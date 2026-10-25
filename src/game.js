@@ -18,6 +18,7 @@ const POTION_HEAL = 0.5;
 const SKILL_LEVEL_CAP = 10;
 const SKILL_DAMAGE_PER_LEVEL = 0.15;
 const INTERACT_RANGE = 90;
+const DROP_TIME = 0.25;
 
 export function createGame(classId, appearance) {
   const classDef = CLASSES[classId];
@@ -31,7 +32,19 @@ export function createGame(classId, appearance) {
     inventory: [],
     potions: 0,
     cooldowns: createCooldowns(),
-    player: { x: 200, y: FLOOR_Y - 48, w: 28, h: 48, vx: 0, vy: 0, onGround: false, dir: 1, invuln: 0 },
+    player: {
+      x: 200,
+      y: FLOOR_Y - 48,
+      w: 28,
+      h: 48,
+      vx: 0,
+      vy: 0,
+      onGround: false,
+      onPlatform: false,
+      dropTimer: 0,
+      dir: 1,
+      invuln: 0,
+    },
     mapId: 'town',
     map: null,
     mobs: [],
@@ -51,15 +64,28 @@ export function message(game, text) {
   if (game.messages.length > 5) game.messages.shift();
 }
 
+// Floor groups spread across the map. Platform groups share out their mobs across the listed ledges
+// and keep each patrol inside its ledge.
 function spawnMobs(map, level) {
   const mobs = [];
   for (const group of map.spawns) {
     if (group.minLevel > level) continue;
+    const t = MOB_TYPES[group.type];
     for (let i = 0; i < group.count; i++) {
-      const t = MOB_TYPES[group.type];
-      const span = map.width - 600;
-      const x = 300 + ((i + 0.5) * span) / group.count;
-      const mob = createMob(group.type, x, FLOOR_Y - t.h);
+      let mob;
+      if (group.platforms) {
+        const slots = group.platforms.length;
+        const pl = map.platforms[group.platforms[i % slots]];
+        const perLedge = Math.ceil(group.count / slots);
+        const slot = Math.floor(i / slots);
+        const homeX = pl.x + (pl.w * (slot + 0.5)) / perLedge - t.w / 2;
+        const room = Math.min(homeX - pl.x, pl.x + pl.w - (homeX + t.w));
+        mob = createMob(group.type, homeX, pl.y - t.h, Math.max(0, Math.min(room, 40)));
+      } else {
+        const span = map.width - 600;
+        const x = 300 + ((i + 0.5) * span) / group.count;
+        mob = createMob(group.type, x, FLOOR_Y - t.h);
+      }
       mob.respawnIn = 0;
       mobs.push(mob);
     }
@@ -85,6 +111,7 @@ export function loadMap(game, mapId, fromMapId) {
   p.y = FLOOR_Y - p.h;
   p.vy = 0;
   p.onGround = true;
+  p.onPlatform = false;
 }
 
 // Effective skill: damage scales with the skill's own level.
@@ -199,6 +226,37 @@ function handleInteractions(game, input) {
   }
 }
 
+// Gravity and landing. Ledges are one-way: you land on them only when falling onto their top.
+function movePhysics(game, dt) {
+  const p = game.player;
+  const prevBottom = p.y + p.h;
+  p.vy += GRAVITY * dt;
+  p.x += p.vx * dt;
+  p.y += p.vy * dt;
+  p.x = Math.max(0, Math.min(game.map.width - p.w, p.x));
+  p.onGround = false;
+  p.onPlatform = false;
+  if (p.vy < 0) return;
+
+  if (p.y + p.h >= FLOOR_Y) {
+    p.y = FLOOR_Y - p.h;
+    p.vy = 0;
+    p.onGround = true;
+    return;
+  }
+  if (p.dropTimer > 0) return;
+  for (const pl of game.map.platforms) {
+    const overlapX = p.x + p.w > pl.x && p.x < pl.x + pl.w;
+    if (overlapX && prevBottom <= pl.y + 1 && p.y + p.h >= pl.y) {
+      p.y = pl.y - p.h;
+      p.vy = 0;
+      p.onGround = true;
+      p.onPlatform = true;
+      return;
+    }
+  }
+}
+
 // Main update step. `input` = { held: Set, pressed: Set } of key codes.
 export function update(game, dt, input) {
   game.time += dt;
@@ -215,15 +273,15 @@ export function update(game, dt, input) {
     p.vy = JUMP_VELOCITY;
     p.onGround = false;
   }
-  p.vy += GRAVITY * dt;
-  p.x += p.vx * dt;
-  p.y += p.vy * dt;
-  if (p.y + p.h >= FLOOR_Y) {
-    p.y = FLOOR_Y - p.h;
-    p.vy = 0;
-    p.onGround = true;
+  // Holding Down while standing on a ledge drops through it.
+  const down = input.held.has('ArrowDown') || input.held.has('KeyS');
+  if (down && p.onPlatform && !jumpKey) {
+    p.dropTimer = DROP_TIME;
+    p.onPlatform = false;
+    p.y += 2;
   }
-  p.x = Math.max(0, Math.min(game.map.width - p.w, p.x));
+  p.dropTimer = Math.max(0, p.dropTimer - dt);
+  movePhysics(game, dt);
   p.invuln = Math.max(0, p.invuln - dt);
 
   // Skills: Q / E / R map to the class's skill slots 0..2.

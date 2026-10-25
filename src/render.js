@@ -6,6 +6,7 @@ import { FLOOR_Y, cameraFor } from './game.js';
 import { CLASSES } from './classes.js';
 import { expToNext } from './progression.js';
 import { drawCharacter, drawCharacterPreview, drawMob, drawNpc } from './sprites.js';
+import { drawBackdrop, drawPlatforms } from './scenery.js';
 import { APPEARANCE_FIELDS, COLOR_FIELDS } from './appearance.js';
 
 export const VW = 640;
@@ -23,6 +24,7 @@ const UI = {
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 const NPC_COLORS = { shop: '#ffd66b', skills: '#b8a6ff', upgrade: '#ff9b7a', quest: '#8ee3a6' };
+const MENU_THEME = 'sunset';
 
 function roundPath(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -59,71 +61,7 @@ function text(ctx, str, x, y, size, color = UI.text, align = 'left', weight = ''
   ctx.textAlign = 'left';
 }
 
-// ---------- Sky and world ----------
-
-function drawCloud(ctx, x, y, s) {
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.beginPath();
-  ctx.arc(x, y, 13 * s, 0, Math.PI * 2);
-  ctx.arc(x + 15 * s, y - 7 * s, 16 * s, 0, Math.PI * 2);
-  ctx.arc(x + 31 * s, y, 13 * s, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawSky(ctx, width, height, cam, time) {
-  const g = ctx.createLinearGradient(0, 0, 0, height);
-  g.addColorStop(0, '#9fd8ff');
-  g.addColorStop(0.75, '#ffe9f3');
-  g.addColorStop(1, '#ffe9f3');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.fillStyle = 'rgba(255, 240, 180, 0.95)';
-  ctx.beginPath();
-  ctx.arc(width * 0.82, 52, 22, 0, Math.PI * 2);
-  ctx.fill();
-
-  for (let i = 0; i < 6; i++) {
-    const speed = 6 + i * 2;
-    const x = ((i * 190 + 40 - cam * 0.25 + time * speed) % (width + 200)) - 100;
-    drawCloud(ctx, x, 36 + (i % 3) * 26, 0.7 + (i % 3) * 0.15);
-  }
-}
-
-function drawHills(ctx, cam) {
-  const tint = ['#b9e6c0', '#a6dcb5'];
-  for (let layer = 0; layer < 2; layer++) {
-    ctx.fillStyle = tint[layer];
-    const shift = cam * (0.3 + layer * 0.15);
-    for (let i = -1; i < 8; i++) {
-      const x = i * 170 - (shift % 170);
-      ctx.beginPath();
-      ctx.arc(x + 85, FLOOR_Y + 6, 74 + layer * 22, Math.PI, 0);
-      ctx.fill();
-    }
-  }
-}
-
-function drawGround(ctx, width, height) {
-  ctx.fillStyle = '#c99a6b';
-  ctx.fillRect(0, FLOOR_Y + 6, width, height - FLOOR_Y);
-  ctx.fillStyle = '#7bc96a';
-  ctx.fillRect(0, FLOOR_Y, width, 6);
-  ctx.fillStyle = '#5fb050';
-  for (let x = 0; x < width; x += 12) {
-    ctx.beginPath();
-    ctx.moveTo(x, FLOOR_Y);
-    ctx.lineTo(x + 3, FLOOR_Y - 3);
-    ctx.lineTo(x + 6, FLOOR_Y);
-    ctx.fill();
-  }
-}
-
-function drawBackground(ctx, game, cam, width, height) {
-  drawSky(ctx, width, height, cam, game.time);
-  drawHills(ctx, cam);
-  drawGround(ctx, width, height);
-}
+// ---------- World ----------
 
 function drawPortals(ctx, game, cam) {
   for (const portal of game.map.portals) {
@@ -265,7 +203,8 @@ function drawHud(ctx, game, width, height) {
 
 export function drawGame(ctx, game, width, height) {
   const cam = cameraFor(game, width);
-  drawBackground(ctx, game, cam, width, height);
+  drawBackdrop(ctx, game.map.theme, cam, width, height, game.time);
+  drawPlatforms(ctx, game.map.platforms, cam, width, game.map.theme);
   drawPortals(ctx, game, cam);
   drawNpcs(ctx, game, cam);
   drawMobs(ctx, game, cam);
@@ -278,7 +217,7 @@ export function drawGame(ctx, game, width, height) {
 // ---------- Setup screens ----------
 
 export function drawAppearance(ctx, width, height, appearance, row, time) {
-  drawSky(ctx, width, height, 0, time);
+  drawBackdrop(ctx, MENU_THEME, 0, width, height, time);
   text(ctx, 'Make your hero', width / 2, 34, 16, UI.text, 'center', 'bold');
   text(ctx, 'Up / Down: choose    Left / Right: change    Enter: continue', width / 2, 48, 8, UI.muted, 'center');
 
@@ -318,7 +257,7 @@ export function drawAppearance(ctx, width, height, appearance, row, time) {
 }
 
 export function drawSelect(ctx, width, height, time) {
-  drawSky(ctx, width, height, 0, time);
+  drawBackdrop(ctx, MENU_THEME, 0, width, height, time);
   text(ctx, 'Choose your class', width / 2, 62, 16, UI.text, 'center', 'bold');
   text(ctx, 'Press 1, 2, or 3', width / 2, 76, 8, UI.muted, 'center');
 

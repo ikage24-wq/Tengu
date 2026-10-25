@@ -259,7 +259,7 @@ function npcSprite(color) {
       R(8, 38, 3, 2, 'k'),
       R(13, 38, 3, 2, 'k'),
     ];
-    return bake(rasterize(NPC_W, NPC_H, shapes), { c: color, s: '#ffe2c7', k: OUTLINE });
+    return bake(rasterize(NPC_W, NPC_H, shapes), { o: OUTLINE, c: color, s: '#ffe2c7', k: OUTLINE });
   });
 }
 

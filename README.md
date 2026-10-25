@@ -23,7 +23,8 @@ In game:
 | Key | Action |
 | --- | --- |
 | Arrow keys / A, D | Move |
-| Space / W / Up | Jump |
+| Space / W / Up | Jump (land on ledges from above) |
+| Down / S (on a ledge) | Drop through the ledge |
 | Q, E, R | Cast class skill 1, 2, 3 (AoE) |
 | H | Drink potion (heals 50% HP) |
 | 1, 2, 3 (near Skill Trainer) | Spend a skill point to raise that skill |
@@ -49,7 +50,7 @@ In game:
 - **Gear** — Five slots (weapon, hat, top, gloves, shoes) in five rarities.
   Better gear auto-equips. Upgrades go from 0 to 15, with success odds that
   fall as the level rises. Failure costs gold but keeps the item (`src/gear.js`).
-- **World** — Henesys Square (town with NPCs), Green Meadow, and Dark Forest,
+- **World** — Layered scenery with parallax skylines, cranes, power poles, and brick ground. Ledges are one-way platforms, and some mobs patrol them. Henesys Square (town with NPCs), Green Meadow, and Dark Forest,
   linked by portals. Dangerous mobs only spawn once you reach their level
   (`src/world.js`).
 
