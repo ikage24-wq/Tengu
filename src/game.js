@@ -344,6 +344,7 @@ export function update(game, dt, input) {
 function damageMobWithFloater(game) {
   return (mob, dmg, crit) => {
     floater(game, mob.x + mob.w / 2, mob.y - 6, crit ? `${dmg}!` : `${dmg}`, crit ? '#ffd34d' : '#ffffff');
+    game.effects.push({ kind: 'spark', x: mob.x + mob.w / 2, y: mob.y + mob.h / 2, crit, t: 0.25, max: 0.25 });
     return damageMob(mob, dmg);
   };
 }

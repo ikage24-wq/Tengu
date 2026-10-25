@@ -9,6 +9,7 @@ import { drawCharacter, drawCharacterPreview, drawMob, drawNpc } from './sprites
 import { drawBackdrop, drawPlatforms } from './scenery.js';
 import { APPEARANCE_FIELDS, COLOR_FIELDS } from './appearance.js';
 import { RARITIES, SLOTS } from './gear.js';
+import { EFFECTS, ready } from './assets.js';
 
 export const VW = 640;
 export const VH = 360;
@@ -115,6 +116,15 @@ function drawEffects(ctx, game, cam) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       roundPath(ctx, b.x - cam, b.y, b.w, b.h, 6);
       ctx.fill();
+    } else if (e.kind === 'spark') {
+      // Hit spark: a small burst that grows and fades. Crits use the star sprite.
+      const img = e.crit ? EFFECTS.star : EFFECTS.spark;
+      if (!ready(img)) continue;
+      const fade = e.t / e.max;
+      const s = 16 + (1 - fade) * 14;
+      ctx.globalAlpha = fade;
+      ctx.drawImage(img, e.x - cam - s / 2, e.y - s / 2, s, s);
+      ctx.globalAlpha = 1;
     } else if (e.kind === 'fullmap') {
       // Screen flash, then light columns over every mob on the map.
       ctx.globalAlpha = e.t;

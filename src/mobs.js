@@ -9,7 +9,7 @@ export const MOB_TYPES = {
   wolf: { name: 'Wolf', level: 18, hp: 160, atk: 16, exp: 55, goldMin: 12, goldMax: 30, w: 48, h: 34, speed: 95, color: '#8d8fa6' },
   golem: { name: 'Golem', level: 30, hp: 420, atk: 30, exp: 150, goldMin: 30, goldMax: 70, w: 60, h: 64, speed: 35, color: '#a58a6a' },
   pig: { name: 'Pig', level: 4, hp: 48, atk: 6, exp: 14, goldMin: 3, goldMax: 9, w: 30, h: 26, speed: 50, color: '#ffb3c6' },
-  skeleton: { name: 'Skeleton', level: 22, hp: 240, atk: 20, exp: 90, goldMin: 18, goldMax: 40, w: 30, h: 50, speed: 70, color: '#e9e4d4' },
+  skeleton: { name: 'Skeleton', level: 22, hp: 240, atk: 20, exp: 90, goldMin: 18, goldMax: 40, w: 32, h: 32, speed: 70, color: '#e9e4d4' },
 };
 
 // Chance a mob drops gear. Bosses and higher-tier mobs roll gear more often.

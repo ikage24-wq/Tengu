@@ -88,5 +88,8 @@ have no DOM access, so they can be tested in Node.
 
 ## Credits
 
-- Ground tile: "Pixel Platformer" by Kenney (www.kenney.nl), CC0 public domain.
-  The tilesheet and its license are in `assets/kenney/`.
+All art from Kenney (www.kenney.nl), released under CC0 (public domain). License files are in `assets/kenney/`.
+
+- Ground tile: "Pixel Platformer" (`assets/kenney/tilemap_packed.png`, `LICENSE.txt`).
+- Monsters and items: "Tiny Dungeon" (`assets/kenney/tiny-dungeon.png`, `LICENSE-tiny-dungeon.txt`).
+- Hit sparks and slashes: "Particle Pack" (`assets/kenney/effects/`, `LICENSE-particle-pack.txt`).

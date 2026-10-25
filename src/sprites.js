@@ -2,6 +2,8 @@
 // Each sprite is rasterized onto a small grid, gets a 1px dark outline around its silhouette,
 // and is cached as a tiny canvas. It is drawn with nearest-neighbour scaling so it stays crisp.
 
+import { SHEETS, ready, drawTile } from './assets.js';
+
 const OUTLINE = '#2d2846';
 const PAD = 1; // room for the outline around the grid edge
 const cache = new Map();
@@ -326,6 +328,12 @@ export function drawCharacterPreview(ctx, appearance, accent, time, x, y, scale)
 }
 
 export function drawMob(ctx, mob, sx, time) {
+  // Skeletons use the CC0 Tiny Dungeon frame once it has loaded; the drawn version is the fallback.
+  if (mob.typeId === 'skeleton' && ready(SHEETS.tiny)) {
+    const bob = Math.round(Math.sin(time * 4) * 0.5);
+    drawTile(ctx, SHEETS.tiny, 1, 10, sx, mob.y + bob, { scale: 2, flip: mob.dir < 0 });
+    return;
+  }
   const bob = mob.typeId === 'golem' ? Math.round(Math.sin(time * 2)) : 0;
   // Wolves face left by default, so they flip when moving right.
   blit(ctx, mobSprite(mob.typeId), sx, mob.y + bob, { flip: mob.typeId === 'wolf' && mob.dir > 0 });
