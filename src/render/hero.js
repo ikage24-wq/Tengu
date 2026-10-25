@@ -213,43 +213,44 @@ function star(cx, cy, r, c) {
   return F(T([[cx, cy - r], [cx + k, cy - k], [cx + r, cy], [cx + k, cy + k], [cx, cy + r], [cx - k, cy + k], [cx - r, cy], [cx - k, cy - k]], c));
 }
 
-// Big, clean eyes made of a few bold pieces: a thick dark upper lash with a tick at the outer
-// corner, a solid iris with a big dark pupil, a lighter band along the bottom, and crisp square
-// highlights. `out` is -1 for the far eye (its tick points back) and 1 for the near one.
+// Soft eyes sized to the face: a clean upper lash with a small tick at the outer corner, an iris
+// that's deeper under the lash and light along the bottom, a modest pupil, and a round shine. `out` is -1 for the far eye (its tick points back) and 1 for the near one.
 const EYE_Y = 18.2;
 
 function eye(ex, out, style, color, mode, skin) {
   const ey = EYE_Y;
-  const closedUp = () => [arc(ex, ey + 1.2, 2.5, 2.2, 200, 340, 1, INK)];
-  if (mode === 'blink') return [arc(ex, ey - 0.6, 2.6, 1.6, 20, 160, 0.9, INK)];
-  if (mode === 'hurt') return [F(T([[ex - 2 * out, ey - 2.2], [ex + 2 * out, ey], [ex - 2 * out, ey + 2.2], [ex - 1.2 * out, ey]], INK))];
+  const closedUp = () => [arc(ex, ey + 1, 2.2, 1.9, 200, 340, 0.8, INK)];
+  if (mode === 'blink') return [arc(ex, ey - 0.6, 2.3, 1.4, 20, 160, 0.8, INK)];
+  if (mode === 'hurt') return [F(T([[ex - 1.8 * out, ey - 2], [ex + 1.8 * out, ey], [ex - 1.8 * out, ey + 2], [ex - 1.1 * out, ey]], INK))];
   if (mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0)) return closedUp();
-  const size = style === 'round' ? 1.1 : style === 'big' ? 1.2 : 1;
-  const rx = 2.3 * size;
-  const ry = 2.9 * size;
+  const size = style === 'round' ? 1.08 : style === 'big' ? 1.18 : 1;
+  const rx = 2.05 * size;
+  const ry = 2.55 * size;
   const shapes = [
     F(E(ex, ey, rx, ry, color)),
-    F(E(ex, ey + ry * 0.55, rx * 0.72, ry * 0.32, mix(color, '#ffffff', 0.4))),
-    F(E(ex + 0.15, ey + 0.1, style === 'cat' ? 0.5 : rx * 0.5, ry * (style === 'cat' ? 0.7 : 0.55), shade(color, -52))),
+    // Deeper color under the lash, fading to a light band at the bottom.
+    F(E(ex, ey - ry * 0.45, rx * 0.92, ry * 0.5, shade(color, -22))),
+    F(E(ex, ey + ry * 0.52, rx * 0.68, ry * 0.3, mix(color, '#ffffff', 0.45))),
+    // A modest pupil (a slit for cat eyes) so the eye reads as color, not a dark hole.
+    F(E(ex + 0.1, ey + 0.1, style === 'cat' ? 0.4 : rx * 0.4, ry * (style === 'cat' ? 0.62 : 0.45), shade(color, -40))),
   ];
-  // Highlights: square glints read crisply at pixel scale.
-  if (style === 'star') shapes.push(star(ex - 0.4, ey - 0.9, 2, '#ffffff'));
-  else shapes.push(F(R(ex - rx * 0.62, ey - ry * 0.55, 1.2 * size, 1.2 * size, '#ffffff')));
-  shapes.push(F(R(ex + rx * 0.3, ey + ry * 0.25, 0.6, 0.6, '#ffffff')));
-  if (style === 'big') shapes.push(F(R(ex - rx * 0.5, ey + ry * 0.35, 0.5, 0.5, '#ffffff')));
-  // The upper lash, thick and slightly wider than the eye, with a tick at the outer corner.
-  const lash = arc(ex, ey + 0.1, rx + 0.4, ry + 0.3, 196, 344, 1.05, INK);
-  const tick = (lift) => F(T([[ex + out * (rx - 0.2), ey - ry * 0.6], [ex + out * (rx + 1.5), ey - ry * 0.6 - lift], [ex + out * (rx + 0.6), ey - ry * 0.25]], INK));
+  if (style === 'star') shapes.push(star(ex - 0.3, ey - 0.7, 1.7, '#ffffff'));
+  else shapes.push(F(E(ex - rx * 0.42, ey - ry * 0.32, 0.8 * size, 0.8 * size, '#ffffff')));
+  shapes.push(F(R(ex + rx * 0.3, ey + ry * 0.28, 0.5, 0.5, '#ffffff')));
+  if (style === 'big') shapes.push(F(R(ex - rx * 0.55, ey + ry * 0.3, 0.5, 0.5, '#ffffff')));
+  // A clean upper lash just wider than the eye, with a small tick at the outer corner.
+  const lash = arc(ex, ey + 0.1, rx + 0.35, ry + 0.25, 200, 340, 0.8, INK);
+  const tick = (lift) => F(T([[ex + out * (rx - 0.1), ey - ry * 0.55], [ex + out * (rx + 1.1), ey - ry * 0.55 - lift], [ex + out * (rx + 0.5), ey - ry * 0.25]], INK));
   if (style === 'sleepy') {
     shapes.push(F(T([[ex - rx - 0.6, ey - ry - 0.6], [ex + rx + 0.6, ey - ry - 0.6], [ex + rx + 0.6, ey - 0.3], [ex - rx - 0.6, ey - 0.3]], skin)));
-    shapes.push(F(T([[ex - rx - 0.4, ey - 0.6], [ex + rx + 0.4, ey - 0.8], [ex + rx + 0.4, ey + 0.3], [ex - rx - 0.4, ey + 0.3]], INK)));
+    shapes.push(F(T([[ex - rx - 0.3, ey - 0.5], [ex + rx + 0.3, ey - 0.7], [ex + rx + 0.3, ey + 0.2], [ex - rx - 0.3, ey + 0.2]], INK)));
     return shapes;
   }
   if (style === 'round') return [...shapes, lash];
-  if (style === 'cat') return [...shapes, lash, tick(1.8)];
-  if (style === 'droopy') return [...shapes, lash, tick(-1.4)];
-  if (style === 'big') return [...shapes, lash, tick(0.9), arc(ex, ey, rx + 0.2, ry + 0.2, 50, 130, 0.45, INK)];
-  return [...shapes, lash, tick(0.9)];
+  if (style === 'cat') return [...shapes, lash, tick(1.5)];
+  if (style === 'droopy') return [...shapes, lash, tick(-1.2)];
+  if (style === 'big') return [...shapes, lash, tick(0.7), arc(ex, ey, rx + 0.2, ry + 0.2, 55, 125, 0.4, INK)];
+  return [...shapes, lash, tick(0.7)];
 }
 
 function headShapes(look, g, rig) {
