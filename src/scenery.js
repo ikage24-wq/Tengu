@@ -8,63 +8,63 @@ import { BACKGROUNDS, ready } from './assets.js';
 export const THEMES = {
   sunset: {
     skyline: 'city',
-    skyTop: '#3d2b5f',
-    skyMid: '#a84f7a',
-    skyBottom: '#ffb27a',
-    sun: 'rgba(255, 243, 196, 0.9)',
-    cloud: '#5a3a6e',
-    cloudLight: '#f0a0a0',
-    far: '#4a3d63',
-    mid: '#6b5a7e',
-    dark: '#2b2340',
-    lit: '#ffd978',
-    brick: '#b3673e',
-    mortar: '#e2b58f',
-    ground: '#7a4a35',
-    ledge: '#d59a6a',
-    ledgeTop: '#f5c99c',
-    curb: '#8d8590',
-    posters: ['#ffd978', '#ff9ec0', '#9be8ff'],
+    skyTop: '#ff9fd6',
+    skyMid: '#c9b6ff',
+    skyBottom: '#fff0fa',
+    sun: 'rgba(255, 250, 205, 0.95)',
+    cloud: '#ffffff',
+    cloudLight: '#ffd6ef',
+    far: '#d9c8ff',
+    mid: '#f0e4ff',
+    dark: '#8f7cc4',
+    lit: '#fff3a6',
+    brick: '#ffb6cf',
+    mortar: '#ffe3ef',
+    ground: '#ff9ac0',
+    ledge: '#ffc2dc',
+    ledgeTop: '#ffffff',
+    curb: '#c9b8ff',
+    posters: ['#fff3a6', '#ff9ec0', '#a8e8ff'],
   },
   daylight: {
     skyline: 'hills',
-    skyTop: '#7ec8ff',
-    skyMid: '#bfe6ff',
-    skyBottom: '#fff2d6',
-    sun: 'rgba(255, 251, 224, 0.95)',
+    skyTop: '#8fe3ff',
+    skyMid: '#d6f5ff',
+    skyBottom: '#fff6d9',
+    sun: 'rgba(255, 252, 214, 0.95)',
     cloud: '#ffffff',
     cloudLight: '#ffffff',
-    far: '#9cd3a8',
-    mid: '#6fbf7a',
-    dark: '#2f6b3a',
+    far: '#b8f2d0',
+    mid: '#8fe3b0',
+    dark: '#4fb07d',
     lit: '#ffffff',
-    brick: '#c9a06e',
-    mortar: '#e6d0ac',
-    ground: '#8a6a48',
-    ledge: '#c89b6a',
-    ledgeTop: '#dfc08f',
-    grass: '#6dbf5a',
-    posters: ['#ffe9a8', '#ffc2d6', '#bff0dc'],
+    brick: '#ffd39b',
+    mortar: '#fff0d6',
+    ground: '#f5b97a',
+    ledge: '#ffd9a8',
+    ledgeTop: '#fff4e0',
+    grass: '#7ee081',
+    posters: ['#fff3a6', '#ffc2d6', '#bff0dc'],
   },
   dusk: {
     skyline: 'pines',
-    skyTop: '#1d2b4a',
-    skyMid: '#3c4f7a',
-    skyBottom: '#c98d8d',
-    sun: 'rgba(255, 226, 176, 0.7)',
-    cloud: '#3b4a6b',
-    cloudLight: '#9aa6c6',
-    far: '#243a3a',
-    mid: '#1f3b33',
-    dark: '#0f1d1c',
-    lit: '#ffd27a',
-    brick: '#5b6470',
-    mortar: '#7b8592',
-    ground: '#3d4a3a',
-    ledge: '#6f7a86',
-    ledgeTop: '#9aa6b4',
-    grass: '#3f7a4a',
-    posters: ['#ffd27a', '#c9b5ff', '#9be8ff'],
+    skyTop: '#7b6be6',
+    skyMid: '#b48cff',
+    skyBottom: '#ffb8e6',
+    sun: 'rgba(255, 230, 255, 0.8)',
+    cloud: '#f3e8ff',
+    cloudLight: '#ffffff',
+    far: '#9d8ae8',
+    mid: '#7d6dd0',
+    dark: '#4a3a92',
+    lit: '#fff3a6',
+    brick: '#c8b8ff',
+    mortar: '#ece4ff',
+    ground: '#a58ef0',
+    ledge: '#cbbcff',
+    ledgeTop: '#ffffff',
+    grass: '#a6f0c6',
+    posters: ['#fff3a6', '#ffc2d6', '#a8e8ff'],
   },
 };
 
@@ -261,11 +261,33 @@ function drawGround(ctx, t, cam, width, height, hasCurb) {
 
 // Draws everything behind the platforms: sky, skyline, poles, and the ground.
 // Which CC0 parallax set a theme uses, if any.
+// The pastel anime look is drawn in code, so the CC0 parallax sets are off. They stay in assets/oga
+// in case we want them back. To re-enable one, return BACKGROUNDS.ocean.night and friends here.
 function imageLayersFor(themeName) {
-  if (themeName === 'sunset') return BACKGROUNDS.ocean.night;
-  if (themeName === 'daylight') return BACKGROUNDS.ocean.noon;
-  if (themeName === 'dusk') return BACKGROUNDS.forest;
+  void themeName;
   return null;
+}
+
+// Twinkling four-point sparkles in the sky, drifting slowly with the camera.
+function star(ctx, x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r, y);
+  ctx.quadraticCurveTo(x, y, x, y - r);
+  ctx.fill();
+}
+
+function drawSparkles(ctx, cam, width, time) {
+  repeat(cam, 0.15, 70, width, 0, (i, x) => {
+    if (hash(i + 21) < 0.45) return;
+    const twinkle = 0.5 + 0.5 * Math.sin(time * 3 + i);
+    ctx.globalAlpha = 0.45 + 0.55 * twinkle;
+    star(ctx, x + hash(i) * 40, 16 + hash(i + 5) * 110, 2 + twinkle * 1.5, '#ffffff');
+  });
+  ctx.globalAlpha = 1;
 }
 
 // Tiles each layer horizontally at its own scroll speed. Layers sit on the ground line.
@@ -287,6 +309,7 @@ export function drawBackdrop(ctx, themeName, cam, width, height, time) {
   if (layers && layers.every((l) => ready(l.img))) {
     drawImageLayers(ctx, layers, cam, width);
   } else {
+    drawSparkles(ctx, cam, width, time);
     drawClouds(ctx, t, cam, width, time);
     if (t.skyline === 'city') drawCity(ctx, t, cam, width);
     else if (t.skyline === 'hills') drawHills(ctx, t, cam, width);

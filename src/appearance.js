@@ -6,7 +6,6 @@
 export const BASE_OPTIONS = ['classic', ...Array.from({ length: 16 }, (_, i) => `sample${String(i + 1).padStart(2, '0')}`)];
 
 export const APPEARANCE_FIELDS = [
-  { key: 'base', label: 'Body', options: BASE_OPTIONS },
   { key: 'hairStyle', label: 'Hair', options: ['wavy', 'bob'] },
   { key: 'hairColor', label: 'Hair Color', options: ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650'] },
   { key: 'skinTone', label: 'Skin', options: ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66'] },
