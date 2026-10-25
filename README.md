@@ -79,11 +79,12 @@ then press the key. Right-click a hotkey slot to clear it.
   Rare loot glows with a colored beam on the ground, and bosses always
   drop Rare or better. Drops also roll small stat differences. Every item has 7 upgrade slots for
   charms (100% / 60% / 10%) that spend a slot whether they work or not.
-- **Animation and feel** — the hero is a layered rig drawn at 3x detail and shaded automatically
-  (the back third of each part and the back limbs in a lavender shadow, bangs casting onto the face): a 16-frame walk cycle
-  driven by distance, with feet that arc forward, counter-swinging arms, a dip after each step
-  and a head that lags a touch behind, a breathing idle with blinks, stretch on the way up and squash on
-  landing, hair and capes that trail behind on springs, attack wind-up and lunge with a weapon
+- **Animation and feel** — the hero is a layered rig drawn at 3x detail with jointed limbs (hips,
+  knees, ankles, elbows) and shaded automatically (the back third of each part and the back limbs
+  in a lavender shadow, bangs casting onto the face): a 24-frame walk cycle driven by distance,
+  with heel strike, a planted foot that rolls onto its toe, a high heel kick behind, hips that sink
+  when the feet are spread, and counter-swinging arms, a breathing idle with blinks, stretch on the
+  way up and knees that give on landing, hair and capes that trail behind on springs, attack wind-up and lunge with a weapon
   trail, a climbing cycle, and a hurt recoil. Monsters hop, breathe, pop in when they spawn, and
   squash when hit. Footstep dust, hit sparks, defeat poofs, screen shake, short hitstop on crits
   and kills, and ambient petals, fireflies, and glints in every map.
