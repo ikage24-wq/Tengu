@@ -4,8 +4,8 @@
 // flat (F) details; shading and edges come from the renderer.
 //
 // Landmarks: head center (15.5, 14.6) r10 · neck y 23-27 · torso y 26-35.8 and hips y 34.6-39.6,
-// shaped by the body type (see FIGURES) · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12 (back)
-// and 15.6 (front) · soles at y 56 · shoulders (11.3, 27.5) and (19.2, 27.5) · hands rest at y 36.8.
+// shaped by the body type (see FIGURES) · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12.3 (left)
+// and 18.7 (right) · soles at y 56 · shoulders (10.4, 28.2) and (20.8, 28.2) · hands rest at y 37.6.
 
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
 

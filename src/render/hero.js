@@ -79,17 +79,7 @@ const RIBBON = '#ff9ec0';
 const HEAD_X = 15.5;
 const HEAD_Y = 14.6;
 // The face sits a little forward on the skull, toward the facing side.
-const FACE_X = 16;
-
-// Narrows shapes horizontally around x = cx (the far eye in three-quarter view).
-function squeezeX(shapes, cx, k) {
-  const fx = (x) => cx + (x - cx) * k;
-  return shapes.map((sh) => {
-    if (sh.t === 'p') return { ...sh, x: 0, pts: sh.pts.map(([px, py]) => [fx(sh.x + px), py]) };
-    if (sh.t === 'e') return { ...sh, x: fx(sh.x), rx: sh.rx * k };
-    return { ...sh, x: fx(sh.x), w: sh.w * k };
-  });
-}
+const FACE_X = HEAD_X;
 
 // An arc stroke along an ellipse, from angle a0 to a1 (degrees, 0 = right, 90 = down), th thick.
 function arc(cx, cy, rx, ry, a0, a1, th, c) {
@@ -250,16 +240,15 @@ function headShapes(look, g, rig) {
   const out = [];
   if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairLift).filter((sh) => !sh.hang));
   if (hat) out.push(...hatBackShapes(hat.design, hat.color));
-  // Three-quarter view toward the facing side (right): only the back ear shows, and the face (a
-  // round head with soft full cheeks) sits a little forward on the skull. Big eyes sit low on
-  // the face, the far one a touch narrower; blush under each eye and a small mouth.
-  out.push(L(E(6.4, 18, 1.8, 2.3, skin)), F(E(6.2, 18.2, 0.7, 1.2, '#f4bfcb')));
-  out.push(L(E(FACE_X, 15, 10.2, 9.8, skin)), L(E(FACE_X + 0.4, 19, 9.2, 5.8, skin)));
-  out.push(...squeezeX(eye(12.2, -1, eyeStyle, eyeColor, rig.eyes, skin), 12.2, 0.86), ...eye(20.6, 1, eyeStyle, eyeColor, rig.eyes, skin));
-  out.push(F(E(10.4, 21.8, 1.6, 0.7, '#f9c3cf')), F(E(22.6, 21.8, 1.8, 0.7, '#f9c3cf')));
-  if (rig.eyes === 'hurt') out.push(F(E(17.6, 23, 1, 0.7, INK)));
-  else if (rig.mouth === 'open') out.push(F(E(17.6, 22.9, 1.1, 0.9, '#b2506c')), F(E(17.6, 23.4, 0.6, 0.35, '#ff9fb8')));
-  else out.push(arc(17.6, 21.7, 1.3, 1.1, 25, 155, 0.55, '#b86a7c'));
+  // Facing the screen: a round head with soft full cheeks, an ear peeking out on each side, big
+  // eyes set low and wide apart, blush under each eye and a small mouth in the middle.
+  for (const ex of [5.6, 25.4]) out.push(L(E(ex, 18, 1.8, 2.3, skin)), F(E(ex, 18.2, 0.7, 1.2, '#f4bfcb')));
+  out.push(L(E(FACE_X, 15, 10.2, 9.8, skin)), L(E(FACE_X, 19, 9.4, 5.8, skin)));
+  out.push(...eye(FACE_X - 4.3, -1, eyeStyle, eyeColor, rig.eyes, skin), ...eye(FACE_X + 4.3, 1, eyeStyle, eyeColor, rig.eyes, skin));
+  out.push(F(E(FACE_X - 6.3, 21.8, 1.7, 0.7, '#f9c3cf')), F(E(FACE_X + 6.3, 21.8, 1.7, 0.7, '#f9c3cf')));
+  if (rig.eyes === 'hurt') out.push(F(E(FACE_X, 23, 1, 0.7, INK)));
+  else if (rig.mouth === 'open') out.push(F(E(FACE_X, 22.9, 1.1, 0.9, '#b2506c')), F(E(FACE_X, 23.4, 0.6, 0.35, '#ff9fb8')));
+  else out.push(arc(FACE_X, 21.7, 1.3, 1.1, 25, 155, 0.55, '#b86a7c'));
   if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
   if (g.earring) out.push(...earringShapes(g.earring.design, g.earring.color));
@@ -273,9 +262,9 @@ const UPPER_ARM = 5;
 const FOREARM = 4.7;
 
 // Shoulder to elbow in the sleeve color, then a forearm (bare unless the top has long sleeves).
-// The elbow bends backward to bring the hand to (hx, hy).
+// The elbow bends outward (away from the body's middle) to bring the hand to (hx, hy).
 function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
-  const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, -1);
+  const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, sx < HEAD_X ? 1 : -1);
   return [
     E(sx, sy + 0.4, 2, 2, sleeve),
     limb(sx, sy, ex, ey, 4.2, 3.6, sleeve),
@@ -285,18 +274,19 @@ function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
   ];
 }
 
-// Seen three-quarters from the side: the back shoulder sits inside the torso so that arm hangs
-// mostly behind the body, and the front shoulder sits at the torso's front edge so that arm hangs
-// along the side; each hand rests a little forward by the hip so the elbow bends softly.
+// Facing the screen: a shoulder at each edge of the torso, so the arms hang down the sides, each
+// hand resting a little out from the hip so the elbow bends softly. The "back" arm is the one on
+// the left (away from the facing side); the "front" arm holds the weapon.
 const SHOULDER_Y = 28.2;
-const BACK_SHOULDER = 11.8;
-const FRONT_SHOULDER = 19.6;
-const HAND_FORWARD = 0.9;
-const HAND_Y = 36.4;
+const BACK_SHOULDER = 10.4;
+const FRONT_SHOULDER = 20.8;
+const HAND_FORWARD = 1.4;
+const HAND_Y = 37.6;
 
 // A resting arm from the shoulder at (sx, SHOULDER_Y), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin) {
-  return arm(sx, SHOULDER_Y, sx + HAND_FORWARD + dx, HAND_Y + dy, sleeve, long, g, skin);
+  const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
+  return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, g, skin);
 }
 
 // Attack arms point along `angle` (0 = down, 90 = forward, 180 = up) from the front shoulder.
@@ -308,6 +298,10 @@ function aimedArm(angle, sleeve, long, g, skin) {
 }
 
 // ---------- Body parts per rig ----------
+
+// Legs stand apart under the hips, one on each side.
+const LEFT_LEG = 10.8;
+const RIGHT_LEG = 17.2;
 
 function bodyShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
@@ -330,14 +324,14 @@ function bodyShapes(look, g, rig) {
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap), ux, uy));
-  shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], shadowTone(sleeve), long, g, shadowTone(skin)), ux, uy));
-  shapes.push(...legShapes(11.6, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
-  shapes.push(...legShapes(15.4, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
+  shapes.push(...legShapes(LEFT_LEG, legs, g.shoes, false, rig.backLeg, HIP_Y + drop));
+  shapes.push(...legShapes(RIGHT_LEG, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
   shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
   const skirt = skirtShapes(g.bottom.design, g.bottom.color);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
   shapes.push(...offset(topShapes(top.design, top.color), ux, uy));
+  shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
   // The head rides the squashed body, so it moves by the squashed bob.
   const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy + NECK_LIFT);
   return move([...hang, ...squash(shapes), ...head], 0, 0);
