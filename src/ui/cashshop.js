@@ -3,7 +3,7 @@
 // pick its color, and buy it to wear it right away. Outfits only change your look.
 
 import { ITEMS, variantsFor } from '../data/items.js';
-import { CASH_ITEMS, OUTFIT_SLOTS, cashPrice } from '../data/cash.js';
+import { CASH_ITEMS, OUTFIT_SLOTS, OUTFIT_STYLES, cashPrice } from '../data/cash.js';
 import { wornGear, wearOutfit } from '../core/character.js';
 import { makeCash, itemName } from '../core/items.js';
 import { addItem } from '../core/inventory.js';
@@ -17,9 +17,13 @@ const COLS = 4;
 const ROWS = 3;
 const PINK = '#d0559a';
 
-// The catalog for a slot: one-of-a-kind looks first, then each job's costumes by level.
+const STYLE_LABELS = ['All', 'Casual', 'Swim', 'Funny', 'Fantasy'];
+
+// The catalog for a slot: casual, swim, and funny lines first, then the fantasy costumes (one-of-a-
+// kind looks, then each job's by level) and covers.
+const styleRank = (d) => OUTFIT_STYLES.indexOf(d.style);
 const bySlot = Object.fromEntries(OUTFIT_SLOTS.map((slot) => [slot, CASH_ITEMS.filter((id) => ITEMS[id].slot === slot)
-  .sort((a, b) => Number(Boolean(ITEMS[a].family)) - Number(Boolean(ITEMS[b].family)) || ITEMS[a].cash - ITEMS[b].cash)]));
+  .sort((a, b) => styleRank(ITEMS[a]) - styleRank(ITEMS[b]) || Number(Boolean(ITEMS[a].family)) - Number(Boolean(ITEMS[b].family)) || ITEMS[a].cash - ITEMS[b].cash)]));
 
 export function cashShopWindow(ui, state, world) {
   const win = state.windows.cashshop;
@@ -52,17 +56,19 @@ export function cashShopWindow(ui, state, world) {
 
   // Slots and catalog.
   const rx = win.x + 128;
-  const was = win.cat;
-  const row1 = tabs(ui, rx, win.y + 24, LABELS.slice(0, 4), win.cat < 4 ? win.cat : -1, { w: 53, h: 12 });
-  const row2 = tabs(ui, rx, win.y + 40, LABELS.slice(4), win.cat >= 4 ? win.cat - 4 : -1, { w: 53, h: 12 });
+  const was = `${win.cat}|${win.style}`;
+  win.style = tabs(ui, rx, win.y + 24, STYLE_LABELS, win.style ?? 0, { w: 42.6, h: 12 });
+  const row1 = tabs(ui, rx, win.y + 42, LABELS.slice(0, 4), win.cat < 4 ? win.cat : -1, { w: 53, h: 12 });
+  const row2 = tabs(ui, rx, win.y + 58, LABELS.slice(4), win.cat >= 4 ? win.cat - 4 : -1, { w: 53, h: 12 });
   if (row1 >= 0 && row1 !== (win.cat < 4 ? win.cat : -1)) win.cat = row1;
   if (row2 >= 0 && row2 !== (win.cat >= 4 ? win.cat - 4 : -1)) win.cat = row2 + 4;
-  if (win.cat !== was) win.scroll = 0;
+  if (`${win.cat}|${win.style}` !== was) win.scroll = 0;
   const slot = OUTFIT_SLOTS[win.cat];
-  const list = bySlot[slot];
+  const style = win.style ? OUTFIT_STYLES[win.style - 1] : null;
+  const list = style ? bySlot[slot].filter((id) => ITEMS[id].style === style) : bySlot[slot];
   const cw = 55;
-  const ch = 40;
-  const gy = win.y + 58;
+  const ch = 38;
+  const gy = win.y + 76;
   const rowsTotal = Math.ceil(list.length / COLS);
   if (hover(ui, rx, gy, COLS * cw, ROWS * ch)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
   win.scroll = Math.max(0, Math.min(rowsTotal - ROWS, win.scroll ?? 0));
@@ -85,7 +91,8 @@ export function cashShopWindow(ui, state, world) {
     if (clicked(ui, x, y, cw - 3, ch - 3)) win.tryOn = { ...win.tryOn, [slot]: on ? undefined : { id, variant: null } };
   });
   if (win.tryOn[slot] === undefined) delete win.tryOn[slot];
-  if (rowsTotal > ROWS) text(ctx, `${win.scroll + 1}-${Math.min(rowsTotal, win.scroll + ROWS)} of ${rowsTotal} rows · scroll`, rx + COLS * cw - 4, gy + ROWS * ch + 4, { size: 6.5, align: 'right', color: COLORS.muted });
+  if (!list.length) text(ctx, 'Nothing in this style for this slot yet.', rx + (COLS * cw) / 2, gy + 50, { size: 8, align: 'center', color: COLORS.muted });
+  if (rowsTotal > ROWS) text(ctx, `rows ${win.scroll + 1}-${Math.min(rowsTotal, win.scroll + ROWS)} of ${rowsTotal} · scroll`, rx + COLS * cw - 4, gy + ROWS * ch + 4, { size: 6, align: 'right', color: COLORS.muted });
 
   // The piece being tried on: its colors, its price, and buying it.
   const by = win.y + H - 52;

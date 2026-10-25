@@ -5,6 +5,7 @@
 // sparkle gold. Everything is a function of time, so nothing is stored per hero.
 
 import { settings } from '../../core/settings.js';
+import { LOOK_FAMILIES } from './index.js';
 
 const SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape'];
 
@@ -45,7 +46,7 @@ const hash = (n) => frac(Math.sin(n * 127.1 + 311.7) * 43758.5453);
 export function drawGearFx(ctx, g, at, s, dir, t) {
   if (!settings.gearEffects || settings.particles === 'off') return;
   const few = settings.particles === 'reduced';
-  const pieces = SLOTS.map((slot) => [slot, g[slot]]).filter(([, p]) => p?.family);
+  const pieces = SLOTS.map((slot) => [slot, g[slot]]).filter(([, p]) => p?.family && !LOOK_FAMILIES.has(p.family));
   if (!pieces.length) return;
   ctx.save();
   for (const [slot, p] of pieces) {

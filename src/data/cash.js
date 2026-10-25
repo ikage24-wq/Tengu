@@ -8,8 +8,12 @@
 // ({ theme } or { tier }), cash (price) }. Instances: { uid, id, variant }.
 
 import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, ENDGAME_THEMES, UNIQUE_IDS } from './items.js';
+import { CASUAL_LOOKS } from './outfits-casual.js';
+import { FUN_LOOKS } from './outfits-fun.js';
 
 export const OUTFIT_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring', 'weapon'];
+// Shop styles: everyday clothes, beachwear, silly stuff, and the fantasy costumes and covers.
+export const OUTFIT_STYLES = ['casual', 'swim', 'funny', 'fantasy'];
 
 // Cash a hero starts with, and earns per level and per quest.
 export const STARTING_CASH = 5000;
@@ -19,8 +23,24 @@ export const CASH_PER_QUEST = 300;
 export const CASH_ITEMS = [];
 
 function add(def) {
-  ITEMS[def.id] = { type: 'cash', price: 0, ...def };
+  ITEMS[def.id] = { type: 'cash', price: 0, style: 'fantasy', ...def };
   CASH_ITEMS.push(def.id);
+}
+
+// The casual, swim, and funny lines. Each piece wears a hidden "look" item per slot it dresses
+// (its own, plus any it covers, like a onesie's legs), drawn by that line's module with the
+// entry's index as its design.
+for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS]]) {
+  list.forEach((e, t) => {
+    const look = (slot) => {
+      const id = `look_${family}_${e.key}_${slot}`;
+      ITEMS[id] = { id, name: e.name, type: 'look', slot, design: 'job', family, tier: t, color: e.color, colors: e.colors };
+      return id;
+    };
+    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color };
+    if (e.slot === 'weapon') add({ ...base, cover: { fun: family, t } });
+    else add({ ...base, skin: look(e.slot), ...(e.covers?.length ? { covers: Object.fromEntries(e.covers.map((s) => [s, look(s)])) } : {}) });
+  });
 }
 
 // Costumes of each job's sets, every fourth tier from Lv 20 up.

@@ -4,7 +4,7 @@ import { ITEMS, variantsFor } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { R, E, P, F, sprite, blit, shade } from './pixel.js';
 import { weaponIcon } from './weapons.js';
-import { pieceOf } from './jobgear/index.js';
+import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, skirtShapes, hatShapes, hatBackShapes, handShapes, capeShapes, capeFrontShapes, earringShapes, limb } from './gear.js';
 import { SCHOOL_COLORS } from './spells.js';
 
@@ -104,6 +104,7 @@ const CASH_BADGE = [E(13.2, 2.8, 2.8, 2.8, '#ff8fc1'), F(R(12.7, 1, 1, 3.6, '#ff
 
 function itemShapes(def, variant = null) {
   if (def.type === 'cash') {
+    if (def.cover?.fun) return [...fitShapes(JOB_GEAR[def.cover.fun].cover(def.cover.t).shapes), ...CASH_BADGE];
     const look = def.cover ? weaponIcon('sword', def.cover.theme ? 21 : def.cover.tier, def.cover.theme ?? null, def.cover.theme ? null : variant) : itemShapes(ITEMS[def.skin], variant);
     return [...look, ...CASH_BADGE];
   }

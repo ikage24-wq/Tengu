@@ -9,6 +9,8 @@ import { addItem } from '../src/core/inventory.js';
 import { computeStats } from '../src/core/stats.js';
 import { expToNext } from '../src/core/exp.js';
 import { loadGame } from '../src/core/save.js';
+import { JOB_GEAR, pieceOf } from '../src/render/jobgear/index.js';
+import { hatShapes, topShapes, skirtShapes, legLook, legShapes, handShapes, capeShapes, earringShapes } from '../src/render/gear.js';
 
 test('the cash catalog covers every outfit slot with real looks', () => {
   for (const slot of OUTFIT_SLOTS) assert.ok(CASH_ITEMS.some((id) => ITEMS[id].slot === slot), slot);
@@ -16,8 +18,16 @@ test('the cash catalog covers every outfit slot with real looks', () => {
     const def = ITEMS[id];
     assert.equal(def.type, 'cash');
     assert.ok(def.cash > 0, id);
-    if (def.cover) assert.ok(def.cover.theme || ITEMS[`sword_${def.cover.tier * 5}`], id);
+    if (def.cover?.fun) assert.ok(JOB_GEAR[def.cover.fun].cover(def.cover.t).shapes.length, id);
+    else if (def.cover) assert.ok(def.cover.theme || ITEMS[`sword_${def.cover.tier * 5}`], id);
     else assert.equal(ITEMS[def.skin].slot, def.slot, id);
+    // Every slot a piece dresses has something to draw.
+    for (const [slot, look] of Object.entries({ [def.slot]: def.skin, ...def.covers })) {
+      if (!look) continue;
+      const pc = pieceOf(ITEMS[look]);
+      const shapes = { hat: () => hatShapes(pc.design, pc.color, pc), top: () => topShapes(pc.design, pc.color, pc), bottom: () => skirtShapes(pc.design, pc.color, pc) ?? [legLook(pc.design, pc.color, '#fff', pc)], shoes: () => legShapes(11, { top: '#fff', low: '#fff' }, pc, false), gloves: () => handShapes(10, 30, pc, '#fff'), cape: () => capeShapes(pc.design, pc.color, 0, 0, pc), earring: () => earringShapes(pc.design, pc.color, pc) }[slot]();
+      assert.ok(shapes.length, `${id} draws its ${slot}`);
+    }
   }
   assert.ok(cashPrice(ITEMS.cash_bunny_hood, null) < cashPrice(ITEMS.cash_mage_hat_100, 'gilded'));
 });
@@ -69,4 +79,17 @@ test('saves from before outfits load with Cash and empty outfit slots', () => {
   assert.deepEqual(loaded.outfit, {});
   assert.equal(loaded.cash, STARTING_CASH);
   assert.deepEqual(loaded.inventory.cash, []);
+});
+
+test('a full-body outfit dresses every slot it covers, and wearing a piece that clashes takes it off', () => {
+  const char = createCharacter('Me', {});
+  const onesie = CASH_ITEMS.map((id) => ITEMS[id]).find((d) => d.covers?.bottom);
+  if (!onesie) return;
+  addItem(char.inventory, makeCash(CASH_ITEMS.find((id) => ITEMS[id].slot === 'bottom')));
+  wearOutfit(char, 0);
+  addItem(char.inventory, makeCash(onesie.id));
+  wearOutfit(char, 0);
+  assert.equal(char.outfit.bottom, null, 'the bottoms come off');
+  assert.equal(wornGear(char).bottom.id, onesie.covers.bottom);
+  assert.equal(char.inventory.cash.length, 1);
 });

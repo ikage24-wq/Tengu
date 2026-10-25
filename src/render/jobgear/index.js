@@ -27,8 +27,13 @@ import warrior from './warrior.js';
 import archer from './archer.js';
 import mage from './mage.js';
 import thief from './thief.js';
+import casual from './casual.js';
+import fun from './fun.js';
 
-export const JOB_GEAR = { warrior, archer, mage, thief };
+// The four job families, plus the Cash Shop's casual and funny outfit lines (where `t` picks a
+// design from data/outfits-*.js instead of a tier).
+export const JOB_GEAR = { warrior, archer, mage, thief, casual, fun };
+export const LOOK_FAMILIES = new Set(['casual', 'fun']);
 
 // Trim metal by tier band: bronze, silver, gold, platinum, then radiant.
 const TRIMS = ['#d9a45a', '#e6ecf6', '#ffd66b', '#f4f8ff', '#fff1a8'];
@@ -43,9 +48,10 @@ const ACCENTS = {
 // The palette for a piece. `color` is the item's (or its variant's) main color, `accent` the
 // variant's accent if it has one.
 export function gearPalette(family, t, color, accent = null, variant = null) {
-  const band = Math.min(4, Math.floor(t / 4));
+  const look = LOOK_FAMILIES.has(family);
+  const band = look ? 0 : Math.min(4, Math.floor(t / 4));
   const main = color;
-  const trim = TRIMS[band];
+  const trim = look ? '#ffffff' : TRIMS[band];
   const acc = accent ?? ACCENTS[family]?.[band] ?? '#ffe36b';
   const p = {
     tier: t, band, variant, family,
@@ -54,7 +60,7 @@ export function gearPalette(family, t, color, accent = null, variant = null) {
     // other way round.
     second: mix(main, lum(main) > 0.6 ? '#4a3f6a' : '#fff6ec', 0.55),
     trim, trimDark: shade(trim, -24),
-    accent: acc, glow: t >= 10 ? acc : null,
+    accent: acc, glow: t >= 10 && !look ? acc : null,
   };
   p.secondDark = shade(p.second, -16);
   return p;

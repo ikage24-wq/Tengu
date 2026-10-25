@@ -187,11 +187,18 @@ export function unequip(char, slot) {
 export function wearOutfit(char, index) {
   const inst = char.inventory.cash[index];
   if (!inst) return false;
-  const slot = ITEMS[inst.id].slot;
+  const def = ITEMS[inst.id];
   char.outfit ??= {};
   char.inventory.cash.splice(index, 1);
-  if (char.outfit[slot]) char.inventory.cash.push(char.outfit[slot]);
-  char.outfit[slot] = inst;
+  // Anything worn that dresses the same slots comes off (a onesie and a pair of shorts don't mix).
+  const dresses = (d) => [d.slot, ...Object.keys(d.covers ?? {})];
+  for (const [slot, worn] of Object.entries(char.outfit)) {
+    if (worn && dresses(ITEMS[worn.id]).some((s) => dresses(def).includes(s))) {
+      char.inventory.cash.push(worn);
+      char.outfit[slot] = null;
+    }
+  }
+  char.outfit[def.slot] = inst;
   return true;
 }
 
@@ -215,7 +222,10 @@ export function wornGear(char, over = null) {
     g ??= { ...char.equipment };
     if (def.cover) {
       if (g.weapon) g.weapon = { ...g.weapon, cover: def.cover, coverVariant: inst.variant ?? null };
-    } else g[slot] = { id: def.skin, variant: inst.variant ?? null };
+      continue;
+    }
+    g[slot] = { id: def.skin, variant: inst.variant ?? null };
+    for (const [s, look] of Object.entries(def.covers ?? {})) g[s] = { id: look, variant: inst.variant ?? null };
   }
   return g ?? char.equipment;
 }

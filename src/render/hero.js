@@ -13,7 +13,8 @@
 
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
-import { pieceOf } from './jobgear/index.js';
+import { pieceOf, JOB_GEAR } from './jobgear/index.js';
+import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from './pixel.js';
 import {
@@ -90,7 +91,10 @@ function resolveGear(look, gear) {
   let weapon = w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null;
   // A weapon cover reskins the weapon as an endgame design or a top material (looks only).
   const cover = gear?.weapon?.cover;
-  if (weapon && cover) {
+  if (weapon && cover?.fun) {
+    // A joke cover (a fish, a baguette...) drawn by its outfit line.
+    weapon = { ...weapon, tier: 0, theme: null, element: null, variant: null, fun: cover, color: '#ffffff' };
+  } else if (weapon && cover) {
     const v = cover.theme ? null : gear.weapon.coverVariant ?? null;
     const color = cover.theme ? ITEMS[`sword_${cover.theme}`].color : (v && VARIANTS[v]?.main) || ITEMS[`sword_${cover.tier * 5}`].color;
     weapon = { ...weapon, tier: cover.theme ? 21 : cover.tier, theme: cover.theme ?? null, element: cover.theme ?? null, color, variant: v };
@@ -853,7 +857,23 @@ function rigKey(r) {
 
 // ---------- Weapons ----------
 
+// Joke weapon covers, packed like weapons so they swing the same way.
+const funWeapons = new Map();
+function funWeapon(fun) {
+  const key = `${fun.fun}|${fun.t}`;
+  if (!funWeapons.has(key)) {
+    const { shapes, blade } = JOB_GEAR[fun.fun].cover(fun.t);
+    funWeapons.set(key, pack(shapes, { blade }));
+  }
+  return funWeapons.get(key);
+}
+
 function weaponSprite(w, time) {
+  if (w.fun) {
+    const def = funWeapon(w.fun);
+    const s = sprite(`funweapon|${w.fun.fun}|${w.fun.t}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
+    return { ...s, grip: def.grip, blade: def.blade, live: null };
+  }
   const frames = weaponFrames(w.type, w.tier, w.theme);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
   const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant);
