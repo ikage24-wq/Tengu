@@ -265,13 +265,17 @@ function hairFront(style, c, sway = 0, mood = 'smile') {
         lock(6.6, 8, 2.4, 16.4, 4.2, 1.6), lock(24.4, 8, 28.6, 16.4, 4.2, -1.6),
         lock(6.4, 11, 3.4, 24.4, 4.6, 2.4), lock(24.6, 11, 27.6, 24.4, 4.6, -2.4), shine];
     case 'eyecover': {
-      // Mekakure: a long, heavy lock swept down over one eye, with a short fringe over the other
-      // that sways enough to give a peek.
+      // Mekakure: heavy hair swept down over half the face, with a short fringe over the other
+      // eye; it sways enough to give a peek.
       const peek = sway * 0.4;
       return [cap, lock(9.6, 6.8, 9, 14.4, 6.4, 0.6), lock(13, 6, 13.4, 14.8, 5, 0),
-        lock(13.6, 5, 21 + peek, 25, 11, -1.8), lock(18.4, 5.6, 25.4 + peek, 22.4, 6.4, -1.4),
+        // A curtain of hair from the part down past the chin, hiding that whole half of the face
+        // (it stops just short of the mouth), ending in a few soft points.
+        C(T([[14.2, 4.6], [15.2, 11], [15.8 + peek, 16], [16.8 + peek, 20.6], [17.8 + peek, 24.6], [19.4 + peek, 27.4], [21.8 + peek, 26], [24.2 + peek, 27.6],
+          [26.2 + peek, 25.2], [27.6, 20], [27.6, 12], [25.6, 6], [20, 3.6]], c)),
+        lock(18.4 + peek, 24, 18.8 + peek, 29, 3, 0.4), lock(23 + peek, 24, 23.4 + peek, 29.6, 3.2, -0.4),
         lock(7, 8, 5.4, 22, 4.4, 1),
-        arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l), arc(19.8 + peek, 16, 3.4, 6, 250, 300, 0.9, l)];
+        arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l), arc(21.2 + peek, 17, 4.6, 8.4, 245, 300, 1, l)];
     }
     case 'hime':
       // Blunt, straight-cut bangs and straight side locks cut level at the chin.
