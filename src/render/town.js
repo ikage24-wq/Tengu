@@ -7,6 +7,7 @@ import { settings } from '../core/settings.js';
 import { R, E, T, F, shade } from './pixel.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
+import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
@@ -611,6 +612,32 @@ function stroll(p, t) {
   return { x: p.a, walking: false, facing: -1, pausedFor: c - 2 * walk - pause };
 }
 
+// Walkers get their own animation state, stepped by how far they actually moved since the last
+// frame, so their legs keep pace with their feet (like the player's) and hair and capes follow.
+const anims = new Map();
+function animFor(key, x, facing, time) {
+  let a = anims.get(key);
+  if (!a) {
+    a = { anim: createAnim(), x, t: time };
+    anims.set(key, a);
+  }
+  const dt = Math.max(0, Math.min(0.1, time - a.t));
+  const vx = dt > 0 ? (x - a.x) / dt : 0;
+  a.x = x;
+  a.t = time;
+  // A jump in position (arriving through a portal) isn't walking.
+  stepAnim(a.anim, { vx: Math.abs(vx) > 400 ? 0 : vx, vy: 0, onGround: true, rope: false, facing, y: 0 }, dt);
+  if (anims.size > 200) anims.delete(anims.keys().next().value);
+  return a.anim;
+}
+
+// A steady number per walker (their position changes, so it can't come from that).
+function seedOf(id) {
+  let h = 0;
+  for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) % 997;
+  return h;
+}
+
 function shadow(ctx, x, y) {
   ctx.save();
   ctx.globalAlpha = 0.18;
@@ -663,7 +690,8 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     if (x < -40 || x > width + 40) continue;
     const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
     shadow(ctx, x, gy);
-    drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing });
+    const anim = animFor(`v|${map.id}|${p.a}`, at.x, at.facing, time);
+    drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing }, anim);
   }
   const said = [];
   for (const bot of bots) {
@@ -685,10 +713,12 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     const walking = ['walk', 'leave', 'approach'].includes(bot.state);
     const waving = bot.state === 'wave';
     const look = bot.bubble ? { ...bot.char.appearance, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.char.appearance;
+    const seed = seedOf(bot.id);
+    const anim = animFor(bot.id, bot.x, bot.facing, time);
     drawHero(ctx, look, bot.char.equipment, x, gy, {
       pose: waving ? 'cheer' : walking ? 'walk' : 'idle', progress: waving ? (1.6 - bot.timer) / 1.6 : 0, dur: 0.5,
-      time: time + bot.x * 0.01, seed: bot.x % 97, facing: bot.facing, job: bot.char.job, alpha: fade,
-    });
+      time: time + seed * 0.37, seed, facing: bot.facing, job: bot.char.job, alpha: fade,
+    }, anim);
     // Name tag: gold for pros, with a guild under it if they have one.
     ctx.font = 'bold 7px sans-serif';
     const label = `Lv${bot.level} ${bot.name}`;
