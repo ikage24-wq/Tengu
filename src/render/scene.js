@@ -13,7 +13,7 @@ import { summonPosition } from '../world/combat.js';
 import { drawSummon } from './summons.js';
 import { text, box, COLORS } from '../ui/kit.js';
 import { createAnim, stepAnim } from './animator.js';
-import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura } from './particles.js';
+import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura, landing } from './particles.js';
 import { ITEMS } from '../data/items.js';
 import { drawBubble } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
@@ -143,7 +143,7 @@ export function drawWorld(ctx, world, viewCam, time) {
       if (element) elementStep(feel.fx, b.x - b.facing * 4, b.y, element, b.facing);
     }
     if (e === 'land') {
-      dust(feel.fx, b.x, b.y, 6);
+      landing(feel.fx, b.x, b.y, (feel.anim.land ?? 0) >= 0.14);
       if (element) for (const dx of [-6, 0, 6]) elementStep(feel.fx, b.x + dx, b.y, element, Math.sign(dx) || 1);
     }
     if (e === 'jump') dust(feel.fx, b.x, b.y, 3);

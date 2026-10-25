@@ -4,6 +4,7 @@
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
+import { needle, starFlash, shardRing, puff, crown, shock, wisp, easeOut, easeIn } from './fxkit.js';
 
 const MAX = 600;
 
@@ -30,48 +31,71 @@ export function shakeOffset(fx, time) {
   return [Math.round(Math.sin(time * 71) * k), Math.round(Math.cos(time * 53) * k * 0.6)];
 }
 
-export function dust(fx, x, y, count, dir = 0, color = '#f3e6da') {
+// Cel dust puffs kicked up from the ground: little two-tone lumps that pop up, drift, and
+// shrink away. `dir` sends them one way (a footstep); 0 spreads them both ways.
+export function dust(fx, x, y, count, dir = 0, color = '#f6ece2', shade = '#e2d2c4') {
   for (let i = 0; i < count; i++) {
     const side = dir || (i % 2 ? 1 : -1);
     add(fx, {
-      x: x + side * (2 + Math.random() * 4), y: y - 1,
-      vx: side * (20 + Math.random() * 40), vy: -10 - Math.random() * 25,
-      drag: 4, life: 0.35 + Math.random() * 0.2, size: 2 + Math.random() * 1.5, grow: 4, color, alpha: 0.8,
+      x: x + side * (2 + Math.random() * 4), y: y - 2,
+      vx: side * (25 + Math.random() * 45), vy: -12 - Math.random() * 22,
+      drag: 5, life: 0.32 + Math.random() * 0.18, size: 2.4 + Math.random() * 1.6, shape: 'puff', color, shade,
     });
   }
 }
 
+// Landing: dust skids out to both sides along the ground, with puffs.
+export function landing(fx, x, y, hard) {
+  for (const side of [-1, 1]) add(fx, { x: x + side * 4, y, vx: side * (hard ? 70 : 45), vy: 0, drag: 6, life: hard ? 0.4 : 0.3, size: hard ? 14 : 9, h: hard ? 5 : 3.5, dir: side, shape: 'wisp', color: '#f6ece2', shade: '#e2d2c4' });
+  dust(fx, x, y, hard ? 6 : 3);
+}
+
+// A hit: a star flash where it lands, teardrop sparks flying off the way the blow went (falling
+// as they go), and a little shockwave. Crits flash bigger and burst a ring of shards.
 export function sparks(fx, x, y, crit, dir, palette = null) {
-  const n = crit ? 10 : 6;
+  const hot = palette ? palette[0] : crit ? '#ffb347' : '#ffd66b';
+  add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.2 : 0.14, size: crit ? 16 : 10, shape: 'flash', rot: Math.random() * Math.PI, spikes: crit ? 6 : 4, color: hot });
+  const n = crit ? 12 : 7;
   for (let i = 0; i < n; i++) {
-    const a = (Math.random() - 0.5) * Math.PI * 1.2 + (dir > 0 ? 0 : Math.PI);
-    const sp = 90 + Math.random() * (crit ? 170 : 110);
+    const a = (Math.random() - 0.5) * Math.PI * 1.3 + (dir > 0 ? 0 : Math.PI);
+    const sp = 140 + Math.random() * (crit ? 230 : 150);
     add(fx, {
-      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 300, drag: 3,
-      life: 0.25 + Math.random() * 0.2, size: crit ? 2 : 1.5, shape: 'streak',
-      color: palette ? palette[i % palette.length] : crit ? (i % 2 ? '#ffb347' : '#fff3a6') : i % 2 ? '#ffffff' : '#ffe9f5',
+      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 50, g: 420, drag: 4,
+      life: 0.2 + Math.random() * 0.18, size: crit ? 3 : 2.5, shape: 'needle',
+      color: palette ? palette[i % palette.length] : i % 3 ? hot : '#ffffff',
     });
   }
-  if (crit) add(fx, { x, y, vx: 0, vy: 0, life: 0.18, size: 6, grow: 60, shape: 'ring', color: '#fff3a6' });
+  add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.2 : 0.13, size: 4, r1: crit ? 24 : 12, thick: crit ? 2.5 : 1.6, flat: 1, shape: 'shock', color: '#ffffff' });
+  if (crit) add(fx, { x, y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 30, thick: 4, shape: 'shards', n: 9, seed: Math.random(), rot: Math.random() * 6, color: hot });
 }
 
-// A soft cloud of puffs and a few stars where a monster was defeated.
+// A defeated monster bursts into a cel smoke cloud: a flash, a ring of two-tone puffs that
+// billow out and shrink away, and a few stars tossed up. Bosses go up in a huge cloud with a
+// shockwave and a ring of shards.
 export function poof(fx, x, y, w, h, boss) {
-  const n = boss ? 40 : 9;
+  const cy = y - h / 2;
+  add(fx, { x, y: cy, vx: 0, vy: 0, life: boss ? 0.3 : 0.16, size: boss ? 40 : Math.max(12, w * 0.6), shape: 'flash', rot: Math.random(), spikes: boss ? 8 : 4, color: '#ffe9a8' });
+  const n = boss ? 26 : 8;
+  const r = Math.max(w, h) * 0.3;
   for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const sp = (boss ? 80 : 30) + Math.random() * (boss ? 120 : 40);
+    const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
+    const sp = (boss ? 90 : 38) + Math.random() * (boss ? 110 : 30);
     add(fx, {
-      x: x + Math.cos(a) * w * 0.25, y: y - h / 2 + Math.sin(a) * h * 0.25,
-      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, drag: 3.5,
-      life: 0.45 + Math.random() * 0.3, size: 3 + Math.random() * 3, grow: 6, color: i % 3 ? '#ffffff' : '#ffe9f5', alpha: 0.9,
+      x: x + Math.cos(a) * r * 0.4, y: cy + Math.sin(a) * r * 0.4,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 - 18, drag: 4.5,
+      life: 0.32 + Math.random() * 0.18, size: (boss ? 9 : 4.5) + Math.random() * (boss ? 6 : 3), shape: 'puff',
+      color: '#ffffff', shade: i % 3 ? '#e4dcf4' : '#f6dcea',
     });
   }
-  for (let i = 0; i < (boss ? 16 : 4); i++) {
+  for (let i = 0; i < (boss ? 14 : 4); i++) {
     add(fx, {
-      x, y: y - h / 2, vx: (Math.random() - 0.5) * 160, vy: -80 - Math.random() * 120, g: 380,
+      x, y: cy, vx: (Math.random() - 0.5) * 170, vy: -90 - Math.random() * 130, g: 400,
       life: 0.7 + Math.random() * 0.3, size: 2, shape: 'star', spin: 6, color: ['#ffe36b', '#ff9ec0', '#8fe3ff'][i % 3],
     });
+  }
+  if (boss) {
+    add(fx, { x, y: cy, vx: 0, vy: 0, life: 0.5, size: 10, r1: 120, thick: 6, flat: 1, shape: 'shock', color: '#ffffff' });
+    add(fx, { x, y: cy, vx: 0, vy: 0, life: 0.55, size: 14, r1: 90, thick: 7, shape: 'shards', n: 12, seed: Math.random(), rot: 0, color: '#ffe36b' });
   }
 }
 
@@ -141,7 +165,7 @@ export function elementAura(fx, x, y, element, dt) {
 }
 
 export function ring(fx, x, y, color, size, grow) {
-  add(fx, { x, y, vx: 0, vy: 0, life: 0.35, size, grow, shape: 'flatring', color });
+  add(fx, { x, y, vx: 0, vy: 0, life: 0.35, size, r1: size + grow * 0.35, thick: 2.5, flat: 0.2, shape: 'shock', color });
 }
 
 // The player's weapon element, so hits spark in its colors.
@@ -160,16 +184,24 @@ export function absorbJuice(fx, world) {
       if (j.boss) shake(fx, 7, 0.8);
     } else if (j.type === 'hurt') {
       shake(fx, 3, 0.22);
-      for (let i = 0; i < 5; i++) add(fx, { x: j.x, y: j.y, vx: (Math.random() - 0.5) * 120, vy: -60 - Math.random() * 60, g: 300, life: 0.4, size: 2, shape: 'star', color: '#ff9ec0', spin: 5 });
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.15, size: 13, shape: 'flash', rot: Math.random(), spikes: 4, color: '#ff6b8a' });
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
+        add(fx, { x: j.x, y: j.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, g: 380, drag: 3, life: 0.3, size: 2, shape: 'needle', color: i % 2 ? '#ff9ec0' : '#ffffff' });
+      }
     } else if (j.type === 'shake') {
       if (j.delay) fx.delayed.push({ at: j.delay, mag: j.mag, dur: j.dur });
       else shake(fx, j.mag, j.dur);
     } else if (j.type === 'loot') {
-      ring(fx, j.x, j.y, j.color, 4, 60);
-      for (let i = 0; i < 10; i++) add(fx, { x: j.x + (Math.random() - 0.5) * 16, y: j.y, vx: 0, vy: -50 - Math.random() * 60, drag: 1, life: 0.7, size: 1.5, shape: 'star', spin: 4, color: i % 2 ? j.color : '#ffffff' });
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.4, size: 4, r1: 34, thick: 3, flat: 0.3, shape: 'shock', color: j.color });
+      for (let i = 0; i < 8; i++) add(fx, { x: j.x + (Math.random() - 0.5) * 16, y: j.y, vx: (Math.random() - 0.5) * 30, vy: -110 - Math.random() * 90, drag: 2.5, life: 0.5, size: 1.8, shape: 'needle', color: i % 2 ? j.color : '#ffffff' });
+      for (let i = 0; i < 5; i++) add(fx, { x: j.x + (Math.random() - 0.5) * 16, y: j.y, vx: 0, vy: -50 - Math.random() * 60, drag: 1, life: 0.7, size: 1.5, shape: 'star', spin: 4, color: i % 2 ? j.color : '#ffffff' });
     } else if (j.type === 'slam') {
-      for (let i = 0; i < 18; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, '#d9ccef');
-      ring(fx, j.x, j.y, '#ffffff', 10, j.range * 2.5);
+      // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out.
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: '#c9b6ff' });
+      for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, '#efe8fb', '#cdbfe6');
+      landing(fx, j.x, j.y, true);
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: '#ffffff' });
     }
   }
   world.juice.length = 0;
@@ -218,18 +250,58 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
   fx.list = fx.list.filter((p) => p.age < p.life);
 }
 
+// Shapes drawn as solid cel art (see fxkit.js).
+const CEL = new Set(['needle', 'flash', 'shock', 'shards', 'puff', 'crown', 'wisp']);
+
 export function drawParticles(ctx, fx, cam, time) {
   ctx.save();
   for (const p of fx.list) {
     const t = p.age / p.life;
-    // Ambient motes fade in and out; effects fade out.
-    const a = p.ambient ? Math.min(1, t * 5, (1 - t) * 4) * (p.shape === 'glow' ? 0.5 + 0.5 * Math.sin(time * 4 + p.phase) : 1) : 1 - t;
+    // Ambient motes fade in and out; most effects fade out, and cel shapes stay solid and shrink
+    // or break apart instead, only fading right at the end.
+    const a = p.ambient ? Math.min(1, t * 5, (1 - t) * 4) * (p.shape === 'glow' ? 0.5 + 0.5 * Math.sin(time * 4 + p.phase) : 1) : CEL.has(p.shape) ? Math.min(1, (1 - t) / 0.2) : 1 - t;
     ctx.globalAlpha = Math.max(0, a * p.alpha);
     ctx.fillStyle = p.color;
     ctx.strokeStyle = p.color;
     const x = p.x - cam.x;
     const y = p.y - cam.y;
     switch (p.shape) {
+      case 'needle': {
+        const sp = Math.hypot(p.vx, p.vy);
+        needle(ctx, x, y, Math.atan2(p.vy, p.vx), Math.max(2, Math.min(10, sp * 0.05)) * (1 - t * 0.5), p.size * (1 - t * 0.7), p.color);
+        break;
+      }
+      case 'flash': {
+        // Snaps open in the first quarter, then the spikes pull in and thin out.
+        const k = t < 0.25 ? easeOut(t / 0.25) : 1 - (t - 0.25) / 0.75 * 0.55;
+        starFlash(ctx, x, y, p.size * k, p.spikes ?? 4, p.rot ?? 0, p.color, '#ffffff', p.size * 0.3 * (1 - t * 0.8));
+        break;
+      }
+      case 'shock': {
+        // Expands fast and thins out; a flat ring never gets thicker than it is tall.
+        const r = p.size + (p.r1 - p.size) * easeOut(t);
+        shock(ctx, x, y, r, r * (p.flat ?? 1), Math.min(p.thick * (1 - t) ** 1.3, r * (p.flat ?? 1) * 0.8), p.color);
+        break;
+      }
+      case 'shards':
+        shardRing(ctx, x, y, p.size + (p.r1 - p.size) * easeOut(t), p.thick * (1 - t) ** 1.2, p.n, p.seed, p.rot + t * 0.6, p.color);
+        break;
+      case 'puff': {
+        // Billows out fast, then shrinks away.
+        const k = t < 0.25 ? easeOut(t / 0.25) : 1 - ((t - 0.25) / 0.75) ** 0.8;
+        puff(ctx, x, y, p.size * k, p.color, p.shade ?? '#e4dcf4');
+        break;
+      }
+      case 'crown': {
+        const k = t < 0.18 ? easeOut(t / 0.18) : 1 - easeIn((t - 0.18) / 0.82);
+        crown(ctx, x, y, p.size * k, p.w, p.n, p.color);
+        break;
+      }
+      case 'wisp': {
+        const k = easeOut(Math.min(1, t * 3)) * (1 - easeIn(t));
+        wisp(ctx, x, y, p.size * k, p.h * (1 - t * 0.5), p.dir, p.color, p.shade);
+        break;
+      }
       case 'streak': {
         const len = Math.min(6, Math.hypot(p.vx, p.vy) * 0.03);
         ctx.lineWidth = p.size;

@@ -160,8 +160,14 @@ to clear it.
   when the feet are spread, and counter-swinging arms, a breathing idle with blinks, stretch on the
   way up and knees that give on landing, hair and capes that trail behind on springs, attack wind-up and lunge with a weapon
   trail, a climbing cycle, and a hurt recoil. Monsters hop, breathe, pop in when they spawn, and
-  squash when hit. Footstep dust, hit sparks, defeat poofs, screen shake, short hitstop on crits
-  and kills, and ambient petals, fireflies, and glints in every map.
+  squash when hit. Effects are drawn like hand-animated 2D anime effects (`src/render/fxkit.js`):
+  hard-edged cel shapes with a white-hot core in a colored rim that snap open, hold, and then thin
+  out, shrink, and break apart instead of just fading. Swings leave a tapered crescent smear whose
+  tail chases its head, with speed lines and sparks off the tip; hits flash a star with teardrop
+  sparks and a quick shockwave (crits burst a ring of shards); defeated monsters pop into a
+  two-tone smoke cloud that breaks into shrinking puffs; landings skid dust out to both sides; a
+  boss stomp bursts rock spikes up from the ground. Plus screen shake, short hitstop on crits and
+  kills, and ambient petals, fireflies, and glints in every map.
 - **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room) with
   one-way ledges, ropes, and portals that name where they lead. Every region has its own

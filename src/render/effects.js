@@ -7,6 +7,7 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
+import { crescent, starFlash, needle, shock, easeOut, easeIn } from './fxkit.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -30,22 +31,38 @@ function ease(p) {
   return 1 - (1 - p) * (1 - p);
 }
 
-// A crescent slash in front of the player.
+// A swing smear in front of the swinger: a crescent whose head races around the arc while its tail
+// follows and catches up, thick in the middle and tapered at both ends, with a white-hot core,
+// a few speed lines peeling off the outside, and sparks flung from the tip.
 function slash(ctx, cx, cy, dir, radius, p, color, thick = 6) {
-  const start = dir > 0 ? -Math.PI * 0.75 : -Math.PI * 0.25;
-  const sweep = Math.PI * 1.0 * ease(p) * (dir > 0 ? 1 : -1);
-  ctx.save();
-  ctx.globalAlpha = 1 - p;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = color;
-  ctx.lineWidth = thick;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, start, start + sweep, dir < 0);
-  ctx.stroke();
+  const start = dir > 0 ? -Math.PI * 0.8 : -Math.PI * 0.2;
+  const sweep = Math.PI * 1.05 * (dir > 0 ? 1 : -1);
+  const head = easeOut(Math.min(1, p / 0.45));
+  const tail = easeIn(Math.max(0, (p - 0.12) / 0.88));
+  const a0 = start + sweep * tail;
+  const a1 = start + sweep * head;
+  crescent(ctx, cx, cy, radius, a0, a1, thick * (1.6 - p), color);
+  // Speed lines just outside the smear.
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = thick / 2.5;
-  ctx.stroke();
-  ctx.restore();
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 3; i++) {
+    const u = 0.25 + i * 0.25;
+    const a = a0 + (a1 - a0) * u;
+    const r = radius + thick * (0.9 + i * 0.35);
+    ctx.globalAlpha = Math.max(0, 1 - p * 1.4);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, a - 0.12 * Math.sign(sweep), a + 0.12 * Math.sign(sweep), dir < 0);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  if (p < 0.5) {
+    const tip = a1;
+    const tx = cx + Math.cos(tip) * radius;
+    const ty = cy + Math.sin(tip) * radius;
+    const fly = tip + (Math.PI / 2) * Math.sign(sweep);
+    for (let i = 0; i < 2; i++) needle(ctx, tx + Math.cos(fly) * (4 + i * 5) * p * 6, ty + Math.sin(fly) * (4 + i * 5) * p * 6, fly, 6 - i * 2, 2.2 - i * 0.6, color);
+  }
 }
 
 function drawShot(ctx, f, cam) {
@@ -405,10 +422,7 @@ function drawFx(ctx, f, cam, time) {
       if (f.element) {
         // Elemental slashes are wider, glow in the element's color, and leave motes behind.
         const el = ELEMENTS[f.element];
-        ctx.shadowColor = el.glow;
-        ctx.shadowBlur = 8;
-        slash(ctx, cx, y - 24, f.dir, 32, p, el.color, f.kind === 'slash' ? 10 : 8);
-        ctx.shadowBlur = 0;
+        slash(ctx, cx, y - 24, f.dir, 32, p, el.color, f.kind === 'slash' ? 11 : 9);
         for (let i = 0; i < 6; i++) {
           const a = (f.dir > 0 ? -Math.PI * 0.75 : -Math.PI * 0.25) + (i / 5) * Math.PI * ease(p) * f.dir;
           ctx.globalAlpha = (1 - p) * 0.9;
@@ -417,48 +431,48 @@ function drawFx(ctx, f, cam, time) {
           ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(y - 24 + Math.sin(a) * r), 2, 2);
         }
       } else {
-        slash(ctx, cx, y - 24, f.dir, 26, p, f.kind === 'slash' ? '#ffb38a' : '#ffe6f3', f.kind === 'slash' ? 8 : 5);
+        slash(ctx, cx, y - 24, f.dir, 26, p, f.kind === 'slash' ? '#ffb38a' : '#ffc2e0', f.kind === 'slash' ? 8 : 6);
       }
       break;
     }
     case 'spin': {
+      // A whirl: two smears chasing each other around the body, squashed into an ellipse.
       const b = f.box;
       const cx = b.x + b.w / 2 - cam.x;
       const cy = b.y + b.h / 2 - cam.y;
-      ctx.globalAlpha = 1 - p;
-      ctx.strokeStyle = '#ffd66b';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, (b.w / 2) * ease(p), (b.h / 2.5) * ease(p), 0, time * 12, time * 12 + Math.PI * 1.6);
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, 0.42);
+      const r = (b.w / 2) * (0.75 + 0.25 * easeOut(p));
+      const turn = p * Math.PI * 4;
+      for (const k of [0, Math.PI]) crescent(ctx, 0, 0, r, turn + k, turn + k + Math.PI * 0.9 * (1 - p * 0.6), 14 * (1 - p), '#ffd66b');
+      ctx.restore();
       break;
     }
     case 'flurry': {
+      // A flurry of quick cuts: short smears flashing open across the area one after another.
       const b = f.box;
-      ctx.globalAlpha = 1 - p;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
       for (let i = 0; i < 5; i++) {
-        const lx = b.x - cam.x + ((i * 37 + Math.floor(p * 10) * 13) % b.w);
-        const ly = b.y - cam.y + 8 + ((i * 23) % (b.h - 10));
-        ctx.beginPath();
-        ctx.moveTo(lx - 8, ly + 6);
-        ctx.lineTo(lx + 8, ly - 6);
-        ctx.stroke();
+        const q = (p - i * 0.12) / 0.4;
+        if (q <= 0 || q >= 1) continue;
+        const lx = b.x - cam.x + ((i * 37 + 11) % Math.max(1, b.w));
+        const ly = b.y - cam.y + 10 + ((i * 23) % Math.max(1, b.h - 14));
+        const a = -0.9 + (i % 2) * 1.8;
+        crescent(ctx, lx, ly + 14, 16, a - 1.1 * easeOut(q), a + 1.1 * easeOut(q) * (1 - q * 0.5), 6 * (1 - q), i % 2 ? '#ffffff' : '#ffc2e0');
       }
       break;
     }
     case 'pierce': {
+      // A thrust: one long spike shooting forward with a shock ring popping at its tip.
       const b = f.box;
-      ctx.globalAlpha = 1 - p;
-      const g = ctx.createLinearGradient(b.x - cam.x, 0, b.x + b.w - cam.x, 0);
-      g.addColorStop(0, 'rgba(168,232,255,0)');
-      g.addColorStop(1, '#a8e8ff');
-      ctx.fillStyle = g;
-      ctx.fillRect(b.x - cam.x, b.y + b.h / 2 - cam.y - 3, b.w * ease(p), 6);
+      const dir = f.dir ?? 1;
+      const by = b.y + b.h / 2 - cam.y;
+      const from = dir > 0 ? b.x - cam.x : b.x + b.w - cam.x;
+      const reach = b.w * easeOut(Math.min(1, p / 0.35));
+      const tipX = from + dir * reach;
+      ctx.globalAlpha = p < 0.6 ? 1 : (1 - p) / 0.4;
+      needle(ctx, tipX, by, dir > 0 ? 0 : Math.PI, reach, 7 * (1 - p * 0.7), '#a8e8ff');
+      if (p > 0.2) shock(ctx, tipX, by, 4 + 14 * easeOut((p - 0.2) / 0.8), 9 * easeOut((p - 0.2) / 0.8), 3 * (1 - p), '#ffffff');
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -588,21 +602,16 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      ctx.globalAlpha = 1 - p;
-      const r = (f.crit ? 14 : 9) * (0.5 + p);
-      sparkle(ctx, x, y, r, f.crit ? '#ffb347' : '#ffffff');
-      sparkle(ctx, x, y, r * 0.45, '#ffffff');
+      // Where a blow lands: a star flash that snaps open and pulls in.
+      const k = p < 0.3 ? easeOut(p / 0.3) : 1 - (p - 0.3) / 0.7;
+      starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
       break;
     }
     case 'slam': {
-      ctx.globalAlpha = 1 - p;
-      ctx.strokeStyle = '#c9b6ff';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.ellipse(x, y, f.range * ease(p), 14 * ease(p), 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(201,182,255,0.35)';
-      ctx.fill();
+      // The ground cracks open in a flat shockwave that thins as it spreads.
+      const k = easeOut(p);
+      shock(ctx, x, y, f.range * k, 14 * k, 7 * (1 - p), '#c9b6ff');
+      shock(ctx, x, y, f.range * k * 0.7, 10 * k, 3 * (1 - p), '#ffffff');
       break;
     }
     default:
