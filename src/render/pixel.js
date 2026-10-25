@@ -171,7 +171,8 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         // Three tones across the run: shadow at the back, base, and a soft highlight at the front.
         const len = end - x;
         const back = Math.max(res, Math.round(len * 0.28));
-        const front = len >= res * 3 ? Math.max(1, Math.round(len * 0.14)) : 0;
+        // Thin parts (arms, legs) only get the shadow; a highlight on them reads as stripes.
+        const front = len >= res * 6 ? Math.max(1, Math.round(len * 0.14)) : 0;
         for (let k = x; k < Math.min(end, x + back); k++) shaded[y * gw + k] = 1;
         for (let k = Math.max(x + back, end - front); k < end; k++) shaded[y * gw + k] = 2;
         x = end;

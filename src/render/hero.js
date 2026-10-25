@@ -16,15 +16,14 @@ import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from '
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
   hatBackShapes, TUCKS_HAIR, capeShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
-  BODY_TYPES,
 } from './gear.js';
-
-export { BODY_TYPES };
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
 
-export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'spiky', 'bun', 'long'];
+export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long'];
+// Spiky hair was retired; old saves that used it get soft curls instead.
+const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairStyle ?? 'bob');
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
@@ -80,7 +79,7 @@ const RIBBON = '#ff9ec0';
 const HEAD_X = 15.5;
 const HEAD_Y = 14.6;
 // The face sits a little forward on the skull, toward the facing side.
-const FACE_X = 16.5;
+const FACE_X = 16;
 
 // Narrows shapes horizontally around x = cx (the far eye in three-quarter view).
 function squeezeX(shapes, cx, k) {
@@ -177,8 +176,11 @@ function hairBack(style, front, sway, lift) {
       ...locks([[3.6, 6.6, 0.2, 35, 8, 3.2], [3, 10, 2.8, 30, 4.2, -1.2]]),
     ]), E(4.4, 8.4, 2, 1.8, '#ffd66b')];
     case 'short': return [E(HEAD_X, 13.2, 11.6, 10.6, c), E(HEAD_X, 19.6, 9.6, 4, c), ...locks([[7, 16, 8, 23.4, 4.2, 0.6], [24, 16, 23, 23.4, 4.2, -0.6]])];
-    case 'spiky': return [E(HEAD_X, 13.2, 11.6, 10.6, c),
-      ...locks([[8, 6, 1.6, 0.6, 4.8, 0.8], [12, 4.4, 9.6, -3, 4.8, 0.6], [16, 4, 16.8, -3.8, 4.8, -0.4], [20, 4.4, 23.4, -2.4, 4.6, -0.6], [23.4, 6, 29.4, 2.4, 4.4, -0.8], [5, 12, -0.8, 15.4, 4, 0.6], [26, 12, 31.8, 15.4, 4, -0.6]])];
+    case 'curly': {
+      // Soft, fluffy curls all around the head, a little fuller at the back.
+      const curls = [[5, 8.6, 2.6], [4, 13.4, 2.6], [4.6, 18.4, 2.4], [6.8, 22, 2.2], [10, 4.4, 2.6], [15.5, 3, 2.8], [21, 4.4, 2.6], [26, 8.6, 2.6], [27, 13.4, 2.4], [26.4, 18.4, 2.2], [24.4, 21.6, 2]];
+      return [E(HEAD_X, 13.2, 11.8, 10.8, c), ...curls.map(([x, y, r]) => E(x, y, r, r * 0.92, c)), ...curls.map(([x, y, r]) => arc(x, y, r * 0.7, r * 0.64, 200, 290, 0.5, d))];
+    }
     case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, mix(front, '#ffffff', 0.45)), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON),
       ...sw(locks([[6, 14, 6.6, 24.6, 3.2, 0.6], [25, 14, 24.4, 24.6, 3.2, -0.6]]))];
     default: return [crown];
@@ -191,7 +193,7 @@ function hairBack(style, front, sway, lift) {
 function hairFront(style, c) {
   const d = shade(c, -16);
   const l = mix(c, '#ffffff', 0.45);
-  const short = style === 'short' || style === 'spiky';
+  const short = style === 'short' || style === 'curly';
   const k = short ? 0.78 : 1;
   const side = short ? 0.7 : 1;
   // [root x, root y, tip x, tip y, width, bend, length scale]
@@ -255,7 +257,7 @@ function eye(ex, out, style, color, mode, skin) {
 function headShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
   const hair = look.hairColor ?? '#e9ebfa';
-  const style = look.hairStyle ?? 'bob';
+  const style = hairStyleOf(look);
   const eyeStyle = look.eyeStyle ?? 'sparkle';
   const eyeColor = look.eyeColor ?? '#4fcfb8';
   const hat = g.hat;
@@ -268,9 +270,8 @@ function headShapes(look, g, rig) {
   // one full size, and the mouth, blush, and a tiny nose follow the turn.
   out.push(L(E(6.6, 17.4, 1.8, 2.3, skin)), F(E(6.4, 17.6, 0.7, 1.2, '#f4bfcb')));
   out.push(L(E(FACE_X, HEAD_Y, 10, 9.8, skin)), L(E(FACE_X + 0.6, 18.4, 8.8, 6, skin)), L(T([[12.6, 21.6], [23.6, 20.6], [21, 24], [18.6, 25]], skin)));
-  out.push(...squeezeX(eye(13.2, -1, eyeStyle, eyeColor, rig.eyes, skin), 13.2, 0.78), ...eye(20.8, 1, eyeStyle, eyeColor, rig.eyes, skin));
-  out.push(F(E(11.4, 21, 1.2, 0.6, '#f7c1cc')), F(E(22.6, 21, 1.7, 0.65, '#f7c1cc')));
-  out.push(F(E(24, 19.8, 0.4, 0.35, shade(skin, -22))));
+  out.push(...squeezeX(eye(12.6, -1, eyeStyle, eyeColor, rig.eyes, skin), 12.6, 0.88), ...eye(20.4, 1, eyeStyle, eyeColor, rig.eyes, skin));
+  out.push(F(E(10.8, 21, 1.4, 0.6, '#f7c1cc')), F(E(22.2, 21, 1.7, 0.65, '#f7c1cc')));
   if (rig.eyes === 'hurt') out.push(F(E(19.2, 22.8, 1, 0.7, INK)));
   else if (rig.mouth === 'open') out.push(F(E(19.2, 22.6, 1.05, 0.85, '#b2506c')), F(E(19.2, 23.1, 0.6, 0.35, '#ff9fb8')));
   else out.push(F(E(19.2, 22.4, 0.7, 0.42, '#c97a8a')));
@@ -291,10 +292,10 @@ const FOREARM = 4.7;
 function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
   const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, -1);
   return [
-    E(sx, sy + 0.5, 2, 2.1, sleeve),
-    limb(sx, sy, ex, ey, 3.6, 3.1, sleeve),
-    E(ex, ey, 1.5, 1.5, long ? sleeve : skin),
-    limb(ex, ey, wx, wy, 3, 2.6, long ? sleeve : skin),
+    E(sx, sy + 0.6, 2.3, 2.4, sleeve),
+    limb(sx, sy, ex, ey, 4.2, 3.6, sleeve),
+    E(ex, ey, 1.8, 1.8, long ? sleeve : skin),
+    limb(ex, ey, wx, wy, 3.6, 3.1, long ? sleeve : skin),
     ...handShapes(wx, wy, g.gloves, skin),
   ];
 }
@@ -302,9 +303,9 @@ function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
 // Seen three-quarters from the side: the back shoulder sits inside the torso so that arm hangs
 // mostly behind the body, and the front shoulder sits at the torso's front edge so that arm hangs
 // along the side; each hand rests a little forward by the hip so the elbow bends softly.
-const BACK_SHOULDER = 13;
-const FRONT_SHOULDER = 18.8;
-const HAND_FORWARD = 1.2;
+const BACK_SHOULDER = 11.8;
+const FRONT_SHOULDER = 19.6;
+const HAND_FORWARD = 0.9;
 const HAND_Y = 36.4;
 
 // A resting arm from the shoulder at (sx, 27.6), the hand offset (dx, dy) from its rest spot.
@@ -328,7 +329,6 @@ function bodyShapes(look, g, rig) {
   const sleeve = sleeveColor(top.design, top.color);
   const long = longSleeves(top.design);
   const legs = legLook(g.bottom.design, g.bottom.color, skin);
-  const body = look.body ?? 'feminine';
   if (rig.view === 'back') return backShapes(look, g, rig, skin, sleeve, legs);
 
   // Everything above the hips leans with tx and bobs with by; the hips also sink by however much
@@ -340,18 +340,18 @@ function bodyShapes(look, g, rig) {
   const hat = g.hat;
   let hang = [];
   if (!hat || !TUCKS_HAIR.has(hat.design)) {
-    hang = hairBack(look.hairStyle ?? 'bob', look.hairColor ?? '#e9ebfa', rig.hair, rig.hairLift).filter((sh) => sh.hang);
+    hang = hairBack(hairStyleOf(look), look.hairColor ?? '#e9ebfa', rig.hair, rig.hairLift).filter((sh) => sh.hang);
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap), ux, uy));
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], shadowTone(sleeve), long, g, shadowTone(skin)), ux, uy));
-  shapes.push(...legShapes(12.8, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
-  shapes.push(...legShapes(15.2, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
-  shapes.push(...offset(hipShapes(legs, body), ux * 0.5, drop + rig.by * 0.5));
+  shapes.push(...legShapes(11.6, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
+  shapes.push(...legShapes(15.4, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
+  shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
   const skirt = skirtShapes(g.bottom.design, g.bottom.color);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
-  shapes.push(...offset(topShapes(top.design, top.color, body), ux, uy));
+  shapes.push(...offset(topShapes(top.design, top.color), ux, uy));
   // The head rides the squashed body, so it moves by the squashed bob.
   const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy);
   return move([...hang, ...squash(shapes), ...head], 0, 0);
@@ -364,7 +364,7 @@ const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.
 // torso reads narrow, as a body does turned to the side.
 const NECK = 24;
 const KY = 0.75;
-const KX = 0.88;
+const KX = 1;
 const squashY = (y) => (y <= NECK ? y : NECK + (y - NECK) * KY);
 const squashX = (x) => 15.5 + (x - 15.5) * KX;
 function squash(shapes, narrow = true) {
@@ -381,15 +381,15 @@ function squash(shapes, narrow = true) {
 // Seen from behind on a rope: no face, hands reaching up the rope.
 function backShapes(look, g, rig, skin, sleeve, legs) {
   const hair = look.hairColor ?? '#e9ebfa';
-  const style = look.hairStyle ?? 'bob';
+  const style = hairStyleOf(look);
   const a = rig.climb;
   const long = longSleeves(g.top.design);
   const body = [];
   const out = [];
   body.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
   body.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
-  body.push(...hipShapes(legs, look.body));
-  body.push(...topShapes('tee', g.top.color, look.body));
+  body.push(...hipShapes(legs));
+  body.push(...topShapes('tee', g.top.color));
   if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[10.6, 26.6], [20, 26.6], [21, 46], [9.6, 46]], g.cape.color), R(9.6, 45, 11.4, 1, shade(g.cape.color, -20)));
   if (!g.hat || !TUCKS_HAIR.has(g.hat.design)) {
     const back = hairBack(style, hair, 0, 0);

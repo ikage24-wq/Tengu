@@ -13,31 +13,22 @@ const GOLD = '#ffd66b';
 const SILVER = '#dfe6f5';
 const INK = '#3a2d4f';
 
-// ---------- Body shapes ----------
+// ---------- Body shape ----------
 //
-// Two figures, facing right (front = the right side). Feminine: rounded shoulders, a bust, a
-// narrow waist, and wide rounded hips and seat. Masculine: broader shoulders, a flat chest, and a
-// straighter waist and hips. Each is an outline down the front (top to bottom) and up the back.
+// One body for everyone, facing right (front = the right side): a soft, slightly rounded torso
+// that is broad at the shoulders and eases in a little at the waist, on straight hips. It is
+// wide enough to sit well under the big chibi head. Outlined down the front (top to bottom) and
+// up the back.
 
-export const BODY_TYPES = ['feminine', 'masculine'];
-
-const FIGURES = {
-  feminine: {
-    front: [[18.6, 26], [20, 26.4], [20.9, 27.6], [21.6, 29], [22, 30.4], [21.8, 31.6], [20.9, 32.4], [20.3, 33.4], [20.5, 35.8]],
-    back: [[10.6, 35.8], [10.8, 33.4], [10.5, 31.4], [10.2, 29.4], [10.3, 27.6], [10.9, 26.4], [12.4, 26]],
-    hips: [[10.8, 34.6], [20.4, 34.6], [21.4, 36], [21.8, 37.6], [21.4, 39.6], [9.6, 39.6], [9.2, 37.6], [9.6, 36]],
-  },
-  masculine: {
-    front: [[19.8, 26], [21.2, 26.5], [21.7, 27.8], [21.5, 30.2], [21, 33], [20.8, 35.8]],
-    back: [[10.4, 35.8], [10.2, 33], [9.7, 30.2], [9.5, 27.8], [10, 26.5], [11.4, 26]],
-    hips: [[10.4, 34.6], [20.8, 34.6], [21.1, 37], [20.8, 39.6], [10.2, 39.6], [9.9, 37]],
-  },
+const FIGURE = {
+  front: [[19.4, 25.8], [20.9, 26.4], [21.8, 27.6], [22, 29.4], [21.6, 32], [21.3, 34.2], [21.5, 35.8]],
+  back: [[9.5, 35.8], [9.7, 34.2], [9.4, 32], [9, 29.4], [9.2, 27.6], [10.1, 26.4], [11.6, 25.8]],
+  hips: [[9.6, 34.6], [21.4, 34.6], [21.8, 37], [21.6, 39.8], [9.4, 39.8], [9.2, 37]],
 };
-const figure = (body) => FIGURES[body] ?? FIGURES.feminine;
-const torsoPts = (body) => [...figure(body).front, ...figure(body).back];
+const torsoPts = () => [...FIGURE.front, ...FIGURE.back];
 // Robes follow the figure to the waist, then flare past the hips.
-const robePts = (body) => {
-  const { front, back } = figure(body);
+const robePts = () => {
+  const { front, back } = FIGURE;
   return [...front.slice(0, -1), [21.6, 38], [22.2, 44.5], [8.8, 44.5], [9.6, 38], ...back.slice(1)];
 };
 
@@ -78,24 +69,22 @@ function side(pts, x, keep, c) {
 // The neckline sits toward the front, since the body is turned to face its direction.
 const collar = (c) => T([[14.4, 26.2], [19.8, 26.2], [17.4, 29.2]], c);
 
-export function topShapes(design, c, body = 'feminine') {
+export function topShapes(design, c) {
   const d = shade(c, -16);
   const l = shade(c, 18);
-  const torso = torsoPts(body);
-  const robe = robePts(body);
-  // The figure carries the shape on its own; no extra detail lines.
-  const curves = () => [];
+  const torso = torsoPts();
+  const robe = robePts();
   const parts = (() => {
     switch (design) {
-      case 'stripes': return [T(torso, c), band(torso, 29.2, 30.3, d), band(torso, 31.6, 32.6, d), band(torso, 34, 35.1, d), collar(l), ...curves(c)];
-      case 'vest': return [T(torso, '#fff6ec'), side(torso, 15.2, -1, c), side(torso, 18.4, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(16.8, 33.7, 0.9, 0.8, GOLD)), ...curves(c)];
+      case 'stripes': return [T(torso, c), band(torso, 29.2, 30.3, d), band(torso, 31.6, 32.6, d), band(torso, 34, 35.1, d), collar(l)];
+      case 'vest': return [T(torso, '#fff6ec'), side(torso, 15.2, -1, c), side(torso, 18.4, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(16.8, 33.7, 0.9, 0.8, GOLD))];
       case 'plate': return [T(torso, SILVER), T([[13.8, 28], [19.8, 28], [19, 32.5], [16.8, 34], [14.6, 32.5]], c), F(E(15.6, 29.6, 0.8, 0.8, '#ffffff')), band(torso, 33.6, 35.4, shade(SILVER, -18)), E(10.8, 27.6, 2.4, 2, l), E(20.2, 27.6, 2.4, 2, l)];
-      case 'starrobe': return [T(robe, c), band(robe, 26.2, 27.2, GOLD), F(R(15.2, 29.4, 0.9, 3, GOLD)), F(R(14.2, 30.4, 2.9, 0.9, GOLD)), band(robe, 43.4, 44.5, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD)), ...curves(c)];
-      case 'celestial': return [T(robe, c), band(robe, 33, 44.5, l), band(robe, 26.2, 27.2, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), band(robe, 43.4, 44.5, GOLD), ...curves(c)];
-      case 'kimono': return [T(robe, c), T([[13.6, 26.4], [16.2, 26.4], [19, 32]], '#ffffff'), T([[15.2, 26.4], [17.2, 26.4], [19, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(18, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff')), ...curves(c)];
-      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[15.4, 29.8], [18.2, 29.8], [17.6, 32.6], [16.8, 31.6], [16, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c), ...curves('#ffffff')];
-      case 'hoodie': return [T(torso, c), T([[11.4, 25.8], [19.6, 25.8], [18.6, 28.2], [12.4, 28.2]], d), R(12.6, 31.6, 6, 2.8, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.2, '#ffffff')), ...curves(c)];
-      default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d), ...curves(c)];
+      case 'starrobe': return [T(robe, c), band(robe, 26.2, 27.2, GOLD), F(R(15.2, 29.4, 0.9, 3, GOLD)), F(R(14.2, 30.4, 2.9, 0.9, GOLD)), band(robe, 43.4, 44.5, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD))];
+      case 'celestial': return [T(robe, c), band(robe, 33, 44.5, l), band(robe, 26.2, 27.2, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), band(robe, 43.4, 44.5, GOLD)];
+      case 'kimono': return [T(robe, c), T([[13.6, 26.4], [16.2, 26.4], [19, 32]], '#ffffff'), T([[15.2, 26.4], [17.2, 26.4], [19, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(18, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff'))];
+      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[15.4, 29.8], [18.2, 29.8], [17.6, 32.6], [16.8, 31.6], [16, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c)];
+      case 'hoodie': return [T(torso, c), T([[11.4, 25.8], [19.6, 25.8], [18.6, 28.2], [12.4, 28.2]], d), R(12.6, 31.6, 6, 2.8, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.2, '#ffffff'))];
+      default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d)];
     }
   })();
   return parts.filter(Boolean);
@@ -126,8 +115,8 @@ export function legLook(design, c, skin) {
   }
 }
 
-export function hipShapes(look, body = 'feminine') {
-  return [T(figure(body).hips, look.top)];
+export function hipShapes(look) {
+  return [T(FIGURE.hips, look.top)];
 }
 
 export function skirtShapes(design, c) {
@@ -182,9 +171,9 @@ export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
   const hx = x + 1.5;
   const [[kx, ky], [ax, ay]] = reach(hx, hipY, hx + foot[0], ANKLE_Y + foot[1], THIGH, SHIN, 1);
   const shapes = [
-    limb(hx, hipY, kx, ky, 3.7, 3.1, top),
-    E(kx, ky, 1.55, 1.55, top),
-    limb(kx, ky, ax, ay, 3.1, 2.6, low),
+    limb(hx, hipY, kx, ky, 4.4, 3.8, top),
+    E(kx, ky, 1.9, 1.9, top),
+    limb(kx, ky, ax, ay, 3.8, 3.2, low),
   ];
   if (look.pad) shapes.push(E(kx + 0.3, ky, 1.7, 1.4, tint(look.pad)));
   shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, tint));
@@ -206,7 +195,7 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
   };
   const len = Math.hypot(kx - ax, ky - ay) || 1;
   const shaft = (h, col, w = 2.8) => limb(ax, ay, ax + ((kx - ax) / len) * h, ay + ((ky - ay) / len) * h, w, w, col);
-  const sole = (col) => poly([[-1.6, -1.2], [1.2, -1.2], [1.8, 0.4], [3.4, 1.2], [3.6, 3], [-1.9, 3], [-2, 0.8]], col);
+  const sole = (col) => poly([[-2.1, -1.4], [1.5, -1.4], [2.2, 0.2], [4.2, 1], [4.6, 3], [-2.5, 3], [-2.6, 0.8]], col);
   switch (shoe.design) {
     case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
     case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
@@ -252,7 +241,7 @@ export function hatBackShapes(design, c) {
 // ---------- Gloves (on each hand) ----------
 
 export function handShapes(hx, hy, glove, skin) {
-  if (!glove) return [E(hx, hy, 2.1, 2.2, skin)];
+  if (!glove) return [E(hx, hy, 2.4, 2.4, skin)];
   const c = glove.color;
   switch (glove.design) {
     case 'cuffed': return [E(hx, hy, 1.8, 1.9, c), R(hx - 1.8, hy - 2.8, 3.6, 1.4, shade(c, 25))];

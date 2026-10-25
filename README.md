@@ -4,9 +4,9 @@ A browser game in the spirit of classic 2D MMO side-scrollers: start as a Novice
 monsters across connected maps, pick a job at level 10 and a specialty at 30, spend AP and SP,
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
 pastel style: characters are short pixel chibis in the classic MMO style (a big round head with
-ears and big soft eyes, rounded bangs with a shine band, a small jointed body that is feminine or
-masculine, picked in the creator or at the salon, with nine eye styles and hair built from
-curved locks), drawn crisp at 2x detail with a dark pixel outline whose corners are softened;
+ears and big soft eyes, rounded bangs with a shine band, and one sturdy little jointed body for
+everyone, turned three-quarters toward where they're facing, with nine eye styles and eight
+hairstyles built from curved locks), drawn crisp at 2x detail with a dark pixel outline whose corners are softened;
 they and the monsters get three-tone shading: a soft lavender shadow at the back of each part, the
 base color, and a warm highlight on the front edge;
 the world, items, and weapons are pixel art. No build step and no dependencies.
