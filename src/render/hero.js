@@ -15,7 +15,7 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
-  hatBackShapes, TUCKS_HAIR, capeShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
+  hatBackShapes, TUCKS_HAIR, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
@@ -628,6 +628,7 @@ function bodyShapes(look, g, rig) {
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
   shapes.push(...offset(topShapes(top.design, top.color), ux, uy));
+  if (g.cape) shapes.push(...offset(capeFrontShapes(g.cape.design, g.cape.color), ux, uy));
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
   // Out of combat the weapon arm is part of the body too, so it has no outline across the torso.
   if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin), ux, uy));
@@ -669,7 +670,7 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   body.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
   body.push(...hipShapes(legs));
   body.push(...topShapes('tee', g.top.color));
-  if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[10.6, 26.6], [20, 26.6], [21, 46], [9.6, 46]], g.cape.color), R(9.6, 45, 11.4, 1, shade(g.cape.color, -20)));
+  if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[8.6, 26], [22.4, 26], [26, 46], [5, 46]], g.cape.color), R(5, 45, 21, 1.2, shade(g.cape.color, -20)));
   if (!g.hat || !TUCKS_HAIR.has(g.hat.design)) {
     const back = hairBack(style, hair, 0, 0);
     out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));
@@ -681,7 +682,7 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
   if (g.cape?.design === 'fairy' || g.cape?.design === 'angel') {
     const wing = capeShapes(g.cape.design, g.cape.color, 0, rig.flap);
-    arms.push(...wing, ...mirror(wing));
+    arms.push(...wing);
   }
   return move([...squash(body), ...out, ...squash(arms)], 0, 0);
 }
@@ -950,7 +951,7 @@ function weaponPose(type, pose, progress) {
 // look: appearance; gear: equipment map or null.
 // state: { pose, time, facing, progress, hurt, flash, alpha, scale, seed, vy }; anim: from createAnim().
 // (x, y) is the character's feet center in screen space.
-const WEAPON_SCALE = 0.68;
+const WEAPON_SCALE = 1;
 
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const { pose = 'idle', facing = 1, progress = 0, alpha = 1, scale = 1 } = state;
@@ -958,6 +959,8 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const g = resolveGear(look, gear);
   const rig = solveRig(state, anim);
   rig.armIn = !attack;
+  // A resting bow is held a little out from the body, so it stays clear of the face.
+  if (!attack && g.weapon?.type === 'bow' && rig.view !== 'back') rig.frontArm = [rig.frontArm[0] + 4, rig.frontArm[1]];
   if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
@@ -994,18 +997,13 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const armDx = rig.tx;
   const armDy = bodyY;
 
-  const restAngle = { crossbow: 55, claw: 150 }[g.weapon?.type] ?? 25;
+  const restAngle = { bow: 2, crossbow: 55, claw: 100 }[g.weapon?.type] ?? 25;
   let weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
-  // Bows grip in the middle, so out of combat they're slung across the back instead of held.
-  if (!angles && g.weapon?.type === 'bow') {
-    hand = [15.5 + rig.tx, 22 + bodyY];
-    weaponAngle = -40 + rig.by * 2;
-  }
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
 
-  // Weapons were drawn for taller heroes, so they shrink to suit the chibi body.
+  // Weapon size relative to the hero (they are drawn big on purpose).
   const ws = scale * WEAPON_SCALE;
   const drawWeapon = () => {
     if (!wpn) return;
@@ -1015,6 +1013,13 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1])));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
+    // A resting bow is held with its curve facing out, away from the body.
+    // Long bows are gripped low enough that the bottom tip stays above the ground.
+    if (!attack && g.weapon.type === 'bow') {
+      ctx.scale(-1, 1);
+      const sink = (wpn.canvas.height - wpn.grip[1] - 1) * ws - (squashY(56) - hand[1]) * scale + scale;
+      if (sink > 0) ctx.translate(0, -sink);
+    }
     const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
     const el = g.weapon.element;
@@ -1035,14 +1040,12 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   }
   if (anim && anim.trail.length > 1) drawTrail(ctx, anim.trail, x, y, g.weapon?.color ?? '#ffffff');
 
-  // A bow slung across the back sits behind the body; anything held is drawn in front of it,
-  // with the hand drawn again on top so it grips the handle.
-  const slung = !attack && g.weapon?.type === 'bow';
-  if (wpn && slung && rig.view !== 'back') drawWeapon();
+  // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
+  // the handle.
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (rig.view === 'back') return;
   if (!attack) {
-    if (!wpn || slung) return;
+    if (!wpn) return;
     drawWeapon();
     const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(4)), 0, 0), res: RES, soft: 'cel', crisp: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });

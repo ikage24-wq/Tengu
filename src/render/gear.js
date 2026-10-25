@@ -307,24 +307,43 @@ export function earringShapes(design, c) {
 
 // ---------- Capes (behind the body). `sway` bends the hem; wings flap with `flap`. ----------
 
+// Mirrors shapes across the body's center line, for pairs of wings.
+const mirrorX = (shapes) => shapes.map((sh) => (sh.t === 'p' ? { ...sh, x: 0, pts: sh.pts.map(([px, py]) => [31 - sh.x - px, py]) } : { ...sh, x: 31 - sh.x - (sh.w ?? 0) }));
+
+// Capes hang from the shoulders behind the body, wide enough to show on both sides of it and down
+// past the hips; the hem sways with `sway`. Wings come in pairs and flap with `flap`.
 export function capeShapes(design, c, sway, flap) {
   const d = shade(c, -20);
   const s = sway;
   const h = s / 2;
-  const cape = (bottom) => T([[10.6, 26.6], [20, 26.6], [21.4 + h, 38], [22 + s, bottom], [8.4 + s, bottom], [8.8 + h, 38]], c);
+  const cape = (bottom) => T([[8.6, 26], [22.4, 26], [25.4 + h, 36], [27 + s, bottom], [15.5 + s, bottom + 1.2], [4 + s, bottom], [5.6 + h, 36]], c);
+  const hem = (bottom, col, th = 1.2) => T([[4 + s, bottom - th], [27 + s, bottom - th], [27 + s, bottom], [15.5 + s, bottom + 1.2], [4 + s, bottom]], col);
   switch (design) {
     case 'fairy': {
       const up = flap ? -2 : 1;
-      return [E(4, 29 + up, 6.4, 8.4, '#c9f2ff'), E(5, 39 + up, 4.6, 5.6, '#ffd0ec'), F(E(6.4, 29 + up, 3, 4.6, '#e8fbff'))];
+      const wing = [E(4, 29 + up, 6.4, 8.4, '#c9f2ff'), E(5, 39 + up, 4.6, 5.6, '#ffd0ec'), F(E(6.4, 29 + up, 3, 4.6, '#e8fbff'))];
+      return [...wing, ...mirrorX(wing)];
     }
     case 'angel': {
       const up = flap ? -2 : 1;
-      return [T([[11, 28 + up], [3, 22 + up], [-4, 26 + up], [-3, 31 + up], [-5, 35 + up], [-2, 39 + up], [4, 41 + up], [10, 36 + up]], '#ffffff'), F(T([[3, 27 + up], [-2, 30 + up], [3, 31 + up]], '#eef2ff')), F(T([[3, 33 + up], [-2, 36 + up], [4, 37 + up]], '#eef2ff'))];
+      const wing = [T([[11, 28 + up], [3, 22 + up], [-4, 26 + up], [-3, 31 + up], [-5, 35 + up], [-2, 39 + up], [4, 41 + up], [10, 36 + up]], '#ffffff'), F(T([[3, 27 + up], [-2, 30 + up], [3, 31 + up]], '#eef2ff')), F(T([[3, 33 + up], [-2, 36 + up], [4, 37 + up]], '#eef2ff'))];
+      return [...wing, ...mirrorX(wing)];
     }
-    case 'starcape': return [cape(50), R(8.4 + s, 49, 13.6, 1.1, GOLD), F(E(12 + h, 40, 0.7, 0.7, '#ffe36b')), F(E(18.6 + h, 43, 0.7, 0.7, '#ffffff')), F(E(11 + s, 47, 0.7, 0.7, '#ffffff')), F(E(19 + s, 47.6, 0.7, 0.7, '#ffe36b'))];
-    case 'long': return [cape(50), R(8.4 + s, 49, 13.6, 1.1, d), R(13.4, 26.4, 5, 2, GOLD)];
-    case 'royal': return [cape(50), R(8.4 + s, 48, 13.6, 2, GOLD), T([[10, 26], [20.6, 26], [21, 29], [9.6, 29]], '#ffffff'), F(E(12.4, 27.6, 0.5, 0.5, INK)), F(E(17.6, 27.6, 0.5, 0.5, INK))];
-    default: return [cape(44), R(8.8 + h, 43, 13, 1, d)];
+    case 'starcape': return [cape(50), hem(50, GOLD), F(E(8 + h, 40, 0.7, 0.7, '#ffe36b')), F(E(23 + h, 43, 0.7, 0.7, '#ffffff')), F(E(7 + s, 47, 0.7, 0.7, '#ffffff')), F(E(24 + s, 47.6, 0.7, 0.7, '#ffe36b'))];
+    case 'long': return [cape(50), hem(50, d)];
+    case 'royal': return [cape(50), hem(50, GOLD, 2)];
+    default: return [cape(44), hem(44, d)];
   }
+}
+
+// The front of a cape: ties over the shoulders and a clasp (or a fur collar) at the neck,
+// drawn over the top.
+export function capeFrontShapes(design, c) {
+  if (design === 'fairy' || design === 'angel') return [];
+  const ties = [T([[10, 26], [12.6, 26], [13.6, 29.4], [11, 29]], c), T([[21, 26], [18.4, 26], [17.4, 29.4], [20, 29]], c)];
+  if (design === 'royal') return [T([[9.6, 25.6], [21.4, 25.6], [21, 28.6], [15.5, 29.6], [10, 28.6]], '#ffffff'), F(E(12.4, 27.4, 0.5, 0.5, INK)), F(E(18.6, 27.4, 0.5, 0.5, INK)), F(E(15.5, 28.6, 1, 1, GOLD))];
+  if (design === 'starcape') return [...ties, F(T([[15.5, 27.4], [16.4, 28.6], [15.5, 29.8], [14.6, 28.6]], GOLD))];
+  if (design === 'long') return [...ties, F(E(15.5, 28.6, 1.1, 1.1, GOLD))];
+  return [...ties, F(E(15.5, 28.6, 0.9, 0.9, shade(c, -24)))];
 }
 
