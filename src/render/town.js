@@ -10,6 +10,7 @@ import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './her
 import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
+import { ITEMS } from '../data/items.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -568,22 +569,10 @@ function sparkle(ctx, x, y, r, color) {
 }
 
 // ---------- Townsfolk and other players ----------
-// Villagers stroll up and down the street. Other "players" hang around in their gear, some with
-// job auras, and chat the way people do in an MMO.
-
-const PLAYERS = [
-  { name: 'momo_chan', level: 34, job: 'cleric', weapon: 'wand_3', hat: 'flower_crown', lines: ['anyone wanna party? :D', 'heals for hire~', 'omg cute outfit', 'thx for the buff!'] },
-  { name: 'xXDragonXx', level: 56, job: 'fparchmage', weapon: 'staff_demonic', cape: 'star_cape', lines: ['WTS Hellbringer 900k', 'LFG Crystal Throne', 'gg ez', 'who needs a carry'] },
-  { name: 'Sunflower', level: 22, job: 'archer', weapon: 'bow_2', hat: 'bunny_hood', lines: ['how do i get to Ember Crag?', 'lol', 'brb', 'this game is so cute'] },
-  { name: 'KiritoFan', level: 41, job: 'warrior', weapon: 'sword_laser', hat: 'hat_3', lines: ['dual wield when', 'grinding Twinklets all night', 'grats!!', 'afk 5'] },
-  { name: 'PotionSeller', level: 18, job: 'thief', weapon: 'claw_1', lines: ['selling potions cheap~', 'my potions are too strong for you', 'buying Fluff x8', 'pm me'] },
-  { name: 'uwu_mage', level: 63, job: 'bishop', weapon: 'seraphim_staff', cape: 'angel_wings', lines: ['finally got Seraphim\'s Halo!!', 'uwu', 'free heals at the fountain', 'Judgment go brrr'] },
-  { name: 'ByteKnight', level: 47, job: 'ilarchmage', weapon: 'wand_cyber', hat: 'star_beret', lines: ['anyone seen the Crystal King?', 'storm build best build', 'lag?', 'nice'] },
-  { name: 'Mochi', level: 9, job: 'novice', weapon: 'sword_0', lines: ['how do i jump', 'hi everyone!', 'where is mira', ':3'] },
-];
+// Villagers stroll up and down the street (drawn from time alone). Other players come from the
+// bot population (world/bots.js): they walk, chat, run shops, wave, and come and go.
 
 const VILLAGERS = 3;
-const TOWN_ORDER = ['sprout', 'harbor', 'crag', 'grove'];
 const HAIR = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
 const SKIN = ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66'];
 const CLOTHES = ['#ffc2d6', '#bfe0ff', '#bff0dc', '#fff3a6', '#e0cfff', '#ffd0a8', '#ffffff'];
@@ -596,37 +585,22 @@ function lookFor(seed) {
   };
 }
 
-// Who is out and about in a town, and where. Seeded by the town so it's the same each visit.
-const crowdCache = new Map();
-function crowdOf(map) {
-  let crowd = crowdCache.get(map.id);
-  if (crowd) return crowd;
+const villagerCache = new Map();
+function villagersOf(map) {
+  let list = villagerCache.get(map.id);
+  if (list) return list;
   const seed = map.width * 0.1 + map.id.length * 7;
-  crowd = [];
+  list = [];
   for (let i = 0; i < VILLAGERS; i++) {
     const a = 140 + hash(seed + i * 3) * (map.width - 480);
-    crowd.push({ kind: 'villager', look: lookFor(seed + i * 11), a, b: a + 160 + hash(seed + i * 5) * 120, seed: hash(seed + i * 9) * 20 });
+    list.push({ look: lookFor(seed + i * 11), a, b: a + 160 + hash(seed + i * 5) * 120, seed: hash(seed + i * 9) * 20 });
   }
-  // Each town has its own regulars, standing around the plaza and between the stalls but never
-  // on top of an NPC.
-  const start = Math.max(0, TOWN_ORDER.indexOf(map.id)) * 2;
-  for (let i = 0; i < 3; i++) {
-    const p = PLAYERS[(start + i) % PLAYERS.length];
-    const near = i === 0 ? map.plaza ?? map.width / 2 : map.npcs[i % map.npcs.length]?.x ?? map.width / 2;
-    let x = Math.max(120, Math.min(map.width - 120, near + (i % 2 ? 80 : -80) + (hash(seed + i) - 0.5) * 16));
-    const taken = (v) => map.npcs.some((n) => Math.abs(n.x - v) < 56) || crowd.some((c) => c.kind === 'player' && Math.abs(c.a - v) < 60);
-    for (let k = 0; k < 8 && taken(x); k++) x += 34;
-    const gear = { weapon: { id: p.weapon } };
-    for (const slot of ['hat', 'cape']) if (p[slot]) gear[slot] = { id: p[slot] };
-    crowd.push({ kind: 'player', ...p, look: lookFor(seed + 100 + i * 13), gear, a: x, b: x, seed: hash(seed + i * 17) * 30 });
-  }
-  crowdCache.set(map.id, crowd);
-  return crowd;
+  villagerCache.set(map.id, list);
+  return list;
 }
 
-// Where a stroller is at time t: walking between a and b with a pause at each end.
+// Where a villager is at time t: walking between a and b with a pause at each end.
 function stroll(p, t) {
-  if (p.a === p.b) return { x: p.a, walking: false, facing: Math.sin(t * 0.15 + p.seed) > 0 ? 1 : -1 };
   const speed = 22;
   const walk = (p.b - p.a) / speed;
   const pause = 3 + (p.seed % 3);
@@ -637,40 +611,93 @@ function stroll(p, t) {
   return { x: p.a, walking: false, facing: -1, pausedFor: c - 2 * walk - pause };
 }
 
-// What a player is saying right now, if anything: a line every so often, staggered.
-function lineOf(p, t) {
-  const period = 18;
-  const c = (t + p.seed) % period;
-  if (c > 4) return null;
-  return { text: p.lines[Math.floor((t + p.seed) / period) % p.lines.length], age: c };
+function shadow(ctx, x, y) {
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#3a2d4f';
+  ctx.beginPath();
+  ctx.ellipse(x, y, 10, 2.4, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
 }
 
-export function drawTownsfolk(ctx, map, cam, width, time) {
+// A player's shop: a picnic rug with a few wares, and their shop's name on a board above them.
+function shopBooth(ctx, x, gy, bot, time, hovered) {
+  const rugW = 46;
+  ctx.fillStyle = '#ffd6ea';
+  ctx.beginPath();
+  ctx.ellipse(x, gy - 1, rugW / 2, 4, 0, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = '#ff9ec0';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 2]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  bot.shop.items.slice(0, 3).forEach((it, i) => {
+    const ix = x + (i === 0 ? -16 : i === 1 ? 14 : 20);
+    ctx.fillStyle = ITEM_COLORS(it.id);
+    ctx.beginPath();
+    ctx.arc(ix, gy - 4, 3, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(ix - 1.2, gy - 5.6, 1, 1);
+  });
+  // The board, bobbing a touch.
+  ctx.font = 'bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  const w = Math.max(48, ctx.measureText(bot.shop.title).width + 14);
+  const by = gy - 74 + Math.sin(time * 2 + x * 0.01) * 1;
+  box(ctx, x - w / 2, by, w, 14, { fill: hovered ? '#fff6c9' : '#ffffff', edge: '#ff9ec0', r: 5, width: 1.5 });
+  box(ctx, x - w / 2 + 2, by + 2, 10, 10, { fill: '#ff9ec0', edge: null, r: 3 });
+  text(ctx, '$', x - w / 2 + 7, by + 10, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+  text(ctx, bot.shop.title, x + 5, by + 10, { size: 7, bold: true, align: 'center', color: '#a8467a' });
+}
+
+const ITEM_COLORS = (id) => ITEMS[id]?.color ?? '#ffffff';
+
+export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = null) {
   if (!map.isTown || !settings.showCrowd) return;
   const gy = Math.round(map.groundY - cam.y);
-  const said = [];
-  for (const p of crowdOf(map)) {
+  for (const p of villagersOf(map)) {
     const at = stroll(p, time);
     const x = Math.round(at.x - cam.x);
     if (x < -40 || x > width + 40) continue;
-    const talk = p.kind === 'player' ? lineOf(p, time) : null;
-    const face = talk ? (talk.text.includes(':D') || talk.text.includes('!!') ? 'excited' : talk.text.includes('uwu') || talk.text.includes(':3') ? 'cat' : 'grin') : at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = '#3a2d4f';
-    ctx.beginPath();
-    ctx.ellipse(x, gy, 10, 2.4, 0, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-    drawHero(ctx, { ...p.look, face }, p.gear ?? null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing, job: p.job });
-    if (p.kind === 'player') {
-      ctx.font = 'bold 7px sans-serif';
-      const label = `Lv${p.level} ${p.name}`;
-      const w = ctx.measureText(label).width + 10;
-      box(ctx, x - w / 2, gy + 2, w, 10, { fill: 'rgba(40,36,60,0.6)', edge: null, r: 5 });
-      text(ctx, label, x, gy + 9.5, { size: 7, bold: true, align: 'center', color: '#fff6c9' });
-      if (talk) said.push([x, gy - 62, talk]);
-    }
+    const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
+    shadow(ctx, x, gy);
+    drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing });
   }
-  if (settings.chatBubbles) for (const [x, y, talk] of said) drawBubble(ctx, x, y, talk.text, Math.min(1, (4 - talk.age) * 2, talk.age * 4));
+  const said = [];
+  for (const bot of bots) {
+    const x = Math.round(bot.x - cam.x);
+    if (x < -60 || x > width + 60) continue;
+    const hovered = hoverId === bot.id;
+    if (bot.shop) shopBooth(ctx, x, gy, bot, time, hovered);
+    // Logging in or out: a shimmer and a fade.
+    const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
+    if (bot.appear > 0 || bot.state === 'logout') {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU + time * 3;
+        ctx.globalAlpha = 1 - fade;
+        sparkle(ctx, x + Math.cos(a) * 12, gy - 20 + Math.sin(a) * 18, 2.2, i % 2 ? '#ffe36b' : '#ffffff');
+      }
+      ctx.globalAlpha = 1;
+    }
+    shadow(ctx, x, gy);
+    const walking = ['walk', 'leave', 'approach'].includes(bot.state);
+    const waving = bot.state === 'wave';
+    const look = bot.bubble ? { ...bot.char.appearance, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.char.appearance;
+    drawHero(ctx, look, bot.char.equipment, x, gy, {
+      pose: waving ? 'cheer' : walking ? 'walk' : 'idle', progress: waving ? (1.6 - bot.timer) / 1.6 : 0, dur: 0.5,
+      time: time + bot.x * 0.01, seed: bot.x % 97, facing: bot.facing, job: bot.char.job, alpha: fade,
+    });
+    // Name tag: gold for pros, with a guild under it if they have one.
+    ctx.font = 'bold 7px sans-serif';
+    const label = `Lv${bot.level} ${bot.name}`;
+    const w = ctx.measureText(label).width + (bot.pro ? 18 : 10);
+    box(ctx, x - w / 2, gy + 2, w, 10, { fill: hovered ? '#ff8fc1' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)', edge: bot.pro ? '#ffd66b' : hovered ? '#ffffff' : null, r: 5, width: 1 });
+    if (bot.pro) sparkle(ctx, x - w / 2 + 6, gy + 7, 2.6, '#ffd66b');
+    text(ctx, label, x + (bot.pro ? 4 : 0), gy + 9.5, { size: 7, bold: true, align: 'center', color: bot.pro ? '#ffe9a0' : '#fff6c9' });
+    if (bot.guild) text(ctx, `<${bot.guild}>`, x, gy + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+    if (bot.bubble) said.push([x, gy - (bot.shop ? 80 : 62), bot.bubble]);
+  }
+  if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }

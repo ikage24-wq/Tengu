@@ -17,6 +17,7 @@ import { ITEMS } from '../data/items.js';
 import { drawBubble } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
 import { drawStreet, drawTownsfolk, npcRoutine } from './town.js';
+import { botsIn } from '../world/bots.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -151,7 +152,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time));
-  drawTownsfolk(ctx, world.map, cam, VIEW_W, time);
+  drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
@@ -170,6 +171,15 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffClones(ctx, buffs, look, world.char.equipment, hx, hy, heroState, time);
   drawHero(ctx, look, world.char.equipment, hx, hy, heroState, feel.anim);
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
+  // Your own name tag, like everyone else's; click it (or you) to see your profile.
+  if (!world.dead) {
+    ctx.font = 'bold 7px sans-serif';
+    const label = world.char.name;
+    const w = ctx.measureText(label).width + 10;
+    const hot = world.hoverSelf;
+    box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
+    text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+  }
 
   let summonIndex = 0;
   for (const buff of Object.values(world.char.buffs)) {

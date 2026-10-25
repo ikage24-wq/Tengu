@@ -46,7 +46,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
 their title bars, and click a window to bring it to the front. Click an NPC anywhere on screen to talk
-to them. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
+to them, or click another player (or yourself) to see their profile. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
 then press the key. Right-click a hotkey slot to clear it.
 
 ## Systems
@@ -165,8 +165,16 @@ then press the key. Right-click a hotkey slot to clear it.
   have their own idle routines: Pip juggles potions, Tora hammers sparks off an anvil, Brann runs
   sword drills, Kestrel shoots arrows, Elowen floats in meditation, Nim reads a floating spellbook,
   Vex flips a dagger, Rook scans the sea through a spyglass, Marlo flips a coin, Lulu snips and
-  twirls, and Mira waves (they turn to face you when you come over). Villagers stroll the streets,
-  and other "players" in their gear hang around the plaza and the stalls, chatting MMO-style.
+  twirls, and Mira waves (they turn to face you when you come over). Villagers stroll the streets.
+- **Other players** — the towns have a small, changing population of generated players, each a
+  real character: a level (pros at a low rate, Lv 56+ with endgame gear and a gold name tag), a job
+  that fits it, a stat build (pure, standard, or hybrid), rolled gear, and sometimes a guild. They
+  log in, wander, chat in their own typing style from a procedural grammar (trades, LFG, questions,
+  small talk, bragging, newbie questions; a line is never said twice), travel between towns
+  through the portals, and log out for good; a name never comes back. Some set up a shop on a rug
+  with a sign and sell their loot and gear, which you can buy. Now and then one walks over to wave
+  and say hi to you by name (rarely, and each only once). Click any player, or yourself, to see a
+  profile with their look, gear, full stats, build, guild, and shop. At most three share a town.
 - **Quests and NPCs** — 9 quests (defeat or collect), shops that buy and sell (including a
   blacksmith in Ember Crag, a spell shop in Moonleaf Grove, and Lulu's clothing boutique), a salon
   to restyle your hero, and job instructors.

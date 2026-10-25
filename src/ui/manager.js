@@ -10,6 +10,7 @@ import { worldMapWindow } from './worldmap.js';
 import { createChat, chatInput, updateChat, drawChatBar } from './chat.js';
 import { adminWindow } from './admin.js';
 import { optionsWindow } from './options.js';
+import { profileWindow } from './profile.js';
 import { isGm } from '../world/gm.js';
 
 export function createUiState() {
@@ -23,9 +24,12 @@ export function createUiState() {
       worldmap: { x: 110, y: 26, open: false, theme: 'sky', icon: 'map' },
       admin: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       options: { x: 170, y: 40, open: false, tab: 0, theme: 'lavender', icon: 'gear' },
+      profile: { x: 160, y: 46, open: false, tab: 0, theme: 'sky', icon: 'user' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin', 'profile', 'options'],
+    // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
+    profile: null,
     // Set by the Options window: 'select' (change character) or 'title'. main.js acts on it.
     action: null,
     npc: null,
@@ -105,7 +109,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

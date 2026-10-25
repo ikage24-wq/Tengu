@@ -10,6 +10,8 @@ import { saveGame, loadGame, hasSave, deleteSave, SLOTS } from './core/save.js';
 import { createWorld, updateWorld } from './world/world.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
+import { createBots, updateBots, botsIn } from './world/bots.js';
+import { openProfile } from './ui/profile.js';
 
 loadSettings();
 
@@ -45,6 +47,7 @@ let autosave = AUTOSAVE_EVERY;
 function startGame(char) {
   world = createWorld(char);
   world.settings = settings;
+  world.bots = createBots(world);
   uiState = createUiState();
   camera = createCamera();
   screen = 'game';
@@ -123,6 +126,7 @@ function frame(now) {
       updateWorld(world, TICK, { held: input.held, pressed: queued, locked });
       queued = new Set();
     }
+    updateBots(world.bots, world, dt);
     if (world.events.some((e) => e.type === 'map')) saveGame(world.char);
     autosave -= dt;
     if (autosave <= 0) {
@@ -157,22 +161,33 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 
-// Click an NPC to talk to them (a setting). Hovering one highlights them and shows a hand cursor.
+// Clicking people: an NPC to talk to them (a setting), another player or yourself to see their
+// profile. Hovering highlights whoever is under the mouse and shows a hand cursor.
 function npcPointer(ui) {
   const m = input.mouse;
-  let hit = null;
-  if (settings.npcClick && !uiState.npc && !uiState.death && !ui.used) {
+  let npc = null;
+  let bot = null;
+  let self = false;
+  if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
     const gy = world.map.groundY;
-    hit = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > gy - 50 && wy < gy + 14) ?? null;
+    if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > gy - 50 && wy < gy + 14) ?? null;
+    if (!npc && settings.showCrowd && world.map.isTown) {
+      bot = botsIn(world.bots, world.map.id).find((b) => (Math.abs(b.x - wx) < 13 && wy > gy - 46 && wy < gy + 22) || (b.shop && Math.abs(b.x - wx) < 40 && wy > gy - 76 && wy < gy - 58)) ?? null;
+    }
+    const b = world.body;
+    if (!npc && !bot) self = Math.abs(b.x - wx) < 12 && wy > b.y - 46 && wy < b.y + 13;
   }
-  world.hoverNpc = hit?.id ?? null;
-  canvas.style.cursor = hit ? 'pointer' : '';
-  if (hit && m.clicked) {
-    m.clicked = false;
-    world.events.push({ type: 'talk', npc: hit.id });
-  }
+  world.hoverNpc = npc?.id ?? null;
+  world.hoverBot = bot?.id ?? null;
+  world.hoverSelf = self;
+  canvas.style.cursor = npc || bot || self ? 'pointer' : '';
+  if (!m.clicked) return;
+  if (npc) world.events.push({ type: 'talk', npc: npc.id });
+  else if (bot) openProfile(uiState, { kind: 'bot', id: bot.id, shop: Boolean(bot.shop) });
+  else if (self) openProfile(uiState, { kind: 'self' });
+  if (npc || bot || self) m.clicked = false;
 }
 
 // Exposed for debugging and automated play tests.

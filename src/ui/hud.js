@@ -13,6 +13,7 @@ import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle } from './kit.js';
 import { drawHero } from '../render/hero.js';
 import { settings } from '../core/settings.js';
+import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 
 const BAR_Y = 330;
@@ -81,7 +82,9 @@ export function drawHud(ui, state, world) {
   // EXP percent and gold.
   text(ctx, Number.isFinite(need) ? `EXP ${(pct * 100).toFixed(1)}%` : 'MAX LEVEL', 226, BAR_Y + 17, { size: 7, bold: true, color: '#c99a1f' });
   icon(ctx, 'coin', 230, BAR_Y + 24.5, 8, '#f0b53a');
-  text(ctx, char.gold.toLocaleString(), 237, BAR_Y + 27.5, { size: 8, bold: true, color: COLORS.gold });
+  // Big fortunes shorten (1.2m) so they never run into the menu buttons.
+  text(ctx, char.gold >= 100000 ? price(char.gold) : char.gold.toLocaleString(), 237, BAR_Y + 27.5, { size: 8, bold: true, color: COLORS.gold });
+  if (hover(ui, 226, BAR_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
   // Menu buttons: round candy buttons with icons, a dot when there are points to spend.
   const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];

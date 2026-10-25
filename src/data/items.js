@@ -111,7 +111,8 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
     for (const k of Object.keys(stats)) if (!stats[k]) delete stats[k];
     add({
       id: `${slot}_${t}`,
-      name: `${tier.prefix} ${kind.labels[t]}`,
+      // Some labels already carry the tier's name (Celestial Robe), so it isn't doubled.
+      name: kind.labels[t].startsWith(tier.prefix) ? kind.labels[t] : `${tier.prefix} ${kind.labels[t]}`,
       type: 'equip',
       slot,
       design: kind.designs[t],
