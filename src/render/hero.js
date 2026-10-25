@@ -25,6 +25,7 @@ export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'cu
 // Spiky hair was retired; old saves that used it get soft curls instead.
 const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairStyle ?? 'bob');
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
+export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
 // squashed into a small, slim chibi body under the same big head: heights shrink to KY and (for
@@ -208,7 +209,8 @@ function star(cx, cy, r, c) {
 // tiny one, and a thin lash on top. Styles only change the outline, lid, or shine. `out` is -1 for the far eye (its tick points back) and 1 for the near one.
 const EYE_Y = 18.2;
 
-function eye(ex, out, style, color, mode, skin) {
+// `lid` (0-1) lowers a lid over the top of the eye; `glance` shifts the iris sideways.
+function eye(ex, out, style, color, mode, skin, lid = 0, glance = 0, shine = false) {
   const ey = EYE_Y;
   if (mode === 'blink') return [arc(ex, ey - 0.6, 2.2, 1.3, 20, 160, 0.8, INK)];
   if (mode === 'hurt') return [F(T([[ex - 1.8 * out, ey - 2], [ex + 1.8 * out, ey], [ex - 1.8 * out, ey + 2], [ex - 1.1 * out, ey]], INK))];
@@ -216,24 +218,161 @@ function eye(ex, out, style, color, mode, skin) {
   const big = style === 'big' ? 1.2 : style === 'round' ? 1.1 : 1;
   const rx = 1.9 * big;
   const ry = 2.6 * big;
+  const gx = ex + glance * 0.5;
   const shapes = [
     // A dark oval with the eye color filling its lower part, one big shine and a tiny one.
     F(E(ex, ey, rx, ry, shade(color, -38))),
-    F(E(ex, ey + ry * 0.3, rx * 0.86, ry * 0.62, color)),
-    style === 'star' ? star(ex - 0.3, ey - 0.7, 1.6, '#ffffff') : F(E(ex - rx * 0.35, ey - ry * 0.35, 0.9 * big, 1 * big, '#ffffff')),
-    F(E(ex + rx * 0.4, ey + ry * 0.45, 0.4, 0.4, '#ffffff')),
+    F(E(gx, ey + ry * 0.3, rx * 0.86, ry * 0.62, color)),
+    style === 'star' || shine ? star(gx - 0.3, ey - 0.7, shine ? 2 : 1.6, '#ffffff') : F(E(gx - rx * 0.35, ey - ry * 0.35, 0.9 * big, 1 * big, '#ffffff')),
+    F(E(gx + rx * 0.4, ey + ry * 0.45, 0.4, 0.4, '#ffffff')),
   ];
   if (style === 'cat') shapes.push(F(R(ex - 0.25, ey - ry * 0.4, 0.5, ry * 1.1, shade(color, -55))));
   const lash = arc(ex, ey, rx + 0.3, ry + 0.2, 205, 335, 0.7, INK);
-  if (style === 'sleepy') {
-    shapes.push(F(T([[ex - rx - 0.5, ey - ry - 0.5], [ex + rx + 0.5, ey - ry - 0.5], [ex + rx + 0.5, ey - 0.2], [ex - rx - 0.5, ey - 0.2]], skin)));
-    shapes.push(F(R(ex - rx - 0.3, ey - 0.6, rx * 2 + 0.6, 0.7, INK)));
+  if (style === 'sleepy') lid = Math.max(lid, 0.46);
+  if (lid > 0) {
+    const ly = ey - ry + 2 * ry * lid;
+    shapes.push(F(T([[ex - rx - 0.5, ey - ry - 0.5], [ex + rx + 0.5, ey - ry - 0.5], [ex + rx + 0.5, ly], [ex - rx - 0.5, ly]], skin)));
+    shapes.push(F(R(ex - rx - 0.3, ly - 0.4, rx * 2 + 0.6, 0.7, INK)));
     return shapes;
   }
   const flick = (lift) => F(T([[ex + out * (rx - 0.1), ey - ry * 0.6], [ex + out * (rx + 1), ey - ry * 0.6 - lift], [ex + out * (rx + 0.4), ey - ry * 0.3]], INK));
   if (style === 'cat') return [...shapes, lash, flick(1.3)];
   if (style === 'droopy') return [...shapes, lash, flick(-1)];
   return [...shapes, lash];
+}
+
+// A polyline drawn as a run of thin quads.
+function stroke(pts, th, c) {
+  const out = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1];
+    const [x1, y1] = pts[i];
+    const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const nx = (-(y1 - y0) / len) * th * 0.5;
+    const ny = ((x1 - x0) / len) * th * 0.5;
+    out.push([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]]);
+  }
+  return out.length === 1 ? F(T(out[0], c)) : F(T([...out.map((q) => q[0]), out.at(-1)[1], out.at(-1)[2], ...out.map((q) => q[3]).reverse()], c));
+}
+
+// An eyebrow over the eye at ex: `raise` lifts it, `tilt` drops its inner end (angry) or, when
+// negative, lifts it (worried).
+function brow(ex, side, raise, tilt, c) {
+  const y = 14.4 - raise;
+  return stroke([[ex - side * 1.5, y + tilt], [ex + side * 1.8, y - tilt * 0.6]], 0.8, c);
+}
+
+const LIP = '#b86a7c';
+const MOUTH = '#b2506c';
+const TONGUE = '#ff8fa8';
+const MY = 21.7;
+
+function mouthShapes(kind) {
+  const x = FACE_X;
+  switch (kind) {
+    case 'open': return [F(E(x, 22.9, 1.1, 0.9, MOUTH)), F(E(x, 23.4, 0.6, 0.35, '#ff9fb8'))];
+    case 'smirk': return [stroke([[x - 1.4, MY + 0.5], [x + 0.4, MY + 0.6], [x + 1.6, MY - 0.4]], 0.55, LIP)];
+    case 'tongue': return [arc(x, MY, 1.4, 1.1, 20, 160, 0.55, LIP), F(E(x + 0.5, MY + 1.3, 0.75, 0.85, TONGUE)), F(R(x + 0.45, MY + 1, 0.15, 0.9, '#e86d8c'))];
+    case 'bigtongue': return [F(T([[x - 1.6, MY + 0.2], [x + 1.6, MY + 0.2], [x + 1, MY + 1.4], [x - 1, MY + 1.4]], MOUTH)), F(E(x + 0.4, MY + 1.8, 0.9, 1.1, TONGUE))];
+    case 'grin': return [F(T([[x - 2, MY - 0.2], [x + 2, MY - 0.2], [x + 1.4, MY + 1.4], [x, MY + 2], [x - 1.4, MY + 1.4]], MOUTH)), F(R(x - 1.7, MY - 0.2, 3.4, 0.6, '#ffffff')), F(E(x, MY + 1.4, 0.8, 0.4, '#ff9fb8'))];
+    case 'pout': return [arc(x, MY + 0.9, 0.8, 0.7, 200, 340, 0.5, LIP), arc(x, MY + 0.9, 0.8, 0.7, 20, 160, 0.5, LIP)];
+    case 'wavy': return [stroke([[x - 1.6, MY + 0.6], [x - 0.8, MY + 0.1], [x, MY + 0.6], [x + 0.8, MY + 0.1], [x + 1.6, MY + 0.6]], 0.5, LIP)];
+    case 'flat': return [F(R(x - 1, MY + 0.4, 2, 0.5, LIP))];
+    case 'cat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.5, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.5, LIP)];
+    case 'grit': return [F(R(x - 1.8, MY, 3.6, 1.5, MOUTH)), F(R(x - 1.5, MY + 0.3, 3, 0.9, '#ffffff')), F(R(x - 1.5, MY + 0.7, 3, 0.15, '#d9cde6'))];
+    case 'yell': return [F(E(x, MY + 1, 1.8, 1.5, MOUTH)), F(E(x, MY + 1.8, 1, 0.6, '#ff9fb8'))];
+    case 'tiny': return [arc(x, MY + 0.2, 0.8, 0.7, 25, 155, 0.5, LIP)];
+    default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.55, LIP)];
+  }
+}
+
+// Little cartoon marks around the head: an anger vein, a sweat drop, sparkles, a shine.
+function faceExtras(extra) {
+  const out = [];
+  for (const e of extra) {
+    if (e === 'vein' || e === 'veinbig') {
+      const k = e === 'veinbig' ? 1.3 : 1;
+      const [vx, vy] = [23.4, 8.6];
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+        out.push(stroke([[vx + sx * 0.5 * k, vy + sy * 1.6 * k], [vx + sx * 0.5 * k, vy + sy * 0.5 * k], [vx + sx * 1.6 * k, vy + sy * 0.5 * k]], 0.6, '#ff4d6d'));
+      }
+    } else if (e.startsWith('sweat')) {
+      const dy = Number(e.slice(5)) || 0;
+      out.push(F(E(25.2, 12.6 + dy, 1, 1.2, '#9fdcff')), F(T([[24.4, 12.2 + dy], [26, 12.2 + dy], [25.2, 10.2 + dy]], '#9fdcff')), F(E(24.9, 12.4 + dy, 0.3, 0.4, '#ffffff')));
+    } else if (e.startsWith('spark')) {
+      const big = e === 'spark1';
+      out.push(star(1.6, 6, big ? 2 : 1.3, '#ffe36b'), star(29.6, 9, big ? 1.3 : 2, '#ffe36b'), star(27.6, 2.4, big ? 1.4 : 0.9, '#ffffff'));
+    } else if (e === 'note') {
+      out.push(F(E(27.6, 7.4, 1, 0.8, INK)), F(R(28.3, 3, 0.5, 4.4, INK)), F(T([[28.3, 3], [30, 3.8], [30, 4.8], [28.8, 4.2]], INK)));
+    }
+  }
+  return out;
+}
+
+// Expressions: a resting face plus a short idle loop, sampled at 8 frames a second so the
+// sprite cache only ever holds a handful of frames per face. Brows are [raise, tilt] per eye
+// (left, right); `closed` closes an eye into a happy arc.
+const FACE_FPS = 8;
+export function faceFrame(kind, time) {
+  const t = Math.floor(time * FACE_FPS) / FACE_FPS;
+  const at = (period) => (t % period) / period;
+  const win = (p, a, b) => p >= a && p < b;
+  switch (kind) {
+    case 'smug': {
+      const p = at(4.4);
+      const f = { lid: 0.42, mouth: 'smirk', brows: [[0, 0.1], [0.6, -0.3]] };
+      if (win(p, 0.25, 0.55)) f.glance = 1;
+      if (win(p, 0.7, 0.95)) f.brows = [[0, 0.1], [Math.floor(t * 4) % 2 ? 1.6 : 0.9, -0.5]];
+      return f;
+    }
+    case 'sassy': {
+      const p = at(3.6);
+      const f = { mouth: 'tongue', brows: [[0, 0.3], [0.9, -0.4]], lid: 0.15 };
+      if (win(p, 0.45, 0.7)) Object.assign(f, { closed: [false, true], mouth: 'bigtongue', extra: ['spark0'] });
+      return f;
+    }
+    case 'grin': {
+      const p = at(3);
+      return win(p, 0.45, 0.8) ? { mouth: 'grin', brows: [[0.6, -0.2], [0.6, -0.2]] } : { mouth: 'grin', closed: [true, true], brows: [[0.4, -0.2], [0.4, -0.2]] };
+    }
+    case 'pout': {
+      const p = at(2.6);
+      const f = { mouth: 'pout', brows: [[0, 0.5], [0, 0.5]], glance: -1, blush: 1.2 };
+      if (win(p, 0, 0.55)) Object.assign(f, { puff: true, mouth: 'tiny' });
+      return f;
+    }
+    case 'shy': {
+      const p = at(3.2);
+      const f = { mouth: 'wavy', blush: 2, lid: 0.12, glance: win(p, 0.55, 0.9) ? 1 : -1, brows: [[0.3, -0.5], [0.3, -0.5]] };
+      f.extra = [`sweat${Math.round(Math.min(1, p * 1.4) * 4)}`];
+      if (win(p, 0.85, 1)) f.blush = 1.4;
+      return f;
+    }
+    case 'cool': {
+      const p = at(4.2);
+      const f = { lid: 0.48, mouth: 'flat', brows: [[-0.2, 0.2], [-0.2, 0.2]] };
+      if (win(p, 0.82, 0.95)) Object.assign(f, { shine: true, mouth: 'smirk' });
+      return f;
+    }
+    case 'cat': {
+      const p = at(3.4);
+      return win(p, 0.5, 0.85) ? { mouth: 'cat', closed: [true, true], blush: 1.3, extra: ['note'] } : { mouth: 'cat' };
+    }
+    case 'angry': {
+      const p = at(1.2);
+      const f = { lid: 0.2, mouth: 'grit', brows: [[-0.2, 0.9], [-0.2, 0.9]], extra: [win(p, 0, 0.5) ? 'veinbig' : 'vein'] };
+      if (win(at(5), 0.6, 0.75)) f.mouth = 'yell';
+      return f;
+    }
+    case 'excited': {
+      const p = at(0.8);
+      return { mouth: win(at(2.4), 0.5, 1) ? 'open' : 'grin', shine: true, brows: [[0.8, -0.2], [0.8, -0.2]], extra: [win(p, 0, 0.5) ? 'spark1' : 'spark0'] };
+    }
+    default: {
+      const p = at(5);
+      return win(p, 0.6, 0.78) ? { mouth: 'grin', closed: [true, true] } : { mouth: 'smile' };
+    }
+  }
 }
 
 function headShapes(look, g, rig) {
@@ -251,12 +390,28 @@ function headShapes(look, g, rig) {
   // eyes set low and wide apart, blush under each eye and a small mouth in the middle.
   for (const ex of [5.6, 25.4]) out.push(L(E(ex, 18, 1.8, 2.3, skin)), F(E(ex, 18.2, 0.7, 1.2, '#f4bfcb')));
   out.push(L(E(FACE_X, 15, 10.2, 9.8, skin)), L(E(FACE_X, 19, 9.4, 5.8, skin)));
-  out.push(...eye(FACE_X - 4.3, -1, eyeStyle, eyeColor, rig.eyes, skin), ...eye(FACE_X + 4.3, 1, eyeStyle, eyeColor, rig.eyes, skin));
-  out.push(F(E(FACE_X - 6.3, 21.8, 1.7, 0.7, '#f9c3cf')), F(E(FACE_X + 6.3, 21.8, 1.7, 0.7, '#f9c3cf')));
+  const f = rig.face ?? {};
+  if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(L(E(cx, 20.8, 2.8, 2.6, skin)));
+  // Eyes: hurt and blinks win over the expression; otherwise the expression may close one or
+  // both eyes, lower the lids, or glance aside.
+  [-1, 1].forEach((side, i) => {
+    const mode = rig.eyes !== 'open' ? rig.eyes : f.closed?.[i] ? 'happy' : 'open';
+    out.push(...eye(FACE_X + 4.3 * side, side, eyeStyle, eyeColor, mode, skin, f.lid ?? 0, f.glance ?? 0, f.shine));
+  });
+  const blush = f.blush ?? 1;
+  for (const side of [-1, 1]) {
+    const bx = FACE_X + 6.3 * side;
+    out.push(F(E(bx, 21.8, 1.7 * blush, 0.7 * blush, blush > 1 ? '#f7a8bb' : '#f9c3cf')));
+    if (blush > 1) for (const k of [-1, 0, 1]) out.push(stroke([[bx + k * 1 - 0.3, 22.4], [bx + k * 1 + 0.3, 21.2]], 0.4, '#e2788f'));
+  }
   if (rig.eyes === 'hurt') out.push(F(E(FACE_X, 23, 1, 0.7, INK)));
-  else if (rig.mouth === 'open') out.push(F(E(FACE_X, 22.9, 1.1, 0.9, '#b2506c')), F(E(FACE_X, 23.4, 0.6, 0.35, '#ff9fb8')));
-  else out.push(arc(FACE_X, 21.7, 1.3, 1.1, 25, 155, 0.55, '#b86a7c'));
+  else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile'));
   if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair));
+  if (f.brows) {
+    const bc = mix(shade(hair, -30), INK, 0.35);
+    [-1, 1].forEach((side, i) => out.push(brow(FACE_X + 4.3 * side, side, f.brows[i][0], f.brows[i][1], bc)));
+  }
+  if (f.extra) out.push(...faceExtras(f.extra));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
   // An earring under each ear.
   if (g.earring) {
@@ -566,7 +721,7 @@ function solveRig(state, anim) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
@@ -670,6 +825,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const g = resolveGear(look, gear);
   const rig = solveRig(state, anim);
   rig.armIn = !attack;
+  if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
   const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true }));

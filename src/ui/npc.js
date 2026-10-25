@@ -10,7 +10,7 @@ import { addItem, removeItem } from '../core/inventory.js';
 import { advanceJob } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
-import { drawHero, HAIR_STYLES, EYE_STYLES } from '../render/hero.js';
+import { drawHero, HAIR_STYLES, EYE_STYLES, FACE_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, tooltip, wrap } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
@@ -24,6 +24,7 @@ export const LOOK_OPTIONS = [
   { key: 'hairStyle', label: 'Hair', options: HAIR_STYLES },
   { key: 'hairColor', label: 'Hair color', options: HAIR_COLORS, color: true },
   { key: 'eyeStyle', label: 'Eyes', options: EYE_STYLES },
+  { key: 'face', label: 'Face', options: FACE_STYLES },
   { key: 'eyeColor', label: 'Eye color', options: EYE_COLORS, color: true },
   { key: 'skinTone', label: 'Skin', options: SKIN_TONES, color: true },
   { key: 'outfitColor', label: 'Outfit', options: OUTFITS, color: true },
@@ -39,17 +40,17 @@ export function cycleLook(look, key, step) {
 export function lookRows(ui, look, x, y, w) {
   let out = look;
   for (const opt of LOOK_OPTIONS) {
-    box(ui.ctx, x, y, w, 16, { fill: COLORS.cell, edge: null, r: 5 });
-    text(ui.ctx, opt.label, x + 6, y + 11, { size: 8, bold: true });
+    box(ui.ctx, x, y, w, 14, { fill: COLORS.cell, edge: null, r: 5 });
+    text(ui.ctx, opt.label, x + 6, y + 10, { size: 8, bold: true });
     if (opt.color) {
-      box(ui.ctx, x + w - 52, y + 3, 20, 10, { fill: out[opt.key], edge: '#ffffff', r: 4 });
+      box(ui.ctx, x + w - 52, y + 2, 20, 10, { fill: out[opt.key], edge: '#ffffff', r: 4 });
     } else {
       const value = String(out[opt.key]);
-      text(ui.ctx, value, x + w - 42, y + 11, { size: value.length > 8 ? 7 : 8, align: 'center' });
+      text(ui.ctx, value, x + w - 42, y + 10, { size: value.length > 8 ? 7 : 8, align: 'center' });
     }
-    if (button(ui, x + w - 70, y + 2, 12, 12, '<', { size: 8 })) out = cycleLook(out, opt.key, -1);
-    if (button(ui, x + w - 16, y + 2, 12, 12, '>', { size: 8 })) out = cycleLook(out, opt.key, 1);
-    y += 19;
+    if (button(ui, x + w - 70, y + 1, 12, 12, '<', { size: 8 })) out = cycleLook(out, opt.key, -1);
+    if (button(ui, x + w - 16, y + 1, 12, 12, '>', { size: 8 })) out = cycleLook(out, opt.key, 1);
+    y += 16;
   }
   return out;
 }
