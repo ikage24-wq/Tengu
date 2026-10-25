@@ -20,6 +20,7 @@ import {
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
+import { drawJobAura, AURA_JOBS } from './aura.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid', 'eyecover'];
 // Spiky hair was retired; old saves that used it get soft curls instead.
@@ -1044,7 +1045,35 @@ function weaponIdle(type, t) {
   }
 }
 
+// Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,
+// layered behind and in front of the sprite; Duelists also leave flickering afterimages.
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
+  const job = AURA_JOBS.has(state.job) ? state.job : null;
+  if (!job) return drawHeroBody(ctx, look, gear, x, y, state, anim);
+  const time = state.time ?? 0;
+  const idle = (state.pose ?? 'idle') === 'idle';
+  let k = idle ? 1 : 0;
+  if (anim) {
+    const dt = Math.max(0, Math.min(0.1, time - (anim.auraT ?? time)));
+    anim.auraT = time;
+    anim.aura = Math.max(0, Math.min(1, (anim.aura ?? 0) + (idle ? dt * 1.5 : -dt * 6)));
+    k = anim.aura;
+  }
+  const s = state.scale ?? 1;
+  const dir = (state.facing ?? 1) < 0 ? -1 : 1;
+  const t = time + (state.seed ?? 0) * 1.37;
+  drawJobAura(ctx, job, 'back', x, y, t, s, k, dir);
+  if (job === 'duelist' && k > 0.05) {
+    for (const side of [-1, 1]) {
+      const off = side * (8 + Math.sin(t * 3 + side) * 4) * s;
+      drawHeroBody(ctx, look, gear, x + off, y, { ...state, alpha: (state.alpha ?? 1) * k * (0.22 + 0.1 * Math.sin(t * 7 + side)) }, null);
+    }
+  }
+  drawHeroBody(ctx, look, gear, x, y, state, anim);
+  drawJobAura(ctx, job, 'front', x, y, t, s, k, dir);
+}
+
+function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const { pose = 'idle', facing = 1, progress = 0, alpha = 1, scale = 1 } = state;
   const attack = pose === 'swing' || pose === 'shoot' || pose === 'cast';
   const g = resolveGear(look, gear);

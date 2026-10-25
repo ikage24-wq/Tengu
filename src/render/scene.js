@@ -61,7 +61,7 @@ function drawNpcs(ctx, world, cam, time) {
     const y = world.map.groundY - cam.y;
     if (x < -40 || x > VIEW_W + 40) continue;
     const facing = world.body.x < n.x ? -1 : 1;
-    drawHero(ctx, npc.look, npc.gear ?? null, x, y, { pose: 'idle', time, seed: n.x % 97, facing });
+    drawHero(ctx, npc.look, npc.gear ?? null, x, y, { pose: 'idle', time, seed: n.x % 97, facing, job: npc.showJob });
     ctx.font = 'bold 8px sans-serif';
     const label = npc.name;
     const w = ctx.measureText(label).width + 10;
@@ -141,7 +141,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   // A chat emoticon shows on the face for a few seconds.
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
   drawHero(ctx, look, world.char.equipment, Math.round(b.x - cam.x), Math.round(b.y - cam.y), {
-    ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1,
+    ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job,
   }, feel.anim);
 
   let summonIndex = 0;

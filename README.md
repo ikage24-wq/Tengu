@@ -104,6 +104,13 @@ then press the key. Right-click a hotkey slot to clear it.
   and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
   when they chase you (hit monsters do), >< eyes when hit, and x eyes when they poof. The boss
   telegraphs a ground slam.
+- **Idle animations** — standing still with a weapon plays a routine for its type (sword
+  flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
+  dagger toss, claw jab). Advanced jobs add an aura that fades in while idle: Blademaster blade
+  wind, Lancer dragon spiral, Pyromancer orbiting fireballs, Cleric halo and feathers, Ranger leaf
+  storm, Marksman lock-on reticle, Duelist afterimages and petals, Shadow smoke and shuriken, and
+  for third jobs an Inferno Sage fire circle with phoenix wings and a Seraph's wings of light.
+  The instructors show off a job aura in their towns.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
   expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.
