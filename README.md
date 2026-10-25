@@ -130,7 +130,8 @@ then press the key. Right-click a hotkey slot to clear it.
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
   dagger toss, claw jab). Advanced jobs get a quiet aura that fades in while idle: a soft glow at
   the feet in the job's color with a few drifting snowflakes, embers, or sparkles, plus a slowly
-  turning rune ring for the Archmages and a halo for the Bishop. Elowen shows off the Bishop
+  turning rune ring for the Archmages (crackling with lightning for Stormfrost, ringed with
+  dancing flames for Venomflame) and a halo and angel wings for the Bishop. Elowen shows off the Bishop
   aura in Moonleaf Grove.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
