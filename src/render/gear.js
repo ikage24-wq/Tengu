@@ -196,14 +196,15 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
   };
   const len = Math.hypot(kx - ax, ky - ay) || 1;
   const shaft = (h, col, w = 2.8) => limb(ax, ay, ax + ((kx - ax) / len) * h, ay + ((ky - ay) / len) * h, w, w, col);
-  const sole = (col) => poly([[-2.1, -1.4], [1.5, -1.4], [2.2, 0.2], [4.2, 1], [4.6, 3], [-2.5, 3], [-2.6, 0.8]], col);
+  // Seen from the front: a small rounded shoe centered under the ankle.
+  const sole = (col) => poly([[-1.8, -1.4], [1.8, -1.4], [2.7, 0.2], [3, 2], [2.6, 3], [-2.6, 3], [-3, 2], [-2.7, 0.2]], col);
   switch (shoe.design) {
     case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
     case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
-    case 'sabatons': return [shaft(3, tint(SILVER)), sole(tint(SILVER)), poly([[-1.9, 2], [3.5, 2], [3.6, 3], [-1.9, 3]], tint(shade(SILVER, -14))), dot(0.4, 0, 0.6, '#ffffff')];
+    case 'sabatons': return [shaft(3, tint(SILVER)), sole(tint(SILVER)), poly([[-2.8, 2], [2.8, 2], [2.5, 3], [-2.5, 3]], tint(shade(SILVER, -14))), dot(0.4, 0, 0.6, '#ffffff')];
     case 'starboots': return [shaft(3.4, c), sole(c), shaft(0.8, GOLD, 3.1), dot(0.8, 0.6, 0.8, GOLD)];
     case 'wingboots': return [shaft(2.4, c), sole(c), poly([[-1.6, -1], [-4.8, -2.8], [-3.8, -0.6], [-4.6, 0.6], [-1.6, 0.6]], '#ffffff')];
-    default: return [sole(c), poly([[-1.9, 2.2], [3.6, 2.2], [3.6, 3], [-1.9, 3]], shade(c, -18))];
+    default: return [sole(c), poly([[-2.8, 2.2], [2.8, 2.2], [2.5, 3], [-2.5, 3]], shade(c, -18))];
   }
 }
 
@@ -216,7 +217,7 @@ export function hatShapes(design, c) {
     case 'beanie': return [E(15.5, 7, 11, 5.4, c), R(4.6, 8.6, 21.8, 3, d), E(15.5, 1.2, 2.6, 2.6, l)];
     case 'sunhat': return [E(15.5, 8.6, 15, 2.8, c), E(15.5, 5.4, 8.6, 4.6, c), R(7.4, 6.6, 16.4, 2, '#ff9ec0'), F(E(23, 7, 1.4, 1.2, '#ffffff'))];
     case 'cap': return [E(14.5, 6.6, 10.6, 5, c), T([[17, 8], [29, 8.6], [28, 10.4], [17, 10.4]], d), F(E(12, 4.6, 2, 1.4, '#8fd3ff')), F(E(16.6, 4.6, 2, 1.4, '#8fd3ff'))];
-    case 'helmet': return [E(15.5, 9, 11.6, 8.6, SILVER), R(3.8, 10, 3, 10, SILVER), R(4, 8.6, 23, 2, shade(SILVER, -15)), T([[14.4, 1], [17.6, 1], [18.6, -5], [13.4, -4]], '#ff9ec0'), F(E(10, 5, 1, 0.8, '#ffffff'))];
+    case 'helmet': return [E(15.5, 9, 11.6, 8.6, SILVER), R(3.8, 10, 3, 10, SILVER), R(24.2, 10, 3, 10, SILVER), R(4, 8.6, 23, 2, shade(SILVER, -15)), T([[14.4, 1], [17.6, 1], [18.6, -5], [13.4, -4]], '#ff9ec0'), F(E(10, 5, 1, 0.8, '#ffffff'))];
     case 'witch': return [E(15.5, 8.8, 15, 2.8, c), T([[8.6, 8], [22.4, 8], [19.4, 2], [22, -6], [14.4, -1]], c), R(9, 6.2, 13, 1.6, GOLD), F(E(15.8, 4.2, 0.8, 0.8, GOLD))];
     case 'circlet': return [R(5, 7.4, 21.6, 1.8, GOLD), F(E(15.5, 8.2, 1.9, 1.9, '#c9a6ff')), F(E(15, 7.6, 0.6, 0.6, '#ffffff')), T([[5, 7], [0, 3], [1.4, 6.8], [-0.4, 8.6], [4.6, 9]], '#ffffff'), T([[26, 7], [31, 3], [29.6, 6.8], [31.4, 8.6], [26.4, 9]], '#ffffff')];
     case 'bunny': return [E(15.5, 5.6, 11.6, 4.4, '#ffffff'), R(4, 6.6, 3, 14, '#ffffff'), R(24.4, 6.6, 3, 10, '#ffffff'), E(10.4, -2.6, 2.4, 8, '#ffffff'), E(19.6, -3.4, 2.4, 8.4, '#ffffff'), F(E(10.4, -2, 1.1, 6, '#ffc2d6')), F(E(19.6, -2.8, 1.1, 6.4, '#ffc2d6'))];
@@ -242,7 +243,7 @@ export function hatBackShapes(design, c) {
 // ---------- Gloves (on each hand) ----------
 
 export function handShapes(hx, hy, glove, skin) {
-  if (!glove) return [E(hx, hy, 2.4, 2.4, skin)];
+  if (!glove) return [E(hx, hy, 2, 2, skin)];
   const c = glove.color;
   switch (glove.design) {
     case 'cuffed': return [E(hx, hy, 1.8, 1.9, c), R(hx - 1.8, hy - 2.8, 3.6, 1.4, shade(c, 25))];

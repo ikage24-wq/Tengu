@@ -170,7 +170,8 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         while (end < gw && (grid[y * gw + end] === c || (flat[y * gw + end] && grid[y * gw + end] >= 0))) end++;
         // Three tones across the run: shadow at the back, base, and a soft highlight at the front.
         const len = end - x;
-        const back = Math.max(res, Math.round(len * 0.28));
+        // 'cel' sprites (front-facing figures) skip the side shadow and keep only the cast and bottom bands.
+        const back = soft === 'cel' ? 0 : Math.max(res, Math.round(len * 0.28));
         // Thin parts (arms, legs) only get the shadow; a highlight on them reads as stripes.
         // No highlight band: one soft shadow keeps the look simple.
         const front = 0;

@@ -32,7 +32,7 @@ export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy
 // wings, and its bottom edge is the soles.
 const NECK = 24;
 const KY = 0.56;
-const KX = 0.74;
+const KX = 0.66;
 // Below the hips the legs shrink a little more, for short chibi legs.
 const LEG_TOP = 38;
 const KL = 0.72;
@@ -258,7 +258,11 @@ function headShapes(look, g, rig) {
   else out.push(arc(FACE_X, 21.7, 1.3, 1.1, 25, 155, 0.55, '#b86a7c'));
   if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
-  if (g.earring) out.push(...earringShapes(g.earring.design, g.earring.color));
+  // An earring under each ear.
+  if (g.earring) {
+    const ring = offset(earringShapes(g.earring.design, g.earring.color), -1.6, 0);
+    out.push(...ring, ...mirror(ring));
+  }
   if (hat) out.push(...hatShapes(hat.design, hat.color));
   return out;
 }
@@ -307,8 +311,8 @@ function aimedArm(angle, sleeve, long, g, skin) {
 // ---------- Body parts per rig ----------
 
 // Legs stand apart under the hips, one on each side.
-const LEFT_LEG = 10.8;
-const RIGHT_LEG = 17.2;
+const LEFT_LEG = 11.4;
+const RIGHT_LEG = 16.6;
 
 function bodyShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
@@ -346,6 +350,8 @@ function bodyShapes(look, g, rig) {
   return move([...hang, ...squash(shapes), ...head], 0, 0);
 }
 
+// Mirrors shapes across the body's center line.
+const mirror = (shapes) => shapes.map((s) => (s.t === 'p' ? { ...s, x: 0, pts: s.pts.map(([px, py]) => [31 - s.x - px, py]) } : { ...s, x: 31 - s.x - (s.w ?? 0) }));
 const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy }));
 
 // The head sits this far above where it would rest on the shoulders, so a short neck shows and
@@ -389,7 +395,7 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
   if (g.cape?.design === 'fairy' || g.cape?.design === 'angel') {
     const wing = capeShapes(g.cape.design, g.cape.color, 0, rig.flap);
-    arms.push(...wing, ...wing.map((s) => (s.t === 'p' ? { ...s, pts: s.pts.map(([px, py]) => [31 - px, py]) } : { ...s, x: 31 - s.x - (s.w ?? 0) })));
+    arms.push(...wing, ...mirror(wing));
   }
   return move([...squash(body), ...out, ...squash(arms)], 0, 0);
 }
@@ -666,7 +672,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   rig.armIn = !attack;
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
-  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: true, crisp: true }));
+  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true }));
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
@@ -743,7 +749,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   if (rig.view === 'back') return;
   if (!attack) return;
   drawWeapon();
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: true, crisp: true }));
+  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 
