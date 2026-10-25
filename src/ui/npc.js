@@ -10,7 +10,7 @@ import { addItem, removeItem } from '../core/inventory.js';
 import { advanceJob } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
-import { drawHero, HAIR_STYLES, EYE_STYLES, FACE_STYLES } from '../render/hero.js';
+import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, tooltip, wrap } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
@@ -23,7 +23,7 @@ const OUTFITS = ['#ffc2d6', '#bfe0ff', '#bff0dc', '#fff3a6', '#e0cfff', '#ffd0a8
 export const LOOK_OPTIONS = [
   { key: 'hairStyle', label: 'Hair', options: HAIR_STYLES },
   { key: 'hairColor', label: 'Hair color', options: HAIR_COLORS, color: true },
-  { key: 'eyeStyle', label: 'Eyes', options: EYE_STYLES },
+  { key: 'eyeStyle', label: 'Eyes', options: PICKABLE_EYE_STYLES },
   { key: 'face', label: 'Face', options: FACE_STYLES },
   { key: 'eyeColor', label: 'Eye color', options: EYE_COLORS, color: true },
   { key: 'skinTone', label: 'Skin', options: SKIN_TONES, color: true },

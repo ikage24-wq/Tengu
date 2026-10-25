@@ -25,6 +25,9 @@ export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'cu
 // Spiky hair was retired; old saves that used it get soft curls instead.
 const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairStyle ?? 'bob');
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
+// Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
+// covered by the animated faces, so they are hidden there but still draw for older characters.
+export const PICKABLE_EYE_STYLES = ['sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
 export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
