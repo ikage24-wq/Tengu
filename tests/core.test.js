@@ -76,7 +76,7 @@ test('job advancement needs the level and adds HP, MP, and SP', () => {
   assert.ok(c.level >= 10);
   const hpBefore = c.baseHp;
   const spBefore = c.sp;
-  assert.equal(advanceJob(c, 'blademaster'), false, 'second job needs the first');
+  assert.equal(advanceJob(c, 'ilwizard'), false, 'second job needs the first');
   assert.equal(advanceJob(c, 'warrior'), true);
   assert.equal(c.baseHp, hpBefore + 350);
   assert.equal(c.sp, spBefore + 1);
