@@ -3,7 +3,10 @@
 import { MOBS } from '../data/mobs.js';
 import { surfacesOf } from './physics.js';
 
-const RESPAWN = 7;
+const RESPAWN = 4;
+// Each spawn point holds this many monsters (bosses stay single), spread a little apart.
+const PER_SPAWN = 2;
+const SPREAD = 50;
 const AGGRO_TIME = 6;
 const HOVER = 46;
 
@@ -47,7 +50,18 @@ export function mobBox(m) {
 }
 
 export function createSpawner(map) {
-  return { slots: map.spawns.map((s) => ({ spawn: s, mob: null, respawnAt: 0 })) };
+  const slots = [];
+  for (const s of map.spawns) {
+    const copies = MOBS[s.mob].boss ? 1 : PER_SPAWN;
+    // Keep copies on the same ledge as the original spawn point.
+    const surface = surfaceFor(map, s.x, s.y);
+    for (let i = 0; i < copies; i++) {
+      const offset = (i - (copies - 1) / 2) * SPREAD;
+      const x = Math.max(surface.x1 + 4, Math.min(surface.x2 - 4, s.x + offset));
+      slots.push({ spawn: { ...s, x }, mob: null, respawnAt: 0 });
+    }
+  }
+  return { slots };
 }
 
 // Fills empty spawn slots whose timers are up. Returns newly spawned mobs.
