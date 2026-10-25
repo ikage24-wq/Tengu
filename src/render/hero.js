@@ -867,6 +867,30 @@ function weaponSprite(w, time) {
   return { ...s, grip: def.grip, blade: def.blade };
 }
 
+// Little twinkles at a weapon's tip, for wand twirls and staff taps.
+function idleSparkle(ctx, hx, hy, angle, len, flip, time, scale) {
+  const rad = (angle * Math.PI) / 180;
+  const x = hx + Math.sin(rad) * len * (flip ? -1 : 1);
+  const y = hy - Math.cos(rad) * len;
+  ctx.save();
+  for (let i = 0; i < 4; i++) {
+    const a = time * 5 + i * 1.6;
+    const r = (1.6 + (i % 2)) * scale;
+    const px = x + Math.cos(a) * 6 * scale;
+    const py = y + Math.sin(a) * 5 * scale - i * scale;
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 9 + i);
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#ffe36b';
+    ctx.beginPath();
+    ctx.moveTo(px, py - r);
+    ctx.quadraticCurveTo(px, py, px + r, py);
+    ctx.quadraticCurveTo(px, py, px, py + r);
+    ctx.quadraticCurveTo(px, py, px - r, py);
+    ctx.quadraticCurveTo(px, py, px, py - r);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 // Elemental weapons always glow softly in their element's color.
 function elementGlow(ctx, wpn, element, time, scale) {
   const glow = tinted(wpn, ELEMENTS[element].glow);
@@ -953,12 +977,81 @@ function weaponPose(type, pose, progress) {
 // (x, y) is the character's feet center in screen space.
 const WEAPON_SCALE = 1;
 
+// Idle routines while standing still with a weapon: a gentle loop plus a signature move every
+// few seconds. Returns the hand's offset from its rest spot (body units), the weapon's angle, and
+// optionally a toss height (px), a spin, and a sparkle at the hand.
+const smooth = (u) => u * u * (3 - 2 * u);
+function weaponIdle(type, t) {
+  const at = (period) => (t % period) / period;
+  const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
+  switch (type) {
+    case 'sword': {
+      // Sway, then a quick flourish: lift the blade and spin it once.
+      const p = at(5);
+      const spin = p > 0.8 ? smooth((p - 0.8) / 0.2) * 360 : 0;
+      return { arm: [0.5 * bump(p, 0.8, 1), -3 * bump(p, 0.8, 1)], angle: 25 + Math.sin(t * 1.6) * 4 - spin };
+    }
+    case 'axe': {
+      // Rests on the shoulder, bobbing with each breath; now and then it gets hefted up.
+      const p = at(6);
+      const heft = bump(p, 0.75, 0.95);
+      return { arm: [1, -5 - 3 * heft], angle: 16 + Math.sin(t * 2) * 3 - 14 * heft };
+    }
+    case 'spear': {
+      // Planted upright; every so often a twirl.
+      const p = at(6);
+      const spin = p > 0.82 ? smooth((p - 0.82) / 0.18) * 360 : 0;
+      return { arm: [3, -3 - 2 * bump(p, 0.82, 1)], angle: 4 + Math.sin(t * 1.2) * 2 + spin };
+    }
+    case 'wand': {
+      // Twirls in the fingers, with a full spin and a sparkle every few seconds.
+      const p = at(4);
+      const spin = p > 0.75 ? smooth((p - 0.75) / 0.25) * 360 : 0;
+      return { arm: [0.5, -2 - 2 * bump(p, 0.75, 1)], angle: 25 + Math.sin(t * 3) * 18 + spin, sparkle: p > 0.85 && p < 0.97 };
+    }
+    case 'staff': {
+      // Held upright and tapped on the ground, which sends up a little glimmer.
+      const p = at(4);
+      const tap = bump(p, 0.7, 0.85);
+      return { arm: [3, -4 - 3 * tap], angle: 5 + Math.sin(t * 1.4) * 2, sparkle: p > 0.84 && p < 0.96 };
+    }
+    case 'bow': {
+      // A slow sway; every so often it's raised to check the string.
+      const p = at(6);
+      const check = bump(p, 0.7, 0.95);
+      return { arm: [1.5 * check, -5 * check], angle: 25 + Math.sin(t * 1.3) * 4 - 25 * check };
+    }
+    case 'crossbow': {
+      // Hangs at the side, then comes up to aim for a moment and lowers again.
+      const p = at(5.5);
+      const aim = bump(p, 0.62, 0.95);
+      return { arm: [2 * aim, -5 * aim], angle: 55 + Math.sin(t * 1.5) * 3 - 50 * aim };
+    }
+    case 'dagger': {
+      // Tossed into the air with a couple of flips and caught again.
+      const p = at(3.2);
+      const air = p > 0.6 ? (p - 0.6) / 0.4 : 0;
+      return { arm: [0, -2 * bump(p, 0.55, 1)], angle: 25 + Math.sin(t * 2) * 5 + air * 720, toss: Math.sin(air * Math.PI) * 18 };
+    }
+    case 'claw': {
+      // Flexes the claws, with a quick jab every few seconds.
+      const p = at(3.5);
+      const jab = bump(p, 0.78, 0.9);
+      return { arm: [4 * jab, -1.5 * jab], angle: 100 + Math.sin(t * 6) * 6 - 15 * jab };
+    }
+    default:
+      return null;
+  }
+}
+
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const { pose = 'idle', facing = 1, progress = 0, alpha = 1, scale = 1 } = state;
   const attack = pose === 'swing' || pose === 'shoot' || pose === 'cast';
   const g = resolveGear(look, gear);
   const rig = solveRig(state, anim);
   rig.armIn = !attack;
+  const idleW = !attack && pose === 'idle' && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
+  if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
   if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
@@ -996,7 +1089,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const armDy = bodyY;
 
   const restAngle = { crossbow: 55, claw: 100 }[g.weapon?.type] ?? 25;
-  let weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
+  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
@@ -1008,7 +1101,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.imageSmoothingEnabled = false;
-    ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1])));
+    ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1]) - (idleW?.toss ?? 0) * scale));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
     const time = state.time ?? 0;
@@ -1040,6 +1133,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     drawWeapon();
     const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(4)), 0, 0), res: RES, soft: 'cel', crisp: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+    if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return;
   }
   drawWeapon();
