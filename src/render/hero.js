@@ -1031,10 +1031,19 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   }
   if (anim && anim.trail.length > 1) drawTrail(ctx, anim.trail, x, y, g.weapon?.color ?? '#ffffff');
 
-  if (wpn && !attack && rig.view !== 'back') drawWeapon();
+  // A bow slung across the back sits behind the body; anything held is drawn in front of it,
+  // with the hand drawn again on top so it grips the handle.
+  const slung = !attack && g.weapon?.type === 'bow';
+  if (wpn && slung && rig.view !== 'back') drawWeapon();
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (rig.view === 'back') return;
-  if (!attack) return;
+  if (!attack) {
+    if (!wpn || slung) return;
+    drawWeapon();
+    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(4)), 0, 0), res: RES, soft: 'cel', crisp: true }));
+    blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+    return;
+  }
   drawWeapon();
   const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
