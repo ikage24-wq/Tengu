@@ -53,6 +53,7 @@ export function createGame(classId, appearance) {
     messages: [],
     nearNpc: null,
     time: 0,
+    showInventory: false,
   };
   loadMap(game, 'town', null);
   message(game, `Welcome, ${classDef.name}. Q/E/R to cast skills.`);
@@ -309,6 +310,8 @@ export function update(game, dt, input) {
       c.hp = Math.min(c.maxHp, c.hp + Math.floor(c.maxHp * POTION_HEAL));
     }
   }
+
+  if (input.pressed.has('KeyI')) game.showInventory = !game.showInventory;
 
   updateMobs(game, dt);
   updateNpcs(game);

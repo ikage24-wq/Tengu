@@ -51,6 +51,7 @@ export const MAPS = {
     spawns: [
       { type: 'snail', count: 6, minLevel: 1 },
       { type: 'mushroom', count: 4, minLevel: 6, platforms: [1, 3, 5, 7] },
+      { type: 'pig', count: 3, minLevel: 3, platforms: [0, 4, 6] },
     ],
     npcs: [],
     portals: [
@@ -77,6 +78,7 @@ export const MAPS = {
     spawns: [
       { type: 'mushroom', count: 6, minLevel: 8, platforms: [0, 2, 4, 6] },
       { type: 'wolf', count: 5, minLevel: 18 },
+      { type: 'skeleton', count: 4, minLevel: 20, platforms: [2, 5, 7] },
       { type: 'golem', count: 2, minLevel: 30 },
     ],
     npcs: [],

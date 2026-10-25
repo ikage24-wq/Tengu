@@ -8,6 +8,7 @@ import { expToNext } from './progression.js';
 import { drawCharacter, drawCharacterPreview, drawMob, drawNpc } from './sprites.js';
 import { drawBackdrop, drawPlatforms } from './scenery.js';
 import { APPEARANCE_FIELDS, COLOR_FIELDS } from './appearance.js';
+import { RARITIES, SLOTS } from './gear.js';
 
 export const VW = 640;
 export const VH = 360;
@@ -214,6 +215,40 @@ function drawHud(ctx, game, width, height) {
   }
 }
 
+// Inventory overlay: equipped slots on the left, the most recent bag items on the right.
+function drawInventory(ctx, game, width, height) {
+  const w = 360;
+  const h = 260;
+  const x = (width - w) / 2;
+  const y = (height - h) / 2;
+  panel(ctx, x, y, w, h, 8);
+  text(ctx, 'Inventory  (I to close)', x + 12, y + 18, 10, UI.text, 'left', 'bold');
+
+  text(ctx, 'Equipped', x + 12, y + 36, 8, UI.muted, 'left', 'bold');
+  SLOTS.forEach((slot, i) => {
+    const item = game.equipped[slot];
+    const ry = y + 48 + i * 24;
+    text(ctx, slot, x + 12, ry + 10, 8, UI.muted);
+    if (item) {
+      const rarity = RARITIES.find((r) => r.id === item.rarity);
+      text(ctx, `+${item.upgrade}  ${item.atk} ATK`, x + 80, ry + 10, 8, rarity.color, 'left', 'bold');
+    } else {
+      text(ctx, 'empty', x + 80, ry + 10, 8, '#8a8298');
+    }
+  });
+
+  text(ctx, 'Bag', x + 200, y + 36, 8, UI.muted, 'left', 'bold');
+  if (game.inventory.length === 0) {
+    text(ctx, 'Nothing yet. Defeat monsters to find gear.', x + 200, y + 60, 8, UI.muted);
+  }
+  game.inventory.slice(-10).reverse().forEach((item, i) => {
+    const rarity = RARITIES.find((r) => r.id === item.rarity);
+    text(ctx, `${item.slot}  +${item.upgrade}  ${item.atk} ATK`, x + 200, y + 58 + i * 18, 8, rarity.color);
+  });
+
+  text(ctx, `Showing ${Math.min(10, game.inventory.length)} of ${game.inventory.length} items`, x + 12, y + h - 12, 7, UI.muted);
+}
+
 export function drawGame(ctx, game, width, height) {
   const cam = cameraFor(game, width);
   drawBackdrop(ctx, game.map.theme, cam, width, height, game.time);
@@ -225,6 +260,7 @@ export function drawGame(ctx, game, width, height) {
   drawEffects(ctx, game, cam);
   drawFloaters(ctx, game, cam);
   drawHud(ctx, game, width, height);
+  if (game.showInventory) drawInventory(ctx, game, width, height);
 }
 
 // ---------- Setup screens ----------

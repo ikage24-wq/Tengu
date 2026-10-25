@@ -233,9 +233,38 @@ const MOB_ART = {
     ],
     palette: { r: '#b49872', m: '#7fb069', k: OUTLINE, w: '#ffffff', D: '#8a7050' },
   },
+  pig: {
+    shapes: () => [
+      R(8, 22, 3, 4, 'q'),
+      R(18, 22, 3, 4, 'q'),
+      E(14, 15, 12, 9, 'p'),
+      E(8, 9, 3, 3, 'p'),
+      R(22, 13, 5, 4, 'n'),
+      R(19, 11, 2, 2, 'k'),
+    ],
+    palette: { p: '#ffb3c6', n: '#ff8fab', q: '#f08aa5', k: OUTLINE },
+  },
+  skeleton: {
+    shapes: () => [
+      R(10, 34, 3, 14, 's'),
+      R(17, 34, 3, 14, 's'),
+      R(10, 31, 10, 3, 's'),
+      R(6, 19, 3, 12, 's'),
+      R(21, 19, 3, 12, 's'),
+      R(14, 17, 2, 14, 's'),
+      R(9, 19, 12, 1, 's'),
+      R(9, 23, 12, 1, 's'),
+      R(9, 27, 12, 1, 's'),
+      E(15, 9, 7, 7, 's'),
+      R(11, 15, 8, 2, 's'),
+      R(11, 8, 3, 3, 'k'),
+      R(18, 8, 3, 3, 'k'),
+    ],
+    palette: { s: '#e9e4d4', k: OUTLINE },
+  },
 };
 
-const MOB_SIZE = { snail: [34, 24], mushroom: [32, 36], wolf: [48, 34], golem: [60, 64] };
+const MOB_SIZE = { snail: [34, 24], mushroom: [32, 36], wolf: [48, 34], golem: [60, 64], pig: [30, 26], skeleton: [30, 50] };
 
 function mobSprite(typeId) {
   return cached(`mob|${typeId}`, () => {

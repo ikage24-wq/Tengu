@@ -26,6 +26,7 @@ In game:
 | Space / W / Up | Jump (land on ledges from above) |
 | Down / S (on a ledge) | Drop through the ledge |
 | Q, E, R | Cast class skill 1, 2, 3 (AoE) |
+| I | Open or close the inventory (equipped gear and bag) |
 | F | Ultimate (level 30): Earth Breaker and Sky Volley hit every mob on the map; Starfall hits up to 15 enemies twice, with bonus crit chance |
 | H | Drink potion (heals 50% HP) |
 | 1, 2, 3 (near Skill Trainer) | Spend a skill point to raise that skill |
@@ -42,7 +43,7 @@ In game:
   (`src/progression.js`).
 - **Skills** — Cooldowns, MP cost, and AoE hitboxes in front of the caster.
   Skill levels from the trainer add damage (`src/combat.js`).
-- **Mobs** — Snail, Mushroom, Wolf, Golem across three maps. They patrol, respawn
+- **Mobs** — Snail, Pig, Mushroom, Wolf, Skeleton, and Golem across three maps. They patrol, respawn
   after 10 seconds, and give less EXP when you are far above their level
   (`src/mobs.js`).
 - **Character** — Customize hair style and color, skin, eye style and color,
