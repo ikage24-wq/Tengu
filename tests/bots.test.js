@@ -76,3 +76,50 @@ test('buying from a player shop moves the item and the gold', () => {
   assert.equal(bot.char.gold, 300);
   assert.equal(bot.shop, null, 'a sold-out shop closes');
 });
+
+test('parties: players around your level or below join, higher ones decline, and they leave when you do', async () => {
+  const { invite, partyMembers, leaveParty, updateParty } = await import('../src/world/party.js');
+  const world = createWorld(createCharacter('Me', {}));
+  world.log = () => {};
+  for (let i = 0; i < 20; i++) world.char.level++;
+  const bots = { list: [], memory: new Set(), names: new Set(), rng: seeded(11) };
+  world.bots = bots;
+  const make = (name, level) => {
+    const char = makeBotCharacter(seeded(level), { name });
+    char.level = level;
+    const bot = { id: name, name, char, level, style: {}, map: world.map.id, x: world.body.x + 30, facing: 1, state: 'idle', session: 999, stay: 999, nextLine: 999, appear: 0 };
+    bots.list.push(bot);
+    return bot;
+  };
+  const low = make('low', 12);
+  const near = make('near', 24);
+  const high = make('high', 40);
+  for (const b of [low, near, high]) invite(bots, b, world);
+  // A rigged coin so nobody declines on a whim.
+  bots.rng = () => 0.5;
+  for (let i = 0; i < 60; i++) updateParty(bots, world, 0.05);
+  assert.deepEqual(partyMembers(bots).map((b) => b.id).sort(), ['low', 'near']);
+  assert.equal(high.party, undefined, 'too far above you');
+  leaveParty(bots, world);
+  assert.equal(partyMembers(bots).length, 0);
+});
+
+test('a party member\'s kill gives you a share of the EXP and counts for your quests', async () => {
+  const { updateWorld } = await import('../src/world/world.js');
+  const { acceptQuest } = await import('../src/core/quests.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const world = createWorld(createCharacter('Me', {}));
+  world.log = () => {};
+  loadMap(world, 'meadow1', 'west');
+  world.mobs = [];
+  const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 40, y: world.map.groundY });
+  world.mobs.push(m);
+  world.char.level = 3;
+  acceptQuest(world.char, 'snail_trouble');
+  const exp = world.char.exp;
+  world.pending.push({ at: 0, mob: m, miss: false, damage: 1e6, crit: false, fromX: 0, stack: 0, party: 'x' });
+  updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set() });
+  assert.equal(world.char.exp - exp, Math.round(m.def.exp * 0.6));
+  assert.equal(world.char.quests.snail_trouble.kills.snailbun, 1);
+});

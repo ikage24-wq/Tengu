@@ -91,6 +91,17 @@ const TEMPLATES = {
     '{hi} {me}!', '{hi} {me} {emote}', 'oh {hi} {me}', 'love your outfit {me}!', 'nice weapon {me}', '{me}!! {emote}', 'hey {me}, wanna party sometime?',
     '{hi}! cute look {me}', 'yo {me} whats ur lvl', '{me} hii {emote}', 'sup {me}', 'heya {me}, good luck out there',
   ],
+  party: [
+    'nice!', 'gj {me}', 'ty for the party {emote}', 'brb pot', '{laugh} that {mob}', 'this spot is good', 'go go go', 'omg crit', 'ez',
+    'almost lvl up!', 'ooh a drop', 'my {weapon} hits so hard here', 'ur so strong {me}', 'lets do {map} after', 'one more round?', 'loot is yours {me}',
+    'party exp is so good', 'love this party {emote}', 'careful {me}!', 'i got aggro lol', 'wait for me', 'so many {mobs}', 'grinding with friends > solo', 'nice combo',
+  ],
+  joined: ['{yes}! {emote}', 'omg ty for the invite', 'sure, lets go!', 'yay party!', 'ok im in {emote}', 'lets grind {me}!', 'thx {me}!!', 'ooh ok'],
+  declined: ['sry cant rn', 'no ty', 'afk soon sorry', 'maybe later!', 'busy rn {emote}', 'im good solo ty', 'not rn sry'],
+  tooHigh: ['ur a bit low for me sry', 'lvl gap too big lol', 'cant, u wouldnt get exp where i grind', 'come back when ur stronger {emote}', 'too low lvl sry'],
+  shopBusy: ['cant, running my shop', 'shop open sry', 'i gotta watch my shop', 'busy selling {emote}'],
+  levelUp: ['LVL UP!!', 'ding!! {emote}', 'lvl {mylvl}!!', 'leveled!! ty party', 'ding {mylvl} {emote}'],
+  leaving: ['gtg, ty for the party!', 'thx for the pt {me}!', 'that was fun, cya!', 'ty! logging off', 'gg party {emote}'],
   thanks: ['ty!!', 'thanks {emote}', 'tysm', 'enjoy it!', 'pleasure doing business', 'thx {me}!', 'have fun with it!', 'ty, come again {emote}'],
   bye: ['{bye}', '{bye} {emote}', 'ok {bye}', '{bye}, gl everyone'],
 };
@@ -133,6 +144,7 @@ export function speak(memory, kind, ctx, style, rng = Math.random) {
 
 // What a player feels like saying, given who they are.
 export function moodFor(bot, rng = Math.random) {
+  if (bot.party && rng() < 0.7) return 'party';
   if (bot.shop && rng() < 0.55) return 'shop';
   if (bot.level < 12 && rng() < 0.55) return 'newbie';
   if (bot.pro && rng() < 0.4) return 'brag';

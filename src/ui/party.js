@@ -1,0 +1,120 @@
+// Party UI: the right-click menu on players (and yourself), and the party panel on the HUD with
+// each member's level, job, and HP, plus a Leave button.
+
+import { JOBS } from '../data/jobs.js';
+import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, LEVEL_GAP } from '../world/party.js';
+import { openProfile } from './profile.js';
+import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
+import { settings } from '../core/settings.js';
+
+// ---------- Right-click menu ----------
+
+export function openMenu(state, menu) {
+  state.menu = menu;
+}
+
+function menuItems(state, world) {
+  const m = state.menu;
+  const items = [];
+  if (m.kind === 'self') {
+    items.push({ label: 'View my profile', icon: 'user', run: () => openProfile(state, { kind: 'self' }) });
+    if (partyMembers(world.bots).length) items.push({ label: 'Leave party', icon: 'door', run: () => leaveParty(world.bots, world) });
+    return items;
+  }
+  const bot = world.bots?.list.find((b) => b.id === m.id);
+  if (!bot) return items;
+  items.push({ label: 'View profile', icon: 'user', run: () => openProfile(state, { kind: 'bot', id: bot.id, shop: Boolean(bot.shop) }) });
+  if (bot.party) items.push({ label: 'Remove from party', icon: 'door', run: () => kick(world.bots, bot, world) });
+  else {
+    const why = inviteBlocker(world.bots, bot, world);
+    const high = bot.level > world.char.level + LEVEL_GAP;
+    items.push({ label: 'Invite to party', icon: 'heart', why: why ?? (high ? `Lv ${bot.level} is well above you, they'll likely say no` : null), enabled: !why, run: () => invite(world.bots, bot, world) });
+  }
+  if (bot.shop) items.push({ label: 'Browse shop', icon: 'shop', run: () => openProfile(state, { kind: 'bot', id: bot.id, shop: true }) });
+  return items;
+}
+
+export function drawMenu(ui, state, world) {
+  const m = state.menu;
+  if (!m) return;
+  const { ctx } = ui;
+  const items = menuItems(state, world);
+  const bot = m.kind === 'bot' ? world.bots?.list.find((b) => b.id === m.id) : null;
+  if (!items.length || (m.kind === 'bot' && !bot)) {
+    state.menu = null;
+    return;
+  }
+  const th = THEMES.lavender;
+  const w = 118;
+  const h = 18 + items.length * 17;
+  const x = Math.min(m.x, 640 - w - 4);
+  const y = Math.min(m.y, 326 - h);
+  box(ctx, x, y + 3, w, h, { fill: 'rgba(90,50,120,0.18)', edge: null, r: 8 });
+  box(ctx, x, y, w, h, { fill: '#fffaf6', edge: th.dark, r: 8, width: 1.5 });
+  const title = bot ? `${bot.name} · Lv ${bot.level}` : world.char.name;
+  box(ctx, x + 3, y + 3, w - 6, 12, { fill: th.main, edge: null, r: 6 });
+  text(ctx, title, x + w / 2, y + 12, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
+  items.forEach((it, i) => {
+    const iy = y + 18 + i * 17;
+    const enabled = it.enabled !== false;
+    const hot = enabled && hover(ui, x + 3, iy, w - 6, 15);
+    if (hot) box(ctx, x + 3, iy, w - 6, 15, { fill: th.light, edge: null, r: 6 });
+    icon(ctx, it.icon, x + 12, iy + 7.5, 9, enabled ? th.dark : '#c4b4d8');
+    text(ctx, it.label, x + 21, iy + 10.5, { size: 7.5, bold: true, color: enabled ? COLORS.ink : '#b8a8c8' });
+    if (it.why && hover(ui, x + 3, iy, w - 6, 15)) tooltip(ui, [{ text: it.why, size: 8, color: enabled ? COLORS.gold : COLORS.bad }]);
+    if (enabled && clicked(ui, x + 3, iy, w - 6, 15)) {
+      it.run();
+      state.menu = null;
+    }
+  });
+  // Any other click closes it.
+  if (ui.mouse.clicked || ui.mouse.right) {
+    if (!hover(ui, x, y, w, h)) state.menu = null;
+    if (hover(ui, x, y, w, h)) {
+      ui.mouse.clicked = false;
+      ui.used = true;
+    }
+  }
+}
+
+// ---------- Party panel ----------
+
+export function drawPartyPanel(ui, state, world) {
+  const members = partyMembers(world.bots);
+  if (!members.length) return;
+  const { ctx } = ui;
+  const th = THEMES.mint;
+  const x = 6;
+  const map = world.map;
+  const top = settings.minimap ? 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8 : 8;
+  const y = top + (Object.keys(world.char.buffs).length ? 30 : 0);
+  const w = 120;
+  const h = 18 + (members.length + 1) * 19;
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.5 });
+  box(ctx, x + 2, y + 2, w - 4, 12, { fill: th.main, edge: null, r: 6 });
+  icon(ctx, 'heart', x + 9, y + 8, 8, '#ffffff');
+  text(ctx, `Party ${members.length + 1}/${PARTY_MAX + 1}`, x + 17, y + 11, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  if (button(ui, x + w - 32, y + 2, 28, 12, 'Leave', { size: 6.5 })) leaveParty(world.bots, world);
+  const row = (i, name, level, job, hp, leader, onClick, onRight, hot) => {
+    const ry = y + 17 + i * 19;
+    box(ctx, x + 3, ry, w - 6, 17, { fill: hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
+    if (leader) icon(ctx, 'crown', x + 10, ry + 6, 7, '#f0b53a');
+    text(ctx, name, x + (leader ? 16 : 7), ry + 8, { size: 6.5, bold: true });
+    text(ctx, `Lv${level} ${JOBS[job].short ?? JOBS[job].name}`, x + w - 6, ry + 8, { size: 5.5, align: 'right', color: COLORS.muted });
+    box(ctx, x + 7, ry + 11, w - 14, 3, { fill: 'rgba(74,53,96,0.2)', edge: null, r: 1.5 });
+    box(ctx, x + 7, ry + 11, Math.max(2, (w - 14) * hp), 3, { fill: COLORS.hp, edge: null, r: 1.5 });
+    if (clicked(ui, x + 3, ry, w - 6, 17)) onClick();
+    if (ui.mouse.right && hover(ui, x + 3, ry, w - 6, 17)) {
+      ui.used = true;
+      ui.mouse.right = false;
+      onRight(ry);
+    }
+  };
+  const s = world.stats;
+  row(0, world.char.name, world.char.level, world.char.job, world.char.hp / s.maxHp, true,
+    () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17, w - 6, 17));
+  members.forEach((bot, i) => {
+    row(i + 1, bot.name, bot.level, bot.char.job, 1, false,
+      () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17));
+  });
+}

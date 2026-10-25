@@ -16,6 +16,7 @@ import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES } from '../render/hero.js';
 import { speak, moodFor, makeStyle, price as priceText } from './chatter.js';
+import { updateParty } from './party.js';
 
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
@@ -222,7 +223,7 @@ function townFor(bots, level, not = null) {
 
 function townCounts(bots) {
   const counts = Object.fromEntries(TOWNS.map((t) => [t, 0]));
-  for (const b of bots.list) if (counts[b.map] != null) counts[b.map]++;
+  for (const b of bots.list) if (!b.party && counts[b.map] != null) counts[b.map]++;
   return counts;
 }
 
@@ -286,6 +287,8 @@ export function updateBots(bots, world, dt) {
     bot.session -= dt;
     bot.stay -= dt;
     if (bot.bubble && (bot.bubble.t -= dt) <= 0) bot.bubble = null;
+    // Party members follow you instead (see party.js).
+    if (bot.party) continue;
     if (bot.appear > 0) bot.appear = Math.max(0, bot.appear - dt * 1.5);
     if (bot.state === 'transit') {
       bot.timer -= dt;
@@ -329,7 +332,7 @@ export function updateBots(bots, world, dt) {
     bots.waveIn = 25;
     const b = world.body;
     if (world.map.isTown && b.onGround && !world.dead) {
-      const near = bots.list.filter((x) => x.map === here && !x.waved && !x.shop && ['idle', 'walk'].includes(x.state) && Math.abs(x.x - b.x) < 300);
+      const near = bots.list.filter((x) => x.map === here && !x.waved && !x.shop && !x.party && ['idle', 'walk'].includes(x.state) && Math.abs(x.x - b.x) < 300);
       if (near.length) {
         const bot = pick(near, rng);
         bot.state = 'approach';
@@ -338,6 +341,7 @@ export function updateBots(bots, world, dt) {
       }
     }
   }
+  updateParty(bots, world, dt);
   bots.list = bots.list.filter((b) => !b.gone);
   // Whoever just logged out is replaced, so the server never dips under its minimum.
   for (let i = 0; i < 4 && bots.list.length < MIN_ONLINE; i++) spawn(bots, world);
@@ -483,5 +487,5 @@ export function thank(bots, bot, playerName) {
 
 // The players standing in a map right now (for drawing and clicking).
 export function botsIn(bots, mapId) {
-  return bots ? bots.list.filter((b) => b.map === mapId && b.state !== 'transit') : [];
+  return bots ? bots.list.filter((b) => b.map === mapId && b.state !== 'transit' && !b.party) : [];
 }

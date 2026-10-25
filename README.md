@@ -46,7 +46,8 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
 their title bars, and click a window to bring it to the front. Click an NPC anywhere on screen to
-talk to them, or click another player (or yourself) to see their profile. To bind a hotkey, select
+talk to them, or click another player (or yourself) to see their profile. Right-click a player to
+invite them to your party. To bind a hotkey, select
 a skill in the Skills window or a potion in the Bag, then press the key. Right-click a hotkey slot
 to clear it.
 
@@ -143,6 +144,15 @@ to clear it.
   keycap hotkeys. The minimap, the quest tracker card, ringed buff timers, and a ribbon banner
   when you enter a map round it out. NPCs talk in a visual-novel box: they stand large at the left
   with a name ribbon in their role's color, and their words type out (click to skip).
+- **Parties** — right-click another player for a menu (view profile, invite to party, browse
+  their shop). Players around your level (up to 5 above) or below usually say yes; anyone higher
+  turns you down, as do shopkeepers busy selling. A party holds you and up to five others. Members
+  follow you from map to map (climbing ropes, jumping to ledges, dropping down, and catching up if
+  they get stuck), fight the monsters around you, and chat in party chat. Their kills give you 60%
+  of the EXP, count for your quests, and drop loot for you; your own kills get +10% EXP per member.
+  They level up with you. A party panel under the minimap shows everyone (click for a profile,
+  right-click to remove someone); Leave, or right-clicking yourself, leaves the party, and members
+  head off on their own (or log off after a long session).
 - **Options** — Esc (or the gear button) opens Options. Display: screen shake, hit-stop, damage
   numbers, particles (full, reduced, or off), job auras, and weapon effects. Interface: minimap,
   quest tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: auto-loot,

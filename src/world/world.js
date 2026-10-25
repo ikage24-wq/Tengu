@@ -224,10 +224,14 @@ function useHotkey(world, binding) {
 
 // ---------- Kills, damage, and events ----------
 
-function killMob(world, m) {
+// `byParty` is a kill by a party member: you get a share of the EXP. Your own kills get a bonus for
+// each party member with you.
+function killMob(world, m, byParty = false) {
   const char = world.char;
-  const levels = gainExp(char, m.def.exp);
-  world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${m.def.exp} EXP`, color: '#ffe36b', t: 0, small: true });
+  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)));
+  const levels = gainExp(char, exp);
+  world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
+  world.onKill?.(m);
   for (const qid of recordKill(char, m.def.id)) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
@@ -368,14 +372,14 @@ export function updateWorld(world, dt, input) {
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - m.def.h / 2, t: 0, dur: 0.25, crit: h.crit });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
     // Endgame weapons add an elemental impact on every hit.
-    const element = weaponElement(char);
+    const element = h.party ? null : weaponElement(char);
     if (element) world.fx.push({ kind: 'impact', element, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.4, seed: Math.random() });
     // Spell shots burst where they land.
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
     if (hitMob(m, h.damage, h.fromX, world.now)) {
-      killMob(world, m);
+      killMob(world, m, Boolean(h.party));
       continue;
     }
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);

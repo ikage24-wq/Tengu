@@ -11,6 +11,8 @@ import { createWorld, updateWorld } from './world/world.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
 import { createBots, updateBots, botsIn } from './world/bots.js';
+import { partyMembers, shareKill } from './world/party.js';
+import { openMenu } from './ui/party.js';
 import { openProfile } from './ui/profile.js';
 
 loadSettings();
@@ -48,6 +50,7 @@ function startGame(char) {
   world = createWorld(char);
   world.settings = settings;
   world.bots = createBots(world);
+  world.onKill = (m) => shareKill(world.bots, world, m);
   uiState = createUiState();
   camera = createCamera();
   screen = 'game';
@@ -173,7 +176,9 @@ function npcPointer(ui) {
     const wy = m.y + camera.y;
     const gy = world.map.groundY;
     if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > gy - 50 && wy < gy + 14) ?? null;
-    if (!npc && settings.showCrowd && world.map.isTown) {
+    // Party members, wherever they are on the map.
+    if (!npc) bot = partyMembers(world.bots).find((b) => b.body && b.map === world.map.id && Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
+    if (!npc && !bot && settings.showCrowd && world.map.isTown) {
       bot = botsIn(world.bots, world.map.id).find((b) => (Math.abs(b.x - wx) < 13 && wy > gy - 46 && wy < gy + 22) || (b.shop && Math.abs(b.x - wx) < 40 && wy > gy - 76 && wy < gy - 58)) ?? null;
     }
     const b = world.body;
@@ -183,6 +188,12 @@ function npcPointer(ui) {
   world.hoverBot = bot?.id ?? null;
   world.hoverSelf = self;
   canvas.style.cursor = npc || bot || self ? 'pointer' : '';
+  // Right-click a player or yourself for the menu (invite to party, profile, leave).
+  if (m.right && (bot || self)) {
+    openMenu(uiState, bot ? { kind: 'bot', id: bot.id, x: m.x + 4, y: m.y } : { kind: 'self', x: m.x + 4, y: m.y });
+    m.right = false;
+    return;
+  }
   if (!m.clicked) return;
   if (npc) world.events.push({ type: 'talk', npc: npc.id });
   else if (bot) openProfile(uiState, { kind: 'bot', id: bot.id, shop: Boolean(bot.shop) });

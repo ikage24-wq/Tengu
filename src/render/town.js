@@ -697,37 +697,71 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   for (const bot of bots) {
     const x = Math.round(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    const hovered = hoverId === bot.id;
-    if (bot.shop) shopBooth(ctx, x, gy, bot, time, hovered);
-    // Logging in or out: a shimmer and a fade.
-    const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
-    if (bot.appear > 0 || bot.state === 'logout') {
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * TAU + time * 3;
-        ctx.globalAlpha = 1 - fade;
-        sparkle(ctx, x + Math.cos(a) * 12, gy - 20 + Math.sin(a) * 18, 2.2, i % 2 ? '#ffe36b' : '#ffffff');
-      }
-      ctx.globalAlpha = 1;
+    if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
+    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said);
+  }
+  if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
+}
+
+// One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
+// pros, green with a heart for party members, guild underneath).
+function drawBot(ctx, bot, x, y, time, hovered, said) {
+  const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
+  if (bot.appear > 0 || bot.state === 'logout') {
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * TAU + time * 3;
+      ctx.globalAlpha = 1 - fade;
+      sparkle(ctx, x + Math.cos(a) * 12, y - 20 + Math.sin(a) * 18, 2.2, i % 2 ? '#ffe36b' : '#ffffff');
     }
-    shadow(ctx, x, gy);
-    const walking = ['walk', 'leave', 'approach'].includes(bot.state);
-    const waving = bot.state === 'wave';
-    const look = bot.bubble ? { ...bot.char.appearance, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.char.appearance;
-    const seed = seedOf(bot.id);
-    const anim = animFor(bot.id, bot.x, bot.facing, time);
-    drawHero(ctx, look, bot.char.equipment, x, gy, {
-      pose: waving ? 'cheer' : walking ? 'walk' : 'idle', progress: waving ? (1.6 - bot.timer) / 1.6 : 0, dur: 0.5,
-      time: time + seed * 0.37, seed, facing: bot.facing, job: bot.char.job, alpha: fade,
-    }, anim);
-    // Name tag: gold for pros, with a guild under it if they have one.
-    ctx.font = 'bold 7px sans-serif';
-    const label = `Lv${bot.level} ${bot.name}`;
-    const w = ctx.measureText(label).width + (bot.pro ? 18 : 10);
-    box(ctx, x - w / 2, gy + 2, w, 10, { fill: hovered ? '#ff8fc1' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)', edge: bot.pro ? '#ffd66b' : hovered ? '#ffffff' : null, r: 5, width: 1 });
-    if (bot.pro) sparkle(ctx, x - w / 2 + 6, gy + 7, 2.6, '#ffd66b');
-    text(ctx, label, x + (bot.pro ? 4 : 0), gy + 9.5, { size: 7, bold: true, align: 'center', color: bot.pro ? '#ffe9a0' : '#fff6c9' });
-    if (bot.guild) text(ctx, `<${bot.guild}>`, x, gy + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
-    if (bot.bubble) said.push([x, gy - (bot.shop ? 80 : 62), bot.bubble]);
+    ctx.globalAlpha = 1;
+  }
+  const body = bot.party ? bot.body : null;
+  if (!body || body.onGround) shadow(ctx, x, y);
+  const waving = bot.state === 'wave';
+  let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) ? 'walk' : 'idle';
+  let progress = waving ? (1.6 - bot.timer) / 1.6 : 0;
+  if (body) {
+    if (bot.attack) {
+      pose = bot.attack.pose;
+      progress = bot.attack.t / bot.attack.dur;
+    } else if (body.rope) pose = 'climb';
+    else if (!body.onGround) pose = 'jump';
+    else pose = Math.abs(body.vx) > 8 ? 'walk' : 'idle';
+  }
+  const look = bot.bubble ? { ...bot.char.appearance, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.char.appearance;
+  const seed = seedOf(bot.id);
+  const facing = body ? body.facing : bot.facing;
+  const anim = animFor(bot.id, body ? body.x : bot.x, facing, time);
+  drawHero(ctx, look, bot.char.equipment, x, y, {
+    pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
+  }, anim);
+  ctx.font = 'bold 7px sans-serif';
+  const label = `Lv${bot.level} ${bot.name}`;
+  const pad = bot.pro || bot.party ? 18 : 10;
+  const w = ctx.measureText(label).width + pad;
+  const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
+  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : hovered ? '#ffffff' : null, r: 5, width: 1 });
+  if (bot.party) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2 + 6, y + 10);
+    ctx.bezierCurveTo(x - w / 2 + 1, y + 6.5, x - w / 2 + 3.5, y + 3.5, x - w / 2 + 6, y + 5.8);
+    ctx.bezierCurveTo(x - w / 2 + 8.5, y + 3.5, x - w / 2 + 11, y + 6.5, x - w / 2 + 6, y + 10);
+    ctx.fill();
+  } else if (bot.pro) sparkle(ctx, x - w / 2 + 6, y + 7, 2.6, '#ffd66b');
+  text(ctx, label, x + (pad > 10 ? 4 : 0), y + 9.5, { size: 7, bold: true, align: 'center', color: bot.party ? '#e6ffee' : bot.pro ? '#ffe9a0' : '#fff6c9' });
+  if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+  if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
+}
+
+// Your party, on any map, wherever they are.
+export function drawParty(ctx, members, cam, width, time, hoverId = null) {
+  const said = [];
+  for (const bot of members) {
+    if (!bot.body) continue;
+    const x = Math.round(bot.body.x - cam.x);
+    if (x < -60 || x > width + 60) continue;
+    drawBot(ctx, bot, x, Math.round(bot.body.y - cam.y), time, hoverId === bot.id, said);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }

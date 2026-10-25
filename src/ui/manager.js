@@ -11,6 +11,7 @@ import { createChat, chatInput, updateChat, drawChatBar } from './chat.js';
 import { adminWindow } from './admin.js';
 import { optionsWindow } from './options.js';
 import { profileWindow } from './profile.js';
+import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
 
 export function createUiState() {
@@ -30,6 +31,8 @@ export function createUiState() {
     order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
+    // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
+    menu: null,
     // Set by the Options window: 'select' (change character) or 'title'. main.js acts on it.
     action: null,
     npc: null,
@@ -74,7 +77,8 @@ export function routeInput(state, world, input, dt) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
   }
   if (input.pressed.has('Escape')) {
-    if (state.scrollMode) state.scrollMode = null;
+    if (state.menu) state.menu = null;
+    else if (state.scrollMode) state.scrollMode = null;
     else if (state.npc) {
       state.npc = null;
       state.windows.npc.open = false;
@@ -131,6 +135,7 @@ function inside(win, m) {
 
 export function drawUi(ui, state, world) {
   drawHud(ui, state, world);
+  drawPartyPanel(ui, state, world);
   drawChatBar(ui, state.chat, world);
   const m = ui.mouse;
   const t = performance.now() / 1000;
@@ -171,6 +176,7 @@ export function drawUi(ui, state, world) {
   m.double = top && !modal ? false : click.double;
   m.wheel = click.wheel;
   if (top && !modal) ui.used = true;
+  drawMenu(ui, state, world);
   if (state.npc) withPop(ui, state.windows.npc, t, () => npcWindow(ui, state, world));
   else state.windows.npc.openedAt = null;
   if (state.death) deathWindow(ui, state, world);

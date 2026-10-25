@@ -16,8 +16,9 @@ import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffs
 import { ITEMS } from '../data/items.js';
 import { drawBubble } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
-import { drawStreet, drawTownsfolk, npcRoutine } from './town.js';
+import { drawStreet, drawTownsfolk, npcRoutine, drawParty } from './town.js';
 import { botsIn } from '../world/bots.js';
+import { partyMembers } from '../world/party.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -157,6 +158,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawWarnings(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
   drawMobs(ctx, world, cam, time);
+
+  drawParty(ctx, partyMembers(world.bots).filter((b) => b.map === world.map.id), cam, VIEW_W, time, world.hoverBot);
 
   const p = playerPose(world);
   const blink = world.invuln > 0 && Math.floor(time * 16) % 2 === 0;
