@@ -14,14 +14,16 @@ import { isGm } from '../world/gm.js';
 export function createUiState() {
   return {
     windows: {
-      bag: { x: 370, y: 64, open: false, tab: 0, sel: -1 },
-      stats: { x: 8, y: 92, open: false },
-      skills: { x: 194, y: 60, open: false },
-      quests: { x: 436, y: 60, open: false },
-      npc: { x: 170, y: 84, open: false },
-      worldmap: { x: 110, y: 26, open: false },
-      admin: { x: 130, y: 40, open: false, tab: 0 },
+      bag: { x: 370, y: 60, open: false, tab: 0, sel: -1, theme: 'peach', icon: 'bag' },
+      stats: { x: 8, y: 66, open: false, theme: 'pink', icon: 'star' },
+      skills: { x: 180, y: 52, open: false, theme: 'lavender', icon: 'book' },
+      quests: { x: 440, y: 52, open: false, theme: 'mint', icon: 'scroll' },
+      npc: { x: 170, y: 84, open: false, theme: 'pink', icon: 'chat' },
+      worldmap: { x: 110, y: 26, open: false, theme: 'sky', icon: 'map' },
+      admin: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
     },
+    // Window stacking, back to front. Clicking a window brings it to the front.
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin'],
     npc: null,
     chat: createChat(),
     death: false,
@@ -95,15 +97,84 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow };
+const POP = 0.22;
+
+// Opening windows pop in with a little overshoot.
+function popScale(win, t) {
+  if (!win.open) {
+    win.openedAt = null;
+    return 1;
+  }
+  win.openedAt ??= t;
+  const u = Math.min(1, (t - win.openedAt) / POP);
+  if (u >= 1) return 1;
+  const c = 1.9;
+  return 0.85 + 0.15 * (1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2));
+}
+
+function inside(win, m) {
+  return win.open && win.w && m.x >= win.x && m.x < win.x + win.w && m.y >= win.y && m.y < win.y + win.h;
+}
+
 export function drawUi(ui, state, world) {
   drawHud(ui, state, world);
   drawChatBar(ui, state.chat, world);
-  if (state.windows.stats.open) statsWindow(ui, state, world);
-  if (state.windows.skills.open) skillsWindow(ui, state, world);
-  if (state.windows.quests.open) questsWindow(ui, state, world);
-  if (state.windows.bag.open) bagWindow(ui, state, world);
-  if (state.windows.worldmap.open) worldMapWindow(ui, state, world);
-  if (state.windows.admin.open) adminWindow(ui, state, world);
-  if (state.npc) npcWindow(ui, state, world);
+  const m = ui.mouse;
+  const t = performance.now() / 1000;
+  // Only the frontmost window under the mouse sees its clicks, so windows behind it don't react.
+  const top = [...state.order].reverse().find((k) => inside(state.windows[k], m));
+  if (top && m.clicked) state.order = [...state.order.filter((k) => k !== top), top];
+  const click = { clicked: m.clicked, right: m.right, double: m.double, wheel: m.wheel };
+  const modal = Boolean(state.npc || state.death);
+  for (const key of state.order) {
+    const win = state.windows[key];
+    if (!win.open) {
+      win.openedAt = null;
+      continue;
+    }
+    const mine = key === top && !modal;
+    m.clicked = click.clicked && mine;
+    m.right = click.right && mine;
+    m.double = click.double && mine;
+    m.wheel = mine ? click.wheel : 0;
+    const k = popScale(win, t);
+    const { ctx } = ui;
+    ctx.save();
+    if (k !== 1 && win.w) {
+      const cx = win.x + win.w / 2;
+      const cy = win.y + win.h / 2;
+      ctx.translate(cx, cy);
+      ctx.scale(k, k);
+      ctx.translate(-cx, -cy);
+      ctx.globalAlpha = Math.min(1, (k - 0.85) / 0.15 + 0.3);
+    }
+    WINDOWS[key](ui, state, world);
+    ctx.restore();
+    if (mine) click.clicked = m.clicked;
+  }
+  // A click no window used still reaches the dialogs and the game.
+  m.clicked = top && !modal ? false : click.clicked;
+  m.right = top && !modal ? false : click.right;
+  m.double = top && !modal ? false : click.double;
+  m.wheel = click.wheel;
+  if (top && !modal) ui.used = true;
+  if (state.npc) withPop(ui, state.windows.npc, t, () => npcWindow(ui, state, world));
+  else state.windows.npc.openedAt = null;
   if (state.death) deathWindow(ui, state, world);
+}
+
+function withPop(ui, win, t, draw) {
+  const k = popScale(win, t);
+  const { ctx } = ui;
+  ctx.save();
+  if (k !== 1 && win.w) {
+    const cx = win.x + win.w / 2;
+    const cy = win.y + win.h / 2;
+    ctx.translate(cx, cy);
+    ctx.scale(k, k);
+    ctx.translate(-cx, -cy);
+  }
+  draw();
+  ctx.restore();
 }

@@ -15,7 +15,7 @@ import { questState, objectiveProgress } from '../core/quests.js';
 import { useItem } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
-import { COLORS, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle } from './kit.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 
 const CELL = 19;
@@ -36,6 +36,9 @@ const SLOT_POS = {
   weapon: [74, 26], gloves: [74, 50], cape: [74, 74], earring: [74, 98],
 };
 
+// What an empty equipment slot shows, faded.
+const SLOT_GHOST = { hat: 'hat_0', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'earring_0' };
+
 export function bagWindow(ui, state, world) {
   const win = state.windows.bag;
   const W = 262;
@@ -47,7 +50,8 @@ export function bagWindow(ui, state, world) {
   const oy = win.y;
 
   // Equipment panel with a live preview of the hero.
-  box(ctx, ox + 4, oy + 22, 96, 104, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
+  const th = ui.theme;
+  well(ctx, ox + 4, oy + 22, 96, 104, th);
   drawHero(ctx, char.appearance, char.equipment, ox + 52, oy + 104, { pose: 'idle', time: world.now });
   for (const slot of EQUIP_SLOTS) {
     const [sx, sy] = SLOT_POS[slot];
@@ -55,9 +59,14 @@ export function bagWindow(ui, state, world) {
     const y = oy + sy;
     const inst = char.equipment[slot];
     const rare = inst?.rarity ? RARITIES[inst.rarity].color : null;
-    box(ctx, x, y, CELL, CELL, { fill: COLORS.cell, edge: state.scrollMode && inst ? COLORS.accent : rare ?? COLORS.cellEdge, r: 4, width: rare ? 2 : 1 });
+    box(ctx, x, y, CELL, CELL, { fill: hover(ui, x, y, CELL, CELL) ? '#ffffff' : th.light, edge: state.scrollMode && inst ? COLORS.accent : rare ?? th.main, r: 5, width: rare ? 2 : 1 });
     if (inst) drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5);
-    else text(ctx, slot[0].toUpperCase(), x + CELL / 2, y + 12, { size: 7, align: 'center', color: '#cdb8e0' });
+    else {
+      // An empty slot shows a faded outline of what goes there.
+      ctx.globalAlpha = 0.25;
+      drawItemIcon(ctx, SLOT_GHOST[slot], x + 1.5, y + 1.5);
+      ctx.globalAlpha = 1;
+    }
     if (hover(ui, x, y, CELL, CELL)) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click to take off', color: COLORS.muted, size: 8 }] : [{ text: slot[0].toUpperCase() + slot.slice(1), bold: true }]);
     if (clicked(ui, x, y, CELL, CELL) && inst) {
       if (state.scrollMode) {
@@ -70,7 +79,9 @@ export function bagWindow(ui, state, world) {
       }
     }
   }
-  text(ctx, `${char.gold.toLocaleString()} gold`, ox + 52, oy + 140, { size: 9, bold: true, align: 'center', color: COLORS.gold });
+  box(ctx, ox + 10, oy + 131, 84, 15, { fill: '#fff6d6', edge: '#f0cf7a', r: 7.5 });
+  icon(ctx, 'coin', ox + 19, oy + 138.5, 9, '#f0b53a');
+  text(ctx, char.gold.toLocaleString(), ox + 56, oy + 142, { size: 9, bold: true, align: 'center', color: COLORS.gold });
 
   // Tabs and grid.
   const gx = ox + 106;
@@ -83,7 +94,8 @@ export function bagWindow(ui, state, world) {
     const entry = list[i];
     const sel = win.sel === i;
     const rare = tab === 'equip' && entry?.rarity ? RARITIES[entry.rarity].color : null;
-    box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : COLORS.cell, edge: sel ? COLORS.select : rare ?? COLORS.cellEdge, r: 3, width: sel || rare ? 2 : 1 });
+    const hot = hover(ui, x, y, CELL - 1, CELL - 1);
+    box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : rare ?? th.light, r: 4, width: sel || rare ? 2 : 1 });
     if (!entry) continue;
     drawItemIcon(ctx, itemIdOf(entry), x + 1, y + 1);
     if (entry.qty > 1) text(ctx, `${entry.qty}`, x + CELL - 3, y + CELL - 3, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
@@ -108,7 +120,7 @@ export function bagWindow(ui, state, world) {
   // Info strip for the selection.
   const selEntry = list[win.sel];
   const iy = oy + 122;
-  box(ctx, gx, iy, 152, 66, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
+  well(ctx, gx, iy, 152, 66, th);
   if (state.scrollMode) {
     wrap(ctx, `Click a piece of equipment to use ${ITEMS[state.scrollMode].name}.`, gx + 6, iy + 13, 140, { size: 8, color: COLORS.accent });
     if (button(ui, gx + 6, iy + 46, 60, 14, 'Cancel')) state.scrollMode = null;
@@ -157,39 +169,49 @@ function scrollOnto(state, world, inst) {
 
 // ---------- Stats ----------
 
+const STAT_COLORS = { str: '#ff7a6b', dex: '#3fc48a', int: '#5aa8ff', luk: '#f0b53a' };
+
 export function statsWindow(ui, state, world) {
   const win = state.windows.stats;
   const W = 180;
-  const H = 226;
+  const H = 232;
   if (!windowFrame(ui, win, W, H, 'Stats')) return;
   const { ctx } = ui;
+  const th = ui.theme;
   const char = world.char;
   const s = world.stats;
   const x = win.x + 8;
-  let y = win.y + 32;
-  text(ctx, char.name, x, y, { size: 10, bold: true });
-  text(ctx, `${JOBS[char.job].name}  ·  Lv ${char.level}`, x + 164, y, { size: 8, align: 'right', color: COLORS.muted });
-  y += 8;
-  const need = expToNext(char.level);
-  bar(ctx, x, y, 164, 8, Number.isFinite(need) ? char.exp / need : 1, COLORS.exp, Number.isFinite(need) ? `EXP ${(100 * char.exp / need).toFixed(1)}%` : 'MAX', { textColor: '#ffffff' });
-  y += 12;
-  bar(ctx, x, y, 80, 8, char.hp / s.maxHp, COLORS.hp, `${char.hp}/${s.maxHp}`);
-  bar(ctx, x + 84, y, 80, 8, char.mp / s.maxMp, COLORS.mp, `${char.mp}/${s.maxMp}`);
-  y += 20;
-  text(ctx, `Ability Points: ${char.ap}`, x, y, { size: 9, bold: true, color: char.ap ? COLORS.accent : COLORS.muted });
-  if (button(ui, x + 116, y - 9, 48, 12, 'Auto', { enabled: char.ap > 0, size: 8 })) autoAssignAp(char);
+  let y = win.y + 33;
+  text(ctx, char.name, x, y, { size: 11, bold: true });
+  box(ctx, x + 164 - 70, y - 10, 70, 13, { fill: th.light, edge: null, r: 6.5 });
+  text(ctx, `${JOBS[char.job].name} · Lv ${char.level}`, x + 164 - 35, y - 0.5, { size: 7, bold: true, align: 'center', color: th.ink });
   y += 6;
+  const need = expToNext(char.level);
+  bar(ctx, x, y, 164, 9, Number.isFinite(need) ? char.exp / need : 1, COLORS.exp, Number.isFinite(need) ? `EXP ${(100 * char.exp / need).toFixed(1)}%` : 'MAX', { textColor: '#ffffff' });
+  y += 12;
+  bar(ctx, x, y, 80, 9, char.hp / s.maxHp, COLORS.hp, `${char.hp}/${s.maxHp}`);
+  bar(ctx, x + 84, y, 80, 9, char.mp / s.maxMp, COLORS.mp, `${char.mp}/${s.maxMp}`);
+  y += 24;
+  // Unspent points glow and bounce a little to say "spend me".
+  const bounce = char.ap ? Math.abs(Math.sin(world.now * 4)) * 1.5 : 0;
+  box(ctx, x, y - 11 - bounce, 92, 15, { fill: char.ap ? th.main : COLORS.cell, edge: char.ap ? th.dark : null, r: 7.5 });
+  text(ctx, `${char.ap} Ability Points`, x + 46, y - 0.5 - bounce, { size: 8, bold: true, align: 'center', color: char.ap ? '#ffffff' : COLORS.muted, outline: char.ap ? th.ink : null });
+  if (char.ap) sparkle(ctx, x + 90, y - 11 - bounce, 2 + bounce, '#ffffff');
+  if (button(ui, x + 116, y - 12, 48, 16, 'Auto', { enabled: char.ap > 0, size: 8 })) autoAssignAp(char);
+  y += 4;
   for (const k of STAT_KEYS) {
-    y += 15;
-    box(ctx, x, y - 10, 164, 13, { fill: COLORS.cell, edge: null, r: 4 });
-    text(ctx, k.toUpperCase(), x + 5, y, { size: 9, bold: true });
+    y += 16;
+    box(ctx, x, y - 11, 164, 14, { fill: '#ffffff', edge: th.light, r: 7 });
+    box(ctx, x + 1, y - 10, 34, 12, { fill: STAT_COLORS[k], edge: null, r: 6 });
+    text(ctx, k.toUpperCase(), x + 18, y - 1, { size: 8, bold: true, align: 'center', color: '#ffffff' });
     const bonus = s[k] - char.base[k];
-    text(ctx, `${s[k]}${bonus ? ` (${char.base[k]}+${bonus})` : ''}`, x + 50, y, { size: 9 });
-    if (button(ui, x + 146, y - 9, 16, 11, '+', { enabled: char.ap > 0, primary: char.ap > 0, size: 9 })) {
+    text(ctx, `${s[k]}`, x + 42, y, { size: 9, bold: true });
+    if (bonus) text(ctx, `(${char.base[k]} + ${bonus})`, x + 62, y, { size: 7, color: COLORS.good });
+    if (button(ui, x + 146, y - 11, 17, 14, '+', { enabled: char.ap > 0, primary: char.ap > 0, size: 9 })) {
       spendAp(char, k, ui.input.held.has('ShiftLeft') ? 5 : 1);
     }
   }
-  y += 18;
+  y += 10;
   const phys = physicalRange(s, s.weaponType, 100);
   const mag = magicRange(s, 100);
   const family = JOBS[char.job].family;
@@ -202,10 +224,12 @@ export function statsWindow(ui, state, world) {
     ['Critical', `${Math.round((0.05 + s.critRate) * 100)}%`],
     ['Speed', `${s.speed}%`],
   ];
+  well(ctx, x, y - 4, 164, rows.length * 10 + 6, th);
+  y += 6;
   for (const [k, v] of rows) {
-    text(ctx, k, x + 4, y, { size: 8, color: COLORS.muted });
-    text(ctx, v, x + 160, y, { size: 8, bold: true, align: 'right' });
-    y += 11;
+    text(ctx, k, x + 6, y, { size: 7.5, color: COLORS.muted });
+    text(ctx, v, x + 158, y, { size: 7.5, bold: true, align: 'right' });
+    y += 10;
   }
 }
 
@@ -221,23 +245,32 @@ export function skillsWindow(ui, state, world) {
   const chain = jobChain(char.job);
   win.tab = Math.min(win.tab ?? chain.length - 1, chain.length - 1);
   // Tabs share the window width, so four job books still fit.
-  const tabW = Math.min(70, Math.floor((W - 60) / chain.length) - 2);
+  const tabW = Math.min(64, Math.floor((W - 64) / chain.length) - 2);
   win.tab = tabs(ui, win.x + 6, win.y + 22, chain.map((j) => JOBS[j].short ?? JOBS[j].name), win.tab, { w: tabW });
   const job = chain[win.tab];
-  text(ctx, `SP: ${char.sp}`, win.x + W - 10, win.y + 32, { size: 9, bold: true, align: 'right', color: char.sp ? COLORS.accent : COLORS.muted });
+  const th = ui.theme;
+  box(ctx, win.x + W - 50, win.y + 22, 44, 15, { fill: char.sp ? th.main : COLORS.cell, edge: char.sp ? th.dark : null, r: 7.5 });
+  text(ctx, `${char.sp} SP`, win.x + W - 28, win.y + 33, { size: 8, bold: true, align: 'center', color: char.sp ? '#ffffff' : COLORS.muted, outline: char.sp ? th.ink : null });
   const list = Object.values(SKILLS).filter((s) => s.job === job);
   let y = win.y + 42;
   for (const s of list) {
     const lv = char.skills[s.id] ?? 0;
     const sel = state.selectedSkill === s.id;
-    box(ctx, win.x + 6, y, W - 12, 30, { fill: sel ? '#fff3c4' : COLORS.cell, edge: sel ? COLORS.select : COLORS.cellEdge, r: 6, width: sel ? 2 : 1 });
-    drawSkillIcon(ctx, s.id, win.x + 11, y + 7);
+    const hot = hover(ui, win.x + 6, y, W - 40, 30);
+    box(ctx, win.x + 6, y, W - 12, 30, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : lv ? th.main : th.light, r: 8, width: sel ? 2 : 1.2 });
+    box(ctx, win.x + 9, y + 4, 22, 22, { fill: lv ? th.light : COLORS.cell, edge: null, r: 6 });
+    ctx.globalAlpha = lv ? 1 : 0.5;
+    drawSkillIcon(ctx, s.id, win.x + 11, y + 6);
+    ctx.globalAlpha = 1;
+    // A little level gauge under the name.
+    box(ctx, win.x + 34, y + 21, 70, 3, { fill: COLORS.cell, edge: null, r: 1.5 });
+    if (lv) box(ctx, win.x + 34, y + 21, Math.max(3, (70 * lv) / s.maxLevel), 3, { fill: th.main, edge: null, r: 1.5 });
     ctx.globalAlpha = lv ? 1 : 0.55;
-    text(ctx, s.name, win.x + 32, y + 13, { size: 9, bold: true });
-    text(ctx, s.type === 'passive' ? 'Passive' : s.type === 'buff' ? 'Buff' : 'Active', win.x + 32, y + 24, { size: 7, color: COLORS.muted });
+    text(ctx, s.name, win.x + 35, y + 13, { size: 9, bold: true });
+    text(ctx, s.type === 'passive' ? 'Passive' : s.type === 'buff' ? 'Buff' : 'Active', win.x + 108, y + 25, { size: 6.5, color: COLORS.muted });
     ctx.globalAlpha = 1;
     text(ctx, `${lv}/${s.maxLevel}`, win.x + W - 34, y + 19, { size: 9, bold: true, align: 'right', color: lv ? COLORS.ink : COLORS.muted });
-    if (button(ui, win.x + W - 28, y + 8, 16, 14, '+', { enabled: canLearn(char, s.id), primary: canLearn(char, s.id) })) {
+    if (button(ui, win.x + W - 28, y + 7, 17, 16, '+', { enabled: canLearn(char, s.id), primary: canLearn(char, s.id) })) {
       learnSkill(char, s.id);
     }
     if (hover(ui, win.x + 6, y, W - 40, 30)) tooltip(ui, [...skillTooltip(char, s.id), ...(lv && s.type !== 'passive' ? [{ text: 'Click, then press a hotkey to bind', color: COLORS.muted, size: 8 }] : [])]);
@@ -254,37 +287,54 @@ export function skillsWindow(ui, state, world) {
 export function questsWindow(ui, state, world) {
   const win = state.windows.quests;
   const W = 196;
-  const H = 200;
+  const H = 210;
   if (!windowFrame(ui, win, W, H, 'Quests')) return;
   const { ctx } = ui;
+  const th = ui.theme;
   const char = world.char;
   const ids = Object.keys(QUESTS);
   const active = ids.filter((id) => ['active', 'ready'].includes(questState(char, id)));
   const available = ids.filter((id) => questState(char, id) === 'available');
-  let y = win.y + 34;
-  text(ctx, 'In progress', win.x + 10, y, { size: 9, bold: true, color: COLORS.accent });
-  y += 4;
+  const x = win.x + 8;
+  const w = W - 16;
+  let y = win.y + 26;
+  const heading = (label, n) => {
+    box(ctx, x, y, w, 14, { fill: th.light, edge: null, r: 7 });
+    text(ctx, label, x + 8, y + 10, { size: 8, bold: true, color: th.ink });
+    text(ctx, `${n}`, x + w - 8, y + 10, { size: 8, bold: true, align: 'right', color: th.ink });
+    y += 18;
+  };
+  heading('In progress', active.length);
   if (!active.length) {
-    y += 12;
-    text(ctx, 'Nothing yet. Talk to villagers with Up.', win.x + 12, y, { size: 8, color: COLORS.muted });
+    text(ctx, 'Nothing yet. Talk to villagers with Up.', x + 4, y + 8, { size: 7.5, color: COLORS.muted });
+    y += 16;
   }
   for (const id of active) {
     const q = QUESTS[id];
-    y += 13;
     const ready = questState(char, id) === 'ready';
-    text(ctx, `${ready ? '✓ ' : ''}${q.name}`, win.x + 12, y, { size: 9, bold: true, color: ready ? '#3f9f5f' : COLORS.ink });
-    text(ctx, ready ? `Return to ${NPCS[q.giver].name}` : NPCS[q.giver].name, win.x + W - 10, y, { size: 7, align: 'right', color: COLORS.muted });
-    for (const o of objectiveProgress(char, id)) {
-      y += 11;
+    const objs = objectiveProgress(char, id);
+    const h = 18 + objs.length * 11;
+    box(ctx, x, y, w, h, { fill: ready ? '#effcf3' : '#ffffff', edge: ready ? COLORS.good : th.light, r: 7 });
+    text(ctx, `${ready ? '✓ ' : ''}${q.name}`, x + 6, y + 11, { size: 8.5, bold: true, color: ready ? '#2f8f52' : COLORS.ink });
+    text(ctx, ready ? `Back to ${NPCS[q.giver].name}` : NPCS[q.giver].name, x + w - 6, y + 11, { size: 6.5, align: 'right', color: COLORS.muted });
+    let oy = y + 22;
+    for (const o of objs) {
       const name = o.type === 'kill' ? `Defeat ${MOBS[o.mob].name}` : ITEMS[o.item].name;
-      text(ctx, `${name}: ${o.have}/${o.count}`, win.x + 20, y, { size: 8, color: o.have >= o.count ? '#3f9f5f' : COLORS.muted });
+      text(ctx, name, x + 8, oy, { size: 7, color: COLORS.muted });
+      bar(ctx, x + w - 62, oy - 6, 56, 7, o.have / o.count, o.have >= o.count ? COLORS.good : th.main, `${o.have}/${o.count}`, { size: 6 });
+      oy += 11;
     }
+    y += h + 4;
   }
-  y += 18;
-  text(ctx, 'Available', win.x + 10, y, { size: 9, bold: true, color: COLORS.accent });
+  y += 4;
+  heading('Available', available.length);
   for (const id of available.slice(0, 4)) {
-    y += 13;
-    text(ctx, `! ${QUESTS[id].name}`, win.x + 12, y, { size: 9 });
-    text(ctx, NPCS[QUESTS[id].giver].name, win.x + W - 10, y, { size: 7, align: 'right', color: COLORS.muted });
+    const hot = hover(ui, x, y, w, 14);
+    box(ctx, x, y, w, 14, { fill: hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 7 });
+    box(ctx, x + 3, y + 2.5, 9, 9, { fill: COLORS.select, edge: null, r: 4.5 });
+    text(ctx, '!', x + 7.5, y + 10, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#c99a1f' });
+    text(ctx, QUESTS[id].name, x + 16, y + 10, { size: 8 });
+    text(ctx, NPCS[QUESTS[id].giver].name, x + w - 6, y + 10, { size: 6.5, align: 'right', color: COLORS.muted });
+    y += 17;
   }
 }

@@ -45,7 +45,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Esc | Close windows |
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
-their title bars. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
+their title bars, and click a window to bring it to the front. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
 then press the key. Right-click a hotkey slot to clear it.
 
 ## Systems
@@ -133,6 +133,14 @@ then press the key. Right-click a hotkey slot to clear it.
   turning rune ring for the Archmages (crackling with lightning for Stormfrost, ringed with
   dancing flames for Venomflame) and a halo and angel wings for the Bishop. Elowen shows off the Bishop
   aura in Moonleaf Grove.
+- **Interface** — a candy-pastel UI. Each window has its own color and icon badge (peach Bag,
+  pink Stats, lavender Skills, mint Quests, sky-blue World Map) on a scalloped title ribbon, and
+  pops open with a little bounce. The HUD has a portrait medallion with your hero's face and
+  level, glossy HP and MP capsules (a pale trail shows what you just lost, and the heart pulses
+  when HP runs low), an EXP strip along the bar's top edge, round icon buttons for each window, and
+  keycap hotkeys. The minimap, the quest tracker card, ringed buff timers, and a ribbon banner
+  when you enter a map round it out. NPCs talk in a visual-novel box: they stand large at the left
+  with a name ribbon in their role's color, and their words type out (click to skip).
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
   expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.

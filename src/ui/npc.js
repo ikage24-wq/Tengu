@@ -12,7 +12,7 @@ import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, windowFrame, button, tabs, text, box, hover, tooltip, wrap } from './kit.js';
+import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
 
 const HAIR_COLORS = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
@@ -66,6 +66,85 @@ export function questMarker(char, npcId) {
 
 // ---------- Dialog ----------
 
+// Each NPC role gets its own color.
+const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender' };
+
+// A visual-novel style dialog box along the bottom of the screen: the NPC stands large at the
+// left, their name on a ribbon, and their words type out. Returns the text area, or null if the
+// player closed it.
+function dialogFrame(ui, win, npc, H, world) {
+  const { ctx } = ui;
+  const th = THEMES[ROLE_THEME[npc.role] ?? 'pink'];
+  const W = 440;
+  const x = (640 - W) / 2;
+  const y = 322 - H;
+  Object.assign(win, { x, y, w: W, h: H });
+  ui.theme = th;
+  softShadow(ctx, x, y, W, H, 12, 4);
+  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.97)', edge: th.dark, r: 12, width: 2 });
+  roundRect(ctx, x + 3, y + 3, W - 6, H - 6, 9);
+  ctx.strokeStyle = th.light;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // The NPC, drawn big on a soft round stage, peeking over the top of the box.
+  const px = x + 52;
+  const g = ctx.createRadialGradient(px, y + H - 34, 4, px, y + H - 34, 46);
+  g.addColorStop(0, th.light);
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(px - 50, y + H - 84, 100, 84);
+  ctx.save();
+  roundRect(ctx, x - 40, y - 60, 140, H + 60 - 3, 10);
+  ctx.clip();
+  drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob });
+  ctx.restore();
+
+  // The name ribbon.
+  ctx.font = `bold 10px "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
+  const nw = ctx.measureText(npc.name).width;
+  ctx.font = `bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
+  const tw = ctx.measureText(npc.title).width;
+  const rx = x + 104;
+  box(ctx, rx, y - 9, nw + tw + 30, 18, { fill: th.main, edge: '#ffffff', r: 9, width: 2 });
+  text(ctx, npc.name, rx + 10, y + 4, { size: 10, bold: true, color: '#ffffff', outline: th.ink });
+  text(ctx, npc.title, rx + 18 + nw, y + 3.5, { size: 7, bold: true, color: th.light });
+
+  // Close.
+  const cx = x + W - 20;
+  const cy = y + 6;
+  const hot = hover(ui, cx, cy, 13, 13);
+  ctx.fillStyle = hot ? '#ff6b8a' : '#ffffff';
+  ctx.beginPath();
+  ctx.arc(cx + 6.5, cy + 6.5, 6.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = hot ? '#e04a6c' : th.dark;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.strokeStyle = hot ? '#ffffff' : th.dark;
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + 4, cy + 4);
+  ctx.lineTo(cx + 9, cy + 9);
+  ctx.moveTo(cx + 9, cy + 4);
+  ctx.lineTo(cx + 4, cy + 9);
+  ctx.stroke();
+  if (clicked(ui, cx, cy, 13, 13)) return null;
+  return { x: x + 108, y: y + 22, w: W - 128, bottom: y + H - 10, theme: th };
+}
+
+// Typewriter text: how many characters of the current page show. Clicking the text finishes it.
+function typed(ui, dlg, page, world, area) {
+  if (dlg.page !== page) {
+    dlg.page = page;
+    dlg.typedAt = world.now;
+  }
+  const n = (world.now - dlg.typedAt) * 70;
+  if (clicked(ui, area.x, area.y - 10, area.w, 30)) dlg.typedAt = -1e9;
+  return n;
+}
+
 export function npcWindow(ui, state, world) {
   const dlg = state.npc;
   if (dlg.mode === 'shop') return shopWindow(ui, state, world);
@@ -73,42 +152,45 @@ export function npcWindow(ui, state, world) {
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const char = world.char;
-  const W = 300;
-  // The job page grows to fit every branch on offer.
+  const { ctx } = ui;
   const jobOptions = dlg.job ? nextJobs(char.job, char.level).filter((j) => !npc.family || j.family === npc.family) : [];
-  const H = Math.max(150, 58 + jobOptions.length * 44);
-  if (!windowFrame(ui, win, W, H, `${npc.name} · ${npc.title}`)) {
+  const questIds = (npc.quests ?? []).filter((id) => !['locked', 'done'].includes(questState(char, id)));
+  const optionCount = questIds.length + (npc.shop ? 1 : 0) + (npc.role === 'stylist' ? 1 : 0) + (npc.role === 'instructor' ? 1 : 0);
+  const H = dlg.quest ? 112 : dlg.job ? Math.max(104, 46 + jobOptions.length * 42) : Math.max(96, 58 + Math.ceil(optionCount / 2) * 20);
+  const area = dialogFrame(ui, win, npc, H, world);
+  if (!area) {
     state.npc = null;
+    win.open = false;
     return;
   }
-  const { ctx } = ui;
-  box(ctx, win.x + 8, win.y + 24, 58, 70, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, npc.look, npc.gear ?? null, win.x + 37, win.y + 88, { pose: 'idle', time: world.now, seed: 3 });
-  const tx = win.x + 74;
-  const tw = W - 84;
+  const { x: tx, w: tw, theme: th } = area;
 
   // Sub-pages: a quest's text, a job choice, or the greeting with options.
   if (dlg.quest) {
     const q = QUESTS[dlg.quest];
     const st = questState(char, dlg.quest);
-    let y = wrap(ctx, st === 'ready' ? 'You did it! Here is your reward.' : q.text, tx, win.y + 34, tw, { size: 9 });
+    const words = st === 'ready' ? 'You did it! Here is your reward.' : q.text;
+    const chars = typed(ui, dlg, `q:${dlg.quest}:${st}`, world, area);
+    text(ctx, q.name, tx, area.y, { size: 9, bold: true, color: th.ink });
+    let y = wrap(ctx, words, tx, area.y + 13, tw, { size: 8.5, chars });
     if (st === 'active') {
       for (const o of objectiveProgress(char, dlg.quest)) {
         const name = o.type === 'kill' ? `Defeat ${MOBS[o.mob].name}` : ITEMS[o.item].name;
-        y = wrap(ctx, `${name}: ${o.have}/${o.count}`, tx, y + 2, tw, { size: 8, color: COLORS.accent });
+        y = wrap(ctx, `${name}: ${o.have}/${o.count}`, tx, y + 1, tw, { size: 8, color: th.dark });
       }
     }
+    const by = area.bottom - 16;
     if (st !== 'ready') {
       const parts = [`${q.rewards.exp} EXP`, `${q.rewards.gold} gold`, ...q.rewards.items.map((r) => `${ITEMS[r.id].name}${r.qty > 1 ? ` x${r.qty}` : ''}`)];
-      wrap(ctx, `Reward: ${parts.join(', ')}`, tx, Math.max(y + 4, win.y + 96), tw, { size: 8, color: COLORS.gold });
+      icon(ctx, 'coin', tx + 4, by - 7, 8, '#f0b53a');
+      text(ctx, `Reward: ${parts.join(', ')}`, tx + 11, by - 4, { size: 7.5, bold: true, color: COLORS.gold });
     }
-    const by = win.y + H - 22;
-    if (st === 'available' && button(ui, tx, by, 70, 15, 'Accept', { primary: true })) {
+    if (st === 'available' && button(ui, tx + tw - 154, by, 74, 17, 'Accept', { primary: true })) {
       acceptQuest(char, dlg.quest);
       world.log(`Quest accepted: ${q.name}`, '#bff0dc');
       if (questState(char, dlg.quest) !== 'ready') dlg.quest = null;
     }
-    if (st === 'ready' && button(ui, tx, by, 80, 15, 'Complete', { primary: true })) {
+    if (st === 'ready' && button(ui, tx + tw - 154, by, 74, 17, 'Complete', { primary: true })) {
       const r = completeQuest(char, dlg.quest);
       if (r) {
         world.log(`Quest complete: ${q.name}! +${r.exp} EXP, +${r.gold} gold`, '#ffe36b');
@@ -119,26 +201,27 @@ export function npcWindow(ui, state, world) {
         world.log('Make room in your bag first.', '#ffb3c6');
       }
     }
-    if (button(ui, tx + W - 160, by, 70, 15, 'Back')) dlg.quest = null;
+    if (button(ui, tx + tw - 74, by, 74, 17, 'Back')) dlg.quest = null;
     return;
   }
 
   if (dlg.job) {
     const options = jobOptions;
-    let y = win.y + 34;
+    let y = area.y;
     if (!options.length) {
       const next = Object.values(JOBS).filter((j) => j.parent === char.job && (!npc.family || j.family === npc.family));
       const msg = next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
       const fam = JOBS[char.job].family;
-      wrap(ctx, npc.family && char.job !== 'novice' && fam !== npc.family ? `You walk a different path. Seek your own instructor.` : msg, tx, y, tw, { size: 9 });
+      const words = npc.family && char.job !== 'novice' && fam !== npc.family ? 'You walk a different path. Seek your own instructor.' : msg;
+      wrap(ctx, words, tx, y + 4, tw, { size: 8.5, chars: typed(ui, dlg, `job:${words}`, world, area) });
     }
     // One card per branch: the name, its blurb, and a Choose button.
     for (const j of options) {
-      box(ctx, tx - 2, y - 8, tw + 4, 40, { fill: COLORS.cell, edge: null, r: 6 });
-      text(ctx, j.name, tx + 4, y + 2, { size: 9, bold: true, color: COLORS.accent });
-      wrap(ctx, j.blurb, tx + 4, y + 13, tw - 62, { size: 7, lineHeight: 9 });
-      const picked = button(ui, tx + tw - 52, y - 1, 52, 16, 'Choose', { primary: true, size: 8 });
-      y += 44;
+      box(ctx, tx - 2, y - 8, tw + 4, 38, { fill: '#ffffff', edge: th.light, r: 8, width: 1.5 });
+      text(ctx, j.name, tx + 4, y + 3, { size: 9, bold: true, color: th.dark });
+      wrap(ctx, j.blurb, tx + 4, y + 14, tw - 66, { size: 7, lineHeight: 9 });
+      const picked = button(ui, tx + tw - 58, y + 1, 56, 18, 'Choose', { primary: true, size: 8 });
+      y += 42;
       if (picked) {
         advanceJob(char, j.id);
         world.log(`You are now a ${j.name}! Spend your new SP in the Skills window (K).`, '#ffe36b');
@@ -148,29 +231,34 @@ export function npcWindow(ui, state, world) {
         return;
       }
     }
-    if (button(ui, tx + tw - 70, win.y + H - 22, 70, 15, 'Back')) dlg.job = false;
+    if (button(ui, tx + tw - 70, area.bottom - 16, 70, 17, 'Back')) dlg.job = false;
     return;
   }
 
-  wrap(ctx, npc.greeting, tx, win.y + 34, tw, { size: 9 });
-  let by = win.y + 72;
-  const option = (label, primary = false) => {
-    const hit = button(ui, tx, by, tw, 15, label, { primary, size: 8 });
-    by += 18;
-    return hit;
+  // The greeting, typed out, with a bouncing arrow when it's done; then the options as two
+  // columns of buttons.
+  const chars = typed(ui, dlg, `hi:${dlg.id}`, world, area);
+  const end = wrap(ctx, npc.greeting, tx, area.y + 2, tw, { size: 8.5, chars });
+  if (chars >= npc.greeting.length) sparkle(ctx, tx + tw - 4, end - 10 + Math.sin(world.now * 6) * 1.5, 2.5, th.main);
+  const colW = (tw - 6) / 2;
+  let i = 0;
+  const option = (label, primary = false, iconName = null) => {
+    const bx = tx + (i % 2) * (colW + 6);
+    const by = area.bottom - Math.ceil(optionCount / 2) * 20 + Math.floor(i / 2) * 20;
+    i++;
+    return button(ui, bx, by, colW, 18, label, { primary, size: 8, iconName });
   };
-  for (const id of npc.quests ?? []) {
+  for (const id of questIds) {
     const st = questState(char, id);
-    if (st === 'locked' || st === 'done') continue;
     const mark = st === 'ready' ? '✓' : st === 'available' ? '!' : '…';
-    if (option(`${mark} ${QUESTS[id].name}`, st !== 'active')) dlg.quest = id;
+    if (option(`${mark} ${QUESTS[id].name}`, st !== 'active', null)) dlg.quest = id;
   }
-  if (npc.shop && option('Browse the shop')) dlg.mode = 'shop';
-  if (npc.role === 'stylist' && option(`Change my look (${npc.styleCost} gold)`)) {
+  if (npc.shop && option('Browse the shop', false, 'shop')) dlg.mode = 'shop';
+  if (npc.role === 'stylist' && option(`New look (${npc.styleCost}g)`, false, 'wand')) {
     dlg.mode = 'style';
     dlg.look = { ...char.appearance };
   }
-  if (npc.role === 'instructor' && option('About job advancement', nextJobs(char.job, char.level).some((j) => j.family === npc.family))) dlg.job = true;
+  if (npc.role === 'instructor' && option('Job advancement', nextJobs(char.job, char.level).some((j) => j.family === npc.family), 'star')) dlg.job = true;
 }
 
 // ---------- Shop ----------
@@ -181,7 +269,7 @@ function shopWindow(ui, state, world) {
   const win = state.windows.npc;
   const W = 300;
   const H = 232;
-  if (!windowFrame(ui, win, W, H, `${npc.name}'s Shop`)) {
+  if (!windowFrame(ui, win, W, H, `${npc.name}'s Shop`, { theme: 'peach', icon: 'shop' })) {
     state.npc = null;
     return;
   }
@@ -190,7 +278,7 @@ function shopWindow(ui, state, world) {
   const shift = ui.input.held.has('ShiftLeft') || ui.input.held.has('ShiftRight');
   dlg.tab = tabs(ui, win.x + 8, win.y + 22, ['Buy', 'Sell'], dlg.tab ?? 0, { w: 50 });
   text(ctx, `${char.gold.toLocaleString()} gold`, win.x + W - 10, win.y + 32, { size: 9, bold: true, align: 'right', color: COLORS.gold });
-  const rows = 9;
+  const rows = 8;
   dlg.scroll = Math.max(0, dlg.scroll ?? 0);
   let entries;
   if (dlg.tab === 0) {
@@ -247,7 +335,7 @@ function styleWindow(ui, state, world) {
   const win = state.windows.npc;
   const W = 280;
   const H = 184;
-  if (!windowFrame(ui, win, W, H, `${npc.name}'s Salon`)) {
+  if (!windowFrame(ui, win, W, H, `${npc.name}'s Salon`, { theme: 'pink', icon: 'wand' })) {
     state.npc = null;
     return;
   }
@@ -270,20 +358,40 @@ function styleWindow(ui, state, world) {
 // ---------- Fainted ----------
 
 export function deathWindow(ui, state, world) {
-  const W = 220;
-  const H = 96;
+  const W = 230;
+  const H = 112;
   const x = (640 - W) / 2;
-  const y = 110;
+  const y = 100;
   const { ctx } = ui;
-  ctx.fillStyle = 'rgba(90,63,122,0.35)';
+  const th = THEMES.pink;
+  ctx.fillStyle = 'rgba(70,40,100,0.4)';
   ctx.fillRect(0, 0, 640, 360);
-  box(ctx, x, y, W, H, { r: 10 });
-  text(ctx, 'You fainted!', x + W / 2, y + 24, { size: 13, bold: true, align: 'center', color: COLORS.accent });
+  softShadow(ctx, x, y, W, H, 12, 5);
+  box(ctx, x, y, W, H, { fill: '#fffaf6', edge: th.dark, r: 12, width: 2 });
+  // A cracked heart bobbing sadly above the card.
+  const bob = Math.sin(world.now * 2.5) * 2;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x + W / 2, y + bob, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = th.dark;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  icon(ctx, 'heart', x + W / 2, y + bob + 1, 18, th.main);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + W / 2, y + bob - 4);
+  ctx.lineTo(x + W / 2 - 2, y + bob);
+  ctx.lineTo(x + W / 2 + 2, y + bob + 2);
+  ctx.lineTo(x + W / 2, y + bob + 6);
+  ctx.stroke();
+  text(ctx, 'You fainted!', x + W / 2, y + 36, { size: 14, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
   const loss = deathExpLoss(world.char.level, world.char.base.luk);
-  wrap(ctx, `You'll wake up in town and lose ${loss} EXP. Higher LUK softens the loss.`, x + 14, y + 42, W - 28, { size: 8, color: COLORS.muted });
-  if (button(ui, x + W / 2 - 50, y + H - 24, 100, 16, 'Return to town', { primary: true })) {
+  wrap(ctx, `You'll wake up in town and lose ${loss} EXP. Higher LUK softens the loss.`, x + 18, y + 54, W - 36, { size: 8, color: COLORS.muted });
+  ui.theme = th;
+  if (button(ui, x + W / 2 - 56, y + H - 28, 112, 19, 'Return to town', { primary: true })) {
     respawn(world);
     state.death = false;
   }
 }
-
