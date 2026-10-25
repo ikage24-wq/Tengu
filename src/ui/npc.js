@@ -78,7 +78,7 @@ export function npcWindow(ui, state, world) {
   const { ctx } = ui;
   const char = world.char;
   box(ctx, win.x + 8, win.y + 24, 58, 70, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, npc.look, null, win.x + 37, win.y + 88, { pose: 'idle', time: world.now, seed: 3 });
+  drawHero(ctx, npc.look, npc.gear ?? null, win.x + 37, win.y + 88, { pose: 'idle', time: world.now, seed: 3 });
   const tx = win.x + 74;
   const tw = W - 84;
 

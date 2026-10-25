@@ -87,6 +87,26 @@ function whiteOf(canvas) {
   return c;
 }
 
+// A copy of a sprite filled with one color (for glows), cached per color.
+const tints = new WeakMap();
+export function tinted(s, color) {
+  if (!tints.has(s.canvas)) tints.set(s.canvas, new Map());
+  const byColor = tints.get(s.canvas);
+  let c = byColor.get(color);
+  if (!c) {
+    c = document.createElement('canvas');
+    c.width = s.canvas.width;
+    c.height = s.canvas.height;
+    const g = c.getContext('2d');
+    g.drawImage(s.canvas, 0, 0);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = color;
+    g.fillRect(0, 0, c.width, c.height);
+    byColor.set(color, c);
+  }
+  return c;
+}
+
 // Returns a cached sprite { canvas, white, w, h } built by `build()` -> { w, h, shapes, palette }.
 export function sprite(key, build) {
   let s = cache.get(key);

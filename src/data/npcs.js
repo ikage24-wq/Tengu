@@ -1,5 +1,6 @@
 // NPCs. Roles: guide (quests), shop, stylist (change your look for gold), instructor (job advancement).
-// `look` uses the same appearance fields as the player, so NPCs are drawn by the hero renderer.
+// `look` uses the same appearance fields as the player, so NPCs are drawn by the hero renderer;
+// instructors also carry `gear` to show off a top-tier weapon of their class.
 
 const tier = (t) => ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `${w}_${t}`);
 const armor = (t) => ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'].map((s) => `${s}_${t}`);
@@ -27,21 +28,25 @@ export const NPCS = {
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     look: { hairStyle: 'spiky', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round' },
+    gear: { weapon: { id: 'sword_6', rarity: 2 } },
     greeting: 'Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     look: { hairStyle: 'long', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy' },
+    gear: { weapon: { id: 'staff_8', rarity: 3 } },
     greeting: 'Magic is patience and a lot of MP. Shall we begin?',
   },
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round' },
+    gear: { weapon: { id: 'bow_7', rarity: 2 } },
     greeting: 'Keep your distance and your aim true.',
   },
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     look: { hairStyle: 'short', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy' },
+    gear: { weapon: { id: 'claw_8', rarity: 3 } },
     greeting: 'Fast hands, light feet. Luck favors the bold.',
   },
   rook: {

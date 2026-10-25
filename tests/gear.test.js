@@ -6,7 +6,8 @@ import { NPCS } from '../src/data/npcs.js';
 import { makeEquip, rollRarity } from '../src/core/items.js';
 import { rollLoot } from '../src/world/drops.js';
 import { MOBS } from '../src/data/mobs.js';
-import { topShapes, legLook, legShapes, hatShapes, capeShapes, weaponShapes, handShapes, earringShapes } from '../src/render/gear.js';
+import { topShapes, legLook, legShapes, hatShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
+import { weaponShapes } from '../src/render/weapons.js';
 
 const seq = (...values) => {
   let i = 0;
@@ -75,4 +76,18 @@ test('bosses always drop at least Rare gear', () => {
   const gear = loot.filter((l) => l.inst);
   assert.equal(gear.length, 3);
   for (const g of gear) assert.ok(g.inst.rarity >= 1);
+});
+
+test('weapons grow with tier and every animation frame builds', () => {
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
+    const low = weaponShapes(type, '#ffffff', 0);
+    const high = weaponShapes(type, '#ffffff', 8);
+    assert.ok(high.w * high.h > low.w * low.h, `${type} gets bigger`);
+    for (let f = 0; f < 4; f++) {
+      const w = weaponShapes(type, '#ffffff', 8, null, f);
+      assert.ok(w.shapes.length && w.grip[1] < w.h, `${type} frame ${f}`);
+    }
+  }
+  // Top-tier swords are taller than the 48px hero.
+  assert.ok(weaponShapes('sword', '#ffffff', 8).h > 48);
 });

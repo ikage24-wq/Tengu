@@ -8,12 +8,13 @@
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
-import { ITEMS } from '../data/items.js';
-import { R, E, P, sprite, blit, shade } from './pixel.js';
+import { ITEMS, RARITIES } from '../data/items.js';
+import { R, E, P, sprite, blit, shade, tinted } from './pixel.js';
 import {
   topShapes, sleeveColor, legLook, skirtShapes, legShapes, hatShapes, hatBackShapes, TUCKS_HAIR,
-  capeShapes, weaponShapes, handShapes, earringShapes,
+  capeShapes, handShapes, earringShapes,
 } from './gear.js';
+import { weaponShapes, weaponAnimated } from './weapons.js';
 import { walkPhase } from './animator.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'spiky', 'bun', 'long'];
@@ -47,7 +48,7 @@ function resolveGear(look, gear) {
     cape: piece('cape', null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
-    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, special: w.special ?? null } : null,
+    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, special: w.special ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
   };
 }
 
@@ -326,16 +327,66 @@ function rigKey(r) {
 
 // ---------- Weapons ----------
 
-function weaponSprite(w) {
-  const def = weaponShapes(w.type, w.color, w.tier, w.special);
+function weaponSprite(w, time) {
+  const frame = weaponAnimated(w.type, w.tier, w.special) ? Math.floor(time * 8) % 4 : 0;
+  const def = weaponShapes(w.type, w.color, w.tier, w.special, frame);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.color}|${w.tier}|${w.special}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
+  const s = sprite(`weapon|${w.type}|${w.color}|${w.tier}|${w.special}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
   return { ...s, grip: def.grip };
+}
+
+// Rarity effects drawn in the weapon's rotated frame (grip at the origin, tip toward -y).
+// Rare: a glint sweeps up the weapon. Epic: a glowing outline and motes circling the tip.
+// Legendary: a stronger pulsing aura and sparkles rising off the whole weapon.
+function weaponGlow(ctx, wpn, rarity, time, scale, draw) {
+  const color = RARITIES[rarity].color;
+  const ox = -(wpn.grip[0] + 1) * scale;
+  const oy = -(wpn.grip[1] + 1) * scale;
+  const w = wpn.canvas.width * scale;
+  const h = wpn.canvas.height * scale;
+  if (rarity >= 2) {
+    const pulse = 0.5 + 0.5 * Math.sin(time * (rarity >= 3 ? 5 : 3));
+    const glow = tinted(wpn, color);
+    const reach = rarity >= 3 ? 2 : 1;
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * (0.35 + 0.35 * pulse);
+    for (let r = 1; r <= reach; r++) {
+      for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r]]) ctx.drawImage(glow, ox + dx * scale, oy + dy * scale, w, h);
+    }
+    ctx.globalAlpha = base;
+  }
+  draw(ox, oy, w, h);
+  const len = (wpn.grip[1] - 4) * scale;
+  ctx.fillStyle = '#ffffff';
+  // Glint sliding from grip to tip.
+  const p = (time * 0.9) % 1.6;
+  if (p < 1) {
+    const gy = -p * len;
+    const k = Math.sin(p * Math.PI) * 2 * scale;
+    ctx.fillRect(-0.5 * scale, gy - k, scale, k * 2 + scale);
+    ctx.fillRect(-k, gy, k * 2 + scale, scale);
+  }
+  if (rarity >= 2) {
+    ctx.fillStyle = color;
+    const n = rarity >= 3 ? 4 : 2;
+    for (let i = 0; i < n; i++) {
+      const a = time * 3 + (i / n) * Math.PI * 2;
+      ctx.fillRect(Math.round(Math.cos(a) * 7 * scale), Math.round(-len * 0.85 + Math.sin(a) * 4 * scale), scale * 1.5, scale * 1.5);
+    }
+  }
+  if (rarity >= 3) {
+    for (let i = 0; i < 5; i++) {
+      const k = (time * 0.7 + i / 5) % 1;
+      ctx.fillStyle = i % 2 ? '#ffffff' : color;
+      ctx.globalAlpha *= 1 - k;
+      ctx.fillRect(Math.round(Math.sin(i * 2.3 + time) * 5 * scale), Math.round(-len * (i / 5) - k * 10 * scale), scale, scale);
+      ctx.globalAlpha /= Math.max(0.01, 1 - k);
+    }
+  }
 }
 
 // Weapon angle (degrees, 0 = up, positive tips forward) and attack arm angle for a pose.
 function weaponPose(type, pose, progress) {
-  const ranged = type === 'bow' || type === 'crossbow' || type === 'claw';
   if (pose === 'swing') {
     if (progress < 0.3) {
       const t = ease(progress / 0.3);
@@ -346,7 +397,7 @@ function weaponPose(type, pose, progress) {
   }
   if (pose === 'shoot') {
     const pull = progress < 0.25 ? -6 : 0;
-    return { weapon: type === 'crossbow' ? 0 : ranged ? 0 : 90, arm: 95 + pull };
+    return { weapon: type === 'bow' || type === 'crossbow' ? 0 : 90, arm: 95 + pull };
   }
   if (pose === 'cast') return { weapon: -25 + ease(Math.min(1, progress * 1.6)) * 35, arm: 150 };
   return null;
@@ -375,7 +426,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
 
   const skin = look.skinTone ?? '#fff0e6';
   const sleeve = sleeveColor(g.top.design, g.top.color);
-  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon) : null;
+  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
   const angles = attack ? weaponPose(g.weapon?.type, pose, progress) : null;
 
   // Front arm layer.
@@ -395,7 +446,8 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const armDx = rig.tx;
   const armDy = rig.by;
 
-  const weaponAngle = angles ? angles.weapon : 25 + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
+  const restAngle = { bow: 60, crossbow: 10, claw: 70 }[g.weapon?.type] ?? 25;
+  const weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   const drawWeapon = () => {
     if (!wpn) return;
@@ -405,13 +457,15 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1])));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
-    ctx.drawImage(wpn.canvas, -(wpn.grip[0] + 1) * scale, -(wpn.grip[1] + 1) * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
+    const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
+    if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, state.time ?? 0, scale, paint);
+    else paint(-(wpn.grip[0] + 1) * scale, -(wpn.grip[1] + 1) * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
     ctx.restore();
   };
 
   // Weapon trail: remember where the tip was during a swing, drawn as a fading ribbon.
   if (anim && wpn && pose === 'swing' && progress > 0.28 && progress < 0.75) {
-    const len = wpn.grip[1] * scale;
+    const len = (wpn.grip[1] - 6) * scale;
     const rad = (weaponAngle * Math.PI) / 180;
     const tipX = sx(hand[0]) + Math.sin(rad) * len * (flip ? -1 : 1);
     const tipY = sy(hand[1]) - Math.cos(rad) * len;

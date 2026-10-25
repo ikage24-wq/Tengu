@@ -154,29 +154,3 @@ export function capeShapes(design, c, sway, flap) {
   }
 }
 
-// ---------- Weapons (pointing up, grip near the bottom) ----------
-
-const WOOD = '#a0703f';
-
-export function weaponShapes(type, color, tier, special) {
-  const light = shade(color, 22);
-  const gem = tier >= 3 ? (tier >= 6 ? '#ff9ec0' : '#8fd3ff') : null;
-  switch (special ?? type) {
-    case 'lollipop': return { w: 12, h: 24, grip: [5, 21], shapes: [R(5, 9, 2, 15, '#ffffff'), E(6, 5, 5.5, 5.5, '#ff9ec0'), E(6, 5, 3.5, 3.5, '#ffffff'), E(6, 5, 1.8, 1.8, '#ffb3d9'), P(4, 3, '#ffffff')] };
-    case 'candycane': return { w: 11, h: 27, grip: [4, 23], shapes: [R(3, 4, 3, 18, '#ffffff'), R(3, 6, 3, 2, '#ff6b8a'), R(3, 11, 3, 2, '#ff6b8a'), R(3, 16, 3, 2, '#ff6b8a'), R(5, 1, 4, 3, '#ffffff'), R(8, 2, 2, 4, '#ff6b8a'), R(0, 21, 9, 2, GOLD), R(3, 23, 3, 4, WOOD)] };
-    case 'moonstaff': return { w: 14, h: 34, grip: [6, 24], shapes: [R(6, 10, 2, 24, '#f3edff'), E(7, 5, 6, 6, '#fff3a6'), E(9, 4, 5, 5, 'none'), P(4, 2, '#ffffff'), R(4, 11, 6, 1, GOLD), E(7, 12, 1.5, 1.5, '#c9a6ff')] };
-    case 'crystalbow': return { w: 11, h: 30, grip: [3, 15], shapes: [E(4, 15, 5, 14, '#8fe3ff'), E(6, 15, 4, 12, 'none'), R(8, 2, 1, 26, '#ffffff'), R(2, 13, 3, 4, '#c9f2ff'), P(2, 4, '#ffffff'), P(2, 26, '#ffffff')] };
-    case 'heartdagger': return { w: 9, h: 16, grip: [4, 13], shapes: [R(3, 1, 3, 8, '#ffc2d6'), R(4, 1, 1, 7, '#ffffff'), R(1, 9, 7, 2, '#ff6b8a'), E(4.5, 10, 2, 1.5, '#ff6b8a'), R(3, 11, 3, 4, WOOD)] };
-    case 'pawclaw': return { w: 12, h: 12, grip: [5, 8], shapes: [E(6, 7, 5, 4, '#ffc2d6'), E(6, 8, 2.5, 2, '#ff9ec0'), E(2.5, 3, 1.5, 1.5, '#ff9ec0'), E(6, 2, 1.5, 1.5, '#ff9ec0'), E(9.5, 3, 1.5, 1.5, '#ff9ec0')] };
-    case 'sword': return { w: 9, h: 26, grip: [4, 22], shapes: [R(3, 1, 3, 17, color), R(4, 1, 1, 16, light), P(4, 0, light), R(0, 18, 9, 2, GOLD), R(3, 20, 3, 5, WOOD), E(4.5, 25, 2, 1.5, GOLD), ...(gem ? [E(4.5, 19, 1.5, 1.5, gem)] : [])] };
-    case 'axe': return { w: 14, h: 26, grip: [6, 22], shapes: [R(5, 2, 3, 24, WOOD), E(10, 6, 4, 5, color), R(7, 2, 3, 8, color), P(12, 4, light), ...(gem ? [E(7, 6, 1.5, 1.5, gem)] : [])] };
-    case 'spear': return { w: 9, h: 34, grip: [4, 26], shapes: [R(3, 8, 3, 26, WOOD), E(4.5, 4, 3, 5, color), R(4, 0, 1, 4, light), R(1, 9, 7, 1, GOLD), ...(gem ? [E(4.5, 10, 1.5, 1.5, gem)] : [])] };
-    case 'wand': return { w: 8, h: 20, grip: [3, 16], shapes: [R(3, 6, 2, 14, WOOD), E(4, 4, 3.5, 3.5, color), P(3, 3, '#ffffff'), ...(gem ? [R(2, 7, 4, 1, GOLD)] : [])] };
-    case 'staff': return { w: 10, h: 32, grip: [4, 22], shapes: [R(4, 8, 2, 24, WOOD), E(5, 5, 4.5, 4.5, color), P(4, 3, '#ffffff'), R(2, 9, 6, 1, GOLD), ...(gem ? [E(5, 5, 1.8, 1.8, gem)] : [])] };
-    case 'bow': return { w: 10, h: 28, grip: [3, 14], shapes: [E(4, 14, 5, 13, color), E(6, 14, 4, 11, 'none'), R(7, 2, 1, 24, '#fff6fb'), R(2, 12, 3, 4, WOOD), ...(gem ? [P(2, 14, gem)] : [])] };
-    case 'crossbow': return { w: 18, h: 16, grip: [4, 10], shapes: [R(0, 7, 16, 3, WOOD), R(12, 0, 3, 16, color), R(13, 1, 1, 14, light), R(2, 10, 3, 4, WOOD), ...(gem ? [P(7, 8, gem)] : [])] };
-    case 'dagger': return { w: 7, h: 15, grip: [3, 12], shapes: [R(2, 1, 3, 8, color), R(3, 1, 1, 7, light), P(3, 0, light), R(0, 9, 7, 1, GOLD), R(2, 10, 3, 4, WOOD), ...(gem ? [P(3, 9, gem)] : [])] };
-    case 'claw': return { w: 10, h: 12, grip: [4, 8], shapes: [R(1, 4, 8, 6, color), R(1, 0, 2, 5, light), R(4, 0, 2, 5, light), R(7, 0, 2, 5, light), ...(gem ? [P(5, 7, gem)] : [])] };
-    default: return null;
-  }
-}

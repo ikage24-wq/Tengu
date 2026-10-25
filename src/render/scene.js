@@ -59,7 +59,7 @@ function drawNpcs(ctx, world, cam, time) {
     const y = world.map.groundY - cam.y;
     if (x < -40 || x > VIEW_W + 40) continue;
     const facing = world.body.x < n.x ? -1 : 1;
-    drawHero(ctx, npc.look, null, x, y, { pose: 'idle', time, seed: n.x % 97, facing });
+    drawHero(ctx, npc.look, npc.gear ?? null, x, y, { pose: 'idle', time, seed: n.x % 97, facing });
     ctx.font = 'bold 8px sans-serif';
     const label = npc.name;
     const w = ctx.measureText(label).width + 10;

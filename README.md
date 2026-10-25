@@ -58,8 +58,16 @@ then press the key. Right-click a hotkey slot to clear it.
   Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
   Wings, Angel Wings, Galaxy Cape, Lollipop Wand, Candy Cane Sword, Kitty Paw Claw, Sweetheart
   Dagger, Crystal Harp Bow, and Crescent Moon Staff (a few are sold by Marlo; the rest drop).
+- **Weapons** — comically oversized, with a new silhouette at every tier: swords grow from a
+  wooden practice blade into a cleaver, a rune blade, a crystal blade, a flame blade, a holy blade,
+  and a crackling lightning blade (taller than your hero). Axes, spears, wands, staves, bows,
+  crossbows, daggers, and claws each have their own line, from crescent axes and flame spears to
+  winged orbs and a celestial eye staff. Top-tier designs animate: flickering fire, lightning,
+  pulsing runes, swirling orbs, blinking eyes. The class instructors show off their best.
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for
-  higher stats and bonus STR/DEX/INT/LUK. Rare loot glows with a colored beam, and bosses always
+  higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
+  glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.
+  Rare loot glows with a colored beam on the ground, and bosses always
   drop Rare or better. Drops also roll small stat differences. Every item has 7 upgrade slots for
   charms (100% / 60% / 10%) that spend a slot whether they work or not.
 - **Animation and feel** — the hero is a layered rig: an 8-frame walk cycle driven by distance
@@ -87,7 +95,8 @@ src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
 src/world/              simulation: physics, monsters, loot, combat, the world update
-src/render/             drawing: pixel toolkit, hero rig, gear designs, animator, particles,
+src/render/             drawing: pixel toolkit, hero rig, gear designs, weapons, animator,
+                        particles,
                         monsters, scenery, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
 tests/                  node:test suites for rules, content integrity, and world behavior
