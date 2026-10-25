@@ -85,7 +85,7 @@ export function planGroup(world, id = 'hollow') {
 function recruit(world, def, role) {
   const rng = world.bots.rng;
   const [lo, hi] = def.recruit[role];
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? ['mage', 'cleric'] : [pick(['archer', 'thief', 'mage', 'archer', 'thief'], rng)];
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? ['mage'] : [pick(['archer', 'thief'], rng)];
   const bot = recruitBot(world.bots, world, { level: Math.floor(between(lo, hi + 1, rng)), jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -440,7 +440,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   const body = g.body;
   if (g.bot) {
     const bot = g.bot;
-    const dmg = pierce ? Math.round(raw) : damageTaken(raw, bot.stats.wdef);
+    const dmg = absorb(world, body, bot.buffs, pierce ? Math.round(raw) : damageTaken(raw, bot.stats.wdef));
     bot.hp = Math.max(0, bot.hp - dmg);
     bot.hurt = 0.3;
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
@@ -458,7 +458,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   if (world.god) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = pierce ? Math.round(raw) : damageTaken(raw, s.wdef);
+  let dmg = absorb(world, body, char.buffs, pierce ? Math.round(raw) : damageTaken(raw, s.wdef));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -491,13 +491,82 @@ function healMember(world, g, amount, by) {
   return after - before;
 }
 
-// Your heal spell (clerics) also heals party members it reaches.
+// Your heal spells also heal party members they reach.
 export function healMembers(world, pct, box) {
   for (const g of groupOf(world)) {
     if (!g.bot || !isUp(world, g)) continue;
     const b = g.body;
     if (b.x < box.x || b.x > box.x + box.w || b.y - b.h > box.y + box.h || b.y < box.y) continue;
     healMember(world, g, maxHpOf(world, g) * pct, 'you');
+  }
+}
+
+// ---------- Support magic ----------
+
+// A barrier soaks up damage before HP; it pops when used up. Returns the damage left over.
+export function absorb(world, body, buffs, dmg) {
+  for (const b of Object.values(buffs ?? {})) {
+    if (!(b.shield > 0) || b.until <= world.now || dmg <= 0) continue;
+    const take = Math.min(b.shield, dmg);
+    b.shield -= take;
+    dmg -= take;
+    world.numbers.push({ x: body.x + 10, y: body.y - body.h - 2, text: `(${take})`, color: '#9fd8ff', t: 0, small: true });
+    if (b.shield <= 0) b.until = world.now;
+  }
+  return dmg;
+}
+
+// A support buff on one member of the group: yours lands in your buffs, a party member's in theirs.
+export function giveBuff(world, g, id, name, values, duration) {
+  const max = maxHpOf(world, g);
+  const b = { until: world.now + duration, since: world.now, values, name };
+  if (values.barrier) b.shield = Math.round(max * values.barrier);
+  if (g.bot) (g.bot.buffs ??= {})[id] = b;
+  else world.char.buffs[id] = b;
+}
+
+// A party buff spell reaching the members in `box` (you got yours already).
+export function buffMembers(world, id, name, params, box) {
+  for (const g of groupOf(world)) {
+    if (!g.bot || !isUp(world, g) || !inBox(g.body, box)) continue;
+    giveBuff(world, g, id, name, params.buff, params.duration);
+    world.fx.push({ kind: 'buffcast', skill: id, name, x: g.body.x, y: g.body.y, t: 0, dur: 1.1 });
+  }
+}
+
+const inBox = (b, box) => b.x >= box.x && b.x <= box.x + box.w && b.y - b.h <= box.y + box.h && b.y >= box.y;
+
+// The fallen party member a Revive in `box` would reach.
+export function reviveTarget(world, box) {
+  if (!world.dungeon) return null;
+  return groupOf(world).find((g) => g.bot && !isUp(world, g) && inBox(g.body, box)) ?? null;
+}
+
+export function reviveMember(world, g, pct) {
+  revive(world, g, pct);
+}
+
+// Party members' buffs: Renew heals every second; they run out.
+function tickBuffs(world, group, dt) {
+  for (const g of group) {
+    const buffs = g.bot?.buffs;
+    if (!buffs) continue;
+    for (const [id, b] of Object.entries(buffs)) {
+      if (b.until <= world.now || g.bot.down) {
+        delete buffs[id];
+        continue;
+      }
+      if (!b.values.regenPct) continue;
+      b.tick = (b.tick ?? 1) - dt;
+      if (b.tick > 0) continue;
+      b.tick = 1;
+      const max = maxHpOf(world, g);
+      if (g.bot.hp < max) {
+        const add = Math.min(max - g.bot.hp, Math.round(max * b.values.regenPct));
+        g.bot.hp += add;
+        world.numbers.push({ x: g.body.x, y: g.body.y - g.body.h - 10, text: `+${add}`, color: '#9be08f', t: 0, small: true });
+      }
+    }
   }
 }
 
@@ -846,6 +915,7 @@ export function tickDungeon(world, dt) {
   run.combat = world.mobs.some((m) => m.hp > 0 && m.engaged && !m.def.fight?.mender);
   tickZones(world, up, dt);
   tickChannels(world, dt, group);
+  tickBuffs(world, group, dt);
   for (const v of run.vfx) v.t += dt;
   run.vfx = run.vfx.filter((v) => v.t < v.dur);
   for (const g of group) if (g.bot?.hurt) g.bot.hurt = Math.max(0, g.bot.hurt - dt);
@@ -1114,6 +1184,21 @@ export function healerTurn(bot, world, rng) {
     healMember(world, low[0].g, maxHpOf(world, low[0].g) * between(0.22, 0.3, rng) + bot.stats.int * 0.6, bot.id);
     cast();
     return between(1.1, 1.5, rng);
+  }
+  // In a fight: keep a barrier on the tank, and a Renew on the group when it's taking damage.
+  const tank = up.find((g) => g.role === 'tank');
+  const buffsOf = (g) => (g.bot ? g.bot.buffs : world.char.buffs) ?? {};
+  if (run.combat && tank && !(buffsOf(tank).barrier?.shield > 0)) {
+    giveBuff(world, tank, 'barrier', 'Arcane Barrier', { barrier: 0.22 }, 20);
+    world.fx.push({ kind: 'buffcast', skill: 'barrier', name: 'Arcane Barrier', x: tank.body.x, y: tank.body.y, t: 0, dur: 1.1 });
+    bot.attack = { pose: 'castup', t: 0, dur: 0.6 };
+    return between(1.2, 1.6, rng);
+  }
+  if (run.combat && hurt.filter((h) => h.f < 0.92).length >= 2 && !up.some((g) => buffsOf(g).renew)) {
+    for (const g of up) if (Math.abs(g.body.x - me.body.x) < 320) giveBuff(world, g, 'renew', 'Renew', { regenPct: 0.025 }, 20);
+    run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
+    bot.attack = { pose: 'castup', t: 0, dur: 0.6 };
+    return between(1.2, 1.6, rng);
   }
   if (!run.combat) {
     const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < 44);

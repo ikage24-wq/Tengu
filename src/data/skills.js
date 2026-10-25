@@ -3,9 +3,13 @@
 // Types:
 //   attack  - weapon damage (pct is % of a basic hit)
 //   magic   - spell damage (power is % of magic attack)
-//   heal    - restores HP and smites monsters in range with holy damage
+//   heal    - restores HP (yours, and in a dungeon your party's in range) and smites monsters in
+//             range with holy damage (none with targets: 0)
+//   revive  - gets a fallen party member in range back on their feet (dungeons)
 //   blink   - teleports you `distance` forward
-//   buff    - timed bonuses; `buff` keys are added to the player's stats while active
+//   buff    - timed bonuses; `buff` keys are added to the player's stats while active. `party`
+//             buffs also land on party members in `range` (in a dungeon). `regenPct` heals that
+//             share of max HP every second; `barrier` absorbs damage up to that share of max HP.
 //   passive - always-on bonuses once learned
 //
 // Range: `w`/`h` is the hit box in front of the player. `projectile` skills hit the nearest
@@ -68,7 +72,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.02, 0.2, lv, m), restRegen: lerp(2, 20, lv, m) } }),
   }),
 
-  // ---------- Mage (glass cannon) ----------
+  // ---------- Mage (spells and support) ----------
   magicbolt: skill({
     id: 'magicbolt', name: 'Magic Bolt', job: 'mage', type: 'magic', fx: 'bolt', school: 'arcane',
     desc: 'Fire a spinning bolt of raw magic at the nearest monster.',
@@ -93,6 +97,27 @@ export const SKILLS = {
     id: 'arcanemind', name: 'Arcane Mind', job: 'mage', type: 'passive', fx: null,
     desc: 'Raises max MP and MP recovery.',
     at: (lv, m) => ({ passive: { maxMpPct: lerpf(0.03, 0.3, lv, m), mpRegen: lerp(2, 24, lv, m) } }),
+  }),
+  // Support: mages are the healers of a dungeon group.
+  mend: skill({
+    id: 'mend', name: 'Mend', job: 'mage', type: 'heal', fx: 'heal', school: 'holy', lock: 0.3,
+    desc: 'Restore HP to you and every party member around you.',
+    at: (lv, m) => ({ mp: lerp(10, 24, lv, m), healPct: lerpf(0.12, 0.32, lv, m), power: 0, hits: 1, targets: 0, range: { w: 440, h: 160, around: true } }),
+  }),
+  renew: skill({
+    id: 'renew', name: 'Renew', job: 'mage', type: 'buff', fx: 'buff', icon: 'renew', school: 'holy', party: true,
+    desc: 'A soothing glow on you and the party around you that restores HP every second.',
+    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), duration: lerp(15, 30, lv, m), buff: { regenPct: lerpf(0.015, 0.04, lv, m) }, range: { w: 440, h: 160, around: true } }),
+  }),
+  barrier: skill({
+    id: 'barrier', name: 'Arcane Barrier', job: 'mage', type: 'buff', fx: 'shield', school: 'arcane', party: true,
+    desc: 'Wrap you and the party around you in a bubble that soaks up damage until it pops.',
+    at: (lv, m) => ({ mp: lerp(14, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { barrier: lerpf(0.12, 0.35, lv, m) }, range: { w: 440, h: 160, around: true } }),
+  }),
+  revive: skill({
+    id: 'revive', name: 'Revive', job: 'mage', type: 'revive', fx: 'heal', icon: 'revive', school: 'holy', maxLevel: 10, lock: 0.6,
+    desc: 'Get a fallen party member nearby back on their feet, even mid-fight.',
+    at: (lv, m) => ({ mp: lerp(40, 22, lv, m), healPct: lerpf(0.3, 0.7, lv, m), range: { w: 300, h: 140, around: true } }),
   }),
 
   // ---------- Archer ----------
@@ -343,6 +368,7 @@ const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
+  mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip',
   twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',

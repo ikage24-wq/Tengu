@@ -38,18 +38,25 @@ test('players come and go over time, at least 20 online, spread by level, and no
   world.log = () => {};
   const bots = createBots(world, seeded(3));
   const names = new Set();
+  // Levels seen in each town over the whole run (one moment can be a fluke).
+  const seen = Object.fromEntries(TOWNS.map((t) => [t, { sum: 0, n: 0 }]));
   for (let i = 0; i < 20000; i++) {
     updateBots(bots, world, 0.1);
     assert.ok(bots.list.length >= 20, 'at least 20 online');
     for (const t of TOWNS) assert.ok(botsIn(bots, t).length <= 8, `${t} stays uncrowded`);
     for (const b of bots.list) names.add(b.name);
+    if (i % 50 === 0) {
+      for (const t of TOWNS) {
+        for (const b of botsIn(bots, t)) {
+          seen[t].sum += b.level;
+          seen[t].n++;
+        }
+      }
+    }
   }
   assert.ok(names.size > 40, 'new players keep arriving');
   // Beginners gather in Sprout Village, veterans in Moonleaf Grove.
-  const avg = (t) => {
-    const here = botsIn(bots, t);
-    return here.reduce((n, b) => n + b.level, 0) / Math.max(1, here.length);
-  };
+  const avg = (t) => seen[t].sum / Math.max(1, seen[t].n);
   assert.ok(avg('grove') > avg('sprout'), 'higher levels hang out in the high-level town');
   assert.equal(names.size, bots.names.size, 'names are never reused');
 });

@@ -28,7 +28,7 @@ export const JOBS = {
   mage: {
     id: 'mage', name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
     hp: 13, mp: 24, advanceHp: 100, advanceMp: 380, weapons: ['wand', 'staff'],
-    blurb: 'A glass cannon: huge spell damage with INT, but very little HP.',
+    blurb: 'Spells and support: big magic damage with INT, plus heals and barriers for the party. The healer of any dungeon group.',
   },
   archer: {
     id: 'archer', name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,

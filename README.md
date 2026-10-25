@@ -58,7 +58,7 @@ to clear it.
   job's home town). Every first job has a movement skill (Charge, Blink, Backflip, Shadow Step).
   For now only the Mage advances further: three branches at level 30, and one third job per
   branch at level 50 with a signature skill, a summon, and a screen-wide ultimate that hits up to
-  15 monsters twice. The Mage starts as a glass cannon with the least HP in the game. Warrior,
+  15 monsters twice. The Mage has the least HP in the game, but heals and shields the party. Warrior,
   Archer, and Thief stop at their first job for now.
 
   | Class | Branch (30) | Third job (50) | Plays like | Ultimate |
@@ -219,16 +219,16 @@ to clear it.
 - **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
   Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
   form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank,
-  clerics (and bishops) heal, everyone else deals damage**. Your party comes with you if it fits the
-  roles, and the group finder brings in players for any open spot (a cleric for the healer seat if
-  no one in your party can heal). Inside:
+  mages (and every mage job after them) heal, archers and thieves deal damage**. Your party comes
+  with you if it fits the roles, and the group finder brings in players for any open spot. Inside:
   - Everyone in the group has HP (shown under their names and in the group panel), and monsters
     don't hurt on touch: they wind up and swing at whoever they're angriest at. Damage builds
     **threat**, a tank's five times over, and healing builds a little. Monsters in a pack fight
     together. As the tank, press **T** to Provoke everything nearby onto you.
   - The group plays its roles: the tank leads and pulls the next pack once everyone is ready, picks
     up loose monsters, and holds the boss; the healer hangs back and heals whoever is hurt (a group
-    heal when several are); the damage dealers focus what the tank is fighting, go for adds first,
+    heal when several are), keeps a barrier on the tank, and Renews the group when it's taking
+    damage; the damage dealers focus what the tank is fighting, go for adds first,
     and help with the room's task between fights. Everyone steps out of telegraphed attacks.
   - Six rooms, each sealed until it's cleared: **Hollow Entrance** (trash packs, and light the
     three glowcaps), **Capper's Garden** (mini-boss Mother Capper: Spore Rain patches to step out
@@ -246,6 +246,11 @@ to clear it.
   - The chest at the end holds EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
     Hollow Acorns, and Elixirs. Bramble's quest, Heart of the Hollow, pays out for calming Old
     Gnarlroot. Run it as often as you like.
+- **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
+  **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
+  around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in
+  a bubble that soaks up damage until it pops; and **Revive** gets a fallen party member nearby back
+  up, even mid-fight. Outside a dungeon they work on you.
 - **Options** — Esc (or the gear button) opens Options. Display: screen shake, hit-stop, damage
   numbers, particles (full, reduced, or off), job auras, and weapon effects. Interface: minimap,
   quest tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: auto-loot,

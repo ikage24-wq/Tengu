@@ -28,11 +28,10 @@ function heroAt(rng, level, jobs) {
   return world;
 }
 
-test('warriors tank, clerics and bishops heal, everyone else deals damage', () => {
+test('warriors tank, mages heal, everyone else deals damage', () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
-  assert.equal(roleOf('cleric', 'mage'), 'healer');
-  assert.equal(roleOf('bishop', 'mage'), 'healer');
-  for (const [job, fam] of [['mage', 'mage'], ['fpwizard', 'mage'], ['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
+  for (const job of ['mage', 'cleric', 'bishop', 'fpwizard']) assert.equal(roleOf(job, 'mage'), 'healer');
+  for (const [job, fam] of [['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
   assert.equal(roleOf('novice', 'beginner'), null);
 });
 
@@ -50,7 +49,7 @@ test('the group finder fills a 1 tank / 1 healer / 2 DPS group around you', () =
   const tank = members.find((b) => world.dungeon.roles[b.id] === 'tank');
   const healer = members.find((b) => world.dungeon.roles[b.id] === 'healer');
   assert.equal(tank.char.job, 'warrior');
-  assert.equal(healer.char.job, 'cleric');
+  assert.equal(healer.char.job, 'mage');
   assert.equal(world.map.id, DUNGEONS.hollow.rooms[0]);
   for (const b of members) assert.equal(b.hp, b.stats.maxHp);
 });
@@ -165,4 +164,53 @@ test('a group clears Rootwood Hollow from the first room to the chest', () => {
   } finally {
     Math.random = random;
   }
+});
+
+test("a mage's support skills heal, shield, and revive the group", async () => {
+  const { cast } = await import('../src/world/combat.js');
+  const { hurtMember } = await import('../src/world/dungeon.js');
+  const rng = seeded(21);
+  const world = heroAt(rng, 12, ['mage']);
+  Object.assign(world.char.skills, { mend: 10, renew: 5, barrier: 5, revive: 5 });
+  world.char.mp = 999;
+  assert.equal(startRun(world), null);
+  assert.equal(world.dungeon.roles.you, 'healer');
+  updateBots(world.bots, world, 1 / 60);
+  const group = groupOf(world);
+  const bots = group.filter((g) => g.bot);
+  bots.forEach((g, i) => Object.assign(g.body, { x: world.body.x + 30 + i * 20, y: world.body.y }));
+  const ready = () => {
+    world.attackTimer = 0;
+    world.lockTimer = 0;
+  };
+  // Mend: everyone around you gets HP back.
+  for (const g of bots) g.bot.hp = Math.round(g.bot.stats.maxHp / 2);
+  ready();
+  assert.ok(cast(world, 'mend').ok);
+  for (const g of bots) assert.ok(g.bot.hp > g.bot.stats.maxHp / 2, `${g.name} healed`);
+  // Arcane Barrier: a bubble on everyone that soaks up damage first.
+  ready();
+  assert.ok(cast(world, 'barrier').ok);
+  const tank = bots.find((g) => g.role === 'tank');
+  const shield = tank.bot.buffs.barrier.shield;
+  assert.ok(shield > 0 && world.char.buffs.barrier.shield > 0);
+  tank.bot.hp = tank.bot.stats.maxHp;
+  hurtMember(world, tank, 1, 0, { pierce: true });
+  assert.equal(tank.bot.hp, tank.bot.stats.maxHp, 'absorbed');
+  assert.equal(tank.bot.buffs.barrier.shield, shield - 1);
+  // Revive: nobody to raise, then a fallen tank gets back up.
+  ready();
+  assert.equal(cast(world, 'revive').reason, 'noone');
+  tank.bot.down = true;
+  tank.bot.hp = 0;
+  ready();
+  assert.ok(cast(world, 'revive').ok);
+  assert.ok(!tank.bot.down && tank.bot.hp > 0);
+  // Renew: HP comes back every second.
+  ready();
+  assert.ok(cast(world, 'renew').ok);
+  const dps = bots.find((g) => g.role === 'dps');
+  dps.bot.hp = 50;
+  for (let i = 0; i < 70; i++) updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: true });
+  assert.ok(dps.bot.hp > 50, 'renewed');
 });

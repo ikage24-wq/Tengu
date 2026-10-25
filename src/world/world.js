@@ -17,7 +17,7 @@ import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
-import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, roleAction } from './dungeon.js';
+import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, roleAction, absorb } from './dungeon.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -223,6 +223,7 @@ const BLOCKER_TEXT = {
   mp: 'Not enough MP.',
   busy: null,
   weapon: "That skill needs a different weapon.",
+  noone: 'No fallen party member nearby.',
   unlearned: null,
   passive: null,
 };
@@ -279,7 +280,7 @@ function hurtPlayer(world, rawAtk, fromX) {
   if (world.god) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = damageTaken(rawAtk, s.wdef);
+  let dmg = absorb(world, world.body, char.buffs, damageTaken(rawAtk, s.wdef));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -329,6 +330,17 @@ export function updateWorld(world, dt, input) {
       delete char.buffs[id];
       world.log(`${SKILLS[id]?.name ?? 'Buff'} wore off.`, '#d4cbe8');
     }
+  }
+  // Renew: a share of max HP back every second.
+  for (const b of Object.values(char.buffs)) {
+    if (!b.values?.regenPct || world.dead) continue;
+    b.tick = (b.tick ?? 1) - dt;
+    if (b.tick > 0) continue;
+    b.tick = 1;
+    const add = Math.min(world.stats.maxHp - char.hp, Math.round(world.stats.maxHp * b.values.regenPct));
+    if (add <= 0) continue;
+    char.hp += add;
+    world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 10, text: `+${add}`, color: '#9be08f', t: 0, small: true });
   }
   world.stats = computeStats(char, world.now);
   char.hp = Math.min(char.hp, world.stats.maxHp);

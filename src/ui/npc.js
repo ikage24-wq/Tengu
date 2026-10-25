@@ -292,11 +292,11 @@ function dungeonPage(ui, state, world, npc, area) {
       box(ctx, cx + 3, cy + 3, 36, 13, { fill: r.color, edge: null, r: 6 });
       text(ctx, r.label, cx + 21, cy + 12.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.5)' });
       const who = s.who === 'you' ? `${world.char.name} (you)` : s.who ? `Lv${s.who.level} ${s.who.name}` : 'Group finder...';
-      const job = s.who === 'you' ? JOBS[world.char.job].name : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a Cleric' : s.role === 'tank' ? 'a Warrior' : 'any job';
+      const job = s.who === 'you' ? JOBS[world.char.job].name : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a Mage' : s.role === 'tank' ? 'a Warrior' : 'any job';
       text(ctx, who, cx + 44, cy + 9, { size: 7.5, bold: true, color: s.who ? COLORS.ink : COLORS.muted });
       text(ctx, job, cx + 44, cy + 16.5, { size: 6, color: COLORS.muted });
     });
-    text(ctx, 'Warriors tank, Clerics heal, everyone else deals damage.', tx, y + 52, { size: 6.5, color: COLORS.muted });
+    text(ctx, 'Warriors tank, Mages heal, everyone else deals damage.', tx, y + 52, { size: 6.5, color: COLORS.muted });
   }
   const by = area.bottom - 16;
   if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, 'Find group & go', { primary: true, size: 7.5 })) {

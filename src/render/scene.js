@@ -186,6 +186,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
   drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
+  drawSupport(ctx, buffs, hx, hy, time, world.now);
   // Your own name tag, like everyone else's; click it (or you) to see your profile.
   if (!world.dead) {
     ctx.font = 'bold 7px sans-serif';
@@ -336,11 +337,59 @@ function drawDungeonFront(ctx, world, cam, time) {
     }
     ctx.restore();
   }
+  for (const bot of partyMembers(world.bots)) {
+    if (bot.buffs && bot.body && bot.map === world.map.id && !bot.down) drawSupport(ctx, bot.buffs, bot.body.x - cam.x, bot.body.y - cam.y, time, world.now);
+  }
   const ch = world.channel;
   if (ch) {
     const x = world.body.x - cam.x;
     const y = world.body.y - cam.y - 64;
     box(ctx, x - 22, y, 44, 7, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 3.5 });
     box(ctx, x - 21, y + 1, Math.max(3, 42 * ch.obj.progress), 5, { fill: ch.obj.kind === 'cage' ? '#9be08f' : '#ffd66b', edge: null, r: 2.5 });
+  }
+}
+
+// A mage's support magic on someone: a shimmering bubble while their Arcane Barrier holds, and
+// little green plus-sparkles rising while Renew heals them.
+function drawSupport(ctx, buffs, x, y, time, now) {
+  let barrier = null;
+  let renew = false;
+  for (const b of Object.values(buffs)) {
+    if (b.until <= now) continue;
+    if (b.shield > 0) barrier = b;
+    if (b.values?.regenPct) renew = true;
+  }
+  if (barrier) {
+    const k = 1 + Math.sin(time * 4) * 0.03;
+    ctx.save();
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = '#9fd8ff';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 24, 18 * k, 29 * k, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = '#c9ecff';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 24, 14 * k, 25 * k, 0, Math.PI * 1.15, Math.PI * 1.45);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (renew) {
+    ctx.save();
+    ctx.fillStyle = '#9be08f';
+    for (let i = 0; i < 3; i++) {
+      const p = (time * 0.7 + i / 3) % 1;
+      const px = x + Math.sin(i * 2.4 + time) * 10;
+      const py = y - 8 - p * 40;
+      ctx.globalAlpha = Math.sin(p * Math.PI) * 0.9;
+      ctx.fillRect(px - 0.75, py - 2.5, 1.5, 5);
+      ctx.fillRect(px - 2.5, py - 0.75, 5, 1.5);
+    }
+    ctx.restore();
   }
 }

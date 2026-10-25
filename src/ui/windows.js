@@ -275,7 +275,18 @@ export function skillsWindow(ui, state, world) {
   const th = ui.theme;
   box(ctx, win.x + W - 50, win.y + 22, 44, 15, { fill: char.sp ? th.main : COLORS.cell, edge: char.sp ? th.dark : null, r: 7.5 });
   text(ctx, `${char.sp} SP`, win.x + W - 28, win.y + 33, { size: 8, bold: true, align: 'center', color: char.sp ? '#ffffff' : COLORS.muted, outline: char.sp ? th.ink : null });
-  const list = Object.values(SKILLS).filter((s) => s.job === job);
+  const all = Object.values(SKILLS).filter((s) => s.job === job);
+  // Five rows show at once; the wheel scrolls longer books.
+  const ROWS = 5;
+  win.scroll ??= {};
+  if (hover(ui, win.x + 6, win.y + 42, W - 12, ROWS * 33)) win.scroll[job] = (win.scroll[job] ?? 0) + ui.mouse.wheel;
+  const top = (win.scroll[job] = Math.max(0, Math.min(all.length - ROWS, win.scroll[job] ?? 0)));
+  const list = all.slice(top, top + ROWS);
+  if (all.length > ROWS) {
+    const trackH = ROWS * 33 - 6;
+    box(ctx, win.x + W - 5, win.y + 44, 3, trackH, { fill: COLORS.cell, edge: null, r: 1.5 });
+    box(ctx, win.x + W - 5, win.y + 44 + (trackH * top) / all.length, 3, (trackH * ROWS) / all.length, { fill: th.main, edge: null, r: 1.5 });
+  }
   let y = win.y + 42;
   for (const s of list) {
     const lv = char.skills[s.id] ?? 0;

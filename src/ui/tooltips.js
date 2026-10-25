@@ -65,9 +65,9 @@ function describe(params) {
   if (params.healPct) parts.push(`heals ${Math.round(params.healPct * 100)}% HP`);
   if (params.buff) {
     for (const [k, v] of Object.entries(params.buff)) {
-      const pct = ['attackSpeed', 'manaShield', 'maxHpPct', 'critRate'].includes(k);
-      const name = { attackSpeed: 'attack speed', manaShield: 'damage to MP', maxHpPct: 'max HP', critRate: 'crit rate' }[k] ?? STAT_NAMES[k] ?? k;
-      parts.push(`+${pct ? `${Math.round(v * 100)}%` : v} ${name}`);
+      const pct = ['attackSpeed', 'manaShield', 'maxHpPct', 'critRate', 'regenPct', 'barrier'].includes(k);
+      const name = { attackSpeed: 'attack speed', manaShield: 'damage to MP', maxHpPct: 'max HP', critRate: 'crit rate', regenPct: 'HP every second', barrier: 'max HP as a barrier' }[k] ?? STAT_NAMES[k] ?? k;
+      parts.push(`${k === 'barrier' ? '' : '+'}${pct ? `${Math.round(v * 1000) / 10}%` : v} ${name}`);
     }
     parts.push(`${params.duration}s`);
   }

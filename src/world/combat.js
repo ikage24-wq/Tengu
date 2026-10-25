@@ -7,7 +7,7 @@ import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance }
 import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
-import { healMembers } from './dungeon.js';
+import { healMembers, buffMembers, reviveTarget, reviveMember } from './dungeon.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -68,6 +68,7 @@ export function castBlocker(world, skillId) {
   if (s.type === 'passive') return 'passive';
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
+  if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
   return null;
 }
 
@@ -129,8 +130,17 @@ export function cast(world, skillId, rng = Math.random) {
     // Summons ride on a buff: they attack on their own timer until the buff ends.
     const summon = params.summon ? { ...params.summon, timer: 0.6 } : null;
     char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name, summon };
+    if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
     world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, t: 0, dur: 1.1 });
+    // Support buffs land on the party around you too.
+    if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));
     world.log(`${s.name} is active.`, '#ffe36b');
+    return { ok: true };
+  }
+
+  if (type === 'revive') {
+    reviveMember(world, reviveTarget(world, hitBox(body, params.range)), params.healPct);
+    world.fx.push({ kind: 'heal', x: body.x, y: body.y, t: 0, dur: 0.8 });
     return { ok: true };
   }
 
