@@ -14,7 +14,8 @@ import {
   topShapes, sleeveColor, legLook, skirtShapes, legShapes, hatShapes, hatBackShapes, TUCKS_HAIR,
   capeShapes, handShapes, earringShapes,
 } from './gear.js';
-import { weaponShapes, weaponAnimated } from './weapons.js';
+import { weaponShapes, weaponFrames } from './weapons.js';
+import { drawSwordAura, ELEMENTS } from './swords.js';
 import { walkPhase } from './animator.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'spiky', 'bun', 'long'];
@@ -48,7 +49,7 @@ function resolveGear(look, gear) {
     cape: piece('cape', null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
-    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, special: w.special ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
+    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, special: w.special ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
   };
 }
 
@@ -328,11 +329,23 @@ function rigKey(r) {
 // ---------- Weapons ----------
 
 function weaponSprite(w, time) {
-  const frame = weaponAnimated(w.type, w.tier, w.special) ? Math.floor(time * 8) % 4 : 0;
+  const frames = weaponFrames(w.type, w.tier, w.special);
+  const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
   const def = weaponShapes(w.type, w.color, w.tier, w.special, frame);
   if (!def) return null;
   const s = sprite(`weapon|${w.type}|${w.color}|${w.tier}|${w.special}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
-  return { ...s, grip: def.grip };
+  return { ...s, grip: def.grip, blade: def.blade };
+}
+
+// Elemental weapons always glow softly in their element's color.
+function elementGlow(ctx, wpn, element, time, scale) {
+  const glow = tinted(wpn, ELEMENTS[element].glow);
+  const ox = -(wpn.grip[0] + 1) * scale;
+  const oy = -(wpn.grip[1] + 1) * scale;
+  const base = ctx.globalAlpha;
+  ctx.globalAlpha = base * (0.3 + 0.2 * Math.sin(time * 4));
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ctx.drawImage(glow, ox + dx * scale, oy + dy * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
+  ctx.globalAlpha = base;
 }
 
 // Rarity effects drawn in the weapon's rotated frame (grip at the origin, tip toward -y).
@@ -457,9 +470,13 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1])));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
+    const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
-    if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, state.time ?? 0, scale, paint);
+    const el = g.weapon.element;
+    if (el) elementGlow(ctx, wpn, el, time, scale);
+    if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, scale, paint);
     else paint(-(wpn.grip[0] + 1) * scale, -(wpn.grip[1] + 1) * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
+    if (el && wpn.blade) drawSwordAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * scale, (wpn.blade[1] - wpn.grip[1]) * scale, time, scale);
     ctx.restore();
   };
 

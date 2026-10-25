@@ -91,3 +91,20 @@ test('weapons grow with tier and every animation frame builds', () => {
   // Top-tier swords are taller than the 48px hero.
   assert.ok(weaponShapes('sword', '#ffffff', 8).h > 48);
 });
+
+test('the sword path climbs four steps, then splits into five elements', () => {
+  const path = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((t) => ITEMS[`sword_${t}`]);
+  for (let t = 1; t < 4; t++) assert.ok(path[t].stats.watk > path[t - 1].stats.watk && path[t].reqLevel > path[t - 1].reqLevel);
+  const ends = path.slice(4);
+  assert.deepEqual(ends.map((d) => d.element), ['holy', 'cosmic', 'storm', 'fire', 'water']);
+  for (const d of ends) {
+    assert.equal(d.reqLevel, 45);
+    assert.ok(d.stats.watk > path[3].stats.watk);
+  }
+  const sold = Object.values(NPCS).flatMap((n) => n.shop ?? []);
+  for (const d of ends) assert.ok(!sold.includes(d.id), `${d.id} is drop-only`);
+  // Elemental swords animate: their frames differ.
+  const a = weaponShapes('sword', '#fff', 7, null, 0).shapes;
+  const b = weaponShapes('sword', '#fff', 7, null, 2).shapes;
+  assert.notDeepEqual(a, b);
+});

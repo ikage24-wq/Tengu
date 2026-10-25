@@ -3,6 +3,7 @@
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { R, E, P, sprite, blit, shade } from './pixel.js';
+import { swordIcon } from './swords.js';
 
 const WOOD = '#a0703f';
 const GOLD = '#ffd66b';
@@ -56,6 +57,7 @@ function itemShapes(def) {
   const c = def.color;
   const l = shade(c, 22);
   const d = shade(c, -18);
+  if (def.weaponType === 'sword' && !def.special) return swordIcon(def.tier);
   const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;
   if (designed) return designed;
   if (def.type === 'equip' && def.slot === 'weapon') {

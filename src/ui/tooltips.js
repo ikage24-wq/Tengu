@@ -1,6 +1,6 @@
 // Tooltip lines for items and skills.
 
-import { ITEMS, RARITIES } from '../data/items.js';
+import { ITEMS, RARITIES, ELEMENT_NAMES } from '../data/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { COLORS } from './kit.js';
@@ -23,6 +23,7 @@ export function itemTooltip(char, id, inst = null) {
   lines.push({ text: `${def.name}${upgrades}`, bold: true, size: 10, color: rarity.color ?? (inst?.upgrades ? '#e06fa8' : COLORS.ink) });
   if (inst?.rarity) lines.push({ text: `★ ${rarity.name}`, bold: true, color: rarity.color });
   if (def.unique) lines.push({ text: '♥ Unique look', bold: true, color: '#e06fa8' });
+  if (def.element) lines.push({ text: `✦ ${ELEMENT_NAMES[def.element]} element`, bold: true, color: def.color === '#ffe36b' ? '#d9a440' : def.color });
   if (def.type === 'equip') {
     const kind = def.slot === 'weapon' ? def.weaponType[0].toUpperCase() + def.weaponType.slice(1) : def.slot[0].toUpperCase() + def.slot.slice(1);
     lines.push({ text: kind, color: COLORS.muted });

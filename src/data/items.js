@@ -42,6 +42,7 @@ const WEAPON_KINDS = {
 };
 
 for (const [type, kind] of Object.entries(WEAPON_KINDS)) {
+  if (type === 'sword') continue;
   WEAPON_TIERS.forEach((tier, t) => {
     const stats = { watk: Math.round(BASE_WATK[t] * kind.scale) };
     if (kind.magic) stats.matk = Math.round(BASE_MATK[t] * (kind.matkBonus ?? 1));
@@ -60,6 +61,41 @@ for (const [type, kind] of Object.entries(WEAPON_KINDS)) {
     });
   });
 }
+
+// ---------- The sword path ----------
+// Four steps up (Wooden → Mithril), then five endgame swords, one per element. They keep the
+// sword_0 … sword_8 ids so older saves still load.
+
+export const ELEMENT_NAMES = { holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water' };
+
+const SWORD_PATH = [
+  { name: 'Wooden Sword', level: 0, watk: 14, color: '#c99a6b' },
+  { name: 'Iron Sword', level: 10, watk: 26, color: '#a8b0bd' },
+  { name: 'Steel Longsword', level: 20, watk: 40, color: '#cfd8e6' },
+  { name: 'Mithril Greatsword', level: 30, watk: 56, color: '#c4e0f2' },
+  { name: "Seraph's Grace", level: 45, watk: 82, element: 'holy', color: '#ffe36b', bonus: { hp: 150, mdef: 20 } },
+  { name: 'Astral Edge', level: 45, watk: 84, element: 'cosmic', color: '#9b7bff', bonus: { int: 6, luk: 6, acc: 10 } },
+  { name: 'Stormcaller', level: 45, watk: 80, element: 'storm', color: '#5ff3ff', bonus: { dex: 8, speed: 6 } },
+  { name: 'Inferno Fang', level: 45, watk: 90, element: 'fire', color: '#ff6b2b', bonus: { str: 8 } },
+  { name: 'Tidebreaker', level: 45, watk: 82, element: 'water', color: '#4fc8ff', bonus: { hp: 100, mp: 100, str: 4 } },
+];
+
+SWORD_PATH.forEach((p, t) => {
+  add({
+    id: `sword_${t}`,
+    name: p.name,
+    type: 'equip',
+    slot: 'weapon',
+    weaponType: 'sword',
+    tier: t,
+    element: p.element ?? null,
+    reqLevel: p.level,
+    family: t === 0 ? null : 'warrior',
+    stats: { watk: p.watk, ...p.bonus },
+    price: Math.round(100 + 160 * Math.min(t, 4) ** 2 + 400 * t),
+    color: p.color,
+  });
+});
 
 // ---------- Armor ----------
 

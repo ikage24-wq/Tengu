@@ -2,7 +2,8 @@
 // `look` uses the same appearance fields as the player, so NPCs are drawn by the hero renderer;
 // instructors also carry `gear` to show off a top-tier weapon of their class.
 
-const tier = (t) => ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `${w}_${t}`);
+// Elemental swords (sword_4 and up) are endgame drops, never sold.
+const tier = (t) => ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].filter((w) => w !== 'sword' || t < 4).map((w) => `${w}_${t}`);
 const armor = (t) => ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'].map((s) => `${s}_${t}`);
 
 export const NPCS = {
@@ -28,7 +29,7 @@ export const NPCS = {
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     look: { hairStyle: 'spiky', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round' },
-    gear: { weapon: { id: 'sword_6', rarity: 2 } },
+    gear: { weapon: { id: 'sword_7', rarity: 2 } },
     greeting: 'Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {

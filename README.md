@@ -58,12 +58,14 @@ then press the key. Right-click a hotkey slot to clear it.
   Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
   Wings, Angel Wings, Galaxy Cape, Lollipop Wand, Candy Cane Sword, Kitty Paw Claw, Sweetheart
   Dagger, Crystal Harp Bow, and Crescent Moon Staff (a few are sold by Marlo; the rest drop).
-- **Weapons** — comically oversized, with a new silhouette at every tier: swords grow from a
-  wooden practice blade into a cleaver, a rune blade, a crystal blade, a flame blade, a holy blade,
-  and a crackling lightning blade (taller than your hero). Axes, spears, wands, staves, bows,
-  crossbows, daggers, and claws each have their own line, from crescent axes and flame spears to
-  winged orbs and a celestial eye staff. Top-tier designs animate: flickering fire, lightning,
-  pulsing runes, swirling orbs, blinking eyes. The class instructors show off their best.
+- **Weapons** — comically oversized and growing with every tier. Swords follow a **path**:
+  Wooden → Iron → Steel → Mithril, then split into five endgame elements at level 45, each with
+  its own animated art, aura, and colored hit sparks: **Seraph's Grace** (holy: feathered wings and
+  a halo), **Astral Edge** (cosmic: a blade full of stars and an orbiting planet), **Stormcaller**
+  (lightning: crackling edges and arcs), **Inferno Fang** (fire: molten cracks and flames), and
+  **Tidebreaker** (water: a flowing wave blade with bubbles). Elemental swords only drop. The
+  other weapon types (axes, spears, wands, staves, bows, crossbows, daggers, claws) still use the
+  earlier per-tier designs.
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for
   higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
   glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.
@@ -95,7 +97,8 @@ src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
 src/world/              simulation: physics, monsters, loot, combat, the world update
-src/render/             drawing: pixel toolkit, hero rig, gear designs, weapons, animator,
+src/render/             drawing: pixel toolkit, hero rig, gear designs, weapons, sword path,
+                        animator,
                         particles,
                         monsters, scenery, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens

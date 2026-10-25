@@ -6,6 +6,7 @@
 // Weapons point straight up with the grip near the bottom; the hero rotates them around the grip.
 
 import { R, E, P, shade } from './pixel.js';
+import { swordShapes, SWORD_FRAMES } from './swords.js';
 
 const GOLD = '#ffd66b';
 const GOLD_D = '#d9a440';
@@ -142,18 +143,6 @@ function guard(style, cx, y, c, f) {
     default: return [R(cx - 5, y, 11, 2, GOLD), P(cx - 5, y - 1, GOLD), P(cx + 5, y - 1, GOLD)];
   }
 }
-
-const SWORDS = [
-  { len: 22, bw: 7, blade: 'wood', guard: 'bar' },
-  { len: 26, bw: 7, blade: 'plain', guard: 'bar' },
-  { len: 30, bw: 9, blade: 'plain', guard: 'curve' },
-  { len: 34, bw: 12, blade: 'cleaver', guard: 'bar' },
-  { len: 36, bw: 10, blade: 'rune', guard: 'wings' },
-  { len: 38, bw: 12, blade: 'crystal', guard: 'antler' },
-  { len: 40, bw: 11, blade: 'flame', guard: 'curve' },
-  { len: 42, bw: 11, blade: 'holy', guard: 'eye' },
-  { len: 46, bw: 11, blade: 'lightning', guard: 'wings' },
-];
 
 const DAGGERS = [
   { len: 13, bw: 6, blade: 'plain', guard: 'small' },
@@ -396,7 +385,7 @@ export function weaponShapes(type, color, tier = 0, special = null, frame = 0) {
     case 'heartdagger': return bladed({ len: 20, bw: 7, blade: 'heart', guard: 'heart' }, color, f);
     case 'crystalbow': return bow(6, color, f, true);
     case 'pawclaw': return claw(4, color, f, true);
-    case 'sword': return bladed(SWORDS[t], color, f);
+    case 'sword': return swordShapes(t, frame);
     case 'dagger': return bladed(DAGGERS[t], color, f);
     case 'axe': return hafted('axe', AXES[t], color, f, t);
     case 'spear': return hafted('spear', SPEARS[t], color, f, t);
@@ -409,10 +398,11 @@ export function weaponShapes(type, color, tier = 0, special = null, frame = 0) {
   }
 }
 
-// Whether a weapon's own design moves (so the renderer knows to cycle frames).
-export function weaponAnimated(type, tier = 0, special = null) {
-  if (special) return true;
+// How many animation frames a weapon's design has (1 = still).
+export function weaponFrames(type, tier = 0, special = null) {
   const t = Math.max(0, Math.min(8, tier));
-  if (type === 'sword' || type === 'dagger') return ANIMATED_SWORD.has((type === 'sword' ? SWORDS : DAGGERS)[t].blade);
-  return t >= 4;
+  if (special) return FRAMES;
+  if (type === 'sword') return t >= 4 ? SWORD_FRAMES : 1;
+  if (type === 'dagger') return ANIMATED_SWORD.has(DAGGERS[t].blade) ? FRAMES : 1;
+  return t >= 4 ? FRAMES : 1;
 }

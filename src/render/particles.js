@@ -1,6 +1,9 @@
 // Render-only particles and camera shake: footstep dust, landing puffs, hit sparks, defeat poofs,
 // and ambient motes per map theme. Nothing here affects gameplay.
 
+import { ITEMS } from '../data/items.js';
+import { ELEMENTS } from './swords.js';
+
 const MAX = 600;
 
 export function createParticles() {
@@ -35,7 +38,7 @@ export function dust(fx, x, y, count, dir = 0, color = '#f3e6da') {
   }
 }
 
-export function sparks(fx, x, y, crit, dir) {
+export function sparks(fx, x, y, crit, dir, palette = null) {
   const n = crit ? 10 : 6;
   for (let i = 0; i < n; i++) {
     const a = (Math.random() - 0.5) * Math.PI * 1.2 + (dir > 0 ? 0 : Math.PI);
@@ -43,7 +46,7 @@ export function sparks(fx, x, y, crit, dir) {
     add(fx, {
       x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, g: 300, drag: 3,
       life: 0.25 + Math.random() * 0.2, size: crit ? 2 : 1.5, shape: 'streak',
-      color: crit ? (i % 2 ? '#ffb347' : '#fff3a6') : i % 2 ? '#ffffff' : '#ffe9f5',
+      color: palette ? palette[i % palette.length] : crit ? (i % 2 ? '#ffb347' : '#fff3a6') : i % 2 ? '#ffffff' : '#ffe9f5',
     });
   }
   if (crit) add(fx, { x, y, vx: 0, vy: 0, life: 0.18, size: 6, grow: 60, shape: 'ring', color: '#fff3a6' });
@@ -73,10 +76,17 @@ export function ring(fx, x, y, color, size, grow) {
   add(fx, { x, y, vx: 0, vy: 0, life: 0.35, size, grow, shape: 'flatring', color });
 }
 
+// The player's weapon element, so hits spark in its colors.
+function elementOf(world) {
+  const w = world.char.equipment.weapon;
+  const el = w ? ITEMS[w.id].element : null;
+  return el ? ELEMENTS[el] : null;
+}
+
 // Handles the world's game-feel cues.
 export function absorbJuice(fx, world) {
   for (const j of world.juice) {
-    if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir);
+    if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, elementOf(world)?.sparks);
     else if (j.type === 'kill') {
       poof(fx, j.x, j.y, j.w, j.h, j.boss);
       if (j.boss) shake(fx, 7, 0.8);
