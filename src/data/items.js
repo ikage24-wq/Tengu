@@ -12,71 +12,11 @@ function add(def) {
 }
 
 // ---------- Weapons ----------
-// Every weapon type follows the same path: Wooden → Iron → Steel → Mithril, then at level 45 it
-// splits into five endgame elements (Holy, Cosmic, Lightning, Fire, Water). Ids run type_0 …
-// type_8 in that order.
+// The weapon lines were retired; new weapons come next. Weapon types (sword, axe, spear, wand,
+// staff, bow, crossbow, dagger, claw) live in core/formulas.js. A weapon item is an equip with
+// slot 'weapon', a `weaponType`, and optionally an `element`, named here for tooltips.
 
 export const ELEMENT_NAMES = { holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water' };
-export const PATH_ELEMENTS = [null, null, null, null, 'holy', 'cosmic', 'storm', 'fire', 'water'];
-
-const PATH_LEVELS = [0, 10, 20, 30, 45, 45, 45, 45, 45];
-const PATH_COLORS = ['#c99a6b', '#a8b0bd', '#cfd8e6', '#c4e0f2', '#ffe36b', '#9b7bff', '#5ff3ff', '#ff6b2b', '#4fc8ff'];
-const PATH_WATK = [14, 26, 40, 56, 84];
-const PATH_MATK = [8, 15, 30, 46, 72];
-
-// `scale` evens out damage between weapon types; `family` limits who can equip tiers above Wooden.
-const WEAPON_KINDS = {
-  sword: { family: 'warrior', scale: 1.0, names: ['Wooden Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Greatsword', "Seraph's Grace", 'Astral Edge', 'Stormcaller', 'Inferno Fang', 'Tidebreaker'] },
-  axe: { family: 'warrior', scale: 0.95, names: ['Wooden Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Greataxe', "Seraph's Verdict", 'Astral Cleaver', 'Thunderclap', 'Magma Maw', 'Riptide Axe'] },
-  spear: { family: 'warrior', scale: 0.85, names: ['Wooden Pike', 'Iron Spear', 'Steel Halberd', 'Mithril Lance', "Seraph's Lance", 'Starfall Pike', 'Storm Fang', 'Phoenix Spear', 'Trident of Tides'] },
-  wand: { family: 'mage', scale: 0.5, magic: true, names: ['Twig Wand', 'Iron Wand', 'Steel Star Wand', 'Mithril Crystal Wand', 'Halo Wand', 'Moonlight Wand', 'Spark Wand', 'Ember Wand', 'Dewdrop Wand'] },
-  staff: { family: 'mage', scale: 0.55, magic: true, matkBonus: 1.12, names: ['Wooden Staff', 'Iron Staff', 'Steel Staff', 'Mithril Staff', 'Seraph Staff', 'Cosmos Staff', 'Tempest Staff', 'Inferno Staff', 'Tidecaller Staff'] },
-  bow: { family: 'archer', scale: 0.8, names: ['Wooden Bow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Angelwing Bow', 'Crescent Bow', 'Thunder Bow', 'Phoenix Bow', 'Wave Bow'] },
-  crossbow: { family: 'archer', scale: 0.78, names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Crossbow', 'Mithril Arbalest', 'Holy Arbalest', 'Nova Crossbow', 'Volt Crossbow', 'Blaze Crossbow', 'Torrent Crossbow'] },
-  dagger: { family: 'thief', scale: 0.98, names: ['Wooden Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Kris', "Angel's Fang", 'Void Dagger', 'Static Knife', 'Cinder Dagger', 'Coral Dagger'] },
-  claw: { family: 'thief', scale: 0.75, names: ['Wooden Claws', 'Iron Claws', 'Steel Talons', 'Mithril Talons', 'Seraph Talons', 'Starclaw', 'Thunderclaw', 'Hellfire Claw', 'Tidal Claw'] },
-};
-
-const MAIN_STAT = { warrior: 'str', mage: 'int', archer: 'dex', thief: 'luk' };
-
-// Each element leans a different way: Holy is sturdy, Cosmic precise, Lightning fast, Fire
-// hits hardest, Water keeps you topped up.
-function elementBonus(element, family) {
-  const main = MAIN_STAT[family];
-  switch (element) {
-    case 'holy': return { hp: 150, mdef: 20 };
-    case 'cosmic': return { [main]: 6, acc: 10 };
-    case 'storm': return { [main]: 4, speed: 6 };
-    case 'fire': return { [main]: 8 };
-    case 'water': return { hp: 100, mp: 100, [main]: 4 };
-    default: return {};
-  }
-}
-
-for (const [type, kind] of Object.entries(WEAPON_KINDS)) {
-  kind.names.forEach((name, t) => {
-    const element = PATH_ELEMENTS[t];
-    const step = Math.min(t, 4);
-    const fire = element === 'fire' ? 1.08 : element === 'storm' ? 0.96 : 1;
-    const stats = { watk: Math.round(PATH_WATK[step] * kind.scale * fire) };
-    if (kind.magic) stats.matk = Math.round(PATH_MATK[step] * (kind.matkBonus ?? 1) * fire);
-    Object.assign(stats, elementBonus(element, kind.family));
-    add({
-      id: `${type}_${t}`,
-      name,
-      type: 'equip',
-      slot: 'weapon',
-      weaponType: type,
-      tier: t,
-      element,
-      reqLevel: PATH_LEVELS[t],
-      family: t === 0 ? null : kind.family,
-      stats,
-      price: Math.round(100 + 160 * step * step + 400 * step),
-      color: PATH_COLORS[t],
-    });
-  });
-}
 
 // ---------- Armor ----------
 

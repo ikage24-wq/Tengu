@@ -833,7 +833,7 @@ function rigKey(r) {
 function weaponSprite(w, time) {
   const frames = weaponFrames(w.type, w.tier);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.color, w.tier, null, frame);
+  const def = weaponShapes(w.type, w.tier, frame);
   if (!def) return null;
   const s = sprite(`weapon|${w.type}|${w.tier}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
   return { ...s, grip: def.grip, blade: def.blade };

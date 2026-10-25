@@ -7,7 +7,6 @@ import { makeEquip, rollRarity } from '../src/core/items.js';
 import { rollLoot } from '../src/world/drops.js';
 import { MOBS } from '../src/data/mobs.js';
 import { topShapes, legLook, legShapes, hatShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
-import { weaponShapes } from '../src/render/weapons.js';
 import { dropRetiredItems } from '../src/core/save.js';
 
 const seq = (...values) => {
@@ -21,7 +20,6 @@ test('every equip has a design the renderer draws', () => {
     const c = def.color;
     let shapes;
     switch (def.slot) {
-      case 'weapon': shapes = weaponShapes(def.weaponType, c, def.tier, def.special)?.shapes; break;
       case 'hat': shapes = hatShapes(def.design, c); break;
       case 'top': shapes = topShapes(def.design, c); break;
       case 'bottom': shapes = legShapes(11, legLook(def.design, c, '#ffffff'), { design: 'sneakers', color: c }, false); break;
@@ -31,7 +29,7 @@ test('every equip has a design the renderer draws', () => {
       case 'earring': shapes = earringShapes(def.design, c); break;
     }
     assert.ok(shapes?.length, `${def.id} draws something`);
-    if (def.slot !== 'weapon') assert.ok(def.design, `${def.id} has a design`);
+    assert.ok(def.design, `${def.id} has a design`);
   }
 });
 
@@ -60,11 +58,11 @@ test('rarity rolls from the chance table', () => {
 });
 
 test('rarer gear has better stats and bonus main stats', () => {
-  const normal = makeEquip('sword_4', { rarity: 0, rng: () => 0.5 });
-  const rare = makeEquip('sword_4', { rarity: 1, rng: () => 0.5 });
-  const legend = makeEquip('sword_4', { rarity: 3, rng: () => 0.5 });
-  assert.ok(rare.stats.watk > normal.stats.watk);
-  assert.ok(legend.stats.watk > rare.stats.watk);
+  const normal = makeEquip('top_4', { rarity: 0, rng: () => 0.5 });
+  const rare = makeEquip('top_4', { rarity: 1, rng: () => 0.5 });
+  const legend = makeEquip('top_4', { rarity: 3, rng: () => 0.5 });
+  assert.ok(rare.stats.wdef > normal.stats.wdef);
+  assert.ok(legend.stats.wdef > rare.stats.wdef);
   const mains = (s) => ['str', 'dex', 'int', 'luk'].filter((k) => s.stats[k]).length;
   assert.equal(mains(normal), 0);
   assert.equal(mains(rare), 1);
@@ -76,41 +74,8 @@ test('bosses always drop at least Rare gear', () => {
   const loot = rollLoot(MOBS.crystalking, seq(0.9, 0.5, 0.3, 0.7));
   const gear = loot.filter((l) => l.inst);
   assert.equal(gear.length, 3);
+  for (const g of gear) assert.notEqual(ITEMS[g.inst.id].slot, 'weapon');
   for (const g of gear) assert.ok(g.inst.rarity >= 1);
-});
-
-test('weapons grow with tier and every animation frame builds', () => {
-  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
-    const low = weaponShapes(type, '#ffffff', 0);
-    const high = weaponShapes(type, '#ffffff', 8);
-    assert.ok(high.w * high.h > low.w * low.h, `${type} gets bigger`);
-    for (let f = 0; f < 4; f++) {
-      const w = weaponShapes(type, '#ffffff', 8, null, f);
-      assert.ok(w.shapes.length && w.grip[1] < w.h, `${type} frame ${f}`);
-    }
-  }
-  // Top-tier swords are taller than the 48px hero.
-  assert.ok(weaponShapes('sword', '#ffffff', 8).h > 48);
-});
-
-test('every weapon type climbs four steps, then splits into five elements', () => {
-  const sold = Object.values(NPCS).flatMap((n) => n.shop ?? []);
-  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
-    const path = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((t) => ITEMS[`${type}_${t}`]);
-    for (let t = 1; t < 4; t++) assert.ok(path[t].stats.watk > path[t - 1].stats.watk && path[t].reqLevel > path[t - 1].reqLevel, `${type} ${t}`);
-    const ends = path.slice(4);
-    assert.deepEqual(ends.map((d) => d.element), ['holy', 'cosmic', 'storm', 'fire', 'water']);
-    for (const d of ends) {
-      assert.equal(d.reqLevel, 45);
-      assert.ok(d.stats.watk > path[3].stats.watk, `${d.id} beats Mithril`);
-      assert.ok(!sold.includes(d.id), `${d.id} is drop-only`);
-    }
-    // Endgame weapons animate (frames differ) and are bigger than Mithril.
-    const a = weaponShapes(type, '#fff', 7, null, 0);
-    const b = weaponShapes(type, '#fff', 7, null, 2);
-    assert.notDeepEqual(a.shapes, b.shapes, `${type} animates`);
-    assert.ok(a.w * a.h >= weaponShapes(type, '#fff', 3).w * weaponShapes(type, '#fff', 3).h, `${type} endgame is bigger`);
-  }
 });
 
 test('old saves lose weapons that no longer exist instead of breaking', () => {
@@ -122,6 +87,6 @@ test('old saves lose weapons that no longer exist instead of breaking', () => {
   dropRetiredItems(char);
   assert.equal(char.equipment.weapon, null);
   assert.equal(char.equipment.hat.id, 'hat_0');
-  assert.deepEqual(char.inventory.equip.map((e) => e.id), ['sword_2']);
+  assert.deepEqual(char.inventory.equip.map((e) => e.id), [], 'the old weapon lines are gone too');
   assert.equal(char.hotkeys.Digit1.item, 'red_potion');
 });

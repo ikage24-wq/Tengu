@@ -6,7 +6,7 @@ export const QUESTS = {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,
     text: "Every adventurer needs a weapon! Take this sword and some tonics. Equip it from your bag (I), then head east to Petal Meadow.",
     objectives: [],
-    rewards: { exp: 10, gold: 50, items: [{ id: 'sword_0', qty: 1 }, { id: 'red_potion', qty: 10 }] },
+    rewards: { exp: 10, gold: 50, items: [{ id: 'bottom_0', qty: 1 }, { id: 'red_potion', qty: 10 }] },
   },
   fluffy: {
     id: 'fluffy', name: 'Fluffy Business', giver: 'mira', minLevel: 1, prereq: 'first_steps',

@@ -5,9 +5,6 @@ import { MAPS } from '../src/data/maps.js';
 import { createBody, stepBody } from '../src/world/physics.js';
 import { createCharacter, gainExp, learnSkill, advanceJob } from '../src/core/character.js';
 import { cast } from '../src/world/combat.js';
-import { addItem } from '../src/core/inventory.js';
-import { makeEquip } from '../src/core/items.js';
-import { equipFromBag } from '../src/core/character.js';
 import { createWorld, updateWorld, loadMap, respawn, hops, travelTo, travelCost } from '../src/world/world.js';
 import { TOWNS } from '../src/data/maps.js';
 import { spawnMob } from '../src/world/mobs.js';
@@ -55,10 +52,7 @@ test('ropes climb up onto the ledge and back down', () => {
 });
 
 function newWorld() {
-  const c = createCharacter('W', { hairStyle: 'bob' });
-  addItem(c.inventory, makeEquip('sword_0'));
-  equipFromBag(c, 0);
-  return createWorld(c);
+  return createWorld(createCharacter('W', { hairStyle: 'bob' }));
 }
 
 test('a new world starts in Sprout Village and portals travel with Up', () => {
@@ -222,24 +216,6 @@ test('summons attack nearby monsters on their own', () => {
   assert.ok(after < before, 'the angel dealt damage without the player attacking');
 });
 
-test('endgame weapons tag attacks with their element and add an impact on every hit', () => {
-  const w = newWorld();
-  gainExp(w.char, 1e7);
-  advanceJob(w.char, 'warrior');
-  w.char.equipment.weapon = makeEquip('sword_7');
-  loadMap(w, 'meadow1', 'west');
-  w.mobs = [];
-  w.spawner.slots = [];
-  const m = spawnMob(w.map, { mob: 'puffle', x: w.body.x + 30, y: w.map.groundY });
-  m.def = { ...m.def, eva: 0, hp: 1e9 };
-  m.hp = 1e9;
-  w.mobs.push(m);
-  w.body.facing = 1;
-  for (let i = 0; i < 40; i++) updateWorld(w, DT, keys(['KeyZ']));
-  assert.ok(w.fx.some((f) => f.kind === 'swing' && f.element === 'fire'), 'fire slash');
-  assert.ok(w.fx.some((f) => f.kind === 'impact' && f.element === 'fire'), 'fire impact');
-});
-
 test('every town connects to every other town by road', () => {
   for (const a of TOWNS) for (const b of TOWNS) assert.ok(Number.isFinite(hops(a, b)), `${a} -> ${b}`);
   for (const t of TOWNS) assert.ok(MAPS[t].isTown && MAPS[t].job, `${t} is a job's home town`);
@@ -287,8 +263,8 @@ test('the Game Master stays locked without the passphrase, and its tools work on
   assert.ok(w.char.skills.gmsmite, 'GM skills come with the job');
   gmCommand(w, 'level', ['77']);
   assert.equal(w.char.level, 77);
-  gmCommand(w, 'give', ['sword_8', '1']);
-  assert.ok(w.char.inventory.equip.some((e) => e.id === 'sword_8'));
+  gmCommand(w, 'give', ['hat_5', '1']);
+  assert.ok(w.char.inventory.equip.some((e) => e.id === 'hat_5'));
   gmCommand(w, 'tp', ['sky']);
   assert.equal(w.map.id, 'sky');
   gmCommand(w, 'god', []);

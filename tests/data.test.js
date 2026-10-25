@@ -89,7 +89,7 @@ test('a quest runs from accept to rewards', () => {
   assert.equal(acceptQuest(c, 'first_steps'), true);
   assert.equal(questState(c, 'first_steps'), 'ready', 'no objectives means ready at once');
   const r = completeQuest(c, 'first_steps');
-  assert.ok(r && c.inventory.equip.some((e) => e.id === 'sword_0'));
+  assert.ok(r && c.inventory.equip.some((e) => e.id === 'bottom_0'));
   assert.equal(questState(c, 'fluffy'), 'available');
   acceptQuest(c, 'fluffy');
   addItem(c.inventory, 'fluff', 8);

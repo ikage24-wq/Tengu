@@ -105,14 +105,14 @@ test('skills: learning needs SP and the right job, and binds a hotkey', () => {
   assert.deepEqual(c.hotkeys.KeyQ, { skill: 'pebble' });
 });
 
-test('equipping checks level and job', () => {
+test('equipping checks level', () => {
   const c = fresh();
-  addItem(c.inventory, makeEquip('sword_0'));
-  addItem(c.inventory, makeEquip('sword_2'));
-  assert.equal(equipFromBag(c, 1), false, 'iron sword needs level 15 and a warrior');
+  addItem(c.inventory, makeEquip('top_0'));
+  addItem(c.inventory, makeEquip('top_2'));
+  assert.equal(equipFromBag(c, 1), false, 'a leather vest needs level 20');
   assert.equal(equipFromBag(c, 0), true);
-  assert.equal(c.equipment.weapon.id, 'sword_0');
-  assert.ok(stats(c).watk >= 14);
+  assert.equal(c.equipment.top.id, 'top_0');
+  assert.ok(stats(c).wdef >= 5);
 });
 
 test('inventory stacks consumables and removes them', () => {
@@ -134,16 +134,16 @@ test('potions heal and are consumed', () => {
 });
 
 test('scrolls spend a slot whether they pass or fail', () => {
-  const sword = makeEquip('sword_1');
-  const before = sword.stats.watk;
-  const pass = applyScroll(sword, ITEMS.scroll_watk_60, () => 0.1);
+  const gloves = makeEquip('gloves_2');
+  const before = gloves.stats.watk;
+  const pass = applyScroll(gloves, ITEMS.scroll_glove_60, () => 0.1);
   assert.equal(pass.ok, true);
-  assert.equal(sword.stats.watk, before + 2);
-  const fail = applyScroll(sword, ITEMS.scroll_watk_60, () => 0.9);
+  assert.equal(gloves.stats.watk, before + 1);
+  const fail = applyScroll(gloves, ITEMS.scroll_glove_60, () => 0.9);
   assert.equal(fail.ok, false);
-  assert.equal(sword.slotsLeft, 5);
+  assert.equal(gloves.slotsLeft, 5);
   const hat = makeEquip('hat_0');
-  assert.equal(applyScroll(hat, ITEMS.scroll_watk_60).used, false, 'weapon scroll does not fit a hat');
+  assert.equal(applyScroll(hat, ITEMS.scroll_glove_60).used, false, 'a glove charm does not fit a hat');
 });
 
 test('death costs some EXP but never a level', () => {

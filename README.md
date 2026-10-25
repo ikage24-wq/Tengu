@@ -9,7 +9,7 @@ everyone, turned three-quarters toward where they're facing, with nine eye style
 hairstyles built from curved locks), drawn crisp at 2x detail with a dark pixel outline whose corners are softened;
 they and the monsters get three-tone shading: a soft lavender shadow at the back of each part, the
 base color, and a warm highlight on the front edge;
-the world, items, and weapons are pixel art. No build step and no dependencies.
+the world and items are pixel art. No build step and no dependencies.
 
 ## Play online
 
@@ -83,24 +83,18 @@ then press the key. Right-click a hotkey slot to clear it.
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
   3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
-- **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings), 9 weapon types in
-  9 tiers and armor in 6 tiers. Everything you wear shows on your character, and each armor tier
+- **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings), with armor in 6
+  tiers. Everything you wear shows on your character, and each armor tier
   has its own look (beanie → sun hat → cap → helm → witch hat → circlet, tee → robe, sneakers →
   wing boots, and so on). 11 **unique** outfit pieces have one-of-a-kind looks: Bunny Hood, Kitty
   Ears, Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
   Wings, Angel Wings, and Galaxy Cape (a few are sold by Marlo; the rest drop).
-- **Weapons** — every class follows the same **weapon path**: Wooden → Iron → Steel → Mithril
-  (sold in shops), then at level 45 each weapon type splits into five endgame elements that only
-  drop: **Holy** (feathered wings and halos), **Cosmic** (star fields, crescent moons, an orbiting
-  planet), **Lightning** (crackling edges and arcs), **Fire** (molten cracks, flames, embers), and
-  **Water** (flowing waves, bubbles, seashells). That's 9 weapon types × 9 steps, all comically
-  oversized and growing as you climb; endgame weapons are the biggest, animate, glow, leave
-  elemental footsteps (feathers, stardust, sparks, flames, splashes), wrap you in a sparkling
-  aura, and turn your attacks elemental: glowing slashes and projectile trails in the element's
-  colors, and an impact on every hit (a pillar of holy light, a cosmic starburst, a lightning
-  strike from above, a fiery explosion, or a splash with a ripple). Each element leans a different way: Holy adds
-  HP and magic defense, Cosmic your main stat and accuracy, Lightning speed, Fire the most attack,
-  Water HP and MP.
+- **Weapons** — the old weapon lines have been retired and a new set is on the way, so for now
+  everyone fights barehanded. The 9 weapon types (sword, axe, spear, wand, staff, bow, crossbow,
+  dagger, claw) and everything built on them stay in place: which jobs can equip each type, the
+  damage formulas, idle routines, and attack combos. Weapon art plugs into `src/render/weapons.js`
+  by type, and a weapon with an `element` (Holy, Cosmic, Lightning, Fire, Water) still glows,
+  leaves elemental footsteps, and adds an elemental impact to every hit.
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for
   higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
   glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.
@@ -159,8 +153,8 @@ src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
 src/world/              simulation: physics, monsters, loot, combat, the world update
-src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon paths
-                        (weapons, swords, elements), animator,
+src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon art slot
+                        and elements, animator,
                         particles,
                         monsters, scenery, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
