@@ -2224,175 +2224,12 @@ JOBS.dragonknight = {
 };
 
 // ---------- Beastmaster ----------
-// A great spirit wolf of teal light stands guard behind you, wisps streaming off its fur, while a
-// spirit hawk glides overhead. Climax, Call of the Pack: the wolf throws back its head and howls,
-// northern lights ripple across the sky, and spirit wolves dash out to either side.
+// The spirit of the wild: luminous antlers rise like a forest crown, spirit wisps drift around you
+// trailing light, spores float up from a ring of glowing moss. Climax, Spirit Call: the wisps
+// spiral up into one bright orb under rippling northern lights, then it bursts and the spirits
+// streak away in every direction.
 
-// Spirit wolves are drawn as a few opaque Path2D shapes (filled one by one, so overlaps never
-// leave holes). Local space faces right with the feet on y = 0.
-function ellipsePath(cx, cy, rx, ry, rot = 0) {
-  const p = new Path2D();
-  p.ellipse(cx, cy, rx, ry, rot, 0, TAU);
-  return p;
-}
-
-function limb(x0, y0, x1, y1, w) {
-  const p = new Path2D();
-  const a = Math.atan2(y1 - y0, x1 - x0) + Math.PI / 2;
-  const dx = (Math.cos(a) * w) / 2;
-  const dy = (Math.sin(a) * w) / 2;
-  p.moveTo(x0 + dx, y0 + dy);
-  p.lineTo(x1 + dx * 0.7, y1 + dy * 0.7);
-  p.lineTo(x1 - dx * 0.7, y1 - dy * 0.7);
-  p.lineTo(x0 - dx, y0 - dy);
-  p.closePath();
-  return p;
-}
-
-// The head around the neck pivot: skull, tapering muzzle, a dropping jaw, and tall ears.
-function wolfHeadPath(jaw) {
-  const h = new Path2D();
-  h.moveTo(-6, 2);
-  h.bezierCurveTo(-7, -3, -5, -6, -3, -6.5);
-  h.lineTo(-3.5, -14);
-  h.lineTo(1, -7);
-  h.lineTo(3, -15);
-  h.lineTo(5.5, -6);
-  h.bezierCurveTo(9, -5, 13, -3.5, 16, -2.5);
-  h.lineTo(16.5, -0.5);
-  h.lineTo(6, 1);
-  h.lineTo(14, 2.5 + jaw);
-  h.lineTo(5, 5 + jaw * 0.3);
-  h.bezierCurveTo(1, 6, -3, 5, -6, 2);
-  h.closePath();
-  return h;
-}
-
-// A wolf sitting tall and proud, drawn as one hand-shaped outline plus its tail and head.
-function sittingWolfShapes(t, howl) {
-  const body = new Path2D();
-  body.moveTo(15, 0);
-  body.lineTo(6, 0);
-  body.bezierCurveTo(6, -6, 5, -12, 4, -16);
-  body.bezierCurveTo(0, -12, -3, -6, -2, 0);
-  body.lineTo(-13, 0);
-  body.bezierCurveTo(-23, 0, -25, -10, -21, -18);
-  body.bezierCurveTo(-17, -25, -10, -31, -5, -37);
-  body.bezierCurveTo(-3, -41, 0, -45, 2, -47);
-  body.lineTo(10, -42);
-  body.bezierCurveTo(10, -38, 9, -36, 9, -34);
-  body.bezierCurveTo(12, -29, 13, -22, 10, -17);
-  body.bezierCurveTo(10, -10, 11, -4, 15, 0);
-  body.closePath();
-  const sway = Math.sin(t * 1.8) * 2;
-  const tail = new Path2D();
-  tail.moveTo(-18, -7);
-  tail.bezierCurveTo(-27, -5, -33, -2 + sway * 0.3, -39, -8 + sway);
-  tail.bezierCurveTo(-34, -3, -27, -1, -17, -1);
-  tail.closePath();
-  const head = new Path2D();
-  const tilt = -howl * 0.85 + Math.sin(t * 1.2) * 0.04;
-  head.addPath(wolfHeadPath(howl * 4), new DOMMatrix().translate(5, -46).rotate((tilt * 180) / Math.PI));
-  return [tail, body, head];
-}
-
-// A wolf mid-gallop, legs reaching; `t` drives the stride.
-function runningWolfShapes(t) {
-  const st = Math.sin(t);
-  const head = new Path2D();
-  head.addPath(wolfHeadPath(0), new DOMMatrix().translate(15, -17).rotate(12));
-  const tail = new Path2D();
-  tail.moveTo(-12, -14);
-  tail.bezierCurveTo(-18, -17, -24, -19, -30, -17 + st);
-  tail.bezierCurveTo(-24, -15, -18, -13, -12, -11);
-  tail.closePath();
-  return [
-    tail,
-    limb(-9, -11, -20 - st * 3, -2, 3.6),
-    limb(-6, -11, -12 + st * 3, -1, 3.6),
-    limb(12, -11, 22 + st * 3, -2, 3.2),
-    limb(8, -11, 16 - st * 3, -1, 3.2),
-    ellipsePath(0, -12, 14, 5.5),
-    ellipsePath(10, -13, 6, 6.2),
-    head,
-  ];
-}
-
-function drawSpirit(ctx, shapes, x, y, s, dir, k, height) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(dir * s, s);
-  glow(ctx, 0, -height * 0.5, height * 0.9, '#5fe8b0', k * 0.45);
-  ctx.globalAlpha = k;
-  // A dark rim (the path filled slightly offset all around), then the glowing body.
-  ctx.fillStyle = '#1f7a5f';
-  for (const [ox, oy] of [[-1.2, 0], [1.2, 0], [0, -1.2], [0, 1.2]]) {
-    ctx.save();
-    ctx.translate(ox, oy);
-    for (const shape of shapes) ctx.fill(shape);
-    ctx.restore();
-  }
-  const g = ctx.createLinearGradient(0, -height, 0, 0);
-  g.addColorStop(0, '#e8fff4');
-  g.addColorStop(0.5, '#9ff0cc');
-  g.addColorStop(1, '#4fc89a');
-  ctx.fillStyle = g;
-  for (const shape of shapes) ctx.fill(shape);
-  ctx.restore();
-}
-
-function spiritWolf(ctx, x, y, s, dir, t, k, howl) {
-  drawSpirit(ctx, sittingWolfShapes(t, howl), x, y, s, dir, k, 60);
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(dir * s, s);
-  ctx.globalAlpha = k;
-  // Fur highlights on the chest ruff, and a glowing eye that follows the head.
-  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-  ctx.lineWidth = 0.8;
-  for (let i = 0; i < 4; i++) {
-    ctx.beginPath();
-    ctx.moveTo(8 + i * 0.8, -33 + i * 4);
-    ctx.lineTo(11 + i * 0.6, -30 + i * 4);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.moveTo(-18, -14);
-  ctx.quadraticCurveTo(-14, -20, -8, -22);
-  ctx.stroke();
-  ctx.translate(5, -46);
-  ctx.rotate(-howl * 0.85 + Math.sin(t * 1.2) * 0.04);
-  glow(ctx, 6, -2.5, 5, '#ffffff', 1);
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.moveTo(4, -2);
-  ctx.lineTo(9, -3.4);
-  ctx.lineTo(8, -1.6);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#1f5a4a';
-  ctx.beginPath();
-  ctx.arc(16, -1.5, 1.1, 0, TAU);
-  ctx.fill();
-  ctx.restore();
-  // Spirit wisps streaming up off the back and tail.
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(dir * s, s);
-  for (let i = 0; i < 9; i++) {
-    const u = (t * 0.5 + i / 9) % 1;
-    const px = -30 + (i / 9) * 36 - u * 8;
-    const py = -14 - (i / 9) * 22 - u * 20 + Math.sin(t * 3 + i) * 2;
-    ctx.globalAlpha = k * (1 - u) * 0.8;
-    ctx.fillStyle = i % 2 ? '#e8fff4' : '#5fe8b0';
-    ctx.beginPath();
-    ctx.arc(px, py, 2 - u * 1.3, 0, TAU);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-// Northern lights rippling across the sky behind the howl: soft ribbons fading at both ends.
+// Northern lights rippling across the sky: soft ribbons fading at both ends.
 function aurora(ctx, x, y, t, s, a) {
   if (a <= 0) return;
   const colors = ['95,232,176', '143,211,255', '201,166,255'];
@@ -2423,77 +2260,167 @@ function aurora(ctx, x, y, t, s, a) {
   ctx.restore();
 }
 
-JOBS.beastmaster = {
-  back(ctx, x, y, t, s, k, dir) {
-    const u = climax(t, 6.5, 2);
-    const howl = u < 0 ? 0 : Math.sin(Math.min(1, u * 1.25) * Math.PI);
-    aurora(ctx, x, y, t, s, k * howl);
-    // The guardian looms behind you, its head raised over your shoulder.
-    spiritWolf(ctx, x - dir * 14 * s, y, s * 1.2, dir, t, k, howl);
-    if (u > 0) {
-      // Spirit wolves bound away to either side.
-      for (const side of [-1, 1]) {
-        const v = Math.min(1, u * 1.2);
-        const px = x + side * (10 + easeOut(v) * 110) * s;
-        const hop = Math.abs(Math.sin(v * Math.PI * 3)) * 6 * s;
-        drawSpirit(ctx, runningWolfShapes(t * 14), px, y - hop, s * 1.1 * (v > 0.75 ? 1 - (v - 0.75) * 3 : 1), side, k, 24);
-      }
-      // Howl rings rising from the raised muzzle.
-      for (let r = 0; r < 3; r++) {
-        const ru = Math.max(0, u - 0.2 - r * 0.15);
-        if (ru <= 0 || ru >= 1) continue;
-        ctx.save();
-        ctx.globalAlpha = k * (1 - ru) * 0.8;
-        ctx.strokeStyle = '#c9ffe8';
-        ctx.lineWidth = 1.5 * s;
-        ctx.beginPath();
-        ctx.arc(x + dir * 6 * s, y - 84 * s, (8 + ru * 40) * s, -Math.PI * 0.8, -Math.PI * 0.2);
-        ctx.stroke();
-        ctx.restore();
-      }
+// Where spirit wisp `i` drifts at time `tt`, with its depth (z < 0 is behind the body).
+function wispAt(x, y, s, tt, i) {
+  const a = tt * 0.9 + i * 2.1;
+  return {
+    x: x + Math.cos(a) * 30 * s + Math.sin(tt * 1.7 + i) * 6 * s,
+    y: y - 32 * s + Math.sin(tt * 1.3 + i * 1.3) * 20 * s,
+    z: Math.sin(a),
+  };
+}
+
+// A glowing spirit wisp with a comet tail traced back along its path.
+function wisp(ctx, pts, s, k, color) {
+  for (let j = pts.length - 1; j >= 1; j--) {
+    const q = pts[j];
+    const f = 1 - j / pts.length;
+    ctx.globalAlpha = k * f * 0.6;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(q.x, q.y, (0.8 + f * 3) * s, 0, TAU);
+    ctx.fill();
+  }
+  const h = pts[0];
+  glow(ctx, h.x, h.y, 14 * s, color, k);
+  ctx.globalAlpha = k;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(h.x, h.y, 2.8 * s, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// One antler of light branching up and out from (x, y); `side` mirrors it.
+function antler(ctx, x, y, s, side, k, pulse) {
+  const pt = (dx, dy) => [x + side * dx * s, y - dy * s];
+  const beam = [pt(0, 0), pt(6, 5), pt(13, 10), pt(19, 18), pt(22, 28)];
+  const tines = [[pt(6, 5), pt(7, 13)], [pt(13, 10), pt(13, 20)], [pt(19, 18), pt(27, 22)], [pt(19, 18), pt(17, 30)], [pt(22, 28), pt(28, 34)], [pt(22, 28), pt(21, 37)]];
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = '#5fe8b0';
+  ctx.shadowBlur = 8 + pulse * 6;
+  for (const [w, color] of [[3.2 * s, 'rgba(95,232,176,0.85)'], [1.3 * s, '#f0fff8']]) {
+    ctx.globalAlpha = k;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = w;
+    for (const line of [beam, ...tines]) {
+      ctx.beginPath();
+      line.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+      ctx.stroke();
     }
-  },
-  front(ctx, x, y, t, s, k) {
-    // Fireflies and a spirit hawk gliding in slow circles overhead.
-    for (let i = 0; i < 6; i++) {
-      const px = x + Math.sin(t * 0.8 + i * 2.1) * 34 * s;
-      const py = y - 26 * s + Math.cos(t * 1.1 + i * 1.7) * 20 * s;
-      glow(ctx, px, py, 4 * s, '#fff6a0', k * (0.4 + 0.5 * Math.sin(t * 4 + i)));
-    }
-    const ha = t * 0.7;
-    const hx = x + Math.cos(ha) * 34 * s;
-    const hy = y - 96 * s + Math.sin(ha * 2) * 5 * s;
+  }
+  ctx.restore();
+  // Glowing tips, and a tiny leaf sprouting from a couple of them.
+  for (const line of tines) {
+    const [tx, ty] = line[line.length - 1];
+    glow(ctx, tx, ty, (3 + pulse * 3) * s, '#c9ffe8', k);
+  }
+  for (const [lx, ly] of [pt(27, 22), pt(28, 34)]) {
     ctx.save();
     ctx.globalAlpha = k;
-    ctx.translate(hx, hy);
-    ctx.scale((-Math.sin(ha) >= 0 ? 1 : -1) * s * 1.3, s * 1.3);
-    glow(ctx, 0, 0, 12, '#5fe8b0', 0.5);
-    const flap = Math.sin(t * 3) * 0.4;
-    ctx.fillStyle = 'rgba(200,255,232,0.9)';
-    ctx.strokeStyle = '#e8fff4';
-    ctx.lineWidth = 0.8;
+    ctx.fillStyle = '#8fe86b';
+    ctx.translate(lx, ly);
+    ctx.rotate(side * 0.8);
     ctx.beginPath();
-    ctx.moveTo(-2, 0);
-    ctx.quadraticCurveTo(-8, -5 - flap * 4, -16, -2 - flap * 6);
-    ctx.lineTo(-12, 1);
-    ctx.lineTo(-14, 2);
-    ctx.quadraticCurveTo(-7, 2, -2, 2);
-    ctx.moveTo(2, 0);
-    ctx.quadraticCurveTo(8, -5 - flap * 4, 14, -2 - flap * 6);
-    ctx.lineTo(11, 1);
-    ctx.lineTo(12, 2);
-    ctx.quadraticCurveTo(7, 2, 2, 2);
-    ctx.moveTo(-6, 1);
-    ctx.lineTo(-10, 3);
-    ctx.lineTo(-6, 2.5);
+    ctx.ellipse(1.5 * s, -1 * s, 2.4 * s, 1.1 * s, 0, 0, TAU);
     ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(0, 1, 4.5, 2, 0, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#ffd66b';
-    ctx.fillRect(4, 0, 2, 1);
     ctx.restore();
+  }
+}
+
+const WISP_COLORS = ['#5fe8b0', '#7fc8ff', '#a8f0d0', '#9be86b', '#b48cff', '#5fd8e8'];
+
+function drawWisps(ctx, x, y, t, s, k, front, gather) {
+  const cx = x;
+  const cy = y - 84 * s;
+  for (let i = 0; i < 6; i++) {
+    const pts = [];
+    for (let j = 0; j < 14; j++) {
+      const tt = t - j * 0.05;
+      const p = wispAt(x, y, s, tt, i);
+      if (gather > 0) {
+        // Spiral in and up toward the gathering point above the head.
+        const a = tt * 6 + i * (TAU / 6);
+        const r = (1 - gather) * 30 * s;
+        const sx = cx + Math.cos(a) * r;
+        const sy = cy + Math.sin(a) * r * 0.4 + (1 - gather) * 40 * s;
+        p.x += (sx - p.x) * gather;
+        p.y += (sy - p.y) * gather;
+        p.z = gather > 0.5 ? 1 : p.z;
+      }
+      pts.push(p);
+    }
+    if ((pts[0].z >= 0) !== front) continue;
+    wisp(ctx, pts, s * (front ? 1.1 : 0.9), k * (front ? 1 : 0.8), WISP_COLORS[i]);
+  }
+}
+
+// A ring of glowing moss and grass blades around the feet; `front` draws the near half.
+function mossRing(ctx, x, y, t, s, k, front) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 26; i++) {
+    const a = (i / 26) * TAU;
+    if ((Math.sin(a) >= 0) !== front) continue;
+    const px = x + Math.cos(a) * 30 * s;
+    const py = y + Math.sin(a) * 7 * s;
+    const h = (4 + 3 * Math.sin(i * 2.7) + Math.sin(t * 2 + i) * 1) * s;
+    ctx.globalAlpha = k * 0.9;
+    ctx.strokeStyle = i % 3 ? '#7ff0c0' : '#b8f07a';
+    ctx.lineWidth = 1.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.quadraticCurveTo(px + Math.sin(t * 1.5 + i) * 2 * s, py - h * 0.6, px + Math.sin(t * 1.5 + i) * 3 * s, py - h);
+    ctx.stroke();
+    if (i % 5 === 0) glow(ctx, px, py - h, 3 * s, '#e8fff4', k * (0.5 + 0.5 * Math.sin(t * 3 + i)));
+  }
+  ctx.restore();
+}
+
+JOBS.beastmaster = {
+  back(ctx, x, y, t, s, k) {
+    const u = climax(t, 6.5, 2);
+    const gather = u < 0 ? 0 : u < 0.55 ? easeOut(u / 0.55) : 0;
+    const sky = u < 0 ? 0 : Math.sin(Math.min(1, u * 1.15) * Math.PI);
+    aurora(ctx, x, y, t, s, k * sky);
+    glow(ctx, x, y - 34 * s, 50 * s, '#5fe8b0', k * (0.22 + sky * 0.2));
+    // The antler crown, rising from behind the head.
+    const pulse = (Math.sin(t * 2) + 1) / 2 + sky;
+    for (const side of [-1, 1]) antler(ctx, x + side * 5 * s, y - 43 * s, s, side, k, pulse);
+    drawWisps(ctx, x, y, t, s, k, false, gather);
+    mossRing(ctx, x, y, t, s, k, false);
+  },
+  front(ctx, x, y, t, s, k) {
+    mossRing(ctx, x, y, t, s, k, true);
+    rising(ctx, x, y, t, s, { n: 10, spread: 26, height: 70, speed: 0.4, color: '#c9ffe8', size: 1.3, seed: 171 }, k);
+    rising(ctx, x, y, t, s, { n: 5, spread: 20, height: 60, speed: 0.3, color: '#b8f07a', size: 1.6, seed: 177 }, k * 0.8);
+    const u = climax(t, 6.5, 2);
+    const gather = u < 0 ? 0 : u < 0.55 ? easeOut(u / 0.55) : 0;
+    drawWisps(ctx, x, y, t, s, k, true, gather);
+    if (u < 0) return;
+    const cx = x;
+    const cy = y - 84 * s;
+    if (u < 0.55) {
+      // The gathered spirits brighten into one orb.
+      glow(ctx, cx, cy, (10 + gather * 26) * s, '#e8fff4', k * gather);
+      return;
+    }
+    // ...and burst: a flash, a ring of light, and spirits streaking out in every direction.
+    const v = (u - 0.55) / 0.45;
+    glow(ctx, cx, cy, (36 + v * 30) * s, '#ffffff', k * (1 - v));
+    ring(ctx, cx, cy, (10 + easeOut(v) * 70) * s, 0.6, '#c9ffe8', 2.5 * s * (1 - v) + 0.5, k * (1 - v));
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * TAU + 0.2;
+      const d = easeOut(v) * 110 * s;
+      const pts = [];
+      for (let j = 0; j < 8; j++) {
+        const dd = Math.max(0, d - j * 6 * s);
+        pts.push({ x: cx + Math.cos(a) * dd, y: cy + Math.sin(a) * dd * 0.7 });
+      }
+      wisp(ctx, pts, s, k * (1 - v), WISP_COLORS[i % WISP_COLORS.length]);
+    }
   },
 };
 
