@@ -51,13 +51,8 @@ const QUOTE_MAKERS = [
 ];
 const quote = oneOf(QUOTE_MAKERS)();
 
-// Cosmetic worlds for the login screen; the game itself is single-player.
-const WORLDS = [
-  { name: 'Sakura', load: 0.45, color: '#ff9ec0' },
-  { name: 'Kitsune', load: 0.78, color: '#ffb36b' },
-  { name: 'Momiji', load: 0.96, color: '#ff7b7b' },
-  { name: 'Yuki', load: 0.22, color: '#9fd4ff' },
-];
+// The login screen's world list; the game itself is single-player.
+const WORLDS = [{ name: 'Tengu', load: 0.45, color: '#ff9ec0' }];
 let world = 0;
 
 function loadLabel(load) {
@@ -96,7 +91,7 @@ export function titleScreen(ui, time) {
   }
 
   // World select
-  const px = 230, py = 108, pw = 180, ph = 164;
+  const px = 230, py = 108, pw = 180, ph = 76 + WORLDS.length * 22;
   panel(ctx, px, py, pw, ph, 'World Select');
   WORLDS.forEach((w, i) => {
     const ry = py + 24 + i * 22;
