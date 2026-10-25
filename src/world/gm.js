@@ -14,7 +14,7 @@ import { clampVitals, stats as statsOf, bindFreeHotkey } from '../core/character
 import { loadMap } from './world.js';
 import { spawnMob } from './mobs.js';
 
-const GM_HASH = 'a5a2214e51bde287b26d9b699ecad7107b0ba31957ecca4be582fe2d35de62b0';
+const GM_HASH = '01a1ea974eb6725f52e6b8b8fe2c3261eaab572040dece2a859559cf8b3f6039';
 const STORE_KEY = 'twzt-gm';
 
 async function sha256(text) {
@@ -36,7 +36,8 @@ export function isGm(char) {
 
 // Checks the passphrase; on success the character and this browser are unlocked.
 export async function unlockGm(char, pass) {
-  if ((await sha256(pass.trim())) !== GM_HASH) return false;
+  // Case and spaces don't matter, so it's easy to type.
+  if ((await sha256(pass.trim().toLowerCase().replace(/\s+/g, ''))) !== GM_HASH) return false;
   char.gm = true;
   try {
     localStorage.setItem(STORE_KEY, '1');
