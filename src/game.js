@@ -339,8 +339,8 @@ export function update(game, dt, input) {
 
 // Wraps damageMob so every hit shows a floating number.
 function damageMobWithFloater(game) {
-  return (mob, dmg) => {
-    floater(game, mob.x + mob.w / 2, mob.y - 6, `${dmg}`, '#ffffff');
+  return (mob, dmg, crit) => {
+    floater(game, mob.x + mob.w / 2, mob.y - 6, crit ? `${dmg}!` : `${dmg}`, crit ? '#ffd34d' : '#ffffff');
     return damageMob(mob, dmg);
   };
 }

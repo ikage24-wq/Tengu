@@ -1,12 +1,18 @@
 // Skill casting, cooldowns, AoE hit detection, and damage.
 // Pure logic: the game loop supplies positions and mob lists.
 
+// Rolls one hit. Crits deal extra damage; skills can add to the base crit chance.
 export function damageFor(character, skill, gearAtk = 0) {
   const base = character.atk + gearAtk;
   // Small variance keeps hits from feeling identical.
   const variance = 0.9 + Math.random() * 0.2;
-  return Math.max(1, Math.round(base * skill.damageMult * variance));
+  const crit = Math.random() < BASE_CRIT + (skill.critBonus ?? 0);
+  const mult = crit ? CRIT_MULT : 1;
+  return { dmg: Math.max(1, Math.round(base * skill.damageMult * variance * mult)), crit };
 }
+
+const BASE_CRIT = 0.05;
+const CRIT_MULT = 1.5;
 
 // Returns the skill's AoE hitbox as a world-space rectangle, anchored to the caster facing.
 export function skillHitbox(caster, skill) {
@@ -51,12 +57,21 @@ export function cast(character, skill, cooldowns, caster, mobs, applyDamage, gea
   cooldowns[skill.id] = skill.cooldown;
 
   const box = skillHitbox(caster, skill);
+  // Closest enemies first, so a target cap always hits the ones nearest the caster.
+  const cx = caster.x + caster.w / 2;
+  const inBox = mobs
+    .filter((mob) => mob.alive && rectsOverlap(box, mob))
+    .sort((a, b) => Math.abs(a.x + a.w / 2 - cx) - Math.abs(b.x + b.w / 2 - cx));
+  const targets = skill.maxTargets ? inBox.slice(0, skill.maxTargets) : inBox;
+
   const hits = [];
-  for (const mob of mobs) {
-    if (!mob.alive || !rectsOverlap(box, mob)) continue;
-    const dmg = damageFor(character, skill, gearAtk);
-    const killed = applyDamage(mob, dmg);
-    hits.push({ mob, dmg, killed });
+  for (const mob of targets) {
+    for (let n = 0; n < (skill.hits ?? 1); n++) {
+      if (!mob.alive) break;
+      const { dmg, crit } = damageFor(character, skill, gearAtk);
+      const killed = applyDamage(mob, dmg, crit);
+      hits.push({ mob, dmg, crit, killed });
+    }
   }
   return { ok: true, reason: null, hits, box };
 }

@@ -25,7 +25,8 @@ export const CLASSES = {
       { id: 'magicBolt', name: 'Magic Bolt', unlockLevel: 1, mpCost: 6, damageMult: 1.5, cooldown: 0.5, aoe: { w: 60, h: 60 } },
       { id: 'flameBurst', name: 'Flame Burst', unlockLevel: 10, mpCost: 20, damageMult: 1.2, cooldown: 4, aoe: { w: 240, h: 200 } },
       { id: 'thunderStorm', name: 'Thunder Storm', unlockLevel: 25, mpCost: 40, damageMult: 2.5, cooldown: 10, aoe: { w: 420, h: 260 } },
-      { id: 'starfall', name: 'Starfall', unlockLevel: 30, mpCost: 70, damageMult: 1.2, cooldown: 45, fullMap: true, aoe: { w: 0, h: 0 } },
+      // Level 30 ultimate: a light strike that hits up to 15 enemies twice, with a bonus crit chance.
+      { id: 'starfall', name: 'Starfall', unlockLevel: 30, mpCost: 70, damageMult: 7.1, cooldown: 30, aoe: { w: 420, h: 260 }, maxTargets: 15, hits: 2, critBonus: 0.05 },
     ],
   },
   archer: {
