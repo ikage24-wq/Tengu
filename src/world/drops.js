@@ -33,7 +33,12 @@ export function rollLoot(def, rng = Math.random) {
   const loot = [];
   const [gmin, gmax] = def.gold;
   loot.push({ kind: 'gold', amount: gmin + Math.floor(rng() * (gmax - gmin + 1)) });
-  for (const d of def.drops) if (rng() < d.chance) loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
+  for (const d of def.drops) {
+    if (rng() >= d.chance) continue;
+    // Equipment on a monster's own list (like a boss's signature weapon) drops as rolled gear.
+    if (ITEMS[d.id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(d.id, { variance: 0.12, rng, rarity: Math.max(1, rollRarity(rng)) }) });
+    else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
+  }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });
   if (rng() < SCROLL_CHANCE) loot.push({ kind: 'item', id: RARE_SCROLLS[Math.floor(rng() * RARE_SCROLLS.length)], qty: 1 });
   const gearRolls = def.boss ? 3 : rng() < GEAR_CHANCE ? 1 : 0;

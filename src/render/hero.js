@@ -836,7 +836,7 @@ function weaponSprite(w, time) {
   const def = weaponShapes(w.type, w.tier, frame);
   if (!def) return null;
   const s = sprite(`weapon|${w.type}|${w.tier}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
-  return { ...s, grip: def.grip, blade: def.blade };
+  return { ...s, grip: def.grip, blade: def.blade, live: def.live };
 }
 
 // Little twinkles at a weapon's tip, for wand twirls and staff taps.
@@ -1116,6 +1116,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
     else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.canvas.width * ws, wpn.canvas.height * ws);
     if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
+    wpn.live?.(ctx, time, ws, wpn.grip);
     ctx.restore();
   };
 

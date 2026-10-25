@@ -51,6 +51,23 @@ for (const [type, w] of Object.entries(TEST_WEAPONS)) {
   });
 }
 
+// Endgame weapons. Each has its own design (see render/weapons.js); an `element` gives it that
+// element's glow, footsteps, and hit impacts.
+add({
+  id: 'seraphim_staff',
+  name: "Seraphim's Halo",
+  type: 'equip',
+  slot: 'weapon',
+  weaponType: 'staff',
+  tier: 8,
+  element: 'holy',
+  reqLevel: 50,
+  family: 'mage',
+  stats: { watk: 46, matk: 96, int: 12, hp: 200, mdef: 25 },
+  price: 250000,
+  color: '#ffe36b',
+});
+
 // ---------- Armor ----------
 
 const ARMOR_TIERS = [

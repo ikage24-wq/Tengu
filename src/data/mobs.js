@@ -91,6 +91,7 @@ export const MOBS = {
     gold: [4000, 8000], speed: 34, w: 110, h: 110, art: 'crystalking', boss: true,
     drops: [
       { id: 'king_crystal', chance: 1 },
+      { id: 'seraphim_staff', chance: 0.08 },
       { id: 'scroll_watk_10', chance: 0.5 },
       { id: 'scroll_matk_10', chance: 0.5 },
       { id: 'elixir', chance: 1, qty: 5 },
