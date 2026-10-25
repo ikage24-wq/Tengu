@@ -1,10 +1,12 @@
-// The hero (and NPCs): a layered chibi rig. Each frame the pose is solved into small integer
-// offsets for every part (legs, arms, torso, head, hair, cape), the parts are composited with the
-// equipped gear's designs, and the result is cached as a sprite. The front arm and the weapon
-// are separate layers so weapons can swing around the hand.
+// The hero (and NPCs): a layered chibi rig. Each frame the pose is solved into small offsets for
+// every part (legs, arms, torso, head, hair, cape), the parts are composited with the equipped
+// gear's designs, and the result is cached as a smooth sprite drawn at RES x detail, so offsets
+// can be fractions of a pixel. The front arm and the weapon are separate layers so weapons can
+// swing around the hand.
 //
-// Animation: an 8-frame walk cycle driven by distance walked (contact, down, passing, up), a
-// breathing idle with blinks, stretch when rising, squash when landing, spring-driven hair and
+// Animation: a 16-frame walk cycle driven by distance walked (legs swing on a curve and lift
+// on the way forward, arms counter-swing, the body dips after each step and the head lags a
+// touch behind), a breathing idle with blinks, stretch when rising, squash when landing, spring-driven hair and
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
@@ -27,6 +29,9 @@ const OY = 11;
 const W = 30 + OX * 2;
 const H = 48 + OY;
 const INK = '#3a2d4f';
+// Detail cells per art pixel for character sprites, and rounding of rig offsets to that grid.
+const RES = 3;
+const q = (v) => Math.round(v * RES) / RES;
 
 const move = (shapes, dx, dy) => shapes.map((s) => (s ? { ...s, x: s.x + dx + OX, y: s.y + dy + OY } : s));
 
@@ -64,7 +69,7 @@ function hairBack(style, c, sway, lift) {
   const d = shade(c, -18);
   const head = E(15, 13.5, 12.5, 11.5, c);
   // Lower strands follow the hair spring; the crown stays on the head.
-  const s = (shape, k = 1) => ({ ...shape, x: shape.x + Math.round(sway * k), y: shape.y + (shape.y >= 20 ? lift : 0) });
+  const s = (shape, k = 1) => ({ ...shape, x: shape.x + q(sway * k), y: shape.y + (shape.y >= 20 ? lift : 0) });
   switch (style) {
     case 'bob': return [head, s(R(3, 13, 24, 7, c), 0.5), s(E(15, 20, 12.5, 4.5, c), 0.5), s(E(4.5, 22, 2.5, 2.5, c), 0.7), s(E(25.5, 22, 2.5, 2.5, c), 0.7), s(R(7, 21, 1, 3, d), 0.5), s(R(22, 21, 1, 3, d), 0.5)];
     case 'wavy': return [head, s(R(2, 13, 26, 10, c), 0.4), s(E(4, 25, 3.5, 5, c), 0.8), s(E(26, 25, 3.5, 5, c), 0.8), s(E(5, 31, 3, 3.5, c), 1.2), s(E(25, 31, 3, 3.5, c), 1.2), s(E(4, 35, 2, 2, c), 1.5), s(E(26, 35, 2, 2, c), 1.5), s(R(3, 28, 3, 1, d), 1), s(R(24, 28, 3, 1, d), 1)];
@@ -80,8 +85,9 @@ function hairBack(style, c, sway, lift) {
 
 function hairFront(style, c) {
   const l = shade(c, 18);
-  if (style === 'short' || style === 'spiky') return [R(5, 4, 20, 5, c), R(5, 8, 3, 4, c), R(9, 5, 5, 1, l)];
-  return [R(5, 4, 21, 6, c), R(4, 8, 4, 9, c), R(22, 8, 4, 6, c), R(10, 5, 6, 1, l), R(18, 9, 3, 2, c)];
+  // Bangs are a rounded cap that stays inside the head's outline.
+  if (style === 'short' || style === 'spiky') return [E(15, 7.5, 10.5, 4.5, c), R(5, 8, 3, 4, c), R(9, 5, 5, 1, l)];
+  return [E(15.5, 8, 11, 4.5, c), R(4, 8, 4, 9, c), R(22, 8, 4, 6, c), R(10, 5, 6, 1, l), R(18, 9, 3, 2, c)];
 }
 
 function eyes(style, color, mode) {
@@ -127,7 +133,7 @@ function armShapes(sx, dx, dy, sleeve, g, skin) {
   const hy = 34 + dy;
   return [
     R(sx, 26, 3, 3, sleeve),
-    R(sx + Math.round(dx * 0.5), 28 + Math.round(dy * 0.5), 3, 4, sleeve),
+    R(sx + q(dx * 0.5), 28 + q(dy * 0.5), 3, 4, sleeve),
     ...handShapes(hx, hy, g.gloves, skin),
   ];
 }
@@ -193,12 +199,11 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
 
 // ---------- Pose solving ----------
 
-// Walk cycle tables, 8 frames: contact, down, passing, up, then the same on the other foot.
-const WALK = {
-  front: [[3, 0], [2, 0], [0, 0], [-2, 0], [-3, 0], [-2, -1], [0, -2], [2, -1]],
-  back: [[-3, 0], [-2, -1], [0, -2], [2, -1], [3, 0], [2, 0], [0, 0], [-2, 0]],
-  bob: [0, 1, 0, -1, 0, 1, 0, -1],
-};
+// Walk cycle: frames per two steps. Each foot slides back along the ground, then lifts and swings
+// forward on an arc; the body is lowest just after a foot lands and highest as the legs pass.
+const WALK_FRAMES = 16;
+const STEP = 3.5;
+const LIFT = 2.4;
 
 const ease = (t) => 1 - (1 - t) ** 3;
 
@@ -214,7 +219,7 @@ function solveRig(state, anim) {
   const { pose = 'idle', time = 0, progress = 0, hurt = false, seed = 0 } = state;
   const r = baseRig();
   const t = time + seed * 1.37;
-  r.hair = anim ? Math.round(Math.max(-3, Math.min(3, anim.hair))) : Math.round(Math.sin(t * 1.3) * 0.6);
+  r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6) * 2) / 2;
   r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
   r.flap = Math.floor(t * (pose === 'jump' ? 10 : 4)) % 2 === 0;
   // A blink every few seconds, slightly offset per character.
@@ -230,12 +235,16 @@ function solveRig(state, anim) {
 
   if (pose === 'walk') {
     const phase = anim ? walkPhase(anim) : (t * 2.7) % 1;
-    const f = Math.floor(phase * 8) % 8;
-    r.frontLeg = WALK.front[f];
-    r.backLeg = WALK.back[f];
-    r.by = WALK.bob[f];
-    r.frontArm = [-Math.round(WALK.front[f][0] * 0.7), 0];
-    r.backArm = [-Math.round(WALK.back[f][0] * 0.7), 0];
+    const a = (Math.round(phase * WALK_FRAMES) / WALK_FRAMES) * Math.PI * 2;
+    const leg = (k) => [q(STEP * Math.cos(k)), q(LIFT * Math.min(0, Math.sin(k)))];
+    r.frontLeg = leg(a);
+    r.backLeg = leg(a + Math.PI);
+    r.by = q(0.9 * Math.sin(2 * a));
+    r.hy = q(0.45 * Math.sin(2 * a - 0.9));
+    // Arms counter-swing the legs and rise a little at the ends of each swing.
+    const swing = Math.cos(a);
+    r.frontArm = [q(-2.6 * swing), q(-0.6 * Math.abs(swing))];
+    r.backArm = [q(2.6 * swing), q(-0.6 * Math.abs(swing))];
     r.tx = 1;
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
@@ -262,9 +271,8 @@ function solveRig(state, anim) {
     }
     r.mouth = 'open';
   } else {
-    // Idle breathing: the upper body settles a pixel on each exhale, the arms follow.
-    const breath = Math.sin(t * 2.4);
-    r.by = breath > 0.3 ? 1 : 0;
+    // Idle breathing: the upper body eases down a pixel on each exhale, the arms follow.
+    r.by = q(0.5 + 0.5 * Math.sin(t * 2.4));
     r.frontArm = [0, r.by];
     r.backArm = [0, r.by];
   }
@@ -428,7 +436,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const rig = solveRig(state, anim);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
-  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig) }));
+  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES }));
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
@@ -499,7 +507,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (rig.view === 'back') return;
   if (attack) drawWeapon();
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(armShapesNow, 0, 0) }));
+  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(armShapesNow, 0, 0), res: RES }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * scale, top + armDy * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 

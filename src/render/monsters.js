@@ -178,7 +178,7 @@ const ART = {
 };
 
 export function monsterSprite(art, frame) {
-  return sprite(`mob|${art}|${frame}`, () => ART[art](frame));
+  return sprite(`mob|${art}|${frame}`, () => ({ ...ART[art](frame), res: 3 }));
 }
 
 // (x, y) is the monster's feet center in screen space.
