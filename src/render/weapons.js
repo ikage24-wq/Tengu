@@ -51,7 +51,7 @@ function iconColors(look) {
     trim: look.trim,
     handle: look.handle,
     grip: look.grip,
-    accent: { holy: GOLD, demonic: look.hot, bone: look.soul, laser: WHITE, chainsaw: '#ffd23b', cyber: look.neon?.[0] }[th] ?? look.gem ?? look.edge,
+    accent: { holy: GOLD, demonic: look.hot, bone: look.soul, laser: WHITE, chainsaw: '#ffd23b', cyber: look.neon?.[0] }[th] ?? (look.gems ? look.gem : look.edge),
   };
 }
 
@@ -77,9 +77,23 @@ const ICON_MARKS = {
   cyber: () => [F(R(1, 1, 3, 1, '#3bf0ff')), F(R(1, 3, 2, 1, '#ff3bd4'))],
 };
 
+// Progression icons gain a glint in a free corner as they climb: a rune spark from Runic, a
+// four-point star from Dragonbone, and a white-hot heart in it from Abyssal. Dark variants keep
+// their violet edge glow as a second spark.
+const MARK_AT = { axe: [13, 13], bow: [3, 13] };
+function tierMark(type, look) {
+  const [x, y] = MARK_AT[type] ?? [2, 2];
+  const c = look.prism?.[4] ?? look.rune;
+  const out = [];
+  if (look.tier >= 13) out.push(F(P(x - 1, y, c)), F(P(x + 1, y, c)), F(P(x, y - 1, c)), F(P(x, y + 1, c)));
+  if (look.tier >= 9) out.push(F(P(x, y, look.tier >= 17 ? WHITE : c)));
+  if (look.glow) out.push(F(P(x + (x < 8 ? 2 : -2), y + (y < 8 ? 2 : -2), look.glow)));
+  return out;
+}
+
 export function weaponIcon(type, tier = 0, theme = null, variant = null) {
   if (!ICONS[type]) return null;
   if (type === 'staff' && theme === 'holy') return SERAPH_ICON;
   const look = lookFor(type, tier, theme, variant);
-  return [...ICONS[type](iconColors(look)), ...(theme ? ICON_MARKS[theme]() : [])];
+  return [...ICONS[type](iconColors(look)), ...(theme ? ICON_MARKS[theme]() : tierMark(type, look))];
 }

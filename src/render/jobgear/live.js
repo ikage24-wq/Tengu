@@ -68,7 +68,8 @@ export function drawGearFx(ctx, g, at, s, dir, t) {
       const n = few ? 1 : p.tier >= 16 ? 3 : 2;
       for (let i = 0; i < n; i++) {
         const life = frac(t * 0.45 + i / n + seed);
-        const x = ax + Math.sin(t * 1.3 + i * 2.1 + seed) * at.w * 0.8;
+        // Off to the sides, so they never drift across the face.
+        const x = ax + (i % 2 ? 1 : -1) * at.w * (1.2 + 0.4 * Math.sin(t * 1.3 + i * 2.1 + seed));
         const y = ay - life * 14 * s;
         dot(ctx, x, y, 0.7 * s, p.pal.glow, 0.7 * Math.sin(life * Math.PI));
       }
@@ -89,7 +90,7 @@ function signature(ctx, family, pal, at, s, dir, t, n) {
     for (let i = 0; i < n; i++) {
       const life = frac(t * 0.7 + i / n);
       const side = i % 2 ? 1 : -1;
-      const x = at.chest[0] + side * at.w * 0.9 + Math.sin(t * 3 + i) * 2 * s;
+      const x = at.chest[0] + side * at.w * 1.7 + Math.sin(t * 3 + i) * 2 * s;
       const y = at.chest[1] - 4 * s - life * 22 * s;
       dot(ctx, x, y, (1 - life) * 1.1 * s + 0.3 * s, life < 0.5 ? '#ffd23b' : glow, 0.85 * (1 - life));
     }

@@ -196,8 +196,8 @@ function starsLive(a, look) {
 function embersLive(a, look) {
   return (ctx, time, s) => {
     ctx.save();
-    const [hx, hy] = a.top ?? a.head;
-    glow(ctx, hx * s, hy * s, (9 + 2 * Math.sin(time * 5)) * s, rgba(look.gem, 0.7), 0.3);
+    const [hx, hy] = a.gem ?? a.head;
+    glow(ctx, hx * s, hy * s, (7 + 2 * Math.sin(time * 5)) * s, rgba(look.gem, 0.7), 0.3);
     for (let i = 0; i < 6; i++) {
       const cyc = time * 0.8 + i / 6;
       const u = cyc % 1;
@@ -269,11 +269,11 @@ function voidLive(a, look) {
 // light runs through the rainbow.
 function radiantLive(a, colors) {
   return (ctx, time, s) => {
-    const [cx, cy] = a.top ?? a.head;
+    const [cx, cy] = a.head;
     const c = colors[Math.floor(time * 2) % colors.length];
     ctx.save();
     const pulse = 0.5 + 0.5 * Math.sin(time * 3);
-    glow(ctx, cx * s, cy * s, (10 + pulse * 4) * s, rgba(c, 0.8), 0.7);
+    glow(ctx, cx * s, cy * s, (8 + pulse * 3) * s, rgba(c, 0.8), 0.4);
     ctx.lineCap = 'round';
     ctx.lineWidth = 0.8 * s;
     for (let i = 0; i < 4; i++) {

@@ -62,8 +62,8 @@ const VARIANT_LOOKS = {
   azure: { blade: '#4f8fe8', bladeDark: '#2f60b4', edge: '#c4f4ff' },
   gilded: { blade: '#f4c443', bladeDark: '#cc931e', edge: WHITE, trim: '#fff6dc', trimDark: '#e0c890' },
 };
-// Types whose wood (not a blade) carries most of the color.
-const WOODEN = new Set(['bow', 'crossbow', 'wand', 'staff']);
+// Types whose shaft or wood (not a blade) carries most of the color.
+const WOODEN = new Set(['bow', 'crossbow', 'wand', 'staff', 'spear']);
 
 // Endgame themes. Laser weapons color their beams per type.
 export const THEMES = {

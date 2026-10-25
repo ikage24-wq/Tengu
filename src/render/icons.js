@@ -67,7 +67,7 @@ function wornShapes(def, variant) {
       return [...legShapes(11.4, legs, bare, false), ...legShapes(16.6, legs, bare, false), ...hipShapes(legs), ...(skirtShapes(def.design, pc.color, pc) ?? [])];
     }
     case 'shoes': return [...legShapes(9, { top: 'none', low: 'none' }, pc, false).slice(3), ...legShapes(17, { top: 'none', low: 'none' }, pc, false).slice(3)];
-    case 'gloves': return [...handShapes(8, 30, pc, skin, 6, 24), ...handShapes(20, 30, pc, skin, 22, 24)];
+    case 'gloves': return [...handShapes(11, 31, pc, skin, 10, 26), ...handShapes(17.5, 31, pc, skin, 18.5, 26)];
     case 'cape': return [...capeShapes(def.design, pc.color, 0, 0, pc), ...capeFrontShapes(def.design, pc.color, pc)];
     case 'earring': return [...earringShapes(def.design, pc.color, pc), ...offset(earringShapes(def.design, pc.color, pc), 8, 0)];
     default: return [];

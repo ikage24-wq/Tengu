@@ -343,7 +343,7 @@ function claw(m0, f) {
   const a = { tip: [0, -5 - L], head: [0, -5 - L * 0.5], blade: [-5 - L, -5] };
   const reach = [];
   const glove = r === 0 ? m0.handle : th ? m.trim : r === 1 ? m.trimDark : m.handleDark;
-  const orn = th ? null : motif(m, f, { emblem: [0, -0.5], crown: [0, -5.5], top: [0, -10 - L], guard: [0, -3, 4.5, [-1, 1]] }, 8, a);
+  const orn = th ? null : motif(m, f, { emblem: [0, -0.5], crown: [0, -5.5], top: [0, -10 - L], orbit: [0, -5 - L * 0.55], guard: [0, -3, 4.5, [-1, 1]] }, 8, a);
   if (orn) s.push(...orn.back);
   if (!th && m.spikes) for (const sd of [-1, 1]) s.push(T([[sd * 5, -5], [sd * (7.5 + r * 0.3), -8 - r * 0.4], [sd * 5, -1.5]], m.trim));
   if (th === 'chainsaw') {
@@ -469,7 +469,8 @@ function axe(m0, f) {
     return { shapes: s, blade: a.blade, reach, a };
   }
   const bit = (b, c) => T([[1, top + 2], [b * 0.6, top - 1], [b, top + 3], [b, top + hh - 3], [b * 0.6, top + hh + 1], [1, top + hh - 2]], c);
-  const orn = th ? null : motif(m, f, { emblem: [0, mid], crown: [0, top + 0.5], top: [0, top - 7], guard: [-1, mid, 0, [-1]] }, 9, a);
+  const rear = r >= 3 ? bx * 0.6 : 4;
+  const orn = th ? null : motif(m, f, { emblem: [0, mid], crown: [0, top + 0.5], top: [0, top - 7], orbit: [0, top + hh + 4], guard: [-rear, mid, 0, [-1]], flank: [0, top + 1, rear * 0.5, [-1, 1]] }, 10, a);
   if (orn) s.push(...orn.back);
   if (th === 'holy') s.push(...wings(-1, mid, 9, flapAt(f), [-1]));
   if (th === 'demonic') s.push(...horns(-1, top + 3, 5, m.trimDark, [-1]));
@@ -587,7 +588,7 @@ function spear(m0, f) {
     return { shapes: s, blade: [top, sock], reach, a };
   }
   if (th === 'holy') s.push(...wings(0, sock + 1, 9, flapAt(f), [-1, 1], 1.5));
-  const orn = th ? null : motif(m, f, { emblem: [0, sock + 0.8], crown: [0, sock - 0.5], top: [0, top - 5], guard: [0, sock + 1, 1.5, [-1, 1]] }, 9, a);
+  const orn = th ? null : motif(m, f, { emblem: [0, sock + 0.8], crown: [0, sock - 0.5], top: [0, top - 5], orbit: [0, sock - hl * 0.4], guard: [0, sock + 1, 1.5, [-1, 1]] }, 9, a);
   if (orn) s.push(...orn.back);
   if (th === 'demonic') {
     // A barbed trident.
@@ -609,7 +610,8 @@ function spear(m0, f) {
     // Progression: a tassel (rank 2), lugs at the socket (3), a side hook (4), hooks both sides (5).
     if (r === 2) s.push(T([[-1, sock + 2], [1, sock + 2], [2.5, sock + 8 + (f % 2)], [-2.5, sock + 8]], m.grip));
     if ((!th && r >= 3) || th === 'holy') for (const sd of [-1, 1]) s.push(T([[sd * 1, sock + 0.5], [sd * (hw + 1), sock + 2.5], [sd * 1.5, sock - 1.5]], m.trim));
-    if (!th && r >= 4) for (const sd of r >= 5 ? [-1, 1] : [1]) s.push(T([[0, top + 2], [sd * (hw * 0.5 + 2.5), top + 4], [sd * (hw * 0.5 + 3.5), sock - 3], [sd * hw * 0.5, sock - 1]], m.blade));
+    if (!th && r >= 4) s.push(T([[hw / 2 - 0.5, sock - hl * 0.55], [hw / 2 + 3.5, sock - hl * 0.8], [hw / 2 + 2.4, sock - hl * 0.4], [hw / 2 + 4, sock - 0.5], [hw / 2 - 0.5, sock - 1]], m.blade));
+    if (!th && r >= 5) s.push(T([[-hw / 2 + 0.5, sock - hl * 0.5], [-hw / 2 - 4.5, sock - hl * 0.7], [-hw / 2 + 0.5, sock - hl * 0.25]], m.blade));
     if (m.name === 'dragonbone') s.push(...teeth(hw / 2 - 0.3, top + hl * 0.45, sock - 1, 1, 0.8, m.edge));
     s.push(mirrored([[0, top], [hw / 2, top + hl * 0.5], [hw / 2 - 0.6, sock]], m.blade));
     if (th || m.tier >= 3) s.push(R(-0.5, top + 3, 1, hl - 4, m.bladeDark));
@@ -701,7 +703,7 @@ function focus(m, f, y, big, s, a, reach) {
   } else {
     // Progression: a star-shaped mount (rank 2), a ring around a floating crystal (3), prongs
     // cradling an orb (4), and the ring around the cradle (5). Motifs fill the heart of it.
-    const orn = motif(m, f, { emblem: [0, y], crown: [0, y - 3 * z], top: [0, y - 9 * z], guard: [0, y + 1, 2.5 * z, [-1, 1]] }, 7 * z, a);
+    const orn = motif(m, f, { emblem: [0, y], crown: [0, y - 3 * z], top: [0, y - 9 * z], orbit: [0, y], guard: [0, y + 1, 2.5 * z, [-1, 1]] }, 7 * z, a);
     const bob = [0, -0.6, -1, -0.6, -0.3, 0.2][f % 6];
     s.push(...orn.back);
     if (r === 2) {
@@ -813,7 +815,7 @@ function bow(m, f) {
   const r = m.rank;
   const th = m.theme;
   const H = [20, 21, 22, 23, 24, 27][r];
-  const bulge = 8 + (r >= 5 ? 1 : 0);
+  const bulge = 8 + (r >= 5 ? 1 : 0) + (!th && r >= 3 ? 4 : 0);
   const thick = [2.4, 2.6, 2.8, 2.8, 3, 3.2][r];
   const sx = -bulge + thick / 2;
   const curve = r >= 3 ? 1.6 : 0;
@@ -823,7 +825,7 @@ function bow(m, f) {
   const a = { tip: [tipX, -H], head: [1, 0], blade: [-H, H] };
   const reach = [];
   const limbColor = th === 'holy' || (!th && r < 2) ? m.handle : m.blade;
-  const orn = th ? null : motif(m, f, { emblem: [1.8, 0], crown: [1.8, -4], top: [tipX + 1, -H - 4], guard: [2, -2, 0, [1]] }, 9, a);
+  const orn = th ? null : motif(m, f, { emblem: [1.8, 0], crown: [1.8, -4], top: [tipX + 1, -H - 4], orbit: [1, 0], guard: [2, -2, 0, [1]] }, 11, a);
   if (orn) s.push(...orn.back);
 
   // The string, straight from tip to tip.
@@ -963,7 +965,7 @@ function crossbow(m0, f) {
   const a = { tip: [px + 5, cy], head: [px, cy], blade: [-14, 6] };
   const reach = [];
   const wood = th ? m.blade : m.handle;
-  const orn = th ? null : motif(m, f, { emblem: [px - 4, cy + 0.5], crown: [px - 4, cy - 2.5], top: [px + 2, cy - S - 5], guard: [4, cy - 2, 0, [-1, 1]] }, 8, a);
+  const orn = th ? null : motif(m, f, { emblem: [px - 4, cy + 0.5], crown: [px - 4, cy - 2.5], top: [px + 2, cy - S - 5], orbit: [px + 1, cy], guard: [4, cy - 2, 0, [-1, 1]] }, 10, a);
   if (orn) s.push(...orn.back);
   if (th === 'holy') {
     // Wings in place of the prongs, beating up and down.

@@ -79,19 +79,47 @@ to clear it.
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
   3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
-- **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings), with armor in 6
-  tiers. Everything you wear shows on your character, and each armor tier
-  has its own look (beanie → sun hat → cap → helm → witch hat → circlet, tee → robe, sneakers →
-  wing boots, and so on). 11 **unique** outfit pieces have one-of-a-kind looks: Bunny Hood, Kitty
-  Ears, Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
-  Wings, Angel Wings, and Galaxy Cape (a few are sold by Marlo; the rest drop).
-- **Weapons** — 99 weapons across the 9 types (sword, axe, spear, wand, staff, bow, crossbow,
-  dagger, claw). Each type climbs five tiers that look and animate better as you go: common wood
-  or stone (Lv 0, Pip) → iron (Lv 10) → steel and gold with a glint (Lv 20) → twinkling mithril
-  (Lv 30) → rune-carved with runes that light in turn and glyphs floating off (Lv 40, drop only).
-  Tiers 1–3 are sold by Tora (swords, axes, spears), Nim (wands, staves), and Marlo (bows,
-  crossbows, daggers, claws). At Lv 50 every type has six endgame designs, each a rare drop with
-  its own live effects, hit impact, and footsteps:
+- **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings). Everything you
+  wear shows on your character. Every job has its own set **every 5 levels, from 5 to 100**, in
+  every armor slot, and each set looks a step grander than the one before:
+  - **Warriors** go from a squire's leather kettle cap and jerkin through knight plate with plumed
+    great helms, crusader tabards, horned warlord helms and spiked pauldrons, dragonscale,
+    bloodforged, obsidian, and infernal plate, up to the winged, haloed Ascendant set.
+  - **Archers** wear elven leaf hoods, then circlets with leaf and feather wings, tunics with
+    layered leaf hems and sashes, bracers, and mantles, up to diadems of antlers, moons, and lotus
+    flowers with leaf-and-light wings (Worldtree at Lv 100).
+  - **Mages** grow from a floppy apprentice cap into towering wizard hats with bent tips, moons,
+    feathers, and floating orbs, then crowns, halos, rings, and black suns; robes become layered
+    vestments with fan collars and trains, and capes turn into arcane feathered wings.
+  - **Thieves** start in bandanas and grow into ninja wraps, hoods with mouth masks (fox, cobra,
+    raven, cat, wolf), and horned visages up to the Shadow King's crown; their cape is a long
+    scarf that streams behind them, splitting into tattered, glowing tails.
+  Plumes, scarves, capes, sashes, and hems sway as you move, hat tips and feathers follow your
+  head, and wings beat. Fine gear glints, high sets shed motes in their glow color, and a full set
+  of Lv 80+ gear wears its job's signature: embers for warriors, drifting leaves for archers, runes
+  circling a mage's hat, shadow wisps behind a thief (toggle in Options: Gear effects). Starter
+  sets (Lv 5) fit a Novice too. **Earrings** suit every job and climb their own ladder, from
+  copper studs to Genesis Stars. 11 **unique** outfit pieces (Bunny Hood, Kitty Ears, Flower Crown,
+  Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy Wings, Angel Wings,
+  Galaxy Cape) and Lulu's everyday clothes work for anyone.
+- **Colors** — job gear and weapons come in **Dark** (+main stat), **White** (+second stat),
+  **Crimson** (+attack), **Azure** (+defense and HP), and the rarer **Gilded** (a bit of every
+  stat); earrings come in **Ruby** (STR), **Emerald** (DEX), **Sapphire** (INT), **Topaz** (LUK),
+  and **Diamond** (all). The color repaints the piece and its icon, and bonuses grow with the
+  item's level. Most drops come in a color; in shops, pick one from the swatches under an item.
+- **Shops** — Pip, Tora, Marlo, and Nim sell gear for *your* job at their town's levels (with
+  All / Gear / Arms / Other filters), and weapons you can use. Half of all gear drops are for
+  your job, and quest gear rewards come as your job's piece. Other players wear their own job's
+  sets, often in a matching color, and the job instructors show off their Lv 50 sets.
+- **Weapons** — every type (sword, axe, spear, wand, staff, bow, crossbow, dagger, claw) has a
+  weapon every 5 levels: a wood or stone trainer, then Copper, Bronze, Iron, Steel, Silver,
+  Mithril, Cobalt, Crystal, Runic, Starsteel, Moonsilver, Sunforged, Dragonbone, Obsidian,
+  Adamant, Phoenix, Abyssal, Astral, Celestial, and Genesis (Lv 100). They grow every four
+  tiers, gain gems, fins, and runes, and the top ones carry their material's crest (stars,
+  moons, suns, dragon horns, phoenix wings, an abyssal eye, an orbiting ring, angel wings, a
+  rainbow halo). From Silver up they shine and animate, and higher ones have live effects
+  (frost motes, embers, rune pulses, void wisps, radiant rays). At Lv 50 every type also has six
+  endgame designs, each a rare drop with its own live effects, hit impact, and footsteps:
   - **Holy** — white and gold with beating angel wings, a halo, rays of light, and shed feathers
     (the staff is Seraphim's Halo).
   - **Demonic** — black, barbed, and horned, with lava cracks, a blinking demon eye, hellfire, and
@@ -105,7 +133,8 @@ to clear it.
   - **Cyber** — black chrome and neon that pulses cyan and magenta, hologram rings, rising data,
     and glitches; hits shear into neon slices.
   Weapon art lives in `src/render/weapon-forms.js` (one form per type), `weapon-kit.js` (tier and
-  theme looks, shared parts), and `weapon-fx.js` (live effects).
+  theme looks, shared parts), and `weapon-fx.js` (live effects); job gear in
+  `src/render/jobgear/` (one module per job, plus palettes and live effects).
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for
   higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
   glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.

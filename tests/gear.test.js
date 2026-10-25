@@ -7,7 +7,7 @@ import { makeEquip, rollRarity } from '../src/core/items.js';
 import { rollLoot } from '../src/world/drops.js';
 import { MOBS } from '../src/data/mobs.js';
 import { topShapes, legLook, legShapes, hatShapes, hatBackShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
-import { weaponShapes, weaponIcon } from '../src/render/weapons.js';
+import { weaponShapes, weaponIcon, weaponFrames } from '../src/render/weapons.js';
 import { pieceOf } from '../src/render/jobgear/index.js';
 import { dropRetiredItems } from '../src/core/save.js';
 
@@ -101,8 +101,10 @@ test('every weapon type has a weapon every 5 levels and every endgame design, ea
     for (const id of ids) {
       const def = ITEMS[id];
       assert.equal(def?.weaponType, type, id);
-      assert.ok(def.stats.watk >= last, `${id} hits at least as hard as the tier below`);
-      if (!def.theme) last = def.stats.watk;
+      if (!def.theme) {
+        assert.ok(def.stats.watk >= last, `${id} hits at least as hard as the tier below`);
+        last = def.stats.watk;
+      }
       for (let f = 0; f < 6; f++) {
         const art = weaponShapes(type, def.tier, f, def.theme ?? null);
         assert.ok(art.shapes.length && art.grip[0] < art.w && art.grip[1] < art.h, `${id} frame ${f} has a grip inside it`);
@@ -115,7 +117,25 @@ test('every weapon type has a weapon every 5 levels and every endgame design, ea
 
 test('better weapons animate more', () => {
   const live = (type, tier, theme = null) => Boolean(weaponShapes(type, tier, 0, theme).live);
-  assert.equal(live('sword', 0), false);
-  assert.equal(live('sword', 3), true);
-  for (const th of ENDGAME_THEMES) assert.equal(live('axe', 5, th), true, th);
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
+    assert.equal(live(type, 0), false, `${type} tier 0 is still`);
+    assert.equal(weaponFrames(type, 0), 1, `${type} tier 0 has one frame`);
+    assert.ok(weaponFrames(type, 5) > weaponFrames(type, 4), `${type} gems shine from Silver`);
+    assert.ok(weaponFrames(type, 20) >= weaponFrames(type, 5), `${type} top tiers animate at least as much`);
+    for (let t = 4; t <= 20; t++) assert.equal(live(type, t), true, `${type} tier ${t} has live effects`);
+  }
+  for (const th of ENDGAME_THEMES) assert.equal(live('axe', 21, th), true, th);
+});
+
+test('every weapon tier looks different, and variants recolor progression weapons only', () => {
+  const art = (type, tier, theme = null, variant = null) => JSON.stringify(weaponShapes(type, tier, 0, theme, variant).shapes);
+  for (const type of ['sword', 'bow', 'staff', 'claw']) {
+    assert.equal(new Set(WEAPON_LEVELS.map((_, t) => art(type, t))).size, WEAPON_LEVELS.length, `${type} has a look per tier`);
+    assert.ok(weaponShapes(type, 20).w * weaponShapes(type, 20).h > weaponShapes(type, 1).w * weaponShapes(type, 1).h, `${type} grows`);
+    for (const v of ['dark', 'white', 'crimson', 'azure', 'gilded']) {
+      assert.notEqual(art(type, 10, null, v), art(type, 10), `${type} ${v} recolors`);
+      assert.notEqual(JSON.stringify(weaponIcon(type, 10, null, v)), JSON.stringify(weaponIcon(type, 10)), `${type} ${v} icon recolors`);
+      assert.equal(art(type, 21, 'bone', v), art(type, 21, 'bone'), `${type} themes ignore ${v}`);
+    }
+  }
 });
