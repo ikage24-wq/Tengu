@@ -8,6 +8,8 @@ import { npcWindow, deathWindow } from './npc.js';
 import { drawHud } from './hud.js';
 import { worldMapWindow } from './worldmap.js';
 import { createChat, chatInput, updateChat, drawChatBar } from './chat.js';
+import { adminWindow } from './admin.js';
+import { isGm } from '../world/gm.js';
 
 export function createUiState() {
   return {
@@ -18,6 +20,7 @@ export function createUiState() {
       quests: { x: 436, y: 60, open: false },
       npc: { x: 170, y: 84, open: false },
       worldmap: { x: 110, y: 26, open: false },
+      admin: { x: 130, y: 40, open: false, tab: 0 },
     },
     npc: null,
     chat: createChat(),
@@ -41,6 +44,8 @@ export function routeInput(state, world, input, dt) {
       state.windows.npc.open = true;
     } else if (e.type === 'death') {
       state.death = true;
+    } else if (e.type === 'admin') {
+      state.windows.admin.open = isGm(world.char);
     } else if (e.type === 'map') {
       state.banner = 2.5;
       state.npc = null;
@@ -53,6 +58,8 @@ export function routeInput(state, world, input, dt) {
   updateChat(state.chat, world, dt);
   if (!state.npc && !state.death && chatInput(state.chat, world, input)) return true;
 
+  if (input.pressed.has('F9') && isGm(world.char)) state.windows.admin.open = !state.windows.admin.open;
+  if (!isGm(world.char)) state.windows.admin.open = false;
   for (const [code, key] of Object.entries(TOGGLES)) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
   }
@@ -96,6 +103,7 @@ export function drawUi(ui, state, world) {
   if (state.windows.quests.open) questsWindow(ui, state, world);
   if (state.windows.bag.open) bagWindow(ui, state, world);
   if (state.windows.worldmap.open) worldMapWindow(ui, state, world);
+  if (state.windows.admin.open) adminWindow(ui, state, world);
   if (state.npc) npcWindow(ui, state, world);
   if (state.death) deathWindow(ui, state, world);
 }

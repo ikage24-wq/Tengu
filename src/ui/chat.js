@@ -5,6 +5,7 @@
 import { NPCS } from '../data/npcs.js';
 import { FACE_STYLES } from '../render/hero.js';
 import { COLORS, text, box, roundRect } from './kit.js';
+import { isGm, unlockGm, gmCommand } from '../world/gm.js';
 
 const MAX_LEN = 70;
 const BUBBLE_TIME = 4.5;
@@ -52,7 +53,23 @@ function emoteOf(words) {
 function send(chat, world, words) {
   const name = world.char.name;
   if (words.startsWith('/')) {
-    const [cmd, arg] = words.slice(1).split(/\s+/);
+    const [cmd, ...args] = words.slice(1).split(/\s+/);
+    const arg = args[0];
+    // The Game Master passphrase is checked privately and never echoed to the log.
+    if (cmd === 'gm') {
+      unlockGm(world.char, args.join(' ')).then((ok) => {
+        world.log(ok ? 'Game Master unlocked! /gmhelp for commands, F9 for the admin menu.' : 'Unknown command. Try /help.', ok ? '#ffe36b' : '#ffb3c6');
+        if (ok) world.events.push({ type: 'admin' });
+      });
+      return;
+    }
+    if (isGm(world.char)) {
+      const line = gmCommand(world, cmd, args);
+      if (line) {
+        world.log(`[GM] ${line}`, '#ffe36b');
+        return;
+      }
+    }
     if (cmd === 'help') {
       world.log('Chat: Enter to talk. Emoticons like :) :D ;) >:( :3 <3 B) change your face.', '#bff0dc');
       world.log(`/e <face> shows a face: ${FACE_STYLES.join(', ')}.`, '#bff0dc');
@@ -83,14 +100,11 @@ function send(chat, world, words) {
 // Handles typing while the chat bar is open. Returns true while it has the keyboard.
 export function chatInput(chat, world, input) {
   if (chat.typing === null) {
-    if (input.pressed.has('Enter') || input.pressed.has('NumpadEnter')) {
-      chat.typing = '';
-      input.pressed.delete('Enter');
-      input.typed.length = 0;
-      input.held.clear();
-      return true;
-    }
-    return false;
+    if (!input.pressed.has('Enter') && !input.pressed.has('NumpadEnter')) return false;
+    // Letters typed in the same instant as Enter belong to the message, so keep them.
+    chat.typing = '';
+    input.pressed.delete('Enter');
+    input.pressed.delete('NumpadEnter');
   }
   for (const ch of input.typed) {
     if (ch === '\b') chat.typing = chat.typing.slice(0, -1);

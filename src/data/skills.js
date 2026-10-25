@@ -271,6 +271,23 @@ export const SKILLS = {
     }),
   }),
 
+  // ---------- Game Master (hidden) ----------
+  gmsmite: skill({
+    id: 'gmsmite', name: 'GM Smite', job: 'gamemaster', type: 'magic', fx: 'judgment', maxLevel: 1,
+    desc: 'Strike every monster on screen with overwhelming light.',
+    at: () => ({ mp: 0, power: 99999, hits: 1, targets: 40, range: { w: 700, h: 400, around: true }, delay: 0.3 }),
+  }),
+  gmhaste: skill({
+    id: 'gmhaste', name: 'GM Haste', job: 'gamemaster', type: 'buff', fx: 'buff', maxLevel: 1,
+    desc: 'Move and jump like the wind.',
+    at: () => ({ mp: 0, duration: 3600, buff: { speed: 60, jump: 30 } }),
+  }),
+  gmblessing: skill({
+    id: 'gmblessing', name: 'GM Blessing', job: 'gamemaster', type: 'passive', fx: null, maxLevel: 1,
+    desc: 'Bonus to everything.',
+    at: () => ({ passive: { matk: 500, watk: 500, maxHpPct: 1, critRate: 0.5 } }),
+  }),
+
   // ---------- Ranger ----------
   bowmastery: skill({
     id: 'bowmastery', name: 'Bow Mastery', job: 'ranger', type: 'passive', fx: null,

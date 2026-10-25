@@ -3,7 +3,7 @@
 export const VW = 640;
 export const VH = 360;
 
-const GAME_KEYS = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'AltLeft', 'AltRight', 'Tab']);
+const GAME_KEYS = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'AltLeft', 'AltRight', 'Tab', 'F9']);
 
 export function createInput(canvas) {
   const input = {

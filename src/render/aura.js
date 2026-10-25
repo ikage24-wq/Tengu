@@ -10,7 +10,7 @@ const hash = (n) => {
 };
 
 // Jobs that have an idle aura, and the 2nd-job form a 3rd job builds on.
-export const AURA_JOBS = new Set(['blademaster', 'lancer', 'pyromancer', 'cleric', 'ranger', 'marksman', 'duelist', 'shadow', 'infernosage', 'seraph']);
+export const AURA_JOBS = new Set(['blademaster', 'lancer', 'pyromancer', 'cleric', 'ranger', 'marksman', 'duelist', 'shadow', 'infernosage', 'seraph', 'gamemaster']);
 
 function glow(ctx, x, y, r, color, a) {
   if (a <= 0 || r <= 0) return;
@@ -471,6 +471,48 @@ const JOBS = {
       // Every few seconds a burst of light.
       const p = (t % 4) / 4;
       if (p < 0.2) glow(ctx, x, y - 28 * s, (20 + p * 160) * s, '#ffffff', k * (1 - p / 0.2) * 0.5);
+    },
+  },
+  gamemaster: {
+    back(ctx, x, y, t, s, k) {
+      // A rainbow magic circle and a shimmering prism glow.
+      const hues = ['#ff9ec0', '#ffd66b', '#9fe0b0', '#8fd3ff', '#c9a6ff'];
+      glow(ctx, x, y - 26 * s, 40 * s, hues[Math.floor(t * 2) % hues.length], k * 0.35);
+      hues.forEach((c, i) => magicCircle(ctx, x, y, (36 - i * 4) * s, t * (i % 2 ? -1 : 1) * (1 + i * 0.2), c, k * 0.7, 5 + i));
+    },
+    front(ctx, x, y, t, s, k) {
+      // A floating gold crown with a GM tag, and rainbow sparkles rising.
+      const cy = y - 60 * s + Math.sin(t * 2) * 2 * s;
+      ctx.save();
+      ctx.globalAlpha = k;
+      ctx.fillStyle = '#ffd66b';
+      ctx.strokeStyle = '#b8862b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - 8 * s, cy + 4 * s);
+      ctx.lineTo(x - 8 * s, cy - 3 * s);
+      ctx.lineTo(x - 4 * s, cy);
+      ctx.lineTo(x, cy - 5 * s);
+      ctx.lineTo(x + 4 * s, cy);
+      ctx.lineTo(x + 8 * s, cy - 3 * s);
+      ctx.lineTo(x + 8 * s, cy + 4 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ff6b9a';
+      ctx.beginPath();
+      ctx.arc(x, cy + 1 * s, 1.4 * s, 0, TAU);
+      ctx.fill();
+      ctx.font = `bold ${Math.round(6 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#5a3f7a';
+      ctx.strokeText('GM', x, cy - 7 * s);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('GM', x, cy - 7 * s);
+      ctx.restore();
+      const hues = ['#ff9ec0', '#ffd66b', '#9fe0b0', '#8fd3ff', '#c9a6ff'];
+      hues.forEach((c, i) => rising(ctx, x, y, t, s, { n: 3, spread: 22, height: 70, speed: 0.5, color: c, size: 1.5, seed: i * 7, shape: 'star' }, k));
     },
   },
 };

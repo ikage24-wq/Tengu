@@ -264,3 +264,28 @@ test('chat sends a message, shows a bubble, and emoticons set a face', async () 
   assert.equal(w.emote.face, 'excited');
   assert.ok(chat.pending.some((p) => p.who === 'mira'), 'Mira says hi back');
 });
+
+test('the Game Master stays locked without the passphrase, and its tools work once unlocked', async () => {
+  const { isGm, unlockGm, gmCommand } = await import('../src/world/gm.js');
+  const w = newWorld();
+  assert.equal(isGm(w.char), false);
+  assert.equal(await unlockGm(w.char, 'password123'), false, 'a wrong passphrase is rejected');
+  assert.equal(isGm(w.char), false);
+  w.char.gm = true; // what a correct passphrase does
+  gmCommand(w, 'job', ['gamemaster']);
+  assert.equal(w.char.job, 'gamemaster');
+  assert.ok(w.char.skills.gmsmite, 'GM skills come with the job');
+  gmCommand(w, 'level', ['77']);
+  assert.equal(w.char.level, 77);
+  gmCommand(w, 'give', ['sword_8', '1']);
+  assert.ok(w.char.inventory.equip.some((e) => e.id === 'sword_8'));
+  gmCommand(w, 'tp', ['sky']);
+  assert.equal(w.map.id, 'sky');
+  gmCommand(w, 'god', []);
+  const hp = w.char.hp;
+  gmCommand(w, 'spawn', ['starspirit', '3']);
+  for (let i = 0; i < 120; i++) updateWorld(w, DT, idle);
+  assert.equal(w.char.hp, hp, 'god mode takes no damage');
+  gmCommand(w, 'killall', []);
+  assert.ok(w.mobs.every((m) => m.hp === 0));
+});

@@ -248,6 +248,7 @@ function killMob(world, m) {
 }
 
 function hurtPlayer(world, rawAtk, fromX) {
+  if (world.god) return;
   const char = world.char;
   const s = world.stats;
   let dmg = damageTaken(rawAtk, s.wdef);

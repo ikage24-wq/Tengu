@@ -7,6 +7,7 @@ export const FAMILY_STATS = {
   mage: { primary: 'int', secondary: 'luk' },
   archer: { primary: 'dex', secondary: 'str' },
   thief: { primary: 'luk', secondary: 'dex' },
+  gm: { primary: 'int', secondary: 'luk' },
 };
 
 export const JOBS = {
@@ -87,6 +88,14 @@ export const JOBS = {
     id: 'shadow', name: 'Shadow', family: 'thief', tier: 2, parent: 'thief', level: 30,
     hp: 22, mp: 18, advanceHp: 250, advanceMp: 300, weapons: ['claw'],
     blurb: 'Claws. Throws stars in threes and storms of shuriken.',
+  },
+
+  // Hidden: only unlocked with the Game Master passphrase, never offered by an instructor.
+  gamemaster: {
+    id: 'gamemaster', name: 'Game Master', family: 'gm', tier: 9, parent: null, hidden: true,
+    hp: 60, mp: 60, advanceHp: 5000, advanceMp: 5000,
+    weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'],
+    blurb: 'Keeper of Tengu Island. Uses anything, goes anywhere.',
   },
 };
 
