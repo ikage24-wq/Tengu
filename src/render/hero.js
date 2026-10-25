@@ -21,7 +21,7 @@ import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
 
-export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid'];
+export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid', 'eyecover'];
 // Spiky hair was retired; old saves that used it get soft curls instead.
 const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairStyle ?? 'bob');
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
@@ -187,10 +187,18 @@ function hairBack(style, front, sway, lift) {
     case 'sweep':
     case 'curtain': return [E(HEAD_X, 13.2, 11.8, 10.8, c), E(HEAD_X, 19.8, 9.8, 4.2, c), ...locks([[6.4, 16, 7.4, 24, 4.4, 0.8], [24.6, 16, 23.6, 24, 4.4, -0.8]])];
     case 'quiff': return [E(HEAD_X, 13.2, 11.4, 10.6, c), E(HEAD_X, 19, 9.4, 3.6, c)];
-    case 'wolf': return [E(HEAD_X, 13.2, 12, 11, c), ...sw([
-      E(HEAD_X, 20, 11, 6, c),
-      // Layered ends at the nape that flick outward.
-      ...locks([[5.6, 17, 2.6, 28.4, 5, -1.6], [10, 19, 8.6, 29.4, 5, -0.8], [15.5, 20, 15.5, 29, 5.4, 0], [21, 19, 22.4, 29.4, 5, 0.8], [25.4, 17, 28.4, 28.4, 5, 1.6]]),
+    case 'wolf': return [
+      // A shaggy wolf cut: a big layered crown that bumps out at the temples, and longer mullet
+      // layers at the back that flick out past the shoulders.
+      E(HEAD_X, 12.6, 12.8, 11.6, c), E(4.2, 10.6, 3.4, 3.8, c), E(26.8, 10.6, 3.4, 3.8, c), E(3.4, 16.4, 3, 3.4, c), E(27.6, 16.4, 3, 3.4, c),
+      ...sw([
+        E(HEAD_X, 21, 11.4, 6.4, c),
+        ...locks([[4.6, 18, 0.6, 31, 5.6, -2.4], [9.4, 20, 6.6, 33, 5.4, -1.4], [15.5, 21, 15.5, 33.6, 6, 0], [21.6, 20, 24.4, 33, 5.4, 1.4], [26.4, 18, 30.4, 31, 5.6, 2.4]]),
+      ]),
+    ];
+    case 'eyecover': return [crown, ...sw([
+      E(HEAD_X, 19, 12.4, 9, c),
+      ...locks([[4.6, 14, 5.6, 29, 5.4, 1.2], [9.6, 18, 10.6, 30, 5, 0.6], [21.4, 18, 20.4, 30, 5, -0.6], [26.4, 14, 25.4, 29, 5.4, -1.2]]),
     ])];
     case 'hime': return [crown, ...sw([
       // Long, straight, and cut level a little above the waist.
@@ -251,9 +259,20 @@ function hairFront(style, c, sway = 0, mood = 'smile') {
       return [C(E(HEAD_X, 8.2, 11.6, 3.8, c)), E(HEAD_X + 1, 3.6, 9, 4.6, c), lock(7.6, 6.4, 22.4, -0.6, 7.4, 3), lock(8, 9, 10.6, 12.4, 3.4, 0.4),
         lock(6.8, 8, 5.6, 17.4, 4, 0.8), lock(24.6, 8, 25.6, 17, 3.6, -0.8), arc(HEAD_X + 1, 4.6, 7.4, 3.6, 200, 320, 1.2, l)];
     case 'wolf':
-      // Choppy layered bangs and longer side layers that flick outward at the jaw.
-      return [cap, lock(9, 6.8, 8.2, 15, 5.4, 0.8), lock(12.8, 6.4, 12.6, 16, 4.8, 0.2), lock(16.8, 6.4, 17.2, 15.4, 4.8, -0.2), lock(20.6, 6.8, 22, 14.6, 5, -0.8),
-        lock(6.6, 8, 3.8, 23.4, 4.6, 2.2), lock(24.4, 8.4, 27.2, 22.8, 4.4, -2.2), shine];
+      // Choppy curtain-ish bangs split off-center, short layers flicking out at the cheeks, and
+      // longer ones flicking out at the jaw.
+      return [cap, lock(13.4, 5.6, 8.2, 15.6, 5.6, 1.8), lock(10.6, 6.6, 12.4, 16.2, 4, -0.6), lock(17.2, 5.6, 21.8, 15.8, 5.2, -1.6), lock(20.4, 6.4, 18.6, 15.4, 3.6, 0.6),
+        lock(6.6, 8, 2.4, 16.4, 4.2, 1.6), lock(24.4, 8, 28.6, 16.4, 4.2, -1.6),
+        lock(6.4, 11, 3.4, 24.4, 4.6, 2.4), lock(24.6, 11, 27.6, 24.4, 4.6, -2.4), shine];
+    case 'eyecover': {
+      // Mekakure: a long, heavy lock swept down over one eye, with a short fringe over the other
+      // that sways enough to give a peek.
+      const peek = sway * 0.4;
+      return [cap, lock(9.6, 6.8, 9, 14.4, 6.4, 0.6), lock(13, 6, 13.4, 14.8, 5, 0),
+        lock(13.6, 5, 21 + peek, 25, 11, -1.8), lock(18.4, 5.6, 25.4 + peek, 22.4, 6.4, -1.4),
+        lock(7, 8, 5.4, 22, 4.4, 1),
+        arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l), arc(19.8 + peek, 16, 3.4, 6, 250, 300, 0.9, l)];
+    }
     case 'hime':
       // Blunt, straight-cut bangs and straight side locks cut level at the chin.
       return [cap, C(T([[5.4, 8], [25.6, 8], [25.4, 14.6], [5.6, 14.6]], c)), C(R(4.2, 10, 4.6, 14.2, c)), C(R(22.2, 10, 4.6, 14.2, c)),
@@ -497,7 +516,8 @@ function headShapes(look, g, rig) {
   if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair, rig.hair, look.face ?? 'smile'));
   if (f.brows) {
     const bc = mix(shade(hair, -30), INK, 0.35);
-    [-1, 1].forEach((side, i) => out.push(brow(FACE_X + 4.3 * side, side, f.brows[i][0], f.brows[i][1], bc)));
+    // The eye-cover lock hides that side's brow.
+    [-1, 1].forEach((side, i) => (style === 'eyecover' && side > 0) || out.push(brow(FACE_X + 4.3 * side, side, f.brows[i][0], f.brows[i][1], bc)));
   }
   if (f.extra) out.push(...faceExtras(f.extra));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
