@@ -12,6 +12,7 @@ export const CLASSES = {
       { id: 'slash', name: 'Slash', unlockLevel: 1, mpCost: 5, damageMult: 1.4, cooldown: 0.6, aoe: { w: 90, h: 70 } },
       { id: 'whirlwind', name: 'Whirlwind', unlockLevel: 10, mpCost: 15, damageMult: 1.1, cooldown: 3, aoe: { w: 200, h: 120 } },
       { id: 'earthquake', name: 'Earthquake', unlockLevel: 25, mpCost: 30, damageMult: 2.2, cooldown: 8, aoe: { w: 360, h: 140 } },
+      { id: 'earthBreaker', name: 'Earth Breaker', unlockLevel: 30, mpCost: 60, damageMult: 1.2, cooldown: 45, fullMap: true, aoe: { w: 0, h: 0 } },
     ],
   },
   mage: {
@@ -24,6 +25,7 @@ export const CLASSES = {
       { id: 'magicBolt', name: 'Magic Bolt', unlockLevel: 1, mpCost: 6, damageMult: 1.5, cooldown: 0.5, aoe: { w: 60, h: 60 } },
       { id: 'flameBurst', name: 'Flame Burst', unlockLevel: 10, mpCost: 20, damageMult: 1.2, cooldown: 4, aoe: { w: 240, h: 200 } },
       { id: 'thunderStorm', name: 'Thunder Storm', unlockLevel: 25, mpCost: 40, damageMult: 2.5, cooldown: 10, aoe: { w: 420, h: 260 } },
+      { id: 'starfall', name: 'Starfall', unlockLevel: 30, mpCost: 70, damageMult: 1.2, cooldown: 45, fullMap: true, aoe: { w: 0, h: 0 } },
     ],
   },
   archer: {
@@ -36,6 +38,7 @@ export const CLASSES = {
       { id: 'arrow', name: 'Arrow', unlockLevel: 1, mpCost: 4, damageMult: 1.3, cooldown: 0.4, aoe: { w: 80, h: 40 } },
       { id: 'arrowRain', name: 'Arrow Rain', unlockLevel: 10, mpCost: 18, damageMult: 1.0, cooldown: 3.5, aoe: { w: 320, h: 180 } },
       { id: 'stormArrow', name: 'Storm Arrow', unlockLevel: 25, mpCost: 35, damageMult: 2.0, cooldown: 9, aoe: { w: 480, h: 220 } },
+      { id: 'skyVolley', name: 'Sky Volley', unlockLevel: 30, mpCost: 65, damageMult: 1.2, cooldown: 45, fullMap: true, aoe: { w: 0, h: 0 } },
     ],
   },
 };

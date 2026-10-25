@@ -10,6 +10,8 @@ export function damageFor(character, skill, gearAtk = 0) {
 
 // Returns the skill's AoE hitbox as a world-space rectangle, anchored to the caster facing.
 export function skillHitbox(caster, skill) {
+  // Full-map skills reach every mob on the map, wherever it stands.
+  if (skill.fullMap) return { x: -1e6, y: -1e6, w: 2e6, h: 2e6 };
   const { w, h } = skill.aoe;
   const x = caster.dir >= 0 ? caster.x + caster.w : caster.x - w;
   return { x, y: caster.y + caster.h / 2 - h / 2, w, h };

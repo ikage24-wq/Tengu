@@ -114,6 +114,17 @@ function drawEffects(ctx, game, cam) {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       roundPath(ctx, b.x - cam, b.y, b.w, b.h, 6);
       ctx.fill();
+    } else if (e.kind === 'fullmap') {
+      // Screen flash, then light columns over every mob on the map.
+      ctx.globalAlpha = e.t;
+      ctx.fillStyle = e.color;
+      ctx.fillRect(0, 0, VW, VH);
+      ctx.fillStyle = '#ffffff';
+      for (const mob of game.mobs) {
+        if (!mob.alive) continue;
+        ctx.fillRect(mob.x - cam + mob.w / 2 - 2, 0, 4, mob.y);
+      }
+      ctx.globalAlpha = 1;
     } else if (e.kind === 'levelup') {
       ctx.strokeStyle = '#ffe866';
       ctx.lineWidth = 2;
@@ -160,9 +171,9 @@ function drawHud(ctx, game, width, height) {
   text(ctx, `Skill pts ${c.skillPoints}`, rx + 8, 49, 8);
 
   // Skill bar with a cooldown sweep.
-  const keys = ['Q', 'E', 'R'];
+  const keys = ['Q', 'E', 'R', 'F'];
   game.classDef.skills.forEach((s, i) => {
-    const bx = width / 2 - 66 + i * 46;
+    const bx = width / 2 - 90 + i * 46;
     const by = height - 40;
     const locked = c.level < s.unlockLevel;
     const cd = game.cooldowns[s.id] ?? 0;

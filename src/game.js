@@ -285,14 +285,15 @@ export function update(game, dt, input) {
   p.invuln = Math.max(0, p.invuln - dt);
 
   // Skills: Q / E / R map to the class's skill slots 0..2.
-  const slotKeys = ['KeyQ', 'KeyE', 'KeyR'];
+  const slotKeys = ['KeyQ', 'KeyE', 'KeyR', 'KeyF'];
   slotKeys.forEach((key, idx) => {
     if (!input.pressed.has(key)) return;
     const skill = game.classDef.skills[idx];
     if (!skill) return;
     const result = cast(c, effectiveSkill(game, skill), game.cooldowns, p, game.mobs, damageMobWithFloater(game), gearAtk(game));
     if (result.ok) {
-      game.effects.push({ kind: 'aoe', box: result.box, t: 0.2 });
+      if (skill.fullMap) game.effects.push({ kind: 'fullmap', t: 0.7, color: game.classDef.color });
+      else game.effects.push({ kind: 'aoe', box: result.box, t: 0.2 });
       for (const hit of result.hits) if (hit.killed) killMob(game, hit.mob);
     } else if (result.reason === 'no-mp') {
       message(game, 'Not enough MP.');
