@@ -13,8 +13,8 @@
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
 
-// `cooldown` is seconds before the skill can be used again; `lock` is how long using it plants
-// you in place (no moving, jumping, or other attacks), for big wind-ups.
+// `cooldown` is seconds before the skill can be used again; `lock` is a short delay after using it
+// that plants you in place (no moving, jumping, or other attacks), for big wind-ups.
 function skill(def) {
   return { maxLevel: 20, cooldown: 0, lock: 0, ...def };
 }
@@ -141,7 +141,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(60, 200, lv, m), buff: { watk: lerp(5, 25, lv, m), attackSpeed: 0.1 } }),
   }),
   cleave: skill({
-    id: 'cleave', name: 'Cleave', job: 'blademaster', type: 'attack', fx: 'spin', cooldown: 1, lock: 0.6,
+    id: 'cleave', name: 'Cleave', job: 'blademaster', type: 'attack', fx: 'spin', lock: 0.6,
     desc: 'A huge sweep that hits a crowd.',
     at: (lv, m) => ({ mp: lerp(14, 30, lv, m), pct: lerp(150, 300, lv, m), hits: 1, targets: 6, range: { w: 170, h: 80 } }),
   }),
@@ -163,7 +163,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(60, 200, lv, m), buff: { maxHpPct: lerpf(0.1, 0.6, lv, m) } }),
   }),
   sweep: skill({
-    id: 'sweep', name: 'Crescent Sweep', job: 'lancer', type: 'attack', fx: 'spin', cooldown: 1, lock: 0.6,
+    id: 'sweep', name: 'Crescent Sweep', job: 'lancer', type: 'attack', fx: 'spin', lock: 0.6,
     desc: 'A long sweep that hits up to ten monsters.',
     at: (lv, m) => ({ mp: lerp(14, 30, lv, m), pct: lerp(120, 235, lv, m), hits: 1, targets: lerp(6, 10, lv, m), range: { w: 230, h: 90 } }),
   }),
@@ -190,7 +190,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(200, 360, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
   }),
   blaze: skill({
-    id: 'blaze', name: 'Blaze', job: 'pyromancer', type: 'magic', fx: 'blaze', cooldown: 1, lock: 0.6,
+    id: 'blaze', name: 'Blaze', job: 'pyromancer', type: 'magic', fx: 'blaze', lock: 0.6,
     desc: 'A wall of fire that hits everything in front of you.',
     at: (lv, m) => ({ mp: lerp(20, 40, lv, m), power: lerp(120, 240, lv, m), hits: 1, targets: 6, range: { w: 260, h: 120 } }),
   }),
@@ -224,12 +224,12 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 40, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
   }),
   overload: skill({
-    id: 'overload', name: 'Arcane Overload', job: 'infernosage', type: 'buff', fx: 'buff', cooldown: 3, lock: 0.6,
+    id: 'overload', name: 'Arcane Overload', job: 'infernosage', type: 'buff', fx: 'buff', lock: 0.6,
     desc: 'Pour raw mana into every spell: big magic attack and critical rate.',
     at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { matk: lerp(15, 50, lv, m), critRate: lerpf(0.05, 0.2, lv, m) } }),
   }),
   shadowcross: skill({
-    id: 'shadowcross', name: 'Shadow Cross', job: 'infernosage', type: 'buff', fx: 'buff', cooldown: 6, lock: 0.8,
+    id: 'shadowcross', name: 'Shadow Cross', job: 'infernosage', type: 'buff', fx: 'buff', lock: 0.8,
     desc: 'Summon a dark cross that floats beside you and blasts nearby monsters on its own.',
     at: (lv, m) => ({
       mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
@@ -237,7 +237,7 @@ export const SKILLS = {
     }),
   }),
   meteor: skill({
-    id: 'meteor', name: 'Meteor Shower', job: 'infernosage', type: 'magic', fx: 'meteor', cooldown: 8, lock: 1.1,
+    id: 'meteor', name: 'Meteor Shower', job: 'infernosage', type: 'magic', fx: 'meteor', lock: 1.1,
     desc: 'Rain blazing meteors on up to 15 monsters across a huge area, twice.',
     at: (lv, m) => ({
       mp: lerp(70, 120, lv, m), power: lerp(290, 520, lv, m), hits: 2, targets: 15,
@@ -252,12 +252,12 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 36, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
   }),
   sanctuary: skill({
-    id: 'sanctuary', name: 'Sanctuary', job: 'seraph', type: 'buff', fx: 'shield', cooldown: 3, lock: 0.6,
+    id: 'sanctuary', name: 'Sanctuary', job: 'seraph', type: 'buff', fx: 'shield', lock: 0.6,
     desc: 'A halo of light: huge defense, avoid, and max HP.',
     at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { wdef: lerp(30, 120, lv, m), eva: lerp(10, 40, lv, m), maxHpPct: lerpf(0.1, 0.4, lv, m) } }),
   }),
   guardianangel: skill({
-    id: 'guardianangel', name: 'Guardian Angel', job: 'seraph', type: 'buff', fx: 'buff', cooldown: 6, lock: 0.8,
+    id: 'guardianangel', name: 'Guardian Angel', job: 'seraph', type: 'buff', fx: 'buff', lock: 0.8,
     desc: 'Summon an angel that floats beside you and strikes nearby monsters with light.',
     at: (lv, m) => ({
       mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
@@ -265,7 +265,7 @@ export const SKILLS = {
     }),
   }),
   judgment: skill({
-    id: 'judgment', name: 'Radiant Judgment', job: 'seraph', type: 'magic', fx: 'judgment', cooldown: 8, lock: 1.1,
+    id: 'judgment', name: 'Radiant Judgment', job: 'seraph', type: 'magic', fx: 'judgment', lock: 1.1,
     desc: 'Pillars of holy light strike up to 15 monsters across a huge area, twice. Strong criticals.',
     at: (lv, m) => ({
       mp: lerp(70, 120, lv, m), power: lerp(280, 500, lv, m), hits: 2, targets: 15,
@@ -275,7 +275,7 @@ export const SKILLS = {
 
   // ---------- Game Master (hidden) ----------
   gmsmite: skill({
-    id: 'gmsmite', name: 'GM Smite', job: 'gamemaster', type: 'magic', fx: 'judgment', cooldown: 1, maxLevel: 1,
+    id: 'gmsmite', name: 'GM Smite', job: 'gamemaster', type: 'magic', fx: 'judgment', maxLevel: 1,
     desc: 'Strike every monster on screen with overwhelming light.',
     at: () => ({ mp: 0, power: 99999, hits: 1, targets: 40, range: { w: 700, h: 400, around: true }, delay: 0.3 }),
   }),
@@ -302,7 +302,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(60, 200, lv, m), buff: { attackSpeed: lerpf(0.1, 0.3, lv, m) } }),
   }),
   bombarrow: skill({
-    id: 'bombarrow', name: 'Bomb Arrow', job: 'ranger', type: 'attack', fx: 'bomb', cooldown: 1, lock: 0.6,
+    id: 'bombarrow', name: 'Bomb Arrow', job: 'ranger', type: 'attack', fx: 'bomb', lock: 0.6,
     desc: 'An arrow that bursts and hits the whole group.',
     at: (lv, m) => ({ mp: lerp(14, 28, lv, m), pct: lerp(150, 280, lv, m), hits: 1, targets: 6, range: { w: 300, h: 90 }, projectile: true }),
   }),
@@ -324,7 +324,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(60, 200, lv, m), buff: { attackSpeed: lerpf(0.1, 0.3, lv, m) } }),
   }),
   piercebolt: skill({
-    id: 'piercebolt', name: 'Pierce Bolt', job: 'marksman', type: 'attack', fx: 'pierce', cooldown: 1, lock: 0.6,
+    id: 'piercebolt', name: 'Pierce Bolt', job: 'marksman', type: 'attack', fx: 'pierce', lock: 0.6,
     desc: 'A bolt that flies through every monster in a line.',
     at: (lv, m) => ({ mp: lerp(14, 30, lv, m), pct: lerp(160, 300, lv, m), hits: 1, targets: 8, range: { w: 420, h: 40 }, projectile: true }),
   }),
@@ -351,7 +351,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 28, lv, m), pct: lerp(60, 110, lv, m), hits: lerp(4, 6, lv, m), targets: 1, range: { w: 85, h: 60 } }),
   }),
   shadowstrike: skill({
-    id: 'shadowstrike', name: 'Shadow Strike', job: 'duelist', type: 'attack', fx: 'spin', cooldown: 1, lock: 0.6,
+    id: 'shadowstrike', name: 'Shadow Strike', job: 'duelist', type: 'attack', fx: 'spin', lock: 0.6,
     desc: 'Dash through a group in a burst of shadow.',
     at: (lv, m) => ({ mp: lerp(14, 30, lv, m), pct: lerp(150, 265, lv, m), hits: 1, targets: 6, range: { w: 170, h: 80 } }),
   }),
@@ -373,7 +373,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(10, 24, lv, m), pct: lerp(80, 150, lv, m), hits: 3, targets: 1, range: { w: 320, h: 60 }, projectile: true }),
   }),
   shurikenstorm: skill({
-    id: 'shurikenstorm', name: 'Shuriken Storm', job: 'shadow', type: 'attack', fx: 'star', cooldown: 1, lock: 0.6,
+    id: 'shurikenstorm', name: 'Shuriken Storm', job: 'shadow', type: 'attack', fx: 'star', lock: 0.6,
     desc: 'A storm of stars that hits a whole group.',
     at: (lv, m) => ({ mp: lerp(16, 32, lv, m), pct: lerp(100, 195, lv, m), hits: 1, targets: 5, range: { w: 300, h: 90 }, projectile: true }),
   }),

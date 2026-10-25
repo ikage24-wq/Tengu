@@ -290,7 +290,7 @@ test('the Game Master stays locked without the passphrase, and its tools work on
   assert.ok(w.mobs.every((m) => m.hp === 0));
 });
 
-test('big skills have a cooldown and root you while they wind up', async () => {
+test('big skills root you for a short wind-up but have no cooldown', async () => {
   const { setJob, setLevel, gmCommand } = await import('../src/world/gm.js');
   const w = newWorld();
   setJob(w.char, 'infernosage');
@@ -307,7 +307,5 @@ test('big skills have a cooldown and root you while they wind up', async () => {
   assert.equal(cast(w, null).reason, 'busy', 'no attacks during the lock');
   for (let i = 0; i < 60; i++) updateWorld(w, DT, idle);
   assert.equal(w.lockTimer, 0);
-  assert.equal(cast(w, 'meteor').reason, 'cooldown', "can't spam it");
-  for (let i = 0; i < 8 * 60; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'meteor').ok, true, 'ready again after the cooldown');
+  assert.equal(cast(w, 'meteor').ok, true, 'usable again as soon as the lock ends');
 });
