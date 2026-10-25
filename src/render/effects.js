@@ -4,12 +4,13 @@
 import { drawItemIcon } from './icons.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
+import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
 const SHOT_COLORS = {
   pebble: '#ffc2e0', arrow: '#fff6fb', star: '#dfe6ff', bolt: '#c9b6ff', fire: '#ff9b5c', holy: '#fff3a6',
-  bomb: '#ffb347', pierce: '#a8e8ff', swing: '#ffffff', darkbolt: '#b48cff',
+  bomb: '#ffb347', pierce: '#a8e8ff', swing: '#ffffff',
 };
 
 function sparkle(ctx, x, y, r, color) {
@@ -53,6 +54,10 @@ function drawShot(ctx, f, cam) {
   const dir = Math.sign(f.tx - f.x) || 1;
   const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
+  if (drawSpellShot(ctx, f, x, y, dir, f.t)) {
+    ctx.restore();
+    return;
+  }
   switch (f.shot) {
     case 'arrow': case 'pierce':
       ctx.strokeStyle = c;
@@ -74,7 +79,7 @@ function drawShot(ctx, f, cam) {
       sparkle(ctx, 0, 0, 6, c);
       sparkle(ctx, 0, 0, 3, '#ffffff');
       break;
-    case 'bolt': case 'holy': case 'fire': case 'bomb': case 'darkbolt': {
+    case 'bolt': case 'holy': case 'fire': case 'bomb': {
       const r = f.shot === 'fire' ? 7 : 6;
       const g = ctx.createRadialGradient(x, y, 1, x, y, r * 2.2);
       g.addColorStop(0, '#ffffff');
@@ -243,6 +248,10 @@ function drawFx(ctx, f, cam, time) {
   const x = f.x - cam.x;
   const y = f.y - cam.y;
   ctx.save();
+  if (drawSpell(ctx, f, x, y, p, cam, time)) {
+    ctx.restore();
+    return;
+  }
   switch (f.kind) {
     case 'projectile':
       if (f.element) shotTrail(ctx, f, cam);
@@ -312,7 +321,7 @@ function drawFx(ctx, f, cam, time) {
       ctx.fillRect(b.x - cam.x, b.y + b.h / 2 - cam.y - 3, b.w * ease(p), 6);
       break;
     }
-    case 'burst': case 'blaze': case 'fire': case 'holy': case 'heal': {
+    case 'blaze': case 'fire': case 'holy': case 'heal': {
       if (f.box) {
         // Area glow where the spell lands.
         const b = f.box;
@@ -404,7 +413,7 @@ function drawFx(ctx, f, cam, time) {
     }
     case 'buff': case 'potion': {
       ctx.globalAlpha = 1 - p;
-      const color = f.color ?? '#ffe36b';
+      const color = f.color ?? SCHOOL_COLORS[f.school]?.main ?? '#ffe36b';
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2 + p * 4;
         sparkle(ctx, x + Math.cos(a) * 16, y - 10 - p * 36 - (i % 2) * 6, 3, color);

@@ -10,7 +10,7 @@ const hash = (n) => {
 };
 
 // Jobs that have an idle aura, and the 2nd-job form a 3rd job builds on.
-export const AURA_JOBS = new Set(['blademaster', 'lancer', 'pyromancer', 'cleric', 'ranger', 'marksman', 'duelist', 'shadow', 'infernosage', 'seraph', 'gamemaster']);
+export const AURA_JOBS = new Set(['blademaster', 'lancer', 'ilwizard', 'fpwizard', 'cleric', 'ranger', 'marksman', 'duelist', 'shadow', 'ilarchmage', 'fparchmage', 'bishop', 'gamemaster']);
 
 function glow(ctx, x, y, r, color, a) {
   if (a <= 0 || r <= 0) return;
@@ -169,6 +169,66 @@ function halo(ctx, x, y, s, t, color, a) {
 }
 
 // A spinning four-pointed throwing star.
+// A six-armed snowflake.
+function snowflake(ctx, x, y, r, color, a, rot) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const ang = (i / 3) * Math.PI;
+    ctx.moveTo(Math.cos(ang) * r, Math.sin(ang) * r);
+    ctx.lineTo(-Math.cos(ang) * r, -Math.sin(ang) * r);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A floating ice crystal: a tall diamond with a bright facet.
+function crystal(ctx, x, y, r, k) {
+  glow(ctx, x, y, r * 3, '#8fe3ff', 0.45 * k);
+  ctx.globalAlpha = k;
+  ctx.fillStyle = '#bfe6ff';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r * 1.6);
+  ctx.lineTo(x + r * 0.8, y);
+  ctx.lineTo(x, y + r * 1.6);
+  ctx.lineTo(x - r * 0.8, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r * 1.6);
+  ctx.lineTo(x - r * 0.8, y);
+  ctx.lineTo(x, y);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+// A short crackle of lightning between two points.
+function zap(ctx, x1, y1, x2, y2, t, s, k) {
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.strokeStyle = '#fffbe0';
+  ctx.shadowColor = '#ffe86b';
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 1.2 * s;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  const seg = 4;
+  for (let i = 1; i < seg; i++) {
+    const u = i / seg;
+    ctx.lineTo(x1 + (x2 - x1) * u + (hash(Math.floor(t * 20) + i) - 0.5) * 8 * s, y1 + (y2 - y1) * u + (hash(Math.floor(t * 20) + i + 9) - 0.5) * 6 * s);
+  }
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function shuriken(ctx, x, y, r, t, k) {
   ctx.save();
   ctx.globalAlpha = k;
@@ -272,7 +332,7 @@ const JOBS = {
       ctx.globalAlpha = 1;
     },
   },
-  pyromancer: {
+  fpwizard: {
     back(ctx, x, y, t, s, k) {
       glow(ctx, x, y - 6 * s, 26 * s, '#ff8a3c', k * (0.35 + 0.1 * Math.sin(t * 6)));
       orbit(ctx, x, y - 26 * s, t, s, { n: 3, rx: 20, ry: 6, draw: (px, py, z, i) => fireball(ctx, px, py, 3.4 * s * z * k, t, i) }, false);
@@ -280,6 +340,59 @@ const JOBS = {
     },
     front(ctx, x, y, t, s, k) {
       orbit(ctx, x, y - 26 * s, t, s, { n: 3, rx: 20, ry: 6, draw: (px, py, z, i) => fireball(ctx, px, py, 3.4 * s * z * k, t, i) }, true);
+      // Venom bubbles drift up between the flames.
+      rising(ctx, x, y, t, s, { n: 6, spread: 12, height: 44, speed: 0.6, color: '#9be86b', size: 1.6, seed: 11 }, k * 0.9);
+      rising(ctx, x, y, t, s, { n: 3, spread: 10, height: 36, speed: 0.5, color: '#b46bff', size: 1.3, seed: 17 }, k * 0.8);
+    },
+  },
+  ilwizard: {
+    back(ctx, x, y, t, s, k) {
+      glow(ctx, x, y - 10 * s, 28 * s, '#8fe3ff', k * (0.32 + 0.08 * Math.sin(t * 4)));
+      // Snow falling around you.
+      for (let i = 0; i < 8; i++) {
+        const u = (t * 0.3 + hash(i + 40)) % 1;
+        snowflake(ctx, x + (hash(i + 3) - 0.5) * 50 * s + Math.sin(t + i) * 4 * s, y - 70 * s + u * 70 * s, 1.6 * s, '#ffffff', k * Math.sin(u * Math.PI), t + i);
+      }
+      orbit(ctx, x, y - 26 * s, t, s, { n: 2, rx: 20, ry: 6, speed: 1.3, draw: (px, py, z) => crystal(ctx, px, py, 4 * s * z, k) }, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      orbit(ctx, x, y - 26 * s, t, s, { n: 2, rx: 20, ry: 6, speed: 1.3, draw: (px, py, z) => crystal(ctx, px, py, 4 * s * z, k) }, true);
+      // Static crackles off your hands now and then.
+      if ((t * 1.7) % 1 < 0.25) zap(ctx, x + 10 * s, y - 24 * s, x + 18 * s, y - 34 * s, t, s, k);
+      if ((t * 1.3 + 0.5) % 1 < 0.2) zap(ctx, x - 10 * s, y - 22 * s, x - 17 * s, y - 10 * s, t + 3, s, k);
+    },
+  },
+  ilarchmage: {
+    back(ctx, x, y, t, s, k) {
+      // Wings of ice, a frozen magic circle, and a blizzard swirling around you.
+      wings(ctx, x, y - 30 * s, t, s * 1.15, k * 0.9, ['#e8fbff', '#bfe6ff', '#8fe3ff', '#ffffff'], 6);
+      glow(ctx, x, y - 20 * s, 40 * s, '#8fe3ff', k * 0.38);
+      magicCircle(ctx, x, y, 34 * s, t * 0.7, '#8fe3ff', k * 0.9, 6);
+      magicCircle(ctx, x, y, 24 * s, -t * 1.1, '#ffe86b', k * 0.6, 5);
+      for (let i = 0; i < 14; i++) {
+        const ang = t * 1.2 + (i / 14) * TAU;
+        const u = (i / 14 + t * 0.2) % 1;
+        if (Math.sin(ang) > 0) continue;
+        snowflake(ctx, x + Math.cos(ang) * 30 * s, y - 10 * s - u * 60 * s, 1.8 * s, '#ffffff', k * Math.sin(u * Math.PI), t * 2 + i);
+      }
+      orbit(ctx, x, y - 28 * s, t, s, { n: 4, rx: 24, ry: 7, speed: 1.1, draw: (px, py, z) => crystal(ctx, px, py, 4.5 * s * z, k) }, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      orbit(ctx, x, y - 28 * s, t, s, { n: 4, rx: 24, ry: 7, speed: 1.1, draw: (px, py, z) => crystal(ctx, px, py, 4.5 * s * z, k) }, true);
+      for (let i = 0; i < 14; i++) {
+        const ang = t * 1.2 + (i / 14) * TAU;
+        const u = (i / 14 + t * 0.2) % 1;
+        if (Math.sin(ang) <= 0) continue;
+        snowflake(ctx, x + Math.cos(ang) * 30 * s, y - 10 * s - u * 60 * s, 1.8 * s, '#ffffff', k * Math.sin(u * Math.PI), t * 2 + i);
+      }
+      // Lightning arcs crawl over you, and every few seconds a bolt strikes beside you.
+      if ((t * 2.1) % 1 < 0.3) zap(ctx, x - 14 * s, y - 40 * s, x + 12 * s, y - 30 * s, t, s, k);
+      const p = (t % 3.2) / 3.2;
+      if (p < 0.08) {
+        const bx = x + (hash(Math.floor(t / 3.2)) > 0.5 ? 26 : -26) * s;
+        zap(ctx, bx, y - 90 * s, bx, y, t, s * 1.6, k * (1 - p / 0.08));
+        glow(ctx, bx, y, 18 * s, '#ffe86b', k * (1 - p / 0.08));
+      }
     },
   },
   cleric: {
@@ -431,7 +544,7 @@ const JOBS = {
       rising(ctx, x, y, t, s, { n: 5, spread: 12, height: 40, speed: 0.7, color: '#c9a6ff', size: 1.1, seed: 5 }, k * 0.8);
     },
   },
-  infernosage: {
+  fparchmage: {
     back(ctx, x, y, t, s, k) {
       // Phoenix wings of flame, a blazing magic circle, and flames licking up its edge.
       wings(ctx, x, y - 30 * s, t, s * 1.15, k * 0.9, ['#ff8a3c', '#ffb35a', '#ffe36b', '#ff6b4a']);
@@ -455,9 +568,11 @@ const JOBS = {
     front(ctx, x, y, t, s, k) {
       orbit(ctx, x, y - 26 * s, t, s, { n: 5, rx: 24, ry: 7, speed: 1.4, draw: (px, py, z, i) => fireball(ctx, px, py, 2.8 * s * z * k, t, i) }, true);
       rising(ctx, x, y, t, s, { n: 14, spread: 24, height: 70, speed: 0.8, color: '#ffb35a', size: 1.4, seed: 9 }, k);
+      rising(ctx, x, y, t, s, { n: 10, spread: 22, height: 60, speed: 0.55, color: '#9be86b', size: 1.8, seed: 21 }, k * 0.9);
+      rising(ctx, x, y, t, s, { n: 5, spread: 18, height: 50, speed: 0.45, color: '#b46bff', size: 1.4, seed: 27 }, k * 0.8);
     },
   },
-  seraph: {
+  bishop: {
     back(ctx, x, y, t, s, k) {
       // Great wings of light, a pillar of light, and a golden holy circle.
       pillar(ctx, x, y, 44 * s, 120 * s, '#fff6c9', k * (0.6 + 0.2 * Math.sin(t * 2)));

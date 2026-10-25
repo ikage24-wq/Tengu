@@ -187,7 +187,7 @@ function crowd(w, count, type = 'starspirit') {
   }
 }
 
-for (const [second, third, ult] of [['cleric', 'seraph', 'judgment'], ['pyromancer', 'infernosage', 'meteor']]) {
+for (const [second, third, ult] of [['cleric', 'bishop', 'judgment'], ['fpwizard', 'fparchmage', 'meteor'], ['ilwizard', 'ilarchmage', 'tempest']]) {
   test(`${third}: the ultimate hits 15 of 20 monsters twice`, () => {
     const w = mageAt50(second, third);
     w.char.skills[ult] = 20;
@@ -200,7 +200,7 @@ for (const [second, third, ult] of [['cleric', 'seraph', 'judgment'], ['pyromanc
 }
 
 test('summons attack nearby monsters on their own', () => {
-  const w = mageAt50('cleric', 'seraph');
+  const w = mageAt50('cleric', 'bishop');
   w.char.skills.guardianangel = 10;
   w.char.hotkeys = { KeyQ: { skill: 'guardianangel' } };
   crowd(w, 3, 'cloudsheep');
@@ -293,7 +293,7 @@ test('the Game Master stays locked without the passphrase, and its tools work on
 test('big skills root you for a short wind-up and never go on cooldown', async () => {
   const { setJob, setLevel, gmCommand } = await import('../src/world/gm.js');
   const w = newWorld();
-  setJob(w.char, 'infernosage');
+  setJob(w.char, 'fparchmage');
   setLevel(w.char, 120);
   w.char.skills.meteor = 1;
   w.char.baseMp = 5000;
@@ -308,4 +308,77 @@ test('big skills root you for a short wind-up and never go on cooldown', async (
   for (let i = 0; i < 60; i++) updateWorld(w, DT, idle);
   assert.equal(w.lockTimer, 0);
   assert.equal(cast(w, 'meteor').ok, true, 'usable again as soon as the lock ends');
+});
+
+test('the mage branches three ways at 30, and each branch has one third job', async () => {
+  const { nextJobs, JOBS } = await import('../src/data/jobs.js');
+  assert.deepEqual(nextJobs('mage', 30).map((j) => j.id).sort(), ['cleric', 'fpwizard', 'ilwizard']);
+  assert.deepEqual(nextJobs('ilwizard', 50).map((j) => j.id), ['ilarchmage']);
+  assert.deepEqual(nextJobs('fpwizard', 50).map((j) => j.id), ['fparchmage']);
+  assert.deepEqual(nextJobs('cleric', 50).map((j) => j.id), ['bishop']);
+  assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
+});
+
+test('ice freezes monsters in place, and they can\'t hurt you while frozen', () => {
+  const w = mageAt50('ilwizard', 'ilarchmage');
+  w.char.skills.icespire = 20;
+  crowd(w, 3, 'cloudsheep');
+  w.body.facing = 1;
+  assert.equal(cast(w, 'icespire').ok, true);
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
+  const m = w.mobs[0];
+  assert.ok(m.frozenUntil > w.now, 'frozen');
+  const x = m.x;
+  m.state = 'walk';
+  for (let i = 0; i < 60; i++) updateWorld(w, DT, idle);
+  assert.equal(m.x, x, "a frozen monster doesn't move");
+});
+
+test('poison keeps damaging monsters after the hit', () => {
+  const w = mageAt50('fpwizard', 'fparchmage');
+  w.char.skills.poisonmist = 20;
+  crowd(w, 2, 'cloudsheep');
+  w.body.facing = 1;
+  assert.equal(cast(w, 'poisonmist').ok, true);
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
+  const m = w.mobs[0];
+  assert.ok(m.poison, 'poisoned');
+  const hp = m.hp;
+  for (let i = 0; i < 60 * 2.2; i++) updateWorld(w, DT, idle);
+  assert.ok(m.hp < hp, 'took poison damage over time');
+});
+
+test('chain lightning leaps through several monsters, one after another', () => {
+  const w = mageAt50('ilwizard', 'ilarchmage');
+  w.char.skills.chainlightning = 20;
+  crowd(w, 8, 'cloudsheep');
+  w.body.facing = 1;
+  const r = cast(w, 'chainlightning');
+  assert.equal(r.targets, 6);
+  const times = w.pending.map((h) => h.at);
+  assert.ok(times.every((t, i) => i === 0 || t > times[i - 1]), 'each hop lands after the last');
+  assert.ok(w.fx.some((f) => f.kind === 'chainbolt' && f.points.length === 7));
+});
+
+test('Blink teleports the mage forward', () => {
+  const w = newWorld();
+  gainExp(w.char, 1e5);
+  advanceJob(w.char, 'mage');
+  w.char.skills.blink = 10;
+  updateWorld(w, DT, idle);
+  w.body.facing = 1;
+  const x = w.body.x;
+  assert.equal(cast(w, 'blink').ok, true);
+  assert.equal(w.body.x, x + 150);
+});
+
+test('old saves move to the renamed jobs and get SP back for removed skills', async () => {
+  const { updateRetiredJobs } = await import('../src/core/save.js');
+  const c = { job: 'infernosage', sp: 0, skills: { meteor: 10, overload: 5, shadowcross: 3, fireball: 20 }, hotkeys: { KeyQ: { skill: 'overload' }, KeyW: { skill: 'meteor' } } };
+  updateRetiredJobs(c);
+  assert.equal(c.job, 'fparchmage');
+  assert.equal(c.sp, 8);
+  assert.deepEqual(c.skills, { meteor: 10, fireball: 20 });
+  assert.equal(c.hotkeys.KeyQ, null);
+  assert.deepEqual(c.hotkeys.KeyW, { skill: 'meteor' });
 });

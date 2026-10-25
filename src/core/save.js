@@ -2,6 +2,8 @@
 
 import { setNextUid } from './items.js';
 import { ITEMS } from '../data/items.js';
+import { RETIRED_JOBS } from '../data/jobs.js';
+import { SKILLS } from '../data/skills.js';
 
 // Slot 0 keeps the original key so saves from before character slots still load.
 export const SLOTS = 8;
@@ -24,6 +26,7 @@ export function loadGame(slot = 0) {
     const char = JSON.parse(raw);
     char.slot = slot;
     dropRetiredItems(char);
+    updateRetiredJobs(char);
     // Keep new item ids from colliding with saved ones.
     const all = [...Object.values(char.equipment).filter(Boolean), ...char.inventory.equip];
     setNextUid(Math.max(0, ...all.map((i) => i.uid)) + 1);
@@ -40,6 +43,18 @@ export function dropRetiredItems(char) {
   for (const [slot, inst] of Object.entries(char.equipment)) if (inst && !ITEMS[inst.id]) char.equipment[slot] = null;
   for (const tab of Object.keys(char.inventory)) char.inventory[tab] = char.inventory[tab].filter((e) => ITEMS[e.id]);
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.item && !ITEMS[b.item]) char.hotkeys[code] = null;
+  return char;
+}
+
+// Jobs that were renamed move to their new job, and skills that were removed give their SP back.
+export function updateRetiredJobs(char) {
+  char.job = RETIRED_JOBS[char.job] ?? char.job;
+  for (const [id, lv] of Object.entries(char.skills ?? {})) {
+    if (SKILLS[id]) continue;
+    char.sp += lv;
+    delete char.skills[id];
+  }
+  for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.skill && !SKILLS[b.skill]) char.hotkeys[code] = null;
   return char;
 }
 

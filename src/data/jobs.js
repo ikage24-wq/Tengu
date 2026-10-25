@@ -1,4 +1,4 @@
-// Jobs: a Novice start, four first jobs at level 10, and two second-job branches each at level 30.
+// Jobs: a Novice start, four first jobs at level 10, second-job branches at level 30, and third jobs at 50.
 // HP/MP growth follows the classic split: warriors tanky, mages MP-heavy, archers and thieves between.
 
 export const FAMILY_STATS = {
@@ -25,8 +25,8 @@ export const JOBS = {
   },
   mage: {
     id: 'mage', name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
-    hp: 16, mp: 22, advanceHp: 150, advanceMp: 350, weapons: ['wand', 'staff'],
-    blurb: 'Casts spells from range with INT. Fragile but strong.',
+    hp: 13, mp: 24, advanceHp: 100, advanceMp: 380, weapons: ['wand', 'staff'],
+    blurb: 'A glass cannon: huge spell damage with INT, but very little HP.',
   },
   archer: {
     id: 'archer', name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
@@ -49,23 +49,36 @@ export const JOBS = {
     hp: 32, mp: 12, advanceHp: 450, advanceMp: 150, weapons: ['spear'],
     blurb: 'Long spears that hit whole crowds. The tankiest path.',
   },
-  pyromancer: {
-    id: 'pyromancer', name: 'Pyromancer', family: 'mage', tier: 2, parent: 'mage', level: 30,
-    hp: 16, mp: 24, advanceHp: 150, advanceMp: 400, weapons: ['wand', 'staff'],
-    blurb: 'Fireballs and blazing fields. Pure damage.',
+  // The mage line is the template for every class: a first job, three second-job branches at
+  // level 30 (two element pairs and a support), and one third job per branch at level 50 that
+  // keeps the branch's ultimate.
+  ilwizard: {
+    id: 'ilwizard', name: 'Stormfrost Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
+    hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],
+    blurb: 'Ice and lightning. Freezes monsters solid, then shatters them with thunder.',
+  },
+  fpwizard: {
+    id: 'fpwizard', name: 'Venomflame Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
+    hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],
+    blurb: 'Fire and poison. Burns everything, and the venom keeps eating them after.',
   },
   cleric: {
     id: 'cleric', name: 'Cleric', family: 'mage', tier: 2, parent: 'mage', level: 30,
-    hp: 18, mp: 24, advanceHp: 200, advanceMp: 400, weapons: ['wand', 'staff'],
-    blurb: 'Holy light that heals you and smites everything nearby.',
+    hp: 18, mp: 24, advanceHp: 220, advanceMp: 400, weapons: ['wand', 'staff'],
+    blurb: 'Holy light that heals you and smites everything nearby. The sturdiest mage.',
   },
-  infernosage: {
-    id: 'infernosage', name: 'Inferno Sage', family: 'mage', tier: 3, parent: 'pyromancer', level: 50,
-    hp: 18, mp: 28, advanceHp: 300, advanceMp: 800, weapons: ['wand', 'staff'],
-    blurb: 'Calls down meteor storms and binds a shadow cross to fight beside you.',
+  ilarchmage: {
+    id: 'ilarchmage', name: 'Stormfrost Archmage', short: 'Archmage', family: 'mage', tier: 3, parent: 'ilwizard', level: 50,
+    hp: 16, mp: 30, advanceHp: 250, advanceMp: 900, weapons: ['wand', 'staff'],
+    blurb: 'Master of the storm. Chains lightning through crowds and buries them in a glacial tempest.',
   },
-  seraph: {
-    id: 'seraph', name: 'Seraph', family: 'mage', tier: 3, parent: 'cleric', level: 50,
+  fparchmage: {
+    id: 'fparchmage', name: 'Venomflame Archmage', short: 'Archmage', family: 'mage', tier: 3, parent: 'fpwizard', level: 50,
+    hp: 16, mp: 30, advanceHp: 250, advanceMp: 900, weapons: ['wand', 'staff'],
+    blurb: 'Master of plague and flame. Raises toxic infernos and calls down meteor storms.',
+  },
+  bishop: {
+    id: 'bishop', name: 'Bishop', family: 'mage', tier: 3, parent: 'cleric', level: 50,
     hp: 20, mp: 28, advanceHp: 400, advanceMp: 800, weapons: ['wand', 'staff'],
     blurb: 'Judges whole crowds with pillars of light, guarded by a summoned angel.',
   },
@@ -98,6 +111,9 @@ export const JOBS = {
     blurb: 'Keeper of Tengu Island. Uses anything, goes anywhere.',
   },
 };
+
+// Jobs renamed or retired since older saves were made, and what they became.
+export const RETIRED_JOBS = { pyromancer: 'fpwizard', infernosage: 'fparchmage', seraph: 'bishop' };
 
 // Jobs a character can advance into right now, given their current job and level.
 export function nextJobs(jobId, level) {

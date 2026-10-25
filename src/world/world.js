@@ -369,8 +369,37 @@ export function updateWorld(world, dt, input) {
     // Endgame weapons add an elemental impact on every hit.
     const element = weaponElement(char);
     if (element) world.fx.push({ kind: 'impact', element, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.4, seed: Math.random() });
+    // Spell shots burst where they land.
+    if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
+    else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
-    if (hitMob(m, h.damage, h.fromX, world.now)) killMob(world, m);
+    if (hitMob(m, h.damage, h.fromX, world.now)) {
+      killMob(world, m);
+      continue;
+    }
+    // Ice freezes monsters in place (bosses shrug it off twice as fast); venom keeps biting.
+    if (h.freeze) {
+      const secs = m.def.boss ? h.freeze / 2 : h.freeze;
+      if (!(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
+      m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
+    }
+    if (h.poison) m.poison = { until: world.now + h.poison.secs, dmg: Math.max(1, Math.round(h.damage * h.poison.pct)), tick: m.poison?.tick ?? 1 };
+  }
+
+  // Poison ticks once a second, in green, and can finish a monster off.
+  for (const m of world.mobs) {
+    if (!m.poison || m.hp <= 0) continue;
+    if (m.poison.until <= world.now) {
+      m.poison = null;
+      continue;
+    }
+    m.poison.tick -= dt;
+    if (m.poison.tick > 0) continue;
+    m.poison.tick = 1;
+    m.hp = Math.max(0, m.hp - m.poison.dmg);
+    world.numbers.push({ x: m.x + 8, y: m.y - m.def.h - 4, text: `${m.poison.dmg}`, color: '#9be86b', t: 0, small: true });
+    world.fx.push({ kind: 'poisonpuff', x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
+    if (m.hp <= 0) killMob(world, m);
   }
 
   // ----- Monsters -----
@@ -383,7 +412,7 @@ export function updateWorld(world, dt, input) {
       const onFloor = world.body.onGround && world.body.surface?.ground;
       if (onFloor && Math.abs(world.body.x - m.x) < m.def.special.range && !world.dead) hurtPlayer(world, m.def.special.damage, m.x);
     }
-    if (m.hp <= 0 || world.dead || world.invuln > 0) continue;
+    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
       hurtPlayer(world, m.def.atk, m.x);

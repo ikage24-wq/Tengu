@@ -380,9 +380,11 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
 // Walkers bounce along with a squash on every landing, everyone breathes while idle, new
 // monsters pop in, hits squash them flat for a moment, and defeated ones shrink away.
 export function drawMonster(ctx, m, x, y, time, now = time) {
+  const frozen = m.frozenUntil > now && m.hp > 0;
   const flying = m.def.fly;
-  const moving = (m.state === 'walk' && m.stagger <= 0) || flying;
-  const t = time + m.uid * 0.37;
+  const moving = !frozen && ((m.state === 'walk' && m.stagger <= 0) || flying);
+  // Frozen monsters stop animating: their clock stands still with the ice.
+  const t = (frozen ? m.phase : time) + m.uid * 0.37;
   const mood = moodOf(m, t, now);
   const fast = mood === 'angry' ? 1.5 : 1;
   const frame = moving ? Math.floor(t * (flying ? 6 : 4) * fast) % 2 : Math.floor(t * 1.2) % 2;
@@ -443,5 +445,107 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
   ctx.restore();
-  if (alpha > 0.5) drawEmote(ctx, m, mood, x, y - hop - s.h * sy, t, now);
+  if (m.poison && m.hp > 0) poisonBubbles(ctx, x, y - hop, s, time + m.uid);
+  if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
+  if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - hop - s.h * sy, t, now);
+}
+
+// A clear block of ice around a frozen monster, with frosty edges, glints, and cracks as it thaws.
+function iceBlock(ctx, x, y, s, left, time) {
+  const w = s.w + 8;
+  const h = s.h + 6;
+  const bx = Math.round(x - w / 2);
+  const by = Math.round(y - h);
+  ctx.save();
+  // Shiver just before it breaks.
+  if (left < 0.4) ctx.translate(Math.sin(time * 70) * 1, 0);
+  ctx.globalAlpha = 0.42;
+  const g = ctx.createLinearGradient(bx, by, bx + w, by + h);
+  g.addColorStop(0, '#e8fbff');
+  g.addColorStop(0.5, '#9fe3ff');
+  g.addColorStop(1, '#6fc4f0');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(bx + 3, by);
+  ctx.lineTo(bx + w - 2, by + 2);
+  ctx.lineTo(bx + w, by + h);
+  ctx.lineTo(bx, by + h);
+  ctx.lineTo(bx - 1, by + 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 0.9;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Shine streaks and a top rim of frost.
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(bx + 4, by + 3, 2, Math.round(h * 0.45));
+  ctx.fillRect(bx + 8, by + 3, 1, Math.round(h * 0.25));
+  ctx.fillRect(bx + 3, by, w - 6, 2);
+  // Little crystals poking out of the top.
+  ctx.fillStyle = '#c9f6ff';
+  for (const [dx, ch] of [[0.25, 6], [0.55, 9], [0.8, 5]]) {
+    const cx = bx + w * dx;
+    ctx.beginPath();
+    ctx.moveTo(cx - 2.5, by + 1);
+    ctx.lineTo(cx, by - ch);
+    ctx.lineTo(cx + 2.5, by + 1);
+    ctx.fill();
+  }
+  // A glint that sweeps across.
+  const k = (time * 0.8) % 1.6;
+  if (k < 1) {
+    ctx.globalAlpha = 0.8 * Math.sin(k * Math.PI);
+    ctx.fillStyle = '#ffffff';
+    const gx = bx + k * w;
+    ctx.beginPath();
+    ctx.moveTo(gx, by + 2);
+    ctx.lineTo(gx + 4, by + 2);
+    ctx.lineTo(gx - 2, by + h - 2);
+    ctx.lineTo(gx - 6, by + h - 2);
+    ctx.fill();
+  }
+  // Cracks spread as the ice is about to give.
+  if (left < 1) {
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(bx + w * 0.5, by + h * 0.2);
+    ctx.lineTo(bx + w * 0.4, by + h * 0.45);
+    ctx.lineTo(bx + w * 0.6, by + h * 0.6);
+    if (left < 0.5) {
+      ctx.moveTo(bx + w * 0.4, by + h * 0.45);
+      ctx.lineTo(bx + w * 0.2, by + h * 0.55);
+      ctx.moveTo(bx + w * 0.6, by + h * 0.6);
+      ctx.lineTo(bx + w * 0.75, by + h * 0.85);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Venom: a sickly green sheen and bubbles that rise and pop off a poisoned monster.
+function poisonBubbles(ctx, x, y, s, time) {
+  ctx.save();
+  for (let i = 0; i < 5; i++) {
+    const u = (time * 0.7 + i / 5) % 1;
+    const bx = x + Math.sin(i * 2.3 + time * 2) * s.w * 0.35;
+    const by = y - s.h * 0.4 - u * s.h * 0.9;
+    const r = (1.2 + (i % 3) * 0.7) * (u > 0.85 ? 1 + (u - 0.85) * 6 : 1);
+    ctx.globalAlpha = u > 0.85 ? (1 - u) * 6 * 0.8 : 0.8;
+    ctx.fillStyle = i % 2 ? '#9be86b' : '#c46bff';
+    ctx.beginPath();
+    ctx.arc(bx, by, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(Math.round(bx - r * 0.4), Math.round(by - r * 0.5), 1, 1);
+  }
+  ctx.globalAlpha = 0.18 + 0.08 * Math.sin(time * 5);
+  const g = ctx.createRadialGradient(x, y - s.h / 2, 1, x, y - s.h / 2, s.w * 0.7);
+  g.addColorStop(0, '#7de04f');
+  g.addColorStop(1, 'rgba(125,224,79,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - s.w, y - s.h * 1.2, s.w * 2, s.h * 1.4);
+  ctx.restore();
 }

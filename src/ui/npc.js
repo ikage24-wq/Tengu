@@ -72,14 +72,16 @@ export function npcWindow(ui, state, world) {
   if (dlg.mode === 'style') return styleWindow(ui, state, world);
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
+  const char = world.char;
   const W = 300;
-  const H = 150;
+  // The job page grows to fit every branch on offer.
+  const jobOptions = dlg.job ? nextJobs(char.job, char.level).filter((j) => !npc.family || j.family === npc.family) : [];
+  const H = Math.max(150, 58 + jobOptions.length * 44);
   if (!windowFrame(ui, win, W, H, `${npc.name} · ${npc.title}`)) {
     state.npc = null;
     return;
   }
   const { ctx } = ui;
-  const char = world.char;
   box(ctx, win.x + 8, win.y + 24, 58, 70, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
   drawHero(ctx, npc.look, npc.gear ?? null, win.x + 37, win.y + 88, { pose: 'idle', time: world.now, seed: 3 });
   const tx = win.x + 74;
@@ -122,7 +124,7 @@ export function npcWindow(ui, state, world) {
   }
 
   if (dlg.job) {
-    const options = nextJobs(char.job, char.level).filter((j) => !npc.family || j.family === npc.family);
+    const options = jobOptions;
     let y = win.y + 34;
     if (!options.length) {
       const next = Object.values(JOBS).filter((j) => j.parent === char.job && (!npc.family || j.family === npc.family));
@@ -130,9 +132,14 @@ export function npcWindow(ui, state, world) {
       const fam = JOBS[char.job].family;
       wrap(ctx, npc.family && char.job !== 'novice' && fam !== npc.family ? `You walk a different path. Seek your own instructor.` : msg, tx, y, tw, { size: 9 });
     }
+    // One card per branch: the name, its blurb, and a Choose button.
     for (const j of options) {
-      y = wrap(ctx, `${j.name}: ${j.blurb}`, tx, y, tw - 70, { size: 8 }) + 2;
-      if (button(ui, tx + tw - 66, y - 16, 64, 15, `Be a ${j.name}`, { primary: true, size: 8 })) {
+      box(ctx, tx - 2, y - 8, tw + 4, 40, { fill: COLORS.cell, edge: null, r: 6 });
+      text(ctx, j.name, tx + 4, y + 2, { size: 9, bold: true, color: COLORS.accent });
+      wrap(ctx, j.blurb, tx + 4, y + 13, tw - 62, { size: 7, lineHeight: 9 });
+      const picked = button(ui, tx + tw - 52, y - 1, 52, 16, 'Choose', { primary: true, size: 8 });
+      y += 44;
+      if (picked) {
         advanceJob(char, j.id);
         world.log(`You are now a ${j.name}! Spend your new SP in the Skills window (K).`, '#ffe36b');
         world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
@@ -140,7 +147,6 @@ export function npcWindow(ui, state, world) {
         win.open = false;
         return;
       }
-      y += 4;
     }
     if (button(ui, tx + tw - 70, win.y + H - 22, 70, 15, 'Back')) dlg.job = false;
     return;

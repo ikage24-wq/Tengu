@@ -4,11 +4,14 @@
 //   attack  - weapon damage (pct is % of a basic hit)
 //   magic   - spell damage (power is % of magic attack)
 //   heal    - restores HP and smites monsters in range with holy damage
+//   blink   - teleports you `distance` forward
 //   buff    - timed bonuses; `buff` keys are added to the player's stats while active
 //   passive - always-on bonuses once learned
 //
 // Range: `w`/`h` is the hit box in front of the player. `projectile` skills hit the nearest
-// targets within range and draw a flying shot.
+// targets within range and draw a flying shot. `freeze` (seconds) stops monsters it hits;
+// `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
+// `school` (arcane, ice, lightning, fire, poison, holy) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -58,19 +61,24 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.02, 0.2, lv, m), restRegen: lerp(2, 20, lv, m) } }),
   }),
 
-  // ---------- Mage ----------
+  // ---------- Mage (glass cannon) ----------
   magicbolt: skill({
-    id: 'magicbolt', name: 'Magic Bolt', job: 'mage', type: 'magic', fx: 'bolt',
-    desc: 'Fire a bolt of magic at the nearest monster.',
-    at: (lv, m) => ({ mp: lerp(6, 14, lv, m), power: lerp(150, 280, lv, m), hits: 1, targets: 1, range: { w: 260, h: 60 }, projectile: true }),
+    id: 'magicbolt', name: 'Magic Bolt', job: 'mage', type: 'magic', fx: 'bolt', school: 'arcane',
+    desc: 'Fire a spinning bolt of raw magic at the nearest monster.',
+    at: (lv, m) => ({ mp: lerp(6, 14, lv, m), power: lerp(170, 310, lv, m), hits: 1, targets: 1, range: { w: 270, h: 60 }, projectile: true }),
   }),
   sparkburst: skill({
-    id: 'sparkburst', name: 'Spark Burst', job: 'mage', type: 'magic', fx: 'burst',
-    desc: 'A crackling burst that hits a group in front of you.',
-    at: (lv, m) => ({ mp: lerp(12, 28, lv, m), power: lerp(80, 155, lv, m), hits: 1, targets: lerp(4, 6, lv, m), range: { w: 190, h: 90 } }),
+    id: 'sparkburst', name: 'Arcane Burst', job: 'mage', type: 'magic', fx: 'burst', school: 'arcane',
+    desc: 'Detonate a ring of runes that hits a group in front of you.',
+    at: (lv, m) => ({ mp: lerp(12, 28, lv, m), power: lerp(95, 175, lv, m), hits: 1, targets: lerp(4, 6, lv, m), range: { w: 190, h: 90 } }),
+  }),
+  blink: skill({
+    id: 'blink', name: 'Blink', job: 'mage', type: 'blink', fx: 'blink', maxLevel: 10, school: 'arcane',
+    desc: 'Vanish in a flash and reappear a short way ahead. Monsters lose track of you for a moment.',
+    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: lerp(80, 150, lv, m) }),
   }),
   manashield: skill({
-    id: 'manashield', name: 'Mana Shield', job: 'mage', type: 'buff', fx: 'shield',
+    id: 'manashield', name: 'Mana Shield', job: 'mage', type: 'buff', fx: 'shield', school: 'arcane',
     desc: 'Part of the damage you take comes out of MP instead.',
     at: (lv, m) => ({ mp: lerp(10, 25, lv, m), duration: lerp(60, 180, lv, m), buff: { manaShield: lerpf(0.3, 0.8, lv, m) } }),
   }),
@@ -172,71 +180,132 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 26, lv, m), pct: lerp(250, 430, lv, m), hits: 1, targets: 1, range: { w: 120, h: 60 } }),
   }),
 
-  // ---------- Pyromancer ----------
-  firemastery: skill({
-    id: 'firemastery', name: 'Ember Mastery', job: 'pyromancer', type: 'passive', fx: null,
+  // ---------- Stormfrost Wizard (ice & lightning) ----------
+  ilmastery: skill({
+    id: 'ilmastery', name: 'Stormfrost Mastery', job: 'ilwizard', type: 'passive', fx: null,
     desc: 'Steadier spells and more magic attack.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.6, lv, m), matk: lerp(2, 20, lv, m) } }),
   }),
+  coldbeam: skill({
+    id: 'coldbeam', name: 'Cold Beam', job: 'ilwizard', type: 'magic', fx: 'icebeam', school: 'ice',
+    desc: 'Launch a spear of ice that freezes the monster solid. Frozen monsters can\'t move or hurt you.',
+    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(190, 330, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true, freeze: lerpf(1.5, 3, lv, m) }),
+  }),
+  thunderbolt: skill({
+    id: 'thunderbolt', name: 'Thunder Bolt', job: 'ilwizard', type: 'magic', fx: 'thunder', school: 'lightning', lock: 0.5,
+    desc: 'Call jagged lightning down on every monster in front of you.',
+    at: (lv, m) => ({ mp: lerp(18, 36, lv, m), power: lerp(130, 250, lv, m), hits: 1, targets: 6, range: { w: 260, h: 120 }, delay: 0.15 }),
+  }),
+  stormfocus: skill({
+    id: 'stormfocus', name: 'Storm Focus', job: 'ilwizard', type: 'buff', fx: 'buff', icon: 'storm', school: 'lightning',
+    desc: 'Charge yourself with static: more magic attack and faster casting.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { matk: lerp(4, 22, lv, m), attackSpeed: lerpf(0.05, 0.2, lv, m) } }),
+  }),
+
+  // ---------- Venomflame Wizard (fire & poison) ----------
+  firemastery: skill({
+    id: 'firemastery', name: 'Venomflame Mastery', job: 'fpwizard', type: 'passive', fx: null,
+    desc: 'Steadier spells and more magic attack.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.6, lv, m), matk: lerp(2, 20, lv, m) } }),
+  }),
+  fireball: skill({
+    id: 'fireball', name: 'Fireball', job: 'fpwizard', type: 'magic', fx: 'fire', school: 'fire',
+    desc: 'Hurl a roaring fireball that explodes on the nearest monster.',
+    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(210, 370, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
+  }),
+  poisonmist: skill({
+    id: 'poisonmist', name: 'Poison Mist', job: 'fpwizard', type: 'magic', fx: 'mist', school: 'poison', lock: 0.5,
+    desc: 'Exhale a choking green mist. Everything caught in it is poisoned and keeps taking damage.',
+    at: (lv, m) => ({
+      mp: lerp(18, 36, lv, m), power: lerp(60, 120, lv, m), hits: 1, targets: 6, range: { w: 240, h: 110 }, delay: 0.2,
+      poison: { pct: lerpf(0.25, 0.5, lv, m), secs: lerp(4, 8, lv, m) },
+    }),
+  }),
   meditate: skill({
-    id: 'meditate', name: 'Meditate', job: 'pyromancer', type: 'buff', fx: 'buff',
+    id: 'meditate', name: 'Meditate', job: 'fpwizard', type: 'buff', fx: 'buff', school: 'fire',
     desc: 'Raises magic attack for a while.',
     at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { matk: lerp(5, 30, lv, m) } }),
   }),
-  fireball: skill({
-    id: 'fireball', name: 'Fireball', job: 'pyromancer', type: 'magic', fx: 'fire',
-    desc: 'Hurl a fireball at the nearest monster.',
-    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(200, 360, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
-  }),
-  blaze: skill({
-    id: 'blaze', name: 'Blaze', job: 'pyromancer', type: 'magic', fx: 'blaze', lock: 0.6,
-    desc: 'A wall of fire that hits everything in front of you.',
-    at: (lv, m) => ({ mp: lerp(20, 40, lv, m), power: lerp(120, 240, lv, m), hits: 1, targets: 6, range: { w: 260, h: 120 } }),
-  }),
 
-  // ---------- Cleric ----------
+  // ---------- Cleric (holy) ----------
   holymastery: skill({
     id: 'holymastery', name: 'Holy Mastery', job: 'cleric', type: 'passive', fx: null,
     desc: 'Steadier spells and more magic attack.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.6, lv, m), matk: lerp(2, 16, lv, m) } }),
   }),
   bless: skill({
-    id: 'bless', name: 'Bless', job: 'cleric', type: 'buff', fx: 'buff',
+    id: 'bless', name: 'Bless', job: 'cleric', type: 'buff', fx: 'buff', school: 'holy',
     desc: 'Raises defense, accuracy, and avoid.',
     at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { wdef: lerp(5, 30, lv, m), acc: lerp(5, 25, lv, m), eva: lerp(5, 25, lv, m) } }),
   }),
   heal: skill({
-    id: 'heal', name: 'Heal', job: 'cleric', type: 'heal', fx: 'heal', lock: 0.5,
+    id: 'heal', name: 'Heal', job: 'cleric', type: 'heal', fx: 'heal', school: 'holy', lock: 0.5,
     desc: 'Restore HP and burn nearby monsters with holy light.',
     at: (lv, m) => ({ mp: lerp(16, 34, lv, m), healPct: lerpf(0.15, 0.5, lv, m), power: lerp(70, 180, lv, m), hits: 1, targets: 5, range: { w: 220, h: 120, around: true } }),
   }),
   holybolt: skill({
-    id: 'holybolt', name: 'Holy Bolt', job: 'cleric', type: 'magic', fx: 'holy',
+    id: 'holybolt', name: 'Holy Bolt', job: 'cleric', type: 'magic', fx: 'holy', school: 'holy',
     desc: 'A spear of light at the nearest monster.',
     at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(210, 370, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
   }),
 
-  // ---------- Inferno Sage (third job) ----------
+  // ---------- Stormfrost Archmage (third job) ----------
+  ilarchmastery: skill({
+    id: 'ilarchmastery', name: 'Archmage Mastery', job: 'ilarchmage', type: 'passive', fx: null,
+    desc: 'Steadier, sharper spells: more mastery, magic attack, and critical damage.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 40, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
+  }),
+  chainlightning: skill({
+    id: 'chainlightning', name: 'Chain Lightning', job: 'ilarchmage', type: 'magic', fx: 'chain', school: 'lightning', lock: 0.55,
+    desc: 'A bolt of lightning that leaps from monster to monster, striking up to six.',
+    at: (lv, m) => ({ mp: lerp(24, 48, lv, m), power: lerp(230, 400, lv, m), hits: 1, targets: 6, range: { w: 380, h: 160 }, delay: 0.05, chain: true }),
+  }),
+  icespire: skill({
+    id: 'icespire', name: 'Glacier Spikes', job: 'ilarchmage', type: 'magic', fx: 'icespire', school: 'ice', lock: 0.6,
+    desc: 'Giant spikes of ice burst out of the ground, impaling and freezing a whole crowd.',
+    at: (lv, m) => ({ mp: lerp(28, 52, lv, m), power: lerp(200, 360, lv, m), hits: 1, targets: 8, range: { w: 300, h: 120 }, delay: 0.25, freeze: lerpf(2, 4, lv, m) }),
+  }),
+  frostsprite: skill({
+    id: 'frostsprite', name: 'Frost Sprite', job: 'ilarchmage', type: 'buff', fx: 'buff', icon: 'sprite', school: 'ice', lock: 0.8,
+    desc: 'Summon a little ice spirit that floats beside you and pelts monsters with freezing shards.',
+    at: (lv, m) => ({
+      mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
+      summon: { art: 'sprite', every: 2.2, power: lerp(150, 290, lv, m), targets: 5, range: { w: 420, h: 220, around: true }, fx: 'icebeam', freeze: 1 },
+    }),
+  }),
+  tempest: skill({
+    id: 'tempest', name: 'Glacial Tempest', job: 'ilarchmage', type: 'magic', fx: 'tempest', school: 'ice', lock: 1.1,
+    desc: 'The sky freezes over: a blizzard of ice lances and lightning crashes onto up to 15 monsters, twice, freezing them all.',
+    at: (lv, m) => ({
+      mp: lerp(70, 120, lv, m), power: lerp(280, 510, lv, m), hits: 2, targets: 15,
+      range: { w: 620, h: 320, around: true }, critRate: lerpf(0.05, 0.15, lv, m), delay: 0.4, freeze: 3,
+    }),
+  }),
+
+  // ---------- Venomflame Archmage (third job) ----------
   infernomastery: skill({
-    id: 'infernomastery', name: 'Inferno Mastery', job: 'infernosage', type: 'passive', fx: null,
+    id: 'infernomastery', name: 'Inferno Mastery', job: 'fparchmage', type: 'passive', fx: null,
     desc: 'Steadier, fiercer spells: more mastery, magic attack, and critical damage.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 40, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
   }),
-  overload: skill({
-    id: 'overload', name: 'Arcane Overload', job: 'infernosage', type: 'buff', fx: 'buff', lock: 0.6,
-    desc: 'Pour raw mana into every spell: big magic attack and critical rate.',
-    at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { matk: lerp(15, 50, lv, m), critRate: lerpf(0.05, 0.2, lv, m) } }),
+  toxicblaze: skill({
+    id: 'toxicblaze', name: 'Plague Inferno', job: 'fparchmage', type: 'magic', fx: 'toxicblaze', school: 'poison', lock: 0.6,
+    desc: 'A roaring wall of venom-green fire sweeps forward, burning and poisoning everything in its path.',
+    at: (lv, m) => ({
+      mp: lerp(28, 52, lv, m), power: lerp(190, 340, lv, m), hits: 1, targets: 8, range: { w: 300, h: 120 }, delay: 0.2,
+      poison: { pct: lerpf(0.3, 0.6, lv, m), secs: lerp(5, 9, lv, m) },
+    }),
   }),
-  shadowcross: skill({
-    id: 'shadowcross', name: 'Shadow Cross', job: 'infernosage', type: 'buff', fx: 'buff', lock: 0.8,
-    desc: 'Summon a dark cross that floats beside you and blasts nearby monsters on its own.',
+  salamander: skill({
+    id: 'salamander', name: 'Venom Salamander', job: 'fparchmage', type: 'buff', fx: 'buff', icon: 'salamander', school: 'fire', lock: 0.8,
+    desc: 'Summon a fiery salamander that rides beside you and spits poisoned fire at nearby monsters.',
     at: (lv, m) => ({
       mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
-      summon: { art: 'cross', every: 2.4, power: lerp(160, 300, lv, m), targets: 6, range: { w: 420, h: 220, around: true }, fx: 'darkbolt' },
+      summon: { art: 'salamander', every: 2.4, power: lerp(160, 300, lv, m), targets: 5, range: { w: 420, h: 220, around: true }, fx: 'venomfire', poison: { pct: 0.3, secs: 4 } },
     }),
   }),
   meteor: skill({
-    id: 'meteor', name: 'Meteor Shower', job: 'infernosage', type: 'magic', fx: 'meteor', lock: 1.1,
+    id: 'meteor', name: 'Meteor Shower', job: 'fparchmage', type: 'magic', fx: 'meteor', school: 'fire', lock: 1.1,
     desc: 'Rain blazing meteors on up to 15 monsters across a huge area, twice.',
     at: (lv, m) => ({
       mp: lerp(70, 120, lv, m), power: lerp(290, 520, lv, m), hits: 2, targets: 15,
@@ -244,19 +313,24 @@ export const SKILLS = {
     }),
   }),
 
-  // ---------- Seraph (third job) ----------
+  // ---------- Bishop (third job) ----------
   seraphmastery: skill({
-    id: 'seraphmastery', name: 'Seraph Mastery', job: 'seraph', type: 'passive', fx: null,
+    id: 'seraphmastery', name: 'Divine Mastery', job: 'bishop', type: 'passive', fx: null,
     desc: 'Steadier, brighter spells: more mastery, magic attack, and critical rate.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 36, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
   }),
+  shiningray: skill({
+    id: 'shiningray', name: 'Shining Ray', job: 'bishop', type: 'magic', fx: 'shiningray', school: 'holy', lock: 0.55,
+    desc: 'A blinding cross of light bursts out around you, striking every monster near it.',
+    at: (lv, m) => ({ mp: lerp(26, 50, lv, m), power: lerp(210, 370, lv, m), hits: 2, targets: 8, range: { w: 300, h: 160, around: true }, delay: 0.2 }),
+  }),
   sanctuary: skill({
-    id: 'sanctuary', name: 'Sanctuary', job: 'seraph', type: 'buff', fx: 'shield', lock: 0.6,
+    id: 'sanctuary', name: 'Sanctuary', job: 'bishop', type: 'buff', fx: 'shield', school: 'holy', lock: 0.6,
     desc: 'A halo of light: huge defense, avoid, and max HP.',
     at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { wdef: lerp(30, 120, lv, m), eva: lerp(10, 40, lv, m), maxHpPct: lerpf(0.1, 0.4, lv, m) } }),
   }),
   guardianangel: skill({
-    id: 'guardianangel', name: 'Guardian Angel', job: 'seraph', type: 'buff', fx: 'buff', lock: 0.8,
+    id: 'guardianangel', name: 'Guardian Angel', job: 'bishop', type: 'buff', fx: 'buff', icon: 'angel', school: 'holy', lock: 0.8,
     desc: 'Summon an angel that floats beside you and strikes nearby monsters with light.',
     at: (lv, m) => ({
       mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
@@ -264,7 +338,7 @@ export const SKILLS = {
     }),
   }),
   judgment: skill({
-    id: 'judgment', name: 'Radiant Judgment', job: 'seraph', type: 'magic', fx: 'judgment', lock: 1.1,
+    id: 'judgment', name: 'Radiant Judgment', job: 'bishop', type: 'magic', fx: 'judgment', school: 'holy', lock: 1.1,
     desc: 'Pillars of holy light strike up to 15 monsters across a huge area, twice. Strong criticals.',
     at: (lv, m) => ({
       mp: lerp(70, 120, lv, m), power: lerp(280, 500, lv, m), hits: 2, targets: 15,

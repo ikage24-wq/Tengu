@@ -35,7 +35,7 @@ export const NPCS = {
   },
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
-    showJob: 'seraph',
+    showJob: 'bishop',
     look: { hairStyle: 'long', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
     gear: { weapon: { id: 'staff_5', rarity: 3 } },
     greeting: 'Moonleaf Grove welcomes you. Magic is patience and a lot of MP. Shall we begin?',

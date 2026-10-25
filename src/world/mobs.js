@@ -99,8 +99,13 @@ export function updateMob(m, player, dt, now) {
     return null;
   }
   m.flash = Math.max(0, m.flash - dt);
-  m.phase += dt;
   m.age += dt;
+  // Frozen solid: no moving, no animating, no winding up, until the ice cracks.
+  if (m.frozenUntil > now) {
+    m.stagger = 0;
+    return null;
+  }
+  m.phase += dt;
 
   let event = null;
   if (m.special) {
