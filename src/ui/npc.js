@@ -10,7 +10,7 @@ import { addItem, removeItem } from '../core/inventory.js';
 import { advanceJob } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
-import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES } from '../render/hero.js';
+import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, tooltip, wrap } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
@@ -27,7 +27,8 @@ export const LOOK_OPTIONS = [
   { key: 'face', label: 'Face', options: FACE_STYLES },
   { key: 'eyeColor', label: 'Eye color', options: EYE_COLORS, color: true },
   { key: 'skinTone', label: 'Skin', options: SKIN_TONES, color: true },
-  { key: 'outfitColor', label: 'Outfit', options: OUTFITS, color: true },
+  { key: 'outfit', label: 'Outfit', options: OUTFIT_STYLES },
+  { key: 'outfitColor', label: 'Outfit color', options: OUTFITS, color: true },
 ];
 
 export function cycleLook(look, key, step) {
@@ -239,15 +240,15 @@ function styleWindow(ui, state, world) {
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const W = 280;
-  const H = 168;
+  const H = 184;
   if (!windowFrame(ui, win, W, H, `${npc.name}'s Salon`)) {
     state.npc = null;
     return;
   }
   const { ctx } = ui;
   const char = world.char;
-  box(ctx, win.x + 8, win.y + 24, 90, 136, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, char.equipment, win.x + 53, win.y + 150, { pose: 'idle', time: world.now, scale: 2 });
+  box(ctx, win.x + 8, win.y + 24, 90, 152, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
+  drawHero(ctx, dlg.look, char.equipment, win.x + 53, win.y + 160, { pose: 'idle', time: world.now, scale: 2 });
   dlg.look = lookRows(ui, dlg.look, win.x + 104, win.y + 24, 168);
   const cost = npc.styleCost;
   const by = win.y + H - 22;

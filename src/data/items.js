@@ -137,6 +137,18 @@ const UNIQUE_ARMOR = [
   { id: 'angel_wings', name: 'Angel Wings', slot: 'cape', design: 'angel', level: 35, color: '#ffffff', bonus: { speed: 6, mdef: 20, hp: 80 } },
   { id: 'star_cape', name: 'Galaxy Cape', slot: 'cape', design: 'starcape', level: 40, color: '#5d6fd6', bonus: { str: 3, dex: 3, int: 3, luk: 3 } },
   { id: 'crystal_crown', name: 'Crystal Crown', slot: 'hat', design: 'crown', level: 45, color: '#8fe3ff', bonus: { hp: 120, mp: 120, matk: 6 } },
+  // Everyday clothing.
+  { id: 'denim_jacket', name: 'Denim Jacket', slot: 'top', design: 'jacket', level: 6, color: '#7f9fd8', bonus: { dex: 1 } },
+  { id: 'cozy_sweater', name: 'Cozy Sweater', slot: 'top', design: 'sweater', level: 6, color: '#ffcf9e', bonus: { hp: 20 } },
+  { id: 'overalls', name: 'Comfy Overalls', slot: 'top', design: 'overalls', level: 7, color: '#8fb4ff', bonus: { str: 1, hp: 15 } },
+  { id: 'sundress', name: 'Sundress', slot: 'top', design: 'dress', level: 9, color: '#ffe36b', bonus: { luk: 2 } },
+  { id: 'school_blazer', name: 'School Blazer', slot: 'top', design: 'blazer', level: 10, color: '#4f5d9a', bonus: { int: 2 } },
+  { id: 'puffer_jacket', name: 'Puffer Jacket', slot: 'top', design: 'puffer', level: 12, color: '#ff9b7a', bonus: { hp: 40, mdef: 6 } },
+  { id: 'maid_dress', name: 'Maid Dress', slot: 'top', design: 'maid', level: 14, color: '#3b3650', bonus: { dex: 2, luk: 2 } },
+  { id: 'pleated_skirt', name: 'Pleated Skirt', slot: 'bottom', design: 'skirt', level: 6, color: '#ff9ec0', bonus: { speed: 2 } },
+  { id: 'blue_jeans', name: 'Blue Jeans', slot: 'bottom', design: 'jeans', level: 6, color: '#6f8fcf', bonus: { hp: 15 } },
+  { id: 'cargo_pants', name: 'Cargo Pants', slot: 'bottom', design: 'cargo', level: 10, color: '#9aa07a', bonus: { str: 1, dex: 1 } },
+  { id: 'long_skirt', name: 'Long Skirt', slot: 'bottom', design: 'longskirt', level: 12, color: '#b9a7ff', bonus: { mp: 30, mdef: 6 } },
 ];
 
 for (const u of UNIQUE_ARMOR) {

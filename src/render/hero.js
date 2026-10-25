@@ -54,8 +54,26 @@ const move = (shapes, dx, dy) => shapes.map((s) => (s ? { ...s, x: s.x + dx + OX
 
 // ---------- Gear lookup ----------
 
+// Outfits picked in the creator: what a character wears where no top or bottom is equipped.
+// Bottoms take a darker shade of the outfit color unless they have their own (denim, khaki).
+export const OUTFITS = {
+  casual: { top: 'tee', bottom: 'pants' },
+  sporty: { top: 'stripes', bottom: 'shorts' },
+  hoodie: { top: 'hoodie', bottom: 'jeans', bottomColor: '#6f8fcf' },
+  jacket: { top: 'jacket', bottom: 'cargo', bottomColor: '#9aa07a' },
+  school: { top: 'blazer', bottom: 'skirt' },
+  sailor: { top: 'sailor', bottom: 'skirt', bottomColor: '#5b6fc4' },
+  sweater: { top: 'sweater', bottom: 'longskirt' },
+  overalls: { top: 'overalls', bottom: 'pants' },
+  sundress: { top: 'dress', bottom: 'skirt' },
+  maid: { top: 'maid', bottom: 'skirt' },
+  puffer: { top: 'puffer', bottom: 'jeans', bottomColor: '#6f8fcf' },
+};
+export const OUTFIT_STYLES = Object.keys(OUTFITS);
+
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
+  const preset = OUTFITS[look.outfit] ?? OUTFITS.casual;
   const piece = (slot, design, color) => {
     const inst = gear?.[slot];
     if (!inst) return design ? { design, color } : null;
@@ -64,8 +82,8 @@ function resolveGear(look, gear) {
   };
   const w = gear?.weapon ? ITEMS[gear.weapon.id] : null;
   return {
-    top: piece('top', 'tee', outfit),
-    bottom: piece('bottom', 'pants', shade(outfit, -22)),
+    top: piece('top', preset.top, outfit),
+    bottom: piece('bottom', preset.bottom, preset.bottomColor ?? shade(outfit, -22)),
     shoes: piece('shoes', 'sneakers', '#fffaf0'),
     hat: piece('hat', null),
     cape: piece('cape', null),

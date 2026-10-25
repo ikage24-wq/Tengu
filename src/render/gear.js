@@ -33,6 +33,12 @@ const robePts = () => {
   return [...front.slice(0, -1), [21.6, 38], [22.2, 44.5], [8.8, 44.5], [9.6, 38], ...back.slice(1)];
 };
 
+// Dresses follow the figure to the waist, then flare out into a wide, swingy skirt.
+const dressPts = () => {
+  const { front, back } = FIGURE;
+  return [...front.slice(0, -1), [21.8, 35], [24, 40], [25.6, 44.5], [5.6, 44.5], [7.2, 40], [9.4, 35], ...back.slice(1)];
+};
+
 // Where a polygon's outline crosses row y: the leftmost and rightmost x.
 function rowSpan(pts, y) {
   const xs = [];
@@ -67,8 +73,12 @@ function side(pts, x, keep, c) {
 
 // ---------- Tops (torso part) ----------
 
-// The neckline sits toward the front, since the body is turned to face its direction.
-const collar = (c) => T([[14.4, 26.2], [19.8, 26.2], [17.4, 29.2]], c);
+// The body faces the screen, so necklines and fronts are centered on x = MID.
+const MID = 15.6;
+const collar = (c) => T([[MID - 2.6, 26.2], [MID + 2.6, 26.2], [MID, 29.2]], c);
+// A small two-loop bow centered at (x, y).
+const tieBow = (x, y, c) => [T([[x, y], [x - 2, y - 1.2], [x - 2, y + 1.2]], c), T([[x, y], [x + 2, y - 1.2], [x + 2, y + 1.2]], c), F(E(x, y, 0.7, 0.7, shade(c, -20)))];
+const button = (x, y, c) => F(E(x, y, 0.45, 0.45, c));
 
 export function topShapes(design, c) {
   const d = shade(c, -16);
@@ -78,13 +88,31 @@ export function topShapes(design, c) {
   const parts = (() => {
     switch (design) {
       case 'stripes': return [T(torso, c), band(torso, 29.2, 30.3, d), band(torso, 31.6, 32.6, d), band(torso, 34, 35.1, d), collar(l)];
-      case 'vest': return [T(torso, '#fff6ec'), side(torso, 15.2, -1, c), side(torso, 18.4, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(16.8, 33.7, 0.9, 0.8, GOLD))];
-      case 'plate': return [T(torso, SILVER), T([[13.8, 28], [19.8, 28], [19, 32.5], [16.8, 34], [14.6, 32.5]], c), F(E(15.6, 29.6, 0.8, 0.8, '#ffffff')), band(torso, 33.6, 35.4, shade(SILVER, -18)), E(10.8, 27.6, 2.4, 2, l), E(20.2, 27.6, 2.4, 2, l)];
+      case 'vest': return [T(torso, '#fff6ec'), side(torso, MID - 1.6, -1, c), side(torso, MID + 1.6, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(MID, 33.7, 0.9, 0.8, GOLD))];
+      case 'plate': return [T(torso, SILVER), T([[MID - 3, 28], [MID + 3, 28], [MID + 2.2, 32.5], [MID, 34], [MID - 2.2, 32.5]], c), F(E(MID - 1, 29.6, 0.8, 0.8, '#ffffff')), band(torso, 33.6, 35.4, shade(SILVER, -18)), E(10.8, 27.6, 2.4, 2, l), E(20.4, 27.6, 2.4, 2, l)];
       case 'starrobe': return [T(robe, c), band(robe, 26.2, 27.2, GOLD), F(R(15.2, 29.4, 0.9, 3, GOLD)), F(R(14.2, 30.4, 2.9, 0.9, GOLD)), band(robe, 43.4, 44.5, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD))];
       case 'celestial': return [T(robe, c), band(robe, 33, 44.5, l), band(robe, 26.2, 27.2, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), band(robe, 43.4, 44.5, GOLD)];
-      case 'kimono': return [T(robe, c), T([[13.6, 26.4], [16.2, 26.4], [19, 32]], '#ffffff'), T([[15.2, 26.4], [17.2, 26.4], [19, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(18, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff'))];
-      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[15.4, 29.8], [18.2, 29.8], [17.6, 32.6], [16.8, 31.6], [16, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c)];
-      case 'hoodie': return [T(torso, c), T([[11.4, 25.8], [19.6, 25.8], [18.6, 28.2], [12.4, 28.2]], d), R(12.6, 31.6, 6, 2.8, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.2, '#ffffff'))];
+      case 'kimono': return [T(robe, c), T([[MID - 2.6, 26.4], [MID + 2.6, 26.4], [MID, 31.6]], '#ffffff'), T([[MID - 1.2, 26.4], [MID + 2.6, 26.4], [MID + 0.4, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(MID, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff'))];
+      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[MID - 1.4, 29.8], [MID + 1.4, 29.8], [MID + 0.8, 32.6], [MID, 31.6], [MID - 0.8, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c)];
+      case 'hoodie': return [T(torso, c), T([[11.4, 25.8], [19.6, 25.8], [18.6, 28.2], [12.4, 28.2]], d), R(12.6, 31.6, 6, 2.8, d), F(R(MID - 1.9, 27.6, 0.6, 3.2, '#ffffff')), F(R(MID + 1.3, 27.6, 0.6, 3.2, '#ffffff'))];
+      // Clothing: everyday outfits.
+      case 'jacket': return [T(torso, c), T([[MID - 2.4, 26.2], [MID + 2.4, 26.2], [MID + 1.8, 35.8], [MID - 1.8, 35.8]], '#ffffff'),
+        T([[MID - 2.6, 26.2], [MID - 4.2, 26.6], [MID - 2.2, 31]], d), T([[MID + 2.6, 26.2], [MID + 4.2, 26.6], [MID + 2.2, 31]], d), band(torso, 34.6, 35.8, d)];
+      case 'sweater': return [T(torso, c), R(MID - 3.2, 25.4, 6.4, 2, l), band(torso, 34.2, 35.8, d), F(R(MID - 2.4, 28.4, 0.5, 5.4, l)), F(R(MID + 1.9, 28.4, 0.5, 5.4, l)), F(R(MID - 0.25, 28.4, 0.5, 5.4, d))];
+      case 'overalls': return [T(torso, '#ffffff'), collar('#f1ecf7'), T([[MID - 3.6, 29.6], [MID + 3.6, 29.6], [MID + 4.2, 35.8], [MID - 4.2, 35.8]], c),
+        R(MID - 4, 26.2, 1.2, 3.6, c), R(MID + 2.8, 26.2, 1.2, 3.6, c), button(MID - 3.2, 30.2, GOLD), button(MID + 3.2, 30.2, GOLD), F(R(MID - 1.6, 31.4, 3.2, 2, d))];
+      case 'dress': {
+        const dress = dressPts();
+        return [T(dress, c), collar('#ffffff'), band(dress, 33, 34.4, l), ...tieBow(MID, 33.7, l), band(dress, 43, 44.4, '#ffffff')];
+      }
+      case 'maid': {
+        const dress = dressPts();
+        return [T(dress, c), T([[MID - 3.4, 30], [MID + 3.4, 30], [MID + 5.6, 43.6], [MID - 5.6, 43.6]], '#ffffff'),
+        band(dress, 43, 44.4, '#ffffff'), collar('#ffffff'), band(dress, 32.6, 33.6, '#ffffff'), ...tieBow(MID, 27.2, '#ff6b8a'), T([[MID - 3.4, 30], [MID - 2.2, 28.6], [MID + 2.2, 28.6], [MID + 3.4, 30]], '#ffffff')];
+      }
+      case 'blazer': return [T(torso, c), T([[MID - 2.4, 26.2], [MID + 2.4, 26.2], [MID, 31.6]], '#ffffff'), F(T([[MID - 0.6, 27], [MID + 0.6, 27], [MID + 0.9, 31], [MID, 32], [MID - 0.9, 31]], '#e5485f')),
+        T([[MID - 2.6, 26.2], [MID - 4, 27], [MID - 1.4, 32.4]], d), T([[MID + 2.6, 26.2], [MID + 4, 27], [MID + 1.4, 32.4]], d), button(MID, 33.4, GOLD), F(R(MID - 4.8, 31, 2, 0.5, d))];
+      case 'puffer': return [T(torso, c), band(torso, 28.4, 28.9, d), band(torso, 31, 31.5, d), band(torso, 33.6, 34.1, d), R(MID - 3.4, 25.2, 6.8, 2.2, l), F(R(MID - 0.25, 27.4, 0.5, 8.4, d))];
       default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d)];
     }
   })();
@@ -94,13 +122,14 @@ export function topShapes(design, c) {
 // Sleeves follow the top's main color; armor shows metal.
 export function sleeveColor(design, c) {
   if (design === 'plate') return SILVER;
-  if (design === 'vest' || design === 'sailor') return '#ffffff';
+  if (design === 'vest' || design === 'sailor' || design === 'overalls') return '#ffffff';
+  if (design === 'jacket' || design === 'blazer' || design === 'maid') return c;
   return c;
 }
 
 // Robes, armor, and hoodies cover the whole arm; everything else leaves the forearm bare.
 export function longSleeves(design) {
-  return ['plate', 'starrobe', 'celestial', 'kimono', 'hoodie'].includes(design);
+  return ['plate', 'starrobe', 'celestial', 'kimono', 'hoodie', 'jacket', 'sweater', 'blazer', 'puffer', 'maid'].includes(design);
 }
 
 // ---------- Bottoms (leg colors, hips, and an optional skirt) ----------
@@ -112,6 +141,10 @@ export function legLook(design, c, skin) {
     case 'greaves': return { top: SILVER, low: SILVER, pad: '#ffffff' };
     case 'starskirt': return { top: skin, low: skin, pad: null };
     case 'celestialskirt': return { top: '#ffffff', low: '#ffffff', pad: null };
+    case 'skirt': return { top: skin, low: skin, pad: null };
+    case 'longskirt': return { top: c, low: skin, pad: null };
+    case 'jeans': return { top: c, low: c, pad: null, cuff: shade(c, 22) };
+    case 'cargo': return { top: c, low: c, pad: shade(c, -14) };
     default: return { top: c, low: c, pad: null };
   }
 }
@@ -122,6 +155,14 @@ export function hipShapes(look) {
 
 export function skirtShapes(design, c) {
   if (design === 'starskirt') return [T([[10.6, 34.4], [20, 34.4], [21.4, 36.4], [22.6, 41.6], [8.2, 41.6], [9.4, 36.4]], c), R(8.9, 40.6, 13, 1, GOLD), F(E(12, 38, 0.6, 0.6, GOLD)), F(E(17.5, 37, 0.6, 0.6, GOLD)), F(E(20, 39.4, 0.6, 0.6, '#ffffff'))];
+  if (design === 'skirt') {
+    // A short pleated skirt: alternating light and dark pleats and a waistband.
+    const pts = [[10, 34.2], [21.2, 34.2], [22.6, 40.4], [8.6, 40.4]];
+    const out = [T(pts, c), R(10, 34.2, 11.2, 1.2, shade(c, -16))];
+    for (const x of [11.6, 14.2, 16.8, 19.4]) out.push(F(T([[x, 35.4], [x + 0.6, 35.4], [x + 1, 40.4], [x - 0.2, 40.4]], shade(c, -12))));
+    return out;
+  }
+  if (design === 'longskirt') return [T([[10, 34.2], [21.2, 34.2], [23.4, 48.6], [7.8, 48.6]], c), R(10, 34.2, 11.2, 1.4, shade(c, 18)), band([[10, 34.2], [21.2, 34.2], [23.4, 48.6], [7.8, 48.6]], 47.2, 48.4, shade(c, -16))].filter(Boolean);
   if (design === 'celestialskirt') return [T([[10.6, 34.4], [20, 34.4], [22.6, 46.6], [8.2, 46.6]], c), R(8.3, 45.4, 14.2, 1.2, GOLD), T([[15, 34.4], [16.2, 34.4], [16.6, 45.4], [14.6, 45.4]], shade(c, 18))];
   return null;
 }
@@ -177,6 +218,8 @@ export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
     limb(kx, ky, ax, ay, 3.8, 3.2, low),
   ];
   if (look.pad) shapes.push(E(kx + 0.3, ky, 1.7, 1.4, tint(look.pad)));
+  // Rolled-up cuffs just above the ankle.
+  if (look.cuff) shapes.push(limb(kx + (ax - kx) * 0.74, ky + (ay - ky) * 0.74, ax, ay, 3.7, 3.5, tint(look.cuff)));
   shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, tint));
   return shapes;
 }
