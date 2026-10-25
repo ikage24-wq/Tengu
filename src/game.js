@@ -8,7 +8,7 @@ import { createMob, updateMob, damageMob, rollDeathRewards, MOB_TYPES } from './
 import { tryUpgrade, upgradeCost, SLOTS } from './gear.js';
 import { getMap } from './world.js';
 
-export const FLOOR_Y = 520;
+export const FLOOR_Y = 300;
 const GRAVITY = 1800;
 const MOVE_SPEED = 260;
 const JUMP_VELOCITY = -620;

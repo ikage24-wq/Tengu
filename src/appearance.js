@@ -2,22 +2,24 @@
 // Pure data and helpers; drawing lives in sprites.js.
 
 export const APPEARANCE_FIELDS = [
-  { key: 'hairStyle', label: 'Hair', options: ['bob', 'spiky', 'long', 'bun', 'bald'] },
-  { key: 'hairColor', label: 'Hair Color', options: ['#4a3a6b', '#ff7aa2', '#f2c14e', '#6fd3c4', '#3d2b1f', '#e9e9f5'] },
-  { key: 'skinTone', label: 'Skin', options: ['#ffe2c7', '#f5c9a5', '#d9a078', '#f7d7e6'] },
-  { key: 'eyeStyle', label: 'Eyes', options: ['round', 'sparkle', 'sleepy'] },
-  { key: 'eyeColor', label: 'Eye Color', options: ['#2b2d6e', '#8a3fd1', '#1f7a6b', '#b5482b'] },
-  { key: 'outfitColor', label: 'Outfit', options: ['#ff8fab', '#7fb8ff', '#ffd66b', '#9be08f', '#c9a6ff', '#ffffff'] },
+  { key: 'hairStyle', label: 'Hair', options: ['wavy', 'bob'] },
+  { key: 'hairColor', label: 'Hair Color', options: ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650'] },
+  { key: 'skinTone', label: 'Skin', options: ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66'] },
+  { key: 'eyeStyle', label: 'Eyes', options: ['sparkle', 'sleepy'] },
+  { key: 'eyeColor', label: 'Eye Color', options: ['#4fcfb8', '#9b6cff', '#5aa8ff', '#e8a23c', '#7a4a2b'] },
+  { key: 'outfitColor', label: 'Dress', options: ['#fbf3df', '#ffc2d6', '#bff0dc', '#bfe0ff', '#e0cfff', '#4a4560'] },
 ];
+
+export const COLOR_FIELDS = ['hairColor', 'skinTone', 'eyeColor', 'outfitColor'];
 
 export function defaultAppearance() {
   return {
-    hairStyle: 'bob',
-    hairColor: '#ff7aa2',
-    skinTone: '#ffe2c7',
+    hairStyle: 'wavy',
+    hairColor: '#e9ebfa',
+    skinTone: '#fff0e6',
     eyeStyle: 'sparkle',
-    eyeColor: '#2b2d6e',
-    outfitColor: '#ff8fab',
+    eyeColor: '#4fcfb8',
+    outfitColor: '#fbf3df',
   };
 }
 

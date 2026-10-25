@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Twzt — 2D Side Scroller</title>
   <style>
-    html, body { margin: 0; height: 100%; background: #0b0d12; color: #e6e6e6; font-family: system-ui, sans-serif; }
-    canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+    html, body { margin: 0; height: 100%; background: #0b0d12; overflow: hidden; }
+    body { display: flex; align-items: center; justify-content: center; }
+    canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
   </style>
 </head>
 <body>

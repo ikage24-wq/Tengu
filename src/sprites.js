@@ -1,239 +1,307 @@
-// Cute procedural sprites: customizable chibi characters and soft-styled mobs.
-// Everything is drawn with canvas paths, so there are no image assets to load.
+// Pixel-art sprites, generated at runtime from simple shapes.
+// Each sprite is rasterized onto a small grid, gets a 1px dark outline around its silhouette,
+// and is cached as a tiny canvas. It is drawn with nearest-neighbour scaling so it stays crisp.
 
-const OUTLINE = '#2a2440';
+const OUTLINE = '#2d2846';
+const PAD = 1; // room for the outline around the grid edge
+const cache = new Map();
 
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+// Lightens (amount > 0) or darkens (amount < 0) a hex color.
+export function shade(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+  const adj = (v) => Math.max(0, Math.min(255, v + Math.round((amount / 100) * 255)));
+  const parts = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(adj);
+  return `#${parts.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
-function fillRound(ctx, x, y, w, h, r, color) {
-  roundRect(ctx, x, y, w, h, r);
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.strokeStyle = OUTLINE;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-}
+const R = (x, y, w, h, c) => ({ t: 'r', x, y, w, h, c });
+const E = (x, y, rx, ry, c) => ({ t: 'e', x, y, rx, ry, c });
 
-function ellipse(ctx, x, y, rx, ry, color, outline = true) {
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  if (outline) {
-    ctx.strokeStyle = OUTLINE;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-  }
-}
-
-// Hair is drawn behind the face for long/bob and on top for spiky/bun.
-function drawHair(ctx, style, color, cx, cy, r, dir) {
-  ctx.fillStyle = color;
-  ctx.strokeStyle = OUTLINE;
-  ctx.lineWidth = 1.5;
-  if (style === 'long') {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 2, Math.PI, 0);
-    ctx.lineTo(cx + r + 4, cy + 22);
-    ctx.lineTo(cx - r - 4, cy + 22);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  } else if (style === 'bob') {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 1, Math.PI, 0);
-    ctx.lineTo(cx + r + 2, cy + 9);
-    ctx.lineTo(cx - r - 2, cy + 9);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  } else if (style === 'spiky') {
-    ctx.beginPath();
-    ctx.moveTo(cx - r, cy - 2);
-    ctx.lineTo(cx - r + 2, cy - r - 8);
-    ctx.lineTo(cx - 3, cy - r + 1);
-    ctx.lineTo(cx, cy - r - 10);
-    ctx.lineTo(cx + 3, cy - r + 1);
-    ctx.lineTo(cx + r - 2, cy - r - 8);
-    ctx.lineTo(cx + r, cy - 2);
-    ctx.arc(cx, cy, r, 0, Math.PI, true);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-  } else if (style === 'bun') {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 1, Math.PI, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ellipse(ctx, cx + dir * -2, cy - r - 4, 6, 6, color);
-  }
-  if (style === 'bald') {
-    ctx.beginPath();
-    ctx.arc(cx, cy - 3, 3, Math.PI, 0);
-    ctx.strokeStyle = OUTLINE;
-    ctx.stroke();
-  }
-}
-
-function drawEyes(ctx, style, color, cx, cy, dir) {
-  for (const side of [-1, 1]) {
-    const ex = cx + side * 5 + dir;
-    if (style === 'sleepy') {
-      ctx.beginPath();
-      ctx.arc(ex, cy, 3, 0.15 * Math.PI, 0.85 * Math.PI);
-      ctx.strokeStyle = OUTLINE;
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-      continue;
-    }
-    ellipse(ctx, ex, cy, 2.6, 3.4, color, false);
-    if (style === 'sparkle') {
-      ellipse(ctx, ex + 0.9, cy - 1.2, 1.1, 1.1, '#ffffff', false);
+// Fills shapes into a grid of letters, then outlines the silhouette.
+// Shape coordinates are local to the sprite; the grid adds PAD cells on every side.
+function rasterize(w, h, shapes) {
+  const gw = w + PAD * 2;
+  const gh = h + PAD * 2;
+  const grid = Array.from({ length: gh }, () => Array(gw).fill('.'));
+  const put = (x, y, c) => {
+    const gx = x + PAD;
+    const gy = y + PAD;
+    if (gx >= 0 && gy >= 0 && gx < gw && gy < gh) grid[gy][gx] = c;
+  };
+  for (const s of shapes) {
+    if (s.t === 'r') {
+      for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) put(x, y, s.c);
+    } else {
+      for (let y = -PAD; y < h + PAD; y++) {
+        for (let x = -PAD; x < w + PAD; x++) {
+          const dx = (x + 0.5 - s.x) / s.rx;
+          const dy = (y + 0.5 - s.y) / s.ry;
+          if (dx * dx + dy * dy <= 1) put(x, y, s.c);
+        }
+      }
     }
   }
+  // Any empty cell touching the silhouette becomes outline.
+  const edge = [];
+  for (let y = 0; y < gh; y++) {
+    for (let x = 0; x < gw; x++) {
+      if (grid[y][x] !== '.') continue;
+      const touches = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+        const row = grid[y + dy];
+        return row && row[x + dx] && row[x + dx] !== '.';
+      });
+      if (touches) edge.push([x, y]);
+    }
+  }
+  for (const [x, y] of edge) grid[y][x] = 'o';
+  return grid;
+}
+
+function bake(grid, palette) {
+  const h = grid.length;
+  const w = grid[0].length;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const g = canvas.getContext('2d');
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const c = grid[y][x];
+      if (c === '.') continue;
+      g.fillStyle = palette[c] ?? '#ff00ff';
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+  return canvas;
+}
+
+function cached(key, build) {
+  let v = cache.get(key);
+  if (!v) {
+    v = build();
+    cache.set(key, v);
+  }
+  return v;
+}
+
+// ---------- Character ----------
+
+export const CHAR_W = 28;
+export const CHAR_H = 48;
+
+function paletteFor(a) {
+  return {
+    o: OUTLINE,
+    h: a.hairColor,
+    k: shade(a.hairColor, -25),
+    l: shade(a.hairColor, 35),
+    s: a.skinTone,
+    e: a.eyeColor,
+    w: '#ffffff',
+    m: '#6b3a52',
+    p: '#ff9fb8',
+    d: a.outfitColor,
+    D: shade(a.outfitColor, -20),
+    c: '#c99a6b',
+    C: '#a87a52',
+    r: '#e0344f',
+    b: '#fffaf0',
+    B: '#d8c9ae',
+    a: a.accent,
+  };
+}
+
+function eyeShapes(style, x) {
+  if (style === 'sleepy') return [R(x, 20, 3, 1, 'm')];
+  return [
+    R(x, 17, 3, 1, 'm'), // lash line
+    R(x, 18, 3, 4, 'e'),
+    R(x, 18, 1, 2, 'w'), // shine
+    R(x + 2, 21, 1, 1, 'w'),
+  ];
+}
+
+// Legs step by one cell when `step` is 1; the dress and cardigan stay put.
+function characterShapes(a, step) {
+  const wavy = a.hairStyle === 'wavy';
+  const lo = step ? -1 : 0;
+  const ro = step ? 1 : 0;
+  return [
+    // Legs and shoes sit under the dress.
+    R(10 + lo, 40, 3, 5, 's'),
+    R(15 + ro, 40, 3, 5, 's'),
+    R(8 + lo, 45, 6, 3, 'b'),
+    R(14 + ro, 45, 6, 3, 'b'),
+    R(8 + lo, 47, 6, 1, 'B'),
+    R(14 + ro, 47, 6, 1, 'B'),
+    // Back hair, with a shaded lower layer for volume.
+    R(4, 9, 20, wavy ? 24 : 18, 'h'),
+    R(4, wavy ? 25 : 19, 20, wavy ? 9 : 6, 'k'),
+    // Wavy style: locks fall past the shoulders.
+    ...(wavy
+      ? [R(2, 18, 3, 17, 'h'), R(23, 18, 3, 17, 'h'), R(2, 31, 2, 3, 'k'), R(24, 31, 2, 3, 'k')]
+      : []),
+    // Sleeves, dress, cardigan, belt in the class color.
+    R(5, 28, 3, 9, 'c'),
+    R(22, 28, 3, 9, 'c'),
+    R(7, 34, 14, 7, 'D'),
+    R(8, 34, 12, 6, 'd'),
+    R(8, 28, 12, 11, 'c'),
+    R(13, 28, 2, 11, 'C'),
+    R(8, 37, 12, 1, 'a'),
+    // Head with bangs and a highlight on the hair.
+    E(14, 18, 8, 9, 's'),
+    R(6, 9, 16, 4, 'h'),
+    R(9, 10, 4, 1, 'l'),
+    R(16, 10, 3, 1, 'l'),
+    ...eyeShapes(a.eyeStyle, 9),
+    ...eyeShapes(a.eyeStyle, 16),
+    R(8, 24, 2, 1, 'p'),
+    R(18, 24, 2, 1, 'p'),
+    R(13, 26, 2, 1, 'm'),
+    // Little red earrings.
+    R(5, 24, 1, 3, 'r'),
+    R(22, 24, 1, 3, 'r'),
+  ];
+}
+
+function characterSprite(a, step) {
+  return cached(`char|${step}|${JSON.stringify(a)}`, () =>
+    bake(rasterize(CHAR_W, CHAR_H, characterShapes(a, step)), paletteFor(a))
+  );
+}
+
+// ---------- Mobs and NPCs ----------
+
+const MOB_ART = {
+  snail: {
+    shapes: () => [
+      R(0, 14, 34, 10, 'b'),
+      R(0, 21, 34, 3, 'B'),
+      E(22, 11, 9, 9, 's'),
+      R(19, 9, 6, 1, 'v'),
+      R(19, 9, 1, 5, 'v'),
+      R(20, 12, 4, 1, 'v'),
+      R(3, 5, 2, 10, 'b'),
+      E(4, 4, 2.5, 2.5, 'w'),
+      R(4, 4, 1, 1, 'k'),
+    ],
+    palette: { b: '#ffe9a8', B: '#f0cf80', s: '#ff9e6b', v: '#ffd0a8', w: '#ffffff', k: OUTLINE },
+  },
+  mushroom: {
+    shapes: () => [
+      R(9, 20, 14, 16, 'b'),
+      R(9, 30, 14, 6, 'B'),
+      E(16, 15, 15, 13, 's'),
+      E(9, 10, 3, 3, 'w'),
+      E(21, 8, 3, 2, 'w'),
+      E(26, 16, 2, 2, 'w'),
+      R(11, 24, 3, 4, 'k'),
+      R(18, 24, 3, 4, 'k'),
+    ],
+    palette: { b: '#fff1dc', B: '#e8d0b0', s: '#ff7a59', w: '#ffffff', k: OUTLINE },
+  },
+  wolf: {
+    shapes: () => [
+      R(10, 12, 30, 16, 'g'),
+      R(10, 24, 30, 4, 'G'),
+      R(2, 8, 18, 16, 'g'),
+      R(3, 3, 4, 7, 'g'),
+      R(12, 3, 4, 7, 'g'),
+      R(0, 14, 4, 5, 'G'),
+      R(38, 12, 6, 4, 'g'),
+      R(42, 9, 4, 5, 'g'),
+      R(12, 28, 4, 6, 'G'),
+      R(22, 28, 4, 6, 'G'),
+      R(32, 28, 4, 6, 'G'),
+      R(6, 14, 3, 3, 'y'),
+      R(7, 15, 1, 1, 'k'),
+    ],
+    palette: { g: '#8d8fa6', G: '#6f7089', y: '#ffd34d', k: OUTLINE },
+  },
+  golem: {
+    shapes: () => [
+      E(30, 36, 28, 27, 'r'),
+      E(30, 13, 20, 8, 'm'),
+      R(19, 31, 6, 6, 'k'),
+      R(37, 31, 6, 6, 'k'),
+      R(20, 32, 1, 1, 'w'),
+      R(38, 32, 1, 1, 'w'),
+      R(26, 44, 8, 2, 'k'),
+      R(12, 40, 1, 6, 'D'),
+      R(46, 38, 1, 7, 'D'),
+    ],
+    palette: { r: '#b49872', m: '#7fb069', k: OUTLINE, w: '#ffffff', D: '#8a7050' },
+  },
+};
+
+const MOB_SIZE = { snail: [34, 24], mushroom: [32, 36], wolf: [48, 34], golem: [60, 64] };
+
+function mobSprite(typeId) {
+  return cached(`mob|${typeId}`, () => {
+    const [w, h] = MOB_SIZE[typeId];
+    const art = MOB_ART[typeId];
+    return bake(rasterize(w, h, art.shapes()), { o: OUTLINE, ...art.palette });
+  });
+}
+
+const NPC_W = 24;
+const NPC_H = 40;
+
+function npcSprite(color) {
+  return cached(`npc|${color}`, () => {
+    const shapes = [
+      R(6, 18, 12, 22, 'c'),
+      E(12, 11, 7, 7, 's'),
+      R(4, 3, 16, 4, 'c'),
+      R(9, 11, 2, 2, 'k'),
+      R(14, 11, 2, 2, 'k'),
+      R(8, 38, 3, 2, 'k'),
+      R(13, 38, 3, 2, 'k'),
+    ];
+    return bake(rasterize(NPC_W, NPC_H, shapes), { c: color, s: '#ffe2c7', k: OUTLINE });
+  });
+}
+
+// ---------- Drawing ----------
+
+function blit(ctx, sprite, x, y, { flip = false, scale = 1 } = {}) {
+  const w = sprite.width * scale;
+  const h = sprite.height * scale;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  if (flip) {
+    ctx.translate(Math.round(x) + w - PAD * scale, Math.round(y));
+    ctx.scale(-1, 1);
+    ctx.drawImage(sprite, 0, 0, w, h);
+  } else {
+    ctx.drawImage(sprite, Math.round(x - PAD * scale), Math.round(y - PAD * scale), w, h);
+  }
+  ctx.restore();
 }
 
 // Draws the player. `p` is the physics body; sx is its screen-space x.
-export function drawCharacter(ctx, p, sx, appearance, accentColor, time) {
+export function drawCharacter(ctx, p, sx, appearance, accent, time) {
   const walking = Math.abs(p.vx) > 1 && p.onGround;
-  const stride = walking ? Math.sin(time * 14) : 0;
-  const bob = walking ? Math.abs(Math.sin(time * 14)) * -2 : Math.sin(time * 3) * 0.6;
-  const x = sx;
-  const y = p.y + bob;
-  const dir = p.dir >= 0 ? 1 : -1;
-  const cx = x + p.w / 2;
-
-  // Legs, alternating while walking.
-  ctx.fillStyle = OUTLINE;
-  ctx.fillRect(cx - 7 + stride * 2, y + 42, 5, 6);
-  ctx.fillRect(cx + 2 - stride * 2, y + 42, 5, 6);
-
-  // Body and outfit with a class-colored belt.
-  fillRound(ctx, cx - 9, y + 25, 18, 19, 7, appearance.outfitColor);
-  fillRound(ctx, cx - 9, y + 36, 18, 4, 2, accentColor);
-
-  // Head.
-  const headY = y + 14;
-  const headR = 12;
-  ellipse(ctx, cx, headY, headR, headR, appearance.skinTone);
-
-  // Hair behind the head for long/bob, on top for others.
-  const hairBehind = appearance.hairStyle === 'long' || appearance.hairStyle === 'bob';
-  if (hairBehind) drawHair(ctx, appearance.hairStyle, appearance.hairColor, cx, headY, headR, dir);
-
-  drawEyes(ctx, appearance.eyeStyle, appearance.eyeColor, cx, headY + 2, dir);
-
-  // Blush.
-  ctx.fillStyle = 'rgba(255,120,150,0.45)';
-  ctx.beginPath();
-  ctx.ellipse(cx - 7 + dir, headY + 6, 2.5, 1.5, 0, 0, Math.PI * 2);
-  ctx.ellipse(cx + 7 + dir, headY + 6, 2.5, 1.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  if (!hairBehind) drawHair(ctx, appearance.hairStyle, appearance.hairColor, cx, headY, headR, dir);
+  const step = walking ? Math.floor(time * 8) % 2 : 0;
+  const idleBob = !walking && Math.sin(time * 3) > 0.6 ? -1 : 0;
+  const a = { ...appearance, accent };
+  blit(ctx, characterSprite(a, step), sx, p.y + idleBob, { flip: p.dir < 0 });
 }
 
-function drawSnail(ctx, mob, sx, t) {
-  const y = mob.y;
-  // Body.
-  fillRound(ctx, sx, y + mob.h - 12, mob.w, 12, 6, '#ffe9a8');
-  // Shell with a spiral.
-  ellipse(ctx, sx + mob.w * 0.55, y + mob.h - 14, 10, 10, '#ff9e6b');
-  ctx.beginPath();
-  ctx.arc(sx + mob.w * 0.55, y + mob.h - 14, 5, 0, Math.PI * 1.6);
-  ctx.strokeStyle = '#ffe0c7';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  // Eye stalks wobble a little.
-  const wob = Math.sin(t * 2) * 1.5;
-  ctx.strokeStyle = OUTLINE;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(sx + 6, y + mob.h - 12);
-  ctx.lineTo(sx + 5 + wob, y + mob.h - 22);
-  ctx.stroke();
-  ellipse(ctx, sx + 5 + wob, y + mob.h - 23, 2.5, 2.5, '#ffffff');
-  ellipse(ctx, sx + 5 + wob, y + mob.h - 23, 1, 1, OUTLINE, false);
+// Preview for the creator: same sprite, scaled up with crisp pixels.
+export function drawCharacterPreview(ctx, appearance, accent, time, x, y, scale) {
+  const a = { ...appearance, accent };
+  const bob = Math.sin(time * 3) > 0.6 ? -1 : 0;
+  blit(ctx, characterSprite(a, 0), x, y + bob * scale, { scale });
 }
 
-function drawMushroom(ctx, mob, sx, t) {
-  const y = mob.y + Math.sin(t * 3) * 0.8;
-  // Stem with a face.
-  fillRound(ctx, sx + mob.w * 0.3, y + mob.h * 0.5, mob.w * 0.4, mob.h * 0.5, 5, '#fff1dc');
-  ellipse(ctx, sx + mob.w * 0.42, y + mob.h * 0.7, 1.6, 2, OUTLINE, false);
-  ellipse(ctx, sx + mob.w * 0.58, y + mob.h * 0.7, 1.6, 2, OUTLINE, false);
-  // Cap with spots.
-  ctx.beginPath();
-  ctx.arc(sx + mob.w / 2, y + mob.h * 0.5, mob.w * 0.5, Math.PI, 0);
-  ctx.closePath();
-  ctx.fillStyle = '#ff7a59';
-  ctx.fill();
-  ctx.strokeStyle = OUTLINE;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ellipse(ctx, sx + mob.w * 0.3, y + mob.h * 0.35, 3, 2.5, '#ffffff', false);
-  ellipse(ctx, sx + mob.w * 0.7, y + mob.h * 0.3, 2.5, 2, '#ffffff', false);
-}
-
-function drawWolf(ctx, mob, sx, t, dir) {
-  const bob = Math.sin(t * 10) * 1;
-  const y = mob.y + bob;
-  // Tail.
-  ctx.strokeStyle = '#7b7d93';
-  ctx.lineWidth = 6;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  const tailX = dir > 0 ? sx + 4 : sx + mob.w - 4;
-  ctx.moveTo(tailX, y + mob.h * 0.5);
-  ctx.quadraticCurveTo(tailX - dir * 10, y - 4, tailX - dir * 4, y + 4);
-  ctx.stroke();
-  ctx.lineCap = 'butt';
-  // Body and head.
-  fillRound(ctx, sx + 4, y + mob.h * 0.35, mob.w - 8, mob.h * 0.6, 10, '#8d8fa6');
-  const headX = dir > 0 ? sx + mob.w - 12 : sx + 2;
-  fillRound(ctx, headX, y + 2, 14, 16, 6, '#8d8fa6');
-  // Ears.
-  ctx.fillStyle = '#8d8fa6';
-  ctx.strokeStyle = OUTLINE;
-  ctx.beginPath();
-  ctx.moveTo(headX + 2, y + 4);
-  ctx.lineTo(headX + 4, y - 4);
-  ctx.lineTo(headX + 8, y + 3);
-  ctx.fill();
-  ctx.stroke();
-  ellipse(ctx, headX + 9 + dir * 2, y + 8, 2.2, 2.6, '#ffd34d', false);
-  ellipse(ctx, headX + 9 + dir * 2, y + 8, 0.9, 1.8, OUTLINE, false);
-}
-
-function drawGolem(ctx, mob, sx, t) {
-  const bob = Math.sin(t * 2) * 1.2;
-  const y = mob.y + bob;
-  // Rounded rock body with a mossy top and a sleepy face.
-  fillRound(ctx, sx, y + 4, mob.w, mob.h - 4, 16, '#b49872');
-  fillRound(ctx, sx + 6, y + 2, mob.w - 12, 10, 5, '#7fb069');
-  ellipse(ctx, sx + mob.w * 0.36, y + mob.h * 0.45, 3, 3, '#2a2440', false);
-  ellipse(ctx, sx + mob.w * 0.64, y + mob.h * 0.45, 3, 3, '#2a2440', false);
-  ctx.beginPath();
-  ctx.arc(sx + mob.w / 2, y + mob.h * 0.6, 6, 0.1 * Math.PI, 0.9 * Math.PI);
-  ctx.strokeStyle = OUTLINE;
-  ctx.lineWidth = 1.6;
-  ctx.stroke();
-}
-
-// Draws a mob at screen x `sx`. `dir` is its patrol direction.
 export function drawMob(ctx, mob, sx, time) {
-  const dir = mob.dir ?? 1;
-  if (mob.typeId === 'snail') drawSnail(ctx, mob, sx, time);
-  else if (mob.typeId === 'mushroom') drawMushroom(ctx, mob, sx, time);
-  else if (mob.typeId === 'wolf') drawWolf(ctx, mob, sx, time, dir);
-  else if (mob.typeId === 'golem') drawGolem(ctx, mob, sx, time);
+  const bob = mob.typeId === 'golem' ? Math.round(Math.sin(time * 2)) : 0;
+  // Wolves face left by default, so they flip when moving right.
+  blit(ctx, mobSprite(mob.typeId), sx, mob.y + bob, { flip: mob.typeId === 'wolf' && mob.dir > 0 });
+}
+
+export function drawNpc(ctx, npc, sx, color, groundY) {
+  blit(ctx, npcSprite(color), sx - NPC_W / 2, groundY - NPC_H);
 }

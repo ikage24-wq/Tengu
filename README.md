@@ -67,8 +67,10 @@ src/mobs.js       mob definitions, patrol AI, death rewards
 src/gear.js       gear rolls, rarities, upgrades
 src/world.js      maps, NPCs, portals, spawn tables
 src/appearance.js character customization options and defaults
-src/sprites.js    procedural character and mob drawing (no image files)
+src/sprites.js    pixel-art sprites built from shapes (no image files)
 ```
+
+The game draws on a fixed 640×360 canvas that is scaled up with crisp pixels.
 
 The logic modules (`progression`, `combat`, `mobs`, `gear`, `classes`, `world`)
 have no DOM access, so they can be tested in Node.
@@ -79,4 +81,4 @@ have no DOM access, so they can be tested in Node.
 - Save and load (progress is lost on reload)
 - Selling items and a full shop
 - Quests and boss fights
-- Sound and sprite art (everything is drawn with rectangles)
+- Sound, and hand-drawn sprite sheets (the pixel art is generated in code from shapes)

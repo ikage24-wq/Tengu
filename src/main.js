@@ -1,13 +1,24 @@
-// Entry point: canvas setup, input capture, screen flow, and the fixed-timestep loop.
+// Entry point: virtual canvas, input capture, screen flow, and the fixed-timestep loop.
 // Flow: character creator -> class select -> play.
 
 import { createGame, update } from './game.js';
-import { drawAppearance, drawGame, drawSelect } from './render.js';
+import { VW, VH, drawAppearance, drawGame, drawSelect } from './render.js';
 import { CLASSES } from './classes.js';
 import { APPEARANCE_FIELDS, cycleAppearance, defaultAppearance } from './appearance.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+
+// The game draws at a fixed size and the canvas is scaled up with crisp pixels.
+canvas.width = VW;
+canvas.height = VH;
+function fit() {
+  const s = Math.min(window.innerWidth / VW, window.innerHeight / VH);
+  canvas.style.width = `${Math.floor(VW * s)}px`;
+  canvas.style.height = `${Math.floor(VH * s)}px`;
+}
+window.addEventListener('resize', fit);
+fit();
 
 const TICK = 1 / 60;
 
@@ -21,13 +32,6 @@ window.addEventListener('keydown', (e) => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
 });
 window.addEventListener('keyup', (e) => held.delete(e.code));
-
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
 
 const CLASS_KEYS = { Digit1: 'warrior', Digit2: 'mage', Digit3: 'archer' };
 const SCREEN = { APPEARANCE: 'appearance', CLASS: 'class', PLAY: 'play' };
@@ -66,11 +70,11 @@ function frame(now) {
 
   if (screen === SCREEN.APPEARANCE) {
     updateAppearanceScreen();
-    drawAppearance(ctx, canvas.width, canvas.height, appearance, row, time);
+    drawAppearance(ctx, VW, VH, appearance, row, time);
     pressed.clear();
   } else if (screen === SCREEN.CLASS) {
     updateClassScreen();
-    drawSelect(ctx, canvas.width, canvas.height, time);
+    drawSelect(ctx, VW, VH, time);
     pressed.clear();
   } else {
     // A press is consumed by the first fixed tick that sees it; frames with no tick keep it.
@@ -79,7 +83,7 @@ function frame(now) {
       pressed.clear();
       accumulator -= TICK;
     }
-    drawGame(ctx, game, canvas.width, canvas.height);
+    drawGame(ctx, game, VW, VH);
   }
   requestAnimationFrame(frame);
 }
