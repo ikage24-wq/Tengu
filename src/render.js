@@ -182,8 +182,10 @@ function drawHud(ctx, game, width, height) {
       ctx.fillStyle = 'rgba(20,16,30,0.6)';
       ctx.fillRect(bx + 1, by + 1, 40, 30);
     } else if (cd > 0) {
-      ctx.fillStyle = 'rgba(20,16,30,0.6)';
+      // Dark sweep that drains as the cooldown runs down, with the seconds left in the middle.
+      ctx.fillStyle = 'rgba(10, 8, 20, 0.8)';
       ctx.fillRect(bx + 1, by + 1, 40, 30 * (cd / s.cooldown));
+      text(ctx, `${Math.ceil(cd)}s`, bx + 21, by + 20, 9, UI.text, 'center', 'bold');
     }
     text(ctx, keys[i], bx + 5, by + 12, 8, locked ? '#777' : UI.text, 'left', 'bold');
     text(ctx, locked ? `Lv ${s.unlockLevel}` : s.name, bx + 21, by + 27, 6, locked ? '#777' : UI.muted, 'center');
