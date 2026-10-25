@@ -33,10 +33,13 @@ export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy
 const NECK = 24;
 const KY = 0.56;
 const KX = 0.74;
+// Below the hips the legs shrink a little more, for short chibi legs.
+const LEG_TOP = 38;
+const KL = 0.72;
 const OX = 6;
 const OY = 11;
 const W = 30 + OX * 2;
-const H = Math.ceil(NECK + (56 - NECK) * KY) + OY;
+const H = Math.ceil(NECK + (LEG_TOP - NECK) * KY + (56 - LEG_TOP) * KY * KL) + OY;
 const INK = '#3a2d4f';
 // Detail cells per art pixel for character sprites (drawn crisp, like pixel art), and rounding of
 // rig offsets to that grid.
@@ -349,13 +352,13 @@ const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.
 // the figure stands upright instead of hunching.
 const NECK_LIFT = 0;
 
-const squashY = (y) => (y <= NECK ? y : NECK + (y - NECK) * KY);
+const squashY = (y) => (y <= NECK ? y : y <= LEG_TOP ? NECK + (y - NECK) * KY : NECK + (LEG_TOP - NECK) * KY + (y - LEG_TOP) * KY * KL);
 const squashX = (x) => 15.5 + (x - 15.5) * KX;
 function squash(shapes, narrow = true) {
   const fx = (x) => (narrow ? squashX(x) : x);
   return shapes.map((sh) => {
     if (sh.t === 'p') return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => [fx(sh.x + px), squashY(sh.y + py)]) };
-    if (sh.t === 'e') return { ...sh, x: fx(sh.x), y: squashY(sh.y), rx: sh.rx * (narrow ? KX : 1), ry: sh.ry * (sh.y > NECK ? KY : 1) };
+    if (sh.t === 'e') return { ...sh, x: fx(sh.x), y: squashY(sh.y), rx: sh.rx * (narrow ? KX : 1), ry: sh.ry * (sh.y > LEG_TOP ? KY * KL : sh.y > NECK ? KY : 1) };
     const x0 = fx(sh.x);
     const y0 = squashY(sh.y);
     return { ...sh, x: x0, y: y0, w: fx(sh.x + sh.w) - x0, h: squashY(sh.y + sh.h) - y0 };
