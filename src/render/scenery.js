@@ -79,11 +79,11 @@ const INK = '#3a2d4f';
 const BLUSH = '#ff9fb8';
 
 // Scenery sprites share the characters' look: crisp soft outlines tinted from each part.
-function art(key, w, h, build) {
+export function art(key, w, h, build) {
   return sprite(`scn|${key}`, () => ({ w, h, shapes: build().filter(Boolean), res: 2, soft: 'cel', crisp: true }));
 }
 // Draws a sprite with its bottom center at (x, y).
-function place(ctx, s, x, y, opts) {
+export function place(ctx, s, x, y, opts) {
   blit(ctx, s, Math.round(x - s.w / 2), Math.round(y - s.h), opts);
 }
 
@@ -271,7 +271,7 @@ function moonArt(blink) {
 const WALLS = ['#fff4e6', '#ffe3ef', '#e2f6ec', '#ede4ff', '#ffeacf'];
 const ROOFS = ['#ff9ec0', '#9fb8ff', '#ffb38a', '#b9a7ff', '#7fd1a8'];
 
-function houseArt(seed) {
+export function houseArt(seed) {
   const wall = pick(WALLS, seed);
   const roof = pick(ROOFS, hash(seed * 9 + 1));
   const tall = hash(seed * 5 + 2) > 0.5;
@@ -337,7 +337,7 @@ function boatArt(sail) {
     T([[21.6, 5], [21.6, 28], [36, 28]], sail), T([[18.6, 9], [18.6, 28], [7, 28]], '#ffffff'), F(T([[21.6, 18], [31, 18], [33.4, 21], [21.6, 21]], '#ffffff'))]);
 }
 
-function mushHouseArt(seed) {
+export function mushHouseArt(seed) {
   const cap = pick(['#ff8fa8', '#ffb38a', '#c9a6ff'], seed);
   return art(`mushhouse|${cap}`, 56, 60, () => [
     R(14, 26, 28, 34, '#fff1dc'), E(28, 60, 15, 2, '#fff1dc'), R(23, 42, 10, 18, '#d39a6a'), E(28, 42, 5, 4, '#d39a6a'), F(E(30.6, 51, 0.8, 0.8, '#ffe36b')),
@@ -383,7 +383,7 @@ function islandArt(seed, frame) {
   });
 }
 
-function tentArt(color) {
+export function tentArt(color) {
   return art(`tent|${color}`, 56, 50, () => [
     T([[2, 50], [28, 10], [54, 50]], '#fff4e6'), T([[10, 50], [28, 10], [20, 50]], color), T([[36, 50], [28, 10], [46, 50]], color),
     T([[22, 50], [28, 34], [34, 50]], '#8a5a3c'), R(27.4, 0, 1.2, 12, '#8a5a3c'), T([[28.6, 1], [37, 3.4], [28.6, 6]], color),
@@ -407,7 +407,7 @@ function bannerArt(color, frame) {
   ]);
 }
 
-function treehouseArt(seed) {
+export function treehouseArt(seed) {
   const roof = pick(['#ff9ec0', '#9fb8ff', '#ffd66b'], seed);
   return art(`treehouse|${roof}`, 64, 92, () => [
     R(26, 40, 12, 52, '#9f7a57'), T([[26, 92], [20, 92], [26, 84]], '#9f7a57'), T([[38, 92], [44, 92], [38, 84]], '#9f7a57'),
@@ -1252,7 +1252,8 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (seed < 0.38) continue;
       // Keep doorways clear around portals and NPCs, and ropes clear on ledges.
       if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 40)) continue;
-      if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < 30)) continue;
+      if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
+      if (s.ground && map.isTown && map.plaza && Math.abs(map.plaza - wx) < 46) continue;
       if (map.ropes.some((r) => Math.abs(r.x - wx) < 14 && r.top <= s.y + 1 && r.bottom >= s.y - 1)) continue;
       const x = wx - cam.x;
       if (x < -40 || x > width + 40) continue;
@@ -1353,7 +1354,7 @@ function drawDrift(ctx, t, cam, width, height, time) {
 }
 
 // Everything behind the characters.
-export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId) {
+export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   const t = THEMES[theme];
   drawSky(ctx, t, theme, width, height, time);
@@ -1365,6 +1366,8 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId) 
   drawFar(ctx, t, cam, width, layerY(50, 0.2), time);
   drawMid(ctx, t, theme, cam, width, layerY(10, 0.45), time);
   drawGround(ctx, t, theme, map, cam, width, height, time);
+  // Town buildings stand on the street, behind ledges and props.
+  street?.();
   drawLedges(ctx, t, theme, map, cam, width, height, time);
   drawProps(ctx, t, map, cam, width, time);
   drawRopes(ctx, map, cam);

@@ -9,10 +9,11 @@
 //   town       the town you respawn in after dying here
 //   world      where the map sits on the world map (in its 400x240 frame)
 //   job        towns that are a job's home, where its instructor lives
+//   plaza      in towns, where the fountain stands
 
 export const MAPS = {
   sprout: {
-    id: 'sprout', name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    id: 'sprout', plaza: 1040, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     width: 1600, height: 400, groundY: 360,
     platforms: [
       { x: 280, y: 280, w: 180 },
@@ -93,7 +94,7 @@ export const MAPS = {
   },
 
   harbor: {
-    id: 'harbor', name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
+    id: 'harbor', plaza: 760, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
     width: 1800, height: 420, groundY: 380,
     platforms: [
       { x: 200, y: 300, w: 200 },
@@ -298,7 +299,7 @@ Object.assign(MAPS, {
   },
 
   crag: {
-    id: 'crag', name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
+    id: 'crag', plaza: 760, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
     width: 1600, height: 420, groundY: 380,
     platforms: [
       { x: 240, y: 300, w: 220 },
@@ -314,7 +315,7 @@ Object.assign(MAPS, {
   },
 
   grove: {
-    id: 'grove', name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
+    id: 'grove', plaza: 790, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     width: 1600, height: 420, groundY: 380,
     platforms: [
       { x: 220, y: 300, w: 220 },

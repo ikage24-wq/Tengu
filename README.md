@@ -150,6 +150,16 @@ then press the key. Right-click a hotkey slot to clear it.
   training dummies), and Moonleaf Grove (mages, a starry forest with glowing treehouses and
   floating lanterns). The world map (M) shows Tengu Island with every road between maps and a
   "you are here" pin; click a town to fly there from any town for a little gold.
+- **Living towns** — every NPC works from their own place: striped market stalls for Pip's Goods,
+  Tora's Forge, Nim's Spells, Marlo's Wares, and Lulu's Salon; guild halls for the Archer Lodge,
+  Warrior Hall, Mage Tower, and Thieves' Den; an info kiosk for Mira and a harbor office for Captain
+  Rook, each with a swinging wooden sign. Houses line the streets in each town's style (cottages,
+  adobe homes and tents, treehouses and mushroom houses), with a fountain on every plaza. NPCs
+  have their own idle routines: Pip juggles potions, Tora hammers sparks off an anvil, Brann runs
+  sword drills, Kestrel shoots arrows, Elowen floats in meditation, Nim reads a floating spellbook,
+  Vex flips a dagger, Rook scans the sea through a spyglass, Marlo flips a coin, Lulu snips and
+  twirls, and Mira waves (they turn to face you when you come over). Villagers stroll the streets,
+  and other "players" in their gear hang around the plaza and the stalls, chatting MMO-style.
 - **Quests and NPCs** — 9 quests (defeat or collect), shops that buy and sell (including a
   blacksmith in Ember Crag, a spell shop in Moonleaf Grove, and Lulu's clothing boutique), a salon
   to restyle your hero, and job instructors.
@@ -167,7 +177,7 @@ src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
 src/world/              simulation: physics, monsters, loot, combat, the world update
-src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects
+src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects, towns
                         and elements, animator,
                         particles,
                         monsters, scenery, effects, icons, scene

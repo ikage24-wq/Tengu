@@ -15,6 +15,7 @@ import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffs
 import { ITEMS } from '../data/items.js';
 import { drawBubble } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
+import { drawStreet, drawTownsfolk, npcRoutine } from './town.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -61,8 +62,21 @@ function drawNpcs(ctx, world, cam, time) {
     const x = n.x - cam.x;
     const y = world.map.groundY - cam.y;
     if (x < -40 || x > VIEW_W + 40) continue;
-    const facing = world.body.x < n.x ? -1 : 1;
-    drawHero(ctx, npc.look, npc.gear ?? null, x, y, { pose: 'idle', time, seed: n.x % 97, facing, job: npc.showJob });
+    // Each NPC runs their own idle routine, but turns to face you while you're close.
+    const r = npcRoutine(n.id, time + (n.x % 97) * 0.1);
+    const close = near?.id === n.id;
+    const facing = r.facing && !close ? r.facing : world.body.x < n.x ? -1 : 1;
+    const busy = r.pose && !close;
+    const look = r.face ? { ...npc.look, face: r.face } : npc.look;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 10, 2.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    drawHero(ctx, look, npc.gear ?? null, x, y - (r.lift ?? 0), { pose: busy ? r.pose : 'idle', progress: r.progress ?? 0, dur: 0.5, time, seed: n.x % 97, facing, job: npc.showJob });
+    if (r.extra && !close) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
     ctx.font = 'bold 8px sans-serif';
     const label = npc.name;
     const w = ctx.measureText(label).width + 10;
@@ -130,7 +144,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   const [ox, oy] = shakeOffset(feel.fx, time);
   const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
-  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id);
+  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time));
+  drawTownsfolk(ctx, world.map, cam, VIEW_W, time);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);

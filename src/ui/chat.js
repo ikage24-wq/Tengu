@@ -182,7 +182,8 @@ export function drawBubble(ctx, x, y, words, alpha = 1) {
   lines.push(line);
   const w = Math.min(124, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 12);
   const h = lines.length * 10 + 6;
-  const bx = Math.round(x - w / 2);
+  // Keep the bubble on screen; the tail still points at the speaker.
+  const bx = Math.round(Math.max(4, Math.min(636 - w, x - w / 2)));
   const by = Math.round(y - h - 5);
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#c9a6ff';
@@ -202,6 +203,6 @@ export function drawBubble(ctx, x, y, words, alpha = 1) {
   ctx.stroke();
   ctx.fillStyle = COLORS.ink;
   ctx.textAlign = 'center';
-  lines.forEach((l, i) => ctx.fillText(l, x, by + 11 + i * 10));
+  lines.forEach((l, i) => ctx.fillText(l, bx + w / 2, by + 11 + i * 10));
   ctx.restore();
 }

@@ -85,7 +85,10 @@ export function bagWindow(ui, state, world) {
 
   // Tabs and grid.
   const gx = ox + 106;
-  win.tab = tabs(ui, gx, oy + 22, ['Equip', 'Use', 'Etc'], win.tab ?? 0, { w: 48 });
+  const tabWas = win.tab ?? 0;
+  win.tab = tabs(ui, gx, oy + 22, ['Equip', 'Use', 'Etc'], tabWas, { w: 48 });
+  // A selection belongs to its tab.
+  if (win.tab !== tabWas) win.sel = -1;
   const tab = TAB_KEYS[win.tab];
   const list = cellsFor(char, tab);
   for (let i = 0; i < TAB_SIZE; i++) {
@@ -142,12 +145,16 @@ function activate(state, world, tab, index) {
   if (tab === 'equip') {
     const why = equipBlocker(char, entry);
     if (why) world.log(`Can't equip: ${why}.`, '#ffb3c6');
-    else equipFromBag(char, index);
+    else {
+      equipFromBag(char, index);
+      state.windows.bag.sel = -1;
+    }
   } else if (tab === 'use') {
     const def = ITEMS[entry.id];
     if (def.scroll) {
       state.scrollMode = entry.id;
       state.windows.bag.tab = 0;
+      state.windows.bag.sel = -1;
     } else {
       useItem(world, entry.id);
     }
