@@ -1,9 +1,11 @@
 // 16x16 icons for items and skills, drawn from shapes and cached like every other sprite.
 
-import { ITEMS } from '../data/items.js';
+import { ITEMS, variantsFor } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { R, E, P, sprite, blit, shade } from './pixel.js';
 import { weaponIcon } from './weapons.js';
+import { pieceOf } from './jobgear/index.js';
+import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, skirtShapes, hatShapes, hatBackShapes, handShapes, capeShapes, capeFrontShapes, earringShapes, limb } from './gear.js';
 import { SCHOOL_COLORS } from './spells.js';
 
 const GOLD = '#ffd66b';
@@ -47,14 +49,65 @@ function designShapes(def, c, l, d) {
   }
 }
 
-function itemShapes(def) {
-  const c = def.color;
+// Job gear and jewels have no hand-drawn icon: the icon is the piece itself, drawn with the same
+// shapes the character wears and fitted into the 16x16 cell.
+function wornShapes(def, variant) {
+  const pc = pieceOf(def, variant);
+  const skin = '#fff0e6';
+  switch (def.slot) {
+    case 'hat': return [...hatBackShapes(def.design, pc.color, pc), ...hatShapes(def.design, pc.color, pc)];
+    case 'top': {
+      const sleeve = sleeveColor(def.design, pc.color, pc);
+      const arms = [[10.4, 7.6], [20.8, 23.6]].flatMap(([sx, hx]) => [limb(sx, 28.2, hx, 35.6, 4.2, 3.4, sleeve), ...offset(shoulderShapes(pc, sx < 15 ? -1 : 1), sx, 28.2)]);
+      return [...arms, ...topShapes(def.design, pc.color, pc)];
+    }
+    case 'bottom': {
+      const legs = legLook(def.design, pc.color, skin, pc);
+      const bare = { design: 'none', color: legs.low };
+      return [...legShapes(11.4, legs, bare, false), ...legShapes(16.6, legs, bare, false), ...hipShapes(legs), ...(skirtShapes(def.design, pc.color, pc) ?? [])];
+    }
+    case 'shoes': return [...legShapes(9, { top: 'none', low: 'none' }, pc, false).slice(3), ...legShapes(17, { top: 'none', low: 'none' }, pc, false).slice(3)];
+    case 'gloves': return [...handShapes(8, 30, pc, skin, 6, 24), ...handShapes(20, 30, pc, skin, 22, 24)];
+    case 'cape': return [...capeShapes(def.design, pc.color, 0, 0, pc), ...capeFrontShapes(def.design, pc.color, pc)];
+    case 'earring': return [...earringShapes(def.design, pc.color, pc), ...offset(earringShapes(def.design, pc.color, pc), 8, 0)];
+    default: return [];
+  }
+}
+
+const offset = (shapes, dx, dy) => shapes.map((sh) => ({ ...sh, x: sh.x + dx, y: sh.y + dy }));
+
+// Scales shapes about their bounding box to fill a size x size cell (keeping proportions).
+function fitShapes(shapes, size = 16, pad = 1) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const grow = (x, y) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
+  const list = shapes.filter((sh) => sh && sh.c !== 'none');
+  for (const sh of list) {
+    if (sh.t === 'r') { grow(sh.x, sh.y); grow(sh.x + sh.w, sh.y + sh.h); }
+    else if (sh.t === 'e') { grow(sh.x - sh.rx, sh.y - sh.ry); grow(sh.x + sh.rx, sh.y + sh.ry); }
+    else for (const [px, py] of sh.pts) grow(sh.x + px, sh.y + py);
+  }
+  if (!list.length) return [];
+  const k = (size - pad * 2) / Math.max(x1 - x0, y1 - y0, 1);
+  const ox = pad + (size - pad * 2 - (x1 - x0) * k) / 2;
+  const oy = pad + (size - pad * 2 - (y1 - y0) * k) / 2;
+  const X = (x) => ox + (x - x0) * k;
+  const Y = (y) => oy + (y - y0) * k;
+  return shapes.filter(Boolean).map((sh) => {
+    if (sh.t === 'r') return { ...sh, x: X(sh.x), y: Y(sh.y), w: sh.w * k, h: sh.h * k };
+    if (sh.t === 'e') return { ...sh, x: X(sh.x), y: Y(sh.y), rx: sh.rx * k, ry: sh.ry * k };
+    return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => [X(sh.x + px), Y(sh.y + py)]) };
+  });
+}
+
+function itemShapes(def, variant = null) {
+  const c = variant ? variantsFor(def)?.[variant]?.main ?? def.color : def.color;
   const l = shade(c, 22);
   const d = shade(c, -18);
   if (def.slot === 'weapon') {
-    const icon = weaponIcon(def.weaponType, def.tier, def.theme ?? null);
+    const icon = weaponIcon(def.weaponType, def.tier, def.theme ?? null, variant);
     if (icon) return icon;
   }
+  if (def.design === 'job' || def.design === 'jewel') return fitShapes(wornShapes(def, variant));
   const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;
   if (designed) return designed;
   if (def.type === 'equip') {
@@ -76,13 +129,15 @@ function itemShapes(def) {
   return [E(8, 9, 5, 5, c), E(6, 7, 2, 2, l), P(10, 12, d)];
 }
 
-export function itemIcon(id) {
+// Worn-shape icons rasterize at twice the detail so small parts survive the shrink.
+export function itemIcon(id, variant = null) {
   const def = ITEMS[id];
-  return sprite(`icon|${id}`, () => ({ w: 16, h: 16, shapes: itemShapes(def) }));
+  const fine = def.design === 'job' || def.design === 'jewel';
+  return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: itemShapes(def, variant), ...(fine ? { res: 2, soft: 'cel' } : {}) }));
 }
 
-export function drawItemIcon(ctx, id, x, y, scale = 1) {
-  blit(ctx, itemIcon(id), x, y, { scale });
+export function drawItemIcon(ctx, id, x, y, scale = 1, variant = null) {
+  blit(ctx, itemIcon(id, variant ?? null), x, y, { scale });
 }
 
 const SKILL_COLORS = {

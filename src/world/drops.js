@@ -19,35 +19,37 @@ function potionFor(level, rng) {
   return 'white_potion';
 }
 
-// Equipment near the monster's level: anything from 15 below to 5 above. Unique gear is rarer.
-function gearFor(level, rng) {
-  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && d.reqLevel <= level + 5 && d.reqLevel >= level - 15);
+// Equipment near the monster's level: anything from 15 below to 5 above. Unique gear is rarer,
+// and half the time it's something for the hero's own job (`fits`), so drops stay useful.
+function gearFor(level, rng, fits = null) {
+  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && d.reqLevel <= level + 5 && d.reqLevel >= level - 15);
   // One-of-a-kind outfits and endgame weapons are the rare part of the pool.
   const special = near.filter((d) => d.unique || d.endgame);
-  const pool = special.length && rng() < 0.15 ? special : near.filter((d) => !d.unique && !d.endgame);
+  let pool = special.length && rng() < 0.15 ? special : near.filter((d) => !d.unique && !d.endgame);
+  if (fits && rng() < 0.5) pool = pool.filter(fits).length ? pool.filter(fits) : pool;
   if (!pool.length) return null;
   return pool[Math.floor(rng() * pool.length)].id;
 }
 
 // Rolls a monster's loot. Returns plain descriptions; spawnDrops turns them into world objects.
-export function rollLoot(def, rng = Math.random) {
+export function rollLoot(def, rng = Math.random, fits = null) {
   const loot = [];
   const [gmin, gmax] = def.gold;
   loot.push({ kind: 'gold', amount: gmin + Math.floor(rng() * (gmax - gmin + 1)) });
   for (const d of def.drops) {
     if (rng() >= d.chance) continue;
     // Equipment on a monster's own list (like a boss's signature weapon) drops as rolled gear.
-    if (ITEMS[d.id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(d.id, { variance: 0.12, rng, rarity: Math.max(1, rollRarity(rng)) }) });
+    if (ITEMS[d.id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(d.id, { variance: 0.12, rng, rarity: Math.max(1, rollRarity(rng)), variant: 'roll' }) });
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
   }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });
   if (rng() < SCROLL_CHANCE) loot.push({ kind: 'item', id: RARE_SCROLLS[Math.floor(rng() * RARE_SCROLLS.length)], qty: 1 });
   const gearRolls = def.boss ? 3 : rng() < GEAR_CHANCE ? 1 : 0;
   for (let i = 0; i < gearRolls; i++) {
-    const id = gearFor(def.level, rng);
+    const id = gearFor(def.level, rng, fits);
     // Bosses never drop plain gear.
     const rarity = def.boss ? Math.max(1, rollRarity(rng)) : rollRarity(rng);
-    if (id) loot.push({ kind: 'item', inst: makeEquip(id, { variance: 0.12, rng, rarity }) });
+    if (id) loot.push({ kind: 'item', inst: makeEquip(id, { variance: 0.12, rng, rarity, variant: 'roll' }) });
   }
   return loot;
 }

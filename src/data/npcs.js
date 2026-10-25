@@ -3,9 +3,14 @@
 // an NPC can also carry `gear` (same shape as the player's equipment) to show it off. In towns,
 // `building` is the stall or hall drawn behind them (see render/town.js) and `sign` its name.
 
+import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, jobGearId } from './items.js';
+import { JOBS } from './jobs.js';
+
 const armor = (t) => ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'].map((s) => `${s}_${t}`);
-// Weapons of the given types for tiers 1 to 3. Tier 4 and the endgame designs only drop.
-const arms = (...types) => types.flatMap((w) => [1, 2, 3].map((t) => `${w}_${t}`));
+// Weapons of the given types from level `from` to `to`. Higher ones and the endgame designs only drop.
+const arms = (from, to, ...types) => types.flatMap((w) => Array.from({ length: (to - from) / 5 + 1 }, (_, i) => `${w}_${from + i * 5}`));
+// An outfit from one job's set at a level, for NPCs to show off.
+const outfit = (family, level, variant = null) => Object.fromEntries(JOB_SLOTS.map((s) => [s, { id: jobGearId(family, s, level), variant }]));
 
 export const NPCS = {
   mira: {
@@ -20,7 +25,9 @@ export const NPCS = {
     building: 'goods', sign: "Pip's Goods",
     look: { hairStyle: 'short', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
-    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `${w}_0`), ...armor(0)],
+    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'), ...armor(0), 'ear_5', 'ear_10'],
+    // Job gear for your own job (a Novice sees every job's starter set), by level.
+    gear: [5, 10],
     quests: ['snail_trouble'],
   },
   lulu: {
@@ -33,42 +40,44 @@ export const NPCS = {
   },
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
-    building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_2' } },
+    building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson' }, ...outfit('warrior', 50) },
     look: { hairStyle: 'curly', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
-    building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_3' } },
+    building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     showJob: 'bishop',
     look: { hairStyle: 'long', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'Moonleaf Grove welcomes you. Magic is patience and a lot of MP. Shall we begin?',
   },
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',
-    building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_2' } },
+    building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, ...outfit('archer', 50) },
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
-    building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_2' } },
+    building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
     look: { hairStyle: 'short', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
   },
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
-    building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_1' } },
+    building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
     greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
-    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', ...arms('sword', 'axe', 'spear'), ...armor(1), ...armor(2)],
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', ...arms(10, 30, 'sword', 'axe', 'spear'), 'ear_15', 'ear_20', 'ear_25'],
+    gear: [10, 30],
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
     building: 'magic', sign: "Nim's Spells",
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
     greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
-    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', ...arms('wand', 'staff'), 'earring_1', 'earring_2', 'earring_3'],
+    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', ...arms(25, 50, 'wand', 'staff'), 'ear_30', 'ear_35', 'ear_40', 'ear_45', 'ear_50'],
+    gear: [30, 50],
   },
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
@@ -85,10 +94,31 @@ export const NPCS = {
     shop: [
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
       'scroll_watk_100', 'scroll_def_100',
-      ...arms('bow', 'crossbow', 'dagger', 'claw'),
-      ...armor(1), ...armor(2), ...armor(3),
+      ...arms(15, 40, 'bow', 'crossbow', 'dagger', 'claw'),
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
+    gear: [15, 40],
     quests: ['tusk_trader'],
   },
 };
+
+// What a shop offers this hero: its fixed stock, then job gear in its level range. Weapons a
+// job can't use are left out (a Novice sees them all), and job sets show for the hero's own
+// job, or every job's starter set for a Novice.
+export function shopStock(npc, char) {
+  const job = JOBS[char.job];
+  const usable = (id) => ITEMS[id].slot !== 'weapon' || char.job === 'novice' || job.family === 'gm' || job.weapons.includes(ITEMS[id].weaponType);
+  const out = (npc.shop ?? []).filter(usable);
+  if (!npc.gear) return out;
+  const families = GEAR_FAMILIES.includes(job.family) ? [job.family] : GEAR_FAMILIES;
+  for (let L = npc.gear[0]; L <= npc.gear[1]; L += 5) {
+    for (const family of families) {
+      if (char.job === 'novice' && L > 5) continue;
+      for (const slot of JOB_SLOTS) out.push(jobGearId(family, slot, L));
+    }
+  }
+  // Consumables first, then weapons, armor, and earrings, each by level.
+  const rank = (d) => (d.type !== 'equip' ? 0 : d.slot === 'weapon' ? 1 : d.slot === 'earring' ? 3 : 2);
+  const order = new Map(out.map((id, i) => [id, i]));
+  return out.sort((a, b) => rank(ITEMS[a]) - rank(ITEMS[b]) || (rank(ITEMS[a]) ? ITEMS[a].reqLevel - ITEMS[b].reqLevel : 0) || order.get(a) - order.get(b));
+}

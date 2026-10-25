@@ -37,12 +37,36 @@ const WEAPON_LINES = {
   claw: { scale: 0.75, main: 'luk', names: ['Leather Claw', 'Iron Claw', 'Steel Talons', 'Mithril Talons', 'Runic Talons'], themes: { holy: 'Seraph Talons', demonic: 'Demon Grip', bone: 'Grave Hand', laser: 'Photon Claws', chainsaw: 'Shred Claws', cyber: 'Neon Talons' } },
 };
 
-const TIER_LEVELS = [0, 10, 20, 30, 40];
-const TIER_WATK = [14, 26, 40, 56, 70];
-const TIER_MATK = [10, 20, 34, 50, 66];
-const TIER_COLORS = ['#e9c48f', '#c7ced9', '#e6edf7', '#bfe6ff', '#7ffcff'];
-const ENDGAME_WATK = 92;
-const ENDGAME_MATK = 96;
+// Progression weapons come every 5 levels: a level-0 training weapon (`${type}_0`) and then one
+// at each of levels 5 to 100 (`${type}_${level}`), made of a better material each time. `tier`
+// is the weapon's place on that ladder (0 to 20), which the renderer turns into its look.
+export const WEAPON_LEVELS = Array.from({ length: 21 }, (_, i) => i * 5);
+const MATERIALS = [
+  'Copper', 'Bronze', 'Iron', 'Steel', 'Silver', 'Mithril', 'Cobalt', 'Crystal', 'Runic', 'Starsteel',
+  'Moonsilver', 'Sunforged', 'Dragonbone', 'Obsidian', 'Adamant', 'Phoenix', 'Abyssal', 'Astral', 'Celestial', 'Genesis',
+];
+// What each type is called as it grows: one noun per five tiers.
+const WEAPON_NOUNS = {
+  sword: ['Shortsword', 'Sword', 'Longsword', 'Broadsword', 'Greatsword'],
+  axe: ['Hatchet', 'Axe', 'Battleaxe', 'Greataxe', 'Executioner'],
+  spear: ['Spear', 'Pike', 'Lance', 'Halberd', 'Glaive'],
+  wand: ['Wand', 'Rod', 'Baton', 'Scepter', 'Regalia'],
+  staff: ['Staff', 'Crook', 'Grand Staff', 'Spire', 'Archstaff'],
+  bow: ['Shortbow', 'Bow', 'Recurve', 'Longbow', 'Warbow'],
+  crossbow: ['Crossbow', 'Arbalest', 'Repeater', 'Heavy Arbalest', 'Siegebow'],
+  dagger: ['Knife', 'Dagger', 'Dirk', 'Stiletto', 'Kris'],
+  claw: ['Claw', 'Talons', 'Rippers', 'Razorclaws', 'Fangs'],
+};
+// Colors along the ladder (the training weapon first), used for names, trails, and drops.
+const WEAPON_COLORS = [
+  '#e9c48f', '#e0915a', '#c98a4a', '#a8b0bc', '#d6dde8', '#eef2f8', '#bfe6ff', '#4f7bd8', '#c9f2ff', '#7ffcff', '#b8c4ff',
+  '#dfe8ff', '#ffcf5a', '#efe2c4', '#4a3f6a', '#8ff0d0', '#ff8a3c', '#7a3fbf', '#9fb8ff', '#fff3b8', '#ffffff',
+];
+export const weaponAtk = (level) => Math.round(14 + 1.4 * level);
+const weaponMatk = (level) => Math.round(10 + 1.4 * level);
+// Endgame designs hit like a level-60 weapon, plus their theme's bonus.
+const ENDGAME_WATK = weaponAtk(60);
+const ENDGAME_MATK = weaponMatk(60);
 
 // What each endgame theme adds on top of the weapon's attack. `main` is the type's main stat.
 const THEME_BONUS = {
@@ -59,12 +83,14 @@ const LASER_COLORS = { sword: '#4fd8ff', axe: '#ff4f6b', spear: '#7dff6b', wand:
 export const ENDGAME_THEMES = ['holy', 'demonic', 'bone', 'laser', 'chainsaw', 'cyber'];
 
 for (const [type, line] of Object.entries(WEAPON_LINES)) {
-  line.names.forEach((name, t) => {
-    const stats = { watk: Math.round(TIER_WATK[t] * line.scale) };
-    if (line.matk) stats.matk = Math.round(TIER_MATK[t] * line.matk);
+  WEAPON_LEVELS.forEach((level, t) => {
+    const stats = { watk: Math.round(weaponAtk(level) * line.scale) };
+    if (line.matk) stats.matk = Math.round(weaponMatk(level) * line.matk);
     add({
-      id: `${type}_${t}`, name, type: 'equip', slot: 'weapon', weaponType: type, tier: t, element: null,
-      reqLevel: TIER_LEVELS[t], family: null, stats, price: Math.round(100 + 160 * t * t + 400 * t), color: TIER_COLORS[t],
+      id: `${type}_${level}`,
+      name: t === 0 ? line.names[0] : `${MATERIALS[t - 1]} ${WEAPON_NOUNS[type][Math.floor((t - 1) / 4)]}`,
+      type: 'equip', slot: 'weapon', weaponType: type, tier: t, element: null, main: line.main,
+      reqLevel: level, family: null, stats, price: Math.round(100 + 1.6 * level * level + 40 * level), color: WEAPON_COLORS[t],
     });
   });
   for (const theme of ENDGAME_THEMES) {
@@ -74,12 +100,17 @@ for (const [type, line] of Object.entries(WEAPON_LINES)) {
     add({
       // The holy staff keeps the id it first shipped with, so saved ones carry over.
       id: type === 'staff' && theme === 'holy' ? 'seraphim_staff' : `${type}_${theme}`,
-      name: line.themes[theme], type: 'equip', slot: 'weapon', weaponType: type, tier: 5, theme, element: theme,
+      name: line.themes[theme], type: 'equip', slot: 'weapon', weaponType: type, tier: 21, theme, element: theme, main: line.main,
       reqLevel: 50, family: null, endgame: true, stats, price: 250000,
       color: theme === 'laser' ? LASER_COLORS[type] : THEME_COLORS[theme],
     });
   }
 }
+
+// The old ladder had tiers 1 to 4 at levels 10 to 40; saves that hold them get the new weapon
+// of the same level.
+export const RENAMED_ITEMS = {};
+for (const type of Object.keys(WEAPON_LINES)) for (const t of [1, 2, 3, 4]) RENAMED_ITEMS[`${type}_${t}`] = `${type}_${t * 10}`;
 
 export const WEAPON_IDS = Object.values(ITEMS).filter((d) => d.slot === 'weapon').map((d) => d.id);
 
@@ -122,8 +153,160 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
       stats,
       price: Math.round(60 + 90 * t * t + 250 * t),
       color: tier.color,
+      // Only the cotton starter set is still sold and dropped; the rest stay so old saves keep
+      // what they wear (the job sets below replaced them).
+      legacy: t > 0,
     });
   });
+}
+
+// ---------- Job gear ----------
+// Every job has its own set every 5 levels, from 5 to 100, in each armor slot: warriors in heavy
+// plate, archers in elven leaf and silk, mages in grand robes and towering hats, thieves in dark
+// wraps and long scarves. The level-5 sets are starters a Novice can wear before choosing.
+// Earrings suit everyone and come in their own ladder.
+
+export const GEAR_LEVELS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
+export const GEAR_FAMILIES = ['warrior', 'archer', 'mage', 'thief'];
+export const JOB_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape'];
+
+const byTier = (list) => (t) => list[Math.min(list.length - 1, Math.floor(t / (20 / list.length)))];
+export const JOB_SETS = {
+  warrior: {
+    names: ['Squire', 'Militia', 'Ironclad', 'Steelguard', 'Knight', 'Vanguard', 'Crusader', 'Warlord', 'Juggernaut', 'Titan',
+      'Dragonscale', 'Bloodforged', 'Obsidian', 'Colossus', 'Dreadnought', 'Infernal', 'Doomguard', 'Godslayer', 'Ragnarok', 'Ascendant'],
+    nouns: { hat: byTier(['Cap', 'Helm', 'Greathelm', 'Warhelm']), top: byTier(['Jerkin', 'Cuirass', 'Plate', 'Warplate']), bottom: byTier(['Chausses', 'Greaves', 'Legplates', 'Warlegs']), shoes: byTier(['Boots', 'Sabatons', 'Sabatons', 'Warboots']), gloves: byTier(['Grips', 'Gauntlets', 'Gauntlets', 'Warfists']), cape: byTier(['Cloak', 'Warcloak', 'Banner Cape', 'Conqueror Cape']) },
+    colors: ['#b89a74', '#9aa3b0', '#aeb7c4', '#cfd7e3', '#e6ecf6', '#8ea6d6', '#f4f1e8', '#b4614f', '#6f7480', '#d9b45a',
+      '#3fa37a', '#9e2236', '#3a3448', '#c8cfd8', '#4a5a7a', '#e0552e', '#2b2233', '#f2d27a', '#5b2a8a', '#fff8e6'],
+  },
+  archer: {
+    names: ['Fledgling', 'Woodland', 'Greenleaf', 'Ranger', 'Sylvan', 'Thornweave', 'Silverleaf', 'Windrunner', 'Starweave', 'Dawnsong',
+      'Elderwood', 'Moonshadow', 'Sunfeather', 'Aurora', 'Celestine', 'Wildheart', 'Evergreen', 'Starsinger', 'Lightbloom', 'Worldtree'],
+    nouns: { hat: byTier(['Hood', 'Circlet', 'Circlet', 'Diadem']), top: byTier(['Vest', 'Tunic', 'Tunic', 'Raiment']), bottom: byTier(['Breeches', 'Leggings', 'Leggings', 'Legwraps']), shoes: byTier(['Shoes', 'Boots', 'Boots', 'Striders']), gloves: byTier(['Bracers', 'Bracers', 'Armguards', 'Armguards']), cape: byTier(['Cloak', 'Mantle', 'Mantle', 'Wings']) },
+    colors: ['#9bbf7a', '#6fa86a', '#5fbf84', '#4f8f5f', '#7fd1a8', '#8a6a9a', '#cfe3d8', '#7fc4e8', '#6f7fd8', '#ffb07a',
+      '#7a5a3a', '#4a5f8a', '#ffcf5a', '#7fe0c8', '#e8f4ff', '#c85a6a', '#2f7f5a', '#9a8aff', '#ffd6ea', '#e8ffe0'],
+  },
+  mage: {
+    names: ['Apprentice', 'Initiate', 'Scholar', 'Mystic', 'Arcanist', 'Sorcerer', 'Enchanter', 'Magister', 'Sage', 'Archon',
+      'Astral', 'Starweaver', 'Moonsage', 'Sunspire', 'Highmage', 'Seraphic', 'Ethereal', 'Cosmic', 'Eclipse', 'Eternity'],
+    nouns: { hat: byTier(['Hat', 'Wizard Hat', 'Grand Hat', 'Crown']), top: byTier(['Robe', 'Robe', 'Vestments', 'Regalia']), bottom: byTier(['Skirt', 'Robeskirt', 'Robeskirt', 'Train']), shoes: byTier(['Slippers', 'Slippers', 'Shoes', 'Steps']), gloves: byTier(['Gloves', 'Gloves', 'Silks', 'Silks']), cape: byTier(['Cape', 'Cape', 'Mantle', 'Starcloak']) },
+    colors: ['#8fa8e8', '#7f8fe0', '#5f6fc8', '#8a6ad8', '#4f5fb8', '#6a3fa8', '#c86ab8', '#3f4f9a', '#4f8a8a', '#f4ead2',
+      '#2f3f7a', '#5a2f8a', '#9ab8e8', '#e8a23c', '#7a2f5a', '#ffffff', '#8fe8ff', '#1f1f4a', '#2a1a2a', '#b48cff'],
+  },
+  thief: {
+    names: ['Pickpocket', 'Footpad', 'Cutpurse', 'Sneak', 'Nightstalker', 'Rogue', 'Phantom', 'Viper', 'Raven', 'Assassin',
+      'Wraith', 'Nightblade', 'Shade', 'Duskfang', 'Umbral', 'Voidwalker', 'Specter', 'Oblivion', 'Nightmare', 'Shadow King'],
+    nouns: { hat: byTier(['Bandana', 'Hood', 'Mask', 'Visage']), top: byTier(['Garb', 'Garb', 'Shroud', 'Shroud']), bottom: byTier(['Pants', 'Pants', 'Hakama', 'Hakama']), shoes: byTier(['Tabi', 'Tabi', 'Steps', 'Steps']), gloves: byTier(['Wraps', 'Wraps', 'Claws', 'Claws']), cape: byTier(['Scarf', 'Scarf', 'Longscarf', 'Shadowscarf']) },
+    colors: ['#8a7a6a', '#6a6a7a', '#5a5a6f', '#4a4a62', '#3b3a5a', '#5a3a4a', '#6a5a9a', '#2f6a4a', '#2a2a3a', '#7a1f2f',
+      '#5f6f8a', '#1f2a4a', '#4a3f6a', '#6a2f2a', '#2a1f3a', '#1a1a2a', '#cfd6e8', '#3a0f2a', '#160f1f', '#2a1a4a'],
+  },
+};
+
+// How much defense a whole set gives at a level, split over the slots; each job leans its own way.
+const setDefense = (level) => 10 + level * 3.2;
+const SLOT_SHARE = { hat: 0.18, top: 0.3, bottom: 0.2, shoes: 0.1, gloves: 0.1, cape: 0.12 };
+const FAMILY_DEF = { warrior: 1.35, archer: 1, mage: 0.65, thief: 0.9 };
+function jobGearStats(family, slot, L) {
+  const share = SLOT_SHARE[slot];
+  const d = setDefense(L) * share;
+  const s = { wdef: Math.round(d * FAMILY_DEF[family]) };
+  const main = (n) => Math.floor(L / n);
+  if (slot === 'cape') s.mdef = Math.round(2 + L * 0.8);
+  if (family === 'warrior') {
+    if (slot === 'top') Object.assign(s, { hp: L * 2, str: main(12) });
+    if (slot === 'hat') Object.assign(s, { hp: Math.round(L * 1.2) });
+    if (slot === 'bottom') Object.assign(s, { hp: L });
+    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), str: main(20) });
+    if (slot === 'shoes') Object.assign(s, { speed: 1 + main(25) });
+  } else if (family === 'archer') {
+    if (slot === 'top' || slot === 'hat') Object.assign(s, { dex: main(12) });
+    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), acc: 2 + main(5) });
+    if (slot === 'shoes') Object.assign(s, { speed: 2 + main(12) });
+    if (slot === 'cape') Object.assign(s, { eva: 1 + main(8) });
+    if (slot === 'bottom') Object.assign(s, { acc: 1 + main(8) });
+  } else if (family === 'mage') {
+    if (slot === 'top') Object.assign(s, { int: main(10), mp: Math.round(L * 2), mdef: Math.round(4 + L * 0.9) });
+    if (slot === 'hat') Object.assign(s, { int: main(12), mp: Math.round(L * 1.5), mdef: Math.round(2 + L * 0.6) });
+    if (slot === 'bottom') Object.assign(s, { mp: L, mdef: Math.round(L * 0.4) });
+    if (slot === 'gloves') Object.assign(s, { matk: 1 + main(8) });
+    if (slot === 'shoes') Object.assign(s, { speed: 1 + main(20), mp: Math.round(L * 0.5) });
+  } else {
+    if (slot === 'top' || slot === 'hat') Object.assign(s, { luk: main(12) });
+    if (slot === 'top' || slot === 'bottom') Object.assign(s, { eva: 1 + main(5) });
+    if (slot === 'gloves') Object.assign(s, { watk: 1 + main(14), acc: 1 + main(6) });
+    if (slot === 'shoes') Object.assign(s, { speed: 3 + main(10), jump: main(25) });
+    if (slot === 'cape') Object.assign(s, { eva: 2 + main(6) });
+  }
+  for (const k of Object.keys(s)) if (!s[k]) delete s[k];
+  return s;
+}
+
+for (const family of GEAR_FAMILIES) {
+  const set = JOB_SETS[family];
+  GEAR_LEVELS.forEach((level, t) => {
+    for (const slot of JOB_SLOTS) {
+      add({
+        id: `${family}_${slot}_${level}`,
+        name: `${set.names[t]} ${set.nouns[slot](t)}`,
+        type: 'equip', slot, design: 'job', family, tier: t, reqLevel: level,
+        // The first sets let a Novice dress for the job they're aiming at.
+        starter: t === 0,
+        stats: jobGearStats(family, slot, level),
+        price: Math.round((60 + 0.9 * level * level + 25 * level) * (slot === 'top' ? 1.3 : 1)),
+        color: set.colors[t],
+      });
+    }
+  });
+}
+
+// Earrings: a ladder of their own for every job, mostly magic and MP with a little of
+// everything later on.
+const EARRING_NAMES = ['Copper Studs', 'Bronze Studs', 'Silver Studs', 'Silver Hoops', 'Gold Hoops', 'Pearl Drops', 'Crystal Drops', 'Moon Drops', 'Star Drops', 'Comet Charms',
+  'Fairy Charms', 'Dragon Fangs', 'Phoenix Feathers', 'Aurora Drops', 'Nebula Drops', 'Starfall Charms', 'Halo Rings', 'Seraph Feathers', 'Infinity Loops', 'Genesis Stars'];
+const EARRING_COLORS = ['#e0915a', '#c98a4a', '#dfe6f5', '#dfe6f5', '#ffd66b', '#fff4f8', '#bfe9ff', '#d6ccff', '#ffe36b', '#9fd8ff',
+  '#ffc2e8', '#ff9b5c', '#ff7a3c', '#7fe0c8', '#b48cff', '#ffe9a8', '#fff3b8', '#ffffff', '#c9a6ff', '#fffbe0'];
+GEAR_LEVELS.forEach((level, t) => {
+  const stats = { matk: 1 + Math.floor(level / 6), mp: 10 + level * 2, hp: level >= 30 ? level : 0, mdef: Math.floor(level / 4) };
+  if (level >= 50) Object.assign(stats, { str: Math.floor(level / 25), dex: Math.floor(level / 25), int: Math.floor(level / 25), luk: Math.floor(level / 25) });
+  for (const k of Object.keys(stats)) if (!stats[k]) delete stats[k];
+  add({
+    id: `ear_${level}`, name: EARRING_NAMES[t], type: 'equip', slot: 'earring', design: 'jewel', tier: t, reqLevel: level,
+    family: null, stats, price: Math.round(120 + 1.1 * level * level + 30 * level), color: EARRING_COLORS[t],
+  });
+});
+
+// The job set (or earrings) for a slot at a level.
+export function jobGearId(family, slot, level) {
+  const L = Math.max(5, Math.min(100, Math.floor(level / 5) * 5));
+  return slot === 'earring' ? `ear_${L}` : `${family}_${slot}_${L}`;
+}
+
+// ---------- Color variants ----------
+// Gear can come in a color that tunes its stats: Dark adds the wearer's main stat, White their
+// second stat, Crimson attack, Azure defense and health, and Gilded a bit of every stat. Earrings
+// take a gem instead: ruby STR, emerald DEX, sapphire INT, topaz LUK, diamond all four.
+// `main` and `accent` recolor the piece.
+
+export const VARIANTS = {
+  dark: { name: 'Dark', main: '#3b3550', accent: '#b44cff', weight: 26, about: 'main stat' },
+  white: { name: 'White', main: '#f3f0ea', accent: '#ffd66b', weight: 26, about: 'second stat' },
+  crimson: { name: 'Crimson', main: '#c8324a', accent: '#ffd66b', weight: 20, about: 'attack' },
+  azure: { name: 'Azure', main: '#3f7fd8', accent: '#bff6ff', weight: 20, about: 'defense and HP' },
+  gilded: { name: 'Gilded', main: '#f0c040', accent: '#ffffff', weight: 8, about: 'all stats' },
+};
+export const GEMS = {
+  ruby: { name: 'Ruby', main: '#ff3b5c', accent: '#ffd0da', weight: 23, stat: 'str', about: 'STR' },
+  emerald: { name: 'Emerald', main: '#3fd98a', accent: '#d6ffe8', weight: 23, stat: 'dex', about: 'DEX' },
+  sapphire: { name: 'Sapphire', main: '#4f7bff', accent: '#d6e2ff', weight: 23, stat: 'int', about: 'INT' },
+  topaz: { name: 'Topaz', main: '#ffb43b', accent: '#fff0c9', weight: 23, stat: 'luk', about: 'LUK' },
+  diamond: { name: 'Diamond', main: '#e8fbff', accent: '#ffffff', weight: 8, stat: 'all', about: 'all stats' },
+};
+// Which variants an item can come in (none for consumables, legacy gear, and outfits).
+export function variantsFor(def) {
+  if (!def || def.type !== 'equip' || def.legacy || def.unique || def.endgame) return null;
+  if (def.slot === 'earring') return def.design === 'jewel' ? GEMS : null;
+  if (def.slot === 'weapon') return def.tier > 0 ? VARIANTS : null;
+  return def.design === 'job' ? VARIANTS : null;
 }
 
 // ---------- Unique gear ----------

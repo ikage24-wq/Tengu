@@ -1,6 +1,8 @@
 // Quests. Objectives: kill a monster N times, or collect N of an item (handed in on completion).
 // A quest with no objectives completes as soon as you accept it.
 
+// A reward marked `forJob` is job gear: the hero gets their own job's piece instead (the id names
+// the slot and level). `variant` gives it a color ('roll' picks one).
 export const QUESTS = {
   first_steps: {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,
@@ -36,7 +38,7 @@ export const QUESTS = {
     id: 'leaf_samples', name: 'Leaf Samples', giver: 'rook', minLevel: 12, prereq: 'mush_menace',
     text: 'Our herbalist needs 20 Leafox Tufts from the Leafoxes in Mossy Woods.',
     objectives: [{ type: 'collect', item: 'leaf_fragment', count: 20 }],
-    rewards: { exp: 3500, gold: 1500, items: [{ id: 'gloves_1', qty: 1 }, { id: 'scroll_glove_60', qty: 1 }] },
+    rewards: { exp: 3500, gold: 1500, items: [{ id: 'warrior_gloves_15', qty: 1, forJob: true }, { id: 'scroll_glove_60', qty: 1 }] },
   },
   tusk_trader: {
     id: 'tusk_trader', name: 'Tusk Trader', giver: 'marlo', minLevel: 15,
@@ -48,12 +50,12 @@ export const QUESTS = {
     id: 'restless_ruins', name: 'Restless Ruins', giver: 'rook', minLevel: 20, prereq: 'leaf_samples',
     text: 'Skelly Knights patrol the Twilight Ruins at night. Put 25 of them to rest.',
     objectives: [{ type: 'kill', mob: 'boneknight', count: 25 }],
-    rewards: { exp: 18000, gold: 6000, items: [{ id: 'scroll_watk_10', qty: 1 }, { id: 'earring_2', qty: 1 }] },
+    rewards: { exp: 18000, gold: 6000, items: [{ id: 'scroll_watk_10', qty: 1 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
   },
   crystal_heart: {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
     text: 'Deep in the Crystal Cave sits the Crystal King. Defeat it and bring peace to the coast.',
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
-    rewards: { exp: 150000, gold: 50000, items: [{ id: 'cape_4', qty: 1 }, { id: 'elixir', qty: 10 }] },
+    rewards: { exp: 150000, gold: 50000, items: [{ id: 'warrior_cape_40', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 10 }] },
   },
 };

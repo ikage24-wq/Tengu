@@ -1,7 +1,7 @@
 // Saving and loading characters in localStorage, one key per character slot. Buffs and timers aren't saved.
 
 import { setNextUid } from './items.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
 
@@ -40,6 +40,11 @@ export function loadGame(slot = 0) {
 // Items removed from the game since the save was made (like the old weapon lines) are dropped,
 // so an old save never refers to something that no longer exists.
 export function dropRetiredItems(char) {
+  // Renamed items (the old weapon tiers) become their replacements first.
+  const rename = (e) => e && RENAMED_ITEMS[e.id] && (e.id = RENAMED_ITEMS[e.id]);
+  Object.values(char.equipment).forEach(rename);
+  for (const tab of Object.keys(char.inventory)) char.inventory[tab].forEach(rename);
+  for (const b of Object.values(char.hotkeys ?? {})) if (b?.item && RENAMED_ITEMS[b.item]) b.item = RENAMED_ITEMS[b.item];
   for (const [slot, inst] of Object.entries(char.equipment)) if (inst && !ITEMS[inst.id]) char.equipment[slot] = null;
   for (const tab of Object.keys(char.inventory)) char.inventory[tab] = char.inventory[tab].filter((e) => ITEMS[e.id]);
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.item && !ITEMS[b.item]) char.hotkeys[code] = null;

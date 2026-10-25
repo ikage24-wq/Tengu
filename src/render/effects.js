@@ -687,7 +687,7 @@ export function drawDrops(ctx, world, cam, time) {
         sparkle(ctx, x, y - 8, 12, color ?? '#fff3a6');
         ctx.globalAlpha = fade;
       }
-      drawItemIcon(ctx, id, x - 8, y - 16);
+      drawItemIcon(ctx, id, x - 8, y - 16, 1, d.inst?.variant);
     }
   }
   ctx.globalAlpha = 1;

@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS = {
   particles: 'full', // 'full' | 'reduced' | 'off'
   jobAuras: true,
   weaponEffects: true,
+  gearEffects: true,
   showCrowd: true,
   chatBubbles: true,
   monsterHp: true,

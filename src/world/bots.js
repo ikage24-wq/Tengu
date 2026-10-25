@@ -10,7 +10,7 @@
 import { createCharacter, gainExp, advanceJob, spendAp, STAT_KEYS } from '../core/character.js';
 import { computeStats } from '../core/stats.js';
 import { expToNext } from '../core/exp.js';
-import { makeEquip, rollRarity } from '../core/items.js';
+import { makeEquip, rollRarity, variantPrice, itemName } from '../core/items.js';
 import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
@@ -121,19 +121,24 @@ export function buildLabel(char) {
   return `${primary.toUpperCase()} main`;
 }
 
-// The best few items a character could wear in a slot, picked with some luck.
-function gearFor(char, slot, pro, rng) {
-  const weapons = JOBS[char.job].weapons ?? [];
-  let pool = Object.values(ITEMS).filter((d) => d.slot === slot && d.reqLevel <= char.level && (slot !== 'weapon' || weapons.includes(d.weaponType)));
+// The best few items a character could wear in a slot, picked with some luck: their own job's
+// set at their level, a weapon they can use, or now and then a unique outfit. `variant` is the
+// color they're going for (most players match their outfit).
+function gearFor(char, slot, pro, rng, variant) {
+  const job = JOBS[char.job];
+  const weapons = job.weapons ?? [];
+  const wearable = (d) => !d.legacy && (!d.family || d.family === job.family || (d.starter && char.job === 'novice'));
+  let pool = Object.values(ITEMS).filter((d) => d.slot === slot && d.reqLevel <= char.level && wearable(d) && (slot !== 'weapon' || weapons.includes(d.weaponType)));
   if (!pro) pool = pool.filter((d) => !d.endgame);
   else if (slot === 'weapon' && rng() < 0.75 && pool.some((d) => d.endgame)) pool = pool.filter((d) => d.endgame);
   if (!pool.length) return null;
   pool.sort((a, b) => b.reqLevel - a.reqLevel);
   // Uniques show up now and then for flair.
   const uniques = pool.filter((d) => d.unique);
-  const def = uniques.length && rng() < 0.3 ? pick(uniques, rng) : pick(pool.slice(0, 3), rng);
+  const def = uniques.length && rng() < 0.2 ? pick(uniques, rng) : pick(pool.slice(0, 2), rng);
   const rarity = pro ? Math.max(2, rollRarity(rng)) : rollRarity(rng);
-  return makeEquip(def.id, { variance: 0.12, rng, rarity });
+  const own = def.slot === 'earring' ? 'roll' : rng() < 0.7 ? variant : 'roll';
+  return makeEquip(def.id, { variance: 0.12, rng, rarity, variant: own });
 }
 
 export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name } = {}) {
@@ -144,9 +149,11 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
   let r = rng();
   const build = BUILDS.find((b) => (r -= b.weight) < 0)?.id ?? 'standard';
   spendBuild(char, build, rng);
+  // An outfit color: some go plain, most pick a color, and top players love Gilded and Dark.
+  const variant = pro ? pick(['gilded', 'dark', 'dark', 'white', 'crimson', null], rng) : pick([null, null, 'dark', 'white', 'crimson', 'azure', 'gilded'], rng);
   for (const slot of EQUIP_SLOTS) {
-    if (!pro && slot !== 'weapon' && rng() < (char.level < 15 ? 0.45 : 0.15)) continue;
-    char.equipment[slot] = gearFor(char, slot, pro, rng);
+    if (!pro && slot !== 'weapon' && rng() < (char.level < 15 ? 0.35 : 0.1)) continue;
+    char.equipment[slot] = gearFor(char, slot, pro, rng, variant);
   }
   const s = computeStats(char);
   char.hp = s.maxHp;
@@ -168,13 +175,13 @@ function makeShop(bot, rng) {
   const count = 4 + Math.floor(rng() * 4);
   const drops = Object.values(ITEMS).filter((d) => d.type === 'etc');
   const pots = Object.values(ITEMS).filter((d) => d.type === 'use' && d.effect);
-  const gear = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.endgame && Math.abs(d.reqLevel - char.level) <= 15);
+  const gear = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.endgame && !d.legacy && Math.abs(d.reqLevel - char.level) <= 15);
   for (let i = 0; i < count; i++) {
     const r = rng();
     if (r < 0.45 && gear.length) {
       const def = pick(gear, rng);
-      const inst = makeEquip(def.id, { variance: 0.12, rng, rarity: Math.max(rollRarity(rng), rng() < 0.3 ? 1 : 0) });
-      const cost = Math.round((def.price * (1 + inst.rarity * 0.9) * between(0.6, 1.5, rng)) / 10) * 10;
+      const inst = makeEquip(def.id, { variance: 0.12, rng, rarity: Math.max(rollRarity(rng), rng() < 0.3 ? 1 : 0), variant: 'roll' });
+      const cost = Math.round((variantPrice(def, inst.variant) * (1 + inst.rarity * 0.9) * between(0.6, 1.5, rng)) / 10) * 10;
       items.push({ inst, id: def.id, qty: 1, price: Math.max(50, cost) });
     } else if (r < 0.75 && drops.length) {
       const def = pick(drops, rng);
@@ -471,7 +478,7 @@ export function buyFromShop(bot, index, char, addItem) {
   char.gold -= entry.price;
   bot.shop.items.splice(index, 1);
   bot.char.gold += entry.price;
-  const name = ITEMS[entry.id].name;
+  const name = itemName(entry.inst ?? entry.id);
   if (!bot.shop.items.length) {
     bot.shop = null;
     bot.state = 'idle';

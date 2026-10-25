@@ -3,6 +3,7 @@
 
 import { getMap } from '../data/maps.js';
 import { ITEMS, RARITIES } from '../data/items.js';
+import { itemName, itemColors } from '../core/items.js';
 import { QUESTS } from '../data/quests.js';
 import { SKILLS } from '../data/skills.js';
 import { computeStats } from '../core/stats.js';
@@ -14,7 +15,7 @@ import { createBody, stepBody, knockBack } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
-import { nextJobs } from '../data/jobs.js';
+import { JOBS, nextJobs } from '../data/jobs.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -165,8 +166,9 @@ function pickUp(world) {
     }
     const def = ITEMS[d.inst ? d.inst.id : d.id];
     const rarity = d.inst?.rarity ? RARITIES[d.inst.rarity] : null;
-    if (rarity) world.log(`Picked up a ${rarity.name} ${def.name}!`, rarity.color);
-    else world.log(`Picked up ${def.name}${d.qty > 1 ? ` x${d.qty}` : ''}.`, def.color);
+    const name = itemName(d.inst ?? d.id);
+    if (rarity) world.log(`Picked up a ${rarity.name} ${name}!`, rarity.color);
+    else world.log(`Picked up ${name}${d.qty > 1 ? ` x${d.qty}` : ''}.`, d.inst ? itemColors(d.inst).main : def.color);
     if (rarity || def.unique) world.juice.push({ type: 'loot', x: d.x, y: d.y, color: rarity?.color ?? '#ff9ec0' });
     // Show progress for any active quest that collects this item.
     for (const [qid, rec] of Object.entries(char.quests)) {
@@ -226,6 +228,13 @@ function useHotkey(world, binding) {
 
 // `byParty` is a kill by a party member: you get a share of the EXP. Your own kills get a bonus for
 // each party member with you.
+// Gear the hero's job can wear (level aside): its own job set, and weapons it can use.
+function fitsJob(char, def) {
+  const job = JOBS[char.job];
+  if (def.family) return def.family === job.family || (def.starter && char.job === 'novice');
+  return def.slot !== 'weapon' || job.weapons.includes(def.weaponType);
+}
+
 function killMob(world, m, byParty = false) {
   const char = world.char;
   const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)));
@@ -236,7 +245,7 @@ function killMob(world, m, byParty = false) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
   }
-  world.drops.push(...spawnDrops(rollLoot(m.def), m.x, m.y));
+  world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss) });
   world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.3 : 0.045);
   if (levels > 0) {

@@ -12,11 +12,13 @@
 // hurt recoil.
 
 import { settings } from '../core/settings.js';
-import { ITEMS, RARITIES } from '../data/items.js';
+import { ITEMS, RARITIES, variantsFor } from '../data/items.js';
+import { pieceOf } from './jobgear/index.js';
+import { drawGearFx } from './jobgear/live.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
-  hatBackShapes, TUCKS_HAIR, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
+  hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
@@ -43,8 +45,8 @@ const KX = 0.66;
 // Below the hips the legs shrink a little more, for short chibi legs.
 const LEG_TOP = 38;
 const KL = 0.72;
-const OX = 6;
-const OY = 11;
+const OX = 10;
+const OY = 22;
 const W = 30 + OX * 2;
 const H = Math.ceil(NECK + (LEG_TOP - NECK) * KY + (56 - LEG_TOP) * KY * KL) + OY;
 const INK = '#3a2d4f';
@@ -81,7 +83,8 @@ function resolveGear(look, gear) {
     const inst = gear?.[slot];
     if (!inst) return design ? { design, color } : null;
     const def = ITEMS[inst.id];
-    return { design: def.design ?? design, color: def.color };
+    if (!def) return design ? { design, color } : null;
+    return pieceOf(def, inst.variant ?? null);
   };
   const w = gear?.weapon ? ITEMS[gear.weapon.id] : null;
   return {
@@ -92,13 +95,13 @@ function resolveGear(look, gear) {
     cape: piece('cape', null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
-    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
+    weapon: w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null,
   };
 }
 
 function gearKey(gear) {
   if (!gear) return '-';
-  return ['top', 'bottom', 'shoes', 'gloves', 'hat', 'cape', 'earring'].map((s) => gear[s]?.id ?? '').join(',');
+  return ['top', 'bottom', 'shoes', 'gloves', 'hat', 'cape', 'earring'].map((s) => (gear[s] ? `${gear[s].id}${gear[s].variant ? `:${gear[s].variant}` : ''}` : '')).join(',');
 }
 
 // ---------- Head ----------
@@ -515,10 +518,11 @@ function headShapes(look, g, rig) {
   const eyeStyle = look.eyeStyle ?? 'sparkle';
   const eyeColor = look.eyeColor ?? '#4fcfb8';
   const hat = g.hat;
-  const tucked = hat && TUCKS_HAIR.has(hat.design);
+  const tucked = hatTucks(hat);
+  const m = motionOf(rig);
   const out = [];
   if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairLift).filter((sh) => !sh.hang));
-  if (hat) out.push(...hatBackShapes(hat.design, hat.color));
+  if (hat) out.push(...hatBackShapes(hat.design, hat.color, hat, m));
   // Facing the screen: a round head with soft full cheeks, an ear peeking out on each side, big
   // eyes set low and wide apart, blush under each eye and a small mouth in the middle.
   for (const ex of [5.6, 25.4]) out.push(L(E(ex, 18, 1.8, 2.3, skin)), F(E(ex, 18.2, 0.7, 1.2, '#f4bfcb')));
@@ -539,7 +543,7 @@ function headShapes(look, g, rig) {
   }
   if (rig.eyes === 'hurt') out.push(F(E(FACE_X, 23, 1, 0.7, INK)));
   else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile'));
-  if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair, rig.hair, look.face ?? 'smile'));
+  if (!hatHidesBangs(hat)) out.push(...hairFront(style, hair, rig.hair, look.face ?? 'smile'));
   if (f.brows) {
     const bc = mix(shade(hair, -30), INK, 0.35);
     // The eye-cover lock hides that side's brow.
@@ -549,12 +553,15 @@ function headShapes(look, g, rig) {
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
   // An earring under each ear.
   if (g.earring) {
-    const ring = offset(earringShapes(g.earring.design, g.earring.color), -1.6, 0);
+    const ring = offset(earringShapes(g.earring.design, g.earring.color, g.earring), -1.6, 0);
     out.push(...ring, ...mirror(ring));
   }
-  if (hat) out.push(...hatShapes(hat.design, hat.color));
+  if (hat) out.push(...hatShapes(hat.design, hat.color, hat, m));
   return out;
 }
+
+// What gear sways and flaps with: the cape spring, the hair spring, and the wing beat.
+const motionOf = (rig) => ({ sway: rig.cape ?? 0, hair: rig.hair ?? 0, flap: rig.flap ? 1 : 0 });
 
 // ---------- Arms ----------
 
@@ -563,15 +570,19 @@ const FOREARM = 4.7;
 
 // Shoulder to elbow in the sleeve color, then a forearm (bare unless the top has long sleeves).
 // The elbow bends outward (away from the body's middle) to bring the hand to (hx, hy).
+// The hand's shapes come last; `handAt` says where they start (the grip layer redraws them).
 function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
   const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, sx < HEAD_X ? 1 : -1);
-  return [
+  const out = [
     E(sx, sy + 0.4, 2, 2, sleeve),
     limb(sx, sy, ex, ey, 4.2, 3.6, sleeve),
     E(ex, ey, 1.8, 1.8, long ? sleeve : skin),
     limb(ex, ey, wx, wy, 3.6, 3.1, long ? sleeve : skin),
-    ...handShapes(wx, wy, g.gloves, skin),
+    ...offset(shoulderShapes(g.top, sx < HEAD_X ? -1 : 1), sx, sy),
   ];
+  out.handAt = out.length;
+  out.push(...handShapes(wx, wy, g.gloves, skin, ex, ey));
+  return out;
 }
 
 // Facing the screen: a shoulder at each edge of the torso, so the arms hang down the sides, each
@@ -606,9 +617,10 @@ const RIGHT_LEG = 16.6;
 function bodyShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
   const top = g.top;
-  const sleeve = sleeveColor(top.design, top.color);
-  const long = longSleeves(top.design);
-  const legs = legLook(g.bottom.design, g.bottom.color, skin);
+  const sleeve = sleeveColor(top.design, top.color, top);
+  const long = longSleeves(top.design, top);
+  const legs = legLook(g.bottom.design, g.bottom.color, skin, g.bottom);
+  const m = motionOf(rig);
   if (rig.view === 'back') return backShapes(look, g, rig, skin, sleeve, legs);
 
   // Everything above the hips leans with tx and bobs with by; the hips also sink by however much
@@ -619,19 +631,19 @@ function bodyShapes(look, g, rig) {
   const shapes = [];
   const hat = g.hat;
   let hang = [];
-  if (!hat || !TUCKS_HAIR.has(hat.design)) {
+  if (!hatTucks(hat)) {
     hang = hairBack(hairStyleOf(look), look.hairColor ?? '#e9ebfa', rig.hair, rig.hairLift).filter((sh) => sh.hang);
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
-  if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap), ux, uy));
+  if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
   shapes.push(...legShapes(LEFT_LEG, legs, g.shoes, false, rig.backLeg, HIP_Y + drop));
   shapes.push(...legShapes(RIGHT_LEG, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
   shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
-  const skirt = skirtShapes(g.bottom.design, g.bottom.color);
+  const skirt = skirtShapes(g.bottom.design, g.bottom.color, g.bottom, m);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
-  shapes.push(...offset(topShapes(top.design, top.color), ux, uy));
-  if (g.cape) shapes.push(...offset(capeFrontShapes(g.cape.design, g.cape.color), ux, uy));
+  shapes.push(...offset(topShapes(top.design, top.color, top, m), ux, uy));
+  if (g.cape) shapes.push(...offset(capeFrontShapes(g.cape.design, g.cape.color, g.cape, m), ux, uy));
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
   // Out of combat the weapon arm is part of the body too, so it has no outline across the torso.
   if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin), ux, uy));
@@ -666,7 +678,7 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const hair = look.hairColor ?? '#e9ebfa';
   const style = hairStyleOf(look);
   const a = rig.climb;
-  const long = longSleeves(g.top.design);
+  const long = longSleeves(g.top.design, g.top);
   const body = [];
   const out = [];
   body.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
@@ -674,13 +686,13 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   body.push(...hipShapes(legs));
   body.push(...topShapes('tee', g.top.color));
   if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[8.6, 26], [22.4, 26], [26, 46], [5, 46]], g.cape.color), R(5, 45, 21, 1.2, shade(g.cape.color, -20)));
-  if (!g.hat || !TUCKS_HAIR.has(g.hat.design)) {
+  if (!hatTucks(g.hat)) {
     const back = hairBack(style, hair, 0, 0);
     out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));
   }
   out.push(E(HEAD_X, 13.6, 12, 11.2, hair), E(HEAD_X, 20.4, 9.8, 4, hair));
   out.push(arc(HEAD_X, 10, 9, 5.6, 210, 330, 1.1, mix(hair, '#ffffff', 0.45)));
-  if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color), ...hatShapes(g.hat.design, g.hat.color));
+  if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
   if (g.cape?.design === 'fairy' || g.cape?.design === 'angel') {
@@ -834,9 +846,9 @@ function rigKey(r) {
 function weaponSprite(w, time) {
   const frames = weaponFrames(w.type, w.tier, w.theme);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.tier, frame, w.theme);
+  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
+  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
   return { ...s, grip: def.grip, blade: def.blade, live: def.live };
 }
 
@@ -1064,8 +1076,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const sy = (py) => top + (py + OY) * scale;
 
   const skin = look.skinTone ?? '#fff0e6';
-  const sleeve = sleeveColor(g.top.design, g.top.color);
-  const long = longSleeves(g.top.design);
+  const sleeve = sleeveColor(g.top.design, g.top.color, g.top);
+  const long = longSleeves(g.top.design, g.top);
   const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
   const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : null;
 
@@ -1129,11 +1141,21 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
+  if (alpha > 0.5) {
+    // Anchor points on the posed figure for the live gear effects.
+    const pt = (px, py) => [sx(px), sy(py)];
+    const headDx = squashX(15.5 + rig.tx) - 15.5 + rig.hx;
+    const headDy = bodyY * KY + rig.hy;
+    drawGearFx(ctx, g, {
+      head: pt(15.5 + headDx, 4 + headDy), chest: pt(squashX(15.5 + rig.tx), squashY(31 + bodyY)), hips: pt(squashX(15.5 + rig.tx * 0.5), squashY(38 + bodyY)),
+      feet: pt(15.5, squashY(55)), hands: pt(hand[0], hand[1]), back: pt(squashX(10.5 + rig.tx), squashY(32 + bodyY)), w: 4 * scale,
+    }, scale, flip ? -1 : 1, (state.time ?? 0) + (state.seed ?? 0) * 1.37);
+  }
   if (rig.view === 'back') return;
   if (!attack) {
     if (!wpn) return;
     drawWeapon();
-    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(4)), 0, 0), res: RES, soft: 'cel', crisp: true }));
+    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return;

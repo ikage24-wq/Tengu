@@ -1,12 +1,14 @@
 // NPC conversations: quests, shops, the stylist, and job advancement. Also the "fainted" dialog.
 
-import { NPCS } from '../data/npcs.js';
+import { NPCS, shopStock } from '../data/npcs.js';
 import { QUESTS } from '../data/quests.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, variantsFor } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
-import { questState, acceptQuest, completeQuest, objectiveProgress } from '../core/quests.js';
+import { questState, acceptQuest, completeQuest, objectiveProgress, rewardId } from '../core/quests.js';
 import { addItem, removeItem } from '../core/inventory.js';
+import { makeEquip, itemName, itemColors, variantPrice } from '../core/items.js';
+import { shade } from '../render/pixel.js';
 import { advanceJob } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
@@ -181,7 +183,7 @@ export function npcWindow(ui, state, world) {
     }
     const by = area.bottom - 16;
     if (st !== 'ready') {
-      const parts = [`${q.rewards.exp} EXP`, `${q.rewards.gold} gold`, ...q.rewards.items.map((r) => `${ITEMS[r.id].name}${r.qty > 1 ? ` x${r.qty}` : ''}`)];
+      const parts = [`${q.rewards.exp} EXP`, `${q.rewards.gold} gold`, ...q.rewards.items.map((r) => `${ITEMS[rewardId(char, r)].name}${r.qty > 1 ? ` x${r.qty}` : ''}`)];
       icon(ctx, 'coin', tx + 4, by - 7, 8, '#f0b53a');
       text(ctx, `Reward: ${parts.join(', ')}`, tx + 11, by - 4, { size: 7.5, bold: true, color: COLORS.gold });
     }
@@ -267,8 +269,8 @@ function shopWindow(ui, state, world) {
   const dlg = state.npc;
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
-  const W = 300;
-  const H = 232;
+  const W = 320;
+  const H = 240;
   if (!windowFrame(ui, win, W, H, `${npc.name}'s Shop`, { theme: 'peach', icon: 'shop' })) {
     state.npc = null;
     return;
@@ -276,55 +278,113 @@ function shopWindow(ui, state, world) {
   const { ctx } = ui;
   const char = world.char;
   const shift = ui.input.held.has('ShiftLeft') || ui.input.held.has('ShiftRight');
-  dlg.tab = tabs(ui, win.x + 8, win.y + 22, ['Buy', 'Sell'], dlg.tab ?? 0, { w: 50 });
-  text(ctx, `${char.gold.toLocaleString()} gold`, win.x + W - 10, win.y + 32, { size: 9, bold: true, align: 'right', color: COLORS.gold });
-  const rows = 8;
-  dlg.scroll = Math.max(0, dlg.scroll ?? 0);
+  const was = `${dlg.tab}|${dlg.sellTab}|${dlg.buyTab}`;
+  dlg.tab = tabs(ui, win.x + 8, win.y + 22, ['Buy', 'Sell'], dlg.tab ?? 0, { w: 46 });
+  const rows = 7;
+  const rowH = 23;
   let entries;
   if (dlg.tab === 0) {
-    entries = npc.shop.map((id) => ({ id }));
+    dlg.buyTab = tabs(ui, win.x + 106, win.y + 22, ['All', 'Gear', 'Arms', 'Other'], dlg.buyTab ?? 0, { w: 38 });
+    const kind = (id) => (ITEMS[id].type !== 'equip' ? 3 : ITEMS[id].slot === 'weapon' ? 2 : 1);
+    entries = shopStock(npc, char).filter((id) => !dlg.buyTab || kind(id) === dlg.buyTab).map((id) => ({ id }));
   } else {
-    dlg.sellTab = tabs(ui, win.x + 120, win.y + 22, ['Equip', 'Use', 'Etc'], dlg.sellTab ?? 0, { w: 40 });
+    dlg.sellTab = tabs(ui, win.x + 106, win.y + 22, ['Equip', 'Use', 'Etc'], dlg.sellTab ?? 0, { w: 40 });
     const tab = ['equip', 'use', 'etc'][dlg.sellTab];
     entries = char.inventory[tab].map((e, index) => ({ id: e.id, qty: e.qty, inst: tab === 'equip' ? e : null, index, tab }));
   }
-  if (hover(ui, win.x, win.y + 40, W, rows * 20)) dlg.scroll += ui.mouse.wheel;
+  // A new list starts at the top.
+  if (was !== `${dlg.tab}|${dlg.sellTab}|${dlg.buyTab}`) dlg.scroll = 0;
+  dlg.scroll = Math.max(0, dlg.scroll ?? 0);
+  dlg.pick ??= {};
+  if (hover(ui, win.x, win.y + 42, W, rows * rowH)) dlg.scroll += ui.mouse.wheel;
   dlg.scroll = Math.min(dlg.scroll, Math.max(0, entries.length - rows));
-  let y = win.y + 40;
+  let y = win.y + 42;
   for (const e of entries.slice(dlg.scroll, dlg.scroll + rows)) {
     const def = ITEMS[e.id];
-    box(ctx, win.x + 8, y, W - 16, 18, { fill: COLORS.cell, edge: null, r: 5 });
-    drawItemIcon(ctx, e.id, win.x + 10, y + 1);
-    text(ctx, `${def.name}${e.qty > 1 ? ` x${e.qty}` : ''}`, win.x + 30, y + 12, { size: 8, bold: true });
-    if (def.type === 'equip') text(ctx, `Lv ${def.reqLevel}`, win.x + 168, y + 12, { size: 7, color: char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });
-    if (hover(ui, win.x + 8, y, W - 70, 18)) tooltip(ui, itemTooltip(char, e.id, e.inst));
+    const variants = dlg.tab === 0 ? variantsFor(def) : null;
+    const variant = e.inst?.variant ?? (variants ? dlg.pick[e.id] ?? null : null);
+    const shown = e.inst ?? { id: e.id, variant };
+    const colors = itemColors(shown);
+    box(ctx, win.x + 8, y, W - 16, rowH - 2, { fill: COLORS.cell, edge: variant ? colors.main : null, r: 6, width: 1.2 });
+    drawItemIcon(ctx, e.id, win.x + 11, y + 2.5, 1, variant);
+    const name = `${itemName(shown)}${e.qty > 1 ? ` x${e.qty}` : ''}`;
+    text(ctx, fit(ctx, name, 150, 7.5), win.x + 31, y + 9, { size: 7.5, bold: true, color: variant ? readable(colors.main) : COLORS.ink });
+    if (def.type === 'equip') text(ctx, `Lv ${def.reqLevel}`, win.x + 31, y + 18, { size: 6.5, color: char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });
+    // Color swatches: pick the variant you want before buying.
+    if (variants) {
+      const keys = [null, ...Object.keys(variants)];
+      keys.forEach((k, i) => {
+        const cx = win.x + 64 + i * 10;
+        const cy = y + 15.5;
+        const on = k === variant;
+        const hot = hover(ui, cx - 4.5, cy - 4.5, 9, 9);
+        ctx.fillStyle = on ? '#4a3560' : hot ? '#b9a2d6' : 'rgba(74,53,96,0.25)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, on ? 4.4 : 3.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = k ? variants[k].main : def.color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, on ? 3.2 : 2.8, 0, Math.PI * 2);
+        ctx.fill();
+        if (hot) tooltip(ui, [{ text: k ? `${variants[k].name}: +${variants[k].about}` : 'Standard', bold: true, color: k ? readable(variants[k].main) : COLORS.ink }, { text: k ? `${Math.round((variantPrice(def, k) / def.price - 1) * 100)}% more gold` : 'No extra bonus', size: 7, color: COLORS.muted }]);
+        if (clicked(ui, cx - 4.5, cy - 4.5, 9, 9)) dlg.pick[e.id] = k;
+      });
+    }
+    if (hover(ui, win.x + 8, y, 54, rowH - 2) || (hover(ui, win.x + 8, y, W - 70, rowH - 2) && !variants)) tooltip(ui, itemTooltip(char, e.id, e.inst ?? (variant ? makePreview(e.id, variant) : null)));
     if (dlg.tab === 0) {
       const qty = shift && def.type !== 'equip' ? 10 : 1;
-      const cost = def.price * qty;
-      text(ctx, `${cost}g`, win.x + W - 62, y + 12, { size: 8, bold: true, align: 'right', color: char.gold >= cost ? COLORS.gold : COLORS.bad });
-      if (button(ui, win.x + W - 56, y + 2, 46, 14, qty > 1 ? 'Buy 10' : 'Buy', { enabled: char.gold >= cost, primary: true, size: 8 })) {
-        if (addItem(char.inventory, e.id, qty)) {
+      const cost = (variant ? variantPrice(def, variant) : def.price) * qty;
+      text(ctx, `${cost.toLocaleString()}g`, win.x + W - 62, y + 13, { size: 8, bold: true, align: 'right', color: char.gold >= cost ? COLORS.gold : COLORS.bad });
+      if (button(ui, win.x + W - 56, y + 3, 46, 15, qty > 1 ? 'Buy 10' : 'Buy', { enabled: char.gold >= cost, primary: true, size: 8 })) {
+        const item = def.type === 'equip' ? makeEquip(e.id, { variant }) : e.id;
+        if (addItem(char.inventory, item, def.type === 'equip' ? 1 : qty)) {
           char.gold -= cost;
-          world.log(`Bought ${def.name}${qty > 1 ? ` x${qty}` : ''}.`, def.color);
+          world.log(`Bought ${itemName(def.type === 'equip' ? item : e.id)}${qty > 1 ? ` x${qty}` : ''}.`, colors.main);
         } else {
           world.log('Your bag is full.', '#ffb3c6');
         }
       }
     } else {
       const qty = e.inst ? 1 : shift ? e.qty : 1;
-      const gain = sellPrice(e.id) * qty;
-      text(ctx, `${gain}g`, win.x + W - 62, y + 12, { size: 8, bold: true, align: 'right', color: COLORS.gold });
-      if (button(ui, win.x + W - 56, y + 2, 46, 14, qty > 1 ? 'Sell all' : 'Sell', { size: 8 })) {
+      const gain = sellPrice(e.id, e.inst) * qty;
+      text(ctx, `${gain.toLocaleString()}g`, win.x + W - 62, y + 13, { size: 8, bold: true, align: 'right', color: COLORS.gold });
+      if (button(ui, win.x + W - 56, y + 3, 46, 15, qty > 1 ? 'Sell all' : 'Sell', { size: 8 })) {
         if (e.inst) char.inventory.equip.splice(e.index, 1);
         else removeItem(char.inventory, e.id, qty);
         char.gold += gain;
       }
     }
-    y += 20;
+    y += rowH;
   }
   if (!entries.length) text(ctx, 'Nothing here.', win.x + W / 2, win.y + 90, { size: 9, align: 'center', color: COLORS.muted });
-  text(ctx, 'Shift: buy 10 / sell all · Scroll for more', win.x + 10, win.y + H - 8, { size: 7, color: COLORS.muted });
+  icon(ctx, 'coin', win.x + 16, win.y + H - 13, 8, '#f0b53a');
+  text(ctx, `${char.gold.toLocaleString()} gold`, win.x + 23, win.y + H - 10, { size: 8.5, bold: true, color: COLORS.gold });
+  text(ctx, dlg.tab === 0 ? 'Pick a color · Shift: buy 10' : 'Shift: sell all', win.x + W - 68, win.y + H - 10, { size: 7, align: 'right', color: COLORS.muted });
   if (button(ui, win.x + W - 60, win.y + H - 20, 52, 14, 'Back', { size: 8 })) dlg.mode = null;
+}
+
+// A shop item with a variant, for its tooltip before you buy it (stats as sold).
+const previews = new Map();
+function makePreview(id, variant) {
+  const key = `${id}|${variant}`;
+  if (!previews.has(key)) previews.set(key, makeEquip(id, { variant }));
+  return previews.get(key);
+}
+
+// Shortens text with an ellipsis to fit `w` pixels.
+function fit(ctx, s, w, size) {
+  ctx.font = `bold ${size}px sans-serif`;
+  if (ctx.measureText(s).width <= w) return s;
+  while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
+  return `${s}…`;
+}
+
+// A variant's color, darkened enough to read on the pale window.
+const readable = (c) => shade(c, lum(c) > 0.75 ? -45 : -8);
+
+function lum(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return (0.3 * ((n >> 16) & 255) + 0.59 * ((n >> 8) & 255) + 0.11 * (n & 255)) / 255;
 }
 
 // ---------- Stylist ----------

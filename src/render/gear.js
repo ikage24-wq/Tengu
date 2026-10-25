@@ -8,79 +8,18 @@
 // and 18.7 (right) · soles at y 56 · shoulders (10.4, 28.2) and (20.8, 28.2) · hands rest at y 37.6.
 
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
+import { GOLD, SILVER, INK, FIGURE, torsoPts, robePts, dressPts, band, side, MID, collar, tieBow, button, limb, reach, mirrorX } from './figure.js';
+import { JOB_GEAR } from './jobgear/index.js';
 
-const GOLD = '#ffd66b';
-const SILVER = '#dfe6f5';
-const INK = '#3a2d4f';
+export { limb, reach };
 
-// ---------- Body shape ----------
-//
-// One body for everyone, facing right (front = the right side): a soft, slightly rounded torso
-// that is broad at the shoulders and eases in a little at the waist, on straight hips. It is
-// wide enough to sit well under the big chibi head. Outlined down the front (top to bottom) and
-// up the back.
-
-const FIGURE = {
-  // Rounded, sloping shoulders and a straight, upright back (no hump behind the shoulders).
-  front: [[18.6, 26.4], [20.2, 26.8], [21.3, 27.8], [21.7, 29.6], [21.5, 32], [21.3, 34.2], [21.5, 35.8]],
-  back: [[9.5, 35.8], [9.7, 34.2], [9.8, 32], [9.7, 29.6], [9.9, 27.8], [10.9, 26.8], [12.4, 26.4]],
-  hips: [[9.6, 34.6], [21.4, 34.6], [21.8, 37], [21.6, 39.8], [9.4, 39.8], [9.2, 37]],
-};
-const torsoPts = () => [...FIGURE.front, ...FIGURE.back];
-// Robes follow the figure to the waist, then flare past the hips.
-const robePts = () => {
-  const { front, back } = FIGURE;
-  return [...front.slice(0, -1), [21.6, 38], [22.2, 44.5], [8.8, 44.5], [9.6, 38], ...back.slice(1)];
-};
-
-// Dresses follow the figure to the waist, then flare out into a wide, swingy skirt.
-const dressPts = () => {
-  const { front, back } = FIGURE;
-  return [...front.slice(0, -1), [21.8, 35], [24, 40], [25.6, 44.5], [5.6, 44.5], [7.2, 40], [9.4, 35], ...back.slice(1)];
-};
-
-// Where a polygon's outline crosses row y: the leftmost and rightmost x.
-function rowSpan(pts, y) {
-  const xs = [];
-  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const [xi, yi] = pts[i];
-    const [xj, yj] = pts[j];
-    if ((yi > y) !== (yj > y)) xs.push(xi + ((y - yi) * (xj - xi)) / (yj - yi));
-  }
-  return xs.length ? [Math.min(...xs), Math.max(...xs)] : null;
-}
-
-// A band across a shape from y0 to y1 that follows its curves (stripes, belts, hems).
-function band(pts, y0, y1, c) {
-  const a = rowSpan(pts, y0);
-  const b = rowSpan(pts, y1);
-  if (!a || !b) return null;
-  return T([[a[0], y0], [a[1], y0], [b[1], y1], [b[0], y1]], c);
-}
-
-// The part of a shape left (keep < 0) or right (keep > 0) of x, for panels and side pieces.
-function side(pts, x, keep, c) {
-  const inside = ([px]) => (keep < 0 ? px <= x : px >= x);
-  const out = [];
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[i];
-    const b = pts[(i + 1) % pts.length];
-    if (inside(a)) out.push(a);
-    if (inside(a) !== inside(b)) out.push([x, a[1] + ((x - a[0]) * (b[1] - a[1])) / (b[0] - a[0])]);
-  }
-  return T(out, c);
-}
+// Standing still, nothing swaying.
+const MOTION = { sway: 0, hair: 0, flap: 0 };
 
 // ---------- Tops (torso part) ----------
 
-// The body faces the screen, so necklines and fronts are centered on x = MID.
-const MID = 15.6;
-const collar = (c) => T([[MID - 2.6, 26.2], [MID + 2.6, 26.2], [MID, 29.2]], c);
-// A small two-loop bow centered at (x, y).
-const tieBow = (x, y, c) => [T([[x, y], [x - 2, y - 1.2], [x - 2, y + 1.2]], c), T([[x, y], [x + 2, y - 1.2], [x + 2, y + 1.2]], c), F(E(x, y, 0.7, 0.7, shade(c, -20)))];
-const button = (x, y, c) => F(E(x, y, 0.45, 0.45, c));
-
-export function topShapes(design, c) {
+export function topShapes(design, c, piece = null, m = MOTION) {
+  if (piece?.family) return JOB_GEAR[piece.family].top(piece.tier, piece.pal, m).filter(Boolean);
   const d = shade(c, -16);
   const l = shade(c, 18);
   const torso = torsoPts();
@@ -120,7 +59,8 @@ export function topShapes(design, c) {
 }
 
 // Sleeves follow the top's main color; armor shows metal.
-export function sleeveColor(design, c) {
+export function sleeveColor(design, c, piece = null) {
+  if (piece?.family) return JOB_GEAR[piece.family].sleeve(piece.tier, piece.pal);
   if (design === 'plate') return SILVER;
   if (design === 'vest' || design === 'sailor' || design === 'overalls') return '#ffffff';
   if (design === 'jacket' || design === 'blazer' || design === 'maid') return c;
@@ -128,13 +68,15 @@ export function sleeveColor(design, c) {
 }
 
 // Robes, armor, and hoodies cover the whole arm; everything else leaves the forearm bare.
-export function longSleeves(design) {
+export function longSleeves(design, piece = null) {
+  if (piece?.family) return JOB_GEAR[piece.family].longSleeves(piece.tier);
   return ['plate', 'starrobe', 'celestial', 'kimono', 'hoodie', 'jacket', 'sweater', 'blazer', 'puffer', 'maid'].includes(design);
 }
 
 // ---------- Bottoms (leg colors, hips, and an optional skirt) ----------
 
-export function legLook(design, c, skin) {
+export function legLook(design, c, skin, piece = null) {
+  if (piece?.family) return JOB_GEAR[piece.family].legs(piece.tier, piece.pal, skin);
   switch (design) {
     case 'shorts': return { top: c, low: skin, pad: null };
     case 'leather': return { top: c, low: c, pad: shade(c, 20) };
@@ -153,7 +95,8 @@ export function hipShapes(look) {
   return [T(FIGURE.hips, look.top)];
 }
 
-export function skirtShapes(design, c) {
+export function skirtShapes(design, c, piece = null, m = MOTION) {
+  if (piece?.family) return JOB_GEAR[piece.family].skirt(piece.tier, piece.pal, m)?.filter(Boolean) ?? null;
   if (design === 'starskirt') return [T([[10.6, 34.4], [20, 34.4], [21.4, 36.4], [22.6, 41.6], [8.2, 41.6], [9.4, 36.4]], c), R(8.9, 40.6, 13, 1, GOLD), F(E(12, 38, 0.6, 0.6, GOLD)), F(E(17.5, 37, 0.6, 0.6, GOLD)), F(E(20, 39.4, 0.6, 0.6, '#ffffff'))];
   if (design === 'skirt') {
     // A short pleated skirt: alternating light and dark pleats and a waistband.
@@ -168,34 +111,6 @@ export function skirtShapes(design, c) {
 }
 
 // ---------- Limbs ----------
-
-// A tapered limb from (x1, y1) to (x2, y2), w1 wide at the start and w2 at the end.
-export function limb(x1, y1, x2, y2, w1, w2, c) {
-  const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-  const nx = -(y2 - y1) / len;
-  const ny = (x2 - x1) / len;
-  return T([[x1 + (nx * w1) / 2, y1 + (ny * w1) / 2], [x2 + (nx * w2) / 2, y2 + (ny * w2) / 2], [x2 - (nx * w2) / 2, y2 - (ny * w2) / 2], [x1 - (nx * w1) / 2, y1 - (ny * w1) / 2]], c);
-}
-
-// Two-bone reach: the middle joint for a limb of lengths a and b from root to target. The
-// target is pulled in if it's out of reach. bend = 1 puts the joint ahead of the line (knees),
-// -1 behind it (elbows). Returns [joint, end].
-export function reach(rx, ry, tx, ty, a, b, bend) {
-  let dx = tx - rx;
-  let dy = ty - ry;
-  let d = Math.hypot(dx, dy) || 0.001;
-  const max = a + b - 0.001;
-  if (d > max) {
-    dx *= max / d;
-    dy *= max / d;
-    d = max;
-  }
-  const ux = dx / d;
-  const uy = dy / d;
-  const along = (a * a - b * b + d * d) / (2 * d);
-  const off = Math.sqrt(Math.max(0, a * a - along * along)) * bend;
-  return [[rx + ux * along + uy * off, ry + uy * along - ux * off], [rx + dx, ry + dy]];
-}
 
 // ---------- Legs with shoes (one leg; the back leg is drawn in the shadow tone) ----------
 
@@ -241,6 +156,7 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
   const shaft = (h, col, w = 2.8) => limb(ax, ay, ax + ((kx - ax) / len) * h, ay + ((ky - ay) / len) * h, w, w, col);
   // Seen from the front: a small rounded shoe centered under the ankle.
   const sole = (col) => poly([[-1.8, -1.4], [1.8, -1.4], [2.7, 0.2], [3, 2], [2.6, 3], [-2.6, 3], [-3, 2], [-2.7, 0.2]], col);
+  if (shoe.family) return JOB_GEAR[shoe.family].shoe(shoe.tier, shoe.pal, { at, poly, dot, shaft, sole, c, tint }).filter(Boolean);
   switch (shoe.design) {
     case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
     case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
@@ -253,7 +169,8 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
 
 // ---------- Hats ----------
 
-export function hatShapes(design, c) {
+export function hatShapes(design, c, piece = null, m = MOTION) {
+  if (piece?.family) return JOB_GEAR[piece.family].hat(piece.tier, piece.pal, m).filter(Boolean);
   const d = shade(c, -18);
   const l = shade(c, 20);
   switch (design) {
@@ -274,9 +191,16 @@ export function hatShapes(design, c) {
 
 // Hats that hide the back hair (a hood or helmet wraps the whole head).
 export const TUCKS_HAIR = new Set(['helmet', 'bunny']);
+export const hatTucks = (hat) => Boolean(hat) && (hat.family ? JOB_GEAR[hat.family].hatTucks(hat.tier) : TUCKS_HAIR.has(hat.design));
+export const hatHidesBangs = (hat) => Boolean(hat) && (hat.family ? JOB_GEAR[hat.family].hatHidesBangs(hat.tier) : hat.design === 'bunny');
+// Pauldrons and puffs over a shoulder at (0, 0); side -1 is the back arm, 1 the front.
+export function shoulderShapes(top, side) {
+  return top?.family ? JOB_GEAR[top.family].shoulder(top.tier, top.pal, side).filter(Boolean) : [];
+}
 
 // Parts of a hat drawn behind the head: hoods and helmets wrap around it.
-export function hatBackShapes(design, c) {
+export function hatBackShapes(design, c, piece = null, m = MOTION) {
+  if (piece?.family) return JOB_GEAR[piece.family].hatBack(piece.tier, piece.pal, m).filter(Boolean);
   if (design === 'bunny') return [E(15.5, 14, 13.4, 12.8, '#ffffff'), E(15.5, 26, 9, 3, '#ffffff')];
   if (design === 'helmet') return [E(15.5, 13.4, 12.4, 11.4, SILVER)];
   if (design === 'witch') return [R(8, 8.6, 16, 3, shade(c, -18))];
@@ -285,8 +209,9 @@ export function hatBackShapes(design, c) {
 
 // ---------- Gloves (on each hand) ----------
 
-export function handShapes(hx, hy, glove, skin) {
+export function handShapes(hx, hy, glove, skin, ex = hx, ey = hy - 4) {
   if (!glove) return [E(hx, hy, 2, 2, skin)];
+  if (glove.family) return JOB_GEAR[glove.family].hand(glove.tier, glove.pal, hx, hy, ex, ey).filter(Boolean);
   const c = glove.color;
   switch (glove.design) {
     case 'cuffed': return [E(hx, hy, 1.8, 1.9, c), R(hx - 1.8, hy - 2.8, 3.6, 1.4, shade(c, 25))];
@@ -297,7 +222,8 @@ export function handShapes(hx, hy, glove, skin) {
 
 // ---------- Earrings (on the visible ear, under the side hair) ----------
 
-export function earringShapes(design, c) {
+export function earringShapes(design, c, piece = null) {
+  if (design === 'jewel') return jewelShapes(piece?.tier ?? 0, piece?.pal ?? { main: c, accent: '#ffffff', trim: GOLD });
   switch (design) {
     case 'drop': return [F(R(7.1, 20.6, 0.7, 1.6, GOLD)), E(7.4, 23.4, 1.2, 1.5, c)];
     case 'star': return [F(R(7.1, 20.6, 0.7, 1.6, GOLD)), T([[7.4, 21.6], [8, 23], [9.4, 23.2], [8.2, 24], [8.6, 25.4], [7.4, 24.6], [6.2, 25.4], [6.6, 24], [5.4, 23.2], [6.8, 23]], c)];
@@ -307,12 +233,10 @@ export function earringShapes(design, c) {
 
 // ---------- Capes (behind the body). `sway` bends the hem; wings flap with `flap`. ----------
 
-// Mirrors shapes across the body's center line, for pairs of wings.
-const mirrorX = (shapes) => shapes.map((sh) => (sh.t === 'p' ? { ...sh, x: 0, pts: sh.pts.map(([px, py]) => [31 - sh.x - px, py]) } : { ...sh, x: 31 - sh.x - (sh.w ?? 0) }));
-
 // Capes hang from the shoulders behind the body, wide enough to show on both sides of it and down
 // past the hips; the hem sways with `sway`. Wings come in pairs and flap with `flap`.
-export function capeShapes(design, c, sway, flap) {
+export function capeShapes(design, c, sway, flap, piece = null, m = null) {
+  if (piece?.family) return JOB_GEAR[piece.family].cape(piece.tier, piece.pal, m ?? { ...MOTION, sway, flap }).filter(Boolean);
   const d = shade(c, -20);
   const s = sway;
   const h = s / 2;
@@ -338,7 +262,8 @@ export function capeShapes(design, c, sway, flap) {
 
 // The front of a cape: ties over the shoulders and a clasp (or a fur collar) at the neck,
 // drawn over the top.
-export function capeFrontShapes(design, c) {
+export function capeFrontShapes(design, c, piece = null, m = MOTION) {
+  if (piece?.family) return JOB_GEAR[piece.family].capeFront(piece.tier, piece.pal, m).filter(Boolean);
   if (design === 'fairy' || design === 'angel') return [];
   const ties = [T([[10, 26], [12.6, 26], [13.6, 29.4], [11, 29]], c), T([[21, 26], [18.4, 26], [17.4, 29.4], [20, 29]], c)];
   if (design === 'royal') return [T([[9.6, 25.6], [21.4, 25.6], [21, 28.6], [15.5, 29.6], [10, 28.6]], '#ffffff'), F(E(12.4, 27.4, 0.5, 0.5, INK)), F(E(18.6, 27.4, 0.5, 0.5, INK)), F(E(15.5, 28.6, 1, 1, GOLD))];
@@ -347,3 +272,39 @@ export function capeFrontShapes(design, c) {
   return [...ties, F(E(15.5, 28.6, 0.9, 0.9, shade(c, -24)))];
 }
 
+
+// ---------- Jewel earrings (the earring ladder), hanging from the ear at (7.4, 21) ----------
+// Studs, then hoops, drops, charms, and finally feathers, halos, and stars; the gem takes the
+// item's color (or its variant's gem) and the setting the tier's metal.
+
+export function jewelShapes(t, p) {
+  const g = p.main;
+  const m = p.trim ?? GOLD;
+  const x = 7.4;
+  const hook = F(R(x - 0.35, 20.6, 0.7, 1.4, m));
+  const shine = (cx, cy) => F(E(cx - 0.35, cy - 0.4, 0.35, 0.35, '#ffffff'));
+  const star = (cx, cy, r, c) => T([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => {
+    const a = (i * Math.PI) / 5 - Math.PI / 2;
+    const rr = i % 2 ? r * 0.45 : r;
+    return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
+  }), c);
+  switch (t) {
+    case 0: case 1: case 2: return [E(x, 21.6, 0.9 + t * 0.15, 0.9 + t * 0.15, g), shine(x, 21.6)];
+    case 3: case 4: return [E(x, 22.8, 1.5, 1.7, m), E(x, 22.8, 0.8, 1, 'none'), F(E(x, 24.4, 0.6, 0.6, g))];
+    case 5: return [hook, E(x, 23.4, 1.2, 1.4, g), shine(x, 23.2)];
+    case 6: return [hook, T([[x, 21.8], [x + 1.2, 23.6], [x, 25.4], [x - 1.2, 23.6]], g), shine(x, 23.2)];
+    case 7: return [hook, E(x, 23.6, 1.5, 1.5, g), E(x + 0.7, 23.2, 1.2, 1.2, 'none'), F(E(x - 0.9, 24.4, 0.3, 0.3, m))];
+    case 8: return [hook, star(x, 23.6, 1.7, g), shine(x, 23.4)];
+    case 9: return [hook, E(x, 23.8, 1.1, 1.1, g), T([[x - 0.6, 23.2], [x - 2.6, 21.6], [x - 0.2, 22.8]], p.accent ?? g), shine(x, 23.6)];
+    case 10: return [hook, E(x - 1, 23.6, 1, 1.6, p.accent ?? g), E(x + 1, 23.6, 1, 1.6, p.accent ?? g), E(x, 23.8, 0.7, 0.7, g)];
+    case 11: return [hook, T([[x - 0.9, 22], [x + 0.9, 22], [x + 0.3, 25.8], [x, 26.4]], '#fff6e0'), F(E(x, 22.6, 0.7, 0.7, g))];
+    case 12: return [hook, T([[x, 21.8], [x + 1.4, 23.4], [x + 0.4, 26.6], [x - 0.6, 23.6]], g), F(R(x - 0.1, 22.4, 0.3, 3.6, p.accent ?? '#ffffff'))];
+    case 13: return [hook, T([[x, 21.8], [x + 1.4, 24], [x, 26], [x - 1.4, 24]], g), F(T([[x, 22.6], [x + 0.6, 24], [x, 25.2]], p.accent ?? '#ffffff'))];
+    case 14: return [hook, E(x, 23.8, 1.6, 1.8, g), F(E(x - 0.5, 23.4, 0.5, 0.5, '#ffffff')), F(E(x + 0.6, 24.4, 0.3, 0.3, '#ffffff')), F(E(x + 0.2, 23, 0.25, 0.25, p.accent ?? '#ffffff'))];
+    case 15: return [hook, star(x, 23.2, 1.4, g), F(E(x - 0.6, 25.2, 0.4, 0.4, g)), F(E(x + 0.5, 26, 0.3, 0.3, g))];
+    case 16: return [E(x, 20.4, 1.8, 0.7, m), E(x, 20.4, 1.1, 0.3, 'none'), E(x, 22.6, 1, 1.2, g), shine(x, 22.4)];
+    case 17: return [hook, T([[x, 21.8], [x + 2.2, 23.2], [x + 1.2, 24.4], [x + 1.6, 25.4], [x, 26.4], [x - 0.8, 23.4]], '#ffffff'), F(E(x, 22.4, 0.6, 0.6, g))];
+    case 18: return [hook, E(x - 0.9, 23.6, 1, 1, m), E(x + 0.9, 23.6, 1, 1, m), E(x - 0.9, 23.6, 0.45, 0.45, 'none'), E(x + 0.9, 23.6, 0.45, 0.45, 'none'), F(E(x, 25.2, 0.6, 0.6, g))];
+    default: return [hook, star(x, 23.8, 2.1, g), star(x, 23.8, 1, p.accent ?? '#ffffff'), F(E(x + 1.6, 22.2, 0.3, 0.3, '#ffffff'))];
+  }
+}

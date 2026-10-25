@@ -9,7 +9,7 @@ import { MOBS } from '../data/mobs.js';
 import { expToNext } from '../core/exp.js';
 import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js';
 import { equipFromBag, unequip, spendAp, autoAssignAp, learnSkill, canLearn, equipBlocker, STAT_KEYS } from '../core/character.js';
-import { applyScroll } from '../core/items.js';
+import { applyScroll, itemName } from '../core/items.js';
 import { removeItem, TAB_SIZE } from '../core/inventory.js';
 import { questState, objectiveProgress } from '../core/quests.js';
 import { useItem } from '../world/world.js';
@@ -37,7 +37,7 @@ const SLOT_POS = {
 };
 
 // What an empty equipment slot shows, faded.
-const SLOT_GHOST = { hat: 'hat_0', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'earring_0' };
+const SLOT_GHOST = { hat: 'hat_0', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'ear_5' };
 
 export function bagWindow(ui, state, world) {
   const win = state.windows.bag;
@@ -60,7 +60,7 @@ export function bagWindow(ui, state, world) {
     const inst = char.equipment[slot];
     const rare = inst?.rarity ? RARITIES[inst.rarity].color : null;
     box(ctx, x, y, CELL, CELL, { fill: hover(ui, x, y, CELL, CELL) ? '#ffffff' : th.light, edge: state.scrollMode && inst ? COLORS.accent : rare ?? th.main, r: 5, width: rare ? 2 : 1 });
-    if (inst) drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5);
+    if (inst) drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5, 1, inst.variant);
     else {
       // An empty slot shows a faded outline of what goes there.
       ctx.globalAlpha = 0.25;
@@ -100,7 +100,7 @@ export function bagWindow(ui, state, world) {
     const hot = hover(ui, x, y, CELL - 1, CELL - 1);
     box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : rare ?? th.light, r: 4, width: sel || rare ? 2 : 1 });
     if (!entry) continue;
-    drawItemIcon(ctx, itemIdOf(entry), x + 1, y + 1);
+    drawItemIcon(ctx, itemIdOf(entry), x + 1, y + 1, 1, entry.variant);
     if (entry.qty > 1) text(ctx, `${entry.qty}`, x + CELL - 3, y + CELL - 3, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
     if (tab === 'equip' && equipBlocker(char, entry)) {
       ctx.fillStyle = 'rgba(255,107,138,0.18)';
@@ -169,7 +169,7 @@ function scrollOnto(state, world, inst) {
     return;
   }
   removeItem(world.char.inventory, state.scrollMode, 1);
-  world.log(r.ok ? `The charm worked! ${ITEMS[inst.id].name} +${inst.upgrades}` : 'The charm fizzled...', r.ok ? '#7ee081' : '#ffb3c6');
+  world.log(r.ok ? `The charm worked! ${itemName(inst)} +${inst.upgrades}` : 'The charm fizzled...', r.ok ? '#7ee081' : '#ffb3c6');
   world.fx.push({ kind: 'buff', x: world.body.x, y: world.body.y, t: 0, dur: 0.7, color: r.ok ? '#7ee081' : '#ff9ec0' });
   state.scrollMode = null;
 }

@@ -150,7 +150,8 @@ export function equipBlocker(char, inst) {
   if (def.type !== 'equip') return 'not equipment';
   if (JOBS[char.job].family === 'gm') return null;
   if (char.level < def.reqLevel) return `needs level ${def.reqLevel}`;
-  if (def.family && JOBS[char.job].family !== def.family) return `for ${def.family}s only`;
+  // Starter job sets fit a Novice too, so they can dress for the job they're aiming at.
+  if (def.family && JOBS[char.job].family !== def.family && !(def.starter && char.job === 'novice')) return `for ${def.family}s only`;
   if (def.slot === 'weapon' && !JOBS[char.job].weapons.includes(def.weaponType)) return `${JOBS[char.job].name}s can't use this`;
   return null;
 }

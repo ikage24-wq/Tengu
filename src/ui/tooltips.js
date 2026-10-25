@@ -1,6 +1,7 @@
 // Tooltip lines for items and skills.
 
-import { ITEMS, RARITIES, ELEMENT_NAMES } from '../data/items.js';
+import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
+import { itemName, variantPrice } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { COLORS } from './kit.js';
@@ -10,9 +11,11 @@ const STAT_NAMES = {
   hp: 'Max HP', mp: 'Max MP', acc: 'Accuracy', eva: 'Avoid', speed: 'Speed', jump: 'Jump',
 };
 
-export function sellPrice(id) {
+// Shops pay 40% of the price (the full price for monster drops); colors are worth a bit more.
+export function sellPrice(id, inst = null) {
   const def = ITEMS[id];
-  return Math.max(1, Math.floor((def.price || 0) * (def.type === 'etc' ? 1 : 0.4)));
+  const price = inst?.variant ? variantPrice(def, inst.variant) : def.price || 0;
+  return Math.max(1, Math.floor(price * (def.type === 'etc' ? 1 : 0.4)));
 }
 
 export function itemTooltip(char, id, inst = null) {
@@ -20,7 +23,9 @@ export function itemTooltip(char, id, inst = null) {
   const lines = [];
   const upgrades = inst?.upgrades ? ` (+${inst.upgrades})` : '';
   const rarity = RARITIES[inst?.rarity ?? 0];
-  lines.push({ text: `${def.name}${upgrades}`, bold: true, size: 10, color: rarity.color ?? (inst?.upgrades ? '#e06fa8' : COLORS.ink) });
+  lines.push({ text: `${itemName(inst ?? id)}${upgrades}`, bold: true, size: 10, color: rarity.color ?? (inst?.upgrades ? '#e06fa8' : COLORS.ink) });
+  const v = inst?.variant ? variantsFor(def)?.[inst.variant] : null;
+  if (v) lines.push({ text: `◆ ${v.name} color: +${v.about}`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
   if (inst?.rarity) lines.push({ text: `★ ${rarity.name}`, bold: true, color: rarity.color });
   if (def.unique) lines.push({ text: '♥ Unique look', bold: true, color: '#e06fa8' });
   if (def.element) lines.push({ text: `✦ ${ELEMENT_NAMES[def.element]} element`, bold: true, color: def.color === '#ffe36b' ? '#d9a440' : def.color });
@@ -30,8 +35,9 @@ export function itemTooltip(char, id, inst = null) {
     const lvOk = !char || char.level >= def.reqLevel;
     lines.push({ text: `Req. level ${def.reqLevel}`, color: lvOk ? COLORS.muted : COLORS.bad });
     if (def.family) {
-      const ok = !char || JOBS[char.job].family === def.family;
-      lines.push({ text: `${def.family[0].toUpperCase() + def.family.slice(1)}s only`, color: ok ? COLORS.muted : COLORS.bad });
+      const ok = !char || JOBS[char.job].family === def.family || (def.starter && char.job === 'novice');
+      const who = `${def.family[0].toUpperCase() + def.family.slice(1)}s`;
+      lines.push({ text: def.starter ? `${who} and Novices` : `${who} only`, color: ok ? COLORS.muted : COLORS.bad });
     }
     const stats = inst?.stats ?? def.stats;
     for (const [k, v] of Object.entries(stats)) {
@@ -43,7 +49,7 @@ export function itemTooltip(char, id, inst = null) {
   } else {
     if (def.desc) lines.push({ text: def.desc, color: COLORS.muted });
   }
-  if (def.price) lines.push({ text: `Sells for ${sellPrice(id)} gold`, color: COLORS.gold, size: 8 });
+  if (def.price) lines.push({ text: `Sells for ${sellPrice(id, inst)} gold`, color: COLORS.gold, size: 8 });
   return lines;
 }
 

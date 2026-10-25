@@ -24,14 +24,15 @@ export function weaponFrames(type, tier = 0, theme = null) {
 
 const built = new Map();
 
-export function weaponShapes(type, tier = 0, frame = 0, theme = null) {
+// `variant` (dark, white, crimson, azure, gilded, or null) recolors a progression weapon.
+export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = null) {
   const form = FORMS[type];
   if (!form) return null;
   if (type === 'staff' && theme === 'holy') return seraphShapes(frame);
-  const key = `${type}|${tier}|${theme}|${frame}`;
+  const key = `${type}|${tier}|${theme}|${variant}|${frame}`;
   let def = built.get(key);
   if (!def) {
-    const look = lookFor(type, tier, theme);
+    const look = lookFor(type, tier, theme, variant);
     const { shapes, blade, reach, a } = form(look, frame);
     def = pack(shapes, { blade, reach, anchors: a, live: liveFor(look, a) });
     built.set(key, def);
@@ -75,9 +76,9 @@ const ICON_MARKS = {
   cyber: () => [F(R(1, 1, 3, 1, '#3bf0ff')), F(R(1, 3, 2, 1, '#ff3bd4'))],
 };
 
-export function weaponIcon(type, tier = 0, theme = null) {
+export function weaponIcon(type, tier = 0, theme = null, variant = null) {
   if (!ICONS[type]) return null;
   if (type === 'staff' && theme === 'holy') return SERAPH_ICON;
-  const look = lookFor(type, tier, theme);
+  const look = lookFor(type, tier, theme, variant);
   return [...ICONS[type](iconColors(look)), ...(theme ? ICON_MARKS[theme]() : [])];
 }

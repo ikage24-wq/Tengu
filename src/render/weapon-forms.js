@@ -2,9 +2,13 @@
 // and an animation frame. Every form draws around the grip at (0, 0) pointing toward -y, and
 // returns { shapes, blade: [top, base], reach, a } where `a` holds the anchors live effects use
 // (see weapon-fx.js). Higher ranks grow longer and fancier; themes swap in their own parts.
+//
+// Progression weapons evolve by tier: a bigger rank every four tiers reshapes the blade and guard,
+// gems appear from Silver and multiply, spikes, fins and engraved runes come at Runic, and from
+// Starsteel each material crowns the weapon with its own motif (see `motif`).
 
 import { R, E, P, T, F } from './pixel.js';
-import { WHITE, GOLD, STRING, STONE, horns, demonEye, skull, wings, halo, hazard, chain, sawDisc, neon, vertebrae, runes } from './weapon-kit.js';
+import { WHITE, GOLD, STRING, STONE, PRISM, horns, demonEye, skull, wings, halo, hazard, chain, sawDisc, neon, vertebrae, runes, star, crescent, sunburst, crown, tendril } from './weapon-kit.js';
 
 const FLAP = [0, -1, -2, -1.5, 0, 1];
 const flapAt = (f) => FLAP[f % 6];
@@ -24,6 +28,109 @@ function mirrored(half, c) {
 function gem(x, y, r, c, f = 0) {
   const shine = [[-0.4, -0.5], [0, -0.6], [0.3, -0.3], [0, 0]][f % 4];
   return [E(x, y, r, r * 1.1, c), F(P(x + shine[0] * r - 0.5, y + shine[1] * r - 0.5, WHITE))];
+}
+
+// A tier's gem color; Genesis's gems run through the rainbow, the `i`th one a step along.
+const gemOf = (m, f, i = 0) => (m.prism ? m.prism[(f + i * 2) % m.prism.length] : m.gem);
+
+// ---------- Tier ornaments ----------
+
+const BONE = '#efe2c0';
+const ABYSS = '#6a3a9a';
+const PHOENIX_WING = ['#ffcf3b', '#ff8a3c', '#ffcf3b', '#ff6a2a', '#e0402a', '#fff06b'];
+const prismWing = (f) => [0, 1, 2, 3].map((i) => PRISM[(i + f) % PRISM.length]).concat(WHITE, WHITE);
+
+// Abyssal's eye: a slitted, sickly glowing eye.
+function abyssEye(x, y, r, c) {
+  return [E(x, y, r * 1.6, r, '#12081e'), F(E(x, y, r * 1.35, r * 0.75, c)), F(R(x - 0.4, y - r * 0.7, 0.8, r * 1.4, '#12081e'))];
+}
+
+// The material's crowning ornament, from Starsteel up. Spots on the weapon: `emblem` is its
+// centerpiece (a guard's gem, a staff's orb) where stars, moons, suns and eyes go, `crown` where a
+// crown sits (defaults to the emblem), `top` above the weapon for halos and orbits, and `guard`
+// [x, y, gap, sides] where wings, horns, shards and tendrils spread. `z` is the wing size.
+// Returns shapes to draw behind the weapon and in front of it, and sets anchors for live effects.
+function motif(m, f, spots, z, a) {
+  const back = [];
+  const front = [];
+  if (!m.motif) return { back, front };
+  const [ex, ey] = spots.emblem;
+  const [tx, ty] = spots.top;
+  const [gx, gy, gap, sides] = spots.guard;
+  const flap = flapAt(f);
+  a.top = spots.top;
+  switch (m.motif) {
+    case 'star':
+      front.push(star(ex, ey, z * 0.42, m.gem), ...gem(ex, ey, z * 0.11, WHITE, f));
+      break;
+    case 'moon':
+      front.push(crescent(ex - z * 0.08, ey, z * 0.36, m.trim), F(P(ex - z * 0.3, ey - z * 0.12, WHITE)), ...gem(ex + z * 0.08, ey, z * 0.12, m.gem, f));
+      break;
+    case 'sun':
+      front.push(...sunburst(ex, ey, z * 0.5, m.trim, 10), E(ex, ey, z * 0.24, z * 0.24, m.blade), ...gem(ex, ey, z * 0.12, m.gem, f));
+      break;
+    case 'horns':
+      back.push(...horns(gx, gy + z * 0.2, z * 0.6, BONE, sides));
+      break;
+    case 'shards':
+      for (const sd of sides) {
+        const x = gx + sd * gap;
+        back.push(T([[x, gy + 1], [x + sd * z * 0.42, gy - z * 0.62], [x + sd * z * 0.16, gy - z * 0.08]], '#c08aff'));
+        back.push(T([[x, gy + 1.5], [x + sd * z * 0.55, gy - z * 0.15], [x + sd * z * 0.2, gy + z * 0.12]], '#433858'));
+      }
+      break;
+    case 'crown': {
+      const [cx, cy] = spots.crown ?? spots.emblem;
+      front.push(...crown(cx, cy, z * 0.6, GOLD, m.gem));
+      break;
+    }
+    case 'feathers':
+      back.push(...wings(gx, gy, z * 0.85, flap, sides, gap, PHOENIX_WING));
+      a.wings = sides.map((sd) => [gx + sd * (gap + z * 0.6), gy]);
+      break;
+    case 'eye':
+      sides.forEach((sd, i) => back.push(tendril(gx + sd * gap, gy + 1, z, sd, f + i * 2, ABYSS), tendril(gx + sd * gap, gy + 2, z * 0.6, sd, f + i * 2 + 3, '#4e2c70')));
+      front.push(...abyssEye(ex, ey, z * 0.13, m.gem));
+      a.eye = [ex, ey, z * 0.13];
+      break;
+    case 'orbit':
+      back.unshift(...halo(tx, ty, z * 0.55, z * 0.18, m.trim));
+      front.push(star(ex, ey, z * 0.3, m.gem), F(P(ex - 0.5, ey - 0.5, WHITE)));
+      a.halo = [tx, ty, z * 0.55, z * 0.18];
+      break;
+    case 'halo':
+      back.push(...wings(gx, gy, z * 0.9, flap, sides, gap));
+      front.push(...halo(tx, ty, z * 0.45, z * 0.17));
+      a.halo = [tx, ty, z * 0.45, z * 0.17];
+      a.wings = sides.map((sd) => [gx + sd * (gap + z * 0.6), gy]);
+      break;
+    case 'genesis':
+      back.push(...wings(gx, gy, z, flap, sides, gap, prismWing(f)));
+      front.push(...halo(tx, ty, z * 0.5, z * 0.18, m.trim), star(ex, ey, z * 0.36, WHITE), ...gem(ex, ey, z * 0.12, gemOf(m, f), f));
+      a.halo = [tx, ty, z * 0.5, z * 0.18];
+      a.wings = sides.map((sd) => [gx + sd * (gap + z * 0.6), gy]);
+      break;
+  }
+  return { back, front };
+}
+
+// Material detail inlaid in a blade: crystal facets and star specks across its flat (x0-x1), and
+// Genesis's rainbow running down its fuller (fx +- fw/2). Only between y0 and y1.
+function inlay(m, f, x0, x1, y0, y1, fw = 1, fx = 0) {
+  const out = [];
+  if (m.name === 'crystal') for (let y = y0 + 1; y < y1 - 3; y += 5) out.push(F(T([[x0 + 0.4, y + 2], [x1 - 0.4, y], [x1 - 0.4, y + 0.8], [x0 + 0.4, y + 2.8]], WHITE)));
+  if (m.name === 'starsteel' || m.name === 'astral') {
+    for (let i = 0, y = y0 + 1; y < y1 - 1; y += 2.6, i++) out.push(F(P(i % 2 ? x0 + 0.3 : x1 - 1.3, y, (i + f) % 3 ? m.rune : WHITE)));
+  }
+  if (m.prism) for (let i = 0, y = y0; y < y1 - 1; y += 2, i++) out.push(F(R(fx - fw / 2, y, fw, 2, m.prism[(i + f) % m.prism.length])));
+  return out;
+}
+
+// Dragonbone's teeth along an edge at x, pointing out toward `sd`.
+function teeth(x, y0, y1, sd, k, c) {
+  const out = [];
+  for (let y = y0; y < y1 - 1.5; y += 2.6) out.push(T([[x - sd * 0.5, y], [x + sd * 1.6 * k, y + 0.9], [x - sd * 0.5, y + 2]], c));
+  return out;
 }
 
 // ---------- Swords and daggers ----------
@@ -73,8 +180,10 @@ function bladed(m, f, d) {
   else if (th === 'bone') s.push(E(0, gl + 1.8, 2.2 * k + 0.4, 1.8, m.blade), F(P(-1, gl + 1.6, m.bladeDark)), F(P(0.5, gl + 1.6, m.bladeDark)));
   else if (th === 'chainsaw') s.push(R(-2, gl, 4, 2.5, m.handleDark));
   else if (th === 'cyber') s.push(R(-2, gl, 4, 2.2, m.trim), neon(-1, gl + 0.8, 2, 0.6, m.neon[1]));
-  else if (r >= 2) s.push(E(0, gl + 1.4, 2.2 * k + 0.3, 2.2 * k + 0.3, m.trim), ...gem(0, gl + 1.4, 1.1, m.gem, f));
+  else if (th === 'holy' || m.gems >= 2) s.push(E(0, gl + 1.4, 2.2 * k + 0.3, 2.2 * k + 0.3, m.trim), ...gem(0, gl + 1.4, 1.1, gemOf(m, f, 1), f));
+  else if (r >= 2) s.push(E(0, gl + 1.4, 2.2 * k + 0.3, 2.2 * k + 0.3, m.trim), F(P(-0.6, gl + 0.7, m.edge)));
   else s.push(E(0, gl + 1.2, 1.9, 1.9, m.trim));
+  if (!th && r >= 4) s.push(T([[-1.3 * k, gl + 2.6], [0, gl + 3.4 + 2.6 * k], [1.3 * k, gl + 2.6]], m.trim));
 
   if (th === 'chainsaw') {
     // A motor housing with a pull handle and exhaust, and a chain bar where the blade would be.
@@ -111,6 +220,18 @@ function bladed(m, f, d) {
   const std = [[0, top], [bw / 2, top + tipL], [bw / 2, base]];
   const fuller = () => R(-0.5, top + tipL + 1, 1, L - tipL - 3, m.bladeDark);
   const edge = () => T([[0, top + 1], [bw / 2 - 0.2, top + tipL], [bw / 2 - 0.2, base], [bw / 2 - 1, base], [bw / 2 - 1, top + tipL + 0.5]], m.edge);
+  const orn = th ? null : motif(m, f, { emblem: [0, base + 1.2], crown: [0, base - 0.4], top: [0, top - 5 * k], guard: [0, base - 1, bw / 2 - 0.5, [-1, 1]] }, 10 * k, a);
+  if (orn) s.push(...orn.back);
+  if (!th && m.spikes) {
+    // Fins flaring from the blade's base, a second pair higher up on the grandest blades.
+    for (const sd of [-1, 1]) {
+      for (let i = 0; i < (r >= 5 ? 2 : 1); i++) {
+        const y = base - i * L * 0.3;
+        s.push(T([[sd * (bw / 2 - 0.5), y - 0.5], [sd * (bw / 2 + 2.4 * k), y - 4.5 * k], [sd * (bw / 2 + 1.2 * k), y - 0.2], [sd * (bw / 2 - 0.5), y + 0.8]], i ? m.blade : m.trim));
+      }
+    }
+  }
+  if (m.name === 'dragonbone') s.push(...teeth(bw / 2 - 0.2, top + tipL + 1, base - 3, 1, k, m.edge));
   if (th === 'holy') s.push(...wings(0, base - 1, 10 * k, flapAt(f), [-1, 1], bw / 2 - 0.5));
   if (th === 'demonic') s.push(...horns(0, base + 1.5, 10 * k, HORN));
   if (th === 'bone') {
@@ -144,20 +265,26 @@ function bladed(m, f, d) {
     s.push(T([[bw / 2 - 1, top + 4.6], [bw / 2 - 2.2, top + 0.6], [bw / 2 - 1.6, top + 0.3], [bw / 2 - 0.4, top + 4.4]], m.neon[0]));
     for (let y = top + 6, i = 0; y < base - 2; y += 3, i++) if ((i + f) % 3) s.push(neon(-bw / 2 + 0.8, y, 1, 1.6, m.neon[1]));
     a.neon = [[[bw / 2 - 0.5, base], [bw / 2 - 0.5, top + 5], [bw / 2 - 1.7, top + 0.4]]];
-  } else if (r === 3) {
-    s.push(mirrored([[0, top], [bw / 2 + 0.8, top + tipL + 3], [bw / 2, base - L * 0.3], [bw / 2 - 0.4, base]], m.blade));
-    s.push(fuller(), edge());
-    s.push(F(P(bw / 2 - 1.2, top + tipL + 2 + ((f * L) / 4) % (L - tipL - 3), WHITE)));
-  } else if (r === 4) {
-    s.push(T([[0, top], [bw / 2, top + tipL], [bw / 2, base - L * 0.36], [bw / 2 - 1.4, base - L * 0.3], [bw / 2, base - L * 0.24], [bw / 2, base], [-bw / 2, base], [-bw / 2, top + tipL]], m.blade));
-    s.push(R(-1.5, top + tipL + 1, 3, L - tipL - 3, m.bladeDark), edge());
-    s.push(...runes(0, top + tipL + 2, base - 2, f, m.rune, DIM_RUNE, 4));
-    a.runes = [0, top + tipL + 2, base - 2];
+  } else if (th === 'holy') {
+    s.push(mirrored(std, m.blade), fuller(), edge());
+    s.push(F(R(-0.5, top + tipL + 1, 1, L - tipL - 3, GOLD)), ...gem(0, base - 2.4, 1.2, m.gem, f));
   } else {
-    s.push(mirrored(std, m.blade));
-    s.push(fuller());
-    if (r >= 2) s.push(edge());
-    if (th === 'holy') s.push(F(R(-0.5, top + tipL + 1, 1, L - tipL - 3, GOLD)), ...gem(0, base - 2.4, 1.2, m.gem, f));
+    // Straight blades, then a leaf flare (rank 3), notched barbs (4), and both (5).
+    const notch = [[bw / 2, base - L * 0.36], [bw / 2 - 1.4, base - L * 0.3], [bw / 2 + (r - 4) * 0.6, base - L * 0.24], [bw / 2, base]];
+    if (r <= 2) s.push(mirrored(std, m.blade));
+    else if (r === 3) s.push(mirrored([[0, top], [bw / 2 + 0.8, top + tipL + 3], [bw / 2, base - L * 0.3], [bw / 2 - 0.4, base]], m.blade));
+    else s.push(mirrored([[0, top], [bw / 2 + (r - 4), top + tipL + 2 * (r - 4)], ...notch], m.blade));
+    const fw = r >= 4 ? 3 : 1;
+    const end = base - (m.gems >= 3 ? 5 : 2);
+    if (m.tier >= 3) s.push(R(-fw / 2, top + tipL + 1, fw, L - tipL - 3, m.bladeDark));
+    if (m.tier >= 4) s.push(edge());
+    s.push(...inlay(m, f, -bw / 2 + 0.6, bw / 2 - 0.6, top + tipL + 1, base - 2, fw));
+    if (m.rune) {
+      s.push(...runes(0, top + tipL + 2, end, f, m.rune, m.runeDim, 4));
+      a.runes = [0, top + tipL + 2, end];
+    }
+    if (m.tier >= 5) s.push(F(P(bw / 2 - 1.2, top + tipL + 2 + ((f * L) / 4) % (L - tipL - 3), WHITE)));
+    if (m.gems >= 3) s.push(...gem(0, base - 2.6, 1.1, gemOf(m, f, 2), f));
   }
 
   // The guard.
@@ -182,17 +309,15 @@ function bladed(m, f, d) {
     s.push(R(-gw / 2, base, gw, 2.2, m.trim));
   } else if (r === 1) {
     s.push(R(-gw / 2, base, gw, 2.2, m.trim), F(P(-gw / 2 + 0.6, base + 0.6, m.trimDark)), F(P(gw / 2 - 1.6, base + 0.6, m.trimDark)));
-  } else if (r === 2) {
-    s.push(T([[-gw / 2, base - 1.4], [-gw / 2 + 1.5, base], [gw / 2 - 1.5, base], [gw / 2, base - 1.4], [gw / 2, base + 2.2], [-gw / 2, base + 2.2]], m.trim));
-    s.push(E(-gw / 2, base - 0.6, 1, 1, m.trim), E(gw / 2, base - 0.6, 1, 1, m.trim), ...gem(0, base + 1.1, 1.2, m.gem, f));
-  } else if (r === 3) {
-    for (const sd of [-1, 1]) s.push(T([[sd * 1.5, base], [sd * gw / 2, base - 3], [sd * (gw / 2 - 0.6), base + 0.8], [sd * 1.5, base + 2.6]], m.trim));
-    s.push(R(-2, base, 4, 2.6, m.trim), ...gem(0, base + 1.3, 1.3, m.gem, f));
-    a.gem = [0, base + 1.3];
   } else {
-    s.push(T([[-gw / 2, base + 3.5], [-gw / 2 + 1, base], [gw / 2 - 1, base], [gw / 2, base + 3.5], [gw / 2 - 1.5, base + 2.2], [-gw / 2 + 1.5, base + 2.2]], m.trim));
-    s.push(...gem(0, base + 1.2, 1.2, m.gem, f));
+    // Swept quillons (rank 2), quillons curling up (3), bat wings down (4), and both (5).
+    if (r === 2) s.push(T([[-gw / 2, base - 1.4], [-gw / 2 + 1.5, base], [gw / 2 - 1.5, base], [gw / 2, base - 1.4], [gw / 2, base + 2.2], [-gw / 2, base + 2.2]], m.trim), E(-gw / 2, base - 0.6, 1, 1, m.trim), E(gw / 2, base - 0.6, 1, 1, m.trim));
+    if (r >= 4) s.push(T([[-gw / 2, base + 3.5], [-gw / 2 + 1, base], [gw / 2 - 1, base], [gw / 2, base + 3.5], [gw / 2 - 1.5, base + 2.2], [-gw / 2 + 1.5, base + 2.2]], r === 5 ? m.trimDark : m.trim));
+    if (r === 3 || r === 5) for (const sd of [-1, 1]) s.push(T([[sd * 1.5, base], [sd * gw / 2, base - 3], [sd * (gw / 2 - 0.6), base + 0.8], [sd * 1.5, base + 2.6]], m.trim));
+    s.push(R(-2.2, base, 4.4, 2.6, m.trim), ...gem(0, base + 1.2, 1.25, gemOf(m, f), f));
+    a.gem = [0, base + 1.2];
   }
+  if (orn) s.push(...orn.front);
   return { shapes: s, blade: [top, base], reach, a };
 }
 
@@ -209,7 +334,10 @@ function claw(m0, f) {
   const s = [];
   const a = { tip: [0, -5 - L], head: [0, -5 - L * 0.5], blade: [-5 - L, -5] };
   const reach = [];
-  const glove = r === 0 ? m0.handle : th ? m.trim : r === 1 ? '#8d96a8' : m.handleDark;
+  const glove = r === 0 ? m0.handle : th ? m.trim : r === 1 ? m.trimDark : m.handleDark;
+  const orn = th ? null : motif(m, f, { emblem: [0, -0.5], crown: [0, -5.5], top: [0, -10 - L], guard: [0, -3, 4.5, [-1, 1]] }, 8, a);
+  if (orn) s.push(...orn.back);
+  if (!th && m.spikes) for (const sd of [-1, 1]) s.push(T([[sd * 5, -5], [sd * (7.5 + r * 0.3), -8 - r * 0.4], [sd * 5, -1.5]], m.trim));
   if (th === 'chainsaw') {
     s.push(...sawDisc(1, -12, 7, f, 6, m));
     s.push(R(-1, -7, 4, 3, m.handleDark));
@@ -244,8 +372,9 @@ function claw(m0, f) {
     if (th === 'holy') s.push(F(R(x - 0.2, y0 - l * 0.7, 0.6, l * 0.65, GOLD)), T([[x - 1.2, y0 - l * 0.3], [x - 2.4, y0 - l * 0.45], [x - 1.2, y0 - l * 0.5]], '#e8eeff'));
     else if (th === 'demonic') s.push(F(T([[x + cv, y0 - l], [x + 1.3, y0 - l * 0.55], [x + 1.3, y0 - 1], [x + 0.6, y0 - 1], [x + 0.6, y0 - l * 0.55]], m.hot)));
     else if (th === 'cyber') s.push(neon(x + 0.4, y0 - l * 0.55, 0.8, l * 0.5, m.neon[(i + f) % 2]), T([[x + 0.4, y0 - l * 0.55], [x + cv, y0 - l], [x + 1.2, y0 - l * 0.55]], m.neon[0]));
-    else if (r >= 2) s.push(T([[x + 0.3, y0 - l * 0.5], [x + cv, y0 - l + 0.5], [x + 1.2, y0 - l * 0.55], [x + 1.2, y0]], m.edge));
-    if (r === 4 && !th) s.push(F(P(x - 0.5, y0 - l * 0.35 - ((f + i) % 3), m.rune)));
+    else if (m.tier >= 4) s.push(T([[x + 0.3, y0 - l * 0.5], [x + cv, y0 - l + 0.5], [x + 1.2, y0 - l * 0.55], [x + 1.2, y0]], m.edge));
+    if (!th) s.push(...inlay(m, f, x - 1.2, x + 1.2, y0 - l * 0.6, y0, 1, x));
+    if (m.rune) s.push(F(P(x - 0.5, y0 - l * 0.35 - ((f + i) % 3), m.rune)), F(P(x - 0.5, y0 - l * 0.2, m.runeDim)));
   });
   // The gauntlet over the knuckles.
   s.push(R(-5.2, -5.5, 10.4, 9, glove));
@@ -273,14 +402,16 @@ function claw(m0, f) {
     a.ring = [0, 0, 7, 2];
     a.neon = [[[-5, -2], [5, -2]]];
   } else {
-    if (r >= 1) s.push(R(-5.2, -5.5, 10.4, 1.8, r === 1 ? '#6d7484' : m.trim));
+    if (r >= 1) s.push(R(-5.2, -5.5, 10.4, 1.8, m.trim));
     if (r === 0) for (let x = -4; x < 5; x += 2) s.push(F(P(x, -2, '#e6d2a8')));
-    if (r === 1) s.push(F(P(-4, -1, '#5f6676')), F(P(3, -1, '#5f6676')));
-    if (r >= 2) s.push(...gem(0, -0.5, 1.5, m.gem, f));
-    if (r === 3) s.push(T([[5.2, -5], [7.5, -8], [5.2, -2]], m.trim));
-    if (r === 4) a.runes = [0, -5 - L, -5];
-    if (r === 3) a.gem = [0, -0.5];
+    if (r === 1) s.push(F(P(-4, -1, m.trim)), F(P(3, -1, m.trim)));
+    if (r >= 3) s.push(R(-5.2, 2, 10.4, 1.5, m.trim));
+    if (m.gems >= 1) s.push(...gem(0, -0.5, 1.5, gemOf(m, f), f));
+    if (m.gems >= 2) s.push(...gem(-3.4, 0, 0.9, gemOf(m, f, 1), f), ...gem(3.4, 0, 0.9, gemOf(m, f, 2), f));
+    if (m.rune) a.runes = [0, -5 - L, -5];
+    a.gem = [0, -0.5];
   }
+  if (orn) s.push(...orn.front);
   return { shapes: s, blade: a.blade, reach, a };
 }
 
@@ -304,7 +435,9 @@ function axe(m0, f) {
     s.push(R(-1.25, top, 2.5, H + 7, m0.handle));
     if (th === 'cyber') for (let y = -2, i = 0; y < 6; y += 2.5, i++) s.push(neon(-1.25, y, 2.5, 0.8, m.neon[(i + f) % 2]));
     else if (th !== 'laser') s.push(R(-1.25, -2, 2.5, 6, m0.grip));
+    if (!th && r >= 4) s.push(T([[-1.2, 7.5], [0, 11], [1.2, 7.5]], m.trim));
     s.push(E(0, 7, 1.8, 1.4, m.trim));
+    if (m.gems >= 2) s.push(...gem(0, 7, 0.9, gemOf(m, f, 1), f));
   }
   if (th === 'laser') {
     s.push(R(-2.4, top - 1, 4.8, hh + 2, m.trim), R(-2.4, top + hh * 0.35, 4.8, 1, m.trimDark), F(R(2.4, top + 1, 0.8, hh - 2, m.beam)));
@@ -328,6 +461,8 @@ function axe(m0, f) {
     return { shapes: s, blade: a.blade, reach, a };
   }
   const bit = (b, c) => T([[1, top + 2], [b * 0.6, top - 1], [b, top + 3], [b, top + hh - 3], [b * 0.6, top + hh + 1], [1, top + hh - 2]], c);
+  const orn = th ? null : motif(m, f, { emblem: [0, mid], crown: [0, top + 0.5], top: [0, top - 7], guard: [-1, mid, 0, [-1]] }, 9, a);
+  if (orn) s.push(...orn.back);
   if (th === 'holy') s.push(...wings(-1, mid, 9, flapAt(f), [-1]));
   if (th === 'demonic') s.push(...horns(-1, top + 3, 5, m.trimDark, [-1]));
   // The bit.
@@ -355,12 +490,18 @@ function axe(m0, f) {
     a.neon = [[[bx - 3, top - 0.5], [bx - 0.5, top + 3], [bx - 0.5, top + hh - 3], [bx - 3, top + hh + 0.5]]];
     a.ring = [0, mid, 6, 2];
   } else {
-    if (r >= 3) s.push(bit(-bx * 0.55, m.blade));
+    // Progression: a back spike, then a top spike (rank 2), a second bit (3), barbed horns on the
+    // bit (4), and a spike under the socket (Runic up).
+    if (r >= 3) s.push(bit(-bx * (!th && r >= 5 ? 0.7 : 0.55), m.blade));
     else if (r >= 1) s.push(T([[-1, top + hh / 2 - 2.5], [-5, top + hh / 2], [-1, top + hh / 2 + 2.5]], m.blade));
-    if (r >= 2) s.push(T([[-1, top], [0, top - 4.5], [1, top]], m.blade));
+    if (r >= 2) s.push(T([[-1, top], [0, top - 4.5 - (th ? 0 : r - 2)], [1, top]], m.blade));
+    if (!th && m.spikes) s.push(T([[-1, top + hh - 1], [0, top + hh + 4], [1, top + hh - 1]], m.trim));
+    if (!th && r >= 4) for (const sd of [-1, 1]) s.push(T([[bx * 0.55, mid + sd * (hh / 2 - 0.5)], [bx + 1.5, mid + sd * (hh / 2 + 2.5)], [bx - 1, mid + sd * (hh / 2 - 2.5)]], m.blade));
+    if (m.name === 'dragonbone') s.push(...teeth(bx - 0.2, top + 3, top + hh - 2, 1, 1, m.edge));
     s.push(bit(bx, m.blade));
-    if (r >= 1) s.push(T([[3, top + 3], [bx - 2.5, top + 1.5], [bx - 2.5, top + hh - 1.5], [3, top + hh - 3]], m.bladeDark));
-    if (r >= 2) s.push(T([[bx - 1.2, top + 2], [bx - 0.3, top + 3], [bx - 0.3, top + hh - 3], [bx - 1.2, top + hh - 2]], m.edge));
+    if (th || m.tier >= 3) s.push(T([[3, top + 3], [bx - 2.5, top + 1.5], [bx - 2.5, top + hh - 1.5], [3, top + hh - 3]], m.bladeDark));
+    if (th || m.tier >= 4) s.push(T([[bx - 1.2, top + 2], [bx - 0.3, top + 3], [bx - 0.3, top + hh - 3], [bx - 1.2, top + hh - 2]], m.edge));
+    if (!th) s.push(...inlay(m, f, 3, bx - 2.5, top + 2.5, top + hh - 2, 2, bx - 3.5));
     if (th === 'holy') {
       // A gold cutting edge and a sunburst engraved in the bit.
       s.push(F(T([[bx - 1.6, top + 1.5], [bx - 0.3, top + 3], [bx - 0.3, top + hh - 3], [bx - 1.6, top + hh - 1.5]], GOLD)));
@@ -370,11 +511,12 @@ function axe(m0, f) {
       }
       s.push(F(E(4.5, mid, 1.6, 1.6, GOLD)), ...halo(0, top - 5, 4, 1.5));
     }
-    if (r === 4 && !th) {
-      s.push(...runes(bx * 0.5, top + 3, top + hh - 2, f, m.rune, DIM_RUNE, 4));
+    if (m.rune) {
+      s.push(...runes(bx * 0.5, top + 3, top + hh - 2, f, m.rune, m.runeDim, 4));
       a.runes = [bx * 0.5, top + 3, top + hh - 2];
     }
-    if (r === 3 && !th) s.push(F(P(bx - 1.5, top + 3 + (f * 3) % (hh - 5), WHITE)));
+    if (m.gems >= 3) s.push(...gem(-bx * 0.32, mid, 1, gemOf(m, f, 2), f));
+    if (!th && m.tier >= 5) s.push(F(P(bx - 1.5, top + 3 + (f * 3) % (hh - 5), WHITE)));
   }
   // The socket band.
   s.push(R(-2, top + 1, 4, hh - 2, m.trim));
@@ -382,10 +524,11 @@ function axe(m0, f) {
   if (th === 'demonic') {
     s.push(...demonEye(0, mid, 1.4));
     a.eye = [0, mid, 1.4];
-  } else if (th === 'holy' || r >= 2) {
-    s.push(...gem(0, mid, 1.3, m.gem, f));
+  } else if (th === 'holy' || m.gems >= 1) {
+    s.push(...gem(0, mid, 1.3, gemOf(m, f), f));
     a.gem = [0, mid];
   }
+  if (orn) s.push(...orn.front);
   if (th === 'holy') {
     a.halo = [0, top - 5, 4, 1.5];
     a.wings = [[-8, mid - 2]];
@@ -414,7 +557,9 @@ function spear(m0, f) {
     if (r === 0) for (let y = sock + 6; y < 12; y += 8) s.push(R(-1.4, y, 2.8, 0.8, '#9c9650'));
     if (th === 'cyber') for (let y = sock + 4, i = 0; y < 10; y += 6, i++) s.push(neon(-1.25, y, 2.5, 0.8, m.neon[(i + f) % 2]));
     else if (th !== 'laser' && r >= 1) s.push(R(-1.25, -3, 2.5, 7, m0.grip));
+    if (!th && r >= 4) s.push(T([[-1.4, 14], [0, 17.5], [1.4, 14]], m.trim));
     s.push(R(-1.6, 12, 3.2, 2.5, m.trim));
+    if (m.gems >= 2) s.push(R(-1.6, -4, 3.2, 1.4, m.trim), ...gem(0, -3.3, 0.9, gemOf(m, f, 1), f));
   }
   if (th === 'laser') {
     s.push(R(-2, sock - 1, 4, 5, m.trim), R(-2.6, sock - 1.8, 5.2, 1.2, m.trimDark), F(R(-1.2, sock + 1, 2.4, 0.7, m.beam)));
@@ -434,6 +579,8 @@ function spear(m0, f) {
     return { shapes: s, blade: [top, sock], reach, a };
   }
   if (th === 'holy') s.push(...wings(0, sock + 1, 9, flapAt(f), [-1, 1], 1.5));
+  const orn = th ? null : motif(m, f, { emblem: [0, sock + 0.8], crown: [0, sock - 0.5], top: [0, top - 5], guard: [0, sock + 1, 1.5, [-1, 1]] }, 9, a);
+  if (orn) s.push(...orn.back);
   if (th === 'demonic') {
     // A barbed trident.
     for (const sd of [-1, 1]) s.push(T([[sd * 1, sock - 1], [sd * 4.5, sock - 2], [sd * 5, sock - hl * 0.75], [sd * 5.6, sock - hl * 0.8], [sd * 4.6, sock - hl + 1], [sd * 3.6, sock - hl * 0.6], [sd * 3.4, sock - 3.5], [sd * 1, sock - 3]], m.blade));
@@ -451,16 +598,20 @@ function spear(m0, f) {
     a.neon = [[[0, sock], [0, top + 1]]];
     a.ring = [0, sock - hl * 0.4, 6, 2];
   } else {
-    if (r === 3 || th === 'holy') for (const sd of [-1, 1]) s.push(T([[sd * 1, sock + 0.5], [sd * (hw + 1), sock + 2.5], [sd * 1.5, sock - 1.5]], m.trim));
-    if (r === 4 && !th) s.push(T([[0, top + 2], [hw * 0.5 + 2.5, top + 4], [hw * 0.5 + 3.5, sock - 3], [hw * 0.5, sock - 1]], m.blade));
+    // Progression: a tassel (rank 2), lugs at the socket (3), a side hook (4), hooks both sides (5).
+    if (r === 2) s.push(T([[-1, sock + 2], [1, sock + 2], [2.5, sock + 8 + (f % 2)], [-2.5, sock + 8]], m.grip));
+    if ((!th && r >= 3) || th === 'holy') for (const sd of [-1, 1]) s.push(T([[sd * 1, sock + 0.5], [sd * (hw + 1), sock + 2.5], [sd * 1.5, sock - 1.5]], m.trim));
+    if (!th && r >= 4) for (const sd of r >= 5 ? [-1, 1] : [1]) s.push(T([[0, top + 2], [sd * (hw * 0.5 + 2.5), top + 4], [sd * (hw * 0.5 + 3.5), sock - 3], [sd * hw * 0.5, sock - 1]], m.blade));
+    if (m.name === 'dragonbone') s.push(...teeth(hw / 2 - 0.3, top + hl * 0.45, sock - 1, 1, 0.8, m.edge));
     s.push(mirrored([[0, top], [hw / 2, top + hl * 0.5], [hw / 2 - 0.6, sock]], m.blade));
-    if (r >= 1) s.push(R(-0.5, top + 3, 1, hl - 4, m.bladeDark));
-    if (r >= 2) s.push(T([[0, top + 1], [hw / 2 - 0.3, top + hl * 0.5], [hw / 2 - 0.8, sock], [0.2, sock]], m.edge));
-    if (r === 4 && !th) {
-      s.push(...runes(-3.5, sock + 3, sock + 14, f, m.rune, DIM_RUNE, 4));
-      a.runes = [-3.5, sock + 3, sock + 14];
+    if (th || m.tier >= 3) s.push(R(-0.5, top + 3, 1, hl - 4, m.bladeDark));
+    if (th || m.tier >= 4) s.push(T([[0, top + 1], [hw / 2 - 0.3, top + hl * 0.5], [hw / 2 - 0.8, sock], [0.2, sock]], m.edge));
+    if (!th) s.push(...inlay(m, f, -hw / 2 + 0.6, hw / 2 - 0.6, top + 3, sock - 1));
+    if (m.rune) {
+      s.push(...runes(0, top + hl * 0.4, sock - 2, f, m.rune, m.runeDim, 4));
+      a.runes = [0, top + hl * 0.4, sock - 2];
     }
-    if (r === 3 && !th) s.push(F(P(1, top + 3 + (f * 2) % (hl - 4), WHITE)));
+    if (!th && m.tier >= 5) s.push(F(P(1, top + 3 + (f * 2) % (hl - 4), WHITE)));
     if (th === 'holy') {
       s.push(F(R(-0.5, top + 3, 1, hl - 4, GOLD)), ...halo(0, top + hl * 0.4, 5, 1.8));
       a.halo = [0, top + hl * 0.4, 5, 1.8];
@@ -476,11 +627,11 @@ function spear(m0, f) {
   } else if (th === 'demonic') {
     s.push(...demonEye(0, sock + 1, 1.2));
     a.eye = [0, sock + 1, 1.2];
-  } else if (r >= 2) {
-    s.push(...gem(0, sock + 0.8, 1.1, m.gem, f));
+  } else if (th === 'holy' || m.gems >= 1) {
+    s.push(...gem(0, sock + 0.8, 1.1, gemOf(m, f), f));
     a.gem = [0, sock + 0.8];
   }
-  if (r === 2 && !th) s.push(T([[-1, sock + 2], [1, sock + 2], [2.5, sock + 8 + (f % 2)], [-2.5, sock + 8]], '#ff6b8a'));
+  if (orn) s.push(...orn.front);
   return { shapes: s, blade: [top, sock], reach, a };
 }
 

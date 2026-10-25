@@ -1,13 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ITEMS, UNIQUE_IDS, RARITIES, ENDGAME_THEMES } from '../src/data/items.js';
+import { ITEMS, UNIQUE_IDS, RARITIES, ENDGAME_THEMES, WEAPON_LEVELS } from '../src/data/items.js';
 import { NPCS } from '../src/data/npcs.js';
 import { makeEquip, rollRarity } from '../src/core/items.js';
 import { rollLoot } from '../src/world/drops.js';
 import { MOBS } from '../src/data/mobs.js';
-import { topShapes, legLook, legShapes, hatShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
+import { topShapes, legLook, legShapes, hatShapes, hatBackShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
 import { weaponShapes, weaponIcon } from '../src/render/weapons.js';
+import { pieceOf } from '../src/render/jobgear/index.js';
 import { dropRetiredItems } from '../src/core/save.js';
 
 const seq = (...values) => {
@@ -19,16 +20,17 @@ test('every equip has a design the renderer draws', () => {
   for (const def of Object.values(ITEMS)) {
     if (def.type !== 'equip') continue;
     const c = def.color;
+    const pc = pieceOf(def);
     let shapes;
     switch (def.slot) {
       case 'weapon': shapes = weaponShapes(def.weaponType, def.tier, 0, def.theme ?? null)?.shapes; break;
-      case 'hat': shapes = hatShapes(def.design, c); break;
-      case 'top': shapes = topShapes(def.design, c); break;
-      case 'bottom': shapes = legShapes(11, legLook(def.design, c, '#ffffff'), { design: 'sneakers', color: c }, false); break;
-      case 'shoes': shapes = legShapes(11, legLook('pants', c, '#ffffff'), { design: def.design, color: c }, false); break;
-      case 'gloves': shapes = handShapes(10, 30, { design: def.design, color: c }, '#ffffff'); break;
-      case 'cape': shapes = capeShapes(def.design, c, 0, false); break;
-      case 'earring': shapes = earringShapes(def.design, c); break;
+      case 'hat': shapes = [...hatShapes(def.design, c, pc), ...hatBackShapes(def.design, c, pc)]; break;
+      case 'top': shapes = topShapes(def.design, c, pc); break;
+      case 'bottom': shapes = legShapes(11, legLook(def.design, c, '#ffffff', pc), { design: 'sneakers', color: c }, false); break;
+      case 'shoes': shapes = legShapes(11, legLook('pants', c, '#ffffff'), pc, false); break;
+      case 'gloves': shapes = handShapes(10, 30, pc, '#ffffff'); break;
+      case 'cape': shapes = capeShapes(def.design, c, 0, false, pc); break;
+      case 'earring': shapes = earringShapes(def.design, c, pc); break;
     }
     assert.ok(shapes?.length, `${def.id} draws something`);
     if (def.slot !== 'weapon') assert.ok(def.design, `${def.id} has a design`);
@@ -92,9 +94,9 @@ test('old saves lose weapons that no longer exist instead of breaking', () => {
   assert.equal(char.hotkeys.Digit1.item, 'red_potion');
 });
 
-test('every weapon type has five tiers and every endgame design, each with art and an icon', () => {
+test('every weapon type has a weapon every 5 levels and every endgame design, each with art and an icon', () => {
   for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
-    const ids = [0, 1, 2, 3, 4].map((t) => `${type}_${t}`).concat(ENDGAME_THEMES.map((th) => (type === 'staff' && th === 'holy' ? 'seraphim_staff' : `${type}_${th}`)));
+    const ids = WEAPON_LEVELS.map((L) => `${type}_${L}`).concat(ENDGAME_THEMES.map((th) => (type === 'staff' && th === 'holy' ? 'seraphim_staff' : `${type}_${th}`)));
     let last = 0;
     for (const id of ids) {
       const def = ITEMS[id];

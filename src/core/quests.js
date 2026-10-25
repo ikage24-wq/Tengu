@@ -1,8 +1,10 @@
 // Quest progress. Kill counts are tracked per quest; collect objectives read the bag directly.
 
 import { QUESTS } from '../data/quests.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
+import { JOBS } from '../data/jobs.js';
 import { addItem, countItem, removeItem, TAB_SIZE } from './inventory.js';
+import { makeEquip } from './items.js';
 import { gainExp } from './character.js';
 
 // 'locked' | 'available' | 'active' | 'ready' | 'done'
@@ -60,9 +62,21 @@ export function completeQuest(char, id) {
   if (equipRewards > spareEquip) return null;
 
   for (const o of q.objectives) if (o.type === 'collect') removeItem(char.inventory, o.item, o.count);
-  for (const r of q.rewards.items) addItem(char.inventory, r.id, r.qty);
+  const items = q.rewards.items.map((r) => ({ ...r, id: rewardId(char, r) }));
+  for (const r of items) {
+    if (ITEMS[r.id].type === 'equip') for (let i = 0; i < r.qty; i++) addItem(char.inventory, makeEquip(r.id, { variant: r.variant ?? null }));
+    else addItem(char.inventory, r.id, r.qty);
+  }
   char.gold += q.rewards.gold;
   const levels = gainExp(char, q.rewards.exp);
   char.quests[id] = { state: 'done' };
-  return { ...q.rewards, levels };
+  return { ...q.rewards, items, levels };
+}
+
+// The item a reward actually gives this hero: job gear rewards become their own job's piece.
+export function rewardId(char, r) {
+  if (!r.forJob) return r.id;
+  const def = ITEMS[r.id];
+  const family = JOBS[char.job]?.family;
+  return GEAR_FAMILIES.includes(family) ? jobGearId(family, def.slot, def.reqLevel) : r.id;
 }
