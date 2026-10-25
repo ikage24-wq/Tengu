@@ -45,9 +45,10 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Esc | Close windows; with nothing open, Options |
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
-their title bars, and click a window to bring it to the front. Click an NPC anywhere on screen to talk
-to them, or click another player (or yourself) to see their profile. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
-then press the key. Right-click a hotkey slot to clear it.
+their title bars, and click a window to bring it to the front. Click an NPC anywhere on screen to
+talk to them, or click another player (or yourself) to see their profile. To bind a hotkey, select
+a skill in the Skills window or a potion in the Bag, then press the key. Right-click a hotkey slot
+to clear it.
 
 ## Systems
 
