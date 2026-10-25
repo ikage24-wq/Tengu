@@ -7,6 +7,7 @@ import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance }
 import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
+import { healMembers } from './dungeon.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -138,6 +139,7 @@ export function cast(world, skillId, rng = Math.random) {
     char.hp = Math.min(stats.maxHp, char.hp + amount);
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${amount}`, color: '#7ee081', t: 0, big: false });
     world.fx.push({ kind: 'heal', x: body.x, y: body.y, t: 0, dur: 0.8 });
+    if (world.dungeon) healMembers(world, params.healPct, hitBox(body, area));
   }
 
   const targets = pickTargets(world.mobs, body, area, params.targets);

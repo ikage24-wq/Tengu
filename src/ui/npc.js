@@ -12,6 +12,8 @@ import { shade } from '../render/pixel.js';
 import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
+import { DUNGEONS, ROLES } from '../data/dungeons.js';
+import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect } from './kit.js';
@@ -69,7 +71,7 @@ export function questMarker(char, npcId) {
 // ---------- Dialog ----------
 
 // Each NPC role gets its own color.
-const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender' };
+const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender', dungeon: 'mint' };
 
 // A visual-novel style dialog box along the bottom of the screen: the NPC stands large at the
 // left, their name on a ribbon, and their words type out. Returns the text area, or null if the
@@ -157,8 +159,8 @@ export function npcWindow(ui, state, world) {
   const { ctx } = ui;
   const jobOptions = dlg.job ? nextJobs(char.job, char.level).filter((j) => !npc.family || j.family === npc.family) : [];
   const questIds = (npc.quests ?? []).filter((id) => !['locked', 'done'].includes(questState(char, id)));
-  const optionCount = questIds.length + (npc.shop ? 1 : 0) + (npc.role === 'stylist' ? 1 : 0) + (npc.role === 'instructor' ? 1 : 0);
-  const H = dlg.quest ? 112 : dlg.job ? Math.max(104, 46 + jobOptions.length * 42) : Math.max(96, 58 + Math.ceil(optionCount / 2) * 20);
+  const optionCount = questIds.length + (npc.shop ? 1 : 0) + (npc.role === 'stylist' ? 1 : 0) + (npc.role === 'instructor' ? 1 : 0) + (npc.role === 'dungeon' ? 1 : 0);
+  const H = dlg.quest ? 112 : dlg.dungeon ? 150 : dlg.job ? Math.max(104, 46 + jobOptions.length * 42) : Math.max(96, 58 + Math.ceil(optionCount / 2) * 20);
   const area = dialogFrame(ui, win, npc, H, world);
   if (!area) {
     state.npc = null;
@@ -204,6 +206,11 @@ export function npcWindow(ui, state, world) {
       }
     }
     if (button(ui, tx + tw - 74, by, 74, 17, 'Back')) dlg.quest = null;
+    return;
+  }
+
+  if (dlg.dungeon) {
+    dungeonPage(ui, state, world, npc, area);
     return;
   }
 
@@ -260,7 +267,46 @@ export function npcWindow(ui, state, world) {
     dlg.mode = 'style';
     dlg.look = { ...char.appearance };
   }
+  if (npc.role === 'dungeon' && option(`Enter ${DUNGEONS[npc.dungeon].name}`, true, 'star')) dlg.dungeon = true;
   if (npc.role === 'instructor' && option('Job advancement', nextJobs(char.job, char.level).some((j) => j.family === npc.family), 'star')) dlg.job = true;
+}
+
+// ---------- Dungeon group finder ----------
+
+// The group you'd go in with: one row per role, filled by you, your party, or the finder.
+function dungeonPage(ui, state, world, npc, area) {
+  const { ctx } = ui;
+  const def = DUNGEONS[npc.dungeon];
+  const { x: tx, w: tw, theme: th } = area;
+  text(ctx, `${def.name}  ·  Lv ${def.minLevel}+`, tx, area.y, { size: 9, bold: true, color: th.ink });
+  wrap(ctx, def.blurb, tx, area.y + 12, tw, { size: 7, lineHeight: 9, color: COLORS.muted });
+  const plan = planGroup(world, def.id);
+  let y = area.y + 42;
+  if (plan.why) wrap(ctx, plan.why, tx, y + 8, tw, { size: 8.5, color: COLORS.bad });
+  else {
+    plan.slots.forEach((s, i) => {
+      const cx = tx + (i % 2) * (tw / 2 + 2);
+      const cy = y + Math.floor(i / 2) * 22;
+      const r = ROLES[s.role];
+      box(ctx, cx, cy, tw / 2 - 2, 19, { fill: '#ffffff', edge: th.light, r: 7, width: 1.2 });
+      box(ctx, cx + 3, cy + 3, 36, 13, { fill: r.color, edge: null, r: 6 });
+      text(ctx, r.label, cx + 21, cy + 12.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.5)' });
+      const who = s.who === 'you' ? `${world.char.name} (you)` : s.who ? `Lv${s.who.level} ${s.who.name}` : 'Group finder...';
+      const job = s.who === 'you' ? JOBS[world.char.job].name : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a Cleric' : s.role === 'tank' ? 'a Warrior' : 'any job';
+      text(ctx, who, cx + 44, cy + 9, { size: 7.5, bold: true, color: s.who ? COLORS.ink : COLORS.muted });
+      text(ctx, job, cx + 44, cy + 16.5, { size: 6, color: COLORS.muted });
+    });
+    text(ctx, 'Warriors tank, Clerics heal, everyone else deals damage.', tx, y + 52, { size: 6.5, color: COLORS.muted });
+  }
+  const by = area.bottom - 16;
+  if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, 'Find group & go', { primary: true, size: 7.5 })) {
+    const why = startRun(world, def.id);
+    if (why) world.log(why, '#ffb3c6');
+    state.npc = null;
+    state.windows.npc.open = false;
+    return;
+  }
+  if (button(ui, tx + tw - 74, by, 74, 17, 'Back')) state.npc.dungeon = false;
 }
 
 // ---------- Shop ----------
@@ -418,6 +464,12 @@ function styleWindow(ui, state, world) {
 // ---------- Fainted ----------
 
 export function deathWindow(ui, state, world) {
+  // Got back up (a revive, or the group regrouping after a wipe).
+  if (!world.dead) {
+    state.death = false;
+    return;
+  }
+  if (world.dungeon) return dungeonDeath(ui, state, world);
   const W = 230;
   const H = 112;
   const x = (640 - W) / 2;
@@ -452,6 +504,24 @@ export function deathWindow(ui, state, world) {
   ui.theme = th;
   if (button(ui, x + W / 2 - 56, y + H - 28, 112, 19, 'Return to town', { primary: true })) {
     respawn(world);
+    state.death = false;
+  }
+}
+
+// Fainting in a dungeon: a small note at the top instead of a modal, so you can watch your group
+// finish the fight. They'll get you up after it, or you can leave.
+function dungeonDeath(ui, state, world) {
+  const { ctx } = ui;
+  const th = THEMES.pink;
+  const W = 220;
+  const x = (640 - W) / 2;
+  const y = 92;
+  box(ctx, x, y, W, 40, { fill: 'rgba(255,250,246,0.95)', edge: th.dark, r: 10, width: 1.5 });
+  text(ctx, 'You fainted!', x + 10, y + 14, { size: 9, bold: true, color: th.ink });
+  text(ctx, 'Your group will get you up after the fight.', x + 10, y + 26, { size: 6.5, color: COLORS.muted });
+  ui.theme = th;
+  if (button(ui, x + W - 62, y + 6, 54, 15, 'Leave', { size: 7.5 })) {
+    leaveDungeon(world);
     state.death = false;
   }
 }

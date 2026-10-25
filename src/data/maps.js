@@ -338,3 +338,122 @@ export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 export function getMap(id) {
   return MAPS[id] ?? MAPS.sprout;
 }
+
+// ---------- Rootwood Hollow: the gate off Windy Canyon, and the dungeon's six rooms ----------
+//
+// Dungeon rooms (`dungeon` set) hold exactly the monsters listed (no copies, no respawns).
+// Monsters sharing a `pack` fight together. A `sealed` portal opens once the room is cleared:
+// every monster down and the room's `task` done. `objects` are things to use with Up:
+// glowcaps to light, cages to open, and the chest at the end.
+
+const G = 380; // every room's floor
+const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
+
+MAPS.canyon.portals.push({ id: 'hollow', x: 780, y: 480, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
+
+Object.assign(MAPS, {
+  hollow_gate: {
+    id: 'hollow_gate', name: 'Hollow Gate', theme: 'forest', town: 'crag', world: { x: 168, y: 132 },
+    width: 1200, height: 420, groundY: G,
+    platforms: [{ x: 260, y: 300, w: 200 }],
+    ropes: [],
+    portals: [
+      { id: 'start', x: 760, y: G, hidden: true },
+      { id: 'south', x: 60, y: G, to: 'canyon', toPortal: 'hollow' },
+      { id: 'door', x: 1080, y: G, to: 'hollow1', toPortal: 'start', label: 'Rootwood Hollow', dungeon: 'hollow' },
+    ],
+    npcs: [{ id: 'bramble', x: 900 }],
+    spawns: [],
+  },
+
+  hollow1: {
+    id: 'hollow1', name: 'Hollow Entrance', theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    width: 2000, height: 420, groundY: G,
+    task: { kind: 'light', label: 'Light the glowcaps' },
+    platforms: [{ x: 640, y: 300, w: 180 }, { x: 1360, y: 300, w: 200 }],
+    ropes: [],
+    portals: [
+      { id: 'out', x: 40, y: G, to: 'hollow_gate', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 140, y: G, hidden: true },
+      { id: 'east', x: 1950, y: G, to: 'hollow2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'glowcap', x: 330 }, { kind: 'glowcap', x: 1180 }, { kind: 'glowcap', x: 1840 }],
+    npcs: [],
+    spawns: [...pack('a', 560, 'rootling', 'sporecap'), ...pack('b', 1000, 'rootling', 'rootling', 'rootling'), ...pack('c', 1560, 'rootling', 'sporecap', 'rootling', 'sporecap')],
+  },
+
+  hollow2: {
+    id: 'hollow2', name: "Capper's Garden", theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    width: 1300, height: 420, groundY: G,
+    platforms: [{ x: 120, y: 300, w: 180 }, { x: 1000, y: 300, w: 180 }],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'hollow1', toPortal: 'east' },
+      { id: 'east', x: 1260, y: G, to: 'hollow3', toPortal: 'west', sealed: true },
+    ],
+    objects: [],
+    npcs: [],
+    spawns: [{ mob: 'mothercapper', x: 820, y: G }],
+  },
+
+  hollow3: {
+    id: 'hollow3', name: 'Bramble Tunnels', theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    width: 2200, height: 420, groundY: G,
+    task: { kind: 'free', label: 'Free the trapped Sprouts' },
+    platforms: [{ x: 500, y: 300, w: 200 }, { x: 1180, y: 300, w: 220 }, { x: 1800, y: 300, w: 180 }],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'hollow2', toPortal: 'east' },
+      { id: 'east', x: 2150, y: G, to: 'hollow4', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cage', x: 420 }, { kind: 'cage', x: 980 }, { kind: 'cage', x: 1480 }, { kind: 'cage', x: 2040 }],
+    npcs: [],
+    spawns: [...pack('a', 700, 'rootling', 'thornback', 'rootling'), ...pack('b', 1260, 'sporecap', 'rootling', 'sporecap'), ...pack('c', 1800, 'thornback', 'sporecap', 'rootling')],
+  },
+
+  hollow4: {
+    id: 'hollow4', name: 'Boar Den', theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    width: 1400, height: 420, groundY: G,
+    platforms: [{ x: 160, y: 300, w: 160 }, { x: 620, y: 290, w: 160 }, { x: 1080, y: 300, w: 160 }],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'hollow3', toPortal: 'east' },
+      { id: 'east', x: 1360, y: G, to: 'hollow5', toPortal: 'west', sealed: true },
+    ],
+    objects: [],
+    npcs: [],
+    spawns: [{ mob: 'tuskar', x: 900, y: G }],
+  },
+
+  hollow5: {
+    id: 'hollow5', name: 'The Root Gate', theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    width: 2000, height: 420, groundY: G,
+    task: { kind: 'keys', label: 'Find the Root Keys', count: 3 },
+    platforms: [{ x: 420, y: 300, w: 200 }, { x: 1100, y: 300, w: 200 }],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'hollow4', toPortal: 'east' },
+      { id: 'east', x: 1950, y: G, to: 'hollow6', toPortal: 'west', sealed: true },
+    ],
+    objects: [],
+    npcs: [],
+    spawns: [
+      ...pack('a', 520, 'rootling', 'thornback', 'sporecap'), ...pack('b', 1040, 'sporecap', 'thornback', 'rootling', 'rootling'),
+      ...pack('c', 1580, 'rootling', 'sporecap', 'thornback', 'sporecap'),
+    ].map((s) => (s.mob === 'thornback' ? { ...s, key: true } : s)),
+  },
+
+  hollow6: {
+    id: 'hollow6', name: 'Heart of the Hollow', theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    width: 1500, height: 420, groundY: G,
+    platforms: [{ x: 140, y: 300, w: 170 }, { x: 560, y: 290, w: 150 }, { x: 900, y: 290, w: 150 }, { x: 1220, y: 300, w: 170 }],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'hollow5', toPortal: 'east' },
+      { id: 'out', x: 1450, y: G, to: 'hollow_gate', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1330, after: 'clear' }],
+    npcs: [],
+    spawns: [{ mob: 'gnarlroot', x: 860, y: G }],
+  },
+});

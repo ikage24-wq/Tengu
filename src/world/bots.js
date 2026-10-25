@@ -142,11 +142,11 @@ function gearFor(char, slot, pro, rng, variant) {
   return makeEquip(def.id, { variance: 0.12, rng, rarity, variant: own });
 }
 
-export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name } = {}) {
+// `level` and `jobs` (the job path, first job on) pick them instead of rolling.
+export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name, level = rollLevel(pro, rng), jobs = null } = {}) {
   const char = createCharacter(name, makeLook(rng));
-  const level = rollLevel(pro, rng);
   while (char.level < level) gainExp(char, expToNext(char.level));
-  for (const job of jobPath(char.level, rng)) if (job !== 'novice') advanceJob(char, job);
+  for (const job of jobs ?? jobPath(char.level, rng)) if (job !== 'novice') advanceJob(char, job);
   let r = rng();
   const build = BUILDS.find((b) => (r -= b.weight) < 0)?.id ?? 'standard';
   spendBuild(char, build, rng);
@@ -269,6 +269,22 @@ function spawn(bots, world, { quiet = false } = {}) {
     waved: false, shop: null, appear: quiet ? 0 : 1,
   };
   if (rng() < 0.28) openShop(bot, map, bots);
+  bots.list.push(bot);
+  return bot;
+}
+
+// A player the group finder brings in: a level and job path to order, appearing right next to
+// you. They aren't in your party until joined.
+export function recruitBot(bots, world, { level, jobs }) {
+  const rng = bots.rng;
+  const name = makeName(bots.names, rng);
+  const char = makeBotCharacter(rng, { name, pro: false, level, jobs });
+  const bot = {
+    id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: false,
+    guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng),
+    map: world.map.id, x: world.body.x - 40 - rng() * 40, facing: 1, state: 'idle', timer: 2,
+    session: 1800, stay: 600, nextLine: between(20, 50, rng), bubble: null, waved: true, shop: null, appear: 1,
+  };
   bots.list.push(bot);
   return bot;
 }

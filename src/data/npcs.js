@@ -86,6 +86,13 @@ export const NPCS = {
     greeting: 'The harbor needs brave folks. Got time for a job?',
     quests: ['mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart'],
   },
+  bramble: {
+    id: 'bramble', name: 'Bramble', title: 'Hollow Warden', role: 'dungeon', dungeon: 'hollow',
+    look: { hairStyle: 'wolf', hairColor: '#8fbf7a', skinTone: '#e7b48f', eyeColor: '#7a4a2b', outfitColor: '#b08860', eyeStyle: 'round', face: 'grin' },
+    greeting: "Rootwood Hollow is no place to wander alone. Bring a tank, a healer, and two fighters, or I'll find you some.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
+    quests: ['hollow_heart'],
+  },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",

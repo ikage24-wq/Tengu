@@ -733,11 +733,35 @@ function drawBot(ctx, bot, x, y, time, hovered, said) {
   const seed = seedOf(bot.id);
   const facing = body ? body.facing : bot.facing;
   const anim = animFor(bot.id, body ? body.x : bot.x, facing, time);
-  drawHero(ctx, look, wornGear(bot.char), x, y, {
+  const state = {
     pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
     // Party members fighting nearby stand on guard between swings.
-    ready: Boolean(bot.party && bot.brain?.target),
-  }, anim);
+    ready: Boolean(bot.party && bot.brain?.target), hurt: bot.hurt > 0,
+  };
+  if (bot.down) {
+    // Fallen in a dungeon: lying on the floor, with a little ghost bobbing over them.
+    ctx.save();
+    ctx.translate(x, y - 5);
+    ctx.rotate(-facing * Math.PI / 2);
+    drawHero(ctx, { ...look, face: 'pout', eyeStyle: 'sleepy' }, wornGear(bot.char), 0, 0, { ...state, pose: 'idle', ready: false, alpha: 0.75 });
+    ctx.restore();
+    const bob = Math.sin(time * 3 + seed) * 2;
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x, y - 26 + bob, 5, Math.PI, 0);
+    ctx.lineTo(x + 5, y - 20 + bob);
+    ctx.lineTo(x + 2, y - 22 + bob);
+    ctx.lineTo(x, y - 20 + bob);
+    ctx.lineTo(x - 2, y - 22 + bob);
+    ctx.lineTo(x - 5, y - 20 + bob);
+    ctx.fill();
+    ctx.fillStyle = '#3a2d4f';
+    ctx.fillRect(x - 2.5, y - 27 + bob, 1.2, 1.6);
+    ctx.fillRect(x + 1.3, y - 27 + bob, 1.2, 1.6);
+    ctx.restore();
+  } else drawHero(ctx, look, wornGear(bot.char), x, y, state, anim);
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;
@@ -753,7 +777,12 @@ function drawBot(ctx, bot, x, y, time, hovered, said) {
     ctx.fill();
   } else if (bot.pro) sparkle(ctx, x - w / 2 + 6, y + 7, 2.6, '#ffd66b');
   text(ctx, label, x + (pad > 10 ? 4 : 0), y + 9.5, { size: 7, bold: true, align: 'center', color: bot.party ? '#e6ffee' : bot.pro ? '#ffe9a0' : '#fff6c9' });
-  if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+  // In a dungeon, everyone's HP shows under their name.
+  if (bot.inDungeon && bot.hp != null) {
+    const f = Math.max(0, bot.hp / bot.stats.maxHp);
+    box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
+    if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
+  } else if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
   if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
 }
 

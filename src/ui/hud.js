@@ -16,6 +16,8 @@ import { settings } from '../core/settings.js';
 import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
+import { DUNGEONS, PROVOKE } from '../data/dungeons.js';
+import { taskProgress, clock } from '../world/dungeon.js';
 
 const BAR_Y = 330;
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
@@ -158,7 +160,11 @@ export function drawHud(ui, state, world) {
 
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
-  if (settings.questTracker) drawTracker(ui, world);
+  if (world.dungeon) {
+    drawDungeonTracker(ui, world);
+    drawProvoke(ui, world);
+    drawCallout(ctx, world);
+  } else if (settings.questTracker) drawTracker(ui, world);
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   if (settings.showFps) drawFps(ctx, state);
@@ -406,5 +412,89 @@ function drawBanner(ctx, world, state) {
   text(ctx, world.map.name, 320, y + 16, { size: 15, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
   sparkle(ctx, x + 10, y + 11, 3 + Math.sin(world.now * 4), '#ffffff');
   sparkle(ctx, x + w - 10, y + 11, 3 + Math.cos(world.now * 4), '#ffffff');
+  ctx.restore();
+}
+
+// ---------- Dungeon ----------
+
+// The run at the top right: the dungeon, this room, what's left to do, and the clock.
+function drawDungeonTracker(ui, world) {
+  const { ctx } = ui;
+  const run = world.dungeon;
+  const def = DUNGEONS[run.id];
+  const th = THEMES.mint;
+  const w = 138;
+  const x = 640 - w - 6;
+  const y = 6;
+  const rows = [];
+  const bosses = world.mobs.filter((m) => m.def.boss && m.hp > 0);
+  const left = world.mobs.filter((m) => m.hp > 0 && !m.def.boss && !m.add).length;
+  if (bosses.length) rows.push({ label: `Defeat ${bosses[0].def.name}`, done: false });
+  else if (left) rows.push({ label: `Clear the room (${left} left)`, done: false });
+  const task = taskProgress(world);
+  if (task) rows.push({ label: `${task.label} ${task.have}/${task.need}`, done: task.have >= task.need });
+  if (run.room?.cleared) rows.push({ label: run.done ? 'Open the chest, then exit' : 'Head through the exit', done: false, next: true });
+  const h = 30 + rows.length * 10;
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.85)', edge: th.main, r: 8, width: 1.2 });
+  box(ctx, x + 2, y + 2, w - 4, 11, { fill: th.main, edge: null, r: 5.5 });
+  text(ctx, def.name, x + 8, y + 10.5, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  text(ctx, clock(world.now - run.start), x + w - 7, y + 10.5, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: th.ink });
+  const n = def.rooms.indexOf(world.map.id) + 1;
+  text(ctx, `${n}/${def.rooms.length}  ${world.map.name}`, x + 6, y + 22, { size: 7, bold: true, color: COLORS.ink });
+  rows.forEach((r, i) => text(ctx, `${r.done ? '✓' : r.next ? '➜' : '•'} ${r.label}`, x + 8, y + 32 + i * 10, { size: 6.5, color: r.done ? COLORS.good : r.next ? th.dark : COLORS.muted, bold: r.next }));
+  if (run.wipes) text(ctx, `Wipes: ${run.wipes}`, x + w - 6, y + 22, { size: 6, align: 'right', color: COLORS.bad });
+}
+
+// Tanks get a reminder of their Provoke key, just above the portrait.
+function drawProvoke(ui, world) {
+  if (world.dungeon.roles.you !== 'tank') return;
+  const { ctx } = ui;
+  const ok = world.char.mp >= PROVOKE.mp;
+  box(ctx, 8, 300, 96, 13, { fill: ok ? 'rgba(90,168,255,0.9)' : 'rgba(150,160,190,0.8)', edge: '#ffffff', r: 6.5, width: 1 });
+  roleIcon(ctx, 'tank', 17, 306.5, '#ffffff');
+  text(ctx, `T  Provoke · ${PROVOKE.mp} MP`, 58, 309.5, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
+}
+
+// Shield for tanks, a cross for healers, a sword for damage.
+function roleIcon(ctx, role, x, y, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (role === 'tank') {
+    ctx.moveTo(x - 4, y - 4);
+    ctx.lineTo(x + 4, y - 4);
+    ctx.lineTo(x + 4, y);
+    ctx.quadraticCurveTo(x + 4, y + 3, x, y + 5);
+    ctx.quadraticCurveTo(x - 4, y + 3, x - 4, y);
+    ctx.closePath();
+  } else if (role === 'healer') {
+    for (const [a, b, c, d] of [[-1.5, -4.5, 3, 9], [-4.5, -1.5, 9, 3]]) ctx.rect(x + a, y + b, c, d);
+  } else {
+    ctx.moveTo(x - 4, y + 4);
+    ctx.lineTo(x + 3, y - 3);
+    ctx.lineTo(x + 4.5, y - 4.5);
+    ctx.lineTo(x + 3.5, y - 2);
+    ctx.lineTo(x - 3, y + 5);
+    ctx.closePath();
+    ctx.rect(x - 4, y + 1, 3, 1.4);
+  }
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Boss moves and milestones, called out big across the middle of the screen.
+function drawCallout(ctx, world) {
+  const c = world.dungeon.callout;
+  if (!c) return;
+  const age = 2.6 - c.t;
+  const k = Math.min(1, age / 0.18);
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, c.t * 2);
+  const size = 16 * (1 + (1 - k) * 0.4);
+  text(ctx, c.title, 320, 112, { size, bold: true, align: 'center', color: '#ffffff', outline: '#8f3f6f' });
+  if (c.sub) text(ctx, c.sub, 320, 126, { size: 8, bold: true, align: 'center', color: '#fff3c9', outline: '#5a3f7a' });
   ctx.restore();
 }

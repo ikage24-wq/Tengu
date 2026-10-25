@@ -86,6 +86,54 @@ export const MOBS = {
     speed: 60, w: 34, h: 36, art: 'starspirit', fly: true, drops: [{ id: 'stardust', chance: 0.45 }],
   }),
 
+  // Rootwood Hollow (the Lv 10 dungeon). In a dungeon monsters don't hurt on touch: they swing at
+  // whoever they're angriest at (`fight`: every seconds, reach px, wind-up seconds; ranged ones
+  // spit from `range` away). Bosses add their own moves (`mech`, see world/dungeon.js).
+  rootling: mob({
+    id: 'rootling', name: 'Rootling', level: 10, hp: 300, atk: 36, def: 8, acc: 30, eva: 3, exp: 130, gold: [10, 26],
+    speed: 46, w: 26, h: 28, art: 'rootling', drops: [{ id: 'hollow_acorn', chance: 0.12 }],
+    fight: { every: 1.5, reach: 28, windup: 0.35 },
+  }),
+  sporecap: mob({
+    id: 'sporecap', name: 'Sporecap', level: 10, hp: 240, atk: 30, def: 5, acc: 30, eva: 2, exp: 120, gold: [10, 26],
+    speed: 36, w: 26, h: 30, art: 'sporecap', drops: [{ id: 'mushcap', chance: 0.4 }],
+    fight: { every: 2.2, reach: 26, windup: 0.5, range: 170 },
+  }),
+  thornback: mob({
+    id: 'thornback', name: 'Thornback', level: 12, hp: 900, atk: 52, def: 14, acc: 34, eva: 3, exp: 420, gold: [20, 50],
+    speed: 40, w: 42, h: 34, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'tusk', chance: 0.4 }],
+    fight: { every: 1.8, reach: 32, windup: 0.45 },
+  }),
+  sporeling: mob({
+    id: 'sporeling', name: 'Sporeling', level: 10, hp: 160, atk: 22, def: 2, acc: 28, eva: 4, exp: 40, gold: [2, 8],
+    speed: 62, w: 20, h: 20, art: 'sporeling', drops: [],
+    fight: { every: 1.2, reach: 22, windup: 0.25 },
+  }),
+  sapling: mob({
+    id: 'sapling', name: 'Gnarl Sapling', level: 12, hp: 700, atk: 0, def: 10, acc: 0, eva: 0, exp: 160, gold: [4, 12],
+    speed: 0, w: 24, h: 34, art: 'sapling', drops: [],
+    // Saplings don't fight: they feed their life to Old Gnarlroot.
+    fight: { mender: true },
+  }),
+  mothercapper: mob({
+    id: 'mothercapper', name: 'Mother Capper', level: 12, hp: 7000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [300, 600],
+    speed: 34, w: 70, h: 72, art: 'mothercapper', boss: true,
+    drops: [{ id: 'hollow_acorn', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }, { id: 'scroll_watk_60', chance: 0.25 }],
+    fight: { every: 1.8, reach: 52, windup: 0.5 }, mech: 'capper',
+  }),
+  tuskar: mob({
+    id: 'tuskar', name: 'Tuskar', level: 13, hp: 9000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [400, 800],
+    speed: 44, w: 84, h: 64, art: 'tuskar', boss: true,
+    drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }, { id: 'scroll_def_60', chance: 0.25 }],
+    fight: { every: 2, reach: 56, windup: 0.5 }, mech: 'boar',
+  }),
+  gnarlroot: mob({
+    id: 'gnarlroot', name: 'Old Gnarlroot', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [800, 1500],
+    speed: 16, w: 120, h: 130, art: 'gnarlroot', boss: true,
+    drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }, { id: 'scroll_watk_60', chance: 0.5 }, { id: 'scroll_matk_60', chance: 0.5 }],
+    fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',
+  }),
+
   crystalking: mob({
     id: 'crystalking', name: 'Crystal King', level: 45, hp: 160000, atk: 260, def: 60, acc: 110, eva: 12, exp: 120000,
     gold: [4000, 8000], speed: 34, w: 110, h: 110, art: 'crystalking', boss: true,

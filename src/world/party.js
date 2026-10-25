@@ -14,6 +14,7 @@ import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
 import { speak } from './chatter.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
+import { roleThink, healerTurn, jumpNow } from './dungeon.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -67,12 +68,12 @@ function answer(bots, bot, world) {
     world.log(`${bot.name} declined your party invite.`, '#ffb3c6');
     return;
   }
-  join(bots, bot, world);
+  joinParty(bots, bot, world);
   say(bot, speak(bots.memory, 'joined', ctx, bot.style, rng));
   world.log(`${bot.name} joined your party!`, '#bff0dc');
 }
 
-function join(bots, bot, world) {
+export function joinParty(bots, bot, world) {
   const b = world.body;
   bot.party = true;
   bot.shop = null;
@@ -298,6 +299,7 @@ function fieldSteer(bot, world, members) {
 // Decides where to be. Runs every few tenths of a second (each member's own reaction time), not
 // every frame, which keeps movement calm.
 function think(bot, world, members, rng) {
+  if (world.dungeon) return roleThink(bot, world, rng);
   if (!world.map.isTown) return hunt(bot, world, members, rng);
   const ai = bot.ai;
   const br = bot.brain;
@@ -487,6 +489,13 @@ export function updateParty(bots, world, dt) {
       return;
     }
     const body = bot.body;
+    // Fallen in a dungeon: they lie where they fell until someone gets them up.
+    if (bot.down) {
+      bot.attack = null;
+      stepBody(body, map, { left: false, right: false, up: false, down: false, jump: false }, dt, { speed: 0, jump: 0 });
+      bot.x = body.x;
+      return;
+    }
     // In town, lost or stuck: catch up with a shimmer, as if they'd taken a shortcut. (In the
     // field they're off on their own.)
     const far = map.isTown && (Math.abs(body.x - b.x) > 480 || Math.abs(body.y - b.y) > 220);
@@ -510,6 +519,8 @@ export function updateParty(bots, world, dt) {
     // Move.
     const busy = bot.attack && ['pray', 'cheer', 'flip', 'roar', 'guard', 'aimshot'].includes(bot.attack.pose) && !bot.attack.fighting;
     const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : map.isTown ? steerTo(bot, world, members) : fieldSteer(bot, world, members);
+    // In a dungeon, hop over the Root Slam.
+    if (world.dungeon && jumpNow(world, body)) intent.jump = true;
     // Walking into something and getting nowhere: plan again, and give up on that monster.
     const pushing = (intent.left || intent.right) && body.onGround;
     br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
@@ -526,7 +537,7 @@ export function updateParty(bots, world, dt) {
     // Fight.
     const m = br.target;
     const st = bot.ai.weapon;
-    if (m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
+    if (m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
       // Turn to it once planted (walking sets their facing), and only swing at what they face.
       const toward = m.x < body.x ? -1 : 1;
       if (!intent.left && !intent.right) body.facing = toward;
@@ -541,7 +552,12 @@ export function updateParty(bots, world, dt) {
       body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;
     }
     // Healers patch you up between fights (or mid-fight if you're in trouble).
-    if (bot.ai.kind === 'healer') {
+    if (world.dungeon) {
+      if (world.dungeon.roles[bot.id] === 'healer') {
+        br.healIn -= dt;
+        if (br.healIn <= 0) br.healIn = healerTurn(bot, world, rng);
+      }
+    } else if (bot.ai.kind === 'healer') {
       br.healIn -= dt;
       if (br.healIn <= 0) br.healIn = heal(bot, world, bots) ? between(6, 10, rng) : 1.5;
     }

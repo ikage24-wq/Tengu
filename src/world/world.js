@@ -16,6 +16,8 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
+import { DUNGEONS } from '../data/dungeons.js';
+import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, roleAction } from './dungeon.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -75,7 +77,9 @@ export function loadMap(world, mapId, portalId) {
   world.pending = [];
   world.fx = [];
   world.numbers = [];
+  world.channel = null;
   world.events.push({ type: 'map', mapId: map.id });
+  onMapLoaded(world);
 }
 
 function townOf(world) {
@@ -185,7 +189,18 @@ function pickUp(world) {
 function interact(world) {
   const b = world.body;
   if (!b.onGround) return false;
+  if (world.dungeon && dungeonInteract(world)) return true;
   const portal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < PORTAL_RANGE && Math.abs(p.y - b.y) < 6);
+  // A dungeon door sends you to its warden to form a group; a sealed exit waits for the room.
+  if (portal?.dungeon && !world.dungeon) {
+    world.events.push({ type: 'talk', npc: DUNGEONS[portal.dungeon].warden });
+    return true;
+  }
+  if (portal && portalSealed(world, portal)) {
+    if (world.warnTimer <= 0) world.log('Roots seal the way. Clear the room first!', '#ffb3c6');
+    world.warnTimer = 1;
+    return true;
+  }
   if (portal) {
     loadMap(world, portal.to, portal.toPortal);
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');
@@ -241,6 +256,7 @@ function killMob(world, m, byParty = false) {
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
+  onMobKilled(world, m);
   for (const qid of recordKill(char, m.def.id)) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
@@ -352,6 +368,7 @@ export function updateWorld(world, dt, input) {
     // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
     const attackKey = ['KeyZ', 'ControlLeft', 'ControlRight'].some((k) => held.has(k) || pressed.has(k));
     if (attackKey) cast(world, null);
+    if (world.dungeon && pressed.has('KeyT')) roleAction(world);
     for (const [code, binding] of Object.entries(char.hotkeys)) {
       if (!binding) continue;
       // Attack skills repeat while held; everything else fires once per press.
@@ -372,6 +389,7 @@ export function updateWorld(world, dt, input) {
   for (const h of due) {
     const m = h.mob;
     if (m.hp <= 0) continue;
+    if (world.dungeon) h.damage = noteHit(world, m, h);
     const top = m.y - m.def.h - 8 - h.stack * 15;
     if (h.miss) {
       world.numbers.push({ x: m.x, y: top, text: 'MISS', color: '#d4cbe8', t: 0 });
@@ -424,8 +442,10 @@ export function updateWorld(world, dt, input) {
   }
 
   // ----- Monsters -----
+  // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
-  for (const m of world.mobs) {
+  if (world.dungeon) tickDungeon(world, dt);
+  else for (const m of world.mobs) {
     const event = updateMob(m, world.body, dt, world.now);
     if (event === 'slam') {
       world.fx.push({ kind: 'slam', x: m.x, y: m.y, t: 0, dur: 0.6, range: m.def.special.range });

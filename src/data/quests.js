@@ -28,6 +28,12 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'sproutling', count: 10 }],
     rewards: { exp: 450, gold: 500, items: [{ id: 'shoes_0', qty: 1 }, { id: 'top_0', qty: 1 }] },
   },
+  hollow_heart: {
+    id: 'hollow_heart', name: 'Heart of the Hollow', giver: 'bramble', minLevel: 10,
+    text: "Old Gnarlroot has been grumbling under the canyon for a week, and the whole Hollow woke up with him. Take a group down and calm him. Talk to me again when you're ready to go in.",
+    objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
+    rewards: { exp: 5000, gold: 3000, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
+  },
   mush_menace: {
     id: 'mush_menace', name: 'Capper Chaos', giver: 'rook', minLevel: 8,
     text: 'Cappers have been hopping onto the docks. Clear out 20 of them in Clover Hills.',

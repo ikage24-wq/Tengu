@@ -39,6 +39,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Up | Talk to an NPC, or enter a portal |
 | Z (or Ctrl) | Basic attack (hold to keep attacking) |
 | X | Pick up loot (hold to vacuum) |
+| T | In a dungeon, as the tank: Provoke (everything nearby turns on you) |
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
 | I / C / K / L / M / O | Bag / Stats / Skills / Quests / World map / Cash Shop |
 | Enter | Chat (Enter sends, Esc cancels, /help for commands) |
@@ -215,6 +216,36 @@ to clear it.
   shows everyone with their playstyle (click for a profile,
   right-click to remove someone); Leave, or right-clicking yourself, leaves the party, and members
   head off on their own (or log off after a long session).
+- **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
+  Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
+  form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank,
+  clerics (and bishops) heal, everyone else deals damage**. Your party comes with you if it fits the
+  roles, and the group finder brings in players for any open spot (a cleric for the healer seat if
+  no one in your party can heal). Inside:
+  - Everyone in the group has HP (shown under their names and in the group panel), and monsters
+    don't hurt on touch: they wind up and swing at whoever they're angriest at. Damage builds
+    **threat**, a tank's five times over, and healing builds a little. Monsters in a pack fight
+    together. As the tank, press **T** to Provoke everything nearby onto you.
+  - The group plays its roles: the tank leads and pulls the next pack once everyone is ready, picks
+    up loose monsters, and holds the boss; the healer hangs back and heals whoever is hurt (a group
+    heal when several are); the damage dealers focus what the tank is fighting, go for adds first,
+    and help with the room's task between fights. Everyone steps out of telegraphed attacks.
+  - Six rooms, each sealed until it's cleared: **Hollow Entrance** (trash packs, and light the
+    three glowcaps), **Capper's Garden** (mini-boss Mother Capper: Spore Rain patches to step out
+    of, and Sporelings that rush the healer), **Bramble Tunnels** (trash, and free four trapped
+    Sprouts from root cages), **Boar Den** (mini-boss Tuskar: a tank-busting Gore, and a charge down
+    a telegraphed lane at someone; he crashes into the wall and is dazed, taking extra damage),
+    **The Root Gate** (Thornbacks carry the three Root Keys that open the gate), and **Heart of the
+    Hollow** (Old Gnarlroot: a Root Slam to jump or get on a ledge for, alternating Thorn strips,
+    Gnarl Saplings at half HP that heal him and halve his damage taken until killed, and a faster
+    enrage at 20%).
+  - Fall in a fight and your group gets you back up once it's over (no EXP lost; you can also
+    leave). If everyone falls, the room resets and the group regroups at its entrance. The run
+    tracker shows the room, what's left, the clock, and wipes; boss moves are called out on
+    screen.
+  - The chest at the end holds EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
+    Hollow Acorns, and Elixirs. Bramble's quest, Heart of the Hollow, pays out for calming Old
+    Gnarlroot. Run it as often as you like.
 - **Options** — Esc (or the gear button) opens Options. Display: screen shake, hit-stop, damage
   numbers, particles (full, reduced, or off), job auras, and weapon effects. Interface: minimap,
   quest tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: auto-loot,
@@ -283,8 +314,9 @@ npm test
 ```
 
 The suites cover the formulas and progression rules, gear designs and rarity, content integrity (every portal, drop,
-reward, and ledge resolves and is reachable), and world behavior (movement, ropes, portals, NPC
-talk, combat and loot, respawns, death, the boss slam).
+reward, and ledge resolves and is reachable), world behavior (movement, ropes, portals, NPC
+talk, combat and loot, respawns, death, the boss slam), and dungeons (roles, the group finder,
+threat, and a whole Rootwood Hollow run played by an autopilot).
 
 ## Credits
 

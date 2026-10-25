@@ -432,6 +432,7 @@ const ETC = [
   ['feather', 'Gale Feather', 95, '#9fd8ff'],
   ['stardust', 'Stardust', 110, '#ffe36b'],
   ['king_crystal', 'King Crystal', 5000, '#c9a6ff'],
+  ['hollow_acorn', 'Hollow Acorn', 300, '#d99a5a'],
 ];
 
 for (const [id, name, price, color] of ETC) {

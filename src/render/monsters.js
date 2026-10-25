@@ -310,6 +310,243 @@ const ART = {
       ...face(58, 40 + b, 4.6, mood, { gap: 4.4 })];
     return { w: 114, h: 112, shapes: out.map((s) => ({ ...s, y: s.y + 2 })) };
   },
+  // Rootwood Hollow: a root sprite, a spore-puffing mushroom, a bramble hedgehog-boar, and the
+  // little spore puffs and saplings that the bosses call in.
+  rootling: (f, mood) => {
+    const b = f ? 1 : 0;
+    const bark = '#d1a27a';
+    const dark = shade(bark, -14);
+    const out = [...stroke([[9, 25], [7.4, 28.6 - b], [4.4, 29.2 - b]], 2.4, dark, false), ...stroke([[18, 25], [19.8, 28.6 - (1 - b)], [23, 29.2 - (1 - b)]], 2.4, dark, false),
+      ...stroke([[6, 17], [2.8, 14.6 + b], [1.4, 12 + b]], 1.5, dark, false), ...stroke([[22, 18], [25.2, 15.8 - b], [26.6, 13.2 - b]], 1.5, dark, false),
+      ...stroke([[14, 8], [14.2, 3.6]], 1.1, '#6fbf6a', false),
+      T([[14, 4.4], [9.6, 0.8 + b * 0.5], [6.8, 2.2], [8.4, 4.8], [12, 5.8]], '#9be08f'), T([[14, 3.8], [18.6, 0.2 - b * 0.5], [21.4, 1.8], [20, 4.4], [16.4, 5.4]], '#7fd17a'),
+      T([[7, 27], [4.8, 20], [5.4, 13], [9, 8.4], [14, 7], [19, 8.4], [22.6, 13], [23.4, 20], [21, 27]], bark),
+      E(5, 18, 2.2, 2.6, bark), E(23, 22, 1.8, 2.2, bark), E(14, 26.6, 6.6, 1.6, bark),
+      F(E(10, 10.6, 2, 1.1, shade(bark, 10))), ...stroke([[7, 22], [9.6, 21.4]], 0.6, dark), ...stroke([[6.6, 14], [8.4, 13.2]], 0.6, dark),
+      F(E(20.4, 23.8, 1.1, 0.9, dark)), ...stroke([[10, 3], [12.6, 4.6]], 0.4, '#c8f2bc'), ...stroke([[18, 2.4], [15.8, 4]], 0.4, '#c8f2bc'),
+      ...face(16, 16.4, 1.4, mood)];
+    return { w: 28, h: 30, shapes: out };
+  },
+  sporecap: (f, mood) => {
+    const b = f ? 1 : 0;
+    const cap = '#7fd6cf';
+    const stem = '#fff1dc';
+    const angry = mood === 'angry';
+    const dome = [];
+    for (let i = 0; i <= 12; i++) {
+      const a = Math.PI * (1 + i / 12);
+      dome.push([14 + Math.cos(a) * 13.2, 14.6 + b * 0.4 + Math.sin(a) * 13]);
+    }
+    const out = [E(9.4, 30.4 - b, 3, 1.6, '#e8d0b0'), E(19, 30.4 - (1 - b), 3, 1.6, '#e8d0b0'),
+      E(14, 22.6, 9.6, 7.4, stem), E(14, 27.4, 7.6, 2.6, stem), E(4, 23 + b * 0.6, 1.8, 1.6, stem), E(24.2, 23 - b * 0.6, 1.8, 1.6, stem),
+      T([...dome, [24, 16.4 + b * 0.4], [14, 17.2 + b * 0.4], [4, 16.4 + b * 0.4]], cap), F(E(14, 16 + b * 0.4, 11.6, 1.4, '#5fb8b4'))];
+    // Glowing violet spots: a pale halo, the spot, and a bright center.
+    for (const [x, y, r] of [[7.4, 9, 2.4], [15, 4.6, 2.6], [21.4, 10, 2], [12.6, 11.6, 1.4]]) {
+      out.push(F(E(x, y + b * 0.4, r + 0.8, r * 0.8 + 0.7, '#e6d4ff')), F(E(x, y + b * 0.4, r, r * 0.8, '#b98cff')), F(E(x - 0.3, y - 0.3 + b * 0.4, r * 0.4, r * 0.35, '#ffffff')));
+    }
+    if (f) out.push(E(2, 5, 1, 1, '#d9b8ff'), E(25.6, 3.6, 1.1, 1.1, '#d9b8ff'));
+    if (angry) {
+      // Cheeks puffed full of spores, spitting them out front.
+      out.push(...face(16, 21.4, 1.4, mood, { mouth: false, blush: false }), F(E(12.2, 24, 2.4, 2, '#ffb8cc')), F(E(19.8, 24, 2.4, 2, '#ffb8cc')),
+        F(E(16, 24.4, 0.8, 0.7, MOUTH)), E(26.2, 22.4 + b, 1.3, 1.3, '#d9b8ff'), E(25.4, 25.8 - b, 0.9, 0.9, '#d9b8ff'));
+    } else out.push(...face(16, 21.4, 1.4, mood));
+    return { w: 28, h: 32, shapes: out };
+  },
+  thornback: (f, mood) => {
+    const a = f ? 1 : 0;
+    const fur = '#cda383';
+    const hoof = shade(fur, -18);
+    const out = [R(7, 27, 4, 8 - a, hoof), R(13, 27, 4, 7 + a, hoof), R(23, 27, 4, 8 - a, hoof), R(28.6, 27, 4, 7 + a, hoof),
+      ...stroke([[6.4, 22], [3, 21], [2.6, 18.4]], 1, fur, false)];
+    // Bramble thorns fanned over the back.
+    for (let i = 0; i < 9; i++) {
+      const ang = Math.PI * (1.1 + (i / 8) * 0.72);
+      const ox = Math.cos(ang);
+      const oy = Math.sin(ang);
+      const cx = 20 + ox * 12.6;
+      const cy = 21 + oy * 8.6;
+      const len = i % 2 ? 6.4 : 7.6;
+      out.push(T([[cx - oy * 2.6, cy + ox * 2.6], [cx + ox * len, cy + oy * len - (i % 2 ? 0 : a * 0.6)], [cx + oy * 2.6, cy - ox * 2.6]], i % 2 ? '#8fb86a' : '#a07a5a'));
+    }
+    out.push(E(20, 21.6, 13.6, 9.2, fur), F(E(21, 27.8, 8, 2.2, '#ecd2b8')),
+      arc(20, 21.6, 11.4, 7, 200, 330, 1.2, '#6f9f5a'), F(E(11.4, 16, 1, 1, '#ff8fb0')), F(E(20, 13.6, 1, 1, '#ff8fb0')), F(E(27.6, 15.4, 1, 1, '#ff8fb0')),
+      T([[30.6, 15], [30.4, 9.6], [34.4, 13.6]], shade(fur, -10)), E(35.4, 20.6, 7.8, 7.2, fur), E(40.8, 23.6, 2.8, 2.4, '#ecb8a4'),
+      F(E(40.2, 23.6, 0.45, 0.65, INK)), F(E(41.6, 23.6, 0.45, 0.65, INK)), T([[37.4, 27], [38.8, 22.4], [39.6, 27]], '#fffaf0'),
+      // The root-key charm on a cord.
+      ...stroke([[33, 26.6], [35.6, 29.4]], 0.6, '#7a5a3a'), E(35.8, 30.8, 1.7, 1.7, '#e8b066'), F(E(35.8, 30.8, 0.6, 0.6, '#8a5a3a')),
+      R(35.3, 32.2, 1, 3.2, '#e8b066'), R(36.2, 33.8, 1, 0.8, '#e8b066'), E(37.4, 29.8, 1, 0.6, '#9be08f'),
+      ...face(36.4, 19.2, 1.4, mood, { gap: 3.6, mouth: false }));
+    if (mood === 'angry' || mood === 'hurt') out.push(F(E(39, 26, 0.7, 0.5, MOUTH)));
+    return { w: 44, h: 36, shapes: out };
+  },
+  sporeling: (f, mood) => {
+    const b = f ? 1 : 0;
+    const puff = '#f2b8e6';
+    const out = [E(6.4, 18.6 - b, 2, 1.2, '#c98ad0'), E(13.6, 18.6 - (1 - b), 2, 1.2, '#c98ad0')];
+    for (let i = 0; i < 7; i++) {
+      const a = Math.PI * (1 + i / 6);
+      out.push(E(10 + Math.cos(a) * 7, 10.8 + b * 0.3 + Math.sin(a) * 6, 2.4, 2.2, puff));
+    }
+    out.push(E(10, 10.8 + b * 0.3, 7.8, 6.6, puff), F(E(6.4, 6.4, 1.8, 1, '#ffe6f8')),
+      F(E(3.6, 9.6, 0.8, 0.8, '#c99aff')), F(E(13.6, 4.6, 0.8, 0.8, '#c99aff')), F(E(8.6, 3.8, 0.6, 0.6, '#c99aff')),
+      ...face(11, 11.4 + b * 0.3, 1.1, mood));
+    if (f) out.push(E(18.4, 2.6, 0.9, 0.9, '#e6c4ff'));
+    else out.push(E(1.4, 2, 0.9, 0.9, '#e6c4ff'));
+    return { w: 20, h: 20, shapes: out };
+  },
+  sapling: (f, mood) => {
+    const b = f ? 1 : 0;
+    const s = f ? 1 : -1;
+    const bark = '#c9a27c';
+    const dark = shade(bark, -12);
+    const out = [...stroke([[10, 30], [7, 33], [3.6, 35 - b]], 1.8, dark, false), ...stroke([[16, 30], [19, 33], [22.4, 35 - (1 - b)]], 1.8, dark, false),
+      ...stroke([[13, 30], [13.2, 35.2]], 1.6, dark, false),
+      ...stroke([[9, 21], [5, 18.4 + s * 0.6], [3, 15.4 + s * 0.6]], 1.3, bark, false), ...stroke([[17, 21], [21, 18.4 - s * 0.6], [23, 15.4 - s * 0.6]], 1.3, bark, false),
+      E(2.8, 14.2 + s * 0.6, 1.9, 1.3, '#9be08f'), E(23.2, 14.2 - s * 0.6, 1.9, 1.3, '#9be08f'),
+      T([[8.6, 31], [8.2, 20], [9.2, 12], [16.8, 12], [17.8, 20], [17.4, 31]], bark),
+      F(E(13, 25, 3.4 + b * 0.4, 3.4 + b * 0.4, '#d4f7c4')), F(E(13, 25, 2.4, 2.4, '#8de87a')), F(E(12.6, 24.6, 1.1, 1.1, '#f2ffe8')),
+      E(13, 8.6, 9.4, 6.4, '#8fd39a'), E(5.6, 10.4, 4, 3.4, '#7fc48a'), E(20.4, 10.4, 4, 3.4, '#7fc48a'),
+      E(9, 4.4, 4.6, 3.6, '#a8e0a0'), E(17, 4.4, 4.6, 3.6, '#a8e0a0'), E(13, 2.8, 3.8, 2.6, '#b6eeb0'),
+      F(E(18.4, 5.4, 1, 1, '#ff9ec0')), F(E(7, 7.6, 0.9, 0.9, '#ffe36b')),
+      ...face(14.4, 17.2, 1.3, mood)];
+    return { w: 26, h: 36, shapes: out };
+  },
+  // Mother Capper: a matronly mushroom in a frilled bonnet cap and a moss shawl, with a ladle.
+  mothercapper: (f, mood) => {
+    const b = f ? 1 : 0;
+    const angry = mood === 'angry';
+    const cap = angry ? '#d96aa8' : '#ea92c4';
+    const plum = '#9a4f8a';
+    const stem = '#fff1dc';
+    const moss = '#8fd39a';
+    const wood = '#c49a76';
+    const puff = angry ? '#c9a0f0' : '#f2dcff';
+    const out = [E(26, 73.4 - b, 6, 2.6, '#e8d0b0'), E(46, 73.4 - (1 - b), 6, 2.6, '#e8d0b0'),
+      // Spore clouds drifting off the cap's edges.
+      E(4 - b, 22 + b, 3.4, 3, puff), E(2.4, 29 - b, 2.2, 2, puff), E(8 + b, 12 - b, 2.4, 2.2, puff), E(66 + b, 9 + b, 2.6, 2.4, puff), E(60, 2.6 + b, 1.8, 1.6, puff),
+      // A frilled skirt (the mushroom's ring) and the plump body.
+      T([[13, 70], [20, 54], [52, 54], [59, 70]], stem)];
+    for (let x = 15; x <= 57; x += 6) out.push(E(x, 70, 3.4, 2.6, stem));
+    out.push(F(R(18, 62, 36, 2, '#ffc2dc')),
+      E(36, 46, 17, 14, stem), E(17, 58 + b, 4, 6, stem),
+      R(65.2, 26 - b, 2.8, 48, wood), E(66.6, 24 - b, 5, 3.6, shade(wood, 8)), F(E(66.6, 23.2 - b, 3.6, 2, '#9cf08a')), F(E(65.6, 22.6 - b, 1.2, 0.7, '#e6ffd8')),
+      // Moss shawl over the shoulders.
+      T([[17, 50], [55, 50], [58, 57], [52, 63], [46, 59], [41, 64], [36, 59], [31, 64], [26, 59], [20, 63], [14, 57]], moss),
+      F(E(36, 52, 3, 2.2, '#ffd66b')), F(E(36, 52, 1.4, 1, '#fff6c9')), F(E(22, 55, 1.2, 1.2, '#b6eeb0')), F(E(50, 55, 1.2, 1.2, '#b6eeb0')),
+      E(62.6, 52 - b * 0.4, 4.2, 3.6, stem));
+    // The bonnet cap: a wide dome with plum spots and a frilled pink brim.
+    const dome = [];
+    for (let i = 0; i <= 14; i++) {
+      const a = Math.PI * (1 + i / 14);
+      dome.push([34 + Math.cos(a) * 30, 30 + b * 0.6 + Math.sin(a) * 27]);
+    }
+    out.push(T(dome, cap));
+    for (let x = 6; x <= 62; x += 5.6) out.push(E(x, 31.4 + b * 0.6, 3.4, 2.8, '#ffc6e0'));
+    out.push(F(E(34, 30.6 + b * 0.6, 26, 1.2, '#ffd8ea')),
+      F(E(18, 18, 4.4, 3.2, plum)), F(E(36, 9.6, 5, 3.4, plum)), F(E(51, 18.6, 4, 3, plum)), F(E(28, 22.6, 2.4, 1.8, plum)), F(E(43, 24, 2, 1.6, plum)),
+      F(E(16.6, 17, 1.6, 1, '#ffd8ea')), F(E(34.4, 8.6, 1.8, 1.1, '#ffd8ea')), F(E(49.8, 17.6, 1.4, 0.9, '#ffd8ea')),
+      // A little plum bow on top of the bonnet.
+      T([[34, 4], [27.6, 0.4], [28, 6.6]], plum), T([[34, 4], [40.4, 0.4], [40, 6.6]], plum), E(34, 4, 1.8, 1.6, shade(plum, 10)),
+      ...face(38, 42, 2.8, mood, { gap: 3.6 }));
+    if (angry) {
+      out.push(...stroke([[40.6, 33.6], [44, 37]], 1.6, INK), ...stroke([[35.4, 33.6], [32, 37]], 1.6, INK));
+    }
+    return { w: 72, h: 76, shapes: out };
+  },
+  // Tuskar the Bramble Boar: an armored boar with bramble-wrapped tusks and a crown of thorns,
+  // head down mid-charge.
+  tuskar: (f, mood) => {
+    const a = f ? 1 : -1;
+    const fur = '#bf946f';
+    const bark = '#8f6a50';
+    const hoof = '#6f5466';
+    const vine = '#6f9f5a';
+    const out = [
+      // Back legs pushing off, front legs braced forward.
+      ...stroke([[20, 44], [16 - a * 2, 58]], 8, shade(fur, -12), false), E(16 - a * 2, 61, 5, 3.4, hoof),
+      ...stroke([[30, 46], [30 + a * 2, 58]], 8, shade(fur, -6), false), E(30 + a * 2, 61, 5, 3.4, hoof),
+      ...stroke([[52, 46], [56 + a * 2, 58]], 8, shade(fur, -12), false), E(57 + a * 2, 61, 5, 3.4, hoof),
+      ...stroke([[62, 46], [66 - a * 2, 58]], 8, shade(fur, -6), false), E(67 - a * 2, 61, 5, 3.4, hoof),
+      ...stroke([[7, 26], [3, 24], [2.4, 20], [5, 20.4]], 1.6, fur, false),
+      T([[6, 28], [10, 15], [22, 8], [40, 8], [54, 12], [62, 22], [64, 36], [58, 47], [40, 49], [20, 48], [8, 40]], fur),
+      F(E(38, 44.4, 15, 3.4, '#e2c2a4'))];
+    // Root-bark armor plates with bramble thorns along their tops.
+    for (const [x, y, rx, ry] of [[19, 19, 10, 8], [32, 14.6, 10.6, 8], [45, 16, 9.6, 7.6]]) {
+      out.push(E(x, y, rx, ry, bark), arc(x, y + 0.6, rx - 1.6, ry - 1.6, 200, 340, 1.4, shade(bark, 12)),
+        ...stroke([[x - rx * 0.5, y + 2.4], [x, y + 3.2], [x + rx * 0.4, y + 2.6]], 0.8, shade(bark, -8)));
+      for (const k of [-0.6, 0, 0.6]) {
+        const tx = x + k * rx;
+        const ty = y - ry * Math.sqrt(1 - k * k) + 1;
+        out.push(T([[tx - 1.8, ty + 0.4], [tx + 0.8, ty - 5.4], [tx + 1.8, ty + 0.4]], vine));
+      }
+    }
+    out.push(arc(32, 20, 24, 10, 195, 345, 1.4, vine), F(E(14, 13.4, 1.2, 1.2, '#ff8fb0')), F(E(38, 10.6, 1.2, 1.2, '#ff8fb0')),
+      // A shaggy dark mane, then the head, low and forward, with a snout and two hooked tusks.
+      T([[52, 12], [57, 14], [56, 18], [61, 19], [58, 24], [63, 27], [58, 31], [62, 36], [56, 42], [50, 30]], shade(fur, -16)),
+      T([[60, 46], [66, 49], [70, 47], [72, 42], [70, 44], [66, 45]], '#ede4d4'),
+      T([[57, 27], [56, 17], [64.6, 24]], shade(fur, -16)), E(66, 37, 13.4, 12.4, fur), F(E(64, 44.6, 8, 2.6, '#e2c2a4')),
+      E(78.4, 41.4, 5.8, 5, '#ecb4a0'), F(E(77.4, 40.4, 0.8, 1.2, INK)), F(E(80.2, 40.4, 0.8, 1.2, INK)), F(E(78.4, 38.2, 3, 0.8, '#f6d0c2')),
+      T([[72, 46.4], [79, 49.8], [84.6, 47.4], [87.6, 40.4], [86.8, 33.4], [84.6, 40.4], [81.6, 44.4], [76, 45]], '#fffaf0'),
+      ...stroke([[76.6, 45], [76, 49.4]], 1, vine), ...stroke([[81.4, 44.2], [82.6, 48.6]], 1, vine), ...stroke([[84.6, 40], [87.6, 41.4]], 1, vine),
+      T([[78.6, 49.6], [77.6, 52], [80, 49.8]], vine), T([[86.6, 41.4], [88, 43.4], [87.2, 40.6]], vine),
+      // Crown of thorns.
+      E(64, 25.8, 9.6, 2.4, vine), T([[56, 25.4], [56.4, 18.4], [59, 24.6]], vine), T([[60.6, 24.6], [62, 16.4], [64, 24.6]], vine), T([[65.6, 24.6], [67.8, 16.8], [69, 25]], vine),
+      T([[70, 25.6], [73, 19.4], [72.6, 26.4]], vine), F(E(63, 26.2, 1.3, 1.3, '#ff6b9a')), F(E(68.6, 26.4, 1.1, 1.1, '#ffd66b')),
+      ...face(65.6, 33.4, 2.3, mood, { gap: 3.8, mouth: false }));
+    if (mood === 'angry') out.push(E(84.6, 52.4 + a * 0.6, 1.8, 1.5, '#ffffff'), E(87, 55, 1.2, 1, '#ffffff'));
+    if (mood === 'angry' || mood === 'hurt') out.push(F(E(73, 45.4, 1.4, 1, MOUTH)));
+    return { w: 88, h: 66, shapes: out.map((s) => ({ ...s, y: s.y + 1 })) };
+  },
+  // Old Gnarlroot: a grumpy ancient tree spirit with moss brows, a mossy beard, and amber lanterns
+  // hanging in his canopy. His branches and leaves sway between frames.
+  gnarlroot: (f, mood) => {
+    const b = f ? 1 : 0;
+    const sw = f ? 1.6 : -1.6;
+    const bark = '#bb906c';
+    const dark = '#946c52';
+    const root = '#9f7658';
+    const out = [
+      // Root feet spreading over the floor.
+      ...stroke([[42, 114], [30, 124], [14, 131 - b]], 7, root, false), E(12, 131 - b, 4.4, 2.6, root),
+      ...stroke([[56, 118], [52, 131]], 7, root, false), E(51, 131.4, 4.6, 2.4, root),
+      ...stroke([[72, 118], [76, 131]], 7, root, false), E(77, 131.4, 4.6, 2.4, root),
+      ...stroke([[84, 114], [96, 124], [112, 131 - (1 - b)]], 7, root, false), E(114, 131 - (1 - b), 4.4, 2.6, root),
+      // Branch arms with twiggy fingers and leafy hands.
+      ...stroke([[42, 66], [26, 64], [14, 52 + sw]], 8, dark, false), ...stroke([[86, 66], [102, 62], [111, 50 - sw]], 8, dark, false),
+      ...stroke([[22, 64], [17, 68 + sw]], 3, dark, false), ...stroke([[104, 62], [110, 66 - sw]], 3, dark, false),
+      E(12, 47 + sw, 8, 6.4, '#7fc48a'), E(6, 52 + sw, 4.6, 3.6, '#8fd39a'), E(17, 44 + sw, 4.6, 3.6, '#a0dca0'), E(16.6, 69.4 + sw, 3.2, 2.4, '#8fd39a'),
+      E(112, 45 - sw, 8, 6.4, '#7fc48a'), E(118, 50 - sw, 4.6, 3.6, '#8fd39a'), E(107, 42 - sw, 4.6, 3.6, '#a0dca0'), E(110.6, 67.4 - sw, 3.2, 2.4, '#8fd39a'),
+      // The gnarled trunk body.
+      T([[32, 122], [38, 104], [36, 80], [38, 56], [46, 40], [80, 40], [88, 56], [90, 80], [88, 104], [96, 122]], bark),
+      ...stroke([[42, 116], [44, 102], [42, 90]], 1.6, dark), ...stroke([[86, 114], [83, 100], [85, 88]], 1.6, dark),
+      ...stroke([[42, 60], [44, 50]], 1.6, dark), ...stroke([[84, 52], [82, 62]], 1.6, dark), ...stroke([[60, 112], [62, 118]], 1.4, dark),
+      F(E(46, 108, 2.4, 3, dark)), F(E(46, 108, 1.2, 1.6, shade(dark, -8)))];
+    // Canopy crown, swaying, with amber fruit and lanterns.
+    for (const [x, y, rx, ry, c] of [[62, 28, 46, 16, '#7fc48a'], [26, 26, 18, 13, '#8fd39a'], [98, 26, 18, 13, '#8fd39a'], [44, 14, 20, 12, '#a0dca0'],
+      [80, 14, 20, 12, '#a0dca0'], [62, 9, 17, 9, '#b6eeb0'], [44, 36, 14, 7, '#7fc48a'], [80, 36, 14, 7, '#7fc48a']]) {
+      out.push(E(x + sw * (1 - y / 40), y, rx, ry, c));
+    }
+    out.push(F(E(34 + sw, 18, 4, 2, '#d4f5cc')), F(E(70 + sw, 6, 4, 1.8, '#e2fadc')), F(E(90 + sw, 18, 3, 1.6, '#d4f5cc')));
+    for (const [x, y] of [[40, 24], [60, 18], [84, 26], [30, 32], [94, 34], [52, 30]]) {
+      out.push(F(E(x + sw, y, 2.2, 2.2, '#ffc85a')), F(E(x + sw - 0.6, y - 0.6, 0.9, 0.9, '#fff2b8')));
+    }
+    for (const [x, len] of [[22, 8], [104, 6]]) {
+      const lx = x + sw * 1.4;
+      out.push(...stroke([[x + sw, 36], [lx, 36 + len]], 0.8, '#6f5466'), R(lx - 2.4, 36 + len, 4.8, 1.6, '#6f5466'),
+        E(lx, 36 + len + 5, 3.4, 4.2, '#ffc85a'), F(E(lx, 36 + len + 5, 1.8, 2.6, '#fff2b8')), R(lx - 2, 36 + len + 9, 4, 1.4, '#6f5466'));
+    }
+    out.push(...face(64, 70, 5, mood, { gap: 3.6 }), F(E(64.6, 73.8, 2, 1.5, dark)));
+    // Bushy moss eyebrows: always a bit grumpy, raised when happy, scowling when angry.
+    const lift = mood === 'happy' ? -2.4 : 0;
+    const tilt = mood === 'angry' ? 5 : mood === 'happy' ? -1 : 3;
+    out.push(T([[46, 60 + lift - tilt], [52, 57 + lift - tilt], [60, 58 + lift], [62, 62 + lift + tilt * 0.4], [53, 62 + lift], [47, 63 + lift - tilt]], '#7fc48a'),
+      T([[82, 60 + lift - tilt], [76, 57 + lift - tilt], [68, 58 + lift], [66, 62 + lift + tilt * 0.4], [75, 62 + lift], [81, 63 + lift - tilt]], '#7fc48a'));
+    // A beard of hanging moss and roots.
+    out.push(T([[44, 86], [52, 88], [64, 89], [76, 88], [84, 86], [86, 94], [81, 104], [77, 97], [73, 110], [67, 99], [63, 114], [58, 99], [53, 108], [49, 96], [43, 100], [42, 92]], '#8fd39a'),
+      ...stroke([[56, 98], [55, 110], [57, 116]], 1.4, root), ...stroke([[70, 98], [71, 108], [69, 114]], 1.4, root),
+      F(E(52, 91, 2.6, 1.4, '#b6eeb0')), F(E(74, 92, 2.2, 1.2, '#b6eeb0')), F(E(64, 96, 1.4, 1.4, '#ff9ec0')));
+    return { w: 124, h: 134, shapes: out };
+  },
 };
 
 export function monsterSprite(art, frame, mood = 'idle') {

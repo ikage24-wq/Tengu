@@ -2,6 +2,7 @@
 // each member's level, job, and HP, plus a Leave button.
 
 import { JOBS } from '../data/jobs.js';
+import { ROLES } from '../data/dungeons.js';
 import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, LEVEL_GAP, PLAYSTYLES } from '../world/party.js';
 import { openProfile } from './profile.js';
 import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
@@ -102,11 +103,14 @@ export function drawPartyPanel(ui, state, world) {
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.5 });
   box(ctx, x + 2, y + 2, w - 4, 12, { fill: th.main, edge: null, r: 6 });
   icon(ctx, 'heart', x + 9, y + 8, 8, '#ffffff');
-  text(ctx, `Party ${members.length + 1}/${PARTY_MAX + 1}`, x + 17, y + 11, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
-  if (button(ui, x + w - 32, y + 2, 28, 12, 'Leave', { size: 6.5 })) leaveParty(world.bots, world);
+  // In a dungeon the panel shows the group: everyone's role and real HP.
+  const run = world.dungeon;
+  text(ctx, run ? 'Dungeon group' : `Party ${members.length + 1}/${PARTY_MAX + 1}`, x + 17, y + 11, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  if (!run && button(ui, x + w - 32, y + 2, 28, 12, 'Leave', { size: 6.5 })) leaveParty(world.bots, world);
+  const role = (id) => ROLES[run.roles[id] ?? 'dps'];
   const row = (i, name, level, job, hp, leader, onClick, onRight, hot, style = null) => {
     const ry = y + 17 + i * 19;
-    box(ctx, x + 3, ry, w - 6, 17, { fill: hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
+    box(ctx, x + 3, ry, w - 6, 17, { fill: hp <= 0 ? '#e8e0f0' : hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
     if (leader) icon(ctx, 'crown', x + 10, ry + 6, 7, '#f0b53a');
     else if (style) {
       ctx.fillStyle = style.color;
@@ -117,7 +121,7 @@ export function drawPartyPanel(ui, state, world) {
     text(ctx, name, x + (leader || style ? 14 : 7), ry + 8, { size: 6.5, bold: true });
     text(ctx, `Lv${level} ${style ? style.label : JOBS[job].short ?? JOBS[job].name}`, x + w - 6, ry + 8, { size: 5.5, bold: Boolean(style), align: 'right', color: style ? style.color : COLORS.muted });
     box(ctx, x + 7, ry + 11, w - 14, 3, { fill: 'rgba(74,53,96,0.2)', edge: null, r: 1.5 });
-    box(ctx, x + 7, ry + 11, Math.max(2, (w - 14) * hp), 3, { fill: COLORS.hp, edge: null, r: 1.5 });
+    if (hp > 0) box(ctx, x + 7, ry + 11, Math.max(2, (w - 14) * hp), 3, { fill: hp < 0.3 ? '#ff6b8a' : run ? '#7ee081' : COLORS.hp, edge: null, r: 1.5 });
     if (clicked(ui, x + 3, ry, w - 6, 17)) onClick();
     if (ui.mouse.right && hover(ui, x + 3, ry, w - 6, 17)) {
       ui.used = true;
@@ -126,12 +130,13 @@ export function drawPartyPanel(ui, state, world) {
     }
   };
   const s = world.stats;
-  row(0, world.char.name, world.char.level, world.char.job, world.char.hp / s.maxHp, true,
-    () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17, w - 6, 17));
+  row(0, world.char.name, world.char.level, world.char.job, world.dead ? 0 : world.char.hp / s.maxHp, !run,
+    () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17, w - 6, 17), run ? role('you') : null);
   members.forEach((bot, i) => {
-    row(i + 1, bot.name, bot.level, bot.char.job, 1, false,
+    const hp = !run || bot.hp == null ? 1 : bot.down ? 0 : bot.hp / bot.stats.maxHp;
+    row(i + 1, bot.name, bot.level, bot.char.job, hp, false,
       () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17),
-      bot.ai ? PLAYSTYLES[bot.ai.kind] : null);
-    if (bot.ai && hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17)) tooltip(ui, [{ text: `${bot.name} · ${PLAYSTYLES[bot.ai.kind].label}`, bold: true, color: PLAYSTYLES[bot.ai.kind].color }, { text: PLAYSTYLE_TEXT[bot.ai.kind], size: 8, color: COLORS.muted }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
+      run ? role(bot.id) : bot.ai ? PLAYSTYLES[bot.ai.kind] : null);
+    if (!run && bot.ai && hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17)) tooltip(ui, [{ text: `${bot.name} · ${PLAYSTYLES[bot.ai.kind].label}`, bold: true, color: PLAYSTYLES[bot.ai.kind].color }, { text: PLAYSTYLE_TEXT[bot.ai.kind], size: 8, color: COLORS.muted }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
   });
 }

@@ -65,6 +65,14 @@ export const THEMES = {
     skyline: 'crystals', props: ['crystal', 'rock', 'glow'],
     critters: ['firefly'], drift: 'sparkle', face: null,
   },
+  // Rootwood Hollow: a cozy den under a giant old tree, lit by glowing mushrooms and lanterns.
+  hollow: {
+    sky: ['#4a3159', '#7a5480', '#b98b98'], sun: '#ffd6a0', far: '#5f4268', mid: '#8a6274', midTrim: '#b88ea0',
+    ground: '#b98e78', groundDeep: '#a27a68', trim: '#a6dca2', ledge: '#b48a78', ledgeTrim: '#a6dca2', ledgeShade: '#8f6a66',
+    skyline: 'roots', props: ['glowshroom', 'rootcurl', 'moss', 'hlantern', 'pebble', 'glowshroom', 'moss'],
+    shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], ledgeProp: 'glowshroom',
+    critters: ['firefly'], drift: 'spore', face: null,
+  },
   sky: {
     sky: ['#ffc6e8', '#cddbff', '#eef8ff'], sun: '#fffbe6', far: '#ffffff', mid: '#f3f8ff', midTrim: '#d6e6ff',
     ground: '#ffffff', groundDeep: '#e6ecff', trim: '#fff0fa', ledge: '#ffffff', ledgeTrim: '#ffe6f3', ledgeShade: '#dce8ff',
@@ -99,7 +107,7 @@ function arc(cx, cy, rx, ry, a0, a1, th, c) {
 }
 
 // A tiny cute face: dot eyes (or closed arcs when sleeping or blinking), blush, and a small smile.
-function face(cx, cy, gap, mood = 'open', mouth = 'smile', k = 1) {
+export function face(cx, cy, gap, mood = 'open', mouth = 'smile', k = 1) {
   const out = [];
   const th = 0.4 * Math.max(1, k * 0.8);
   for (const s of [-1, 1]) {
@@ -476,6 +484,125 @@ function targetArt() {
     T([[11, 11], [17, 6], [17.6, 6.8]], '#8a5a3c'), T([[15.8, 4.6], [18.6, 5.4], [17, 7.8]], '#ffffff'), T([[8, 13.6], [2, 17], [2.4, 17.8]], '#8a5a3c'), T([[0, 16.2], [3.4, 17.4], [1.2, 19.6]], '#ffffff')]);
 }
 
+// ---------- The hollow: roots, moss, and little lights underground ----------
+
+const ROOT = '#b9917e';
+const ROOT_LIGHT = '#d4b09c';
+const ROOT_DEEP = '#8f6a66';
+const MOSS = '#a6dca2';
+const STALK = '#f6eee2';
+
+// The outline of a band following `path`, `widthAt(u)` half as wide at each point (u = 0..1 along
+// it); used for roots and strands both as sprite polygons and as canvas paths.
+function bandPts(path, widthAt) {
+  const left = [];
+  const right = [];
+  path.forEach(([x, y], i) => {
+    const [ax, ay] = path[Math.max(0, i - 1)];
+    const [bx, by] = path[Math.min(path.length - 1, i + 1)];
+    const l = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = -(by - ay) / l;
+    const ny = (bx - ax) / l;
+    const w = widthAt(i / (path.length - 1));
+    left.push([x + nx * w, y + ny * w]);
+    right.push([x - nx * w, y - ny * w]);
+  });
+  return [...left, ...right.reverse()];
+}
+const band = (path, widthAt, c) => T(bandPts(path, widthAt), c);
+
+function fillPts(ctx, pts) {
+  ctx.beginPath();
+  for (const [x, y] of pts) ctx.lineTo(x, y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// A root curling up out of the dirt with a new leaf on top.
+function rootCurlArt() {
+  return art('rootcurl', 20, 16, () => [
+    band([[3, 16.4], [3.4, 12], [4.8, 8], [7.4, 5.4], [10.4, 4.6], [13, 5.6], [14.4, 8], [13.6, 10.4], [11.6, 11], [10.4, 9.6], [11.2, 8.2]], (u) => 2.2 * (1 - u) + 0.6, ROOT),
+    E(2.4, 15.6, 2.6, 1, ROOT), T([[8.4, 4.8], [9.4, 1.4], [12.6, 0.4], [11.4, 3.6]], MOSS), F(T([[9.4, 3.8], [11.8, 1.2], [10.2, 3.6]], '#d6f4cf')),
+  ]);
+}
+
+// A soft mound of moss with a tiny white bloom.
+function mossArt(bloom) {
+  return art(`moss|${bloom}`, 18, 8, () => [
+    E(9, 6, 8, 2.6, '#92cf94'), E(5.4, 4.8, 3.8, 2.8, MOSS), E(11.6, 4.2, 4.4, 3.4, MOSS), E(15, 5.6, 2.6, 2, MOSS),
+    F(E(10.4, 2.6, 1.8, 0.8, '#d6f4cf')), F(E(5, 3.6, 1.2, 0.6, '#d6f4cf')),
+    bloom ? F(E(13.4, 2.2, 1.1, 1.1, '#ffffff')) : null, bloom ? F(E(13.4, 2.2, 0.45, 0.45, '#ffd68a')) : null,
+  ]);
+}
+
+// A little cluster of smooth stones.
+function pebbleArt(two) {
+  return art(`pebble|${two}`, 16, 8, () => [
+    E(6, 5, 5, 3, '#cbbcc4'), F(E(4.6, 3.6, 1.6, 0.7, '#ece2e6')), E(12, 6, 3.4, 2, two ? '#b9a6b6' : '#d9c8bc'), F(E(11.2, 5.2, 1, 0.5, '#efe6ea')),
+    two ? E(2, 7, 1.6, 1, '#d9c8bc') : null,
+  ]);
+}
+
+// A small paper lantern hung from a curled root post.
+function hollowLanternArt() {
+  return art('hlantern', 16, 30, () => [
+    band([[4, 30.4], [4, 18], [4.2, 10], [5.4, 5], [8.4, 2.6], [11.4, 3.2], [12.2, 5.6]], (u) => 1.6 - u * 0.8, ROOT), E(4, 29.6, 3, 1, ROOT),
+    T([[2.4, 22], [0.6, 19.4], [2.4, 18.6], [3.4, 20.6]], MOSS),
+    R(10.8, 8, 2.8, 1.6, ROOT_DEEP), E(12.2, 13, 3.6, 4.2, '#ffd68a'), F(E(11.2, 12, 1, 2, '#fff6dc')), F(R(10.4, 13, 3.6, 0.6, '#f0b866')), R(10.8, 17, 2.8, 1.4, ROOT_DEEP),
+  ]);
+}
+
+// Mid layer: an arch of old roots, mossy on top, with little glowing fungi on its legs.
+function rootArchArt(v) {
+  const caps = [['#7fe6d6', '#ffb0d0'], ['#ffd68a', '#7fe6d6'], ['#ffb0d0', '#ffd68a']][v];
+  return art(`rootarch|${v}`, 120, 100, () => {
+    const arch = [];
+    const twist = [];
+    for (let k = 0; k <= 18; k++) {
+      const a = Math.PI + (Math.PI * k) / 18;
+      arch.push([60 + Math.cos(a) * 46, 101 + Math.sin(a) * 84]);
+      const r = 1 + Math.sin(k * 1.1 + v) * 0.09;
+      twist.push([60 + Math.cos(a) * 46 * r, 101 + Math.sin(a) * 84 * r]);
+    }
+    const out = [
+      band(arch, (u) => 6 + 4.4 * Math.abs(Math.cos(Math.PI * u)), ROOT),
+      band([[16, 88], [9, 96], [1, 100.6]], (u) => 3.6 - u * 2.6, ROOT), band([[104, 88], [111, 96], [119, 100.6]], (u) => 3.6 - u * 2.6, ROOT),
+      band([[20, 92], [25, 99], [30, 100.6]], (u) => 2.6 - u * 1.8, ROOT), band([[100, 92], [95, 99], [90, 100.6]], (u) => 2.6 - u * 1.8, ROOT),
+      band(twist.slice(2, 17), () => 2, ROOT_LIGHT),
+    ];
+    // Moss along the top, with drips hanging off the inner edge.
+    for (const k of [6, 7.5, 9, 10.5, 12]) {
+      const a = Math.PI + (Math.PI * k) / 18;
+      const px = 60 + Math.cos(a) * 46;
+      const py = 101 + Math.sin(a) * 84;
+      out.push(E(px, py - 6, 6.4, 3.2, MOSS));
+      out.push(T([[px - 2.4, py + 4], [px + 0.4, py + 4], [px - 1, py + 9 + (k % 3) * 2]], MOSS));
+    }
+    out.push(F(E(54, 13, 3.4, 1, '#d6f4cf')), F(E(70, 15, 2.4, 0.8, '#d6f4cf')));
+    // Fungi: a little cap family by the left foot and shelf fungus on the right leg.
+    out.push(R(20.6, 83, 2, 6, STALK), E(21.6, 83, 4.2, 2.8, caps[0]), R(26.6, 87, 1.6, 3, STALK), E(27.4, 87, 2.6, 1.8, caps[0]),
+      F(E(20.4, 82, 1.1, 0.6, '#ffffff')), E(105, 58, 6, 2.2, caps[1]), E(106.4, 66, 4.6, 1.8, caps[1]), F(E(104, 57.4, 2, 0.6, '#ffffff')));
+    return out;
+  });
+}
+// Where the arch sprite's fungi sit, for their glows (offsets from its bottom center).
+const ARCH_GLOWS = [[-38, -16, 0], [46, -40, 1]];
+
+// Mid layer: a family of big glowing mushrooms on a mossy mound; the big one has a face.
+function mushClusterArt(v, blink) {
+  const [c1, c2, c3] = [['#7fe6d6', '#ffb0d0', '#ffd68a'], ['#ffb0d0', '#ffd68a', '#7fe6d6'], ['#ffd68a', '#7fe6d6', '#ffb0d0']][v];
+  return art(`mushcluster|${v}|${blink}`, 44, 36, () => [
+    E(22, 34, 20, 3, '#92cf94'), R(16.4, 16, 7.2, 18, STALK), T([[5, 19], [7, 10], [13, 5], [20, 3.4], [27, 5], [33, 10], [35, 19]], c1),
+    F(E(13, 9, 2, 1.4, '#ffffff')), F(E(25, 7, 1.6, 1.1, '#ffffff')), F(E(20, 13, 1.2, 0.9, '#ffffff')), ...face(20, 25, 1.7, blink ? 'closed' : 'happy', 'smile'),
+    R(31.4, 24, 3.6, 10, STALK), T([[27, 26], [29, 21.4], [33.2, 19.6], [37.4, 21.4], [39.4, 26]], c2), F(E(31, 22, 1, 0.7, '#ffffff')),
+    R(7, 28, 2.6, 6, STALK), E(8.3, 28, 4, 2.6, c3), F(E(7.4, 27.4, 1, 0.5, '#ffffff')),
+  ]);
+}
+
+const hangLanternArt = (c) => art(`hanglantern|${c}`, 10, 14, () => [
+  T([[1, 3.4], [5, 0.6], [9, 3.4]], ROOT_DEEP), E(5, 7.6, 4, 4.4, c), F(E(3.8, 6.4, 1.1, 2, '#fff6dc')), F(R(1.4, 8, 7.2, 0.6, shade(c, -10))), R(3.6, 11.6, 2.8, 1.6, ROOT_DEEP),
+]);
+
 // ---------- Critters ----------
 
 function birdArt(color, frame) {
@@ -589,7 +716,7 @@ function drawRainbow(ctx, width, height, alpha) {
 }
 
 function drawClouds(ctx, theme, cam, width, time) {
-  if (theme === 'cave') return;
+  if (theme === 'cave' || theme === 'hollow') return;
   repeat(cam.x + time * 5, 0.07, 150, width, (i, x) => {
     if (hash(i) < 0.3) return;
     const size = 0.9 + hash(i + 9) * 0.8;
@@ -670,6 +797,9 @@ function drawFar(ctx, t, cam, width, y0, time) {
         ctx.fill();
       });
       break;
+    case 'roots':
+      drawFarRoots(ctx, t, cam, width, y0, time);
+      break;
     case 'mesas':
       ctx.fillRect(0, Math.round(y0 + 20), width, 400);
       repeat(cam.x, 0.2, 130, width, (i, x) => {
@@ -712,6 +842,68 @@ function drawFar(ctx, t, cam, width, y0, time) {
         ctx.fill();
       });
   }
+}
+
+// The hollow's far layer: an earthen ceiling, great twisting root columns, and roots dangling down.
+function drawFarRoots(ctx, t, cam, width, y0, time) {
+  // Soft pools of mushroom light far back in the den.
+  repeat(cam.x, 0.12, 160, width, (i, x) => {
+    glow(ctx, x + 80, y0 - 30 - hash(i + 2) * 120, 60 + hash(i + 4) * 40, pick(t.shrooms, hash(i + 8)), 0.16 + 0.05 * Math.sin(time * 0.8 + i));
+  });
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, Math.round(y0 + 34), width, 400);
+  repeat(cam.x, 0.2, 60, width, (i, x) => {
+    ctx.beginPath();
+    ctx.ellipse(x + 30, y0 + 36, 36 + hash(i + 1) * 12, 10 + hash(i) * 8, 0, Math.PI, 0);
+    ctx.fill();
+  });
+  // Root columns from the ceiling to the floor, each with a thinner root twined around it.
+  repeat(cam.x, 0.2, 150, width, (i, x) => {
+    if (hash(i + 21) < 0.3) return;
+    const cx = x + 40 + hash(i + 1) * 70;
+    const amp = 8 + hash(i + 2) * 10;
+    const base = 9 + hash(i + 3) * 6;
+    const main = [];
+    const twin = [];
+    for (let yy = -12; yy <= y0 + 48; yy += 10) {
+      main.push([cx + Math.sin(yy * 0.02 + i * 2) * amp, yy]);
+      twin.push([cx + Math.sin(yy * 0.02 + i * 2) * amp + Math.sin(yy * 0.06 + i) * (base + 2), yy]);
+    }
+    const flare = (u) => base + Math.max(0, 0.12 - u) * 160 + Math.max(0, u - 0.86) * 150;
+    ctx.fillStyle = t.far;
+    fillPts(ctx, bandPts(main, flare));
+    for (const s of [-1, 1]) {
+      const [fx, fy] = main[main.length - 3];
+      fillPts(ctx, bandPts([[fx, fy], [fx + s * 18, fy + 14], [fx + s * 34, fy + 30]], (u) => 6 - u * 5));
+    }
+    ctx.fillStyle = shade(t.far, 5);
+    fillPts(ctx, bandPts(twin, () => 3));
+  });
+  // The earthen ceiling, lumpy along its underside.
+  ctx.fillStyle = shade(t.far, -5);
+  ctx.beginPath();
+  ctx.moveTo(0, -1);
+  for (let sx = 0; sx <= width + 10; sx += 10) {
+    const k = sx + cam.x * 0.25;
+    ctx.lineTo(sx, 12 + Math.sin(k * 0.031) * 5 + Math.sin(k * 0.013) * 7);
+  }
+  ctx.lineTo(width + 10, -1);
+  ctx.fill();
+  // Roots hanging from it, swaying a little, some ending in a curl.
+  repeat(cam.x, 0.25, 26, width, (i, x) => {
+    if (hash(i + 11) < 0.3) return;
+    const len = 18 + hash(i + 3) * 80;
+    const sway = Math.sin(time * 0.7 + i) * 2.4;
+    const pts = [];
+    for (let k = 0; k <= 8; k++) {
+      const u = k / 8;
+      pts.push([x + Math.sin(u * 5 + i) * 3 + sway * u * u, 6 + u * len]);
+    }
+    const [ex, ey] = pts[8];
+    if (hash(i + 5) > 0.6) pts.push([ex + 3, ey + 3], [ex + 5.4, ey], [ex + 3.6, ey - 2.4]);
+    ctx.fillStyle = shade(t.far, -5);
+    fillPts(ctx, bandPts(pts, (u) => 3.4 * (1 - u) + 0.6));
+  });
 }
 
 // Mid layer: outlined landmarks with a little motion — chimney smoke, windmill sails, bobbing boats.
@@ -833,6 +1025,9 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
         place(ctx, floatLanternArt(), lx, ly + 6);
       }
       break;
+    case 'roots':
+      drawMidRoots(ctx, t, cam, width, y0, time);
+      break;
     case 'islands':
       repeat(cam.x, 0.45, 200, width, (i, x) => {
         if (hash(i + 5) < 0.4) return;
@@ -842,6 +1037,40 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
     default:
   }
   ctx.restore();
+}
+
+// The hollow's middle layer: root arches with lanterns hung under them, glowing mushroom families,
+// and more lanterns dangling from the ceiling on long cords.
+function drawMidRoots(ctx, t, cam, width, y0, time) {
+  const lantern = (lx, top, len, i, c) => {
+    const sw = Math.sin(time * 1.3 + i * 1.7) * 0.12;
+    const ex = lx + Math.sin(sw) * len;
+    const ey = top + Math.cos(sw) * len;
+    ctx.strokeStyle = 'rgba(58,45,79,0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(lx, top);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+    glow(ctx, ex, ey + 8, 18, c, 0.45 + 0.1 * Math.sin(time * 2.4 + i));
+    place(ctx, hangLanternArt(c), ex, ey + 14);
+  };
+  repeat(cam.x, 0.45, 150, width, (i, x) => {
+    const s = hash(i + 5);
+    const v = Math.floor(hash(i) * 3);
+    if (s < 0.45) {
+      for (const [dx, dy, ci] of ARCH_GLOWS) glow(ctx, x + 75 + dx, y0 + 4 + dy, 18, t.shrooms[(v + ci) % 3], 0.4 + 0.12 * Math.sin(time * 2 + i + ci));
+      place(ctx, rootArchArt(v), x + 75, y0 + 4);
+      lantern(x + 75, y0 + 4 - 80, 14 + hash(i + 2) * 10, i, '#ffd68a');
+    } else if (s < 0.8) {
+      glow(ctx, x + 75, y0 - 16, 36, t.shrooms[v], 0.38 + 0.12 * Math.sin(time * 1.6 + i));
+      place(ctx, mushClusterArt(v, blinking(time, hash(i + 3))), x + 75, y0 + 4);
+    }
+  });
+  repeat(cam.x, 0.5, 210, width, (i, x) => {
+    if (hash(i + 31) < 0.35) return;
+    lantern(x + 40 + hash(i + 4) * 120, 0, 30 + hash(i + 6) * 50, i + 9, hash(i + 7) > 0.5 ? '#ffd68a' : '#ffb0d0');
+  });
 }
 
 // Puffs of chimney smoke that rise, grow, and fade.
@@ -930,6 +1159,33 @@ function drawGround(ctx, t, theme, map, cam, width, height, time) {
           ctx.fill();
         }
       }
+      if (theme === 'hollow') {
+        // Thin roots winding through the dirt, and specks of glow.
+        ctx.strokeStyle = t.groundDeep;
+        ctx.lineWidth = 1.6;
+        ctx.lineCap = 'round';
+        for (let gx = -(off % 110) - 110; gx < width + 110; gx += 110) {
+          const k = Math.floor((gx + off) / 110);
+          const ry = y + 12 + hash(k + 4) * 22;
+          ctx.beginPath();
+          ctx.moveTo(gx, ry);
+          ctx.bezierCurveTo(gx + 30, ry - 8, gx + 50, ry + 10, gx + 78, ry + 2);
+          ctx.quadraticCurveTo(gx + 88, ry - 3, gx + 84, ry - 7);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(gx + 40, ry + 1);
+          ctx.quadraticCurveTo(gx + 44, ry + 10, gx + 52, ry + 13);
+          ctx.stroke();
+          ctx.globalAlpha = 0.55 + 0.35 * Math.sin(time * 2 + k);
+          ctx.fillStyle = pick(t.shrooms, hash(k + 9));
+          ctx.beginPath();
+          ctx.arc(gx + 20 + hash(k + 1) * 60, y + 20 + hash(k + 2) * 30, 1.3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = t.groundDeep;
+        }
+        ctx.lineCap = 'butt';
+      }
       if (theme === 'cave') {
         for (let gx = -(off % 70) - 70; gx < width; gx += 70) {
           const k = Math.floor((gx + off) / 70);
@@ -953,7 +1209,7 @@ function drawGround(ctx, t, theme, map, cam, width, height, time) {
     rect(ctx, 0, y, width, 6, '#ffffff');
     return;
   }
-  const scallop = theme === 'meadow' || theme === 'forest' || theme === 'grove';
+  const scallop = theme === 'meadow' || theme === 'forest' || theme === 'grove' || theme === 'hollow';
   ctx.fillStyle = top;
   ctx.fillRect(0, y - 1, width, 6);
   if (scallop) {
@@ -1007,6 +1263,10 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
       roundRect(ctx, x, y + 2, p.w, 11, 6);
       ctx.fill();
       ctx.stroke();
+      continue;
+    }
+    if (theme === 'hollow') {
+      rootLedge(ctx, t, x, y, p.w, pi, time);
       continue;
     }
     const body = t.ledge;
@@ -1079,6 +1339,99 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
         sparkle(ctx, x + dx, y + 6, 2.2, '#b8f0ff');
         ctx.globalAlpha = 1;
       }
+    }
+  }
+}
+
+// A thick old root for a ledge: grainy bark, curled tips at both ends, a mossy top that drapes
+// over the front, and moss strands dangling below.
+function rootLedge(ctx, t, x, y, w, pi, time) {
+  const line = edge(t.ledge);
+  ctx.lineWidth = 1;
+  // Curled root tips poking out of each end.
+  for (const s of [-1, 1]) {
+    const ex = s < 0 ? x + 6 : x + w - 6;
+    const pts = [];
+    for (let k = 0; k <= 10; k++) {
+      const u = k / 10;
+      const a = Math.PI + u * Math.PI * 1.45;
+      const r = 6 * (1 - 0.5 * u);
+      pts.push([ex + s * (6 + Math.cos(a) * r + u * 2), y + 12 + Math.sin(a) * r]);
+    }
+    ctx.fillStyle = t.ledge;
+    ctx.strokeStyle = line;
+    fillPts(ctx, bandPts(pts, (u) => 3.4 * (1 - u) + 0.8));
+    ctx.stroke();
+  }
+  ctx.fillStyle = t.ledgeShade;
+  roundRect(ctx, x, y + 3, w, 13, 6.5);
+  ctx.fill();
+  ctx.fillStyle = t.ledge;
+  roundRect(ctx, x, y, w, 11, 6);
+  ctx.fill();
+  ctx.strokeStyle = line;
+  roundRect(ctx, x + 0.5, y - 0.5, w - 1, 16, 7);
+  ctx.stroke();
+  // Bark grain: broken wavy lines and the odd knot.
+  ctx.strokeStyle = mix(t.ledge, line, 0.45);
+  for (let dx = 8; dx < w - 14; dx += 22) {
+    const k = hash(pi * 31 + dx);
+    const gy = y + 6 + (k > 0.5 ? 2.4 : 0);
+    ctx.beginPath();
+    ctx.moveTo(x + dx, gy);
+    ctx.quadraticCurveTo(x + dx + 7, gy - 1.6, x + dx + 12 + k * 4, gy);
+    ctx.stroke();
+    if (k > 0.78) {
+      ctx.beginPath();
+      ctx.ellipse(x + dx + 6, y + 11, 2.2, 1.4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  // Moss on top, bumpy, draping over the front edge in rounded drips.
+  ctx.fillStyle = t.ledgeTrim;
+  roundRect(ctx, x + 1, y - 2, w - 2, 5, 2.5);
+  ctx.fill();
+  for (let dx = 5; dx < w - 3; dx += 6) {
+    const r = 2 + hash(pi * 7 + dx) * 2.2;
+    ctx.beginPath();
+    ctx.arc(x + dx, y + 2.4, r, 0, Math.PI);
+    ctx.fill();
+  }
+  ctx.strokeStyle = edge(t.ledgeTrim);
+  ctx.beginPath();
+  ctx.moveTo(x + 3, y - 2.5);
+  ctx.lineTo(x + w - 3, y - 2.5);
+  ctx.stroke();
+  rect(ctx, x + 3, y - 2, w - 6, 1, shade(t.ledgeTrim, 14));
+  // Moss strands swaying underneath, a few with a glowing bead at the tip.
+  for (let dx = 12; dx < w - 10; dx += 26) {
+    const k = hash(pi * 17 + dx);
+    if (k < 0.3) continue;
+    const len = 6 + k * 14;
+    const sway = Math.sin(time * 1.2 + dx * 0.3 + pi) * 1.6;
+    ctx.strokeStyle = '#8fcf94';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x + dx, y + 15);
+    ctx.quadraticCurveTo(x + dx + sway, y + 15 + len * 0.6, x + dx + sway * 1.4, y + 15 + len);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
+    ctx.lineWidth = 1;
+    ctx.fillStyle = '#a6dca2';
+    for (let j = 1; j <= len / 5; j++) {
+      const u = (j * 5) / len;
+      ctx.beginPath();
+      ctx.ellipse(x + dx + sway * u * 1.4 + (j % 2 ? 1.6 : -1.6), y + 15 + len * u - 1, 1.6, 1, j % 2 ? 0.5 : -0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (k > 0.72) {
+      const c = pick(t.shrooms, k * 5);
+      glow(ctx, x + dx + sway * 1.4, y + 17 + len, 6, c, 0.6 + 0.3 * Math.sin(time * 2 + dx));
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x + dx + sway * 1.4, y + 17 + len, 1.6, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 }
@@ -1209,7 +1562,7 @@ function prop(ctx, kind, x, y, seed, t, time) {
       glow(ctx, x + 3, y - 22, 16, '#ff9ec0', 0.4 + 0.15 * Math.sin(time * 2 + seed * 7));
       return place(ctx, lanternArt(), x, y);
     case 'glowshroom': {
-      const c = pick(['#8fd3ff', '#c9a6ff', '#9fe0b0'], seed * 3);
+      const c = pick(t.shrooms ?? ['#8fd3ff', '#c9a6ff', '#9fe0b0'], seed * 3);
       glow(ctx, x, y - 8, 14, c, 0.4 + 0.2 * Math.sin(time * 2 + seed * 9));
       return place(ctx, glowshroomArt(c, blinking(time, seed)), x, y);
     }
@@ -1217,6 +1570,12 @@ function prop(ctx, kind, x, y, seed, t, time) {
       glow(ctx, x, y - 16, 14, '#bfe6ff', 0.45 + 0.2 * Math.sin(time * 3 + seed * 6));
       return place(ctx, orbArt(), x, y);
     case 'books': return place(ctx, booksArt(), x, y);
+    case 'rootcurl': return place(ctx, rootCurlArt(), x, y, { flip: seed > 0.75 });
+    case 'moss': return place(ctx, mossArt(seed > 0.7), x, y + 1);
+    case 'pebble': return place(ctx, pebbleArt(seed > 0.6), x, y + 1);
+    case 'hlantern':
+      glow(ctx, x + 4, y - 17, 18, '#ffd68a', 0.45 + 0.12 * Math.sin(time * 2.4 + seed * 7));
+      return place(ctx, hollowLanternArt(), x, y, { flip: seed > 0.75 });
     default:
   }
 }
@@ -1236,8 +1595,8 @@ function zzz(ctx, x, y, time, seed) {
 
 // Props sit sparsely so monsters and NPCs stay easy to see: fewer on the ground (fewest in towns,
 // where buildings fill the street), and only a few small ones on ledges.
-const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal', 'candle', 'cloudpuff'];
-const BIG_PROPS = ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus'];
+const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal', 'candle', 'cloudpuff', 'moss', 'pebble', 'rootcurl'];
+const BIG_PROPS = ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus', 'hlantern'];
 
 function drawProps(ctx, t, map, cam, width, time) {
   const surfaces = [{ x: 0, y: map.groundY, w: map.width, ground: true }, ...map.platforms];
@@ -1256,7 +1615,7 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (x < -40 || x > width + 40) continue;
       let kind = t.props[Math.floor(hash(wx + si) * t.props.length)];
       // Ledges only get small things.
-      if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? 'flower' : kind;
+      if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? (t.ledgeProp ?? 'flower') : kind;
       prop(ctx, kind, Math.round(x), Math.round(s.y - cam.y), seed, t, time);
     }
   });
@@ -1338,12 +1697,13 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
 // Petals, leaves, motes, or sparkles drifting through the air, in front of the scenery.
 function drawDrift(ctx, t, cam, width, height, time) {
   if (!t.drift) return;
-  const colors = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'] }[t.drift];
-  // Embers rise from the forges instead of falling.
-  const rise = t.drift === 'ember' ? -1 : 1;
+  const colors = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms }[t.drift];
+  // Embers rise from the forges and spores float up from the mushrooms instead of falling.
+  const rise = t.drift === 'ember' || t.drift === 'spore' ? -1 : 1;
+  const spore = t.drift === 'spore';
   ctx.save();
-  for (let i = 0; i < 9; i++) {
-    const speed = 10 + hash(i + 2) * 14;
+  for (let i = 0; i < (spore ? 14 : 9); i++) {
+    const speed = (10 + hash(i + 2) * 14) * (spore ? 0.45 : 1);
     const x = (((hash(i) * width + time * speed * 0.8 - cam.x * 0.6) % (width + 40)) + width + 40) % (width + 40) - 20;
     const y = (((hash(i + 7) * height + time * speed * rise) % (height + 20)) + height + 20) % (height + 20) - 10;
     const wob = Math.sin(time * 2 + i) * 4;
@@ -1352,6 +1712,17 @@ function drawDrift(ctx, t, cam, width, height, time) {
     if (t.drift === 'ember') {
       ctx.globalAlpha = 0.5 + 0.4 * Math.abs(Math.sin(time * 3 + i));
       rect(ctx, x + wob, y, 2, 2, c);
+      continue;
+    }
+    if (spore) {
+      const a = 0.45 + 0.45 * Math.abs(Math.sin(time * 1.4 + i * 1.9));
+      glow(ctx, x + wob * 1.5, y, 6, c, a * 0.7);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x + wob * 1.5, y, 1.4 + (i % 3) * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      rect(ctx, x + wob * 1.5 - 0.5, y - 0.5, 1, 1, '#ffffff');
       continue;
     }
     if (t.drift === 'sparkle' || t.drift === 'mote') {

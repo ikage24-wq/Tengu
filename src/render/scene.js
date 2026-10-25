@@ -20,6 +20,8 @@ import { drawBuffEffects } from './buffs.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty } from './town.js';
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
+import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
+import { shock, starFlash, puff } from './fxkit.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -109,7 +111,10 @@ function drawMobs(ctx, world, cam, time) {
     const x = m.x - cam.x;
     const y = m.y - cam.y;
     if (x < -80 || x > VIEW_W + 80) continue;
-    drawMonster(ctx, m, x, y, time, world.now);
+    // In a dungeon a swing winds back, then lunges.
+    const lean = m.windup > 0 ? -m.dir * 2.5 : m.lunge > 0 ? m.dir * 6 * (m.lunge / 0.18) : 0;
+    drawMonster(ctx, m, x + lean, y, time, world.now);
+    if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
     if (m.def.boss) boss = m;
     if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
       const w = Math.max(24, m.def.w);
@@ -157,6 +162,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
+  if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
   drawMobs(ctx, world, cam, time);
 
@@ -198,6 +204,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
 
   drawEffects(ctx, world, cam, time);
+  if (world.dungeon) drawDungeonFront(ctx, world, cam, time);
   drawParticles(ctx, feel.fx, cam, time);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
@@ -241,5 +248,99 @@ function drawBubbles(ctx, world, cam) {
     const x = who === 'player' ? world.body.x : npc.x;
     const y = who === 'player' ? world.body.y : world.map.groundY;
     drawBubble(ctx, Math.round(x - cam.x), Math.round(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2));
+  }
+}
+
+// ---------- Dungeons ----------
+
+// The room's things on the floor: glowcaps, cages, keys, the chest, roots sealing the exit, and
+// the warnings of boss moves about to go off.
+function drawDungeonBack(ctx, world, cam, time) {
+  const run = world.dungeon;
+  const room = run.room;
+  const gy = world.map.groundY - cam.y;
+  for (const p of world.map.portals) {
+    if (!p.sealed) continue;
+    const x = p.x - cam.x;
+    if (x > -40 && x < VIEW_W + 40) drawSeal(ctx, x, p.y - cam.y, room.cleared, time);
+  }
+  for (const o of room.objects) {
+    const x = o.x - cam.x;
+    if (x < -40 || x > VIEW_W + 40) continue;
+    if (o.kind === 'glowcap') drawGlowcap(ctx, x, gy, o.done, time + o.id);
+    else if (o.kind === 'cage') drawCage(ctx, x, gy, o.done, o.done ? 1 : o.progress, time + o.id);
+    else if (o.kind === 'chest') drawChest(ctx, x, gy, Boolean(o.open), time);
+    // A hint over what you can use.
+    const near = !o.done && Math.abs(o.x - world.body.x) < 26 && world.body.onGround && !world.channel;
+    if (near && (o.kind !== 'chest' || room.cleared)) {
+      box(ctx, x - 24, gy - 62, 48, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
+      text(ctx, o.kind === 'chest' ? '▲ Open' : o.kind === 'cage' ? '▲ Free' : '▲ Light', x, gy - 53, { size: 8, bold: true, align: 'center', color: COLORS.accent });
+    }
+  }
+  for (const k of room.keys) if (!k.got) drawRootKey(ctx, k.x - cam.x, k.y - cam.y, time + k.t);
+  // Saplings feeding the boss: a green ribbon of life.
+  const boss = world.mobs.find((m) => m.def.mech === 'gnarl' && m.hp > 0);
+  if (boss) {
+    for (const a of room.adds) {
+      if (a.hp <= 0 || !a.def.fight?.mender) continue;
+      ctx.save();
+      ctx.strokeStyle = '#9be08f';
+      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 8);
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.lineDashOffset = -time * 30;
+      ctx.beginPath();
+      ctx.moveTo(a.x - cam.x, a.y - a.def.h * 0.5 - cam.y);
+      ctx.quadraticCurveTo((a.x + boss.x) / 2 - cam.x, Math.min(a.y, boss.y) - 120 - cam.y, boss.x - cam.x, boss.y - boss.def.h * 0.5 - cam.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  for (const z of run.zones) {
+    if (z.hit) continue;
+    const p = Math.min(1, z.t / z.warn);
+    // Lanes run from the boss toward the wall it's charging at.
+    if (z.kind === 'lane' && z.dir < 0) drawZone(ctx, 'lane', z.x + z.w - cam.x, z.y - cam.y, -z.w, p, time);
+    else drawZone(ctx, z.kind, (z.kind === 'circle' ? z.x : z.x) - cam.x, z.y - cam.y, z.w, p, time);
+  }
+}
+
+// Things that happen in the air: boss moves landing, spit, Provoke's roar, group heals, and the
+// bar while you work on something.
+function drawDungeonFront(ctx, world, cam, time) {
+  const run = world.dungeon;
+  for (const z of run.zones) {
+    if (!z.hit || z.kind === 'lane') continue;
+    drawZoneHit(ctx, z.kind, z.x - cam.x, z.y - cam.y, z.w, Math.min(1, z.after / 0.5), time);
+  }
+  for (const v of run.vfx) {
+    const p = v.t / v.dur;
+    const x = v.x - cam.x;
+    const y = v.y - cam.y;
+    ctx.save();
+    if (v.kind === 'provoke') {
+      ctx.globalAlpha = 1 - p;
+      shock(ctx, x, y - 22, 20 + p * 90, 10 + p * 40, 4 * (1 - p) + 0.5, '#ff7a6b');
+      shock(ctx, x, y - 22, 10 + p * 60, 6 + p * 26, 3 * (1 - p) + 0.5, '#ffffff');
+    } else if (v.kind === 'groupheal') {
+      ctx.globalAlpha = 1 - p;
+      shock(ctx, x, y - 4, 30 + p * 120, 6 + p * 18, 3 * (1 - p) + 0.5, '#7ee081');
+    } else if (v.kind === 'spit') {
+      const sx = x + (v.tx - v.x) * p;
+      const sy = y + (v.ty - v.y) * p - Math.sin(p * Math.PI) * 18;
+      puff(ctx, sx, sy, 4, '#e0b8ff', '#a07ad6');
+    } else if (v.kind === 'crash') {
+      ctx.globalAlpha = 1 - p;
+      starFlash(ctx, x, y - 30, 30 * (0.4 + p), 6, p, '#ffe36b');
+      puff(ctx, x, y - 8, 12 * (1 - p) + 3, '#f6e2c8', '#c9a27a');
+    }
+    ctx.restore();
+  }
+  const ch = world.channel;
+  if (ch) {
+    const x = world.body.x - cam.x;
+    const y = world.body.y - cam.y - 64;
+    box(ctx, x - 22, y, 44, 7, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 3.5 });
+    box(ctx, x - 21, y + 1, Math.max(3, 42 * ch.obj.progress), 5, { fill: ch.obj.kind === 'cage' ? '#9be08f' : '#ffd66b', edge: null, r: 2.5 });
   }
 }

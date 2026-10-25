@@ -53,13 +53,14 @@ export function mobBox(m) {
 export function createSpawner(map) {
   const slots = [];
   for (const s of map.spawns) {
-    const copies = MOBS[s.mob].boss ? 1 : PER_SPAWN;
+    // Dungeon rooms hold exactly what they list, once.
+    const copies = MOBS[s.mob].boss || map.dungeon ? 1 : PER_SPAWN;
     // Keep copies on the same ledge as the original spawn point.
     const surface = surfaceFor(map, s.x, s.y);
     for (let i = 0; i < copies; i++) {
       const offset = (i - (copies - 1) / 2) * SPREAD;
       const x = Math.max(surface.x1 + 4, Math.min(surface.x2 - 4, s.x + offset));
-      slots.push({ spawn: { ...s, x }, mob: null, respawnAt: 0 });
+      slots.push({ spawn: { ...s, x, respawn: map.dungeon ? Infinity : s.respawn }, mob: null, respawnAt: 0 });
     }
   }
   return { slots };
