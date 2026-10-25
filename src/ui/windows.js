@@ -8,7 +8,7 @@ import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
 import { expToNext } from '../core/exp.js';
 import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js';
-import { equipFromBag, unequip, spendAp, autoAssignAp, learnSkill, canLearn, equipBlocker, STAT_KEYS } from '../core/character.js';
+import { equipFromBag, unequip, spendAp, autoAssignAp, learnSkill, canLearn, equipBlocker, STAT_KEYS, wearOutfit, removeOutfit, wornGear } from '../core/character.js';
 import { applyScroll, itemName } from '../core/items.js';
 import { removeItem, TAB_SIZE } from '../core/inventory.js';
 import { questState, objectiveProgress } from '../core/quests.js';
@@ -19,10 +19,10 @@ import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, click
 import { itemTooltip, skillTooltip } from './tooltips.js';
 
 const CELL = 19;
-const TAB_KEYS = ['equip', 'use', 'etc'];
+const TAB_KEYS = ['equip', 'use', 'etc', 'cash'];
 
 function cellsFor(char, tab) {
-  return char.inventory[tab];
+  return char.inventory[tab] ?? [];
 }
 
 function itemIdOf(entry) {
@@ -52,14 +52,17 @@ export function bagWindow(ui, state, world) {
   // Equipment panel with a live preview of the hero.
   const th = ui.theme;
   well(ctx, ox + 4, oy + 22, 96, 104, th);
-  drawHero(ctx, char.appearance, char.equipment, ox + 52, oy + 104, { pose: 'idle', time: world.now });
+  drawHero(ctx, char.appearance, wornGear(char), ox + 52, oy + 104, { pose: 'idle', time: world.now });
+  // The slots show your gear or your outfit (the cash pieces worn over it).
+  const outfit = win.view === 1;
+  const worn = outfit ? char.outfit ?? {} : char.equipment;
   for (const slot of EQUIP_SLOTS) {
     const [sx, sy] = SLOT_POS[slot];
     const x = ox + sx;
     const y = oy + sy;
-    const inst = char.equipment[slot];
+    const inst = worn[slot];
     const rare = inst?.rarity ? RARITIES[inst.rarity].color : null;
-    box(ctx, x, y, CELL, CELL, { fill: hover(ui, x, y, CELL, CELL) ? '#ffffff' : th.light, edge: state.scrollMode && inst ? COLORS.accent : rare ?? th.main, r: 5, width: rare ? 2 : 1 });
+    box(ctx, x, y, CELL, CELL, { fill: hover(ui, x, y, CELL, CELL) ? '#ffffff' : outfit ? '#ffe6f2' : th.light, edge: state.scrollMode && inst && !outfit ? COLORS.accent : rare ?? (outfit ? '#ff8fc1' : th.main), r: 5, width: rare ? 2 : 1 });
     if (inst) drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5, 1, inst.variant);
     else {
       // An empty slot shows a faded outline of what goes there.
@@ -67,8 +70,13 @@ export function bagWindow(ui, state, world) {
       drawItemIcon(ctx, SLOT_GHOST[slot], x + 1.5, y + 1.5);
       ctx.globalAlpha = 1;
     }
-    if (hover(ui, x, y, CELL, CELL)) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click to take off', color: COLORS.muted, size: 8 }] : [{ text: slot[0].toUpperCase() + slot.slice(1), bold: true }]);
-    if (clicked(ui, x, y, CELL, CELL) && inst) {
+    if (hover(ui, x, y, CELL, CELL)) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click to take off', color: COLORS.muted, size: 8 }] : [{ text: `${slot[0].toUpperCase() + slot.slice(1)}${outfit ? ' outfit' : ''}`, bold: true }, ...(outfit ? [{ text: 'Wear cash items from the Cash tab.', size: 8, color: COLORS.muted }] : [])]);
+    if (clicked(ui, x, y, CELL, CELL) && inst && outfit) {
+      if (ui.mouse.double || (state.lastClick?.key === `of:${slot}` && world.now - state.lastClick.at < 0.4)) {
+        if (!removeOutfit(char, slot)) world.log('Your Cash tab is full.', '#ffb3c6');
+        state.lastClick = null;
+      } else state.lastClick = { key: `of:${slot}`, at: world.now };
+    } else if (clicked(ui, x, y, CELL, CELL) && inst) {
       if (state.scrollMode) {
         scrollOnto(state, world, inst);
       } else if (ui.mouse.double || (state.lastClick?.key === `eq:${slot}` && world.now - state.lastClick.at < 0.4)) {
@@ -82,11 +90,15 @@ export function bagWindow(ui, state, world) {
   box(ctx, ox + 10, oy + 131, 84, 15, { fill: '#fff6d6', edge: '#f0cf7a', r: 7.5 });
   icon(ctx, 'coin', ox + 19, oy + 138.5, 9, '#f0b53a');
   text(ctx, char.gold.toLocaleString(), ox + 56, oy + 142, { size: 9, bold: true, align: 'center', color: COLORS.gold });
+  win.view = tabs(ui, ox + 9, oy + 154, ['Gear', 'Outfit'], win.view ?? 0, { w: 41, h: 12 });
+  box(ctx, ox + 10, oy + 172, 84, 15, { fill: '#ffe6f2', edge: '#ff8fc1', r: 7.5 });
+  icon(ctx, 'star', ox + 19, oy + 179.5, 9, '#ff6fae');
+  text(ctx, `${(char.cash ?? 0).toLocaleString()} Cash`, ox + 56, oy + 183, { size: 8.5, bold: true, align: 'center', color: '#d0559a' });
 
   // Tabs and grid.
   const gx = ox + 106;
   const tabWas = win.tab ?? 0;
-  win.tab = tabs(ui, gx, oy + 22, ['Equip', 'Use', 'Etc'], tabWas, { w: 48 });
+  win.tab = tabs(ui, gx, oy + 22, ['Equip', 'Use', 'Etc', 'Cash'], tabWas, { w: 35 });
   // A selection belongs to its tab.
   if (win.tab !== tabWas) win.sel = -1;
   const tab = TAB_KEYS[win.tab];
@@ -107,8 +119,8 @@ export function bagWindow(ui, state, world) {
       ctx.fillRect(x, y, CELL - 1, CELL - 1);
     }
     if (hover(ui, x, y, CELL, CELL)) {
-      const hint = tab === 'equip' ? 'Double-click to equip' : tab === 'use' ? 'Double-click to use · press a hotkey to bind' : null;
-      tooltip(ui, [...itemTooltip(char, entry.id, tab === 'equip' ? entry : null), ...(hint ? [{ text: hint, color: COLORS.muted, size: 8 }] : [])]);
+      const hint = tab === 'equip' ? 'Double-click to equip' : tab === 'cash' ? 'Double-click to wear' : tab === 'use' ? 'Double-click to use · press a hotkey to bind' : null;
+      tooltip(ui, [...itemTooltip(char, entry.id, tab === 'equip' || tab === 'cash' ? entry : null), ...(hint ? [{ text: hint, color: COLORS.muted, size: 8 }] : [])]);
     }
     const right = ui.mouse.right && hover(ui, x, y, CELL, CELL);
     if (clicked(ui, x, y, CELL, CELL) || right) {
@@ -129,9 +141,10 @@ export function bagWindow(ui, state, world) {
     if (button(ui, gx + 6, iy + 46, 60, 14, 'Cancel')) state.scrollMode = null;
   } else if (selEntry) {
     const def = ITEMS[selEntry.id];
-    text(ctx, def.name, gx + 6, iy + 13, { size: 9, bold: true });
-    wrap(ctx, tab === 'equip' ? (equipBlocker(char, selEntry) ?? 'Ready to equip.') : def.desc ?? '', gx + 6, iy + 25, 140, { size: 8, color: COLORS.muted });
-    const label = tab === 'equip' ? 'Equip' : tab === 'use' ? 'Use' : null;
+    text(ctx, itemName(selEntry.uid ? selEntry : selEntry.id), gx + 6, iy + 13, { size: 9, bold: true });
+    const about = tab === 'equip' ? (equipBlocker(char, selEntry) ?? 'Ready to equip.') : tab === 'cash' ? `Outfit for your ${def.slot}. Wear it over your gear's look.` : def.desc ?? '';
+    wrap(ctx, about, gx + 6, iy + 25, 140, { size: 8, color: COLORS.muted });
+    const label = tab === 'equip' ? 'Equip' : tab === 'cash' ? 'Wear' : tab === 'use' ? 'Use' : null;
     if (label && button(ui, gx + 6, iy + 46, 50, 14, label, { primary: true })) activate(state, world, tab, win.sel);
   } else {
     wrap(ctx, 'Pick up loot with X. Double-click (or right-click) an item to use it.', gx + 6, iy + 13, 140, { size: 8, color: COLORS.muted });
@@ -149,6 +162,10 @@ function activate(state, world, tab, index) {
       equipFromBag(char, index);
       state.windows.bag.sel = -1;
     }
+  } else if (tab === 'cash') {
+    wearOutfit(char, index);
+    state.windows.bag.sel = -1;
+    state.windows.bag.view = 1;
   } else if (tab === 'use') {
     const def = ITEMS[entry.id];
     if (def.scroll) {

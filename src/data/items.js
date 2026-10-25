@@ -303,6 +303,8 @@ export const GEMS = {
 };
 // Which variants an item can come in (none for consumables, legacy gear, and outfits).
 export function variantsFor(def) {
+  // Cash outfits come in the colors of the look they wear; endgame weapon covers don't.
+  if (def?.type === 'cash') return def.cover ? (def.cover.tier ? VARIANTS : null) : variantsFor(ITEMS[def.skin]);
   if (!def || def.type !== 'equip' || def.legacy || def.unique || def.endgame) return null;
   if (def.slot === 'earring') return def.design === 'jewel' ? GEMS : null;
   if (def.slot === 'weapon') return def.tier > 0 ? VARIANTS : null;

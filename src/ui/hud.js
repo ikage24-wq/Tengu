@@ -88,28 +88,28 @@ export function drawHud(ui, state, world) {
   if (hover(ui, 226, BAR_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
   // Menu buttons: round candy buttons with icons, a dot when there are points to spend.
-  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
+  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Options', 'options', 'Esc', 'gear', 'gold']];
   menus.forEach(([label, key, hotkey, ic, theme], i) => {
-    const cx = 280 + i * 21.5;
+    const cx = 277 + i * 18.6;
     const cy = BAR_Y + 18;
     const th = THEMES[theme];
-    const hot = hover(ui, cx - 10, cy - 10, 20, 20);
+    const hot = hover(ui, cx - 9, cy - 9, 18, 18);
     const open = state.windows[key].open;
     const lift = hot ? -1.5 : 0;
     ctx.fillStyle = th.dark;
     ctx.beginPath();
-    ctx.arc(cx, cy + 1.5, 9.5, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 1.5, 8.6, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = open ? th.main : hot ? '#ffffff' : th.light;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 9.5, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, 8.6, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = th.dark;
     ctx.lineWidth = 1.2;
     ctx.stroke();
-    icon(ctx, ic, cx, cy + lift, 11, open ? '#ffffff' : th.dark);
+    icon(ctx, ic, cx, cy + lift, 10, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
-    if (clicked(ui, cx - 10, cy - 10, 20, 20)) state.windows[key].open = !open;
+    if (clicked(ui, cx - 9, cy - 9, 18, 18)) state.windows[key].open = !open;
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);
     if (alert) {
       ctx.fillStyle = COLORS.bad;

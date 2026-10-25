@@ -1,5 +1,6 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
+import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack } from './scenery.js';
@@ -171,8 +172,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job };
   const buffs = world.dead ? {} : world.char.buffs;
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
-  drawBuffClones(ctx, buffs, look, world.char.equipment, hx, hy, heroState, time);
-  drawHero(ctx, look, world.char.equipment, hx, hy, heroState, feel.anim);
+  const gear = wornGear(world.char);
+  drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
+  drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
   // Your own name tag, like everyone else's; click it (or you) to see your profile.
   if (!world.dead) {

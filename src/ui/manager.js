@@ -11,6 +11,7 @@ import { createChat, chatInput, updateChat, drawChatBar } from './chat.js';
 import { adminWindow } from './admin.js';
 import { optionsWindow } from './options.js';
 import { profileWindow } from './profile.js';
+import { cashShopWindow } from './cashshop.js';
 import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
 
@@ -26,9 +27,10 @@ export function createUiState() {
       admin: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       options: { x: 170, y: 40, open: false, tab: 0, theme: 'lavender', icon: 'gear' },
       profile: { x: 160, y: 46, open: false, tab: 0, theme: 'sky', icon: 'user' },
+      cashshop: { x: 140, y: 40, open: false, theme: 'pink', icon: 'gift' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -45,7 +47,7 @@ export function createUiState() {
   };
 }
 
-const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap' };
+const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop' };
 
 // Handles keys and world events before the world updates. Returns whether the world should
 // ignore player controls this frame.
@@ -113,7 +115,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

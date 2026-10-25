@@ -5,7 +5,7 @@ import { JOBS } from '../data/jobs.js';
 import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
 import { COLORS, FONT, text, box, button, wrap, bar, hover, clicked, roundRect } from './kit.js';
-import { stats } from '../core/character.js';
+import { stats, wornGear } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
 import { lookRows, LOOK_OPTIONS } from './npc.js';
 
@@ -298,7 +298,7 @@ export function selectScreen(ui, time, chars, state) {
       ctx.fillRect(x - 16, y - 70, 32, 70);
     }
     if (c) {
-      drawHero(ctx, c.appearance, c.equipment, x, y, { pose: on ? 'walk' : 'idle', time, seed: i });
+      drawHero(ctx, c.appearance, wornGear(c), x, y, { pose: on ? 'walk' : 'idle', time, seed: i });
       ctx.font = `bold 8px ${FONT}`;
       const tw = ctx.measureText(c.name).width + 10;
       box(ctx, x - tw / 2, y + 3, tw, 12, { fill: 'rgba(70,50,95,0.8)', edge: null, r: 4 });

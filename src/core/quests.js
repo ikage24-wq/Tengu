@@ -3,6 +3,7 @@
 import { QUESTS } from '../data/quests.js';
 import { ITEMS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
+import { CASH_PER_QUEST } from '../data/cash.js';
 import { addItem, countItem, removeItem, TAB_SIZE } from './inventory.js';
 import { makeEquip } from './items.js';
 import { gainExp } from './character.js';
@@ -68,6 +69,7 @@ export function completeQuest(char, id) {
     else addItem(char.inventory, r.id, r.qty);
   }
   char.gold += q.rewards.gold;
+  char.cash = (char.cash ?? 0) + CASH_PER_QUEST;
   const levels = gainExp(char, q.rewards.exp);
   char.quests[id] = { state: 'done' };
   return { ...q.rewards, items, levels };

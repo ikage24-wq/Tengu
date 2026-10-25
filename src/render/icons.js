@@ -2,7 +2,7 @@
 
 import { ITEMS, variantsFor } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
-import { R, E, P, sprite, blit, shade } from './pixel.js';
+import { R, E, P, F, sprite, blit, shade } from './pixel.js';
 import { weaponIcon } from './weapons.js';
 import { pieceOf } from './jobgear/index.js';
 import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, skirtShapes, hatShapes, hatBackShapes, handShapes, capeShapes, capeFrontShapes, earringShapes, limb } from './gear.js';
@@ -99,7 +99,14 @@ function fitShapes(shapes, size = 16, pad = 1) {
   });
 }
 
+// The little pink star that marks a cash outfit piece.
+const CASH_BADGE = [E(13.2, 2.8, 2.8, 2.8, '#ff8fc1'), F(R(12.7, 1, 1, 3.6, '#ffffff')), F(R(11.4, 2.3, 3.6, 1, '#ffffff'))];
+
 function itemShapes(def, variant = null) {
+  if (def.type === 'cash') {
+    const look = def.cover ? weaponIcon('sword', def.cover.theme ? 21 : def.cover.tier, def.cover.theme ?? null, def.cover.theme ? null : variant) : itemShapes(ITEMS[def.skin], variant);
+    return [...look, ...CASH_BADGE];
+  }
   const c = variant ? variantsFor(def)?.[variant]?.main ?? def.color : def.color;
   const l = shade(c, 22);
   const d = shade(c, -18);
@@ -132,7 +139,8 @@ function itemShapes(def, variant = null) {
 // Worn-shape icons rasterize at twice the detail so small parts survive the shrink.
 export function itemIcon(id, variant = null) {
   const def = ITEMS[id];
-  const fine = def.design === 'job' || def.design === 'jewel';
+  const look = def.type === 'cash' && def.skin ? ITEMS[def.skin] : def;
+  const fine = look.design === 'job' || look.design === 'jewel';
   return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: itemShapes(def, variant), ...(fine ? { res: 2, soft: 'cel' } : {}) }));
 }
 

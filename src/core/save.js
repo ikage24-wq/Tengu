@@ -2,6 +2,7 @@
 
 import { setNextUid } from './items.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
+import { STARTING_CASH } from '../data/cash.js';
 import { RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
 
@@ -25,10 +26,14 @@ export function loadGame(slot = 0) {
     if (!raw) return null;
     const char = JSON.parse(raw);
     char.slot = slot;
+    // Saves from before outfits get the starting Cash and empty outfit slots.
+    char.outfit ??= {};
+    char.cash ??= STARTING_CASH;
+    char.inventory.cash ??= [];
     dropRetiredItems(char);
     updateRetiredJobs(char);
     // Keep new item ids from colliding with saved ones.
-    const all = [...Object.values(char.equipment).filter(Boolean), ...char.inventory.equip];
+    const all = [...Object.values(char.equipment).filter(Boolean), ...Object.values(char.outfit).filter(Boolean), ...char.inventory.equip, ...char.inventory.cash];
     setNextUid(Math.max(0, ...all.map((i) => i.uid)) + 1);
     char.buffs = {};
     return char;
@@ -46,6 +51,7 @@ export function dropRetiredItems(char) {
   for (const tab of Object.keys(char.inventory)) char.inventory[tab].forEach(rename);
   for (const b of Object.values(char.hotkeys ?? {})) if (b?.item && RENAMED_ITEMS[b.item]) b.item = RENAMED_ITEMS[b.item];
   for (const [slot, inst] of Object.entries(char.equipment)) if (inst && !ITEMS[inst.id]) char.equipment[slot] = null;
+  for (const [slot, inst] of Object.entries(char.outfit ?? {})) if (inst && !ITEMS[inst.id]) char.outfit[slot] = null;
   for (const tab of Object.keys(char.inventory)) char.inventory[tab] = char.inventory[tab].filter((e) => ITEMS[e.id]);
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.item && !ITEMS[b.item]) char.hotkeys[code] = null;
   return char;

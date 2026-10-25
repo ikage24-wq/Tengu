@@ -12,7 +12,7 @@
 // hurt recoil.
 
 import { settings } from '../core/settings.js';
-import { ITEMS, RARITIES, variantsFor } from '../data/items.js';
+import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf } from './jobgear/index.js';
 import { drawGearFx } from './jobgear/live.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from './pixel.js';
@@ -87,6 +87,14 @@ function resolveGear(look, gear) {
     return pieceOf(def, inst.variant ?? null);
   };
   const w = gear?.weapon ? ITEMS[gear.weapon.id] : null;
+  let weapon = w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null;
+  // A weapon cover reskins the weapon as an endgame design or a top material (looks only).
+  const cover = gear?.weapon?.cover;
+  if (weapon && cover) {
+    const v = cover.theme ? null : gear.weapon.coverVariant ?? null;
+    const color = cover.theme ? ITEMS[`sword_${cover.theme}`].color : (v && VARIANTS[v]?.main) || ITEMS[`sword_${cover.tier * 5}`].color;
+    weapon = { ...weapon, tier: cover.theme ? 21 : cover.tier, theme: cover.theme ?? null, element: cover.theme ?? null, color, variant: v };
+  }
   return {
     top: piece('top', preset.top, outfit),
     bottom: piece('bottom', preset.bottom, preset.bottomColor ?? shade(outfit, -22)),
@@ -95,7 +103,7 @@ function resolveGear(look, gear) {
     cape: piece('cape', null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
-    weapon: w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null,
+    weapon,
   };
 }
 

@@ -245,6 +245,17 @@ const ICONS = {
     ctx.lineTo(s * 0.02, s * 0.2);
     ctx.fill();
   },
+  gift(ctx, s) {
+    ctx.fillRect(-s * 0.38, -s * 0.12, s * 0.76, s * 0.5);
+    ctx.fillRect(-s * 0.44, -s * 0.26, s * 0.88, s * 0.16);
+    ctx.lineWidth = s * 0.09;
+    ctx.beginPath();
+    ctx.ellipse(-s * 0.14, -s * 0.34, s * 0.14, s * 0.08, -0.4, 0, Math.PI * 2);
+    ctx.ellipse(s * 0.14, -s * 0.34, s * 0.14, s * 0.08, 0.4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-s * 0.05, -s * 0.26, s * 0.1, s * 0.64);
+  },
   shop(ctx, s) {
     ctx.fillRect(-s * 0.36, -s * 0.05, s * 0.72, s * 0.42);
     ctx.beginPath();

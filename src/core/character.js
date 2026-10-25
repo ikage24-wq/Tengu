@@ -5,6 +5,7 @@ import { MAX_LEVEL, expToNext } from './exp.js';
 import { JOBS, FAMILY_STATS, jobChain, nextJobs } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
 import { ITEMS } from '../data/items.js';
+import { STARTING_CASH, CASH_PER_LEVEL } from '../data/cash.js';
 import { computeStats } from './stats.js';
 import { createInventory, addItem, removeItem } from './inventory.js';
 import { deathExpLoss } from './formulas.js';
@@ -29,6 +30,9 @@ export function createCharacter(name, appearance) {
     gold: 0,
     skills: {},
     equipment: { weapon: null, hat: null, top: null, bottom: null, shoes: null, gloves: null, cape: null, earring: null },
+    // Cash outfit pieces worn over the gear, by slot, and the Cash to buy them with.
+    outfit: {},
+    cash: STARTING_CASH,
     inventory: createInventory(),
     quests: {},
     buffs: {},
@@ -66,6 +70,7 @@ export function gainExp(char, amount) {
     }
     char.baseHp += job.hp;
     char.baseMp += job.mp;
+    char.cash = (char.cash ?? 0) + CASH_PER_LEVEL;
   }
   if (char.level >= MAX_LEVEL) char.exp = 0;
   if (gained) {
@@ -174,6 +179,45 @@ export function unequip(char, slot) {
   char.equipment[slot] = null;
   clampVitals(char);
   return true;
+}
+
+// ---------- Outfits ----------
+
+// Wears the cash item at `index` in the Cash tab, putting back whatever was in that outfit slot.
+export function wearOutfit(char, index) {
+  const inst = char.inventory.cash[index];
+  if (!inst) return false;
+  const slot = ITEMS[inst.id].slot;
+  char.outfit ??= {};
+  char.inventory.cash.splice(index, 1);
+  if (char.outfit[slot]) char.inventory.cash.push(char.outfit[slot]);
+  char.outfit[slot] = inst;
+  return true;
+}
+
+export function removeOutfit(char, slot) {
+  const inst = char.outfit?.[slot];
+  if (!inst || !addItem(char.inventory, inst)) return false;
+  char.outfit[slot] = null;
+  return true;
+}
+
+// What a hero looks like they're wearing: their gear, with each outfit piece covering the look of
+// its slot (a weapon cover reskins the weapon they hold, which keeps its type). Stats always come
+// from the gear itself. `over` previews outfit pieces on top (the Cash Shop's fitting room).
+export function wornGear(char, over = null) {
+  const outfit = over ? { ...char.outfit, ...over } : char.outfit;
+  if (!outfit) return char.equipment;
+  let g = null;
+  for (const [slot, inst] of Object.entries(outfit)) {
+    if (!inst) continue;
+    const def = ITEMS[inst.id];
+    g ??= { ...char.equipment };
+    if (def.cover) {
+      if (g.weapon) g.weapon = { ...g.weapon, cover: def.cover, coverVariant: inst.variant ?? null };
+    } else g[slot] = { id: def.skin, variant: inst.variant ?? null };
+  }
+  return g ?? char.equipment;
 }
 
 // ---------- Consumables ----------

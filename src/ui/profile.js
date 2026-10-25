@@ -7,7 +7,7 @@ import { computeStats } from '../core/stats.js';
 import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js';
 import { addItem } from '../core/inventory.js';
 import { itemName } from '../core/items.js';
-import { STAT_KEYS } from '../core/character.js';
+import { STAT_KEYS, wornGear } from '../core/character.js';
 import { buildLabel, buyFromShop, thank } from '../world/bots.js';
 import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
@@ -51,7 +51,7 @@ export function profileWindow(ui, state, world) {
   ctx.beginPath();
   ctx.rect(lx + 2, ly + 2, 100, 110);
   ctx.clip();
-  drawHero(ctx, char.appearance, char.equipment, lx + 52, ly + 104, { pose: 'idle', time: world.now, scale: 1.7, facing: 1, job: char.job });
+  drawHero(ctx, char.appearance, wornGear(char), lx + 52, ly + 104, { pose: 'idle', time: world.now, scale: 1.7, facing: 1, job: char.job });
   ctx.restore();
   const pro = bot?.pro;
   text(ctx, char.name, lx + 52, ly + 124, { size: 9.5, bold: true, align: 'center', color: pro ? '#c99a1f' : COLORS.ink });

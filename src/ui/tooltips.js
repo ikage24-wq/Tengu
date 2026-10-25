@@ -18,8 +18,11 @@ export function sellPrice(id, inst = null) {
   return Math.max(1, Math.floor(price * (def.type === 'etc' ? 1 : 0.4)));
 }
 
+const SLOT_LOOKS = { hat: 'hat', top: 'top', bottom: 'bottom', shoes: 'shoes', gloves: 'gloves', cape: 'cape', earring: 'earrings', weapon: 'weapon' };
+
 export function itemTooltip(char, id, inst = null) {
   const def = ITEMS[id];
+  if (def.type === 'cash') return cashTooltip(def, inst);
   const lines = [];
   const upgrades = inst?.upgrades ? ` (+${inst.upgrades})` : '';
   const rarity = RARITIES[inst?.rarity ?? 0];
@@ -91,5 +94,15 @@ export function skillTooltip(char, skillId) {
   if (lv < s.maxLevel) lines.push({ text: `Next: ${describe(skillAt(skillId, lv + 1))}`, color: COLORS.accent });
   if (s.lock) lines.push({ text: `Roots you for ${s.lock}s`, color: COLORS.muted });
   if (s.weapons) lines.push({ text: `Needs: ${s.weapons.join(' or ')}`, color: COLORS.muted });
+  return lines;
+}
+
+// Cash outfit pieces: what they cover and their color; they have no stats.
+function cashTooltip(def, inst) {
+  const v = inst?.variant ? variantsFor(def)?.[inst.variant] : null;
+  const lines = [{ text: itemName(inst ?? def.id), bold: true, size: 10, color: '#d0559a' }];
+  lines.push({ text: `✦ Cash outfit · ${def.slot[0].toUpperCase() + def.slot.slice(1)}`, bold: true, color: '#ff8fc1' });
+  if (v) lines.push({ text: `◆ ${v.name} color`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
+  lines.push({ text: def.cover ? `Reskins the weapon you hold. Its stats stay the same.` : `Covers the look of your ${SLOT_LOOKS[def.slot]}. Your gear keeps its stats.`, color: COLORS.muted, size: 8 });
   return lines;
 }

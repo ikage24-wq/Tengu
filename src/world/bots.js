@@ -10,7 +10,8 @@
 import { createCharacter, gainExp, advanceJob, spendAp, STAT_KEYS } from '../core/character.js';
 import { computeStats } from '../core/stats.js';
 import { expToNext } from '../core/exp.js';
-import { makeEquip, rollRarity, variantPrice, itemName } from '../core/items.js';
+import { makeEquip, makeCash, rollRarity, variantPrice, itemName } from '../core/items.js';
+import { CASH_ITEMS } from '../data/cash.js';
 import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
@@ -154,6 +155,15 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
   for (const slot of EQUIP_SLOTS) {
     if (!pro && slot !== 'weapon' && rng() < (char.level < 15 ? 0.35 : 0.1)) continue;
     char.equipment[slot] = gearFor(char, slot, pro, rng, variant);
+  }
+  // Some players dress up in cash outfits (top players most of all), often in one color.
+  if (rng() < (pro ? 0.75 : 0.3)) {
+    const color = pick([null, 'dark', 'white', 'crimson', 'azure', 'gilded'], rng);
+    const count = 1 + Math.floor(rng() * (pro ? 6 : 3));
+    for (let i = 0; i < count; i++) {
+      const def = ITEMS[pick(CASH_ITEMS, rng)];
+      char.outfit[def.slot] = makeCash(def.id, def.slot === 'earring' ? null : color);
+    }
   }
   const s = computeStats(char);
   char.hp = s.maxHp;

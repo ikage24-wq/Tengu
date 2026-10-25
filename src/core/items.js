@@ -60,6 +60,12 @@ export function rollVariant(def, rng = Math.random, chance = 0.75) {
   return entries[0][0];
 }
 
+// A cash outfit piece: no stats, just its look and color.
+export function makeCash(id, variant = null) {
+  if (variant && !variantsFor(ITEMS[id])?.[variant]) variant = null;
+  return { uid: nextUid++, id, ...(variant ? { variant } : {}) };
+}
+
 // What a shop charges for an item in a color: a bit more, and a lot more for Gilded or Diamond.
 export function variantPrice(def, key) {
   if (!key) return def.price;

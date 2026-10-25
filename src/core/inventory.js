@@ -7,18 +7,20 @@ export const TAB_SIZE = 32;
 export const STACK_MAX = 200;
 
 export function createInventory() {
-  return { equip: [], use: [], etc: [] };
+  return { equip: [], use: [], etc: [], cash: [] };
 }
 
 export function tabFor(id) {
-  return ITEMS[id].type; // 'equip' | 'use' | 'etc'
+  return ITEMS[id].type; // 'equip' | 'use' | 'etc' | 'cash'
 }
 
 // Adds an item. `item` is either an equip instance or an item id. Returns true if it fit.
 export function addItem(inv, item, qty = 1) {
   if (typeof item === 'object') {
-    if (inv.equip.length >= TAB_SIZE) return false;
-    inv.equip.push(item);
+    // Equipment and cash outfits are one item per cell.
+    const list = (inv[tabFor(item.id)] ??= []);
+    if (list.length >= TAB_SIZE) return false;
+    list.push(item);
     return true;
   }
   const tab = tabFor(item);

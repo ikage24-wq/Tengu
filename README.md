@@ -40,7 +40,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Z (or Ctrl) | Basic attack (hold to keep attacking) |
 | X | Pick up loot (hold to vacuum) |
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
-| I / C / K / L / M | Bag / Stats / Skills / Quests / World map |
+| I / C / K / L / M / O | Bag / Stats / Skills / Quests / World map / Cash Shop |
 | Enter | Chat (Enter sends, Esc cancels, /help for commands) |
 | Esc | Close windows; with nothing open, Options |
 
@@ -107,6 +107,15 @@ to clear it.
   stat); earrings come in **Ruby** (STR), **Emerald** (DEX), **Sapphire** (INT), **Topaz** (LUK),
   and **Diamond** (all). The color repaints the piece and its icon, and bonuses grow with the
   item's level. Most drops come in a color; in shops, pick one from the swatches under an item.
+- **Cash outfits** — the Cash Shop (O, or the gift button) sells outfit pieces that cover the
+  look of your gear without touching its stats: costumes of every job's sets (a warrior can wear a
+  towering wizard hat), the unique outfits and clothes, jewel earrings, and weapon covers that
+  reskin whatever weapon you hold as an endgame design (Seraph, Hellfire, Ossuary, Photon, Ripper,
+  Neon) or a top material (Crystal up to Genesis). Most come in the gear colors. Click a piece to
+  try it on in the fitting room (turn around, walk, reset), then Buy & Wear. You start with 5,000
+  Cash and earn 250 per level and 300 per quest. Bought pieces live in the bag's **Cash** tab;
+  the equipment panel switches between **Gear** and **Outfit** (double-click to take a piece off).
+  Other players dress up too, top players most of all.
 - **Shops** — Pip, Tora, Marlo, and Nim sell gear for *your* job at their town's levels (with
   All / Gear / Arms / Other filters), and weapons you can use. Half of all gear drops are for
   your job, and quest gear rewards come as your job's piece. Other players wear their own job's

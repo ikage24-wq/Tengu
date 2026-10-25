@@ -9,7 +9,7 @@ import { questState, acceptQuest, completeQuest, objectiveProgress, rewardId } f
 import { addItem, removeItem } from '../core/inventory.js';
 import { makeEquip, itemName, itemColors, variantPrice } from '../core/items.js';
 import { shade } from '../render/pixel.js';
-import { advanceJob } from '../core/character.js';
+import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
@@ -402,7 +402,7 @@ function styleWindow(ui, state, world) {
   const { ctx } = ui;
   const char = world.char;
   box(ctx, win.x + 8, win.y + 24, 90, 152, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, char.equipment, win.x + 53, win.y + 160, { pose: 'idle', time: world.now, scale: 2 });
+  drawHero(ctx, dlg.look, wornGear(char), win.x + 53, win.y + 160, { pose: 'idle', time: world.now, scale: 2 });
   dlg.look = lookRows(ui, dlg.look, win.x + 104, win.y + 24, 168);
   const cost = npc.styleCost;
   const by = win.y + H - 22;

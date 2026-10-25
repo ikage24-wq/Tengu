@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { R, E, T, F, shade } from './pixel.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
@@ -732,7 +733,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said) {
   const seed = seedOf(bot.id);
   const facing = body ? body.facing : bot.facing;
   const anim = animFor(bot.id, body ? body.x : bot.x, facing, time);
-  drawHero(ctx, look, bot.char.equipment, x, y, {
+  drawHero(ctx, look, wornGear(bot.char), x, y, {
     pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
   }, anim);
   ctx.font = 'bold 7px sans-serif';
