@@ -1641,6 +1641,753 @@ for (const [id, extra] of Object.entries(SIGNATURES)) {
   };
 }
 
+// ---------- Endgame grandeur ----------
+// Third jobs get an extra layer of scale on top of their signature look, and every few seconds a
+// climax: a short, showy moment that plays out and settles back into the idle aura.
+
+// Progress (0-1) through a climax that fires every `period` seconds and lasts `dur`, else -1.
+function climax(t, period, dur) {
+  const c = t % period;
+  return c < dur ? c / dur : -1;
+}
+
+const easeOut = (p) => 1 - (1 - p) * (1 - p);
+
+// An expanding ring flat on the ground (or upright when `flat` is 1).
+function ring(ctx, x, y, r, flat, color, width, a) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * flat, 0, 0, TAU);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A sword stuck point-first in the ground; (x, y) is where the blade meets the ground.
+function plantedSword(ctx, x, y, s, k, tilt) {
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.translate(x, y);
+  ctx.rotate(tilt);
+  ctx.fillStyle = '#dbe9ff';
+  ctx.strokeStyle = '#6f8fd8';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.rect(-1.6 * s, -14 * s, 3.2 * s, 14 * s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#ffd66b';
+  ctx.fillRect(-4.5 * s, -15.5 * s, 9 * s, 2 * s);
+  ctx.fillStyle = '#6f8fd8';
+  ctx.fillRect(-1 * s, -20 * s, 2 * s, 4.5 * s);
+  ctx.restore();
+}
+
+// A little skull of green fire.
+function fireSkull(ctx, x, y, r, k, t) {
+  glow(ctx, x, y, r * 3, '#7de04f', k * 0.6);
+  ctx.save();
+  ctx.globalAlpha = k;
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i ? '#c9ff9b' : '#7de04f';
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.8 + i * r * 0.8, y - r * 0.6);
+    ctx.quadraticCurveTo(x - r * 0.6 + i * r * 0.8, y - r * 2.2 - Math.sin(t * 9 + i) * r * 0.5, x - r * 0.4 + i * r * 0.8, y - r * 0.6);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#e6ffd0';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fill();
+  ctx.fillRect(x - r * 0.6, y + r * 0.5, r * 1.2, r * 0.7);
+  ctx.fillStyle = '#2f5a1f';
+  ctx.beginPath();
+  ctx.arc(x - r * 0.38, y, r * 0.28, 0, TAU);
+  ctx.arc(x + r * 0.38, y, r * 0.28, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function musicNote(ctx, x, y, s, color, a) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(x, y, 2.2 * s, 1.6 * s, -0.4, 0, TAU);
+  ctx.fill();
+  ctx.fillRect(x + 1.4 * s, y - 8 * s, 1 * s, 8 * s);
+  ctx.fillRect(x + 1.4 * s, y - 8 * s, 4 * s, 1.4 * s);
+  ctx.restore();
+}
+
+const GRAND = {
+  swordsaint: {
+    back(ctx, x, y, t, s, k) {
+      // A circle of swords planted in the ground around you, the far half behind.
+      glow(ctx, x, y - 30 * s, 60 * s, '#bfe0ff', k * 0.3);
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + 0.15;
+        if (Math.sin(a) >= 0) continue;
+        plantedSword(ctx, x + Math.cos(a) * 34 * s, y + Math.sin(a) * 8 * s, s * 0.9, k * 0.85, Math.cos(a) * 0.15);
+      }
+    },
+    front(ctx, x, y, t, s, k) {
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + 0.15;
+        if (Math.sin(a) < 0) continue;
+        plantedSword(ctx, x + Math.cos(a) * 34 * s, y + Math.sin(a) * 8 * s, s, k, Math.cos(a) * 0.15);
+      }
+      // Climax, Sword Volley: nine blades launch out of the fan in a radial burst, a ring of
+      // light cuts across the ground, and the swords streak away.
+      const u = climax(t, 5, 1.2);
+      if (u < 0) return;
+      const cx = x;
+      const cy = y - 32 * s;
+      if (u < 0.15) glow(ctx, cx, cy, 50 * s, '#ffffff', k * (1 - u / 0.15));
+      for (let i = 0; i < 9; i++) {
+        const a = -Math.PI * (0.08 + (i / 8) * 0.84);
+        const d = (34 + easeOut(Math.min(1, u * 1.6)) * 110) * s;
+        const fade = 1 - u;
+        ctx.save();
+        ctx.globalAlpha = k * fade;
+        ctx.strokeStyle = '#bfe0ff';
+        ctx.lineWidth = 2 * s;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * (d - 26 * s), cy + Math.sin(a) * (d - 26 * s));
+        ctx.lineTo(cx + Math.cos(a) * d, cy + Math.sin(a) * d);
+        ctx.stroke();
+        ctx.restore();
+        floatSword(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d, 8 * s, a - Math.PI / 2 + Math.PI, k * fade, '#ffffff', '#8fd3ff');
+      }
+      ring(ctx, x, y, (12 + easeOut(u) * 80) * s, 0.22, '#ffffff', 3 * s * (1 - u) + 0.5, k * (1 - u));
+    },
+  },
+
+  dragonknight: {
+    back(ctx, x, y, t, s, k) {
+      // The ground smolders in a ring of embers and licking flames.
+      glow(ctx, x, y - 30 * s, 64 * s, '#ff3a3a', k * 0.22);
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * TAU;
+        if (Math.sin(a) >= 0) continue;
+        const fx = x + Math.cos(a) * 34 * s;
+        const fy = y + Math.sin(a) * 8 * s;
+        const h = (7 + 4 * Math.sin(t * 8 + i * 2)) * s;
+        ctx.save();
+        ctx.globalAlpha = k * 0.85;
+        ctx.fillStyle = i % 2 ? '#ff5a3a' : '#ffb35a';
+        ctx.beginPath();
+        ctx.moveTo(fx - 2.5 * s, fy);
+        ctx.quadraticCurveTo(fx, fy - h * 1.4, fx + 2.5 * s, fy);
+        ctx.fill();
+        ctx.restore();
+      }
+    },
+    front(ctx, x, y, t, s, k, dir) {
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * TAU;
+        if (Math.sin(a) < 0) continue;
+        const fx = x + Math.cos(a) * 34 * s;
+        const fy = y + Math.sin(a) * 8 * s;
+        const h = (8 + 4 * Math.sin(t * 8 + i * 2)) * s;
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.fillStyle = i % 2 ? '#ff5a3a' : '#ffd66b';
+        ctx.beginPath();
+        ctx.moveTo(fx - 2.8 * s, fy);
+        ctx.quadraticCurveTo(fx, fy - h * 1.5, fx + 2.8 * s, fy);
+        ctx.fill();
+        ctx.restore();
+      }
+      // Climax, Dragon's Roar: shockwaves blast out of the dragon's jaws, a gout of flame pours
+      // out, and the air glows red.
+      const u = climax(t, 5.5, 1.3);
+      if (u < 0) return;
+      const hx = x;
+      const hy = y - 70 * s;
+      glow(ctx, hx, hy, (40 + u * 60) * s, '#ff3a3a', k * 0.5 * (1 - u));
+      for (let r = 0; r < 3; r++) {
+        const ru = Math.max(0, u - r * 0.15);
+        ring(ctx, hx, hy, (6 + easeOut(ru) * 70) * s, 0.75, r === 1 ? '#ffd66b' : '#ff5a5a', 2.5 * s, k * (1 - ru) * (ru > 0 ? 1 : 0));
+      }
+      for (let i = 0; i < 14; i++) {
+        const v = Math.min(1, u * 1.5) - i * 0.03;
+        if (v <= 0) continue;
+        const d = v * 90 * s;
+        const spread = (hash(i + 7) - 0.5) * 0.7;
+        ctx.save();
+        ctx.globalAlpha = k * (1 - u);
+        ctx.fillStyle = i % 3 === 0 ? '#ffffff' : i % 2 ? '#ffd66b' : '#ff6b3a';
+        ctx.beginPath();
+        ctx.arc(hx + dir * d, hy - 6 * s + spread * d, (5 - v * 2) * s, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+      }
+    },
+  },
+
+  paladin: {
+    back(ctx, x, y, t, s, k) {
+      // A wheel of golden crosses turning slowly on the ground.
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU + t * 0.4;
+        if (Math.sin(a) >= 0) continue;
+        crossMark(ctx, x + Math.cos(a) * 34 * s, y + Math.sin(a) * 8 * s, s, k * 0.75);
+      }
+    },
+    front(ctx, x, y, t, s, k) {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * TAU + t * 0.4;
+        if (Math.sin(a) < 0) continue;
+        crossMark(ctx, x + Math.cos(a) * 34 * s, y + Math.sin(a) * 8 * s, s, k);
+      }
+      // Climax, Divine Descent: a column of light slams down onto you, the barrier blazes, and
+      // golden feathers scatter.
+      const u = climax(t, 6, 1.4);
+      if (u < 0) return;
+      const drop = Math.min(1, u * 4);
+      const fade = u < 0.3 ? 1 : 1 - (u - 0.3) / 0.7;
+      const top = y - 200 * s;
+      const bottom = top + (y - top) * easeOut(drop);
+      const w = (18 - u * 10) * s;
+      ctx.save();
+      ctx.globalAlpha = k * fade;
+      const g = ctx.createLinearGradient(x - w, 0, x + w, 0);
+      g.addColorStop(0, 'rgba(255,246,201,0)');
+      g.addColorStop(0.5, '#ffffff');
+      g.addColorStop(1, 'rgba(255,246,201,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x - w, top, w * 2, bottom - top);
+      ctx.restore();
+      if (drop >= 1) {
+        const v = (u - 0.25) / 0.75;
+        ring(ctx, x, y, (10 + easeOut(v) * 70) * s, 0.25, '#ffe36b', 3 * s, k * (1 - v));
+        glow(ctx, x, y - 24 * s, 50 * s, '#fff6c9', k * (1 - v) * 0.8);
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * TAU;
+          const d = easeOut(v) * 50 * s;
+          ctx.save();
+          ctx.globalAlpha = k * (1 - v);
+          ctx.translate(x + Math.cos(a) * d, y - 30 * s + Math.sin(a) * d * 0.7 + v * v * 20 * s);
+          ctx.rotate(a + v * 3);
+          ctx.fillStyle = i % 2 ? '#ffffff' : '#ffe9a0';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 1.5 * s, 4 * s, 0, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    },
+  },
+
+  ilarchmage: {
+    back(ctx, x, y, t, s, k) {
+      glow(ctx, x, y - 40 * s, 56 * s, '#bfe6ff', k * 0.25);
+    },
+    front(ctx, x, y, t, s, k) {
+      // The near half of the frost ring, so the ice fully surrounds you.
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * TAU;
+        if (Math.sin(a) <= 0) continue;
+        const px = x + Math.cos(a) * 26 * s;
+        const py = y + Math.sin(a) * 6 * s;
+        const h = (7 + 5 * Math.sin(t * 1.5 + i * 1.7)) * s;
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.fillStyle = i % 2 ? '#bfe6ff' : '#e8fbff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(px - 2.6 * s, py);
+        ctx.lineTo(px, py - h);
+        ctx.lineTo(px + 2.6 * s, py);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      // Climax, Thunderclap: the ball lightning discharges into the ice around you, then a
+      // frost nova bursts out across the ground with shards flying.
+      const u = climax(t, 5, 1.1);
+      if (u < 0) return;
+      const ox = x;
+      const oy = y - 64 * s;
+      if (u < 0.35) {
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * TAU + 0.4;
+          zap(ctx, ox, oy, x + Math.cos(a) * 26 * s, y + Math.sin(a) * 6 * s - 6 * s, t + i, s * 1.4, k * (1 - u / 0.35));
+        }
+        glow(ctx, ox, oy, 36 * s, '#fffbe0', k * (1 - u / 0.35));
+      }
+      const v = Math.max(0, (u - 0.2) / 0.8);
+      if (v > 0) {
+        ring(ctx, x, y, (20 + easeOut(v) * 90) * s, 0.22, '#e8fbff', 4 * s * (1 - v) + 0.5, k * (1 - v));
+        ring(ctx, x, y, (10 + easeOut(v) * 60) * s, 0.22, '#8fe3ff', 2 * s, k * (1 - v));
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * TAU;
+          const d = (20 + easeOut(v) * 70) * s;
+          ctx.save();
+          ctx.globalAlpha = k * (1 - v);
+          ctx.translate(x + Math.cos(a) * d, y - 6 * s + Math.sin(a) * d * 0.25 - Math.sin(v * Math.PI) * 18 * s);
+          ctx.rotate(v * 8 + i);
+          ctx.fillStyle = i % 2 ? '#e8fbff' : '#8fe3ff';
+          ctx.fillRect(-1.5 * s, -3 * s, 3 * s, 6 * s);
+          ctx.restore();
+        }
+      }
+    },
+  },
+
+  fparchmage: {
+    back(ctx, x, y, t, s, k) {
+      // Three wisps of green fire with skull faces circling behind you.
+      for (let i = 0; i < 3; i++) {
+        const a = t * 0.9 + (i / 3) * TAU;
+        if (Math.sin(a) >= 0) continue;
+        fireSkull(ctx, x + Math.cos(a) * 34 * s, y - 40 * s + Math.sin(a * 2) * 6 * s, 3.2 * s, k * 0.8, t + i);
+      }
+    },
+    front(ctx, x, y, t, s, k, dir) {
+      for (let i = 0; i < 3; i++) {
+        const a = t * 0.9 + (i / 3) * TAU;
+        if (Math.sin(a) < 0) continue;
+        fireSkull(ctx, x + Math.cos(a) * 34 * s, y - 40 * s + Math.sin(a * 2) * 6 * s, 3.8 * s, k, t + i);
+      }
+      // Climax, Plague Eruption: the flame ring roars up into a tower of venom fire, and a great
+      // burning skull rises out of the grimoire and howls away.
+      const u = climax(t, 5.5, 1.4);
+      if (u < 0) return;
+      const up = Math.sin(Math.min(1, u * 1.3) * Math.PI);
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * TAU + t;
+        const fx = x + Math.cos(a) * 28 * s;
+        const fy = y + Math.sin(a) * 6 * s;
+        const h = (20 + 50 * up + 10 * Math.sin(t * 12 + i)) * s;
+        ctx.save();
+        ctx.globalAlpha = k * up * 0.85;
+        ctx.fillStyle = i % 2 ? '#7de04f' : '#ff8a3c';
+        ctx.beginPath();
+        ctx.moveTo(fx - 3.5 * s, fy);
+        ctx.quadraticCurveTo(fx - 2 * s, fy - h * 0.6, fx + Math.sin(t * 7 + i) * 3 * s, fy - h);
+        ctx.quadraticCurveTo(fx + 2 * s, fy - h * 0.6, fx + 3.5 * s, fy);
+        ctx.fill();
+        ctx.restore();
+      }
+      const sk = Math.min(1, u * 1.2);
+      fireSkull(ctx, x + dir * 22 * s, y - 46 * s - easeOut(sk) * 60 * s, (4 + sk * 7) * s, k * (1 - Math.max(0, u - 0.6) / 0.4), t);
+    },
+  },
+
+  bishop: {
+    front(ctx, x, y, t, s, k) {
+      // A halo of tiny stars circling the rose window.
+      const cx = x;
+      const cy = y - 58 * s;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU - t * 0.6;
+        star(ctx, cx + Math.cos(a) * 24 * s, cy + Math.sin(a) * 24 * s, (1.2 + Math.max(0, Math.sin(t * 3 + i)) * 1.2) * s, '#fffbe0', k * 0.9);
+      }
+      // Climax, Hymn of Light: the window flares and casts long rays, rings of gold pulse out like
+      // a bell's toll, and music notes drift up.
+      const u = climax(t, 6, 1.6);
+      if (u < 0) return;
+      const fade = u < 0.2 ? u / 0.2 : 1 - (u - 0.2) / 0.8;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(t * 0.8);
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * TAU;
+        const len = (60 + (i % 2) * 30) * s;
+        const g = ctx.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len);
+        g.addColorStop(0, 'rgba(255,251,224,0.9)');
+        g.addColorStop(1, 'rgba(255,251,224,0)');
+        ctx.globalAlpha = k * fade;
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a - 0.05) * len, Math.sin(a - 0.05) * len);
+        ctx.lineTo(Math.cos(a + 0.05) * len, Math.sin(a + 0.05) * len);
+        ctx.fill();
+      }
+      ctx.restore();
+      for (let r = 0; r < 3; r++) {
+        const ru = Math.max(0, u - r * 0.2);
+        if (ru > 0) ring(ctx, cx, cy, (18 + easeOut(ru) * 60) * s, 1, '#ffe36b', 2 * s, k * (1 - ru));
+      }
+      for (let i = 0; i < 4; i++) {
+        const v = Math.max(0, u - i * 0.12);
+        musicNote(ctx, cx + (i - 1.5) * 16 * s + Math.sin(v * 6 + i) * 4 * s, cy - v * 40 * s, s, i % 2 ? '#ffe36b' : '#ffffff', k * Math.sin(Math.min(1, v) * Math.PI));
+      }
+    },
+  },
+
+  windwalker: {
+    back(ctx, x, y, t, s, k) {
+      glow(ctx, x, y - 30 * s, 56 * s, '#c9f6e0', k * 0.22);
+    },
+    front(ctx, x, y, t, s, k) {
+      // Climax, Gale: a tornado spins up around you, then bursts, flinging feathers outward.
+      const u = climax(t, 5, 1.3);
+      if (u < 0) return;
+      const spin = u < 0.65;
+      if (spin) {
+        const grow = Math.min(1, u / 0.2);
+        // The funnel body: a translucent cone widening upward, with streaks racing around it.
+        ctx.save();
+        const top = y - 92 * s * grow;
+        const g = ctx.createLinearGradient(0, top, 0, y);
+        g.addColorStop(0, 'rgba(201,246,224,0.55)');
+        g.addColorStop(1, 'rgba(255,255,255,0.15)');
+        ctx.globalAlpha = k;
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(x - 8 * s, y);
+        ctx.quadraticCurveTo(x - 14 * s + Math.sin(t * 5) * 4 * s, y - 50 * s * grow, x - 42 * s * grow, top);
+        ctx.lineTo(x + 42 * s * grow, top);
+        ctx.quadraticCurveTo(x + 14 * s + Math.sin(t * 5) * 4 * s, y - 50 * s * grow, x + 8 * s, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        for (let i = 0; i < 9; i++) {
+          const v = i / 8;
+          const ry = 3 * s + v * 2 * s;
+          const rx = (10 + v * 30) * s * grow;
+          const py = y - v * 90 * s * grow;
+          ctx.save();
+          ctx.globalAlpha = k * 0.7;
+          ctx.strokeStyle = i % 2 ? '#ffffff' : '#9fe8c8';
+          ctx.lineWidth = 2 * s;
+          ctx.beginPath();
+          ctx.ellipse(x + Math.sin(t * 6 + v * 4) * 4 * s, py, rx, ry, 0, t * 14 + i, t * 14 + i + 4.2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        const v = (u - 0.65) / 0.35;
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * TAU;
+          const d = (20 + easeOut(v) * 80) * s;
+          ctx.save();
+          ctx.globalAlpha = k * (1 - v);
+          ctx.translate(x + Math.cos(a) * d, y - 40 * s + Math.sin(a) * d * 0.6);
+          ctx.rotate(a + v * 6);
+          ctx.fillStyle = i % 2 ? '#ffffff' : '#9fe0b0';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 5 * s, 1.6 * s, 0, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+        ring(ctx, x, y - 40 * s, (20 + easeOut(v) * 70) * s, 0.6, '#c9f6e0', 2 * s, k * (1 - v));
+      }
+    },
+  },
+
+  deadeye: {
+    back(ctx, x, y, t, s, k) {
+      // A rangefinder dial: a dashed ring with tick marks turning around you.
+      ctx.save();
+      ctx.globalAlpha = k * 0.6;
+      ctx.strokeStyle = '#8fe3ff';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4 * s, 3 * s]);
+      ctx.lineDashOffset = -t * 20;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 30 * s, 40 * s, 40 * s, 0, 0, TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * TAU + t * 0.3;
+        const r0 = (i % 6 ? 42 : 40) * s;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * r0, y - 30 * s + Math.sin(a) * r0);
+        ctx.lineTo(x + Math.cos(a) * 45 * s, y - 30 * s + Math.sin(a) * 45 * s);
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+    front(ctx, x, y, t, s, k, dir) {
+      // Climax, Lock and Fire: brackets converge on one far target and lock red, then a tracer
+      // round cracks across to it with a muzzle flash and a burst of sparks.
+      const u = climax(t, 4.5, 1);
+      if (u < 0) return;
+      const tx = x + dir * 100 * s;
+      const ty = y - 26 * s;
+      if (u < 0.55) {
+        const v = u / 0.55;
+        const r = (24 - v * 16) * s;
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.strokeStyle = v > 0.8 ? '#ff5a5a' : '#8fe3ff';
+        ctx.lineWidth = 1.5;
+        for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+          ctx.beginPath();
+          ctx.moveTo(tx + sx * r, ty + sy * r * 0.4);
+          ctx.lineTo(tx + sx * r, ty + sy * r);
+          ctx.lineTo(tx + sx * r * 0.4, ty + sy * r);
+          ctx.stroke();
+        }
+        if (v > 0.8) {
+          ctx.font = `bold ${Math.round(6 * s)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#ff5a5a';
+          ctx.fillText('LOCK', tx, ty - r - 3 * s);
+        }
+        ctx.restore();
+      } else {
+        const v = (u - 0.55) / 0.45;
+        const sx = x + dir * 12 * s;
+        ctx.save();
+        ctx.globalAlpha = k * (1 - v);
+        ctx.strokeStyle = '#fffbe0';
+        ctx.shadowColor = '#ff5a5a';
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2.5 * s * (1 - v) + 0.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, ty);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.restore();
+        glow(ctx, sx, ty, 14 * s, '#ffe36b', k * (1 - v));
+        glow(ctx, tx, ty, 22 * s, '#ff5a5a', k * (1 - v));
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * TAU;
+          star(ctx, tx + Math.cos(a) * easeOut(v) * 18 * s, ty + Math.sin(a) * easeOut(v) * 18 * s, 2 * s, '#ffd66b', k * (1 - v));
+        }
+      }
+    },
+  },
+
+  beastmaster: {
+    back(ctx, x, y, t, s, k) {
+      // Climax, Spirit Howl: a giant ghostly wolf rises behind you, throws back its head and
+      // howls, sound rings rolling up into the sky.
+      const u = climax(t, 6, 1.7);
+      if (u < 0) return;
+      const rise = Math.min(1, u * 3);
+      const fade = u < 0.75 ? 1 : 1 - (u - 0.75) / 0.25;
+      const hx = x;
+      const hy = y - 40 * s - rise * 20 * s;
+      ctx.save();
+      ctx.globalAlpha = k * fade * 0.9;
+      glow(ctx, hx, hy, 60 * s, '#8fd86b', 0.7);
+      ctx.translate(hx, hy);
+      ctx.rotate(-0.55 * rise);
+      // The head: skull, long muzzle with the jaw dropping open, two ears, a ruff of fur.
+      const jaw = rise * 6 * s;
+      const head = () => {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20 * s, 15 * s, 0, 0, TAU);
+        ctx.moveTo(10 * s, -10 * s);
+        ctx.lineTo(40 * s, -4 * s);
+        ctx.lineTo(39 * s, 1 * s);
+        ctx.lineTo(12 * s, 4 * s);
+        ctx.moveTo(12 * s, 5 * s);
+        ctx.lineTo(36 * s, 5 * s + jaw);
+        ctx.lineTo(12 * s, 11 * s);
+        ctx.moveTo(-8 * s, -11 * s);
+        ctx.lineTo(-4 * s, -32 * s);
+        ctx.lineTo(4 * s, -12 * s);
+        ctx.moveTo(2 * s, -13 * s);
+        ctx.lineTo(9 * s, -30 * s);
+        ctx.lineTo(12 * s, -10 * s);
+        for (let i = 0; i < 3; i++) {
+          const a = Math.PI * (0.8 + i * 0.16);
+          ctx.moveTo(Math.cos(a) * 16 * s, Math.sin(a) * 12 * s);
+          ctx.lineTo(Math.cos(a) * 26 * s, Math.sin(a) * 20 * s);
+          ctx.lineTo(Math.cos(a + 0.12) * 16 * s, Math.sin(a + 0.12) * 12 * s);
+        }
+      };
+      ctx.strokeStyle = '#4f8a3a';
+      ctx.lineWidth = 3 * s;
+      ctx.lineJoin = 'round';
+      head();
+      ctx.stroke();
+      ctx.fillStyle = '#eaffde';
+      head();
+      ctx.fill();
+      ctx.fillStyle = '#8fd86b';
+      ctx.beginPath();
+      ctx.ellipse(-4 * s, -4 * s, 12 * s, 5 * s, 0.2, 0, TAU);
+      ctx.fill();
+      glow(ctx, 14 * s, -4 * s, 7 * s, '#fff6a0', 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(12 * s, -5 * s, 4 * s, 2 * s);
+      ctx.restore();
+      for (let r = 0; r < 3; r++) {
+        const ru = Math.max(0, u - 0.25 - r * 0.15);
+        if (ru <= 0) continue;
+        ctx.save();
+        ctx.globalAlpha = k * (1 - ru) * 0.8;
+        ctx.strokeStyle = '#c9f6b0';
+        ctx.lineWidth = 2 * s;
+        ctx.beginPath();
+        ctx.arc(hx + 20 * s, hy - 16 * s, (10 + ru * 50) * s, -Math.PI * 0.85, -Math.PI * 0.25);
+        ctx.stroke();
+        ctx.restore();
+      }
+    },
+    front(ctx, x, y, t, s, k, dir) {
+      // During the howl the hawk dives across in a sweeping arc.
+      const u = climax(t, 6, 1.7);
+      if (u < 0) return;
+      const v = Math.min(1, u * 1.4);
+      const hx = x - dir * 80 * s + dir * v * 160 * s;
+      const hy = y - 90 * s + Math.sin(v * Math.PI) * 60 * s;
+      for (let i = 1; i <= 4; i++) glow(ctx, hx - dir * i * 8 * s, hy - Math.cos(v * Math.PI) * i * 5 * s, 5 * s, '#fff6a0', k * (0.5 - i * 0.1));
+      hawk(ctx, hx, hy, s * 1.8, t * 2, k, dir);
+    },
+  },
+
+  bladedancer: {
+    front(ctx, x, y, t, s, k) {
+      // Climax, Petal Storm: the two daggers multiply into a spinning ring of eight blades, then
+      // everything bursts outward in a spiral of petals.
+      const u = climax(t, 5, 1.3);
+      if (u < 0) return;
+      if (u < 0.6) {
+        const grow = Math.min(1, u / 0.15);
+        for (let i = 0; i < 8; i++) {
+          const a = t * 9 + (i / 8) * TAU;
+          const px = x + Math.cos(a) * 38 * s * grow;
+          const py = y - 30 * s + Math.sin(a) * 16 * s * grow;
+          ctx.save();
+          ctx.globalAlpha = k * 0.5;
+          ctx.strokeStyle = '#ff9ec0';
+          ctx.lineWidth = 3 * s;
+          ctx.beginPath();
+          ctx.ellipse(x, y - 30 * s, 38 * s * grow, 16 * s * grow, 0, a - 0.5, a);
+          ctx.stroke();
+          ctx.globalAlpha = k;
+          ctx.translate(px, py);
+          ctx.rotate(a + Math.PI);
+          glow(ctx, 0, 0, 9 * s, '#ff9ec0', 0.7);
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#c94f8a';
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(0, -11 * s);
+          ctx.lineTo(2.4 * s, 1 * s);
+          ctx.lineTo(-2.4 * s, 1 * s);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#c94f8a';
+          ctx.fillRect(-3.5 * s, 1 * s, 7 * s, 1.6 * s);
+          ctx.fillRect(-0.8 * s, 2.6 * s, 1.6 * s, 4 * s);
+          ctx.restore();
+        }
+      } else {
+        const v = (u - 0.6) / 0.4;
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * TAU + v * 2;
+          const d = (14 + easeOut(v) * 90 * (0.6 + hash(i) * 0.4)) * s;
+          ctx.save();
+          ctx.globalAlpha = k * (1 - v);
+          ctx.translate(x + Math.cos(a) * d, y - 30 * s + Math.sin(a) * d * 0.6);
+          ctx.rotate(a * 3 + v * 5);
+          ctx.fillStyle = i % 3 ? '#ff9ec0' : '#ffffff';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3.2 * s, 1.8 * s, 0, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    },
+  },
+
+  nightstalker: {
+    back(ctx, x, y, t, s, k) {
+      // Climax, A Hundred Eyes: the darkness swells and eyes snap open all around you.
+      const u = climax(t, 5.5, 1.4);
+      if (u < 0) return;
+      const swell = Math.sin(Math.min(1, u * 1.1) * Math.PI);
+      glow(ctx, x, y - 30 * s, 80 * s * swell, '#1a1030', k * swell * 0.85);
+      for (let i = 0; i < 12; i++) {
+        const open = Math.max(0, Math.min(1, (u - i * 0.03) * 6)) * (u > 0.8 ? (1 - u) / 0.2 : 1);
+        if (open <= 0) continue;
+        const a = (i / 12) * TAU + 0.3;
+        const d = (34 + hash(i + 200) * 22) * s;
+        const ex = x + Math.cos(a) * d;
+        const ey = y - 34 * s + Math.sin(a) * d * 0.7;
+        glow(ctx, ex, ey, 7 * s, '#9b6bff', k * open * 0.7);
+        ctx.save();
+        ctx.globalAlpha = k * open;
+        ctx.fillStyle = '#e0b0ff';
+        ctx.beginPath();
+        ctx.ellipse(ex - 3 * s, ey, 1.8 * s, 1.2 * s * open, 0, 0, TAU);
+        ctx.ellipse(ex + 3 * s, ey, 1.8 * s, 1.2 * s * open, 0, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+      }
+    },
+    front(ctx, x, y, t, s, k) {
+      // ...then a purple crescent slash cuts across you and the dark snaps shut.
+      const u = climax(t, 5.5, 1.4);
+      if (u < 0.6 || u > 0.9) return;
+      const v = (u - 0.6) / 0.3;
+      ctx.save();
+      ctx.globalAlpha = k * (1 - v);
+      ctx.strokeStyle = '#c46bff';
+      ctx.shadowColor = '#9b6bff';
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = 4 * s * (1 - v) + 1;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(x, y - 30 * s, 34 * s, -2.6, -2.6 + Math.min(1, v * 2.5) * 2.6);
+      ctx.stroke();
+      ctx.restore();
+    },
+  },
+
+  phantomthief: {
+    front(ctx, x, y, t, s, k) {
+      // Climax, The Shuffle: cards fly up into a spinning ring over your head, riffle, and rain
+      // back down with a shower of gold coins.
+      const u = climax(t, 5, 1.5);
+      if (u < 0) return;
+      const up = u < 0.25 ? easeOut(u / 0.25) : u > 0.75 ? 1 - (u - 0.75) / 0.25 : 1;
+      const cx = x;
+      const cy = y - 30 * s - up * 44 * s;
+      for (let i = 0; i < 10; i++) {
+        const a = t * 5 + (i / 10) * TAU;
+        ctx.save();
+        ctx.globalAlpha = k;
+        ctx.translate(cx + Math.cos(a) * 28 * s * up, cy + Math.sin(a) * 8 * s * up);
+        ctx.scale(Math.cos(a * 2), 1);
+        card(ctx, s * 0.9, i);
+        ctx.restore();
+      }
+      if (u > 0.4) {
+        const v = (u - 0.4) / 0.6;
+        for (let i = 0; i < 10; i++) {
+          const px = x + (hash(i + 300) - 0.5) * 70 * s;
+          const py = y - 80 * s + ((v * 1.4 + hash(i + 301)) % 1) * 80 * s;
+          goldCoin(ctx, px, py, 2.6 * s, t * 4 + i, k * (1 - v * 0.6));
+        }
+      }
+    },
+  },
+};
+for (const [id, extra] of Object.entries(GRAND)) {
+  const base = JOBS[id];
+  JOBS[id] = {
+    back: (...a) => { extra.back?.(...a); base.back?.(...a); },
+    front: (...a) => { base.front?.(...a); extra.front?.(...a); },
+  };
+}
+
+function crossMark(ctx, x, y, s, k) {
+  glow(ctx, x, y - 3 * s, 6 * s, '#ffe36b', k * 0.6);
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.fillStyle = '#ffd66b';
+  ctx.fillRect(x - 0.9 * s, y - 7 * s, 1.8 * s, 7 * s);
+  ctx.fillRect(x - 2.8 * s, y - 5.2 * s, 5.6 * s, 1.6 * s);
+  ctx.restore();
+}
+
 // A spear point aimed outward from the center (cx, cy).
 function spearTip(ctx, cx, cy, px, py, s, k) {
   const a = Math.atan2(py - cy, (px - cx) / 3.5);
