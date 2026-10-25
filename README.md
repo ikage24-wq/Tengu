@@ -42,10 +42,11 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
 | I / C / K / L / M | Bag / Stats / Skills / Quests / World map |
 | Enter | Chat (Enter sends, Esc cancels, /help for commands) |
-| Esc | Close windows |
+| Esc | Close windows; with nothing open, Options |
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
-their title bars, and click a window to bring it to the front. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
+their title bars, and click a window to bring it to the front. Click an NPC anywhere on screen to talk
+to them. To bind a hotkey, select a skill in the Skills window or a potion in the Bag,
 then press the key. Right-click a hotkey slot to clear it.
 
 ## Systems
@@ -141,6 +142,12 @@ then press the key. Right-click a hotkey slot to clear it.
   keycap hotkeys. The minimap, the quest tracker card, ringed buff timers, and a ribbon banner
   when you enter a map round it out. NPCs talk in a visual-novel box: they stand large at the left
   with a name ribbon in their role's color, and their words type out (click to skip).
+- **Options** — Esc (or the gear button) opens Options. Display: screen shake, hit-stop, damage
+  numbers, particles (full, reduced, or off), job auras, and weapon effects. Interface: minimap,
+  quest tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: auto-loot,
+  click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and
+  the Character page changes character or returns to the title (saving first). Settings are saved in
+  the browser.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
   expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.

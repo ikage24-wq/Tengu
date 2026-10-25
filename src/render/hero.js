@@ -11,6 +11,7 @@
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
+import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from './pixel.js';
 import {
@@ -1001,7 +1002,7 @@ function weaponIdle(type, t) {
 // Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,
 // layered behind and in front of the sprite.
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
-  const job = AURA_JOBS.has(state.job) ? state.job : null;
+  const job = settings.jobAuras && AURA_JOBS.has(state.job) ? state.job : null;
   if (!job) return drawHeroBody(ctx, look, gear, x, y, state, anim);
   const time = state.time ?? 0;
   const idle = (state.pose ?? 'idle') === 'idle';
@@ -1108,8 +1109,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (el) elementGlow(ctx, wpn, el, time, ws);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
     else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.canvas.width * ws, wpn.canvas.height * ws);
-    if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
-    wpn.live?.(ctx, time, ws, wpn.grip);
+    if (settings.weaponEffects) {
+      if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
+      wpn.live?.(ctx, time, ws, wpn.grip);
+    }
     ctx.restore();
   };
 

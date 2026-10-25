@@ -9,6 +9,9 @@ import { addItem } from './core/inventory.js';
 import { saveGame, loadGame, hasSave, deleteSave, SLOTS } from './core/save.js';
 import { createWorld, updateWorld } from './world/world.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
+import { settings, loadSettings } from './core/settings.js';
+
+loadSettings();
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -41,6 +44,7 @@ let autosave = AUTOSAVE_EVERY;
 
 function startGame(char) {
   world = createWorld(char);
+  world.settings = settings;
   uiState = createUiState();
   camera = createCamera();
   screen = 'game';
@@ -111,6 +115,7 @@ function frame(now) {
     while (acc >= TICK) {
       acc -= TICK;
       // Hitstop: a few frozen ticks on big hits. Presses wait for the next real tick.
+      if (!settings.hitStop) world.hitstop = 0;
       if (world.hitstop > 0) {
         world.hitstop -= TICK;
         continue;
@@ -127,6 +132,23 @@ function frame(now) {
     updateCamera(camera, world, dt);
     drawWorld(ctx, world, camera, time);
     drawUi(ui, uiState, world);
+    npcPointer(ui);
+    // The Options window can send you back to character select or the title.
+    if (uiState.action) {
+      const action = uiState.action;
+      saveGame(world.char);
+      lobby.slot = world.char.slot ?? 0;
+      world = null;
+      uiState = null;
+      canvas.style.cursor = '';
+      if (action === 'select') {
+        loadChars();
+        lobby.confirm = false;
+        screen = 'select';
+      } else {
+        screen = 'title';
+      }
+    }
   }
 
   endUi(ui);
@@ -134,6 +156,24 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// Click an NPC to talk to them (a setting). Hovering one highlights them and shows a hand cursor.
+function npcPointer(ui) {
+  const m = input.mouse;
+  let hit = null;
+  if (settings.npcClick && !uiState.npc && !uiState.death && !ui.used) {
+    const wx = m.x + camera.x;
+    const wy = m.y + camera.y;
+    const gy = world.map.groundY;
+    hit = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > gy - 50 && wy < gy + 14) ?? null;
+  }
+  world.hoverNpc = hit?.id ?? null;
+  canvas.style.cursor = hit ? 'pointer' : '';
+  if (hit && m.clicked) {
+    m.clicked = false;
+    world.events.push({ type: 'talk', npc: hit.id });
+  }
+}
 
 // Exposed for debugging and automated play tests.
 window.twzt = {

@@ -9,6 +9,7 @@ import { drawHud } from './hud.js';
 import { worldMapWindow } from './worldmap.js';
 import { createChat, chatInput, updateChat, drawChatBar } from './chat.js';
 import { adminWindow } from './admin.js';
+import { optionsWindow } from './options.js';
 import { isGm } from '../world/gm.js';
 
 export function createUiState() {
@@ -21,9 +22,12 @@ export function createUiState() {
       npc: { x: 170, y: 84, open: false, theme: 'pink', icon: 'chat' },
       worldmap: { x: 110, y: 26, open: false, theme: 'sky', icon: 'map' },
       admin: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
+      options: { x: 170, y: 40, open: false, tab: 0, theme: 'lavender', icon: 'gear' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'admin', 'options'],
+    // Set by the Options window: 'select' (change character) or 'title'. main.js acts on it.
+    action: null,
     npc: null,
     chat: createChat(),
     death: false,
@@ -70,8 +74,12 @@ export function routeInput(state, world, input, dt) {
     else if (state.npc) {
       state.npc = null;
       state.windows.npc.open = false;
-    } else {
+    } else if (Object.values(state.windows).some((w) => w.open)) {
       for (const w of Object.values(state.windows)) w.open = false;
+    } else {
+      // With nothing open, Esc brings up the Options.
+      state.windows.options.open = true;
+      state.order = [...state.order.filter((k) => k !== 'options'), 'options'];
     }
   }
 
@@ -97,7 +105,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

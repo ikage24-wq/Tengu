@@ -390,3 +390,14 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
   assert.equal(c.hotkeys.KeyQ, null);
   assert.deepEqual(c.hotkeys.KeyW, { skill: 'meteor' });
 });
+
+test('auto-loot picks up drops without holding X', async () => {
+  const { spawnDrops } = await import('../src/world/drops.js');
+  const w = newWorld();
+  w.drops.push(...spawnDrops([{ kind: 'gold', amount: 25 }], w.body.x, w.body.y));
+  for (let i = 0; i < 90; i++) updateWorld(w, DT, idle);
+  assert.equal(w.char.gold, 0, 'nothing picked up by default');
+  w.settings = { autoLoot: true };
+  for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
+  assert.equal(w.char.gold, 25);
+});

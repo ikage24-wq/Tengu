@@ -350,7 +350,8 @@ export function updateWorld(world, dt, input) {
       if (binding?.item && pressed.has(code)) useHotkey(world, binding);
     }
   }
-  if (held.has('KeyX') && world.lootTimer <= 0 && pickUp(world)) world.lootTimer = 0.12;
+  // Auto-loot (a setting, passed in as world.settings) picks things up without holding X.
+  if ((held.has('KeyX') || world.settings?.autoLoot) && world.lootTimer <= 0 && pickUp(world)) world.lootTimer = 0.12;
 
   // ----- Queued hits -----
   const due = world.pending.filter((h) => h.at <= world.now);

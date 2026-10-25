@@ -12,6 +12,7 @@ import { questState, objectiveProgress } from '../core/quests.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle } from './kit.js';
 import { drawHero } from '../render/hero.js';
+import { settings } from '../core/settings.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 
 const BAR_Y = 330;
@@ -83,9 +84,9 @@ export function drawHud(ui, state, world) {
   text(ctx, char.gold.toLocaleString(), 237, BAR_Y + 27.5, { size: 8, bold: true, color: COLORS.gold });
 
   // Menu buttons: round candy buttons with icons, a dot when there are points to spend.
-  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky']];
+  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
   menus.forEach(([label, key, hotkey, ic, theme], i) => {
-    const cx = 290 + i * 22;
+    const cx = 280 + i * 21.5;
     const cy = BAR_Y + 18;
     const th = THEMES[theme];
     const hot = hover(ui, cx - 10, cy - 10, 20, 20);
@@ -151,11 +152,22 @@ export function drawHud(ui, state, world) {
     clicked(ui, x, y, 18, 18);
   });
 
-  drawMinimap(ui, world);
+  if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
-  drawTracker(ui, world);
-  drawLog(ui, world, state);
-  drawBanner(ctx, world, state);
+  if (settings.questTracker) drawTracker(ui, world);
+  if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
+  if (settings.mapBanner) drawBanner(ctx, world, state);
+  if (settings.showFps) drawFps(ctx, state);
+}
+
+// Frames per second, smoothed.
+function drawFps(ctx, state) {
+  const now = performance.now();
+  const hud = (state.hud ??= {});
+  if (hud.lastFrame) hud.fps = (hud.fps ?? 60) * 0.95 + (1000 / Math.max(1, now - hud.lastFrame)) * 0.05;
+  hud.lastFrame = now;
+  box(ctx, 290, 4, 60, 13, { fill: 'rgba(40,36,60,0.55)', edge: null, r: 6.5 });
+  text(ctx, `${Math.round(hud.fps ?? 60)} FPS`, 320, 13.5, { size: 7.5, bold: true, align: 'center', color: '#bff0dc' });
 }
 
 // A round badge with an icon, sitting on the end of a bar.
@@ -278,7 +290,7 @@ function drawBuffs(ui, world) {
   const { ctx } = ui;
   const buffs = Object.entries(world.char.buffs);
   const map = world.map;
-  const y = 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8;
+  const y = settings.minimap ? 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8 : 8;
   buffs.forEach(([id, b], i) => {
     const x = 8 + i * 22;
     const left = Math.max(0, b.until - world.now);

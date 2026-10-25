@@ -1,6 +1,7 @@
 // Render-only particles and camera shake: footstep dust, landing puffs, hit sparks, defeat poofs,
 // and ambient motes per map theme. Nothing here affects gameplay.
 
+import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 
@@ -11,6 +12,8 @@ export function createParticles() {
 }
 
 function add(fx, p) {
+  // The Particles setting thins or skips them; ambient motes are part of the scenery and stay.
+  if (!p.ambient && settings.particles !== 'full' && (settings.particles === 'off' || Math.random() < 0.5)) return;
   if (fx.list.length >= MAX) fx.list.shift();
   fx.list.push({ age: 0, g: 0, drag: 0, grow: 0, shape: 'dot', alpha: 1, spin: 0, ...p });
 }
@@ -22,7 +25,7 @@ export function shake(fx, mag, dur) {
 // Camera offset for this frame: a decaying wobble.
 export function shakeOffset(fx, time) {
   const s = fx.shake;
-  if (s.t >= s.dur) return [0, 0];
+  if (s.t >= s.dur || !settings.screenShake) return [0, 0];
   const k = (1 - s.t / s.dur) ** 2 * s.mag;
   return [Math.round(Math.sin(time * 71) * k), Math.round(Math.cos(time * 53) * k * 0.6)];
 }

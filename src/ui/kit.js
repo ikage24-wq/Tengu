@@ -275,6 +275,36 @@ const ICONS = {
     ctx.closePath();
     ctx.fill();
   },
+  gear(ctx, s) {
+    ctx.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const r = (i % 2 ? 0.34 : 0.46) * s;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+  },
+  user(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.14, s * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.32, s * 0.34, s * 0.2, 0, Math.PI, 0);
+    ctx.fill();
+  },
+  door(ctx, s) {
+    roundRect(ctx, -s * 0.3, -s * 0.42, s * 0.6, s * 0.84, s * 0.1);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(s * 0.14, s * 0.04, s * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+  },
   skull(ctx, s) {
     ctx.beginPath();
     ctx.arc(0, -s * 0.06, s * 0.36, 0, Math.PI * 2);
@@ -544,6 +574,24 @@ export function lighten(hex, k) {
 }
 export function darken(hex, k) {
   return toHex(rgb(hex).map((v) => v * (1 - k)));
+}
+
+// An on/off switch: a pill with a knob that slides over. Returns the (possibly flipped) value.
+export function toggle(ui, x, y, on) {
+  const { ctx } = ui;
+  const th = ui.theme ?? THEMES.pink;
+  const w = 26;
+  const h = 13;
+  const hot = hover(ui, x, y, w, h);
+  box(ctx, x, y, w, h, { fill: on ? th.main : '#e6dcef', edge: on ? th.dark : '#d2c4e2', r: h / 2, width: 1 });
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(on ? x + w - h / 2 : x + h / 2, y + h / 2, h / 2 - 1.5 + (hot ? 0.5 : 0), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = on ? th.dark : '#c4b4d8';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  return clicked(ui, x - 2, y - 2, w + 4, h + 4) ? !on : on;
 }
 
 // Queue a tooltip; endUi draws it on top of everything.

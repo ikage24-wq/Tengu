@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { settings } from '../core/settings.js';
 import { R, E, T, F, shade } from './pixel.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
@@ -613,7 +614,8 @@ function crowdOf(map) {
     const p = PLAYERS[(start + i) % PLAYERS.length];
     const near = i === 0 ? map.plaza ?? map.width / 2 : map.npcs[i % map.npcs.length]?.x ?? map.width / 2;
     let x = Math.max(120, Math.min(map.width - 120, near + (i % 2 ? 80 : -80) + (hash(seed + i) - 0.5) * 16));
-    for (let k = 0; k < 6 && map.npcs.some((n) => Math.abs(n.x - x) < 56); k++) x += 30;
+    const taken = (v) => map.npcs.some((n) => Math.abs(n.x - v) < 56) || crowd.some((c) => c.kind === 'player' && Math.abs(c.a - v) < 60);
+    for (let k = 0; k < 8 && taken(x); k++) x += 34;
     const gear = { weapon: { id: p.weapon } };
     for (const slot of ['hat', 'cape']) if (p[slot]) gear[slot] = { id: p[slot] };
     crowd.push({ kind: 'player', ...p, look: lookFor(seed + 100 + i * 13), gear, a: x, b: x, seed: hash(seed + i * 17) * 30 });
@@ -644,7 +646,7 @@ function lineOf(p, t) {
 }
 
 export function drawTownsfolk(ctx, map, cam, width, time) {
-  if (!map.isTown) return;
+  if (!map.isTown || !settings.showCrowd) return;
   const gy = Math.round(map.groundY - cam.y);
   const said = [];
   for (const p of crowdOf(map)) {
@@ -670,5 +672,5 @@ export function drawTownsfolk(ctx, map, cam, width, time) {
       if (talk) said.push([x, gy - 62, talk]);
     }
   }
-  for (const [x, y, talk] of said) drawBubble(ctx, x, y, talk.text, Math.min(1, (4 - talk.age) * 2, talk.age * 4));
+  if (settings.chatBubbles) for (const [x, y, talk] of said) drawBubble(ctx, x, y, talk.text, Math.min(1, (4 - talk.age) * 2, talk.age * 4));
 }

@@ -1,5 +1,6 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
+import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack } from './scenery.js';
 import { drawHero } from './hero.js';
@@ -80,8 +81,13 @@ function drawNpcs(ctx, world, cam, time) {
     ctx.font = 'bold 8px sans-serif';
     const label = npc.name;
     const w = ctx.measureText(label).width + 10;
-    box(ctx, x - w / 2, y + 2, w, 11, { fill: 'rgba(90,63,122,0.75)', edge: null, r: 5 });
+    const hovered = world.hoverNpc === n.id;
+    box(ctx, x - w / 2, y + 2, w, 11, { fill: hovered ? COLORS.accent : 'rgba(90,63,122,0.75)', edge: hovered ? '#ffffff' : null, r: 5 });
     text(ctx, label, x, y + 10, { size: 8, bold: true, align: 'center', color: '#ffffff' });
+    if (hovered && near?.id !== n.id) {
+      box(ctx, x - 28, y - 70, 56, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
+      text(ctx, 'Click to talk', x, y - 61, { size: 7.5, bold: true, align: 'center', color: COLORS.accent });
+    }
     const mark = questMarker(world.char, n.id);
     if (mark) {
       const bob = Math.sin(time * 4) * 2;
@@ -102,7 +108,7 @@ function drawMobs(ctx, world, cam, time) {
     if (x < -80 || x > VIEW_W + 80) continue;
     drawMonster(ctx, m, x, y, time, world.now);
     if (m.def.boss) boss = m;
-    if (m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
+    if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
       const w = Math.max(24, m.def.w);
       box(ctx, x - w / 2, y - m.def.h - 7, w, 4, { fill: 'rgba(58,45,79,0.5)', edge: null, r: 2 });
       box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: COLORS.hp, edge: null, r: 2 });
@@ -127,7 +133,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
   absorbJuice(feel.fx, world);
   // Endgame weapons leave elemental footsteps and wrap their wielder in sparkles.
-  const element = world.char.equipment.weapon ? ITEMS[world.char.equipment.weapon.id].element : null;
+  const element = settings.weaponEffects && world.char.equipment.weapon ? ITEMS[world.char.equipment.weapon.id].element : null;
   for (const e of stepAnim(feel.anim, b, dt)) {
     if (e === 'step') {
       dust(feel.fx, b.x - b.facing * 6, b.y, 1, -b.facing);
@@ -174,8 +180,8 @@ export function drawWorld(ctx, world, viewCam, time) {
 
   drawEffects(ctx, world, cam, time);
   drawParticles(ctx, feel.fx, cam, time);
-  drawNumbers(ctx, world, cam);
-  drawBubbles(ctx, world, cam);
+  if (settings.damageNumbers) drawNumbers(ctx, world, cam);
+  if (settings.chatBubbles) drawBubbles(ctx, world, cam);
 }
 
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
