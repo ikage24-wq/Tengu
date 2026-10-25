@@ -16,7 +16,10 @@ import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from '
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
   hatBackShapes, TUCKS_HAIR, capeShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
+  BODY_TYPES,
 } from './gear.js';
+
+export { BODY_TYPES };
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
@@ -264,6 +267,7 @@ function bodyShapes(look, g, rig) {
   const sleeve = sleeveColor(top.design, top.color);
   const long = longSleeves(top.design);
   const legs = legLook(g.bottom.design, g.bottom.color, skin);
+  const body = look.body ?? 'feminine';
   if (rig.view === 'back') return backShapes(look, g, rig, skin, sleeve, legs);
 
   // Everything above the hips leans with tx and bobs with by; the hips also sink by however much
@@ -281,11 +285,11 @@ function bodyShapes(look, g, rig) {
   shapes.push(...offset(armShapes(11.3, rig.backArm[0], rig.backArm[1], shadowTone(sleeve), long, g, shadowTone(skin)), ux, uy));
   shapes.push(...legShapes(12, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
   shapes.push(...legShapes(15.6, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
-  shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
+  shapes.push(...offset(hipShapes(legs, body), ux * 0.5, drop + rig.by * 0.5));
   const skirt = skirtShapes(g.bottom.design, g.bottom.color);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
-  shapes.push(...offset(topShapes(top.design, top.color), ux, uy));
+  shapes.push(...offset(topShapes(top.design, top.color, body), ux, uy));
   shapes.push(...offset(headShapes(look, g, rig), ux + rig.hx, uy + rig.hy));
   return move(shapes, 0, 0);
 }
@@ -301,8 +305,8 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const out = [];
   out.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
   out.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
-  out.push(...hipShapes(legs));
-  out.push(...topShapes('tee', g.top.color));
+  out.push(...hipShapes(legs, look.body));
+  out.push(...topShapes('tee', g.top.color, look.body));
   if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') out.push(T([[10.6, 26.6], [20, 26.6], [21, 46], [9.6, 46]], g.cape.color), R(9.6, 45, 11.4, 1, shade(g.cape.color, -20)));
   if (!g.hat || !TUCKS_HAIR.has(g.hat.design)) out.push(...hairBack(style, hair, 0, 0));
   const d = shade(hair, -16);

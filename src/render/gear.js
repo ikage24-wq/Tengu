@@ -3,8 +3,8 @@
 // Sprites are soft (cel-shaded with tinted outlines), so designs are flat color blocks plus a few
 // flat (F) details; shading and edges come from the renderer.
 //
-// Landmarks: head center (15.5, 15) r10 · neck y 23-27 · torso x 10.5-20, y 26.5-35.5 ·
-// hips y 34.5-39 · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12 (back)
+// Landmarks: head center (15.5, 14.6) r10 · neck y 23-27 · torso y 26-35.8 and hips y 34.6-39.6,
+// shaped by the body type (see FIGURES) · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12 (back)
 // and 15.6 (front) · soles at y 56 · shoulders (11.3, 27.5) and (19.2, 27.5) · hands rest at y 36.8.
 
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
@@ -13,28 +13,91 @@ const GOLD = '#ffd66b';
 const SILVER = '#dfe6f5';
 const INK = '#3a2d4f';
 
+// ---------- Body shapes ----------
+//
+// Two figures, facing right (front = the right side). Feminine: rounded shoulders, a bust, a
+// narrow waist, and wide rounded hips and seat. Masculine: broader shoulders, a flat chest, and a
+// straighter waist and hips. Each is an outline down the front (top to bottom) and up the back.
+
+export const BODY_TYPES = ['feminine', 'masculine'];
+
+const FIGURES = {
+  feminine: {
+    front: [[18.6, 26], [19.9, 26.5], [20.6, 27.6], [21.6, 28.9], [22.6, 30], [22.9, 31], [22.5, 32], [21.2, 32.7], [19.4, 33.4], [19.2, 34.4], [19.6, 35.8]],
+    back: [[11.6, 35.8], [12, 34.2], [11.6, 32.6], [11, 30.8], [10.9, 28.6], [11.3, 26.9], [12.4, 26]],
+    hips: [[11.6, 34.6], [19.4, 34.6], [20.6, 35.6], [21.6, 37], [21.7, 38.5], [21, 39.6], [10, 39.6], [8.9, 38.6], [9, 36.8], [10.2, 35.2]],
+  },
+  masculine: {
+    front: [[19.8, 26], [21.2, 26.5], [21.6, 27.8], [21.4, 30.2], [20.8, 33], [20.6, 35.8]],
+    back: [[10.6, 35.8], [10.4, 33], [9.8, 30.2], [9.6, 27.8], [10, 26.5], [11.4, 26]],
+    hips: [[10.6, 34.6], [20.6, 34.6], [20.8, 37], [20.6, 39.6], [10.4, 39.6], [10.2, 37]],
+  },
+};
+const figure = (body) => FIGURES[body] ?? FIGURES.feminine;
+const torsoPts = (body) => [...figure(body).front, ...figure(body).back];
+// Robes follow the figure to the waist, then flare past the hips.
+const robePts = (body) => {
+  const { front, back } = figure(body);
+  return [...front.slice(0, -1), [21.6, 38], [22.2, 44.5], [8.8, 44.5], [9.6, 38], ...back.slice(1)];
+};
+
+// Where a polygon's outline crosses row y: the leftmost and rightmost x.
+function rowSpan(pts, y) {
+  const xs = [];
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i];
+    const [xj, yj] = pts[j];
+    if ((yi > y) !== (yj > y)) xs.push(xi + ((y - yi) * (xj - xi)) / (yj - yi));
+  }
+  return xs.length ? [Math.min(...xs), Math.max(...xs)] : null;
+}
+
+// A band across a shape from y0 to y1 that follows its curves (stripes, belts, hems).
+function band(pts, y0, y1, c) {
+  const a = rowSpan(pts, y0);
+  const b = rowSpan(pts, y1);
+  if (!a || !b) return null;
+  return T([[a[0], y0], [a[1], y0], [b[1], y1], [b[0], y1]], c);
+}
+
+// The part of a shape left (keep < 0) or right (keep > 0) of x, for panels and side pieces.
+function side(pts, x, keep, c) {
+  const inside = ([px]) => (keep < 0 ? px <= x : px >= x);
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    if (inside(a)) out.push(a);
+    if (inside(a) !== inside(b)) out.push([x, a[1] + ((x - a[0]) * (b[1] - a[1])) / (b[0] - a[0])]);
+  }
+  return T(out, c);
+}
+
 // ---------- Tops (torso part) ----------
 
-const TORSO = [[10.4, 26.4], [20.2, 26.4], [20.8, 29.5], [19.9, 35.6], [10.8, 35.6], [9.9, 29.5]];
-// Robes flare past the hips.
-const ROBE = [[10.4, 26.4], [20.2, 26.4], [20.8, 29.5], [21.6, 44.5], [9.2, 44.5], [9.9, 29.5]];
-const torso = (c) => T(TORSO, c);
-const collar = (c) => T([[12.5, 26.4], [18.4, 26.4], [15.8, 29.4]], c);
+const collar = (c) => T([[12.8, 26.2], [18.2, 26.2], [15.8, 29.2]], c);
 
-export function topShapes(design, c) {
+export function topShapes(design, c, body = 'feminine') {
   const d = shade(c, -16);
   const l = shade(c, 18);
-  switch (design) {
-    case 'stripes': return [torso(c), R(10.3, 29.2, 10.4, 1.1, d), R(10.4, 31.6, 10.2, 1.1, d), R(10.6, 34, 9.8, 1.1, d), collar(l)];
-    case 'vest': return [torso('#fff6ec'), T([[10.4, 26.4], [14, 26.4], [14.4, 35.6], [10.8, 35.6], [9.9, 29.5]], c), T([[17.2, 26.4], [20.2, 26.4], [20.8, 29.5], [19.9, 35.6], [16.8, 35.6]], c), R(10.6, 32.8, 9.6, 1.8, '#7a5238'), F(E(15.6, 33.7, 0.9, 0.8, GOLD))];
-    case 'plate': return [torso(SILVER), T([[12.6, 28], [18.6, 28], [17.8, 33.5], [15.6, 35], [13.4, 33.5]], c), F(E(14.4, 29.6, 0.8, 0.8, '#ffffff')), R(10.6, 33.4, 9.6, 2, shade(SILVER, -18)), E(10.6, 27.6, 2.4, 2, l), E(20, 27.6, 2.4, 2, l)];
-    case 'starrobe': return [T(ROBE, c), R(10.4, 26.4, 9.4, 1, GOLD), F(R(15.2, 30, 0.9, 3, GOLD)), F(R(14.2, 31, 2.9, 0.9, GOLD)), R(9.3, 43.4, 12.2, 1.1, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD))];
-    case 'celestial': return [T(ROBE, c), T([[11.6, 33], [19.6, 33], [21, 44.5], [10, 44.5]], l), R(10.4, 26.4, 9.4, 1, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), R(9.3, 43.4, 12.2, 1.1, GOLD)];
-    case 'kimono': return [T(ROBE, c), T([[12.4, 26.5], [15, 26.5], [17.8, 32]], '#ffffff'), T([[14, 26.5], [16, 26.5], [17.8, 31]], l), R(10.4, 31.5, 10.2, 3, '#ff6b9a'), F(E(18, 33, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff'))];
-    case 'sailor': return [torso('#ffffff'), T([[10.6, 26.5], [20, 26.5], [20.2, 29], [15.6, 31.6], [10.4, 29]], c), F(T([[14.2, 30], [17, 30], [16.4, 33], [15.6, 32], [14.8, 33]], '#ff6b8a')), R(10.7, 33.6, 9.6, 2, c)];
-    case 'hoodie': return [torso(c), T([[11.4, 26], [19.6, 26], [18.6, 28.4], [12.4, 28.4]], d), R(12.4, 31, 6.4, 3, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.6, '#ffffff'))];
-    default: return [torso(c), collar(l), R(10.8, 34.3, 9.2, 1.3, d)];
-  }
+  const torso = torsoPts(body);
+  const robe = robePts(body);
+  // A soft crease under the bust.
+  const curves = (col) => (body === 'feminine' ? [F(T([[19.6, 32.8], [22.4, 32.1], [22.2, 32.7], [19.8, 33.4]], shade(col, -16)))] : []);
+  const parts = (() => {
+    switch (design) {
+      case 'stripes': return [T(torso, c), band(torso, 29.2, 30.3, d), band(torso, 31.6, 32.6, d), band(torso, 34, 35.1, d), collar(l), ...curves(c)];
+      case 'vest': return [T(torso, '#fff6ec'), side(torso, 14, -1, c), side(torso, 17.2, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(15.6, 33.7, 0.9, 0.8, GOLD)), ...curves(c)];
+      case 'plate': return [T(torso, SILVER), T([[12.6, 28], [18.6, 28], [17.8, 32.5], [15.6, 34], [13.4, 32.5]], c), F(E(14.4, 29.6, 0.8, 0.8, '#ffffff')), band(torso, 33.6, 35.4, shade(SILVER, -18)), E(10.8, 27.6, 2.4, 2, l), E(20.2, 27.6, 2.4, 2, l)];
+      case 'starrobe': return [T(robe, c), band(robe, 26.2, 27.2, GOLD), F(R(15.2, 29.4, 0.9, 3, GOLD)), F(R(14.2, 30.4, 2.9, 0.9, GOLD)), band(robe, 43.4, 44.5, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD)), ...curves(c)];
+      case 'celestial': return [T(robe, c), band(robe, 33, 44.5, l), band(robe, 26.2, 27.2, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), band(robe, 43.4, 44.5, GOLD), ...curves(c)];
+      case 'kimono': return [T(robe, c), T([[12.4, 26.4], [15, 26.4], [17.8, 32]], '#ffffff'), T([[14, 26.4], [16, 26.4], [17.8, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(18, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff')), ...curves(c)];
+      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[14.2, 29.8], [17, 29.8], [16.4, 32.6], [15.6, 31.6], [14.8, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c), ...curves('#ffffff')];
+      case 'hoodie': return [T(torso, c), T([[11.4, 25.8], [19.6, 25.8], [18.6, 28.2], [12.4, 28.2]], d), R(12.6, 31.6, 6, 2.8, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.2, '#ffffff')), ...curves(c)];
+      default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d), ...curves(c)];
+    }
+  })();
+  return parts.filter(Boolean);
 }
 
 // Sleeves follow the top's main color; armor shows metal.
@@ -62,12 +125,12 @@ export function legLook(design, c, skin) {
   }
 }
 
-export function hipShapes(look) {
-  return [T([[10.9, 34.6], [19.8, 34.6], [20.2, 39.2], [10.4, 39.2]], look.top)];
+export function hipShapes(look, body = 'feminine') {
+  return [T(figure(body).hips, look.top)];
 }
 
 export function skirtShapes(design, c) {
-  if (design === 'starskirt') return [T([[10.6, 34.4], [20, 34.4], [22, 41.6], [8.8, 41.6]], c), R(8.9, 40.6, 13, 1, GOLD), F(E(12, 38, 0.6, 0.6, GOLD)), F(E(17.5, 37, 0.6, 0.6, GOLD)), F(E(20, 39.4, 0.6, 0.6, '#ffffff'))];
+  if (design === 'starskirt') return [T([[10.6, 34.4], [20, 34.4], [21.4, 36.4], [22.6, 41.6], [8.2, 41.6], [9.4, 36.4]], c), R(8.9, 40.6, 13, 1, GOLD), F(E(12, 38, 0.6, 0.6, GOLD)), F(E(17.5, 37, 0.6, 0.6, GOLD)), F(E(20, 39.4, 0.6, 0.6, '#ffffff'))];
   if (design === 'celestialskirt') return [T([[10.6, 34.4], [20, 34.4], [22.6, 46.6], [8.2, 46.6]], c), R(8.3, 45.4, 14.2, 1.2, GOLD), T([[15, 34.4], [16.2, 34.4], [16.6, 45.4], [14.6, 45.4]], shade(c, 18))];
   return null;
 }

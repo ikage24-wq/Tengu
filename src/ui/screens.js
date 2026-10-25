@@ -395,7 +395,7 @@ export function creatorScreen(ui, time, draft) {
   const caret = Math.floor(time * 2) % 2 ? '|' : '';
   text(ctx, `${draft.name}${caret}`, 346, 81, { size: 9, bold: true });
   draft.look = lookRows(ui, draft.look, 300, 94, 220);
-  wrap(ctx, 'Gear changes your outfit as you equip it. You can restyle later at the salon in Sprout Village.', 302, 220, 216, { size: 8, color: COLORS.muted });
+  wrap(ctx, 'Gear changes your outfit as you equip it. You can restyle later at the salon in Sprout Village.', 302, 233, 216, { size: 8, color: COLORS.muted });
   const ok = draft.name.trim().length > 0;
   if (button(ui, 8, 8, 86, 18, '< Characters', { size: 8 }) || ui.input.pressed.has('Escape')) return 'back';
   return button(ui, 360, 258, 100, 22, 'Start!', { primary: true, enabled: ok, size: 11 }) || (ok && ui.input.pressed.has('Enter')) ? 'start' : null;

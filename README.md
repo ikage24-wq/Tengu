@@ -4,7 +4,8 @@ A browser game in the spirit of classic 2D MMO side-scrollers: start as a Novice
 monsters across connected maps, pick a job at level 10 and a specialty at 30, spend AP and SP,
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
 pastel style: characters are gacha-style chibis (a round head with ears, big soft eyes, rounded
-bangs with a shine band, slim jointed limbs) and they and the monsters are shaded with a soft
+bangs with a shine band, slim jointed limbs, and a feminine figure with bust, waist, and hips or
+a broader masculine one, picked in the creator or at the salon) and they and the monsters are shaded with a soft
 lavender tone on the back side of each part, with outlines tinted from each part's own color;
 the world, items, and weapons are pixel art. No build step and no dependencies.
 
