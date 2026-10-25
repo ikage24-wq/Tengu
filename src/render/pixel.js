@@ -40,11 +40,13 @@ export function mix(a, b, t) {
 
 const outlineCache = new Map();
 // Soft sprites outline each part in a deep shade of its own color, pulled toward the ink.
-function outlineFor(c) {
-  let v = outlineCache.get(c);
+// Crisp sprites use a darker, inkier line, like classic pixel art.
+function outlineFor(c, crisp) {
+  const k = `${c}${crisp ? 1 : 0}`;
+  let v = outlineCache.get(k);
   if (!v) {
-    v = mix(shade(c, -42), OUTLINE, 0.35);
-    outlineCache.set(c, v);
+    v = crisp ? mix(shade(c, -58), '#2a2035', 0.5) : mix(shade(c, -42), OUTLINE, 0.35);
+    outlineCache.set(k, v);
   }
   return v;
 }
@@ -61,7 +63,7 @@ function outlineFor(c) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false) {
   const gw = (w + PAD * 2) * res;
   const gh = (h + PAD * 2) * res;
   const colors = [];
@@ -184,7 +186,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
 
   // Outline: every empty cell within `reach` cells of the silhouette (a disc, so it's round),
   // grown outward from the filled cells and colored after the nearest one.
-  const reach = res === 1 ? 1 : Math.max(1, Math.round(res * 0.67));
+  const reach = res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
   const ring = [];
   for (let dy = -reach; dy <= reach; dy++) {
     for (let dx = -reach; dx <= reach; dx++) {
@@ -218,7 +220,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
     } else {
       let v = inkFor.get(from[t]);
       if (v === undefined) {
-        v = idOf(outlineFor(colors[from[t]]));
+        v = idOf(outlineFor(colors[from[t]], crisp));
         inkFor.set(from[t], v);
       }
       out[t] = v;
@@ -295,9 +297,9 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    const { w, h, shapes, palette = {}, res = 1, soft = false } = build();
-    const canvas = bake(rasterize(w, h, shapes, res, soft, palette));
-    s = { canvas, w, h, res, white: null };
+    const { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    const canvas = bake(rasterize(w, h, shapes, res, soft, palette, crisp));
+    s = { canvas, w, h, res, crisp, white: null };
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
   }
   cache.set(key, s);
@@ -305,15 +307,18 @@ export function sprite(key, build) {
 }
 
 // Draws a sprite with its local (0, 0) at screen (x, y). Optionally mirrored or flashed white.
-// Smooth sprites (res > 1) are drawn filtered and at sub-pixel positions.
+// Smooth sprites (res > 1, not crisp) are drawn filtered at sub-pixel positions; crisp ones stay
+// sharp and snap to their own cell grid.
 export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale = 1 } = {}) {
   const img = s.canvas;
   const res = s.res ?? 1;
   const w = (img.width / res) * scale;
   const h = (img.height / res) * scale;
-  const smooth = res > 1;
-  const px = smooth ? x - PAD * scale : Math.round(x - PAD * scale);
-  const py = smooth ? y - PAD * scale : Math.round(y - PAD * scale);
+  const smooth = res > 1 && !s.crisp;
+  const cell = scale / res;
+  const snap = (v) => (smooth ? v : s.crisp ? Math.round(v / cell) * cell : Math.round(v));
+  const px = snap(x - PAD * scale);
+  const py = snap(y - PAD * scale);
   ctx.save();
   ctx.imageSmoothingEnabled = smooth;
   if (smooth) ctx.imageSmoothingQuality = 'high';

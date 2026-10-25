@@ -27,15 +27,17 @@ import { walkPhase } from './animator.js';
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'spiky', 'bun', 'long'];
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy'];
 
-// Body coordinates are a 30x56 anime chibi with feet at y 56; the sprite box adds room for hats,
-// ears, and wings.
+// Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
+// squashed into a short chibi body (feet at y 48) under the same big head; the sprite box adds
+// room for hats, ears, and wings.
 const OX = 6;
 const OY = 11;
 const W = 30 + OX * 2;
-const H = 56 + OY;
+const H = 48 + OY;
 const INK = '#3a2d4f';
-// Detail cells per art pixel for character sprites, and rounding of rig offsets to that grid.
-const RES = 3;
+// Detail cells per art pixel for character sprites (drawn crisp, like pixel art), and rounding of
+// rig offsets to that grid.
+const RES = 2;
 const q = (v) => Math.round(v * RES) / RES;
 
 const move = (shapes, dx, dy) => shapes.map((s) => (s ? { ...s, x: s.x + dx + OX, y: s.y + dy + OY } : s));
@@ -213,9 +215,6 @@ function headShapes(look, g, rig) {
   out.push(L(E(4.9, 17.2, 1.7, 2.2, skin)), L(E(26.1, 17, 1.7, 2.2, skin)), F(E(4.7, 17.4, 0.7, 1.1, '#f4bfcb')), F(E(26.3, 17.2, 0.7, 1.1, '#f4bfcb')));
   // A round face with full cheeks.
   out.push(L(E(HEAD_X, HEAD_Y, 10.4, 9.8, skin)), L(E(HEAD_X + 0.3, 18.2, 9.2, 6.2, skin)));
-  // Brows first, so the bangs can cover them.
-  const brow = mix(hair, INK, 0.45);
-  out.push(arc(11.6, 15.6, 2.2, 3, 228, 312, 0.5, brow), arc(20.2, 15.4, 2.2, 3, 228, 312, 0.5, brow));
   out.push(...eye(11.4, -1, eyeStyle, eyeColor, rig.eyes, skin), ...eye(20.2, 1, eyeStyle, eyeColor, rig.eyes, skin));
   out.push(F(E(9.6, 21, 1.7, 0.65, '#f7c1cc')), F(E(22, 21, 1.7, 0.65, '#f7c1cc')));
   if (rig.eyes === 'hurt') out.push(F(E(16.2, 22.8, 1, 0.7, INK)));
@@ -277,9 +276,10 @@ function bodyShapes(look, g, rig) {
   const uy = rig.by + drop;
   const shapes = [];
   const hat = g.hat;
+  let hang = [];
   if (!hat || !TUCKS_HAIR.has(hat.design)) {
-    const hang = hairBack(look.hairStyle ?? 'bob', look.hairColor ?? '#e9ebfa', rig.hair, rig.hairLift).filter((sh) => sh.hang);
-    shapes.push(...offset(hang, ux + rig.hx, uy + rig.hy));
+    hang = hairBack(look.hairStyle ?? 'bob', look.hairColor ?? '#e9ebfa', rig.hair, rig.hairLift).filter((sh) => sh.hang);
+    hang = squash(offset(hang, ux + rig.hx, uy + rig.hy), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap), ux, uy));
   shapes.push(...offset(armShapes(11.3, rig.backArm[0], rig.backArm[1], shadowTone(sleeve), long, g, shadowTone(skin)), ux, uy));
@@ -290,11 +290,30 @@ function bodyShapes(look, g, rig) {
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
   shapes.push(...offset(topShapes(top.design, top.color, body), ux, uy));
-  shapes.push(...offset(headShapes(look, g, rig), ux + rig.hx, uy + rig.hy));
-  return move(shapes, 0, 0);
+  // The head rides the squashed body, so it moves by the squashed bob.
+  const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy);
+  return move([...hang, ...squash(shapes), ...head], 0, 0);
 }
 
 const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy }));
+
+// The chibi squash: below the neck, heights shrink to KY and (for the body) widths to KX around
+// the body's center line, so a 56-tall figure stands 48 tall under an unchanged head.
+const NECK = 24;
+const KY = 0.75;
+const KX = 0.92;
+const squashY = (y) => (y <= NECK ? y : NECK + (y - NECK) * KY);
+const squashX = (x) => 15.5 + (x - 15.5) * KX;
+function squash(shapes, narrow = true) {
+  const fx = (x) => (narrow ? squashX(x) : x);
+  return shapes.map((sh) => {
+    if (sh.t === 'p') return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => [fx(sh.x + px), squashY(sh.y + py)]) };
+    if (sh.t === 'e') return { ...sh, x: fx(sh.x), y: squashY(sh.y), rx: sh.rx * (narrow ? KX : 1), ry: sh.ry * (sh.y > NECK ? KY : 1) };
+    const x0 = fx(sh.x);
+    const y0 = squashY(sh.y);
+    return { ...sh, x: x0, y: y0, w: fx(sh.x + sh.w) - x0, h: squashY(sh.y + sh.h) - y0 };
+  });
+}
 
 // Seen from behind on a rope: no face, hands reaching up the rope.
 function backShapes(look, g, rig, skin, sleeve, legs) {
@@ -302,25 +321,29 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const style = look.hairStyle ?? 'bob';
   const a = rig.climb;
   const long = longSleeves(g.top.design);
+  const body = [];
   const out = [];
-  out.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
-  out.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
-  out.push(...hipShapes(legs, look.body));
-  out.push(...topShapes('tee', g.top.color, look.body));
-  if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') out.push(T([[10.6, 26.6], [20, 26.6], [21, 46], [9.6, 46]], g.cape.color), R(9.6, 45, 11.4, 1, shade(g.cape.color, -20)));
-  if (!g.hat || !TUCKS_HAIR.has(g.hat.design)) out.push(...hairBack(style, hair, 0, 0));
+  body.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
+  body.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
+  body.push(...hipShapes(legs, look.body));
+  body.push(...topShapes('tee', g.top.color, look.body));
+  if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[10.6, 26.6], [20, 26.6], [21, 46], [9.6, 46]], g.cape.color), R(9.6, 45, 11.4, 1, shade(g.cape.color, -20)));
+  if (!g.hat || !TUCKS_HAIR.has(g.hat.design)) {
+    const back = hairBack(style, hair, 0, 0);
+    out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));
+  }
   const d = shade(hair, -16);
   out.push(E(HEAD_X, 13.6, 12, 11.2, hair), E(HEAD_X, 20.4, 9.8, 4, hair));
   for (const x of [9.6, 13.4, 17.6, 21.4]) out.push(F(T([[x - 0.3, 10], [x + 0.3, 10], [x + (x - 15.5) * 0.15, 22]], d)));
   out.push(arc(HEAD_X, 10, 9, 5.6, 210, 330, 1.1, mix(hair, '#ffffff', 0.45)));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color), ...hatShapes(g.hat.design, g.hat.color));
   // Arms reach up past the head to grip the rope, hand over hand.
-  out.push(...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin));
+  const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
   if (g.cape?.design === 'fairy' || g.cape?.design === 'angel') {
     const wing = capeShapes(g.cape.design, g.cape.color, 0, rig.flap);
-    out.push(...wing, ...wing.map((s) => (s.t === 'p' ? { ...s, pts: s.pts.map(([px, py]) => [31 - px, py]) } : { ...s, x: 31 - s.x - (s.w ?? 0) })));
+    arms.push(...wing, ...wing.map((s) => (s.t === 'p' ? { ...s, pts: s.pts.map(([px, py]) => [31 - px, py]) } : { ...s, x: 31 - s.x - (s.w ?? 0) })));
   }
-  return move(out, 0, 0);
+  return move([...squash(body), ...out, ...squash(arms)], 0, 0);
 }
 
 // ---------- Pose solving ----------
@@ -594,7 +617,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const rig = solveRig(state, anim);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
-  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: true }));
+  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: true, crisp: true }));
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
@@ -635,6 +658,9 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     weaponAngle = 112 + rig.by * 2;
   }
 
+  // The hand was placed on the full-size figure; carry it into the squashed body.
+  hand = [squashX(hand[0]), squashY(hand[1])];
+
   const drawWeapon = () => {
     if (!wpn) return;
     ctx.save();
@@ -667,8 +693,8 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (rig.view === 'back') return;
   if (attack) drawWeapon();
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(armShapesNow, 0, 0), res: RES, soft: true }));
-  blit(ctx, arm, left + (flip ? -armDx : armDx) * scale, top + armDy * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: true, crisp: true }));
+  blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 
 function drawTrail(ctx, trail, x, y, color) {

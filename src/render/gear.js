@@ -82,8 +82,8 @@ export function topShapes(design, c, body = 'feminine') {
   const l = shade(c, 18);
   const torso = torsoPts(body);
   const robe = robePts(body);
-  // A soft crease under the bust.
-  const curves = (col) => (body === 'feminine' ? [F(T([[19.6, 32.8], [22.4, 32.1], [22.2, 32.7], [19.8, 33.4]], shade(col, -16)))] : []);
+  // The figure carries the shape on its own; no extra detail lines.
+  const curves = () => [];
   const parts = (() => {
     switch (design) {
       case 'stripes': return [T(torso, c), band(torso, 29.2, 30.3, d), band(torso, 31.6, 32.6, d), band(torso, 34, 35.1, d), collar(l), ...curves(c)];

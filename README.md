@@ -3,10 +3,10 @@
 A browser game in the spirit of classic 2D MMO side-scrollers: start as a Novice, grind cute
 monsters across connected maps, pick a job at level 10 and a specialty at 30, spend AP and SP,
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
-pastel style: characters are gacha-style chibis (a round head with ears, big soft eyes, rounded
-bangs with a shine band, slim jointed limbs, and a feminine figure with bust, waist, and hips or
-a broader masculine one, picked in the creator or at the salon) and they and the monsters are shaded with a soft
-lavender tone on the back side of each part, with outlines tinted from each part's own color;
+pastel style: characters are short pixel chibis in the classic MMO style (a big round head with
+ears and big soft eyes, rounded bangs with a shine band, a small jointed body that is feminine or
+masculine, picked in the creator or at the salon), drawn crisp at 2x detail with a dark pixel
+outline; they and the monsters get a soft lavender shadow on the back side of each part;
 the world, items, and weapons are pixel art. No build step and no dependencies.
 
 ## Run it
@@ -80,7 +80,7 @@ then press the key. Right-click a hotkey slot to clear it.
   Rare loot glows with a colored beam on the ground, and bosses always
   drop Rare or better. Drops also roll small stat differences. Every item has 7 upgrade slots for
   charms (100% / 60% / 10%) that spend a slot whether they work or not.
-- **Animation and feel** — the hero is a layered rig drawn at 3x detail with jointed limbs (hips,
+- **Animation and feel** — the hero is a layered rig drawn at 2x detail with jointed limbs (hips,
   knees, ankles, elbows) and shaded automatically (the back third of each part and the back limbs
   in a lavender shadow, bangs casting onto the face): a 24-frame walk cycle driven by distance,
   with heel strike, a planted foot that rolls onto its toe, a high heel kick behind, hips that sink
