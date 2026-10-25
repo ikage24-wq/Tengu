@@ -13,7 +13,7 @@
 // The thief is the one family whose masks cover the mouth and nose (never the eyes).
 
 import { R, E, T, F, shade, mix } from '../pixel.js';
-import { torsoPts, band, side, MID, limb } from '../figure.js';
+import { torsoPts, band, MID, limb } from '../figure.js';
 
 const BANDAGE = '#efe4d2';
 const LEATHER = '#7a5238';
@@ -36,7 +36,7 @@ const crescent = (o, inner, a0, a1, c) => T([...arcPts(...o, a0, a1), ...arcPts(
 
 // A ribbon along a wavy centerline from (x, y): it heads `ang` radians from straight down toward
 // the back (-x), bending by `curl` along its length and rippling by `wave` (phase `ph`). Width
-// tapers from w0 to w1; the end can be cut square, forked, or tattered. Returns [shape, tip, pts].
+// tapers from w0 to w1; the end can be cut square, forked, or tattered. Returns [shape, centerline].
 function ribbon(x, y, len, ang, curl, wave, ph, w0, w1, c, end = 'square', n = 7) {
   const pts = [[x, y]];
   for (let i = 1; i <= n; i++) {
@@ -77,7 +77,7 @@ function ribbon(x, y, len, ang, curl, wave, ph, w0, w1, c, end = 'square', n = 7
     const [fx, fy] = fwd(1.6);
     cap = [[tip[0] + fx, tip[1] + fy]];
   }
-  return [T([...left, ...cap, ...right.reverse()], c), tip, pts];
+  return [T([...left, ...cap, ...right.reverse()], c), pts];
 }
 
 // ---------- Hats ----------
@@ -206,7 +206,7 @@ function hoodFront(t, h, p, hair) {
     const tall = h.hood === 'deep' ? 6 : 3.4;
     out.push(T([[9, 4.6], [20.6, 3], [11 + tip - tall * 0.6, -1 - tall], [6.6, 2.6]], p.main), F(T([[11.8, 2.8], [10.6 + tip - tall * 0.6, -0.6 - tall], [9.4 + tip - tall * 0.6, -0.4 - tall], [9.8, 3.4]], p.light)));
   }
-  if (h.hood === 'cobra') out.push(T([[2.8, 19], [0.4, 9], [5, 1.4], [15.5, 0.3], [26, 1.4], [30.6, 9], [28.2, 19]], p.main), ...[[2.4, 10], [28.6, 10], [8.4, 2.4], [22.6, 2.4]].map(([x, y]) => F(E(x, y, 1.1, 0.8, p.light))));
+  if (h.hood === 'cobra') out.push(T([[3, 19], [1.4, 10], [5, 2.6], [15.5, 0.6], [26, 2.6], [29.6, 10], [28, 19]], p.main), ...[[2.4, 10], [28.6, 10], [8.4, 2.4], [22.6, 2.4]].map(([x, y]) => F(E(x, y, 1.1, 0.8, p.light))));
   if (h.hood === 'raven') {
     // A beak peak over the brow and fans of swept-back feathers at the temples.
     for (const dir of [-1, 1]) {
@@ -231,8 +231,8 @@ function hoodFront(t, h, p, hair) {
     // Ragged points around the hood's outer edge.
     for (const a of [150, 175, 200, 5, 30]) {
       const [x, y] = arcPts(...HOOD, a, a, 0)[0];
-      const out1 = [Math.cos(rad(a)) * 2.4, -Math.sin(rad(a)) * 2.4];
-      out.push(T([[x - 1.6 * Math.sin(rad(a)), y - 1.6 * Math.cos(rad(a))], [x + out1[0], y + out1[1] + 1.2], [x + 1.6 * Math.sin(rad(a)), y + 1.6 * Math.cos(rad(a))]], p.main));
+      const poke = [Math.cos(rad(a)) * 2.4, -Math.sin(rad(a)) * 2.4];
+      out.push(T([[x - 1.6 * Math.sin(rad(a)), y - 1.6 * Math.cos(rad(a))], [x + poke[0], y + poke[1] + 1.2], [x + 1.6 * Math.sin(rad(a)), y + 1.6 * Math.cos(rad(a))]], p.main));
     }
   }
   if (h.hood === 'cobra') out.push(F(T([[15.5, 1.6], [17, 3.8], [15.5, 5.6], [14, 3.8]], p.accent)));
@@ -449,7 +449,7 @@ function cape(t, p, m) {
     // At rest the tail flares out to the side and droops; running lifts it out straight.
     const ang = 0.95 + lift * 0.18 + off;
     const col = k === 0 ? p.light : k === 1 ? p.main : p.dark;
-    const [shape, , pts] = ribbon(10.2, 28.2, len * 1.35, ang, [-0.8, -1.3, -0.3][k] + lift * 0.22, 0.3, m.sway * 0.8 + k * 1.7, w * 0.75, w, col, sc.end, 9);
+    const [shape, pts] = ribbon(10.2, 28.2, len * 1.35, ang, [-0.8, -1.3, -0.3][k] + lift * 0.22, 0.3, m.sway * 0.8 + k * 1.7, w * 0.75, w, col, sc.end, 9);
     out.push(shape);
     // A stripe across the tail near its end, glowing on shadow scarves.
     if (sc.stripe || sc.glow) {

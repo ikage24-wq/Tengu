@@ -24,12 +24,14 @@ const stage = (t) => STAGE[t];
 
 const pts = (list, dx = 0, dy = 0, k = 1) => list.map(([x, y]) => [dx + x * k, dy + y * k]);
 const both = (shapes) => [...shapes, ...mirrorX(shapes.filter(Boolean))];
-// The top half of an ellipse, closed along its base: helm domes.
+// The top half of a rounded-square ellipse, closed along its base: helm domes, full at the
+// shoulders so they cover the hair.
 function dome(cx, cy, rx, ry, c) {
   const out = [];
-  for (let i = 0; i <= 12; i++) {
-    const a = Math.PI + (i * Math.PI) / 12;
-    out.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]);
+  const pw = (v) => Math.sign(v) * Math.abs(v) ** 0.8;
+  for (let i = 0; i <= 14; i++) {
+    const a = Math.PI + (i * Math.PI) / 14;
+    out.push([cx + pw(Math.cos(a)) * rx, cy + pw(Math.sin(a)) * ry]);
   }
   return T(out, c);
 }
@@ -120,7 +122,7 @@ function hat(t, p, m) {
     // Obsidian: towering crystal shards.
     case 12: return [...shards(p, glow), ...helm(p, 2, 1.8, p.trim), ...gem(15.5, 12, 1.3, glow), F(T([[7, 8], [9.6, 4.6], [8.6, 8.6]], p.light))];
     // Colossus: a tall red fan crest between curling ram horns.
-    case 13: return [fan(15.5, 4, 11, 13, p.accent), F(fan(15.5, 4, 8.4, 10, shade(p.accent, 14))), ...horns(1.1, BONE, 1, 4.4, 9), ...helm(p, 2, 2), ...crown([3, 4, 3], p.trim, 10.6, 11, 20), ...gem(15.5, 12, 1.2, glow)];
+    case 13: return [fan(15.5, 4, 11, 13, p.accent), ...[-6, -2, 2, 6].map((dx) => F(T([[15.5 + dx * 0.3 - 0.4, 3], [15.5 + dx * 0.3 + 0.4, 3], [15.5 + dx * 1.5, -7.4 - (6 - Math.abs(dx)) * 0.5]], shade(p.accent, -16)))), ...horns(1.1, BONE, 1, 4.4, 9), ...helm(p, 2, 2), ...crown([3, 4, 3], p.trim, 10.6, 11, 20), ...gem(15.5, 12, 1.2, glow)];
     // Dreadnought: swept steel blade-wings and a center spike.
     case 14: return [...bladeWings(p), spike(15.5, 4, 4, 12, p.light), F(spike(15.5, 3.4, 1.2, 9.4, glow)), ...helm(p, 2, 2, p.trim), ...rivets(p.trimDark), ...gem(15.5, 12, 1.2, glow)];
     // Infernal: demon horns, a crest of flames, and molten cracks.
@@ -254,7 +256,7 @@ function shoulder(t, p, s) {
   const k = [0.62, 0.78, 0.92, 1.05, 1.1, 1.2, 1.25][st];
   const P = (list, c) => T(list.map(([x, y]) => [x * k * s, y * k]), c);
   const top = (x) => (x < 5 ? -3 : -3 + (x - 5) * 0.55);
-  const sp = (x, h, lean, c = p.trim, w = 2.4) => P([[x - w / 2, top(x) + 0.6], [x + w / 2, top(x + w / 2) + 0.6], [x + lean, top(x) - h]], c);
+  const sp = (x, h, lean, c = p.trim, w = 2.4) => P([[x - w / 2, top(x) + 0.6], [x + w / 2, top(x + w / 2) + 0.6], [x + lean + h * 0.6, top(x) - h * 0.8]], c);
   const cap = [[-2.4, -1.8], [1, -3.2], [5, -3], [8.4, -1.2], [10, 1.6], [9.6, 3.4], [6, 2.6], [2, 2.4], [-2.4, 2]];
   const lames = [1, 1, 2, 2, 3, 3, 3][st];
   const out = [];
@@ -359,7 +361,7 @@ function hand(t, p, hx, hy, ex, ey) {
   const [ax, ay] = at(1.2);
   const [bx, by] = at(1.2 + cuffLen);
   if (st === 0) return [limb(ax, ay, bx, by, 3.6, 4, t ? LEATHER_D : p.dark), E(hx, hy, 2.1, 2.1, t ? LEATHER : p.main)];
-  const out = [limb(ax, ay, bx, by, 3.8, 4.6 + st * 0.2, p.main), limb(...at(0.6 + cuffLen), bx, by, 4.8 + st * 0.2, 5 + st * 0.2, st >= 2 ? p.trim : p.dark)];
+  const out = [limb(ax, ay, bx, by, 4.2, 5.2 + st * 0.3, p.main), limb(...at(0.6 + cuffLen), bx, by, 5.4 + st * 0.3, 5.6 + st * 0.3, st >= 2 ? p.trim : p.dark)];
   // Spikes off the cuff's outer side.
   if (st >= 3) {
     const [mx, my] = at(1.2 + cuffLen * 0.55);
@@ -368,7 +370,7 @@ function hand(t, p, hx, hy, ex, ey) {
     const so = nx < 0 ? 1 : -1;
     out.push(T([[mx + ux, my + uy], [mx - ux, my - uy], [mx + nx * so * (3 + st * 0.3) + ux * 1.4, my + ny * so * (3 + st * 0.3) + uy * 1.4]], st >= 5 ? p.trim : p.light));
   }
-  out.push(E(hx, hy, 2.3, 2.2, p.main), F(E(hx - 0.5, hy - 0.6, 1, 0.7, p.light)));
+  out.push(E(hx, hy, 2.7, 2.5, p.main), F(E(hx - 0.6, hy - 0.7, 1.2, 0.8, p.light)));
   if (st >= 4) out.push(F(E(...at(1.6 + cuffLen * 0.5), 0.9, 0.9, glowOf(p))));
   return out;
 }
@@ -408,24 +410,24 @@ function cape(t, p, m) {
   const st = stage(t);
   const glow = glowOf(p);
   switch (st) {
-    case 0: return capeOf(t ? 46 : 44, 0, 'flat', s, p.main, p.dark);
-    case 1: return capeOf(48, 0.6, 'flat', s, p.main, p.trim, 1.2);
+    case 0: return capeOf(t ? 46 : 44, 0, 'flat', s, p.dark, p.deep);
+    case 1: return capeOf(48, 0.6, 'flat', s, p.dark, p.trim, 1.2);
     // Knightly banner capes, swallow-tailed.
-    case 2: return capeOf(50 + (t - 4), 1 + (t - 4) * 0.4, 'notch', s, p.main, p.trim, 1.2 + (t - 4) * 0.4);
+    case 2: return capeOf(50 + (t - 4), 1 + (t - 4) * 0.4, 'notch', s, p.dark, p.trim, 1.2 + (t - 4) * 0.4);
     // Battle-torn war cloaks.
-    case 3: return capeOf(50 + (t - 7), 1.6 + (t - 7) * 0.4, 'tatter', s, p.main, t === 9 ? p.trim : p.dark);
-    case 4: return capeOf(52, 2, ['scale', 'tatter', 'shard'][t - 10], s, p.main, t === 11 ? glow : p.trim);
+    case 3: return capeOf(50 + (t - 7), 1.6 + (t - 7) * 0.4, 'tatter', s, p.dark, t === 9 ? p.trim : p.deep);
+    case 4: return capeOf(52, 2, ['scale', 'tatter', 'shard'][t - 10], s, p.dark, t === 11 ? glow : p.trim);
     case 5: {
       // A long cape under a shorter over-cape.
       const style = ['flat', 'notch', 'flame', 'tatter'][t - 13];
-      const under = capeOf(53, 2.6, style, s, p.dark, t === 15 ? glow : p.trim, 1.6);
-      const over = capeOf(44, 1.6, t === 15 ? 'flame' : 'flat', s * 0.7, p.main, t === 15 ? glow : p.trim, 1.2);
+      const under = capeOf(53, 2.6, style, s, p.deep, t === 15 ? glow : p.trim, 1.6);
+      const over = capeOf(44, 1.6, t === 15 ? 'flame' : 'flat', s * 0.7, p.dark, t === 15 ? glow : p.trim, 1.2);
       return [...under, ...over];
     }
     default: {
-      if (t === 19) return [...capeWings(WHITE, m?.flap ? -2 : 1, mix(p.trim, WHITE, 0.4)), ...capeOf(52, 2.4, 'flat', s, p.main, p.trim, 2)];
-      const under = capeOf(54, 3, t === 18 ? 'tatter' : 'flat', s, t === 18 ? p.dark : p.main, p.trim, 2);
-      const over = capeOf(45, 2, 'notch', s * 0.7, t === 18 ? p.main : p.light, p.trim, 1.2);
+      if (t === 19) return [...capeWings(WHITE, m?.flap ? -2 : 1, mix(p.trim, WHITE, 0.4)), ...capeOf(52, 2.4, 'flat', s, p.dark, p.trim, 2)];
+      const under = capeOf(54, 3, t === 18 ? 'tatter' : 'flat', s, p.deep, p.trim, 2);
+      const over = capeOf(45, 2, 'notch', s * 0.7, p.dark, p.trim, 1.2);
       const bolts = t === 18 ? [zig([[5 + s, 40], [7 + s, 44], [5 + s, 45], [7.6 + s, 50]], 1, glow), zig([[26 + s, 40], [24 + s, 44], [26 + s, 45], [23.4 + s, 50]], 1, glow)] : [];
       return [...under, ...bolts, ...over];
     }

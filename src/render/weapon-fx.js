@@ -1,12 +1,13 @@
 // Live weapon effects, drawn every frame on top of the weapon sprite in the weapon's own space
 // (grip at the origin, the weapon pointing toward -y). Better weapons do more: steel glints,
-// mithril twinkles, runes float glyphs, and each endgame theme has its own show — holy light and
+// mithril twinkles, crystal sheds frost, runes float glyphs, stars twinkle, sunforged and phoenix
+// throw embers and flames, abyssal smokes, celestial and genesis shine; and each endgame theme has its own show — holy light and
 // feathers, hellfire and a blinking eye, soul fire and ghosts, humming energy blades, chainsaw
 // smoke and sparks, and neon with glitches and holograms.
 //
 // `liveFor(look, a)` returns live(ctx, time, s) or null. Anchors `a` are in the weapon's local
-// pixels: head, tip, blade [top, base], and per-theme points (halo, wings, flames, eye, eyes,
-// beams, orbs, exhaust, sparks, chain, neon, ring, runes).
+// pixels: head, tip, blade [top, base], gem, top, runes, and per-theme points (halo, wings,
+// flames, eye, eyes, beams, orbs, exhaust, sparks, chain, neon, ring).
 
 import { THEMES } from './weapon-kit.js';
 
@@ -83,8 +84,14 @@ function onBlade(a, u, spread) {
 
 // ---------- Progression ----------
 
-// Steel: a bright glint runs up the edge every few seconds.
-function steelLive(a) {
+// '#rrggbb' at alpha `a`, for gradients.
+function rgba(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+// Steel and silver: a bright glint runs up the edge every few seconds.
+function glintLive(a) {
   return (ctx, time, s) => {
     const k = (time % 3.2) / 0.5;
     if (k > 1) return;
@@ -96,30 +103,49 @@ function steelLive(a) {
   };
 }
 
-// Mithril: a cool shimmer around the gem and twinkles popping along the blade.
-function mithrilLive(a) {
+// Mithril and cobalt: a cool shimmer around the gem and twinkles popping along the blade.
+function shimmerLive(a, look) {
+  const halo = rgba(look.gem === '#ffd23b' ? '#7fa8ff' : look.gem, 0.8);
   return (ctx, time, s) => {
     ctx.save();
     const [gx, gy] = a.gem ?? a.head;
-    glow(ctx, gx * s, gy * s, 7 * s, 'rgba(127,224,255,0.8)', 0.35 + 0.2 * Math.sin(time * 3));
+    glow(ctx, gx * s, gy * s, 7 * s, halo, 0.35 + 0.2 * Math.sin(time * 3));
     for (let i = 0; i < 3; i++) {
       const cyc = time * 0.8 + i / 3;
       const k = cyc % 1;
       const n = Math.floor(cyc);
       const [x, y] = onBlade(a, 0.15 + hash(n, i) * 0.8, (hash(n, i + 7) - 0.5) * 6);
       ctx.globalAlpha = Math.sin(k * Math.PI);
-      twinkle(ctx, x * s, y * s, (1 + 1.5 * Math.sin(k * Math.PI)) * s, i % 2 ? '#bff4ff' : '#ffffff');
+      twinkle(ctx, x * s, y * s, (1 + 1.5 * Math.sin(k * Math.PI)) * s, i % 2 ? look.edge : '#ffffff');
     }
     ctx.restore();
   };
 }
 
-// Runic: the runes breathe light and glyphs lift off the weapon and fade.
+// Crystal and moonsilver: frost motes drifting down around the blade, and a cold breath of light.
+function frostLive(a, look) {
+  return (ctx, time, s) => {
+    ctx.save();
+    const [hx, hy] = a.head;
+    glow(ctx, hx * s, hy * s, 10 * s, rgba(look.edge === '#ffffff' ? '#bff4ff' : look.edge, 0.6), 0.25 + 0.12 * Math.sin(time * 2));
+    for (let i = 0; i < 5; i++) {
+      const cyc = time * 0.4 + i / 5;
+      const u = cyc % 1;
+      const [x, y] = onBlade(a, hash(Math.floor(cyc), i), (hash(Math.floor(cyc), i + 3) - 0.5) * 12);
+      ctx.globalAlpha = Math.sin(u * Math.PI) * 0.9;
+      ctx.fillStyle = i % 2 ? '#ffffff' : '#bff4ff';
+      ctx.fillRect((x + Math.sin(time * 2 + i) * 1.5) * s, (y + u * 8) * s, s, s);
+    }
+    ctx.restore();
+  };
+}
+
+// Runes: they breathe light and glyphs lift off the weapon and fade.
 function runicLive(a, look) {
   return (ctx, time, s) => {
     ctx.save();
     const [x, y0, y1] = a.runes;
-    for (let y = y0; y < y1; y += 6) glow(ctx, x * s, y * s, 5 * s, 'rgba(127,252,255,0.6)', 0.15 + 0.15 * Math.sin(time * 4 - y * 0.4));
+    for (let y = y0; y < y1; y += 6) glow(ctx, x * s, y * s, 5 * s, rgba(look.rune, 0.6), 0.15 + 0.15 * Math.sin(time * 4 - y * 0.4));
     ctx.strokeStyle = look.rune;
     ctx.lineWidth = Math.max(1, s * 0.6);
     for (let i = 0; i < 4; i++) {
@@ -142,6 +168,157 @@ function runicLive(a, look) {
     ctx.restore();
   };
 }
+
+// Starsteel and astral: stars twinkling on and off all around the weapon, and riding the orbit.
+function starsLive(a, look) {
+  return (ctx, time, s) => {
+    ctx.save();
+    for (let i = 0; i < 5; i++) {
+      const cyc = time * 0.7 + i / 5;
+      const k = cyc % 1;
+      const n = Math.floor(cyc);
+      const [x, y] = onBlade(a, hash(n, i), (hash(n, i + 5) - 0.5) * 16);
+      ctx.globalAlpha = Math.sin(k * Math.PI);
+      twinkle(ctx, x * s, y * s, (0.8 + 1.6 * Math.sin(k * Math.PI)) * s, i % 2 ? look.gem : '#ffffff');
+    }
+    if (a.halo) {
+      const [hx, hy, rx, ry] = a.halo;
+      const ang = time * 2;
+      ctx.globalAlpha = 0.9;
+      glow(ctx, (hx + Math.cos(ang) * rx) * s, (hy + Math.sin(ang) * ry) * s, 3 * s, '#ffffff', 0.9);
+    }
+    ctx.restore();
+  };
+}
+
+// Sunforged and dragonbone: a warm glow and ember sparks rising off the blade.
+function embersLive(a, look) {
+  return (ctx, time, s) => {
+    ctx.save();
+    const [hx, hy] = a.top ?? a.head;
+    glow(ctx, hx * s, hy * s, (9 + 2 * Math.sin(time * 5)) * s, rgba(look.gem, 0.7), 0.3);
+    for (let i = 0; i < 6; i++) {
+      const cyc = time * 0.8 + i / 6;
+      const u = cyc % 1;
+      const [x, y] = onBlade(a, hash(Math.floor(cyc), i), (hash(Math.floor(cyc), i + 9) - 0.5) * 8);
+      ctx.globalAlpha = 1 - u;
+      ctx.fillStyle = i % 3 ? '#ffb03b' : '#fff3a6';
+      ctx.fillRect((x + Math.sin(time * 4 + i) * 2) * s, (y - u * 14) * s, s, s);
+    }
+    ctx.restore();
+  };
+}
+
+// Phoenix: flames licking up the blade, embers, and a shimmer of heat.
+function flamesLive(a) {
+  return (ctx, time, s) => {
+    ctx.save();
+    for (let i = 0; i < 4; i++) {
+      const k = (time * 1.5 + i / 4) % 1;
+      const [x, y] = onBlade(a, 0.1 + (i / 4) * 0.8, (i % 2 ? 1 : -1) * 2.5);
+      const h = (3 + 4 * Math.sin(k * Math.PI)) * s;
+      const lean = Math.sin(time * 5 + i) * s;
+      ctx.globalAlpha = 0.8 * Math.sin(k * Math.PI);
+      flame(ctx, x * s, (y - k * 3) * s, 1.1 * s, h, lean, '#ff6a2a');
+      flame(ctx, x * s, (y - k * 3) * s, 0.55 * s, h * 0.6, lean * 0.6, '#ffe36b');
+    }
+    for (let i = 0; i < 5; i++) {
+      const cyc = time * 0.9 + i / 5;
+      const u = cyc % 1;
+      const [x, y] = onBlade(a, hash(Math.floor(cyc), i), (hash(Math.floor(cyc), i + 2) - 0.5) * 12);
+      ctx.globalAlpha = 1 - u;
+      ctx.fillStyle = i % 2 ? '#ff8a3c' : '#fff06b';
+      ctx.fillRect(x * s, (y - u * 16) * s, s, s);
+    }
+    ctx.restore();
+  };
+}
+
+// Obsidian (and dark variants): a violet gleam sliding along the edge.
+function edgeLive(a, color) {
+  return (ctx, time, s) => {
+    const k = (time * 0.6) % 1;
+    const [x, y] = onBlade(a, k, 1);
+    ctx.save();
+    glow(ctx, x * s, y * s, 6 * s, rgba(color, 0.9), 0.55 * Math.sin(k * Math.PI));
+    ctx.restore();
+  };
+}
+
+// Abyssal: dark wisps curling up off the weapon and a slow throb of void light around the eye.
+function voidLive(a, look) {
+  return (ctx, time, s) => {
+    ctx.save();
+    const [ex, ey] = a.eye ?? a.head;
+    glow(ctx, ex * s, ey * s, 8 * s, rgba(look.edge, 0.8), 0.25 + 0.2 * Math.pow(Math.max(0, Math.sin(time * 2.4)), 4));
+    for (let i = 0; i < 4; i++) {
+      const u = (time * 0.45 + i / 4) % 1;
+      const [x, y] = onBlade(a, (i / 4) * 0.9 + 0.05, Math.sin(u * TAU + i) * 5);
+      ctx.globalAlpha = Math.sin(u * Math.PI) * 0.7;
+      ctx.fillStyle = i % 2 ? '#2c1844' : '#7a4ab0';
+      ctx.beginPath();
+      ctx.arc(x * s, (y - u * 12) * s, (2.2 - u * 1.4) * s, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+}
+
+// Celestial and genesis: breathing light with turning rays and sparkles riding the halo. Genesis's
+// light runs through the rainbow.
+function radiantLive(a, colors) {
+  return (ctx, time, s) => {
+    const [cx, cy] = a.top ?? a.head;
+    const c = colors[Math.floor(time * 2) % colors.length];
+    ctx.save();
+    const pulse = 0.5 + 0.5 * Math.sin(time * 3);
+    glow(ctx, cx * s, cy * s, (10 + pulse * 4) * s, rgba(c, 0.8), 0.7);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 0.8 * s;
+    for (let i = 0; i < 4; i++) {
+      const ang = (i / 4) * TAU + time * 0.8;
+      ctx.globalAlpha = 0.35 + 0.25 * Math.sin(time * 4 + i);
+      ctx.strokeStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.moveTo((cx + Math.cos(ang) * 4) * s, (cy + Math.sin(ang) * 4) * s);
+      ctx.lineTo((cx + Math.cos(ang) * (10 + pulse * 3)) * s, (cy + Math.sin(ang) * (10 + pulse * 3)) * s);
+      ctx.stroke();
+    }
+    if (a.halo) {
+      const [hx, hy, rx, ry] = a.halo;
+      for (let i = 0; i < 2; i++) {
+        const ang = time * 2.4 + i * Math.PI;
+        ctx.globalAlpha = 0.6 + 0.4 * Math.sin(ang);
+        twinkle(ctx, (hx + Math.cos(ang) * rx) * s, (hy + Math.sin(ang) * ry) * s, 1.4 * s, '#ffffff');
+      }
+    }
+    for (let i = 0; i < 4; i++) {
+      const u = (time * 0.6 + i / 4) % 1;
+      const [x, y] = onBlade(a, (i / 4) * 0.9, Math.sin(i * 2.1 + time) * 6);
+      ctx.globalAlpha = Math.sin(u * Math.PI);
+      ctx.fillStyle = colors[(i + 1) % colors.length];
+      ctx.fillRect(x * s, (y - u * 14) * s, s, s);
+    }
+    ctx.restore();
+  };
+}
+
+const PROGRESSION_LIVE = {
+  glint: glintLive,
+  shimmer: shimmerLive,
+  frost: frostLive,
+  runes: (a, look) => (a.runes ? runicLive(a, look) : shimmerLive(a, look)),
+  stars: starsLive,
+  embers: embersLive,
+  flames: flamesLive,
+  edge: (a, look) => edgeLive(a, look.edge),
+  void: voidLive,
+  radiant: (a) => radiantLive(a, ['#fff3a6', '#ffffff', '#bfe6ff']),
+  prism: (a, look) => radiantLive(a, look.prism),
+};
+
+// Both effects, one over the other.
+const both = (x, y) => (x && y ? (ctx, time, s) => (x(ctx, time, s), y(ctx, time, s)) : x ?? y);
 
 // ---------- Endgame themes ----------
 
@@ -472,8 +649,6 @@ const THEME_LIVE = { holy: holyLive, demonic: demonicLive, bone: boneLive, laser
 
 export function liveFor(look, a) {
   if (look.theme) return THEME_LIVE[look.theme](a, look);
-  if (look.tier === 2) return steelLive(a);
-  if (look.tier === 3) return mithrilLive(a);
-  if (look.tier === 4) return a.runes ? runicLive(a, look) : mithrilLive(a);
-  return null;
+  const own = look.fx ? PROGRESSION_LIVE[look.fx](a, look) : null;
+  return look.glow ? both(own, edgeLive(a, look.glow)) : own;
 }
