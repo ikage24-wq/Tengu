@@ -42,14 +42,13 @@ export function pickTargets(mobs, body, range, targets) {
 
 // Why a skill can't be used right now, or null if it can.
 export function castBlocker(world, skillId) {
-  const { char, stats, now } = world;
+  const { char, stats } = world;
   if (world.attackTimer > 0 || world.lockTimer > 0) return 'busy';
   if (!skillId) return null;
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
   if (!s || lv <= 0) return 'unlearned';
   if (s.type === 'passive') return 'passive';
-  if ((world.cooldowns[skillId] ?? 0) > now) return 'cooldown';
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
   return null;
@@ -68,7 +67,6 @@ export function cast(world, skillId, rng = Math.random) {
   const type = s ? s.type : 'attack';
 
   char.mp -= params.mp ?? 0;
-  if (s?.cooldown) world.cooldowns[skillId] = now + s.cooldown;
 
   const delay = BASE_DELAY * (1 - stats.attackSpeed);
   world.attackTimer = type === 'buff' ? 0.35 : delay;

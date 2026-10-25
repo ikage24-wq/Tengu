@@ -71,12 +71,8 @@ export function drawHud(ui, state, world) {
     if (b?.skill) {
       drawSkillIcon(ctx, b.skill, x + 1.5, y + 1.5);
       const lv = char.skills[b.skill] ?? 0;
-      const cdLeft = (world.cooldowns[b.skill] ?? 0) - world.now;
       const noMp = lv && SKILLS[b.skill].type !== 'passive' && char.mp < skillAt(b.skill, lv).mp;
-      if (cdLeft > 0) {
-        ctx.fillStyle = 'rgba(58,45,79,0.55)';
-        ctx.fillRect(x + 1, y + 1, 17, 17 * Math.min(1, cdLeft / (SKILLS[b.skill].cooldown || 1)));
-      } else if (noMp) {
+      if (noMp) {
         ctx.fillStyle = 'rgba(111,184,255,0.45)';
         ctx.fillRect(x + 1, y + 1, 17, 17);
       }

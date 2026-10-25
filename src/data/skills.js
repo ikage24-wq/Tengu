@@ -13,10 +13,9 @@
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
 
-// `cooldown` is seconds before the skill can be used again; `lock` is a short delay after using it
-// that plants you in place (no moving, jumping, or other attacks), for big wind-ups.
+// `lock` is a short delay after using a skill that plants you in place (no moving, jumping, or other attacks), for big wind-ups.
 function skill(def) {
-  return { maxLevel: 20, cooldown: 0, lock: 0, ...def };
+  return { maxLevel: 20, lock: 0, ...def };
 }
 
 export const SKILLS = {
@@ -207,7 +206,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { wdef: lerp(5, 30, lv, m), acc: lerp(5, 25, lv, m), eva: lerp(5, 25, lv, m) } }),
   }),
   heal: skill({
-    id: 'heal', name: 'Heal', job: 'cleric', type: 'heal', fx: 'heal', cooldown: 2, lock: 0.5,
+    id: 'heal', name: 'Heal', job: 'cleric', type: 'heal', fx: 'heal', lock: 0.5,
     desc: 'Restore HP and burn nearby monsters with holy light.',
     at: (lv, m) => ({ mp: lerp(16, 34, lv, m), healPct: lerpf(0.15, 0.5, lv, m), power: lerp(70, 180, lv, m), hits: 1, targets: 5, range: { w: 220, h: 120, around: true } }),
   }),
@@ -329,7 +328,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(14, 30, lv, m), pct: lerp(160, 300, lv, m), hits: 1, targets: 8, range: { w: 420, h: 40 }, projectile: true }),
   }),
   snipe: skill({
-    id: 'snipe', name: 'Snipe', job: 'marksman', type: 'attack', fx: 'arrow', cooldown: 1.5, lock: 0.75,
+    id: 'snipe', name: 'Snipe', job: 'marksman', type: 'attack', fx: 'arrow', lock: 0.75,
     desc: 'A slow, heavy shot with a high critical chance.',
     at: (lv, m) => ({ mp: lerp(16, 30, lv, m), pct: lerp(320, 520, lv, m), hits: 1, targets: 1, range: { w: 420, h: 60 }, projectile: true, critRate: lerpf(0.1, 0.4, lv, m) }),
   }),
@@ -382,7 +381,7 @@ export const SKILLS = {
 // Numbers for `skillId` at `level`, with the skill's max level passed through for scaling.
 export function skillAt(skillId, level) {
   const s = SKILLS[skillId];
-  return { ...s.at(level, s.maxLevel), cooldown: s.cooldown, lock: s.lock };
+  return { ...s.at(level, s.maxLevel), lock: s.lock };
 }
 
 export function skillsForJob(jobId) {

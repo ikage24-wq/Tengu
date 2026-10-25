@@ -37,7 +37,6 @@ export function createWorld(char) {
     // Game-feel cues for the renderer (dust, sparks, screen shake). Purely visual.
     juice: [],
     hitstop: 0,
-    cooldowns: {},
     attackTimer: 0,
     lockTimer: 0,
     pose: null,
@@ -205,7 +204,6 @@ export function nearbyNpc(world) {
 
 const BLOCKER_TEXT = {
   mp: 'Not enough MP.',
-  cooldown: null,
   busy: null,
   weapon: "That skill needs a different weapon.",
   unlearned: null,
