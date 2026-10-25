@@ -4,8 +4,6 @@ import { MAPS } from '../data/maps.js';
 import { JOBS } from '../data/jobs.js';
 import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
-import { drawMonster } from '../render/monsters.js';
-import { MOBS } from '../data/mobs.js';
 import { COLORS, FONT, text, box, button, wrap, bar, hover, clicked, roundRect } from './kit.js';
 import { stats } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
@@ -73,100 +71,7 @@ function panel(ctx, x, y, w, h, title) {
   text(ctx, title, x + w / 2, y + 13, { size: 10, bold: true, align: 'center', color: '#ffffff', outline: '#b87ac9' });
 }
 
-// ----- The living title scene: a hero who wanders, hops over or bonks passing monsters,
-// flyers drifting through the sky, falling petals, and a logo that bounces in on load.
-
-const TITLE_GEAR = { weapon: { id: 'sword_3', uid: 0 } };
-const PARADE = ['puffle', 'snailbun', 'mushkin', 'piglet', 'sproutling'];
-const FLYERS = ['windbird', 'starspirit', 'wisp'];
-const GROUND = MAPS.meadow1.groundY - (MAPS.meadow1.height - 360);
-const SWING = 0.45;
-let scene = null;
-
-const clamp01 = (k) => Math.max(0, Math.min(1, k));
-const easeOutBack = (k) => 1 + 2.70158 * (k - 1) ** 3 + 1.70158 * (k - 1) ** 2;
-function easeOutBounce(k) {
-  if (k < 1 / 2.75) return 7.5625 * k * k;
-  if (k < 2 / 2.75) return 7.5625 * (k -= 1.5 / 2.75) * k + 0.75;
-  if (k < 2.5 / 2.75) return 7.5625 * (k -= 2.25 / 2.75) * k + 0.9375;
-  return 7.5625 * (k -= 2.625 / 2.75) * k + 0.984375;
-}
-
-// Just enough of a monster for drawMonster.
-const fakeMob = (id, uid, x, dir) => ({ def: MOBS[id], uid, x, dir, state: 'walk', stagger: 0, flash: 0, age: 1, hp: 1, bonk: 0, hitIn: 0, seen: false });
-
-function newScene(time) {
-  return {
-    start: time,
-    last: time,
-    hero: { x: 120, y: 0, vy: 0, dir: 1, mode: 'walk', timer: 2.5, swing: 0 },
-    walkers: PARADE.map((id, i) => fakeMob(id, i, 420 + i * 150, -1)),
-    flyers: FLYERS.map((id, i) => Object.assign(fakeMob(id, 10 + i, -80 - i * 280, 1), { baseY: 36 + i * 26 })),
-  };
-}
-
-function updateScene(sc, dt) {
-  const h = sc.hero;
-  if (h.y < 0 || h.vy < 0) {
-    h.vy += 900 * dt;
-    h.y = Math.min(0, h.y + h.vy * dt);
-    if (h.y === 0) h.vy = 0;
-  }
-  const grounded = h.y === 0 && h.vy === 0;
-  h.swing = Math.max(0, h.swing - dt);
-  h.timer -= dt;
-  if (h.mode === 'walk' && !h.swing) {
-    h.x += h.dir * 40 * dt;
-    if (h.x < 60 || h.x > 200) {
-      h.x = Math.max(60, Math.min(200, h.x));
-      h.dir *= -1;
-    }
-  }
-  if (h.timer <= 0 && grounded && !h.swing) {
-    h.mode = h.mode === 'walk' && Math.random() < 0.4 ? 'idle' : 'walk';
-    h.timer = h.mode === 'idle' ? 1 + Math.random() : 2 + Math.random() * 2;
-    if (h.mode === 'walk' && Math.random() < 0.4) h.dir *= -1;
-  }
-
-  const lastX = Math.max(...sc.walkers.map((w) => w.x));
-  for (const w of sc.walkers) {
-    w.x -= Math.max(36, Math.min(w.def.speed, 60) * 0.8) * dt;
-    w.flash = Math.max(0, w.flash - dt);
-    w.bonk = Math.max(0, w.bonk - dt);
-    if (w.hitIn > 0 && (w.hitIn -= dt) <= 0) {
-      w.flash = 0.15;
-      w.bonk = 0.35;
-    }
-    if (w.x < -40) {
-      w.x = Math.max(700, lastX + 150);
-      w.seen = false;
-    }
-    // When a monster reaches the hero, they either hop over it or give it a friendly bonk.
-    const dx = w.x - h.x;
-    if (!w.seen && grounded && !h.swing && Math.abs(dx) < 36) {
-      w.seen = true;
-      if (Math.random() < 0.5) {
-        h.vy = -330;
-      } else {
-        h.dir = Math.sign(dx) || 1;
-        h.swing = SWING;
-        h.mode = 'idle';
-        h.timer = 0.8;
-        w.hitIn = SWING * 0.4;
-      }
-    }
-  }
-  for (const f of sc.flyers) {
-    f.x += 26 * dt;
-    if (f.x > 700) f.x = -80 - Math.random() * 300;
-  }
-}
-
-function heroState(h) {
-  if (h.swing > 0) return { pose: 'swing', progress: 1 - h.swing / SWING };
-  if (h.y < 0 || h.vy < 0) return { pose: 'jump', vy: h.vy };
-  return { pose: h.mode === 'walk' ? 'walk' : 'idle' };
-}
+const HERO_Y = MAPS.meadow1.groundY - (MAPS.meadow1.height - 360);
 
 function petals(ctx, time) {
   const colors = ['#ffc2dc', '#ffffff', '#ffd9ec'];
@@ -187,79 +92,25 @@ function petals(ctx, time) {
   }
 }
 
-// "Tengu", one letter at a time: each drops in with a bounce, then they ripple in a slow wave.
-function logo(ctx, time, t) {
-  const word = 'Tengu';
-  ctx.font = `bold 56px ${FONT}`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  const widths = [...word].map((ch) => ctx.measureText(ch).width);
-  let x = 320 - widths.reduce((a, b) => a + b, 0) / 2;
-  const letters = [...word].map((ch, i) => {
-    const k = clamp01((t - 0.1 - i * 0.09) / 0.6);
-    const lx = x;
-    x += widths[i];
-    return { ch, x: lx, y: 70 - (1 - easeOutBounce(k)) * 140 + Math.sin(time * 2.5 - i * 0.7) * 3, shown: k > 0 };
-  });
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = 14;
-  ctx.strokeStyle = '#c97ad9';
-  for (const l of letters) if (l.shown) ctx.strokeText(l.ch, l.x, l.y);
-  ctx.fillStyle = '#ffffff';
-  for (const l of letters) if (l.shown) ctx.fillText(l.ch, l.x, l.y);
-  // A twinkle that hops across the letters every few seconds.
-  const sweep = ((t - 1.2) % 4) / 0.9;
-  if (t > 1.2 && sweep < 1) {
-    const sx = 320 - 130 + sweep * 260;
-    const r = 7 * Math.sin(sweep * Math.PI);
-    sparkle(ctx, sx, 34 + Math.sin(sweep * Math.PI * 5) * 4, r, '#fffbe0');
-  }
-}
-
 // MMO-style login: logo, world select panel, and a status bar. Returns true on Enter World.
 export function titleScreen(ui, time) {
   const { ctx } = ui;
-  if (!scene || time - scene.last > 0.25) scene = newScene(time);
-  updateScene(scene, Math.min(0.05, time - scene.last));
-  scene.last = time;
-  const t = time - scene.start;
-
   const map = MAPS.meadow1;
   drawSceneBack(ctx, map, { x: 260, y: map.height - 360 }, 640, 360, time, null);
-  for (const f of scene.flyers) drawMonster(ctx, f, f.x, f.baseY + Math.sin(time * 1.6 + f.uid) * 10, time);
-
-  // Logo and quote
-  logo(ctx, time, t);
-  for (let i = 0; i < 6; i++) {
-    const a = time * 1.5 + i;
-    const k = clamp01((t - 0.8) / 0.4);
-    sparkle(ctx, 320 + Math.cos(a) * 110, 55 + Math.sin(a * 1.3) * 24, (3 + (i % 3)) * k, i % 2 ? '#ffffff' : '#ffe36b');
-  }
-  const qk = clamp01((t - 0.9) / 0.5);
-  ctx.save();
-  ctx.globalAlpha = qk;
-  text(ctx, quote, 320, 92 + (1 - qk) * 8 + Math.sin(time * 2) * 1.5, { size: 12, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
-  ctx.restore();
-
-  // Ground: the parade of monsters and the hero.
-  for (const w of scene.walkers) {
-    if (w.x > -40 && w.x < 680) drawMonster(ctx, w, w.x, GROUND - Math.sin((w.bonk / 0.35) * Math.PI) * 10, time);
-  }
-  const h = scene.hero;
-  ctx.save();
-  ctx.globalAlpha = 0.18 * (1 + h.y / 120);
-  ctx.fillStyle = '#3a2d4f';
-  ctx.beginPath();
-  ctx.ellipse(h.x, GROUND, 14 * (1 + h.y / 160), 3, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  drawHero(ctx, TITLE_LOOK, TITLE_GEAR, h.x, GROUND + h.y, { ...heroState(h), facing: h.dir, time, scale: 2 });
+  drawHero(ctx, TITLE_LOOK, null, 130, HERO_Y, { pose: 'idle', time, scale: 2 });
   petals(ctx, time);
 
-  // World select slides up after the logo lands.
-  const pk = clamp01((t - 0.7) / 0.6);
-  const px = 230, pw = 180, ph = 76 + WORLDS.length * 22;
-  const py = 108 + (1 - easeOutBack(pk)) * 260;
+  // Logo
+  const bob = Math.sin(time * 2) * 2;
+  text(ctx, 'Tengu', 320, 70 + bob, { size: 56, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
+  text(ctx, quote, 320, 92 + bob, { size: 12, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
+  for (let i = 0; i < 6; i++) {
+    const a = time * 1.5 + i;
+    sparkle(ctx, 320 + Math.cos(a) * 110, 55 + Math.sin(a * 1.3) * 24, 3 + (i % 3), i % 2 ? '#ffffff' : '#ffe36b');
+  }
+
+  // World select
+  const px = 230, py = 108, pw = 180, ph = 76 + WORLDS.length * 22;
   panel(ctx, px, py, pw, ph, 'World Select');
   WORLDS.forEach((w, i) => {
     const ry = py + 24 + i * 22;
@@ -273,25 +124,12 @@ export function titleScreen(ui, time) {
     if (clicked(ui, px + 8, ry, pw - 16, 19)) world = i;
   });
 
-  // Enter World breathes with a soft pink glow.
-  const by = py + 24 + WORLDS.length * 22 + 6;
-  ctx.save();
-  ctx.shadowColor = 'rgba(255,143,193,0.9)';
-  ctx.shadowBlur = 10 + Math.sin(time * 3) * 6;
-  box(ctx, px + 10, by, pw - 20, 22, { fill: COLORS.accent, edge: null, r: 6 });
-  ctx.restore();
-  const pick = button(ui, px + 10, by, pw - 20, 22, 'Enter World', { primary: true, size: 10 }) || ui.input.pressed.has('Enter');
+  const pick = button(ui, px + 10, py + 24 + WORLDS.length * 22 + 6, pw - 20, 22, 'Enter World', { primary: true, size: 10 }) || ui.input.pressed.has('Enter');
   text(ctx, `${WORLDS[world].name} · Channel 1`, px + pw / 2, py + ph - 9, { size: 8, align: 'center', color: COLORS.muted });
 
-  // Status bar with a pulsing "online" light.
+  // Status bar
   ctx.fillStyle = 'rgba(90,63,122,0.55)';
   ctx.fillRect(0, 340, 640, 20);
-  const pulse = (time % 1.6) / 1.6;
-  ctx.strokeStyle = `rgba(111,207,138,${1 - pulse})`;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(12, 350, 3 + pulse * 6, 0, Math.PI * 2);
-  ctx.stroke();
   ctx.fillStyle = COLORS.good;
   ctx.beginPath();
   ctx.arc(12, 350, 3, 0, Math.PI * 2);
@@ -321,8 +159,8 @@ function ring(ctx, y) {
   box(ctx, 44, y - 6, 372, 18, { fill: '#f3d6a6', edge: '#d4a574', r: 9 });
   ctx.fillStyle = '#8fd18a';
   for (let x = 54; x < 410; x += 14) ctx.fillRect(x, y - 7, 8, 3);
-  const petals = ['#ffb8dc', '#ffffff', '#ffe36b'];
-  for (let i = 0; i < 9; i++) leaves(ctx, 64 + i * 41 + (i % 2) * 9, y - 6, 2.5, petals[i % 3]);
+  const flowers = ['#ffb8dc', '#ffffff', '#ffe36b'];
+  for (let i = 0; i < 9; i++) leaves(ctx, 64 + i * 41 + (i % 2) * 9, y - 6, 2.5, flowers[i % 3]);
   ctx.strokeStyle = '#7cc47a';
   ctx.lineWidth = 2;
   for (const vx of [70, 150, 330, 398]) {
