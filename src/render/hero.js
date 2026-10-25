@@ -950,6 +950,8 @@ function weaponPose(type, pose, progress) {
 // look: appearance; gear: equipment map or null.
 // state: { pose, time, facing, progress, hurt, flash, alpha, scale, seed, vy }; anim: from createAnim().
 // (x, y) is the character's feet center in screen space.
+const WEAPON_SCALE = 0.68;
+
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const { pose = 'idle', facing = 1, progress = 0, alpha = 1, scale = 1 } = state;
   const attack = pose === 'swing' || pose === 'shoot' || pose === 'cast';
@@ -992,17 +994,19 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const armDx = rig.tx;
   const armDy = bodyY;
 
-  const restAngle = { crossbow: 10, claw: 70 }[g.weapon?.type] ?? 25;
+  const restAngle = { crossbow: 55, claw: 150 }[g.weapon?.type] ?? 25;
   let weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
   // Bows grip in the middle, so out of combat they're slung across the back instead of held.
   if (!angles && g.weapon?.type === 'bow') {
-    hand = [14 + rig.tx, 30 + bodyY];
-    weaponAngle = 112 + rig.by * 2;
+    hand = [15.5 + rig.tx, 22 + bodyY];
+    weaponAngle = -40 + rig.by * 2;
   }
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
 
+  // Weapons were drawn for taller heroes, so they shrink to suit the chibi body.
+  const ws = scale * WEAPON_SCALE;
   const drawWeapon = () => {
     if (!wpn) return;
     ctx.save();
@@ -1014,16 +1018,16 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
     const el = g.weapon.element;
-    if (el) elementGlow(ctx, wpn, el, time, scale);
-    if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, scale, paint);
-    else paint(-(wpn.grip[0] + 1) * scale, -(wpn.grip[1] + 1) * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
-    if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * scale, (wpn.blade[1] - wpn.grip[1]) * scale, time, scale);
+    if (el) elementGlow(ctx, wpn, el, time, ws);
+    if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
+    else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.canvas.width * ws, wpn.canvas.height * ws);
+    if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
     ctx.restore();
   };
 
   // Weapon trail: remember where the tip was during a swing, drawn as a fading ribbon.
   if (anim && wpn && pose === 'swing' && progress > 0.28 && progress < 0.75) {
-    const len = (wpn.grip[1] - 6) * scale;
+    const len = (wpn.grip[1] - 6) * ws;
     const rad = (weaponAngle * Math.PI) / 180;
     const tipX = sx(hand[0]) + Math.sin(rad) * len * (flip ? -1 : 1);
     const tipY = sy(hand[1]) - Math.cos(rad) * len;
