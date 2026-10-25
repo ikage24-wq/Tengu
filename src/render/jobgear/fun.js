@@ -142,12 +142,12 @@ const D = {
   // A glass dome over the head with a goldfish swimming over the hair.
   fishbowl: {
     hat: () => [
-      ring(15.5, 11.6, 15.2, 14.8, 1.1, '#d8f2ff'),
+      ring(15.5, 11, 15.2, 15.4, 1.1, '#d8f2ff'),
       F(crescent([15.5, 11.6, 13.2, 12.8], [15.5, 11.6, 12.2, 11.8], 112, 150, WHITE)), F(E(23.6, 1.8, 0.7, 0.7, WHITE)),
       crescent([15.5, 11.6, 15.4, 15], [15.5, 11.6, 14, 13.6], 238, 302, STEEL),
-      T([[16.2, 0.6], [13.8, -1.2], [13.8, 2.4]], '#ff9f3a'), E(19, 0.6, 2.8, 1.7, '#ff9f3a'),
-      F(E(20.4, 0.2, 0.45, 0.45, INK)), F(T([[18.4, -1], [19.6, -1], [18.4, -2]], '#ffc070')),
-      ...dots([[23.4, -0.4], [24.4, -2]], 0.5, WHITE),
+      T([[16.4, 0.4], [13.2, -1.8], [13.2, 2.6]], '#ff9f3a'), E(19.4, 0.4, 3.4, 2.1, '#ff9f3a'),
+      F(E(21.2, -0.1, 0.6, 0.6, INK)), F(T([[18.4, -1.4], [20, -1.4], [18.6, -2.8]], '#ffc070')),
+      ...dots([[24.4, -1.6], [25.4, -4]], 0.6, WHITE),
     ],
   },
 
@@ -395,9 +395,9 @@ const D = {
     tucks: true,
     hat: () => {
       const mustard = arcPts(15.5, 14.6, 11.8, 11.2, 160, 20, 10).map(([x, y], i) => [x, y + (i % 2 ? 1.2 : -1.2)]);
-      return [...hoodFront('#d9583a', '#b8402a'), ...zigzag(mustard, 1, '#ffd23b')];
+      return [E(15.5, 1.2, 7.4, 5.2, '#d9583a'), ...hoodFront('#d9583a', '#b8402a'), ...zigzag(mustard, 1, '#ffd23b'), F(E(12.6, -1.4, 1.4, 0.8, '#ff9a7a'))];
     },
-    hatBack: (p, m) => [E(1.4, 16, 4.6, 12.4, '#f0c27a'), E(29.6, 16, 4.6, 12.4, '#f0c27a'), ...hoodBack('#d9583a', m)],
+    hatBack: (p, m) => [E(1.8, 19.4, 4.4, 9.4, '#f0c27a'), E(29.2, 19.4, 4.4, 9.4, '#f0c27a'), ...dots([[0.6, 14], [30.4, 14]], 1, '#ffe0a8'), ...hoodBack('#d9583a', m)],
     top: () => {
       const bun = [[6.6, 25], [11.6, 25.8], [12, 38.8], [7.4, 39.6], [5.8, 32]];
       return [torso('#d9583a'), ...zigzag([[14.6, 26.6], [17, 28.4], [14.4, 30.4], [17, 32.4], [14.6, 34.4], [16.8, 36]], 1.1, '#ffd23b'), T(bun, '#f0c27a'), ...mirrorX([T(bun, '#f0c27a')])];
@@ -412,10 +412,10 @@ const D = {
     shoe: (p, k) => {
       const d = outward(k);
       return [
-        k.shaft(1.6, k.tint(p.dark)),
-        k.poly(oval(d * 3.2, 1.2, 5.6, 2.6, 14), k.tint(p.main)),
-        k.poly(oval(d * 3.2, 3, 5.2, 0.8, 10), k.tint(YELLOW)),
-        k.dot(d * 6, 0.2, 0.8, p.light), k.dot(-0.6, -0.6, 0.8, WHITE), k.dot(0.6, -0.6, 0.8, WHITE),
+        k.shaft(2.4, k.tint(p.dark), 3.4),
+        k.poly(oval(d * 4.6, 0.2, 7.6, 4.4, 16), k.tint(p.main)),
+        k.poly(oval(d * 4.6, 3.6, 7, 1.2, 12), k.tint(YELLOW)),
+        k.dot(d * 8.4, -1.2, 1.1, p.light), k.dot(-0.9, -1.8, 1.1, WHITE), k.dot(0.9, -1.8, 1.1, WHITE),
       ];
     },
   },
@@ -423,9 +423,10 @@ const D = {
   // Fluffy bunny slippers with floppy ears, button eyes, and a pink nose.
   bunnyslippers: {
     shoe: (p, k) => [
-      k.poly(oval(-0.8, -3.4, 0.9, 3, 10), k.tint(p.main)), k.poly(oval(1.4, -3.6, 0.9, 3, 10), k.tint(p.main)),
-      k.poly(oval(0.6, 1, 3.8, 2.4, 14), k.tint(p.main)), k.poly(oval(0.6, 2.8, 3.6, 0.7, 8), k.tint(WHITE)),
-      k.dot(-0.6, 0.2, 0.45, INK), k.dot(1.8, 0.2, 0.45, INK), k.dot(0.6, 1.2, 0.55, '#ff6b8a'),
+      k.poly(oval(-1.4, -5, 1.3, 5, 10), k.tint(p.main)), k.poly(oval(2.4, -5.4, 1.3, 5, 10), k.tint(p.main)),
+      k.poly(oval(-1.4, -5, 0.6, 3.6, 8), k.tint(PINK)), k.poly(oval(2.4, -5.4, 0.6, 3.6, 8), k.tint(PINK)),
+      k.poly(oval(0.6, 0.6, 4.8, 3, 14), k.tint(p.main)), k.poly(oval(0.6, 3.2, 4.6, 0.9, 8), k.tint(WHITE)),
+      k.dot(-1, -0.6, 0.6, INK), k.dot(2.2, -0.6, 0.6, INK), k.dot(0.6, 1, 0.7, '#ff6b8a'),
     ],
   },
 
@@ -433,8 +434,8 @@ const D = {
   duckfeet: {
     shoe: (p, k) => {
       const d = outward(k);
-      const foot = [[-1.6, -1.2], [1.6, -1.2], [2.4, 0.2], [7, 0.6], [5.8, 1.6], [7.4, 2.2], [5.8, 2.6], [6.8, 3.4], [-2.2, 3.4], [-2.8, 1]];
-      return [k.poly(foot.map(([x, y]) => [x * d, y]), k.tint('#ff9f3a')), k.poly([[2 * d, 1.4], [5 * d, 1.6], [5 * d, 2], [2 * d, 1.9]], k.tint('#e8762a'))];
+      const foot = [[-1.6, -1.6], [1.6, -1.6], [2.8, -0.6], [8.6, -0.4], [7, 1.2], [9.2, 2], [7.2, 2.8], [8.6, 3.8], [-2.6, 3.8], [-3.2, 0.6]];
+      return [k.poly(foot.map(([x, y]) => [x * d, y]), k.tint('#ff9f3a')), k.poly([[2 * d, 0.8], [6 * d, 1.2], [6 * d, 1.8], [2 * d, 1.6]], k.tint('#e8762a')), k.poly([[2 * d, 2.4], [6 * d, 2.6], [6 * d, 3.2], [2 * d, 3]], k.tint('#e8762a'))];
     },
   },
 
@@ -445,10 +446,13 @@ const D = {
     hand: (p, hx, hy, ex, ey) => {
       const l = Math.hypot(hx - ex, hy - ey) || 1;
       const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      // The finger points up and away from the body.
+      const out = hx < 15.5 ? -1 : 1;
+      const [tx, ty] = [hx + out * 5, hy - 9];
       return [
-        limb(hx - ux * 1.4, hy - uy * 1.4, hx - ux * 3, hy - uy * 3, 4.2, 4.4, WHITE),
-        R(hx - 1, hy - 6, 2, 5, p.main), E(hx, hy - 6, 1, 1.2, p.main),
-        E(hx, hy + 0.4, 2.8, 2.6, p.main), E(hx + 2.2, hy - 0.8, 1, 1.4, p.main), F(R(hx - 0.4, hy - 0.6, 0.8, 2, WHITE)),
+        limb(hx - ux * 2, hy - uy * 2, hx - ux * 4, hy - uy * 4, 5.6, 5.8, WHITE),
+        limb(hx, hy, tx, ty, 3.6, 3.2, p.main), E(tx, ty, 1.6, 1.6, p.main),
+        E(hx, hy + 0.6, 3.8, 3.6, p.main), E(hx - out * 3, hy - 1.4, 1.4, 2, p.main), F(R(hx - 0.6, hy - 1, 1.2, 3.4, WHITE)),
       ];
     },
   },
@@ -461,9 +465,9 @@ const D = {
       const [nx, ny] = [-uy, ux];
       const at = (a, b) => [hx + ux * a + nx * b, hy + uy * a + ny * b];
       return [
-        limb(...at(-1, 0), ...at(-3.6, 0), 3.4, 3.6, '#d8403a'),
-        T([at(0, 1.6), at(4.6, 2.6), at(5.2, 0.6), at(2.6, 0.2)], RED), T([at(0, -1.4), at(3.6, -2.4), at(4, -0.8), at(2, -0.2)], RED),
-        E(hx, hy, 2.3, 2.3, RED), F(E(...at(-0.4, 1), 0.6, 0.6, '#ffb0a0')),
+        limb(...at(-1, 0), ...at(-4, 0), 4.2, 4.4, '#d8403a'),
+        T([at(0, 2.2), at(6.6, 3.8), at(7.4, 0.8), at(3.6, 0.4)], RED), T([at(0, -2), at(5.2, -3.4), at(5.8, -1), at(2.8, -0.2)], RED),
+        E(hx, hy, 3.2, 3.2, RED), F(E(...at(-0.6, 1.4), 0.8, 0.8, '#ffb0a0')),
       ];
     },
   },
@@ -489,7 +493,7 @@ const D = {
     cape: (p, m) => {
       const s = m.sway * 0.5;
       const bob = m.hair * 0.4;
-      const list = [[-1, -5, '#ff5a6a'], [5, -11, YELLOW], [-6, -13, '#5aa8ff'], [0.6, -19, null]];
+      const list = [[2, -5, '#ff5a6a'], [8, -11, YELLOW], [-3, -13, '#5aa8ff'], [3.6, -19, null]];
       const out = list.map(([x, y]) => F(limb(9.6, 30, x + s, y + 3.6, 0.6, 0.5, WHITE)));
       list.forEach(([x0, y0, c], i) => {
         const x = x0 + s;
@@ -521,8 +525,8 @@ const D = {
   // A big spiral snail shell worn as a backpack.
   snail: {
     cape: (p) => [
-      E(6.6, 30.4, 8.6, 8.6, p.main), E(7.4, 29.8, 6.6, 6.4, p.light), E(7, 30, 5, 4.8, p.main),
-      E(7.6, 29.6, 3.4, 3.2, p.light), E(7.2, 29.8, 2, 1.9, p.main), F(E(3.6, 26.6, 1, 1.4, WHITE)),
+      E(4.6, 27.4, 11, 11, p.main), E(5.6, 26.6, 8.4, 8.2, p.light), E(5, 26.8, 6.4, 6.2, p.main),
+      E(5.8, 26.2, 4.4, 4.2, p.light), E(5.3, 26.4, 2.6, 2.5, p.main), F(E(0.4, 21.6, 1.2, 1.8, WHITE)),
     ],
     capeFront: () => {
       const strap = [T([[10, 26], [12.6, 26], [13.4, 31], [11, 31]], '#7a5238')];
@@ -536,9 +540,9 @@ const D = {
   fish: {
     cover: () => ({
       shapes: [
-        T([[-3.6, 4.4], [0, 0.4], [3.6, 4.4], [0, 2.8]], '#6aa0d0'), R(-1, -2.6, 2, 3.4, '#8fc4e8'),
+        T([[-3.6, 4.4], [0, 0.4], [3.6, 4.4], [0, 2.8]], '#6aa0d0'), R(-1, -2.6, 2, 3.4, '#7fb4e0'),
         T([[3, -14], [6.6, -10.4], [3.4, -6]], '#6aa0d0'),
-        E(0, -11, 4, 9, '#8fc4e8'), E(-1.6, -10.4, 2, 6.6, '#e8f4ff'),
+        E(0, -11, 4.4, 9, '#7fb4e0'), E(-1.8, -10.4, 2.2, 6.6, '#e8f4ff'),
         T([[-1, -12], [-4.8, -9.4], [-1.2, -8.6]], '#6aa0d0'),
         F(T([[-3.4, -14.8], [3.4, -15.4], [3.4, -14.4], [-3.4, -13.8]], '#5f94c8')), ...dots([[1.4, -9.4], [1.4, -5.6], [2.6, -7.4]], 0.6, '#5f94c8'),
         E(0.8, -17.4, 1.6, 1.6, WHITE), F(E(1.1, -17.4, 0.8, 0.8, INK)), F(R(-1, -20.2, 2, 0.8, '#3a5a80')),

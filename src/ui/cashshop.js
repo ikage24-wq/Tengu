@@ -58,10 +58,13 @@ export function cashShopWindow(ui, state, world) {
   const rx = win.x + 128;
   const was = `${win.cat}|${win.style}`;
   win.style = tabs(ui, rx, win.y + 24, STYLE_LABELS, win.style ?? 0, { w: 42.6, h: 12 });
-  const row1 = tabs(ui, rx, win.y + 42, LABELS.slice(0, 4), win.cat < 4 ? win.cat : -1, { w: 53, h: 12 });
-  const row2 = tabs(ui, rx, win.y + 58, LABELS.slice(4), win.cat >= 4 ? win.cat - 4 : -1, { w: 53, h: 12 });
-  if (row1 >= 0 && row1 !== (win.cat < 4 ? win.cat : -1)) win.cat = row1;
-  if (row2 >= 0 && row2 !== (win.cat >= 4 ? win.cat - 4 : -1)) win.cat = row2 + 4;
+  // Two rows of slot tabs act as one set: a click in either row picks that slot.
+  const in1 = win.cat < 4 ? win.cat : -1;
+  const in2 = win.cat >= 4 ? win.cat - 4 : -1;
+  const row1 = tabs(ui, rx, win.y + 42, LABELS.slice(0, 4), in1, { w: 53, h: 12 });
+  const row2 = tabs(ui, rx, win.y + 58, LABELS.slice(4), in2, { w: 53, h: 12 });
+  if (row1 !== in1) win.cat = row1;
+  else if (row2 !== in2) win.cat = row2 + 4;
   if (`${win.cat}|${win.style}` !== was) win.scroll = 0;
   const slot = OUTFIT_SLOTS[win.cat];
   const style = win.style ? OUTFIT_STYLES[win.style - 1] : null;
