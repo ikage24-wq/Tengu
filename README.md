@@ -15,7 +15,8 @@ npm start            # or: python3 -m http.server 8000
 ```
 
 Progress saves to your browser automatically (every 20 seconds, on map changes, and when you
-leave the tab). Pick **Continue** on the title screen to pick up where you left off.
+leave the tab). Pick a world, then pick a hero on the character select tree and press **Start**
+(or Enter). The tree holds up to 8 characters; click an empty slot to create one.
 
 ## Controls
 

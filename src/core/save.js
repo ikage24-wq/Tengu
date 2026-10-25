@@ -1,25 +1,28 @@
-// Saving and loading the character in localStorage. Buffs and timers aren't saved.
+// Saving and loading characters in localStorage, one key per character slot. Buffs and timers aren't saved.
 
 import { setNextUid } from './items.js';
 import { ITEMS } from '../data/items.js';
 
-const KEY = 'twzt-save-v1';
+// Slot 0 keeps the original key so saves from before character slots still load.
+export const SLOTS = 8;
+const keyFor = (slot = 0) => (slot ? `twzt-save-v1-${slot}` : 'twzt-save-v1');
 
 export function saveGame(char) {
   try {
     const data = { ...char, buffs: {}, savedAt: Date.now() };
-    localStorage.setItem(KEY, JSON.stringify(data));
+    localStorage.setItem(keyFor(char.slot), JSON.stringify(data));
     return true;
   } catch {
     return false;
   }
 }
 
-export function loadGame() {
+export function loadGame(slot = 0) {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(keyFor(slot));
     if (!raw) return null;
     const char = JSON.parse(raw);
+    char.slot = slot;
     dropRetiredItems(char);
     // Keep new item ids from colliding with saved ones.
     const all = [...Object.values(char.equipment).filter(Boolean), ...char.inventory.equip];
@@ -40,17 +43,17 @@ export function dropRetiredItems(char) {
   return char;
 }
 
-export function hasSave() {
+export function hasSave(slot = 0) {
   try {
-    return Boolean(localStorage.getItem(KEY));
+    return Boolean(localStorage.getItem(keyFor(slot)));
   } catch {
     return false;
   }
 }
 
-export function deleteSave() {
+export function deleteSave(slot = 0) {
   try {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem(keyFor(slot));
   } catch {
     // Storage may be unavailable (private mode); nothing to delete.
   }

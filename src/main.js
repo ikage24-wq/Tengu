@@ -1,12 +1,12 @@
-// Entry point: canvas scaling, screens (title -> creator -> game), the fixed-step loop, and autosave.
+// Entry point: canvas scaling, screens (title -> character select -> creator -> game), the fixed-step loop, and autosave.
 
 import { createInput, endFrame, VW, VH } from './input.js';
 import { beginUi, endUi } from './ui/kit.js';
-import { titleScreen, creatorScreen, randomLook } from './ui/screens.js';
+import { titleScreen, selectScreen, creatorScreen, randomLook } from './ui/screens.js';
 import { createUiState, routeInput, drawUi } from './ui/manager.js';
 import { createCharacter } from './core/character.js';
 import { addItem } from './core/inventory.js';
-import { saveGame, loadGame, hasSave } from './core/save.js';
+import { saveGame, loadGame, hasSave, deleteSave, SLOTS } from './core/save.js';
 import { createWorld, updateWorld } from './world/world.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 
@@ -31,7 +31,8 @@ const TICK = 1 / 60;
 const AUTOSAVE_EVERY = 20;
 
 let screen = 'title';
-let savePreview = hasSave() ? loadGame() : null;
+let chars = [];
+const lobby = { slot: 0, confirm: false };
 let draft = null;
 let world = null;
 let uiState = null;
@@ -47,8 +48,13 @@ function startGame(char) {
   if (!char.quests.first_steps) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
 }
 
-function newCharacter(name, look) {
+function loadChars() {
+  chars = Array.from({ length: SLOTS }, (_, i) => (hasSave(i) ? loadGame(i) : null));
+}
+
+function newCharacter(name, look, slot = 0) {
   const char = createCharacter(name, look);
+  char.slot = slot;
   addItem(char.inventory, 'red_potion', 3);
   char.hotkeys.Digit1 = { item: 'red_potion' };
   char.hotkeys.Digit2 = { item: 'blue_potion' };
@@ -72,15 +78,29 @@ function frame(now) {
   const ui = beginUi(ctx, input);
 
   if (screen === 'title') {
-    const pick = titleScreen(ui, time, savePreview);
-    if (pick === 'continue') startGame(loadGame());
-    if (pick === 'new') {
+    if (titleScreen(ui, time)) {
+      loadChars();
+      lobby.slot = Math.max(0, chars.findIndex(Boolean));
+      lobby.confirm = false;
+      screen = 'select';
+    }
+  } else if (screen === 'select') {
+    const pick = selectScreen(ui, time, chars, lobby);
+    if (pick === 'back') screen = 'title';
+    if (pick === 'start') startGame(loadGame(lobby.slot));
+    if (pick === 'delete') {
+      deleteSave(lobby.slot);
+      loadChars();
+    }
+    if (pick === 'create') {
       draft = { name: '', look: randomLook() };
       screen = 'creator';
     }
   } else if (screen === 'creator') {
-    if (creatorScreen(ui, time, draft)) {
-      const char = newCharacter(draft.name.trim(), draft.look);
+    const pick = creatorScreen(ui, time, draft);
+    if (pick === 'back') screen = 'select';
+    if (pick === 'start') {
+      const char = newCharacter(draft.name.trim(), draft.look, lobby.slot);
       saveGame(char);
       startGame(char);
     }
