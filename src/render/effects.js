@@ -3,6 +3,7 @@
 
 import { drawItemIcon } from './icons.js';
 import { ITEMS, RARITIES } from '../data/items.js';
+import { ELEMENTS } from './elements.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -50,7 +51,7 @@ function drawShot(ctx, f, cam) {
   const x = f.x + (f.tx - f.x) * p - cam.x;
   const y = f.y + (f.ty - f.y) * p - cam.y;
   const dir = Math.sign(f.tx - f.x) || 1;
-  const c = SHOT_COLORS[f.shot] ?? '#ffffff';
+  const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
   switch (f.shot) {
     case 'arrow': case 'pierce':
@@ -99,6 +100,144 @@ function drawShot(ctx, f, cam) {
   ctx.restore();
 }
 
+// A glowing streak behind elemental projectiles.
+function shotTrail(ctx, f, cam) {
+  if (f.t < 0) return;
+  const p = Math.max(0, Math.min(1, f.t / f.dur));
+  const el = ELEMENTS[f.element];
+  const x = f.x + (f.tx - f.x) * p - cam.x;
+  const y = f.y + (f.ty - f.y) * p - cam.y;
+  const dir = Math.sign(f.tx - f.x) || 1;
+  ctx.save();
+  const g = ctx.createLinearGradient(x - dir * 34, y, x, y);
+  g.addColorStop(0, 'rgba(255,255,255,0)');
+  g.addColorStop(1, el.color);
+  ctx.strokeStyle = g;
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.globalAlpha = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(x - dir * 34, y);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = el.sparks[i % el.sparks.length];
+    ctx.fillRect(Math.round(x - dir * (8 + i * 9)), Math.round(y + Math.sin(f.t * 30 + i * 2) * 3), 2, 2);
+  }
+  ctx.restore();
+}
+
+// An elemental burst where a hit lands. (x, y) is the monster's feet; f.h its height.
+function impact(ctx, f, x, y, p, time) {
+  const el = ELEMENTS[f.element];
+  const cy = y - f.h / 2;
+  const fade = 1 - p;
+  switch (f.element) {
+    case 'holy': {
+      // A pillar of light with a cross flash.
+      const w = 10 * fade + 2;
+      const g = ctx.createLinearGradient(0, cy - 70, 0, y);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(1, '#fff3a6');
+      ctx.globalAlpha = fade * 0.8;
+      ctx.fillStyle = g;
+      ctx.fillRect(x - w / 2, cy - 70, w, y - cy + 70);
+      ctx.fillStyle = '#ffffff';
+      const s = 6 + p * 10;
+      ctx.fillRect(x - 1, cy - s, 3, s * 2);
+      ctx.fillRect(x - s * 0.7, cy - s * 0.35, s * 1.4, 3);
+      break;
+    }
+    case 'cosmic': {
+      // A starburst: a ring and five spinning stars flung outward.
+      ctx.globalAlpha = fade;
+      ctx.strokeStyle = el.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, cy, 4 + p * 18, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + f.seed * 6;
+        ctx.save();
+        ctx.translate(x + Math.cos(a) * p * 22, cy + Math.sin(a) * p * 22);
+        ctx.rotate(time * 6 + i);
+        sparkle(ctx, 0, 0, 4 * fade + 1, el.sparks[i % 3]);
+        ctx.restore();
+      }
+      break;
+    }
+    case 'storm': {
+      // A lightning bolt strikes from above, then crackles.
+      if (p < 0.6) {
+        ctx.globalAlpha = 1 - p / 0.6;
+        ctx.strokeStyle = '#ffffff';
+        ctx.shadowColor = el.color;
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        let bx = x + (f.seed - 0.5) * 20;
+        let by = cy - 90;
+        ctx.moveTo(bx, by);
+        for (let i = 1; i <= 6; i++) {
+          bx = x + (i === 6 ? 0 : Math.sin(f.seed * 50 + i * 2.3) * 9);
+          by = cy - 90 + i * 15;
+          ctx.lineTo(bx, by);
+        }
+        ctx.stroke();
+        ctx.strokeStyle = el.color;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = el.color;
+      ctx.beginPath();
+      ctx.arc(x, cy, 10 * fade + 2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'fire': {
+      // An explosion: a hot core and puffs blooming outward.
+      const r = 6 + ease(p) * 16;
+      const g = ctx.createRadialGradient(x, cy, 1, x, cy, r);
+      g.addColorStop(0, '#fff3a6');
+      g.addColorStop(0.4, '#ffa53b');
+      g.addColorStop(1, 'rgba(255,75,43,0)');
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + f.seed * 4;
+        ctx.fillStyle = el.sparks[i % 3];
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * r, cy + Math.sin(a) * r - p * 8, 3 * fade + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case 'water': {
+      // A splash crown with droplets, and a ripple on the ground.
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = '#c9f6ff';
+      for (let i = 0; i < 7; i++) {
+        const a = -Math.PI * (0.15 + (i / 6) * 0.7);
+        const d = ease(p) * 20;
+        const dy = p * p * 30;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * d, cy + Math.sin(a) * d + dy, 2.5 * fade + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.strokeStyle = el.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 6 + p * 24, 2 + p * 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    }
+  }
+}
+
 function drawFx(ctx, f, cam, time) {
   const p = Math.max(0, Math.min(1, f.t / f.dur));
   const x = f.x - cam.x;
@@ -106,11 +245,31 @@ function drawFx(ctx, f, cam, time) {
   ctx.save();
   switch (f.kind) {
     case 'projectile':
+      if (f.element) shotTrail(ctx, f, cam);
       drawShot(ctx, f, cam);
+      break;
+    case 'impact':
+      impact(ctx, f, x, y, p, time);
       break;
     case 'swing': case 'slash': {
       const cx = x + f.dir * 10;
-      slash(ctx, cx, y - 24, f.dir, 26, p, f.kind === 'slash' ? '#ffb38a' : '#ffe6f3', f.kind === 'slash' ? 8 : 5);
+      if (f.element) {
+        // Elemental slashes are wider, glow in the element's color, and leave motes behind.
+        const el = ELEMENTS[f.element];
+        ctx.shadowColor = el.glow;
+        ctx.shadowBlur = 8;
+        slash(ctx, cx, y - 24, f.dir, 32, p, el.color, f.kind === 'slash' ? 10 : 8);
+        ctx.shadowBlur = 0;
+        for (let i = 0; i < 6; i++) {
+          const a = (f.dir > 0 ? -Math.PI * 0.75 : -Math.PI * 0.25) + (i / 5) * Math.PI * ease(p) * f.dir;
+          ctx.globalAlpha = (1 - p) * 0.9;
+          ctx.fillStyle = el.sparks[i % el.sparks.length];
+          const r = 32 + Math.sin(i * 3.1) * 6 + p * 10;
+          ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(y - 24 + Math.sin(a) * r), 2, 2);
+        }
+      } else {
+        slash(ctx, cx, y - 24, f.dir, 26, p, f.kind === 'slash' ? '#ffb38a' : '#ffe6f3', f.kind === 'slash' ? 8 : 5);
+      }
       break;
     }
     case 'spin': {

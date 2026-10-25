@@ -5,6 +5,13 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { mobBox } from './mobs.js';
+import { ITEMS } from '../data/items.js';
+
+// The element of the player's weapon (endgame weapons only); attack effects take it on.
+export function weaponElement(char) {
+  const w = char.equipment.weapon;
+  return w ? ITEMS[w.id]?.element ?? null : null;
+}
 
 const BASE_DELAY = 0.5; // seconds between attacks at normal speed
 const PROJECTILE_SPEED = 620;
@@ -55,6 +62,7 @@ export function cast(world, skillId, rng = Math.random) {
 
   const { char, stats, body, now } = world;
   const s = skillId ? SKILLS[skillId] : null;
+  const element = weaponElement(char);
   const ranged = WEAPON_TYPES[stats.weaponType]?.ranged;
   const params = s ? skillAt(skillId, char.skills[skillId]) : ranged ? BASIC_RANGED : BASIC_MELEE;
   const type = s ? s.type : 'attack';
@@ -92,7 +100,7 @@ export function cast(world, skillId, rng = Math.random) {
   if (!params.projectile) {
     const box = hitBox(body, params.range);
     const storm = fxKind === 'meteor' || fxKind === 'judgment';
-    world.fx.push({ kind: fxKind, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: storm ? 0.8 : 0.3 });
+    world.fx.push({ kind: fxKind, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: storm ? 0.8 : 0.3, element });
     if (storm) world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
   }
 
@@ -107,7 +115,7 @@ export function cast(world, skillId, rng = Math.random) {
       if (params.projectile) {
         world.fx.push({
           kind: 'projectile', shot: fxKind, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
-          tx: m.x, ty: m.y - m.def.h / 2, t: -(n * 0.09 + ti * 0.02), dur: Math.max(0.08, travel),
+          tx: m.x, ty: m.y - m.def.h / 2, t: -(n * 0.09 + ti * 0.02), dur: Math.max(0.08, travel), element,
         });
       }
     }
@@ -121,7 +129,7 @@ export function cast(world, skillId, rng = Math.random) {
   if (params.projectile && !targets.length) {
     world.fx.push({
       kind: 'projectile', shot: fxKind, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
-      tx: body.x + body.facing * params.range.w, ty: body.y - body.h * 0.55, t: 0, dur: params.range.w / PROJECTILE_SPEED,
+      tx: body.x + body.facing * params.range.w, ty: body.y - body.h * 0.55, t: 0, dur: params.range.w / PROJECTILE_SPEED, element,
     });
   }
   return { ok: true, targets: targets.length };

@@ -64,7 +64,9 @@ then press the key. Right-click a hotkey slot to clear it.
   **Water** (flowing waves, bubbles, seashells). That's 9 weapon types × 9 steps, all comically
   oversized and growing as you climb; endgame weapons are the biggest, animate, glow, leave
   elemental footsteps (feathers, stardust, sparks, flames, splashes), wrap you in a sparkling
-  aura, and color your swing trails and hit sparks. Each element leans a different way: Holy adds
+  aura, and turn your attacks elemental: glowing slashes and projectile trails in the element's
+  colors, and an impact on every hit (a pillar of holy light, a cosmic starburst, a lightning
+  strike from above, a fiery explosion, or a splash with a ripple). Each element leans a different way: Holy adds
   HP and magic defense, Cosmic your main stat and accuracy, Lightning speed, Fire the most attack,
   Water HP and MP.
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for

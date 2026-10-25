@@ -13,7 +13,7 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
-import { cast, summonStrike, summonPosition } from './combat.js';
+import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
 import { nextJobs } from '../data/jobs.js';
 
 const INVULN = 1.2;
@@ -327,6 +327,9 @@ export function updateWorld(world, dt, input) {
     world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit });
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - m.def.h / 2, t: 0, dur: 0.25, crit: h.crit });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
+    // Endgame weapons add an elemental impact on every hit.
+    const element = weaponElement(char);
+    if (element) world.fx.push({ kind: 'impact', element, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.4, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
     if (hitMob(m, h.damage, h.fromX, world.now)) killMob(world, m);
   }

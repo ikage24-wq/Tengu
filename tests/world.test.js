@@ -203,3 +203,21 @@ test('summons attack nearby monsters on their own', () => {
   const after = w.mobs.reduce((n, m) => n + m.hp, 0);
   assert.ok(after < before, 'the angel dealt damage without the player attacking');
 });
+
+test('endgame weapons tag attacks with their element and add an impact on every hit', () => {
+  const w = newWorld();
+  gainExp(w.char, 1e7);
+  advanceJob(w.char, 'warrior');
+  w.char.equipment.weapon = makeEquip('sword_7');
+  loadMap(w, 'meadow1', 'west');
+  w.mobs = [];
+  w.spawner.slots = [];
+  const m = spawnMob(w.map, { mob: 'puffle', x: w.body.x + 30, y: w.map.groundY });
+  m.def = { ...m.def, eva: 0, hp: 1e9 };
+  m.hp = 1e9;
+  w.mobs.push(m);
+  w.body.facing = 1;
+  for (let i = 0; i < 40; i++) updateWorld(w, DT, keys(['KeyZ']));
+  assert.ok(w.fx.some((f) => f.kind === 'swing' && f.element === 'fire'), 'fire slash');
+  assert.ok(w.fx.some((f) => f.kind === 'impact' && f.element === 'fire'), 'fire impact');
+});
