@@ -7,6 +7,7 @@ import { bagWindow, statsWindow, skillsWindow, questsWindow } from './windows.js
 import { npcWindow, deathWindow } from './npc.js';
 import { drawHud } from './hud.js';
 import { worldMapWindow } from './worldmap.js';
+import { createChat, chatInput, updateChat, drawChatBar } from './chat.js';
 
 export function createUiState() {
   return {
@@ -19,6 +20,7 @@ export function createUiState() {
       worldmap: { x: 110, y: 26, open: false },
     },
     npc: null,
+    chat: createChat(),
     death: false,
     scrollMode: null,
     selectedSkill: null,
@@ -46,6 +48,10 @@ export function routeInput(state, world, input, dt) {
     }
   }
   world.events.length = 0;
+
+  // While the chat bar is open it has the keyboard.
+  updateChat(state.chat, world, dt);
+  if (!state.npc && !state.death && chatInput(state.chat, world, input)) return true;
 
   for (const [code, key] of Object.entries(TOGGLES)) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
@@ -84,6 +90,7 @@ export function routeInput(state, world, input, dt) {
 
 export function drawUi(ui, state, world) {
   drawHud(ui, state, world);
+  drawChatBar(ui, state.chat, world);
   if (state.windows.stats.open) statsWindow(ui, state, world);
   if (state.windows.skills.open) skillsWindow(ui, state, world);
   if (state.windows.quests.open) questsWindow(ui, state, world);

@@ -41,6 +41,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | X | Pick up loot (hold to vacuum) |
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
 | I / C / K / L / M | Bag / Stats / Skills / Quests / World map |
+| Enter | Chat (Enter sends, Esc cancels, /help for commands) |
 | Esc | Close windows |
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
@@ -103,6 +104,9 @@ then press the key. Right-click a hotkey slot to clear it.
   and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
   when they chase you (hit monsters do), >< eyes when hit, and x eyes when they poof. The boss
   telegraphs a ground slam.
+- **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
+  emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
+  expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.
 - **Towns and the world map** — each job has a home town in its own style: Sprout Village
   (archers, a pastel village with archery targets), Pastel Harbor (thieves, moonlit docks with
   string lights and alley cats), Ember Crag (warriors, sandstone mesas with forges, banners, and

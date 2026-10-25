@@ -248,3 +248,19 @@ test('fast travel flies between towns for gold, and only from a town', () => {
   assert.ok(travelTo(w, 'sprout'), 'no flights from the field');
   assert.equal(w.map.id, 'ruins');
 });
+
+test('chat sends a message, shows a bubble, and emoticons set a face', async () => {
+  const { createChat, chatInput } = await import('../src/ui/chat.js');
+  const w = newWorld();
+  w.body.x = 360; // next to Mira
+  const chat = createChat();
+  const frame = (pressed = [], typed = []) => chatInput(chat, w, { pressed: new Set(pressed), held: new Set(['ArrowRight']), typed });
+  assert.equal(frame(['Enter']), true, 'Enter opens the chat bar');
+  assert.equal(frame([], [...'hello :D']), true);
+  frame(['Enter']);
+  assert.equal(chat.typing, null);
+  assert.ok(w.messages.some((m) => m.text === 'W: hello :D'));
+  assert.equal(w.bubbles.player.text, 'hello :D');
+  assert.equal(w.emote.face, 'excited');
+  assert.ok(chat.pending.some((p) => p.who === 'mira'), 'Mira says hi back');
+});

@@ -13,6 +13,7 @@ import { text, box, COLORS } from '../ui/kit.js';
 import { createAnim, stepAnim } from './animator.js';
 import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura } from './particles.js';
 import { ITEMS } from '../data/items.js';
+import { drawBubble } from '../ui/chat.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -137,7 +138,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   const p = playerPose(world);
   const blink = world.invuln > 0 && Math.floor(time * 16) % 2 === 0;
   if (b.onGround) drawShadow(ctx, b.x - cam.x, b.y - cam.y, 1);
-  drawHero(ctx, world.char.appearance, world.char.equipment, Math.round(b.x - cam.x), Math.round(b.y - cam.y), {
+  // A chat emoticon shows on the face for a few seconds.
+  const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
+  drawHero(ctx, look, world.char.equipment, Math.round(b.x - cam.x), Math.round(b.y - cam.y), {
     ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1,
   }, feel.anim);
 
@@ -151,6 +154,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawEffects(ctx, world, cam, time);
   drawParticles(ctx, feel.fx, cam, time);
   drawNumbers(ctx, world, cam);
+  drawBubbles(ctx, world, cam);
 }
 
 // A soft oval under the feet.
@@ -162,4 +166,15 @@ function drawShadow(ctx, x, y, k) {
   ctx.ellipse(x, y, 11 * k, 2.5 * k, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+}
+
+// Speech bubbles over the player and NPCs; they fade out at the end.
+function drawBubbles(ctx, world, cam) {
+  for (const [who, bubble] of Object.entries(world.bubbles ?? {})) {
+    const npc = who === 'player' ? null : world.map.npcs.find((n) => n.id === who);
+    if (who !== 'player' && !npc) continue;
+    const x = who === 'player' ? world.body.x : npc.x;
+    const y = who === 'player' ? world.body.y : world.map.groundY;
+    drawBubble(ctx, Math.round(x - cam.x), Math.round(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2));
+  }
 }

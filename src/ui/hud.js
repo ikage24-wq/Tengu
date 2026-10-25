@@ -173,12 +173,14 @@ function drawTracker(ui, world) {
   }
 }
 
-function drawLog(ui, world) {
+function drawLog(ui, world, state) {
   const { ctx } = ui;
   const msgs = world.messages;
+  // While chatting the log sits above the chat bar and shows in full.
+  const typing = state.chat?.typing != null;
   msgs.forEach((m, i) => {
-    const y = BAR_Y - 6 - (msgs.length - 1 - i) * 11;
-    ctx.globalAlpha = Math.min(1, m.t);
+    const y = BAR_Y - (typing ? 26 : 6) - (msgs.length - 1 - i) * 11;
+    ctx.globalAlpha = typing ? 1 : Math.min(1, m.t);
     text(ctx, m.text, 6, y, { size: 8, bold: true, color: m.color, outline: 'rgba(58,45,79,0.85)' });
   });
   ctx.globalAlpha = 1;
