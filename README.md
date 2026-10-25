@@ -5,8 +5,10 @@ monsters across connected maps, pick a job at level 10 and a specialty at 30, sp
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
 pastel style: characters are short pixel chibis in the classic MMO style (a big round head with
 ears and big soft eyes, rounded bangs with a shine band, a small jointed body that is feminine or
-masculine, picked in the creator or at the salon), drawn crisp at 2x detail with a dark pixel
-outline; they and the monsters get a soft lavender shadow on the back side of each part;
+masculine, picked in the creator or at the salon, with nine eye styles and hair built from
+curved locks), drawn crisp at 2x detail with a dark pixel outline whose corners are softened;
+they and the monsters get three-tone shading: a soft lavender shadow at the back of each part, the
+base color, and a warm highlight on the front edge;
 the world, items, and weapons are pixel art. No build step and no dependencies.
 
 ## Run it

@@ -23,6 +23,11 @@ export function shadowTone(c) {
   return mix(shade(c, -7), '#9b8ad0', 0.2);
 }
 
+// The soft highlight on the lit front edge: a touch of warm white.
+export function lightTone(c) {
+  return mix(c, '#fff8ee', 0.22);
+}
+
 export function shade(hex, amount) {
   const n = parseInt(hex.slice(1), 16);
   const adj = (v) => Math.max(0, Math.min(255, v + Math.round((amount / 100) * 255)));
@@ -140,14 +145,16 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     const under = Math.max(1, Math.round(res * 0.5));
     const castBand = Math.round(res * 1.1);
     const dark = new Map();
-    const tone = (id) => {
-      let v = dark.get(id);
+    const bright = new Map();
+    const toned = (cache, id, fn) => {
+      let v = cache.get(id);
       if (v === undefined) {
-        v = idOf(shadowTone(colors[id]));
-        dark.set(id, v);
+        v = idOf(fn(colors[id]));
+        cache.set(id, v);
       }
       return v;
     };
+    const tone = (id) => toned(dark, id, shadowTone);
     const shaded = new Uint8Array(gw * gh);
     for (let y = 0; y < gh; y++) {
       let x = 0;
@@ -161,8 +168,12 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         // A run of this color; flat details inside it (strands, shines) don't break it.
         let end = x;
         while (end < gw && (grid[y * gw + end] === c || (flat[y * gw + end] && grid[y * gw + end] >= 0))) end++;
-        const back = Math.max(res, Math.round((end - x) * 0.3));
+        // Three tones across the run: shadow at the back, base, and a soft highlight at the front.
+        const len = end - x;
+        const back = Math.max(res, Math.round(len * 0.28));
+        const front = len >= res * 3 ? Math.max(1, Math.round(len * 0.14)) : 0;
         for (let k = x; k < Math.min(end, x + back); k++) shaded[y * gw + k] = 1;
+        for (let k = Math.max(x + back, end - front); k < end; k++) shaded[y * gw + k] = 2;
         x = end;
       }
     }
@@ -180,6 +191,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
           }
         }
         if (shadow) out[i] = tone(c);
+        else if (!lit[i] && shaded[i] === 2) out[i] = toned(bright, c, lightTone);
       }
     }
   }
@@ -212,26 +224,34 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     }
   }
   const ink = soft ? null : idOf(OUTLINE);
+  // Crisp outlines are smoothed: the outermost corner cells (a knight's move from the shape) are
+  // drawn half transparent, which rounds off stair-steps like hand-antialiased pixel art.
+  const softCorner = crisp ? reach * reach + 1 : Infinity;
   const inkFor = new Map();
   for (let t = 0; t < best.length; t++) {
     if (best[t] === Infinity) continue;
     if (ink !== null) {
       out[t] = ink;
-    } else {
-      let v = inkFor.get(from[t]);
-      if (v === undefined) {
-        v = idOf(outlineFor(colors[from[t]], crisp));
-        inkFor.set(from[t], v);
-      }
-      out[t] = v;
+      continue;
     }
+    const corner = best[t] >= softCorner;
+    const key = from[t] * 2 + (corner ? 1 : 0);
+    let v = inkFor.get(key);
+    if (v === undefined) {
+      const line = outlineFor(colors[from[t]], crisp);
+      v = idOf(corner ? `${line}80` : line);
+      inkFor.set(key, v);
+    }
+    out[t] = v;
   }
   return { gw, gh, cells: out, colors };
 }
 
+// '#rrggbb' or '#rrggbbaa'.
 function rgb(c) {
   const n = parseInt(c.slice(1, 7), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const a = c.length >= 9 ? parseInt(c.slice(7, 9), 16) : 255;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255, a];
 }
 
 function bake({ gw, gh, cells, colors }) {
@@ -244,11 +264,11 @@ function bake({ gw, gh, cells, colors }) {
   for (let i = 0; i < cells.length; i++) {
     const c = cells[i];
     if (c < 0) continue;
-    const [r, gr, b] = rgbs[c];
+    const [r, gr, b, a] = rgbs[c];
     img.data[i * 4] = r;
     img.data[i * 4 + 1] = gr;
     img.data[i * 4 + 2] = b;
-    img.data[i * 4 + 3] = 255;
+    img.data[i * 4 + 3] = a;
   }
   g.putImageData(img, 0, 0);
   return canvas;

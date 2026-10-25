@@ -25,7 +25,7 @@ import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'spiky', 'bun', 'long'];
-export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy'];
+export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
 // squashed into a short chibi body (feet at y 48) under the same big head; the sprite box adds
@@ -105,98 +105,138 @@ function swayShape(shape, sway, lift) {
 const BOW = '#fff6fb';
 const bow = (x, y) => [T([[x, y], [x - 2.8, y - 1.8], [x - 2.6, y + 1.6]], BOW), T([[x, y], [x + 2.8, y - 1.8], [x + 2.6, y + 1.6]], BOW), F(E(x, y, 0.9, 0.9, RIBBON))];
 
+// A tapered, curved lock from its root (x0, y0) to its tip (x1, y1), w wide at the root. `bend`
+// bows the middle sideways (positive bows to the left of the root-to-tip direction).
+function curvedLock(x0, y0, x1, y1, w, bend, c, from = 0, to = 1) {
+  const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+  const cx = (x0 + x1) / 2 - ((y1 - y0) / len) * bend;
+  const cy = (y0 + y1) / 2 + ((x1 - x0) / len) * bend;
+  const left = [];
+  const right = [];
+  for (let i = 0; i <= 10; i++) {
+    const t = from + ((to - from) * i) / 10;
+    const u = 1 - t;
+    const px = u * u * x0 + 2 * u * t * cx + t * t * x1;
+    const py = u * u * y0 + 2 * u * t * cy + t * t * y1;
+    const tx = 2 * u * (cx - x0) + 2 * t * (x1 - cx);
+    const ty = 2 * u * (cy - y0) + 2 * t * (y1 - cy);
+    const tl = Math.hypot(tx, ty) || 1;
+    const half = (w / 2) * Math.pow(1 - t, 0.8);
+    left.push([px - (ty / tl) * half, py + (tx / tl) * half]);
+    right.push([px + (ty / tl) * half, py - (tx / tl) * half]);
+  }
+  return T([...left, ...right.reverse()], c);
+}
+
+// A lock with a thin darker strand drawn down its middle.
+function lockWithStrand(x0, y0, x1, y1, w, bend, c, d) {
+  return [curvedLock(x0, y0, x1, y1, w, bend, c), F(curvedLock(x0, y0, x1, y1, Math.min(0.7, w * 0.16), bend, d, 0.15, 0.85))];
+}
+
 // Hair behind the head: the crown's volume plus whatever hangs down (tails, long hair, curls),
-// which is flagged `hang` so the body can be drawn over it.
+// which is flagged `hang` so the body can be drawn over it. Hanging hair is built from curved
+// locks over a solid mass, each with a strand line.
 function hairBack(style, front, sway, lift) {
   // Hair behind the head sits a little in shadow, so the bangs stand out in front of it.
   const c = shade(front, -6);
-  const d = shade(c, -14);
+  const d = shade(c, -16);
   const crown = E(HEAD_X, 13.2, 12, 11.2, c);
   // Everything that sways hangs below the head and is drawn behind the body.
   const sw = (shapes) => shapes.map((sh) => ({ ...swayShape(sh, sway, lift), hang: true }));
-  const strand = (x, y0, y1, lean = 0) => F(T([[x - 0.3, y0], [x + 0.3, y0], [x + lean + 0.2, y1], [x + lean - 0.2, y1]], d));
+  const locks = (list) => list.flatMap(([x0, y0, x1, y1, w, bend]) => lockWithStrand(x0, y0, x1, y1, w, bend, c, d));
   switch (style) {
     case 'bob': return [crown, ...sw([
-      E(HEAD_X, 16.4, 12.8, 10.4, c), E(5.4, 23, 3.6, 3.4, c), E(25.6, 23, 3.6, 3.4, c), E(HEAD_X, 23.4, 9, 2.8, c),
-      strand(6, 17, 24, -0.6), strand(25, 17, 24, 0.6),
+      E(HEAD_X, 16.4, 12.8, 10, c),
+      ...locks([[4.4, 12, 6.8, 25.4, 5.4, 1.8], [26.6, 12, 24.2, 25.4, 5.4, -1.8], [9, 17, 10.8, 26, 5, 0.6], [22, 17, 20.2, 26, 5, -0.6], [15.5, 19, 15.5, 26.4, 6, 0]]),
     ])];
     case 'wavy': return [crown, ...sw([
-      E(HEAD_X, 22, 13, 13, c),
-      E(4.4, 26, 3.6, 4.6, c), E(26.6, 26, 3.6, 4.6, c), E(5.4, 34, 3.4, 4.4, c), E(25.6, 34, 3.4, 4.4, c),
-      E(8, 40, 3.2, 3.2, c), E(23, 40, 3.2, 3.2, c), E(HEAD_X, 37, 8, 6, c),
-      strand(6, 22, 30, -0.8), strand(25, 22, 30, 0.8), strand(7.2, 32, 39, 0.8), strand(23.8, 32, 39, -0.8),
+      E(HEAD_X, 21, 13, 12, c),
+      ...locks([[4, 14, 3.4, 41, 6, -3], [8.6, 18, 9.6, 42.6, 5.6, 2.6], [15.5, 20, 15.5, 43.4, 6.4, -2], [22.4, 18, 21.4, 42.6, 5.6, -2.6], [27, 14, 27.6, 41, 6, 3]]),
+      E(3.8, 40.2, 1.8, 1.6, c), E(27.2, 40.2, 1.8, 1.6, c),
     ])];
     case 'long': return [crown, ...sw([
-      T([[3.4, 13], [27.6, 13], [28.4, 26], [27.8, 38], [26, 43.6], [23.4, 44.4], [21, 42.4], [18.4, 44.6], [15.5, 43], [12.6, 44.6], [10, 42.4], [7.6, 44.4], [5, 43.6], [3.2, 38], [2.6, 26]], c),
-      strand(6.4, 20, 41, -0.4), strand(24.6, 20, 41, 0.4), strand(10.4, 30, 42, 0), strand(20.6, 30, 42, 0),
+      T([[3.6, 13], [27.4, 13], [28.2, 30], [27.4, 40], [3.6, 40], [2.8, 30]], c),
+      ...locks([[4.6, 15, 4.4, 43, 5.4, -1], [9.6, 18, 10, 44.4, 5.6, 0.6], [15.5, 20, 15.5, 45, 6.2, 0], [21.4, 18, 21, 44.4, 5.6, -0.6], [26.4, 15, 26.6, 43, 5.4, 1]]),
     ])];
     case 'twintails': return [crown, ...sw([
-      E(2.6, 21, 4.2, 7.4, c), E(1.8, 30, 3.6, 6.6, c), E(3, 36.6, 2.4, 3, c),
-      E(28.4, 21, 4.2, 7.4, c), E(29.2, 30, 3.6, 6.6, c), E(28, 36.6, 2.4, 3, c),
-      strand(2.4, 16, 34, -0.6), strand(28.6, 16, 34, 0.6),
+      ...locks([[3, 11, 1.2, 38.4, 7.6, 2.8], [3.8, 13, 4.8, 34, 4.2, -1.2], [28, 11, 29.8, 38.4, 7.6, -2.8], [27.2, 13, 26.2, 34, 4.2, 1.2]]),
     ])];
     case 'ponytail': return [crown, ...sw([
-      E(2.4, 14, 4, 5.4, c), E(1.4, 22, 3.6, 6.4, c), E(1.8, 30, 2.6, 4.6, c), E(2.8, 34.6, 1.4, 2, c),
-      strand(1.8, 12, 30, -0.4),
-    ]), E(4.4, 8.6, 2, 1.8, '#ffd66b')];
-    case 'short': return [E(HEAD_X, 13.2, 11.6, 10.6, c), E(HEAD_X, 20, 9.6, 4, c)];
+      ...locks([[3.6, 6.6, 0.2, 35, 8, 3.2], [3, 10, 2.8, 30, 4.2, -1.2]]),
+    ]), E(4.4, 8.4, 2, 1.8, '#ffd66b')];
+    case 'short': return [E(HEAD_X, 13.2, 11.6, 10.6, c), E(HEAD_X, 19.6, 9.6, 4, c), ...locks([[7, 16, 8, 23.4, 4.2, 0.6], [24, 16, 23, 23.4, 4.2, -0.6]])];
     case 'spiky': return [E(HEAD_X, 13.2, 11.6, 10.6, c),
-      T([[4, 9], [-0.4, 4.4], [6, 5.2]], c), T([[6.6, 4.4], [6.4, -1.4], [11.6, 2.8]], c), T([[11.4, 2.6], [15, -2.6], [18, 2.4]], c),
-      T([[18, 2.4], [23, -1.2], [23, 4]], c), T([[22.6, 4], [29.6, 2.6], [26.8, 8]], c), T([[3.6, 13], [-1, 15.6], [4.2, 18]], c),
-      T([[27, 13], [31.6, 16], [26.6, 18]], c)];
-    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, shade(front, 24)), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON)];
+      ...locks([[8, 6, 1.6, 0.6, 4.8, 0.8], [12, 4.4, 9.6, -3, 4.8, 0.6], [16, 4, 16.8, -3.8, 4.8, -0.4], [20, 4.4, 23.4, -2.4, 4.6, -0.6], [23.4, 6, 29.4, 2.4, 4.4, -0.8], [5, 12, -0.8, 15.4, 4, 0.6], [26, 12, 31.8, 15.4, 4, -0.6]])];
+    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, mix(front, '#ffffff', 0.45)), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON),
+      ...sw(locks([[6, 14, 6.6, 24.6, 3.2, 0.6], [25, 14, 24.4, 24.6, 3.2, -0.6]]))];
     default: return [crown];
   }
 }
 
-// Bangs over the forehead: a rounded cap whose edge breaks into soft locks, side locks framing
-// the face in front of the ears, a few strands, and a glossy shine band across the crown.
+// Bangs over the forehead, parted a little toward the facing side: a rounded cap under curved
+// locks that sweep out to soft points, slim side locks framing the face in front of the ears,
+// strand lines down each lock, and a glossy shine band across the crown.
 function hairFront(style, c) {
   const d = shade(c, -16);
   const l = mix(c, '#ffffff', 0.45);
   const short = style === 'short' || style === 'spiky';
-  // A soft lock: square top, rounded point at (x + lean, tip).
-  const lock = (x, w, tip, lean) => C(T([[x - w / 2, 9], [x + w / 2, 9], [x + w * 0.4 + lean * 0.5, tip - 1.4], [x + lean, tip], [x - w * 0.36 + lean * 0.5, tip - 1.6]], c));
-  const side = short ? 19.6 : 23;
-  return [
-    C(E(HEAD_X, 8.4, 11.6, 5.4, c)),
-    lock(7.6, 5, 13.4, -1), lock(11.6, 5, 14.4, -0.2), lock(15.8, 5.2, 14.8, 0.4), lock(20, 5, 14.2, 0.8), lock(23.8, 4.6, 13.2, 1),
-    // Side locks, slim enough to let the ears peek out.
-    C(T([[4.4, 9.6], [8, 10], [7.8, 16], [7, side], [5.6, side + 1.2], [4.8, 16]], c)),
-    C(T([[23, 10], [26.6, 9.6], [26.2, 16], [25.4, side + 1.2], [24, side], [23.2, 16]], c)),
-    F(T([[11.2, 10], [11.8, 10], [11.6, 13.4]], d)), F(T([[19.6, 10], [20.2, 10], [20.2, 13.2]], d)),
-    F(T([[6.2, 13], [6.7, 13], [6.4, side - 1]], d)), F(T([[24.8, 13], [25.3, 13], [25, side - 1]], d)),
-    arc(HEAD_X, 9, 9, 5.6, 205, 250, 1.1, l), arc(HEAD_X, 9, 9, 5.6, 262, 300, 1.1, l), arc(HEAD_X, 9, 9, 5.6, 310, 330, 1.1, l),
-    F(E(19.2, 3.8, 0.55, 0.45, '#ffffff')),
+  const k = short ? 0.78 : 1;
+  const side = short ? 0.7 : 1;
+  // [root x, root y, tip x, tip y, width, bend, length scale]
+  const locks = [
+    [10, 7.2, 5, 22, 4.4, 1, side], [23.4, 7.4, 26.2, 21.6, 4, -0.9, side],
+    [13, 5.6, 6.8, 16.4, 5.2, 1.4, k], [20.6, 5.8, 25, 16.2, 4.8, -1.2, k],
+    [16.2, 5, 9.6, 15.2, 5.6, 1.6, k], [17.6, 5, 21.4, 14.8, 5.2, -1.4, k], [16.9, 6, 17.4, 14.2, 3.6, 0.2, k],
   ];
+  const out = [C(E(HEAD_X, 8.4, 11.6, 5.6, c))];
+  for (const [x0, y0, x1, y1, w, bend, scale] of locks) {
+    const tx = x0 + (x1 - x0) * scale;
+    const ty = y0 + (y1 - y0) * scale;
+    out.push(C(curvedLock(x0, y0, tx, ty, w, bend, c)), F(curvedLock(x0, y0, tx, ty, 0.6, bend, d, 0.2, 0.8)));
+  }
+  out.push(
+    arc(HEAD_X, 9, 9, 5.6, 205, 248, 1.2, l), arc(HEAD_X, 9, 9, 5.6, 262, 300, 1.2, l), arc(HEAD_X, 9, 9, 5.6, 310, 332, 1.2, l),
+    F(E(19.2, 3.8, 0.6, 0.5, '#ffffff')), F(E(11.4, 5.4, 0.4, 0.4, '#ffffff')),
+  );
+  return out;
+}
+
+// A four-point sparkle, for star-shine eyes; it stays readable at small sizes.
+function star(cx, cy, r, c) {
+  const k = r * 0.28;
+  return F(T([[cx, cy - r], [cx + k, cy - k], [cx + r, cy], [cx + k, cy + k], [cx, cy + r], [cx - k, cy + k], [cx - r, cy], [cx - k, cy - k]], c));
 }
 
 // Big soft eyes: a curved upper lash with a flick at the outer corner, a round iris that's deeper
-// at the top and pale at the bottom, a pupil, and two shines. `out` is -1 for the far eye
-// (its flick points back) and 1 for the near one.
+// at the top and pale at the bottom, a pupil, and two shines. `out` is -1 for the far eye (its
+// flick points back) and 1 for the near one. Styles change the lash, pupil, and shines.
 function eye(ex, out, style, color, mode, skin) {
   const ey = 17.6;
-  const lash = (y = 0) => [
-    arc(ex, ey + y, 2.6, 2.9, 198, 342, 0.85, INK),
-    F(T([[ex + out * 2.2, ey - 1.2 + y], [ex + out * 3.4, ey - 2 + y], [ex + out * 2.8, ey - 0.6 + y]], INK)),
-  ];
+  const flick = (dy0, dy1) => F(T([[ex + out * 2.2, ey - 1.2 + dy0], [ex + out * 3.4, ey - 2 + dy1], [ex + out * 2.8, ey - 0.6 + dy0]], INK));
+  const lash = () => [arc(ex, ey, 2.6, 2.9, 198, 342, 0.85, INK), flick(0, 0)];
+  const closed = () => [arc(ex, ey + 1, 2.3, 2.1, 200, 340, 0.8, INK)];
   if (mode === 'blink') return [arc(ex, ey - 0.8, 2.4, 1.6, 20, 160, 0.75, INK)];
   if (mode === 'hurt') return [F(T([[ex - 1.8 * out, ey - 2], [ex + 1.8 * out, ey], [ex - 1.8 * out, ey + 2], [ex - 1.1 * out, ey]], INK))];
-  if (mode === 'happy' || style === 'happy') return [arc(ex, ey + 1, 2.3, 2.1, 200, 340, 0.8, INK)];
-  const big = style === 'round' ? 1.12 : 1;
+  if (mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0)) return closed();
+  const big = style === 'round' ? 1.12 : style === 'big' ? 1.22 : 1;
+  const slit = style === 'cat';
   const shapes = [
     F(E(ex, ey, 2.25 * big, 2.55 * big, color)),
     F(E(ex, ey - 1, 2.05 * big, 1.45, shade(color, -24))),
-    F(E(ex + 0.1, ey + 0.1, 1.05 * big, 1.35 * big, shade(color, -42))),
-    F(E(ex, ey + 1.5, 1.45, 0.75, mix(color, '#ffffff', 0.45))),
-    F(E(ex - 0.8, ey - 1.2, 0.75 * big, 0.8 * big, '#ffffff')),
-    F(E(ex + 0.9, ey + 1.1, 0.35, 0.35, '#ffffff')),
+    F(E(ex + 0.1, ey + 0.1, slit ? 0.45 : 1.05 * big, slit ? 1.8 : 1.35 * big, shade(color, -42))),
+    F(E(ex, ey + 1.5, 1.45 * big, 0.75, mix(color, '#ffffff', 0.45))),
   ];
+  if (style === 'star') shapes.push(star(ex - 0.3, ey - 0.6, 1.9, '#ffffff'), F(E(ex + 1.1, ey + 1.3, 0.35, 0.35, '#ffffff')));
+  else if (style === 'big') shapes.push(F(E(ex - 0.8, ey - 1.2, 1, 1.05, '#ffffff')), F(E(ex + 1, ey + 1, 0.55, 0.55, '#ffffff')), F(E(ex - 1.4, ey + 0.6, 0.3, 0.3, '#ffffff')));
+  else shapes.push(F(E(ex - 0.8, ey - 1.2, 0.75 * big, 0.8 * big, '#ffffff')), F(E(ex + 0.9, ey + 1.1, 0.35, 0.35, '#ffffff')));
   if (style === 'sleepy') {
     shapes.push(F(T([[ex - 2.8, ey - 3.2], [ex + 2.8, ey - 3.2], [ex + 2.8, ey - 0.4], [ex - 2.8, ey - 0.4]], skin)));
     shapes.push(arc(ex, ey + 1.9, 2.6, 2.4, 205, 335, 0.8, INK));
     return shapes;
   }
+  if (style === 'cat') return [...shapes, arc(ex, ey, 2.6, 2.9, 198, 342, 0.85, INK), F(T([[ex + out * 2.1, ey - 1.4], [ex + out * 4, ey - 3], [ex + out * 2.8, ey - 0.8]], INK))];
+  if (style === 'droopy') return [...shapes, arc(ex, ey, 2.6, 2.9, 198, 342, 0.85, INK), F(T([[ex + out * 2.2, ey - 1.2], [ex + out * 3.2, ey + 0.6], [ex + out * 2.4, ey - 0.2]], INK)), arc(ex, ey + 0.4, 2.2, 2.6, 30, 150, 0.4, shade(skin, -35))];
+  if (style === 'big') return [...shapes, ...lash(), arc(ex, ey + 0.2, 2.6, 2.9, 40, 140, 0.4, INK)];
   return [...shapes, ...lash()];
 }
 
@@ -237,10 +277,10 @@ const FOREARM = 4.7;
 function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
   const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, -1);
   return [
-    E(sx, sy + 0.4, 1.7, 1.8, sleeve),
-    limb(sx, sy, ex, ey, 3, 2.6, sleeve),
-    E(ex, ey, 1.25, 1.25, long ? sleeve : skin),
-    limb(ex, ey, wx, wy, 2.5, 2.1, long ? sleeve : skin),
+    E(sx, sy + 0.5, 2, 2.1, sleeve),
+    limb(sx, sy, ex, ey, 3.6, 3.1, sleeve),
+    E(ex, ey, 1.5, 1.5, long ? sleeve : skin),
+    limb(ex, ey, wx, wy, 3, 2.6, long ? sleeve : skin),
     ...handShapes(wx, wy, g.gloves, skin),
   ];
 }
@@ -301,7 +341,7 @@ const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.
 // the body's center line, so a 56-tall figure stands 48 tall under an unchanged head.
 const NECK = 24;
 const KY = 0.75;
-const KX = 0.92;
+const KX = 1;
 const squashY = (y) => (y <= NECK ? y : NECK + (y - NECK) * KY);
 const squashX = (x) => 15.5 + (x - 15.5) * KX;
 function squash(shapes, narrow = true) {

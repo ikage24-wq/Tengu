@@ -23,14 +23,14 @@ export const BODY_TYPES = ['feminine', 'masculine'];
 
 const FIGURES = {
   feminine: {
-    front: [[18.6, 26], [19.9, 26.5], [20.6, 27.6], [21.6, 28.9], [22.6, 30], [22.9, 31], [22.5, 32], [21.2, 32.7], [19.4, 33.4], [19.2, 34.4], [19.6, 35.8]],
-    back: [[11.6, 35.8], [12, 34.2], [11.6, 32.6], [11, 30.8], [10.9, 28.6], [11.3, 26.9], [12.4, 26]],
-    hips: [[11.6, 34.6], [19.4, 34.6], [20.6, 35.6], [21.6, 37], [21.7, 38.5], [21, 39.6], [10, 39.6], [8.9, 38.6], [9, 36.8], [10.2, 35.2]],
+    front: [[18.6, 26], [20, 26.4], [20.9, 27.6], [21.6, 29], [22, 30.4], [21.8, 31.6], [20.9, 32.4], [20.3, 33.4], [20.5, 35.8]],
+    back: [[10.6, 35.8], [10.8, 33.4], [10.5, 31.4], [10.2, 29.4], [10.3, 27.6], [10.9, 26.4], [12.4, 26]],
+    hips: [[10.8, 34.6], [20.4, 34.6], [21.4, 36], [21.8, 37.6], [21.4, 39.6], [9.6, 39.6], [9.2, 37.6], [9.6, 36]],
   },
   masculine: {
-    front: [[19.8, 26], [21.2, 26.5], [21.6, 27.8], [21.4, 30.2], [20.8, 33], [20.6, 35.8]],
-    back: [[10.6, 35.8], [10.4, 33], [9.8, 30.2], [9.6, 27.8], [10, 26.5], [11.4, 26]],
-    hips: [[10.6, 34.6], [20.6, 34.6], [20.8, 37], [20.6, 39.6], [10.4, 39.6], [10.2, 37]],
+    front: [[19.8, 26], [21.2, 26.5], [21.7, 27.8], [21.5, 30.2], [21, 33], [20.8, 35.8]],
+    back: [[10.4, 35.8], [10.2, 33], [9.7, 30.2], [9.5, 27.8], [10, 26.5], [11.4, 26]],
+    hips: [[10.4, 34.6], [20.8, 34.6], [21.1, 37], [20.8, 39.6], [10.2, 39.6], [9.9, 37]],
   },
 };
 const figure = (body) => FIGURES[body] ?? FIGURES.feminine;
@@ -181,9 +181,9 @@ export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
   const hx = x + 1.5;
   const [[kx, ky], [ax, ay]] = reach(hx, hipY, hx + foot[0], ANKLE_Y + foot[1], THIGH, SHIN, 1);
   const shapes = [
-    limb(hx, hipY, kx, ky, 3.1, 2.6, top),
-    E(kx, ky, 1.3, 1.3, top),
-    limb(kx, ky, ax, ay, 2.6, 2.1, low),
+    limb(hx, hipY, kx, ky, 3.7, 3.1, top),
+    E(kx, ky, 1.55, 1.55, top),
+    limb(kx, ky, ax, ay, 3.1, 2.6, low),
   ];
   if (look.pad) shapes.push(E(kx + 0.3, ky, 1.7, 1.4, tint(look.pad)));
   shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, tint));
@@ -251,7 +251,7 @@ export function hatBackShapes(design, c) {
 // ---------- Gloves (on each hand) ----------
 
 export function handShapes(hx, hy, glove, skin) {
-  if (!glove) return [E(hx, hy, 1.8, 1.9, skin)];
+  if (!glove) return [E(hx, hy, 2.1, 2.2, skin)];
   const c = glove.color;
   switch (glove.design) {
     case 'cuffed': return [E(hx, hy, 1.8, 1.9, c), R(hx - 1.8, hy - 2.8, 3.6, 1.4, shade(c, 25))];
