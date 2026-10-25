@@ -21,7 +21,7 @@ import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
 
-export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long'];
+export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid'];
 // Spiky hair was retired; old saves that used it get soft curls instead.
 const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairStyle ?? 'bob');
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
@@ -183,23 +183,108 @@ function hairBack(style, front, sway, lift) {
     }
     case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, mix(front, '#ffffff', 0.45)), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON),
       ...sw(locks([[6, 14, 6.6, 24.6, 3.2, 0.6], [25, 14, 24.4, 24.6, 3.2, -0.6]]))];
+    case 'ahoge':
+    case 'sweep':
+    case 'curtain': return [E(HEAD_X, 13.2, 11.8, 10.8, c), E(HEAD_X, 19.8, 9.8, 4.2, c), ...locks([[6.4, 16, 7.4, 24, 4.4, 0.8], [24.6, 16, 23.6, 24, 4.4, -0.8]])];
+    case 'quiff': return [E(HEAD_X, 13.2, 11.4, 10.6, c), E(HEAD_X, 19, 9.4, 3.6, c)];
+    case 'wolf': return [E(HEAD_X, 13.2, 12, 11, c), ...sw([
+      E(HEAD_X, 20, 11, 6, c),
+      // Layered ends at the nape that flick outward.
+      ...locks([[5.6, 17, 2.6, 28.4, 5, -1.6], [10, 19, 8.6, 29.4, 5, -0.8], [15.5, 20, 15.5, 29, 5.4, 0], [21, 19, 22.4, 29.4, 5, 0.8], [25.4, 17, 28.4, 28.4, 5, 1.6]]),
+    ])];
+    case 'hime': return [crown, ...sw([
+      // Long, straight, and cut level a little above the waist.
+      T([[4.4, 14], [26.6, 14], [25.8, 38], [5.2, 38]], c),
+      F(R(5.2, 37.4, 20.6, 0.6, shade(c, -16))),
+    ])];
+    case 'odango': return [crown, E(6.2, 3.6, 3.8, 3.6, c), E(24.8, 3.6, 3.8, 3.6, c),
+      arc(6.2, 3.6, 2.6, 2.4, 200, 290, 0.7, mix(front, '#ffffff', 0.45)), arc(24.8, 3.6, 2.6, 2.4, 200, 290, 0.7, mix(front, '#ffffff', 0.45)),
+      ...sw(locks([[5, 6, 1.6, 33, 4.6, 2], [26, 6, 29.4, 33, 4.6, -2]]))];
+    case 'drills': {
+      // Ojou-sama ringlets: a stack of shrinking coils on each side, each with a darker turn line.
+      const coil = (x, dir) => Array.from({ length: 5 }, (_, k) => {
+        const y = 17 + k * 4.2;
+        const rr = 3.6 - k * 0.38;
+        return [E(x + (k % 2 ? 0.5 : -0.5) * dir, y, rr, 2.6, c), arc(x + (k % 2 ? 0.5 : -0.5) * dir, y - 0.2, rr, 2.4, 20, 160, 0.6, shade(c, -18))];
+      }).flat();
+      return [crown, ...sw([...coil(3.6, 1), ...coil(27.4, -1)])];
+    }
+    case 'braid': return [E(HEAD_X, 13.2, 12, 11, c), E(HEAD_X, 19.6, 10, 4.4, c)];
     default: return [crown];
   }
 }
 
-// Bangs: a rounded cap over the forehead that ends in five soft points just above the eyes,
-// slim side locks framing the face (leaving room to see it), two gentle lock separations in a
-// slightly deeper tone, and one clean shine band with a couple of glints.
-function hairFront(style, c) {
+// Bangs. The original styles share one fringe: a rounded cap over the forehead, three big soft
+// locks ending just above the eyes, slim side locks, and one clean shine band. Newer styles each
+// draw their own fringe. `sway` (from the hair spring) and `mood` (the face) move the ahoge.
+function hairFront(style, c, sway = 0, mood = 'smile') {
   const l = mix(c, '#ffffff', 0.45);
-  const short = style === 'short' || style === 'curly';
-  const side = short ? 20 : 23;
-  const out = [C(E(HEAD_X, 7.8, 11.8, 5, c))];
-  // Three big, soft bang locks and two side locks: simple shapes that read at a glance.
-  for (const [x0, y0, x1, y1, w, bend] of [[11, 7, 9.8, 14.6, 7, 0.8], [16, 6.6, 15.6, 15.2, 7.2, 0.2], [21, 7, 22.4, 14.2, 6.6, -0.8]]) out.push(C(curvedLock(x0, y0, x1, y1, w, bend, c)));
-  out.push(C(curvedLock(7.2, 8, 5.6, side, 4.4, 1, c)), C(curvedLock(24.8, 8.4, 26.2, side - 1.4, 4, -1, c)));
-  out.push(arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l));
-  return out;
+  const d = shade(c, -16);
+  const cap = C(E(HEAD_X, 7.8, 11.8, 5, c));
+  const shine = arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l);
+  const lock = (x0, y0, x1, y1, w, bend) => C(curvedLock(x0, y0, x1, y1, w, bend, c));
+  switch (style) {
+    case 'ahoge': {
+      // Messy boyish bangs and a single antenna strand on top that bounces with every move,
+      // perks up when excited and wilts when sulking.
+      const droop = mood === 'pout' || mood === 'shy';
+      const perk = mood === 'excited' || mood === 'angry';
+      const tipX = 17 + sway * 1.2 + (droop ? 6 : 2.4);
+      const tipY = droop ? 0.4 : perk ? -7 : -5;
+      return [
+        curvedLock(14.6, 3.4, tipX, tipY, 2.8, droop ? -2.4 : 1.8, c),
+        cap,
+        lock(9.6, 6.6, 7.8, 14.2, 6, 1), lock(13.6, 6.4, 13, 15, 5.6, 0.4), lock(17.6, 6.4, 18.8, 14.6, 5.6, -0.4), lock(21.6, 6.8, 23.6, 13.8, 5.4, -1),
+        lock(7, 8, 5.4, 20.6, 4.4, 1), lock(24.8, 8.4, 26.2, 19.4, 4, -1),
+        shine,
+      ];
+    }
+    case 'curtain':
+      // Parted down the middle, each half curving out to frame the face.
+      return [cap, lock(15, 5.4, 8.4, 15.4, 6.6, 2.2), lock(16, 5.4, 22.6, 15.4, 6.6, -2.2), lock(7, 8, 5.4, 21, 4.4, 1), lock(24, 8, 25.8, 21, 4.4, -1),
+        shine];
+    case 'sweep':
+      // One big lock swept across the forehead toward the facing side, nearly over one eye.
+      return [cap, lock(7.6, 6, 22.8, 16.4, 8.4, -2.6), lock(12, 5.6, 25.4, 12.4, 5.4, -1.6), lock(7, 8, 5.6, 19.6, 4.2, 1), lock(25, 8.4, 26.4, 19, 3.8, -1), shine];
+    case 'quiff':
+      // A big rounded swoop up and back off the forehead, with short neat sides.
+      return [C(E(HEAD_X, 8.2, 11.6, 3.8, c)), E(HEAD_X + 1, 3.6, 9, 4.6, c), lock(7.6, 6.4, 22.4, -0.6, 7.4, 3), lock(8, 9, 10.6, 12.4, 3.4, 0.4),
+        lock(6.8, 8, 5.6, 17.4, 4, 0.8), lock(24.6, 8, 25.6, 17, 3.6, -0.8), arc(HEAD_X + 1, 4.6, 7.4, 3.6, 200, 320, 1.2, l)];
+    case 'wolf':
+      // Choppy layered bangs and longer side layers that flick outward at the jaw.
+      return [cap, lock(9, 6.8, 8.2, 15, 5.4, 0.8), lock(12.8, 6.4, 12.6, 16, 4.8, 0.2), lock(16.8, 6.4, 17.2, 15.4, 4.8, -0.2), lock(20.6, 6.8, 22, 14.6, 5, -0.8),
+        lock(6.6, 8, 3.8, 23.4, 4.6, 2.2), lock(24.4, 8.4, 27.2, 22.8, 4.4, -2.2), shine];
+    case 'hime':
+      // Blunt, straight-cut bangs and straight side locks cut level at the chin.
+      return [cap, C(T([[5.4, 8], [25.6, 8], [25.4, 14.6], [5.6, 14.6]], c)), C(R(4.2, 10, 4.6, 14.2, c)), C(R(22.2, 10, 4.6, 14.2, c)),
+        F(R(4.2, 23.6, 4.6, 0.6, d)), F(R(22.2, 23.6, 4.6, 0.6, d)), shine];
+    case 'braid': {
+      // Side-swept bangs, and a thick braid brought forward over one shoulder, tied with a bow.
+      const out = [cap, lock(9, 6.4, 18.6, 15.2, 7.6, -2), lock(19.6, 6.6, 23.4, 14, 5.4, -0.8), lock(7, 8, 5.6, 20.4, 4.4, 1), lock(24.6, 8.4, 25.6, 19, 4, -1)];
+      const bx = 24.8 + sway * 0.3;
+      for (let k = 0; k < 5; k++) {
+        const y = 20.6 + k * 2.5;
+        const x = bx + (k % 2 ? 0.7 : -0.7) - k * 0.2;
+        out.push(E(x, y, 2.3 - k * 0.12, 1.7, c), arc(x, y - 0.1, 2.2 - k * 0.12, 1.6, 20, 160, 0.5, d));
+      }
+      out.push(E(bx - 1, 33.6, 1.4, 1.8, c), ...bow(bx - 0.8, 32));
+      out.push(shine);
+      return out;
+    }
+    case 'drills':
+      return [cap, lock(11, 7, 9.8, 14.4, 7, 0.8), lock(16, 6.6, 15.6, 15, 7.2, 0.2), lock(21, 7, 22.4, 14, 6.6, -0.8),
+        lock(7.2, 8, 5.8, 17, 4.2, 1), lock(24.8, 8.4, 25.8, 16.4, 3.8, -1), ...bow(4.4, 9), ...bow(26.6, 9), shine];
+    default: {
+      const short = style === 'short' || style === 'curly';
+      const side = short ? 20 : 23;
+      const out = [cap];
+      // Three big, soft bang locks and two side locks: simple shapes that read at a glance.
+      for (const [x0, y0, x1, y1, w, bend] of [[11, 7, 9.8, 14.6, 7, 0.8], [16, 6.6, 15.6, 15.2, 7.2, 0.2], [21, 7, 22.4, 14.2, 6.6, -0.8]]) out.push(lock(x0, y0, x1, y1, w, bend));
+      out.push(lock(7.2, 8, 5.6, side, 4.4, 1), lock(24.8, 8.4, 26.2, side - 1.4, 4, -1));
+      out.push(shine);
+      return out;
+    }
+  }
 }
 
 // A four-point sparkle, for star-shine eyes; it stays readable at small sizes.
@@ -409,7 +494,7 @@ function headShapes(look, g, rig) {
   }
   if (rig.eyes === 'hurt') out.push(F(E(FACE_X, 23, 1, 0.7, INK)));
   else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile'));
-  if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair));
+  if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair, rig.hair, look.face ?? 'smile'));
   if (f.brows) {
     const bc = mix(shade(hair, -30), INK, 0.35);
     [-1, 1].forEach((side, i) => out.push(brow(FACE_X + 4.3 * side, side, f.brows[i][0], f.brows[i][1], bc)));
