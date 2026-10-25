@@ -15,7 +15,7 @@ export function surfacesOf(map) {
 
 export function createBody(x, y) {
   return {
-    x, y, w: 22, h: 46, vx: 0, vy: 0,
+    x, y, w: 22, h: 54, vx: 0, vy: 0,
     onGround: true, surface: null, rope: null, facing: 1,
     dropTimer: 0, knockTimer: 0,
   };

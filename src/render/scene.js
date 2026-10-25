@@ -69,11 +69,11 @@ function drawNpcs(ctx, world, cam, time) {
     const mark = questMarker(world.char, n.id);
     if (mark) {
       const bob = Math.sin(time * 4) * 2;
-      text(ctx, mark, x, y - 54 + bob, { size: 16, bold: true, align: 'center', color: mark === '?' ? '#7ee081' : '#ffe36b', outline: '#8f5cc4' });
+      text(ctx, mark, x, y - 62 + bob, { size: 16, bold: true, align: 'center', color: mark === '?' ? '#7ee081' : '#ffe36b', outline: '#8f5cc4' });
     }
     if (near?.id === n.id) {
-      box(ctx, x - 22, y - 70, 44, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
-      text(ctx, '▲ Talk', x, y - 61, { size: 8, bold: true, align: 'center', color: COLORS.accent });
+      box(ctx, x - 22, y - 78, 44, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
+      text(ctx, '▲ Talk', x, y - 69, { size: 8, bold: true, align: 'center', color: COLORS.accent });
     }
   }
 }
