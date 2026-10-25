@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 ## Controls
 
-Character creator: Up/Down choose an option, Left/Right change it, Enter continues.
+Character creator: Up/Down choose an option, Left/Right change it, Enter continues. Body "classic" is the recolorable hero; the sample bodies have fixed colors.
 Class select: 1, 2, or 3.
 
 In game:
@@ -93,3 +93,7 @@ All art from Kenney (www.kenney.nl), released under CC0 (public domain). License
 - Ground tile: "Pixel Platformer" (`assets/kenney/tilemap_packed.png`, `LICENSE.txt`).
 - Monsters and items: "Tiny Dungeon" (`assets/kenney/tiny-dungeon.png`, `LICENSE-tiny-dungeon.txt`).
 - Hit sparks and slashes: "Particle Pack" (`assets/kenney/effects/`, `LICENSE-particle-pack.txt`).
+
+Also CC0 from OpenGameArt (license lines and files in `assets/oga/`):
+- Parallax backgrounds: "Ocean View" by Ansimuz (town and meadow skies) and "Tall Forest" (Dark Forest).
+- Character bases: "Customizable character pack" by rubberduck, 16 sample characters, used as selectable bodies.

@@ -2,7 +2,7 @@
 // Each sprite is rasterized onto a small grid, gets a 1px dark outline around its silhouette,
 // and is cached as a tiny canvas. It is drawn with nearest-neighbour scaling so it stays crisp.
 
-import { SHEETS, ready, drawTile } from './assets.js';
+import { SHEETS, SAMPLE_CHARACTERS, ready, drawTile, drawCell } from './assets.js';
 
 const OUTLINE = '#2d2846';
 const PAD = 1; // room for the outline around the grid edge
@@ -344,8 +344,28 @@ function blit(ctx, sprite, x, y, { flip = false, scale = 1 } = {}) {
   ctx.restore();
 }
 
+// Sample bases are 16x24 frames: columns are idle and walk steps, rows are down, left, right, up.
+// Row 2 is the side view. Drawn at 2x so the sprite matches the 28x48 hitbox.
+const SAMPLE_CELL = { w: 16, h: 24, side: 2 };
+
+function sampleIndex(base) {
+  return Number(base.replace('sample', '')) - 1;
+}
+
+function drawSampleCharacter(ctx, p, sx, base, time) {
+  const img = SAMPLE_CHARACTERS[sampleIndex(base)];
+  if (!ready(img)) return false;
+  const walking = Math.abs(p.vx) > 1 && p.onGround;
+  const col = walking ? 1 + (Math.floor(time * 8) % 3) : 0;
+  const scale = 2;
+  const x = sx + (CHAR_W - SAMPLE_CELL.w * scale) / 2;
+  drawCell(ctx, img, col, SAMPLE_CELL.side, SAMPLE_CELL.w, SAMPLE_CELL.h, x, p.y, { scale, flip: p.dir < 0 });
+  return true;
+}
+
 // Draws the player. `p` is the physics body; sx is its screen-space x.
 export function drawCharacter(ctx, p, sx, appearance, accent, time) {
+  if (appearance.base !== 'classic' && drawSampleCharacter(ctx, p, sx, appearance.base, time)) return;
   const walking = Math.abs(p.vx) > 1 && p.onGround;
   const step = walking ? Math.floor(time * 8) % 2 : 0;
   const idleBob = !walking && Math.sin(time * 3) > 0.6 ? -1 : 0;
@@ -355,6 +375,16 @@ export function drawCharacter(ctx, p, sx, appearance, accent, time) {
 
 // Preview for the creator: same sprite, scaled up with crisp pixels.
 export function drawCharacterPreview(ctx, appearance, accent, time, x, y, scale) {
+  if (appearance.base !== 'classic') {
+    // Same placement as the in-game sprite: centered horizontally, feet on the bottom of the box.
+    const img = SAMPLE_CHARACTERS[sampleIndex(appearance.base)];
+    if (ready(img)) {
+      const px = x + ((CHAR_W - SAMPLE_CELL.w) * scale) / 2;
+      const py = y + (CHAR_H - SAMPLE_CELL.h) * scale;
+      drawCell(ctx, img, 0, SAMPLE_CELL.side, SAMPLE_CELL.w, SAMPLE_CELL.h, px, py, { scale });
+      return;
+    }
+  }
   const a = { ...appearance, accent };
   const bob = Math.sin(time * 3) > 0.6 ? -1 : 0;
   blit(ctx, characterSprite(a, 0), x, y + bob * scale, { scale });

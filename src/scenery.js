@@ -3,6 +3,7 @@
 // put as the camera moves and looks the same on every run.
 
 import { FLOOR_Y } from './game.js';
+import { BACKGROUNDS, ready } from './assets.js';
 
 export const THEMES = {
   sunset: {
@@ -259,13 +260,38 @@ function drawGround(ctx, t, cam, width, height, hasCurb) {
 }
 
 // Draws everything behind the platforms: sky, skyline, poles, and the ground.
+// Which CC0 parallax set a theme uses, if any.
+function imageLayersFor(themeName) {
+  if (themeName === 'sunset') return BACKGROUNDS.ocean.night;
+  if (themeName === 'daylight') return BACKGROUNDS.ocean.noon;
+  if (themeName === 'dusk') return BACKGROUNDS.forest;
+  return null;
+}
+
+// Tiles each layer horizontally at its own scroll speed. Layers sit on the ground line.
+function drawImageLayers(ctx, layers, cam, width) {
+  for (const { img, factor } of layers) {
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const x0 = -((cam * factor) % w);
+    for (let x = x0; x < width; x += w) {
+      ctx.drawImage(img, Math.round(x), FLOOR_Y + 40 - h);
+    }
+  }
+}
+
 export function drawBackdrop(ctx, themeName, cam, width, height, time) {
   const t = THEMES[themeName] ?? THEMES.sunset;
   drawSky(ctx, t, width, height);
-  drawClouds(ctx, t, cam, width, time);
-  if (t.skyline === 'city') drawCity(ctx, t, cam, width);
-  else if (t.skyline === 'hills') drawHills(ctx, t, cam, width);
-  else drawPines(ctx, t, cam, width);
+  const layers = imageLayersFor(themeName);
+  if (layers && layers.every((l) => ready(l.img))) {
+    drawImageLayers(ctx, layers, cam, width);
+  } else {
+    drawClouds(ctx, t, cam, width, time);
+    if (t.skyline === 'city') drawCity(ctx, t, cam, width);
+    else if (t.skyline === 'hills') drawHills(ctx, t, cam, width);
+    else drawPines(ctx, t, cam, width);
+  }
   drawGround(ctx, t, cam, width, height, t.skyline === 'city');
   drawPoles(ctx, t, cam, width);
 }

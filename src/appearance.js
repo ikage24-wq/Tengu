@@ -1,7 +1,12 @@
 // Character appearance: the options players can pick and the default look.
 // Pure data and helpers; drawing lives in sprites.js.
 
+// Base body: "classic" is the recolorable hero drawn in code. The sample bases are CC0 character sheets
+// with their own colors, so the color options only apply to "classic".
+export const BASE_OPTIONS = ['classic', ...Array.from({ length: 16 }, (_, i) => `sample${String(i + 1).padStart(2, '0')}`)];
+
 export const APPEARANCE_FIELDS = [
+  { key: 'base', label: 'Body', options: BASE_OPTIONS },
   { key: 'hairStyle', label: 'Hair', options: ['wavy', 'bob'] },
   { key: 'hairColor', label: 'Hair Color', options: ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650'] },
   { key: 'skinTone', label: 'Skin', options: ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66'] },
@@ -14,6 +19,7 @@ export const COLOR_FIELDS = ['hairColor', 'skinTone', 'eyeColor', 'outfitColor']
 
 export function defaultAppearance() {
   return {
+    base: 'classic',
     hairStyle: 'wavy',
     hairColor: '#e9ebfa',
     skinTone: '#fff0e6',
