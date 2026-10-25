@@ -28,6 +28,29 @@ function backdrop(ctx, time) {
   drawSceneBack(ctx, map, cam, 640, 360, time, null);
 }
 
+// A silly subtitle under the logo, rolled fresh on every page load.
+const oneOf = (list) => list[Math.floor(Math.random() * list.length)];
+const THINGS = ['slimes', 'potions', 'mushrooms', 'bunny hoods', 'loot', 'jumping', 'sparkles', 'crits'];
+const QUOTE_MAKERS = [
+  () => `Now with ${10 + Math.floor(Math.random() * 90)}% more ${oneOf(THINGS)}!`,
+  () => `Warning: may contain ${oneOf(THINGS)}.`,
+  () => `Powered by ${oneOf(THINGS)} and questionable decisions.`,
+  () => `${oneOf(['Mira', 'Marlo', 'The Crystal King', 'Your mom'])} says hi!`,
+  () => oneOf([
+    'The slimes have unionized.',
+    'Press Z to solve your problems. Mostly.',
+    'No mushrooms were harmed. Okay, a few.',
+    'Level 1 forever is a lifestyle.',
+    'Have you tried jumping at it?',
+    'Grinding is just walking with ambition.',
+    'Ropes: the original fast travel.',
+    'Your bag is full. Of dreams.',
+    '100% organic, free-range pixels.',
+    'Tengu does not sponsor your sleep schedule.',
+  ]),
+];
+const quote = oneOf(QUOTE_MAKERS)();
+
 // Cosmetic worlds for the login screen; the game itself is single-player.
 const WORLDS = [
   { name: 'Sakura', load: 0.45, color: '#ff9ec0' },
@@ -66,7 +89,7 @@ export function titleScreen(ui, time) {
   // Logo
   const bob = Math.sin(time * 2) * 2;
   text(ctx, 'Tengu', 320, 70 + bob, { size: 56, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
-  text(ctx, 'a cozy pastel adventure', 320, 92 + bob, { size: 12, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
+  text(ctx, quote, 320, 92 + bob, { size: 12, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
   for (let i = 0; i < 6; i++) {
     const a = time * 1.5 + i;
     sparkle(ctx, 320 + Math.cos(a) * 110, 55 + Math.sin(a * 1.3) * 24, 3 + (i % 3), i % 2 ? '#ffffff' : '#ffe36b');
