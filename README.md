@@ -62,7 +62,8 @@ then press the key. Right-click a hotkey slot to clear it.
   magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.
 - **Skills** — 3 Novice skills, 4 per first job, 4 per second job: attacks, area hits, multi-hit
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
-  3 SP per level after advancing.
+  3 SP per level after advancing. Big skills have a cooldown (ultimates like Meteor Shower and
+  Judgment take 8s), and heavy ones root you in place for their wind-up, so they can't be spammed.
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings), 9 weapon types in
   9 tiers and armor in 6 tiers. Everything you wear shows on your character, and each armor tier
   has its own look (beanie → sun hat → cap → helm → witch hat → circlet, tee → robe, sneakers →

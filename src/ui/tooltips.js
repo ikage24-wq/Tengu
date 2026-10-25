@@ -83,6 +83,10 @@ export function skillTooltip(char, skillId) {
   ];
   if (lv > 0) lines.push({ text: `Now: ${describe(skillAt(skillId, lv))}`, color: '#3f9f5f' });
   if (lv < s.maxLevel) lines.push({ text: `Next: ${describe(skillAt(skillId, lv + 1))}`, color: COLORS.accent });
+  if (s.cooldown || s.lock) {
+    const parts = [s.cooldown ? `Cooldown ${s.cooldown}s` : null, s.lock ? `Roots you for ${s.lock}s` : null].filter(Boolean);
+    lines.push({ text: parts.join('  ·  '), color: COLORS.muted });
+  }
   if (s.weapons) lines.push({ text: `Needs: ${s.weapons.join(' or ')}`, color: COLORS.muted });
   return lines;
 }

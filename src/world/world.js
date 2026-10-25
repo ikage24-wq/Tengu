@@ -39,6 +39,7 @@ export function createWorld(char) {
     hitstop: 0,
     cooldowns: {},
     attackTimer: 0,
+    lockTimer: 0,
     pose: null,
     invuln: 0,
     now: 0,
@@ -286,6 +287,7 @@ export function updateWorld(world, dt, input) {
   if (world.juice.length > 200) world.juice.length = 0;
   world.now += dt;
   world.attackTimer = Math.max(0, world.attackTimer - dt);
+  world.lockTimer = Math.max(0, (world.lockTimer ?? 0) - dt);
   world.invuln = Math.max(0, world.invuln - dt);
   world.warnTimer = Math.max(0, world.warnTimer - dt);
   world.lootTimer = Math.max(0, world.lootTimer - dt);
@@ -327,7 +329,7 @@ export function updateWorld(world, dt, input) {
     jump: held.has('Space') || held.has('AltLeft') || held.has('AltRight'),
   };
   // Attacking roots you on the ground, like the classics.
-  const rooted = world.attackTimer > 0.15 && world.body.onGround;
+  const rooted = (world.attackTimer > 0.15 || world.lockTimer > 0) && world.body.onGround;
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
   if (!(pressed.has('ArrowUp') && interact(world))) {

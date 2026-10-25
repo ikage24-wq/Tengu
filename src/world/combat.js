@@ -43,7 +43,7 @@ export function pickTargets(mobs, body, range, targets) {
 // Why a skill can't be used right now, or null if it can.
 export function castBlocker(world, skillId) {
   const { char, stats, now } = world;
-  if (world.attackTimer > 0) return 'busy';
+  if (world.attackTimer > 0 || world.lockTimer > 0) return 'busy';
   if (!skillId) return null;
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
@@ -72,8 +72,12 @@ export function cast(world, skillId, rng = Math.random) {
 
   const delay = BASE_DELAY * (1 - stats.attackSpeed);
   world.attackTimer = type === 'buff' ? 0.35 : delay;
+  // Big skills plant you for their wind-up and play their pose slower, as one heavy motion.
+  const lock = s?.lock ?? 0;
+  world.lockTimer = Math.max(world.lockTimer ?? 0, lock);
   const pose = type === 'magic' || type === 'heal' || type === 'buff' ? 'cast' : ranged || params.projectile ? 'shoot' : 'swing';
-  world.pose = { kind: pose, t: Math.min(0.35, world.attackTimer), dur: Math.min(0.35, world.attackTimer) };
+  const poseDur = lock || Math.min(0.35, world.attackTimer);
+  world.pose = { kind: pose, t: poseDur, dur: poseDur };
 
   if (type === 'buff') {
     // Summons ride on a buff: they attack on their own timer until the buff ends.
