@@ -1,4 +1,4 @@
-# Twzt — a cozy pastel side-scroller RPG
+# Tengu — a cozy pastel side-scroller RPG
 
 A browser game in the spirit of classic 2D MMO side-scrollers: start as a Novice, grind cute
 monsters across connected maps, pick a job at level 10 and a specialty at 30, spend AP and SP,
