@@ -64,12 +64,12 @@ for (const [type, kind] of Object.entries(WEAPON_KINDS)) {
 // ---------- Armor ----------
 
 const ARMOR_TIERS = [
-  { level: 0, prefix: 'Cotton', color: '#ffe9f3' },
-  { level: 10, prefix: 'Linen', color: '#d8f2ff' },
-  { level: 20, prefix: 'Leather', color: '#e6b98a' },
-  { level: 30, prefix: 'Silver', color: '#e8eef8' },
-  { level: 40, prefix: 'Starlit', color: '#fff0a8' },
-  { level: 50, prefix: 'Celestial', color: '#e2d2ff' },
+  { level: 0, prefix: 'Cotton', color: '#ffc2d6' },
+  { level: 10, prefix: 'Linen', color: '#a8dcff' },
+  { level: 20, prefix: 'Leather', color: '#ffb38a' },
+  { level: 30, prefix: 'Silver', color: '#c9d6ff' },
+  { level: 40, prefix: 'Starlit', color: '#ffe98a' },
+  { level: 50, prefix: 'Celestial', color: '#d2b8ff' },
 ];
 
 const ARMOR_KINDS = {

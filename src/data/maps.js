@@ -259,7 +259,7 @@ export const MAPS = {
     ropes: [],
     portals: [{ id: 'west', x: 60, y: 380, to: 'cave', toPortal: 'boss' }],
     npcs: [],
-    spawns: [{ mob: 'crystalking', x: 760, y: 380, respawn: 300 }],
+    spawns: [{ mob: 'crystalking', x: 560, y: 380, respawn: 300 }],
   },
 };
 
