@@ -176,20 +176,24 @@ to clear it.
 - **Parties** — right-click another player for a menu (view profile, invite to party, browse
   their shop). Players around your level (up to 5 above) or below usually say yes; anyone higher
   turns you down, as do shopkeepers busy selling. A party holds you and up to five others. Members
-  follow you from map to map (climbing ropes, jumping to ledges, dropping down, and catching up if
-  they get stuck), fight the monsters around you, and chat in party chat. Their kills give you 60%
-  of the EXP, count for your quests, and drop loot for you; your own kills get +10% EXP per member.
-  They level up with you. Each member has their own playstyle, picked from their job and level,
-  plus small quirks (which side of you they keep, how far, how fast they react and walk):
-  - **Rusher**: charges into packs well ahead of you.
-  - **Guardian**: stays at your side and takes on whatever comes at you.
-  - **Sniper**: hangs back at range, shoots over ledges, and steps away when a monster gets close.
-  - **Healer**: stays close and heals you when your HP drops.
-  - **Rookie**: wanders off, hops about, and falls behind.
-  - **Show-off**: flashy specials, flips, and wide roaming.
+  come along from map to map. In town they hang around near you; out in the field each one goes
+  off hunting **on their own**, anywhere on the map: they pick a monster no partymate is on, find a
+  way to it over the ledges (jumping up, dropping through, walking off edges, climbing ropes), fight
+  it, and wander off to look for more when the area is clear. They only jump when the path needs
+  it, and give up on a monster they can't reach. They show on the minimap as dots in their
+  playstyle's color, and chat in party chat. Their kills give you 60% of the EXP, count for your
+  quests, and drop loot for you; your own kills get +10% EXP per member. They level up with you.
+  Each member has their own playstyle, picked from their job and level, plus small quirks (how
+  fast they react and walk, their attack rhythm and idle habits):
+  - **Rusher**: dives into packs, fast swings and big spin moves.
+  - **Guardian**: steady and tough, picks off monsters closer to you.
+  - **Sniper**: fights from range, shooting up and down ledges.
+  - **Healer**: heals you from anywhere on the map when your HP drops.
+  - **Rookie**: gets distracted and wanders off to look at things.
+  - **Show-off**: flashy specials, flips, and taunts.
 
-  Members pick a side of a monster and keep it, hold a good spot instead of chasing every step, and
-  spread out over different targets, so their movement stays calm. A party panel under the minimap
+  Members pick a side of a monster and keep it and hold a good spot instead of chasing every step,
+  so their movement stays calm. A party panel under the minimap
   shows everyone with their playstyle (click for a profile,
   right-click to remove someone); Leave, or right-clicking yourself, leaves the party, and members
   head off on their own (or log off after a long session).

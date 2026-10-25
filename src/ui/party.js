@@ -80,12 +80,12 @@ export function drawMenu(ui, state, world) {
 // ---------- Party panel ----------
 
 const PLAYSTYLE_TEXT = {
-  rusher: 'Charges into packs ahead of you.',
-  guardian: 'Sticks by your side and meets what comes at you.',
-  sniper: 'Hangs back at range and steps away from danger.',
-  healer: 'Stays close and heals you when you get hurt.',
-  rookie: 'Still learning: wanders, hops, falls behind.',
-  showoff: 'Flashy moves, flips, and wide roaming.',
+  rusher: 'Hunts on their own and dives into packs.',
+  guardian: 'Hunts on their own, picking off monsters near you.',
+  sniper: 'Hunts on their own from range, shooting across ledges.',
+  healer: 'Hunts on their own and heals you from anywhere on the map.',
+  rookie: 'Still learning: gets distracted and wanders off.',
+  showoff: 'Flashy moves, flips, and taunts.',
 };
 
 export function drawPartyPanel(ui, state, world) {

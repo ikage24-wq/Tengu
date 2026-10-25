@@ -13,6 +13,7 @@ import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle } from './kit.js';
 import { drawHero } from '../render/hero.js';
 import { settings } from '../core/settings.js';
+import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 
@@ -267,6 +268,18 @@ function drawMinimap(ui, world) {
   }
   ctx.fillStyle = '#ff6b8a';
   for (const m of world.mobs) if (m.hp > 0) ctx.fillRect(x + m.x * scale - 0.75, y + m.y * scale - 1.5, 1.5, 1.5);
+  // Party members, out hunting on their own, in their playstyle's color.
+  for (const b of partyMembers(world.bots)) {
+    if (!b.body || b.map !== map.id) continue;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = PLAYSTYLES[b.ai?.kind]?.color ?? '#3fc48a';
+    ctx.beginPath();
+    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
   const px = x + world.body.x * scale;
   const py = y + world.body.y * scale - 2;
   const pulse = (world.now * 1.5) % 1;

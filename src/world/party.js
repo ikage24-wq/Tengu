@@ -1,7 +1,9 @@
 // Parties: invite other players (right-click them), and those around your level or below can
-// join. Party members follow you from map to map, climbing ledges and ropes, fight the monsters
-// around you (their kills give you a share of the EXP, count for your quests, and drop loot for
-// you), chat, and level up alongside you, until you leave the party (or they log off).
+// join. Party members come along from map to map. In town they hang around near you; out in
+// the field each one goes off hunting on their own, finding their way over ledges and ropes to
+// monsters anywhere on the map (their kills give you a share of the EXP, count for your quests,
+// and drop loot for you). They chat and level up alongside you, until you leave the party (or
+// they log off).
 
 import { createBody, stepBody } from './physics.js';
 import { computeStats } from '../core/stats.js';
@@ -11,6 +13,7 @@ import { JOBS } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
 import { speak } from './chatter.js';
+import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -118,13 +121,13 @@ export function kick(bots, bot, world) {
 
 // ---------- Playstyles ----------
 // Every member plays their own way, from their class and a roll of personality:
-//   Rusher    charges into packs well ahead of you, fast swings, big spin moves
-//   Guardian  sticks to your side and meets whatever comes at you
-//   Sniper    hangs back at range and steps away if a monster gets close
-//   Healer    stays near you, patches you up when you're hurt, chips in with spells
-//   Rookie    a bit lost: wanders, hops around, sometimes falls behind
-//   Show-off  flashy: flips and taunts between fancy attacks, roams wide
-// Each also has its own reaction speed, rhythm, spot in the formation, and idle habits.
+//   Rusher    goes for packs, fast swings, big spin moves
+//   Guardian  steady and tough, picks off monsters closer to you
+//   Sniper    fights from range, shooting up and down ledges
+//   Healer    heals you from anywhere on the map, chips in with spells
+//   Rookie    a bit lost: gets distracted and wanders off to look at things
+//   Show-off  flashy: flips and taunts between fancy attacks
+// Each also has its own reaction speed, rhythm, walking pace, and idle habits.
 
 export const PLAYSTYLES = {
   rusher: { label: 'Rusher', color: '#ff7a6b' },
@@ -155,12 +158,12 @@ export function makeAI(bot, rng, kind = null) {
     : st.ranged ? (rng() < 0.75 ? 'sniper' : 'showoff')
     : rng() < 0.55 ? 'rusher' : 'guardian';
   const base = {
-    rusher: { hunt: 320, tether: 360, keep: 0.6, react: [0.12, 0.25], rhythm: [0.6, 0.95], special: 0.22, hop: 0.05, habits: ['roar', 'cheer'] },
-    guardian: { hunt: 140, tether: 110, keep: 0.7, react: [0.15, 0.3], rhythm: [0.9, 1.3], special: 0.12, hop: 0.02, habits: ['guard', 'roar'] },
-    sniper: { hunt: 280, tether: 260, keep: 0.85, react: [0.18, 0.35], rhythm: [0.95, 1.35], special: 0.15, hop: 0.03, habits: ['aimshot', 'cheer'] },
-    healer: { hunt: 180, tether: 90, keep: 0.9, react: [0.2, 0.4], rhythm: [1.2, 1.8], special: 0.1, hop: 0.02, habits: ['pray', 'cheer'] },
-    rookie: { hunt: 220, tether: 300, keep: 0.5, react: [0.3, 0.7], rhythm: [1.1, 1.8], special: 0.04, hop: 0.25, habits: ['cheer', 'flip'] },
-    showoff: { hunt: 300, tether: 320, keep: 0.65, react: [0.12, 0.22], rhythm: [0.75, 1.1], special: 0.35, hop: 0.12, habits: ['flip', 'roar', 'cheer'] },
+    rusher: { keep: 0.6, react: [0.12, 0.25], rhythm: [0.6, 0.95], special: 0.22, habits: ['roar', 'cheer'] },
+    guardian: { keep: 0.7, react: [0.15, 0.3], rhythm: [0.9, 1.3], special: 0.12, habits: ['guard', 'roar'] },
+    sniper: { keep: 0.85, react: [0.18, 0.35], rhythm: [0.95, 1.35], special: 0.15, habits: ['aimshot', 'cheer'] },
+    healer: { keep: 0.9, react: [0.2, 0.4], rhythm: [1.2, 1.8], special: 0.1, habits: ['pray', 'cheer'] },
+    rookie: { keep: 0.5, react: [0.3, 0.7], rhythm: [1.1, 1.8], special: 0.04, habits: ['cheer', 'flip'] },
+    showoff: { keep: 0.65, react: [0.12, 0.22], rhythm: [0.75, 1.1], special: 0.35, habits: ['flip', 'roar', 'cheer'] },
   }[kind];
   return {
     kind, ...base, weapon: st,
@@ -173,25 +176,26 @@ export function makeAI(bot, rng, kind = null) {
   };
 }
 
-// The monster a member goes after. They stick with a target until it's dead or out of their
-// reach, so they don't flip back and forth between two.
-function chooseTarget(bot, world, members) {
-  const ai = bot.ai;
-  const b = world.body;
-  const cur = bot.brain.target;
-  if (cur && cur.hp > 0 && Math.abs(cur.x - b.x) < ai.hunt * 1.25 && Math.abs(cur.y - b.y) < 170) return cur;
+// ---------- In the field: hunting on their own ----------
+
+// The monster a member hunts: one near them that no partymate is already on, anywhere on the
+// map. They stick with it until it's dead (or turns out to be out of reach), so they don't flip
+// between two. Guardians lean toward monsters near you, rushers toward packs.
+function huntTarget(bot, world, members) {
+  const br = bot.brain;
+  const body = bot.body;
+  const skip = (m) => br.skip?.mob === m && world.now < br.skip.until;
+  const cur = br.target;
+  if (cur && cur.hp > 0 && world.mobs.includes(cur) && !skip(cur)) return cur;
   let best = null;
   let bestScore = Infinity;
   for (const m of world.mobs) {
-    if (m.hp <= 0 || Math.abs(m.x - b.x) > ai.hunt || Math.abs(m.y - b.y) > 160) continue;
-    // Guardians and healers care most about what's near you; others about what's near them.
-    const fromMe = Math.abs(m.x - bot.body.x) + Math.abs(m.y - bot.body.y) * 2;
-    const fromYou = Math.abs(m.x - b.x) + Math.abs(m.y - b.y) * 2;
-    let score = ['guardian', 'healer'].includes(ai.kind) ? fromYou * 1.5 + fromMe * 0.5 : fromMe;
-    // Spread out: a monster someone else is already on is less attractive.
-    if (members.some((o) => o !== bot && o.brain?.target === m)) score += 120;
-    // And one in front of them beats one behind, so they don't spin round between kills.
-    if (Math.sign(m.x - bot.body.x) === -bot.body.facing) score += 70;
+    if (m.hp <= 0 || skip(m)) continue;
+    let score = Math.abs(m.x - body.x) + Math.abs(m.y - body.y) * 3;
+    if (members.some((o) => o !== bot && o.brain?.target === m)) score += 300;
+    if (Math.sign(m.x - body.x) === -body.facing) score += 40;
+    if (bot.ai.kind === 'guardian') score += (Math.abs(m.x - world.body.x) + Math.abs(m.y - world.body.y) * 3) * 0.5;
+    if (bot.ai.kind === 'rusher') score -= 40 * world.mobs.filter((o) => o !== m && o.hp > 0 && Math.abs(o.x - m.x) < 120 && Math.abs(o.y - m.y) < 30).length;
     if (score < bestScore) {
       bestScore = score;
       best = m;
@@ -200,60 +204,115 @@ function chooseTarget(bot, world, members) {
   return best;
 }
 
-// Decides where to be. Runs every few tenths of a second (each member's own reaction time), not
-// every frame, which keeps movement calm.
-function think(bot, world, members, rng) {
+// Decides what to do in the field: pick a monster, choose a spot to fight it from on its ledge
+// (or, for ranged fighters, anywhere in range), and when the map is clear, wander off to look
+// somewhere else. Goals carry the surface they're on, so the path finder can get there.
+function hunt(bot, world, members, rng) {
   const ai = bot.ai;
   const br = bot.brain;
-  const b = world.body;
   const body = bot.body;
   const st = ai.weapon;
-  const off = ai.spot * (1 + bot.slot * 0.35);
-  // Their spot is on their own side of you, unless that's past the edge of the map.
-  const mine = b.x + ai.side * off;
-  const home = clampX(world.map, mine) === mine ? mine : b.x - ai.side * off;
-  const target = world.map.isTown ? null : chooseTarget(bot, world, members);
-  br.target = target;
-  // Too far from you with nothing near you to fight: come back. (Targets are always near you, so
-  // this never fights with chasing one.)
-  const away = Math.abs(body.x - b.x);
-  if (!target && away > ai.tether * 1.4 && ai.kind !== 'rookie') {
-    br.goal = { x: home, y: b.y, mode: 'regroup' };
-    return;
+  const nav = navOf(world.map);
+  // Rookies get distracted now and then and go look at something instead.
+  const distracted = ai.kind === 'rookie' && br.goal?.mode === 'wander' && world.now < br.wanderUntil;
+  const target = distracted ? null : huntTarget(bot, world, members);
+  if (target && target !== br.target && ai.kind === 'rookie' && rng() < 0.2) {
+    br.target = null;
+    return wander(bot, world, nav, rng);
   }
+  br.target = target;
   if (target) {
-    // They pick a side of the monster when they first go for it and keep it, so they don't run
-    // back and forth past it as it moves.
     if (br.fightOn !== target) {
       br.fightOn = target;
       br.fightSide = Math.sign(body.x - target.x) || ai.side;
     }
-    const dir = br.fightSide;
-    const along = (body.x - target.x) * dir;
-    // Ranged fighters keep some room; snipers and healers like more.
-    const near = st.ranged ? (ai.kind === 'rookie' ? 40 : 60) : 4;
-    const far = st.reach * 0.95;
-    // Already in a good spot: hold it and let the monster come and go a little.
+    const near = st.ranged ? 60 : 4;
+    const along = (body.x - target.x) * br.fightSide;
     br.fought = world.now;
-    // (Ranged fighters can shoot up or down a ledge, so they don't need to climb to it.)
-    if (along >= near && along <= far && Math.abs(target.y - body.y) < st.lift && body.onGround) {
-      br.goal = { x: body.x, y: body.y, mode: 'fight' };
+    // In a good spot already (ranged fighters can shoot up or down a ledge): hold it.
+    if (body.onGround && along >= near && along <= st.reach * 0.95 && Math.abs(target.y - body.y) < st.lift) {
+      br.goal = { x: body.x, y: body.y, mode: 'fight', surface: surfaceOf(nav, body) };
       return;
     }
-    br.goal = { x: target.x + dir * Math.max(near + 8, st.reach * ai.keep), y: Math.abs(target.y - body.y) < st.lift ? body.y : target.y, mode: 'fight' };
+    const s = surfaceBelow(nav, target.x, target.y);
+    const surf = nav.surfaces[s];
+    const off = Math.max(near + 8, st.reach * ai.keep);
+    // Their side of it, unless that runs off the ledge.
+    let x = target.x + br.fightSide * off;
+    if (x < surf.x1 + 8 || x > surf.x2 - 8) {
+      br.fightSide = -br.fightSide;
+      x = target.x + br.fightSide * off;
+    }
+    br.goal = { x: Math.max(surf.x1 + 8, Math.min(surf.x2 - 8, x)), y: surf.y, mode: 'fight', surface: s };
     return;
   }
   br.fightOn = null;
-  // Just finished one off: a moment to look around for the next before heading back.
-  if (world.now - (br.fought ?? -9) < 0.9 && away < ai.tether) {
-    br.goal = { x: body.x, y: body.y, mode: 'fight' };
-    return;
+  // Just finished one off: a moment to look around for the next.
+  if (world.now - (br.fought ?? -9) < 0.9) return;
+  if (br.goal?.mode === 'wander' && world.now < br.wanderUntil) return;
+  wander(bot, world, nav, rng);
+}
+
+// Off to a random spot on a random ledge, for a while.
+function wander(bot, world, nav, rng) {
+  const br = bot.brain;
+  const s = Math.floor(rng() * nav.surfaces.length);
+  const surf = nav.surfaces[s];
+  br.goal = { x: between(Math.max(24, surf.x1 + 12), Math.min(world.map.width - 24, surf.x2 - 12), rng), y: surf.y, mode: 'wander', surface: s };
+  br.wanderUntil = world.now + between(4, 9, rng) * bot.ai.patience;
+}
+
+// Walks a member to its goal in the field along a path over ledges and ropes, planned again
+// when the goal moves to another surface, the body ends up somewhere unexpected, or every so
+// often. A goal they can't reach is given up on for a while.
+function fieldSteer(bot, world, members) {
+  const br = bot.brain;
+  const body = bot.body;
+  const g = br.goal;
+  const none = { left: false, right: false, up: false, down: false, jump: false };
+  if (!g || g.surface < 0) return none;
+  const nav = navOf(world.map);
+  const here = surfaceOf(nav, body);
+  if (here >= 0 && (!br.path || br.pathTo !== g.surface || world.now > br.replanAt)) {
+    br.path = findPath(nav, here, body.x, g.surface, g.x);
+    br.pathTo = g.surface;
+    br.replanAt = world.now + 1.5;
+    if (!br.path) {
+      if (br.target) br.skip = { mob: br.target, until: world.now + 8 };
+      br.target = null;
+      br.goal = null;
+      return none;
+    }
   }
-  // Nothing to fight: rookies sometimes wander off to look at something, and stick with it for a
-  // few seconds; everyone else settles into their spot by you, with a little drift.
+  if (!br.path) return none;
+  // On the goal's ledge: the usual calm approach (stop near it, keep apart from partymates).
+  if (!br.path.length && here === g.surface) return steerTo(bot, world, members);
+  br.settled = false;
+  const { intent, lost } = followPath(nav, body, br.path, g.x);
+  if (lost) br.path = null;
+  return intent;
+}
+
+// ---------- In town: hanging around near you ----------
+
+// Decides where to be. Runs every few tenths of a second (each member's own reaction time), not
+// every frame, which keeps movement calm.
+function think(bot, world, members, rng) {
+  if (!world.map.isTown) return hunt(bot, world, members, rng);
+  const ai = bot.ai;
+  const br = bot.brain;
+  const b = world.body;
+  const body = bot.body;
+  const off = ai.spot * (1 + bot.slot * 0.35);
+  // Their spot is on their own side of you, unless that's past the edge of the map.
+  const mine = b.x + ai.side * off;
+  const home = clampX(world.map, mine) === mine ? mine : b.x - ai.side * off;
+  br.target = null;
+  // Rookies sometimes wander off to look at something, and stick with it for a few seconds;
+  // everyone else settles into their spot by you, with a little drift.
   if (br.goal?.mode === 'wander' && world.now < br.wanderUntil && Math.abs(body.x - br.goal.x) > 8) return;
   if (ai.kind === 'rookie' && rng() < 0.025) {
-    br.goal = { x: b.x + between(-140, 140, rng), y: b.y, mode: 'wander' };
+    br.goal = { x: clampX(world.map, b.x + between(-140, 140, rng)), y: b.y, mode: 'wander' };
     br.wanderUntil = world.now + between(3, 6, rng);
     return;
   }
@@ -428,10 +487,11 @@ export function updateParty(bots, world, dt) {
       return;
     }
     const body = bot.body;
-    // Lost or stuck: catch up with a shimmer, as if they'd taken a shortcut.
-    const far = Math.abs(body.x - b.x) > 480 || Math.abs(body.y - b.y) > 220;
+    // In town, lost or stuck: catch up with a shimmer, as if they'd taken a shortcut. (In the
+    // field they're off on their own.)
+    const far = map.isTown && (Math.abs(body.x - b.x) > 480 || Math.abs(body.y - b.y) > 220);
     bot.stuck = far ? bot.stuck + dt : Math.max(0, bot.stuck - dt);
-    const below = !b.rope && body.onGround && b.onGround && Math.abs(body.y - b.y) > 40;
+    const below = map.isTown && !b.rope && body.onGround && b.onGround && Math.abs(body.y - b.y) > 40;
     bot.lowFor = below ? (bot.lowFor ?? 0) + dt : 0;
     if (bot.stuck > 3 || bot.lowFor > 6 * bot.ai.patience) {
       Object.assign(body, { x: b.x - b.facing * (FOLLOW_GAP + i * 14), y: b.y, vx: 0, vy: 0, rope: null, onGround: b.onGround, surface: b.surface });
@@ -449,9 +509,18 @@ export function updateParty(bots, world, dt) {
     }
     // Move.
     const busy = bot.attack && ['pray', 'cheer', 'flip', 'roar', 'guard', 'aimshot'].includes(bot.attack.pose) && !bot.attack.fighting;
-    const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : steerTo(bot, world, members);
-    // Rookies and show-offs hop about now and then.
-    if (body.onGround && !intent.jump && !bot.attack && rng() < bot.ai.hop * dt * (br.goal?.mode === 'fight' ? 0.5 : 1)) intent.jump = true;
+    const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : map.isTown ? steerTo(bot, world, members) : fieldSteer(bot, world, members);
+    // Walking into something and getting nowhere: plan again, and give up on that monster.
+    const pushing = (intent.left || intent.right) && body.onGround;
+    br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
+    br.lastX = body.x;
+    if (br.stall > 1.5) {
+      br.path = null;
+      if (br.target) br.skip = { mob: br.target, until: world.now + 6 };
+      br.target = null;
+      br.goal = null;
+      br.stall = 0;
+    }
     stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100 });
     br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;
     // Fight.
@@ -467,7 +536,7 @@ export function updateParty(bots, world, dt) {
         bot.attack.fighting = true;
         bot.cooldown = between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng);
       }
-    } else if (br.stopped > 0.35 && br.goal?.mode !== 'fight') {
+    } else if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') {
       // Standing about: look where you're headed if you're on the move, or at you if not.
       body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;
     }
@@ -477,7 +546,7 @@ export function updateParty(bots, world, dt) {
       if (br.healIn <= 0) br.healIn = heal(bot, world, bots) ? between(6, 10, rng) : 1.5;
     }
     // Idle habits while you stand around: a flip, a cheer, a taunt, a little stretch.
-    if (!m && br.still > 3 && body.onGround && !bot.attack) {
+    if (!m && body.onGround && !bot.attack && (map.isTown ? br.still > 3 : br.goal?.mode === 'wander' && br.settled)) {
       br.habitIn -= dt;
       if (br.habitIn <= 0) {
         br.habitIn = between(6, 14, rng) * bot.ai.patience;
