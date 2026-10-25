@@ -51,27 +51,35 @@ then press the key. Right-click a hotkey slot to clear it.
 ## Systems
 
 - **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (each instructor lives in their
-  job's home town) → a second job at 30: Blademaster or Lancer, Ranger or Marksman, Duelist or
-  Shadow. Each job has its own HP/MP growth and weapons.
-- **The mage tree** (the template for every class) — the Mage starts as a glass cannon: huge
-  spell damage, the least HP in the game, and Blink to get out of trouble. At 30 it branches three
-  ways, and each branch becomes a third job at 50:
+  job's home town). Every class follows the same template: a movement skill in the first job
+  (Charge, Blink, Backflip, Shadow Step), three branches at level 30, and one third job per branch
+  at level 50 with a signature skill, a summon or power buff, and a screen-wide ultimate that hits
+  up to 15 monsters twice. The Mage starts as a glass cannon with the least HP in the game.
 
-  | Branch (30) | Third job (50) | Plays like | Ultimate |
-  |---|---|---|---|
-  | Stormfrost Wizard | Stormfrost Archmage | Ice freezes monsters solid (they can't move or hurt you), lightning chains through crowds | Glacial Tempest |
-  | Venomflame Wizard | Venomflame Archmage | Fire bursts, and poison keeps damaging monsters every second after | Meteor Shower |
-  | Cleric | Bishop | Heals, buffs, holy light; the sturdiest mage | Radiant Judgment |
+  | Class | Branch (30) | Third job (50) | Plays like | Ultimate |
+  |---|---|---|---|---|
+  | Warrior | Blademaster | Sword Saint | Sword waves and eight-hit combos | Thousand Blades |
+  | Warrior | Lancer | Dragon Knight | Dragon breath and a stunning sky-spear plunge | Dragon's Roar |
+  | Warrior | Guardian | Paladin | The tank: shield bashes that stun, quakes, a holy charge | Heaven's Hammer |
+  | Mage | Stormfrost Wizard | Stormfrost Archmage | Ice freezes monsters solid, lightning chains through crowds | Glacial Tempest |
+  | Mage | Venomflame Wizard | Venomflame Archmage | Fire bursts, and poison keeps damaging monsters after | Meteor Shower |
+  | Mage | Cleric | Bishop | Heals, buffs, holy light; the sturdiest mage | Radiant Judgment |
+  | Archer | Ranger | Windwalker | Hurricanes of arrows and wind crescents | Arrow Storm |
+  | Archer | Marksman | Deadeye | Piercing rays, frag bolts, huge criticals | Final Shot |
+  | Archer | Hunter | Beastmaster | Snares, thorn traps that bleed, a thunder hawk | Wild Hunt |
+  | Thief | Duelist | Blade Dancer | Dashing cuts and petal whirlwinds | Blade Fury |
+  | Thief | Shadow | Nightstalker | Shadow shuriken and webs that bind | Shuriken Tempest |
+  | Thief | Trickster | Phantom Thief | Coin tosses, smoke bombs, cartoon bombs | Jackpot |
 
-  Each third job has a mastery passive, a signature spell (Chain Lightning and Glacier Spikes,
-  Plague Inferno, Shining Ray), a summon that fights beside you (Frost Sprite, Venom Salamander,
-  Guardian Angel), and a huge-area ultimate that hits up to 15 monsters twice. Every spell casts
-  over a magic circle in its school's color. Old Pyromancer, Inferno Sage, and Seraph saves move to
-  the new jobs, and skills that were removed give their SP back.
+  Monsters can be **frozen** (in a block of ice) or **stunned** (seeing stars) so they can't move or
+  hurt you, and **poisoned** (green) or **bleeding** (red) so they take damage every second. Spells
+  cast over a magic circle in their school's color; big weapon skills flare with a burst of
+  power. Old Pyromancer, Inferno Sage, and Seraph saves move to the new mage jobs, and skills that
+  were removed give their SP back.
 - **Stats** — STR, DEX, INT, LUK with 5 AP per level (an Auto button spends them for your job).
   Damage uses a primary and secondary stat per weapon type, mastery raises your minimum damage,
   magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.
-- **Skills** — 3 Novice skills, 4-5 per first job, 4 per second job: attacks, area hits, multi-hit
+- **Skills** — 3 Novice skills, 5 per first job, 4 per second job, 4-5 per third job: attacks, area hits, multi-hit
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
   3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
@@ -118,11 +126,12 @@ then press the key. Right-click a hotkey slot to clear it.
   telegraphs a ground slam.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
-  dagger toss, claw jab). Advanced jobs add an aura that fades in while idle: Blademaster blade
-  wind, Lancer dragon spiral, Stormfrost ice crystals and snow, Venomflame fireballs and venom
-  bubbles, Cleric halo and feathers, Ranger leaf storm, Marksman lock-on reticle, Duelist
-  afterimages and petals, Shadow smoke and shuriken, and for third jobs a Stormfrost Archmage's
-  frost wings and lightning, a Venomflame Archmage's phoenix wings, and a Bishop's wings of light.
+  dagger toss, claw jab). Every second and third job adds its own aura that fades in while idle:
+  blade wind, a dragon spiral, orbiting boulders, ice crystals and snow, fireballs and venom bubbles,
+  a halo and feathers, a leaf storm, a lock-on reticle, leaves and fireflies, afterimages, smoke and
+  shuriken, and orbiting coins. Third jobs build on their branch's aura with something grander:
+  floating swords, dragon or frost or phoenix or shadow wings, a holy pillar, wind wings, a spirit
+  wolf, a petal whirl, or a swirl of playing cards.
   The instructors show off a job aura in their towns.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any

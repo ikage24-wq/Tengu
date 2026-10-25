@@ -213,7 +213,7 @@ export function statsWindow(ui, state, world) {
 
 export function skillsWindow(ui, state, world) {
   const win = state.windows.skills;
-  const W = 236;
+  const W = 256;
   const H = 216;
   if (!windowFrame(ui, win, W, H, 'Skills')) return;
   const { ctx } = ui;

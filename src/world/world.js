@@ -377,16 +377,22 @@ export function updateWorld(world, dt, input) {
       killMob(world, m);
       continue;
     }
-    // Ice freezes monsters in place (bosses shrug it off twice as fast); venom keeps biting.
-    if (h.freeze) {
-      const secs = m.def.boss ? h.freeze / 2 : h.freeze;
-      if (!(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
+    // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
+    // venom and bleeding keep biting every second.
+    const hold = h.freeze || h.stun;
+    if (hold) {
+      const secs = m.def.boss ? hold / 2 : hold;
+      if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
+      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : 'stun';
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
-    if (h.poison) m.poison = { until: world.now + h.poison.secs, dmg: Math.max(1, Math.round(h.damage * h.poison.pct)), tick: m.poison?.tick ?? 1 };
+    const dot = h.poison ?? h.bleed;
+    if (dot) {
+      m.poison = { until: world.now + dot.secs, dmg: Math.max(1, Math.round(h.damage * dot.pct)), tick: m.poison?.tick ?? 1, kind: h.bleed ? 'bleed' : 'poison' };
+    }
   }
 
-  // Poison ticks once a second, in green, and can finish a monster off.
+  // Poison (green) and bleeding (red) tick once a second, and can finish a monster off.
   for (const m of world.mobs) {
     if (!m.poison || m.hp <= 0) continue;
     if (m.poison.until <= world.now) {
@@ -397,8 +403,9 @@ export function updateWorld(world, dt, input) {
     if (m.poison.tick > 0) continue;
     m.poison.tick = 1;
     m.hp = Math.max(0, m.hp - m.poison.dmg);
-    world.numbers.push({ x: m.x + 8, y: m.y - m.def.h - 4, text: `${m.poison.dmg}`, color: '#9be86b', t: 0, small: true });
-    world.fx.push({ kind: 'poisonpuff', x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
+    const bleed = m.poison.kind === 'bleed';
+    world.numbers.push({ x: m.x + 8, y: m.y - m.def.h - 4, text: `${m.poison.dmg}`, color: bleed ? '#ff6b7a' : '#9be86b', t: 0, small: true });
+    world.fx.push({ kind: 'poisonpuff', bleed, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
     if (m.hp <= 0) killMob(world, m);
   }
 

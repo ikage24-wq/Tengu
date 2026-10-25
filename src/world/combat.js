@@ -13,12 +13,18 @@ export function weaponElement(char) {
   return w ? ITEMS[w.id]?.element ?? null : null;
 }
 
-// Ultimates that light up the whole screen, and area spells whose sweep lasts longer than a slash.
-const STORMS = new Set(['meteor', 'judgment', 'tempest']);
-const SWEEPS = { mist: 0.9, toxicblaze: 0.8, icespire: 0.7, thunder: 0.5, shiningray: 0.7, burst: 0.45 };
+// Area effects whose sweep lasts longer than a slash.
+const SWEEPS = {
+  mist: 0.9, toxicblaze: 0.8, icespire: 0.7, thunder: 0.5, shiningray: 0.7, burst: 0.45,
+  vortex: 0.55, quake: 0.6, beam: 0.55, smoke: 0.9, charge: 0.4,
+};
+const SHAKY = new Set(['thunder', 'chain', 'icespire', 'quake']);
 
-// What a spell shot does when it lands: an elemental impact, or a spell effect by kind.
-const SHOT_IMPACTS = { bolt: 'burst', fire: 'fire', holy: 'holy', venomfire: 'mist' };
+// What a shot does when it lands: an elemental impact, or an effect by kind.
+const SHOT_IMPACTS = {
+  bolt: 'burst', fire: 'fire', holy: 'holy', venomfire: 'mist', bomb: 'fire', coin: 'coinpop',
+  bigstar: 'xslash', wave: 'xslash', feather: 'claw',
+};
 
 const BASE_DELAY = 0.5; // seconds between attacks at normal speed
 const PROJECTILE_SPEED = 620;
@@ -34,6 +40,8 @@ function overlaps(a, b) {
 export function hitBox(body, range) {
   const cy = body.y - body.h / 2;
   if (range.around) return { x: body.x - range.w / 2, y: cy - range.h / 2, w: range.w, h: range.h };
+  // A dash's path: the stretch just crossed, behind where the player now stands.
+  if (range.back) return { x: body.facing > 0 ? body.x + 20 - range.w : body.x - 20, y: cy - range.h / 2, w: range.w, h: range.h };
   const x = body.facing > 0 ? body.x - 6 : body.x + 6 - range.w;
   return { x, y: cy - range.h / 2, w: range.w, h: range.h };
 }
@@ -83,17 +91,27 @@ export function cast(world, skillId, rng = Math.random) {
   const pose = type === 'magic' || type === 'heal' || type === 'buff' ? 'cast' : ranged || params.projectile ? 'shoot' : 'swing';
   const poseDur = lock || Math.min(0.35, world.attackTimer);
   world.pose = { kind: pose, t: poseDur, dur: poseDur };
-  // Spells glow with a magic circle at your feet in their school's color.
-  if (s?.school) world.fx.push({ kind: 'castcircle', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.2), big: lock >= 1 });
+  // Spells glow with a magic circle at your feet in their school's color; big weapon skills
+  // flare with a burst of power instead.
+  const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';
+  if (s?.school && magical) world.fx.push({ kind: 'castcircle', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.2), big: lock >= 1 });
+  else if (s?.school && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
 
+  let area = params.range;
   if (type === 'blink') {
-    // Vanish, reappear ahead, and shake off monsters for a moment.
+    // Vanish (or dash), reappear ahead, and shake off monsters for a moment. A negative
+    // distance flips you backward. Dashes with `pct` hit everything along the way.
     const from = body.x;
     body.x = Math.max(body.w / 2, Math.min(world.map.width - body.w / 2, body.x + body.facing * params.distance));
     world.invuln = Math.max(world.invuln, 0.4);
-    world.fx.push({ kind: 'blink', x: from, y: body.y, tx: body.x, dir: body.facing, t: 0, dur: 0.45 });
-    world.fx.push({ kind: 'blinkin', x: body.x, y: body.y, t: 0, dur: 0.4 });
-    return { ok: true };
+    if (s.fx === 'charge') {
+      world.fx.push({ kind: 'chargetrail', school: s.school, x: from, y: body.y, tx: body.x, dir: body.facing, t: 0, dur: 0.5 });
+    } else {
+      world.fx.push({ kind: 'blink', school: s.school, x: from, y: body.y, tx: body.x, dir: body.facing, t: 0, dur: 0.45 });
+      world.fx.push({ kind: 'blinkin', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.4 });
+    }
+    if (!params.pct) return { ok: true };
+    area = { w: Math.abs(body.x - from) + 40, h: 64, back: true };
   }
 
   if (type === 'buff') {
@@ -112,17 +130,19 @@ export function cast(world, skillId, rng = Math.random) {
     world.fx.push({ kind: 'heal', x: body.x, y: body.y, t: 0, dur: 0.8 });
   }
 
-  const targets = pickTargets(world.mobs, body, params.range, params.targets);
+  const targets = pickTargets(world.mobs, body, area, params.targets);
   const family = JOBS[char.job].family;
   const acc = accuracy(family, stats, char.level);
-  const range = type === 'attack' ? physicalRange(stats, stats.weaponType, params.pct) : magicRange(stats, params.power);
+  const range = params.pct != null ? physicalRange(stats, stats.weaponType, params.pct) : magicRange(stats, params.power);
   const fxKind = s?.fx ?? (ranged ? 'arrow' : 'swing');
+  const ultimate = Boolean(s?.ultimate);
+  const look = { school: s?.school, variant: s?.variant };
 
-  if (!params.projectile) {
-    const box = hitBox(body, params.range);
-    world.fx.push({ kind: fxKind, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: STORMS.has(fxKind) ? 0.9 : SWEEPS[fxKind] ?? 0.3, element });
-    if (STORMS.has(fxKind)) world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
-    if (fxKind === 'thunder' || fxKind === 'chain' || fxKind === 'icespire') world.juice?.push({ type: 'shake', mag: 1.5, dur: 0.25, delay: 0.1 });
+  if (!params.projectile && type !== 'blink') {
+    const box = hitBox(body, area);
+    world.fx.push({ kind: fxKind, ...look, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: ultimate ? 0.9 : SWEEPS[fxKind] ?? 0.3, element });
+    if (ultimate) world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
+    if (SHAKY.has(fxKind)) world.juice?.push({ type: 'shake', mag: 1.5, dur: 0.25, delay: 0.1 });
   }
   // Chain lightning: one bolt that hops from the caster through each target in turn.
   if (params.chain && targets.length) {
@@ -140,18 +160,21 @@ export function cast(world, skillId, rng = Math.random) {
       const chainAt = params.chain ? ti * 0.06 : 0;
       world.pending.push({
         at: at + chainAt, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: n,
-        freeze: params.freeze, poison: params.poison, burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null,
+        freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
+        burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school,
       });
       if (params.projectile) {
         world.fx.push({
-          kind: 'projectile', shot: fxKind, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
+          kind: 'projectile', shot: fxKind, school: s?.school, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
           tx: m.x, ty: m.y - m.def.h / 2, t: -(n * 0.09 + ti * 0.02), dur: Math.max(0.08, travel), element,
         });
       }
     }
-    if (!params.projectile && (type === 'magic' || type === 'heal') && !params.chain) {
-      const storm = STORMS.has(fxKind);
-      world.fx.push({ kind: fxKind, x: m.x, y: m.y, h: m.def.h, t: storm ? -ti * 0.025 : -(params.delay ?? 0) * 0.5, dur: storm ? 0.9 : 0.55, seed: rng() });
+    // An effect on each monster hit: the skill's own `hitFx`, or the spell itself landing.
+    const hitKind = s?.hitFx ?? ((type === 'magic' || type === 'heal' || ultimate) && !params.projectile && !params.chain ? fxKind : null);
+    if (hitKind) {
+      const t = ultimate ? -ti * 0.025 : type === 'blink' ? -0.05 - ti * 0.04 : -(params.delay ?? 0) * 0.5;
+      world.fx.push({ kind: hitKind, ...look, x: m.x, y: m.y, h: m.def.h, t, dur: ultimate ? 0.9 : 0.55, seed: rng() });
     }
   });
 
@@ -159,7 +182,7 @@ export function cast(world, skillId, rng = Math.random) {
   if (params.projectile && !targets.length) {
     world.fx.push({
       kind: 'projectile', shot: fxKind, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
-      tx: body.x + body.facing * params.range.w, ty: body.y - body.h * 0.55, t: 0, dur: params.range.w / PROJECTILE_SPEED, element,
+      tx: body.x + body.facing * params.range.w, ty: body.y - body.h * 0.55, t: 0, dur: params.range.w / PROJECTILE_SPEED, element, school: s?.school,
     });
   }
   return { ok: true, targets: targets.length };
@@ -176,7 +199,7 @@ export function summonStrike(world, summon, from, rng = Math.random) {
   const { char, stats, body, now } = world;
   const targets = pickTargets(world.mobs, body, summon.range, summon.targets);
   if (!targets.length) return 0;
-  const range = magicRange(stats, summon.power);
+  const range = summon.physical ? physicalRange(stats, stats.weaponType, summon.power) : magicRange(stats, summon.power);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   targets.forEach((m, i) => {
     const travel = Math.hypot(m.x - from.x, m.y - from.y) / 700;
@@ -184,9 +207,9 @@ export function summonStrike(world, summon, from, rng = Math.random) {
     const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
     world.pending.push({
       at: now + travel + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: from.x, stack: 0,
-      freeze: summon.freeze, poison: summon.poison, burst: SHOT_IMPACTS[summon.fx],
+      freeze: summon.freeze, poison: summon.poison, burst: SHOT_IMPACTS[summon.fx], school: summon.school,
     });
-    world.fx.push({ kind: 'projectile', shot: summon.fx, x: from.x, y: from.y, tx: m.x, ty: m.y - m.def.h / 2, t: -i * 0.03, dur: Math.max(0.08, travel) });
+    world.fx.push({ kind: 'projectile', shot: summon.fx, school: summon.school, x: from.x, y: from.y, tx: m.x, ty: m.y - m.def.h / 2, t: -i * 0.03, dur: Math.max(0.08, travel) });
   });
   return targets.length;
 }

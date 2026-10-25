@@ -161,11 +161,15 @@ test('the boss slam hurts players standing on the floor', () => {
 });
 
 function mageAt50(second, third) {
+  return jobAt50('mage', second, third);
+}
+
+function jobAt50(first, second, third) {
   const w = newWorld();
   gainExp(w.char, 3e7);
   assert.ok(w.char.level >= 50);
   assert.equal(advanceJob(w.char, third), false, 'third job needs the second job first');
-  advanceJob(w.char, 'mage');
+  advanceJob(w.char, first);
   advanceJob(w.char, second);
   assert.equal(advanceJob(w.char, third), true);
   w.char.base.int = 250;
@@ -187,9 +191,15 @@ function crowd(w, count, type = 'starspirit') {
   }
 }
 
-for (const [second, third, ult] of [['cleric', 'bishop', 'judgment'], ['fpwizard', 'fparchmage', 'meteor'], ['ilwizard', 'ilarchmage', 'tempest']]) {
+const THIRD_JOBS = [
+  ['mage', 'cleric', 'bishop', 'judgment'], ['mage', 'fpwizard', 'fparchmage', 'meteor'], ['mage', 'ilwizard', 'ilarchmage', 'tempest'],
+  ['warrior', 'blademaster', 'swordsaint', 'thousandblades'], ['warrior', 'lancer', 'dragonknight', 'dragonroar'], ['warrior', 'guardian', 'paladin', 'heavenshammer'],
+  ['archer', 'ranger', 'windwalker', 'arrowstorm'], ['archer', 'marksman', 'deadeye', 'finalshot'], ['archer', 'hunter', 'beastmaster', 'wildhunt'],
+  ['thief', 'duelist', 'bladedancer', 'bladefury'], ['thief', 'shadow', 'nightstalker', 'shurikentempest'], ['thief', 'trickster', 'phantomthief', 'jackpot'],
+];
+for (const [first, second, third, ult] of THIRD_JOBS) {
   test(`${third}: the ultimate hits 15 of 20 monsters twice`, () => {
-    const w = mageAt50(second, third);
+    const w = jobAt50(first, second, third);
     w.char.skills[ult] = 20;
     crowd(w, 20);
     const result = cast(w, ult);
@@ -310,13 +320,58 @@ test('big skills root you for a short wind-up and never go on cooldown', async (
   assert.equal(cast(w, 'meteor').ok, true, 'usable again as soon as the lock ends');
 });
 
-test('the mage branches three ways at 30, and each branch has one third job', async () => {
+test('every class branches three ways at 30, and each branch has one third job with an ultimate', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
-  assert.deepEqual(nextJobs('mage', 30).map((j) => j.id).sort(), ['cleric', 'fpwizard', 'ilwizard']);
-  assert.deepEqual(nextJobs('ilwizard', 50).map((j) => j.id), ['ilarchmage']);
-  assert.deepEqual(nextJobs('fpwizard', 50).map((j) => j.id), ['fparchmage']);
-  assert.deepEqual(nextJobs('cleric', 50).map((j) => j.id), ['bishop']);
+  const { SKILLS } = await import('../src/data/skills.js');
+  for (const first of ['warrior', 'mage', 'archer', 'thief']) {
+    const seconds = nextJobs(first, 30);
+    assert.equal(seconds.length, 3, `${first} has three branches`);
+    for (const second of seconds) {
+      const thirds = nextJobs(second.id, 50);
+      assert.equal(thirds.length, 1, `${second.id} has one third job`);
+      const skills = Object.values(SKILLS).filter((k) => k.job === thirds[0].id);
+      assert.equal(skills.filter((k) => k.ultimate).length, 1, `${thirds[0].id} has one ultimate`);
+      assert.ok(skills.some((k) => k.type === 'passive'), `${thirds[0].id} has a mastery`);
+    }
+    assert.ok(Object.values(SKILLS).some((k) => k.job === first && k.type === 'blink'), `${first} has a movement skill`);
+  }
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
+});
+
+test('stuns stop monsters with stars, and bleeding ticks like poison', () => {
+  const w = jobAt50('warrior', 'guardian', 'paladin');
+  w.char.skills.shieldbash = 20;
+  crowd(w, 2, 'cloudsheep');
+  w.body.facing = 1;
+  assert.equal(cast(w, 'shieldbash').ok, true);
+  for (let i = 0; i < 20; i++) updateWorld(w, DT, idle);
+  const m = w.mobs[0];
+  assert.equal(m.hold, 'stun');
+  assert.ok(m.frozenUntil > w.now);
+
+  const h = jobAt50('archer', 'hunter', 'beastmaster');
+  h.char.skills.thorntrap = 20;
+  crowd(h, 2, 'cloudsheep');
+  h.body.facing = 1;
+  assert.equal(cast(h, 'thorntrap').ok, true);
+  for (let i = 0; i < 30; i++) updateWorld(h, DT, idle);
+  const b = h.mobs[0];
+  assert.equal(b.poison?.kind, 'bleed');
+  const hp = b.hp;
+  for (let i = 0; i < 60 * 2.2; i++) updateWorld(h, DT, idle);
+  assert.ok(b.hp < hp, 'took bleed damage over time');
+});
+
+test('a charge dashes forward and hits the monsters it passes through', () => {
+  const w = jobAt50('warrior', 'guardian', 'paladin');
+  w.char.skills.holycharge = 20;
+  crowd(w, 4, 'cloudsheep');
+  w.body.facing = 1;
+  const x = w.body.x;
+  const r = cast(w, 'holycharge');
+  assert.equal(r.ok, true);
+  assert.ok(w.body.x > x + 100, 'moved forward');
+  assert.equal(r.targets, 4, 'hit everything it passed');
 });
 
 test('ice freezes monsters in place, and they can\'t hurt you while frozen', () => {

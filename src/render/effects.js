@@ -5,6 +5,7 @@ import { drawItemIcon } from './icons.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
+import { drawStrike, drawStrikeShot } from './strikes.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -54,7 +55,7 @@ function drawShot(ctx, f, cam) {
   const dir = Math.sign(f.tx - f.x) || 1;
   const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
-  if (drawSpellShot(ctx, f, x, y, dir, f.t)) {
+  if (drawSpellShot(ctx, f, x, y, dir, f.t) || drawStrikeShot(ctx, f, x, y, dir, f.t)) {
     ctx.restore();
     return;
   }
@@ -248,7 +249,7 @@ function drawFx(ctx, f, cam, time) {
   const x = f.x - cam.x;
   const y = f.y - cam.y;
   ctx.save();
-  if (drawSpell(ctx, f, x, y, p, cam, time)) {
+  if (drawSpell(ctx, f, x, y, p, cam, time) || drawStrike(ctx, f, x, y, p, cam, time)) {
     ctx.restore();
     return;
   }

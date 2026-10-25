@@ -10,7 +10,13 @@ const hash = (n) => {
 };
 
 // Jobs that have an idle aura, and the 2nd-job form a 3rd job builds on.
-export const AURA_JOBS = new Set(['blademaster', 'lancer', 'ilwizard', 'fpwizard', 'cleric', 'ranger', 'marksman', 'duelist', 'shadow', 'ilarchmage', 'fparchmage', 'bishop', 'gamemaster']);
+export const AURA_JOBS = new Set([
+  'blademaster', 'lancer', 'guardian', 'swordsaint', 'dragonknight', 'paladin',
+  'ilwizard', 'fpwizard', 'cleric', 'ilarchmage', 'fparchmage', 'bishop',
+  'ranger', 'marksman', 'hunter', 'windwalker', 'deadeye', 'beastmaster',
+  'duelist', 'shadow', 'trickster', 'bladedancer', 'nightstalker', 'phantomthief',
+  'gamemaster',
+]);
 
 function glow(ctx, x, y, r, color, a) {
   if (a <= 0 || r <= 0) return;
@@ -227,6 +233,83 @@ function zap(ctx, x1, y1, x2, y2, t, s, k) {
   ctx.lineTo(x2, y2);
   ctx.stroke();
   ctx.restore();
+}
+
+// A small floating sword, point down, tilted by `rot`.
+function floatSword(ctx, x, y, r, rot, k, blade = '#e6f2ff', glowColor = '#8fd3ff') {
+  glow(ctx, x, y, r * 2.4, glowColor, 0.4 * k);
+  ctx.save();
+  ctx.globalAlpha = k;
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.fillStyle = blade;
+  ctx.beginPath();
+  ctx.moveTo(0, r * 1.6);
+  ctx.lineTo(-r * 0.3, -r * 0.6);
+  ctx.lineTo(r * 0.3, -r * 0.6);
+  ctx.fill();
+  ctx.fillStyle = '#ffd66b';
+  ctx.fillRect(-r * 0.7, -r * 0.75, r * 1.4, r * 0.25);
+  ctx.fillRect(-r * 0.12, -r * 1.3, r * 0.24, r * 0.6);
+  ctx.restore();
+}
+
+function goldCoin(ctx, x, y, r, t, k) {
+  glow(ctx, x, y, r * 2.4, '#ffe36b', 0.4 * k);
+  const w = Math.max(0.2, Math.abs(Math.cos(t * 3))) * r;
+  ctx.globalAlpha = k;
+  ctx.fillStyle = '#c98a2b';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 0.6, w, r, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffd66b';
+  ctx.beginPath();
+  ctx.ellipse(x, y, w, r, 0, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function rock(ctx, x, y, r, k, i) {
+  ctx.globalAlpha = k;
+  ctx.fillStyle = i % 2 ? '#c99a6b' : '#a87a4f';
+  ctx.beginPath();
+  ctx.moveTo(x - r, y);
+  ctx.lineTo(x - r * 0.4, y - r);
+  ctx.lineTo(x + r * 0.8, y - r * 0.6);
+  ctx.lineTo(x + r, y + r * 0.4);
+  ctx.lineTo(x, y + r);
+  ctx.fill();
+  ctx.fillStyle = '#ffe9b8';
+  ctx.fillRect(x - r * 0.3, y - r * 0.6, r * 0.5, r * 0.3);
+  ctx.globalAlpha = 1;
+}
+
+// Petals (or leaves) swirling around the body.
+function swirl(ctx, x, y, t, s, k, colors, n = 10, front = true) {
+  for (let i = 0; i < n; i++) {
+    const ang = t * 1.6 + (i / n) * TAU;
+    if ((Math.sin(ang) >= 0) !== front) continue;
+    const u = (i / n + t * 0.15) % 1;
+    const px = x + Math.cos(ang) * 22 * s;
+    const py = y - 8 * s - u * 56 * s + Math.sin(ang) * 4 * s;
+    ctx.save();
+    ctx.globalAlpha = k * Math.sin(u * Math.PI);
+    ctx.translate(px, py);
+    ctx.rotate(ang * 2);
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 3 * s, 1.6 * s, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// Layers several auras into one (a third job builds on its second job's look).
+function layered(...defs) {
+  return {
+    back: (...a) => defs.forEach((d) => d.back?.(...a)),
+    front: (...a) => defs.forEach((d) => d.front?.(...a)),
+  };
 }
 
 function shuriken(ctx, x, y, r, t, k) {
@@ -588,6 +671,52 @@ const JOBS = {
       if (p < 0.2) glow(ctx, x, y - 28 * s, (20 + p * 160) * s, '#ffffff', k * (1 - p / 0.2) * 0.5);
     },
   },
+  guardian: {
+    back(ctx, x, y, t, s, k) {
+      // Earth: an amber glow, a dust ring, and boulders orbiting slowly.
+      glow(ctx, x, y - 16 * s, 30 * s, '#e0a96b', k * 0.35);
+      ctx.strokeStyle = '#e0c49b';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 2; i++) {
+        const u = (t * 0.5 + i / 2) % 1;
+        ctx.globalAlpha = k * (1 - u) * 0.8;
+        ctx.beginPath();
+        ctx.ellipse(x, y, (12 + u * 24) * s, (3 + u * 5) * s, 0, 0, TAU);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      orbit(ctx, x, y - 22 * s, t, s, { n: 3, rx: 22, ry: 6, speed: 0.9, draw: (px, py, z, i) => rock(ctx, px, py, 3.2 * s * z, k, i) }, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      orbit(ctx, x, y - 22 * s, t, s, { n: 3, rx: 22, ry: 6, speed: 0.9, draw: (px, py, z, i) => rock(ctx, px, py, 3.2 * s * z, k, i) }, true);
+      rising(ctx, x, y, t, s, { n: 6, spread: 16, height: 30, speed: 0.6, color: '#e0c49b', size: 1.3, seed: 31 }, k * 0.8);
+    },
+  },
+  hunter: {
+    back(ctx, x, y, t, s, k) {
+      // The forest: a green glow, swirling leaves, and fireflies.
+      glow(ctx, x, y - 18 * s, 28 * s, '#8fd86b', k * 0.32);
+      swirl(ctx, x, y, t, s, k, ['#7fc45a', '#b8e07a', '#5fa84a'], 10, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      swirl(ctx, x, y, t, s, k, ['#7fc45a', '#b8e07a', '#5fa84a'], 10, true);
+      for (let i = 0; i < 5; i++) {
+        const px = x + Math.sin(t * 0.9 + i * 2.1) * 26 * s;
+        const py = y - 30 * s + Math.cos(t * 1.3 + i * 1.7) * 16 * s;
+        glow(ctx, px, py, 4 * s, '#fff6a0', k * (0.5 + 0.5 * Math.sin(t * 4 + i)));
+      }
+    },
+  },
+  trickster: {
+    back(ctx, x, y, t, s, k) {
+      glow(ctx, x, y - 20 * s, 26 * s, '#ffd66b', k * 0.28);
+      orbit(ctx, x, y - 26 * s, t, s, { n: 3, rx: 20, ry: 6, speed: 1.8, draw: (px, py, z, i) => goldCoin(ctx, px, py, 3 * s * z, t + i, k) }, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      orbit(ctx, x, y - 26 * s, t, s, { n: 3, rx: 20, ry: 6, speed: 1.8, draw: (px, py, z, i) => goldCoin(ctx, px, py, 3 * s * z, t + i, k) }, true);
+      rising(ctx, x, y, t, s, { n: 5, spread: 14, height: 40, speed: 0.6, color: '#fff6c9', size: 1.5, seed: 41, shape: 'star' }, k);
+    },
+  },
   gamemaster: {
     back(ctx, x, y, t, s, k) {
       // A rainbow magic circle and a shimmering prism glow.
@@ -631,6 +760,116 @@ const JOBS = {
     },
   },
 };
+
+// Third jobs build on their second job's aura with something grander.
+Object.assign(JOBS, {
+  swordsaint: layered(JOBS.blademaster, {
+    back(ctx, x, y, t, s, k) {
+      magicCircle(ctx, x, y, 32 * s, t * 0.6, '#cfe0ff', k * 0.8, 8);
+      orbit(ctx, x, y - 30 * s, t, s, { n: 4, rx: 26, ry: 7, speed: 1.1, draw: (px, py, z, i) => floatSword(ctx, px, py, 5 * s * z, Math.sin(t * 2 + i) * 0.3, k) }, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      orbit(ctx, x, y - 30 * s, t, s, { n: 4, rx: 26, ry: 7, speed: 1.1, draw: (px, py, z, i) => floatSword(ctx, px, py, 5 * s * z, Math.sin(t * 2 + i) * 0.3, k) }, true);
+    },
+  }),
+  dragonknight: layered({
+    back(ctx, x, y, t, s, k) {
+      wings(ctx, x, y - 30 * s, t, s * 1.15, k * 0.9, ['#e8364f', '#ff5a5a', '#ffb35a', '#a02a4a'], 5);
+      glow(ctx, x, y - 20 * s, 40 * s, '#ff5a5a', k * 0.35);
+      magicCircle(ctx, x, y, 32 * s, t * 0.8, '#ff8a3c', k * 0.8, 5);
+    },
+    front(ctx, x, y, t, s, k) {
+      rising(ctx, x, y, t, s, { n: 12, spread: 22, height: 64, speed: 0.8, color: '#ffb35a', size: 1.4, seed: 51 }, k);
+    },
+  }, JOBS.lancer),
+  paladin: layered(JOBS.guardian, {
+    back(ctx, x, y, t, s, k) {
+      pillar(ctx, x, y, 40 * s, 110 * s, '#fff6c9', k * (0.55 + 0.2 * Math.sin(t * 2)));
+      magicCircle(ctx, x, y, 34 * s, -t * 0.7, '#ffe36b', k * 0.85, 4);
+    },
+    front(ctx, x, y, t, s, k) {
+      halo(ctx, x, y - 52 * s, s * 1.1, t, '#ffe36b', k);
+      rising(ctx, x, y, t, s, { n: 8, spread: 22, height: 70, speed: 0.45, color: '#fff6c9', size: 1.5, seed: 61, shape: 'star' }, k);
+    },
+  }),
+  windwalker: layered(JOBS.ranger, {
+    back(ctx, x, y, t, s, k) {
+      wings(ctx, x, y - 30 * s, t, s * 1.1, k * 0.85, ['#e8fff4', '#8fe8c0', '#c9f6e0', '#ffffff'], 6);
+      ctx.strokeStyle = '#c9f6e0';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 3; i++) {
+        const u = (t * 0.9 + i / 3) % 1;
+        ctx.globalAlpha = k * (1 - u);
+        ctx.beginPath();
+        ctx.ellipse(x, y - u * 50 * s, (16 + u * 10) * s, 4 * s, 0, t * 4, t * 4 + 4);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    },
+  }),
+  deadeye: layered(JOBS.marksman, {
+    back(ctx, x, y, t, s, k) {
+      magicCircle(ctx, x, y, 30 * s, t * 0.5, '#ffd66b', k * 0.75, 4);
+      glow(ctx, x, y - 20 * s, 34 * s, '#cfe0ff', k * 0.3);
+    },
+  }),
+  beastmaster: layered(JOBS.hunter, {
+    back(ctx, x, y, t, s, k) {
+      magicCircle(ctx, x, y, 32 * s, t * 0.6, '#8fd86b', k * 0.8, 5);
+      // A spirit wolf's head glowing faintly behind you.
+      ctx.save();
+      ctx.globalAlpha = k * (0.35 + 0.1 * Math.sin(t * 2));
+      ctx.fillStyle = '#c9f6b0';
+      const hy = y - 52 * s;
+      ctx.beginPath();
+      ctx.ellipse(x, hy, 14 * s, 11 * s, 0, 0, TAU);
+      ctx.moveTo(x - 12 * s, hy - 4 * s);
+      ctx.lineTo(x - 10 * s, hy - 20 * s);
+      ctx.lineTo(x - 2 * s, hy - 8 * s);
+      ctx.moveTo(x + 12 * s, hy - 4 * s);
+      ctx.lineTo(x + 10 * s, hy - 20 * s);
+      ctx.lineTo(x + 2 * s, hy - 8 * s);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - 6 * s, hy - 2 * s, 3 * s, 2 * s);
+      ctx.fillRect(x + 3 * s, hy - 2 * s, 3 * s, 2 * s);
+      ctx.restore();
+    },
+  }),
+  bladedancer: layered(JOBS.duelist, {
+    back(ctx, x, y, t, s, k) {
+      glow(ctx, x, y - 22 * s, 34 * s, '#ff9ec0', k * 0.3);
+      swirl(ctx, x, y, t, s, k, ['#ff9ec0', '#ffd0e0', '#ffffff'], 14, false);
+    },
+    front(ctx, x, y, t, s, k) {
+      swirl(ctx, x, y, t, s, k, ['#ff9ec0', '#ffd0e0', '#ffffff'], 14, true);
+    },
+  }),
+  nightstalker: layered({
+    back(ctx, x, y, t, s, k) {
+      wings(ctx, x, y - 30 * s, t, s * 1.1, k * 0.85, ['#3a2a6b', '#5a3f9a', '#9b6bff', '#2a1f4a'], 5);
+      magicCircle(ctx, x, y, 30 * s, -t * 0.7, '#9b6bff', k * 0.8, 6);
+    },
+  }, JOBS.shadow),
+  phantomthief: layered(JOBS.trickster, {
+    back(ctx, x, y, t, s, k) {
+      magicCircle(ctx, x, y, 32 * s, t * 0.8, '#ffd66b', k * 0.8, 5);
+      // A swirl of playing-card shapes behind you.
+      for (let i = 0; i < 6; i++) {
+        const ang = t * 1.2 + (i / 6) * TAU;
+        ctx.save();
+        ctx.globalAlpha = k * 0.85;
+        ctx.translate(x + Math.cos(ang) * 30 * s, y - 34 * s + Math.sin(ang) * 10 * s);
+        ctx.rotate(ang);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-2.5 * s, -3.5 * s, 5 * s, 7 * s);
+        ctx.fillStyle = i % 2 ? '#e8364f' : '#3a2d4f';
+        ctx.fillRect(-1 * s, -1 * s, 2 * s, 2 * s);
+        ctx.restore();
+      }
+    },
+  }),
+});
 
 export function drawJobAura(ctx, job, layer, x, y, time, scale, k, dir = 1) {
   const def = JOBS[job];

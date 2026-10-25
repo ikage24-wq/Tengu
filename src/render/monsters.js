@@ -445,8 +445,9 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
   ctx.restore();
-  if (m.poison && m.hp > 0) poisonBubbles(ctx, x, y - hop, s, time + m.uid);
-  if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
+  if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y - hop, s, time + m.uid);
+  if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
+  else if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
   if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - hop - s.h * sy, t, now);
 }
 
@@ -521,6 +522,53 @@ function iceBlock(ctx, x, y, s, left, time) {
       ctx.lineTo(bx + w * 0.75, by + h * 0.85);
     }
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Stunned: little stars and a swirl circling over the head.
+function dizzyStars(ctx, x, y, time) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(x, y, 13, 4, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let i = 0; i < 3; i++) {
+    const a = time * 5 + (i / 3) * Math.PI * 2;
+    const sx = x + Math.cos(a) * 13;
+    const sy = y + Math.sin(a) * 4;
+    const r = 4 + Math.sin(a) * 1;
+    ctx.fillStyle = i === 1 ? '#ffffff' : '#ffe36b';
+    ctx.strokeStyle = '#c98a2b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) {
+      const ang = (k / 10) * Math.PI * 2 - Math.PI / 2;
+      const rr = k % 2 ? r * 0.45 : r;
+      ctx.lineTo(sx + Math.cos(ang) * rr, sy + Math.sin(ang) * rr);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Bleeding: red drops falling off the monster.
+function bleedDrops(ctx, x, y, s, time) {
+  ctx.save();
+  for (let i = 0; i < 4; i++) {
+    const u = (time * 0.9 + i / 4) % 1;
+    const bx = x + (i - 1.5) * s.w * 0.18;
+    const by = y - s.h * 0.6 + u * s.h * 0.6;
+    ctx.globalAlpha = 1 - u;
+    ctx.fillStyle = '#e8364f';
+    ctx.beginPath();
+    ctx.moveTo(bx, by - 3);
+    ctx.quadraticCurveTo(bx + 2.2, by + 0.5, bx, by + 2);
+    ctx.quadraticCurveTo(bx - 2.2, by + 0.5, bx, by - 3);
+    ctx.fill();
   }
   ctx.restore();
 }

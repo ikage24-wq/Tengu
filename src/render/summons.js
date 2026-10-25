@@ -3,7 +3,7 @@
 import { R, E, P, sprite, blit } from './pixel.js';
 
 const INK = '#3a2d4f';
-const GLOWS = { angel: 'rgba(255,243,166,0.65)', sprite: 'rgba(143,227,255,0.6)', salamander: 'rgba(255,138,60,0.6)' };
+const GLOWS = { angel: 'rgba(255,243,166,0.65)', sprite: 'rgba(143,227,255,0.6)', salamander: 'rgba(255,138,60,0.6)', hawk: 'rgba(255,232,107,0.55)' };
 
 const ART = {
   angel: (f) => ({ w: 30, h: 30, shapes: [
@@ -28,6 +28,14 @@ const ART = {
     E(7, 11, 7, 6, '#ff8a3c'), E(4, 13, 3, 2, '#ff9b5c'), R(5, 4, 2, 4, '#b46bff'), R(9, 3, 2, 5, '#9be86b'), R(13, 5, 2, 3, '#b46bff'),
     P(5, 10, INK), P(9, 10, INK), P(5, 9, '#ffffff'), P(9, 9, '#ffffff'), R(4, 14, 3, 1, '#8a2a2a'),
     P(14, 14, '#ffd66b'), P(18, 13, '#ffd66b'), P(11, 15, '#ffd66b'),
+  ] }),
+  // A thunder hawk mid-flap: storm-blue wings with lightning edges, a white head, a gold beak.
+  hawk: (f) => ({ w: 34, h: 26, shapes: [
+    ...(f
+      ? [E(9, 8, 9, 4, '#5f7fd8'), E(25, 8, 9, 4, '#5f7fd8'), R(2, 6, 6, 1, '#ffe86b'), R(26, 6, 6, 1, '#ffe86b')]
+      : [E(9, 15, 9, 4, '#5f7fd8'), E(25, 15, 9, 4, '#5f7fd8'), R(2, 18, 6, 1, '#ffe86b'), R(26, 18, 6, 1, '#ffe86b')]),
+    E(17, 14, 6, 7, '#7f9fe8'), E(17, 16, 4, 4, '#dfe8ff'), R(14, 20, 2, 4, '#ffd66b'), R(18, 20, 2, 4, '#ffd66b'),
+    E(17, 7, 5, 4.5, '#ffffff'), R(21, 7, 4, 2, '#ffd66b'), R(23, 8, 2, 1, '#c98a2b'), P(18, 6, INK), P(18, 5, '#ffffff'),
   ] }),
 };
 

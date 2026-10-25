@@ -4,6 +4,7 @@ import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { R, E, P, sprite, blit, shade } from './pixel.js';
 import { weaponIcon } from './weapons.js';
+import { SCHOOL_COLORS } from './spells.js';
 
 const GOLD = '#ffd66b';
 
@@ -91,8 +92,8 @@ const SKILL_COLORS = {
 };
 
 function skillShapes(s) {
-  const kind = s.type === 'passive' ? 'passive' : s.icon ?? s.fx;
-  const c = SKILL_COLORS[kind] ?? '#ffc2d6';
+  const kind = s.type === 'passive' ? 'passive' : s.icon ?? (s.fx === 'rain' ? `rain-${s.variant}` : s.fx);
+  const c = (s.type !== 'passive' && SCHOOL_COLORS[s.school]?.main) || SKILL_COLORS[kind] || '#ffc2d6';
   const bg = [R(0, 0, 16, 16, shade(c, -30)), R(1, 1, 14, 14, shade(c, -12))];
   const l = '#ffffff';
   switch (kind) {
@@ -120,6 +121,22 @@ function skillShapes(s) {
     case 'sprite': return [...bg, E(4, 7, 3, 4, l), E(12, 7, 3, 4, l), E(8, 6, 3, 3, l), R(6, 9, 4, 5, l), P(7, 6, c), P(9, 6, c)];
     case 'salamander': return [...bg, E(9, 10, 5, 3, l), E(4, 8, 3, 3, l), R(13, 7, 2, 3, '#ffe36b'), P(3, 7, c), P(5, 7, c)];
     case 'angel': return [...bg, E(4, 9, 3, 5, l), E(12, 9, 3, 5, l), E(8, 6, 2.5, 2.5, l), R(6, 9, 4, 5, l), E(8, 2, 3, 1, '#ffe36b')];
+    case 'charge': return [...bg, R(2, 5, 6, 1, l), R(1, 8, 7, 1, l), R(2, 11, 6, 1, l), E(11, 8, 3, 5, l), R(13, 4, 2, 8, c)];
+    case 'wave': return [...bg, E(9, 8, 5, 7, l), E(6, 8, 5, 6, c), R(1, 4, 3, 1, l), R(1, 11, 3, 1, l)];
+    case 'vortex': return [...bg, E(8, 8, 6, 3, l), E(8, 8, 4, 2, c), E(8, 8, 2, 1, l), R(3, 3, 2, 2, l), R(11, 12, 2, 2, l)];
+    case 'quake': return [...bg, R(1, 12, 14, 2, l), R(3, 8, 3, 4, l), R(7, 5, 2, 7, l), R(11, 9, 3, 3, l), P(5, 4, l), P(12, 5, l)];
+    case 'beam': return [...bg, R(1, 6, 14, 4, l), R(1, 7, 14, 2, c), E(3, 8, 2.5, 3.5, l)];
+    case 'smoke': return [...bg, E(6, 10, 4, 3, l), E(10, 9, 4, 4, l), E(8, 6, 3, 3, l), R(12, 3, 1, 1, '#ffe36b'), R(3, 4, 1, 1, '#ffe36b')];
+    case 'bigarrow': return [...bg, R(2, 7, 10, 2, l), R(11, 5, 2, 6, l), R(13, 7, 2, 2, l), R(3, 4, 1, 8, c), R(6, 4, 1, 8, c)];
+    case 'bigstar': case 'rain-star': return [...bg, R(7, 1, 2, 14, l), R(1, 7, 14, 2, l), R(5, 5, 6, 6, l), E(8, 8, 1.5, 1.5, c)];
+    case 'coin': case 'rain-coin': return [...bg, E(8, 8, 5, 5, '#c98a2b'), E(8, 7.5, 4.5, 4.5, '#ffd66b'), R(7, 4, 2, 7, '#fff6c9')];
+    case 'rain-sword': return [...bg, R(3, 2, 2, 9, l), R(7, 4, 2, 9, l), R(11, 1, 2, 9, l), R(2, 10, 4, 1, c), R(6, 12, 4, 1, c), R(10, 9, 4, 1, c)];
+    case 'rain-arrow': return [...bg, R(2, 2, 2, 2, l), R(4, 4, 2, 2, l), R(6, 6, 2, 2, l), R(8, 8, 3, 3, l), R(9, 2, 2, 2, l), R(11, 4, 2, 2, l), R(13, 6, 2, 3, l)];
+    case 'dragon': return [...bg, E(6, 8, 5, 4, l), R(9, 6, 6, 3, l), R(2, 2, 2, 4, '#ffe36b'), R(5, 1, 2, 4, '#ffe36b'), P(7, 7, c)];
+    case 'hammer': return [...bg, R(3, 3, 10, 5, l), R(7, 8, 2, 7, l), R(4, 5, 8, 1, c)];
+    case 'stampede': return [...bg, E(7, 9, 5, 3, l), E(12, 7, 3, 2.5, l), R(13, 4, 1, 2, l), R(4, 11, 1, 3, l), R(9, 11, 1, 3, l), R(1, 7, 3, 1, l)];
+    case 'bladestorm': return [...bg, R(2, 13, 12, 1, l), R(3, 3, 1, 1, l), R(4, 4, 8, 1, l), R(2, 8, 12, 1, l), R(12, 2, 1, 12, c), R(5, 10, 6, 1, l)];
+    case 'hawk': return [...bg, E(4, 7, 4, 2, l), E(12, 7, 4, 2, l), E(8, 9, 2.5, 3.5, l), E(8, 5, 2, 2, l), R(10, 5, 2, 1, '#ffd66b')];
     default: return [...bg, E(8, 8, 4, 4, l), E(8, 8, 2, 2, c)];
   }
 }

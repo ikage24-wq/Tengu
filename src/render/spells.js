@@ -12,6 +12,14 @@ export const SCHOOL_COLORS = {
   fire: { main: '#ff8a3c', light: '#ffe9a8', deep: '#e0442b' },
   poison: { main: '#9be86b', light: '#e6ffd0', deep: '#9b4fe0' },
   holy: { main: '#ffe36b', light: '#fffbe0', deep: '#f0b33b' },
+  steel: { main: '#cfe0ff', light: '#ffffff', deep: '#6f8fd8' },
+  earth: { main: '#e0a96b', light: '#fff0c9', deep: '#8a5a3a' },
+  dragon: { main: '#ff5a5a', light: '#ffe36b', deep: '#a02a4a' },
+  wind: { main: '#8fe8c0', light: '#f0fff8', deep: '#2fa880' },
+  nature: { main: '#8fd86b', light: '#eaffd0', deep: '#4f8a3a' },
+  shadow: { main: '#9b6bff', light: '#e6dcff', deep: '#3a2a6b' },
+  sakura: { main: '#ff9ec0', light: '#fff0f6', deep: '#c94f8a' },
+  gold: { main: '#ffd66b', light: '#fff6c9', deep: '#c98a2b' },
 };
 
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -332,12 +340,12 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'blink': {
-      // Where you vanished: a lilac afterimage silhouette that streaks toward where you land.
-      const c = SCHOOL_COLORS.arcane;
+      // Where you vanished: an afterimage streak toward where you land.
+      const c = SCHOOL_COLORS[f.school] ?? SCHOOL_COLORS.arcane;
       const tx = f.tx - cam.x;
       ctx.globalAlpha = 1 - p;
       const g = ctx.createLinearGradient(x, 0, tx, 0);
-      g.addColorStop(0, 'rgba(201,166,255,0)');
+      g.addColorStop(0, 'rgba(255,255,255,0)');
       g.addColorStop(1, c.main);
       ctx.fillStyle = g;
       ctx.fillRect(Math.min(x, tx), y - 30, Math.abs(tx - x), 22 * (1 - p) + 2);
@@ -356,7 +364,7 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
     }
     case 'blinkin': {
       // Arriving: a flash, a ring snapping outward, and sparkles spraying off.
-      const c = SCHOOL_COLORS.arcane;
+      const c = SCHOOL_COLORS[f.school] ?? SCHOOL_COLORS.arcane;
       glow(ctx, x, y - 18, 30 * (1 - p) + 6, '#ffffff', 1 - p);
       ctx.globalAlpha = 1 - p;
       ctx.strokeStyle = c.main;
@@ -717,7 +725,7 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) * 0.6;
       ctx.globalAlpha = (1 - p) * 0.7;
       for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = i % 2 ? '#9be86b' : '#9b4fe0';
+        ctx.fillStyle = f.bleed ? (i % 2 ? '#e8364f' : '#ff8a9a') : i % 2 ? '#9be86b' : '#9b4fe0';
         ctx.beginPath();
         ctx.arc(x + (rand(f.seed * 9 + i) - 0.5) * 16, cy - p * 14 - i * 3, 3 + p * 4, 0, TAU);
         ctx.fill();
