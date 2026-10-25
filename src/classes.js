@@ -5,6 +5,7 @@ export const CLASSES = {
   warrior: {
     id: 'warrior',
     name: 'Warrior',
+    color: '#d9a441',
     baseStats: { maxHp: 200, maxMp: 50, atk: 12 },
     growth: { hp: 30, mp: 4, atk: 3 },
     skills: [
@@ -16,6 +17,7 @@ export const CLASSES = {
   mage: {
     id: 'mage',
     name: 'Mage',
+    color: '#8a5cf6',
     baseStats: { maxHp: 120, maxMp: 150, atk: 9 },
     growth: { hp: 14, mp: 12, atk: 4 },
     skills: [
@@ -27,6 +29,7 @@ export const CLASSES = {
   archer: {
     id: 'archer',
     name: 'Archer',
+    color: '#4fbf7a',
     baseStats: { maxHp: 150, maxMp: 90, atk: 11 },
     growth: { hp: 20, mp: 7, atk: 4 },
     skills: [
