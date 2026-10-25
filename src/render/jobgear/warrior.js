@@ -242,7 +242,7 @@ function top(t, p) {
   return out;
 }
 
-const sleeve = (t, p) => (t === 1 ? CHAIN : t === 0 ? p.dark : p.dark);
+const sleeve = (t, p) => (t === 1 ? CHAIN : p.dark);
 const longSleeves = () => true;
 
 // ---------- Pauldrons ----------
@@ -256,7 +256,7 @@ function shoulder(t, p, s) {
   const k = [0.62, 0.78, 0.92, 1.05, 1.1, 1.2, 1.25][st];
   const P = (list, c) => T(list.map(([x, y]) => [x * k * s, y * k]), c);
   const top = (x) => (x < 5 ? -3 : -3 + (x - 5) * 0.55);
-  const sp = (x, h, lean, c = p.trim, w = 2.4) => P([[x - w / 2, top(x) + 0.6], [x + w / 2, top(x + w / 2) + 0.6], [x + lean + h * 0.6, top(x) - h * 0.8]], c);
+  const sp = (x, h, lean, c = p.trim, w = 2.4) => P([[x - w / 2, top(x) + 0.6], [x + w / 2, top(x + w / 2) + 0.6], [x + lean + h * 0.9, top(x) - h * 0.5]], c);
   const cap = [[-2.4, -1.8], [1, -3.2], [5, -3], [8.4, -1.2], [10, 1.6], [9.6, 3.4], [6, 2.6], [2, 2.4], [-2.4, 2]];
   const lames = [1, 1, 2, 2, 3, 3, 3][st];
   const out = [];
@@ -400,8 +400,8 @@ function capeOf(bottom, wide, style, s, c, trim, th = 1.4) {
 }
 
 function capeWings(c, up, tip) {
-  const wing = [T([[11, 28 + up], [4, 20 + up], [-4, 21 + up], [-9, 27 + up], [-7, 31 + up], [-10, 35 + up], [-5, 38 + up], [-7, 42 + up], [0, 43 + up], [9, 36 + up]], c),
-    F(T([[3, 26 + up], [-5, 28 + up], [3, 31 + up]], tip)), F(T([[2, 33 + up], [-4, 37 + up], [3, 37 + up]], tip))];
+  const wing = [T([[11, 28 + up], [3, 18 + up], [-7, 11 + up], [-12, 13 + up], [-10, 19 + up], [-14, 24 + up], [-9, 29 + up], [-12, 34 + up], [-5, 38 + up], [-6, 42 + up], [3, 41 + up], [10, 35 + up]], c),
+    F(T([[1, 20 + up], [-9, 15 + up], [-6, 21 + up]], tip)), F(T([[0, 27 + up], [-10, 25 + up], [-6, 30 + up]], tip)), F(T([[1, 34 + up], [-8, 35 + up], [-2, 38 + up]], tip))];
   return both(wing);
 }
 

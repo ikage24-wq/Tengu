@@ -685,7 +685,9 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   body.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
   body.push(...hipShapes(legs));
   body.push(...topShapes('tee', g.top.color));
-  if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[8.6, 26], [22.4, 26], [26, 46], [5, 46]], g.cape.color), R(5, 45, 21, 1.2, shade(g.cape.color, -20)));
+  // From behind, job capes show their own shape (scarves, banners, wings); others a plain drape.
+  if (g.cape?.family) body.push(...capeShapes(g.cape.design, g.cape.color, 0, rig.flap, g.cape, motionOf(rig)));
+  else if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[8.6, 26], [22.4, 26], [26, 46], [5, 46]], g.cape.color), R(5, 45, 21, 1.2, shade(g.cape.color, -20)));
   if (!hatTucks(g.hat)) {
     const back = hairBack(style, hair, 0, 0);
     out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));

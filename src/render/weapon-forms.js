@@ -46,8 +46,9 @@ function abyssEye(x, y, r, c) {
 
 // The material's crowning ornament, from Starsteel up. Spots on the weapon: `emblem` is its
 // centerpiece (a guard's gem, a staff's orb) where stars, moons, suns and eyes go, `crown` where a
-// crown sits (defaults to the emblem), `top` above the weapon for halos and orbits, and `guard`
-// [x, y, gap, sides] where wings, horns, shards and tendrils spread. `z` is the wing size.
+// crown sits (defaults to the emblem), `top` above the weapon for halos (`orbit`, around it, for
+// rings), `guard` [x, y, gap, sides] where wings spread, and `flank` (defaults to the guard) where
+// horns, shards and tendrils sprout. `z` is the wing size.
 // Returns shapes to draw behind the weapon and in front of it, and sets anchors for live effects.
 function motif(m, f, spots, z, a) {
   const back = [];
@@ -56,26 +57,27 @@ function motif(m, f, spots, z, a) {
   const [ex, ey] = spots.emblem;
   const [tx, ty] = spots.top;
   const [gx, gy, gap, sides] = spots.guard;
+  const [fx, fy, fgap, fsides] = spots.flank ?? spots.guard;
   const flap = flapAt(f);
   a.top = spots.top;
   switch (m.motif) {
     case 'star':
-      front.push(star(ex, ey, z * 0.42, m.gem), ...gem(ex, ey, z * 0.11, WHITE, f));
+      front.push(star(ex, ey, z * 0.5, GOLD), ...gem(ex, ey, z * 0.11, WHITE, f));
       break;
     case 'moon':
-      front.push(crescent(ex - z * 0.08, ey, z * 0.36, m.trim), F(P(ex - z * 0.3, ey - z * 0.12, WHITE)), ...gem(ex + z * 0.08, ey, z * 0.12, m.gem, f));
+      front.push(crescent(ex - z * 0.08, ey, z * 0.38, '#ffe9a0'), F(P(ex - z * 0.32, ey - z * 0.12, WHITE)), ...gem(ex + z * 0.08, ey, z * 0.12, m.gem, f));
       break;
     case 'sun':
-      front.push(...sunburst(ex, ey, z * 0.5, m.trim, 10), E(ex, ey, z * 0.24, z * 0.24, m.blade), ...gem(ex, ey, z * 0.12, m.gem, f));
+      front.push(...sunburst(ex, ey, z * 0.52, '#ff6a2a', 10), E(ex, ey, z * 0.25, z * 0.25, '#fff3a6'), ...gem(ex, ey, z * 0.12, m.gem, f));
       break;
     case 'horns':
-      back.push(...horns(gx, gy + z * 0.2, z * 0.6, BONE, sides));
+      for (const sd of fsides) back.push(...horns(fx + sd * fgap, fy + z * 0.1, z * 0.5, BONE, [sd]));
       break;
     case 'shards':
-      for (const sd of sides) {
-        const x = gx + sd * gap;
-        back.push(T([[x, gy + 1], [x + sd * z * 0.42, gy - z * 0.62], [x + sd * z * 0.16, gy - z * 0.08]], '#c08aff'));
-        back.push(T([[x, gy + 1.5], [x + sd * z * 0.55, gy - z * 0.15], [x + sd * z * 0.2, gy + z * 0.12]], '#433858'));
+      for (const sd of fsides) {
+        const x = fx + sd * fgap;
+        back.push(T([[x - sd, fy + 1], [x + sd * z * 0.3, fy - z * 0.7], [x + sd * z * 0.25, fy - z * 0.1]], '#c08aff'));
+        back.push(T([[x - sd, fy + 1.5], [x + sd * z * 0.6, fy - z * 0.3], [x + sd * z * 0.3, fy + z * 0.15]], '#5a4a78'));
       }
       break;
     case 'crown': {
@@ -88,15 +90,22 @@ function motif(m, f, spots, z, a) {
       a.wings = sides.map((sd) => [gx + sd * (gap + z * 0.6), gy]);
       break;
     case 'eye':
-      sides.forEach((sd, i) => back.push(tendril(gx + sd * gap, gy + 1, z, sd, f + i * 2, ABYSS), tendril(gx + sd * gap, gy + 2, z * 0.6, sd, f + i * 2 + 3, '#4e2c70')));
+      fsides.forEach((sd, i) => back.push(tendril(fx + sd * fgap, fy + 1, z, sd, f + i * 2, ABYSS), tendril(fx + sd * fgap, fy + 2, z * 0.6, sd, f + i * 2 + 3, '#4e2c70')));
       front.push(...abyssEye(ex, ey, z * 0.13, m.gem));
       a.eye = [ex, ey, z * 0.13];
       break;
-    case 'orbit':
-      back.unshift(...halo(tx, ty, z * 0.55, z * 0.18, m.trim));
-      front.push(star(ex, ey, z * 0.3, m.gem), F(P(ex - 0.5, ey - 0.5, WHITE)));
-      a.halo = [tx, ty, z * 0.55, z * 0.18];
+    case 'orbit': {
+      // A ring around the weapon: its far half behind, its near half in front.
+      const [ox, oy] = spots.orbit ?? spots.top;
+      const [rx, ry] = [z * 0.8, z * 0.24];
+      const band = [];
+      for (let i = 0; i <= 10; i++) band.push([ox + Math.cos((i / 10) * Math.PI) * rx, oy + Math.sin((i / 10) * Math.PI) * ry]);
+      for (let i = 10; i >= 0; i--) band.push([ox + Math.cos((i / 10) * Math.PI) * (rx - 1.3), oy + Math.sin((i / 10) * Math.PI) * (ry - 1)]);
+      back.unshift(...halo(ox, oy, rx, ry, m.trim));
+      front.push(T(band, m.trim), F(P(ox + rx * 0.5, oy + ry * 0.6, WHITE)), star(ex, ey, z * 0.4, GOLD), F(P(ex - 0.5, ey - 0.5, WHITE)));
+      a.halo = [ox, oy, rx, ry];
       break;
+    }
     case 'halo':
       back.push(...wings(gx, gy, z * 0.9, flap, sides, gap));
       front.push(...halo(tx, ty, z * 0.45, z * 0.17));
@@ -219,7 +228,7 @@ function bladed(m, f, d) {
   const std = [[0, top], [bw / 2, top + tipL], [bw / 2, base]];
   const fuller = () => R(-0.5, top + tipL + 1, 1, L - tipL - 3, m.bladeDark);
   const edge = () => T([[0, top + 1], [bw / 2 - 0.2, top + tipL], [bw / 2 - 0.2, base], [bw / 2 - 1, base], [bw / 2 - 1, top + tipL + 0.5]], m.edge);
-  const orn = th ? null : motif(m, f, { emblem: [0, base + 1.2], crown: [0, base - 0.4], top: [0, top - 5 * k], guard: [0, base - 1, bw / 2 - 0.5, [-1, 1]] }, 10 * k, a);
+  const orn = th ? null : motif(m, f, { emblem: [0, base - 1.5 * k], crown: [0, base - 0.4], top: [0, top - 5 * k], orbit: [0, top + L * 0.3], guard: [0, base - 1, bw / 2 - 0.5, [-1, 1]], flank: [0, base + 1, gw / 2 - 1.5, [-1, 1]] }, 10 * k, a);
   if (orn) s.push(...orn.back);
   if (!th && m.spikes) {
     // Fins flaring from the blade's base, a second pair higher up on the grandest blades.
