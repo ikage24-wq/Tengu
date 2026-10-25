@@ -141,6 +141,13 @@ export function drawUi(ui, state, world) {
   drawChatBar(ui, state.chat, world);
   const m = ui.mouse;
   const t = performance.now() / 1000;
+  // A window that just opened (by hotkey, menu button, or anything else) comes to the front, so
+  // it's never stuck behind one you used earlier.
+  for (const key of state.order) {
+    const win = state.windows[key];
+    if (win.open && !win.wasOpen) state.order = [...state.order.filter((k) => k !== key), key];
+    win.wasOpen = win.open;
+  }
   // Only the frontmost window under the mouse sees its clicks, so windows behind it don't react.
   const top = [...state.order].reverse().find((k) => inside(state.windows[k], m));
   if (top && m.clicked) state.order = [...state.order.filter((k) => k !== top), top];
