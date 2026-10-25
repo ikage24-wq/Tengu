@@ -143,7 +143,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   const out = grid.slice();
   if (soft) {
     const under = Math.max(1, Math.round(res * 0.5));
-    const castBand = Math.round(res * 1.1);
+    const castBand = Math.max(1, Math.round(res * 0.6));
     const dark = new Map();
     const bright = new Map();
     const toned = (cache, id, fn) => {

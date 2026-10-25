@@ -139,9 +139,9 @@ function curvedLock(x0, y0, x1, y1, w, bend, c, from = 0, to = 1) {
   return T([...left, ...right.reverse()], c);
 }
 
-// A lock with a thin darker strand drawn down its middle.
-function lockWithStrand(x0, y0, x1, y1, w, bend, c, d) {
-  return [curvedLock(x0, y0, x1, y1, w, bend, c), F(curvedLock(x0, y0, x1, y1, Math.min(0.7, w * 0.16), bend, d, 0.15, 0.85))];
+// A lock with a faint separation line down its middle, in a slightly deeper tone of the hair.
+function lockWithStrand(x0, y0, x1, y1, w, bend, c) {
+  return [curvedLock(x0, y0, x1, y1, w, bend, c), F(curvedLock(x0, y0, x1, y1, 0.5, bend, shade(c, -9), 0.2, 0.8))];
 }
 
 // Hair behind the head: the crown's volume plus whatever hangs down (tails, long hair, curls),
@@ -154,7 +154,7 @@ function hairBack(style, front, sway, lift) {
   const crown = E(HEAD_X, 13.2, 12, 11.2, c);
   // Everything that sways hangs below the head and is drawn behind the body.
   const sw = (shapes) => shapes.map((sh) => ({ ...swayShape(sh, sway, lift), hang: true }));
-  const locks = (list) => list.flatMap(([x0, y0, x1, y1, w, bend]) => lockWithStrand(x0, y0, x1, y1, w, bend, c, d));
+  const locks = (list) => list.flatMap(([x0, y0, x1, y1, w, bend]) => lockWithStrand(x0, y0, x1, y1, w, bend, c));
   switch (style) {
     case 'bob': return [crown, ...sw([
       E(HEAD_X, 16.4, 12.8, 10, c),
@@ -187,31 +187,23 @@ function hairBack(style, front, sway, lift) {
   }
 }
 
-// Bangs over the forehead, parted a little toward the facing side: a rounded cap under curved
-// locks that sweep out to soft points, slim side locks framing the face in front of the ears,
-// strand lines down each lock, and a glossy shine band across the crown.
+// Bangs: a rounded cap over the forehead that ends in five soft points just above the eyes,
+// slim side locks framing the face (leaving room to see it), two gentle lock separations in a
+// slightly deeper tone, and one clean shine band with a couple of glints.
 function hairFront(style, c) {
-  const d = shade(c, -16);
-  const l = mix(c, '#ffffff', 0.45);
+  const soft = shade(c, -9);
+  const l = mix(c, '#ffffff', 0.5);
   const short = style === 'short' || style === 'curly';
-  const k = short ? 0.78 : 1;
-  const side = short ? 0.7 : 1;
-  // [root x, root y, tip x, tip y, width, bend, length scale]
-  const locks = [
-    [10, 7.2, 5, 22, 4.4, 1, side], [23.4, 7.4, 26.2, 21.6, 4, -0.9, side],
-    [13, 5.6, 6.8, 16.4, 5.2, 1.4, k], [20.6, 5.8, 25, 16.2, 4.8, -1.2, k],
-    [16.2, 5, 9.6, 15.2, 5.6, 1.6, k], [17.6, 5, 21.4, 14.8, 5.2, -1.4, k], [16.9, 6, 17.4, 14.2, 3.6, 0.2, k],
-  ];
-  const out = [C(E(HEAD_X, 8.4, 11.6, 5.6, c))];
-  for (const [x0, y0, x1, y1, w, bend, scale] of locks) {
-    const tx = x0 + (x1 - x0) * scale;
-    const ty = y0 + (y1 - y0) * scale;
-    out.push(C(curvedLock(x0, y0, tx, ty, w, bend, c)), F(curvedLock(x0, y0, tx, ty, 0.6, bend, d, 0.2, 0.8)));
-  }
-  out.push(
-    arc(HEAD_X, 9, 9, 5.6, 205, 248, 1.2, l), arc(HEAD_X, 9, 9, 5.6, 262, 300, 1.2, l), arc(HEAD_X, 9, 9, 5.6, 310, 332, 1.2, l),
-    F(E(19.2, 3.8, 0.6, 0.5, '#ffffff')), F(E(11.4, 5.4, 0.4, 0.4, '#ffffff')),
-  );
+  const side = short ? 20 : 23.4;
+  // [root x, root y, tip x, tip y, width, bend]
+  const locks = [[10.6, 7, 9.2, 14.6, 5.8, 0.8], [14.6, 6.4, 14, 15, 6, 0.3], [18.6, 6.6, 19.2, 14.4, 5.8, -0.4], [22.4, 7.6, 23.8, 13.8, 5, -0.8]];
+  // The cap stops short of the lock tips so the points stand free with forehead between them.
+  const out = [C(E(HEAD_X, 7.6, 11.8, 4.8, c))];
+  for (const [x0, y0, x1, y1, w, bend] of locks) out.push(C(curvedLock(x0, y0, x1, y1, w, bend, c)));
+  // Side locks: slim, falling past the cheeks, a little in front of the back ear.
+  out.push(C(curvedLock(7.2, 8, 5.4, side, 4, 1, c)), C(curvedLock(24.8, 8.4, 26.4, side - 1.4, 3.6, -1, c)));
+  out.push(F(curvedLock(12.6, 8.4, 11.8, 13.4, 0.5, 0.4, soft)), F(curvedLock(16.8, 8.2, 16.8, 13.6, 0.5, 0, soft)), F(curvedLock(20.6, 8.6, 21.4, 13.2, 0.5, -0.4, soft)));
+  out.push(arc(HEAD_X, 9.6, 8.8, 5.4, 212, 328, 1.3, l), F(E(19.6, 4.6, 0.55, 0.45, '#ffffff')), F(E(11.6, 5.8, 0.4, 0.4, '#ffffff')));
   return out;
 }
 
@@ -221,37 +213,43 @@ function star(cx, cy, r, c) {
   return F(T([[cx, cy - r], [cx + k, cy - k], [cx + r, cy], [cx + k, cy + k], [cx, cy + r], [cx - k, cy + k], [cx - r, cy], [cx - k, cy - k]], c));
 }
 
-// Big soft eyes: a curved upper lash with a flick at the outer corner, a round iris that's deeper
-// at the top and pale at the bottom, a pupil, and two shines. `out` is -1 for the far eye (its
-// flick points back) and 1 for the near one. Styles change the lash, pupil, and shines.
+// Big, clean eyes made of a few bold pieces: a thick dark upper lash with a tick at the outer
+// corner, a solid iris with a big dark pupil, a lighter band along the bottom, and crisp square
+// highlights. `out` is -1 for the far eye (its tick points back) and 1 for the near one.
+const EYE_Y = 18.2;
+
 function eye(ex, out, style, color, mode, skin) {
-  const ey = 17.6;
-  const flick = (dy0, dy1) => F(T([[ex + out * 2.2, ey - 1.2 + dy0], [ex + out * 3.4, ey - 2 + dy1], [ex + out * 2.8, ey - 0.6 + dy0]], INK));
-  const lash = () => [arc(ex, ey, 2.6, 2.9, 198, 342, 0.85, INK), flick(0, 0)];
-  const closed = () => [arc(ex, ey + 1, 2.3, 2.1, 200, 340, 0.8, INK)];
-  if (mode === 'blink') return [arc(ex, ey - 0.8, 2.4, 1.6, 20, 160, 0.75, INK)];
-  if (mode === 'hurt') return [F(T([[ex - 1.8 * out, ey - 2], [ex + 1.8 * out, ey], [ex - 1.8 * out, ey + 2], [ex - 1.1 * out, ey]], INK))];
-  if (mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0)) return closed();
-  const big = style === 'round' ? 1.12 : style === 'big' ? 1.22 : 1;
-  const slit = style === 'cat';
+  const ey = EYE_Y;
+  const closedUp = () => [arc(ex, ey + 1.2, 2.5, 2.2, 200, 340, 1, INK)];
+  if (mode === 'blink') return [arc(ex, ey - 0.6, 2.6, 1.6, 20, 160, 0.9, INK)];
+  if (mode === 'hurt') return [F(T([[ex - 2 * out, ey - 2.2], [ex + 2 * out, ey], [ex - 2 * out, ey + 2.2], [ex - 1.2 * out, ey]], INK))];
+  if (mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0)) return closedUp();
+  const size = style === 'round' ? 1.1 : style === 'big' ? 1.2 : 1;
+  const rx = 2.3 * size;
+  const ry = 2.9 * size;
   const shapes = [
-    F(E(ex, ey, 2.25 * big, 2.55 * big, color)),
-    F(E(ex, ey - 1, 2.05 * big, 1.45, shade(color, -24))),
-    F(E(ex + 0.1, ey + 0.1, slit ? 0.45 : 1.05 * big, slit ? 1.8 : 1.35 * big, shade(color, -42))),
-    F(E(ex, ey + 1.5, 1.45 * big, 0.75, mix(color, '#ffffff', 0.45))),
+    F(E(ex, ey, rx, ry, color)),
+    F(E(ex, ey + ry * 0.55, rx * 0.72, ry * 0.32, mix(color, '#ffffff', 0.4))),
+    F(E(ex + 0.15, ey + 0.1, style === 'cat' ? 0.5 : rx * 0.5, ry * (style === 'cat' ? 0.7 : 0.55), shade(color, -52))),
   ];
-  if (style === 'star') shapes.push(star(ex - 0.3, ey - 0.6, 1.9, '#ffffff'), F(E(ex + 1.1, ey + 1.3, 0.35, 0.35, '#ffffff')));
-  else if (style === 'big') shapes.push(F(E(ex - 0.8, ey - 1.2, 1, 1.05, '#ffffff')), F(E(ex + 1, ey + 1, 0.55, 0.55, '#ffffff')), F(E(ex - 1.4, ey + 0.6, 0.3, 0.3, '#ffffff')));
-  else shapes.push(F(E(ex - 0.8, ey - 1.2, 0.75 * big, 0.8 * big, '#ffffff')), F(E(ex + 0.9, ey + 1.1, 0.35, 0.35, '#ffffff')));
+  // Highlights: square glints read crisply at pixel scale.
+  if (style === 'star') shapes.push(star(ex - 0.4, ey - 0.9, 2, '#ffffff'));
+  else shapes.push(F(R(ex - rx * 0.62, ey - ry * 0.55, 1.2 * size, 1.2 * size, '#ffffff')));
+  shapes.push(F(R(ex + rx * 0.3, ey + ry * 0.25, 0.6, 0.6, '#ffffff')));
+  if (style === 'big') shapes.push(F(R(ex - rx * 0.5, ey + ry * 0.35, 0.5, 0.5, '#ffffff')));
+  // The upper lash, thick and slightly wider than the eye, with a tick at the outer corner.
+  const lash = arc(ex, ey + 0.1, rx + 0.4, ry + 0.3, 196, 344, 1.05, INK);
+  const tick = (lift) => F(T([[ex + out * (rx - 0.2), ey - ry * 0.6], [ex + out * (rx + 1.5), ey - ry * 0.6 - lift], [ex + out * (rx + 0.6), ey - ry * 0.25]], INK));
   if (style === 'sleepy') {
-    shapes.push(F(T([[ex - 2.8, ey - 3.2], [ex + 2.8, ey - 3.2], [ex + 2.8, ey - 0.4], [ex - 2.8, ey - 0.4]], skin)));
-    shapes.push(arc(ex, ey + 1.9, 2.6, 2.4, 205, 335, 0.8, INK));
+    shapes.push(F(T([[ex - rx - 0.6, ey - ry - 0.6], [ex + rx + 0.6, ey - ry - 0.6], [ex + rx + 0.6, ey - 0.3], [ex - rx - 0.6, ey - 0.3]], skin)));
+    shapes.push(F(T([[ex - rx - 0.4, ey - 0.6], [ex + rx + 0.4, ey - 0.8], [ex + rx + 0.4, ey + 0.3], [ex - rx - 0.4, ey + 0.3]], INK)));
     return shapes;
   }
-  if (style === 'cat') return [...shapes, arc(ex, ey, 2.6, 2.9, 198, 342, 0.85, INK), F(T([[ex + out * 2.1, ey - 1.4], [ex + out * 4, ey - 3], [ex + out * 2.8, ey - 0.8]], INK))];
-  if (style === 'droopy') return [...shapes, arc(ex, ey, 2.6, 2.9, 198, 342, 0.85, INK), F(T([[ex + out * 2.2, ey - 1.2], [ex + out * 3.2, ey + 0.6], [ex + out * 2.4, ey - 0.2]], INK)), arc(ex, ey + 0.4, 2.2, 2.6, 30, 150, 0.4, shade(skin, -35))];
-  if (style === 'big') return [...shapes, ...lash(), arc(ex, ey + 0.2, 2.6, 2.9, 40, 140, 0.4, INK)];
-  return [...shapes, ...lash()];
+  if (style === 'round') return [...shapes, lash];
+  if (style === 'cat') return [...shapes, lash, tick(1.8)];
+  if (style === 'droopy') return [...shapes, lash, tick(-1.4)];
+  if (style === 'big') return [...shapes, lash, tick(0.9), arc(ex, ey, rx + 0.2, ry + 0.2, 50, 130, 0.45, INK)];
+  return [...shapes, lash, tick(0.9)];
 }
 
 function headShapes(look, g, rig) {
@@ -265,16 +263,16 @@ function headShapes(look, g, rig) {
   const out = [];
   if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairLift).filter((sh) => !sh.hang));
   if (hat) out.push(...hatBackShapes(hat.design, hat.color));
-  // Three-quarter view toward the facing side (right): only the back ear shows, the face sits
-  // forward on the skull with the chin toward the front, the far eye is narrower and the near
-  // one full size, and the mouth, blush, and a tiny nose follow the turn.
-  out.push(L(E(6.6, 17.4, 1.8, 2.3, skin)), F(E(6.4, 17.6, 0.7, 1.2, '#f4bfcb')));
-  out.push(L(E(FACE_X, HEAD_Y, 10, 9.8, skin)), L(E(FACE_X + 0.6, 18.4, 8.8, 6, skin)), L(T([[12.6, 21.6], [23.6, 20.6], [21, 24], [18.6, 25]], skin)));
-  out.push(...squeezeX(eye(12.6, -1, eyeStyle, eyeColor, rig.eyes, skin), 12.6, 0.88), ...eye(20.4, 1, eyeStyle, eyeColor, rig.eyes, skin));
-  out.push(F(E(10.8, 21, 1.4, 0.6, '#f7c1cc')), F(E(22.2, 21, 1.7, 0.65, '#f7c1cc')));
-  if (rig.eyes === 'hurt') out.push(F(E(19.2, 22.8, 1, 0.7, INK)));
-  else if (rig.mouth === 'open') out.push(F(E(19.2, 22.6, 1.05, 0.85, '#b2506c')), F(E(19.2, 23.1, 0.6, 0.35, '#ff9fb8')));
-  else out.push(F(E(19.2, 22.4, 0.7, 0.42, '#c97a8a')));
+  // Three-quarter view toward the facing side (right): only the back ear shows, and the face (a
+  // round head with soft full cheeks) sits a little forward on the skull. Big eyes sit low on
+  // the face, the far one a touch narrower; blush under each eye and a small mouth.
+  out.push(L(E(6.4, 18, 1.8, 2.3, skin)), F(E(6.2, 18.2, 0.7, 1.2, '#f4bfcb')));
+  out.push(L(E(FACE_X, 15, 10.2, 9.8, skin)), L(E(FACE_X + 0.4, 19, 9.2, 5.8, skin)));
+  out.push(...squeezeX(eye(12.2, -1, eyeStyle, eyeColor, rig.eyes, skin), 12.2, 0.86), ...eye(20.6, 1, eyeStyle, eyeColor, rig.eyes, skin));
+  out.push(F(E(10.4, 21.8, 1.6, 0.7, '#f9c3cf')), F(E(22.6, 21.8, 1.8, 0.7, '#f9c3cf')));
+  if (rig.eyes === 'hurt') out.push(F(E(17.6, 23, 1, 0.7, INK)));
+  else if (rig.mouth === 'open') out.push(F(E(17.6, 22.9, 1.1, 0.9, '#b2506c')), F(E(17.6, 23.4, 0.6, 0.35, '#ff9fb8')));
+  else out.push(F(R(16.9, 22.7, 1.4, 0.5, '#b86a7c')));
   if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
   if (g.earring) out.push(...earringShapes(g.earring.design, g.earring.color));
