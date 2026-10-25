@@ -48,16 +48,16 @@ export function drawHud(ui, state, world) {
   text(ctx, `${char.gold.toLocaleString()}g`, 222, BAR_Y + 25, { size: 8, bold: true, color: COLORS.gold });
 
   // Menu buttons, with a dot when there are points to spend.
-  const menus = [['Bag', 'bag', 'I'], ['Stat', 'stats', 'C'], ['Skill', 'skills', 'K'], ['Quest', 'quests', 'L']];
+  const menus = [['Bag', 'bag', 'I'], ['Stat', 'stats', 'C'], ['Skill', 'skills', 'K'], ['Quest', 'quests', 'L'], ['Map', 'worldmap', 'M']];
   menus.forEach(([label, key, hotkey], i) => {
-    const x = 262 + i * 32;
-    if (button(ui, x, BAR_Y + 16, 30, 12, label, { size: 7 })) state.windows[key].open = !state.windows[key].open;
-    if (hover(ui, x, BAR_Y + 16, 30, 12)) tooltip(ui, [{ text: `${label} (${hotkey})`, bold: true }]);
+    const x = 262 + i * 25.6;
+    if (button(ui, x, BAR_Y + 16, 24.6, 12, label, { size: 7 })) state.windows[key].open = !state.windows[key].open;
+    if (hover(ui, x, BAR_Y + 16, 24.6, 12)) tooltip(ui, [{ text: `${label} (${hotkey})`, bold: true }]);
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);
     if (alert) {
       ctx.fillStyle = COLORS.bad;
       ctx.beginPath();
-      ctx.arc(x + 28, BAR_Y + 17, 2.5 + Math.sin(world.now * 6) * 0.6, 0, Math.PI * 2);
+      ctx.arc(x + 23, BAR_Y + 17, 2.5 + Math.sin(world.now * 6) * 0.6, 0, Math.PI * 2);
       ctx.fill();
     }
   });

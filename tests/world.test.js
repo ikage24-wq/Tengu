@@ -8,7 +8,8 @@ import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
 import { makeEquip } from '../src/core/items.js';
 import { equipFromBag } from '../src/core/character.js';
-import { createWorld, updateWorld, loadMap, respawn } from '../src/world/world.js';
+import { createWorld, updateWorld, loadMap, respawn, hops, travelTo, travelCost } from '../src/world/world.js';
+import { TOWNS } from '../src/data/maps.js';
 import { spawnMob } from '../src/world/mobs.js';
 
 const DT = 1 / 60;
@@ -227,4 +228,23 @@ test('endgame weapons tag attacks with their element and add an impact on every 
   for (let i = 0; i < 40; i++) updateWorld(w, DT, keys(['KeyZ']));
   assert.ok(w.fx.some((f) => f.kind === 'swing' && f.element === 'fire'), 'fire slash');
   assert.ok(w.fx.some((f) => f.kind === 'impact' && f.element === 'fire'), 'fire impact');
+});
+
+test('every town connects to every other town by road', () => {
+  for (const a of TOWNS) for (const b of TOWNS) assert.ok(Number.isFinite(hops(a, b)), `${a} -> ${b}`);
+  for (const t of TOWNS) assert.ok(MAPS[t].isTown && MAPS[t].job, `${t} is a job's home town`);
+  assert.deepEqual(new Set(TOWNS.map((t) => MAPS[t].job)), new Set(['archer', 'thief', 'warrior', 'mage']));
+});
+
+test('fast travel flies between towns for gold, and only from a town', () => {
+  const w = newWorld();
+  w.char.gold = 1000;
+  const cost = travelCost('sprout', 'grove');
+  assert.ok(cost > 0);
+  assert.equal(travelTo(w, 'grove'), null);
+  assert.equal(w.map.id, 'grove');
+  assert.equal(w.char.gold, 1000 - cost);
+  loadMap(w, 'ruins', 'west');
+  assert.ok(travelTo(w, 'sprout'), 'no flights from the field');
+  assert.equal(w.map.id, 'ruins');
 });

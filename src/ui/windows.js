@@ -245,7 +245,7 @@ export function skillsWindow(ui, state, world) {
     y += 33;
   }
   if (job === 'novice' && char.level >= 10) {
-    wrap(ctx, 'You can choose a job! Talk to an instructor in Pastel Harbor.', win.x + 10, y + 10, W - 20, { size: 8, color: COLORS.accent });
+    wrap(ctx, 'You can choose a job! Kestrel (archer) is in Sprout Village, Vex (thief) in Pastel Harbor, Brann (warrior) in Ember Crag, and Elowen (mage) in Moonleaf Grove. Press M for the world map.', win.x + 10, y + 10, W - 20, { size: 8, color: COLORS.accent });
   }
 }
 

@@ -9,7 +9,7 @@ export const NPCS = {
   mira: {
     id: 'mira', name: 'Mira', title: 'Village Guide', role: 'guide',
     look: { hairStyle: 'twintails', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
-    greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, and C for stats.',
+    greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
     quests: ['first_steps', 'fluffy', 'sprout_sweep'],
   },
   pip: {
@@ -30,25 +30,38 @@ export const NPCS = {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     look: { hairStyle: 'curly', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     gear: { weapon: { id: 'sword_7', rarity: 2 } },
-    greeting: 'Strong arms, steady heart. Warriors stand in front so others can shine.',
+    greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     look: { hairStyle: 'long', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
     gear: { weapon: { id: 'staff_5', rarity: 3 } },
-    greeting: 'Magic is patience and a lot of MP. Shall we begin?',
+    greeting: 'Moonleaf Grove welcomes you. Magic is patience and a lot of MP. Shall we begin?',
   },
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     gear: { weapon: { id: 'bow_4', rarity: 2 } },
-    greeting: 'Keep your distance and your aim true.',
+    greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     look: { hairStyle: 'short', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     gear: { weapon: { id: 'claw_6', rarity: 3 } },
-    greeting: 'Fast hands, light feet. Luck favors the bold.',
+    greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
+  },
+  tora: {
+    id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
+    look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
+    greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100',
+      ...['sword', 'axe', 'spear'].flatMap((w) => [1, 2, 3].map((t) => `${w}_${t}`)), ...armor(1), ...armor(2)],
+  },
+  nim: {
+    id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
+    look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
+    greeting: 'W-welcome... wands, staves, and moonberry tonics. Mind the floating candles.',
+    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', ...['wand', 'staff'].flatMap((w) => [1, 2, 3].map((t) => `${w}_${t}`)), 'earring_1', 'earring_2', 'earring_3'],
   },
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',

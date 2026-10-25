@@ -85,6 +85,44 @@ export function returnToTown(world) {
   loadMap(world, townOf(world), 'start');
 }
 
+// ---------- Fast travel between towns ----------
+
+// Steps between two maps along the portal roads.
+export function hops(from, to) {
+  const seen = new Set([from]);
+  let frontier = [from];
+  for (let d = 0; frontier.length; d++) {
+    if (frontier.includes(to)) return d;
+    const next = [];
+    for (const id of frontier) {
+      for (const p of getMap(id).portals) {
+        if (!p.to || seen.has(p.to)) continue;
+        seen.add(p.to);
+        next.push(p.to);
+      }
+    }
+    frontier = next;
+  }
+  return Infinity;
+}
+
+// Flying between towns costs a little gold per road on the way.
+export function travelCost(fromId, townId) {
+  return fromId === townId ? 0 : 20 * Math.min(8, hops(fromId, townId));
+}
+
+// Travel is only offered from a town. Returns a reason string when it can't happen.
+export function travelTo(world, townId) {
+  if (!world.map.isTown) return 'Fast travel leaves from towns.';
+  if (world.map.id === townId) return 'You are already here.';
+  const cost = travelCost(world.map.id, townId);
+  if (world.char.gold < cost) return `You need ${cost} gold.`;
+  world.char.gold -= cost;
+  loadMap(world, townId, 'start');
+  world.log(`You fly to ${getMap(townId).name}!`, '#bff0dc');
+  return null;
+}
+
 // ---------- Actions the UI can trigger ----------
 
 export function useItem(world, id) {
@@ -203,7 +241,7 @@ function killMob(world, m) {
     world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
     world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
     if (nextJobs(char.job, char.level).some((j) => j.level === char.level)) {
-      world.log('A new job is ready! Visit your instructor in Pastel Harbor.', '#ffe36b');
+      world.log('A new job is ready! Visit your instructor in their home town (M opens the world map).', '#ffe36b');
     }
   }
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');

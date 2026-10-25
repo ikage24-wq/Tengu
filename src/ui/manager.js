@@ -6,6 +6,7 @@ import { HOTKEYS } from '../core/character.js';
 import { bagWindow, statsWindow, skillsWindow, questsWindow } from './windows.js';
 import { npcWindow, deathWindow } from './npc.js';
 import { drawHud } from './hud.js';
+import { worldMapWindow } from './worldmap.js';
 
 export function createUiState() {
   return {
@@ -15,6 +16,7 @@ export function createUiState() {
       skills: { x: 194, y: 60, open: false },
       quests: { x: 436, y: 60, open: false },
       npc: { x: 170, y: 84, open: false },
+      worldmap: { x: 110, y: 26, open: false },
     },
     npc: null,
     death: false,
@@ -25,7 +27,7 @@ export function createUiState() {
   };
 }
 
-const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests' };
+const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap' };
 
 // Handles keys and world events before the world updates. Returns whether the world should
 // ignore player controls this frame.
@@ -86,6 +88,7 @@ export function drawUi(ui, state, world) {
   if (state.windows.skills.open) skillsWindow(ui, state, world);
   if (state.windows.quests.open) questsWindow(ui, state, world);
   if (state.windows.bag.open) bagWindow(ui, state, world);
+  if (state.windows.worldmap.open) worldMapWindow(ui, state, world);
   if (state.npc) npcWindow(ui, state, world);
   if (state.death) deathWindow(ui, state, world);
 }

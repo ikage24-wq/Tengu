@@ -7,10 +7,12 @@
 //   npcs       {id, x}; they stand on the ground
 //   spawns     {mob, x, y}; y is the surface the monster patrols (flyers hover above it)
 //   town       the town you respawn in after dying here
+//   world      where the map sits on the world map (in its 400x240 frame)
+//   job        towns that are a job's home, where its instructor lives
 
 export const MAPS = {
   sprout: {
-    id: 'sprout', name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout',
+    id: 'sprout', name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     width: 1600, height: 400, groundY: 360,
     platforms: [
       { x: 280, y: 280, w: 180 },
@@ -22,12 +24,12 @@ export const MAPS = {
       { id: 'start', x: 140, y: 360, hidden: true },
       { id: 'east', x: 1520, y: 360, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 360 }, { id: 'pip', x: 820 }, { id: 'lulu', x: 1200 }],
+    npcs: [{ id: 'mira', x: 360 }, { id: 'kestrel', x: 720 }, { id: 'pip', x: 860 }, { id: 'lulu', x: 1200 }],
     spawns: [],
   },
 
   meadow1: {
-    id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout',
+    id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
     width: 2200, height: 480, groundY: 440,
     platforms: [
       { x: 180, y: 360, w: 240 },
@@ -46,6 +48,7 @@ export const MAPS = {
     portals: [
       { id: 'west', x: 40, y: 440, to: 'sprout', toPortal: 'east' },
       { id: 'east', x: 2140, y: 440, to: 'meadow2', toPortal: 'west' },
+      { id: 'north', x: 1640, y: 440, to: 'canyon', toPortal: 'south' },
     ],
     npcs: [],
     spawns: [
@@ -58,7 +61,7 @@ export const MAPS = {
   },
 
   meadow2: {
-    id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor',
+    id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
     width: 2400, height: 520, groundY: 480,
     platforms: [
       { x: 160, y: 400, w: 260 },
@@ -90,7 +93,7 @@ export const MAPS = {
   },
 
   harbor: {
-    id: 'harbor', name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor',
+    id: 'harbor', name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
     width: 1800, height: 420, groundY: 380,
     platforms: [
       { x: 200, y: 300, w: 200 },
@@ -102,15 +105,12 @@ export const MAPS = {
       { id: 'west', x: 40, y: 380, to: 'meadow2', toPortal: 'east' },
       { id: 'east', x: 1740, y: 380, to: 'woods', toPortal: 'west' },
     ],
-    npcs: [
-      { id: 'brann', x: 320 }, { id: 'elowen', x: 540 }, { id: 'kestrel', x: 760 },
-      { id: 'vex', x: 980 }, { id: 'rook', x: 1200 }, { id: 'marlo', x: 1460 },
-    ],
+    npcs: [{ id: 'vex', x: 420 }, { id: 'rook', x: 1100 }, { id: 'marlo', x: 1460 }],
     spawns: [],
   },
 
   woods: {
-    id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor',
+    id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
     width: 2600, height: 640, groundY: 600,
     platforms: [
       { x: 150, y: 520, w: 300 },
@@ -135,7 +135,7 @@ export const MAPS = {
     ],
     portals: [
       { id: 'west', x: 40, y: 600, to: 'harbor', toPortal: 'east' },
-      { id: 'east', x: 2540, y: 600, to: 'ruins', toPortal: 'west' },
+      { id: 'east', x: 2540, y: 600, to: 'grove', toPortal: 'west' },
     ],
     npcs: [],
     spawns: [
@@ -149,7 +149,7 @@ export const MAPS = {
   },
 
   ruins: {
-    id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'harbor',
+    id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 },
     width: 2600, height: 640, groundY: 600,
     platforms: [
       { x: 200, y: 510, w: 280 },
@@ -169,7 +169,7 @@ export const MAPS = {
       { x: 2080, top: 430, bottom: 600 },
     ],
     portals: [
-      { id: 'west', x: 40, y: 600, to: 'woods', toPortal: 'east' },
+      { id: 'west', x: 40, y: 600, to: 'grove', toPortal: 'east' },
       { id: 'east', x: 2540, y: 600, to: 'cave', toPortal: 'west' },
     ],
     npcs: [],
@@ -183,7 +183,7 @@ export const MAPS = {
   },
 
   cave: {
-    id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'harbor',
+    id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'grove', world: { x: 336, y: 148 },
     width: 2600, height: 700, groundY: 660,
     platforms: [
       { x: 180, y: 580, w: 280 },
@@ -219,7 +219,7 @@ export const MAPS = {
   },
 
   sky: {
-    id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'harbor',
+    id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 },
     width: 2600, height: 700, groundY: 660,
     platforms: [
       { x: 200, y: 570, w: 260 },
@@ -250,7 +250,7 @@ export const MAPS = {
   },
 
   bossroom: {
-    id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'harbor',
+    id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'grove', world: { x: 360, y: 186 },
     width: 1200, height: 420, groundY: 380,
     platforms: [
       { x: 150, y: 290, w: 200 },
@@ -262,6 +262,77 @@ export const MAPS = {
     spawns: [{ mob: 'crystalking', x: 560, y: 380, respawn: 300 }],
   },
 };
+
+// ---------- The warrior and mage homes, and the canyon road up to the warriors ----------
+
+Object.assign(MAPS, {
+  canyon: {
+    id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 },
+    width: 2200, height: 520, groundY: 480,
+    platforms: [
+      { x: 200, y: 400, w: 240 },
+      { x: 520, y: 320, w: 220 },
+      { x: 820, y: 400, w: 260 },
+      { x: 1000, y: 250, w: 220 },
+      { x: 1260, y: 330, w: 240 },
+      { x: 1560, y: 400, w: 240 },
+      { x: 1820, y: 320, w: 220 },
+    ],
+    ropes: [
+      { x: 1100, top: 250, bottom: 480 },
+      { x: 620, top: 320, bottom: 480 },
+      { x: 1920, top: 320, bottom: 480 },
+      { x: 1380, top: 330, bottom: 480 },
+    ],
+    portals: [
+      { id: 'south', x: 40, y: 480, to: 'meadow1', toPortal: 'north' },
+      { id: 'north', x: 2140, y: 480, to: 'crag', toPortal: 'south' },
+    ],
+    npcs: [],
+    spawns: [
+      { mob: 'mushkin', x: 320, y: 480 }, { mob: 'piglet', x: 760, y: 480 }, { mob: 'mushkin', x: 1200, y: 480 },
+      { mob: 'piglet', x: 1650, y: 480 }, { mob: 'boarlet', x: 1950, y: 480 }, { mob: 'piglet', x: 320, y: 400 },
+      { mob: 'mushkin', x: 620, y: 320 }, { mob: 'piglet', x: 950, y: 400 }, { mob: 'boarlet', x: 1100, y: 250 },
+      { mob: 'piglet', x: 1380, y: 330 }, { mob: 'mushkin', x: 1680, y: 400 }, { mob: 'boarlet', x: 1920, y: 320 },
+    ],
+  },
+
+  crag: {
+    id: 'crag', name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
+    width: 1600, height: 420, groundY: 380,
+    platforms: [
+      { x: 240, y: 300, w: 220 },
+      { x: 1100, y: 300, w: 240 },
+    ],
+    ropes: [],
+    portals: [
+      { id: 'start', x: 800, y: 380, hidden: true },
+      { id: 'south', x: 60, y: 380, to: 'canyon', toPortal: 'north' },
+    ],
+    npcs: [{ id: 'brann', x: 520 }, { id: 'tora', x: 1000 }],
+    spawns: [],
+  },
+
+  grove: {
+    id: 'grove', name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
+    width: 1600, height: 420, groundY: 380,
+    platforms: [
+      { x: 220, y: 300, w: 220 },
+      { x: 1140, y: 300, w: 220 },
+    ],
+    ropes: [],
+    portals: [
+      { id: 'start', x: 800, y: 380, hidden: true },
+      { id: 'west', x: 40, y: 380, to: 'woods', toPortal: 'east' },
+      { id: 'east', x: 1540, y: 380, to: 'ruins', toPortal: 'west' },
+    ],
+    npcs: [{ id: 'elowen', x: 560 }, { id: 'nim', x: 1020 }],
+    spawns: [],
+  },
+});
+
+// Towns in world-map order, for fast travel.
+export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 
 export function getMap(id) {
   return MAPS[id] ?? MAPS.sprout;

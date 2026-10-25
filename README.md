@@ -40,7 +40,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Z (or Ctrl) | Basic attack (hold to keep attacking) |
 | X | Pick up loot (hold to vacuum) |
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
-| I / C / K / L | Bag / Stats / Skills / Quests |
+| I / C / K / L / M | Bag / Stats / Skills / Quests / World map |
 | Esc | Close windows |
 
 Mouse: click buttons, double-click (or right-click) items to use or equip them, drag windows by
@@ -49,8 +49,8 @@ then press the key. Right-click a hotkey slot to clear it.
 
 ## Systems
 
-- **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (talk to the instructors in
-  Pastel Harbor) → a second job at 30: Blademaster or Lancer, Pyromancer or Cleric, Ranger or
+- **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (each instructor lives in their
+  job's home town) → a second job at 30: Blademaster or Lancer, Pyromancer or Cleric, Ranger or
   Marksman, Duelist or Shadow. Each job has its own HP/MP growth and weapons. Mages get a
   third job at level 50: **Seraph** (from Cleric) and **Inferno Sage** (from Pyromancer), each
   with a huge-area ultimate that strikes up to 15 monsters twice (Radiant Judgment, Meteor
@@ -95,11 +95,19 @@ then press the key. Right-click a hotkey slot to clear it.
   trail, a climbing cycle, and a hurt recoil. Monsters hop, breathe, pop in when they spawn, and
   squash when hit. Footstep dust, hit sparks, defeat poofs, screen shake, short hitstop on crits
   and kills, and ambient petals, fireflies, and glints in every map.
-- **Monsters and maps** — 17 monsters and the Crystal King boss across 9 maps (two towns, two
-  meadows, woods, ruins, a crystal cave, a sky garden, and the throne room) with one-way ledges,
-  ropes, and portals. Hit monsters chase you; the boss telegraphs a ground slam.
-- **Quests and NPCs** — 9 quests (defeat or collect), shops that buy and sell, a salon to restyle
-  your hero, and job instructors.
+- **Monsters and maps** — 17 monsters and the Crystal King boss across 12 maps (four towns, two
+  meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room) with
+  one-way ledges, ropes, and portals that name where they lead. Hit monsters chase you; the boss
+  telegraphs a ground slam.
+- **Towns and the world map** — each job has a home town in its own style: Sprout Village
+  (archers, a pastel village with archery targets), Pastel Harbor (thieves, moonlit docks with
+  string lights and alley cats), Ember Crag (warriors, sandstone mesas with forges, banners, and
+  training dummies), and Moonleaf Grove (mages, a starry forest with glowing treehouses and
+  floating lanterns). The world map (M) shows Tengu Island with every road between maps and a
+  "you are here" pin; click a town to fly there from any town for a little gold.
+- **Quests and NPCs** — 9 quests (defeat or collect), shops that buy and sell (including a
+  blacksmith in Ember Crag, a spell shop in Moonleaf Grove, and Lulu's clothing boutique), a salon
+  to restyle your hero, and job instructors.
 - **Death** — you wake up in town and lose a little EXP (less with more LUK), never a level.
 
 Mechanics follow the classic genre formulas (EXP curve, damage, accuracy, HP/MP growth), using the

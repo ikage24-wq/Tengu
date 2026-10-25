@@ -5,6 +5,7 @@
 // nothing jitters as you move; animation comes only from `time`.
 
 import { R, E, T, F, sprite, blit, shade, mix } from './pixel.js';
+import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -16,7 +17,7 @@ export const THEMES = {
   town: {
     sky: ['#ffc6e6', '#e2d2ff', '#fff4fb'], sun: '#fff6c9', far: '#ead9ff', mid: '#f3e6ff', midTrim: '#c9b6ff',
     ground: '#f6d3bd', groundDeep: '#e9b99d', trim: '#ffffff', ledge: '#fff0f6', ledgeTrim: '#ffffff', ledgeShade: '#f0c3d6',
-    skyline: 'houses', props: ['lamp', 'flower', 'bench', 'flower', 'mailbox', 'bush', 'tulip', 'sign'],
+    skyline: 'houses', props: ['lamp', 'flower', 'bench', 'target', 'flower', 'mailbox', 'bush', 'tulip', 'target', 'sign'],
     critters: ['bird', 'butterfly'], drift: 'petal', face: 'sun',
   },
   meadow: {
@@ -25,11 +26,26 @@ export const THEMES = {
     skyline: 'hills', props: ['flower', 'tuft', 'flower', 'bush', 'fence', 'tulip', 'tuft', 'mushroom', 'rock'],
     critters: ['butterfly', 'bird', 'butterfly'], drift: 'petal', face: 'sun',
   },
+  // The thieves' harbor, by moonlight: string lights, lit lamps, and alley cats on the crates.
   harbor: {
-    sky: ['#9fd8ff', '#ffd9ee', '#fff5e2'], sun: '#fff1c9', far: '#9fd6ff', mid: '#ffffff', midTrim: '#8fd3ff',
-    ground: '#e9c49a', groundDeep: '#d4a678', trim: '#fff4e0', ledge: '#e8c49a', ledgeTrim: '#fff4e0', ledgeShade: '#c99a6b',
-    skyline: 'sea', props: ['lamp', 'crate', 'barrel', 'buoy', 'flower', 'crate'],
-    critters: ['bird', 'gull'], drift: null, face: 'sun',
+    sky: ['#4a3f86', '#9a72c8', '#ffb8c8'], sun: '#ffe6f6', far: '#8c94e6', mid: '#ffffff', midTrim: '#8fd3ff',
+    ground: '#d9b08a', groundDeep: '#c4966c', trim: '#f6e2c8', ledge: '#d9b08a', ledgeTrim: '#f6e2c8', ledgeShade: '#b08060',
+    skyline: 'sea', props: ['lamp', 'crate', 'cat', 'barrel', 'poster', 'buoy', 'crate', 'lamp'],
+    critters: ['gull', 'firefly'], drift: null, face: 'moon', stars: true,
+  },
+  // The warriors' home: warm sandstone mesas, tents, forges, banners, and training dummies.
+  crag: {
+    sky: ['#ffab8a', '#ffd3a1', '#fff1d6'], sun: '#fff1c9', far: '#f2b98c', mid: '#e8a86b', midTrim: '#c97f4f',
+    ground: '#f2c48d', groundDeep: '#dfa56c', trim: '#ffe2b8', ledge: '#dca06e', ledgeTrim: '#f6cf9a', ledgeShade: '#b5784a',
+    skyline: 'mesas', props: ['torch', 'dummy', 'rock', 'cactus', 'rack', 'barrel', 'dummy', 'cactus'],
+    critters: ['bird', 'gull'], drift: 'ember', face: 'sun',
+  },
+  // The mages' home: a starry night forest with glowing treehouses and floating lanterns.
+  grove: {
+    sky: ['#2f2c6e', '#6a52b4', '#c4a6f2'], sun: '#e6dcff', far: '#5a4aa0', mid: '#7a62c4', midTrim: '#9f8ae0',
+    ground: '#8f7cc8', groundDeep: '#7a68b8', trim: '#9fe0b0', ledge: '#b08860', ledgeTrim: '#9fe0b0', ledgeShade: '#8a6a4a',
+    skyline: 'bigtrees', props: ['lantern', 'glowshroom', 'orb', 'books', 'flower', 'glowshroom', 'candle'],
+    critters: ['firefly', 'butterfly'], drift: 'sparkle', face: 'moon', stars: true,
   },
   forest: {
     sky: ['#b8f0d0', '#e0f8e8', '#fff8e0'], sun: '#fffde0', far: '#9fdcb4', mid: '#7cc794', midTrim: '#5aa878',
@@ -280,8 +296,8 @@ function houseArt(seed) {
   });
 }
 
-function treeArt(seed, blossom) {
-  const leaf = blossom ? '#ffc6de' : pick(['#8fdc9a', '#7fd1a8', '#a8e28a'], seed);
+function treeArt(seed, blossom, palette = ['#8fdc9a', '#7fd1a8', '#a8e28a']) {
+  const leaf = blossom ? '#ffc6de' : pick(palette, seed);
   const big = hash(seed * 3) > 0.5;
   const H = big ? 66 : 54;
   return art(`tree|${leaf}|${big}`, 44, H, () => [
@@ -367,6 +383,99 @@ function islandArt(seed, frame) {
   });
 }
 
+function tentArt(color) {
+  return art(`tent|${color}`, 56, 50, () => [
+    T([[2, 50], [28, 10], [54, 50]], '#fff4e6'), T([[10, 50], [28, 10], [20, 50]], color), T([[36, 50], [28, 10], [46, 50]], color),
+    T([[22, 50], [28, 34], [34, 50]], '#8a5a3c'), R(27.4, 0, 1.2, 12, '#8a5a3c'), T([[28.6, 1], [37, 3.4], [28.6, 6]], color),
+  ]);
+}
+
+function forgeArt(frame) {
+  return art(`forge|${frame}`, 50, 56, () => [
+    R(30, 4, 9, 30, '#b5a8c9'), R(29, 2, 11, 4, '#a598bd'), R(4, 22, 42, 34, '#c9bedc'), E(25, 22, 21, 6, '#c9bedc'),
+    E(25, 40, 9, 8, '#3a2d4f'), E(25, 42 - frame * 0.4, 6.4, 5 + frame * 0.6, '#ff8a3c'), F(E(25, 43, 3.4, 2.6, '#ffe36b')),
+    F(R(10, 30, 4, 3, '#a598bd')), F(R(36, 34, 5, 3, '#a598bd')), R(4, 52, 42, 4, '#a598bd'),
+  ]);
+}
+
+function bannerArt(color, frame) {
+  const wave = [0, 1.2, 0][frame] - 0.6;
+  return art(`banner|${color}|${frame}`, 24, 70, () => [
+    R(4, 2, 2.4, 68, '#8a5a3c'), E(5.2, 2, 2.4, 2.4, '#ffd66b'),
+    T([[6.4, 6], [20 + wave, 7], [21 + wave, 30], [14 + wave * 0.5, 26], [6.4, 32]], color),
+    F(T([[11, 14], [13.4, 11], [15.8, 14], [13.4, 20]], '#fff4e6')),
+  ]);
+}
+
+function treehouseArt(seed) {
+  const roof = pick(['#ff9ec0', '#9fb8ff', '#ffd66b'], seed);
+  return art(`treehouse|${roof}`, 64, 92, () => [
+    R(26, 40, 12, 52, '#9f7a57'), T([[26, 92], [20, 92], [26, 84]], '#9f7a57'), T([[38, 92], [44, 92], [38, 84]], '#9f7a57'),
+    E(32, 22, 30, 20, '#6fbf8a'), E(12, 30, 12, 10, '#6fbf8a'), E(52, 30, 12, 10, '#6fbf8a'),
+    R(16, 30, 32, 20, '#f0d6a8'), T([[12, 31], [32, 18], [52, 31]], roof),
+    E(24, 40, 3.4, 3.4, '#ffffff'), F(E(24, 40, 2.4, 2.4, '#fff3a6')), E(40, 40, 3.4, 3.4, '#ffffff'), F(E(40, 40, 2.4, 2.4, '#fff3a6')),
+    R(30, 42, 5, 8, '#c99a6b'), R(31, 50, 0.8, 22, '#e6c9a0'), R(34.2, 50, 0.8, 22, '#e6c9a0'),
+    F(R(31, 54, 4, 0.8, '#e6c9a0')), F(R(31, 59, 4, 0.8, '#e6c9a0')), F(R(31, 64, 4, 0.8, '#e6c9a0')), F(R(31, 69, 4, 0.8, '#e6c9a0')),
+  ]);
+}
+
+function towerArt() {
+  return art('magetower', 40, 100, () => [
+    T([[8, 100], [11, 34], [29, 34], [32, 100]], '#ece4ff'), R(9, 32, 22, 4, '#c9b6ff'), T([[5, 34], [20, 2], [35, 34]], '#7f8cff'),
+    F(T([[18, 14], [20, 9], [22, 14], [20, 19]], '#ffe36b')), E(20, 52, 4, 5, '#ffffff'), F(E(20, 52, 3, 4, '#fff3a6')),
+    E(20, 74, 4, 5, '#ffffff'), F(E(20, 74, 3, 4, '#c9f2ff')), R(15, 88, 10, 12, '#9f7a57'), E(20, 88, 5, 4, '#9f7a57'),
+  ]);
+}
+
+const floatLanternArt = () => art('floatlantern', 8, 10, () => [E(4, 5, 3.4, 4, '#ffcf7a'), F(E(3, 4, 1, 2, '#fff1c9')), R(2.6, 0, 2.8, 1.4, '#c97f4f'), R(2.6, 8.8, 2.8, 1.2, '#c97f4f')]);
+
+function torchArt(frame) {
+  return art(`torch|${frame}`, 10, 30, () => [R(4, 10, 2.4, 20, '#8a5a3c'), R(2.6, 8, 5.2, 3, '#a598bd'), E(5.2, 5 - frame * 0.3, 2.6, 3.6 + frame * 0.4, '#ff8a3c'), F(E(5.2, 6, 1.4, 2, '#ffe36b'))]);
+}
+
+function dummyArt(blink) {
+  return art(`dummy|${blink}`, 20, 34, () => [
+    R(9, 18, 2.4, 16, '#8a5a3c'), R(2, 18, 16, 2.4, '#8a5a3c'), E(10, 22, 6, 7, '#f2d38a'), F(R(4.4, 22, 11.2, 1.2, '#c99a6b')),
+    E(10, 9, 6, 6, '#f2d38a'), F(E(10, 5, 3, 1.4, '#f7e4b0')), ...face(10, 9.6, 2.2, blink ? 'closed' : 'open', 'o'),
+  ]);
+}
+
+function cactusArt(blink) {
+  return art(`cactus|${blink}`, 18, 22, () => [
+    E(9, 13, 6, 9, '#8fd39a'), E(2.6, 12, 2.2, 3.4, '#8fd39a'), E(15.4, 10, 2.2, 3.4, '#8fd39a'), R(4.6, 18, 8.8, 4, '#ff9a6b'), R(4, 17.4, 10, 1.6, '#ffb38a'),
+    E(9, 3.4, 2.2, 2, '#ff8fb4'), F(E(9, 3.4, 0.8, 0.8, '#ffe36b')), ...face(9, 11, 2, blink ? 'closed' : 'happy', 'smile'),
+  ]);
+}
+
+function rackArt() {
+  return art('rack', 26, 24, () => [R(2, 6, 22, 2, '#8a5a3c'), R(2, 20, 22, 2, '#8a5a3c'), R(3, 6, 2, 18, '#8a5a3c'), R(21, 6, 2, 18, '#8a5a3c'),
+    R(8, 2, 1.6, 18, '#dfe6f5'), R(7, 14, 3.6, 1.2, '#ffd66b'), R(13, 0, 1.6, 20, '#dfe6f5'), T([[12, 1], [13.8, -2], [15.6, 1]], '#dfe6f5'), R(17.6, 4, 1.4, 16, '#c99a6b'), E(18.3, 5, 2.4, 1.6, '#dfe6f5')]);
+}
+
+function catArt(color, frame) {
+  return art(`cat|${color}|${frame}`, 16, 14, () => {
+    const tail = [-1, 0, 1][frame];
+    return [E(7, 9.6, 5, 4, color), E(10.6, 5, 3.6, 3.2, color), T([[8, 3], [8.4, 0], [10, 2]], color), T([[11.4, 2], [13, 0], [13.4, 3]], color),
+      T([[2.6, 10], [0.4 + tail, 4], [2 + tail, 3.6], [3.8, 9]], color), ...face(10.6, 5.2, 1.3, 'happy', 'none'), F(E(10.6, 6.6, 0.4, 0.3, '#ff8fa8'))];
+  });
+}
+
+const posterArt = () => art('poster', 16, 26, () => [R(7, 10, 2, 16, '#8a5a3c'), R(1, 1, 14, 13, '#fff4e0'), F(R(3, 2.6, 10, 1.2, '#c99a6b')), F(E(8, 7.6, 2.6, 2.6, '#c9b8ff')), F(R(5.4, 6.4, 5.2, 1, '#3a2d4f')), F(R(3, 11.6, 10, 0.8, '#d9b88f'))]);
+
+const lanternArt = () => art('lantern', 12, 34, () => [R(5, 8, 2, 26, '#8a6a4a'), R(5, 6, 6, 1.6, '#8a6a4a'), E(9, 12, 3, 3.6, '#ff9ec0'), F(E(8.4, 11.4, 1, 1.6, '#ffd6e6')), R(7.6, 8, 2.8, 1.2, '#8a6a4a')]);
+
+function glowshroomArt(color, blink) {
+  return art(`glowshroom|${color}|${blink}`, 14, 14, () => [R(4.6, 7, 4.8, 7, '#e6f4ff'), T([[1, 8], [3, 3], [7, 1], [11, 3], [13, 8]], color), F(E(4.6, 4.4, 1, 0.8, '#ffffff')), F(E(9.4, 4, 0.9, 0.7, '#ffffff')), ...face(7, 10.4, 1.2, blink ? 'closed' : 'open', 'none')]);
+}
+
+const orbArt = () => art('orb', 14, 22, () => [R(4, 12, 6, 10, '#c9b8ff'), R(2, 20, 10, 2, '#a68be0'), R(3, 11, 8, 2, '#a68be0'), E(7, 6, 5, 5, '#bfe6ff'), F(E(5.6, 4.6, 1.6, 1.2, '#ffffff')), F(E(8, 7.4, 1.4, 1.4, '#e0b8ff'))]);
+const booksArt = () => art('books', 16, 12, () => [R(1, 8, 14, 4, '#ff9ec0'), R(2, 4, 12, 4, '#9fb8ff'), R(3, 0.6, 10, 3.4, '#ffd66b'), F(R(1, 9.4, 14, 0.8, '#ffffff')), F(R(2, 5.4, 12, 0.8, '#ffffff')), F(R(3, 1.8, 10, 0.6, '#ffffff'))]);
+
+function targetArt() {
+  return art('target', 20, 30, () => [R(4, 16, 2, 14, '#c99a6b'), R(14, 16, 2, 14, '#c99a6b'), E(10, 12, 9, 9, '#ffffff'), E(10, 12, 6.6, 6.6, '#ff8fa8'), E(10, 12, 4.2, 4.2, '#ffffff'), E(10, 12, 2, 2, '#ff8fa8'),
+    T([[11, 11], [17, 6], [17.6, 6.8]], '#8a5a3c'), T([[15.8, 4.6], [18.6, 5.4], [17, 7.8]], '#ffffff'), T([[8, 13.6], [2, 17], [2.4, 17.8]], '#8a5a3c'), T([[0, 16.2], [3.4, 17.4], [1.2, 19.6]], '#ffffff')]);
+}
+
 // ---------- Critters ----------
 
 function birdArt(color, frame) {
@@ -446,7 +555,7 @@ function drawSky(ctx, t, theme, width, height, time) {
   g.addColorStop(1, t.sky[2]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, width, height);
-  if (theme === 'cave' || theme === 'ruins') {
+  if (theme === 'cave' || theme === 'ruins' || t.stars) {
     for (let i = 0; i < 30; i++) {
       const tw = 0.5 + 0.5 * Math.sin(time * 2 + i * 1.7);
       ctx.globalAlpha = 0.3 + 0.6 * tw;
@@ -512,6 +621,11 @@ function drawFar(ctx, t, cam, width, y0, time) {
       break;
     case 'sea': {
       ctx.fillRect(0, y0 - 30, width, 300);
+      if (t.face === 'moon') {
+        ctx.fillStyle = 'rgba(255,246,214,0.35)';
+        for (let k = 0; k < 6; k++) ctx.fillRect(Math.round(width * 0.8 - 14 + Math.sin(time * 2 + k) * 4), Math.round(y0 - 24 + k * 6), 28 - k * 3, 2);
+        ctx.fillStyle = t.far;
+      }
       ctx.fillStyle = 'rgba(255,255,255,0.65)';
       repeat(cam.x + time * 10, 0.2, 38, width, (i, x) => {
         const w = 10 + (i % 3) * 5;
@@ -553,6 +667,31 @@ function drawFar(ctx, t, cam, width, y0, time) {
         ctx.beginPath();
         ctx.moveTo(x, -2);
         ctx.quadraticCurveTo(x + 9, h, x + 18, -2);
+        ctx.fill();
+      });
+      break;
+    case 'mesas':
+      ctx.fillRect(0, Math.round(y0 + 20), width, 400);
+      repeat(cam.x, 0.2, 130, width, (i, x) => {
+        const h = 40 + hash(i) * 60;
+        const w = 60 + hash(i + 4) * 50;
+        roundRect(ctx, x, y0 - h, w, h + 40, 8);
+        ctx.fill();
+        ctx.fillStyle = shade(t.far, 10);
+        roundRect(ctx, x + 4, y0 - h, w - 8, 6, 3);
+        ctx.fill();
+        ctx.fillStyle = t.far;
+      });
+      break;
+    case 'bigtrees':
+      ctx.fillRect(0, Math.round(y0 + 10), width, 400);
+      repeat(cam.x, 0.2, 110, width, (i, x) => {
+        const h = 90 + hash(i) * 70;
+        ctx.fillRect(Math.round(x + 46), Math.round(y0 - h * 0.6), 18, h);
+        ctx.beginPath();
+        ctx.arc(x + 55, y0 - h * 0.6, 34 + hash(i + 2) * 14, 0, Math.PI * 2);
+        ctx.arc(x + 30, y0 - h * 0.45, 22, 0, Math.PI * 2);
+        ctx.arc(x + 80, y0 - h * 0.48, 24, 0, Math.PI * 2);
         ctx.fill();
       });
       break;
@@ -631,6 +770,29 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
         ctx.fill();
         ctx.restore();
       });
+      // Strings of little lights draped along the docks, twinkling.
+      repeat(cam.x, 0.6, 120, width, (i, x) => {
+        const sag = 10;
+        for (let k = 0; k <= 8; k++) {
+          const u = k / 8;
+          const lx = x + u * 120;
+          const ly = y0 - 54 + Math.sin(u * Math.PI) * sag;
+          const c = ['#ffe36b', '#ff9ec0', '#9fd8ff', '#bff0dc'][(k + i) % 4];
+          ctx.globalAlpha = 0.6 + 0.35 * Math.sin(time * 3 + k + i);
+          ctx.fillStyle = c;
+          ctx.beginPath();
+          ctx.arc(lx, ly + 2, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = '#3a2d4f';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(x, y0 - 54);
+        ctx.quadraticCurveTo(x + 60, y0 - 54 + sag * 2, x + 120, y0 - 54);
+        ctx.stroke();
+        ctx.globalAlpha = 0.92;
+      });
       break;
     case 'trees':
       repeat(cam.x, 0.45, 84, width, (i, x) => {
@@ -653,6 +815,32 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
         glow(ctx, x + 55, y0 - 30, 46, c, 0.25 + 0.15 * Math.sin(time * 2 + i));
         place(ctx, bigCrystalArt(c), x + 55, y0 + 6);
       });
+      break;
+    case 'mesas':
+      repeat(cam.x, 0.45, 84, width, (i, x) => {
+        const s = hash(i + 5);
+        if (s < 0.35) place(ctx, tentArt(pick(['#ff8a5c', '#ffd66b', '#ff9ec0'], hash(i))), x + 55, y0 + 4);
+        else if (s < 0.6) {
+          place(ctx, forgeArt(Math.floor(time * 6 + i) % 3), x + 55, y0 + 4);
+          glow(ctx, x + 55, y0 - 12, 26, '#ffb35a', 0.35 + 0.15 * Math.sin(time * 7 + i));
+          smoke(ctx, x + 70, y0 - 50, time, i);
+        } else place(ctx, bannerArt(pick(['#ff6b6b', '#ff9a5c', '#ffd66b'], hash(i)), Math.floor(time * 4 + i) % 3), x + 55, y0 + 4);
+      });
+      break;
+    case 'bigtrees':
+      repeat(cam.x, 0.45, 120, width, (i, x) => {
+        const s = hash(i + 5);
+        if (s < 0.45) place(ctx, treehouseArt(hash(i)), x + 60, y0 + 4);
+        else if (s < 0.7) place(ctx, towerArt(), x + 60, y0 + 4);
+        else place(ctx, treeArt(hash(i), false, ['#9fb8ff', '#b9a7ff', '#8fd3d6']), x + 60, y0 + 4);
+      });
+      // Paper lanterns floating up through the trees.
+      for (let k = 0; k < 7; k++) {
+        const lx = ((hash(k) * width * 1.4 - cam.x * 0.45 + time * 4) % (width + 60) + width + 60) % (width + 60) - 30;
+        const ly = y0 - 60 - ((time * (6 + k) + hash(k + 3) * 200) % 220);
+        glow(ctx, lx, ly, 14, '#ffd27a', 0.5);
+        place(ctx, floatLanternArt(), lx, ly + 6);
+      }
       break;
     case 'islands':
       repeat(cam.x, 0.45, 200, width, (i, x) => {
@@ -774,7 +962,7 @@ function drawGround(ctx, t, theme, map, cam, width, height, time) {
     rect(ctx, 0, y, width, 6, '#ffffff');
     return;
   }
-  const scallop = theme === 'meadow' || theme === 'forest';
+  const scallop = theme === 'meadow' || theme === 'forest' || theme === 'grove';
   ctx.fillStyle = top;
   ctx.fillRect(0, y - 1, width, 6);
   if (scallop) {
@@ -857,7 +1045,7 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     ctx.fillStyle = t.ledgeTrim;
     roundRect(ctx, x, y - 1, p.w, 4, 2);
     ctx.fill();
-    if (theme === 'meadow' || theme === 'forest' || theme === 'ruins' || theme === 'town') {
+    if (theme === 'meadow' || theme === 'forest' || theme === 'ruins' || theme === 'town' || theme === 'grove') {
       for (let dx = 4; dx < p.w - 2; dx += 7) {
         ctx.beginPath();
         ctx.arc(x + dx, y + 3, 3, 0, Math.PI);
@@ -870,7 +1058,7 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     ctx.lineTo(x + p.w - 4, y - 1.5);
     ctx.stroke();
     // Hanging vines that sway in the breeze.
-    if (theme === 'forest' || theme === 'meadow' || theme === 'ruins') {
+    if (theme === 'forest' || theme === 'meadow' || theme === 'ruins' || theme === 'grove') {
       for (let dx = 14; dx < p.w - 10; dx += 34) {
         const k = hash(pi * 17 + dx);
         if (k < 0.35) continue;
@@ -935,13 +1123,29 @@ function drawPortals(ctx, map, cam, time, nearId) {
       const a = time * 2 + (i * Math.PI * 2) / 6;
       sparkle(ctx, x + Math.cos(a) * 15, y - 26 + Math.sin(a) * 23, i % 2 ? 2.6 : 1.8, i % 3 ? '#ffffff' : '#ffe36b');
     }
+    // A little sign naming where the portal goes.
+    const dest = p.label ?? MAPS[p.to]?.name;
+    if (dest) {
+      ctx.font = 'bold 7px sans-serif';
+      const w = ctx.measureText(dest).width + 10;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      roundRect(ctx, Math.round(x - w / 2), Math.round(y - 68), w, 11, 5);
+      ctx.fill();
+      ctx.strokeStyle = '#b9a7ff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#5a3f7a';
+      ctx.textAlign = 'center';
+      ctx.fillText(dest, Math.round(x), Math.round(y - 60));
+      ctx.textAlign = 'left';
+    }
     if (p.id === nearId) {
       const bob = Math.sin(time * 6) * 2;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(x, y - 66 + bob);
-      ctx.lineTo(x - 6, y - 58 + bob);
-      ctx.lineTo(x + 6, y - 58 + bob);
+      ctx.moveTo(x, y - 82 + bob);
+      ctx.lineTo(x - 6, y - 74 + bob);
+      ctx.lineTo(x + 6, y - 74 + bob);
       ctx.fill();
     }
   }
@@ -1001,6 +1205,27 @@ function prop(ctx, kind, x, y, seed, t, time) {
       ctx.globalAlpha = 1;
       return;
     case 'cloudpuff': return place(ctx, cloudArt(0.5, null), x, y + 2);
+    case 'target': return place(ctx, targetArt(), x, y);
+    case 'torch':
+      glow(ctx, x, y - 26, 18, '#ffb35a', 0.4 + 0.15 * Math.sin(time * 9 + seed * 5));
+      return place(ctx, torchArt(Math.floor(time * 7 + seed * 5) % 3), x, y);
+    case 'dummy': return place(ctx, dummyArt(blinking(time, seed)), x, y + (Math.floor(time * 2 + seed * 9) % 6 === 0 ? -1 : 0));
+    case 'cactus': return place(ctx, cactusArt(blinking(time, seed)), x, y);
+    case 'rack': return place(ctx, rackArt(), x, y);
+    case 'cat': return place(ctx, catArt(pick(['#ffb38a', '#f2f2ff', '#7a6a8a', '#3b3650'], seed * 7), Math.floor(time * 2 + seed * 4) % 3), x, y, { flip: seed > 0.6 });
+    case 'poster': return place(ctx, posterArt(), x, y);
+    case 'lantern':
+      glow(ctx, x + 3, y - 22, 16, '#ff9ec0', 0.4 + 0.15 * Math.sin(time * 2 + seed * 7));
+      return place(ctx, lanternArt(), x, y);
+    case 'glowshroom': {
+      const c = pick(['#8fd3ff', '#c9a6ff', '#9fe0b0'], seed * 3);
+      glow(ctx, x, y - 8, 14, c, 0.4 + 0.2 * Math.sin(time * 2 + seed * 9));
+      return place(ctx, glowshroomArt(c, blinking(time, seed)), x, y);
+    }
+    case 'orb':
+      glow(ctx, x, y - 16, 14, '#bfe6ff', 0.45 + 0.2 * Math.sin(time * 3 + seed * 6));
+      return place(ctx, orbArt(), x, y);
+    case 'books': return place(ctx, booksArt(), x, y);
     default:
   }
 }
@@ -1033,7 +1258,7 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (x < -40 || x > width + 40) continue;
       let kind = t.props[Math.floor(hash(wx + si) * t.props.length)];
       // Big props stay on the ground.
-      if (!s.ground && (kind === 'lamp' || kind === 'bench' || kind === 'mailbox' || kind === 'column')) kind = 'flower';
+      if (!s.ground && ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch'].includes(kind)) kind = 'flower';
       prop(ctx, kind, Math.round(x), Math.round(s.y - cam.y), seed, t, time);
     }
   });
@@ -1098,15 +1323,22 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
 // Petals, leaves, motes, or sparkles drifting through the air, in front of the scenery.
 function drawDrift(ctx, t, cam, width, height, time) {
   if (!t.drift) return;
-  const colors = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'] }[t.drift];
+  const colors = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'] }[t.drift];
+  // Embers rise from the forges instead of falling.
+  const rise = t.drift === 'ember' ? -1 : 1;
   ctx.save();
   for (let i = 0; i < 16; i++) {
     const speed = 10 + hash(i + 2) * 14;
     const x = (((hash(i) * width + time * speed * 0.8 - cam.x * 0.6) % (width + 40)) + width + 40) % (width + 40) - 20;
-    const y = (((hash(i + 7) * height + time * speed) % (height + 20)) + height + 20) % (height + 20) - 10;
+    const y = (((hash(i + 7) * height + time * speed * rise) % (height + 20)) + height + 20) % (height + 20) - 10;
     const wob = Math.sin(time * 2 + i) * 4;
     const c = colors[i % colors.length];
     ctx.globalAlpha = 0.85;
+    if (t.drift === 'ember') {
+      ctx.globalAlpha = 0.5 + 0.4 * Math.abs(Math.sin(time * 3 + i));
+      rect(ctx, x + wob, y, 2, 2, c);
+      continue;
+    }
     if (t.drift === 'sparkle' || t.drift === 'mote') {
       ctx.globalAlpha = 0.4 + 0.5 * Math.abs(Math.sin(time * 2 + i));
       sparkle(ctx, x + wob, y, 1.6 + (i % 3) * 0.6, c);
