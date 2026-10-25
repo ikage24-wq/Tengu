@@ -1,9 +1,10 @@
 // Live weapon effects, drawn every frame on top of the weapon sprite in the weapon's own space
 // (grip at the origin, the weapon pointing toward -y). Better weapons do more: steel glints,
 // mithril twinkles, crystal sheds frost, runes float glyphs, stars twinkle, sunforged and phoenix
-// throw embers and flames, abyssal smokes, celestial and genesis shine; and each endgame theme has its own show — holy light and
-// feathers, hellfire and a blinking eye, soul fire and ghosts, humming energy blades, chainsaw
-// smoke and sparks, and neon with glitches and holograms.
+// throw embers and flames, abyssal weapons smoke, celestial and genesis ones shine, and each
+// endgame theme has its own show — holy light and feathers, hellfire and a blinking eye, soul
+// fire and ghosts, humming energy blades, chainsaw smoke and sparks, and neon with glitches and
+// holograms.
 //
 // `liveFor(look, a)` returns live(ctx, time, s) or null. Anchors `a` are in the weapon's local
 // pixels: head, tip, blade [top, base], gem, top, runes, and per-theme points (halo, wings,
