@@ -98,6 +98,7 @@ export const MAPS = {
     ],
     ropes: [],
     portals: [
+      { id: 'start', x: 860, y: 380, hidden: true },
       { id: 'west', x: 40, y: 380, to: 'meadow2', toPortal: 'east' },
       { id: 'east', x: 1740, y: 380, to: 'woods', toPortal: 'west' },
     ],
