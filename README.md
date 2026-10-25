@@ -11,6 +11,10 @@ they and the monsters get three-tone shading: a soft lavender shadow at the back
 base color, and a warm highlight on the front edge;
 the world, items, and weapons are pixel art. No build step and no dependencies.
 
+## Play online
+
+**https://ikage24-wq.github.io/Twzt/** (served by GitHub Pages from this branch; keyboard needed).
+
 ## Run it
 
 ES modules need an HTTP server (not `file://`):
