@@ -21,6 +21,7 @@ import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
+import { moveAt } from './moves.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid', 'eyecover'];
 // Spiky hair was retired; old saves that used it get soft curls instead.
@@ -736,8 +737,8 @@ function baseRig() {
   };
 }
 
-function solveRig(state, anim) {
-  const { pose = 'idle', time = 0, progress = 0, hurt = false, seed = 0 } = state;
+function solveRig(state, anim, mv = null) {
+  const { pose = 'idle', time = 0, hurt = false, seed = 0 } = state;
   const r = baseRig();
   const t = time + seed * 1.37;
   r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6) * 2) / 2;
@@ -818,38 +819,8 @@ function solveRig(state, anim) {
     r.backArm = [-2, -2];
   }
 
-  if (pose === 'swing') {
-    if (progress < 0.3) {
-      // Anticipation: lean back and wind up.
-      r.tx = -1;
-      r.by = 0;
-      r.backArm = [-2, -1];
-    } else if (progress < 0.7) {
-      // The strike: lunge forward and dip.
-      r.tx = 2;
-      r.squat = 1;
-      r.frontLeg = [3.6, 0, 4];
-      r.backLeg = [-3, 0, -10];
-      r.backArm = [-3, -1];
-      r.mouth = 'open';
-    } else {
-      r.tx = 1;
-      r.frontLeg = [2.4, 0, 0];
-      r.backLeg = [-1.6, 0, 0];
-    }
-  } else if (pose === 'shoot') {
-    r.tx = progress < 0.25 ? -1 : 0;
-    r.frontLeg = [2.6, 0, 0];
-    r.backLeg = [-2.6, 0, 0];
-    r.backArm = [2, -3];
-  } else if (pose === 'cast') {
-    // Rise on tiptoe with the free arm open; hair and cape lift in the magic wind.
-    r.by = progress > 0.2 && progress < 0.8 ? -1 : 0;
-    r.backArm = [-2, -4];
-    r.hairLift = -1;
-    r.cape = r.cape - 2;
-    r.mouth = 'open';
-  }
+  // Attack and skill moves shape the body on top of everything else.
+  if (mv) mv.rig?.(r);
   return r;
 }
 
@@ -951,24 +922,6 @@ function weaponGlow(ctx, wpn, rarity, time, scale, draw) {
       ctx.globalAlpha /= Math.max(0.01, 1 - k);
     }
   }
-}
-
-// Weapon angle (degrees, 0 = up, positive tips forward) and attack arm angle for a pose.
-function weaponPose(type, pose, progress) {
-  if (pose === 'swing') {
-    if (progress < 0.3) {
-      const t = ease(progress / 0.3);
-      return { weapon: 25 - 110 * t, arm: 40 + 125 * t };
-    }
-    const t = ease(Math.min(1, (progress - 0.3) / 0.35));
-    return { weapon: -85 + 235 * t, arm: 165 - 120 * t };
-  }
-  if (pose === 'shoot') {
-    const pull = progress < 0.25 ? -6 : 0;
-    return { weapon: type === 'bow' || type === 'crossbow' ? 0 : 90, arm: 95 + pull };
-  }
-  if (pose === 'cast') return { weapon: -25 + ease(Math.min(1, progress * 1.6)) * 35, arm: 150 };
-  return null;
 }
 
 // ---------- Public drawing ----------
@@ -1073,11 +1026,34 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   drawJobAura(ctx, job, 'front', x, y, t, s, k, dir);
 }
 
+// Older pose names still used by callers map onto moves.
+const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
+
+// Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
-  const { pose = 'idle', facing = 1, progress = 0, alpha = 1, scale = 1 } = state;
-  const attack = pose === 'swing' || pose === 'shoot' || pose === 'cast';
+  const pose = state.pose ?? 'idle';
+  const mv = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  if (!mv || (!mv.lift && !mv.lunge && !mv.tilt && mv.turn === 1 && mv.stretch === 1)) {
+    paintHero(ctx, look, gear, x, y, state, anim, mv);
+    return;
+  }
+  const scale = state.scale ?? 1;
+  const dir = (state.facing ?? 1) < 0 ? -1 : 1;
+  const pivot = y - H * scale * 0.42;
+  ctx.save();
+  ctx.translate(x + dir * mv.lunge * scale, pivot - mv.lift * scale);
+  ctx.rotate(mv.tilt * dir);
+  ctx.scale(Math.abs(mv.turn) < 0.05 ? 0.05 * Math.sign(mv.turn || 1) : mv.turn, mv.stretch);
+  ctx.translate(-x, -pivot);
+  paintHero(ctx, look, gear, x, y, state, anim, mv);
+  ctx.restore();
+}
+
+function paintHero(ctx, look, gear, x, y, state, anim, mv) {
+  const { pose = 'idle', facing = 1, alpha = 1, scale = 1 } = state;
+  const attack = Boolean(mv);
   const g = resolveGear(look, gear);
-  const rig = solveRig(state, anim);
+  const rig = solveRig(state, anim, mv);
   rig.armIn = !attack;
   const idleW = !attack && pose === 'idle' && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
   if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
@@ -1097,7 +1073,7 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const sleeve = sleeveColor(g.top.design, g.top.color);
   const long = longSleeves(g.top.design);
   const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
-  const angles = attack ? weaponPose(g.weapon?.type, pose, progress) : null;
+  const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : null;
 
   // Front arm layer; it moves with the upper body, which sinks with the hips.
   const bodyY = rig.by + hipDrop(rig);
@@ -1144,7 +1120,7 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   };
 
   // Weapon trail: remember where the tip was during a swing, drawn as a fading ribbon.
-  if (anim && wpn && pose === 'swing' && progress > 0.28 && progress < 0.75) {
+  if (anim && wpn && mv?.trail) {
     const len = (wpn.grip[1] - 6) * ws;
     const rad = (weaponAngle * Math.PI) / 180;
     const tipX = sx(hand[0]) + Math.sin(rad) * len * (flip ? -1 : 1);

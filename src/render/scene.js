@@ -47,7 +47,7 @@ export function updateCamera(cam, world, dt) {
 
 function playerPose(world) {
   const b = world.body;
-  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur };
+  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };

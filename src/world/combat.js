@@ -6,6 +6,7 @@ import { JOBS } from '../data/jobs.js';
 import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
+import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -88,8 +89,17 @@ export function cast(world, skillId, rng = Math.random) {
   // Big skills plant you for their wind-up and play their pose slower, as one heavy motion.
   const lock = s?.lock ?? 0;
   world.lockTimer = Math.max(world.lockTimer ?? 0, lock);
-  const pose = type === 'magic' || type === 'heal' || type === 'buff' ? 'cast' : ranged || params.projectile ? 'shoot' : 'swing';
-  const poseDur = lock || Math.min(0.35, world.attackTimer);
+  // The move to play: the skill's own, or the next step of the weapon's basic-attack combo
+  // (the combo resets after a short pause).
+  let pose;
+  if (s) pose = s.anim ?? defaultMove(type, stats.weaponType, params);
+  else {
+    world.combo = now - (world.lastBasic ?? -9) < 0.9 ? (world.combo ?? 0) + 1 : 0;
+    world.lastBasic = now;
+    pose = basicMove(stats.weaponType, world.combo);
+  }
+  const poseDur = Math.max(lock, s ? MOVE_MIN[pose] ?? 0 : 0, Math.min(0.35, world.attackTimer));
+  if (s && !lock) world.lockTimer = Math.max(world.lockTimer ?? 0, poseDur * 0.8);
   world.pose = { kind: pose, t: poseDur, dur: poseDur };
   // Spells glow with a magic circle at your feet in their school's color; big weapon skills
   // flare with a burst of power instead.

@@ -102,3 +102,13 @@ test('a quest runs from accept to rewards', () => {
   for (let i = 0; i < 12; i++) recordKill(c, 'snailbun');
   assert.equal(questState(c, 'snail_trouble'), 'ready');
 });
+
+test('every skill plays a move the hero knows how to draw', async () => {
+  const { MOVES } = await import('../src/render/moves.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  for (const s of Object.values(SKILLS)) {
+    if (s.type === 'passive') continue;
+    assert.ok(s.anim, `${s.id} has a move`);
+    assert.ok(MOVES[s.anim], `${s.id} plays "${s.anim}", which exists`);
+  }
+});

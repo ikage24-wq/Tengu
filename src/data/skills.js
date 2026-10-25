@@ -781,6 +781,41 @@ export const SKILLS = {
   }),
 };
 
+// The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
+const MOVES_BY_SKILL = {
+  pebble: 'throw', quickstep: 'cheer',
+  powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
+  magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
+  doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip',
+  twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
+  rage: 'roar', cleave: 'spin', risingcombo: 'rising',
+  ironwill: 'roar', sweep: 'spin', dragonfang: 'thrust',
+  shieldbash: 'thrust', earthshaker: 'slam', bulwark: 'guard',
+  phantomslash: 'slash', hundredcuts: 'flurry', bladeaura: 'roar', thousandblades: 'castup',
+  dragonbreath: 'thrust', skyspear: 'plunge', dragonblood: 'roar', dragonroar: 'roar',
+  holycharge: 'dash', sacredcross: 'overhead', holyaegis: 'guard', heavenshammer: 'castup',
+  coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
+  fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',
+  bless: 'pray', heal: 'pray', holybolt: 'castforward',
+  chainlightning: 'castforward', icespire: 'slam', frostsprite: 'castup', tempest: 'castup',
+  toxicblaze: 'castspin', salamander: 'castup', meteor: 'castup',
+  shiningray: 'castspin', sanctuary: 'pray', guardianangel: 'pray', judgment: 'castup',
+  bowbooster: 'cheer', bombarrow: 'draw', multishot: 'rapid',
+  xbowbooster: 'cheer', piercebolt: 'aimshot', snipe: 'aimshot',
+  snareshot: 'draw', thorntrap: 'slam', huntersmark: 'cheer',
+  hurricane: 'rapid', galearrow: 'draw', windspirit: 'cheer', arrowstorm: 'skyshot',
+  railshot: 'aimshot', fragbolt: 'draw', eagleeye: 'cheer', finalshot: 'aimshot',
+  feralclaw: 'throw', thunderhawk: 'castup', callwild: 'roar', wildhunt: 'roar',
+  daggerbooster: 'cheer', flurry: 'flurry', shadowstrike: 'spin',
+  clawbooster: 'cheer', triplestar: 'barrage', shurikenstorm: 'spin',
+  cointoss: 'throw', smokebomb: 'slam', luckycharm: 'cheer',
+  phantomedge: 'dash', blossomdance: 'spin', shadowpartner: 'roar', bladefury: 'spin',
+  darkshuriken: 'barrage', shadowweb: 'throw', nightveil: 'guard', shurikentempest: 'castup',
+  blitz: 'flurry', bombtoss: 'throw', mirage: 'cheer', jackpot: 'castup',
+  gmsmite: 'castup', gmhaste: 'cheer',
+};
+for (const [id, move] of Object.entries(MOVES_BY_SKILL)) SKILLS[id].anim = move;
+
 // Numbers for `skillId` at `level`, with the skill's max level passed through for scaling.
 export function skillAt(skillId, level) {
   const s = SKILLS[skillId];
