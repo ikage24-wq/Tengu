@@ -612,8 +612,8 @@ function crowdOf(map) {
   for (let i = 0; i < 3; i++) {
     const p = PLAYERS[(start + i) % PLAYERS.length];
     const near = i === 0 ? map.plaza ?? map.width / 2 : map.npcs[i % map.npcs.length]?.x ?? map.width / 2;
-    let x = Math.max(120, Math.min(map.width - 120, near + (i % 2 ? 74 : -74) + (hash(seed + i) - 0.5) * 16));
-    for (let k = 0; k < 6 && map.npcs.some((n) => Math.abs(n.x - x) < 48); k++) x += 30;
+    let x = Math.max(120, Math.min(map.width - 120, near + (i % 2 ? 80 : -80) + (hash(seed + i) - 0.5) * 16));
+    for (let k = 0; k < 6 && map.npcs.some((n) => Math.abs(n.x - x) < 56); k++) x += 30;
     const gear = { weapon: { id: p.weapon } };
     for (const slot of ['hat', 'cape']) if (p[slot]) gear[slot] = { id: p[slot] };
     crowd.push({ kind: 'player', ...p, look: lookFor(seed + 100 + i * 13), gear, a: x, b: x, seed: hash(seed + i * 17) * 30 });
@@ -637,7 +637,7 @@ function stroll(p, t) {
 
 // What a player is saying right now, if anything: a line every so often, staggered.
 function lineOf(p, t) {
-  const period = 11;
+  const period = 18;
   const c = (t + p.seed) % period;
   if (c > 4) return null;
   return { text: p.lines[Math.floor((t + p.seed) / period) % p.lines.length], age: c };

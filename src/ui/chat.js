@@ -141,7 +141,7 @@ export function updateChat(chat, world, dt) {
   }
   chat.chatter = (chat.chatter ?? 6) - dt;
   if (chat.chatter <= 0 && world.map.npcs.length) {
-    chat.chatter = 9 + Math.random() * 10;
+    chat.chatter = 18 + Math.random() * 14;
     const n = world.map.npcs[Math.floor(Math.random() * world.map.npcs.length)];
     if (!world.bubbles[n.id]) {
       const lines = [...(NPCS[n.id].chatter ?? CHATTER[NPCS[n.id].role] ?? []), ...CHATTER.any];

@@ -17,58 +17,58 @@ export const THEMES = {
   town: {
     sky: ['#ffc6e6', '#e2d2ff', '#fff4fb'], sun: '#fff6c9', far: '#ead9ff', mid: '#f3e6ff', midTrim: '#c9b6ff',
     ground: '#f6d3bd', groundDeep: '#e9b99d', trim: '#ffffff', ledge: '#fff0f6', ledgeTrim: '#ffffff', ledgeShade: '#f0c3d6',
-    skyline: 'houses', props: ['lamp', 'flower', 'bench', 'target', 'flower', 'mailbox', 'bush', 'tulip', 'target', 'sign'],
+    skyline: 'houses', props: ['lamp', 'flower', 'bench', 'tulip', 'flower', 'bush'],
     critters: ['bird', 'butterfly'], drift: 'petal', face: 'sun',
   },
   meadow: {
     sky: ['#8fdcff', '#c9efff', '#fff6dc'], sun: '#fffbe0', far: '#c4efcf', mid: '#a8e2b8', midTrim: '#7fd19a',
     ground: '#ecc595', groundDeep: '#d9ab79', trim: '#86df86', ledge: '#f0cf9e', ledgeTrim: '#8fe39a', ledgeShade: '#d8b07e',
-    skyline: 'hills', props: ['flower', 'tuft', 'flower', 'bush', 'fence', 'tulip', 'tuft', 'mushroom', 'rock'],
+    skyline: 'hills', props: ['flower', 'tuft', 'flower', 'bush', 'tulip', 'tuft', 'rock'],
     critters: ['butterfly', 'bird', 'butterfly'], drift: 'petal', face: 'sun',
   },
   // The thieves' harbor, by moonlight: string lights, lit lamps, and alley cats on the crates.
   harbor: {
     sky: ['#4a3f86', '#9a72c8', '#ffb8c8'], sun: '#ffe6f6', far: '#8c94e6', mid: '#ffffff', midTrim: '#8fd3ff',
     ground: '#d9b08a', groundDeep: '#c4966c', trim: '#f6e2c8', ledge: '#d9b08a', ledgeTrim: '#f6e2c8', ledgeShade: '#b08060',
-    skyline: 'sea', props: ['lamp', 'crate', 'cat', 'barrel', 'poster', 'buoy', 'crate', 'lamp'],
+    skyline: 'sea', props: ['lamp', 'crate', 'cat', 'barrel', 'lamp'],
     critters: ['gull', 'firefly'], drift: null, face: 'moon', stars: true,
   },
   // The warriors' home: warm sandstone mesas, tents, forges, banners, and training dummies.
   crag: {
     sky: ['#ffab8a', '#ffd3a1', '#fff1d6'], sun: '#fff1c9', far: '#f2b98c', mid: '#e8a86b', midTrim: '#c97f4f',
     ground: '#f2c48d', groundDeep: '#dfa56c', trim: '#ffe2b8', ledge: '#dca06e', ledgeTrim: '#f6cf9a', ledgeShade: '#b5784a',
-    skyline: 'mesas', props: ['torch', 'dummy', 'rock', 'cactus', 'rack', 'barrel', 'dummy', 'cactus'],
+    skyline: 'mesas', props: ['torch', 'rock', 'cactus', 'barrel', 'dummy'],
     critters: ['bird', 'gull'], drift: 'ember', face: 'sun',
   },
   // The mages' home: a starry night forest with glowing treehouses and floating lanterns.
   grove: {
     sky: ['#2f2c6e', '#6a52b4', '#c4a6f2'], sun: '#e6dcff', far: '#5a4aa0', mid: '#7a62c4', midTrim: '#9f8ae0',
     ground: '#8f7cc8', groundDeep: '#7a68b8', trim: '#9fe0b0', ledge: '#b08860', ledgeTrim: '#9fe0b0', ledgeShade: '#8a6a4a',
-    skyline: 'bigtrees', props: ['lantern', 'glowshroom', 'orb', 'books', 'flower', 'glowshroom', 'candle'],
+    skyline: 'bigtrees', props: ['lantern', 'glowshroom', 'flower', 'glowshroom'],
     critters: ['firefly', 'butterfly'], drift: 'sparkle', face: 'moon', stars: true,
   },
   forest: {
     sky: ['#b8f0d0', '#e0f8e8', '#fff8e0'], sun: '#fffde0', far: '#9fdcb4', mid: '#7cc794', midTrim: '#5aa878',
     ground: '#c9a27a', groundDeep: '#b08860', trim: '#7ed38f', ledge: '#d9b88f', ledgeTrim: '#8fe39a', ledgeShade: '#b8946b',
-    skyline: 'trees', props: ['mushroom', 'bush', 'tuft', 'stump', 'mushroom', 'flower', 'rock'],
+    skyline: 'trees', props: ['mushroom', 'tuft', 'flower', 'bush', 'tuft', 'rock'],
     critters: ['firefly', 'butterfly'], drift: 'leaf', face: 'sun',
   },
   ruins: {
     sky: ['#7b6be6', '#c39cff', '#ffc2e0'], sun: '#ffe6ff', far: '#9d8ae8', mid: '#b8a6f0', midTrim: '#8f7cd0',
     ground: '#c3b4e8', groundDeep: '#a898d6', trim: '#e6dcff', ledge: '#d6cbf5', ledgeTrim: '#f3edff', ledgeShade: '#ad9fd9',
-    skyline: 'columns', props: ['column', 'candle', 'flower', 'rock', 'candle', 'tuft'],
+    skyline: 'columns', props: ['candle', 'flower', 'column', 'tuft'],
     critters: ['firefly'], drift: 'mote', face: 'moon',
   },
   cave: {
     sky: ['#3f3380', '#5c47a6', '#7c62c2'], sun: '#c9b6ff', far: '#53439a', mid: '#6c56b4', midTrim: '#9f8ae0',
     ground: '#7a68b8', groundDeep: '#62509e', trim: '#a8e8ff', ledge: '#8f7cd0', ledgeTrim: '#b8f0ff', ledgeShade: '#6b58a8',
-    skyline: 'crystals', props: ['crystal', 'crystal', 'rock', 'mushroom', 'glow'],
+    skyline: 'crystals', props: ['crystal', 'rock', 'glow'],
     critters: ['firefly'], drift: 'sparkle', face: null,
   },
   sky: {
     sky: ['#ffc6e8', '#cddbff', '#eef8ff'], sun: '#fffbe6', far: '#ffffff', mid: '#f3f8ff', midTrim: '#d6e6ff',
     ground: '#ffffff', groundDeep: '#e6ecff', trim: '#fff0fa', ledge: '#ffffff', ledgeTrim: '#ffe6f3', ledgeShade: '#dce8ff',
-    skyline: 'islands', props: ['star', 'flower', 'cloudpuff', 'tulip'],
+    skyline: 'islands', props: ['flower', 'cloudpuff', 'tulip'],
     critters: ['butterfly', 'gull'], drift: 'sparkle', face: 'sun',
   },
 };
@@ -710,15 +710,6 @@ function drawFar(ctx, t, cam, width, y0, time) {
         ctx.beginPath();
         ctx.arc(x + 110, y0 + 30, 130, Math.PI, 0);
         ctx.fill();
-        if (t.skyline === 'hills' && hash(i + 1) > 0.4) {
-          ctx.fillStyle = shade(t.far, -8);
-          for (const dx of [70, 92]) {
-            ctx.beginPath();
-            ctx.arc(x + dx, y0 - 92 + (dx - 70) * 0.3, 9, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          ctx.fillStyle = t.far;
-        }
       });
   }
 }
@@ -730,7 +721,7 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
   ctx.globalAlpha = theme === 'forest' ? 0.72 : theme === 'town' ? 0.88 : 0.92;
   switch (t.skyline) {
     case 'houses':
-      repeat(cam.x, 0.45, 96, width, (i, x) => {
+      repeat(cam.x, 0.45, 120, width, (i, x) => {
         const s = hash(i + 5);
         if (s < 0.22) return place(ctx, treeArt(hash(i), hash(i + 1) > 0.5), x + 48, y0 + 4);
         place(ctx, houseArt(hash(i)), x + 48, y0 + 4);
@@ -795,7 +786,7 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
       });
       break;
     case 'trees':
-      repeat(cam.x, 0.45, 84, width, (i, x) => {
+      repeat(cam.x, 0.45, 124, width, (i, x) => {
         const s = hash(i + 5);
         if (s < 0.25) place(ctx, mushHouseArt(hash(i)), x + 42, y0 + 4);
         else place(ctx, treeArt(hash(i), false), x + 42, y0 + 4);
@@ -817,7 +808,7 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
       });
       break;
     case 'mesas':
-      repeat(cam.x, 0.45, 84, width, (i, x) => {
+      repeat(cam.x, 0.45, 140, width, (i, x) => {
         const s = hash(i + 5);
         if (s < 0.35) place(ctx, tentArt(pick(['#ff8a5c', '#ffd66b', '#ff9ec0'], hash(i))), x + 55, y0 + 4);
         else if (s < 0.6) {
@@ -828,14 +819,14 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
       });
       break;
     case 'bigtrees':
-      repeat(cam.x, 0.45, 120, width, (i, x) => {
+      repeat(cam.x, 0.45, 160, width, (i, x) => {
         const s = hash(i + 5);
         if (s < 0.45) place(ctx, treehouseArt(hash(i)), x + 60, y0 + 4);
         else if (s < 0.7) place(ctx, towerArt(), x + 60, y0 + 4);
         else place(ctx, treeArt(hash(i), false, ['#9fb8ff', '#b9a7ff', '#8fd3d6']), x + 60, y0 + 4);
       });
       // Paper lanterns floating up through the trees.
-      for (let k = 0; k < 7; k++) {
+      for (let k = 0; k < 4; k++) {
         const lx = ((hash(k) * width * 1.4 - cam.x * 0.45 + time * 4) % (width + 60) + width + 60) % (width + 60) - 30;
         const ly = y0 - 60 - ((time * (6 + k) + hash(k + 3) * 200) % 220);
         glow(ctx, lx, ly, 14, '#ffd27a', 0.5);
@@ -1243,26 +1234,49 @@ function zzz(ctx, x, y, time, seed) {
   ctx.restore();
 }
 
+// Props sit sparsely so monsters and NPCs stay easy to see: fewer on the ground (fewest in towns,
+// where buildings fill the street), and only a few small ones on ledges.
+const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal', 'candle', 'cloudpuff'];
+const BIG_PROPS = ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus'];
+
 function drawProps(ctx, t, map, cam, width, time) {
   const surfaces = [{ x: 0, y: map.groundY, w: map.width, ground: true }, ...map.platforms];
+  const keep = map.isTown ? 0.66 : 0.52;
   surfaces.forEach((s, si) => {
-    const step = s.ground ? 34 : 30;
-    for (let wx = s.x + 12; wx < s.x + s.w - 10; wx += step) {
+    const step = s.ground ? 38 : 44;
+    for (let wx = s.x + 14; wx < s.x + s.w - 12; wx += step) {
       const seed = hash(wx * 0.37 + si * 13 + map.width);
-      if (seed < 0.38) continue;
+      if (seed < (s.ground ? keep : 0.62)) continue;
       // Keep doorways clear around portals and NPCs, and ropes clear on ledges.
-      if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 40)) continue;
+      if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 44)) continue;
       if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
       if (s.ground && map.isTown && map.plaza && Math.abs(map.plaza - wx) < 46) continue;
-      if (map.ropes.some((r) => Math.abs(r.x - wx) < 14 && r.top <= s.y + 1 && r.bottom >= s.y - 1)) continue;
+      if (map.ropes.some((r) => Math.abs(r.x - wx) < 16 && r.top <= s.y + 1 && r.bottom >= s.y - 1)) continue;
       const x = wx - cam.x;
       if (x < -40 || x > width + 40) continue;
       let kind = t.props[Math.floor(hash(wx + si) * t.props.length)];
-      // Big props stay on the ground.
-      if (!s.ground && ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch'].includes(kind)) kind = 'flower';
+      // Ledges only get small things.
+      if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? 'flower' : kind;
       prop(ctx, kind, Math.round(x), Math.round(s.y - cam.y), seed, t, time);
     }
   });
+}
+
+// A soft wash of the sky's color over the backdrop, thickest near the ground, so the far and
+// middle layers recede and the play layer reads clearly in front.
+// Only the band just above the ground, where the middle layer stands, gets it.
+const HAZE = 150;
+function drawHaze(ctx, t, width, groundScreenY) {
+  const bottom = Math.min(360, groundScreenY + 4);
+  const top = Math.max(0, bottom - HAZE);
+  if (bottom <= top) return;
+  const c = t.sky[1];
+  const [r, gg, b] = [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const g = ctx.createLinearGradient(0, bottom - HAZE, 0, bottom);
+  g.addColorStop(0, `rgba(${r},${gg},${b},0)`);
+  g.addColorStop(1, `rgba(${r},${gg},${b},0.42)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, top, width, bottom - top);
 }
 
 // ---------- Ambient life ----------
@@ -1285,7 +1299,7 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   }
   // Butterflies flutter in loops above the ground.
   if (kinds.includes('butterfly')) {
-    for (let i = 0; i < Math.ceil(map.width / 280); i++) {
+    for (let i = 0; i < Math.ceil(map.width / 520); i++) {
       const bx = 100 + hash(i * 5.1 + 2) * (map.width - 200) + Math.sin(time * 0.6 + i) * 60;
       const by = map.groundY - 40 - hash(i + 9) * 90 + Math.sin(time * 1.7 + i * 2) * 14;
       const x = bx - cam.x;
@@ -1310,7 +1324,7 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   }
   // Fireflies drift and pulse.
   if (kinds.includes('firefly')) {
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 9; i++) {
       const fx = (hash(i) * width + Math.sin(time * 0.5 + i) * 30 - cam.x * 0.3) % width;
       const fy = height * (0.25 + hash(i + 5) * 0.6) + Math.sin(time * 0.8 + i * 2) * 12;
       const a = 0.4 + 0.6 * Math.max(0, Math.sin(time * 2 + i * 1.3));
@@ -1328,7 +1342,7 @@ function drawDrift(ctx, t, cam, width, height, time) {
   // Embers rise from the forges instead of falling.
   const rise = t.drift === 'ember' ? -1 : 1;
   ctx.save();
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 9; i++) {
     const speed = 10 + hash(i + 2) * 14;
     const x = (((hash(i) * width + time * speed * 0.8 - cam.x * 0.6) % (width + 40)) + width + 40) % (width + 40) - 20;
     const y = (((hash(i + 7) * height + time * speed * rise) % (height + 20)) + height + 20) % (height + 20) - 10;
@@ -1365,6 +1379,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   drawClouds(ctx, theme, cam, width, time);
   drawFar(ctx, t, cam, width, layerY(50, 0.2), time);
   drawMid(ctx, t, theme, cam, width, layerY(10, 0.45), time);
+  drawHaze(ctx, t, width, map.groundY - cam.y);
   drawGround(ctx, t, theme, map, cam, width, height, time);
   // Town buildings stand on the street, behind ledges and props.
   street?.();
