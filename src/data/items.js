@@ -12,61 +12,76 @@ function add(def) {
 }
 
 // ---------- Weapons ----------
-// The weapon lines were retired; new weapons come next. Weapon types (sword, axe, spear, wand,
-// staff, bow, crossbow, dagger, claw) live in core/formulas.js. A weapon item is an equip with
-// slot 'weapon', a `weaponType`, and optionally an `element`, named here for tooltips.
+// Every weapon type (sword, axe, spear, wand, staff, bow, crossbow, dagger, claw; see
+// core/formulas.js) comes in five progression tiers, `${type}_0` to `${type}_4`, and six endgame
+// designs, `${type}_${theme}`. A weapon item is an equip with slot 'weapon', a `weaponType`, a
+// `tier`, and for endgame ones a `theme`, which is also its `element`: the glow, footsteps, and
+// hit impacts it brings.
 
-export const ELEMENT_NAMES = { holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water' };
-
-// Test weapons, one per type, while the new set is designed. `scale` keeps damage even between
-// types the way the old lines did; magic weapons add magic attack. Anyone can equip them.
-const TEST_WEAPONS = {
-  sword: { name: 'Test Sword', scale: 1.0, color: '#e6edf7' },
-  axe: { name: 'Test Axe', scale: 0.95, color: '#e6edf7' },
-  spear: { name: 'Test Spear', scale: 0.85, color: '#e6edf7' },
-  wand: { name: 'Test Wand', scale: 0.5, matk: 15, color: '#ffd66b' },
-  staff: { name: 'Test Staff', scale: 0.55, matk: 17, color: '#9fd8ff' },
-  bow: { name: 'Test Bow', scale: 0.8, color: '#c98e55' },
-  crossbow: { name: 'Test Crossbow', scale: 0.78, color: '#c98e55' },
-  dagger: { name: 'Test Dagger', scale: 0.98, color: '#e6edf7' },
-  claw: { name: 'Test Claw', scale: 0.75, color: '#8d96a8' },
+export const ELEMENT_NAMES = {
+  holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water',
+  demonic: 'Demonic', bone: 'Necrotic', laser: 'Photon', chainsaw: 'Shred', cyber: 'Cyber',
 };
 
-for (const [type, w] of Object.entries(TEST_WEAPONS)) {
-  const stats = { watk: Math.round(26 * w.scale) };
-  if (w.matk) stats.matk = w.matk;
-  add({
-    id: `test_${type}`,
-    name: w.name,
-    type: 'equip',
-    slot: 'weapon',
-    weaponType: type,
-    tier: 0,
-    element: null,
-    reqLevel: 0,
-    family: null,
-    stats,
-    price: 300,
-    color: w.color,
+// Per type: how hard it hits relative to a sword, magic attack for wands and staves, the main
+// stat its wielders want, and its names (five tiers, then the endgame themes).
+const WEAPON_LINES = {
+  sword: { scale: 1.0, main: 'str', names: ['Wooden Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Blade', 'Runeblade'], themes: { holy: "Seraph's Grace", demonic: 'Hellbringer', bone: 'Ossuary Edge', laser: 'Photon Saber', chainsaw: 'Ripper', cyber: 'Neon Katana' } },
+  axe: { scale: 0.95, main: 'str', names: ['Stone Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Cleaver', 'Runic Greataxe'], themes: { holy: 'Dawnbreaker', demonic: 'Abyssal Reaver', bone: 'Gravedigger', laser: 'Plasma Cleaver', chainsaw: 'Buzzkill', cyber: 'Glitch Axe' } },
+  spear: { scale: 0.85, main: 'str', names: ['Bamboo Spear', 'Iron Spear', 'Steel Pike', 'Mithril Lance', 'Runic Glaive'], themes: { holy: "Archangel's Lance", demonic: 'Infernal Trident', bone: 'Spine Lance', laser: 'Ion Lance', chainsaw: 'Shredder Pike', cyber: 'Synapse Spear' } },
+  wand: { scale: 0.5, matk: 0.9, main: 'int', names: ['Twig Wand', 'Iron Wand', 'Star Wand', 'Crescent Wand', 'Runic Wand'], themes: { holy: "Cherub's Kiss", demonic: 'Hexfang Wand', bone: 'Bonecaller', laser: 'Beam Wand', chainsaw: 'Buzz Wand', cyber: 'Holo Wand' } },
+  staff: { scale: 0.55, matk: 1, main: 'int', names: ['Crooked Staff', 'Caged Staff', 'Moonlit Staff', 'Mithril Staff', 'Runic Staff'], themes: { holy: "Seraphim's Halo", demonic: 'Staff of the Pit', bone: 'Lich Scepter', laser: 'Photon Scepter', chainsaw: 'Sawblade Staff', cyber: 'Neuromancer Rod' } },
+  bow: { scale: 0.8, main: 'dex', names: ['Shortbow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Runic Bow'], themes: { holy: 'Wings of Dawn', demonic: 'Hellstring', bone: 'Ribcage Bow', laser: 'Photon Bow', chainsaw: 'Sawtooth Bow', cyber: 'Neon Arc' } },
+  crossbow: { scale: 0.78, main: 'dex', names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Arbalest', 'Mithril Crossbow', 'Runic Arbalest'], themes: { holy: 'Judgment', demonic: 'Doombolt', bone: 'Marrow Repeater', laser: 'Railgun', chainsaw: 'Sawlauncher', cyber: 'Cyber Repeater' } },
+  dagger: { scale: 0.98, main: 'luk', names: ['Wooden Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Stiletto', 'Runic Kris'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
+  claw: { scale: 0.75, main: 'luk', names: ['Leather Claw', 'Iron Claw', 'Steel Talons', 'Mithril Talons', 'Runic Talons'], themes: { holy: 'Seraph Talons', demonic: 'Demon Grip', bone: 'Grave Hand', laser: 'Photon Claws', chainsaw: 'Shred Claws', cyber: 'Neon Talons' } },
+};
+
+const TIER_LEVELS = [0, 10, 20, 30, 40];
+const TIER_WATK = [14, 26, 40, 56, 70];
+const TIER_MATK = [10, 20, 34, 50, 66];
+const TIER_COLORS = ['#e9c48f', '#c7ced9', '#e6edf7', '#bfe6ff', '#7ffcff'];
+const ENDGAME_WATK = 92;
+const ENDGAME_MATK = 96;
+
+// What each endgame theme adds on top of the weapon's attack. `main` is the type's main stat.
+const THEME_BONUS = {
+  holy: (main) => ({ [main]: 8, hp: 200, mdef: 25 }),
+  demonic: (main) => ({ [main]: 14, watkPct: 0.08 }),
+  bone: (main) => ({ [main]: 10, hp: 150, eva: 12 }),
+  laser: (main) => ({ [main]: 12, acc: 25 }),
+  chainsaw: (main) => ({ [main]: 6, watkPct: 0.14 }),
+  cyber: (main) => ({ [main]: 10, speed: 8, eva: 10, jump: 4 }),
+};
+const THEME_COLORS = { holy: '#ffe36b', demonic: '#ff3b2b', bone: '#6bff9a', chainsaw: '#ffb03b', cyber: '#3bf0ff' };
+const LASER_COLORS = { sword: '#4fd8ff', axe: '#ff4f6b', spear: '#7dff6b', wand: '#ff6bf0', staff: '#b48cff', bow: '#5ff3ff', crossbow: '#ffcf4f', dagger: '#ff4f6b', claw: '#7dff6b' };
+
+export const ENDGAME_THEMES = ['holy', 'demonic', 'bone', 'laser', 'chainsaw', 'cyber'];
+
+for (const [type, line] of Object.entries(WEAPON_LINES)) {
+  line.names.forEach((name, t) => {
+    const stats = { watk: Math.round(TIER_WATK[t] * line.scale) };
+    if (line.matk) stats.matk = Math.round(TIER_MATK[t] * line.matk);
+    add({
+      id: `${type}_${t}`, name, type: 'equip', slot: 'weapon', weaponType: type, tier: t, element: null,
+      reqLevel: TIER_LEVELS[t], family: null, stats, price: Math.round(100 + 160 * t * t + 400 * t), color: TIER_COLORS[t],
+    });
   });
+  for (const theme of ENDGAME_THEMES) {
+    const { watkPct = 0, ...bonus } = THEME_BONUS[theme](line.main);
+    const stats = { watk: Math.round(ENDGAME_WATK * line.scale * (1 + watkPct)), ...bonus };
+    if (line.matk) stats.matk = Math.round(ENDGAME_MATK * line.matk * (1 + watkPct));
+    add({
+      // The holy staff keeps the id it first shipped with, so saved ones carry over.
+      id: type === 'staff' && theme === 'holy' ? 'seraphim_staff' : `${type}_${theme}`,
+      name: line.themes[theme], type: 'equip', slot: 'weapon', weaponType: type, tier: 5, theme, element: theme,
+      reqLevel: 50, family: null, endgame: true, stats, price: 250000,
+      color: theme === 'laser' ? LASER_COLORS[type] : THEME_COLORS[theme],
+    });
+  }
 }
 
-// Endgame weapons. Each has its own design (see render/weapons.js); an `element` gives it that
-// element's glow, footsteps, and hit impacts.
-add({
-  id: 'seraphim_staff',
-  name: "Seraphim's Halo",
-  type: 'equip',
-  slot: 'weapon',
-  weaponType: 'staff',
-  tier: 8,
-  element: 'holy',
-  reqLevel: 50,
-  family: 'mage',
-  stats: { watk: 46, matk: 96, int: 12, hp: 200, mdef: 25 },
-  price: 250000,
-  color: '#ffe36b',
-});
+export const WEAPON_IDS = Object.values(ITEMS).filter((d) => d.slot === 'weapon').map((d) => d.id);
 
 // ---------- Armor ----------
 

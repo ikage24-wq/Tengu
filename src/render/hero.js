@@ -91,7 +91,7 @@ function resolveGear(look, gear) {
     cape: piece('cape', null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
-    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
+    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
   };
 }
 
@@ -831,11 +831,11 @@ function rigKey(r) {
 // ---------- Weapons ----------
 
 function weaponSprite(w, time) {
-  const frames = weaponFrames(w.type, w.tier);
+  const frames = weaponFrames(w.type, w.tier, w.theme);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.tier, frame);
+  const def = weaponShapes(w.type, w.tier, frame, w.theme);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
+  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
   return { ...s, grip: def.grip, blade: def.blade, live: def.live };
 }
 

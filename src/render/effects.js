@@ -242,6 +242,144 @@ function impact(ctx, f, x, y, p, time) {
       ctx.stroke();
       break;
     }
+    case 'demonic': {
+      // Hellfire: spikes of dark flame burst up through the target, and a black-red ring snaps in.
+      ctx.globalAlpha = fade;
+      ctx.strokeStyle = '#5a0f1f';
+      ctx.lineWidth = 3 * fade + 1;
+      ctx.beginPath();
+      ctx.arc(x, cy, 22 * (1 - ease(p)) + 3, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < 5; i++) {
+        const sx = x + (i - 2) * 7 + (f.seed - 0.5) * 6;
+        const h = (18 + ((i * 7 + f.seed * 13) % 9) * 2) * Math.sin(Math.min(1, p * 2.5) * Math.PI * 0.5) * (1 - p * 0.6);
+        ctx.fillStyle = '#3a0614';
+        ctx.beginPath();
+        ctx.moveTo(sx - 4, y);
+        ctx.quadraticCurveTo(sx - 2, y - h * 0.6, sx, y - h);
+        ctx.quadraticCurveTo(sx + 2, y - h * 0.6, sx + 4, y);
+        ctx.fill();
+        ctx.fillStyle = i % 2 ? '#ff3b2b' : '#ffb03b';
+        ctx.beginPath();
+        ctx.moveTo(sx - 2, y);
+        ctx.quadraticCurveTo(sx - 1, y - h * 0.5, sx, y - h * 0.8);
+        ctx.quadraticCurveTo(sx + 1, y - h * 0.5, sx + 2, y);
+        ctx.fill();
+      }
+      for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = el.sparks[i % 2];
+        ctx.fillRect(x + Math.sin(f.seed * 40 + i * 2.1) * 14, cy - p * 30 - i * 3, 2, 2);
+      }
+      break;
+    }
+    case 'bone': {
+      // A ghostly skull flashes over the target and green souls spiral out of it.
+      ctx.globalAlpha = fade * 0.85;
+      const r = 7 + ease(p) * 4;
+      ctx.fillStyle = '#e6ffee';
+      ctx.beginPath();
+      ctx.arc(x, cy - 2 - p * 8, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(x - r * 0.6, cy - 2 - p * 8 + r * 0.4, r * 1.2, r * 0.8);
+      ctx.fillStyle = '#1f6b44';
+      ctx.beginPath();
+      ctx.arc(x - r * 0.4, cy - 1 - p * 8, r * 0.28, 0, Math.PI * 2);
+      ctx.arc(x + r * 0.4, cy - 1 - p * 8, r * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 + p * 5 + f.seed * 6;
+        const d = ease(p) * 24;
+        ctx.globalAlpha = fade;
+        ctx.fillStyle = el.color;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7 - p * 10, 2.5 * fade + 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case 'laser': {
+      // A searing slice of light through the target, a white flash, and a hex ring.
+      ctx.globalCompositeOperation = 'lighter';
+      const w = 40 * ease(Math.min(1, p * 3));
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = el.color;
+      ctx.fillRect(x - w, cy - 2.5 * fade - 0.5, w * 2, 5 * fade + 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - w * 0.8, cy - 0.75, w * 1.6, 1.5);
+      if (p < 0.25) {
+        ctx.globalAlpha = 1 - p / 0.25;
+        ctx.beginPath();
+        ctx.arc(x, cy, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = fade;
+      ctx.strokeStyle = el.color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const hr = 6 + ease(p) * 16;
+      for (let i = 0; i <= 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+        ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * hr, cy + Math.sin(a) * hr);
+      }
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+      break;
+    }
+    case 'chainsaw': {
+      // Grinding: jagged rips across the target and a fountain of sparks.
+      ctx.globalAlpha = fade;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      for (let j = 0; j < 3; j++) {
+        ctx.beginPath();
+        for (let i = 0; i <= 6; i++) {
+          const px = x - 14 + i * 4.7;
+          const py = cy - 8 + j * 8 + (i % 2 ? -2.5 : 2.5) + (px - x) * 0.25;
+          ctx[i ? 'lineTo' : 'moveTo'](px, py);
+        }
+        ctx.stroke();
+      }
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI * (0.1 + ((i * 0.37 + f.seed) % 1) * 0.8);
+        const d = ease(p) * (16 + (i % 3) * 8);
+        ctx.strokeStyle = el.sparks[i % 3];
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * d, cy + Math.sin(a) * d + p * p * 20);
+        ctx.lineTo(x + Math.cos(a) * (d + 4), cy + Math.sin(a) * (d + 4) + p * p * 20);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ffd23b';
+      ctx.globalAlpha = fade * 0.6;
+      ctx.beginPath();
+      ctx.arc(x, cy, 6 * fade + 1, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'cyber': {
+      // A glitch: slices of the target shear sideways in neon, and pixels scatter.
+      for (let i = 0; i < 5; i++) {
+        const sy = cy - 14 + ((i * 0.41 + f.seed) % 1) * 28;
+        const shift = Math.sin(p * 40 + i * 3) * 10 * fade;
+        ctx.globalAlpha = fade * 0.8;
+        ctx.fillStyle = i % 2 ? '#ff3bd4' : '#3bf0ff';
+        ctx.fillRect(x - 10 + shift, sy, 20 + (i % 3) * 6, 2 + (i % 2) * 2);
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + f.seed * 5;
+        const d = ease(p) * 26;
+        ctx.globalAlpha = fade;
+        ctx.fillStyle = el.sparks[i % 3];
+        ctx.fillRect(Math.round(x + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), 2, 2);
+      }
+      ctx.strokeStyle = '#3bf0ff';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 2]);
+      ctx.globalAlpha = fade;
+      ctx.strokeRect(x - 8 - p * 10, cy - 8 - p * 10, 16 + p * 20, 16 + p * 20);
+      ctx.setLineDash([]);
+      break;
+    }
   }
 }
 

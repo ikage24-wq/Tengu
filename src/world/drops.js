@@ -22,8 +22,9 @@ function potionFor(level, rng) {
 // Equipment near the monster's level: anything from 15 below to 5 above. Unique gear is rarer.
 function gearFor(level, rng) {
   const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && d.reqLevel <= level + 5 && d.reqLevel >= level - 15);
-  const uniques = near.filter((d) => d.unique);
-  const pool = uniques.length && rng() < 0.15 ? uniques : near.filter((d) => !d.unique);
+  // One-of-a-kind outfits and endgame weapons are the rare part of the pool.
+  const special = near.filter((d) => d.unique || d.endgame);
+  const pool = special.length && rng() < 0.15 ? special : near.filter((d) => !d.unique && !d.endgame);
   if (!pool.length) return null;
   return pool[Math.floor(rng() * pool.length)].id;
 }

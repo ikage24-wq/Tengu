@@ -1,5 +1,6 @@
-// Weapon elements: the palette for Holy, Cosmic, Lightning, Fire, and Water, and the live aura drawn
-// along an elemental weapon's blade. Hits, footsteps, and sparkles take on the element's colors.
+// Weapon elements: the palette for Holy, Cosmic, Lightning, Fire, and Water, and for the endgame
+// weapon themes (Demonic, Bone, Laser, Chainsaw, Cyber), and the live aura drawn along an
+// elemental weapon's blade. Hits, footsteps, and sparkles take on the element's colors.
 
 export const ELEMENTS = {
   holy: { color: '#ffe36b', glow: '#fff3a6', gem: '#ff9ec0', sparks: ['#ffffff', '#ffe36b', '#fff3a6'] },
@@ -7,6 +8,11 @@ export const ELEMENTS = {
   storm: { color: '#5ff3ff', glow: '#5ff3ff', gem: '#5ff3ff', sparks: ['#5ff3ff', '#ffffff', '#c9f6ff'] },
   fire: { color: '#ff6b2b', glow: '#ff8a3b', gem: '#ffd23b', sparks: ['#ff6b2b', '#ffa53b', '#ffd23b'] },
   water: { color: '#4fc8ff', glow: '#8fe3ff', gem: '#fff6fb', sparks: ['#8fe3ff', '#ffffff', '#4fc8ff'] },
+  demonic: { color: '#ff3b2b', glow: '#ff4a5a', gem: '#ff2b3b', sparks: ['#ff3b2b', '#ffb03b', '#7a1022'] },
+  bone: { color: '#6bff9a', glow: '#9dffbe', gem: '#6bff9a', sparks: ['#6bff9a', '#e6ffee', '#f3e9cf'] },
+  laser: { color: '#5ff3ff', glow: '#9ff8ff', gem: '#ffffff', sparks: ['#ffffff', '#5ff3ff', '#ff6bf0'] },
+  chainsaw: { color: '#ffb03b', glow: '#ffd23b', gem: '#ffd23b', sparks: ['#ffe36b', '#ffffff', '#ff8a1f'] },
+  cyber: { color: '#3bf0ff', glow: '#ff3bd4', gem: '#ff3bd4', sparks: ['#3bf0ff', '#ff3bd4', '#ffffff'] },
 };
 
 // ---------- Live auras around elemental weapons ----------

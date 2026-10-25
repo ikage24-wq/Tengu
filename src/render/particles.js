@@ -72,7 +72,8 @@ export function poof(fx, x, y, w, h, boss) {
   }
 }
 
-// Footsteps of an endgame weapon's wielder: feathers, stardust, sparks, flames, or splashes.
+// Footsteps of an endgame weapon's wielder: feathers, stardust, sparks, flames, splashes, embers,
+// soul wisps, light streaks, chainsaw sparks and smoke, or neon pixels.
 export function elementStep(fx, x, y, element, dir) {
   const c = ELEMENTS[element].sparks;
   switch (element) {
@@ -95,6 +96,28 @@ export function elementStep(fx, x, y, element, dir) {
     case 'water':
       for (let i = 0; i < 4; i++) add(fx, { x, y: y - 1, vx: (Math.random() - 0.5) * 70, vy: -60 - Math.random() * 50, g: 420, life: 0.45, size: 1, color: i % 2 ? '#ffffff' : '#8fe3ff' });
       ring(fx, x, y, '#c9f6ff', 2, 26);
+      break;
+    case 'demonic':
+      for (let i = 0; i < 3; i++) add(fx, { x: x + (Math.random() - 0.5) * 8, y: y - 1, vx: -dir * 6 + (Math.random() - 0.5) * 10, vy: -30 - Math.random() * 30, drag: 2, life: 0.55, size: 2 - i * 0.5, grow: -2.5, color: ['#3a0614', '#ff3b2b', '#ffb03b'][i] });
+      add(fx, { x, y: y - 2, vx: (Math.random() - 0.5) * 20, vy: -50, drag: 1.5, life: 0.8, size: 0.6, color: '#ffb03b' });
+      break;
+    case 'bone':
+      for (let i = 0; i < 2; i++) add(fx, { x: x + (Math.random() - 0.5) * 8, y: y - 2, vx: -dir * 8 + (Math.random() - 0.5) * 12, vy: -18 - Math.random() * 14, drag: 1.5, life: 0.9, size: 2.2, grow: 1.5, color: i ? '#bfffe0' : '#6bff9a', alpha: 0.45 });
+      add(fx, { x, y: y - 1, vx: (Math.random() - 0.5) * 50, vy: -40, g: 300, life: 0.4, size: 0.8, color: '#f3e9cf' });
+      break;
+    case 'laser':
+      for (let i = 0; i < 2; i++) add(fx, { x, y: y - 1 - i * 2, vx: -dir * (140 + i * 60), vy: 0, drag: 6, life: 0.25, size: 1, shape: 'streak', color: c[i] });
+      add(fx, { x, y: y - 1, vx: 0, vy: -10, life: 0.4, size: 1.2, shape: 'glow', color: '#5ff3ff' });
+      break;
+    case 'chainsaw':
+      for (let i = 0; i < 3; i++) {
+        const a = -Math.PI / 2 - dir * (0.4 + Math.random() * 0.8);
+        add(fx, { x, y: y - 1, vx: Math.cos(a) * 120, vy: Math.sin(a) * 120, g: 380, drag: 2, life: 0.3, size: 0.8, shape: 'streak', color: c[i % 3] });
+      }
+      add(fx, { x: x - dir * 4, y: y - 3, vx: -dir * 10, vy: -14, drag: 1.5, life: 0.8, size: 2, grow: 4, color: '#9a9aa6', alpha: 0.4 });
+      break;
+    case 'cyber':
+      for (let i = 0; i < 3; i++) add(fx, { x: x + Math.round((Math.random() - 0.5) * 10), y: y - 1, vx: 0, vy: -20 - Math.random() * 30, life: 0.6, size: 1, shape: 'pixel', color: c[i % 2] });
       break;
   }
   // A brief glowing footprint.
@@ -252,6 +275,9 @@ export function drawParticles(ctx, fx, cam, time) {
         }
         break;
       }
+      case 'pixel':
+        ctx.fillRect(Math.round(x), Math.round(y), p.size * 2, p.size * 2);
+        break;
       default:
         ctx.beginPath();
         ctx.arc(x, y, Math.max(0.3, p.size), 0, Math.PI * 2);

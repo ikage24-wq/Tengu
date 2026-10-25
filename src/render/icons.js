@@ -52,7 +52,7 @@ function itemShapes(def) {
   const l = shade(c, 22);
   const d = shade(c, -18);
   if (def.slot === 'weapon') {
-    const icon = weaponIcon(def.weaponType, def.tier);
+    const icon = weaponIcon(def.weaponType, def.tier, def.theme ?? null);
     if (icon) return icon;
   }
   const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;

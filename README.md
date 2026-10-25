@@ -89,12 +89,27 @@ then press the key. Right-click a hotkey slot to clear it.
   wing boots, and so on). 11 **unique** outfit pieces have one-of-a-kind looks: Bunny Hood, Kitty
   Ears, Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
   Wings, Angel Wings, and Galaxy Cape (a few are sold by Marlo; the rest drop).
-- **Weapons** — the old weapon lines have been retired and a new set is on the way, so for now
-  everyone fights barehanded. The 9 weapon types (sword, axe, spear, wand, staff, bow, crossbow,
-  dagger, claw) and everything built on them stay in place: which jobs can equip each type, the
-  damage formulas, idle routines, and attack combos. Weapon art plugs into `src/render/weapons.js`
-  by type, and a weapon with an `element` (Holy, Cosmic, Lightning, Fire, Water) still glows,
-  leaves elemental footsteps, and adds an elemental impact to every hit.
+- **Weapons** — 99 weapons across the 9 types (sword, axe, spear, wand, staff, bow, crossbow,
+  dagger, claw). Each type climbs five tiers that look and animate better as you go: common wood
+  or stone (Lv 0, Pip) → iron (Lv 10) → steel and gold with a glint (Lv 20) → twinkling mithril
+  (Lv 30) → rune-carved with runes that light in turn and glyphs floating off (Lv 40, drop only).
+  Tiers 1–3 are sold by Tora (swords, axes, spears), Nim (wands, staves), and Marlo (bows,
+  crossbows, daggers, claws). At Lv 50 every type has six endgame designs, each a rare drop with
+  its own live effects, hit impact, and footsteps:
+  - **Holy** — white and gold with beating angel wings, a halo, rays of light, and shed feathers
+    (the staff is Seraphim's Halo).
+  - **Demonic** — black, barbed, and horned, with lava cracks, a blinking demon eye, hellfire, and
+    embers; hits erupt in spikes of dark flame.
+  - **Bone** — carved bone and vertebrae with a skull whose eyes burn with green soul fire, and
+    ghosts winding around the weapon; hits flash a spectral skull.
+  - **Laser** — a chrome hilt and a humming energy blade (each type its own color) with a white
+    core, flicker, and emitter sparks; hits sear a slice of light through the target.
+  - **Chainsaw** — hazard-striped motors with running chains or spinning saw blades, exhaust smoke,
+    and sparks; hits grind and spray sparks.
+  - **Cyber** — black chrome and neon that pulses cyan and magenta, hologram rings, rising data,
+    and glitches; hits shear into neon slices.
+  Weapon art lives in `src/render/weapon-forms.js` (one form per type), `weapon-kit.js` (tier and
+  theme looks, shared parts), and `weapon-fx.js` (live effects).
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for
   higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
   glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.
@@ -153,7 +168,7 @@ src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
 src/world/              simulation: physics, monsters, loot, combat, the world update
-src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon art slot
+src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects
                         and elements, animator,
                         particles,
                         monsters, scenery, effects, icons, scene

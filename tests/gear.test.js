@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ITEMS, UNIQUE_IDS, RARITIES } from '../src/data/items.js';
+import { ITEMS, UNIQUE_IDS, RARITIES, ENDGAME_THEMES } from '../src/data/items.js';
 import { NPCS } from '../src/data/npcs.js';
 import { makeEquip, rollRarity } from '../src/core/items.js';
 import { rollLoot } from '../src/world/drops.js';
@@ -21,7 +21,7 @@ test('every equip has a design the renderer draws', () => {
     const c = def.color;
     let shapes;
     switch (def.slot) {
-      case 'weapon': shapes = weaponShapes(def.weaponType, def.tier)?.shapes; break;
+      case 'weapon': shapes = weaponShapes(def.weaponType, def.tier, 0, def.theme ?? null)?.shapes; break;
       case 'hat': shapes = hatShapes(def.design, c); break;
       case 'top': shapes = topShapes(def.design, c); break;
       case 'bottom': shapes = legShapes(11, legLook(def.design, c, '#ffffff'), { design: 'sneakers', color: c }, false); break;
@@ -76,14 +76,13 @@ test('bosses always drop at least Rare gear', () => {
   const loot = rollLoot(MOBS.crystalking, seq(0.9, 0.5, 0.3, 0.7));
   const gear = loot.filter((l) => l.inst);
   assert.equal(gear.length, 3);
-  for (const g of gear) assert.notEqual(ITEMS[g.inst.id].slot, 'weapon');
   for (const g of gear) assert.ok(g.inst.rarity >= 1);
 });
 
 test('old saves lose weapons that no longer exist instead of breaking', () => {
   const char = {
     equipment: { weapon: { uid: 1, id: 'lollipop_wand' }, hat: { uid: 2, id: 'hat_0' } },
-    inventory: { equip: [{ uid: 3, id: 'moon_staff' }, { uid: 4, id: 'sword_2' }], use: [{ id: 'red_potion', qty: 2 }], etc: [] },
+    inventory: { equip: [{ uid: 3, id: 'moon_staff' }, { uid: 4, id: 'sword_9' }], use: [{ id: 'red_potion', qty: 2 }], etc: [] },
     hotkeys: { Digit1: { item: 'red_potion' } },
   };
   dropRetiredItems(char);
@@ -93,12 +92,28 @@ test('old saves lose weapons that no longer exist instead of breaking', () => {
   assert.equal(char.hotkeys.Digit1.item, 'red_potion');
 });
 
-test('every weapon type has a test weapon with in-hand art and an icon', () => {
+test('every weapon type has five tiers and every endgame design, each with art and an icon', () => {
   for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
-    const def = ITEMS[`test_${type}`];
-    assert.equal(def?.weaponType, type);
-    const art = weaponShapes(type, 0);
-    assert.ok(art.shapes.length && art.grip[0] < art.w && art.grip[1] < art.h, `${type} art has a grip inside it`);
-    assert.ok(weaponIcon(type, 0)?.length, `${type} icon`);
+    const ids = [0, 1, 2, 3, 4].map((t) => `${type}_${t}`).concat(ENDGAME_THEMES.map((th) => (type === 'staff' && th === 'holy' ? 'seraphim_staff' : `${type}_${th}`)));
+    let last = 0;
+    for (const id of ids) {
+      const def = ITEMS[id];
+      assert.equal(def?.weaponType, type, id);
+      assert.ok(def.stats.watk >= last, `${id} hits at least as hard as the tier below`);
+      if (!def.theme) last = def.stats.watk;
+      for (let f = 0; f < 6; f++) {
+        const art = weaponShapes(type, def.tier, f, def.theme ?? null);
+        assert.ok(art.shapes.length && art.grip[0] < art.w && art.grip[1] < art.h, `${id} frame ${f} has a grip inside it`);
+      }
+      assert.ok(weaponIcon(type, def.tier, def.theme ?? null)?.length, `${id} icon`);
+      if (def.theme) assert.equal(def.element, def.theme, `${id} brings its theme's effects`);
+    }
   }
+});
+
+test('better weapons animate more', () => {
+  const live = (type, tier, theme = null) => Boolean(weaponShapes(type, tier, 0, theme).live);
+  assert.equal(live('sword', 0), false);
+  assert.equal(live('sword', 3), true);
+  for (const th of ENDGAME_THEMES) assert.equal(live('axe', 5, th), true, th);
 });

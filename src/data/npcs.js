@@ -3,6 +3,8 @@
 // an NPC can also carry `gear` (same shape as the player's equipment) to show it off.
 
 const armor = (t) => ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'].map((s) => `${s}_${t}`);
+// Weapons of the given types for tiers 1 to 3. Tier 4 and the endgame designs only drop.
+const arms = (...types) => types.flatMap((w) => [1, 2, 3].map((t) => `${w}_${t}`));
 
 export const NPCS = {
   mira: {
@@ -15,7 +17,7 @@ export const NPCS = {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',
     look: { hairStyle: 'short', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
-    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `test_${w}`), ...armor(0)],
+    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `${w}_0`), ...armor(0)],
     quests: ['snail_trouble'],
   },
   lulu: {
@@ -52,14 +54,14 @@ export const NPCS = {
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
-    greeting: 'Fresh off the anvil! Armor that can take a hit.',
-    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', ...armor(1), ...armor(2)],
+    greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', ...arms('sword', 'axe', 'spear'), ...armor(1), ...armor(2)],
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
-    greeting: 'W-welcome... moonberry tonics and charmed earrings. Mind the floating candles.',
-    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', 'earring_1', 'earring_2', 'earring_3'],
+    greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
+    shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', ...arms('wand', 'staff'), 'earring_1', 'earring_2', 'earring_3'],
   },
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
@@ -70,10 +72,11 @@ export const NPCS = {
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     look: { hairStyle: 'bob', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
-    greeting: 'Finest goods on the coast. Armor, tonics, and charms!',
+    greeting: 'Finest goods on the coast. Bows, blades, armor, tonics, and charms!',
     shop: [
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
       'scroll_watk_100', 'scroll_def_100',
+      ...arms('bow', 'crossbow', 'dagger', 'claw'),
       ...armor(1), ...armor(2), ...armor(3),
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
