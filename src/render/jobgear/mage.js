@@ -103,12 +103,14 @@ function feather(x, y, len, c, sw, vane = WHITE) {
 const HATS = [
   { w: 21, h: 10, curl: 120 }, { w: 14, h: 12, curl: 60, brim: 11.5, lift: 0 },
   { w: 14, h: 14, curl: 70, brim: 13.5, lift: 0.5 }, { w: 14, h: 16, curl: 95, brim: 14, lift: 0.8 }, { w: 15, h: 17, curl: 110, brim: 14.5, lift: 1 },
-  { w: 15, h: 20, curl: 150, brim: 15.5, lift: 1.5 }, { w: 15, h: 20, curl: 120, brim: 15.5, lift: 1.2 }, { w: 16, h: 21, curl: 90, brim: 16, lift: 2 }, { w: 15, h: 22, curl: 140, brim: 16, lift: 1.6 },
+  { w: 15, h: 22, curl: 150, brim: 15.5, lift: 1.5 }, { w: 15, h: 22, curl: 115, brim: 15.5, lift: 1.2 }, { w: 16, h: 22, curl: 80, brim: 16, lift: 2 }, { w: 15, h: 24, curl: 135, brim: 16, lift: 1.6 },
   { w: 16, h: 24, curl: 45, brim: 17, lift: 2 }, { w: 16, h: 25, curl: 70, brim: 17, lift: 2 }, { w: 17, h: 27, curl: 210, brim: 17, lift: 2.5 }, { w: 16, h: 25, curl: 55, brim: 17.5, lift: 2.4 },
   { w: 15, h: 27, curl: 14, brim: 17, lift: 3 }, { w: 18, h: 27, curl: 35, brim: 18, lift: 3 }, { w: 16, h: 25, curl: 25, brim: 17, lift: 2.6 }, { w: 16, h: 27, curl: 85, brim: 18, lift: 3 },
   { w: 18, h: 28, curl: 50, brim: 18.5, lift: 3.4 }, { w: 17, h: 28, curl: 30, brim: 18.5, lift: 3.6 }, { w: 18, h: 28, curl: 40, brim: 19, lift: 4 },
 ];
 const BRIM_Y = 7.4;
+// Floating ornaments stay inside the sprite's headroom (its top edge is y -22).
+const sky = (y, r) => Math.max(y, -21.4 + r);
 const hatSpine = (t, m) => {
   const H = HATS[t];
   return cone(15.5, t ? BRIM_Y + 0.4 : 8.6, H.w, H.h, H.curl + m.hair * (3 + H.h * 0.25));
@@ -158,12 +160,12 @@ function hat(t, p, m) {
       out.push(coneBand(sp, 0.02, 0.16, p.second), ...feather(21.2, 6.6, 13, p.light, m.hair), crescent(13.4, 4.4, 2.2, p.trim, 30), F(E(tip.x, tip.y, 1.1, 1.1, p.accent)), coneBand(sp, 0.5, 0.54, p.trim, 0.2));
       break;
     case 9: // Archon: a gold crown on the brim and a floating orb.
-      out.push(coneBand(sp, 0.2, 0.25, p.trim, 0.2), ...crown(BRIM_Y + 0.2, 8.6, 4.8, 4, p), E(tip.x, tip.y - 2.4, 1.6, 1.6, p.accent), F(E(tip.x - 0.5, tip.y - 2.9, 0.5, 0.5, WHITE)));
+      out.push(coneBand(sp, 0.2, 0.25, p.trim, 0.2), ...crown(BRIM_Y + 0.2, 8.6, 4.8, 4, p), E(tip.x, sky(tip.y - 2.4, 1.6), 1.6, 1.6, p.accent), F(E(tip.x - 0.5, sky(tip.y - 2.4, 1.6) - 0.5, 0.5, 0.5, WHITE)));
       break;
     case 10: // Astral: star field and a big floating star.
       out.push(coneBand(sp, 0.02, 0.13, p.deep), ...crown(BRIM_Y + 0.2, 8.4, 3.2, 6, p, false),
         ...[[0.3, -0.5], [0.42, 0.4], [0.58, -0.2], [0.72, 0.3], [0.22, 0.55]].map(([u, k], i) => (i % 2 ? F(E(...onCone(sp, u, k), 0.5, 0.5, WHITE)) : sparkle(...onCone(sp, u, k), 1.3, i ? WHITE : p.accent))),
-        star(tip.x, tip.y - 3, 2.6, p.trim), F(star(tip.x, tip.y - 3, 1.2, WHITE)));
+        star(tip.x, sky(tip.y - 3, 2.6), 2.6, p.trim), F(star(tip.x, sky(tip.y - 3, 2.6), 1.2, WHITE)));
       break;
     case 11: { // Starweaver: a curling tip strung with stars, woven bands.
       out.push(coneBand(sp, 0.02, 0.12, p.second), coneBand(sp, 0.16, 0.2, p.trim, 0.2), coneBand(sp, 0.3, 0.33, p.trim, 0.2), ...crown(BRIM_Y + 0.2, 8.6, 3.4, 4, p));
@@ -187,7 +189,7 @@ function hat(t, p, m) {
       break;
     case 15: // Seraphic: white wings (in hatBack), feathers, and a halo above.
       out.push(coneBand(sp, 0.02, 0.14, p.trim), ...crown(BRIM_Y + 0.2, 8.4, 3.6, 4, p), ...feather(10.6, 6, 8, WHITE, m.hair, '#eef2ff'),
-        arc(tip.x, tip.y - 3, 4, 1.4, 0.9, 0, 180, p.trim), F(E(tip.x, tip.y, 1, 1, p.accent)), sparkle(...onCone(sp, 0.45, 0), 1.5, WHITE));
+        arc(tip.x, sky(tip.y - 3, 1.4), 4, 1.4, 0.9, 0, 180, p.trim), F(E(tip.x, tip.y, 1, 1, p.accent)), sparkle(...onCone(sp, 0.45, 0), 1.5, WHITE));
       break;
     case 16: // Ethereal: two rings orbit the cone (their backs in hatBack), floating motes.
       out.push(coneBand(sp, 0.02, 0.13, p.light), ...crown(BRIM_Y + 0.2, 8.6, 3.8, 4, p),
@@ -197,16 +199,16 @@ function hat(t, p, m) {
     case 17: // Cosmic: a planet ring around the cone, galaxy dots, a crown.
       out.push(coneBand(sp, 0.02, 0.12, p.deep), ...crown(BRIM_Y + 0.2, 9.2, 4.8, 6, p),
         ...[[0.25, 0.5], [0.33, -0.4], [0.5, 0.3], [0.63, -0.2], [0.78, 0.2]].map(([u, k], i) => (i % 2 ? F(E(...onCone(sp, u, k), 0.6, 0.6, i > 2 ? p.accent : WHITE)) : sparkle(...onCone(sp, u, k), 1.4, WHITE))),
-        arc(...onCone(sp, 0.46, 0), 10, 2.4, 1.1, -12, 192, p.trim), E(tip.x, tip.y - 2.4, 2, 2, p.accent), arc(tip.x, tip.y - 2.4, 3.4, 1, 0.6, -15, 195, WHITE));
+        arc(...onCone(sp, 0.46, 0), 10, 2.4, 1.1, -12, 192, p.trim), E(tip.x, sky(tip.y - 2.4, 2), 2, 2, p.accent), arc(tip.x, sky(tip.y - 2.4, 2), 3.4, 1, 0.6, -15, 195, WHITE));
       break;
-    case 18: // Eclipse: a dark crown and a black sun (its corona in hatBack).
+    case 18: // Eclipse: a dark crown, the tip piercing a black sun (in hatBack).
       out.push(coneBand(sp, 0.02, 0.14, p.deep), coneBand(sp, 0.42, 0.46, p.trim, 0.2), ...crown(BRIM_Y + 0.2, 9, 5.2, 4, { ...p, accent: p.deep }),
-        crescent(...onCone(sp, 0.26, 0), 2.6, p.accent, 0), E(tip.x + 0.5, tip.y - 3.4, 3, 3, '#2a2140'), crescent(tip.x + 0.5, tip.y - 3.4, 3.1, p.accent, 160));
+        crescent(...onCone(sp, 0.26, 0), 2.6, p.accent, 0));
       break;
     default: // Eternity: a tall crown, wings, an endless ring of stars, and a star crest.
       out.push(coneBand(sp, 0.02, 0.12, p.light), coneBand(sp, 0.34, 0.38, p.trim, 0.2), ...crown(BRIM_Y + 0.2, 9.4, 6.4, 6, p), ...feather(23.4, 5.4, 9, WHITE, m.hair, p.light),
         arc(...onCone(sp, 0.56, 0), 7.6, 1.8, 0.8, -10, 190, p.accent),
-        ...ring(3, (i) => sparkle(...onCone(sp, 0.66 + i * 0.1, i % 2 ? 0.5 : -0.5), 1, WHITE)), star(tip.x, tip.y - 1, 2.8, p.trim), F(star(tip.x, tip.y - 1, 1.3, p.accent)));
+        ...ring(3, (i) => sparkle(...onCone(sp, 0.66 + i * 0.1, i % 2 ? 0.5 : -0.5), 1, WHITE)), star(tip.x, sky(tip.y - 1, 2.8), 2.8, p.trim), F(star(tip.x, sky(tip.y - 1, 2.8), 1.3, p.accent)));
   }
   return out;
 }
@@ -225,10 +227,14 @@ function hatBack(t, p, m) {
     }
     case 16: return [arc(...onCone(sp, 0.32, 0), 9, 2, 0.9, 180, 360, p.accent), arc(...onCone(sp, 0.6, 0), 6.4, 1.6, 0.8, 180, 360, p.light)];
     case 17: return [arc(...onCone(sp, 0.46, 0), 10, 2.4, 1.1, 180, 360, p.trim)];
-    case 18: return [star(tip.x + 0.5, tip.y - 3.4, 6.4, p.accent, 10, 0.62), E(tip.x + 0.5, tip.y - 3.4, 4.2, 4.2, mix(p.accent, WHITE, 0.5))];
+    case 18: {
+      const y = sky(tip.y + 3, 6.6);
+      return [star(tip.x, y, 6.6, p.accent, 10, 0.62), E(tip.x, y, 4.6, 4.6, mix(p.accent, WHITE, 0.5)), E(tip.x, y, 4, 4, '#2a2140'), crescent(tip.x, y, 4.1, p.accent, 160)];
+    }
     case 19: {
       const w = wing(1).map((sh) => ({ ...sh, y: 3 + (m.flap ? -1.6 : 0) }));
-      return [arc(...onCone(sp, 0.56, 0), 7.6, 1.8, 0.8, 180, 360, p.accent), E(tip.x, tip.y - 1, 6.6, 6.6, mix(p.accent, WHITE, 0.4)), E(tip.x, tip.y - 1, 5.2, 5.2, p.trim), E(tip.x, tip.y - 1, 4.2, 4.2, mix(p.accent, WHITE, 0.7)), ...w, ...mirrorX(w)];
+      const y = sky(tip.y + 2, 6.6);
+      return [arc(...onCone(sp, 0.56, 0), 7.6, 1.8, 0.8, 180, 360, p.accent), E(tip.x, y, 6.6, 6.6, mix(p.accent, WHITE, 0.4)), E(tip.x, y, 5.2, 5.2, p.trim), E(tip.x, y, 4.2, 4.2, mix(p.accent, WHITE, 0.7)), ...w, ...mirrorX(w)];
     }
     default: return [];
   }
@@ -262,7 +268,7 @@ function top(t, p, m) {
   out.push(panel(len, s >= 2 ? 2.2 : 1.6, s >= 2 ? 4.6 : 3, sw, p.second));
   if (s >= 2) out.push(F(limb(MID - 2.2, 26.4, MID - 4.6 + sw, len, 0.9, 0.9, p.trim)), F(limb(MID + 2.2, 26.4, MID + 4.6 + sw, len, 0.9, 0.9, p.trim)));
   out.push(hem(s >= 2 ? 2 : 1.4, p.trim));
-  if (s >= 2) out.push(...dots(len - 1, p.accent));
+  if (s === 2) out.push(...dots(len - 1, p.accent));
   // High stand-up collar.
   out.push(T([[MID - 4.4, 25.6], [MID + 4.4, 25.6], [MID + 3.6, 27.6], [MID, 29.6], [MID - 3.6, 27.6]], s >= 3 ? p.trim : p.light), T([[MID - 2.4, 25.8], [MID + 2.4, 25.8], [MID, 28.2]], p.secondDark));
   if (s >= 3) {
@@ -271,7 +277,8 @@ function top(t, p, m) {
   }
   // Sash with tails that swing.
   const sash = s >= 2 ? p.accent : p.dark;
-  out.push(band(body, 33.4, 35.4, sash), limb(18, 35, 19 + sw * 1.5, 40.6, 1.6, 1.1, sash), limb(17, 35, 17.2 + sw * 1.5, 39.6, 1.4, 1, sash), E(17.6, 34.4, 1.3, 1.2, p.trim));
+  out.push(band(body, 33.4, 35.4, sash), E(17.6, 34.4, 1.3, 1.2, p.trim));
+  if (s < 3) out.push(limb(18, 35, 19 + sw * 1.5, 40.6, 1.6, 1.1, sash), limb(17, 35, 17.2 + sw * 1.5, 39.6, 1.4, 1, sash));
   switch (t) {
     case 2: out.push(F(E(MID, 30.4, 0.7, 0.7, p.trim))); break;
     case 3: out.push(star(MID, 31, 1.8, p.trim), F(E(12, 41, 0.6, 0.6, WHITE)), F(E(19.4 + sw, 42, 0.6, 0.6, WHITE))); break;
@@ -284,7 +291,7 @@ function top(t, p, m) {
   }
   if (s >= 3) {
     // Vestments: a big brooch, a double hem, and an emblem on the skirt panel.
-    out.push(band(body, len - 3.6, len - 2.4, p.deep), E(MID, 30.4, 1.9, 1.9, p.trim), F(E(MID, 30.4, 1.2, 1.2, p.accent)), F(E(MID - 0.4, 30, 0.4, 0.4, WHITE)));
+    out.push(E(MID, 30.4, 1.9, 1.9, p.trim), F(E(MID, 30.4, 1.2, 1.2, p.accent)), F(E(MID - 0.4, 30, 0.4, 0.4, WHITE)));
     const ey = len - 6;
     const emblem = {
       9: () => [star(MID + sw, ey, 2, p.trim)],
@@ -307,9 +314,7 @@ function top(t, p, m) {
       const x = lerp(9.6, 21.6, i / 4) + sw;
       out.push(T([[x - 1.6, len - 1.4], [x + 1.6, len - 1.4], [x, len + 1.6]], i % 2 ? p.trim : p.light));
     }
-    out.push(...dots(37.4, p.glow ?? p.accent, 3));
   }
-  if (s >= 5) out.push(F(E(11.8 + sw, 40.4, 0.5, 0.5, WHITE)), F(E(19.6 + sw, 41.6, 0.5, 0.5, WHITE)), sparkle(12.4, 32.4, 1, WHITE), sparkle(19, 32.8, 1, p.accent));
   return out;
 }
 
@@ -403,12 +408,26 @@ function capeShape(y, wd, s, n = 8, sc = 0) {
 }
 const CAPES = [[42, 2], [43.5, 3], [47, 4.4], [48, 4.8], [49, 5.2], [50, 6], [50.5, 6.4], [51, 6.8], [51.5, 7.2], [52, 8], [52.5, 8.4], [53, 8.8], [53, 9.2], [53.5, 10], [53.5, 10.4], [53.5, 10.8], [54, 11.2], [54, 12], [54.5, 12.4], [54.5, 12.8]];
 
-// Arcane wings that rise behind the head and sweep out past the arms; up is the beat.
-function wings(p, up, sw, big) {
-  const k = big ? 1 : 0.7;
-  const pts = [[11, 27], [6 - 6 * k, 14 + up], [-2 - 12 * k, 8 + up * 1.4], [-4 - 12 * k, 14 + up], [-2 - 11 * k + sw * 0.3, 22], [-3 - 10 * k + sw * 0.5, 30], [-8 * k + sw * 0.6, 38], [6 + sw * 0.4, 38]];
-  const inner = [[10, 28], [4 - 5 * k, 18 + up], [-10 * k, 15 + up * 1.2], [-9 * k + sw * 0.3, 24], [-7 * k + sw * 0.5, 32], [6, 34]];
-  const w = [T(pts, p.dark), T(inner, p.second), F(T([[4 - 4 * k, 20 + up], [-6 * k, 21 + up], [-4 * k + sw * 0.3, 27]], p.glow ?? p.accent))];
+// A standing fan collar behind the head: pointed ribs around an upper half-ellipse.
+function fan(rx, ry, n, p) {
+  const pts = (k) => ring(n * 2 + 1, (i) => {
+    const a = Math.PI * (1 + i / (n * 2));
+    const rr = k * (i % 2 ? 0.84 : 1);
+    return [15.5 + Math.cos(a) * rx * rr, 27 + Math.sin(a) * ry * rr];
+  });
+  return [T(pts(1.06), p.trim), T(pts(1), p.second), T(pts(0.8), p.dark), ...ring(n + 1, (i) => F(E(...pts(0.97)[i * 2], 0.6, 0.6, p.accent)))];
+}
+
+// Arcane wings of long feathers fanning out behind the shoulders; up is the beat.
+function wings(p, up, sw) {
+  const w = [[-15, 3, 5.4], [-21, 12, 6], [-22, 22, 5.6], [-17, 32, 4.6]].flatMap(([x, y, wd], i) => {
+    const tip = [x + sw * 0.3 * i, y + up * (1 - i * 0.3)];
+    const dx = tip[0] - 12.5;
+    const dy = tip[1] - 29;
+    const len = Math.hypot(dx, dy);
+    const at = (u, k) => [12.5 + dx * u - (dy / len) * k, 29 + dy * u + (dx / len) * k];
+    return [T([[12.5, 29], at(0.5, wd / 2), tip, at(0.62, -wd / 2)], i % 2 ? p.second : mix(p.light, p.accent, 0.4)), i % 2 ? null : F(T([at(0.3, 0.4), at(0.55, 1.2), at(0.85, 0.2), at(0.6, -0.8)], p.glow ?? p.accent))];
+  }).filter(Boolean);
   return [...w, ...mirrorX(w)];
 }
 
@@ -417,7 +436,8 @@ function cape(t, p, m) {
   const sw = m.sway;
   const [y, wd] = CAPES[t];
   const out = [];
-  if (s >= 4) out.push(...wings(p, m.flap ? -3 : 0, sw, s >= 5));
+  if (s >= 5) out.push(...wings(p, m.flap ? -3 : 0, sw));
+  else if (s >= 3) out.push(...fan(s >= 4 ? 25 : 21, s >= 4 ? 16 : 11, s >= 4 ? 5 : 4, p));
   if (s >= 1) out.push(T(capeShape(y + 1.4, wd + 0.6, sw, 8, s >= 2 ? 1 : 0), p.second));
   if (s >= 3) out.push(band(capeShape(y + 1.4, wd + 0.6, sw), y, y + 2.6, p.trim));
   const main = capeShape(y, wd, sw, s >= 2 ? 10 : 8, s >= 4 ? 1.2 : 0);

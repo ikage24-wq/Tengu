@@ -178,14 +178,26 @@ function hoodFront(t, h, p, hair) {
   };
   if (h.ears) out.push(...ear(-1), ...ear(1));
   if (h.horns) {
-    // Curved horns sweeping up and back from the temples; big ones curl outward.
+    // Horns curving out from the temples and up to a point (a quadratic curve that tapers),
+    // with a glowing tip on the big ones.
     const big = h.horns === 'big';
     for (const dir of [-1, 1]) {
-      const x = 15.5 + dir * 6.4;
-      const pts = big
-        ? [[x - dir * 2.4, 5], [x + dir * 1.6, -1.6], [x + dir * 6.6, -7.4], [x + dir * 5, -1], [x + dir * 2.6, 5.6]]
-        : [[x - dir * 1.4, 4.4], [x + dir * 1.4, 0.3], [x + dir * 3.6, -3.8], [x + dir * 2.6, 0.6], [x + dir * 1.8, 5]];
-      out.push(T(pts, big ? p.deep : p.trimDark), F(T(pts.slice(1, 4), big ? p.accent : p.trim)));
+      const x = 15.5 + dir * 7.4;
+      const [p1, p2] = big ? [[x + dir * 6.6, 1.6], [x + dir * 2.6, -7.4]] : [[x + dir * 4.4, 3.6], [x + dir * 3.6, -2.6]];
+      const w = big ? 3.6 : 2.6;
+      const left = [];
+      const right = [];
+      for (let i = 0; i <= 6; i++) {
+        const u = i / 6;
+        const bx = (1 - u) ** 2 * x + 2 * u * (1 - u) * p1[0] + u * u * p2[0];
+        const by = (1 - u) ** 2 * 5.6 + 2 * u * (1 - u) * p1[1] + u * u * p2[1];
+        const hw = (w / 2) * (1 - u * 0.92);
+        left.push([bx - hw, by]);
+        right.push([bx + hw, by]);
+      }
+      out.push(T([...left, ...right.reverse()], big ? p.deep : p.trimDark));
+      const tipPts = [left[4], left[5], left[6], right[1], right[2]];
+      out.push(F(T(tipPts, big ? p.accent : p.trim)));
     }
   }
   // The hood itself: a rim around the face, then the peak or crest on top.
@@ -195,7 +207,20 @@ function hoodFront(t, h, p, hair) {
     out.push(T([[9, 4.6], [20.6, 3], [11 + tip - tall * 0.6, -1 - tall], [6.6, 2.6]], p.main), F(T([[11.8, 2.8], [10.6 + tip - tall * 0.6, -0.6 - tall], [9.4 + tip - tall * 0.6, -0.4 - tall], [9.8, 3.4]], p.light)));
   }
   if (h.hood === 'cobra') out.push(T([[2.8, 19], [0.4, 9], [5, 1.4], [15.5, 0.3], [26, 1.4], [30.6, 9], [28.2, 19]], p.main), ...[[2.4, 10], [28.6, 10], [8.4, 2.4], [22.6, 2.4]].map(([x, y]) => F(E(x, y, 1.1, 0.8, p.light))));
-  if (h.hood === 'raven') out.push(T([[11.4, 4.4], [19.6, 4.4], [15.5, 9.6]], p.trimDark), T([[6, 3], [1 + tip, -3.4], [3.6, 0.4], [-1 + tip, 0.3], [3.8, 4.8]], p.deep), T([[25, 3], [30 + tip, -3.4], [27.4, 0.4], [32 + tip, 0.3], [27.2, 4.8]], p.deep));
+  if (h.hood === 'raven') {
+    // A beak peak over the brow and fans of swept-back feathers at the temples.
+    for (const dir of [-1, 1]) {
+      for (const [a, l] of [[115, 8.4], [140, 9.4], [165, 7.6]]) {
+        const x = 15.5 + dir * 9.4;
+        const ang = rad(dir < 0 ? a : 180 - a);
+        const [ux, uy] = [Math.cos(ang), -Math.sin(ang)];
+        const tx = x + ux * l + (dir < 0 ? tip : -tip) * 0.5;
+        const ty = 6 + uy * l;
+        out.push(T([[x - uy * 1.3, 6 + ux * 1.3], [x + ux * l * 0.6 - uy * 1.6, 6 + uy * l * 0.6 + ux * 1.6], [tx, ty], [x + ux * l * 0.6 + uy * 1.2, 6 + uy * l * 0.6 - ux * 1.2], [x + uy * 1.3, 6 - ux * 1.3]], a === 140 ? p.dark : p.deep));
+      }
+    }
+    out.push(T([[11.2, 4.4], [19.8, 4.4], [15.5, 10]], p.trimDark), F(T([[13.6, 5], [17.4, 5], [15.5, 7.8]], p.trim)));
+  }
   if (h.halo) out.push(F(crescent([15.5, -2.6, 9.4, 3], [15.5, -2.6, 7.6, 1.8], 0, 360, p.accent)));
   if (h.wisps) for (const [x, s] of [[9.4, 1], [15.5, 1.3], [21.6, 1]]) out.push(T([[x - 2 * s, 3.4], [x + 2 * s, 3.4], [x + 0.8 * s + tip, -2.6 * s], [x + tip * 1.4, -5 * s], [x - 1.2 * s, -1.4 * s]], mix(p.accent, WHITE, 0.4)), F(E(x, 1.4, 0.9 * s, 1.4 * s, WHITE)));
   out.push(crescent(HOOD, OPENING, -38, 218, p.main));
@@ -246,7 +271,7 @@ function hatBack(t, p, m) {
     : [[23 + s, 25.6], [15.5 + s, 27.2], [8 + s, 25.6]];
   out.push(T([[5, 18], [26, 18], ...hem], p.main));
   if (t >= 10) out.push(T([[22.8 + s, 25], [15.5 + s, 26.4], [8.2 + s, 25], [8.4, 24.2], [22.6, 24.2]], t >= 15 ? p.accent : p.trim));
-  if (h.hood === 'cobra') out.push(T([[3, 19], [0.4, 9], [5, 3], [26, 3], [30.6, 9], [28, 19]], p.dark));
+  if (h.hood === 'cobra') out.push(T([[3, 19], [1.4, 10], [5, 3.6], [26, 3.6], [29.6, 10], [28, 19]], p.dark));
   return out;
 }
 

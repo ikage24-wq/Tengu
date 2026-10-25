@@ -1,12 +1,13 @@
 // Weapon art: how each weapon is drawn in the hero's hand and as a 16x16 bag icon.
 //
-// Every weapon type comes in five progression tiers (0 common wood or stone, 1 iron, 2 steel and
-// gold, 3 mithril, 4 rune-carved) and six endgame themes (holy, demonic, bone, laser, chainsaw,
-// cyber). The shapes come from the type's form (weapon-forms.js) in the tier's or theme's look
-// (weapon-kit.js); live effects drawn every frame come from weapon-fx.js. Better weapons animate
-// more: tier 3 twinkles over 4 frames, tier 4's runes and every endgame weapon run 6 frames.
+// Every weapon type comes in 21 progression tiers (0 wood or stone, then a material every five
+// levels from Copper to Genesis), each in five color variants, and six endgame themes (holy,
+// demonic, bone, laser, chainsaw, cyber). The shapes come from the type's form (weapon-forms.js)
+// in the tier's or theme's look (weapon-kit.js); live effects drawn every frame come from
+// weapon-fx.js. Better weapons animate more: gems shine over 4 frames from Silver (tier 5), and
+// runes, motifs and every endgame weapon run 6 frames from Runic (tier 9).
 //
-// weaponShapes(type, tier, frame, theme) -> { w, h, grip, blade: [top, base], shapes, live }
+// weaponShapes(type, tier, frame, theme, variant) -> { w, h, grip, blade: [top, base], shapes, live }
 // The hero rotates the sprite around `grip`; `live(ctx, time, s)` draws in that rotated space
 // with the grip at the origin and the weapon pointing toward -y.
 
@@ -19,7 +20,7 @@ import { seraphShapes, SERAPH_ICON } from './seraph.js';
 export function weaponFrames(type, tier = 0, theme = null) {
   if (!FORMS[type]) return 1;
   if (theme) return 6;
-  return tier >= 4 ? 6 : tier === 3 ? 4 : 1;
+  return tier >= 9 ? 6 : tier >= 5 ? 4 : 1;
 }
 
 const built = new Map();

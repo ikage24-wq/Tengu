@@ -228,40 +228,34 @@ function top(t, p, m = { sway: 0, hair: 0, flap: 0 }) {
   const s = m.sway;
   const tr = p.trim;
   const out = [];
+  const buckle = F(T([[MID - 1.3, 34.5], [MID, 33.3], [MID + 1.3, 34.5], [MID, 35.7]], tr));
   if (t < 5) {
-    // Vests: a shirt under a leather-laced leaf vest.
-    const vest = tunicPts(37.6 + t * 0.6, 4, s, 1.6, 0);
+    // Vests: a leaf-hemmed vest open over a shirt, belted in leather.
     out.push(T(torso, p.second));
-    if (t >= 2) out.push(T(tunicPts(38.6 + t * 0.6, 5, s, 1.6, 0.4), p.dark));
-    out.push(T(vest, p.main), T([[MID - 2.4, 26.2], [MID + 2.4, 26.2], [MID + 1.2, 33], [MID - 1.2, 33]], p.second));
-    for (let y = 28; y < 33; y += 1.6) out.push(F(T([[MID - 1.4, y], [MID + 1.4, y + 0.6], [MID + 1.4, y + 1.1], [MID - 1.4, y + 0.5]], LEATHER)));
-    out.push(band(torso, 33.6, 35.4, LEATHER), F(E(MID, 34.5, 1.1, 0.9, tr)));
-    if (t >= 1) out.push(leaf(12.6, 26.4, 4.4, 3, -160, p.light), leaf(18.6, 26.4, 4.4, 3, 160, p.light));
-    // The ranger's strap across the chest; sylvan leaf collar.
-    if (t >= 3) out.push(T([[19.2, 26.2], [21.2, 27.4], [11.6, 35.6], [9.8, 34.2]], BARK), F(E(16.6, 30, 0.8, 0.8, tr)));
-    if (t >= 4) out.push(...fan(MID, 26.4, 5, 4.6, 2.8, 120, 240, [p.light, p.main]));
+    if (t >= 2) out.push(T(tunicPts(39.4 + t * 0.4, 4, s, 2.6, 0.4), p.dark));
+    out.push(T(tunicPts(37.6 + t * 0.4, 3, s, 2.6, 0), p.main), T([[MID - 2.2, 26.2], [MID + 2.2, 26.2], [MID + 1, 34], [MID - 1, 34]], p.second));
+    out.push(band(torso, 33.6, 35.6, LEATHER), buckle);
+    if (t >= 1) out.push(leaf(12.4, 26.2, 5, 3.6, -158, p.light), leaf(18.8, 26.2, 5, 3.6, 158, p.light));
+    // The ranger's strap across the chest; the sylvan leaf collar.
+    if (t >= 3) out.push(T([[19, 26.2], [21.2, 27.4], [11.8, 35.6], [9.8, 34.4]], BARK));
+    if (t >= 4) out.push(...fan(MID, 26.2, 3, 5.4, 4, 140, 220, [p.light, p.main]));
     return out;
   }
   // Tunics and raiments: under-layers of leaves peek below the main hem.
-  const raiment = t >= 15;
-  const hemY = raiment ? 41 : 39 + (t - 5) * 0.2;
-  const layers = raiment ? 3 : t >= 10 ? 2 : 1;
-  const layerColors = [p.secondDark, p.light, p.second];
-  for (let i = layers - 1; i >= 1; i--) out.push(T(tunicPts(hemY + i * 2.4, 4 + i, s * (1 + i * 0.3), 3.4, 0.6 + i * 0.6), layerColors[i - 1]));
+  const layers = t >= 15 ? 3 : t >= 9 ? 2 : 1;
+  const hemY = t >= 15 ? 40.6 : 39.4;
+  const under = [p.light, p.secondDark];
+  for (let i = layers - 1; i >= 1; i--) out.push(T(tunicPts(hemY + i * 2.6, 4, s * (1 + i * 0.4), 3, 0.5 + i * 0.7), under[i - 1]));
   const tunic = tunicPts(hemY, 4, s, 3.4, 0.4);
-  out.push(T(tunic, p.main));
-  // A V neck edged in trim (from Silverleaf), and a sash with tails.
-  out.push(T([[MID - 3, 26.2], [MID + 3, 26.2], [MID, 31]], p.second));
-  if (t >= 6) out.push(F(T([[MID - 3.4, 26.2], [MID - 2.4, 26.2], [MID, 30.2], [MID + 2.4, 26.2], [MID + 3.4, 26.2], [MID, 31.6]], tr)));
-  out.push(band(tunic, 33.4, 35.4, t >= 10 ? p.second : LEATHER));
-  if (t >= 7) out.push(leaf(11, 34.6, 7, 2.4, 190 + s * 4, p.second), leaf(11.6, 34.6, 6, 2, 168 + s * 4, p.secondDark));
-  out.push(F(T([[MID - 1.2, 34.4], [MID, 33.4], [MID + 1.2, 34.4], [MID, 35.6]], tr)));
-  // Leaf filigree on the chest and gems as the sets climb.
-  if (t >= 8) out.push(F(leaf(12.2, 32.4, 4, 1.8, -20, p.light)), F(leaf(19, 32.4, 4, 1.8, 20, p.light)));
-  if (t >= 10) out.push(leaf(MID, 31.6, 4.4, 3, 0, tr), ...gem(MID, 30, 0.9, p.accent));
-  if (t >= 12) out.push(F(T(tunic.slice(-14, -6), p.light)));
-  if (t >= 13) out.push(band(tunic, hemY - 1.2, hemY, tr));
-  if (raiment) out.push(...fan(MID, 26.2, 5, 5, 3, 116, 244, [p.light, tr]), ...[11.4, 19.8].map((x, i) => F(E(x, 38 + i, 0.6, 0.6, p.glow))));
+  out.push(T(tunic, p.main), T([[MID - 3, 26.2], [MID + 3, 26.2], [MID, 31]], p.second));
+  // A trim-edged V neck (Silverleaf on), a sash with tails (Windrunner on), a chest leaf.
+  if (t >= 6) out.push(F(T([[MID - 3.6, 26.2], [MID - 2.4, 26.2], [MID, 30], [MID + 2.4, 26.2], [MID + 3.6, 26.2], [MID, 31.8]], tr)));
+  out.push(band(tunic, 33.4, 35.6, t >= 10 ? p.secondDark : LEATHER), buckle);
+  if (t >= 7) out.push(T([[19.4, 26.4], [21.4, 27.8], [12, 35.6], [10, 34.2]], p.second), leaf(10.6, 34.6, 8, 2.8, 194 + s * 5, p.second), leaf(11, 34.8, 6.4, 2.4, 172 + s * 5, p.secondDark));
+  if (t >= 8) out.push(leaf(17.6, 32.8, 4.6, 3.4, 0, tr));
+  if (t >= 10) out.push(...gem(17.6, 31, 0.9, p.accent));
+  if (t >= 12) out.push(band(tunic, hemY - 1.3, hemY, tr));
+  if (t >= 15) out.push(...fan(MID, 26.2, 3, 6, 4.6, 140, 220, [p.light, tr]));
   return out;
 }
 
@@ -292,11 +286,11 @@ function legs(t, p) {
 function skirt(t, p, m = { sway: 0, hair: 0, flap: 0 }) {
   if (t < 10) return null;
   const s = m.sway * 5;
-  const n = t >= 15 ? 3 : 2;
-  const len = t >= 15 ? 13 : 11;
+  const n = t >= 15 ? 2 : 1;
+  const len = t >= 15 ? 15 : 13;
   const out = [
-    ...fan(10.4, 35, n, len, 4.6, 196 + s, 172 + s, [p.main, p.light]),
-    ...fan(20.6, 35, n, len, 4.6, 164 + s, 188 + s, [p.main, p.light]),
+    ...fan(10.4, 35, n, len, 4.6, 200 + s, 176 + s, [p.light, p.main]),
+    ...fan(20.6, 35, n, len, 4.6, 160 + s, 184 + s, [p.light, p.main]),
     T([[9.6, 34.2], [21.4, 34.2], [21.6, 36.2], [9.4, 36.2]], p.dark),
   ];
   if (t >= 15) out.push(...gem(10.4, 35.2, 0.8, p.accent), ...gem(20.6, 35.2, 0.8, p.accent));
@@ -361,9 +355,9 @@ function wing(t, p, m) {
   const n = t >= 17 ? 6 : 5;
   const out = [];
   // Long leaf feathers, the top ones longest, then a shorter inner row that glows up high.
-  for (let i = 0; i < n; i++) out.push(leaf(12 - i * 0.3, 29 + i * 0.8, len * (1 - i * 0.12), 7, -34 - i * 19 + up, i % 2 ? p.light : p.main));
-  for (let i = 0; i < n - 1; i++) out.push(leaf(12, 29, len * (0.62 - i * 0.06), 4.4, -42 - i * 19 + up, t >= 17 ? lit : p.light));
-  if (t >= 17) out.push(...[0, 1, 2].map((i) => F(E(...along(12, 29, len * (1 - i * 0.12) * 0.98, -34 - i * 19 + up), 1, 1, WHITE))));
+  for (let i = 0; i < n; i++) out.push(leaf(12 - i * 0.3, 29 + i * 0.8, len * (1 - i * 0.12), 7, -30 - i * 16 + up, i % 2 ? p.light : p.main));
+  for (let i = 0; i < 3; i++) out.push(leaf(12, 29, len * (0.62 - i * 0.06), 4.4, -38 - i * 18 + up, t >= 17 ? lit : p.light));
+  if (t >= 17) out.push(...[0, 1, 2].map((i) => F(E(...along(12, 29, len * (1 - i * 0.12) * 0.98, -30 - i * 16 + up), 1, 1, WHITE))));
   if (t >= 18) out.push(leaf(12, 29, len * 0.42, 2.6, -52 + up, p.trim), leaf(12, 29, len * 0.36, 2.2, -88 + up, p.trim));
   return out;
 }

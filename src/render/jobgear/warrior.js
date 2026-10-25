@@ -47,7 +47,7 @@ function helm(p, top = 2.4, cheek = 1, browC = p.trim) {
   const g = cheek;
   const guard = T([[3, 11], [8.2, 12], [8.4 + 0.3 * g, 16.4], [7.6 + 0.3 * g, 21.2 + g], [5.2, 22.4 + g], [3, 18 + g]], p.main);
   return [
-    dome(15.5, 12.4, 12.4, 12.4 - top, p.main),
+    dome(15.5, 12.6, 13.4, 12.6 - top, p.main),
     F(T([[9, 4.8], [12.4, 3.4], [11, 6.8], [8.6, 8.4]], p.light)),
     ...both([guard, F(T([[7.4, 13], [8.2, 13], [7.8 + 0.3 * g, 20 + g], [6.8 + 0.3 * g, 20.8 + g]], p.dark))]),
     T([[3, 10.4], [28, 10.4], [27.8, 13], [15.5, 13.8], [3.2, 13]], browC),
@@ -161,7 +161,7 @@ function flames(x, y, k, c) {
 
 function hatBack(t, p) {
   if (t < 2) return [];
-  const out = [E(15.5, 13.6, 12.6, 11.4, p.dark), T([[4.8, 14], [26.2, 14], [25.6, 25.4], [15.5, 26.4], [5.4, 25.4]], CHAIN)];
+  const out = [E(15.5, 13.6, 12.6, 11.4, p.dark), T([[4.8, 14], [26.2, 14], [25.6, 24], [15.5, 24.8], [5.4, 24]], stage(t) >= 3 ? p.deep : CHAIN)];
   if (t === 17) for (let i = 0; i < 9; i++) {
     // The sun crown's rays fan out behind the head.
     const a = Math.PI * (1.05 + (i * 0.9) / 8);
@@ -245,35 +245,41 @@ const longSleeves = () => true;
 
 // ---------- Pauldrons ----------
 
-// A layered pauldron around the shoulder joint: lames stacked under a domed cap, the cap's rim in
-// trim, spikes rising outward. `s` mirrors toward the arm's outer side.
+// A flared pauldron over the shoulder joint, drawn with +x pointing out from the body (`s`
+// mirrors it to the arm's side): lames stacked under a domed cap whose rim is trimmed, spikes and
+// crests rising from it. It reaches far out so it shows past the big chibi head.
 function shoulder(t, p, s) {
   const st = stage(t);
   const glow = glowOf(p);
-  const X = (x) => x * s;
-  if (st === 0) return [E(X(0.8), 2.4, 3.6, 2, t ? LEATHER_D : p.dark), E(X(0.6), 0.4, 3.8, 3, t ? LEATHER : p.main), t ? F(E(X(1), 0, 0.6, 0.6, p.trim)) : null];
-  const k = [0, 1.05, 1.25, 1.45, 1.5, 1.65, 1.7][st];
-  const lames = [0, 1, 2, 2, 3, 3, 3][st];
+  const k = [0.62, 0.78, 0.92, 1.05, 1.1, 1.2, 1.25][st];
+  const P = (list, c) => T(list.map(([x, y]) => [x * k * s, y * k]), c);
+  const top = (x) => (x < 5 ? -3 : -3 + (x - 5) * 0.55);
+  const sp = (x, h, lean, c = p.trim, w = 2.4) => P([[x - w / 2, top(x) + 0.6], [x + w / 2, top(x + w / 2) + 0.6], [x + lean, top(x) - h]], c);
+  const cap = [[-2.4, -1.8], [1, -3.2], [5, -3], [8.4, -1.2], [10, 1.6], [9.6, 3.4], [6, 2.6], [2, 2.4], [-2.4, 2]];
+  const lames = [1, 1, 2, 2, 3, 3, 3][st];
   const out = [];
-  for (let i = lames; i >= 1; i--) out.push(E(X(1.2 * k), (1 + i * 1.7) * k, (4.2 - i * 0.3) * k, 1.7 * k, i % 2 ? p.dark : p.main));
+  for (let i = lames; i >= 1; i--) {
+    const d = i * 2;
+    out.push(P([[-2, 1 + d], [4, 1.4 + d], [9.4 + i * 0.3, 2.4 + d], [9.6 + i * 0.3, 4.2 + d], [5, 3.8 + d], [-2, 3.4 + d]], st === 0 ? LEATHER_D : i % 2 ? p.dark : p.main));
+  }
   // Spikes and crests behind the cap.
-  const sp = (x, h, lean, c = p.trim) => T([[X((x - 1.2) * k), -1.6 * k], [X((x + 1.2) * k), -1.6 * k], [X((x + lean) * k), -(1.6 + h) * k]], c);
-  if (t === 7) out.push(sp(1.4, 4.4, 1));
-  if (t === 8) out.push(sp(0, 4, 0.6), sp(2.8, 5, 2));
-  if (t === 9) out.push(sp(-1.4, 4, -0.4), sp(1.2, 6, 0.8), sp(3.6, 4.6, 2.4));
-  if (t === 10) out.push(T([[X(-1 * k), -1], [X(4 * k), -2], [X(7 * k), -8 * k], [X(2 * k), -4 * k]], p.light), T([[X(2 * k), -1], [X(5.4 * k), 0], [X(8 * k), -4.4 * k]], p.dark));
-  if (t === 11) out.push(sp(-0.6, 6, -1, p.dark), sp(2, 8, 1.4, p.dark), sp(4.2, 5, 3.4, p.dark));
-  if (t === 12) out.push(T([[X(-1), -1], [X(1.4 * k), -9 * k], [X(3 * k), -1]], p.main), T([[X(2.6 * k), -1], [X(5.4 * k), -6 * k], [X(5.6 * k), 0]], p.dark), F(T([[X(0.6), -2], [X(1.4 * k), -8 * k], [X(1.9 * k), -2]], glow)));
-  if (t === 13) out.push(sp(0, 5, 0.6, p.light), sp(2.6, 6.4, 1.4, p.light), sp(5, 4.6, 3, p.light));
-  if (t === 14) out.push(T([[X(-1), -1], [X(6 * k), -6 * k], [X(5 * k), -2 * k], [X(8 * k), -4 * k], [X(5.4 * k), 1]], p.light));
-  if (t === 15) out.push(...[-1, 1.6, 4.2].map((x, i) => T([[X((x - 1.6) * k), -1.4 * k], [X((x + 1.6) * k), -1.4 * k], [X((x + 0.6 + i * 0.6) * k), -(5 + (i % 2) * 2.4) * k]], glow)));
-  if (t === 16) out.push(T(pts([[-1, -1.2], [2.4, -6], [6.4, -6.4], [4, -4.4], [4.8, -1]].map(([x, y]) => [X(x), y]), 0, 0, k), BONE), sp(-1, 4, -1, p.deep));
-  if (t === 17) out.push(...[-0.6, 1.8, 4.2].map((x, i) => T([[X((x - 0.8) * k), -1.4 * k], [X((x + 0.8) * k), -1.4 * k], [X((x + (i - 1) * 1.6) * k), -(6 + (i === 1) * 3) * k]], i === 1 ? p.trim : p.light)));
-  if (t === 18) out.push(zig([[X(0.4 * k), -1.4], [X(2 * k), -4.6 * k], [X(0.8 * k), -5 * k], [X(3 * k), -9 * k]], 1.4, glow));
-  if (t === 19) out.push(T([[X(-0.6 * k), -1], [X(1 * k), -5 * k], [X(4.4 * k), -9.4 * k], [X(4.6 * k), -5 * k], [X(6.6 * k), -5.4 * k], [X(4.8 * k), 0]], WHITE));
-  // The rim, then the cap.
-  out.push(E(X(1.2 * k), 0.8 * k, 4.6 * k, 3.4 * k, st >= 2 ? p.trim : p.deep), E(X(1 * k), 0, 4.6 * k, 3.4 * k, p.main), F(E(X(0), -1.2 * k, 2 * k, 1 * k, p.light)));
-  if (st >= 2) out.push(...emblemOnShoulder(t, p, X(1.4 * k), 0.4 * k));
+  if (t === 7) out.push(sp(5.4, 4.4, 2));
+  if (t === 8) out.push(sp(3.6, 4, 0.6), sp(6.6, 5, 2.6));
+  if (t === 9) out.push(sp(2, 4, -0.4), sp(4.8, 6, 1), sp(7.6, 4.6, 3));
+  if (t === 10) out.push(P([[1, -2.6], [5.6, -2.8], [11, -9], [4.6, -6]], p.light), P([[5.6, -2.4], [8.6, -1], [12.4, -5]], p.dark));
+  if (t === 11) out.push(sp(2.4, 6, -1, p.dark), sp(5.2, 8, 1.4, p.dark), sp(8, 5, 3.4, p.dark));
+  if (t === 12) out.push(P([[1.4, -2.6], [4, -11], [6, -2.6]], p.main), P([[5.6, -2.4], [10, -7.6], [9.4, -0.6]], p.dark), F(P([[3.2, -3], [4, -10], [4.6, -3]], glow)));
+  if (t === 13) out.push(sp(2.6, 5, 0.6, p.light), sp(5.4, 6.4, 1.4, p.light), sp(8.2, 4.6, 3, p.light));
+  if (t === 14) out.push(P([[1, -2.6], [9, -8], [7.4, -4], [12, -6], [9.4, 0]], p.light));
+  if (t === 15) out.push(sp(2, 5, -0.6, glow, 3), sp(5, 7.4, 0.6, glow, 3), sp(8, 5, 2.6, glow, 3));
+  if (t === 16) out.push(P([[2, -2.8], [5, -8], [10.4, -9.6], [7, -6.4], [8, -1.6]], BONE), sp(2, 4, -1.4, p.deep));
+  if (t === 17) out.push(sp(2.6, 6, -1.4, p.light, 1.8), sp(5.2, 9, 0.4, p.trim, 1.8), sp(8, 6, 2.6, p.light, 1.8));
+  if (t === 18) out.push(zig([[3 * k * s, -2.4 * k], [5 * k * s, -6 * k], [3.6 * k * s, -6.4 * k], [6.4 * k * s, -11 * k]], 1.4, glow));
+  if (t === 19) out.push(P([[1, -2.6], [3.4, -7], [7.8, -12], [8, -7], [11, -7.4], [9.6, -1.2]], WHITE), F(P([[4, -4], [7.4, -10], [7.2, -5.4]], mix(p.trim, WHITE, 0.4))));
+  // The trimmed rim, then the cap with a highlight.
+  out.push(P(cap.map(([x, y]) => [x, y + 1]), st === 0 ? LEATHER_D : st >= 2 ? p.trim : p.deep), P(cap, st === 0 ? (t ? LEATHER : p.main) : p.main), F(P([[0, -2.4], [5, -2.4], [8, -0.8], [5, -1.2], [0, -1.2]], st === 0 ? shade(LEATHER, 14) : p.light)));
+  if (t === 1) out.push(F(E(5 * k * s, 0.4 * k, 0.7, 0.7, p.trim)));
+  if (st >= 2) out.push(...emblemOnShoulder(t, p, 4.6 * k * s, 0.4 * k));
   return out;
 }
 
