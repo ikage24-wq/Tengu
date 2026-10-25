@@ -131,7 +131,14 @@ test('dying costs EXP and respawns you in town', () => {
   const m = spawnMob(w.map, { mob: 'piglet', x: w.body.x, y: w.map.groundY });
   m.def = { ...m.def, acc: 9999 };
   w.mobs.push(m);
-  for (let i = 0; i < 10 && !w.dead; i++) updateWorld(w, DT, idle);
+  // Monster hits cap at 98%, and a miss grants 0.5s of invulnerability, so pin the roll to a hit.
+  const random = Math.random;
+  Math.random = () => 0;
+  try {
+    for (let i = 0; i < 10 && !w.dead; i++) updateWorld(w, DT, idle);
+  } finally {
+    Math.random = random;
+  }
   assert.equal(w.dead, true);
   respawn(w);
   assert.equal(w.map.id, 'harbor');
