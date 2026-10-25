@@ -3,8 +3,9 @@
 A browser game in the spirit of classic 2D MMO side-scrollers: start as a Novice, grind cute
 monsters across connected maps, pick a job at level 10 and a specialty at 30, spend AP and SP,
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
-pastel style: characters are anime chibis (big glossy eyes, layered hair with a shine band, slim
-limbs) and they and the monsters are cel-shaded with outlines tinted from each part's own color;
+pastel style: characters are gacha-style chibis (a round head with ears, big soft eyes, rounded
+bangs with a shine band, slim jointed limbs) and they and the monsters are shaded with a soft
+lavender tone on the back side of each part, with outlines tinted from each part's own color;
 the world, items, and weapons are pixel art. No build step and no dependencies.
 
 ## Run it
@@ -79,7 +80,7 @@ then press the key. Right-click a hotkey slot to clear it.
   drop Rare or better. Drops also roll small stat differences. Every item has 7 upgrade slots for
   charms (100% / 60% / 10%) that spend a slot whether they work or not.
 - **Animation and feel** — the hero is a layered rig drawn at 3x detail and shaded automatically
-  (shadow bands under and behind each part, cast shadows from bangs and chin, a light rim): a 16-frame walk cycle
+  (the back third of each part and the back limbs in a lavender shadow, bangs casting onto the face): a 16-frame walk cycle
   driven by distance, with feet that arc forward, counter-swinging arms, a dip after each step
   and a head that lags a touch behind, a breathing idle with blinks, stretch on the way up and squash on
   landing, hair and capes that trail behind on springs, attack wind-up and lunge with a weapon

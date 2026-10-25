@@ -15,23 +15,19 @@ export const T = (pts, c, x = 0, y = 0) => ({ t: 'p', x, y, pts, c });
 export const F = (shape) => ({ ...shape, f: 1 });
 // Shapes that cast a soft shadow onto whatever sits just below them (bangs onto the face).
 export const C = (shape) => ({ ...shape, cast: 1 });
+// Lit shapes skip form shading and only take cast shadows (faces).
+export const L = (shape) => ({ ...shape, lit: 1 });
+
+// The soft shadow tone: a little darker and pulled toward lavender.
+export function shadowTone(c) {
+  return mix(shade(c, -7), '#9b8ad0', 0.2);
+}
 
 export function shade(hex, amount) {
   const n = parseInt(hex.slice(1), 16);
   const adj = (v) => Math.max(0, Math.min(255, v + Math.round((amount / 100) * 255)));
   const parts = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(adj);
   return `#${parts.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
-}
-
-const shadeCache = new Map();
-function shadeOf(c, amount) {
-  const k = `${c}${amount}`;
-  let v = shadeCache.get(k);
-  if (!v) {
-    v = shade(c, amount);
-    shadeCache.set(k, v);
-  }
-  return v;
 }
 
 // Blend two hex colors, t = 0 gives a, 1 gives b.
@@ -56,8 +52,8 @@ function outlineFor(c) {
 // Shapes use literal colors (strings starting with '#') or palette keys. `res` rasterizes at
 // res x res cells per art pixel (for smooth sprites); the outline then grows into a rounded
 // ring about two thirds of an art pixel wide, so corners soften instead of stair-stepping.
-// `soft` sprites are also shaded: a soft shadow tone along the back and bottom of the silhouette
-// and under shapes flagged to cast (C), and outlines take a deep shade of the part they wrap.
+// `soft` sprites are also shaded with a soft lavender tone on the back side of each part and
+// under shapes flagged to cast (C), and outlines take a deep shade of the part they wrap.
 // Shapes flagged flat (F) keep their exact color, for eyes and other fine details.
 //
 // Cells hold color ids (indexes into `colors`); EMPTY is transparent and NONE is a hole that
@@ -82,12 +78,14 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
   const grid = new Int32Array(gw * gh).fill(EMPTY);
   const flat = new Uint8Array(gw * gh);
   const cast = new Uint8Array(gw * gh);
+  const lit = new Uint8Array(gw * gh);
   const at = (v) => Math.round((v + PAD) * res);
   for (const s of shapes) {
     if (!s) continue;
     const id = s.c === 'none' ? NONE : idOf(s.c.startsWith('#') ? s.c : palette[s.c] ?? '#ff00ff');
     const f = s.f ? 1 : 0;
     const cs = s.cast ? 1 : 0;
+    const ls = s.lit ? 1 : 0;
     const span = (y, x0, x1) => {
       if (y < 0 || y >= gh) return;
       const a = Math.max(0, x0);
@@ -96,6 +94,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
         grid[i] = id;
         flat[i] = f;
         cast[i] = cs;
+        lit[i] = ls;
       }
     };
     if (s.t === 'r') {
@@ -130,32 +129,48 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
     }
   }
 
-  // Shading, read from the unshaded colors so bands don't feed into each other: one soft shadow
-  // tone along the back and bottom of the silhouette (light comes from the front and above), and
-  // a cast shadow just under shapes flagged `cast` (bangs over the face).
+  // Shading, read from the unshaded colors: each part's back side (the left third of every run
+  // of its color, light coming from the front) takes the soft lavender shadow tone, as does a thin
+  // band along the bottom of the silhouette and the strip just under any shape flagged to cast
+  // (bangs over the face). Lit shapes (L) only take cast shadows, so faces stay clean.
   const out = grid.slice();
   if (soft) {
-    const back = Math.round(res * 1.2);
-    const under = Math.max(1, Math.round(res * 0.7));
+    const under = Math.max(1, Math.round(res * 0.5));
     const castBand = Math.round(res * 1.1);
     const dark = new Map();
     const tone = (id) => {
       let v = dark.get(id);
       if (v === undefined) {
-        v = idOf(shadeOf(colors[id], -11));
+        v = idOf(shadowTone(colors[id]));
         dark.set(id, v);
       }
       return v;
     };
-    const outside = (x, y) => x < 0 || y < 0 || x >= gw || y >= gh || grid[y * gw + x] < 0;
+    const shaded = new Uint8Array(gw * gh);
+    for (let y = 0; y < gh; y++) {
+      let x = 0;
+      while (x < gw) {
+        const i = y * gw + x;
+        const c = grid[i];
+        if (c < 0 || flat[i]) {
+          x++;
+          continue;
+        }
+        // A run of this color; flat details inside it (strands, shines) don't break it.
+        let end = x;
+        while (end < gw && (grid[y * gw + end] === c || (flat[y * gw + end] && grid[y * gw + end] >= 0))) end++;
+        const back = Math.max(res, Math.round((end - x) * 0.3));
+        for (let k = x; k < Math.min(end, x + back); k++) shaded[y * gw + k] = 1;
+        x = end;
+      }
+    }
     for (let y = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++) {
         const i = y * gw + x;
         const c = grid[i];
         if (c < 0 || flat[i]) continue;
-        let shadow = false;
-        for (let k = 1; k <= back && !shadow; k++) shadow = outside(x - k, y);
-        for (let k = 1; k <= under && !shadow; k++) shadow = outside(x, y + k);
+        let shadow = !lit[i] && shaded[i] === 1;
+        for (let k = 1; k <= under && !shadow && !lit[i]; k++) shadow = y + k >= gh || grid[i + k * gw] < 0;
         if (!cast[i]) {
           for (let k = 1; k <= castBand && !shadow && y - k >= 0; k++) {
             const a = i - k * gw;

@@ -7,7 +7,7 @@
 // hips y 34.5-39 · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12 (back)
 // and 15.6 (front) · soles at y 56 · shoulders (11.3, 27.5) and (19.2, 27.5) · hands rest at y 36.8.
 
-import { R, E, T, F, shade } from './pixel.js';
+import { R, E, T, F, shade, shadowTone } from './pixel.js';
 
 const GOLD = '#ffd66b';
 const SILVER = '#dfe6f5';
@@ -102,7 +102,7 @@ export function reach(rx, ry, tx, ty, a, b, bend) {
   return [[rx + ux * along + uy * off, ry + uy * along - ux * off], [rx + dx, ry + dy]];
 }
 
-// ---------- Legs with shoes (one leg; back legs are drawn a shade darker) ----------
+// ---------- Legs with shoes (one leg; the back leg is drawn in the shadow tone) ----------
 
 export const THIGH = 7.8;
 export const SHIN = 7.6;
@@ -112,9 +112,9 @@ export const ANKLE_Y = 53;
 // x is the leg's left edge at rest. foot = [dx, dy, angle]: the ankle's offset from its rest spot
 // under the hip, and the foot's tilt in degrees (positive lifts the toe). hipY moves the hip.
 export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
-  const k = back ? -10 : 0;
-  const top = shade(look.top, k);
-  const low = shade(look.low, k);
+  const tint = (c) => (back ? shadowTone(c) : c);
+  const top = tint(look.top);
+  const low = tint(look.low);
   const hx = x + 1.5;
   const [[kx, ky], [ax, ay]] = reach(hx, hipY, hx + foot[0], ANKLE_Y + foot[1], THIGH, SHIN, 1);
   const shapes = [
@@ -122,15 +122,15 @@ export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
     E(kx, ky, 1.3, 1.3, top),
     limb(kx, ky, ax, ay, 2.6, 2.1, low),
   ];
-  if (look.pad) shapes.push(E(kx + 0.3, ky, 1.7, 1.4, shade(look.pad, k)));
-  shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, k));
+  if (look.pad) shapes.push(E(kx + 0.3, ky, 1.7, 1.4, tint(look.pad)));
+  shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, tint));
   return shapes;
 }
 
 // Shoes are drawn in the foot's frame (origin at the ankle, x toward the toe, y down to the sole)
 // and turned by the foot's tilt; boot shafts run up the shin toward the knee.
-function shoeShapes(ax, ay, kx, ky, tilt, shoe, k) {
-  const c = shade(shoe.color, k);
+function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
+  const c = tint(shoe.color);
   const rad = (tilt * Math.PI) / 180;
   const cos = Math.cos(rad);
   const sin = Math.sin(rad);
@@ -146,7 +146,7 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, k) {
   switch (shoe.design) {
     case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
     case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
-    case 'sabatons': return [shaft(3, shade(SILVER, k)), sole(shade(SILVER, k)), poly([[-1.9, 2], [3.5, 2], [3.6, 3], [-1.9, 3]], shade(SILVER, k - 14)), dot(0.4, 0, 0.6, '#ffffff')];
+    case 'sabatons': return [shaft(3, tint(SILVER)), sole(tint(SILVER)), poly([[-1.9, 2], [3.5, 2], [3.6, 3], [-1.9, 3]], tint(shade(SILVER, -14))), dot(0.4, 0, 0.6, '#ffffff')];
     case 'starboots': return [shaft(3.4, c), sole(c), shaft(0.8, GOLD, 3.1), dot(0.8, 0.6, 0.8, GOLD)];
     case 'wingboots': return [shaft(2.4, c), sole(c), poly([[-1.6, -1], [-4.8, -2.8], [-3.8, -0.6], [-4.6, 0.6], [-1.6, 0.6]], '#ffffff')];
     default: return [sole(c), poly([[-1.9, 2.2], [3.6, 2.2], [3.6, 3], [-1.9, 3]], shade(c, -18))];
