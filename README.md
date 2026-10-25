@@ -157,9 +157,9 @@ to clear it.
   knees, ankles, elbows) and shaded automatically (the back third of each part and the back limbs
   in a lavender shadow, bangs casting onto the face): a 24-frame walk cycle driven by distance,
   with heel strike, a planted foot that rolls onto its toe, a high heel kick behind, hips that sink
-  when the feet are spread, and counter-swinging arms, a breathing idle with blinks, stretch on the
-  way up and knees that give on landing, hair and capes that trail behind on springs, attack wind-up and lunge with a weapon
-  trail, a climbing cycle, and a hurt recoil. Monsters hop, breathe, pop in when they spawn, and
+  when the feet are spread, and counter-swinging arms pumping hard, a forward lean and a bounce at each step while running, a breathing idle with blinks and a slow weight shift, a bouncy fighting stance (weapon on guard, hair whipping) for a few seconds after a fight, stretch on the
+  way up and knees that give on landing, hair and capes that trail behind on springs, attack wind-up held for a beat before a strike that's over in a flash and a slow follow-through, a
+  bow that swings up into place before the draw, lunges with a weapon trail, a climbing cycle, and a hurt recoil. Monsters hop, breathe, pop in when they spawn, and
   squash when hit. Effects are drawn like hand-animated 2D anime effects (`src/render/fxkit.js`):
   hard-edged cel shapes with a white-hot core in a colored rim that snap open, hold, and then thin
   out, shrink, and break apart instead of just fading. Swings leave a tapered crescent smear whose

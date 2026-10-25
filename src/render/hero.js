@@ -790,11 +790,12 @@ function solveRig(state, anim, mv = null) {
     r.frontLeg = legKey(front);
     r.backLeg = legKey(back);
     // Each arm swings against the leg on its side; the hand lifts at the ends of the swing.
-    const hand = ([dx]) => [q(-0.45 * dx), q(-0.5 * (dx / HALF_STRIDE) ** 2)];
+    // Arms pump hard against the legs, fists lifting at the ends of each swing.
+    const hand = ([dx]) => [q(-0.6 * dx), q(-0.9 * (dx / HALF_STRIDE) ** 2)];
     r.frontArm = hand(front);
     r.backArm = hand(back);
-    r.hy = q(0.3 * Math.sin(4 * Math.PI * p - 1));
-    r.tx = q(0.6);
+    r.hy = q(0.4 * Math.sin(4 * Math.PI * p - 1));
+    r.tx = q(1);
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
     r.air = true;
@@ -820,11 +821,26 @@ function solveRig(state, anim, mv = null) {
       r.hairLift = -1;
     }
     r.mouth = 'open';
+  } else if (state.ready) {
+    // Fighting stance after a fight: feet wide, a springy bounce in the knees on a quick beat,
+    // fists up, and the hair whipping a moment behind each bounce.
+    const beat = t * 6.5;
+    const down = Math.sin(beat) > 0.2;
+    r.squat = down ? 1 : 0;
+    r.by = down ? 1 : 0;
+    r.frontLeg = [2, 0, 4];
+    r.backLeg = [-2.2, 0, -6];
+    r.frontArm = [1, q(-1.5 + (down ? 0.5 : 0))];
+    r.backArm = [1.5, q(-2 + (down ? 0.5 : 0))];
+    r.hair = Math.round((r.hair + Math.sin(beat - 1.2) * 1.2) * 2) / 2;
+    r.tx = 1;
   } else {
-    // Idle breathing: the upper body eases down a pixel on each exhale, the arms follow.
+    // Idle breathing: the upper body eases down a pixel on each exhale, the arms follow, and the
+    // weight drifts from foot to foot every few seconds.
     r.by = q(0.5 + 0.5 * Math.sin(t * 2.4));
     r.frontArm = [0, r.by];
     r.backArm = [0, r.by];
+    r.tx = q(0.5 * Math.sin(t * 0.45));
   }
 
   // Landing squash: the knees give, the hips drop, and the feet spread.
@@ -1068,9 +1084,15 @@ const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
 // Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const pose = state.pose ?? 'idle';
-  const mv = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  const moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  // Walking, the whole body leans into the run and rises a little at each passing step.
+  let mv = moved;
+  if (!moved && pose === 'walk' && anim) {
+    const p = walkPhase(anim);
+    mv = { lift: Math.max(0, Math.sin(p * Math.PI * 4)) * 1.2, lunge: 0, tilt: 0.07, turn: 1, stretch: 1, bodyOnly: true };
+  }
   if (!mv || (!mv.lift && !mv.lunge && !mv.tilt && mv.turn === 1 && mv.stretch === 1)) {
-    paintHero(ctx, look, gear, x, y, state, anim, mv);
+    paintHero(ctx, look, gear, x, y, state, anim, moved);
     return;
   }
   const scale = state.scale ?? 1;
@@ -1081,7 +1103,7 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   ctx.rotate(mv.tilt * dir);
   ctx.scale(Math.abs(mv.turn) < 0.05 ? 0.05 * Math.sign(mv.turn || 1) : mv.turn, mv.stretch);
   ctx.translate(-x, -pivot);
-  paintHero(ctx, look, gear, x, y, state, anim, mv);
+  paintHero(ctx, look, gear, x, y, state, anim, moved);
   ctx.restore();
 }
 
@@ -1091,7 +1113,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const g = resolveGear(look, gear);
   const rig = solveRig(state, anim, mv);
   rig.armIn = !attack;
-  const idleW = !attack && pose === 'idle' && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
+  const idleW = !attack && pose === 'idle' && !state.ready && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
   if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
   if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   const lookKey = JSON.stringify(look);
@@ -1130,7 +1152,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const armDy = bodyY;
 
   const restAngle = { crossbow: 55, claw: 100 }[g.weapon?.type] ?? 25;
-  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
+  // On guard, the weapon points out front and dips with each bounce.
+  const guard = state.ready && pose === 'idle' ? { crossbow: 80, claw: 110, bow: 20 }[g.weapon?.type] ?? 62 : null;
+  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];

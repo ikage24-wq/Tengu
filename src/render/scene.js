@@ -169,7 +169,11 @@ export function drawWorld(ctx, world, viewCam, time) {
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
   const hx = Math.round(b.x - cam.x);
   const hy = Math.round(b.y - cam.y);
-  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job };
+  // After fighting (attacking or getting hit) the hero stays in a bouncy ready stance for a few
+  // seconds before relaxing.
+  if (world.pose || world.attackTimer > 0 || world.invuln > 0.6) feel.lastFight = world.now;
+  const ready = !world.map.isTown && world.now - (feel.lastFight ?? -99) < 4;
+  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job, ready };
   const buffs = world.dead ? {} : world.char.buffs;
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);

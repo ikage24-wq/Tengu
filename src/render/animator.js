@@ -59,8 +59,10 @@ export function stepAnim(a, body, dt) {
   const speed = Math.max(-1, Math.min(1, localVx / 125));
   const idleSway = Math.sin(a.t * 1.3) * 0.5;
   const fall = body.onGround ? 0 : Math.max(-1, Math.min(1, body.vy / 500));
-  spring(a, 'hair', 'hairV', -speed * 2.2 + idleSway + fall * 0.6, 140, 11, dt);
-  spring(a, 'cape', 'capeV', -speed * 3.2 + idleSway * 0.8 + fall * 1.2, 70, 7, dt);
+  // Running, they stream out behind and ripple with each stride.
+  const ripple = body.onGround ? Math.sin((a.dist / STRIDE) * Math.PI * 4) * Math.abs(speed) : 0;
+  spring(a, 'hair', 'hairV', -speed * 3 + idleSway + fall * 0.6 + ripple * 0.9, 140, 11, dt);
+  spring(a, 'cape', 'capeV', -speed * 4 + idleSway * 0.8 + fall * 1.2 + ripple * 1.2, 70, 7, dt);
 
   for (const p of a.trail) p.age += dt;
   a.trail = a.trail.filter((p) => p.age < 0.14);

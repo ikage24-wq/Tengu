@@ -735,6 +735,8 @@ function drawBot(ctx, bot, x, y, time, hovered, said) {
   const anim = animFor(bot.id, body ? body.x : bot.x, facing, time);
   drawHero(ctx, look, wornGear(bot.char), x, y, {
     pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
+    // Party members fighting nearby stand on guard between swings.
+    ready: Boolean(bot.party && bot.brain?.target),
   }, anim);
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;

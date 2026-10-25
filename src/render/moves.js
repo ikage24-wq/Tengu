@@ -174,10 +174,13 @@ export const MOVES = {
 
   // A full bow draw: pull the string back slowly, then release with a snap of recoil.
   draw(p) {
-    const pull = ease(seg(p, 0, 0.55));
+    // Swing the bow up from across the body to upright, draw and hold the aim, then loose.
+    const raise = ease(seg(p, 0, 0.2));
+    const pull = ease(seg(p, 0.12, 0.55));
     const snap = seg(p, 0.55, 0.7);
+    const shiver = p > 0.42 && p < 0.55 ? Math.sin(p * 220) * 1.5 : 0;
     return {
-      weapon: 0, arm: 95, lunge: -2 * snap * (1 - seg(p, 0.7, 1)), tilt: -0.06 * pull * (1 - snap) - 0.05 * snap,
+      weapon: lerp(-55, 0, raise) + shiver, arm: lerp(60, 95, raise), lunge: -2 * snap * (1 - seg(p, 0.7, 1)), tilt: -0.06 * pull * (1 - snap) - 0.05 * snap,
       rig: (r) => { r.backArm = snap > 0 ? [-4, -2] : [q(2 - 6 * pull), -3]; r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.6, 0, 0]; r.tx = snap > 0 ? -1 : 0; },
     };
   },
@@ -354,8 +357,19 @@ export function defaultMove(type, weaponType, params) {
   return 'slash';
 }
 
+// Melee swings get hand-animated timing: the wind-up is drawn out and held for a beat, the strike
+// itself is over in a couple of frames, and the recovery eases back slowly. The moves are written
+// with a wind-up to about 0.3 and the cut to about 0.65; this reshapes time around that.
+const SNAPPY = new Set(['slash', 'slash2', 'thrust', 'overhead']);
+function snap(p) {
+  if (p < 0.4) return 0.3 * ease(p / 0.4) ** 0.7; // wind up, slowing into a hold
+  if (p < 0.5) return 0.3 + 0.35 * ((p - 0.4) / 0.1); // the cut, in a flash
+  return 0.65 + 0.35 * ease((p - 0.5) / 0.5); // follow through and settle
+}
+
 export function moveAt(kind, progress, dur = 0.35) {
   const fn = MOVES[kind];
   if (!fn) return null;
-  return { lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false, ...fn(clamp01(progress), dur) };
+  const p = SNAPPY.has(kind) ? snap(clamp01(progress)) : clamp01(progress);
+  return { lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false, ...fn(p, dur) };
 }
