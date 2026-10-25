@@ -19,11 +19,12 @@ const SKILL_LEVEL_CAP = 10;
 const SKILL_DAMAGE_PER_LEVEL = 0.15;
 const INTERACT_RANGE = 90;
 
-export function createGame(classId) {
+export function createGame(classId, appearance) {
   const classDef = CLASSES[classId];
   const character = createCharacter(classDef);
   const game = {
     classDef,
+    appearance,
     character,
     skillLevels: {},
     equipped: {},

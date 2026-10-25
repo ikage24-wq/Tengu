@@ -15,6 +15,11 @@ python3 -m http.server 8000
 
 ## Controls
 
+Character creator: Up/Down choose an option, Left/Right change it, Enter continues.
+Class select: 1, 2, or 3.
+
+In game:
+
 | Key | Action |
 | --- | --- |
 | Arrow keys / A, D | Move |
@@ -38,6 +43,9 @@ python3 -m http.server 8000
 - **Mobs** — Snail, Mushroom, Wolf, Golem across three maps. They patrol, respawn
   after 10 seconds, and give less EXP when you are far above their level
   (`src/mobs.js`).
+- **Character** — Customize hair style and color, skin, eye style and color,
+  and outfit color in the creator. Characters are drawn in code, so there are
+  no image files to download.
 - **Gear** — Five slots (weapon, hat, top, gloves, shoes) in five rarities.
   Better gear auto-equips. Upgrades go from 0 to 15, with success odds that
   fall as the level rises. Failure costs gold but keeps the item (`src/gear.js`).
@@ -58,6 +66,8 @@ src/combat.js     skill casting, cooldowns, AoE hit detection
 src/mobs.js       mob definitions, patrol AI, death rewards
 src/gear.js       gear rolls, rarities, upgrades
 src/world.js      maps, NPCs, portals, spawn tables
+src/appearance.js character customization options and defaults
+src/sprites.js    procedural character and mob drawing (no image files)
 ```
 
 The logic modules (`progression`, `combat`, `mobs`, `gear`, `classes`, `world`)
