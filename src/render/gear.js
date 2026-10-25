@@ -75,7 +75,8 @@ function side(pts, x, keep, c) {
 
 // ---------- Tops (torso part) ----------
 
-const collar = (c) => T([[12.8, 26.2], [18.2, 26.2], [15.8, 29.2]], c);
+// The neckline sits toward the front, since the body is turned to face its direction.
+const collar = (c) => T([[14.4, 26.2], [19.8, 26.2], [17.4, 29.2]], c);
 
 export function topShapes(design, c, body = 'feminine') {
   const d = shade(c, -16);
@@ -87,12 +88,12 @@ export function topShapes(design, c, body = 'feminine') {
   const parts = (() => {
     switch (design) {
       case 'stripes': return [T(torso, c), band(torso, 29.2, 30.3, d), band(torso, 31.6, 32.6, d), band(torso, 34, 35.1, d), collar(l), ...curves(c)];
-      case 'vest': return [T(torso, '#fff6ec'), side(torso, 14, -1, c), side(torso, 17.2, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(15.6, 33.7, 0.9, 0.8, GOLD)), ...curves(c)];
-      case 'plate': return [T(torso, SILVER), T([[12.6, 28], [18.6, 28], [17.8, 32.5], [15.6, 34], [13.4, 32.5]], c), F(E(14.4, 29.6, 0.8, 0.8, '#ffffff')), band(torso, 33.6, 35.4, shade(SILVER, -18)), E(10.8, 27.6, 2.4, 2, l), E(20.2, 27.6, 2.4, 2, l)];
+      case 'vest': return [T(torso, '#fff6ec'), side(torso, 15.2, -1, c), side(torso, 18.4, 1, c), band(torso, 32.9, 34.6, '#7a5238'), F(E(16.8, 33.7, 0.9, 0.8, GOLD)), ...curves(c)];
+      case 'plate': return [T(torso, SILVER), T([[13.8, 28], [19.8, 28], [19, 32.5], [16.8, 34], [14.6, 32.5]], c), F(E(15.6, 29.6, 0.8, 0.8, '#ffffff')), band(torso, 33.6, 35.4, shade(SILVER, -18)), E(10.8, 27.6, 2.4, 2, l), E(20.2, 27.6, 2.4, 2, l)];
       case 'starrobe': return [T(robe, c), band(robe, 26.2, 27.2, GOLD), F(R(15.2, 29.4, 0.9, 3, GOLD)), F(R(14.2, 30.4, 2.9, 0.9, GOLD)), band(robe, 43.4, 44.5, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD)), ...curves(c)];
       case 'celestial': return [T(robe, c), band(robe, 33, 44.5, l), band(robe, 26.2, 27.2, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), band(robe, 43.4, 44.5, GOLD), ...curves(c)];
-      case 'kimono': return [T(robe, c), T([[12.4, 26.4], [15, 26.4], [17.8, 32]], '#ffffff'), T([[14, 26.4], [16, 26.4], [17.8, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(18, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff')), ...curves(c)];
-      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[14.2, 29.8], [17, 29.8], [16.4, 32.6], [15.6, 31.6], [14.8, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c), ...curves('#ffffff')];
+      case 'kimono': return [T(robe, c), T([[13.6, 26.4], [16.2, 26.4], [19, 32]], '#ffffff'), T([[15.2, 26.4], [17.2, 26.4], [19, 31]], l), band(robe, 32, 34.6, '#ff6b9a'), F(E(18, 33.3, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff')), ...curves(c)];
+      case 'sailor': return [T(torso, '#ffffff'), T([[11, 26.2], [20.2, 26.2], [20.6, 28.6], [15.6, 31.2], [10.6, 28.6]], c), F(T([[15.4, 29.8], [18.2, 29.8], [17.6, 32.6], [16.8, 31.6], [16, 32.6]], '#ff6b8a')), band(torso, 33.6, 35.8, c), ...curves('#ffffff')];
       case 'hoodie': return [T(torso, c), T([[11.4, 25.8], [19.6, 25.8], [18.6, 28.2], [12.4, 28.2]], d), R(12.6, 31.6, 6, 2.8, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.2, '#ffffff')), ...curves(c)];
       default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d), ...curves(c)];
     }

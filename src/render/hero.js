@@ -79,6 +79,18 @@ function gearKey(gear) {
 const RIBBON = '#ff9ec0';
 const HEAD_X = 15.5;
 const HEAD_Y = 14.6;
+// The face sits a little forward on the skull, toward the facing side.
+const FACE_X = 16.5;
+
+// Narrows shapes horizontally around x = cx (the far eye in three-quarter view).
+function squeezeX(shapes, cx, k) {
+  const fx = (x) => cx + (x - cx) * k;
+  return shapes.map((sh) => {
+    if (sh.t === 'p') return { ...sh, x: 0, pts: sh.pts.map(([px, py]) => [fx(sh.x + px), py]) };
+    if (sh.t === 'e') return { ...sh, x: fx(sh.x), rx: sh.rx * k };
+    return { ...sh, x: fx(sh.x), w: sh.w * k };
+  });
+}
 
 // An arc stroke along an ellipse, from angle a0 to a1 (degrees, 0 = right, 90 = down), th thick.
 function arc(cx, cy, rx, ry, a0, a1, th, c) {
@@ -251,15 +263,17 @@ function headShapes(look, g, rig) {
   const out = [];
   if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairLift).filter((sh) => !sh.hang));
   if (hat) out.push(...hatBackShapes(hat.design, hat.color));
-  // Ears sit behind the face so only their outer halves show.
-  out.push(L(E(4.9, 17.2, 1.7, 2.2, skin)), L(E(26.1, 17, 1.7, 2.2, skin)), F(E(4.7, 17.4, 0.7, 1.1, '#f4bfcb')), F(E(26.3, 17.2, 0.7, 1.1, '#f4bfcb')));
-  // A round face with full cheeks.
-  out.push(L(E(HEAD_X, HEAD_Y, 10.4, 9.8, skin)), L(E(HEAD_X + 0.3, 18.2, 9.2, 6.2, skin)));
-  out.push(...eye(11.4, -1, eyeStyle, eyeColor, rig.eyes, skin), ...eye(20.2, 1, eyeStyle, eyeColor, rig.eyes, skin));
-  out.push(F(E(9.6, 21, 1.7, 0.65, '#f7c1cc')), F(E(22, 21, 1.7, 0.65, '#f7c1cc')));
-  if (rig.eyes === 'hurt') out.push(F(E(16.2, 22.8, 1, 0.7, INK)));
-  else if (rig.mouth === 'open') out.push(F(E(16.2, 22.6, 1.05, 0.85, '#b2506c')), F(E(16.2, 23.1, 0.6, 0.35, '#ff9fb8')));
-  else out.push(F(E(16.2, 22.4, 0.7, 0.42, '#c97a8a')));
+  // Three-quarter view toward the facing side (right): only the back ear shows, the face sits
+  // forward on the skull with the chin toward the front, the far eye is narrower and the near
+  // one full size, and the mouth, blush, and a tiny nose follow the turn.
+  out.push(L(E(6.6, 17.4, 1.8, 2.3, skin)), F(E(6.4, 17.6, 0.7, 1.2, '#f4bfcb')));
+  out.push(L(E(FACE_X, HEAD_Y, 10, 9.8, skin)), L(E(FACE_X + 0.6, 18.4, 8.8, 6, skin)), L(T([[12.6, 21.6], [23.6, 20.6], [21, 24], [18.6, 25]], skin)));
+  out.push(...squeezeX(eye(13.2, -1, eyeStyle, eyeColor, rig.eyes, skin), 13.2, 0.78), ...eye(20.8, 1, eyeStyle, eyeColor, rig.eyes, skin));
+  out.push(F(E(11.4, 21, 1.2, 0.6, '#f7c1cc')), F(E(22.6, 21, 1.7, 0.65, '#f7c1cc')));
+  out.push(F(E(24, 19.8, 0.4, 0.35, shade(skin, -22))));
+  if (rig.eyes === 'hurt') out.push(F(E(19.2, 22.8, 1, 0.7, INK)));
+  else if (rig.mouth === 'open') out.push(F(E(19.2, 22.6, 1.05, 0.85, '#b2506c')), F(E(19.2, 23.1, 0.6, 0.35, '#ff9fb8')));
+  else out.push(F(E(19.2, 22.4, 0.7, 0.42, '#c97a8a')));
   if (!hat || hat.design !== 'bunny') out.push(...hairFront(style, hair));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
   if (g.earring) out.push(...earringShapes(g.earring.design, g.earring.color));
@@ -285,17 +299,25 @@ function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
   ];
 }
 
+// Seen three-quarters from the side: the back shoulder sits inside the torso so that arm hangs
+// mostly behind the body, and the front shoulder sits at the torso's front edge so that arm hangs
+// along the side; each hand rests a little forward by the hip so the elbow bends softly.
+const BACK_SHOULDER = 13;
+const FRONT_SHOULDER = 18.8;
+const HAND_FORWARD = 1.2;
+const HAND_Y = 36.4;
+
 // A resting arm from the shoulder at (sx, 27.6), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin) {
-  return arm(sx, 27.6, sx + 0.6 + dx, 36.8 + dy, sleeve, long, g, skin);
+  return arm(sx, 27.6, sx + HAND_FORWARD + dx, HAND_Y + dy, sleeve, long, g, skin);
 }
 
 // Attack arms point along `angle` (0 = down, 90 = forward, 180 = up) from the front shoulder.
 function aimedArm(angle, sleeve, long, g, skin) {
   const rad = (angle * Math.PI) / 180;
-  const hx = 19.2 + Math.sin(rad) * 8.6;
+  const hx = FRONT_SHOULDER + Math.sin(rad) * 8.6;
   const hy = 27.8 + Math.cos(rad) * 8.6;
-  return { shapes: arm(19.2, 27.8, hx, hy, sleeve, long, g, skin), hand: [hx, hy] };
+  return { shapes: arm(FRONT_SHOULDER, 27.8, hx, hy, sleeve, long, g, skin), hand: [hx, hy] };
 }
 
 // ---------- Body parts per rig ----------
@@ -322,9 +344,9 @@ function bodyShapes(look, g, rig) {
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap), ux, uy));
-  shapes.push(...offset(armShapes(11.3, rig.backArm[0], rig.backArm[1], shadowTone(sleeve), long, g, shadowTone(skin)), ux, uy));
-  shapes.push(...legShapes(12, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
-  shapes.push(...legShapes(15.6, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
+  shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], shadowTone(sleeve), long, g, shadowTone(skin)), ux, uy));
+  shapes.push(...legShapes(12.8, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
+  shapes.push(...legShapes(15.2, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
   shapes.push(...offset(hipShapes(legs, body), ux * 0.5, drop + rig.by * 0.5));
   const skirt = skirtShapes(g.bottom.design, g.bottom.color);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
@@ -338,10 +360,11 @@ function bodyShapes(look, g, rig) {
 const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy }));
 
 // The chibi squash: below the neck, heights shrink to KY and (for the body) widths to KX around
-// the body's center line, so a 56-tall figure stands 48 tall under an unchanged head.
+// the body's center line, so a 56-tall figure stands 48 tall under an unchanged head and its
+// torso reads narrow, as a body does turned to the side.
 const NECK = 24;
 const KY = 0.75;
-const KX = 1;
+const KX = 0.88;
 const squashY = (y) => (y <= NECK ? y : NECK + (y - NECK) * KY);
 const squashX = (x) => 15.5 + (x - 15.5) * KX;
 function squash(shapes, narrow = true) {
@@ -683,8 +706,8 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     hand = [aimed.hand[0] + rig.tx, aimed.hand[1] + bodyY];
     armKey = `a${Math.round(angles.arm / 5)}`;
   } else {
-    armShapesNow = armShapes(19.2, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin);
-    hand = [19.8 + rig.frontArm[0] + rig.tx, 36.8 + rig.frontArm[1] + bodyY];
+    armShapesNow = armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin);
+    hand = [FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0] + rig.tx, HAND_Y + rig.frontArm[1] + bodyY];
     armKey = `r${rig.frontArm.join(',')}`;
   }
   const armDx = rig.tx;
