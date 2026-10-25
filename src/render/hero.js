@@ -459,8 +459,13 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const armDx = rig.tx;
   const armDy = rig.by;
 
-  const restAngle = { bow: 60, crossbow: 10, claw: 70 }[g.weapon?.type] ?? 25;
-  const weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
+  const restAngle = { crossbow: 10, claw: 70 }[g.weapon?.type] ?? 25;
+  let weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
+  // Bows grip in the middle, so out of combat they're slung across the back instead of held.
+  if (!angles && g.weapon?.type === 'bow') {
+    hand = [14 + rig.tx, 27 + rig.by];
+    weaponAngle = 112 + rig.by * 2;
+  }
 
   const drawWeapon = () => {
     if (!wpn) return;

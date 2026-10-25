@@ -221,12 +221,13 @@ function bow(t, f) {
   const bend = 6 + Math.min(t, 4) * 1.2;
   const W = 56;
   const top = 16;
-  const bx = 32;
+  // The limbs bow out toward the target (forward, +x); the string sits on the archer's side.
+  const bx = 22;
   const g = grid(W, top + h + 14);
   const spans = [];
   for (let i = 0; i <= h; i++) {
     const u = i / h;
-    const x = Math.round(bx - bend * Math.sin(Math.PI * u));
+    const x = Math.round(bx + bend * Math.sin(Math.PI * u));
     const th = u > 0.42 && u < 0.58 ? thick + 1 : u < 0.08 || u > 0.92 ? thick - 1 : thick;
     spans.push([top + i, x, x + th - 1]);
   }
@@ -234,21 +235,21 @@ function bow(t, f) {
   // Recurved, capped tips.
   const trim = SHAFTS[t][2];
   if (t >= 1) {
-    g.rect(bx + 1, top - 2, 2, 3, trim);
-    g.rect(bx + 1, top + h, 2, 3, trim);
+    g.rect(bx - 2, top - 2, 2, 3, trim);
+    g.rect(bx - 2, top + h, 2, 3, trim);
   }
   const mid = top + Math.round(h / 2);
-  const gx = Math.round(bx - bend);
+  const gx = Math.round(bx + bend);
   g.rect(gx, mid - 3, thick + 1, 7, SHAFTS[t][1]);
   const string = el ? ELEMENTS[el].glow : '#fff6fb';
-  g.rect(bx + 2, top + 1, 1, h - 1, string);
+  g.rect(bx - 2, top + 1, 1, h - 1, string);
   if (el) {
-    gem(g, gx + 2, mid, 2, ELEMENTS[el].gem);
-    collar(g, el, gx + 2, mid - 2, f, 0.45);
-    crown(g, el, bx + 2, top - 7, f);
-    crown(g, el, bx + 2, top + h + 6, (f + 3) % ELEMENT_FRAMES);
+    gem(g, gx + 1, mid, 2, ELEMENTS[el].gem);
+    collar(g, el, gx + 1, mid - 2, f, 0.45);
+    crown(g, el, bx - 2, top - 7, f);
+    crown(g, el, bx - 2, top + h + 6, (f + 3) % ELEMENT_FRAMES);
   }
-  return { w: W, h: g.h, grip: [gx + 2, mid], blade: [top, top + h], g };
+  return { w: W, h: g.h, grip: [gx + 1, mid], blade: [top, top + h], g };
 }
 
 // ---------- Crossbows (horizontal, pointing right) ----------
@@ -393,12 +394,12 @@ export function weaponIcon(type, tier) {
       break;
     case 'bow':
       for (let y = 1; y <= 14; y++) {
-        const x = Math.round(10 - 6 * Math.sin((Math.PI * (y - 1)) / 13));
+        const x = Math.round(5 + 6 * Math.sin((Math.PI * (y - 1)) / 13));
         g.set(x, y, m.mid);
         g.set(x + 1, y, m.dark);
       }
-      g.rect(11, 2, 1, 12, el ? ELEMENTS[el].glow : '#fff6fb');
-      g.rect(4, 7, 2, 3, sb);
+      g.rect(4, 2, 1, 12, el ? ELEMENTS[el].glow : '#fff6fb');
+      g.rect(10, 7, 2, 3, sb);
       break;
     case 'crossbow':
       g.rect(1, 8, 12, 2, sa);
