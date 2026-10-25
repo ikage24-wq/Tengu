@@ -26,7 +26,8 @@ export function price(n) {
 // Slots: each returns a phrase. `ctx` carries the speaker and the real player's name.
 const SLOTS = {
   item: () => pick(GEAR()).name,
-  weapon: () => pick(WEAPONS()).name,
+  // A party member talks about their own weapon; anyone else about whatever.
+  weapon: (c) => c.weapon ?? pick(WEAPONS()).name,
   drop: () => pick(DROPS()).name,
   potion: () => pick(POTIONS()).name,
   map: () => pick(HUNTS()).name,

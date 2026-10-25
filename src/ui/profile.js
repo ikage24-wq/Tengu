@@ -8,6 +8,7 @@ import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js'
 import { addItem } from '../core/inventory.js';
 import { STAT_KEYS } from '../core/character.js';
 import { buildLabel, buyFromShop, thank } from '../world/bots.js';
+import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
@@ -66,6 +67,7 @@ export function profileWindow(ui, state, world) {
   if (pro) tag('★ Top player', ly + 169, '#e0a52f');
   if (who.kind === 'self') tag("That's you!", ly + 169, COLORS.accent);
   else if (bot?.shop) tag('Shop open', ly + 184, '#ff8fc1');
+  if (bot?.party && bot.ai) tag(`Party · ${PLAYSTYLES[bot.ai.kind].label}`, ly + (pro ? 184 : 169), PLAYSTYLES[bot.ai.kind].color);
 
   // Tabs: gear, stats, and their shop if one is open.
   const names = ['Gear', 'Stats', ...(bot?.shop ? ['Shop'] : [])];

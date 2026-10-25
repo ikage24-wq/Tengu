@@ -150,7 +150,18 @@ to clear it.
   follow you from map to map (climbing ropes, jumping to ledges, dropping down, and catching up if
   they get stuck), fight the monsters around you, and chat in party chat. Their kills give you 60%
   of the EXP, count for your quests, and drop loot for you; your own kills get +10% EXP per member.
-  They level up with you. A party panel under the minimap shows everyone (click for a profile,
+  They level up with you. Each member has their own playstyle, picked from their job and level,
+  plus small quirks (which side of you they keep, how far, how fast they react and walk):
+  - **Rusher**: charges into packs well ahead of you.
+  - **Guardian**: stays at your side and takes on whatever comes at you.
+  - **Sniper**: hangs back at range, shoots over ledges, and steps away when a monster gets close.
+  - **Healer**: stays close and heals you when your HP drops.
+  - **Rookie**: wanders off, hops about, and falls behind.
+  - **Show-off**: flashy specials, flips, and wide roaming.
+
+  Members pick a side of a monster and keep it, hold a good spot instead of chasing every step, and
+  spread out over different targets, so their movement stays calm. A party panel under the minimap
+  shows everyone with their playstyle (click for a profile,
   right-click to remove someone); Leave, or right-clicking yourself, leaves the party, and members
   head off on their own (or log off after a long session).
 - **Options** — Esc (or the gear button) opens Options. Display: screen shake, hit-stop, damage
