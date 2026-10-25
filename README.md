@@ -128,10 +128,10 @@ then press the key. Right-click a hotkey slot to clear it.
   telegraphs a ground slam.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
-  dagger toss, claw jab). Every mage second and third job adds its own aura that fades in while
-  idle: ice crystals and snow, fireballs and venom bubbles, a halo and feathers; the third jobs
-  grow grander frost or phoenix wings and a holy pillar. Elowen shows off the Bishop aura in
-  Moonleaf Grove.
+  dagger toss, claw jab). Advanced jobs get a quiet aura that fades in while idle: a soft glow at
+  the feet in the job's color with a few drifting snowflakes, embers, or sparkles, plus a slowly
+  turning rune ring for the Archmages and a halo for the Bishop. Elowen shows off the Bishop
+  aura in Moonleaf Grove.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
   expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.

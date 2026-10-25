@@ -999,7 +999,7 @@ function weaponIdle(type, t) {
 }
 
 // Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,
-// layered behind and in front of the sprite; Duelists also leave flickering afterimages.
+// layered behind and in front of the sprite.
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const job = AURA_JOBS.has(state.job) ? state.job : null;
   if (!job) return drawHeroBody(ctx, look, gear, x, y, state, anim);
@@ -1013,17 +1013,10 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     k = anim.aura;
   }
   const s = state.scale ?? 1;
-  const dir = (state.facing ?? 1) < 0 ? -1 : 1;
   const t = time + (state.seed ?? 0) * 1.37;
-  drawJobAura(ctx, job, 'back', x, y, t, s, k, dir);
-  if (job === 'duelist' && k > 0.05) {
-    for (const side of [-1, 1]) {
-      const off = side * (8 + Math.sin(t * 3 + side) * 4) * s;
-      drawHeroBody(ctx, look, gear, x + off, y, { ...state, alpha: (state.alpha ?? 1) * k * (0.22 + 0.1 * Math.sin(t * 7 + side)) }, null);
-    }
-  }
+  drawJobAura(ctx, job, 'back', x, y, t, s, k);
   drawHeroBody(ctx, look, gear, x, y, state, anim);
-  drawJobAura(ctx, job, 'front', x, y, t, s, k, dir);
+  drawJobAura(ctx, job, 'front', x, y, t, s, k);
 }
 
 // Older pose names still used by callers map onto moves.
