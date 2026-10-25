@@ -95,9 +95,13 @@ then press the key. Right-click a hotkey slot to clear it.
   trail, a climbing cycle, and a hurt recoil. Monsters hop, breathe, pop in when they spawn, and
   squash when hit. Footstep dust, hit sparks, defeat poofs, screen shake, short hitstop on crits
   and kills, and ambient petals, fireflies, and glints in every map.
-- **Monsters and maps** — 17 monsters and the Crystal King boss across 12 maps (four towns, two
+- **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room) with
-  one-way ledges, ropes, and portals that name where they lead. Hit monsters chase you; the boss
+  one-way ledges, ropes, and portals that name where they lead. Every region has its own
+  monsters (dandelion Fuzzlets and Bloomsnails in the meadow, Pebblets and Scorpips in the canyon,
+  Leafoxes in the woods, Skelly Knights in the ruins, Gemjellies in the cave, Flufframs in the sky),
+  and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
+  when they chase you (hit monsters do), >< eyes when hit, and x eyes when they poof. The boss
   telegraphs a ground slam.
 - **Towns and the world map** — each job has a home town in its own style: Sprout Village
   (archers, a pastel village with archery targets), Pastel Harbor (thieves, moonlit docks with

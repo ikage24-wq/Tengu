@@ -84,7 +84,7 @@ function drawMobs(ctx, world, cam, time) {
     const x = m.x - cam.x;
     const y = m.y - cam.y;
     if (x < -80 || x > VIEW_W + 80) continue;
-    drawMonster(ctx, m, x, y, time);
+    drawMonster(ctx, m, x, y, time, world.now);
     if (m.def.boss) boss = m;
     if (m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
       const w = Math.max(24, m.def.w);
@@ -93,9 +93,9 @@ function drawMobs(ctx, world, cam, time) {
     }
   }
   if (boss && boss.hp > 0) {
-    box(ctx, 170, 26, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
-    box(ctx, 171, 27, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
-    text(ctx, `${boss.def.name}  Lv ${boss.def.level}`, 320, 35, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#5a3f7a' });
+    box(ctx, 170, 60, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
+    box(ctx, 171, 61, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
+    text(ctx, `${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#5a3f7a' });
   }
 }
 

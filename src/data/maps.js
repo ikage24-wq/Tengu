@@ -290,10 +290,10 @@ Object.assign(MAPS, {
     ],
     npcs: [],
     spawns: [
-      { mob: 'mushkin', x: 320, y: 480 }, { mob: 'piglet', x: 760, y: 480 }, { mob: 'mushkin', x: 1200, y: 480 },
-      { mob: 'piglet', x: 1650, y: 480 }, { mob: 'boarlet', x: 1950, y: 480 }, { mob: 'piglet', x: 320, y: 400 },
-      { mob: 'mushkin', x: 620, y: 320 }, { mob: 'piglet', x: 950, y: 400 }, { mob: 'boarlet', x: 1100, y: 250 },
-      { mob: 'piglet', x: 1380, y: 330 }, { mob: 'mushkin', x: 1680, y: 400 }, { mob: 'boarlet', x: 1920, y: 320 },
+      { mob: 'pebblet', x: 320, y: 480 }, { mob: 'scorpip', x: 760, y: 480 }, { mob: 'pebblet', x: 1200, y: 480 },
+      { mob: 'scorpip', x: 1650, y: 480 }, { mob: 'scorpip', x: 1950, y: 480 }, { mob: 'pebblet', x: 320, y: 400 },
+      { mob: 'pebblet', x: 620, y: 320 }, { mob: 'pebblet', x: 950, y: 400 }, { mob: 'scorpip', x: 1100, y: 250 },
+      { mob: 'scorpip', x: 1380, y: 330 }, { mob: 'pebblet', x: 1680, y: 400 }, { mob: 'scorpip', x: 1920, y: 320 },
     ],
   },
 
