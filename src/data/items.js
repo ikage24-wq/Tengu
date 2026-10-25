@@ -18,6 +18,39 @@ function add(def) {
 
 export const ELEMENT_NAMES = { holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water' };
 
+// Test weapons, one per type, while the new set is designed. `scale` keeps damage even between
+// types the way the old lines did; magic weapons add magic attack. Anyone can equip them.
+const TEST_WEAPONS = {
+  sword: { name: 'Test Sword', scale: 1.0, color: '#e6edf7' },
+  axe: { name: 'Test Axe', scale: 0.95, color: '#e6edf7' },
+  spear: { name: 'Test Spear', scale: 0.85, color: '#e6edf7' },
+  wand: { name: 'Test Wand', scale: 0.5, matk: 15, color: '#ffd66b' },
+  staff: { name: 'Test Staff', scale: 0.55, matk: 17, color: '#9fd8ff' },
+  bow: { name: 'Test Bow', scale: 0.8, color: '#c98e55' },
+  crossbow: { name: 'Test Crossbow', scale: 0.78, color: '#c98e55' },
+  dagger: { name: 'Test Dagger', scale: 0.98, color: '#e6edf7' },
+  claw: { name: 'Test Claw', scale: 0.75, color: '#8d96a8' },
+};
+
+for (const [type, w] of Object.entries(TEST_WEAPONS)) {
+  const stats = { watk: Math.round(26 * w.scale) };
+  if (w.matk) stats.matk = w.matk;
+  add({
+    id: `test_${type}`,
+    name: w.name,
+    type: 'equip',
+    slot: 'weapon',
+    weaponType: type,
+    tier: 0,
+    element: null,
+    reqLevel: 0,
+    family: null,
+    stats,
+    price: 300,
+    color: w.color,
+  });
+}
+
 // ---------- Armor ----------
 
 const ARMOR_TIERS = [

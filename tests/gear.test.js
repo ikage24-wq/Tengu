@@ -7,6 +7,7 @@ import { makeEquip, rollRarity } from '../src/core/items.js';
 import { rollLoot } from '../src/world/drops.js';
 import { MOBS } from '../src/data/mobs.js';
 import { topShapes, legLook, legShapes, hatShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
+import { weaponShapes, weaponIcon } from '../src/render/weapons.js';
 import { dropRetiredItems } from '../src/core/save.js';
 
 const seq = (...values) => {
@@ -20,6 +21,7 @@ test('every equip has a design the renderer draws', () => {
     const c = def.color;
     let shapes;
     switch (def.slot) {
+      case 'weapon': shapes = weaponShapes(def.weaponType, def.tier)?.shapes; break;
       case 'hat': shapes = hatShapes(def.design, c); break;
       case 'top': shapes = topShapes(def.design, c); break;
       case 'bottom': shapes = legShapes(11, legLook(def.design, c, '#ffffff'), { design: 'sneakers', color: c }, false); break;
@@ -29,7 +31,7 @@ test('every equip has a design the renderer draws', () => {
       case 'earring': shapes = earringShapes(def.design, c); break;
     }
     assert.ok(shapes?.length, `${def.id} draws something`);
-    assert.ok(def.design, `${def.id} has a design`);
+    if (def.slot !== 'weapon') assert.ok(def.design, `${def.id} has a design`);
   }
 });
 
@@ -89,4 +91,14 @@ test('old saves lose weapons that no longer exist instead of breaking', () => {
   assert.equal(char.equipment.hat.id, 'hat_0');
   assert.deepEqual(char.inventory.equip.map((e) => e.id), [], 'the old weapon lines are gone too');
   assert.equal(char.hotkeys.Digit1.item, 'red_potion');
+});
+
+test('every weapon type has a test weapon with in-hand art and an icon', () => {
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
+    const def = ITEMS[`test_${type}`];
+    assert.equal(def?.weaponType, type);
+    const art = weaponShapes(type, 0);
+    assert.ok(art.shapes.length && art.grip[0] < art.w && art.grip[1] < art.h, `${type} art has a grip inside it`);
+    assert.ok(weaponIcon(type, 0)?.length, `${type} icon`);
+  }
 });

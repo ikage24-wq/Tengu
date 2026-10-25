@@ -15,7 +15,7 @@ export const NPCS = {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',
     look: { hairStyle: 'short', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
-    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...armor(0)],
+    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `test_${w}`), ...armor(0)],
     quests: ['snail_trouble'],
   },
   lulu: {
