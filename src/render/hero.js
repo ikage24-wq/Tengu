@@ -4,17 +4,18 @@
 // can be fractions of a pixel. The front arm and the weapon are separate layers so weapons can
 // swing around the hand.
 //
-// Animation: a 16-frame walk cycle driven by distance walked (legs swing on a curve and lift
-// on the way forward, arms counter-swing, the body dips after each step and the head lags a
-// touch behind), a breathing idle with blinks, stretch when rising, squash when landing, spring-driven hair and
+// Animation: jointed limbs (hip, knee, ankle; shoulder, elbow, wrist) solved by two-bone reach; a
+// 24-frame walk cycle driven by distance walked (heel strike with the toe up, a planted foot that
+// rolls onto its toe, a high heel kick behind, the knee swinging through, counter-swinging arms,
+// and hips that sink when the feet are spread), a breathing idle with blinks, stretch when rising, squash when landing, spring-driven hair and
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
 import { ITEMS, RARITIES } from '../data/items.js';
-import { R, E, T, F, sprite, blit, shade, tinted } from './pixel.js';
+import { R, E, T, F, C, sprite, blit, shade, tinted } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
-  hatBackShapes, TUCKS_HAIR, capeShapes, handShapes, earringShapes,
+  hatBackShapes, TUCKS_HAIR, capeShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
@@ -129,9 +130,9 @@ function hairFront(style, c) {
   const k = short ? -1.4 : 0;
   // Locks: [center x, width, tip y, lean].
   const locks = [[7.4, 4.6, 19.4, -1.6], [11, 4.6, 15.8, 0.4], [14.8, 4.8, 16.8, 0.8], [18.6, 4.6, 15.4, 1], [22.2, 4.2, 17.2, 1.6], [25.4, 3.4, 19.6, 1.2]];
-  const out = [E(15.8, 8.4, 11.4, 5.8, c)];
-  for (const [x, w, tip, lean] of locks) out.push(T([[x - w / 2, 8.6], [x + w / 2, 8.6], [x + lean, tip + k]], c));
-  out.push(T([[4.2, 9.6], [8.8, 9.6], [8.6, 18], [7.6, 24 + k * 2], [5.4, 26 + k * 2], [4.6, 18]], c));
+  const out = [C(E(15.8, 8.4, 11.4, 5.8, c))];
+  for (const [x, w, tip, lean] of locks) out.push(C(T([[x - w / 2, 8.6], [x + w / 2, 8.6], [x + lean, tip + k]], c)));
+  out.push(C(T([[4.2, 9.6], [8.8, 9.6], [8.6, 18], [7.6, 24 + k * 2], [5.4, 26 + k * 2], [4.6, 18]], c)));
   // Strands: a thin darker line down each lock, between locks, and down the side lock.
   for (const [x, , tip, lean] of locks) out.push(F(T([[x - 0.3, 9.4], [x + 0.3, 9.4], [x + lean * 0.7, tip + k - 1.6]], d)));
   for (const x of [9.2, 12.9, 16.7, 20.4]) out.push(F(T([[x - 0.25, 10], [x + 0.25, 10], [x + 0.3, 13.6]], d)));
@@ -197,36 +198,32 @@ function headShapes(look, g, rig) {
 
 // ---------- Arms ----------
 
-// A tapered limb from (x1, y1) to (x2, y2), w1 wide at the start and w2 at the end.
-function limb(x1, y1, x2, y2, w1, w2, c) {
-  const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-  const nx = -(y2 - y1) / len;
-  const ny = (x2 - x1) / len;
-  return T([[x1 + nx * w1 / 2, y1 + ny * w1 / 2], [x2 + nx * w2 / 2, y2 + ny * w2 / 2], [x2 - nx * w2 / 2, y2 - ny * w2 / 2], [x1 - nx * w1 / 2, y1 - ny * w1 / 2]], c);
-}
+const UPPER_ARM = 5;
+const FOREARM = 4.7;
 
 // Shoulder to elbow in the sleeve color, then a forearm (bare unless the top has long sleeves).
+// The elbow bends backward to bring the hand to (hx, hy).
 function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
-  const ex = (sx + hx) / 2 - 0.2;
-  const ey = (sy + hy) / 2;
+  const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, -1);
   return [
     E(sx, sy + 0.4, 1.7, 1.8, sleeve),
     limb(sx, sy, ex, ey, 3, 2.6, sleeve),
-    limb(ex, ey, hx, hy - 1, 2.5, 2.1, long ? sleeve : skin),
-    ...handShapes(hx, hy, g.gloves, skin),
+    E(ex, ey, 1.25, 1.25, long ? sleeve : skin),
+    limb(ex, ey, wx, wy, 2.5, 2.1, long ? sleeve : skin),
+    ...handShapes(wx, wy, g.gloves, skin),
   ];
 }
 
 // A resting arm from the shoulder at (sx, 27.6), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin) {
-  return arm(sx, 27.6, sx + 0.6 + dx, 38 + dy, sleeve, long, g, skin);
+  return arm(sx, 27.6, sx + 0.6 + dx, 36.8 + dy, sleeve, long, g, skin);
 }
 
 // Attack arms point along `angle` (0 = down, 90 = forward, 180 = up) from the front shoulder.
 function aimedArm(angle, sleeve, long, g, skin) {
   const rad = (angle * Math.PI) / 180;
-  const hx = 19.2 + Math.sin(rad) * 9;
-  const hy = 27.8 + Math.cos(rad) * 9;
+  const hx = 19.2 + Math.sin(rad) * 8.6;
+  const hy = 27.8 + Math.cos(rad) * 8.6;
   return { shapes: arm(19.2, 27.8, hx, hy, sleeve, long, g, skin), hand: [hx, hy] };
 }
 
@@ -240,9 +237,11 @@ function bodyShapes(look, g, rig) {
   const legs = legLook(g.bottom.design, g.bottom.color, skin);
   if (rig.view === 'back') return backShapes(look, g, rig, skin, sleeve, legs);
 
-  // Everything above the hips leans with tx and bobs with by; the legs stay planted.
+  // Everything above the hips leans with tx and bobs with by; the hips also sink by however much
+  // the planted legs need to reach the ground, and the legs hang from there.
+  const drop = hipDrop(rig);
   const ux = rig.tx;
-  const uy = rig.by;
+  const uy = rig.by + drop;
   const shapes = [];
   const hat = g.hat;
   if (!hat || !TUCKS_HAIR.has(hat.design)) {
@@ -251,9 +250,9 @@ function bodyShapes(look, g, rig) {
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap), ux, uy));
   shapes.push(...offset(armShapes(11.3, rig.backArm[0], rig.backArm[1], shade(sleeve, -12), long, g, shade(skin, -6)), ux, uy));
-  shapes.push(...offset(legShapes(12 + rig.backLeg[0], legs, g.shoes, true), 0, rig.backLeg[1]));
-  shapes.push(...offset(legShapes(15.6 + rig.frontLeg[0], legs, g.shoes, false), 0, rig.frontLeg[1]));
-  shapes.push(...offset(hipShapes(legs), ux * 0.5, uy * 0.5));
+  shapes.push(...legShapes(12, legs, g.shoes, true, rig.backLeg, HIP_Y + drop));
+  shapes.push(...legShapes(15.6, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
+  shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
   const skirt = skirtShapes(g.bottom.design, g.bottom.color);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
   shapes.push(...offset([R(14, 22.5, 3.4, 5, shade(skin, -8))], ux, uy));
@@ -271,8 +270,8 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const a = rig.climb;
   const long = longSleeves(g.top.design);
   const out = [];
-  out.push(...offset(legShapes(12, legs, g.shoes, true), 0, -a));
-  out.push(...offset(legShapes(15.6, legs, g.shoes, false), 0, a));
+  out.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
+  out.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
   out.push(...hipShapes(legs));
   out.push(...topShapes('tee', g.top.color));
   if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') out.push(T([[10.6, 26.6], [20, 26.6], [21, 46], [9.6, 46]], g.cape.color), R(9.6, 45, 11.4, 1, shade(g.cape.color, -20)));
@@ -293,18 +292,48 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
 
 // ---------- Pose solving ----------
 
-// Walk cycle: frames per two steps. Each foot slides back along the ground, then lifts and swings
-// forward on an arc; the body is lowest just after a foot lands and highest as the legs pass.
-const WALK_FRAMES = 16;
-const STEP = 3.8;
-const LIFT = 2.6;
+// Walk cycle: frames per two steps. Each foot spends 60% of the cycle planted, sliding back from
+// heel strike (toe up) to toe-off (heel rolling up); then the heel kicks up behind, the knee
+// swings through, and the foot reaches forward to land again. The body sinks a little whenever the
+// planted feet are spread, and the arms counter-swing with a soft elbow.
+const WALK_FRAMES = 24;
+const HALF_STRIDE = 7.5;
+const KICK = 6;
+const STANCE = 0.6;
+const LEG = THIGH + SHIN;
+const REST_LEG = ANKLE_Y - HIP_Y;
+
+// Ankle offset and foot tilt for one leg at walk phase p (0 = heel strike).
+function walkLeg(p) {
+  if (p < STANCE) {
+    const u = p / STANCE;
+    const roll = u > 0.7 ? (u - 0.7) / 0.3 : 0;
+    const tilt = u < 0.15 ? 16 * (1 - u / 0.15) : -30 * roll;
+    return [HALF_STRIDE - 2 * HALF_STRIDE * u, -1.6 * roll, tilt];
+  }
+  const v = (p - STANCE) / (1 - STANCE);
+  return [-HALF_STRIDE + 2 * HALF_STRIDE * (0.5 - 0.5 * Math.cos(Math.PI * v)), -KICK * Math.sin(Math.PI * v ** 0.7), -30 * (1 - v) ** 2 + 14 * v ** 3];
+}
+
+const legKey = ([dx, dy, tilt]) => [q(dx), q(dy), Math.round(tilt / 2) * 2];
+
+// How far the hips sink so every planted foot (one not lifted) can reach the ground.
+function hipDrop(r) {
+  if (r.air) return 0;
+  let drop = r.squat;
+  for (const [dx, dy] of [r.frontLeg, r.backLeg]) {
+    if (dy < -0.01) continue;
+    drop = Math.max(drop, REST_LEG - Math.sqrt(Math.max(0, LEG * LEG - dx * dx)));
+  }
+  return q(drop);
+}
 
 const ease = (t) => 1 - (1 - t) ** 3;
 
 function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
-    frontLeg: [0, 0], backLeg: [0, 0], frontArm: [0, 0], backArm: [0, 0],
+    frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], air: false, squat: 0,
     hair: 0, hairLift: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0,
   };
 }
@@ -328,37 +357,38 @@ function solveRig(state, anim) {
   }
 
   if (pose === 'walk') {
-    const phase = anim ? walkPhase(anim) : (t * 2.7) % 1;
-    const a = (Math.round(phase * WALK_FRAMES) / WALK_FRAMES) * Math.PI * 2;
-    const leg = (k) => [q(STEP * Math.cos(k)), q(LIFT * Math.min(0, Math.sin(k)))];
-    r.frontLeg = leg(a);
-    r.backLeg = leg(a + Math.PI);
-    r.by = q(0.9 * Math.sin(2 * a));
-    r.hy = q(0.45 * Math.sin(2 * a - 0.9));
-    // Arms counter-swing the legs and rise a little at the ends of each swing.
-    const swing = Math.cos(a);
-    r.frontArm = [q(-2.6 * swing), q(-0.6 * Math.abs(swing))];
-    r.backArm = [q(2.6 * swing), q(-0.6 * Math.abs(swing))];
-    r.tx = 1;
+    const phase = anim ? walkPhase(anim) : (t * 0.9) % 1;
+    const p = (Math.round(phase * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
+    const front = walkLeg(p);
+    const back = walkLeg((p + 0.5) % 1);
+    r.frontLeg = legKey(front);
+    r.backLeg = legKey(back);
+    // Each arm swings against the leg on its side; the hand lifts at the ends of the swing.
+    const hand = ([dx]) => [q(-0.45 * dx), q(-0.5 * (dx / HALF_STRIDE) ** 2)];
+    r.frontArm = hand(front);
+    r.backArm = hand(back);
+    r.hy = q(0.3 * Math.sin(4 * Math.PI * p - 1));
+    r.tx = q(0.6);
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
+    r.air = true;
     if (anim?.rise > 0 || vy < -250) {
       // Rising: stretched tall, legs tucked, arms swept back.
       r.by = -1;
-      r.frontLeg = [1, -3];
-      r.backLeg = [-1, -1];
+      r.frontLeg = [2.6, -5, 10];
+      r.backLeg = [-1.6, -2.6, -10];
       r.frontArm = [-2, -2];
       r.backArm = [-2, -3];
     } else if (vy < 120) {
       // Apex: a little ball.
-      r.frontLeg = [2, -3];
-      r.backLeg = [-1, -2];
+      r.frontLeg = [3, -6, 10];
+      r.backLeg = [-1, -4, -6];
       r.frontArm = [1, -3];
       r.backArm = [-1, -3];
     } else {
       // Falling: legs reach for the ground, arms out for balance, hair floats up.
-      r.frontLeg = [1, -1];
-      r.backLeg = [-2, 0];
+      r.frontLeg = [2, -2, 6];
+      r.backLeg = [-2.6, -1, -6];
       r.frontArm = [2, -4];
       r.backArm = [-3, -4];
       r.hairLift = -1;
@@ -371,12 +401,13 @@ function solveRig(state, anim) {
     r.backArm = [0, r.by];
   }
 
-  // Landing squash: the body drops and the legs spread.
+  // Landing squash: the knees give, the hips drop, and the feet spread.
   if (anim?.land > 0 && pose !== 'jump') {
     const k = anim.land > 0.06 ? 2 : 1;
-    r.by = k;
-    r.frontLeg = [r.frontLeg[0] + k, 0];
-    r.backLeg = [r.backLeg[0] - k, 0];
+    r.by = 0;
+    r.squat = k;
+    r.frontLeg = [r.frontLeg[0] + k * 0.6, 0, 0];
+    r.backLeg = [r.backLeg[0] - k * 0.6, 0, 0];
     r.frontArm = [k, 1];
     r.backArm = [-k, 1];
   }
@@ -398,20 +429,20 @@ function solveRig(state, anim) {
     } else if (progress < 0.7) {
       // The strike: lunge forward and dip.
       r.tx = 2;
-      r.by = 1;
-      r.frontLeg = [3, 0];
-      r.backLeg = [-2, 0];
+      r.squat = 1;
+      r.frontLeg = [3.6, 0, 4];
+      r.backLeg = [-3, 0, -10];
       r.backArm = [-3, -1];
       r.mouth = 'open';
     } else {
       r.tx = 1;
-      r.frontLeg = [2, 0];
-      r.backLeg = [-1, 0];
+      r.frontLeg = [2.4, 0, 0];
+      r.backLeg = [-1.6, 0, 0];
     }
   } else if (pose === 'shoot') {
     r.tx = progress < 0.25 ? -1 : 0;
-    r.frontLeg = [2, 0];
-    r.backLeg = [-2, 0];
+    r.frontLeg = [2.6, 0, 0];
+    r.backLeg = [-2.6, 0, 0];
     r.backArm = [2, -3];
   } else if (pose === 'cast') {
     // Rise on tiptoe with the free arm open; hair and cape lift in the magic wind.
@@ -425,7 +456,7 @@ function solveRig(state, anim) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.air ? 1 : 0, r.squat, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb].join(',');
 }
 
 // ---------- Weapons ----------
@@ -545,28 +576,29 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
   const angles = attack ? weaponPose(g.weapon?.type, pose, progress) : null;
 
-  // Front arm layer.
+  // Front arm layer; it moves with the upper body, which sinks with the hips.
+  const bodyY = rig.by + hipDrop(rig);
   let armShapesNow;
   let hand;
   let armKey;
   if (angles) {
     const aimed = aimedArm(angles.arm, sleeve, long, g, skin);
     armShapesNow = aimed.shapes;
-    hand = [aimed.hand[0] + rig.tx, aimed.hand[1] + rig.by];
+    hand = [aimed.hand[0] + rig.tx, aimed.hand[1] + bodyY];
     armKey = `a${Math.round(angles.arm / 5)}`;
   } else {
     armShapesNow = armShapes(19.2, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin);
-    hand = [19.8 + rig.frontArm[0] + rig.tx, 38 + rig.frontArm[1] + rig.by];
+    hand = [19.8 + rig.frontArm[0] + rig.tx, 36.8 + rig.frontArm[1] + bodyY];
     armKey = `r${rig.frontArm.join(',')}`;
   }
   const armDx = rig.tx;
-  const armDy = rig.by;
+  const armDy = bodyY;
 
   const restAngle = { crossbow: 10, claw: 70 }[g.weapon?.type] ?? 25;
   let weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
   // Bows grip in the middle, so out of combat they're slung across the back instead of held.
   if (!angles && g.weapon?.type === 'bow') {
-    hand = [14 + rig.tx, 30 + rig.by];
+    hand = [14 + rig.tx, 30 + bodyY];
     weaponAngle = 112 + rig.by * 2;
   }
 

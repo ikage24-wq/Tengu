@@ -2,7 +2,7 @@
 // for hair and cape follow-through, landing squash, blinking, and the weapon trail.
 // The renderer reads it; the world simulation never does.
 
-const STRIDE = 44; // pixels walked per full cycle (two steps)
+const STRIDE = 48; // pixels walked per full cycle (two steps)
 
 export function createAnim() {
   return {

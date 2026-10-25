@@ -11,8 +11,10 @@ export const E = (x, y, rx, ry, c) => ({ t: 'e', x, y, rx, ry, c });
 export const P = (x, y, c) => ({ t: 'r', x, y, w: 1, h: 1, c });
 // A polygon; points are relative to (x, y) so shapes can be moved by changing x and y.
 export const T = (pts, c, x = 0, y = 0) => ({ t: 'p', x, y, pts, c });
-// Flat shapes skip cel shading and keep their exact color (eyes, mouths, shines).
+// Flat shapes skip shading and keep their exact color (eyes, mouths, shines).
 export const F = (shape) => ({ ...shape, f: 1 });
+// Shapes that cast a soft shadow onto whatever sits just below them (bangs onto the face).
+export const C = (shape) => ({ ...shape, cast: 1 });
 
 export function shade(hex, amount) {
   const n = parseInt(hex.slice(1), 16);
@@ -54,10 +56,9 @@ function outlineFor(c) {
 // Shapes use literal colors (strings starting with '#') or palette keys. `res` rasterizes at
 // res x res cells per art pixel (for smooth sprites); the outline then grows into a rounded
 // ring about two thirds of an art pixel wide, so corners soften instead of stair-stepping.
-// `soft` sprites are also cel-shaded: every part gets a shadow band along its lower and back
-// edges and wherever another part overlaps it from above, plus a thin light rim on the
-// silhouette, and outlines take a deep shade of the part they wrap. Shapes flagged flat (F)
-// keep their exact color, for eyes and other fine details.
+// `soft` sprites are also shaded: a soft shadow tone along the back and bottom of the silhouette
+// and under shapes flagged to cast (C), and outlines take a deep shade of the part they wrap.
+// Shapes flagged flat (F) keep their exact color, for eyes and other fine details.
 //
 // Cells hold color ids (indexes into `colors`); EMPTY is transparent and NONE is a hole that
 // stays transparent and never gets outlined.
@@ -80,11 +81,13 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
   };
   const grid = new Int32Array(gw * gh).fill(EMPTY);
   const flat = new Uint8Array(gw * gh);
+  const cast = new Uint8Array(gw * gh);
   const at = (v) => Math.round((v + PAD) * res);
   for (const s of shapes) {
     if (!s) continue;
     const id = s.c === 'none' ? NONE : idOf(s.c.startsWith('#') ? s.c : palette[s.c] ?? '#ff00ff');
     const f = s.f ? 1 : 0;
+    const cs = s.cast ? 1 : 0;
     const span = (y, x0, x1) => {
       if (y < 0 || y >= gh) return;
       const a = Math.max(0, x0);
@@ -92,6 +95,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
       for (let x = a, i = y * gw + a; x <= b; x++, i++) {
         grid[i] = id;
         flat[i] = f;
+        cast[i] = cs;
       }
     };
     if (s.t === 'r') {
@@ -126,37 +130,39 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}) {
     }
   }
 
-  // Cel shading, read from the unshaded colors so bands don't feed into each other.
+  // Shading, read from the unshaded colors so bands don't feed into each other: one soft shadow
+  // tone along the back and bottom of the silhouette (light comes from the front and above), and
+  // a cast shadow just under shapes flagged `cast` (bangs over the face).
   const out = grid.slice();
   if (soft) {
-    const band = Math.round(res * 1.4);
+    const back = Math.round(res * 1.2);
+    const under = Math.max(1, Math.round(res * 0.7));
+    const castBand = Math.round(res * 1.1);
     const dark = new Map();
-    const light = new Map();
-    const tone = (cache, id, amount) => {
-      let v = cache.get(id);
+    const tone = (id) => {
+      let v = dark.get(id);
       if (v === undefined) {
-        v = idOf(shadeOf(colors[id], amount));
-        cache.set(id, v);
+        v = idOf(shadeOf(colors[id], -11));
+        dark.set(id, v);
       }
       return v;
     };
+    const outside = (x, y) => x < 0 || y < 0 || x >= gw || y >= gh || grid[y * gw + x] < 0;
     for (let y = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++) {
         const i = y * gw + x;
         const c = grid[i];
         if (c < 0 || flat[i]) continue;
         let shadow = false;
-        for (let k = 1; k <= band && !shadow; k++) {
-          // Below or behind is a different part or empty; or a different part overlaps from above.
-          const b = y + k < gh ? i + k * gw : -1;
-          const l = x - k >= 0 ? i - k : -1;
-          const a = y - k >= 0 ? i - k * gw : -1;
-          shadow = b < 0 || grid[b] !== c || flat[b] === 1
-            || l < 0 || grid[l] !== c || flat[l] === 1
-            || (a >= 0 && grid[a] >= 0 && grid[a] !== c && !flat[a]);
+        for (let k = 1; k <= back && !shadow; k++) shadow = outside(x - k, y);
+        for (let k = 1; k <= under && !shadow; k++) shadow = outside(x, y + k);
+        if (!cast[i]) {
+          for (let k = 1; k <= castBand && !shadow && y - k >= 0; k++) {
+            const a = i - k * gw;
+            shadow = cast[a] === 1 && grid[a] !== c;
+          }
         }
-        if (shadow) out[i] = tone(dark, c, -13);
-        else if ((y > 0 && grid[i - gw] < 0) || (x + 1 < gw && grid[i + 1] < 0)) out[i] = tone(light, c, 10);
+        if (shadow) out[i] = tone(c);
       }
     }
   }

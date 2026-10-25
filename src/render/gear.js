@@ -3,9 +3,9 @@
 // Sprites are soft (cel-shaded with tinted outlines), so designs are flat color blocks plus a few
 // flat (F) details; shading and edges come from the renderer.
 //
-// Landmarks: head center (15.5, 15) r10 · neck y 23-27 · torso x 10.5-20, y 26.5-37.5 ·
-// hips y 36.5-41 · legs x 12-15 (back) and 15.6-18.6 (front), y 40-52 · shoes y 51-56 ·
-// shoulders (11.3, 27.5) and (19.2, 27.5) · hands rest at y 38.
+// Landmarks: head center (15.5, 15) r10 · neck y 23-27 · torso x 10.5-20, y 26.5-35.5 ·
+// hips y 34.5-39 · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12 (back)
+// and 15.6 (front) · soles at y 56 · shoulders (11.3, 27.5) and (19.2, 27.5) · hands rest at y 36.8.
 
 import { R, E, T, F, shade } from './pixel.js';
 
@@ -15,7 +15,7 @@ const INK = '#3a2d4f';
 
 // ---------- Tops (torso part) ----------
 
-const TORSO = [[10.4, 26.4], [20.2, 26.4], [20.8, 29.5], [19.9, 37.6], [10.8, 37.6], [9.9, 29.5]];
+const TORSO = [[10.4, 26.4], [20.2, 26.4], [20.8, 29.5], [19.9, 35.6], [10.8, 35.6], [9.9, 29.5]];
 // Robes flare past the hips.
 const ROBE = [[10.4, 26.4], [20.2, 26.4], [20.8, 29.5], [21.6, 44.5], [9.2, 44.5], [9.9, 29.5]];
 const torso = (c) => T(TORSO, c);
@@ -25,15 +25,15 @@ export function topShapes(design, c) {
   const d = shade(c, -16);
   const l = shade(c, 18);
   switch (design) {
-    case 'stripes': return [torso(c), R(10.5, 29.5, 10, 1.2, d), R(10.5, 32.5, 10, 1.2, d), R(10.6, 35.5, 9.6, 1.2, d), collar(l)];
-    case 'vest': return [torso('#fff6ec'), T([[11, 26.5], [14, 26.5], [14.4, 37.6], [10.8, 37.6], [10.2, 29.5]], c), T([[17.2, 26.5], [19.6, 26.5], [20.4, 29.5], [19.8, 37.6], [16.8, 37.6]], c), R(10.6, 34.6, 9.6, 1.8, '#7a5238'), F(E(15.6, 35.5, 0.9, 0.8, GOLD))];
-    case 'plate': return [torso(SILVER), T([[12.6, 28], [18.6, 28], [17.8, 33.5], [15.6, 35], [13.4, 33.5]], c), F(E(14.4, 29.6, 0.8, 0.8, '#ffffff')), R(10.6, 35, 9.6, 2, shade(SILVER, -18)), E(10.6, 27.6, 2.4, 2, l), E(20, 27.6, 2.4, 2, l)];
+    case 'stripes': return [torso(c), R(10.3, 29.2, 10.4, 1.1, d), R(10.4, 31.6, 10.2, 1.1, d), R(10.6, 34, 9.8, 1.1, d), collar(l)];
+    case 'vest': return [torso('#fff6ec'), T([[10.4, 26.4], [14, 26.4], [14.4, 35.6], [10.8, 35.6], [9.9, 29.5]], c), T([[17.2, 26.4], [20.2, 26.4], [20.8, 29.5], [19.9, 35.6], [16.8, 35.6]], c), R(10.6, 32.8, 9.6, 1.8, '#7a5238'), F(E(15.6, 33.7, 0.9, 0.8, GOLD))];
+    case 'plate': return [torso(SILVER), T([[12.6, 28], [18.6, 28], [17.8, 33.5], [15.6, 35], [13.4, 33.5]], c), F(E(14.4, 29.6, 0.8, 0.8, '#ffffff')), R(10.6, 33.4, 9.6, 2, shade(SILVER, -18)), E(10.6, 27.6, 2.4, 2, l), E(20, 27.6, 2.4, 2, l)];
     case 'starrobe': return [T(ROBE, c), R(10.4, 26.4, 9.4, 1, GOLD), F(R(15.2, 30, 0.9, 3, GOLD)), F(R(14.2, 31, 2.9, 0.9, GOLD)), R(9.3, 43.4, 12.2, 1.1, GOLD), F(E(12.5, 40, 0.6, 0.6, '#ffffff')), F(E(18.4, 38.5, 0.6, 0.6, GOLD))];
     case 'celestial': return [T(ROBE, c), T([[11.6, 33], [19.6, 33], [21, 44.5], [10, 44.5]], l), R(10.4, 26.4, 9.4, 1, GOLD), R(15.2, 26.5, 1, 18, GOLD), F(E(13.3, 30, 1.2, 1.6, '#ffffff')), F(E(18, 30, 1.2, 1.6, '#ffffff')), R(9.3, 43.4, 12.2, 1.1, GOLD)];
     case 'kimono': return [T(ROBE, c), T([[12.4, 26.5], [15, 26.5], [17.8, 32]], '#ffffff'), T([[14, 26.5], [16, 26.5], [17.8, 31]], l), R(10.4, 31.5, 10.2, 3, '#ff6b9a'), F(E(18, 33, 0.8, 0.8, GOLD)), F(E(12, 38, 0.7, 0.7, '#ffffff')), F(E(19, 41, 0.7, 0.7, '#ffffff'))];
-    case 'sailor': return [torso('#ffffff'), T([[10.6, 26.5], [20, 26.5], [20.2, 29], [15.6, 31.6], [10.4, 29]], c), F(T([[14.2, 30], [17, 30], [16.4, 33], [15.6, 32], [14.8, 33]], '#ff6b8a')), R(10.7, 35.4, 9.4, 2.2, c)];
-    case 'hoodie': return [torso(c), T([[11.4, 26], [19.6, 26], [18.6, 28.4], [12.4, 28.4]], d), R(12.4, 32, 6.4, 3, d), F(R(13.6, 27.6, 0.6, 3.6, '#ffffff')), F(R(17, 27.6, 0.6, 3.6, '#ffffff'))];
-    default: return [torso(c), collar(l), R(10.8, 36.2, 9.2, 1.4, d)];
+    case 'sailor': return [torso('#ffffff'), T([[10.6, 26.5], [20, 26.5], [20.2, 29], [15.6, 31.6], [10.4, 29]], c), F(T([[14.2, 30], [17, 30], [16.4, 33], [15.6, 32], [14.8, 33]], '#ff6b8a')), R(10.7, 33.6, 9.6, 2, c)];
+    case 'hoodie': return [torso(c), T([[11.4, 26], [19.6, 26], [18.6, 28.4], [12.4, 28.4]], d), R(12.4, 31, 6.4, 3, d), F(R(13.6, 27.6, 0.6, 3.2, '#ffffff')), F(R(17, 27.6, 0.6, 3.6, '#ffffff'))];
+    default: return [torso(c), collar(l), R(10.8, 34.3, 9.2, 1.3, d)];
   }
 }
 
@@ -63,37 +63,93 @@ export function legLook(design, c, skin) {
 }
 
 export function hipShapes(look) {
-  return [T([[10.9, 36.6], [19.8, 36.6], [20.2, 41.4], [10.4, 41.4]], look.top)];
+  return [T([[10.9, 34.6], [19.8, 34.6], [20.2, 39.2], [10.4, 39.2]], look.top)];
 }
 
 export function skirtShapes(design, c) {
-  if (design === 'starskirt') return [T([[10.6, 36.4], [20, 36.4], [22, 43.6], [8.8, 43.6]], c), R(8.9, 42.6, 13, 1, GOLD), F(E(12, 40, 0.6, 0.6, GOLD)), F(E(17.5, 39, 0.6, 0.6, GOLD)), F(E(20, 41.4, 0.6, 0.6, '#ffffff'))];
-  if (design === 'celestialskirt') return [T([[10.6, 36.4], [20, 36.4], [22.6, 47.6], [8.2, 47.6]], c), R(8.3, 46.4, 14.2, 1.2, GOLD), T([[15, 36.4], [16.2, 36.4], [16.6, 46.4], [14.6, 46.4]], shade(c, 18))];
+  if (design === 'starskirt') return [T([[10.6, 34.4], [20, 34.4], [22, 41.6], [8.8, 41.6]], c), R(8.9, 40.6, 13, 1, GOLD), F(E(12, 38, 0.6, 0.6, GOLD)), F(E(17.5, 37, 0.6, 0.6, GOLD)), F(E(20, 39.4, 0.6, 0.6, '#ffffff'))];
+  if (design === 'celestialskirt') return [T([[10.6, 34.4], [20, 34.4], [22.6, 46.6], [8.2, 46.6]], c), R(8.3, 45.4, 14.2, 1.2, GOLD), T([[15, 34.4], [16.2, 34.4], [16.6, 45.4], [14.6, 45.4]], shade(c, 18))];
   return null;
+}
+
+// ---------- Limbs ----------
+
+// A tapered limb from (x1, y1) to (x2, y2), w1 wide at the start and w2 at the end.
+export function limb(x1, y1, x2, y2, w1, w2, c) {
+  const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+  const nx = -(y2 - y1) / len;
+  const ny = (x2 - x1) / len;
+  return T([[x1 + (nx * w1) / 2, y1 + (ny * w1) / 2], [x2 + (nx * w2) / 2, y2 + (ny * w2) / 2], [x2 - (nx * w2) / 2, y2 - (ny * w2) / 2], [x1 - (nx * w1) / 2, y1 - (ny * w1) / 2]], c);
+}
+
+// Two-bone reach: the middle joint for a limb of lengths a and b from root to target. The
+// target is pulled in if it's out of reach. bend = 1 puts the joint ahead of the line (knees),
+// -1 behind it (elbows). Returns [joint, end].
+export function reach(rx, ry, tx, ty, a, b, bend) {
+  let dx = tx - rx;
+  let dy = ty - ry;
+  let d = Math.hypot(dx, dy) || 0.001;
+  const max = a + b - 0.001;
+  if (d > max) {
+    dx *= max / d;
+    dy *= max / d;
+    d = max;
+  }
+  const ux = dx / d;
+  const uy = dy / d;
+  const along = (a * a - b * b + d * d) / (2 * d);
+  const off = Math.sqrt(Math.max(0, a * a - along * along)) * bend;
+  return [[rx + ux * along + uy * off, ry + uy * along - ux * off], [rx + dx, ry + dy]];
 }
 
 // ---------- Legs with shoes (one leg; back legs are drawn a shade darker) ----------
 
-export function legShapes(x, look, shoe, back) {
+export const THIGH = 7.8;
+export const SHIN = 7.6;
+export const HIP_Y = 37.6;
+export const ANKLE_Y = 53;
+
+// x is the leg's left edge at rest. foot = [dx, dy, angle]: the ankle's offset from its rest spot
+// under the hip, and the foot's tilt in degrees (positive lifts the toe). hipY moves the hip.
+export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
   const k = back ? -10 : 0;
   const top = shade(look.top, k);
   const low = shade(look.low, k);
-  const shapes = [T([[x, 40], [x + 3, 40], [x + 2.7, 46.8], [x + 0.3, 46.8]], top), T([[x + 0.3, 46.6], [x + 2.7, 46.6], [x + 2.4, 52.4], [x + 0.6, 52.4]], low)];
-  if (look.pad) shapes.push(E(x + 1.5, 46.8, 1.8, 1.4, shade(look.pad, k)));
-  shapes.push(...shoeShapes(x, shoe, k));
+  const hx = x + 1.5;
+  const [[kx, ky], [ax, ay]] = reach(hx, hipY, hx + foot[0], ANKLE_Y + foot[1], THIGH, SHIN, 1);
+  const shapes = [
+    limb(hx, hipY, kx, ky, 3.1, 2.6, top),
+    E(kx, ky, 1.3, 1.3, top),
+    limb(kx, ky, ax, ay, 2.6, 2.1, low),
+  ];
+  if (look.pad) shapes.push(E(kx + 0.3, ky, 1.7, 1.4, shade(look.pad, k)));
+  shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, k));
   return shapes;
 }
 
-function shoeShapes(x, shoe, k) {
+// Shoes are drawn in the foot's frame (origin at the ankle, x toward the toe, y down to the sole)
+// and turned by the foot's tilt; boot shafts run up the shin toward the knee.
+function shoeShapes(ax, ay, kx, ky, tilt, shoe, k) {
   const c = shade(shoe.color, k);
-  const foot = (col, top = 51.4) => [T([[x, top], [x + 3, top], [x + 3.4, 53.6], [x + 4.6, 54.4], [x + 4.6, 56], [x - 0.4, 56], [x - 0.4, 53]], col)];
+  const rad = (tilt * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const at = ([x, y]) => [ax + x * cos + y * sin, ay - x * sin + y * cos];
+  const poly = (pts, col) => T(pts.map(at), col);
+  const dot = (x, y, r, col) => {
+    const [px, py] = at([x, y]);
+    return F(E(px, py, r, r, col));
+  };
+  const len = Math.hypot(kx - ax, ky - ay) || 1;
+  const shaft = (h, col, w = 2.8) => limb(ax, ay, ax + ((kx - ax) / len) * h, ay + ((ky - ay) / len) * h, w, w, col);
+  const sole = (col) => poly([[-1.6, -1.2], [1.2, -1.2], [1.8, 0.4], [3.4, 1.2], [3.6, 3], [-1.9, 3], [-2, 0.8]], col);
   switch (shoe.design) {
-    case 'boots': return [...foot(c, 48.6), R(x - 0.5, 48.4, 4, 1.1, shade(c, 18))];
-    case 'leatherboots': return [...foot(c, 47.6), R(x - 0.5, 47.4, 4, 1.6, shade(c, -18)), F(E(x + 1.5, 50.4, 0.5, 0.5, GOLD))];
-    case 'sabatons': return [...foot(shade(SILVER, k), 49), R(x - 0.5, 53.8, 5.2, 1.2, shade(SILVER, k - 14)), F(E(x + 1.2, 50.6, 0.6, 0.6, '#ffffff'))];
-    case 'starboots': return [...foot(c, 48.6), R(x - 0.5, 48.4, 4, 1, GOLD), F(E(x + 1.6, 51.4, 0.8, 0.8, GOLD))];
-    case 'wingboots': return [...foot(c, 49.6), T([[x - 0.4, 50], [x - 3.6, 48.4], [x - 2.6, 50.4], [x - 3.4, 51.6], [x - 0.4, 51.6]], '#ffffff')];
-    default: return [...foot(c), R(x - 0.4, 55, 5, 1, shade(c, -18))];
+    case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
+    case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
+    case 'sabatons': return [shaft(3, shade(SILVER, k)), sole(shade(SILVER, k)), poly([[-1.9, 2], [3.5, 2], [3.6, 3], [-1.9, 3]], shade(SILVER, k - 14)), dot(0.4, 0, 0.6, '#ffffff')];
+    case 'starboots': return [shaft(3.4, c), sole(c), shaft(0.8, GOLD, 3.1), dot(0.8, 0.6, 0.8, GOLD)];
+    case 'wingboots': return [shaft(2.4, c), sole(c), poly([[-1.6, -1], [-4.8, -2.8], [-3.8, -0.6], [-4.6, 0.6], [-1.6, 0.6]], '#ffffff')];
+    default: return [sole(c), poly([[-1.9, 2.2], [3.6, 2.2], [3.6, 3], [-1.9, 3]], shade(c, -18))];
   }
 }
 
