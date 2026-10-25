@@ -52,12 +52,8 @@ const QUOTE_MAKERS = [
 const quote = oneOf(QUOTE_MAKERS)();
 
 // The login screen's world list; the game itself is single-player.
-const WORLDS = [{ name: 'Tengu', load: 0.45, color: '#ff9ec0' }];
+const WORLDS = [{ name: 'Tengu', color: '#ff9ec0' }];
 let world = 0;
-
-function loadLabel(load) {
-  return load > 0.9 ? ['Full', COLORS.bad] : load > 0.65 ? ['Busy', COLORS.gold] : ['Normal', COLORS.good];
-}
 
 // A fixed frame like the in-game windows, without dragging or a close button.
 function panel(ctx, x, y, w, h, title) {
@@ -102,10 +98,6 @@ export function titleScreen(ui, time) {
     ctx.arc(px + 19, ry + 9.5, 4, 0, Math.PI * 2);
     ctx.fill();
     text(ctx, w.name, px + 28, ry + 13, { size: 9, bold: true });
-    const load = Math.min(1, w.load + Math.sin(time * 0.4 + i * 2) * 0.03);
-    const [label, color] = loadLabel(load);
-    bar(ctx, px + 82, ry + 6, 50, 7, load, color, null);
-    text(ctx, label, px + pw - 14, ry + 13, { size: 7, bold: true, align: 'right', color });
     if (clicked(ui, px + 8, ry, pw - 16, 19)) world = i;
   });
 
