@@ -105,6 +105,8 @@ const TOPS = {
     frill(9.8, 21.6, 26, 9.4, 22, 29.4, 5, 0.9, pale(p)), band(TORSO, 33.6, 34.8, p.dark), ...tieBow(19.6, 34.2, p.dark)],
   bikini: (p) => [T(TORSO, p.main), frill(9.8, 21.6, 30.4, 9, 22.4, 34.6, 6, 0.9, p.light), frill(9.8, 21.6, 26, 9.2, 22.2, 31, 6, 1, p.main),
     ...dots([[12, 28.4], [17, 28], [19.8, 29.4], [13.6, 32.6], [18.6, 32.8]], 0.55, pale(p)), ...tieBow(MID, 26.8, pale(p))],
+  dotbikini: (p) => [T(TORSO, p.main), ...dots([[11.6, 28.4], [19.4, 28.2], [13.2, 31.4], [18, 31.6], [11.4, 34], [MID, 33.8], [19.8, 34]], 0.75, pale(p)),
+    F(T([[MID - 2.6, 26.2], [MID + 2.6, 26.2], [MID, 28.4]], p.dark)), E(MID, 29.6, 1.2, 1.2, GOLD), F(E(MID, 29.6, 0.55, 0.55, p.main)), frill(9.6, 21.6, 34.6, 9.4, 21.8, 36.6, 6, 0.6, pale(p))],
   tankini: (p) => [T(TORSO, p.main), ...[28.4, 30.8].map((y) => band(TORSO, y, y + 1.1, pale(p))), crew(p.dark),
     frill(9.6, 21.6, 33.4, 8.4, 22.8, 37.6, 5, 0.8, p.main), F(R(9.6, 33.4, 12, 0.6, pale(p))), F(T([[20, 30.8], [21, 30.3], [20.6, 31.8]], RED))],
   rashguard: (p) => [T(TORSO, p.main), side(TORSO, 11.6, -1, p.dark), side(TORSO, 19.6, 1, p.dark),
@@ -123,6 +125,7 @@ const SHOULDERS = {
   parka: (p) => [E(0, 0.6, 2.8, 2.6, p.main), F(R(-2.6, 1.6, 5.2, 0.5, p.dark))],
   onepiece: (p) => ruffle(p, pale(p)),
   bikini: (p) => ruffle(p, p.light),
+  dotbikini: (p) => [E(0, 0.6, 2.4, 2, p.main), ...tieBow(0, 0.2, pale(p))],
 };
 
 // ---------- Bottoms ----------
@@ -137,7 +140,7 @@ const LEGS = {
   trunks: (p, s) => ({ top: p.main, low: s, pad: null }),
 };
 // Skirts and bare-legged bottoms show skin under the skirt.
-const BARE = new Set(['plaid', 'tennis', 'flowerskirt', 'pinafore', 'onepiece', 'bikinibottom']);
+const BARE = new Set(['plaid', 'tennis', 'flowerskirt', 'pinafore', 'onepiece', 'bikinibottom', 'dotbikinibottom']);
 
 // Over the hips (the top's hem covers y < 35.8, so waist details sit just below it).
 const SKIRTS = {
@@ -169,8 +172,11 @@ const SKIRTS = {
     return [T(pts, p.main), R(11.4 + sw * 0.4, 37.4, 3, 2.6, p.dark), F(limb(10.6, 36, 9 + sw, 41.6, 0.4, 0.4, p.light)), F(limb(20.6, 36, 22.2 + sw, 41.6, 0.4, 0.4, p.light)), band(pts, 41.6, 42.6, p.dark)];
   },
   onepiece: (p, sw) => [skirtFrill(41.2, 2.6, sw, 6, pale(p)), skirtFrill(40.2, 2, sw, 6, p.main), ...dots([[12.2 + sw * 0.5, 38], [MID + sw * 0.6, 37.2], [19 + sw * 0.6, 38.4]], 0.6, pale(p))],
-  bikinibottom: (p, sw) => [skirtFrill(40.4, 2.4, sw, 6, p.light), skirtFrill(38.8, 1.6, sw, 6, p.main), R(10, 34.2, 11.2, 2.2, p.main),
+  bikinibottom: (p, sw) => [skirtFrill(42, 2.8, sw, 6, p.light), skirtFrill(40.4, 2, sw, 6, p.main), R(10, 34.2, 11.2, 2.2, p.main),
     ...dots([[12.4 + sw * 0.4, 37.4], [17.6 + sw * 0.5, 37]], 0.55, pale(p)), ...tieBow(20.4, 36.4, pale(p))],
+  // Bloomer-style bottoms with frilled leg openings.
+  dotbikinibottom: (p) => [T([[9.6, 34.2], [21.6, 34.2], [22.6, 37.6], [22.2, 40], [8.8, 40], [8.4, 37.6]], p.main), frill(8.6, 22.4, 39, 8.2, 22.8, 41.2, 7, 0.7, pale(p)),
+    ...dots([[11.4, 37], [MID, 38], [19.8, 37]], 0.75, pale(p)), ...tieBow(10.4, 36.4, pale(p))],
   boardshorts: (p) => [F(limb(MID, 36, MID - 1.2, 38.8, 0.5, 0.5, pale(p))), F(limb(MID, 36, MID + 1.2, 38.8, 0.5, 0.5, pale(p))), ...flower(11.4, 37.8, 1.6, pale(p), '#ff9ec0'), ...flower(19.8, 38.2, 1.3, '#ffe36b', '#ff7a6b')],
   trunks: (p) => [F(R(9.6, 35.8, 1.2, 4, pale(p))), F(R(20.4, 35.8, 1.2, 4, pale(p))), F(limb(MID, 36, MID - 1, 38.4, 0.5, 0.5, pale(p))), F(limb(MID, 36, MID + 1, 38.4, 0.5, 0.5, pale(p))), F(E(12.8, 38, 0.5, 0.5, pale(p)))],
 };
@@ -195,8 +201,9 @@ const SHOES = {
 // ---------- Hats ----------
 
 const HATS = {
-  cap: (p) => [dome(15.5, 9.6, 11, 7.6, p.main), F(R(15.2, 2.4, 0.6, 7, p.dark)), F(R(9.4, 4.4, 0.6, 5, p.dark)), F(R(21.4, 4.4, 0.6, 5, p.dark)),
-    R(4.6, 8.4, 21.8, 1.6, p.dark), dome(15.5, 10, 2.8, 2.6, p.deep), R(12.2, 8.6, 6.6, 1.2, p.light), F(E(15.5, 2.2, 1.2, 0.8, p.dark))],
+  cap: (p) => [T([[7.4, 7.6], [-1.6, 6.4], [-2.6, 8.4], [-0.4, 10], [7, 10.2]], p.dark), dome(15.5, 9.4, 11.2, 7.6, p.main), F(R(15.2, 2.2, 0.6, 7, p.dark)),
+    F(T([[9.6, 3.4], [10.4, 3], [8.8, 9], [8, 9]], p.dark)), F(T([[21.4, 3.4], [20.6, 3], [22.4, 9], [23.2, 9]], p.dark)), R(4.4, 8.2, 22.2, 1.6, p.dark),
+    F(E(15.5, 2, 1.3, 0.9, p.dark)), F(E(19, 5.6, 1.6, 1.4, pale(p))), F(E(19, 5.6, 0.7, 0.6, p.main))],
   bucket: (p) => [T([[6, 7.2], [25, 7.2], [28.6, 10.8], [26.8, 12], [4.2, 12], [2.4, 10.8]], p.dark), dome(15.5, 8, 9, 6.4, p.main), R(6.6, 6.2, 17.8, 1.8, p.light),
     F(R(4.8, 10.6, 21.4, 0.4, p.main)), ...flower(22, 7, 1.5, pale(p) === WHITE ? '#ff9ec0' : p.second)],
   pompom: (p, m) => {
@@ -231,9 +238,8 @@ const HATS = {
     F(E(10.2, 5.2, 0.6, 0.5, WHITE)), F(E(18.8, 5.2, 0.6, 0.5, WHITE)), F(R(14.2, 5.2, 2.6, 0.8, p.main))],
 };
 
-// Behind the head: the cap's brim turned backwards and the sun hat's ribbon tails.
+// Behind the head: the sun hat's ribbon tails.
 const HAT_BACKS = {
-  cap: (p) => [T([[10, 3.6], [21, 3.6], [22.4, -0.6], [8.6, -0.6]], p.dark)],
   sunhat: (p, m) => {
     const rib = lum(p.main) > 0.85 ? '#ff9ec0' : p.second;
     return [T([[22, 8], [24.4, 8], [28 + m.sway, 17], [25.8 + m.sway, 17.6]], rib), T([[23, 8], [25, 8], [25.6 + m.sway, 19.6], [23.6 + m.sway, 19]], shade(rib, -12))];
@@ -247,7 +253,7 @@ function hand(t, p, hx, hy, ex, ey) {
   const s = hx < 15.5 ? 1 : -1;
   switch (keyOf(t)) {
     case 'fingerless': return [limb(...at(0.18), ...at(0.5), 3.8, 3.6, p.main), F(limb(...at(0.42), ...at(0.5), 3.8, 3.8, p.dark)), E(hx, hy, 2, 2, p.main), F(R(hx - 1.6, hy + 0.4, 3.2, 0.6, p.light))];
-    case 'mittens': return [limb(...at(0.24), ...at(0.56), 4.6, 4.4, pale(p) === WHITE ? FUR : p.second), E(hx + s * 1.8, hy - 0.6, 1.1, 1.3, p.main), E(hx, hy, 2.6, 2.6, p.main), heart(hx, hy + 0.2, 1, pale(p))];
+    case 'mittens': return [limb(...at(0.24), ...at(0.56), 4.6, 4.4, pale(p) === WHITE ? FUR : p.second), E(hx + s * 2, hy - 0.8, 1.3, 1.5, p.main), E(hx, hy, 3, 3, p.main), heart(hx, hy + 0.2, 1.3, pale(p))];
     default: return [E(hx, hy, 1.9, 1.9, p.main)];
   }
 }
@@ -258,11 +264,11 @@ function capeBack(t, p, m) {
   const sw = m?.sway ?? 0;
   switch (keyOf(t)) {
     case 'backpack': return [E(15.5, 28.4, 10, 3.4, p.main), R(5.6, 28, 19.8, 12, p.main), R(4.2, 33, 2.2, 5.4, p.dark), R(24.6, 33, 2.2, 5.4, p.dark), F(R(4.2, 33, 2.2, 1, p.light)), F(R(24.6, 33, 2.2, 1, p.light))];
-    case 'guitar': return [limb(9, 36, 33, 4, 3.6, 3, p.main), E(33.6, 3.2, 2.4, 2.4, p.main), E(9.4, 36.8, 3.8, 4.4, p.main), E(5.4, 42.4, 5, 6, p.main),
+    case 'guitar': return [limb(9, 36, 33, 4, 3.6, 3, p.main), E(33.4, 3.4, 2, 2, p.main), E(9.4, 36.8, 3.8, 4.4, p.main), E(5.4, 42.4, 5, 6, p.main),
       F(E(4.4, 42, 1.4, 1.4, GOLD)), F(heart(7, 45, 1.2, '#ff9ec0')), F(R(26, 9.6, 1, 1.2, p.light))];
     case 'scarf': return [T([[9.4, 26], [12, 26], [7.6 + sw, 40], [4.6 + sw, 39.4]], p.dark), ...[4.8, 6, 7.2].map((x) => F(R(x + sw, 39.6, 0.6, 1.6, pale(p))))];
     case 'tote': return [R(2, 34, 7.6, 8.4, p.main), F(R(2, 34, 7.6, 1, p.dark)), heart(5.8, 38.4, 1.8, '#ff9ec0'), F(E(3.6, 36.4, 0.5, 0.5, GOLD))];
-    case 'swimring': return [hoop(15.5, 37.4, 11.8, 4.6, 6.8, 2.2, p.main, 180, 360, 12)];
+    case 'swimring': return [hoop(15.5, 37.4, 12, 6, 6.6, 2.4, p.main, 180, 360, 12)];
     case 'towel': {
       const pts = [[8.4, 25.6], [22.6, 25.6], [25 + sw * 0.5, 36], [26 + sw, 48], [5 + sw, 48], [6 + sw * 0.5, 36]];
       return [T(pts, p.main), band(pts, 38, 39.6, pale(p)), band(pts, 41.6, 42.8, '#ffe36b'), band(pts, 44.6, 45.8, pale(p)), ...[7, 11, 15, 19, 23].map((x) => F(R(x + sw, 47.8, 0.7, 1.4, pale(p))))];
@@ -280,7 +286,7 @@ function capeFront(t, p, m) {
       ...[17.8, 19, 20.2].map((x) => F(R(x + sw * 0.5, 38.4, 0.6, 1.6, pale(p)))), E(MID, 26.4, 6.6, 2.4, p.main), F(R(10.4, 25.8, 10.4, 0.8, pale(p)))];
     case 'tote': return [limb(11.6, 26.2, 3.4, 34.4, 1.2, 1.2, p.dark), limb(11.6, 26.2, 8.2, 34.4, 1.2, 1.2, p.dark)];
     // The front half of the ring around the waist, in candy stripes.
-    case 'swimring': return [0, 1, 2, 3].map((i) => hoop(15.5, 37.4, 11.8, 4.6, 6.8, 2.2, i % 2 ? pale(p) : p.main, i * 45, i * 45 + 45, 5));
+    case 'swimring': return [0, 1, 2, 3].map((i) => hoop(15.5, 37.4, 12, 6, 6.6, 2.4, i % 2 ? pale(p) : p.main, i * 45, i * 45 + 45, 5));
     case 'towel': return [T([[9.8, 25.4], [12.8, 25.4], [14.6, 28.6], [11.4, 29]], p.main), T([[21.4, 25.4], [18.4, 25.4], [16.6, 28.6], [19.8, 29]], p.main), E(MID, 28.4, 1.6, 1.3, p.dark)];
     default: return [];
   }
