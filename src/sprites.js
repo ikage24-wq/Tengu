@@ -264,9 +264,42 @@ const MOB_ART = {
     ],
     palette: { s: '#e9e4d4', k: OUTLINE },
   },
+  bat: {
+    shapes: () => [
+      E(16, 16, 7, 5, 'b'),
+      R(2, 10, 8, 8, 'w'),
+      R(22, 10, 8, 8, 'w'),
+      R(11, 8, 3, 3, 'b'),
+      R(18, 8, 3, 3, 'b'),
+      R(12, 14, 2, 2, 'y'),
+      R(18, 14, 2, 2, 'y'),
+    ],
+    palette: { b: '#7b6fa8', w: '#5d5285', y: '#ffe36b', o: OUTLINE },
+  },
+  ghost: {
+    shapes: () => [
+      E(16, 13, 10, 11, 'g'),
+      R(6, 18, 20, 9, 'g'),
+      R(6, 26, 4, 3, 'g'),
+      R(14, 26, 4, 4, 'g'),
+      R(22, 26, 4, 3, 'g'),
+      R(11, 11, 3, 4, 'k'),
+      R(18, 11, 3, 4, 'k'),
+    ],
+    palette: { g: '#c9f2e0', k: OUTLINE },
+  },
 };
 
-const MOB_SIZE = { snail: [34, 24], mushroom: [32, 36], wolf: [48, 34], golem: [60, 64], pig: [30, 26], skeleton: [30, 50] };
+const MOB_SIZE = {
+  snail: [34, 24],
+  mushroom: [32, 36],
+  wolf: [48, 34],
+  golem: [60, 64],
+  pig: [30, 26],
+  skeleton: [32, 32],
+  bat: [32, 32],
+  ghost: [32, 32],
+};
 
 function mobSprite(typeId) {
   return cached(`mob|${typeId}`, () => {
@@ -327,11 +360,21 @@ export function drawCharacterPreview(ctx, appearance, accent, time, x, y, scale)
   blit(ctx, characterSprite(a, 0), x, y + bob * scale, { scale });
 }
 
+// Tiny Dungeon frames (column, row) for mobs that have one. Drawn shapes are the fallback.
+const TINY_FRAMES = {
+  skeleton: [1, 10],
+  bat: [0, 10],
+  ghost: [0, 9],
+};
+
 export function drawMob(ctx, mob, sx, time) {
-  // Skeletons use the CC0 Tiny Dungeon frame once it has loaded; the drawn version is the fallback.
-  if (mob.typeId === 'skeleton' && ready(SHEETS.tiny)) {
-    const bob = Math.round(Math.sin(time * 4) * 0.5);
-    drawTile(ctx, SHEETS.tiny, 1, 10, sx, mob.y + bob, { scale: 2, flip: mob.dir < 0 });
+  const frame = TINY_FRAMES[mob.typeId];
+  if (frame && ready(SHEETS.tiny)) {
+    // Flyers bob in the air; ghosts drift a little more slowly.
+    const amp = mob.typeId === 'bat' ? 2 : 1;
+    const speed = mob.typeId === 'bat' ? 8 : 3;
+    const bob = Math.round(Math.sin(time * speed) * amp * 0.5);
+    drawTile(ctx, SHEETS.tiny, frame[0], frame[1], sx, mob.y + bob, { scale: 2, flip: mob.dir < 0 });
     return;
   }
   const bob = mob.typeId === 'golem' ? Math.round(Math.sin(time * 2)) : 0;

@@ -85,7 +85,8 @@ function spawnMobs(map, level) {
       } else {
         const span = map.width - 600;
         const x = 300 + ((i + 0.5) * span) / group.count;
-        mob = createMob(group.type, x, FLOOR_Y - t.h);
+        // Flyers hover above the floor by their group's `hover` height.
+        mob = createMob(group.type, x, FLOOR_Y - t.h - (group.hover ?? 0));
       }
       mob.respawnIn = 0;
       mobs.push(mob);

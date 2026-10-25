@@ -79,6 +79,8 @@ export const MAPS = {
       { type: 'mushroom', count: 6, minLevel: 8, platforms: [0, 2, 4, 6] },
       { type: 'wolf', count: 5, minLevel: 18 },
       { type: 'skeleton', count: 4, minLevel: 20, platforms: [2, 5, 7] },
+      { type: 'bat', count: 4, minLevel: 12, hover: 70 },
+      { type: 'ghost', count: 3, minLevel: 16, hover: 36 },
       { type: 'golem', count: 2, minLevel: 30 },
     ],
     npcs: [],

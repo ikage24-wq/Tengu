@@ -10,10 +10,12 @@ export const MOB_TYPES = {
   golem: { name: 'Golem', level: 30, hp: 420, atk: 30, exp: 150, goldMin: 30, goldMax: 70, w: 60, h: 64, speed: 35, color: '#a58a6a' },
   pig: { name: 'Pig', level: 4, hp: 48, atk: 6, exp: 14, goldMin: 3, goldMax: 9, w: 30, h: 26, speed: 50, color: '#ffb3c6' },
   skeleton: { name: 'Skeleton', level: 22, hp: 240, atk: 20, exp: 90, goldMin: 18, goldMax: 40, w: 32, h: 32, speed: 70, color: '#e9e4d4' },
+  bat: { name: 'Bat', level: 12, hp: 90, atk: 10, exp: 36, goldMin: 8, goldMax: 20, w: 32, h: 32, speed: 85, color: '#7b6fa8' },
+  ghost: { name: 'Ghost', level: 16, hp: 130, atk: 14, exp: 50, goldMin: 10, goldMax: 25, w: 32, h: 32, speed: 45, color: '#c9f2e0' },
 };
 
 // Chance a mob drops gear. Bosses and higher-tier mobs roll gear more often.
-const GEAR_DROP_CHANCE = { snail: 0.02, pig: 0.03, mushroom: 0.04, wolf: 0.08, skeleton: 0.12, golem: 0.25 };
+const GEAR_DROP_CHANCE = { snail: 0.02, pig: 0.03, mushroom: 0.04, wolf: 0.08, bat: 0.06, skeleton: 0.12, ghost: 0.1, golem: 0.25 };
 
 export function createMob(typeId, x, y, patrolRange = 160) {
   const t = MOB_TYPES[typeId];
