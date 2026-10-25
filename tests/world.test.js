@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 
 import { MAPS } from '../src/data/maps.js';
 import { createBody, stepBody } from '../src/world/physics.js';
-import { createCharacter, gainExp, learnSkill } from '../src/core/character.js';
+import { createCharacter, gainExp, learnSkill, advanceJob } from '../src/core/character.js';
+import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
 import { makeEquip } from '../src/core/items.js';
 import { equipFromBag } from '../src/core/character.js';
@@ -149,4 +150,56 @@ test('the boss slam hurts players standing on the floor', () => {
   const hp = w.char.hp;
   for (let i = 0; i < 60 * 9; i++) updateWorld(w, DT, idle);
   assert.ok(w.char.hp < hp, 'took slam damage');
+});
+
+function mageAt50(second, third) {
+  const w = newWorld();
+  gainExp(w.char, 3e7);
+  assert.ok(w.char.level >= 50);
+  assert.equal(advanceJob(w.char, third), false, 'third job needs the second job first');
+  advanceJob(w.char, 'mage');
+  advanceJob(w.char, second);
+  assert.equal(advanceJob(w.char, third), true);
+  w.char.base.int = 250;
+  w.char.mp = 99999;
+  w.char.baseMp = 99999;
+  return w;
+}
+
+function crowd(w, count, type = 'starspirit') {
+  loadMap(w, 'sky', 'west');
+  w.spawner.slots = [];
+  w.mobs = [];
+  for (let i = 0; i < count; i++) {
+    const m = spawnMob(w.map, { mob: type, x: w.body.x + 40 + i * 12, y: w.map.groundY });
+    m.def = { ...m.def, eva: 0, fly: false, hp: 1e9 };
+    m.hp = 1e9;
+    m.y = w.map.groundY;
+    w.mobs.push(m);
+  }
+}
+
+for (const [second, third, ult] of [['cleric', 'seraph', 'judgment'], ['pyromancer', 'infernosage', 'meteor']]) {
+  test(`${third}: the ultimate hits 15 of 20 monsters twice`, () => {
+    const w = mageAt50(second, third);
+    w.char.skills[ult] = 20;
+    crowd(w, 20);
+    const result = cast(w, ult);
+    assert.equal(result.ok, true);
+    assert.equal(result.targets, 15);
+    assert.equal(w.pending.length, 30, '15 targets x 2 hits');
+  });
+}
+
+test('summons attack nearby monsters on their own', () => {
+  const w = mageAt50('cleric', 'seraph');
+  w.char.skills.guardianangel = 10;
+  w.char.hotkeys = { KeyQ: { skill: 'guardianangel' } };
+  crowd(w, 3, 'cloudsheep');
+  updateWorld(w, DT, keys([], ['KeyQ']));
+  assert.ok(w.char.buffs.guardianangel?.summon, 'angel summoned');
+  const before = w.mobs.reduce((n, m) => n + m.hp, 0);
+  for (let i = 0; i < 60 * 3; i++) updateWorld(w, DT, idle);
+  const after = w.mobs.reduce((n, m) => n + m.hp, 0);
+  assert.ok(after < before, 'the angel dealt damage without the player attacking');
 });

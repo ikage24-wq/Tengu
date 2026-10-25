@@ -7,7 +7,7 @@ const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
 const SHOT_COLORS = {
   pebble: '#ffc2e0', arrow: '#fff6fb', star: '#dfe6ff', bolt: '#c9b6ff', fire: '#ff9b5c', holy: '#fff3a6',
-  bomb: '#ffb347', pierce: '#a8e8ff', swing: '#ffffff',
+  bomb: '#ffb347', pierce: '#a8e8ff', swing: '#ffffff', darkbolt: '#b48cff',
 };
 
 function sparkle(ctx, x, y, r, color) {
@@ -72,7 +72,7 @@ function drawShot(ctx, f, cam) {
       sparkle(ctx, 0, 0, 6, c);
       sparkle(ctx, 0, 0, 3, '#ffffff');
       break;
-    case 'bolt': case 'holy': case 'fire': case 'bomb': {
+    case 'bolt': case 'holy': case 'fire': case 'bomb': case 'darkbolt': {
       const r = f.shot === 'fire' ? 7 : 6;
       const g = ctx.createRadialGradient(x, y, 1, x, y, r * 2.2);
       g.addColorStop(0, '#ffffff');
@@ -178,6 +178,67 @@ function drawFx(ctx, f, cam, time) {
           sparkle(ctx, x + Math.cos(a) * 18 * ease(p), y - 16 + Math.sin(a) * 14 * ease(p), 4 * (1 - p) + 1, color);
         }
         sparkle(ctx, x, y - 16, 9 * (1 - p), '#ffffff');
+      }
+      break;
+    }
+    case 'meteor': case 'judgment': {
+      const gold = f.kind === 'judgment';
+      if (f.box) {
+        // The whole screen glows while the storm lands.
+        ctx.globalAlpha = 0.3 * Math.sin(Math.PI * p);
+        ctx.fillStyle = gold ? '#fff3a6' : '#ff9b5c';
+        ctx.fillRect(0, 0, 640, 360);
+        break;
+      }
+      if (f.t < 0) break;
+      const impact = 0.45;
+      if (gold) {
+        // A pillar of light drops from the sky, then fades out from the edges.
+        const width = 20 * (p < impact ? p / impact : 1 - (p - impact) / (1 - impact));
+        const g = ctx.createLinearGradient(0, 0, 0, y);
+        g.addColorStop(0, 'rgba(255,243,166,0)');
+        g.addColorStop(0.6, 'rgba(255,248,210,0.8)');
+        g.addColorStop(1, 'rgba(255,255,255,1)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - width / 2, 0, width, y);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x - width / 6, 0, width / 3, y);
+        for (let i = 0; i < 5; i++) sparkle(ctx, x - 14 + ((i * 13) % 28), y - ((p * 220 + i * 37) % 120), 2.5, i % 2 ? '#ffffff' : '#ffe36b');
+      } else if (p < impact) {
+        // A meteor streaks down at a slant with a flaming tail.
+        const k = p / impact;
+        const mx = x - 130 * (1 - k);
+        const my = y - 260 * (1 - k) - 10;
+        for (let i = 4; i >= 1; i--) {
+          ctx.globalAlpha = 0.18 * i;
+          ctx.fillStyle = i % 2 ? '#ffd66b' : '#ff8a6b';
+          ctx.beginPath();
+          ctx.arc(mx - i * 9, my - i * 18, 9 - i, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ff8a6b';
+        ctx.beginPath();
+        ctx.arc(mx, my, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff3c4';
+        ctx.beginPath();
+        ctx.arc(mx + 2, my - 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (p >= impact) {
+        // Burst on impact.
+        const k = (p - impact) / (1 - impact);
+        ctx.globalAlpha = 1 - k;
+        ctx.strokeStyle = gold ? '#fff3a6' : '#ffb347';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(x, y - 4, 10 + 36 * k, 5 + 12 * k, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          sparkle(ctx, x + Math.cos(a) * 26 * k, y - 16 + Math.sin(a) * 18 * k, 5 * (1 - k) + 1, gold ? '#ffffff' : '#ffd66b');
+        }
       }
       break;
     }

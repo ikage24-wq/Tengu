@@ -40,7 +40,11 @@ then press the key. Right-click a hotkey slot to clear it.
 
 - **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (talk to the instructors in
   Pastel Harbor) → a second job at 30: Blademaster or Lancer, Pyromancer or Cleric, Ranger or
-  Marksman, Duelist or Shadow. Each job has its own HP/MP growth and weapons.
+  Marksman, Duelist or Shadow. Each job has its own HP/MP growth and weapons. Mages get a
+  third job at level 50: **Seraph** (from Cleric) and **Inferno Sage** (from Pyromancer), each
+  with a huge-area ultimate that strikes up to 15 monsters twice (Radiant Judgment, Meteor
+  Shower), a summon that fights beside you (Guardian Angel, Shadow Cross), a power buff, and a
+  mastery passive.
 - **Stats** — STR, DEX, INT, LUK with 5 AP per level (an Auto button spends them for your job).
   Damage uses a primary and secondary stat per weapon type, mastery raises your minimum damage,
   magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.

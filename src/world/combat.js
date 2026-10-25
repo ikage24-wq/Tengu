@@ -68,7 +68,9 @@ export function cast(world, skillId, rng = Math.random) {
   world.pose = { kind: pose, t: Math.min(0.35, world.attackTimer), dur: Math.min(0.35, world.attackTimer) };
 
   if (type === 'buff') {
-    char.buffs[skillId] = { until: now + params.duration, values: params.buff, name: s.name };
+    // Summons ride on a buff: they attack on their own timer until the buff ends.
+    const summon = params.summon ? { ...params.summon, timer: 0.6 } : null;
+    char.buffs[skillId] = { until: now + params.duration, values: params.buff, name: s.name, summon };
     world.fx.push({ kind: 'buff', x: body.x, y: body.y, t: 0, dur: 0.7, color: '#ffe36b' });
     world.log(`${s.name} is active.`, '#ffe36b');
     return { ok: true };
@@ -89,12 +91,13 @@ export function cast(world, skillId, rng = Math.random) {
 
   if (!params.projectile) {
     const box = hitBox(body, params.range);
-    world.fx.push({ kind: fxKind, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: 0.3 });
+    const storm = fxKind === 'meteor' || fxKind === 'judgment';
+    world.fx.push({ kind: fxKind, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: storm ? 0.8 : 0.3 });
   }
 
   targets.forEach((m, ti) => {
     const dist = Math.abs(m.x - body.x);
-    const travel = params.projectile ? dist / PROJECTILE_SPEED : 0.1;
+    const travel = params.projectile ? dist / PROJECTILE_SPEED : params.delay ?? 0.1;
     for (let n = 0; n < params.hits; n++) {
       const at = now + travel + n * 0.09 + ti * 0.02;
       const miss = rng() >= hitChance(acc, char.level, m.def);
@@ -108,7 +111,8 @@ export function cast(world, skillId, rng = Math.random) {
       }
     }
     if (!params.projectile && (type === 'magic' || type === 'heal')) {
-      world.fx.push({ kind: fxKind, x: m.x, y: m.y, t: 0, dur: 0.45 });
+      const storm = fxKind === 'meteor' || fxKind === 'judgment';
+      world.fx.push({ kind: fxKind, x: m.x, y: m.y, t: storm ? -ti * 0.025 : 0, dur: storm ? 0.9 : 0.45 });
     }
   });
 
@@ -120,4 +124,27 @@ export function cast(world, skillId, rng = Math.random) {
     });
   }
   return { ok: true, targets: targets.length };
+}
+
+// Where a summon floats: just behind the player's shoulder, bobbing gently.
+export function summonPosition(world, index = 0) {
+  const b = world.body;
+  return { x: b.x - b.facing * (24 + index * 18), y: b.y - 62 + Math.sin(world.now * 3 + index) * 3 };
+}
+
+// One summon attack: magic bolts from the summon to nearby monsters.
+export function summonStrike(world, summon, from, rng = Math.random) {
+  const { char, stats, body, now } = world;
+  const targets = pickTargets(world.mobs, body, summon.range, summon.targets);
+  if (!targets.length) return 0;
+  const range = magicRange(stats, summon.power);
+  const acc = accuracy(JOBS[char.job].family, stats, char.level);
+  targets.forEach((m, i) => {
+    const travel = Math.hypot(m.x - from.x, m.y - from.y) / 700;
+    const miss = rng() >= hitChance(acc, char.level, m.def);
+    const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
+    world.pending.push({ at: now + travel + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: from.x, stack: 0 });
+    world.fx.push({ kind: 'projectile', shot: summon.fx, x: from.x, y: from.y, tx: m.x, ty: m.y - m.def.h / 2, t: -i * 0.03, dur: Math.max(0.08, travel) });
+  });
+  return targets.length;
 }

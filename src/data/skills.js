@@ -215,6 +215,62 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(210, 370, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
   }),
 
+  // ---------- Inferno Sage (third job) ----------
+  infernomastery: skill({
+    id: 'infernomastery', name: 'Inferno Mastery', job: 'infernosage', type: 'passive', fx: null,
+    desc: 'Steadier, fiercer spells: more mastery, magic attack, and critical damage.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 40, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
+  }),
+  overload: skill({
+    id: 'overload', name: 'Arcane Overload', job: 'infernosage', type: 'buff', fx: 'buff',
+    desc: 'Pour raw mana into every spell: big magic attack and critical rate.',
+    at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { matk: lerp(15, 50, lv, m), critRate: lerpf(0.05, 0.2, lv, m) } }),
+  }),
+  shadowcross: skill({
+    id: 'shadowcross', name: 'Shadow Cross', job: 'infernosage', type: 'buff', fx: 'buff',
+    desc: 'Summon a dark cross that floats beside you and blasts nearby monsters on its own.',
+    at: (lv, m) => ({
+      mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
+      summon: { art: 'cross', every: 2.4, power: lerp(160, 300, lv, m), targets: 6, range: { w: 420, h: 220, around: true }, fx: 'darkbolt' },
+    }),
+  }),
+  meteor: skill({
+    id: 'meteor', name: 'Meteor Shower', job: 'infernosage', type: 'magic', fx: 'meteor',
+    desc: 'Rain blazing meteors on up to 15 monsters across a huge area, twice.',
+    at: (lv, m) => ({
+      mp: lerp(70, 120, lv, m), power: lerp(290, 520, lv, m), hits: 2, targets: 15,
+      range: { w: 620, h: 320, around: true }, critRate: lerpf(0.05, 0.15, lv, m), delay: 0.4,
+    }),
+  }),
+
+  // ---------- Seraph (third job) ----------
+  seraphmastery: skill({
+    id: 'seraphmastery', name: 'Seraph Mastery', job: 'seraph', type: 'passive', fx: null,
+    desc: 'Steadier, brighter spells: more mastery, magic attack, and critical rate.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 36, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
+  }),
+  sanctuary: skill({
+    id: 'sanctuary', name: 'Sanctuary', job: 'seraph', type: 'buff', fx: 'shield',
+    desc: 'A halo of light: huge defense, avoid, and max HP.',
+    at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { wdef: lerp(30, 120, lv, m), eva: lerp(10, 40, lv, m), maxHpPct: lerpf(0.1, 0.4, lv, m) } }),
+  }),
+  guardianangel: skill({
+    id: 'guardianangel', name: 'Guardian Angel', job: 'seraph', type: 'buff', fx: 'buff',
+    desc: 'Summon an angel that floats beside you and strikes nearby monsters with light.',
+    at: (lv, m) => ({
+      mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
+      summon: { art: 'angel', every: 2.2, power: lerp(150, 280, lv, m), targets: 6, range: { w: 420, h: 220, around: true }, fx: 'holy' },
+    }),
+  }),
+  judgment: skill({
+    id: 'judgment', name: 'Radiant Judgment', job: 'seraph', type: 'magic', fx: 'judgment',
+    desc: 'Pillars of holy light strike up to 15 monsters across a huge area, twice. Strong criticals.',
+    at: (lv, m) => ({
+      mp: lerp(70, 120, lv, m), power: lerp(280, 500, lv, m), hits: 2, targets: 15,
+      range: { w: 620, h: 320, around: true }, critRate: lerpf(0.1, 0.25, lv, m), delay: 0.4,
+    }),
+  }),
+
   // ---------- Ranger ----------
   bowmastery: skill({
     id: 'bowmastery', name: 'Bow Mastery', job: 'ranger', type: 'passive', fx: null,

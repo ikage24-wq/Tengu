@@ -58,6 +58,16 @@ export const JOBS = {
     hp: 18, mp: 24, advanceHp: 200, advanceMp: 400, weapons: ['wand', 'staff'],
     blurb: 'Holy light that heals you and smites everything nearby.',
   },
+  infernosage: {
+    id: 'infernosage', name: 'Inferno Sage', family: 'mage', tier: 3, parent: 'pyromancer', level: 50,
+    hp: 18, mp: 28, advanceHp: 300, advanceMp: 800, weapons: ['wand', 'staff'],
+    blurb: 'Calls down meteor storms and binds a shadow cross to fight beside you.',
+  },
+  seraph: {
+    id: 'seraph', name: 'Seraph', family: 'mage', tier: 3, parent: 'cleric', level: 50,
+    hp: 20, mp: 28, advanceHp: 400, advanceMp: 800, weapons: ['wand', 'staff'],
+    blurb: 'Judges whole crowds with pillars of light, guarded by a summoned angel.',
+  },
   ranger: {
     id: 'ranger', name: 'Ranger', family: 'archer', tier: 2, parent: 'archer', level: 30,
     hp: 22, mp: 18, advanceHp: 300, advanceMp: 250, weapons: ['bow'],

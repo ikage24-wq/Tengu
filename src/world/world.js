@@ -13,7 +13,8 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
-import { cast } from './combat.js';
+import { cast, summonStrike, summonPosition } from './combat.js';
+import { nextJobs } from '../data/jobs.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -193,8 +194,9 @@ function killMob(world, m) {
     world.events.push({ type: 'levelup', level: char.level });
     world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
     world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
-    if (char.level === 10 && char.job === 'novice') world.log('You can choose a job! Visit an instructor in Pastel Harbor.', '#ffe36b');
-    if (char.level === 30 && ['warrior', 'mage', 'archer', 'thief'].includes(char.job)) world.log('Your instructor has a new path for you.', '#ffe36b');
+    if (nextJobs(char.job, char.level).some((j) => j.level === char.level)) {
+      world.log('A new job is ready! Visit your instructor in Pastel Harbor.', '#ffe36b');
+    }
   }
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');
 }
@@ -253,6 +255,17 @@ export function updateWorld(world, dt, input) {
   char.hp = Math.min(char.hp, world.stats.maxHp);
   char.mp = Math.min(char.mp, world.stats.maxMp);
 
+  // Summons attack on their own timers; with nothing in range they check again shortly.
+  let summonIndex = 0;
+  for (const b of Object.values(char.buffs)) {
+    if (!b.summon) continue;
+    const from = summonPosition(world, summonIndex++);
+    b.summon.timer -= dt;
+    if (b.summon.timer <= 0 && !world.dead) {
+      b.summon.timer = summonStrike(world, b.summon, from) ? b.summon.every : 0.25;
+    }
+  }
+
   // ----- Player control -----
   const held = input.locked || world.dead ? new Set() : input.held;
   const pressed = input.locked || world.dead ? new Set() : input.pressed;
@@ -273,12 +286,14 @@ export function updateWorld(world, dt, input) {
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
 
   if (!world.body.rope) {
-    if (held.has('KeyZ') || held.has('ControlLeft') || held.has('ControlRight')) cast(world, null);
+    // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
+    const attackKey = ['KeyZ', 'ControlLeft', 'ControlRight'].some((k) => held.has(k) || pressed.has(k));
+    if (attackKey) cast(world, null);
     for (const [code, binding] of Object.entries(char.hotkeys)) {
       if (!binding) continue;
       // Attack skills repeat while held; everything else fires once per press.
       const repeat = binding.skill && ['attack', 'magic'].includes(SKILLS[binding.skill]?.type);
-      if (repeat ? held.has(code) : pressed.has(code)) useHotkey(world, binding);
+      if (pressed.has(code) || (repeat && held.has(code))) useHotkey(world, binding);
     }
   } else {
     for (const [code, binding] of Object.entries(char.hotkeys)) {

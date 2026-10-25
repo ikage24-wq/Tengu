@@ -218,7 +218,9 @@ export function skillsWindow(ui, state, world) {
   const char = world.char;
   const chain = jobChain(char.job);
   win.tab = Math.min(win.tab ?? chain.length - 1, chain.length - 1);
-  win.tab = tabs(ui, win.x + 6, win.y + 22, chain.map((j) => JOBS[j].name), win.tab, { w: 70 });
+  // Tabs share the window width, so four job books still fit.
+  const tabW = Math.min(70, Math.floor((W - 60) / chain.length) - 2);
+  win.tab = tabs(ui, win.x + 6, win.y + 22, chain.map((j) => JOBS[j].name), win.tab, { w: tabW });
   const job = chain[win.tab];
   text(ctx, `SP: ${char.sp}`, win.x + W - 10, win.y + 32, { size: 9, bold: true, align: 'right', color: char.sp ? COLORS.accent : COLORS.muted });
   const list = Object.values(SKILLS).filter((s) => s.job === job);

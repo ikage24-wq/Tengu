@@ -7,6 +7,8 @@ import { drawMonster } from './monsters.js';
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
 import { nearbyNpc } from '../world/world.js';
+import { summonPosition } from '../world/combat.js';
+import { drawSummon } from './summons.js';
 import { text, box, COLORS } from '../ui/kit.js';
 
 export const VIEW_W = 640;
@@ -105,6 +107,13 @@ export function drawWorld(ctx, world, cam, time) {
   drawHero(ctx, world.char.appearance, world.char.equipment, b.x - cam.x, b.y - cam.y, {
     ...p, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1,
   });
+
+  let summonIndex = 0;
+  for (const buff of Object.values(world.char.buffs)) {
+    if (!buff.summon) continue;
+    const pos = summonPosition(world, summonIndex++);
+    drawSummon(ctx, buff.summon.art, pos.x - cam.x, pos.y - cam.y, time, b.facing);
+  }
 
   drawEffects(ctx, world, cam, time);
   drawNumbers(ctx, world, cam);

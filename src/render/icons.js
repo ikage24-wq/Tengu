@@ -56,7 +56,7 @@ export function drawItemIcon(ctx, id, x, y, scale = 1) {
 const SKILL_COLORS = {
   slash: '#ffb38a', spin: '#ffd66b', flurry: '#ff9ec0', pierce: '#a8e8ff', bolt: '#b8a6ff', burst: '#ffe36b',
   fire: '#ff8a6b', blaze: '#ff9b5c', holy: '#fff3a6', heal: '#9be08f', arrow: '#9be08f', bomb: '#ffb347', star: '#c9d6ff',
-  pebble: '#ffd0e6', buff: '#ffe36b', shield: '#8fd3ff', passive: '#d4cbe8',
+  pebble: '#ffd0e6', buff: '#ffe36b', shield: '#8fd3ff', passive: '#d4cbe8', meteor: '#ff9b5c', judgment: '#ffe36b',
 };
 
 function skillShapes(s) {
@@ -71,6 +71,8 @@ function skillShapes(s) {
     case 'bolt': case 'holy': return [...bg, R(8, 2, 3, 4, l), R(6, 6, 4, 3, l), R(7, 9, 3, 4, l), R(5, 12, 3, 2, l)];
     case 'burst': case 'bomb': return [...bg, E(8, 8, 4, 4, l), R(8, 1, 1, 3, l), R(8, 12, 1, 3, l), R(1, 8, 3, 1, l), R(12, 8, 3, 1, l)];
     case 'fire': case 'blaze': return [...bg, E(8, 10, 4, 4, l), E(8, 6, 2.5, 4, l), P(9, 2, l)];
+    case 'meteor': return [...bg, E(10, 10, 4, 4, l), R(3, 3, 2, 2, l), R(5, 5, 2, 2, l), R(7, 7, 2, 2, l), P(10, 9, c)];
+    case 'judgment': return [...bg, R(3, 1, 2, 12, l), R(7, 1, 2, 13, l), R(11, 1, 2, 12, l), R(2, 13, 12, 2, l)];
     case 'heal': return [...bg, R(6, 3, 4, 10, l), R(3, 6, 10, 4, l)];
     case 'star': case 'pebble': return [...bg, R(7, 2, 2, 12, l), R(2, 7, 12, 2, l), R(5, 5, 6, 6, l)];
     case 'shield': return [...bg, E(8, 7, 5, 5, l), R(5, 8, 6, 5, l), R(7, 12, 2, 2, l)];
