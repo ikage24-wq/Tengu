@@ -6,6 +6,7 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
+import { drawBuffCast } from './buffs.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -412,6 +413,9 @@ function drawFx(ctx, f, cam, time) {
       }
       break;
     }
+    case 'buffcast':
+      drawBuffCast(ctx, f, x, y, p, time);
+      break;
     case 'buff': case 'potion': {
       ctx.globalAlpha = 1 - p;
       const color = f.color ?? SCHOOL_COLORS[f.school]?.main ?? '#ffe36b';

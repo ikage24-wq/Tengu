@@ -14,6 +14,7 @@ import { createAnim, stepAnim } from './animator.js';
 import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura } from './particles.js';
 import { ITEMS } from '../data/items.js';
 import { drawBubble } from '../ui/chat.js';
+import { drawBuffEffects } from './buffs.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -140,9 +141,14 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (b.onGround) drawShadow(ctx, b.x - cam.x, b.y - cam.y, 1);
   // A chat emoticon shows on the face for a few seconds.
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
-  drawHero(ctx, look, world.char.equipment, Math.round(b.x - cam.x), Math.round(b.y - cam.y), {
-    ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job,
-  }, feel.anim);
+  const hx = Math.round(b.x - cam.x);
+  const hy = Math.round(b.y - cam.y);
+  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job };
+  const buffs = world.dead ? {} : world.char.buffs;
+  drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
+  drawBuffClones(ctx, buffs, look, world.char.equipment, hx, hy, heroState, time);
+  drawHero(ctx, look, world.char.equipment, hx, hy, heroState, feel.anim);
+  drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
 
   let summonIndex = 0;
   for (const buff of Object.values(world.char.buffs)) {
@@ -155,6 +161,25 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawParticles(ctx, feel.fx, cam, time);
   drawNumbers(ctx, world, cam);
   drawBubbles(ctx, world, cam);
+}
+
+// Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
+function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
+  const clone = (dx, alpha, filter) => {
+    ctx.save();
+    ctx.filter = filter;
+    drawHero(ctx, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha });
+    ctx.restore();
+  };
+  if (buffs.shadowpartner) {
+    clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, 'brightness(0.3) sepia(1) hue-rotate(220deg) saturate(3)');
+  }
+  if (buffs.mirage) {
+    for (const side of [-1, 1]) {
+      const flicker = 0.25 + 0.2 * Math.sin(time * 6 + side * 2);
+      clone(side * (20 + Math.sin(time * 1.5 + side) * 4), flicker, 'sepia(1) saturate(2.5) brightness(1.25)');
+    }
+  }
 }
 
 // A soft oval under the feet.

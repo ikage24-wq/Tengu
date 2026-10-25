@@ -260,7 +260,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         const len = 8 + rand(i * 7) * 14;
         ctx.globalAlpha = a * (1 - u);
         ctx.fillStyle = i % 2 ? c.main : c.light;
-        ctx.fillRect(Math.round(sx), Math.round(y - 4 - u * (f.big ? 80 : 50)), 2, len);
+        ctx.fillRect(Math.round(sx), Math.round(y - 4 - u * (f.big ? 80 : 50) - len), 2, len);
       }
       return true;
     }

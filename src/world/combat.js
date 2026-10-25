@@ -117,8 +117,8 @@ export function cast(world, skillId, rng = Math.random) {
   if (type === 'buff') {
     // Summons ride on a buff: they attack on their own timer until the buff ends.
     const summon = params.summon ? { ...params.summon, timer: 0.6 } : null;
-    char.buffs[skillId] = { until: now + params.duration, values: params.buff, name: s.name, summon };
-    world.fx.push({ kind: 'buff', x: body.x, y: body.y, t: 0, dur: 0.7, school: s.school });
+    char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name, summon };
+    world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, t: 0, dur: 1.1 });
     world.log(`${s.name} is active.`, '#ffe36b');
     return { ok: true };
   }
