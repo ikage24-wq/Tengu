@@ -336,6 +336,8 @@ function bodyShapes(look, g, rig) {
   shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
   shapes.push(...offset(topShapes(top.design, top.color), ux, uy));
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
+  // Out of combat the weapon arm is part of the body too, so it has no outline across the torso.
+  if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin), ux, uy));
   // The head rides the squashed body, so it moves by the squashed bob.
   const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy + NECK_LIFT);
   return move([...hang, ...squash(shapes), ...head], 0, 0);
@@ -555,7 +557,7 @@ function solveRig(state, anim) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.air ? 1 : 0, r.squat, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb].join(',');
 }
 
 // ---------- Weapons ----------
@@ -658,6 +660,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const attack = pose === 'swing' || pose === 'shoot' || pose === 'cast';
   const g = resolveGear(look, gear);
   const rig = solveRig(state, anim);
+  rig.armIn = !attack;
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
   const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: true, crisp: true }));
@@ -735,7 +738,8 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   if (wpn && !attack && rig.view !== 'back') drawWeapon();
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (rig.view === 'back') return;
-  if (attack) drawWeapon();
+  if (!attack) return;
+  drawWeapon();
   const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: true, crisp: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
