@@ -312,7 +312,7 @@ export function tinted(s, color) {
 
 // Smooth sprites are big and the hero makes many of them, so the cache forgets the least
 // recently used ones past this size.
-const CACHE_MAX = 900;
+const CACHE_MAX = 1600;
 
 // Returns a cached sprite { canvas, white, w, h, res } built by `build()` -> { w, h, shapes, palette, res, soft }.
 export function sprite(key, build) {
