@@ -175,7 +175,10 @@ to clear it.
   through the portals, and log out for good; a name never comes back. Some set up a shop on a rug
   with a sign and sell their loot and gear, which you can buy. Now and then one walks over to wave
   and say hi to you by name (rarely, and each only once). Click any player, or yourself, to see a
-  profile with their look, gear, full stats, build, guild, and shop. At most three share a town.
+  profile with their look, gear, full stats, build, guild, and shop. About 22 are online (never
+  fewer than 20; someone logging out is soon replaced), spread over the towns by level: beginners
+  in Sprout Village, mid levels in Ember Crag and Pastel Harbor, veterans and pros in Moonleaf Grove,
+  with a few wandering anywhere. The busier a town, the less each person chats.
 - **Quests and NPCs** — 9 quests (defeat or collect), shops that buy and sell (including a
   blacksmith in Ember Crag, a spell shop in Moonleaf Grove, and Lulu's clothing boutique), a salon
   to restyle your hero, and job instructors.

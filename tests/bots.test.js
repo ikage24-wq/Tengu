@@ -33,17 +33,24 @@ test('generated players are real characters with a job for their level and gear 
   }
 });
 
-test('players come and go over time, a few per town, and nobody comes back', () => {
+test('players come and go over time, at least 20 online, spread by level, and nobody comes back', () => {
   const world = createWorld(createCharacter('Me', {}));
   world.log = () => {};
   const bots = createBots(world, seeded(3));
   const names = new Set();
   for (let i = 0; i < 20000; i++) {
     updateBots(bots, world, 0.1);
-    for (const t of TOWNS) assert.ok(botsIn(bots, t).length <= 3, `${t} stays uncrowded`);
+    assert.ok(bots.list.length >= 20, 'at least 20 online');
+    for (const t of TOWNS) assert.ok(botsIn(bots, t).length <= 8, `${t} stays uncrowded`);
     for (const b of bots.list) names.add(b.name);
   }
-  assert.ok(names.size > 20, 'new players keep arriving');
+  assert.ok(names.size > 40, 'new players keep arriving');
+  // Beginners gather in Sprout Village, veterans in Moonleaf Grove.
+  const avg = (t) => {
+    const here = botsIn(bots, t);
+    return here.reduce((n, b) => n + b.level, 0) / Math.max(1, here.length);
+  };
+  assert.ok(avg('grove') > avg('sprout'), 'higher levels hang out in the high-level town');
   assert.equal(names.size, bots.names.size, 'names are never reused');
 });
 

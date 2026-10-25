@@ -3,7 +3,7 @@
 // Each one is built like a real character (level, job, stat build, rolled gear), so you can click
 // them to see their stats and gear. Nobody comes back after logging out, and no name repeats.
 //
-// The town population stays small (a few per town) so the streets feel lived in, not crowded.
+// About 22 are online (never under 20), spread over the towns by level so each town has a handful.
 // This runs alongside the world (main.js calls updateBots), not inside updateWorld, so the game
 // rules stay deterministic for tests.
 
@@ -20,8 +20,14 @@ import { speak, moodFor, makeStyle, price as priceText } from './chatter.js';
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 
-const TOTAL = 8; // players online across all towns
-const PER_TOWN = 3; // most in one town at once
+const TOTAL = 22; // players online across all towns, counting those between towns
+const MIN_ONLINE = 20; // never fewer: someone logging out is soon replaced
+const PER_TOWN = 8; // most in one town at once
+
+// Where players of each level hang out, following the hunting grounds around each town: Sprout
+// Village for beginners, Ember Crag and Pastel Harbor in the middle, Moonleaf Grove for the
+// high-level maps and the Crystal King.
+const TOWN_LEVELS = { sprout: [1, 12], crag: [10, 25], harbor: [15, 35], grove: [30, 99] };
 const WALK = 46;
 const PRO_RATE = 0.05;
 
@@ -73,7 +79,7 @@ function makeLook(rng) {
 function rollLevel(pro, rng) {
   if (pro) return Math.floor(between(56, 71, rng));
   const r = rng();
-  if (r < 0.25) return Math.floor(between(1, 12, rng));
+  if (r < 0.3) return Math.floor(between(1, 12, rng));
   if (r < 0.8) return Math.floor(between(12, 40, rng));
   return Math.floor(between(40, 56, rng));
 }
@@ -193,9 +199,25 @@ function makeShop(bot, rng) {
 
 export function createBots(world, rng = Math.random) {
   const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), rng };
-  // Start with a few already around so towns aren't empty when you arrive.
-  for (let i = 0; i < 6; i++) spawn(bots, world, { quiet: true });
+  // Everyone's already around when you log in.
+  for (let i = 0; i < TOTAL; i++) spawn(bots, world, { quiet: true });
   return bots;
+}
+
+// A town for a player of this level: usually one whose band fits them (the emptier, the likelier),
+// sometimes anywhere, as people do.
+function townFor(bots, level, not = null) {
+  const rng = bots.rng;
+  const counts = townCounts(bots);
+  const open = TOWNS.filter((t) => t !== not && counts[t] < PER_TOWN);
+  if (!open.length) return null;
+  const fits = open.filter((t) => level >= TOWN_LEVELS[t][0] && level <= TOWN_LEVELS[t][1]);
+  const pool = fits.length && rng() < 0.9 ? fits : open;
+  // Weighted toward the town with fewer people so nowhere piles up.
+  const weights = pool.map((t) => 1 / (1 + counts[t]));
+  let r = rng() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) if ((r -= weights[i]) <= 0) return pool[i];
+  return pool[pool.length - 1];
 }
 
 function townCounts(bots) {
@@ -216,13 +238,11 @@ function freeX(map, bots, rng) {
 
 function spawn(bots, world, { quiet = false } = {}) {
   const rng = bots.rng;
-  const counts = townCounts(bots);
-  const open = TOWNS.filter((t) => counts[t] < PER_TOWN);
-  if (!open.length) return null;
-  const town = pick(open, rng);
-  const map = MAPS[town];
   const name = makeName(bots.names, rng);
   const char = makeBotCharacter(rng, { name });
+  const town = townFor(bots, char.level);
+  if (!town) return null;
+  const map = MAPS[town];
   const bot = {
     id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: char.level >= 56,
     guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng),
@@ -252,11 +272,15 @@ export function updateBots(bots, world, dt) {
   if (!bots) return;
   const rng = bots.rng;
   const here = world.map.id;
+  // Logins: right away if the server dips under its minimum, otherwise now and then up to the usual
+  // number.
   bots.spawnIn -= dt;
-  if (bots.spawnIn <= 0) {
+  const online = bots.list.length;
+  if (online < MIN_ONLINE || (bots.spawnIn <= 0 && online < TOTAL)) {
     bots.spawnIn = between(12, 30, rng);
-    if (bots.list.filter((b) => b.state !== 'transit').length < TOTAL) spawn(bots, world);
+    spawn(bots, world);
   }
+  const crowd = Math.max(1, botsIn(bots, here).length / 3);
   const ctx = { player: world.char.name };
   for (const bot of bots.list) {
     bot.session -= dt;
@@ -290,7 +314,8 @@ export function updateBots(bots, world, dt) {
     // Chat, at a relaxed pace.
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble && !['logout', 'leave'].includes(bot.state)) {
-      bot.nextLine = bot.shop ? between(25, 50, rng) : between(30, 75, rng);
+      // The busier the town, the less each person talks, so chat stays readable.
+      bot.nextLine = (bot.shop ? between(25, 50, rng) : between(30, 75, rng)) * crowd;
       const line = speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng);
       if (line) {
         say(bot, line);
@@ -314,6 +339,8 @@ export function updateBots(bots, world, dt) {
     }
   }
   bots.list = bots.list.filter((b) => !b.gone);
+  // Whoever just logged out is replaced, so the server never dips under its minimum.
+  for (let i = 0; i < 4 && bots.list.length < MIN_ONLINE; i++) spawn(bots, world);
 }
 
 function goToPortal(bot, map, why) {
@@ -335,6 +362,7 @@ function depart(bot, bots) {
   if (rng() < 0.45) {
     bot.state = 'transit';
     bot.timer = between(15, 45, rng);
+    bot.from = bot.map;
     bot.map = null;
   } else {
     bot.stay = between(60, 180, rng);
@@ -343,13 +371,11 @@ function depart(bot, bots) {
 
 function arrive(bot, bots, world) {
   const rng = bots.rng;
-  const counts = townCounts(bots);
-  const open = TOWNS.filter((t) => counts[t] < PER_TOWN);
-  if (!open.length || bot.session <= 0) {
+  const town = bot.session > 0 ? townFor(bots, bot.level, bot.from) : null;
+  if (!town) {
     bot.gone = true;
     return;
   }
-  const town = pick(open, rng);
   const map = MAPS[town];
   bot.map = town;
   bot.stay = between(70, 200, rng);
@@ -400,6 +426,7 @@ function behave(bot, bots, world, map, dt) {
         else {
           bot.state = 'transit';
           bot.timer = between(15, 45, rng);
+          bot.from = bot.map;
           bot.map = null;
         }
       }
