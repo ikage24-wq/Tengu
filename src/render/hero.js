@@ -959,8 +959,6 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const g = resolveGear(look, gear);
   const rig = solveRig(state, anim);
   rig.armIn = !attack;
-  // A resting bow is held a little out from the body, so it stays clear of the face.
-  if (!attack && g.weapon?.type === 'bow' && rig.view !== 'back') rig.frontArm = [rig.frontArm[0] + 4, rig.frontArm[1]];
   if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
@@ -997,7 +995,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const armDx = rig.tx;
   const armDy = bodyY;
 
-  const restAngle = { bow: 2, crossbow: 55, claw: 100 }[g.weapon?.type] ?? 25;
+  const restAngle = { crossbow: 55, claw: 100 }[g.weapon?.type] ?? 25;
   let weaponAngle = angles ? angles.weapon : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
@@ -1013,13 +1011,6 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1])));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
-    // A resting bow is held with its curve facing out, away from the body.
-    // Long bows are gripped low enough that the bottom tip stays above the ground.
-    if (!attack && g.weapon.type === 'bow') {
-      ctx.scale(-1, 1);
-      const sink = (wpn.canvas.height - wpn.grip[1] - 1) * ws - (squashY(56) - hand[1]) * scale + scale;
-      if (sink > 0) ctx.translate(0, -sink);
-    }
     const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
     const el = g.weapon.element;
