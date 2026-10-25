@@ -445,14 +445,14 @@ function drawDungeonTracker(ui, world) {
   if (run.wipes) text(ctx, `Wipes: ${run.wipes}`, x + w - 6, y + 22, { size: 6, align: 'right', color: COLORS.bad });
 }
 
-// Tanks get a reminder of their Provoke key, just above the portrait.
+// Tanks get a reminder of their Provoke key, just above the hotkeys.
 function drawProvoke(ui, world) {
   if (world.dungeon.roles.you !== 'tank') return;
   const { ctx } = ui;
   const ok = world.char.mp >= PROVOKE.mp;
-  box(ctx, 8, 300, 96, 13, { fill: ok ? 'rgba(90,168,255,0.9)' : 'rgba(150,160,190,0.8)', edge: '#ffffff', r: 6.5, width: 1 });
-  roleIcon(ctx, 'tank', 17, 306.5, '#ffffff');
-  text(ctx, `T  Provoke · ${PROVOKE.mp} MP`, 58, 309.5, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
+  box(ctx, 536, 312, 96, 13, { fill: ok ? 'rgba(90,168,255,0.9)' : 'rgba(150,160,190,0.8)', edge: '#ffffff', r: 6.5, width: 1 });
+  roleIcon(ctx, 'tank', 545, 318.5, '#ffffff');
+  text(ctx, `T  Provoke · ${PROVOKE.mp} MP`, 586, 321.5, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
 }
 
 // Shield for tanks, a cross for healers, a sword for damage.
