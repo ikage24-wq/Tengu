@@ -27,12 +27,16 @@ const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairS
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
-// squashed into a short chibi body (feet at y 48) under the same big head; the sprite box adds
-// room for hats, ears, and wings.
+// squashed into a small, slim chibi body under the same big head: heights shrink to KY and (for
+// the body) widths to KX around the center line. The sprite box adds room for hats, ears, and
+// wings, and its bottom edge is the soles.
+const NECK = 24;
+const KY = 0.56;
+const KX = 0.74;
 const OX = 6;
 const OY = 11;
 const W = 30 + OX * 2;
-const H = 48 + OY;
+const H = Math.ceil(NECK + (56 - NECK) * KY) + OY;
 const INK = '#3a2d4f';
 // Detail cells per art pixel for character sprites (drawn crisp, like pixel art), and rounding of
 // rig offsets to that grid.
@@ -343,12 +347,6 @@ const offset = (shapes, dx, dy) => shapes.map((s) => ({ ...s, x: s.x + dx, y: s.
 // the figure stands upright instead of hunching.
 const NECK_LIFT = 0;
 
-// The chibi squash: below the neck, heights shrink to KY and (for the body) widths to KX around
-// the body's center line, so a 56-tall figure stands 48 tall under an unchanged head and its
-// torso reads narrow, as a body does turned to the side.
-const NECK = 24;
-const KY = 0.66;
-const KX = 1;
 const squashY = (y) => (y <= NECK ? y : NECK + (y - NECK) * KY);
 const squashX = (x) => 15.5 + (x - 15.5) * KX;
 function squash(shapes, narrow = true) {
