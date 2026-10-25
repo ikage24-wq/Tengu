@@ -1,6 +1,6 @@
 // Player windows: Bag (inventory + equipment), Stats, Skills, and Quests.
 
-import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
+import { ITEMS, EQUIP_SLOTS, RARITIES } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { QUESTS } from '../data/quests.js';
@@ -48,13 +48,14 @@ export function bagWindow(ui, state, world) {
 
   // Equipment panel with a live preview of the hero.
   box(ctx, ox + 4, oy + 22, 96, 104, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, char.appearance, char.equipment, ox + 52, oy + 104, { pose: 'idle', frame: Math.floor(world.now * 2) % 2 });
+  drawHero(ctx, char.appearance, char.equipment, ox + 52, oy + 104, { pose: 'idle', time: world.now });
   for (const slot of EQUIP_SLOTS) {
     const [sx, sy] = SLOT_POS[slot];
     const x = ox + sx;
     const y = oy + sy;
     const inst = char.equipment[slot];
-    box(ctx, x, y, CELL, CELL, { fill: COLORS.cell, edge: state.scrollMode && inst ? COLORS.accent : COLORS.cellEdge, r: 4 });
+    const rare = inst?.rarity ? RARITIES[inst.rarity].color : null;
+    box(ctx, x, y, CELL, CELL, { fill: COLORS.cell, edge: state.scrollMode && inst ? COLORS.accent : rare ?? COLORS.cellEdge, r: 4, width: rare ? 2 : 1 });
     if (inst) drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5);
     else text(ctx, slot[0].toUpperCase(), x + CELL / 2, y + 12, { size: 7, align: 'center', color: '#cdb8e0' });
     if (hover(ui, x, y, CELL, CELL)) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click to take off', color: COLORS.muted, size: 8 }] : [{ text: slot[0].toUpperCase() + slot.slice(1), bold: true }]);
@@ -81,7 +82,8 @@ export function bagWindow(ui, state, world) {
     const y = oy + 40 + Math.floor(i / 8) * CELL;
     const entry = list[i];
     const sel = win.sel === i;
-    box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : COLORS.cell, edge: sel ? COLORS.select : COLORS.cellEdge, r: 3, width: sel ? 2 : 1 });
+    const rare = tab === 'equip' && entry?.rarity ? RARITIES[entry.rarity].color : null;
+    box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : COLORS.cell, edge: sel ? COLORS.select : rare ?? COLORS.cellEdge, r: 3, width: sel || rare ? 2 : 1 });
     if (!entry) continue;
     drawItemIcon(ctx, itemIdOf(entry), x + 1, y + 1);
     if (entry.qty > 1) text(ctx, `${entry.qty}`, x + CELL - 3, y + CELL - 3, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });

@@ -93,6 +93,7 @@ export function cast(world, skillId, rng = Math.random) {
     const box = hitBox(body, params.range);
     const storm = fxKind === 'meteor' || fxKind === 'judgment';
     world.fx.push({ kind: fxKind, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: storm ? 0.8 : 0.3 });
+    if (storm) world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
   }
 
   targets.forEach((m, ti) => {

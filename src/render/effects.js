@@ -2,6 +2,7 @@
 // Everything is drawn in screen space from world positions minus the camera.
 
 import { drawItemIcon } from './icons.js';
+import { ITEMS, RARITIES } from '../data/items.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -366,13 +367,40 @@ export function drawDrops(ctx, world, cam, time) {
     } else {
       const id = d.inst ? d.inst.id : d.id;
       if (d.inst) {
+        const fade = d.age > 84 ? Math.max(0, (90 - d.age) / 6) : 1;
+        const rarity = RARITIES[d.inst.rarity ?? 0];
+        const color = rarity.color ?? (ITEMS[id].unique ? '#ff9ec0' : null);
+        if (color && d.landed) lootBeam(ctx, x, y, color, time + d.uid, d.inst.rarity ?? 1, fade);
         // Equipment glows so it stands out among the coins.
-        ctx.globalAlpha *= 0.4 + 0.2 * Math.sin(time * 4 + d.uid);
-        sparkle(ctx, x, y - 8, 12, '#fff3a6');
-        ctx.globalAlpha = d.age > 84 ? Math.max(0, (90 - d.age) / 6) : 1;
+        ctx.globalAlpha = fade * (0.4 + 0.2 * Math.sin(time * 4 + d.uid));
+        sparkle(ctx, x, y - 8, 12, color ?? '#fff3a6');
+        ctx.globalAlpha = fade;
       }
       drawItemIcon(ctx, id, x - 8, y - 16);
     }
   }
   ctx.globalAlpha = 1;
+}
+
+// A soft column of light over rare loot, taller and brighter for better rarities.
+function lootBeam(ctx, x, y, color, t, rarity, fade) {
+  const h = 40 + rarity * 22;
+  ctx.save();
+  const pulse = 0.75 + 0.25 * Math.sin(t * 3);
+  const grad = ctx.createLinearGradient(0, y - h, 0, y);
+  grad.addColorStop(0, 'rgba(255,255,255,0)');
+  grad.addColorStop(1, color);
+  ctx.globalAlpha = 0.45 * pulse * fade;
+  ctx.fillStyle = grad;
+  ctx.fillRect(x - 5, y - h, 10, h);
+  ctx.globalAlpha = 0.7 * pulse * fade;
+  ctx.fillRect(x - 1.5, y - h * 0.8, 3, h * 0.8);
+  // Rising motes inside the beam.
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 2 + rarity; i++) {
+    const k = (t * 0.6 + i / (2 + rarity)) % 1;
+    ctx.globalAlpha = (1 - k) * fade;
+    ctx.fillRect(Math.round(x + Math.sin(t * 2 + i * 2) * 3), Math.round(y - k * h), 1, 1);
+  }
+  ctx.restore();
 }

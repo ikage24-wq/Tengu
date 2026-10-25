@@ -30,7 +30,7 @@ function backdrop(ctx, time) {
 export function titleScreen(ui, time, save) {
   const { ctx } = ui;
   backdrop(ctx, time);
-  drawHero(ctx, TITLE_LOOK, null, 320, 440 - (MAPS.meadow1.height - 360), { pose: 'walk', frame: Math.floor(time * 9) % 4, scale: 2 });
+  drawHero(ctx, TITLE_LOOK, null, 320, 440 - (MAPS.meadow1.height - 360), { pose: 'walk', time, scale: 2 });
 
   const bob = Math.sin(time * 2) * 3;
   text(ctx, 'Twzt', 320, 104 + bob, { size: 64, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
@@ -67,7 +67,7 @@ export function creatorScreen(ui, time, draft) {
   // Preview
   box(ctx, 110, 60, 160, 230, { r: 10 });
   const walking = Math.floor(time / 3) % 2 === 1;
-  drawHero(ctx, draft.look, null, 190, 250, { pose: walking ? 'walk' : 'idle', frame: Math.floor(time * (walking ? 9 : 2)) % 4, scale: 3 });
+  drawHero(ctx, draft.look, null, 190, 250, { pose: walking ? 'walk' : 'idle', time, scale: 3 });
   if (button(ui, 150, 264, 80, 16, 'Randomize', { size: 8 })) draft.look = randomLook();
 
   // Name and look options

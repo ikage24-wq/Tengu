@@ -78,7 +78,7 @@ export function npcWindow(ui, state, world) {
   const { ctx } = ui;
   const char = world.char;
   box(ctx, win.x + 8, win.y + 24, 58, 70, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, npc.look, null, win.x + 37, win.y + 88, { pose: 'idle', frame: Math.floor(world.now * 2) % 2 });
+  drawHero(ctx, npc.look, null, win.x + 37, win.y + 88, { pose: 'idle', time: world.now, seed: 3 });
   const tx = win.x + 74;
   const tw = W - 84;
 
@@ -245,7 +245,7 @@ function styleWindow(ui, state, world) {
   const { ctx } = ui;
   const char = world.char;
   box(ctx, win.x + 8, win.y + 24, 90, 136, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, char.equipment, win.x + 53, win.y + 120, { pose: 'idle', frame: Math.floor(world.now * 2) % 2, scale: 2 });
+  drawHero(ctx, dlg.look, char.equipment, win.x + 53, win.y + 120, { pose: 'idle', time: world.now, scale: 2 });
   dlg.look = lookRows(ui, dlg.look, win.x + 104, win.y + 24, 168);
   const cost = npc.styleCost;
   const by = win.y + H - 22;

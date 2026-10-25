@@ -72,14 +72,15 @@ const ARMOR_TIERS = [
   { level: 50, prefix: 'Celestial', color: '#d2b8ff' },
 ];
 
+// Each tier has its own name and look (`design`), so upgrades show on the character.
 const ARMOR_KINDS = {
-  hat: { label: 'Cap', def: (t) => 3 + t * 6, extra: (t) => ({ hp: t * 10 }) },
-  top: { label: 'Tunic', def: (t) => 5 + t * 8, extra: () => ({}) },
-  bottom: { label: 'Trousers', def: (t) => 3 + t * 6, extra: () => ({}) },
-  shoes: { label: 'Boots', def: (t) => 2 + t * 3, extra: (t) => ({ speed: t >= 2 ? 2 + t : 0 }) },
-  gloves: { label: 'Gloves', def: (t) => 2 + t * 3, extra: (t) => ({ watk: t >= 2 ? t - 1 : 0, acc: 1 + t }) },
-  cape: { label: 'Cape', def: (t) => 2 + t * 4, extra: (t) => ({ mdef: 2 + t * 4, eva: t }) },
-  earring: { label: 'Earrings', def: () => 0, extra: (t) => ({ matk: 1 + t * 2, mp: 10 + t * 15 }) },
+  hat: { labels: ['Beanie', 'Sun Hat', 'Cap', 'Helm', 'Witch Hat', 'Circlet'], designs: ['beanie', 'sunhat', 'cap', 'helmet', 'witch', 'circlet'], def: (t) => 3 + t * 6, extra: (t) => ({ hp: t * 10 }) },
+  top: { labels: ['Tee', 'Striped Shirt', 'Vest', 'Breastplate', 'Star Robe', 'Celestial Robe'], designs: ['tee', 'stripes', 'vest', 'plate', 'starrobe', 'celestial'], def: (t) => 5 + t * 8, extra: () => ({}) },
+  bottom: { labels: ['Shorts', 'Trousers', 'Chaps', 'Greaves', 'Star Skirt', 'Celestial Skirt'], designs: ['shorts', 'pants', 'leather', 'greaves', 'starskirt', 'celestialskirt'], def: (t) => 3 + t * 6, extra: () => ({}) },
+  shoes: { labels: ['Sneakers', 'Boots', 'Riding Boots', 'Sabatons', 'Star Boots', 'Wing Boots'], designs: ['sneakers', 'boots', 'leatherboots', 'sabatons', 'starboots', 'wingboots'], def: (t) => 2 + t * 3, extra: (t) => ({ speed: t >= 2 ? 2 + t : 0 }) },
+  gloves: { labels: ['Mittens', 'Gloves', 'Cuffed Gloves', 'Gauntlets', 'Star Gloves', 'Celestial Gauntlets'], designs: ['mitten', 'mitten', 'cuffed', 'gauntlet', 'cuffed', 'gauntlet'], def: (t) => 2 + t * 3, extra: (t) => ({ watk: t >= 2 ? t - 1 : 0, acc: 1 + t }) },
+  cape: { labels: ['Scarf Cape', 'Cloak', 'Traveler Cloak', 'Royal Mantle', 'Star Cape', 'Celestial Mantle'], designs: ['short', 'long', 'long', 'royal', 'starcape', 'royal'], def: (t) => 2 + t * 4, extra: (t) => ({ mdef: 2 + t * 4, eva: t }) },
+  earring: { labels: ['Studs', 'Studs', 'Drops', 'Drops', 'Star Drops', 'Star Drops'], designs: ['stud', 'stud', 'drop', 'drop', 'star', 'star'], def: () => 0, extra: (t) => ({ matk: 1 + t * 2, mp: 10 + t * 15 }) },
 };
 
 for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
@@ -88,9 +89,10 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
     for (const k of Object.keys(stats)) if (!stats[k]) delete stats[k];
     add({
       id: `${slot}_${t}`,
-      name: `${tier.prefix} ${kind.label}`,
+      name: `${tier.prefix} ${kind.labels[t]}`,
       type: 'equip',
       slot,
+      design: kind.designs[t],
       tier: t,
       reqLevel: tier.level,
       family: null,
@@ -100,6 +102,70 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
     });
   });
 }
+
+// ---------- Unique gear ----------
+// One-of-a-kind looks. Stats match the generated tier for their level, a little better.
+
+const tierAt = (tiers, level) => tiers.reduce((best, t, i) => (t.level <= level ? i : best), 0);
+
+const UNIQUE_WEAPONS = [
+  { id: 'lollipop_wand', name: 'Lollipop Wand', weaponType: 'wand', special: 'lollipop', level: 12, color: '#ff9ec0' },
+  { id: 'candycane_sword', name: 'Candy Cane Sword', weaponType: 'sword', special: 'candycane', level: 15, color: '#ff6b8a' },
+  { id: 'paw_claw', name: 'Kitty Paw Claw', weaponType: 'claw', special: 'pawclaw', level: 15, color: '#ffc2d6' },
+  { id: 'heart_dagger', name: 'Sweetheart Dagger', weaponType: 'dagger', special: 'heartdagger', level: 20, color: '#ff6b8a' },
+  { id: 'crystal_bow', name: 'Crystal Harp Bow', weaponType: 'bow', special: 'crystalbow', level: 30, color: '#8fe3ff' },
+  { id: 'moon_staff', name: 'Crescent Moon Staff', weaponType: 'staff', special: 'moonstaff', level: 35, color: '#fff3a6' },
+];
+
+for (const u of UNIQUE_WEAPONS) {
+  const kind = WEAPON_KINDS[u.weaponType];
+  const t = tierAt(WEAPON_TIERS, u.level);
+  const stats = { watk: Math.round(BASE_WATK[t] * kind.scale * 1.1) + 2 };
+  if (kind.magic) stats.matk = Math.round(BASE_MATK[t] * (kind.matkBonus ?? 1) * 1.1) + 3;
+  stats[{ warrior: 'str', mage: 'int', archer: 'dex', thief: 'luk' }[kind.family]] = 3 + t;
+  add({
+    id: u.id, name: u.name, type: 'equip', slot: 'weapon', weaponType: u.weaponType, special: u.special, unique: true,
+    tier: t, reqLevel: u.level, family: kind.family, stats, price: Math.round(400 + 160 * t * t + 500 * t), color: u.color,
+  });
+}
+
+const UNIQUE_ARMOR = [
+  { id: 'hoodie', name: 'Comfy Hoodie', slot: 'top', design: 'hoodie', level: 5, color: '#c9b8ff', bonus: { eva: 2 } },
+  { id: 'kitty_ears', name: 'Kitty Ears', slot: 'hat', design: 'kitty', level: 8, color: '#ffb3d1', bonus: { luk: 2, eva: 2 } },
+  { id: 'sailor_top', name: 'Sailor Blouse', slot: 'top', design: 'sailor', level: 12, color: '#6f9cff', bonus: { dex: 2 } },
+  { id: 'bunny_hood', name: 'Bunny Hood', slot: 'hat', design: 'bunny', level: 15, color: '#ffffff', bonus: { hp: 40, jump: 4 } },
+  { id: 'fairy_wings', name: 'Fairy Wings', slot: 'cape', design: 'fairy', level: 15, color: '#c9f2ff', bonus: { speed: 4, mp: 30 } },
+  { id: 'kimono', name: 'Blossom Kimono', slot: 'top', design: 'kimono', level: 18, color: '#ffb3d9', bonus: { int: 2, mdef: 10 } },
+  { id: 'flower_crown', name: 'Flower Crown', slot: 'hat', design: 'flowers', level: 20, color: '#ff9ec0', bonus: { matk: 4, mp: 40 } },
+  { id: 'star_beret', name: 'Star Beret', slot: 'hat', design: 'beret', level: 30, color: '#8fa8ff', bonus: { dex: 3, luk: 3 } },
+  { id: 'angel_wings', name: 'Angel Wings', slot: 'cape', design: 'angel', level: 35, color: '#ffffff', bonus: { speed: 6, mdef: 20, hp: 80 } },
+  { id: 'star_cape', name: 'Galaxy Cape', slot: 'cape', design: 'starcape', level: 40, color: '#5d6fd6', bonus: { str: 3, dex: 3, int: 3, luk: 3 } },
+  { id: 'crystal_crown', name: 'Crystal Crown', slot: 'hat', design: 'crown', level: 45, color: '#8fe3ff', bonus: { hp: 120, mp: 120, matk: 6 } },
+];
+
+for (const u of UNIQUE_ARMOR) {
+  const kind = ARMOR_KINDS[u.slot];
+  const t = tierAt(ARMOR_TIERS, u.level);
+  const stats = { wdef: Math.round(kind.def(t) * 1.1) + 1, ...kind.extra(t) };
+  for (const [k, v] of Object.entries(u.bonus)) stats[k] = (stats[k] ?? 0) + v;
+  for (const k of Object.keys(stats)) if (!stats[k]) delete stats[k];
+  add({
+    id: u.id, name: u.name, type: 'equip', slot: u.slot, design: u.design, unique: true,
+    tier: t, reqLevel: u.level, family: null, stats, price: Math.round(300 + 140 * t * t + 400 * t), color: u.color,
+  });
+}
+
+export const UNIQUE_IDS = [...UNIQUE_WEAPONS, ...UNIQUE_ARMOR].map((u) => u.id);
+
+// ---------- Rarity ----------
+// Dropped gear can roll better than normal. Shop gear is always Normal.
+
+export const RARITIES = [
+  { name: 'Normal', color: null, chance: 1 },
+  { name: 'Rare', color: '#4fa8e8', chance: 0.16 },
+  { name: 'Epic', color: '#a66bff', chance: 0.05 },
+  { name: 'Legendary', color: '#f0a020', chance: 0.012 },
+];
 
 // ---------- Consumables ----------
 

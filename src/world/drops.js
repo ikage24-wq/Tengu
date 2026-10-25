@@ -1,7 +1,7 @@
 // Loot: what a monster drops, how it falls, and picking it up.
 
 import { ITEMS } from '../data/items.js';
-import { makeEquip } from '../core/items.js';
+import { makeEquip, rollRarity } from '../core/items.js';
 import { surfacesOf } from './physics.js';
 
 const GEAR_CHANCE = 0.045;
@@ -19,9 +19,11 @@ function potionFor(level, rng) {
   return 'white_potion';
 }
 
-// Equipment near the monster's level: anything from 15 below to 5 above.
+// Equipment near the monster's level: anything from 15 below to 5 above. Unique gear is rarer.
 function gearFor(level, rng) {
-  const pool = Object.values(ITEMS).filter((d) => d.type === 'equip' && d.reqLevel <= level + 5 && d.reqLevel >= level - 15);
+  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && d.reqLevel <= level + 5 && d.reqLevel >= level - 15);
+  const uniques = near.filter((d) => d.unique);
+  const pool = uniques.length && rng() < 0.15 ? uniques : near.filter((d) => !d.unique);
   if (!pool.length) return null;
   return pool[Math.floor(rng() * pool.length)].id;
 }
@@ -37,7 +39,9 @@ export function rollLoot(def, rng = Math.random) {
   const gearRolls = def.boss ? 3 : rng() < GEAR_CHANCE ? 1 : 0;
   for (let i = 0; i < gearRolls; i++) {
     const id = gearFor(def.level, rng);
-    if (id) loot.push({ kind: 'item', inst: makeEquip(id, { variance: 0.12, rng }) });
+    // Bosses never drop plain gear.
+    const rarity = def.boss ? Math.max(1, rollRarity(rng)) : rollRarity(rng);
+    if (id) loot.push({ kind: 'item', inst: makeEquip(id, { variance: 0.12, rng, rarity }) });
   }
   return loot;
 }

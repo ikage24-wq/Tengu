@@ -2,7 +2,7 @@
 // Rendering and UI read this state; they never change it except through the action functions below.
 
 import { getMap } from '../data/maps.js';
-import { ITEMS } from '../data/items.js';
+import { ITEMS, RARITIES } from '../data/items.js';
 import { QUESTS } from '../data/quests.js';
 import { SKILLS } from '../data/skills.js';
 import { computeStats } from '../core/stats.js';
@@ -34,6 +34,9 @@ export function createWorld(char) {
     numbers: [],
     messages: [],
     events: [],
+    // Game-feel cues for the renderer (dust, sparks, screen shake). Purely visual.
+    juice: [],
+    hitstop: 0,
     cooldowns: {},
     attackTimer: 0,
     pose: null,
@@ -123,7 +126,10 @@ function pickUp(world) {
       return false;
     }
     const def = ITEMS[d.inst ? d.inst.id : d.id];
-    world.log(`Picked up ${def.name}${d.qty > 1 ? ` x${d.qty}` : ''}.`, def.color);
+    const rarity = d.inst?.rarity ? RARITIES[d.inst.rarity] : null;
+    if (rarity) world.log(`Picked up a ${rarity.name} ${def.name}!`, rarity.color);
+    else world.log(`Picked up ${def.name}${d.qty > 1 ? ` x${d.qty}` : ''}.`, def.color);
+    if (rarity || def.unique) world.juice.push({ type: 'loot', x: d.x, y: d.y, color: rarity?.color ?? '#ff9ec0' });
     // Show progress for any active quest that collects this item.
     for (const [qid, rec] of Object.entries(char.quests)) {
       if (rec.state !== 'active') continue;
@@ -190,6 +196,8 @@ function killMob(world, m) {
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
   }
   world.drops.push(...spawnDrops(rollLoot(m.def), m.x, m.y));
+  world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss) });
+  world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.3 : 0.045);
   if (levels > 0) {
     world.events.push({ type: 'levelup', level: char.level });
     world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
@@ -213,6 +221,7 @@ function hurtPlayer(world, rawAtk, fromX) {
   char.hp = Math.max(0, char.hp - dmg);
   world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 6, text: `${dmg}`, color: '#ff6b8a', t: 0 });
   world.invuln = INVULN;
+  world.juice.push({ type: 'hurt', x: world.body.x, y: world.body.y - world.body.h / 2 });
   knockBack(world.body, fromX);
   if (char.hp <= 0 && !world.dead) {
     world.dead = true;
@@ -234,6 +243,8 @@ function overlaps(a, b) {
 // input: { held: Set<code>, pressed: Set<code>, locked: bool } (locked while a menu has focus)
 export function updateWorld(world, dt, input) {
   const char = world.char;
+  // Without a renderer draining it (tests, background tabs), keep the cue queue short.
+  if (world.juice.length > 200) world.juice.length = 0;
   world.now += dt;
   world.attackTimer = Math.max(0, world.attackTimer - dt);
   world.invuln = Math.max(0, world.invuln - dt);
@@ -315,6 +326,8 @@ export function updateWorld(world, dt, input) {
     }
     world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit });
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - m.def.h / 2, t: 0, dur: 0.25, crit: h.crit });
+    world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
+    if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
     if (hitMob(m, h.damage, h.fromX, world.now)) killMob(world, m);
   }
 
@@ -324,6 +337,7 @@ export function updateWorld(world, dt, input) {
     const event = updateMob(m, world.body, dt, world.now);
     if (event === 'slam') {
       world.fx.push({ kind: 'slam', x: m.x, y: m.y, t: 0, dur: 0.6, range: m.def.special.range });
+      world.juice.push({ type: 'shake', mag: 6, dur: 0.5 }, { type: 'slam', x: m.x, y: m.y, range: m.def.special.range });
       const onFloor = world.body.onGround && world.body.surface?.ground;
       if (onFloor && Math.abs(world.body.x - m.x) < m.def.special.range && !world.dead) hurtPlayer(world, m.def.special.damage, m.x);
     }

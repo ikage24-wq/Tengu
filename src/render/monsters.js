@@ -182,13 +182,68 @@ export function monsterSprite(art, frame) {
 }
 
 // (x, y) is the monster's feet center in screen space.
+// Walkers bounce along with a squash on every landing, everyone breathes while idle, new
+// monsters pop in, hits squash them flat for a moment, and defeated ones shrink away.
 export function drawMonster(ctx, m, x, y, time) {
   const flying = m.def.fly;
-  const moving = m.state === 'walk' || flying;
-  const frame = moving ? Math.floor((time + m.uid * 0.37) * (flying ? 6 : 4)) % 2 : 0;
+  const moving = (m.state === 'walk' && m.stagger <= 0) || flying;
+  const t = time + m.uid * 0.37;
+  const frame = moving ? Math.floor(t * (flying ? 6 : 4)) % 2 : 0;
   const s = monsterSprite(m.def.art, frame);
   let alpha = 1;
-  if (m.hp <= 0) alpha = Math.max(0, 1 - m.dying * 2);
-  const lift = m.hp <= 0 ? m.dying * 30 : 0;
-  blit(ctx, s, x - s.w / 2, y - s.h - lift, { flip: m.dir < 0, flash: m.flash, alpha });
+  let sx = 1;
+  let sy = 1;
+  let hop = 0;
+  if (m.def.boss) {
+    sy = 1 + Math.sin(t * 2) * 0.015;
+    if (m.special?.warn > 0) {
+      // Wind-up: crouch and tremble before the slam.
+      sy = 0.9;
+      sx = 1.08;
+      x += Math.sin(time * 60) * 1.5;
+    }
+  } else if (moving && !flying) {
+    const p = (t * 2.6) % 1;
+    hop = Math.sin(p * Math.PI) * 3;
+    const squash = p < 0.12 || p > 0.9 ? 0.12 : 0;
+    sx = 1 + squash - (hop > 2 ? 0.04 : 0);
+    sy = 1 - squash + (hop > 2 ? 0.06 : 0);
+  } else {
+    sy = 1 + Math.sin(t * 3) * 0.03;
+    sx = 1 - Math.sin(t * 3) * 0.02;
+  }
+  if (m.flash > 0) {
+    sx *= 1.14;
+    sy *= 0.86;
+  }
+  if (m.age < 0.3 && m.hp > 0) {
+    // Spawn pop with a little overshoot.
+    const k = m.age / 0.3;
+    const pop = 1 + Math.sin(k * Math.PI) * 0.25;
+    sx *= k * pop;
+    sy *= k * pop;
+    alpha = Math.min(1, k * 2);
+  }
+  if (m.hp <= 0) {
+    alpha = Math.max(0, 1 - m.dying * 2.2);
+    sx *= 1 + m.dying * 0.6;
+    sy *= Math.max(0.05, 1 - m.dying * 1.8);
+  }
+  if (sx <= 0 || sy <= 0) return;
+  if (!flying) {
+    // Ground shadow; it shrinks a little at the top of each hop.
+    ctx.save();
+    ctx.globalAlpha = 0.16 * alpha;
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.ellipse(x, y, Math.max(6, s.w * 0.36) * (1 - hop * 0.04), 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y - hop));
+  ctx.scale(sx, sy);
+  blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
+  ctx.restore();
 }

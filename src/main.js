@@ -61,6 +61,7 @@ window.addEventListener('visibilitychange', () => {
 
 let last = performance.now();
 let acc = 0;
+let queued = new Set();
 
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -86,11 +87,16 @@ function frame(now) {
   } else {
     const locked = routeInput(uiState, world, input, dt);
     acc += dt;
-    let first = true;
+    for (const code of input.pressed) queued.add(code);
     while (acc >= TICK) {
-      updateWorld(world, TICK, { held: input.held, pressed: first ? input.pressed : new Set(), locked });
-      first = false;
       acc -= TICK;
+      // Hitstop: a few frozen ticks on big hits. Presses wait for the next real tick.
+      if (world.hitstop > 0) {
+        world.hitstop -= TICK;
+        continue;
+      }
+      updateWorld(world, TICK, { held: input.held, pressed: queued, locked });
+      queued = new Set();
     }
     if (world.events.some((e) => e.type === 'map')) saveGame(world.char);
     autosave -= dt;

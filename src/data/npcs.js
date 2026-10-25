@@ -58,6 +58,7 @@ export const NPCS = {
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
       'scroll_watk_100', 'scroll_def_100',
       ...tier(1), ...tier(2), ...tier(3), ...tier(4), ...armor(1), ...armor(2),
+      'hoodie', 'kitty_ears', 'sailor_top', 'lollipop_wand', 'candycane_sword', 'paw_claw',
     ],
     quests: ['tusk_trader'],
   },

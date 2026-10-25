@@ -42,6 +42,7 @@ export function spawnMob(map, spawn) {
     phase: Math.random() * Math.PI * 2,
     special: def.special ? { timer: def.special.every, warn: 0 } : null,
     dying: 0,
+    age: 0,
   };
 }
 
@@ -99,6 +100,7 @@ export function updateMob(m, player, dt, now) {
   }
   m.flash = Math.max(0, m.flash - dt);
   m.phase += dt;
+  m.age += dt;
 
   let event = null;
   if (m.special) {
