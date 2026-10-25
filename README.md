@@ -85,3 +85,8 @@ have no DOM access, so they can be tested in Node.
 - Selling items and a full shop
 - Quests and boss fights
 - Sound, and hand-drawn sprite sheets (the pixel art is generated in code from shapes)
+
+## Credits
+
+- Ground tile: "Pixel Platformer" by Kenney (www.kenney.nl), CC0 public domain.
+  The tilesheet and its license are in `assets/kenney/`.

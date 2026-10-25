@@ -67,6 +67,18 @@ export const THEMES = {
   },
 };
 
+// Dirt tile from the CC0 Pixel Platformer pack (assets/kenney/LICENSE.txt). The ground uses it once loaded.
+let groundTile = null;
+const sheet = new Image();
+sheet.onload = () => {
+  const tile = document.createElement('canvas');
+  tile.width = 18;
+  tile.height = 18;
+  tile.getContext('2d').drawImage(sheet, 18, 126, 18, 18, 0, 0, 18, 18);
+  groundTile = tile;
+};
+sheet.src = 'assets/kenney/tilemap_packed.png';
+
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return s - Math.floor(s);
@@ -207,14 +219,22 @@ function drawPoles(ctx, t, cam, width) {
 
 // Brick ground with a grass or curb top edge, and hazard stripes on the sidewalk.
 function drawGround(ctx, t, cam, width, height, hasCurb) {
-  rect(ctx, 0, FLOOR_Y, width, height - FLOOR_Y, t.brick);
-  const mortarY = (row) => FLOOR_Y + 10 + row * 8;
-  for (let row = 0; mortarY(row) < height; row++) {
-    const y = mortarY(row);
-    rect(ctx, 0, y, width, 1, t.ground);
-    const offset = row % 2 ? 8 : 0;
-    for (let x = -((cam + offset) % 16); x < width; x += 16) {
-      rect(ctx, x, y + 1, 1, 7, t.ground);
+  if (groundTile) {
+    ctx.save();
+    ctx.fillStyle = ctx.createPattern(groundTile, 'repeat');
+    ctx.translate(-(cam % 18), FLOOR_Y + 10);
+    ctx.fillRect(-18, 0, width + 36, height);
+    ctx.restore();
+  } else {
+    rect(ctx, 0, FLOOR_Y, width, height - FLOOR_Y, t.brick);
+    const mortarY = (row) => FLOOR_Y + 10 + row * 8;
+    for (let row = 0; mortarY(row) < height; row++) {
+      const y = mortarY(row);
+      rect(ctx, 0, y, width, 1, t.ground);
+      const offset = row % 2 ? 8 : 0;
+      for (let x = -((cam + offset) % 16); x < width; x += 16) {
+        rect(ctx, x, y + 1, 1, 7, t.ground);
+      }
     }
   }
   if (t.grass) {
