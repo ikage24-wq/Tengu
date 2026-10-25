@@ -2,8 +2,7 @@
 // `look` uses the same appearance fields as the player, so NPCs are drawn by the hero renderer;
 // instructors also carry `gear` to show off a top-tier weapon of their class.
 
-// Elemental swords (sword_4 and up) are endgame drops, never sold.
-const tier = (t) => ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].filter((w) => w !== 'sword' || t < 4).map((w) => `${w}_${t}`);
+const tier = (t) => ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'].map((w) => `${w}_${t}`);
 const armor = (t) => ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'].map((s) => `${s}_${t}`);
 
 export const NPCS = {
@@ -35,19 +34,19 @@ export const NPCS = {
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     look: { hairStyle: 'long', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy' },
-    gear: { weapon: { id: 'staff_8', rarity: 3 } },
+    gear: { weapon: { id: 'staff_5', rarity: 3 } },
     greeting: 'Magic is patience and a lot of MP. Shall we begin?',
   },
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round' },
-    gear: { weapon: { id: 'bow_7', rarity: 2 } },
+    gear: { weapon: { id: 'bow_4', rarity: 2 } },
     greeting: 'Keep your distance and your aim true.',
   },
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     look: { hairStyle: 'short', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy' },
-    gear: { weapon: { id: 'claw_8', rarity: 3 } },
+    gear: { weapon: { id: 'claw_6', rarity: 3 } },
     greeting: 'Fast hands, light feet. Luck favors the bold.',
   },
   rook: {
@@ -63,8 +62,9 @@ export const NPCS = {
     shop: [
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
       'scroll_watk_100', 'scroll_def_100',
-      ...tier(1), ...tier(2), ...tier(3), ...tier(4), ...armor(1), ...armor(2),
-      'hoodie', 'kitty_ears', 'sailor_top', 'lollipop_wand', 'candycane_sword', 'paw_claw',
+      // Weapons up to Mithril; the elemental endgame weapons only drop.
+      ...tier(1), ...tier(2), ...tier(3), ...armor(1), ...armor(2),
+      'hoodie', 'kitty_ears', 'sailor_top',
     ],
     quests: ['tusk_trader'],
   },

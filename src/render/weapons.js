@@ -1,408 +1,421 @@
-// Comically oversized weapons. Every type has its own silhouette per tier (a training sword grows
-// into a cleaver, a rune blade, a crystal blade, a flame blade, a holy blade, and finally a
-// lightning blade), and the fanciest designs animate over 4 frames: flickering flames, crackling
-// lightning, pulsing runes, swirling orbs, sparkling crystals.
+// Weapon art for every class, all on the same path: Wooden → Iron → Steel → Mithril, then five
+// endgame elements (Holy, Cosmic, Lightning, Fire, Water). Base tiers grow in size and detail;
+// the endgame ones are the biggest, animate over 6 frames, and wear their element's decorations
+// (wings and halos, crescent moons and stars, bolts and arcs, horns and flames, shells and waves).
 //
 // Weapons point straight up with the grip near the bottom; the hero rotates them around the grip.
+// Each returns { w, h, grip, blade: [top, base], shapes }: `blade` bounds the main part for auras.
 
-import { R, E, P, shade } from './pixel.js';
-import { swordShapes, SWORD_FRAMES } from './swords.js';
+import { swordShapes } from './swords.js';
+import {
+  grid, TIER_ELEMENT, ELEMENTS, ELEMENT_FRAMES, MATERIALS, SHAFTS, pointed, taperSpans, ellipseSpans, dropSpans,
+  paint, collar, crown, gem, shaft,
+} from './elements.js';
 
-const GOLD = '#ffd66b';
-const GOLD_D = '#d9a440';
-const WOOD = '#a0703f';
-const WOOD_D = '#7a5238';
-const STEEL = '#dfe6f5';
-const WHITE = '#ffffff';
-const FIRE = ['#ff4b2b', '#ff8a2b', '#ffd23b'];
-const ZAP = '#5ff3ff';
+const clampTier = (t) => Math.max(0, Math.min(8, t ?? 0));
+// Base tiers pick from a 4-entry table; every endgame tier uses the last (biggest) value.
+const pick = (table, t) => table[Math.min(t, table.length - 1)];
 
-export const FRAMES = 4;
+// ---------- Axes ----------
 
-// ---------- Small builders ----------
-
-// Rows of width going from w1 (at y1) to w2 (at y2), centered on cx.
-function taper(cx, y1, y2, w1, w2, c) {
-  const out = [];
-  const n = Math.max(1, y2 - y1);
-  for (let i = 0; i <= y2 - y1; i++) {
-    const w = Math.max(1, Math.round(w1 + ((w2 - w1) * i) / n));
-    out.push(R(cx - Math.floor(w / 2), y1 + i, w, 1, c));
-  }
-  return out;
-}
-
-const diamond = (cx, y, h, w, c) => [...taper(cx, y, y + Math.round(h * 0.6), 1, w, c), ...taper(cx, y + Math.round(h * 0.6), y + h, w, 1, c)];
-
-function flames(cx, y1, y2, spread, f, n = 6) {
-  const out = [];
-  for (let k = 0; k < n; k++) {
-    const side = k % 2 ? -1 : 1;
-    const jig = ((k + f) % 3) - 1;
-    const y = y2 - ((y2 - y1) * k) / (n - 1);
-    out.push(E(cx + side * spread * (0.4 + ((k + f) % 2) * 0.3) + jig, y, 2.5 + (k % 2), 3.5, FIRE[(k + f) % 3]));
-  }
-  out.push(E(cx, y2 - 2, spread * 0.5, 3, '#fff3a6'));
-  // Embers drifting up.
-  out.push(P(cx + ((f * 3) % 7) - 3, y1 - 2 - f, FIRE[2]), P(cx - ((f * 5) % 5) + 2, y1 - 5 - ((f + 2) % 4), FIRE[1]));
-  return out;
-}
-
-// Gem with a shine; `eye` adds a pupil that blinks on frame 3.
-function gem(cx, cy, r, c, f, eye = false) {
-  const out = [E(cx, cy, r + 1, r + 1, GOLD), E(cx, cy, r, r, c), P(cx - Math.ceil(r / 2), cy - Math.ceil(r / 2), WHITE)];
-  if (eye) out.push(f === 3 ? R(cx - r + 1, cy, r * 2 - 1, 1, '#3a2d4f') : E(cx, cy, 1, 1.5, '#3a2d4f'));
-  return out;
-}
-
-// ---------- Swords and daggers (blade, guard, grip, pommel) ----------
-
-function blade(style, cx, top, base, bw, c, f) {
-  const half = Math.floor(bw / 2);
-  const tipH = half + 1;
-  const len = base - top;
-  const light = shade(c, 25);
-  const dark = shade(c, -20);
-  const plain = (col, hi, lo) => [
-    ...taper(cx, top, top + tipH, 1, bw, col),
-    R(cx - half, top + tipH, bw, len - tipH, col),
-    R(cx, top + tipH - 1, 1, len - tipH, hi),
-    R(cx + bw - half - 1, top + tipH, 1, len - tipH, lo),
-  ];
-  switch (style) {
-    case 'wood': return [E(cx + 0.5, top + half + 0.5, half + 0.5, half + 0.5, c), R(cx - half, top + half, bw, len - half, c), R(cx, top + 2, 1, len - 3, light), R(cx - half, base - 4, bw, 1, dark)];
-    case 'cleaver': return [
-      ...taper(cx, top, top + 3, bw - 4, bw, c), R(cx - half, top + 3, bw, len - 3, c),
-      R(cx - half, top + 3, 2, len - 3, light), R(cx + half - 1, top + 2, 2, len - 2, dark),
-      R(cx + half - 2, top + Math.round(len * 0.3), 3, 3, 'none'), E(cx, top + Math.round(len * 0.6), 1.5, 1.5, 'none'),
-      R(cx - half, base - 3, bw, 2, GOLD_D),
-    ];
-    case 'rune': {
-      const glow = ['#8fe3ff', '#c9f2ff', WHITE, '#c9f2ff'][f];
-      const out = [...plain('#4b4675', '#6d6799', '#3a3560'), R(cx - half, top + tipH, 1, len - tipH, STEEL), R(cx + bw - half - 1, top + tipH, 1, len - tipH, STEEL), ...taper(cx, top, top + tipH, 1, 1, STEEL)];
-      for (let y = top + tipH + 2; y < base - 3; y += 5) out.push(R(cx - 1, y, 3, 1, glow), P(cx, y + 1, glow), P(cx - 1 + ((y + f) % 3), y + 2, glow));
-      return out;
-    }
-    case 'crystal': {
-      const out = [...plain('#2b3a6b', '#3f5aa8', '#1f2a52'), R(cx - 1, top + tipH + 1, 3, len - tipH - 9, '#3f7bff')];
-      for (let y = top + tipH + 2; y < base - 10; y += 4) out.push(P(cx, y, (y + f * 2) % 8 < 4 ? ZAP : '#c9f2ff'));
-      const cl = ['#8fd3ff', '#5aa8ff', '#c9f2ff'];
-      [[-3, -4], [3, -4], [0, -6], [-4, -1], [4, -1], [0, -2]].forEach(([dx, dy], i) => out.push(E(cx + dx, base + dy, 2.5, 3.5, cl[i % 3])));
-      out.push(P(cx - 3 + (f % 2) * 6, base - 6 + (f >> 1), WHITE), P(cx + 1, base - 3, WHITE));
-      return out;
-    }
-    case 'flame': return [...plain(STEEL, WHITE, '#b8c2d6'), ...flames(cx, top + Math.round(len * 0.45), base - 1, bw * 0.9, f, 7)];
-    case 'holy': return [
-      ...taper(cx, top - 2, top + tipH, 1, bw + 2, GOLD), R(cx - half - 1, top + tipH, bw + 2, len - tipH, GOLD),
-      ...taper(cx, top, top + tipH, 1, bw - 1, WHITE), R(cx - half, top + tipH, bw - 1, len - tipH, WHITE),
-      R(cx - 1, top + tipH + 2, 1, len - tipH - 4, '#fff3a6'), P(cx, top - 3, '#ffb3c6'), P(cx, top - 5 - (f % 2), '#ff9ec0'),
-    ];
-    case 'lightning': {
-      const out = [...plain(WHITE, WHITE, '#c9f2ff'), R(cx - 1, top + 3, 2, len - 4, '#4b5a8f')];
-      for (let y = top + tipH + 1, k = 0; y < base - 2; y += 4, k++) {
-        const sl = 2 + ((k + f) % 3);
-        const sr = 2 + ((k + f + 1) % 3);
-        out.push(R(cx - half - sl, y, sl + 1, 2, ZAP), P(cx - half - sl - 1, y - 1, WHITE));
-        out.push(R(cx + bw - half - 1, y + 2, sr + 1, 2, ZAP), P(cx + bw - half + sr, y + 1, WHITE));
-      }
-      out.push(P(cx - half - 4 + f * 2, top + 2 + f * 3, ZAP), P(cx + half + 3 - f, top + 8 + f * 2, WHITE));
-      return out;
-    }
-    case 'curved': return [
-      ...taper(cx + 2, top, top + 6, 1, bw - 1, c), R(cx - half + 1, top + 6, bw - 1, len - 6, c), R(cx - half, top + Math.round(len / 2), bw, Math.round(len / 2), c),
-      R(cx - half + 1, top + 6, 1, len - 7, light),
-    ];
-    case 'heart': return [...plain('#ffc2d6', WHITE, '#ff9ec0'), E(cx - 1.5, top + len * 0.55, 2, 2, '#ff6b8a'), E(cx + 1.5, top + len * 0.55, 2, 2, '#ff6b8a'), ...taper(cx, top + len * 0.55 + 1, top + len * 0.55 + 4, 6, 1, '#ff6b8a')];
-    case 'candy': {
-      const out = [R(cx - half, top + 6, bw, len - 6, WHITE), R(cx - half, top + 2, bw, 4, WHITE), R(cx + half - bw - 3, top, bw + 4, bw, WHITE), R(cx - half - bw - 2, top + 2, bw, 8, WHITE)];
-      for (let y = top + 4; y < base; y += 5) out.push(R(cx - half, y + (f % 2), bw, 2, '#ff6b8a'));
-      out.push(R(cx - half - bw - 2, top + 6, bw, 2, '#ff6b8a'), R(cx - half - 1, top, 3, bw, '#ff6b8a'));
-      return out;
-    }
-    default: return plain(c, light, dark);
-  }
-}
-
-function guard(style, cx, y, c, f) {
-  switch (style) {
-    case 'curve': return [R(cx - 6, y, 13, 2, GOLD), R(cx - 7, y - 2, 2, 3, GOLD), R(cx + 6, y - 2, 2, 3, GOLD)];
-    case 'wings': return [
-      R(cx - 8, y, 17, 2, GOLD), ...taper(cx - 9, y - 6, y, 1, 3, GOLD), ...taper(cx + 9, y - 6, y, 1, 3, GOLD),
-      R(cx - 12, y - 4, 3, 2, shade(c, -10)), R(cx + 10, y - 4, 3, 2, shade(c, -10)), E(cx + 0.5, y + 1, 2, 2, c),
-    ];
-    case 'eye': return [
-      R(cx - 9, y, 19, 2, GOLD_D), R(cx - 11, y - 3, 3, 3, GOLD_D), R(cx + 9, y - 3, 3, 3, GOLD_D),
-      ...gem(cx + 0.5, y + 1, 3, '#ff6b8a', f, true),
-    ];
-    case 'antler': return [
-      R(cx - 5, y, 11, 3, '#5a4632'), R(cx - 10, y - 2, 5, 2, '#7a6248'), R(cx + 6, y - 2, 5, 2, '#7a6248'),
-      R(cx - 11, y - 6, 2, 4, '#7a6248'), R(cx + 10, y - 6, 2, 4, '#7a6248'), R(cx - 13, y - 4, 2, 2, '#7a6248'), R(cx + 12, y - 4, 2, 2, '#7a6248'),
-    ];
-    case 'heart': return [R(cx - 5, y, 11, 2, '#ff6b8a'), E(cx - 1.5, y + 2, 2.5, 2.5, '#ff6b8a'), E(cx + 2.5, y + 2, 2.5, 2.5, '#ff6b8a')];
-    case 'small': return [R(cx - 3, y, 7, 2, GOLD)];
-    default: return [R(cx - 5, y, 11, 2, GOLD), P(cx - 5, y - 1, GOLD), P(cx + 5, y - 1, GOLD)];
-  }
-}
-
-const DAGGERS = [
-  { len: 13, bw: 6, blade: 'plain', guard: 'small' },
-  { len: 15, bw: 7, blade: 'curved', guard: 'small' },
-  { len: 17, bw: 7, blade: 'plain', guard: 'bar' },
-  { len: 18, bw: 9, blade: 'cleaver', guard: 'small' },
-  { len: 20, bw: 8, blade: 'rune', guard: 'curve' },
-  { len: 21, bw: 9, blade: 'crystal', guard: 'small' },
-  { len: 22, bw: 8, blade: 'flame', guard: 'bar' },
-  { len: 23, bw: 8, blade: 'holy', guard: 'eye' },
-  { len: 25, bw: 9, blade: 'lightning', guard: 'curve' },
-];
-
-function bladed(spec, c, f) {
-  const W = 30;
-  const cx = 15;
-  const top = 7;
-  const base = top + spec.len;
-  const gripY = base + 2;
-  const gripLen = spec.len > 20 ? 8 : 6;
-  const shapes = [
-    ...blade(spec.blade, cx, top, base, spec.bw, c, f),
-    R(cx - 1, gripY, 3, gripLen, WOOD_D), ...Array.from({ length: gripLen >> 1 }, (_, i) => R(cx - 1, gripY + i * 2, 3, 1, WOOD)),
-    ...guard(spec.guard, cx, base, c, f),
-    E(cx + 0.5, gripY + gripLen + 1.5, 2, 2, GOLD),
-  ];
-  return { w: W, h: gripY + gripLen + 4, grip: [cx, gripY + Math.floor(gripLen / 2)], shapes };
-}
-
-// ---------- Hafted weapons: axes, spears, wands, staves ----------
-
-function axeHead(style, cx, y, s, c, f) {
-  const light = shade(c, 25);
-  const wedge = (dir) => [R(dir > 0 ? cx : cx - s, y - Math.round(s * 0.45), s, Math.round(s * 0.9), c), E(cx + dir * s * 1.05, y, s * 0.75, s * 1.15, c), E(cx + dir * s * 1.55, y, s * 0.3, s * 1.0, light)];
-  switch (style) {
-    case 'double': return [...wedge(1), ...wedge(-1)];
-    case 'crescent': return [E(cx + s, y, s * 1.2, s * 1.5, c), E(cx + s * 1.9, y, s * 0.35, s * 1.3, light), E(cx + s * 0.1, y, s * 0.8, s * 1.1, 'none'), R(cx - 4, y - s - 3, 3, 4, c)];
-    case 'bearded': return [...wedge(1), E(cx + s * 0.8, y + s * 0.9, s * 0.6, s * 0.8, c), ...taper(cx, y - s - 5, y - s, 1, 3, STEEL), R(cx - 4, y - 1, 3, 3, c)];
-    case 'crystal': return [...diamond(cx + s, y - s, s * 2, s + 2, '#8fd3ff'), ...diamond(cx - s, y - s + 2, s * 2 - 2, s, '#5aa8ff'), ...diamond(cx, y - s - 5, s + 2, 4, '#c9f2ff'), P(cx + s - 1, y - s + 3 + f, WHITE)];
-    case 'flame': return [...wedge(1), ...wedge(-1), ...flames(cx, y - s - 4, y + s * 0.6, s * 1.8, f, 6)];
-    case 'heart': return [E(cx + s * 0.9, y - s * 0.4, s * 0.6, s * 0.6, c), E(cx + s * 0.9, y + s * 0.4, s * 0.6, s * 0.6, c), ...taper(cx + Math.round(s * 1.5), y - s, y + s, 1, 1, c), E(cx + s * 1.2, y, s * 0.7, s * 0.9, c), E(cx - s * 0.9, y - s * 0.4, s * 0.6, s * 0.6, c), E(cx - s * 0.9, y + s * 0.4, s * 0.6, s * 0.6, c), E(cx - s * 1.2, y, s * 0.7, s * 0.9, c), ...gem(cx + 0.5, y, 2, '#ff6b8a', f)];
-    case 'star': return [E(cx + s, y, s * 1.2, s * 1.5, c), E(cx + s * 0.1, y, s * 0.8, s * 1.1, 'none'), E(cx - s, y, s * 1.2, s * 1.5, c), E(cx - s * 0.1, y, s * 0.8, s * 1.1, 'none'), ...star(cx, y - s - 3, 4, GOLD, f)];
-    default: return wedge(1);
-  }
-}
-
-function star(cx, cy, s, c, f) {
-  const k = f % 2;
-  return [R(cx - 1, cy - s - k, 3, s * 2 + 1 + k * 2, c), R(cx - s - k, cy - 1, s * 2 + 1 + k * 2, 3, c), E(cx + 0.5, cy + 0.5, s * 0.55, s * 0.55, c), P(cx, cy, WHITE)];
-}
-
-function orbHead(style, cx, cy, s, c, f) {
-  const light = shade(c, 30);
-  switch (style) {
-    case 'knot': return [E(cx + 0.5, cy, s * 0.8, s, WOOD), E(cx - 1, cy - 2, s * 0.4, s * 0.4, '#c99a6b'), E(cx + 0.5, cy - 1, 2, 2, c)];
-    case 'orb': {
-      const sw = [[-1, -1], [1, -1], [1, 1], [-1, 1]][f];
-      return [E(cx + 0.5, cy, s, s, c), E(cx + 0.5, cy, s * 0.6, s * 0.6, light), P(cx + sw[0] * 2, cy + sw[1] * 2, WHITE), P(cx - Math.round(s / 2), cy - Math.round(s / 2), WHITE)];
-    }
-    case 'ring': return [E(cx + 0.5, cy, s + 1, s + 1, GOLD), E(cx + 0.5, cy, s - 1, s - 1, 'none'), ...orbHead('orb', cx, cy, s * 0.55, c, f)];
-    case 'star': return [...star(cx, cy, s, c, f), ...star(cx, cy, Math.max(2, s - 3), light, f)];
-    case 'heart': return [E(cx - s * 0.45, cy - s * 0.25, s * 0.6, s * 0.6, c), E(cx + 1 + s * 0.45, cy - s * 0.25, s * 0.6, s * 0.6, c), ...taper(cx, cy, cy + s, s * 2, 1, c), P(cx - Math.round(s * 0.5), cy - Math.round(s * 0.5), WHITE)];
-    case 'crescent': return [E(cx + 0.5, cy, s + 1, s + 1, c), E(cx + 0.5 + s * 0.55, cy - s * 0.35, s * 0.85, s * 0.85, 'none'), ...star(cx + Math.round(s * 0.5), cy - Math.round(s * 0.2), 2, WHITE, f)];
-    case 'crystal': return [...diamond(cx, cy - s, s * 2, s, '#8fd3ff'), ...diamond(cx - Math.round(s * 0.7), cy - s * 0.3, s, s * 0.6, '#5aa8ff'), ...diamond(cx + Math.round(s * 0.7), cy - s * 0.3, s, s * 0.6, '#c9f2ff'), P(cx, cy - s + 3 + f, WHITE)];
-    case 'sun': {
-      const out = [];
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2 + (f * Math.PI) / 16;
-        out.push(E(cx + 0.5 + Math.cos(a) * s * 1.2, cy + Math.sin(a) * s * 1.2, 1.5, 1.5, GOLD));
-      }
-      return [...out, E(cx + 0.5, cy, s * 0.85, s * 0.85, GOLD), E(cx + 0.5, cy, s * 0.6, s * 0.6, c), P(cx - 1, cy - 2, WHITE)];
-    }
-    case 'wings': return [...wingPair(cx, cy + 1, s, f), ...orbHead('orb', cx, cy - 1, s * 0.6, c, f)];
-    case 'flower': return [E(cx - s * 0.6, cy - 1, s * 0.55, s * 0.4, '#7fd17a'), E(cx + 1 + s * 0.6, cy - 1, s * 0.55, s * 0.4, '#7fd17a'), ...[0, 1, 2, 3, 4].map((i) => E(cx + 0.5 + Math.cos(i * 1.257 + f * 0.1) * s * 0.55, cy - 3 + Math.sin(i * 1.257) * s * 0.55, s * 0.4, s * 0.4, c)), E(cx + 0.5, cy - 3, 1.5, 1.5, GOLD)];
-    case 'eye': return [...wingPair(cx, cy + 2, s + 1, f), E(cx + 0.5, cy, s, s * 0.8, WHITE), E(cx + 0.5, cy, s * 0.5, s * 0.6, c), f === 3 ? R(cx - s + 1, cy, s * 2, 1, '#3a2d4f') : E(cx + 0.5, cy, 1, 1.5, '#3a2d4f'), ...star(cx, cy - s - 4, 2, GOLD, f)];
-    case 'lollipop': return [E(cx + 0.5, cy, s + 1, s + 1, '#ff9ec0'), E(cx + 0.5, cy, s - 1, s - 1, WHITE), E(cx + 0.5, cy, s - 3, s - 3, '#ff9ec0'), E(cx + 0.5, cy, s - 5, s - 5, WHITE), P(cx - 3 + f, cy - s + 1, WHITE), R(cx - s, cy + s - 2, 4, 3, '#8fd3ff'), R(cx + s - 3, cy + s - 2, 4, 3, '#8fd3ff')];
-    case 'moon': return [E(cx + 0.5, cy, s + 2, s + 2, '#fff3a6'), E(cx + 3 + s * 0.5, cy - 2, s, s, 'none'), ...star(cx + 4, cy + 2, 2 + (f % 2), WHITE, 0), P(cx + s, cy - s - 2 + (f % 2), WHITE), E(cx - s, cy + s, 1.5, 1.5, '#c9a6ff')];
-    default: return [E(cx + 0.5, cy, s, s, c)];
-  }
-}
-
-function wingPair(cx, cy, s, f) {
-  const up = f % 2 ? -1 : 0;
-  const one = (dir) => [
-    E(cx + dir * (s + 2), cy - 1 + up, s * 0.9, s * 0.55, WHITE),
-    R(cx + (dir > 0 ? s + 2 : -s * 2 - 2), cy + 1 + up, s, 2, '#e6ebff'),
-    R(cx + (dir > 0 ? s + 1 : -s * 2), cy + 3 + up, s - 2, 2, '#e6ebff'),
-  ];
-  return [...one(1), ...one(-1)];
-}
-
-function spearHead(style, cx, top, s, c, f) {
-  const leaf = (col) => [...taper(cx, top, top + s * 2, 1, s, col), ...taper(cx, top + s * 2, top + s * 3, s, 2, col), R(cx, top + 2, 1, s * 2, shade(col, 25))];
-  const base = top + s * 3;
-  switch (style) {
-    case 'long': return [...taper(cx, top, top + s * 3, 1, s, c), ...taper(cx, top + s * 3, top + s * 4, s, 2, c), R(cx, top + 2, 1, s * 3, shade(c, 25))];
-    case 'cross': return [...leaf(c), R(cx - s - 2, base - 2, s * 2 + 5, 2, GOLD), ...taper(cx - s - 2, base - 6, base - 2, 1, 2, c), ...taper(cx + s + 2, base - 6, base - 2, 1, 2, c)];
-    case 'halberd': return [...leaf(STEEL), E(cx + s + 2, base, s, s * 1.3, c), E(cx + s * 2 + 1, base, s * 0.3, s * 1.1, shade(c, 25)), ...taper(cx - s, base - 2, base + 2, 1, 3, c)];
-    case 'trident': return [...leaf(c), R(cx - s - 2, base + 1, s * 2 + 5, 2, c), ...taper(cx - s - 1, base - s * 2, base + 1, 1, 3, c), ...taper(cx + s + 1, base - s * 2, base + 1, 1, 3, c)];
-    case 'crystal': return [...diamond(cx, top, s * 3 + 2, s + 2, '#8fd3ff'), ...diamond(cx - s, top + s * 2, s * 1.5, s * 0.8, '#5aa8ff'), ...diamond(cx + s, top + s * 2, s * 1.5, s * 0.8, '#c9f2ff'), P(cx, top + 4 + f * 2, WHITE)];
-    case 'flame': return [...leaf(STEEL), ...flames(cx, top + s, base + 4, s * 1.6, f, 6)];
-    case 'swirl': return [...leaf('#9be08f'), E(cx + 0.5, base + 3, s + 1, s + 1, '#5fb85a'), E(cx + 0.5, base + 3, s - 1, s - 1, 'none'), E(cx + 0.5, base + 3 - ((f % 2) * 2 - 1), 1.5, 1.5, '#d8ff8a')];
-    case 'celestial': return [
-      E(cx + 0.5, base, s * 2.2, s * 1.5, c), E(cx + 0.5, base + s * 0.6, s * 1.7, s * 1.4, 'none'),
-      ...taper(cx, top - 2, top + s * 3, 1, s, WHITE), R(cx, top + 2, 1, s * 3 - 2, '#c9f2ff'), ...gem(cx + 0.5, base + 1, 2, '#8fe3ff', f),
-      P(cx - s * 2 + f, base - 3, WHITE), P(cx + s * 2 - f, base - 3, WHITE),
-    ];
-    default: return leaf(c);
-  }
-}
-
-// Shaft of `len` ending at the bottom of a `h`-tall sprite, with a cap.
-function shaft(cx, y1, y2, c, cap = GOLD) {
-  return [R(cx - 1, y1, 2, y2 - y1, c), R(cx - 1, y1, 2, 1, shade(c, 20)), E(cx, y2, 1.8, 1.8, cap)];
-}
-
-function ribbon(cx, y, f, c = '#ff9ec0') {
-  const sw = f % 2 ? 1 : 0;
-  return [R(cx + 1, y, 2, 2, c), R(cx + 2 + sw, y + 2, 2, 4, c), R(cx + 1 + sw * 2, y + 6, 2, 3, c)];
-}
-
-const AXES = [['wedge', 6, 22], ['wedge', 7, 24], ['double', 7, 26], ['crescent', 8, 28], ['bearded', 8, 30], ['crystal', 8, 32], ['flame', 8, 34], ['heart', 9, 36], ['star', 10, 38]];
-const SPEARS = [['leaf', 4, 38], ['long', 4, 42], ['cross', 5, 44], ['halberd', 5, 46], ['trident', 5, 48], ['crystal', 6, 50], ['flame', 6, 52], ['swirl', 6, 54], ['celestial', 6, 58]];
-const WANDS = [['knot', 5, 16], ['orb', 6, 17], ['star', 7, 18], ['heart', 8, 18], ['crescent', 8, 19], ['crystal', 8, 20], ['sun', 8, 20], ['wings', 9, 21], ['eye', 9, 22]];
-const STAVES = [['knot', 6, 32], ['ring', 7, 34], ['orb', 8, 36], ['crescent', 9, 38], ['crystal', 9, 40], ['wings', 9, 42], ['flower', 10, 44], ['sun', 10, 46], ['eye', 11, 48]];
-
-function hafted(kind, spec, c, f, tier) {
-  const [style, s, len] = spec;
+function axe(t, f) {
+  const el = TIER_ELEMENT[t];
+  const s = pick([6, 7, 8, 9, 12], t);
+  const len = pick([26, 30, 34, 38, 46], t);
   const W = 64;
   const cx = 32;
-  const headH = kind === 'spear' ? s * 4 + 6 : s * 2 + 10;
-  const top = 8;
-  const shaftTop = kind === 'spear' ? top + s * 3 - 1 : top + headH - 4;
-  const h = shaftTop + len + 4;
-  const shapes = [];
-  const sc = tier >= 7 ? '#f3edff' : tier >= 4 ? '#5d5285' : WOOD;
-  if (kind === 'axe') shapes.push(...axeHead(style, cx, top + s + 4, s, c, f));
-  if (kind === 'spear') shapes.push(...spearHead(style, cx, top, s, c, f));
-  if (kind === 'wand' || kind === 'staff') shapes.push(...orbHead(style, cx, top + s + 3, s, c, f));
-  shapes.push(...shaft(cx, shaftTop, shaftTop + len, sc));
-  if (tier >= 2 && kind !== 'axe') shapes.push(R(cx - 3, shaftTop + 1, 6, 2, GOLD));
-  if (tier >= 3 && kind === 'spear') shapes.push(...ribbon(cx, shaftTop + 3, f));
-  // Grip wraps.
-  const gy = shaftTop + Math.round(len * (kind === 'wand' ? 0.65 : 0.72));
-  shapes.push(R(cx - 1, gy - 2, 2, 5, '#c25b78'));
-  return { w: W, h, grip: [cx, gy], shapes };
+  const top = 18;
+  const hy = top + Math.round(s * 1.4);
+  const g = grid(W, hy + len + 8);
+  shaft(g, cx, top + 2, hy + len, t);
+  // A bearded bit: a neck at the haft that flares into a curved edge with pointed horns above
+  // and below. Endgame axes are double-bitted.
+  const spans = [];
+  for (const d of el ? [1, -1] : [1]) {
+    for (let y = Math.floor(hy - s * 1.4); y <= hy + s * 1.4; y++) {
+      const oy = Math.abs(y + 0.5 - hy) / (s * 1.4);
+      if (oy >= 1) continue;
+      const outer = s * 0.5 + s * 1.3 * Math.sqrt(1 - oy * oy);
+      const inner = oy < 0.2 ? 1 : s * 0.3 + s * 1.2 * Math.pow((oy - 0.2) / 0.8, 0.65);
+      const a = Math.max(1, Math.round(inner));
+      const b = Math.round(outer);
+      if (b >= a) spans.push(d > 0 ? [y, cx + a, cx + b] : [y, cx - b - 1, cx - a - 1]);
+    }
+  }
+  paint(g, spans, t, f);
+  // Back spike on steel and up; a spear tip on mithril and up.
+  if (t >= 2 && !el) for (let i = 0; i < 4; i++) g.rect(cx - 2 - i, hy - 1 + (i >> 1), 1, 3 - (i >> 1), MATERIALS[t].dark);
+  if (t >= 3) paint(g, taperSpans(cx, top - 6, top + 2, pointed(3, 0.6)), t, f);
+  g.rect(cx - 2, hy - 3, 4, 7, SHAFTS[t][2]);
+  if (el) {
+    gem(g, cx - 1, hy, 1.5, ELEMENTS[el].gem);
+    crown(g, el, cx, top - 12, f);
+  }
+  return { w: W, h: g.h, grip: [cx, hy + Math.round(len * 0.72)], blade: [top - 6, hy + s], g };
 }
 
-// ---------- Bows, crossbows, claws ----------
+// ---------- Spears ----------
 
-function bow(tier, c, f, crystal = false) {
-  const h = 30 + tier * 3;
-  const W = 34;
-  const top = 6;
-  const bx = 18;
-  const bend = 7 + tier * 0.5;
-  const shapes = [];
-  const col = crystal ? '#8fe3ff' : c;
-  for (let i = 0; i <= h; i++) {
-    const t = i / h;
-    const x = Math.round(bx - bend * Math.sin(Math.PI * t));
-    const thick = t > 0.4 && t < 0.6 ? 4 : t < 0.1 || t > 0.9 ? 2 : 3;
-    shapes.push(R(x, top + i, thick, 1, i % 6 === 0 && tier >= 4 ? shade(col, 25) : col));
+function spear(t, f) {
+  const el = TIER_ELEMENT[t];
+  const hl = pick([10, 12, 14, 16, 22], t);
+  const hw = pick([5, 5, 7, 7, 11], t);
+  const len = pick([36, 40, 44, 48, 56], t);
+  const W = 64;
+  const cx = 32;
+  const top = 18;
+  const base = top + hl;
+  const g = grid(W, base + len + 8);
+  shaft(g, cx, base - 2, base + len, t);
+  const leaf = (u) => (u < 0.6 ? 1 + (hw - 1) * Math.pow(u / 0.6, 0.7) : hw - (hw - 2) * ((u - 0.6) / 0.4));
+  // Endgame spears grow side blades below the head.
+  if (el) {
+    for (const d of [-1, 1]) {
+      const side = [];
+      for (let i = 0; i < 9; i++) {
+        const w = Math.max(1, Math.round(4 * Math.sin((i / 8) * Math.PI)));
+        const x = cx + d * (4 + Math.round(i * 0.6));
+        side.push([base - 6 + i, d > 0 ? x : x - w + 1, d > 0 ? x + w - 1 : x]);
+      }
+      paint(g, side, t, f);
+    }
   }
-  // Recurve tips and ornaments.
-  shapes.push(R(bx + 1, top - 1, 2, 2, col), R(bx + 1, top + h, 2, 2, col));
-  if (tier >= 2) shapes.push(R(bx + 2, top - 3, 2, 3, GOLD), R(bx + 2, top + h + 1, 2, 3, GOLD));
+  paint(g, taperSpans(cx, top, base, leaf), t, f, { fuller: true });
+  if (t >= 2) g.rect(cx - 4, base + 1, 9, 2, SHAFTS[t][2]);
+  // A ribbon tassel under the head.
+  if (t >= 1) {
+    const rc = el ? ELEMENTS[el].color : '#ff9ec0';
+    const sw = f % 2;
+    g.rect(cx + 1, base + 3, 2, 2, rc);
+    g.rect(cx + 2 + sw, base + 5, 2, 4, rc);
+    g.rect(cx + 1 + sw * 2, base + 9, 2, 3, rc);
+  }
+  if (el) {
+    collar(g, el, cx, base + 2, f, 0.55);
+    crown(g, el, cx, top - 6, f);
+  }
+  return { w: W, h: g.h, grip: [cx, base + Math.round(len * 0.62)], blade: [top, base], g };
+}
+
+// ---------- Daggers ----------
+
+function dagger(t, f) {
+  const el = TIER_ELEMENT[t];
+  const len = pick([12, 14, 16, 18, 26], t);
+  const w = pick([5, 6, 7, 8, 11], t);
+  const W = 48;
+  const cx = 24;
+  const top = 14;
+  const base = top + len;
+  const g = grid(W, base + 16);
+  if (el) collar(g, el, cx, base + 1, f, 0.6);
+  paint(g, taperSpans(cx, top, base, pointed(w, 0.32)), t, f, { fuller: true });
+  if (!el) {
+    const [, , trim] = SHAFTS[t];
+    g.rect(cx - 4, base + 1, 9, 2, trim);
+  } else {
+    crown(g, el, cx, top - 6, f);
+    gem(g, cx, base + 1, 1.5, ELEMENTS[el].gem);
+  }
+  const [a, b, trim] = SHAFTS[t];
+  for (let i = 0; i < 7; i++) g.rect(cx - 1, base + 3 + i, 3, 1, i % 2 ? a : b);
+  g.disc(cx + 0.5, base + 11.5, 2, trim);
+  return { w: W, h: g.h, grip: [cx, base + 6], blade: [top, base], g };
+}
+
+// ---------- Wands and staves (a shaft with a head) ----------
+
+function head(g, t, cx, cy, r, f) {
+  const el = TIER_ELEMENT[t];
+  switch (el ?? t) {
+    case 0: paint(g, ellipseSpans(cx + 0.5, cy, r * 0.8, r), t, f); break;
+    case 1: {
+      const ring = ellipseSpans(cx + 0.5, cy, r, r).flatMap(([y, x0, x1]) => {
+        const inner = ellipseSpans(cx + 0.5, cy, r - 2, r - 2).find((s) => s[0] === y);
+        return inner ? [[y, x0, inner[1] - 1], [y, inner[2] + 1, x1]] : [[y, x0, x1]];
+      });
+      paint(g, ring, t, f);
+      gem(g, cx, cy, 1.2, '#8fd3ff');
+      break;
+    }
+    case 2: {
+      paint(g, taperSpans(cx, cy - r - 2, cy + r + 2, (u) => 1 + 4 * (1 - Math.abs(u - 0.5) * 2) ** 2), t, f);
+      for (let x = -r - 2; x <= r + 2; x++) {
+        const k = 1 - Math.abs(x) / (r + 3);
+        const h = Math.round(k * k * 2);
+        for (let y = -h; y <= h; y++) g.set(cx + x, cy + y, x < 0 ? MATERIALS[t].light : MATERIALS[t].mid);
+      }
+      gem(g, cx, cy, 1.5, '#8fd3ff');
+      break;
+    }
+    case 3:
+      paint(g, taperSpans(cx, cy - r - 3, cy + r, (u) => (u < 0.55 ? 1 + 2 * r * Math.pow(u / 0.55, 0.8) : 2 * r + 1 - 2 * r * ((u - 0.55) / 0.45))), t, f);
+      g.set(cx - 1, cy - r, '#ffffff');
+      g.set(cx + 1, cy - 2, '#e9f6ff');
+      break;
+    case 'holy':
+      collar(g, el, cx, cy + 2, f, r / 12);
+      paint(g, ellipseSpans(cx + 0.5, cy, r * 0.75, r * 0.75), t, f);
+      gem(g, cx, cy, 1.5, ELEMENTS.holy.gem);
+      crown(g, el, cx, cy - r - 5, f);
+      break;
+    case 'cosmic':
+      collar(g, el, cx, cy + r * 0.9, f, r / 9);
+      paint(g, ellipseSpans(cx + 0.5, cy, r * 0.8, r * 0.8), t, f);
+      crown(g, el, cx, cy - r - 4, f);
+      break;
+    case 'storm':
+      paint(g, ellipseSpans(cx + 0.5, cy, r * 0.75, r * 0.75), t, f);
+      for (let a = 0; a < 6; a++) {
+        const ang = (a / 6) * Math.PI * 2 + f * 0.3;
+        for (let i = 0; i < 4; i++) g.set(cx + Math.cos(ang) * (r + i) + (i % 2), cy + Math.sin(ang) * (r + i), i === 3 ? '#ffffff' : '#5ff3ff');
+      }
+      break;
+    case 'fire':
+      collar(g, el, cx, cy + r, f, r / 11);
+      paint(g, dropSpans(cx, cy, r * 0.85), t, f);
+      crown(g, el, cx, cy - r * 1.8 - 3, f);
+      break;
+    case 'water':
+      collar(g, el, cx, cy + r * 0.6, f, r / 11);
+      paint(g, dropSpans(cx, cy, r * 0.85), t, f);
+      g.ring(cx + 0.5, cy + 1, r * 0.4, r * 0.4, '#ffffff');
+      g.set(cx + 1, cy - 2 - (f % 3), '#ffffff');
+      break;
+  }
+}
+
+function rod(kind, t, f) {
+  const el = TIER_ELEMENT[t];
+  const staff = kind === 'staff';
+  const r = staff ? pick([5, 6, 7, 8, 11], t) : pick([4, 5, 6, 7, 9], t);
+  const len = staff ? pick([30, 34, 38, 42, 52], t) : pick([14, 15, 16, 17, 22], t);
+  const W = 64;
+  const cx = 32;
+  const cy = 18 + Math.round(r * 1.9);
+  const neck = cy + r;
+  const g = grid(W, neck + len + 8);
+  shaft(g, cx, neck - 1, neck + len, t);
+  // Staves cradle their head in two prongs.
+  if (staff && t >= 2) {
+    const c = SHAFTS[t][2];
+    for (let i = 0; i < r + 2; i++) {
+      const dx = Math.round(Math.sin((i / (r + 2)) * Math.PI * 0.9) * (r + 1));
+      g.set(cx - dx - 1, neck - i, c);
+      g.set(cx + dx, neck - i, c);
+    }
+  }
+  head(g, t, cx, cy, r, f);
+  g.rect(cx - 2, neck + 1, 4, 2, SHAFTS[t][2]);
+  const gy = neck + Math.round(len * (staff ? 0.68 : 0.62));
+  g.rect(cx - 1, gy - 2, 2, 5, el ? ELEMENTS[el].color : '#c25b78');
+  return { w: W, h: g.h, grip: [cx, gy], blade: [cy - r * 2, neck], g };
+}
+
+// ---------- Bows ----------
+
+function bow(t, f) {
+  const el = TIER_ELEMENT[t];
+  const h = pick([30, 34, 38, 42, 54], t);
+  const thick = el ? 4 : 3;
+  const bend = 6 + Math.min(t, 4) * 1.2;
+  const W = 56;
+  const top = 16;
+  const bx = 32;
+  const g = grid(W, top + h + 14);
+  const spans = [];
+  for (let i = 0; i <= h; i++) {
+    const u = i / h;
+    const x = Math.round(bx - bend * Math.sin(Math.PI * u));
+    const th = u > 0.42 && u < 0.58 ? thick + 1 : u < 0.08 || u > 0.92 ? thick - 1 : thick;
+    spans.push([top + i, x, x + th - 1]);
+  }
+  paint(g, spans, t, f);
+  // Recurved, capped tips.
+  const trim = SHAFTS[t][2];
+  if (t >= 1) {
+    g.rect(bx + 1, top - 2, 2, 3, trim);
+    g.rect(bx + 1, top + h, 2, 3, trim);
+  }
   const mid = top + Math.round(h / 2);
   const gx = Math.round(bx - bend);
-  if (tier >= 4 || crystal) {
-    // Feather wings near the tips.
-    const fc = crystal ? '#c9f2ff' : tier >= 7 ? WHITE : '#9be8ff';
-    const up = f % 2;
-    for (const [y, dir] of [[top + 6, -1], [top + h - 6, 1]]) {
-      shapes.push(R(gx - 4, y - up * dir, 5, 2, fc), R(gx - 7, y + 2 * dir - up * dir, 6, 2, fc), R(gx - 9, y + 4 * dir - up * dir, 6, 2, fc));
-    }
+  g.rect(gx, mid - 3, thick + 1, 7, SHAFTS[t][1]);
+  const string = el ? ELEMENTS[el].glow : '#fff6fb';
+  g.rect(bx + 2, top + 1, 1, h - 1, string);
+  if (el) {
+    gem(g, gx + 2, mid, 2, ELEMENTS[el].gem);
+    collar(g, el, gx + 2, mid - 2, f, 0.45);
+    crown(g, el, bx + 2, top - 7, f);
+    crown(g, el, bx + 2, top + h + 6, (f + 3) % ELEMENT_FRAMES);
   }
-  if (tier >= 6 || crystal) shapes.push(...gem(gx + 2, mid, 3, crystal ? '#8fe3ff' : tier >= 8 ? '#c9a6ff' : '#ff9ec0', f));
-  shapes.push(R(gx + 1, mid - 3, 3, 6, WOOD_D));
-  // String.
-  shapes.push(R(bx + 3, top + 1, 1, h - 1, '#fff6fb'));
-  return { w: W, h: top + h + 6, grip: [gx + 2, mid], shapes };
+  return { w: W, h: g.h, grip: [gx + 2, mid], blade: [top, top + h], g };
 }
 
-function crossbow(tier, c, f) {
-  const len = 22 + tier * 2;
-  const lim = 18 + tier * 2;
-  const W = Math.round(len) + 8;
-  const H = Math.round(lim) + 8;
+// ---------- Crossbows (horizontal, pointing right) ----------
+
+function crossbow(t, f) {
+  const el = TIER_ELEMENT[t];
+  const len = pick([20, 22, 24, 26, 34], t);
+  const lh = pick([16, 18, 20, 22, 32], t);
+  const W = len + 24;
+  const H = lh + 24;
   const cy = Math.round(H / 2);
-  const front = Math.round(len) + 2;
-  const shapes = [
-    R(2, cy - 1, Math.round(len), 3, WOOD), R(2, cy + 2, 4, 4, WOOD_D),
-    R(front - 2, 3, 3, Math.round(lim), c), R(front - 1, 4, 1, Math.round(lim) - 2, shade(c, 25)),
-    R(front - 6, 3, 1, Math.round(lim), '#fff6fb'),
-  ];
-  if (tier >= 4) shapes.push(...gem(8, cy, 2, tier >= 7 ? '#ff9ec0' : '#8fe3ff', f));
-  if (tier >= 6) shapes.push(...flames(front, 4, Math.round(lim), 3, f, 4).slice(0, 4));
-  return { w: W, h: H, grip: [4, cy + 3], shapes };
+  const fx = len + 4;
+  const g = grid(W, H);
+  const [a, b, trim] = SHAFTS[Math.min(t, 3)];
+  g.rect(2, cy - 1, len + 2, 3, t >= 4 ? SHAFTS[t][0] : a);
+  g.rect(2, cy + 1, len + 2, 1, t >= 4 ? SHAFTS[t][1] : b);
+  g.rect(2, cy + 2, 5, 4, b);
+  // Limbs: a vertical arc at the front.
+  const spans = [];
+  for (let i = 0; i <= lh; i++) {
+    const x = fx - Math.round(3 * Math.sin((Math.PI * i) / lh));
+    spans.push([cy - Math.round(lh / 2) + i, x, x + (el ? 3 : 2)]);
+  }
+  paint(g, spans, t, f);
+  g.rect(fx - 5, cy - Math.round(lh / 2) + 1, 1, lh - 1, el ? ELEMENTS[el].glow : '#fff6fb');
+  // A loaded bolt.
+  g.rect(8, cy - 2, fx - 4, 1, '#efe8d8');
+  g.rect(fx + 3, cy - 3, 2, 3, el ? ELEMENTS[el].color : trim);
+  g.rect(fx - 2, cy - 2, 4, 4, trim);
+  if (el) {
+    gem(g, fx, cy, 1.5, ELEMENTS[el].gem);
+    crown(g, el, fx, cy - Math.round(lh / 2) - 6, f);
+  }
+  return { w: W, h: H, grip: [5, cy + 3], blade: [cy - Math.round(lh / 2), cy + Math.round(lh / 2)], g };
 }
 
-function claw(tier, c, f, paw = false) {
-  const bl = 10 + tier * 1.6;
-  const W = 30;
-  const H = Math.round(bl) + 18;
-  const shapes = [];
-  if (paw) {
-    shapes.push(E(15, H - 9, 10, 8, '#ffc2d6'), E(15, H - 7, 5, 4, '#ff9ec0'), E(6, H - 18, 3, 3, '#ff9ec0'), E(15, H - 21, 3, 3, '#ff9ec0'), E(24, H - 18, 3, 3, '#ff9ec0'));
-    shapes.push(...[6, 15, 24].map((x) => R(x, H - 26 - (f % 2), 1, 3, WHITE)));
-    return { w: W, h: H, grip: [15, H - 7], shapes };
-  }
-  const col = tier >= 5 ? shade(c, 10) : STEEL;
-  // Three talons that sweep forward as they rise.
-  [8, 15, 22].forEach((x0, i) => {
-    const len = Math.round(bl) - (i === 1 ? 0 : 3);
+// ---------- Claws ----------
+
+function claw(t, f) {
+  const el = TIER_ELEMENT[t];
+  const bl = pick([13, 15, 17, 19, 28], t);
+  const W = 52;
+  const gx = 26;
+  const H = bl + 24;
+  const g = grid(W, H);
+  [gx - 9, gx, gx + 9].forEach((x0, i) => {
+    const len = bl - (i === 1 ? 0 : 3);
+    const tw = el ? 6 : 5;
+    const spans = [];
     for (let k = 0; k < len; k++) {
-      const t = k / len;
-      const w = Math.max(1, Math.round(4 * (1 - t)));
-      const x = Math.round(x0 + Math.pow(t, 2) * 6) - Math.floor(w / 2);
-      shapes.push(R(x, H - 13 - k, w, 1, k === len - 1 ? WHITE : col));
+      const u = k / len;
+      const w = Math.max(1, Math.round(tw * (1 - u)));
+      const x = Math.round(x0 + u * u * 8) - Math.floor(w / 2);
+      spans.push([H - 15 - k, x, x + w - 1]);
     }
-    if (tier >= 6) shapes.push(P(x0 + 1 + ((f + i) % 3), H - 15 - ((f * 3 + i * 5) % len), WHITE));
+    paint(g, spans.reverse(), t, f);
   });
-  shapes.push(R(3, H - 14, 24, 8, c), R(3, H - 14, 24, 2, shade(c, 25)), R(6, H - 6, 18, 5, WOOD_D), R(6, H - 4, 18, 1, WOOD));
-  if (tier >= 3) shapes.push(...gem(15, H - 10, 2.5, tier >= 7 ? '#ff9ec0' : '#8fe3ff', f));
-  return { w: W, h: H, grip: [15, H - 4], shapes };
+  const [a, b, trim] = SHAFTS[t];
+  g.rect(gx - 14, H - 15, 29, 9, t >= 4 ? a : MATERIALS[t].mid);
+  g.rect(gx - 14, H - 15, 29, 2, t >= 4 ? trim : MATERIALS[t].hi);
+  g.rect(gx - 11, H - 6, 23, 4, b);
+  if (el) {
+    gem(g, gx, H - 11, 2, ELEMENTS[el].gem);
+    crown(g, el, gx, H - 18 - bl - 4, f);
+  } else if (t >= 2) gem(g, gx, H - 11, 1.5, t >= 3 ? '#4b4675' : '#8fd3ff');
+  return { w: W, h: H, grip: [gx, H - 4], blade: [H - 15 - bl, H - 15], g };
 }
 
 // ---------- Public ----------
 
-const ANIMATED_SWORD = new Set(['rune', 'crystal', 'flame', 'holy', 'lightning', 'candy']);
+const BUILDERS = {
+  axe, spear, dagger, bow, crossbow, claw,
+  wand: (t, f) => rod('wand', t, f),
+  staff: (t, f) => rod('staff', t, f),
+};
 
 export function weaponShapes(type, color, tier = 0, special = null, frame = 0) {
-  const f = frame % FRAMES;
-  const t = Math.max(0, Math.min(8, tier));
-  switch (special ?? type) {
-    case 'lollipop': return hafted('wand', ['lollipop', 8, 18], color, f, 3);
-    case 'moonstaff': return hafted('staff', ['moon', 9, 40], color, f, 7);
-    case 'candycane': return bladed({ len: 34, bw: 6, blade: 'candy', guard: 'heart' }, color, f);
-    case 'heartdagger': return bladed({ len: 20, bw: 7, blade: 'heart', guard: 'heart' }, color, f);
-    case 'crystalbow': return bow(6, color, f, true);
-    case 'pawclaw': return claw(4, color, f, true);
-    case 'sword': return swordShapes(t, frame);
-    case 'dagger': return bladed(DAGGERS[t], color, f);
-    case 'axe': return hafted('axe', AXES[t], color, f, t);
-    case 'spear': return hafted('spear', SPEARS[t], color, f, t);
-    case 'wand': return hafted('wand', WANDS[t], color, f, t);
-    case 'staff': return hafted('staff', STAVES[t], color, f, t);
-    case 'bow': return bow(t, color, f);
-    case 'crossbow': return crossbow(t, color, f);
-    case 'claw': return claw(t, color, f);
-    default: return null;
-  }
+  const t = clampTier(tier);
+  const f = frame % ELEMENT_FRAMES;
+  if (type === 'sword') return swordShapes(t, f);
+  const build = BUILDERS[type];
+  if (!build) return null;
+  const { w, h, grip, blade, g } = build(t, f);
+  return { w, h, grip, blade, shapes: g.shapes() };
 }
 
-// How many animation frames a weapon's design has (1 = still).
-export function weaponFrames(type, tier = 0, special = null) {
-  const t = Math.max(0, Math.min(8, tier));
-  if (special) return FRAMES;
-  if (type === 'sword') return t >= 4 ? SWORD_FRAMES : 1;
-  if (type === 'dagger') return ANIMATED_SWORD.has(DAGGERS[t].blade) ? FRAMES : 1;
-  return t >= 4 ? FRAMES : 1;
+// How many animation frames a weapon's design has (1 = still). Endgame weapons animate.
+export function weaponFrames(type, tier = 0) {
+  return TIER_ELEMENT[clampTier(tier)] ? ELEMENT_FRAMES : 1;
+}
+
+// ---------- 16x16 bag icons ----------
+
+export function weaponIcon(type, tier) {
+  const t = clampTier(tier);
+  const el = TIER_ELEMENT[t];
+  const m = MATERIALS[t];
+  const [sa, sb, trim] = SHAFTS[t];
+  const g = grid(16, 16);
+  const accent = el ? ELEMENTS[el].color : null;
+  const diag = (x0, y0, n, c1, c2) => {
+    for (let k = 0; k < n; k++) {
+      g.set(x0 - k, y0 + k, c1);
+      if (c2) g.set(x0 - k + 1, y0 + k, c2);
+    }
+  };
+  switch (type) {
+    case 'sword':
+    case 'dagger': {
+      const n = type === 'sword' ? 9 : 6;
+      const o = 9 - n;
+      for (let k = 0; k < n; k++) {
+        g.set(14 - k - o, 1 + k + o, m.hi);
+        g.set(15 - k - o, 1 + k + o, m.dark);
+        g.set(14 - k - o, 2 + k + o, m.mid);
+      }
+      for (let i = -2; i <= 2; i++) g.set(5 + i, 11 + i, el ? ELEMENTS[el].glow : trim);
+      g.set(4, 12, sb);
+      g.set(3, 13, sa);
+      g.set(2, 14, trim);
+      break;
+    }
+    case 'axe':
+    case 'spear':
+      diag(12, 3, 12, sa, sb);
+      if (type === 'axe') {
+        g.disc(12, 4.5, 3.6, m.mid);
+        g.disc(11.5, 4, 2, m.light);
+        g.set(13, 2, m.hi);
+      } else {
+        g.set(14, 1, m.hi);
+        g.rect(12, 2, 2, 2, m.light);
+        g.set(14, 2, m.dark);
+        g.set(12, 4, m.mid);
+      }
+      break;
+    case 'wand':
+    case 'staff':
+      diag(type === 'staff' ? 11 : 10, type === 'staff' ? 5 : 6, type === 'staff' ? 11 : 8, sa, sb);
+      g.disc(12, 4, type === 'staff' ? 3.4 : 3, el ? ELEMENTS[el].glow : m.mid);
+      g.disc(11.5, 3.5, 1.4, el ? '#ffffff' : m.light);
+      break;
+    case 'bow':
+      for (let y = 1; y <= 14; y++) {
+        const x = Math.round(10 - 6 * Math.sin((Math.PI * (y - 1)) / 13));
+        g.set(x, y, m.mid);
+        g.set(x + 1, y, m.dark);
+      }
+      g.rect(11, 2, 1, 12, el ? ELEMENTS[el].glow : '#fff6fb');
+      g.rect(4, 7, 2, 3, sb);
+      break;
+    case 'crossbow':
+      g.rect(1, 8, 12, 2, sa);
+      g.rect(1, 10, 3, 3, sb);
+      for (let y = 2; y <= 14; y++) g.set(12 - Math.round(2 * Math.sin((Math.PI * (y - 2)) / 12)), y, m.mid);
+      g.rect(9, 3, 1, 11, '#fff6fb');
+      break;
+    case 'claw':
+      for (let i = 0; i < 3; i++) for (let k = 0; k < 6; k++) g.set(4 + i * 4 + Math.round((k / 6) ** 2 * 2), 9 - k, k > 3 ? m.hi : m.mid);
+      g.rect(2, 10, 12, 3, t >= 4 ? sa : m.mid);
+      g.rect(3, 13, 10, 2, sb);
+      break;
+  }
+  if (accent) {
+    g.set(13, 1, '#ffffff');
+    g.set(14, 3, accent);
+    g.set(1, 2, accent);
+  }
+  return g.shapes();
 }

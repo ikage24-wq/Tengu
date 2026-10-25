@@ -1,58 +1,8 @@
-// The sword path: Wooden → Iron → Steel → Mithril, then it splits into five endgame elements:
+// The sword path, hand-tuned: Wooden → Iron → Steel → Mithril, then five endgame swords:
 // Seraph's Grace (holy), Astral Edge (cosmic), Stormcaller (lightning), Inferno Fang (fire), and
-// Tidebreaker (water). Swords are drawn pixel by pixel with 3-tone shading; the elemental ones
-// animate over 6 frames and carry a live aura (feathers, an orbiting planet, crackling arcs,
-// embers, bubbles) drawn around them in the hero's hand.
+// Tidebreaker (water). Drawn pixel by pixel with 3-tone shading; the elemental ones animate.
 
-import { P } from './pixel.js';
-
-export const SWORD_FRAMES = 6;
-
-export const ELEMENTS = {
-  holy: { color: '#ffe36b', glow: '#fff3a6', sparks: ['#ffffff', '#ffe36b', '#fff3a6'] },
-  cosmic: { color: '#9b7bff', glow: '#b49cff', sparks: ['#c9b6ff', '#ff7ad9', '#8fe3ff'] },
-  storm: { color: '#5ff3ff', glow: '#5ff3ff', sparks: ['#5ff3ff', '#ffffff', '#c9f6ff'] },
-  fire: { color: '#ff6b2b', glow: '#ff8a3b', sparks: ['#ff6b2b', '#ffa53b', '#ffd23b'] },
-  water: { color: '#4fc8ff', glow: '#8fe3ff', sparks: ['#8fe3ff', '#ffffff', '#4fc8ff'] },
-};
-
-// ---------- Pixel grid ----------
-
-function grid(w, h) {
-  const px = new Map();
-  return {
-    w,
-    h,
-    set(x, y, c) {
-      x = Math.round(x);
-      y = Math.round(y);
-      if (x >= 0 && y >= 0 && x < w && y < h) px.set(y * w + x, c);
-    },
-    del(x, y) {
-      px.delete(Math.round(y) * w + Math.round(x));
-    },
-    rect(x, y, rw, rh, c) {
-      for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) this.set(x + i, y + j, c);
-    },
-    disc(cx, cy, r, c) {
-      for (let y = Math.floor(cy - r - 1); y <= cy + r; y++) {
-        for (let x = Math.floor(cx - r - 1); x <= cx + r; x++) if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r) this.set(x, y, c);
-      }
-    },
-    ring(cx, cy, rx, ry, c) {
-      for (let a = 0; a < 64; a++) this.set(cx + Math.cos((a / 64) * Math.PI * 2) * rx, cy + Math.sin((a / 64) * Math.PI * 2) * ry, c);
-    },
-    shapes() {
-      return [...px].map(([k, c]) => P(k % w, Math.floor(k / w), c));
-    },
-  };
-}
-
-// Deterministic per-pixel noise in [0, 1).
-const noise = (x, y) => {
-  const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-  return n - Math.floor(n);
-};
+import { grid, noise, ELEMENT_FRAMES } from './elements.js';
 
 // Width profile: a point that widens over the top `tip` of the blade.
 const pointed = (w, tip = 0.22) => (t) => (t < tip ? 1 + (w - 1) * Math.pow(t / tip, 0.8) : w);
@@ -98,8 +48,8 @@ function crossguard(g, cx, y, half, light, dark, curl = false) {
 
 // ---------- The path ----------
 
-const W = 48;
-const CX = 24;
+const W = 56;
+const CX = 28;
 
 function wooden() {
   const g = grid(W, 52);
@@ -155,16 +105,16 @@ function mithril() {
 // ---------- Endgame elements ----------
 
 const TOP = 16;
-const LEN = 48;
+const LEN = 54;
 
 function seraph(f) {
-  const g = grid(W, 86);
+  const g = grid(W, 94);
   const base = TOP + LEN;
   // Feathered wings spread from the guard, flapping gently.
   const flap = f >= 3 ? -1 : 0;
   for (const s of [-1, 1]) {
     for (let k = 0; k < 4; k++) {
-      const len = 15 - k * 3;
+      const len = 18 - k * 3;
       for (let i = 0; i < len; i++) {
         const x = CX + s * (3 + i);
         const y = base - 1 - Math.floor(i * 0.55) + k * 2 + flap * (i > 6 ? 1 : 0);
@@ -174,7 +124,7 @@ function seraph(f) {
       }
     }
   }
-  const rows = blade(g, CX, TOP, base, pointed(13, 0.3), { hi: '#ffffff', light: '#ffffff', mid: '#fff6dc', dark: '#e8c97a', fuller: '#ffd66b' }, { fuller: true });
+  const rows = blade(g, CX, TOP, base, pointed(15, 0.3), { hi: '#ffffff', light: '#ffffff', mid: '#fff6dc', dark: '#e8c97a', fuller: '#ffd66b' }, { fuller: true });
   for (const [y, [x0, x1]] of Object.entries(rows)) {
     if (y > TOP + 3) {
       g.set(x0, y, '#ffe9a0');
@@ -194,12 +144,12 @@ function seraph(f) {
 }
 
 function astral(f) {
-  const g = grid(W, 86);
+  const g = grid(W, 94);
   const base = TOP + LEN;
   // Crescent-moon guard cradling the blade.
   g.disc(CX + 0.5, base - 1, 9, '#ffd66b');
   for (let y = base - 15; y <= base + 9; y++) for (let x = CX - 10; x <= CX + 10; x++) if ((x + 0.5 - CX - 0.5) ** 2 + (y + 0.5 - base + 5) ** 2 <= 81) g.del(x, y);
-  const rows = blade(g, CX, TOP, base, pointed(13, 0.26), { hi: '#c9b6ff', light: '#3d2d86', mid: '#2a1f60', dark: '#8f7cff' });
+  const rows = blade(g, CX, TOP, base, pointed(15, 0.26), { hi: '#c9b6ff', light: '#3d2d86', mid: '#2a1f60', dark: '#8f7cff' });
   // A window into space: drifting nebulae and twinkling stars.
   for (const [y, [x0, x1]] of Object.entries(rows)) {
     for (let x = x0 + 1; x < x1; x++) {
@@ -225,9 +175,9 @@ function astral(f) {
 }
 
 function storm(f) {
-  const g = grid(W, 86);
+  const g = grid(W, 94);
   const base = TOP + LEN;
-  const rows = blade(g, CX, TOP, base, pointed(11, 0.24), { hi: '#ffffff', light: '#f2feff', mid: '#c9f6ff', dark: '#6fd6f0' });
+  const rows = blade(g, CX, TOP, base, pointed(13, 0.24), { hi: '#ffffff', light: '#f2feff', mid: '#c9f6ff', dark: '#6fd6f0' });
   // Jagged electric edges that shift every frame.
   let k = 0;
   for (let y = TOP + 8; y < base - 2; y += 5, k++) {
@@ -263,14 +213,14 @@ function storm(f) {
 }
 
 function inferno(f) {
-  const g = grid(W, 86);
+  const g = grid(W, 94);
   const base = TOP + LEN;
   const heat = ['#ff6b2b', '#ffa53b', '#ffd23b'];
   // Horned guard.
   for (const s of [-1, 1]) {
     for (let i = 0; i < 9; i++) g.rect(CX + s * (3 + i) - (s < 0 ? 1 : 0), base - Math.floor((i * i) / 10), 2, 2, i > 6 ? '#ff6b2b' : '#5a2030');
   }
-  const rows = blade(g, CX, TOP, base, pointed(13, 0.25), { hi: '#8a4a5a', light: '#4a2a3a', mid: '#33202c', dark: '#ff6b2b' });
+  const rows = blade(g, CX, TOP, base, pointed(15, 0.25), { hi: '#8a4a5a', light: '#4a2a3a', mid: '#33202c', dark: '#ff6b2b' });
   // Molten cracks that pulse.
   for (let v = 0; v < 3; v++) {
     for (let y = TOP + 8; y < base - 1; y++) {
@@ -297,14 +247,14 @@ function inferno(f) {
 }
 
 function tide(f) {
-  const g = grid(W, 86);
+  const g = grid(W, 94);
   const base = TOP + LEN;
   // Seashell guard.
   g.disc(CX + 0.5, base + 2, 7, '#ffc2d6');
   for (let y = base + 2; y < base + 10; y++) for (let x = CX - 7; x <= CX + 8; x++) g.del(x, y);
   for (let a = -3; a <= 3; a++) for (let r = 2; r < 7; r++) g.set(CX + Math.round((a / 3) * r), base + 2 - Math.round(Math.sqrt(Math.max(0, 1 - (a / 3) ** 2)) * r), '#ff9ec0');
   const flow = (t, y) => 1.6 * Math.sin(y * 0.4 - f * 1.05) + 0.5;
-  const rows = blade(g, CX, TOP, base, pointed(11, 0.26), { hi: '#ffffff', light: '#c9f6ff', mid: '#6fd6f0', dark: '#2f9bd0' }, { wobble: flow });
+  const rows = blade(g, CX, TOP, base, pointed(13, 0.26), { hi: '#ffffff', light: '#c9f6ff', mid: '#6fd6f0', dark: '#2f9bd0' }, { wobble: flow });
   for (const [y, [x0]] of Object.entries(rows)) if (Math.sin(+y * 0.4 - f * 1.05) > 0.4) g.set(x0, y, '#ffffff');
   // A current running down the middle and bubbles rising through it.
   for (let y = TOP + 6; y < base - 2; y++) if ((y + f * 2) % 6 < 3) g.set(CX + Math.round(Math.sin(y * 0.3 + f) * 1.5), y, '#e6fbff');
@@ -321,128 +271,8 @@ function tide(f) {
 }
 
 const PATH = [wooden, iron, steel, mithril, seraph, astral, storm, inferno, tide];
-export const SWORD_ELEMENTS = [null, null, null, null, 'holy', 'cosmic', 'storm', 'fire', 'water'];
 
 export function swordShapes(tier, frame = 0) {
-  const { g, grip, blade: span } = PATH[Math.max(0, Math.min(8, tier))](frame % SWORD_FRAMES);
+  const { g, grip, blade: span } = PATH[Math.max(0, Math.min(8, tier))](frame % ELEMENT_FRAMES);
   return { w: g.w, h: g.h, grip, blade: span, shapes: g.shapes() };
-}
-
-// ---------- Live auras around elemental swords ----------
-// Drawn in the weapon's rotated frame: grip at the origin, the blade toward -y. `top`/`base` are
-// the blade's ends in that frame (negative numbers); `s` is the pixel scale.
-
-export function drawSwordAura(ctx, element, top, base, time, s) {
-  const len = base - top;
-  ctx.save();
-  switch (element) {
-    case 'holy':
-      // Feathers drifting down past the blade.
-      for (let i = 0; i < 3; i++) {
-        const k = (time * 0.25 + i / 3) % 1;
-        ctx.globalAlpha = Math.sin(k * Math.PI);
-        ctx.fillStyle = '#ffffff';
-        const x = Math.sin(time * 1.5 + i * 2) * 9 * s;
-        ctx.fillRect(Math.round(x), Math.round(top + k * len), 3 * s, s);
-        ctx.fillRect(Math.round(x + s), Math.round(top + k * len + s), s, s);
-      }
-      break;
-    case 'cosmic': {
-      // A little ringed planet orbiting the blade, passing behind and in front.
-      const a = time * 2.2;
-      const x = Math.cos(a) * 11 * s;
-      const y = top + len * 0.45 + Math.sin(a) * 3 * s;
-      ctx.globalAlpha = Math.sin(a) > 0 ? 1 : 0.45;
-      ctx.fillStyle = '#ff9ec0';
-      ctx.fillRect(Math.round(x - s), Math.round(y - s), 3 * s, 3 * s);
-      ctx.fillStyle = '#ffd66b';
-      ctx.fillRect(Math.round(x - 2 * s), Math.round(y), 5 * s, s);
-      for (let i = 0; i < 3; i++) {
-        const tw = Math.sin(time * 5 + i * 2.1);
-        if (tw < 0.3) continue;
-        ctx.globalAlpha = tw;
-        ctx.fillStyle = '#ffffff';
-        const sx = Math.round(Math.sin(i * 4.7) * 12 * s);
-        const sy = Math.round(top + ((i * 0.37 + 0.1) % 1) * len);
-        ctx.fillRect(sx - s, sy, 3 * s, s);
-        ctx.fillRect(sx, sy - s, s, 3 * s);
-      }
-      break;
-    }
-    case 'storm': {
-      // Arcs jump to a new spot ten times a second.
-      const step = Math.floor(time * 10);
-      ctx.lineWidth = s;
-      for (let a = 0; a < 2; a++) {
-        const r = (n) => {
-          const v = Math.sin((step + a * 13) * 91.7 + n * 37.3) * 43758.5;
-          return v - Math.floor(v);
-        };
-        if (r(0) < 0.3) continue;
-        ctx.strokeStyle = a ? '#ffffff' : '#5ff3ff';
-        ctx.beginPath();
-        let x = (a ? 5 : -5) * s;
-        let y = top + r(1) * len;
-        ctx.moveTo(x, y);
-        for (let i = 0; i < 4; i++) {
-          x += (a ? 3 : -3) * s;
-          y += (r(i + 2) - 0.5) * 8 * s;
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-      break;
-    }
-    case 'fire':
-      // Embers rising off the blade.
-      for (let i = 0; i < 6; i++) {
-        const k = (time * 0.8 + i / 6) % 1;
-        ctx.globalAlpha = 1 - k;
-        ctx.fillStyle = ['#ff6b2b', '#ffa53b', '#ffd23b'][i % 3];
-        ctx.fillRect(Math.round(Math.sin(time * 3 + i * 1.7) * 6 * s), Math.round(base - ((i / 6) * len + k * 20 * s)), s, s);
-      }
-      break;
-    case 'water':
-      // Bubbles wobbling upward around the blade.
-      ctx.lineWidth = Math.max(1, s * 0.75);
-      ctx.strokeStyle = '#c9f6ff';
-      for (let i = 0; i < 4; i++) {
-        const k = (time * 0.45 + i / 4) % 1;
-        ctx.globalAlpha = Math.sin(k * Math.PI);
-        ctx.beginPath();
-        ctx.arc(Math.sin(time * 2 + i * 1.9) * 9 * s, base - k * len, (1 + (i % 2)) * s, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      break;
-  }
-  ctx.restore();
-}
-
-// ---------- 16x16 bag icons ----------
-
-export function swordIcon(tier) {
-  const g = grid(16, 16);
-  const el = SWORD_ELEMENTS[tier];
-  const pal = [
-    ['#f6d3a3', '#c98e55'], ['#ffffff', '#a3abbb'], ['#ffffff', '#bcc3d0'], ['#ffffff', '#88b2d1'],
-    ['#ffffff', '#ffd66b'], ['#5a45b0', '#2a1f60'], ['#ffffff', '#6fd6f0'], ['#8a4a5a', '#33202c'], ['#c9f6ff', '#2f9bd0'],
-  ][tier];
-  // A three-pixel diagonal blade from the top right down to the guard, lit on its upper edge.
-  for (let k = 0; k < 9; k++) {
-    g.set(14 - k, 1 + k, pal[0]);
-    g.set(15 - k, 1 + k, pal[1]);
-    g.set(14 - k, 2 + k, pal[1]);
-  }
-  // Crossguard across the blade, then the grip and pommel.
-  const guard = el === 'holy' ? '#ffffff' : el === 'storm' ? '#3b3f5c' : el === 'fire' ? '#5a2030' : el === 'water' ? '#ffc2d6' : el === 'cosmic' ? '#ffd66b' : tier >= 2 ? '#ffd66b' : '#7a5238';
-  for (let i = -2; i <= 2; i++) g.set(5 + i, 11 + i, guard);
-  g.set(4, 12, '#7a5238');
-  g.set(3, 13, '#5a3a26');
-  g.set(2, 14, guard);
-  if (el === 'holy') [[2, 8], [1, 9], [8, 14], [9, 15], [9, 0], [10, 0]].forEach(([x, y]) => g.set(x, y, x > 8 && y === 0 ? '#ffe36b' : '#ffffff'));
-  if (el === 'cosmic') [[11, 4], [9, 7], [7, 8]].forEach(([x, y]) => g.set(x, y, '#ffffff'));
-  if (el === 'storm') [[12, 2], [10, 5], [8, 6], [13, 6], [11, 8]].forEach(([x, y]) => g.set(x, y, '#5ff3ff'));
-  if (el === 'fire') [[11, 5], [9, 7], [12, 7], [10, 9], [8, 10]].forEach(([x, y], i) => g.set(x, y, ['#ff6b2b', '#ffd23b'][i % 2]));
-  if (el === 'water') [[12, 4], [10, 6], [8, 8]].forEach(([x, y]) => g.set(x, y, '#ffffff'));
-  return g.shapes();
 }

@@ -2,7 +2,7 @@
 // and ambient motes per map theme. Nothing here affects gameplay.
 
 import { ITEMS } from '../data/items.js';
-import { ELEMENTS } from './swords.js';
+import { ELEMENTS } from './elements.js';
 
 const MAX = 600;
 
@@ -68,6 +68,48 @@ export function poof(fx, x, y, w, h, boss) {
     add(fx, {
       x, y: y - h / 2, vx: (Math.random() - 0.5) * 160, vy: -80 - Math.random() * 120, g: 380,
       life: 0.7 + Math.random() * 0.3, size: 2, shape: 'star', spin: 6, color: ['#ffe36b', '#ff9ec0', '#8fe3ff'][i % 3],
+    });
+  }
+}
+
+// Footsteps of an endgame weapon's wielder: feathers, stardust, sparks, flames, or splashes.
+export function elementStep(fx, x, y, element, dir) {
+  const c = ELEMENTS[element].sparks;
+  switch (element) {
+    case 'holy':
+      for (let i = 0; i < 2; i++) add(fx, { x: x + (Math.random() - 0.5) * 8, y: y - 2, vx: -dir * 10 + (Math.random() - 0.5) * 20, vy: -30 - Math.random() * 20, drag: 2.5, life: 0.9, size: 1.5, shape: 'petal', spin: 3, sway: 10, phase: i, color: '#ffffff' });
+      add(fx, { x, y: y - 1, vx: 0, vy: -20, drag: 2, life: 0.6, size: 0.5, shape: 'star', spin: 0, color: '#ffe36b' });
+      break;
+    case 'cosmic':
+      for (let i = 0; i < 3; i++) add(fx, { x: x + (Math.random() - 0.5) * 10, y: y - 1, vx: -dir * 15 + (Math.random() - 0.5) * 20, vy: -25 - Math.random() * 30, drag: 2, life: 0.8, size: 0.5 + (i % 2), shape: 'star', spin: 0, color: c[i % c.length] });
+      break;
+    case 'storm':
+      for (let i = 0; i < 4; i++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2;
+        add(fx, { x, y: y - 1, vx: Math.cos(a) * 110, vy: Math.sin(a) * 110, g: 200, drag: 4, life: 0.22, size: 1, shape: 'streak', color: c[i % 2] });
+      }
+      break;
+    case 'fire':
+      for (let i = 0; i < 3; i++) add(fx, { x: x + (Math.random() - 0.5) * 8, y: y - 1, vx: -dir * 8 + (Math.random() - 0.5) * 10, vy: -35 - Math.random() * 25, drag: 2, life: 0.5, size: 2.2 - i * 0.5, grow: -2, color: c[i % 3] });
+      break;
+    case 'water':
+      for (let i = 0; i < 4; i++) add(fx, { x, y: y - 1, vx: (Math.random() - 0.5) * 70, vy: -60 - Math.random() * 50, g: 420, life: 0.45, size: 1, color: i % 2 ? '#ffffff' : '#8fe3ff' });
+      ring(fx, x, y, '#c9f6ff', 2, 26);
+      break;
+  }
+  // A brief glowing footprint.
+  add(fx, { x, y, vx: 0, vy: 0, life: 0.5, size: 3, grow: 2, shape: 'flatring', color: ELEMENTS[element].color, alpha: 0.7 });
+}
+
+// Sparkles drifting up around someone holding an endgame weapon. Call every frame.
+export function elementAura(fx, x, y, element, dt) {
+  fx.auraTimer = (fx.auraTimer ?? 0) - dt * 14;
+  const c = ELEMENTS[element].sparks;
+  while (fx.auraTimer <= 0) {
+    fx.auraTimer += 1;
+    add(fx, {
+      x: x + (Math.random() - 0.5) * 30, y: y - Math.random() * 48, vx: (Math.random() - 0.5) * 6, vy: -12 - Math.random() * 16,
+      life: 0.7 + Math.random() * 0.5, size: Math.random() < 0.3 ? 1 : 0.4, shape: 'star', spin: 0, color: c[Math.floor(Math.random() * c.length)],
     });
   }
 }
@@ -175,7 +217,7 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'flatring':
         ctx.lineWidth = 2 * (1 - t) + 0.5;
         ctx.beginPath();
-        ctx.ellipse(x, y, p.size, p.shape === 'flatring' ? p.size * 0.18 : p.size, 0, 0, Math.PI * 2);
+        ctx.ellipse(x, y, Math.max(0.3, p.size), Math.max(0.3, p.shape === 'flatring' ? p.size * 0.18 : p.size), 0, 0, Math.PI * 2);
         ctx.stroke();
         break;
       case 'star': {
@@ -212,7 +254,7 @@ export function drawParticles(ctx, fx, cam, time) {
       }
       default:
         ctx.beginPath();
-        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.arc(x, y, Math.max(0.3, p.size), 0, Math.PI * 2);
         ctx.fill();
     }
   }

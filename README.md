@@ -54,18 +54,19 @@ then press the key. Right-click a hotkey slot to clear it.
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings), 9 weapon types in
   9 tiers and armor in 6 tiers. Everything you wear shows on your character, and each armor tier
   has its own look (beanie → sun hat → cap → helm → witch hat → circlet, tee → robe, sneakers →
-  wing boots, and so on). 17 **unique** pieces have one-of-a-kind looks: Bunny Hood, Kitty Ears,
-  Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
-  Wings, Angel Wings, Galaxy Cape, Lollipop Wand, Candy Cane Sword, Kitty Paw Claw, Sweetheart
-  Dagger, Crystal Harp Bow, and Crescent Moon Staff (a few are sold by Marlo; the rest drop).
-- **Weapons** — comically oversized and growing with every tier. Swords follow a **path**:
-  Wooden → Iron → Steel → Mithril, then split into five endgame elements at level 45, each with
-  its own animated art, aura, and colored hit sparks: **Seraph's Grace** (holy: feathered wings and
-  a halo), **Astral Edge** (cosmic: a blade full of stars and an orbiting planet), **Stormcaller**
-  (lightning: crackling edges and arcs), **Inferno Fang** (fire: molten cracks and flames), and
-  **Tidebreaker** (water: a flowing wave blade with bubbles). Elemental swords only drop. The
-  other weapon types (axes, spears, wands, staves, bows, crossbows, daggers, claws) still use the
-  earlier per-tier designs.
+  wing boots, and so on). 11 **unique** outfit pieces have one-of-a-kind looks: Bunny Hood, Kitty
+  Ears, Flower Crown, Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy
+  Wings, Angel Wings, and Galaxy Cape (a few are sold by Marlo; the rest drop).
+- **Weapons** — every class follows the same **weapon path**: Wooden → Iron → Steel → Mithril
+  (sold in shops), then at level 45 each weapon type splits into five endgame elements that only
+  drop: **Holy** (feathered wings and halos), **Cosmic** (star fields, crescent moons, an orbiting
+  planet), **Lightning** (crackling edges and arcs), **Fire** (molten cracks, flames, embers), and
+  **Water** (flowing waves, bubbles, seashells). That's 9 weapon types × 9 steps, all comically
+  oversized and growing as you climb; endgame weapons are the biggest, animate, glow, leave
+  elemental footsteps (feathers, stardust, sparks, flames, splashes), wrap you in a sparkling
+  aura, and color your swing trails and hit sparks. Each element leans a different way: Holy adds
+  HP and magic defense, Cosmic your main stat and accuracy, Lightning speed, Fire the most attack,
+  Water HP and MP.
 - **Rarity** — dropped gear can roll **Rare** (16%), **Epic** (5%), or **Legendary** (1.2%) for
   higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
   glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.
@@ -97,8 +98,8 @@ src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
 src/world/              simulation: physics, monsters, loot, combat, the world update
-src/render/             drawing: pixel toolkit, hero rig, gear designs, weapons, sword path,
-                        animator,
+src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon paths
+                        (weapons, swords, elements), animator,
                         particles,
                         monsters, scenery, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens

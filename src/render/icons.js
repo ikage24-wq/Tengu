@@ -3,22 +3,15 @@
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { R, E, P, sprite, blit, shade } from './pixel.js';
-import { swordIcon } from './swords.js';
+import { weaponIcon } from './weapons.js';
 
-const WOOD = '#a0703f';
 const GOLD = '#ffd66b';
 
 // Icons for specific designs, so the bag shows the same look you'll wear.
 function designShapes(def, c, l, d) {
   const W = '#ffffff';
   const PINK = '#ffc2d6';
-  switch (def.special ?? def.design) {
-    case 'lollipop': return [R(7, 8, 2, 8, W), E(8, 5, 5, 5, '#ff9ec0'), E(8, 5, 3, 3, W), E(8, 5, 1.5, 1.5, '#ffb3d9')];
-    case 'candycane': return [R(6, 4, 3, 11, W), R(6, 6, 3, 1, '#ff6b8a'), R(6, 9, 3, 1, '#ff6b8a'), R(6, 12, 3, 1, '#ff6b8a'), R(8, 1, 4, 3, W), R(11, 2, 2, 4, '#ff6b8a')];
-    case 'moonstaff': return [R(7, 6, 2, 10, '#f3edff'), E(8, 4, 4, 4, '#fff3a6'), E(10, 3, 3, 3, 'none'), R(5, 7, 6, 1, GOLD)];
-    case 'crystalbow': return [E(6, 8, 5, 7, '#8fe3ff'), E(8, 8, 4, 6, 'none'), R(10, 2, 1, 12, W), P(4, 3, W)];
-    case 'heartdagger': return [R(7, 1, 3, 7, PINK), R(8, 1, 1, 6, W), E(8.5, 9, 3, 2, '#ff6b8a'), R(7, 10, 3, 4, WOOD)];
-    case 'pawclaw': return [E(8, 10, 5, 4, PINK), E(8, 11, 2.5, 2, '#ff9ec0'), E(4, 5, 1.6, 1.6, '#ff9ec0'), E(8, 4, 1.6, 1.6, '#ff9ec0'), E(12, 5, 1.6, 1.6, '#ff9ec0')];
+  switch (def.design) {
     case 'beanie': return [E(8, 9, 7, 5, c), R(1, 10, 14, 3, d), E(8, 3, 2, 2, l)];
     case 'sunhat': return [E(8, 11, 8, 2.5, c), E(8, 8, 5, 4, c), R(3, 9, 10, 2, '#ff9ec0')];
     case 'cap': return [E(7, 9, 6, 4.5, c), R(10, 11, 6, 2, d), R(4, 7, 2, 1, '#8fd3ff')];
@@ -57,23 +50,9 @@ function itemShapes(def) {
   const c = def.color;
   const l = shade(c, 22);
   const d = shade(c, -18);
-  if (def.weaponType === 'sword' && !def.special) return swordIcon(def.tier);
+  if (def.slot === 'weapon') return weaponIcon(def.weaponType, def.tier);
   const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;
   if (designed) return designed;
-  if (def.type === 'equip' && def.slot === 'weapon') {
-    switch (def.weaponType) {
-      case 'sword': return [R(9, 1, 3, 3, c), R(7, 3, 3, 3, c), R(5, 5, 3, 3, c), R(8, 2, 1, 1, l), R(2, 9, 6, 2, GOLD), R(3, 8, 2, 4, GOLD), R(1, 12, 3, 3, WOOD)];
-      case 'axe': return [R(3, 3, 2, 12, WOOD), E(8, 5, 5, 4, c), R(6, 2, 2, 7, c), P(10, 3, l)];
-      case 'spear': return [R(4, 6, 2, 10, WOOD), E(5, 3, 2.5, 4, c), P(5, 1, l), R(2, 7, 6, 1, GOLD)];
-      case 'wand': return [R(6, 6, 2, 9, WOOD), E(7, 4, 3.5, 3.5, c), P(6, 3, '#ffffff')];
-      case 'staff': return [R(7, 6, 2, 10, WOOD), E(8, 4, 4, 4, c), P(7, 2, '#ffffff'), R(5, 7, 6, 1, GOLD)];
-      case 'bow': return [E(6, 8, 5, 7, c), E(8, 8, 4, 6, 'none'), R(10, 2, 1, 12, '#fff6fb')];
-      case 'crossbow': return [R(1, 7, 13, 3, WOOD), R(9, 2, 3, 12, c), P(10, 3, l)];
-      case 'dagger': return [R(7, 1, 3, 7, c), R(8, 1, 1, 6, l), R(5, 8, 7, 2, GOLD), R(7, 10, 3, 4, WOOD)];
-      case 'claw': return [R(3, 6, 10, 7, c), R(3, 2, 2, 5, l), R(7, 2, 2, 5, l), R(11, 2, 2, 5, l)];
-      default: return [R(4, 4, 8, 8, c)];
-    }
-  }
   if (def.type === 'equip') {
     switch (def.slot) {
       case 'hat': return [E(8, 9, 7, 5, c), R(1, 10, 14, 3, d), P(5, 6, l)];

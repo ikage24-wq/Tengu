@@ -11,7 +11,8 @@ import { summonPosition } from '../world/combat.js';
 import { drawSummon } from './summons.js';
 import { text, box, COLORS } from '../ui/kit.js';
 import { createAnim, stepAnim } from './animator.js';
-import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust } from './particles.js';
+import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura } from './particles.js';
+import { ITEMS } from '../data/items.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -109,11 +110,20 @@ export function drawWorld(ctx, world, viewCam, time) {
     feel.mapId = world.map.id;
   }
   absorbJuice(feel.fx, world);
+  // Endgame weapons leave elemental footsteps and wrap their wielder in sparkles.
+  const element = world.char.equipment.weapon ? ITEMS[world.char.equipment.weapon.id].element : null;
   for (const e of stepAnim(feel.anim, b, dt)) {
-    if (e === 'step') dust(feel.fx, b.x - b.facing * 6, b.y, 1, -b.facing);
-    if (e === 'land') dust(feel.fx, b.x, b.y, 6);
+    if (e === 'step') {
+      dust(feel.fx, b.x - b.facing * 6, b.y, 1, -b.facing);
+      if (element) elementStep(feel.fx, b.x - b.facing * 4, b.y, element, b.facing);
+    }
+    if (e === 'land') {
+      dust(feel.fx, b.x, b.y, 6);
+      if (element) for (const dx of [-6, 0, 6]) elementStep(feel.fx, b.x + dx, b.y, element, Math.sign(dx) || 1);
+    }
     if (e === 'jump') dust(feel.fx, b.x, b.y, 3);
   }
+  if (element && !world.dead) elementAura(feel.fx, b.x, b.y, element, dt);
   updateParticles(feel.fx, dt, world, viewCam, VIEW_W, VIEW_H);
   const [ox, oy] = shakeOffset(feel.fx, time);
   const cam = { x: viewCam.x + ox, y: viewCam.y + oy };

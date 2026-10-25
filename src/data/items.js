@@ -12,90 +12,71 @@ function add(def) {
 }
 
 // ---------- Weapons ----------
+// Every weapon type follows the same path: Wooden → Iron → Steel → Mithril, then at level 45 it
+// splits into five endgame elements (Holy, Cosmic, Lightning, Fire, Water). Ids run type_0 …
+// type_8 in that order.
 
-const WEAPON_TIERS = [
-  { level: 0, prefix: 'Wooden', color: '#c99a6b' },
-  { level: 10, prefix: 'Copper', color: '#e08a4f' },
-  { level: 15, prefix: 'Iron', color: '#a8b0bd' },
-  { level: 20, prefix: 'Steel', color: '#cfd8e6' },
-  { level: 25, prefix: 'Silver', color: '#eef3ff' },
-  { level: 30, prefix: 'Crystal', color: '#8fe3ff' },
-  { level: 35, prefix: 'Starlit', color: '#ffe36b' },
-  { level: 40, prefix: 'Royal', color: '#ff9ec0' },
-  { level: 50, prefix: 'Celestial', color: '#c9a6ff' },
-];
+export const ELEMENT_NAMES = { holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water' };
+export const PATH_ELEMENTS = [null, null, null, null, 'holy', 'cosmic', 'storm', 'fire', 'water'];
 
-const BASE_WATK = [14, 25, 32, 40, 48, 56, 65, 75, 88];
-const BASE_MATK = [8, 15, 22, 30, 38, 46, 55, 64, 76];
+const PATH_LEVELS = [0, 10, 20, 30, 45, 45, 45, 45, 45];
+const PATH_COLORS = ['#c99a6b', '#a8b0bd', '#cfd8e6', '#c4e0f2', '#ffe36b', '#9b7bff', '#5ff3ff', '#ff6b2b', '#4fc8ff'];
+const PATH_WATK = [14, 26, 40, 56, 84];
+const PATH_MATK = [8, 15, 30, 46, 72];
 
 // `scale` evens out damage between weapon types; `family` limits who can equip tiers above Wooden.
 const WEAPON_KINDS = {
-  sword: { label: 'Sword', family: 'warrior', scale: 1.0, magic: false },
-  axe: { label: 'Axe', family: 'warrior', scale: 0.95, magic: false },
-  spear: { label: 'Spear', family: 'warrior', scale: 0.85, magic: false },
-  wand: { label: 'Wand', family: 'mage', scale: 0.5, magic: true },
-  staff: { label: 'Staff', family: 'mage', scale: 0.55, magic: true, matkBonus: 1.12 },
-  bow: { label: 'Bow', family: 'archer', scale: 0.8, magic: false },
-  crossbow: { label: 'Crossbow', family: 'archer', scale: 0.78, magic: false },
-  dagger: { label: 'Dagger', family: 'thief', scale: 0.98, magic: false },
-  claw: { label: 'Claw', family: 'thief', scale: 0.75, magic: false },
+  sword: { family: 'warrior', scale: 1.0, names: ['Wooden Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Greatsword', "Seraph's Grace", 'Astral Edge', 'Stormcaller', 'Inferno Fang', 'Tidebreaker'] },
+  axe: { family: 'warrior', scale: 0.95, names: ['Wooden Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Greataxe', "Seraph's Verdict", 'Astral Cleaver', 'Thunderclap', 'Magma Maw', 'Riptide Axe'] },
+  spear: { family: 'warrior', scale: 0.85, names: ['Wooden Pike', 'Iron Spear', 'Steel Halberd', 'Mithril Lance', "Seraph's Lance", 'Starfall Pike', 'Storm Fang', 'Phoenix Spear', 'Trident of Tides'] },
+  wand: { family: 'mage', scale: 0.5, magic: true, names: ['Twig Wand', 'Iron Wand', 'Steel Star Wand', 'Mithril Crystal Wand', 'Halo Wand', 'Moonlight Wand', 'Spark Wand', 'Ember Wand', 'Dewdrop Wand'] },
+  staff: { family: 'mage', scale: 0.55, magic: true, matkBonus: 1.12, names: ['Wooden Staff', 'Iron Staff', 'Steel Staff', 'Mithril Staff', 'Seraph Staff', 'Cosmos Staff', 'Tempest Staff', 'Inferno Staff', 'Tidecaller Staff'] },
+  bow: { family: 'archer', scale: 0.8, names: ['Wooden Bow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Angelwing Bow', 'Crescent Bow', 'Thunder Bow', 'Phoenix Bow', 'Wave Bow'] },
+  crossbow: { family: 'archer', scale: 0.78, names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Crossbow', 'Mithril Arbalest', 'Holy Arbalest', 'Nova Crossbow', 'Volt Crossbow', 'Blaze Crossbow', 'Torrent Crossbow'] },
+  dagger: { family: 'thief', scale: 0.98, names: ['Wooden Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Kris', "Angel's Fang", 'Void Dagger', 'Static Knife', 'Cinder Dagger', 'Coral Dagger'] },
+  claw: { family: 'thief', scale: 0.75, names: ['Wooden Claws', 'Iron Claws', 'Steel Talons', 'Mithril Talons', 'Seraph Talons', 'Starclaw', 'Thunderclaw', 'Hellfire Claw', 'Tidal Claw'] },
 };
 
+const MAIN_STAT = { warrior: 'str', mage: 'int', archer: 'dex', thief: 'luk' };
+
+// Each element leans a different way: Holy is sturdy, Cosmic precise, Lightning fast, Fire
+// hits hardest, Water keeps you topped up.
+function elementBonus(element, family) {
+  const main = MAIN_STAT[family];
+  switch (element) {
+    case 'holy': return { hp: 150, mdef: 20 };
+    case 'cosmic': return { [main]: 6, acc: 10 };
+    case 'storm': return { [main]: 4, speed: 6 };
+    case 'fire': return { [main]: 8 };
+    case 'water': return { hp: 100, mp: 100, [main]: 4 };
+    default: return {};
+  }
+}
+
 for (const [type, kind] of Object.entries(WEAPON_KINDS)) {
-  if (type === 'sword') continue;
-  WEAPON_TIERS.forEach((tier, t) => {
-    const stats = { watk: Math.round(BASE_WATK[t] * kind.scale) };
-    if (kind.magic) stats.matk = Math.round(BASE_MATK[t] * (kind.matkBonus ?? 1));
+  kind.names.forEach((name, t) => {
+    const element = PATH_ELEMENTS[t];
+    const step = Math.min(t, 4);
+    const fire = element === 'fire' ? 1.08 : element === 'storm' ? 0.96 : 1;
+    const stats = { watk: Math.round(PATH_WATK[step] * kind.scale * fire) };
+    if (kind.magic) stats.matk = Math.round(PATH_MATK[step] * (kind.matkBonus ?? 1) * fire);
+    Object.assign(stats, elementBonus(element, kind.family));
     add({
       id: `${type}_${t}`,
-      name: `${tier.prefix} ${kind.label}`,
+      name,
       type: 'equip',
       slot: 'weapon',
       weaponType: type,
       tier: t,
-      reqLevel: tier.level,
+      element,
+      reqLevel: PATH_LEVELS[t],
       family: t === 0 ? null : kind.family,
       stats,
-      price: Math.round(100 + 120 * t * t + 400 * t),
-      color: tier.color,
+      price: Math.round(100 + 160 * step * step + 400 * step),
+      color: PATH_COLORS[t],
     });
   });
 }
-
-// ---------- The sword path ----------
-// Four steps up (Wooden → Mithril), then five endgame swords, one per element. They keep the
-// sword_0 … sword_8 ids so older saves still load.
-
-export const ELEMENT_NAMES = { holy: 'Holy', cosmic: 'Cosmic', storm: 'Lightning', fire: 'Fire', water: 'Water' };
-
-const SWORD_PATH = [
-  { name: 'Wooden Sword', level: 0, watk: 14, color: '#c99a6b' },
-  { name: 'Iron Sword', level: 10, watk: 26, color: '#a8b0bd' },
-  { name: 'Steel Longsword', level: 20, watk: 40, color: '#cfd8e6' },
-  { name: 'Mithril Greatsword', level: 30, watk: 56, color: '#c4e0f2' },
-  { name: "Seraph's Grace", level: 45, watk: 82, element: 'holy', color: '#ffe36b', bonus: { hp: 150, mdef: 20 } },
-  { name: 'Astral Edge', level: 45, watk: 84, element: 'cosmic', color: '#9b7bff', bonus: { int: 6, luk: 6, acc: 10 } },
-  { name: 'Stormcaller', level: 45, watk: 80, element: 'storm', color: '#5ff3ff', bonus: { dex: 8, speed: 6 } },
-  { name: 'Inferno Fang', level: 45, watk: 90, element: 'fire', color: '#ff6b2b', bonus: { str: 8 } },
-  { name: 'Tidebreaker', level: 45, watk: 82, element: 'water', color: '#4fc8ff', bonus: { hp: 100, mp: 100, str: 4 } },
-];
-
-SWORD_PATH.forEach((p, t) => {
-  add({
-    id: `sword_${t}`,
-    name: p.name,
-    type: 'equip',
-    slot: 'weapon',
-    weaponType: 'sword',
-    tier: t,
-    element: p.element ?? null,
-    reqLevel: p.level,
-    family: t === 0 ? null : 'warrior',
-    stats: { watk: p.watk, ...p.bonus },
-    price: Math.round(100 + 160 * Math.min(t, 4) ** 2 + 400 * t),
-    color: p.color,
-  });
-});
 
 // ---------- Armor ----------
 
@@ -140,30 +121,9 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
 }
 
 // ---------- Unique gear ----------
-// One-of-a-kind looks. Stats match the generated tier for their level, a little better.
+// One-of-a-kind outfits. Stats match the armor tier for their level, a little better.
 
 const tierAt = (tiers, level) => tiers.reduce((best, t, i) => (t.level <= level ? i : best), 0);
-
-const UNIQUE_WEAPONS = [
-  { id: 'lollipop_wand', name: 'Lollipop Wand', weaponType: 'wand', special: 'lollipop', level: 12, color: '#ff9ec0' },
-  { id: 'candycane_sword', name: 'Candy Cane Sword', weaponType: 'sword', special: 'candycane', level: 15, color: '#ff6b8a' },
-  { id: 'paw_claw', name: 'Kitty Paw Claw', weaponType: 'claw', special: 'pawclaw', level: 15, color: '#ffc2d6' },
-  { id: 'heart_dagger', name: 'Sweetheart Dagger', weaponType: 'dagger', special: 'heartdagger', level: 20, color: '#ff6b8a' },
-  { id: 'crystal_bow', name: 'Crystal Harp Bow', weaponType: 'bow', special: 'crystalbow', level: 30, color: '#8fe3ff' },
-  { id: 'moon_staff', name: 'Crescent Moon Staff', weaponType: 'staff', special: 'moonstaff', level: 35, color: '#fff3a6' },
-];
-
-for (const u of UNIQUE_WEAPONS) {
-  const kind = WEAPON_KINDS[u.weaponType];
-  const t = tierAt(WEAPON_TIERS, u.level);
-  const stats = { watk: Math.round(BASE_WATK[t] * kind.scale * 1.1) + 2 };
-  if (kind.magic) stats.matk = Math.round(BASE_MATK[t] * (kind.matkBonus ?? 1) * 1.1) + 3;
-  stats[{ warrior: 'str', mage: 'int', archer: 'dex', thief: 'luk' }[kind.family]] = 3 + t;
-  add({
-    id: u.id, name: u.name, type: 'equip', slot: 'weapon', weaponType: u.weaponType, special: u.special, unique: true,
-    tier: t, reqLevel: u.level, family: kind.family, stats, price: Math.round(400 + 160 * t * t + 500 * t), color: u.color,
-  });
-}
 
 const UNIQUE_ARMOR = [
   { id: 'hoodie', name: 'Comfy Hoodie', slot: 'top', design: 'hoodie', level: 5, color: '#c9b8ff', bonus: { eva: 2 } },
@@ -191,7 +151,7 @@ for (const u of UNIQUE_ARMOR) {
   });
 }
 
-export const UNIQUE_IDS = [...UNIQUE_WEAPONS, ...UNIQUE_ARMOR].map((u) => u.id);
+export const UNIQUE_IDS = UNIQUE_ARMOR.map((u) => u.id);
 
 // ---------- Rarity ----------
 // Dropped gear can roll better than normal. Shop gear is always Normal.

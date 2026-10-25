@@ -15,7 +15,7 @@ import {
   capeShapes, handShapes, earringShapes,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
-import { drawSwordAura, ELEMENTS } from './swords.js';
+import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase } from './animator.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'spiky', 'bun', 'long'];
@@ -49,7 +49,7 @@ function resolveGear(look, gear) {
     cape: piece('cape', null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
-    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, special: w.special ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
+    weapon: w ? { type: w.weaponType, color: w.color, tier: w.tier, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0 } : null,
   };
 }
 
@@ -329,11 +329,11 @@ function rigKey(r) {
 // ---------- Weapons ----------
 
 function weaponSprite(w, time) {
-  const frames = weaponFrames(w.type, w.tier, w.special);
+  const frames = weaponFrames(w.type, w.tier);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.color, w.tier, w.special, frame);
+  const def = weaponShapes(w.type, w.color, w.tier, null, frame);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.color}|${w.tier}|${w.special}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
+  const s = sprite(`weapon|${w.type}|${w.tier}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
   return { ...s, grip: def.grip, blade: def.blade };
 }
 
@@ -476,7 +476,7 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
     if (el) elementGlow(ctx, wpn, el, time, scale);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, scale, paint);
     else paint(-(wpn.grip[0] + 1) * scale, -(wpn.grip[1] + 1) * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
-    if (el && wpn.blade) drawSwordAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * scale, (wpn.blade[1] - wpn.grip[1]) * scale, time, scale);
+    if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * scale, (wpn.blade[1] - wpn.grip[1]) * scale, time, scale);
     ctx.restore();
   };
 
