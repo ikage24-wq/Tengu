@@ -10,14 +10,19 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   planted feet, hair chain, held idle beat, hurt wobble, knocked-out pose; townsfolk eye/hair contrast.
 - Meadow monsters (all five) and all of the wilds: Basilisk Hatchling, Manticore Cub, Dryad (warm
   skin now apart from her green hair), Warg, Treant (glowEye embers): rigs, chains, ramps, form shadows.
-- Ruins: Will-o'-Wisp, Imp, Dullahan, Gem Mimic, Crystal Golem.
+- Ruins (all six): Will-o'-Wisp, Imp, Dullahan, Gem Mimic, Crystal Golem, Wraith (rig, chained hem,
+  peak and chains, glowEye in a lopsided hood opening, bone claws; old helpers removed). Ruins.js
+  now exports its rig and motion helpers (put, pivot, chain, beat, ik, gait, ...) for other modules.
+- Sky (all three): Pegasus Foal (IK prancing trot, kit eye/mouth), Sky Harpy (fast-down wingbeat,
+  kit eyes/mouth, crown highlight band), Star Seraph (kit eyes with star pupils, three-tone halo,
+  wing ripple). Shape counts run ~270 per frame (feathers), a little over the 240 budget.
+- Treant: the slam now reaches the ground (trunk lean plus the shoulder rolling down).
 - Hollow: Root Imp, Myconid Shaman, Bramble Bear, Spore Mite.
 
 ## Still to do
-- Monsters not yet redone (old faces/rig): Wraith
-  (shade) in `mobs/ruins.js` (the old helpers `xf`, `mv`, `rot` and `INK`/`MOUTH` imports stay only
-  for it); Pegasus Foal, Sky Harpy, Star Seraph in `mobs/sky.js`; Corrupted Sapling in
-  `mobs/hollow.js` (old helpers kept only for it).
+- Monsters not yet redone (old faces/rig): Corrupted Sapling in `mobs/hollow.js` (old helpers
+  kept only for it). Sky designs still place feathers in absolute coordinates (wings are not yet
+  chains); trim their shape counts.
 - Bosses in `mobs/bosses.js`, untouched: Myconid Queen (use heroine.js for her face), Tuskar,
   Gnarlroot, Prismaris.
 - Icon pass (`icons/items.js`, `icons/skills.js`): Basilisk Scale vs Dryad Leaf look alike; Fox

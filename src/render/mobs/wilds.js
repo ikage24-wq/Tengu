@@ -937,16 +937,16 @@ function boarlet(pose, f, mood) {
 
 // Attack: a branch arm swung down like a club. lean: trunk lean, hd: the near hand from the
 // shoulder (the elbow follows from two fixed bones), bend: which way the elbow points, imp: the
-// blow lands.
+// blow lands, by: body drop, sd: the near shoulder rolling down into the blow.
 const TREANT_ATK = [
   // Wind-up: the arm hauled up high overhead, leaning back.
   { lean: -2.6, hd: [-2, -19], bend: -1, imp: 0, by: -0.6 },
   // Swing: the arm sweeps forward and down.
   { lean: 1.4, hd: [13, -6], bend: -1, imp: 0, by: 0.4 },
   // Slam: the twig fist crashes down on whatever is in front of it.
-  { lean: 3, hd: [14, 26], bend: 1, imp: 1, by: 2 },
+  { lean: 9, hd: [10, 26], bend: 1, imp: 1, by: 3.6, sd: 5 },
   // Recover: hauling the arm back up.
-  { lean: 1.2, hd: [11, 14], bend: 1, imp: 0, by: 0.6 },
+  { lean: 4, hd: [11, 16], bend: 1, imp: 0, by: 1.4, sd: 2 },
 ];
 
 function mossgolem(pose, f, mood) {
@@ -1007,7 +1007,8 @@ function mossgolem(pose, f, mood) {
   // Branch arms: a crooked bough on two fixed bones, twig fingers on chains, and a sprig of
   // leaves at the elbow trailing the swing.
   const arm = (near) => {
-    const sh = tp(near ? 43 : 17, 31);
+    // The near shoulder rolls down into the slam (sd), so the club reaches the ground.
+    const sh = tp(near ? 43 : 17, 31 + (A && near && !dead ? A.sd ?? 0 : 0));
     const s = near ? 1 : -1;
     const swing = (walk ? Math.sin(p * TAU - 0.8) * (near ? -3.4 : 3.4) : idle ? sway(p + (near ? 0 : 0.5)) * 1 : 0) + (angry ? -4 : 0) + (dead ? 6 : 0) + (hurt ? -2 : 0);
     const aim = A && near && !dead;
@@ -1151,7 +1152,7 @@ function mossgolem(pose, f, mood) {
     out.push(F(ov(nx2 + 6, ny2 + 8, 0.8, 1.8, 40, '#8ec8ff')));
   }
   if (A && A.imp) {
-    const sh = tp(43, 31);
+    const sh = tp(43, 31 + (A.sd ?? 0));
     const ha = Math.atan2(A.hd[1], A.hd[0]);
     const [hx, hy] = [sh[0] + Math.cos(ha) * 24.5, sh[1] + Math.sin(ha) * 24.5];
     out.push(...star(Math.min(hx + 2, 57), hy + 2, 3.2, '#fff2a8'), ...dust(Math.min(hx, 54), G - 0.6, 1.4));

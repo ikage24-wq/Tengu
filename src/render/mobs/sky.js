@@ -7,7 +7,9 @@
 // Everything is built from feathers and puffs that carry their own thin inner line, so layered
 // parts stay readable inside the automatic silhouette outline.
 
-import { E, T, F, C, shade, mix, stroke, INK, BLUSH, MOUTH } from './kit.js';
+import { E, T, F, C, shade, mix, stroke, INK, BLUSH } from './kit.js';
+import { eye, mouth, deadEye } from './faces.js';
+import { ID, ap, pivot, move, put, breath, beat, burst, streaks, ik, gait } from './ruins.js';
 
 const TAU = Math.PI * 2;
 const rad = (d) => (d * Math.PI) / 180;
@@ -88,143 +90,16 @@ function sparkle(x, y, r, c, core = '#ffffff') {
   return [F(T([[x, y - r], [x + q, y - q], [x + r, y], [x + q, y + q], [x, y + r], [x - q, y + q], [x - r, y], [x - q, y - q]], c)), F(E(x, y, q * 0.9, q * 0.9, core))];
 }
 
-// A tilted ring (halo).
-function ring(cx, cy, rx, ry, th, rot, c) {
+// A tilted ring (halo), or the arc of it from t0 to t1 degrees.
+function ring(cx, cy, rx, ry, th, rot, c, t0 = 0, t1 = 360) {
   const pts = (a, b) => Array.from({ length: 25 }, (_, i) => {
-    const t = (i / 24) * TAU;
+    const t = rad(t0 + ((t1 - t0) * i) / 24);
     const px = Math.cos(t) * a;
     const py = Math.sin(t) * b;
     const r = rad(rot);
     return [cx + px * Math.cos(r) - py * Math.sin(r), cy + px * Math.sin(r) + py * Math.cos(r)];
   });
   return T([...pts(rx, ry), ...pts(rx - th, Math.max(0.4, ry - th * 0.7)).reverse()], c);
-}
-
-function mouth(x, y, k, mood, ink = INK) {
-  switch (mood) {
-    case 'angry':
-      return [F(T([[x - 1 * k, y - 0.1 * k], [x + 1 * k, y - 0.35 * k], [x + 0.7 * k, y + 0.75 * k], [x - 0.6 * k, y + 0.7 * k]], MOUTH)), F(T([[x + 0.15 * k, y - 0.2 * k], [x + 0.8 * k, y - 0.3 * k], [x + 0.5 * k, y + 0.45 * k]], '#ffffff'))];
-    case 'hurt':
-      return [F(E(x, y + 0.3 * k, 0.5 * k, 0.65 * k, MOUTH))];
-    case 'dead':
-      return stroke([[x - 0.9 * k, y + 0.3 * k], [x - 0.3 * k, y], [x + 0.3 * k, y + 0.3 * k], [x + 0.9 * k, y]], 0.35 * k, ink);
-    case 'happy':
-      return [F(T([[x - 1 * k, y - 0.1 * k], [x + 1 * k, y - 0.1 * k], [x + 0.45 * k, y + 0.85 * k], [x - 0.45 * k, y + 0.85 * k]], MOUTH)), F(E(x, y + 0.6 * k, 0.4 * k, 0.22 * k, '#ff94ae'))];
-    default:
-      return stroke([[x - 0.8 * k, y], [x - 0.4 * k, y + 0.42 * k], [x, y + 0.1 * k], [x + 0.4 * k, y + 0.42 * k], [x + 0.8 * k, y]], 0.3 * k, ink);
-  }
-}
-
-// Move and turn whole groups: f maps a point; ellipse radii scale by k.
-function xf(shapes, f, k = 1) {
-  return shapes.map((s) => {
-    if (!s) return s;
-    if (s.t === 'p') return { ...s, x: 0, y: 0, pts: s.pts.map(([px, py]) => f(s.x + px, s.y + py)) };
-    if (s.t === 'e') {
-      const [x, y] = f(s.x, s.y);
-      return { ...s, x, y, rx: s.rx * k, ry: s.ry * k };
-    }
-    const pts = [[s.x, s.y], [s.x + s.w, s.y], [s.x + s.w, s.y + s.h], [s.x, s.y + s.h]].map(([a, b]) => f(a, b));
-    return { t: 'p', x: 0, y: 0, pts, c: s.c, f: s.f, cast: s.cast, lit: s.lit };
-  });
-}
-const turnPt = (x, y, cx, cy, a) => [cx + (x - cx) * Math.cos(a) - (y - cy) * Math.sin(a), cy + (x - cx) * Math.sin(a) + (y - cy) * Math.cos(a)];
-const turn = (shapes, cx, cy, a) => (a ? xf(shapes, (x, y) => turnPt(x, y, cx, cy, a)) : shapes);
-
-// An impact star of n spikes.
-function burst(x, y, r, c, core, n = 8, a0 = 0) {
-  const pts = [];
-  for (let i = 0; i < n * 2; i++) {
-    const a = a0 + (i / (n * 2)) * TAU;
-    const rr = i % 2 ? r * 0.4 : r * (i % 4 ? 0.72 : 1);
-    pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
-  }
-  return [F(T(pts, c)), F(E(x, y, r * 0.3, r * 0.3, core))];
-}
-const streaks = (lines, c, th = 0.6) => lines.flatMap(([x0, y0, x1, y1]) => stroke([[x0, y0], [x1, y1]], th, c));
-
-// ---------- Eyes ----------
-// Each species gets its own: the foal's big gentle side-on horse eye with long lashes, the harpy's
-// sharp raptor eyes under a stern brow, and the seraph's serene closed eyes that open on star pupils.
-
-function horseEye(x, y, s, mood, { look = 0, lid = '#ffffff' } = {}) {
-  const out = [];
-  const lashes = (dy = 0, down = false) => [
-    ...stroke([[x - 0.7 * s, y - 0.9 * s + dy], [x - 1.45 * s, y - 1.75 * s + dy + (down ? 1.6 * s : 0)]], 0.32 * s, INK),
-    ...stroke([[x - 0.2 * s, y - 1.2 * s + dy], [x - 0.55 * s, y - 2.15 * s + dy + (down ? 2 * s : 0)]], 0.3 * s, INK),
-    ...stroke([[x - 1.05 * s, y - 0.4 * s + dy], [x - 1.9 * s, y - 0.95 * s + dy + (down ? 1.2 * s : 0)]], 0.3 * s, INK),
-  ];
-  switch (mood) {
-    case 'blink':
-      return [...stroke([[x - 1.1 * s, y - 0.1 * s], [x - 0.4 * s, y + 0.5 * s], [x + 0.6 * s, y + 0.5 * s], [x + 1.1 * s, y]], 0.42 * s, INK), ...lashes(0.9 * s, true)];
-    case 'happy':
-      return [...stroke([[x - 1.15 * s, y + 0.5 * s], [x - 0.6 * s, y - 0.3 * s], [x + 0.2 * s, y - 0.55 * s], [x + 1 * s, y + 0.2 * s]], 0.46 * s, INK), ...lashes(0.6 * s)];
-    case 'hurt':
-      return [...stroke([[x - 1 * s, y - 1 * s], [x + 0.8 * s, y], [x - 1 * s, y + 1 * s]], 0.46 * s, INK), ...lashes(0.5 * s)];
-    case 'dead':
-      return [...stroke([[x - 0.8 * s, y - 0.8 * s], [x + 0.8 * s, y + 0.8 * s]], 0.42 * s, INK), ...stroke([[x - 0.8 * s, y + 0.8 * s], [x + 0.8 * s, y - 0.8 * s]], 0.42 * s, INK)];
-  }
-  const lx = look * 0.22 * s;
-  out.push(F(E(x, y, 1.12 * s, 1.38 * s, INK)), F(E(x + lx, y + 0.12 * s, 0.9 * s, 1.15 * s, '#5b3fa8')), F(E(x + lx, y + 0.62 * s, 0.68 * s, 0.5 * s, '#a38cf4')),
-    F(E(x + lx, y + 0.05 * s, 0.5 * s, 0.68 * s, '#2c1d58')), F(E(x - 0.32 * s + lx, y - 0.45 * s, 0.46 * s, 0.52 * s, '#ffffff')), F(E(x + 0.4 * s + lx, y + 0.55 * s, 0.18 * s, 0.18 * s, '#ffffff')));
-  if (mood === 'angry') {
-    out.push(F(T([[x - 1.6 * s, y - 2 * s], [x + 1.5 * s, y - 2 * s], [x + 1.5 * s, y - 0.1 * s], [x - 1.6 * s, y - 1.1 * s]], lid)),
-      ...stroke([[x - 1.3 * s, y - 1.05 * s], [x + 1.2 * s, y - 0.2 * s]], 0.4 * s, INK), ...stroke([[x - 1.5 * s, y - 2.1 * s], [x + 1.1 * s, y - 1.2 * s]], 0.45 * s, INK));
-  } else {
-    out.push(...lashes());
-  }
-  return out;
-}
-
-function raptorEye(x, y, s, mood, { inner = 1, lid = '#ffffff', look = 0, brow = INK } = {}) {
-  const o = -inner;
-  const P = (px, py) => [x + o * px * s, y + py * s];
-  switch (mood) {
-    case 'blink':
-      return [...stroke([P(-1.3, 0.3), P(0, 0.55), P(1.2, 0.1)], 0.42 * s, INK), ...stroke([P(-1.4, -0.9), P(0, -1.2), P(1.3, -1)], 0.5 * s, brow)];
-    case 'happy':
-      return [...stroke([P(-1.2, 0.4), P(-0.4, -0.3), P(0.5, -0.45), P(1.2, 0.2)], 0.46 * s, INK)];
-    case 'hurt':
-      return stroke([[x + o * 0.85 * s, y - 0.95 * s], [x + inner * 0.75 * s, y], [x + o * 0.85 * s, y + 0.95 * s]], 0.46 * s, INK);
-    case 'dead':
-      return [...stroke([[x - 0.8 * s, y - 0.8 * s], [x + 0.8 * s, y + 0.8 * s]], 0.42 * s, INK), ...stroke([[x - 0.8 * s, y + 0.8 * s], [x + 0.8 * s, y - 0.8 * s]], 0.42 * s, INK)];
-  }
-  // A keen almond: the tear duct dips toward the beak-line, the outer end sweeps up.
-  const shape = [P(-1.35, 0.4), P(-0.6, -0.55), P(0.4, -0.85), P(1.2, -0.55), P(1.15, 0.3), P(0.3, 0.85), P(-0.6, 0.75)];
-  const lx = look * 0.2 * s;
-  const out = [F(T(shape.map(([px, py]) => [x + (px - x) * 1.22, y + (py - y) * 1.22]), INK)), F(T(shape, '#fff8ea'))];
-  out.push(F(E(x + lx, y + 0.05 * s, 0.86 * s, 0.86 * s, '#ffc23a')), F(E(x + lx, y + 0.35 * s, 0.55 * s, 0.35 * s, '#ffe08a')), F(E(x + lx, y, mood === 'angry' ? 0.3 * s : 0.4 * s, mood === 'angry' ? 0.3 * s : 0.4 * s, '#21152e')), F(E(x + lx - 0.3 * s, y - 0.32 * s, 0.24 * s, 0.24 * s, '#ffffff')));
-  if (mood === 'angry') {
-    out.push(F(T([P(-1.6, -2), P(1.5, -2), P(1.5, -0.95), P(-1.6, 0.05)], lid)), ...stroke([P(-1.5, 0.05), P(1.4, -0.95)], 0.42 * s, INK), ...stroke([P(-1.6, -0.4), P(1.5, -1.7)], 0.6 * s, brow));
-  } else {
-    out.push(...stroke([P(-1.35, 0.4), P(-0.6, -0.55), P(0.4, -0.85), P(1.2, -0.55)], 0.36 * s, INK), ...stroke([P(-1.45, -1.05), P(0, -1.6), P(1.45, -1.45)], 0.45 * s, brow));
-  }
-  return out;
-}
-
-function seraphEye(x, y, s, mood, { inner = 1, lid = '#ffffff', open = false } = {}) {
-  const o = -inner;
-  const glow = '#fff3b0';
-  switch (mood) {
-    case 'happy':
-      return stroke([[x - 1.05 * s, y + 0.5 * s], [x - 0.6 * s, y - 0.25 * s], [x, y - 0.55 * s], [x + 0.6 * s, y - 0.25 * s], [x + 1.05 * s, y + 0.5 * s]], 0.42 * s, INK);
-    case 'hurt':
-      return stroke([[x + o * 0.85 * s, y - 0.95 * s], [x + inner * 0.75 * s, y], [x + o * 0.85 * s, y + 0.95 * s]], 0.44 * s, INK);
-    case 'dead':
-      return [...stroke([[x - 0.8 * s, y - 0.8 * s], [x + 0.8 * s, y + 0.8 * s]], 0.4 * s, INK), ...stroke([[x - 0.8 * s, y + 0.8 * s], [x + 0.8 * s, y - 0.8 * s]], 0.4 * s, INK)];
-  }
-  if (mood === 'angry' || open) {
-    // Eyes opened wide on glowing star pupils.
-    const st = 0.85 * s;
-    const out = [F(E(x, y, 1.05 * s, 1.3 * s, INK)), F(E(x, y + 0.15 * s, 0.82 * s, 1.02 * s, '#9a6cf0')), F(E(x, y + 0.6 * s, 0.55 * s, 0.32 * s, '#d4b8ff')),
-      F(T([[x, y - st], [x + st * 0.3, y - st * 0.3], [x + st, y], [x + st * 0.3, y + st * 0.3], [x, y + st], [x - st * 0.3, y + st * 0.3], [x - st, y], [x - st * 0.3, y - st * 0.3]], glow)), F(E(x, y, 0.22 * s, 0.22 * s, '#ffffff'))];
-    if (mood === 'angry') out.push(F(T([[x + o * 1.25 * s, y - 1.9 * s], [x + inner * 1.25 * s, y - 1.9 * s], [x + inner * 1.25 * s, y - 0.2 * s], [x + o * 1.25 * s, y - 1.05 * s]], lid)), ...stroke([[x + o * 1.1 * s, y - 1 * s], [x + inner * 1.1 * s, y - 0.25 * s]], 0.38 * s, INK));
-    return out;
-  }
-  // Serene closed eyes: soft downturned lids with long lashes and a faint glow beneath.
-  const dip = mood === 'blink' ? 0.3 : 0.6;
-  return [F(E(x, y + 0.5 * s, 1.15 * s, 0.55 * s, glow)), ...stroke([[x - 1.1 * s, y - 0.1 * s], [x - 0.5 * s, y + dip * s], [x + 0.5 * s, y + dip * s], [x + 1.1 * s, y - 0.1 * s]], 0.42 * s, INK),
-    ...stroke([[x + o * 1.05 * s, y - 0.05 * s], [x + o * 1.55 * s, y - 0.5 * s]], 0.3 * s, INK), ...stroke([[x - 0.2 * s, y + dip * s], [x - 0.35 * s, y + (dip + 0.5) * s]], 0.22 * s, INK), ...stroke([[x + 0.45 * s, y + dip * s], [x + 0.55 * s, y + (dip + 0.45) * s]], 0.22 * s, INK)];
 }
 
 // ---------- Pegasus Foal ----------
@@ -237,6 +112,7 @@ const COAT_SH = '#efe4f8';
 const MANE = ['#ffc4de', '#e2caff', '#c0e2ff'];
 const CLOUD = '#ffffff';
 const HOOF = '#ffd98a';
+const MUZ = '#b0607e';
 
 const PEG_ATK = [
   { rot: 0.05, dy: 1.4, wa: -152, ps: 8, fore: [0.8, 46], head: [-0.6, 1.6], tail: -0.6 },
@@ -248,104 +124,103 @@ const PEG_ATK = [
 function pegasus(pose, f, mood) {
   const walk = pose === 'walk';
   const ak = pose === 'attack' ? PEG_ATK[f] : null;
-  const a = ak ? f * 1.2 : (f / (walk ? 8 : 6)) * TAU;
+  const u = ak ? f / 4 : f / (walk ? 8 : 6);
+  const a = ak ? f * 1.2 : u * TAU;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  // A springy trot: two bounces per cycle, the head nodding a beat after each.
-  const bob = ak ? ak.dy : walk ? 0.75 * Math.cos(2 * a) : 0;
-  const breathe = walk || ak ? 0 : Math.sin(a) * 0.35;
+  // A springy prancing trot: the body rises off each diagonal pair's push (two bounces a cycle),
+  // the head nodding a beat after; standing, it breathes in slowly and out quickly.
+  const bob = ak ? ak.dy : walk ? 0.75 * Math.cos(2 * a) : -breath(u) * 0.45;
+  const breathe = walk || ak ? 0 : breath(u) * 0.5;
   let hx = ak ? ak.head[0] : walk ? 0.3 * Math.sin(2 * a - 0.6) : Math.sin(a) * 0.25;
-  let hy = bob + (ak ? ak.head[1] - ak.dy : walk ? 0.7 * Math.cos(2 * a - 0.9) : Math.sin(a + 0.6) * 0.3);
-  if (hurt) {
-    hx -= 1.2;
-    hy -= 0.8;
-  }
-  if (dead) {
-    hx -= 0.4;
-    hy += 2.4;
-  }
+  let hy = bob + (ak ? ak.head[1] - ak.dy : walk ? 0.7 * Math.cos(2 * a - 0.9) : -breath(u - 0.12) * 0.35);
+  if (hurt) [hx, hy] = [hx - 1.2, hy - 0.8];
+  if (dead) [hx, hy] = [hx - 0.4, hy + 2.4];
+  const nod = ak ? [-0.06, -0.14, 0.08, 0.03][f] : walk ? 0.05 * Math.cos(2 * a - 1.2) : 0.02 * Math.sin(a - 1) + (hurt ? -0.12 : 0) + (dead ? 0.18 : 0);
   const look = walk ? 0.4 : ak ? 0.6 : Math.sin(a) * 0.9;
+  // Rig: root (rears about the hind hooves in the attack) > body (bob) > neck > head (nods about
+  // the poll); legs are two-bone IK from the hips to hooves planted on the ground.
+  const root = ak ? pivot(move(ID, -ak.rot * 16, 0), 18, 46, ak.rot) : ID;
+  const bodyF = move(root, 0, bob);
+  const headF = pivot(move(root, hx, hy), 37, 18, nod);
+  const Rt = (s) => put(root, s);
+  const B = (s) => put(bodyF, s);
   const out = [];
-  const B = (shapes) => shift(shapes, 0, bob);
-  const H = (shapes) => shift(shapes, hx, hy);
-  const piv = [18, 46];
-  // Turned about the hind hooves, nudged forward so the rear stays in frame.
-  const R = (shapes) => (ak ? shift(turn(shapes, piv[0], piv[1], ak.rot), -ak.rot * 16, 0) : shapes);
 
-  // Wing pose: raised and half spread, beating with the trot.
-  let wa = ak ? ak.wa : walk ? -128 + 12 * Math.sin(a) : -133 + 3 * Math.sin(a) + (f === 3 ? -4 : 0);
-  let ps = ak ? ak.ps : walk ? 10.5 + 2.5 * Math.cos(a) : 9.5 + Math.sin(a) * 0.8;
+  // Wing pose: raised and half spread, beating with the trot (fast down, slow up).
+  const bt = beat(u * 2);
+  let wa = ak ? ak.wa : walk ? -140 + 22 * bt : -133 + 4 * beat(u) + (f === 3 ? -3 : 0);
+  let ps = ak ? ak.ps : walk ? 13 - 3.5 * bt : 9.5 + beat(u) * 0.8;
   if (angry && !ak) [wa, ps] = [wa + 14, ps + 2.5];
   if (happy) wa += 8;
   if (hurt) [wa, ps] = [-104, 15];
   if (dead) [wa, ps] = [-176, 6];
   const wingCol = { col: '#fbfaff', tip: '#a9d3ff', cov: '#ffffff', vane: '#e8eefb', k: 1.2, arm: 7 };
-  out.push(...R(B(wing({ x: 29.5, y: 21.5, ang: wa + 9 + (walk ? 4 * Math.sin(a - 0.5) : 0), ps, k: 1.08, arm: 7, col: '#e7e2f4', tip: '#b5d3f2', cov: '#efebf8', vane: '#dcd6ee' }))));
+  out.push(...B(wing({ x: 29.5, y: 21.5, ang: wa + 9 + (walk ? 18 * (beat(u * 2 - 0.06) - bt) : 0), ps, k: 1.08, arm: 7, col: '#e7e2f4', tip: '#b5d3f2', cov: '#efebf8', vane: '#dcd6ee' })));
 
-  // Tail: a cotton-candy plume carried high in the trot, swishing a beat behind.
+  // Tail: a cotton-candy plume on a chain, carried high in the trot and swishing root to tip.
   const tsw = walk ? 1.2 : ak ? 0.4 : 0.6;
   const lift = ak ? ak.tail : walk ? 0.7 : 0;
   const tail = [[10.5, 24.5, 2.8], [7.6, 26.2, 3.3], [5.4, 29.4, 3.4], [4.6, 33.2, 3.1], [5.4, 36.8, 2.6], [7.2, 39.4, 1.9]].map(([x, y, r], i) => {
     const sw = Math.sin((walk ? 2 : 1) * a - i * 0.75) * i * 0.38 * tsw + (dead ? i * 0.5 : 0);
     return [x + sw + 0.6 - lift * i * 0.35, y - (angry ? i * 0.5 : 0) - lift * i * 0.9, r, MANE[i % 3]];
   });
-  out.push(...R(B(puffs(tail, MANE[0]))));
+  out.push(...B(puffs(tail, MANE[0])));
 
-  // Legs: a diagonal trot with high, prancing forelegs (near fore with far hind, and so on).
+  // Legs: a diagonal trot (near fore with far hind) with high, prancing forelegs. Forelegs bend
+  // at the knee to the front, hind legs at the hock to the back; the hooves plant and slide.
   const ground = 46;
-  const leg = (hipx, hipy, ph, fore, near, foot) => {
-    const s = Math.sin(ph);
-    const c = Math.cos(ph);
-    const dx = walk ? s * 4 : 0;
-    let up = walk ? Math.max(0, c) ** 1.2 * (fore ? 4.6 : 3.4) : 0;
-    let fx = hipx + dx + (fore ? 0.6 : -0.4) + (dead ? (fore ? 1 : -1) : 0);
-    let fy = ground - up;
-    if (foot) {
-      [fx, fy] = foot;
-      up = Math.max(0, ground - fy);
-    }
-    const hy0 = foot ? hipy : hipy + bob;
+  const leg = (hipx, hipy, p, fore, near, plant) => {
+    const hip = ap(bodyF, hipx, hipy);
+    let foot;
+    let up = 0;
+    if (plant) foot = plant;
+    else if (walk && !dead) {
+      const [dx, l] = gait(p, 8, fore ? 5.4 : 3.4, 0.5);
+      up = l;
+      foot = [hipx + (fore ? 0.6 : -0.4) + dx, ground - l];
+    } else foot = [hipx + (fore ? 0.6 : -0.4) + (dead ? (fore ? 1 : -1) : 0), ground];
+    up = Math.max(up, ground - foot[1]);
+    const tgt = [foot[0] + (fore ? up * 0.25 : 0.2), foot[1] - 4.3];
+    const l1 = fore ? 6.4 : 6.8;
+    const knee = ik(hip, tgt, l1, 5.6, fore ? 1 : -1);
+    const d = Math.hypot(tgt[0] - knee[0], tgt[1] - knee[1]) || 1;
+    const ank = [knee[0] + ((tgt[0] - knee[0]) / d) * 5.6, knee[1] + ((tgt[1] - knee[1]) / d) * 5.6];
+    const [fx, fy] = [ank[0] - (fore ? up * 0.25 : 0.2), ank[1] + 4.3];
     const coat = near ? COAT : COAT_FAR;
-    const knee = fore ? [lerp(hipx, fx, 0.5) + up * 0.7 + 0.3, lerp(hy0, fy, 0.45) - up * 0.15] : [lerp(hipx, fx, 0.5) - 1.3 - up * 0.25, lerp(hy0, fy, 0.55)];
-    const ank = [fx + (fore ? up * 0.12 : 0.2), fy - 4.3];
-    const o = [...stroke([[hipx, hy0], knee], fore ? 3.6 : 3.9, coat, false), E(knee[0], knee[1], 1.6, 1.6, coat), ...stroke([knee, ank], 2.7, coat, false)];
+    const o = [...stroke([hip, knee], fore ? 3.6 : 3.9, coat, false), E(knee[0], knee[1], 1.6, 1.6, coat), ...stroke([knee, ank], 2.7, coat, false)];
+    if (near) o.push(...stroke([[hip[0] - 1.4, hip[1] + 1], [knee[0] - 1.1, knee[1]]], 0.8, COAT_SH));
     o.push(T([[fx - 1.7, fy - 2.3], [fx + 1.8, fy - 2.3], [fx + 2.2, fy], [fx - 2, fy]], near ? HOOF : shade(HOOF, -8)), F(T([[fx - 1.1, fy - 2], [fx + 0.1, fy - 2], [fx - 0.3, fy - 0.6], [fx - 1.4, fy - 0.6]], '#fff1c8')));
     o.push(...puffs([[fx - 1.5, fy - 3.2, 1.9], [fx + 1.6, fy - 3.3, 1.8], [fx, fy - 4.6, 2.1]], near ? CLOUD : '#e8eefc', { line: near ? '#a9b8de' : '#9aa6cf' }));
     return o;
   };
-  // In the attack the hind legs stay planted under the turned body; the forelegs kick and stamp.
-  const hind = (hipx, hipy, ph, near) => {
-    if (!ak) return leg(hipx, hipy, ph, false, near);
-    const [x0, y] = turnPt(hipx, hipy + bob, piv[0], piv[1], ak.rot);
-    const x = x0 - ak.rot * 16;
-    return leg(x, y, 0, false, near, [hipx - 1.2 + (near ? 0 : 1.4), ground]);
-  };
-  const foreLeg = (hipx, hipy, ph, near) => R(leg(hipx, hipy, ph, true, near, ak ? [hipx + ak.fore[0] + (near ? 0 : -1.2), ak.fore[1] - (near ? 0 : 0.8) - (f === 0 || f === 3 ? bob : 0)] : null));
-  out.push(...foreLeg(34.5, 31, a + Math.PI, false), ...hind(19.5, 31.5, a, false));
+  // In the attack the hind hooves stay planted under the rearing body; the forelegs kick and stamp.
+  const hind = (hipx, hipy, p, near) => leg(hipx, hipy, p, false, near, ak ? [hipx - 1.2 + (near ? 0 : 1.4), ground] : null);
+  const foreLeg = (hipx, hipy, p, near) => leg(hipx, hipy, p, true, near, ak ? ap(root, hipx + ak.fore[0] + (near ? 0 : -1.2), ak.fore[1] - (near ? 0 : 0.8) - (f === 0 || f === 3 ? bob : 0)) : null);
+  out.push(...foreLeg(34.5, 31, u + 0.5, false), ...hind(19.5, 31.5, u, false));
 
   // Body: rump, barrel, chest, a soft lavender belly, and star dapples.
-  out.push(...R(B([F(E(16.4, 28.4, 7.9, 7.6, lineOf(COAT))), E(16.4, 28.4, 7.4, 7.1 + breathe * 0.4, COAT), E(25, 29.6, 11.5, 7.2 + breathe, COAT), E(33.2, 28, 6.4, 7, COAT),
+  out.push(...B([F(E(16.4, 28.4, 7.9, 7.6, lineOf(COAT))), E(16.4, 28.4, 7.4, 7.1 + breathe * 0.4, COAT), E(25, 29.6, 11.5, 7.2 + breathe, COAT), E(33.2, 28, 6.4, 7, COAT),
     F(E(25.5, 35.2, 8.6, 1.6, COAT_SH)), F(E(15.5, 33.6, 4.5, 1.3, COAT_SH)), F(E(23, 24.4, 7, 1.3, '#ffffff')), F(E(14.5, 23.6, 3.2, 1.1, '#ffffff')),
-    ...sparkle(14.2, 28.4, 1.9, '#ffd6ea', '#fff2f8'), ...sparkle(18.4, 31.6, 1.3, '#d9cfff', '#f4f0ff'), ...sparkle(11.6, 31.8, 1, '#c8e4ff', '#f0f8ff')])));
-  out.push(...foreLeg(30.8, 32, a, true), ...hind(16.5, 32.5, a + Math.PI, true));
+    ...sparkle(14.2, 28.4, 1.9, '#ffd6ea', '#fff2f8'), ...sparkle(18.4, 31.6, 1.3, '#d9cfff', '#f4f0ff'), ...sparkle(11.6, 31.8, 1, '#c8e4ff', '#f0f8ff')]));
+  out.push(...foreLeg(30.8, 32, u, true), ...hind(16.5, 32.5, u + 0.5, true));
 
-  const front = [];
   // Neck, bridging the body and the head.
-  front.push(T([[28.6, 22.5 + bob], [33 + hx, 11 + hy], [40 + hx, 12 + hy], [38.6, 27 + bob], [33, 30 + bob]], COAT), F(E(36 + hx * 0.5, 22 + (bob + hy) / 2, 2.4, 4.6, COAT_SH)));
-  // Mane down the neck crest, streaming back and rippling.
+  out.push(...Rt([T([[28.6, 22.5 + bob], [33 + hx, 11 + hy], [40 + hx, 12 + hy], [38.6, 27 + bob], [33, 30 + bob]], COAT), F(E(36 + hx * 0.5, 22 + (bob + hy) / 2, 2.4, 4.6, COAT_SH))]));
+  // Mane down the neck crest: a chain from the poll to the withers, streaming back and rippling.
   const maneLine = [[36.2, 5.6, 3.7], [33.4, 8.2, 3.7], [31.2, 11.6, 3.5], [29.5, 15.2, 3.3], [28, 18.7, 3], [26.8, 21.8, 2.6]];
   const mane = maneLine.map(([x, y, r], i) => {
     const t = i / 5;
     const wv = walk ? -(0.5 + 0.7 * Math.sin(a * 2 - i * 0.9)) * (0.3 + t) : ak ? -[0, 1.2, 0.8, 0.3][f] * (0.3 + t) : -Math.sin(a - i * 0.8) * 0.4 * t;
     return [x + lerp(hx, 0, t) + wv - (angry ? 0.6 * (1 - t) : 0), y + lerp(hy, bob, t) - (angry ? 0.8 : 0), r, MANE[(5 - i) % 3]];
   }).reverse();
-  front.push(...puffs(mane, MANE[0]));
-  front.push(...B([...stroke([[30, 24.6 + (hy - bob) * 0.3], [34.2, 26.4], [38.6, 25.6]], 1.5, '#9fd4ff'), ...stroke([[30.2, 24.1 + (hy - bob) * 0.3], [34.2, 25.9], [38.4, 25.1]], 0.4, '#d6efff')]),
-    ...shift(sparkle(35.2, 28.2, 1.9, '#ffd66b', '#fff4c0'), walk ? Math.sin(2 * a - 1.4) * 0.4 : 0, bob + (walk ? Math.abs(Math.cos(a - 0.7)) * 0.4 : 0)));
+  out.push(...Rt(puffs(mane, MANE[0])));
+  out.push(...B([...stroke([[30, 24.6 + (hy - bob) * 0.3], [34.2, 26.4], [38.6, 25.6]], 1.5, '#9fd4ff'), ...stroke([[30.2, 24.1 + (hy - bob) * 0.3], [34.2, 25.9], [38.4, 25.1]], 0.4, '#d6efff')]),
+    ...B(shift(sparkle(35.2, 28.2, 1.9, '#ffd66b', '#fff4c0'), walk ? Math.sin(2 * a - 1.4) * 0.4 : 0, walk ? Math.abs(Math.cos(a - 0.7)) * 0.4 : 0)));
   // Near wing, in front of the body.
-  front.push(...B(wing({ x: 27.5, y: 23, ang: wa, ps, ...wingCol })));
+  out.push(...B(wing({ x: 27.5, y: 23, ang: wa, ps, ...wingCol })));
 
   // Head: ears flick and pin back with mood.
   let earTip = [33.2, 1.4];
@@ -357,21 +232,31 @@ function pegasus(pose, f, mood) {
   const farTip = [earTip[0] + 10.6 + (angry || dead || ak ? -1.5 : 0), earTip[1] - 0.3];
   const head = [T([[40.5, 7.5], farTip, [44.6, 8.6]], COAT_FAR), F(T([[41.4, 7.6], [farTip[0] - 0.1, farTip[1] + 2], [43.6, 8.2]], '#f4c6d8'))];
   head.push(F(E(40, 14, 8.65, 8.05, lineOf(COAT))), E(40, 14, 8.2, 7.6, COAT), E(41.2, 17.6, 7, 5.4, COAT), F(E(46.2, 20.1, 5.85, 4.65, lineOf(COAT))), E(46.2, 20.1, 5.4, 4.2, COAT),
-    F(E(47.4, 21.1, 3.7, 2.8, '#ffe2ec')), F(E(49.7, 19.8, 0.75 + (angry || ak ? 0.25 : 0), 0.55, '#e295b1')), F(E(37.4, 9.6, 3.6, 1.3, '#ffffff')), F(E(45, 17.4, 2, 0.8, '#ffffff')));
+    F(E(47.4, 21.1, 3.7, 2.8, '#ffe2ec')), F(E(49.7, 19.8, 0.75 + (angry || ak ? 0.25 : 0), 0.55, '#e295b1')), F(E(37.4, 9.6, 3.6, 1.3, '#ffffff')), F(E(45, 17.4, 2, 0.8, '#ffffff')), F(E(37.6, 19.4, 3.2, 1.2, COAT_SH)));
   head.push(T([[34.2, 9.2], earTip, [38.8, 6.6]], COAT), F(T([[35.1, 8.2], [earTip[0] + 0.7, earTip[1] + 2], [37.6, 6.9]], '#ffcade')));
   // Forelock, a curl, and a gold star clip.
   head.push(...puffs([[37.6, 6.6, 3.2, MANE[1]], [41, 5.8, 3, MANE[0]], [44, 7.6, 2.4, MANE[2]]], MANE[0]),
     ...feather(41.6, 7.4, 78 + (walk ? Math.sin(2 * a - 1) * 10 : Math.sin(a) * 4), 5.4, 2.6, MANE[0], { shaft: false, cast: true }),
     ...sparkle(36.4, 5.4, 1.7, '#ffd66b', '#fff4c0'));
-  // One big gentle eye on the side of the head.
-  head.push(...horseEye(42.2, 13.8, 2.15, ak && mood === 'idle' ? 'angry' : mood, { look, lid: COAT }));
+  // One big gentle eye on the side of the head (the kit's eye: violet iris against the pink mane,
+  // plum lashes), and a small mouth on the muzzle.
+  const em = ak && mood === 'idle' ? 'angry' : mood;
+  const lashC = '#5a3a72';
+  const act = { angry: { lid: 0.32, slant: 0.7, pupilK: 0.7 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[em] ?? {};
+  if (dead) head.push(...deadEye(42.2, 14, 1.8, { c: lashC }));
+  else head.push(...eye(42.2, 13.8, { s: 1, shape: 'round', w: 2.3, h: 2.7, iris: ['#3b2a7a', '#6a4fc0', '#c2b0ff'], lashC, flicks: 2, look: [look, 0], ...act }));
   if (!dead) head.push(F(E(40.6, 18.4, 1.8, 0.8, BLUSH)));
-  head.push(...mouth(47.6, 22.6, 1.05, ak && f === 1 && !dead ? 'angry' : mood));
+  const mo = { ink: MUZ, s: 1 };
+  if (ak && f === 1 && !dead) head.push(...mouth(47.8, 22.8, { ...mo, type: 'shout', w: 1.1, h: 1.6, open: 1 }));
+  else if (em === 'angry') head.push(...mouth(47.6, 22.6, { ...mo, type: 'snarl', w: 1.1, h: 1, open: 0.7, teeth: 'gritted', tongue: false }));
+  else if (hurt) head.push(...mouth(47.6, 22.8, { ...mo, type: 'o', w: 0.7, h: 0.9, open: 1 }));
+  else if (happy) head.push(...mouth(47.6, 22.4, { ...mo, type: 'grin', w: 1.1, h: 1.2, open: 1, teeth: 'none' }));
+  else if (dead) head.push(...mouth(47.6, 22.6, { ...mo, type: 'wavy', w: 1, amp: 0.2 }));
+  else head.push(...mouth(47.6, 22.4, { ...mo, type: 'cat', w: 0.9, curve: 0.4 }));
   if (angry || (ak && f > 0)) head.push(...puffs([[52.2, 20.8, 0.9], [53.1, 22.4, 0.7]], '#ffffff', { hi: null }));
-  front.push(...H(head));
-  out.push(...R(front));
+  out.push(...put(headF, head));
   if (ak && f === 2 && !dead) {
-    const [bx, by] = turnPt(30.8 + ak.fore[0] - ak.rot * 16, ak.fore[1], piv[0], piv[1], ak.rot);
+    const [bx, by] = ap(root, 30.8 + ak.fore[0], ak.fore[1]);
     out.push(...burst(bx + 2.4, Math.min(by, 44), 3.4, '#fff3b0', '#ffffff', 7, 0.2), ...puffs([[bx - 3, 45, 1.6], [bx + 5.6, 45, 1.4]], '#ffffff', { hi: null }));
   }
   if (ak && f === 1 && !dead) out.push(...streaks([[48, 30, 51.6, 27.6], [47.4, 34, 51.4, 33]], '#e0ecff', 0.6));
@@ -400,21 +285,25 @@ const HARPY_ATK = [
 function harpy(pose, f, mood) {
   const walk = pose === 'walk';
   const ak = pose === 'attack' ? HARPY_ATK[f] : null;
-  const a = ak ? f * 1.3 : (f / (walk ? 8 : 6)) * TAU;
+  const u = ak ? f / 4 : f / (walk ? 8 : 6);
+  const a = ak ? f * 1.3 : u * TAU;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  // A full stroke: wings sweep from high (-108) down past the body (-204) and back.
-  let ang = ak ? ak.ang : walk ? -156 + 48 * Math.cos(a) - 6 * Math.sin(2 * a) : -130 + 12 * Math.cos(a);
-  let ps = ak ? ak.ps : walk ? 11.3 + 3.7 * Math.cos(a - 1.6) : 10.8 + 0.5 * Math.cos(a - 1.4);
-  let bob = ak ? ak.bob : walk ? 0.7 - 0.9 * Math.cos(a - 0.5) : 0.4 - 0.4 * Math.cos(a - 0.5);
+  // A full stroke: a fast downstroke from high (-108) past the body (-204), then a slow recovery
+  // (Saint11 "Wings"); the feathers close on the way down and spread on the way up. The body
+  // surges up a beat after each downstroke and sags through the recovery.
+  const bt = beat(u);
+  let ang = ak ? ak.ang : walk ? lerp(-108, -204, bt) : lerp(-122, -140, bt);
+  let ps = ak ? ak.ps : walk ? lerp(15, 7.6, bt) : lerp(11.3, 10.3, bt);
+  let bob = ak ? ak.bob : walk ? 0.8 - 1.8 * beat(u - 0.1) : 0.4 - 0.8 * beat(u - 0.1);
   if (angry && !ak) [ang, ps] = [ang + 8, ps + 2];
   if (hurt) [ang, ps] = [-100, 16];
   if (dead) [ang, ps, bob] = [128, 6, 0.6];
   // The head lags the body a little.
   let hx = 0;
-  let hy = (ak ? bob : walk ? 0.7 - 0.9 * Math.cos(a - 1.2) : 0.4 - 0.4 * Math.cos(a - 1.1)) - bob + bob * 0.7 + (walk ? 0.25 : 0);
+  let hy = (ak ? bob : walk ? 0.8 - 1.8 * beat(u - 0.2) : 0.4 - 0.8 * beat(u - 0.2)) - bob + bob * 0.7 + (walk ? 0.25 : 0);
   if (hurt) [hx, hy] = [-1.3, hy - 0.6];
   if (dead) [hx, hy] = [0.4, hy + 1.6];
   const lagA = a - 1.1;
@@ -432,7 +321,7 @@ function harpy(pose, f, mood) {
 
   // Far wing, a touch behind the near one.
   const wingOpts = { n: 6, sec: 4, arm: 7, plen: 11.6, pw: 3.4, slen: 8.2, sw: 3.2 };
-  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9 + (walk ? 6 * Math.sin(a) : 0), ps, k: 1.12, col: '#dce8f6', tip: PLUME_D, tipAt: 0.72, cov: '#cfe0f4', bone: PLUME_D, vane: '#cfdcef', ...wingOpts })));
+  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9 + (walk ? 96 * (bt - beat(u - 0.05)) : 0), ps, k: 1.12, col: '#dce8f6', tip: PLUME_D, tipAt: 0.72, cov: '#cfe0f4', bone: PLUME_D, vane: '#cfdcef', ...wingOpts })));
 
   // Legs and talons: dangling and swinging after the strokes, tucked or thrust out in the dive.
   const leg = (x, near) => {
@@ -489,18 +378,32 @@ function harpy(pose, f, mood) {
   head.push(F(E(29.8, 11, 8.6, 5.8, lineOf(PLUME))), E(29.8, 11, 8.1, 5.3, PLUME), E(24.8, 14.4, 3.8, 5, PLUME));
   [[25.2, 12, 98, 7.2, PLUME_D], [28.8, 8.4, 92, 5, PLUME], [31.8, 8, 76, 5.2, PLUME], [34.8, 8.6, 60, 4.8, PLUME], [37.4, 10.2, 48, 3.6, PLUME]].forEach(([x, y, d, len, c], i) =>
     head.push(...feather(x, y, d + (walk ? Math.sin(lagA - i * 0.3) * 3 : 0), len, 3.7, c, { cast: true, shaft: false, line: mix(c, lineOf(c), 0.7) })));
-  head.push(...stroke([[25.6, 9.4], [28, 7.2], [31, 6.4], [34, 7]], 0.9, PLUME_L));
+  // One highlight band across the crown, its lower edge V-notched between the feather clumps.
+  head.push(F(T([[24.6, 10.4], [26.8, 7.8], [30, 6.5], [33.6, 6.7], [36.4, 8.3], [35.6, 9.5], [34.2, 8.7], [32.8, 9.6], [31.2, 8.4], [29.6, 9.3], [28, 8.8], [26.8, 10.2], [25.4, 11.2]], PLUME_L)), F(T([[27.6, 8.4], [30, 7.2], [32.6, 7.3], [30.2, 7.9]], '#f2fbff')));
   head.push(...feather(24.6, 15, 130 + lag * 0.5, 5, 2.4, '#ffffff', { tip: CREST[0], shaft: false }), F(E(24.8, 14.4, 1.5, 1.5, '#ffd66b')), F(E(24.8, 14.4, 0.8, 0.8, '#5ec8e8')));
-  // Sharp raptor eyes under a stern feathered brow.
+  // Sharp raptor eyes (the kit's eye: gold iris against the blue plumes, navy lashes) under a
+  // stern feathered brow; the near eye is the larger.
   const em = ak && mood === 'idle' ? 'angry' : mood;
-  head.push(...raptorEye(32.4, 16.9, 1.85, em, { inner: 1, lid: SKIN, look, brow: PLUME_D }), ...raptorEye(37.8, 16.5, 1.5, em, { inner: -1, lid: SKIN, look, brow: PLUME_D }));
+  const lashC = '#24406e';
+  const act = { angry: { lid: 0.3, slant: 0.85, raise: 0.2, pupilK: 0.6 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[em] ?? {};
+  const eo = { shape: 'sharp', iris: ['#a2580e', '#ffbb2e', '#ffe9a0'], lashC, look: [look, 0], flicks: 1, ...act };
+  if (dead) head.push(...deadEye(32.4, 17, 1.4, { c: lashC }), ...deadEye(37.8, 16.6, 1.1, { c: lashC }));
+  else head.push(...eye(32.4, 16.9, { ...eo, s: -1, w: 2.1, h: 2.2 }), ...eye(37.8, 16.5, { ...eo, s: 1, w: 1.6, h: 1.9 }));
+  const bl = em === 'angry' ? 1 : hurt ? -0.8 : happy ? -0.4 : 0;
+  if (!dead) head.push(...stroke([[30, 14 - bl * 0.2], [32.4, 13.6 + bl * 0.2], [34.2, 14 + bl * 0.8]], 0.8, PLUME_D), ...stroke([[36.6, 14 + bl * 0.6], [38.2, 13.6], [39.4, 14 - bl * 0.3]], 0.67, PLUME_D));
   if (!dead) head.push(F(E(31, 20.2, 1.5, 0.7, BLUSH)), F(E(38, 19.8, 0.9, 0.55, BLUSH)));
-  head.push(...mouth(35.4, 21, 0.95, ak && f > 0 && !dead ? 'angry' : mood));
+  const mo = { ink: MUZ, s: 1 };
+  if (ak && f > 0 && !dead) head.push(...mouth(35.4, 21.2, { ...mo, type: 'shout', w: 1.2, h: 1.7, open: 1, fangs: 0 }));
+  else if (em === 'angry') head.push(...mouth(35.4, 21, { ...mo, type: 'snarl', w: 1.2, h: 1, open: 0.7, fangs: 2, tongue: false }));
+  else if (hurt) head.push(...mouth(35.4, 21.2, { ...mo, type: 'pained', w: 1, h: 1, open: 1 }));
+  else if (happy) head.push(...mouth(35.4, 20.8, { ...mo, type: 'grin', w: 1.2, h: 1.3, open: 1, teeth: 'none' }));
+  else if (dead) head.push(...mouth(35.4, 21, { ...mo, type: 'wavy', w: 1, amp: 0.2 }));
+  else head.push(...mouth(35.4, 20.8, { ...mo, type: 'smirk', w: 1, curve: 0.35 }));
   out.push(...Hd(head));
 
   let shapes = out;
   if (ak) {
-    shapes = shift(turn(shapes, 28, 26, ak.rot), ak.dx, 0);
+    shapes = put(pivot(move(ID, ak.dx, 0), 28, 26, ak.rot), shapes);
     if (!dead && f === 1) shapes.push(...streaks([[6, 12, 14, 17], [4, 20, 12, 23], [8, 27, 16, 29]], '#e0f0ff', 0.7));
     if (!dead && f === 2) for (const k of [-2.2, 0, 2.2]) shapes.push(...stroke([[39 + k * 0.3, 31 + k], [44 + k * 0.2, 36.4 + k], [45.4, 42 + k * 0.4]], 0.7, '#ff9ec0'), ...stroke([[39.4 + k * 0.3, 31.8 + k], [43.8 + k * 0.2, 36.8 + k]], 0.3, '#ffffff'));
   }
@@ -512,6 +415,8 @@ function harpy(pose, f, mood) {
 // stardust tail streaming. It casts by gathering light into its core and releasing a star burst.
 
 const GOLD = '#ffe27a';
+const GOLD_SH = '#e8a64e';
+const GOLD_HI = '#fff8d2';
 const STAR = '#ffe88f';
 const STAR_IN = '#fff6c8';
 const WING_TIPS = ['#ffe9a8', '#e4d8ff', '#cdeaff'];
@@ -542,7 +447,11 @@ function seraph(pose, f, mood) {
   let hdy = walk ? Math.sin(a - 1.2) * 0.5 : 0;
   if (hurt) hrot += 16;
   if (dead) [hrot, hdy] = [-24, 4];
-  out.push(F(ring(cx + 0.6, cy - 18.6 + hdy, 9.3, 3.1, 2.4, hrot, lineOf(GOLD))), ring(cx + 0.6, cy - 18.6 + hdy, 8.6, 2.6, 1.7, hrot, fade(GOLD)));
+  // Three tones of gold under one upper-front light: the base, a warm shadow on the back and
+  // underside, and a pale shine on the upper front of the rim.
+  const hcy = cy - 18.6 + hdy;
+  out.push(F(ring(cx + 0.6, hcy, 9.3, 3.1, 2.4, hrot, lineOf(GOLD))), ring(cx + 0.6, hcy, 8.6, 2.6, 1.7, hrot, fade(GOLD)));
+  out.push(F(ring(cx + 0.6, hcy, 8.6, 2.6, 1.7, hrot, fade(GOLD_SH), 70, 230)), F(ring(cx + 0.6, hcy, 8.5, 2.5, 0.8, hrot, fade(GOLD_HI), 280, 350)));
   if (!dead) {
     const ha = rad(hrot) + (f / n) * TAU;
     out.push(...sparkle(cx + 0.6 + 7.6 * Math.cos(ha), cy - 18.6 + hdy + 2.2 * Math.sin(ha), 1.6, '#ffffff', '#ffffff'));
@@ -580,7 +489,8 @@ function seraph(pose, f, mood) {
       const one = [];
       for (let j = p.n - 1; j >= 0; j--) {
         // Feathers fan from the leading edge down to the trailing edge; the tips lag the sweep.
-        const lagT = walk ? Math.sin(a - i * 0.8 - 0.9) * (j / p.n) * 4 : 0;
+        // A ripple runs from the leading edge to the trailing feathers, root to tip.
+        const lagT = dead ? 0 : Math.sin(a - i * 0.8 - 0.9 - j * 0.45) * (j / p.n) * (walk ? 6 : ak ? 3 : 3.4);
         const d = p.base + beat + (j - (p.n - 1) * 0.35) * fan + lagT;
         const ang = side > 0 ? d : 180 - d;
         const len = p.len * (1 - Math.abs(j - 1) * 0.08);
@@ -635,9 +545,23 @@ function seraph(pose, f, mood) {
   const fy = cy + 0.4;
   const open = !!ak && f > 0;
   const em = ak && f === 0 && mood === 'angry' ? 'idle' : mood;
-  out.push(...seraphEye(fx - 3, fy, 1.6, em, { inner: 1, lid: fade(STAR_IN), open }), ...seraphEye(fx + 3, fy, 1.6, em, { inner: -1, lid: fade(STAR_IN), open }));
+  // The kit's eyes: calm, they rest closed with long amber lashes; roused, they open on violet
+  // irises with star pupils.
+  const lashC = '#8a5228';
+  const roused = open || em === 'angry';
+  const so = dead ? null : roused
+    ? { shape: 'round', iris: ['#4a2f9a', '#9a6cf0', '#e2d4ff'], pupil: 'star', pupilC: '#fff3b0', lashC, ...(em === 'angry' ? { lid: 0.25, slant: 0.7 } : {}) }
+    : { closed: { happy: 'happy', hurt: 'squeeze', blink: 'blink' }[em] ?? 'sleep', lashC, flicks: 2 };
+  if (dead) out.push(...deadEye(fx - 3, fy, 1.3, { c: lashC }), ...deadEye(fx + 3, fy, 1.3, { c: lashC }));
+  else out.push(...eye(fx - 3, fy, { ...so, s: -1, w: 1.7, h: 1.9 }), ...eye(fx + 3, fy, { ...so, s: 1, w: 1.7, h: 1.9 }));
   if (!dead) out.push(F(E(fx - 4.4, fy + 2.6, 1.4, 0.7, BLUSH)), F(E(fx + 4.4, fy + 2.6, 1.4, 0.7, BLUSH)));
-  out.push(...(ak && f > 0 && f < 3 && !dead ? [F(E(fx, fy + 3.6, 1, 1.2, MOUTH)), F(E(fx, fy + 4.1, 0.6, 0.4, '#ff94ae'))] : mouth(fx, fy + 3.2, 1, em === 'idle' && !ak ? 'idle' : em)));
+  const mo = { ink: MUZ };
+  if (ak && f > 0 && f < 3 && !dead) out.push(...mouth(fx, fy + 3.6, { ...mo, type: 'o', w: 0.9, h: 1.2, open: 1 }));
+  else if (em === 'angry') out.push(...mouth(fx, fy + 3.4, { ...mo, type: 'frown', w: 1.1 }));
+  else if (hurt) out.push(...mouth(fx, fy + 3.4, { ...mo, type: 'pained', w: 1, h: 1, open: 1 }));
+  else if (happy) out.push(...mouth(fx, fy + 3.2, { ...mo, type: 'grin', w: 1.2, h: 1.2, open: 1, teeth: 'none' }));
+  else if (dead) out.push(...mouth(fx, fy + 3.4, { ...mo, type: 'wavy', w: 1, amp: 0.2 }));
+  else out.push(...mouth(fx, fy + 3.2, { ...mo, type: 'smile', w: 1, curve: 0.45 }));
   if (!dead) for (const s of sparks) if (s.front) out.push(...s.s);
   if (angry && !ak) out.push(...sparkle(cx + 11, cy - 11, 2.2, '#ff9a6b', '#fff0c0'));
 

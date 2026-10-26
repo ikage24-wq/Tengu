@@ -2,7 +2,7 @@
 // a crystal golem, a wraith). Every design faces right with its feet (or its floating hem) on the
 // bottom edge, and is built back to front from layered shapes with hand-placed shading.
 
-import { E, T, F, shade, mix, arc, stroke, INK, MOUTH } from './kit.js';
+import { E, T, F, mix, arc, stroke } from './kit.js';
 import { walkBob } from '../animator.js';
 import { eye, glowEye, brow, mouth, blush, sweat, tear, deadEye, vein, starPts, ovalPts } from './faces.js';
 
@@ -22,13 +22,6 @@ const step = (c, dl, toward = COOL) => (dl < 0 ? mix(c, toward, Math.min(1, -dl 
 // The line around a part that overlaps another (the rasterizer only outlines the silhouette): a
 // deep shade of the part's own hue, never a neutral ink.
 const ink = (c, toward = COOL) => step(c, -0.42, toward);
-
-// Rotate points about (cx, cy).
-function rot(pts, cx, cy, a) {
-  const c = Math.cos(a);
-  const s = Math.sin(a);
-  return pts.map(([x, y]) => [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]);
-}
 
 // Grow a polygon outward by d (miter offset), for drawing a line around an overlapping part.
 function grow(pts, d) {
@@ -105,21 +98,6 @@ function flamePts(cx, by, w, h, lean = 0, n = 7) {
   }
   return [...L, ...Rr.reverse()];
 }
-
-// Move / reshape whole groups of shapes: f maps a point; ellipse radii scale by sx, sy.
-function xf(shapes, f, sx = 1, sy = 1) {
-  return shapes.map((s) => {
-    if (!s) return s;
-    if (s.t === 'p') return { ...s, x: 0, y: 0, pts: s.pts.map(([px, py]) => f(s.x + px, s.y + py)) };
-    if (s.t === 'e') {
-      const [x, y] = f(s.x, s.y);
-      return { ...s, x, y, rx: s.rx * sx, ry: s.ry * sy };
-    }
-    const pts = [[s.x, s.y], [s.x + s.w, s.y], [s.x + s.w, s.y + s.h], [s.x, s.y + s.h]].map(([a, b]) => f(a, b));
-    return { t: 'p', x: 0, y: 0, pts, c: s.c, f: s.f, cast: s.cast, lit: s.lit };
-  });
-}
-const mv = (shapes, dx, dy) => xf(shapes, (x, y) => [x + dx, y + dy]);
 
 // ---------- Rig ----------
 // Every design is a hierarchy of parts. A part's frame is a 2D affine [a, b, c, d, e, f]
@@ -814,7 +792,8 @@ const CHEST = {
 // facet facing the light is the darkest, the far facet glows (light passes through), a glint sits
 // at the tip, and the line is the gem's own deep hue.
 function gem(x, y, w, h, tilt, [c, dk, lt]) {
-  const tf = (p) => rot(p.map(([px, py]) => [x + px, y + py]), x, y, tilt);
+  const m = joint(ID, x, y, tilt);
+  const tf = (p) => p.map(([px, py]) => ap(m, px, py));
   const body = [[-w / 2, 0], [-w / 2, -h * 0.72], [0, -h], [w / 2, -h * 0.72], [w / 2, 0]];
   return [
     F(T(tf(grow(body, 0.6)), mix(dk, '#2a1850', 0.35))), T(tf(body), c),
@@ -1095,151 +1074,173 @@ function golem(pose, frame, mood) {
 }
 
 // ---------- Wraith ----------
-// A hooded, tattered specter: two pinpoint lights in a bottomless hood, ragged billowing robes, bony
-// claws, and rattling chains with a padlock and a broken shackle. It slides along in an eerie lean,
-// its hem rippling behind, and attacks by lunging with its claws and a scream.
+// A hooded, tattered specter: two lights burning in a bottomless hood, ragged robes, bone claws,
+// and rattling chains with a padlock and a broken shackle. It slides along in an eerie forward
+// lean, its hem streaming behind, and attacks by rearing back and raking down with a scream.
+// Signature shape: the peaked hood leaning over a long claw.
+// Rig: root (float bob) > body (lean about the hem) > hood (sways a beat late; the peak is a
+// chain), hem tatters (chains, root leads), waist chain (chain trailing back), diagonal chain and
+// padlock; body > both sleeves (shoulder > elbow > wrist, two-bone IK) > bone claws (three
+// fingers of two bones each) and the shackle chain hanging from the front wrist (a pendulum).
+const WRAITH = { hi: '#8f82c6', base: '#62579a', s1: step('#62579a', -0.2), s2: step('#62579a', -0.38), fade: '#b9b0e6', hood: '#1a1430' };
+const BONE = { hi: '#fffaf0', base: '#e6dcc8', s1: step('#e6dcc8', -0.24, WARM) };
+const IRON = { base: '#cfc9e2', s1: '#968db4' };
+
+// Links along a path: round links seen face-on alternate with thin ones seen edge-on.
 function chainLinks(a, b, sag, n, c, cd, hole) {
-  const out = [];
+  const ps = [];
   for (let i = 0; i <= n; i++) {
     const u = i / n;
-    const x = a[0] + (b[0] - a[0]) * u;
-    const y = a[1] + (b[1] - a[1]) * u + Math.sin(u * Math.PI) * sag;
-    if (i % 2) out.push(F(E(x, y, 0.55, 0.95, cd)));
-    else out.push(F(E(x, y, 1.15, 0.85, c)), F(E(x, y, 0.45, 0.25, hole)));
+    ps.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u + Math.sin(u * Math.PI) * sag]);
+  }
+  return links(ps, c, cd, hole);
+}
+function links(ps, c, cd, hole) {
+  return ps.flatMap(([x, y], i) => (i % 2 ? [F(E(x, y, 0.55, 0.95, cd))] : [F(E(x, y, 1.2, 0.9, ink(c))), F(E(x, y, 1.05, 0.78, c)), F(E(x, y, 0.42, 0.24, hole))]));
+}
+
+// A bone claw in the wrist's frame (x along the forearm): a knuckled palm and three two-bone
+// fingers that curl by `curl`, each ending in a hooked talon.
+function boneClaw(curl, spread = 1) {
+  const out = [...oE(1.2, 0, 1.6, 1.4, BONE.base, 0.5), F(E(1.6, -0.6, 0.8, 0.5, BONE.hi))];
+  for (const [i, a] of [[0, -0.5], [1, 0.02], [2, 0.5]]) {
+    const fr = chain(joint(ID, 2.2, (i - 1) * 0.9), [2.2, 2], [a * spread, 0.35 + curl * 0.5, 0.3 + curl * 0.6]);
+    const p = pts(fr);
+    out.push(...limb(p, 0.8, i === 0 ? BONE.s1 : BONE.base, 0.4), F(E(p[1][0], p[1][1], 0.55, 0.55, BONE.hi)));
+    const t = fr[2];
+    out.push(...oT([ap(t, 0, -0.45), ap(t, 1.8, 0.5), ap(t, 0, 0.45)], BONE.hi, 0.35));
   }
   return out;
 }
 
-// Two pinpoint lights deep in the hood.
-function pinEyes(cx, cy, k, mood, col, hood, look = 0) {
-  const out = [];
-  const halo = mix(col, hood, 0.7);
-  for (const s of [-1, 1]) {
-    const x = cx + s * 2 * k + look;
-    const y = cy;
-    switch (mood) {
-      case 'blink':
-        out.push(F(E(x, y + 0.2 * k, 0.9 * k, 0.25 * k, halo)), F(E(x, y + 0.2 * k, 0.5 * k, 0.12 * k, col)));
-        break;
-      case 'happy':
-        out.push(arc(x, y + 0.6 * k, 0.9 * k, 0.8 * k, 200, 340, 0.4 * k, col));
-        break;
-      case 'hurt':
-        out.push(...stroke([[x - s * 0.8 * k, y - 0.8 * k], [x + s * 0.6 * k, y], [x - s * 0.8 * k, y + 0.8 * k]], 0.4 * k, col));
-        break;
-      case 'dead':
-        out.push(F(E(x, y + 0.4 * k, 0.35 * k, 0.35 * k, halo)));
-        break;
-      case 'angry':
-        out.push(F(T([[x + s * 1.6 * k, y - 1.1 * k], [x - s * 1.2 * k, y + 0.05 * k], [x + s * 0.6 * k, y + 0.5 * k]], halo)), F(E(x, y, 1.1 * k, 1.1 * k, halo)), F(E(x, y, 0.6 * k, 0.6 * k, col)), F(E(x, y, 0.3 * k, 0.3 * k, '#ffffff')));
-        break;
-      default:
-        out.push(F(E(x, y, 1.2 * k, 1.2 * k, halo)), F(E(x, y, 0.55 * k, 0.55 * k, col)), F(E(x - 0.1 * k, y - 0.1 * k, 0.26 * k, 0.26 * k, '#ffffff')));
-    }
-  }
-  return out;
-}
-
+// Attack keys: lean (rad), body offset, front/back hand targets in the body's space, claw curl,
+// the hood's lag. A rear-back wind-up with the claw raised, the lunge, the held rake, the settle.
 const WRAITH_ATK = [
-  { dx: -0.8, dy: -1.2, lean: -0.05, fh: [29.6, 17.6], curl: -0.8 },
-  { dx: 1.2, dy: 0.4, lean: 0.1, fh: [31.2, 26.6], curl: 0.2 },
-  { dx: 1.4, dy: 0.8, lean: 0.09, fh: [31.4, 34], curl: 1.6 },
-  { dx: 0.8, dy: 0.3, lean: 0.06, fh: [32.6, 31.4], curl: 0.8 },
+  { lean: -0.12, dx: -0.8, dy: -1.4, fh: [33, 8], bh: [6, 26], curl: -0.6, hl: -0.12 },
+  { lean: 0.12, dx: 0.4, dy: 0.2, fh: [32, 22], bh: [9, 32], curl: 0.4, hl: 0.06 },
+  { lean: 0.15, dx: 0.4, dy: 0.8, fh: [33, 35], bh: [10, 34], curl: 1.4, hl: 0.16 },
+  { lean: 0.08, dx: 0.2, dy: 0.4, fh: [33, 32], bh: [9, 33], curl: 0.8, hl: 0.06 },
 ];
 
 function wraith(pose, frame, mood) {
   const walk = pose === 'walk';
   const ak = pose === 'attack' ? WRAITH_ATK[frame] : null;
-  const n = walk ? 8 : 6;
-  const t = ak ? frame * 1.3 : (frame / n) * TAU;
   const dead = mood === 'dead';
-  const amp = dead ? 0 : walk ? 1.25 : ak ? 0.6 : 0.55;
   const hurt = mood === 'hurt';
   const angry = mood === 'angry' || !!ak;
-  const robe = '#5f5490';
-  const robeL = '#8073b4';
-  const robeD = '#463c6e';
-  const hood = '#1c1530';
-  const chain = '#d2cce4';
-  const chainD = '#9188ae';
-  const claw = '#e8eeff';
+  const P = WRAITH;
+  const u = ak ? frame / 4 : frame / (walk ? 8 : 6);
+  const ph = u * TAU;
   const eyeC = angry ? '#ff6f9f' : dead ? '#9890b0' : '#ffe36b';
+  const amp = dead ? 0.15 : walk ? 1 : ak ? 0.7 : 0.55;
+  // A slow float that breathes in, holds, and sinks; sliding, an eerie forward lean.
+  const bob = ak ? ak.dy : walk ? Math.sin(ph) * 0.8 : -breath(u) * 0.9;
+  const lean = (ak ? ak.lean : walk ? 0.1 + Math.sin(ph - 0.6) * 0.02 : Math.sin(ph - 0.9) * 0.025) + (hurt ? -0.14 : 0) + (dead ? 0.05 : 0);
+  const root = move(ID, -2 + (hurt ? -1.4 : 0) + (ak ? ak.dx : walk ? -0.6 : 0), bob + (dead ? 2.6 : 0));
+  const body = dead ? squash(pivot(root, 20, 47, lean), 20, 47, 1.06, 0.9) : pivot(root, 20, 47, lean);
   const out = [];
   const fxs = [];
-  // The hem ripples back in travelling waves; in the slide it streams out behind.
-  const w = (k) => Math.sin(t - k * 0.9) * 1.2 * amp;
-  const tr = (k) => Math.sin(t - k * 0.7) * 1.4 * amp - (walk ? k * 0.55 : ak && frame ? k * 0.5 : 0);
+  const B = (shapes) => put(body, shapes);
 
   // Ghost wisps trailing below.
   if (!dead) {
     for (let i = 0; i < 3; i++) {
-      const u = ((ak ? frame / 4 : frame / n) + i / 3) % 1;
-      out.push(F(E(10 + i * 7 - u * (walk ? 9 : 4), 46 + u * 3, 1.3 - u * 0.6, 0.9 - u * 0.4, '#b9b0e6')));
+      const q = wrap(u + i / 3);
+      out.push(F(E(10 + i * 7 - q * (walk ? 9 : 4), 47 + q * 3, 1.3 - q * 0.6, 0.9 - q * 0.4, P.fade)));
     }
   }
-  // Back sleeve and claw.
-  const bh = ak ? [[3.6, 27], [6.6, 32.6], [6.2, 33.4], [5.4, 32]][frame] : [4.6 + tr(1) * 0.5, 31.4 + w(1) * 0.4];
-  out.push(...oT([[12.4, 20], [8, 25.6], [bh[0] - 1.6, bh[1] - 0.6], [bh[0] + 0.4, bh[1] + 1.2], [bh[0] + 2.4, bh[1] + 0.2], [13.6, 27]], robeD));
-  for (const [dx, dy] of [[-1.6, 3.6], [0, 4.2], [1.6, 3.4]]) out.push(...stroke([[bh[0] + 0.2, bh[1] + 0.6], [bh[0] + dx * 0.6, bh[1] + dy * 0.6], [bh[0] + dx, bh[1] + dy]], 0.8, shade(claw, -8)));
-  // Waist chain trailing back, swinging late.
-  out.push(...chainLinks([11, 36], [2.6 + tr(2), 42 + w(3) * 0.6], 1.4, 7, chainD, shade(chainD, -12), robeD));
-  // The robe.
-  const hem = [[31, 44], [30.2, 49.2 + w(0)], [27.2, 46.2], [24.6, 50 + w(1)], [21.6, 46.4], [18.6, 49.6 + w(2)], [15.6, 46], [12 + tr(3) * 0.5, 48.8 + w(3)], [9.4 + tr(3) * 0.6, 44.4], [5 + tr(4), 46.4 + w(4)], [7.6 + tr(3) * 0.4, 38], [9, 28]];
-  const robeP = [[3.4 + tr(1) * 0.8, 6.2 + w(1) * 0.4], [9, 4.4], [14, 2], [20, 1.2], [27.4, 3.6], [31.6, 10], [32.2, 18], [33, 26], [32.6, 36], ...hem, [10, 18], [9.2, 13.6]];
-  out.push(...oT(robeP, robe));
-  out.push(F(T([[9, 28], [7.6 + tr(3) * 0.4, 38], [5 + tr(4), 46.4 + w(4)], [9.4 + tr(3) * 0.6, 44.4], [12 + tr(3) * 0.5, 48.8 + w(3)], [13.4, 40], [13, 28], [11, 18], [10, 18]], robeD)));
-  out.push(...stroke([[17, 30], [16 + tr(2) * 0.3, 40], [15.6 + tr(2) * 0.5, 45.6]], 0.7, robeD), ...stroke([[23.6, 30], [24 + tr(1) * 0.3, 40], [24.4 + tr(1) * 0.4, 49]], 0.7, robeD));
-  out.push(...stroke([[28.6, 28], [29.4, 38], [28.6, 45]], 0.9, robeL), ...stroke([[20, 32], [20.4 + tr(1) * 0.3, 44]], 0.6, robeL));
-  const fade = mix(robe, '#c9c0f0', 0.28);
-  out.push(F(T([[31.6, 42], ...hem.slice(1, 9), [10.4, 41.6], [16, 43], [22, 42.4], [27, 43.2]], fade)));
-  out.push(F(T([[30.2, 47.4 + w(0) * 0.8], [27.2, 46.2], [24.6, 48.8 + w(1) * 0.8], [21.6, 46.4], [18.6, 48.6 + w(2) * 0.8], [15.6, 46], [12 + tr(3) * 0.5, 47.4 + w(3) * 0.8], [9.4 + tr(3) * 0.6, 44.4], [12, 46], [15.6, 46], ...hem.slice(1, 6).reverse()], mix(robe, '#e0daff', 0.45))));
-  // Hood: lighter rim, bottomless dark inside, a fold over the brow. It sways a beat late.
-  const hl = walk ? Math.sin(t - 1.2) * 0.5 : ak ? [-0.6, 0.6, 0.4, 0.2][frame] : Math.sin(t - 1) * 0.3;
-  const look = ak ? 0.6 : walk ? 0.5 : Math.sin(t) * 0.8;
+
+  // Back sleeve and claw (IK from the shoulder; the claw hangs open).
+  const bS = ap(body, 13, 24);
+  const bH = ap(body, ...(ak ? ak.bh : [8 + Math.sin(ph - 1) * 1.2 * amp, 33 + (dead ? 3 : 0) + Math.cos(ph - 1) * 0.6 * amp]));
+  const bE = ik(bS, bH, 5.6, 5.6, 1);
+  out.push(...oRibbon([bS, bE, bH], [4.4, 4.8, 5.8], P.s2), ...put(joint(ID, bH[0], bH[1], Math.atan2(bH[1] - bE[1], bH[0] - bE[0])), [F(E(0, 0, 1.2, 2.4, P.hood)), ...boneClaw(ak ? 0.4 : 0.8, 0.8).map((s) => s && { ...s, c: s.c === BONE.hi ? BONE.base : s.c === BONE.base ? BONE.s1 : s.c })]));
+
+  // Waist chain trailing back, swinging a beat behind the body.
+  const wc = chain(joint(body, 11, 36), [2, 2, 2, 2, 2, 2], wave(6, walk ? 0.7 : 0, 0.18 * amp, ph - 1.2, 0.6).map((a, i) => (i ? a * 0.6 : 2.2 + a + (walk ? 0.5 : 0))));
+  out.push(...links(pts(wc), IRON.s1, step(IRON.s1, -0.2), P.s2));
+
+  // Hem tatters: ragged cloth strips on chains; the root leads, the tip streams behind.
+  const tat = [];
+  const tx = [8.6, 13, 17.4, 21.8, 26.2, 30.4];
+  tx.forEach((x, i) => {
+    const len = [2.6, 3, 3.4, 3, 3.2, 2.4][i];
+    const back = walk ? 0.45 : ak && frame ? 0.35 : 0.08;
+    const bends = wave(2, 0, 0.22 * amp, ph - i * 0.8, 0.8).map((a, k) => (k ? a + back * 0.4 : Math.PI / 2 + back + a));
+    const p = pts(chain(joint(body, x, 41), [len, len * 0.9, len * 0.7], bends));
+    const c = i % 2 ? P.base : P.s1;
+    tat.push(...oRibbon(p, [5, 4.4, 3, 0.8], c, 0.6), F(T(ribbonPts(p.slice(2), [2.6, 0.6]), mix(c, P.fade, 0.5))));
+  });
+
+  // The robe: a back shadow plane, a lit front-top, and folds that ripple with the hem.
+  const robeS = [[8.4, 43], [8.6, 34], [10, 26], [12.6, 21], [18, 18.6], [26, 18.6], [31, 21.6], [33, 28], [33.4, 36], [32, 43]];
+  const rb = [...oT(robeS, P.base)];
+  rb.push(F(T([[8.4, 43], [8.6, 34], [10, 26], [12.6, 21], [15, 20], [13.4, 27], [12.6, 35], [13.4, 43]], P.s1)));
+  rb.push(F(T([[22, 18.6], [26, 18.6], [31, 21.6], [32.4, 26], [28.6, 23.4], [24, 21]], P.hi)));
+  const fold = (x, k) => stroke([[x, 26], [x + Math.sin(ph - k) * 0.5 * amp, 34], [x + Math.sin(ph - k - 0.8) * 0.9 * amp - (walk ? 0.8 : 0), 42]], 0.7, P.s2);
+  rb.push(...fold(18, 0.6), ...fold(24.6, 1.4), ...stroke([[29.4, 28], [30, 36], [29.6, 42]], 0.7, P.hi));
+  out.push(...tat.slice(0, tat.length / 2), ...B(rb), ...tat.slice(tat.length / 2));
+
+  // Diagonal chain across the robe, and a padlock swinging on it a beat late.
+  out.push(...B(chainLinks([11, 26], [31.6, 35.4], 1.6 + (walk ? Math.sin(ph - 1.8) * 0.5 : 0), 12, IRON.base, IRON.s1, P.s2)));
+  const pk = walk ? Math.sin(ph - 2) * 0.25 : ak ? [0.2, -0.3, -0.25, -0.1][frame] : Math.sin(ph - 1.4) * 0.08;
+  const lock = pivot(body, 26.2, 33.4, pk);
+  out.push(...put(lock, [arc(26.2, 33.8, 1.3, 1.6, 180, 360, 0.6, IRON.base), ...oT([[24.4, 33.8], [28, 33.6], [28.2, 37.2], [24.4, 37.4]], '#ffd66b', 0.5), F(T([[24.4, 35.8], [28.2, 35.6], [28.2, 37.2], [24.4, 37.4]], step('#ffd66b', -0.2, WARM))), F(T([[24.8, 34.1], [26, 34], [26, 34.8], [24.8, 34.9]], '#fff6c8')), F(E(26.3, 35.2, 0.45, 0.45, '#6a3a4a')), F(T([[26.1, 35.4], [26.5, 35.4], [26.4, 36.6], [26.2, 36.6]], '#6a3a4a'))]));
+
+  // The hood, swaying a beat late: a peaked cowl whose tip is a little chain, a lit rim, and a
+  // lopsided opening (wider at the front, arched at the top) with the lights burning in it.
+  const hl = ak ? ak.hl : (walk ? Math.sin(ph - 1.2) * 0.06 : Math.sin(ph - 1.1) * 0.04) + (hurt ? -0.12 : 0) + (dead ? 0.32 : 0);
+  const head = pivot(body, 22, 21, hl);
   const hd = [];
-  hd.push(E(23, 14.4, 8.6, 8.8, robeL), F(E(23.8, 15.4, 6.8, 7.2, hood)));
-  hd.push(F(T([[16, 9], [20, 6.4], [27, 6.2], [30.4, 9.4], [26, 8.6], [20, 9.2]], robeL)));
-  hd.push(F(E(25, 11, 4.6, 1.2, shade(hood, 4))));
-  const eyeY = 14.6 + (dead ? 1 : 0);
-  hd.push(...pinEyes(25, eyeY, 1.15, mood === 'idle' && ak ? 'angry' : mood, eyeC, hood, look));
-  const scream = ak && (frame === 1 || frame === 2) && !dead;
-  if (scream) hd.push(F(E(25.4 + look, 19.4, 2, 2.6, mix(eyeC, hood, 0.75))), F(E(25.4 + look, 19.6, 1.3, 1.9, '#08050f')), F(E(25.4 + look, 20.8, 0.8, 0.5, mix(eyeC, hood, 0.5))));
-  else if (angry && !dead) hd.push(F(T([[21.6, 18.6], [28.4, 18.4], [27.6, 20.4], [26.6, 19.4], [25.4, 20.8], [24.4, 19.4], [23.2, 20.6], [22.4, 19.4]], mix(eyeC, hood, 0.15))));
-  else if (hurt) hd.push(F(E(25, 19.6, 0.9, 1, mix(eyeC, hood, 0.3))));
-  else if (mood === 'happy') hd.push(arc(25, 18.6, 1.6, 1.2, 20, 160, 0.5, mix(eyeC, hood, 0.2)));
-  out.push(...mv(hd, hl * 0.6, hl * 0.3));
-  // Diagonal chain across the robe with a padlock.
-  out.push(...chainLinks([10, 26], [31.6, 35.4], 1.6 + (walk ? Math.sin(t - 1.8) * 0.5 : 0), 12, chain, chainD, robeD));
-  const pk = walk ? Math.sin(t - 2) * 0.8 : 0;
-  out.push(...mv([...oT([[24.4, 33.6], [28, 33.4], [28.2, 37], [24.4, 37.2]], '#ffd66b', 0.5), arc(26.2, 33.6, 1.3, 1.6, 180, 360, 0.6, '#c9c4d6'), F(E(26.3, 35, 0.45, 0.45, '#6a4a3a')), F(T([[26.1, 35.2], [26.5, 35.2], [26.4, 36.4], [26.2, 36.4]], '#6a4a3a'))], pk * 0.5, Math.abs(pk) * 0.3));
-  // Front sleeve reaching out, with a bony claw and a dangling broken shackle.
-  const reach = [Math.sin(t) * 0.8 * amp + (angry && !ak ? 1 : 0), Math.cos(t) * 0.6 * amp + (dead ? 3 : 0)];
-  const fh = ak ? ak.fh : [34 + reach[0] - (walk ? 1 : 0), 32.6 + reach[1]];
-  const end = ak ? [fh[0] - 4 - frame * 0.4, fh[1] + 10] : [fh[0] - 1 + Math.sin(t - 1.4) * 2 * amp - (walk ? 2 : 0), fh[1] + 11 - (walk ? 0.6 : 0)];
-  out.push(...chainLinks([fh[0] - 2, fh[1] + 1], end, 0.6, 6, chain, chainD, robe));
-  out.push(...oE(end[0], end[1] + 1.4, 1.6, 1.5, chain, 0.5), F(E(end[0], end[1] + 1.4, 0.8, 0.7, robe)), F(E(end[0] + 1.6, end[1] + 2.2, 0.6, 0.5, robe)));
-  const slv = [[27.4, 24.4], [32.4, 25], [fh[0] + 1.6, fh[1] - 3.4], [fh[0] + 1.2, fh[1] + 1.2], [fh[0] - 0.6, fh[1] + 0.4], [fh[0] - 2, fh[1] + 2.4], [fh[0] - 3.4, fh[1] + 0.8], [fh[0] - 5, fh[1] + 2.6], [27.6, 33], [25.8, 29]];
-  out.push(...oT(slv, robe), F(T([slv[0], slv[1], slv[2], [fh[0], fh[1] - 2.2], [30.4, 27]], robeL)), ...stroke([[fh[0] - 3.4, fh[1] + 0.6], [fh[0] - 1, fh[1] - 1.4]], 0.5, robeD), ...stroke([[28, 30.6], [fh[0] - 3, fh[1] - 1]], 0.5, robeD));
-  const curl = ak ? ak.curl : (angry ? 1.4 : hurt ? -0.6 : 0) + (walk ? 0 : Math.sin(t * 2) * 0.4);
-  for (const [dy, l] of [[-1.4, 4], [0.2, 4.6], [1.6, 3.6]]) out.push(...limb([[fh[0] + 0.8, fh[1] - 0.2 + dy * 0.6], [fh[0] + 1 + l * 0.6, fh[1] + dy], [fh[0] + 1 + l * 0.85, fh[1] + dy + 1.6 + curl]], 0.9, claw, 0.45), F(T([[fh[0] + 0.6 + l * 0.85, fh[1] + dy + 1.4 + curl], [fh[0] + 1.4 + l * 0.85, fh[1] + dy + 1.4 + curl], [fh[0] + 1 + l * 0.8, fh[1] + dy + 2.6 + curl]], '#ffffff')));
-  out.push(...oE(fh[0] + 0.4, fh[1] - 0.2, 2, 1.7, claw, 0.5), F(E(fh[0] + 0.8, fh[1] - 0.8, 0.8, 0.5, '#ffffff')));
+  const peak = pts(chain(joint(ID, 15.6, 5.4), [2.6, 2.4, 2], wave(3, 0, 0.2 * amp, ph - 1.8, 0.8).map((a, i) => (i ? 0.5 + a : 3.6 + a - (walk ? 0.2 : 0)))));
+  hd.push(...oRibbon(peak, [5, 3.6, 2.2, 0.6], P.s1));
+  const hood = [[12.6, 22.6], [11.4, 15], [13, 8.4], [17, 4], [23, 2], [28.6, 4.2], [31.8, 9.4], [32.8, 15.2], [31.6, 21], [26.4, 23.6], [18.4, 23.8]];
+  hd.push(...oT(hood, P.base), F(T([[12.6, 22.6], [11.4, 15], [13, 8.4], [17, 4], [16, 10], [16.4, 17], [18.4, 23.8]], P.s1)), F(T([[19, 3.4], [23, 2], [28.6, 4.2], [31.8, 9.4], [28.4, 7.2], [23.6, 5]], P.hi)));
+  const hole = [[19.6, 13.4], [20.6, 9.4], [23.6, 6.8], [27.4, 7.4], [30, 10.4], [30.8, 14.6], [29.8, 19], [26.6, 21], [22.6, 20.6], [20.2, 17.6]];
+  hd.push(F(T(grow(hole, 0.9), P.s2)), F(T(hole, P.hood)), F(T([[20.6, 9.4], [23.6, 6.8], [27.4, 7.4], [30, 10.4], [27, 9], [23.6, 8.8]], step(P.hood, 0.06))));
+  const look = ak ? 0.6 : walk ? 0.5 : Math.sin(ph) * 0.7;
+  const lk = look * 0.4;
+  const ge = { c: eyeC, bg: P.hood, look: [look, 0], shape: 'round', flick: wrap(u * 2) };
+  const act = { angry: { lid: 0.3, slant: 0.9, raise: 0.2 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[angry ? 'angry' : mood] ?? {};
+  if (dead) hd.push(...deadEye(23.4, 14.4, 1.1, { c: eyeC }), ...deadEye(27.8, 14.2, 1.3, { c: eyeC }));
+  else hd.push(...glowEye(23.4 + lk, 13.8, { ...ge, ...act, s: -1, w: 1.2, h: 1.4 }), ...glowEye(27.8 + lk, 13.6, { ...ge, ...act, s: 1, w: 1.5, h: 1.6 }));
+  const mo = { ink: mix(eyeC, P.hood, 0.35), inner: '#08050f', tongue: false };
+  const mx = 25.8 + lk;
+  if (ak && (frame === 1 || frame === 2) && !dead) hd.push(...mouth(mx, 18, { ...mo, type: 'shout', w: 1.5, h: 2.4, open: 1 }));
+  else if (angry && !dead) hd.push(...mouth(mx, 18, { ...mo, type: 'snarl', w: 1.7, h: 1.2, open: 0.7, teeth: 'gritted' }));
+  else if (hurt) hd.push(...mouth(mx, 18, { ...mo, type: 'o', w: 0.8, h: 1.1, open: 1 }));
+  else if (mood === 'happy') hd.push(...mouth(mx, 17.6, { ...mo, type: 'smile', w: 1.3, curve: 0.5 }));
+  else if (dead) hd.push(...mouth(mx, 18, { ...mo, type: 'wavy', w: 1.2, amp: 0.25 }));
+  out.push(...put(head, hd));
+
+  // Front sleeve reaching out (IK), its bell cuff, the bone claw, and the shackle chain that
+  // hangs from the wrist like a pendulum, lagging the hand.
+  const reachT = ak ? ak.fh : [35 + Math.sin(ph) * 0.8 * amp + (angry ? 1 : 0) - (walk ? 0.6 : 0), 33 + Math.cos(ph) * 0.6 * amp + (dead ? 5 : 0) + (hurt ? -1 : 0)];
+  const fS = ap(body, 28.6, 24.4);
+  const fH = ap(body, ...reachT);
+  const fE = ik(fS, fH, 6.2, 6.2, ak && frame === 0 ? -1 : 1);
+  const wa = Math.atan2(fH[1] - fE[1], fH[0] - fE[0]);
+  const swing = ak ? [-0.6, 0.7, 0.4, 0.1][frame] : walk ? Math.sin(ph - 1.6) * 0.3 : Math.sin(ph - 1.4) * 0.12;
+  const sc = chain(joint(ID, fH[0] - 1, fH[1] + 0.6), [1.6, 1.6, 1.6, 1.6, 1.6], [Math.PI / 2 - swing, swing * 0.4, swing * 0.3, swing * 0.2, swing * 0.1]);
+  const scP = pts(sc);
+  const end = scP[scP.length - 1];
+  out.push(...links(scP, IRON.base, IRON.s1, P.s2), ...oE(end[0], end[1] + 1.4, 1.7, 1.5, IRON.base, 0.5), F(E(end[0], end[1] + 1.4, 0.85, 0.7, P.s2)), F(E(end[0] - 0.6, end[1] + 0.4, 0.6, 0.35, '#ffffff')));
+  out.push(...oRibbon([fS, fE, fH], [4.6, 5, 6.4], P.base), ...stroke([fS, fE], 1.2, P.hi));
+  const curl = ak ? ak.curl : (angry ? 1.2 : hurt ? -0.5 : dead ? 1.6 : 0) + Math.sin(ph * 2 - 0.5) * 0.25 * amp;
+  out.push(...put(joint(ID, fH[0], fH[1], wa), [F(E(0, 0, 1.3, 2.6, P.hood)), ...boneClaw(curl, ak && frame === 0 ? 1.4 : 1)]));
+
   if (ak && !dead) {
+    const hw = ap(head, 31, 13);
     if (frame === 1) {
-      // The scream ripples out of the hood; speed lines trail the claw.
-      for (const r of [3, 5.4]) fxs.push(arc(30 + r * 0.4, 18, r * 0.55, r, -60, 60, 0.6, '#e6dcff'));
-      fxs.push(...streaks([[fh[0] - 12, fh[1] - 7, fh[0] - 5, fh[1] - 3], [fh[0] - 11, fh[1] - 3, fh[0] - 5, fh[1]]], '#d9d0f6', 0.6));
+      // The scream ripples out of the hood; a smear trails the claw.
+      for (const r of [3, 5.4]) fxs.push(arc(hw[0] + r * 0.4, hw[1], r * 0.55, r, -60, 60, 0.67, '#e6dcff'));
+      fxs.push(F(T(ribbonPts([[fH[0] - 9, fH[1] - 9], [fH[0] - 4, fH[1] - 4], [fH[0] + 1, fH[1] + 0.6]], [0.4, 3, 4]), '#e3dafa')));
     } else if (frame === 2) {
-      for (const r of [4.2, 6.6]) fxs.push(arc(30 + r * 0.45, 18, r * 0.55, r, -60, 60, 0.5, '#e6dcff'));
-      for (const k of [-2.2, 0, 2.2]) fxs.push(...stroke([[33 + k * 0.4, 24 + k], [37.6 + k * 0.3, 29 + k], [38.4 + k * 0.2, 35 + k]], 0.7, '#ff9ec0'), ...stroke([[33.4 + k * 0.4, 25 + k], [37.4 + k * 0.3, 29.6 + k]], 0.3, '#ffffff'));
+      for (const r of [4.2, 6.6]) fxs.push(arc(hw[0] + r * 0.45, hw[1], r * 0.55, r, -60, 60, 0.67, '#e6dcff'));
+      for (const k of [-2.2, 0, 2.2]) fxs.push(...stroke([[fH[0] - 1 + k * 0.4, fH[1] - 10 + k], [fH[0] + 3.4 + k * 0.3, fH[1] - 4 + k], [fH[0] + 4 + k * 0.2, fH[1] + 1 + k]], 0.8, '#ff9ec0'), ...stroke([[fH[0] - 0.6 + k * 0.4, fH[1] - 9 + k], [fH[0] + 3.2 + k * 0.3, fH[1] - 3.6 + k]], 0.4, '#ffffff'));
     }
   }
-  let shapes = out;
-  // The eerie slide: leaning into the glide, shearing the top forward.
-  const lean = ak ? ak.lean : walk ? 0.07 + Math.sin(t - 0.6) * 0.015 : 0;
-  if (lean) shapes = xf(shapes, (x, y) => [x + (46 - y) * lean, y]);
-  const bob = ak ? 0 : walk ? Math.sin(t) * 0.7 : Math.sin(t) * 0.5;
-  shapes = mv([...shapes, ...fxs], (hurt ? -1.4 : 0) + (ak ? ak.dx : walk ? -0.6 : 0), bob + (ak ? ak.dy : 0));
-  return { w: 40, h: 52, res: 3, shapes };
+  return { w: 40, h: 52, res: 3, shapes: [...out, ...fxs] };
 }
 
 // ---------- Exports ----------
@@ -1263,3 +1264,6 @@ export const INFO = {
   rockgolem: { name: 'Crystal Golem', w: 46, h: 60 },
   shade: { name: 'Wraith', w: 26, h: 40 },
 };
+
+// The rig and motion helpers, shared with the other monster modules.
+export { ID, joint, ap, pivot, move, put, chain, pts, wave, wrap, ease, breath, beat, burst, streaks, ik, gait, step };
