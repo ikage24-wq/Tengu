@@ -133,6 +133,22 @@ says many more examples are on X, Pinterest and Reddit, so ask them for screensh
 - Players finish a look with a themed backdrop, matching effects (petals, sparkles, bubbles)
   and a pose. The whole picture shares one colour key, either light and pastel or dark and rich.
 
+## The body the player wants (Sakuemon-style curvy chibi)
+
+The player's "dream body" reference is Sakuemon's pixel sprites (same source as in
+[anim.md](anim.md)). Its proportions:
+- **Height:** about 3 heads tall: a big head with big hair, a short torso, and legs about one head
+  long.
+- **Curves:** a defined bust, a narrow waist, and hips wider than the shoulders.
+- **Legs:** soft full thighs that touch and stay full most of the way down, then taper fast to
+  slim calves, thin ankles and small shoes.
+- **Stance:** knees turned in a little, weight on one leg.
+- **Rendering:** crisp 1 px dark outlines and chunky 3–4 tone shading, with lots of costume
+  detail (folds, frills, coats).
+
+A still test body in these proportions was drawn on a scratch copy (not in the game). Bringing it
+in would mean redoing the rig, the walk, run and attack poses, and every outfit.
+
 ## To do with this reference
 
 - [x] Gather a reference library: 128 hair, 139 outfits, faces, props, stages and full looks

@@ -205,6 +205,42 @@ Raw page dumps are in `scratchpad/ranim/p/` and contact sheets of our GIFs are i
     Contacts fall on frames 1, 13 and 25, with down and pass in between. A Korean summary (https://blog.naver.com/mg2201/223077128797) states the working order: **set the timing first, then the spacing within it**.
     **Applies to**: sanity-checking `stride`. A chibi takes about 3 steps a second at a natural walk and 4–6 when angry (`fast = 1.5`). Effort **S**.
 
+### Pixel idle and run loops from Sakuemon's curvy chibi sprites (player's reference)
+
+Source: Sakuemon's pixel-art sheet of five characters, all looping
+(https://tenor.com/view/sakuemon-pixel-art-hololive-houshou-marine-disgaea-gif-19771950). The
+GIF has 60 frames at 120 ms each, about 8 fps. Each character runs its own loop inside it. The
+player wants hero bodies in this style; see `avatar.md` for the proportions.
+
+- **Frames are held long, and the poses are big.** Every frame lasts 120 ms. Idles loop over about
+  6 frames (the gown and the casual girl) to 10–12 (the pirate). The run is 8 frames. Motion reads
+  from pose changes of 1–3 px, not from smooth tweening.
+- **No idle stands still.** Every idle has three things:
+  - the weight shifts from leg to leg (the knees bend in turn and the hips sway side to side);
+  - the upper body bobs by 1 px on the down beat;
+  - something does a personal action: a wink, licking a sweet, a hand gesture or a twirl.
+- **Secondary parts lag 1–2 frames behind the body:**
+  - hair (ponytails, long locks);
+  - coat tails and capes;
+  - big skirt hems, which ripple round the bottom in a wave;
+  - bows and pouches.
+
+  Each of these swings the opposite way to the hip sway, then settles.
+- **The run is fast and heavy:**
+  - a strong forward lean and high knees;
+  - the back foot kicks up to hip height;
+  - the body is lowest on contact and highest in the push-off frame;
+  - the arms stay steady when holding something;
+  - a ponytail streams behind and bobs once per step;
+  - pouches and flaps bounce a frame late.
+- **The silhouette changes every frame.** The hem outline, the hair outline and the gap between
+  the legs all change, so the loop reads even at a glance.
+- **Apply to Tengu:**
+  - give the idle a hip sway and a weight shift, not just breathing;
+  - put a skirt-hem ripple and a coat-tail lag on the cape and skirt springs;
+  - give each hero a "personal idle beat" every few seconds (the expressions already do some of this);
+  - keep hair on its lagging spring, as the new hair system does.
+
 ## 4. Concrete upgrade plan (ordered by payoff per effort)
 
 1. **Per-frame attack timings** (`atkMs`) for every mob with `attack` frames, with damage on the impact frame. Defaults by weight:
