@@ -110,7 +110,12 @@ function drawMobs(ctx, world, cam, time) {
     if (x < -80 || x > VIEW_W + 80) continue;
     // In a dungeon a swing winds back, then lunges.
     const lean = m.windup > 0 ? -m.dir * 2.5 : m.lunge > 0 ? m.dir * 6 * (m.lunge / 0.18) : 0;
-    drawMonster(ctx, m, x + lean, y, time, world.now);
+    // During hit-stop the monster just struck shudders in place (sideways on the ground, up and
+    // down in the air), so the frozen moment still reads as an impact.
+    const struck = world.hitstop > 0 && m.flash > 0 && m.hp > 0;
+    const jolt = struck ? (Math.floor(time * 60) % 2 ? 1 : -1) * Math.min(2, 0.6 + world.hitstop * 20) : 0;
+    const airborne = m.air > 0;
+    drawMonster(ctx, m, x + lean + (airborne ? 0 : jolt), y + (airborne ? jolt : 0), time, world.now);
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
     if (m.def.boss) boss = m;
     if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {

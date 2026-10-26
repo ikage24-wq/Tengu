@@ -10,7 +10,7 @@ import { needle, starFlash, shardRing, puff, crown, shock, wisp, easeOut, easeIn
 const MAX = 600;
 
 export function createParticles() {
-  return { list: [], shake: { t: 0, dur: 0, mag: 0 }, delayed: [], ambientTimer: 0 };
+  return { list: [], trauma: 0, delayed: [], ambientTimer: 0 };
 }
 
 function add(fx, p) {
@@ -20,16 +20,26 @@ function add(fx, p) {
   fx.list.push({ age: 0, g: 0, drag: 0, grow: 0, shape: 'dot', alpha: 1, spin: 0, ...p });
 }
 
+// Screen shake is "trauma": every jolt adds to it, it drains away over time, and the camera moves
+// by its square along smooth noise, so small bumps barely register and big hits stack up into a
+// real quake instead of the newest shake replacing the last. `dur` sets how long a jolt lingers.
+const SHAKE_MAX = 10;
 export function shake(fx, mag, dur) {
-  if (mag >= fx.shake.mag * (1 - fx.shake.t / Math.max(0.01, fx.shake.dur))) fx.shake = { t: 0, dur, mag };
+  const was = fx.trauma;
+  fx.trauma = Math.min(1, fx.trauma + mag / 9);
+  // Drain so this jolt lasts about `dur`, but never cut short a longer quake still running.
+  const drain = fx.trauma / Math.max(0.15, dur);
+  fx.drain = was > 0 ? Math.min(fx.drain, drain) : drain;
 }
 
-// Camera offset for this frame: a decaying wobble.
+// Smooth noise in -1..1 from a few unrelated sines (cheap, continuous, never repeats visibly).
+const wobble = (t, seed) => (Math.sin(t * 17.3 + seed) + Math.sin(t * 29.1 + seed * 2.1) * 0.6 + Math.sin(t * 47.7 + seed * 3.7) * 0.3) / 1.9;
+
+// Camera offset for this frame.
 export function shakeOffset(fx, time) {
-  const s = fx.shake;
-  if (s.t >= s.dur || !settings.screenShake) return [0, 0];
-  const k = (1 - s.t / s.dur) ** 2 * s.mag;
-  return [snap(Math.sin(time * 71) * k), snap(Math.cos(time * 53) * k * 0.6)];
+  if (fx.trauma <= 0 || !settings.screenShake) return [0, 0];
+  const k = fx.trauma * fx.trauma * SHAKE_MAX;
+  return [snap(wobble(time, 1) * k), snap(wobble(time, 7) * k * 0.7)];
 }
 
 // Cel dust puffs kicked up from the ground: little two-tone lumps that pop up, drift, and
@@ -220,7 +230,7 @@ const AMBIENT = {
 };
 
 export function updateParticles(fx, dt, world, cam, viewW, viewH) {
-  fx.shake.t += dt;
+  fx.trauma = Math.max(0, fx.trauma - (fx.drain ?? 1) * dt);
   for (const d of fx.delayed) {
     d.at -= dt;
     if (d.at <= 0) shake(fx, d.mag, d.dur);
