@@ -18,7 +18,7 @@ import { addItem } from '../core/inventory.js';
 import { makeEquip, itemName } from '../core/items.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { knockBack } from './physics.js';
-import { spawnMob } from './mobs.js';
+import { spawnMob, yank, tickYank } from './mobs.js';
 import { navOf, surfaceBelow, surfaceOf } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { recruitBot } from './bots.js';
@@ -118,7 +118,7 @@ export function startRun(world, id = 'hollow') {
   for (const bot of partyMembers(world.bots)) prep(bot);
   loadMap(world, def.rooms[0], 'start');
   world.log(`Your group enters ${def.name}! You are the ${ROLES[roles.you].label}.`, '#ffe36b');
-  if (roles.you === 'tank') world.log('Tanks: press T to Provoke everything nearby onto you.', '#bff0dc');
+  if (roles.you === 'tank') world.log('Tanks: Provoke pulls everything nearby onto you, and Chain Hook drags monsters over for the group.', '#bff0dc');
   return null;
 }
 
@@ -398,39 +398,33 @@ function healThreat(world, who, amount) {
   for (const m of world.mobs) if (m.engaged && m.hp > 0) m.threat[who] = (m.threat[who] ?? 0) + amount * 0.5;
 }
 
-// Every monster nearby turns on `who`: the tank's Provoke.
-export function provoke(world, who, body) {
+// A monster turns on `who` and sticks with them for `hold` seconds.
+function taunt(world, m, who, hold) {
+  engage(world, m, who);
+  const top = Math.max(0, ...Object.values(m.threat));
+  m.threat[who] = top * 1.2 + 50;
+  m.taunt = { id: who, until: world.now + hold };
+}
+
+// Every monster within `range` turns on `who`: the warrior's Provoke.
+export function provoke(world, who, body, range = PROVOKE.range, hold = PROVOKE.hold) {
   let n = 0;
   for (const m of world.mobs) {
-    if (m.hp <= 0 || m.def.fight?.mender || Math.abs(m.x - body.x) > PROVOKE.range || Math.abs(m.y - body.y) > 120) continue;
-    engage(world, m, who);
-    const top = Math.max(0, ...Object.values(m.threat));
-    m.threat[who] = top * 1.2 + 50;
-    m.taunt = { id: who, until: world.now + PROVOKE.hold };
+    if (m.hp <= 0 || m.def.fight?.mender || Math.abs(m.x - body.x) > range || Math.abs(m.y - body.y) > 120) continue;
+    taunt(world, m, who, hold);
     n++;
   }
-  world.dungeon.vfx.push({ kind: 'provoke', x: body.x, y: body.y, t: 0, dur: 0.6 });
+  world.fx.push({ kind: 'roar', x: body.x, y: body.y, r: range, t: 0, dur: 0.6 });
   return n;
 }
 
-// T: the tank's Provoke.
-export function roleAction(world) {
-  const run = world.dungeon;
-  if (!run || world.dead || world.attackTimer > 0) return;
-  if (run.roles.you !== 'tank') {
-    if (world.warnTimer <= 0) world.log('Only the tank can Provoke.', '#ffb3c6');
-    world.warnTimer = 1.5;
-    return;
-  }
-  if (world.char.mp < PROVOKE.mp) {
-    if (world.warnTimer <= 0) world.log('Not enough MP.', '#ffb3c6');
-    world.warnTimer = 1.5;
-    return;
-  }
-  world.char.mp -= PROVOKE.mp;
-  world.attackTimer = 0.35;
-  world.pose = { kind: 'roar', t: 0.45, dur: 0.45 };
-  provoke(world, 'you', world.body);
+// The warrior's Chain Hook in a dungeon: the monsters it catches turn on `who` and get dragged
+// over, lined up in front of them for the group (bosses are too heavy to move).
+export function hookMobs(world, who, body, mobs, dir) {
+  mobs.forEach((m, i) => {
+    taunt(world, m, who, 2);
+    if (!m.def.boss) yank(m, body.x + dir * (m.def.w / 2 + 14 + i * 14));
+  });
 }
 
 // ---------- Hurting and healing the group ----------
@@ -440,7 +434,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   const body = g.body;
   if (g.bot) {
     const bot = g.bot;
-    const dmg = absorb(world, body, bot.buffs, pierce ? Math.round(raw) : damageTaken(raw, bot.stats.wdef));
+    const dmg = absorb(world, body, bot.buffs, Math.round((pierce ? raw : damageTaken(raw, bot.stats.wdef)) * (1 - cutOf(bot.buffs, world.now))));
     bot.hp = Math.max(0, bot.hp - dmg);
     bot.hurt = 0.3;
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
@@ -458,7 +452,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   if (world.god) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, body, char.buffs, pierce ? Math.round(raw) : damageTaken(raw, s.wdef));
+  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (1 - cutOf(char.buffs, world.now))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -502,6 +496,13 @@ export function healMembers(world, pct, box) {
 }
 
 // ---------- Support magic ----------
+
+// Shield Wall and Rally Cry take a share off every hit (never more than 60%).
+export function cutOf(buffs, now) {
+  let cut = 0;
+  for (const b of Object.values(buffs ?? {})) if (b.until > now && b.values?.dmgCut) cut += b.values.dmgCut;
+  return Math.min(0.6, cut);
+}
 
 // A barrier soaks up damage before HP; it pops when used up. Returns the damage left over.
 export function absorb(world, body, buffs, dmg) {
@@ -612,6 +613,7 @@ function fight(world, m, up, dt) {
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
   m.lunge = Math.max(0, (m.lunge ?? 0) - dt);
+  if (tickYank(m, dt)) return;
   if (m.frozenUntil > now) {
     m.stagger = 0;
     return;
@@ -956,6 +958,7 @@ export function tickDungeon(world, dt) {
 function idle(m, dt, now) {
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
+  if (tickYank(m, dt)) return;
   m.phase += dt;
   if (m.def.speed <= 0) return;
   m.timer -= dt;
@@ -1081,7 +1084,12 @@ export function roleThink(bot, world, rng) {
     const tankTarget = tank && (tank.bot ? tank.bot.brain.target : fights.find((m) => m.target === 'you' || m.threat?.you > 0));
     if (role === 'tank') {
       const loose = fights.filter((m) => m.target && m.target !== bot.id && !m.def.fight?.mender);
-      if (loose.length && world.now >= (br.provokeAt ?? 0) && loose.some((m) => Math.abs(m.x - body.x) < PROVOKE.range)) {
+      // A loose one out of reach gets hooked back; a crowd around gets Provoked.
+      const far = loose.filter((m) => !m.def.boss && Math.abs(m.x - body.x) > 70 && Math.abs(m.x - body.x) < 300 && Math.abs(m.y - body.y) < 60);
+      if (far.length && world.now >= (br.hookAt ?? 0)) {
+        botHook(world, bot, far.slice(0, 4), rng);
+        br.hookAt = world.now + between(3, 4.5, rng);
+      } else if (loose.length && world.now >= (br.provokeAt ?? 0) && loose.some((m) => Math.abs(m.x - body.x) < PROVOKE.range)) {
         provoke(world, bot.id, body);
         bot.attack = { pose: 'roar', t: 0, dur: 0.5 };
         br.provokeAt = world.now + between(2.2, 3.2, rng);
@@ -1127,7 +1135,16 @@ export function roleThink(bot, world, rng) {
     const next = nearest(asleep, body);
     if (next) {
       const ready = up.length === group.length && up.every((g) => hpOf(world, g) / maxHpOf(world, g) > 0.7) && Math.abs(world.body.x - body.x) < 420;
-      br.goal = ready ? goalAt(world, next.x - Math.sign(next.x - body.x) * 20, next.y, 'fight') : goalAt(world, next.x - Math.sign(next.x - body.x || 1) * 190, next.y, 'follow');
+      // Ready: hook the pack back to the group from range (bosses are walked up to).
+      const pack = next.spawn?.pack ? asleep.filter((m) => m.spawn?.pack === next.spawn.pack) : [next];
+      const dist = Math.abs(next.x - body.x);
+      if (ready && !next.def.boss && dist < 280 && dist > 60 && Math.abs(next.y - body.y) < 60 && body.onGround && world.now >= (br.hookAt ?? 0)) {
+        botHook(world, bot, pack.slice(0, 5), rng);
+        br.hookAt = world.now + between(3, 4.5, rng);
+        if (rng() < 0.5) bot.bubble = { text: pick(['pulling!', 'gather up!', 'get over here!', 'AoE them!']), t: 2.5 };
+        return;
+      }
+      br.goal = ready ? goalAt(world, next.x - Math.sign(next.x - body.x || 1) * (next.def.boss ? 20 : 220), next.y, 'fight') : goalAt(world, next.x - Math.sign(next.x - body.x || 1) * 190, next.y, 'follow');
       if (ready && rng() < 0.02) bot.bubble = { text: pick(['pulling!', 'ready?', 'going in', 'next pack']), t: 2.5 };
       return;
     }
@@ -1152,6 +1169,16 @@ export function roleThink(bot, world, rng) {
   const follow = lead === me ? group.find((g) => !g.bot) : lead;
   const k = 1 + (bot.slot ?? 0);
   br.goal = goalAt(world, Math.max(30, follow.body.x - 34 * k), follow.body.y, 'follow');
+}
+
+// A party tank throws their Chain Hook at monsters in front of them.
+function botHook(world, bot, mobs, rng) {
+  const body = bot.body;
+  const dir = Math.sign(mobs[0].x - body.x) || 1;
+  body.facing = dir;
+  hookMobs(world, bot.id, body, mobs, dir);
+  world.fx.push({ kind: 'hook', x: body.x + dir * 10, y: body.y - 28, mobs, t: 0, dur: 0.5 });
+  bot.attack = { pose: 'throw', t: 0, dur: 0.45, fighting: true };
 }
 
 function nearest(list, body) {

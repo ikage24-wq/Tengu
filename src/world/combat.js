@@ -7,7 +7,8 @@ import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance }
 import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
-import { healMembers, buffMembers, reviveTarget, reviveMember } from './dungeon.js';
+import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
+import { yank } from './mobs.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -136,6 +137,39 @@ export function cast(world, skillId, rng = Math.random) {
     if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));
     world.log(`${s.name} is active.`, '#ffe36b');
     return { ok: true };
+  }
+
+  // Provoke: everything around you comes after you.
+  if (type === 'provoke') {
+    if (world.dungeon) provoke(world, 'you', body, params.range.w / 2, params.hold);
+    else {
+      const box = hitBox(body, params.range);
+      for (const m of world.mobs) {
+        if (m.hp <= 0 || !overlaps(box, mobBox(m))) continue;
+        m.aggroUntil = now + 6;
+        m.dir = Math.sign(body.x - m.x) || m.dir;
+      }
+      world.fx.push({ kind: 'roar', x: body.x, y: body.y, r: params.range.w / 2, t: 0, dur: 0.6 });
+    }
+    world.juice?.push({ type: 'shake', mag: 1.5, dur: 0.2 });
+    return { ok: true };
+  }
+
+  // Chain Hook: the chain flies out, catches monsters in front, and drags them back to you
+  // (along their ledge; bosses are too heavy), lined up for the party.
+  if (type === 'hook') {
+    const caught = pickTargets(world.mobs, body, params.range, params.targets);
+    if (world.dungeon) hookMobs(world, 'you', body, caught, body.facing);
+    else caught.forEach((m, i) => !m.def.boss && yank(m, body.x + body.facing * (m.def.w / 2 + 14 + i * 14)));
+    const acc = accuracy(JOBS[char.job].family, stats, char.level);
+    const range = physicalRange(stats, stats.weaponType, params.pct);
+    caught.forEach((m, i) => {
+      const miss = rng() >= hitChance(acc, char.level, m.def);
+      const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
+      world.pending.push({ at: now + 0.15 + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: 0 });
+    });
+    world.fx.push({ kind: 'hook', x: body.x + body.facing * 10, y: body.y - 28, mobs: caught, reach: body.x + body.facing * params.range.w, t: 0, dur: 0.5 });
+    return { ok: true, targets: caught.length };
   }
 
   if (type === 'revive') {

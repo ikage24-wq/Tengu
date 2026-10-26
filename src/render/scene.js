@@ -306,7 +306,7 @@ function drawDungeonBack(ctx, world, cam, time) {
   }
 }
 
-// Things that happen in the air: boss moves landing, spit, Provoke's roar, group heals, and the
+// Things that happen in the air: boss moves landing, spit, group heals, and the
 // bar while you work on something.
 function drawDungeonFront(ctx, world, cam, time) {
   const run = world.dungeon;
@@ -319,11 +319,7 @@ function drawDungeonFront(ctx, world, cam, time) {
     const x = v.x - cam.x;
     const y = v.y - cam.y;
     ctx.save();
-    if (v.kind === 'provoke') {
-      ctx.globalAlpha = 1 - p;
-      shock(ctx, x, y - 22, 20 + p * 90, 10 + p * 40, 4 * (1 - p) + 0.5, '#ff7a6b');
-      shock(ctx, x, y - 22, 10 + p * 60, 6 + p * 26, 3 * (1 - p) + 0.5, '#ffffff');
-    } else if (v.kind === 'groupheal') {
+    if (v.kind === 'groupheal') {
       ctx.globalAlpha = 1 - p;
       shock(ctx, x, y - 4, 30 + p * 120, 6 + p * 18, 3 * (1 - p) + 0.5, '#7ee081');
     } else if (v.kind === 'spit') {

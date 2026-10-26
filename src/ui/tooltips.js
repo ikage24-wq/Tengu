@@ -63,11 +63,13 @@ function describe(params) {
   if (params.hits > 1) parts.push(`${params.hits} hits`);
   if (params.targets > 1) parts.push(`up to ${params.targets} foes`);
   if (params.healPct) parts.push(`heals ${Math.round(params.healPct * 100)}% HP`);
+  if (params.hold) parts.push(`${params.range.w / 2}px around, holds them ${Math.round(params.hold * 10) / 10}s`);
+  if (params.pull) parts.push(`pulls from ${params.range.w}px`);
   if (params.buff) {
     for (const [k, v] of Object.entries(params.buff)) {
-      const pct = ['attackSpeed', 'manaShield', 'maxHpPct', 'critRate', 'regenPct', 'barrier'].includes(k);
-      const name = { attackSpeed: 'attack speed', manaShield: 'damage to MP', maxHpPct: 'max HP', critRate: 'crit rate', regenPct: 'HP every second', barrier: 'max HP as a barrier' }[k] ?? STAT_NAMES[k] ?? k;
-      parts.push(`${k === 'barrier' ? '' : '+'}${pct ? `${Math.round(v * 1000) / 10}%` : v} ${name}`);
+      const pct = ['attackSpeed', 'manaShield', 'maxHpPct', 'critRate', 'regenPct', 'barrier', 'dmgCut'].includes(k);
+      const name = { attackSpeed: 'attack speed', manaShield: 'damage to MP', maxHpPct: 'max HP', critRate: 'crit rate', regenPct: 'HP every second', barrier: 'max HP as a barrier', dmgCut: 'less damage taken' }[k] ?? STAT_NAMES[k] ?? k;
+      parts.push(`${k === 'barrier' || k === 'dmgCut' ? '' : '+'}${pct ? `${Math.round(v * 1000) / 10}%` : v} ${name}`);
     }
     parts.push(`${params.duration}s`);
   }

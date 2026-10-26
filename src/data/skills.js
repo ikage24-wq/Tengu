@@ -6,10 +6,13 @@
 //   heal    - restores HP (yours, and in a dungeon your party's in range) and smites monsters in
 //             range with holy damage (none with targets: 0)
 //   revive  - gets a fallen party member in range back on their feet (dungeons)
+//   provoke - every monster in range turns on you (`hold` seconds of sticking to you in a dungeon)
+//   hook    - a chain flies forward and drags the monsters it catches (up to `targets`) to you
 //   blink   - teleports you `distance` forward
 //   buff    - timed bonuses; `buff` keys are added to the player's stats while active. `party`
 //             buffs also land on party members in `range` (in a dungeon). `regenPct` heals that
-//             share of max HP every second; `barrier` absorbs damage up to that share of max HP.
+//             share of max HP every second; `barrier` absorbs damage up to that share of max HP;
+//             `dmgCut` takes that share off every hit.
 //   passive - always-on bonuses once learned
 //
 // Range: `w`/`h` is the hit box in front of the player. `projectile` skills hit the nearest
@@ -70,6 +73,32 @@ export const SKILLS = {
     id: 'vigor', name: 'Vigor', job: 'warrior', type: 'passive', fx: null,
     desc: 'Raises max HP and HP recovery.',
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.02, 0.2, lv, m), restRegen: lerp(2, 20, lv, m) } }),
+  }),
+  // Tanking: warriors hold the monsters so the rest of the group can fight.
+  provoke: skill({
+    id: 'provoke', name: 'Provoke', job: 'warrior', type: 'provoke', fx: 'roar', icon: 'provoke', school: 'steel', maxLevel: 10,
+    desc: 'Roar at every monster around you so they all come after you.',
+    at: (lv, m) => ({ mp: lerp(8, 4, lv, m), hold: lerpf(2, 4, lv, m), range: { w: lerp(300, 480, lv, m), h: 140, around: true } }),
+  }),
+  chainhook: skill({
+    id: 'chainhook', name: 'Chain Hook', job: 'warrior', type: 'hook', fx: 'hook', icon: 'hook', school: 'steel', lock: 0.25,
+    desc: 'Hurl a chain hook ahead and drag the monsters it catches right to you, gathered up for the party.',
+    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), pct: lerp(60, 130, lv, m), hits: 1, targets: lerp(3, 8, lv, m), range: { w: lerp(180, 320, lv, m), h: 80 }, pull: true }),
+  }),
+  shieldwall: skill({
+    id: 'shieldwall', name: 'Shield Wall', job: 'warrior', type: 'buff', fx: 'shield', school: 'steel',
+    desc: 'Brace behind your shield and take less damage from every hit for a while.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(10, 25, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m) } }),
+  }),
+  rallycry: skill({
+    id: 'rallycry', name: 'Rally Cry', job: 'warrior', type: 'buff', fx: 'buff', icon: 'rally', school: 'steel', party: true,
+    desc: 'A rousing shout: you and the party around you take less damage.',
+    at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(20, 45, lv, m), buff: { dmgCut: lerpf(0.06, 0.18, lv, m) }, range: { w: 440, h: 160, around: true } }),
+  }),
+  stalwart: skill({
+    id: 'stalwart', name: 'Stalwart', job: 'warrior', type: 'passive', fx: null,
+    desc: 'Tougher all around: more max HP and weapon defense.',
+    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
   }),
 
   // ---------- Mage (spells and support) ----------
@@ -367,6 +396,7 @@ export const SKILLS = {
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
+  provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip',

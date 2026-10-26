@@ -17,7 +17,7 @@ import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
-import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, roleAction, absorb } from './dungeon.js';
+import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -280,7 +280,7 @@ function hurtPlayer(world, rawAtk, fromX) {
   if (world.god) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, damageTaken(rawAtk, s.wdef));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -380,7 +380,6 @@ export function updateWorld(world, dt, input) {
     // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
     const attackKey = ['KeyZ', 'ControlLeft', 'ControlRight'].some((k) => held.has(k) || pressed.has(k));
     if (attackKey) cast(world, null);
-    if (world.dungeon && pressed.has('KeyT')) roleAction(world);
     for (const [code, binding] of Object.entries(char.hotkeys)) {
       if (!binding) continue;
       // Attack skills repeat while held; everything else fires once per press.

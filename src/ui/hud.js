@@ -16,7 +16,7 @@ import { settings } from '../core/settings.js';
 import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
-import { DUNGEONS, PROVOKE } from '../data/dungeons.js';
+import { DUNGEONS } from '../data/dungeons.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 
 const BAR_Y = 330;
@@ -162,7 +162,6 @@ export function drawHud(ui, state, world) {
   drawBuffs(ui, world);
   if (world.dungeon) {
     drawDungeonTracker(ui, world);
-    drawProvoke(ui, world);
     drawCallout(ctx, world);
   } else if (settings.questTracker) drawTracker(ui, world);
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
@@ -443,46 +442,6 @@ function drawDungeonTracker(ui, world) {
   text(ctx, `${n}/${def.rooms.length}  ${world.map.name}`, x + 6, y + 22, { size: 7, bold: true, color: COLORS.ink });
   rows.forEach((r, i) => text(ctx, `${r.done ? '✓' : r.next ? '➜' : '•'} ${r.label}`, x + 8, y + 32 + i * 10, { size: 6.5, color: r.done ? COLORS.good : r.next ? th.dark : COLORS.muted, bold: r.next }));
   if (run.wipes) text(ctx, `Wipes: ${run.wipes}`, x + w - 6, y + 22, { size: 6, align: 'right', color: COLORS.bad });
-}
-
-// Tanks get a reminder of their Provoke key, just above the hotkeys.
-function drawProvoke(ui, world) {
-  if (world.dungeon.roles.you !== 'tank') return;
-  const { ctx } = ui;
-  const ok = world.char.mp >= PROVOKE.mp;
-  box(ctx, 536, 312, 96, 13, { fill: ok ? 'rgba(90,168,255,0.9)' : 'rgba(150,160,190,0.8)', edge: '#ffffff', r: 6.5, width: 1 });
-  roleIcon(ctx, 'tank', 545, 318.5, '#ffffff');
-  text(ctx, `T  Provoke · ${PROVOKE.mp} MP`, 586, 321.5, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
-}
-
-// Shield for tanks, a cross for healers, a sword for damage.
-function roleIcon(ctx, role, x, y, color) {
-  ctx.save();
-  ctx.fillStyle = color;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  if (role === 'tank') {
-    ctx.moveTo(x - 4, y - 4);
-    ctx.lineTo(x + 4, y - 4);
-    ctx.lineTo(x + 4, y);
-    ctx.quadraticCurveTo(x + 4, y + 3, x, y + 5);
-    ctx.quadraticCurveTo(x - 4, y + 3, x - 4, y);
-    ctx.closePath();
-  } else if (role === 'healer') {
-    for (const [a, b, c, d] of [[-1.5, -4.5, 3, 9], [-4.5, -1.5, 9, 3]]) ctx.rect(x + a, y + b, c, d);
-  } else {
-    ctx.moveTo(x - 4, y + 4);
-    ctx.lineTo(x + 3, y - 3);
-    ctx.lineTo(x + 4.5, y - 4.5);
-    ctx.lineTo(x + 3.5, y - 2);
-    ctx.lineTo(x - 3, y + 5);
-    ctx.closePath();
-    ctx.rect(x - 4, y + 1, 3, 1.4);
-  }
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
 }
 
 // Boss moves and milestones, called out big across the middle of the screen.

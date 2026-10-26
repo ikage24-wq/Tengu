@@ -35,7 +35,7 @@ export function roleOf(jobId, family) {
   return 'dps';
 }
 
-// Provoke (T, tanks in a dungeon): every monster nearby turns on you.
-export const PROVOKE = { mp: 6, range: 240, hold: 3 };
+// A party tank's Provoke: how far it reaches and how long monsters stick to them.
+export const PROVOKE = { range: 240, hold: 3 };
 // How much more threat a tank's damage makes.
 export const TANK_THREAT = 5;

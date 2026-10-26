@@ -81,6 +81,29 @@ export function tickSpawner(spawner, map, now) {
   return born;
 }
 
+// Dragged by a chain hook toward x (along its own ledge): caught once the chain reaches it
+// (`wait` seconds), then reeled in over a moment.
+export function yank(m, x, wait = 0.15) {
+  m.yank = { x: Math.max(m.x1, Math.min(m.x2, x)), t: 0.3, wait };
+  m.dir = Math.sign(x - m.x) || m.dir;
+}
+
+// Moves a monster being dragged. Returns true while it is.
+export function tickYank(m, dt) {
+  if (!m.yank) return false;
+  if (m.yank.wait > 0) {
+    m.yank.wait -= dt;
+    return true;
+  }
+  m.yank.t -= dt;
+  m.x += (m.yank.x - m.x) * Math.min(1, dt * 16);
+  if (m.yank.t <= 0) {
+    m.x = m.yank.x;
+    m.yank = null;
+  }
+  return true;
+}
+
 export function hitMob(m, damage, fromX, now) {
   m.hp = Math.max(0, m.hp - damage);
   m.flash = 0.12;
@@ -101,6 +124,7 @@ export function updateMob(m, player, dt, now) {
   }
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
+  if (tickYank(m, dt)) return null;
   // Frozen solid: no moving, no animating, no winding up, until the ice cracks.
   if (m.frozenUntil > now) {
     m.stagger = 0;

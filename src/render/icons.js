@@ -173,6 +173,9 @@ function skillShapes(s) {
     case 'meteor': return [...bg, E(10, 10, 4, 4, l), R(3, 3, 2, 2, l), R(5, 5, 2, 2, l), R(7, 7, 2, 2, l), P(10, 9, c)];
     case 'judgment': return [...bg, R(3, 1, 2, 12, l), R(7, 1, 2, 13, l), R(11, 1, 2, 12, l), R(2, 13, 12, 2, l)];
     case 'heal': return [...bg, R(6, 3, 4, 10, l), R(3, 6, 10, 4, l)];
+    case 'provoke': return [...bg, E(6, 8, 3, 4, l), R(9, 5, 1, 2, l), R(11, 4, 1, 3, l), R(13, 3, 1, 5, l), R(11, 10, 1, 3, l), R(13, 9, 1, 5, l), R(9, 9, 1, 2, l), P(6, 7, c)];
+    case 'hook': return [...bg, R(2, 12, 2, 2, l), R(4, 10, 2, 2, l), R(6, 8, 2, 2, l), R(8, 6, 2, 2, l), R(10, 3, 2, 6, l), R(12, 3, 2, 2, l), R(12, 7, 2, 2, l), P(13, 9, l)];
+    case 'rally': return [...bg, R(4, 3, 1, 11, l), R(5, 3, 7, 5, l), R(7, 5, 3, 1, c), E(11, 12, 2, 2, l), E(8, 13, 1.5, 1.5, l)];
     case 'renew': return [...bg, E(8, 9, 5, 5, l), E(8, 9, 3, 3, c), R(7, 7, 2, 5, l), R(5.5, 8.5, 5, 2, l), P(3, 3, l), P(13, 4, l), P(12, 13, l)];
     case 'revive': return [...bg, E(4, 7, 2.5, 4, l), E(12, 7, 2.5, 4, l), R(7, 4, 2, 9, l), R(5, 6, 6, 2, l), E(8, 2.5, 2.5, 1, '#ffe36b')];
     case 'star': case 'pebble': return [...bg, R(7, 2, 2, 12, l), R(2, 7, 12, 2, l), R(5, 5, 6, 6, l)];

@@ -214,3 +214,47 @@ test("a mage's support skills heal, shield, and revive the group", async () => {
   for (let i = 0; i < 70; i++) updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: true });
   assert.ok(dps.bot.hp > 50, 'renewed');
 });
+
+test("a warrior's tank skills: Provoke, Chain Hook, Shield Wall", async () => {
+  const { cast } = await import('../src/world/combat.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const { hurtMember } = await import('../src/world/dungeon.js');
+  const rng = seeded(31);
+  const world = heroAt(rng, 12, ['warrior']);
+  Object.assign(world.char.skills, { provoke: 5, chainhook: 10, shieldwall: 10, rallycry: 5 });
+  world.char.mp = 999;
+  const ready = () => {
+    world.attackTimer = 0;
+    world.lockTimer = 0;
+  };
+  // Out in the field, the hook drags a monster in front of you over to you.
+  loadMap(world, 'woods', 'west');
+  const b = world.body;
+  const m = world.mobs.find((x) => x.y === world.map.groundY && x.x > 300 && x.def.hp >= 300);
+  Object.assign(b, { x: m.x - 200, y: world.map.groundY, onGround: true, facing: 1 });
+  ready();
+  assert.equal(cast(world, 'chainhook').targets >= 1, true);
+  for (let i = 0; i < 30; i++) updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: true });
+  assert.ok(Math.abs(m.x - b.x) < 80, `dragged over (now ${Math.round(Math.abs(m.x - b.x))}px away)`);
+  // In a dungeon, Provoke turns a pack on you.
+  loadMap(world, 'hollow_gate', 'start');
+  assert.equal(startRun(world), null);
+  const pack = world.mobs.filter((x) => x.spawn.pack === 'a');
+  Object.assign(world.body, { x: pack[0].x - 120, y: world.map.groundY, onGround: true });
+  ready();
+  assert.ok(cast(world, 'provoke').ok);
+  for (const x of pack) {
+    assert.ok(x.engaged);
+    assert.equal(x.taunt.id, 'you');
+  }
+  // Shield Wall takes a share off every hit.
+  const me = groupOf(world).find((g) => !g.bot);
+  world.char.hp = world.stats.maxHp;
+  hurtMember(world, me, 100, 0, { pierce: true });
+  const plain = world.stats.maxHp - world.char.hp;
+  ready();
+  assert.ok(cast(world, 'shieldwall').ok);
+  world.char.hp = world.stats.maxHp;
+  hurtMember(world, me, 100, 0, { pierce: true });
+  assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the shield');
+});

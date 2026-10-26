@@ -39,7 +39,6 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Up | Talk to an NPC, or enter a portal |
 | Z (or Ctrl) | Basic attack (hold to keep attacking) |
 | X | Pick up loot (hold to vacuum) |
-| T | In a dungeon, as the tank: Provoke (everything nearby turns on you) |
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
 | I / C / K / L / M / O | Bag / Stats / Skills / Quests / World map / Cash Shop |
 | Enter | Chat (Enter sends, Esc cancels, /help for commands) |
@@ -224,9 +223,9 @@ to clear it.
   - Everyone in the group has HP (shown under their names and in the group panel), and monsters
     don't hurt on touch: they wind up and swing at whoever they're angriest at. Damage builds
     **threat**, a tank's five times over, and healing builds a little. Monsters in a pack fight
-    together. As the tank, press **T** to Provoke everything nearby onto you.
-  - The group plays its roles: the tank leads and pulls the next pack once everyone is ready, picks
-    up loose monsters, and holds the boss; the healer hangs back and heals whoever is hurt (a group
+    together. Tanks hold them with the warrior's tank skills (below).
+  - The group plays its roles: the tank leads and, once everyone is ready, Chain Hooks the next
+    pack back to the group, hooks or Provokes loose monsters back, and holds the boss; the healer hangs back and heals whoever is hurt (a group
     heal when several are), keeps a barrier on the tank, and Renews the group when it's taking
     damage; the damage dealers focus what the tank is fighting, go for adds first,
     and help with the room's task between fights. Everyone steps out of telegraphed attacks.
@@ -246,6 +245,13 @@ to clear it.
   - The chest at the end holds EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
     Hollow Acorns, and Elixirs. Bramble's quest, Heart of the Hollow, pays out for calming Old
     Gnarlroot. Run it as often as you like.
+- **Warrior tanking** — warriors are the tanks, with five tank skills in the Warrior book:
+  **Provoke** roars at every monster around you so they all come after you (in a dungeon they
+  stick to you for a few seconds); **Chain Hook** hurls a chain ahead and drags the monsters it
+  catches (up to 8) right to you along their ledge, gathered up for the party to hit together
+  (bosses are too heavy to move, but still turn on you); **Shield Wall** takes a share off every
+  hit for a while; **Rally Cry** does the same for you and the party around you; and **Stalwart**
+  adds max HP and defense. They all work outside dungeons too.
 - **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
   **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in

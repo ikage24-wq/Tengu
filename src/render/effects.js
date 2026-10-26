@@ -607,6 +607,51 @@ function drawFx(ctx, f, cam, time) {
       starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
       break;
     }
+    case 'roar': {
+      // Provoke: rings of a battle roar rolling out to its reach.
+      ctx.globalAlpha = 1 - p;
+      const k = easeOut(p);
+      shock(ctx, x, y - 24, 14 + (f.r ?? 120) * k, 10 + 36 * k, 4 * (1 - p) + 0.5, '#ff7a6b');
+      shock(ctx, x, y - 24, 8 + (f.r ?? 120) * 0.7 * k, 6 + 24 * k, 3 * (1 - p) + 0.5, '#ffffff');
+      break;
+    }
+    case 'hook': {
+      // Chain Hook: links race out to each monster caught, then reel it in.
+      const out = Math.min(1, p / 0.3);
+      ctx.globalAlpha = p > 0.8 ? (1 - p) / 0.2 : 1;
+      const ends = f.mobs.length ? f.mobs.map((m) => [m.x - cam.x, m.y - m.def.h / 2 - cam.y]) : [[(f.reach ?? f.x) - cam.x, y]];
+      for (const [ex, ey] of ends) {
+        const tx = x + (ex - x) * out;
+        const ty = y + (ey - y) * out;
+        const len = Math.hypot(tx - x, ty - y);
+        const n = Math.max(1, Math.floor(len / 6));
+        for (let i = 0; i <= n; i++) {
+          const lx = x + ((tx - x) * i) / n;
+          const ly = y + ((ty - y) * i) / n + Math.sin(i * 0.9 + p * 10) * (1 - out) * 2;
+          ctx.fillStyle = '#5a4a6e';
+          ctx.beginPath();
+          ctx.ellipse(lx, ly, 2.6, 1.8, i % 2 ? 0.6 : -0.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#d8d0e6';
+          ctx.beginPath();
+          ctx.ellipse(lx, ly, 1.6, 1, i % 2 ? 0.6 : -0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // The hook at the end.
+        const dir = Math.sign(tx - x) || 1;
+        ctx.strokeStyle = '#3a2d4f';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(tx - dir * 2, ty + 2, 4, dir > 0 ? -Math.PI / 2 : Math.PI * 1.5, dir > 0 ? Math.PI * 0.7 : Math.PI * 0.3, dir < 0);
+        ctx.stroke();
+        ctx.strokeStyle = '#e6e0f0';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+        if (out >= 1 && p < 0.45) starFlash(ctx, tx, ty, 7, 4, 0.3, '#ffd66b', '#ffffff', 2);
+      }
+      break;
+    }
     case 'slam': {
       // The ground cracks open in a flat shockwave that thins as it spreads.
       const k = easeOut(p);
