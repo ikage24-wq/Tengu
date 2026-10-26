@@ -212,3 +212,18 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
   run(w, 0.25);
   assert.ok(cast(w, 'scattershot').ok, 'weaved in after the arrow left');
 });
+
+test('the same no-spam rule holds for every job, spells and thief skills included', () => {
+  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'claw_20', 'startoss'], ['warrior', 'sword_20', 'powerslash']]) {
+    const w = arena(weapon);
+    w.char.job = job;
+    w.char.skills[skill] = 10;
+    w.char.mp = 9999;
+    assert.ok(cast(w, skill).ok, `${skill} goes off`);
+    run(w, 0.15);
+    for (let i = 0; i < 3; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion, even after moving`);
+    run(w, 1);
+    assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
+  }
+});
