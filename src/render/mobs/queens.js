@@ -277,6 +277,245 @@ const headAt = (hx, hy) => {
 const queenHead = (hx, hy, mood, look) => heroineHead(headAt(hx, hy), mood, { ...look, browsOnTop: true });
 const queenTop = (hx, hy, mood, look) => [...heroineBrows(headAt(hx, hy), mood, look), ...heroineTop(headAt(hx, hy), mood, look)];
 
+// ---------- Hair ----------
+
+// Draws fn() in the head's own space (0, 0 = middle of the skull), its origin snapped to the cell
+// grid exactly as headAt does, so the hair and the face move as one in every frame.
+function inHead(hx, hy, fn) {
+  const prev = X;
+  const [ox, oy] = prev(hx, hy);
+  const dx = Math.round(ox * 3) / 3 - ox;
+  const dy = Math.round(oy * 3) / 3 - oy;
+  X = (x, y) => {
+    const p = prev(hx + x, hy + y);
+    return [p[0] + dx, p[1] + dy];
+  };
+  try {
+    return fn();
+  } finally {
+    X = prev;
+  }
+}
+
+// Secondary motion. Returns lag(t, len): the offset of a point a fraction t of the way down a lock,
+// `len` px below its root. Locks trail the body's bob and sway by about a frame (more toward the
+// tip), are dragged back on the walk, and hang with gravity when the head and body tilt (`turn`).
+function hairMotion(tm, o) {
+  const step = TAU / tm.n;
+  const turn = o.turn ?? 0;
+  return (t, len = 0) => {
+    let dx = 0;
+    let dy = 0;
+    if (tm.atk) dx = (o.swing ?? 0) * t ** 1.2;
+    else if (!o.still) {
+      const p = tm.ph - step * (0.5 + t);
+      const w = t ** 1.3;
+      dx = (o.drag ?? 0) * w + o.amp * w * Math.sin((o.fq ?? 1) * p + (o.p0 ?? 0));
+      if (o.sway) dx += (o.sway(p) - o.sway(tm.ph)) * t;
+      dy = (o.bob(p) - o.bob(tm.ph)) * t;
+    }
+    dx += Math.sin(turn) * len * t * 0.7;
+    dy -= (1 - Math.cos(turn)) * len * t * 0.7;
+    return [dx, dy];
+  };
+}
+// A lock's spine pushed through the motion: point i sits i/(n-1) of the way down.
+const flow = (pts, lag) => pts.map(([x, y], i) => {
+  const [dx, dy] = lag(i / (pts.length - 1), Math.max(0, y - pts[0][1]));
+  return [x + dx, y + dy];
+});
+
+// One clump of hair along a spine: a little narrower at the root, full by `pk`, then tapering to
+// a point.
+function clump(pts, w, c, o = {}) {
+  const r0 = o.r0 ?? 0.8;
+  const pk = o.pk ?? 0.22;
+  const end = o.end ?? 0.1;
+  const wf = (t) => w * (t < pk ? lerp(r0, 1, t / pk) : lerp(1, end, ((t - pk) / (1 - pk)) ** (o.k ?? 1.2)));
+  return strip(pts, wf, c, { n: 3, flat: true, tip: o.tip ?? Math.max(0.8, w * 0.3) });
+}
+
+// A lock in two tones: shadow 1 underneath, the base laid over it toward the light, so the back
+// edge and the tip stay in shadow (where the lock passes under its neighbour). `hi` adds a short
+// sheen high on the lock; `line` a fading interior line along the front edge (over skin).
+function lock(pts, w, R, o = {}) {
+  const out = [clump(pts, w, o.dark ?? R.sh1, o)];
+  const lx = o.lx ?? w * 0.17;
+  const base = pts.map(([x, y], i) => [x + lx * (i ? 1 : 0.5), y]);
+  out.push(clump(base, w * 0.66, o.c ?? R.base, { ...o, tip: (o.tip ?? Math.max(0.8, w * 0.3)) * 0.4, end: 0.18 }));
+  const sp = spline(pts, 3);
+  const m = sp.length;
+  if (o.hi) {
+    const [a, b] = o.hi;
+    const seg = sp.slice(Math.round(a * (m - 1)), Math.round(b * (m - 1)) + 1).map(([x, y]) => [x + lx * 1.4, y]);
+    if (seg.length > 1) out.push(strip(seg, (t) => w * 0.3 * Math.sin(PI * clamp(t, 0.08, 0.92)) ** 0.6, R.hi, { n: 1, flat: true }));
+  }
+  if (o.line) {
+    const seg = sp.slice(1, Math.round(m * 0.8)).map(([x, y], i) => [x + w * 0.42, y]);
+    if (seg.length > 1) out.push(strip(seg, (t) => 0.7 * Math.sin(PI * clamp(t, 0.05, 0.95)) ** 0.5 * (1 - t * 0.5), R.sh2, { n: 1, flat: true }));
+  }
+  return out;
+}
+
+// A lock that splits into two pointed ends of different lengths (pa, pb: the two spines, root to
+// tip): both ends in shadow 1, the base over the shared upper part, the gap reading as a V.
+function pair(pa, pb, wa, wb, R, o = {}) {
+  const out = [clump(pa, wa, R.sh1, o), clump(pb, wb, R.sh1, o)];
+  const m = Math.min(pa.length, pb.length);
+  const mid = [];
+  for (let i = 0; i < m; i++) mid.push([lerp(pa[i][0], pb[i][0], 0.5) + (o.lx ?? 0.5), lerp(pa[i][1], pb[i][1], 0.5) - (i === m - 1 ? (o.short ?? 2) : 0)]);
+  const w = Math.max(wa, wb) + Math.hypot(pa[0][0] - pb[0][0], pa[0][1] - pb[0][1]) * 0.6;
+  out.push(clump(mid, w * 0.72, R.base, { ...o, end: 0.3, tip: 0.6 }));
+  const sp = spline(mid, 3);
+  const n = sp.length;
+  if (o.hi) {
+    const [a, b] = o.hi;
+    const seg = sp.slice(Math.round(a * (n - 1)), Math.round(b * (n - 1)) + 1).map(([x, y]) => [x + w * 0.12, y]);
+    if (seg.length > 1) out.push(strip(seg, (t) => w * 0.22 * Math.sin(PI * clamp(t, 0.08, 0.92)) ** 0.6, R.hi, { n: 1, flat: true }));
+  }
+  if (o.line) {
+    const front = pa[0][0] > pb[0][0] ? pa : pb;
+    const seg = spline(front, 3).slice(1, -2).map(([x, y]) => [x + (front === pa ? wa : wb) * 0.4, y]);
+    if (seg.length > 1) out.push(strip(seg, (t) => 0.7 * Math.sin(PI * clamp(t, 0.05, 0.95)) ** 0.5 * (1 - t * 0.5), R.sh2, { n: 1, flat: true }));
+  }
+  return out;
+}
+
+// The crown and fringe, in head space, on the ramp R = { hi, base, sh1, sh2 }.
+//   cap    { cx, cy, rx, ry, a0, a1 }: the hair's outer edge, an arc (degrees) from the nape at a0
+//          over the top to the front temple at a1
+//   edge   the fringe's lower edge from the front temple to the back: [x, y, kind] with kind
+//          't' a clump tip, 'n' the notch between clumps, 'p' a plain point
+//   part   where the clumps spring from; the gaps between clumps run from each notch toward it,
+//          `sepLen` of the way, bowed by `curl` (or away from the part on both sides, `split`)
+//   crown  more gaps over the crown, behind the fringe
+//   back   [aS, ...pts]: the shadow side, from the arc at aS down to the nape
+//   nape   [span, w]: shadow 2 under the crown, along the nape
+//   ring   { cx, cy, rx, ry, a0, a1, w }: the angel ring, broken where the gaps cross it
+function hairCap(R, o) {
+  const out = [];
+  const c = o.cap;
+  const arcAt = (a, d = 0) => [c.cx + Math.cos((a * PI) / 180) * (c.rx - d), c.cy + Math.sin((a * PI) / 180) * (c.ry - d)];
+  const e = [[...arcAt(c.a1), 'a'], ...o.edge, [...arcAt(c.a0), 'a']];
+  // The fringe: clump sides bow outward and meet in sharp tips and V notches.
+  const fr = [];
+  for (let i = 0; i < e.length; i++) {
+    const [x, y, k] = e[i];
+    fr.push([x, y]);
+    if (i === e.length - 1) break;
+    const [x2, y2, k2] = e[i + 1];
+    if (k !== 't' && k2 !== 't') continue;
+    const dx = x2 - x;
+    const dy = y2 - y;
+    const len = Math.hypot(dx, dy) || 1;
+    let nx = -dy / len;
+    let ny = dx / len;
+    if (ny < 0) {
+      nx = -nx;
+      ny = -ny;
+    }
+    // A rounded shoulder by the notch, running straight into a sharp tip.
+    const bu = (o.bulge ?? 0.25) * Math.abs(dy) + 0.12;
+    for (const t of [0.22, 0.5, 0.78]) {
+      const u = k === 't' ? 1 - t : t;
+      const b = bu * Math.sin(PI * Math.min(1, u * 1.6)) ** 0.7 * (1 - u) * 1.6;
+      fr.push([x + dx * t + nx * b, y + dy * t + ny * b]);
+    }
+  }
+  // A rim line where the crown overlaps whatever is behind it (tails, wings, collars).
+  if (o.rim) out.push(strip(arcPts(c.cx, c.cy, c.rx + 0.3, c.ry + 0.3, c.a0 + 4, c.a1 - 4, 18), (t) => 1.1 * Math.sin(PI * clamp(t, 0.03, 0.97)) ** 0.4, o.rim, { n: 1, flat: true }));
+  out.push(fpoly([...fr, ...arcPts(c.cx, c.cy, c.rx, c.ry, c.a0, c.a1, 22)], R.base));
+  // The shadow side of the crown, its edge following the clumps down to the nape.
+  if (o.back) {
+    const [aS, ...pts] = o.back;
+    out.push(fpoly([...arcPts(c.cx, c.cy, c.rx, c.ry, c.a0, aS, 8), ...pts], R.sh1));
+  }
+  // Gaps between clumps, shadow 1, tapering up toward the part.
+  const P = o.part;
+  const seps = [];
+  let ni = 0;
+  e.forEach(([x, y, k]) => {
+    if (k !== 'n') return;
+    const L = Array.isArray(o.sepLen) ? o.sepLen[ni++ % o.sepLen.length] : o.sepLen ?? 0.7;
+    const bow = (o.curl ?? 0) * (o.split ? Math.sign(x - P[0]) : 1);
+    seps.push([[x, y], [lerp(x, P[0], L * 0.45) + bow, lerp(y, P[1], L * 0.45)], [lerp(x, P[0], L) + bow * 0.6, lerp(y, P[1], L)]]);
+  });
+  for (const s of seps) out.push(strip(s, (t) => lerp(1.1, 0.15, t ** 0.6), R.sh1, { n: 3, flat: true, tip: 0.8 }));
+  for (const s of o.crown ?? []) out.push(strip(s, (t) => 0.95 * Math.sin(PI * lerp(0.12, 1, t)) ** 0.5, s.c ?? R.sh1, { n: 3, flat: true, tip: 0.6 }));
+  // Shadow 2 under the crown, along the nape.
+  if (o.nape) {
+    const [span, nw] = o.nape;
+    const outer = [];
+    const inner = [];
+    for (let i = 0; i <= 8; i++) {
+      const a = c.a0 + (span * i) / 8;
+      outer.push(arcAt(a));
+      inner.push(arcAt(a, nw * (1 - i / 8) ** 0.8));
+    }
+    out.push(fpoly([...outer, ...inner.reverse()], R.sh2));
+  }
+  // The angel ring: a band following the skull, broken where the gaps cross it, with a zigzag
+  // lower edge, widest at the top.
+  if (o.ring) {
+    const r = o.ring;
+    const mx = r.rx - r.w / 2;
+    const my = r.ry - r.w / 2;
+    const gaps = [];
+    for (const s of [...seps, ...(o.crown ?? [])]) {
+      const sp = spline(s, 4);
+      for (let i = 1; i < sp.length; i++) {
+        const f = ([x, y]) => Math.hypot((x - r.cx) / mx, (y - r.cy) / my) - 1;
+        const f0 = f(sp[i - 1]);
+        const f1 = f(sp[i]);
+        if (f0 * f1 > 0) continue;
+        const u = f0 / (f0 - f1 || 1);
+        const x = lerp(sp[i - 1][0], sp[i][0], u);
+        const y = lerp(sp[i - 1][1], sp[i][1], u);
+        let a = (Math.atan2((y - r.cy) / my, (x - r.cx) / mx) * 180) / PI;
+        if (a < r.a0 - 180) a += 360;
+        if (a > r.a0 && a < r.a1) gaps.push(a);
+        break;
+      }
+    }
+    if (r.gaps) gaps.splice(0, gaps.length, ...r.gaps);
+    gaps.sort((p, q) => p - q);
+    const h = ((r.gap ?? 0.55) / r.rx) * (180 / PI);
+    const cuts = [r.a0];
+    for (const g of gaps) cuts.push(g - h, g + h);
+    cuts.push(r.a1);
+    const tooth = ((r.tooth ?? 1.9) / r.rx) * (180 / PI);
+    for (let i = 0; i < cuts.length; i += 2) {
+      const s0 = cuts[i];
+      const s1 = cuts[i + 1];
+      if (s1 - s0 < tooth * 0.6) continue;
+      const wq = (a) => r.w * (0.4 + 0.6 * Math.sin(PI * clamp((a - r.a0) / (r.a1 - r.a0), 0, 1)) ** 0.7);
+      const at = (a, d) => [r.cx + Math.cos((a * PI) / 180) * (r.rx - d), r.cy + Math.sin((a * PI) / 180) * (r.ry - d)];
+      const n = Math.max(2, Math.round((s1 - s0) / tooth) * 2);
+      const top = [];
+      const low = [];
+      for (let j = 0; j <= n; j++) {
+        const a = lerp(s0, s1, j / n);
+        top.push(at(a, 0));
+        const end = j === 0 || j === n;
+        low.push(at(a, end ? wq(a) * 0.45 : wq(a) * (j % 2 ? 1.65 : 0.9)));
+      }
+      out.push(fpoly([...top, ...low.reverse()], R.hi));
+    }
+  }
+  // Pale hair: the clump tips darken toward the skin so the hairline reads.
+  if (o.tipShade) {
+    const ln = fr.filter(([x]) => x >= (o.lineX ?? -5.5)).map(([x, y]) => [x, y - o.tipShade * 0.45]);
+    out.push(strip(ln, (t) => o.tipShade * Math.sin(PI * clamp(t, 0.03, 0.97)) ** 0.3, R.sh1, { n: 1, flat: true }));
+  }
+  // A fine line where the fringe overlaps the face, fading at both ends.
+  const lx = o.lineX ?? -5.5;
+  const ln = fr.filter(([x]) => x >= lx).map(([x, y]) => [x, y - 0.22]);
+  out.push(strip(ln, (t) => 0.72 * Math.sin(PI * clamp(t, 0.03, 0.97)) ** 0.35, R.sh2, { n: 1, flat: true }));
+  return out;
+}
+// The fringe's lower edge, left to right, for the face's forehead shadow (look.bangs).
+const bangsOf = (edge) => edge.filter(([x, , k]) => k !== 'p' && x < 12.8).map(([x, y]) => [x, y]).reverse();
+
 // ---------- Shared motion ----------
 
 function timing(pose, f) {
@@ -298,18 +537,35 @@ function finish(out, w, h, dead) {
 // ---------- Tamamo, the Nine-Tailed Empress ----------
 
 const K = {
-  skin: '#fff2ea', skinDk: '#f1d2cf', hair: '#fff0d4', hairDk: '#eec98e', hairLt: '#fffbf0', tail: '#ffd284', tailDk: '#e6a24c', tip: '#fffaf3',
+  skin: '#fff2ea', skinDk: '#f1d2cf', hair: '#ffe2a6', hairDk: '#efb767', hairLt: '#fffbea', hairSh2: '#c4823f', tail: '#ffd284', tailDk: '#e6a24c', tip: '#fffaf3',
   earIn: '#ffc2d2', fire: '#5ec5ff', fire2: '#a8e8ff', fire3: '#f2fdff', hot: '#9a7bff', robe: '#fff8f1', robeDk: '#eadbe3', robeLt: '#ffffff',
   crimson: '#dc3a60', crimsonDk: '#a82448', pink: '#ffa3bd', gold: '#ffd36b', goldDk: '#d39a42', goldLt: '#fff1b6', wood: '#8a4a3c', lip: '#e2486c',
 };
 const FIRE = [K.fire, K.fire2, K.fire3];
 const FIRE_HOT = ['#8c74ff', '#c4b4ff', '#ffffff'];
 
+// Tamamo's hime cut: a straight-cut fringe of five clumps with small V notches, chin-length side
+// locks, and long straight hair down her back.
+const TAMAMO_HAIR = {
+  cap: { cx: 0, cy: -1.2, rx: 14.8, ry: 15.2, a0: 160, a1: 357 },
+  edge: [[13, -0.9, 't'], [11.3, -2.6, 'n'], [9.3, -1.5, 't'], [7.2, -2.7, 'n'], [5.1, -1.1, 't'], [3, -2.5, 'n'], [0.9, -1.7, 't'], [-1.2, -2.8, 'n'], [-3.3, -1.2, 't'], [-5, -2.4, 'n'], [-8.2, 5.2, 'p']],
+  part: [2.5, -15.5],
+  sepLen: [0.5, 0.74, 0.58, 0.8],
+  curl: 0.3,
+  bulge: 0.18,
+  rim: K.hairDk,
+  crown: [[[0, -14.6], [-5, -9.6], [-8.6, -2.4]], [[-2.4, -15], [-9, -10.4], [-12.6, -1.4]]],
+  back: [215, [-10.6, -7.4], [-11.2, -3], [-9.8, 1], [-10.8, 4.6]],
+  nape: [32, 2.4],
+  ring: { cx: 1, cy: -0.6, rx: 12.6, ry: 9.4, a0: 200, a1: 332, w: 1.4 },
+};
+const TAMAMO_RAMP = { hi: K.hairLt, base: K.hair, sh1: K.hairDk, sh2: K.hairSh2 };
+
 // Tamamo's face: serene, regal fox eyes lifted at the corners, a red liner wing, slit pupils,
 // and a sly half-smile; she bares a fang only when roused.
 const TAMAMO_FACE = {
   skin: K.skin, skinSh: '#f8d0ca', skinSh2: '#e6a6ab', blush: '#ff9fb2', lip: '#e2486c', lipLine: '#a8344f',
-  bangs: [[-8, 4], [-5, -1.6], [3, -2.2], [14.2, -2.2]], bangLine: '#d9a85e',
+  bangs: bangsOf(TAMAMO_HAIR.edge),
   eye: { ry: 2.75, iris: '#ffa21f', irisDk: '#a8420e', irisLt: '#ffe27a', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#4a1608', tilt: 0.62, wing: 2, flicks: 2, lashLen: 1.3, liner: '#e0283f', shadow: '#ffd0d6', lowerLash: '#c86478', ink: '#3a1a1c' },
   brow: { c: '#c4823f', kind: 'soft', w: 0.75 },
   fang: 'angry',
@@ -321,7 +577,8 @@ function tamamo(pose, f, mood) {
   const H = 150;
   const G = H - 0.6;
   const bx = 82;
-  const { walk, atk, a, ph } = timing(pose, f);
+  const tm = timing(pose, f);
+  const { walk, atk, a, ph } = tm;
   const { angry, hurt, dead, happy } = moods(mood);
   // A stately glide: she floats along without steps, the train sweeping behind, and the body
   // rises a touch once per cycle; idle is a slow breath.
@@ -431,13 +688,17 @@ function tamamo(pose, f, mood) {
     }
   }
 
-  // ---- Long back hair and the far sleeve.
-  within(Th, () => {
-    const sw = swing;
-    out.push(poly([[hx - 12, hy - 8], [hx - 15, hy + 4], [hx - 17, hy + 20], [hx - 18 + sw * 0.4, hy + 36], [hx - 19 + sw * 0.8, hy + 50], [hx - 16 + sw, hy + 56], [hx - 13 + sw * 0.9, hy + 52], [hx - 9 + sw, hy + 57], [hx - 6 + sw * 0.8, hy + 50], [hx - 4, hy + 30], [hx - 2, hy + 14], [hx, hy - 6]], K.hairDk));
-    out.push(poly([[hx - 11, hy - 6], [hx - 13.6, hy + 6], [hx - 15, hy + 22], [hx - 15.4 + sw * 0.5, hy + 40], [hx - 13 + sw * 0.9, hy + 52], [hx - 10 + sw * 0.8, hy + 46], [hx - 7 + sw * 0.7, hy + 40], [hx - 5, hy + 22], [hx - 3, hy + 6]], K.hair));
-    out.push(line(spline([[hx - 10, hy + 6], [hx - 11.4, hy + 24], [hx - 11 + sw * 0.6, hy + 42]], 3), 0.6, K.hairDk), line(spline([[hx - 7, hy + 10], [hx - 8, hy + 26], [hx - 8.5 + sw * 0.6, hy + 40]], 3), 0.5, K.hairLt));
-  });
+  // Hair trails the glide by a frame and hangs with gravity as she tilts.
+  const lag = hairMotion(tm, { amp: walk ? 1 : 1.1, drag: walk ? -2.2 : 0, bob: (p) => (walk ? -0.8 : 0.6) * Math.sin(p), swing, still: dead, turn: tilt + headA });
+  const R = TAMAMO_RAMP;
+
+  // ---- Long straight back hair in four locks, ends cut to points of different lengths.
+  within(Th, () => inHead(hx, hy, () => {
+    out.push(clump(flow([[-12, -6], [-15.6, 8], [-17, 24], [-17.4, 40], [-16, 56]], lag), 8, R.sh2, { end: 0.3 }));
+    out.push(...lock(flow([[-10.4, -4], [-14, 10], [-14.8, 26], [-14.2, 42], [-12.8, 57.5]], lag), 6.6, R, { hi: [0.1, 0.3] }));
+    out.push(...lock(flow([[-7, -2], [-9.8, 12], [-10.6, 28], [-10, 42], [-9.8, 53]], lag), 6, R, { hi: [0.14, 0.3] }));
+    out.push(...lock(flow([[-3.6, 2], [-5.4, 14], [-6, 28], [-5.4, 40], [-6, 47.5]], lag), 4.8, R));
+  }));
   within(Tu, () => {
     const sw = swing;
     const top = G - 82;
@@ -468,7 +729,7 @@ function tamamo(pose, f, mood) {
       const [x0, y0] = front[3];
       const x = lerp(x0, hem[0][0], t) - 4 - (k % 2) * 5;
       const y = lerp(y0, G, t);
-      if (y < G - 3) out.push(F(T(ovalPts(x, y, 1.4, 1.4, 8), K.gold)), F(T(ovalPts(x, y, 0.6, 0.6, 6), K.goldLt)));
+      if (y < G - 3) out.push(F(T(ovalPts(x, y, 1.4, 1.4, 8), k % 2 ? K.goldLt : K.gold)));
     }
     // The open uchikake: from the shoulders, its front edge running down behind the obi.
     const edge = [P(bx + 6, top + 1), P(bx + 7, top + 13), P(bx + 1, top + 26), P(bx + 1, top + 38), [bx + 4 + lean * 0.4, G - 18], [hem[3][0] - 2, G - 1.2]];
@@ -536,14 +797,11 @@ function tamamo(pose, f, mood) {
       });
     ear(hx - 7, hy - 9, -0.45, 0.92);
     out.push(...queenHead(hx, hy, mood, TAMAMO_FACE));
-    // Hime-cut hair: a smooth crown, straight-cut bangs, and long side locks cut at the chin.
-    out.push(C(poly([[hx - 14.8, hy + 4], [hx - 15, hy - 6], [hx - 10, hy - 14.4], [hx, hy - 16.4], [hx + 9, hy - 14], [hx + 14.6, hy - 6], [hx + 15, hy - 1.4], [hx + 3, hy - 1.2], [hx - 5, hy - 0.6], [hx - 8, hy + 6]], K.hairDk)));
-    out.push(C(poly([[hx - 13.8, hy + 2], [hx - 14, hy - 6], [hx - 9.4, hy - 13.4], [hx, hy - 15.2], [hx + 8.6, hy - 13], [hx + 13.8, hy - 6], [hx + 14.2, hy - 2.2], [hx + 3, hy - 2.2], [hx - 5, hy - 1.6], [hx - 8, hy + 4]], K.hair)));
-    out.push(line([[hx - 4, hy - 12.6], [hx + 6, hy - 12]], 1.2, K.hairLt), line([[hx - 1, hy - 14], [hx + 3, hy - 13.6]], 0.8, '#ffffff'));
-    for (const x of [hx + 2, hx + 6.5, hx + 10.5]) out.push(line([[x, hy - 9], [x + 0.3, hy - 2.6]], 0.5, K.hairDk));
-    const sl = swing * 0.25;
-    out.push(C(poly([[hx - 9, hy - 2], [hx - 2.6, hy - 2], [hx - 2.2 + sl, hy + 15.4], [hx - 9.6 + sl, hy + 15.4]], K.hairDk)), C(poly([[hx - 8.4, hy - 2], [hx - 3.2, hy - 2], [hx - 2.9 + sl, hy + 14.8], [hx - 8.9 + sl, hy + 14.8]], K.hair)));
-    out.push(line([[hx - 6, hy + 1], [hx - 5.8 + sl, hy + 13]], 0.6, K.hairLt));
+    // Hime-cut hair: the crown and straight-cut fringe, and the chin-length side locks.
+    inHead(hx, hy, () => {
+      out.push(...hairCap(R, TAMAMO_HAIR));
+      out.push(...pair(flow([[-7.6, -3], [-8.4, 5], [-8.2, 12], [-7.8, 16.4]], lag), flow([[-4.8, -3], [-5, 5], [-4.6, 11], [-4.2, 14.4]], lag), 3.6, 3.4, R, { r0: 1, pk: 0.55, k: 2.4, end: 0.15, line: true, short: 3 }));
+    });
     out.push(...queenTop(hx, hy, mood, TAMAMO_FACE));
     ear(hx + 4.5, hy - 11.5, 0.12, 1);
     // Kanzashi crown: a gold sunburst tiara, a crimson peony, and swinging gold chains.
@@ -642,17 +900,34 @@ function tamamo(pose, f, mood) {
 // ---------- Sylvana, the Dryad Queen ----------
 
 const S = {
-  hair: '#bde27e', hairDk: '#86b45a', hairLt: '#d9f29a', hairHi: '#efffc4',
+  hair: '#bde27e', hairDk: '#86b45a', hairLt: '#d9f29a', hairHi: '#efffc4', hairSh: '#7fbf63', hairSh2: '#4b8a5c',
   skin: '#f7f2e8', skinDk: '#ddd2c2', mark: '#7f7068', vein: '#7dffb0', veinHot: '#e4ff6a', leaf: '#62c48e', leafDk: '#3f9a70', leafLt: '#a8ecc0',
   leaf2: '#4fb0a0', leaf2Dk: '#357f7a', moss: '#86b86a', mossDk: '#5f8f4f', wood: '#8b6a58', woodDk: '#634a40', woodLt: '#b48f74', bloom: '#ffc6dd',
   bloomDk: '#f08fb4', wis: '#c3a2ff', wisLt: '#e6d8ff', fly: '#fff6a6', flyGlow: '#efffc4', thorn: '#4f3a3a', lip: '#e8879f',
 };
 
+// Sylvana's willow hair: a fringe of six leaf-pointed clumps swept from the crown, two willow
+// locks before the shoulder, and a long cascade of tapering locks behind.
+const SYLVANA_HAIR = {
+  cap: { cx: 0, cy: -1, rx: 14.6, ry: 15.2, a0: 160, a1: 358 },
+  edge: [[13.6, 1.4, 't'], [11.6, -2.8, 'n'], [9.6, -0.7, 't'], [7.6, -3.4, 'n'], [5.3, -1.3, 't'], [3.3, -3.4, 'n'], [1, -0.5, 't'], [-1.1, -3, 'n'], [-3.4, -0.9, 't'], [-5.4, -2.6, 'n'], [-8.6, 5.4, 'p']],
+  part: [1.5, -15.5],
+  sepLen: [0.62, 0.8, 0.55, 0.76, 0.6],
+  curl: 0.9,
+  bulge: 0.34,
+  rim: S.hairSh,
+  crown: [[[-0.6, -15], [-6, -10.4], [-9, -2.4]], [[-2.6, -14.8], [-9.6, -9.8], [-12.8, -1.2]]],
+  back: [215, [-10.8, -7.2], [-11.4, -3], [-10, 1], [-11, 4.8]],
+  nape: [32, 2.4],
+  ring: { cx: 0.5, cy: -1, rx: 12.4, ry: 10.2, a0: 200, a1: 334, w: 1.4 },
+};
+const SYLVANA_RAMP = { hi: S.hairHi, base: S.hair, sh1: S.hairSh, sh2: S.hairSh2 };
+
 // Sylvana's face: big round gentle eyes of leaf green with leaf-shaped lashes, soft arched brows,
 // and a kind small smile; she gasps when hurt.
 const SYLVANA_FACE = {
   skin: S.skin, skinSh: '#d7e2cf', skinSh2: '#a9c1ae', blush: '#ffb0c4', lip: S.lip, lipLine: '#b0546c',
-  bangs: [[-8.4, 5], [-6, -1], [2, -2.8], [8, -3.6], [13.6, -2]],
+  bangs: bangsOf(SYLVANA_HAIR.edge),
   eye: { ry: 3.15, iris: '#2fd08e', irisDk: '#0f6b4a', irisLt: '#cfff9a', hot: '#c9ff3a', hotDk: '#4e8a10', pupil: 'round', pupilC: '#0b3d2c', tilt: 0.04, wing: 1.2, flicks: 1, lashLen: 1.5, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#1f3d32', sparkle: true },
   brow: { c: '#3f7a52', kind: 'soft', w: 0.7 },
   moods: { idle: { mouth: 'soft' }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' } },
@@ -663,7 +938,8 @@ function sylvana(pose, f, mood) {
   const H = 150;
   const G = H - 0.6;
   const bx = 70;
-  const { walk, atk, a, ph } = timing(pose, f);
+  const tm = timing(pose, f);
+  const { walk, atk, a, ph } = tm;
   const { angry, hurt, dead, happy } = moods(mood);
   // She flows rather than walks: the body rises and settles on a slow wave and sways side to
   // side while the roots under her gown ripple backward along the ground.
@@ -727,23 +1003,41 @@ function sylvana(pose, f, mood) {
   };
   flies(false);
 
-  // ---- Willow hair cascading down her back, long trailing strands of leaves.
-  within(Th, () => {
-    const sw = swing;
-    out.push(poly([[hx - 12, hy - 9], [hx - 16, hy + 4], [hx - 18 + sw * 0.3, hy + 22], [hx - 20 + sw * 0.7, hy + 40], [hx - 18 + sw, hy + 52], [hx - 12 + sw * 0.8, hy + 46], [hx - 8 + sw * 0.9, hy + 54], [hx - 5 + sw * 0.6, hy + 40], [hx - 3, hy + 20], [hx + 1, hy - 6]], S.hairDk));
-    for (let k = 0; k < 6; k++) {
-      const x0 = hx - 15 + k * 2.4;
-      const len = 40 + (k % 3) * 7;
-      const pts = [[x0, hy - 2], [x0 - 2 + sw * 0.3, hy + len * 0.4], [x0 - 2 + sw * 0.8 + Math.sin(ph + k) * 0.6, hy + len * 0.8], [x0 - 1 + sw * 1.1, hy + len]];
-      out.push(line(spline(pts, 3), 0.8, S.hairDk));
-      const sp = spline(pts, 3);
-      for (let j = 2; j < sp.length; j += 3) {
-        const [x, y] = sp[j];
-        out.push(...leaf(x, y, PI / 2 + (j % 2 ? 0.7 : -0.7) - sw * 0.04, 4.8, 2.4, j % 2 ? S.hair : S.hairLt));
+  // Willow hair trails her flowing sway by a frame and hangs with gravity as she tilts.
+  const lag = hairMotion(tm, { amp: walk ? 1.3 : 1, drag: walk ? -1.8 : 0, bob: (p) => (walk ? -1.3 : 0.7) * Math.sin(p), sway: walk ? (p) => Math.sin(p) * 0.6 : null, swing, still: dead, turn: tilt + headA });
+  const R = SYLVANA_RAMP;
+
+  // ---- Willow hair cascading down her back: long locks in S-curves, split into points at the
+  // ends, with a few leaves and blossoms caught in them.
+  within(Th, () => inHead(hx, hy, () => {
+    const wv = (k, y) => Math.sin(y * 0.11 + k * 2.1 - ph * (walk ? 1 : 0.5)) * 2.6;
+    const locks = [
+      [-12.4, -6, 54, 8, R.sh2, -1.8],
+      [-10.6, -4, 52, 6.8, null, -2.2],
+      [-15, 2, 42, 5.2, null, -0.6],
+      [-7.6, -2, 47, 6.2, null, -1.2],
+      [-4.4, 2, 36, 5, null, -2.4],
+    ];
+    locks.forEach(([x0, y0, len, w, dark, drift], k) => {
+      const pts = [];
+      for (let j = 0; j <= 4; j++) {
+        const y = y0 + (len * j) / 4;
+        pts.push([x0 + j * drift + wv(k, y) * Math.min(1, j / 2), y]);
       }
-      if (k % 2) out.push(...blossom(sp[sp.length - 4][0], sp[sp.length - 4][1], 1.6, k % 4 === 1 ? S.bloom : '#ffffff', '#fff6a0', k));
-    }
-  });
+      const sp = flow(pts, lag);
+      if (dark) out.push(clump(sp, w, dark, { end: 0.25 }));
+      else out.push(...lock(sp, w, R, { hi: k === 1 ? [0.1, 0.28] : k === 3 ? [0.14, 0.3] : null }));
+      if (k > 0) {
+        const s2 = spline(sp, 3);
+        const m = s2.length;
+        for (const [u, side] of [[0.45, 1], [0.72, -1]]) {
+          const [x, y] = s2[Math.round(u * (m - 1))];
+          out.push(...leaf(x + side * w * 0.3, y, PI / 2 + side * 0.75, 4.4, 2.2, k % 2 ? S.hairLt : S.hair));
+        }
+        if (k % 2) out.push(...blossom(s2[Math.round(m * 0.6)][0], s2[Math.round(m * 0.6)][1], 1.6, k === 1 ? S.bloom : '#ffffff', '#fff6a0', k));
+      }
+    });
+  }));
 
   // ---- Roots spreading from the hem along the ground; they ripple as she flows.
   const roots = [];
@@ -852,21 +1146,19 @@ function sylvana(pose, f, mood) {
     // Bark lenticels and a glowing vein along the cheek and temple.
     for (const [x, y, w] of [[hx - 8, hy + 6, 2.4], [hx - 6, hy + 10, 1.6], [hx - 2, hy + 13, 1.4]]) out.push(line([[x - w / 2, y], [x + w / 2, y - 0.2]], 0.5, S.mark));
     if (!dead) out.push(line(spline([[hx + 11.6, hy - 1], [hx + 12.4, hy + 2.6], [hx + 11, hy + 6], [hx + 12.2, hy + 8.2]], 3), 0.5, glow), dot(hx + 12.2, hy + 8.2, 0.55, glow));
-    // The willow crown of hair: a leafy cap and bangs that end in pointed leaves.
-    out.push(C(poly([[hx - 14.6, hy + 5], [hx - 15, hy - 5], [hx - 10, hy - 14.2], [hx, hy - 16.4], [hx + 9, hy - 14], [hx + 14.2, hy - 6], [hx + 14.6, hy - 1], [hx + 8, hy - 3], [hx + 2, hy - 2], [hx - 6, hy], [hx - 9, hy + 7]], S.hairDk)));
-    out.push(C(poly([[hx - 13.6, hy + 3], [hx - 14, hy - 5], [hx - 9.4, hy - 13.4], [hx, hy - 15.2], [hx + 8.6, hy - 13], [hx + 13.4, hy - 6], [hx + 13.6, hy - 2], [hx + 8, hy - 3.6], [hx + 2, hy - 2.8], [hx - 6, hy - 1], [hx - 8.4, hy + 5]], S.hair)));
-    for (const [x, y, a0, l] of [[hx + 13, hy - 4, 1.8, 7], [hx + 9, hy - 5, 1.5, 8], [hx + 5, hy - 5, 1.7, 7], [hx + 1, hy - 4.6, 1.9, 7], [hx - 4, hy - 3.4, 2.0, 8]]) out.push(...leaf(x, y, a0, l, 3.2, a0 > 1.8 ? S.hairLt : S.hair, { rib: S.hairDk, flat: false }));
-    out.push(line(spline([[hx - 6, hy - 12.6], [hx + 1, hy - 14], [hx + 7, hy - 12]], 3), 1, S.hairHi));
-    for (let k = 0; k < 4; k++) out.push(line([[hx - 11 + k * 5, hy - 10 + Math.abs(k - 1.5)], [hx - 10 + k * 5.2, hy - 5]], 0.5, S.hairDk));
+    // The willow crown of hair, and two willow locks falling before the shoulder.
+    inHead(hx, hy, () => {
+      out.push(...hairCap(R, SYLVANA_HAIR));
+      const pa = flow([[-8, -3], [-9, 8], [-10.6, 18], [-9.4, 27], [-10.6, 33]], lag);
+      const pb = flow([[-4.8, -3], [-5.4, 8], [-7, 16], [-6.2, 23], [-7, 27]], lag);
+      out.push(...pair(pa, pb, 3.8, 3.4, R, { r0: 1, pk: 0.35, k: 1.4, end: 0.12, line: true, hi: [0.1, 0.3], short: 4 }));
+      for (const [sp, u, side] of [[pa, 0.55, -1], [pb, 0.8, 1], [pa, 0.85, 1]]) {
+        const s2 = spline(sp, 3);
+        const [x, y] = s2[Math.round(u * (s2.length - 1))];
+        out.push(...leaf(x + side * 1.4, y, PI / 2 + side * 0.8, 4.4, 2.2, side > 0 ? S.hairLt : S.hair));
+      }
+    });
     out.push(...queenTop(hx, hy, mood, SYLVANA_FACE));
-    // Long front strands of willow falling past the shoulder.
-    const sl = swing * 0.4;
-    for (let k = 0; k < 2; k++) {
-      const pts = [[hx - 7 + k * 2.6, hy - 1], [hx - 8 + k * 2.6 + sl * 0.4, hy + 12], [hx - 9 + k * 2.4 + sl, hy + 26 + k * 4]];
-      out.push(taper(pts, 3.6, 2, S.hairDk, { n: 3 }));
-      const sp = spline(pts, 3);
-      for (let j = 1; j < sp.length; j += 2) out.push(...leaf(sp[j][0], sp[j][1], PI / 2 + (j % 4 === 1 ? 0.6 : -0.6), 4.6, 2.4, k ? S.hairLt : S.hair));
-    }
     // The crown: two branching antlers of living wood, blossoms at the forks, wisteria hanging.
     const brSw = Math.sin(ph - 0.5) * (walk ? 0.8 : 0.5);
     const branches = [
@@ -964,16 +1256,34 @@ function sylvana(pose, f, mood) {
 // ---------- Lilith, the Succubus Queen ----------
 
 const D = {
-  skin: '#ffe5ea', skinDk: '#f0c3cf', hair: '#6c47ab', hairDk: '#47307c', hairLt: '#9a77da', hairHi: '#cdb0ff', horn: '#7a5e8e', hornLt: '#b9a0d2',
+  skin: '#ffe5ea', skinDk: '#f0c3cf', hair: '#6c47ab', hairDk: '#4a3080', hairSh2: '#2c1d55', hairHi: '#b9a0ff', horn: '#7a5e8e', hornLt: '#b9a0d2',
   gold: '#ffcc66', goldDk: '#cf9440', goldLt: '#fff0b8', black: '#3d3150', blackDk: '#2a2139', blackLt: '#5d4c78', wine: '#b43b60', wineDk: '#842a49',
   wineLt: '#de6c90', wing: '#9b4a88', wingDk: '#6f3064', wingLt: '#c777b0', bone: '#4b2b50', gem: '#ff4f9c', pink: '#ff9fd0', violet: '#b884ff', lip: '#c8386a',
 };
+
+// Lilith's hair: long, wavy, and dark violet; the fringe sweeps from a part over the near brow
+// toward the back in long pointed clumps, a wavy lock falls over the front shoulder, and the
+// mass behind waves down her back and splits into three locks.
+const LILITH_HAIR = {
+  cap: { cx: 0, cy: -1, rx: 14.6, ry: 15.2, a0: 158, a1: 363 },
+  edge: [[13.8, 3, 't'], [12, -1.8, 'n'], [8.8, -0.2, 't'], [7.2, -3.3, 'n'], [3.8, -0.8, 't'], [2.2, -3, 'n'], [-1.4, 0, 't'], [-3, -1.8, 'n'], [-6, 1.6, 't'], [-9, 7, 'p']],
+  part: [10, -14.5],
+  sepLen: [0.7, 0.82, 0.62, 0.78],
+  curl: -1.3,
+  bulge: 0.34,
+  rim: '#3a2470',
+  crown: [[[8, -15], [0, -12], [-7, -6], [-9.6, 1]], [[6, -15.4], [-3, -13.6], [-11, -7], [-13, 1]]],
+  back: [222, [-9.6, -8.4], [-10.8, -4], [-10, 0.6], [-11.4, 5.6]],
+  nape: [34, 2.6],
+  ring: { cx: 0.5, cy: -0.4, rx: 12.8, ry: 8, a0: 205, a1: 335, w: 1.3 },
+};
+const LILITH_RAMP = { hi: D.hairHi, base: D.hair, sh1: D.hairDk, sh2: D.hairSh2 };
 
 // Lilith's face: heavy smoky lids half lowered, heart pupils, a beauty mark, full dark lips in a
 // smouldering smirk with a fang.
 const LILITH_FACE = {
   skin: D.skin, skinSh: '#f2c0d1', skinSh2: '#d593b5', blush: '#ff9cbc', lip: '#c8306a', lipLine: '#8a1c46',
-  bangs: [[-8.6, 6], [-7, -2], [-1, -0.4], [4, -3.4], [10, -4], [13.6, 0.4]],
+  bangs: bangsOf(LILITH_HAIR.edge),
   eye: { ry: 3, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.3, wing: 2, flicks: 3, lashLen: 1.6, shadow: '#c98ac6', smoky: 1, lowerLash: '#7a3a6a', ink: '#24112e' },
   brow: { c: '#2c1d55', kind: 'arch', w: 0.7 },
   mole: [-1.4, 9.4],
@@ -986,7 +1296,8 @@ function lilith(pose, f, mood) {
   const H = 148;
   const G = H - 0.6;
   const bx = 78;
-  const { walk, atk, a, ph } = timing(pose, f);
+  const tm = timing(pose, f);
+  const { walk, atk, a, ph } = tm;
   const { angry, hurt, dead, happy } = moods(mood);
   // A sultry runway stride: the feet cross toward the line, the hips roll with each step
   // (twice per cycle), the shoulders counter, and hair and tail swing against the hips.
@@ -1086,24 +1397,27 @@ function lilith(pose, f, mood) {
     out.push(heart(e[0] + Math.cos(ang + PI / 2) * 3, e[1] + Math.sin(ang + PI / 2) * 3, 4.4, D.wineDk, ang + PI), heart(e[0] + Math.cos(ang + PI / 2) * 3, e[1] + Math.sin(ang + PI / 2) * 3, 3.2, D.gem, ang + PI));
   }
 
-  // ---- Long wavy hair falling down her back.
-  within(Th, () => {
-    const sw = swing;
-    const wave = (y, k) => Math.sin(y * 0.28 + k + ph * (walk ? 2 : 1)) * 1.6;
-    const outer = [];
-    const inner = [];
-    for (let i = 0; i <= 8; i++) {
-      const t = i / 8;
-      const y = hy - 6 + t * 62;
-      outer.push([hx - 15 - t * 7 + sw * t + wave(y, 0), y]);
-      inner.push([hx - 2 - t * 4 + sw * t * 0.8 + wave(y, 1.4), y]);
+  // Hair swings against the hips a frame late and hangs with gravity as she tilts.
+  const lag = hairMotion(tm, { amp: walk ? 1.3 : 1, fq: walk ? 2 : 1, p0: walk ? -1.1 : 0, drag: walk ? -1.4 : 0, bob: walk ? (p) => -1.1 * Math.abs(Math.cos(p)) : (p) => 0.5 * Math.sin(p), swing, still: dead, turn: tilt + headA });
+  const R = LILITH_RAMP;
+  // A wave running down the locks (S-curves that travel toward the tips).
+  const wave = (y, k) => (dead ? 0.5 : 1) * Math.sin(y * 0.2 + k - ph * (walk ? 2 : 1)) * 1.7;
+  const wavy = (x0, y0, len, dx, k) => {
+    const pts = [];
+    for (let j = 0; j <= 5; j++) {
+      const y = y0 + (len * j) / 5;
+      pts.push([x0 + dx * (j / 5) + wave(y, k) * Math.min(1, j / 2), y]);
     }
-    const ends = [[hx - 18 + sw, hy + 60], [hx - 14 + sw, hy + 54], [hx - 10 + sw * 0.9, hy + 59], [hx - 7 + sw * 0.8, hy + 52]];
-    out.push(poly([...outer, ...ends, ...inner.slice().reverse()], D.hairDk));
-    const mid = outer.map(([x, y], i) => [lerp(x, inner[i][0], 0.45), y]);
-    out.push(poly([...outer.slice(1, 8).map(([x, y]) => [x + 1.6, y]), [hx - 15 + sw, hy + 52], ...mid.slice(1, 8).reverse()], D.hair));
-    out.push(line(spline(mid.slice(1, 8).map(([x, y]) => [x - 1.4, y]), 2), 0.7, D.hairLt), line(spline(mid.slice(2, 7).map(([x, y]) => [x + 2, y]), 2), 0.5, D.hairDk));
-  });
+    return flow(pts, lag);
+  };
+
+  // ---- Long wavy hair falling down her back, splitting into locks at the ends.
+  within(Th, () => inHead(hx, hy, () => {
+    out.push(clump(wavy(-12, -6, 62, -8, 0), 10, R.sh2, { end: 0.3, r0: 0.9 }));
+    out.push(...lock(wavy(-11, -4, 64, -5, 0.6), 7, R, { hi: [0.08, 0.24] }));
+    out.push(...lock(wavy(-7, -2, 56, -4, 1.4), 6.6, R, { hi: [0.12, 0.26] }));
+    out.push(...lock(wavy(-3.6, 2, 46, -3, 2.2), 5, R));
+  }));
 
   // ---- Legs in tall heeled boots, glimpsed through the slit as she strides.
   const legAt = (hip, phase, far) => {
@@ -1232,11 +1546,8 @@ function lilith(pose, f, mood) {
     };
     horn(true, shade(D.horn, -6));
     out.push(...queenHead(hx, hy, mood, LILITH_FACE));
-    // Hair: a soft crown, side-swept bangs, and a lock curling over the front shoulder.
-    out.push(C(poly([[hx - 14.6, hy + 6], [hx - 15, hy - 5], [hx - 10, hy - 14], [hx, hy - 16.4], [hx + 9, hy - 14], [hx + 14.4, hy - 5], [hx + 14.4, hy + 2], [hx + 10, hy - 3], [hx + 4, hy - 2.4], [hx - 1, hy + 1], [hx - 7, hy - 1], [hx - 9, hy + 8]], D.hairDk)));
-    out.push(C(poly([[hx - 13.6, hy + 4], [hx - 14, hy - 5], [hx - 9.4, hy - 13.2], [hx, hy - 15.2], [hx + 8.6, hy - 13], [hx + 13.4, hy - 5], [hx + 13.6, hy + 0.4], [hx + 10, hy - 4], [hx + 4, hy - 3.4], [hx - 1, hy - 0.4], [hx - 7, hy - 2], [hx - 8.6, hy + 6]], D.hair)));
-    out.push(line(spline([[hx - 6, hy - 12], [hx + 1, hy - 13.6], [hx + 8, hy - 11]], 3), 1.1, D.hairLt), line([[hx - 1, hy - 13.4], [hx + 3, hy - 13.2]], 0.7, D.hairHi));
-    out.push(line(spline([[hx + 1, hy - 12], [hx + 6, hy - 7], [hx + 11, hy - 3.4]], 3), 0.5, D.hairDk), line(spline([[hx - 4, hy - 11], [hx - 1, hy - 5], [hx - 2, hy]], 3), 0.5, D.hairDk));
+    // Hair: the crown and side-swept fringe.
+    inHead(hx, hy, () => out.push(...hairCap(R, LILITH_HAIR)));
     out.push(...queenTop(hx, hy, mood, LILITH_FACE));
     horn(false, D.horn);
     // Tiara: a gold band with a heart ruby and small points.
@@ -1249,10 +1560,8 @@ function lilith(pose, f, mood) {
     const tx = hx + 1 + Math.cos((278 * PI) / 180) * 11.5;
     const ty = hy - 7 + Math.sin((278 * PI) / 180) * 6.6;
     out.push(heart(tx, ty - 0.6, 3, D.goldDk), heart(tx, ty - 0.8, 2.2, D.gem), dot(tx - 0.6, ty - 1.4, 0.45, '#ffffff'));
-    // The front lock over the shoulder.
-    const sl = swing * 0.4;
-    const lock = [[hx - 8, hy - 2], [hx - 10 + sl * 0.3, hy + 10], [hx - 7 + sl * 0.6, hy + 20], [hx - 10 + sl, hy + 30], [hx - 7 + sl, hy + 36]];
-    out.push(taper(lock, 5.6, 1.6, D.hairDk, { n: 3, tip: true }), taper(lock.map(([x, y]) => [x + 0.6, y]), 3.6, 0.8, D.hair, { n: 3, flat: true }), line(spline(lock.slice(1, 4), 3).map(([x, y]) => [x + 0.8, y]), 0.5, D.hairLt));
+    // The wavy lock over the front shoulder.
+    inHead(hx, hy, () => out.push(...pair(wavy(-8.2, -3, 40, 0, 3), wavy(-5, -3, 30, -0.6, 3.6), 4.6, 3.6, R, { r0: 1, pk: 0.3, k: 1.3, end: 0.1, line: true, hi: [0.08, 0.26], short: 5 })));
   });
 
   // ---- The near arm: a hand on the hip, or blowing a kiss in the attack.
@@ -1307,7 +1616,7 @@ function lilith(pose, f, mood) {
 // ---------- Selene, the Moon Valkyrie ----------
 
 const M = {
-  skin: '#fff0e8', skinDk: '#efcec9', hair: '#f4f0ff', hairDk: '#c9c0ea', hairLt: '#ffffff', silver: '#e3e6f6', silverDk: '#a4a8d0', silverLt: '#ffffff',
+  skin: '#fff0e8', skinDk: '#efcec9', hair: '#eceaff', hairDk: '#c6c1ee', hairSh2: '#8f8ad0', hairLt: '#ffffff', silver: '#e3e6f6', silverDk: '#a4a8d0', silverLt: '#ffffff',
   steel: '#8a8ec0', lav: '#c5b0ff', lavDk: '#9580df', lavLt: '#e6dcff', gold: '#ffe08a', goldDk: '#d4a748', cape: '#40439a', capeDk: '#2b2d70',
   capeIn: '#5c62c8', star: '#fffbe0', halo: '#fff4c2', haloDk: '#efd27e', moon: '#fff8d8', glow: '#bfe9ff', lip: '#e07a92',
 };
@@ -1329,11 +1638,29 @@ function crescentPts(cx, cy, r, w, dir) {
   return pts;
 }
 
+// Selene's platinum hair under the helm: a fringe parted over the far brow into six clumps, a
+// side lock before the ear, and a long braid behind. The ring of light sits just below the brim.
+const SELENE_HAIR = {
+  cap: { cx: 0, cy: -1, rx: 14.6, ry: 15, a0: 160, a1: 358 },
+  edge: [[13.8, 2, 't'], [11.9, -3, 'n'], [9.6, 0, 't'], [7.4, -3.3, 'n'], [5.1, -0.8, 't'], [2.8, -4.8, 'n'], [0.5, -0.4, 't'], [-1.8, -3.2, 'n'], [-4.2, 0.2, 't'], [-6, -2.4, 'n'], [-8.6, 6, 'p']],
+  part: [3, -15],
+  sepLen: [0.24, 0.3, 0.36, 0.26, 0.22],
+  curl: 0.9,
+  split: true,
+  bulge: 0.3,
+  crown: [[[-1, -9], [-8, -5.4], [-11.4, 1.6]]],
+  back: [218, [-10.6, -6], [-11.2, -2], [-10, 2], [-11, 5.2]],
+  nape: [30, 2.4],
+  tipShade: 1.2,
+  ring: { cx: 0.5, cy: -0.8, rx: 13, ry: 5.4, a0: 212, a1: 332, w: 1.2, tooth: 1.5, gaps: [242, 281] },
+};
+const SELENE_RAMP = { hi: M.hairLt, base: M.hair, sh1: M.hairDk, sh2: M.hairSh2 };
+
 // Selene's face: clear, steady eyes with clean strong lashes and straight brows, a calm resolve;
 // she grits her teeth when struck.
 const SELENE_FACE = {
   skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffb0c0', blushK: 0.8, lip: M.lip, lipLine: '#b0566a',
-  bangs: [[-8.4, 6], [-3, -1], [2, -5.6], [5, -2], [9, -4.6], [13.6, -0.6]], bangLine: '#b4aee0',
+  bangs: bangsOf(SELENE_HAIR.edge),
   eye: { ry: 2.9, iris: '#8e9be6', irisDk: '#3d3f8f', irisLt: '#d8e6ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#23245a', tilt: 0, wing: 1.3, flicks: 2, lashLen: 1.2, ink: '#2c2d5a', sparkle: true },
   brow: { c: '#8f8ad0', kind: 'straight', w: 0.8, lift: -0.3 },
   moods: { idle: { open: 0.94, mouth: 'calm' }, angry: { mouth: 'grit', brow: { inner: 1.4, outer: 0.2, arch: -0.8, w: 1.4 } }, hurt: { mouth: 'grimace' } },
@@ -1344,7 +1671,8 @@ function selene(pose, f, mood) {
   const H = 150;
   const G = H - 0.6;
   const bx = 76;
-  const { walk, atk, a, ph } = timing(pose, f);
+  const tm = timing(pose, f);
+  const { walk, atk, a, ph } = tm;
   const { angry, hurt, dead, happy } = moods(mood);
   // A heroic armoured march: high knees, a firm footfall that drops the body on each step,
   // a counter-swing of the shield arm, and the cape billowing behind.
@@ -1433,19 +1761,35 @@ function selene(pose, f, mood) {
     for (const [x, y] of [[bx - 14, G - 60], [bx - 20, G - 40], [bx - 10, G - 30], [bx - 24, G - 20]]) out.push(dot(x + sw * 0.5, y, 0.5, M.lavLt));
   });
 
-  // ---- Long platinum braid swinging behind.
-  within(Th, () => {
-    const sw = swing;
-    const pts = [[hx - 10, hy + 2], [hx - 14 + sw * 0.3, hy + 14], [hx - 16 + sw * 0.8, hy + 28], [hx - 16 + sw * 1.3, hy + 42], [hx - 15 + sw * 1.6, hy + 52]];
-    const sp = spline(pts, 3);
+  // ---- Long platinum braid swinging behind, a frame behind each footfall.
+  const lag = hairMotion(tm, { amp: walk ? 1.4 : 1.2, fq: walk ? 2 : 1, p0: walk ? -1.2 : 0, drag: walk ? -2.4 : 0, bob: walk ? (p) => 2.4 * Math.abs(Math.sin(p)) : (p) => 0.5 * Math.sin(p), swing, still: dead, turn: tilt + headA });
+  const R = SELENE_RAMP;
+  within(Th, () => inHead(hx, hy, () => {
+    const sp = spline(flow([[-10, 2], [-14, 14], [-16, 28], [-15.6, 42], [-14.6, 52]], lag), 3);
+    out.push(clump(sp, 6.4, R.sh2, { r0: 0.9, pk: 0.1, end: 0.55, tip: 0.4 }));
+    // Interlaced strands: each lobe a pointed clump crossing the braid on a slant, alternating
+    // sides, shaded where it tucks under the next and lit on its upper front.
     for (let i = 0; i < sp.length - 1; i++) {
       const [x, y] = sp[i];
-      const r = 3.6 - (i / sp.length) * 1.4;
-      out.push(oval(x + (i % 2 ? 0.8 : -0.8), y, r + 0.5, 2.4, M.hairDk, (i % 2 ? 0.5 : -0.5), 12), oval(x + (i % 2 ? 0.8 : -0.8), y - 0.3, r, 1.9, M.hair, (i % 2 ? 0.5 : -0.5), 12));
+      const [x2, y2] = sp[i + 1];
+      const len = Math.hypot(x2 - x, y2 - y) || 1;
+      const d = [(x2 - x) / len, (y2 - y) / len];
+      const nrm = [-d[1], d[0]];
+      const r = 3.4 - (i / sp.length) * 1.3;
+      const s = i % 2 ? 1 : -1;
+      const a = [x + nrm[0] * r * s - d[0] * 1.6, y + nrm[1] * r * s - d[1] * 1.6];
+      const m = [x + d[0] * len * 0.35, y + d[1] * len * 0.35];
+      const b = [x - nrm[0] * r * s * 0.7 + d[0] * len * 1.05, y - nrm[1] * r * s * 0.7 + d[1] * len * 1.05];
+      out.push(clump([a, m, b], r * 1.3, R.sh2, { r0: 0.7, pk: 0.4, end: 0.3, tip: 0.8 }));
+      out.push(clump([[a[0] + d[0] * 0.3, a[1] + d[1] * 0.3 - 0.2], [m[0], m[1] - 0.4], [b[0] - d[0] * 0.8, b[1] - d[1] * 0.8 - 0.3]], r * 1.0, i % 2 ? R.sh1 : R.base, { r0: 0.6, pk: 0.4, end: 0.3, tip: 0.4 }));
+      out.push(clump([[a[0] + d[0] * 0.6, a[1] + d[1] * 0.6 - 0.5], [m[0] - d[0] * 0.3, m[1] - 0.8]], r * 0.42, i % 2 ? R.base : R.hi, { r0: 0.6, pk: 0.5, end: 0.4, tip: 0.3 }));
     }
+    // The gold tie and the tail splitting into two points.
     const e = sp[sp.length - 1];
-    out.push(oval(e[0], e[1] - 1, 2.2, 1.6, M.gold, 0, 10), poly([[e[0] - 2, e[1]], [e[0] + 2, e[1]], [e[0] + 2.6 + sw * 0.3, e[1] + 6], [e[0] + sw * 0.4, e[1] + 4.6], [e[0] - 2.4 + sw * 0.3, e[1] + 6]], M.hair));
-  });
+    const [tx, ty] = lag(1, 54).map((v, i) => v - lag(0.9, 50)[i]);
+    out.push(oval(e[0], e[1] - 0.6, 2.4, 1.6, M.goldDk, 0, 10), foval(e[0] + 0.2, e[1] - 0.9, 1.8, 1, M.gold, 0, 10));
+    out.push(...pair([[e[0] - 0.6, e[1] + 0.4], [e[0] - 1.4 + tx * 3, e[1] + 4], [e[0] - 1.6 + tx * 5, e[1] + 7.4 + ty * 2]], [[e[0] + 0.8, e[1] + 0.4], [e[0] + 1.4 + tx * 3, e[1] + 3.6], [e[0] + 1.8 + tx * 5, e[1] + 5.6 + ty * 2]], 2.6, 2.4, R, { r0: 1, pk: 0.3, short: 1.4, lx: 0.3 }));
+  }));
 
   // ---- The round shield on the far arm: lavender with a silver rim and a gold crescent crest.
   const drawShield = () => {
@@ -1528,13 +1872,12 @@ function selene(pose, f, mood) {
   // ---- Head: platinum hair, a winged silver circlet-helm.
   within(Th, () => {
     out.push(...queenHead(hx, hy, mood, SELENE_FACE));
-    // Hair: a smooth crown under the helm and soft parted bangs.
-    out.push(C(poly([[hx - 14.6, hy + 5], [hx - 15, hy - 5], [hx - 10, hy - 14], [hx, hy - 16], [hx + 9, hy - 14], [hx + 14.4, hy - 5], [hx + 14.6, hy + 1], [hx + 9, hy - 3.6], [hx + 5, hy - 1], [hx + 2, hy - 4.6], [hx - 3, hy], [hx - 9, hy + 8]], M.hairDk)));
-    out.push(C(poly([[hx - 13.6, hy + 3], [hx - 14, hy - 5], [hx - 9.4, hy - 13], [hx, hy - 15], [hx + 8.6, hy - 13], [hx + 13.4, hy - 5], [hx + 13.6, hy - 0.6], [hx + 9, hy - 4.6], [hx + 5, hy - 2], [hx + 2, hy - 5.6], [hx - 3, hy - 1], [hx - 8.4, hy + 6]], M.hair)));
-    out.push(line(spline([[hx + 2, hy - 12], [hx + 6, hy - 7], [hx + 9, hy - 4.6]], 3), 0.5, M.hairDk), line(spline([[hx + 1, hy - 12], [hx - 1, hy - 6], [hx - 3, hy - 1]], 3), 0.5, M.hairDk));
-    // A long side lock in front of the ear.
-    const sl = swing * 0.3;
-    out.push(taper([[hx - 7, hy - 2], [hx - 8 + sl * 0.4, hy + 9], [hx - 6 + sl, hy + 19]], 4.6, 1.4, M.hairDk, { n: 3, tip: true }), taper([[hx - 6.6, hy - 2], [hx - 7.4 + sl * 0.4, hy + 9], [hx - 5.8 + sl, hy + 18]], 3, 0.8, M.hair, { n: 3, flat: true }));
+    // Hair: the crown and parted fringe, a thin shadow under the helm's brim, and the side lock.
+    inHead(hx, hy, () => {
+      out.push(...hairCap(R, SELENE_HAIR));
+      out.push(fpoly([[14.6, -6.6], [8, -9.2], [2, -10.6], [-5, -10.2], [-10, -7.6], [-14, -3], [-13.8, -1.4], [-10.4, -5.4], [-5, -7.6], [2, -8], [8, -6.8], [14.6, -3.6]], R.sh1));
+      out.push(...pair(flow([[-7.6, -3], [-8.4, 7], [-7.4, 15], [-6.2, 20]], lag), flow([[-5, -3], [-5.4, 6], [-4.6, 12.6], [-3.6, 16.4]], lag), 3.4, 3, R, { r0: 1, pk: 0.3, k: 1.4, end: 0.12, line: true, hi: [0.1, 0.3], short: 3 }));
+    });
     out.push(...queenTop(hx, hy, mood, SELENE_FACE));
     // The helm: a silver cap with a lavender gem at the brow and white wings sweeping back.
     const brim = [[hx + 14.4, hy - 5], [hx + 8, hy - 7.6], [hx + 2, hy - 9], [hx - 5, hy - 8.6], [hx - 10, hy - 6], [hx - 13.4, hy - 1.6]];
