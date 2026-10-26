@@ -15,6 +15,7 @@ import { WEAPON_TYPES } from '../core/formulas.js';
 import { speak } from './chatter.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 import { roleThink, healerTurn, jumpNow } from './dungeon.js';
+import { COMBOS } from './melee.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -408,20 +409,29 @@ function strike(bot, m, world, rng) {
   const acc = accuracy(family, bot.stats, level);
   const from = { x: body.x + body.facing * 10, y: body.y - 26 };
   const hits = special && !st.magic ? (st.ranged ? 3 : 2) : 1;
+  // Melee members work through their weapon's combo, one step per swing: the hit lands as the
+  // blade cuts, with that step's push and smear.
+  const steps = !special && !st.ranged && !st.magic ? COMBOS[bot.stats.weaponType] ?? COMBOS.none : null;
+  const step = steps ? steps[(bot.comboStep = ((bot.comboStep ?? -1) + 1) % steps.length)] : null;
+  const cut = step?.strikes[0];
+  const impact = cut ? cut.at * step.dur : 0.12;
   for (let i = 0; i < hits; i++) {
     const miss = rng() >= hitChance(acc, level, m.def);
     const roll = miss ? null : rollHit(range, bot.stats, m.def, level, rng);
-    const travel = st.shot ? Math.hypot(m.x - from.x, m.y - from.y) / 620 : 0.12;
-    world.pending.push({ at: world.now + travel + i * 0.09, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id });
+    const travel = st.shot ? Math.hypot(m.x - from.x, m.y - from.y) / 620 : impact;
+    world.pending.push({ at: world.now + travel + i * 0.09, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id, knock: cut?.knock, launch: cut?.launch, big: cut?.big });
     if (st.shot) world.fx.push({ kind: 'projectile', shot: st.shot, x: from.x, y: from.y - i * 3, tx: m.x, ty: m.y - m.def.h / 2 + (i - 1) * 4, t: -i * 0.09, dur: Math.max(0.08, travel) });
   }
   const box = { x: body.x - 34, y: body.y - 50, w: 68, h: 50 };
   if (special) {
     if (st.magic) world.fx.push({ kind: 'burst', x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.55, seed: rng() });
     else if (!st.ranged) world.fx.push({ kind: rng() < 0.5 ? 'spin' : 'flurry', x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: 0.4 });
-  } else if (!st.shot) world.fx.push({ kind: 'swing', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.3 });
-  const pose = special ? (st.magic ? 'castspin' : st.ranged ? (st.shot === 'star' ? 'barrage' : 'rapid') : rng() < 0.5 ? 'spin' : 'flurry') : st.ranged ? st.pose : pick2(['slash', 'slash2', 'thrust']);
-  bot.attack = { pose, t: 0, dur: special ? 0.6 : 0.42 };
+  }
+  if (cut?.arc) {
+    world.fx.push({ kind: 'arc', x: body.x + body.facing * 10, y: body.y - 25, dir: body.facing, r: cut.reach * 0.52, start: cut.arc[0], sweep: cut.arc[1], thick: cut.thick ?? 7, big: cut.big, color: cut.big ? '#ffb347' : '#8fb8ff', t: -impact, dur: cut.big ? 0.32 : 0.24 });
+  }
+  const pose = special ? (st.magic ? 'castspin' : st.ranged ? (st.shot === 'star' ? 'barrage' : 'rapid') : rng() < 0.5 ? 'spin' : 'flurry') : st.ranged ? st.pose : step.move;
+  bot.attack = { pose, t: 0, dur: special ? 0.6 : step?.dur ?? 0.42 };
 }
 
 // Healers keep an eye on your HP.

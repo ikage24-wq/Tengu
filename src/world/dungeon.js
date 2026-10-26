@@ -18,7 +18,7 @@ import { addItem } from '../core/inventory.js';
 import { makeEquip, itemName } from '../core/items.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { knockBack } from './physics.js';
-import { spawnMob, yank, tickYank } from './mobs.js';
+import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
 import { navOf, surfaceBelow, surfaceOf } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { recruitBot } from './bots.js';
@@ -613,7 +613,7 @@ function fight(world, m, up, dt) {
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
   m.lunge = Math.max(0, (m.lunge ?? 0) - dt);
-  if (tickYank(m, dt)) return;
+  if (tickYank(m, dt) || tickAir(m, dt)) return;
   if (m.frozenUntil > now) {
     m.stagger = 0;
     return;
@@ -958,7 +958,7 @@ export function tickDungeon(world, dt) {
 function idle(m, dt, now) {
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
-  if (tickYank(m, dt)) return;
+  if (tickYank(m, dt) || tickAir(m, dt)) return;
   m.phase += dt;
   if (m.def.speed <= 0) return;
   m.timer -= dt;

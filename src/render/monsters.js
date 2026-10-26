@@ -677,8 +677,11 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
     ctx.restore();
   }
 
+  // Knocked up into the air: drawn above its shadow, tumbling a little.
+  const air = m.air > 0 ? m.air : 0;
   ctx.save();
-  ctx.translate(Math.round(x), Math.round(y - hop));
+  ctx.translate(Math.round(x), Math.round(y - hop - air));
+  if (air) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
   ctx.restore();

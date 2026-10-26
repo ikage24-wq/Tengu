@@ -37,7 +37,7 @@ leave the tab). Pick a world, then pick a hero on the character select tree and 
 | Down + Space | Drop through a ledge |
 | Up / Down at a rope | Climb (jump off with Space + Left/Right) |
 | Up | Talk to an NPC, or enter a portal |
-| Z (or Ctrl) | Basic attack (hold to keep attacking) |
+| Z (or Ctrl) | Basic attack (hold, or keep tapping, to chain a melee combo) |
 | X | Pick up loot (hold to vacuum) |
 | Q W E R A S D F 1 2 3 4 | Hotkeys for skills and potions |
 | I / C / K / L / M / O | Bag / Stats / Skills / Quests / World map / Cash Shop |
@@ -79,6 +79,21 @@ to clear it.
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
   3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
+- **Melee combos** — with a sword, axe, spear, dagger, or bare hands, basic attacks chain into a
+  combo: sword slash → backhand → lunging thrust → a spinning cleave finisher; axe slash →
+  backhand → a ground-cracking overhead smash; spear jab → jab → rising sweep → a charging
+  thrust through the line; dagger jab → slash → cross-cut; fists jab → jab → uppercut. Hold the
+  key or keep tapping (a tap mid-swing is remembered); pause and it starts over. Each blow lands
+  as the blade cuts, you step into every swing, and the smear follows the blade's real path (blue
+  cuts, gold heavy blows). Light hits barely push; finishers knock monsters away or launch them
+  into the air, and hits keep them up there for a juggle. Heavy blows hit-stop, shake the screen,
+  and crack the ground. Party members swing through the same combos.
+- **Warrior skills** — **Blade Rush** is a three-press combo: a quick cross-cut, a rising
+  launcher that throws them into the air, and a leaping dive that cracks the ground around you.
+  **Whirlwind** spins you forward hitting everything around you five times, sucking monsters in,
+  then flinging them away. **Titan Breaker** is a heavy three-blow combo in one press: a crushing
+  smash, a rising drag that hurls them up, and a leaping dive that splits the ground. Charge now
+  bowls monsters over.
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings). Everything you
   wear shows on your character. Every job has its own set **every 5 levels, from 5 to 100**, in
   every armor slot, and each set looks a step grander than the one before:

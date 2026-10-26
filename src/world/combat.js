@@ -9,6 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
+import { hasCombo, basicCombo, skillCombo } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -86,6 +87,17 @@ export function cast(world, skillId, rng = Math.random) {
   const type = s ? s.type : 'attack';
 
   char.mp -= params.mp ?? 0;
+
+  // Melee basic attacks and combo skills play out as timed strikes (see melee.js).
+  if (!s && hasCombo(stats.weaponType)) {
+    basicCombo(world);
+    return { ok: true };
+  }
+  if (params.combo) {
+    if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
+    skillCombo(world, skillId, { ...params, school: s.school });
+    return { ok: true };
+  }
 
   const delay = BASE_DELAY * (1 - stats.attackSpeed);
   world.attackTimer = type === 'buff' ? 0.35 : delay;
@@ -215,7 +227,7 @@ export function cast(world, skillId, rng = Math.random) {
       const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng, params.critRate ?? 0);
       const chainAt = params.chain ? ti * 0.06 : 0;
       world.pending.push({
-        at: at + chainAt, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: n,
+        at: at + chainAt, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: n, knock: params.knock, launch: params.launch,
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
         burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school,
       });

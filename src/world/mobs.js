@@ -104,15 +104,41 @@ export function tickYank(m, dt) {
   return true;
 }
 
-export function hitMob(m, damage, fromX, now) {
+// A hit: knocked back (`knock` px/s, away from the blow; negative pulls in), and popped up into
+// the air by a launcher (`launch` px/s); bosses stand firm.
+export function hitMob(m, damage, fromX, now, { knock = 90, launch = 0 } = {}) {
   m.hp = Math.max(0, m.hp - damage);
   m.flash = 0.12;
   m.aggroUntil = now + AGGRO_TIME;
   if (!m.def.boss) {
-    m.stagger = 0.25;
-    m.knockVx = (m.x >= fromX ? 1 : -1) * 90;
+    m.stagger = Math.max(m.stagger, knock > 150 ? 0.4 : 0.25);
+    m.knockVx = (m.x >= fromX ? 1 : -1) * knock;
+    // Hits keep a monster up in the air (a juggle); a launcher sends it up.
+    if (launch && !m.def.fly) m.airV = Math.max(m.airV ?? 0, launch);
+    else if (m.air > 0) m.airV = Math.max(m.airV ?? 0, 120);
   }
   return m.hp <= 0;
+}
+
+const AIR_GRAVITY = 1300;
+
+// A monster up in the air falls back down, drifting with its knockback, and can't act until it
+// lands (with a little bounce). Returns true while it's airborne.
+export function tickAir(m, dt) {
+  if (!(m.air > 0) && !(m.airV > 0)) return false;
+  m.air = (m.air ?? 0) + m.airV * dt;
+  m.airV -= AIR_GRAVITY * dt;
+  m.x = Math.max(m.x1, Math.min(m.x2, m.x + (m.knockVx ?? 0) * dt));
+  m.knockVx = (m.knockVx ?? 0) * 0.97;
+  m.state = 'idle';
+  if (m.air <= 0) {
+    // A hard landing bounces once.
+    const hard = m.airV < -380;
+    m.air = 0;
+    m.airV = hard ? 150 : 0;
+    m.stagger = 0.3;
+  }
+  return true;
 }
 
 // Moves one monster. `player` is { x, y } so aggro'd monsters can chase.
@@ -124,7 +150,7 @@ export function updateMob(m, player, dt, now) {
   }
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
-  if (tickYank(m, dt)) return null;
+  if (tickYank(m, dt) || tickAir(m, dt)) return null;
   // Frozen solid: no moving, no animating, no winding up, until the ice cracks.
   if (m.frozenUntil > now) {
     m.stagger = 0;

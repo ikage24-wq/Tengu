@@ -7,7 +7,7 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
-import { crescent, starFlash, needle, shock, easeOut, easeIn } from './fxkit.js';
+import { crescent, starFlash, needle, shock, puff, crown, easeOut, easeIn } from './fxkit.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -63,6 +63,118 @@ function slash(ctx, cx, cy, dir, radius, p, color, thick = 6) {
     const fly = tip + (Math.PI / 2) * Math.sign(sweep);
     for (let i = 0; i < 2; i++) needle(ctx, tx + Math.cos(fly) * (4 + i * 5) * p * 6, ty + Math.sin(fly) * (4 + i * 5) * p * 6, fly, 6 - i * 2, 2.2 - i * 0.6, color);
   }
+}
+
+// A melee cut's smear along the blade's real path: `start` and `sweep` in degrees for a hero
+// facing right (0 = forward, -90 = up; mirrored when facing left). The head races ahead and the
+// tail catches up, with a white-hot inner edge; heavy blows get a second, fatter smear and a flash
+// where the cut ends. `flat` squashes it into a whirl around the body.
+function arcSmear(ctx, f, x, y, p) {
+  const rad = Math.PI / 180;
+  let a0 = f.start * rad;
+  let sweep = f.sweep * rad;
+  if (f.dir < 0) {
+    a0 = Math.PI - a0;
+    sweep = -sweep;
+  }
+  const head = easeOut(Math.min(1, p / 0.4));
+  const tail = easeIn(Math.max(0, (p - 0.1) / 0.9));
+  const from = a0 + sweep * tail;
+  const to = a0 + sweep * head;
+  const el = f.element ? ELEMENTS[f.element] : null;
+  const color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
+  const thick = f.thick * (f.big ? 1.25 : 1) * (1.5 - p);
+  ctx.save();
+  ctx.translate(x, y);
+  if (f.flat) ctx.scale(1, 0.45);
+  if (f.big) {
+    ctx.globalAlpha = 0.45 * (1 - p);
+    crescent(ctx, 0, 0, f.r + thick * 0.6, from, to, thick * 1.9, color);
+    ctx.globalAlpha = 1;
+  }
+  crescent(ctx, 0, 0, f.r, from, to, thick, color);
+  // Speed lines peeling off the outside.
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = Math.max(0, 1 - p * 1.5);
+  for (let i = 0; i < 3; i++) {
+    const a = from + (to - from) * (0.3 + i * 0.25);
+    const r = f.r + thick * (0.8 + i * 0.35);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, a - 0.14 * Math.sign(sweep), a + 0.14 * Math.sign(sweep), sweep < 0);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // Sparks flung off the tip, and on a heavy blow a flash where it ends.
+  if (p < 0.5) {
+    const tx = Math.cos(to) * f.r;
+    const ty = Math.sin(to) * f.r;
+    const fly = to + (Math.PI / 2) * Math.sign(sweep);
+    for (let i = 0; i < 2; i++) needle(ctx, tx + Math.cos(fly) * (4 + i * 5) * p * 6, ty + Math.sin(fly) * (4 + i * 5) * p * 6, fly, 6 - i * 2, 2.2 - i * 0.6, color);
+    if (f.big) starFlash(ctx, tx, ty, 16 * (1 - p * 2), 6, 0.3, color, '#ffffff', 4 * (1 - p * 2));
+  }
+  if (el && p < 0.8) {
+    for (let i = 0; i < 6; i++) {
+      const a = from + (to - from) * (i / 5);
+      ctx.globalAlpha = (1 - p) * 0.9;
+      ctx.fillStyle = el.sparks[i % el.sparks.length];
+      const r = f.r + Math.sin(i * 3.1) * 6 + p * 10;
+      ctx.fillRect(Math.round(Math.cos(a) * r), Math.round(Math.sin(a) * r), 2, 2);
+    }
+  }
+  ctx.restore();
+}
+
+// The floor splitting open under a heavy blow: jagged cracks racing out both ways, chips of
+// ground flung up, a burst of spikes, and dust rolling out.
+function crack(ctx, f, x, y, p) {
+  const out = easeOut(Math.min(1, p / 0.18));
+  const fade = p > 0.55 ? 1 - (p - 0.55) / 0.45 : 1;
+  const half = f.w / 2;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  // The cracks run just under the grass line: a dark split with a hot glow inside.
+  for (const side of [-1, 1]) {
+    for (let k = 0; k < 3; k++) {
+      ctx.strokeStyle = ['#ffb36b', '#4a2f3a', '#fff3c9'][k];
+      ctx.lineWidth = [6, 3, 1][k];
+      ctx.globalAlpha = fade * (k === 0 ? 0.45 : 1);
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x, y + 5);
+      const n = 7;
+      for (let i = 1; i <= n; i++) {
+        const u = (i / n) * out;
+        const jag = Math.sin((i + f.seed * 10) * 2.7 + side) * 3;
+        ctx.lineTo(x + side * half * u, y + 5 + jag + (i % 2 ? 2 : -1));
+      }
+      ctx.stroke();
+      // A branch off the middle.
+      ctx.beginPath();
+      ctx.moveTo(x + side * half * 0.35 * out, y + 5);
+      ctx.lineTo(x + side * half * 0.5 * out, y + 11);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  if (p < 0.35) crown(ctx, x, y + 1, 26 * Math.sin((p / 0.35) * Math.PI), 18, 5, '#e8c8a8');
+  // Chips of ground thrown up and falling back.
+  for (let i = 0; i < 8; i++) {
+    const sd = i % 2 ? 1 : -1;
+    const vx = sd * (30 + ((i * 37 + f.seed * 50) % 50));
+    const vy = 160 + ((i * 53) % 90);
+    const t = p * 0.7;
+    const cx = x + vx * t;
+    const cy = y - (vy * t - 450 * t * t);
+    if (cy > y + 2) continue;
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = i % 3 ? '#c9a27a' : '#8a6a5a';
+    ctx.fillRect(Math.round(cx - 1.5), Math.round(cy - 1.5), 3, 3);
+  }
+  ctx.globalAlpha = fade * 0.9;
+  for (const side of [-1, 1]) puff(ctx, x + side * (10 + half * 0.7 * easeOut(p)), y - 4 - p * 4, 6 * (1 - p) + 2, '#f6e2c8', '#d9b89a');
+  ctx.restore();
 }
 
 function drawShot(ctx, f, cam) {
@@ -607,6 +719,12 @@ function drawFx(ctx, f, cam, time) {
       starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
       break;
     }
+    case 'arc':
+      arcSmear(ctx, f, x, y, p);
+      break;
+    case 'crack':
+      crack(ctx, f, x, y, p);
+      break;
     case 'roar': {
       // Provoke: rings of a battle roar rolling out to its reach.
       ctx.globalAlpha = 1 - p;

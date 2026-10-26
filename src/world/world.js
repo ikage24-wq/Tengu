@@ -15,6 +15,7 @@ import { createBody, stepBody, knockBack } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
+import { tickMelee } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
@@ -33,6 +34,7 @@ export function createWorld(char) {
     mobs: [],
     drops: [],
     pending: [],
+    strikes: [],
     fx: [],
     numbers: [],
     messages: [],
@@ -75,6 +77,8 @@ export function loadMap(world, mapId, portalId) {
   world.mobs = tickSpawner(world.spawner, map, world.now);
   world.drops = [];
   world.pending = [];
+  world.strikes = [];
+  world.lunge = null;
   world.fx = [];
   world.numbers = [];
   world.channel = null;
@@ -231,6 +235,9 @@ const BLOCKER_TEXT = {
 function useHotkey(world, binding) {
   if (binding.skill) {
     const r = cast(world, binding.skill);
+    // Pressed mid-swing: it goes off as soon as the swing allows.
+    if (r.reason === 'busy') world.skillBuffer = { binding, until: world.now + 0.3 };
+    else if (r.ok) world.skillBuffer = null;
     if (!r.ok && BLOCKER_TEXT[r.reason] && world.warnTimer <= 0) {
       world.log(BLOCKER_TEXT[r.reason], '#ffb3c6');
       world.warnTimer = 1.5;
@@ -378,8 +385,12 @@ export function updateWorld(world, dt, input) {
 
   if (!world.body.rope) {
     // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
-    const attackKey = ['KeyZ', 'ControlLeft', 'ControlRight'].some((k) => held.has(k) || pressed.has(k));
-    if (attackKey) cast(world, null);
+    // A tap during a swing is remembered for a moment, so combos chain on time.
+    const attackKeys = ['KeyZ', 'ControlLeft', 'ControlRight'];
+    if (attackKeys.some((k) => pressed.has(k))) world.attackBuffer = world.now + 0.3;
+    if ((attackKeys.some((k) => held.has(k)) || world.attackBuffer > world.now) && cast(world, null).ok) world.attackBuffer = 0;
+    const buffered = world.skillBuffer;
+    if (buffered && buffered.until > world.now && world.attackTimer <= 0 && world.lockTimer <= 0) useHotkey(world, buffered.binding);
     for (const [code, binding] of Object.entries(char.hotkeys)) {
       if (!binding) continue;
       // Attack skills repeat while held; everything else fires once per press.
@@ -394,20 +405,21 @@ export function updateWorld(world, dt, input) {
   // Auto-loot (a setting, passed in as world.settings) picks things up without holding X.
   if ((held.has('KeyX') || world.settings?.autoLoot) && world.lootTimer <= 0 && pickUp(world)) world.lootTimer = 0.12;
 
-  // ----- Queued hits -----
+  // ----- Melee strikes landing, then queued hits -----
+  tickMelee(world, dt);
   const due = world.pending.filter((h) => h.at <= world.now);
   world.pending = world.pending.filter((h) => h.at > world.now);
   for (const h of due) {
     const m = h.mob;
     if (m.hp <= 0) continue;
     if (world.dungeon) h.damage = noteHit(world, m, h);
-    const top = m.y - m.def.h - 8 - h.stack * 15;
+    const top = m.y - (m.air ?? 0) - m.def.h - 8 - h.stack * 15;
     if (h.miss) {
       world.numbers.push({ x: m.x, y: top, text: 'MISS', color: '#d4cbe8', t: 0 });
       continue;
     }
-    world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit });
-    world.fx.push({ kind: 'spark', x: m.x, y: m.y - m.def.h / 2, t: 0, dur: 0.25, crit: h.crit });
+    world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit });
+    world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : weaponElement(char);
@@ -416,7 +428,7 @@ export function updateWorld(world, dt, input) {
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
-    if (hitMob(m, h.damage, h.fromX, world.now)) {
+    if (hitMob(m, h.damage, h.fromX, world.now, { knock: h.knock ?? 90, launch: h.launch ?? 0 })) {
       killMob(world, m, Boolean(h.party));
       continue;
     }

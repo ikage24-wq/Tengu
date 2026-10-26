@@ -6,6 +6,9 @@
 //   heal    - restores HP (yours, and in a dungeon your party's in range) and smites monsters in
 //             range with holy damage (none with targets: 0)
 //   revive  - gets a fallen party member in range back on their feet (dungeons)
+// `combo` (melee) makes a skill a combo of steps that play as timed strikes (see world/melee.js):
+// each use plays the next step, so pressing again keeps it going.
+//
 //   provoke - every monster in range turns on you (`hold` seconds of sticking to you in a dungeon)
 //   hook    - a chain flies forward and drags the monsters it catches (up to `targets`) to you
 //   blink   - teleports you `distance` forward
@@ -50,14 +53,55 @@ export const SKILLS = {
 
   // ---------- Warrior ----------
   powerslash: skill({
-    id: 'powerslash', name: 'Power Slash', job: 'warrior', type: 'attack', fx: 'slash',
-    desc: 'A heavy swing at one monster.',
-    at: (lv, m) => ({ mp: lerp(4, 12, lv, m), pct: lerp(160, 265, lv, m), hits: 1, targets: 1, range: { w: 80, h: 60 } }),
+    id: 'powerslash', name: 'Blade Rush', job: 'warrior', type: 'attack', fx: 'slash', school: 'steel',
+    desc: 'A three-part combo, one part per press: a quick cross-cut, a rising launcher that throws them into the air, and a leaping dive that cracks the ground.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(3, 5);
+      return {
+        mp: k(4, 10), pct: k(90, 150), hits: 4, targets,
+        combo: [
+          { move: 'cross', dur: 0.5, step: 10, strikes: [
+            { at: 0.22, pct: k(90, 150), reach: 76, h: 60, targets, knock: 40, arc: [-115, 205], thick: 9 },
+            { at: 0.72, pct: k(90, 150), reach: 76, h: 62, targets, knock: 60, arc: [100, -215], thick: 9 },
+          ] },
+          { move: 'rising', dur: 0.46, step: 8, strikes: [{ at: 0.4, pct: k(130, 220), reach: 80, h: 84, targets, knock: 50, launch: 430, arc: [80, -175], thick: 11, big: true, stop: 0.06 }] },
+          { move: 'plunge', dur: 0.62, step: 18, finisher: true, strikes: [{ at: 0.56, pct: k(200, 340), reach: 92, h: 84, around: true, targets: targets + 2, knock: 230, crack: true, big: true, stop: 0.11, shake: 5 }] },
+        ],
+      };
+    },
   }),
   whirlstrike: skill({
-    id: 'whirlstrike', name: 'Whirl Strike', job: 'warrior', type: 'attack', fx: 'spin',
-    desc: 'Spin your weapon to hit several monsters.',
-    at: (lv, m) => ({ mp: lerp(8, 20, lv, m), pct: lerp(90, 170, lv, m), hits: 1, targets: lerp(3, 6, lv, m), range: { w: 150, h: 70 } }),
+    id: 'whirlstrike', name: 'Whirlwind', job: 'warrior', type: 'attack', fx: 'spin', school: 'steel',
+    desc: 'Spin into a whirlwind that carries you forward, hitting everything around you five times and sucking monsters in, then flinging them away.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 8);
+      const hit = (at, i) => ({ at, pct: k(40, 72), reach: 80, h: 76, around: true, targets, pull: 70, arc: [i % 2 ? 180 : 0, 300], thick: 10, stop: 0.02 });
+      return {
+        mp: k(10, 24), pct: k(40, 72), hits: 5, targets,
+        combo: [{ move: 'spin', dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
+          ...[0.15, 0.3, 0.45, 0.6].map(hit),
+          { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3 },
+        ] }],
+      };
+    },
+  }),
+  titanbreaker: skill({
+    id: 'titanbreaker', name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'quake', school: 'steel',
+    desc: 'A heavy three-blow combo in one go: a crushing smash, a rising drag that hurls them up, and a leaping dive that splits the ground wide open.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 7);
+      return {
+        mp: k(18, 36), pct: k(180, 320), hits: 3, targets, flare: true,
+        combo: [{ move: 'titan', dur: 1.25, step: 14, finisher: true, strikes: [
+          { at: 0.17, pct: k(150, 260), reach: 94, h: 74, targets, knock: 140, arc: [-105, 190], thick: 14, big: true, crack: true, stop: 0.08, shake: 3 },
+          { at: 0.46, pct: k(130, 230), reach: 90, h: 86, targets, knock: 50, launch: 470, arc: [80, -175], thick: 12, big: true, stop: 0.06 },
+          { at: 0.83, pct: k(260, 460), reach: 112, h: 92, around: true, targets: targets + 2, knock: 290, crack: true, big: true, stop: 0.15, shake: 7 },
+        ] }],
+      };
+    },
   }),
   ironskin: skill({
     id: 'ironskin', name: 'Iron Skin', job: 'warrior', type: 'buff', fx: 'buff',
@@ -67,7 +111,7 @@ export const SKILLS = {
   charge: skill({
     id: 'charge', name: 'Charge', job: 'warrior', type: 'blink', fx: 'charge', maxLevel: 10, school: 'steel',
     desc: 'Barrel forward shoulder-first, slamming every monster in your path.',
-    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: lerp(70, 130, lv, m), pct: lerp(90, 160, lv, m), hits: 1, targets: 4 }),
+    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: lerp(70, 130, lv, m), pct: lerp(90, 160, lv, m), hits: 1, targets: 4, knock: 280, launch: 160 }),
   }),
   vigor: skill({
     id: 'vigor', name: 'Vigor', job: 'warrior', type: 'passive', fx: null,
@@ -396,7 +440,7 @@ export const SKILLS = {
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
-  provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar',
+  provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip',

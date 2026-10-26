@@ -292,6 +292,36 @@ export const MOVES = {
     };
   },
 
+  // The sword finisher: coil back with the blade high behind, then unwind in one huge spinning
+  // sweep that carries you forward off your feet, and land in a low crouch.
+  cleave(p) {
+    if (p < 0.38) {
+      const t = ease(p / 0.38);
+      return { weapon: lerp(25, -135, t), arm: lerp(60, 175, t), tilt: -0.16 * t, lunge: -3 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.tx = -1; r.backArm = [2, -1]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.38, 0.62));
+    const settle = seg(p, 0.7, 1);
+    const turn = Math.cos(t * Math.PI * 2);
+    return {
+      weapon: lerp(-135, 225, t) - 40 * ease(settle), arm: lerp(175, 85, t), lunge: 8 * t * (1 - settle * 0.6), lift: 6 * bump(p, 0.38, 0.7),
+      turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.16 * t * (1 - settle), trail: p < 0.7,
+      rig: (r) => { r.tx = 2; if (p < 0.66) tuck(r); else { r.squat = settle < 0.5 ? 2 : 1; wideLegs(r); } r.backArm = [-4, -2]; r.hairLift = -1; r.cape = -4; strikeFace(r); },
+    };
+  },
+
+  // Two quick cuts in one breath: a downward slash, then the backhand.
+  cross(p) {
+    return p < 0.5 ? MOVES.slash(snap(p / 0.5)) : MOVES.slash2(snap((p - 0.5) / 0.5));
+  },
+
+  // Titan Breaker: a smash, a rising drag that throws them up, then a leap and a crater-making
+  // dive. Three moves as one.
+  titan(p) {
+    if (p < 0.36) return MOVES.overhead(snap(p / 0.36));
+    if (p < 0.6) return MOVES.rising((p - 0.36) / 0.24);
+    return MOVES.plunge((p - 0.6) / 0.4);
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -324,7 +354,7 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1,
 };
 
 // Basic attacks chain into a combo per weapon type.
