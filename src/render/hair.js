@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy'];
+export const HAIR_STYLES = ['candy', 'drills'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -370,6 +370,15 @@ const STYLES = {
       hang.push(streak(...a[0], ...a[1], 0.9, 0.4, r.hi, m, 1.2), streak(...b[0], ...b[1], 0.8, 0.3, r.base, m, 1.05));
     }
     return { head: [crown(r), F(E(5.4, 6.2, 1.4, 1.9, r.sh2)), F(E(25.6, 6.2, 1.4, 1.9, r.sh2))], hang, front: bangs('blunt', r, m, sideLocks(r, m, [[25.2, 11], [26.2, 16], [26.4, 20.6]], undefined, 3)), tips: [27, 31] };
+  },
+  // Ojou drills: a ringlet on each side, stretching and bouncing; soft bangs.
+  drills(r, m) {
+    return {
+      head: [crown(r), F(E(4.6, 9, 1.4, 1.9, r.sh2)), F(E(26.4, 9, 1.4, 1.9, r.sh2))],
+      hang: [lock([[4.6, 9], [2.4, 11.6], [1.6, 14]], 6, r.sh1, m), lock([[26.4, 9], [28.6, 11.6], [29.4, 14]], 6, r.sh1, m), ...drill(1.6, 15.6, 6, 3.6, 1, r, m), ...drill(29.4, 15.6, 6, 3.6, -1, r, m)],
+      front: bangs('soft', r, m, sideLocks(r, m, [[25.2, 11], [26, 16], [25.6, 21]], undefined, 3)),
+      tips: [28, 32],
+    };
   },
 };
 
