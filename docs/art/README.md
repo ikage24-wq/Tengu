@@ -72,6 +72,11 @@ carry an improvement across every part of the game it applies to.
   Capes are the same two-link chain (`animator.js` `cape`/`capeTip`, kit.js `hang`): the root
   spring rides the shoulders (stiffer, damping ratio ~0.5), the hem chases it on a softer one
   (~0.4), so it lags a start and swings past on a stop before settling.
+- Skirts, tassets and the hems of dresses and robes drape over the posed legs (`gear.js` `drape`):
+  per row, push the cloth's side out past wherever a leg reaches beyond its resting edge, plus a
+  little give from every leg move so wide dresses still swing; a push holds for every row below it
+  and tapers up to the waist, so the side flares as one A-line instead of kinking at the knee.
+  Subdivide outlines first so edges bend; plain dresses and robes also hang on the cloth springs.
 
 **Animation**
 - Attacks: wind-up held, a short strike, a held impact, then settle (MapleStory: 300/150/350 ms).
