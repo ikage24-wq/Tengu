@@ -110,6 +110,9 @@ carry an improvement across every part of the game it applies to.
   simpler ridge, almost the sky's colour. Water takes a per-map ramp (`WATERS` in landmarks.js).
 - Far layers fade toward the sky colour and get paler; vertical parallax stays tiny (about 0.05);
   a foreground layer in front of the characters adds depth; varied tiles, never one repeated tile.
+- Bag icons of near-black gear take a monotone value lift (`icons.js` `liftTone`, icons only):
+  tones under the floor rise toward it on one curve, so tone order and material planes survive
+  and the darkest reads as a deep hue, not a black blob in a dark slot.
 - Text over the scene always has an outline or backing; the world dims behind windows; bars give
   feedback (lingering lost chunk, heal flash, low-HP pulse).
 - Props (landmarks, buildings, scenery) use `src/render/propkit.js`: one world light from the upper

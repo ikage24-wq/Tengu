@@ -159,8 +159,45 @@ export function itemIcon(id, variant = null) {
   const fine = look.design === 'job' || look.design === 'jewel';
   const art = def.type !== 'cash' && ITEM_ART[id];
   const detail = art ? { res: 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
-  return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: itemShapes(def, variant), ...detail }));
+  const gear = look.type === 'equip';
+  return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: gear ? itemShapes(def, variant).map(lifted) : itemShapes(def, variant), ...detail }));
 }
+
+// Gear drawn in near-black (demonic, cyber, the shadowy thief sets, endgame weapons) melts into
+// one dark blob in a 16 px bag slot. Icons only (the worn gear keeps its colours): every tone
+// darker than LIFT is raised toward it on one monotone curve, so the order of the tones (and the
+// planes that shade each material) is kept while the darkest reads as a deep hue instead of
+// black; greys pick up a cool violet so they don't go flat.
+const LIFT = 0.46;
+const liftCache = new Map();
+function liftTone(c) {
+  if (typeof c !== 'string' || !c.startsWith('#') || c.length < 7) return c;
+  let v = liftCache.get(c);
+  if (v) return v;
+  const n = parseInt(c.slice(1, 7), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => x / 255);
+  const hi = Math.max(r, g, b);
+  const lo = Math.min(r, g, b);
+  const l = (hi + lo) / 2;
+  if (l >= LIFT) v = c;
+  else {
+    const d = hi - lo;
+    let s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let h = d === 0 ? 0 : hi === r ? ((g - b) / d) % 6 : hi === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+    if (s < 0.12) [h, s] = [252, 0.2];
+    s = Math.min(s, 0.5);
+    const l2 = LIFT - (LIFT - l) * 0.5;
+    const k = (1 - Math.abs(2 * l2 - 1)) * Math.min(1, s * 1.1);
+    const x = k * (1 - Math.abs(((h / 60) % 2) - 1));
+    const [r1, g1, b1] = h < 60 ? [k, x, 0] : h < 120 ? [x, k, 0] : h < 180 ? [0, k, x] : h < 240 ? [0, x, k] : h < 300 ? [x, 0, k] : [k, 0, x];
+    const m = l2 - k / 2;
+    v = `#${[r1, g1, b1].map((q) => Math.round((q + m) * 255).toString(16).padStart(2, '0')).join('')}${c.slice(7)}`;
+  }
+  liftCache.set(c, v);
+  return v;
+}
+const lifted = (sh) => (sh && sh.c ? { ...sh, c: liftTone(sh.c) } : sh);
 
 export function drawItemIcon(ctx, id, x, y, scale = 1, variant = null) {
   blit(ctx, itemIcon(id, variant ?? null), x, y, { scale });
