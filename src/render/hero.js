@@ -843,7 +843,29 @@ function bodyShapes(look, g, rig) {
   if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin), ux, uy));
   // The head rides the squashed body, so it moves by the squashed bob.
   const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy + NECK_LIFT);
-  return move([...hang, ...squash(shapes), ...head], 0, 0);
+  // The head (and the hair hanging from it) rolls about the neck.
+  const nx = squashX(15.5 + ux) + rig.hx;
+  const ny = 25 + uy * KY + rig.hy + NECK_LIFT;
+  return move([...roll(hang, nx, ny, rig.tilt), ...squash(shapes), ...roll(head, nx, ny, rig.tilt)], 0, 0);
+}
+
+// Turns shapes by deg about (cx, cy): polygons point by point, ellipses and rects by their centres
+// (fine for the few degrees a head tilts).
+function roll(shapes, cx, cy, deg) {
+  if (!deg) return shapes;
+  const c = Math.cos((deg * Math.PI) / 180);
+  const sn = Math.sin((deg * Math.PI) / 180);
+  const r = (x, y) => [cx + (x - cx) * c - (y - cy) * sn, cy + (x - cx) * sn + (y - cy) * c];
+  return shapes.map((sh) => {
+    if (!sh) return sh;
+    if (sh.t === 'p') return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => r(sh.x + px, sh.y + py)) };
+    if (sh.t === 'e') {
+      const [x, y] = r(sh.x, sh.y);
+      return { ...sh, x, y };
+    }
+    const [x, y] = r(sh.x + sh.w / 2, sh.y + sh.h / 2);
+    return { ...sh, x: x - sh.w / 2, y: y - sh.h / 2 };
+  });
 }
 
 // Mirrors shapes across the body's center line.
@@ -956,7 +978,7 @@ function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
     frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], air: false, squat: 0,
-    hair: 0, hairLift: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0,
+    hair: 0, hairLift: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0,
   };
 }
 
@@ -1060,6 +1082,8 @@ function solveRig(state, anim, mv = null) {
     r.frontArm = [0, r.by];
     r.backArm = [0, r.by];
     r.tx = q(0.6 * Math.sin(t * 0.45));
+    // The head tips a little toward the hip the weight shifts onto, a beat after the body.
+    r.tilt = Math.round(1.6 * Math.sin(t * 0.45 - 0.7)) * 2;
   }
 
   // Landing squash: the knees give, the hips drop, and the feet spread.
@@ -1085,6 +1109,8 @@ function solveRig(state, anim, mv = null) {
     r.frontArm = [q(-1 - k), q(-1 - 1.5 * k)];
     r.backArm = [q(-2 - k), q(-1 - 1.5 * k)];
     r.hairLift = k > 0.5 ? -1 : 0;
+    // The head snaps back away from the blow, then wobbles upright with the body.
+    r.tilt = Math.round(-3 * k) * 2;
   }
 
   // Knocked out (a fallen party member): limp, eyes shut, mouth open.
@@ -1095,6 +1121,8 @@ function solveRig(state, anim, mv = null) {
     r.frontLeg = [1.5, 0, 10];
     r.backLeg = [-1.5, 0, -10];
     r.hairLift = 0;
+    // Limp: the head lolls to one side.
+    r.tilt = 8;
   }
 
   // Attack and skill moves shape the body on top of everything else.
@@ -1103,7 +1131,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
