@@ -12,7 +12,9 @@ carry an improvement across every part of the game it applies to.
   applies in Tengu: [en](research/en.md), [ja](research/ja.md), [ko](research/ko.md),
   [zh](research/zh.md), [ru](research/ru.md), [fx](research/fx.md) (effects and game feel),
   [env](research/env.md) (maps, UI, icons), [anim](research/anim.md) (animation craft),
-  [fanart](research/fanart.md) (how pros put anime characters into small sprites).
+  [fanart](research/fanart.md) (how pros put anime characters into small sprites),
+  [avatar](research/avatar.md) (dress-up avatar games the player named as references: SELFY /
+  attrade and CocoPPa Play; read before any hair, outfit or cosmetic work).
 - [briefs/](briefs/): the briefs the art and improvement passes worked from (conventions, quality
   bar, review loop).
 
