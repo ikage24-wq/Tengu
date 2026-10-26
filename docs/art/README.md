@@ -165,6 +165,13 @@ carry an improvement across every part of the game it applies to.
   a preview before you commit: trying gear on, +1 stat previews in Stats, Now/Next in Skills.
 - Skills and Use items drag onto the hotkey bar; while something is dragged every hotkey slot
   shows it can take it and the one under the mouse lights up.
+- NPC dialog: choices are rows with a badge (a quest's state or an icon), a line saying where it
+  stands, and a number key; Space finishes the typing, Enter takes a quest page's main action,
+  Backspace goes back. NPCs move their mouth while their words type (`hero.js` `talking`).
+  Quest pages show objectives with progress and where to go, and rewards as item cells.
+- Shops (`ui/shop.js`) are list + detail: try gear on, compare stats, pick a color, set how many
+  with a stepper, see the total before paying; gold changes float off the gold pill. Windows
+  bigger than the talk box place themselves on screen when they open.
 - Speech bubbles are queued and laid out once per frame (`chat.js` `flushBubbles`): they stack
   instead of overlapping, and a lifted bubble's tail stretches to its speaker.
 - Damage numbers scale with the share of the monster's HP a hit took and fade for party hits;

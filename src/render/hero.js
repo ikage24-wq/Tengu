@@ -1105,6 +1105,9 @@ function solveRig(state, anim, mv = null) {
   // A blink every few seconds, slightly offset per character.
   const cycle = (t * 0.31) % 1;
   if (cycle < 0.035 || (cycle > 0.5 && cycle < 0.53 && seed % 2 === 0)) r.eyes = 'blink';
+  // Talking (an NPC whose words are typing out): the mouth opens and closes on a syllable beat,
+  // skipping every third so it doesn't flap like a metronome.
+  if (state.talking && Math.floor(t * 9) % 3 !== 2 && Math.floor(t * 9) % 2 === 0) r.mouth = 'open';
 
   if (pose === 'climb') {
     r.view = 'back';
