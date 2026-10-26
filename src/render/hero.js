@@ -637,8 +637,9 @@ function stroke(pts, th, c) {
 
 // Ear styles. Round ears peek out from behind the cheeks; elf ears are a pointed leaf whose base
 // tucks under the side locks and whose tip pokes out past the hair: `elf` short and swept up,
-// `long` long and swept out to the side.
-export const EAR_STYLES = ['round', 'elf', 'long'];
+// `long` long and swept out to the side, and `pointed` broad and swept up and out (the MapleStory
+// elf).
+export const EAR_STYLES = ['round', 'elf', 'long', 'pointed'];
 
 // The front (right-hand) ear in a style: the ear in `c` and its inner hollow in `inner`. The back
 // ear is its mirror, a shade darker.
@@ -648,6 +649,12 @@ function earShapes(style, c, inner) {
   }
   if (style === 'long') {
     return [F(T([[24.2, 16.1], [28.2, 15.1], [32.4, 14.0], [36.2, 12.8], [33.2, 15.6], [29.2, 18.6], [25, 20.7]], c)), F(T([[25.4, 17.0], [28.4, 16.3], [32.0, 15.1], [34.2, 14.0], [31.6, 16.0], [28.6, 18.1], [25.7, 19.4]], inner))];
+  }
+  if (style === 'pointed') {
+    return [
+      F(T([[24.2, 15.4], [26.8, 14.3], [29.4, 12.6], [31.6, 11.0], [33.4, 9.6], [32.2, 12.4], [30.6, 15.0], [28.6, 17.6], [26.6, 19.8], [25, 20.8]], c)),
+      F(T([[25.4, 16.4], [27.4, 15.6], [29.6, 14.0], [31.6, 11.8], [30.2, 14.6], [28.4, 17.0], [26.6, 18.9], [25.6, 19.6]], inner)),
+    ];
   }
   return [F(E(25.4, 18, 1.8, 2.3, c)), F(E(25.2, 18.3, 0.7, 1.2, inner))];
 }
