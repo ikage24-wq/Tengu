@@ -679,12 +679,17 @@ function faceExtras(extra) {
       }
     } else if (e.startsWith('sweat')) {
       const dy = Number(e.slice(5)) || 0;
-      out.push(F(E(25.2, 12.6 + dy, 1, 1.2, '#9fdcff')), F(T([[24.4, 12.2 + dy], [26, 12.2 + dy], [25.2, 10.2 + dy]], '#9fdcff')), F(E(24.9, 12.4 + dy, 0.3, 0.4, '#ffffff')));
+      // On the temple beside the eye, sliding down toward the ear (never onto the eye).
+      const [sx, sy] = [26.6, 11.4 + dy * 0.6];
+      out.push(F(E(sx, sy, 1, 1.2, '#9fdcff')), F(T([[sx - 0.8, sy - 0.4], [sx + 0.8, sy - 0.4], [sx, sy - 2.4]], '#9fdcff')), F(E(sx - 0.3, sy - 0.2, 0.3, 0.4, '#ffffff')));
     } else if (e.startsWith('spark')) {
       const big = e === 'spark1';
-      out.push(star(1.6, 6, big ? 2 : 1.3, '#ffe36b'), star(29.6, 9, big ? 1.3 : 2, '#ffe36b'), star(27.6, 2.4, big ? 1.4 : 0.9, '#ffffff'));
+      // Just clear of the hair's outline, so they read as floating around the head.
+      out.push(star(0, 5, big ? 2 : 1.3, '#ffe36b'), star(31.6, 8.6, big ? 1.3 : 2, '#ffe36b'), star(29.2, 1.4, big ? 1.4 : 0.9, '#ffffff'));
     } else if (e === 'note') {
-      out.push(F(E(27.6, 7.4, 1, 0.8, INK)), F(R(28.3, 3, 0.5, 4.4, INK)), F(T([[28.3, 3], [30, 3.8], [30, 4.8], [28.8, 4.2]], INK)));
+      // Floating above the head's corner, clear of the hair.
+      const [nx, ny] = [30, 1.2];
+      out.push(F(E(nx, ny + 4.4, 1, 0.8, INK)), F(R(nx + 0.7, ny, 0.5, 4.4, INK)), F(T([[nx + 0.7, ny], [nx + 2.4, ny + 0.8], [nx + 2.4, ny + 1.8], [nx + 1.2, ny + 1.2]], INK)));
     }
   }
   return out;
@@ -778,7 +783,16 @@ function headShapes(look, g, rig) {
   out.push(F(E(25.4, 18, 1.8, 2.3, skin)), F(E(25.2, 18.3, 0.7, 1.2, sk.sh1)));
   out.push(F(E(FACE_X, 15, 10.2, 9.8, sk.sh1)), F(E(FACE_X, 19, 9.4, 5.8, sk.sh1)));
   out.push(F(E(FACE_X + 0.6, 15, 9.6, 9.8, skin)), F(E(FACE_X + 0.5, 19, 8.9, 5.8, skin)));
-  const f = rig.face ?? {};
+  // A hurt or knocked-out face drops the expression's own play (sparkles, notes, winks, puffed
+  // cheeks): pain squeezes the brows together and a sweat drop flies; out cold, the brows go slack.
+  let f = rig.face ?? {};
+  if (rig.eyes === 'hurt') f = { brows: [[0.5, 0.7], [0.5, 0.7]], extra: ['sweat0'] };
+  else if (rig.eyes === 'dead') f = { brows: [[0.2, -0.3], [0.2, -0.3]] };
+  else if (rig.mouth === 'open' && f.puff) f = { ...f, puff: false };
+  // The eye-cover lock hides the right eye and brow, so a wink or a raised brow moves to the eye
+  // that shows.
+  const covered = style === 'eyecover' && !hatHidesBangs(hat);
+  if (covered) f = { ...f, closed: f.closed && [...f.closed].reverse(), brows: f.brows && [...f.brows].reverse() };
   if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(F(E(cx, 20.8, 2.8, 2.6, skin)));
   // The bangs' shadow on the forehead (under the eyes, so lashes stay on top).
   const front = hatHidesBangs(hat) ? null : hairFront(style, hair, rig.hairTip ?? rig.hair, look.face ?? 'smile');
@@ -804,7 +818,7 @@ function headShapes(look, g, rig) {
   if (front) out.push(...front);
   if (f.brows) {
     // The eye-cover lock hides that side's brow.
-    [-1, 1].forEach((side, i) => (style === 'eyecover' && side > 0) || out.push(brow(FACE_X + EYE_DX * side, side, f.brows[i][0], f.brows[i][1], hr.brow)));
+    [-1, 1].forEach((side, i) => (covered && side > 0) || out.push(brow(FACE_X + EYE_DX * side, side, f.brows[i][0], f.brows[i][1], hr.brow)));
   }
   if (f.extra) out.push(...faceExtras(f.extra));
   // Hair ties where the twintails gather (no bows, so nothing clashes with a hat).
