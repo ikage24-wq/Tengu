@@ -6,7 +6,7 @@
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, shade, snap, footShadow, slopeAt } from './pixel.js';
-import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted } from './propkit.js';
+import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted, wallShade, beam, gable } from './propkit.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
 import { createAnim, stepAnim } from './animator.js';
@@ -39,36 +39,6 @@ const poseLean = (p) => (p / (POSES - 1)) * 1.5 - 0.6;
 function post(x, y, w, h, wood) {
   const r = ramp(wood);
   return [R(x, y, w, h, r.base), F(R(x, y, w * 0.3, h, r.hi)), F(R(x + w * 0.66, y, w * 0.34, h, r.sh)), F(R(x + w * 0.42, y + h * 0.3, 0.5, h * 0.22, r.sh))];
-}
-
-// The soft shadow an eave or ledge casts on the wall under it, and the thin turn of the wall's
-// right edge away from the light.
-function wallShade(x, y, w, h, r, d = 2.6) {
-  return [F(R(x, y, w, d, r.sh)), F(R(x, y + d, w, 1, mix(r.base, r.sh, 0.5))), F(R(x + w - 1.4, y, 1.4, h, mix(r.base, r.sh, 0.7)))];
-}
-
-// A trim beam or sill: lit top, shaded underside.
-function beam(x, y, w, h, c) {
-  const r = ramp(c);
-  return [R(x, y, w, h, c), F(R(x, y, w, Math.min(1, h * 0.35), r.hi)), F(R(x, y + h * 0.7, w, h * 0.3, r.sh))];
-}
-
-// A gable roof (left slope lit, right slope in shade) in courses of shingles from `base` up to
-// the peak at `peak`, across x0 ... x1.
-function gable(x0, x1, base, peak, c, seed = 0) {
-  const r = ramp(c, 0.8);
-  const cx = (x0 + x1) / 2;
-  const out = [T([[x0, base], [cx, peak], [x1, base]], c), F(T([[cx, peak], [x1, base], [cx + 1, base]], mix(c, r.sh, 0.65)))];
-  const half = (y) => ((y - peak) / (base - peak)) * (x1 - x0) / 2;
-  for (let y = base - 5, row = 0; y > peak + 4; y -= 5, row++) {
-    const hw = half(y) - 1;
-    out.push(F(R(cx - hw, y, hw * 2, 0.8, r.sh)));
-    // Gaps between tiles, staggered row to row.
-    for (let x = cx - hw + 3 + (row % 2) * 3; x < cx + hw - 2; x += 6) if (hash(seed + row * 3.1 + x) > 0.25) out.push(F(R(x, y - 4, 0.6, 4, x < cx ? r.sh : r.deep)));
-  }
-  // The lit verge down the left slope and a ridge cap glint.
-  out.push(F(T([[x0 + 1, base - 0.6], [cx, peak + 0.6], [cx, peak + 2.4], [x0 + 3.4, base - 0.6]], r.hi)), F(R(cx - 1, peak + 0.6, 1.6, 1.2, '#ffffff')));
-  return out;
 }
 
 // A cloth banner hanging from a rod as a chain: each segment swings out a little more than the

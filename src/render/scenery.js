@@ -8,7 +8,7 @@ import { R, E, T, F, sprite, blit, shade, mix, snap, tinted, gfx } from './pixel
 import { groundAt, surfacesOf } from '../world/physics.js';
 import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
-import { ramp, foliage, lightUL, flagShapes, lean, leanFrame, swing, pivoted, flicker, stones, planks, bark } from './propkit.js';
+import { ramp, foliage, lightUL, flagShapes, lean, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {
@@ -325,24 +325,29 @@ export function houseArt(seed) {
   const H = tall ? 92 : 74;
   return art(`house|${wall}|${roof}|${tall}`, 70, H, () => {
     const top = H - (tall ? 58 : 40);
-    const out = [R(48, top - 24, 8, 16, shade(roof, -8)), R(46.6, top - 26, 10.8, 3, shade(roof, -14)), R(8, top, 54, H - top, wall),
-      // Light from the upper left: the right end of the wall a step darker, and the eaves' shadow.
-      F(R(54, top, 8, H - top, shade(wall, -6))), F(R(8, top + 1, 54, 4, shade(wall, -11))),
-      T([[2, top + 2], [35, top - 26], [68, top + 2]], roof), F(T([[8, top - 1], [35, top - 22], [62, top - 1], [62, top + 1], [35, top - 20], [8, top + 1]], shade(roof, 16))),
-      // Round attic window with a little heart.
-      E(35, top - 8, 5, 5, '#ffffff'), F(E(35, top - 8, 3.6, 3.6, '#fff3a6')), F(E(34, top - 8.6, 1, 1, '#ff8fa8')), F(E(36, top - 8.6, 1, 1, '#ff8fa8')), F(T([[33.2, top - 8.2], [36.8, top - 8.2], [35, top - 6.2]], '#ff8fa8')),
-      // Door with a round top and a knob, and a step.
-      R(29, H - 18, 12, 18, '#d39a6a'), E(35, H - 18, 6, 4.6, '#d39a6a'), F(E(38.4, H - 9, 0.8, 0.8, '#ffe36b')), R(27, H - 2, 16, 2, shade(wall, -14))];
+    const w = ramp(wall, 0.6);
+    const door = ramp('#d39a6a', 0.8);
+    // A stone chimney with a capped top, then clapboard walls under the eaves' shadow, lit corner
+    // boards on the left and shaded ones on the right.
+    const out = [...stones(48, top - 24, 8, 20, ramp('#e2c6c0', 0.7), seed * 7, { rowH: 4, blockW: 5 }), ...beam(46.6, top - 26, 10.8, 3, shade(roof, -14)),
+      ...planks(8, top, 54, H - top, w, Math.round((H - top) / 5), seed * 3, true), ...wallShade(8, top + 2, 54, H - top - 2, w, 3),
+      F(R(8, top + 2, 1.6, H - top - 2, w.hi)), F(R(60.4, top + 2, 1.6, H - top - 2, w.sh)),
+      ...gable(2, 68, top + 2, top - 26, roof, seed * 11),
+      // A round attic window with a little heart, its frame lit on the upper left.
+      E(35, top - 8, 5, 5, '#ffffff'), F(E(35.6, top - 7.4, 4.4, 4.4, w.sh)), F(E(35, top - 8, 3.6, 3.6, '#ffd98a')), F(E(34.2, top - 8.8, 1.8, 1.8, '#fff6c9')),
+      F(E(34, top - 8.6, 1, 1, '#ff8fa8')), F(E(36, top - 8.6, 1, 1, '#ff8fa8')), F(T([[33.2, top - 8.2], [36.8, top - 8.2], [35, top - 6.2]], '#ff8fa8')),
+      // A plank door under a round head, set back in shade on the left, with a brass knob and a
+      // stone step.
+      E(35, H - 18, 6.4, 5, door.sh), R(28.6, H - 18, 12.8, 18, door.sh), ...planks(29.4, H - 17, 11.2, 17, door, 3, seed * 5), E(35, H - 17.4, 5.6, 4.2, door.base),
+      F(R(29.4, H - 17, 1.4, 17, door.deep)), F(E(38.4, H - 9, 0.9, 0.9, '#ffe36b')), F(E(38.2, H - 9.2, 0.4, 0.4, '#ffffff')), ...beam(27, H - 2.4, 16, 2.4, '#d8d0e8')];
     const rows = tall ? [top + 8, top + 30] : [top + 8];
     for (const wy of rows) {
       for (const wx of [17, 53]) {
-        out.push(R(wx - 5.4, wy, 10.8, 10, wx > 40 ? '#f0ecf6' : '#ffffff'), F(R(wx - 4.2, wy + 1.2, 8.4, 7.6, '#fff3a6')), F(R(wx - 0.4, wy + 1.2, 0.8, 7.6, '#ffffff')), F(R(wx - 4.2, wy + 4.6, 8.4, 0.8, '#ffffff')));
-        // Flower box under the window.
-        out.push(R(wx - 6, wy + 10, 12, 2.6, '#c99a6b'), F(R(wx - 6, wy + 10, 12, 0.7, '#e2b88a')), F(E(wx - 3, wy + 9.8, 1.2, 1.2, '#ff9ec0')), F(E(wx, wy + 9.4, 1.2, 1.2, '#ffe36b')), F(E(wx + 3, wy + 9.8, 1.2, 1.2, '#c9a6ff')));
+        out.push(...windowPane(wx - 4.4, wy + 1, 8.8, 8, '#ffffff', '#ffd98a', '#fff6c9'), F(R(wx - 5.2, wy + 9, 10.4, 0.8, w.sh)));
+        // Flower box under the window: lit lip, shaded front, blooms on top.
+        out.push(...beam(wx - 6, wy + 10, 12, 2.6, '#c99a6b'), F(E(wx - 3, wy + 9.8, 1.2, 1.2, '#ff9ec0')), F(E(wx, wy + 9.4, 1.2, 1.2, '#ffe36b')), F(E(wx + 3, wy + 9.8, 1.2, 1.2, '#c9a6ff')), F(E(wx - 1, wy + 9.2, 0.8, 0.6, '#8fdc9a')));
       }
     }
-    // The roof's right slope turns away from the light.
-    out.push(F(T([[35, top - 26], [68, top + 2], [62, top + 2], [35, top - 20]], ramp(roof, 0.8).sh)));
     return out;
   }, false);
 }
@@ -398,12 +403,27 @@ function boatArt(sail) {
 
 export function mushHouseArt(seed) {
   const cap = pick(['#ff8fa8', '#ffb38a', '#c9a6ff'], seed);
-  return art(`mushhouse|${cap}`, 56, 60, () => [
-    R(14, 26, 28, 34, '#fff1dc'), E(28, 60, 15, 2, '#fff1dc'), R(23, 42, 10, 18, '#d39a6a'), E(28, 42, 5, 4, '#d39a6a'), F(E(30.6, 51, 0.8, 0.8, '#ffe36b')),
-    E(19, 36, 3.4, 3.4, '#ffffff'), F(E(19, 36, 2.4, 2.4, '#fff3a6')), E(37, 36, 3.4, 3.4, '#ffffff'), F(E(37, 36, 2.4, 2.4, '#fff3a6')),
-    T([[1, 28], [6, 12], [18, 3], [28, 1], [38, 3], [50, 12], [55, 28]], cap), R(4, 26, 48, 3, shade(cap, -10)),
-    F(E(14, 14, 3.4, 2.6, '#ffffff')), F(E(30, 8, 3, 2.2, '#ffffff')), F(E(42, 18, 3.6, 2.6, '#ffffff')), F(E(24, 20, 2, 1.6, '#ffffff')),
-  ]);
+  return art(`mushhouse|${cap}`, 56, 60, () => {
+    const st = ramp('#fff1dc', 0.6);
+    const c = ramp(cap, 0.8);
+    const door = ramp('#d39a6a', 0.8);
+    const dome = [[1, 28], [6, 12], [18, 3], [28, 1], [38, 3], [50, 12], [55, 28]];
+    const out = [
+      // The stalk: soft cream, lit down the left, turning away on the right, the cap's shadow on it.
+      R(14, 26, 28, 34, st.base), E(28, 59, 15, 2.4, st.base), F(R(14, 28, 3, 32, st.hi)), F(R(36, 28, 6, 32, st.sh)), F(E(37, 59, 6, 1.6, st.sh)), F(R(14, 28, 28, 4, st.sh)), F(R(14, 32, 28, 1, mix(st.base, st.sh, 0.5))),
+      // A round plank door and two round windows.
+      E(28, 42, 5.6, 4.6, door.sh), R(22.4, 42, 11.2, 18, door.sh), ...planks(23.2, 42.6, 9.6, 17.4, door, 3, seed * 4), E(28, 42.6, 4.8, 3.8, door.base),
+      F(R(23.2, 42.6, 1.2, 17.4, door.deep)), F(E(30.8, 51, 0.8, 0.8, '#ffe36b')),
+      E(19, 37, 3.4, 3.4, '#ffffff'), F(E(19.4, 37.4, 2.6, 2.6, st.sh)), F(E(19, 37, 2.4, 2.4, '#ffd98a')), F(E(18.4, 36.4, 1.1, 1.1, '#fff6c9')),
+      E(37, 37, 3.4, 3.4, '#ffffff'), F(E(37.4, 37.4, 2.6, 2.6, st.sh)), F(E(37, 37, 2.4, 2.4, '#ffd98a')), F(E(36.4, 36.4, 1.1, 1.1, '#fff6c9')),
+      // The cap: lit on the upper left, its right flank in shade, gills under the rim.
+      T(dome, cap), F(T([[30, 1.2], [38, 3], [50, 12], [55, 28], [34, 28], [40, 16]], c.sh)), F(T([[4, 22], [7, 12], [18, 4], [26, 2.4], [16, 9], [9, 17]], c.hi)),
+      R(4, 26, 48, 3, c.deep), F(R(4, 26, 48, 0.8, c.sh)),
+    ];
+    // White spots, each with a crescent of shade under its right side.
+    for (const [x, y, rx, ry] of [[14, 14, 3.4, 2.6], [30, 8, 3, 2.2], [42, 18, 3.6, 2.6], [24, 20, 2, 1.6]]) out.push(F(E(x + 0.6, y + 0.6, rx, ry, x > 32 ? c.deep : c.sh)), F(E(x, y, rx, ry, '#ffffff')), F(E(x - rx * 0.3, y - ry * 0.3, rx * 0.4, ry * 0.35, '#fff8f0')));
+    return out;
+  }, false);
 }
 
 function archArt() {
@@ -443,18 +463,47 @@ function islandArt(seed, frame) {
 }
 
 export function tentArt(color) {
-  return art(`tent|${color}`, 56, 50, () => [
-    T([[2, 50], [28, 10], [54, 50]], '#fff4e6'), T([[10, 50], [28, 10], [20, 50]], color), T([[36, 50], [28, 10], [46, 50]], color),
-    T([[22, 50], [28, 34], [34, 50]], '#8a5a3c'), R(27.4, 0, 1.2, 12, '#8a5a3c'), T([[28.6, 1], [37, 3.4], [28.6, 6]], color),
-  ]);
+  return art(`tent|${color}`, 56, 50, () => {
+    const cv = ramp('#fff4e6', 0.6);
+    const c = ramp(color, 0.8);
+    const wood = ramp('#8a5a3c');
+    return [
+      // Canvas: the left panel in the light, the right one turned away, stripes following the folds.
+      T([[2, 50], [28, 10], [54, 50]], cv.base), F(T([[28, 10], [54, 50], [28, 50]], cv.sh)),
+      T([[10, 50], [28, 10], [20, 50]], color), F(T([[11.6, 50], [28, 10], [13.4, 50]], c.hi)), T([[36, 50], [28, 10], [46, 50]], c.sh), F(T([[43, 50], [28, 10], [46, 50]], c.deep)),
+      // Sagging seams between the guy points.
+      F(band([[6, 42], [11, 43.4], [16, 42]], () => 0.35, cv.sh)), F(band([[40, 42], [45, 43.4], [50, 42]], () => 0.35, cv.deep)),
+      // The doorway: dark inside, one flap pulled back and lit.
+      T([[22, 50], [28, 32], [34, 50]], '#5e3a2c'), F(T([[28, 32], [34, 50], [31, 50]], '#3f2620')), F(T([[22, 50], [28, 32], [25.6, 50]], cv.hi)), F(R(24.6, 44, 3.6, 0.7, c.base)),
+      // The pole and its pennant.
+      R(27.2, 0, 1.6, 12, wood.base), F(R(28.2, 0, 0.6, 12, wood.sh)), T([[28.8, 1], [37, 3.4], [28.8, 6]], color), F(T([[28.8, 3.6], [37, 3.4], [28.8, 6]], c.sh)), E(28, 0.6, 1.2, 1.2, '#ffd66b'),
+      // Pegs at the corners.
+      R(1, 47.6, 1.4, 2.4, wood.base), R(53.6, 47.6, 1.4, 2.4, wood.sh),
+    ];
+  }, false);
 }
 
+// A stone forge with its fire mouth glowing (`frame` 0 ... 2 the flame's flicker) and an anvil on a
+// stump in front of it.
 function forgeArt(frame) {
-  return art(`forge|${frame}`, 50, 56, () => [
-    R(30, 4, 9, 30, '#b5a8c9'), R(29, 2, 11, 4, '#a598bd'), R(4, 22, 42, 34, '#c9bedc'), E(25, 22, 21, 6, '#c9bedc'),
-    E(25, 40, 9, 8, '#3a2d4f'), E(25, 42 - frame * 0.4, 6.4, 5 + frame * 0.6, '#ff8a3c'), F(E(25, 43, 3.4, 2.6, '#ffe36b')),
-    F(R(10, 30, 4, 3, '#a598bd')), F(R(36, 34, 5, 3, '#a598bd')), R(4, 52, 42, 4, '#a598bd'),
-  ]);
+  return art(`forge|${frame}`, 50, 56, () => {
+    const st = ramp('#c9bedc', 0.8);
+    const iron = ramp('#6d7484');
+    const wood = ramp('#9f7a57');
+    return [
+      // Chimney and body in dressed stone, a cap stone along the top.
+      ...stones(31, 4, 8, 22, st, 3, { rowH: 4, blockW: 5 }), ...beam(29.6, 2, 10.8, 3, st.sh),
+      ...stones(8, 24, 38, 30, st, 7, { rowH: 6, blockW: 9 }), ...beam(6, 21, 42, 3.4, st.base), F(R(44, 24, 2, 30, st.sh)), F(R(8, 24.4, 38, 2, st.sh)),
+      // The fire mouth: a dark arch, the fire inside, its light spilling on the sill.
+      E(29, 40, 8, 7, '#3a2d4f'), R(21, 40, 16, 8, '#3a2d4f'), E(29, 44 - frame * 0.4, 6, 4.4 + frame * 0.6, '#ff8a3c'), F(E(29, 45, 3.6, 2.4, '#ffe36b')), F(E(28.4, 45.6, 1.4, 1, '#ffffff')),
+      ...beam(19, 48, 20, 2.4, st.base), F(R(22, 48, 14, 0.8, '#ffcf8a')),
+      R(6, 53.6, 42, 2.4, st.deep),
+      // The anvil on its stump: a lit top face, horn reaching out to the left, a shaded waist.
+      R(5, 48, 9, 8, wood.base), F(R(11.4, 48, 2.6, 8, wood.sh)), F(R(5, 48, 9, 1, wood.hi)), F(R(8, 50, 0.5, 4, wood.deep)),
+      T([[2, 41], [16, 41], [16, 44], [13, 45], [12, 48], [7, 48], [6, 45], [4, 44], [0.6, 42]], iron.base),
+      F(T([[0.6, 42], [2, 41], [16, 41], [16, 42.2], [3, 42.2]], iron.hi)), F(T([[10.6, 44.4], [13, 45], [12, 48], [10.4, 48]], iron.sh)), F(R(13, 42.2, 3, 2, iron.sh)), F(R(5.6, 41.2, 2, 0.6, '#ffffff')),
+    ];
+  }, false);
 }
 
 // A war banner on a pole, streaming as a chain: `k` (0 ... 4) how hard the wind holds it, `ph`
@@ -468,14 +517,31 @@ function bannerArt(color, k, ph) {
 
 export function treehouseArt(seed) {
   const roof = pick(['#ff9ec0', '#9fb8ff', '#ffd66b'], seed);
-  return art(`treehouse|${roof}`, 64, 92, () => [
-    R(26, 40, 12, 52, '#9f7a57'), T([[26, 92], [20, 92], [26, 84]], '#9f7a57'), T([[38, 92], [44, 92], [38, 84]], '#9f7a57'),
-    E(32, 22, 30, 20, '#6fbf8a'), E(12, 30, 12, 10, '#6fbf8a'), E(52, 30, 12, 10, '#6fbf8a'),
-    R(16, 30, 32, 20, '#f0d6a8'), T([[12, 31], [32, 18], [52, 31]], roof),
-    E(24, 40, 3.4, 3.4, '#ffffff'), F(E(24, 40, 2.4, 2.4, '#fff3a6')), E(40, 40, 3.4, 3.4, '#ffffff'), F(E(40, 40, 2.4, 2.4, '#fff3a6')),
-    R(30, 42, 5, 8, '#c99a6b'), R(31, 50, 0.8, 22, '#e6c9a0'), R(34.2, 50, 0.8, 22, '#e6c9a0'),
-    F(R(31, 54, 4, 0.8, '#e6c9a0')), F(R(31, 59, 4, 0.8, '#e6c9a0')), F(R(31, 64, 4, 0.8, '#e6c9a0')), F(R(31, 69, 4, 0.8, '#e6c9a0')),
-  ]);
+  return art(`treehouse|${roof}`, 64, 92, () => {
+    const b = ramp('#9f7a57');
+    const leaf = ramp('#6fbf8a');
+    const wall = ramp('#f0d6a8', 0.6);
+    const rope = '#e6c9a0';
+    const out = [
+      // The trunk with flaring roots, bark grain running up it.
+      ...bark([[32, 92], [31.6, 70], [32.4, 50], [32, 36]], (u) => 5.4 + Math.max(0, 0.16 - u) * 16, b, seed * 9, 3),
+      T([[26, 92], [19, 92], [27, 82]], b.base), T([[38, 92], [45, 92], [37, 82]], b.sh),
+      // Leaf clumps around and over the house.
+      ...foliage(12, 30, 12, 10, ramp(mix('#6fbf8a', leaf.sh, 0.5)), seed * 5 + 1, { tips: 1 }), ...foliage(52, 30, 12, 10, ramp(mix('#6fbf8a', leaf.sh, 0.5)), seed * 5 + 2, { tips: 1 }),
+      ...foliage(32, 20, 28, 18, leaf, seed * 5, { tips: 3 }),
+      // The house: planked walls under the eave's shadow, a shingled roof, two round lit windows.
+      ...planks(16, 30, 32, 20, wall, 4, seed * 3, true), ...wallShade(16, 31, 32, 19, wall, 2.4), F(R(16, 31, 1.2, 19, wall.hi)),
+      ...gable(12, 52, 31, 18, roof, seed * 7),
+      E(24, 40, 3.4, 3.4, '#ffffff'), F(E(24.4, 40.4, 2.6, 2.6, wall.sh)), F(E(24, 40, 2.4, 2.4, '#ffd98a')), F(E(23.4, 39.4, 1.1, 1.1, '#fff6c9')),
+      E(40, 40, 3.4, 3.4, '#ffffff'), F(E(40.4, 40.4, 2.6, 2.6, wall.sh)), F(E(40, 40, 2.4, 2.4, '#ffd98a')), F(E(39.4, 39.4, 1.1, 1.1, '#fff6c9')),
+      // A little door and the platform beam under it.
+      R(29.6, 42, 5.4, 8, '#7a5236'), F(R(30.4, 42.8, 3.8, 7.2, '#c99a6b')), F(R(30.4, 42.8, 1, 7.2, '#8f6544')), ...beam(14, 49.4, 36, 2.6, '#b08860'),
+      // A rope ladder hanging from the door.
+      R(30.6, 52, 0.8, 22, rope), R(33.8, 52, 0.8, 22, rope),
+    ];
+    for (const y of [55, 60, 65, 70]) out.push(R(30.6, y, 4, 1, rope), F(R(30.6, y + 0.6, 4, 0.4, '#b58f66')));
+    return out;
+  }, false);
 }
 
 function towerArt() {
@@ -787,19 +853,47 @@ function drawClouds(ctx, theme, cam, width, time, air) {
   });
 }
 
-// Far silhouettes: soft and unoutlined, pulled toward the sky color for depth.
+// A far silhouette: one flat value and no outline (its edge is the sky's own colour), with a soft
+// lit rim on the sides facing the world light (upper left): the shape in the rim colour, then its
+// body shifted down and right over it.
+function litFill(ctx, t, p, dx = 2, dy = 1.5) {
+  ctx.fillStyle = t.farLit;
+  ctx.fill(p);
+  ctx.save();
+  ctx.translate(dx, dy);
+  ctx.fillStyle = t.far;
+  ctx.fill(p);
+  ctx.restore();
+}
+
+// The furthest plane: one low ridge, simpler than anything in front of it, almost the sky's colour,
+// barely moving. `bumps` rounds it into a line of treetops.
+function backRidge(ctx, t, cam, width, y, amp, bumps = false) {
+  ctx.fillStyle = t.farBack;
+  ctx.beginPath();
+  ctx.moveTo(-2, y + 300);
+  for (let sx = -2; sx <= width + 12; sx += 6) {
+    const k = sx + cam.x * 0.1;
+    const v = bumps ? Math.abs(Math.sin(k * 0.035)) * 0.45 + Math.sin(k * 0.006) * 0.55 : Math.sin(k * 0.007) * 0.6 + Math.sin(k * 0.017 + 1) * 0.4;
+    ctx.lineTo(sx, y - amp * v);
+  }
+  ctx.lineTo(width + 12, y + 300);
+  ctx.fill();
+}
+
+// Far silhouettes: flat, unoutlined shapes pulled toward the sky color for depth, each with a lit
+// rim toward the light, over a still simpler ridge further back.
 function drawFar(ctx, t, cam, width, y0, time) {
   ctx.fillStyle = t.far;
   switch (t.skyline) {
     case 'houses':
       repeat(cam.x, 0.2, 58, width, (i, x) => {
         const h = 36 + hash(i) * 44;
-        roundRect(ctx, x, y0 - h, 48, h + 200, 6);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(x - 4, y0 - h + 4);
-        ctx.quadraticCurveTo(x + 24, y0 - h - 30, x + 52, y0 - h + 4);
-        ctx.fill();
+        const p = new Path2D();
+        p.roundRect(x, y0 - h, 48, h + 200, 6);
+        p.moveTo(x - 4, y0 - h + 4);
+        p.quadraticCurveTo(x + 24, y0 - h - 30, x + 52, y0 - h + 4);
+        litFill(ctx, t, p);
         if (hash(i + 6) > 0.6) {
           ctx.fillStyle = 'rgba(255,243,166,0.5)';
           ctx.fillRect(snap(x + 18), snap(y0 - h + 12), 10, 8);
@@ -833,22 +927,25 @@ function drawFar(ctx, t, cam, width, y0, time) {
       break;
     }
     case 'columns':
+      backRidge(ctx, t, cam, width, y0 - 10, 40);
       repeat(cam.x, 0.2, 90, width, (i, x) => {
         const h = 60 + hash(i) * 70;
-        roundRect(ctx, x, y0 - h, 22, h + 200, 3);
-        ctx.fill();
-        ctx.fillRect(snap(x - 5), snap(y0 - h), 32, 7);
+        const p = new Path2D();
+        p.roundRect(x, y0 - h, 22, h + 200, 3);
+        p.rect(snap(x - 5), snap(y0 - h), 32, 7);
+        litFill(ctx, t, p, 1.6, 1.2);
       });
       break;
     case 'crystals':
       repeat(cam.x, 0.2, 46, width, (i, x) => {
         const h = 50 + hash(i) * 90;
-        ctx.beginPath();
-        ctx.moveTo(x, y0 + 200);
-        ctx.lineTo(x + 10, y0 - h);
-        ctx.lineTo(x + 24, y0 + 200);
-        ctx.fill();
+        const p = new Path2D();
+        p.moveTo(x, y0 + 200);
+        p.lineTo(x + 10, y0 - h);
+        p.lineTo(x + 24, y0 + 200);
+        litFill(ctx, t, p, 1.6, 1);
       });
+      ctx.fillStyle = t.far;
       // Stalactites hanging from the cave ceiling.
       repeat(cam.x, 0.25, 40, width, (i, x) => {
         const h = 20 + hash(i + 3) * 60;
@@ -862,28 +959,49 @@ function drawFar(ctx, t, cam, width, y0, time) {
       drawFarRoots(ctx, t, cam, width, y0, time);
       break;
     case 'mesas':
+      backRidge(ctx, t, cam, width, y0 - 30, 34);
+      ctx.fillStyle = t.far;
       ctx.fillRect(0, snap(y0 + 20), width, 400);
       repeat(cam.x, 0.2, 130, width, (i, x) => {
         const h = 40 + hash(i) * 60;
         const w = 60 + hash(i + 4) * 50;
-        roundRect(ctx, x, y0 - h, w, h + 40, 8);
-        ctx.fill();
-        ctx.fillStyle = shade(t.far, 10);
-        roundRect(ctx, x + 4, y0 - h, w - 8, 6, 3);
-        ctx.fill();
-        ctx.fillStyle = t.far;
+        // A mesa: sheer sides flaring out at the foot, a flat lit top.
+        const p = new Path2D();
+        p.moveTo(x - 10, y0 + 40);
+        p.quadraticCurveTo(x + 2, y0 - h * 0.3, x + 4, y0 - h + 4);
+        p.quadraticCurveTo(x + 5, y0 - h, x + 10, y0 - h);
+        p.lineTo(x + w - 10, y0 - h);
+        p.quadraticCurveTo(x + w - 5, y0 - h, x + w - 4, y0 - h + 4);
+        p.quadraticCurveTo(x + w - 2, y0 - h * 0.3, x + w + 10, y0 + 40);
+        p.closePath();
+        litFill(ctx, t, p, 2.4, 2.4);
+        // Strata: faint bands a step toward the rim colour across the cliff face.
+        ctx.fillStyle = mix(t.far, t.farLit, 0.35);
+        for (let k = 1; k < 3; k++) ctx.fillRect(snap(x + 6), snap(y0 - h + h * k * 0.3), w - 12, 1.5);
       });
+      ctx.fillStyle = t.far;
       break;
     case 'bigtrees':
+      backRidge(ctx, t, cam, width, y0 - 70, 50, true);
+      ctx.fillStyle = t.far;
       ctx.fillRect(0, snap(y0 + 10), width, 400);
       repeat(cam.x, 0.2, 110, width, (i, x) => {
         const h = 90 + hash(i) * 70;
-        ctx.fillRect(snap(x + 46), snap(y0 - h * 0.6), 18, h);
-        ctx.beginPath();
-        ctx.arc(x + 55, y0 - h * 0.6, 34 + hash(i + 2) * 14, 0, Math.PI * 2);
-        ctx.arc(x + 30, y0 - h * 0.45, 22, 0, Math.PI * 2);
-        ctx.arc(x + 80, y0 - h * 0.48, 24, 0, Math.PI * 2);
-        ctx.fill();
+        // A trunk flaring at the root under one broad crown: a wide dome with a few lobes.
+        const r = 34 + hash(i + 2) * 14;
+        const cy = y0 - h * 0.6;
+        const p = new Path2D();
+        p.moveTo(x + 44, y0 + 10);
+        p.quadraticCurveTo(x + 48, y0 - 10, x + 48, cy);
+        p.lineTo(x + 62, cy);
+        p.quadraticCurveTo(x + 62, y0 - 10, x + 68, y0 + 10);
+        p.closePath();
+        p.moveTo(x + 33 - r, cy - 4);
+        p.ellipse(x + 55, cy - 4, r + 22, r * 0.72, 0, Math.PI, 0);
+        p.ellipse(x + 55, cy - 4, r + 22, r * 0.34, 0, 0, Math.PI);
+        p.moveTo(x + 55 + r * 0.37, cy - r * 0.55);
+        p.ellipse(x + 55 - r * 0.25, cy - r * 0.55, r * 0.62, r * 0.5, 0, 0, Math.PI * 2);
+        litFill(ctx, t, p, 2.4, 2);
       });
       break;
     case 'islands':
@@ -896,12 +1014,14 @@ function drawFar(ctx, t, cam, width, y0, time) {
       });
       break;
     default: // hills, trees
+      backRidge(ctx, t, cam, width, y0 - 55, 45, t.skyline === 'trees');
+      ctx.fillStyle = t.far;
       ctx.fillRect(0, snap(y0 + 29), width, 400);
       // Each hill its own size, so the repeat doesn't show.
       repeat(cam.x, 0.2, 220, width, (i, x) => {
-        ctx.beginPath();
-        ctx.ellipse(x + 110 + (hash(i + 3) - 0.5) * 40, y0 + 30, 115 + hash(i) * 40, 100 + hash(i + 1) * 50, 0, Math.PI, 0);
-        ctx.fill();
+        const p = new Path2D();
+        p.ellipse(x + 110 + (hash(i + 3) - 0.5) * 40, y0 + 30, 115 + hash(i) * 40, 100 + hash(i + 1) * 50, 0, Math.PI, 0);
+        litFill(ctx, t, p, 3, 2.4);
       });
   }
 }
@@ -1168,7 +1288,7 @@ function drawDeco(ctx, map, cam, width, time, onLedges) {
     if (x + half < 0 || x - half > width) continue;
     const y = snap((wy ?? groundAt(map, wx)) - cam.y);
     if (b) place(ctx, b.art(seed, time), snap(x), y + 2);
-    else drawLandmark(ctx, kind, snap(x), y, time, seed, wx);
+    else drawLandmark(ctx, kind, snap(x), y, time, seed, wx, map.theme);
   }
 }
 
@@ -1911,7 +2031,10 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   // with it, and a band of haze sits at its foot so it stands in air. `look.aerial` scales it.
   const air = t.sky[1];
   const aerial = t.aerial ?? 1;
-  const far = { ...t, far: mix(t.far, air, 0.3 * aerial) };
+  const farC = mix(t.far, air, 0.3 * aerial);
+  // The far plane's lit rim leans toward the light's colour; the plane behind it fades nearly
+  // into the sky.
+  const far = { ...t, far: farC, farLit: mix(farC, t.sun, 0.42), farBack: mix(t.far, air, 0.62 * aerial) };
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
     drawClouds(g, theme, cam, width, time, air);

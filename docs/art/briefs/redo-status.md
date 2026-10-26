@@ -48,6 +48,14 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   t16–19 shorter and upright, so face and hair read; mage t17–19 wings use a clean hue-shifted
   ramp built from the set's own hue (`wingRamp` in mage.js) instead of grey. One critique round.
 
+- Backdrops, water, scenery buildings: far silhouettes flat with a lit upper-left rim and a
+  simpler ridge behind (hills, treetops, mesas with strata, broad-crowned grove trees, columns,
+  crystals, houses); waterfall and pond water on per-map hue-shifted ramps (meadow sky blue, woods
+  teal, ruins periwinkle, cave cyan) with sliding light bands, a lit lip, reflections, drifting
+  light and lily-pad ripples; scenery houses, mushroom house, tents, treehouse and the forge (with
+  an anvil) hand-shaded on the prop kit (clapboard, shingled gables, stone chimneys, eave shadows,
+  lit trim, bark trunk). `wallShade`/`beam`/`gable` moved to propkit. One critique round.
+
 ## Still to do
 - Sky designs still place feathers in absolute coordinates (wings are not yet
   chains); trim their shape counts.
@@ -65,5 +73,5 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   Tortoise tail a stub.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
 - Thunder Hawk has no skill that summons it.
-- Props: backdrop far/mid silhouettes not redone; waterfall and pond water colours still old.
-  Shared prop kit: `src/render/propkit.js`.
+- Props: mid-layer backdrop sprites keep their own-hue outlines (washed by the veil only); the
+  hollow's far roots and the cave stalactites have no lit rim yet. Shared prop kit: `src/render/propkit.js`.

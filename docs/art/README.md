@@ -97,6 +97,9 @@ carry an improvement across every part of the game it applies to.
 - Damage numbers pop in with an overshoot, drift on alternating arcs, and total multi-hits.
 
 **Maps and UI**
+- Far silhouettes: flat, no outline, a lit rim on the upper-left by filling the shape in the rim
+  colour and then its body shifted 2 px down-right (`litFill` in scenery.js); behind them one still
+  simpler ridge, almost the sky's colour. Water takes a per-map ramp (`WATERS` in landmarks.js).
 - Far layers fade toward the sky colour and get paler; vertical parallax stays tiny (about 0.05);
   a foreground layer in front of the characters adds depth; varied tiles, never one repeated tile.
 - Text over the scene always has an outline or backing; the world dims behind windows; bars give

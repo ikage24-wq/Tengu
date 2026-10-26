@@ -1575,10 +1575,26 @@ function mushringArt() {
 
 // ---------- Water ----------
 
+// Water ramps that fit each map's palette, hue-shifted: `deep` (cooler, toward violet, under banks
+// and lips), `base`, `light` (the sky's reflection), `foam` (a warm-tinged white), and `edge` (the
+// thin outline, a dark shade of the water's own hue). Meadow water is sky blue, woods water a mossy
+// teal, ruins water periwinkle, cave water a glowing cyan over violet.
+const WATERS = {
+  meadow: { deep: '#5a9ae6', base: '#7cc4f6', light: '#b8e8ff', foam: '#f6fdff', edge: '#4a7cc8' },
+  forest: { deep: '#3f8fb0', base: '#58bcc4', light: '#a2e8d8', foam: '#f2fff4', edge: '#357896' },
+  ruins: { deep: '#6a6cd4', base: '#8c9cf2', light: '#c4caff', foam: '#fbf6ff', edge: '#5552b4' },
+  cave: { deep: '#5a5ccc', base: '#64b4f0', light: '#a6f0ff', foam: '#eefeff', edge: '#4648aa' },
+};
+// The map's water, set by `drawLandmark` from the map's theme.
+let waterKey = 'meadow';
+const water = () => WATERS[waterKey] ?? WATERS.meadow;
+
 function waterPoolArt() {
-  return art('waterpool', 60, 14, () => {
+  const w = water();
+  return art(`waterpool|${waterKey}`, 60, 14, () => {
     const stone = '#c9c0dc';
-    const out = [E(30, 8, 29, 5.6, '#9fdcff'), F(E(30, 8.4, 24, 3.6, '#8fd0f6')), F(E(22, 6.4, 8, 1, '#d6f2ff')), F(E(42, 9.6, 6, 0.8, '#d6f2ff'))];
+    // The pool: deep under the far lip, the sky's light across the near water, two glints.
+    const out = [E(30, 8, 29, 5.6, w.base), F(E(30, 6.6, 26, 2.4, w.deep)), F(E(31, 9.6, 22, 2.4, w.light)), F(E(22, 9.2, 7, 0.8, w.foam)), F(E(42, 10.6, 5, 0.7, w.foam))];
     for (const [x, y, rx, ry] of [[3, 9.6, 4.4, 3.2], [57, 9.4, 4.4, 3.4], [11, 12.4, 4, 2], [49, 12.4, 4.4, 2], [22, 13.4, 3.4, 1.2], [39, 13.4, 3, 1.2]]) out.push(...ringed(x, y, rx, ry, stone, 0.6));
     out.push(...ringed(2, 7, 2.6, 1.6, '#9fe0b0', 0.5), ...ringed(58, 7, 2.6, 1.6, '#9fe0b0', 0.5), tuft(6, 14, '#86d98c'), tuft(55, 14), ...bloom(52, 11, 1.1, '#ffffff'));
     return out;
@@ -1620,24 +1636,35 @@ function drawWaterfall(ctx, x, y, time, H, seed) {
     ctx.lineTo(x - 16, y1);
     ctx.closePath();
   };
+  const w = water();
   ctx.save();
   col();
+  // Bright where it curls over the lip, the base colour as it falls, deepening toward the foot.
   const g = ctx.createLinearGradient(0, y0, 0, y1);
-  g.addColorStop(0, '#d2f3ff');
-  g.addColorStop(0.35, '#a8e4ff');
-  g.addColorStop(1, '#8fd3ff');
+  g.addColorStop(0, w.light);
+  g.addColorStop(0.3, w.base);
+  g.addColorStop(1, mix(w.base, w.deep, 0.6));
   ctx.fillStyle = g;
   ctx.fill();
   ctx.clip();
-  // Shade toward one side, light down the other, then streaks of foam rushing down.
-  const sg = ctx.createLinearGradient(x - 16, 0, x + 16, 0);
-  sg.addColorStop(0, 'rgba(255,255,255,0.35)');
-  sg.addColorStop(0.3, 'rgba(255,255,255,0)');
-  sg.addColorStop(0.75, 'rgba(110,150,220,0)');
-  sg.addColorStop(1, 'rgba(110,150,220,0.3)');
-  ctx.fillStyle = sg;
-  ctx.fillRect(x - 17, y0, 34, y1 - y0);
-  ctx.fillStyle = '#ffffff';
+  // The sheet turns away from the light on the right (deep) and catches it down the left.
+  ctx.fillStyle = w.deep;
+  ctx.globalAlpha = 0.3;
+  ctx.fillRect(x + 4, y0, 4, y1 - y0);
+  ctx.globalAlpha = 0.55;
+  ctx.fillRect(x + 8, y0, 9, y1 - y0);
+  ctx.fillStyle = w.light;
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(x - 17, y0, 7, y1 - y0);
+  // Broad, faint bands of light sliding down the sheet, slower than the foam.
+  ctx.fillStyle = w.foam;
+  for (let k = 0; k < 3; k++) {
+    const by = y0 + (((time * 26 + k * 37 + seed * 11) % 111) / 111) * (y1 - y0 + 24) - 12;
+    ctx.globalAlpha = 0.22;
+    ctx.fillRect(x - 16, by, 32, 5 + k * 2);
+  }
+  // Streaks of foam rushing down.
+  ctx.fillStyle = w.foam;
   const lanes = [-10.5, -7, -3, 0.5, 4, 7.5, 11];
   lanes.forEach((dx, k) => {
     const speed = 64 + ((k * 13) % 5) * 9;
@@ -1652,9 +1679,9 @@ function drawWaterfall(ctx, x, y, time, H, seed) {
     }
   });
   ctx.restore();
-  // Ink edges down both sides, and the water curling over the ledge.
+  // Thin edges in the water's own dark hue down both sides, and the water curling over the ledge.
   ctx.save();
-  ctx.strokeStyle = '#5f86c4';
+  ctx.strokeStyle = w.edge;
   ctx.lineWidth = 0.9;
   ctx.beginPath();
   ctx.moveTo(x - 13, y0);
@@ -1662,16 +1689,20 @@ function drawWaterfall(ctx, x, y, time, H, seed) {
   ctx.moveTo(x + 13, y0);
   ctx.lineTo(x + 16, y1);
   ctx.stroke();
-  ctx.fillStyle = '#e6f8ff';
+  ctx.fillStyle = w.light;
   ctx.beginPath();
   ctx.ellipse(x, y0, 13.4, 2.6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+  ctx.fillStyle = w.foam;
+  ctx.beginPath();
+  ctx.ellipse(x - 2, y0 - 0.6, 9, 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
   place(ctx, waterLedgeArt(true), x, top + 20);
   // Ripples spreading over the pool.
   ctx.save();
-  ctx.strokeStyle = '#ffffff';
+  ctx.strokeStyle = w.foam;
   ctx.lineWidth = 0.7;
   for (let k = 0; k < 3; k++) {
     const p = (time * 0.7 + k / 3 + seed * 0.1) % 1;
@@ -1684,7 +1715,7 @@ function drawWaterfall(ctx, x, y, time, H, seed) {
   // Foam churning where the water lands, mist, and glints.
   glow(ctx, x, y1 - 3, 30, '#ffffff', 0.45);
   ctx.save();
-  for (const [fill, grow] of [['#a8d4f0', 0.8], ['#ffffff', 0]]) {
+  for (const [fill, grow] of [[w.light, 0.8], [w.foam, 0]]) {
     ctx.fillStyle = fill;
     for (let k = 0; k < 7; k++) {
       const fx = x + (k - 3) * 4.8;
@@ -1708,10 +1739,13 @@ function drawWaterfall(ctx, x, y, time, H, seed) {
 }
 
 function pondArt(blink) {
-  return art(`pond|${blink}`, 110, 20, () => {
-    const out = [E(55, 12, 54, 7.6, '#b6e6a6'), F(E(55, 13, 52, 6.4, '#a4dc96')), E(55, 12, 49, 5.6, '#8fd3ff'), F(E(55, 12.8, 40, 3.6, '#7cc6f2')), F(E(46, 9.4, 26, 0.9, '#c9efff'))];
+  const w = water();
+  return art(`pond|${blink}|${waterKey}`, 110, 20, () => {
+    // Grass bank, then the water: the far bank's reflection deep along the back, the sky's light
+    // across the near water, a long glint on the left.
+    const out = [E(55, 12, 54, 7.6, '#b6e6a6'), F(E(55, 13, 52, 6.4, '#a4dc96')), E(55, 12, 49, 5.6, w.base), F(E(55, 8.6, 46, 2.4, w.deep)), F(E(58, 14, 38, 2.6, w.light)), F(E(42, 12.4, 18, 0.7, w.foam)), F(E(76, 15.4, 10, 0.6, w.foam))];
     // Lily pads, a lotus, and a frog sitting on the biggest pad.
-    const pad = (x, y, r, c = '#7fd19a') => out.push(F(E(x, y, r + 0.7, r * 0.42 + 0.6, '#5fae7a')), F(E(x, y, r, r * 0.42, c)), F(T([[x, y], [x + r * 0.8, y - r * 0.2], [x + r * 0.9, y + 0.2]], '#7cc6f2')));
+    const pad = (x, y, r, c = '#7fd19a') => out.push(F(E(x + 0.6, y + 0.8, r + 0.4, r * 0.42, w.deep)), F(E(x, y, r + 0.7, r * 0.42 + 0.6, '#5fae7a')), F(E(x, y, r, r * 0.42, c)), F(E(x - r * 0.3, y - r * 0.12, r * 0.45, r * 0.16, '#b4ecb0')), F(T([[x, y], [x + r * 0.8, y - r * 0.2], [x + r * 0.9, y + 0.2]], w.base)));
     pad(26, 12.4, 4.4);
     pad(36, 15, 3);
     pad(70, 13.6, 6, '#8fdc9a');
@@ -2278,7 +2312,30 @@ const KINDS = {
       const by = y + 6;
       place(ctx, pondArt(blinking(time, seed) ? 1 : 0), x, by);
       place(ctx, cattailsArt(leanFrame(time, wx, 5, 0.1, seed)), x, by);
-      shimmer(ctx, x, by - 8, 47, 5, time, seed);
+      const w = water();
+      // A wavering band of the sky's light drifting across, glints, and now and then a ring
+      // spreading from a lily pad.
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(x, by - 8, 47, 5, 0, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle = w.light;
+      for (let k = 0; k < 3; k++) {
+        const u = (time * 0.05 + k / 3 + seed * 0.1) % 1;
+        ctx.globalAlpha = 0.45 * Math.sin(u * Math.PI);
+        ctx.fillRect(snap(x - 54 + u * 108), snap(by - 9 + k * 1.6 + Math.sin(time * 1.3 + k) * 0.6), 14 - k * 3, 1);
+      }
+      const rp = (time * 0.4 + seed * 0.3) % 1.6;
+      if (rp < 1) {
+        ctx.globalAlpha = 0.7 * (1 - rp);
+        ctx.strokeStyle = w.foam;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.ellipse(x - 19, by - 7.6, 5 + rp * 10, 1.4 + rp * 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+      shimmer(ctx, x, by - 8, 47, 5, time, seed, 7, w.foam);
     },
   },
   // Crystal cave.
@@ -2371,8 +2428,9 @@ export const LANDMARKS = Object.fromEntries(Object.entries(KINDS).map(([k, { w, 
 
 // Draws landmark `kind` with its base centered at screen (x, y), y being the ground line.
 // `wx` is its place in the world, so a gust rolls across the map and reaches it in turn.
-export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x) {
+export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x, theme = 'meadow') {
   const k = KINDS[kind];
   if (!k) return;
+  waterKey = theme;
   k.draw(ctx, x, y + SINK, time, seed, wx);
 }
