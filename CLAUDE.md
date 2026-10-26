@@ -29,9 +29,15 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 
 ## Art, animation, and effects
 
-Before drawing or animating anything (sprites, faces, hair, effects, maps, UI), read
-`docs/art/README.md` and `docs/art/art-bible.md`: the rules learned from deep multilingual research,
-with the full findings in `docs/art/research/`. Save anything new we learn there too.
+**Always consult the research first.** `docs/art/research/` is the saved research guide: about 350
+sources in five languages (tutorials, artists' process posts, game-dev talks, real game data).
+Before any visual or feel work (sprites, faces, hair, animation, effects, maps, UI, HUD, windows,
+icons, fonts, game feel), read `docs/art/README.md` and `docs/art/art-bible.md` (the rules drawn
+from it), then the research files that cover the task. For UI that's `research/env.md` sections
+E (UI) and F (Icons); for effects and game feel `research/fx.md`; for animation
+`research/anim.md`. Follow what they say, compare the work against them rather than against our
+own older work, and save anything new we learn back there (the rule in `README.md`, the finding
+with its source in `research/`).
 
 "Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
 `docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items
