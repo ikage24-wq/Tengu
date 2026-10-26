@@ -334,7 +334,9 @@ const FRINGES = {
   peek: { pts: [[27.2, 18.4], [25.6, 23.6, 1], [23.6, 21.8], [21.4, 22.8], [18.8, 21.6], [16.6, 18.6], [15.4, 14.8], [14.6, 14, 1], [11.4, 14.1, 1], [10.9, 13.2, 1], [10.4, 14.1, 1], [7.4, 14, 1]], lean: 0, plain: true,
     part: [[10.4, 2.8], [9.6, 6.4]],
     // Strand lines that follow the sweep from the part down over the eye.
-    strands: [[11.2, 5.4, 19.4, 21, 0.8, -1.8], [14.4, 4.8, 23.4, 21.2, 0.8, -1.8], [18.6, 4.6, 26, 16.4, 0.7, -1.4]],
+    strands: [[11.2, 5.4, 19.4, 21, 0.8, -1.8], [14.4, 4.8, 23.4, 21.2, 0.8, -1.8], [18.6, 4.6, 26, 16.4, 0.7, -1.4],
+      // a few short lines where the ends split
+      [18, 18, 20.2, 22.2, 1, -0.4], [21.4, 18.2, 22.6, 22.8, 1, -0.3], [23.6, 18, 24.8, 23.4, 1, -0.3]],
     // One long lock on the open side, falling past the cheek over a little of the face.
     locks: [[[6.4, 10.2], [7.6, 14.6], [8.8, 19.4], [8.6, 23.6]]] },
   // Rounded scallops (for curly hair).
