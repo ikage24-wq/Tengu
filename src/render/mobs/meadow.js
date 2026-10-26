@@ -63,6 +63,22 @@ function spin(shapes, cx, cy, deg) {
 // A chain (tail, ear, leaf, lock of mane): segments of `lens` hanging from (x, y) at `deg`;
 // segment i turns bend(i) degrees further than its parent. Returns the joints, root first, as
 // [x, y, angle in degrees of the segment leaving it].
+// Rounds a polyline off (Chaikin corner cutting, ends kept), so a band laid along a chain of
+// links bends smoothly instead of kinking at each joint.
+export function smooth(pts, passes = 2) {
+  let p = pts;
+  for (let k = 0; k < passes; k++) {
+    const q = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) {
+      const [a, b] = [p[i], p[i + 1]];
+      q.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    q.push(p.at(-1));
+    p = q;
+  }
+  return p;
+}
+
 export function chain(x, y, deg, lens, bend = () => 0) {
   const out = [];
   let a = deg;
@@ -383,22 +399,44 @@ function kitsune(pose, f, mood) {
     if (dead) base = [-150, -132, -165][k];
     const curl = dead ? 9 : [7, 5, 10][k] + (angry ? -3 : 0);
     const pts = chain(root.x, root.y, base, [len * 1.6, len * 1.8, len * 1.9, len * 1.8, len * 1.4], (i) => (i ? curl : 0) + wave(ph, amp)(i));
-    const tone = k === 2 ? ramp(fur.sh, { step: 9, turn: 10 }) : fur;
+    const tone = k === 2 ? ramp(fur.sh, { step: 8, turn: 10, sat: -12 }) : fur;
     const tc = k === 2 ? ramp(cream.sh, { step: 7, turn: 20 }) : cream;
-    // Each link is a fluffy ball: the shadow tone peeking out at its back and underside.
-    for (const pass of [0, 1]) {
-      pts.forEach(([x, y], i) => {
-        if (i === 0) return;
-        const t = i / (pts.length - 1);
-        const r = 1.7 + 1.8 * Math.sin(Math.PI * (0.16 + 0.68 * t));
-        const m = t > 0.72 ? tc : tone;
-        out.push(pass ? F(E(x + 0.3, y - 0.35, r - 0.55, (r - 0.55) * 0.94, m.base)) : E(x - 0.2, y + 0.3, r, r * 0.94, m.sh));
-      });
+    // One smooth plume along the chain (the links rounded off so no joint shows): the shadow tone
+    // is the whole plume nudged down and back, the lit fur a slimmer copy nudged up and front, so
+    // the shadow reads as one clean crescent along the underside instead of a ball per link. The
+    // cream tip is the last quarter.
+    const sm = smooth(pts.slice(1).map(([x, y]) => [x, y]));
+    const wAt = (t) => 2 * (1.7 + 1.8 * Math.sin(Math.PI * (0.16 + 0.68 * t)));
+    const cut = Math.round((sm.length - 1) * 0.72);
+    const tipC = sm.at(-1);
+    const plume = (dx, dy, dw, m0, m1) => {
+      const at = (p0) => p0.map(([x, y]) => [x + dx, y + dy]);
+      const n = sm.length - 1;
+      return [band(at(sm.slice(0, cut + 1)), (t) => wAt((t * cut) / n) - dw, m0), band(at(sm.slice(cut)), (t) => wAt((cut + t * (n - cut)) / n) - dw, m1),
+        E(tipC[0] + dx, tipC[1] + dy, (wAt(1) - dw) / 2, (wAt(1) - dw) / 2, m1)];
+    };
+    out.push(...plume(-0.2, 0.35, 0, tone.sh, tc.sh), ...plume(0.3, -0.35, 1.1, tone.base, tc.base).map(F));
+    // Fur tufts sweeping toward the tip break the plume's edge (two on the back, one on the front),
+    // and the cream tip bites into the fur in a V instead of a straight cut.
+    const n = sm.length - 1;
+    const frame = (t) => {
+      const i = Math.max(1, Math.min(n - 1, Math.round(t * n)));
+      const d = [sm[i + 1][0] - sm[i - 1][0], sm[i + 1][1] - sm[i - 1][1]];
+      const l = Math.hypot(...d) || 1;
+      return [sm[i], [d[0] / l, d[1] / l], [d[1] / l, -d[0] / l]];
+    };
+    for (const [t, side] of [[0.38, 1], [0.6, -1], [0.82, 1]]) {
+      const [[x, y], d, nn] = frame(t);
+      const e = (wAt(t) / 2 - 0.4) * side;
+      const ex = x + nn[0] * e;
+      const ey = y + nn[1] * e;
+      const c = (t > 0.72 ? tc : tone)[side > 0 ? 'sh' : 'base'];
+      out.push(T([[ex - d[0] * 1.1, ey - d[1] * 1.1], [ex + nn[0] * 1.3 * side + d[0] * 1.2, ey + nn[1] * 1.3 * side + d[1] * 1.2], [ex + d[0] * 0.9, ey + d[1] * 0.9]], c));
     }
-    // A few fur tufts on the lit side, and the tip's highlight.
-    for (const i of [2, 3]) {
-      const [x, y] = pts[i];
-      out.push(F(T([[x - 0.9, y - 1.6], [x + 0.5, y - 2.9], [x + 0.6, y - 1.5]], tone.hi)));
+    {
+      const [[x, y], d, nn] = frame(0.72);
+      const hw = wAt(0.72) / 2 - 0.85;
+      out.push(F(T([[x + nn[0] * hw + 0.3, y + nn[1] * hw - 0.35], [x - d[0] * 1.6 + 0.3, y - d[1] * 1.6 - 0.35], [x - nn[0] * hw + 0.3, y - nn[1] * hw - 0.35]], tc.base)));
     }
     const tip = pts.at(-1);
     out.push(F(E(tip[0] + 0.5, tip[1] - 0.9, 0.9, 0.55, cream.hi)));
@@ -429,7 +467,9 @@ function kitsune(pose, f, mood) {
   const sw = br * 0.3;
   body.push(E(bx - 3.8, by + 0.2, 4, 4.1, fur.base), E(bx, by, 6.8 + sw * 0.3, 4.4 + sw, fur.base), E(bx + 4.4, by + 0.8, 3.2 + sw * 0.4, 3.6 + sw, cream.base));
   body.push(crescent(bx - 0.6, by + 0.1, 7.4, 4.5 + sw, fur.sh, { k: 0.3, a0: 60, a1: 215, jag: 0.45 }),
-    crescent(bx - 3.8, by + 0.2, 4, 4.1, fur.sh, { k: 0.4, a0: 70, a1: 200, jag: 0.5 }),
+    // the haunch's shadow only where it bulges past the barrel (its back), so the two shadows
+    // meet in one line instead of a blotch where they overlap
+    crescent(bx - 3.8, by + 0.2, 4, 4.1, fur.sh, { k: 0.4, a0: 120, a1: 200, jag: 0.5 }),
     crescent(bx + 4.4, by + 0.8, 3.2, 3.6 + sw, cream.sh, { k: 0.3, a0: 50, a1: 150 }),
     shine(bx + 0.6, by - 0.2, 6.4, 4.4, fur.hi, 0, 1.2));
   out.push(...spin(body, hip[0], hip[1], pitch));
@@ -1230,6 +1270,8 @@ function jackalope(pose, f, mood) {
   // Far legs (darker).
   const hindFoot = (near) => {
     const k = hop.hind;
+    // Dead, the hind legs stretch straight out behind, past the tail, soles up.
+    if (dead) return [bx - (near ? 18.2 : 16.4), by + (near ? 5.2 : 3.4), -8];
     const fx = (near ? 13.2 : 10.6) + rx - k * 4.6;
     const fy = Math.min(34.8, 34.8 - L * 0.55 + Math.max(0, k) * 0.6);
     return [fx, fy, Math.max(0, k) * 50];
@@ -1260,6 +1302,8 @@ function jackalope(pose, f, mood) {
     const kn = reach([bx - 3.6, by + 3.4], [fx + 2, fy - 1.2], 4, 4.4, 1);
     out.push(...limb([bx - 3.6, by + 3.4], kn, 3.6, 2.8, fur), ...limb(kn, [fx + 2, fy - 1.2], 2.8, 2.4, fur), O(fx + 2.8, fy, 4, 1.4, a, fur),
       crescent(bx - 2.6, by + 3.4, 3.6, 3, furD, { k: 0.4, a0: 70, a1: 200, jag: 0.5, n: 10 }), F(E(fx + 5.4 - a / 30, fy + 0.2 + a / 40, 0.5, 0.4, furD)));
+    // Dead, the stretched leg is set off from the belly by a crease, and its sole shows a cream pad.
+    if (dead) out.push(band([[bx - 2.4, by + 5.4], [bx - 5.6, by + 3.6], [fx + 4.4, fy - 1.1]], (t) => 0.6 * Math.sin(Math.PI * t) ** 0.5, FU.deep), E(fx - 0.2, fy + 0.1, 1.4, 1.1, cream), F(E(fx - 0.6, fy + 0.1, 0.5, 0.45, earIn)));
     const [s, h] = front(true);
     const el = reach(s, h, 3.4, 3.4, -1);
     out.push(...limb(s, el, 2.4, 2.2, fur), ...limb(el, h, 2.2, 2, fur), E(h[0] + 0.6, h[1] - 0.2, 1.7, 1.1, cream));
