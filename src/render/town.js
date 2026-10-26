@@ -888,7 +888,7 @@ function shopBooth(ctx, x, gy, bot, time, hovered) {
   // The board, bobbing a touch.
   ctx.font = 'bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const w = Math.max(48, ctx.measureText(bot.shop.title).width + 14);
-  const by = gy - 74 + Math.sin(time * 2 + x * 0.01) * 1;
+  const by = gy - 74 + Math.sin(time * 2 + bot.x * 0.01) * 1;
   box(ctx, x - w / 2, by, w, 14, { fill: hovered ? '#fff6c9' : '#ffffff', edge: '#ff9ec0', r: 5, width: 1.5 });
   box(ctx, x - w / 2 + 2, by + 2, 10, 10, { fill: '#ff9ec0', edge: null, r: 3 });
   text(ctx, '$', x - w / 2 + 7, by + 10, { size: 7, bold: true, align: 'center', color: '#ffffff' });

@@ -574,7 +574,7 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
         ctx.fill();
       }
       if (lucky) {
-        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 4 + x);
+        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 4 + x + camX);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(x + 2, y - 6, 1, 1);
         ctx.globalAlpha = 1;
@@ -582,7 +582,9 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
     } else if (kind === 'glowcaps') {
       if (h < 0.75) return;
       const c = BLOOMS[Math.floor(hash(k) * 3) + 1];
-      ctx.globalAlpha = 0.35 + 0.25 * Math.sin(time * 2 + x);
+      // Each cap glows on its own beat, keyed to where it is in the world (not on screen, or the
+      // glow strobes as the camera scrolls).
+      ctx.globalAlpha = 0.35 + 0.25 * Math.sin(time * 2 + x + camX);
       ctx.fillStyle = c;
       ctx.beginPath();
       ctx.arc(x, y - 3, 5, 0, Math.PI * 2);
