@@ -271,6 +271,13 @@ export function drawHud(ui, state, world) {
   if (settings.showFps) drawFps(ctx, state);
 }
 
+// The hotkey slot under a point on screen (for dragging items onto the bar), or null.
+export function hotkeyAt(x, y) {
+  const i = Math.floor((x - 400) / 19.6);
+  if (i < 0 || i >= HOTKEYS.length || x > 400 + i * 19.6 + 18) return null;
+  return y >= BAR_Y + 9 && y < BAR_Y + 27 ? HOTKEYS[i] : null;
+}
+
 // The throwing stars a gauntlet is throwing, and how many are left in the set.
 function drawStars(ui, world) {
   const { ctx } = ui;

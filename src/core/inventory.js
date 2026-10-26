@@ -132,3 +132,35 @@ export function sortTab(inv, tab) {
   });
   list.splice(0, list.length, ...keyed.map((x) => x.e));
 }
+
+// Moves the item in cell `from` to cell `to` of a tab: onto another item they swap places, onto
+// the same stackable item they merge (as far as the stack allows), and past the end it goes
+// last. Returns true when anything moved.
+export function moveItem(inv, tab, from, to) {
+  const list = inv[tab];
+  const a = list?.[from];
+  if (!a || from === to) return false;
+  if (to >= list.length) {
+    list.splice(from, 1);
+    list.push(a);
+    return true;
+  }
+  const b = list[to];
+  const def = ITEMS[a.id];
+  if (b.id === a.id && a.uid == null && b.uid == null && !def.star) {
+    const max = def.stack ?? STACK_MAX;
+    const take = Math.min(a.qty, max - b.qty);
+    if (take <= 0) {
+      list[from] = b;
+      list[to] = a;
+      return true;
+    }
+    b.qty += take;
+    a.qty -= take;
+    if (a.qty <= 0) list.splice(from, 1);
+    return true;
+  }
+  list[from] = b;
+  list[to] = a;
+  return true;
+}

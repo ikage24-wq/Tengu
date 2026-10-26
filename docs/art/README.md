@@ -146,7 +146,10 @@ carry an improvement across every part of the game it applies to.
 - Item windows show the hovered item in a detail strip (big icon, stats against what's worn,
   the action button) instead of a tooltip over the grid; hovering gear tries it on the hero and
   lights the slot it goes in, and items new since the bag last closed wear a NEW mark
-  (`ui/bag.js`).
+  (`ui/bag.js`). Items drag: a press arms the drag and it starts after a few pixels, so clicks
+  and double-clicks still work; the item rides the cursor, leaves a faded copy, and every place
+  that takes it lights up (cells, the hero to wear it, hotkeys for potions). A live stat panel
+  under the hero shows each total's change while trying something on.
 - Text over the scene always has an outline or backing; the world dims behind windows; bars give
   feedback (lingering lost chunk, heal flash, low-HP pulse).
 - Props (landmarks, buildings, scenery) use `src/render/propkit.js`: one world light from the upper

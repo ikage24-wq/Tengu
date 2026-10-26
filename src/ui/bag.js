@@ -7,18 +7,19 @@
 // wear a NEW mark), how full the tab is, a Sort button, and a detail strip for the picked item:
 // a big icon, what it is, its stats against what you're wearing, and what you can do with it.
 
-import { ITEMS, RARITIES } from '../data/items.js';
-import { equipFromBag, unequip, equipBlocker, wearOutfit, removeOutfit, wornGear } from '../core/character.js';
+import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
+import { equipFromBag, unequip, equipBlocker, wearOutfit, removeOutfit, wornGear, stats } from '../core/character.js';
 import { applyScroll, itemName } from '../core/items.js';
-import { removeItem, sortTab, TAB_SIZE } from '../core/inventory.js';
+import { removeItem, sortTab, moveItem, TAB_SIZE } from '../core/inventory.js';
 import { useItem } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle, rarityCell, slotEdges, itemShadow, fit } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
+import { hotkeyAt } from './hud.js';
 
 const W = 324;
-const H = 236;
+const H = 258;
 const CELL = 24;
 const SLOT = 21;
 const TAB_KEYS = ['equip', 'use', 'etc', 'cash'];
@@ -53,7 +54,10 @@ export function bagWindow(ui, state, world) {
   const char = world.char;
   // Whatever was in the bag when it last closed counts as seen (the first time, everything does).
   // The manager only draws open windows, so a gap since the last frame means it was closed.
-  if (win.lastDrawn == null || world.now - win.lastDrawn > 0.25 || world.now < win.lastDrawn) win.seen = win.lastKeys ?? allKeys(char);
+  if (win.lastDrawn == null || world.now - win.lastDrawn > 0.25 || world.now < win.lastDrawn) {
+    win.seen = win.lastKeys ?? allKeys(char);
+    win.carry = null;
+  }
   win.lastDrawn = world.now;
   win.lastKeys = allKeys(char);
   if (!windowFrame(ui, win, W, H, 'Bag')) return;
@@ -61,8 +65,9 @@ export function bagWindow(ui, state, world) {
   const th = ui.theme;
   const ox = win.x;
   const oy = win.y;
+  const m = ui.mouse;
 
-  // ---- Items (right), read first so the doll can preview the hovered piece ----
+  // ---- Items (right), read first so the doll can preview the hovered or dragged piece ----
   const rx = ox + 120;
   const rw = W - 126;
   const tabWas = win.tab ?? 0;
@@ -70,9 +75,15 @@ export function bagWindow(ui, state, world) {
   const list = char.inventory[tab] ?? [];
   const gx = rx + Math.floor((rw - 8 * CELL) / 2);
   const gy = oy + 46;
-  let hotIndex = -1;
-  for (let i = 0; i < list.length; i++) if (hover(ui, gx + (i % 8) * CELL, gy + Math.floor(i / 8) * CELL, CELL - 1, CELL - 1)) hotIndex = i;
-  const focus = list[hotIndex] ?? list[win.sel] ?? null;
+  const cellAt = (x, y) => {
+    const c = Math.floor((x - gx) / CELL);
+    const r = Math.floor((y - gy) / CELL);
+    return c >= 0 && c < 8 && r >= 0 && r < TAB_SIZE / 8 ? r * 8 + c : -1;
+  };
+  const drag = win.carry?.live ? win.carry : null;
+  const hotIndex = drag ? -1 : cellAt(m.x, m.y);
+  const dragged = drag?.from === 'bag' ? list[drag.index] : null;
+  const focus = dragged ?? list[hotIndex] ?? list[win.sel] ?? null;
   const focusDef = focus ? ITEMS[focus.id] : null;
   const tryOn = focus && !state.scrollMode && (tab === 'equip' || tab === 'cash') ? focus : null;
 
@@ -80,34 +91,42 @@ export function bagWindow(ui, state, world) {
   const lx = ox + 6;
   win.view = tabs(ui, lx + 8, oy + 25, ['Gear', 'Outfit'], win.view ?? 0, { w: 45, h: 13 });
   const outfit = win.view === 1;
-  well(ctx, lx, oy + 43, 108, 128, th);
+  const doll = { x: lx, y: oy + 43, w: 108, h: 124 };
+  well(ctx, doll.x, doll.y, doll.w, doll.h, th);
   // The hero, wearing whatever you're pointing at in the bag.
   let gear = wornGear(char);
   const fits = tryOn && (tab === 'cash' || !equipBlocker(char, tryOn));
-  if (fits && tab === 'equip') gear = wornGear({ ...char, equipment: { ...char.equipment, [ITEMS[tryOn.id].slot]: tryOn } });
+  const trial = fits && tab === 'equip' ? { ...char, equipment: { ...char.equipment, [ITEMS[tryOn.id].slot]: tryOn } } : null;
+  if (trial) gear = wornGear(trial);
   if (fits && tab === 'cash') gear = wornGear(char, { [ITEMS[tryOn.id].slot]: tryOn });
+  // Dragging something wearable over the doll: the well lights up to take it.
+  const wearable = dragged && (tab === 'equip' || tab === 'cash');
+  const overDoll = hover(ui, doll.x, doll.y, doll.w, doll.h);
+  if (wearable) box(ctx, doll.x + 1, doll.y + 1, doll.w - 2, doll.h - 2, { fill: overDoll ? 'rgba(255,216,79,0.22)' : null, edge: COLORS.select, r: 7, width: overDoll ? 2.5 : 1.5 });
   ctx.fillStyle = 'rgba(90,63,122,0.12)';
   ctx.beginPath();
-  ctx.ellipse(lx + 54, oy + 156, 17, 3.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(lx + 54, oy + 152, 17, 3.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  drawHero(ctx, char.appearance, gear, lx + 54, oy + 156, { pose: 'idle', time: world.now, scale: 1.15 });
-  if (fits) text(ctx, 'Trying on', lx + 54, oy + 52, { size: 6, bold: true, align: 'center', color: th.dark });
+  drawHero(ctx, char.appearance, gear, lx + 54, oy + 152, { pose: 'idle', time: world.now, scale: 1.15 });
+  if (fits) text(ctx, wearable ? 'Drop to wear' : 'Trying on', lx + 54, oy + 52, { size: 6, bold: true, align: 'center', color: th.dark });
   const target = tryOn && ((tab === 'equip' && !outfit) || (tab === 'cash' && outfit)) ? ITEMS[tryOn.id].slot : null;
   const worn = outfit ? char.outfit ?? {} : char.equipment;
   [...LEFT.map((s, i) => [s, lx + 4, i]), ...RIGHT.map((s, i) => [s, lx + 108 - 4 - SLOT, i])].forEach(([slot, x, i]) => {
-    const y = oy + 50 + i * 29;
-    dollSlot(ui, state, world, slot, x, y, worn[slot], outfit, slot === target);
+    dollSlot(ui, state, world, slot, x, oy + 48 + i * 29, worn[slot], outfit, slot === target, win);
   });
-  pill(ctx, lx, oy + 176, 108, 'coin', '#f0b53a', char.gold.toLocaleString(), COLORS.gold, '#fff6d6', '#f0cf7a');
-  pill(ctx, lx, oy + 195, 108, 'star', '#ff6fae', `${(char.cash ?? 0).toLocaleString()} Cash`, '#d0559a', '#ffe6f2', '#ff8fc1');
-  text(ctx, 'Double-click to take off', lx + 54, oy + 222, { size: 6, align: 'center', color: COLORS.muted });
+
+  // Your totals, and how they'd change with the piece you're trying on.
+  statPanel(ui, char, trial, lx, oy + 171, 108, 50, th, world);
 
   // ---- Items: tabs, sort, grid, capacity ----
   // Each tab says when it holds something new.
   const fresh = TAB_KEYS.map((k) => (char.inventory[k] ?? []).some((e) => !win.seen.has(seenKey(k, e))));
   win.tab = tabs(ui, rx, oy + 25, TAB_NAMES, tabWas, { w: 38, h: 13 });
   fresh.forEach((f, i) => f && i !== win.tab && sparkle(ctx, rx + i * 40 + 35, oy + 25, 2.6, '#ff6fae'));
-  if (win.tab !== tabWas) win.sel = -1;
+  if (win.tab !== tabWas) {
+    win.sel = -1;
+    win.carry = null;
+  }
   if (button(ui, rx + rw - 32, oy + 23, 32, 16, 'Sort', { size: 7.5 })) {
     const picked = list[win.sel];
     sortTab(char.inventory, tab);
@@ -115,10 +134,11 @@ export function bagWindow(ui, state, world) {
   }
   if (hover(ui, rx + rw - 32, oy + 23, 32, 16)) tooltip(ui, [{ text: 'Sort this tab', bold: true }, { text: 'Merges stacks and lines items up by kind.', color: COLORS.muted, size: 8 }]);
 
+  const dropCell = drag ? cellAt(m.x, m.y) : -1;
   for (let i = 0; i < TAB_SIZE; i++) {
     const x = gx + (i % 8) * CELL;
     const y = gy + Math.floor(i / 8) * CELL;
-    gridCell(ui, state, world, tab, list, i, x, y, win);
+    gridCell(ui, state, world, tab, list, i, x, y, win, drag && i === Math.min(dropCell, Math.max(0, list.length - (drag.from === 'bag' ? 1 : 0))) && dropCell >= 0);
   }
 
   // How full the tab is.
@@ -128,7 +148,85 @@ export function bagWindow(ui, state, world) {
   bar(ctx, gx + 62, cy + 1.5, 8 * CELL - 64, 4, full, full >= 1 ? COLORS.bad : full > 0.8 ? COLORS.gold : th.main, null);
 
   // ---- The detail strip ----
-  details(ui, state, world, tab, rx, cy + 12, rw, oy + H - 8 - (cy + 12), focus, focusDef, hotIndex >= 0 ? hotIndex : win.sel);
+  details(ui, state, world, tab, rx, cy + 12, rw, oy + 227 - (cy + 12), focus, focusDef, drag ? -1 : hotIndex >= 0 && list[hotIndex] ? hotIndex : win.sel);
+
+  // ---- Footer: gold, Cash, and how to move things ----
+  const fy = oy + H - 22;
+  pill(ctx, lx, fy, 108, 'coin', '#f0b53a', char.gold.toLocaleString(), COLORS.gold, '#fff6d6', '#f0cf7a');
+  pill(ctx, lx + 108, fy, 96, 'star', '#ff6fae', `${(char.cash ?? 0).toLocaleString()} Cash`, '#d0559a', '#ffe6f2', '#ff8fc1');
+  text(ctx, 'Drag items to move, wear,', ox + W - 10, fy + 6.5, { size: 6, align: 'right', color: COLORS.muted });
+  text(ctx, 'or put potions on a hotkey', ox + W - 10, fy + 13.5, { size: 6, align: 'right', color: COLORS.muted });
+
+  // ---- Dragging ----
+  // A press on an item arms a drag; it starts once the mouse moves a few pixels, so clicks and
+  // double-clicks still work. Letting go drops it on whatever is under the mouse.
+  if (win.carry) {
+    const d = win.carry;
+    if (m.down) {
+      if (!d.live && Math.hypot(m.x - d.x0, m.y - d.y0) > 4) d.live = true;
+    } else {
+      if (d.live) dropItem(world, win, d, { cell: cellAt(m.x, m.y), doll: overDoll, key: hotkeyAt(m.x, m.y), outfit });
+      win.carry = null;
+    }
+  }
+  if (win.carry?.live) {
+    // The item rides the cursor, lifted, over everything in the window.
+    const d = win.carry;
+    const inst = d.from === 'bag' ? list[d.index] : (d.outfit ? char.outfit : char.equipment)[d.slot];
+    if (!inst) win.carry = null;
+    else {
+      ctx.globalAlpha = 0.9;
+      itemShadow(ctx, m.x, m.y + 9);
+      drawItemIcon(ctx, inst.id, m.x - 8, m.y - 10, 1, inst.variant);
+      ctx.globalAlpha = 1;
+      const k = d.from === 'bag' && hotkeyAt(m.x, m.y) && tab === 'use' && !ITEMS[inst.id].star;
+      if (k) text(ctx, 'Set hotkey', m.x, m.y - 13, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: COLORS.ink });
+    }
+  }
+}
+
+// Drops a dragged item: on a bag cell it moves (or merges), on the doll it's worn, on a hotkey a
+// Use item is bound; a piece dragged off the doll onto the grid is taken off.
+function dropItem(world, win, d, at) {
+  const char = world.char;
+  const tab = TAB_KEYS[win.tab];
+  if (d.from === 'bag') {
+    if (at.cell >= 0) {
+      if (moveItem(char.inventory, tab, d.index, at.cell)) win.sel = Math.min(at.cell, char.inventory[tab].length - 1);
+    } else if (at.doll && (tab === 'equip' || tab === 'cash')) {
+      activate({ windows: { bag: win } }, world, tab, d.index);
+    } else if (at.key && tab === 'use') {
+      const entry = char.inventory.use[d.index];
+      if (!entry || ITEMS[entry.id].star) return;
+      const binding = { item: entry.id };
+      for (const [k, b] of Object.entries(char.hotkeys)) if (b.item === entry.id) delete char.hotkeys[k];
+      char.hotkeys[at.key] = binding;
+      world.log(`${ITEMS[entry.id].name} set to ${at.key.replace('Key', '').replace('Digit', '')}.`, '#d4cbe8');
+    }
+  } else if (at.cell >= 0) {
+    const ok = d.outfit ? removeOutfit(char, d.slot) : unequip(char, d.slot);
+    if (!ok) world.log(d.outfit ? 'Your Cash tab is full.' : 'Your bag is full.', '#ffb3c6');
+  }
+}
+
+// Totals from the stats window that gear changes, two to a row; while trying something on, each
+// shows how it would change.
+const PANEL_STATS = [['ATK', 'watk'], ['M.ATK', 'matk'], ['DEF', 'wdef'], ['M.DEF', 'mdef'], ['HP', 'maxHp'], ['MP', 'maxMp'], ['STR', 'str'], ['DEX', 'dex'], ['INT', 'int'], ['LUK', 'luk']];
+function statPanel(ui, char, trial, x, y, w, h, th, world) {
+  const { ctx } = ui;
+  box(ctx, x, y, w, h, { fill: '#ffffff', edge: th.light, r: 7, width: 1.2 });
+  const now = stats(char, world.now);
+  const next = trial ? stats(trial, world.now) : null;
+  PANEL_STATS.forEach(([label, k], i) => {
+    const cx = x + 5 + (i % 2) * (w / 2);
+    const cy = y + 9 + Math.floor(i / 2) * 9.2;
+    const v = now[k];
+    const d = next ? next[k] - v : 0;
+    text(ctx, label, cx, cy, { size: 6, bold: true, color: COLORS.muted });
+    const s = (d ? next[k] : v).toLocaleString();
+    text(ctx, s, cx + w / 2 - 10, cy, { size: 6.5, bold: true, align: 'right', color: d > 0 ? '#2f9f58' : d < 0 ? COLORS.bad : COLORS.ink });
+    if (d) text(ctx, d > 0 ? '▲' : '▼', cx + w / 2 - 9, cy, { size: 5, bold: true, color: d > 0 ? '#2f9f58' : COLORS.bad });
+  });
 }
 
 function allKeys(char) {
@@ -144,7 +242,7 @@ function pill(ctx, x, y, w, iconName, iconColor, label, color, fill, edge) {
 }
 
 // One equipment slot on the doll. `lit` marks the slot the hovered bag item would go in.
-function dollSlot(ui, state, world, slot, x, y, inst, outfit, lit) {
+function dollSlot(ui, state, world, slot, x, y, inst, outfit, lit, win) {
   const { ctx } = ui;
   const th = ui.theme;
   const char = world.char;
@@ -166,10 +264,12 @@ function dollSlot(ui, state, world, slot, x, y, inst, outfit, lit) {
     drawItemIcon(ctx, SLOT_GHOST[slot], x + (SLOT - 16) / 2, y + (SLOT - 16) / 2);
     ctx.globalAlpha = 1;
   }
-  if (hot) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click (or right-click) to take off', color: COLORS.muted, size: 8 }] : [{ text: `${SLOT_NAMES[slot]}${outfit ? ' outfit' : ''}`, bold: true }, { text: outfit ? 'Wear cash items from the Cash tab.' : 'Empty', size: 8, color: COLORS.muted }]);
-  // Read the click once: clicked() uses it up.
-  const hit = inst && (clicked(ui, x, y, SLOT, SLOT) || (ui.mouse.right && hot));
+  if (hot && !win.carry?.live) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click, or drag it into the bag, to take off', color: COLORS.muted, size: 8 }] : [{ text: `${SLOT_NAMES[slot]}${outfit ? ' outfit' : ''}`, bold: true }, { text: outfit ? 'Wear cash items from the Cash tab.' : 'Empty', size: 8, color: COLORS.muted }]);
+  // Read the click once: clicked() uses it up. A press also arms a drag back into the bag.
+  const press = inst && clicked(ui, x, y, SLOT, SLOT);
+  const hit = press || (inst && ui.mouse.right && hot);
   if (!hit) return;
+  if (press && !state.scrollMode) win.carry = { from: 'doll', slot, outfit, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
   const key = `${outfit ? 'of' : 'eq'}:${slot}`;
   const dbl = ui.mouse.right || ui.mouse.double || (state.lastClick?.key === key && world.now - state.lastClick.at < 0.4);
   if (!outfit && state.scrollMode) {
@@ -184,7 +284,7 @@ function dollSlot(ui, state, world, slot, x, y, inst, outfit, lit) {
 }
 
 // One cell of the item grid.
-function gridCell(ui, state, world, tab, list, i, x, y, win) {
+function gridCell(ui, state, world, tab, list, i, x, y, win, dropHere) {
   const { ctx } = ui;
   const th = ui.theme;
   const char = world.char;
@@ -192,9 +292,11 @@ function gridCell(ui, state, world, tab, list, i, x, y, win) {
   const sel = win.sel === i;
   const rare = entry?.rarity ? RARITIES[entry.rarity].color : null;
   const hot = hover(ui, x, y, CELL - 1, CELL - 1);
-  box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : hot && entry ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : rare ?? th.light, r: 5, width: sel || rare ? 2 : 1 });
+  const lifted = win.carry?.live && win.carry.from === 'bag' && win.carry.index === i;
+  box(ctx, x, y, CELL - 1, CELL - 1, { fill: dropHere ? '#fff3c4' : sel ? '#fff3c4' : hot && entry ? '#ffffff' : '#fffdfb', edge: dropHere ? COLORS.select : sel ? COLORS.select : rare ?? th.light, r: 5, width: dropHere || sel || rare ? 2 : 1 });
   slotEdges(ctx, x, y, CELL - 1, CELL - 1, 5);
   if (!entry) return;
+
   const ix = x + (CELL - 1 - 16) / 2;
   const iy = y + (CELL - 1 - 16) / 2;
   itemShadow(ctx, x + (CELL - 1) / 2, y + CELL - 5);
@@ -219,6 +321,8 @@ function gridCell(ui, state, world, tab, list, i, x, y, win) {
   if (tab === 'use' && def.star && char.inventory.use.find((e) => ITEMS[e.id].star && char.level >= def.reqLevel) === entry) {
     text(ctx, '▶', x + 2.5, y + 8, { size: 6, bold: true, color: COLORS.accent });
   }
+  // The item being dragged leaves a faded copy behind.
+  if (lifted) box(ctx, x + 1, y + 1, CELL - 3, CELL - 3, { fill: 'rgba(255,253,251,0.72)', edge: null, r: 4 });
   if (!win.seen.has(seenKey(tab, entry))) {
     box(ctx, x - 1, y - 2, 15, 7, { fill: '#ff6fae', edge: '#ffffff', r: 3.5, width: 1 });
     text(ctx, 'NEW', x + 6.5, y + 3.4, { size: 4.6, bold: true, align: 'center', color: '#ffffff' });
@@ -230,6 +334,7 @@ function gridCell(ui, state, world, tab, list, i, x, y, win) {
     const dbl = right || ui.mouse.double || (state.lastClick?.key === `${tab}:${i}` && world.now - state.lastClick.at < 0.4);
     win.sel = i;
     state.lastClick = { key: `${tab}:${i}`, at: world.now };
+    if (!right && !state.scrollMode) win.carry = { from: 'bag', index: i, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
     if (state.scrollMode && tab === 'equip') scrollOnto(state, world, entry);
     else if (dbl) activate(state, world, tab, i);
   }
@@ -288,7 +393,10 @@ function details(ui, state, world, tab, x, y, w, h, entry, def, index) {
       }
       sx += cw + 3;
     }
-    if (!char.equipment[def.slot]) text(ctx, 'Nothing worn here yet', tx, Math.min(sy + 10, y + h - 6), { size: 6, color: COLORS.muted });
+    // The rest of what the tooltip says: color, element, slots left, and what's worn now.
+    const tint = entry.variant ? variantsFor(def)?.[entry.variant] : null;
+    const bits = [tint && `◆ ${tint.name}`, def.element && `✦ ${ELEMENT_NAMES[def.element]}`, `${entry.slotsLeft ?? 7} slots`, char.equipment[def.slot] ? `vs ${itemName(char.equipment[def.slot])}` : 'nothing worn here'].filter(Boolean);
+    text(ctx, fit(ctx, bits.join(' · '), tw - 52, 6, false), tx, y + h - 6, { size: 6, color: COLORS.muted });
     label = why ? null : 'Equip';
   } else if (tab === 'cash') {
     text(ctx, `Outfit · ${SLOT_NAMES[def.slot] ?? def.slot}`, tx, y + 22.5, { size: 6.8, color: '#d0559a', bold: true });

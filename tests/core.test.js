@@ -6,7 +6,7 @@ import { physicalRange, magicRange, hitChance, levelGapFactor, deathExpLoss, rol
 import {
   createCharacter, gainExp, advanceJob, autoAssignAp, learnSkill, equipFromBag, stats, usePotion, applyDeath,
 } from '../src/core/character.js';
-import { addItem, countItem, removeItem, STACK_MAX, sortTab, createInventory } from '../src/core/inventory.js';
+import { addItem, countItem, removeItem, STACK_MAX, sortTab, createInventory, moveItem } from '../src/core/inventory.js';
 import { makeEquip, applyScroll } from '../src/core/items.js';
 import { ITEMS } from '../src/data/items.js';
 
@@ -175,4 +175,18 @@ test('sorting a bag tab merges split stacks, orders gear by slot and level, and 
   inv.equip.push(makeEquip(hat[0].id), makeEquip(weapon.id), makeEquip(hat.at(-1).id));
   sortTab(inv, 'equip');
   assert.deepEqual(inv.equip.map((e) => e.id), [weapon.id, hat.at(-1).id, hat[0].id]);
+});
+
+test('moving bag items swaps, merges stacks, and moves past the end', () => {
+  const inv = createInventory();
+  inv.use.push({ id: 'red_potion', qty: 150 }, { id: 'blue_potion', qty: 5 }, { id: 'red_potion', qty: 120 });
+  assert.ok(moveItem(inv, 'use', 0, 1));
+  assert.deepEqual(inv.use.map((e) => e.id), ['blue_potion', 'red_potion', 'red_potion']);
+  // Same item: the dragged stack tops up the other and keeps what's left.
+  moveItem(inv, 'use', 2, 1);
+  assert.deepEqual(inv.use.map((e) => e.qty), [5, STACK_MAX, 70]);
+  moveItem(inv, 'use', 0, 30);
+  assert.deepEqual(inv.use.map((e) => e.id), ['red_potion', 'red_potion', 'blue_potion']);
+  assert.equal(moveItem(inv, 'use', 5, 0), false);
+  assert.equal(countItem(inv, 'red_potion'), 270);
 });
