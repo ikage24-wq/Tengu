@@ -261,7 +261,7 @@ function drawSqueaky(ctx, f, x, y, p) {
   const sx = 1 + sq * 0.8;
   const alpha = 1 - easeIn(seg(p, 0.72, 1));
   const px = 0;
-  const py = y - 32;
+  const py = y - 38;
   ctx.save();
   ctx.translate(x, 0);
   ctx.scale(dir, 1);
@@ -293,9 +293,10 @@ function drawSqueaky(ctx, f, x, y, p) {
   }
   // The hammer, with the head kept on the ground while squashed.
   ctx.save();
-  ctx.translate(px, py + 32 * (1 - sy) * Math.cos(a));
+  ctx.translate(px, py + 38 * (1 - sy) * Math.cos(a));
   ctx.rotate(a);
-  squeakyHammer(ctx, reach, sx, sy);
+  ctx.scale(1.2, 1.2);
+  squeakyHammer(ctx, reach / 1.2, sx, sy);
   ctx.restore();
   // Squeak stars and a little "squeak!" popping out of the impact.
   const su = seg(p, 0.35, 0.75);
@@ -596,8 +597,8 @@ function drawBaguette(ctx, f, x, y, p) {
   ctx.globalAlpha = alpha;
   // Whoosh ring around the spinning loaf.
   ctx.save();
-  ctx.globalAlpha = alpha * 0.5;
-  shock(ctx, bx, by, 36, 36, 2, '#ffffff');
+  ctx.globalAlpha = alpha * 0.35;
+  shock(ctx, bx, by, 34, 34, 1.5, '#ffffff');
   ctx.restore();
   ctx.translate(bx, by);
   ctx.rotate(p * TAU * 2.6 * dir);
@@ -609,41 +610,49 @@ function drawBaguette(ctx, f, x, y, p) {
 
 // A splayed banana peel resting on the ground at the origin; `open` 0-1 spreads its flaps.
 function bananaPeel(ctx, open) {
-  const flap = (ang, len) => {
+  // One floppy flap arching out to the right (mirrored for the left) and flopping onto the ground.
+  const flap = (side, len, dy) => {
+    const L = len * (0.45 + open * 0.55);
     ctx.save();
-    ctx.translate(0, -9);
-    ctx.rotate(ang);
+    ctx.scale(side, 1);
+    ctx.translate(0, dy);
     ctx.beginPath();
-    ctx.moveTo(-4, 0);
-    ctx.quadraticCurveTo(-6, len * 0.6, -1, len);
-    ctx.quadraticCurveTo(2, len + 3, 4, len - 1);
-    ctx.quadraticCurveTo(6, len * 0.5, 4, 0);
+    ctx.moveTo(-2, -14);
+    ctx.quadraticCurveTo(L * 0.55, -17, L, -4);
+    ctx.quadraticCurveTo(L + 3, 1, L - 3, 0.5);
+    ctx.quadraticCurveTo(L * 0.5, -4, 2, -6);
     ctx.closePath();
-    inked(ctx, '#ffe36b', 2);
-    // Brown tip.
+    inked(ctx, '#ffe36b', 1.8);
+    // Pale inside of the peel and a brown tip.
+    ctx.fillStyle = '#fff6c4';
+    ctx.beginPath();
+    ctx.moveTo(2, -8);
+    ctx.quadraticCurveTo(L * 0.5, -7, L - 3, -1.5);
+    ctx.quadraticCurveTo(L * 0.5, -4.5, 2, -6.5);
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = '#8b5a2b';
     ctx.beginPath();
-    ctx.arc(1.5, len - 1, 2, 0, TAU);
+    ctx.arc(L - 1.5, -1.2, 1.8, 0, TAU);
     ctx.fill();
     ctx.restore();
   };
-  const s = 0.4 + open * 0.6;
-  flap(-1.25 * s, 14); // back-left flop
-  flap(1.25 * s, 14); // right flop
-  flap(-0.35 * s, 11);
-  // The middle hump and its stem.
+  flap(-1, 15, 0);
+  flap(1, 16, 0);
+  // The upright middle of the peel and its stem.
   ctx.beginPath();
-  ctx.ellipse(0, -7, 6, 8, 0, Math.PI, TAU);
-  ctx.lineTo(6, -2);
-  ctx.lineTo(-6, -2);
+  ctx.moveTo(-4.5, -4);
+  ctx.quadraticCurveTo(-5, -15, 0, -17);
+  ctx.quadraticCurveTo(5, -15, 4.5, -4);
   ctx.closePath();
-  inked(ctx, '#ffd84a', 2);
-  ctx.fillStyle = '#fff3b0';
-  ctx.fillRect(-3, -12, 2, 6);
+  inked(ctx, '#ffd84a', 1.8);
+  ctx.fillStyle = '#fff6c4';
+  ctx.fillRect(-2.2, -13, 1.6, 7);
   ctx.beginPath();
-  ctx.roundRect(-1.5, -19, 3, 5, 1);
-  inked(ctx, '#8b5a2b', 1.5);
-  flap(0.4 * s, 10);
+  ctx.roundRect(-1.4, -21, 2.8, 5, 1);
+  inked(ctx, '#8b5a2b', 1.4);
+  // A short front flap flopped toward the viewer.
+  flap(1, 9, 3.5);
 }
 
 function drawBanana(ctx, f, x, y, p) {
@@ -667,6 +676,7 @@ function drawBanana(ctx, f, x, y, p) {
     const py = lerp(sy, y, u) - Math.sin(u * Math.PI) * hgt;
     ctx.save();
     ctx.translate(px, py);
+    ctx.scale(1.45, 1.45);
     if (u < 1) {
       ctx.rotate(u * TAU * (1.5 + rand(seed + i * 7)) * dir);
       bananaPeel(ctx, 0.2);
@@ -904,7 +914,7 @@ function drawBonk(ctx, f, x, y, p, time) {
   const a0 = -2.5;
   let a;
   if (p < 0.3) a = lerp(a0, 0, easeIn(p / 0.3));
-  else a = lerp(0, 0.75, easeOut(seg(p, 0.3, 0.7)));
+  else a = lerp(0, 0.4, easeOut(seg(p, 0.3, 0.7)));
   const alpha = 1 - easeIn(seg(p, 0.6, 1));
   ctx.save();
   ctx.translate(x, 0);
@@ -915,7 +925,7 @@ function drawBonk(ctx, f, x, y, p, time) {
     ctx.save();
     ctx.globalAlpha = alpha * (1 - seg(p, 0.3, 0.5));
     const tail = Math.max(a0, a - 1.4);
-    crescent(ctx, px, py, 36, tail, a - 0.1, 14, '#e6e2ef');
+    crescent(ctx, px, py, 48, tail, a - 0.1, 18, '#e6e2ef');
     ctx.restore();
   }
   ctx.save();
@@ -923,11 +933,11 @@ function drawBonk(ctx, f, x, y, p, time) {
   ctx.rotate(a);
   // Thwack wobble on impact.
   const wob = p >= 0.3 ? Math.sin(seg(p, 0.3, 0.55) * Math.PI * 4) * (1 - seg(p, 0.3, 0.55)) * 0.12 : 0;
-  ctx.scale(1 - wob, 1 + wob);
+  ctx.scale(1.35 * (1 - wob), 1.35 * (1 + wob));
   fryingPan(ctx);
   ctx.restore();
   // Impact flash and dizzy stars.
-  const hx = 46;
+  const hx = 56;
   const hy = y - 32;
   const iu = seg(p, 0.3, 0.55);
   if (iu > 0 && iu < 1) {
@@ -940,11 +950,11 @@ function drawBonk(ctx, f, x, y, p, time) {
   if (du > 0) {
     for (let i = 0; i < 3; i++) {
       const a2 = time * 6 + (i / 3) * TAU;
-      const sx = hx + 8 + Math.cos(a2) * 16;
-      const sy = hy - 24 + Math.sin(a2) * 5;
+      const sx = hx + 4 + Math.cos(a2) * 20;
+      const sy = hy - 30 + Math.sin(a2) * 5;
       ctx.save();
       ctx.globalAlpha = alpha * Math.min(1, du * 6);
-      cuteStar(ctx, sx, sy, 4.5 + Math.sin(a2) * 1, a2, i % 2 ? '#ffe36b' : '#ffd8ea');
+      cuteStar(ctx, sx, sy, 6.5 + Math.sin(a2) * 1.5, a2, i % 2 ? '#ffe36b' : '#ffd8ea');
       ctx.restore();
     }
   }
