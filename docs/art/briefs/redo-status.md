@@ -17,14 +17,19 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   kit eyes/mouth, crown highlight band), Star Seraph (kit eyes with star pupils, three-tone halo,
   wing ripple). Shape counts run ~270 per frame (feathers), a little over the 240 budget.
 - Treant: the slam now reaches the ground (trunk lean plus the shoulder rolling down).
-- Hollow: Root Imp, Myconid Shaman, Bramble Bear, Spore Mite.
+- Hollow (all five): Root Imp, Myconid Shaman, Bramble Bear, Spore Mite, Corrupted Sapling (trunk
+  chain, planted roots, branch and leaf chains, glowEye knot holes; old helpers removed). Hollow.js
+  now exports its rig, ramp and shape helpers.
+- Bosses: Myconid Queen (heroine.js face, veil/robe/hair chains, staff rides the hand, held
+  wind-up with a floor ring telegraph) and Tuskar (IK gallop with planted hooves, flame mane and
+  tail chains, glowEye, rear-and-stomp), both on the hollow rig.
 
 ## Still to do
-- Monsters not yet redone (old faces/rig): Corrupted Sapling in `mobs/hollow.js` (old helpers
-  kept only for it). Sky designs still place feathers in absolute coordinates (wings are not yet
+- Sky designs still place feathers in absolute coordinates (wings are not yet
   chains); trim their shape counts.
-- Bosses in `mobs/bosses.js`, untouched: Myconid Queen (use heroine.js for her face), Tuskar,
-  Gnarlroot, Prismaris.
+- Bosses in `mobs/bosses.js` still old: Gnarlroot, Prismaris (they keep the transform stack).
+  Queen/Tuskar rough spots: Tuskar's body is blocky and its flames read a bit like spikes; the
+  queen's face is small under the cap.
 - Icon pass (`icons/items.js`, `icons/skills.js`): Basilisk Scale vs Dryad Leaf look alike; Fox
   Fluff and Star Pebble low contrast; Shining Ray and Holy Bolt gold on gold; Frost Sprite skill icon
   no longer matches the fairy summon; the Seraphim bag icon's halo reads as a hat.
