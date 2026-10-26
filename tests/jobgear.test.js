@@ -140,7 +140,7 @@ test('generated players wear their own job gear', () => {
     const c = makeBotCharacter(rng, { name: `p${i}` });
     for (const inst of Object.values(c.equipment).filter(Boolean)) {
       assert.equal(equipBlocker(c, inst), null, `${c.job} ${c.level} wears ${inst.id}`);
-      assert.ok(!ITEMS[inst.id].legacy, inst.id);
+      assert.ok(!ITEMS[inst.id].legacy || ITEMS[inst.id].starterOutfit, inst.id);
     }
   }
 });

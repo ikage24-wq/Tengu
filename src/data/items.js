@@ -163,6 +163,15 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
   });
 }
 
+// ---------- Starting outfit ----------
+// The outfit picked in the creator, worn from the start as three pieces you can take off and
+// put back on. They're drawn in the look's own outfit style and color (hero.js resolveGear), and
+// are never dropped or sold in shops. With a piece off, the plain basics underneath show.
+for (const [slot, name, color] of [['top', 'Starting Top', '#ffc2d6'], ['bottom', 'Starting Bottoms', '#b4c8f2'], ['shoes', 'Starting Shoes', '#ffd6a8']]) {
+  add({ id: `outfit_${slot}`, name, type: 'equip', slot, design: 'starter', tier: 0, reqLevel: 1, family: null, stats: {}, price: 0, color, legacy: true, starterOutfit: true });
+}
+export const STARTING_OUTFIT = ['top', 'bottom', 'shoes'];
+
 // ---------- Job gear ----------
 // Every job has its own set every 5 levels, from 5 to 100, in each armor slot: warriors in heavy
 // plate, archers in elven leaf and silk, mages in grand robes and towering hats, thieves in dark

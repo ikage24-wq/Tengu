@@ -8,6 +8,7 @@ import { ITEMS } from '../data/items.js';
 import { STARTING_CASH, CASH_PER_LEVEL } from '../data/cash.js';
 import { computeStats } from './stats.js';
 import { createInventory, addItem, removeItem } from './inventory.js';
+import { makeEquip } from './items.js';
 import { deathExpLoss } from './formulas.js';
 
 export const STAT_KEYS = ['str', 'dex', 'int', 'luk'];
@@ -29,7 +30,9 @@ export function createCharacter(name, appearance) {
     mp: 5,
     gold: 0,
     skills: {},
-    equipment: { weapon: null, hat: null, top: null, bottom: null, shoes: null, gloves: null, cape: null, earring: null },
+    // Dressed in the outfit picked in the creator (pieces that come off; see items.js).
+    equipment: { weapon: null, hat: null, top: makeEquip('outfit_top'), bottom: makeEquip('outfit_bottom'), shoes: makeEquip('outfit_shoes'), gloves: null, cape: null, earring: null },
+    gotOutfit: true,
     // Cash outfit pieces worn over the gear, by slot, and the Cash to buy them with.
     outfit: {},
     cash: STARTING_CASH,

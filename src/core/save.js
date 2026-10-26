@@ -1,6 +1,6 @@
 // Saving and loading characters in localStorage, one key per character slot. Buffs and timers aren't saved.
 
-import { setNextUid } from './items.js';
+import { setNextUid, makeEquip } from './items.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { RETIRED_JOBS } from '../data/jobs.js';
@@ -37,6 +37,7 @@ export function loadGame(slot = 0) {
     // Keep new item ids from colliding with saved ones.
     const all = [...Object.values(char.equipment).filter(Boolean), ...Object.values(char.outfit).filter(Boolean), ...char.inventory.equip, ...char.inventory.cash];
     setNextUid(Math.max(0, ...all.map((i) => i.uid)) + 1);
+    giveStartingOutfit(char);
     char.buffs = {};
     return char;
   } catch {
@@ -68,6 +69,15 @@ export function updateRetiredJobs(char) {
     delete char.skills[id];
   }
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.skill && !SKILLS[b.skill]) char.hotkeys[code] = null;
+  return char;
+}
+
+// Saves from before the starting outfit came off: whatever top, bottoms and shoes slot is empty
+// (where the creator outfit was drawn) gets the matching outfit piece, once.
+export function giveStartingOutfit(char) {
+  if (char.gotOutfit) return char;
+  char.gotOutfit = true;
+  for (const slot of ['top', 'bottom', 'shoes']) if (!char.equipment[slot]) char.equipment[slot] = makeEquip(`outfit_${slot}`);
   return char;
 }
 

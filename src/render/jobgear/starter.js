@@ -273,8 +273,25 @@ const OUTFITS = {
   },
 };
 
+// The basics under the outfit, shown wherever a top, bottoms or shoes are taken off: a soft
+// pink tank top with a deeper pink trim and a tiny bow, lavender shorts, and plain slip-on flats. Not a
+// pickable outfit.
+const BASIC_TOP = '#ffcfe2';
+const BASIC_TRIM = '#ff94bf';
+const BASIC_SHORTS = '#c9b8f0';
+const BASIC_SHORTS_DARK = '#a896d8';
+const BASICS = {
+  top: (p) => [T(TORSO, BASIC_TOP), T([[11.8, 24.6], [19.2, 24.6], [18.4, 27.6], [MID, 28.6], [12.6, 27.6]], p.skin),
+    F(limb(12.4, 24.6, 13, 27.6, 0.5, 0.5, BASIC_TRIM)), F(limb(18.6, 24.6, 18, 27.6, 0.5, 0.5, BASIC_TRIM)),
+    band(TORSO, 34.9, 35.8, BASIC_TRIM), ...bow(MID, 28.6, 0.9, BASIC_TRIM, shade(BASIC_TRIM, -20))],
+  sleeve: (p) => p.skin,
+  legs: (p, skin) => ({ top: BASIC_SHORTS, low: skin, pad: null }),
+  skirt: () => [F(R(10, 34.6, 11.2, 0.7, BASIC_SHORTS_DARK)), F(R(MID - 0.25, 35.4, 0.5, 2, BASIC_SHORTS_DARK))],
+  shoe: (p, k, c) => [k.sole(c('#f4eefa')), k.poly([[-3, 2], [3, 2], [2.8, 3], [-2.8, 3]], c('#c9bde0')), k.dot(0.8, -0.2, 0.55, c(BASIC_TRIM))],
+};
+
 export const STARTER_OUTFITS = Object.keys(OUTFITS);
-const of = (t) => OUTFITS[t] ?? OUTFITS.casual;
+const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? OUTFITS.casual);
 
 export default {
   hat: (t, p, m) => of(t).hat?.(p, m) ?? [],

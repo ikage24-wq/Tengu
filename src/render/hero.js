@@ -182,11 +182,19 @@ function resolveGear(look, gear) {
   const style = OUTFIT_STYLES.includes(look.outfit) ? look.outfit : 'casual';
   // Where nothing is equipped, the outfit picked in the creator.
   const starter = { family: 'starter', design: style, tier: style, color: outfit, pal: starterPalette(outfit, look.skinTone ?? '#fff0e6') };
+  // A real hero's gear (not a preview or a townsperson, who pass none): where the top, bottoms or
+  // shoes are off, the plain basics underneath show, never bare skin.
+  const own = gear != null;
+  const basics = { family: 'starter', design: 'basics', tier: 'basics', color: '#c9b8f0', pal: starterPalette('#c9b8f0', look.skinTone ?? '#fff0e6') };
   const piece = (slot, fallback) => {
     const inst = gear?.[slot];
     const def = inst ? ITEMS[inst.id] : null;
+    // The starting outfit pieces are drawn as the outfit picked in the creator.
+    if (def?.starterOutfit) return starter;
     return def ? pieceOf(def, inst.variant ?? null) : fallback;
   };
+  const dressed = !own || Boolean(gear.top);
+  const under = own ? basics : starter;
   const w = gear?.weapon ? ITEMS[gear.weapon.id] : null;
   let weapon = w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null;
   // A weapon cover reskins the weapon as an endgame design or a top material (looks only).
@@ -200,13 +208,13 @@ function resolveGear(look, gear) {
     weapon = { ...weapon, tier: cover.theme ? 21 : cover.tier, theme: cover.theme ?? null, element: cover.theme ?? null, color, variant: v };
   }
   return {
-    top: piece('top', starter),
-    bottom: piece('bottom', starter),
-    shoes: piece('shoes', starter),
-    // The outfit's own hat or glasses, unless the look asks for a bare head (the creator's
-    // hairstyle thumbnails) or a real hat is equipped.
-    hat: piece('hat', starterHasHat(style) && look.outfitHat !== false ? starter : null),
-    cape: piece('cape', starterHasBack(style) ? starter : null),
+    top: piece('top', under),
+    bottom: piece('bottom', under),
+    shoes: piece('shoes', under),
+    // The outfit's own hat or glasses and back piece, unless the look asks for a bare head (the
+    // creator's hairstyle thumbnails), a real hat is equipped, or the top is off.
+    hat: piece('hat', starterHasHat(style) && look.outfitHat !== false && dressed ? starter : null),
+    cape: piece('cape', starterHasBack(style) && dressed ? starter : null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
     weapon,

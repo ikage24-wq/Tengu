@@ -150,3 +150,25 @@ test('old saves turn their claws into the gauntlets that replaced them', async (
   assert.equal(c.equipment.weapon.id, 'gauntlet_20');
   assert.deepEqual(c.inventory.equip.map((e) => e.id), ['gauntlet_cyber', 'gauntlet_20']);
 });
+
+test('the starting outfit can be taken off and put back on, and old saves get it once', async () => {
+  const { createCharacter, unequip, equipFromBag } = await import('../src/core/character.js');
+  const { giveStartingOutfit } = await import('../src/core/save.js');
+  const char = createCharacter('Mia', { outfit: 'casual', outfitColor: '#ffc2d6' });
+  for (const slot of ['top', 'bottom', 'shoes']) assert.equal(char.equipment[slot]?.id, `outfit_${slot}`);
+  assert.ok(unequip(char, 'top'));
+  assert.equal(char.equipment.top, null);
+  const i = char.inventory.equip.findIndex((e) => e.id === 'outfit_top');
+  assert.ok(equipFromBag(char, i));
+  assert.equal(char.equipment.top.id, 'outfit_top');
+  // Never dropped by monsters.
+  for (const id of ['outfit_top', 'outfit_bottom', 'outfit_shoes']) assert.ok(ITEMS[id].legacy && ITEMS[id].starterOutfit);
+  const old = { equipment: { top: null, bottom: makeEquip('bottom_0'), shoes: null } };
+  giveStartingOutfit(old);
+  assert.equal(old.equipment.top.id, 'outfit_top');
+  assert.equal(old.equipment.bottom.id, 'bottom_0');
+  assert.equal(old.equipment.shoes.id, 'outfit_shoes');
+  old.equipment.top = null;
+  giveStartingOutfit(old);
+  assert.equal(old.equipment.top, null);
+});
