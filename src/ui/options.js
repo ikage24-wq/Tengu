@@ -7,6 +7,7 @@ import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, w
 
 const PAGES = {
   Display: [
+    ['hdGraphics', 'HD graphics', 'Smooth, detailed art with lighting and glow. Off: crisp pixel art.'],
     ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.'],
     ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
     ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],

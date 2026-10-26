@@ -5,6 +5,7 @@ const KEY = 'twzt-settings-v1';
 
 export const DEFAULT_SETTINGS = {
   // Display
+  hdGraphics: true,
   screenShake: true,
   hitStop: true,
   damageNumbers: true,

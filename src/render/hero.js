@@ -16,7 +16,7 @@ import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted } from './pixel.js';
+import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, gfx, snap } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
   hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
@@ -888,15 +888,18 @@ function weaponSprite(w, time) {
   if (w.fun) {
     const def = funWeapon(w.fun);
     const s = sprite(`funweapon|${w.fun.fun}|${w.fun.t}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
-    return { ...s, grip: def.grip, blade: def.blade, live: null };
+    return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: null };
   }
   const frames = weaponFrames(w.type, w.tier, w.theme);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
   const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant);
   if (!def) return null;
   const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
-  return { ...s, grip: def.grip, blade: def.blade, live: def.live };
+  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live };
 }
+
+// A sprite's canvas size in art pixels (HD sprites hold several cells per art pixel).
+const logical = (s) => ({ cw: s.canvas.width / s.res, ch: s.canvas.height / s.res });
 
 // Little twinkles at a weapon's tip, for wand twirls and staff taps.
 function idleSparkle(ctx, hx, hy, angle, len, flip, time, scale) {
@@ -929,7 +932,7 @@ function elementGlow(ctx, wpn, element, time, scale) {
   const oy = -(wpn.grip[1] + 1) * scale;
   const base = ctx.globalAlpha;
   ctx.globalAlpha = base * (0.3 + 0.2 * Math.sin(time * 4));
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ctx.drawImage(glow, ox + dx * scale, oy + dy * scale, wpn.canvas.width * scale, wpn.canvas.height * scale);
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ctx.drawImage(glow, ox + dx * scale, oy + dy * scale, wpn.cw * scale, wpn.ch * scale);
   ctx.globalAlpha = base;
 }
 
@@ -940,8 +943,8 @@ function weaponGlow(ctx, wpn, rarity, time, scale, draw) {
   const color = RARITIES[rarity].color;
   const ox = -(wpn.grip[0] + 1) * scale;
   const oy = -(wpn.grip[1] + 1) * scale;
-  const w = wpn.canvas.width * scale;
-  const h = wpn.canvas.height * scale;
+  const w = wpn.cw * scale;
+  const h = wpn.ch * scale;
   if (rarity >= 2) {
     const pulse = 0.5 + 0.5 * Math.sin(time * (rarity >= 3 ? 5 : 3));
     const glow = tinted(wpn, color);
@@ -1165,8 +1168,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (!wpn) return;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.imageSmoothingEnabled = false;
-    ctx.translate(Math.round(sx(hand[0])), Math.round(sy(hand[1]) - (idleW?.toss ?? 0) * scale));
+    ctx.imageSmoothingEnabled = gfx.hd;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.translate(snap(sx(hand[0])), snap(sy(hand[1]) - (idleW?.toss ?? 0) * scale));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
     const time = state.time ?? 0;
@@ -1174,7 +1178,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     const el = g.weapon.element;
     if (el) elementGlow(ctx, wpn, el, time, ws);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
-    else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.canvas.width * ws, wpn.canvas.height * ws);
+    else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws);
     if (settings.weaponEffects) {
       if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
       wpn.live?.(ctx, time, ws, wpn.grip);

@@ -1,6 +1,7 @@
 // Render-only particles and camera shake: footstep dust, landing puffs, hit sparks, defeat poofs,
 // and ambient motes per map theme. Nothing here affects gameplay.
 
+import { snap } from './pixel.js';
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
@@ -28,7 +29,7 @@ export function shakeOffset(fx, time) {
   const s = fx.shake;
   if (s.t >= s.dur || !settings.screenShake) return [0, 0];
   const k = (1 - s.t / s.dur) ** 2 * s.mag;
-  return [Math.round(Math.sin(time * 71) * k), Math.round(Math.cos(time * 53) * k * 0.6)];
+  return [snap(Math.sin(time * 71) * k), snap(Math.cos(time * 53) * k * 0.6)];
 }
 
 // Cel dust puffs kicked up from the ground: little two-tone lumps that pop up, drift, and
@@ -339,19 +340,19 @@ export function drawParticles(ctx, fx, cam, time) {
         ctx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha /= 0.35;
-        ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+        ctx.fillRect(snap(x), snap(y), 1, 1);
         break;
       case 'glint': {
         const tw = Math.abs(Math.sin(time * 3 + p.phase));
-        ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+        ctx.fillRect(snap(x), snap(y), 1, 1);
         if (tw > 0.7) {
-          ctx.fillRect(Math.round(x) - 1, Math.round(y), 3, 1);
-          ctx.fillRect(Math.round(x), Math.round(y) - 1, 1, 3);
+          ctx.fillRect(snap(x) - 1, snap(y), 3, 1);
+          ctx.fillRect(snap(x), snap(y) - 1, 1, 3);
         }
         break;
       }
       case 'pixel':
-        ctx.fillRect(Math.round(x), Math.round(y), p.size * 2, p.size * 2);
+        ctx.fillRect(snap(x), snap(y), p.size * 2, p.size * 2);
         break;
       default:
         ctx.beginPath();

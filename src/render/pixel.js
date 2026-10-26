@@ -5,6 +5,25 @@ export const OUTLINE = '#3a2d4f';
 const PAD = 1;
 const cache = new Map();
 
+// HD graphics: detailed sprites are rasterized as usual, then doubled with a pixel-art smoothing
+// filter (EPX) that turns stair-steps into smooth curves and diagonals, and drawn filtered at
+// sub-pixel positions instead of snapping to a pixel grid. Off, the game keeps its crisp
+// pixel-art look.
+export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false };
+// Rounds a position to the pixel grid: whole game pixels, or in HD the screen's own (finer) pixels,
+// so the camera and everything in the world glide instead of stepping.
+export const snap = (v) => (gfx.hd ? Math.round(v * gfx.scale) / gfx.scale : Math.round(v));
+export function setHd(on, scale = 1) {
+  gfx.scale = scale;
+  if (gfx.hd === on) return;
+  gfx.hd = on;
+  // Turning HD back on tries the full look again.
+  gfx.noGlow = false;
+  gfx.noLight = false;
+  cache.clear();
+  cacheBytes = 0;
+}
+
 export const R = (x, y, w, h, c) => ({ t: 'r', x, y, w, h, c });
 export const E = (x, y, rx, ry, c) => ({ t: 'e', x, y, rx, ry, c });
 // Pixels set one at a time, for details like eye shines.
@@ -250,6 +269,29 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   return { gw, gh, cells: out, colors };
 }
 
+// EPX (Scale2x): each cell becomes four, and a corner takes its neighbors' color where two
+// matching neighbors meet there, so stair-steps become smooth diagonals and curves.
+function smoothDouble({ gw, gh, cells, colors }) {
+  const w2 = gw * 2;
+  const out = new Int32Array(w2 * gh * 2);
+  const at = (x, y) => (x < 0 || y < 0 || x >= gw || y >= gh ? EMPTY : cells[y * gw + x]);
+  for (let y = 0; y < gh; y++) {
+    for (let x = 0; x < gw; x++) {
+      const p = cells[y * gw + x];
+      const a = at(x, y - 1);
+      const b = at(x + 1, y);
+      const c = at(x - 1, y);
+      const d = at(x, y + 1);
+      const i = y * 2 * w2 + x * 2;
+      out[i] = c === a && c !== d && a !== b ? a : p;
+      out[i + 1] = a === b && a !== c && b !== d ? b : p;
+      out[i + w2] = d === c && d !== b && c !== a ? c : p;
+      out[i + w2 + 1] = b === d && b !== a && d !== c ? d : p;
+    }
+  }
+  return { gw: w2, gh: gh * 2, cells: out, colors };
+}
+
 // '#rrggbb' or '#rrggbbaa'.
 function rgb(c) {
   const n = parseInt(c.slice(1, 7), 16);
@@ -311,8 +353,11 @@ export function tinted(s, color) {
 }
 
 // Smooth sprites are big and the hero makes many of them, so the cache forgets the least
-// recently used ones past this size.
+// recently used ones past this many, or past this much memory.
 const CACHE_MAX = 1600;
+const CACHE_BYTES = 160e6;
+let cacheBytes = 0;
+const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 
 // Returns a cached sprite { canvas, white, w, h, res } built by `build()` -> { w, h, shapes, palette, res, soft }.
 export function sprite(key, build) {
@@ -320,10 +365,24 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    const { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
-    const canvas = bake(rasterize(w, h, shapes, res, soft, palette, crisp));
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    let raster = rasterize(w, h, shapes, res, soft, palette, crisp);
+    if (gfx.hd) {
+      // Plain pixel sprites (weapons, icons) are doubled twice to catch up.
+      for (let k = res > 1 ? 1 : 2; k > 0; k--) {
+        raster = smoothDouble(raster);
+        res *= 2;
+      }
+      crisp = false;
+    }
+    const canvas = bake(raster);
     s = { canvas, w, h, res, crisp, white: null };
-    if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+    cacheBytes += bytesOf(s);
+    while (cache.size && (cache.size >= CACHE_MAX || cacheBytes > CACHE_BYTES)) {
+      const old = cache.keys().next().value;
+      cacheBytes -= bytesOf(cache.get(old));
+      cache.delete(old);
+    }
   }
   cache.set(key, s);
   return s;
@@ -339,9 +398,9 @@ export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale =
   const h = (img.height / res) * scale;
   const smooth = res > 1 && !s.crisp;
   const cell = scale / res;
-  const snap = (v) => (smooth ? v : s.crisp ? Math.round(v / cell) * cell : Math.round(v));
-  const px = snap(x - PAD * scale);
-  const py = snap(y - PAD * scale);
+  const grid = (v) => (smooth ? snap(v) : s.crisp ? Math.round(v / cell) * cell : Math.round(v));
+  const px = grid(x - PAD * scale);
+  const py = grid(y - PAD * scale);
   ctx.save();
   ctx.imageSmoothingEnabled = smooth;
   if (smooth) ctx.imageSmoothingQuality = 'high';

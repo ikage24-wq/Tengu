@@ -295,7 +295,13 @@ to clear it.
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in
   a bubble that soaks up damage until it pops; and **Revive** gets a fallen party member nearby back
   up, even mid-fight. Outside a dungeon they work on you.
-- **Options** — Esc (or the gear button) opens Options. Display: screen shake, hit-stop, damage
+- **HD graphics** — on by default (Options: Display). Sprites are smoothed with a pixel-art
+  upscaler (EPX) so stair-steps become round curves, and drawn at sub-pixel positions so the camera
+  and everyone in the world glide instead of stepping. Each map gets its own lighting: warm light
+  and slanting sun rays from above, cool shade below, and a soft vignette. Spells, sparks, and
+  particles glow (bloom), shadows are soft, crits glow, and new maps fade in. On a slow device it
+  drops the glow, then the lighting, by itself. Turn it off for the crisp pixel-art look.
+- **Options** — Esc (or the gear button) opens Options. Display: HD graphics, screen shake, hit-stop, damage
   numbers, particles (full, reduced, or off), job auras, and weapon effects. Interface: minimap,
   quest tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: auto-loot,
   click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and

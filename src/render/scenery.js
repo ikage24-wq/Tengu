@@ -4,7 +4,7 @@
 // chimney smoke, bobbing boats. World-to-screen is (wx - cam.x, wy - cam.y). Layouts are seeded so
 // nothing jitters as you move; animation comes only from `time`.
 
-import { R, E, T, F, sprite, blit, shade, mix } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
 import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {
@@ -92,7 +92,7 @@ export function art(key, w, h, build) {
 }
 // Draws a sprite with its bottom center at (x, y).
 export function place(ctx, s, x, y, opts) {
-  blit(ctx, s, Math.round(x - s.w / 2), Math.round(y - s.h), opts);
+  blit(ctx, s, snap(x - s.w / 2), snap(y - s.h), opts);
 }
 
 function arc(cx, cy, rx, ry, a0, a1, th, c) {
@@ -627,7 +627,7 @@ function butterflyArt(color, frame) {
 
 function rect(ctx, x, y, w, h, c) {
   ctx.fillStyle = c;
-  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  ctx.fillRect(snap(x), snap(y), snap(w), snap(h));
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -741,7 +741,7 @@ function drawFar(ctx, t, cam, width, y0, time) {
         ctx.fill();
         if (hash(i + 6) > 0.6) {
           ctx.fillStyle = 'rgba(255,243,166,0.5)';
-          ctx.fillRect(Math.round(x + 18), Math.round(y0 - h + 12), 10, 8);
+          ctx.fillRect(snap(x + 18), snap(y0 - h + 12), 10, 8);
           ctx.fillStyle = t.far;
         }
       });
@@ -750,13 +750,13 @@ function drawFar(ctx, t, cam, width, y0, time) {
       ctx.fillRect(0, y0 - 30, width, 300);
       if (t.face === 'moon') {
         ctx.fillStyle = 'rgba(255,246,214,0.35)';
-        for (let k = 0; k < 6; k++) ctx.fillRect(Math.round(width * 0.8 - 14 + Math.sin(time * 2 + k) * 4), Math.round(y0 - 24 + k * 6), 28 - k * 3, 2);
+        for (let k = 0; k < 6; k++) ctx.fillRect(snap(width * 0.8 - 14 + Math.sin(time * 2 + k) * 4), snap(y0 - 24 + k * 6), 28 - k * 3, 2);
         ctx.fillStyle = t.far;
       }
       ctx.fillStyle = 'rgba(255,255,255,0.65)';
       repeat(cam.x + time * 10, 0.2, 38, width, (i, x) => {
         const w = 10 + (i % 3) * 5;
-        ctx.fillRect(Math.round(x), Math.round(y0 - 24 + (i % 4) * 7 + Math.sin(time * 2 + i) * 1.5), w, 2);
+        ctx.fillRect(snap(x), snap(y0 - 24 + (i % 4) * 7 + Math.sin(time * 2 + i) * 1.5), w, 2);
       });
       // A fish hops out of the water now and then.
       const cyc = (time * 0.25) % 1;
@@ -776,7 +776,7 @@ function drawFar(ctx, t, cam, width, y0, time) {
         const h = 60 + hash(i) * 70;
         roundRect(ctx, x, y0 - h, 22, h + 200, 3);
         ctx.fill();
-        ctx.fillRect(Math.round(x - 5), Math.round(y0 - h), 32, 7);
+        ctx.fillRect(snap(x - 5), snap(y0 - h), 32, 7);
       });
       break;
     case 'crystals':
@@ -801,7 +801,7 @@ function drawFar(ctx, t, cam, width, y0, time) {
       drawFarRoots(ctx, t, cam, width, y0, time);
       break;
     case 'mesas':
-      ctx.fillRect(0, Math.round(y0 + 20), width, 400);
+      ctx.fillRect(0, snap(y0 + 20), width, 400);
       repeat(cam.x, 0.2, 130, width, (i, x) => {
         const h = 40 + hash(i) * 60;
         const w = 60 + hash(i + 4) * 50;
@@ -814,10 +814,10 @@ function drawFar(ctx, t, cam, width, y0, time) {
       });
       break;
     case 'bigtrees':
-      ctx.fillRect(0, Math.round(y0 + 10), width, 400);
+      ctx.fillRect(0, snap(y0 + 10), width, 400);
       repeat(cam.x, 0.2, 110, width, (i, x) => {
         const h = 90 + hash(i) * 70;
-        ctx.fillRect(Math.round(x + 46), Math.round(y0 - h * 0.6), 18, h);
+        ctx.fillRect(snap(x + 46), snap(y0 - h * 0.6), 18, h);
         ctx.beginPath();
         ctx.arc(x + 55, y0 - h * 0.6, 34 + hash(i + 2) * 14, 0, Math.PI * 2);
         ctx.arc(x + 30, y0 - h * 0.45, 22, 0, Math.PI * 2);
@@ -835,7 +835,7 @@ function drawFar(ctx, t, cam, width, y0, time) {
       });
       break;
     default: // hills, trees
-      ctx.fillRect(0, Math.round(y0 + 29), width, 400);
+      ctx.fillRect(0, snap(y0 + 29), width, 400);
       repeat(cam.x, 0.2, 220, width, (i, x) => {
         ctx.beginPath();
         ctx.arc(x + 110, y0 + 30, 130, Math.PI, 0);
@@ -851,7 +851,7 @@ function drawFarRoots(ctx, t, cam, width, y0, time) {
     glow(ctx, x + 80, y0 - 30 - hash(i + 2) * 120, 60 + hash(i + 4) * 40, pick(t.shrooms, hash(i + 8)), 0.16 + 0.05 * Math.sin(time * 0.8 + i));
   });
   ctx.fillStyle = t.far;
-  ctx.fillRect(0, Math.round(y0 + 34), width, 400);
+  ctx.fillRect(0, snap(y0 + 34), width, 400);
   repeat(cam.x, 0.2, 60, width, (i, x) => {
     ctx.beginPath();
     ctx.ellipse(x + 30, y0 + 36, 36 + hash(i + 1) * 12, 10 + hash(i) * 8, 0, Math.PI, 0);
@@ -1090,7 +1090,7 @@ function smoke(ctx, x, y, time, seed) {
 // ---------- Ground and ledges ----------
 
 function drawGround(ctx, t, theme, map, cam, width, height, time) {
-  const y = Math.round(map.groundY - cam.y);
+  const y = snap(map.groundY - cam.y);
   if (y > height) return;
   const off = cam.x;
   rect(ctx, 0, y, width, height - y, t.ground);
@@ -1102,7 +1102,7 @@ function drawGround(ctx, t, theme, map, cam, width, height, time) {
       for (let row = 0; row * 9 + 9 < height - y; row++) {
         const shift = row % 2 ? 9 : 0;
         for (let gx = -((off + shift) % 18) - 18; gx < width; gx += 18) {
-          roundRect(ctx, Math.round(gx) + 1, y + 9 + row * 9, 15, 6, 3);
+          roundRect(ctx, snap(gx) + 1, y + 9 + row * 9, 15, 6, 3);
           ctx.fill();
         }
       }
@@ -1126,7 +1126,7 @@ function drawGround(ctx, t, theme, map, cam, width, height, time) {
         for (let gx = -((off + shift) % 32) - 32; gx < width; gx += 32) {
           ctx.strokeStyle = t.groundDeep;
           ctx.lineWidth = 1;
-          ctx.strokeRect(Math.round(gx) + 0.5, y + row * 16 + 6.5, 32, 16);
+          ctx.strokeRect(snap(gx) + 0.5, y + row * 16 + 6.5, 32, 16);
           if (hash(Math.floor((gx + off + shift) / 32) + row * 31) > 0.7) rect(ctx, gx + 10, y + row * 16 + 11, 6, 1, t.groundDeep);
         }
       }

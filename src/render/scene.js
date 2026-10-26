@@ -22,6 +22,8 @@ import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
+import { snap, gfx } from './pixel.js';
+import { drawGlowing, drawLighting, softShadow } from './post.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -134,6 +136,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const dt = feel.last === null ? 0 : Math.min(0.1, Math.max(0, time - feel.last));
   feel.last = time;
   if (feel.world !== world || feel.mapId !== world.map.id) {
+    feel.enteredAt = time;
     feel.fx = createParticles();
     if (feel.world !== world) feel.anim = createAnim();
     feel.world = world;
@@ -173,8 +176,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (b.onGround) drawShadow(ctx, b.x - cam.x, b.y - cam.y, 1);
   // A chat emoticon shows on the face for a few seconds.
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
-  const hx = Math.round(b.x - cam.x);
-  const hy = Math.round(b.y - cam.y);
+  const hx = snap(b.x - cam.x);
+  const hy = snap(b.y - cam.y);
   // After fighting (attacking or getting hit) the hero stays in a bouncy ready stance for a few
   // seconds before relaxing.
   if (world.pose || world.attackTimer > 0 || world.invuln > 0.6) feel.lastFight = world.now;
@@ -204,11 +207,27 @@ export function drawWorld(ctx, world, viewCam, time) {
     drawSummon(ctx, buff.summon.art, pos.x - cam.x, pos.y - cam.y, time, b.facing);
   }
 
-  drawEffects(ctx, world, cam, time);
-  if (world.dungeon) drawDungeonFront(ctx, world, cam, time);
-  drawParticles(ctx, feel.fx, cam, time);
+  // HD: light and color over the world, then effects on a glowing layer.
+  const hd = gfx.hd;
+  if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time);
+  const drawFx = (g) => {
+    drawEffects(g, world, cam, time);
+    if (world.dungeon) drawDungeonFront(g, world, cam, time);
+    drawParticles(g, feel.fx, cam, time);
+  };
+  if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
+  else drawFx(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
+  // HD: a new map fades in from a soft glow instead of cutting straight in.
+  const enter = time - (feel.enteredAt ?? -9);
+  if (gfx.hd && enter < 0.5) {
+    ctx.save();
+    ctx.globalAlpha = (1 - enter / 0.5) ** 2;
+    ctx.fillStyle = '#fff6fb';
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.restore();
+  }
 }
 
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
@@ -232,6 +251,7 @@ function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
 
 // A soft oval under the feet.
 function drawShadow(ctx, x, y, k) {
+  if (gfx.hd) return softShadow(ctx, x, y, 11 * k, 2.8 * k);
   ctx.save();
   ctx.globalAlpha = 0.18 * k;
   ctx.fillStyle = '#3a2d4f';
@@ -248,7 +268,7 @@ function drawBubbles(ctx, world, cam) {
     if (who !== 'player' && !npc) continue;
     const x = who === 'player' ? world.body.x : npc.x;
     const y = who === 'player' ? world.body.y : world.map.groundY;
-    drawBubble(ctx, Math.round(x - cam.x), Math.round(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2));
+    drawBubble(ctx, snap(x - cam.x), snap(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2));
   }
 }
 

@@ -8,7 +8,7 @@ import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, easeOut, easeIn } from './fxkit.js';
-import { mix } from './pixel.js';
+import { mix, snap, gfx } from './pixel.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -888,14 +888,18 @@ export function drawNumbers(ctx, world, cam) {
   for (const n of world.numbers) {
     const p = n.t / 1.1;
     const pop = n.t < 0.12 ? 1 + (0.12 - n.t) * 4 : 1;
-    const size = Math.round((n.crit ? 17 : n.small ? 10 : 14) * pop);
+    // HD numbers pop smoothly (no whole-pixel font steps), ease upward, and crits glow.
+    const size = gfx.hd ? (n.crit ? 17 : n.small ? 10 : 14) * pop : Math.round((n.crit ? 17 : n.small ? 10 : 14) * pop);
     const x = n.x - cam.x;
-    const y = n.y - cam.y - p * 26;
+    const y = n.y - cam.y - (gfx.hd ? 1 - (1 - p) ** 2 : p) * 26;
     ctx.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
     ctx.font = `bold ${size}px ${FONT}`;
+    ctx.shadowColor = gfx.hd && n.crit ? 'rgba(255,190,80,0.85)' : 'transparent';
+    ctx.shadowBlur = gfx.hd && n.crit ? 10 : 0;
     ctx.lineWidth = 4;
     ctx.strokeStyle = n.crit ? '#8a3a1f' : '#3a2d4f';
     ctx.strokeText(n.text, x, y);
+    ctx.shadowBlur = 0;
     ctx.fillStyle = n.color;
     ctx.fillText(n.text, x, y);
     if (n.crit) sparkle(ctx, x - ctx.measureText(n.text).width / 2 - 6, y - size / 2, 4, '#ffe36b');
@@ -906,13 +910,13 @@ export function drawNumbers(ctx, world, cam) {
 export function drawDrops(ctx, world, cam, time) {
   for (const d of world.drops) {
     const bob = d.landed ? Math.sin(time * 3 + d.uid) * 1.5 : 0;
-    const x = Math.round(d.x - cam.x);
-    const y = Math.round(d.y - cam.y - 2 + bob);
+    const x = snap(d.x - cam.x);
+    const y = snap(d.y - cam.y - 2 + bob);
     // Fade out in the last few seconds before despawning.
     ctx.globalAlpha = d.age > 84 ? Math.max(0, (90 - d.age) / 6) : 1;
     ctx.fillStyle = 'rgba(58,45,79,0.18)';
     ctx.beginPath();
-    ctx.ellipse(x, Math.round(d.y - cam.y), 6, 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, snap(d.y - cam.y), 6, 2, 0, 0, Math.PI * 2);
     ctx.fill();
     if (d.kind === 'gold') {
       const big = d.amount >= 100;

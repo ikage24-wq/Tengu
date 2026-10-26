@@ -5,7 +5,7 @@
 
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
-import { R, E, T, F, shade } from './pixel.js';
+import { R, E, T, F, shade, snap } from './pixel.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
 import { createAnim, stepAnim } from './animator.js';
@@ -252,7 +252,7 @@ function hangingSign(ctx, x, y, label, time) {
 // the ground and before ledges and props.
 export function drawStreet(ctx, map, cam, width, time) {
   if (!map.isTown) return;
-  const gy = Math.round(map.groundY - cam.y);
+  const gy = snap(map.groundY - cam.y);
   const theme = map.theme;
   // Houses fill the gaps between NPCs, portals, and the plaza.
   const kinds = STREET[theme] ?? [];
@@ -264,13 +264,13 @@ export function drawStreet(ctx, map, cam, width, time) {
       const seed = hash(wx * 0.13 + map.width);
       const kind = pick(kinds, seed);
       const s = kind === 'house' ? houseArt(seed) : kind === 'adobe' ? adobeArt(seed) : kind === 'tent' ? tentArt(pick(['#e0504d', '#ffab5c', '#5fb8d8'], seed)) : kind === 'treehouse' ? treehouseArt(seed) : mushHouseArt(seed);
-      place(ctx, s, Math.round(x), gy);
+      place(ctx, s, snap(x), gy);
       if (kind === 'house' || kind === 'adobe') chimneySmoke(ctx, x + (kind === 'house' ? 17 : -24), gy - (kind === 'house' ? 84 : 46), time, seed);
     }
   }
   // The plaza fountain, with water arcing from the spout.
   if (map.plaza != null) {
-    const x = Math.round(map.plaza - cam.x);
+    const x = snap(map.plaza - cam.x);
     if (x > -60 && x < width + 60) {
       place(ctx, fountainArt(), x, gy);
       ctx.save();
@@ -296,7 +296,7 @@ export function drawStreet(ctx, map, cam, width, time) {
   for (const n of map.npcs) {
     const npc = NPCS[n.id];
     if (!npc.building) continue;
-    const x = Math.round(n.x - cam.x);
+    const x = snap(n.x - cam.x);
     if (x < -80 || x > width + 80) continue;
     const s = buildingArt(npc.building, time);
     if (!s) continue;
@@ -684,10 +684,10 @@ const ITEM_COLORS = (id) => ITEMS[id]?.color ?? '#ffffff';
 
 export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = null) {
   if (!map.isTown || !settings.showCrowd) return;
-  const gy = Math.round(map.groundY - cam.y);
+  const gy = snap(map.groundY - cam.y);
   for (const p of villagersOf(map)) {
     const at = stroll(p, time);
-    const x = Math.round(at.x - cam.x);
+    const x = snap(at.x - cam.x);
     if (x < -40 || x > width + 40) continue;
     const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
     shadow(ctx, x, gy);
@@ -696,7 +696,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   }
   const said = [];
   for (const bot of bots) {
-    const x = Math.round(bot.x - cam.x);
+    const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
     drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said);
@@ -791,9 +791,9 @@ export function drawParty(ctx, members, cam, width, time, hoverId = null) {
   const said = [];
   for (const bot of members) {
     if (!bot.body) continue;
-    const x = Math.round(bot.body.x - cam.x);
+    const x = snap(bot.body.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    drawBot(ctx, bot, x, Math.round(bot.body.y - cam.y), time, hoverId === bot.id, said);
+    drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }

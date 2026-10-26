@@ -6,7 +6,7 @@
 //   dead   x eyes as it poofs away
 // Little emote bubbles (!, anger marks, sweat, music notes, z's) float over their heads.
 
-import { R, E, T, F, sprite, blit, shade } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, snap } from './pixel.js';
 
 const INK = '#3a2d4f';
 const BLUSH = '#ff9fb8';
@@ -680,7 +680,7 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   // Knocked up into the air: drawn above its shadow, tumbling a little.
   const air = m.air > 0 ? m.air : 0;
   ctx.save();
-  ctx.translate(Math.round(x), Math.round(y - hop - air));
+  ctx.translate(snap(x), snap(y - hop - air));
   if (air) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
@@ -695,8 +695,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
 function iceBlock(ctx, x, y, s, left, time) {
   const w = s.w + 8;
   const h = s.h + 6;
-  const bx = Math.round(x - w / 2);
-  const by = Math.round(y - h);
+  const bx = snap(x - w / 2);
+  const by = snap(y - h);
   ctx.save();
   // Shiver just before it breaks.
   if (left < 0.4) ctx.translate(Math.sin(time * 70) * 1, 0);

@@ -10,6 +10,7 @@ import { saveGame, loadGame, hasSave, deleteSave, SLOTS } from './core/save.js';
 import { createWorld, updateWorld } from './world/world.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
+import { setHd, gfx } from './render/pixel.js';
 import { createBots, updateBots, botsIn } from './world/bots.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
@@ -79,12 +80,30 @@ let last = performance.now();
 let acc = 0;
 let queued = new Set();
 
+// HD drops its costliest extras (the glow, then the lighting) on a device that can't keep up.
+const perf = { frames: 0, time: 0 };
+function watchSpeed(raw) {
+  if (!settings.hdGraphics || raw > 0.25) return;
+  perf.frames++;
+  perf.time += raw;
+  if (perf.time < 4) return;
+  if (perf.frames / perf.time < 40) {
+    if (!gfx.noGlow) gfx.noGlow = true;
+    else gfx.noLight = true;
+  }
+  perf.frames = 0;
+  perf.time = 0;
+}
+
 function frame(now) {
-  const dt = Math.min(0.1, (now - last) / 1000);
+  const raw = (now - last) / 1000;
+  const dt = Math.min(0.1, raw);
   last = now;
+  watchSpeed(raw);
   const time = now / 1000;
   ctx.setTransform(pixelScale, 0, 0, pixelScale, 0, 0);
   ctx.imageSmoothingEnabled = false;
+  setHd(settings.hdGraphics, pixelScale);
   const ui = beginUi(ctx, input);
 
   if (screen === 'title') {
