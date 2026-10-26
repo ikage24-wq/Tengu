@@ -97,6 +97,35 @@ function watchSpeed(raw) {
   perf.time = 0;
 }
 
+// The world moves in fixed ticks, but the screen may refresh at any rate. Drawing blends each
+// mover's position between its last two ticks, so motion (and the camera following it) stays
+// smooth instead of stepping, at 60Hz, 144Hz, or with uneven frame timing.
+function movers(world) {
+  return [world.body, ...world.mobs, ...partyMembers(world.bots).map((b) => b.body).filter(Boolean)];
+}
+function remember(world) {
+  for (const o of movers(world)) {
+    o.prevX = o.x;
+    o.prevY = o.y;
+  }
+}
+function blended(world, alpha, draw) {
+  // Anything that jumped (a new map, a teleport) is drawn where it is.
+  const list = movers(world).filter((o) => o.prevX != null && Math.abs(o.x - o.prevX) < 48 && Math.abs(o.y - o.prevY) < 48);
+  const real = list.map((o) => [o.x, o.y]);
+  for (const o of list) {
+    o.x = o.prevX + (o.x - o.prevX) * alpha;
+    o.y = o.prevY + (o.y - o.prevY) * alpha;
+  }
+  try {
+    draw();
+  } finally {
+    list.forEach((o, i) => {
+      [o.x, o.y] = real[i];
+    });
+  }
+}
+
 function frame(now) {
   const raw = (now - last) / 1000;
   const dt = Math.min(0.1, raw);
@@ -147,6 +176,7 @@ function frame(now) {
         world.hitstop -= TICK;
         continue;
       }
+      remember(world);
       updateWorld(world, TICK, { held: input.held, pressed: queued, locked });
       queued = new Set();
     }
@@ -157,8 +187,10 @@ function frame(now) {
       saveGame(world.char);
       autosave = AUTOSAVE_EVERY;
     }
-    updateCamera(camera, world, dt);
-    drawWorld(ctx, world, camera, time);
+    blended(world, acc / TICK, () => {
+      updateCamera(camera, world, dt);
+      drawWorld(ctx, world, camera, time);
+    });
     drawUi(ui, uiState, world);
     npcPointer(ui);
     // The Options window can send you back to character select or the title.

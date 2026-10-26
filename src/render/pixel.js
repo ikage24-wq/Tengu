@@ -12,7 +12,12 @@ export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false };
 // so the camera and everything in the world glide instead of stepping.
 export const snap = (v) => (gfx.hd ? Math.round(v * gfx.scale) / gfx.scale : Math.round(v));
 export function setHd(on, scale = 1) {
-  gfx.scale = scale;
+  if (gfx.scale !== scale) {
+    // Detailed sprites are drawn at the screen's density: redraw them for the new one.
+    gfx.scale = scale;
+    cache.clear();
+    cacheBytes = 0;
+  }
   if (gfx.hd === on) return;
   gfx.hd = on;
   // Turning HD back on tries the full look again.
@@ -340,7 +345,10 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    const { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    // Detailed sprites (characters, monsters, scenery) are drawn at the screen's own pixel
+    // density, so every cell is exactly one screen pixel: sharp and even at any window size.
+    if (res > 1) res = Math.max(res, Math.round(gfx.scale));
     const raster = rasterize(w, h, shapes, res, soft, palette, crisp);
     const canvas = bake(raster);
     s = { canvas, w, h, res, crisp, white: null };

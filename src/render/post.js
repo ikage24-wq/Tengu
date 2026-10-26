@@ -59,26 +59,6 @@ export function drawGlowing(ctx, draw) {
   ctx.restore();
 }
 
-// ---------- Depth ----------
-
-// Draws far scenery (sky, clouds, hills) into a layer at 1/`shrink` of the screen's size and
-// stretches it back up, so it comes out softly out of focus behind the sharp play area, like
-// a camera lens. Fewer pixels to fill, too.
-export function drawSoft(ctx, shrink, draw) {
-  const c = layer('soft', Math.ceil(ctx.canvas.width / shrink), Math.ceil(ctx.canvas.height / shrink));
-  const g = c.getContext('2d');
-  const m = ctx.getTransform();
-  g.setTransform(m.a / shrink, 0, 0, m.d / shrink, m.e / shrink, m.f / shrink);
-  g.imageSmoothingEnabled = true;
-  draw(g);
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(c, 0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.restore();
-}
-
 // ---------- Light ----------
 
 // Light is baked small (gradients stay smooth stretched up) into two cached overlays per map

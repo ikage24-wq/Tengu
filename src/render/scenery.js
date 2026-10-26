@@ -4,8 +4,7 @@
 // chimney smoke, bobbing boats. World-to-screen is (wx - cam.x, wy - cam.y). Layouts are seeded so
 // nothing jitters as you move; animation comes only from `time`.
 
-import { R, E, T, F, sprite, blit, shade, mix, snap, gfx } from './pixel.js';
-import { drawSoft } from './post.js';
+import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
 import { groundAt, surfacesOf } from '../world/physics.js';
 import { drawTerrain, drawIsland, drawLadder } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
@@ -16,9 +15,6 @@ const hash = (n) => {
   return s - Math.floor(s);
 };
 const pick = (list, seed) => list[Math.floor(seed * list.length) % list.length];
-
-// How soft the HD backdrop is: it's drawn at one cell per this many game pixels.
-const BACKDROP_BLUR = 1.5;
 
 export const THEMES = {
   town: {
@@ -1548,9 +1544,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     drawMid(g, t, theme, cam, width, layerY(10, 0.45), time);
     drawHaze(g, t, width, map.groundY - cam.y);
   };
-  // HD: the backdrop is softly out of focus, so the play area stands out in front of it.
-  if (gfx.hd) drawSoft(ctx, BACKDROP_BLUR * gfx.scale, backdrop);
-  else backdrop(ctx);
+  backdrop(ctx);
   drawTerrain(ctx, theme, map, cam, width, height, time);
   drawDeco(ctx, map, cam, width, time, false);
   // Town buildings stand on the street, behind ledges and props.
