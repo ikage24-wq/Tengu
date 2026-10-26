@@ -12,6 +12,8 @@
 // strike, impact, recover).
 
 import { R, E, T, F, C, shade, mix, arc, stroke, INK, BLUSH, MOUTH } from './kit.js';
+import { eye, glowEye, brow, mouth, nose as snout, blush as cheek, sweat, tear, vein, deadEye, band, LASH } from './faces.js';
+import { ramp, hue, crescent, shine, smear, chain, wave as ripple, breath, sway } from './meadow.js';
 
 // ---------- Geometry helpers ----------
 
@@ -109,8 +111,13 @@ function tubePts(pts, ws, seg = 4) {
   return [...left, ...endCap, ...right.reverse(), ...startCap];
 }
 const tube = (pts, ws, c, seg) => T(tubePts(pts, ws, seg), c);
-// Inner line color for a part (the auto outline only wraps the whole silhouette).
-const edge = (c) => mix(shade(c, -38), INK, 0.45);
+// Inner line color for a part (the auto outline only wraps the whole silhouette): the part's
+// own deepest tone, hue-shifted, never a neutral ink.
+const edges = new Map();
+const edge = (c) => {
+  if (!edges.has(c)) edges.set(c, hue(ramp(c, { step: 15, turn: 14 }).deep, 0, -8, -4));
+  return edges.get(c);
+};
 // A tube with its own thin dark line, so a limb in front of the body still reads.
 const tubeL = (pts, ws, c, seg, lw = 0.9) => [F(tube(pts, ws.map((w) => w + lw), edge(c), seg)), tube(pts, ws, c, seg)];
 // An oval with its own thin line.
@@ -176,10 +183,13 @@ const spin = (shapes, cx, cy, a) => (!a ? shapes : shapes.map((s) => {
   return { ...s, x: x - s.w / 2, y: y - s.h / 2 };
 }));
 
-// A shaded ball: a darker underside, the base, and a soft highlight on top.
-function ball(cx, cy, rx, ry, c, a = 0, { hi = true, dark = -10 } = {}) {
-  const out = [ov(cx, cy, rx, ry, a, shade(c, dark)), ov(cx - rx * 0.04, cy - ry * 0.1, rx * 0.95, ry * 0.86, a, c)];
-  if (hi) out.push(F(ov(cx - rx * 0.25, cy - ry * 0.45, rx * 0.42, ry * 0.25, a, mix(c, '#ffffff', 0.35))));
+// A shaded ball: the base, its form shadow as a crescent on the back and underside (light from
+// the upper front, so never a ring), and one small highlight on the top front. `jag` notches the
+// shadow into fur tufts; `sh`/`hi` override the ramp's tones.
+function ball(cx, cy, rx, ry, c, a = 0, { hi = true, k = 0.3, jag = 0, sh, light, a0 = 40, a1 = 225 } = {}) {
+  const r = ramp(c, { step: 10, turn: 14, sat: -6 });
+  const out = [ov(cx, cy, rx, ry, a, c), crescent(cx, cy, rx, ry, sh ?? r.sh, { k, jag, rot: a, a0, a1 })];
+  if (hi) out.push(shine(cx, cy, rx, ry, light ?? r.hi, a));
   return out;
 }
 
@@ -306,51 +316,62 @@ function pebblet(pose, f, mood) {
   const dead = mood === 'dead';
   const hurt = mood === 'hurt';
   const angry = mood === 'angry';
-  const skin = '#a6d69a';
-  const skinD = shade(skin, -12);
-  const belly = '#f7eccb';
-  const stone = '#c9b7a3';
-  const stoneL = '#e6dccd';
-  const stoneD = '#a08d7b';
-  const frill = angry || A ? '#ff8c6e' : '#f6a88c';
-  const frillD = shade(frill, -12);
+  const happy = mood === 'happy';
+  // Ramps: leaf-green scales cooling to teal, a cream belly, warm sandstone turning plum in its
+  // shadows, and the coral frill as the one accent.
+  const SK = ramp('#a8d69a', { step: 10, turn: 18, sat: -6 });
+  const BE = ramp('#f7ecd0', { step: 8, turn: 24, sat: -10 });
+  const ST = ramp('#cfbca2', { step: 11, turn: 22, sat: -4 });
+  const skin = SK.base;
+  const skinD = SK.sh;
+  const belly = BE.base;
+  const stone = ST.base;
+  const stoneL = ST.hi;
+  const stoneD = ST.sh;
+  const frill = angry || A ? '#ff8c6e' : '#f7a88c';
+  const frillD = hue(frill, -10, -6, -10);
   const ox = A ? A.ox : 0;
-  const breathe = idle ? wave(p) * 0.35 : 0;
-  // A low reptile wiggle: belly close to the ground, shoulders and hips rolling in turn.
-  const by = dead ? 1.4 : (walk ? 0.3 * Math.cos(p * TAU * 2) - 0.9 : A ? A.rear : breathe) - 1.6;
-  const wig = walk ? 3 * Math.sin(p * TAU) : 0;
+  const br = idle ? breath(p) : 0;
+  // A low reptile wiggle: belly close to the ground, shoulders and hips rolling in turn; idle,
+  // the flanks fill and it sways a little.
+  const by = dead ? 1.4 : (walk ? 0.3 * Math.cos(p * TAU * 2) - 0.9 : A ? A.rear : hurt ? 0.4 : -br * 0.4) - 1.6;
+  const wig = walk ? 3 * Math.sin(p * TAU) : idle ? sway(p) * 1.2 : 0;
   const look = idle ? bump(p, 0.5, 0.34) : 0;
-  const hx = (hurt ? -1.4 : 0) + (walk ? 0.7 * Math.sin(p * TAU - 0.9) : 0) + (A ? A.hx : 0);
-  const hy = (dead ? 3.4 : hurt ? -1 : 0) + by + (walk ? 0.35 * Math.sin(p * TAU * 2 + 0.6) : idle ? wave(p + 0.15) * 0.3 - look * 0.9 : 0) + (A ? A.hy : 0);
+  const hx = (hurt ? -1.6 : 0) + (walk ? 0.7 * Math.sin(p * TAU - 0.9) : idle ? sway(p - 0.12) * 0.4 : 0) + (A ? A.hx : 0);
+  const hy = (dead ? 3.4 : hurt ? -1 : 0) + by + (walk ? 0.35 * Math.sin(p * TAU * 2 + 0.6) : idle ? -breath(p - 0.1) * 0.3 - look * 0.9 : 0) + (A ? A.hy : 0);
   const out = [];
   const body = [];
 
-  // Tail: a thick root that tapers into a curled tip, sweeping side to side in an S as it walks.
-  const amp = walk ? 1.6 : idle ? 0.7 : 0;
-  const tw = (i) => (dead ? 0 : amp * Math.sin(p * TAU - i * 0.9) * i * 0.3 + (A ? A.tail * i * 0.25 : 0) + (idle ? -bump(p, 0.75, 0.2) * i * 0.4 : 0));
-  const tail = [[11, 23 + by], [6.5, 24.2 + by + tw(1)], [3, 22.2 + by + tw(2)], [1.8, 18.6 + by + tw(3)], [3.6, 15.8 + by + tw(4)], [6, 16.8 + by + tw(4.5)]];
-  if (dead) tail.splice(3, 3, [0.8, 26.5], [-0.2, 27.6]);
-  body.push(tube(tail, [7, 5, 3.4, 2.2, 1.4, 1], skin));
-  // Stone scales riding the tail.
+  // Tail: a chain of five links from the hips, a thick root tapering to a curled tip; the walk's
+  // sway enters at the root and runs out to the tip as an S.
+  const tph = walk ? p * TAU - 0.4 : p * TAU - 1;
+  const tamp = dead ? 0 : walk ? 9 : idle ? 5 : 2;
+  const tlift = A ? A.tail * 6 : idle ? -bump(p, 0.75, 0.2) * 10 : 0;
+  const tj = dead
+    ? chain(11, 23 + by, 170, [4.4, 3.6, 3, 2.4, 1.8], (i) => (i ? 4 : 0))
+    : chain(11, 23 + by, 166 + tlift * 0.4, [4.4, 3.8, 3.2, 2.6, 2], (i) => (i ? 26 + tlift * 0.3 : 0) + ripple(tph, tamp, 0.9, 0.3)(i));
+  const tail = tj.map(([x, y]) => [x, y]);
+  body.push(tube(tail, [7, 5, 3.4, 2.2, 1.4, 1], skin), F(tube(tail.slice(0, 4).map(([x, y]) => [x - 0.3, y + 0.9]), [4.6, 3, 1.8, 1], skinD)));
+  // Stone scales riding the tail, each lit on top.
   for (const [i, s] of [[1, 1.8], [2, 1.4], [3, 1.1]]) {
-    if (!tail[i]) continue;
     const [tx, ty] = tail[i];
-    body.push(T([[tx - s, ty - 1.4], [tx, ty - 1.4 - s], [tx + s, ty - 1.4], [tx, ty - 0.6]], stone));
+    body.push(T([[tx - s, ty - 1.4], [tx, ty - 1.4 - s], [tx + s, ty - 1.4], [tx, ty - 0.6]], stone), F(T([[tx - s * 0.4, ty - 1.5], [tx, ty - 1.4 - s], [tx + s * 0.8, ty - 1.45]], stoneL)));
   }
 
-  // Legs: sprawled out to the sides, a diagonal trot; feet stay planted while the body shifts.
+  // Legs: two bones each, sprawled out to the sides, a diagonal trot; feet stay planted while
+  // the body shifts over them.
   const legPhase = { nf: 0, fb: 0, nb: 0.5, ff: 0.5 };
   const leg = (key, hipX, hipY, near, front) => {
     const [dx, lift] = dead ? [front ? 3 : -3, 0] : walk ? gait(p + legPhase[key], 7.7, 2.2, 0.55) : [0, 0];
-    const fx = hipX + dx + (front ? 1 : -0.5) - ox + (A && front ? [0, 2.4, 2.4, 0.8][f] : 0);
+    const fx = hipX + dx + (front ? 1 : -0.5) - ox + (A && front ? [0, 2.4, 2.4, 0.8][f] : 0) + (hurt && front ? -1 : 0);
     const fy = G - 1.3 + lift + (dead ? -0.6 : 0);
     const kn = knee(hipX, hipY, fx, fy, 4.4, 4.4, front ? 1 : -1);
     // Elbows and knees bowed outward: the joint pokes up above the hip line.
     const kj = [kn[0], kn[1] - 1];
     const c = near ? skin : skinD;
     const parts = near
-      ? [...ovL(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c), ...tubeL([[hipX, hipY], kj, [fx, fy]], [5, 3.8, 3.2], c, 4, 0.6), ov(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c)]
-      : [tube([[hipX, hipY], kj, [fx, fy]], [5, 3.8, 3.2], c), ov(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c), ...stroke([[kj[0] - 1, kj[1] + 1], [fx - 1, fy]], 0.4, edge(c))];
+      ? [...ovL(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c), ...tubeL([[hipX, hipY], kj, [fx, fy]], [5, 3.8, 3.2], c, 4, 0.6), ov(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c), F(ov(fx + 0.4, fy + 0.6, 2, 0.6, 0, SK.sh))]
+      : [tube([[hipX, hipY], kj, [fx, fy]], [5, 3.8, 3.2], c), ov(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c), band([[kj[0] - 1, kj[1] + 1], [fx - 1, fy]], 0.67, SK.deep)];
     // Little cream claws, splayed.
     for (const k of [0, 1, 2]) parts.push(F(E(fx + 2.4 + k * 0.1, fy + 0.6 - k * 0.65 + 0.5, 0.55, 0.42, '#fff6e0')));
     return parts;
@@ -358,97 +379,111 @@ function pebblet(pose, f, mood) {
   const rollY = (front) => (walk ? (front ? 0.5 : -0.5) * Math.sin(p * TAU) : 0);
   out.push(...leg('fb', 14.5, 23 + by + rollY(false), false, false), ...leg('ff', 26.5, 23 + by + rollY(true), false, true));
 
-  // Body with a cream belly and scute lines.
-  body.push(...ball(18.5, 21.5 + by, 10.4, 6.8, skin));
-  body.push(E(19.5, 24.6 + by, 8.2, 2.9, belly), F(E(18, 23.6 + by, 4, 0.8, mix(belly, '#ffffff', 0.5))));
+  // Body with a cream belly; it swells a little as it breathes in.
+  body.push(...ball(18.5, 21.5 + by, 10.4, 6.8 + br * 0.3, skin, 0, { sh: skinD, light: SK.hi, k: 0.32 }));
+  body.push(E(19.5, 24.6 + by, 8.2, 2.9, belly), crescent(19.5, 24.6 + by, 8.2, 2.9, BE.sh, { k: 0.5, a0: 50, a1: 190 }));
   for (const [x, y] of [[12.5, 20], [16, 22.4], [21, 21.6], [24, 23]]) body.push(F(E(x, y + by, 0.7, 0.55, skinD)));
 
-  // Stone plates along the spine, each with a lit top face and a crack; they rise when angry.
+  // Stone plates along the spine, cut in facets: the top face lit, the side in the stone's base,
+  // the back face in shadow, a crack in the deep tone. They rise when angry.
   for (let i = 0; i < 5; i++) {
     const x = 9.4 + i * 3.6;
     const y = 15.8 + by - Math.sin((i / 4) * Math.PI) * 1.6 + (i === 0 ? 1.4 : 0);
     const s = i === 2 ? 2.6 : 2.2;
     const lift = (angry || A ? -0.8 : 0) + (walk ? -0.35 * Math.max(0, Math.sin(p * TAU * 2 - i * 0.9)) : 0);
     body.push(C(T([[x - s, y + 2], [x - s * 0.8, y - 0.6 + lift], [x, y - s - 0.4 + lift], [x + s * 0.9, y - 0.4 + lift], [x + s, y + 2]], stone)),
-      F(T([[x - s * 0.6, y - 0.3 + lift], [x, y - s + 0.2 + lift], [x + s * 0.55, y - 0.2 + lift], [x, y + 0.5]], stoneL)),
-      ...stroke([[x + 0.3, y + 0.4], [x + 0.9, y + 1.6]], 0.3, stoneD));
+      F(T([[x - s, y + 2], [x - s * 0.8, y - 0.6 + lift], [x, y - s - 0.4 + lift], [x - s * 0.15, y + 0.3], [x - s * 0.3, y + 2]], stoneD)),
+      F(T([[x, y - s - 0.4 + lift], [x + s * 0.9, y - 0.4 + lift], [x + s * 0.5, y + 0.2], [x, y - 0.2 + lift * 0.5]], stoneL)),
+      band([[x + 0.3, y + 0.5], [x + 0.9, y + 1.7]], 0.4, ST.deep));
   }
   out.push(...spin(body, 18.5, 22 + by, wig));
   out.push(...leg('nb', 13, 24 + by + rollY(false), true, false), ...leg('nf', 25, 24 + by + rollY(true), true, true));
 
-  // The rocky frill fanned behind the head: a coral web on stone ribs, pulsing with breath.
-  const fx0 = 24 + hx;
-  const fy0 = 11.4 + hy;
-  const fr = (angry ? 11.4 : hurt ? 7.6 : 9.6) + (idle ? wave(p) * 0.5 : 0) + (A ? A.fr : 0);
+  // The head is one part on the neck: frill, skull, horns, face. It is built level and turned
+  // about the neck joint, so everything on it stays put as it nods.
+  const head = [];
+  const X = 29.2 + hx;
+  const Y = 13.4 + hy;
+  const neck = [X - 5.4, Y + 4.6];
+  const tilt = dead ? 14 : hurt ? -10 : A ? [-10, 8, 10, 0][f] : idle ? -look * 6 : walk ? 2 * Math.sin(p * TAU * 2 - 1.4) : 0;
+  // The rocky frill fanned behind the skull: a coral web on stone ribs, flaring as it breathes;
+  // its ribs trail the head's turn a little.
+  const fx0 = X - 5.2;
+  const fy0 = Y - 2;
+  const fr = (angry ? 11.4 : hurt ? 7.6 : 9.6) + br * 0.6 + (A ? A.fr : 0);
   const web = [[fx0, fy0 + 2]];
   for (let i = 0; i <= 8; i++) {
     const a = rad(lerp(140, 290, i / 8));
     const r = i % 2 ? fr * 0.78 : fr;
     web.push([fx0 + Math.cos(a) * r, fy0 + Math.sin(a) * r]);
   }
-  out.push(T(web, frill));
+  head.push(T(web, frill), F(T(web.slice(0, 5).map(([x, y]) => [lerp(fx0, x, 1), lerp(fy0, y, 1)]).concat([[fx0, fy0 + 2]]), frillD)));
   for (let i = 0; i <= 8; i += 2) {
     const a = rad(lerp(140, 290, i / 8));
-    out.push(tube([[fx0 + Math.cos(a) * 2, fy0 + Math.sin(a) * 2], [fx0 + Math.cos(a) * (fr + 0.6), fy0 + Math.sin(a) * (fr + 0.6)]], [1.6, 0.9], stoneD));
-    out.push(F(E(fx0 + Math.cos(a) * (fr + 0.4), fy0 + Math.sin(a) * (fr + 0.4), 0.9, 0.9, stone)));
+    head.push(tube([[fx0 + Math.cos(a) * 2, fy0 + Math.sin(a) * 2], [fx0 + Math.cos(a) * (fr + 0.6), fy0 + Math.sin(a) * (fr + 0.6)]], [1.6, 0.9], i < 4 ? ST.sh : stone));
+    head.push(F(E(fx0 + Math.cos(a) * (fr + 0.4), fy0 + Math.sin(a) * (fr + 0.4), 0.9, 0.9, i < 4 ? stone : stoneL)));
   }
-  out.push(F(T(web.map(([x, y]) => [lerp(fx0, x, 0.55), lerp(fy0 + 1, y, 0.55)]), frillD)));
+  head.push(F(T(web.map(([x, y]) => [lerp(fx0, x, 0.5), lerp(fy0 + 1, y, 0.5)]), frillD)));
 
-  // Head: a big round skull with a blunt snout.
-  const X = 29.2 + hx;
-  const Y = 13.4 + hy;
-  const tilt = dead ? 14 : hurt ? -8 : A ? [-10, 8, 10, 0][f] : idle ? -look * 6 : 0;
-  out.push(F(ov(X, Y, 8.9, 7.9, tilt, edge(skin))), ...ball(X, Y, 8.4, 7.4, skin, tilt));
-  out.push(C(ov(X + 5.2, Y + 2.6, 4.8, 3.8, tilt, skin)), F(ov(X + 4.4, Y + 1.2, 3, 1.2, tilt, mix(skin, '#ffffff', 0.3))));
+  // Skull: a big round head with a blunt snout, lit on the brow and snout top, shadowed at the
+  // back and under the jaw.
+  head.push(F(ov(X, Y, 8.9, 7.9, 0, edge(skin))), ...ball(X, Y, 8.4, 7.4, skin, 0, { sh: skinD, light: SK.hi, a0: 70, a1: 220 }));
+  head.push(C(ov(X + 5.2, Y + 2.6, 4.8, 3.8, 0, skin)), F(ov(X + 5.6, Y + 0.6, 2.6, 0.9, -8, SK.hi)));
   // Jaw and chin in belly cream.
-  out.push(F(ov(X + 3.4, Y + 5.5, 5.6, 1.9, tilt, belly)));
-  // Stone horns on the crown, leaning back.
+  head.push(F(ov(X + 3.4, Y + 5.5, 5.6, 1.9, 0, belly)), F(ov(X + 1.4, Y + 6, 3, 1.1, 0, BE.sh)));
+  // Stone horns on the crown, leaning back: the front face lit, the back face in shadow.
   for (const [ox2, oy, s, ang] of [[-3.6, -5.6, 2.3, -150], [-0.4, -6.8, 2, -125], [2.6, -6.6, 1.5, -105]]) {
     const bx = X + ox2;
     const by2 = Y + oy;
-    const a = rad(ang + (angry ? 12 : 0) + tilt * 0.5);
+    const a = rad(ang + (angry ? 12 : 0));
     const tipX = bx + Math.cos(a) * (s * 2.6);
     const tipY = by2 + Math.sin(a) * (s * 2.6);
-    out.push(T([[bx - s, by2 + 1], [tipX, tipY], [bx + s, by2 + 1]], stone), F(T([[bx - s * 0.2, by2 + 0.6], [tipX, tipY], [bx + s * 0.7, by2 + 0.8]], stoneL)));
+    head.push(T([[bx - s, by2 + 1], [tipX, tipY], [bx + s, by2 + 1]], stone), F(T([[bx - s, by2 + 1], [tipX, tipY], [bx - s * 0.1, by2 + 0.9]], stoneD)), F(T([[bx + s * 0.2, by2 + 0.7], [tipX, tipY], [bx + s * 0.7, by2 + 0.8]], stoneL)));
   }
-  out.push(F(E(X + 9.3, Y + 1.4, 0.55, 0.45, shade(skin, -30))));
-
-  // Eyes: gold reptile eyes, all iris with a slit pupil, under a ridge of brow scales.
-  const glance = idle ? 0.4 * Math.sin(p * TAU + 0.5) : 0;
-  const eo = { round: 0.6, lower: 0.9, iris: '#ffc83a', irisL: '#fff0a0', glow: '#ff7a2a', glowL: '#ffd27a', aura: '#fff09a', pupil: 'slit', slant: 0.15, brow: stoneD, look: [glance, 0], squint: 0.62 };
-  out.push(...peeper(X + 1.4, Y - 0.6, mood, -1, { ...eo, w: 2.2, h: 2.3 }), ...peeper(X + 6.4, Y - 0.9, mood, 1, { ...eo, w: 1.35, h: 1.95 }));
   // Brow scales: a ridge of little stones over the eyes, hunched lower when angry.
-  const bl = angry ? 0.9 : hurt ? -0.6 : 0;
-  out.push(C(T([[X - 1.6, Y - 3.2 + bl], [X - 0.6, Y - 4.8 + bl], [X + 1.8, Y - 5.4], [X + 4.4, Y - 4.8], [X + 6.8, Y - 3.6 + bl * 0.6], [X + 7.6, Y - 2.6 + bl], [X + 5.2, Y - 3.4 + bl * 0.4], [X + 3.6, Y - 3.6 + bl * 0.2], [X + 1.4, Y - 3.6 + bl * 0.4]], stone)));
-  for (const [x, y] of [[X - 0.2, Y - 4.2], [X + 2, Y - 4.8], [X + 4.4, Y - 4.4], [X + 6.4, Y - 3.4]]) out.push(F(E(x, y + bl * 0.5, 0.75, 0.45, stoneL)));
-  if (mood !== 'dead') out.push(F(E(X + 0.4, Y + 3, 1.4, 0.7, BLUSH)));
+  const bl = angry ? 0.9 : hurt ? -0.6 : happy ? -0.4 : 0;
 
-  // Mouth along the snout; idle, a forked tongue flicks out to taste the air.
-  const my = Y + 4.6;
+  // Face: round, all-iris reptile eyes (gold, a slit pupil, a dark rim and no white) that stare
+  // wide at rest; angry, the lids drop into a glare, the iris burns orange and the slit thins;
+  // hurt, it squeezes shut; happy, it squints up into arcs.
+  const glance = idle ? 0.4 * Math.sin(p * TAU + 0.5) : 0;
+  const lashC = '#2a3a26';
+  const eyeF = [X + 0.4, Y - 0.4];
+  const eyeN = [X + 5, Y - 0.6];
+  const be = { shape: 'animal', iris: angry || A ? ['#8a2a08', '#ff8a2a', '#ffe08a'] : ['#7a4a0a', '#f6be32', '#fff0a6'], pupil: 'slit', pupilC: '#2a1a10', lashC, rim: 0.4, look: [glance, 0] };
+  const act = { idle: {}, angry: { lid: 0.35, slant: 0.8, pupilK: 0.55 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
+  if (A && f === 0 && !dead && !hurt) Object.assign(act, { lid: 0.3, slant: 0.6, pupilK: 0.5 });
+  if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.4, { c: lashC }), ...deadEye(eyeN[0], eyeN[1], 1.7, { c: lashC }));
+  else head.push(...eye(eyeF[0], eyeF[1], { ...be, ...act, s: -1, w: 1.8, h: 2.1 }), ...eye(eyeN[0], eyeN[1], { ...be, ...act, s: 1, w: 2.2, h: 2.4 }));
+  head.push(C(T([[X - 2, Y - 3.2 + bl], [X - 1, Y - 4.8 + bl], [X + 1.8, Y - 5.4], [X + 4.4, Y - 5], [X + 7, Y - 3.8 + bl * 0.6], [X + 7.8, Y - 2.8 + bl], [X + 5.4, Y - 3.6 + bl * 0.4], [X + 3.6, Y - 3.8 + bl * 0.2], [X + 1.4, Y - 3.8 + bl * 0.4]], stone)));
+  for (const [x, y] of [[X - 0.4, Y - 4.2], [X + 2, Y - 4.9], [X + 4.6, Y - 4.6], [X + 6.6, Y - 3.6]]) head.push(F(E(x + 0.2, y - 0.1 + bl * 0.5, 0.75, 0.42, stoneL)));
+  if (!dead) head.push(...cheek(X - 0.4, Y + 3, 1.3, { on: skin, lines: happy ? 2 : 0 }));
+  head.push(...snout(X + 9.3, Y + 1.2, { type: 'dot', r: 0.8, c: SK.deep }));
+
+  // Mouth: a long reptile smile along the snout; angry, a snarl of little teeth; the lunge opens
+  // it wide and the bite snaps it shut. Idle, a forked tongue flicks out to taste the air.
+  const mx = X + 6.2;
+  const my = Y + 4.4;
+  const mo = { s: 1, ink: '#3a5a32' };
   const gape = A && !dead && !hurt ? A.gape : 0;
   const tongue = idle && !dead && !hurt ? bump(p, 0.17, 0.2) : 0;
-  if (gape > 0) {
-    out.push(F(T([[X + 2.4, my - 1], [X + 9.6, my - 2.6], [X + 9.2, my + 2.8], [X + 3.6, my + 2.4]], MOUTH)), F(E(X + 6.2, my + 1.4, 1.8, 0.8, '#ff8fab')));
-    for (const t of [0.35, 0.7]) out.push(F(T([[X + 2.4 + 7 * t, my - 1 - 1.6 * t], [X + 3 + 7 * t, my + 0.4 - 1.6 * t], [X + 3.6 + 7 * t, my - 1.1 - 1.6 * t]], '#ffffff')), F(T([[X + 3.6 + 5.4 * t, my + 2.4 + 0.4 * t], [X + 4.2 + 5.4 * t, my + 1 + 0.4 * t], [X + 4.8 + 5.4 * t, my + 2.4 + 0.4 * t]], '#ffffff')));
-  } else if (gape < 0) {
-    out.push(...stroke([[X + 2.8, my], [X + 9.4, my - 0.6]], 0.6, INK), F(T([[X + 5, my - 0.3], [X + 5.6, my + 1.1], [X + 6.2, my - 0.4]], '#ffffff')), ...star(X + 8.2, my + 1.8, 1.8, '#fff2a8'));
-  } else if (angry) {
-    out.push(F(T([[X + 2.6, my - 0.6], [X + 9.6, my - 1.2], [X + 8.6, my + 2], [X + 4, my + 2.2]], MOUTH)));
-    out.push(F(T([[X + 4.4, my - 0.6], [X + 5.2, my + 0.9], [X + 6, my - 0.7]], '#ffffff')), F(T([[X + 7.2, my - 0.9], [X + 7.9, my + 0.5], [X + 8.6, my - 1]], '#ffffff')));
-  } else if (hurt) {
-    out.push(F(E(X + 6.4, my + 0.4, 1.3, 1.1, MOUTH)));
-  } else if (dead) {
-    out.push(...stroke([[X + 3.4, my + 0.6], [X + 9, my + 0.4]], 0.5, INK), F(ov(X + 6.4, my + 1.6, 0.9, 1.4, 10, '#ff8fa8')));
-  } else if (mood === 'happy') {
-    out.push(F(T([[X + 3.4, my - 0.4], [X + 9.2, my - 0.8], [X + 6.6, my + 1.8]], MOUTH)), F(E(X + 6.6, my + 1, 0.9, 0.5, '#ff9fb0')));
-  } else {
-    out.push(...stroke([[X + 3, my - 0.1], [X + 5.6, my + 0.5], [X + 9.2, my - 0.4]], 0.45, INK));
-  }
+  if (gape > 0) head.push(...mouth(mx, my - 0.4, { ...mo, type: 'shout', w: 3, h: 4, open: 1, teeth: 'both', fangs: 2 }));
+  else if (gape < 0) head.push(...mouth(mx, my, { ...mo, type: 'flat', w: 3, tilt: 0.3, fangs: 1, fangAt: 0.6 }));
+  else if (angry) head.push(...mouth(mx, my - 0.2, { ...mo, type: 'snarl', w: 2.8, h: 3, open: 1, teeth: 'top', fangs: 2, tongue: false }));
+  else if (hurt) head.push(...mouth(mx, my, { ...mo, type: 'pained', w: 2.2, h: 2, open: 1 }));
+  else if (dead) head.push(...mouth(mx, my, { ...mo, type: 'flat', w: 2.6, tongueOut: true, tongueLen: 1.6 }));
+  else if (happy) head.push(...mouth(mx, my - 0.3, { ...mo, type: 'grin', w: 2.6, h: 2.8, open: 1, teeth: 'none' }));
+  else head.push(...mouth(mx, my, { ...mo, type: 'smile', w: 2.8, curve: 0.3, tilt: 0.3 }));
   if (tongue > 0.2) {
     const tl = Math.min(1.4 + tongue * 1.6, (39.2 - X - 9.2) / 0.7);
-    out.push(...stroke([[X + 8.6, my - 0.2], [X + 8.6 + tl * 0.7, my + 0.3]], 0.55, '#ff7f9f'), ...stroke([[X + 8.6 + tl * 0.7, my + 0.3], [X + 9.2 + tl * 0.7, my - 0.3]], 0.4, '#ff7f9f'), ...stroke([[X + 8.6 + tl * 0.7, my + 0.3], [X + 9.2 + tl * 0.7, my + 0.9]], 0.4, '#ff7f9f'));
+    head.push(band([[X + 8.6, my - 0.2], [X + 8.6 + tl * 0.7, my + 0.3]], 0.67, '#ff7f9f'), band([[X + 8.6 + tl * 0.7, my + 0.3], [X + 9.2 + tl * 0.7, my - 0.3]], 0.5, '#ff7f9f'), band([[X + 8.6 + tl * 0.7, my + 0.3], [X + 9.2 + tl * 0.7, my + 0.9]], 0.5, '#ff7f9f'));
   }
-  if (hurt) out.push(F(E(37, 4, 0.8, 1.2, '#9fd8ff')));
+  if (angry) head.push(...vein(X - 2.6, Y - 1.4, 0.8));
+  if (hurt) head.push(...sweat(X - 3, Y - 3, 1), ...tear(eyeN[0] + 1.4, eyeN[1] + 1.8, 0.8, { type: 'stream', len: 2.2 }));
+  if (gape < 0) head.push(...star(X + 8.2, my + 1.8, 1.8, '#fff2a8'));
+  // The lunge's smear: the snout's path from where the head was to where it bites.
+  if (A && f === 1 && !dead) out.push(smear([[X - 6, Y - 4], [X - 1, Y - 1], [X + 5, Y + 2.4]], 4.4, mix(SK.hi, '#ffffff', 0.45)));
+  out.push(...spin(head, neck[0], neck[1], tilt));
   return { w: W, h: H, res: 3, shapes: shift(shift(out, ox, 0), 0, 2) };
 }
 
