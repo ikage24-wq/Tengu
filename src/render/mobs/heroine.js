@@ -13,9 +13,11 @@
 //
 // `look` describes the character (all optional except skin and eye.iris):
 //   k              scale (1 = queen-sized head, ~0.52 for a 14 px maiden head)
+//   lineK          stroke weight multiplier (default 1); small heads use ~1.5 so lashes, lids,
+//                  brows and lip lines keep their pixel weight when the head shrinks
 //   skin, skinSh, skinSh2   skin base and its two shadow tones (hue-shifted, not grey);
 //                  skinLt cheek/nose glint; blush, blushDk, blushK (blush size, 0 = none),
-//                  blushLines (always hatch the blush)
+//                  blushLines (always hatch the blush), blushN (hatch strokes, default 3)
 //   head           { chin: [x, y], cheek, jaw, neck: { x, w, top, bot } }   face outline
 //   bangs          [[x, y], ...] lower edge of the bangs, left to right: shadow on the forehead;
 //                  bangLine: a colour for a fine line along that edge (pale hair on pale skin)
@@ -36,7 +38,7 @@
 // 1 wide .. 0.6 half-lidded), inner (angry inner-lid drop, px), raise (lower lid pushed up, px),
 // gaze [dx, dy] (iris shift, in eye widths), iris and pupil (sizes), hot (angry iris colours),
 // brow { inner, outer, arch (px, + is down), w (weight) }, mouth 'smile'|'sly'|'smirk'|'calm'|
-// 'soft'|'shout'|'snarl'|'grit'|'grimace'|'gasp'|'grin'|'laugh'|'slack', blush (0..2), lines
+// 'soft'|'cat'|'shout'|'snarl'|'grit'|'grimace'|'gasp'|'grin'|'laugh'|'slack', blush (0..2), lines
 // (blush hatching), tear, sweat, vein (anger mark), knit (frown crease).
 //
 // Construction (3/4 view): the near eye is full width on the cheek toward the ear; the far eye is
@@ -150,12 +152,14 @@ function hull(pts) {
 // ---------- Drawing through the caller's transform ----------
 
 // A painter bound to one head: every shape goes through `at` and widths scale with k.
-function painter(at, k = 1) {
+function painter(at, k = 1, wk = 1) {
   const P = (x, y) => at(x * k, y * k);
   const out = [];
   const api = {
     out,
     P,
+    k,
+    wk,
     poly(pts, c, mode = 'f') {
       if (!pts || pts.length < 3) return;
       const s = T(pts.map(([x, y]) => P(x, y)), c);
@@ -179,7 +183,7 @@ function painter(at, k = 1) {
         const len = Math.hypot(dx, dy) || 1;
         dx /= len;
         dy /= len;
-        const w = Math.max(0.02, wf(i / (m - 1))) / 2;
+        const w = (Math.max(0.02, wf(i / (m - 1))) * wk) / 2;
         left.push([p[i][0] - dy * w, p[i][1] + dx * w]);
         right.push([p[i][0] + dy * w, p[i][1] - dx * w]);
       }
@@ -260,7 +264,7 @@ export function eyeGeom(e, x = MOODS.idle) {
 
 // One eye. e: { cx, cy, rx, ry, o, near (bool) }; x: the expression; look: the character.
 export function heroineEye(at, e, x, look = {}) {
-  const pen = painter(at, look.k ?? 1);
+  const pen = painter(at, look.k ?? 1, look.lineK ?? 1);
   drawEye(pen, e, x, look);
   return pen.out;
 }
@@ -332,8 +336,8 @@ function drawEye(pen, e, x, look) {
   const sz = x.iris ?? 1;
   const irx = rx * (e.near ? 0.58 : 0.55) * sz;
   const iry = ry * 1.02 * sz;
-  const ix = snap3(e.cx + gx * rx * 2 + 0.3 - (e.near ? 0 : o * rx * 0.06));
-  const iy = snap3(e.cy + gy * ry * 2 + ry * 0.12);
+  const ix = snap3(e.cx + gx * rx * 2 + 0.3 - (e.near ? 0 : o * rx * 0.06), pen.k);
+  const iy = snap3(e.cy + gy * ry * 2 + ry * 0.12, pen.k);
   const disc = clip(ell(ix, iy, irx, iry, 24), almond);
   if (disc.length > 2) {
     pen.poly(disc, iris);
@@ -372,8 +376,9 @@ function drawEye(pen, e, x, look) {
   }
 }
 
-// Third-pixel grid: anchors land on whole cells so a face rasterises the same in every frame.
-const snap3 = (v) => Math.round(v * 3) / 3;
+// Third-pixel grid: anchors land on whole cells so a face rasterises the same in every frame
+// (k: the head's scale, so the grid stays one sprite cell on a small head).
+const snap3 = (v, k = 1) => Math.round(v * 3 * k) / (3 * k);
 
 function closedEye(pen, e, x, g, { ink, lw, E, skin, sh2, lowerC }) {
   const { rx, ry, o, cx, cy } = e;
@@ -489,7 +494,7 @@ function headOutline(look) {
 
 export function heroineHead(at, mood, look) {
   const k = look.k ?? 1;
-  const pen = painter(at, k);
+  const pen = painter(at, k, look.lineK ?? 1);
   const x = expression(mood, look);
   const skin = look.skin;
   const sh = look.skinSh ?? mix(shade(skin, -9), '#d77f9a', 0.22);
@@ -535,9 +540,13 @@ export function heroineHead(at, mood, look) {
     pen.oval(far.cx + 1, by - 0.1, 1.5 * s, 0.9 * s, mix(skin, blush, 0.3 + 0.08 * bl));
     if (x.lines || look.blushLines) {
       const bd = look.blushDk ?? shade(blush, -16);
-      for (let i = 0; i < 3; i++) {
-        const hx = near.cx - 1.5 + i * 1.2;
-        pen.poly([[hx + 0.75, by - 0.55], [hx + 1.3, by - 0.55], [hx + 0.15, by + 0.6], [hx - 0.4, by + 0.6]], bd);
+      // Strokes keep their pixel weight on a small head (lineK), so fewer fit across the cheek.
+      const n = look.blushN ?? 3;
+      const sw = 0.55 * pen.wk;
+      const sp = 1.2 * pen.wk;
+      for (let i = 0; i < n; i++) {
+        const hx = near.cx - 0.3 + (i - (n - 1) / 2) * sp;
+        pen.poly([[hx + 0.75, by - 0.55], [hx + 0.75 + sw, by - 0.55], [hx - 0.4 + sw, by + 0.6], [hx - 0.4, by + 0.6]], bd);
       }
     }
   }
@@ -566,7 +575,7 @@ export function heroineHead(at, mood, look) {
 // The brows alone (and the fine line where the bangs meet the skin, look.bangLine). Draw them
 // after the hair when look.browsOnTop; they read through the bangs like ink through paper.
 export function heroineBrows(at, mood, look) {
-  const pen = painter(at, look.k ?? 1);
+  const pen = painter(at, look.k ?? 1, look.lineK ?? 1);
   const x = expression(mood, look);
   const B = look.brow ?? {};
   const c = B.c ?? mix(INK, look.skin, 0.25);
@@ -662,6 +671,14 @@ function mouth(pen, [mx, my], x, look, mood) {
     case 'calm':
       closed(0.15, 0.1, 0.1, 0.85);
       break;
+    case 'cat': {
+      // A cat's mouth: a little 'w' with the corners curled up, a fang peeking under it.
+      const pts = [[mx - wn * 0.95, my - 0.75], [mx - wn * 0.5, my + 0.35], [mx - 0.15, my - 0.15], [mx + wf * 0.4, my + 0.35], [mx + wf * 0.95, my - 0.6]];
+      pen.swell([[mx - wn * 0.45, my + 0.55], [mx - 0.1, my + 0.95], [mx + wf * 0.45, my + 0.55]], 0.7, mix(lip, look.skin, 0.25));
+      pen.strip(spline(pts, 3), (t) => 0.55 * (t < 0.12 ? 0.5 + t * 4 : t > 0.88 ? lerp(1, 0.5, (t - 0.88) / 0.12) : 1), ln, { n: 1 });
+      if (look.fang === 'always') pen.poly([[mx - wn * 0.62, my + 0.3], [mx - wn * 0.2, my + 0.25], [mx - wn * 0.42, my + 1.2]], teeth);
+      break;
+    }
     case 'soft':
       closed(0.45, 0.35, 0.3, 0.9);
       break;
@@ -718,7 +735,7 @@ function tear(pen, x, y, s, look) {
 // Things that sit over the hair: a sweat drop on the temple (hurt), an anger mark (angry, if
 // look.vein), drawn after the hair.
 export function heroineTop(at, mood, look) {
-  const pen = painter(at, look.k ?? 1);
+  const pen = painter(at, look.k ?? 1, look.lineK ?? 1);
   const x = expression(mood, look);
   if (x.sweat) {
     const [sx, sy] = look.sweatAt ?? [14.2, -3];
