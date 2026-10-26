@@ -14,13 +14,13 @@
 // and the bangs flutter at their tips.
 //
 // Coordinates are the hero's head space: skull centre (15.5, 14.6), facing right, chin near y 25.
-import { E, T, F } from './pixel.js';
+import { R, E, T, F } from './pixel.js';
 
 const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -313,6 +313,8 @@ const FRINGES = {
   swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[22.6, 2.6], [24.6, 6.6]] },
   // Parted in the middle, curving apart to open a triangle of forehead.
   part: { pts: [[23.4, 15.2], [21.8, 12.4], [20.2, 14.2], [18.2, 11.2], [16.4, 10.2], [HX, 9.4], [14.6, 10.2], [12.8, 11.2], [10.8, 14.2], [9.2, 12.4], [7.6, 15.2]], lean: 0, part: [[HX, 2.2], [HX, 8.6]], softTips: true, noCrease: true },
+  // Hime: one heavy, perfectly straight line low on the brow, no notches.
+  hime: { pts: [[24.4, 15.6], [6.6, 15.6]], lean: 0, blunt: true, noCrease: true },
   // Short and choppy, high on the brow.
   short: { pts: [[23, 12.4], [21.4, 10.2], [19.6, 13], [17.6, 10.4], [15.2, 13.4], [13.2, 10.6], [11, 13], [9.2, 10.6], [7.6, 12.4]], lean: 0.5 },
   // Jagged spikes of every length, one long between the eyes.
@@ -451,6 +453,19 @@ const STYLES = {
     };
   },
 
+  // Hime cut: blunt bangs, side locks cut level at the chin, long straight hair cut level.
+  hime(r, m) {
+    const side = (dir) => {
+      const p = [[24, 10], [27.2, 10.6], [27.4, 25.4, 1], [21.8, 25.4, 1], [21.8, 15]];
+      return mass(dir > 0 ? p : fx(p), r.base, m, 0.6);
+    };
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r), ...sheet({ len: 42, flare: 12.6, ends: 'level', n: 3 }, r, m, 0.8)],
+      front: bangs('hime', r, m, [side(1), side(-1), F(R(21.8, 15.6, 0.7, 9.8, r.sh2)), F(R(8.5, 15.6, 0.7, 9.8, r.sh2))]),
+      tips: [33, 38],
+    };
+  },
 };
 
 // ---------- Two-tone ----------
