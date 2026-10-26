@@ -1,0 +1,63 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Monster gallery</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; image-rendering: pixelated; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: renders every frame and mood of a group's monster art at 3x, next to a hero for scale.
+// Open /tools/mob-gallery.html?group=meadow (or wilds, ruins, sky, hollow, bosses); &keys=a,b
+// limits it to some designs; &bg=%23hex sets the background.
+import { setHd, sprite, blit } from '../src/render/pixel.js';
+import { drawHero } from '../src/render/hero.js';
+
+const q = new URLSearchParams(location.search);
+const group = q.get('group') ?? 'meadow';
+const S = 3;
+setHd(true, S);
+const { ART } = await import(`../src/render/mobs/${group}.js`);
+const keys = (q.get('keys') ?? Object.keys(ART).join(',')).split(',').filter((k) => ART[k]);
+const MOODS = ['idle', 'angry', 'hurt', 'dead', 'blink', 'happy'];
+const spr = (k, pose, f, mood) => sprite(`gal|${k}|${pose}${f}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, ...ART[k].draw(pose, f, mood) }));
+const rows = [];
+let H = 10;
+let W = 0;
+for (const k of keys) {
+  const a = ART[k];
+  const walk = Array.from({ length: a.walk ?? 4 }, (_, f) => spr(k, 'walk', f, 'idle'));
+  const idle = Array.from({ length: a.idle ?? 2 }, (_, f) => spr(k, 'idle', f, 'idle'));
+  const moods = MOODS.map((m) => spr(k, 'walk', 0, m));
+  const tall = Math.max(60, ...walk.map((s) => s.h)) + 22;
+  const wide = 50 + [...walk, ...idle, ...moods].reduce((n, s) => n + s.w + 10, 0) + 40;
+  rows.push({ k, walk, idle, moods, y: H, tall });
+  H += tall;
+  W = Math.max(W, wide);
+}
+const c = document.getElementById('c');
+c.width = W * S;
+c.height = H * S;
+const ctx = c.getContext('2d');
+ctx.setTransform(S, 0, 0, S, 0, 0);
+ctx.imageSmoothingEnabled = false;
+ctx.fillStyle = q.get('bg') ?? '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+ctx.font = 'bold 7px sans-serif';
+for (const r of rows) {
+  const base = r.y + r.tall - 8;
+  ctx.fillStyle = 'rgba(58,45,79,0.15)';
+  ctx.fillRect(0, base, W, 1);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillText(r.k, 4, r.y + 9);
+  drawHero(ctx, { hairStyle: 'bob', hairColor: '#ff9ec0', skinTone: '#fbd9bf', eyeColor: '#5aa8ff', outfitColor: '#c9a6ff', eyeStyle: 'round', face: 'smile' }, null, 22, base, { pose: 'idle', time: 0 });
+  let x = 50;
+  const put = (s, label) => {
+    blit(ctx, s, x, base - s.h);
+    ctx.fillStyle = '#8f7cc4';
+    ctx.fillText(label, x, r.y + 9);
+    x += s.w + 10;
+  };
+  r.walk.forEach((s, i) => put(s, `walk ${i}`));
+  r.idle.forEach((s, i) => put(s, `idle ${i}`));
+  r.moods.forEach((s, i) => put(s, MOODS[i]));
+}
+document.title = 'ready';
+</script>
