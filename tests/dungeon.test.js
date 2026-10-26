@@ -182,6 +182,7 @@ test("a mage's support skills heal, shield, and revive the group", async () => {
   const ready = () => {
     world.attackTimer = 0;
     world.lockTimer = 0;
+    world.skillReadyAt = 0;
   };
   // Mend: everyone around you gets HP back.
   for (const g of bots) g.bot.hp = Math.round(g.bot.stats.maxHp / 2);
@@ -226,6 +227,7 @@ test("a warrior's tank skills: Provoke, Chain Hook, Shield Wall", async () => {
   const ready = () => {
     world.attackTimer = 0;
     world.lockTimer = 0;
+    world.skillReadyAt = 0;
   };
   // Out in the field, the hook drags a monster in front of you over to you.
   loadMap(world, 'woods', 'west');

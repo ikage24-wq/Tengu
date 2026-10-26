@@ -82,6 +82,7 @@ test('finishers and launchers knock monsters up into the air', () => {
   const hits = (id) => {
     w.attackTimer = 0;
     w.lockTimer = 0;
+    w.skillReadyAt = 0;
     assert.ok(cast(w, id).ok);
   };
   hits('powerslash'); // cross-cut
@@ -169,6 +170,7 @@ test("the archer's skills: Rapid Fire, Arrow Fan, Arrow Rain, Backflip Shot", ()
   const go = (id) => {
     w.attackTimer = 0;
     w.lockTimer = 0;
+    w.skillReadyAt = 0;
     w.recoverAt = null;
     assert.ok(cast(w, id).ok, id);
   };
@@ -190,4 +192,23 @@ test("the archer's skills: Rapid Fire, Arrow Fan, Arrow Rain, Backflip Shot", ()
   assert.ok(w.invuln > 0, 'untouchable mid-flip');
   run(w, 0.5);
   assert.ok(w.body.x < x - 60, 'flipped back');
+});
+
+test("skills can't be spammed back to back, even by moving, but basic attacks still flow into them", () => {
+  const w = range();
+  Object.assign(w.char.skills, { scattershot: 10, arrowrain: 10 });
+  w.char.mp = 9999;
+  assert.ok(cast(w, 'scattershot').ok);
+  run(w, 0.4);
+  assert.equal(cast(w, 'arrowrain').reason, 'busy', 'the fan is still being loosed');
+  const left = { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false };
+  for (let i = 0; i < 3; i++) updateWorld(w, DT, left);
+  assert.equal(cast(w, 'arrowrain').reason, 'busy', 'walking cuts the follow-through, not the wait');
+  run(w, 0.4);
+  assert.ok(cast(w, 'arrowrain').ok, 'free once the motion is done');
+  // A basic shot flows straight into a skill once its arrow is away.
+  run(w, 1.5);
+  updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
+  run(w, 0.25);
+  assert.ok(cast(w, 'scattershot').ok, 'weaved in after the arrow left');
 });

@@ -59,8 +59,10 @@ export function pickTargets(mobs, body, range, targets) {
     .slice(0, targets);
 }
 
-// Once a move's blows have landed it can be cut short (see `recovering`): a skill can go off right
-// away, and so can a basic attack after a skill, but basic attacks keep their own rhythm.
+// Once a move's blows have landed it can be cut short (see `recovering`): walking or jumping ends
+// it, a basic attack can flow straight into a skill, and a skill into a basic attack. But every
+// skill plays out its own motion before the next skill can start (moving doesn't skip that), and
+// basic attacks keep their own rhythm.
 export function recovering(world) {
   return world.recoverAt != null && world.now >= world.recoverAt;
 }
@@ -69,9 +71,10 @@ export function recovering(world) {
 export function castBlocker(world, skillId) {
   const { char, stats } = world;
   if (world.attackTimer > 0 || world.lockTimer > 0) {
-    if (!recovering(world) || (!skillId && world.recoverKind === 'basic')) return 'busy';
+    if (!recovering(world) || world.recoverKind === (skillId ? 'skill' : 'basic')) return 'busy';
   }
   if (!skillId && world.now < (world.basicReadyAt ?? 0)) return 'busy';
+  if (skillId && world.now < (world.skillReadyAt ?? 0)) return 'busy';
   if (!skillId) return null;
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
@@ -129,6 +132,7 @@ export function cast(world, skillId, rng = Math.random) {
   world.recoverAt = now + (lock || (s ? poseDur * 0.55 : Math.min(0.2, world.attackTimer)));
   world.recoverKind = s ? 'skill' : 'basic';
   if (!s) world.basicReadyAt = now + world.attackTimer;
+  else world.skillReadyAt = now + Math.max(world.attackTimer, world.lockTimer, poseDur * 0.8);
   // Spells glow with a magic circle at your feet in their school's color; big weapon skills
   // flare with a burst of power instead.
   const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';

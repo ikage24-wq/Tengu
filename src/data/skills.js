@@ -208,13 +208,13 @@ export const SKILLS = {
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const quick = (at) => ({ at, shot: 'arrow', pct: k(55, 90), range: 310, h: 60, knock: 20, speed: 820 });
+      const quick = (at) => ({ at, shot: 'arrow', pct: k(45, 75), range: 310, h: 60, knock: 20, speed: 820 });
       return {
-        mp: k(4, 10), pct: k(55, 90), hits: 7, targets: 1,
+        mp: k(5, 11), pct: k(45, 75), hits: 7, targets: 1,
         combo: [
-          { move: 'rapid', dur: 0.42, step: -2, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
-          { move: 'rapid', dur: 0.42, step: -12, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
-          { move: 'aimshot', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: k(180, 300), range: 360, h: 64, targets: k(3, 6), pierce: true, speed: 950, knock: 230, launch: 150, big: true, stop: 0.07, shake: 2 }] },
+          { move: 'rapid', dur: 0.52, step: -2, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
+          { move: 'rapid', dur: 0.52, step: -12, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
+          { move: 'aimshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: k(180, 300), range: 360, h: 64, targets: k(3, 6), pierce: true, speed: 950, knock: 230, launch: 150, big: true, stop: 0.07, shake: 2 }] },
         ],
       };
     },
@@ -227,7 +227,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 22), pct: k(100, 170), hits: 1, targets: k(3, 6),
-        combo: [{ move: 'draw', dur: 0.5, step: -6, strikes: [{ at: 0.6, shot: 'arrow', fan: k(3, 6), pct: k(100, 170), range: 300, h: 150, knock: 90, speed: 780 }] }],
+        combo: [{ move: 'draw', dur: 0.62, step: -6, strikes: [{ at: 0.6, shot: 'arrow', fan: k(3, 6), pct: k(100, 170), range: 300, h: 150, knock: 90, speed: 780 }] }],
       };
     },
   }),
@@ -239,7 +239,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(16, 32), pct: k(60, 100), hits: k(8, 14), targets: 6,
-        combo: [{ move: 'skyshot', dur: 0.55, step: -4, strikes: [{ at: 0.58, rain: k(8, 14), pct: k(60, 100), rainFrom: 60, rainW: 280, span: 0.7, knock: 20 }] }],
+        combo: [{ move: 'skyshot', dur: 0.75, step: -4, finisher: true, strikes: [{ at: 0.58, rain: k(8, 14), pct: k(60, 100), rainFrom: 60, rainW: 280, span: 0.7, knock: 20 }] }],
       };
     },
   }),

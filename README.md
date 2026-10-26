@@ -104,10 +104,11 @@ to clear it.
   once, one per monster. **Arrow Rain** shoots a volley into the sky that pours down on everything
   ahead. **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread
   of arrows at whatever was on you.
-- **Smooth controls** — once a move's blows have landed, walking or jumping cuts its follow-through
-  short, and any skill can cut in right away (so you can weave Blade Rush into a sword combo);
-  ranged and magic attacks let you move again a moment after they fire. Skills pressed mid-swing
-  go off the moment they can.
+- **Smooth controls** — once a move's blows have landed (or its arrows are away), walking or
+  jumping cuts its follow-through short, and a basic attack can flow straight into a skill (so you
+  can weave Blade Rush into a sword combo). Each skill plays out its own motion before another
+  skill can start, though, and moving doesn't skip that, so skills can't be spammed back to back.
+  Skills pressed mid-swing go off the moment they can.
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings). Everything you
   wear shows on your character. Every job has its own set **every 5 levels, from 5 to 100**, in
   every armor slot, and each set looks a step grander than the one before:

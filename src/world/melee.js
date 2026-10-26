@@ -101,7 +101,9 @@ function playStep(world, step, scale, key, school = null) {
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
   const dur = step.dur * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
-  const busy = dur * (step.finisher ? 0.92 : CANCEL);
+  // Shots need the whole draw and loose, so they hold you a little longer than a cut.
+  const ranged = step.strikes.some((s) => s.shot || s.rain);
+  const busy = dur * (step.finisher ? 0.92 : ranged ? 0.86 : CANCEL);
   world.attackTimer = busy;
   world.lockTimer = Math.max(world.lockTimer ?? 0, busy);
   world.pose = { kind: step.move, t: dur, dur };
@@ -109,7 +111,8 @@ function playStep(world, step, scale, key, school = null) {
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + step.strikes.at(-1).at * dur + 0.03;
   world.recoverKind = key.startsWith('basic') ? 'basic' : 'skill';
-  world.basicReadyAt = key.startsWith('basic') ? now + busy : now;
+  if (key.startsWith('basic')) world.basicReadyAt = now + busy;
+  else world.skillReadyAt = now + busy;
   // Step into it (or hop back from it): carried until the first strike lands (or through `carry`).
   const first = (step.carry ?? step.strikes[0].at) * dur;
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
