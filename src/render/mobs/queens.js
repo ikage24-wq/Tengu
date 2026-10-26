@@ -11,7 +11,8 @@
 // stack (`within`) so a torso, a head, or an arm can tilt as one piece. All face right, feet at
 // the bottom.
 
-import { E, T, F, C, L, INK, BLUSH, shade, mix } from './kit.js';
+import { E, T, F, C, L, INK, shade, mix } from './kit.js';
+import { heroineHead, heroineBrows, heroineTop } from './heroine.js';
 
 const TAU = Math.PI * 2;
 const PI = Math.PI;
@@ -259,175 +260,22 @@ function hand(x, y, a, skin, dk, open = 0) {
 
 // ---------- Faces ----------
 
-// A queen's eye. Every queen passes her own look:
-//   tilt   how far the outer corner lifts (fox eyes are high), as a fraction of ry
-//   heavy  how far the upper lid rests down (0 open, 0.5 half-lidded)
-//   pupil  'round', 'slit', or 'heart'
-//   wing   eyeliner wing length (x rx); liner: a second colored liner (kitsune red)
-//   lashes number of upper lash flicks; leafLash: lashes drawn as tiny leaves of that color
-// `s` is +1 for the near eye (toward the front), -1 for the far one. `skin` paints the lids.
-function ladyEye(ex, ey, rx, ry, mood, o) {
-  const s = o.s ?? 1;
-  const ink = o.ink ?? INK;
-  const out = [];
-  const tilt = o.tilt ?? 0.15;
-  const ci = [ex - s * rx, ey + ry * 0.12];
-  const co = [ex + s * rx * 1.05, ey - ry * tilt];
-  const at = (t, k) => [lerp(ci[0], co[0], t), lerp(ci[1], co[1], t) + k * Math.sin(PI * t ** 0.9)];
-  const th = Math.max(0.7, ry * 0.26);
-  const N = 8;
-  const closed = (k, lash) => {
-    const pts = Array.from({ length: N + 1 }, (_, i) => at(i / N, ry * k));
-    out.push(taper(pts, th * 0.6, th * 1.25, ink, { n: 2, flat: true }));
-    if (lash) {
-      for (let j = 0; j < 2; j++) {
-        const [x, y] = at(0.78 + j * 0.2, ry * k);
-        out.push(line([[x, y], [x + s * 1.1, y + 1.1 + j * 0.3]], 0.5, ink));
-      }
-    }
+// A queen's head and face come from the heroine kit (heroine.js), drawn in the head's own space
+// around (hx, hy) through the current transform, so the face follows every tilt of the head.
+// The hair goes on top; then queenTop adds the brows (they show through the bangs) and any sweat.
+const headAt = (hx, hy) => {
+  const Xh = X;
+  // Snap the head's origin to the cell grid so the features rasterise alike in every frame.
+  const [ox, oy] = Xh(hx, hy);
+  const dx = Math.round(ox * 3) / 3 - ox;
+  const dy = Math.round(oy * 3) / 3 - oy;
+  return (x, y) => {
+    const [px, py] = Xh(hx + x, hy + y);
+    return [px + dx, py + dy];
   };
-  if (mood === 'blink') {
-    closed(0.42, true);
-    return out;
-  }
-  if (mood === 'dead') {
-    closed(0.36, false);
-    out.push(line([at(0.3, ry * 0.9), at(0.7, ry * 0.9)], 0.4, mix(o.skin, ink, 0.25)));
-    return out;
-  }
-  if (mood === 'hurt') {
-    out.push(taper([[ex + s * rx * 0.95, ey - ry * 0.7], [ex - s * rx * 0.75, ey], [ex + s * rx * 0.95, ey + ry * 0.55]], th * 1.2, th * 0.7, ink, { flat: true }));
-    return out;
-  }
-  const angry = mood === 'angry';
-  const smug = mood === 'happy';
-  // The lid line: 1 follows the open upper arc, 0 is a flat line across, below 0 dips.
-  let k = 1 - 2 * (o.heavy ?? 0);
-  if (smug) k = Math.min(k, 0.1);
-  let inner = 0;
-  if (angry) {
-    k = Math.min(k, 0.75);
-    inner = 0.55;
-  }
-  const lid = (t) => {
-    const [x, y] = at(t, -ry * k);
-    return [x, y + ry * inner * (1 - t) ** 1.6];
-  };
-  const up = Array.from({ length: N + 1 }, (_, i) => at(i / N, -ry));
-  const lo = Array.from({ length: N + 1 }, (_, i) => at(i / N, ry * 0.82));
-  // Eyeshadow above the lid.
-  if (o.shadow) out.push(fpoly([...Array.from({ length: N + 1 }, (_, i) => lid(i / N)), ...Array.from({ length: N + 1 }, (_, i) => { const [x, y] = lid(1 - i / N); return [x, y - ry * 0.75 * Math.sin(PI * (1 - i / N)) - 0.4]; })], o.shadow));
-  out.push(fpoly([...up, ...lo.slice().reverse()], o.white ?? '#ffffff'));
-  // The iris: a dark rim, the color, a lit lower crescent, the pupil, and shines.
-  const ic = angry ? o.hot ?? o.iris : o.iris;
-  const look = smug ? 0.32 : 0.18;
-  const ix = ex + s * rx * look + (s < 0 ? rx * 0.12 : 0);
-  const iy = ey + ry * 0.04;
-  const ir = Math.min(rx * 0.7, ry * 1.05);
-  const iry = Math.max(ir, ry * 0.95);
-  out.push(foval(ix, iy, ir, iry, shade(ic, -28)), foval(ix, iy + iry * 0.06, ir * 0.82, iry * 0.84, ic), foval(ix, iy + iry * 0.42, ir * 0.62, iry * 0.4, mix(ic, '#ffffff', 0.5)));
-  const pc = o.pupilC ?? shade(ic, -55);
-  if (o.pupil === 'slit') out.push(foval(ix, iy, ir * 0.17, iry * (angry ? 0.8 : 0.66), pc));
-  else if (o.pupil === 'heart') out.push(heart(ix, iy - 0.1, ir * (angry ? 0.42 : 0.5), angry ? '#ffe6f2' : pc));
-  else out.push(foval(ix, iy, ir * (angry ? 0.3 : 0.4), iry * (angry ? 0.34 : 0.44), pc));
-  out.push(dot(ix - ir * 0.32, iy - iry * 0.36, Math.max(0.55, ir * 0.3), '#ffffff'), dot(ix + ir * 0.3, iy + iry * 0.36, Math.max(0.35, ir * 0.13), '#ffffff'));
-  // Skin above the lid and below the lower lid crops the iris to the almond.
-  const lidPts = Array.from({ length: N + 1 }, (_, i) => lid(i / N));
-  out.push(lpoly([[ci[0] - s * 0.3, ci[1]], ...lidPts, [co[0] + s * 0.5, co[1]], [co[0] + s * 0.5, ey - ry * 2.1], [ci[0] - s * 0.3, ey - ry * 2.1]], o.shadow ?? o.skin));
-  out.push(lpoly([[ci[0] - s * 0.4, ci[1] - 0.2], ...lo, [co[0] + s * 0.6, co[1] - 0.2], [co[0] + s * 0.6, ey + ry * 1.9], [ci[0] - s * 0.4, ey + ry * 1.9]], o.skin));
-  // The lash line, thick toward the outer corner, swept into a wing.
-  const wing = o.wing ?? 0.5;
-  const wtip = [co[0] + s * rx * wing, co[1] - ry * (0.35 + tilt * 0.6)];
-  out.push(strip([...lidPts, wtip], (t) => lerp(0.5, th * 1.5, Math.min(1, t * 1.25)) * (t > 0.92 ? 0.6 : 1), ink, { n: 2, flat: true }));
-  if (o.liner) out.push(taper([[co[0] - s * rx * 0.2, co[1] + ry * 0.35], [co[0] + s * rx * 0.5, co[1] - ry * 0.05], [co[0] + s * rx * (wing + 0.75), co[1] - ry * (0.6 + tilt)]], 1, 0.3, o.liner, { flat: true, n: 3 }));
-  const nl = o.lashes ?? 2;
-  for (let j = 0; j < nl; j++) {
-    const t = 0.62 + (j / Math.max(1, nl - 1)) * 0.36;
-    const [x, y] = lid(t);
-    const ln = (o.lashLen ?? 1.6) * (0.75 + 0.25 * j);
-    if (o.leafLash) out.push(...leaf(x, y - 0.3, -PI / 2 + s * (0.5 + j * 0.35), ln + 0.6, 1.2, o.leafLash));
-    else out.push(taper([[x, y], [x + s * ln * 0.55, y - ln * 0.6], [x + s * ln, y - ln * 0.7]], 0.6, 0.25, ink, { flat: true, n: 2 }));
-  }
-  // A soft lower lash at the outer corner.
-  out.push(line(lo.slice(5).map(([x, y]) => [x, y + 0.2]), 0.42, o.lower ?? mix(ink, o.skin, 0.35)));
-  return out;
-}
-
-// Brows: `kind` 'arch' (thin and high), 'straight' (a steady line), 'short' (soft and small).
-function brow(ex, ey, rx, ry, mood, s, c, kind = 'arch') {
-  if (mood === 'dead') return [];
-  let iy = 0;
-  let oy = 0;
-  if (mood === 'angry') {
-    iy = 2;
-    oy = -0.6;
-  }
-  if (mood === 'hurt') iy = -1.6;
-  if (mood === 'happy') oy = -0.4;
-  const y0 = ey - ry - (kind === 'straight' ? 2 : 2.6);
-  const pts = kind === 'straight'
-    ? [[ex - s * rx * 1.05, y0 + 0.4 + iy], [ex + s * rx * 0.2, y0 - 0.3 + iy * 0.4], [ex + s * rx * 1.25, y0 + 0.2 + oy]]
-    : kind === 'short'
-      ? [[ex - s * rx * 0.6, y0 + iy], [ex + s * rx * 0.2, y0 - 0.9 + iy * 0.4], [ex + s * rx * 0.9, y0 - 0.2 + oy]]
-      : [[ex - s * rx * 0.95, y0 + 0.5 + iy], [ex + s * rx * 0.1, y0 - 1.3 + iy * 0.4], [ex + s * rx * 1.3, y0 + 0.4 + oy]];
-  return [taper(pts, 0.8, 0.45, c, { flat: true, n: 3 })];
-}
-
-// Lips at (mx, my). `fang` adds a small fang when snarling.
-function lips(mx, my, mood, o) {
-  const out = [];
-  const lip = o.lip;
-  const dk = shade(lip, -24);
-  switch (mood) {
-    case 'angry':
-      out.push(fpoly([[mx - 2.6, my - 0.6], [mx + 2.4, my - 1], [mx + 1.8, my + 2], [mx - 1.6, my + 2.2]], '#7a2440'));
-      out.push(fpoly([[mx - 2.2, my - 0.5], [mx + 2, my - 0.8], [mx + 1.6, my + 0.3], [mx - 1.8, my + 0.4]], '#ffffff'));
-      if (o.fang) out.push(fpoly([[mx + 0.6, my + 0.2], [mx + 1.6, my + 0.1], [mx + 1, my + 1.4]], '#ffffff'));
-      out.push(line([[mx - 2.8, my - 0.7], [mx + 2.6, my - 1.1]], 0.55, dk), foval(mx, my + 2.4, 1.6, 0.55, lip));
-      break;
-    case 'hurt':
-      out.push(foval(mx, my + 0.6, 1.3, 1.1, '#7a2440'), foval(mx, my + 1.2, 0.8, 0.45, '#ff8fb0'));
-      break;
-    case 'dead':
-      out.push(line([[mx - 1.6, my + 0.4], [mx, my + 0.8], [mx + 1.4, my + 0.3]], 0.55, dk, 3));
-      break;
-    case 'happy':
-      out.push(foval(mx - 0.1, my + 0.75, 1.6, 0.7, lip), line([[mx - 2.4, my - 0.5], [mx - 0.6, my + 0.5], [mx + 1.4, my + 0.2], [mx + 2.6, my - 1.1]], 0.6, dk, 3));
-      break;
-    default:
-      out.push(foval(mx, my + 0.75, 1.4, 0.65, lip), line([[mx - 1.9, my], [mx - 0.2, my + 0.3], [mx + 1.6, my - 0.2]], 0.55, dk, 3));
-      if (o.smirk) out.push(line([[mx + 1.4, my - 0.1], [mx + 2.3, my - 0.9]], 0.5, dk));
-  }
-  return out;
-}
-
-// A queen's head: a soft rounded skull with the chin toward the front, then her eyes and lips.
-// The eyes come from her own `eye` options, sized by o.er (rx, ry of the near eye).
-function ladyHead(hx, hy, mood, o) {
-  const out = [];
-  const skin = o.skin;
-  const dk = o.skinDk;
-  // Neck and the face mass.
-  out.push(L(taper([[hx - 1, hy + 9], [hx - 1.5, hy + 18]], 7.4, 7, dk, { n: 1 })), L(taper([[hx - 0.4, hy + 9], [hx - 0.8, hy + 18]], 5.6, 5.4, skin, { n: 1 })));
-  out.push(L(oval(hx, hy, 13.5, 13.6, skin, 0, 30)));
-  out.push(lpoly([[hx - 11, hy + 3], [hx - 7.5, hy + 10.5], [hx - 1, hy + 14.2], [hx + 5.2, hy + 15.6], [hx + 9.2, hy + 14.6], [hx + 12.6, hy + 9.5], [hx + 13.6, hy + 2], [hx, hy]], skin));
-  // Jaw shade on the back of the cheek, under the hair.
-  out.push(F(poly([[hx - 10, hy + 4], [hx - 6.5, hy + 10.4], [hx - 2, hy + 13.2], [hx - 4, hy + 7]], mix(skin, dk, 0.6))));
-  const [rx, ry] = o.er;
-  const ey = hy + (o.eyeY ?? 4.4);
-  const e1 = hx - 0.4;
-  const e2 = hx + 8.2;
-  const eo = { skin, ...o.eye };
-  out.push(...ladyEye(e1, ey, rx * 0.82, ry * 0.95, mood, { ...eo, s: -1, lashes: Math.max(1, (eo.lashes ?? 2) - 1), wing: (eo.wing ?? 0.5) * 0.6 }));
-  out.push(...ladyEye(e2, ey, rx, ry, mood, { ...eo, s: 1 }));
-  out.push(...brow(e1, ey, rx * 0.82, ry * 0.95, mood, -1, o.browC, o.brow), ...brow(e2, ey, rx, ry, mood, 1, o.browC, o.brow));
-  // Nose, a soft blush, and the lips.
-  out.push(line([[hx + 12.8, hy + 6.4], [hx + 13.3, hy + 7.8], [hx + 12.6, hy + 8.4]], 0.5, mix(dk, INK, 0.25), 2));
-  if (mood !== 'dead') out.push(dot(e1 - 0.4, ey + ry + 1.8, 2.2, o.blush ?? BLUSH, 0.85), dot(e2 + 0.8, ey + ry + 1.8, 2.4, o.blush ?? BLUSH, 0.95));
-  out.push(...lips(hx + 8.8, hy + 11.2, mood, o));
-  if (o.mole && mood !== 'dead') out.push(dot(e2 + 2.6, ey + ry + 2.6, 0.45, '#6a3a5c'));
-  return out;
-}
+};
+const queenHead = (hx, hy, mood, look) => heroineHead(headAt(hx, hy), mood, { ...look, browsOnTop: true });
+const queenTop = (hx, hy, mood, look) => [...heroineBrows(headAt(hx, hy), mood, look), ...heroineTop(headAt(hx, hy), mood, look)];
 
 // ---------- Shared motion ----------
 
@@ -456,6 +304,17 @@ const K = {
 };
 const FIRE = [K.fire, K.fire2, K.fire3];
 const FIRE_HOT = ['#8c74ff', '#c4b4ff', '#ffffff'];
+
+// Tamamo's face: serene, regal fox eyes lifted at the corners, a red liner wing, slit pupils,
+// and a sly half-smile; she bares a fang only when roused.
+const TAMAMO_FACE = {
+  skin: K.skin, skinSh: '#f8d0ca', skinSh2: '#e6a6ab', blush: '#ff9fb2', lip: '#e2486c', lipLine: '#a8344f',
+  bangs: [[-8, 4], [-5, -1.6], [3, -2.2], [14.2, -2.2]], bangLine: '#d9a85e',
+  eye: { ry: 2.75, iris: '#ffa21f', irisDk: '#a8420e', irisLt: '#ffe27a', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#4a1608', tilt: 0.62, wing: 2, flicks: 2, lashLen: 1.3, liner: '#e0283f', shadow: '#ffd0d6', lowerLash: '#c86478', ink: '#3a1a1c' },
+  brow: { c: '#c4823f', kind: 'soft', w: 0.75 },
+  fang: 'angry',
+  moods: { idle: { open: 0.85, mouth: 'sly' }, angry: { mouth: 'snarl', pupil: 0.55 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
+};
 
 function tamamo(pose, f, mood) {
   const W = 164;
@@ -676,11 +535,7 @@ function tamamo(pose, f, mood) {
         for (let k = 0; k < 3; k++) out.push(line([[ex - 2 + k * 1.6, ey + 0.6], [ex - 1.6 + k * 1.3 + Math.sin(ph + k) * 0.4, ey - 4.6 - k]], 0.7, K.tip));
       });
     ear(hx - 7, hy - 9, -0.45, 0.92);
-    out.push(...ladyHead(hx, hy, mood, {
-      skin: K.skin, skinDk: K.skinDk, er: [3.4, 2.5], eyeY: 4.6, browC: K.hairDk, brow: 'short', lip: K.lip, blush: '#ffb0c4',
-      eye: { iris: '#ffb43c', hot: '#ff3d63', pupil: 'slit', pupilC: '#7a2a1a', tilt: 0.75, wing: 0.7, liner: K.crimson, lashes: 2, lashLen: 1.3, shadow: '#ffd9df', lower: '#d06a7a' },
-      fang: true, smirk: true,
-    }));
+    out.push(...queenHead(hx, hy, mood, TAMAMO_FACE));
     // Hime-cut hair: a smooth crown, straight-cut bangs, and long side locks cut at the chin.
     out.push(C(poly([[hx - 14.8, hy + 4], [hx - 15, hy - 6], [hx - 10, hy - 14.4], [hx, hy - 16.4], [hx + 9, hy - 14], [hx + 14.6, hy - 6], [hx + 15, hy - 1.4], [hx + 3, hy - 1.2], [hx - 5, hy - 0.6], [hx - 8, hy + 6]], K.hairDk)));
     out.push(C(poly([[hx - 13.8, hy + 2], [hx - 14, hy - 6], [hx - 9.4, hy - 13.4], [hx, hy - 15.2], [hx + 8.6, hy - 13], [hx + 13.8, hy - 6], [hx + 14.2, hy - 2.2], [hx + 3, hy - 2.2], [hx - 5, hy - 1.6], [hx - 8, hy + 4]], K.hair)));
@@ -689,6 +544,7 @@ function tamamo(pose, f, mood) {
     const sl = swing * 0.25;
     out.push(C(poly([[hx - 9, hy - 2], [hx - 2.6, hy - 2], [hx - 2.2 + sl, hy + 15.4], [hx - 9.6 + sl, hy + 15.4]], K.hairDk)), C(poly([[hx - 8.4, hy - 2], [hx - 3.2, hy - 2], [hx - 2.9 + sl, hy + 14.8], [hx - 8.9 + sl, hy + 14.8]], K.hair)));
     out.push(line([[hx - 6, hy + 1], [hx - 5.8 + sl, hy + 13]], 0.6, K.hairLt));
+    out.push(...queenTop(hx, hy, mood, TAMAMO_FACE));
     ear(hx + 4.5, hy - 11.5, 0.12, 1);
     // Kanzashi crown: a gold sunburst tiara, a crimson peony, and swinging gold chains.
     const cy0 = hy - 14.6;
@@ -790,6 +646,16 @@ const S = {
   skin: '#f7f2e8', skinDk: '#ddd2c2', mark: '#7f7068', vein: '#7dffb0', veinHot: '#e4ff6a', leaf: '#62c48e', leafDk: '#3f9a70', leafLt: '#a8ecc0',
   leaf2: '#4fb0a0', leaf2Dk: '#357f7a', moss: '#86b86a', mossDk: '#5f8f4f', wood: '#8b6a58', woodDk: '#634a40', woodLt: '#b48f74', bloom: '#ffc6dd',
   bloomDk: '#f08fb4', wis: '#c3a2ff', wisLt: '#e6d8ff', fly: '#fff6a6', flyGlow: '#efffc4', thorn: '#4f3a3a', lip: '#e8879f',
+};
+
+// Sylvana's face: big round gentle eyes of leaf green with leaf-shaped lashes, soft arched brows,
+// and a kind small smile; she gasps when hurt.
+const SYLVANA_FACE = {
+  skin: S.skin, skinSh: '#d7e2cf', skinSh2: '#a9c1ae', blush: '#ffb0c4', lip: S.lip, lipLine: '#b0546c',
+  bangs: [[-8.4, 5], [-6, -1], [2, -2.8], [8, -3.6], [13.6, -2]],
+  eye: { ry: 3.15, iris: '#2fd08e', irisDk: '#0f6b4a', irisLt: '#cfff9a', hot: '#c9ff3a', hotDk: '#4e8a10', pupil: 'round', pupilC: '#0b3d2c', tilt: 0.04, wing: 1.2, flicks: 1, lashLen: 1.5, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#1f3d32', sparkle: true },
+  brow: { c: '#3f7a52', kind: 'soft', w: 0.7 },
+  moods: { idle: { mouth: 'soft' }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' } },
 };
 
 function sylvana(pose, f, mood) {
@@ -982,10 +848,7 @@ function sylvana(pose, f, mood) {
 
   // ---- Head: birch skin with glowing veins, willow hair, and the blossoming branch crown.
   within(Th, () => {
-    out.push(...ladyHead(hx, hy, mood, {
-      skin: S.skin, skinDk: S.skinDk, er: [3.6, 4.6], eyeY: 4.6, browC: S.leafDk, brow: 'arch', lip: S.lip, blush: '#ffc0cf',
-      eye: { iris: '#36dc96', hot: '#c9ff3a', pupil: 'round', pupilC: '#155e45', tilt: 0.05, wing: 0.25, lashes: 3, lashLen: 1.6, leafLash: S.leafDk, shadow: '#e4f4d6', lower: '#86b8a0' },
-    }));
+    out.push(...queenHead(hx, hy, mood, SYLVANA_FACE));
     // Bark lenticels and a glowing vein along the cheek and temple.
     for (const [x, y, w] of [[hx - 8, hy + 6, 2.4], [hx - 6, hy + 10, 1.6], [hx - 2, hy + 13, 1.4]]) out.push(line([[x - w / 2, y], [x + w / 2, y - 0.2]], 0.5, S.mark));
     if (!dead) out.push(line(spline([[hx + 11.6, hy - 1], [hx + 12.4, hy + 2.6], [hx + 11, hy + 6], [hx + 12.2, hy + 8.2]], 3), 0.5, glow), dot(hx + 12.2, hy + 8.2, 0.55, glow));
@@ -995,6 +858,7 @@ function sylvana(pose, f, mood) {
     for (const [x, y, a0, l] of [[hx + 13, hy - 4, 1.8, 7], [hx + 9, hy - 5, 1.5, 8], [hx + 5, hy - 5, 1.7, 7], [hx + 1, hy - 4.6, 1.9, 7], [hx - 4, hy - 3.4, 2.0, 8]]) out.push(...leaf(x, y, a0, l, 3.2, a0 > 1.8 ? S.hairLt : S.hair, { rib: S.hairDk, flat: false }));
     out.push(line(spline([[hx - 6, hy - 12.6], [hx + 1, hy - 14], [hx + 7, hy - 12]], 3), 1, S.hairHi));
     for (let k = 0; k < 4; k++) out.push(line([[hx - 11 + k * 5, hy - 10 + Math.abs(k - 1.5)], [hx - 10 + k * 5.2, hy - 5]], 0.5, S.hairDk));
+    out.push(...queenTop(hx, hy, mood, SYLVANA_FACE));
     // Long front strands of willow falling past the shoulder.
     const sl = swing * 0.4;
     for (let k = 0; k < 2; k++) {
@@ -1103,6 +967,18 @@ const D = {
   skin: '#ffe5ea', skinDk: '#f0c3cf', hair: '#6c47ab', hairDk: '#47307c', hairLt: '#9a77da', hairHi: '#cdb0ff', horn: '#7a5e8e', hornLt: '#b9a0d2',
   gold: '#ffcc66', goldDk: '#cf9440', goldLt: '#fff0b8', black: '#3d3150', blackDk: '#2a2139', blackLt: '#5d4c78', wine: '#b43b60', wineDk: '#842a49',
   wineLt: '#de6c90', wing: '#9b4a88', wingDk: '#6f3064', wingLt: '#c777b0', bone: '#4b2b50', gem: '#ff4f9c', pink: '#ff9fd0', violet: '#b884ff', lip: '#c8386a',
+};
+
+// Lilith's face: heavy smoky lids half lowered, heart pupils, a beauty mark, full dark lips in a
+// smouldering smirk with a fang.
+const LILITH_FACE = {
+  skin: D.skin, skinSh: '#f2c0d1', skinSh2: '#d593b5', blush: '#ff9cbc', lip: '#c8306a', lipLine: '#8a1c46',
+  bangs: [[-8.6, 6], [-7, -2], [-1, -0.4], [4, -3.4], [10, -4], [13.6, 0.4]],
+  eye: { ry: 3, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.3, wing: 2, flicks: 3, lashLen: 1.6, shadow: '#c98ac6', smoky: 1, lowerLash: '#7a3a6a', ink: '#24112e' },
+  brow: { c: '#2c1d55', kind: 'arch', w: 0.7 },
+  mole: [-1.4, 9.4],
+  fang: 'always',
+  moods: { idle: { open: 0.62, mouth: 'smirk', gaze: [0.1, 0.03] }, angry: { open: 0.85, mouth: 'snarl' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
 };
 
 function lilith(pose, f, mood) {
@@ -1355,15 +1231,13 @@ function lilith(pose, f, mood) {
       out.push(line([[gx - 3, gy + 0.8], [gx + 3, gy - 0.4]], 1.6, D.gold), dot(gx, gy + 0.2, 0.7, D.gem));
     };
     horn(true, shade(D.horn, -6));
-    out.push(...ladyHead(hx, hy, mood, {
-      skin: D.skin, skinDk: D.skinDk, er: [3.5, 3.7], eyeY: 4.8, browC: D.hairDk, brow: 'arch', lip: D.lip, blush: '#ffa3c0', mole: true, smirk: true, fang: true,
-      eye: { iris: '#ff4fae', hot: '#ff2a5c', pupil: 'heart', pupilC: '#7a1446', tilt: 0.3, heavy: 0.3, wing: 0.85, lashes: 3, lashLen: 2.2, shadow: '#e7b2d6', lower: '#9a4f86' },
-    }));
+    out.push(...queenHead(hx, hy, mood, LILITH_FACE));
     // Hair: a soft crown, side-swept bangs, and a lock curling over the front shoulder.
     out.push(C(poly([[hx - 14.6, hy + 6], [hx - 15, hy - 5], [hx - 10, hy - 14], [hx, hy - 16.4], [hx + 9, hy - 14], [hx + 14.4, hy - 5], [hx + 14.4, hy + 2], [hx + 10, hy - 3], [hx + 4, hy - 2.4], [hx - 1, hy + 1], [hx - 7, hy - 1], [hx - 9, hy + 8]], D.hairDk)));
     out.push(C(poly([[hx - 13.6, hy + 4], [hx - 14, hy - 5], [hx - 9.4, hy - 13.2], [hx, hy - 15.2], [hx + 8.6, hy - 13], [hx + 13.4, hy - 5], [hx + 13.6, hy + 0.4], [hx + 10, hy - 4], [hx + 4, hy - 3.4], [hx - 1, hy - 0.4], [hx - 7, hy - 2], [hx - 8.6, hy + 6]], D.hair)));
     out.push(line(spline([[hx - 6, hy - 12], [hx + 1, hy - 13.6], [hx + 8, hy - 11]], 3), 1.1, D.hairLt), line([[hx - 1, hy - 13.4], [hx + 3, hy - 13.2]], 0.7, D.hairHi));
     out.push(line(spline([[hx + 1, hy - 12], [hx + 6, hy - 7], [hx + 11, hy - 3.4]], 3), 0.5, D.hairDk), line(spline([[hx - 4, hy - 11], [hx - 1, hy - 5], [hx - 2, hy]], 3), 0.5, D.hairDk));
+    out.push(...queenTop(hx, hy, mood, LILITH_FACE));
     horn(false, D.horn);
     // Tiara: a gold band with a heart ruby and small points.
     out.push(line(arcPts(hx + 1, hy - 7, 11.5, 6.6, 205, 330, 8), 1.6, D.goldDk), line(arcPts(hx + 1, hy - 7.4, 11.5, 6.6, 210, 325, 8), 0.8, D.gold));
@@ -1454,6 +1328,16 @@ function crescentPts(cx, cy, r, w, dir) {
   }
   return pts;
 }
+
+// Selene's face: clear, steady eyes with clean strong lashes and straight brows, a calm resolve;
+// she grits her teeth when struck.
+const SELENE_FACE = {
+  skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffb0c0', blushK: 0.8, lip: M.lip, lipLine: '#b0566a',
+  bangs: [[-8.4, 6], [-3, -1], [2, -5.6], [5, -2], [9, -4.6], [13.6, -0.6]], bangLine: '#b4aee0',
+  eye: { ry: 2.9, iris: '#8e9be6', irisDk: '#3d3f8f', irisLt: '#d8e6ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#23245a', tilt: 0, wing: 1.3, flicks: 2, lashLen: 1.2, ink: '#2c2d5a', sparkle: true },
+  brow: { c: '#8f8ad0', kind: 'straight', w: 0.8, lift: -0.3 },
+  moods: { idle: { open: 0.94, mouth: 'calm' }, angry: { mouth: 'grit', brow: { inner: 1.4, outer: 0.2, arch: -0.8, w: 1.4 } }, hurt: { mouth: 'grimace' } },
+};
 
 function selene(pose, f, mood) {
   const W = 164;
@@ -1643,10 +1527,7 @@ function selene(pose, f, mood) {
 
   // ---- Head: platinum hair, a winged silver circlet-helm.
   within(Th, () => {
-    out.push(...ladyHead(hx, hy, mood, {
-      skin: M.skin, skinDk: M.skinDk, er: [3.3, 3.9], eyeY: 4.7, browC: M.hairDk, brow: 'straight', lip: M.lip, blush: '#ffb6c4',
-      eye: { iris: '#a5acdf', hot: '#7fd8ff', pupil: 'round', pupilC: '#4a4f8a', tilt: 0.1, heavy: 0.12, wing: 0.3, lashes: 2, lashLen: 1.3, shadow: '#e8e4fa', lower: '#a9a6cc' },
-    }));
+    out.push(...queenHead(hx, hy, mood, SELENE_FACE));
     // Hair: a smooth crown under the helm and soft parted bangs.
     out.push(C(poly([[hx - 14.6, hy + 5], [hx - 15, hy - 5], [hx - 10, hy - 14], [hx, hy - 16], [hx + 9, hy - 14], [hx + 14.4, hy - 5], [hx + 14.6, hy + 1], [hx + 9, hy - 3.6], [hx + 5, hy - 1], [hx + 2, hy - 4.6], [hx - 3, hy], [hx - 9, hy + 8]], M.hairDk)));
     out.push(C(poly([[hx - 13.6, hy + 3], [hx - 14, hy - 5], [hx - 9.4, hy - 13], [hx, hy - 15], [hx + 8.6, hy - 13], [hx + 13.4, hy - 5], [hx + 13.6, hy - 0.6], [hx + 9, hy - 4.6], [hx + 5, hy - 2], [hx + 2, hy - 5.6], [hx - 3, hy - 1], [hx - 8.4, hy + 6]], M.hair)));
@@ -1654,6 +1535,7 @@ function selene(pose, f, mood) {
     // A long side lock in front of the ear.
     const sl = swing * 0.3;
     out.push(taper([[hx - 7, hy - 2], [hx - 8 + sl * 0.4, hy + 9], [hx - 6 + sl, hy + 19]], 4.6, 1.4, M.hairDk, { n: 3, tip: true }), taper([[hx - 6.6, hy - 2], [hx - 7.4 + sl * 0.4, hy + 9], [hx - 5.8 + sl, hy + 18]], 3, 0.8, M.hair, { n: 3, flat: true }));
+    out.push(...queenTop(hx, hy, mood, SELENE_FACE));
     // The helm: a silver cap with a lavender gem at the brow and white wings sweeping back.
     const brim = [[hx + 14.4, hy - 5], [hx + 8, hy - 7.6], [hx + 2, hy - 9], [hx - 5, hy - 8.6], [hx - 10, hy - 6], [hx - 13.4, hy - 1.6]];
     out.push(poly([...arcPts(hx, hy - 4.6, 15.4, 13.4, 165, 360, 16), ...brim.map(([x, y]) => [x, y + 1.2])], M.silverDk));
