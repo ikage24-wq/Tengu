@@ -1120,7 +1120,7 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
     if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
-    else drawIsland(ctx, theme, p, cam, time, pi, groundAt(map, p.x + p.w / 2), map.look);
+    else drawIsland(ctx, theme, p, cam, time, pi, map.look);
   }
 }
 

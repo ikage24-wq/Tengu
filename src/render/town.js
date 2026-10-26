@@ -5,7 +5,7 @@
 
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
-import { R, E, T, F, shade, snap } from './pixel.js';
+import { R, E, T, F, shade, snap, footShadow, slopeAt } from './pixel.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
 import { createAnim, stepAnim } from './animator.js';
@@ -646,15 +646,12 @@ function seedOf(id) {
   return h;
 }
 
-function shadow(ctx, x, y) {
-  ctx.save();
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle = '#3a2d4f';
-  ctx.beginPath();
-  ctx.ellipse(x, y, 10, 2.4, 0, 0, TAU);
-  ctx.fill();
-  ctx.restore();
+function shadow(ctx, x, y, slope = 0) {
+  footShadow(ctx, x, y, 12, slope);
 }
+
+// How steep the ground is under someone at world x.
+const groundSlope = (map, wx) => (groundAt(map, wx + 6) - groundAt(map, wx - 6)) / 12;
 
 // A player's shop: a picnic rug with a few wares, and their shop's name on a board above them.
 function shopBooth(ctx, x, gy, bot, time, hovered) {
@@ -697,7 +694,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     const gy = snap(groundAt(map, at.x) - cam.y);
     if (x < -40 || x > width + 40) continue;
     const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
-    shadow(ctx, x, gy);
+    shadow(ctx, x, gy, groundSlope(map, at.x));
     const anim = animFor(`v|${map.id}|${p.a}`, at.x, at.facing, time);
     drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing }, anim);
   }
@@ -707,14 +704,14 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     if (x < -60 || x > width + 60) continue;
     const gy = snap(groundAt(map, bot.x) - cam.y);
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
-    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said);
+    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x));
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }
 
 // One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
 // pros, green with a heart for party members, guild underneath).
-function drawBot(ctx, bot, x, y, time, hovered, said) {
+function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
   const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
   if (bot.appear > 0 || bot.state === 'logout') {
     for (let i = 0; i < 8; i++) {
@@ -725,7 +722,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said) {
     ctx.globalAlpha = 1;
   }
   const body = bot.party ? bot.body : null;
-  if (!body || body.onGround) shadow(ctx, x, y);
+  if (!body || body.onGround) shadow(ctx, x, y, body ? slopeAt(body.surface, body.x) : slope);
   const waving = bot.state === 'wave';
   let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) ? 'walk' : 'idle';
   let progress = waving ? (1.6 - bot.timer) / 1.6 : 0;

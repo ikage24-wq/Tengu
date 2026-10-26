@@ -153,21 +153,6 @@ export function drawLighting(ctx, map, cam, w, h, time) {
   ctx.restore();
 }
 
-// A soft shadow under feet: dark in the middle, fading out at the edges.
-export function softShadow(ctx, x, y, rx, ry, strength = 1) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(1, ry / rx);
-  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx * 1.25);
-  g.addColorStop(0, `rgba(58,45,79,${0.32 * strength})`);
-  g.addColorStop(0.55, `rgba(58,45,79,${0.18 * strength})`);
-  g.addColorStop(1, 'rgba(58,45,79,0)');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(0, 0, rx * 1.25, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
 
 // ---------- Filters ----------
 

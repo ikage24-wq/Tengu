@@ -23,8 +23,8 @@ import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
-import { snap, gfx } from './pixel.js';
-import { drawGlowing, drawLighting, softShadow, drawDreamy } from './post.js';
+import { snap, gfx, footShadow, slopeAt } from './pixel.js';
+import { drawGlowing, drawLighting, drawDreamy } from './post.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -77,13 +77,7 @@ function drawNpcs(ctx, world, cam, time) {
     const facing = r.facing && !close ? r.facing : world.body.x < n.x ? -1 : 1;
     const busy = r.pose && !close;
     const look = r.face ? { ...npc.look, face: r.face } : npc.look;
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = '#3a2d4f';
-    ctx.beginPath();
-    ctx.ellipse(x, y, 10, 2.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    footShadow(ctx, x, y, 12);
     drawHero(ctx, look, npc.gear ?? null, x, y - (r.lift ?? 0), { pose: busy ? r.pose : 'idle', progress: r.progress ?? 0, dur: 0.5, time, seed: n.x % 97, facing, job: npc.showJob });
     if (r.extra && !close) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
     ctx.font = 'bold 8px sans-serif';
@@ -174,7 +168,7 @@ export function drawWorld(ctx, world, viewCam, time) {
 
   const p = playerPose(world);
   const blink = world.invuln > 0 && Math.floor(time * 16) % 2 === 0;
-  if (b.onGround) drawShadow(ctx, b.x - cam.x, b.y - cam.y, 1);
+  if (b.onGround) footShadow(ctx, b.x - cam.x, b.y - cam.y, 13, slopeAt(b.surface, b.x));
   // A chat emoticon shows on the face for a few seconds.
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
   const hx = snap(b.x - cam.x);
@@ -249,18 +243,6 @@ function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
       clone(side * (20 + Math.sin(time * 1.5 + side) * 4), flicker, 'sepia(1) saturate(2.5) brightness(1.25)');
     }
   }
-}
-
-// A soft oval under the feet.
-function drawShadow(ctx, x, y, k) {
-  if (gfx.hd) return softShadow(ctx, x, y, 11 * k, 2.8 * k);
-  ctx.save();
-  ctx.globalAlpha = 0.18 * k;
-  ctx.fillStyle = '#3a2d4f';
-  ctx.beginPath();
-  ctx.ellipse(x, y, 11 * k, 2.5 * k, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
 }
 
 // Speech bubbles over the player and NPCs; they fade out at the end.

@@ -767,7 +767,7 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
 
 // A ledge drawn as a chunk of floating land: flat top, thick in the middle, tapering to a
 // rounded point underneath, with the lip on top and things dangling below.
-export function drawIsland(ctx, theme, p, cam, time, pi, groundY, look = null) {
+export function drawIsland(ctx, theme, p, cam, time, pi, look = null) {
   theme = look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   camX = cam.x;
@@ -776,14 +776,12 @@ export function drawIsland(ctx, theme, p, cam, time, pi, groundY, look = null) {
   const w = p.w;
   const style = p.style ?? look?.islands ?? 'earth';
   if (style !== 'earth') {
-    groundShadow(ctx, x, y, w, groundY == null ? null : groundY - cam.y, style === 'bridge' ? 0.5 : 1);
     if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;
   }
   const d = p.thick ?? Math.min(48, 22 + w * 0.1);
-  groundShadow(ctx, x, y, w, groundY == null ? null : groundY - cam.y, 1);
   // Things hanging under the island, rooted in its underside (drawn first, so the island
   // covers where they're rooted).
   const under = islandShape(x, y, w, d, pi);
@@ -820,15 +818,6 @@ export function drawIsland(ctx, theme, p, cam, time, pi, groundY, look = null) {
 
 // The island's outline: a flat top, then the underside curving from the right end down to a
 // rounded point and back up, as points (so things can hang from exactly its underside).
-// A soft shadow on the ground far below a ledge.
-function groundShadow(ctx, x, y, w, gy, k) {
-  if (gy == null) return;
-  const far = Math.min(1, (gy - y) / 220);
-  ctx.fillStyle = `rgba(58,45,79,${0.12 * k * (1 - far * 0.6)})`;
-  ctx.beginPath();
-  ctx.ellipse(x + w / 2, gy + 1, w * 0.42, 3.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
 
 const WOOD = '#d9a86c';
 

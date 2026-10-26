@@ -399,3 +399,25 @@ export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale =
   }
   ctx.restore();
 }
+
+// A soft shadow under someone's feet at (x, y): dark in the middle, fading at the edges, and
+// tilted to lie along a slope (`slope` is the ground's rise per pixel). `k` scales its strength.
+export function footShadow(ctx, x, y, rx, slope = 0, k = 1) {
+  if (k <= 0) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.atan(slope));
+  ctx.scale(1, 0.26);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  g.addColorStop(0, `rgba(58,45,79,${0.3 * k})`);
+  g.addColorStop(0.6, `rgba(58,45,79,${0.17 * k})`);
+  g.addColorStop(1, 'rgba(58,45,79,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// The slope of a surface (anything with yAt) at x, for tilting shadows.
+export const slopeAt = (s, x) => (s?.yAt ? (s.yAt(x + 6) - s.yAt(x - 6)) / 12 : 0);

@@ -6,7 +6,7 @@
 //   dead   x eyes as it poofs away
 // Little emote bubbles (!, anger marks, sweat, music notes, z's) float over their heads.
 
-import { R, E, T, F, sprite, blit, shade, snap } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, snap, footShadow } from './pixel.js';
 
 const INK = '#3a2d4f';
 const BLUSH = '#ff9fb8';
@@ -667,14 +667,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   }
   if (sx <= 0 || sy <= 0) return;
   if (!flying) {
-    // Ground shadow; it shrinks a little at the top of each hop.
-    ctx.save();
-    ctx.globalAlpha = 0.16 * alpha;
-    ctx.fillStyle = '#3a2d4f';
-    ctx.beginPath();
-    ctx.ellipse(x, y, Math.max(6, s.w * 0.36) * (1 - hop * 0.04), 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    // Ground shadow, along the slope it stands on; it shrinks a little at the top of each hop.
+    footShadow(ctx, x, y, Math.max(8, s.w * 0.42) * (1 - hop * 0.04), m.yAt ? (m.yAt(m.x + 6) - m.yAt(m.x - 6)) / 12 : 0, alpha);
   }
 
   // Knocked up into the air: drawn above its shadow, tumbling a little.
