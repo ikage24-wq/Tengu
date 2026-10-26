@@ -1,13 +1,26 @@
 // Seraphim's Halo, the holy staff: hand-drawn rather than built from the shared staff form,
 // since it was the first endgame weapon and set the bar for the rest.
 
-import { R, E, P, T } from './pixel.js';
+import { R, E, T, F } from './pixel.js';
 
-const GOLD = '#ffd66b';
-const GEM = '#ff9ec0';
-const IVORY = '#fff6e6';
+// Ramps (at most four tones each), lit from the upper front: gold metal in three steps plus a
+// warm specular, ivory, feathers that shade toward lavender (never grey), and the rose heart gem
+// whose darkest facet sits nearest the light.
+const GOLD = '#ffd25a';
+const GOLD_LT = '#fff3b0';
+const GOLD_SH = '#e39a3a';
+const GOLD_DK = '#a8602e';
+const GEM = '#ff7fae';
+const GEM_DK = '#c8467e';
+const GEM_LT = '#ffd0e2';
+const IVORY = '#fff3e0';
+const IVORY_SH = '#e8cfb4';
 const WHITE = '#ffffff';
-const FEATHER = '#e8eeff';
+const FEATHER = '#f4f2ff';
+const FEATHER_SH = '#d6d2f2';
+const FEATHER_DK = '#b0a8dc';
+const RIBBON = '#ff9ec0';
+const RIBBON_SH = '#e0709c';
 
 // ---------- Seraphim's Halo (endgame holy staff) ----------
 // A golden halo floats over a radiant crystal with a rose heart gem, cradled in gold filigree;
@@ -17,57 +30,82 @@ const SERAPH_W = 44;
 const SERAPH_CRYSTAL = [22, 20];
 const SERAPH_HALO = [22, 5];
 
-function seraphWing(side, flap) {
+// The beat over six frames: held up, a fast downstroke, a slow recovery (never a ping-pong).
+const FLAP = [-3, -3, 0, 2, 1, -1.5];
+
+// One wing: three broad flight feathers fanning out from the cradle and a rounded covert over
+// their roots. Each feather takes the beat a frame later than the one inside it, so the tips
+// trail the root. Every part is at least two pixels wide, so nothing breaks into specks.
+function seraphWing(side, frame) {
   const out = [];
-  const bx = side < 0 ? 16 : 28;
-  // Four long feathers fanning out from the crystal, the tips rising and falling with the flap.
-  const tips = [[1, 7], [2, 15], [4, 23], [9, 30]];
-  tips.forEach(([tx, ty], i) => {
-    const x = side < 0 ? tx : SERAPH_W - tx;
-    const y = ty + flap * (1 - i * 0.25);
-    const inner = side < 0 ? 2 : -2;
-    out.push(T([[bx, 19 + i * 1.5], [x, y - 1.5], [x + inner, y + 1.5], [bx, 23 + i * 1.5]], i % 2 ? FEATHER : WHITE));
+  const X = (x) => (side < 0 ? x : SERAPH_W - x);
+  const f = (lag) => FLAP[(frame - lag + 6) % 6];
+  const feathers = [
+    // [tip x, tip y, half width at the root, lag]
+    [2, 9, 2.4, 2],
+    [3, 17, 2.6, 1],
+    [6, 25, 2.4, 0],
+  ];
+  feathers.forEach(([tx, ty, hw, lag], i) => {
+    const y = ty + f(lag) * (1 - i * 0.3);
+    const root = [X(15), 19 + i * 2.5];
+    const tip = [X(tx), y];
+    const mid = [X(lerp(15, tx, 0.55)), lerp(root[1], y, 0.55)];
+    out.push(T([[root[0], root[1] - hw], [mid[0], mid[1] - hw * 1.1], [tip[0], tip[1] - 0.5], [tip[0] + side * -1, tip[1] + 1.5], [mid[0], mid[1] + hw], [root[0], root[1] + hw]], i === 1 ? FEATHER : WHITE));
+    // The lower vane in shadow.
+    out.push(F(T([[root[0], root[1] + 0.2], [mid[0], mid[1] + 0.2], [tip[0] + side * -1, tip[1] + 1.5], [mid[0], mid[1] + hw], [root[0], root[1] + hw]], FEATHER_SH)));
   });
-  // Two rows of soft, rounded coverts over the feather roots, so the wing reads full and fluffy.
-  const cx = (dx) => (side < 0 ? dx : SERAPH_W - dx);
-  out.push(E(cx(9), 17 + flap * 0.6, 4.5, 3, FEATHER));
-  out.push(E(cx(8), 24 + flap * 0.4, 4, 2.8, FEATHER));
-  out.push(E(cx(13), 19 + flap * 0.4, 4.5, 3.4, WHITE));
-  out.push(E(cx(12), 25 + flap * 0.3, 3.6, 2.6, WHITE));
+  // Covert: a rounded pad over the roots, lit on top, a darker row under it.
+  out.push(E(X(12), 20 + f(0) * 0.4, 4.5, 3.5, WHITE));
+  out.push(F(E(X(12), 22 + f(0) * 0.4, 3.5, 1.5, FEATHER_SH)));
+  out.push(F(E(X(12.5), 25 + f(0) * 0.3, 3, 1.5, FEATHER_DK)));
   return out;
 }
+const lerp = (a, b, t) => a + (b - a) * t;
 
 export function seraphShapes(frame) {
-  const flap = [0, -1.5, -3, -2, 0, 1.5][frame % 6];
-  const wave = Math.sin((frame / 6) * Math.PI * 2);
-  const shine = [[20, 15], [21, 14], [23, 15], [24, 17], [23, 19], [21, 17]][frame % 6];
+  frame %= 6;
+  const wave = [0, 1, 1.5, 0.5, -0.5, -1][frame];
+  const lag = [-1, 0, 1, 1.5, 0.5, -0.5][frame];
   return {
     w: SERAPH_W, h: 80, grip: [22, 60], blade: [2, 34],
     live: seraphLive,
     shapes: [
-      ...seraphWing(-1, flap),
-      ...seraphWing(1, flap),
-      // The halo, floating above.
-      E(SERAPH_HALO[0], SERAPH_HALO[1], 7.5, 2.8, GOLD),
-      E(SERAPH_HALO[0], SERAPH_HALO[1], 5.8, 1.5, 'none'),
-      // Ivory shaft with gold rings.
-      R(20.7, 32, 2.6, 41, IVORY),
-      R(20, 37, 4, 1.6, GOLD),
-      R(20, 50, 4, 1.6, GOLD),
-      R(20, 67, 4, 1.6, GOLD),
-      // The filigree cradle and the crystal it holds.
-      T([[13, 13], [16, 26], [22, 34], [28, 26], [31, 13], [28.5, 14], [26, 24], [22, 30], [18, 24], [15.5, 14]], GOLD),
+      ...seraphWing(-1, frame),
+      ...seraphWing(1, frame),
+      // The halo: a ring of gold, its far half in shadow, the near half bright with a specular.
+      E(SERAPH_HALO[0], SERAPH_HALO[1], 8, 3, GOLD),
+      F(T([[14, 5], [16, 3], [22, 2], [28, 3], [30, 5], [27, 4], [22, 3.5], [17, 4]], GOLD_SH)),
+      E(SERAPH_HALO[0], SERAPH_HALO[1], 5.5, 1.5, 'none'),
+      F(T([[16, 7], [22, 7.5], [28, 7], [26, 8], [18, 8]], GOLD_LT)),
+      // Ivory shaft, lit down its front edge, with gold collars.
+      R(20.5, 32, 3, 41, IVORY),
+      F(R(20.5, 32, 1, 41, IVORY_SH)),
+      F(R(22.5, 33, 1, 39, WHITE)),
+      ...[37, 50, 67].flatMap((y) => [R(19.5, y, 5, 2, GOLD), F(R(19.5, y + 1, 5, 1, GOLD_SH)), F(R(22, y, 2, 1, GOLD_LT))]),
+      // The filigree cradle: two gold arms rising from the shaft around the crystal.
+      T([[13, 12], [16, 25], [22, 34], [28, 25], [31, 12], [28, 14], [26, 23], [22, 29], [18, 23], [16, 14]], GOLD),
+      F(T([[13, 12], [16, 25], [22, 34], [22, 31], [17.5, 24], [15, 13]], GOLD_SH)),
+      F(T([[31, 12], [28, 14], [26.5, 21], [28, 20]], GOLD_LT)),
+      // The crystal in flat facets: shade on the back facet, pale front, a bright edge.
       T([[22, 9], [27.5, 19], [22, 31], [16.5, 19]], '#fff6dc'),
-      T([[22, 11], [25.5, 19], [22, 28], [22, 19]], WHITE),
-      E(SERAPH_CRYSTAL[0], SERAPH_CRYSTAL[1] + 1, 2.4, 2.2, GEM),
-      P(shine[0], shine[1], WHITE),
-      // A rose ribbon tied below the head, its tails fluttering.
-      T([[23, 36], [29, 39 + wave], [28, 45 + wave * 1.5], [32, 51 + wave], [30, 52 + wave], [26, 46 + wave * 0.5], [27, 41], [23, 39]], GEM),
-      T([[21, 36], [17, 40 - wave], [18, 46 - wave], [16, 49 - wave], [18, 49 - wave], [20, 44], [19, 40], [21, 39]], '#ffc2d6'),
+      F(T([[22, 9], [22, 31], [16.5, 19]], '#f4dcc0')),
+      F(T([[22, 10], [26.5, 19], [23, 19]], WHITE)),
+      // The rose heart gem: dark facet up by the light, light facet below.
+      F(E(SERAPH_CRYSTAL[0], SERAPH_CRYSTAL[1] + 1, 3, 2.5, GEM)),
+      F(T([[19, 20], [22, 18], [25, 20], [22, 19.5]], GEM_DK)),
+      F(R(21, 22, 2, 1, GEM_LT)),
+      F(R(23, 19, 1, 1, WHITE)),
+      // A rose ribbon tied below the head, its tails fluttering a frame behind the wings.
+      T([[23, 36], [29, 39 + wave], [28, 45 + lag * 1.5], [32, 51 + lag], [29, 52 + lag], [26, 46 + wave * 0.5], [26, 41], [23, 39]], RIBBON),
+      F(T([[26, 41], [28, 45 + lag * 1.5], [29, 52 + lag], [26, 46 + wave * 0.5]], RIBBON_SH)),
+      T([[21, 36], [16, 40 - wave], [18, 46 - lag], [15, 50 - lag], [18, 50 - lag], [20, 44], [19, 40], [21, 39]], RIBBON_SH),
+      E(22, 37.5, 2, 1.5, RIBBON),
       // A small winged ferrule at the foot.
-      T([[20.5, 72], [24.5, 72], [22.5, 79]], GOLD),
-      T([[20.5, 72], [16, 70 + flap * 0.3], [19, 74]], WHITE),
-      T([[24.5, 72], [29, 70 + flap * 0.3], [26, 74]], WHITE),
+      T([[20, 72], [25, 72], [22.5, 79]], GOLD),
+      F(T([[20, 72], [22.5, 72], [22.5, 79]], GOLD_SH)),
+      T([[20.5, 71], [15, 69 + FLAP[frame] * 0.3], [17, 72], [20, 74]], WHITE),
+      T([[24.5, 71], [30, 69 + FLAP[frame] * 0.3], [28, 72], [25, 74]], WHITE),
     ],
   };
 }
@@ -150,7 +188,6 @@ function twinkle(ctx, x, y, r, color) {
 export const SERAPH_ICON = [
   E(4, 6, 3, 2, WHITE), E(12, 6, 3, 2, WHITE),
   T([[2, 15], [7, 10], [8, 11], [3, 16]], IVORY),
-  E(8, 7, 2.5, 3, '#fff6dc'), P(8, 7, GEM),
-  E(8, 2, 3, 1, GOLD), P(6, 9, GOLD), P(10, 9, GOLD),
+  E(8, 7, 2.5, 3, '#fff6dc'), F(R(8, 7, 1, 1, GEM)),
+  E(8, 2, 3, 1, GOLD), F(R(6, 9, 1, 1, GOLD)), F(R(10, 9, 1, 1, GOLD)),
 ];
-

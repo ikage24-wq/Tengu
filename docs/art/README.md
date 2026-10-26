@@ -63,6 +63,12 @@ carry an improvement across every part of the game it applies to.
 - Cycles keep a fixed length however many frames they have; walkers step with the ground they
   cover (`stride`), so feet never slide.
 - Springs are solved exactly so hair and capes move the same at any frame rate.
+- Wing beats are keyed, not a sine: hold at the top, a fast downstroke, a slow recovery; each wing
+  bone takes the beat a little later than the one before it, and the body rises a beat after the
+  push (`summons.js` `beat`). Summons and companions that shoot on a timer wind up while the next
+  shot is due, strike on the shot, hold about 0.2 s, then settle.
+- Face-kit shapes (`mobs/faces.js`) come out in plain coordinates: carry them through your part
+  transform, or the face stays put while the head moves.
 
 **Effects and game feel**
 - An impact plays in layers: a dark contrast beat, a flash that jumps from tiny to big, then sparks.
