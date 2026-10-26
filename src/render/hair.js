@@ -331,7 +331,10 @@ const FRINGES = {
   mshape: { pts: [[23.6, 15.8], [21.8, 12.4], [19.8, 14.8], [17.8, 11.2], [HX, 12.4], [13.2, 11.2], [11.2, 14.8], [9.2, 12.4], [7.4, 15.8]], lean: 0, softTips: true },
   // Peekaboo: a long fringe swept down from a part on the far side over the near eye to the
   // cheek, in soft points; the far eye stays clear.
-  peek: { pts: [[27, 19.2], [25.8, 21.2], [24.2, 20], [22.4, 21.4], [20.6, 19.2], [18.8, 16.4], [17, 13.6], [14.8, 11.4], [13, 13.8], [11.2, 11.6], [9, 13.4]], lean: 0, plain: true, part: [[10.6, 2.8], [9.2, 6.6]] },
+  peek: { pts: [[27.2, 18.4], [25.4, 22.8, 1], [23.8, 20.2], [22.2, 21.2], [20.6, 18.4], [18.8, 15.2], [16.8, 12.4], [14.6, 10.4], [12.4, 11.4], [10.4, 10.2], [8.4, 11.6]], lean: 0, plain: true,
+    part: [[10.4, 2.8], [9.6, 6.4]],
+    // Strand lines that follow the sweep from the part down over the eye.
+    strands: [[11.6, 5.4, 21.4, 19.6, 0.8, -1.6], [14.6, 4.8, 24.4, 19.2, 0.8, -1.8], [18.6, 4.6, 26, 15.4, 0.7, -1.4]] },
   // Rounded scallops (for curly hair).
   curly: { pts: [[23.6, 13.8], [21.8, 14.8], [19.8, 13.8], [17.8, 15.2], [15.6, 14], [13.4, 15.2], [11.2, 13.8], [9.2, 14.8], [7.6, 13.8]], lean: 0, round: true },
 };
@@ -361,6 +364,7 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   }
   // Where the hair parts, a dark line runs back over the crown.
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
+  for (const [x0, y0, x1, y1, w, bow] of f.strands ?? []) shapes.push(streak(x0, y0, x1, y1, w, bow, r.sh1));
   // The band of forehead the bangs shade: a thin strip under each run of the edge over the face.
   const shade = [];
   let run = [];
