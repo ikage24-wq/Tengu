@@ -52,31 +52,32 @@ function puffs(list, col, { line = lineOf(col), hi = mix(col, '#ffffff', 0.6), s
 // A side-view wing from the shoulder (x, y): an arm toward `ang` (degrees, screen space), primaries
 // fanning backward from the wrist by `ps` degrees each, secondaries along the arm, a row of coverts,
 // and the leading edge. Scaled by k.
-function wing({ x, y, ang, ps, k = 1, col, tip, cov, vane, bone = col, hand, n = 5, sec = 4, arm = 6.5, plen = 11, pw = 3.3, slen = 8, sw = 3 }) {
+function wing({ x, y, ang, ps, k = 1, col, tip, tipAt = 0.62, cov, vane, bone = col, hand, n = 5, sec = 4, arm = 6.5, plen = 11, pw = 3.3, slen = 8, sw = 3 }) {
   const [dx, dy] = dirOf(ang);
   const wx = x + dx * arm * k;
   const wy = y + dy * arm * k;
   const out = [];
+  // Inner lines stay soft; the silhouette gets the strong outline anyway.
+  const line = mix(col, lineOf(col), 0.72);
   for (let i = 0; i < n; i++) {
     const a = ang + 4 - i * ps;
     const back = i * 0.55 * k;
-    out.push(...feather(wx - dx * back, wy - dy * back, a, plen * k * (1 - i * 0.07), pw * k, col, { tip, vane }));
+    out.push(...feather(wx - dx * back, wy - dy * back, a, plen * k * (1 - i * 0.07), pw * k, col, { tip, tipAt, vane, shaft: false, line }));
   }
   const sa = ang + 4 - n * ps;
   for (let j = 0; j < sec; j++) {
     const t = 1 - (j + 0.7) / (sec + 0.3);
-    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa - 6 - j * 7, slen * k * (1 - j * 0.06), sw * k, col, { tip, vane }));
+    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa - 6 - j * 7, slen * k * (1 - j * 0.06), sw * k, col, { tip, tipAt, vane, shaft: false, line }));
   }
-  for (let j = 0; j < 4; j++) {
-    const t = 0.95 - j * 0.27;
-    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa + 10 - j * 6, slen * 0.52 * k, sw * 0.95 * k, cov, { shaft: false }));
-  }
-  out.push(...stroke([[x, y], [wx, wy]], 2.3 * k, bone, false), E(wx, wy, 1.35 * k, 1.35 * k, bone), E(x, y, 1.8 * k, 1.8 * k, bone));
-  // Little marginal coverts along the leading edge.
+  // Coverts: one smooth band of three broad feathers over the feather roots.
+  const cl = mix(cov, lineOf(cov), 0.8);
+  const [nx, ny] = dirOf(sa + 20);
+  out.push(...stroke([[x + nx * 1.2 * k, y + ny * 1.2 * k], [wx + nx * 1.2 * k, wy + ny * 1.2 * k]], 3.4 * k, cov, false));
   for (let j = 0; j < 3; j++) {
-    const t = 0.2 + j * 0.3;
-    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), ang - 120, 2.4 * k, 2 * k, cov, { shaft: false }));
+    const t = 0.9 - j * 0.36;
+    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa + 16 - j * 8, slen * 0.6 * k, sw * 1.2 * k, cov, { shaft: false, line: cl }));
   }
+  out.push(...stroke([[x, y], [wx, wy]], 2.4 * k, bone, false), E(wx, wy, 1.4 * k, 1.4 * k, bone), E(x, y, 1.9 * k, 1.9 * k, bone), F(E(lerp(x, wx, 0.45) - ny * 0.4, lerp(y, wy, 0.45) + nx * 0.4, 1.6 * k, 0.6 * k, mix(bone, '#ffffff', 0.55))));
   if (hand) out.push(...hand(wx, wy));
   return out;
 }
@@ -278,12 +279,12 @@ const CLAW = '#6a5a86';
 const CREST = ['#ff9ec0', '#ffd66b', '#ffb3d1'];
 
 const FLAP = [
-  { ang: -98, ps: 12, bob: 0.3 },
-  { ang: -128, ps: 14, bob: 0 },
-  { ang: -166, ps: 15, bob: 0.5 },
-  { ang: 152, ps: 12.5, bob: 1.4 },
-  { ang: 176, ps: 7.5, bob: 1.2 },
-  { ang: -134, ps: 7.5, bob: 0.6 },
+  { ang: -108, ps: 12, bob: 0.3 },
+  { ang: -136, ps: 14, bob: 0 },
+  { ang: -170, ps: 15, bob: 0.5 },
+  { ang: 156, ps: 12, bob: 1.2 },
+  { ang: 176, ps: 7.5, bob: 1 },
+  { ang: -140, ps: 8, bob: 0.6 },
 ];
 const HOVER = [
   { ang: -118, ps: 10.5, bob: 0 },
@@ -303,7 +304,7 @@ function harpy(pose, f, mood) {
   let { ang, ps, bob } = st;
   if (angry) [ang, ps] = [ang + 8, ps + 2];
   if (hurt) [ang, ps] = [-100, 16];
-  if (dead) [ang, ps, bob] = [118, 6, 1.5];
+  if (dead) [ang, ps, bob] = [128, 6, 0.6];
   // The head lags the body a little.
   let hx = 0;
   let hy = bob * 0.7 + (walk ? 0.25 : 0);
@@ -322,7 +323,7 @@ function harpy(pose, f, mood) {
 
   // Far wing.
   const wingOpts = { n: 6, sec: 4, arm: 7, plen: 11.6, pw: 3.4, slen: 8.2, sw: 3.2 };
-  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9, ps, k: 1, col: PLUME_D, tip: '#e6f3ff', cov: '#9ccff5', vane: shade(PLUME_D, -6), ...wingOpts })));
+  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9, ps, k: 1.12, col: '#dce8f6', tip: PLUME_D, tipAt: 0.72, cov: '#cfe0f4', bone: PLUME_D, vane: '#cfdcef', ...wingOpts })));
 
   // Legs and talons, dangling and swinging opposite the wingbeat.
   const leg = (x, near) => {
@@ -359,8 +360,11 @@ function harpy(pose, f, mood) {
   out.push(...B([...puffs([[25.6, 24.2, 2.5], [28.4, 28.4, 2.6], [30.8, 25.8, 2.7], [28.6, 22.8, 3]], '#ffffff', { line: '#a8c4e6' }),
     ...stroke([[25.8, 21.6], [29, 24.2], [32, 21.8]], 0.45, '#ffd66b'), F(T([[29, 23.6], [30.2, 25.1], [29, 26.8], [27.8, 25.1]], '#ffd66b')), F(T([[29, 24.2], [29.7, 25.1], [29, 26.1], [28.3, 25.1]], '#ff8fb8'))]));
 
+  // Near wing-arm, with a little hand at the wrist.
+  const hand = (x, y) => [E(x + 0.4, y + 0.6, 1.3, 1.1, SKIN), ...stroke([[x + 0.6, y + 1.2], [x + 1.4, y + 2]], 0.7, SKIN, false), ...stroke([[x - 0.3, y + 1.3], [x - 0.2, y + 2.3]], 0.7, SKIN, false)];
+  out.push(...B(wing({ x: 24.8, y: 23.2, ang, ps, col: '#f8fcff', tip: PLUME, tipAt: 0.72, cov: '#e6f4ff', bone: PLUME, vane: '#e4effa', hand, k: 1.25, ...wingOpts })));
   // Head.
-  const head = [E(29.6, 20.6, 1.8, 2.2, SKIN), F(E(32, 15.6, 6.75, 6.45, lineOf(SKIN))), E(32, 15.6, 6.3, 6, SKIN), E(33.2, 17.8, 5, 3.6, SKIN)];
+  const head = [E(29.6, 20.6, 1.8, 2.2, SKIN), F(E(32.6, 16.2, 7.05, 6.65, lineOf(SKIN))), E(32.6, 16.2, 6.6, 6.2, SKIN), E(33.4, 18.4, 5.4, 3.6, SKIN)];
   // Crest plumes.
   const cr = angry ? 14 : happy ? 8 : hurt ? -18 : dead ? -40 : 0;
   const csw = walk ? Math.sin(a - 1.4) * 7 : Math.sin(a) * 3;
@@ -369,19 +373,17 @@ function harpy(pose, f, mood) {
     crest.push(...feather(27.2 + i * 0.9, 8.4 - i * 0.2, d + cr + csw * (0.6 + i * 0.2), len, 2.7, c, { tip: '#ffffff', tipAt: 0.7 })));
   head.unshift(...crest);
   // Hair cap and feather bangs.
-  head.push(F(E(29.4, 11.4, 8.1, 5.4, lineOf(PLUME))), E(29.4, 11.4, 7.6, 4.9, PLUME), E(24.8, 14.2, 3.6, 4.6, PLUME), F(E(28, 8.6, 3.6, 1.2, PLUME_L)));
-  [[24.8, 12, 100, 7.4, PLUME_D], [29, 8.6, 80, 6.2, PLUME], [32.4, 8.4, 66, 6.2, PLUME], [35.6, 9.2, 56, 5.4, PLUME_D], [37.6, 10.8, 54, 3.8, PLUME]].forEach(([x, y, d, len, c]) =>
-    head.push(...feather(x, y, d, len, 3.5, c, { tip: PLUME_L, cast: true, shaft: false, tipAt: 0.7 })));
+  head.push(F(E(29.8, 11, 8.6, 5.8, lineOf(PLUME))), E(29.8, 11, 8.1, 5.3, PLUME), E(24.8, 14.4, 3.8, 5, PLUME));
+  [[25.2, 12, 98, 7.2, PLUME_D], [28.8, 8.4, 92, 5, PLUME], [31.8, 8, 76, 5.2, PLUME], [34.8, 8.6, 60, 4.8, PLUME], [37.4, 10.2, 48, 3.6, PLUME]].forEach(([x, y, d, len, c]) =>
+    head.push(...feather(x, y, d, len, 3.7, c, { cast: true, shaft: false, line: mix(c, lineOf(c), 0.7) })));
+  head.push(...stroke([[25.6, 9.4], [28, 7.2], [31, 6.4], [34, 7]], 0.9, PLUME_L));
   // A gold feather clip with a gem, over the ear.
   head.push(...feather(24.6, 15, 130 + lag * 0.5, 5, 2.4, '#ffffff', { tip: CREST[0], shaft: false }), F(E(24.8, 14.4, 1.5, 1.5, '#ffd66b')), F(E(24.8, 14.4, 0.8, 0.8, '#5ec8e8')));
-  head.push(...eye(31.6, 16.4, 1.8, mood, { iris: '#38b6c9', inner: 1, lid: SKIN, look: walk ? 0.4 : 0 }), ...eye(37, 16, 1.5, mood, { iris: '#38b6c9', inner: -1, lid: SKIN, lash: false, look: walk ? 0.4 : 0 }));
-  if (!dead) head.push(F(E(30.4, 19.6, 1.5, 0.7, BLUSH)), F(E(37.8, 19.2, 1.1, 0.6, BLUSH)));
-  head.push(...mouth(35.4, 20.2, 0.95, mood));
+  head.push(...eye(32.2, 16.9, 1.9, mood, { iris: '#38b6c9', inner: 1, lid: SKIN, look: walk ? 0.4 : 0 }), ...eye(37.7, 16.5, 1.55, mood, { iris: '#38b6c9', inner: -1, lid: SKIN, lash: false, look: walk ? 0.4 : 0 }));
+  if (!dead) head.push(F(E(31, 20.2, 1.5, 0.7, BLUSH)), F(E(38, 19.8, 0.9, 0.55, BLUSH)));
+  head.push(...mouth(35.4, 21, 0.95, mood));
   out.push(...Hd(head));
 
-  // Near wing-arm, with a little hand at the wrist.
-  const hand = (x, y) => [E(x + 0.4, y + 0.6, 1.3, 1.1, SKIN), ...stroke([[x + 0.6, y + 1.2], [x + 1.4, y + 2]], 0.7, SKIN, false), ...stroke([[x - 0.3, y + 1.3], [x - 0.2, y + 2.3]], 0.7, SKIN, false)];
-  out.push(...B(wing({ x: 25.4, y: 22.6, ang, ps, col: PLUME, tip: '#ffffff', cov: PLUME_L, vane: shade(PLUME, -7), hand, k: 1.12, ...wingOpts })));
   return { w: 52, h: 44, res: 3, shapes: out };
 }
 

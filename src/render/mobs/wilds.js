@@ -208,8 +208,9 @@ function eye(x, y, rx, ry, mood, { iris = '#ffd24a', glow = '#fff0a0', pupil = '
 
 function pebblet(pose, f, mood) {
   const W = 40;
-  const H = 30;
-  const G = H;
+  const H = 32;
+  // Laid out on a 30-tall box; the extra headroom keeps the crown horns clear of the top edge.
+  const G = 30;
   const walk = pose === 'walk';
   const p = walk ? f / 6 : f / 4;
   const dead = mood === 'dead';
@@ -224,7 +225,8 @@ function pebblet(pose, f, mood) {
   const frill = angry ? '#ff8c6e' : '#f6a88c';
   const frillD = shade(frill, -12);
   const breathe = walk ? 0 : wave(p) * 0.35;
-  const by = dead ? 2 : walk ? 0.45 * Math.cos(p * TAU * 2) - 0.2 : breathe;
+  // The body rides high enough that the stubby legs show under it.
+  const by = dead ? 1.4 : (walk ? 0.45 * Math.cos(p * TAU * 2) - 0.2 : breathe) - 1.6;
   const hx = (hurt ? -1.4 : 0) + (walk ? 0.4 * Math.sin(p * TAU * 2) : 0);
   const hy = (dead ? 3.4 : hurt ? -1 : 0) + by + (walk ? 0.4 * Math.sin(p * TAU * 2 + 0.6) : wave(p + 0.15) * 0.3);
   const out = [];
@@ -244,7 +246,7 @@ function pebblet(pose, f, mood) {
   // Legs: a sprawling trot (diagonal pairs move together).
   const legPhase = { nf: 0, fb: 0, nb: 0.5, ff: 0.5 };
   const leg = (key, hipX, hipY, near, front) => {
-    const [dx, lift] = dead ? [front ? 3 : -3, 0] : walk ? gait(p + legPhase[key], 5, 2.2) : [0, 0];
+    const [dx, lift] = dead ? [front ? 3 : -3, 0] : walk ? gait(p + legPhase[key], 6.4, 2.8) : [0, 0];
     const fx = hipX + dx + (front ? 1 : -0.5);
     const fy = G - 1.3 + lift + (dead ? -0.6 : 0);
     const kn = knee(hipX, hipY, fx, fy, 4.2, 4.2, front ? 1 : -1);
@@ -254,14 +256,13 @@ function pebblet(pose, f, mood) {
       : [tube([[hipX, hipY], kn, [fx, fy]], [5, 3.8, 3.2], c), ov(fx + 1.1, fy + 0.2, 2.8, 1.35, 0, c), ...stroke([[kn[0] - 1, kn[1] + 1], [fx - 1, fy]], 0.4, edge(c))];
     // Little cream claws.
     for (const k of [0, 1, 2]) parts.push(F(E(fx + 2.4 + k * 0.1, fy + 0.6 - k * 0.65 + 0.5, 0.55, 0.42, '#fff6e0')));
-    if (near) parts.push(F(E(kn[0] - 0.5, kn[1] - 0.6, 1, 0.7, mix(skin, '#ffffff', 0.3))));
     return parts;
   };
   out.push(...leg('fb', 14.5, 23 + by, false, false), ...leg('ff', 26.5, 23 + by, false, true));
 
   // Body with a cream belly and scute lines.
   out.push(...ball(18.5, 21.5 + by, 10.4, 6.8, skin));
-  out.push(E(19.5, 25 + by, 8.6, 3.3, belly));
+  out.push(E(19.5, 24.6 + by, 8.2, 2.9, belly), F(E(18, 23.6 + by, 4, 0.8, mix(belly, '#ffffff', 0.5))));
   // Freckles of a darker green.
   for (const [x, y] of [[12.5, 20], [16, 22.4], [21, 21.6], [24, 23]]) out.push(F(E(x, y + by, 0.7, 0.55, skinD)));
 
@@ -338,7 +339,7 @@ function pebblet(pose, f, mood) {
   }
 
   if (hurt) out.push(F(E(37, 4, 0.8, 1.2, '#9fd8ff')));
-  return { w: W, h: H, res: 3, shapes: out };
+  return { w: W, h: H, res: 3, shapes: shift(out, 0, 2) };
 }
 
 // ---------- Manticore Cub (scorpip) ----------
@@ -372,7 +373,7 @@ function scorpip(pose, f, mood) {
   const sway = dead ? 0 : walk ? Math.sin(p * TAU) : wave(p) * 0.6;
   const rise = angry ? -2 : 0;
   const tailPts = dead
-    ? [[12, 30 + by], [8, 33], [4.6, 35], [2.4, 35.6]]
+    ? [[12, 30 + by], [9.6, 33], [7.4, 34.6], [5.6, 35.2]]
     : [[12, 28 + by], [7.5, 26 + by], [5.4 + sway * 0.3, 20 + by], [7 + sway * 0.7, 13.4 + rise], [11.6 + sway, 9.6 + rise], [17 + sway, 8.6 + rise]];
   const segs = along(tailPts, 9);
   segs.forEach(([x, y, a], i) => {
@@ -389,7 +390,7 @@ function scorpip(pose, f, mood) {
   }
 
   // Wings: small bat wings, the far one darker behind the body. They flick as it trots.
-  const flap = dead ? 30 : walk ? wave(p * 2) * 12 : wave(p) * 6 + (angry ? -10 : 0);
+  const flap = dead ? -28 : walk ? wave(p * 2) * 12 : wave(p) * 6 + (angry ? -10 : 0);
   const wingShape = (rx, ry, a, c, cd, s) => {
     const pts = [[rx, ry], [rx - 2.4 * s, ry - 6.4], [rx - 5 * s, ry - 9.6], [rx - 11.6 * s, ry - 9.4], [rx - 9.4 * s, ry - 6.4], [rx - 12.4 * s, ry - 3.6], [rx - 9.2 * s, ry - 2], [rx - 9.6 * s, ry + 1.2], [rx - 6.4 * s, ry - 0.2], [rx - 4.6 * s, ry + 2], [rx - 2 * s, ry + 1.2]];
     const w = turn(pts, rx, ry, a);
@@ -562,7 +563,7 @@ function leafling(pose, f, mood) {
   // The twig staff, held out front: knots, a curl, a little leaf, and a glowing bud.
   const sx = X + 10.6 + (walk ? Math.sin(p * TAU) * 0.6 : 0);
   const sy = 31 + by;
-  const st = dead ? 30 : hurt ? -10 : walk ? Math.sin(p * TAU) * 3 : wave(p) * 1.4;
+  const st = dead ? 14 : hurt ? -10 : walk ? Math.sin(p * TAU) * 3 : wave(p) * 1.4;
   const staff = turn([[sx - 0.8, sy + 13], [sx, sy + 4], [sx - 0.2, sy - 6], [sx + 0.6, sy - 13], [sx + 0.1, sy - 16.4]], sx, sy, st);
   out.push(...tubeL(staff, [1.2, 1.6, 1.6, 1.4, 1], bark, 4, 0.5));
   const top = staff[4];
@@ -588,8 +589,15 @@ function leafling(pose, f, mood) {
   const rustle = walk ? Math.sin(p * TAU * 2) * 5 : wave(p) * 4 + (angry ? 0 : 0);
   const crown = [[-8, -2, 150], [-7, -6, 165], [-4, -9, 200], [0, -10, 245], [4, -9.4, 285], [7, -7, 315], [8.6, -3, 345]];
   crown.forEach(([dx, dy, a], i) => out.push(...leaf(X + dx * 0.6, Y + dy * 0.6, angry ? 7.4 : 6.4, 4.4, a + rustle * (i % 2 ? 1 : -0.6), i % 2 ? leafB : leafA)));
-  out.push(C(blob([[X - 8.4, Y - 1], [X - 7, Y - 7], [X - 1, Y - 9.6], [X + 6, Y - 8], [X + 8.8, Y - 3], [X + 7.4, Y - 2.4], [X + 5.4, Y - 4.6], [X + 3.6, Y - 2.6], [X + 1.4, Y - 5], [X - 1.6, Y - 3], [X - 4, Y - 4.4], [X - 5.6, Y - 1.4]], leafA)));
-  out.push(F(E(X - 2.6, Y - 7, 2.6, 1, leafL)));
+  // Bangs: a solid cap of leaves, then pointed leaf-tips falling over the brow.
+  out.push(blob([[X - 8.4, Y - 1.4], [X - 7, Y - 7], [X - 1, Y - 9.6], [X + 6, Y - 8], [X + 8.8, Y - 3.4], [X + 4, Y - 5.2], [X - 4, Y - 5]], leafA));
+  const fringe = [[-6.6, -4.6, 112, leafC], [-3.4, -5.4, 100, leafA], [-0.2, -5.8, 86, leafB], [3, -5.4, 74, leafA], [6, -4.6, 60, leafB]];
+  fringe.forEach(([dx, dy, a, c], i) => out.push(...leaf(X + dx, Y + dy, 4.4 - Math.abs(i - 2) * 0.4, 3.2, a + rustle * 0.3, c, false).map((sh) => C(sh))));
+  out.push(F(E(X - 2.6, Y - 7, 2.6, 1, leafL)), F(E(X + 2.6, Y - 7.6, 1.2, 0.6, leafL)));
+  // A sprout curling up from the crown, bobbing with each step.
+  const sp = walk ? Math.sin(p * TAU * 2 - 1.2) * 10 : wave(p) * 6;
+  const sprout = turn([[X + 0.4, Y - 9], [X + 1, Y - 12], [X + 0.2, Y - 14]], X + 0.4, Y - 9, sp + (dead ? 50 : 0));
+  out.push(...tubeL(sprout, [0.9, 0.7, 0.6], leafC, 3, 0.4), ...leaf(sprout[2][0], sprout[2][1], 3.6, 2.4, -150 + sp, leafB, false), ...leaf(sprout[2][0], sprout[2][1], 3.2, 2.2, -30 + sp, leafA, false));
   // A pink blossom tucked in the hair.
   const fx = X - 5.4;
   const fy = Y - 5.6;
@@ -600,7 +608,15 @@ function leafling(pose, f, mood) {
   out.push(F(E(fx, fy, 0.8, 0.8, '#ffe36b')));
 
   // Face: big green eyes.
-  out.push(...face(X + 2.2, Y + 1.8, 1.55, mood, { gap: 3.6, eye: '#3f8a4e' }));
+  out.push(...face(X + 2.2, Y + 1.8, 1.72, mood, { gap: 3.5, eye: '#3f8a4e' }));
+  // Lashes flicking out at the eyes' outer corners, and a leaf-green iris ring.
+  if (mood === 'idle' || mood === 'angry') {
+    for (const sd of [-1, 1]) {
+      const ex = X + 2.2 + sd * 3;
+      out.push(...stroke([[ex + sd * 1.3, Y + 0.2], [ex + sd * 2.2, Y - 0.8]], 0.45, INK));
+      out.push(F(E(ex + 0.25, Y + 2.6, 0.9, 0.45, '#7fd08a')));
+    }
+  }
   if (angry) out.push(F(E(X + 7.2, Y - 1, 0.5, 0.5, '#ff6b9a')));
   if (hurt) out.push(F(E(X + 9, Y - 6, 0.8, 1.2, '#9fd8ff')));
   // Falling leaves on the walk, sparkles of pollen on idle.
@@ -742,11 +758,219 @@ function boarlet(pose, f, mood) {
   return { w: W, h: H, res: 3, shapes: out };
 }
 
+// ---------- Treant (mossgolem) ----------
+
+function mossgolem(pose, f, mood) {
+  const W = 62;
+  const H = 70;
+  const G = H;
+  const walk = pose === 'walk';
+  const p = walk ? f / 6 : f / 4;
+  const dead = mood === 'dead';
+  const hurt = mood === 'hurt';
+  const angry = mood === 'angry';
+  const happy = mood === 'happy';
+  const bark = '#a9826a';
+  const barkD = shade(bark, -13);
+  const barkDD = shade(bark, -26);
+  const barkL = mix(bark, '#fff0dc', 0.3);
+  const moss = '#9cd486';
+  const mossD = shade(moss, -14);
+  const leafA = dead ? '#b8b07a' : '#76c27a';
+  const leafB = dead ? '#c9c08a' : '#92d690';
+  const leafC = dead ? '#a89c68' : '#5ea86a';
+  const leafL = dead ? '#e0d8a8' : '#c2efb4';
+  const out = [];
+  // A heavy, rolling stomp: the trunk sinks as each root foot lands and leans into the step.
+  const step = walk ? Math.sin(p * TAU * 2) : 0;
+  const by = dead ? 5 : walk ? Math.abs(Math.sin(p * TAU)) * -1.4 + 0.4 : wave(p) * 0.5;
+  const lean = dead ? 3.5 : hurt ? -2.6 : walk ? Math.sin(p * TAU) * 2 : 0;
+  const cx = 30;
+  // The crown sits this much lower than it was laid out, leaving headroom for the nest's bird.
+  const CY = 3;
+  const pivot = [30, 62];
+  const tr = (pts) => turn(pts.map(([x, y]) => [x, y + by]), pivot[0], pivot[1], lean);
+  const tp = (x, y) => tr([[x, y]])[0];
+  const sw = (walk ? Math.sin(p * TAU - 1) * 1.6 : wave(p) * 0.9) + (hurt ? -1.4 : 0);
+
+  // Root feet: a splay of root toes that lift and plant in turn.
+  const foot = (ph, near) => {
+    const [dx, lift] = dead ? [near ? 4 : -4, 0] : walk ? gait(p + ph, 9, 3.4) : [near ? 1 : -1, 0];
+    const fx = cx + (near ? 6 : -6) + dx;
+    const fy = G - 1.6 + lift;
+    const c = near ? bark : barkD;
+    const top = tp(cx + (near ? 6 : -6), 57);
+    const parts = near ? tubeL([top, [fx, fy - 4], [fx, fy]], [9, 7, 6], c, 4, 0.7) : [tube([top, [fx, fy - 4], [fx, fy]], [9, 7, 6], c)];
+    for (const [ox, len, a] of [[-2, 4.6, 165], [0, 5.4, 20], [2.4, 5.4, 5]]) {
+      const end = [fx + ox + Math.cos(rad(a)) * len, fy + 0.6 + Math.sin(rad(a)) * 0.4 + (lift ? -lift * 0.1 + 0.6 : 0)];
+      parts.push(...(near ? tubeL([[fx + ox, fy - 1], end], [3, 1.4], c, 3, 0.6) : [tube([[fx + ox, fy - 1], end], [3, 1.4], c)]));
+    }
+    if (near) parts.push(F(E(fx - 1, fy - 4, 1.4, 1, mossD)));
+    return parts;
+  };
+
+  // Branch arms: a crooked bough with twig fingers and a tuft of leaves, swinging with the step.
+  const arm = (near) => {
+    const sh = tp(near ? 43 : 17, 31);
+    const s = near ? 1 : -1;
+    const swing = (walk ? Math.sin(p * TAU) * (near ? -3 : 3) : wave(p + (near ? 0 : 0.5)) * 0.8) + (angry ? -4 : 0) + (dead ? 8 : 0) + (hurt ? -2 : 0);
+    const elbow = [sh[0] + 6.4 * s, sh[1] + 4 + swing * 0.4];
+    const hand = [sh[0] + 9.4 * s + swing * 0.5 * s, sh[1] + 11 + swing];
+    const c = near ? bark : barkDD;
+    const out2 = near ? tubeL([sh, elbow, hand], [6, 4, 3], c, 4, 0.7) : [tube([sh, elbow, hand], [6, 4, 3], c)];
+    // Twig fingers.
+    for (const a of near ? [40, 80, 120] : [60, 100, 140]) {
+      const tip = [hand[0] + Math.cos(rad(a + (angry ? -30 : 0))) * 3.6, hand[1] + Math.sin(rad(a + (angry ? -30 : 0))) * 3.6];
+      out2.push(...(near ? tubeL([hand, tip], [1.6, 0.8], c, 2, 0.5) : [tube([hand, tip], [1.6, 0.8], c)]));
+    }
+    // A sprig of leaves sprouting at the elbow.
+    const lc = near ? leafB : leafC;
+    out2.push(...leaf(elbow[0], elbow[1] - 1, 5.4, 3.4, near ? -60 + sw * 6 : -120 + sw * 6, lc), ...leaf(elbow[0], elbow[1] - 1, 4.6, 3, near ? -15 + sw * 5 : -165 + sw * 5, lc));
+    return out2;
+  };
+
+  // Crown back layer.
+  const crown = (x, y, rx, ry, c, k = 1) => {
+    const ox = sw * k * (1 - y / 40);
+    const [px, py] = tp(x + ox, y + CY);
+    return ball(px, py, rx, ry, c, 0, { dark: -12 });
+  };
+  out.push(...arm(false));
+  out.push(...foot(0.5, false));
+  for (const [x, y, rx, ry] of [[14, 16, 10, 8], [46, 15, 10, 8], [30, 10, 15, 9], [22, 22, 9, 6], [40, 22, 9, 6]]) out.push(...crown(x, y, rx, ry, leafC));
+
+  // The trunk.
+  const trunk = tr([[17, 60], [18.4, 50], [16.6, 38], [17.6, 26], [21, 18], [39, 18], [42.4, 26], [43.4, 38], [41.6, 50], [43, 60], [36, 62], [30, 61], [24, 62]]);
+  out.push(T(trunk.map(([x, y]) => [x + (x - cx) * 0.035, y + 0.3]), edge(bark)), blob(trunk, bark, 3));
+  // Bark grooves and a lighter front plate where the face sits.
+  out.push(F(blob(tr([[21, 32], [25, 27], [35, 27], [39.6, 33], [39, 48], [33, 52], [26, 52], [21.4, 47]]), mix(bark, barkL, 0.45), 3)));
+  for (const line of [[[19.6, 56], [20.6, 48], [19.4, 40]], [[40.4, 58], [39.4, 50], [41, 42]], [[22.4, 22], [21.2, 28]], [[38, 21], [39.4, 27]], [[29.6, 54], [30.4, 60]], [[25, 55], [24.4, 60]], [[35, 55], [35.8, 60]]]) {
+    out.push(...stroke(tr(line), 0.7, barkD), ...stroke(tr(line).map(([x, y]) => [x + 0.6, y]), 0.35, barkL));
+  }
+  // A knothole on the side.
+  const [kx, ky] = tp(20.4, 44);
+  out.push(F(E(kx, ky, 1.6, 2.2, barkDD)), F(E(kx + 0.3, ky + 0.4, 0.9, 1.4, '#4a3448')));
+  // Mushrooms growing up the side.
+  for (const [x, y, r] of [[17.6, 36, 2.6], [18.6, 32, 1.8]]) {
+    const [mx, my] = tp(x, y);
+    out.push(F(R(mx - 0.5, my, 1.2, 1.8, '#fff0dc')), ...ovL(mx - 0.6, my, r, r * 0.6, 0, dead ? '#c8a8a0' : '#ff9eb8', 0.35), F(E(mx - 1, my - 0.3, 0.5, 0.35, '#ffffff')), F(E(mx + 0.6, my - 0.1, 0.35, 0.3, '#ffffff')));
+  }
+  // Moss draped over the shoulders.
+  out.push(C(blob(tr([[16.4, 27], [19, 20], [25, 17.4], [26.4, 21], [23.4, 22.4], [22, 26], [19.4, 25.6], [18.6, 30]]), moss, 3)));
+  out.push(C(blob(tr([[43.6, 28], [41.4, 20], [35, 17.4], [34, 21], [37, 21.6], [38.4, 24.6], [41, 25], [42, 31]]), moss, 3)));
+
+  out.push(...foot(0, true));
+
+  // The face: deep knot eyes with a warm glow, moss brows, a knobby nose, a mouth crack, and a
+  // mossy beard.
+  const [ex1, ey1] = tp(27.4, 37);
+  const [ex2, ey2] = tp(36.6, 37);
+  const glow = angry ? '#ff8a3a' : '#ffd36a';
+  const hollow = (x, y, s) => {
+    const o = [F(E(x, y, 3.3, 2.9, barkDD)), F(E(x, y + 0.2, 2.7, 2.3, '#4a3448'))];
+    switch (mood) {
+      case 'blink':
+        o.push(F(E(x, y - 0.6, 3, 2.2, barkD)), ...stroke([[x - 2.4, y + 0.6], [x, y + 1.2], [x + 2.4, y + 0.6]], 0.6, '#4a3448'));
+        break;
+      case 'happy':
+        o.push(arc(x, y + 1, 1.8, 1.6, 200, 340, 0.8, glow));
+        break;
+      case 'hurt':
+        o.push(...stroke([[x - s * 1.6, y - 1.4], [x + s * 1.2, y], [x - s * 1.6, y + 1.4]], 0.8, '#ffd36a'));
+        break;
+      case 'dead':
+        o.push(...stroke([[x - 1.2, y - 1.2], [x + 1.2, y + 1.2]], 0.7, '#8a7a8a'), ...stroke([[x - 1.2, y + 1.2], [x + 1.2, y - 1.2]], 0.7, '#8a7a8a'));
+        break;
+      default:
+        o.push(F(E(x + 0.4, y + 0.3, angry ? 1.8 : 1.5, angry ? 1.4 : 1.7, angry ? '#ffd27a' : '#fff1b0')), F(E(x + 0.4, y + 0.3, angry ? 1.1 : 1, angry ? 0.8 : 1.2, glow)), F(E(x - 0.2, y - 0.4, 0.45, 0.45, '#ffffff')));
+    }
+    return o;
+  };
+  out.push(...hollow(ex1, ey1, 1), ...hollow(ex2, ey2, -1));
+  // Moss brows: heavy, wise, and expressive.
+  const lift = happy ? -1.6 : hurt ? -1 : 0;
+  const tilt = angry ? 2.6 : happy ? -0.6 : hurt ? -1.4 : 0.8;
+  const brow = (x, y, s) => C(blob([[x - s * 4.4, y - 3.6 + lift + tilt * 0.2], [x - s * 1, y - 5 + lift - tilt * 0.4], [x + s * 2.6, y - 4.4 + lift + tilt], [x + s * 3.6, y - 2.6 + lift + tilt * 1.2], [x + s * 0.6, y - 3 + lift + tilt * 0.4], [x - s * 3.6, y - 2.2 + lift]], moss, 3));
+  out.push(brow(ex1, ey1, 1), brow(ex2, ey2, -1));
+  out.push(...stroke([[ex1 - 3, ey1 - 4.2 + lift], [ex1, ey1 - 4.6 + lift]], 0.4, mossD), ...stroke([[ex2 + 3, ey2 - 4.2 + lift], [ex2, ey2 - 4.6 + lift]], 0.4, mossD));
+  // Nose knot.
+  const [nx, ny] = tp(32.4, 41.4);
+  out.push(...ovL(nx, ny, 2.2, 1.8, 0, mix(bark, barkL, 0.6), 0.4), F(E(nx - 0.6, ny - 0.6, 0.7, 0.5, '#fff6e6')));
+  // Mouth.
+  const [mx, my] = tp(32, 46);
+  if (angry) {
+    out.push(F(T([[mx - 4.4, my - 1], [mx + 4.4, my - 1], [mx + 3, my + 2.6], [mx - 3, my + 2.6]], '#4a3448')));
+    for (const k of [-3, -1, 1, 3]) out.push(F(T([[mx + k - 0.7, my - 1], [mx + k + 0.7, my - 1], [mx + k, my + 0.6]], '#fff0dc')));
+  } else if (hurt) {
+    out.push(F(E(mx, my + 0.6, 1.6, 1.6, '#4a3448')));
+  } else if (dead) {
+    out.push(...stroke([[mx - 3, my + 0.6], [mx - 1, my], [mx + 1, my + 0.6], [mx + 3, my]], 0.6, '#4a3448'));
+  } else if (happy) {
+    out.push(F(T([[mx - 3.4, my - 0.6], [mx + 3.4, my - 0.6], [mx, my + 2.4]], '#4a3448')), F(E(mx, my + 1.2, 1.2, 0.6, '#e9849a')));
+  } else {
+    out.push(arc(mx, my - 1.4, 3, 2, 30, 150, 0.7, '#4a3448'));
+  }
+  if (!dead) out.push(F(E(ex1 - 1.6, ey1 + 4.4, 1.6, 0.8, '#f2a0a8')), F(E(ex2 + 1.6, ey2 + 4.4, 1.6, 0.8, '#f2a0a8')));
+  // Mossy beard hanging from the chin, swaying.
+  const bw = sw * 0.6;
+  out.push(C(blob(tr([[25.4, 49.4], [29, 50.6], [35, 50.2], [38.6, 48.8], [38 + bw, 53.4], [35.6 + bw, 52.4], [34 + bw, 57], [31.6 + bw, 53], [29.4 + bw, 56], [27.6 + bw, 52], [25.6 + bw, 54]]), moss, 3)));
+  out.push(F(E(...tp(30, 51.6), 1.6, 0.7, mix(moss, '#ffffff', 0.4))));
+  out.push(...arm(true));
+
+  // Crown front: big leafy clouds with highlights, a few blossoms, and the bird's nest.
+  for (const [x, y, rx, ry, c] of [[11, 22, 7.6, 5.6, leafA], [49, 21, 7.6, 5.6, leafA], [18, 12, 9, 6.6, leafB], [30, 7, 10, 6.4, leafB], [42, 12, 9, 6.6, leafA], [25, 19, 6, 3.6, leafA], [36, 19, 6, 3.6, leafB]]) out.push(...crown(x, y, rx, ry, c));
+  // A fringe of leaves hanging from the crown's underside, swaying.
+  for (let i = 0; i < 9; i++) {
+    const x = 9 + i * 5.2;
+    const y = 23.4 + CY + Math.sin(i * 1.7) * 1.2 - (i === 0 || i === 8 ? 2 : 0);
+    const [px, py] = tp(x + sw * 0.6, y);
+    out.push(...leaf(px, py, 3.6, 2.6, 90 + sw * 8 + (i - 4) * 4, i % 2 ? leafA : leafC, false));
+  }
+  const leafRing = [[6, 18, 200], [5, 24, 160], [12, 7, 230], [22, 2, 260], [38, 2, 285], [48, 7, 310], [55, 17, 340], [55, 24, 20]];
+  for (const [x, y, a] of leafRing) {
+    const [px, py] = tp(x + sw * (1 - y / 40), y + CY);
+    out.push(...leaf(px, py, 4.4, 3, a + sw * 4, leafB, false));
+  }
+  for (const [x, y] of [[14, 9], [26, 3.4], [44, 9], [9, 19]]) {
+    const [px, py] = tp(x + sw, y + CY);
+    out.push(F(E(px, py, 2.4, 1.2, leafL)));
+  }
+  if (!dead) {
+    for (const [x, y] of [[20, 16], [45, 17], [10, 14]]) {
+      const [px, py] = tp(x + sw, y + CY);
+      for (let i = 0; i < 5; i++) out.push(F(E(px + Math.cos((i / 5) * TAU) * 1, py + Math.sin((i / 5) * TAU) * 1, 0.85, 0.85, '#ffc4d8')));
+      out.push(F(E(px, py, 0.55, 0.55, '#ffe36b')));
+    }
+  }
+  // The nest, with a little bluebird who reacts to everything.
+  const [nx2, ny2] = tp(36 + sw * 0.9, 2.6 + CY);
+  out.push(...ovL(nx2, ny2 + 1.6, 4.6, 2.2, 0, '#c99a6a', 0.4));
+  for (const k of [-3, -1, 1, 3]) out.push(...stroke([[nx2 + k - 1.4, ny2 + 0.8], [nx2 + k + 1.2, ny2 + 2.6]], 0.35, '#8f6a4a'));
+  if (!dead) {
+    const hop = happy ? -1.2 : angry ? -0.8 : walk ? -Math.abs(Math.sin(p * TAU * 2)) * 1 : f === 2 ? -0.8 : 0;
+    const bx = nx2 + 0.6;
+    const bby = ny2 - 1.4 + hop;
+    out.push(...ovL(bx, bby, 2.6, 2.1, 0, '#8ec8ff', 0.4), F(E(bx + 0.8, bby + 0.8, 1.4, 1, '#ffe2c8')));
+    out.push(F(T([[bx + 2.2, bby - 0.4], [bx + 3.8, bby + 0.1], [bx + 2.2, bby + 0.6]], '#ffb347')));
+    out.push(T([[bx - 1, bby - 1.8], [bx - 0.2, bby - 3 - (angry ? 0.8 : 0)], [bx + 0.4, bby - 1.8]], '#8ec8ff'));
+    if (mood === 'blink' || happy) out.push(arc(bx + 1, bby - 0.2, 0.5, 0.4, 200, 340, 0.3, INK));
+    else if (hurt) out.push(...stroke([[bx + 0.6, bby - 0.8], [bx + 1.4, bby - 0.3], [bx + 0.6, bby + 0.2]], 0.3, INK));
+    else out.push(F(E(bx + 1, bby - 0.3, 0.45, 0.55, INK)));
+    if (happy) out.push(F(E(bx + 5.6, bby + 1.4, 0.8, 0.6, INK)), ...stroke([[bx + 6.3, bby + 1.4], [bx + 6.3, bby - 1.2], [bx + 7.2, bby - 0.6]], 0.3, INK));
+    if (angry) out.push(...stroke([[bx + 0.2, bby - 1.4], [bx + 1.8, bby - 0.8]], 0.35, INK));
+  } else {
+    out.push(F(ov(nx2 + 6, ny2 + 8, 0.8, 1.8, 40, '#8ec8ff')));
+  }
+  if (hurt) out.push(F(E(53, 30, 0.9, 1.4, '#9fd8ff')));
+  return { w: W, h: H, res: 3, shapes: shift(out, 1, 0) };
+}
+
 export const ART = {
   pebblet: { walk: 6, idle: 4, draw: pebblet },
   scorpip: { walk: 6, idle: 4, draw: scorpip },
   leafling: { walk: 6, idle: 4, draw: leafling },
   boarlet: { walk: 6, idle: 4, draw: boarlet },
+  mossgolem: { walk: 6, idle: 4, draw: mossgolem },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
@@ -755,4 +979,5 @@ export const INFO = {
   scorpip: { name: 'Manticore Cub', w: 32, h: 26 },
   leafling: { name: 'Dryad', w: 20, h: 34 },
   boarlet: { name: 'Warg', w: 38, h: 26 },
+  mossgolem: { name: 'Treant', w: 34, h: 58 },
 };

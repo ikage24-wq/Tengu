@@ -159,23 +159,24 @@ function rootImp(pose, f, mood) {
   const arm = (sx, sy, q, c, front) => {
     let hand;
     if (dead) hand = [sx + 0.8, sy + 6];
-    else if (hurt) hand = [sx - 3.4, sy - 2.6];
+    else if (hurt) hand = front ? [sx + 3.6, sy - 0.6] : [sx - 3.4, sy - 2.6];
     else if (angry) hand = front ? [sx + 5.6, sy - 2.4 + Math.sin(p) * 0.6] : [sx + 4, sy - 3.6];
     else {
-      const a = walk ? Math.sin(q) * 0.75 : 0.25 + Math.sin(it) * 0.08;
+      const a = (front ? 0.95 : 0.2) + (walk ? Math.sin(q) * 0.6 : Math.sin(it) * 0.1);
       hand = [sx + Math.sin(a) * 5.4, sy + Math.cos(a) * 5.4];
     }
     const elbow = [lerp([sx, sy], hand, 0.5)[0] - 0.8, lerp([sx, sy], hand, 0.5)[1] + 0.4];
     const dx = hand[0] - elbow[0];
     const dy = hand[1] - elbow[1];
-    const base = Math.atan2(dy, dx);
+    // Front claws point forward, ready to swipe; the back ones follow the arm.
+    const base = front && !dead ? -0.25 + (hurt ? -0.9 : 0) : Math.atan2(dy, dx);
     const res = [...limb([[sx, sy], elbow, hand], 2.8, 2.1, c)];
     for (const k of [-1, 0, 1]) {
-      const a = base + k * 0.55 - (angry && !dead ? 0.5 : 0);
-      const l = k === 0 ? 3.2 : 2.6;
+      const a = base + k * 0.55 - (angry && !dead && !front ? 0.5 : 0);
+      const l = (k === 0 ? 3.8 : 3.1) * (front ? 1 : 0.85);
       const m = [hand[0] + Math.cos(a) * l * 0.55, hand[1] + Math.sin(a) * l * 0.55];
-      const t2 = [hand[0] + Math.cos(a + 0.35) * l, hand[1] + Math.sin(a + 0.35) * l];
-      res.push(...limb([hand, m, t2], 1.2, 0.1, front ? BONE : shade(BONE, -12)));
+      const t2 = [hand[0] + Math.cos(a + 0.45) * l, hand[1] + Math.sin(a + 0.45) * l];
+      res.push(...limb([hand, m, t2], 1.5, 0.1, front ? BONE : shade(BONE, -12)));
     }
     res.push(...oval(hand[0], hand[1], 1.5, 1.4, c));
     return res;
@@ -188,8 +189,9 @@ function rootImp(pose, f, mood) {
   const hcx = 17.6 + hx;
   const hcy = 14.2 + by + hy;
   out.push(...limb([[hcx - 7.4, hcy - 1], [hcx - 11.2, hcy - 3], [hcx - 13.4, hcy - 5.4 + (walk ? Math.sin(p) * 0.4 : 0)]], 3.8, 0.3, barkD));
-  out.push(...limb([[hcx - 3.6, hcy - 6.6], [hcx - 5.6, hcy - 10.4], [hcx - 9, hcy - 12.4], [hcx - 10.6, hcy - 11.4]], 3, 0.4, shade(horn, -8)));
-  out.push(F(E(hcx - 10.4, hcy - 11.6, 0.7, 0.7, pglow)));
+  out.push(...limb([[hcx - 3.2, hcy - 6.4], [hcx - 5.4, hcy - 10], [hcx - 8.8, hcy - 12.6], [hcx - 12, hcy - 12.2]], 3.4, 0.4, shade(horn, -8)));
+  out.push(...flatLine([[hcx - 5.8, hcy - 9.2], [hcx - 4.2, hcy - 10.4]], 0.45, lineD), ...flatLine([[hcx - 8.6, hcy - 11.6], [hcx - 8, hcy - 13.2]], 0.45, lineD));
+  out.push(F(E(hcx - 11.8, hcy - 12.2, 0.75, 0.7, pglow)));
 
   // Body: a knot of roots with corruption glowing through.
   out.push(E(16.6, 27 + by, 6.6, 6.2 + breathe * 0.5, bark), E(16.4, 30.4 + by, 5.4, 3.2, bark));
@@ -198,7 +200,17 @@ function rootImp(pose, f, mood) {
   out.push(...flatLine([[16.6, 23.6 + by], [17.6, 25.2 + by], [16.8, 27.4 + by], [18, 29.2 + by]], 0.6, pglow));
   out.push(F(E(17.6, 26.4 + by, 1.5, 1.7, pglow)), F(E(17.5, 26.2 + by, 0.7, 0.8, PURP_HI)));
 
-  out.push(...leg(18.8, p, bark));
+  out.push(...leg(18.8, p, barkD));
+  // A leaf loincloth on a vine belt.
+  for (let i = 0; i < 6; i++) {
+    const x = 11.4 + i * 2.1;
+    const s = walk ? Math.sin(p + i * 0.8) * 0.5 : Math.sin(it + i) * 0.2;
+    const c = i === 2 ? '#9a6fd0' : i % 2 ? '#5f8c62' : '#77a774';
+    const l = 3 + (i % 2) * 0.8;
+    out.push(F(T([[x - 1.4, 28.8 + by], [x + 1.4, 28.8 + by], [x + 0.4 + s, 29.4 + l + by], [x - 0.2 + s, 29.6 + l + by]], lineOf(c))));
+    out.push(F(T([[x - 1, 29 + by], [x + 1, 29 + by], [x + 0.3 + s, 28.9 + l + by], [x - 0.1 + s, 29.1 + l + by]], c)));
+  }
+  out.push(...flatLine([[10.2, 28.8 + by], [16.6, 29.6 + by], [23, 28.6 + by]], 0.9, '#4f7a4c'));
 
   // Head: big and knotty, with a root beard.
   for (const [x, l] of [[-1.6, 3.6], [0.6, 4.6], [2.6, 3.4]]) {
@@ -212,8 +224,6 @@ function rootImp(pose, f, mood) {
   out.push(...flatLine([[hcx - 1, hcy - 7.2], [hcx + 1.2, hcy - 6.2], [hcx + 3.8, hcy - 6.8]], 0.45, barkD));
   out.push(F(E(hcx - 4.4, hcy + 3.4, 1.4, 1.2, barkD)), F(E(hcx - 4.3, hcy + 3.5, 0.7, 0.6, lineD)));
   out.push(F(E(hcx - 3.4, hcy - 4.6, 2.2, 1.0, mix(head, '#ffffff', 0.28))));
-  // Glowing fungus on the brow.
-  out.push(F(E(hcx - 6.6, hcy - 5.6, 1.3, 0.8, shade(glow, -14))), F(E(hcx - 6.6, hcy - 5.8, 0.8, 0.45, TEAL_HI)));
 
   // Face.
   const ex1 = hcx + 1.2;
@@ -247,13 +257,13 @@ function rootImp(pose, f, mood) {
   }
 
   // Front horn: a twisted root curling back, its tip glowing.
-  out.push(...limb([[hcx + 1.2, hcy - 7], [hcx + 1.4, hcy - 10.6], [hcx - 0.6, hcy - 13.2], [hcx - 3, hcy - 13.8]], 3.2, 0.5, horn));
-  out.push(...flatLine([[hcx + 0.2, hcy - 8.4], [hcx + 2, hcy - 9]], 0.45, lineD), ...flatLine([[hcx + 0.2, hcy - 11], [hcx + 1.4, hcy - 12.2]], 0.45, lineD));
-  out.push(F(E(hcx - 2.7, hcy - 13.8, 0.75, 0.7, pglow)), F(E(hcx - 2.8, hcy - 13.9, 0.35, 0.35, PURP_HI)));
+  out.push(...limb([[hcx + 2.4, hcy - 6.8], [hcx + 2.8, hcy - 10.4], [hcx + 1, hcy - 13], [hcx - 2, hcy - 13.6]], 3.6, 0.5, horn));
+  out.push(...flatLine([[hcx + 1.2, hcy - 8.4], [hcx + 3.4, hcy - 8.8]], 0.45, lineD), ...flatLine([[hcx + 1, hcy - 11], [hcx + 2.6, hcy - 11.8]], 0.45, lineD));
+  out.push(F(E(hcx - 1.7, hcy - 13.6, 0.8, 0.75, pglow)), F(E(hcx - 1.8, hcy - 13.7, 0.35, 0.35, PURP_HI)));
   // Front ear tucked by the horn.
   out.push(...limb([[hcx + 7.6, hcy - 3.2], [hcx + 10, hcy - 5.6], [hcx + 11.4, hcy - 7.4 + (walk ? Math.sin(p + 1) * 0.4 : 0)]], 2.8, 0.3, head));
 
-  out.push(...arm(20.6, 23.8 + by, p + Math.PI, bark, true));
+  out.push(...arm(20.6, 23.8 + by, p + Math.PI, head, true));
   return { w: 34, h: 38, res: 3, shapes: out };
 }
 
@@ -304,7 +314,7 @@ function myconid(pose, f, mood) {
   };
   out.push(...foot(14, p + Math.PI, stemD));
   const bsx = 11.6;
-  const bsy = 30.6 + by;
+  const bsy = 31.4 + by;
   const bh = dead ? [bsx - 0.6, bsy + 5.6] : hurt ? [bsx - 4, bsy - 2] : [bsx - 2.2 - raise * 1.2, bsy + 4.4 - raise * 9];
   out.push(...limb([[bsx, bsy], lerp([bsx, bsy], bh, 0.5).map((v, i) => v - (i ? 0 : 0.8)), bh], 2.6, 2, stemD), ...oval(bh[0], bh[1], 1.4, 1.4, stemD));
   if (raise > 0.5) {
@@ -314,31 +324,33 @@ function myconid(pose, f, mood) {
   out.push(...foot(20, p, stemD));
 
   // Body: a stout stem with a leaf mantle and beads.
-  out.push(E(17, 34.4 + by, 7.6, 8.2 + breathe, stem), E(17, 38.6 + by, 7, 3.6, stem));
-  out.push(F(E(19, 36 + by, 3.4, 3.6, mix(stem, '#ffffff', 0.35))));
+  out.push(E(17, 32.8 + by, 7.4, 9.8 + breathe, stem), E(17, 38.6 + by, 7.2, 3.6, stem));
+  out.push(F(E(19.4, 37 + by, 3, 2.6, mix(stem, '#ffffff', 0.35))));
   out.push(...flatLine([[11.6, 37 + by], [12.6, 39.8 + by]], 0.45, stemD), ...flatLine([[22.6, 37.4 + by], [21.8, 40 + by]], 0.45, stemD));
   // Leaf mantle.
   for (let i = 0; i < 7; i++) {
     const x = 10.4 + i * 2.2;
     const s = walk ? Math.sin(p + i) * 0.35 : 0;
     const c = i % 2 ? '#5f8c6e' : '#74a47e';
-    out.push(F(T([[x - 1.6, 28.6 + by], [x + 1.6, 28.6 + by], [x + 0.3 + s, 32.4 + by + (i % 2) * 0.6], [x - 0.5 + s, 32.2 + by]], lineOf(c))));
-    out.push(F(T([[x - 1.2, 28.6 + by], [x + 1.2, 28.6 + by], [x + 0.3 + s, 31.8 + by + (i % 2) * 0.6], [x - 0.4 + s, 31.6 + by]], c)));
+    const y0 = 30.2 + by + Math.abs(i - 3) * 0.25;
+    out.push(F(T([[x - 1.6, y0], [x + 1.6, y0], [x + 0.3 + s, y0 + 3.8 + (i % 2) * 0.6], [x - 0.5 + s, y0 + 3.6]], lineOf(c))));
+    out.push(F(T([[x - 1.2, y0], [x + 1.2, y0], [x + 0.3 + s, y0 + 3.2 + (i % 2) * 0.6], [x - 0.4 + s, y0 + 3]], c)));
+    out.push(...flatLine([[x, y0 + 0.4], [x + s * 0.5, y0 + 2.6]], 0.3, shade(c, -12)));
   }
   // Beaded necklace with a fang pendant.
   const beads = [TEAL, BONE, PURP, BONE, TEAL, BONE, PURP];
   for (let i = 0; i < 7; i++) {
     const a = Math.PI * (0.15 + (i / 6) * 0.7);
     const x = 17.6 + Math.cos(a) * 6;
-    const y = 30.2 + by + Math.sin(a) * 3.4;
+    const y = 32.2 + by + Math.sin(a) * 3.4;
     out.push(F(E(x, y, 0.95, 0.95, lineOf(beads[i]))), F(E(x, y, 0.7, 0.7, beads[i])), F(E(x - 0.2, y - 0.25, 0.25, 0.25, '#ffffff')));
   }
-  out.push(F(T([[16.4, 33.6 + by], [18.8, 33.6 + by], [17.8, 36.6 + by]], lineOf(BONE))), F(T([[16.8, 33.7 + by], [18.4, 33.7 + by], [17.7, 36 + by]], BONE)));
+  out.push(F(T([[16.4, 35.4 + by], [18.8, 35.4 + by], [17.8, 38.4 + by]], lineOf(BONE))), F(T([[16.8, 35.5 + by], [18.4, 35.5 + by], [17.7, 37.8 + by]], BONE)));
 
   // Face on the stem, in the cap's shade.
-  const fx = 20 + hx;
-  const fy = 25.2 + by;
-  out.push(...eyes([[fx - 2.6, fy, 1.55], [fx + 2.4, fy, 1.45]], mood, { cx: fx, skin: stem, glow, brow: '#6a4a5a' }));
+  const fx = 19.2 + hx;
+  const fy = 25.6 + by;
+  out.push(...eyes([[fx - 2.6, fy, 1.55], [fx + 2.4, fy, 1.45]], mood, { cx: fx, skin: stem, glow, brow: '#6a4a5a', flare: false }));
   if (!dead && mood !== 'hurt') {
     // War paint: two violet stripes under each eye.
     for (const x of [fx - 3.8, fx - 2.6, fx + 2, fx + 3.2]) out.push(...flatLine([[x, fy + 2], [x - 0.3, fy + 3.2]], 0.5, '#9b6fd6'));
@@ -363,21 +375,21 @@ function myconid(pose, f, mood) {
 
   // Cap: a frilled dome with a floppy tip, spotted with glow. It casts its shade over the face.
   const ct = (walk ? -Math.sin(p) * 0.9 : Math.sin(it) * 0.5) + (hurt ? -1.2 : 0) + (dead ? 1.4 : 0);
-  const cy = 20.4 + by + (dead ? 1.4 : 0);
+  const cy = 17.6 + by + (dead ? 1.4 : 0);
   const ccx = 16 + hx * 0.6;
   const dome = [];
   for (let i = 0; i <= 14; i++) {
     const a = Math.PI * (1 + i / 14);
-    dome.push([ccx + Math.cos(a) * 15.4, cy + Math.sin(a) * 11.2]);
+    dome.push([ccx + Math.cos(a) * 14.8, cy + Math.sin(a) * 10.4]);
   }
   const tipPts = [[ccx - 2, cy - 9.6], [ccx - 4, cy - 14.2], [ccx - 7.4 + ct * 0.5, cy - 16.4 + Math.abs(ct) * 0.2], [ccx - 10.6 + ct, cy - 15 + (dead ? 3 : 0)]];
   out.push(F(taper(ext(tipPts, 0.4), 7.6, 1.6, lineOf(cap))), C(taper(tipPts, 6.6, 0.8, cap)));
-  out.push(C(T([...dome, [ccx + 15.2, cy + 1.4], [ccx, cy + 2.6], [ccx - 15.2, cy + 1.4]], cap)));
+  out.push(C(T([...dome, [ccx + 14.6, cy + 1.4], [ccx, cy + 2.6], [ccx - 14.6, cy + 1.4]], cap)));
   out.push(F(E(ccx - 3, cy - 7.6, 5.4, 2, capHi)), F(E(ccx - 5.4, cy - 7.2, 1.6, 0.8, '#d2c2f2')));
   // Gills and the ruffled frill along the brim.
-  out.push(F(E(ccx, cy + 2.2, 14.6, 1.6, gill)));
+  out.push(F(E(ccx, cy + 2.2, 14, 1.6, gill)));
   for (let i = 0; i < 11; i++) {
-    const x = ccx - 14.2 + i * 2.84;
+    const x = ccx - 13.6 + i * 2.72;
     const wob = Math.sin(i * 2.2 + (walk ? p : it)) * 0.35;
     const yy = cy + 2.6 + (i % 2) * 0.4 + wob - Math.abs(i - 5) * 0.12;
     out.push(E(x, yy, 1.9, 1.5, frill));
@@ -385,7 +397,7 @@ function myconid(pose, f, mood) {
   }
   // Glowing spots, pulsing.
   const pulse = walk ? 0.5 + 0.5 * raise : 0.5 + 0.5 * Math.sin(it);
-  for (const [x, y, r] of [[-7.6, -4.6, 2.2], [0.4, -8.4, 2.4], [7.4, -4.2, 2], [-3.4, -1.4, 1.3], [3.8, -0.8, 1.2], [11.6, -0.4, 1], [-11.6, -0.6, 0.9], [-9.6, -10.4, 1]]) {
+  for (const [x, y, r] of [[-7.6, -4.6, 2.2], [0.4, -8.4, 2.4], [7.4, -4.2, 2], [-3.4, -1.4, 1.3], [3.8, -0.8, 1.2], [11.6, -0.4, 1], [-11.4, -0.8, 0.9]]) {
     const rr = r * (0.95 + 0.12 * pulse);
     out.push(F(E(ccx + x, cy + y, rr + 0.6, rr * 0.82 + 0.55, mix(cap, glow, 0.45))), F(E(ccx + x, cy + y, rr, rr * 0.82, glow)), F(E(ccx + x - 0.3, cy + y - 0.3, rr * 0.4, rr * 0.35, TEAL_HI)));
   }
@@ -416,7 +428,7 @@ function myconid(pose, f, mood) {
     out.push(...mote(o[0] + Math.sin(u * TAU + i * 2) * 3.2, o[1] - 3.6 - u * 3.4, 0.55 - u * 0.2, i % 2 ? PURP : glow));
   }
   const fsx = 22.4;
-  const fsy = 30.6 + by;
+  const fsy = 31.4 + by;
   const grip = lerp(bot, top, 0.42);
   out.push(...limb([[fsx, fsy], [lerp([fsx, fsy], grip, 0.5)[0], lerp([fsx, fsy], grip, 0.5)[1] + 1], grip], 2.6, 2.1, stem), ...oval(grip[0], grip[1], 1.6, 1.6, stem));
   return { w: 36, h: 44, res: 3, shapes: out };
@@ -438,8 +450,8 @@ function brambleBear(pose, f, mood) {
   const furD = '#7d5c4c';
   const belly = '#c7a488';
   const muzzle = '#dcbda0';
-  const plate = '#6c5748';
-  const plateHi = '#8e7764';
+  const plate = '#68564a';
+  const plateHi = '#8a7465';
   const vine = '#5f8c5c';
   const thorn = '#ece0c6';
   const glow = dead ? '#a49cb0' : TEAL;
@@ -458,6 +470,8 @@ function brambleBear(pose, f, mood) {
     const py = 46 - lift;
     const knee = [(x + px) / 2 + (fore ? -0.6 : 1.2), (top + by + py) / 2];
     const res = [...limb([[x, top + by], knee, [px, py - 0.8]], w, w * 0.78, c)];
+    // A rounded haunch hides the limb's flat top.
+    res.push(E(x + (fore ? 0 : -0.4), top + by - 0.6, w * 0.62, w * 0.62, c));
     res.push(...oval(px + 0.8, py, 3.6, 2, c));
     for (const k of [0, 1, 2]) {
       const cx = px + 3.2 - k * 0.3;
@@ -469,105 +483,115 @@ function brambleBear(pose, f, mood) {
 
   // Far legs, darker and a step back.
   out.push(...leg(12.4, 33, p + Math.PI, shade(fur, -12), 6, false));
-  out.push(...leg(37.6, 32, p, shade(fur, -12), 5.6, true));
+  out.push(...leg(36.6, 32, p, shade(fur, -12), 5.6, true));
 
   // Tail: a thorny stub.
-  out.push(...oval(7.2, 28 + by, 2.6, 2.4, furD), F(T([[5, 26.6 + by], [3, 24.6 + by], [5.6, 25.8 + by]], thorn)));
+  out.push(...oval(6.6, 28 + by, 2.6, 2.4, furD), F(T([[4.4, 26.6 + by], [2.2, 24.6 + by], [5, 25.6 + by]], thorn)));
 
   // Body: rump, belly, and the big shoulder hump.
-  out.push(E(15.4, 31 + by, 9.6, 9.6 + breathe * 0.5, fur), E(27, 30.6 + by, 18, 11.4 + breathe, fur), E(37.4, 27 + by, 10.6, 10.8 + breathe * 0.5, fur));
-  out.push(E(27.4, 36.8 + by, 13, 4, belly));
-  out.push(...flatLine([[20, 35.4 + by], [21, 37 + by]], 0.45, shade(belly, -12)), ...flatLine([[27, 36 + by], [27.6, 38 + by]], 0.45, shade(belly, -12)), ...flatLine([[34, 35.4 + by], [34.4, 37.2 + by]], 0.45, shade(belly, -12)));
+  out.push(E(15, 31 + by, 9.6, 9.6 + breathe * 0.5, fur), E(26, 30.6 + by, 17.6, 11.4 + breathe, fur), E(35.6, 27.4 + by, 10.4, 10.6 + breathe * 0.5, fur));
+  out.push(E(26.4, 36.8 + by, 13, 4, belly));
+  out.push(...flatLine([[19, 35.4 + by], [20, 37 + by]], 0.45, shade(belly, -12)), ...flatLine([[26, 36 + by], [26.6, 38 + by]], 0.45, shade(belly, -12)), ...flatLine([[33, 35.4 + by], [33.4, 37.2 + by]], 0.45, shade(belly, -12)));
   // Fur tufts along the underside.
-  for (const x of [16, 22, 29, 35]) out.push(T([[x - 1.6, 38.6 + by], [x + 1.6, 38.6 + by], [x + 0.2, 41 + by]], fur));
+  for (const x of [15, 21, 28, 34]) out.push(T([[x - 1.6, 38.6 + by], [x + 1.6, 38.6 + by], [x + 0.2, 41 + by]], fur));
 
-  // Bark plates fanned over the back, each with a thorn; purple corruption glows in the seams.
-  const plates = [[200, 6.6, 4.4], [222, 7.4, 4.8], [246, 7.8, 5], [270, 7.6, 5], [294, 7, 4.6], [315, 5.8, 4]];
+  // Bramble wrapped over the body, under the plates, with little thorns and leaves.
+  const wrap = (pts, th = 1) => {
+    const res = [...flatLine(pts, th + 0.6, lineOf(vine)), ...flatLine(pts, th, vine)];
+    for (let i = 1; i < pts.length; i++) {
+      const m = lerp(pts[i - 1], pts[i], 0.5);
+      const dx = pts[i][0] - pts[i - 1][0];
+      const dy = pts[i][1] - pts[i - 1][1];
+      const l = Math.hypot(dx, dy) || 1;
+      const nx = (dy / l) * (i % 2 ? 1 : -1);
+      const ny = (-dx / l) * (i % 2 ? 1 : -1);
+      res.push(F(T([[m[0] - (dx / l) * 0.6, m[1] - (dy / l) * 0.6], [m[0] + (dx / l) * 0.6, m[1] + (dy / l) * 0.6], [m[0] + nx * 1.5, m[1] + ny * 1.5]], thorn)));
+    }
+    return res;
+  };
+  out.push(...wrap([[12, 22.6 + by], [16.4, 27.4 + by], [19, 31.6 + by], [23.6, 34.4 + by], [27.8, 39.4 + by]]));
+  out.push(...wrap([[29.4, 19.4 + by], [31.2, 24.4 + by], [35.6, 29.2 + by], [37, 35 + by]]));
+  out.push(F(T([[19.4, 31.4 + by], [22.6, 29.6 + by], [21.4, 32.4 + by]], '#8fc77a')), F(T([[35.6, 29.2 + by], [38.6, 27.8 + by], [37.8, 30.6 + by]], '#8fc77a')));
+  out.push(F(E(18.2, 30 + by, 0.8, 0.8, '#ff9ec0')), F(E(18.2, 30 + by, 0.35, 0.35, '#fff2b8')));
+
+  // Bark plates armoring the back, each with a thorn; purple corruption glows in the seams.
+  const plates = [[198, 7, 5.6], [221, 8.4, 6], [246, 9, 6.4], [271, 9, 6.4], [296, 8.4, 6], [318, 6.8, 5.2]];
   const seams = [];
   plates.forEach(([deg, pw, ph], i) => {
     const a = (deg * Math.PI) / 180;
-    const cx = 25.6 + Math.cos(a) * 15.6;
-    const cy = 31.6 + by + Math.sin(a) * 15;
+    const cx = 24.8 + Math.cos(a) * 14.6;
+    const cy = 31.6 + by + Math.sin(a) * 12.6;
     const tx = -Math.sin(a);
     const ty = Math.cos(a);
     const nx = Math.cos(a);
     const ny = Math.sin(a);
     const pt = (u, v) => [cx + tx * u * pw * 0.5 + nx * v * ph * 0.5, cy + ty * u * pw * 0.5 + ny * v * ph * 0.5];
-    const quad = [pt(-1, -0.7), pt(-0.85, 0.75), pt(0, 1), pt(0.85, 0.75), pt(1, -0.7), pt(0, -1)];
-    seams.push(pt(1.05, -0.2));
+    const quad = [pt(-1, -0.8), pt(-0.95, 0.5), pt(-0.5, 0.95), pt(0.5, 0.95), pt(0.95, 0.5), pt(1, -0.8), pt(0, -1)];
+    seams.push([pt(1, 0.4), pt(1.02, -0.6)]);
     out.push(F(T(quad.map(([x, y]) => [x + nx * 0.5, y + ny * 0.5]), lineOf(plate))), C(T(quad, plate)));
-    out.push(...flatLine([pt(-0.8, 0.55), pt(0, 0.8), pt(0.8, 0.55)], 0.6, plateHi));
-    out.push(...flatLine([pt(-0.2, -0.6), pt(0.1, 0.1), pt(-0.15, 0.6)], 0.4, shade(plate, -14)));
+    out.push(...flatLine([pt(-0.7, 0.62), pt(0, 0.78), pt(0.7, 0.62)], 0.7, plateHi));
+    out.push(...flatLine([pt(-0.55, -0.5), pt(-0.6, 0.3)], 0.4, shade(plate, -10)), ...flatLine([pt(0.45, -0.55), pt(0.5, 0.25)], 0.4, shade(plate, -10)));
     // Thorn spike.
-    const l = i % 2 ? 4.4 : 5.6;
-    const b0 = pt(-0.45, 0.8);
-    const b1 = pt(0.45, 0.8);
-    const tipP = [cx + nx * (ph * 0.5 + l) - tx * 1.2, cy + ny * (ph * 0.5 + l) - ty * 1.2];
-    out.push(F(T([[b0[0] - nx * 0.4, b0[1] - ny * 0.4], [tipP[0] + nx * 0.5, tipP[1] + ny * 0.5], [b1[0] - nx * 0.4, b1[1] - ny * 0.4]], lineOf(thorn))), T([b0, tipP, b1], thorn));
-    if (i === 1 || i === 3) out.push(F(E(pt(-0.3, 0.2)[0], pt(-0.3, 0.2)[1], 2.2, 1.1, '#7fb26e')), F(E(pt(-0.5, 0.35)[0], pt(-0.5, 0.35)[1], 1.2, 0.6, '#a3d48f')));
-  });
-  for (const s of seams.slice(0, -1)) out.push(F(E(s[0], s[1], 0.9, 0.9, pglow)), F(E(s[0], s[1], 0.4, 0.4, PURP_HI)));
-  // Glowing toadstools sprouting from the rump plate.
-  for (const [x, y, s] of [[10.8, 21.4, 1], [13.6, 20.4, 0.75]]) {
-    out.push(...limb([[x, y + by + 2.4 * s], [x, y + by]], 0.9, 0.8, BONE), ...oval(x, y + by - 0.4, 2 * s, 1.3 * s, '#4fb8b0'), F(E(x - 0.4, y + by - 0.8, 0.6 * s, 0.4 * s, TEAL_HI)));
-  }
-  // Brambles wrapped around the body, with little thorns and leaves.
-  const wrap = (pts) => {
-    const res = [...flatLine(pts, 1.4, lineOf(vine)), ...flatLine(pts, 0.9, vine)];
-    for (let i = 1; i < pts.length; i++) {
-      const m = lerp(pts[i - 1], pts[i], 0.5);
-      res.push(F(T([[m[0] - 0.5, m[1]], [m[0] + 0.5, m[1]], [m[0] + 0.2, m[1] - 1.3]], thorn)));
+    const l = (i % 2 ? 4.2 : 5.6) + (angry ? 1.6 : 0);
+    const b0 = pt(-0.4, 0.8);
+    const b1 = pt(0.4, 0.8);
+    const tipP = [cx + nx * (ph * 0.5 + l) - tx * 1.4, cy + ny * (ph * 0.5 + l) - ty * 1.4];
+    if (i > 0) out.push(F(T([[b0[0] - nx * 0.4, b0[1] - ny * 0.4], [tipP[0] + nx * 0.5, tipP[1] + ny * 0.5], [b1[0] - nx * 0.4, b1[1] - ny * 0.4]], lineOf(thorn))), T([b0, tipP, b1], thorn));
+    if (i === 2 || i === 4) {
+      const m = pt(-0.35, 0.1);
+      out.push(F(E(m[0] - 1.2, m[1], 1.3, 1, '#6fa565')), F(E(m[0] + 0.6, m[1] - 0.2, 1.5, 1.1, '#7fb26e')), F(E(m[0] + 0.2, m[1] + 0.8, 1.2, 0.8, '#6fa565')), F(E(m[0] + 0.4, m[1] - 0.6, 0.6, 0.35, '#a3d48f')));
     }
-    return res;
-  };
-  out.push(...wrap([[18, 21.4 + by], [20.6, 27 + by], [21, 33 + by], [19.6, 38.6 + by]]));
-  out.push(...wrap([[30.4, 18.6 + by], [31.4, 25 + by], [30.4, 32 + by], [31.6, 39.4 + by]]));
-  out.push(F(E(21.8, 29.6 + by, 1.6, 0.8, '#8fc77a')), F(E(29.6, 34 + by, 1.6, 0.8, '#8fc77a')));
-  out.push(...flatLine([[24, 26 + by], [25.4, 28.4 + by], [24.6, 30.6 + by]], 0.55, pglow));
+  });
+  for (const [a, b] of seams.slice(0, -1)) out.push(...flatLine([a, b], 0.9, pglow), F(E(lerp(a, b, 0.5)[0], lerp(a, b, 0.5)[1], 0.35, 0.35, PURP_HI)));
+  // Glowing toadstools sprouting from the rump plate.
+  for (const [x, y, s] of [[9.6, 20.6, 1], [12.6, 19.2, 0.8]]) {
+    out.push(...limb([[x, y + by + 2.6 * s], [x, y + by]], 0.9, 0.8, BONE), ...oval(x, y + by - 0.4, 2 * s, 1.3 * s, '#4fb8b0'), F(E(x - 0.4, y + by - 0.8, 0.6 * s, 0.4 * s, TEAL_HI)));
+  }
 
   // Near legs.
-  out.push(...leg(16, 34.6, p, fur, 6.6, false));
-  out.push(...leg(40.6, 33.6, p + Math.PI, fur, 6.2, true));
+  out.push(...leg(15.6, 34.6, p, fur, 6.6, false));
+  out.push(...leg(39.4, 33.6, p + Math.PI, fur, 6.2, true));
   // A bramble coiled around the near foreleg.
   const fl = walk ? Math.sin(p + Math.PI) * 2.1 : 0;
-  out.push(...wrap([[37.6 + fl * 0.3, 36.6 + by], [43.4 + fl * 0.5, 38.4 + by * 0.5], [38 + fl * 0.6, 41]]));
+  out.push(...wrap([[36.4 + fl * 0.3, 36.6 + by], [42.4 + fl * 0.5, 38.4 + by * 0.5], [37 + fl * 0.6, 41.4]], 0.8));
 
-  // Head.
-  const hcx = 47.4 + hx;
-  const hcy = 24.6 + by + hy;
-  // Back ear, then the head with a cheek ruff.
-  out.push(...oval(hcx - 4.8, hcy - 7, 2.7, 2.7, furD), F(E(hcx - 4.6, hcy - 6.8, 1.3, 1.3, '#8c64b0')));
-  for (const [dx, dy] of [[-7.6, 3.6], [-6.4, 6.4], [-3.6, 7.8]]) out.push(T([[hcx + dx - 1.8, hcy + dy - 2.2], [hcx + dx + 1.6, hcy + dy - 1.4], [hcx + dx - 1.2, hcy + dy + 2.2]], fur));
-  out.push(C(E(hcx, hcy, 8.4, 7.8, fur)));
-  out.push(...oval(hcx + 1.6, hcy - 7.6, 2.9, 2.9, fur), F(E(hcx + 1.7, hcy - 7.4, 1.5, 1.5, '#8c64b0')));
-  // Bark brow-plate with two horn thorns, cracked with corruption.
-  out.push(F(T([[hcx - 6.2, hcy - 2.6], [hcx - 5.4, hcy - 6.8], [hcx - 1, hcy - 8.2], [hcx + 3.2, hcy - 6.2], [hcx + 3.6, hcy - 3.8], [hcx - 1.2, hcy - 4.4]], lineOf(plate))));
-  out.push(T([[hcx - 5.6, hcy - 3], [hcx - 5, hcy - 6.4], [hcx - 1, hcy - 7.6], [hcx + 2.8, hcy - 5.8], [hcx + 3, hcy - 4.2], [hcx - 1.2, hcy - 4.8]], plate));
-  out.push(...flatLine([[hcx - 4.6, hcy - 5.6], [hcx - 1, hcy - 6.8], [hcx + 2.2, hcy - 5.4]], 0.5, plateHi));
-  out.push(...flatLine([[hcx - 1.6, hcy - 7.2], [hcx - 0.8, hcy - 5.8], [hcx - 1.6, hcy - 4.8]], 0.5, pglow));
-  out.push(F(T([[hcx - 4.8, hcy - 6], [hcx - 7.4, hcy - 10.4], [hcx - 3, hcy - 6.8]], lineOf(thorn))), T([[hcx - 4.6, hcy - 6.2], [hcx - 6.8, hcy - 9.8], [hcx - 3.4, hcy - 6.8]], thorn));
-  // Muzzle and nose.
-  const jaw = angry ? 2.4 : hurt ? 1.2 : dead ? 1.4 : 0;
-  out.push(...oval(hcx + 5.6, hcy + 4.2 + jaw * 0.6, 3.8, 2.2, muzzle));
+  // Head: big, with a cheek ruff and a bark brow-plate.
+  const hcx = 46.4 + hx;
+  const hcy = 24.4 + by + hy;
+  out.push(...oval(hcx - 5.4, hcy - 7.6, 2.9, 2.9, furD), F(E(hcx - 5.2, hcy - 7.4, 1.4, 1.4, '#8c64b0')));
+  for (const [dx, dy] of [[-8.4, 3.6], [-7, 6.8], [-4, 8.4]]) out.push(T([[hcx + dx - 1.8, hcy + dy - 2.4], [hcx + dx + 1.8, hcy + dy - 1.4], [hcx + dx - 1.4, hcy + dy + 2.4]], fur));
+  out.push(C(E(hcx, hcy, 9.4, 8.6, fur)));
+  out.push(...oval(hcx + 2, hcy - 8.2, 3.1, 3.1, fur), F(E(hcx + 2.1, hcy - 8, 1.6, 1.6, '#8c64b0')));
+  out.push(F(E(hcx - 4.6, hcy + 3.4, 2.4, 1.6, mix(fur, '#ffffff', 0.12))));
+  out.push(F(T([[hcx - 7, hcy - 2.8], [hcx - 6.2, hcy - 7.4], [hcx - 1.2, hcy - 9], [hcx + 3.6, hcy - 7], [hcx + 4, hcy - 4.2], [hcx - 1.4, hcy - 4.8]], lineOf(plate))));
+  out.push(T([[hcx - 6.4, hcy - 3.2], [hcx - 5.8, hcy - 7], [hcx - 1.2, hcy - 8.4], [hcx + 3.2, hcy - 6.6], [hcx + 3.4, hcy - 4.6], [hcx - 1.4, hcy - 5.2]], plate));
+  out.push(...flatLine([[hcx - 5.2, hcy - 6.2], [hcx - 1.2, hcy - 7.6], [hcx + 2.6, hcy - 6]], 0.55, plateHi));
+  out.push(...flatLine([[hcx - 1.8, hcy - 8], [hcx - 0.9, hcy - 6.4], [hcx - 1.8, hcy - 5.2]], 0.55, pglow));
+  out.push(F(T([[hcx - 5.4, hcy - 6.4], [hcx - 8.4, hcy - 11.4], [hcx - 3.2, hcy - 7.4]], lineOf(thorn))), T([[hcx - 5.2, hcy - 6.6], [hcx - 7.8, hcy - 10.8], [hcx - 3.6, hcy - 7.4]], thorn));
+  // Muzzle, jaw, and nose.
+  const jaw = angry ? 2.6 : hurt ? 1.2 : dead ? 1.4 : 0;
+  const mx = hcx + 6;
+  const my = hcy + 2.6;
+  out.push(...oval(mx + 0.2, my + 2 + jaw * 0.6, 3.8, 2.2, muzzle));
   if (jaw > 0) {
-    // Open mouth between the upper muzzle and the lower jaw.
-    out.push(F(E(hcx + 6, hcy + 4.4 + jaw * 0.3, 3.4, 1.3 + jaw * 0.5, GUM)), F(E(hcx + 5.6, hcy + 4.8 + jaw * 0.6, 1.9, 0.7, MOUTH)));
+    out.push(F(E(mx + 0.6, my + 2.2 + jaw * 0.3, 3.4, 1.3 + jaw * 0.5, GUM)), F(E(mx + 0.2, my + 2.6 + jaw * 0.6, 1.9, 0.7, MOUTH)));
     if (!hurt) {
-      for (const k of [0, 2.4]) out.push(F(T([[hcx + 4 + k, hcy + 3.2], [hcx + 5.2 + k, hcy + 3.2], [hcx + 4.6 + k, hcy + 4.8 + jaw * 0.1]], FANG)));
-      for (const k of [0.6, 2.8]) out.push(F(T([[hcx + 4 + k, hcy + 5.6 + jaw * 0.8], [hcx + 5 + k, hcy + 5.6 + jaw * 0.8], [hcx + 4.5 + k, hcy + 4.4 + jaw * 0.6]], FANG)));
+      for (const k of [-1.4, 1.2]) out.push(F(T([[mx + k - 0.6, my + 1], [mx + k + 0.7, my + 1], [mx + k, my + 2.8 + jaw * 0.1]], FANG)));
+      for (const k of [-0.8, 1.6]) out.push(F(T([[mx + k - 0.5, my + 3.4 + jaw * 0.8], [mx + k + 0.5, my + 3.4 + jaw * 0.8], [mx + k, my + 2.2 + jaw * 0.6]], FANG)));
     }
-    if (dead) out.push(F(E(hcx + 7.6, hcy + 5.8 + jaw * 0.6, 1, 1.3, '#ff8fa8')));
+    if (dead) out.push(F(E(mx + 2, my + 3.6 + jaw * 0.6, 1, 1.3, '#ff8fa8')));
   }
-  out.push(...oval(hcx + 5.4, hcy + 2.4, 4.4, 2.8, muzzle));
-  out.push(F(E(hcx + 5, hcy + 1.4, 2, 0.8, mix(muzzle, '#ffffff', 0.4))));
+  out.push(...oval(mx, my, 4.6, 3, muzzle));
+  out.push(F(E(mx - 0.4, my - 1.1, 2.2, 0.8, mix(muzzle, '#ffffff', 0.4))));
   if (jaw === 0) {
-    out.push(...flatLine([[hcx + 2.6, hcy + 4.2], [hcx + 5.4, hcy + 4.6], [hcx + 8.4, hcy + 3.6]], 0.5, lineOf(muzzle)));
-    out.push(F(T([[hcx + 6.6, hcy + 4.6], [hcx + 7.6, hcy + 4.3], [hcx + 7.3, hcy + 3.1]], FANG)));
-    if (mood === 'happy') out.push(F(E(hcx + 5.4, hcy + 5, 1.2, 0.7, MOUTH)));
+    out.push(...flatLine([[mx - 3, my + 1.8], [mx, my + 2.4], [mx + 3.2, my + 1.4]], 0.5, lineOf(muzzle)));
+    out.push(F(T([[mx + 1.2, my + 2.3], [mx + 2.3, my + 2], [mx + 1.9, my + 0.8]], FANG)));
+    if (mood === 'happy') out.push(F(E(mx, my + 2.8, 1.3, 0.8, MOUTH)));
   }
-  out.push(F(E(hcx + 9, hcy + 1.4, 1.9, 1.4, '#4a3548')), F(E(hcx + 8.6, hcy + 0.9, 0.6, 0.4, '#a08fbf')));
-  out.push(...eyes([[hcx - 1.6, hcy - 1, 1.6], [hcx + 3, hcy - 1.4, 1.5]], mood, { cx: hcx + 0.7, skin: fur, glow, brow: '#4a3548' }));
-  if (mood === 'idle' || mood === 'happy' || mood === 'blink') out.push(F(E(hcx - 2.8, hcy + 2.2, 1.1, 0.5, BLUSH)));
+  out.push(...flatLine([[mx + 3.6, my - 0.4], [mx + 3.4, my + 1.2]], 0.45, lineOf(muzzle)));
+  out.push(F(E(mx + 3.8, my - 1.2, 2, 1.5, '#4a3548')), F(E(mx + 3.3, my - 1.8, 0.7, 0.45, '#a08fbf')));
+  out.push(...eyes([[hcx - 1.8, hcy - 1.2, 1.9], [hcx + 3.4, hcy - 1.6, 1.75]], mood, { cx: hcx + 0.8, skin: fur, glow, brow: '#4a3548' }));
+  if (mood === 'idle' || mood === 'happy' || mood === 'blink') out.push(F(E(hcx - 3.4, hcy + 2.4, 1.3, 0.6, BLUSH)));
   return { w: 60, h: 48, res: 3, shapes: out };
 }
 

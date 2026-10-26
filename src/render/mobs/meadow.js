@@ -109,7 +109,6 @@ function flame(x, y, h, lean, outer, inner) {
       [x + w * 0.4, y - h * 0.5], [x + w * 0.95 + lean * 0.4, y - h * 0.68], [x + w * 1.05, y - h * 0.18], [x + w * 0.85, y + w * 0.6], [x, y + w * 0.95], [x - w * 0.85, y + w * 0.6]], outer)),
     F(T([[x - w * 0.55, y + 0.3], [x - w * 0.45, y - h * 0.3], [x - w * 0.1 + lean * 0.6, y - h * 0.68], [x + w * 0.3, y - h * 0.38], [x + w * 0.5, y - h * 0.1], [x + w * 0.4, y + w * 0.5], [x, y + w * 0.65]], inner)),
     F(E(x + 0.1, y + 0.1, w * 0.3, w * 0.36, '#ffffff')),
-    F(E(x + w * 1.4 + lean * 0.6, y - h * 0.95, 0.4, 0.4, inner)),
   ];
 }
 
@@ -127,7 +126,7 @@ function kitsune(pose, f, mood) {
   const cream = '#fff4e8';
   const sock = '#c58e86';
   const mark = '#ff6f92';
-  const [fo, fi] = angry ? ['#ff8ab8', '#ffe1ee'] : ['#9cc6ff', '#e4f2ff'];
+  const [fo, fi] = angry ? ['#ff8ab8', '#ffe1ee'] : ['#a6c8ff', '#eef6ff'];
   const out = [];
 
   const bob = dead ? 3 : walk ? -Math.abs(Math.cos(p)) * 1.1 + 0.5 : Math.sin(p) * 0.3;
@@ -136,7 +135,7 @@ function kitsune(pose, f, mood) {
   const by = 22 + bob;
 
   // Tails: three fluffy plumes curling up behind, lagging the stride, each tipped in a spirit flame.
-  const tips = [[-7, -12.6, -6.4, -2], [-1.4, -15.4, -4.4, -7], [-10.6, -5, -3, 0.6]];
+  const tips = [[-9.6, -11.4, -9.4, -1], [-2.6, -15.4, -7.4, -6], [-12, -2.6, -5, 2]];
   tips.forEach(([tdx, tdy, cdx, cdy], k) => {
     const sw = walk ? Math.sin(p - 1.2 - k * 0.7) * 1.6 : Math.sin(p - k * 0.9) * 1.1;
     const lift = happy ? -1.5 : dead ? 7 + k : angry ? -1 : 0;
@@ -187,8 +186,8 @@ function kitsune(pose, f, mood) {
   // Ruff: a fluffy cream collar, bristling when angry.
   const spike = angry ? 1.6 : 0;
   out.push(E(hx - 4.2, hy + 6.4, 3.4, 2.6, cream), E(hx - 0.8, hy + 7.2, 3.6, 2.6, cream), E(hx + 2.4, hy + 6.6, 2.8, 2.2, cream));
-  for (const [x, y] of [[hx - 5.6, hy + 8], [hx - 3, hy + 9], [hx - 0.4, hy + 9.4], [hx + 2.2, hy + 8.6]]) {
-    out.push(T([[x - 1.2, y - 1], [x + 1.2, y - 1], [x + 0.2, y + 1.4 + spike]], cream));
+  for (const [x, y] of angry ? [[hx - 5.6, hy + 8], [hx - 3, hy + 9], [hx - 0.4, hy + 9.4], [hx + 2.2, hy + 8.6]] : [[hx - 3.6, hy + 8.8], [hx + 0.4, hy + 9.2]]) {
+    out.push(T([[x - 1.4, y - 1], [x + 1.4, y - 1], [x + 0.2, y + 1.2 + spike]], cream));
   }
 
   // Ears: big and pointy, swaying a beat behind the head; the near one twitches when idle.
@@ -196,12 +195,11 @@ function kitsune(pose, f, mood) {
   const twitch = !walk && f === 2 ? 1 : 0;
   const droop = dead ? 1 : hurt ? 0.6 : angry ? 0.35 : 0;
   const ear = (b0, b1, tip, c) => {
-    const inner = [(b0[0] * 0.6 + tip[0] * 0.4 + b1[0] * 0.1) / 1.1, 0];
-    const midb = [(b0[0] + b1[0]) / 2, (b0[1] + b1[1]) / 2];
-    inner[1] = midb[1] * 0.55 + tip[1] * 0.45;
+    const lp = (u, v, t) => [u[0] + (v[0] - u[0]) * t, u[1] + (v[1] - u[1]) * t];
+    const mid = lp(b0, b1, 0.5);
     return [T([b0, tip, b1], c),
-      F(T([[midb[0] * 0.8 + b0[0] * 0.2, midb[1] - 0.4], [tip[0] * 0.78 + midb[0] * 0.22, tip[1] * 0.78 + midb[1] * 0.22], [midb[0] * 0.8 + b1[0] * 0.2, midb[1] - 0.4]], '#ffb7c8')),
-      F(T([tip, [tip[0] * 0.75 + b0[0] * 0.25, tip[1] * 0.75 + b0[1] * 0.25], [tip[0] * 0.75 + b1[0] * 0.25, tip[1] * 0.75 + b1[1] * 0.25]], sock))];
+      F(T([lp(lp(b0, b1, 0.16), tip, 0.08), lp(mid, tip, 0.86), lp(lp(b0, b1, 0.84), tip, 0.08), lp(mid, tip, -0.04)], '#ffb3c6')),
+      F(T([tip, lp(tip, b0, 0.24), lp(tip, b1, 0.24)], sock))];
   };
   out.push(...ear([hx - 6.4, hy - 2.4], [hx - 1.4, hy - 5.8], [hx - 6.4 + esw - droop * 5, hy - 13 + droop * 7], furD));
   out.push(E(hx, hy, 8, 6.9, fur));
@@ -238,7 +236,7 @@ function kitsune(pose, f, mood) {
     out.push(...stroke([[mx - 1, my - 0.1], [mx - 0.4, my + 0.4], [mx + 0.1, my - 0.1], [mx + 0.6, my + 0.4], [mx + 1.1, my - 0.1]], 0.38, INK));
   }
   if (angry) out.push(...stroke([[hx - 6, hy - 7.6], [hx - 7, hy - 9.4]], 0.5, '#ff8ab8'), ...stroke([[hx - 7.6, hy - 6.4], [hx - 9.4, hy - 7]], 0.5, '#ff8ab8'));
-  return { w: 40, h: 32, res: 3, shapes: out.map((q) => ({ ...q, x: q.x + 4, y: q.y + 2 })) };
+  return { w: 42, h: 32, res: 3, shapes: out.map((q) => ({ ...q, x: q.x + 6, y: q.y + 2 })) };
 }
 
 // ---------- Moss Tortoise (snailbun) ----------
@@ -506,8 +504,8 @@ function goblin(pose, f, mood) {
   // Legs: short, bowed, big bare feet.
   const leg = (x, ph, near) => {
     const s = walk ? Math.sin(p + ph) : 0;
-    const lift = walk ? Math.max(0, Math.cos(p + ph)) * 1.8 : 0;
-    const fx = x + s * 2.4 + (dead ? (near ? 2 : -2) : 0);
+    const lift = walk ? Math.max(0, Math.cos(p + ph)) * 2.2 : 0;
+    const fx = x + s * 3 + (dead ? (near ? 2 : -2) : 0);
     const fy = 43.2 - lift;
     const c = near ? skin : skinD;
     return [...limb([x, by + 4], [fx, fy - 1.4], 3, 2.6, c), E(fx + 1.2, fy - 0.2, 2.8, 1.3, c), F(E(fx + 2.8, fy - 0.6, 0.5, 0.4, shade(c, -10)))];
@@ -520,6 +518,8 @@ function goblin(pose, f, mood) {
 
   // Pot belly with a lighter tummy and a loincloth.
   out.push(E(bx, by, 6.8, 6, skin), E(bx + 1.6, by + 1, 4, 4, skinL), F(E(bx + 2.2, by + 1.6, 0.35, 0.35, skinD)));
+  out.push(...stroke([[bx - 4.4, by - 4.6], [bx + 1, by + 0.4], [bx + 5.4, by + 3.4]], 1.3, '#8a6a4e', false), F(E(bx - 0.4, by - 1, 0.9, 0.7, '#ffe08a')),
+    ...stroke([[bx - 4.4, by - 4.6], [bx + 1, by + 0.4], [bx + 5.4, by + 3.4]], 0.25, '#b08a66'));
   out.push(...leg(bx + 2.6, 0, true));
   const cs = walk ? Math.sin(p - 1) * 0.8 : Math.sin(p - 0.8) * 0.3;
   out.push(T([[bx - 6.2, by + 3.4], [bx + 6.4, by + 3.2], [bx + 5.2, by + 7.6 + cs * 0.3], [bx + 3.6 + cs, by + 9.4], [bx + 1.8 + cs, by + 8.4], [bx - 0.2 + cs, by + 9.6], [bx - 2.4 + cs, by + 8.4], [bx - 4.6 + cs, by + 9.2], [bx - 5.8, by + 7]], cloth));
@@ -537,12 +537,12 @@ function goblin(pose, f, mood) {
   out.push(E(hx, hy, 7.8, 6.8, skin));
   out.push(T([[hx + 5.6, hy - 2.8], [hx + 13.4, hy - 6.2 - esw + ed], [hx + 6.6, hy + 1.6]], skin), F(T([[hx + 6.2, hy - 1.8], [hx + 11.4, hy - 5 - esw + ed], [hx + 6.6, hy + 0.4]], '#ffb8c0')));
   // Eyes, a big nose, warts and a toothy grin.
-  const ey = hy + 0.2;
+  const ey = hy + 0.6;
   const eo = { iris: '#e8a91e', glow: '#ff5a2a', lid: skin, brow: '#4f7a3c' };
-  out.push(...eye(hx - 1.6, ey, 1.7, mood, -1, eo), ...eye(hx + 3.4, ey, 1.9, mood, 1, eo));
+  out.push(...eye(hx - 1.4, ey, 1.95, mood, -1, eo), ...eye(hx + 3.6, ey, 2.2, mood, 1, eo));
   if (!angry && mood !== 'dead' && mood !== 'hurt') out.push(...stroke([[hx - 3.4, ey - 2.6], [hx - 0.4, ey - 2.4]], 0.5, '#4f7a3c'), ...stroke([[hx + 1.8, ey - 2.4], [hx + 5, ey - 2.8]], 0.5, '#4f7a3c'));
   out.push(...blush(hx - 3.2, ey + 2.8, 1.2, mood), F(E(hx - 4.6, ey + 2, 0.4, 0.4, skinD)), F(E(hx - 3.8, ey + 3.4, 0.35, 0.35, skinD)));
-  out.push(E(hx + 6.4, hy + 2.4, 2.2, 1.7, skinD), F(E(hx + 6, hy + 1.8, 0.7, 0.45, skinL)));
+  out.push(E(hx + 6.6, hy + 2.6, 2.4, 1.9, skinD), F(E(hx + 6.2, hy + 1.9, 0.8, 0.5, skinL)), F(E(hx + 7.4, hy + 3.4, 0.4, 0.3, shade(skinD, -14))));
   const mx = hx + 2.6;
   const my = hy + 4.4;
   if (angry) {
@@ -562,7 +562,7 @@ function goblin(pose, f, mood) {
   // The mushroom-cap helmet: gills underneath casting a shadow, a dome with white spots.
   const tilt = dead ? 3 : hurt ? -1.4 : 0;
   const cx = hx + (dead ? 2.4 : 0);
-  const cy = hy - 6 + (hurt ? -1.6 : 0) + (dead ? 1.4 : 0);
+  const cy = hy - 6.4 + (hurt ? -1.8 : 0) + (dead ? 1.4 : 0) + (walk ? Math.sin(p * 2 + 0.2) * 0.25 : 0);
   out.push(C(E(cx, cy + 0.4, 12.6, 2.1, gill)));
   for (let i = -5; i <= 5; i++) out.push(...stroke([[cx + i * 1, cy - 0.4], [cx + i * 2.1, cy + 1.6]], 0.3, shade(gill, -14)));
   const domePts = [];
@@ -582,14 +582,14 @@ function goblin(pose, f, mood) {
   let tip;
   if (dead) {
     hand = [bx + 8, by + 6];
-    tip = [bx + 17, by + 8.6];
+    tip = [bx + 17.4, by + 5.6];
   } else if (angry) {
     hand = [bx + 8.6, by - 9.4];
     tip = [bx + 13.6, by - 22];
   } else {
     const rock = walk ? Math.sin(p) * 0.9 : Math.sin(p) * 0.3;
-    hand = [bx + 7.4 + swing * 0.6, by + 1.6 + rock * 0.3];
-    tip = [bx + 13.8 + swing * 0.3 + rock, by - 12.4];
+    hand = [bx + 8.4 + swing * 0.6, by + 1.4 + rock * 0.3];
+    tip = [bx + 15.4 + swing * 0.3 + rock, by - 11.4];
   }
   const dx = tip[0] - hand[0];
   const dy = tip[1] - hand[1];
@@ -597,10 +597,9 @@ function goblin(pose, f, mood) {
   const ux = dx / len;
   const uy = dy / len;
   const at = (t) => [hand[0] + dx * t, hand[1] + dy * t];
-  out.push(...limb(at(-0.18), at(0.62), 1.6, 2.6, wood), O(tip[0] - ux * 2, tip[1] - uy * 2, 4.8, 3.6, Math.atan2(dy, dx) / D2R, wood),
+  out.push(...limb(at(-0.18), at(0.62), 1.6, 2.6, wood), O(tip[0] - ux * 2.2, tip[1] - uy * 2.2, 4.4, 3.9, Math.atan2(dy, dx) / D2R, wood), E(tip[0] - ux * 3.4 + uy * 2.6, tip[1] - uy * 3.4 - ux * 2.6, 1.6, 1.6, wood), E(tip[0] - ux * 0.4 - uy * 2.4, tip[1] - uy * 0.4 + ux * 2.4, 1.4, 1.4, wood),
     F(E(tip[0] - ux * 2.4 - uy * 1.4, tip[1] - uy * 2.4 + ux * 1.4, 0.9, 0.7, woodD)), F(E(tip[0] - ux * 0.6 + uy * 1.2, tip[1] - uy * 0.6 - ux * 1.2, 0.7, 0.55, woodD)),
-    F(E(tip[0] - ux * 3.8 + uy * 1.6, tip[1] - uy * 3.8 - ux * 1.6, 0.5, 0.5, '#d8d4e4')), F(E(tip[0] - ux * 1.4 - uy * 2.6, tip[1] - uy * 1.4 + ux * 2.6, 0.5, 0.5, '#d8d4e4')),
-    F(E(tip[0] - ux * 2.6 + uy * 2.4, tip[1] - uy * 2.6 - ux * 2.4, 0.5, 0.5, '#d8d4e4')));
+    F(E(tip[0] - ux * 1.2 - uy * 0.6, tip[1] - uy * 1.2 + ux * 0.6, 1.4, 1, mix(wood, '#ffffff', 0.3))));
   for (const t of [0.12, 0.24]) out.push(...stroke([[at(t)[0] - uy * 1, at(t)[1] + ux * 1], [at(t)[0] + uy * 1, at(t)[1] - ux * 1]], 0.5, '#8a6a4e'));
   out.push(...limb(sh, hand, 2.8, 2.4, skin), E(hand[0], hand[1], 1.8, 1.7, skin), F(E(hand[0] + 0.6, hand[1] - 0.6, 0.6, 0.5, skinL)));
   return { w: 38, h: 44, res: 3, shapes: out };
@@ -627,7 +626,7 @@ function jackalope(pose, f, mood) {
   const happy = mood === 'happy';
   const fur = '#dccdf0';
   const furD = '#c4b2e0';
-  const cream = '#fbf7ff';
+  const cream = '#f6f0ff';
   const earIn = '#ffb3cc';
   const ant = '#f6dcb4';
   const antD = '#dcb98e';
@@ -664,6 +663,8 @@ function jackalope(pose, f, mood) {
   out.push(E(bx, by, 9.6 + sq * 0.4, 6.4 - sq * 0.5, fur), E(bx - 4.6, by + 1.2, 5.6, 5.4 - sq * 0.3, fur), F(E(bx - 6, by - 2, 2.4, 1.2, mix(fur, '#ffffff', 0.35))));
   out.push(...stroke([[bx - 7.6, by + 3.2], [bx - 4, by + 5.4], [bx - 0.6, by + 4.6]], 0.4, furD));
   out.push(E(bx + 6.2, by + 1.6, 3.8, 4.2, cream));
+  for (const [x, y] of [[bx + 4.4, by + 5.2], [bx + 6.6, by + 5.6]]) out.push(T([[x - 1.2, y - 1], [x + 1.2, y - 1], [x + 0.3, y + 1.3]], cream));
+  out.push(...stroke([[bx + 4.4, by - 0.6], [bx + 5.2, by + 0.4], [bx + 6, by - 0.4]], 0.3, shade(cream, -12)));
   {
     const [fx, fy, a] = hindFoot(true);
     out.push(...limb([bx - 3.6, by + 3.4], [fx + 2, fy - 1.2], 3.2, 2.4, fur), O(fx + 2.8, fy, 4, 1.4, a, fur), F(E(fx + 5.4 - a / 30, fy + 0.2 + a / 40, 0.5, 0.4, furD)));
@@ -677,25 +678,26 @@ function jackalope(pose, f, mood) {
   // Ears: long, swept back on the rise, flopping forward on landing; flat when angry, limp when dead.
   const eb = walk ? hop.ear : 0;
   const twitch = !walk && f === 2 ? 1 : 0;
-  const flat = angry ? 1 : hurt ? 0.8 : dead ? 1.6 : happy ? -0.3 : 0;
+  const flat = angry ? 1 : hurt ? 0.8 : happy ? -0.3 : 0;
   const earTip = (bx0, by0, len, a0) => {
-    const a = (a0 - eb * 10 - flat * 32 + (dead ? -60 : 0)) * D2R;
+    const a = (dead ? a0 - 34 : a0 - eb * 10 - flat * 32) * D2R;
     return [bx0 + Math.cos(a) * len, by0 + Math.sin(a) * len];
   };
   const farB = [hx - 3.2, hy - 4.4];
   const farT = earTip(farB[0], farB[1], 10.4, -146);
   out.push(seg(farB, farT, 2.3, furD), seg([farB[0] * 0.85 + farT[0] * 0.15, farB[1] * 0.85 + farT[1] * 0.15], farT, 1.2, shade(earIn, -8)));
   // Antlers (behind the near ear, in front of the far one): branching tines, a clover tied on.
-  const antler = (x, y, c, k) => {
+  const antler = (x, y, c, k, g = 0) => {
     const q = (dx, dy) => [x + dx * k, y + dy * Math.abs(k)];
-    return [...limb(q(0, 0), q(1.6, -6), 1.9, 1.5, c), ...limb(q(1.6, -6), q(1, -12.4), 1.5, 1, c),
-      ...limb(q(0.8, -3.2), q(-2.6, -6.2), 1.3, 0.9, c), ...limb(q(1.5, -6.4), q(6, -9), 1.3, 0.9, c),
-      ...limb(q(1.3, -9.6), q(-1.6, -12.6), 1.1, 0.8, c), ...limb(q(4, -7.8), q(5.4, -11.8), 1, 0.7, c),
-      F(E(x + 0.3 * k, y - 4 * Math.abs(k), 0.35, 1.2, mix(c, '#ffffff', 0.5)))];
+    return [...limb(q(0, 0), q(1.4, -6.2), 2.2 + g, 1.8 + g, c), ...limb(q(1.4, -6.2), q(0.6, -12.6), 1.8 + g, 1.2 + g, c),
+      ...limb(q(0.7, -3.4), q(-2.8, -6.4), 1.5 + g, 1.1 + g, c), ...limb(q(1.3, -6.6), q(5.6, -9.4), 1.5 + g, 1.1 + g, c),
+      ...limb(q(0.9, -10), q(-1.8, -12.4), 1.2 + g, 0.9 + g, c)];
   };
-  out.push(...antler(hx - 1.6, hy - 5, antD, 0.85));
-  out.push(E(hx, hy, 7, 6.2, fur));
-  out.push(...antler(hx + 1.8, hy - 5.4, ant, 1));
+  const antlers = (x, y, c, k) => [...antler(x, y, mix(shade(c, -14), '#a07a8a', 0.25), k, 0.4), ...antler(x, y, c, k),
+    F(E(x + 0.2 * k, y - 4.4 * Math.abs(k), 0.35, 1.4, mix(c, '#ffffff', 0.55)))];
+  out.push(...antlers(hx - 1.4, hy - 5.2, antD, -0.9));
+  out.push(E(hx, hy, 7.6, 6.7, fur));
+  out.push(...antlers(hx + 1.8, hy - 5.6, ant, 1.12));
   if (!dead) {
     const cx = hx + 8;
     const cy = hy - 13.4;
@@ -711,25 +713,26 @@ function jackalope(pose, f, mood) {
     E(hx + 4.4, hy + 2.6, 3.4, 2.6, cream), F(E(hx - 2.6, hy - 3.6, 2, 1, mix(fur, '#ffffff', 0.35))));
   const tw2 = !walk && f === 3 ? -0.3 : 0;
   out.push(F(T([[hx + 6.8, hy + 1.1 + tw2], [hx + 8.2, hy + 1.1 + tw2], [hx + 7.5, hy + 2 + tw2]], '#ff7f9f')));
-  for (const [a, b] of [[0.6, -0.4], [1.6, 0.8]]) out.push(...stroke([[hx + 7.2, hy + 2 + a * 0.4], [hx + 10.6, hy + 1.6 + b + tw2]], 0.25, '#9a86b8'));
+  for (const b of [-0.6, 0.7]) out.push(...stroke([[hx + 4.2, hy + 2.6 + b * 0.3], [hx + 7.2, hy + 2.4 + b * 1.2 + tw2]], 0.2, '#b2a4d0'));
   const ey = hy - 0.2;
   const eo = { iris: '#c0507a', glow: '#ff3d6e', lid: fur, brow: '#6a4a8a' };
   out.push(...eye(hx - 0.8, ey, 1.6, mood, -1, eo), ...eye(hx + 3.6, ey, 1.9, mood, 1, eo), ...blush(hx - 1.4, ey + 2.8, 1.1, mood), ...blush(hx + 3.8, ey + 3, 1.1, mood));
-  const mx = hx + 6.8;
-  const my = hy + 3.2;
+  const mx = hx + 5.6;
+  const my = hy + 3.6;
   if (angry) {
-    out.push(F(T([[mx - 1.8, my - 0.4], [mx + 1.2, my - 0.4], [mx + 0.8, my + 1.8], [mx - 1.4, my + 1.6]], MOUTH)), F(R(mx - 1, my - 0.4, 1.6, 1.4, '#ffffff')), F(R(mx - 0.25, my - 0.4, 0.2, 1.4, '#e6dce8')));
+    out.push(F(T([[mx - 1.6, my - 0.5], [mx + 1.5, my - 0.6], [mx + 1, my + 1.7], [mx - 1.1, my + 1.6]], MOUTH)), F(E(mx, my + 1.2, 0.8, 0.4, '#ff8fab')),
+      F(R(mx - 0.9, my - 0.55, 1.7, 1.1, '#ffffff')), F(R(mx - 0.1, my - 0.55, 0.18, 1.1, '#d8cce8')));
   } else if (happy) {
-    out.push(...stroke([[mx - 1.4, my - 0.4], [mx - 0.7, my + 0.3], [mx, my - 0.3], [mx + 0.7, my + 0.3]], 0.4, INK), F(E(mx - 0.4, my + 0.9, 0.7, 0.5, '#ff8fab')));
+    out.push(F(T([[mx - 1.2, my - 0.4], [mx + 1.2, my - 0.5], [mx, my + 1.4]], MOUTH)), F(R(mx - 0.6, my - 0.45, 1.1, 0.6, '#ffffff')));
   } else if (hurt) {
-    out.push(F(E(mx - 0.3, my + 0.3, 0.6, 0.7, MOUTH)));
+    out.push(F(E(mx, my + 0.3, 0.6, 0.7, MOUTH)));
   } else if (dead) {
-    out.push(...stroke([[mx - 1.2, my], [mx + 0.6, my]], 0.4, INK));
+    out.push(...stroke([[mx - 1, my], [mx - 0.3, my + 0.3], [mx + 0.4, my]], 0.35, INK), F(E(mx + 0.1, my + 0.8, 0.45, 0.6, '#ff8fab')));
   } else {
-    out.push(...stroke([[mx - 1.4, my - 0.4], [mx - 0.7, my + 0.3], [mx, my - 0.3], [mx + 0.7, my + 0.3]], 0.38, INK), F(R(mx - 0.75, my + 0.25, 1, 0.9, '#ffffff')));
+    out.push(...stroke([[mx - 1.2, my - 0.3], [mx - 0.6, my + 0.2], [mx, my - 0.3], [mx + 0.6, my + 0.2]], 0.32, INK), F(R(mx - 0.55, my + 0.2, 0.9, 0.8, '#ffffff')));
   }
   if (angry) out.push(...stroke([[hx - 7, hy - 7], [hx - 8.4, hy - 8.4]], 0.5, '#ff6b8a'), ...stroke([[hx - 7.8, hy - 5.4], [hx - 9.6, hy - 5.8]], 0.5, '#ff6b8a'));
-  return { w: 40, h: 40, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 4 })) };
+  return { w: 40, h: 42, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 6 })) };
 }
 
 export const ART = {
