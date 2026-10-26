@@ -331,7 +331,7 @@ const FRINGES = {
   mshape: { pts: [[23.6, 15.8], [21.8, 12.4], [19.8, 14.8], [17.8, 11.2], [HX, 12.4], [13.2, 11.2], [11.2, 14.8], [9.2, 12.4], [7.4, 15.8]], lean: 0, softTips: true },
   // Peekaboo: a long fringe swept down from a part on the far side over the near eye to the
   // cheek, in soft points; the far eye stays clear.
-  peek: { pts: [[27.2, 18.4], [25.6, 23.6, 1], [23.6, 21.8], [21.4, 22.8], [18.8, 21.6], [16.6, 18.6], [15.4, 14.8], [14.4, 12.4], [13.4, 11], [12.4, 14.4], [11.2, 11.2], [9.8, 14.2], [8.6, 11.6], [7.6, 12.8]], lean: 0, plain: true,
+  peek: { pts: [[27.2, 18.4], [25.6, 23.6, 1], [23.6, 21.8], [21.4, 22.8], [18.8, 21.6], [16.6, 18.6], [15.4, 14.8], [14.6, 14, 1], [11.4, 14.1, 1], [10.9, 13.2, 1], [10.4, 14.1, 1], [7.4, 14, 1]], lean: 0, plain: true,
     part: [[10.4, 2.8], [9.6, 6.4]],
     // Strand lines that follow the sweep from the part down over the eye.
     strands: [[11.2, 5.4, 19.4, 21, 0.8, -1.8], [14.4, 4.8, 23.4, 21.2, 0.8, -1.8], [18.6, 4.6, 26, 16.4, 0.7, -1.4]],
@@ -367,7 +367,7 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   // Where the hair parts, a dark line runs back over the crown.
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
   for (const [x0, y0, x1, y1, w, bow] of f.strands ?? []) shapes.push(streak(x0, y0, x1, y1, w, bow, r.sh1));
-  for (const spine of f.locks ?? []) shapes.push(lock(spine, 3.2, r.base, m, 1.2), streak(spine[0][0] + 0.6, spine[0][1] + 2, spine[2][0], spine[2][1], 0.6, 0.3, r.sh1, m, 1.2));
+  for (const spine of f.locks ?? []) shapes.push(lock(spine, 4.6, r.base, m, 1.2), streak(spine[0][0] + 0.6, spine[0][1] + 2, spine[2][0], spine[2][1], 0.6, 0.3, r.sh1, m, 1.2));
   // The band of forehead the bangs shade: a thin strip under each run of the edge over the face.
   const shade = [];
   let run = [];
