@@ -296,7 +296,7 @@ function dungeonPage(ui, state, world, npc, area) {
       text(ctx, who, cx + 44, cy + 9, { size: 7.5, bold: true, color: s.who ? COLORS.ink : COLORS.muted });
       text(ctx, job, cx + 44, cy + 16.5, { size: 6, color: COLORS.muted });
     });
-    text(ctx, 'Warriors tank, Mages heal, everyone else deals damage.', tx, y + 52, { size: 6.5, color: COLORS.muted });
+    text(ctx, 'Warriors tank, Mages heal, everyone else deals damage.', tx, y + 52, { role: 'minor' });
   }
   const by = area.bottom - 16;
   if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, 'Find group & go', { primary: true, size: 7.5 })) {
@@ -538,7 +538,7 @@ function dungeonDeath(ui, state, world) {
   const y = 92;
   box(ctx, x, y, W, 40, { fill: 'rgba(255,250,246,0.95)', edge: th.dark, r: 10, width: 1.5 });
   text(ctx, 'You fainted!', x + 10, y + 14, { size: 9, bold: true, color: th.ink });
-  text(ctx, 'Your group will get you up after the fight.', x + 10, y + 26, { size: 6.5, color: COLORS.muted });
+  text(ctx, 'Your group will get you up after the fight.', x + 10, y + 26, { role: 'minor' });
   ui.theme = th;
   if (button(ui, x + W - 62, y + 6, 54, 15, 'Leave', { size: 7.5 })) {
     leaveDungeon(world);

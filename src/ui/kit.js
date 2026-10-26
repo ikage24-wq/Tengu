@@ -503,6 +503,14 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   ctx.globalAlpha = 0.35;
   ctx.fillRect(x, y + h - 14, w, 14);
   ctx.restore();
+  // A thin ink line outside the colored rim keeps the window's edge from melting into a scene of
+  // the same pastel.
+  roundRect(ctx, x - 1.5, y - 1.5, w + 3, h + 3, 11.5);
+  ctx.strokeStyle = theme.ink;
+  ctx.globalAlpha = 0.45;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
   roundRect(ctx, x, y, w, h, 10);
   ctx.strokeStyle = theme.dark;
   ctx.lineWidth = 2;

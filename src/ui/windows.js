@@ -271,7 +271,7 @@ export function statsWindow(ui, state, world) {
   well(ctx, x, y - 4, 164, rows.length * 10 + 6, th);
   y += 6;
   for (const [k, v] of rows) {
-    text(ctx, k, x + 6, y, { size: 7.5, color: COLORS.muted });
+    text(ctx, k, x + 6, y, { role: 'secondary' });
     text(ctx, v, x + 158, y, { size: 7.5, bold: true, align: 'right' });
     y += 10;
   }
@@ -377,7 +377,7 @@ export function questsWindow(ui, state, world) {
   };
   heading('In progress', active.length);
   if (!active.length) {
-    text(ctx, 'Nothing yet. Talk to villagers with Up.', x + 4, y + 8, { size: 7.5, color: COLORS.muted });
+    text(ctx, 'Nothing yet. Talk to villagers with Up.', x + 4, y + 8, { role: 'secondary' });
     y += 16;
   }
   for (const id of active) {

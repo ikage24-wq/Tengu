@@ -59,7 +59,7 @@ export function optionsWindow(ui, state, world) {
     for (const [key, label, desc, choices] of PAGES[page]) {
       box(ctx, x - 2, y, W - 16, step - 3, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });
       text(ctx, label, x + 6, y + 11, { size: 8.5, bold: true });
-      text(ctx, desc, x + 6, y + 21, { size: 6.5, color: COLORS.muted });
+      text(ctx, desc, x + 6, y + 21, { role: 'minor' });
       if (choices) {
         choices.forEach((c, i) => {
           const bx = x + W - 22 - choices.length * 38 + i * 38;
@@ -94,7 +94,7 @@ export function optionsWindow(ui, state, world) {
     const char = world.char;
     box(ctx, x - 2, y, W - 16, 40, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });
     text(ctx, char.name, x + 8, y + 16, { size: 11, bold: true });
-    text(ctx, `Level ${char.level} · saved automatically`, x + 8, y + 30, { size: 7.5, color: COLORS.muted });
+    text(ctx, `Level ${char.level} · saved automatically`, x + 8, y + 30, { role: 'secondary' });
     y += 50;
     if (button(ui, x, y, W - 20, 22, 'Change character', { primary: true, iconName: 'user', size: 9 })) state.action = 'select';
     y += 28;

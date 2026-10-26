@@ -122,7 +122,7 @@ export function profileWindow(ui, state, world) {
     well(ctx, rx, y - 4, rw, rows.length * 13 + 6, th);
     y += 7;
     for (const [k, v] of rows) {
-      text(ctx, k, rx + 8, y, { size: 7.5, color: COLORS.muted });
+      text(ctx, k, rx + 8, y, { role: 'secondary' });
       text(ctx, v, rx + rw - 8, y, { size: 7.5, bold: true, align: 'right' });
       y += 13;
     }

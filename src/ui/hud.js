@@ -526,7 +526,7 @@ function drawTracker(ui, world) {
     for (const o of r.objs) {
       ty += 10;
       const name = o.type === 'kill' ? MOBS[o.mob].name : ITEMS[o.item].name;
-      text(ctx, name, x + 9, ty, { size: 6.5, color: COLORS.muted });
+      text(ctx, name, x + 9, ty, { role: 'minor' });
       bar(ctx, x + w - 46, ty - 6, 40, 6, o.have / o.count, o.have >= o.count ? COLORS.good : th.main, `${o.have}/${o.count}`, { size: 5 });
     }
     ty += 12;
