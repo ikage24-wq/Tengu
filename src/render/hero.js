@@ -635,6 +635,23 @@ function stroke(pts, th, c) {
   return out.length === 1 ? F(T(out[0], c)) : F(T([...out.map((q) => q[0]), out.at(-1)[1], out.at(-1)[2], ...out.map((q) => q[3]).reverse()], c));
 }
 
+// Ear styles. Round ears peek out from behind the cheeks; elf ears are a pointed leaf whose base
+// tucks under the side locks and whose tip pokes out past the hair: `elf` short and swept up,
+// `long` long and swept out to the side.
+export const EAR_STYLES = ['round', 'elf', 'long'];
+
+// The front (right-hand) ear in a style: the ear in `c` and its inner hollow in `inner`. The back
+// ear is its mirror, a shade darker.
+function earShapes(style, c, inner) {
+  if (style === 'elf') {
+    return [F(T([[24.2, 15.9], [27.4, 15.0], [29.6, 13.0], [31.6, 11.2], [30.4, 14.6], [28.4, 18.4], [25, 20.7]], c)), F(T([[25.4, 16.9], [27.6, 16.2], [30.0, 13.5], [28.9, 15.6], [27.4, 18.1], [25.7, 19.4]], inner))];
+  }
+  if (style === 'long') {
+    return [F(T([[24.2, 16.1], [28.2, 15.1], [32.4, 14.0], [36.2, 12.8], [33.2, 15.6], [29.2, 18.6], [25, 20.7]], c)), F(T([[25.4, 17.0], [28.4, 16.3], [32.0, 15.1], [34.2, 14.0], [31.6, 16.0], [28.6, 18.1], [25.7, 19.4]], inner))];
+  }
+  return [F(E(25.4, 18, 1.8, 2.3, c)), F(E(25.2, 18.3, 0.7, 1.2, inner))];
+}
+
 // Eyebrow styles, each its own silhouette (art bible: brows taper at both ends, in the hair's
 // darkest shade, never ink). `round` is hikimayu: small soft ovals set high. `none` hides them.
 export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'none'];
@@ -827,8 +844,8 @@ function headShapes(look, g, rig) {
   // eyes set low and wide apart, blush under each eye and a small mouth in the middle. The skin
   // is flat colour from its own ramp: the light comes from the upper front (the facing side, on
   // the right), so the back ear and a thin crescent down the back of the face sit in shadow.
-  out.push(F(E(5.6, 18, 1.8, 2.3, sk.sh1)), F(E(5.8, 18.3, 0.7, 1.2, sk.sh2)));
-  out.push(F(E(25.4, 18, 1.8, 2.3, skin)), F(E(25.2, 18.3, 0.7, 1.2, sk.sh1)));
+  const ears = look.earStyle ?? 'round';
+  out.push(...mirror(earShapes(ears, sk.sh1, sk.sh2)), ...earShapes(ears, skin, sk.sh1));
   out.push(F(E(FACE_X, 15, 10.2, 9.8, sk.sh1)), F(E(FACE_X, 19, 9.4, 5.8, sk.sh1)));
   out.push(F(E(FACE_X + 0.6, 15, 9.6, 9.8, skin)), F(E(FACE_X + 0.5, 19, 8.9, 5.8, skin)));
   // A hurt or knocked-out face drops the expression's own play (sparkles, notes, winks, puffed
@@ -1065,6 +1082,11 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
     out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));
   }
   const hr = hairRamp(hair);
+  // From behind, elf ears poke out past the back of the head (round ones hide behind it).
+  if ((look.earStyle ?? 'round') !== 'round') {
+    const sk = skinRamp(skin);
+    out.push(...mirror(earShapes(look.earStyle, skin, sk.sh1)), ...earShapes(look.earStyle, sk.sh1, sk.sh2));
+  }
   out.push(F(E(HEAD_X, 13.6, 12, 11.2, hair)), F(E(HEAD_X, 20.4, 9.8, 4, hr.sh1)), ...halo(HEAD_X, 10, 9, 5.6, 210, 330, 1.1, hr.hi));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.

@@ -3,7 +3,7 @@
 // your own head in your own colours, every eye style and expression on your own face, every
 // outfit on your own body) or a row of colour swatches. Picking one is a single click.
 
-import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES, BROW_STYLES } from '../render/hero.js';
+import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES, BROW_STYLES, EAR_STYLES } from '../render/hero.js';
 import { COLORS, THEMES, text, box, hover, clicked, roundRect, tooltip } from './kit.js';
 
 // Palettes: soft pastels first, then naturals and deeper tones, so every skin and hair pairing
@@ -20,6 +20,7 @@ export const LOOK_OPTIONS = [
   { key: 'browStyle', label: 'Brows', options: BROW_STYLES },
   { key: 'face', label: 'Expression', options: FACE_STYLES },
   { key: 'eyeColor', label: 'Eye color', options: EYE_COLORS, color: true },
+  { key: 'earStyle', label: 'Ears', options: EAR_STYLES },
   { key: 'skinTone', label: 'Skin', options: SKIN_TONES, color: true },
   { key: 'outfit', label: 'Outfit', options: OUTFIT_STYLES },
   { key: 'outfitColor', label: 'Outfit color', options: OUTFIT_COLORS, color: true },
@@ -31,7 +32,7 @@ const OPTION = Object.fromEntries(LOOK_OPTIONS.map((o) => [o.key, o]));
 export const LOOK_TABS = [
   { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairColor', label: 'Color' }] },
   { label: 'Eyes', rows: [{ key: 'eyeStyle', label: 'Eyes', thumb: 'face' }, { key: 'browStyle', label: 'Brows', thumb: 'brow' }, { key: 'eyeColor', label: 'Eye color' }] },
-  { label: 'Face', rows: [{ key: 'face', label: 'Expression', thumb: 'face' }, { key: 'skinTone', label: 'Skin' }] },
+  { label: 'Face', rows: [{ key: 'face', label: 'Expression', thumb: 'face' }, { key: 'earStyle', label: 'Ears', thumb: 'ears' }, { key: 'skinTone', label: 'Skin' }] },
   { label: 'Outfit', rows: [{ key: 'outfit', label: 'Style', thumb: 'body' }, { key: 'outfitColor', label: 'Color' }] },
 ];
 
@@ -44,7 +45,7 @@ export function randomLook(rng = Math.random) {
 }
 
 // Display names for the styles whose ids aren't plain words.
-const NAMES = { none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', eyecover: 'Covered eye', ahoge: 'Ahoge', hime: 'Hime cut', odango: 'Odango buns', drills: 'Drill curls', curtain: 'Curtain bangs', quiff: 'Quiff', wolf: 'Wolf cut', sweep: 'Side sweep', pixie: 'Pixie cut', fluffy: 'Fluffy', halfup: 'Half-up', lowtails: 'Low twintails' };
+const NAMES = { elf: 'Elf', long: 'Long elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', eyecover: 'Covered eye', ahoge: 'Ahoge', hime: 'Hime cut', odango: 'Odango buns', drills: 'Drill curls', curtain: 'Curtain bangs', quiff: 'Quiff', wolf: 'Wolf cut', sweep: 'Side sweep', pixie: 'Pixie cut', fluffy: 'Fluffy', halfup: 'Half-up', lowtails: 'Low twintails' };
 export const styleName = (id) => NAMES[id] ?? String(id).charAt(0).toUpperCase() + String(id).slice(1);
 
 // Where a thumbnail looks, in hero units from the feet: the point to centre and how much of the
@@ -54,6 +55,8 @@ const FRAMES = {
   face: { y: -22, span: 18 },
   // Brows sit up under the bangs, so their thumbnail looks higher and closer.
   brow: { y: -26, span: 14 },
+  // Ears: the whole head, wide enough for long elf ears.
+  ears: { y: -24.5, span: 36 },
   body: { y: -10.5, span: 25 },
 };
 

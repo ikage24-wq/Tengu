@@ -28,6 +28,10 @@ carry an improvement across every part of the game it applies to.
 - The face holds the strongest contrast in the sprite. Eye colour must contrast the hair colour.
   Hair separates from skin by value (a bangs shadow where face meets hair).
 - Every mood is acted by the whole face and differs per character: no stock `> <` everywhere.
+- Ears come in styles (`hero.js` `EAR_STYLES`: round, elf, long elf). Elf ears are a pointed leaf
+  drawn at the ears' layer, under the side locks, so the hair covers the base and the tip pokes
+  out past it; the back ear is the front one mirrored in shadow, and from behind both tips show.
+  The crowd and other players get a share of every new look option, so the world shows them too.
 - Brows come in styles (`hero.js` `BROW_STYLES`: soft, thick, round hikimayu dots, thin, arched,
   sharp, hidden), each built as a tapered ribbon (or an oval) that follows the expression's raise
   and tilt, and every face shows them (at rest when the expression doesn't move them). Each brow

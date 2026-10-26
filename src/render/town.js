@@ -8,7 +8,7 @@ import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, shade, snap, footShadow, slopeAt } from './pixel.js';
 import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted, wallShade, beam, gable } from './propkit.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt, hitsLedge } from './scenery.js';
-import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
+import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, BROW_STYLES } from './hero.js';
 import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
@@ -757,6 +757,8 @@ function lookFor(seed) {
     hairStyle: pick(HAIR_STYLES, hash(seed + 1)), hairColor, skinTone: pick(SKIN, hash(seed + 3)),
     eyeColor: pick(EYES_FOR[hairColor], hash(seed + 4)), eyeStyle: pick(PICKABLE_EYE_STYLES, hash(seed + 5)),
     outfit: pick(OUTFIT_STYLES, hash(seed + 6)), outfitColor: pick(CLOTHES, hash(seed + 7)), face: pick(CALM_FACES, hash(seed + 8)),
+    // Villagers wear every brow, and now and then an elf passes through.
+    browStyle: pick(BROW_STYLES, hash(seed + 9)), earStyle: hash(seed + 10) < 0.15 ? 'elf' : 'round',
   };
 }
 

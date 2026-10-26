@@ -15,7 +15,7 @@ import { CASH_ITEMS } from '../data/cash.js';
 import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
-import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES } from '../render/hero.js';
+import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
 import { speak, moodFor, makeStyle, price as priceText } from './chatter.js';
 import { updateParty } from './party.js';
 
@@ -75,6 +75,8 @@ function makeLook(rng) {
   return {
     hairStyle: pick(HAIR_STYLES, rng), hairColor: pick(HAIR, rng), skinTone: pick(SKIN, rng), eyeColor: pick(EYES, rng),
     eyeStyle: pick(PICKABLE_EYE_STYLES, rng), face: pick(FACE_STYLES, rng), outfit: pick(OUTFIT_STYLES, rng), outfitColor: pick(CLOTHES, rng),
+    // About one player in five plays an elf.
+    browStyle: pick(BROW_STYLES, rng), earStyle: rng() < 0.2 ? pick(['elf', 'long'], rng) : 'round',
   };
 }
 
