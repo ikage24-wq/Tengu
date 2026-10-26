@@ -33,6 +33,10 @@ Before drawing or animating anything (sprites, faces, hair, effects, maps, UI), 
 `docs/art/README.md` and `docs/art/art-bible.md`: the rules learned from deep multilingual research,
 with the full findings in `docs/art/research/`. Save anything new we learn there too.
 
+"Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
+`docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items
+there and update the status file as they get done.
+
 ## Other standing rules
 
 - Commits end with the session's Co-Authored-By / Claude-Session lines; no model names in code or
