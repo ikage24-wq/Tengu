@@ -373,7 +373,7 @@ function scorpip(pose, f, mood) {
   const sway = dead ? 0 : walk ? Math.sin(p * TAU) : wave(p) * 0.6;
   const rise = angry ? -2 : 0;
   const tailPts = dead
-    ? [[12, 30 + by], [9.6, 33], [7.4, 34.6], [5.6, 35.2]]
+    ? [[13, 29 + by], [10, 31.6], [8.4, 33.6], [8.2, 35.2]]
     : [[12, 28 + by], [7.5, 26 + by], [5.4 + sway * 0.3, 20 + by], [7 + sway * 0.7, 13.4 + rise], [11.6 + sway, 9.6 + rise], [17 + sway, 8.6 + rise]];
   const segs = along(tailPts, 9);
   segs.forEach(([x, y, a], i) => {

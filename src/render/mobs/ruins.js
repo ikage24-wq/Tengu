@@ -348,11 +348,14 @@ function dullahan(pose, frame, mood) {
   const dead = mood === 'dead';
   const hurt = mood === 'hurt';
   const angry = mood === 'angry';
-  const armor = '#c9d6ff';
-  const armorD = '#9fb0e6';
-  const armorL = '#eef3ff';
+  const plate = '#d4ddff';
+  const plateD = '#a9b6ea';
+  const plateL = '#f4f7ff';
+  const suit = '#5a4e8c';
+  const suitD = '#473d74';
   const trim = '#ffd66b';
   const capeC = '#7a5cc0';
+  const visor = '#221a36';
   const fl = angry ? ['#ff8fc0', '#ffd0e6', '#ffffff'] : dead ? ['#b8bfd0', '#dde1ea', '#f2f4f8'] : ['#7fe6e0', '#c8fbf4', '#ffffff'];
   const bob = walk ? Math.sin(t) ** 2 * 1.3 : (Math.sin(t) * 0.5 + 0.5) * 0.7;
   const hx = hurt ? -1.2 : 0;
@@ -360,48 +363,51 @@ function dullahan(pose, frame, mood) {
   const out = [];
   const body = [];
 
-  // Cape, flowing back and rippling.
+  // Cape, flowing back and rippling, lined in pink.
   const w = (k) => Math.sin(t - k * 0.9) * amp * (0.4 + k * 0.45);
   const cape = [[27, 23], [15, 23.4], [11, 30], [8 + w(1) * 0.6, 40], [5 + w(2), 49], [6.6 + w(3), 52.4], [9.4 + w(3), 50.4], [12.4 + w(3) * 0.8, 53.4], [15.6 + w(2) * 0.6, 51], [18.4, 52.4], [21, 46]];
   body.push(...oT(cape, capeC), F(T([[11, 30], [8 + w(1) * 0.6, 40], [5 + w(2), 49], [6.6 + w(3), 52.4], [9 + w(2), 44], [12, 34]], shade(capeC, -9))));
   body.push(...stroke([[14, 30], [12 + w(2) * 0.5, 42], [10.6 + w(3) * 0.7, 50]], 0.6, shade(capeC, -16)));
   body.push(F(T([[5 + w(2), 49], [6.6 + w(3), 52.4], [9.4 + w(3), 50.4], [12.4 + w(3) * 0.8, 53.4], [15.6 + w(2) * 0.6, 51], [15, 49.4], [12.4, 51.2], [9.6, 48.6], [6.8, 50.2]], '#ff9ec0')));
-  // Back upper arm (it cradles the helmet).
-  body.push(...limb([[15, 27], [9, 37]], 3.8, armorD));
-  // Torso: breastplate, belt, faulds.
-  const plate = [[15, 25], [29, 25], [30.6, 31], [28.6, 38], [27.4, 41], [16.6, 41], [15.4, 38], [13.8, 31]];
-  body.push(...oT(plate, armor), F(T([[15, 25], [18.6, 25], [17.6, 33], [18.4, 41], [16.6, 41], [15.4, 38], [13.8, 31]], armorD)));
-  body.push(F(E(25.4, 30, 3, 2.2, armorL)), ...stroke([[22, 26], [22.4, 33], [22, 40]], 0.6, armorD), ...stroke([[16.2, 34.6], [29.4, 34.2]], 0.5, armorD));
-  body.push(...oT([[16.4, 40.4], [27.8, 40.4], [28, 42.6], [16.2, 42.6]], '#6b4f8a', 0.5), F(T([[21, 40.2], [24, 40.2], [24, 42.8], [21, 42.8]], trim)), F(E(22.5, 41.5, 0.7, 0.6, '#6b4f8a')));
-  body.push(...oT([[15.6, 42.6], [28.6, 42.6], [29.8, 46.6], [14.4, 46.6]], armorD, 0.5), ...stroke([[22.2, 42.8], [22.2, 46.4]], 0.5, shade(armorD, -14)), ...stroke([[15.2, 44.6], [29.2, 44.6]], 0.4, armorL));
+  // Back upper arm in the dark under-suit (it cradles the helmet).
+  body.push(...limb([[15, 27], [8.4, 36.4]], 3.6, suitD));
+  // Breastplate with a gold-trimmed hem, belt, and faulds.
+  const bp = [[15, 25], [29, 25], [30.6, 31], [28.6, 38], [27.4, 41], [16.6, 41], [15.4, 38], [13.8, 31]];
+  body.push(...oT(bp, plate), F(T([[15, 25], [18.4, 25], [17.4, 33], [18.2, 41], [16.6, 41], [15.4, 38], [13.8, 31]], plateD)));
+  body.push(F(E(25.6, 29.8, 2.8, 2, plateL)), F(E(26.6, 35.4, 1.2, 1.6, plateL)), ...stroke([[21.6, 26], [22.2, 33], [21.8, 40.4]], 0.55, plateD));
+  body.push(F(T([[22.4, 30.4], [24, 32.4], [22.4, 34.6], [20.8, 32.4]], trim)), F(T([[22.4, 31.4], [23.2, 32.4], [22.4, 33.4], [21.6, 32.4]], '#ff9ec0')));
+  body.push(...oT([[16.2, 40.2], [27.8, 40.2], [28, 42.6], [16, 42.6]], suit, 0.5), F(T([[20.8, 40], [24, 40], [24, 42.8], [20.8, 42.8]], trim)), F(E(22.4, 41.4, 0.7, 0.6, suit)));
+  body.push(...oT([[15.6, 42.6], [28.6, 42.6], [30, 46.8], [14.2, 46.8]], plateD, 0.5), ...stroke([[22.2, 42.8], [22.2, 46.6]], 0.5, shade(plateD, -14)), F(T([[14.6, 45.6], [29.6, 45.6], [30, 46.8], [14.2, 46.8]], trim)));
   // Back pauldron.
-  body.push(...oE(15, 26.6, 4.4, 3.8, armorD), F(E(14.4, 25.4, 2, 1, armor)));
+  body.push(...oE(15, 26.6, 4.4, 3.8, plateD), F(E(14.4, 25.4, 2, 1, plate)));
   // The empty collar and its ghost-fire.
   const fk = (angry ? 1.3 : dead ? 0.35 : 1) * (1 + 0.1 * Math.sin(t * 2));
   const lean = (walk ? -2.6 : -0.8) + Math.sin(t) * 0.8 + (hurt ? -2 : 0);
-  body.push(F(E(22, 24.2, 4.6, 1.6, '#2a2240')));
+  body.push(...oE(22, 25.2, 6.8, 2.8, plateL, 0.5), F(E(22, 24.7, 5, 1.7, visor)));
   body.push(T(flamePts(22, 25, 9.4, 15 * fk, lean), fl[0]), T(flamePts(18.6, 25, 4.6, 8 * fk * (1 + 0.15 * Math.sin(t + 2)), lean - 1), fl[0]), T(flamePts(25.4, 25, 4, 7 * fk * (1 + 0.15 * Math.sin(t * 2 + 1)), lean), fl[0]));
   body.push(F(T(flamePts(22.3, 25, 6.2, 10.5 * fk, lean * 0.8), fl[1])), F(T(flamePts(22.5, 25, 3, 6 * fk, lean * 0.5), fl[2])));
   if (!dead) body.push(F(E(20 + lean * 1.4, 6.5 - Math.sin(t) * 1.5 + (angry ? -1 : 0), 0.8, 0.8, fl[1])));
-  body.push(...oT([[15.6, 23.6], [28.4, 23.6], [27.6, 26.2], [16.4, 26.2]], armorL, 0.5), F(T([[15.8, 25.4], [28.2, 25.4], [27.6, 26.2], [16.4, 26.2]], armorD)));
-  // Front pauldron, layered.
-  body.push(...oE(29.6, 26.8, 5.2, 4.4, armor), arc(29.6, 27.6, 4.6, 3.4, 20, 160, 0.6, armorD), F(E(28.6, 25.2, 2.4, 1.2, armorL)), F(E(32.6, 27.6, 0.6, 0.6, trim)), F(E(26.8, 28.2, 0.6, 0.6, trim)));
+  const lip = [];
+  for (let i = 0; i <= 8; i++) lip.push([22 + 6.8 * Math.cos((i / 8) * Math.PI), 25.2 + 2.8 * Math.sin((i / 8) * Math.PI)]);
+  for (let i = 8; i >= 0; i--) lip.push([22 + 5 * Math.cos((i / 8) * Math.PI), 24.9 + 1.5 * Math.sin((i / 8) * Math.PI)]);
+  body.push(F(T(lip, plateL)), ...stroke([[16.4, 26.6], [22, 28.1], [27.6, 26.6]], 0.5, trim));
+  // Front pauldron, layered and gold-rimmed.
+  body.push(...oE(29.6, 26.8, 5.2, 4.4, plate), arc(29.6, 27.4, 5, 3.8, 15, 165, 0.8, trim), arc(29.6, 26.6, 3.8, 2.6, 25, 155, 0.5, plateD), F(E(28.4, 25, 2.4, 1.1, plateL)));
 
-  // Helmet under the arm: plume, bucket helm, dark visor with glowing eyes.
+  // Helmet under the arm: plume, gold crest, bucket helm, T-visor with glowing eyes.
   const hb = hurt ? -1.6 : dead ? 1.4 : Math.sin(t + 0.6) * 0.3 * amp;
-  const hc = [10.8, 38.4 + hb];
   const helm = [];
-  const pl = [[10.6, 32.8], [7.6, 31.4 + w(1) * 0.4], [4.6, 31.8 + w(2) * 0.6], [2.4, 34 + w(3) * 0.7]];
-  helm.push(...oRibbon(pl, [3.4, 3.2, 2.4, 0.8], '#ff9ec0'), F(T(ribbonPts(pl.slice(0, 3), [1.2, 1.2, 0.6]), '#ffd0e0')));
-  helm.push(...oE(10.8, 38.4, 6.1, 5.9, armor), F(T([[5, 37], [7.4, 33.6], [8.2, 44], [5.6, 41.6]], armorD)), F(E(9, 34.6, 2.4, 1.1, armorL)));
-  helm.push(...stroke([[6.6, 34], [10.6, 32.6], [14.6, 34]], 1, trim));
-  helm.push(F(T([[9.2, 36.2], [16.5, 35.8], [16.7, 40.4], [9.6, 40.8]], '#231c38')));
-  helm.push(...glowEyes(13.3, 38.3, 1.05, mood, { gap: 3.7, col: fl[0], core: '#ffffff', halo: mix(fl[0], '#231c38', 0.55) }));
-  if (angry) helm.push(...stroke([[10.2, 36.4], [12.6, 37.4]], 0.6, fl[0]), ...stroke([[16.2, 36.4], [14, 37.4]], 0.6, fl[0]));
-  helm.push(...stroke([[9, 36], [16.8, 35.6]], 0.8, armorL), F(E(12.4, 42.6, 0.4, 0.4, '#231c38')), F(E(14, 42.4, 0.4, 0.4, '#231c38')), F(E(15.4, 42, 0.4, 0.4, '#231c38')));
-  body.push(...mv(helm, hc[0] - 10.8, hc[1] - 38.4));
-  // Forearm cradling the helmet.
-  body.push(...limb([[9, 37], [13.6, 44.2 + hb * 0.5]], 3.4, armorD), ...oE(14.6, 44 + hb * 0.5, 2.2, 1.8, armor), F(E(14.2, 43.2 + hb * 0.5, 1.2, 0.5, armorL)));
+  const pl = [[9.6, 32], [6.6, 30.6 + w(1) * 0.4], [3.6, 31.2 + w(2) * 0.6], [1.6, 33.6 + w(3) * 0.7]];
+  helm.push(...oRibbon(pl, [3.6, 3.4, 2.6, 0.8], '#ff9ec0'), F(T(ribbonPts(pl.slice(0, 3), [1.2, 1.2, 0.6]), '#ffd0e0')));
+  helm.push(...oE(10.4, 38.2, 6.8, 6.6, plate), F(T([[3.8, 37], [6.4, 33], [7.4, 44.4], [4.6, 41.6]], plateD)), F(E(8.4, 34, 2.6, 1.2, plateL)));
+  helm.push(...stroke([[5.6, 34.6], [10, 31.8], [14.6, 33.6]], 1.2, trim));
+  helm.push(F(T([[8.2, 35.2], [17.2, 34.8], [17.4, 39.8], [15, 40], [14.8, 43.4], [12.8, 43.6], [12.6, 40.1], [8.6, 40.4]], visor)));
+  helm.push(...glowEyes(13, 37.5, 1.18, mood, { gap: 3.5, col: fl[0], core: '#ffffff', halo: mix(fl[0], visor, 0.55) }));
+  if (angry) helm.push(...stroke([[9.6, 35.6], [12.2, 36.6]], 0.6, fl[0]), ...stroke([[16.6, 35.6], [14, 36.6]], 0.6, fl[0]));
+  helm.push(...stroke([[8, 35.1], [17.4, 34.7]], 0.7, plateL), F(E(10, 42.2, 0.4, 0.4, visor)), F(E(10.4, 43.6, 0.4, 0.4, visor)), F(E(16.2, 42.4, 0.4, 0.4, visor)));
+  body.push(...mv(helm, 0, hb));
+  // Forearm cradling the helmet from below.
+  body.push(...limb([[8.4, 36.4], [8.6, 43], [13.6, 45.2 + hb * 0.5]], 3.2, suit), ...oE(14.6, 44.8 + hb * 0.5, 2.2, 1.9, plateD), F(E(14.2, 44 + hb * 0.5, 1.2, 0.5, plateL)));
 
   // The sword arm and an upright blade.
   const sw = dead ? 0.7 : 0.2 + Math.sin(t) * 0.05 * amp + (angry ? -0.12 : 0);
@@ -417,22 +423,24 @@ function dullahan(pose, frame, mood) {
     F(E(-4.3, -2.4, 0.7, 0.7, trim)), F(E(4.3, -2.4, 0.7, 0.7, trim)),
   ];
   body.push(...xf(sword, (x, y) => rot([[x + sx, y + sy]], sx, sy, sw)[0]));
-  body.push(...limb([[30.4, 28.6], [32.4, 33.6], [34.8, 36.6]], 3.6, armor), ...oE(35.2, 36.8, 2, 1.9, armor), F(E(35.8, 36.2, 0.9, 0.6, armorL)));
+  body.push(...limb([[30.4, 29], [32.4, 33.2]], 3.2, suit), ...limb([[32.4, 33.2], [34.8, 36.4]], 3.8, plate), ...oE(32.2, 33, 1.8, 1.6, plateL, 0.5));
+  body.push(...oE(35.2, 36.8, 2.1, 2, plateD), F(E(35.8, 36.1, 0.9, 0.6, plateL)));
 
-  // Legs (drawn first, under the faulds).
+  // Legs: dark thighs, plated greaves, pointed sabatons.
   const legs = [];
-  const leg = (hipX, p, c, front) => {
+  const leg = (hipX, p, back) => {
     const hip = [hipX + hx, 44 + bob];
     const lift = walk ? 2.4 * Math.max(0, Math.cos(p)) : 0;
-    const fx = walk ? hipX + 4.6 * Math.sin(p) : hipX + (front ? 2.2 : -1.6);
+    const fx = walk ? hipX + 4.6 * Math.sin(p) : hipX + (back ? -1.6 : 2.2);
     const fy = 58 - lift;
     const ank = [fx + hx, fy - 2.4];
     const knee = [(hip[0] + ank[0]) / 2 + 1.4, (hip[1] + ank[1]) / 2];
-    legs.push(...limb([hip, knee, ank], 4.6, c), ...oE(knee[0] + 0.4, knee[1], 2.2, 1.8, front ? armorL : armor, 0.5));
-    legs.push(...oT([[ank[0] - 2.6, fy - 3.2], [ank[0] + 1.4, fy - 3.4], [ank[0] + 4.4, fy - 0.8], [ank[0] + 4, fy], [ank[0] - 2.6, fy]], c, 0.5));
+    const pc = back ? plateD : plate;
+    legs.push(...limb([hip, knee], 4.4, back ? suitD : suit), ...limb([knee, ank], 4.6, pc), ...oE(knee[0] + 0.4, knee[1], 2.2, 1.9, back ? plate : plateL, 0.5));
+    legs.push(...oT([[ank[0] - 2.6, fy - 3.2], [ank[0] + 1.4, fy - 3.4], [ank[0] + 4.4, fy - 0.8], [ank[0] + 4, fy], [ank[0] - 2.6, fy]], pc, 0.5));
   };
-  leg(19.4, t + Math.PI, armorD, false);
-  leg(25, t, armor, true);
+  leg(19.4, t + Math.PI, true);
+  leg(25, t, false);
   out.push(...legs, ...mv(body, hx, bob));
   return { w: 44, h: 58, res: 3, shapes: out };
 }

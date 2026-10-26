@@ -54,6 +54,29 @@ function leaf(bx, by, deg, len, wid, c) {
   return T([p(0, 0.35), p(0.18, 0.85), p(0.45, 1), p(0.75, 0.7), p(1, 0), p(0.75, -0.7), p(0.45, -1), p(0.18, -0.85), p(0, -0.35)], c);
 }
 
+// A broad leaf whose spine curves from b along deg, its tip sagging by `bend`.
+function cleaf(b, deg, len, wid, bend, c, rib, rim = 0) {
+  const a = deg * D2R;
+  const ctl = [b[0] + Math.cos(a) * len * 0.6, b[1] + Math.sin(a) * len * 0.6];
+  const tip = [b[0] + Math.cos(a) * len, b[1] + Math.sin(a) * len + bend];
+  const l = [];
+  const r = [];
+  const spine = [];
+  for (let i = 0; i <= 9; i++) {
+    const t = i / 9;
+    const [x, y] = bz(b, ctl, tip, t);
+    const tx = 2 * (1 - t) * (ctl[0] - b[0]) + 2 * t * (tip[0] - ctl[0]);
+    const ty = 2 * (1 - t) * (ctl[1] - b[1]) + 2 * t * (tip[1] - ctl[1]);
+    const tl = Math.hypot(tx, ty) || 1;
+    const w = rim + wid * Math.pow(Math.sin(Math.PI * (0.06 + 0.88 * t)), 0.7) * (1 + 0.1 * Math.sin(t * 20));
+    l.push([x - (ty / tl) * w, y + (tx / tl) * w]);
+    r.push([x + (ty / tl) * w, y - (tx / tl) * w]);
+    if (t <= 0.8) spine.push([x, y]);
+  }
+  if (rim) return [F(T([...l, ...r.reverse()], c))];
+  return [T([...l, ...r.reverse()], c), ...stroke(spine, 0.4, rib)];
+}
+
 const bz = (a, b, c, t) => [
   (1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * b[0] + t * t * c[0],
   (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * b[1] + t * t * c[1],
@@ -377,8 +400,8 @@ function mandrake(pose, f, mood) {
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  const root = '#f6d6ae';
-  const rootD = '#e2b88c';
+  const root = '#f8d6b8';
+  const rootD = '#e6b796';
   const line = '#c99b74';
   const out = [];
   // Waddle: body highest as the legs pass, swaying side to side.
@@ -404,32 +427,46 @@ function mandrake(pose, f, mood) {
   const hand0 = dead ? [5, by + 8] : [4.6 - armUp * 1, by + 4 + swing - armUp * 13];
   out.push(...limb([bx - 6, by - 1], hand0, 2.2, 1.6, rootD), ...stroke([[hand0[0], hand0[1]], [hand0[0] - 1.4, hand0[1] - 1]], 0.6, rootD, false), ...stroke([[hand0[0], hand0[1]], [hand0[0] - 0.8, hand0[1] + 1.4]], 0.6, rootD, false));
 
-  // Leafy crown, swaying behind the body's motion.
-  const ldead = '#b9c48a';
-  const lc = [['#62b25e', -150, 9], ['#7fcf73', -122, 11.5], ['#8fd87e', -92, 12.5], ['#7fcf73', -62, 11.5], ['#62b25e', -32, 9]];
-  const top = [bx, by - 9.6];
-  lc.forEach(([c, a, len], k) => {
-    const s = walk ? Math.sin(p - 1 - k * 0.35) * 9 : Math.sin(p - k * 0.6) * 5;
+  // Leafy crown: a lush rosette of broad, drooping leaves swaying behind the body's motion.
+  const top = [bx, by - 9.4];
+  const ldead = '#bcc58e';
+  const crown = [
+    ['#5aa857', -174, 11.5, 4.5], ['#5aa857', -6, 11.5, 4.5], ['#68b762', -146, 12, 2], ['#68b762', -34, 12, 2],
+    ['#7fcf73', -120, 11.5, -0.5], ['#7fcf73', -60, 11.5, -0.5], ['#93db84', -90, 11, -1.5],
+  ];
+  crown.forEach(([c, a, len, bend], k) => {
+    const side = a < -90 ? -1 : a > -90 ? 1 : 0;
+    const s = walk ? Math.sin(p - 1 - k * 0.3) * 7 : Math.sin(p - k * 0.5) * 4 + (hurt ? side * 10 : 0);
     let ang = a + s;
-    if (dead) ang = a < -90 ? 160 - k * 12 : 20 + (4 - k) * 12;
-    else if (happy) ang = a * 0.8 - 18;
-    else if (angry) ang = -90 + (a + 90) * 1.25 + s * 1.4;
-    const l = len * (dead ? 0.85 : angry ? 1.08 : 1);
-    out.push(leaf(top[0], top[1], ang, l, 2.4, dead ? ldead : c));
-    const tip = [top[0] + Math.cos(ang * D2R) * l * 0.8, top[1] + Math.sin(ang * D2R) * l * 0.8];
-    out.push(...stroke([top, tip], 0.4, dead ? shade(ldead, -12) : shade(c, -14)));
+    let bd = bend;
+    if (dead) {
+      ang = side < 0 ? 196 + k * 6 : side > 0 ? -16 - k * 6 : -90;
+      bd = side ? 7 : 0;
+    } else if (angry) {
+      ang = -90 + (a + 90) * 0.78 + s * 1.5;
+      bd = bend - 3;
+    } else if (happy) {
+      ang = -90 + (a + 90) * 0.9;
+      bd = bend - 1.5;
+    }
+    if (dead && !side) return;
+    const lc = dead ? ldead : c;
+    out.push(...cleaf(top, ang, len * (dead ? 0.85 : 1), 3, bd, shade(lc, -20), null, 0.45), ...cleaf(top, ang, len * (dead ? 0.85 : 1), 3, bd, lc, shade(lc, -16)));
   });
-  // A sprig of lilac blossoms in the middle.
+  // A cluster of purple mandrake bells in the middle.
   if (!dead) {
     const fs = walk ? Math.sin(p - 1.8) * 1 : Math.sin(p - 1) * 0.6;
-    const fl = [top[0] + 1 + fs, top[1] - 11];
-    out.push(...stroke([[top[0], top[1]], [top[0] + 0.6 + fs * 0.5, top[1] - 6], fl], 0.6, '#5fae5c'));
-    for (const [dx, dy] of [[0, 0], [-1.3, 0.9], [1.3, 0.9], [0, -1.2]]) out.push(E(fl[0] + dx, fl[1] + dy, 1.05, 1.05, '#c9a6ff'));
-    out.push(F(E(fl[0], fl[1] + 0.2, 0.5, 0.5, '#fff1a8')));
+    const fl = [top[0] + 0.6 + fs, top[1] - 9.6 + (angry ? -1 : 0)];
+    out.push(...stroke([[top[0], top[1]], [top[0] + 0.4 + fs * 0.5, top[1] - 5], fl], 0.6, '#4f9a50'));
+    for (const [dx, dy] of [[-1.6, 1.2], [1.6, 1.2], [0, -0.8], [-0.4, 2.6], [1.4, -1.6]]) {
+      out.push(T([[fl[0] + dx - 1.1, fl[1] + dy - 0.9], [fl[0] + dx + 1.1, fl[1] + dy - 0.9], [fl[0] + dx + 1.3, fl[1] + dy + 0.9], [fl[0] + dx, fl[1] + dy + 0.5], [fl[0] + dx - 1.3, fl[1] + dy + 0.9]], '#b48cff'));
+      out.push(F(E(fl[0] + dx - 0.3, fl[1] + dy - 0.3, 0.45, 0.35, '#dcc8ff')));
+    }
   }
 
   // The root body: a plump parsnip with rings and root hairs.
   out.push(E(bx, by - 8.4, 4.6, 2.6, root), E(bx, by, 8.8, 10, root), E(bx + 0.5, by + 7.4, 6.4, 3.6, root));
+  out.push(F(E(bx + 0.6, by + 5.4, 7, 3.8, mix(root, rootD, 0.45))), F(E(bx - 3.4, by + 4, 2.2, 3, mix(root, rootD, 0.45))));
   for (const [y, w] of [[-3.6, 6], [1.8, 7.2], [6.4, 5.4]]) out.push(arc(bx + 0.4, by + y, w, 1.6, 20, 160, 0.4, line));
   for (const [x, y, d] of [[-8.6, -1, -1], [-8, 3.4, -1], [8.6, 0.4, 1], [8, 4.4, 1]]) {
     out.push(...stroke([[bx + x, by + y], [bx + x + d * 1.4, by + y + 0.6], [bx + x + d * 2, by + y + 1.6]], 0.45, rootD));
@@ -450,7 +487,7 @@ function mandrake(pose, f, mood) {
       out.push(...stroke([[x - 1.9, ey - (s < 0 ? 2.8 : 1.4)], [x + 1.9, ey - (s < 0 ? 1.4 : 2.8)]], 0.7, '#8a5a40'));
     }
   } else {
-    out.push(...eye(fx - 3, ey, 1.7, mood, -1, { iris: '#6b7d3a' }), ...eye(fx + 2.8, ey, 1.9, mood, 1, { iris: '#6b7d3a' }));
+    out.push(...eye(fx - 3.2, ey, 2, mood, -1, { iris: '#5a9a4a' }), ...eye(fx + 3, ey, 2.3, mood, 1, { iris: '#5a9a4a' }));
   }
   out.push(...blush(fx - 4.4, ey + 3, 1.3, mood), ...blush(fx + 3.6, ey + 3.2, 1.4, mood));
   const mY = ey + 4.2;
@@ -458,10 +495,7 @@ function mandrake(pose, f, mood) {
     // The scream.
     out.push(F(E(fx, mY + 1.8, 3.2, 3.8, '#5a2a44')), F(E(fx, mY + 2.6, 2.4, 2.6, '#7a3456')), F(E(fx + 0.2, mY + 4, 1.8, 1.2, '#ff8fab')));
     out.push(F(T([[fx - 2.4, mY - 0.8], [fx + 2.4, mY - 0.8], [fx + 1.8, mY + 0.1], [fx + 1.2, mY - 0.3], [fx + 0.6, mY + 0.2], [fx, mY - 0.3], [fx - 0.6, mY + 0.2], [fx - 1.2, mY - 0.3], [fx - 1.8, mY + 0.1]], '#fff8ec')));
-    for (const [r, a] of [[9, 0], [11.6, 1]]) {
-      const cx = fx + 2.4;
-      out.push(arc(cx, mY + 1.6, r * 0.55, r * 0.7, -38 + a * 4, 38 - a * 4, 0.5, a ? '#d9a0ff' : '#ff9ec0'));
-    }
+    for (const [r, c] of [[2.4, '#ff9ec0'], [4, '#d9a0ff']]) out.push(arc(fx + 7.6, mY + 1.6, r, r * 1.3, -50, 50, 0.6, c));
   } else if (happy) {
     out.push(F(T([[fx - 1.8, mY - 0.3], [fx + 1.8, mY - 0.3], [fx, mY + 1.8]], MOUTH)), F(E(fx, mY + 1, 0.8, 0.45, '#ff8fab')));
   } else if (hurt) {
@@ -474,7 +508,7 @@ function mandrake(pose, f, mood) {
   // Near arm.
   const hand1 = dead ? [25, by + 8] : [25.6 + armUp * 1, by + 4 - swing - armUp * 13];
   out.push(...limb([bx + 6.4, by - 0.6], hand1, 2.4, 1.8, root), ...stroke([[hand1[0], hand1[1]], [hand1[0] + 1.4, hand1[1] - 1]], 0.6, root, false), ...stroke([[hand1[0], hand1[1]], [hand1[0] + 0.8, hand1[1] + 1.4]], 0.6, root, false));
-  return { w: 30, h: 40, res: 3, shapes: out };
+  return { w: 34, h: 44, res: 3, shapes: out.map((q) => ({ ...q, x: q.x + 2, y: q.y + 4 })) };
 }
 
 // ---------- Toadstool Goblin (mushkin) ----------

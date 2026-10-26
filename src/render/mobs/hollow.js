@@ -607,79 +607,83 @@ function sporeMite(pose, f, mood) {
   const dead = mood === 'dead';
   const hurt = mood === 'hurt';
   const angry = mood === 'angry';
-  const puff = '#ebc8ea';
-  const puffD = '#d2a6d6';
-  const shell = '#b98bc8';
-  const leg = '#8e6aa0';
+  const puff = '#efd2ec';
+  const puffD = '#d6aad8';
+  const shell = '#a98ad0';
+  const leg = '#7e6296';
   const glow = dead ? '#a49cb0' : TEAL;
-  const by = (walk ? (f % 2 ? -0.7 : 0) : Math.sin(it) * 0.3) + (dead ? 1.6 : 0);
+  const by = (walk ? (f % 2 ? -0.8 : 0) : Math.sin(it) * 0.3) + (dead ? 3 : -1.2);
   const hx = hurt ? -1 : 0;
   const pulse = walk ? 0.5 + 0.5 * Math.cos(p) : 0.5 + 0.5 * Math.sin(it);
   const out = [];
 
-  const legShape = (x, q, c, out2, far) => {
+  // Spindly jointed legs with high knees.
+  const legShape = (x, q, c, dir, far) => {
     const sw = walk ? Math.sin(q) : 0;
-    const lift = walk ? Math.max(0, Math.cos(q)) * 1.5 : 0;
-    const hip = [x, 13.6 + by - (far ? 0.6 : 0)];
-    let foot = [x + out2 * 2.2 + sw * 1.7, 19.4 - lift - (far ? 0.4 : 0)];
-    if (dead) foot = [x + out2 * 1.4, 16.4 + by];
-    const knee = [(hip[0] + foot[0]) / 2 + out2 * 1.4, Math.min(hip[1], foot[1]) - 1.2];
-    return limb([hip, knee, foot], 1.15, 0.6, c);
+    const lift = walk ? Math.max(0, Math.cos(q)) * 1.6 : 0;
+    const hip = [x, 13.4 + by - (far ? 0.8 : 0)];
+    let foot = [x + dir * 3.4 + sw * 1.6, 19.6 - lift - (far ? 0.5 : 0)];
+    if (dead) foot = [x + dir * 2.4, 12.4 + by];
+    const knee = [x + dir * 2.2 + sw * 0.6, hip[1] - 1.8 + (dead ? 0.6 : 0)];
+    return [taper([hip, knee], 1.1, 0.9, c), taper([knee, [foot[0] - dir * 0.2, foot[1] - 1.2], foot], 0.9, 0.5, c), F(E(knee[0], knee[1], 0.5, 0.5, mix(c, '#ffffff', 0.25)))];
   };
-  // Tripod gait: front and back near legs with the middle far leg, then the others.
-  const xs = [7, 11, 15];
-  const dirs = [-1, 0, 1];
-  xs.forEach((x, i) => out.push(...legShape(x + 1.2, p + (i === 1 ? 0 : Math.PI), shade(leg, -12), dirs[i], true)));
+  const xs = [6.6, 10.4, 14.2];
+  const dirs = [-1, 0.25, 1.1];
+  xs.forEach((x, i) => out.push(...legShape(x + 1.4, p + (i === 1 ? 0 : Math.PI), shade(leg, -12), dirs[i], true)));
 
-  // The puffball body: fluff bumps around a round core.
-  const bx = 10.6;
-  const byy = 12.4 + by;
-  for (let i = 0; i < 9; i++) {
-    const a = Math.PI * (0.9 + (i / 8) * 1.25);
-    const w = walk ? Math.sin(p + i) * 0.2 : 0;
-    out.push(E(bx + Math.cos(a) * 6.4, byy + Math.sin(a) * 4.6 + w, 2.1, 1.9, puff));
-  }
-  out.push(E(bx, byy, 7.2, 5.4, puff), F(E(bx + 0.4, byy + 3.6, 5.4, 1.3, puffD)));
-  for (const [x, y] of [[-4.6, 1], [-1.6, 2.2], [1.8, 1.6], [-3, -1.6]]) out.push(F(E(bx + x, byy + y, 0.5, 0.5, mix(puff, PURP, 0.4))));
+  // Spore sac on the rear, glowing through its skin.
+  const sr = 3 + pulse * 0.45;
+  const sx = 5.4;
+  const sy = 7.4 + by;
+  out.push(...limb([[sx - 1.4, sy - 2.2], [sx - 2.2, sy - 3.8]], 1.5, 1.2, '#6fb7b0'));
+  out.push(F(E(sx - 2.25, sy - 3.9, 0.85, 0.5, TEAL_HI)));
+  out.push(...oval(sx, sy, sr, sr * 0.95, mix(glow, '#3aa59c', 0.4)));
+  out.push(F(E(sx + 0.25, sy + 0.3, sr * 0.75, sr * 0.72, glow)));
+  for (const [x, y, r] of [[-0.9, 0.6, 0.7], [1, -0.5, 0.55], [0.5, 1.4, 0.45]]) out.push(F(E(sx + x, sy + y, r * (0.8 + pulse * 0.4), r * (0.8 + pulse * 0.4), TEAL_HI)));
+  out.push(F(E(sx - 1, sy - 1.3, 0.8, 0.5, '#ffffff')));
 
-  // Spore sac on its back, translucent and pulsing.
-  const sr = 3.8 + pulse * 0.5;
-  const sx = 8.4;
-  const sy = 6.6 + by;
-  out.push(...limb([[sx - 2.4, sy - 2.2], [sx - 3.4, sy - 4.2]], 1.6, 1.3, shade(glow, -22)));
-  out.push(F(E(sx - 3.5, sy - 4.4, 0.9, 0.5, TEAL_HI)));
-  out.push(...oval(sx, sy, sr, sr * 0.92, mix(glow, '#3aa59c', 0.45)));
-  out.push(F(E(sx + 0.3, sy + 0.4, sr * 0.78, sr * 0.72, glow)));
-  out.push(...flatLine([[sx - 2.4, sy + 1.6], [sx, sy - 0.6], [sx + 2.6, sy + 1]], 0.4, mix(glow, '#2a8f8a', 0.5)));
-  for (const [x, y, r] of [[-1.2, 0.8, 0.8], [1.2, -0.6, 0.65], [0.6, 1.8, 0.55], [-0.4, -1.6, 0.5]]) out.push(F(E(sx + x, sy + y, r * (0.8 + pulse * 0.4), r * (0.8 + pulse * 0.4), TEAL_HI)));
-  out.push(F(E(sx - 1.4, sy - 1.8, 1, 0.6, '#ffffff')));
-  // A puff of spores from the vent.
-  if (!dead) {
-    const u = walk ? f / 4 : f / 3;
-    out.push(...mote(sx - 4.4 - u * 1.6, sy - 5.6 - u * 1.2, 0.7 - u * 0.25, glow), ...mote(sx - 2.6 + u, sy - 6.6 - u * 1.4, 0.5, PURP));
+  // The puffball body: fluff bumps around a round core, dotted with spore pores.
+  const bx = 10.2;
+  const byy = 11.6 + by;
+  for (let i = 0; i < 8; i++) {
+    const a = Math.PI * (1.0 + (i / 7) * 1.0);
+    const w = walk ? Math.sin(p + i) * 0.2 : Math.sin(it + i) * 0.1;
+    out.push(E(bx + Math.cos(a) * 5.6, byy + Math.sin(a) * 4.4 + w, 1.9, 1.8, puff));
   }
+  out.push(E(bx, byy, 6.4, 5, puff), F(E(bx + 0.4, byy + 3.4, 4.8, 1.2, puffD)));
+  for (const [x, y, r] of [[-3.6, 0.6, 0.55], [-1, -1.8, 0.5], [1.4, 1, 0.6], [-1.6, 2, 0.45], [2.8, -1.8, 0.45]]) {
+    out.push(F(E(bx + x, byy + y, r, r * 0.8, mix(puff, '#8a5aa8', 0.35))), F(E(bx + x + 0.15, byy + y - 0.15, r * 0.4, r * 0.4, mix(PURP, '#ffffff', 0.4))));
+  }
+  out.push(F(E(bx - 2, byy - 3, 2, 0.8, '#fff4fc')));
 
   // Near legs.
   xs.forEach((x, i) => out.push(...legShape(x, p + (i === 1 ? Math.PI : 0), leg, dirs[i], false)));
 
-  // Head: a shiny carapace with big eyes, antennae and mandibles.
-  const hcx = 17.4 + hx;
-  const hcy = 12.6 + by + (dead ? 1 : 0);
-  const aw = walk ? Math.sin(p * 2) * 0.6 : Math.sin(it) * 0.5;
-  const ant = (x0, dx, c) => {
-    const tip = dead ? [hcx + x0 + 2.6 + dx, hcy - 2.6] : [hcx + x0 + 3.4 + dx + aw * 0.4, hcy - 8 + aw];
-    return [...limb([[hcx + x0, hcy - 3], [hcx + x0 + 0.6 + dx, hcy - 6], tip], 0.8, 0.5, c), ...oval(tip[0], tip[1], 0.9, 0.9, glow), F(E(tip[0] - 0.2, tip[1] - 0.2, 0.4, 0.4, TEAL_HI))];
-  };
-  out.push(...ant(-1.4, -1, shade(shell, -16)));
-  for (const s of [-1, 1]) {
-    const mo = angry ? 0.6 : 0;
-    out.push(...limb([[hcx + 2.4, hcy + 2 + s * 0.8], [hcx + 4.6, hcy + 2.4 + s * (1 + mo)], [hcx + 5.4, hcy + 1.6 + s * (0.2 + mo)]], 1, 0.3, s < 0 ? shade(BONE, -12) : BONE));
+  // Mite puffs from the vent as it scuttles.
+  if (!dead) {
+    const u = walk ? f / 4 : f / 3;
+    out.push(...mote(sx - 3 - u * 1.4, sy - 5 - u * 1.4, 0.7 - u * 0.25, glow), ...mote(sx - 0.6 + u, sy - 5.8 - u * 1.2, 0.5, PURP));
   }
-  out.push(C(E(hcx, hcy, 4.4, 3.9, shell)), F(E(hcx - 0.8, hcy - 2.4, 2, 0.8, mix(shell, '#ffffff', 0.45))));
-  out.push(...ant(0.8, 0, shell));
-  out.push(...eyes([[hcx - 0.9, hcy + 0.2, 1.25], [hcx + 2.2, hcy + 0.1, 1.15]], mood, { cx: hcx + 0.65, skin: shell, glow, brow: '#4a3060', flare: false }));
-  if (mood === 'idle' || mood === 'happy' || mood === 'blink') out.push(F(E(hcx - 1.8, hcy + 2, 0.8, 0.4, BLUSH)));
-  if (mood === 'angry' || mood === 'hurt') out.push(F(E(hcx + 1.8, hcy + 2.6, 0.55, 0.45, GUM)));
+
+  // Head: a shiny carapace with big eyes, glow-tipped antennae, and mandibles.
+  const hcx = 17 + hx;
+  const hcy = 11.4 + by + (dead ? 0.6 : 0);
+  const aw = walk ? Math.sin(p * 2 + f) * 0.7 : Math.sin(it) * 0.5;
+  const ant = (x0, dx, c) => {
+    const tip = dead ? [hcx + x0 + 3 + dx, hcy - 3.2] : [hcx + x0 + 2.8 + dx + aw * 0.4, hcy - 8.6 + aw + (angry ? 1 : 0)];
+    return [...limb([[hcx + x0, hcy - 3.4], [hcx + x0 + 0.4 + dx, hcy - 6.6], tip], 0.8, 0.5, c), ...oval(tip[0], tip[1], 0.95, 0.95, glow), F(E(tip[0] - 0.25, tip[1] - 0.25, 0.4, 0.4, TEAL_HI))];
+  };
+  out.push(...ant(-1.8, -1.2, shade(shell, -16)));
+  for (const s of [-1, 1]) {
+    const mo = angry ? 0.7 : 0;
+    out.push(...limb([[hcx + 3, hcy + 2.2 + s * 0.6], [hcx + 5.2, hcy + 2.4 + s * (0.9 + mo)], [hcx + 5.9, hcy + 1.6 + s * (0.1 + mo)]], 1.1, 0.3, s < 0 ? shade(BONE, -12) : BONE));
+  }
+  out.push(C(E(hcx, hcy, 4.8, 4.4, shell)), F(E(hcx - 1, hcy - 2.8, 2.2, 0.9, mix(shell, '#ffffff', 0.45))));
+  out.push(...ant(0.6, 0, shell));
+  out.push(...eyes([[hcx - 1.1, hcy + 0.3, 1.45], [hcx + 2.4, hcy + 0.2, 1.3]], mood, { cx: hcx + 0.65, skin: shell, glow, brow: '#3f2a58', flare: false }));
+  if (mood === 'idle' || mood === 'happy' || mood === 'blink') out.push(F(E(hcx - 2.4, hcy + 2.4, 0.9, 0.45, BLUSH)));
+  if (mood === 'angry' || mood === 'hurt' || mood === 'happy') out.push(F(E(hcx + 1.4, hcy + 3, 0.6, 0.5, mood === 'happy' ? MOUTH : GUM)));
+  if (hurt) out.push(F(E(hcx + 4, hcy - 3.6, 0.6, 0.9, '#9fe8ff')));
   return { w: 24, h: 20, res: 3, shapes: out };
 }
 
