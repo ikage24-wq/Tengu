@@ -129,3 +129,65 @@ test('once a blow lands, moving cuts the follow-through short and skills can cut
   for (let i = 0; i < 20; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
   assert.ok(w.body.x < x, 'walking away after the blows');
 });
+
+// A level 25 archer in Mossy Woods with sturdy boars a little way off.
+function range(weapon = 'bow_20') {
+  const w = arena(weapon);
+  w.char.job = 'archer';
+  w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
+  return w;
+}
+
+test('bow shots chain into a combo, fly to their target, and land when they arrive', () => {
+  const w = range();
+  const m = w.mobs[0];
+  const x = w.body.x;
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  let firstHit = null;
+  for (let i = 0; i < 120; i++) {
+    updateWorld(w, DT, hold);
+    if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
+    if (firstHit == null && m.hp < 1e9) firstHit = i;
+  }
+  assert.deepEqual(seen.slice(0, 3).map((s) => s.move), COMBOS.bow.map((s) => s.move));
+  assert.ok(firstHit > 16, `the arrow took time to arrive (frame ${firstHit})`);
+  assert.ok(w.body.x < x, 'hopped back while shooting');
+});
+
+test('the finishing arrow pierces the whole line', () => {
+  const w = range();
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  for (let i = 0; i < 150; i++) updateWorld(w, DT, hold);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'all three in the line got hit');
+});
+
+test("the archer's skills: Rapid Fire, Arrow Fan, Arrow Rain, Backflip Shot", () => {
+  const w = range();
+  Object.assign(w.char.skills, { doubleshot: 10, scattershot: 10, arrowrain: 10, backflip: 5 });
+  w.char.mp = 9999;
+  const go = (id) => {
+    w.attackTimer = 0;
+    w.lockTimer = 0;
+    w.recoverAt = null;
+    assert.ok(cast(w, id).ok, id);
+  };
+  const hurt = () => w.mobs.filter((m) => m.hp < 1e9).length;
+  go('scattershot');
+  run(w, 0.8);
+  assert.equal(hurt(), 3, 'one arrow for each monster');
+  w.mobs.forEach((m) => (m.hp = 1e9));
+  go('arrowrain');
+  run(w, 1.3);
+  assert.equal(hurt(), 3, 'the rain fell on all of them');
+  for (let i = 0; i < 3; i++) {
+    go('doubleshot');
+    run(w, 0.5);
+  }
+  assert.equal(w.chains.doubleshot.i, 2, 'three presses, three parts');
+  const x = w.body.x;
+  go('backflip');
+  assert.ok(w.invuln > 0, 'untouchable mid-flip');
+  run(w, 0.5);
+  assert.ok(w.body.x < x - 60, 'flipped back');
+});

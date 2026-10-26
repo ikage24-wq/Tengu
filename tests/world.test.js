@@ -306,7 +306,7 @@ test('the mage branches three ways at 30, each branch with one third job and an 
     assert.ok(skills.some((k) => k.type === 'passive'), `${thirds[0].id} has a mastery`);
   }
   for (const first of ['warrior', 'mage', 'archer', 'thief']) {
-    assert.ok(Object.values(SKILLS).some((k) => k.job === first && k.type === 'blink'), `${first} has a movement skill`);
+    assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
     if (first !== 'mage') assert.equal(nextJobs(first, 200).length, 0, `${first} has no advanced jobs for now`);
   }
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
@@ -321,10 +321,10 @@ test('a charge dashes forward and hits the monsters it passes through', () => {
   crowd(w, 4, 'cloudsheep');
   w.body.facing = 1;
   const x = w.body.x;
-  const r = cast(w, 'charge');
-  assert.equal(r.ok, true);
+  assert.equal(cast(w, 'charge').ok, true);
+  for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
   assert.ok(w.body.x > x + 60, 'moved forward');
-  assert.equal(r.targets, 4, 'hit everything it passed');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 4, 'hit everything it passed');
 });
 
 test('ice freezes monsters in place, and they can\'t hurt you while frozen', () => {

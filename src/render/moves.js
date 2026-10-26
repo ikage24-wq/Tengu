@@ -185,6 +185,19 @@ export const MOVES = {
     };
   },
 
+  // A snap shot: swing the bow up, a short sharp pull, loose, and a kick of recoil.
+  quickshot(p) {
+    const raise = ease(seg(p, 0, 0.22));
+    const pull = ease(seg(p, 0.18, 0.46));
+    const snap = seg(p, 0.48, 0.58);
+    const back = ease(seg(p, 0.62, 1));
+    return {
+      weapon: lerp(-40, 0, raise) - 6 * snap * (1 - back), arm: lerp(70, 95, raise) + 4 * snap * (1 - back),
+      lunge: -3 * snap * (1 - back), tilt: -0.04 * pull * (1 - snap) - 0.07 * snap * (1 - back),
+      rig: (r) => { r.backArm = snap > 0 ? [q(-4 + 3 * back), -2] : [q(2 - 6 * pull), -3]; r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.8, 0, -2]; r.tx = snap > 0 && back < 0.5 ? -1 : 0; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+
   // Rapid fire: three quick pull-and-release pulses with a kick each time.
   rapid(p) {
     const k = Math.abs(Math.sin(p * Math.PI * 3));
@@ -354,7 +367,7 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3,
 };
 
 // Basic attacks chain into a combo per weapon type.

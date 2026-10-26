@@ -437,6 +437,9 @@ export function updateWorld(world, dt, input) {
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
+    // Heavy shots land with their own weight.
+    if (h.stop) world.hitstop = Math.max(world.hitstop, h.stop);
+    if (h.shake) world.juice.push({ type: 'shake', mag: h.shake, dur: 0.2 });
     if (hitMob(m, h.damage, h.fromX, world.now, { knock: h.knock ?? 90, launch: h.launch ?? 0 })) {
       killMob(world, m, Boolean(h.party));
       continue;

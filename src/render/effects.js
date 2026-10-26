@@ -190,20 +190,34 @@ function drawShot(ctx, f, cam) {
     return;
   }
   switch (f.shot) {
-    case 'arrow': case 'pierce':
-      ctx.strokeStyle = c;
-      ctx.lineWidth = 2;
+    case 'arrow': case 'pierce': {
+      // Pointed along its flight, with a fading streak behind and fletching at the tail.
+      ctx.translate(x, y);
+      ctx.rotate(Math.atan2(f.ty - f.y, f.tx - f.x));
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-30, -0.75, 18, 1.5);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#3a2d4f';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(x - dir * 14, y);
-      ctx.lineTo(x, y);
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(2, 0);
+      ctx.stroke();
+      ctx.strokeStyle = c;
+      ctx.lineWidth = 1.4;
       ctx.stroke();
       ctx.fillStyle = f.shot === 'pierce' ? '#a8e8ff' : '#ffd66b';
       ctx.beginPath();
-      ctx.moveTo(x + dir * 4, y);
-      ctx.lineTo(x - dir * 2, y - 3);
-      ctx.lineTo(x - dir * 2, y + 3);
+      ctx.moveTo(6, 0);
+      ctx.lineTo(0, -3);
+      ctx.lineTo(0, 3);
       ctx.fill();
+      ctx.fillStyle = '#ff9ec0';
+      ctx.fillRect(-15, -3, 4, 2);
+      ctx.fillRect(-15, 1, 4, 2);
       break;
+    }
     case 'star':
       ctx.translate(x, y);
       ctx.rotate(f.t * 20);

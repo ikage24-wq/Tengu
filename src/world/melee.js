@@ -1,6 +1,6 @@
-// Melee combos. Basic attacks with a blade, axe, spear, dagger, or bare fists chain into a combo
-// (each step its own move, reach, and weight, ending in a heavy finisher), and the warrior's combo
-// skills are built the same way.
+// Combos. Basic attacks with a blade, axe, spear, dagger, bare fists, bow, crossbow, or throwing
+// stars chain into a combo (each step its own move, reach, and weight, ending in a heavy finisher),
+// and the warrior's and archer's skills are built the same way.
 //
 // A step is one move that plays for `dur` seconds, with one or more strikes landing at set moments
 // of it (`at`, 0-1, timed to where the blade cuts). You step into each swing (`step` px forward,
@@ -12,6 +12,12 @@
 //   thick      smear width                    pierce     a thrust's straight spike instead
 //   big        a heavy blow (bigger flash)    stop       hit-stop seconds; `shake` the screen
 //   crack      the floor cracks open          pull       draws monsters in instead (Whirlwind)
+// Ranged strikes fire instead of cutting: `shot` (the projectile's look) flies `speed` px/s up to
+// `range` px (in a box `h` tall), and hits when it arrives. `fan` fires that many at once, one per
+// monster (the rest fly off at an angle); `pierce` goes through up to `targets` in a line. `rain`
+// drops that many arrows from the sky on monsters in the `rainW` px starting `rainFrom` ahead,
+// over `span` seconds. A step's `step` can be negative (hop back as you shoot), and `guard` makes
+// you untouchable for that long (dodges).
 // Pressing again while a step plays carries on to the next one; wait too long and it starts over.
 
 import { physicalRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
@@ -49,6 +55,21 @@ export const COMBOS = {
     { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 80, reach: 56, h: 44, knock: 35, pierce: true }] },
     { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 85, reach: 56, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
     { move: 'cross', dur: 0.46, step: 10, finisher: true, strikes: [{ at: 0.22, pct: 80, reach: 60, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.72, pct: 110, reach: 60, h: 56, knock: 160, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
+  ],
+  bow: [
+    { move: 'quickshot', dur: 0.46, step: -3, strikes: [{ at: 0.5, shot: 'arrow', pct: 90, range: 290, h: 60, knock: 25 }] },
+    { move: 'quickshot', dur: 0.44, step: -3, strikes: [{ at: 0.5, shot: 'arrow', pct: 95, range: 290, h: 60, knock: 25 }] },
+    { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'bigarrow', pct: 170, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+  ],
+  crossbow: [
+    { move: 'quickshot', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'arrow', pct: 100, range: 300, h: 56, knock: 50, speed: 820 }] },
+    { move: 'quickshot', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'arrow', pct: 105, range: 300, h: 56, knock: 50, speed: 820 }] },
+    { move: 'aimshot', dur: 0.66, step: -12, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: 190, range: 340, h: 56, targets: 3, pierce: true, speed: 1000, knock: 240, big: true, stop: 0.07, shake: 3 }] },
+  ],
+  claw: [
+    { move: 'throw', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 270, h: 60, knock: 25 }] },
+    { move: 'throw', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 90, range: 270, h: 60, knock: 25 }] },
+    { move: 'barrage', dur: 0.56, step: -6, finisher: true, strikes: [0.2, 0.5, 0.8].map((at) => ({ at, shot: 'star', pct: 70, range: 280, h: 70, knock: 60, fan: 1 })) },
   ],
   none: [
     { move: 'thrust', dur: 0.3, step: 6, strikes: [{ at: 0.42, pct: 90, reach: 50, h: 44, knock: 60 }] },
@@ -89,9 +110,12 @@ function playStep(world, step, scale, key, school = null) {
   world.recoverAt = now + step.strikes.at(-1).at * dur + 0.03;
   world.recoverKind = key.startsWith('basic') ? 'basic' : 'skill';
   world.basicReadyAt = key.startsWith('basic') ? now + busy : now;
-  // Step into it: carried forward until the first strike lands (or through `carry` of it).
+  // Step into it (or hop back from it): carried until the first strike lands (or through `carry`).
   const first = (step.carry ?? step.strikes[0].at) * dur;
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
+  if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
+  // A dash leaves speed lines and a shock cone along its path.
+  if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   step.strikes.forEach((s, n) => {
     world.strikes.push({ ...s, n, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher });
   });
@@ -120,6 +144,8 @@ function land(world, s) {
   const { char, stats, body, now } = world;
   // Strikes follow the way you were facing when the step began.
   body.facing = s.dir;
+  if (s.rain) return rain(world, s);
+  if (s.shot) return fire(world, s);
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
   const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
@@ -147,4 +173,63 @@ function land(world, s) {
     world.hitstop = Math.max(world.hitstop, s.stop ?? (s.finisher ? 0.07 : 0.035));
     if (s.shake) world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });
   } else if (s.shake && s.crack) world.juice.push({ type: 'shake', mag: s.shake * 0.6, dur: 0.2 });
+}
+
+// How a shot would hit a monster: rolled now, landing when it arrives.
+function shotHit(world, s, m, delay, stack = 0) {
+  const { char, stats, body } = world;
+  const acc = accuracy(JOBS[char.job].family, stats, char.level);
+  const miss = Math.random() >= hitChance(acc, char.level, m.def);
+  const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random);
+  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake });
+}
+
+// A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
+function fire(world, s) {
+  const { body } = world;
+  const ox = body.x + s.dir * 12;
+  const oy = body.y - 27;
+  const speed = s.speed ?? 680;
+  const box = { w: s.range, h: s.h ?? 60 };
+  const element = s.key.startsWith('basic') ? weaponElement(world.char) : null;
+  const fly = (tx, ty) => {
+    const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
+    world.fx.push({ kind: 'projectile', shot: s.shot, school: s.school, element, x: ox, y: oy, tx, ty, t: 0, dur: travel });
+    return travel;
+  };
+  // A little snap of the string (or flick of the wrist) as it goes.
+  world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16 });
+  if (s.pierce) {
+    const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
+    line.forEach((m, i) => shotHit(world, s, m, Math.abs(m.x - ox) / speed, i % 3));
+    fly(ox + s.dir * s.range, oy);
+    return;
+  }
+  const n = s.fan ?? 1;
+  const targets = pickTargets(world.mobs, body, box, n);
+  for (let i = 0; i < n; i++) {
+    const m = targets[i];
+    if (m) {
+      const travel = fly(m.x, m.y - (m.air ?? 0) - m.def.h / 2);
+      shotHit(world, s, m, travel);
+    } else {
+      // Nothing to aim at: it flies off at its place in the fan.
+      const a = n > 1 ? (i / (n - 1) - 0.5) * 0.7 : 0;
+      fly(ox + s.dir * Math.cos(a) * s.range, oy + Math.sin(a) * s.range);
+    }
+  }
+}
+
+// Arrows rain down on the monsters in an area ahead, one after another.
+function rain(world, s) {
+  const { body } = world;
+  const x0 = s.dir > 0 ? body.x + s.rainFrom : body.x - s.rainFrom - s.rainW;
+  const area = world.mobs.filter((m) => m.hp > 0 && m.x >= x0 && m.x <= x0 + s.rainW && Math.abs(m.y - body.y) < 120);
+  for (let k = 0; k < s.rain; k++) {
+    const delay = 0.12 + (k * s.span) / s.rain;
+    const m = area.length ? area[k % area.length] : null;
+    const x = m ? m.x + ((k * 13) % 17) - 8 : x0 + ((k * 37) % s.rainW);
+    world.fx.push({ kind: 'rain', variant: 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
+    if (m) shotHit(world, s, m, delay + 0.18, k % 3);
+  }
 }

@@ -79,7 +79,7 @@ to clear it.
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
   3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
-- **Melee combos** — with a sword, axe, spear, dagger, or bare hands, basic attacks chain into a
+- **Combos** — with a sword, axe, spear, dagger, or bare hands, basic attacks chain into a
   combo: sword slash → backhand → lunging thrust → a spinning cleave finisher; axe slash →
   backhand → a ground-cracking overhead smash; spear jab → jab → rising sweep → a charging
   thrust through the line; dagger jab → slash → cross-cut; fists jab → jab → uppercut. Hold the
@@ -87,13 +87,23 @@ to clear it.
   as the blade cuts, you step into every swing, and the smear follows the blade's real path (blue
   cuts, gold heavy blows). Light hits barely push; finishers knock monsters away or launch them
   into the air, and hits keep them up there for a juggle. Heavy blows hit-stop, shake the screen,
-  and crack the ground. Party members swing through the same combos.
+  and crack the ground. Party members swing through the same combos. Bows, crossbows, and throwing
+  stars chain too: two snap shots and then a heavy piercing arrow (or bolt) that tears through the
+  whole line, or two throws and a three-star barrage. Arrows leave on the string's snap, fly to
+  their target pointed along their path, and hit when they arrive; you hop back a little with each
+  shot.
 - **Warrior skills** — **Blade Rush** is a three-press combo: a quick cross-cut, a rising
   launcher that throws them into the air, and a leaping dive that cracks the ground around you.
   **Whirlwind** spins you forward hitting everything around you five times, sucking monsters in,
   then flinging them away. **Titan Breaker** is a heavy three-blow combo in one press: a crushing
-  smash, a rising drag that hurls them up, and a leaping dive that splits the ground. Charge now
-  bowls monsters over.
+  smash, a rising drag that hurls them up, and a leaping dive that splits the ground. **Charge**
+  dashes through everything in your path (untouchable on the way), bowling monsters over and
+  tossing them aside.
+- **Archer skills** — **Rapid Fire** is a three-press combo: three quick arrows, three more as you
+  hop back, then a heavy arrow that tears through the line. **Arrow Fan** looses a fan of arrows at
+  once, one per monster. **Arrow Rain** shoots a volley into the sky that pours down on everything
+  ahead. **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread
+  of arrows at whatever was on you.
 - **Smooth controls** — once a move's blows have landed, walking or jumping cuts its follow-through
   short, and any skill can cut in right away (so you can weave Blade Rush into a sword combo);
   ranged and magic attacks let you move again a moment after they fire. Skills pressed mid-swing

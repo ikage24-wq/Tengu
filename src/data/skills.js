@@ -6,7 +6,8 @@
 //   heal    - restores HP (yours, and in a dungeon your party's in range) and smites monsters in
 //             range with holy damage (none with targets: 0)
 //   revive  - gets a fallen party member in range back on their feet (dungeons)
-// `combo` (melee) makes a skill a combo of steps that play as timed strikes (see world/melee.js):
+// `movement` marks a combo skill that moves you (a dash or a dodge).
+// `combo` makes a skill a combo of steps that play as timed strikes (see world/melee.js):
 // each use plays the next step, so pressing again keeps it going.
 //
 //   provoke - every monster in range turns on you (`hold` seconds of sticking to you in a dungeon)
@@ -109,9 +110,16 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { wdef: lerp(10, 60, lv, m) } }),
   }),
   charge: skill({
-    id: 'charge', name: 'Charge', job: 'warrior', type: 'blink', fx: 'charge', maxLevel: 10, school: 'steel',
-    desc: 'Barrel forward shoulder-first, slamming every monster in your path.',
-    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: lerp(70, 130, lv, m), pct: lerp(90, 160, lv, m), hits: 1, targets: 4, knock: 280, launch: 160 }),
+    id: 'charge', name: 'Charge', job: 'warrior', type: 'attack', fx: 'charge', maxLevel: 10, school: 'steel', movement: true,
+    desc: 'Barrel forward shoulder-first, bowling over every monster in your path and tossing them aside. Nothing touches you on the way.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const hit = (at) => ({ at, pct: k(90, 160), reach: 46, h: 64, around: true, targets: 4, knock: 300, launch: 180 });
+      return {
+        mp: k(10, 6), pct: k(90, 160), hits: 1, targets: 4,
+        combo: [{ move: 'dash', dur: 0.42, step: k(80, 140), carry: 0.7, guard: 0.45, trail: true, strikes: [hit(0.25), { ...hit(0.6), big: true, stop: 0.06, shake: 2 }] }],
+      };
+    },
   }),
   vigor: skill({
     id: 'vigor', name: 'Vigor', job: 'warrior', type: 'passive', fx: null,
@@ -195,16 +203,45 @@ export const SKILLS = {
 
   // ---------- Archer ----------
   doubleshot: skill({
-    id: 'doubleshot', name: 'Double Shot', job: 'archer', type: 'attack', fx: 'arrow',
-    desc: 'Fire two arrows at the nearest monster.',
+    id: 'doubleshot', name: 'Rapid Fire', job: 'archer', type: 'attack', fx: 'arrow', school: 'wind',
+    desc: 'A three-part combo, one part per press: three quick arrows, three more as you hop back, then a heavy arrow that tears through the whole line.',
     weapons: ['bow', 'crossbow'],
-    at: (lv, m) => ({ mp: lerp(4, 12, lv, m), pct: lerp(70, 128, lv, m), hits: 2, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const quick = (at) => ({ at, shot: 'arrow', pct: k(55, 90), range: 310, h: 60, knock: 20, speed: 820 });
+      return {
+        mp: k(4, 10), pct: k(55, 90), hits: 7, targets: 1,
+        combo: [
+          { move: 'rapid', dur: 0.42, step: -2, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
+          { move: 'rapid', dur: 0.42, step: -12, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
+          { move: 'aimshot', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: k(180, 300), range: 360, h: 64, targets: k(3, 6), pierce: true, speed: 950, knock: 230, launch: 150, big: true, stop: 0.07, shake: 2 }] },
+        ],
+      };
+    },
   }),
   scattershot: skill({
-    id: 'scattershot', name: 'Scatter Shot', job: 'archer', type: 'attack', fx: 'arrow',
-    desc: 'A spread of arrows that hits several monsters.',
+    id: 'scattershot', name: 'Arrow Fan', job: 'archer', type: 'attack', fx: 'arrow', school: 'wind',
+    desc: 'Loose a fan of arrows at once; each one finds its own monster.',
     weapons: ['bow', 'crossbow'],
-    at: (lv, m) => ({ mp: lerp(10, 22, lv, m), pct: lerp(80, 150, lv, m), hits: 1, targets: lerp(3, 5, lv, m), range: { w: 280, h: 80 }, projectile: true }),
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 22), pct: k(100, 170), hits: 1, targets: k(3, 6),
+        combo: [{ move: 'draw', dur: 0.5, step: -6, strikes: [{ at: 0.6, shot: 'arrow', fan: k(3, 6), pct: k(100, 170), range: 300, h: 150, knock: 90, speed: 780 }] }],
+      };
+    },
+  }),
+  arrowrain: skill({
+    id: 'arrowrain', name: 'Arrow Rain', job: 'archer', type: 'attack', fx: 'rain', icon: 'rain-arrow', school: 'wind',
+    desc: 'Shoot a volley into the sky; arrows pour down on everything in the area ahead.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(16, 32), pct: k(60, 100), hits: k(8, 14), targets: 6,
+        combo: [{ move: 'skyshot', dur: 0.55, step: -4, strikes: [{ at: 0.58, rain: k(8, 14), pct: k(60, 100), rainFrom: 60, rainW: 280, span: 0.7, knock: 20 }] }],
+      };
+    },
   }),
   eaglefocus: skill({
     id: 'eaglefocus', name: 'Eagle Focus', job: 'archer', type: 'buff', fx: 'buff',
@@ -212,9 +249,15 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { acc: lerp(5, 30, lv, m), critRate: lerpf(0.03, 0.15, lv, m) } }),
   }),
   backflip: skill({
-    id: 'backflip', name: 'Backflip', job: 'archer', type: 'blink', fx: 'blink', maxLevel: 10, school: 'wind',
-    desc: 'Flip backward out of danger on a gust of wind. Monsters lose track of you for a moment.',
-    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: -lerp(70, 120, lv, m) }),
+    id: 'backflip', name: 'Backflip Shot', job: 'archer', type: 'attack', fx: 'blink', maxLevel: 10, school: 'wind', movement: true,
+    desc: 'Flip backward out of danger on a gust of wind, firing a spread of arrows at whatever was on you. Nothing touches you mid-flip.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(70, 120), hits: 3, targets: 3,
+        combo: [{ move: 'flip', dur: 0.5, step: -k(80, 140), carry: 0.75, guard: 0.5, strikes: [{ at: 0.42, shot: 'arrow', fan: 3, pct: k(70, 120), range: 300, h: 130, knock: 80, speed: 820 }] }],
+      };
+    },
   }),
   keeneye: skill({
     id: 'keeneye', name: 'Keen Eye', job: 'archer', type: 'passive', fx: null,
@@ -443,7 +486,7 @@ const MOVES_BY_SKILL = {
   provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
-  doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip',
+  doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip', arrowrain: 'skyshot',
   twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
   fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',
