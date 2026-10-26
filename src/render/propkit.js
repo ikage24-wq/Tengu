@@ -238,6 +238,83 @@ export function windowPane(x, y, w, h, frame, glass, lit) {
   return [R(x - 0.8, y - 0.8, w + 1.6, h + 1.6, frame), F(R(x, y, w, h, glass)), F(R(x, y, w * 0.5, h * 0.5, lit)), F(R(x + w * 0.5 - 0.35, y, 0.7, h, frame)), F(R(x, y + h * 0.5 - 0.35, w, 0.7, frame))];
 }
 
+// ---------- Light from the upper left, for simple props ----------
+
+// Clips a polygon to the half-plane x >= xc.
+function clipRight(pts, xc) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const ain = a[0] >= xc;
+    const bin = b[0] >= xc;
+    if (ain) out.push(a);
+    if (ain !== bin) {
+      const t = (xc - a[0]) / (b[0] - a[0]);
+      out.push([xc, a[1] + (b[1] - a[1]) * t]);
+    }
+  }
+  return out;
+}
+
+// Shades a list of simple shapes as one light from the upper left would: each part (big enough to
+// show it) takes its own ramp's shadow down its right side, and ellipses sit in their shadow with
+// the lit body up and to the left. Flat (F) details are left alone. Each shade goes right after its
+// part, so parts drawn later still sit on top. `k` scales how wide the shadow is.
+export function lightUL(shapes, k = 1) {
+  const out = [];
+  for (const s of shapes) {
+    if (!s || s.f || typeof s.c !== 'string' || !s.c.startsWith('#')) {
+      out.push(s);
+      continue;
+    }
+    const r = ramp(s.c, 0.8);
+    if (s.t === 'e') {
+      if (s.rx >= 1.8 && s.ry >= 1.4) {
+        out.push({ ...s, c: r.sh }, F(E(s.x - s.rx * 0.12 * k, s.y - s.ry * 0.14 * k, s.rx * (1 - 0.14 * k), s.ry * (1 - 0.16 * k), s.c)));
+      } else out.push(s);
+      continue;
+    }
+    out.push(s);
+    if (s.t === 'r' && s.w >= 3 && s.h >= 2) {
+      const sw = Math.max(0.7, s.w * 0.26 * k);
+      out.push(F(R(s.x + s.w - sw, s.y, sw, s.h, r.sh)));
+    } else if (s.t === 'p') {
+      const xs = s.pts.map((q) => q[0]);
+      const x0 = Math.min(...xs);
+      const x1 = Math.max(...xs);
+      if (x1 - x0 >= 3) {
+        const part = clipRight(s.pts, x1 - (x1 - x0) * 0.3 * k);
+        if (part.length >= 3) out.push(F(T(part, r.sh, s.x, s.y)));
+      }
+    }
+  }
+  return out;
+}
+
+// A flag (or banner, or pennant) on a pole as a chain of segments: `k` how hard the wind holds it
+// out (0 hanging slack, 1 a full gust), `ph` (0 ... 1) the ripple travelling from the pole to the
+// tip. Hangs from (px, py), `len` long and `h` tall. Returns shapes.
+export function flagShapes(px, py, len, h, k, ph, c, c2) {
+  const top = [];
+  const bot = [];
+  const n = 5;
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const x = px + len * u * (0.72 + 0.28 * k);
+    const droop = (1 - k) * Math.pow(u, 1.4) * h * 0.9;
+    const ripple = Math.sin(u * 4.4 - ph * Math.PI * 2) * 0.9 * u * (0.4 + 0.6 * k);
+    top.push([x, py + droop + ripple]);
+    bot.push([x - (1 - k) * u * 1.2, py + h + droop * 1.15 + ripple]);
+  }
+  // A swallowtail notch at the tip.
+  const [tx, ty] = top[n];
+  const [, by] = bot[n];
+  const pts = [...top, [tx - 2.4 * (0.5 + 0.5 * k), (ty + by) / 2], ...[...bot].reverse()];
+  const shadeBand = top.map(([x, y], i) => [x, y + h * 0.55 + (i % 2 ? 0.3 : 0)]);
+  return [T(pts, c), F(T([...shadeBand.slice(1, 4), ...bot.slice(2, 5).reverse()], ramp(c, 0.8).sh)), F(T([top[0], top[1], [top[1][0], top[1][1] + h * 0.3], [top[0][0], top[0][1] + h * 0.3]], c2))];
+}
+
 // ---------- Wind ----------
 
 // How far the wind leans things at world x: about -0.5 (still, swaying back) to 0.8 (a gust),

@@ -5,7 +5,7 @@
 // among a few cached frames or adds soft canvas glows, beams, smoke, and glints on top.
 
 import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
-import { ramp, foliage, bark, stones, planks, crystal, lean, leanFrame, swing, pivoted, flicker, hash, leafRim } from './propkit.js';
+import { ramp, foliage, bark, stones, planks, crystal, lean, leanFrame, swing, pivoted, flicker, leafRim, flagShapes } from './propkit.js';
 import { windTravel } from './terrain.js';
 
 const INK = '#3a2d4f';
@@ -516,28 +516,6 @@ function mesaArt() {
       E(70, 150, 3.4, 2, '#e3a676'), E(26, 151, 3, 1.6, '#e3a676'));
     return out;
   });
-}
-
-// A flag on a pole as a chain of segments: `k` how hard the wind holds it out (0 hanging slack, 1
-// a full gust), `ph` the ripple travelling from the pole to the tip. Returns shapes.
-function flagShapes(px, py, len, h, k, ph, c, c2) {
-  const top = [];
-  const bot = [];
-  const n = 5;
-  for (let i = 0; i <= n; i++) {
-    const u = i / n;
-    const x = px + len * u * (0.72 + 0.28 * k);
-    const droop = (1 - k) * Math.pow(u, 1.4) * h * 0.9;
-    const ripple = Math.sin(u * 4.4 - ph * Math.PI * 2) * 0.9 * u * (0.4 + 0.6 * k);
-    top.push([x, py + droop + ripple]);
-    bot.push([x - (1 - k) * u * 1.2, py + h + droop * 1.15 + ripple]);
-  }
-  // A swallowtail notch at the tip.
-  const [tx, ty] = top[n];
-  const [bx, by] = bot[n];
-  const pts = [...top, [tx - 2.4 * (0.5 + 0.5 * k), (ty + by) / 2], ...bot.reverse()];
-  const shadeBand = top.map(([x, y], i) => [x, y + h * 0.55 + (i % 2 ? 0.3 : 0)]);
-  return [T(pts, c), F(T([...shadeBand.slice(1, 4), ...bot.slice(2, 5)], shade(c, -10))), F(T([top[0], top[1], [top[1][0], top[1][1] + h * 0.3], [top[0][0], top[0][1] + h * 0.3]], c2))];
 }
 
 function tentArt(f, ph) {
