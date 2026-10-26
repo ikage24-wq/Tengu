@@ -29,13 +29,9 @@ import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
 import { moveAt } from './moves.js';
 import { heroineEye } from './mobs/heroine.js';
+import { HAIR_STYLES, hairStyleOf, coversEye, hairBehind, hairBangs, hairNape } from './hair.js';
 
-export const HAIR_STYLES = ['bob', 'pixie', 'curtain', 'sweep', 'ahoge', 'quiff', 'wolf', 'curly', 'fluffy', 'wavy', 'hime', 'halfup', 'eyecover', 'ponytail', 'twintails', 'lowtails', 'odango', 'bun', 'braid', 'drills'];
-// Spiky hair was retired; old saves that used it get soft curls instead.
-// Retired styles draw as their closest kept look: spiky became soft curls; 'short' and 'long'
-// were near twins of the curtain cut and the wavy long hair.
-const RETIRED_HAIR = { spiky: 'curly', short: 'curtain', long: 'wavy' };
-export const hairStyleOf = (look) => RETIRED_HAIR[look.hairStyle] ?? look.hairStyle ?? 'bob';
+export { HAIR_STYLES, hairStyleOf };
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
@@ -291,296 +287,20 @@ function subdivide(pts, step) {
   return out;
 }
 
-// A tapered, curved lock from its root (x0, y0) to its tip (x1, y1), w wide at the root. `bend`
-// bows the middle sideways (positive bows to the left of the root-to-tip direction).
-function curvedLock(x0, y0, x1, y1, w, bend, c, from = 0, to = 1) {
-  const len = Math.hypot(x1 - x0, y1 - y0) || 1;
-  const cx = (x0 + x1) / 2 - ((y1 - y0) / len) * bend;
-  const cy = (y0 + y1) / 2 + ((x1 - x0) / len) * bend;
-  const left = [];
-  const right = [];
-  for (let i = 0; i <= 10; i++) {
-    const t = from + ((to - from) * i) / 10;
-    const u = 1 - t;
-    const px = u * u * x0 + 2 * u * t * cx + t * t * x1;
-    const py = u * u * y0 + 2 * u * t * cy + t * t * y1;
-    const tx = 2 * u * (cx - x0) + 2 * t * (x1 - cx);
-    const ty = 2 * u * (cy - y0) + 2 * t * (y1 - cy);
-    const tl = Math.hypot(tx, ty) || 1;
-    const half = (w / 2) * Math.pow(1 - t, 0.8);
-    left.push([px - (ty / tl) * half, py + (tx / tl) * half]);
-    right.push([px + (ty / tl) * half, py - (tx / tl) * half]);
-  }
-  return T([...left, ...right.reverse()], c);
-}
-
-// A smooth lock (kept simple: no strand lines).
-function lockWithStrand(x0, y0, x1, y1, w, bend, c) {
-  return [curvedLock(x0, y0, x1, y1, w, bend, c)];
-}
-
-// Hair behind the head: the crown's volume plus whatever hangs down (tails, long hair, curls),
-// which is flagged `hang` so the body can be drawn over it. Hanging hair is built from curved
-// locks (shadow 1) over a deeper mass (shadow 2) that shows only in the gaps between them, so the
-// locks read as clumps.
+// Hair behind the head (see hair.js); whatever hangs below it sways and is flagged `hang` so the
+// body is drawn over it.
 function hairBack(style, front, root, tip, lift) {
-  return hairBackShapes(style, front, root, tip, lift).map((sh) => F(sh));
-}
-function hairBackShapes(style, front, root, tip, lift) {
-  // Hair behind the head is one shade darker, so the bangs stand out in front of it.
-  const r = hairRamp(front);
-  const c = r.sh1;
-  const m = r.sh2;
-  const crown = E(HEAD_X, 13.2, 12, 11.2, c);
-  // Everything that sways hangs below the head and is drawn behind the body.
-  const sw = (shapes) => shapes.map((sh) => ({ ...swayShape(sh, root, tip, lift), hang: true }));
-  const locks = (list) => list.flatMap(([x0, y0, x1, y1, w, bend]) => lockWithStrand(x0, y0, x1, y1, w, bend, c));
-  switch (style) {
-    case 'bob': return [crown, ...sw([
-      E(HEAD_X, 16.4, 12.8, 10, m),
-      ...locks([[4.4, 12, 6.8, 25.4, 5.4, 1.8], [26.6, 12, 24.2, 25.4, 5.4, -1.8], [9, 17, 10.8, 26, 5, 0.6], [22, 17, 20.2, 26, 5, -0.6], [15.5, 19, 15.5, 26.4, 6, 0]]),
-    ])];
-    case 'wavy': return [crown, ...sw([
-      E(HEAD_X, 21, 13, 12, m),
-      ...locks([[4, 14, 3.4, 41, 6, -3], [8.6, 18, 9.6, 42.6, 5.6, 2.6], [15.5, 20, 15.5, 43.4, 6.4, -2], [22.4, 18, 21.4, 42.6, 5.6, -2.6], [27, 14, 27.6, 41, 6, 3]]),
-      E(3.8, 40.2, 1.8, 1.6, c), E(27.2, 40.2, 1.8, 1.6, c),
-    ])];
-    case 'twintails': return [crown, ...sw([
-      ...locks([[3, 11, 1.2, 38.4, 7.6, 2.8], [3.8, 13, 4.8, 34, 4.2, -1.2], [28, 11, 29.8, 38.4, 7.6, -2.8], [27.2, 13, 26.2, 34, 4.2, 1.2]]),
-    ])];
-    case 'ponytail': return [crown, ...sw([
-      ...locks([[3.6, 6.6, 0.2, 35, 8, 3.2], [3, 10, 2.8, 30, 4.2, -1.2]]),
-    ]), E(4.4, 8.4, 1.8, 1.5, m)];
-    case 'curly': {
-      // Soft, fluffy curls all around the head, a little fuller at the back.
-      const curls = [[5, 8.6, 2.6], [4, 13.4, 2.6], [4.6, 18.4, 2.4], [6.8, 22, 2.2], [10, 4.4, 2.6], [15.5, 3, 2.8], [21, 4.4, 2.6], [26, 8.6, 2.6], [27, 13.4, 2.4], [26.4, 18.4, 2.2], [24.4, 21.6, 2]];
-      return [E(HEAD_X, 13.2, 11.8, 10.8, c), ...curls.map(([x, y, r]) => E(x, y, r, r * 0.92, c))];
-    }
-    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, r.hi), E(HEAD_X, 6.4, 4.2, 1, m),
-      ...sw(locks([[6, 14, 6.6, 24.6, 3.2, 0.6], [25, 14, 24.4, 24.6, 3.2, -0.6]]))];
-    case 'ahoge':
-    case 'sweep':
-    case 'curtain': return [E(HEAD_X, 13.2, 11.8, 10.8, c), E(HEAD_X, 19.8, 9.8, 4.2, c), ...locks([[6.4, 16, 7.4, 24, 4.4, 0.8], [24.6, 16, 23.6, 24, 4.4, -0.8]])];
-    case 'quiff': return [E(HEAD_X, 13.2, 11.4, 10.6, c), E(HEAD_X, 19, 9.4, 3.6, c)];
-    case 'wolf': return [
-      // A shaggy wolf cut: a big layered crown that bumps out at the temples, and longer mullet
-      // layers at the back that flick out past the shoulders.
-      E(HEAD_X, 12.6, 12.8, 11.6, c), E(4.2, 10.6, 3.4, 3.8, c), E(26.8, 10.6, 3.4, 3.8, c), E(3.4, 16.4, 3, 3.4, c), E(27.6, 16.4, 3, 3.4, c),
-      ...sw([
-        E(HEAD_X, 21, 11.4, 6.4, m),
-        ...locks([[4.6, 18, 0.6, 31, 5.6, -2.4], [9.4, 20, 6.6, 33, 5.4, -1.4], [15.5, 21, 15.5, 33.6, 6, 0], [21.6, 20, 24.4, 33, 5.4, 1.4], [26.4, 18, 30.4, 31, 5.6, 2.4]]),
-      ]),
-    ];
-    case 'eyecover': return [crown, ...sw([
-      E(HEAD_X, 19, 12.4, 9, m),
-      ...locks([[4.6, 14, 5.6, 29, 5.4, 1.2], [9.6, 18, 10.6, 30, 5, 0.6], [21.4, 18, 20.4, 30, 5, -0.6], [26.4, 14, 25.4, 29, 5.4, -1.2]]),
-    ])];
-    case 'hime': return [crown, ...sw([
-      // Long, straight, and cut level a little above the waist.
-      T([[4.4, 14], [26.6, 14], [27, 38], [4, 38]], m),
-      ...locks([[6, 16, 5.4, 38.6, 5, 0.3], [11, 18, 10.8, 38.8, 5.4, 0.1], [15.5, 18, 15.5, 38.6, 5.6, 0], [20, 18, 20.2, 38.8, 5.4, -0.1], [25, 16, 25.6, 38.6, 5, -0.3]]),
-    ])];
-    case 'odango': return [crown, E(6.2, 3.6, 3.8, 3.6, c), E(24.8, 3.6, 3.8, 3.6, c),
-      arc(6.2, 3.6, 2.6, 2.4, 200, 290, 0.7, r.hi), arc(24.8, 3.6, 2.6, 2.4, 200, 290, 0.7, r.hi),
-      ...sw(locks([[5, 6, 1.6, 33, 4.6, 2], [26, 6, 29.4, 33, 4.6, -2]]))];
-    case 'drills': {
-      // Ojou-sama ringlets: a stack of shrinking coils on each side, each with a darker turn line.
-      const coil = (x, dir) => Array.from({ length: 5 }, (_, k) => {
-        const y = 17 + k * 4.2;
-        const rr = 3.6 - k * 0.38;
-        return [E(x + (k % 2 ? 0.5 : -0.5) * dir, y, rr, 2.6, c), arc(x + (k % 2 ? 0.5 : -0.5) * dir, y - 0.2, rr, 2.4, 20, 160, 0.6, m)];
-      }).flat();
-      return [crown, ...sw([...coil(3.6, 1), ...coil(27.4, -1)])];
-    }
-    case 'braid': return [E(HEAD_X, 13.2, 12, 11, c), E(HEAD_X, 19.6, 10, 4.4, c)];
-    // A pixie cut hugs the skull: a close crown and two little flicks at the nape.
-    case 'pixie': return [E(HEAD_X, 12.8, 11.4, 10.4, c), ...locks([[8, 17.6, 7, 22.2, 3, 0.4], [23, 17.6, 24, 22.2, 3, -0.4]])];
-    // Low twintails: the tails are tied at the jaw and fall in front of the shoulders (see the
-    // fringe); behind is only a short mass to the nape.
-    case 'lowtails': return [crown, ...sw([E(HEAD_X, 18.6, 11.4, 6.6, m)])];
-    case 'fluffy': {
-      // A big soft cloud of long hair: puffs stacked down both sides and across the hem over a
-      // deeper mass, much wider than the head.
-      const side = [[3.4, 16, 4.2], [2.6, 22, 4.4], [3.2, 28, 4.4], [4.8, 33.4, 4], [8.6, 36.8, 3.6]];
-      const puffs = [...side, ...side.map(([x, y, rr]) => [31 - x, y, rr]), [13, 38, 3.6], [18, 38, 3.6]];
-      return [E(HEAD_X, 13, 12.6, 11.6, c), ...sw([T([[4, 14], [27, 14], [28, 34], [24, 38], [7, 38], [3, 34]], m), ...puffs.map(([x, y, rr]) => E(x, y, rr, rr * 0.92, c))])];
-    }
-    // Half-up: the top section gathered into a high knot on the crown, the rest left down.
-    case 'halfup': return [crown, E(HEAD_X, 0.8, 4.4, 3.6, c), arc(HEAD_X, 1, 3.2, 2.6, 200, 300, 0.8, r.hi), E(HEAD_X, 3.8, 3, 0.9, m), ...sw([
-      // The rest left down, long and straight, its ends splitting into points.
-      T([[3.8, 13], [27.2, 13], [28, 30], [27.2, 38], [3.8, 38], [3, 30]], m),
-      ...locks([[4.8, 15, 4.6, 41, 5.4, -1], [9.8, 18, 10.2, 42.4, 5.6, 0.6], [15.5, 20, 15.5, 43, 6.2, 0], [21.2, 18, 20.8, 42.4, 5.6, -0.6], [26.2, 15, 26.4, 41, 5.4, 1]]),
-    ])];
-    default: return [crown];
-  }
+  const { head, hang } = hairBehind(style, hairRamp(front));
+  return [...head, ...hang.map((sh) => ({ ...swayShape(sh, root, tip, lift), hang: true }))];
 }
 
-// The angel ring: one highlight band across the crown that follows the skull, broken into a few
-// pieces by the gaps between clumps, with a zigzag lower edge.
-function halo(cx, cy, rx, ry, a0, a1, th, c, parts = 3) {
-  const out = [];
-  const gap = 6;
-  const span = (a1 - a0 - gap * (parts - 1)) / parts;
-  for (let k = 0; k < parts; k++) {
-    const s0 = a0 + k * (span + gap);
-    const top = [];
-    const bot = [];
-    const n = 6;
-    for (let i = 0; i <= n; i++) {
-      const a = ((s0 + (span * i) / n) * Math.PI) / 180;
-      const d = th * (i === 0 || i === n ? 0.3 : i % 2 ? 1.15 : 0.6);
-      top.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
-      bot.push([cx + (rx - d) * Math.cos(a), cy + (ry - d) * Math.sin(a)]);
-    }
-    out.push(F(T([...top, ...bot.reverse()], c)));
-  }
-  return out;
-}
-
-// Bangs. The original styles share one fringe: a rounded cap over the forehead, three big
-// clumps ending just above the eyes, slim side locks, and the angel ring. Newer styles each draw
-// their own fringe. `sway` (the hair's tip spring) and `mood` (the face) move the ahoge.
-//
-// Every lock is drawn over a copy of itself in hair shadow, nudged down and back: where a clump
-// overlaps the one beside it, or ends on the forehead, that copy shows as the shadow line that
-// separates them (no strand stripes). Bangs that end on the face also cast a band of skin shadow
-// (returned as `shade`, drawn under the eyes).
+// The bangs, plus the band of forehead they shade (`shade`, drawn under the eyes); the hairline
+// itself shades the forehead too, so gaps between clumps aren't left bare.
 function hairFront(style, c, sway = 0, mood = 'smile') {
-  const r = hairRamp(c);
-  const shapes = fringe(style, r, sway, mood).flat();
-  const out = [];
-  const shade1 = [];
-  // The hairline itself shades the forehead too, so gaps between clumps aren't left bare.
-  if (style !== 'quiff') shade1.push(F(E(HEAD_X, 9, 11.4, 5, '#000000')));
-  for (const sh of shapes) {
-    if (sh.lock) {
-      const nudge = (s0, dx, dy, col) => ({ ...s0, f: 1, cast: 0, lock: 0, c: col, pts: s0.pts.map(([px, py]) => [px + dx, py + dy]) });
-      // Only the lower half of a clump gets the shadow copy, so it reads as an edge, not a stripe.
-      const half = Array.isArray(sh.lock) ? curvedLock(...sh.lock, c, 0.45, 1) : sh;
-      out.push(nudge(half, -0.3, 0.55, r.sh1));
-      // Bangs ending on the face (not side locks) shade the skin under them.
-      const tip = sh.pts.reduce((a, b) => (b[1] > a[1] ? b : a));
-      if (tip[1] > 11 && tip[1] < 17.5 && tip[0] > 7.4 && tip[0] < 23.6) shade1.push(nudge(sh, 0, 1.1, null));
-    }
-    out.push(sh.f ? sh : F({ ...sh, cast: 0 }));
-  }
-  out.shade = shade1;
+  const { shapes, shade } = hairBangs(style, hairRamp(c), sway, mood);
+  const out = [...shapes];
+  out.shade = [...(style === 'mohawk' ? [] : [F(E(HEAD_X, 9.4, 10.4, 4.6, '#000000'))]), ...shade];
   return out;
-}
-
-function fringe(style, r, sway, mood) {
-  const c = r.base;
-  const l = r.hi;
-  const d = r.sh2;
-  const cap = E(HEAD_X, 7.8, 11.8, 5, c);
-  const shine = halo(HEAD_X, 9.6, 8.6, 5.2, 212, 328, 1.3, l);
-  const lock = (x0, y0, x1, y1, w, bend) => ({ ...curvedLock(x0, y0, x1, y1, w, bend, c), lock: [x0, y0, x1, y1, w, bend] });
-  switch (style) {
-    case 'ahoge': {
-      // Messy boyish bangs and a single antenna strand on top that bounces with every move,
-      // perks up when excited and wilts when sulking.
-      const droop = mood === 'pout' || mood === 'shy';
-      const perk = mood === 'excited' || mood === 'angry';
-      const tipX = 17 + sway * 1.2 + (droop ? 6 : 2.4);
-      const tipY = droop ? 0.4 : perk ? -7 : -5;
-      return [
-        curvedLock(14.6, 3.4, tipX, tipY, 2.8, droop ? -2.4 : 1.8, c),
-        cap,
-        lock(9.6, 6.6, 7.8, 14.2, 6, 1), lock(13.6, 6.4, 13, 15, 5.6, 0.4), lock(17.6, 6.4, 18.8, 14.6, 5.6, -0.4), lock(21.6, 6.8, 23.6, 13.8, 5.4, -1),
-        lock(7, 8, 5.4, 20.6, 4.4, 1), lock(24.8, 8.4, 26.2, 19.4, 4, -1),
-        shine,
-      ];
-    }
-    case 'curtain':
-      // Parted down the middle, each half curving out to frame the face.
-      return [cap, lock(15, 5.4, 8.4, 15.4, 6.6, 2.2), lock(16, 5.4, 22.6, 15.4, 6.6, -2.2), lock(7, 8, 5.4, 21, 4.4, 1), lock(24, 8, 25.8, 21, 4.4, -1),
-        shine];
-    case 'sweep':
-      // One big lock swept across the forehead toward the facing side, nearly over one eye.
-      return [cap, lock(7.6, 6, 22.8, 16.4, 8.4, -2.6), lock(12, 5.6, 25.4, 12.4, 5.4, -1.6), lock(7, 8, 5.6, 19.6, 4.2, 1), lock(25, 8.4, 26.4, 19, 3.8, -1), shine];
-    case 'quiff':
-      // A big rounded swoop up and back off the forehead, with short neat sides.
-      return [C(E(HEAD_X, 8.2, 11.6, 3.8, c)), E(HEAD_X + 1, 3.6, 9, 4.6, c), lock(7.6, 6.4, 22.4, -0.6, 7.4, 3), lock(8, 9, 10.6, 12.4, 3.4, 0.4),
-        lock(6.8, 8, 5.6, 17.4, 4, 0.8), lock(24.6, 8, 25.6, 17, 3.6, -0.8), halo(HEAD_X + 1, 4.6, 7.4, 3.6, 200, 320, 1.2, l, 2)];
-    case 'wolf':
-      // Choppy curtain-ish bangs split off-center, short layers flicking out at the cheeks, and
-      // longer ones flicking out at the jaw.
-      return [cap, lock(13.4, 5.6, 8.2, 15.6, 5.6, 1.8), lock(10.6, 6.6, 12.4, 16.2, 4, -0.6), lock(17.2, 5.6, 21.8, 15.8, 5.2, -1.6), lock(20.4, 6.4, 18.6, 15.4, 3.6, 0.6),
-        lock(6.6, 8, 2.4, 16.4, 4.2, 1.6), lock(24.4, 8, 28.6, 16.4, 4.2, -1.6),
-        lock(6.4, 11, 3.4, 24.4, 4.6, 2.4), lock(24.6, 11, 27.6, 24.4, 4.6, -2.4), shine];
-    case 'eyecover': {
-      // Mekakure: heavy hair swept down over half the face, with a short fringe over the other
-      // eye; it sways enough to give a peek.
-      const peek = sway * 0.4;
-      return [cap, lock(9.6, 6.8, 9, 14.4, 6.4, 0.6), lock(13, 6, 13.4, 14.8, 5, 0),
-        // A curtain of hair from the part down past the chin, curving away from the mouth, hiding
-        // that half of the face and ending in two soft points; a darker line along its inner
-        // edge gives it a little depth.
-        { ...T([[14.6, 4.6], [15.4, 10], [16.2, 14.6], [17.2, 18.6], [18.2, 22], [19.6 + peek, 25.2], [21.4 + peek, 27.6], [23 + peek, 25.6], [25 + peek, 27],
-          [26.6 + peek, 23.4], [27.4, 18], [27.4, 11], [25.4, 5.6], [20, 3.4]], c), lock: 1 },
-        stroke([[15.8, 9], [16.7, 14.6], [17.7, 18.6], [18.8 + peek, 22], [20.2 + peek, 25]], 0.6, d),
-        lock(7, 8, 5.4, 22, 4.4, 1),
-        halo(HEAD_X, 9.6, 8.6, 5.2, 212, 300, 1.3, l, 2), arc(22 + peek, 17, 4.4, 8.4, 245, 300, 1, l)];
-    }
-    case 'hime':
-      // Blunt, straight-cut bangs and straight side locks cut level at the chin.
-      // The cut stays level, split into clumps by small V notches.
-      return [cap, { ...T([[5.4, 8], [25.6, 8], [25.4, 14.6], [23.6, 14.6], [22.9, 13.8], [22.2, 14.7], [19.2, 14.7], [18.5, 13.9], [17.8, 14.8], [13.2, 14.8], [12.5, 13.9], [11.8, 14.7], [8.8, 14.7], [8.1, 13.8], [7.4, 14.6], [5.6, 14.6]], c), lock: 1 },
-        { ...T([[4.2, 10], [8.8, 10], [8.8, 24.2], [7.1, 24.2], [6.5, 23.4], [5.9, 24.2], [4.2, 24.2]], c), lock: 1 },
-        { ...T([[22.2, 10], [26.8, 10], [26.8, 24.2], [25.1, 24.2], [24.5, 23.4], [23.9, 24.2], [22.2, 24.2]], c), lock: 1 }, shine];
-    case 'braid': {
-      // Side-swept bangs, and a thick braid brought forward over one shoulder, tied with a bow.
-      const out = [cap, lock(9, 6.4, 18.6, 15.2, 7.6, -2), lock(19.6, 6.6, 23.4, 14, 5.4, -0.8), lock(7, 8, 5.6, 20.4, 4.4, 1), lock(24.6, 8.4, 25.6, 19, 4, -1)];
-      const bx = 24.8 + sway * 0.3;
-      for (let k = 0; k < 5; k++) {
-        const y = 20.6 + k * 2.5;
-        const x = bx + (k % 2 ? 0.7 : -0.7) - k * 0.2;
-        out.push(E(x, y, 2.3 - k * 0.12, 1.7, c), arc(x, y - 0.1, 2.2 - k * 0.12, 1.6, 20, 160, 0.5, d));
-      }
-      out.push(E(bx - 1, 33.6, 1.4, 1.8, c), F(E(bx - 0.8, 32, 1.6, 0.8, d)));
-      out.push(shine);
-      return out;
-    }
-    case 'pixie':
-      // Short wispy bangs swept to one side, ending high so the forehead shows, and short sides.
-      return [cap, lock(10.2, 6.4, 7.6, 11.8, 5.2, 1.2), lock(14.2, 6, 12.4, 11.4, 5, 0.8), lock(18, 6, 19.6, 11.8, 4.8, -0.6), lock(21.8, 6.6, 23.4, 10.8, 3.8, -0.8),
-        lock(7, 8, 6.2, 15.4, 3.6, 0.8), lock(24.6, 8.4, 25.4, 15, 3.4, -0.8), shine];
-    case 'fluffy':
-      // Soft rounded bangs, and curls framing the face down both cheeks.
-      return [cap, lock(10.4, 7, 9, 13.6, 6.4, 1), lock(15, 6.6, 14.6, 14.4, 6.4, 0.3), lock(19.4, 6.8, 20.6, 13.8, 6, -0.6),
-        E(4.4, 15.6, 3.2, 3.6, c), E(3.8, 21.2, 3, 3.2, c), E(26.6, 15.6, 3.2, 3.6, c), E(27.2, 21.2, 3, 3.2, c),
-        arc(4.4, 15.4, 2.8, 3.2, 200, 290, 0.6, l), arc(26.6, 15.4, 2.8, 3.2, 200, 290, 0.6, l), shine];
-    case 'lowtails': {
-      // Two tails tied low at the jaw with ribbons, lying forward over the shoulders and swinging
-      // a beat behind the head; each ends in two points.
-      const out = [cap];
-      for (const [x0, y0, x1, y1, w, bend] of [[10.6, 7, 9.4, 14.2, 6.2, 0.8], [14.8, 6.6, 14.2, 15.4, 6, 0.3], [19, 6.6, 19.6, 14.8, 5.8, -0.4], [22.6, 7, 23.6, 13.4, 4.8, -0.8]]) out.push(lock(x0, y0, x1, y1, w, bend));
-      for (const side of [-1, 1]) {
-        const x0 = HEAD_X + side * 10.2;
-        const sw2 = sway * (side < 0 ? 0.6 : 0.45);
-        out.push(lock(HEAD_X + side * 8.6, 8.4, x0, 20.4, 4.4, side * 1));
-        out.push(lock(x0 - side * 0.4, 20, x0 + side * 0.6 + sw2, 36, 6.8, side * -1.6), lock(x0 + side * 1.4, 21, x0 + side * 3.2 + sw2 * 1.2, 34, 4.2, side * 1),
-          lock(x0 - side * 1.2, 22, x0 - side * 1.6 + sw2 * 0.8, 33, 3.4, side * -0.6));
-        out.push(F(E(x0, 20.4, 2.4, 0.9, d)));
-      }
-      out.push(shine);
-      return out;
-    }
-    case 'drills':
-      return [cap, lock(11, 7, 9.6, 14.4, 6, 0.8), lock(15.6, 6.6, 15.2, 15.2, 5.6, 0.2), lock(19.6, 6.8, 20.6, 14.6, 5.4, -0.5), lock(22.4, 7, 23.4, 13.8, 4.6, -0.8),
-        lock(7.2, 8, 5.8, 17, 4.2, 1), lock(24.8, 8.4, 25.8, 16.4, 3.8, -1), shine];
-    default: {
-      const short = style === 'curly';
-      const side = short ? 20 : 23;
-      const out = [cap];
-      // Four bang clumps of different lengths (a long one off-centre, a short one at the temple)
-      // and two side locks: simple shapes that read at a glance.
-      for (const [x0, y0, x1, y1, w, bend] of [[10.6, 7, 9.4, 14.2, 6.2, 0.8], [14.8, 6.6, 14.2, 15.4, 6, 0.3], [19, 6.6, 19.6, 14.8, 5.8, -0.4], [22.6, 7, 23.6, 13.4, 4.8, -0.8]]) out.push(lock(x0, y0, x1, y1, w, bend));
-      out.push(lock(7.2, 8, 5.6, side, 4.4, 1), lock(24.8, 8.4, 26.2, side - 1.4, 4, -1));
-      out.push(shine);
-      return out;
-    }
-  }
 }
 
 // A four-point sparkle, for star-shine eyes; it stays readable at small sizes.
@@ -887,7 +607,7 @@ function headShapes(look, g, rig) {
   else if (rig.mouth === 'open' && f.puff) f = { ...f, puff: false };
   // The eye-cover lock hides the right eye and brow, so a wink or a raised brow moves to the eye
   // that shows.
-  const covered = style === 'eyecover' && !hatHidesBangs(hat);
+  const covered = coversEye(style) && !hatHidesBangs(hat);
   if (covered) f = { ...f, closed: f.closed && [...f.closed].reverse(), brows: f.brows && [...f.brows].reverse() };
   if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(F(E(cx, 20.8, 2.8, 2.6, skin)));
   // The bangs' shadow on the forehead (under the eyes, so lashes stay on top).
@@ -926,8 +646,6 @@ function headShapes(look, g, rig) {
     });
   }
   if (f.extra) out.push(...faceExtras(f.extra));
-  // Hair ties where the twintails gather (no bows, so nothing clashes with a hat).
-  if (style === 'twintails' && !tucked) out.push(F(E(3.6, 12, 1.6, 1.1, hairRamp(hair).sh2)), F(E(27.4, 12, 1.6, 1.1, hairRamp(hair).sh2)));
   // An earring under each ear.
   if (g.earring) {
     const ring = offset(earringShapes(g.earring.design, g.earring.color, g.earring), -1.6, 0);
@@ -1118,7 +836,7 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
     const sk = skinRamp(skin);
     out.push(...mirror(earShapes(look.earStyle, skin, sk.sh1)), ...earShapes(look.earStyle, sk.sh1, sk.sh2));
   }
-  out.push(F(E(HEAD_X, 13.6, 12, 11.2, hair)), F(E(HEAD_X, 20.4, 9.8, 4, hr.sh1)), ...halo(HEAD_X, 10, 9, 5.6, 210, 330, 1.1, hr.hi));
+  out.push(...hairNape(style, hr));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];

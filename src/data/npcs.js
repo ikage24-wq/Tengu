@@ -33,7 +33,7 @@ export const NPCS = {
   lulu: {
     id: 'lulu', name: 'Lulu', title: 'Stylist', role: 'stylist',
     building: 'salon', sign: "Lulu's Salon",
-    look: { hairStyle: 'bun', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
+    look: { hairStyle: 'topknot', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
     greeting: 'New hair? New clothes? A fresh look is 500 gold, and my boutique has the cutest outfits!',
     styleCost: 500,
     shop: ['denim_jacket', 'cozy_sweater', 'overalls', 'sundress', 'school_blazer', 'puffer_jacket', 'maid_dress', 'pleated_skirt', 'blue_jeans', 'cargo_pants', 'long_skirt', 'hoodie', 'sailor_top'],
@@ -60,7 +60,7 @@ export const NPCS = {
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
-    look: { hairStyle: 'sweep', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
+    look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
   },
   tora: {
@@ -82,7 +82,7 @@ export const NPCS = {
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
     building: 'office', sign: 'Harbor Office',
-    look: { hairStyle: 'curtain', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
+    look: { hairStyle: 'hero', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
     quests: ['mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart'],
   },
@@ -96,7 +96,7 @@ export const NPCS = {
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",
-    look: { hairStyle: 'bob', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
+    look: { hairStyle: 'ahoge', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
     greeting: 'Finest goods on the coast. Bows, blades, armor, tonics, and charms!',
     shop: [
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',

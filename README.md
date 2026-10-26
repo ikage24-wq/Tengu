@@ -5,8 +5,8 @@ monsters across connected maps, pick a job at level 10 (mages pick a specialty a
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
 pastel style: characters are short pixel chibis in the classic MMO style (a big round head with
 ears and big soft eyes, rounded bangs with a shine band, and one sturdy little jointed body for
-everyone, turned three-quarters toward where they're facing, with nine eye styles and eight
-hairstyles built from curved locks), drawn crisp at 2x detail with a dark pixel outline whose corners are softened;
+everyone, turned three-quarters toward where they're facing, with nine eye styles and twenty
+hairstyles (anime, fantasy, cool, punk and cute), each one clean outline cut into pointed clumps), drawn crisp at 2x detail with a dark pixel outline whose corners are softened;
 they and the monsters get three-tone shading: a soft lavender shadow at the back of each part, the
 base color, and a warm highlight on the front edge;
 the world and items are pixel art. No build step and no dependencies.

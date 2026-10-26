@@ -40,7 +40,7 @@ carry an improvement across every part of the game it applies to.
 - Hurt and knocked-out faces replace the expression, not layer on it: no sparkles, notes,
   winks or puffed cheeks over `> <` (`hero.js` `headShapes`). Marks around the head (sparkles,
   notes, sweat) float clear of the hair's outline and never sit on an eye; a style that hides an
-  eye (eyecover) moves winks and raised brows to the eye that shows.
+  eye (the swoop) moves winks and raised brows to the eye that shows.
 - Kits: `src/render/mobs/faces.js` (creatures) and `src/render/mobs/heroine.js` (3/4 anime faces,
   scales down to small heads).
 
