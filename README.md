@@ -216,9 +216,11 @@ to clear it.
   and big landmarks: giant trees and mushrooms, wishing wells and flower arches, totems and mesas,
   broken archways and statues, crystal spires, cloud pillars and gazebos. Portals name where they
   lead. Every region has its own
-  monsters (dandelion Fuzzlets and Bloomsnails in the meadow, Pebblets and Scorpips in the canyon,
-  Leafoxes in the woods, Skelly Knights in the ruins, Gemjellies in the cave, Flufframs in the sky),
-  and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
+  monsters, drawn after myths, folklore, and other games (Kitsune Kits, Moss Tortoises, Mandrakes,
+  and Jackalopes in the meadow; Basilisk Hatchlings and Manticore Cubs in the canyon; Dryads, Wargs,
+  and Treants in the woods; Will-o'-Wisps, Imps, and Dullahans in the ruins; Gem Mimics and Crystal
+  Golems in the cave; Pegasus Foals, Sky Harpies, and Star Seraphs in the sky), each with its own
+  walk cycle and idle motion, and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
   when they chase you (hit monsters do), >< eyes when hit, and x eyes when they poof. The boss
   telegraphs a ground slam.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
@@ -276,12 +278,12 @@ to clear it.
     and help with the room's task between fights. Everyone steps out of telegraphed attacks.
   - Six rooms, each sealed until it's cleared: **Hollow Entrance** (trash packs, and light the
     three glowcaps), **Capper's Garden** (mini-boss Mother Capper: Spore Rain patches to step out
-    of, and Sporelings that rush the healer), **Bramble Tunnels** (trash, and free four trapped
+    of, and Spore Mites that rush the healer), **Bramble Tunnels** (trash, and free four trapped
     Sprouts from root cages), **Boar Den** (mini-boss Tuskar: a tank-busting Gore, and a charge down
     a telegraphed lane at someone; he crashes into the wall and is dazed, taking extra damage),
-    **The Root Gate** (Thornbacks carry the three Root Keys that open the gate), and **Heart of the
+    **The Root Gate** (Bramble Bears carry the three Root Keys that open the gate), and **Heart of the
     Hollow** (Old Gnarlroot: a Root Slam to jump or get on a ledge for, alternating Thorn strips,
-    Gnarl Saplings at half HP that heal him and halve his damage taken until killed, and a faster
+    Corrupted Saplings at half HP that heal him and halve his damage taken until killed, and a faster
     enrage at 20%).
   - Fall in a fight and your group gets you back up once it's over (no EXP lost; you can also
     leave). If everyone falls, the room resets and the group regroups at its entrance. The run

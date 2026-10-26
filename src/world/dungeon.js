@@ -736,7 +736,7 @@ function bossMove(world, m, up, dt) {
       s.adds.shift();
       const healer = up.find((g) => g.role === 'healer') ?? pick(nonTanks.length ? nonTanks : up);
       adds(world, m, 'sporeling', [m.x - 90, m.x + 90, m.x - 150], healer?.id);
-      callout(world, 'Sporelings!', 'They swarm the healer: Tank, Provoke! DPS, kill them!');
+      callout(world, 'Spore Mites!', 'They swarm the healer: Tank, Provoke! DPS, kill them!');
     }
     return false;
   }
@@ -823,7 +823,7 @@ function bossMove(world, m, up, dt) {
     if (!s.saplings && frac <= 0.5) {
       s.saplings = true;
       adds(world, m, 'sapling', [m.x - 400, m.x + 400], null);
-      callout(world, 'Gnarl Saplings!', 'They feed him their life: cut them down!');
+      callout(world, 'Corrupted Saplings!', 'They feed him their life: cut them down!');
     }
     const feeding = run.room.adds.filter((a) => a.def.fight?.mender && a.hp > 0).length;
     m.shield = feeding > 0;
