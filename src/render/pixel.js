@@ -365,9 +365,10 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, round = true } = build();
     let raster = rasterize(w, h, shapes, res, soft, palette, crisp);
-    if (gfx.hd) {
+    // Sprites built with `round: false` (monsters) keep their own crisp art in HD.
+    if (gfx.hd && round) {
       // Plain pixel sprites (weapons, icons) are doubled twice to catch up.
       for (let k = res > 1 ? 1 : 2; k > 0; k--) {
         raster = smoothDouble(raster);
