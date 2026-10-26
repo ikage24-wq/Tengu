@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -324,7 +324,7 @@ const FRINGES = {
 };
 // The front hair: the skull's hair line from the far cheek over the top to the near one, closed
 // by the bangs. The tips flutter a little with the hair. Returns { shapes, shade }.
-function bangs(kind, r, m, extra = []) {
+function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   const f = FRINGES[kind];
   const edge = [];
   f.pts.forEach((p, i) => {
@@ -363,7 +363,7 @@ function bangs(kind, r, m, extra = []) {
     } else flush();
   }
   flush();
-  return { shapes: [...shapes, ...extra, ...ring(r.hi)], shade };
+  return { shapes: [...shapes, ...extra, ...(shine ? ring(r.hi) : [])], shade };
 }
 // Locks that frame the face, one in front of each ear, swinging a beat behind.
 const sideLocks = (r, m, near, far = near ? fx(near) : null, w = 3.6, k = 1.2) => [
@@ -466,6 +466,30 @@ const STYLES = {
       tips: [33, 38],
     };
   },
+  // A braid wound round the head like a crown, over long loose waves; soft bangs below it.
+  crownbraid(r, m) {
+    // A braid wound over the head like a crown: a dark band with round knots along it (the
+    // darker gaps between them make it read as a braid), each with a small shine.
+    const band = (pts) => {
+      const out = [lock([...pts, pts[pts.length - 1]], 4.8, r.sh2, null, 1, 1)];
+      for (let i = 0; i < pts.length; i++) {
+        const [x, y] = pts[i];
+        const k = i % 2 ? 0.35 : -0.35;
+        out.push(F(E(x, y + k, 2.3, 1.9, r.base)), F(E(x + 0.5, y - 0.7 + k, 0.8, 0.45, r.hi)));
+      }
+      return out;
+    };
+    const arc = dome(198, 342, 8, 11, 7.6, 13.4);
+    const braid = band(arc);
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r), ...sheet({ len: 42, flare: 13.4, wave: 1, ends: 'curls', n: 3 }, r, m)],
+      front: bangs('soft', r, m, [...sideLocks(r, m, [[25.4, 11], [26.6, 17], [26.2, 22], [27.6, 25.6]], undefined, 3), ...braid], { shine: false }),
+      top: band(fx(arc)),
+      tips: [33, 38],
+    };
+  },
+
 };
 
 // ---------- Two-tone ----------
