@@ -32,3 +32,7 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 - Commits end with the session's Co-Authored-By / Claude-Session lines; no model names in code or
   commits.
 - Don't open pull requests unless asked.
+- Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
+  maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
+  monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece
+  that prompted it.
