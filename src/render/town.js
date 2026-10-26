@@ -583,14 +583,31 @@ function sparkle(ctx, x, y, r, color) {
 
 const VILLAGERS = 3;
 const HAIR = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
-const SKIN = ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66'];
+const SKIN = ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66', '#8a5a3c'];
 const CLOTHES = ['#ffc2d6', '#bfe0ff', '#bff0dc', '#fff3a6', '#e0cfff', '#ffd0a8', '#ffffff'];
 
+// Eye colours that stand out against each hair colour (never green on green or pink on pink):
+// the iris is the face's accent, so it sits well away from the hair's hue.
+const EYES_FOR = {
+  '#e9ebfa': ['#5aa8ff', '#9b6cff', '#ff6b8a', '#3f9f5f'],
+  '#ff9ec0': ['#4fcfb8', '#5aa8ff', '#3f9f5f'],
+  '#f5c95c': ['#4fcfb8', '#5aa8ff', '#9b6cff'],
+  '#b9a7ff': ['#e8a23c', '#4fcfb8', '#ff6b8a'],
+  '#7a5238': ['#4fcfb8', '#5aa8ff', '#3f9f5f'],
+  '#3b3650': ['#e8a23c', '#ff6b8a', '#4fcfb8'],
+  '#9be08f': ['#ff6b8a', '#9b6cff', '#e8a23c'],
+  '#ffb38a': ['#4fcfb8', '#5aa8ff', '#9b6cff'],
+  '#8fd3ff': ['#ff6b8a', '#e8a23c', '#9b6cff'],
+};
+// Each villager wears their own calm resting face (they grin when they stop to look around).
+const CALM_FACES = ['smile', 'smile', 'smug', 'shy', 'cool', 'cat'];
+
 function lookFor(seed) {
+  const hairColor = pick(HAIR, hash(seed + 2));
   return {
-    hairStyle: pick(HAIR_STYLES, hash(seed + 1)), hairColor: pick(HAIR, hash(seed + 2)), skinTone: pick(SKIN, hash(seed + 3)),
-    eyeColor: pick(['#5aa8ff', '#9b6cff', '#3f9f5f', '#7a4a2b', '#ff6b8a'], hash(seed + 4)), eyeStyle: pick(PICKABLE_EYE_STYLES, hash(seed + 5)),
-    outfit: pick(OUTFIT_STYLES, hash(seed + 6)), outfitColor: pick(CLOTHES, hash(seed + 7)), face: 'smile',
+    hairStyle: pick(HAIR_STYLES, hash(seed + 1)), hairColor, skinTone: pick(SKIN, hash(seed + 3)),
+    eyeColor: pick(EYES_FOR[hairColor], hash(seed + 4)), eyeStyle: pick(PICKABLE_EYE_STYLES, hash(seed + 5)),
+    outfit: pick(OUTFIT_STYLES, hash(seed + 6)), outfitColor: pick(CLOTHES, hash(seed + 7)), face: pick(CALM_FACES, hash(seed + 8)),
   };
 }
 
@@ -749,7 +766,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
     ctx.save();
     ctx.translate(x, y - 5);
     ctx.rotate(-facing * Math.PI / 2);
-    drawHero(ctx, { ...look, face: 'pout', eyeStyle: 'sleepy' }, wornGear(bot.char), 0, 0, { ...state, pose: 'idle', ready: false, alpha: 0.75 });
+    drawHero(ctx, { ...look, face: 'pout' }, wornGear(bot.char), 0, 0, { ...state, pose: 'idle', ready: false, hurt: false, down: true, alpha: 0.75 });
     ctx.restore();
     const bob = Math.sin(time * 3 + seed) * 2;
     ctx.save();

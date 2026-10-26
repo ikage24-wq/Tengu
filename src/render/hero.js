@@ -23,9 +23,10 @@ import {
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
-import { walkPhase, walkBob } from './animator.js';
+import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
 import { moveAt } from './moves.js';
+import { heroineEye } from './mobs/heroine.js';
 
 export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid', 'eyecover'];
 // Spiky hair was retired; old saves that used it get soft curls instead.
@@ -55,6 +56,82 @@ const INK = '#3a2d4f';
 // rig offsets to that grid.
 const RES = 2;
 const q = (v) => Math.round(v * RES) / RES;
+
+// ---------- Colour ramps ----------
+//
+// Skin and hair get their own hue-shifted ramps (highlight, base, two shadows) instead of the
+// engine's lavender shadow tone, which turns grey on tan and brown skin. Shadows come from
+// multiplying by a tint, so they darken AND rotate hue: skin toward rose, warm hair toward red,
+// cool hair toward blue-violet. Every tone in the creator gets the same treatment.
+
+const rgbOf = (c) => {
+  const n = parseInt(c.slice(1, 7), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const hexOf = (rgb) => `#${rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('')}`;
+const multiply = (a, b) => {
+  const [x, y] = [rgbOf(a), rgbOf(b)];
+  return hexOf(x.map((v, i) => (v * y[i]) / 255));
+};
+function hslOf(c) {
+  const [r, g, b] = rgbOf(c).map((v) => v / 255);
+  const hi = Math.max(r, g, b);
+  const lo = Math.min(r, g, b);
+  const l = (hi + lo) / 2;
+  if (hi === lo) return [0, 0, l];
+  const d = hi - lo;
+  const s = l > 0.5 ? d / (2 - hi - lo) : d / (hi + lo);
+  const h = hi === r ? ((g - b) / d + (g < b ? 6 : 0)) * 60 : hi === g ? ((b - r) / d + 2) * 60 : ((r - g) / d + 4) * 60;
+  return [h, s, l];
+}
+function hslHex(h, s, l) {
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  return hexOf([f(0) * 255, f(8) * 255, f(4) * 255]);
+}
+
+const ramps = new Map();
+const memo = (key, fn) => {
+  let v = ramps.get(key);
+  if (!v) {
+    v = fn();
+    ramps.set(key, v);
+  }
+  return v;
+};
+
+// Skin: base, highlight, two shadows (rose, then rose-magenta), line, blush, and lips.
+export const skinRamp = (skin) => memo(`s${skin}`, () => ({
+  base: skin,
+  hi: mix(skin, '#fffaf0', 0.45),
+  sh1: multiply(skin, '#f4cfd2'),
+  sh2: multiply(skin, '#dfa3b5'),
+  line: multiply(skin, '#b06878'),
+  blush: mix(skin, '#ff7f9b', 0.42),
+  blushDk: multiply(skin, '#e2788f'),
+  lip: multiply(skin, '#ec8c9c'),
+  lipDk: multiply(skin, '#b04a64'),
+  mouthIn: multiply(skin, '#c8405e'),
+}));
+
+// Hair: highlight (warm, for the angel ring), base, shadow 1 (the back hair, clump edges),
+// shadow 2 (deepest gaps), and the lash and brow colour: a very dark shade of the hair's hue.
+export const hairRamp = (c) => memo(`h${c}`, () => {
+  const [h, s, l] = hslOf(c);
+  const grey = s < 0.14;
+  const tint = grey ? '#d2cff0' : h < 75 || h >= 290 ? '#f0c4cc' : h < 170 ? '#c2dcd6' : '#c6c6f0';
+  const sh1 = multiply(c, tint);
+  const ink = mix(grey ? hslHex(275, 0.3, 0.17) : hslHex(h, Math.min(0.55, s), 0.16), '#2a1a33', 0.35);
+  return {
+    base: c,
+    hi: mix(c, '#fff6e0', l < 0.35 ? 0.32 : 0.55),
+    sh1,
+    sh2: multiply(sh1, tint),
+    ink,
+    brow: mix(multiply(sh1, tint), ink, 0.55),
+  };
+});
 
 const move = (shapes, dx, dy) => shapes.map((s) => (s ? { ...s, x: s.x + dx + OX, y: s.y + dy + OY } : s));
 
@@ -140,13 +217,21 @@ function arc(cx, cy, rx, ry, a0, a1, th, c) {
   return F(T([...outer, ...inner.reverse()], c));
 }
 
-// Hair that hangs below the head bends with the hair spring: the lower a point, the more it sways.
-function swayShape(shape, sway, lift) {
+// Hair that hangs below the head is a chain: near the root it follows the root spring, toward the
+// tips it follows the tip spring, which lags and overshoots it, so a swing travels down the hair.
+// Where root and tip disagree the tips also ride up a little, tracing a loop instead of a line.
+function swayShape(shape, root, tip, lift) {
   const bend = (py) => Math.max(0, Math.min(1, (py - 14) / 16));
+  const dx = (b) => root * b + (tip - root) * b * b;
+  const up = (b) => -Math.abs(tip - root) * 0.35 * b * b;
   if (shape.t === 'p') {
-    return { ...shape, pts: shape.pts.map(([px, py]) => [px + q(sway * bend(shape.y + py)), py + (shape.y + py >= 22 ? lift : 0)]) };
+    return { ...shape, pts: shape.pts.map(([px, py]) => {
+      const b = bend(shape.y + py);
+      return [px + q(dx(b)), py + q(up(b)) + (shape.y + py >= 22 ? lift : 0)];
+    }) };
   }
-  return { ...shape, x: shape.x + q(sway * bend(shape.y)), y: shape.y + (shape.y >= 22 ? lift : 0) };
+  const b = bend(shape.y);
+  return { ...shape, x: shape.x + q(dx(b)), y: shape.y + q(up(b)) + (shape.y >= 22 ? lift : 0) };
 }
 
 // A white ribbon bow tied at (x, y), with a pink knot so it shows on any hair color.
@@ -183,26 +268,32 @@ function lockWithStrand(x0, y0, x1, y1, w, bend, c) {
 
 // Hair behind the head: the crown's volume plus whatever hangs down (tails, long hair, curls),
 // which is flagged `hang` so the body can be drawn over it. Hanging hair is built from curved
-// locks over a solid mass, each with a strand line.
-function hairBack(style, front, sway, lift) {
-  // Hair behind the head sits a little in shadow, so the bangs stand out in front of it.
-  const c = shade(front, -6);
+// locks (shadow 1) over a deeper mass (shadow 2) that shows only in the gaps between them, so the
+// locks read as clumps.
+function hairBack(style, front, root, tip, lift) {
+  return hairBackShapes(style, front, root, tip, lift).map((sh) => (sh.c === RIBBON || sh.c === BOW || sh.c === '#ffd66b' ? sh : F(sh)));
+}
+function hairBackShapes(style, front, root, tip, lift) {
+  // Hair behind the head is one shade darker, so the bangs stand out in front of it.
+  const r = hairRamp(front);
+  const c = r.sh1;
+  const m = r.sh2;
   const crown = E(HEAD_X, 13.2, 12, 11.2, c);
   // Everything that sways hangs below the head and is drawn behind the body.
-  const sw = (shapes) => shapes.map((sh) => ({ ...swayShape(sh, sway, lift), hang: true }));
+  const sw = (shapes) => shapes.map((sh) => ({ ...swayShape(sh, root, tip, lift), hang: true }));
   const locks = (list) => list.flatMap(([x0, y0, x1, y1, w, bend]) => lockWithStrand(x0, y0, x1, y1, w, bend, c));
   switch (style) {
     case 'bob': return [crown, ...sw([
-      E(HEAD_X, 16.4, 12.8, 10, c),
+      E(HEAD_X, 16.4, 12.8, 10, m),
       ...locks([[4.4, 12, 6.8, 25.4, 5.4, 1.8], [26.6, 12, 24.2, 25.4, 5.4, -1.8], [9, 17, 10.8, 26, 5, 0.6], [22, 17, 20.2, 26, 5, -0.6], [15.5, 19, 15.5, 26.4, 6, 0]]),
     ])];
     case 'wavy': return [crown, ...sw([
-      E(HEAD_X, 21, 13, 12, c),
+      E(HEAD_X, 21, 13, 12, m),
       ...locks([[4, 14, 3.4, 41, 6, -3], [8.6, 18, 9.6, 42.6, 5.6, 2.6], [15.5, 20, 15.5, 43.4, 6.4, -2], [22.4, 18, 21.4, 42.6, 5.6, -2.6], [27, 14, 27.6, 41, 6, 3]]),
       E(3.8, 40.2, 1.8, 1.6, c), E(27.2, 40.2, 1.8, 1.6, c),
     ])];
     case 'long': return [crown, ...sw([
-      T([[3.6, 13], [27.4, 13], [28.2, 30], [27.4, 40], [3.6, 40], [2.8, 30]], c),
+      T([[3.6, 13], [27.4, 13], [28.2, 30], [27.4, 40], [3.6, 40], [2.8, 30]], m),
       ...locks([[4.6, 15, 4.4, 43, 5.4, -1], [9.6, 18, 10, 44.4, 5.6, 0.6], [15.5, 20, 15.5, 45, 6.2, 0], [21.4, 18, 21, 44.4, 5.6, -0.6], [26.4, 15, 26.6, 43, 5.4, 1]]),
     ])];
     case 'twintails': return [crown, ...sw([
@@ -217,7 +308,7 @@ function hairBack(style, front, sway, lift) {
       const curls = [[5, 8.6, 2.6], [4, 13.4, 2.6], [4.6, 18.4, 2.4], [6.8, 22, 2.2], [10, 4.4, 2.6], [15.5, 3, 2.8], [21, 4.4, 2.6], [26, 8.6, 2.6], [27, 13.4, 2.4], [26.4, 18.4, 2.2], [24.4, 21.6, 2]];
       return [E(HEAD_X, 13.2, 11.8, 10.8, c), ...curls.map(([x, y, r]) => E(x, y, r, r * 0.92, c))];
     }
-    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, mix(front, '#ffffff', 0.45)), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON),
+    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, r.hi), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON),
       ...sw(locks([[6, 14, 6.6, 24.6, 3.2, 0.6], [25, 14, 24.4, 24.6, 3.2, -0.6]]))];
     case 'ahoge':
     case 'sweep':
@@ -228,28 +319,28 @@ function hairBack(style, front, sway, lift) {
       // layers at the back that flick out past the shoulders.
       E(HEAD_X, 12.6, 12.8, 11.6, c), E(4.2, 10.6, 3.4, 3.8, c), E(26.8, 10.6, 3.4, 3.8, c), E(3.4, 16.4, 3, 3.4, c), E(27.6, 16.4, 3, 3.4, c),
       ...sw([
-        E(HEAD_X, 21, 11.4, 6.4, c),
+        E(HEAD_X, 21, 11.4, 6.4, m),
         ...locks([[4.6, 18, 0.6, 31, 5.6, -2.4], [9.4, 20, 6.6, 33, 5.4, -1.4], [15.5, 21, 15.5, 33.6, 6, 0], [21.6, 20, 24.4, 33, 5.4, 1.4], [26.4, 18, 30.4, 31, 5.6, 2.4]]),
       ]),
     ];
     case 'eyecover': return [crown, ...sw([
-      E(HEAD_X, 19, 12.4, 9, c),
+      E(HEAD_X, 19, 12.4, 9, m),
       ...locks([[4.6, 14, 5.6, 29, 5.4, 1.2], [9.6, 18, 10.6, 30, 5, 0.6], [21.4, 18, 20.4, 30, 5, -0.6], [26.4, 14, 25.4, 29, 5.4, -1.2]]),
     ])];
     case 'hime': return [crown, ...sw([
       // Long, straight, and cut level a little above the waist.
-      T([[4.4, 14], [26.6, 14], [25.8, 38], [5.2, 38]], c),
-      F(R(5.2, 37.4, 20.6, 0.6, shade(c, -16))),
+      T([[4.4, 14], [26.6, 14], [27, 38], [4, 38]], m),
+      ...locks([[6, 16, 5.4, 38.6, 5, 0.3], [11, 18, 10.8, 38.8, 5.4, 0.1], [15.5, 18, 15.5, 38.6, 5.6, 0], [20, 18, 20.2, 38.8, 5.4, -0.1], [25, 16, 25.6, 38.6, 5, -0.3]]),
     ])];
     case 'odango': return [crown, E(6.2, 3.6, 3.8, 3.6, c), E(24.8, 3.6, 3.8, 3.6, c),
-      arc(6.2, 3.6, 2.6, 2.4, 200, 290, 0.7, mix(front, '#ffffff', 0.45)), arc(24.8, 3.6, 2.6, 2.4, 200, 290, 0.7, mix(front, '#ffffff', 0.45)),
+      arc(6.2, 3.6, 2.6, 2.4, 200, 290, 0.7, r.hi), arc(24.8, 3.6, 2.6, 2.4, 200, 290, 0.7, r.hi),
       ...sw(locks([[5, 6, 1.6, 33, 4.6, 2], [26, 6, 29.4, 33, 4.6, -2]]))];
     case 'drills': {
       // Ojou-sama ringlets: a stack of shrinking coils on each side, each with a darker turn line.
       const coil = (x, dir) => Array.from({ length: 5 }, (_, k) => {
         const y = 17 + k * 4.2;
         const rr = 3.6 - k * 0.38;
-        return [E(x + (k % 2 ? 0.5 : -0.5) * dir, y, rr, 2.6, c), arc(x + (k % 2 ? 0.5 : -0.5) * dir, y - 0.2, rr, 2.4, 20, 160, 0.6, shade(c, -18))];
+        return [E(x + (k % 2 ? 0.5 : -0.5) * dir, y, rr, 2.6, c), arc(x + (k % 2 ? 0.5 : -0.5) * dir, y - 0.2, rr, 2.4, 20, 160, 0.6, m)];
       }).flat();
       return [crown, ...sw([...coil(3.6, 1), ...coil(27.4, -1)])];
     }
@@ -258,15 +349,66 @@ function hairBack(style, front, sway, lift) {
   }
 }
 
-// Bangs. The original styles share one fringe: a rounded cap over the forehead, three big soft
-// locks ending just above the eyes, slim side locks, and one clean shine band. Newer styles each
-// draw their own fringe. `sway` (from the hair spring) and `mood` (the face) move the ahoge.
+// The angel ring: one highlight band across the crown that follows the skull, broken into a few
+// pieces by the gaps between clumps, with a zigzag lower edge.
+function halo(cx, cy, rx, ry, a0, a1, th, c, parts = 3) {
+  const out = [];
+  const gap = 6;
+  const span = (a1 - a0 - gap * (parts - 1)) / parts;
+  for (let k = 0; k < parts; k++) {
+    const s0 = a0 + k * (span + gap);
+    const top = [];
+    const bot = [];
+    const n = 6;
+    for (let i = 0; i <= n; i++) {
+      const a = ((s0 + (span * i) / n) * Math.PI) / 180;
+      const d = th * (i === 0 || i === n ? 0.3 : i % 2 ? 1.15 : 0.6);
+      top.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a)]);
+      bot.push([cx + (rx - d) * Math.cos(a), cy + (ry - d) * Math.sin(a)]);
+    }
+    out.push(F(T([...top, ...bot.reverse()], c)));
+  }
+  return out;
+}
+
+// Bangs. The original styles share one fringe: a rounded cap over the forehead, three big
+// clumps ending just above the eyes, slim side locks, and the angel ring. Newer styles each draw
+// their own fringe. `sway` (the hair's tip spring) and `mood` (the face) move the ahoge.
+//
+// Every lock is drawn over a copy of itself in hair shadow, nudged down and back: where a clump
+// overlaps the one beside it, or ends on the forehead, that copy shows as the shadow line that
+// separates them (no strand stripes). Bangs that end on the face also cast a band of skin shadow
+// (returned as `shade`, drawn under the eyes).
 function hairFront(style, c, sway = 0, mood = 'smile') {
-  const l = mix(c, '#ffffff', 0.45);
-  const d = shade(c, -16);
-  const cap = C(E(HEAD_X, 7.8, 11.8, 5, c));
-  const shine = arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l);
-  const lock = (x0, y0, x1, y1, w, bend) => C(curvedLock(x0, y0, x1, y1, w, bend, c));
+  const r = hairRamp(c);
+  const shapes = fringe(style, r, sway, mood).flat();
+  const out = [];
+  const shade1 = [];
+  // The hairline itself shades the forehead too, so gaps between clumps aren't left bare.
+  if (style !== 'quiff') shade1.push(F(E(HEAD_X, 9, 11.4, 5, '#000000')));
+  for (const sh of shapes) {
+    if (sh.lock) {
+      const nudge = (s0, dx, dy, col) => ({ ...s0, f: 1, cast: 0, lock: 0, c: col, pts: s0.pts.map(([px, py]) => [px + dx, py + dy]) });
+      // Only the lower half of a clump gets the shadow copy, so it reads as an edge, not a stripe.
+      const half = Array.isArray(sh.lock) ? curvedLock(...sh.lock, c, 0.45, 1) : sh;
+      out.push(nudge(half, -0.3, 0.55, r.sh1));
+      // Bangs ending on the face (not side locks) shade the skin under them.
+      const tip = sh.pts.reduce((a, b) => (b[1] > a[1] ? b : a));
+      if (tip[1] > 11 && tip[1] < 17.5 && tip[0] > 7.4 && tip[0] < 23.6) shade1.push(nudge(sh, 0, 1.1, null));
+    }
+    out.push(sh.f || sh.c === RIBBON || sh.c === BOW ? sh : F({ ...sh, cast: 0 }));
+  }
+  out.shade = shade1;
+  return out;
+}
+
+function fringe(style, r, sway, mood) {
+  const c = r.base;
+  const l = r.hi;
+  const d = r.sh2;
+  const cap = E(HEAD_X, 7.8, 11.8, 5, c);
+  const shine = halo(HEAD_X, 9.6, 8.6, 5.2, 212, 328, 1.3, l);
+  const lock = (x0, y0, x1, y1, w, bend) => ({ ...curvedLock(x0, y0, x1, y1, w, bend, c), lock: [x0, y0, x1, y1, w, bend] });
   switch (style) {
     case 'ahoge': {
       // Messy boyish bangs and a single antenna strand on top that bounces with every move,
@@ -293,7 +435,7 @@ function hairFront(style, c, sway = 0, mood = 'smile') {
     case 'quiff':
       // A big rounded swoop up and back off the forehead, with short neat sides.
       return [C(E(HEAD_X, 8.2, 11.6, 3.8, c)), E(HEAD_X + 1, 3.6, 9, 4.6, c), lock(7.6, 6.4, 22.4, -0.6, 7.4, 3), lock(8, 9, 10.6, 12.4, 3.4, 0.4),
-        lock(6.8, 8, 5.6, 17.4, 4, 0.8), lock(24.6, 8, 25.6, 17, 3.6, -0.8), arc(HEAD_X + 1, 4.6, 7.4, 3.6, 200, 320, 1.2, l)];
+        lock(6.8, 8, 5.6, 17.4, 4, 0.8), lock(24.6, 8, 25.6, 17, 3.6, -0.8), halo(HEAD_X + 1, 4.6, 7.4, 3.6, 200, 320, 1.2, l, 2)];
     case 'wolf':
       // Choppy curtain-ish bangs split off-center, short layers flicking out at the cheeks, and
       // longer ones flicking out at the jaw.
@@ -308,16 +450,18 @@ function hairFront(style, c, sway = 0, mood = 'smile') {
         // A curtain of hair from the part down past the chin, curving away from the mouth, hiding
         // that half of the face and ending in two soft points; a darker line along its inner
         // edge gives it a little depth.
-        C(T([[14.6, 4.6], [15.4, 10], [16.2, 14.6], [17.2, 18.6], [18.2, 22], [19.6 + peek, 25.2], [21.4 + peek, 27.6], [23 + peek, 25.6], [25 + peek, 27],
-          [26.6 + peek, 23.4], [27.4, 18], [27.4, 11], [25.4, 5.6], [20, 3.4]], c)),
+        { ...T([[14.6, 4.6], [15.4, 10], [16.2, 14.6], [17.2, 18.6], [18.2, 22], [19.6 + peek, 25.2], [21.4 + peek, 27.6], [23 + peek, 25.6], [25 + peek, 27],
+          [26.6 + peek, 23.4], [27.4, 18], [27.4, 11], [25.4, 5.6], [20, 3.4]], c), lock: 1 },
         stroke([[15.8, 9], [16.7, 14.6], [17.7, 18.6], [18.8 + peek, 22], [20.2 + peek, 25]], 0.6, d),
         lock(7, 8, 5.4, 22, 4.4, 1),
-        arc(HEAD_X, 9.6, 8.6, 5.2, 215, 325, 1.3, l), arc(22 + peek, 17, 4.4, 8.4, 245, 300, 1, l)];
+        halo(HEAD_X, 9.6, 8.6, 5.2, 212, 300, 1.3, l, 2), arc(22 + peek, 17, 4.4, 8.4, 245, 300, 1, l)];
     }
     case 'hime':
       // Blunt, straight-cut bangs and straight side locks cut level at the chin.
-      return [cap, C(T([[5.4, 8], [25.6, 8], [25.4, 14.6], [5.6, 14.6]], c)), C(R(4.2, 10, 4.6, 14.2, c)), C(R(22.2, 10, 4.6, 14.2, c)),
-        F(R(4.2, 23.6, 4.6, 0.6, d)), F(R(22.2, 23.6, 4.6, 0.6, d)), shine];
+      // The cut stays level, split into clumps by small V notches.
+      return [cap, { ...T([[5.4, 8], [25.6, 8], [25.4, 14.6], [23.6, 14.6], [22.9, 13.8], [22.2, 14.7], [19.2, 14.7], [18.5, 13.9], [17.8, 14.8], [13.2, 14.8], [12.5, 13.9], [11.8, 14.7], [8.8, 14.7], [8.1, 13.8], [7.4, 14.6], [5.6, 14.6]], c), lock: 1 },
+        { ...T([[4.2, 10], [8.8, 10], [8.8, 24.2], [7.1, 24.2], [6.5, 23.4], [5.9, 24.2], [4.2, 24.2]], c), lock: 1 },
+        { ...T([[22.2, 10], [26.8, 10], [26.8, 24.2], [25.1, 24.2], [24.5, 23.4], [23.9, 24.2], [22.2, 24.2]], c), lock: 1 }, shine];
     case 'braid': {
       // Side-swept bangs, and a thick braid brought forward over one shoulder, tied with a bow.
       const out = [cap, lock(9, 6.4, 18.6, 15.2, 7.6, -2), lock(19.6, 6.6, 23.4, 14, 5.4, -0.8), lock(7, 8, 5.6, 20.4, 4.4, 1), lock(24.6, 8.4, 25.6, 19, 4, -1)];
@@ -332,14 +476,15 @@ function hairFront(style, c, sway = 0, mood = 'smile') {
       return out;
     }
     case 'drills':
-      return [cap, lock(11, 7, 9.8, 14.4, 7, 0.8), lock(16, 6.6, 15.6, 15, 7.2, 0.2), lock(21, 7, 22.4, 14, 6.6, -0.8),
+      return [cap, lock(11, 7, 9.6, 14.4, 6, 0.8), lock(15.6, 6.6, 15.2, 15.2, 5.6, 0.2), lock(19.6, 6.8, 20.6, 14.6, 5.4, -0.5), lock(22.4, 7, 23.4, 13.8, 4.6, -0.8),
         lock(7.2, 8, 5.8, 17, 4.2, 1), lock(24.8, 8.4, 25.8, 16.4, 3.8, -1), ...bow(4.4, 9), ...bow(26.6, 9), shine];
     default: {
       const short = style === 'short' || style === 'curly';
       const side = short ? 20 : 23;
       const out = [cap];
-      // Three big, soft bang locks and two side locks: simple shapes that read at a glance.
-      for (const [x0, y0, x1, y1, w, bend] of [[11, 7, 9.8, 14.6, 7, 0.8], [16, 6.6, 15.6, 15.2, 7.2, 0.2], [21, 7, 22.4, 14.2, 6.6, -0.8]]) out.push(lock(x0, y0, x1, y1, w, bend));
+      // Four bang clumps of different lengths (a long one off-centre, a short one at the temple)
+      // and two side locks: simple shapes that read at a glance.
+      for (const [x0, y0, x1, y1, w, bend] of [[10.6, 7, 9.4, 14.2, 6.2, 0.8], [14.8, 6.6, 14.2, 15.4, 6, 0.3], [19, 6.6, 19.6, 14.8, 5.8, -0.4], [22.6, 7, 23.6, 13.4, 4.8, -0.8]]) out.push(lock(x0, y0, x1, y1, w, bend));
       out.push(lock(7.2, 8, 5.6, side, 4.4, 1), lock(24.8, 8.4, 26.2, side - 1.4, 4, -1));
       out.push(shine);
       return out;
@@ -353,40 +498,52 @@ function star(cx, cy, r, c) {
   return F(T([[cx, cy - r], [cx + k, cy - k], [cx + r, cy], [cx + k, cy + k], [cx, cy + r], [cx - k, cy + k], [cx - r, cy], [cx - k, cy - k]], c));
 }
 
-// Simple anime eyes: a tall dark oval with the eye color in its lower part, one big shine and a
-// tiny one, and a thin lash on top. Styles only change the outline, lid, or shine. `out` is -1 for the far eye (its tick points back) and 1 for the near one.
+// Eyes are built with the heroine face kit (mobs/heroine.js), the same construction as the
+// queens and maidens: sclera corners with a lash shadow, an iris in bands (dark top under the
+// lash, base, a light crescent at the bottom) with a pupil, a big catchlight and a small one in
+// the same place in both eyes, one heavy lash polygon ending in a wing and clumps, and a light
+// lower lid. The hero faces the screen, so each eye is drawn as the kit's near eye, mirrored so
+// its catchlights sit on the lit (facing) side and its outer corner points away from the nose.
 const EYE_Y = 18.2;
+const EYE_DX = 4.3;
+// Per eye style: size (rx, ry), outer-corner lift, wing and clumps, iris size, pupil, openness.
+const EYE_LOOK = {
+  sparkle: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
+  round: { rx: 2.05, ry: 2.6, tilt: 0.02, wing: 0.45, flicks: 1, iris: 1.4 },
+  big: { rx: 2.3, ry: 2.85, tilt: 0.1, wing: 0.9, flicks: 2, iris: 1.3, sparkle: true },
+  cat: { rx: 2.1, ry: 2.3, tilt: 0.4, wing: 1.6, flicks: 2, iris: 1.12, pupil: 'slit' },
+  droopy: { rx: 2.05, ry: 2.45, tilt: -0.18, wing: 0.8, flicks: 1, iris: 1.3, open: 0.86 },
+  star: { rx: 2.05, ry: 2.55, tilt: 0.1, wing: 0.8, flicks: 1, iris: 1.36, pupil: 'star', sparkle: true },
+  sleepy: { rx: 2.05, ry: 2.4, tilt: 0.06, wing: 0.7, flicks: 1, iris: 1.3, open: 0.56 },
+  happy: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
+  wink: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
+};
+const mirrorAt = (x, y) => [-x, y];
 
-// `lid` (0-1) lowers a lid over the top of the eye; `glance` shifts the iris sideways.
-function eye(ex, out, style, color, mode, skin, lid = 0, glance = 0, shine = false) {
-  const ey = EYE_Y;
-  if (mode === 'blink') return [arc(ex, ey - 0.6, 2.2, 1.3, 20, 160, 0.8, INK)];
-  if (mode === 'hurt') return [F(T([[ex - 1.8 * out, ey - 2], [ex + 1.8 * out, ey], [ex - 1.8 * out, ey + 2], [ex - 1.1 * out, ey]], INK))];
-  if (mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0)) return [arc(ex, ey + 1, 2.1, 1.8, 200, 340, 0.8, INK)];
-  const big = style === 'big' ? 1.2 : style === 'round' ? 1.1 : 1;
-  const rx = 1.9 * big;
-  const ry = 2.6 * big;
-  const gx = ex + glance * 0.5;
-  const shapes = [
-    // A dark oval with the eye color filling its lower part, one big shine and a tiny one.
-    F(E(ex, ey, rx, ry, shade(color, -38))),
-    F(E(gx, ey + ry * 0.3, rx * 0.86, ry * 0.62, color)),
-    style === 'star' || shine ? star(gx - 0.3, ey - 0.7, shine ? 2 : 1.6, '#ffffff') : F(E(gx - rx * 0.35, ey - ry * 0.35, 0.9 * big, 1 * big, '#ffffff')),
-    F(E(gx + rx * 0.4, ey + ry * 0.45, 0.4, 0.4, '#ffffff')),
-  ];
-  if (style === 'cat') shapes.push(F(R(ex - 0.25, ey - ry * 0.4, 0.5, ry * 1.1, shade(color, -55))));
-  const lash = arc(ex, ey, rx + 0.3, ry + 0.2, 205, 335, 0.7, INK);
-  if (style === 'sleepy') lid = Math.max(lid, 0.46);
-  if (lid > 0) {
-    const ly = ey - ry + 2 * ry * lid;
-    shapes.push(F(T([[ex - rx - 0.5, ey - ry - 0.5], [ex + rx + 0.5, ey - ry - 0.5], [ex + rx + 0.5, ly], [ex - rx - 0.5, ly]], skin)));
-    shapes.push(F(R(ex - rx - 0.3, ly - 0.4, rx * 2 + 0.6, 0.7, INK)));
-    return shapes;
-  }
-  const flick = (lift) => F(T([[ex + out * (rx - 0.1), ey - ry * 0.6], [ex + out * (rx + 1), ey - ry * 0.6 - lift], [ex + out * (rx + 0.4), ey - ry * 0.3]], INK));
-  if (style === 'cat') return [...shapes, lash, flick(1.3)];
-  if (style === 'droopy') return [...shapes, lash, flick(-1)];
-  return [...shapes, lash];
+// One eye at screen x `ex`; `out` is -1 for the eye on the back side, 1 for the facing side.
+// mode: 'open', 'blink', 'hurt', 'happy' (closed smile), 'dead'. `lid` (0-1) lowers the upper
+// lid, `glance` looks aside, `shine` swaps in sparkles, `cross` pulls the inner lid down (angry).
+function eye(ex, out, style, color, mode, look, lid = 0, glance = 0, shine = false, cross = 0) {
+  const st = EYE_LOOK[style] ?? EYE_LOOK.sparkle;
+  const sk = skinRamp(look.skinTone ?? '#fff0e6');
+  const hr = hairRamp(look.hairColor ?? '#e9ebfa');
+  const closed = mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0);
+  const lids = mode === 'blink' ? 'blink' : mode === 'hurt' ? 'squeeze' : mode === 'dead' ? 'dead' : closed ? 'happy' : 'open';
+  // Iris offset on screen: a touch toward the facing side, more when glancing.
+  const g = 0.3 + 0.55 * glance;
+  const x = {
+    lids, open: (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), 0],
+    iris: st.iris * (cross ? 0.9 : 1), pupil: cross ? 0.75 : 1,
+  };
+  const kit = {
+    k: 1, chibi: true, skin: sk.base, skinSh: sk.sh1, skinSh2: sk.sh2, lip: sk.lip,
+    eye: {
+      iris: color, pupil: shine && !st.pupil ? 'star' : st.pupil, pupilC: mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
+      ink: hr.ink, lashW: 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
+      sparkle: st.sparkle || shine, tilt: st.tilt,
+    },
+  };
+  return heroineEye(mirrorAt, { cx: -ex, cy: EYE_Y, rx: st.rx, ry: st.ry, o: -out, near: true, tilt: st.tilt }, x, kit);
 }
 
 // A polyline drawn as a run of thin quads.
@@ -410,27 +567,28 @@ function brow(ex, side, raise, tilt, c) {
   return stroke([[ex - side * 1.5, y + tilt], [ex + side * 1.8, y - tilt * 0.6]], 0.8, c);
 }
 
-const LIP = '#b86a7c';
-const MOUTH = '#b2506c';
+// Mouth colours come from the skin ramp (lip line, a bright open-mouth fill), never ink.
 const TONGUE = '#ff8fa8';
 const MY = 21.7;
 
-function mouthShapes(kind) {
+function mouthShapes(kind, sk) {
   const x = FACE_X;
+  const LIP = sk.lipDk;
+  const MOUTH = sk.mouthIn;
   switch (kind) {
     case 'open': return [F(E(x, 22.9, 1.1, 0.9, MOUTH)), F(E(x, 23.4, 0.6, 0.35, '#ff9fb8'))];
-    case 'smirk': return [stroke([[x - 1.4, MY + 0.5], [x + 0.4, MY + 0.6], [x + 1.6, MY - 0.4]], 0.55, LIP)];
-    case 'tongue': return [arc(x, MY, 1.4, 1.1, 20, 160, 0.55, LIP), F(E(x + 0.5, MY + 1.3, 0.75, 0.85, TONGUE)), F(R(x + 0.45, MY + 1, 0.15, 0.9, '#e86d8c'))];
+    case 'smirk': return [stroke([[x - 1.4, MY + 0.5], [x + 0.4, MY + 0.6], [x + 1.6, MY - 0.4]], 0.62, LIP)];
+    case 'tongue': return [arc(x, MY, 1.4, 1.1, 20, 160, 0.62, LIP), F(E(x + 0.5, MY + 1.3, 0.75, 0.85, TONGUE)), F(R(x + 0.45, MY + 1, 0.15, 0.9, '#e86d8c'))];
     case 'bigtongue': return [F(T([[x - 1.6, MY + 0.2], [x + 1.6, MY + 0.2], [x + 1, MY + 1.4], [x - 1, MY + 1.4]], MOUTH)), F(E(x + 0.4, MY + 1.8, 0.9, 1.1, TONGUE))];
     case 'grin': return [F(T([[x - 2, MY - 0.2], [x + 2, MY - 0.2], [x + 1.4, MY + 1.4], [x, MY + 2], [x - 1.4, MY + 1.4]], MOUTH)), F(R(x - 1.7, MY - 0.2, 3.4, 0.6, '#ffffff')), F(E(x, MY + 1.4, 0.8, 0.4, '#ff9fb8'))];
-    case 'pout': return [arc(x, MY + 0.9, 0.8, 0.7, 200, 340, 0.5, LIP), arc(x, MY + 0.9, 0.8, 0.7, 20, 160, 0.5, LIP)];
-    case 'wavy': return [stroke([[x - 1.6, MY + 0.6], [x - 0.8, MY + 0.1], [x, MY + 0.6], [x + 0.8, MY + 0.1], [x + 1.6, MY + 0.6]], 0.5, LIP)];
-    case 'flat': return [F(R(x - 1, MY + 0.4, 2, 0.5, LIP))];
-    case 'cat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.5, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.5, LIP)];
+    case 'pout': return [arc(x, MY + 0.9, 0.8, 0.7, 200, 340, 0.6, LIP), arc(x, MY + 0.9, 0.8, 0.7, 20, 160, 0.6, LIP)];
+    case 'wavy': return [stroke([[x - 1.6, MY + 0.6], [x - 0.8, MY + 0.1], [x, MY + 0.6], [x + 0.8, MY + 0.1], [x + 1.6, MY + 0.6]], 0.6, LIP)];
+    case 'flat': return [F(R(x - 1, MY + 0.4, 2, 0.6, LIP))];
+    case 'cat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP)];
     case 'grit': return [F(R(x - 1.8, MY, 3.6, 1.5, MOUTH)), F(R(x - 1.5, MY + 0.3, 3, 0.9, '#ffffff')), F(R(x - 1.5, MY + 0.7, 3, 0.15, '#d9cde6'))];
     case 'yell': return [F(E(x, MY + 1, 1.8, 1.5, MOUTH)), F(E(x, MY + 1.8, 1, 0.6, '#ff9fb8'))];
-    case 'tiny': return [arc(x, MY + 0.2, 0.8, 0.7, 25, 155, 0.5, LIP)];
-    default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.55, LIP)];
+    case 'tiny': return [arc(x, MY + 0.2, 0.8, 0.7, 25, 155, 0.6, LIP)];
+    default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
 }
 
@@ -525,7 +683,9 @@ export function faceFrame(kind, time) {
 
 function headShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
+  const sk = skinRamp(skin);
   const hair = look.hairColor ?? '#e9ebfa';
+  const hr = hairRamp(hair);
   const style = hairStyleOf(look);
   const eyeStyle = look.eyeStyle ?? 'sparkle';
   const eyeColor = look.eyeColor ?? '#4fcfb8';
@@ -533,33 +693,43 @@ function headShapes(look, g, rig) {
   const tucked = hatTucks(hat);
   const m = motionOf(rig);
   const out = [];
-  if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairLift).filter((sh) => !sh.hang));
+  if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairTip ?? rig.hair, rig.hairLift).filter((sh) => !sh.hang));
   if (hat) out.push(...hatBackShapes(hat.design, hat.color, hat, m));
   // Facing the screen: a round head with soft full cheeks, an ear peeking out on each side, big
-  // eyes set low and wide apart, blush under each eye and a small mouth in the middle.
-  for (const ex of [5.6, 25.4]) out.push(L(E(ex, 18, 1.8, 2.3, skin)), F(E(ex, 18.2, 0.7, 1.2, '#f4bfcb')));
-  out.push(L(E(FACE_X, 15, 10.2, 9.8, skin)), L(E(FACE_X, 19, 9.4, 5.8, skin)));
+  // eyes set low and wide apart, blush under each eye and a small mouth in the middle. The skin
+  // is flat colour from its own ramp: the light comes from the upper front (the facing side, on
+  // the right), so the back ear and a thin crescent down the back of the face sit in shadow.
+  out.push(F(E(5.6, 18, 1.8, 2.3, sk.sh1)), F(E(5.8, 18.3, 0.7, 1.2, sk.sh2)));
+  out.push(F(E(25.4, 18, 1.8, 2.3, skin)), F(E(25.2, 18.3, 0.7, 1.2, sk.sh1)));
+  out.push(F(E(FACE_X, 15, 10.2, 9.8, sk.sh1)), F(E(FACE_X, 19, 9.4, 5.8, sk.sh1)));
+  out.push(F(E(FACE_X + 0.6, 15, 9.6, 9.8, skin)), F(E(FACE_X + 0.5, 19, 8.9, 5.8, skin)));
   const f = rig.face ?? {};
-  if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(L(E(cx, 20.8, 2.8, 2.6, skin)));
-  // Eyes: hurt and blinks win over the expression; otherwise the expression may close one or
-  // both eyes, lower the lids, or glance aside.
-  [-1, 1].forEach((side, i) => {
-    const mode = rig.eyes !== 'open' ? rig.eyes : f.closed?.[i] ? 'happy' : 'open';
-    out.push(...eye(FACE_X + 4.3 * side, side, eyeStyle, eyeColor, mode, skin, f.lid ?? 0, f.glance ?? 0, f.shine));
-  });
+  if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(F(E(cx, 20.8, 2.8, 2.6, skin)));
+  // The bangs' shadow on the forehead (under the eyes, so lashes stay on top).
+  const front = hatHidesBangs(hat) ? null : hairFront(style, hair, rig.hairTip ?? rig.hair, look.face ?? 'smile');
+  if (front) out.push(...front.shade.map((sh) => ({ ...sh, c: sk.sh1 })));
+  // Blush: a soft two-tone patch on each cheek, clear of the eyes; flustered faces add hatching.
   const blush = f.blush ?? 1;
   for (const side of [-1, 1]) {
-    const bx = FACE_X + 6.3 * side;
-    out.push(F(E(bx, 21.8, 1.7 * blush, 0.7 * blush, blush > 1 ? '#f7a8bb' : '#f9c3cf')));
-    if (blush > 1) for (const k of [-1, 0, 1]) out.push(stroke([[bx + k * 1 - 0.3, 22.4], [bx + k * 1 + 0.3, 21.2]], 0.4, '#e2788f'));
+    const bx = FACE_X + 6.1 * side;
+    const k = side < 0 ? 0.8 : 1;
+    out.push(F(E(bx, 21.9, 1.8 * blush * k, 0.75 * blush, mix(skin, sk.blush, 0.55))), F(E(bx, 21.9, 1.0 * blush * k, 0.42 * blush, sk.blush)));
+    if (blush > 1) for (const j of [-1, 0, 1]) out.push(stroke([[bx + j * 1 - 0.3, 22.4], [bx + j * 1 + 0.3, 21.2]], 0.5, sk.blushDk));
   }
-  if (rig.eyes === 'hurt') out.push(F(E(FACE_X, 23, 1, 0.7, INK)));
-  else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile'));
-  if (!hatHidesBangs(hat)) out.push(...hairFront(style, hair, rig.hair, look.face ?? 'smile'));
+  // Eyes: hurt and blinks win over the expression; otherwise the expression may close one or
+  // both eyes, lower the lids, or glance aside. Angry faces pull the inner lids down.
+  const cross = look.face === 'angry' ? 0.9 : 0;
+  [-1, 1].forEach((side, i) => {
+    const mode = rig.eyes !== 'open' ? rig.eyes : f.closed?.[i] ? 'happy' : 'open';
+    out.push(...eye(FACE_X + EYE_DX * side, side, eyeStyle, eyeColor, mode, look, f.lid ?? 0, f.glance ?? 0, f.shine, cross));
+  });
+  if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', sk));
+  else if (rig.eyes === 'dead') out.push(...mouthShapes('open', sk));
+  else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile', sk));
+  if (front) out.push(...front);
   if (f.brows) {
-    const bc = mix(shade(hair, -30), INK, 0.35);
     // The eye-cover lock hides that side's brow.
-    [-1, 1].forEach((side, i) => (style === 'eyecover' && side > 0) || out.push(brow(FACE_X + 4.3 * side, side, f.brows[i][0], f.brows[i][1], bc)));
+    [-1, 1].forEach((side, i) => (style === 'eyecover' && side > 0) || out.push(brow(FACE_X + EYE_DX * side, side, f.brows[i][0], f.brows[i][1], hr.brow)));
   }
   if (f.extra) out.push(...faceExtras(f.extra));
   if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
@@ -644,7 +814,7 @@ function bodyShapes(look, g, rig) {
   const hat = g.hat;
   let hang = [];
   if (!hatTucks(hat)) {
-    hang = hairBack(hairStyleOf(look), look.hairColor ?? '#e9ebfa', rig.hair, rig.hairLift).filter((sh) => sh.hang);
+    hang = hairBack(hairStyleOf(look), look.hairColor ?? '#e9ebfa', rig.hair, rig.hairTip ?? rig.hair, rig.hairLift).filter((sh) => sh.hang);
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
@@ -653,7 +823,9 @@ function bodyShapes(look, g, rig) {
   shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
   const skirt = skirtShapes(g.bottom.design, g.bottom.color, g.bottom, m);
   if (skirt) shapes.push(...offset(skirt, ux, uy));
-  shapes.push(...offset([R(14.3, 22.6, 2.8, 4.8, shadowTone(skin))], ux, uy));
+  // The neck sits in the head's shadow, darkest right under the chin so the jaw reads.
+  const sk = skinRamp(skin);
+  shapes.push(...offset([F(R(14.3, 22.6, 2.8, 4.8, sk.sh1)), F(R(14.3, 22.6, 2.8, 3.1, sk.sh2))], ux, uy));
   shapes.push(...offset(topShapes(top.design, top.color, top, m), ux, uy));
   if (g.cape) shapes.push(...offset(capeFrontShapes(g.cape.design, g.cape.color, g.cape, m), ux, uy));
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
@@ -701,11 +873,11 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   if (g.cape?.family) body.push(...capeShapes(g.cape.design, g.cape.color, 0, rig.flap, g.cape, motionOf(rig)));
   else if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[8.6, 26], [22.4, 26], [26, 46], [5, 46]], g.cape.color), R(5, 45, 21, 1.2, shade(g.cape.color, -20)));
   if (!hatTucks(g.hat)) {
-    const back = hairBack(style, hair, 0, 0);
+    const back = hairBack(style, hair, 0, 0, 0);
     out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));
   }
-  out.push(E(HEAD_X, 13.6, 12, 11.2, hair), E(HEAD_X, 20.4, 9.8, 4, hair));
-  out.push(arc(HEAD_X, 10, 9, 5.6, 210, 330, 1.1, mix(hair, '#ffffff', 0.45)));
+  const hr = hairRamp(hair);
+  out.push(F(E(HEAD_X, 13.6, 12, 11.2, hair)), F(E(HEAD_X, 20.4, 9.8, 4, hr.sh1)), ...halo(HEAD_X, 10, 9, 5.6, 210, 330, 1.1, hr.hi));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
@@ -718,27 +890,41 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
 
 // ---------- Pose solving ----------
 
-// Walk cycle: frames per two steps. Each foot spends 60% of the cycle planted, sliding back from
-// heel strike (toe up) to toe-off (heel rolling up); then the heel kicks up behind, the knee
-// swings through, and the foot reaches forward to land again. The body sinks a little whenever the
-// planted feet are spread, and the arms counter-swing with a soft elbow.
+// Walk and run cycles: frames per two steps. Each foot is planted from heel strike (toe up) to
+// toe-off (heel rolling up) and slides back exactly as fast as the ground goes by: over its
+// stance it travels the ground covered in that time (the animator's stride for this gait), so
+// feet never skate. Then the heel kicks up behind, the knee swings through, and the foot reaches
+// forward to land again. Walking, a foot is planted 60% of the cycle (both feet down between
+// steps) and the hips sink when the feet are spread; running, only 30%, so there's a moment with
+// both feet off the ground after every push-off, and the hips compress through each stance.
 const WALK_FRAMES = 24;
-const HALF_STRIDE = 7.5;
-const KICK = 6;
-const STANCE = 0.6;
 const LEG = THIGH + SHIN;
 const REST_LEG = ANKLE_Y - HIP_Y;
+const lerp = (a, b, t) => a + (b - a) * t;
+// The legs are drawn on the full-size figure and narrowed by KX, so a planted foot's offset in
+// figure units is the ground distance divided by KX.
+const gaitShape = (gait) => {
+  const stance = lerp(0.6, 0.3, gait);
+  return { stance, half: (strideAt(gait) * stance) / 2 / KX, kick: lerp(4.2, 6.5, gait) };
+};
 
 // Ankle offset and foot tilt for one leg at walk phase p (0 = heel strike).
-function walkLeg(p) {
-  if (p < STANCE) {
-    const u = p / STANCE;
+function walkLeg(p, { stance, half, kick }) {
+  if (p < stance) {
+    const u = p / stance;
     const roll = u > 0.7 ? (u - 0.7) / 0.3 : 0;
     const tilt = u < 0.15 ? 16 * (1 - u / 0.15) : -30 * roll;
-    return [HALF_STRIDE - 2 * HALF_STRIDE * u, -1.6 * roll, tilt];
+    return [half - 2 * half * u, -1.6 * roll, tilt];
   }
-  const v = (p - STANCE) / (1 - STANCE);
-  return [-HALF_STRIDE + 2 * HALF_STRIDE * (0.5 - 0.5 * Math.cos(Math.PI * v)), -KICK * Math.sin(Math.PI * v ** 0.7), -30 * (1 - v) ** 2 + 14 * v ** 3];
+  const v = (p - stance) / (1 - stance);
+  return [-half + 2 * half * (0.5 - 0.5 * Math.cos(Math.PI * v)), -kick * Math.sin(Math.PI * v ** 0.7), -30 * (1 - v) ** 2 + 14 * v ** 3];
+}
+
+// How high a running body floats between steps (0-1): zero while a foot is planted.
+function flightAt(p, G) {
+  const u = (p * 2) % 1;
+  const st2 = G.stance * 2;
+  return u >= st2 ? Math.sin((Math.PI * (u - st2)) / (1 - st2)) : 0;
 }
 
 const legKey = ([dx, dy, tilt]) => [q(dx), q(dy), Math.round(tilt / 2) * 2];
@@ -764,10 +950,13 @@ function baseRig() {
   };
 }
 
-// An idle breath, 0 (out) to 1 (in), over one cycle of u: a slow swell, a quicker letting go.
+// An idle breath, 0 (out) to 1 (in), over one cycle of u: a slow swell, a held beat at the top,
+// then a quicker letting go.
 function breath(u) {
   const b = ((u % 1) + 1) % 1;
-  return b < 0.62 ? 0.5 - 0.5 * Math.cos((b / 0.62) * Math.PI) : 0.5 + 0.5 * Math.cos(((b - 0.62) / 0.38) * Math.PI);
+  if (b < 0.5) return 0.5 - 0.5 * Math.cos((b / 0.5) * Math.PI);
+  if (b < 0.64) return 1;
+  return 0.5 + 0.5 * Math.cos(((b - 0.64) / 0.36) * Math.PI);
 }
 
 function solveRig(state, anim, mv = null) {
@@ -776,6 +965,8 @@ function solveRig(state, anim, mv = null) {
   const t = time + seed * 1.37;
   // Without a spring (NPCs, menus) the hair still sways, its tips a beat behind the breath.
   r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.4 - 1.4) * 0.35) * 2) / 2;
+  // The tips follow the root a beat later (a chain), and swing a little further.
+  r.hairTip = Math.round((anim ? Math.max(-4, Math.min(4, anim.hairTip ?? anim.hair)) : Math.sin(t * 1.3 - 0.9) * 0.75 + Math.sin(t * 2.4 - 2.4) * 0.4) * 2) / 2;
   r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
   r.flap = Math.floor(t * (pose === 'jump' ? 10 : 4)) % 2 === 0;
   // A blink every few seconds, slightly offset per character.
@@ -792,18 +983,23 @@ function solveRig(state, anim, mv = null) {
   if (pose === 'walk') {
     const phase = anim ? walkPhase(anim) : (t * 0.9) % 1;
     const p = (Math.round(phase * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
-    const front = walkLeg(p);
-    const back = walkLeg((p + 0.5) % 1);
+    const gait = anim ? Math.round(anim.gait * 4) / 4 : 0;
+    const G = gaitShape(gait);
+    const front = walkLeg(p, G);
+    const back = walkLeg((p + 0.5) % 1, G);
     r.frontLeg = legKey(front);
     r.backLeg = legKey(back);
     // Each arm swings against the leg on its side; the hand lifts at the ends of the swing.
-    // Arms pump hard against the legs, fists lifting at the ends of each swing.
-    const hand = ([dx]) => [q(-0.6 * dx), q(-0.9 * (dx / HALF_STRIDE) ** 2)];
+    // Running, the arms pump higher with the elbows bent.
+    const hand = ([dx]) => [q(-0.5 * dx), q(-(0.8 + 1.2 * gait) * (dx / G.half) ** 2 - 1.5 * gait)];
     r.frontArm = hand(front);
     r.backArm = hand(back);
-    // The body bobs on a triangle wave (see drawHeroBody); the head rides a step behind it.
+    // Running, the hips give a little through each stance (the float is drawn in drawHeroBody).
+    const u = (p * 2) % 1;
+    if (u < G.stance * 2) r.squat = q(gait * 1.2 * Math.sin((Math.PI * u) / (G.stance * 2)));
+    // The head rides a step behind the body's bob.
     r.hy = q(0.9 * (walkBob(p) - walkBob(p, 0.14)));
-    r.tx = q(1);
+    r.tx = q(1 + 0.5 * gait);
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
     r.air = true;
@@ -865,12 +1061,28 @@ function solveRig(state, anim, mv = null) {
     r.backArm = [-k, 1];
   }
 
+  // Hurt: the first beat is held at the most squashed, leaning hard away from the blow, then the
+  // body wobbles back like jelly (hurtK runs 1 -> overshoot -> 0, see drawHeroBody).
   if (hurt) {
-    r.tx = -1;
-    r.hx = -1;
+    const k = state.hurtK ?? 0.7;
+    r.tx = q(-1.6 * k);
+    r.hx = q(-1.2 * k);
+    r.hy = q(0.8 * Math.max(0, k));
+    r.squat = k > 0.5 ? 1 : 0;
     r.eyes = 'hurt';
-    r.frontArm = [-1, -2];
-    r.backArm = [-2, -2];
+    r.frontArm = [q(-1 - k), q(-1 - 1.5 * k)];
+    r.backArm = [q(-2 - k), q(-1 - 1.5 * k)];
+    r.hairLift = k > 0.5 ? -1 : 0;
+  }
+
+  // Knocked out (a fallen party member): limp, eyes shut, mouth open.
+  if (state.down) {
+    r.eyes = 'dead';
+    r.frontArm = [2, -1];
+    r.backArm = [-2, -1];
+    r.frontLeg = [1.5, 0, 10];
+    r.backLeg = [-1.5, 0, -10];
+    r.hairLift = 0;
   }
 
   // Attack and skill moves shape the body on top of everything else.
@@ -879,7 +1091,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
@@ -905,7 +1117,7 @@ function weaponSprite(w, time) {
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
   const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
+  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
   return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live };
 }
 
@@ -1102,15 +1314,35 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   // Walking, the whole body leans into the run and rises a little at each passing step.
   let mv = moved;
   if (!moved && pose === 'walk' && anim) {
-    const p = walkPhase(anim);
-    mv = { lift: walkBob(p) * 1.4, lunge: 0, tilt: 0.07, turn: 1, stretch: 1, bodyOnly: true };
+    // Walking, the body leans in a little; running, more, and it floats between steps (the whole
+    // figure lifts, both feet off the ground) with a touch of stretch.
+    const p = (Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
+    const gait = Math.round(anim.gait * 4) / 4;
+    const fly = flightAt(p, gaitShape(gait)) * gait;
+    mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait, turn: 1, stretch: 1 + 0.03 * fly, bodyOnly: true };
+  }
+  // Hurt timing: hold the hit pose for a beat, then a decaying wobble back.
+  let hx = 1;
+  let hy = 1;
+  if (anim) {
+    if (state.hurt) {
+      if (!anim.hurtOn) anim.hurtAt = state.time ?? 0;
+      const e = Math.max(0, (state.time ?? 0) - anim.hurtAt);
+      const k = e < 0.09 ? 1 : Math.exp(-(e - 0.09) * 7) * Math.cos((e - 0.09) * 26);
+      state = { ...state, hurtK: Math.round(k * 4) / 4 };
+      hx = 1 + 0.1 * k;
+      hy = 1 - 0.1 * k;
+    }
+    anim.hurtOn = Boolean(state.hurt);
   }
   // Take-off stretch and landing squash (from the animator), about the feet.
-  const sq = anim && (anim.sqx !== 1 || anim.sqy !== 1);
+  const sx = (anim?.sqx ?? 1) * hx;
+  const sy = (anim?.sqy ?? 1) * hy;
+  const sq = sx !== 1 || sy !== 1;
   if (sq) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(anim.sqx, anim.sqy);
+    ctx.scale(sx, sy);
     ctx.translate(-x, -y);
   }
   drawMoved(ctx, look, gear, x, y, state, anim, mv, moved);
@@ -1145,7 +1377,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
-  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true }));
+  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
@@ -1236,13 +1468,13 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (!attack) {
     if (!wpn) return;
     drawWeapon();
-    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true }));
+    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return;
   }
   drawWeapon();
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: true }));
+  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 

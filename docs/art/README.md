@@ -43,6 +43,13 @@ carry an improvement across every part of the game it applies to.
   specular corner. Cloth: one back shadow, no highlight. Gems: inverted (dark near the light).
   Upright parts shade on the back, wide parts underneath. Step ramps by chroma, not HSL saturation,
   or pale tints turn into strong peaches and lilacs in shadow.
+- Skin and hair ramps by multiplying with a tint (`hero.js` `skinRamp`, `hairRamp`): the shadow
+  darkens and rotates hue in one step and works for every tone from pale to deep brown (the
+  lavender `shadowTone` turns tan skin grey). Draw such faces flat (F) and place the shadows by hand.
+- Form shadow on round monster parts: a crescent on the back and underside whose inner edge is the
+  same oval nudged toward the upper-front light and tapered to nothing at both ends (never a ring);
+  notch that edge for fur. Ramps from `ramp()` in `mobs/meadow.js` (hue turns toward violet in
+  shadow; pastels need negative `sat` or the shadows go garish).
 - Minimum readable line is 2/3 of an art pixel; no stray single pixels; snap feature anchors to the
   1/3-pixel grid so faces don't flicker as heads bob.
 
@@ -51,6 +58,11 @@ carry an improvement across every part of the game it applies to.
   band across the crown, back hair one shade darker, flaring out below the jaw.
 - Motion: the root leads and the tip follows; layers offset by about a frame; tips trace a
   figure-8; never ping-pong the same frames.
+- Separate clumps by drawing each lock over a copy of its lower half in shadow 1, nudged down and
+  back: it shows only where clumps overlap and at the tips (no stripes). Bangs cast a copy of
+  themselves (plus the hairline) 1 px down in skin shadow, drawn under the eyes.
+- A two-link hair chain is enough: a root spring on the body and a softer tip spring chasing it;
+  points blend from root to tip by depth (`b`, `b²`) and lift a little when they disagree.
 
 **Animation**
 - Attacks: wind-up held, a short strike, a held impact, then settle (MapleStory: 300/150/350 ms).
@@ -63,6 +75,9 @@ carry an improvement across every part of the game it applies to.
 - Cycles keep a fixed length however many frames they have; walkers step with the ground they
   cover (`stride`), so feet never slide.
 - Springs are solved exactly so hair and capes move the same at any frame rate.
+- Chibi legs are too short to cover a run's ground at a calm cadence: give the run a short stance
+  (30%) with a float between steps and the walk a long one (60%), and a stride per gait so the
+  planted foot travels exactly the ground covered (`animator.js` `strideAt`, legs narrowed by KX).
 - Wing beats are keyed, not a sine: hold at the top, a fast downstroke, a slow recovery; each wing
   bone takes the beat a little later than the one before it, and the body rises a beat after the
   push (`summons.js` `beat`). Summons and companions that shoot on a timer wind up while the next
