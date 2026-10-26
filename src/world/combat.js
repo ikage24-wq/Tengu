@@ -239,7 +239,10 @@ export function cast(world, skillId, rng = Math.random) {
   if (!params.projectile && type !== 'blink') {
     const box = hitBox(body, area);
     world.fx.push({ kind: fxKind, ...look, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: ultimate ? 0.9 : SWEEPS[fxKind] ?? 0.3, element });
-    if (ultimate) world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
+    if (ultimate) {
+      world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
+      world.fx.push({ kind: 'ultcue', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.7 });
+    }
     if (SHAKY.has(fxKind)) world.juice?.push({ type: 'shake', mag: 1.5, dur: 0.25, delay: 0.1 });
   }
   // Chain lightning: one bolt that hops from the caster through each target in turn.

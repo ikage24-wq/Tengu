@@ -189,7 +189,10 @@ function land(world, s) {
     const mid = s.of > 2 && s.n > 0 && s.n < s.of - 1 && !s.big;
     const stop = s.stop ?? (s.finisher ? 0.07 : 0.035);
     if (!mid) world.hitstop = Math.max(world.hitstop, Math.min(MAX_STOP, stop));
-    if (stop > MAX_STOP) world.slowmo = Math.max(world.slowmo ?? 0, 0.1 + (stop - MAX_STOP) * 2);
+    if (stop > MAX_STOP) {
+      world.slowmo = Math.max(world.slowmo ?? 0, 0.1 + (stop - MAX_STOP) * 2);
+      world.fx.push({ kind: 'tint', x: 0, y: 0, t: 0, dur: 0.05 });
+    }
     if (s.shake) {
       world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });
       world.juice.push({ type: 'kick', x: s.dir * Math.min(4, 1 + s.shake * 0.6), y: s.crack ? 2 : 0 });

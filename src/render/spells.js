@@ -3,6 +3,8 @@
 // needs no state. (x, y) is the effect's anchor in screen space: a monster's feet for per-target
 // effects, the caster's feet otherwise; `f.box` (world space) is the spell's area when it has one.
 
+import { inked, deep, shock, bloom, ghost } from './fxkit.js';
+
 const TAU = Math.PI * 2;
 
 export const SCHOOL_COLORS = {
@@ -51,8 +53,10 @@ function glow(ctx, x, y, r, color, a) {
   ctx.restore();
 }
 
-// A jagged lightning path from (x1, y1) to (x2, y2), drawn as a white core with a colored glow.
-function bolt(ctx, x1, y1, x2, y2, seed, color, width = 3, segs = 7) {
+// A jagged lightning path from (x1, y1) to (x2, y2): a white core inside a colored stroke on a
+// deep rim (no blur; the HD glow layer lights it). `fresh` draws the strike's first drawings
+// all white and fatter, the way lightning is brightest the instant it hits.
+function bolt(ctx, x1, y1, x2, y2, seed, color, width = 3, segs = 7, fresh = false) {
   const pts = [[x1, y1]];
   const len = Math.hypot(x2 - x1, y2 - y1);
   const nx = -(y2 - y1) / (len || 1);
@@ -63,32 +67,41 @@ function bolt(ctx, x1, y1, x2, y2, seed, color, width = 3, segs = 7) {
     pts.push([x1 + (x2 - x1) * k + nx * off, y1 + (y2 - y1) * k + ny * off]);
   }
   pts.push([x2, y2]);
+  const w = fresh ? width * 1.5 : width;
   ctx.save();
-  ctx.lineJoin = 'round';
+  ctx.lineJoin = 'miter';
   ctx.lineCap = 'round';
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 10;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width + 3;
-  ctx.globalAlpha *= 0.6;
   ctx.beginPath();
   pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+  if (inked(ctx)) {
+    ctx.strokeStyle = deep(color);
+    ctx.lineWidth = w + 4.5;
+    ctx.stroke();
+  }
+  ctx.strokeStyle = fresh ? '#ffffff' : color;
+  ctx.lineWidth = w + 2.5;
   ctx.stroke();
-  ctx.globalAlpha /= 0.6;
-  ctx.shadowBlur = 0;
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = width;
+  ctx.lineWidth = w;
   ctx.stroke();
   // A forked branch off the middle.
   const [mx, my] = pts[Math.floor(segs / 2)];
-  ctx.lineWidth = Math.max(1, width - 1.5);
-  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1, w - 1.5);
+  ctx.strokeStyle = fresh ? '#ffffff' : color;
   ctx.beginPath();
   ctx.moveTo(mx, my);
   ctx.lineTo(mx + nx * 14 * (rand(seed) > 0.5 ? 1 : -1) + (x2 - x1) * 0.08, my + 10);
   ctx.stroke();
   ctx.restore();
 }
+
+// Lightning timing, from the effect's age in seconds: the path jumps to a new shape every two
+// ticks, the first two drawings are white-hot, and now and then a drawing is left blank, so it
+// crackles instead of sliding.
+const zap = (t) => {
+  const tick = Math.floor(t * 60);
+  return { seed: Math.floor(t * 30), fresh: tick < 2, blank: tick > 3 && tick % 5 === 2 };
+};
 
 // A spinning magic circle laid flat on the ground: two rings, rune ticks, and a star.
 function circle(ctx, x, y, r, rot, color, light, a, points = 6) {
@@ -354,6 +367,14 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
         const px = x + (tx - x) * ((k + p * 0.6) % 1);
         sparkle(ctx, px, y - 8 - rand(i) * 34, 3 * (1 - p) + 0.5, i % 2 ? '#ffffff' : c.main);
       }
+      // Afterimages along the path, the oldest vanishing first.
+      for (let i = 0; i < 3; i++) {
+        const left = 0.18 + i * 0.1 - p;
+        if (left <= 0) continue;
+        ctx.globalAlpha = 0.75;
+        ghost(ctx, x + (tx - x) * (0.25 + i * 0.25), y, 0.9 * Math.min(1, left / 0.08), i === 2 ? '#ffffff' : c.main);
+      }
+      ctx.globalAlpha = 1 - p;
       // A shrinking burst at the spot you left.
       ctx.strokeStyle = c.light;
       ctx.lineWidth = 2;
@@ -441,9 +462,15 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
       }
       // A thunderbolt smashes down onto each monster, then crackles over it.
       const cy = y - (f.h ?? 24) / 2;
-      if (p < 0.55) {
-        ctx.globalAlpha = 1 - p / 0.55;
-        bolt(ctx, x + (f.seed - 0.5) * 50, y - 170, x, cy, f.seed * 100 + Math.floor(p * 12), c.main, 3.5, 9);
+      const z = zap(f.t);
+      if (f.t >= 0 && p < 0.55 && !z.blank) {
+        ctx.globalAlpha = z.fresh ? 1 : 1 - p / 0.55;
+        bolt(ctx, x + (f.seed - 0.5) * 50, y - 170, x, cy, f.seed * 100 + z.seed, c.main, 3.5, 9, z.fresh);
+      }
+      // Where it strikes: a dark ring for a moment, then the crackle.
+      if (f.t >= 0 && f.t < 3 / 60) {
+        ctx.globalAlpha = 1;
+        shock(ctx, x, cy, 14, 10, 4, deep(c.deep));
       }
       glow(ctx, x, cy, 26 * (1 - p) + 4, c.main, 1 - p);
       ctx.globalAlpha = 1 - p;
@@ -462,8 +489,9 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
       for (let i = 0; i < shown; i++) {
         const age = p - i / (hops * 2.2);
         ctx.globalAlpha = Math.max(0, 1 - age * 1.6);
-        const flick = Math.floor(time * 30);
-        bolt(ctx, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, f.seed * 50 + i * 7 + flick, c.deep, 2.5, 6);
+        const z = zap(age * f.dur);
+        if (z.blank) continue;
+        bolt(ctx, pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, f.seed * 50 + i * 7 + z.seed, c.deep, 2.5, 6, z.fresh);
         glow(ctx, pts[i + 1].x, pts[i + 1].y, 18, c.main, ctx.globalAlpha);
       }
       return true;
@@ -621,6 +649,9 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
       ctx.fillRect(x - 1.5, cy - s, 3, s * 2);
       ctx.fillRect(x - s, cy - 1.5, s * 2, 3);
       sparkle(ctx, x, cy, 9 * (1 - p) + 2, c.main);
+      // Holy light lands in rounded petals rather than spikes.
+      ctx.globalAlpha = 1;
+      bloom(ctx, x, cy, 14 * ease(Math.min(1, p * 3)), 5, 0.3 + p, c.main, '#ffffff', p * 2);
       return true;
     }
     case 'tempest': {
@@ -678,9 +709,10 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
         ctx.restore();
       } else {
         const k = (p - hit) / (1 - hit);
-        if (k < 0.4) {
-          ctx.globalAlpha = 1 - k / 0.4;
-          bolt(ctx, x + (f.seed - 0.5) * 30, cy - 160, x, cy, f.seed * 40 + Math.floor(k * 10), '#ffe86b', 3, 8);
+        const z = zap(k * (1 - hit) * f.dur);
+        if (k < 0.4 && !z.blank) {
+          ctx.globalAlpha = z.fresh ? 1 : 1 - k / 0.4;
+          bolt(ctx, x + (f.seed - 0.5) * 30, cy - 160, x, cy, f.seed * 40 + z.seed, '#ffe86b', 3, 8, z.fresh);
         }
         ctx.globalAlpha = 1 - k;
         spike(ctx, x - 9, y + 2, 4, 22, 1 - k * 0.5, -3);

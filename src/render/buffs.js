@@ -2,6 +2,9 @@
 // front of the hero, even while moving), and a cast moment when it goes up: a burst shaped for the
 // skill, with its name popping over your head. Everything is drawn from time alone.
 
+import { haloStroke, shock } from './fxkit.js';
+import { font } from '../ui/kit.js';
+
 const TAU = Math.PI * 2;
 const hash = (n) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -402,14 +405,12 @@ export const BUFF_LOOKS = {
         ctx.save();
         ctx.globalAlpha = a * Math.sin(u * Math.PI);
         ctx.strokeStyle = '#dff0ff';
-        ctx.shadowColor = '#7fb8ff';
-        ctx.shadowBlur = 6;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x - 13, cy + 6);
         ctx.lineTo(x, cy);
         ctx.lineTo(x + 13, cy + 6);
-        ctx.stroke();
+        haloStroke(ctx, '#7fb8ff');
         ctx.restore();
       }
     },
@@ -496,15 +497,13 @@ export const BUFF_LOOKS = {
         ctx.save();
         ctx.globalAlpha = a;
         ctx.strokeStyle = '#fffbe0';
-        ctx.shadowColor = '#ffe86b';
-        ctx.shadowBlur = 6;
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(sx, sy);
         ctx.lineTo(sx + 4, sy + 3);
         ctx.lineTo(sx + 1, sy + 5);
         ctx.lineTo(sx + 6, sy + 9);
-        ctx.stroke();
+        haloStroke(ctx, '#ffe86b');
         ctx.restore();
       }
     },
@@ -906,6 +905,21 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   const fade = 1 - p;
   const e = easeOut(Math.min(1, p * 1.6));
   ctx.save();
+  // The moment it goes up, in order: a round white pop at the chest for two drawings, then a
+  // ring of the buff's color snapping out along the ground, then its own shape.
+  const t = f.t;
+  if (t < 2 / 60) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x, y - 26, 12, 0, TAU);
+    ctx.fill();
+  }
+  if (t > 1 / 60 && t < 0.3) {
+    const k = easeOut((t - 1 / 60) / 0.28);
+    ctx.globalAlpha = 1 - k;
+    shock(ctx, x, y - 1, 8 + 38 * k, 2 + 8 * k, 4 * (1 - k) + 0.5, c);
+    ctx.globalAlpha = 1;
+  }
   glow(ctx, x, y - 24, 40 * (1 - p * 0.5), c, fade * 0.6);
   switch (look.cast) {
     case 'pillar': case 'shower': case 'dome': case 'summon': {
@@ -971,8 +985,6 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
       if (p < 0.4) {
         ctx.globalAlpha = 1 - p / 0.4;
         ctx.strokeStyle = '#fffbe0';
-        ctx.shadowColor = c;
-        ctx.shadowBlur = 10;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x + 6, y - 130);
@@ -980,7 +992,7 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
         ctx.lineTo(x + 5, y - 70);
         ctx.lineTo(x - 3, y - 40);
         ctx.lineTo(x, y - 24);
-        ctx.stroke();
+        haloStroke(ctx, c);
       }
       ring(ctx, x, y, 30 * e, 7 * e, c, 2, fade);
       break;
@@ -1026,10 +1038,12 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   ctx.restore();
   // The skill's name pops up over your head.
   if (f.name) {
-    const k = Math.min(1, p * 5);
+    // It pops in big, overshoots a touch small, and settles.
+    const k = Math.min(1, p * 9);
+    const pop = 1.5 - 0.5 * (1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2);
     ctx.save();
     ctx.globalAlpha = p > 0.75 ? (1 - p) / 0.25 : 1;
-    ctx.font = `bold ${Math.round(9 + (1 - k) * 4)}px "Trebuchet MS", sans-serif`;
+    ctx.font = font((9 * pop).toFixed(1), true);
     ctx.textAlign = 'center';
     ctx.lineJoin = 'round';
     ctx.lineWidth = 3;

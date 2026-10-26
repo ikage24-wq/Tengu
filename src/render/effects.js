@@ -7,10 +7,10 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
-import { crescent, starFlash, needle, shock, puff, crown, stepped, easeOut, easeIn } from './fxkit.js';
+import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
+import { font } from '../ui/kit.js';
 
-const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
 const SHOT_COLORS = {
   pebble: '#ffc2e0', arrow: '#fff6fb', star: '#dfe6ff', bolt: '#c9b6ff', fire: '#ff9b5c', holy: '#fff3a6',
@@ -83,7 +83,9 @@ function arcSmear(ctx, f, x, y, p) {
   const from = a0 + sweep * tail;
   const to = a0 + sweep * head;
   const el = f.element ? ELEMENTS[f.element] : null;
-  const color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
+  let color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
+  // A heavy blow's very first drawing flashes in the complementary hue, so the eye catches it.
+  if (f.big && f.t < 1.5 / 60) color = color === '#ffb347' ? '#8fc8ff' : '#ffffff';
   const thick = f.thick * (f.big ? 1.25 : 1) * (1.5 - p);
   ctx.save();
   ctx.translate(x, y);
@@ -361,6 +363,12 @@ function impact(ctx, f, x, y, p, time) {
       const s = 6 + p * 10;
       ctx.fillRect(x - 1, cy - s, 3, s * 2);
       ctx.fillRect(x - s * 0.7, cy - s * 0.35, s * 1.4, 3);
+      // Then, once the light has come down, a bloom of round petals opens where it landed.
+      if (p > 0.1) {
+        ctx.globalAlpha = 1;
+        const q = (p - 0.1) / 0.9;
+        bloom(ctx, x, cy, 16 * easeOut(Math.min(1, q * 2.5)), 6, q * 0.8, '#ffe36b', '#ffffff', q * 2);
+      }
       break;
     }
     case 'cosmic': {
@@ -386,8 +394,6 @@ function impact(ctx, f, x, y, p, time) {
       if (p < 0.6) {
         ctx.globalAlpha = 1 - p / 0.6;
         ctx.strokeStyle = '#ffffff';
-        ctx.shadowColor = el.color;
-        ctx.shadowBlur = 10;
         ctx.lineWidth = 3;
         ctx.beginPath();
         let bx = x + (f.seed - 0.5) * 20;
@@ -398,7 +404,7 @@ function impact(ctx, f, x, y, p, time) {
           by = cy - 90 + i * 15;
           ctx.lineTo(bx, by);
         }
-        ctx.stroke();
+        haloStroke(ctx, el.color);
         ctx.strokeStyle = el.color;
         ctx.lineWidth = 1;
         ctx.stroke();
@@ -591,6 +597,46 @@ function impact(ctx, f, x, y, p, time) {
   }
 }
 
+// The ultimate's staging, around the caster (the skill draws its own storm on top): one drawing
+// of a ring flash in the school's color, the view dimming while the power gathers with light
+// streaks rising around the caster, then at the impact two drawings of a flat tint over
+// everything and a starburst over the caster.
+const ULT_IMPACT = 0.4;
+function ultimateCue(ctx, f, x, y) {
+  const c = SCHOOL_COLORS[f.school] ?? SCHOOL_COLORS.arcane;
+  const t = f.t;
+  if (t < 1 / 30) {
+    ctx.globalAlpha = 0.9;
+    shock(ctx, x, y - 26, 26, 34, 5, c.main);
+  }
+  if (t < ULT_IMPACT) {
+    const k = Math.min(1, t / 0.12) * (t > ULT_IMPACT - 0.08 ? (ULT_IMPACT - t) / 0.08 : 1);
+    ctx.globalAlpha = 0.24 * k;
+    ctx.fillStyle = '#2a1d40';
+    ctx.fillRect(0, 0, 640, 360);
+    ctx.globalAlpha = k;
+    for (let i = 0; i < 6; i++) {
+      const u = ((t * 3 + i / 6) % 1);
+      const sx = x + Math.sin(i * 2.4) * 22;
+      const sy = y - 8 - u * 70;
+      ctx.fillStyle = i % 2 ? c.light : c.main;
+      ctx.fillRect(Math.round(sx), Math.round(sy), 1.5, 12 * (1 - u) + 3);
+    }
+    return;
+  }
+  const after = t - ULT_IMPACT;
+  if (after < 2 / 60) {
+    ctx.globalAlpha = 0.32;
+    ctx.fillStyle = c.light;
+    ctx.fillRect(0, 0, 640, 360);
+  }
+  if (after < 0.25) {
+    ctx.globalAlpha = 1;
+    const k = stepped(after / 0.25, 8);
+    starFlash(ctx, x, y - 30, 40 * (k < 0.15 ? 0.5 : 1 - k * 0.6), 8, 0.2, c.main, '#ffffff', 9 * (1 - k));
+  }
+}
+
 function drawFx(ctx, f, cam, time) {
   const p = Math.max(0, Math.min(1, f.t / f.dur));
   const x = f.x - cam.x;
@@ -774,22 +820,74 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'levelup': {
-      ctx.globalAlpha = Math.min(1, 2 * (1 - p));
-      const g = ctx.createLinearGradient(0, y - 140, 0, y);
-      g.addColorStop(0, 'rgba(255,243,166,0)');
-      g.addColorStop(1, 'rgba(255,243,166,0.75)');
-      ctx.fillStyle = g;
-      ctx.fillRect(x - 16, y - 140, 32, 140);
-      for (let i = 0; i < 10; i++) {
-        sparkle(ctx, x - 22 + ((i * 17) % 44), y - ((p * 160 + i * 23) % 140), 3, i % 2 ? '#ffffff' : '#ffe36b');
+      // A sequence, one beat after another: a gold ring bursts along the ground, a column of
+      // light shoots up, "LEVEL UP!" drops in letter by letter with a bounce, and a shine sweeps
+      // across it; motes in the column cycle through the gold ramp.
+      const t = f.t;
+      const out = p > 0.75 ? (1 - p) / 0.25 : 1;
+      if (t < 0.4) {
+        const k = easeOut(t / 0.4);
+        ctx.globalAlpha = 1 - t / 0.4;
+        shock(ctx, x, y - 2, 10 + 46 * k, 3 + 10 * k, 5 * (1 - k) + 1, '#ffe36b');
       }
-      ctx.font = `bold 15px ${FONT}`;
-      ctx.textAlign = 'center';
+      const rise = easeOut(Math.min(1, Math.max(0, (t - 0.08) / 0.25)));
+      if (rise > 0) {
+        const h = 150 * rise;
+        ctx.globalAlpha = out;
+        const g = ctx.createLinearGradient(0, y - h, 0, y);
+        g.addColorStop(0, 'rgba(255,243,166,0)');
+        g.addColorStop(1, 'rgba(255,243,166,0.75)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - 16, y - h, 32, h);
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = out * 0.8;
+        ctx.fillRect(x - 3, y - h * 0.85, 6, h * 0.85);
+        const ramp = ['#ffffff', '#fff3a6', '#ffe36b', '#ffb347', '#ffe36b', '#fff3a6'];
+        const step = Math.floor(time * 12);
+        ctx.globalAlpha = out;
+        for (let i = 0; i < 10; i++) {
+          sparkle(ctx, x - 22 + ((i * 17) % 44), y - ((t * 100 + i * 23) % h), 3, ramp[(i + step) % ramp.length]);
+        }
+      }
+      const word = 'LEVEL UP!';
+      ctx.font = font(15, true);
+      ctx.textAlign = 'left';
       ctx.lineWidth = 4;
       ctx.strokeStyle = '#8f5cc4';
-      ctx.strokeText('LEVEL UP!', x, y - 70 - p * 20);
-      ctx.fillStyle = '#ffe36b';
-      ctx.fillText('LEVEL UP!', x, y - 70 - p * 20);
+      const total = ctx.measureText(word).width;
+      const ty = y - 70 - Math.max(0, t - 0.3) * 12;
+      let lx = x - total / 2;
+      const letters = [];
+      for (let i = 0; i < word.length; i++) {
+        const ch = word[i];
+        const w = ctx.measureText(ch).width;
+        const q = Math.min(1, Math.max(0, (t - 0.25 - i * 0.04) / 0.18));
+        if (q > 0) {
+          const drop = (1 - backOut(q)) * -18;
+          ctx.globalAlpha = Math.min(1, q * 3) * out;
+          ctx.strokeText(ch, lx, ty + drop);
+          ctx.fillStyle = '#ffe36b';
+          ctx.fillText(ch, lx, ty + drop);
+          letters.push([ch, lx]);
+        }
+        lx += w;
+      }
+      // The shine: a slanted white band sweeping across the word.
+      const sweep = (t - 0.75) / 0.35;
+      if (sweep > 0 && sweep < 1) {
+        const sx = x - total / 2 - 10 + (total + 20) * sweep;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(sx - 4, ty - 16);
+        ctx.lineTo(sx + 4, ty - 16);
+        ctx.lineTo(sx - 2, ty + 4);
+        ctx.lineTo(sx - 10, ty + 4);
+        ctx.closePath();
+        ctx.clip();
+        ctx.fillStyle = '#ffffff';
+        for (const [ch, cx] of letters) ctx.fillText(ch, cx, ty);
+        ctx.restore();
+      }
       break;
     }
     case 'spark': {
@@ -811,6 +909,16 @@ function drawFx(ctx, f, cam, time) {
     case 'arc':
       arcSmear(ctx, f, x, y, p);
       break;
+    case 'ultcue':
+      ultimateCue(ctx, f, x, y);
+      break;
+    case 'tint': {
+      // A heavy blow's impact frame: the whole view washes flat in one tone for two drawings.
+      ctx.globalAlpha = f.t < 2 / 60 ? 0.3 : 0;
+      ctx.fillStyle = f.color ?? '#fff3c4';
+      ctx.fillRect(0, 0, 640, 360);
+      break;
+    }
     case 'crack':
       crack(ctx, f, x, y, p);
       break;
@@ -875,18 +983,26 @@ export function drawEffects(ctx, world, cam, time) {
   for (const f of world.fx) drawFx(ctx, f, cam, time);
 }
 
-// The boss's wind-up warning: a pulsing ring on the floor around it.
+// The boss's wind-up warning, a telegraph that reads at a glance: the danger zone pulses on the
+// floor, its edge inked, and a ring gathers inward from the edge, faster and faster, landing on
+// the boss just as the slam comes down.
 export function drawWarnings(ctx, world, cam, time) {
   for (const m of world.mobs) {
     if (!m.special || m.special.warn <= 0) continue;
     const x = m.x - cam.x;
     const y = m.y - cam.y;
+    const r = m.def.special.range;
+    const q = 1 - m.special.warn / (m.def.special.warn || 1);
     ctx.save();
-    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(time * 18);
+    ctx.globalAlpha = (0.25 + 0.2 * Math.sin(time * 18)) * (0.6 + 0.4 * q);
     ctx.fillStyle = '#ff6b8a';
     ctx.beginPath();
-    ctx.ellipse(x, y, m.def.special.range, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y, r, 12, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.globalAlpha = 0.9;
+    shock(ctx, x, y, r, 12, 2, '#ff8fa8');
+    const k = 1 - easeIn(q);
+    shock(ctx, x, y, Math.max(6, r * k), Math.max(2, 12 * k), 1.5 + 2.5 * q, '#ffffff');
     ctx.restore();
   }
 }
@@ -921,7 +1037,7 @@ export function drawNumbers(ctx, world, cam) {
     const y = n.y - cam.y - rise;
     ctx.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
     if (n.crit && age < 0.14) starFlash(ctx, x, y - size * 0.35, (size + 6) * (1 - age / 0.14) + 4, 8, age * 4, '#ffb347', '#fff3c4', 4);
-    ctx.font = `bold ${size}px ${FONT}`;
+    ctx.font = font(size, true);
     ctx.lineWidth = 4;
     ctx.strokeStyle = n.crit ? '#8a3a1f' : '#3a2d4f';
     ctx.strokeText(n.text, x, y);
@@ -948,7 +1064,7 @@ export function drawNumbers(ctx, world, cam) {
     const x = g.x - cam.x;
     const y = g.top - cam.y - 34 - easeOut(Math.min(1, age / 0.5)) * 10;
     ctx.globalAlpha = g.oldest > 0.8 ? Math.max(0, (1.1 - g.oldest) / 0.3) : 1;
-    ctx.font = `bold ${size}px ${FONT}`;
+    ctx.font = font(size, true);
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#5a3f7a';
     const label = `${g.sum.toLocaleString('en-US')}`;
@@ -959,17 +1075,29 @@ export function drawNumbers(ctx, world, cam) {
   ctx.restore();
 }
 
+// Loot plays out in beats: it pops out with a white flash and spins (edge-on and back) while it
+// flies, squashes as it lands, and only then does a rare item's beam of light grow up out of it.
 export function drawDrops(ctx, world, cam, time) {
   for (const d of world.drops) {
-    const bob = d.landed ? Math.sin(time * 3 + d.uid) * 1.5 : 0;
+    if (d.landed) d.landAt ??= d.age;
+    const landed = d.landed ? d.age - d.landAt : -1;
+    const bob = landed > 0.4 ? Math.sin(time * 3 + d.uid) * 1.5 : 0;
     const x = snap(d.x - cam.x);
     const y = snap(d.y - cam.y - 2 + bob);
     // Fade out in the last few seconds before despawning.
-    ctx.globalAlpha = d.age > 84 ? Math.max(0, (90 - d.age) / 6) : 1;
+    const fade = d.age > 84 ? Math.max(0, (90 - d.age) / 6) : 1;
+    ctx.globalAlpha = fade;
     ctx.fillStyle = 'rgba(58,45,79,0.18)';
     ctx.beginPath();
     ctx.ellipse(x, snap(d.y - cam.y), 6, 2, 0, 0, Math.PI * 2);
     ctx.fill();
+    // Spin in the air; squash on the landing, then spring back.
+    const sx = landed < 0 ? Math.max(0.2, Math.abs(Math.cos(d.age * 12))) : landed < 0.14 ? 1.25 - 0.25 * (landed / 0.14) : 1;
+    const sy = landed >= 0 && landed < 0.14 ? 0.72 + 0.28 * easeOut(landed / 0.14) : 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(sx, sy);
+    ctx.translate(-x, -y);
     if (d.kind === 'gold') {
       const big = d.amount >= 100;
       ctx.fillStyle = '#e8a23c';
@@ -985,10 +1113,9 @@ export function drawDrops(ctx, world, cam, time) {
     } else {
       const id = d.inst ? d.inst.id : d.id;
       if (d.inst) {
-        const fade = d.age > 84 ? Math.max(0, (90 - d.age) / 6) : 1;
         const rarity = RARITIES[d.inst.rarity ?? 0];
         const color = rarity.color ?? (ITEMS[id].unique ? '#ff9ec0' : null);
-        if (color && d.landed) lootBeam(ctx, x, y, color, time + d.uid, d.inst.rarity ?? 1, fade);
+        if (color && landed > 0.08) lootBeam(ctx, x, y, color, time + d.uid, d.inst.rarity ?? 1, fade, easeOut(Math.min(1, (landed - 0.08) / 0.25)));
         // Equipment glows so it stands out among the coins.
         ctx.globalAlpha = fade * (0.4 + 0.2 * Math.sin(time * 4 + d.uid));
         sparkle(ctx, x, y - 8, 12, color ?? '#fff3a6');
@@ -996,13 +1123,20 @@ export function drawDrops(ctx, world, cam, time) {
       }
       drawItemIcon(ctx, id, x - 8, y - 16, 1, d.inst?.variant);
     }
+    ctx.restore();
+    // The pop: a white flash where it leaps out.
+    if (d.age < 0.1) {
+      ctx.globalAlpha = 1;
+      starFlash(ctx, x, y - 8, 12 * (1 - d.age / 0.1) + 3, 4, 0.4, '#ffffff', '#ffffff', 3);
+    }
   }
   ctx.globalAlpha = 1;
 }
 
 // A soft column of light over rare loot, taller and brighter for better rarities.
-function lootBeam(ctx, x, y, color, t, rarity, fade) {
-  const h = 40 + rarity * 22;
+function lootBeam(ctx, x, y, color, t, rarity, fade, grow = 1) {
+  const h = (40 + rarity * 22) * grow;
+  if (h < 1) return;
   ctx.save();
   const pulse = 0.75 + 0.25 * Math.sin(t * 3);
   const grad = ctx.createLinearGradient(0, y - h, 0, y);
@@ -1013,10 +1147,11 @@ function lootBeam(ctx, x, y, color, t, rarity, fade) {
   ctx.fillRect(x - 5, y - h, 10, h);
   ctx.globalAlpha = 0.7 * pulse * fade;
   ctx.fillRect(x - 1.5, y - h * 0.8, 3, h * 0.8);
-  // Rising motes inside the beam.
-  ctx.fillStyle = '#ffffff';
+  // Rising motes inside the beam, cycling between white and the rarity's color.
+  const cycle = Math.floor(t * 8);
   for (let i = 0; i < 2 + rarity; i++) {
     const k = (t * 0.6 + i / (2 + rarity)) % 1;
+    ctx.fillStyle = (i + cycle) % 2 ? color : '#ffffff';
     ctx.globalAlpha = (1 - k) * fade;
     ctx.fillRect(Math.round(x + Math.sin(t * 2 + i * 2) * 3), Math.round(y - k * h), 1, 1);
   }

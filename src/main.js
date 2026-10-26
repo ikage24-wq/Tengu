@@ -268,6 +268,7 @@ function npcPointer(ui) {
 window.twzt = {
   get world() { return world; },
   get ui() { return uiState; },
+  get camera() { return camera; },
   start(name = 'Tester', look = randomLook()) {
     startGame(newCharacter(name, look));
   },

@@ -38,6 +38,19 @@ export function dusk(color) {
 // True on the full-size canvas (the glow layer is a quarter of it, and skips the ink).
 export const inked = (ctx) => ctx.canvas.width >= 600;
 
+// Strokes the current path with a wider band of `color` under it: a hard-edged halo in place of a
+// shadow blur (cheaper every frame, and it stays cel-crisp).
+export function haloStroke(ctx, color) {
+  const lw = ctx.lineWidth;
+  const ss = ctx.strokeStyle;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw + 3;
+  ctx.stroke();
+  ctx.strokeStyle = ss;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+}
+
 // Holds an effect's progress on a grid of `frames` steps, so flashes and sparks pop from drawing
 // to drawing like hand-timed animation instead of tweening smoothly.
 export const stepped = (p, frames) => Math.min(1, Math.floor(p * frames) / frames);
@@ -111,6 +124,57 @@ export function starFlash(ctx, x, y, r, n, rot, rim, core = '#ffffff', coreR = r
   ctx.beginPath();
   ctx.arc(x, y, coreR, 0, TAU);
   ctx.fill();
+}
+
+// A holy bloom: rounded petals around a white core, the light-magic answer to a spiky flash (no
+// points, nothing harsh). Petals thin as `open` passes 1 so it fades by narrowing, not dimming.
+export function bloom(ctx, x, y, r, n, rot, rim, core = '#ffffff', open = 1) {
+  if (r <= 0.5) return;
+  const thin = open > 1 ? Math.max(0.05, 2 - open) : 1;
+  const petals = (R, w) => {
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const a = rot + (i / n) * TAU;
+      const px = x + Math.cos(a) * R * 0.55;
+      const py = y + Math.sin(a) * R * 0.55;
+      ctx.moveTo(px + Math.cos(a) * R * 0.45, py + Math.sin(a) * R * 0.45);
+      ctx.ellipse(px, py, R * 0.45, w, a, 0, TAU);
+    }
+    ctx.fill();
+  };
+  if (inked(ctx)) {
+    ctx.fillStyle = deep(rim);
+    petals(r + 1.2, r * 0.22 * thin + 1);
+  }
+  ctx.fillStyle = rim;
+  petals(r, r * 0.22 * thin);
+  ctx.fillStyle = core;
+  petals(r * 0.6, r * 0.12 * thin);
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.22 * Math.min(1, thin + 0.3), 0, TAU);
+  ctx.fill();
+}
+
+// One afterimage of a dash ("multiples", the smear for fast moves): a flat chibi silhouette in
+// one tone on an inked rim, `s` its size (1 = hero height), standing on (x, y).
+export function ghost(ctx, x, y, s, color) {
+  if (s <= 0.05) return;
+  const shape = (g) => {
+    ctx.beginPath();
+    ctx.arc(x, y - 33 * s, 11 * s + g, 0, TAU);
+    ctx.moveTo(x - 8 * s - g, y - 2);
+    ctx.lineTo(x - 7 * s - g, y - 22 * s - g);
+    ctx.quadraticCurveTo(x, y - 27 * s - g, x + 7 * s + g, y - 22 * s - g);
+    ctx.lineTo(x + 8 * s + g, y - 2);
+    ctx.closePath();
+    ctx.fill();
+  };
+  if (inked(ctx)) {
+    ctx.fillStyle = deep(color);
+    shape(1);
+  }
+  ctx.fillStyle = color;
+  shape(0);
 }
 
 // A ring broken into jagged shards with gaps between them, `thick` wide; it thins and scatters

@@ -5,6 +5,7 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
+import { ghost } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -280,6 +281,14 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         ctx.fillStyle = i % 2 ? '#ffffff' : c.light;
         ctx.fillRect(Math.round(Math.min(lx, lx - f.dir * 24)), Math.round(ly), 24, 1.5);
       }
+      // Afterimages along the path, the oldest vanishing first.
+      for (let i = 0; i < 3; i++) {
+        const left = 0.18 + i * 0.1 - p;
+        if (left <= 0) continue;
+        ctx.globalAlpha = 0.75;
+        ghost(ctx, x + (tx - x) * (0.25 + i * 0.25), y, 0.9 * Math.min(1, left / 0.08), i === 2 ? '#ffffff' : c.main);
+      }
+      ctx.globalAlpha = 1 - p;
       // The shockwave cone in front of where you stopped.
       ctx.strokeStyle = c.light;
       ctx.lineWidth = 3 * fade + 1;
