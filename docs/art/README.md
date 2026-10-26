@@ -101,6 +101,12 @@ carry an improvement across every part of the game it applies to.
   a foreground layer in front of the characters adds depth; varied tiles, never one repeated tile.
 - Text over the scene always has an outline or backing; the world dims behind windows; bars give
   feedback (lingering lost chunk, heal flash, low-HP pulse).
+- Props (landmarks, buildings, scenery) use `src/render/propkit.js`: one world light from the upper
+  left, `ramp()` for 4 hue-shifted tones, materials as clean clusters (`foliage`, `bark`, `stones`,
+  `planks`, `crystal`), and non-crisp sprites so outlines are a thin own-hue line a tier below the
+  characters. Motion rides the shared wind: root still, tips lean most (`lean`, `leanFrame` for
+  cached poses, `swing`/`pivoted` for hanging things); ripple phase comes from `windTravel`, never
+  from a speed times `time` (that jumps whenever the speed changes).
 
 ## Working method that got results
 1. Look at the work zoomed in (6–8x) before judging it, and write down concretely what's wrong.
