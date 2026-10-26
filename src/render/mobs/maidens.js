@@ -233,7 +233,7 @@ function eye(ex, ey, s, mood, e) {
   const out = [];
   const rx = e.rx * (s < 0 ? 0.8 : 1);
   const lash = e.lash ?? '#2a2035';
-  const th = e.th ?? 0.62;
+  const th = (e.th ?? 0.62) * 1.12;
   const xAt = (t) => ex + s * (-rx + 2 * rx * t);
   const mid = (t) => ey + lerp(e.inY, e.outY, t);
   const angry = mood === 'angry';
@@ -250,6 +250,8 @@ function eye(ex, ey, s, mood, e) {
   const flick = (x, y, k = 1) => {
     out.push(line([[x - s * 0.2, y + 0.1], [x + s * 0.95 * k, y - 0.6 * k]], th * 0.9, lash));
     if ((e.flicks ?? 2) > 1) out.push(line([[x - s * 0.5, y], [x + s * 0.55 * k, y - 0.95 * k]], th * 0.6, lash));
+    // A third, lower lash sweeping straight out: fuller, more glamorous lashes.
+    out.push(line([[x - s * 0.3, y + 0.3], [x + s * 1.05 * k, y + 0.15 * k]], th * 0.5, lash));
   };
   if (mood === 'blink') {
     const pts = ts.map((t) => [xAt(t), mid(t) + e.dn * 0.45 + e.dn * 0.35 * Math.sin(Math.PI * t)]);
@@ -305,6 +307,9 @@ function eye(ex, ey, s, mood, e) {
   flick(upper[N][0], upper[N][1], s > 0 ? 1 : 0.75);
   if (e.liner) out.push(line([[upper[N][0] - s * 0.4, upper[N][1] + 0.3], [upper[N][0] + s * 1.1, upper[N][1] - 0.2]], 0.45, e.liner));
   if (e.lower) out.push(fband(lower.slice(Math.round(N * 0.45)), (t) => lerp(0.15, 0.42, t), lash, 2));
+  // The lid crease above the eye, and a lower lash flick at the outer corner.
+  if (e.crease !== false) out.push(fband(upper.slice(2, N).map(([x, y], i) => [x + s * 0.15, y - 0.8 - Math.sin((i / (N - 2)) * Math.PI) * 0.15]), (t) => 0.28 * Math.sin(Math.PI * t) + 0.04, mix(lash, '#e7a9a9', 0.45), 2));
+  out.push(line([[lower[N - 1][0], lower[N - 1][1] - 0.1], [lower[N][0] + s * 0.6, lower[N][1] + 0.3]], 0.32, lash));
   return out;
 }
 
@@ -338,7 +343,7 @@ function features(mood, f) {
   } else {
     // A small confident smile, lifted at the front corner.
     out.push(fband([[mx - 1.3, my - 0.1], [mx - 0.2, my + 0.45], [mx + 1, my + 0.15], [mx + 1.5, my - 0.35]], taperW(0.3, 0.5), ink(lip), 3));
-    out.push(dot(mx - 0.1, my + 1, 0.55, mix(lip, '#ffffff', 0.35), 0.25));
+    out.push(dot(mx - 0.1, my + 1, 0.6, mix(lip, '#ffffff', 0.35), 0.28), dot(mx + 0.1, my + 0.9, 0.2, '#ffffff'));
     if (f.fangIdle) out.push(fpoly([[mx + 0.4, my + 0.3], [mx + 0.9, my + 0.2], [mx + 0.7, my + 0.8]], '#ffffff'));
   }
   if (mood === 'hurt') out.push(...fpolyDrop(7.6, -2.6));
@@ -365,7 +370,10 @@ function fringe(c, cLt, locks) {
     const mid = [lerp(x0, x1, 0.5) + curl, lerp(y0, y1, 0.5)];
     out.push(...oband([[x0, y0], mid, [x1, y1]], lockW(w, 1, 0.3, 0.05), c, 3).map(C));
   }
-  out.push(fband(arcPts(0, -0.8, 6.3, 5.9, 212, 262, 5), taperW(0.5, 1), cLt, 1), fband(arcPts(0, -0.8, 6.4, 6, 272, 318, 5), taperW(1, 0.4), cLt, 1));
+  // Glossy hair: a lit band over the crown, a brighter streak inside it, and a couple of glints.
+  out.push(fband(arcPts(0, -0.8, 6.3, 5.9, 212, 262, 5), taperW(0.5, 1.1), cLt, 1), fband(arcPts(0, -0.8, 6.4, 6, 272, 318, 5), taperW(1.1, 0.4), cLt, 1));
+  out.push(fband(arcPts(0, -0.8, 6.4, 6, 236, 300, 5), (t) => 0.5 * Math.sin(Math.PI * t), mix(cLt, '#ffffff', 0.6), 1));
+  out.push(dot(-2.6, -6.3, 0.35, '#ffffff'), dot(2.4, -6.6, 0.3, '#ffffff'));
   return out;
 }
 
@@ -475,21 +483,27 @@ function kitsune(pose, f, mood) {
   const ph = (f / n) * TAU;
   const p = f / n;
   // A gliding shrine-dance step: short, smooth strides; the hips float with barely a dip.
-  const STR = 7;
-  let hip = [31, 43.6];
+  const STR = 8;
+  let hip = [31, 42.6];
   let lean = 0;
   let tilt = 0;
   let feet;
   if (walk) {
-    hip[1] += -0.55 * (0.5 - 0.5 * Math.cos(4 * Math.PI * p));
-    lean = 0.05;
+    hip[1] += -0.6 * (0.5 - 0.5 * Math.cos(4 * Math.PI * p));
+    hip[0] += Math.sin(ph * 2) * 0.25;
+    lean = 0.04;
     tilt = 0.03 * Math.sin(ph * 2);
-    feet = [0.5, 0].map((o) => gait(p + o, STR, 1.6));
+    feet = [0.5, 0].map((o) => gait(p + o, STR, 2.6));
   } else {
-    hip[1] += Math.sin(ph) * 0.35;
-    tilt = Math.sin(ph) * 0.04;
-    feet = [[-2.2, 0], [2.6, 0]];
+    // Poised: weight on the back leg, hip cocked, chin tipped coyly.
+    hip[0] += Math.sin(ph) * 0.5;
+    hip[1] += Math.sin(ph) * 0.3;
+    lean = -0.04;
+    tilt = 0.08 + Math.sin(ph) * 0.03;
+    feet = [[-1.2, 0], [3.8, 0]];
   }
+  // Idle fidget: her tails fan out and settle while an ear flicks.
+  const fan = pose === 'idle' && !dead ? Math.max(0, Math.sin(ph - 1.2)) : 0;
   // Attack: a sweep of the sleeve flings fox-fire. 0 coils back, 1 flicks, 2 follows through, 3 settles.
   const A = atk ? [[-1, -0.1, 1.5], [1, 0.12, -0.3], [0.8, 0.08, -0.1], [0.3, 0.02, 0.4]][f] : null;
   if (A) {
@@ -522,7 +536,7 @@ function kitsune(pose, f, mood) {
   const tb = pt(-3.6, -1.6);
   const tails = [];
   for (let i = 0; i < 3; i++) {
-    const a0 = [-3.05, -2.45, -1.85][i] + (dead ? 0.75 : 0) + (angry ? 0.12 : 0) + (A ? -A[0] * 0.1 : 0) + (hurt ? 0.3 : 0);
+    const a0 = [-3.05, -2.45, -1.85][i] + (i - 1) * fan * 0.32 + (dead ? 0.75 : 0) + (angry ? 0.12 : 0) + (A ? -A[0] * 0.1 : 0) + (hurt ? 0.3 : 0);
     const amp = (walk ? 0.16 : 0.1) * (dead ? 0.2 : 1);
     const len = dead ? 16 : 21;
     const pts = [tb];
@@ -565,43 +579,35 @@ function kitsune(pose, f, mood) {
   out.push(...limb(shB, elB.k, elB.f, 2.5, 2.1, 1.6, P.robeDk), ...ooval(elB.f[0], elB.f[1], 1.1, 1, P.skinDk));
   out.push(...sleeve(shB, elB.k, elB.f, P.robeDk, shade(P.robeDk, -6), sway * 0.6 + trail, 3.6, P.redDk));
 
-  // Legs: white tabi in red-strapped zori peeking from under the hakama.
+  // Legs: white tabi in red-strapped zori stepping out from under the hakama.
   const ankle = (i) => [hip[0] + feet[i][0], (dead ? 63 : GY - 1.2) + feet[i][1]];
   const legs = [];
   for (const i of [0, 1]) {
     const a = ankle(i);
     const h0 = pt(i ? 1.2 : -1.4, 0);
-    const kn = joint(h0, a, 10.4, 10.4, 1);
-    legs.push({ h0, kn, a });
+    const kn = joint(h0, a, 11, 11, 1);
+    // How fast this foot is swinging forward (the hem trails behind it).
+    const v = walk ? gait(p + (i ? 0 : 0.5) + 0.04, STR, 0)[0] - feet[i][0] : 0;
+    legs.push({ h0, kn, a, v });
   }
-  const foot = (a, c) => [...opoly([[a[0] - 1.4, a[1] - 1], [a[0] + 1.2, a[1] - 1.2], [a[0] + 3.2, a[1] + 0.2], [a[0] + 3, a[1] + 1.1], [a[0] - 1.6, a[1] + 1.1]], c), line([[a[0] + 0.4, a[1] - 0.6], [a[0] + 1.6, a[1] + 0.6]], 0.6, P.zori), ...fpolyR([[a[0] - 1.8, a[1] + 1], [a[0] + 3.4, a[1] + 1], [a[0] + 3.4, a[1] + 1.4], [a[0] - 1.8, a[1] + 1.4]], P.zori)];
-  out.push(...foot(legs[0].a, mix(P.tabi, '#d8d2ea', 0.3)));
-
-  // The red hakama: wide pleated trousers whose hem follows the feet.
-  {
-    const w0 = pt(-4.4, -4.6);
-    const w1 = pt(3.4, -4.6);
-    const kA = legs[0].kn.k;
-    const kB = legs[1].kn.k;
-    const fA = legs[0].a;
-    const fB = legs[1].a;
-    const lo = Math.min(fA[0], fB[0]);
-    const hi = Math.max(fA[0], fB[0]);
-    const hy = (dead ? 62 : GY - 2.4);
-    const flare = 2.6 + (walk ? Math.abs(Math.sin(ph)) * 0.8 : 0);
-    const hem = [[hi + flare + 0.8, hy + 0.3], [lerp(lo, hi, 0.5) + 0.6, hy - 1.2 + Math.sin(ph * 2) * 0.3], [lo - flare - 0.4, hy + 0.2]];
-    const hk = [w0, w1, pt(4.6, 0.5), [Math.max(kA[0], kB[0]) + 2.4, Math.min(kA[1], kB[1]) + 1], hem[0], hem[1], hem[2], [Math.min(kA[0], kB[0]) - 3.2, lerp(kA[1], kB[1], 0.5) + 1], pt(-5.4, 0.6)];
-    out.push(...opoly(hk, P.red));
-    // Back half in shade, pleats, and the split between the legs.
-    out.push(fpoly([w0, pt(-1, -4.6), pt(-1.4, 1), [lo - 0.6, hy], hem[2], [Math.min(kA[0], kB[0]) - 3.2, lerp(kA[1], kB[1], 0.5) + 1], pt(-5.4, 0.6)], P.redDk));
-    for (const k of [-0.2, 0.25, 0.6]) {
-      const top = pt(lerp(-4, 3.2, k + 0.2), -3.6);
-      out.push(line([top, [lerp(lo - 1.6, hi + 2, k + 0.2), hy - 0.4]], 0.45, k > 0 ? P.redDk : shade(P.redDk, -8)));
-    }
-    out.push(line([pt(0.6, 0), [lerp(lo, hi, 0.5) + 0.6, hy - 1.4]], 0.5, ink(P.red)));
-    out.push(fband([pt(2, -2), [hi + flare, hy - 1]], 0.8, P.redLt, 1));
-  }
-  out.push(...foot(legs[1].a, P.tabi));
+  const foot = (a, c) => [...opoly([[a[0] - 1.4, a[1] - 1], [a[0] + 1.2, a[1] - 1.2], [a[0] + 3.2, a[1] + 0.2], [a[0] + 3, a[1] + 1.1], [a[0] - 1.6, a[1] + 1.1]], c), line([[a[0] + 0.4, a[1] - 0.6], [a[0] + 1.6, a[1] + 0.6]], 0.6, P.zori), fpoly([[a[0] - 1.8, a[1] + 1], [a[0] + 3.4, a[1] + 1], [a[0] + 3.4, a[1] + 1.4], [a[0] - 1.8, a[1] + 1.4]], P.zori)];
+  // The red hakama: one wide pleated leg over each foot, its hem swinging with the step.
+  const hakamaLeg = ({ kn, a, v }, back) => {
+    const c = back ? P.redDk : P.red;
+    const k = kn.k;
+    const hy = a[1] - 2;
+    const lag = clamp(-v * 0.8, -2, 2);
+    const top = back ? [pt(-5, -3.4), pt(1.6, -3.4)] : [pt(-2.4, -3.4), pt(4.2, -3.4)];
+    const hem = [[a[0] + 4.3 + lag, hy + 0.2], [a[0] + 0.6 + lag * 0.6, hy - 0.4], [a[0] - 3.8 + lag, hy + 0.4]];
+    const r = [...opoly([top[0], top[1], [k[0] + 3, k[1] - 1], hem[0], hem[1], hem[2], [k[0] - 3.3, k[1] + 0.4]], c)];
+    for (const t of [0.3, 0.65]) r.push(line([lerp2(top[0], top[1], t), [k[0] - 3 + t * 6, k[1]], lerp2(hem[2], hem[0], t)], 0.4, shade(c, -9), 1));
+    if (!back) r.push(fband([[top[1][0] - 0.6, top[1][1] + 1], [k[0] + 2.2, k[1]], [hem[0][0] - 0.8, hem[0][1] - 0.6]], 0.7, P.redLt, 2));
+    r.push(line([hem[0], hem[1], hem[2]], 0.5, shade(c, -14), 1));
+    return r;
+  };
+  out.push(...foot(legs[0].a, mix(P.tabi, '#d8d2ea', 0.3)), ...hakamaLeg(legs[0], true));
+  out.push(...foot(legs[1].a, P.tabi), ...hakamaLeg(legs[1], false));
+  out.push(...opoly([pt(-4.6, -4.8), pt(3.6, -4.8), pt(4.6, 0.6), pt(1.8, 2.6), pt(-2, 2.4), pt(-5.4, 0.8)], P.red), fpoly([pt(-4.6, -4.8), pt(-1.2, -4.8), pt(-2, 2.4), pt(-5.4, 0.8)], P.redDk));
 
   // The white kosode: crossed collar (red under-collar), tucked into the hakama, with its ties.
   within(T0, () => {
@@ -620,7 +626,7 @@ function kitsune(pose, f, mood) {
   // Neck and head.
   out.push(...oband([[neck[0], neck[1] + 1.4], [hc[0] + 0.2, hc[1] + 6]], 2.8, P.skin, 1), fband([[hc[0] - 0.6, hc[1] + 6.8], [hc[0] + 1.2, hc[1] + 6.4]], 1.2, P.skinDk, 1));
   within(at(hc[0], hc[1], tilt), () => {
-    const earT = walk ? Math.sin(ph * 2 - 1) * 0.06 : f === 3 && pose === 'idle' ? 0.18 : 0;
+    const earT = walk ? Math.sin(ph * 2 - 1) * 0.06 : pose === 'idle' ? [0, 0, 0.05, 0.3, 0.12, 0][f] : 0;
     const earFlat = angry ? -0.25 : hurt || dead ? 0.55 : 0;
     // Back ear.
     within(at(-3.6, -5.4, -0.5 - earFlat - earT), () => out.push(...opoly([[-2.6, 0.6], [0.2, -7.2], [2.6, 0.8]], P.hairDk), fpoly([[-1.3, 0], [0.1, -5], [1.4, 0]], shade(P.earIn, -6))));
@@ -648,7 +654,8 @@ function kitsune(pose, f, mood) {
   if (dead) handF = [shF[0] + 3, shF[1] + 10];
   else if (A) handF = [[shF[0] - 6.5, shF[1] + 4], [shF[0] + 11.5, shF[1] + 1], [shF[0] + 11, shF[1] + 3.5], [shF[0] + 6.5, shF[1] + 7]][f];
   else if (hurt) handF = [shF[0] + 4.5, shF[1] + 3];
-  else handF = [shF[0] + 4.2 + sway * 0.4, shF[1] + 8.4 - (angry ? 2.6 : 0) + Math.sin(ph) * 0.3];
+  else if (walk) handF = [shF[0] + 4.2 + sway * 0.4, shF[1] + 8.4 - (angry ? 2.6 : 0)];
+  else handF = [shF[0] + 5.2, shF[1] + 3.2 + Math.sin(ph) * 0.3];
   const elF = joint(shF, handF, 6.2, 6.2, A && f === 0 ? 1 : -1);
   {
     const e = elF.k;
@@ -689,7 +696,6 @@ function kitsune(pose, f, mood) {
   }
   return { w: W, h: H, res: 3, shapes: out };
 }
-const fpolyR = (pts, c) => [fpoly(pts, c)];
 
 // ---------- Sylph ----------
 
@@ -698,7 +704,7 @@ const SY = {
   leaf: '#78d494', ribbon: '#ffc4e4', ribbonDk: '#f09ccb', wing: '#effdff', wingDk: '#c8eef0', vein: '#8fd6cc', wingTint: '#f2dcff', gust: '#d4fff1', gust2: '#ffffff', flower: '#ffb3d9', gold: '#ffe08a',
 };
 const SYLPH_FACE = {
-  eye: { rx: 1.95, up: 2.2, dn: 1.85, inY: 0, outY: -0.15, pupil: 'none', star: true, iris: '#45d6bd', hot: '#ff7fc4', lash: '#2f7a70', flicks: 1, lower: true, irisW: 0.74, white: '#f6fffc', th: 0.55 },
+  eye: { rx: 1.95, up: 2.2, dn: 1.85, inY: 0, outY: -0.15, pupil: 'none', star: true, iris: '#45d6bd', hot: '#ff7fc4', lash: '#2f7a70', flicks: 1, lower: true, irisW: 0.74, white: '#f6fffc', th: 0.55, crease: false },
   brow: '#5cbca0', nose: '#b9e4d8', lip: '#ff8fb8', blush: '#ffb8d8',
 };
 
@@ -754,7 +760,9 @@ function sylph(pose, f, mood) {
   const ph = (f / n) * TAU;
   // Hovering on the breeze: a slow rise and fall, drifting nose-down as she glides forward.
   let hip = [32, 40.5 + Math.sin(ph) * 1.4];
-  let lean = walk ? 0.17 : 0.04 + Math.sin(ph) * 0.02;
+  // Idle fidget: a lazy twirl in the air, one arm sweeping up overhead and around.
+  const twirl = pose === 'idle' && !dead;
+  let lean = walk ? 0.17 : 0.04 + Math.sin(ph) * 0.05;
   let tilt = walk ? 0.02 + Math.sin(ph + 1) * 0.03 : Math.sin(ph + 1) * 0.05;
   const A = atk ? [[-2.2, -0.16], [2.2, 0.2], [1.6, 0.12], [0.4, 0.05]][f] : null;
   if (A) {
@@ -814,7 +822,7 @@ function sylph(pose, f, mood) {
   // Legs: bare and pointed like a dancer's, trailing as she floats, ribbons laced at the ankles.
   const legAt = (hx, foot, c, c2) => {
     const h0 = pt(hx, 0);
-    const kn = joint(h0, foot, 9.4, 9.4, 1);
+    const kn = joint(h0, foot, 10.2, 10.2, 1);
     const a = kn.f;
     const dir = Math.atan2(a[1] - kn.k[1], a[0] - kn.k[0]) - 0.35;
     const toe = [a[0] + Math.cos(dir) * 3.2, a[1] + Math.sin(dir) * 3.2];
@@ -827,7 +835,7 @@ function sylph(pose, f, mood) {
     ? [[hip[0] - 9, hip[1] + 10], [hip[0] - 6, hip[1] + 12]]
     : A && f === 1
       ? [[hip[0] - 8, hip[1] + 15], [hip[0] - 3, hip[1] + 17]]
-      : [[hip[0] - 7 - swing * 0.6 - (walk ? 1.6 : 0), hip[1] + 13.4 + swing * 0.4], [hip[0] - 0.4 + swing - (walk ? 2.2 : 0), hip[1] + 18 - (walk ? 0 : 0.4)]];
+      : [[hip[0] - 7.4 - swing * 0.6 - (walk ? 1.6 : 0), hip[1] + 14.4 + swing * 0.4], [hip[0] - 0.2 + swing * 1.4 - (walk ? 2.2 : 0), hip[1] + 19.4 - (walk ? 0 : 0.4)]];
   out.push(...legAt(-1.6, feet[0], P.skinDk, P.ribbonDk));
 
   // The petal skirt: leaves layered back to front, fluttering on the breeze.
@@ -884,6 +892,7 @@ function sylph(pose, f, mood) {
   else if (A) handF = [[shF[0] - 7, shF[1] + 4], [shF[0] + 11.5, shF[1]], [shF[0] + 10.5, shF[1] + 3.5], [shF[0] + 6.5, shF[1] + 6]][f];
   else if (hurt) handF = [shF[0] + 3, shF[1] + 1];
   else if (walk) handF = [shF[0] - 1 + Math.sin(ph) * 0.8, shF[1] + 8];
+  else if (twirl) handF = [[shF[0] + 6.4, shF[1] + 5], [shF[0] + 6, shF[1] - 1], [shF[0] + 2.4, shF[1] - 7], [shF[0] - 2.6, shF[1] - 7.4], [shF[0] + 1.6, shF[1] - 2.6], [shF[0] + 5.4, shF[1] + 2.8]][f];
   else handF = [shF[0] + 6.4 + Math.sin(ph) * 0.4, shF[1] + 5.4 - Math.sin(ph - 0.5) * 0.6];
   const elF = joint(shF, handF, 6, 6, A && f === 0 ? 1 : -1);
   out.push(...limb(shF, elF.k, elF.f, 2.3, 2, 1.6, P.skin), ...ooval(elF.f[0] + 0.3, elF.f[1], 1.15, 1, P.skin));
@@ -891,14 +900,6 @@ function sylph(pose, f, mood) {
 
   // Wind: little leaves and motes riding around her; the attack's spinning gust.
   if (!dead) {
-    for (let i = 0; i < 3; i++) {
-      const u = (i / 3 + f / n) % 1;
-      const a = u * TAU;
-      const x = 32 + Math.cos(a) * 17;
-      const y = 36 + Math.sin(a) * 5 - i * 4;
-      out.push(...oband([[x - 1.2, y + 0.4], [x + 1.2, y - 0.4]], lockW(1.6, 0.3, 0.5, 0.1), i % 2 ? P.leaf : P.dress, 1, 0.4));
-    }
-    if (!A) out.push(sparkle(32 + Math.cos(ph) * 12, 28 + Math.sin(ph) * 3, 1.2, '#ffffff'));
     if (A) {
       const g = [[hip[0] - 11, hip[1] - 13, 3.2, 0.5], [52, 30, 9, 1], [55, 30, 10.5, 0.8], [58, 31, 7, 0.4]][f];
       out.push(...gust(g[0], g[1], g[2], -f * 1.6, P, g[3]));
@@ -944,8 +945,9 @@ function yuki(pose, f, mood) {
   const ph = (f / n) * TAU;
   // A ghostly glide: no steps at all, just a slow float with the hem rippling back.
   let hip = [31, 42.6 + (walk ? Math.sin(ph * 2) * 0.45 : Math.sin(ph) * 0.7)];
-  let lean = walk ? 0.07 : 0.02;
-  let tilt = walk ? 0.06 : Math.sin(ph - 0.8) * 0.04 + 0.04;
+  // An elegant S-curve: hips forward, shoulders back, head bowed a little to the side.
+  let lean = walk ? 0.07 : -0.03 + Math.sin(ph) * 0.02;
+  let tilt = walk ? 0.06 : Math.sin(ph - 0.8) * 0.04 + 0.1;
   const A = atk ? [[-1.2, -0.1, -0.12], [1.4, 0.14, 0.1], [1.2, 0.1, 0.06], [0.4, 0.03, 0.04]][f] : null;
   if (A) {
     hip[0] += A[0];
@@ -973,7 +975,18 @@ function yuki(pose, f, mood) {
   {
     const root = [hc[0] - 2.5, hc[1] - 1];
     const len = dead ? 16 : 37;
-    const pts = lockPts(root, Math.PI / 2 + 0.16 + 0.12 * drift + lean * 0.6, len, ph - 0.5, 0.9 * drift + 0.3, -0.03 * drift, 6, 0.7);
+    // Idle: it drifts as if underwater, slow waves rolling down to tips that lift and float.
+    const under = pose === 'idle' && !dead;
+    const pts = under
+      ? flowPts(root, Math.PI / 2 + 0.2, 0.55 + Math.sin(ph - 1.2) * 0.12, len, ph - 0.5, 0.2, 6, 0.75)
+      : lockPts(root, Math.PI / 2 + 0.16 + 0.12 * drift + lean * 0.6, len, ph - 0.5, 0.9 * drift + 0.3, -0.03 * drift, 6, 0.7);
+    // Loose strands floating free of the mass.
+    if (!dead) {
+      for (let k = 0; k < 2; k++) {
+        const fl = flowPts([root[0] - 1 - k, root[1] + 3 + k * 4], Math.PI / 2 + 0.6 + k * 0.2, under ? 0.9 : 0.4, 20 - k * 4, ph - k * 1.7, under ? 0.45 : 0.2, 6, 0.9);
+        out.push(...oband(fl, lockW(1.6, 1, 0.3, 0.1), k ? P.hairDk : P.hair, 3, 0.45));
+      }
+    }
     out.push(...oband(pts, (t) => (t < 0.12 ? lerp(13, 11, t / 0.12) : lerp(11, 1.5, ((t - 0.12) / 0.88) ** 2.2)), P.hair, 4));
     out.push(fband(pts.slice(1).map(([x, y]) => [x - 2.2, y]), lockW(3.4, 0.6, 0.3, 0.1), P.hairDk, 3));
     for (const dx of [-0.4, 1.6]) out.push(fband(pts.slice(1, 6).map(([x, y], k) => [x + dx * (1 - k * 0.15), y]), taperW(0.4, 0.2), P.hairDk, 3));
@@ -1047,9 +1060,8 @@ function yuki(pose, f, mood) {
   const elF = joint(shF, handF, 6.2, 6.2, -1);
   out.push(...limb(shF, elF.k, elF.f, 2.8, 2.4, 2, P.kimono));
   out.push(...frostSleeve(shF, elF.k, elF.f, P.kimono, P.kimonoDk, (A ? [0, -3.6, -2.6, -1][f] : -1.6 * drift) + Math.sin(ph) * 0.6, 10, P, ph));
-  // Her hand droops from the sleeve, a ghost's limp wrist.
-  if (!A || f === 0) out.push(...ooval(elF.f[0] + 0.9, elF.f[1] + 0.9, 0.85, 1.45, P.skin, -0.5));
-  else out.push(...ooval(elF.f[0] + 0.5, elF.f[1], 1.15, 1, P.skin));
+  // Her hands stay hidden in her sleeves, except when she sweeps one out to freeze you.
+  if (A && f > 0) out.push(...ooval(elF.f[0] + 0.5, elF.f[1], 1.15, 1, P.skin));
 
   // Snow drifting down around her; the attack's breath of frost.
   if (!dead) {
@@ -1126,7 +1138,7 @@ function nekomata(pose, f, mood) {
   const p = f / n;
   // A low, sly prowl: long silent strides, shoulders rolling, head held level and steady.
   const STR = 9;
-  let hip = [31, 45];
+  let hip = [31, 44];
   let lean = 0.08;
   let tilt = -0.04;
   let feet;
@@ -1138,9 +1150,14 @@ function nekomata(pose, f, mood) {
     tilt = -0.16;
     feet = [0, 0.5].map((o) => gait(p + o, STR, 2.6));
   } else {
-    hip[1] += Math.sin(ph) * 0.4;
-    feet = [[-3.4, 0], [3.4, 0]];
+    // Hip cocked, weight on the back leg, the front foot pointed.
+    hip[0] += Math.sin(ph) * 0.5;
+    hip[1] += Math.sin(ph) * 0.3;
+    lean = 0.02;
+    feet = [[-2.4, 0], [4.4, -0.6]];
   }
+  // Idle fidget: she brings a paw up to lick it, then flexes her claws.
+  const lick = pose === 'idle' && !dead && !hurt && (f === 2 || f === 3);
   // Attack: 0 coils low, 1 leaps with a cross slash, 2 lands slashing through, 3 recovers.
   const A = atk ? [[-1, 50, 0.38, -0.26], [5, 36, 0.22, -0.1], [5, 45.5, 0.32, -0.2], [3, 45, 0.14, -0.08]][f] : null;
   if (A) {
@@ -1202,7 +1219,7 @@ function nekomata(pose, f, mood) {
     const a = [hip[0] + feet[i][0] + (A && f === 1 ? 0 : 0), (dead ? 63 : A && f === 1 ? hip[1] + 15 + feet[i][1] * 0.2 : GY - 1.2) + (A && f === 1 ? 0 : feet[i][1])];
     if (A && f === 1) a[0] = hip[0] + feet[i][0];
     const h0 = pt(i ? 1.4 : -1.6, 0.4);
-    legs.push({ h0, kn: joint(h0, a, 10, 10.2, 1) });
+    legs.push({ h0, kn: joint(h0, a, 10.6, 10.8, 1) });
   }
   const leg = ({ h0, kn }, back) => {
     const c = back ? shade(P.stocking, -6) : P.stocking;
@@ -1246,6 +1263,7 @@ function nekomata(pose, f, mood) {
     out.push(...opoly([[6, 2.6], [8.6, 3.8], [6.8, 4.6], [8.2, 6], [5.6, 6]], P.fur, 0.4), ...opoly([[-6.4, 2], [-9, 3.4], [-7, 4.4], [-8.6, 5.8], [-5.6, 5.6]], P.furDk, 0.4));
     out.push(...features(mood, CAT_FACE));
     if (mood !== 'dead') out.push(line([[6.6, 4.6], [8.4, 4.2]], 0.3, '#d9a9b9'), line([[6.6, 5.4], [8.4, 5.6]], 0.3, '#d9a9b9'));
+    if (lick) out.push(...opoly([[3.4, 6.4], [5.6, 6.6], [5.4, 7.8], [4, 7.6]], '#ff8fae', 0.35));
     out.push(...fringe(P.fur, P.furLt, [[-5.6, -5.2, -6.8, 1.6, 3, -0.8], [-2.6, -6.8, -3.4, -0.2, 3, -0.4], [0.4, -7, 0.4, 0.2, 3.4, 0.4], [3.4, -6.4, 4.2, -0.8, 3, 0.8], [5.8, -4.8, 7.2, 0.8, 2.6, 0.6]]));
     out.push(...brows(mood, CAT_FACE));
     out.push(...oband([[6.6, -2], [7.6, 2.4], [6.8, 5.6]], lockW(2.4, 1, 0.3, 0.1), P.fur, 3));
@@ -1259,10 +1277,16 @@ function nekomata(pose, f, mood) {
   else if (A) handF = [[shF[0] - 6, shF[1] - 2.5], [shF[0] + 10.5, shF[1] + 4], [shF[0] + 11, shF[1] + 0], [shF[0] + 7.5, shF[1] + 4]][f];
   else if (hurt) handF = [shF[0] + 3.4, shF[1] + 2];
   else if (walk) handF = [shF[0] + 3 + sw * 3, shF[1] + 7.6];
+  else if (pose === 'idle' && !angry) handF = [[shF[0] + 2.2, shF[1] + 9.4], [shF[0] + 2.6, shF[1] + 8], [hc[0] + 6.4, hc[1] + 6.6], [hc[0] + 6.6, hc[1] + 6], [shF[0] + 7.4, shF[1] + 3.4], [shF[0] + 3.4, shF[1] + 7.6]][f];
   else handF = [shF[0] + 6, shF[1] + 5.2 + Math.sin(ph - 0.4) * 0.4 - (angry ? 1.6 : 0)];
-  const elF = joint(shF, handF, 5.8, 5.8, -1);
+  const elF = joint(shF, handF, 5.8, 5.8, pose === 'idle' && f < 2 && !angry ? 1 : -1);
   out.push(...limb(shF, elF.k, elF.f, 2.4, 2.8, 2.8, P.skin, P.fur), ...pawHand(elF.f, P, false));
-  out.push(...dagger(elF.f, A ? [-0.9, 0.7, -0.2, 1.3][f] : 1.6 - sw * 0.2 - (angry ? 0.3 : 0), P, false));
+  if (pose === 'idle' && f === 4 && !dead) {
+    // Claws flexed out.
+    const h = elF.f;
+    for (const [dx, dy] of [[2.2, -1.6], [2.9, -0.4], [2.6, 0.9]]) out.push(fpoly([[h[0] + dx - 0.6, h[1] + dy - 0.3], [h[0] + dx + 1.2, h[1] + dy - 0.1], [h[0] + dx - 0.4, h[1] + dy + 0.4]], '#ffffff'));
+  }
+  out.push(...dagger(elF.f, A ? [-0.9, 0.7, -0.2, 1.3][f] : lick ? 2.5 : 1.6 - sw * 0.2 - (angry ? 0.3 : 0), P, false));
 
   // Slash arcs on the attack.
   if (A && f >= 1) {
@@ -1379,9 +1403,9 @@ function lamia(pose, f, mood) {
   const n = walk ? 8 : atk ? 4 : 6;
   const ph = (f / n) * TAU;
   // Slithering: waves run back along the tail while the upper body sways like a dancer's.
-  const sway = walk ? Math.sin(ph) : Math.sin(ph) * 0.8;
-  let hip = [31 + sway * 0.8, 41.4 + (walk ? Math.cos(ph * 2) * 0.4 : Math.sin(ph * 2) * 0.3)];
-  let lean = walk ? 0.06 + sway * 0.03 : sway * 0.05;
+  const sway = walk ? Math.sin(ph) : Math.sin(ph) * 1.2;
+  let hip = [31 + sway * 0.9, 41.4 + (walk ? Math.cos(ph * 2) * 0.4 : Math.sin(ph * 2) * 0.3)];
+  let lean = walk ? 0.06 + sway * 0.03 : -0.03 + sway * 0.06;
   let tilt = -sway * 0.06;
   const A = atk ? [[-2, -0.18], [3, 0.16], [2, 0.1], [0.6, 0.03]][f] : null;
   if (A) {
@@ -1484,9 +1508,17 @@ function lamia(pose, f, mood) {
   if (dead) handF = [shF[0] - 1, shF[1] + 10];
   else if (A) handF = [[shF[0] - 4, shF[1] + 6], [shF[0] + 10, shF[1] + 3], [shF[0] + 9, shF[1] + 6], [shF[0] + 6, shF[1] + 5]][f];
   else if (hurt) handF = [shF[0] + 3, shF[1] + 1];
+  // Idle fidget: her front hand toys with the end of her veil, turning slow circles.
+  else if (pose === 'idle') handF = [shF[0] + 6 + Math.cos(ph) * 1.4, shF[1] + 2.6 + Math.sin(ph) * 1.6];
   else handF = [shF[0] + 6.2 - sway * 0.6, shF[1] + 3.4 + sway * 1.4];
   const elF = joint(shF, handF, 6, 6, -1);
-  out.push(...limb(shF, elF.k, elF.f, 2.4, 2, 1.6, P.skin), ...ooval(elF.f[0] + 0.3, elF.f[1] - 0.2, 1.15, 1, P.skin));
+  out.push(...limb(shF, elF.k, elF.f, 2.4, 2, 1.6, P.skin));
+  if (pose === 'idle' && !dead) {
+    // The veil's loose end, trailing from her fingers as they turn.
+    const v = flowPts([elF.f[0] + 0.4, elF.f[1] + 0.4], Math.PI / 2 + 0.5 - Math.cos(ph) * 0.3, 0.6, 10, ph - 0.8, 0.35, 5, 0.9);
+    out.push(...oband(v, lockW(2.4, 0.5, 0.3, 0.6), P.veilLt, 3, 0.4), fband(v.slice(1).map(([x, y]) => [x - 0.4, y]), lockW(0.7, 0.4, 0.4, 0.3), P.veil, 3), ...ooval(v[5][0], v[5][1] + 0.9, 0.6, 0.6, P.gold, 0, 0.3));
+  }
+  out.push(...ooval(elF.f[0] + 0.3, elF.f[1] - 0.2, 1.15, 1, P.skin));
   for (const t of [0.72, 0.86]) out.push(...opoly(bandPtsRaw([lerp2(elF.k, elF.f, t - 0.05), lerp2(elF.k, elF.f, t + 0.05)], () => 2.6), P.gold, 0.35));
   out.push(...opoly(bandPtsRaw([lerp2(shF, elF.k, 0.6), lerp2(shF, elF.k, 0.8)], () => 2.8), P.gold, 0.35), ...gem(lerp2(shF, elF.k, 0.7)[0], lerp2(shF, elF.k, 0.7)[1], 0.55, P.gem2));
 
@@ -1523,7 +1555,7 @@ function lupina(pose, f, mood) {
   const p = f / n;
   // A confident hunter's stride: long steps, a proud upright back, hips rolling with each step.
   const STR = 10;
-  let hip = [31, 43.4];
+  let hip = [31, 42.6];
   let lean = 0;
   let tilt = 0;
   let feet;
@@ -1534,10 +1566,14 @@ function lupina(pose, f, mood) {
     tilt = Math.sin(ph * 2) * 0.03;
     feet = [0, 0.5].map((o) => gait(p + o, STR, 2.4));
   } else {
+    // Hand on hip, weight on one leg, chin up: a huntress who knows she's the predator.
+    hip[0] += Math.sin(ph) * 0.4;
     hip[1] += Math.sin(ph) * 0.3;
-    feet = [[-3, 0], [3.4, 0]];
-    tilt = Math.sin(ph - 1) * 0.03;
+    lean = -0.04;
+    feet = [[-2.6, 0], [4.2, 0]];
+    tilt = -0.05 + Math.sin(ph - 1) * 0.03;
   }
+  const rest = pose === 'idle' && !dead;
   // Attack: 0 full draw, 1 loose, 2 the arrow away, 3 lowering the bow.
   const A = atk ? [[-0.8, -0.05], [-1.4, -0.08], [-1, -0.04], [-0.4, 0]][f] : null;
   if (A) {
@@ -1593,6 +1629,13 @@ function lupina(pose, f, mood) {
     out.push(...oband([q0, q1], taperW(3.4, 3), P.leatherDk, 1), line([lerp2(q0, q1, 0.2), lerp2(q0, q1, 0.25)].map(([x, y]) => [x, y]), 3.2, P.gold));
   }
 
+  // At rest the bow is slung across her back, its string a strap over her chest.
+  const slC = pt(-4.4, -7.4);
+  const slA = -2.12 + lean;
+  const tipU = [slC[0] + Math.cos(slA) * 12.5, slC[1] + Math.sin(slA) * 12.5];
+  const tipL = [slC[0] - Math.cos(slA) * 12.5, slC[1] - Math.sin(slA) * 12.5];
+  if (rest) out.push(...longbow(slC, slA, null, P, false));
+
   // Back arm: holds the longbow (down at her side, or raised for the shot).
   const shB = pt(-2.8, -12.2);
   let handB;
@@ -1602,13 +1645,18 @@ function lupina(pose, f, mood) {
   else handB = [shB[0] + 2.2, shB[1] + 9.8 + Math.sin(ph) * 0.3];
   const elB = joint(shB, handB, 6.4, 6.4, -1);
   // The draw hand's position (front arm) is needed for the string.
-  const shF = pt(3.4, -12);
+  // Idle fidget: she rolls her shoulder, then plucks her bowstring to test it.
+  const shF = rest && f === 2 ? pt(2.8, -12.9) : pt(3.4, -12);
+  const pluck = rest && (f === 3 || f === 4) ? lerp2(tipU, tipL, 0.4) : null;
+  if (pluck && f === 4) pluck[0] += 1.4;
   const cheek = within(at(hc[0], hc[1], tilt), () => X(3.6, 5.8));
   let handF;
   if (dead) handF = [shF[0] + 2, shF[1] + 10];
   else if (A) handF = [[cheek[0] - 1.6, cheek[1] + 0.4], [shF[0] - 6.5, shF[1] - 1.5], [shF[0] - 6, shF[1] + 1.5], [shF[0] + 2, shF[1] + 8]][f];
   else if (hurt) handF = [shF[0] + 3, shF[1] + 1.5];
   else if (walk) handF = [shF[0] + 0.8 + sw * 3.6, shF[1] + 9.2];
+  else if (pluck) handF = [pluck[0] + 0.6, pluck[1]];
+  else if (rest) handF = [shF[0] + 1, shF[1] + 10.4];
   else handF = [shF[0] + 3.8, shF[1] + 8.2 + Math.sin(ph - 0.4) * 0.3];
   const bowA = dead ? 0.1 : A ? [-Math.PI / 2, -Math.PI / 2, -Math.PI / 2 + 0.05, -1.4][f] : -1.74 - sw * 0.1;
   const drawn = A && f === 0 ? [handF[0] + 0.6, handF[1]] : null;
@@ -1621,7 +1669,7 @@ function lupina(pose, f, mood) {
   for (const i of [0, 1]) {
     const a = [hip[0] + feet[i][0], (dead ? 63 : GY - 1.2) + feet[i][1]];
     const h0 = pt(i ? 1.3 : -1.5, 0.3);
-    legs.push({ h0, kn: joint(h0, a, 10.4, 10.4, 1) });
+    legs.push({ h0, kn: joint(h0, a, 11, 11, 1) });
   }
   const leg = ({ h0, kn }, back) => {
     const r = [...limb(h0, kn.k, kn.f, 4, 2.9, 2.2, back ? shade(P.legging, -6) : P.legging)];
@@ -1673,10 +1721,12 @@ function lupina(pose, f, mood) {
   });
 
   // Front arm: bracer and glove; it draws the string to her cheek.
-  const elF = joint(shF, handF, 6, 6, -1);
+  // The bowstring strap across her chest (pulled out when she plucks it).
+  if (rest) out.push(line(pluck ? [tipU, pluck, tipL] : [tipU, tipL], 0.45, P.string));
+  const elF = joint(shF, handF, 6, 6, rest && !pluck && !hurt ? 1 : -1);
   out.push(...limb(shF, elF.k, elF.f, 2.6, 2.6, 2.3, P.shirt, P.leather));
-  // At rest she carries the bow in this hand, upright at her side.
-  if (!A && !dead) out.push(...bow(elF.f));
+  // Walking, she carries the bow in this hand, upright at her side.
+  if (!A && !dead && !rest) out.push(...bow(elF.f));
   out.push(...ooval(elF.f[0] + 0.2, elF.f[1], 1.2, 1.1, P.leatherDk));
   out.push(...ooval(shF[0] - 0.2, shF[1] + 0.6, 2.4, 2, P.leather), ...ooval(shF[0], shF[1] + 0.2, 1.6, 1.2, P.leatherLt));
   if (A) out.push(...bow(elB.f));
