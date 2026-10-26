@@ -299,7 +299,7 @@ function hairBack(style, front, root, tip, lift) {
 function hairFront(style, c, sway = 0, mood = 'smile') {
   const { shapes, shade } = hairBangs(style, hairRamp(c), sway, mood);
   const out = [...shapes];
-  out.shade = [...(style === 'mohawk' ? [] : [F(E(HEAD_X, 9.4, 10.4, 4.6, '#000000'))]), ...shade];
+  out.shade = shapes.length ? [F(E(HEAD_X, 9.4, 10.4, 4.6, '#000000')), ...shade] : [];
   return out;
 }
 
@@ -836,7 +836,9 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
     const sk = skinRamp(skin);
     out.push(...mirror(earShapes(look.earStyle, skin, sk.sh1)), ...earShapes(look.earStyle, sk.sh1, sk.sh2));
   }
-  out.push(...hairNape(style, hr));
+  const nape = hairNape(style, hr);
+  // Bald, the back of the skull shows.
+  out.push(...(nape.length ? nape : [F(E(HEAD_X, 14.6, 10.2, 10, skinRamp(skin).sh1)), F(E(HEAD_X, 14.2, 9.6, 9.6, skin))]));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
