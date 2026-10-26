@@ -158,10 +158,10 @@ function kitsune(pose, f, mood) {
   const by = 22 + bob;
 
   // Tails: three fluffy plumes curling up behind, lagging the stride, each tipped in a spirit flame.
-  const tips = [[-9.6, -11.4, -9.4, -1], [-2.6, -15.4, -7.4, -6], [-12, -2.6, -5, 2]];
+  const tips = [[-9.6, -11.4, -9.4, -1], [-2.6, -15.4, -7.4, -6], [-10.2, -2.8, -4.6, 2]];
   tips.forEach(([tdx, tdy, cdx, cdy], k) => {
     const sw = walk ? Math.sin(p - 1.2 - k * 0.7) * 1.6 : Math.sin(p - k * 0.9) * 1.1;
-    const lift = happy ? -1.5 : dead ? 7 + k : angry ? -1 : 0;
+    const lift = happy ? -1.5 : dead ? [6, 8, 1.5][k] : angry ? -1 : 0;
     const base = [bx - 5.5, by - 1];
     const tip = [base[0] + tdx + sw + (dead ? -1 : 0), base[1] + tdy + lift + Math.abs(sw) * 0.3];
     const ctl = [base[0] + cdx, base[1] + cdy];
@@ -184,7 +184,6 @@ function kitsune(pose, f, mood) {
     const fl = walk ? Math.sin(p * 2 + k * 2) : [0, 0.8, -0.6, 0.4][f];
     const h = dead ? 0 : (angry ? 7 : hurt ? 3 : 4.6) + fl * 0.6;
     out.push(...flame(tip[0] - 0.2, tip[1] - 1.2, h, -sw * 0.5 + fl * 0.5, fo, fi));
-    if (dead) out.push(F(E(tip[0], tip[1] - 2.2, 0.9, 0.7, '#d8d0e8')), F(E(tip[0] + 0.8, tip[1] - 3.8, 0.6, 0.5, '#e4def0')));
   });
 
   // Legs: a trot, diagonal pairs swinging together.
@@ -323,6 +322,7 @@ function tortoise(pose, f, mood) {
   out.push(...stroke([[sx - 3.6, rim - 9.8], [sx - 3.6, rim - 3.6], [sx + 3.6, rim - 3.6], [sx + 3.6, rim - 9.8]], 0.4, shellD),
     ...stroke([[sx - 9.6, rim - 6.6], [sx - 3.6, rim - 6.6]], 0.4, shellD), ...stroke([[sx + 3.6, rim - 6.6], [sx + 9.6, rim - 6.6]], 0.4, shellD),
     ...stroke([[sx - 3.6, rim - 3.6], [sx - 5, rim]], 0.4, shellD), ...stroke([[sx + 3.6, rim - 3.6], [sx + 5, rim]], 0.4, shellD));
+  out.push(...leg(11.4, 0, true), ...leg(26, Math.PI, true));
   out.push(E(sx, rim + 0.4, 14.2, 2.3, shellD));
   for (let i = 0; i < 9; i++) out.push(F(R(sx - 12 + i * 3, rim - 0.2, 0.4, 1.6, shade(shellD, -8))));
 
@@ -344,7 +344,7 @@ function tortoise(pose, f, mood) {
   const my = mb - 1.4;
   out.push(R(mx - 0.8, my - 1, 1.6, 2.6, '#fff1dc'), T([[mx - 3, my - 0.8], [mx - 2.4, my - 2.8], [mx, my - 3.8], [mx + 2.4, my - 2.8], [mx + 3, my - 0.8]], '#ff8f8f'),
     F(E(mx - 1.2, my - 2.4, 0.55, 0.45, '#ffffff')), F(E(mx + 1, my - 2.9, 0.45, 0.4, '#ffffff')), F(E(mx + 1.8, my - 1.4, 0.35, 0.3, '#ffffff')));
-  if (angry) out.push(F(E(mx - 2, my - 5.6, 0.7, 0.7, '#ffd9e0')), F(E(mx + 0.8, my - 6.8, 0.55, 0.55, '#ffd9e0')), F(E(mx - 0.6, my - 8.2, 0.45, 0.45, '#ffe8ec')));
+  if (angry) out.push(E(mx - 0.6, my - 4.6, 1.6, 1.2, '#ffe0e6'), E(mx + 0.8, my - 5.8, 1.3, 1.1, '#ffe0e6'), E(mx - 0.4, my - 6.8, 1.1, 0.9, '#fff0f2'), F(E(mx - 0.9, my - 4.9, 0.5, 0.35, '#ffffff')));
   // The flower: a stem swaying a beat behind, a pink bloom (wilted when dead).
   const sw = walk ? Math.sin(p - 1.4) * 1.2 : Math.sin(p - 1) * 0.8;
   const fx0 = sx + 3.4;
@@ -358,8 +358,6 @@ function tortoise(pose, f, mood) {
   }
   out.push(F(E(fb[0], fb[1], 1, 1, '#ffe27a')), F(E(fb[0] - 0.3, fb[1] - 0.3, 0.4, 0.4, '#fff6c8')));
 
-  // Near legs in front of the shell rim.
-  out.push(...leg(11.4, 0, true), ...leg(26, Math.PI, true));
 
   // Head: round, with a sprout on top and a little beak-like mouth.
   out.push(E(hx, hy, 5.4, 4.8, skin), E(hx + 2.2, hy + 1.8, 3.2, 2.4, skin), F(E(hx - 1.6, hy - 2.4, 1.8, 0.8, mix(skin, '#ffffff', 0.4))));
@@ -368,8 +366,8 @@ function tortoise(pose, f, mood) {
   out.push(...stroke([[hx - 0.4, hy - 4.4], [hx - 0.2 + spr * 0.5, hy - 6.2]], 0.5, '#5fae5c'),
     leaf(hx - 0.2 + spr * 0.5, hy - 6, -30 + spr * 15 + (dead ? 120 : 0), 2.8, 1, '#8fd07e'), leaf(hx - 0.2 + spr * 0.5, hy - 6, -160 + spr * 15 - (dead ? 30 : 0), 2.2, 0.8, '#a6e398'));
   const ey = hy - 0.2;
-  out.push(...eye(hx - 0.6, ey, 1.25, mood, -1, { iris: '#4f8a6a', glow: '#ff7a3c', lid: skin, brow: '#3f6e55' }),
-    ...eye(hx + 2.8, ey, 1.5, mood, 1, { iris: '#4f8a6a', glow: '#ff7a3c', lid: skin, brow: '#3f6e55' }),
+  out.push(...eye(hx - 0.8, ey, 1.45, mood, -1, { iris: '#4f8a6a', glow: '#ff7a3c', lid: skin, brow: '#3f6e55' }),
+    ...eye(hx + 2.8, ey, 1.75, mood, 1, { iris: '#4f8a6a', glow: '#ff7a3c', lid: skin, brow: '#3f6e55' }),
     ...blush(hx - 1.6, ey + 2.2, 0.9, mood), ...blush(hx + 2.8, ey + 2.4, 1, mood));
   // Mouth.
   const mX = hx + 3.4;
@@ -451,7 +449,7 @@ function mandrake(pose, f, mood) {
     }
     if (dead && !side) return;
     const lc = dead ? ldead : c;
-    out.push(...cleaf(top, ang, len * (dead ? 0.85 : 1), 3, bd, shade(lc, -20), null, 0.45), ...cleaf(top, ang, len * (dead ? 0.85 : 1), 3, bd, lc, shade(lc, -16)));
+    out.push(...cleaf(top, ang, len * (dead ? 0.85 : 1.1), 2.5, bd, shade(lc, -20), null, 0.45), ...cleaf(top, ang, len * (dead ? 0.85 : 1.1), 2.5, bd, lc, shade(lc, -16)));
   });
   // A cluster of purple mandrake bells in the middle.
   if (!dead) {
@@ -466,7 +464,7 @@ function mandrake(pose, f, mood) {
 
   // The root body: a plump parsnip with rings and root hairs.
   out.push(E(bx, by - 8.4, 4.6, 2.6, root), E(bx, by, 8.8, 10, root), E(bx + 0.5, by + 7.4, 6.4, 3.6, root));
-  out.push(F(E(bx + 0.6, by + 5.4, 7, 3.8, mix(root, rootD, 0.45))), F(E(bx - 3.4, by + 4, 2.2, 3, mix(root, rootD, 0.45))));
+  out.push(F(E(bx + 0.4, by + 6, 7.2, 3.6, mix(root, rootD, 0.25))));
   for (const [y, w] of [[-3.6, 6], [1.8, 7.2], [6.4, 5.4]]) out.push(arc(bx + 0.4, by + y, w, 1.6, 20, 160, 0.4, line));
   for (const [x, y, d] of [[-8.6, -1, -1], [-8, 3.4, -1], [8.6, 0.4, 1], [8, 4.4, 1]]) {
     out.push(...stroke([[bx + x, by + y], [bx + x + d * 1.4, by + y + 0.6], [bx + x + d * 2, by + y + 1.6]], 0.45, rootD));

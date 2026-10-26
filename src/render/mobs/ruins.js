@@ -370,7 +370,7 @@ function dullahan(pose, frame, mood) {
   body.push(...stroke([[14, 30], [12 + w(2) * 0.5, 42], [10.6 + w(3) * 0.7, 50]], 0.6, shade(capeC, -16)));
   body.push(F(T([[5 + w(2), 49], [6.6 + w(3), 52.4], [9.4 + w(3), 50.4], [12.4 + w(3) * 0.8, 53.4], [15.6 + w(2) * 0.6, 51], [15, 49.4], [12.4, 51.2], [9.6, 48.6], [6.8, 50.2]], '#ff9ec0')));
   // Back upper arm in the dark under-suit (it cradles the helmet).
-  body.push(...limb([[15, 27], [8.4, 36.4]], 3.6, suitD));
+  body.push(...limb([[15, 27], [6, 41.6]], 3.6, suitD));
   // Breastplate with a gold-trimmed hem, belt, and faulds.
   const bp = [[15, 25], [29, 25], [30.6, 31], [28.6, 38], [27.4, 41], [16.6, 41], [15.4, 38], [13.8, 31]];
   body.push(...oT(bp, plate), F(T([[15, 25], [18.4, 25], [17.4, 33], [18.2, 41], [16.6, 41], [15.4, 38], [13.8, 31]], plateD)));
@@ -401,13 +401,13 @@ function dullahan(pose, frame, mood) {
   helm.push(...oRibbon(pl, [3.6, 3.4, 2.6, 0.8], '#ff9ec0'), F(T(ribbonPts(pl.slice(0, 3), [1.2, 1.2, 0.6]), '#ffd0e0')));
   helm.push(...oE(10.4, 38.2, 6.8, 6.6, plate), F(T([[3.8, 37], [6.4, 33], [7.4, 44.4], [4.6, 41.6]], plateD)), F(E(8.4, 34, 2.6, 1.2, plateL)));
   helm.push(...stroke([[5.6, 34.6], [10, 31.8], [14.6, 33.6]], 1.2, trim));
-  helm.push(F(T([[8.2, 35.2], [17.2, 34.8], [17.4, 39.8], [15, 40], [14.8, 43.4], [12.8, 43.6], [12.6, 40.1], [8.6, 40.4]], visor)));
+  helm.push(F(T([[8.6, 35.2], [17.2, 34.8], [17.4, 39.6], [8.9, 40]], visor)), ...stroke([[13.2, 40.2], [13.2, 43.4]], 0.9, plateD));
   helm.push(...glowEyes(13, 37.5, 1.18, mood, { gap: 3.5, col: fl[0], core: '#ffffff', halo: mix(fl[0], visor, 0.55) }));
   if (angry) helm.push(...stroke([[9.6, 35.6], [12.2, 36.6]], 0.6, fl[0]), ...stroke([[16.6, 35.6], [14, 36.6]], 0.6, fl[0]));
-  helm.push(...stroke([[8, 35.1], [17.4, 34.7]], 0.7, plateL), F(E(10, 42.2, 0.4, 0.4, visor)), F(E(10.4, 43.6, 0.4, 0.4, visor)), F(E(16.2, 42.4, 0.4, 0.4, visor)));
+  helm.push(...stroke([[8.4, 35.1], [17.4, 34.7]], 0.7, plateL), F(E(11.4, 41.8, 0.4, 0.4, visor)), F(E(11.6, 43.2, 0.4, 0.4, visor)), F(E(15, 41.8, 0.4, 0.4, visor)), F(E(14.8, 43.2, 0.4, 0.4, visor)));
   body.push(...mv(helm, 0, hb));
   // Forearm cradling the helmet from below.
-  body.push(...limb([[8.4, 36.4], [8.6, 43], [13.6, 45.2 + hb * 0.5]], 3.2, suit), ...oE(14.6, 44.8 + hb * 0.5, 2.2, 1.9, plateD), F(E(14.2, 44 + hb * 0.5, 1.2, 0.5, plateL)));
+  body.push(...limb([[6, 41.6], [13.6, 45.4 + hb * 0.5]], 3.2, suit), ...oE(14.6, 44.8 + hb * 0.5, 2.2, 1.9, plateD), F(E(14.2, 44 + hb * 0.5, 1.2, 0.5, plateL)));
 
   // The sword arm and an upright blade.
   const sw = dead ? 0.7 : 0.2 + Math.sin(t) * 0.05 * amp + (angry ? -0.12 : 0);
@@ -583,7 +583,9 @@ function golem(pose, frame, mood) {
   up.push(F(T([[15, 32], [21, 21], [25, 19.4], [21, 30], [20, 42], [25, 52], [34, 58], [28, 58], [18.6, 52], [14.4, 42]], stD)));
   up.push(F(E(48, 23, 7.6, 3.6, stL)), F(E(56, 34, 1.6, 4, stL)));
   // Chest slabs around the core, cracks with light leaking through.
-  up.push(...oT([[30, 33], [38, 30.6], [41, 34], [33, 37.2]], shade(st, 4), 0.5), ...oT([[44, 33.4], [52, 31.6], [53.6, 36.6], [47, 37]], shade(st, 4), 0.5));
+  // Faceted rock planes: a lit ledge over the core and chipped facets.
+  up.push(F(T([[31, 34.6], [37, 33], [48, 33.2], [53, 35.4], [48, 36], [37, 35.8]], stL)));
+  up.push(F(T([[18, 44], [22, 40.6], [24.6, 44.6], [21, 48]], shade(stD, 3))), F(T([[47, 52], [53, 48.6], [54, 52.4], [49, 55.6]], stD)));
   up.push(...stroke([[26, 46], [30, 49.4], [29, 54]], 0.9, stDD), ...stroke([[26.2, 46.4], [30, 49.6], [29.2, 53.6]], 0.35, glow));
   up.push(...stroke([[51, 46], [54.6, 44], [56, 47]], 0.9, stDD), ...stroke([[51.2, 46.2], [54.6, 44.3], [55.8, 46.8]], 0.35, glow));
   up.push(F(E(24, 41, 1.6, 1.1, stDD)), F(E(36, 54, 1.2, 0.8, stDD)), F(E(53, 41.6, 1, 0.7, stDD)));
@@ -600,27 +602,28 @@ function golem(pose, frame, mood) {
   // Head, sunk between the shoulders.
   const nod = walk ? Math.sin(t * 2) * 0.5 : Math.sin(t) * 0.4;
   const head = [];
-  head.push(...oE(42.6, 25.4, 9.6, 8.4, st), F(E(39, 30.4, 5, 2, stD)), F(E(46, 20, 4, 1.8, stL)));
-  head.push(...crystal(45, 18.4, 3, 6.4, 0.35, '#c3a8ff', '#eee4ff'));
-  head.push(F(E(39.2, 26, 2.4, 2, '#3a3158')), F(E(46.6, 25.8, 2.4, 2, '#3a3158')));
-  head.push(...glowEyes(42.9, 25.9, 1.18, mood, { gap: 6.2, col: glow, core: '#ffffff', halo: mix(glow, '#3a3158', 0.5) }));
-  const brow = angry ? [[35.4, 20.6], [42.8, 23.6], [50.4, 20.4], [50.8, 22.6], [42.8, 25.4], [35, 22.8]] : mood === 'happy' ? [[35.2, 21], [42.8, 21.2], [50.6, 20.6], [50.8, 22.4], [42.8, 22.6], [35, 22.8]] : [[35.2, 21.6], [42.8, 22], [50.6, 21.2], [50.8, 23.2], [42.8, 23.6], [35, 23.4]];
-  head.push(...oT(brow, stD, 0.5));
-  if (angry) head.push(F(T([[39, 30], [46.8, 29.8], [46, 31.8], [44.8, 30.8], [43.4, 32], [42.2, 30.9], [40.8, 32], [39.6, 31]], glow)));
-  else if (mood === 'hurt') head.push(F(E(43, 31, 1, 1.1, stDD)));
-  else if (mood === 'happy') head.push(arc(43, 29.6, 2.2, 1.6, 20, 160, 0.6, stDD));
-  else head.push(...stroke([[40.8, 30.8], [45.2, 30.6]], 0.6, stDD));
-  if (!dead) head.push(F(E(37.6, 28.8, 1.3, 0.6, '#e9a8cc')), F(E(48.4, 28.6, 1.3, 0.6, '#e9a8cc')));
-  up.push(...mv(head, 0, nod));
-  // Front shoulder boulder with crystals.
-  up.push(...crystal(51.6, 26.4, 4, 11, 0.1, '#ffadd8', '#ffe2f1'), ...crystal(56.4, 25.6, 5, 14, 0.4, '#8fe6ff', '#dcfaff'), ...crystal(61, 29, 3.4, 8, 0.85, '#c3a8ff', '#eee4ff'));
-  up.push(...oE(56, 32.4, 8.4, 7, st), F(E(54, 29.6, 4, 2, stL)), F(E(52, 36, 3, 1.2, stD)));
-  // Front arm with shards on the forearm and a huge fist.
+  head.push(...oE(43, 25, 10, 8.8, st), F(E(39.4, 30.6, 5.4, 2, stD)), F(E(46.6, 18.8, 4.4, 1.8, stL)));
+  head.push(...crystal(46.4, 17.6, 3.2, 6.6, 0.35, '#c3a8ff', '#eee4ff'));
+  // A dark face hollow where the eyes glow, under a heavy stone brow.
+  head.push(F(E(44.6, 26.2, 7, 4.6, '#3a3158')), F(E(44.8, 27, 6.2, 3.4, '#2f2848')));
+  head.push(...glowEyes(44.8, 26.2, 1.5, mood, { gap: 3.6, col: glow, core: '#ffffff', halo: mix(glow, '#3a3158', 0.55) }));
+  const bt = angry ? 2.6 : mood === 'happy' ? -1 : 0.6;
+  const brow = [[35.6, 21.4 - bt * 0.4], [39, 19.8 - bt * 0.3], [44.6, 21 + bt * 0.6], [50, 19.6 - bt * 0.3], [53.4, 21 - bt * 0.4], [52.6, 23.2 - bt * 0.2], [48.6, 22.4], [44.6, 23.4 + bt * 0.7], [40.4, 22.6], [36.4, 23.4 - bt * 0.2]];
+  head.push(...oT(brow, stD, 0.5), F(T([brow[0], brow[1], brow[2], brow[3], brow[4], [brow[4][0] - 1, brow[4][1] + 0.9], [brow[3][0], brow[3][1] + 0.9], [brow[2][0], brow[2][1] + 0.9], [brow[1][0], brow[1][1] + 0.9], [brow[0][0] + 1, brow[0][1] + 0.9]], stL)));
+  if (angry) head.push(F(T([[41.4, 29], [48.4, 29], [47.6, 30.4], [46.4, 29.6], [45, 30.6], [43.8, 29.6], [42.4, 30.4]], glow)));
+  else if (mood === 'hurt') head.push(F(E(44.8, 29.4, 0.9, 0.8, glow)));
+  else if (mood === 'happy') head.push(arc(44.8, 28.4, 1.8, 1.3, 20, 160, 0.5, glow));
+  else if (mood !== 'dead') head.push(...stroke([[43.6, 29.6], [46, 29.6]], 0.45, mix(glow, '#3a3158', 0.4)));
+  if (!dead) head.push(F(E(37.2, 28.2, 1.4, 0.7, '#e9a8cc')), F(E(52.6, 28, 1.2, 0.7, '#e9a8cc')));
+  up.push(...mv(head, -3, nod));
+  // Front arm with shards on the forearm and a huge fist, under a crystal-crusted shoulder boulder.
   const ff = [57.8 + swing, 62];
-  up.push(...limb([[56.6, 35], [61, 46], [ff[0] + 0.4, ff[1] - 4]], 10, st));
-  up.push(...crystal(63.6, 47, 3, 6.6, 1.1, '#8fe6ff', '#dcfaff'));
+  up.push(...limb([[57, 36], [61, 46]], 8.6, stD), ...limb([[61, 46], [ff[0] + 0.4, ff[1] - 4]], 10.6, st), ...oE(61, 46.4, 4.6, 4, st, 0.5), F(E(62.4, 45, 2, 1.4, stL)));
+  up.push(...crystal(65.2, 50, 3, 6.6, 1.15, '#8fe6ff', '#dcfaff'));
   up.push(...oE(ff[0], ff[1], 8, 7, st), F(E(ff[0] + 2, ff[1] - 3, 3.6, 1.6, stL)));
   up.push(...stroke([[ff[0] - 4.6, ff[1] + 1], [ff[0] + 4, ff[1] - 0.4]], 0.6, stDD), ...stroke([[ff[0] - 1, ff[1] - 1], [ff[0] - 0.4, ff[1] + 4]], 0.6, stDD), ...stroke([[ff[0] + 2.6, ff[1] - 0.8], [ff[0] + 3.2, ff[1] + 3.6]], 0.6, stDD));
+  up.push(...crystal(51.6, 27, 4, 11, 0.1, '#ffadd8', '#ffe2f1'), ...crystal(56.6, 26, 5, 14, 0.4, '#8fe6ff', '#dcfaff'), ...crystal(61.4, 29.6, 3.4, 8, 0.85, '#c3a8ff', '#eee4ff'));
+  up.push(...oE(56.4, 33.4, 8.6, 6.8, st), F(E(54.6, 30.6, 4.4, 2, stL)), F(E(52, 37.4, 3.6, 1.3, stD)), F(E(60.4, 36.4, 1, 0.7, stDD)));
   if (hurt) up.push(...oT([[8, 14], [10, 12.6], [11, 14.6], [9, 15.6]], stD, 0.5), ...oT([[4, 22], [5.6, 21], [6.2, 22.8]], '#8fe6ff', 0.5));
 
   // Legs: short and thick, planted with each stomp.
@@ -690,11 +693,15 @@ function wraith(pose, frame, mood) {
   out.push(...chainLinks([11, 36], [2.6 + tr(2), 42 + w(2) * 0.5], 1.4, 7, chainD, shade(chainD, -12), robeD));
   // The robe.
   const hem = [[31, 44], [30.2, 49.6 + w(0)], [27.2, 46.2], [24.6, 50.6 + w(1)], [21.6, 46.4], [18.6, 50.2 + w(2)], [15.6, 46], [12 + tr(3) * 0.5, 48.8 + w(3)], [9.4 + tr(3) * 0.6, 44.4], [5 + tr(4), 46.4 + w(4)], [7.6 + tr(3) * 0.4, 38], [9, 28]];
-  const robeP = [[7 + tr(1) * 0.6, 9.6 + w(1) * 0.3], [12, 4.2], [20, 1.4], [28, 3.8], [31.6, 10], [32.2, 18], [33, 26], [32.6, 36], ...hem, [10, 18], [9.2, 13.6]];
+  const robeP = [[3.4 + tr(1) * 0.8, 6.2 + w(1) * 0.4], [9, 4.4], [14, 2], [20, 1.2], [27.4, 3.6], [31.6, 10], [32.2, 18], [33, 26], [32.6, 36], ...hem, [10, 18], [9.2, 13.6]];
   out.push(...oT(robeP, robe));
   out.push(F(T([[9, 28], [7.6 + tr(3) * 0.4, 38], [5 + tr(4), 46.4 + w(4)], [9.4 + tr(3) * 0.6, 44.4], [12 + tr(3) * 0.5, 48.8 + w(3)], [13.4, 40], [13, 28], [11, 18], [10, 18]], robeD)));
   out.push(...stroke([[17, 30], [16 + tr(2) * 0.3, 40], [15.6 + tr(2) * 0.5, 45.6]], 0.7, robeD), ...stroke([[23.6, 30], [24 + tr(1) * 0.3, 40], [24.4 + tr(1) * 0.4, 49]], 0.7, robeD));
   out.push(...stroke([[28.6, 28], [29.4, 38], [28.6, 45]], 0.9, robeL), ...stroke([[20, 32], [20.4 + tr(1) * 0.3, 44]], 0.6, robeL));
+  // The hem fades into ghost-light.
+  const fade = mix(robe, '#c9c0f0', 0.28);
+  out.push(F(T([[31.6, 42], ...hem.slice(1, 9), [10.4, 41.6], [16, 43], [22, 42.4], [27, 43.2]], fade)));
+  out.push(F(T([[30.2, 47.4 + w(0) * 0.8], [27.2, 46.2], [24.6, 48.8 + w(1) * 0.8], [21.6, 46.4], [18.6, 48.6 + w(2) * 0.8], [15.6, 46], [12 + tr(3) * 0.5, 47.4 + w(3) * 0.8], [9.4 + tr(3) * 0.6, 44.4], [12, 46], [15.6, 46], ...hem.slice(1, 6).reverse()], mix(robe, '#e0daff', 0.45))));
   // Hood: lighter rim, bottomless dark inside, a fold over the brow.
   out.push(E(23, 14.4, 8.6, 8.8, robeL), F(E(23.8, 15.4, 6.8, 7.2, hood)));
   out.push(F(T([[16, 9], [20, 6.4], [27, 6.2], [30.4, 9.4], [26, 8.6], [20, 9.2]], robeL)));
@@ -710,14 +717,15 @@ function wraith(pose, frame, mood) {
   out.push(...oT([[24.4, 33.6], [28, 33.4], [28.2, 37], [24.4, 37.2]], '#ffd66b', 0.5), arc(26.2, 33.6, 1.3, 1.6, 180, 360, 0.6, '#c9c4d6'), F(E(26.3, 35, 0.45, 0.45, '#6a4a3a')), F(T([[26.1, 35.2], [26.5, 35.2], [26.4, 36.4], [26.2, 36.4]], '#6a4a3a')));
   // Front sleeve reaching out, with a bony claw and a dangling broken shackle.
   const reach = [Math.sin(t) * 0.8 * amp + (angry ? 1 : 0), Math.cos(t) * 0.6 * amp + (dead ? 3 : 0)];
-  const fh = [36 + reach[0], 28.6 + reach[1]];
+  const fh = [35.8 + reach[0], 32.6 + reach[1]];
   const end = [fh[0] - 1 + Math.sin(t - 1.2) * 2 * amp, fh[1] + 11];
   out.push(...chainLinks([fh[0] - 2, fh[1] + 1], end, 0.6, 6, chain, chainD, robe));
   out.push(...oE(end[0], end[1] + 1.4, 1.6, 1.5, chain, 0.5), F(E(end[0], end[1] + 1.4, 0.8, 0.7, robe)), F(E(end[0] + 1.6, end[1] + 2.2, 0.6, 0.5, robe)));
-  out.push(...oT([[27, 18.6], [32.4, 21.6], [fh[0] + 1, fh[1] - 3.6], [fh[0] + 0.2, fh[1] + 1], [fh[0] - 2.2, fh[1] + 0.2], [fh[0] - 3.6, fh[1] + 1.6], [29.6, 27.4], [26.4, 25.6]], robe), F(T([[27, 18.6], [32.4, 21.6], [fh[0] + 1, fh[1] - 3.6], [fh[0] - 0.4, fh[1] - 2.6], [31, 23.2]], robeL)));
+  const slv = [[27.4, 24.4], [32.4, 25], [fh[0] + 1.6, fh[1] - 3.4], [fh[0] + 1.2, fh[1] + 1.2], [fh[0] - 0.6, fh[1] + 0.4], [fh[0] - 2, fh[1] + 2.4], [fh[0] - 3.4, fh[1] + 0.8], [fh[0] - 5, fh[1] + 2.6], [27.6, 33], [25.8, 29]];
+  out.push(...oT(slv, robe), F(T([slv[0], slv[1], slv[2], [fh[0], fh[1] - 2.2], [30.4, 27]], robeL)), ...stroke([[fh[0] - 3.4, fh[1] + 0.6], [fh[0] - 1, fh[1] - 1.4]], 0.5, robeD), ...stroke([[28, 30.6], [fh[0] - 3, fh[1] - 1]], 0.5, robeD));
   const curl = angry ? 1.4 : hurt ? -0.6 : 0;
-  out.push(...oE(fh[0] + 0.4, fh[1] - 0.2, 1.6, 1.3, claw, 0.5));
-  for (const [dy, l] of [[-1, 3.4], [0.2, 3.8], [1.2, 3]]) out.push(...stroke([[fh[0] + 1, fh[1] - 0.2 + dy * 0.6], [fh[0] + 1 + l * 0.6, fh[1] + dy], [fh[0] + 1 + l * 0.8, fh[1] + dy + 1.4 + curl]], 0.8, claw));
+  for (const [dy, l] of [[-1.4, 4], [0.2, 4.6], [1.6, 3.6]]) out.push(...limb([[fh[0] + 0.8, fh[1] - 0.2 + dy * 0.6], [fh[0] + 1 + l * 0.6, fh[1] + dy], [fh[0] + 1 + l * 0.85, fh[1] + dy + 1.6 + curl]], 0.9, claw, 0.45), F(T([[fh[0] + 0.6 + l * 0.85, fh[1] + dy + 1.4 + curl], [fh[0] + 1.4 + l * 0.85, fh[1] + dy + 1.4 + curl], [fh[0] + 1 + l * 0.8, fh[1] + dy + 2.6 + curl]], '#ffffff')));
+  out.push(...oE(fh[0] + 0.4, fh[1] - 0.2, 2, 1.7, claw, 0.5), F(E(fh[0] + 0.8, fh[1] - 0.8, 0.8, 0.5, '#ffffff')));
   let shapes = out;
   if (hurt) shapes = mv(shapes, -1.4, 0);
   return { w: 40, h: 52, res: 3, shapes };

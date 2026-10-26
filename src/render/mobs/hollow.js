@@ -349,13 +349,13 @@ function myconid(pose, f, mood) {
 
   // Face on the stem, in the cap's shade.
   const fx = 19.2 + hx;
-  const fy = 25.6 + by;
-  out.push(...eyes([[fx - 2.6, fy, 1.55], [fx + 2.4, fy, 1.45]], mood, { cx: fx, skin: stem, glow, brow: '#6a4a5a', flare: false }));
+  const fy = 26 + by;
+  out.push(...eyes([[fx - 2.7, fy, 1.8], [fx + 2.5, fy, 1.65]], mood, { cx: fx, skin: stem, glow, brow: '#6a4a5a', flare: false }));
   if (!dead && mood !== 'hurt') {
     // War paint: two violet stripes under each eye.
-    for (const x of [fx - 3.8, fx - 2.6, fx + 2, fx + 3.2]) out.push(...flatLine([[x, fy + 2], [x - 0.3, fy + 3.2]], 0.5, '#9b6fd6'));
+    for (const x of [fx - 4.6, fx + 4.2]) out.push(...flatLine([[x - 0.7, fy + 2.1], [x, fy + 2.8], [x + 0.7, fy + 2.1]], 0.5, '#9b6fd6'));
   }
-  const my = fy + 3.4;
+  const my = fy + 3.2;
   switch (mood) {
     case 'angry':
       out.push(F(E(fx, my, 1.6, 1.1, GUM)), F(T([[fx - 1.1, my - 0.8], [fx - 0.3, my - 0.8], [fx - 0.7, my + 0.1]], FANG)), F(T([[fx + 0.3, my - 0.8], [fx + 1.1, my - 0.8], [fx + 0.7, my + 0.1]], FANG)));
@@ -707,7 +707,7 @@ function sapling(pose, f, mood) {
   const leafA = dead ? '#a9a08f' : '#97c48c';
   const leafB = dead ? '#9b8f99' : '#b08ad8';
   const leafC = dead ? '#8f8a80' : '#77a978';
-  const heart = dead ? '#8f8599' : '#d65cff';
+  const heart = dead ? '#8f8599' : '#e05cf0';
   const glow = dead ? '#a49cb0' : TEAL;
   const vein = dead ? barkD : mix(barkD, PURP, 0.45 + 0.45 * beat);
   const out = [];
@@ -720,29 +720,39 @@ function sapling(pose, f, mood) {
   out.push(...limb([[16.4, 39.6], [20.4, 42.6], [25, 44.2], [27.6, 44.6], [28.6, 43.4]], 3.2, 0.5, bark));
   out.push(...limb([[15.2, 41.6], [15.6, 44.4], [17.6, 45.6], [19.4, 45.4]], 2.4, 0.5, barkL));
 
-  // Weeping branches behind the trunk.
+  // A pointed leaf hanging from (x, y), tipping toward side.
+  const leaf = (x, y, l, side, c) => {
+    const pts = [[x, y], [x - 1.2, y + l * 0.4], [x + side * 0.6, y + l], [x + 1.2, y + l * 0.4]];
+    const res = [F(T(pts.map(([px, py]) => [px + (px - x) * 0.25 + (px === x ? 0 : 0), py + (py - y) * 0.12 + (py === y ? -0.4 : 0.3)]), lineOf(c))), F(T(pts, c))];
+    res.push(...flatLine([[x, y + 0.3], [x + side * 0.4, y + l * 0.75]], 0.3, shade(c, -14)));
+    if (c === leafB && !dead) res.push(F(E(x + side * 0.6, y + l - 0.4, 0.55, 0.55, glow)));
+    return res;
+  };
+  // Weeping branches arching out from the top of the trunk, hung with leaves.
   const branch = (pts, side) => {
-    const b = pts.map(([x, y]) => [x + sx(y), y + (angry ? -1.2 * Math.abs(x - 15) / 10 : 0)]);
-    const res = [...limb(b, 2.4, 0.7, barkD)];
-    for (let i = 1; i < b.length; i++) {
-      const m = lerp(b[i - 1], b[i], 0.6);
-      const dl = droop + (walk ? Math.sin((f / 4) * TAU + i) * 0.3 : 0);
+    const b = pts.map(([x, y]) => [x + sx(y), y + (angry ? -1.4 * Math.abs(x - 15) / 10 : 0)]);
+    const res = [...limb(b, 2.6, 0.7, barkD)];
+    for (let i = 0; i < 5; i++) {
+      const seg = Math.min(b.length - 2, Math.floor(i * 0.8) + 1);
+      const m = lerp(b[seg - (i % 2 ? 0 : 1) + 0], b[seg + (i % 2 ? 1 : 0)] ?? b[seg], i % 2 ? 0.4 : 0.7);
+      const dl = droop + (walk ? Math.sin((f / 4) * TAU + i) * 0.4 : Math.sin((f / 3) * TAU + i) * 0.2);
       const c = i % 3 === 1 ? leafB : i % 2 ? leafA : leafC;
-      const lx = m[0] + side * 0.4 + sway * 0.3;
-      res.push(...oval(lx, m[1] + 2.4 + dl, 1.1, 2.4, c));
-      if (c === leafB && !dead) res.push(F(E(lx, m[1] + 4.2 + dl, 0.6, 0.6, glow)));
+      res.push(...leaf(m[0], m[1] + 0.4, 3.6 + (i % 2) * 0.8 + dl, side, c));
     }
     return res;
   };
-  out.push(...branch([[14, 20], [10, 15.6], [6, 14.6], [3.2, 16.4], [2.6, 19.6]], -1));
-  out.push(...branch([[16.2, 19.4], [20.4, 15], [24.6, 14.2], [27.2, 16], [27.6, 19.2]], 1));
+  out.push(...branch([[13.8, 16], [9.6, 12.8], [5.4, 13], [3, 15.8], [2.4, 19.6]], -1));
+  out.push(...branch([[16.4, 15.6], [20.6, 12.6], [24.8, 12.8], [27, 15.6], [27.6, 19.4]], 1));
 
   // The twisted trunk.
   const tc = [[15, 42], [13.8, 37], [16.2, 31.6], [14.6, 25.6], [15.4, 19], [15, 13]].map(([x, y]) => [x + sx(y), y]);
   out.push(F(taper(ext(tc, 0.3), 10.2, 6.4, lineOf(bark))), taper(tc, 9.2, 5.4, bark));
   // Spiral grooves and ridges.
   for (const y of [38, 34, 23, 18.6]) out.push(...flatLine([[11.6 + sx(y), y + 1.4], [15 + sx(y), y - 0.2], [18.4 + sx(y), y - 1.8]], 0.5, barkD));
-  for (const y of [36.4, 21]) out.push(...flatLine([[12.4 + sx(y), y + 1], [15.6 + sx(y), y - 0.6]], 0.5, barkL));
+  for (const y of [36.4]) out.push(...flatLine([[12.4 + sx(y), y + 1], [15.6 + sx(y), y - 0.6]], 0.5, barkL));
+  // A knotty swell in the trunk carries the face.
+  out.push(C(E(15.4 + sx(22), 22.2, 5.6, 4.8, bark)), F(E(13.4 + sx(22), 19.6, 2.2, 0.8, barkL)));
+  out.push(...flatLine([[10.4 + sx(22), 23.4], [11.2 + sx(22), 25.4]], 0.45, barkD), ...flatLine([[20.4 + sx(22), 23], [19.8 + sx(22), 25.2]], 0.45, barkD));
 
   // Hollow with the pulsing heart, and veins of glow spreading out.
   const hcx = 15.6 + sx(32);
@@ -751,22 +761,22 @@ function sapling(pose, f, mood) {
     out.push(...flatLine(v, 0.55 + beat * 0.2, vein));
     if (!dead) out.push(F(E(v[v.length - 1][0], v[v.length - 1][1], 0.5 + beat * 0.3, 0.5 + beat * 0.3, mix(PURP, PURP_HI, beat))));
   }
-  out.push(F(E(hcx, hcy, 3.9, 4.8, barkL)), F(E(hcx + 0.2, hcy + 0.2, 3.3, 4.2, '#24182f')));
-  out.push(F(E(hcx, hcy + 0.4, 2.6 + beat * 0.7, 3.2 + beat * 0.7, dead ? '#3a3040' : mix('#3a1f55', PURP, 0.3 + beat * 0.35))));
-  const s = 0.85 + beat * 0.35;
+  out.push(F(E(hcx, hcy, 4.5, 5.3, barkL)), F(E(hcx + 0.2, hcy + 0.2, 3.9, 4.7, '#24182f')));
+  out.push(F(E(hcx + 0.1, hcy + 0.4, 2.8 + beat * 0.9, 3.4 + beat * 0.9, dead ? '#3a3040' : mix('#3a1f55', PURP, 0.3 + beat * 0.4))));
+  const s = 0.95 + beat * 0.4;
   const hy = hcy + 0.2;
   const heartShape = (k, c) => [
-    F(E(hcx - 0.95 * s, hy - 0.6 * s, 1.25 * s * k, 1.2 * s * k, c)), F(E(hcx + 0.95 * s, hy - 0.6 * s, 1.25 * s * k, 1.2 * s * k, c)),
-    F(T([[hcx - 2.15 * s * k, hy - 0.3 * s], [hcx + 2.15 * s * k, hy - 0.3 * s], [hcx, hy + 2.3 * s * k]], c)),
+    F(E(hcx - 1 * s, hy - 0.7 * s, 1.2 * s * k, 1.15 * s * k, c)), F(E(hcx + 1 * s, hy - 0.7 * s, 1.2 * s * k, 1.15 * s * k, c)),
+    F(T([[hcx - 2.15 * s * k, hy - 0.45 * s], [hcx + 2.15 * s * k, hy - 0.45 * s], [hcx, hy + 2.4 * s * k]], c)),
   ];
   out.push(...heartShape(1.12, lineOf(heart)), ...heartShape(1, heart));
-  out.push(F(E(hcx - 1, hy - 0.9 * s, 0.6 * s, 0.5 * s, dead ? '#c0b8c8' : PURP_HI)));
-  // Roots grown over the hollow's rim, like a cage.
-  out.push(...limb([[hcx - 3.4, hcy - 2], [hcx - 1, hcy - 0.6], [hcx + 0.6, hcy + 2.2], [hcx + 3.2, hcy + 3.6]], 0.9, 0.7, barkD));
+  out.push(F(E(hcx - 1.1 * s, hy - 1 * s, 0.55 * s, 0.45 * s, dead ? '#c0b8c8' : PURP_HI)), F(E(hcx + 0.3, hy + 0.3, 0.9 * s, 0.9 * s, dead ? heart : mix(heart, '#ffb8f0', 0.35 + beat * 0.3))));
+  // Rootlets curling over the hollow's rim.
+  out.push(...limb([[hcx - 4.2, hcy - 3.4], [hcx - 2.4, hcy - 4.4], [hcx - 0.8, hcy - 3.8]], 0.9, 0.4, barkD), ...limb([[hcx + 4.2, hcy + 3], [hcx + 2.8, hcy + 4.6], [hcx + 1, hcy + 4.6]], 0.9, 0.4, barkD));
 
   // Face: sleepy knot eyes and a crack of a mouth.
   const fx = 15.4 + sx(22) + (hurt ? -0.4 : 0);
-  const fy = 22.6 + (dead ? 0.6 : 0);
+  const fy = 22 + (dead ? 0.6 : 0);
   out.push(F(E(fx - 2.4, fy - 2.3, 1.8, 0.5, barkD)), F(E(fx + 2.4, fy - 2.3, 1.8, 0.5, barkD)));
   out.push(...eyes([[fx - 2.3, fy, 1.4], [fx + 2.3, fy, 1.4]], mood, { cx: fx, skin: bark, glow: dead ? glow : mix(TEAL, PURP, 0.25 * beat), brow: '#4a3548' }));
   const my = fy + 2.8;
@@ -788,24 +798,27 @@ function sapling(pose, f, mood) {
   }
   if (mood === 'idle' || mood === 'happy' || mood === 'blink') out.push(F(E(fx - 3.4, fy + 1.8, 0.9, 0.45, BLUSH)), F(E(fx + 3.4, fy + 1.8, 0.9, 0.45, BLUSH)));
 
-  // Crown: drooping clumps of leaves, a curled shoot, and a fringe of hanging leaves.
-  const cx = 15.2 + sx(8);
-  const cy = 9.6 + droop * 0.5;
-  out.push(...limb([[cx, cy - 3], [cx + 0.6, cy - 6.4], [cx - 0.8, cy - 8.2], [cx - 2.2, cy - 7.4]], 1.4, 0.5, barkD));
-  out.push(F(E(cx - 2.3, cy - 7.4, 0.7, 0.7, dead ? '#9b8f99' : PURP)));
-  for (const [x, y, rx, ry, c] of [[-5.2, 1.6, 4.4, 3.4, leafC], [5.4, 1.4, 4.4, 3.4, leafC], [0, 0, 6.6, 4.6, leafA], [-2.6, -2.6, 3.8, 2.8, leafA], [3, -2.4, 3.6, 2.6, leafB], [0.4, -3.8, 2.8, 2, mix(leafA, '#ffffff', 0.15)]]) {
-    out.push(C(E(cx + x, cy + y, rx, ry, c)));
-  }
-  out.push(F(E(cx - 2.4, cy - 3.2, 1.6, 0.7, mix(leafA, '#ffffff', 0.45))), F(E(cx + 3.6, cy - 2.6, 1, 0.5, mix(leafB, '#ffffff', 0.45))));
+  // Crown: drooping clumps of leaves around a curled shoot, edged with short hanging leaves.
+  const cx = 15.2 + sx(6);
+  const cy = 8.4 + droop * 0.5;
+  out.push(...limb([[cx, cy - 3], [cx + 0.6, cy - 5.8], [cx - 0.6, cy - 7.6], [cx - 2, cy - 7]], 1.4, 0.5, barkD));
+  out.push(F(E(cx - 2.1, cy - 7, 0.75, 0.75, dead ? '#9b8f99' : PURP)), F(E(cx - 2.2, cy - 7.1, 0.3, 0.3, PURP_HI)));
   for (let i = 0; i < 7; i++) {
     const x = cx - 7.2 + i * 2.4;
-    const l = 2 + (i % 3) * 0.8 + droop;
     const w = walk ? Math.sin((f / 4) * TAU + i * 0.9) * 0.4 : Math.sin((f / 3) * TAU + i) * 0.25;
     const c = i % 3 === 2 ? leafB : i % 2 ? leafA : leafC;
-    out.push(...oval(x + w, cy + 3.4 + l * 0.6, 0.9, l * 0.6, c));
-    if (c === leafB && !dead) out.push(F(E(x + w, cy + 3.6 + l * 1.15, 0.5, 0.5, glow)));
+    out.push(...leaf(x + w, cy + 2 - Math.abs(i - 3) * 0.3, 2.6 + (i % 2) * 0.6 + droop * 0.5, i < 3 ? -1 : 1, c));
   }
-  for (const [x, y] of [[-4.4, -0.4], [4, 1], [1.2, -1.6]]) out.push(F(E(cx + x, cy + y, 0.6, 0.6, dead ? '#9b8f99' : PURP)), F(E(cx + x - 0.2, cy + y - 0.2, 0.25, 0.25, PURP_HI)));
+  for (const [x, y, rx, ry, c] of [[-4.8, 1, 4, 3, leafC], [4.8, 0.8, 4, 3, leafC], [0, 0, 6.2, 4.2, leafA], [-2.4, -2.4, 3.6, 2.6, leafA], [2.8, -2.2, 3.4, 2.4, leafB], [0.2, -3.4, 2.6, 1.8, mix(leafA, '#ffffff', 0.15)]]) {
+    out.push(C(E(cx + x, cy + y, rx, ry, c)));
+  }
+  // A bumpy leafy rim, so the crown reads as foliage.
+  for (const [x, y, r, c] of [[-7.6, -0.6, 1.6, leafC], [-6.2, -2.8, 1.7, leafA], [-4, -4.6, 1.7, leafA], [4.4, -4.4, 1.6, leafB], [6.6, -2.6, 1.7, leafC], [7.8, -0.4, 1.5, leafC], [-1.4, -5.6, 1.6, mix(leafA, '#ffffff', 0.15)], [1.8, -5.4, 1.5, leafB]]) {
+    out.push(E(cx + x, cy + y, r, r * 0.9, c));
+  }
+  for (const [x, y] of [[-3.6, 0.8], [1.4, 1.4], [5.6, 1.2]]) out.push(...flatLine([[cx + x - 1, cy + y - 0.6], [cx + x, cy + y], [cx + x + 1, cy + y - 0.6]], 0.35, shade(leafA, -16)));
+  out.push(F(E(cx - 2.2, cy - 3, 1.6, 0.7, mix(leafA, '#ffffff', 0.45))), F(E(cx + 3.4, cy - 2.4, 1, 0.5, mix(leafB, '#ffffff', 0.45))));
+  for (const [x, y] of [[-4.6, -0.6], [3.8, 0.4], [0.8, -1.6]]) out.push(F(E(cx + x, cy + y, 0.65, 0.65, dead ? '#9b8f99' : PURP)), F(E(cx + x - 0.2, cy + y - 0.2, 0.25, 0.25, PURP_HI)));
   // Spore motes drifting off as the heart beats.
   if (!dead && beat > 0.4) out.push(...mote(hcx + 5.4, hcy - 4 - beat * 2, 0.6, PURP), ...mote(hcx - 5, hcy - 6 - beat, 0.5, glow));
   return { w: 30, h: 46, res: 3, shapes: out };
