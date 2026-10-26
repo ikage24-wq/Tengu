@@ -6,10 +6,12 @@
 //   piglet      Jackalope: a fluffy antlered hare that bounds along
 // Every design faces right with its feet on the bottom edge; see kit.js for the shapes. Each has
 // its own gait (a light trot, a heavy plod, a root-footed scurry, a bow-legged swagger, bounding
-// hops), its own eyes, an idle fidget loop, and a four-frame attack (wind-up, strike, impact,
-// recover).
+// hops), its own face built from faces.js (fox almond eyes, sleepy tortoise lids, a mandrake's
+// big round eyes, a goblin's shifty squint, a hare's glossy eye), an idle fidget loop, and a
+// four-frame attack (wind-up, strike, impact, recover).
 
-import { R, E, T, F, C, INK, BLUSH, MOUTH, arc, stroke, shade, mix } from './kit.js';
+import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix } from './kit.js';
+import { eye, brow, mouth, nose, blush as cheek, sweat, tear, vein, deadEye } from './faces.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -143,112 +145,6 @@ function star(x, y, r, c, core = '#ffffff') {
 
 // Little dust puffs kicked up where something hits the ground.
 const dust = (x, y, k) => [E(x - 2.4 * k, y - 0.8 * k, 1.6 * k, 1.2 * k, '#f3e6d6'), E(x, y - 1.6 * k, 2 * k, 1.6 * k, '#fbf1e4'), E(x + 2.4 * k, y - 0.7 * k, 1.5 * k, 1.1 * k, '#f3e6d6')];
-
-// ---------- Eyes ----------
-
-// An almond outline: pointed corners, the outer one (side s) lifted by `slant`; `round` near 0.5
-// gives a rounder eye, near 1 a sharper almond. Returns the upper and lower lid lines too.
-function almond(x, y, w, h, s, slant = 0, round = 0.75, lower = 0.8, n = 10) {
-  const up = [];
-  const lo = [];
-  for (let i = 0; i <= n; i++) {
-    const u = -1 + (2 * i) / n;
-    const k = Math.pow(Math.max(0, 1 - u * u), round);
-    const sl = -slant * u * s;
-    up.push([x + u * w, y - h * k + sl]);
-    lo.push([x + u * w, y + h * lower * k + sl]);
-  }
-  return { up, lo, pts: [...up, ...lo.slice(1, -1).reverse()] };
-}
-
-// One eye, built to a species' recipe (o): its size (w, h), shape (slant, round, lower), colors
-// (sclera, iris, irisL, glow for angry), pupil ('slit', 'dot', 'round', 'none'), a heavy lid
-// (lid color, drop 0..1), a liner wing at the outer corner, an outer ring, and where it looks.
-// s = -1 for the far eye, 1 for the near one. Every mood reads in every shape.
-function peeper(x, y, mood, s, o) {
-  const ink = o.ink ?? INK;
-  const angry = mood === 'angry';
-  const w = o.w;
-  const h = o.h * (angry ? o.squint ?? 0.68 : 1);
-  const sl = (o.slant ?? 0) + (angry ? 0.3 * o.h : 0);
-  const rd = o.round ?? 0.75;
-  const lw = o.lw ?? 0.45;
-  const out = [];
-  const outer = (a) => (s > 0 ? a[a.length - 1] : a[0]);
-  switch (mood) {
-    case 'blink': {
-      const a = almond(x, y + o.h * 0.25, w, o.h * 0.35, s, o.slant ?? 0, rd, 1);
-      out.push(...stroke(a.lo, lw * 1.35, ink));
-      if (o.wing) out.push(...stroke([outer(a.lo), [outer(a.lo)[0] + s * 0.9, outer(a.lo)[1] - 0.6]], lw * 1.1, o.wing));
-      return out;
-    }
-    case 'happy':
-      return stroke(almond(x, y + o.h * 0.45, w * 0.92, o.h * 0.75, s, 0, 0.5, 0).up, lw * 1.35, ink);
-    case 'hurt': {
-      const r = Math.max(w, o.h) * 0.85;
-      const d = s < 0 ? 1 : -1;
-      return stroke([[x - d * 0.85 * r, y - 0.8 * r], [x + d * 0.75 * r, y], [x - d * 0.85 * r, y + 0.8 * r]], lw * 1.3, ink);
-    }
-    case 'dead': {
-      const r = Math.max(w, o.h) * 0.8;
-      return [...stroke([[x - r, y - r], [x + r, y + r]], lw * 1.2, ink), ...stroke([[x - r, y + r], [x + r, y - r]], lw * 1.2, ink)];
-    }
-    default:
-      break;
-  }
-  const a = almond(x, y, w, h, s, sl, rd, o.lower ?? 0.8);
-  const a2 = almond(x, y, w + lw, h + lw, s, sl, rd, o.lower ?? 0.8);
-  if (o.ring) out.push(F(T(almond(x, y, w + lw + 0.5, h + lw + 0.5, s, sl, rd, o.lower ?? 0.8).pts, o.ring)));
-  out.push(F(T(a2.pts, ink)));
-  const [lx, ly] = o.look ?? [0, 0];
-  const iris = angry ? o.glow ?? o.iris : o.iris;
-  const irisL = angry ? o.glowL ?? mix(iris ?? '#ffffff', '#ffffff', 0.45) : o.irisL ?? mix(iris ?? '#ffffff', '#ffffff', 0.45);
-  if (o.sclera) {
-    out.push(F(T(a.pts, angry && o.scleraA ? o.scleraA : o.sclera)));
-    if (iris) {
-      const iw = w * (o.irisW ?? 0.6);
-      out.push(F(E(x + lx, y + ly + h * 0.05, iw, h * 0.92, iris)), F(E(x + lx, y + ly + h * 0.42, iw * 0.7, h * 0.4, irisL)));
-    }
-  } else {
-    out.push(F(T(a.pts, iris)), F(E(x + lx * 0.5, y + h * 0.34, w * 0.6, h * 0.34, irisL)));
-  }
-  const px = x + lx;
-  const py = y + ly;
-  if (o.pupil === 'slit') out.push(F(E(px + 0.05 * w, py + h * 0.04, Math.max(0.26, w * (angry ? 0.1 : 0.17)), h * 0.84, ink)));
-  else if (o.pupil === 'dot') out.push(F(E(px, py + h * 0.08, Math.max(0.3, w * (angry ? 0.13 : 0.2)), Math.max(0.3, w * (angry ? 0.13 : 0.2)), angry ? o.dotA ?? ink : ink)));
-  else if (o.pupil === 'round') out.push(F(E(px + 0.05 * w, py + 0.1 * h, w * (angry ? 0.26 : 0.36), h * (angry ? 0.42 : 0.55), ink)));
-  const sh = o.shine ?? 1;
-  out.push(F(E(px - w * 0.3, py - h * 0.36, w * 0.21 * sh, w * 0.21 * sh, '#ffffff')), F(E(px + w * 0.28, py + h * 0.3, w * 0.09 * sh, w * 0.09 * sh, '#ffffff')));
-  if (o.lid) {
-    // A heavy lid drooping over the top of the eye, lower toward the nose when angry.
-    const drop = o.drop ?? 0.4;
-    const yi = y - h + 2 * h * Math.min(0.85, drop + (angry ? 0.25 : 0));
-    const yo = y - h + 2 * h * Math.max(0.05, drop - (angry ? 0.15 : 0.05));
-    const [yl, yr] = s > 0 ? [yi, yo] : [yo, yi];
-    const top = a2.up.map(([ux, uy]) => [ux, uy - 0.6]);
-    const edge = [];
-    for (let i = 0; i <= 6; i++) {
-      const u = -1 + i / 3;
-      edge.push([x + u * (w + lw * 0.5), yl + (yr - yl) * (u + 1) / 2 + h * (o.sag ?? 0.2) * (1 - u * u)]);
-    }
-    out.push(F(T([...top, ...edge.slice().reverse()], o.lid)));
-    out.push(...stroke(edge, lw * 1.35, ink));
-    if (o.crease) out.push(...stroke([[x - w * 0.8, Math.min(yl, yr) - 0.9], [x, y - h - 0.7], [x + w * 0.8, Math.min(yl, yr) - 0.9]], 0.35, o.crease));
-  } else {
-    out.push(...stroke(a.up, lw * 1.3, ink));
-  }
-  if (o.wing) {
-    const c = outer(a.up);
-    out.push(...stroke([[c[0] - s * 0.5, c[1] + 0.1], [c[0] + s * 1.1, c[1] - 0.9]], lw * 1.2, o.wing));
-  }
-  if (o.bag) out.push(...stroke([[x - w * 0.7, y + h * 0.95 + 0.6], [x, y + h * 1.1 + 0.6], [x + w * 0.7, y + h * 0.95 + 0.6]], 0.35, o.bag));
-  if (angry && o.brow) {
-    out.push(...stroke([[x + s * (w + 0.5), y - h - 1.7 - sl * 0.5], [x - s * w * 0.8, y - h - 0.4]], 0.6, o.brow));
-  }
-  return out;
-}
-
-const blush = (x, y, rx, mood) => (mood === 'dead' ? [] : [F(E(x, y, rx, rx * 0.5, BLUSH))]);
 
 // A spirit flame: a teardrop licking upward, h tall, leaning by `lean`.
 function flame(x, y, h, lean, outer, inner) {
@@ -386,40 +282,39 @@ function kitsune(pose, f, mood) {
   out.push(T([[hx - 6.6, hy + 0.6], [hx - 9.4 - esw * 0.3, hy + 4.8], [hx - 6.4, hy + 3.8], [hx - 7, hy + 6.6], [hx - 3.4, hy + 5.4]], fur),
     E(hx + 1.6, hy + 3.4, 5.6, 3.2, cream), E(hx + 6.4, hy + 2.8, 3.2, 2.3, cream),
     F(E(hx - 3.4, hy - 3.8, 2.2, 1.2, mix(fur, '#ffffff', 0.35))));
-  // Kitsune mask markings: a forehead flame and swoops over the eyes.
-  out.push(F(T([[hx + 1.4, hy - 3], [hx + 0.6, hy - 4.6], [hx + 1.3, hy - 6.2], [hx + 2.2, hy - 4.6]], mark)));
-  if (!dead && !angry) {
-    out.push(...stroke([[hx - 2.8, hy - 1.8], [hx - 1.6, hy - 2.6], [hx - 0.2, hy - 2.3]], 0.6, mark),
-      ...stroke([[hx + 2.8, hy - 2.4], [hx + 4.4, hy - 2.9], [hx + 5.8, hy - 2]], 0.6, mark));
-  }
-  // Eyes: narrow almond fox eyes, amber with slit pupils, lined in red at the outer corners.
-  const ey = hy + 0.7;
-  const fe = { slant: 0.55, round: 0.95, lower: 0.62, iris: '#f6a531', irisL: '#ffe08a', glow: '#ff4f8a', glowL: '#ffc2d6', pupil: 'slit', wing: mark, brow: '#8a4a5a', look: [glance, 0], squint: 0.6 };
-  out.push(...peeper(hx - 1.4, ey, mood, -1, { ...fe, w: 1.65, h: 1.3 }), ...peeper(hx + 4.2, ey, mood, 1, { ...fe, w: 2.05, h: 1.5 }),
-    ...blush(hx - 2.4, ey + 2.6, 1.1, mood), ...blush(hx + 3.6, ey + 2.8, 1.2, mood));
-  // Nose and mouth on the muzzle.
-  const mx = hx + 7.4;
-  const my = hy + 3.6;
+  // Kitsune mask: a flame mark on the brow.
+  out.push(F(T([[hx + 0.9, hy - 3.6], [hx + 0.2, hy - 5.1], [hx + 0.8, hy - 6.6], [hx + 1.6, hy - 5.1]], mark)));
+  // Face: sly almond fox eyes (amber, slit pupils, red liner wings) under red maro brows. Smug and
+  // half-lidded at rest, a narrow pink glare when angry, a tight wince when hurt, swirled when dead.
+  const ey = hy + 0.6;
+  const eyeF = [hx - 2.6, ey + 0.1];
+  const eyeN = [hx + 3.5, ey];
+  const lashC = '#3a1f2e';
+  const fe = { shape: 'almond', tilt: 0.5, iris: angry || A ? ['#8a1e48', '#ff4f8a', '#ffc6da'] : ['#9a4a1c', '#f59a2e', '#ffe08a'], pupil: 'slit', lashC, liner: mark, lower: 0.6, look: [glance, 0] };
+  const act = { idle: { lid: 0.26, slant: -0.1 }, angry: { lid: 0.12, slant: 0.9, raise: 0.25, pupilK: 0.5 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
+  if (dead) out.push(...deadEye(eyeF[0], eyeF[1], 1.9, { type: 'swirl', s: -1, c: lashC }), ...deadEye(eyeN[0], eyeN[1], 2.3, { type: 'swirl', c: lashC }));
+  else out.push(...eye(eyeF[0], eyeF[1], { ...fe, ...act, s: -1, w: 2.2, h: 2.7, squeeze: 0.85 }), ...eye(eyeN[0], eyeN[1], { ...fe, ...act, s: 1, w: 2.8, h: 3 }));
+  // Maro brows: lopsided (one cocked: smug), slammed into slants, lifted in a pained tilt.
+  const [ba, bf, bn] = { idle: [-6, 0.1, 0.8], angry: [34, -1.1, -1.1], hurt: [-30, 0.7, 0.7], happy: [-12, 0.7, 0.7], blink: [0, 0, 0], dead: [-15, 0.3, 0.3] }[mood];
+  out.push(...brow(eyeF[0] - 0.2, ey - 4 - bf, { s: -1, len: 1.3, angle: ba, th: 0.7, c: mark, shape: 'dot' }),
+    ...brow(eyeN[0] + 0.1, ey - 4.3 - bn, { s: 1, len: 1.5, angle: ba, th: 0.78, c: mark, shape: 'dot' }));
+  if (!dead) out.push(...cheek(hx - 3.8, ey + 3.4, 1.1, { on: cream, lines: happy ? 2 : 0 }), ...cheek(hx + 2.6, ey + 3.8, 1.3, { on: cream, lines: happy || hurt ? 3 : 0 }));
+  // Nose pad and mouth on the muzzle.
   const sniff = idle ? bump(q, 0.83, 0.18) * 0.3 : 0;
-  out.push(F(E(hx + 9.1, hy + 1.9 - sniff, 1.05, 0.8, INK)), F(E(hx + 8.8, hy + 1.6 - sniff, 0.35, 0.25, '#ffffff')));
+  out.push(...nose(hx + 9.2, hy + 1.8 - sniff, { r: 1.05, c: '#3a2a3a' }));
+  const mx = hx + 6.5;
+  const my = hy + 4.6;
   const g = A && !dead && !hurt ? A.g : 0;
-  if (g > 0.3) {
-    // Mouth thrown wide: fangs top and bottom, a pink tongue.
-    out.push(F(T([[mx - 2, my - 0.4], [mx + 1.8, my - 1 - g * 0.4], [mx + 1.6, my + 1.4 + g * 1.4], [mx - 1.2, my + 1.4 + g]], MOUTH)), F(E(mx, my + 1 + g, 1, 0.6, '#ff8fab')),
-      F(T([[mx - 1.4, my - 0.4], [mx - 0.7, my - 0.5], [mx - 1.1, my + 0.8]], '#ffffff')), F(T([[mx + 0.8, my - 0.8], [mx + 1.4, my - 0.9], [mx + 1.2, my + 0.4]], '#ffffff')));
-  } else if (angry) {
-    out.push(F(T([[mx - 1.8, my - 0.2], [mx + 1.6, my - 0.6], [mx + 1, my + 1.6], [mx - 1.2, my + 1.4]], MOUTH)),
-      F(T([[mx - 1.4, my - 0.2], [mx - 0.8, my - 0.25], [mx - 1.1, my + 0.9]], '#ffffff')), F(T([[mx + 0.6, my - 0.4], [mx + 1.2, my - 0.45], [mx + 0.9, my + 0.8]], '#ffffff')));
-  } else if (happy) {
-    out.push(F(T([[mx - 1.4, my - 0.2], [mx + 1.4, my - 0.4], [mx + 0.2, my + 1.6]], MOUTH)), F(E(mx, my + 0.9, 0.6, 0.4, '#ff8fa8')));
-  } else if (hurt) {
-    out.push(F(E(mx, my + 0.4, 0.6, 0.75, MOUTH)));
-  } else if (dead) {
-    out.push(...stroke([[mx - 1, my], [mx, my + 0.4], [mx + 1, my]], 0.4, INK), F(E(mx + 0.3, my + 1, 0.5, 0.7, '#ff8fa8')));
-  } else {
-    out.push(...stroke([[mx - 1, my - 0.1], [mx - 0.4, my + 0.4], [mx + 0.1, my - 0.1], [mx + 0.6, my + 0.4], [mx + 1.1, my - 0.1]], 0.38, INK));
-  }
-  if (angry) out.push(...stroke([[hx - 6, hy - 7.6], [hx - 7, hy - 9.4]], 0.5, '#ff8ab8'), ...stroke([[hx - 7.6, hy - 6.4], [hx - 9.4, hy - 7]], 0.5, '#ff8ab8'));
+  const mo = { s: 1, ink: '#7a2e40' };
+  if (g > 0.3) out.push(...mouth(mx, my - 0.4, { ...mo, type: 'shout', open: 0.55 + g * 0.6, h: 3.2, w: 2.1, fangs: 2, tusks: 1 }));
+  else if (angry) out.push(...mouth(mx, my - 0.3, { ...mo, type: 'snarl', open: 1, h: 3.4, w: 2.3, teeth: 'top', fangs: 2, tusks: 2, tongue: false, tilt: -0.3 }));
+  else if (happy) out.push(...mouth(mx, my - 0.4, { ...mo, type: 'grin', open: 1, h: 2.8, w: 1.9, fangs: 1, teeth: 'none' }));
+  else if (hurt) out.push(...mouth(mx, my - 0.1, { ...mo, type: 'pained', open: 1, h: 2.4, w: 1.8 }));
+  else if (dead) out.push(...mouth(mx, my, { ...mo, type: 'wavy', w: 1.3, amp: 0.2, tongueOut: true, tongueLen: 1.7 }));
+  else out.push(...mouth(mx, my, { ...mo, type: 'cat', w: 1.6, curve: 0.7, fangs: 1, fangAt: 0.74 }));
+  // Marks: a vein when angry; when hurt, a sweat drop and a tear welling in the near eye.
+  if (angry) out.push(...vein(hx - 4.4, hy - 4, 1.1));
+  if (hurt) out.push(...sweat(hx - 6.2, hy - 3.6, 1.1), ...tear(eyeN[0] + 1, ey + 2.4, 0.9, { type: 'stream', len: 2.6 }));
   // The fox-fire it spits.
   if (A && !dead) out.push(...foxfire(hx + A.orb[0], hy + A.orb[1], A.orb[2], fo, fi));
   return { w: 42, h: 32, res: 3, shapes: out.map((q2) => ({ ...q2, x: q2.x + 6, y: q2.y + 2 })) };
@@ -555,33 +450,37 @@ function tortoise(pose, f, mood) {
   const spr = walk ? Math.sin(2 * TAU * q - 2.6) * 0.8 : A ? [1, -1, -0.6, 0.3][f] : Math.sin(p - 1.2) * 0.5;
   out.push(...stroke([[hx - 0.4, hy - 4.4], [hx - 0.2 + spr * 0.5, hy - 6.2]], 0.5, '#5fae5c'),
     leaf(hx - 0.2 + spr * 0.5, hy - 6, -30 + spr * 15 + (dead ? 120 : 0), 2.8, 1, '#8fd07e'), leaf(hx - 0.2 + spr * 0.5, hy - 6, -160 + spr * 15 - (dead ? 30 : 0), 2.2, 0.8, '#a6e398'));
-  // Eyes: small beady eyes under heavy, sleepy lids; idle, it slowly looks up and about.
-  const ey = hy - 0.2;
-  const te = { round: 0.5, lower: 1, iris: '#2e2436', irisL: '#5a4a62', glow: '#3a1e2a', glowL: '#ff7a3c', pupil: 'none', lid: skin, crease: skinD, drop: idle ? 0.42 - look * 0.22 : 0.4, shine: 1.3, brow: '#3f6e55', look: [0, 0] };
-  out.push(...peeper(hx - 0.8, ey, mood, -1, { ...te, w: 0.85, h: 1 }), ...peeper(hx + 2.8, ey, mood, 1, { ...te, w: 1.05, h: 1.2 }),
-    ...blush(hx - 1.6, ey + 2.2, 0.9, mood), ...blush(hx + 2.8, ey + 2.4, 1, mood));
-  // Mouth.
+  // Face: big, sleepy, heavy-lidded eyes (warm brown, round pupils, a lid fold) under soft mossy
+  // brows. It dozes at rest and slowly looks up and about; a flat-lidded glare when angry; when
+  // hurt it scrunches up and cries big slow tears.
+  const ey = hy - 0.3;
+  const eyeF = [hx - 2, ey + 0.1];
+  const eyeN = [hx + 2.2, ey];
+  const lashC = '#2f2a2a';
+  const te = { shape: 'heavy', sclera: '#fffaf0', iris: angry || A ? ['#5a1a0e', '#c8502a', '#ffb070'] : ['#3a2a1e', '#7c5636', '#d9ae6c'], pupil: 'round', lashC, lash: 0.85, lower: 0.25, flicks: 1, crease: skinD, look: [0.25, -look * 0.9] };
+  const act = { idle: { lid: 0.5 - look * 0.25, slant: -0.3 }, angry: { lid: 0.42, slant: 0.7, raise: 0.25, pupilK: 0.55 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'sleep' } }[mood] ?? {};
+  if (dead) out.push(...deadEye(eyeF[0], eyeF[1], 1.3, { c: lashC, th: 0.55 }), ...deadEye(eyeN[0], eyeN[1], 1.6, { c: lashC, th: 0.6 }));
+  else out.push(...eye(eyeF[0], eyeF[1], { ...te, ...act, s: -1, w: 1.45, h: 2 }), ...eye(eyeN[0], eyeN[1], { ...te, ...act, s: 1, w: 1.95, h: 2.3 }));
+  // Brows: droopy and sleepy, knitted down hard in anger, tipped up in misery.
+  const [ba, bu] = { idle: [-14, 0.1], angry: [30, -0.9], hurt: [-28, 0.5], happy: [-10, 0.6], blink: [-16, -0.1], dead: [-20, 0] }[mood];
+  out.push(...brow(eyeF[0] - 0.1, ey - 3 - bu, { s: -1, len: 1.2, angle: ba, th: 0.7, arch: 0.3, c: '#4f8a52', shape: 'bushy' }),
+    ...brow(eyeN[0] + 0.1, ey - 3.3 - bu, { s: 1, len: 1.6, angle: ba, th: 0.75, arch: 0.35, c: '#4f8a52', shape: 'bushy' }));
+  if (!dead) out.push(...cheek(hx - 2.4, ey + 2.6, 0.9, { on: skin, lines: happy ? 2 : 0 }), ...cheek(hx + 1.6, ey + 2.9, 1, { on: skin, lines: happy ? 3 : 0 }));
+  // Nostril on the snout tip, and the beak-like mouth.
+  out.push(...nose(hx + 4.9, hy + 0.6, { type: 'dot', r: 0.6, c: shade(skinD, -18) }));
   const mX = hx + 3.4;
-  const mY = hy + 2.6;
-  out.push(F(E(hx + 4.8, hy + 0.6, 0.25, 0.2, skinD)));
+  const mY = hy + 2.7;
+  const mo = { s: 1, ink: '#3f6450' };
   const gape = A && !dead && !hurt ? A.gape : 0;
-  if (gape > 0) {
-    out.push(F(T([[mX - 1.4, mY - 0.2], [mX + 2, mY - 1], [mX + 1.8, mY + 2.6], [mX - 0.8, mY + 1.4]], MOUTH)), F(E(mX + 0.6, mY + 1.6, 0.9, 0.5, '#ff8fab')),
-      ...stroke([[mX - 1.4, mY - 0.3], [mX + 2, mY - 1.1]], 0.4, '#fff6e8'));
-  } else if (gape < 0) {
-    out.push(...stroke([[mX - 1.4, mY], [mX + 2.1, mY - 0.3]], 0.55, INK), ...star(mX + 2.4, mY + 0.8, 1.4, '#fff2a8'));
-  } else if (angry) {
-    out.push(F(T([[mX - 1.6, mY - 0.3], [mX + 1.9, mY - 0.6], [mX + 1.2, mY + 1.6], [mX - 1, mY + 1.2]], MOUTH)),
-      F(T([[mX - 1.4, mY - 0.3], [mX + 1.8, mY - 0.6], [mX + 1.4, mY + 0.1], [mX + 0.8, mY - 0.2], [mX + 0.2, mY + 0.2], [mX - 0.4, mY - 0.1], [mX - 1, mY + 0.2]], '#fff6e8')));
-  } else if (happy) {
-    out.push(F(T([[mX - 1.4, mY - 0.3], [mX + 1.6, mY - 0.5], [mX + 0.3, mY + 1.5]], MOUTH)));
-  } else if (hurt) {
-    out.push(F(E(mX, mY + 0.3, 0.55, 0.7, MOUTH)));
-  } else if (dead) {
-    out.push(...stroke([[mX - 1.2, mY + 0.2], [mX - 0.4, mY - 0.1], [mX + 0.4, mY + 0.2], [mX + 1.2, mY - 0.1]], 0.38, INK));
-  } else {
-    out.push(arc(mX, mY - 0.5, 1.1, 0.8, 20, 160, 0.36, INK));
-  }
+  if (gape > 0) out.push(...mouth(mX + 0.2, mY - 0.4, { ...mo, type: 'shout', w: 2, h: 3, open: 1, teeth: 'both' }));
+  else if (gape < 0) out.push(...mouth(mX, mY, { ...mo, type: 'flat', w: 1.9, th: 0.5, tilt: 0.2 }), ...star(mX + 2.6, mY + 0.8, 1.4, '#fff2a8'));
+  else if (angry) out.push(...mouth(mX, mY - 0.1, { ...mo, type: 'snarl', w: 1.8, h: 2.2, open: 0.9, teeth: 'both', tongue: false }));
+  else if (happy) out.push(...mouth(mX, mY - 0.3, { ...mo, type: 'grin', w: 1.6, h: 2.2, open: 1, teeth: 'none' }));
+  else if (hurt) out.push(...mouth(mX, mY, { ...mo, type: 'pained', w: 1.5, h: 1.8, open: 1 }));
+  else if (dead) out.push(...mouth(mX, mY, { ...mo, type: 'flat', w: 1.3, tongueOut: true, tongueLen: 1.5 }));
+  else out.push(...mouth(mX, mY, { ...mo, type: 'smile', w: 1.4, curve: 0.45 }));
+  if (angry) out.push(...vein(hx - 2.8, hy - 3.2, 0.75));
+  if (hurt) out.push(...tear(eyeN[0] + 0.4, ey + 1.4, 0.9, { type: 'stream', len: 3.4 }), ...tear(eyeF[0] - 0.6, ey + 1.4, 0.75, { type: 'stream', len: 2.6, s: -1 }));
   if (A && A.imp) out.push(...dust(sx + 9.6, 27.6, 0.6 + A.imp * 0.4));
   if (hurt) out.push(...stroke([[sx + 14, rim - 9], [sx + 15.6, rim - 10.4]], 0.5, '#9ad0ff'), ...stroke([[sx + 15.4, rim - 7], [sx + 17.4, rim - 7.6]], 0.5, '#9ad0ff'));
   return { w: 40, h: 28, res: 3, shapes: out };
@@ -705,59 +604,52 @@ function mandrake(pose, f, mood) {
   const tw = walk ? Math.sin(TAU * q - 2.2) * 1.6 : idle ? Math.sin(p - 1.2) * 0.6 : 0;
   body.push(...stroke([[bx - 0.6, by + 9], [bx - 1.2 + tw * 0.5, by + 12], [bx - 0.4 + tw, by + 14.2]], 0.9, rootD, false));
 
-  // Face: hollow dark pits with a glowing ember deep inside.
+  // Face: huge round, innocent eyes (cream whites, leaf-green irises, round pupils) under thin,
+  // worried root brows, and a little pursed mouth. Angry, the pupils shrink to pinpoints, the
+  // irises burn ember and the mouth tears open into the scream; hurt, it bawls.
   const fx = bx + 2;
-  const ey = by - 1.6;
-  const glance = idle ? Math.cos(p) * 0.5 : 0;
-  const ember = angry || A ? '#ffe36b' : '#c8f79a';
-  const pit = (x, s, r) => {
-    switch (mood) {
-      case 'blink':
-        return [F(T([[x - r, ey + 0.3], [x, ey - 0.1], [x + r, ey + 0.3], [x + r * 0.7, ey + 0.9], [x - r * 0.7, ey + 0.9]], '#4a2c47'))];
-      case 'happy':
-        return [arc(x, ey + 1.2, r, r * 0.9, 200, 340, 0.75, '#4a2c47'), F(E(x, ey - 0.1, 0.35, 0.3, ember))];
-      case 'hurt':
-        return stroke([[x - s * r * 0.8, ey - r * 0.7], [x + s * r * 0.6, ey], [x - s * r * 0.8, ey + r * 0.7]], 0.75, '#4a2c47');
-      case 'dead':
-        return [F(E(x, ey, r * 0.8, r * 0.9, '#6a4a5a')), ...stroke([[x - 0.7 * r, ey - 0.7 * r], [x + 0.7 * r, ey + 0.7 * r]], 0.45, root), ...stroke([[x - 0.7 * r, ey + 0.7 * r], [x + 0.7 * r, ey - 0.7 * r]], 0.45, root)];
-      case 'angry': {
-        const o = [F(T([[x - r * 0.85, ey - (s < 0 ? 1.8 : 0.6)], [x + r * 0.85, ey - (s < 0 ? 0.6 : 1.8)], [x + r * 0.75, ey + 1.6], [x, ey + 2.2], [x - r * 0.75, ey + 1.6]], '#4a2c47'))];
-        o.push(F(E(x + 0.2, ey + 0.4, 0.75, 0.75, mix(ember, '#ff8a3a', 0.4))), F(E(x + 0.2, ey + 0.4, 0.4, 0.45, '#ffffff')));
-        o.push(...stroke([[x - r, ey - (s < 0 ? 2.8 : 1.4)], [x + r, ey - (s < 0 ? 1.4 : 2.8)]], 0.7, '#8a5a40'));
-        return o;
-      }
-      default:
-        return [F(E(x, ey + 0.2, r * 0.8, r * 1.05, '#5a3a52')), F(E(x, ey + 0.3, r * 0.62, r * 0.85, '#3a2238')),
-          F(E(x + glance, ey + 0.5, r * 0.36, r * 0.42, mix(ember, '#ffffff', 0.15))), F(E(x + glance - 0.15, ey + 0.3, r * 0.16, r * 0.18, '#ffffff')),
-          ...stroke([[x - r * 0.7, ey - r * 1.15], [x, ey - r * 1.3], [x + r * 0.7, ey - r * 1.15]], 0.35, line)];
-    }
-  };
-  body.push(...pit(fx - 3, -1, 2), ...pit(fx + 2.9, 1, 2.3));
-  body.push(...blush(fx - 4.4, ey + 3, 1.3, mood), ...blush(fx + 3.6, ey + 3.2, 1.4, mood));
-  const mY = ey + 4.2;
+  const ey = by - 2;
+  const glance = idle ? Math.cos(p) * 0.6 : 0;
+  const eyeF = [fx - 3.4, ey + 0.1];
+  const eyeN = [fx + 3, ey];
+  const lashC = '#3a2230';
+  const hot = angry || (A && A.mouth > 0);
+  const me = { shape: 'round', sclera: '#fffbea', iris: hot ? ['#7a1e0a', '#ff7a1e', '#ffe36b'] : ['#24502a', '#4fae4a', '#c9f58a'], pupil: hot ? 'pin' : 'round', lashC, lash: 0.9, lower: 0.45, flicks: 1, look: [glance, 0.1] };
+  const act = { idle: { lid: 0.05 }, angry: { lid: 0.12, slant: 0.65, pupilK: 1.1 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
+  if (A && A.mouth === 0 && !dead && !hurt) Object.assign(act, { closed: 'squeeze', squeeze: 0.8 });
+  if (dead) body.push(...deadEye(eyeF[0], eyeF[1], 1.7, { c: lashC }), ...deadEye(eyeN[0], eyeN[1], 2, { c: lashC }));
+  else body.push(...eye(eyeF[0], eyeF[1], { ...me, ...act, s: -1, w: 2.3, h: 2.6, irisW: 0.68 }), ...eye(eyeN[0], eyeN[1], { ...me, ...act, s: 1, w: 2.6, h: 2.9, irisW: 0.68 }));
+  const [ba, bu] = hot && !A ? [36, -0.8] : A && A.mouth > 0 ? [30, -0.6] : { idle: [-16, 0.4], angry: [36, -0.8], hurt: [-30, 0.6], happy: [-12, 0.8], blink: [-12, 0.2], dead: [-22, 0.2] }[mood];
+  body.push(...brow(eyeF[0] - 0.2, ey - 3.6 - bu, { s: -1, len: 1.5, angle: ba, th: 0.6, arch: 0.4, c: '#9a6a4a' }),
+    ...brow(eyeN[0] + 0.2, ey - 3.9 - bu, { s: 1, len: 1.7, angle: ba, th: 0.65, arch: 0.45, c: '#9a6a4a' }));
+  if (!dead) body.push(...cheek(fx - 4.8, ey + 3.4, 1.3, { on: root, lines: happy || hurt ? 2 : 0 }), ...cheek(fx + 4, ey + 3.6, 1.4, { on: root, lines: happy || hurt ? 3 : 0 }));
+  const mY = ey + 5;
   const scream = A ? A.mouth : angry ? 1 : -1;
+  const mo = { s: 1, ink: '#7a3a3a' };
   if (A && A.mouth === 0 && !dead) {
     // Holding its breath: cheeks puffed, lips pressed tight.
-    body.push(F(E(fx - 4.6, mY - 0.4, 1.6, 1.3, mix(root, BLUSH, 0.4))), F(E(fx + 4.4, mY - 0.3, 1.7, 1.4, mix(root, BLUSH, 0.4))),
-      ...stroke([[fx - 1.2, mY + 0.4], [fx, mY + 0.1], [fx + 1.2, mY + 0.4]], 0.55, '#5a2a44'));
+    body.push(F(E(fx - 4.6, mY - 0.8, 1.7, 1.4, mix(root, BLUSH, 0.4))), F(E(fx + 4.4, mY - 0.7, 1.8, 1.5, mix(root, BLUSH, 0.4))),
+      ...mouth(fx, mY, { ...mo, type: 'wavy', w: 1.4, amp: 0.22 }));
   } else if (scream > 0 && !dead && !hurt) {
-    // The scream.
+    // The scream: thrown wide, teeth bared, tongue back.
     const k = 0.75 + scream * 0.25;
-    body.push(F(E(fx, mY + 1.8 * k, 3.2 * k, 3.8 * k, '#5a2a44')), F(E(fx, mY + 2.6 * k, 2.4 * k, 2.6 * k, '#7a3456')), F(E(fx + 0.2, mY + 4 * k, 1.8 * k, 1.2 * k, '#ff8fab')));
-    body.push(F(T([[fx - 2.4 * k, mY - 0.8], [fx + 2.4 * k, mY - 0.8], [fx + 1.8 * k, mY + 0.1], [fx + 1.2 * k, mY - 0.3], [fx + 0.6 * k, mY + 0.2], [fx, mY - 0.3], [fx - 0.6 * k, mY + 0.2], [fx - 1.2 * k, mY - 0.3], [fx - 1.8 * k, mY + 0.1]], '#fff8ec')));
+    body.push(...mouth(fx, mY - 0.4, { ...mo, type: 'shout', w: 2.9 * k, h: 5.2 * k, open: 1, teeth: 'top', fangs: 2, fangK: 0.8 }));
     if (!A) {
       const pulse = walk ? 0.8 * Math.sin(2 * TAU * q) : idle ? Math.sin(p * 2) * 0.6 : 0;
-      for (const [r, c] of [[2.4 + pulse, '#ff9ec0'], [4 + pulse, '#d9a0ff']]) body.push(arc(fx + 7.6, mY + 1.6, r, r * 1.3, -50, 50, 0.6, c));
+      for (const [r, c] of [[2.4 + pulse, '#ff9ec0'], [4 + pulse, '#d9a0ff']]) body.push(arc(fx + 8.2, mY + 1.6, r, r * 1.3, -50, 50, 0.6, c));
     }
   } else if (happy) {
-    body.push(F(T([[fx - 1.8, mY - 0.3], [fx + 1.8, mY - 0.3], [fx, mY + 1.8]], MOUTH)), F(E(fx, mY + 1, 0.8, 0.45, '#ff8fab')));
+    body.push(...mouth(fx, mY - 0.3, { ...mo, type: 'grin', w: 2.1, h: 3, open: 1, teeth: 'none' }));
   } else if (hurt) {
-    body.push(...stroke([[fx - 1.4, mY + 0.6], [fx - 0.7, mY], [fx, mY + 0.6], [fx + 0.7, mY], [fx + 1.4, mY + 0.6]], 0.45, INK));
+    // Bawling.
+    body.push(...mouth(fx, mY - 0.2, { ...mo, type: 'shout', w: 1.9, h: 2.8, open: 0.9, curve: -0.5 }));
+    body.push(...tear(eyeN[0] + 1.6, ey + 1.6, 1, { type: 'stream', len: 4.4 }), ...tear(eyeF[0] - 1.6, ey + 1.6, 0.9, { type: 'stream', len: 3.8, s: -1 }));
   } else if (dead) {
-    body.push(...stroke([[fx - 1.2, mY + 0.2], [fx + 1.2, mY + 0.2]], 0.45, INK));
+    body.push(...mouth(fx, mY, { ...mo, type: 'o', w: 0.9, h: 1.6, open: 0.8, tongue: false }));
   } else {
-    body.push(F(E(fx, mY + 0.2, 0.9, 0.7, MOUTH)), F(E(fx, mY - 0.1, 0.9, 0.35, root)));
+    body.push(...mouth(fx, mY, { ...mo, type: 'pout', w: 0.9, h: 1.5, open: 0.7 + (idle ? 0.25 * Math.sin(p) : 0) }));
   }
+  if (angry && !A) body.push(...vein(fx - 6, ey - 5, 0.9));
   // Near arm.
   const hand1 = hand(1);
   body.push(...limb([bx + 6.4, by - 0.6], hand1, 2.4, 1.8, root), ...fingers(hand1, 1, root));
@@ -865,33 +757,40 @@ function goblin(pose, f, mood) {
   head.push(T([[hx - 5.8, hy - 2.8], [hx - 14.6, hy - 5.4 + esw * 0.7 + ed], [hx - 6, hy + 2]], skinD), F(T([[hx - 6.4, hy - 1.6], [hx - 12.4, hy - 4.4 + esw * 0.7 + ed], [hx - 6.6, hy + 0.8]], '#ffb8c0')));
   head.push(E(hx, hy, 7.8, 6.8, skin));
   head.push(T([[hx + 5.6, hy - 2.8], [hx + 13.4, hy - 6.2 + esw + ed], [hx + 6.6, hy + 1.6]], skin), F(T([[hx + 6.2, hy - 1.8], [hx + 11.4, hy - 5 + esw + ed], [hx + 6.6, hy + 0.4]], '#ffb8c0')));
-  // Eyes: squinty yellow eyes with pinprick pupils under heavy lids, shifting shiftily when idle.
-  const ey = hy + 0.6;
-  const glance = idle ? 0.55 * Math.sin(p + 0.6) : 0;
-  const ge = { slant: 0.35, round: 0.7, lower: 0.85, sclera: '#ffe27a', scleraA: '#ffb347', iris: null, pupil: 'dot', dotA: '#b8231a', lid: skin, drop: 0.36, bag: skinD, brow: '#4f7a3c', look: [glance, 0.1], squint: 0.75, shine: 0.8 };
-  head.push(...peeper(hx - 1.4, ey, mood, -1, { ...ge, w: 1.8, h: 1.45 }), ...peeper(hx + 3.6, ey, mood, 1, { ...ge, w: 2.1, h: 1.6 }));
-  if (!angry && mood !== 'dead' && mood !== 'hurt') head.push(...stroke([[hx - 3.4, ey - 2.6], [hx - 0.4, ey - 2.2]], 0.55, '#4f7a3c'), ...stroke([[hx + 1.8, ey - 2.2], [hx + 5.2, ey - 2.8]], 0.55, '#4f7a3c'));
-  head.push(...blush(hx - 3.2, ey + 2.8, 1.2, mood), F(E(hx - 4.6, ey + 2, 0.4, 0.4, skinD)), F(E(hx - 3.8, ey + 3.4, 0.35, 0.35, skinD)));
-  head.push(E(hx + 6.6, hy + 2.6, 2.4, 1.9, skinD), F(E(hx + 6.2, hy + 1.9, 0.8, 0.5, skinL)), F(E(hx + 7.4, hy + 3.4, 0.4, 0.3, shade(skinD, -14))));
-  const mx = hx + 2.6;
-  const my = hy + 4.4;
-  if (A && f === 2 && !dead && !hurt) {
-    // The smash: a bellowing open mouth.
-    head.push(F(T([[mx - 3, my - 0.8], [mx + 2.8, my - 0.8], [mx + 2, my + 2.8], [mx - 2.2, my + 2.6]], '#7a3456')), F(E(mx, my + 1.9, 1.6, 0.8, '#ff8fab')),
-      F(T([[mx - 2.6, my - 0.8], [mx - 1.8, my - 0.8], [mx - 2.2, my + 0.4]], '#fff6e0')), F(T([[mx + 1.4, my - 0.8], [mx + 2.2, my - 0.8], [mx + 1.8, my + 0.4]], '#fff6e0')));
-  } else if (angry) {
-    head.push(F(T([[mx - 3, my - 0.6], [mx + 2.6, my - 0.6], [mx + 1.8, my + 1.8], [mx - 2.2, my + 1.8]], '#7a3456')),
-      F(T([[mx - 2.8, my - 0.6], [mx + 2.4, my - 0.6], [mx + 2, my + 0.1], [mx - 2.4, my + 0.1]], '#fff6e0')),
-      F(T([[mx - 2.4, my + 1.8], [mx - 1.6, my - 0.6], [mx - 1, my + 1.8]], '#fff6e0')), F(T([[mx + 0.8, my + 1.8], [mx + 1.5, my - 0.4], [mx + 2, my + 1.8]], '#fff6e0')));
-  } else if (happy) {
-    head.push(F(T([[mx - 2.4, my - 0.5], [mx + 2.2, my - 0.5], [mx + 0.8, my + 1.8], [mx - 1.2, my + 1.6]], MOUTH)), F(R(mx - 1.8, my - 0.5, 3.6, 0.6, '#fff6e0')));
-  } else if (hurt) {
-    head.push(F(E(mx, my + 0.4, 0.8, 0.9, MOUTH)));
-  } else if (dead) {
-    head.push(...stroke([[mx - 1.8, my], [mx + 1.8, my]], 0.45, INK), F(E(mx + 0.6, my + 0.8, 0.6, 0.8, '#ff8fab')));
-  } else {
-    head.push(arc(mx, my - 1.2, 2.4, 1.4, 25, 155, 0.45, INK), F(T([[mx - 1.2, my + 0.1], [mx - 0.5, my + 0.1], [mx - 0.85, my - 0.9]], '#fff6e0')), F(T([[mx + 0.6, my + 0.1], [mx + 1.3, my + 0.1], [mx + 0.95, my - 0.9]], '#fff6e0')));
-  }
+  // Face: shifty, sharp eyes (sallow whites, blood-red irises, small pupils) under heavy lids,
+  // one squinting more than the other, darting side to side; a lopsided smirk with a tusk poking
+  // up over the lip. Angry, the brows crash down and it bares every tooth; hurt, one eye
+  // squeezes shut while the other pops wide.
+  const ey = hy + 0.2;
+  const glance = idle ? 0.8 * Math.sin(p + 0.6) : 0;
+  const eyeF = [hx - 2.3, ey + 0.2];
+  const eyeN = [hx + 3, ey];
+  const lashC = '#24301e';
+  const ge = { shape: 'sharp', sclera: angry || A ? '#ffe08a' : '#fff6c0', iris: angry || A ? ['#6a0a0a', '#ff3a22', '#ffd06a'] : ['#5a1a10', '#d0452c', '#ffb27a'], irisW: 0.55, pupil: 'round', pupilK: 0.75, lashC, lash: 1.05, lower: 0.35, flicks: 0, crease: skinD, look: [glance, 0.1] };
+  const actF = { idle: { lid: 0.18 }, angry: { lid: 0.15, slant: 0.95, raise: 0.3, pupilK: 0.45 }, hurt: { lid: 0, raise: 0, pupilK: 0.45 }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
+  const actN = { idle: { lid: 0.42, slant: 0.2 }, hurt: { closed: 'squeeze' } }[mood] ?? actF;
+  if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.7, { type: 'swirl', s: -1, c: lashC }), ...deadEye(eyeN[0], eyeN[1], 2.1, { type: 'swirl', c: lashC }));
+  else head.push(...eye(eyeF[0], eyeF[1], { ...ge, ...actF, s: -1, w: 2.1, h: 2.4 }), ...eye(eyeN[0], eyeN[1], { ...ge, ...actN, s: 1, w: 2.5, h: 2.6 }));
+  // Bushy brows: one cocked, one low (scheming); crashing down; jumping up in shock.
+  const bc = '#3f6a30';
+  const [af, uf, an, un] = { idle: [-14, 0.9, 16, -0.2], angry: [34, -0.9, 34, -1], hurt: [-26, 1.3, -10, 0.3], happy: [-10, 0.8, -10, 0.8], blink: [-6, 0.3, 10, 0], dead: [-18, 0.4, -18, 0.4] }[mood];
+  head.push(...brow(eyeF[0] - 0.2, ey - 3.4 - uf, { s: -1, len: 1.6, angle: af, th: 0.85, arch: 0.3, c: bc, shape: 'bushy' }),
+    ...brow(eyeN[0] + 0.1, ey - 3.6 - un, { s: 1, len: 1.9, angle: an, th: 0.9, arch: 0.3, c: bc, shape: 'bushy' }));
+  if (!dead) head.push(...cheek(hx - 3.4, ey + 3.4, 1.2, { on: skin, lines: happy ? 2 : 0 }));
+  head.push(F(E(hx - 4.6, ey + 2.6, 0.4, 0.4, skinD)), F(E(hx - 3.8, ey + 4, 0.35, 0.35, skinD)));
+  // A big warty nose.
+  head.push(...nose(hx + 6.6, hy + 2.6, { type: 'button', r: 2.1, c: skinD }), F(E(hx + 7.4, hy + 3.4, 0.45, 0.35, shade(skinD, -18))), F(E(hx + 5.6, hy + 3.4, 0.3, 0.3, shade(skinD, -10))));
+  const mx = hx + 2.4;
+  const my = hy + 5;
+  const mo = { s: 1, ink: '#3e5a2c' };
+  if (A && f === 2 && !dead && !hurt) head.push(...mouth(mx, my - 0.6, { ...mo, type: 'shout', w: 3, h: 3.6, open: 1, teeth: 'top', tusks: 2 }));
+  else if (angry) head.push(...mouth(mx, my - 0.4, { ...mo, type: 'snarl', w: 3.2, h: 3.6, open: 1, teeth: 'top', tusks: 2, tongue: false, tilt: -0.2 }));
+  else if (happy) head.push(...mouth(mx, my - 0.5, { ...mo, type: 'grin', w: 2.7, h: 3, open: 1, teeth: 'top', tusks: 1, tuskAt: 0.3 }));
+  else if (hurt) head.push(...mouth(mx, my - 0.2, { ...mo, type: 'pained', w: 2.4, h: 2.2, open: 1, tilt: 0.5 }));
+  else if (dead) head.push(...mouth(mx, my, { ...mo, type: 'flat', w: 2, tusks: 1, tuskAt: 0.3, tongueOut: true, tongueLen: 1.8 }));
+  else head.push(...mouth(mx, my, { ...mo, type: 'smirk', w: 2.4, tilt: 0.7, tusks: 2, tuskAt: [0.28, 0.7] }));
+  if (angry) head.push(...vein(hx - 4.6, hy - 2.4, 0.9));
+  if (hurt) head.push(...sweat(hx - 6.4, hy - 1.6, 1.1), ...sweat(hx + 7.6, hy - 2.4, 0.8));
 
   // The mushroom-cap helmet: it bounces a beat behind the head and settles.
   const capLag = walk ? Math.sin(2 * TAU * q - 2.6) * 0.5 : A ? A.cap : idle ? Math.sin(p - 1.2) * 0.25 : 0;
@@ -1093,30 +992,32 @@ function jackalope(pose, f, mood) {
   head.push(T([[hx - 5.6, hy + 1], [hx - 8.4, hy + 3.4], [hx - 5.6, hy + 3.6], [hx - 6.6, hy + 6], [hx - 2.6, hy + 5.4]], fur),
     E(hx + 4.4, hy + 2.6, 3.4, 2.6, cream), F(E(hx - 2.6, hy - 3.6, 2, 1, mix(fur, '#ffffff', 0.35))));
   const tw2 = idle ? -0.35 * (bump(q, 0, 0.18) + bump(q, 0.33, 0.18)) : 0;
-  head.push(F(T([[hx + 6.8, hy + 1.1 + tw2], [hx + 8.2, hy + 1.1 + tw2], [hx + 7.5, hy + 2 + tw2]], '#ff7f9f')));
+  head.push(...nose(hx + 7.6, hy + 1.4 + tw2, { r: 0.85, c: '#ff7f9f' }));
   for (const b of [-0.6, 0.7]) head.push(...stroke([[hx + 4.2, hy + 2.6 + b * 0.3], [hx + 7.2, hy + 2.4 + b * 1.2 + tw2 * 2]], 0.2, '#b2a4d0'));
-  // Eyes: big glossy dark hare eyes set on the side of the head; the far one barely shows.
-  const ey = hy - 0.4;
-  const he = { round: 0.55, lower: 1, iris: '#3b2540', irisL: '#7a4a6a', glow: '#5a1e3a', glowL: '#ff3d6e', pupil: 'none', ring: '#fbf6ff', shine: 1.25, brow: '#6a4a8a', squint: 0.7, look: [idle ? 0.3 * Math.cos(p) : 0, 0] };
-  head.push(...peeper(hx + 6.3, ey - 0.4, mood, 1, { ...he, w: 0.6, h: 1.45, ring: null }), ...peeper(hx + 2, ey, mood, 1, { ...he, w: 2, h: 2.3 }),
-    ...blush(hx + 0.6, ey + 3.2, 1.2, mood), ...blush(hx + 5.6, ey + 2.6, 0.7, mood));
-  const mx = hx + 5.6;
-  const my = hy + 3.6;
-  if (A && f === 0 && !dead && !hurt) {
-    head.push(...stroke([[mx - 1.2, my], [mx + 1, my - 0.2]], 0.4, INK), F(R(mx - 0.5, my, 0.9, 0.7, '#ffffff')));
-  } else if (angry) {
-    head.push(F(T([[mx - 1.6, my - 0.5], [mx + 1.5, my - 0.6], [mx + 1, my + 1.7], [mx - 1.1, my + 1.6]], MOUTH)), F(E(mx, my + 1.2, 0.8, 0.4, '#ff8fab')),
-      F(R(mx - 0.9, my - 0.55, 1.7, 1.1, '#ffffff')), F(R(mx - 0.1, my - 0.55, 0.18, 1.1, '#d8cce8')));
-  } else if (happy) {
-    head.push(F(T([[mx - 1.2, my - 0.4], [mx + 1.2, my - 0.5], [mx, my + 1.4]], MOUTH)), F(R(mx - 0.6, my - 0.45, 1.1, 0.6, '#ffffff')));
-  } else if (hurt) {
-    head.push(F(E(mx, my + 0.3, 0.6, 0.7, MOUTH)));
-  } else if (dead) {
-    head.push(...stroke([[mx - 1, my], [mx - 0.3, my + 0.3], [mx + 0.4, my]], 0.35, INK), F(E(mx + 0.1, my + 0.8, 0.45, 0.6, '#ff8fab')));
-  } else {
-    head.push(...stroke([[mx - 1.2, my - 0.3], [mx - 0.6, my + 0.2], [mx, my - 0.3], [mx + 0.6, my + 0.2]], 0.32, INK), F(R(mx - 0.55, my + 0.2, 0.9, 0.8, '#ffffff')));
-  }
-  if (angry) head.push(...stroke([[hx - 7, hy - 7], [hx - 8.4, hy - 8.4]], 0.5, '#ff6b8a'), ...stroke([[hx - 7.8, hy - 5.4], [hx - 9.6, hy - 5.8]], 0.5, '#ff6b8a'));
+  // Face: a big, glossy hare eye on the side of the head (violet, a pale ring, no white), wide and
+  // curious at rest, under soft fur-tuft brows; the far eye just peeks past the muzzle. Angry, the
+  // lid drops into a red glare; hurt, it squeezes shut with a tear; dead, it's seeing stars.
+  const ey = hy - 0.3;
+  const lashC = '#2e2040';
+  const je = { shape: 'animal', iris: angry || A ? ['#4a0a1e', '#e0304e', '#ff9ab0'] : ['#2a1630', '#6a3a80', '#c49ae4'], pupil: 'round', pupilK: 0.85, pupilC: '#1e1428', lashC, ring: '#fbf6ff', ringW: 0.45, shine: 1.15, glint: !angry && !A, look: [idle ? 0.35 * Math.cos(p) + 0.2 : 0.2, -perk * 0.4] };
+  const act = { idle: { lid: 0.05 - perk * 0.05 }, angry: { lid: 0.32, slant: 0.85, raise: 0.25, pupil: 'pin', pupilC: '#ffe0e8' }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
+  if (A && f === 0 && !dead && !hurt) Object.assign(act, { lid: 0.35, slant: 0.9, pupil: 'pin', pupilC: '#ffe0e8' });
+  if (dead) head.push(...deadEye(hx + 2.2, ey, 2.2, { type: 'swirl', c: lashC }));
+  else head.push(...eye(hx + 6.5, ey - 0.3, { ...je, ...act, s: 1, w: 0.6, h: 2, ring: null, rim: 0.3, shine: 0.6, glint: false }), ...eye(hx + 2.2, ey, { ...je, ...act, s: 1, w: 2.5, h: 2.9 }));
+  const [ba, bu] = { idle: [-14, 0.5 + perk * 0.4], angry: [36, -0.9], hurt: [-30, 0.6], happy: [-10, 0.6], blink: [0, 0], dead: [-20, 0.3] }[mood];
+  head.push(...brow(hx + 1.5, ey - 3.7 - bu, { s: 1, len: 1.8, angle: ba, th: 0.8, arch: 0.3, c: '#6e58a0', shape: 'tuft' }));
+  if (!dead) head.push(...cheek(hx + 0.4, ey + 4, 1.3, { on: fur, lines: happy || hurt ? 3 : 0 }), ...cheek(hx + 5.8, ey + 3.4, 0.7, { on: cream }));
+  const mx = hx + 5.8;
+  const my = hy + 3.7;
+  const mo = { s: 1, ink: '#6a3a6a' };
+  if (A && f === 0 && !dead && !hurt) head.push(...mouth(mx, my, { ...mo, type: 'pained', w: 1.3, h: 1.5, open: 1 }));
+  else if (angry) head.push(...mouth(mx, my - 0.2, { ...mo, type: 'snarl', w: 1.6, h: 2.6, open: 1, teeth: 'buck', tongue: false }));
+  else if (happy) head.push(...mouth(mx, my - 0.3, { ...mo, type: 'grin', w: 1.5, h: 2.6, open: 1, teeth: 'buck' }));
+  else if (hurt) head.push(...mouth(mx, my - 0.1, { ...mo, type: 'shout', w: 1.2, h: 2.2, open: 0.8, teeth: 'buck' }));
+  else if (dead) head.push(...mouth(mx, my, { ...mo, type: 'flat', w: 1.2, teeth: 'buck', tongueOut: true, tongueLen: 1.5 }));
+  else head.push(...mouth(mx, my, { ...mo, type: 'cat', w: 1.2, curve: 0.5, teeth: 'buck' }));
+  if (angry) head.push(...vein(hx - 3.6, hy - 2.8, 0.85));
+  if (hurt) head.push(...tear(hx + 3.6, ey + 2.6, 0.9, { type: 'stream', len: 2.8 }), ...sweat(hx - 4.6, hy - 2.8, 1));
   // The head turns about the neck: lowered for the charge, tipped with the bound.
   const rot = A ? A.rot : walk ? hop.tilt * 3 : idle ? -perk * 4 : 0;
   out.push(...spin(head, hx - 3, hy + 5, rot));
