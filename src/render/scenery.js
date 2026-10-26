@@ -315,6 +315,8 @@ export function houseArt(seed) {
   return art(`house|${wall}|${roof}|${tall}`, 70, H, () => {
     const top = H - (tall ? 58 : 40);
     const out = [R(48, top - 24, 8, 16, shade(roof, -8)), R(46.6, top - 26, 10.8, 3, shade(roof, -14)), R(8, top, 54, H - top, wall),
+      // Light from the upper left: the right end of the wall a step darker, and the eaves' shadow.
+      F(R(54, top, 8, H - top, shade(wall, -6))), F(R(8, top + 1, 54, 4, shade(wall, -11))),
       T([[2, top + 2], [35, top - 26], [68, top + 2]], roof), F(T([[8, top - 1], [35, top - 22], [62, top - 1], [62, top + 1], [35, top - 20], [8, top + 1]], shade(roof, 16))),
       // Round attic window with a little heart.
       E(35, top - 8, 5, 5, '#ffffff'), F(E(35, top - 8, 3.6, 3.6, '#fff3a6')), F(E(34, top - 8.6, 1, 1, '#ff8fa8')), F(E(36, top - 8.6, 1, 1, '#ff8fa8')), F(T([[33.2, top - 8.2], [36.8, top - 8.2], [35, top - 6.2]], '#ff8fa8')),
@@ -872,9 +874,10 @@ function drawFar(ctx, t, cam, width, y0, time) {
       break;
     default: // hills, trees
       ctx.fillRect(0, snap(y0 + 29), width, 400);
+      // Each hill its own size, so the repeat doesn't show.
       repeat(cam.x, 0.2, 220, width, (i, x) => {
         ctx.beginPath();
-        ctx.arc(x + 110, y0 + 30, 130, Math.PI, 0);
+        ctx.ellipse(x + 110 + (hash(i + 3) - 0.5) * 40, y0 + 30, 115 + hash(i) * 40, 100 + hash(i + 1) * 50, 0, Math.PI, 0);
         ctx.fill();
       });
   }
