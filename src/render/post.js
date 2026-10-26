@@ -15,6 +15,11 @@ const LOOKS = {
   crag: { light: '#ffd8a4', shade: '#8a4a5c', rays: 0.5, sun: 0.75 },
   grove: { light: '#e2d8ff', shade: '#4a3a8a', rays: 0.3, sun: 0.7 },
   hollow: { light: '#d8ffc0', shade: '#2c4a4a', rays: 0.25, sun: 0.6 },
+  // Map looks (a map's `look.light`).
+  morning: { light: '#ffe2ec', shade: '#9a7cc8', rays: 0.7, sun: 0.75 },
+  noon: { light: '#fffbe0', shade: '#5c9a8a', rays: 0.35, sun: 0.85 },
+  dusk: { light: '#ffc08a', shade: '#4a2f6a', rays: 0.6, sun: 0.2 },
+  throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5 },
 };
 
 const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
@@ -148,7 +153,8 @@ function drawRays(g, look, cam, w, h, time) {
 
 // The map's light over the world: rays, the warm glow from above, and the cool shade and vignette.
 export function drawLighting(ctx, map, cam, w, h, time) {
-  const theme = LOOKS[map.theme] ? map.theme : 'meadow';
+  const key = map.look?.light ?? map.theme;
+  const theme = LOOKS[key] ? key : 'meadow';
   const look = LOOKS[theme];
   ctx.save();
   ctx.imageSmoothingEnabled = true;

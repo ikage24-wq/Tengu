@@ -31,7 +31,7 @@ export const THEMES = {
     sky: ['#8fdcff', '#c9efff', '#fff6dc'], sun: '#fffbe0', far: '#c4efcf', mid: '#a8e2b8', midTrim: '#7fd19a',
     ground: '#ecc595', groundDeep: '#d9ab79', trim: '#86df86', ledge: '#f0cf9e', ledgeTrim: '#8fe39a', ledgeShade: '#d8b07e',
     skyline: 'hills', props: ['flower', 'tuft', 'flower', 'bush', 'tulip', 'tuft', 'rock'],
-    critters: ['butterfly', 'bird', 'butterfly'], drift: 'petal', face: 'sun',
+    critters: ['butterfly', 'bird', 'butterfly'], drift: 'petal', face: 'sun', rainbow: 0.28,
   },
   // The thieves' harbor, by moonlight: string lights, lit lamps, and alley cats on the crates.
   harbor: {
@@ -64,13 +64,13 @@ export const THEMES = {
     sky: ['#7b6be6', '#c39cff', '#ffc2e0'], sun: '#ffe6ff', far: '#9d8ae8', mid: '#b8a6f0', midTrim: '#8f7cd0',
     ground: '#c3b4e8', groundDeep: '#a898d6', trim: '#e6dcff', ledge: '#d6cbf5', ledgeTrim: '#f3edff', ledgeShade: '#ad9fd9',
     skyline: 'columns', props: ['candle', 'flower', 'column', 'tuft'],
-    critters: ['firefly'], drift: 'mote', face: 'moon',
+    critters: ['firefly'], drift: 'mote', face: 'moon', stars: true,
   },
   cave: {
     sky: ['#3f3380', '#5c47a6', '#7c62c2'], sun: '#c9b6ff', far: '#53439a', mid: '#6c56b4', midTrim: '#9f8ae0',
     ground: '#7a68b8', groundDeep: '#62509e', trim: '#a8e8ff', ledge: '#8f7cd0', ledgeTrim: '#b8f0ff', ledgeShade: '#6b58a8',
     skyline: 'crystals', props: ['crystal', 'rock', 'glow'],
-    critters: ['firefly'], drift: 'sparkle', face: null,
+    critters: ['firefly'], drift: 'sparkle', face: null, stars: true,
   },
   // Rootwood Hollow: a cozy den under a giant old tree, lit by glowing mushrooms and lanterns.
   hollow: {
@@ -84,7 +84,7 @@ export const THEMES = {
     sky: ['#ffc6e8', '#cddbff', '#eef8ff'], sun: '#fffbe6', far: '#ffffff', mid: '#f3f8ff', midTrim: '#d6e6ff',
     ground: '#ffffff', groundDeep: '#e6ecff', trim: '#fff0fa', ledge: '#ffffff', ledgeTrim: '#ffe6f3', ledgeShade: '#dce8ff',
     skyline: 'islands', props: ['flower', 'cloudpuff', 'tulip'],
-    critters: ['butterfly', 'gull'], drift: 'sparkle', face: 'sun',
+    critters: ['butterfly', 'gull'], drift: 'sparkle', face: 'sun', rainbow: 0.5,
   },
 };
 
@@ -689,7 +689,7 @@ function drawSky(ctx, t, theme, width, height, time) {
   g.addColorStop(1, t.sky[2]);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, width, height);
-  if (theme === 'cave' || theme === 'ruins' || t.stars) {
+  if (t.stars) {
     for (let i = 0; i < 30; i++) {
       const tw = 0.5 + 0.5 * Math.sin(time * 2 + i * 1.7);
       ctx.globalAlpha = 0.3 + 0.6 * tw;
@@ -697,7 +697,7 @@ function drawSky(ctx, t, theme, width, height, time) {
     }
     ctx.globalAlpha = 1;
   }
-  if (theme === 'sky' || theme === 'meadow') drawRainbow(ctx, width, height, theme === 'sky' ? 0.5 : 0.28);
+  if (t.rainbow) drawRainbow(ctx, width, height, t.rainbow);
   // The sun (or moon) smiles down and bobs gently.
   if (t.face) {
     const sx = width * 0.8;
@@ -1124,7 +1124,7 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
     if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
-    else drawIsland(ctx, theme, p, cam, time, pi, groundAt(map, p.x + p.w / 2));
+    else drawIsland(ctx, theme, p, cam, time, pi, groundAt(map, p.x + p.w / 2), map.look);
   }
 }
 
@@ -1535,7 +1535,8 @@ function drawDrift(ctx, t, cam, width, height, time) {
 // Everything behind the characters.
 export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
-  const t = THEMES[theme];
+  // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike.
+  const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll
   // vertically at a fraction of the camera so taller maps still feel deep.
   const camBottom = Math.max(0, map.height - height);

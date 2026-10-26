@@ -15,6 +15,7 @@ export const MAPS = {
   sprout: {
     id: 'sprout', plaza: 1040, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     width: 1800, height: 520, groundY: 480,
+    look: { edges: 'flowers' },
     terrain: [[0, 480], [440, 480], [540, 440], [1090, 440], [1140, 480], [1400, 480], [1500, 430], [1800, 430]],
     platforms: [
       { x: 90, y: 400, w: 180 },
@@ -44,6 +45,7 @@ export const MAPS = {
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
     width: 2200, height: 520, groundY: 480,
+    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
     terrain: [[0, 480], [460, 480], [560, 430], [820, 430], [900, 470], [1180, 470], [1180, 400], [1500, 400], [1500, 440], [1560, 440], [1620, 480], [2200, 480]],
     platforms: [
       { x: 120, y: 400, w: 200 },
@@ -77,6 +79,7 @@ export const MAPS = {
   meadow2: {
     id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
     width: 2400, height: 560, groundY: 520,
+    look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'farm', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
     terrain: [[0, 520], [380, 520], [520, 450], [700, 450], [820, 500], [1000, 500], [1120, 430], [1360, 430], [1480, 520], [1700, 520], [1700, 450], [1980, 450], [2100, 520], [2400, 520]],
     platforms: [
       { x: 120, y: 440, w: 220 },
@@ -112,6 +115,7 @@ export const MAPS = {
   harbor: {
     id: 'harbor', plaza: 760, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
     width: 1800, height: 560, groundY: 480,
+    look: { islands: 'planks' },
     terrain: [[0, 480], [600, 480], [660, 450], [1300, 450], [1360, 480], [1800, 480]],
     platforms: [
       { x: 150, y: 400, w: 180 },
@@ -137,6 +141,7 @@ export const MAPS = {
   woods: {
     id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
     width: 2600, height: 640, groundY: 600,
+    look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'planks', edges: 'glowcaps' },
     terrain: [[0, 600], [560, 600], [680, 530], [900, 530], [900, 600], [1100, 600], [1100, 520], [1380, 520], [1500, 560], [1700, 560], [1820, 600], [2600, 600]],
     platforms: [
       { x: 120, y: 520, w: 220 },
@@ -182,6 +187,7 @@ export const MAPS = {
   ruins: {
     id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 },
     width: 2600, height: 640, groundY: 600,
+    look: { islands: 'stone' },
     terrain: [[0, 600], [500, 600], [500, 540], [760, 540], [760, 480], [1040, 480], [1040, 540], [1200, 540], [1200, 600], [1500, 600], [1500, 520], [1800, 520], [1920, 600], [2600, 600]],
     platforms: [
       { x: 140, y: 520, w: 220 },
@@ -222,6 +228,7 @@ export const MAPS = {
   cave: {
     id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'grove', world: { x: 336, y: 148 },
     width: 2600, height: 700, groundY: 660,
+    look: { ceiling: true },
     terrain: [[0, 660], [420, 660], [540, 600], [700, 600], [820, 660], [1000, 660], [1000, 590], [1260, 590], [1380, 640], [1620, 640], [1620, 570], [1880, 570], [2000, 660], [2600, 660]],
     platforms: [
       { x: 120, y: 580, w: 220 },
@@ -298,6 +305,7 @@ export const MAPS = {
   bossroom: {
     id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'grove', world: { x: 360, y: 186 },
     width: 1200, height: 420, groundY: 380,
+    look: { sky: ['#1f1a4a', '#3a2f7a', '#5a47a6'], far: '#3f3480', mid: '#4f4296', material: 'throne', ceiling: true, light: 'throne', islands: 'stone' },
     platforms: [
       { x: 150, y: 290, w: 200 },
       { x: 850, y: 290, w: 200 },
@@ -321,10 +329,10 @@ Object.assign(MAPS, {
       { x: 120, y: 440, w: 200 },
       { x: 400, y: 370, w: 200 },
       { x: 460, y: 290, w: 160 },
-      { x: 960, y: 440, w: 120 },
+      { x: 960, y: 440, w: 120, style: 'bridge' },
       { x: 1130, y: 360, w: 220 },
       { x: 1200, y: 280, w: 180 },
-      { x: 1420, y: 300, w: 160 },
+      { x: 1420, y: 300, w: 160, style: 'bridge' },
       { x: 1450, y: 220, w: 140 },
       { x: 1840, y: 440, w: 200 },
       { x: 1920, y: 360, w: 180 },
@@ -374,6 +382,7 @@ Object.assign(MAPS, {
   grove: {
     id: 'grove', plaza: 790, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     width: 1800, height: 600, groundY: 480,
+    look: { islands: 'planks', edges: 'glowcaps' },
     terrain: [[0, 480], [260, 480], [340, 450], [880, 450], [940, 470], [1300, 470], [1400, 440], [1800, 440]],
     platforms: [
       { x: 150, y: 400, w: 180 },
@@ -422,6 +431,7 @@ Object.assign(MAPS, {
   hollow_gate: {
     id: 'hollow_gate', name: 'Hollow Gate', theme: 'forest', town: 'crag', world: { x: 168, y: 132 },
     width: 1200, height: 420, groundY: G,
+    look: { sky: ['#ff9f7a', '#d48ab8', '#6a4f9a'], far: '#9a6a9a', mid: '#7a5a8a', midTrim: '#9a7aa8', skyline: 'roots', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], material: 'hollow', light: 'dusk', drift: 'spore', critters: ['firefly'], face: null, edges: 'glowcaps' },
     terrain: [[0, G], [300, G], [380, G - 40], [560, G - 40], [640, G], [1200, G]],
     platforms: [{ x: 400, y: G - 120, w: 160 }],
     ropes: [],

@@ -29,6 +29,9 @@ export const MATERIALS = {
   cave: { lip: '#a8e8ff', body: '#7563b6', deep: '#4f3f8e', stone: '#9482d6', style: 'rock', blades: false, drip: 'crystal', glow: '#a8e8ff' },
   hollow: { lip: '#a6dca2', body: '#b48a74', deep: '#8a6656', stone: '#cda48c', style: 'loam', blades: true, drip: 'root' },
   sky: { lip: '#ffffff', body: '#f6f8ff', deep: '#d6e0ff', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
+  // Map-specific materials (a map's `look.material`).
+  farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
+  throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
 };
 
 const TILE = 64;
@@ -100,6 +103,38 @@ function paintTile(g, m, theme) {
           }
         });
       }
+    }
+  } else if (m.style === 'farm') {
+    // Tilled farmland: rows of furrows, with pebbles and the odd buried carrot.
+    for (let row = 0; row < 8; row++) {
+      const y0 = row * 8 + 5;
+      g.strokeStyle = row % 2 ? m.deep : mix(m.deep, m.body, 0.4);
+      g.lineWidth = 1.6;
+      g.beginPath();
+      for (let x = 0; x <= TILE; x += 4) g.lineTo(x, y0 + Math.sin((x / TILE) * Math.PI * 4 + row) * 0.8);
+      g.stroke();
+    }
+    for (let i = 0; i < 8; i++) {
+      const k = seed + i * 5.9;
+      wrap((dx, dy) => {
+        g.fillStyle = m.stone;
+        g.beginPath();
+        g.ellipse(hash(k) * TILE + dx, hash(k + 1) * TILE + dy, 2 + hash(k + 2), 1.3, 0, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+    for (let i = 0; i < 2; i++) {
+      const k = seed + i * 17.3 + 50;
+      const x = hash(k) * TILE;
+      const y = hash(k + 1) * TILE;
+      wrap((dx, dy) => {
+        g.fillStyle = '#ff9d4a';
+        poly(g, [[x + dx - 2, y + dy], [x + dx + 2, y + dy], [x + dx, y + dy + 7]]);
+        g.fill();
+        g.fillStyle = '#6cc070';
+        g.fillRect(x + dx - 1.5, y + dy - 3, 1, 3);
+        g.fillRect(x + dx + 0.5, y + dy - 3.5, 1, 3.5);
+      });
     }
   } else if (m.style === 'slab') {
     // Big sandstone slabs, stacked a little unevenly: lit tops, shaded bottoms, chips and cracks.
@@ -329,7 +364,9 @@ function groundRuns(map, cam) {
 }
 
 export function drawTerrain(ctx, theme, map, cam, width, height, time) {
+  theme = map.look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
+  const deco = map.look?.edges ?? null;
   const runs = groundRuns(map, cam);
   const bottom = height + 40;
   // The land itself: everything under the line.
@@ -363,14 +400,15 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
     cliffFace(ctx, m, a[0], yTop, yBot, highLeft ? -1 : 1, time, i);
   }
   // The lip along the top of every run.
-  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width));
+  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, 7, deco));
+  if (map.look?.ceiling) drawCeiling(ctx, m, map, cam, width, time);
 }
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
 
 // The top layer along a line of points: a thick band with a soft scalloped (or bladed) lower edge,
 // a bright top, and an outline.
-function lip(ctx, m, pts, time, seed, width, depth = 7) {
+function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
   const line = edge(m.lip);
   const deep = shade(m.lip, -16);
   // The band.
@@ -423,6 +461,132 @@ function lip(ctx, m, pts, time, seed, width, depth = 7) {
     });
     ctx.lineCap = 'butt';
   }
+  if (deco) edgeDeco(ctx, deco, pts, time, seed, width);
+}
+
+// Little things dotted along the top of the land: flowers, clovers, or glowing mushrooms.
+const BLOOMS = ['#ff9ec0', '#ffe36b', '#ffffff', '#c9a6ff', '#ffb38a'];
+function edgeDeco(ctx, kind, pts, time, seed, width) {
+  forAlong(pts, 11, (x, y, k) => {
+    const h = hash(k * 2.3 + seed * 7);
+    if (x < -6 || x > width + 6 || h < 0.45) return;
+    const sway = Math.sin(time * 2 + x * 0.07) * 0.7;
+    if (kind === 'flowers') {
+      const stem = 3 + h * 4;
+      ctx.strokeStyle = '#5fb878';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + sway, y - stem);
+      ctx.stroke();
+      ctx.fillStyle = BLOOMS[Math.floor(hash(k + seed) * BLOOMS.length)];
+      for (let j = 0; j < 4; j++) {
+        ctx.beginPath();
+        ctx.arc(x + sway + Math.cos(j * 1.57) * 1.3, y - stem + Math.sin(j * 1.57) * 1.3, 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffe36b';
+      ctx.fillRect(x + sway - 0.5, y - stem - 0.5, 1, 1);
+    } else if (kind === 'clover') {
+      const lucky = h > 0.93;
+      ctx.fillStyle = lucky ? '#3fbf5f' : '#58c866';
+      for (let j = 0; j < (lucky ? 4 : 3); j++) {
+        const a = (j / (lucky ? 4 : 3)) * Math.PI * 2 - Math.PI / 2;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * 1.4 + sway * 0.4, y - 3 + Math.sin(a) * 1.4, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (lucky) {
+        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 4 + x);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + 2, y - 6, 1, 1);
+        ctx.globalAlpha = 1;
+      }
+    } else if (kind === 'glowcaps') {
+      if (h < 0.75) return;
+      const c = BLOOMS[Math.floor(hash(k) * 3) + 1];
+      ctx.globalAlpha = 0.35 + 0.25 * Math.sin(time * 2 + x);
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x, y - 3, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#f6efff';
+      ctx.fillRect(x - 0.6, y - 3, 1.2, 3);
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 3.5, 2.4, 1.6, 0, Math.PI, 0);
+      ctx.fill();
+    }
+  });
+}
+
+// A cave's rock ceiling across the top of the map: a jagged underside and stalactites (some
+// tipped with glowing crystal), so it feels underground.
+function drawCeiling(ctx, m, map, cam, width, time) {
+  // It hangs at the top of the view (the cave's roof is always just overhead), rising a little
+  // as you climb.
+  const base = 12 - Math.min(10, Math.max(0, (map.height - 360 - cam.y) * 0.03));
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(-10, -10);
+  const step = 18;
+  const first = Math.floor(cam.x / step) - 1;
+  for (let i = first; i * step - cam.x < width + step; i++) {
+    const x = i * step - cam.x;
+    ctx.lineTo(x, base + hash(i * 1.3) * 14);
+  }
+  ctx.lineTo(width + 10, -10);
+  ctx.closePath();
+  fillLand(ctx, map.look.material ?? map.theme, m, cam);
+  ctx.fillStyle = hexA(m.deep, 0.55);
+  ctx.fill();
+  ctx.strokeStyle = edge(m.body);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Stalactites.
+  const sstep = 54;
+  for (let i = Math.floor(cam.x / sstep) - 1; i * sstep - cam.x < width + sstep; i++) {
+    const k = hash(i * 7.7 + 3);
+    if (k < 0.35) continue;
+    const x = i * sstep - cam.x + k * 20;
+    const top = base + hash(i * 1.1) * 8;
+    const len = 18 + k * 46;
+    const w = 7 + k * 8;
+    ctx.fillStyle = shade(m.body, -10);
+    ctx.strokeStyle = edge(m.body);
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, top);
+    ctx.quadraticCurveTo(x - w * 0.2, top + len * 0.6, x, top + len);
+    ctx.quadraticCurveTo(x + w * 0.2, top + len * 0.6, x + w / 2, top);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(x - w * 0.25, top + 2, 1.5, len * 0.5);
+    if (k > 0.7) {
+      const c = k > 0.85 ? '#e6c8ff' : '#bff0ff';
+      ctx.globalAlpha = 0.4 + 0.3 * Math.sin(time * 2 + i);
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x, top + len - 2, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.moveTo(x - 2.5, top + len - 7);
+      ctx.lineTo(x, top + len + 3);
+      ctx.lineTo(x + 2.5, top + len - 7);
+      ctx.fill();
+    }
+    // A drip falls now and then.
+    const u = (time * 0.4 + k * 5) % 1;
+    if (k > 0.55 && u < 0.6) {
+      ctx.fillStyle = 'rgba(191,240,255,0.8)';
+      ctx.fillRect(x - 0.6, top + len + u * 160, 1.2, 2.5);
+    }
+  }
+  ctx.restore();
 }
 
 // Calls fn(x, y, k) every `step` pixels along a line of points.
@@ -478,80 +642,149 @@ function cliffFace(ctx, m, x, yTop, yBot, side, time, seed) {
   ctx.moveTo(x + 0.5 * side, yTop + 3);
   ctx.lineTo(x + 0.5 * side, yBot);
   ctx.stroke();
-  // The lip curls over the corner.
+  // Things hanging down the face, never past its foot, then the lip curling over the corner.
+  drip(ctx, m, x + side * 2.5, yTop + 6, Math.min(46, yBot - yTop - 16), time, seed);
   ctx.fillStyle = m.lip;
   ctx.strokeStyle = edge(m.lip);
   ctx.beginPath();
   ctx.ellipse(x + side * 1, yTop + 3, 5, 5.5, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  // Things hanging down the face.
-  drip(ctx, m, x + side * 2, yTop + 7, Math.min(46, (yBot - yTop) * 0.6), time, seed);
 }
 
-// Vines, roots, seaweed, or crystals hanging from an edge at (x, y).
+// Vines, roots, seaweed, or crystals hanging from an edge at (x, y). Each starts a few pixels
+// above y, so whatever it hangs from (drawn over it) hides where it's rooted.
 function drip(ctx, m, x, y, maxLen, time, seed) {
-  if (!m.drip) return;
+  if (!m.drip || maxLen < 6) return;
   const k = hash(seed * 3.3 + x * 0.01);
-  const len = Math.max(6, maxLen * (0.45 + k * 0.55));
-  const sway = Math.sin(time * 1.4 + seed + x * 0.02) * 1.8;
+  const len = Math.max(6, maxLen * (0.5 + k * 0.5));
+  const sway = Math.sin(time * 1.4 + seed + x * 0.02) * 1.6;
+  const top = y - 5;
+  // A point along the hanging curve, u from 0 (root) to 1 (tip).
+  const at = (u) => {
+    const cx = x + sway * 0.6;
+    const cy = top + (len + 5) * 0.6;
+    const ex = x + sway * 1.6;
+    const ey = y + len;
+    const a = (1 - u) * (1 - u);
+    const b = 2 * (1 - u) * u;
+    const c = u * u;
+    return [a * x + b * cx + c * ex, a * top + b * cy + c * ey];
+  };
+  const curve = (w0, w1, color) => {
+    // Drawn in short pieces so it can taper.
+    for (let i = 0; i < 6; i++) {
+      const [x0, y0] = at(i / 6);
+      const [x1, y1] = at((i + 1) / 6);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = w0 + ((w1 - w0) * i) / 5;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    }
+  };
+  ctx.save();
   ctx.lineCap = 'round';
   if (m.drip === 'crystal') {
+    const h = Math.min(len, 10 + k * 8);
     ctx.fillStyle = k > 0.5 ? '#bff0ff' : '#e6c8ff';
     ctx.strokeStyle = edge('#a8e8ff');
     ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.moveTo(x - 3, y - 2);
-    ctx.lineTo(x, y + Math.min(len, 14));
-    ctx.lineTo(x + 3, y - 2);
+    ctx.moveTo(x - 3.5, top);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x + 3.5, top);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-  } else {
-    const color = m.drip === 'root' ? shade(m.deep, -10) : m.drip === 'weed' ? '#5fae8a' : '#5fb878';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = m.drip === 'root' ? 2.2 : 1.8;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillRect(x - 1.2, y, 1, h * 0.5);
+  } else if (m.drip === 'root') {
+    // A root that tapers to a curled tip, with a little side rootlet.
+    const dark = shade(m.deep, -14);
+    curve(3.2, 1.2, dark);
+    curve(1.6, 0.4, shade(m.deep, 10));
+    const [tx, ty] = at(1);
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 1.1;
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(x + sway, y + len * 0.6, x + sway * 1.6, y + len);
+    ctx.arc(tx + 2, ty, 2, Math.PI, Math.PI * 0.2, true);
     ctx.stroke();
-    if (m.drip === 'vine') {
-      ctx.fillStyle = '#8fdc9a';
-      for (let j = 1; j <= 3; j++) {
-        const u = j / 3.4;
+    const [rx, ry] = at(0.5);
+    ctx.beginPath();
+    ctx.moveTo(rx, ry);
+    ctx.quadraticCurveTo(rx + 4, ry + 2, rx + 5, ry + 6);
+    ctx.stroke();
+  } else if (m.drip === 'weed') {
+    curve(2, 1.2, '#4f9a7a');
+    ctx.fillStyle = '#6fc79a';
+    for (const u of [0.45, 0.8]) {
+      const [lx, ly] = at(u);
+      ctx.beginPath();
+      ctx.ellipse(lx + 1.5, ly, 2.2, 1, 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // A vine: a green stem with leaves along it and, now and then, a flower at the tip.
+    curve(2, 1.4, '#4f9a62');
+    const leaf = mix(m.lip, '#8fdc9a', 0.6);
+    for (const [i, u] of [0.3, 0.55, 0.8].entries()) {
+      if (u * len < 4) continue;
+      const [lx, ly] = at(u);
+      const s = i % 2 ? -1 : 1;
+      ctx.fillStyle = leaf;
+      ctx.strokeStyle = '#4f9a62';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.ellipse(lx + s * 2.6, ly, 2.8, 1.5, s * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    if (k > 0.7) {
+      const [fx, fy] = at(1);
+      ctx.fillStyle = '#ff9ec0';
+      for (let j = 0; j < 4; j++) {
         ctx.beginPath();
-        ctx.ellipse(x + sway * u * 1.4 + (j % 2 ? 2 : -2), y + len * u, 2, 1.2, j % 2 ? 0.5 : -0.5, 0, Math.PI * 2);
+        ctx.arc(fx + Math.cos(j * 1.57) * 1.6, fy + 1.5 + Math.sin(j * 1.57) * 1.6, 1.3, 0, Math.PI * 2);
         ctx.fill();
       }
-      if (k > 0.75) {
-        ctx.fillStyle = '#ff9ec0';
-        ctx.beginPath();
-        ctx.arc(x + sway * 1.6, y + len + 1.5, 1.8, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.fillStyle = '#ffe36b';
+      ctx.beginPath();
+      ctx.arc(fx, fy + 1.5, 0.9, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
-  ctx.lineCap = 'butt';
+  ctx.restore();
 }
 
 // ---------- Floating islands (the ledges) ----------
 
 // A ledge drawn as a chunk of floating land: flat top, thick in the middle, tapering to a
 // rounded point underneath, with the lip on top and things dangling below.
-export function drawIsland(ctx, theme, p, cam, time, pi, groundY) {
+export function drawIsland(ctx, theme, p, cam, time, pi, groundY, look = null) {
+  theme = look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   const x = p.x - cam.x;
   const y = p.y - cam.y;
   const w = p.w;
+  const style = p.style ?? look?.islands ?? 'earth';
+  if (style !== 'earth') {
+    groundShadow(ctx, x, y, w, groundY == null ? null : groundY - cam.y, style === 'bridge' ? 0.5 : 1);
+    if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
+    else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
+    else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
+    return;
+  }
   const d = p.thick ?? Math.min(48, 22 + w * 0.1);
-  // A soft shadow on the ground far below.
-  if (groundY != null) {
-    const gy = groundY - cam.y;
-    const far = Math.min(1, (gy - y) / 220);
-    ctx.fillStyle = `rgba(58,45,79,${0.12 * (1 - far * 0.6)})`;
-    ctx.beginPath();
-    ctx.ellipse(x + w / 2, gy + 1, w * 0.42, 3.5, 0, 0, Math.PI * 2);
-    ctx.fill();
+  groundShadow(ctx, x, y, w, groundY == null ? null : groundY - cam.y, 1);
+  // Things hanging under the island, rooted in its underside (drawn first, so the island
+  // covers where they're rooted).
+  const under = islandShape(x, y, w, d, pi);
+  for (let dx = 14; dx < w - 12; dx += 22) {
+    const k = hash(pi * 13.1 + dx);
+    if (k < 0.45) continue;
+    drip(ctx, m, x + dx, undersideAt(under, x + dx) - 1, 18, time, pi * 5 + dx);
   }
   ctx.save();
   island(ctx, x, y, w, d, pi);
@@ -567,15 +800,7 @@ export function drawIsland(ctx, theme, p, cam, time, pi, groundY) {
   ctx.strokeStyle = edge(m.body);
   ctx.lineWidth = 1;
   ctx.stroke();
-  // Hanging things under the island.
-  for (let dx = 12; dx < w - 10; dx += 22) {
-    const k = hash(pi * 13.1 + dx);
-    if (k < 0.45) continue;
-    const u = dx / w;
-    const under = y + d * (1 - Math.abs(u - 0.5) * 1.7) - 2;
-    drip(ctx, m, x + dx, Math.max(y + 6, under), 18, time, pi * 5 + dx);
-  }
-  lip(ctx, m, [[x + 2, y], [x + w - 2, y]], time, pi + 50, Infinity, 6);
+  lip(ctx, m, [[x + 2, y], [x + w - 2, y]], time, pi + 50, Infinity, 6, look?.edges);
   // Rounded caps at both ends of the lip.
   ctx.fillStyle = m.lip;
   ctx.strokeStyle = edge(m.lip);
@@ -587,15 +812,211 @@ export function drawIsland(ctx, theme, p, cam, time, pi, groundY) {
   }
 }
 
-function island(ctx, x, y, w, d, seed) {
+// The island's outline: a flat top, then the underside curving from the right end down to a
+// rounded point and back up, as points (so things can hang from exactly its underside).
+// A soft shadow on the ground far below a ledge.
+function groundShadow(ctx, x, y, w, gy, k) {
+  if (gy == null) return;
+  const far = Math.min(1, (gy - y) / 220);
+  ctx.fillStyle = `rgba(58,45,79,${0.12 * k * (1 - far * 0.6)})`;
+  ctx.beginPath();
+  ctx.ellipse(x + w / 2, gy + 1, w * 0.42, 3.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+const WOOD = '#d9a86c';
+
+// A wooden deck, Ellinia style: planks on a log beam with round sawn ends, braces underneath,
+// and vines trailing down.
+function drawPlanks(ctx, m, x, y, w, time, seed, deco) {
+  const line = edge(WOOD);
+  const vine = { ...m, drip: m.drip === 'crystal' ? 'crystal' : 'vine' };
+  for (let dx = 18; dx < w - 14; dx += 26) {
+    if (hash(seed * 9.1 + dx) < 0.4) continue;
+    drip(ctx, vine, x + dx, y + 15, 22, time, seed * 3 + dx);
+  }
+  // Braces from the beam down to a post.
+  ctx.strokeStyle = shade(WOOD, -22);
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  for (const bx of [x + w * 0.25, x + w * 0.75]) {
+    ctx.beginPath();
+    ctx.moveTo(bx - 14, y + 12);
+    ctx.lineTo(bx, y + 26);
+    ctx.lineTo(bx + 14, y + 12);
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  // The log beam, with ring-marked ends.
+  ctx.fillStyle = shade(WOOD, -14);
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.fillRect(x + 2, y + 7, w - 4, 8);
+  ctx.strokeRect(x + 2.5, y + 7.5, w - 5, 7);
+  for (const ex of [x + 1, x + w - 1]) {
+    ctx.fillStyle = '#f0cf9a';
+    ctx.beginPath();
+    ctx.ellipse(ex, y + 11, 4, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = shade(WOOD, -10);
+    ctx.beginPath();
+    ctx.ellipse(ex, y + 11, 2, 2.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = line;
+  }
+  // The planks.
+  for (let px = x; px < x + w - 0.5; px += 10) {
+    const pw = Math.min(10, x + w - px);
+    ctx.fillStyle = hash(seed * 3.7 + px * 0.13) > 0.5 ? WOOD : shade(WOOD, -6);
+    ctx.fillRect(px, y - 1, pw, 8);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(px + 1, y, pw - 2, 1.2);
+    ctx.fillStyle = shade(WOOD, -24);
+    ctx.fillRect(px + 2, y + 3, 1, 1);
+  }
+  ctx.strokeStyle = line;
+  ctx.strokeRect(x + 0.5, y - 0.5, w - 1, 8);
+  for (let px = x + 10; px < x + w - 2; px += 10) {
+    ctx.beginPath();
+    ctx.moveTo(px + 0.5, y);
+    ctx.lineTo(px + 0.5, y + 7);
+    ctx.stroke();
+  }
+  // Moss creeping over the edge here and there.
+  ctx.fillStyle = mix(m.lip, '#8fdc9a', 0.5);
+  for (let dx = 6; dx < w - 6; dx += 16) {
+    if (hash(seed * 5.3 + dx) < 0.6) continue;
+    ctx.beginPath();
+    ctx.ellipse(x + dx, y - 0.5, 4, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (deco) edgeDeco(ctx, deco, [[x + 3, y - 1], [x + w - 3, y - 1]], time, seed, Infinity);
+}
+
+// A rope bridge: posts at both ends, sagging rope rails, and planks with gaps between them.
+function drawBridge(ctx, x, y, w, time, seed) {
+  const rope = '#c9a06b';
+  const line = edge(WOOD);
+  const sag = Math.min(8, w * 0.05);
+  const railY = (u) => y - 14 + Math.sin(u * Math.PI) * sag + Math.sin(time * 1.5 + seed) * 0.6 * Math.sin(u * Math.PI);
+  // Hangers from the rails down to the planks.
+  ctx.strokeStyle = rope;
+  ctx.lineWidth = 1;
+  for (let px = x + 8; px < x + w - 6; px += 12) {
+    const u = (px - x) / w;
+    ctx.beginPath();
+    ctx.moveTo(px, railY(u));
+    ctx.lineTo(px, y + 1);
+    ctx.stroke();
+  }
+  // The planks, on a rope underneath.
+  ctx.strokeStyle = shade(rope, -20);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(x, y + 4);
+  ctx.lineTo(x + w, y + 4);
+  ctx.stroke();
+  for (let px = x + 2; px < x + w - 4; px += 11) {
+    ctx.fillStyle = hash(seed + px * 0.31) > 0.5 ? WOOD : shade(WOOD, -8);
+    ctx.fillRect(px, y - 1, 8, 5);
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(px + 0.4, y - 0.6, 7.2, 4.2);
+  }
+  // The rails.
+  ctx.strokeStyle = rope;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    if (i) ctx.lineTo(x + u * w, railY(u));
+    else ctx.moveTo(x + u * w, railY(u));
+  }
+  ctx.stroke();
+  // Posts with knobs at both ends.
+  for (const px of [x - 1, x + w - 3]) {
+    ctx.fillStyle = shade(WOOD, -12);
+    ctx.fillRect(px, y - 18, 4, 26);
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 0.5, y - 17.5, 3, 25);
+    ctx.fillStyle = WOOD;
+    ctx.beginPath();
+    ctx.arc(px + 2, y - 18, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+// A floating block of stone: a squared-off slab with a broken, jagged underside and pebbles
+// drifting beneath it.
+function drawStone(ctx, theme, m, x, y, w, d, cam, time, seed, deco) {
+  const pts = [[x, y], [x + w, y], [x + w, y + d * 0.55]];
+  for (let px = x + w - 10; px > x + 6; px -= 12) pts.push([px, y + d * (0.6 + hash(seed * 4.1 + px) * 0.4)]);
+  pts.push([x, y + d * 0.55]);
+  for (let i = 0; i < 3; i++) {
+    const k = hash(seed * 2.2 + i);
+    const px = x + w * (0.2 + k * 0.6);
+    const py = y + d + 8 + i * 6 + Math.sin(time * 1.5 + i + seed) * 2;
+    ctx.fillStyle = shade(m.body, -6);
+    ctx.strokeStyle = edge(m.body);
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.ellipse(px, py, 3 + k * 2, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.save();
+  poly(ctx, pts);
+  fillLand(ctx, theme, m, cam);
+  ctx.clip();
+  const g = ctx.createLinearGradient(0, y, 0, y + d);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(1, hexA(m.deep, 0.75));
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, d + 2);
+  ctx.restore();
+  poly(ctx, pts);
+  ctx.strokeStyle = edge(m.body);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  lip(ctx, m, [[x + 1, y], [x + w - 1, y]], time, seed + 70, Infinity, 6, deco);
+}
+
+function islandShape(x, y, w, d, seed) {
   const lumpy = (u) => 1 + (hash(seed * 3 + u * 10) - 0.5) * 0.18;
+  const curves = [
+    [[x + w, y], [x + w + 1, y + d * 0.45], [x + w * 0.82, y + d * 0.7 * lumpy(1)]],
+    [[x + w * 0.82, y + d * 0.7 * lumpy(1)], [x + w * 0.62, y + d * 0.95 * lumpy(2)], [x + w * 0.5, y + d]],
+    [[x + w * 0.5, y + d], [x + w * 0.38, y + d * 0.95 * lumpy(3)], [x + w * 0.18, y + d * 0.7 * lumpy(4)]],
+    [[x + w * 0.18, y + d * 0.7 * lumpy(4)], [x - 1, y + d * 0.45], [x, y]],
+  ];
+  const under = [];
+  for (const [a, c, b] of curves) {
+    for (let i = 0; i < 8; i++) {
+      const u = i / 8;
+      under.push([(1 - u) * (1 - u) * a[0] + 2 * (1 - u) * u * c[0] + u * u * b[0], (1 - u) * (1 - u) * a[1] + 2 * (1 - u) * u * c[1] + u * u * b[1]]);
+    }
+  }
+  under.push([x, y]);
+  return under;
+}
+
+// How far down the underside reaches at screen x.
+function undersideAt(under, px) {
+  for (let i = 1; i < under.length; i++) {
+    const [x0, y0] = under[i - 1];
+    const [x1, y1] = under[i];
+    if ((px <= x0 && px >= x1) || (px >= x0 && px <= x1)) return x0 === x1 ? Math.max(y0, y1) : y0 + ((y1 - y0) * (px - x0)) / (x1 - x0);
+  }
+  return under[0][1];
+}
+
+function island(ctx, x, y, w, d, seed) {
   ctx.beginPath();
   ctx.moveTo(x, y);
-  ctx.lineTo(x + w, y);
-  ctx.quadraticCurveTo(x + w + 1, y + d * 0.45, x + w * 0.82, y + d * 0.7 * lumpy(1));
-  ctx.quadraticCurveTo(x + w * 0.62, y + d * 0.95 * lumpy(2), x + w * 0.5, y + d);
-  ctx.quadraticCurveTo(x + w * 0.38, y + d * 0.95 * lumpy(3), x + w * 0.18, y + d * 0.7 * lumpy(4));
-  ctx.quadraticCurveTo(x - 1, y + d * 0.45, x, y);
+  for (const [px, py] of islandShape(x, y, w, d, seed)) ctx.lineTo(px, py);
   ctx.closePath();
 }
 
