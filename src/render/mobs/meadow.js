@@ -144,11 +144,19 @@ function kitsune(pose, f, mood) {
     const tip = [base[0] + tdx + sw + (dead ? -1 : 0), base[1] + tdy + lift + Math.abs(sw) * 0.3];
     const ctl = [base[0] + cdx, base[1] + cdy];
     const tone = k === 2 ? furD : fur;
-    for (let i = 0; i <= 7; i++) {
-      const t = i / 7;
+    const tc = k === 2 ? shade(cream, -5) : cream;
+    for (const pass of [0, 1]) {
+      for (let i = 0; i <= 7; i++) {
+        const t = i / 7;
+        const [x, y] = bz(base, ctl, tip, t);
+        const r = 1.5 + 1.7 * Math.sin(Math.PI * (0.18 + 0.66 * t)) + (pass ? 0 : 0.45);
+        const c = t > 0.7 ? tc : tone;
+        out.push(pass ? E(x, y, r, r * 0.95, c) : F(E(x, y, r, r * 0.95, mix(shade(c, -22), '#9b6a8a', 0.3))));
+      }
+    }
+    for (const t of [0.35, 0.55]) {
       const [x, y] = bz(base, ctl, tip, t);
-      const r = 1.5 + 1.7 * Math.sin(Math.PI * (0.18 + 0.66 * t));
-      out.push(E(x, y, r, r * 0.95, t > 0.62 ? (k === 2 ? shade(cream, -5) : cream) : tone));
+      out.push(...stroke([[x - 1.4, y + 0.4], [x - 0.4, y - 0.2], [x + 0.4, y + 0.3]], 0.35, shade(tone, -12)));
     }
     out.push(F(E(tip[0] - 0.6, tip[1] - 0.6, 1, 0.7, '#ffffff')));
     const fl = walk ? Math.sin(p * 2 + k * 2) : [0, 0.8, -0.6, 0.4][f];
@@ -196,7 +204,7 @@ function kitsune(pose, f, mood) {
       F(T([tip, [tip[0] * 0.75 + b0[0] * 0.25, tip[1] * 0.75 + b0[1] * 0.25], [tip[0] * 0.75 + b1[0] * 0.25, tip[1] * 0.75 + b1[1] * 0.25]], sock))];
   };
   out.push(...ear([hx - 6.4, hy - 2.4], [hx - 1.4, hy - 5.8], [hx - 6.4 + esw - droop * 5, hy - 13 + droop * 7], furD));
-  out.push(E(hx, hy, 7.6, 6.6, fur));
+  out.push(E(hx, hy, 8, 6.9, fur));
   out.push(...ear([hx + 0.2, hy - 6.2], [hx + 5.6, hy - 3.6], [hx + 4.4 + esw + twitch * 1.6 + droop * 5, hy - 13.4 + twitch * 1 + droop * 7.5], fur));
   // Cheek fluff and the cream lower face and muzzle.
   out.push(T([[hx - 6.6, hy + 0.6], [hx - 9.4, hy + 4.8], [hx - 6.4, hy + 3.8], [hx - 7, hy + 6.6], [hx - 3.4, hy + 5.4]], fur),
@@ -617,15 +625,15 @@ function jackalope(pose, f, mood) {
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  const fur = '#efcca8';
-  const furD = '#d9b18c';
-  const cream = '#fff4e6';
-  const earIn = '#ffb3c6';
-  const ant = '#f3e6cc';
-  const antD = '#d9c49e';
+  const fur = '#dccdf0';
+  const furD = '#c4b2e0';
+  const cream = '#fbf7ff';
+  const earIn = '#ffb3cc';
+  const ant = '#f6dcb4';
+  const antD = '#dcb98e';
   const hop = walk ? HOP[f] : { lift: 0, squash: Math.sin(p) * 0.4, hind: 0, reach: 0, ear: 0, tilt: 0 };
   const out = [];
-  const L = dead ? -2 : hop.lift;
+  const L = dead ? -2 : hop.lift * 0.9;
   const rx = hurt ? -1.4 : 0;
   const bx = 17 + rx;
   const by = 26.4 - L + hop.squash * 0.5;
@@ -675,36 +683,37 @@ function jackalope(pose, f, mood) {
     return [bx0 + Math.cos(a) * len, by0 + Math.sin(a) * len];
   };
   const farB = [hx - 3.2, hy - 4.4];
-  const farT = earTip(farB[0], farB[1], 11, -112);
+  const farT = earTip(farB[0], farB[1], 10.4, -146);
   out.push(seg(farB, farT, 2.3, furD), seg([farB[0] * 0.85 + farT[0] * 0.15, farB[1] * 0.85 + farT[1] * 0.15], farT, 1.2, shade(earIn, -8)));
   // Antlers (behind the near ear, in front of the far one): branching tines, a clover tied on.
   const antler = (x, y, c, k) => {
-    const g = [x + 2.2 * k, y - 6];
-    const t = [x + 1.8 * k, y - 10.4];
-    return [...limb([x, y], g, 1.6, 1.3, c), ...limb(g, t, 1.3, 0.9, c), ...limb([x + 1 * k, y - 3], [x - 1.6 * k, y - 5.4], 1.1, 0.8, c),
-      ...limb(g, [x + 5.4 * k, y - 7.6], 1.1, 0.8, c), ...limb([x + 2 * k, y - 8.6], [x - 0.4 * k, y - 11], 0.9, 0.7, c)];
+    const q = (dx, dy) => [x + dx * k, y + dy * Math.abs(k)];
+    return [...limb(q(0, 0), q(1.6, -6), 1.9, 1.5, c), ...limb(q(1.6, -6), q(1, -12.4), 1.5, 1, c),
+      ...limb(q(0.8, -3.2), q(-2.6, -6.2), 1.3, 0.9, c), ...limb(q(1.5, -6.4), q(6, -9), 1.3, 0.9, c),
+      ...limb(q(1.3, -9.6), q(-1.6, -12.6), 1.1, 0.8, c), ...limb(q(4, -7.8), q(5.4, -11.8), 1, 0.7, c),
+      F(E(x + 0.3 * k, y - 4 * Math.abs(k), 0.35, 1.2, mix(c, '#ffffff', 0.5)))];
   };
-  out.push(...antler(hx - 0.6, hy - 5, antD, 0.85));
+  out.push(...antler(hx - 1.6, hy - 5, antD, 0.85));
   out.push(E(hx, hy, 7, 6.2, fur));
-  out.push(...antler(hx + 2, hy - 5.2, ant, 1));
+  out.push(...antler(hx + 1.8, hy - 5.4, ant, 1));
   if (!dead) {
-    const cx = hx + 7.2;
-    const cy = hy - 12.6;
+    const cx = hx + 8;
+    const cy = hy - 13.4;
     out.push(...stroke([[cx - 0.2, cy + 0.6], [cx + 0.6, cy + 2.6]], 0.35, '#5fae5c'));
     for (const a of [-90, 30, 150]) out.push(F(E(cx + Math.cos(a * D2R) * 0.9, cy + Math.sin(a * D2R) * 0.9, 0.8, 0.8, '#7fcf73')));
     out.push(F(E(cx, cy, 0.35, 0.35, '#b5e8a2')));
   }
   const nearB = [hx + 0.4, hy - 5];
-  const nearT = earTip(nearB[0], nearB[1], 12.4 - twitch * 1.4, -104 - twitch * 14);
+  const nearT = earTip(nearB[0], nearB[1], 11.4 - twitch * 1.2, -136 + twitch * 16);
   out.push(seg(nearB, nearT, 2.6, fur), seg([nearB[0] * 0.8 + nearT[0] * 0.2, nearB[1] * 0.8 + nearT[1] * 0.2], nearT, 1.4, earIn));
   // Cheek fluff, muzzle, whiskers.
   out.push(T([[hx - 5.6, hy + 1], [hx - 8.4, hy + 3.4], [hx - 5.6, hy + 3.6], [hx - 6.6, hy + 6], [hx - 2.6, hy + 5.4]], fur),
     E(hx + 4.4, hy + 2.6, 3.4, 2.6, cream), F(E(hx - 2.6, hy - 3.6, 2, 1, mix(fur, '#ffffff', 0.35))));
   const tw2 = !walk && f === 3 ? -0.3 : 0;
   out.push(F(T([[hx + 6.8, hy + 1.1 + tw2], [hx + 8.2, hy + 1.1 + tw2], [hx + 7.5, hy + 2 + tw2]], '#ff7f9f')));
-  for (const [a, b] of [[0.6, -0.4], [1.6, 0.8]]) out.push(...stroke([[hx + 7.2, hy + 2 + a * 0.4], [hx + 10.6, hy + 1.6 + b + tw2]], 0.25, '#b08a74'));
+  for (const [a, b] of [[0.6, -0.4], [1.6, 0.8]]) out.push(...stroke([[hx + 7.2, hy + 2 + a * 0.4], [hx + 10.6, hy + 1.6 + b + tw2]], 0.25, '#9a86b8'));
   const ey = hy - 0.2;
-  const eo = { iris: '#9a5a3a', glow: '#ff3d6e', lid: fur, brow: '#8a5a44' };
+  const eo = { iris: '#c0507a', glow: '#ff3d6e', lid: fur, brow: '#6a4a8a' };
   out.push(...eye(hx - 0.8, ey, 1.6, mood, -1, eo), ...eye(hx + 3.6, ey, 1.9, mood, 1, eo), ...blush(hx - 1.4, ey + 2.8, 1.1, mood), ...blush(hx + 3.8, ey + 3, 1.1, mood));
   const mx = hx + 6.8;
   const my = hy + 3.2;
@@ -720,7 +729,7 @@ function jackalope(pose, f, mood) {
     out.push(...stroke([[mx - 1.4, my - 0.4], [mx - 0.7, my + 0.3], [mx, my - 0.3], [mx + 0.7, my + 0.3]], 0.38, INK), F(R(mx - 0.75, my + 0.25, 1, 0.9, '#ffffff')));
   }
   if (angry) out.push(...stroke([[hx - 7, hy - 7], [hx - 8.4, hy - 8.4]], 0.5, '#ff6b8a'), ...stroke([[hx - 7.8, hy - 5.4], [hx - 9.6, hy - 5.8]], 0.5, '#ff6b8a'));
-  return { w: 40, h: 36, res: 3, shapes: out };
+  return { w: 40, h: 40, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 4 })) };
 }
 
 export const ART = {

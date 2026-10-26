@@ -189,8 +189,8 @@ function pegasus(pose, f, mood) {
   if (happy) wa += 8;
   if (hurt) [wa, ps] = [-104, 15];
   if (dead) [wa, ps] = [-176, 6];
-  const wingCol = { col: '#fbfaff', tip: '#c8e4ff', cov: '#ffffff', vane: '#eef0fb' };
-  out.push(...B(wing({ x: 29.5, y: 21.5, ang: wa + 9, ps, k: 0.9, col: '#e7e2f4', tip: '#b5d3f2', cov: '#efebf8', vane: '#dcd6ee' })));
+  const wingCol = { col: '#fbfaff', tip: '#a9d3ff', cov: '#ffffff', vane: '#e8eefb', k: 1.2, arm: 7 };
+  out.push(...B(wing({ x: 29.5, y: 21.5, ang: wa + 9, ps, k: 1.08, arm: 7, col: '#e7e2f4', tip: '#b5d3f2', cov: '#efebf8', vane: '#dcd6ee' })));
 
   // Tail: a swishing cotton-candy plume with a bow.
   const tsw = walk ? 1 : 0.5;
@@ -322,7 +322,7 @@ function harpy(pose, f, mood) {
 
   // Far wing.
   const wingOpts = { n: 6, sec: 4, arm: 7, plen: 11.6, pw: 3.4, slen: 8.2, sw: 3.2 };
-  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9, ps, k: 0.9, col: PLUME_D, tip: '#e6f3ff', cov: '#9ccff5', vane: shade(PLUME_D, -6), ...wingOpts })));
+  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9, ps, k: 1, col: PLUME_D, tip: '#e6f3ff', cov: '#9ccff5', vane: shade(PLUME_D, -6), ...wingOpts })));
 
   // Legs and talons, dangling and swinging opposite the wingbeat.
   const leg = (x, near) => {
@@ -381,7 +381,7 @@ function harpy(pose, f, mood) {
 
   // Near wing-arm, with a little hand at the wrist.
   const hand = (x, y) => [E(x + 0.4, y + 0.6, 1.3, 1.1, SKIN), ...stroke([[x + 0.6, y + 1.2], [x + 1.4, y + 2]], 0.7, SKIN, false), ...stroke([[x - 0.3, y + 1.3], [x - 0.2, y + 2.3]], 0.7, SKIN, false)];
-  out.push(...B(wing({ x: 25.4, y: 22.6, ang, ps, col: PLUME, tip: '#ffffff', cov: PLUME_L, vane: shade(PLUME, -7), hand, ...wingOpts })));
+  out.push(...B(wing({ x: 25.4, y: 22.6, ang, ps, col: PLUME, tip: '#ffffff', cov: PLUME_L, vane: shade(PLUME, -7), hand, k: 1.12, ...wingOpts })));
   return { w: 52, h: 44, res: 3, shapes: out };
 }
 
@@ -390,7 +390,7 @@ function harpy(pose, f, mood) {
 const GOLD = '#ffe27a';
 const STAR = '#ffe88f';
 const STAR_IN = '#fff6c8';
-const WING_TIPS = ['#ffe6a0', '#ddd0ff', '#c6e6ff'];
+const WING_TIPS = ['#ffe9a8', '#e4d8ff', '#cdeaff'];
 
 function seraph(pose, f, mood) {
   const walk = pose === 'walk';
@@ -426,9 +426,9 @@ function seraph(pose, f, mood) {
 
   // Three pairs of wings, the beat rippling from the top pair down.
   const pairs = [
-    { dx: 4.6, dy: -4.6, base: -38, amp: 12, n: 5, len: 14.5, w: 3.6, fan: 13, tip: WING_TIPS[0] },
-    { dx: 6.4, dy: 0.4, base: 4, amp: 10, n: 5, len: 15, w: 3.5, fan: 12, tip: WING_TIPS[1] },
-    { dx: 4.8, dy: 5, base: 46, amp: 8, n: 4, len: 10.5, w: 3.2, fan: 13, tip: WING_TIPS[2] },
+    { dx: 4.4, dy: -4.8, base: -50, amp: 12, n: 5, len: 15, w: 3.9, fan: 9, tip: WING_TIPS[0] },
+    { dx: 6.2, dy: 0.2, base: 2, amp: 10, n: 5, len: 16, w: 3.9, fan: 8, tip: WING_TIPS[1] },
+    { dx: 4.6, dy: 4.8, base: 54, amp: 8, n: 4, len: 11.5, w: 3.6, fan: 9, tip: WING_TIPS[2] },
   ];
   const wings = [];
   pairs.forEach((p, i) => {
@@ -447,12 +447,12 @@ function seraph(pose, f, mood) {
         const d = p.base + beat + (j - (p.n - 1) * 0.35) * fan;
         const ang = side > 0 ? d : 180 - d;
         const len = p.len * (1 - Math.abs(j - 1) * 0.08);
-        one.push(...feather(rx, ry, ang, len, p.w, fade('#ffffff'), { tip: fade(p.tip), vane: fade('#f0ecfb'), line: fade('#a99ccd') }));
+        one.push(...feather(rx, ry, ang, len, p.w, fade('#ffffff'), { tip: fade(p.tip), vane: fade('#f0ecfb'), line: fade('#bcaedf') }));
       }
       // Coverts on top.
       for (let j = 0; j < 3; j++) {
         const d = p.base + beat + (j - 1) * fan * 0.9 - fan * 0.4;
-        one.push(...feather(rx, ry, side > 0 ? d : 180 - d, p.len * 0.45, p.w * 1.1, fade('#fffaf0'), { shaft: false, line: fade('#b7a9d6'), tip: fade(mix(p.tip, '#ffffff', 0.5)) }));
+        one.push(...feather(rx, ry, side > 0 ? d : 180 - d, p.len * 0.45, p.w * 1.1, fade('#fffaf0'), { shaft: false, line: fade('#c6b9e4'), tip: fade(mix(p.tip, '#ffffff', 0.5)) }));
       }
       wings.push(one);
     }
@@ -462,9 +462,21 @@ function seraph(pose, f, mood) {
 
   // Stardust tail streaming below the core.
   const tw = walk ? Math.sin(a - 0.8) * 2.2 : Math.sin(a) * 1;
-  out.push(F(T([[cx - 5.6, cy + 5], [cx + 5.6, cy + 5], [cx + 3 + tw * 0.5, cy + 15], [cx + tw * 1.4, cy + 24.6], [cx - 2.6 + tw * 0.4, cy + 14]], lineOf(STAR))),
-    T([[cx - 5, cy + 5], [cx + 5, cy + 5], [cx + 2.4 + tw * 0.5, cy + 15], [cx + tw * 1.4, cy + 24], [cx - 2.1 + tw * 0.4, cy + 14]], fade(STAR)),
-    F(T([[cx - 2.4, cy + 6], [cx + 2.6, cy + 6], [cx + 1 + tw * 0.5, cy + 14.5], [cx + tw * 1.1, cy + 20.4], [cx - 0.9 + tw * 0.4, cy + 13.4]], fade(STAR_IN))));
+  // A flowing wisp: a curving centerline, scalloped edges, and a bright inner stream.
+  const wisp = (wk, grow = 0) => {
+    const L = [];
+    const Rr = [];
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      const x = cx + Math.sin(t * 3 - a * (walk ? 1 : 0.6)) * (1 + tw * 0.7) * t * 1.8;
+      const y = cy + 4 + t * (20 + grow * 0.6);
+      const w = (5.4 * Math.pow(1 - t, 0.85) * (1 + 0.12 * Math.sin(t * 15 - a)) + 0.25) * wk + grow * (1 - t);
+      L.push([x - w, y]);
+      Rr.push([x + w, y]);
+    }
+    return [...L, ...Rr.reverse()];
+  };
+  out.push(F(T(wisp(1, 0.5), lineOf(STAR))), T(wisp(1), fade(STAR)), F(T(wisp(0.5), fade(STAR_IN))), F(T(wisp(0.18), fade('#ffffff'))));
   if (!dead) out.push(...sparkle(cx - 3.5 + tw, cy + 19, 1.2, '#fff6c8'), ...sparkle(cx + 4 + tw * 0.8, cy + 15, 0.9, '#ffffff'));
 
   // The core: two turning eight-pointed stars around a glowing face.
@@ -484,7 +496,7 @@ function seraph(pose, f, mood) {
   // Serene face: gentle lidded eyes when calm.
   const fx = cx + 0.8;
   const fy = cy + 0.4;
-  const calm = mood === 'idle';
+  const calm = false;
   if (calm) {
     for (const [ex, inner] of [[fx - 3, 1], [fx + 3, -1]]) {
       out.push(F(E(ex, fy, 1.6, 1.8, INK)), F(E(ex, fy + 0.5, 1.2, 1.2, '#b28cff')), F(E(ex, fy + 1.1, 0.8, 0.4, '#e6d6ff')), F(E(ex - 0.5, fy + 0.1, 0.45, 0.45, '#ffffff')),
