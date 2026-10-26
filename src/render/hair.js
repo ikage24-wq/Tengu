@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -378,6 +378,19 @@ const STYLES = {
       hang: [lock([[4.6, 9], [2.4, 11.6], [1.6, 14]], 6, r.sh1, m), lock([[26.4, 9], [28.6, 11.6], [29.4, 14]], 6, r.sh1, m), ...drill(1.6, 15.6, 6, 3.6, 1, r, m), ...drill(29.4, 15.6, 6, 3.6, -1, r, m)],
       front: bangs('soft', r, m, sideLocks(r, m, [[25.2, 11], [26, 16], [25.6, 21]], undefined, 3)),
       tips: [28, 32],
+    };
+  },
+  // A side tail tied high over the near temple, falling in a wave in front of the shoulder with a
+  // curl at the end; swept bangs.
+  sidetail(r, m) {
+    const tail = [[26.2, 6.4], [29.6, 6.6], [31.8, 10.4], [32.2, 16.4], [30.8, 22.4], [32, 28.4], [32.4, 33.4], [30.8, 37], [28.6, 37.4], [28.4, 35.6]];
+    const light = [[26.6, 7.4], [28.6, 10], [29.4, 15], [28.4, 21], [29.2, 27], [29.2, 31.6]];
+    const pieces = [lock(tail, 7.6, r.sh1, m, 1.1, 0.16), lock(light, 3.6, r.base, m, 1.25), streak(28.8, 9, 29.4, 16, 0.9, -0.4, r.hi, m, 1.2), F(E(26.4, 7.2, 1.5, 1.9, r.sh2))];
+    return {
+      head: [crown(r)],
+      hang: [...sheet({ len: 23, flare: 11.6, n: 3 }, r, m), lock(tail, 7.6, r.sh1, m, 1.1, 0.16)],
+      front: bangs('swept', r, m, [...sideLocks(r, m, null, [[5.8, 11], [5, 16], [5.6, 20.4]], 3.2), ...pieces]),
+      tips: [26, 31],
     };
   },
 };
