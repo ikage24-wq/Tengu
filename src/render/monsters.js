@@ -617,17 +617,12 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
 // Walkers bounce along with a squash on every landing, everyone breathes while idle, new
 // monsters pop in, hits squash them flat for a moment, and defeated ones shrink away.
 export function drawMonster(ctx, m, x, y, time, now = time) {
-  const held = m.frozenUntil > now && m.hp > 0 ? m.hold : null;
-  // Dancing (Dance Party) keeps moving to the beat; flattened (Squeaky Hammer) lies there as a
-  // pancake; ice and dizziness hold them still.
-  const dancing = held === 'dance';
-  const flat = held === 'flat';
-  const frozen = Boolean(held) && !dancing;
+  const frozen = m.frozenUntil > now && m.hp > 0;
   const flying = m.def.fly;
   const moving = !frozen && ((m.state === 'walk' && m.stagger <= 0) || flying);
   // Frozen monsters stop animating: their clock stands still with the ice.
   const t = (frozen ? m.phase : time) + m.uid * 0.37;
-  const mood = dancing ? (Math.floor(time * 2 + m.uid) % 3 ? 'happy' : 'blink') : flat ? 'hurt' : moodOf(m, t, now);
+  const mood = moodOf(m, t, now);
   const fast = mood === 'angry' ? 1.5 : 1;
   const frame = moving ? Math.floor(t * (flying ? 6 : 4) * fast) % 2 : Math.floor(t * 1.2) % 2;
   const s = monsterSprite(m.def.art, frame, mood);
@@ -652,20 +647,6 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   } else {
     sy = 1 + Math.sin(t * 3) * 0.03;
     sx = 1 - Math.sin(t * 3) * 0.02;
-  }
-  if (dancing) {
-    const beat = time * 7 + m.uid;
-    hop = Math.abs(Math.sin(beat)) * 5;
-    x += Math.sin(beat * 0.5) * 4;
-    sx = 1 + Math.sin(beat) * 0.08;
-    sy = 1 - Math.sin(beat) * 0.08;
-  }
-  if (flat) {
-    // Squashed flat, slowly puffing back up as it wears off.
-    const back = Math.max(0, 1 - (m.frozenUntil - now) / 0.4);
-    sy = 0.22 + 0.78 * back * back;
-    sx = 1.55 - 0.55 * back;
-    hop = 0;
   }
   if (m.flash > 0) {
     sx *= 1.14;
@@ -701,13 +682,11 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y - hop - air));
   if (air) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
-  if (dancing) ctx.rotate(Math.sin(time * 3.5 + m.uid) * 0.2);
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
   ctx.restore();
-  if (dancing) notes(ctx, x, y - s.h - 4, time + m.uid);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y - hop, s, time + m.uid);
-  if (frozen && (m.hold === 'stun' || flat)) dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
+  if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
   else if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
   if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - hop - s.h * sy, t, now);
 }
@@ -856,28 +835,5 @@ function poisonBubbles(ctx, x, y, s, time) {
   g.addColorStop(1, 'rgba(125,224,79,0)');
   ctx.fillStyle = g;
   ctx.fillRect(x - s.w, y - s.h * 1.2, s.w * 2, s.h * 1.4);
-  ctx.restore();
-}
-
-// Music notes bobbing up over a dancing monster.
-function notes(ctx, x, y, time) {
-  ctx.save();
-  for (let i = 0; i < 2; i++) {
-    const u = (time * 0.8 + i * 0.5) % 1;
-    const nx = x + (i ? 8 : -8) + Math.sin(u * 6 + i) * 3;
-    const ny = y - u * 16;
-    ctx.globalAlpha = Math.sin(u * Math.PI);
-    ctx.fillStyle = i ? '#ff8fc1' : '#8f7cd0';
-    ctx.strokeStyle = ctx.fillStyle;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.ellipse(nx, ny, 2.2, 1.7, -0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(nx + 1.8, ny);
-    ctx.lineTo(nx + 1.8, ny - 7);
-    ctx.lineTo(nx + 4.5, ny - 5.5);
-    ctx.stroke();
-  }
   ctx.restore();
 }

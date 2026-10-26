@@ -9,14 +9,8 @@
 // `combo` (melee) makes a skill a combo of steps that play as timed strikes (see world/melee.js):
 // each use plays the next step, so pressing again keeps it going.
 //
-// `funny` skills are the silly, overpowered ones: their effect is a big cartoon (see
-// render/funnyfx.js) drawn `at` your feet ('self') or over the area ('center') for `dur` seconds,
-// with a comic word (`comic`) when they land. `stun` leaves monsters dizzy; `flatten` squashes
-// them flat as pancakes; `dance` makes them dance helplessly.
-//
 //   provoke - every monster in range turns on you (`hold` seconds of sticking to you in a dungeon)
 //   hook    - a chain flies forward and drags the monsters it catches (up to `targets`) to you
-//   party   - every monster in range drops everything and dances for `hold` seconds
 //   blink   - teleports you `distance` forward
 //   buff    - timed bonuses; `buff` keys are added to the player's stats while active. `party`
 //             buffs also land on party members in `range` (in a dungeon). `regenPct` heals that
@@ -55,19 +49,6 @@ export const SKILLS = {
     id: 'quickstep', name: 'Quick Step', job: 'novice', type: 'buff', maxLevel: 3, fx: 'buff',
     desc: 'Move and jump faster for a while.',
     at: (lv) => ({ mp: 8, duration: 60 + lv * 30, buff: { speed: 8 + lv * 4, jump: 3 + lv * 2 } }),
-  }),
-  bonk: skill({
-    id: 'bonk', name: 'Frying Pan Bonk', job: 'novice', type: 'attack', fx: 'bonk', icon: 'bonk', maxLevel: 3,
-    desc: "Whack one monster with a frying pan so hard it goes to the moon. It comes back. Eventually. Everyone keeps this one, because it's that good.",
-    at: (lv) => ({
-      mp: 6, pct: 220 + lv * 90, hits: 1, targets: 1,
-      combo: [{ move: 'slash', dur: 0.45, step: 8, fx: 'bonk', strikes: [{ at: 0.42, pct: 220 + lv * 90, reach: 72, h: 60, knock: 520, launch: 820, big: true, stop: 0.13, shake: 4, comic: 'BONK!' }] }],
-    }),
-  }),
-  danceparty: skill({
-    id: 'danceparty', name: 'Dance Party', job: 'novice', type: 'party', fx: 'disco', icon: 'disco', maxLevel: 3,
-    desc: 'Drop a disco ball. Every monster around you forgets it was fighting and dances its heart out. Bosses dance too, just less.',
-    at: (lv) => ({ mp: 10, hold: 2 + lv, range: { w: 520, h: 200, around: true } }),
   }),
 
   // ---------- Warrior ----------
@@ -164,18 +145,6 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
   }),
 
-  squeakyhammer: skill({
-    id: 'squeakyhammer', name: 'Squeaky Hammer', job: 'warrior', type: 'attack', fx: 'squeaky', icon: 'hammer',
-    desc: 'Summon a gigantic squeaky toy hammer and flatten everything in front of you into pancakes. *squeak*',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(20, 40), pct: k(450, 900), hits: 1, targets: k(6, 10),
-        combo: [{ move: 'overhead', dur: 0.72, step: 6, finisher: true, fx: 'squeaky', fxW: 220, strikes: [{ at: 0.42, pct: k(450, 900), reach: 220, h: 110, targets: k(6, 10), knock: 40, flatten: 2.5, big: true, stop: 0.14, shake: 6, comic: 'SQUEAK!' }] }],
-      };
-    },
-  }),
-
   // ---------- Mage (spells and support) ----------
   magicbolt: skill({
     id: 'magicbolt', name: 'Magic Bolt', job: 'mage', type: 'magic', fx: 'bolt', school: 'arcane',
@@ -224,13 +193,6 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(40, 22, lv, m), healPct: lerpf(0.3, 0.7, lv, m), range: { w: 300, h: 140, around: true } }),
   }),
 
-  duckmeteor: skill({
-    id: 'duckmeteor', name: 'Rubber Duck Meteor', job: 'mage', type: 'magic', fx: 'duck', icon: 'duck', school: 'arcane', lock: 0.4,
-    funny: { at: 'center', dur: 1.4, comic: 'QUACK!' },
-    desc: 'Call down an enormous rubber duck. It is not a real meteor. It still hurts. Everything it lands on sees stars.',
-    at: (lv, m) => ({ mp: lerp(24, 44, lv, m), power: lerp(380, 720, lv, m), hits: 1, targets: lerp(6, 10, lv, m), stun: 2, delay: 0.48, range: { w: 300, h: 160 } }),
-  }),
-
   // ---------- Archer ----------
   doubleshot: skill({
     id: 'doubleshot', name: 'Double Shot', job: 'archer', type: 'attack', fx: 'arrow',
@@ -260,13 +222,6 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { critRate: lerpf(0.01, 0.15, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
   }),
 
-  baguette: skill({
-    id: 'baguette', name: 'Baguette Barrage', job: 'archer', type: 'attack', fx: 'baguette', icon: 'baguette', weapons: ['bow', 'crossbow'],
-    funny: { at: 'self', dur: 0.75, comic: 'OUI!', speed: 700 },
-    desc: 'Fire a whole baguette. It goes through everything in a line, because bread is undefeated.',
-    at: (lv, m) => ({ mp: lerp(14, 30, lv, m), pct: lerp(260, 520, lv, m), hits: 1, targets: 15, knock: 260, range: { w: 520, h: 60 } }),
-  }),
-
   // ---------- Thief ----------
   twinstab: skill({
     id: 'twinstab', name: 'Twin Stab', job: 'thief', type: 'attack', fx: 'flurry',
@@ -294,12 +249,6 @@ export const SKILLS = {
     id: 'nimble', name: 'Nimble', job: 'thief', type: 'passive', fx: null,
     desc: 'Permanently raises avoid and accuracy.',
     at: (lv, m) => ({ passive: { eva: lerp(3, 30, lv, m), acc: lerp(2, 20, lv, m) } }),
-  }),
-  bananapeel: skill({
-    id: 'bananapeel', name: 'Banana Peel', job: 'thief', type: 'attack', fx: 'banana', icon: 'banana',
-    funny: { at: 'self', dur: 0.9, comic: 'WHOOPS!' },
-    desc: 'Scatter banana peels. Monsters slip, flip, and lie there seeing stars, embarrassed.',
-    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), pct: lerp(200, 380, lv, m), hits: 1, targets: 8, launch: 380, knock: 80, stun: 2, delay: 0.38, range: { w: 280, h: 70 } }),
   }),
 
   // ---------- Stormfrost Wizard (ice & lightning) ----------
@@ -489,10 +438,9 @@ export const SKILLS = {
 
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
-  pebble: 'throw', quickstep: 'cheer', bonk: 'slash', danceparty: 'cheer',
+  pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
-  provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan', squeakyhammer: 'overhead',
-  duckmeteor: 'castup', baguette: 'throw', bananapeel: 'throw',
+  provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip',

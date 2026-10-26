@@ -7,7 +7,7 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
-import { drawFunny } from './funnyfx.js';
+import { drawComic } from './comic.js';
 import { crescent, starFlash, needle, shock, puff, crown, easeOut, easeIn } from './fxkit.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
@@ -518,7 +518,7 @@ function drawFx(ctx, f, cam, time) {
   const x = f.x - cam.x;
   const y = f.y - cam.y;
   ctx.save();
-  if ((f.t >= 0 && drawFunny(ctx, f, x, y, p, cam, time)) || drawSpell(ctx, f, x, y, p, cam, time) || drawStrike(ctx, f, x, y, p, cam, time)) {
+  if (drawSpell(ctx, f, x, y, p, cam, time) || drawStrike(ctx, f, x, y, p, cam, time)) {
     ctx.restore();
     return;
   }
@@ -722,6 +722,9 @@ function drawFx(ctx, f, cam, time) {
     }
     case 'arc':
       arcSmear(ctx, f, x, y, p);
+      break;
+    case 'comic':
+      drawComic(ctx, f, x, y, p);
       break;
     case 'crack':
       crack(ctx, f, x, y, p);

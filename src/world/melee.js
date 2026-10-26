@@ -96,8 +96,6 @@ function playStep(world, step, scale, key, school = null) {
   // Step into it: carried forward until the first strike lands (or through `carry` of it).
   const first = (step.carry ?? step.strikes[0].at) * dur;
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
-  // Funny skills bring their own giant cartoon (a frying pan, a squeaky hammer...).
-  if (step.fx) world.fx.push({ kind: step.fx, x: body.x, y: body.y, dir: body.facing, w: step.fxW ?? 80, t: 0, dur: step.fx === 'squeaky' ? 0.9 : 0.5 });
   step.strikes.forEach((s, n) => {
     world.strikes.push({ ...s, n, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher });
   });
@@ -147,13 +145,12 @@ function land(world, s) {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
     const roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random);
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock;
-    world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big, flat: s.flatten });
+    world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big });
   });
-  // A comic word pops on the blow: the skill's own, or now and then a random one on a heavy hit.
-  const word = s.comic ?? (s.big && targets.length && Math.random() < 0.4 ? pick(WORDS) : null);
-  if (word && targets.length) {
+  // Now and then a comic word pops on a heavy blow.
+  if (s.big && targets.length && Math.random() < 0.4) {
     const m = targets[0];
-    world.fx.push({ kind: 'comic', x: m.x, y: m.y - (m.air ?? 0) - m.def.h - 6, text: word, big: Boolean(s.comic), t: 0, dur: 0.85 });
+    world.fx.push({ kind: 'comic', x: m.x, y: m.y - (m.air ?? 0) - m.def.h - 6, text: pick(WORDS), t: 0, dur: 0.85 });
   }
   if (targets.length) {
     world.hitstop = Math.max(world.hitstop, s.stop ?? (s.finisher ? 0.07 : 0.035));

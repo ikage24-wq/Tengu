@@ -446,12 +446,7 @@ export function updateWorld(world, dt, input) {
     }
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
-    // Squeaky Hammer flattens them into pancakes for a while.
-    if (h.flat) {
-      m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + (m.def.boss ? h.flat / 2 : h.flat));
-      m.hold = 'flat';
-    }
-    const hold = !h.flat && (h.freeze || h.stun);
+    const hold = h.freeze || h.stun;
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
