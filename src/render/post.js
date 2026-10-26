@@ -2,24 +2,25 @@
 // the sky in soft rays, each map gets its own color grade, and a soft vignette frames the view.
 // Only in HD graphics; the pixel-art look skips all of it.
 
-// Per map theme: the warm light from above, the cool shade below and in the corners, and how
-// strong the light rays are (0 for night and underground maps).
+// Per map theme: the warm light from above, the cool shade below and in the corners, how strong
+// the light rays are (0 for night and underground maps), and how strongly pools of light gather
+// around the hero and the portals (`pool`, strongest at night and underground, tinted `warm`).
 const LOOKS = {
-  meadow: { light: '#fff1c4', shade: '#8a78d0', rays: 0.55, sun: 0.8 },
-  town: { light: '#fff1c4', shade: '#8a78d0', rays: 0.45, sun: 0.8 },
-  forest: { light: '#f4ffc4', shade: '#3c7a6c', rays: 0.9, sun: 0.75 },
-  harbor: { light: '#d4dcff', shade: '#3e3484', rays: 0, sun: 0.8 },
-  ruins: { light: '#ffcce8', shade: '#55388a', rays: 0.3, sun: 0.7 },
-  cave: { light: '#c8f0ff', shade: '#2e3478', rays: 0, sun: 0.5 },
-  sky: { light: '#fff8e0', shade: '#98a8ff', rays: 0.6, sun: 0.85 },
-  crag: { light: '#ffd8a4', shade: '#8a4a5c', rays: 0.5, sun: 0.75 },
-  grove: { light: '#e2d8ff', shade: '#4a3a8a', rays: 0.3, sun: 0.7 },
-  hollow: { light: '#d8ffc0', shade: '#2c4a4a', rays: 0.25, sun: 0.6 },
+  meadow: { light: '#fff1c4', shade: '#8a78d0', rays: 0.55, sun: 0.8, pool: 0.07 },
+  town: { light: '#fff1c4', shade: '#8a78d0', rays: 0.45, sun: 0.8, pool: 0.07 },
+  forest: { light: '#f4ffc4', shade: '#3c7a6c', rays: 0.9, sun: 0.75, pool: 0.08 },
+  harbor: { light: '#d4dcff', shade: '#3e3484', rays: 0, sun: 0.8, pool: 0.2, warm: '#ffd9a8' },
+  ruins: { light: '#ffcce8', shade: '#55388a', rays: 0.3, sun: 0.7, pool: 0.14 },
+  cave: { light: '#c8f0ff', shade: '#2e3478', rays: 0, sun: 0.5, pool: 0.2 },
+  sky: { light: '#fff8e0', shade: '#98a8ff', rays: 0.6, sun: 0.85, pool: 0.05 },
+  crag: { light: '#ffd8a4', shade: '#8a4a5c', rays: 0.5, sun: 0.75, pool: 0.07 },
+  grove: { light: '#e2d8ff', shade: '#4a3a8a', rays: 0.3, sun: 0.7, pool: 0.2, warm: '#ffe2b0' },
+  hollow: { light: '#d8ffc0', shade: '#2c4a4a', rays: 0.25, sun: 0.6, pool: 0.18, warm: '#ffe0b0' },
   // Map looks (a map's `look.light`).
-  morning: { light: '#ffe2ec', shade: '#9a7cc8', rays: 0.7, sun: 0.75 },
-  noon: { light: '#fffbe0', shade: '#5c9a8a', rays: 0.35, sun: 0.85 },
-  dusk: { light: '#ffc08a', shade: '#4a2f6a', rays: 0.6, sun: 0.2 },
-  throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5 },
+  morning: { light: '#ffe2ec', shade: '#9a7cc8', rays: 0.7, sun: 0.75, pool: 0.07 },
+  noon: { light: '#fffbe0', shade: '#5c9a8a', rays: 0.35, sun: 0.85, pool: 0.05 },
+  dusk: { light: '#ffc08a', shade: '#4a2f6a', rays: 0.6, sun: 0.2, pool: 0.15 },
+  throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5, pool: 0.22, warm: '#e6dcff' },
 };
 
 const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
@@ -131,8 +132,32 @@ function drawRays(g, look, cam, w, h, time) {
   }
 }
 
-// The map's light over the world: rays, the warm glow from above, and the cool shade and vignette.
-export function drawLighting(ctx, map, cam, w, h, time) {
+// Pools of light: each cuts a soft hole in the shade and adds a gentle glow, so the eye goes to
+// the hero and the ways out (Octopath and Eastward light their scenes to steer the eye).
+function drawPools(g, look, lights, w, h) {
+  g.setTransform(LIGHT_W / w, 0, 0, LIGHT_H / h, 0, 0);
+  for (const l of lights) {
+    if (l.x < -l.r || l.x > w + l.r || l.y < -l.r || l.y > h + l.r) continue;
+    const k = look.pool * (l.k ?? 1);
+    g.globalCompositeOperation = 'destination-out';
+    const hole = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 1.3);
+    hole.addColorStop(0, `rgba(0,0,0,${Math.min(0.9, k * 3)})`);
+    hole.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = hole;
+    g.fillRect(l.x - l.r * 1.3, l.y - l.r * 1.3, l.r * 2.6, l.r * 2.6);
+    g.globalCompositeOperation = 'source-over';
+    const pool = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
+    pool.addColorStop(0, rgba(l.c ?? look.warm ?? look.light, k));
+    pool.addColorStop(1, rgba(l.c ?? look.warm ?? look.light, 0));
+    g.fillStyle = pool;
+    g.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// The map's light over the world: rays, the warm glow from above, the cool shade and vignette,
+// and pools of light at `lights` ({ x, y, r, k?, c? } in screen space).
+export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
   const key = map.look?.light ?? map.theme;
   const theme = LOOKS[key] ? key : 'meadow';
   const look = LOOKS[theme];
@@ -145,6 +170,7 @@ export function drawLighting(ctx, map, cam, w, h, time) {
   g.clearRect(0, 0, LIGHT_W, LIGHT_H);
   g.drawImage(shadeOf(theme, look), 0, 0);
   g.drawImage(brightOf(theme, look), 0, 0);
+  if (look.pool && lights.length) drawPools(g, look, lights, w, h);
   if (look.rays) {
     g.scale(LIGHT_W / w, LIGHT_H / h);
     drawRays(g, look, cam, w, h, time);

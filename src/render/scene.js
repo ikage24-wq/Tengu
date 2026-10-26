@@ -231,7 +231,10 @@ export function drawWorld(ctx, world, viewCam, time) {
 
   // HD: light and color over the world, then effects on a glowing layer.
   const hd = gfx.hd;
-  if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time);
+  // Light gathers around you and the portals.
+  const lights = [{ x: hx, y: hy - 22, r: 96 }];
+  for (const pt of world.map.portals) if (!pt.hidden) lights.push({ x: pt.x - cam.x, y: pt.y - 26 - cam.y, r: 56, k: 0.8, c: '#e6dcff' });
+  if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time, lights);
   // The foreground: framing pieces and the nearest drifting petals, in front of everyone (and of
   // the light, being between it and the camera), but under the effects.
   const actors = [{ x: hx, top: hy - 50 }];
