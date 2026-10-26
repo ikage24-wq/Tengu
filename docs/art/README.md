@@ -212,6 +212,11 @@ carry an improvement across every part of the game it applies to.
 3. Build shared kits so every character gets the same quality from the same construction.
 4. Iterate at least three critique rounds, then check at real game size (1x) in a real map.
 5. Show before/after for every change.
+7. **Hair always covers the head (the player's rule).** No skin, scalp or ear may peek through
+   gaps in the hair: at the sides, between the bangs and the hair behind, or under the crown.
+   Every hairstyle draws side hair in front that covers the ears and the sides of the head
+   (`hair.js`, the bangs). Only elf ears are long enough to poke out past it, on purpose. The
+   forehead under the bangs is face, not head, and may show.
 6. Clean beats busy. A hairstyle remake made of many small spikes, plait stripes and dark
    patches read as messy and overdone to the player; what worked was one smooth outline per
    mass cut into a few pointed clumps, a short crease at each notch, one shine band and one

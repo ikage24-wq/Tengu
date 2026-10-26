@@ -356,7 +356,11 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   const outline = smooth([...dome(160, 380), [26.4, 14.6], P(24.8, 12), ...edge, P(6.2, 12), [4.6, 14.6]]);
   const flutter = mover(m && { root: 0, tip: m.tip * 0.4, wave: m.wave }, 0.35, 9, 8);
   const pts = dense(outline, 1.2).map(flutter);
-  const shapes = [poly(pts, r.base)];
+  // Side hair over the ears and the sides of the head, so no skin or skull ever shows between
+  // the bangs and the hair behind (elf ears are long enough to poke out past it).
+  const side = [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
+  const sideHair = [poly(smooth(side), r.base), poly(smooth(side.map(([x, y]) => [31 - x, y])), r.base)];
+  const shapes = [...sideHair, poly(pts, r.base)];
   // Creases rise from the notches.
   if (f.noCrease || f.plain) {
     // no creases
