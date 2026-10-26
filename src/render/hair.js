@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -502,6 +502,19 @@ const STYLES = {
       tips: [29, 34],
     };
   },
+  // Wolf cut: shaggy layers, flicking out at the cheeks and the jaw, with a longer mullet behind.
+  wolf(r, m) {
+    // Shaggy layers that flick out at the temples, the cheeks and the jaw, over a longer mullet.
+    const flick = (pts, w = 4.4) => [lock(pts, w, r.base, m, 1.15), lock(fx(pts), w, r.base, m, 1.15)];
+    const mid = (pts) => [lock(pts, 4.4, r.sh1, m, 1), lock(fx(pts), 4.4, r.sh1, m, 1)];
+    return {
+      head: [crown(r, 0.8), ...mid([[24.4, 12], [28.4, 16], [32, 17.4]])],
+      hang: sheet({ len: 33, flare: 14.6, ends: 'points', n: 5, w0: 12.6 }, r, m),
+      front: bangs('spiky', r, m, [...flick([[25, 9.4], [29, 11.6], [32.4, 12.4]], 4.2), ...flick([[25.2, 13], [27.4, 18.4], [31.6, 22.6]], 4.6), ...flick([[24.8, 17], [26, 23], [29.2, 27.4]], 3.8)]),
+      tips: [22, 27],
+    };
+  },
+
 };
 
 // ---------- Two-tone ----------

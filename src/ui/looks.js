@@ -49,7 +49,7 @@ export function randomLook(rng = Math.random) {
 }
 
 // Display names for the styles whose ids aren't plain words.
-const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns' };
+const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns', wolf: 'Wolf cut' };
 export const styleName = (id) => NAMES[id] ?? String(id).charAt(0).toUpperCase() + String(id).slice(1);
 
 // Where a thumbnail looks, in hero units from the feet: the point to centre and how much of the
