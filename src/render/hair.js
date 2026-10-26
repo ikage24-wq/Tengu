@@ -445,7 +445,7 @@ const STYLES = {
     return {
       head: [crown(r)],
       hang: [napeShadow(r), ...sheet({ len: 40, flare: 12, wave: 1.2, n: 4 }, r, m)],
-      front: bangs('soft', r, m, [...sideLocks(r, m, [[25.2, 11], [26.4, 18], [26, 25], [26.8, 29]], undefined, 3.6), ...bow]),
+      front: bangs('blunt', r, m, [...sideLocks(r, m, [[25.2, 11], [26.4, 18], [26, 25], [26.8, 29]], undefined, 3.6), ...bow]),
       top: bow,
       tips: [31, 36],
     };
