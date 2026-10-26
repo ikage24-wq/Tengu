@@ -10,7 +10,7 @@
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
 import { GOLD, SILVER, INK, FIGURE, torsoPts, robePts, dressPts, band, side, MID, collar, tieBow, button, limb, reach, mirrorX } from './figure.js';
 import { JOB_GEAR } from './jobgear/index.js';
-import { finish, hang, hsl } from './jobgear/kit.js';
+import { finish, hang, hsl, polyOf } from './jobgear/kit.js';
 
 export { limb, reach };
 
@@ -106,7 +106,9 @@ export function topShapes(design, c, piece = null, m = MOTION) {
       default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d)];
     }
   })();
-  return done(parts, piece);
+  // Dresses and robes swing below the waist like a skirt (the hair and cape springs), so they
+  // aren't stiff while the rest of the figure moves.
+  return done(lowest(parts) > 37 ? hang(parts, 36, lowest(parts), m, 0.7) : parts, piece);
 }
 
 // Sleeves follow the top's main color; armor shows metal.
@@ -205,6 +207,151 @@ function legParts(x, look, shoe, back, foot, hipY) {
   if (look.cuff) shapes.push(limb(kx + (ax - kx) * 0.74, ky + (ay - ky) * 0.74, ax, ay, 3.7, 3.5, tint(look.cuff)));
   shapes.push(...shoeShapes(ax, ay, kx, ky, foot[2] ?? 0, shoe, tint));
   return shapes;
+}
+
+// A leg's joints for a pose: hip, knee, ankle (the same reach legParts draws with).
+export function legJoints(x, foot = [0, 0, 0], hipY = HIP_Y) {
+  const hx = x + 1.5;
+  const [knee, ankle] = reach(hx, hipY, hx + foot[0], ANKLE_Y + foot[1], THIGH, SHIN, 1);
+  return [[hx, hipY], knee, ankle];
+}
+
+// ---------- Draping cloth over the legs ----------
+//
+// Skirts, tassets, and the lower part of dresses and robes are drawn at rest; `drape` bends them
+// around the legs as posed, so a stride never pokes a thigh or knee out through the cloth. At each
+// height it finds how far the legs reach past the cloth's own resting edge and pushes that side
+// out to cover them; part of every leg movement also carries into the cloth, so a wide dress still
+// swings with each step, and the hem drifts toward where the legs have gone. Outlines are cut into
+// short steps first, so the cloth curves around a knee instead of pivoting at its corners.
+// `legs` and `rest` are [joints, joints] from legJoints; y0 is where the cloth starts to hang.
+const LEG_HALF = 2.3;
+const DRAPE_GIVE = 0.35;
+
+function legEdges(joints, y) {
+  // The leftmost and rightmost reach of a leg (as a band LEG_HALF wide) around height y.
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let i = 0; i < joints.length - 1; i++) {
+    const [ax, ay] = joints[i];
+    const [bx, by] = joints[i + 1];
+    for (let k = 0; k <= 8; k++) {
+      const t = k / 8;
+      const px = ax + (bx - ax) * t;
+      const py = ay + (by - ay) * t;
+      if (Math.abs(py - y) > 1.4) continue;
+      lo = Math.min(lo, px - LEG_HALF);
+      hi = Math.max(hi, px + LEG_HALF);
+    }
+  }
+  return [lo, hi];
+}
+
+function legsAt(legs, y) {
+  const a = legEdges(legs[0], y);
+  const b = legEdges(legs[1], y);
+  return [Math.min(a[0], b[0]), Math.max(a[1], b[1])];
+}
+
+// Where the cloth's outlines cross row y at rest: its leftmost and rightmost x.
+function clothSpan(polys, y) {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const pts of polys) {
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i];
+      const [xj, yj] = pts[j];
+      if ((yi > y) !== (yj > y)) {
+        const x = xi + ((y - yi) * (xj - xi)) / (yj - yi);
+        lo = Math.min(lo, x);
+        hi = Math.max(hi, x);
+      }
+    }
+  }
+  return [lo, hi];
+}
+
+function subdivide(pts, step = 1.2) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
+    for (let k = 0; k < n; k++) out.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
+  }
+  return out;
+}
+
+export function drape(shapes, legs, rest, y0 = 34.4) {
+  if (!shapes?.length || !legs) return shapes;
+  const list = shapes.filter(Boolean);
+  const hanging = list.filter((s) => s.t !== 'p' || s.pts.some(([, py]) => py + s.y > y0 + 0.5));
+  if (!hanging.length) return shapes;
+  // The cloth's resting outline, from the shapes that aren't small flat details.
+  const polys = hanging.filter((s) => !s.f).map(polyOf);
+  // Rows are read just inside the cloth, so the hem's own bottom edge moves with the rest.
+  const bottom = Math.max(...polys.flat().map(([, py]) => py)) - 0.3;
+  // The raw push at each row, then spread like cloth: a push holds for every row below it (the
+  // hem can't tuck back in under a knee) and tapers up to the waist above it, so the side flares
+  // as one A-line instead of kinking where the leg is.
+  const raw = (y) => {
+    const [cl, cr] = clothSpan(polys, y);
+    const [ll, lr] = legsAt(legs, y);
+    const [rl, rr] = legsAt(rest, y);
+    const ok = Number.isFinite(cl) && Number.isFinite(ll) && Number.isFinite(rl);
+    if (!ok) return null;
+    return {
+      l: Math.max(0, cl + 0.5 - ll, DRAPE_GIVE * (rl - ll)) - Math.max(0, ll - rl) * DRAPE_GIVE,
+      r: Math.max(0, lr - (cr - 0.5), DRAPE_GIVE * (lr - rr)) - Math.max(0, rr - lr) * DRAPE_GIVE,
+      mid: (cl + cr) / 2, half: Math.max(2, (cr - cl) / 2),
+    };
+  };
+  const rows = [];
+  for (let y = y0 + 0.5; y <= bottom; y += 0.5) {
+    const v = raw(y);
+    if (v) rows.push([y, v]);
+  }
+  const cache = new Map();
+  const at = (yy) => {
+    const y = Math.min(yy, bottom);
+    const key = Math.round(y * 4);
+    let v = cache.get(key);
+    if (!v) {
+      let outL = 0;
+      let outR = 0;
+      let near = rows[0]?.[1];
+      for (const [ry, r] of rows) {
+        const k = ry <= y ? 1 : Math.max(0, (y - y0) / (ry - y0));
+        if (r.l > 0) outL = Math.max(outL, r.l * k);
+        if (r.r > 0) outR = Math.max(outR, r.r * k);
+        if (ry <= y + 0.25) near = r;
+      }
+      // Pulling in (a leg drawn toward the middle) only acts at its own row.
+      const own = rows.find(([ry]) => Math.abs(ry - y) <= 0.25)?.[1];
+      const inL = own && own.l < 0 ? -own.l : 0;
+      const inR = own && own.r < 0 ? -own.r : 0;
+      v = { outL, outR, inL, inR, mid: near?.mid ?? MID, half: near?.half ?? 6 };
+      cache.set(key, v);
+    }
+    return v;
+  };
+  const move = ([x, y]) => {
+    if (y <= y0) return [x, y];
+    const d = at(y);
+    const side = Math.max(-1, Math.min(1, (x - d.mid) / d.half));
+    const l = Math.max(0, -side);
+    const r = Math.max(0, side);
+    return [x - (d.outL - d.inL) * l + (d.outR - d.inR) * r, y];
+  };
+  return shapes.map((s) => {
+    if (!s || !hanging.includes(s)) return s;
+    if (s.f && s.t !== 'p' && (s.t === 'e' ? Math.max(s.rx, s.ry) < 1.2 : s.w * s.h < 2)) {
+      const [nx, ny] = move([s.x, s.y]);
+      return { ...s, x: nx, y: ny };
+    }
+    const { x, y, w, h, rx, ry, pts: _p, ...keep } = s;
+    return { ...keep, t: 'p', x: 0, y: 0, pts: subdivide(polyOf(s)).map(move) };
+  });
 }
 
 // Shoes are drawn in the foot's frame (origin at the ankle, x toward the toe, y down to the sole)

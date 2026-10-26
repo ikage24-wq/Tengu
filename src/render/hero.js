@@ -19,7 +19,7 @@ import { drawGearFx } from './jobgear/live.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
-  hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
+  hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
@@ -831,12 +831,17 @@ function bodyShapes(look, g, rig) {
   shapes.push(...legShapes(LEFT_LEG, legs, g.shoes, false, rig.backLeg, HIP_Y + drop));
   shapes.push(...legShapes(RIGHT_LEG, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
   shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
+  // Skirts and the hems of dresses and robes drape over the legs as they're posed (in the upper
+  // body's frame, which leans and bobs by ux, uy).
+  const inFrame = (j) => j.map(([x, y]) => [x - ux, y - uy]);
+  const posed = [inFrame(legJoints(LEFT_LEG, rig.backLeg, HIP_Y + drop)), inFrame(legJoints(RIGHT_LEG, rig.frontLeg, HIP_Y + drop))];
+  const rest = [legJoints(LEFT_LEG), legJoints(RIGHT_LEG)];
   const skirt = skirtShapes(g.bottom.design, g.bottom.color, g.bottom, m);
-  if (skirt) shapes.push(...offset(skirt, ux, uy));
+  if (skirt) shapes.push(...offset(drape(skirt, posed, rest), ux, uy));
   // The neck sits in the head's shadow, darkest right under the chin so the jaw reads.
   const sk = skinRamp(skin);
   shapes.push(...offset([F(R(14.3, 22.6, 2.8, 4.8, sk.sh1)), F(R(14.3, 22.6, 2.8, 3.1, sk.sh2))], ux, uy));
-  shapes.push(...offset(topShapes(top.design, top.color, top, m), ux, uy));
+  shapes.push(...offset(drape(topShapes(top.design, top.color, top, m), posed, rest, 36), ux, uy));
   if (g.cape) shapes.push(...offset(capeFrontShapes(g.cape.design, g.cape.color, g.cape, m), ux, uy));
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
   // Out of combat the weapon arm is part of the body too, so it has no outline across the torso.
