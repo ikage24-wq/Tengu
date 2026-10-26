@@ -148,3 +148,14 @@ export function objectiveHint(o) {
   const where = mobPlaces(from)[0];
   return where ? `${MOBS[from].name}, ${where}` : MOBS[from].name;
 }
+
+// Quests in progress that want an item: [{ id, name, have, count }].
+export function questsWanting(char, itemId) {
+  const out = [];
+  for (const [id, rec] of Object.entries(char.quests)) {
+    if (rec.state !== 'active') continue;
+    const goal = QUESTS[id]?.objectives.find((o) => o.type === 'collect' && o.item === itemId);
+    if (goal) out.push({ id, name: QUESTS[id].name, have: Math.min(goal.count, countItem(char.inventory, itemId)), count: goal.count });
+  }
+  return out;
+}

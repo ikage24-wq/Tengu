@@ -17,7 +17,7 @@ import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero } from '../render/hero.js';
 import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, rarityCell, fit } from './kit.js';
+import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
 
 export function questMarker(char, npcId) {
@@ -314,8 +314,7 @@ function shopWindow(ui, state, world) {
     // Gear you're selling shows its rarity on the row's edge and around its icon.
     const rare = e.inst?.rarity ? RARITIES[e.inst.rarity].color : null;
     box(ctx, win.x + 8, y, W - 16, rowH - 2, { fill: COLORS.cell, edge: rare ?? (variant ? colors.main : null), r: 6, width: rare ? 1.6 : 1.2 });
-    drawItemIcon(ctx, e.id, win.x + 11, y + 2.5, 1, variant);
-    rarityCell(ctx, win.x + 9, y + 1, 18, rowH - 4, rare, e.inst?.rarity ?? 0, 5);
+    itemSlot(ctx, win.x + 10, y + 1.5, 18, { id: e.id, variant, rarity: e.inst?.rarity, upgrades: e.inst?.upgrades }, { shadow: false, count: false });
     const name = `${itemName(shown)}${e.qty > 1 ? ` x${e.qty}` : ''}`;
     text(ctx, fit(ctx, name, def.star ? 132 : 150, 7.5), win.x + 31, y + 9, { size: 7.5, bold: true, color: variant ? readable(colors.main) : COLORS.ink });
     if (def.star) text(ctx, `Lv ${def.reqLevel} · +${def.star.watk} attack`, win.x + 31, y + 18, { size: 6.5, color: char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });

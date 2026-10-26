@@ -143,6 +143,12 @@ carry an improvement across every part of the game it applies to.
 - HUD cards (the quest tracker) can be dragged by their header, folded and closed, and remember
   where they were left (`settings.trackerPos`); whatever closes them names where to turn them
   back on. Windows that list things pair a list with a detail pane, and say where to go next.
+- Every item cell is `kit.js` `itemSlot` (bag, equipment, shops, quest rewards, player shops):
+  a cream cell, the item on its ground shadow (lifted a pixel on hover), rarity as an inner ring
+  in its color plus a corner glow for Epic and up and a shine for Legendary, count and upgrade
+  level in the corners, and a greyed ghost of what goes in an empty slot. One badge per cell in
+  the top-left corner, most important first: NEW, wanted by a quest, the throwing set in use,
+  its hotkey. Throwing things away always asks first.
 - Item windows show the hovered item in a detail strip (big icon, stats against what's worn,
   the action button) instead of a tooltip over the grid; hovering gear tries it on the hero and
   lights the slot it goes in, and items new since the bag last closed wear a NEW mark

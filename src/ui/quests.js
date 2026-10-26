@@ -17,8 +17,7 @@ import { MOBS } from '../data/mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { questState, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
-import { drawItemIcon } from '../render/icons.js';
-import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, rarityCell, toggle } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { settings, saveSettings } from '../core/settings.js';
 
@@ -240,10 +239,7 @@ function details(ui, char, id, x0, y0, w0, h0, th) {
   let ix = x + 1;
   for (const r of q.rewards.items) {
     const rid = rewardId(char, r);
-    const def = ITEMS[rid];
-    rarityCell(ctx, ix, y, 18, 18, def.color ?? th.light, 0, 4);
-    drawItemIcon(ctx, rid, ix + 1, y + 1, 1, r.variant === 'roll' ? null : r.variant ?? null);
-    if (r.qty > 1) text(ctx, `${r.qty}`, ix + 17, y + 17, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
+    itemSlot(ctx, ix, y, 18, { id: rid, qty: r.qty, variant: r.variant === 'roll' ? null : r.variant ?? null }, { shadow: false });
     if (hover(ui, ix, y, 18, 18)) tooltip(ui, itemTooltip(char, rid));
     ix += 20;
   }

@@ -5,6 +5,9 @@
 // scalloped title ribbon, a cream body, and a soft shadow. Buttons are glossy candy
 // with a lip that presses down; bars are glossy capsules with a shine that sweeps across.
 
+import { RARITIES } from '../data/items.js';
+import { drawItemIcon } from '../render/icons.js';
+
 // Nunito (Google Fonts, loaded by index.html) has the rounded strokes of the candy look and reads
 // well down to 6 px; the system fonts stand in until it arrives or when offline. Regular text is
 // weight 500 and bold 800: fallback fonts round those to their own regular and bold.
@@ -279,6 +282,47 @@ export function rarityCell(ctx, x, y, w, h, color, tier, r = 4) {
   ctx.restore();
 }
 
+// One item cell, drawn the same everywhere items show (bag, equipment, shops, rewards): a cream
+// cell with a lit top edge, the item on its little ground shadow (lifted a pixel when hovered),
+// rarity as an inner ring in its color (Epic and up also glow from the corners, Legendary
+// shines), and the stack count and upgrade level in the corners. An empty cell can show a
+// greyed `ghost` of what goes there. `state`: null, 'hot', 'selected', or 'target' (a drop spot).
+export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', fill = '#fffdfb', ghost = null, r = 5, scale = 1, shadow = true, count = true } = {}) {
+  const sel = state === 'selected' || state === 'target';
+  box(ctx, x, y, s, s, { fill: state === 'target' ? '#fff6d0' : sel ? '#fff3c4' : state === 'hot' && item ? '#ffffff' : fill, edge: sel ? COLORS.select : edge, r, width: sel ? 2 : 1 });
+  slotEdges(ctx, x, y, s, s, r);
+  const isz = 16 * scale;
+  const ix = Math.round(x + (s - isz) / 2);
+  const iy = Math.round(y + (s - isz) / 2);
+  if (!item) {
+    if (ghost) {
+      // A greyed outline of what belongs here.
+      ctx.save();
+      ctx.globalAlpha = 0.2;
+      if ('filter' in ctx) ctx.filter = 'grayscale(1) brightness(1.1)';
+      drawItemIcon(ctx, ghost, ix, iy, scale);
+      ctx.restore();
+    }
+    return;
+  }
+  const tier = item.rarity ?? 0;
+  const rc = RARITIES[tier]?.color;
+  if (shadow) itemShadow(ctx, x + s / 2, iy + isz - 1);
+  drawItemIcon(ctx, item.id, ix, iy - (state === 'hot' ? 1 : 0), scale, item.variant ?? null);
+  if (rc) {
+    rarityCell(ctx, x, y, s, s, rc, tier, r);
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+    roundRect(ctx, x + 1.75, y + 1.75, s - 3.5, s - 3.5, Math.max(1, r - 1.5));
+    ctx.strokeStyle = rc;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (count && item.qty > 1) text(ctx, `${item.qty}`, x + s - 2.5, y + s - 2.5, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
+  if (item.upgrades) text(ctx, `+${item.upgrades}`, x + s - 2, y + 7.5, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: '#d0559a' });
+}
+
 // A four-pointed twinkle.
 export function sparkle(ctx, x, y, r, color) {
   ctx.fillStyle = color;
@@ -484,6 +528,20 @@ const ICONS = {
     ctx.beginPath();
     ctx.arc(-s * 0.08, -s * 0.22, s * 0.08, 0, Math.PI * 2);
     ctx.fill();
+  },
+  trash(ctx, s) {
+    // A little bin: lid with a handle, and a tapered can with two grooves.
+    ctx.fillRect(-s * 0.36, -s * 0.3, s * 0.72, s * 0.1);
+    ctx.fillRect(-s * 0.1, -s * 0.38, s * 0.2, s * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.3, -s * 0.16);
+    ctx.lineTo(s * 0.3, -s * 0.16);
+    ctx.lineTo(s * 0.24, s * 0.4);
+    ctx.lineTo(-s * 0.24, s * 0.4);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fillRect(-s * 0.1, -s * 0.06, s * 0.05, s * 0.36);
+    ctx.fillRect(s * 0.06, -s * 0.06, s * 0.05, s * 0.36);
   },
   skull(ctx, s) {
     ctx.beginPath();
