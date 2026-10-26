@@ -14,7 +14,8 @@
 //
 // Tag a shape with `M(shape, 'metal')`; untagged shapes are classified by the caller (gear.js).
 // `hang` bends hanging cloth (capes, tassets, tails, ribbons) as a chain: the root follows the
-// fast hair spring and the tip the slower cape spring, so the root leads and the tip follows.
+// cape's root spring (or the fast hair spring) and the tip the softer hem spring, so the root
+// leads and the tip follows.
 
 import { T, E, F } from '../pixel.js';
 
@@ -273,7 +274,7 @@ export function finish(shapes, matOf) {
 // hair spring and the lower ones the slower cape spring, so a swing travels down the cloth. The
 // links also rise a little as they swing out, so the cloth keeps its length.
 export function hang(shapes, y0, y1, m, k = 1) {
-  const fast = (m?.hair ?? 0) * k;
+  const fast = (m?.capeRoot ?? m?.hair ?? 0) * k;
   const slow = (m?.sway ?? 0) * k;
   if (!fast && !slow) return shapes;
   const len = Math.max(1, y1 - y0);

@@ -69,6 +69,9 @@ carry an improvement across every part of the game it applies to.
   themselves (plus the hairline) 1 px down in skin shadow, drawn under the eyes.
 - A two-link hair chain is enough: a root spring on the body and a softer tip spring chasing it;
   points blend from root to tip by depth (`b`, `b²`) and lift a little when they disagree.
+  Capes are the same two-link chain (`animator.js` `cape`/`capeTip`, kit.js `hang`): the root
+  spring rides the shoulders (stiffer, damping ratio ~0.5), the hem chases it on a softer one
+  (~0.4), so it lags a start and swings past on a stop before settling.
 
 **Animation**
 - Attacks: wind-up held, a short strike, a held impact, then settle (MapleStory: 300/150/350 ms).

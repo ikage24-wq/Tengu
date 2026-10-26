@@ -752,8 +752,8 @@ function headShapes(look, g, rig) {
   return out;
 }
 
-// What gear sways and flaps with: the cape spring, the hair spring, and the wing beat.
-const motionOf = (rig) => ({ sway: rig.cape ?? 0, hair: rig.hair ?? 0, flap: rig.flap ? 1 : 0 });
+// What gear sways and flaps with: the cape's hem and root springs, the hair spring, and the wing beat.
+const motionOf = (rig) => ({ sway: rig.cape ?? 0, hair: rig.hair ?? 0, capeRoot: rig.capeRoot ?? null, flap: rig.flap ? 1 : 0 });
 
 // ---------- Arms ----------
 
@@ -977,7 +977,9 @@ function solveRig(state, anim, mv = null) {
   r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.4 - 1.4) * 0.35) * 2) / 2;
   // The tips follow the root a beat later (a chain), and swing a little further.
   r.hairTip = Math.round((anim ? Math.max(-4, Math.min(4, anim.hairTip ?? anim.hair)) : Math.sin(t * 1.3 - 0.9) * 0.75 + Math.sin(t * 2.4 - 2.4) * 0.4) * 2) / 2;
-  r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
+  // The cape is a chain of two springs: the root (upper cloth) and the hem a beat behind it.
+  r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.capeTip ?? anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
+  r.capeRoot = anim ? Math.round(Math.max(-3, Math.min(3, anim.cape)) * 2) / 2 : null;
   r.flap = Math.floor(t * (pose === 'jump' ? 10 : 4)) % 2 === 0;
   // A blink every few seconds, slightly offset per character.
   const cycle = (t * 0.31) % 1;
@@ -1101,7 +1103,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------

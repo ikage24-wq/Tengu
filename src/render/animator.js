@@ -18,7 +18,8 @@ export function createAnim() {
     // The hair is a two-link chain: the root follows the body, the tips follow the root.
     hair: 0, hairV: 0, hairTip: 0, hairTipV: 0,
     phase: 0, gait: 0,
-    cape: 0, capeV: 0,
+    // The cape too: its root rides the shoulders, its hem chases the root on a softer spring.
+    cape: 0, capeV: 0, capeTip: 0, capeTipV: 0,
     land: 0,
     rise: 0,
     // Whole-body squash and stretch (x, y scale about the feet), easing back to 1 at a steady rate.
@@ -115,7 +116,10 @@ export function stepAnim(a, body, dt) {
   spring(a, 'hair', 'hairV', -speed * 3 + idleSway + fall * 0.6 + ripple * 0.9, 140, 11, dt);
   // The tips chase the root on a softer spring, so a swing travels down the hair and overshoots.
   spring(a, 'hairTip', 'hairTipV', a.hair * 1.25, 55, 6.5, dt);
-  spring(a, 'cape', 'capeV', -speed * 4 + idleSway * 0.8 + fall * 1.2 + capeRipple * 1.2, 70, 7, dt);
+  spring(a, 'cape', 'capeV', -speed * 4 + idleSway * 0.8 + fall * 1.2 + capeRipple * 1.2, 90, 9.5, dt);
+  // The hem chases the cape's root on a softer spring: it lags a start, swings past on a stop,
+  // and settles a beat after the shoulders.
+  spring(a, 'capeTip', 'capeTipV', a.cape * 1.15, 32, 4.6, dt);
 
   for (const p of a.trail) p.age += dt;
   a.trail = a.trail.filter((p) => p.age < 0.14);
