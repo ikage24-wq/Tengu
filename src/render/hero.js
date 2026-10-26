@@ -29,7 +29,7 @@ import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
 import { moveAt } from './moves.js';
 import { heroineEye } from './mobs/heroine.js';
-import { HAIR_STYLES, hairStyleOf, coversEye, hairBehind, hairBangs, hairNape } from './hair.js';
+import { HAIR_STYLES, hairStyleOf, coversEye, hairParts, hairNape } from './hair.js';
 
 export { HAIR_STYLES, hairStyleOf };
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
@@ -241,66 +241,21 @@ function arc(cx, cy, rx, ry, a0, a1, th, c) {
   return F(T([...outer, ...inner.reverse()], c));
 }
 
-// Hair that hangs below the head is a chain: near the root it follows the root spring, toward the
-// tips it follows the tip spring, which lags and overshoots it, so a swing travels down the hair.
-// Where root and tip disagree the tips also ride up a little, tracing a loop instead of a line.
-// Every shape is cut into short steps and bent point by point (ellipses too), so a long sheet of
-// hair curves as it swings instead of shearing like a card; the bend eases in below the skull, and
-// locks further out from the middle trail a touch more, so they fan apart instead of moving as one.
-const HANG_TOP = 13;
-const HANG_LEN = 24;
-function swayShape(shape, root, tip, lift) {
-  const bend = (py) => {
-    const u = Math.max(0, Math.min(1, (py - HANG_TOP) / HANG_LEN));
-    return u * u * (3 - 2 * u);
-  };
-  const move = ([px, py]) => {
-    const b = bend(py);
-    const fan = 1 + 0.22 * Math.min(1, Math.abs(px - HEAD_X) / 12);
-    const dx = (root * b + (tip - root) * b * b) * fan;
-    const up = -Math.abs(tip - root) * 0.3 * b * b;
-    return [px + q(dx), py + q(up) + (py >= 22 ? lift : 0)];
-  };
-  if (!root && !tip && !lift) return shape;
-  const pts = shape.t === 'p' ? shape.pts.map(([px, py]) => [px + shape.x, py + shape.y]) : shape.t === 'e' ? ellipsePts(shape) : null;
-  if (!pts) {
-    const [nx, ny] = move([shape.x, shape.y]);
-    return { ...shape, x: nx, y: ny };
-  }
-  if (Math.max(...pts.map(([, py]) => py)) <= HANG_TOP) return shape;
-  const { rx, ry, ...rest } = shape;
-  return { ...rest, t: 'p', x: 0, y: 0, pts: subdivide(pts, 1.5).map(move) };
-}
-
-const ellipsePts = (e, n = 24) => Array.from({ length: n }, (_, i) => {
-  const a = (i / n) * Math.PI * 2;
-  return [e.x + Math.cos(a) * e.rx, e.y + Math.sin(a) * e.ry];
-});
-function subdivide(pts, step) {
-  const out = [];
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[i];
-    const b = pts[(i + 1) % pts.length];
-    const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
-    for (let k = 0; k < n; k++) out.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
-  }
-  return out;
-}
-
-// Hair behind the head (see hair.js); whatever hangs below it sways and is flagged `hang` so the
-// body is drawn over it.
-function hairBack(style, front, root, tip, lift) {
-  const { head, hang } = hairBehind(style, hairRamp(front));
-  return [...head, ...hang.map((sh) => ({ ...swayShape(sh, root, tip, lift), hang: true }))];
-}
-
-// The bangs, plus the band of forehead they shade (`shade`, drawn under the eyes); the hairline
-// itself shades the forehead too, so gaps between clumps aren't left bare.
-function hairFront(style, c, sway = 0, mood = 'smile') {
-  const { shapes, shade } = hairBangs(style, hairRamp(c), sway, mood);
-  const out = [...shapes];
-  out.shade = shapes.length ? [F(E(HEAD_X, 9.4, 10.4, 4.6, '#000000')), ...shade] : [];
-  return out;
+// The look's hairstyle for one pose (see hair.js): every part, already moving with the hair spring
+// and the breeze, with the two-tone tips applied. Hanging parts are flagged `hang` so the body is
+// drawn over them. The bangs carry `shade`, the band of forehead they darken (drawn under the
+// eyes); the hairline itself shades the forehead too, so gaps between clumps aren't left bare.
+function hairOf(look, rig) {
+  const style = hairStyleOf(look);
+  const color = look.hairColor ?? '#e9ebfa';
+  const r = hairRamp(color);
+  const tipColor = look.hairTip && look.hairTip !== 'none' && look.hairTip !== color ? look.hairTip : null;
+  const tint = tipColor ? { mid: hairRamp(mix(color, tipColor, 0.5)), tip: hairRamp(tipColor) } : null;
+  const m = rig ? { root: rig.hair ?? 0, tip: rig.hairTip ?? rig.hair ?? 0, lift: rig.hairLift ?? 0, wave: rig.hairWave ?? 0 } : null;
+  const p = hairParts(style, r, tint, m, look.face ?? 'smile');
+  const front = [...p.front];
+  front.shade = p.front.length ? [F(E(HEAD_X, 9.4, 10.4, 4.6, '#000000')), ...p.shade] : [];
+  return { style, r, head: p.head, hang: p.hang.map((sh) => ({ ...sh, hang: true })), front, top: p.top };
 }
 
 // A four-point sparkle, for star-shine eyes; it stays readable at small sizes.
@@ -589,7 +544,8 @@ function headShapes(look, g, rig) {
   const tucked = hatTucks(hat);
   const m = motionOf(rig);
   const out = [];
-  if (!tucked) out.push(...hairBack(style, hair, rig.hair, rig.hairTip ?? rig.hair, rig.hairLift).filter((sh) => !sh.hang));
+  const hairNow = hairOf(look, rig);
+  if (!tucked) out.push(...hairNow.head);
   if (hat) out.push(...hatBackShapes(hat.design, hat.color, hat, m));
   // Facing the screen: a round head with soft full cheeks, an ear peeking out on each side, big
   // eyes set low and wide apart, blush under each eye and a small mouth in the middle. The skin
@@ -611,7 +567,7 @@ function headShapes(look, g, rig) {
   if (covered) f = { ...f, closed: f.closed && [...f.closed].reverse(), brows: f.brows && [...f.brows].reverse() };
   if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(F(E(cx, 20.8, 2.8, 2.6, skin)));
   // The bangs' shadow on the forehead (under the eyes, so lashes stay on top).
-  const front = hatHidesBangs(hat) ? null : hairFront(style, hair, rig.hairTip ?? rig.hair, look.face ?? 'smile');
+  const front = hatHidesBangs(hat) ? null : hairNow.front;
   if (front) out.push(...front.shade.map((sh) => ({ ...sh, c: sk.sh1 })));
   // Blush: a soft two-tone patch on each cheek, clear of the eyes; flustered faces add hatching.
   const blush = f.blush ?? 1;
@@ -736,7 +692,7 @@ function bodyShapes(look, g, rig) {
   const hat = g.hat;
   let hang = [];
   if (!hatTucks(hat)) {
-    hang = hairBack(hairStyleOf(look), look.hairColor ?? '#e9ebfa', rig.hair, rig.hairTip ?? rig.hair, rig.hairLift).filter((sh) => sh.hang);
+    hang = hairOf(look, rig).hang;
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
@@ -827,8 +783,8 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   if (g.cape?.family) body.push(...capeShapes(g.cape.design, g.cape.color, 0, rig.flap, g.cape, motionOf(rig)));
   else if (g.cape && g.cape.design !== 'fairy' && g.cape.design !== 'angel') body.push(T([[8.6, 26], [22.4, 26], [26, 46], [5, 46]], g.cape.color), R(5, 45, 21, 1.2, shade(g.cape.color, -20)));
   if (!hatTucks(g.hat)) {
-    const back = hairBack(style, hair, 0, 0, 0);
-    out.push(...squash(back.filter((sh) => sh.hang), false), ...back.filter((sh) => !sh.hang));
+    const back = hairOf(look, null);
+    out.push(...squash(back.hang, false), ...back.head);
   }
   const hr = hairRamp(hair);
   // From behind, elf ears poke out past the back of the head (round ones hide behind it).
@@ -837,8 +793,8 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
     out.push(...mirror(earShapes(look.earStyle, skin, sk.sh1)), ...earShapes(look.earStyle, sk.sh1, sk.sh2));
   }
   const nape = hairNape(style, hr);
-  // Bald, the back of the skull shows.
-  out.push(...(nape.length ? nape : [F(E(HEAD_X, 14.6, 10.2, 10, skinRamp(skin).sh1)), F(E(HEAD_X, 14.2, 9.6, 9.6, skin))]));
+  // Bald, the back of the skull shows; buns, bows and the like sit on top of it.
+  out.push(...(nape.length ? [...nape, ...(hatTucks(g.hat) ? [] : hairOf(look, null).top)] : [F(E(HEAD_X, 14.6, 10.2, 10, skinRamp(skin).sh1)), F(E(HEAD_X, 14.2, 9.6, 9.6, skin))]));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
   const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
@@ -907,7 +863,7 @@ function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
     frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, hipIn: 0, air: false, squat: 0,
-    hair: 0, hairLift: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0,
+    hair: 0, hairLift: 0, hairWave: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0,
   };
 }
 
@@ -928,6 +884,8 @@ function solveRig(state, anim, mv = null) {
   r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.4 - 1.4) * 0.35) * 2) / 2;
   // The tips follow the root a beat later (a chain), and swing a little further.
   r.hairTip = Math.round((anim ? Math.max(-4, Math.min(4, anim.hairTip ?? anim.hair)) : Math.sin(t * 1.3 - 0.9) * 0.75 + Math.sin(t * 2.4 - 2.4) * 0.4) * 2) / 2;
+  // A slow breeze travels down the hair, in 8 steps over about 2.6 seconds.
+  r.hairWave = Math.floor((((t / 2.6) % 1) + 1) % 1 * 8);
   // The cape is a chain of two springs: the root (upper cloth) and the hem a beat behind it.
   r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.capeTip ?? anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
   r.capeRoot = anim ? Math.round(Math.max(-3, Math.min(3, anim.cape)) * 2) / 2 : null;
@@ -1076,7 +1034,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------

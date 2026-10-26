@@ -16,6 +16,8 @@ export const OUTFIT_COLORS = ['#ffc2d6', '#ff9a9a', '#ffd0a8', '#fff3a6', '#bff0
 export const LOOK_OPTIONS = [
   { key: 'hairStyle', label: 'Hair', options: HAIR_STYLES },
   { key: 'hairColor', label: 'Hair color', options: HAIR_COLORS, color: true },
+  // Two-tone: the hair fades into this colour toward the tips ('none' keeps it one colour).
+  { key: 'hairTip', label: 'Tips', options: ['none', ...HAIR_COLORS], color: true },
   { key: 'eyeStyle', label: 'Eyes', options: PICKABLE_EYE_STYLES },
   { key: 'browStyle', label: 'Brows', options: BROW_STYLES },
   { key: 'face', label: 'Expression', options: FACE_STYLES },
@@ -30,7 +32,7 @@ const OPTION = Object.fromEntries(LOOK_OPTIONS.map((o) => [o.key, o]));
 // What each tab holds. `thumb` says how a style is previewed: the head, the face close up, or
 // the whole body.
 export const LOOK_TABS = [
-  { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairColor', label: 'Color' }] },
+  { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairColor', label: 'Color' }, { key: 'hairTip', label: 'Tips' }] },
   { label: 'Eyes', rows: [{ key: 'eyeStyle', label: 'Eyes', thumb: 'face' }, { key: 'browStyle', label: 'Brows', thumb: 'brow' }, { key: 'eyeColor', label: 'Eye color' }] },
   { label: 'Face', rows: [{ key: 'face', label: 'Expression', thumb: 'face' }, { key: 'earStyle', label: 'Ears', thumb: 'ears' }, { key: 'skinTone', label: 'Skin' }] },
   { label: 'Outfit', rows: [{ key: 'outfit', label: 'Style', thumb: 'body' }, { key: 'outfitColor', label: 'Color' }] },
@@ -41,11 +43,13 @@ export const sameLook = (a, b) => LOOK_OPTIONS.every((o) => a?.[o.key] === b?.[o
 export function randomLook(rng = Math.random) {
   const look = {};
   for (const opt of LOOK_OPTIONS) look[opt.key] = opt.options[Math.floor(rng() * opt.options.length)];
+  // Most random heroes keep one hair colour; two-tone is the occasional treat.
+  if (rng() < 0.6) look.hairTip = 'none';
   return look;
 }
 
 // Display names for the styles whose ids aren't plain words.
-const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald' };
+const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', candy: 'Candy curls' };
 export const styleName = (id) => NAMES[id] ?? String(id).charAt(0).toUpperCase() + String(id).slice(1);
 
 // Where a thumbnail looks, in hero units from the feet: the point to centre and how much of the
@@ -85,7 +89,7 @@ export function lookRows(ui, look, tab, x, y, w, { cell = 30, time = 0, gap = 3 
   let cy = y;
   for (const row of LOOK_TABS[tab].rows) {
     const opt = OPTION[row.key];
-    const value = out[row.key];
+    const value = out[row.key] ?? (row.key === 'hairTip' ? 'none' : undefined);
     text(ctx, row.label, x + 2, cy + 8, { size: 8, bold: true, color: th.ink });
     if (!opt.color) text(ctx, styleName(value), x + w - 2, cy + 8, { size: 8, align: 'right', color: COLORS.muted });
     cy += 12;
@@ -110,10 +114,19 @@ export function lookRows(ui, look, tab, x, y, w, { cell = 30, time = 0, gap = 3 
         ctx.beginPath();
         ctx.arc(cx + r, ry + r, r - 0.5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = o;
+        ctx.fillStyle = o === 'none' ? '#ffffff' : o;
         ctx.beginPath();
         ctx.arc(cx + r, ry + r, r - 2, 0, Math.PI * 2);
         ctx.fill();
+        // 'none' is a white swatch crossed through.
+        if (o === 'none') {
+          ctx.strokeStyle = '#ff8aa8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(cx + r - r * 0.5, ry + r + r * 0.5);
+          ctx.lineTo(cx + r + r * 0.5, ry + r - r * 0.5);
+          ctx.stroke();
+        }
         // A little gloss so pale swatches don't vanish into the white.
         ctx.fillStyle = 'rgba(255,255,255,0.45)';
         ctx.beginPath();
