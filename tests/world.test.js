@@ -5,7 +5,9 @@ import { MAPS } from '../src/data/maps.js';
 import { createBody, stepBody } from '../src/world/physics.js';
 import { createCharacter, gainExp, learnSkill, advanceJob } from '../src/core/character.js';
 import { cast } from '../src/world/combat.js';
-import { createWorld, updateWorld, loadMap, respawn, hops, travelTo, travelCost } from '../src/world/world.js';
+import { createWorld, updateWorld, loadMap, respawn, hops, travelTo, travelCost, dropItem } from '../src/world/world.js';
+import { addItem, countItem } from '../src/core/inventory.js';
+import { makeEquip } from '../src/core/items.js';
 import { TOWNS } from '../src/data/maps.js';
 import { spawnMob } from '../src/world/mobs.js';
 
@@ -441,4 +443,34 @@ test('auto-loot picks up drops without holding X', async () => {
   w.settings = { autoLoot: true };
   for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
   assert.equal(w.char.gold, 25);
+});
+
+test('bag items dropped in the world land in front of you and only come back with the loot key', () => {
+  const w = newWorld();
+  w.settings = { autoLoot: true };
+  const before = countItem(w.char.inventory, 'red_potion');
+  addItem(w.char.inventory, 'red_potion', 5);
+  const i = w.char.inventory.use.findIndex((e) => e.id === 'red_potion');
+  assert.ok(dropItem(w, 'use', i, 2));
+  assert.equal(countItem(w.char.inventory, 'red_potion'), before + 3);
+  const d = w.drops.at(-1);
+  assert.equal(d.qty, 2);
+  assert.ok(d.dropped);
+  // It falls and lands; auto-loot leaves it alone.
+  for (let t = 0; t < 90; t++) updateWorld(w, DT, keys([]));
+  assert.ok(d.landed);
+  assert.equal(countItem(w.char.inventory, 'red_potion'), before + 3);
+  // Walking back onto it and pressing X picks it up.
+  w.body.x = d.x;
+  for (let t = 0; t < 10; t++) updateWorld(w, DT, keys(['KeyX']));
+  assert.equal(countItem(w.char.inventory, 'red_potion'), before + 5);
+
+  // Equipment drops whole; Cash items can't be dropped.
+  addItem(w.char.inventory, makeEquip('hat_0'));
+  const n = w.char.inventory.equip.length;
+  assert.ok(dropItem(w, 'equip', n - 1));
+  assert.equal(w.char.inventory.equip.length, n - 1);
+  assert.equal(w.drops.at(-1).inst.id, 'hat_0');
+  w.char.inventory.cash.push(makeEquip('hat_0'));
+  assert.equal(dropItem(w, 'cash', 0), false);
 });

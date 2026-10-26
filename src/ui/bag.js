@@ -19,7 +19,7 @@ import { equipFromBag, unequip, equipBlocker, wearOutfit, removeOutfit, wornGear
 import { applyScroll, itemName } from '../core/items.js';
 import { removeItem, sortTab, moveItem, TAB_SIZE } from '../core/inventory.js';
 import { questsWanting } from '../core/quests.js';
-import { useItem } from '../world/world.js';
+import { useItem, dropItem as dropOnGround } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle, itemSlot, itemShadow, fit } from './kit.js';
@@ -89,6 +89,7 @@ export function bagWindow(ui, state, world) {
     win.seen = win.lastKeys ?? allKeys(char);
     win.carry = null;
     win.confirm = null;
+    win.dropAsk = null;
   }
   win.lastDrawn = world.now;
   win.lastKeys = allKeys(char);
@@ -153,7 +154,7 @@ export function bagWindow(ui, state, world) {
   ctx.fill();
   drawHero(ctx, char.appearance, gear, cx, oy + 160, { pose: 'idle', time: world.now, scale: 1.2 });
   if (fits) {
-    const label = wearable ? 'Drop to wear' : 'Trying on';
+    const label = wearable ? (overDoll ? 'Drop to wear' : 'Drag here to wear') : 'Trying on';
     ctx.font = '800 6.5px sans-serif';
     const tw = ctx.measureText(label).width + 10;
     box(ctx, cx - tw / 2, oy + 48, tw, 10, { fill: th.main, edge: null, r: 5 });
@@ -173,7 +174,7 @@ export function bagWindow(ui, state, world) {
   const fresh = TAB_KEYS.map((k) => (char.inventory[k] ?? []).some((e) => !win.seen.has(seenKey(k, e))));
   win.tab = tabs(ui, rx + 2, oy + 26, TAB_NAMES, tabWas, { w: 37, h: 13 });
   fresh.forEach((f, i) => f && i !== win.tab && sparkle(ctx, rx + 2 + i * 39 + 34, oy + 26, 2.6, '#ff6fae'));
-  if (win.tab !== tabWas) Object.assign(win, { sel: -1, carry: null, confirm: null });
+  if (win.tab !== tabWas) Object.assign(win, { sel: -1, carry: null, confirm: null, dropAsk: null });
   const sortX = rx + rw - 34;
   if (button(ui, sortX, oy + 24, 34, 16, 'Sort', { size: 7.5 })) {
     const picked = list[win.sel];
@@ -207,10 +208,10 @@ export function bagWindow(ui, state, world) {
   const binLit = dragged && overBin;
   box(ctx, bin.x, bin.y, bin.w, bin.h, { fill: binLit ? '#ffe0e8' : overBin ? '#ffffff' : '#fbf5fd', edge: dragged ? COLORS.bad : '#e6d6ef', r: 6, width: dragged ? 1.5 : 1 });
   icon(ctx, 'trash', bin.x + bin.w / 2, bin.y + bin.h / 2 + (binLit ? -1 : 0), 11, dragged ? COLORS.bad : COLORS.muted);
-  text(ctx, 'Drag to move or wear', bin.x - 5, fy + 7, { size: 6.5, align: 'right', color: COLORS.muted });
+  text(ctx, 'Drag out to drop', bin.x - 5, fy + 7, { size: 6.5, align: 'right', color: COLORS.muted });
   text(ctx, 'Bin: throw away', bin.x - 5, fy + 14.5, { size: 6.5, align: 'right', color: COLORS.muted });
   if (overBin && !drag) tooltip(ui, [{ text: 'Throw away', bold: true }, { text: 'Drag an item here, or pick one and click.', size: 8, color: COLORS.muted }, { text: 'You will be asked first.', size: 8, color: COLORS.muted }]);
-  if (!drag && clicked(ui, bin.x, bin.y, bin.w, bin.h) && list[win.sel]) win.confirm = { tab, entry: list[win.sel] };
+  if (!drag && clicked(ui, bin.x, bin.y, bin.w, bin.h) && list[win.sel]) Object.assign(win, { confirm: { tab, entry: list[win.sel] }, dropAsk: null });
 
   // ---- Dragging ----
   if (win.carry) {
@@ -218,7 +219,7 @@ export function bagWindow(ui, state, world) {
     if (m.down) {
       if (!d.live && Math.hypot(m.x - d.x0, m.y - d.y0) > 4) d.live = true;
     } else {
-      if (d.live) dropItem(world, win, d, { cell: cellAt(m.x, m.y), doll: overDoll, key: hotkeyAt(m.x, m.y), bin: overBin });
+      if (d.live) placeCarried(world, win, d, { cell: cellAt(m.x, m.y), doll: overDoll, key: hotkeyAt(m.x, m.y), bin: overBin, ground: overGround(ui, state, win) });
       win.carry = null;
     }
   }
@@ -230,21 +231,41 @@ export function bagWindow(ui, state, world) {
     else {
       itemShadow(ctx, m.x, m.y + 10);
       drawItemIcon(ctx, inst.id, m.x - 8, m.y - 11, 1, inst.variant);
-      const hint = d.from === 'bag' && hotkeyAt(m.x, m.y) && tab === 'use' && !ITEMS[inst.id].star ? 'Set hotkey' : d.from === 'bag' && overBin ? 'Throw away?' : null;
+      const ground = d.from === 'bag' && overGround(ui, state, win);
+      const hint = d.from === 'bag' && hotkeyAt(m.x, m.y) && tab === 'use' && !ITEMS[inst.id].star ? 'Set hotkey' : d.from === 'bag' && overBin ? 'Throw away?' : ground ? (tab === 'cash' ? "Can't drop Cash items" : 'Drop on the ground') : null;
       if (hint) {
         ctx.font = '800 6.5px sans-serif';
         const tw = ctx.measureText(hint).width + 10;
-        box(ctx, m.x - tw / 2, m.y - 25, tw, 10, { fill: hint === 'Set hotkey' ? LAV.main : COLORS.bad, edge: null, r: 5 });
+        const fill = hint === 'Set hotkey' ? LAV.main : hint === 'Drop on the ground' ? THEMES.peach.dark : COLORS.bad;
+        box(ctx, m.x - tw / 2, m.y - 25, tw, 10, { fill, edge: null, r: 5 });
         text(ctx, hint, m.x, m.y - 17.5, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
       }
     }
   }
 }
 
-// Drops a dragged item: on a bag cell it moves (or merges), on the doll it's worn, on a hotkey a
-// Use item is bound, on the bin it asks to throw it away; a piece dragged off the doll onto the
-// grid is taken off.
-function dropItem(world, win, d, at) {
+// Is the mouse over the game world: outside every open window and above the HUD bar? A bag
+// item let go there drops on the ground.
+function overGround(ui, state, win) {
+  const m = ui.mouse;
+  if (m.y >= 326 || m.y < 0 || m.x < 0 || m.x >= 640) return false;
+  return !Object.values(state.windows).some((w) => w.open && w.w && m.x >= w.x && m.x < w.x + w.w && m.y >= w.y && m.y < w.y + w.h);
+}
+
+// Drops the bag item in cell `index` on the ground: one item goes at once; for a stack, the
+// detail strip asks how many first.
+function askDrop(world, win, tab, index) {
+  const entry = world.char.inventory[tab]?.[index];
+  if (!entry) return;
+  if (tab === 'cash') world.log("Cash items are yours to keep: they can't be dropped.", '#ffb3c6');
+  else if (entry.qty > 1) Object.assign(win, { confirm: null, dropAsk: { tab, entry, qty: entry.qty } });
+  else if (dropOnGround(world, tab, index)) win.sel = -1;
+}
+
+// Lets go of a dragged item: on a bag cell it moves (or merges), on the doll it's worn, on a
+// hotkey a Use item is bound, on the bin it asks to throw it away, and out over the world it
+// drops on the ground; a piece dragged off the doll onto the grid is taken off.
+function placeCarried(world, win, d, at) {
   const char = world.char;
   const tab = TAB_KEYS[win.tab];
   if (d.from === 'bag') {
@@ -255,11 +276,13 @@ function dropItem(world, win, d, at) {
     } else if (at.doll && (tab === 'equip' || tab === 'cash')) {
       activate({ windows: { bag: win } }, world, tab, d.index);
     } else if (at.bin) {
-      win.confirm = { tab, entry };
+      Object.assign(win, { confirm: { tab, entry }, dropAsk: null });
     } else if (at.key && tab === 'use' && !ITEMS[entry.id].star) {
       for (const [k, b] of Object.entries(char.hotkeys)) if (b?.item === entry.id) delete char.hotkeys[k];
       char.hotkeys[at.key] = { item: entry.id };
       world.log(`${ITEMS[entry.id].name} set to ${at.key.replace('Key', '').replace('Digit', '')}.`, '#d4cbe8');
+    } else if (at.ground) {
+      askDrop(world, win, tab, d.index);
     }
   } else if (at.cell >= 0) {
     const ok = d.outfit ? removeOutfit(char, d.slot) : unequip(char, d.slot);
@@ -376,6 +399,7 @@ function gridCell(ui, state, world, tab, list, i, x, y, win, dropHere) {
     const dbl = right || ui.mouse.double || (state.lastClick?.key === `${tab}:${i}` && world.now - state.lastClick.at < 0.4);
     win.sel = i;
     win.confirm = null;
+    win.dropAsk = null;
     state.lastClick = { key: `${tab}:${i}`, at: world.now };
     if (!right && !state.scrollMode) win.carry = { from: 'bag', index: i, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
     if (state.scrollMode && tab === 'equip') scrollOnto(state, world, entry);
@@ -390,6 +414,37 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
   const char = world.char;
   well(ctx, x, y, w, h, th);
 
+  // Dropping a stack on the ground: how many?
+  const ask = bagOf(state).dropAsk;
+  if (ask) {
+    const list = char.inventory[ask.tab];
+    const at = list.indexOf(ask.entry);
+    if (at < 0) bagOf(state).dropAsk = null;
+    else {
+      const max = ask.entry.qty;
+      ask.qty = Math.max(1, Math.min(max, ask.qty));
+      itemSlot(ctx, x + 6, y + 6, 40, { ...ask.entry, qty: ask.qty }, { scale: 2, shadow: false, edge: THEMES.peach.main });
+      text(ctx, 'Drop how many?', x + 52, y + 15, { size: 8.5, bold: true, color: THEMES.peach.ink });
+      text(ctx, fit(ctx, `${itemName(ask.entry.id)} (you have ${max})`, w - 58, 7), x + 52, y + 25, { size: 7, color: COLORS.muted });
+      // A stepper: - [n] +, then All; the wheel works over the number too.
+      const sx = x + 52;
+      const sy = y + 31;
+      if (button(ui, sx, sy, 16, 15, '−', { size: 9 })) ask.qty -= ui.input.held?.has('ShiftLeft') ? 10 : 1;
+      box(ctx, sx + 19, sy, 40, 13, { fill: '#ffffff', edge: THEMES.peach.light, r: 6.5, width: 1.2 });
+      text(ctx, `${ask.qty}`, sx + 39, sy + 9.5, { size: 8.5, bold: true, align: 'center', color: COLORS.ink });
+      if (hover(ui, sx + 19, sy, 40, 13)) ask.qty -= ui.mouse.wheel;
+      if (button(ui, sx + 62, sy, 16, 15, '+', { size: 9 })) ask.qty += ui.input.held?.has('ShiftLeft') ? 10 : 1;
+      if (button(ui, sx + 81, sy, 26, 15, 'All', { size: 7 })) ask.qty = max;
+      ask.qty = Math.max(1, Math.min(max, ask.qty));
+      text(ctx, 'It stays on the ground for a while; X picks it back up.', x + 52, y + h - 26, { size: 6, color: COLORS.muted });
+      if (button(ui, x + w - 104, y + h - 20, 50, 15, 'Cancel', { size: 7.5 })) bagOf(state).dropAsk = null;
+      if (button(ui, x + w - 50, y + h - 20, 44, 15, 'Drop', { theme: 'peach', size: 7.5 })) {
+        if (dropOnGround(world, ask.tab, at, ask.qty)) bagOf(state).sel = -1;
+        bagOf(state).dropAsk = null;
+      }
+      return;
+    }
+  }
   // Throwing something away always asks first.
   const c = bagOf(state).confirm;
   if (c) {
@@ -490,14 +545,21 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
     if (def.price) foot = `Sells for ${sellPrice(entry.id).toLocaleString()} gold each`;
     if (tab === 'use') label = def.star ? 'Throw' : def.scroll ? 'Apply' : 'Use';
   }
-  if (foot) text(ctx, fit(ctx, foot, tw - (label ? 74 : 24), 6.5, false), tx, by + 11, { size: 6.5, color: tab === 'equip' ? COLORS.muted : COLORS.gold, bold: tab !== 'equip' });
-  // Actions: the bin (asks first), then the main one.
+  if (foot) text(ctx, fit(ctx, foot, tw - (label ? 74 : 24) - (tab !== 'cash' ? 21 : 0), 6.5, false), tx, by + 11, { size: 6.5, color: tab === 'equip' ? COLORS.muted : COLORS.gold, bold: tab !== 'equip' });
+  // Actions, right to left: the main one, drop on the ground, and the bin (which asks first).
   if (index >= 0) {
-    const bx = x + w - (label ? 72 : 24);
-    if (button(ui, bx, by, 18, 15, '', { size: 7.5 })) bagOf(state).confirm = { tab, entry };
+    let bx = x + w - (label ? 50 : 6);
+    if (label && button(ui, bx, by, 44, 15, label, { primary: true, size: 7.5 })) activate(state, world, tab, index);
+    if (tab !== 'cash') {
+      bx -= 21;
+      if (button(ui, bx, by, 18, 15, '', { size: 7.5 })) askDrop(world, bagOf(state), tab, index);
+      icon(ctx, 'ground', bx + 9, by + 6.5, 9, THEMES.peach.dark);
+      if (hover(ui, bx, by, 18, 15)) tooltip(ui, [{ text: 'Drop on the ground', bold: true }, { text: 'Or drag it out of the bag. X picks it back up.', size: 8, color: COLORS.muted }]);
+    }
+    bx -= 21;
+    if (button(ui, bx, by, 18, 15, '', { size: 7.5 })) Object.assign(bagOf(state), { confirm: { tab, entry }, dropAsk: null });
     icon(ctx, 'trash', bx + 9, by + 6.5, 9, COLORS.muted);
     if (hover(ui, bx, by, 18, 15)) tooltip(ui, [{ text: 'Throw away', bold: true }, { text: 'You will be asked first.', size: 8, color: COLORS.muted }]);
-    if (label && button(ui, x + w - 50, by, 44, 15, label, { primary: true, size: 7.5 })) activate(state, world, tab, index);
   }
 }
 

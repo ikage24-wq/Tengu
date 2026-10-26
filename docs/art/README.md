@@ -149,6 +149,9 @@ carry an improvement across every part of the game it applies to.
   level in the corners, and a greyed ghost of what goes in an empty slot. One badge per cell in
   the top-left corner, most important first: NEW, wanted by a quest, the throwing set in use,
   its hotkey. Throwing things away always asks first.
+- Dropping items: drag one out of the bag over the world (or press the drop button) and it pops
+  out in front of the hero as loot. A stack asks how many first. Your own drops only come back
+  with X, never with auto-loot, and Cash items can't be dropped (`world.js` `dropItem`).
 - Item windows show the hovered item in a detail strip (big icon, stats against what's worn,
   the action button) instead of a tooltip over the grid; hovering gear tries it on the hero and
   lights the slot it goes in, and items new since the bag last closed wear a NEW mark

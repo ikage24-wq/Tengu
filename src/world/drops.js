@@ -82,6 +82,11 @@ export function spawnDrops(loot, x, y) {
   }));
 }
 
+// An item the player drops from their bag: it pops out in front of them, a little forward.
+export function dropFromHero(item, x, y, facing) {
+  return { uid: nextUid++, kind: 'item', ...item, dropped: true, x: x + facing * 14, y: y - 18, vy: -200, landed: false, age: 0 };
+}
+
 export function updateDrops(drops, map, dt) {
   const surfaces = surfacesOf(map);
   for (const d of drops) {
@@ -104,12 +109,13 @@ export function updateDrops(drops, map, dt) {
   return drops.filter((d) => d.age < LIFETIME);
 }
 
-// The nearest landed drop within reach of the player's feet, or null.
-export function dropInReach(drops, body) {
+// The nearest landed drop within reach of the player's feet, or null. Things the player dropped
+// themselves only come back with a real press of the loot key (`manual`), never by auto-loot.
+export function dropInReach(drops, body, manual = true) {
   let best = null;
   let bestDist = Infinity;
   for (const d of drops) {
-    if (!d.landed) continue;
+    if (!d.landed || (d.dropped && !manual)) continue;
     const dist = Math.abs(d.x - body.x) + Math.abs(d.y - body.y) * 0.5;
     if (dist <= PICKUP_RANGE && dist < bestDist) {
       best = d;

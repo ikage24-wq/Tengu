@@ -13,7 +13,7 @@ import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
-import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
+import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
 import { tickMelee } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
@@ -134,6 +134,34 @@ export function travelTo(world, townId) {
 
 // ---------- Actions the UI can trigger ----------
 
+// Drops `qty` of the bag item in cell `index` of a tab onto the ground in front of the hero, where
+// it lies like any loot (and vanishes the same way if left). Cash items are bound to you and
+// can't be dropped. Returns true when something dropped.
+export function dropItem(world, tab, index, qty = Infinity) {
+  const char = world.char;
+  const list = char.inventory[tab];
+  const entry = list?.[index];
+  if (!entry || world.dead) return false;
+  if (tab === 'cash') {
+    world.log("Cash items are yours to keep: they can't be dropped.", '#ffb3c6');
+    return false;
+  }
+  let item;
+  if (entry.uid != null) {
+    list.splice(index, 1);
+    item = { inst: entry };
+  } else {
+    const n = Math.max(1, Math.min(entry.qty, Math.floor(qty)));
+    entry.qty -= n;
+    if (entry.qty <= 0) list.splice(index, 1);
+    item = { id: entry.id, qty: n };
+  }
+  const b = world.body;
+  world.drops.push(dropFromHero(item, b.x, b.y, b.facing ?? 1));
+  world.log(`Dropped ${itemName(item.inst ?? item.id)}${item.qty > 1 ? ` x${item.qty}` : ''}.`, '#d4cbe8');
+  return true;
+}
+
 export function useItem(world, id) {
   const def = ITEMS[id];
   if (!def) return false;
@@ -159,8 +187,8 @@ export function respawn(world) {
   world.log(loss > 0 ? `You wake up in town. Lost ${loss} EXP.` : 'You wake up in town.', '#ffb3c6');
 }
 
-function pickUp(world) {
-  const d = dropInReach(world.drops, world.body);
+function pickUp(world, manual = true) {
+  const d = dropInReach(world.drops, world.body, manual);
   if (!d) return false;
   const char = world.char;
   if (d.kind === 'gold') {
@@ -423,7 +451,7 @@ export function updateWorld(world, dt, input) {
     }
   }
   // Auto-loot (a setting, passed in as world.settings) picks things up without holding X.
-  if ((held.has('KeyX') || world.settings?.autoLoot) && world.lootTimer <= 0 && pickUp(world)) world.lootTimer = 0.12;
+  if ((held.has('KeyX') || world.settings?.autoLoot) && world.lootTimer <= 0 && pickUp(world, held.has('KeyX'))) world.lootTimer = 0.12;
 
   // ----- Melee strikes landing, then queued hits -----
   tickMelee(world, dt);

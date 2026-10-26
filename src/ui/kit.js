@@ -543,6 +543,21 @@ const ICONS = {
     ctx.fillRect(-s * 0.1, -s * 0.06, s * 0.05, s * 0.36);
     ctx.fillRect(s * 0.06, -s * 0.06, s * 0.05, s * 0.36);
   },
+  ground(ctx, s) {
+    // An arrow down onto the ground line: drop it here.
+    ctx.lineWidth = s * 0.16;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.38);
+    ctx.lineTo(0, s * 0.12);
+    ctx.moveTo(-s * 0.22, -s * 0.08);
+    ctx.lineTo(0, s * 0.14);
+    ctx.lineTo(s * 0.22, -s * 0.08);
+    ctx.moveTo(-s * 0.36, s * 0.36);
+    ctx.lineTo(s * 0.36, s * 0.36);
+    ctx.stroke();
+  },
   skull(ctx, s) {
     ctx.beginPath();
     ctx.arc(0, -s * 0.06, s * 0.36, 0, Math.PI * 2);
