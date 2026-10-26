@@ -30,11 +30,14 @@ import mage from './mage.js';
 import thief from './thief.js';
 import casual from './casual.js';
 import fun from './fun.js';
+import starter from './starter.js';
 
-// The four job families, plus the Cash Shop's casual and funny outfit lines (where `t` picks a
+// The four job families, plus the Cash Shop's casual and funny outfit lines and the creator's
+// starter outfits (where `t` picks a
 // design from data/outfits-*.js instead of a tier).
-export const JOB_GEAR = { warrior, archer, mage, thief, casual, fun };
-export const LOOK_FAMILIES = new Set(['casual', 'fun']);
+export const JOB_GEAR = { warrior, archer, mage, thief, casual, fun, starter };
+// Looks, not job gear: no job auras, white trim, no glow. `starter` is the creator's outfits.
+export const LOOK_FAMILIES = new Set(['casual', 'fun', 'starter']);
 
 // Trim metal by tier band: bronze, silver, gold, platinum, then radiant.
 const TRIMS = ['#d9a45a', '#e6ecf6', '#ffd66b', '#f4f8ff', '#fff1a8'];

@@ -129,7 +129,9 @@ export function lookRows(ui, look, tab, x, y, w, { cell = 30, time = 0, gap = 3 
         // Thumbnails show your look with just this one thing swapped in.
         // Expressions play out live; the rest hold still (at a moment clear of a blink).
         // Eye styles are shown on a plain smile, since some expressions close the eyes.
-        thumb(ctx, { ...out, ...(row.key === 'eyeStyle' ? { face: 'smile' } : null), [row.key]: o }, row.thumb, cx, ry, s, row.key === 'face' ? time : 1);
+        // Hair, brow and eye thumbnails show the head bare, so an outfit's hat doesn't hide them.
+        const bare = row.thumb === 'head' || row.thumb === 'brow' || row.thumb === 'face' || row.thumb === 'ears' ? { outfitHat: false } : null;
+        thumb(ctx, { ...out, ...(row.key === 'eyeStyle' ? { face: 'smile' } : null), ...bare, [row.key]: o }, row.thumb, cx, ry, s, row.key === 'face' ? time : 1);
         if (on) {
           box(ctx, cx, ry, s, s, { fill: null, edge: th.main, r: 6, width: 2 });
           ctx.fillStyle = th.main;

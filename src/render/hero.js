@@ -13,7 +13,9 @@
 
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
-import { pieceOf, JOB_GEAR } from './jobgear/index.js';
+import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
+import { STARTER_OUTFITS, starterHasBack, starterHasHat } from './jobgear/starter.js';
+import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
 import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, snap, sparkLine } from './pixel.js';
@@ -148,32 +150,46 @@ const move = (shapes, dx, dy) => shapes.map((s) => (s ? { ...s, x: s.x + dx + OX
 
 // ---------- Gear lookup ----------
 
-// Outfits picked in the creator: what a character wears where no top or bottom is equipped.
-// Bottoms take a darker shade of the outfit color unless they have their own (denim, khaki).
-export const OUTFITS = {
-  casual: { top: 'tee', bottom: 'pants' },
-  sporty: { top: 'stripes', bottom: 'shorts' },
-  hoodie: { top: 'hoodie', bottom: 'jeans', bottomColor: '#6f8fcf' },
-  jacket: { top: 'jacket', bottom: 'cargo', bottomColor: '#9aa07a' },
-  school: { top: 'blazer', bottom: 'skirt' },
-  sailor: { top: 'sailor', bottom: 'skirt', bottomColor: '#5b6fc4' },
-  sweater: { top: 'sweater', bottom: 'longskirt' },
-  overalls: { top: 'overalls', bottom: 'pants' },
-  sundress: { top: 'dress', bottom: 'skirt' },
-  maid: { top: 'maid', bottom: 'skirt' },
-  puffer: { top: 'puffer', bottom: 'jeans', bottomColor: '#6f8fcf' },
-};
-export const OUTFIT_STYLES = Object.keys(OUTFITS);
+// Outfits picked in the creator: what a character wears where no top, bottom, shoes or cape is
+// equipped (drawn by jobgear/starter.js in a palette built from the outfit color).
+export const OUTFIT_STYLES = STARTER_OUTFITS;
+
+// The palette a starter outfit is drawn in: the gear ramp of the picked color, gold trim (so
+// buttons and zips are metal and white stays cloth), an accent from across the color wheel, and
+// the hero's skin for bare shoulders.
+const starterPalettes = new Map();
+function starterPalette(color, skin) {
+  const key = `${color}|${skin}`;
+  let p = starterPalettes.get(key);
+  if (!p) {
+    p = { ...gearPalette('starter', 0, color), trim: '#ffd66b', trimDark: '#e0a52f', trimLight: '#fff0b0', accent: null, glow: null, skin, pop: popOf(color) };
+    starterPalettes.set(key, p);
+  }
+  return p;
+}
+// The accent: a pastel that pairs with the outfit color, the classic way (pink with sky blue,
+// peach with mint, yellow with lavender, green with pink, blue with coral, purple with butter).
+// Whites, greys and near-blacks take pink.
+function popOf(c) {
+  const [h, s, l] = hsl(c);
+  if (s < 0.14 || l > 0.95 || l < 0.12) return '#ff86ab';
+  if (h >= 320 || h < 15) return '#7fbcff';
+  if (h < 48) return '#6fd6bf';
+  if (h < 75) return '#b08cff';
+  if (h < 170) return '#ff8fb6';
+  if (h < 255) return '#ff7a86';
+  return '#ffd36e';
+}
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
-  const preset = OUTFITS[look.outfit] ?? OUTFITS.casual;
-  const piece = (slot, design, color) => {
+  const style = OUTFIT_STYLES.includes(look.outfit) ? look.outfit : 'casual';
+  // Where nothing is equipped, the outfit picked in the creator.
+  const starter = { family: 'starter', design: style, tier: style, color: outfit, pal: starterPalette(outfit, look.skinTone ?? '#fff0e6') };
+  const piece = (slot, fallback) => {
     const inst = gear?.[slot];
-    if (!inst) return design ? { design, color } : null;
-    const def = ITEMS[inst.id];
-    if (!def) return design ? { design, color } : null;
-    return pieceOf(def, inst.variant ?? null);
+    const def = inst ? ITEMS[inst.id] : null;
+    return def ? pieceOf(def, inst.variant ?? null) : fallback;
   };
   const w = gear?.weapon ? ITEMS[gear.weapon.id] : null;
   let weapon = w ? { type: w.weaponType, color: (gear.weapon.variant && variantsFor(w)?.[gear.weapon.variant]?.main) || w.color, tier: w.tier, theme: w.theme ?? null, element: w.element ?? null, rarity: gear.weapon.rarity ?? 0, variant: gear.weapon.variant ?? null } : null;
@@ -188,11 +204,13 @@ function resolveGear(look, gear) {
     weapon = { ...weapon, tier: cover.theme ? 21 : cover.tier, theme: cover.theme ?? null, element: cover.theme ?? null, color, variant: v };
   }
   return {
-    top: piece('top', preset.top, outfit),
-    bottom: piece('bottom', preset.bottom, preset.bottomColor ?? shade(outfit, -22)),
-    shoes: piece('shoes', 'sneakers', '#fffaf0'),
-    hat: piece('hat', null),
-    cape: piece('cape', null),
+    top: piece('top', starter),
+    bottom: piece('bottom', starter),
+    shoes: piece('shoes', starter),
+    // The outfit's own hat or glasses, unless the look asks for a bare head (the creator's
+    // hairstyle thumbnails) or a real hat is equipped.
+    hat: piece('hat', starterHasHat(style) && look.outfitHat !== false ? starter : null),
+    cape: piece('cape', starterHasBack(style) ? starter : null),
     gloves: piece('gloves', null),
     earring: piece('earring', null),
     weapon,

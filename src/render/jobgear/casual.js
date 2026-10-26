@@ -54,6 +54,9 @@ function frill(x0, x1, y0, x2, x3, y1, n, d, c) {
   });
   return T([[x0, y0], [x1, y0], ...hem], c);
 }
+// Shared with the creator's outfits (starter.js).
+export { hoop, frill, heart, flower, diamond, dots, dome };
+
 // A skirt from the waist to `len`, flaring `fl` past the hips, its hem swung by sw.
 const skirtPts = (len, fl, sw) => [[10, 34.2], [21.2, 34.2], [21.2 + fl + sw, len], [10 - fl + sw, len]];
 const pleats = (len, fl, sw, c, xs = [12.2, 14.6, 17, 19.4]) => xs.map((x) => F(limb(x, 35.6, x + (x - MID) * (fl / 6) + sw, len - 0.4, 0.5, 0.7, c)));
