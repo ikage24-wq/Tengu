@@ -27,7 +27,7 @@ export const NPCS = {
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
     shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', 'star_pebble', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
     // Job gear for your own job (a Novice sees every job's starter set), by level.
-    gear: [5, 10],
+    stockLevels: [5, 10],
     quests: ['snail_trouble'],
   },
   lulu: {
@@ -69,7 +69,7 @@ export const NPCS = {
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
     greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', 'star_steel', 'star_mint', ...arms(10, 30, 'sword', 'axe', 'spear'), 'ear_15', 'ear_20', 'ear_25'],
-    gear: [10, 30],
+    stockLevels: [10, 30],
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
@@ -77,7 +77,7 @@ export const NPCS = {
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
     greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
     shop: ['blue_potion', 'mana_elixir', 'red_potion', 'orange_potion', 'return_scroll', ...arms(25, 50, 'wand', 'staff'), 'ear_30', 'ear_35', 'ear_40', 'ear_45', 'ear_50'],
-    gear: [30, 50],
+    stockLevels: [30, 50],
   },
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
@@ -104,7 +104,7 @@ export const NPCS = {
       ...arms(15, 40, 'bow', 'crossbow', 'dagger', 'gauntlet'),
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
-    gear: [15, 40],
+    stockLevels: [15, 40],
     quests: ['tusk_trader'],
   },
 };
@@ -116,9 +116,9 @@ export function shopStock(npc, char) {
   const job = JOBS[char.job];
   const usable = (id) => ITEMS[id].slot !== 'weapon' || char.job === 'novice' || job.family === 'gm' || job.weapons.includes(ITEMS[id].weaponType);
   const out = (npc.shop ?? []).filter(usable);
-  if (!npc.gear) return out;
+  if (!npc.stockLevels) return out;
   const families = GEAR_FAMILIES.includes(job.family) ? [job.family] : GEAR_FAMILIES;
-  for (let L = npc.gear[0]; L <= npc.gear[1]; L += 5) {
+  for (let L = npc.stockLevels[0]; L <= npc.stockLevels[1]; L += 5) {
     for (const family of families) {
       if (char.job === 'novice' && L > 5) continue;
       for (const slot of JOB_SLOTS) out.push(jobGearId(family, slot, L));

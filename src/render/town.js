@@ -7,7 +7,7 @@ import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, shade, snap, footShadow, slopeAt } from './pixel.js';
 import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted, wallShade, beam, gable } from './propkit.js';
-import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
+import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt, hitsLedge } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
 import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
@@ -431,6 +431,8 @@ export function drawStreet(ctx, map, cam, width, time) {
       const seed = hash(wx * 0.13 + map.width);
       const kind = pick(kinds, seed);
       const s = kind === 'house' ? houseArt(seed) : kind === 'adobe' ? adobeArt(seed) : kind === 'tent' ? tentArt(pick(['#e0504d', '#ffab5c', '#5fb8d8'], seed)) : kind === 'treehouse' ? treehouseArt(seed) : mushHouseArt(seed);
+      // Never under a ledge it would run up into (a roof or cap through the planks).
+      if (hitsLedge(map, wx, s.w, groundAt(map, wx), s.h)) continue;
       const hy = ground(wx);
       place(ctx, s, snap(x), hy);
       if (kind === 'house' || kind === 'adobe') chimneySmoke(ctx, x + (kind === 'house' ? 17 : -24), hy - (kind === 'house' ? 84 : 46), time, seed);

@@ -85,7 +85,7 @@ export function drawElementAura(ctx, element, top, base, time, s) {
       for (let i = 0; i < 7; i++) {
         const k = (time * 0.8 + i / 7) % 1;
         ctx.globalAlpha = 1 - k;
-        ctx.fillStyle = HEAT[i % 3];
+        ctx.fillStyle = ELEMENTS.fire.sparks[i % 3];
         ctx.fillRect(Math.round(Math.sin(time * 3 + i * 1.7) * 7 * s), Math.round(base - ((i / 7) * len + k * 20 * s)), s, s);
       }
       break;

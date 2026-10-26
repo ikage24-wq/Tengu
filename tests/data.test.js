@@ -155,3 +155,13 @@ test('every skill plays a move the hero knows how to draw', async () => {
     assert.ok(MOVES[s.anim], `${s.id} plays "${s.anim}", which exists`);
   }
 });
+
+test('NPCs wear real gear, and shops list their job-gear levels apart from it', () => {
+  for (const npc of Object.values(NPCS)) {
+    if (npc.gear) {
+      assert.ok(!Array.isArray(npc.gear) && typeof npc.gear === 'object', `${npc.id} wears gear by slot`);
+      for (const [slot, g] of Object.entries(npc.gear)) assert.ok(ITEMS[g.id], `${npc.id} ${slot}: ${g.id} exists`);
+    }
+    if (npc.stockLevels) assert.ok(Array.isArray(npc.stockLevels) && npc.stockLevels[0] <= npc.stockLevels[1], `${npc.id} stock levels`);
+  }
+});

@@ -1336,16 +1336,92 @@ const BUILDINGS = {
   treehouse: { w: 64, art: (seed) => treehouseArt(seed) },
   windmill: { w: 60, art: (seed, time) => windmillArt(Math.floor(windTravel(time) * 4 + time + seed * 8) % 8) },
 };
-function drawDeco(ctx, map, cam, width, time, onLedges) {
-  for (const [kind, wx, seed = 0, wy] of map.deco ?? []) {
-    if ((wy != null) !== onLedges) continue;
+// A landmark or house standing under a ledge must not run up into it: it reads as poking
+// through. Where one would, it's set back a plane instead (`behind`): drawn before the ground,
+// washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
+// Waterfalls pour off a ledge and cloud pillars hold one up, on purpose.
+const MEETS_LEDGE = new Set(['waterfall', 'cloudpillar']);
+const decoSize = (kind, seed) => {
+  const b = BUILDINGS[kind];
+  if (b) {
+    const s = b.art(seed, 0);
+    return [s.w, s.h];
+  }
+  const l = LANDMARKS[kind];
+  return l ? [l.w, l.h] : [0, 0];
+};
+// Whether something w wide and h tall, standing with its base at (x, foot), runs into a ledge
+// above it (the one it stands on doesn't count). Exported for the town's street houses.
+export function hitsLedge(map, x, w, foot, h) {
+  return map.platforms.some((p) => foot > p.y + 15 && x + w * 0.47 > p.x - 2 && x - w * 0.47 < p.x + p.w + 2 && foot - h < p.y + (p.thick ?? 26) + 4);
+}
+const setBackCache = new WeakMap();
+function setBack(map) {
+  let set = setBackCache.get(map);
+  if (!set) {
+    set = new Set((map.deco ?? []).filter(([kind, wx, seed = 0, wy]) => {
+      if (MEETS_LEDGE.has(kind)) return false;
+      const [w, h] = decoSize(kind, seed);
+      return hitsLedge(map, wx, w, wy ?? groundAt(map, wx), h);
+    }));
+    setBackCache.set(map, set);
+  }
+  return set;
+}
+
+// Draws with `draw(g)` into a scratch canvas at the screen's own resolution, washes everything
+// it drew toward `color`, and lays it back down: a whole landmark (glows and all) set back.
+let hazeCanvas = null;
+function hazed(ctx, left, top, w, h, color, k, draw) {
+  const t = ctx.getTransform();
+  const sx = Math.hypot(t.a, t.b);
+  const sy = Math.hypot(t.c, t.d);
+  const cw = Math.ceil(w * sx);
+  const ch = Math.ceil(h * sy);
+  if (cw <= 0 || ch <= 0) return;
+  hazeCanvas ??= document.createElement('canvas');
+  if (hazeCanvas.width < cw) hazeCanvas.width = cw;
+  if (hazeCanvas.height < ch) hazeCanvas.height = ch;
+  const g = hazeCanvas.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, cw, ch);
+  g.setTransform(sx, 0, 0, sy, -left * sx, -top * sy);
+  g.imageSmoothingEnabled = false;
+  draw(g);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  g.globalAlpha = k;
+  g.fillStyle = color;
+  g.fillRect(0, 0, cw, ch);
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(hazeCanvas, 0, 0, cw, ch, left, top, cw / sx, ch / sy);
+  ctx.restore();
+}
+
+// `pass`: 'behind' (set-back pieces, before the ground), 'ground' (the rest standing on the
+// ground), or 'ledges' (the rest standing on ledges, after the ledges).
+function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
+  const back = setBack(map);
+  for (const entry of map.deco ?? []) {
+    const [kind, wx, seed = 0, wy] = entry;
+    if (back.has(entry) ? pass !== 'behind' : pass !== (wy != null ? 'ledges' : 'ground')) continue;
     const b = BUILDINGS[kind];
     const half = (b?.w ?? LANDMARKS[kind]?.w ?? 120) / 2 + 160;
     const x = wx - cam.x;
     if (x + half < 0 || x - half > width) continue;
     const y = snap((wy ?? groundAt(map, wx)) - cam.y);
-    if (b) place(ctx, b.art(seed, time), snap(x), y + 2);
-    else drawLandmark(ctx, kind, snap(x), y, time, seed, wx, map.theme);
+    const draw = (g) => {
+      if (b) place(g, b.art(seed, time), snap(x), y + 2);
+      else drawLandmark(g, kind, snap(x), y, time, seed, wx, map.theme);
+    };
+    if (pass !== 'behind') draw(ctx);
+    else {
+      const [w, h] = decoSize(kind, seed);
+      hazed(ctx, x - w / 2 - 60, y - h - 50, w + 120, h + 120, air, 0.3, draw);
+    }
   }
 }
 
@@ -2106,12 +2182,13 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   };
   backdrop(ctx);
   drawDrift(ctx, t, cam, width, height, time, 'back');
+  drawDeco(ctx, map, cam, width, time, 'behind', air);
   drawTerrain(ctx, theme, map, cam, width, height, time);
-  drawDeco(ctx, map, cam, width, time, false);
+  drawDeco(ctx, map, cam, width, time, 'ground');
   // Town buildings stand on the street, behind ledges and props.
   street?.();
   drawLedges(ctx, t, theme, map, cam, width, height, time);
-  drawDeco(ctx, map, cam, width, time, true);
+  drawDeco(ctx, map, cam, width, time, 'ledges');
   drawProps(ctx, t, map, cam, width, time);
   drawRopes(ctx, map, cam);
   drawPortals(ctx, map, cam, time, nearPortalId);

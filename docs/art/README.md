@@ -122,6 +122,10 @@ carry an improvement across every part of the game it applies to.
 - Far silhouettes: flat, no outline, a lit rim on the upper-left by filling the shape in the rim
   colour and then its body shifted 2 px down-right (`litFill` in scenery.js); behind them one still
   simpler ridge, almost the sky's colour. Water takes a per-map ramp (`WATERS` in landmarks.js).
+- Nothing standing on the ground may run up into a ledge above it: it reads as poking through.
+  Place landmarks clear of ledges; where a tall one can't fit, it's set back a plane automatically
+  (drawn before the ground, washed toward the sky; `scenery.js` `setBack`), and town street houses
+  skip slots under ledges (`hitsLedge`). Waterfalls and cloud pillars meet their ledge on purpose.
 - Far layers fade toward the sky colour and get paler; vertical parallax stays tiny (about 0.05);
   a foreground layer in front of the characters adds depth; varied tiles, never one repeated tile.
 - Bag icons of near-black gear take a monotone value lift (`icons.js` `liftTone`, icons only):
@@ -154,3 +158,6 @@ the repo, since they write their images to the current directory:
 - `maidshot.cjs <map> <x> key1,key2 <out.png>` (`GAP=` env for spacing): spawn designs in a map.
 - `mapsmobs.cjs <outdir> <tag> map1,map2`: in-game shots of maps with their monsters.
 - `gaitgif.cjs <map> <x> x [clip]`: frames for a walking GIF into `gf/`.
+- `ledgeclip.cjs [map1,map2]`: lists scenery that runs up into a ledge from below (houses,
+  landmarks, props in the play layer). Run it after placing scenery or ledges; it should print
+  "no clipping".
