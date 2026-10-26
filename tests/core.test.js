@@ -6,7 +6,7 @@ import { physicalRange, magicRange, hitChance, levelGapFactor, deathExpLoss, rol
 import {
   createCharacter, gainExp, advanceJob, autoAssignAp, learnSkill, equipFromBag, stats, usePotion, applyDeath,
 } from '../src/core/character.js';
-import { addItem, countItem, removeItem, STACK_MAX } from '../src/core/inventory.js';
+import { addItem, countItem, removeItem, STACK_MAX, sortTab, createInventory } from '../src/core/inventory.js';
 import { makeEquip, applyScroll } from '../src/core/items.js';
 import { ITEMS } from '../src/data/items.js';
 
@@ -155,4 +155,24 @@ test('death costs some EXP but never a level', () => {
   assert.equal(c.level, lvl);
   assert.equal(c.exp, 0);
   assert.ok(deathExpLoss(10, 4) > deathExpLoss(10, 100));
+});
+
+test('sorting a bag tab merges split stacks, orders gear by slot and level, and keeps star sets in order', () => {
+  const inv = createInventory();
+  inv.use.push({ id: 'blue_potion', qty: 5 }, { id: 'red_potion', qty: 150 }, { id: 'red_potion', qty: 120 }, { id: 'blue_potion', qty: 3 });
+  const stars = Object.values(ITEMS).filter((d) => d.star).slice(0, 2);
+  inv.use.push({ id: stars[1].id, qty: 10 }, { id: stars[0].id, qty: 4 });
+  sortTab(inv, 'use');
+  assert.equal(countItem(inv, 'red_potion'), 270);
+  assert.equal(countItem(inv, 'blue_potion'), 8);
+  assert.deepEqual(inv.use.slice(0, 2).map((e) => e.id), [stars[1].id, stars[0].id]);
+  assert.deepEqual(inv.use.filter((e) => e.id === 'red_potion').map((e) => e.qty), [STACK_MAX, 70]);
+  assert.equal(inv.use.filter((e) => e.id === 'blue_potion').length, 1);
+
+  const gear = Object.values(ITEMS).filter((d) => d.type === 'equip');
+  const hat = gear.filter((d) => d.slot === 'hat').sort((a, b) => a.reqLevel - b.reqLevel);
+  const weapon = gear.find((d) => d.slot === 'weapon');
+  inv.equip.push(makeEquip(hat[0].id), makeEquip(weapon.id), makeEquip(hat.at(-1).id));
+  sortTab(inv, 'equip');
+  assert.deepEqual(inv.equip.map((e) => e.id), [weapon.id, hat.at(-1).id, hat[0].id]);
 });

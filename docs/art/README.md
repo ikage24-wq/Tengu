@@ -143,6 +143,10 @@ carry an improvement across every part of the game it applies to.
 - HUD cards (the quest tracker) can be dragged by their header, folded and closed, and remember
   where they were left (`settings.trackerPos`); whatever closes them names where to turn them
   back on. Windows that list things pair a list with a detail pane, and say where to go next.
+- Item windows show the hovered item in a detail strip (big icon, stats against what's worn,
+  the action button) instead of a tooltip over the grid; hovering gear tries it on the hero and
+  lights the slot it goes in, and items new since the bag last closed wear a NEW mark
+  (`ui/bag.js`).
 - Text over the scene always has an outline or backing; the world dims behind windows; bars give
   feedback (lingering lost chunk, heal flash, low-HP pulse).
 - Props (landmarks, buildings, scenery) use `src/render/propkit.js`: one world light from the upper

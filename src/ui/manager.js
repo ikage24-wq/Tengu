@@ -3,7 +3,8 @@
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { HOTKEYS } from '../core/character.js';
-import { bagWindow, statsWindow, skillsWindow } from './windows.js';
+import { statsWindow, skillsWindow } from './windows.js';
+import { bagWindow } from './bag.js';
 import { questsWindow } from './quests.js';
 import { npcWindow, deathWindow } from './npc.js';
 import { drawHud } from './hud.js';
@@ -19,7 +20,7 @@ import { isGm } from '../world/gm.js';
 export function createUiState() {
   return {
     windows: {
-      bag: { x: 370, y: 60, open: false, tab: 0, sel: -1, theme: 'peach', icon: 'bag' },
+      bag: { x: 300, y: 56, open: false, tab: 0, sel: -1, theme: 'peach', icon: 'bag' },
       stats: { x: 8, y: 66, open: false, theme: 'pink', icon: 'star' },
       skills: { x: 180, y: 52, open: false, theme: 'lavender', icon: 'book' },
       quests: { x: 300, y: 52, open: false, theme: 'mint', icon: 'scroll' },

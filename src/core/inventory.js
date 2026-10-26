@@ -87,3 +87,48 @@ export function useStars(char, n = 1) {
 export function rechargePrice(def, qty) {
   return Math.ceil(((def.stack - qty) * def.price) / def.stack);
 }
+
+// Tidies a tab: partial stacks of the same item merge, then items line up by kind. Equipment
+// goes by slot, then highest level and rarity first; stackables follow the catalogue's order.
+// Throwing-star sets keep their own order (the first one is the set being thrown) and never
+// merge, since each set is recharged on its own.
+const SLOT_ORDER = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
+let catalogue = null;
+export function sortTab(inv, tab) {
+  const list = inv[tab];
+  if (!list) return;
+  catalogue ??= new Map(Object.keys(ITEMS).map((id, i) => [id, i]));
+  if (tab === 'use' || tab === 'etc') {
+    const merged = [];
+    for (const e of list) {
+      const def = ITEMS[e.id];
+      if (def.star) {
+        merged.push(e);
+        continue;
+      }
+      const max = def.stack ?? STACK_MAX;
+      let left = e.qty;
+      for (const m of merged) {
+        if (m.id !== e.id || m.qty >= max) continue;
+        const take = Math.min(left, max - m.qty);
+        m.qty += take;
+        left -= take;
+        if (!left) break;
+      }
+      if (left) merged.push({ ...e, qty: left });
+    }
+    list.splice(0, list.length, ...merged);
+  }
+  const rank = (e) => {
+    const def = ITEMS[e.id];
+    if (tab === 'equip' || tab === 'cash') return [SLOT_ORDER.indexOf(def.slot), -(def.reqLevel ?? 0), -(e.rarity ?? 0), catalogue.get(e.id)];
+    // Stars first (as a block, in their own order), then everything else by catalogue order.
+    return def.star ? [0, 0] : [1, catalogue.get(e.id)];
+  };
+  const keyed = list.map((e, i) => ({ e, k: [...rank(e), i] }));
+  keyed.sort((a, b) => {
+    for (let j = 0; j < a.k.length; j++) if (a.k[j] !== b.k[j]) return a.k[j] - b.k[j];
+    return 0;
+  });
+  list.splice(0, list.length, ...keyed.map((x) => x.e));
+}
