@@ -34,3 +34,8 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   Tortoise tail a stub.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
 - Thunder Hawk has no skill that summons it.
+- Props: town buildings in `town.js` (stalls, halls, kiosk, office, fountain, adobe, hanging sign —
+  the sign should swing with the wind) and dungeon props in `dungeon.js` (glowcap, cage, seal,
+  chest, key) only got automatic shading; backdrop far/mid silhouettes not redone; waterfall and
+  pond water colours still old; check rectangle-heavy props for hard shadow strips from the
+  automatic shading (clouds needed hand shading). Shared prop kit: `src/render/propkit.js`.
