@@ -164,45 +164,75 @@ export function drawChatBar(ui, chat, world) {
   if (!chat.typing) text(ctx, 'Say something... (Enter to send, Esc to cancel, /help)', 14 + nameW, y + 11, { size: 8, color: COLORS.muted });
 }
 
-// A rounded speech bubble with a little tail, centered over (x, y).
+// Speech bubbles are queued while the scene draws (you, NPCs, the crowd, your party) and laid out
+// together at the end of the frame (flushBubbles), so bubbles from people standing close stack
+// up instead of covering each other: the one nearest its speaker stays, the others move up, and
+// their tails stretch down to whoever is talking.
+const queued = [];
+
+// Queues a rounded speech bubble with a little tail, centered over (x, y).
 export function drawBubble(ctx, x, y, words, alpha = 1) {
+  queued.push({ x, y, words, alpha });
+}
+
+export function flushBubbles(ctx) {
+  if (!queued.length) return;
   ctx.save();
-  ctx.globalAlpha = alpha;
   ctx.font = font(8, true);
-  // Wrap to a comfortable width.
-  const lines = [];
-  let line = '';
-  for (const w of words.split(' ')) {
-    const next = line ? `${line} ${w}` : w;
-    if (ctx.measureText(next).width > 110 && line) {
-      lines.push(line);
-      line = w;
-    } else line = next;
+  // Wrap each to a comfortable width and keep it on screen.
+  const list = queued.map((b) => {
+    const lines = [];
+    let line = '';
+    for (const w of b.words.split(' ')) {
+      const next = line ? `${line} ${w}` : w;
+      if (ctx.measureText(next).width > 110 && line) {
+        lines.push(line);
+        line = w;
+      } else line = next;
+    }
+    lines.push(line);
+    const w = Math.min(124, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 12);
+    const h = lines.length * 10 + 6;
+    return { ...b, lines, w, h, bx: Math.round(Math.max(4, Math.min(636 - w, b.x - w / 2))), by: Math.round(b.y - h - 5) };
+  });
+  queued.length = 0;
+  // Lowest first; each later bubble moves up until it's clear of the ones already placed.
+  list.sort((a, b) => b.by - a.by);
+  const placed = [];
+  for (const b of list) {
+    for (let guard = 0; guard < 8; guard++) {
+      const hit = placed.find((o) => b.bx < o.bx + o.w + 2 && o.bx < b.bx + b.w + 2 && b.by < o.by + o.h + 3 && o.by < b.by + b.h + 3);
+      if (!hit) break;
+      b.by = hit.by - b.h - 4;
+    }
+    placed.push(b);
   }
-  lines.push(line);
-  const w = Math.min(124, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 12);
-  const h = lines.length * 10 + 6;
-  // Keep the bubble on screen; the tail still points at the speaker.
-  const bx = Math.round(Math.max(4, Math.min(636 - w, x - w / 2)));
-  const by = Math.round(y - h - 5);
+  for (const b of placed) paintBubble(ctx, b);
+  ctx.restore();
+}
+
+function paintBubble(ctx, { x, y, lines, w, h, bx, by, alpha }) {
+  ctx.globalAlpha = alpha;
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#c9a6ff';
   ctx.lineWidth = 1;
+  // The tail reaches down to the speaker; a bubble that moved up gets a longer, slimmer one.
+  const tip = Math.max(by + h + 5, y - 4);
+  const half = tip - (by + h) > 8 ? 2.5 : 4;
+  ctx.beginPath();
+  ctx.moveTo(x - half, by + h - 1);
+  ctx.lineTo(x, tip);
+  ctx.lineTo(x + half, by + h - 1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
   roundRect(ctx, bx + 0.5, by + 0.5, w, h, 6);
   ctx.fill();
   ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x - 4, by + h);
-  ctx.lineTo(x, by + h + 5);
-  ctx.lineTo(x + 4, by + h);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(x - 4, by + h + 0.5);
-  ctx.lineTo(x, by + h + 5.5);
-  ctx.lineTo(x + 4, by + h + 0.5);
-  ctx.stroke();
+  // Cover the tail's seam with the bubble's own white.
+  ctx.fillRect(x - half + 1, by + h - 1.5, half * 2 - 2, 2.5);
   ctx.fillStyle = COLORS.ink;
   ctx.textAlign = 'center';
   lines.forEach((l, i) => ctx.fillText(l, bx + w / 2, by + 11 + i * 10));
-  ctx.restore();
+  ctx.textAlign = 'left';
 }

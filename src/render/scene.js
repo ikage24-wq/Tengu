@@ -16,7 +16,7 @@ import { text, box, COLORS } from '../ui/kit.js';
 import { createAnim, stepAnim } from './animator.js';
 import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura, landing } from './particles.js';
 import { ITEMS } from '../data/items.js';
-import { drawBubble } from '../ui/chat.js';
+import { drawBubble, flushBubbles } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
 import { botsIn } from '../world/bots.js';
@@ -266,6 +266,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (settings.filter === 'dreamy') drawDreamy(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
+  // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
+  flushBubbles(ctx);
   // HD: a new map fades in from a soft glow instead of cutting straight in.
   const enter = time - (feel.enteredAt ?? -9);
   if (gfx.hd && enter < 0.5) {
