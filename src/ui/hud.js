@@ -379,7 +379,7 @@ function drawPortrait(ctx, char, world, { hurt = false, low = false, cheer = fal
   bg.addColorStop(1, low ? '#ff9fb4' : '#ffc2df');
   ctx.fillStyle = bg;
   ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-  const face = cheer ? 'excited' : low ? 'pout' : char.appearance.face;
+  const face = cheer ? 'excited' : low ? 'nervous' : char.appearance.face;
   const look = face === char.appearance.face ? char.appearance : { ...char.appearance, face };
   drawHero(ctx, look, null, cx, cy + 27, { pose: 'idle', time: world.now, scale: 1.25, facing: 1, hurt });
   ctx.restore();

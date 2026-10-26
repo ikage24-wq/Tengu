@@ -36,7 +36,7 @@ export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
 export const PICKABLE_EYE_STYLES = ['sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
-export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited'];
+export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited', 'love', 'sleepy', 'sad', 'shock', 'playful', 'proud', 'dizzy', 'nervous', 'giggle', 'determined'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
 // squashed into a small, slim chibi body under the same big head: heights shrink to KY and (for
@@ -289,29 +289,48 @@ const EYE_LOOK = {
 const mirrorAt = (x, y) => [-x, y];
 
 // One eye at screen x `ex`; `out` is -1 for the eye on the back side, 1 for the facing side.
-// mode: 'open', 'blink', 'hurt', 'happy' (closed smile), 'dead'. `lid` (0-1) lowers the upper
-// lid, `glance` looks aside, `shine` swaps in sparkles, `cross` pulls the inner lid down (angry).
-function eye(ex, out, style, color, mode, look, lid = 0, glance = 0, shine = false, cross = 0) {
+// mode: 'open', 'half' (mid-blink), 'blink', 'hurt' (> <), 'happy' (closed smile), 'dead'. The
+// face frame `f` acts on it: `lid` (0-1) lowers the upper lid, `glance` looks aside and `look`
+// up or down, `shine` swaps in sparkles, `wide` pops the eye open with a shrunken iris (shock),
+// `heart` turns the pupils to hearts, `spiral` spins them (dizzy), `teary` fills the eye with
+// water. `cross` pulls the inner lid down (angry).
+function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
   const st = EYE_LOOK[style] ?? EYE_LOOK.sparkle;
   const sk = skinRamp(look.skinTone ?? '#fff0e6');
   const hr = hairRamp(look.hairColor ?? '#e9ebfa');
   const closed = mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0);
   const lids = mode === 'blink' ? 'blink' : mode === 'hurt' ? 'squeeze' : mode === 'dead' ? 'dead' : closed ? 'happy' : 'open';
+  const lid = f.lid ?? 0;
   // Iris offset on screen: a touch toward the facing side, more when glancing.
-  const g = 0.3 + 0.55 * glance;
+  const g = 0.3 + 0.55 * (f.glance ?? 0);
+  const gy = f.look === 'down' ? 0.13 : f.look === 'up' ? -0.1 : 0;
+  const wide = f.wide && lids === 'open';
   const x = {
-    lids, open: (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), 0],
-    iris: st.iris * (cross ? 0.9 : 1), pupil: cross ? 0.75 : 1,
+    lids, open: mode === 'half' ? 0.36 : wide ? 1 : (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), gy],
+    iris: st.iris * (cross ? 0.9 : 1) * (wide ? 0.62 : 1), pupil: wide ? 0.4 : cross ? 0.75 : f.heart ? 1.7 : 1,
   };
   const kit = {
     k: 1, chibi: true, skin: sk.base, skinSh: sk.sh1, skinSh2: sk.sh2, lip: sk.lip,
     eye: {
-      iris: color, pupil: shine && !st.pupil ? 'star' : st.pupil, pupilC: mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
+      iris: color, pupil: f.heart ? 'heart' : f.shine && !st.pupil ? 'star' : st.pupil, pupilC: f.heart ? '#ff4f86' : mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
       ink: hr.ink, lashW: 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
-      sparkle: st.sparkle || shine, tilt: st.tilt,
+      sparkle: st.sparkle || f.shine, tilt: st.tilt,
     },
   };
-  return heroineEye(mirrorAt, { cx: -ex, cy: EYE_Y, rx: st.rx, ry: st.ry, o: -out, near: true, tilt: st.tilt }, x, kit);
+  const k = wide ? 1.2 : 1;
+  if (f.spiral && lids === 'open') {
+    // Dizzy: a white eye with a lash-coloured spiral wound into it.
+    const pts = [];
+    for (let a = 0; a < Math.PI * 4.2; a += 0.35) { const rr = 0.25 + a * 0.13; pts.push([ex + out * Math.cos(a + f.spiral) * rr, EYE_Y + Math.sin(a + f.spiral) * rr * 1.15]); }
+    return [F(E(ex, EYE_Y, st.rx, st.ry, '#fffaf7')), stroke(pts, 0.5, hr.ink), arc(ex, EYE_Y, st.rx, st.ry, 200, 340, 0.7, hr.ink)];
+  }
+  const shapes = heroineEye(mirrorAt, { cx: -ex, cy: EYE_Y, rx: st.rx * k, ry: st.ry * k, o: -out, near: true, tilt: st.tilt }, x, kit);
+  if (f.teary && lids === 'open') {
+    // Welling up: a wobbling pool along the lower lid and a second big wet shine.
+    const w = f.teary === 2 ? 0.2 : 0;
+    shapes.push(F(E(ex, EYE_Y + st.ry * 0.62, st.rx * 0.82, 0.62 + w, '#c9ecff')), F(E(ex - 0.5, EYE_Y + st.ry * 0.58, 0.5, 0.28, '#ffffff')), F(E(ex + 0.7 * out, EYE_Y + 0.2, 0.42, 0.42, '#ffffff')));
+  }
+  return shapes;
 }
 
 // A polyline drawn as a run of thin quads.
@@ -434,6 +453,22 @@ function mouthShapes(kind, sk) {
     case 'grit': return [F(R(x - 1.8, MY, 3.6, 1.5, MOUTH)), F(R(x - 1.5, MY + 0.3, 3, 0.9, '#ffffff')), F(R(x - 1.5, MY + 0.7, 3, 0.15, '#d9cde6'))];
     case 'yell': return [F(E(x, MY + 1, 1.8, 1.5, MOUTH)), F(E(x, MY + 1.8, 1, 0.6, '#ff9fb8'))];
     case 'tiny': return [arc(x, MY + 0.2, 0.8, 0.7, 25, 155, 0.6, LIP)];
+    // Talking shapes, cycled syllable by syllable.
+    case 'o': return [F(E(x, MY + 0.9, 0.7, 0.8, MOUTH)), F(E(x, MY + 1.3, 0.35, 0.25, '#ff9fb8'))];
+    case 'ah': return [F(E(x, MY + 1, 1.4, 1.2, MOUTH)), F(E(x, MY + 1.7, 0.8, 0.45, TONGUE))];
+    case 'e': return [F(T([[x - 1.5, MY + 0.2], [x + 1.5, MY + 0.2], [x + 1, MY + 1.1], [x - 1, MY + 1.1]], MOUTH)), F(R(x - 1.2, MY + 0.2, 2.4, 0.4, '#ffffff'))];
+    // A big open laugh, a fang grin, a kiss, a gasp, a frown, a cat's "w", a yawn, a sob.
+    case 'D': return [F(T([[x - 2, MY - 0.2], [x + 2, MY - 0.2], [x + 1.5, MY + 1.4], [x, MY + 2.2], [x - 1.5, MY + 1.4]], MOUTH)), F(E(x, MY + 1.6, 1.1, 0.55, TONGUE))];
+    case 'fang': return [arc(x, MY - 0.2, 1.8, 1.4, 15, 165, 0.7, LIP), F(T([[x + 0.2, MY + 1], [x + 1.2, MY + 0.9], [x + 0.7, MY + 2.1]], '#ffffff'))];
+    case 'kiss': return [arc(x + 0.2, MY - 0.2, 0.9, 0.75, 270, 450, 0.7, LIP), arc(x + 0.2, MY + 1.2, 0.9, 0.75, 270, 450, 0.7, LIP)];
+    case 'gasp': return [F(T([[x, MY - 0.5], [x + 1.2, MY + 1.7], [x - 1.2, MY + 1.7]], MOUTH)), F(E(x, MY + 1.3, 0.5, 0.3, '#ff9fb8'))];
+    case 'frown': return [arc(x, MY + 1.4, 1.2, 1.1, 205, 335, 0.66, LIP)];
+    case 'meow': return [F(E(x, MY + 1, 1.2, 1.1, MOUTH)), F(E(x, MY + 1.5, 0.6, 0.4, '#ff9fb8')), arc(x - 0.8, MY + 0.1, 0.8, 0.8, 10, 170, 0.6, LIP), arc(x + 0.8, MY + 0.1, 0.8, 0.8, 10, 170, 0.6, LIP)];
+    case 'yawn': return [F(E(x, MY + 1.4, 1.2, 1.8, MOUTH)), F(E(x, MY + 2.5, 0.75, 0.55, TONGUE))];
+    case 'sob': case 'sob2': {
+      const w = kind === 'sob2' ? 0.35 : 0;
+      return [F(T([[x - 0.9 - w, MY + 0.1], [x + 0.9 + w, MY + 0.1], [x + 1.7 + w, MY + 1.8], [x - 1.7 - w, MY + 1.8]], MOUTH)), F(E(x, MY + 1.5, 0.9, 0.35, TONGUE))];
+    }
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
 }
@@ -457,6 +492,71 @@ function faceExtras(extra) {
       const big = e === 'spark1';
       // Just clear of the hair's outline, so they read as floating around the head.
       out.push(star(0, 5, big ? 2 : 1.3, '#ffe36b'), star(31.6, 8.6, big ? 1.3 : 2, '#ffe36b'), star(29.2, 1.4, big ? 1.4 : 0.9, '#ffffff'));
+    } else if (e.startsWith('hearts')) {
+      // Little hearts float up from beside the head, each a beat apart, swelling as they rise.
+      const n = Number(e.slice(6)) || 0;
+      const hp = (hx, hy, k) => F(T([[hx, hy + 1.2 * k], [hx - 1.5 * k, hy - 0.1 * k], [hx - 1.2 * k, hy - 1.1 * k], [hx - 0.4 * k, hy - 1.2 * k], [hx, hy - 0.6 * k], [hx + 0.4 * k, hy - 1.2 * k], [hx + 1.2 * k, hy - 1.1 * k], [hx + 1.5 * k, hy - 0.1 * k]], '#ff5f8f'));
+      out.push(hp(0.6 - (n % 2) * 0.3, 8 - n * 1.3, 0.8 + n * 0.12), hp(30.8 + ((n + 1) % 2) * 0.3, 6 - ((n + 2) % 4) * 1.3, 0.8 + ((n + 2) % 4) * 0.12));
+    } else if (e.startsWith('tear')) {
+      // A tear rolls from each outer corner down the cheek; `tears` (no number) streams.
+      for (const side of [-1, 1]) {
+        const tx = FACE_X + (EYE_DX + 1.5) * side;
+        if (e === 'tears') out.push(F(R(tx - 0.45, 20, 0.9, 4.2, '#9fdcff')), F(E(tx, 24.4, 0.8, 0.6, '#9fdcff')));
+        else {
+          const ty = 20.8 + (Number(e.slice(4)) || 0) * 0.9;
+          out.push(F(E(tx, ty, 0.6, 0.8, '#9fdcff')), F(T([[tx - 0.5, ty - 0.3], [tx + 0.5, ty - 0.3], [tx, ty - 1.4]], '#9fdcff')), F(E(tx - 0.2, ty, 0.2, 0.25, '#ffffff')));
+        }
+      }
+    } else if (e.startsWith('zzz')) {
+      // Sleepy z's drifting up and out, bigger as they go.
+      const n = Number(e.slice(3)) || 0;
+      for (let j = 0; j <= Math.min(1, n); j++) {
+        const k = 0.9 + (n - j) * 0.3;
+        const [zx, zy] = [27.6 + (n - j) * 1.6, 3.6 - (n - j) * 2.6];
+        out.push(stroke([[zx - k, zy - k], [zx + k, zy - k]], 0.45, '#8f7cc4'), stroke([[zx + k, zy - k], [zx - k, zy + k]], 0.45, '#8f7cc4'), stroke([[zx - k, zy + k], [zx + k, zy + k]], 0.45, '#8f7cc4'));
+      }
+    } else if (e.startsWith('steam')) {
+      // Huffing: a puff of steam blows out from each side of the head.
+      const n = Number(e.slice(5)) || 0;
+      for (const side of [-1, 1]) {
+        const px = FACE_X + side * (12.5 + n * 0.9);
+        const py = 7 - n * 0.8;
+        out.push(F(E(px, py, 1.2 + n * 0.3, 1 + n * 0.25, '#ffffff')), F(E(px + side * 1.1, py - 0.7, 0.8 + n * 0.2, 0.7 + n * 0.2, '#f1eefb')));
+      }
+    } else if (e.startsWith('bang')) {
+      // A red "!" popping in over the head: it overshoots big, then settles.
+      const k = [0.6, 1.35, 1, 1][Number(e.slice(4)) || 0] ?? 1;
+      const [bx, by] = [28.4, 1.6];
+      out.push(F(T([[bx - 0.6 * k, by - 2.6 * k], [bx + 0.6 * k, by - 2.6 * k], [bx + 0.3 * k, by + 0.5 * k], [bx - 0.3 * k, by + 0.5 * k]], '#ff4d6d')), F(E(bx, by + 1.6 * k, 0.55 * k, 0.55 * k, '#ff4d6d')));
+    } else if (e === 'q') {
+      // A puzzled "?" over the head.
+      const [qx, qy] = [28.6, 0.4];
+      out.push(arc(qx, qy - 0.6, 1.3, 1.2, 190, 400, 0.6, '#8f7cc4'), F(R(qx - 0.3, qy + 0.5, 0.6, 1.2, '#8f7cc4')), F(E(qx, qy + 2.6, 0.4, 0.4, '#8f7cc4')));
+    } else if (e === 'gloom') {
+      // Gloom: blue lines hanging down over the forehead.
+      for (const [gx, gl] of [[-3.4, 3.2], [-1.2, 4.2], [1.2, 3.6], [3.4, 2.8]]) out.push(F(R(FACE_X + gx - 0.25, 10.4, 0.5, gl, '#9a8fd8')));
+    } else if (e.startsWith('orbit')) {
+      // Knocked silly: three little stars circling over the head.
+      const n = Number(e.slice(5)) || 0;
+      for (let j = 0; j < 3; j++) {
+        const a = ((n / 8) + j / 3) * Math.PI * 2;
+        const back = Math.sin(a) < 0;
+        out.push(star(FACE_X + Math.cos(a) * 8, 3.4 + Math.sin(a) * 1.6, back ? 0.9 : 1.4, back ? '#ffe9a6' : '#ffe36b'));
+      }
+    } else if (e === 'drop') {
+      // One big comic sweat drop on the side of the head.
+      const [sx, sy] = [27.2, 7.6];
+      out.push(F(E(sx, sy, 1.5, 1.8, '#9fdcff')), F(T([[sx - 1.2, sy - 0.7], [sx + 1.2, sy - 0.7], [sx, sy - 3.6]], '#9fdcff')), F(E(sx - 0.5, sy - 0.1, 0.4, 0.6, '#ffffff')));
+    } else if (e === 'shock') {
+      // Shock lines flaring out around the head.
+      for (const a of [-160, -130, -50, -20]) {
+        const r = (a * Math.PI) / 180;
+        out.push(stroke([[FACE_X + Math.cos(r) * 13, 10 + Math.sin(r) * 11], [FACE_X + Math.cos(r) * 15.4, 10 + Math.sin(r) * 13]], 0.55, '#ff7b9a'));
+      }
+    } else if (e.startsWith('dots')) {
+      // "..." appearing one dot at a time.
+      const n = Number(e.slice(4)) || 3;
+      for (let j = 0; j < n; j++) out.push(F(E(26.4 + j * 1.6, 1.8, 0.45, 0.45, '#8f7cc4')));
     } else if (e === 'note') {
       // Floating above the head's corner, clear of the hair.
       const [nx, ny] = [30, 1.2];
@@ -517,19 +617,130 @@ export function faceFrame(kind, time) {
     }
     case 'angry': {
       const p = at(1.2);
-      const f = { lid: 0.2, mouth: 'grit', brows: [[-0.2, 0.9], [-0.2, 0.9]], extra: [win(p, 0, 0.5) ? 'veinbig' : 'vein'] };
-      if (win(at(5), 0.6, 0.75)) f.mouth = 'yell';
+      const f = { lid: 0.2, cross: 0.9, mouth: 'grit', brows: [[-0.2, 0.9], [-0.2, 0.9]], extra: [win(p, 0, 0.5) ? 'veinbig' : 'vein'] };
+      // Now and then a huff: a shout and steam blowing from both sides.
+      const huff = at(5);
+      if (win(huff, 0.6, 0.85)) Object.assign(f, { mouth: 'yell', extra: [...f.extra, `steam${Math.min(2, Math.floor((huff - 0.6) * 12))}`] });
       return f;
     }
     case 'excited': {
       const p = at(0.8);
       return { mouth: win(at(2.4), 0.5, 1) ? 'open' : 'grin', shine: true, brows: [[0.8, -0.2], [0.8, -0.2]], extra: [win(p, 0, 0.5) ? 'spark1' : 'spark0'] };
     }
+    case 'love': {
+      // Heart eyes and floating hearts; every few seconds a dreamy sigh with the eyes shut.
+      const p = at(3.6);
+      const f = { heart: true, mouth: 'cat', blush: 1.7, brows: [[0.7, -0.3], [0.7, -0.3]], extra: [`hearts${Math.floor(t * 4) % 4}`] };
+      if (win(p, 0.62, 0.86)) Object.assign(f, { heart: false, closed: [true, true], mouth: 'kiss' });
+      return f;
+    }
+    case 'sleepy': {
+      // Lids drift down, the head nods off (eyes shut, z's), then a big yawn wakes it.
+      const p = at(6);
+      const f = { lid: 0.55, mouth: 'tiny', brows: [[0.1, -0.2], [0.1, -0.2]] };
+      if (win(p, 0.2, 0.35)) f.lid = 0.75;
+      else if (win(p, 0.35, 0.68)) Object.assign(f, { closed: ['blink', 'blink'], mouth: 'o', extra: [`zzz${Math.min(3, Math.floor((p - 0.35) * 14))}`] });
+      else if (win(p, 0.72, 0.9)) Object.assign(f, { closed: ['hurt', 'hurt'], mouth: 'yawn', brows: [[0.6, -0.4], [0.6, -0.4]], extra: ['tear0'] });
+      return f;
+    }
+    case 'sad': {
+      // Welling eyes and a wobbling lip; a tear rolls down, then a sob with gloom lines.
+      const p = at(4.4);
+      const f = { teary: Math.floor(t * 4) % 2 ? 2 : 1, look: 'down', mouth: 'frown', brows: [[0.5, -0.8], [0.5, -0.8]], blush: 1.2 };
+      if (win(p, 0.3, 0.6)) f.extra = [`tear${Math.min(3, Math.floor((p - 0.3) * 14))}`];
+      if (win(p, 0.68, 0.92)) Object.assign(f, { teary: 0, closed: ['hurt', 'hurt'], mouth: Math.floor(t * 8) % 2 ? 'sob' : 'sob2', extra: ['tears', 'gloom'] });
+      return f;
+    }
+    case 'shock': {
+      // A snap to wide eyes with a "!" that pops in and settles, a gasp, sweat; then it calms.
+      const p = at(3.4);
+      const f = { mouth: 'tiny', brows: [[0.4, -0.2], [0.4, -0.2]] };
+      if (win(p, 0.15, 0.7)) Object.assign(f, { wide: true, mouth: win(p, 0.15, 0.4) ? 'gasp' : 'o', brows: [[1.3, -0.3], [1.3, -0.3]], extra: [`bang${Math.min(3, Math.floor((p - 0.15) * 20))}`, 'drop', ...(win(p, 0.15, 0.3) ? ['shock'] : [])] });
+      return f;
+    }
+    case 'playful': {
+      // A wink with the tongue out and a sparkle, swapping eyes now and then.
+      const p = at(3.2);
+      const right = win(p, 0, 0.5);
+      const f = { mouth: 'tongue', brows: right ? [[0.7, -0.3], [0, 0.2]] : [[0, 0.2], [0.7, -0.3]], closed: right ? [false, true] : [true, false], extra: [`spark${Math.floor(t * 4) % 2}`] };
+      if (win(p, 0.42, 0.5) || win(p, 0.92, 1)) Object.assign(f, { closed: [false, false], mouth: 'cat', extra: [] });
+      return f;
+    }
+    case 'proud': {
+      // Eyes shut, chin up, a confident smirk; then an "ohoho" laugh in quick beats with sparkles.
+      const p = at(4);
+      const f = { closed: [true, true], mouth: 'smirk', brows: [[0.9, -0.4], [0.9, -0.4]], look: 'up' };
+      if (win(p, 0.5, 0.85)) Object.assign(f, { mouth: Math.floor(t * 8) % 2 ? 'D' : 'grin', extra: [`spark${Math.floor(t * 8) % 2}`] });
+      return f;
+    }
+    case 'dizzy': {
+      // Spinning eyes, a wavy mouth and stars circling the head.
+      return { spiral: 1 + (Math.floor(t * 8) % 4) * 1.5, mouth: Math.floor(t * 4) % 2 ? 'wavy' : 'frown', brows: [[0.3, -0.5], [0.3, -0.5]], extra: [`orbit${Math.floor(t * 8) % 8}`, 'sweat0'] };
+    }
+    case 'nervous': {
+      // Eyes dart side to side, sweat slides, a wobbly mouth; a gulp now and then.
+      const p = at(3);
+      const dart = [1, 1, -1, -1, 0, 1, -1, 0][Math.floor(t * 4) % 8];
+      const f = { glance: dart, mouth: 'wavy', brows: [[0.6, -0.7], [0.6, -0.7]], blush: 1.2, extra: [`sweat${Math.round(p * 4)}`] };
+      if (win(p, 0.7, 0.8)) Object.assign(f, { glance: 0, wide: true, mouth: 'o', extra: [...f.extra, 'drop'] });
+      return f;
+    }
+    case 'giggle': {
+      // Eyes squeezed into happy arcs, the mouth bouncing between a "w" and a laugh, notes.
+      const p = at(2.8);
+      const beat = Math.floor(t * 6) % 2;
+      const f = { closed: [true, true], mouth: beat ? 'cat' : 'meow', blush: 1.5, brows: [[0.5, -0.3], [0.5, -0.3]] };
+      if (win(p, 0.4, 0.75)) f.extra = ['note'];
+      if (win(p, 0.85, 1)) Object.assign(f, { closed: [false, false], mouth: 'cat' });
+      return f;
+    }
+    case 'determined': {
+      // Set eyes and a firm mouth; a glint flashes in the eyes and the jaw sets in a grit.
+      const p = at(3.8);
+      const f = { lid: 0.22, cross: 0.4, mouth: 'flat', brows: [[-0.3, 0.6], [-0.3, 0.6]] };
+      if (win(p, 0.55, 0.7)) Object.assign(f, { shine: true, mouth: 'grit', extra: ['spark1'] });
+      return f;
+    }
     default: {
       const p = at(5);
       return win(p, 0.6, 0.78) ? { mouth: 'grin', closed: [true, true] } : { mouth: 'smile' };
     }
   }
+}
+
+// What the face does right now: the look's own expression, unless the moment calls for another.
+// Knocked out, the eyes spin under circling stars; attacking, the face winds up (narrowed eyes,
+// set jaw), shouts on the blow and grins after; jumping, it whoops on the way up and gasps on the
+// way down; after a fight it stays set and focused; low on health it frets and sweats. At rest
+// the eyes wander now and then. Sampled at FACE_FPS like the expressions.
+function liveFace(look, state, mv) {
+  const time = Math.floor(((state.time ?? 0) + (state.seed ?? 0) * 1.37) * FACE_FPS) / FACE_FPS;
+  const beat = (n) => Math.floor(time * n);
+  const pose = state.pose ?? 'idle';
+  if (state.down) return { spiral: 1 + (beat(8) % 4) * 1.5, mouth: beat(3) % 2 ? 'wavy' : 'o', brows: [[0.3, -0.5], [0.3, -0.5]], extra: [`orbit${beat(8) % 8}`] };
+  if (mv) {
+    const p = state.progress ?? 0;
+    if (p < 0.3) return { lid: 0.25, cross: 0.5, mouth: 'grit', brows: [[-0.3, 0.7], [-0.3, 0.7]] };
+    if (p < 0.7) return { lid: 0.1, cross: 0.6, mouth: 'yell', brows: [[-0.1, 0.8], [-0.1, 0.8]] };
+    return { lid: 0.15, mouth: 'smirk', brows: [[0, 0.3], [0.5, -0.2]] };
+  }
+  if (pose === 'jump') {
+    return (state.vy ?? -1) < 0 ? { mouth: 'D', brows: [[0.9, -0.3], [0.9, -0.3]] } : { mouth: 'o', brows: [[1.1, -0.4], [1.1, -0.4]], look: 'down' };
+  }
+  const base = faceFrame(look.face ?? 'smile', time);
+  if (state.low) {
+    // Frets: worried brows, a wobbly mouth, sweat sliding and a nervous glance back and forth.
+    const p = (time % 2.4) / 2.4;
+    return { ...base, closed: null, heart: false, brows: [[0.6, -0.7], [0.6, -0.7]], mouth: 'wavy', glance: p > 0.5 && p < 0.7 ? -1 : p > 0.75 && p < 0.9 ? 1 : 0, extra: [`sweat${Math.round(p * 4)}`] };
+  }
+  if (state.ready && pose === 'idle') return { ...base, lid: Math.max(base.lid ?? 0, 0.15), cross: Math.max(base.cross ?? 0, 0.35), brows: [[-0.2, 0.5], [-0.2, 0.5]] };
+  // At rest the eyes wander: a look one way, a look the other, each held a moment.
+  if (base.glance === undefined && !base.closed && !base.spiral) {
+    const p = (time * 0.23 + (state.seed ?? 0) * 0.17) % 1;
+    if (p > 0.3 && p < 0.42) return { ...base, glance: 1 };
+    if (p > 0.7 && p < 0.8) return { ...base, glance: -1, look: 'up' };
+  }
+  return base;
 }
 
 function headShapes(look, g, rig) {
@@ -560,7 +771,7 @@ function headShapes(look, g, rig) {
   let f = rig.face ?? {};
   if (rig.eyes === 'hurt') f = { brows: [[0.5, 0.7], [0.5, 0.7]], extra: ['sweat0'] };
   else if (rig.eyes === 'dead') f = { brows: [[0.2, -0.3], [0.2, -0.3]] };
-  else if (rig.mouth === 'open' && f.puff) f = { ...f, puff: false };
+  else if (rig.mouth && f.puff) f = { ...f, puff: false };
   // The eye-cover lock hides the right eye and brow, so a wink or a raised brow moves to the eye
   // that shows.
   const covered = coversEye(style, look.hairBangs) && !hatHidesBangs(hat);
@@ -579,14 +790,17 @@ function headShapes(look, g, rig) {
   }
   // Eyes: hurt and blinks win over the expression; otherwise the expression may close one or
   // both eyes, lower the lids, or glance aside. Angry faces pull the inner lids down.
-  const cross = look.face === 'angry' ? 0.9 : 0;
+  const cross = f.cross ?? 0;
   [-1, 1].forEach((side, i) => {
-    const mode = rig.eyes !== 'open' ? rig.eyes : f.closed?.[i] ? 'happy' : 'open';
-    out.push(...eye(FACE_X + EYE_DX * side, side, eyeStyle, eyeColor, mode, look, f.lid ?? 0, f.glance ?? 0, f.shine, cross));
+    // A closed eye is a happy arc (true) or a named lid ('blink', 'hurt'); a blink only takes an
+    // open eye.
+    const shut = f.closed?.[i];
+    const mode = rig.eyes === 'hurt' || rig.eyes === 'dead' ? rig.eyes : shut ? (shut === true ? 'happy' : shut) : rig.eyes;
+    out.push(...eye(FACE_X + EYE_DX * side, side, eyeStyle, eyeColor, mode, look, f, cross));
   });
   if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', sk));
   else if (rig.eyes === 'dead') out.push(...mouthShapes('open', sk));
-  else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile', sk));
+  else out.push(...mouthShapes(rig.mouth ?? f.mouth ?? 'smile', sk));
   if (front) out.push(...front);
   // Brows, in the look's style; an expression that doesn't move them leaves them at rest. The
   // eye-cover lock hides that side's brow.
@@ -891,11 +1105,16 @@ function solveRig(state, anim, mv = null) {
   r.capeRoot = anim ? Math.round(Math.max(-3, Math.min(3, anim.cape)) * 2) / 2 : null;
   r.flap = Math.floor(t * (pose === 'jump' ? 10 : 4)) % 2 === 0;
   // A blink every few seconds, slightly offset per character.
+  // A blink is three beats (half shut, shut, half open); some blink twice in a row.
   const cycle = (t * 0.31) % 1;
-  if (cycle < 0.035 || (cycle > 0.5 && cycle < 0.53 && seed % 2 === 0)) r.eyes = 'blink';
-  // Talking (an NPC whose words are typing out): the mouth opens and closes on a syllable beat,
-  // skipping every third so it doesn't flap like a metronome.
-  if (state.talking && Math.floor(t * 9) % 3 !== 2 && Math.floor(t * 9) % 2 === 0) r.mouth = 'open';
+  const lidAt = (c) => (c < 0.012 ? 'half' : c < 0.03 ? 'blink' : c < 0.042 ? 'half' : null);
+  r.eyes = lidAt(cycle) ?? (seed % 2 === 0 ? lidAt(cycle - 0.5) : null) ?? (seed % 3 === 0 ? lidAt(cycle - 0.07) : null) ?? 'open';
+  // Talking (an NPC whose words are typing out): the mouth shapes syllables on a beat, skipping
+  // every third so it doesn't flap like a metronome.
+  if (state.talking) {
+    const syl = Math.floor(t * 9);
+    if (syl % 3 !== 2) r.mouth = ['ah', 'o', 'e', 'open', 'ah', 'e', 'o'][(syl * 5 + seed) % 7];
+  }
 
   if (pose === 'climb') {
     r.view = 'back';
@@ -961,7 +1180,6 @@ function solveRig(state, anim, mv = null) {
       r.backArm = [-3, -4];
       r.hairLift = -1;
     }
-    r.mouth = 'open';
   } else if (state.ready) {
     // Fighting stance after a fight: feet wide, a springy bounce in the knees on a quick beat,
     // fists up, and the hair whipping a moment behind each bounce.
@@ -1018,7 +1236,7 @@ function solveRig(state, anim, mv = null) {
 
   // Knocked out (a fallen party member): limp, eyes shut, mouth open.
   if (state.down) {
-    r.eyes = 'dead';
+    r.eyes = 'open';
     r.frontArm = [2, -1];
     r.backArm = [-2, -1];
     r.frontLeg = [1.5, 0, 10];
@@ -1352,7 +1570,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   rig.armIn = !attack;
   const idleW = !attack && pose === 'idle' && !state.ready && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
   if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
-  if (rig.view !== 'back') rig.face = faceFrame(look.face ?? 'smile', (state.time ?? 0) + (state.seed ?? 0) * 1.37);
+  if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
   const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));

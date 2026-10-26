@@ -207,7 +207,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   // seconds before relaxing.
   if (world.pose || world.attackTimer > 0 || world.invuln > 0.6) feel.lastFight = world.now;
   const ready = !world.map.isTown && world.now - (feel.lastFight ?? -99) < 4;
-  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job, ready };
+  const low = !world.map.isTown && world.char.hp < (world.stats?.maxHp ?? 1) * 0.3;
+  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job, ready, low };
   const buffs = world.dead ? {} : world.char.buffs;
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);

@@ -120,6 +120,21 @@ Head box about 14 w × 15 h. The eye line is at 58% from the crown.
 | **blink** | A **downward-sagging curve** (∪-ish lid line) at 60% of eye height, 1.0 thick, tapering to the inner end, plus 1–2 lash clumps at the outer end pointing down and out. (A happy closed eye is the ∩ arch; never use it for a blink.) | Unchanged | Unchanged |
 | **dead** | Closed ∪ line at 0.67 with no lashes, or comedic swirls at maiden scale. Desaturate 30% (the existing FADE). | Neutral, slightly raised inner ends | Small open mouth, 1.3 wide |
 
+**Live faces (heroes, party, bots, NPCs).** From diives.md, fanart.md finding 8, ko.md 12 and 15, and
+en.md 16:
+- Expressions hold, then snap to the next beat; each loops with one acting moment (a sigh, a yawn,
+  a sob, a laugh). Excited beats change every 0.125–0.25 s, calm ones hold 0.5 s or longer.
+- Symbol eyes and marks do half the acting: heart pupils, spirals, > <, welling tears, "!" that
+  pops in with an overshoot, "?", z's, steam, gloom lines, circling stars, a big sweat drop.
+- At rest the eyes wander (a look aside, a look up), blinks take three beats (half, shut, half),
+  and some characters blink twice.
+- The moment overrides the chosen expression: wind-up (narrowed eyes, gritted teeth), a shout on
+  the blow, a grin after; a whoop going up a jump, a gasp coming down; set and focused after a
+  fight; fretting with sweat at low health; spiral eyes and stars when knocked out. Talking cycles
+  syllable mouth shapes.
+- Monsters: "!" and "?" bubbles pop in with an overshoot; they gloat with a happy face after
+  landing a hit, and sweat and blink nervously when nearly beaten.
+
 Personality levers (AnimeOutline personality and mature-woman guides; Clip Studio generations):
 - **Cute** means a bigger iris relative to the eye, rounder lids, a shorter lower face, more catchlights and a lower eye line.
 - **Mature / regal / alluring** means eyes vertically narrower with an almond shape, a smaller iris, a heavier upper lid, a wing, a crease, a longer lower face, a pointed chin, a slender neck, defined lips that are pink-outlined with no dark line, and a glossy lower lip.

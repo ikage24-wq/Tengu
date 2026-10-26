@@ -92,17 +92,25 @@ export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
 }
 
 // How a monster feels right now.
+// Right after landing a hit on the hero it gloats (a happy face); nearly beaten, it blinks fast
+// and nervously.
 function moodOf(m, t, now, held) {
   if (m.hp <= 0) return 'dead';
   if (m.flash > 0 || m.stagger > 0) return 'hurt';
   if (m.special?.warn > 0) return 'angry';
   if (held) return 'hurt';
+  if (now - (m.gloatAt ?? -9) < 0.9) return 'happy';
   if (now < m.aggroUntil && m.def.aggro) return 'angry';
   const cyc = (t * 0.3) % 1;
   if (cyc < 0.04) return 'blink';
+  if (lowOn(m) && ((t * 1.7) % 1) < 0.08) return 'blink';
   if (m.state === 'idle' && cyc > 0.55 && cyc < 0.75) return 'happy';
   return 'idle';
 }
+
+const lowOn = (m) => m.hp > 0 && m.hp < m.def.hp * 0.25;
+// Pop-in with overshoot: 0 -> 1.3 -> 1 over about a fifth of a second.
+const pop = (e) => (e <= 0 ? 0 : e >= 0.2 ? 1 : e < 0.1 ? (e / 0.1) * 1.3 : 1.3 - ((e - 0.1) / 0.1) * 0.3);
 
 // Emote bubbles over the head: "!" right after it gets angry, a pulsing anger mark while it
 // chases, a sweat drop when hit, and music notes or z's while it lazes about.
@@ -111,16 +119,39 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
   ctx.font = 'bold 9px sans-serif';
   ctx.textAlign = 'center';
   const hx = x + (m.dir < 0 ? -1 : 1) * m.def.w * 0.32;
-  if (mood === 'angry' && m.aggroUntil - now > 5.4 && !m.def.boss) {
+  // A bubble that pops in with an overshoot and holds.
+  const bubble = (mark, color, e) => {
+    const k = pop(e);
+    if (k <= 0) return;
+    ctx.save();
+    ctx.translate(hx, top - 8);
+    ctx.scale(k, k);
     ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#ff5b7f';
+    ctx.strokeStyle = color;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(hx, top - 8, 6, 0, Math.PI * 2);
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#ff5b7f';
-    ctx.fillText('!', hx, top - 4.6);
+    ctx.fillStyle = color;
+    ctx.fillText(mark, 0, 3.4);
+    ctx.restore();
+  };
+  // Losing the hero: a puzzled "?" when its anger runs out.
+  const em = (m.emo ??= { angry: false, lostAt: -9 });
+  const angryNow = m.hp > 0 && now < m.aggroUntil;
+  if (em.angry && !angryNow && m.hp > 0) em.lostAt = now;
+  em.angry = angryNow;
+  if (mood === 'angry' && m.aggroUntil - now > 5.4 && !m.def.boss) {
+    bubble('!', '#ff5b7f', 6 - (m.aggroUntil - now));
+  } else if (mood === 'happy' && now - (m.gloatAt ?? -9) < 0.9) {
+    // Gloating after a hit: a bouncing note.
+    const e = now - m.gloatAt;
+    ctx.globalAlpha = Math.min(1, (0.9 - e) * 4);
+    ctx.fillStyle = '#ff7fb0';
+    ctx.fillText('♪', hx + e * 6, top - 3 - e * 10 - Math.abs(Math.sin(e * 14)) * 2);
+  } else if (now - em.lostAt < 1.4 && m.hp > 0 && !m.def.boss) {
+    bubble('?', '#8f7cc4', now - em.lostAt);
   } else if (mood === 'angry') {
     const k = 1 + 0.25 * Math.max(0, Math.sin(t * 8));
     ctx.strokeStyle = '#ff4d6d';
@@ -139,6 +170,17 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
     ctx.moveTo(hx - 2, top + 1.4);
     ctx.lineTo(hx, top - 2.6);
     ctx.lineTo(hx + 2, top + 1.4);
+    ctx.fill();
+  } else if (lowOn(m)) {
+    // Nearly beaten: a sweat drop slides down, again and again.
+    const u = (t * 0.9) % 1;
+    ctx.globalAlpha = u < 0.8 ? 1 : (1 - u) * 5;
+    ctx.fillStyle = '#9fdcff';
+    ctx.beginPath();
+    ctx.arc(hx + 3, top + 1 + u * 5, 2, 0, Math.PI * 2);
+    ctx.moveTo(hx + 1.2, top + 0.4 + u * 5);
+    ctx.lineTo(hx + 3, top - 3 + u * 5);
+    ctx.lineTo(hx + 4.8, top + 0.4 + u * 5);
     ctx.fill();
   } else if (m.state === 'idle' && m.hp > 0) {
     const cyc = (t * 0.3) % 1;
