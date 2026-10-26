@@ -162,7 +162,7 @@ function wisp(pose, frame, mood) {
   const [c0, c1, c2] = dead ? ['#a9b2c6', '#cdd3e0', '#eceff5'] : angry ? ['#b48cff', '#dcc4ff', '#fbf4ff'] : ['#7fd8ee', '#bff2ff', '#f2fdff'];
   const flare = angry ? 1.3 : dead ? 0.45 : hurt ? 0.8 : 1;
   const cx = 16 + (hurt ? -1.4 : 0);
-  const cy = 23 + Math.sin(t) * 0.6 * amp + (dead ? 1 : 0);
+  const cy = 23 + Math.sin(t) * 0.6 * amp + (dead ? 0.6 : 0);
   const out = [];
 
   // Embers drifting up behind it.
@@ -173,7 +173,7 @@ function wisp(pose, frame, mood) {
     }
   }
   // The curling tail, lagging behind the body.
-  const tp = [[cx - 2, cy + 5.5], [cx - 6, cy + 9], [cx - 9.6, cy + 11], [cx - 12, cy + 13.2], [cx - 11, cy + 15.2], [cx - 8.6, cy + 14.8]];
+  const tp = [[cx - 2, cy + 5.5], [cx - 6, cy + 9], [cx - 9.6, cy + 11], [cx - 12, cy + 12.6], [cx - 11, cy + 14.4], [cx - 8.6, cy + 14]];
   const tail = tp.map(([x, y], i) => [x + Math.sin(t - i * 0.9) * 0.45 * i * amp, y + Math.cos(t - i * 0.9) * 0.25 * i * amp]);
   out.push(...oRibbon(tail, [8, 6.4, 4.6, 3, 1.8, 0.4], c0));
   // Flame tongues (back to front), each flickering on its own beat.
@@ -196,7 +196,7 @@ function wisp(pose, frame, mood) {
   // Stubby arm and the swinging lantern.
   out.push(...limb([[cx + 6.6, cy + 3], [cx + 9.6, cy + 5]], 2.8, c1, 0.6));
   const px = cx + 10.2;
-  const py = cy + 5.8;
+  const py = cy + 4.8;
   const a = dead ? 0.15 : hurt ? 0.55 : Math.sin(t - 1) * 0.34 * amp;
   const frame_ = '#6e5a96';
   const glass = dead ? '#c9c2d6' : angry ? '#ffd8ef' : '#fff1b8';
@@ -285,8 +285,8 @@ function imp(pose, frame, mood) {
   // Ears and horns.
   out.push(...oT([[18, 10.4], [11.2, 7.2], [17.6, 15]], skin, 0.6), F(T([[17.2, 11.4], [13.4, 9.2], [17, 13.6]], '#ffc2d8')));
   out.push(...oT([[31.6, 9.8], [37.4, 6.8], [32.2, 14]], skin, 0.6), F(T([[32.4, 10.6], [35.6, 8.6], [32.6, 12.8]], '#ffc2d8')));
-  const hornL = [[21, 6.4], [19.2, 3.6], [18.8, 1.4], [19.8, 0.4]];
-  const hornR = [[28.4, 6], [30, 3.4], [31.6, 1.6], [33, 1.2]];
+  const hornL = [[21, 6.4], [19.2, 3.8], [18.8, 1.8], [19.8, 0.9]];
+  const hornR = [[28.4, 6], [30, 3.6], [31.6, 2], [33, 1.6]];
   out.push(...oRibbon(hornL, [3, 2.4, 1.5, 0.3], horn, 0.6), ...oRibbon(hornR, [3, 2.4, 1.5, 0.3], horn, 0.6));
   out.push(...stroke([[19.4, 4.4], [21, 4]], 0.4, '#e8cfa8'), ...stroke([[29.2, 3.6], [30.6, 4.4]], 0.4, '#e8cfa8'));
   // Head.
@@ -410,7 +410,7 @@ function dullahan(pose, frame, mood) {
   body.push(...limb([[6, 41.6], [13.6, 45.4 + hb * 0.5]], 3.2, suit), ...oE(14.6, 44.8 + hb * 0.5, 2.2, 1.9, plateD), F(E(14.2, 44 + hb * 0.5, 1.2, 0.5, plateL)));
 
   // The sword arm and an upright blade.
-  const sw = dead ? 0.7 : 0.2 + Math.sin(t) * 0.05 * amp + (angry ? -0.12 : 0);
+  const sw = dead ? 0.32 : 0.2 + Math.sin(t) * 0.05 * amp + (angry ? -0.12 : 0);
   const sx = 35.2;
   const sy = 37;
   const sword = [
@@ -501,7 +501,7 @@ function mimic(pose, frame, mood) {
   chest.push(F(T([H, [fx, fy], [32.2, 21.4], [6, 21.4]], '#43213e')));
   chest.push(F(E(20, 21, 6, 1.6 + lid * 2, '#ffcf5a')), F(E(16, 20.4, 1.2, 1.2, '#8fe6ff')), F(E(24.6, 20.2, 1, 1, '#ff9ed2')), F(E(19.6, 19.8, 0.7, 0.7, '#fff6c9')));
   // Tongue, lolling over the front edge.
-  const tl = dead ? 1.3 : hurt ? 0.4 : angry ? 1.1 : 1;
+  const tl = dead ? 1.1 : hurt ? 0.4 : angry ? 1.1 : 1;
   const wag = dead ? 0 : Math.sin(t) * 1.2;
   if (tl > 0.5) {
     const tp = [[24, 20.6], [28.4, 20.2], [32.6, 21.2], [34.4 + wag * 0.3, 23.4 * tl + 0.4], [34.6 + wag, 26.4 * tl], [33.4 + wag * 1.2, 28.4 * tl]];
@@ -542,7 +542,7 @@ function mimic(pose, frame, mood) {
   // Gems tumbling out mid-hop.
   if (walk && st.air > 0.4 && !dead) {
     const u = (frame - 1) / 3;
-    chest.push(...oT([[34 + u * 3, 18 - u * 2], [35.4 + u * 3, 16.6 - u * 2], [36.8 + u * 3, 18 - u * 2], [35.4 + u * 3, 19.8 - u * 2]], '#8fe6ff', 0.5));
+    chest.push(...oT([[33 + u * 2, 17 - u * 2], [34.4 + u * 2, 15.6 - u * 2], [35.8 + u * 2, 17 - u * 2], [34.4 + u * 2, 18.8 - u * 2]], '#8fe6ff', 0.5));
     chest.push(...oE(31 + u * 2, 15 - u * 3, 0.9, 0.9, '#ffcf5a', 0.5));
   }
   out.push(...xf(chest, (x, y) => [20 + (x - 20) * sx, 31 - (31 - y) * sy - lift], sx, sy));
@@ -619,7 +619,7 @@ function golem(pose, frame, mood) {
   // Front arm with shards on the forearm and a huge fist, under a crystal-crusted shoulder boulder.
   const ff = [57.8 + swing, 62];
   up.push(...limb([[57, 36], [61, 46]], 8.6, stD), ...limb([[61, 46], [ff[0] + 0.4, ff[1] - 4]], 10.6, st), ...oE(61, 46.4, 4.6, 4, st, 0.5), F(E(62.4, 45, 2, 1.4, stL)));
-  up.push(...crystal(65.2, 50, 3, 6.6, 1.15, '#8fe6ff', '#dcfaff'));
+  up.push(...crystal(63.6, 49, 2.8, 5, 1.05, '#8fe6ff', '#dcfaff'));
   up.push(...oE(ff[0], ff[1], 8, 7, st), F(E(ff[0] + 2, ff[1] - 3, 3.6, 1.6, stL)));
   up.push(...stroke([[ff[0] - 4.6, ff[1] + 1], [ff[0] + 4, ff[1] - 0.4]], 0.6, stDD), ...stroke([[ff[0] - 1, ff[1] - 1], [ff[0] - 0.4, ff[1] + 4]], 0.6, stDD), ...stroke([[ff[0] + 2.6, ff[1] - 0.8], [ff[0] + 3.2, ff[1] + 3.6]], 0.6, stDD));
   up.push(...crystal(51.6, 27, 4, 11, 0.1, '#ffadd8', '#ffe2f1'), ...crystal(56.6, 26, 5, 14, 0.4, '#8fe6ff', '#dcfaff'), ...crystal(61.4, 29.6, 3.4, 8, 0.85, '#c3a8ff', '#eee4ff'));
@@ -692,7 +692,7 @@ function wraith(pose, frame, mood) {
   // Waist chain trailing back.
   out.push(...chainLinks([11, 36], [2.6 + tr(2), 42 + w(2) * 0.5], 1.4, 7, chainD, shade(chainD, -12), robeD));
   // The robe.
-  const hem = [[31, 44], [30.2, 49.6 + w(0)], [27.2, 46.2], [24.6, 50.6 + w(1)], [21.6, 46.4], [18.6, 50.2 + w(2)], [15.6, 46], [12 + tr(3) * 0.5, 48.8 + w(3)], [9.4 + tr(3) * 0.6, 44.4], [5 + tr(4), 46.4 + w(4)], [7.6 + tr(3) * 0.4, 38], [9, 28]];
+  const hem = [[31, 44], [30.2, 49.2 + w(0)], [27.2, 46.2], [24.6, 50 + w(1)], [21.6, 46.4], [18.6, 49.6 + w(2)], [15.6, 46], [12 + tr(3) * 0.5, 48.8 + w(3)], [9.4 + tr(3) * 0.6, 44.4], [5 + tr(4), 46.4 + w(4)], [7.6 + tr(3) * 0.4, 38], [9, 28]];
   const robeP = [[3.4 + tr(1) * 0.8, 6.2 + w(1) * 0.4], [9, 4.4], [14, 2], [20, 1.2], [27.4, 3.6], [31.6, 10], [32.2, 18], [33, 26], [32.6, 36], ...hem, [10, 18], [9.2, 13.6]];
   out.push(...oT(robeP, robe));
   out.push(F(T([[9, 28], [7.6 + tr(3) * 0.4, 38], [5 + tr(4), 46.4 + w(4)], [9.4 + tr(3) * 0.6, 44.4], [12 + tr(3) * 0.5, 48.8 + w(3)], [13.4, 40], [13, 28], [11, 18], [10, 18]], robeD)));
@@ -717,7 +717,7 @@ function wraith(pose, frame, mood) {
   out.push(...oT([[24.4, 33.6], [28, 33.4], [28.2, 37], [24.4, 37.2]], '#ffd66b', 0.5), arc(26.2, 33.6, 1.3, 1.6, 180, 360, 0.6, '#c9c4d6'), F(E(26.3, 35, 0.45, 0.45, '#6a4a3a')), F(T([[26.1, 35.2], [26.5, 35.2], [26.4, 36.4], [26.2, 36.4]], '#6a4a3a')));
   // Front sleeve reaching out, with a bony claw and a dangling broken shackle.
   const reach = [Math.sin(t) * 0.8 * amp + (angry ? 1 : 0), Math.cos(t) * 0.6 * amp + (dead ? 3 : 0)];
-  const fh = [35.8 + reach[0], 32.6 + reach[1]];
+  const fh = [34 + reach[0], 32.6 + reach[1]];
   const end = [fh[0] - 1 + Math.sin(t - 1.2) * 2 * amp, fh[1] + 11];
   out.push(...chainLinks([fh[0] - 2, fh[1] + 1], end, 0.6, 6, chain, chainD, robe));
   out.push(...oE(end[0], end[1] + 1.4, 1.6, 1.5, chain, 0.5), F(E(end[0], end[1] + 1.4, 0.8, 0.7, robe)), F(E(end[0] + 1.6, end[1] + 2.2, 0.6, 0.5, robe)));
