@@ -13,7 +13,7 @@ import { drawSkillIcon } from '../src/render/icons.js';
 const q = new URLSearchParams(location.search);
 const pick = q.get('ids')?.split(',');
 const jobs = q.get('jobs')?.split(',');
-const all = Object.values(SKILLS).filter((s) => (!pick || pick.includes(s.id)) && (!jobs || jobs.includes(s.job)));
+const all = Object.values(SKILLS).filter((s) => s.job !== 'gamemaster' && (!pick || pick.includes(s.id)) && (!jobs || jobs.includes(s.job)));
 const COLS = 3;
 const ROW = 112;
 const COL = 400;
