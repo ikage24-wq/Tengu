@@ -65,6 +65,10 @@ export function mix(a, b, t) {
   return `#${m(ar, br)}${m(ag, bg)}${m(ab, bb)}`;
 }
 
+// The outline for a sparkle, glint or star: a warm gold pulled from its own colour, so bright
+// marks read as light on any map instead of getting a grey ring.
+export const sparkLine = (c) => mix(shade(c, -26), '#e39a3a', 0.5);
+
 const outlineCache = new Map();
 // Soft sprites outline each part in a deep shade of its own color, pulled toward the ink.
 // Crisp sprites use a darker, inkier line, like classic pixel art.
@@ -114,9 +118,13 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   const cast = new Uint8Array(gw * gh);
   const lit = new Uint8Array(gw * gh);
   const at = (v) => Math.round((v + pad) * res);
+  // A shape may name its own outline colour (`line`), for bright marks such as sparkles and
+  // glints, whose automatic darkened line would turn grey; it applies to every cell of that colour.
+  const lineOf = new Map();
   for (const s of shapes) {
     if (!s) continue;
     const id = s.c === 'none' ? NONE : idOf(s.c.startsWith('#') ? s.c : palette[s.c] ?? '#ff00ff');
+    if (s.line && id >= 0) lineOf.set(id, s.line);
     const f = s.f ? 1 : 0;
     const cs = s.cast ? 1 : 0;
     const ls = s.lit ? 1 : 0;
@@ -278,7 +286,8 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     const key = (from[t] * 2 + (corner ? 1 : 0)) * 3 + side + 1;
     let v = inkFor.get(key);
     if (v === undefined) {
-      const line = outlineFor(colors[from[t]], crisp, side);
+      const own = lineOf.get(from[t]);
+      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side);
       v = idOf(corner ? `${line}80` : line);
       inkFor.set(key, v);
     }

@@ -16,7 +16,7 @@ import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, snap } from './pixel.js';
+import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
   hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
@@ -102,18 +102,24 @@ const memo = (key, fn) => {
 };
 
 // Skin: base, highlight, two shadows (rose, then rose-magenta), line, blush, and lips.
-export const skinRamp = (skin) => memo(`s${skin}`, () => ({
-  base: skin,
-  hi: mix(skin, '#fffaf0', 0.45),
-  sh1: multiply(skin, '#f4cfd2'),
-  sh2: multiply(skin, '#dfa3b5'),
-  line: multiply(skin, '#b06878'),
-  blush: mix(skin, '#ff7f9b', 0.42),
-  blushDk: multiply(skin, '#e2788f'),
-  lip: multiply(skin, '#ec8c9c'),
-  lipDk: multiply(skin, '#b04a64'),
-  mouthIn: multiply(skin, '#c8405e'),
-}));
+// On deep skin a light rose tint only reddens the shadow without darkening it, so the bangs'
+// cast shadow read as a lighter, warmer band; the tint deepens as the skin does, so every tone
+// drops about the same step in value.
+export const skinRamp = (skin) => memo(`s${skin}`, () => {
+  const deep = Math.max(0, Math.min(1, (0.78 - hslOf(skin)[2]) / 0.42));
+  return {
+    base: skin,
+    hi: mix(skin, '#fffaf0', 0.45),
+    sh1: multiply(skin, mix('#f4cfd2', '#cc9aaa', deep)),
+    sh2: multiply(skin, mix('#dfa3b5', '#a8708e', deep)),
+    line: multiply(skin, '#b06878'),
+    blush: mix(skin, '#ff7f9b', 0.42),
+    blushDk: multiply(skin, '#e2788f'),
+    lip: multiply(skin, '#ec8c9c'),
+    lipDk: multiply(skin, '#b04a64'),
+    mouthIn: multiply(skin, '#c8405e'),
+  };
+});
 
 // Hair: highlight (warm, for the angel ring), base, shadow 1 (the back hair, clump edges),
 // shadow 2 (deepest gaps), and the lash and brow colour: a very dark shade of the hair's hue.
@@ -125,7 +131,9 @@ export const hairRamp = (c) => memo(`h${c}`, () => {
   const ink = mix(grey ? hslHex(275, 0.3, 0.17) : hslHex(h, Math.min(0.55, s), 0.16), '#2a1a33', 0.35);
   return {
     base: c,
-    hi: mix(c, '#fff6e0', l < 0.35 ? 0.32 : 0.55),
+    // Dark hair mixed toward cream turns a flat grey; its sheen is its own hue lifted and made
+    // richer (near-black hair takes a cool indigo sheen, as in anime).
+    hi: l < 0.35 ? hslHex(grey ? 248 : h, Math.max(s, 0.26), Math.min(0.6, l + 0.22)) : mix(c, '#fff6e0', 0.55),
     sh1,
     sh2: multiply(sh1, tint),
     ink,
@@ -493,9 +501,11 @@ function fringe(style, r, sway, mood) {
 }
 
 // A four-point sparkle, for star-shine eyes; it stays readable at small sizes.
+// Outside the head it takes a warm gold line of its own, not the grey a darkened white or yellow
+// would give.
 function star(cx, cy, r, c) {
   const k = r * 0.28;
-  return F(T([[cx, cy - r], [cx + k, cy - k], [cx + r, cy], [cx + k, cy + k], [cx, cy + r], [cx - k, cy + k], [cx - r, cy], [cx - k, cy - k]], c));
+  return { ...F(T([[cx, cy - r], [cx + k, cy - k], [cx + r, cy], [cx + k, cy + k], [cx, cy + r], [cx - k, cy + k], [cx - r, cy], [cx - k, cy - k]], c)), line: sparkLine(c) };
 }
 
 // Eyes are built with the heroine face kit (mobs/heroine.js), the same construction as the

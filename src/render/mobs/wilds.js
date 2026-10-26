@@ -11,7 +11,7 @@
 // a lumbering sway), its own eyes, an idle fidget loop, and a four-frame attack (wind-up,
 // strike, impact, recover).
 
-import { R, E, T, F, C, mix } from './kit.js';
+import { R, E, T, F, C, mix, sparkLine } from './kit.js';
 import { eye, glowEye, brow, mouth, nose as snout, blush as cheek, sweat, tear, vein, deadEye, band, LASH, TONGUE, THROAT, TOOTH } from './faces.js';
 import { ramp, hue, crescent, shine, smear, chain, wave as ripple, reach, breath, sway } from './meadow.js';
 
@@ -174,7 +174,7 @@ const shift = (shapes, dx, dy) => shapes.map((s) => (s ? { ...s, x: s.x + dx, y:
 // A four-point sparkle (impact stars, glints).
 function star(x, y, r, c, core = '#ffffff') {
   const k = r * 0.28;
-  return [F(T([[x, y - r], [x + k, y - k], [x + r, y], [x + k, y + k], [x, y + r], [x - k, y + k], [x - r, y], [x - k, y - k]], c)), F(E(x, y, k * 0.9, k * 0.9, core))];
+  return [{ ...F(T([[x, y - r], [x + k, y - k], [x + r, y], [x + k, y + k], [x, y + r], [x - k, y + k], [x - r, y], [x - k, y - k]], c)), line: sparkLine(c) }, F(E(x, y, k * 0.9, k * 0.9, core))];
 }
 // Little dust puffs kicked up where something hits the ground.
 const dust = (x, y, k, c = '#f3e6d6') => [E(x - 2.4 * k, y - 0.8 * k, 1.6 * k, 1.2 * k, c), E(x, y - 1.6 * k, 2 * k, 1.6 * k, mix(c, '#ffffff', 0.4)), E(x + 2.4 * k, y - 0.7 * k, 1.5 * k, 1.1 * k, c)];

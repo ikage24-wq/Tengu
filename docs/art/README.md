@@ -46,6 +46,12 @@ carry an improvement across every part of the game it applies to.
 - Skin and hair ramps by multiplying with a tint (`hero.js` `skinRamp`, `hairRamp`): the shadow
   darkens and rotates hue in one step and works for every tone from pale to deep brown (the
   lavender `shadowTone` turns tan skin grey). Draw such faces flat (F) and place the shadows by hand.
+- On deep skin a pale multiply tint only reddens, so a cast shadow reads as a lighter, warmer band:
+  deepen the tint as the skin darkens (`skinRamp` `deep`) so every tone drops a similar value step.
+  Dark hair's sheen is its own hue lifted and enriched (near-black takes a cool indigo), never
+  mixed toward cream, which turns grey.
+- Bright marks (sparkles, stars, glints) give their own outline with `line` on the shape (pixel.js);
+  `sparkLine(c)` is a warm gold from the mark's colour. The automatic darkened line greys them.
 - Form shadow on round monster parts: a crescent on the back and underside whose inner edge is the
   same oval nudged toward the upper-front light and tapered to nothing at both ends (never a ring);
   notch that edge for fur. Ramps from `ramp()` in `mobs/meadow.js` (hue turns toward violet in
@@ -69,7 +75,9 @@ carry an improvement across every part of the game it applies to.
   The impact frame shows the moment damage lands. Monster wind-ups are exaggerated; the player's are
   short.
 - Hurt: a held, most-squashed first frame, a jelly wobble back, a lean away from the blow.
-  Death: knocked up on an arc, bounce, hold, flash, poof.
+  Death: knocked up on an arc, bounce, hold, flash, poof. A fallen hero (you or a party member,
+  `town.js` `drawFallen`) is knocked up and back turning onto their back, bounces once, lies
+  still, and a ghost rises out after a beat.
 - Walk bob dips as each foot lands; idle breathes in slowly and out quickly with a sideways sway
   and a held beat; landing squash scales with fall speed (Celeste numbers).
 - Cycles keep a fixed length however many frames they have; walkers step with the ground they

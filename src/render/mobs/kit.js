@@ -3,9 +3,9 @@
 // Each art module (meadow.js, wilds.js, ...) exports `ART`: { key: { walk, idle, draw } } where
 // draw(pose, frame, mood) returns { w, h, shapes } with the feet at the bottom center, facing right.
 
-import { R, E, P, T, F, C, L, shade, mix } from '../pixel.js';
+import { R, E, P, T, F, C, L, shade, mix, sparkLine } from '../pixel.js';
 
-export { R, E, P, T, F, C, L, shade, mix };
+export { R, E, P, T, F, C, L, shade, mix, sparkLine };
 
 export const INK = '#3a2d4f';
 export const BLUSH = '#ff9fb8';

@@ -18,7 +18,7 @@ import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffs
 import { ITEMS } from '../data/items.js';
 import { drawBubble } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
-import { drawStreet, drawTownsfolk, npcRoutine, drawParty } from './town.js';
+import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
@@ -212,7 +212,20 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
-  drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+  // Knocked out: the same fall as a downed party member (up and back, a bounce, lying with a ghost).
+  if (world.dead) {
+    if (feel.fellAt === undefined) feel.fellAt = time;
+    const since = time - feel.fellAt;
+    if (since >= 0.34 && !feel.fellDust) {
+      feel.fellDust = true;
+      dust(feel.fx, b.x - b.facing * 7, b.y, 4);
+    }
+    drawFallen(ctx, look, gear, hx, hy, { ...heroState, alpha: 0.85 }, since);
+  } else {
+    feel.fellAt = undefined;
+    feel.fellDust = false;
+    drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+  }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
   drawSupport(ctx, buffs, hx, hy, time, world.now);
   // Your own name tag, like everyone else's; click it (or you) to see your profile.

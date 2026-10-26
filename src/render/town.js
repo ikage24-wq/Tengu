@@ -787,6 +787,50 @@ function stroll(p, t) {
 // Walkers get their own animation state, stepped by how far they actually moved since the last
 // frame, so their legs keep pace with their feet (like the player's) and hair and capes follow.
 const anims = new Map();
+// A fallen hero (a party member down in a dungeon, or you): knocked up and back on an arc,
+// turning over as they go, one small bounce on landing, then lying on their back while a little
+// ghost rises out and bobs over them. `since` is the time since the fall, in seconds.
+// When each fallen party member went down (renderer-side, so the world state stays clean).
+const fellAt = new WeakMap();
+const FALL_UP = 0.34;
+const FALL_BOUNCE = 0.2;
+export function drawFallen(ctx, look, gear, x, y, state, since) {
+  const facing = state.facing ?? 1;
+  const s = Math.max(0, since);
+  const k = Math.min(1, s / FALL_UP);
+  const ease = 1 - (1 - k) ** 2;
+  // Up and back on the arc, the body turning onto its back; then a bounce a third as high.
+  const lift = s < FALL_UP ? 11 * Math.sin(Math.PI * k) : s < FALL_UP + FALL_BOUNCE ? 3 * Math.sin((Math.PI * (s - FALL_UP)) / FALL_BOUNCE) : 0;
+  const turn = ease * (s < FALL_UP ? 1 : 1 + 0.06 * Math.sin((Math.PI * (s - FALL_UP)) / FALL_BOUNCE));
+  ctx.save();
+  ctx.translate(snap(x - facing * 7 * ease), snap(y - 10 * ease - lift));
+  ctx.rotate((-facing * Math.PI) / 2 * turn);
+  drawHero(ctx, { ...look, face: 'pout' }, gear, 0, 5 * ease, { ...state, pose: 'idle', ready: false, hurt: s < FALL_UP, down: s >= FALL_UP });
+  ctx.restore();
+  // The ghost floats up out of the body after the bounce, fading in, then bobs.
+  const g = (s - FALL_UP - FALL_BOUNCE - 0.25) / 0.5;
+  if (g <= 0) return;
+  const gx = x - facing * 7;
+  const rise = Math.min(1, g);
+  const bob = Math.sin(state.time * 3 + (state.seed ?? 0)) * 2 * rise;
+  const gy = y - 16 - 12 * (1 - (1 - rise) ** 2) + bob;
+  ctx.save();
+  ctx.globalAlpha = 0.8 * rise;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(gx, gy, 5, Math.PI, 0);
+  ctx.lineTo(gx + 5, gy + 6);
+  ctx.lineTo(gx + 2, gy + 4);
+  ctx.lineTo(gx, gy + 6);
+  ctx.lineTo(gx - 2, gy + 4);
+  ctx.lineTo(gx - 5, gy + 6);
+  ctx.fill();
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillRect(gx - 2.5, gy - 1, 1.2, 1.6);
+  ctx.fillRect(gx + 1.3, gy - 1, 1.2, 1.6);
+  ctx.restore();
+}
+
 function animFor(key, x, facing, time, body = null) {
   let a = anims.get(key);
   if (!a) {
@@ -909,29 +953,12 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
     ready: Boolean(bot.party && bot.brain?.target), hurt: bot.hurt > 0,
   };
   if (bot.down) {
-    // Fallen in a dungeon: lying on the floor, with a little ghost bobbing over them.
-    ctx.save();
-    ctx.translate(x, y - 5);
-    ctx.rotate(-facing * Math.PI / 2);
-    drawHero(ctx, { ...look, face: 'pout' }, wornGear(bot.char), 0, 0, { ...state, pose: 'idle', ready: false, hurt: false, down: true, alpha: 0.75 });
-    ctx.restore();
-    const bob = Math.sin(time * 3 + seed) * 2;
-    ctx.save();
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y - 26 + bob, 5, Math.PI, 0);
-    ctx.lineTo(x + 5, y - 20 + bob);
-    ctx.lineTo(x + 2, y - 22 + bob);
-    ctx.lineTo(x, y - 20 + bob);
-    ctx.lineTo(x - 2, y - 22 + bob);
-    ctx.lineTo(x - 5, y - 20 + bob);
-    ctx.fill();
-    ctx.fillStyle = '#3a2d4f';
-    ctx.fillRect(x - 2.5, y - 27 + bob, 1.2, 1.6);
-    ctx.fillRect(x + 1.3, y - 27 + bob, 1.2, 1.6);
-    ctx.restore();
-  } else drawHero(ctx, look, wornGear(bot.char), x, y, state, anim);
+    if (!fellAt.has(bot)) fellAt.set(bot, time);
+    drawFallen(ctx, look, wornGear(bot.char), x, y, { ...state, alpha: 0.75 }, time - fellAt.get(bot));
+  } else {
+    fellAt.delete(bot);
+    drawHero(ctx, look, wornGear(bot.char), x, y, state, anim);
+  }
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;

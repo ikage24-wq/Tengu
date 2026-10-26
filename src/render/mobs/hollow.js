@@ -10,7 +10,7 @@
 // follows). Materials use hue-shifted four-tone ramps lit from the upper front; faces come from
 // the creature face kit (faces.js) and hold the sprite's strongest contrast.
 
-import { E, T, F, C, shade, mix } from './kit.js';
+import { E, T, F, C, shade, mix, sparkLine } from './kit.js';
 import { eye, glowEye, brow, mouth, blush, sweat, tear, vein, deadEye, band, ovalPts } from './faces.js';
 
 const TAU = Math.PI * 2;
@@ -240,7 +240,7 @@ function swoosh(cx, cy, r, a0, a1, th, glow = TEAL, core = '#ffffff') {
 // A four-point impact star.
 function star(x, y, r, c = '#ffffff') {
   const q = r * 0.28;
-  return F(T([[x, y - r], [x + q, y - q], [x + r, y], [x + q, y + q], [x, y + r], [x - q, y + q], [x - r, y], [x - q, y - q]], c));
+  return { ...F(T([[x, y - r], [x + q, y - q], [x + r, y], [x + q, y + q], [x, y + r], [x - q, y + q], [x - r, y], [x - q, y - q]], c)), line: sparkLine(c) };
 }
 // A glowing spore mote with a darker rim.
 const mote = (x, y, r, c = TEAL) => [fov(x, y, r + 0.34, r + 0.34, shade(c, -26), 0, 10), fov(x, y, r, r, c, 0, 10), fov(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.4, '#ffffff', 0, 8)];

@@ -10,7 +10,7 @@
 // big round eyes, a goblin's shifty squint, a hare's glossy eye), an idle fidget loop, and a
 // four-frame attack (wind-up, strike, impact, recover).
 
-import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix } from './kit.js';
+import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix, sparkLine } from './kit.js';
 import { eye, brow, mouth, nose, blush as cheek, sweat, tear, vein, deadEye, band } from './faces.js';
 
 const TAU = Math.PI * 2;
@@ -317,7 +317,7 @@ function ring(cx, cy, rx, ry, th, c, a0 = 0, a1 = 360) {
 // A four-point sparkle (impact stars, sparks).
 function star(x, y, r, c, core = '#ffffff') {
   const k = r * 0.28;
-  return [F(T([[x, y - r], [x + k, y - k], [x + r, y], [x + k, y + k], [x, y + r], [x - k, y + k], [x - r, y], [x - k, y - k]], c)), F(E(x, y, k * 0.9, k * 0.9, core))];
+  return [{ ...F(T([[x, y - r], [x + k, y - k], [x + r, y], [x + k, y + k], [x, y + r], [x - k, y + k], [x - r, y], [x - k, y - k]], c)), line: sparkLine(c) }, F(E(x, y, k * 0.9, k * 0.9, core))];
 }
 
 // Little dust puffs kicked up where something hits the ground.
