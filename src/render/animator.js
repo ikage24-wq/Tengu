@@ -5,8 +5,10 @@
 // The gait changes with speed: a stroll covers less ground per cycle (two steps) than a run, so
 // each planted foot moves exactly with the ground at either pace. `gait` (0 walk .. 1 run) is
 // smoothed so the change between them doesn't pop.
-export const WALK_STRIDE = 22;
-export const RUN_STRIDE = 44;
+// Strides are short for the chibi's little legs: a long one makes each planted foot slide
+// further under the body than the legs are tall, and every step turns into the splits.
+export const WALK_STRIDE = 17;
+export const RUN_STRIDE = 38;
 const gaitOf = (speed) => Math.max(0, Math.min(1, (speed - 50) / 50));
 export const strideAt = (gait) => WALK_STRIDE + (RUN_STRIDE - WALK_STRIDE) * gait;
 

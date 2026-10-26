@@ -92,8 +92,14 @@ carry an improvement across every part of the game it applies to.
   cover (`stride`), so feet never slide.
 - Springs are solved exactly so hair and capes move the same at any frame rate.
 - Chibi legs are too short to cover a run's ground at a calm cadence: give the run a short stance
-  (30%) with a float between steps and the walk a long one (60%), and a stride per gait so the
+  (24%) with a float between steps and the walk a longer one (52%), and a stride per gait so the
   planted foot travels exactly the ground covered (`animator.js` `strideAt`, legs narrowed by KX).
+  Keep strides short (walk 17, run 38): the ground a planted foot slides must stay well under the
+  legs' height on screen, or every step becomes the splits. Quick little steps suit a chibi.
+- A front-facing body walking sideways: turn the pelvis (hips drawn together, `rig.hipIn`) and
+  shade the far leg so the legs scissor in depth instead of splaying into an X; arms swing only
+  outward on screen, a swing across the body showing as the hand lifting toward the viewer, and
+  their elbows bend mostly in depth (`arm()` `side`), never out like wings.
 - Wing beats are keyed, not a sine: hold at the top, a fast downstroke, a slow recovery; each wing
   bone takes the beat a little later than the one before it, and the body rises a beat after the
   push (`summons.js` `beat`). Summons and companions that shoot on a timer wind up while the next

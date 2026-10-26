@@ -813,6 +813,7 @@ function aimedArm(angle, sleeve, long, g, skin) {
 // Legs stand apart under the hips, one on each side.
 const LEFT_LEG = 11.4;
 const RIGHT_LEG = 16.6;
+const LEG_MID = (LEFT_LEG + RIGHT_LEG) / 2;
 
 function bodyShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
@@ -836,13 +837,18 @@ function bodyShapes(look, g, rig) {
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
-  shapes.push(...legShapes(LEFT_LEG, legs, g.shoes, false, rig.backLeg, HIP_Y + drop));
-  shapes.push(...legShapes(RIGHT_LEG, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
+  // Walking, the pelvis turns toward the way it's going: the hips draw together on screen (they
+  // part in depth instead), so the legs scissor past each other rather than splaying from wide
+  // hips into splits and an X, and the far leg falls into shadow.
+  const lx = LEFT_LEG + (LEG_MID - LEFT_LEG) * rig.hipIn;
+  const rx = RIGHT_LEG + (LEG_MID - RIGHT_LEG) * rig.hipIn;
+  shapes.push(...legShapes(lx, legs, g.shoes, rig.hipIn > 0, rig.backLeg, HIP_Y + drop));
+  shapes.push(...legShapes(rx, legs, g.shoes, false, rig.frontLeg, HIP_Y + drop));
   shapes.push(...offset(hipShapes(legs), ux * 0.5, drop + rig.by * 0.5));
   // Skirts and the hems of dresses and robes drape over the legs as they're posed (in the upper
   // body's frame, which leans and bobs by ux, uy).
   const inFrame = (j) => j.map(([x, y]) => [x - ux, y - uy]);
-  const posed = [inFrame(legJoints(LEFT_LEG, rig.backLeg, HIP_Y + drop)), inFrame(legJoints(RIGHT_LEG, rig.frontLeg, HIP_Y + drop))];
+  const posed = [inFrame(legJoints(lx, rig.backLeg, HIP_Y + drop)), inFrame(legJoints(rx, rig.frontLeg, HIP_Y + drop))];
   const rest = [legJoints(LEFT_LEG), legJoints(RIGHT_LEG)];
   const skirt = skirtShapes(g.bottom.design, g.bottom.color, g.bottom, m);
   if (skirt) shapes.push(...offset(drape(skirt, posed, rest), ux, uy));
@@ -939,8 +945,8 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
 // toe-off (heel rolling up) and slides back exactly as fast as the ground goes by: over its
 // stance it travels the ground covered in that time (the animator's stride for this gait), so
 // feet never skate. Then the heel kicks up behind, the knee swings through, and the foot reaches
-// forward to land again. Walking, a foot is planted 60% of the cycle (both feet down between
-// steps) and the hips sink when the feet are spread; running, only 30%, so there's a moment with
+// forward to land again. Walking, a foot is planted 52% of the cycle (both feet down between
+// steps) and the hips sink when the feet are spread; running, only 24%, so there's a moment with
 // both feet off the ground after every push-off, and the hips compress through each stance.
 const WALK_FRAMES = 24;
 const LEG = THIGH + SHIN;
@@ -949,7 +955,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // The legs are drawn on the full-size figure and narrowed by KX, so a planted foot's offset in
 // figure units is the ground distance divided by KX.
 const gaitShape = (gait) => {
-  const stance = lerp(0.6, 0.3, gait);
+  const stance = lerp(0.52, 0.24, gait);
   return { stance, half: (strideAt(gait) * stance) / 2 / KX, kick: lerp(4.2, 6.5, gait) };
 };
 
@@ -990,7 +996,7 @@ const ease = (t) => 1 - (1 - t) ** 3;
 function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
-    frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0,
+    frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, hipIn: 0, air: false, squat: 0,
     hair: 0, hairLift: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0,
   };
 }
@@ -1052,6 +1058,8 @@ function solveRig(state, anim, mv = null) {
     r.backArm = hand(back, -1);
     // Swinging arms bend mostly toward and away from the viewer (see arm()).
     r.armSide = 0.35;
+    // The hips turn toward the walking direction (see bodyShapes).
+    r.hipIn = 0.6;
     // Running, the hips give a little through each stance (the float is drawn in drawHeroBody).
     const u = (p * 2) % 1;
     if (u < G.stance * 2) r.squat = q(gait * 1.2 * Math.sin((Math.PI * u) / (G.stance * 2)));
@@ -1155,7 +1163,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
