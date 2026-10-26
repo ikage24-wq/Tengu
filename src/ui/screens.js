@@ -491,7 +491,8 @@ export function creatorScreen(ui, time, draft) {
 
   // Name entry: a field with a blinking caret and a placeholder.
   const NY = PY + PH - 62;
-  wrap(ctx, 'Gear you equip covers your outfit. Restyle any time at Lulu\'s salon in Sprout Village.', PX + 16, NY - 24, PW - 32, { size: 7, color: COLORS.muted });
+  // The tip only shows when the rows leave room for it (the Hair tab is full).
+  if (PY + 36 + picked.h < NY - 26) wrap(ctx, 'Gear you equip covers your outfit. Restyle any time at Lulu\'s salon in Sprout Village.', PX + 16, NY - 24, PW - 32, { size: 7, color: COLORS.muted });
   ctx.strokeStyle = COLORS.cellEdge;
   ctx.lineWidth = 1;
   ctx.beginPath();

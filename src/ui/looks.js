@@ -3,7 +3,7 @@
 // your own head in your own colours, every eye style and expression on your own face, every
 // outfit on your own body) or a row of colour swatches. Picking one is a single click.
 
-import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES, BROW_STYLES, EAR_STYLES } from '../render/hero.js';
+import { drawHero, HAIR_STYLES, BANG_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES, BROW_STYLES, EAR_STYLES } from '../render/hero.js';
 import { COLORS, THEMES, text, box, hover, clicked, roundRect, tooltip } from './kit.js';
 
 // Palettes: soft pastels first, then naturals and deeper tones, so every skin and hair pairing
@@ -15,6 +15,8 @@ export const OUTFIT_COLORS = ['#ffc2d6', '#ff9a9a', '#ffd0a8', '#fff3a6', '#bff0
 
 export const LOOK_OPTIONS = [
   { key: 'hairStyle', label: 'Hair', options: HAIR_STYLES },
+  // Bangs apart from the hairstyle ('auto' keeps the style's own).
+  { key: 'hairBangs', label: 'Bangs', options: BANG_STYLES },
   { key: 'hairColor', label: 'Hair color', options: HAIR_COLORS, color: true },
   // Two-tone: the hair fades into this colour toward the tips ('none' keeps it one colour).
   { key: 'hairTip', label: 'Tips', options: ['none', ...HAIR_COLORS], color: true },
@@ -32,7 +34,7 @@ const OPTION = Object.fromEntries(LOOK_OPTIONS.map((o) => [o.key, o]));
 // What each tab holds. `thumb` says how a style is previewed: the head, the face close up, or
 // the whole body.
 export const LOOK_TABS = [
-  { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairColor', label: 'Color' }, { key: 'hairTip', label: 'Tips' }] },
+  { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairBangs', label: 'Bangs', thumb: 'head' }, { key: 'hairColor', label: 'Color' }, { key: 'hairTip', label: 'Tips' }] },
   { label: 'Eyes', rows: [{ key: 'eyeStyle', label: 'Eyes', thumb: 'face' }, { key: 'browStyle', label: 'Brows', thumb: 'brow' }, { key: 'eyeColor', label: 'Eye color' }] },
   { label: 'Face', rows: [{ key: 'face', label: 'Expression', thumb: 'face' }, { key: 'earStyle', label: 'Ears', thumb: 'ears' }, { key: 'skinTone', label: 'Skin' }] },
   { label: 'Outfit', rows: [{ key: 'outfit', label: 'Style', thumb: 'body' }, { key: 'outfitColor', label: 'Color' }] },
@@ -45,11 +47,12 @@ export function randomLook(rng = Math.random) {
   for (const opt of LOOK_OPTIONS) look[opt.key] = opt.options[Math.floor(rng() * opt.options.length)];
   // Most random heroes keep one hair colour; two-tone is the occasional treat.
   if (rng() < 0.6) look.hairTip = 'none';
+  if (rng() < 0.7) look.hairBangs = 'auto';
   return look;
 }
 
 // Display names for the styles whose ids aren't plain words.
-const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns', wolf: 'Wolf cut' };
+const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', auto: 'Own', blunt: 'Blunt', hime: 'Hime', baby: 'Baby', heavy: 'Heavy', mshape: 'M-shape', wispy: 'Wispy', swept: 'Swept', peek: 'Peekaboo', part: 'Parted', curtain: 'Curtain', short: 'Short', spiky: 'Spiky', curly: 'Curly', slicked: 'Swept back', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns', wolf: 'Wolf cut' };
 export const styleName = (id) => NAMES[id] ?? String(id).charAt(0).toUpperCase() + String(id).slice(1);
 
 // Where a thumbnail looks, in hero units from the feet: the point to centre and how much of the
@@ -89,7 +92,7 @@ export function lookRows(ui, look, tab, x, y, w, { cell = 30, time = 0, gap = 3 
   let cy = y;
   for (const row of LOOK_TABS[tab].rows) {
     const opt = OPTION[row.key];
-    const value = out[row.key] ?? (row.key === 'hairTip' ? 'none' : undefined);
+    const value = out[row.key] ?? (row.key === 'hairTip' ? 'none' : row.key === 'hairBangs' ? 'auto' : undefined);
     text(ctx, row.label, x + 2, cy + 8, { size: 8, bold: true, color: th.ink });
     if (!opt.color) text(ctx, styleName(value), x + w - 2, cy + 8, { size: 8, align: 'right', color: COLORS.muted });
     cy += 12;

@@ -29,9 +29,9 @@ import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
 import { moveAt } from './moves.js';
 import { heroineEye } from './mobs/heroine.js';
-import { HAIR_STYLES, hairStyleOf, coversEye, hairParts, hairNape } from './hair.js';
+import { HAIR_STYLES, BANG_STYLES, hairStyleOf, coversEye, hairParts, hairNape } from './hair.js';
 
-export { HAIR_STYLES, hairStyleOf };
+export { HAIR_STYLES, BANG_STYLES, hairStyleOf };
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
@@ -252,9 +252,9 @@ function hairOf(look, rig) {
   const tipColor = look.hairTip && look.hairTip !== 'none' && look.hairTip !== color ? look.hairTip : null;
   const tint = tipColor ? { mid: hairRamp(mix(color, tipColor, 0.5)), tip: hairRamp(tipColor) } : null;
   const m = rig ? { root: rig.hair ?? 0, tip: rig.hairTip ?? rig.hair ?? 0, lift: rig.hairLift ?? 0, wave: rig.hairWave ?? 0 } : null;
-  const p = hairParts(style, r, tint, m, look.face ?? 'smile');
+  const p = hairParts(style, r, tint, m, look.face ?? 'smile', look.hairBangs);
   const front = [...p.front];
-  front.shade = p.front.length ? [F(E(HEAD_X, 8.2, 10.4, 3.2, '#000000')), ...p.shade] : [];
+  front.shade = p.front.length ? [...(p.hairline ? [F(E(HEAD_X, 8.2, 10.4, 3.2, '#000000'))] : []), ...p.shade] : [];
   return { style, r, head: p.head, hang: p.hang.map((sh) => ({ ...sh, hang: true })), front, top: p.top };
 }
 
@@ -563,7 +563,7 @@ function headShapes(look, g, rig) {
   else if (rig.mouth === 'open' && f.puff) f = { ...f, puff: false };
   // The eye-cover lock hides the right eye and brow, so a wink or a raised brow moves to the eye
   // that shows.
-  const covered = coversEye(style) && !hatHidesBangs(hat);
+  const covered = coversEye(style, look.hairBangs) && !hatHidesBangs(hat);
   if (covered) f = { ...f, closed: f.closed && [...f.closed].reverse(), brows: f.brows && [...f.brows].reverse() };
   if (f.puff) for (const cx of [FACE_X - 7.6, FACE_X + 7.6]) out.push(F(E(cx, 20.8, 2.8, 2.6, skin)));
   // The bangs' shadow on the forehead (under the eyes, so lashes stay on top).

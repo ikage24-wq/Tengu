@@ -24,7 +24,7 @@ export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess',
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
-export const coversEye = (style) => style === 'swoop';
+export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
 // ---------- Geometry ----------
 
@@ -319,26 +319,39 @@ const FRINGES = {
   short: { pts: [[23, 12.4], [21.4, 10.2], [19.6, 13], [17.6, 10.4], [15.2, 13.4], [13.2, 10.6], [11, 13], [9.2, 10.6], [7.6, 12.4]], lean: 0.5 },
   // Jagged spikes of every length, one long between the eyes.
   spiky: { pts: [[23.6, 13.4], [21.6, 10.2], [19.8, 15], [17.8, 10.4], [15.4, 17.6], [13.4, 10.6], [10.8, 15.4], [9, 10.2], [7.4, 13.4]], lean: 0.4 },
+  // Curtain: parted in the middle, sweeping out to the cheekbones, short at the centre.
+  curtain: { pts: [[23.6, 17.4], [22.2, 13.4], [20, 10.8], [17.6, 8.8], [HX, 8.2], [13.4, 8.8], [11, 10.8], [8.8, 13.4], [7.4, 17.4]], lean: 0, plain: true, part: [[HX, 2.2], [HX, 7.6]] },
+  // Swept back: no fringe at all, the hairline high so the whole brow shows.
+  slicked: { pts: [[24.4, 10.6], [20.6, 8], [HX, 7], [10.4, 8], [6.6, 10.6]], lean: 0, plain: true },
+  // Baby bangs: very short and straight, high on the forehead.
+  baby: { pts: [[23.4, 11.4], [22.8, 10.5], [22.2, 11.5], [17.8, 11.6], [17.2, 10.6], [16.6, 11.6], [13.2, 11.6], [12.6, 10.6], [12, 11.6], [7.6, 11.4]], lean: 0, blunt: true },
+  // Heavy: three big thick clumps down to the eyes.
+  heavy: { pts: [[23.8, 15.6], [21.4, 11], [19.2, 17.2], [16.6, 11], [13.6, 17.4], [11.2, 11], [8.6, 16.6], [7.2, 14.2]], lean: 0.5, softTips: true },
+  // M-shape: short in the middle, longer at the sides.
+  mshape: { pts: [[23.6, 15.8], [21.8, 12.4], [19.8, 14.8], [17.8, 11.2], [HX, 12.4], [13.2, 11.2], [11.2, 14.8], [9.2, 12.4], [7.4, 15.8]], lean: 0, softTips: true },
+  // Peekaboo: a long fringe swept down from a part on the far side over the near eye to the
+  // cheek, in soft points; the far eye stays clear.
+  peek: { pts: [[25.8, 21.2], [24.4, 24.2], [23, 21.6], [21, 23.8], [19.6, 20.6], [17.6, 17], [16, 13.6], [13.8, 10.8], [12, 13.8], [10.4, 11], [8.4, 13.4]], lean: -0.5, softTips: true, part: [[10.6, 2.8], [9.2, 6.6]] },
   // Rounded scallops (for curly hair).
   curly: { pts: [[23.6, 13.8], [21.8, 14.8], [19.8, 13.8], [17.8, 15.2], [15.6, 14], [13.4, 15.2], [11.2, 13.8], [9.2, 14.8], [7.6, 13.8]], lean: 0, round: true },
 };
 // The front hair: the skull's hair line from the far cheek over the top to the near one, closed
 // by the bangs. The tips flutter a little with the hair. Returns { shapes, shade }.
 function bangs(kind, r, m, extra = [], { shine = true } = {}) {
-  const f = FRINGES[kind];
+  const f = FRINGES[BANGS ?? kind];
   const edge = [];
   f.pts.forEach((p, i) => {
     // Soft tips round off (the notches between them stay crisp).
-    edge.push(f.round || (f.softTips && i % 2 === 0) ? p : P(...p));
+    edge.push(f.round || f.plain || (f.softTips && i % 2 === 0) ? p : P(...p));
     const b = f.pts[i + 1];
-    if (b && !f.blunt && !f.round) edge.push([(p[0] + b[0]) / 2 + f.lean, (p[1] + b[1]) / 2]);
+    if (b && !f.blunt && !f.round && !f.plain) edge.push([(p[0] + b[0]) / 2 + f.lean, (p[1] + b[1]) / 2]);
   });
   const outline = smooth([...dome(160, 380), [26.4, 14.6], P(24.8, 12), ...edge, P(6.2, 12), [4.6, 14.6]]);
   const flutter = mover(m && { root: 0, tip: m.tip * 0.4, wave: m.wave }, 0.35, 9, 8);
   const pts = dense(outline, 1.2).map(flutter);
   const shapes = [poly(pts, r.base)];
   // Creases rise from the notches.
-  if (f.noCrease) {
+  if (f.noCrease || f.plain) {
     // no creases
   } else if (!f.round) {
     const notches = f.blunt ? f.pts.filter((_, i) => i % 3 === 1) : f.pts.filter((_, i) => i % 2 === 1);
@@ -363,13 +376,17 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
     } else flush();
   }
   flush();
-  return { shapes: [...shapes, ...extra, ...(shine ? ring(r.hi) : [])], shade };
+  return { shapes: [...shapes, ...extra, ...(shine ? ring(r.hi) : [])], shade, hairline: !f.plain };
 }
 // Locks that frame the face, one in front of each ear, swinging a beat behind.
 const sideLocks = (r, m, near, far = near ? fx(near) : null, w = 3.6, k = 1.2) => [
   ...(near ? [lock(near, w, r.base, m, k), streak(near[0][0] + 0.4, near[0][1] + 2, near[1][0] + 0.4, near[1][1], 0.7, -0.3, r.hi, m, k)] : []),
   ...(far ? [lock(far, w, r.base, m, k)] : []),
 ];
+
+// Bangs can be chosen apart from the hairstyle ('auto' keeps the style's own).
+export const BANG_STYLES = ['auto', 'soft', 'blunt', 'hime', 'baby', 'heavy', 'mshape', 'wispy', 'swept', 'peek', 'part', 'curtain', 'short', 'spiky', 'curly', 'slicked'];
+let BANGS = null;
 
 // ---------- The styles ----------
 
@@ -559,16 +576,19 @@ function twoTone(shapes, r, tint, [y1, y2]) {
 // Every part of a hairstyle for one look and motion: { head, hang, front, shade, top }.
 // `r` is the hair's colour ramp, `tint` the blend and tip ramps for two-tone (or null), `m` the
 // motion ({ root, tip, lift, wave }), and `mood` the face (for the ahoge).
-export function hairParts(style, r, tint, m, mood = 'smile') {
+export function hairParts(style, r, tint, m, mood = 'smile', bangsKind = 'auto') {
   const s = STYLES[style];
   if (!s) return { head: [], hang: [], front: [], shade: [], top: [] };
+  BANGS = bangsKind && bangsKind !== 'auto' && FRINGES[bangsKind] ? bangsKind : null;
   const p = s(r, m, mood);
+  BANGS = null;
   const tips = p.tips ?? [99, 99];
   return {
     head: twoTone(p.head, r, tint, tips),
     hang: twoTone(p.hang, r, tint, tips),
     front: twoTone(p.front.shapes, r, tint, tips),
     shade: p.front.shade,
+    hairline: p.front.hairline !== false,
     top: p.top ?? [],
   };
 }
