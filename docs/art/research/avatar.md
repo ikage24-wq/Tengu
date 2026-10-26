@@ -58,6 +58,33 @@ player named these two references; study them before any avatar, hair, outfit or
    said the art style would be updated. Fans noticed, and they archive the old art. **Tengu:** keep
    the look consistent and change it on purpose, across the whole cast at once.
 
+## How CocoPPa draws hair (studied from the official art)
+
+Sources: the official CocoPPa Play account's posts "Cat Hair"
+(https://x.com/CocoPPaPlay_cp/status/828484612334587905) and "Candy Hair & Eyes"
+(https://x.com/CocoPPaPlay_cp/status/829239875580866562); the images were fetched through
+api.fxtwitter.com, which worked. Another reference avatar is at
+https://www.kindpng.com/imgv/xwwmbh_cocoppa-play-hair-png-transparent-png/. Reddit's search (403)
+and Pinterest's search (rendered by script) could not be read; don't go round them. The player
+says many more examples are on X, Pinterest and Reddit, so ask them for screenshots.
+
+1. **Wispy bangs.** Many thin, pointed strands of uneven length (7 or more across the brow), with
+   small gaps where the forehead shows. They are often swept from a part on one side, with one
+   long lock crossing toward an eye. They are never one solid fringe.
+2. **A bell-shaped silhouette.** Medium hair widens below the jaw, and the ends curl outward in
+   soft C-curls. Each curl has a darker turn inside it, so the hem reads as a row of curls rather
+   than a flat cut.
+3. **Thin locks in front of the ears**, hanging to about the chin and curling at the tip.
+4. **The shine runs in long streaks** along the flow of the hair, from the crown down each lock:
+   several thin, tapered slivers in the light colour. There is no single band across the crown.
+   **Tengu:** good for big, close-up art. At sprite size, keep the ring and add 2–4 short
+   streaks, as in the cat-ear test.
+5. **Shapes made of hair, not accessories.** A big bow tied out of the hair, or cat ears made of
+   small coiled buns, each with a spiral crease and its own shine. This fits our
+   no-hair-accessory rule.
+6. **The inner layer is darker.** Hair seen behind the face and neck is a step darker, the same
+   as our rule that back hair uses shadow 1.
+
 ## To do with this reference
 
 - [ ] Get screenshots from the player of SELFY / CocoPPa hair and outfits, and measure them:
