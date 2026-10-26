@@ -237,6 +237,23 @@ test('summons attack nearby monsters on their own', () => {
   assert.ok(after < before, 'the angel dealt damage without the player attacking');
 });
 
+test('a summoned thunder hawk dives on monsters on its own, with physical damage', () => {
+  const w = newWorld();
+  gainExp(w.char, 1e5);
+  assert.equal(advanceJob(w.char, 'archer'), true);
+  w.char.skills.thunderhawk = 10;
+  w.char.mp = 999;
+  w.char.hotkeys = { KeyQ: { skill: 'thunderhawk' } };
+  crowd(w, 3, 'cloudsheep');
+  updateWorld(w, DT, keys([], ['KeyQ']));
+  assert.equal(w.char.buffs.thunderhawk?.summon?.art, 'hawk', 'hawk summoned');
+  assert.ok(w.char.buffs.thunderhawk.summon.physical);
+  const before = w.mobs.reduce((n, m) => n + m.hp, 0);
+  for (let i = 0; i < 60 * 3; i++) updateWorld(w, DT, idle);
+  const after = w.mobs.reduce((n, m) => n + m.hp, 0);
+  assert.ok(after < before, 'the hawk dealt damage without the player attacking');
+});
+
 test('every town connects to every other town by road', () => {
   for (const a of TOWNS) for (const b of TOWNS) assert.ok(Number.isFinite(hops(a, b)), `${a} -> ${b}`);
   for (const t of TOWNS) assert.ok(MAPS[t].isTown && MAPS[t].job, `${t} is a job's home town`);

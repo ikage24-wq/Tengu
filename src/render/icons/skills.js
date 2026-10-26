@@ -745,6 +745,40 @@ function eaglefocus() {
   return out;
 }
 
+function thunderhawk() {
+  // The summon: a storm hawk with its wings raised in a V, the primaries along each wing's back
+  // edge tipped lightning gold, a white head with a gold hooked beak, and bolts crackling down
+  // either side. Blue on a dawn tile, so the bird stands off the background.
+  const HW = { wing: '#7f9cf0', wingDk: '#4a58bc', ink: '#1e2470', gold: '#ffe86b', head: '#fffaf2', beak: '#ffc23a' };
+  const out = [...tile('dawn', 'buff'), ...aura(8, 7.4, 6.8, '#fffbe0', 1.1)];
+  // Each wing: a broad arm whose back edge breaks into three primaries, lit and shaded facets, a
+  // pale leading edge, and gold over the feather tips.
+  const wing = (root, tip, side) => {
+    const u = N(root, tip);
+    const nn = [-u[1] * side, u[0] * side];
+    const m = [(root[0] + tip[0]) / 2, (root[1] + tip[1]) / 2];
+    const back = [0, 1, 2].flatMap((i) => [add(add(tip, u, -1.5 * i - 0.2), nn, -1.2 - 0.9 * i), add(add(tip, u, -1.5 * i - 1.3), nn, -0.6 - 0.9 * i)]);
+    const arm = [root, add(m, nn, 1.9), add(tip, nn, 0.3), tip, ...back, add(root, nn, -1.9)];
+    return [...facet(arm, root, tip, HW.wing, { ink: HW.ink, d: 0.5, dark: HW.wingDk }),
+      S(clip(arm, oval(tip[0] - u[0] * 1.4, tip[1] - u[1] * 1.4, 2.4, 2.4, 0, 16)), HW.gold), S(tube([add(root, nn, 1.1), add(m, nn, 1.7), add(tip, u, -0.7)], 0.5), '#d4e0ff')];
+  };
+  out.push(...wing([6.4, 8.6], [1.6, 1.6], -1), ...wing([9.8, 8.6], [14.4, 1.8], 1));
+  // The body tapering to a fanned tail, the white head on top, turned to the right.
+  const body = [[6, 8], [10.2, 8], [9.8, 11.2], [10.6, 14.4], [8.2, 13.4], [5.8, 14.4], [6.4, 11.2]];
+  out.push(...solid(body, HW.wing, { ink: HW.ink, d: 0.5, light: '#c4d4ff' }));
+  // Lightning crackling down on either side of it.
+  out.push(...bolt([[4.2, 9.4], [2, 12], [4.2, 12.2], [2.4, 15.2]], 1.9, HW.gold, { ink: '#5a3a10' }));
+  out.push(...bolt([[12, 9.4], [14.2, 12], [12, 12.2], [13.8, 15.2]], 1.9, HW.gold, { ink: '#5a3a10' }));
+  const head = oval(8.4, 6.4, 2.6, 2.3, 0, 22);
+  out.push(...solid(head, HW.head, { ink: '#2e3a8a', d: 0.45, light: W }));
+  const beak = [[10.6, 5.6], [12.8, 6], [12.4, 7.8], [11, 7.4]];
+  out.push(...solid(beak, HW.beak, { shadow: false, ink: '#7a4a10', d: 0.4 }), S([[12.4, 7.8], [12.8, 6], [11.8, 6.8]], '#e0902a'));
+  out.push(S(oval(9.4, 6.1, 0.75, 0.75, 0, 12), '#2a2035'), S(oval(9.55, 6.15, 0.42, 0.42, 0, 10), '#ffc23a'), S(oval(9.15, 5.8, 0.24, 0.24, 0, 8), W));
+  out.push(S([[7.4, 5.1], [10.6, 4.7], [10.4, 5.4]], '#2e3a8a'));
+  out.push(...spark(8, 1.6, 1.1, W));
+  return out;
+}
+
 function backflip() {
   const out = [...tile('wind', 'active'), ...aura(8, 7.6, 6.6, '#f0fff8')];
   // A gust looping back over the top: a curled arrow.
@@ -1266,7 +1300,7 @@ const ART = {
   pebble, cozyrest, quickstep,
   powerslash, whirlstrike, titanbreaker, ironskin, charge, vigor, provoke, chainhook, shieldwall, rallycry, stalwart,
   magicbolt, sparkburst, blink, manashield, arcanemind, mend, renew, barrier, revive,
-  doubleshot, scattershot, arrowrain, eaglefocus, backflip, keeneye,
+  doubleshot, scattershot, arrowrain, eaglefocus, thunderhawk, backflip, keeneye,
   twinstab, startoss, haste, shadowstep, nimble,
   ilmastery, coldbeam, thunderbolt, stormfocus,
   firemastery, fireball, poisonmist, meditate,

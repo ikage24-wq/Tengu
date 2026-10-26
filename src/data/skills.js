@@ -248,6 +248,14 @@ export const SKILLS = {
     desc: 'Sharpen your aim: more accuracy and critical hits.',
     at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { acc: lerp(5, 30, lv, m), critRate: lerpf(0.03, 0.15, lv, m) } }),
   }),
+  thunderhawk: skill({
+    id: 'thunderhawk', name: 'Thunder Hawk', job: 'archer', type: 'buff', fx: 'buff', icon: 'hawk', school: 'lightning', lock: 0.8,
+    desc: 'Call a storm hawk that circles above you and dives lightning-edged feathers into nearby monsters.',
+    at: (lv, m) => ({
+      mp: lerp(40, 80, lv, m), duration: lerp(60, 180, lv, m), buff: {},
+      summon: { art: 'hawk', every: 2.4, power: lerp(60, 140, lv, m), targets: 3, range: { w: 400, h: 200, around: true }, fx: 'feather', physical: true },
+    }),
+  }),
   backflip: skill({
     id: 'backflip', name: 'Backflip Shot', job: 'archer', type: 'attack', fx: 'blink', maxLevel: 10, school: 'wind', movement: true,
     desc: 'Flip backward out of danger on a gust of wind, firing a spread of arrows at whatever was on you. Nothing touches you mid-flip.',
@@ -486,7 +494,7 @@ const MOVES_BY_SKILL = {
   provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
-  doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', backflip: 'flip', arrowrain: 'skyshot',
+  doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', thunderhawk: 'castup', backflip: 'flip', arrowrain: 'skyshot',
   twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
   fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',

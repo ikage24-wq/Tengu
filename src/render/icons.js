@@ -171,7 +171,7 @@ const SKILL_COLORS = {
   fire: '#ff8a6b', blaze: '#ff9b5c', holy: '#fff3a6', heal: '#9be08f', arrow: '#9be08f', bomb: '#ffb347', star: '#c9d6ff',
   pebble: '#ffd0e6', buff: '#ffe36b', shield: '#8fd3ff', passive: '#d4cbe8', meteor: '#ff9b5c', judgment: '#ffe36b',
   blink: '#c9a6ff', icebeam: '#8fe3ff', thunder: '#ffd84a', chain: '#7fc4ff', icespire: '#9fe3ff', tempest: '#6fa8d8',
-  mist: '#8fd86b', toxicblaze: '#7de04f', shiningray: '#ffe36b', storm: '#ffd84a', sprite: '#bfe6ff', salamander: '#ff8a3c', angel: '#fff3a6',
+  mist: '#8fd86b', toxicblaze: '#7de04f', shiningray: '#ffe36b', storm: '#ffd84a', sprite: '#bfe6ff', salamander: '#ff8a3c', angel: '#fff3a6', hawk: '#ffe86b',
   venom: '#b46bff',
 };
 
