@@ -331,7 +331,7 @@ const FRINGES = {
   mshape: { pts: [[23.6, 15.8], [21.8, 12.4], [19.8, 14.8], [17.8, 11.2], [HX, 12.4], [13.2, 11.2], [11.2, 14.8], [9.2, 12.4], [7.4, 15.8]], lean: 0, softTips: true },
   // Peekaboo: a long fringe swept down from a part on the far side over the near eye to the
   // cheek, in soft points; the far eye stays clear.
-  peek: { pts: [[27.2, 18.4], [25.6, 23.6, 1], [23.6, 21.8], [21.4, 22.8], [18.8, 21.6], [16.6, 18.6], [15.4, 14.8], [13.8, 11.6], [12.2, 11.8], [10.4, 10.2], [8.4, 11.6]], lean: 0, plain: true,
+  peek: { pts: [[27.2, 18.4], [25.6, 23.6, 1], [23.6, 21.8], [21.4, 22.8], [18.8, 21.6], [16.6, 18.6], [15.4, 14.8], [14.4, 12.4], [13.4, 11], [12.4, 14.4], [11.2, 11.2], [9.8, 14.2], [8.6, 11.6], [7.6, 12.8]], lean: 0, plain: true,
     part: [[10.4, 2.8], [9.6, 6.4]],
     // Strand lines that follow the sweep from the part down over the eye.
     strands: [[11.2, 5.4, 19.4, 21, 0.8, -1.8], [14.4, 4.8, 23.4, 21.2, 0.8, -1.8], [18.6, 4.6, 26, 16.4, 0.7, -1.4]] },
