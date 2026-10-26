@@ -377,6 +377,30 @@ add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 50, effect
 add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 160, effect: { hp: 150 }, color: '#ffa94d', desc: 'Restores 150 HP.' });
 add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 320, effect: { hp: 300 }, color: '#fff7ea', desc: 'Restores 300 HP.' });
 add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100 }, color: '#6fb8ff', desc: 'Restores 100 MP.' });
+// Throwing stars: what a gauntlet throws, one star per throw. They come in sets that stack up to
+// `stack`; the topmost set in your Use tab (that your level allows) is the one you throw, and its
+// `star.watk` adds to your attack. A shop recharges a set back to full for `price / stack` a star.
+// Better stars only drop from monsters. `element` gives the star's hits that element's impact.
+export const STARS = [
+  { key: 'pebble', name: 'Pebble Stars', level: 10, watk: 15, price: 500, color: '#c9c2b8' },
+  { key: 'steel', name: 'Steel Stars', level: 10, watk: 17, price: 1800, color: '#c8d2e0' },
+  { key: 'mint', name: 'Mint Stars', level: 20, watk: 19, price: 5000, color: '#8ff0c8' },
+  { key: 'moon', name: 'Moon Stars', level: 30, watk: 21, price: 12000, color: '#c9b6ff' },
+  { key: 'crimson', name: 'Crimson Stars', level: 40, watk: 23, price: 22000, color: '#ff6b7a', drop: true },
+  { key: 'thunder', name: 'Thunder Stars', level: 50, watk: 25, price: 36000, color: '#ffe36b', element: 'storm', drop: true },
+  { key: 'flame', name: 'Flame Stars', level: 60, watk: 27, price: 52000, color: '#ff9b5c', element: 'fire', drop: true },
+  { key: 'crystal', name: 'Crystal Stars', level: 70, watk: 27, price: 52000, color: '#a8e8ff', element: 'water', drop: true },
+  { key: 'starlight', name: 'Starlight Stars', level: 80, watk: 30, price: 90000, color: '#fff3b8', element: 'cosmic', drop: true },
+];
+export const STAR_STACK = 500;
+for (const s of STARS) {
+  add({
+    id: `star_${s.key}`, name: s.name, type: 'use', price: s.price, stack: STAR_STACK, reqLevel: s.level, color: s.color,
+    star: { watk: s.watk, element: s.element ?? null }, drop: Boolean(s.drop),
+    desc: `Throwing stars for a gauntlet: +${s.watk} attack. ${STAR_STACK} to a set, one per throw.`,
+  });
+}
+
 add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 620, effect: { mp: 300 }, color: '#a58cff', desc: 'Restores 300 MP.' });
 add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 3000, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });
 add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 400, effect: { returnTown: true }, color: '#bff0dc', desc: 'Takes you back to the nearest town.' });

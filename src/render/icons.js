@@ -132,6 +132,15 @@ function itemShapes(def, variant = null) {
   }
   if (def.scroll) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), E(8, 8, 3, 3, c), P(7, 7, '#ffffff')];
   if (def.effect?.returnTown) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), R(6, 6, 4, 5, c), R(5, 6, 6, 1, d)];
+  // Throwing stars: a little pile of shuriken in the set's color.
+  if (def.star) {
+    const ink = shade(c, -45);
+    return [
+      R(3, 1, 2, 7, d), R(0, 3, 7, 2, d), R(2, 2, 4, 4, d),
+      R(9, 3, 3, 13, ink), R(4, 8, 13, 3, ink), R(7, 6, 7, 7, ink),
+      R(10, 4, 1, 11, c), R(5, 9, 11, 1, c), R(8, 7, 5, 5, c), R(8, 7, 2, 2, l), E(10.5, 9.5, 1, 1, ink),
+    ];
+  }
   if (def.type === 'use') return [R(6, 1, 4, 3, '#c99a6b'), R(5, 4, 6, 2, '#ffffff'), E(8, 10, 5, 5, c), E(6, 8, 1.5, 1.5, '#ffffff')];
   // Etc: a little gem-like bauble in the item's color.
   return [E(8, 9, 5, 5, c), E(6, 7, 2, 2, l), P(10, 12, d)];

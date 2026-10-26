@@ -8,6 +8,7 @@ import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, easeOut, easeIn } from './fxkit.js';
+import { mix } from './pixel.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
 
@@ -283,7 +284,9 @@ function drawShot(ctx, f, cam) {
       }
       ctx.translate(x, y);
       ctx.rotate(f.t * 20);
-      shuriken(ctx, 7, '#b9c0cc', '#eef2f7', '#3a2d4f');
+      // Each kind of star has its own color.
+      const body = f.starColor ?? '#b9c0cc';
+      shuriken(ctx, 7, body, f.starColor ? mix(body, '#ffffff', 0.55) : '#eef2f7', '#3a2d4f');
       break;
     }
     case 'bolt': case 'holy': case 'fire': case 'bomb': {

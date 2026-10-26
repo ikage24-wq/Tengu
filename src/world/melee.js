@@ -24,6 +24,7 @@ import { physicalRange, rollHit, accuracy, hitChance } from '../core/formulas.js
 import { JOBS } from '../data/jobs.js';
 import { pickTargets, weaponElement } from './combat.js';
 import { moveAt } from '../render/moves.js';
+import { useStars } from '../core/inventory.js';
 
 // How long after a step ends you can still carry the combo on.
 const WINDOW = 0.45;
@@ -183,33 +184,43 @@ function land(world, s) {
 }
 
 // How a shot would hit a monster: rolled now, landing when it arrives.
-function shotHit(world, s, m, delay, stack = 0) {
+function shotHit(world, s, m, delay, stack = 0, element = null) {
   const { char, stats, body } = world;
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const miss = Math.random() >= hitChance(acc, char.level, m.def);
   const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random);
-  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake });
+  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element });
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, s) {
   const { body } = world;
+  // A gauntlet throws real stars: one each, from the set in your bag.
+  let star = null;
+  if (s.shot === 'star') {
+    star = useStars(world.char, s.pierce ? 1 : s.fan ?? 1);
+    if (!star) {
+      if (world.warnTimer <= 0) world.log('Out of throwing stars!', '#ffb3c6');
+      world.warnTimer = 1.5;
+      return;
+    }
+  }
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
   const ox = body.x + s.dir * 10;
   const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0);
   const speed = s.speed ?? 680;
   const box = { w: s.range, h: s.h ?? 60 };
-  const element = s.key.startsWith('basic') ? weaponElement(world.char) : null;
+  const element = star?.star.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
   const fly = (tx, ty) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', shot: s.shot, school: s.school, element, x: ox, y: oy, tx, ty, t: 0, dur: travel });
+    world.fx.push({ kind: 'projectile', shot: s.shot, school: s.school, element, starColor: star?.color, x: ox, y: oy, tx, ty, t: 0, dur: travel });
     return travel;
   };
   // A little snap of the string (or flick of the wrist) as it goes.
   world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16 });
   if (s.pierce) {
     const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
-    line.forEach((m, i) => shotHit(world, s, m, Math.abs(m.x - ox) / speed, i % 3));
+    line.forEach((m, i) => shotHit(world, s, m, Math.abs(m.x - ox) / speed, i % 3, element));
     fly(ox + s.dir * s.range, oy);
     return;
   }
@@ -219,7 +230,7 @@ function fire(world, s) {
     const m = targets[i];
     if (m) {
       const travel = fly(m.x, m.y - (m.air ?? 0) - m.def.h / 2);
-      shotHit(world, s, m, travel);
+      shotHit(world, s, m, travel, 0, element);
     } else {
       // Nothing to aim at: it flies off at its place in the fan.
       const a = n > 1 ? (i / (n - 1) - 0.5) * 0.7 : 0;

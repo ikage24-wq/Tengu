@@ -6,7 +6,7 @@ import { ITEMS, variantsFor } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { questState, acceptQuest, completeQuest, objectiveProgress, rewardId } from '../core/quests.js';
-import { addItem, removeItem } from '../core/inventory.js';
+import { addItem, removeItem, rechargePrice } from '../core/inventory.js';
 import { makeEquip, itemName, itemColors, variantPrice } from '../core/items.js';
 import { shade } from '../render/pixel.js';
 import { advanceJob, wornGear } from '../core/character.js';
@@ -354,7 +354,8 @@ function shopWindow(ui, state, world) {
     box(ctx, win.x + 8, y, W - 16, rowH - 2, { fill: COLORS.cell, edge: variant ? colors.main : null, r: 6, width: 1.2 });
     drawItemIcon(ctx, e.id, win.x + 11, y + 2.5, 1, variant);
     const name = `${itemName(shown)}${e.qty > 1 ? ` x${e.qty}` : ''}`;
-    text(ctx, fit(ctx, name, 150, 7.5), win.x + 31, y + 9, { size: 7.5, bold: true, color: variant ? readable(colors.main) : COLORS.ink });
+    text(ctx, fit(ctx, name, def.star ? 132 : 150, 7.5), win.x + 31, y + 9, { size: 7.5, bold: true, color: variant ? readable(colors.main) : COLORS.ink });
+    if (def.star) text(ctx, `Lv ${def.reqLevel} · +${def.star.watk} attack`, win.x + 31, y + 18, { size: 6.5, color: char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });
     if (def.type === 'equip') text(ctx, `Lv ${def.reqLevel}`, win.x + 31, y + 18, { size: 6.5, color: char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });
     // Color swatches: pick the variant you want before buying.
     if (variants) {
@@ -378,10 +379,11 @@ function shopWindow(ui, state, world) {
     }
     if (hover(ui, win.x + 8, y, 54, rowH - 2) || (hover(ui, win.x + 8, y, W - 70, rowH - 2) && !variants)) tooltip(ui, itemTooltip(char, e.id, e.inst ?? (variant ? makePreview(e.id, variant) : null)));
     if (dlg.tab === 0) {
-      const qty = shift && def.type !== 'equip' ? 10 : 1;
-      const cost = (variant ? variantPrice(def, variant) : def.price) * qty;
+      // Throwing stars come by the full set.
+      const qty = def.star ? def.stack : shift && def.type !== 'equip' ? 10 : 1;
+      const cost = (variant ? variantPrice(def, variant) : def.price) * (def.star ? 1 : qty);
       text(ctx, `${cost.toLocaleString()}g`, win.x + W - 62, y + 13, { size: 8, bold: true, align: 'right', color: char.gold >= cost ? COLORS.gold : COLORS.bad });
-      if (button(ui, win.x + W - 56, y + 3, 46, 15, qty > 1 ? 'Buy 10' : 'Buy', { enabled: char.gold >= cost, primary: true, size: 8 })) {
+      if (button(ui, win.x + W - 56, y + 3, 46, 15, def.star ? 'Buy set' : qty > 1 ? 'Buy 10' : 'Buy', { enabled: char.gold >= cost, primary: true, size: 8 })) {
         const item = def.type === 'equip' ? makeEquip(e.id, { variant }) : e.id;
         if (addItem(char.inventory, item, def.type === 'equip' ? 1 : qty)) {
           char.gold -= cost;
@@ -391,11 +393,22 @@ function shopWindow(ui, state, world) {
         }
       }
     } else {
-      const qty = e.inst ? 1 : shift ? e.qty : 1;
-      const gain = sellPrice(e.id, e.inst) * qty;
+      // A set of stars sells whole, for what its stars are worth; a part-thrown set can be
+      // recharged back to full.
+      const qty = e.inst ? 1 : shift || def.star ? e.qty : 1;
+      const gain = def.star ? starSellPrice(def, qty) : sellPrice(e.id, e.inst) * qty;
+      if (def.star && qty < def.stack) {
+        const cost = rechargePrice(def, qty);
+        if (button(ui, win.x + W - 150, y + 3, 52, 15, `Refill ${cost.toLocaleString()}g`, { enabled: char.gold >= cost, primary: true, size: 6.5 })) {
+          char.inventory.use[e.index].qty = def.stack;
+          char.gold -= cost;
+          world.log(`Recharged ${def.name}.`, def.color);
+        }
+      }
       text(ctx, `${gain.toLocaleString()}g`, win.x + W - 62, y + 13, { size: 8, bold: true, align: 'right', color: COLORS.gold });
-      if (button(ui, win.x + W - 56, y + 3, 46, 15, qty > 1 ? 'Sell all' : 'Sell', { size: 8 })) {
+      if (button(ui, win.x + W - 56, y + 3, 46, 15, def.star ? 'Sell set' : qty > 1 ? 'Sell all' : 'Sell', { size: 8 })) {
         if (e.inst) char.inventory.equip.splice(e.index, 1);
+        else if (def.star) char.inventory.use.splice(e.index, 1);
         else removeItem(char.inventory, e.id, qty);
         char.gold += gain;
       }
@@ -407,6 +420,10 @@ function shopWindow(ui, state, world) {
   text(ctx, `${char.gold.toLocaleString()} gold`, win.x + 23, win.y + H - 10, { size: 8.5, bold: true, color: COLORS.gold });
   text(ctx, dlg.tab === 0 ? 'Pick a color · Shift: buy 10' : 'Shift: sell all', win.x + W - 68, win.y + H - 10, { size: 7, align: 'right', color: COLORS.muted });
   if (button(ui, win.x + W - 60, win.y + H - 20, 52, 14, 'Back', { size: 8 })) dlg.mode = null;
+}
+
+function starSellPrice(def, qty) {
+  return Math.max(1, Math.floor((def.price * 0.4 * qty) / def.stack));
 }
 
 // A shop item with a variant, for its tooltip before you buy it (stats as sold).

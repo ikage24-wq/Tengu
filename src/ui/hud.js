@@ -6,7 +6,7 @@ import { JOBS } from '../data/jobs.js';
 import { QUESTS } from '../data/quests.js';
 import { MOBS } from '../data/mobs.js';
 import { expToNext } from '../core/exp.js';
-import { countItem } from '../core/inventory.js';
+import { countItem, activeStar } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { questState, objectiveProgress } from '../core/quests.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
@@ -158,6 +158,7 @@ export function drawHud(ui, state, world) {
     clicked(ui, x, y, 18, 18);
   });
 
+  if (s.weaponType === 'gauntlet') drawStars(ui, world);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -167,6 +168,20 @@ export function drawHud(ui, state, world) {
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   if (settings.showFps) drawFps(ctx, state);
+}
+
+// The throwing stars a gauntlet is throwing, and how many are left in the set.
+function drawStars(ui, world) {
+  const { ctx } = ui;
+  const char = world.char;
+  const set = activeStar(char);
+  const x = 584;
+  const y = BAR_Y - 20;
+  const low = !set || set.qty < 50;
+  box(ctx, x, y, 52, 16, { fill: 'rgba(255,253,251,0.92)', edge: low && Math.sin(world.now * 8) > 0 ? COLORS.bad : '#e2d3f0', r: 8, width: 1.2 });
+  if (set) drawItemIcon(ctx, set.id, x + 2, y);
+  text(ctx, set ? `${set.qty}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: low ? COLORS.bad : COLORS.ink });
+  if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
 }
 
 // Frames per second, smoothed.

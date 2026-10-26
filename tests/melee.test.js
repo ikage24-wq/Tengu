@@ -10,6 +10,7 @@ import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
 import { COMBOS } from '../src/world/melee.js';
 import { cast } from '../src/world/combat.js';
+import { addItem } from '../src/core/inventory.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -217,6 +218,7 @@ test('the same no-spam rule holds for every job, spells and thief skills include
   for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'startoss'], ['warrior', 'sword_20', 'powerslash']]) {
     const w = arena(weapon);
     w.char.job = job;
+    if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
     w.char.skills[skill] = 10;
     w.char.mp = 9999;
     assert.ok(cast(w, skill).ok, `${skill} goes off`);

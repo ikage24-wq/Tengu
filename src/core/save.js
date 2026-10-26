@@ -5,6 +5,7 @@ import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
+import { addItem } from './inventory.js';
 
 // Slot 0 keeps the original key so saves from before character slots still load.
 export const SLOTS = 8;
@@ -32,6 +33,7 @@ export function loadGame(slot = 0) {
     char.inventory.cash ??= [];
     dropRetiredItems(char);
     updateRetiredJobs(char);
+    giveFirstStars(char);
     // Keep new item ids from colliding with saved ones.
     const all = [...Object.values(char.equipment).filter(Boolean), ...Object.values(char.outfit).filter(Boolean), ...char.inventory.equip, ...char.inventory.cash];
     setNextUid(Math.max(0, ...all.map((i) => i.uid)) + 1);
@@ -66,6 +68,14 @@ export function updateRetiredJobs(char) {
     delete char.skills[id];
   }
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.skill && !SKILLS[b.skill]) char.hotkeys[code] = null;
+  return char;
+}
+
+// Thieves from before throwing stars get the set new thieves start with, once.
+export function giveFirstStars(char) {
+  if (char.gotStars || char.job !== 'thief') return char;
+  char.gotStars = true;
+  if (!char.inventory.use.some((e) => ITEMS[e.id].star)) addItem(char.inventory, 'star_pebble', ITEMS.star_pebble.stack);
   return char;
 }
 

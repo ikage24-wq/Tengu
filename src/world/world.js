@@ -228,6 +228,7 @@ const BLOCKER_TEXT = {
   busy: null,
   weapon: "That skill needs a different weapon.",
   noone: 'No fallen party member nearby.',
+  stars: 'You need throwing stars! Shops sell them.',
   unlearned: null,
   passive: null,
 };
@@ -431,7 +432,7 @@ export function updateWorld(world, dt, input) {
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
     // Endgame weapons add an elemental impact on every hit.
-    const element = h.party ? null : weaponElement(char);
+    const element = h.party ? null : h.element ?? weaponElement(char);
     if (element) world.fx.push({ kind: 'impact', element, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.4, seed: Math.random() });
     // Spell shots burst where they land.
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });

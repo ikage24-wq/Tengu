@@ -10,6 +10,7 @@ import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
 import { hasCombo, basicCombo, skillCombo } from './melee.js';
+import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -77,6 +78,9 @@ export function castBlocker(world, skillId) {
   }
   if (!skillId && world.now < (world.basicReadyAt ?? 0)) return 'busy';
   if (skillId && world.now < (world.skillReadyAt ?? 0)) return 'busy';
+  // A gauntlet throws stars from your bag: none left, nothing to throw.
+  const throwsStars = stats.weaponType === 'gauntlet' && (!skillId || SKILLS[skillId]?.weapons?.includes('gauntlet'));
+  if (throwsStars && SKILLS[skillId]?.type !== 'passive' && (!skillId || char.skills[skillId] > 0) && !activeStar(char)) return 'stars';
   if (!skillId) return null;
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
@@ -237,6 +241,10 @@ export function cast(world, skillId, rng = Math.random) {
     world.fx.push({ kind: 'chainbolt', points, x: 0, y: 0, t: 0, dur: 0.5, seed: rng() });
   }
 
+  // Thrown stars come out of your bag, one per star, and carry its look and element.
+  const star = params.projectile && fxKind === 'star' ? useStars(char, targets.length * params.hits) : null;
+  const shotElement = star?.star.element ?? element;
+
   targets.forEach((m, ti) => {
     const dist = Math.abs(m.x - body.x);
     const travel = params.projectile ? dist / PROJECTILE_SPEED : params.delay ?? 0.1;
@@ -248,12 +256,12 @@ export function cast(world, skillId, rng = Math.random) {
       world.pending.push({
         at: at + chainAt, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: n, knock: params.knock, launch: params.launch,
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
-        burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school,
+        burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school, element: star?.star.element,
       });
       if (params.projectile) {
         world.fx.push({
           kind: 'projectile', shot: fxKind, school: s?.school, x: body.x + body.facing * 10, y: body.y - HAND_Y,
-          tx: m.x, ty: m.y - m.def.h / 2, t: -(n * 0.09 + ti * 0.02), dur: Math.max(0.08, travel), element,
+          tx: m.x, ty: m.y - m.def.h / 2, t: -(n * 0.09 + ti * 0.02), dur: Math.max(0.08, travel), element: shotElement, starColor: star?.color,
         });
       }
     }

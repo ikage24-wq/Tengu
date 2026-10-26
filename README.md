@@ -92,6 +92,14 @@ to clear it.
   whole line, or two throws and a three-star barrage. Arrows leave on the string's snap, fly to
   their target pointed along their path, and hit when they arrive; you hop back a little with each
   shot.
+- **Throwing stars** — a gauntlet throws real stars from your bag, one per star thrown. Stars
+  come in sets of 500 and add their own attack: Pebble (Lv 10, +15), Steel (Lv 10, +17), Mint
+  (Lv 20, +19), and Moon (Lv 30, +21) are sold in shops; Crimson (Lv 40), Thunder (Lv 50),
+  Flame (Lv 60), Crystal (Lv 70), and Starlight (Lv 80, +30) only drop from monsters (bosses
+  often), and the last four hit with their element. New thieves get a set of Pebble Stars. The
+  first set in your bag is the one thrown (double-click a set to throw it), the HUD shows how
+  many are left, and any shop recharges a part-thrown set for what its missing stars are worth.
+  Out of stars, a gauntlet can't attack.
 - **Warrior skills** — **Blade Rush** is a three-press combo: a quick cross-cut, a rising
   launcher that throws them into the air, and a leaping dive that cracks the ground around you.
   **Whirlwind** spins you forward hitting everything around you five times, sucking monsters in,

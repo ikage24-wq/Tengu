@@ -25,7 +25,7 @@ export const NPCS = {
     building: 'goods', sign: "Pip's Goods",
     look: { hairStyle: 'short', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
-    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
+    shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', 'star_pebble', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
     // Job gear for your own job (a Novice sees every job's starter set), by level.
     gear: [5, 10],
     quests: ['snail_trouble'],
@@ -68,7 +68,7 @@ export const NPCS = {
     building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
     greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
-    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', ...arms(10, 30, 'sword', 'axe', 'spear'), 'ear_15', 'ear_20', 'ear_25'],
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll', 'scroll_watk_100', 'scroll_def_100', 'star_steel', 'star_mint', ...arms(10, 30, 'sword', 'axe', 'spear'), 'ear_15', 'ear_20', 'ear_25'],
     gear: [10, 30],
   },
   nim: {
@@ -100,7 +100,7 @@ export const NPCS = {
     greeting: 'Finest goods on the coast. Bows, blades, armor, tonics, and charms!',
     shop: [
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
-      'scroll_watk_100', 'scroll_def_100',
+      'scroll_watk_100', 'scroll_def_100', 'star_pebble', 'star_steel', 'star_mint', 'star_moon',
       ...arms(15, 40, 'bow', 'crossbow', 'dagger', 'gauntlet'),
       'hoodie', 'kitty_ears', 'sailor_top',
     ],

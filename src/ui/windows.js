@@ -119,7 +119,7 @@ export function bagWindow(ui, state, world) {
       ctx.fillRect(x, y, CELL - 1, CELL - 1);
     }
     if (hover(ui, x, y, CELL, CELL)) {
-      const hint = tab === 'equip' ? 'Double-click to equip' : tab === 'cash' ? 'Double-click to wear' : tab === 'use' ? 'Double-click to use · press a hotkey to bind' : null;
+      const hint = tab === 'equip' ? 'Double-click to equip' : tab === 'cash' ? 'Double-click to wear' : tab === 'use' ? (ITEMS[entry.id].star ? 'Double-click to throw this set' : 'Double-click to use · press a hotkey to bind') : null;
       tooltip(ui, [...itemTooltip(char, entry.id, tab === 'equip' || tab === 'cash' ? entry : null), ...(hint ? [{ text: hint, color: COLORS.muted, size: 8 }] : [])]);
     }
     const right = ui.mouse.right && hover(ui, x, y, CELL, CELL);
@@ -144,7 +144,7 @@ export function bagWindow(ui, state, world) {
     text(ctx, itemName(selEntry.uid ? selEntry : selEntry.id), gx + 6, iy + 13, { size: 9, bold: true });
     const about = tab === 'equip' ? (equipBlocker(char, selEntry) ?? 'Ready to equip.') : tab === 'cash' ? `Outfit for your ${def.slot}. Wear it over your gear's look.` : def.desc ?? '';
     wrap(ctx, about, gx + 6, iy + 25, 140, { size: 8, color: COLORS.muted });
-    const label = tab === 'equip' ? 'Equip' : tab === 'cash' ? 'Wear' : tab === 'use' ? 'Use' : null;
+    const label = tab === 'equip' ? 'Equip' : tab === 'cash' ? 'Wear' : tab === 'use' ? (def.star ? 'Throw' : 'Use') : null;
     if (label && button(ui, gx + 6, iy + 46, 50, 14, label, { primary: true })) activate(state, world, tab, win.sel);
   } else {
     wrap(ctx, 'Pick up loot with X. Double-click (or right-click) an item to use it.', gx + 6, iy + 13, 140, { size: 8, color: COLORS.muted });
@@ -168,7 +168,16 @@ function activate(state, world, tab, index) {
     state.windows.bag.view = 1;
   } else if (tab === 'use') {
     const def = ITEMS[entry.id];
-    if (def.scroll) {
+    if (def.star) {
+      // Picks the set a gauntlet throws: it moves to the front of the tab.
+      if (char.level < def.reqLevel) world.log(`${def.name} need level ${def.reqLevel}.`, '#ffb3c6');
+      else {
+        char.inventory.use.splice(index, 1);
+        char.inventory.use.unshift(entry);
+        state.windows.bag.sel = 0;
+        world.log(`Now throwing ${def.name}.`, def.color);
+      }
+    } else if (def.scroll) {
       state.scrollMode = entry.id;
       state.windows.bag.tab = 0;
       state.windows.bag.sel = -1;
