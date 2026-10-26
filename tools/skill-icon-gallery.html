@@ -1,0 +1,81 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Skill icon gallery</title>
+<style>body { margin: 0; background: #e9e2f5; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: renders every skill icon at 1x, 3x and 6x, grouped by job, with its name.
+// Open /tools/skill-icon-gallery.html (&ids=a,b limits it to some skills; &jobs=a,b to some jobs).
+import { setHd } from '../src/render/pixel.js';
+import { SKILLS } from '../src/data/skills.js';
+import { drawSkillIcon } from '../src/render/icons.js';
+
+const q = new URLSearchParams(location.search);
+const pick = q.get('ids')?.split(',');
+const jobs = q.get('jobs')?.split(',');
+const all = Object.values(SKILLS).filter((s) => (!pick || pick.includes(s.id)) && (!jobs || jobs.includes(s.job)));
+const COLS = 3;
+const ROW = 112;
+const COL = 400;
+const HEAD = 28;
+// Lay out job by job: a heading, then the job's skills in rows.
+const groups = [...new Set(all.map((s) => s.job))].map((job) => [job, all.filter((s) => s.job === job)]);
+const cells = [];
+let y = 8;
+for (const [job, list] of groups) {
+  cells.push({ head: job, y });
+  y += HEAD;
+  list.forEach((s, i) => cells.push({ s, x: (i % COLS) * COL, y: y + Math.floor(i / COLS) * ROW }));
+  y += Math.ceil(list.length / COLS) * ROW;
+}
+const c = document.getElementById('c');
+c.width = COL * COLS;
+c.height = y + 8;
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#e9e2f5';
+ctx.fillRect(0, 0, c.width, c.height);
+for (const S of [1, 3, 6]) {
+  setHd(true, S);
+  for (const cell of cells) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (cell.head) {
+      if (S === 1) {
+        ctx.fillStyle = '#5a4a80';
+        ctx.fillRect(0, cell.y, c.width, HEAD - 6);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(cell.head.toUpperCase(), 10, cell.y + 16);
+      }
+      continue;
+    }
+    const { s, x: ox, y: oy } = cell;
+    if (S === 1) {
+      ctx.fillStyle = '#3a2d4f';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(s.name, ox + 8, oy + 16);
+      ctx.font = '10px monospace';
+      ctx.fillStyle = '#8f7cc4';
+      ctx.fillText(`${s.id} · ${s.type}`, ox + 8, oy + 30);
+    }
+    const x0 = { 1: 12, 3: 60, 6: 130 }[S];
+    const size = 16 * S + 8;
+    const px = ox + x0;
+    const py = oy + (S === 6 ? 6 : 40);
+    ctx.fillStyle = '#fffdfb';
+    ctx.fillRect(px, py, size, size);
+    if (S === 1) {
+      // Also as it sits on the dark side.
+      ctx.fillStyle = '#2b2340';
+      ctx.fillRect(px, py + size + 4, size, size);
+    }
+    ctx.setTransform(S, 0, 0, S, px + 4, py + 4);
+    ctx.imageSmoothingEnabled = false;
+    drawSkillIcon(ctx, s.id, 0, 0);
+    if (S === 1) {
+      ctx.setTransform(1, 0, 0, 1, px + 4, py + size + 8);
+      drawSkillIcon(ctx, s.id, 0, 0);
+    }
+  }
+}
+document.title = 'ready';
+</script>

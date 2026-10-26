@@ -959,3 +959,6 @@ const ART = {
 };
 
 export const ITEM_ART = Object.fromEntries(Object.entries(ART).map(([id, draw]) => [id, framed(draw)]));
+
+// The drawing kit, shared with the skill icons so both speak one visual language.
+export { hi, lt, sh, dk, ink, S, oval, arcPts, bez, bez3, rect, clip, cut, bbox, ball, tube, line, bevel, twinkle, glint, leaf, turn, framed, W, GOLD, D2R };

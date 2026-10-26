@@ -8,6 +8,7 @@ import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, skirtShapes, hatShapes, hatBackShapes, handShapes, capeShapes, capeFrontShapes, earringShapes, limb } from './gear.js';
 import { SCHOOL_COLORS } from './spells.js';
 import { ITEM_ART } from './icons/items.js';
+import { SKILL_ART } from './icons/skills.js';
 
 const GOLD = '#ffd66b';
 
@@ -227,7 +228,13 @@ function skillShapes(s) {
   }
 }
 
+// Every skill has its own hand-drawn tile (res 3, crisp inked outline); any skill without one
+// falls back to the simple glyph for its kind.
+export function skillIcon(skillId) {
+  const art = SKILL_ART[skillId];
+  return sprite(`skill|${skillId}`, () => (art ? { w: 16, h: 16, shapes: art(), res: 3, soft: 'cel', crisp: true } : { w: 16, h: 16, shapes: skillShapes(SKILLS[skillId]) }));
+}
+
 export function drawSkillIcon(ctx, skillId, x, y, scale = 1) {
-  const s = SKILLS[skillId];
-  blit(ctx, sprite(`skill|${skillId}`, () => ({ w: 16, h: 16, shapes: skillShapes(s) })), x, y, { scale });
+  blit(ctx, skillIcon(skillId), x, y, { scale });
 }
