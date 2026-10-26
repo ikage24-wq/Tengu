@@ -4,7 +4,7 @@
 // chimney smoke, bobbing boats. World-to-screen is (wx - cam.x, wy - cam.y). Layouts are seeded so
 // nothing jitters as you move; animation comes only from `time`.
 
-import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, mix, snap, tinted } from './pixel.js';
 import { groundAt, surfacesOf } from '../world/physics.js';
 import { drawTerrain, drawIsland, drawLadder } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
@@ -93,9 +93,15 @@ const BLUSH = '#ff9fb8';
 export function art(key, w, h, build) {
   return sprite(`scn|${key}`, () => ({ w, h, shapes: build().filter(Boolean), res: 2, soft: 'cel', crisp: true }));
 }
+// While a backdrop layer draws, `veil` washes its sprites toward the sky's color (outlines and
+// all), so distant things lose contrast and sink into the air.
+let veil = null;
 // Draws a sprite with its bottom center at (x, y).
 export function place(ctx, s, x, y, opts) {
-  blit(ctx, s, snap(x - s.w / 2), snap(y - s.h), opts);
+  const px = snap(x - s.w / 2);
+  const py = snap(y - s.h);
+  blit(ctx, s, px, py, opts);
+  if (veil) blit(ctx, { ...s, canvas: tinted(s, veil.color) }, px, py, { ...opts, alpha: (opts?.alpha ?? 1) * veil.k });
 }
 
 function arc(cx, cy, rx, ry, a0, a1, th, c) {
@@ -718,8 +724,16 @@ function drawRainbow(ctx, width, height, alpha) {
   ctx.restore();
 }
 
-function drawClouds(ctx, theme, cam, width, time) {
+function drawClouds(ctx, theme, cam, width, time, air) {
   if (theme === 'cave' || theme === 'hollow') return;
+  // A far bank of big, faint clouds near the horizon, almost the sky's own color, barely moving.
+  veil = { color: air, k: 0.55 };
+  repeat(cam.x + time * 2, 0.03, 210, width, (i, x) => {
+    if (hash(i + 50) < 0.35) return;
+    const size = Math.round((1.5 + hash(i + 51) * 0.9) * 4) / 4;
+    place(ctx, cloudArt(size, null), x, 130 + hash(i + 52) * 46 - cam.y * 0.02 + 18 * size, { alpha: 0.7 });
+  });
+  veil = null;
   repeat(cam.x + time * 5, 0.07, 150, width, (i, x) => {
     if (hash(i) < 0.3) return;
     const size = 0.9 + hash(i + 9) * 0.8;
@@ -1428,6 +1442,19 @@ function drawHaze(ctx, t, width, groundScreenY) {
   ctx.fillRect(0, top, width, bottom - top);
 }
 
+// A band of the sky's color at the foot of a backdrop layer: clear above, thickening down to
+// `k` at `y`, and staying that thick below (where nearer layers cover it).
+function footHaze(ctx, c, width, height, y, k) {
+  if (k <= 0 || y - 60 > height) return;
+  const g = ctx.createLinearGradient(0, y - 60, 0, y);
+  g.addColorStop(0, hexA(c, 0));
+  g.addColorStop(1, hexA(c, k));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, Math.max(0, y - 60), width, height - Math.max(0, y - 60));
+}
+
+const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+
 // ---------- Ambient life ----------
 
 function drawCritters(ctx, t, map, cam, width, height, time) {
@@ -1536,12 +1563,24 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll
   // vertically at a fraction of the camera so taller maps still feel deep.
   const camBottom = Math.max(0, map.height - height);
+  // Like Maple's backgrounds they barely move up and down (a tenth of the camera at most), so the
+  // skyline stays planted while you climb.
   const layerY = (lift, factor) => map.groundY - lift - camBottom - (cam.y - camBottom) * factor;
+  // Depth: each plane further back is paler, softer, and nearer the sky's color, its outlines fade
+  // with it, and a band of haze sits at its foot so it stands in air. `look.aerial` scales it.
+  const air = t.sky[1];
+  const aerial = t.aerial ?? 1;
+  const far = { ...t, far: mix(t.far, air, 0.3 * aerial) };
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
-    drawClouds(g, theme, cam, width, time);
-    drawFar(g, t, cam, width, layerY(50, 0.2), time);
-    drawMid(g, t, theme, cam, width, layerY(10, 0.45), time);
+    drawClouds(g, theme, cam, width, time, air);
+    const farY = layerY(50, 0.05);
+    veil = { color: air, k: 0.5 * aerial };
+    drawFar(g, far, cam, width, farY, time);
+    footHaze(g, air, width, height, farY + 24, 0.3 * aerial);
+    veil = { color: air, k: 0.22 * aerial };
+    drawMid(g, t, theme, cam, width, layerY(10, 0.1), time);
+    veil = null;
     drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);
