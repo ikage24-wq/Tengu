@@ -635,11 +635,59 @@ function stroke(pts, th, c) {
   return out.length === 1 ? F(T(out[0], c)) : F(T([...out.map((q) => q[0]), out.at(-1)[1], out.at(-1)[2], ...out.map((q) => q[3]).reverse()], c));
 }
 
-// An eyebrow over the eye at ex: `raise` lifts it, `tilt` drops its inner end (angry) or, when
-// negative, lifts it (worried).
-function brow(ex, side, raise, tilt, c) {
+// Eyebrow styles, each its own silhouette (art bible: brows taper at both ends, in the hair's
+// darkest shade, never ink). `round` is hikimayu: small soft ovals set high. `none` hides them.
+export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'none'];
+
+// A tapered ribbon along `pts`, `ws` thick at each point.
+function ribbon(pts, ws, c) {
+  const left = [];
+  const right = [];
+  pts.forEach(([x, y], i) => {
+    const [ax, ay] = pts[Math.max(0, i - 1)];
+    const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+    const len = Math.hypot(bx - ax, by - ay) || 1;
+    const nx = (-(by - ay) / len) * ws[i] * 0.5;
+    const ny = ((bx - ax) / len) * ws[i] * 0.5;
+    left.push([x + nx, y + ny]);
+    right.push([x - nx, y - ny]);
+  });
+  return F(T([...left, ...right.reverse()], c));
+}
+
+// An eyebrow over the eye at ex in a style: `raise` lifts it, `tilt` drops its inner end (angry)
+// or, when negative, lifts it (worried). Every style follows the same raise and tilt, so every
+// expression still reads.
+// `grow` widens it all round, for the skin-coloured edge drawn under it.
+function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
   const y = 14.4 - raise;
-  return stroke([[ex - side * 1.5, y + tilt], [ex + side * 1.8, y - tilt * 0.6]], 0.8, c);
+  const g = (ws) => ws.map((w) => w + grow * 2);
+  // Points from the inner end (toward the nose) to the outer end.
+  const at = (u, lift = 0) => {
+    const x0 = ex - side * 1.5;
+    const x1 = ex + side * 1.8;
+    return [x0 + (x1 - x0) * u, y + tilt + (-tilt * 1.6) * u - lift];
+  };
+  switch (style) {
+    case 'thick':
+      // Bold and straight-ish, a little longer, thinning only at the tail.
+      return ribbon([at(-0.08), at(0.35, 0.1), at(0.75, 0.1), at(1.08)], g([1.25, 1.35, 1.2, 0.6]), c);
+    case 'round': {
+      // Hikimayu: a small soft oval, set high over the inner half of the eye.
+      const [cx, cy] = at(0.3, 0.9);
+      return F(E(cx, cy, 0.95 + grow, 0.72 + grow, c));
+    }
+    case 'thin':
+      return ribbon([at(0), at(0.45, 0.35), at(1, 0.1)], g([0.35, 0.5, 0.3]), c);
+    case 'arched':
+      // A high curve that peaks past the middle.
+      return ribbon([at(0), at(0.35, 0.6), at(0.65, 0.95), at(1, 0.2)], g([0.5, 0.75, 0.7, 0.35]), c);
+    case 'sharp':
+      // Full at the inner end, narrowing to a point that flicks up past the eye.
+      return ribbon([at(0), at(0.5, 0.15), at(1.12, 0.75)], g([0.95, 0.7, 0.12]), c);
+    default:
+      return ribbon([at(0), at(0.45, 0.15), at(1)], g([0.6, 0.85, 0.45]), c);
+  }
 }
 
 // Mouth colours come from the skin ramp (lip line, a bright open-mouth fill), never ink.
@@ -816,9 +864,18 @@ function headShapes(look, g, rig) {
   else if (rig.eyes === 'dead') out.push(...mouthShapes('open', sk));
   else out.push(...mouthShapes(rig.mouth === 'open' ? 'open' : f.mouth ?? 'smile', sk));
   if (front) out.push(...front);
-  if (f.brows) {
-    // The eye-cover lock hides that side's brow.
-    [-1, 1].forEach((side, i) => (covered && side > 0) || out.push(brow(FACE_X + EYE_DX * side, side, f.brows[i][0], f.brows[i][1], hr.brow)));
+  // Brows, in the look's style; an expression that doesn't move them leaves them at rest. The
+  // eye-cover lock hides that side's brow.
+  const browStyle = look.browStyle ?? 'soft';
+  if (browStyle !== 'none') {
+    const brows = f.brows ?? [[0.2, 0], [0.2, 0]];
+    // Each sits on a thin skin-coloured edge, so it reads over the bangs (as if seen through
+    // them, the anime way) even when the hair is as dark as the brow.
+    [-1, 1].forEach((side, i) => {
+      if (covered && side > 0) return;
+      const args = [FACE_X + EYE_DX * side, side, brows[i][0], brows[i][1]];
+      out.push(brow(...args, mix(skin, sk.sh1, 0.25), browStyle, 0.42), brow(...args, hr.brow, browStyle));
+    });
   }
   if (f.extra) out.push(...faceExtras(f.extra));
   // Hair ties where the twintails gather (no bows, so nothing clashes with a hat).

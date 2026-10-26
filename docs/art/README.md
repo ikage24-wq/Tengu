@@ -28,6 +28,11 @@ carry an improvement across every part of the game it applies to.
 - The face holds the strongest contrast in the sprite. Eye colour must contrast the hair colour.
   Hair separates from skin by value (a bangs shadow where face meets hair).
 - Every mood is acted by the whole face and differs per character: no stock `> <` everywhere.
+- Brows come in styles (`hero.js` `BROW_STYLES`: soft, thick, round hikimayu dots, thin, arched,
+  sharp, hidden), each built as a tapered ribbon (or an oval) that follows the expression's raise
+  and tilt, and every face shows them (at rest when the expression doesn't move them). Each brow
+  sits on a thin skin-coloured edge, so it reads over the bangs even when the hair is as dark as
+  the brow.
 - Hurt and knocked-out faces replace the expression, not layer on it: no sparkles, notes,
   winks or puffed cheeks over `> <` (`hero.js` `headShapes`). Marks around the head (sparkles,
   notes, sweat) float clear of the hair's outline and never sit on an eye; a style that hides an
