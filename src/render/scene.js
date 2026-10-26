@@ -3,7 +3,7 @@
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
-import { drawSceneBack } from './scenery.js';
+import { drawSceneBack, drawSceneFront } from './scenery.js';
 import { drawHero } from './hero.js';
 import { drawMonster } from './monsters.js';
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
@@ -232,6 +232,11 @@ export function drawWorld(ctx, world, viewCam, time) {
   // HD: light and color over the world, then effects on a glowing layer.
   const hd = gfx.hd;
   if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time);
+  // The foreground: framing pieces and the nearest drifting petals, in front of everyone (and of
+  // the light, being between it and the camera), but under the effects.
+  const actors = [{ x: hx, top: hy - 50 }];
+  for (const m of world.mobs) if (m.hp > 0) actors.push({ x: m.x - cam.x, top: m.y - m.def.h - cam.y });
+  drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time, actors);
   const drawFx = (g) => {
     drawEffects(g, world, cam, time);
     if (world.dungeon) drawDungeonFront(g, world, cam, time);

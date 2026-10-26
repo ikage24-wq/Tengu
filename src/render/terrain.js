@@ -432,15 +432,33 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   ctx.clip();
   const deepest = mix(m.deep, INK, 0.22);
   const STRIP = 16;
-  for (let sx = -STRIP; sx < width + STRIP; sx += STRIP) {
-    const top = surfaceY(runs, sx + STRIP / 2);
-    if (top == null || top > height) continue;
+  const depthBand = (x, w, top) => {
     const g = ctx.createLinearGradient(0, top + 14, 0, top + 190);
     g.addColorStop(0, hexA(m.deep, 0));
     g.addColorStop(0.4, hexA(m.deep, 0.38));
     g.addColorStop(1, hexA(deepest, 0.82));
     ctx.fillStyle = g;
-    ctx.fillRect(sx, top - 40, STRIP, bottom - top + 40);
+    ctx.fillRect(x, top - 40, w, bottom - top + 40);
+  };
+  for (const pts of runs) {
+    for (let i = 1; i < pts.length; i++) {
+      const x0 = Math.max(-STRIP, pts[i - 1][0]);
+      const x1 = Math.min(width + STRIP, pts[i][0]);
+      if (x1 <= x0) continue;
+      const [ax, ay] = pts[i - 1];
+      const [bx, by] = pts[i];
+      const at = (x) => ay + ((by - ay) * (x - ax)) / (bx - ax || 1);
+      // Flat stretches take one band; slopes take narrow strips that step down with them.
+      if (Math.abs(by - ay) < 1) {
+        if (ay < height) depthBand(x0, x1 - x0, ay);
+        continue;
+      }
+      for (let sx = x0; sx < x1; sx += STRIP) {
+        const w = Math.min(STRIP, x1 - sx);
+        const top = at(sx + w / 2);
+        if (top < height) depthBand(sx, w, top);
+      }
+    }
   }
   ctx.restore();
 
@@ -459,23 +477,6 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   for (const pts of runs) strokeAlong(ctx, pts, 12, hexA(INK, 0.16), 6);
   runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, 10, deco));
   if (map.look?.ceiling) drawCeiling(ctx, m, map, cam, width, time);
-}
-
-// The ground's surface height at screen x (the higher side at a cliff), or null off the land.
-function surfaceY(runs, x) {
-  let best = null;
-  for (const pts of runs) {
-    if (x < pts[0][0] - 8 || x > pts[pts.length - 1][0] + 8) continue;
-    for (let i = 1; i < pts.length; i++) {
-      const [x0, y0] = pts[i - 1];
-      const [x1, y1] = pts[i];
-      if (x < x0 - 8 || x > x1 + 8) continue;
-      const u = x1 > x0 ? Math.max(0, Math.min(1, (x - x0) / (x1 - x0))) : 0;
-      const y = y0 + (y1 - y0) * u;
-      if (best == null || y < best) best = y;
-    }
-  }
-  return best;
 }
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;

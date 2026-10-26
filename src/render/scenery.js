@@ -4,9 +4,9 @@
 // chimney smoke, bobbing boats. World-to-screen is (wx - cam.x, wy - cam.y). Layouts are seeded so
 // nothing jitters as you move; animation comes only from `time`.
 
-import { R, E, T, F, sprite, blit, shade, mix, snap, tinted } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, mix, snap, tinted, gfx } from './pixel.js';
 import { groundAt, surfacesOf } from '../world/physics.js';
-import { drawTerrain, drawIsland, drawLadder } from './terrain.js';
+import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { MAPS } from '../data/maps.js';
 
@@ -100,8 +100,27 @@ let veil = null;
 export function place(ctx, s, x, y, opts) {
   const px = snap(x - s.w / 2);
   const py = snap(y - s.h);
-  blit(ctx, s, px, py, opts);
-  if (veil) blit(ctx, { ...s, canvas: tinted(s, veil.color) }, px, py, { ...opts, alpha: (opts?.alpha ?? 1) * veil.k });
+  blit(ctx, veil ? { ...s, canvas: veiled(s, veil.color, veil.k) } : s, px, py, opts);
+}
+
+// A sprite already washed toward a color, made once and kept with the sprite.
+const veils = new WeakMap();
+function veiled(s, color, k) {
+  if (!veils.has(s.canvas)) veils.set(s.canvas, new Map());
+  const byKey = veils.get(s.canvas);
+  const key = `${color}|${k}`;
+  let c = byKey.get(key);
+  if (!c) {
+    c = document.createElement('canvas');
+    c.width = s.canvas.width;
+    c.height = s.canvas.height;
+    const g = c.getContext('2d');
+    g.drawImage(s.canvas, 0, 0);
+    g.globalAlpha = k;
+    g.drawImage(tinted(s, color), 0, 0);
+    byKey.set(key, c);
+  }
+  return c;
 }
 
 function arc(cx, cy, rx, ry, a0, a1, th, c) {
@@ -1450,7 +1469,7 @@ function footHaze(ctx, c, width, height, y, k) {
   g.addColorStop(0, hexA(c, 0));
   g.addColorStop(1, hexA(c, k));
   ctx.fillStyle = g;
-  ctx.fillRect(0, Math.max(0, y - 60), width, height - Math.max(0, y - 60));
+  ctx.fillRect(0, Math.max(0, y - 60), width, Math.min(height, y + 90) - Math.max(0, y - 60));
 }
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
@@ -1511,48 +1530,288 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   }
 }
 
-// Petals, leaves, motes, or sparkles drifting through the air, in front of the scenery.
-function drawDrift(ctx, t, cam, width, height, time) {
+// Petals, leaves, motes, or sparkles drifting through the air, in three depth bands: a faint,
+// small, slow one far back (tinted toward the sky), the main one among the scenery, and a few big,
+// fast ones in front of the characters. All of them ride the same wind.
+const DRIFT_BANDS = {
+  back: { n: 10, size: 0.6, alpha: 0.5, par: 0.3, speed: 0.6, seed: 100, air: 0.45 },
+  mid: { n: 9, size: 1, alpha: 1, par: 0.6, speed: 1, seed: 0, air: 0 },
+  front: { n: 4, size: 1.9, alpha: 0.75, par: 1.25, speed: 1.35, seed: 200, air: 0 },
+};
+function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
   if (!t.drift) return;
-  const colors = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms }[t.drift];
+  const band = DRIFT_BANDS[which];
+  const base = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms }[t.drift];
+  const colors = band.air ? base.map((c) => mix(c, t.sky[1], band.air)) : base;
   // Embers rise from the forges and spores float up from the mushrooms instead of falling.
   const rise = t.drift === 'ember' || t.drift === 'spore' ? -1 : 1;
   const spore = t.drift === 'spore';
+  const k = band.size;
+  const blow = windTravel(time) * 1.3 * band.speed;
+  const gust = wind(time);
   ctx.save();
-  for (let i = 0; i < (spore ? 14 : 9); i++) {
-    const speed = (10 + hash(i + 2) * 14) * (spore ? 0.45 : 1);
-    const x = (((hash(i) * width + time * speed * 0.8 - cam.x * 0.6) % (width + 40)) + width + 40) % (width + 40) - 20;
+  const n = spore ? Math.round(band.n * 1.5) : band.n;
+  for (let j = 0; j < n; j++) {
+    const i = j + band.seed;
+    const speed = (10 + hash(i + 2) * 14) * (spore ? 0.45 : 1) * band.speed;
+    const x = (((hash(i) * width + blow * (10 + hash(i + 2) * 14) * (spore ? 0.45 : 1) - cam.x * band.par) % (width + 40)) + width + 40) % (width + 40) - 20;
     const y = (((hash(i + 7) * height + time * speed * rise) % (height + 20)) + height + 20) % (height + 20) - 10;
-    const wob = Math.sin(time * 2 + i) * 4;
-    const c = colors[i % colors.length];
-    ctx.globalAlpha = 0.85;
+    const wob = Math.sin(time * 2 + i) * 4 * k;
+    const c = colors[j % colors.length];
+    ctx.globalAlpha = 0.85 * band.alpha;
     if (t.drift === 'ember') {
-      ctx.globalAlpha = 0.5 + 0.4 * Math.abs(Math.sin(time * 3 + i));
-      rect(ctx, x + wob, y, 2, 2, c);
+      ctx.globalAlpha = (0.5 + 0.4 * Math.abs(Math.sin(time * 3 + i))) * band.alpha;
+      rect(ctx, x + wob, y, 2 * k, 2 * k, c);
       continue;
     }
     if (spore) {
-      const a = 0.45 + 0.45 * Math.abs(Math.sin(time * 1.4 + i * 1.9));
-      glow(ctx, x + wob * 1.5, y, 6, c, a * 0.7);
+      const a = (0.45 + 0.45 * Math.abs(Math.sin(time * 1.4 + i * 1.9))) * band.alpha;
+      glow(ctx, x + wob * 1.5, y, 6 * k, c, a * 0.7);
       ctx.globalAlpha = a;
       ctx.fillStyle = c;
       ctx.beginPath();
-      ctx.arc(x + wob * 1.5, y, 1.4 + (i % 3) * 0.3, 0, Math.PI * 2);
+      ctx.arc(x + wob * 1.5, y, (1.4 + (j % 3) * 0.3) * k, 0, Math.PI * 2);
       ctx.fill();
       rect(ctx, x + wob * 1.5 - 0.5, y - 0.5, 1, 1, '#ffffff');
       continue;
     }
     if (t.drift === 'sparkle' || t.drift === 'mote') {
-      ctx.globalAlpha = 0.4 + 0.5 * Math.abs(Math.sin(time * 2 + i));
-      sparkle(ctx, x + wob, y, 1.6 + (i % 3) * 0.6, c);
+      ctx.globalAlpha = (0.4 + 0.5 * Math.abs(Math.sin(time * 2 + i))) * band.alpha;
+      sparkle(ctx, x + wob, y, (1.6 + (j % 3) * 0.6) * k, c);
       continue;
     }
+    // Petals and leaves tumble, and tip over further when a gust blows.
     ctx.fillStyle = c;
     ctx.beginPath();
-    ctx.ellipse(x + wob, y, 2.6, 1.4, Math.sin(time * 3 + i) * 1.2, 0, Math.PI * 2);
+    ctx.ellipse(x + wob, y, 2.6 * k, 1.4 * k, Math.sin(time * 3 + i) * 1.2 + gust * 0.5, 0, Math.PI * 2);
     ctx.fill();
+    if (which === 'front') {
+      ctx.globalAlpha = 0.5 * band.alpha;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(x + wob - 0.8 * k, y - 0.4 * k, 1 * k, 0.5 * k, Math.sin(time * 3 + i) * 1.2 + gust * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.restore();
+}
+
+// ---------- The foreground ----------
+
+// Out-of-focus things just in front of the camera that frame the view from the top edge: leaf
+// clumps in the woods, roots in the hollow, vines in the ruins, crystal shards in caves, blossom
+// branches in spring maps, cloud wisps in the sky, and strings of lights over the harbor. They
+// scroll faster than the world (they're nearer), sway with the wind, and turn see-through when
+// anyone is under them, so they never hide a fight.
+const FRONT_COLORS = {
+  leaves: ['#4f9a6e', '#5fae7a', '#3f8a66'],
+  grove: ['#5a4aa0', '#6a58b4', '#4c3f8e'],
+  roots: ['#5a3f4c', '#6c4c58', '#4a3442'],
+  vines: ['#5a9a7a', '#6aae86', '#4c8a70'],
+  crystals: ['#5c4aa6', '#6e5cc0', '#4a3c90'],
+  blossoms: ['#b88a7a', '#ffb3cf', '#ff9ec0'],
+  clouds: ['#ffffff', '#f4f6ff', '#ffffff'],
+};
+const FRONT_W = 130;
+const FRONT_H = 96;
+const fronts = new Map();
+// Each piece is painted once, softly blurred (it's out of focus), and reused.
+function frontArt(kind, v) {
+  const res = Math.max(1, Math.round(gfx.scale || 1));
+  const key = `${kind}|${v}|${res}`;
+  let c = fronts.get(key);
+  if (!c) {
+    c = document.createElement('canvas');
+    c.width = FRONT_W * res;
+    c.height = FRONT_H * res;
+    const g = c.getContext('2d');
+    g.filter = `blur(${(kind === 'clouds' ? 2 : 1.1) * res}px)`;
+    g.scale(res, res);
+    paintFront(g, kind, v, FRONT_COLORS[kind]);
+    fronts.set(key, c);
+  }
+  return c;
+}
+
+// Paints a foreground piece hanging from (FRONT_W / 2, 0).
+function paintFront(g, kind, v, [c0, c1, c2]) {
+  const cx = FRONT_W / 2;
+  const r = (n) => hash(v * 13.7 + n);
+  const leaf = (x, y, rx, ry, a, c) => {
+    g.fillStyle = c;
+    g.beginPath();
+    g.ellipse(x, y, rx, ry, a, 0, Math.PI * 2);
+    g.fill();
+  };
+  const stem = (pts, w, c) => {
+    g.fillStyle = c;
+    fillPts(g, bandPts(pts, (u) => w * (1 - u * 0.7)));
+  };
+  const curve = (x0, len, bend, n = 8) => Array.from({ length: n + 1 }, (_, k) => [x0 + Math.sin((k / n) * 2.2) * bend, -4 + (k / n) * len]);
+  if (kind === 'leaves' || kind === 'grove') {
+    // Two or three twigs, each ending in a clump of overlapping leaves.
+    for (let s = 0; s < 2 + Math.floor(r(1) * 2); s++) {
+      const x0 = cx - 34 + s * 30 + r(s + 2) * 14;
+      const len = 26 + r(s + 5) * 34;
+      const bend = (r(s + 8) - 0.5) * 20;
+      const pts = curve(x0, len, bend);
+      stem(pts, 2, c2);
+      const [tx, ty] = pts[pts.length - 1];
+      for (let j = 0; j < 9; j++) {
+        const a = (j / 9) * Math.PI * 2 + r(j + 11);
+        const d = 4 + r(j + 20) * 8;
+        leaf(tx + Math.cos(a) * d, ty + Math.sin(a) * d * 0.7 - 2, 8 + r(j + 30) * 3, 4.2, a, j % 3 ? c0 : c1);
+      }
+      for (const u of [0.35, 0.65]) {
+        const [lx, ly] = pts[Math.round(u * 8)];
+        leaf(lx + 6, ly, 7, 3.4, 0.6, c1);
+        leaf(lx - 6, ly + 3, 7, 3.4, -0.6, c0);
+      }
+    }
+  } else if (kind === 'roots') {
+    // Gnarled roots hanging from the den's ceiling, tapering, one or two curling at the tip.
+    g.fillStyle = c2;
+    g.beginPath();
+    g.ellipse(cx, -6, 58, 14, 0, 0, Math.PI * 2);
+    g.fill();
+    for (let s = 0; s < 3; s++) {
+      const x0 = cx - 34 + s * 30 + r(s + 2) * 10;
+      const len = 30 + r(s + 5) * 46;
+      const pts = curve(x0, len, (r(s + 8) - 0.5) * 18);
+      if (r(s + 14) > 0.5) {
+        const [ex, ey] = pts[pts.length - 1];
+        pts.push([ex + 4, ey + 4], [ex + 7, ey], [ex + 4.5, ey - 3]);
+      }
+      stem(pts, 5 + r(s + 3) * 2, s % 2 ? c0 : c1);
+    }
+  } else if (kind === 'vines') {
+    // Long vines with leaf pairs down their length.
+    for (let s = 0; s < 3; s++) {
+      const x0 = cx - 36 + s * 34 + r(s + 2) * 10;
+      const len = 34 + r(s + 5) * 50;
+      const pts = curve(x0, len, (r(s + 8) - 0.5) * 12, 10);
+      stem(pts, 1.4, c2);
+      for (let k = 2; k <= 10; k += 2) {
+        const [lx, ly] = pts[k];
+        leaf(lx + 4, ly, 5, 2.6, 0.5, c0);
+        leaf(lx - 4, ly + 2, 5, 2.6, -0.5, c1);
+      }
+    }
+  } else if (kind === 'crystals') {
+    // A cluster of shards hanging point-down, each with a lit facet.
+    for (let s = 0; s < 4; s++) {
+      const x = cx - 36 + s * 22 + r(s + 2) * 10;
+      const w = 7 + r(s + 4) * 9;
+      const len = 26 + r(s + 6) * 46;
+      g.fillStyle = s % 2 ? c0 : c2;
+      g.beginPath();
+      g.moveTo(x - w, -2);
+      g.lineTo(x + w, -2);
+      g.lineTo(x + w * 0.2, len);
+      g.closePath();
+      g.fill();
+      g.fillStyle = c1;
+      g.beginPath();
+      g.moveTo(x - w * 0.2, -2);
+      g.lineTo(x + w * 0.6, -2);
+      g.lineTo(x + w * 0.2, len * 0.85);
+      g.closePath();
+      g.fill();
+    }
+  } else if (kind === 'blossoms') {
+    // A cherry branch reaching in from above, dotted with blossoms.
+    const pts = [[cx - 58, -4], [cx - 30, 14 + r(1) * 8], [cx, 22 + r(2) * 10], [cx + 34, 26 + r(3) * 12], [cx + 56, 40 + r(4) * 10]];
+    stem(pts, 3, c0);
+    const twig = [[cx - 4, 22], [cx + 6, 40 + r(5) * 10], [cx + 4, 54 + r(6) * 10]];
+    stem(twig, 1.6, c0);
+    for (const [bx, by] of [...pts.slice(1), ...twig.slice(1), [cx - 16, 24], [cx + 20, 34], [cx + 46, 30]]) {
+      for (let j = 0; j < 5; j++) {
+        const a = (j / 5) * Math.PI * 2;
+        leaf(bx + Math.cos(a) * 3.4, by + Math.sin(a) * 3.4, 3.4, 3.4, 0, j % 2 ? c1 : c2);
+      }
+      leaf(bx, by, 1.6, 1.6, 0, '#fff3c4');
+    }
+  } else if (kind === 'clouds') {
+    // A soft cloud wisp drifting by just under the top edge.
+    g.globalAlpha = 0.85;
+    for (let j = 0; j < 6; j++) leaf(cx - 46 + j * 18 + r(j) * 8, 6 + r(j + 9) * 10, 16 + r(j + 3) * 10, 12 + r(j + 6) * 6, 0, j % 2 ? c0 : c1);
+    g.globalAlpha = 1;
+  }
+}
+
+// The harbor's front layer: strings of little lights sagging across the top of the view.
+function drawGarlands(ctx, cam, width, time, fade) {
+  repeat(cam.x, 1.25, 260, width, (i, x) => {
+    if (hash(i + 70) < 0.4) return;
+    const sag = 18 + hash(i + 71) * 14;
+    const top = -4 + hash(i + 72) * 6;
+    const a = fade(x + 130);
+    ctx.save();
+    ctx.globalAlpha = 0.75 * a;
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.quadraticCurveTo(x + 130, top + sag * 2, x + 260, top);
+    ctx.stroke();
+    for (let k = 1; k < 12; k++) {
+      const u = k / 12;
+      const lx = x + u * 260;
+      const ly = top + 4 * sag * u * (1 - u) + 3;
+      const c = ['#ffe36b', '#ff9ec0', '#9fd8ff', '#bff0dc'][(k + i) % 4];
+      const tw = 0.65 + 0.35 * Math.sin(time * 3 + k * 1.7 + i);
+      ctx.globalAlpha = a;
+      glow(ctx, lx, ly, 9, c, 0.45 * tw);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  });
+}
+
+const FRONTS = { forest: 'leaves', grove: 'grove', hollow: 'roots', ruins: 'vines', cave: 'crystals', sky: 'clouds', harbor: 'garland' };
+
+// Everything in front of the characters: the foreground framing pieces and the nearest band of
+// drifting petals or sparks. `actors` are the screen boxes ({ x, top }) of the player and the
+// monsters, which the pieces turn see-through over.
+export function drawSceneFront(ctx, map, cam, width, height, time, actors = []) {
+  const theme = THEMES[map.theme] ? map.theme : 'meadow';
+  const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
+  const kind = t.front !== undefined ? t.front : FRONTS[theme];
+  // How solid a piece centered at screen x is: see-through when anyone near it stands high on
+  // the screen (on a ledge just under it).
+  const fade = (x) => {
+    let k = 1;
+    for (const a of actors) {
+      if (a.top > 92) continue;
+      k = Math.min(k, Math.max(0, (Math.abs(a.x - x) - 45) / 45));
+    }
+    return 0.3 + 0.7 * k;
+  };
+  if (kind === 'garland') drawGarlands(ctx, cam, width, time, fade);
+  else if (kind) {
+    repeat(cam.x, 1.25, 170, width, (i, x) => {
+      if (hash(i + 60) < 0.5) return;
+      const v = Math.floor(hash(i + 61) * 3);
+      const c = frontArt(kind, v);
+      const scale = 0.8 + hash(i + 62) * 0.3;
+      const ax = x + 85;
+      const sway = kind === 'clouds' ? 0 : (windAt(time, cam.x * 1.25 + ax) - 0.6) * 0.06 + Math.sin(time * 1.1 + i) * 0.02;
+      const drift = kind === 'clouds' ? Math.sin(time * 0.3 + i) * 10 : 0;
+      ctx.save();
+      ctx.globalAlpha = (kind === 'clouds' ? 0.7 : 0.92) * fade(ax);
+      ctx.translate(ax + drift, -2);
+      ctx.rotate(sway);
+      ctx.scale(hash(i + 63) > 0.5 ? -scale : scale, scale);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(c, -FRONT_W / 2, 0, FRONT_W, FRONT_H);
+      ctx.restore();
+    });
+  }
+  drawDrift(ctx, t, cam, width, height, time, 'front');
 }
 
 // Everything behind the characters.
@@ -1584,6 +1843,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);
+  drawDrift(ctx, t, cam, width, height, time, 'back');
   drawTerrain(ctx, theme, map, cam, width, height, time);
   drawDeco(ctx, map, cam, width, time, false);
   // Town buildings stand on the street, behind ledges and props.
