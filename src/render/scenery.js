@@ -8,6 +8,7 @@ import { R, E, T, F, sprite, blit, shade, mix, snap, gfx } from './pixel.js';
 import { drawSoft } from './post.js';
 import { groundAt, surfacesOf } from '../world/physics.js';
 import { drawTerrain, drawIsland, drawLadder } from './terrain.js';
+import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {
@@ -1095,108 +1096,25 @@ function smoke(ctx, x, y, time, seed) {
 
 // ---------- Ground and ledges ----------
 
+// The map's landmarks (giant trees, totems, archways, crystal spires...), standing on the ground
+// behind everything that moves.
+function drawDeco(ctx, map, cam, width, time) {
+  for (const [kind, wx, seed = 0] of map.deco ?? []) {
+    const half = (LANDMARKS[kind]?.w ?? 120) / 2 + 160;
+    const x = wx - cam.x;
+    if (x + half < 0 || x - half > width) continue;
+    drawLandmark(ctx, kind, snap(x), snap(groundAt(map, wx) - cam.y), time, seed);
+  }
+}
+
 
 function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of map.platforms.entries()) {
     const x = Math.round(p.x - cam.x);
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
-    if (theme === 'sky') {
-      // A soft shadow below.
-      ctx.fillStyle = 'rgba(58,45,79,0.1)';
-      ctx.beginPath();
-      ctx.ellipse(x + p.w / 2, y + 22, p.w / 2 - 6, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // A fluffy cloud ledge.
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = edge('#e6ecff');
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let dx = 6; dx < p.w; dx += 12) ctx.arc(x + dx, y + 5 + (dx % 24 ? 1 : -1), 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      roundRect(ctx, x, y + 2, p.w, 11, 6);
-      ctx.fill();
-      ctx.stroke();
-      continue;
-    }
-    if (theme === 'hollow') {
-      rootLedge(ctx, t, x, y, p.w, pi, time);
-      continue;
-    }
-    drawIsland(ctx, theme, p, cam, time, pi, groundAt(map, p.x + p.w / 2));
-    continue;
-    const body = t.ledge;
-    ctx.fillStyle = t.ledgeShade;
-    roundRect(ctx, x, y + 2, p.w, 13, 6);
-    ctx.fill();
-    ctx.fillStyle = body;
-    roundRect(ctx, x, y, p.w, 11, 6);
-    ctx.fill();
-    ctx.strokeStyle = edge(body);
-    ctx.lineWidth = 1;
-    roundRect(ctx, x + 0.5, y - 0.5, p.w - 1, 15, 6);
-    ctx.stroke();
-    if (theme === 'harbor') {
-      for (let dx = 12; dx < p.w - 4; dx += 12) rect(ctx, x + dx, y + 1, 1, 12, edge(body));
-    } else if (theme === 'town') {
-      for (let dx = 10; dx < p.w - 6; dx += 16) rect(ctx, x + dx, y + 6, 8, 2, t.ledgeShade);
-    } else {
-      for (let dx = 9; dx < p.w - 6; dx += 15) {
-        ctx.fillStyle = t.ledgeShade;
-        ctx.beginPath();
-        ctx.ellipse(x + dx, y + 8, 2.4, 1.4, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    // The top trim: grass scallops, frosting, rope, moss, or glowing crystal edge.
-    ctx.fillStyle = t.ledgeTrim;
-    roundRect(ctx, x, y - 1, p.w, 4, 2);
-    ctx.fill();
-    if (theme === 'meadow' || theme === 'forest' || theme === 'ruins' || theme === 'town' || theme === 'grove') {
-      for (let dx = 4; dx < p.w - 2; dx += 7) {
-        ctx.beginPath();
-        ctx.arc(x + dx, y + 3, 3, 0, Math.PI);
-        ctx.fill();
-      }
-    }
-    ctx.strokeStyle = edge(t.ledgeTrim);
-    ctx.beginPath();
-    ctx.moveTo(x + 4, y - 1.5);
-    ctx.lineTo(x + p.w - 4, y - 1.5);
-    ctx.stroke();
-    // Hanging vines that sway in the breeze.
-    if (theme === 'forest' || theme === 'meadow' || theme === 'ruins' || theme === 'grove') {
-      for (let dx = 14; dx < p.w - 10; dx += 34) {
-        const k = hash(pi * 17 + dx);
-        if (k < 0.35) continue;
-        const len = 8 + k * 16;
-        const sway = Math.sin(time * 1.4 + dx) * 2;
-        ctx.strokeStyle = '#7cc794';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(x + dx, y + 13);
-        ctx.quadraticCurveTo(x + dx + sway, y + 13 + len * 0.6, x + dx + sway * 1.4, y + 13 + len);
-        ctx.stroke();
-        ctx.fillStyle = '#9fe0b0';
-        ctx.beginPath();
-        ctx.ellipse(x + dx + sway * 1.4, y + 13 + len, 2.4, 1.6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        if (k > 0.8) {
-          ctx.fillStyle = '#ff9ec0';
-          ctx.beginPath();
-          ctx.arc(x + dx + sway * 1.4, y + 13 + len + 2, 1.6, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-    if (theme === 'cave') {
-      for (let dx = 10; dx < p.w - 8; dx += 26) {
-        ctx.globalAlpha = 0.5 + 0.4 * Math.sin(time * 2.4 + dx + pi);
-        sparkle(ctx, x + dx, y + 6, 2.2, '#b8f0ff');
-        ctx.globalAlpha = 1;
-      }
-    }
+    if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
+    else drawIsland(ctx, theme, p, cam, time, pi, groundAt(map, p.x + p.w / 2));
   }
 }
 
@@ -1621,6 +1539,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   if (gfx.hd) drawSoft(ctx, BACKDROP_BLUR * gfx.scale, backdrop);
   else backdrop(ctx);
   drawTerrain(ctx, theme, map, cam, width, height, time);
+  drawDeco(ctx, map, cam, width, time);
   // Town buildings stand on the street, behind ledges and props.
   street?.();
   drawLedges(ctx, t, theme, map, cam, width, height, time);

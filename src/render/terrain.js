@@ -559,7 +559,7 @@ export function drawIsland(ctx, theme, p, cam, time, pi, groundY) {
   ctx.clip();
   const g = ctx.createLinearGradient(0, y + 4, 0, y + d);
   g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, hexA(m.deep, 0.85));
+  g.addColorStop(1, hexA(m.deep, m.style === 'cloud' ? 0.4 : 0.85));
   ctx.fillStyle = g;
   ctx.fillRect(x - 2, y, w + 4, d + 4);
   ctx.restore();

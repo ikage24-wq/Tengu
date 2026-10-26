@@ -52,7 +52,7 @@ export const MAPS = {
       { id: 'north', x: 1700, y: 480, to: 'canyon', toPortal: 'south' },
     ],
     npcs: [],
-    deco: [['bigtree', 380, 1], ['well', 760], ['flowerarch', 1040], ['giantshroom', 1400], ['signpost', 1640], ['bigtree', 2010]],
+    deco: [['bigtree', 596, 1], ['well', 760], ['flowerarch', 920], ['giantshroom', 1536], ['signpost', 1640], ['bigtree', 2058]],
     spawns: [
       { mob: 'puffle', x: 300, y: 480 }, { mob: 'puffle', x: 700, y: 430 }, { mob: 'snailbun', x: 1000, y: 470 },
       { mob: 'puffle', x: 1350, y: 400 }, { mob: 'puffle', x: 1850, y: 480 }, { mob: 'snailbun', x: 220, y: 400 },
@@ -86,7 +86,7 @@ export const MAPS = {
       { id: 'east', x: 2340, y: 520, to: 'harbor', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['giantshroom', 290, 0], ['flowerarch', 610], ['well', 900], ['bigtree', 1240, 1], ['giantshroom', 1860, 2], ['signpost', 2260]],
+    deco: [['giantshroom', 362, 0], ['flowerarch', 542], ['well', 900], ['bigtree', 1524, 1], ['giantshroom', 1960, 2], ['signpost', 2260]],
     spawns: [
       { mob: 'sproutling', x: 250, y: 520 }, { mob: 'mushkin', x: 610, y: 450 }, { mob: 'sproutling', x: 900, y: 500 },
       { mob: 'mushkin', x: 1240, y: 430 }, { mob: 'sproutling', x: 1580, y: 520 }, { mob: 'mushkin', x: 1850, y: 450 },
@@ -148,7 +148,7 @@ export const MAPS = {
       { id: 'east', x: 2540, y: 600, to: 'grove', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['bigtree', 470, 0], ['giantshroom', 800, 1], ['bigtree', 1250, 1], ['giantshroom', 1620, 0], ['bigtree', 2000, 0], ['signpost', 2470]],
+    deco: [['bigtree', 518, 0], ['giantshroom', 936, 1], ['bigtree', 1526, 1], ['giantshroom', 1832, 0], ['bigtree', 2204, 0], ['signpost', 2470]],
     spawns: [
       { mob: 'leafling', x: 300, y: 600 }, { mob: 'leafling', x: 780, y: 530 }, { mob: 'boarlet', x: 1000, y: 600 },
       { mob: 'mossgolem', x: 1250, y: 520 }, { mob: 'leafling', x: 1600, y: 560 }, { mob: 'boarlet', x: 2000, y: 600 },
@@ -188,7 +188,7 @@ export const MAPS = {
       { id: 'east', x: 2540, y: 600, to: 'cave', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['ruinarch', 300], ['ruinpillar', 640], ['statue', 900], ['ruinpillar', 1120], ['ruinarch', 1350], ['statue', 1650], ['ruinpillar', 2000], ['ruinarch', 2250]],
+    deco: [['ruinarch', 416], ['ruinpillar', 520], ['statue', 784], ['ruinpillar', 1220], ['ruinarch', 1426], ['statue', 1766], ['ruinpillar', 1960], ['ruinarch', 2250]],
     spawns: [
       { mob: 'boneknight', x: 300, y: 600 }, { mob: 'gloombat', x: 640, y: 540 }, { mob: 'boneknight', x: 900, y: 480 },
       { mob: 'gloombat', x: 1350, y: 600 }, { mob: 'boneknight', x: 1650, y: 520 }, { mob: 'boneknight', x: 2100, y: 600 },
@@ -230,7 +230,7 @@ export const MAPS = {
       { id: 'boss', x: 1100, y: 350, to: 'bossroom', toPortal: 'west', label: 'Throne' },
     ],
     npcs: [],
-    deco: [['crystalspire', 280, 0], ['stalagmite', 620], ['crystalspire', 900, 1], ['stalagmite', 1300], ['crystalspire', 1520, 0], ['stalagmite', 1760], ['crystalspire', 2200, 1], ['stalagmite', 2450]],
+    deco: [['crystalspire', 376, 0], ['stalagmite', 828], ['crystalspire', 1036, 1], ['stalagmite', 1252], ['crystalspire', 1396, 0], ['stalagmite', 1868], ['crystalspire', 2316, 1], ['stalagmite', 2450]],
     spawns: [
       { mob: 'crystalslime', x: 300, y: 660 }, { mob: 'shade', x: 620, y: 600 }, { mob: 'crystalslime', x: 900, y: 660 },
       { mob: 'rockgolem', x: 1150, y: 590 }, { mob: 'crystalslime', x: 1500, y: 640 }, { mob: 'shade', x: 1750, y: 570 },
@@ -264,7 +264,7 @@ export const MAPS = {
     ropes: [{ x: 1190, top: 580, bottom: 650 }],
     portals: [{ id: 'west', x: 40, y: 660, to: 'cave', toPortal: 'east' }],
     npcs: [],
-    deco: [['cloudpillar', 420], ['skygazebo', 740], ['cloudpillar', 1100], ['skygazebo', 1340], ['cloudpillar', 2050], ['skygazebo', 2450]],
+    deco: [['cloudpillar', 420], ['skygazebo', 836], ['cloudpillar', 1000], ['skygazebo', 1456], ['cloudpillar', 2306], ['skygazebo', 2542]],
     spawns: [
       { mob: 'cloudsheep', x: 300, y: 660 }, { mob: 'cloudsheep', x: 740, y: 600 }, { mob: 'starspirit', x: 1100, y: 650 },
       { mob: 'cloudsheep', x: 1340, y: 580 }, { mob: 'windbird', x: 1700, y: 640 }, { mob: 'cloudsheep', x: 2040, y: 580 },
@@ -318,7 +318,7 @@ Object.assign(MAPS, {
       { id: 'north', x: 2140, y: 520, to: 'crag', toPortal: 'south' },
     ],
     npcs: [],
-    deco: [['mesa', 230], ['totem', 520], ['tent', 1000], ['totem', 1260], ['mesa', 1960], ['signpost', 2070]],
+    deco: [['mesa', 102], ['totem', 620], ['tent', 1000], ['totem', 1372], ['mesa', 2076], ['signpost', 2002]],
     spawns: [
       { mob: 'pebblet', x: 250, y: 520 }, { mob: 'scorpip', x: 500, y: 450 }, { mob: 'pebblet', x: 1000, y: 520 },
       { mob: 'scorpip', x: 1250, y: 440 }, { mob: 'pebblet', x: 1500, y: 380 }, { mob: 'scorpip', x: 2000, y: 520 },
@@ -388,7 +388,7 @@ Object.assign(MAPS, {
     terrain: [[0, G], [300, G], [380, G - 40], [560, G - 40], [640, G], [1200, G]],
     platforms: [{ x: 400, y: G - 120, w: 160 }],
     ropes: [],
-    deco: [['bigtree', 470, 0], ['giantshroom', 700, 2], ['signpost', 180]],
+    deco: [['bigtree', 262, 0], ['giantshroom', 700, 2], ['signpost', 168]],
     portals: [
       { id: 'start', x: 760, y: G, hidden: true },
       { id: 'south', x: 60, y: G, to: 'canyon', toPortal: 'hollow' },
