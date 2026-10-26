@@ -4,10 +4,12 @@ import { MAPS } from '../data/maps.js';
 import { JOBS } from '../data/jobs.js';
 import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
-import { COLORS, text, box, button, wrap, bar, hover, clicked, roundRect, font } from './kit.js';
+import { COLORS, THEMES, text, box, button, tabs, wrap, bar, hover, clicked, roundRect, font, softShadow } from './kit.js';
 import { stats, wornGear } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
-import { lookRows, LOOK_OPTIONS } from './npc.js';
+import { lookRows, randomLook, LOOK_TABS } from './looks.js';
+
+export { randomLook };
 
 const TITLE_LOOK = { hairStyle: 'twintails', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeStyle: 'sparkle', eyeColor: '#5aa8ff', outfitColor: '#bfe0ff' };
 
@@ -364,39 +366,153 @@ export function selectScreen(ui, time, chars, state) {
   return pick;
 }
 
-export function randomLook() {
-  const look = {};
-  for (const opt of LOOK_OPTIONS) look[opt.key] = opt.options[Math.floor(Math.random() * opt.options.length)];
-  return look;
+// ---------- Character creator ----------
+
+// The stage poses: stand, walk in place, a cheer, and a turn to show the back of the hair.
+const POSES = ['Idle', 'Walk', 'Cheer', 'Back'];
+const POSE_DUR = 1.1;
+
+function stage(ctx, x, y, w, h, time) {
+  // A soft sky card with a spotlight falling on a round pedestal.
+  ctx.save();
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.clip();
+  const sky = ctx.createLinearGradient(0, y, 0, y + h);
+  sky.addColorStop(0, '#fbe9ff');
+  sky.addColorStop(0.65, '#ffeef6');
+  sky.addColorStop(1, '#ffe2ee');
+  ctx.fillStyle = sky;
+  ctx.fillRect(x, y, w, h);
+  const cx = x + w / 2;
+  const fy = y + h - 62;
+  const beam = ctx.createLinearGradient(0, y, 0, fy);
+  beam.addColorStop(0, 'rgba(255,255,255,0)');
+  beam.addColorStop(1, 'rgba(255,255,255,0.75)');
+  ctx.fillStyle = beam;
+  ctx.beginPath();
+  ctx.moveTo(cx - 22, y);
+  ctx.lineTo(cx + 22, y);
+  ctx.lineTo(cx + 62, fy);
+  ctx.lineTo(cx - 62, fy);
+  ctx.fill();
+  // Drifting motes in the light.
+  for (let i = 0; i < 9; i++) {
+    const k = (time * 0.12 + i * 0.137) % 1;
+    const mx = cx + Math.sin(i * 2.3 + time * 0.8) * (20 + (i % 3) * 14);
+    ctx.globalAlpha = Math.sin(k * Math.PI) * 0.9;
+    sparkle(ctx, mx, fy - k * (h - 80), 1.6 + (i % 2), i % 2 ? '#ffffff' : '#ffd6ea');
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  // The pedestal: a pastel stone drum with a lit top and a flower trim.
+  ctx.fillStyle = '#d9b8ea';
+  ctx.beginPath();
+  ctx.ellipse(cx, fy + 7, 58, 13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(cx - 58, fy, 116, 7);
+  ctx.fillStyle = '#f6e6ff';
+  ctx.beginPath();
+  ctx.ellipse(cx, fy, 58, 13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(cx - 6, fy - 3, 40, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI * (0.08 + (i / 8) * 0.84);
+    const px = cx - Math.cos(a) * 56;
+    const py = fy + Math.sin(a) * 12 + 5;
+    ctx.fillStyle = ['#ffb3d1', '#ffe36b', '#b9e8ff'][i % 3];
+    ctx.beginPath();
+    ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(px, py, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  box(ctx, x, y, w, h, { fill: null, edge: COLORS.panelEdge, r: 12, width: 2 });
+  return [cx, fy + 2];
 }
 
-// Edits `draft` ({ name, look }) in place. Returns 'start', 'back', or null.
+// Edits `draft` ({ name, look, tab, pose, facing, history }) in place. Returns 'start', 'back',
+// or null.
 export function creatorScreen(ui, time, draft) {
   const { ctx } = ui;
+  ui.theme = THEMES.pink;
+  draft.tab ??= 0;
+  draft.pose ??= 0;
+  draft.facing ??= 1;
+  draft.history ??= [];
+  const remember = (look) => {
+    if (look === draft.look) return;
+    draft.history.push(draft.look);
+    if (draft.history.length > 40) draft.history.shift();
+    draft.look = look;
+  };
   backdrop(ctx, time * 0.3);
-  ctx.fillStyle = 'rgba(255,247,252,0.35)';
+  ctx.fillStyle = 'rgba(255,240,250,0.45)';
   ctx.fillRect(0, 0, 640, 360);
-  text(ctx, 'Make your hero', 320, 40, { size: 22, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
+  petals(ctx, time);
+  text(ctx, 'Create your hero', 320, 30, { size: 18, bold: true, align: 'center', color: '#ffffff', outline: '#c97ad9' });
 
-  // Preview
-  box(ctx, 110, 60, 160, 230, { r: 10 });
-  const walking = Math.floor(time / 3) % 2 === 1;
-  drawHero(ctx, draft.look, null, 190, 250, { pose: walking ? 'walk' : 'idle', time, scale: 3 });
-  if (button(ui, 150, 264, 80, 16, 'Randomize', { size: 8 })) draft.look = randomLook();
+  // The stage: your hero on a pedestal, the name on a plate at their feet.
+  const SX = 22;
+  const SY = 44;
+  const SW = 250;
+  const SH = 290;
+  softShadow(ctx, SX, SY, SW, SH, 12, 4);
+  const [cx, fy] = stage(ctx, SX, SY, SW, SH, time);
+  const pose = POSES[draft.pose];
+  const cheer = pose === 'Cheer' ? (time % (POSE_DUR + 0.6)) / POSE_DUR : 2;
+  const state = pose === 'Walk' ? { pose: 'walk' } : pose === 'Back' ? { pose: 'climb' } : cheer <= 1 ? { pose: 'cheer', progress: cheer, dur: POSE_DUR } : { pose: 'idle' };
+  drawHero(ctx, draft.look, null, cx, fy, { ...state, time, facing: draft.facing, scale: 3, seed: 1 });
+  const shown = draft.name || 'Your name';
+  ctx.font = font(10, true);
+  const nw = Math.max(70, ctx.measureText(shown).width + 20);
+  box(ctx, cx - nw / 2, fy + 14, nw, 16, { fill: 'rgba(90,63,122,0.82)', edge: '#ffffff', r: 8, width: 1.5 });
+  text(ctx, shown, cx, fy + 26, { size: 10, bold: true, align: 'center', color: draft.name ? '#ffffff' : 'rgba(255,255,255,0.55)' });
+  // Pose chips and a turn button along the bottom of the stage.
+  draft.pose = tabs(ui, SX + 14, SY + SH - 22, POSES, draft.pose, { w: 44, h: 15 });
+  if (button(ui, SX + SW - 46, SY + SH - 24, 34, 17, 'Turn', { size: 8 })) draft.facing = -draft.facing;
 
-  // Name and look options
-  box(ctx, 290, 60, 240, 230, { r: 10 });
-  text(ctx, 'Name', 302, 80, { size: 9, bold: true });
+  // The wardrobe: tabs over the look picker, then the name, then the buttons.
+  const PX = 286;
+  const PY = 44;
+  const PW = 332;
+  const PH = 290;
+  softShadow(ctx, PX, PY, PW, PH, 12, 4);
+  box(ctx, PX, PY, PW, PH, { fill: 'rgba(255,250,253,0.97)', edge: COLORS.panelEdge, r: 12, width: 2 });
+  const tabNames = LOOK_TABS.map((t) => t.label);
+  draft.tab = tabs(ui, PX + (PW - tabNames.length * 66) / 2, PY + 10, tabNames, draft.tab, { w: 64, h: 17 });
+  const cell = [30, 27, 40][draft.tab];
+  const picked = lookRows(ui, draft.look, draft.tab, PX + 14, PY + 36, PW - 28, { cell, time });
+  remember(picked.look);
+
+  // Name entry: a field with a blinking caret and a placeholder.
+  const NY = PY + PH - 62;
+  wrap(ctx, 'Gear you equip covers your outfit. Restyle any time at Lulu\'s salon in Sprout Village.', PX + 16, NY - 24, PW - 32, { size: 7, color: COLORS.muted });
+  ctx.strokeStyle = COLORS.cellEdge;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PX + 14, NY - 6);
+  ctx.lineTo(PX + PW - 14, NY - 6);
+  ctx.stroke();
   for (const ch of ui.input.typed) {
     if (ch === '\b') draft.name = draft.name.slice(0, -1);
-    else if (/^[\w '-]$/.test(ch) && draft.name.length < 12) draft.name += ch;
+    else if (/^[\w '-]$/.test(ch) && draft.name.length < 12 && !(ch === ' ' && !draft.name)) draft.name += ch;
   }
-  box(ctx, 340, 69, 178, 16, { fill: '#ffffff', edge: COLORS.accent, r: 5 });
+  text(ctx, 'Name', PX + 16, NY + 11, { size: 9, bold: true });
+  box(ctx, PX + 52, NY, PW - 66, 17, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
   const caret = Math.floor(time * 2) % 2 ? '|' : '';
-  text(ctx, `${draft.name}${caret}`, 346, 81, { size: 9, bold: true });
-  draft.look = lookRows(ui, draft.look, 300, 94, 220);
-  wrap(ctx, 'Gear changes your outfit as you equip it. You can restyle later at the salon in Sprout Village.', 302, 238, 216, { size: 8, color: COLORS.muted });
+  if (draft.name) text(ctx, `${draft.name}${caret}`, PX + 58, NY + 12, { size: 9, bold: true });
+  else text(ctx, `${caret}Type a name`, PX + 58, NY + 12, { size: 9, color: COLORS.muted });
+  text(ctx, `${draft.name.length}/12`, PX + PW - 20, NY + 12, { size: 7, align: 'right', color: COLORS.muted });
+
+  const BY = PY + PH - 34;
+  if (button(ui, PX + 14, BY, 82, 22, 'Randomize', { size: 9, iconName: 'star' })) remember(randomLook());
+  if (button(ui, PX + 102, BY, 56, 22, 'Undo', { size: 9, enabled: draft.history.length > 0 })) draft.look = draft.history.pop();
   const ok = draft.name.trim().length > 0;
   if (button(ui, 8, 8, 86, 18, '< Characters', { size: 8 }) || ui.input.pressed.has('Escape')) return 'back';
-  return button(ui, 360, 258, 100, 22, 'Start!', { primary: true, enabled: ok, size: 11 }) || (ok && ui.input.pressed.has('Enter')) ? 'start' : null;
+  return button(ui, PX + PW - 124, BY, 110, 22, 'Start!', { primary: true, enabled: ok, size: 11 }) || (ok && ui.input.pressed.has('Enter')) ? 'start' : null;
 }

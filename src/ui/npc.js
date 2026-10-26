@@ -14,51 +14,11 @@ import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
-import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
+import { drawHero } from '../render/hero.js';
+import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, rarityCell } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
-
-const HAIR_COLORS = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
-const SKIN_TONES = ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66', '#8a5a3c'];
-const EYE_COLORS = ['#4fcfb8', '#9b6cff', '#5aa8ff', '#e8a23c', '#7a4a2b', '#ff6b8a', '#3f9f5f'];
-const OUTFITS = ['#ffc2d6', '#bfe0ff', '#bff0dc', '#fff3a6', '#e0cfff', '#ffd0a8', '#ffffff', '#5d5285'];
-
-export const LOOK_OPTIONS = [
-  { key: 'hairStyle', label: 'Hair', options: HAIR_STYLES },
-  { key: 'hairColor', label: 'Hair color', options: HAIR_COLORS, color: true },
-  { key: 'eyeStyle', label: 'Eyes', options: PICKABLE_EYE_STYLES },
-  { key: 'face', label: 'Face', options: FACE_STYLES },
-  { key: 'eyeColor', label: 'Eye color', options: EYE_COLORS, color: true },
-  { key: 'skinTone', label: 'Skin', options: SKIN_TONES, color: true },
-  { key: 'outfit', label: 'Outfit', options: OUTFIT_STYLES },
-  { key: 'outfitColor', label: 'Outfit color', options: OUTFITS, color: true },
-];
-
-export function cycleLook(look, key, step) {
-  const opt = LOOK_OPTIONS.find((o) => o.key === key);
-  const i = Math.max(0, opt.options.indexOf(look[key]));
-  return { ...look, [key]: opt.options[(i + step + opt.options.length) % opt.options.length] };
-}
-
-// Look editor rows: label, value or swatch, and < > arrows. Returns the (possibly) changed look.
-export function lookRows(ui, look, x, y, w) {
-  let out = look;
-  for (const opt of LOOK_OPTIONS) {
-    box(ui.ctx, x, y, w, 14, { fill: COLORS.cell, edge: null, r: 5 });
-    text(ui.ctx, opt.label, x + 6, y + 10, { size: 8, bold: true });
-    if (opt.color) {
-      box(ui.ctx, x + w - 52, y + 2, 20, 10, { fill: out[opt.key], edge: '#ffffff', r: 4 });
-    } else {
-      const value = String(out[opt.key]);
-      text(ui.ctx, value, x + w - 42, y + 10, { size: value.length > 8 ? 7 : 8, align: 'center' });
-    }
-    if (button(ui, x + w - 70, y + 1, 12, 12, '<', { size: 8 })) out = cycleLook(out, opt.key, -1);
-    if (button(ui, x + w - 16, y + 1, 12, 12, '>', { size: 8 })) out = cycleLook(out, opt.key, 1);
-    y += 16;
-  }
-  return out;
-}
 
 export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
@@ -459,26 +419,35 @@ function styleWindow(ui, state, world) {
   const dlg = state.npc;
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
-  const W = 280;
-  const H = 184;
+  const W = 400;
+  const H = 250;
+  // The salon is bigger than the talk box it opens from, so it starts centred on screen.
+  if (!dlg.placed) {
+    win.x = (640 - W) / 2;
+    win.y = Math.round((360 - H) / 2) - 8;
+    dlg.placed = true;
+  }
   if (!windowFrame(ui, win, W, H, `${npc.name}'s Salon`, { theme: 'pink', icon: 'wand' })) {
     state.npc = null;
     return;
   }
   const { ctx } = ui;
   const char = world.char;
-  box(ctx, win.x + 8, win.y + 24, 90, 152, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, wornGear(char), win.x + 53, win.y + 160, { pose: 'idle', time: world.now, scale: 2 });
-  dlg.look = lookRows(ui, dlg.look, win.x + 104, win.y + 24, 168);
+  dlg.tab ??= 0;
+  box(ctx, win.x + 8, win.y + 24, 104, H - 32, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
+  drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 170, { pose: 'idle', time: world.now, scale: 2.2 });
+  if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, char.appearance) })) dlg.look = { ...char.appearance };
+  dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 56, h: 15 });
+  dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [26, 22, 32][dlg.tab], time: world.now, gap: 2 }).look;
   const cost = npc.styleCost;
   const by = win.y + H - 22;
-  if (button(ui, win.x + 104, by, 90, 15, `Done (${cost}g)`, { primary: true, enabled: char.gold >= cost })) {
+  if (button(ui, win.x + 122, by, 110, 15, `Done (${cost}g)`, { primary: true, enabled: char.gold >= cost && !sameLook(dlg.look, char.appearance) })) {
     char.gold -= cost;
     char.appearance = dlg.look;
     world.log('Lulu: You look adorable!', '#ffc2d6');
     dlg.mode = null;
   }
-  if (button(ui, win.x + 200, by, 72, 15, 'Cancel')) dlg.mode = null;
+  if (button(ui, win.x + W - 82, by, 72, 15, 'Cancel')) dlg.mode = null;
 }
 
 // ---------- Fainted ----------
