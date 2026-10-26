@@ -196,6 +196,8 @@ function frame(now) {
       updateCamera(camera, world, dt);
       drawWorld(ctx, world, camera, time);
     });
+    // The HUD needs the camera to fly picked-up loot from the world into the Bag button.
+    uiState.cam = camera;
     drawUi(ui, uiState, world);
     npcPointer(ui);
     // The Options window can send you back to character select or the title.

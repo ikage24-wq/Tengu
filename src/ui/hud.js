@@ -136,7 +136,9 @@ export function drawHud(ui, state, world) {
 
   // Loot lands with a bump: the coin when gold comes in, the Bag button when an item does.
   const items = Object.values(char.inventory).reduce((n, tab) => n + tab.reduce((m, e) => m + (e ? e.qty ?? 1 : 0), 0), 0);
-  if (hud.items != null && items > hud.items) hud.bagAt = t;
+  // Loot picked up in the world bumps the button when its icon lands there (drawPickups) instead.
+  const flying = world.pickups?.some((f) => world.now - f.at < 0.1);
+  if (hud.items != null && items > hud.items && !flying) hud.bagAt = t;
   if (hud.gold != null && char.gold > hud.gold) hud.goldAt = t;
   hud.items = items;
   hud.gold = char.gold;
@@ -188,6 +190,8 @@ export function drawHud(ui, state, world) {
       ctx.stroke();
     }
   });
+
+  drawPickups(ctx, state, world, hud, t);
 
   // Hotkeys: little keycaps with a lip, the key printed in a corner tab. A key sinks when pressed;
   // a skill it casts pops with a white flash, and one you can't afford shakes instead. Skills
@@ -273,6 +277,38 @@ export function drawHud(ui, state, world) {
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   if (settings.showFps) drawFps(ctx, state);
+}
+
+// Loot you pick up flies into the Bag button: from where it lay, up and over on a curve, shrinking
+// as it goes, and the button bumps when it lands (fx research: pickup juice).
+const FLIGHT = 0.5;
+function drawPickups(ctx, state, world, hud, t) {
+  const cam = state.cam;
+  if (!world.pickups?.length) return;
+  world.pickups = world.pickups.filter((f) => {
+    const age = world.now - f.at;
+    if (age >= FLIGHT || age < 0) {
+      if (age >= FLIGHT) hud.bagAt = t;
+      return false;
+    }
+    if (!cam) return true;
+    const k = age / FLIGHT;
+    // Ease in: it lifts off gently and speeds into the button.
+    const e = k * k * (3 - 2 * k) * 0.4 + k * k * 0.6;
+    const sx = f.x - cam.x;
+    const sy = f.y - cam.y;
+    const ex = 277;
+    const ey = BAR_Y + 18;
+    const cx = (sx + ex) / 2;
+    const cy = Math.min(sy, ey) - 70;
+    const x = (1 - e) * (1 - e) * sx + 2 * (1 - e) * e * cx + e * e * ex;
+    const y = (1 - e) * (1 - e) * sy + 2 * (1 - e) * e * cy + e * e * ey;
+    const s = 1 - 0.45 * e;
+    ctx.globalAlpha = k < 0.85 ? 1 : (1 - k) / 0.15 + 0.3;
+    drawItemIcon(ctx, f.id, x - 8 * s, y - 8 * s, s, f.variant);
+    ctx.globalAlpha = 1;
+    return true;
+  });
 }
 
 // The hotkey slot under a point on screen (for dragging items onto the bar), or null.

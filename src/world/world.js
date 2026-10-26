@@ -201,6 +201,9 @@ function pickUp(world, manual = true) {
       return false;
     }
     const def = ITEMS[d.inst ? d.inst.id : d.id];
+    // The HUD flies the item's icon from here into the Bag button.
+    world.pickups = (world.pickups ?? []).filter((f) => world.now - f.at < 2);
+    world.pickups.push({ id: def.id, variant: d.inst?.variant ?? null, x: d.x, y: d.y - 8, at: world.now });
     const rarity = d.inst?.rarity ? RARITIES[d.inst.rarity] : null;
     const name = itemName(d.inst ?? d.id);
     if (rarity) world.log(`Picked up a ${rarity.name} ${name}!`, rarity.color);
@@ -466,7 +469,7 @@ export function updateWorld(world, dt, input) {
       world.numbers.push({ x: m.x, y: top, text: 'MISS', color: '#d4cbe8', t: 0 });
       continue;
     }
-    world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit });
+    world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit, weight: h.damage / m.def.hp, party: Boolean(h.party) });
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
     // Endgame weapons add an elemental impact on every hit.

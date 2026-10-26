@@ -1057,16 +1057,21 @@ export function drawNumbers(ctx, world, cam) {
     if (n.t < NUMBER_DELAY) continue;
     n.side ??= (numberSide = -numberSide || 1);
     const age = n.t - NUMBER_DELAY;
-    const p = Math.min(1, n.t / 1.1);
+    // A hit's size follows how much of the monster's HP it took: chip damage is smaller and
+    // fainter, a big chunk is bigger and lingers (zh research: damage-number tiers).
+    const w = n.weight ?? 0.05;
+    // Party members' hits are smaller and fainter, so your own numbers lead (fx research).
+    const tier = (w >= 0.25 ? 1.25 : w >= 0.1 ? 1.1 : w < 0.02 ? 0.88 : 1) * (n.party ? 0.72 : 1);
+    const p = Math.min(1, n.t / (w >= 0.25 ? 1.4 : 1.1));
     const popIn = Math.min(1, age / (n.crit ? 0.11 : 0.08));
     const pop = n.crit ? 1.7 - 0.7 * backOut(popIn) : 1.4 - 0.4 * backOut(popIn);
-    const base = n.crit ? 17 : n.small ? 10 : 14;
+    const base = (n.crit ? 17 : n.small ? 10 : 14) * tier;
     // HD numbers pop smoothly (no whole-pixel font steps).
     const size = gfx.hd ? base * pop : Math.round(base * pop);
     const rise = easeOut(Math.min(1, age / 0.6)) * 24 + Math.max(0, age - 0.6) * 6;
     const x = n.x - cam.x + n.side * (n.small ? 4 : 9) * easeOut(Math.min(1, age / 0.5));
     const y = n.y - cam.y - rise;
-    ctx.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
+    ctx.globalAlpha = (p > 0.7 ? (1 - p) / 0.3 : 1) * (n.party ? 0.6 : tier < 1 ? 0.85 : 1);
     if (n.crit && age < 0.14) starFlash(ctx, x, y - size * 0.35, (size + 6) * (1 - age / 0.14) + 4, 8, age * 4, '#ffb347', '#fff3c4', 4);
     ctx.font = font(size, true);
     ctx.lineWidth = 4;
