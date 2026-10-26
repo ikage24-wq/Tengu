@@ -1247,12 +1247,12 @@ function wraith(pose, frame, mood) {
 
 // Every design flies or walks with its own cadence: `stride` is how far it travels per cycle.
 export const ART = {
-  wisp: { walk: 8, idle: 6, attack: 4, stride: 34, atkMs: [50, 200, 150], draw: wisp },
-  gloombat: { walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [40, 180, 130], draw: imp },
-  boneknight: { walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 270, 200], draw: dullahan },
+  wisp: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 34, atkMs: [50, 200, 150], draw: wisp },
+  gloombat: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [40, 180, 130], draw: imp },
+  boneknight: { pad: 17, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 270, 200], draw: dullahan },
   crystalslime: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [55, 240, 170], draw: mimic },
-  rockgolem: { walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [75, 330, 240], draw: golem },
-  shade: { walk: 8, idle: 6, attack: 4, stride: 58, atkMs: [60, 230, 180], draw: wraith },
+  rockgolem: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [75, 330, 240], draw: golem },
+  shade: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 58, atkMs: [60, 230, 180], draw: wraith },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

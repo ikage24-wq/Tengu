@@ -1162,11 +1162,11 @@ function mossgolem(pose, f, mood) {
 }
 
 export const ART = {
-  pebblet: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [55, 240, 170], draw: pebblet },
+  pebblet: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [55, 240, 170], draw: pebblet },
   scorpip: { walk: 8, idle: 6, attack: 4, stride: 17, atkMs: [50, 220, 150], draw: scorpip },
   leafling: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [55, 230, 170], draw: leafling },
-  boarlet: { walk: 8, idle: 6, attack: 4, stride: 36, atkMs: [55, 290, 200], draw: boarlet },
-  mossgolem: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [75, 320, 230], draw: mossgolem },
+  boarlet: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 36, atkMs: [55, 290, 200], draw: boarlet },
+  mossgolem: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [75, 320, 230], draw: mossgolem },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

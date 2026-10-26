@@ -330,7 +330,7 @@ function queen(pose, f, mood) {
       const d = (att ? 7 : 10) + (i % 2) * 2;
       out.push(...mote(orbAt[0] + Math.cos(a) * d, orbAt[1] + Math.sin(a) * d, 0.8, i % 2 ? '#ff9ad2' : P.glow));
     }
-    out.push(fp(ringPts(80, floor - 0.6, 15 * k, 3.2 * k, 2), mix(P.glow, '#ffffff', 0.3)), fp(ringPts(80, floor - 0.6, 15 * k - 1.6, 3.2 * k - 0.6, 1.2), P.glow));
+    out.push(fp(ringPts(80, floor - 2.2, 15 * k, 3.2 * k, 2), mix(P.glow, '#ffffff', 0.3)), fp(ringPts(80, floor - 2.2, 15 * k - 1.6, 3.2 * k - 0.6, 1.2), P.glow));
   }
   if (att === 2) out.push(...rswoosh(56, 88, 26, -95, -25, 4, P.glow));
   if (att === 2 || att === 3) {

@@ -447,11 +447,13 @@ function kitsune(pose, f, mood) {
 
   // Ruff: a fluffy cream collar, bristling when angry.
   const spike = angry ? 1.6 : 0;
-  head.push(E(hx - 4.2, hy + 6.4, 3.4, 2.6, cream.base), E(hx - 0.8, hy + 7.2, 3.6, 2.6, cream.base), E(hx + 2.4, hy + 6.6, 2.8, 2.2, cream.base));
+  head.push(E(hx - 4.2, hy + 6.4, 3.4, 2.6, cream.base), E(hx - 0.8, hy + 7.2, 3.6, 2.6, cream.base), E(hx + 2.4, hy + 6.6, 2.8, 2.2, cream.base),
+    // one bib down into the chest, so ruff and chest read as a single cream mass, not stripes
+    E(hx - 0.4, hy + 9.4, 3.4, 2.8, cream.base));
   for (const [x, y] of angry ? [[hx - 5.6, hy + 8], [hx - 3, hy + 9], [hx - 0.4, hy + 9.4], [hx + 2.2, hy + 8.6]] : [[hx - 3.6, hy + 8.8], [hx + 0.4, hy + 9.2]]) {
     head.push(T([[x - 1.4, y - 1], [x + 1.4, y - 1], [x + 0.2, y + 1.2 + spike]], cream.base));
   }
-  head.push(crescent(hx - 1.4, hy + 7, 6, 2.6, cream.sh, { k: 0.35, a0: 70, a1: 180 }));
+  head.push(crescent(hx - 1.4, hy + 8.4, 5.6, 3.4, cream.sh, { k: 0.3, a0: 95, a1: 175 }));
 
   // Ears: chains of two links from the skull, swinging a beat behind the head; the near one
   // flicks when idle; pinned back when hurt or angry, limp when dead.
@@ -585,10 +587,11 @@ function tortoise(pose, f, mood) {
     return o;
   };
   out.push(...leg(8.6, 0, false, false), ...leg(23.2, 0.25, false, true));
-  // Little tail: a two-link chain wagging a beat behind the steps.
+  // Little tail: a tapering three-link chain poking out under the shell's back rim, wagging a
+  // beat behind the steps; limp on the floor when dead.
   const tb = at(sx - 11.4, rim - 0.4);
-  const tail = chain(tb.x, tb.y, 168, [2, 2], wave(walk ? 2 * TAU * q - 1.5 : TAU * q, walk ? 10 : 6));
-  out.push(T([[tb.x, tb.y - 1.2], tail[1].slice(0, 2), tail[2].slice(0, 2), [tail[1][0] + 0.4, tail[1][1] + 1.2], [tb.x, tb.y + 1.1]], skin.sh));
+  const tail = chain(tb.x, tb.y, dead ? 176 : 160, [2.6, 2.4, 2], dead ? () => 4 : wave(walk ? 2 * TAU * q - 1.5 : TAU * q, walk ? 12 : 7)).map((p) => p.slice(0, 2));
+  out.push(band(tail, (t) => 1.5 * (1 - 0.75 * t), skin.base), band(tail.map(([x, y]) => [x + 0.2, y + 0.6]), (t) => 0.7 * (1 - 0.8 * t), skin.sh));
 
   // Neck: a two-link chain from the shoulder out of the shell; the head rides its end. It pushes
   // forward with each step, slowly looks up when idle, pulls in when hurt, rests flat when dead.
@@ -622,8 +625,8 @@ function tortoise(pose, f, mood) {
   }
   // Marginal plates along the rim, and the plastron's edge under them.
   // (drawn after the near legs, so the legs tuck in under the shell's rim)
-  const band = [E(sx, rim + 0.4, 14.2, 2.3, shell.sh), F(E(sx + 2, rim - 0.2, 11, 0.9, mix(shell.sh, shell.base, 0.5)))];
-  for (let i = 0; i < 8; i++) band.push(F(R(sx - 10.8 + i * 3.1, rim - 0.4, 0.67, 1.8, shell.deep)));
+  const rimBand = [E(sx, rim + 0.4, 14.2, 2.3, shell.sh), F(E(sx + 2, rim - 0.2, 11, 0.9, mix(shell.sh, shell.base, 0.5)))];
+  for (let i = 0; i < 8; i++) rimBand.push(F(R(sx - 10.8 + i * 3.1, rim - 0.4, 0.67, 1.8, shell.deep)));
 
   // Moss blanket draped over the dome: scale-shaped clumps, darker drips at the lower edge, a few
   // lit clumps on top.
@@ -635,7 +638,7 @@ function tortoise(pose, f, mood) {
   sh.push(crescent(sx, mb + 0.6, 11.4, 3.6, moss.sh, { k: 0.5, a0: 20, a1: 200, jag: 0.6, n: 18 }));
   for (const [x, y, r] of [[sx + 1.6, mb - 2, 2.4], [sx + 6.6, mb - 0.6, 1.8], [sx - 3.6, mb - 1.6, 1.6]]) sh.push(F(T([[x - r, y + 0.5], [x - r * 0.5, y - 0.6], [x + r * 0.4, y - 0.8], [x + r, y], [x + r * 0.3, y + 0.5]], moss.hi)));
   out.push(...spin(sh, piv[0], piv[1], roll));
-  out.push(...leg(11.4, 0.5, true, false), ...leg(26, 0.75, true, true), ...spin(band, piv[0], piv[1], roll));
+  out.push(...leg(11.4, 0.5, true, false), ...leg(26, 0.75, true, true), ...spin(rimBand, piv[0], piv[1], roll));
 
   // The garden sways a beat behind the shell's jolts: grass tufts, a mushroom wobbling on its
   // stalk, and a flower on a three-link stem.
@@ -1209,10 +1212,13 @@ function jackalope(pose, f, mood) {
   const ant = AN.base;
   const antD = AN.sh;
   const br = idle ? breath(q) : 0;
-  const hop = walk ? HOP[f] : A ?? { lift: 0, squash: hurt ? 0.6 : dead ? 0 : 0.35 - br * 0.6, hind: 0, reach: hurt ? -0.4 : 0, ear: 0, tilt: 0 };
+  // Dead, it lies stretched out on the floor: body flattened, hind legs kicked back, forepaws
+  // reaching forward, chin on the ground.
+  const hop = dead ? { lift: 0, squash: -1.5, hind: 1.2, reach: 1, ear: 0, tilt: 0 }
+    : walk ? HOP[f] : A ?? { lift: 0, squash: hurt ? 0.6 : 0.35 - br * 0.6, hind: 0, reach: hurt ? -0.4 : 0, ear: 0, tilt: 0 };
   const out = [];
   // The world lifts a bounder through the air, so the sprite keeps only a little of the arc.
-  const L = dead ? -2 : hop.lift * 0.7;
+  const L = dead ? -2.9 : hop.lift * 0.7;
   const rx = (hurt ? -1.6 : 0) + (A ? A.b : 0) + (idle ? sway(q) * 0.4 : 0);
   const bx = 17 + rx;
   const by = 26.4 - L + hop.squash * 0.6;
@@ -1263,8 +1269,8 @@ function jackalope(pose, f, mood) {
   // looks about.
   const head = [];
   const perk = idle ? bump(q, 0.5, 0.34) : 0;
-  const hx = 27.4 + rx * (A ? 0 : 1.1) + (A ? A.hx : 0) + (dead ? -1 : 0);
-  const hy = 17 - L + (walk ? hop.tilt * 0.6 : 0) + (idle ? Math.sin(p - 0.7) * 0.3 - perk * 0.8 : 0) + (dead ? 3 : 0) + (hurt ? -0.4 : 0) + (A ? hop.squash * 0.5 : 0);
+  const hx = 27.4 + rx * (A ? 0 : 1.1) + (A ? A.hx : 0) + (dead ? 2.4 : 0);
+  const hy = 17 - L + (walk ? hop.tilt * 0.6 : 0) + (idle ? Math.sin(p - 0.7) * 0.3 - perk * 0.8 : 0) + (dead ? 4.6 : 0) + (hurt ? -0.4 : 0) + (A ? hop.squash * 0.5 : 0);
   // Ears: long, swept back on the rise, flopping forward on landing; flat when angry, limp when
   // dead; idle, the near one swivels to listen.
   const eb = walk || A ? hop.ear : 0;
@@ -1334,7 +1340,7 @@ function jackalope(pose, f, mood) {
   if (angry) head.push(...vein(hx - 3.6, hy - 2.8, 0.85));
   if (hurt) head.push(...tear(hx + 3.6, ey + 2.6, 0.9, { type: 'stream', len: 2.8 }), ...sweat(hx - 4.6, hy - 2.8, 1));
   // The head turns about the neck: lowered for the charge, tipped with the bound.
-  const rot = A ? A.rot : walk ? hop.tilt * 3 : idle ? -perk * 4 : 0;
+  const rot = A ? A.rot : walk ? hop.tilt * 3 : idle ? -perk * 4 : dead ? 14 : 0;
   out.push(...spin(head, hx - 3, hy + 5, rot));
   if (A && f === 1) for (const [y, l] of [[-2, 3.4], [1.6, 5], [5, 3]]) out.push(...stroke([[bx - 11.4 - l, by + y], [bx - 11.4, by + y]], 0.55, '#ffffff'));
   if (A && A.imp) {
@@ -1345,7 +1351,7 @@ function jackalope(pose, f, mood) {
 }
 
 export const ART = {
-  puffle: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [45, 190, 140], draw: kitsune },
+  puffle: { pad: 7, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [45, 190, 140], draw: kitsune },
   snailbun: { walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 270, 210], draw: tortoise },
   sproutling: { walk: 8, idle: 6, attack: 4, stride: 13, atkMs: [55, 240, 170], draw: mandrake },
   mushkin: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [60, 250, 180], draw: goblin },

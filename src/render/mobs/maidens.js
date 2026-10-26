@@ -1800,7 +1800,7 @@ function arrow(p, a, P, tail) {
 export const ART = {
   kitsunemiko: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [60, 240, 180], draw: kitsune },
   sylph: { walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [50, 210, 160], draw: sylph },
-  yukionna: { walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 260, 200], draw: yuki },
+  yukionna: { pad: 5, walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 260, 200], draw: yuki },
   nekomata: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [40, 190, 130], draw: nekomata },
   lamia: { walk: 8, idle: 6, attack: 4, stride: 32, atkMs: [60, 250, 190], draw: lamia },
   lupina: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [45, 220, 150], draw: lupina },

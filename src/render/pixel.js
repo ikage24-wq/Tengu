@@ -95,9 +95,9 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false) {
-  const gw = (w + PAD * 2) * res;
-  const gh = (h + PAD * 2) * res;
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD) {
+  const gw = (w + pad * 2) * res;
+  const gh = (h + pad + PAD) * res;
   const colors = [];
   const ids = new Map();
   const idOf = (c) => {
@@ -113,7 +113,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   const flat = new Uint8Array(gw * gh);
   const cast = new Uint8Array(gw * gh);
   const lit = new Uint8Array(gw * gh);
-  const at = (v) => Math.round((v + PAD) * res);
+  const at = (v) => Math.round((v + pad) * res);
   for (const s of shapes) {
     if (!s) continue;
     const id = s.c === 'none' ? NONE : idOf(s.c.startsWith('#') ? s.c : palette[s.c] ?? '#ff00ff');
@@ -135,7 +135,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
       for (let y = at(s.y); y < at(s.y + s.h); y++) span(y, at(s.x), at(s.x + s.w) - 1);
     } else if (s.t === 'p') {
       // Scanline fill: cells whose centers fall between pairs of edge crossings.
-      const pts = s.pts.map(([px, py]) => [(s.x + px + PAD) * res, (s.y + py + PAD) * res]);
+      const pts = s.pts.map(([px, py]) => [(s.x + px + pad) * res, (s.y + py + pad) * res]);
       const ys = pts.map((q) => q[1]);
       for (let y = Math.max(0, Math.floor(Math.min(...ys))); y < Math.min(gh, Math.ceil(Math.max(...ys))); y++) {
         const cy = y + 0.5;
@@ -149,8 +149,8 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         for (let k = 0; k + 1 < xs.length; k += 2) span(y, Math.ceil(xs[k] - 0.5), Math.ceil(xs[k + 1] - 0.5) - 1);
       }
     } else {
-      const cx = (s.x + PAD) * res;
-      const cy = (s.y + PAD) * res;
+      const cx = (s.x + pad) * res;
+      const cy = (s.y + pad) * res;
       const rx = s.rx * res;
       const ry = s.ry * res;
       for (let y = Math.max(0, Math.floor(cy - ry)); y < Math.min(gh, Math.ceil(cy + ry)); y++) {
@@ -360,13 +360,15 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false } = build();
+    // `pad` is the margin left of, right of and above the w x h box that parts may reach into
+    // (wings, tails, smears): the sprite keeps its feet and centre where w x h puts them.
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD } = build();
     // Detailed sprites (characters, monsters, scenery) are drawn at the screen's own pixel
     // density, so every cell is exactly one screen pixel: sharp and even at any window size.
     if (res > 1) res = Math.max(res, Math.round(gfx.scale));
-    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout);
+    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad);
     const canvas = bake(raster);
-    s = { canvas, w, h, res, crisp, white: null };
+    s = { canvas, w, h, res, crisp, pad, white: null };
     cacheBytes += bytesOf(s);
     while (cache.size && (cache.size >= CACHE_MAX || cacheBytes > CACHE_BYTES)) {
       const old = cache.keys().next().value;
@@ -389,8 +391,9 @@ export function blit(ctx, s, x, y, { flip = false, flash = 0, alpha = 1, scale =
   const smooth = res > 1 && !s.crisp;
   const cell = scale / res;
   const grid = (v) => (smooth ? snap(v) : s.crisp ? Math.round(v / cell) * cell : Math.round(v));
-  const px = grid(x - PAD * scale);
-  const py = grid(y - PAD * scale);
+  const pad = s.pad ?? PAD;
+  const px = grid(x - pad * scale);
+  const py = grid(y - pad * scale);
   ctx.save();
   ctx.imageSmoothingEnabled = smooth;
   if (smooth) ctx.imageSmoothingQuality = 'high';

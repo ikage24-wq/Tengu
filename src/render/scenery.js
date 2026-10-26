@@ -122,11 +122,62 @@ function veiled(s, color, k) {
     c.height = s.canvas.height;
     const g = c.getContext('2d');
     g.drawImage(s.canvas, 0, 0);
+    softenRim(g, c.width, c.height, s.res ?? 1);
     g.globalAlpha = k;
     g.drawImage(tinted(s, color), 0, 0);
     byKey.set(key, c);
   }
   return c;
+}
+
+// Backdrop sprites lose their hard silhouette line: the outline ring (`w` pixels deep) is pulled
+// most of the way toward the fill just inside it, so distant things read by value, not by ink.
+function softenRim(g, W, H, w) {
+  const img = g.getImageData(0, 0, W, H);
+  const d = img.data;
+  const depth = new Uint8Array(W * H);
+  let ring = [];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      if (d[i * 4 + 3] < 8) continue;
+      const out = (xx, yy) => xx < 0 || yy < 0 || xx >= W || yy >= H || d[(yy * W + xx) * 4 + 3] < 8;
+      if (out(x - 1, y) || out(x + 1, y) || out(x, y - 1) || out(x, y + 1)) {
+        depth[i] = 1;
+        ring.push(i);
+      }
+    }
+  }
+  const rings = [ring];
+  for (let k = 2; k <= w + 1; k++) {
+    const next = [];
+    for (const i of ring) {
+      const x = i % W;
+      for (const j of [i - 1, i + 1, i - W, i + W]) {
+        if (j < 0 || j >= W * H || Math.abs((j % W) - x) > 1 || depth[j] || d[j * 4 + 3] < 8) continue;
+        depth[j] = k;
+        next.push(j);
+      }
+    }
+    rings.push(next);
+    ring = next;
+  }
+  // From the inside out, each outline pixel takes on the colour of a deeper neighbour.
+  for (let k = w; k >= 1; k--) {
+    for (const i of rings[k - 1]) {
+      const x = i % W;
+      let src = -1;
+      for (const j of [i - 1, i + 1, i - W, i + W, i - W - 1, i - W + 1, i + W - 1, i + W + 1]) {
+        if (j < 0 || j >= W * H || Math.abs((j % W) - x) > 1 || depth[j] <= k && depth[j] !== 0) continue;
+        if (d[j * 4 + 3] < 8) continue;
+        src = j;
+        break;
+      }
+      if (src < 0) continue;
+      for (let ch = 0; ch < 3; ch++) d[i * 4 + ch] = Math.round(d[i * 4 + ch] + (d[src * 4 + ch] - d[i * 4 + ch]) * 0.65);
+    }
+  }
+  g.putImageData(img, 0, 0);
 }
 
 function arc(cx, cy, rx, ry, a0, a1, th, c) {
@@ -949,10 +1000,10 @@ function drawFar(ctx, t, cam, width, y0, time) {
       // Stalactites hanging from the cave ceiling.
       repeat(cam.x, 0.25, 40, width, (i, x) => {
         const h = 20 + hash(i + 3) * 60;
-        ctx.beginPath();
-        ctx.moveTo(x, -2);
-        ctx.quadraticCurveTo(x + 9, h, x + 18, -2);
-        ctx.fill();
+        const p = new Path2D();
+        p.moveTo(x, -2);
+        p.quadraticCurveTo(x + 9, h, x + 18, -2);
+        litFill(ctx, t, p, 1.4, 0);
       });
       break;
     case 'roots':
@@ -1052,12 +1103,18 @@ function drawFarRoots(ctx, t, cam, width, y0, time) {
       twin.push([cx + Math.sin(yy * 0.02 + i * 2) * amp + Math.sin(yy * 0.06 + i) * (base + 2), yy]);
     }
     const flare = (u) => base + Math.max(0, 0.12 - u) * 160 + Math.max(0, u - 0.86) * 150;
-    ctx.fillStyle = t.far;
-    fillPts(ctx, bandPts(main, flare));
+    // The column and its foot roots as one flat shape with a lit rim on the upper-left side.
+    const col = new Path2D();
+    const add = (pts) => {
+      pts.forEach(([px, py], k) => (k ? col.lineTo(px, py) : col.moveTo(px, py)));
+      col.closePath();
+    };
+    add(bandPts(main, flare));
     for (const s of [-1, 1]) {
       const [fx, fy] = main[main.length - 3];
-      fillPts(ctx, bandPts([[fx, fy], [fx + s * 18, fy + 14], [fx + s * 34, fy + 30]], (u) => 6 - u * 5));
+      add(bandPts([[fx, fy], [fx + s * 18, fy + 14], [fx + s * 34, fy + 30]], (u) => 6 - u * 5));
     }
+    litFill(ctx, t, col, 1.6, 0);
     ctx.fillStyle = shade(t.far, 5);
     fillPts(ctx, bandPts(twin, () => 3));
   });

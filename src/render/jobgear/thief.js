@@ -231,7 +231,7 @@ function hoodFront(t, h, p, hair) {
   if (h.hood === 'tatter') {
     // Ragged points around the hood's outer edge.
     for (const a of [150, 175, 200, 5, 30]) {
-      const [x, y] = arcPts(...HOOD, a, a, 0)[0];
+      const [x, y] = arcPts(...HOOD, a, a, 1)[0];
       const poke = [Math.cos(rad(a)) * 2.4, -Math.sin(rad(a)) * 2.4];
       out.push(T([[x - 1.6 * Math.sin(rad(a)), y - 1.6 * Math.cos(rad(a))], [x + poke[0], y + poke[1] + 1.2], [x + 1.6 * Math.sin(rad(a)), y + 1.6 * Math.cos(rad(a))]], p.main));
     }

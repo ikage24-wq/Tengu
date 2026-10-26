@@ -2002,7 +2002,7 @@ export const ART = {
   tamamo: { walk: 8, idle: 8, attack: 5, stride: 60, atkMs: [70, 140, 360, 200], draw: tamamo },
   sylvana: { walk: 8, idle: 8, attack: 5, stride: 50, atkMs: [80, 150, 400, 220], draw: sylvana },
   lilith: { walk: 8, idle: 8, attack: 5, stride: 36, atkMs: [70, 140, 360, 200], draw: lilith },
-  selene: { walk: 8, idle: 8, attack: 5, stride: 40, atkMs: [60, 140, 380, 200], draw: selene },
+  selene: { pad: 8, walk: 8, idle: 8, attack: 5, stride: 40, atkMs: [60, 140, 380, 200], draw: selene },
 };
 
 export const INFO = {

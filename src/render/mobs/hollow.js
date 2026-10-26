@@ -532,7 +532,7 @@ function rootImp(pose, f, mood) {
   // Arms: shoulder and elbow angles per pose; three thorn claws in the hand's own frame.
   const armAngles = (front) => {
     if (dead) return [1.65, 0.1];
-    if (att >= 0) return front ? [[3.2, 0.45], [0.45, 0.15], [0.95, 0.35], [1.25, -0.6]][att] : [[1.0, -0.6], [2.25, -0.4], [2.2, -0.5], [1.8, -0.6]][att];
+    if (att >= 0) return front ? [[-2.75, -0.25], [0.45, 0.15], [0.95, 0.35], [1.25, -0.6]][att] : [[1.0, -0.6], [2.25, -0.4], [2.2, -0.5], [1.8, -0.6]][att];
     if (hurt) return front ? [0.2, -0.5] : [-2.4, -0.4];
     if (angry) return front ? [0.55, -1.35] : [1.15, -1.2];
     if (walk) return front ? [Math.PI / 2 + 0.75 * Math.cos(p), -0.95] : [Math.PI / 2 - 0.75 * Math.cos(p), -0.85];
@@ -540,7 +540,9 @@ function rootImp(pose, f, mood) {
   };
   const armOf = (S, front, R) => {
     const [a1, a2] = armAngles(front);
-    const [El, Hd, ha] = arm2(S, 3.9, 3.6, a1, a2);
+    // The wind-up stretches the cocked arm so the claws clear the back of the head.
+    const st = front && att === 0 ? 1.3 : 1;
+    const [El, Hd, ha] = arm2(S, 3.9 * st, 3.6 * st, a1, a2);
     const res = [...limbR([S, El, Hd], 2.5, 2, R)];
     const spread = front && att === 0 ? 0.62 : 0.45;
     const claws = [];
@@ -711,7 +713,7 @@ function sporeMite(pose, f, mood) {
     else ft = [rest + (att >= 0 ? [-0.6, 0.6, 0.8, 0.2][att] : 0), floor - (far ? 0.4 : 0)];
     const R = far ? ramp(P.leg.sh, true) : P.leg;
     const [K, Ft] = ik(H, ft, 3.8, 4.4, i === 0 ? -1 : 1);
-    return [...limb([H, K, Ft], 1.15, 0.7, R.base, R.sh2), fov(K[0], K[1], 0.55, 0.55, R.hi, 0, 8)];
+    return [...limb([H, K, Ft], 0.95, 0.55, R.base, R.sh2), fov(K[0], K[1], 0.45, 0.45, R.hi, 0, 8)];
   };
   for (let i = 0; i < 3; i++) out.push(...legOf(i, true));
 
@@ -1220,7 +1222,7 @@ function sapling(pose, f, mood) {
 
 export const ART = {
   rootling: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [45, 190, 140], draw: rootImp },
-  sporecap: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [65, 250, 190], draw: myconid },
+  sporecap: { pad: 13, walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [65, 250, 190], draw: myconid },
   thornback: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 310, 230], draw: brambleBear },
   sporeling: { walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [40, 170, 120], draw: sporeMite },
   sapling: { walk: 8, idle: 6, attack: 4, cycle: 2.4, atkMs: [60, 240, 180], draw: sapling },

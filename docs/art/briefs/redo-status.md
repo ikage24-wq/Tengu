@@ -56,22 +56,31 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   an anvil) hand-shaded on the prop kit (clapboard, shingled gables, stone chimneys, eave shadows,
   lit trim, bark trunk). `wallShade`/`beam`/`gable` moved to propkit. One critique round.
 
+- Polish sweep: monster sprites take a per-design `pad` (margin left, right and above the w x h box,
+  feet and centre unchanged; `pad` in the ART entry, default 4) so swords, staffs, wings, tails and
+  smears are no longer clipped (Gnarlroot arms, Dullahan sword, Imp trident, Wraith, Myconid
+  staff, Selene, Yuki-onna, ...); a probe found no clipped side or top edge left. Queen's floor
+  ring raised inside the sprite. Jackalope dead pose lies flat, chin down; Tortoise tail a tapering
+  three-link chain; Kitsune ruff and chest one cream bib; Root Imp's wind-up arm cocked back across
+  the body with claws past the head; Spore Mite legs thinner. Far hollow roots and cave stalactites
+  get the lit upper-left rim; veiled backdrop sprites (mid and far layers) have their outline ring
+  pulled toward the fill (`softenRim` in scenery.js). Thief hoods with tattered edges (Wraith Mask,
+  Specter/Nightmare Visage) drew nothing (NaN points); fixed for the bag icons and the hero.
+
 ## Still to do
 - Sky designs still place feathers in absolute coordinates (wings are not yet
   chains); trim their shape counts.
 - Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs); Prismaris'
-  dead pose and wing panes could use another look; the queen's floor ring dips ~1.5 px below the
-  sprite in attack 1. Queen/Tuskar: Tuskar's body is blocky and its flames read a bit like spikes; the
+  dead pose and wing panes could use another look. Queen/Tuskar: Tuskar's body is blocky and its flames read a bit like spikes; the
   queen's face is small under the cap.
-- Gear: check job-gear bag icons at 1x; accent-colour audit per piece.
+- Gear: accent-colour audit per piece. Bag icons at 1x all draw now, but the darkest sets (demonic,
+  cyber and t45+ weapons, thief bottoms and shoes) read as near-black blobs at 1x.
 - Hero: critique rounds on attack/jump/climb/death motion; a player death pose (drawn in scene.js);
   head tilt; capes on two springs; sparkle extras on excited/sassy faces get grey outlines; lighter
   bangs band on dark skin.
-- Rough spots on finished designs: Root Imp's wind-up arm hides behind the body; Spore Mite legs
-  heavy at 1x; Bramble Bear joints angular; Dullahan armour shapes round and merged; Dullahan smear
-  and Imp spark clipped at the sprite edge; Kitsune chest shading stripy; Jackalope dead pose upright;
-  Tortoise tail a stub.
+- Rough spots on finished designs: Bramble Bear joints angular; Dullahan armour shapes round and
+  merged; Kitsune body fur shading still a little blotchy; Jackalope's hind legs hide under the
+  body when dead.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
 - Thunder Hawk has no skill that summons it.
-- Props: mid-layer backdrop sprites keep their own-hue outlines (washed by the veil only); the
-  hollow's far roots and the cave stalactites have no lit rim yet. Shared prop kit: `src/render/propkit.js`.
+- Props: shared prop kit is `src/render/propkit.js`.
