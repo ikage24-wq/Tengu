@@ -7,10 +7,8 @@ import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, w
 
 const PAGES = {
   Display: [
+    ['filter', 'Filter', 'A look for the whole screen.', ['natural', 'vivid', 'dreamy', 'retro']],
     ['hdGraphics', 'HD graphics', 'Smooth, detailed art with lighting and glow. Off: crisp pixel art.'],
-    ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.'],
-    ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
-    ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],
     ['particles', 'Particles', 'Dust, sparks, petals, and footsteps.', ['full', 'reduced', 'off']],
     ['jobAuras', 'Job auras', 'The glow around advanced jobs while idle.'],
     ['weaponEffects', 'Weapon effects', 'Live effects on weapons and elemental footsteps.'],
@@ -25,6 +23,9 @@ const PAGES = {
     ['showFps', 'FPS counter', 'Frames per second, for the curious.'],
   ],
   Gameplay: [
+    ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.'],
+    ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
+    ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],
     ['autoLoot', 'Auto-loot', 'Pick up items just by walking over them.'],
     ['npcClick', 'Click NPCs to talk', 'Click any NPC on screen to open their dialog.'],
     ['showCrowd', 'Townsfolk and players', 'Villagers and other players wandering the towns.'],
@@ -53,13 +54,15 @@ export function optionsWindow(ui, state, world) {
   let y = win.y + 46;
 
   if (PAGES[page]) {
+    // Longer pages pack their rows a little tighter so they stay clear of the buttons.
+    const step = PAGES[page].length > 6 ? 25.5 : 29;
     for (const [key, label, desc, choices] of PAGES[page]) {
-      box(ctx, x - 2, y, W - 16, 26, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });
+      box(ctx, x - 2, y, W - 16, step - 3, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });
       text(ctx, label, x + 6, y + 11, { size: 8.5, bold: true });
       text(ctx, desc, x + 6, y + 21, { size: 6.5, color: COLORS.muted });
       if (choices) {
         choices.forEach((c, i) => {
-          const bx = x + W - 128 + i * 38;
+          const bx = x + W - 22 - choices.length * 38 + i * 38;
           const on = settings[key] === c;
           box(ctx, bx, y + 7, 36, 13, { fill: on ? th.main : hover(ui, bx, y + 7, 36, 13) ? '#ffffff' : th.light, edge: on ? th.dark : null, r: 6.5, width: 1 });
           text(ctx, c, bx + 18, y + 16.5, { size: 7, bold: true, align: 'center', color: on ? '#ffffff' : th.ink });
@@ -75,7 +78,7 @@ export function optionsWindow(ui, state, world) {
           saveSettings();
         }
       }
-      y += 29;
+      y += step;
     }
   } else if (page === 'Controls') {
     CONTROLS.forEach(([keys, what], i) => {

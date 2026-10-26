@@ -6,6 +6,7 @@ const KEY = 'twzt-settings-v1';
 export const DEFAULT_SETTINGS = {
   // Display
   hdGraphics: true,
+  filter: 'vivid', // 'natural' | 'vivid' | 'dreamy' | 'retro'
   screenShake: true,
   hitStop: true,
   damageNumbers: true,

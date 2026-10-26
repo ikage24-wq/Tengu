@@ -4,7 +4,11 @@
 // chimney smoke, bobbing boats. World-to-screen is (wx - cam.x, wy - cam.y). Layouts are seeded so
 // nothing jitters as you move; animation comes only from `time`.
 
-import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, mix, snap, gfx } from './pixel.js';
+import { drawSoft } from './post.js';
+
+// How soft the HD backdrop is: it's drawn at one cell per this many game pixels.
+const BACKDROP_BLUR = 1.5;
 import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {
@@ -1742,15 +1746,20 @@ function drawDrift(ctx, t, cam, width, height, time) {
 export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   const t = THEMES[theme];
-  drawSky(ctx, t, theme, width, height, time);
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll
   // vertically at a fraction of the camera so taller maps still feel deep.
   const camBottom = Math.max(0, map.height - height);
   const layerY = (lift, factor) => map.groundY - lift - camBottom - (cam.y - camBottom) * factor;
-  drawClouds(ctx, theme, cam, width, time);
-  drawFar(ctx, t, cam, width, layerY(50, 0.2), time);
-  drawMid(ctx, t, theme, cam, width, layerY(10, 0.45), time);
-  drawHaze(ctx, t, width, map.groundY - cam.y);
+  const backdrop = (g) => {
+    drawSky(g, t, theme, width, height, time);
+    drawClouds(g, theme, cam, width, time);
+    drawFar(g, t, cam, width, layerY(50, 0.2), time);
+    drawMid(g, t, theme, cam, width, layerY(10, 0.45), time);
+    drawHaze(g, t, width, map.groundY - cam.y);
+  };
+  // HD: the backdrop is softly out of focus, so the play area stands out in front of it.
+  if (gfx.hd) drawSoft(ctx, BACKDROP_BLUR * gfx.scale, backdrop);
+  else backdrop(ctx);
   drawGround(ctx, t, theme, map, cam, width, height, time);
   // Town buildings stand on the street, behind ledges and props.
   street?.();

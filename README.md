@@ -299,12 +299,16 @@ to clear it.
   upscaler (EPX) so stair-steps become round curves, and drawn at sub-pixel positions so the camera
   and everyone in the world glide instead of stepping. Each map gets its own lighting: warm light
   and slanting sun rays from above, cool shade below, and a soft vignette. Spells, sparks, and
-  particles glow (bloom), shadows are soft, crits glow, and new maps fade in. On a slow device it
+  particles glow (bloom), the far backdrop is softly out of focus behind the play area, shadows
+  are soft, crits glow, and new maps fade in. Monsters keep their crisp art. On a slow device it
   drops the glow, then the lighting, by itself. Turn it off for the crisp pixel-art look.
-- **Options** — Esc (or the gear button) opens Options. Display: HD graphics, screen shake, hit-stop, damage
-  numbers, particles (full, reduced, or off), job auras, and weapon effects. Interface: minimap,
-  quest tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: auto-loot,
-  click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and
+- **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
+  adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
+  **Natural** leaves the colors as drawn.
+- **Options** — Esc (or the gear button) opens Options. Display: filter, HD graphics, particles
+  (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest
+  tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: screen shake,
+  hit-stop, damage numbers, auto-loot, click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and
   the Character page changes character or returns to the title (saving first). Settings are saved in
   the browser.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,

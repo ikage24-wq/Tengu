@@ -23,7 +23,7 @@ import { partyMembers } from '../world/party.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx } from './pixel.js';
-import { drawGlowing, drawLighting, softShadow } from './post.js';
+import { drawGlowing, drawLighting, softShadow, drawDreamy } from './post.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -217,6 +217,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   };
   if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
+  if (settings.filter === 'dreamy') drawDreamy(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // HD: a new map fades in from a soft glow instead of cutting straight in.

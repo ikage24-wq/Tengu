@@ -11,6 +11,7 @@ import { createWorld, updateWorld } from './world/world.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
 import { setHd, gfx } from './render/pixel.js';
+import { FILTERS, drawRetro } from './render/post.js';
 import { createBots, updateBots, botsIn } from './world/bots.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
@@ -177,6 +178,9 @@ function frame(now) {
     }
   }
 
+  if (settings.filter === 'retro') drawRetro(ctx, pixelScale);
+  const filter = FILTERS[settings.filter] ?? '';
+  if (canvas.style.filter !== filter) canvas.style.filter = filter;
   endUi(ui);
   endFrame(input);
   requestAnimationFrame(frame);
