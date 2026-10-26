@@ -15,7 +15,7 @@ export const MAPS = {
   sprout: {
     id: 'sprout', plaza: 1040, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     width: 1800, height: 520, groundY: 480,
-    look: { edges: 'flowers' },
+    look: { edges: 'flowers', front: 'blossoms' },
     terrain: [[0, 480], [440, 480], [540, 440], [1090, 440], [1140, 480], [1400, 480], [1500, 430], [1800, 430]],
     platforms: [
       { x: 90, y: 400, w: 180 },
@@ -45,7 +45,7 @@ export const MAPS = {
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
     width: 2200, height: 520, groundY: 480,
-    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
+    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', front: 'blossoms', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
     terrain: [[0, 480], [460, 480], [560, 430], [820, 430], [900, 470], [1180, 470], [1180, 400], [1500, 400], [1500, 440], [1560, 440], [1620, 480], [2200, 480]],
     platforms: [
       { x: 120, y: 400, w: 200 },
@@ -305,7 +305,7 @@ export const MAPS = {
   bossroom: {
     id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'grove', world: { x: 360, y: 186 },
     width: 1200, height: 420, groundY: 380,
-    look: { sky: ['#1f1a4a', '#3a2f7a', '#5a47a6'], far: '#3f3480', mid: '#4f4296', material: 'throne', ceiling: true, light: 'throne', islands: 'stone' },
+    look: { sky: ['#1f1a4a', '#3a2f7a', '#5a47a6'], far: '#3f3480', mid: '#4f4296', material: 'throne', ceiling: true, light: 'throne', islands: 'stone', skyline: 'columns', aerial: 1.8 },
     platforms: [
       { x: 150, y: 290, w: 200 },
       { x: 850, y: 290, w: 200 },
@@ -451,6 +451,7 @@ Object.assign(MAPS, {
     task: { kind: 'light', label: 'Light the glowcaps' },
     platforms: [{ x: 640, y: 300, w: 180 }, { x: 1360, y: 300, w: 200 }],
     ropes: [],
+    deco: [['giantshroom', 780, 0], ['hollowlog', 1400], ['mushring', 230]],
     portals: [
       { id: 'out', x: 40, y: G, to: 'hollow_gate', toPortal: 'door', label: 'Leave' },
       { id: 'start', x: 140, y: G, hidden: true },
@@ -466,6 +467,7 @@ Object.assign(MAPS, {
     width: 1300, height: 420, groundY: G,
     platforms: [{ x: 120, y: 300, w: 180 }, { x: 1000, y: 300, w: 180 }],
     ropes: [],
+    deco: [['mushring', 400], ['giantshroom', 1110, 2]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow1', toPortal: 'east' },
       { id: 'east', x: 1260, y: G, to: 'hollow3', toPortal: 'west', sealed: true },
@@ -481,6 +483,7 @@ Object.assign(MAPS, {
     task: { kind: 'free', label: 'Free the trapped Sprouts' },
     platforms: [{ x: 500, y: 300, w: 200 }, { x: 1180, y: 300, w: 220 }, { x: 1800, y: 300, w: 180 }],
     ropes: [],
+    deco: [['hollowlog', 700], ['giantshroom', 1250, 1], ['stumphouse', 1720]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow2', toPortal: 'east' },
       { id: 'east', x: 2150, y: G, to: 'hollow4', toPortal: 'west', sealed: true },
@@ -495,6 +498,7 @@ Object.assign(MAPS, {
     width: 1400, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 160 }, { x: 620, y: 300, w: 160 }, { x: 1080, y: 300, w: 160 }],
     ropes: [],
+    deco: [['bones', 420], ['hollowlog', 560], ['bones', 1180, 1]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow3', toPortal: 'east' },
       { id: 'east', x: 1360, y: G, to: 'hollow5', toPortal: 'west', sealed: true },
@@ -510,6 +514,7 @@ Object.assign(MAPS, {
     task: { kind: 'keys', label: 'Find the Root Keys', count: 3 },
     platforms: [{ x: 420, y: 300, w: 200 }, { x: 1100, y: 300, w: 200 }],
     ropes: [],
+    deco: [['giantshroom', 760, 2], ['mushring', 1360], ['rootgate', 1900]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow4', toPortal: 'east' },
       { id: 'east', x: 1950, y: G, to: 'hollow6', toPortal: 'west', sealed: true },
@@ -527,6 +532,7 @@ Object.assign(MAPS, {
     width: 1500, height: 420, groundY: G,
     platforms: [{ x: 140, y: 300, w: 170 }, { x: 560, y: 300, w: 150 }, { x: 900, y: 300, w: 150 }, { x: 1220, y: 300, w: 170 }],
     ropes: [],
+    deco: [['glowpool', 380], ['giantshroom', 1160, 1]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow5', toPortal: 'east' },
       { id: 'out', x: 1450, y: G, to: 'hollow_gate', toPortal: 'start', label: 'Exit', sealed: true },
