@@ -10,7 +10,7 @@ import { QUESTS } from '../src/data/quests.js';
 import { JOBS } from '../src/data/jobs.js';
 import { SKILLS, skillAt } from '../src/data/skills.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
-import { acceptQuest, questState, recordKill, completeQuest } from '../src/core/quests.js';
+import { acceptQuest, questState, recordKill, completeQuest, trackedQuests, toggleTracked, TRACK_MAX, npcMap, objectiveHint } from '../src/core/quests.js';
 import { addItem } from '../src/core/inventory.js';
 import { surfacesOf, groundAt, ropeTop } from '../src/world/physics.js';
 import { navOf } from '../src/world/nav.js';
@@ -164,4 +164,28 @@ test('NPCs wear real gear, and shops list their job-gear levels apart from it', 
     }
     if (npc.stockLevels) assert.ok(Array.isArray(npc.stockLevels) && npc.stockLevels[0] <= npc.stockLevels[1], `${npc.id} stock levels`);
   }
+});
+
+test('every quest giver stands somewhere and every objective says where to go', () => {
+  for (const q of Object.values(QUESTS)) {
+    assert.ok(npcMap(q.giver), `${q.id}: giver ${q.giver} is on no map`);
+    for (const o of q.objectives) assert.ok(objectiveHint(o), `${q.id}: no hint for ${o.mob ?? o.item}`);
+  }
+});
+
+test('the tracker follows every quest until you pin your own, and new quests join your pins', () => {
+  const char = createCharacter('Pinner', {});
+  char.level = 20;
+  char.quests.first_steps = { state: 'done' };
+  for (const id of ['fluffy', 'snail_trouble', 'mush_menace']) acceptQuest(char, id);
+  assert.deepEqual(trackedQuests(char), ['fluffy', 'snail_trouble', 'mush_menace']);
+  assert.equal(toggleTracked(char, 'snail_trouble'), false);
+  assert.deepEqual(trackedQuests(char), ['fluffy', 'mush_menace']);
+  acceptQuest(char, 'tusk_trader');
+  assert.deepEqual(trackedQuests(char), ['fluffy', 'mush_menace', 'tusk_trader']);
+  // Finished quests drop off; the list never grows past the limit.
+  char.quests.fluffy = { state: 'done' };
+  assert.deepEqual(trackedQuests(char), ['mush_menace', 'tusk_trader']);
+  toggleTracked(char, 'snail_trouble');
+  assert.ok(trackedQuests(char).length <= TRACK_MAX);
 });

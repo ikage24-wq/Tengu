@@ -1,12 +1,20 @@
 // Quest progress. Kill counts are tracked per quest; collect objectives read the bag directly.
 
 import { QUESTS } from '../data/quests.js';
+import { MAPS } from '../data/maps.js';
+import { MOBS } from '../data/mobs.js';
+import { DUNGEONS } from '../data/dungeons.js';
 import { ITEMS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
 import { CASH_PER_QUEST } from '../data/cash.js';
 import { addItem, countItem, removeItem, TAB_SIZE } from './inventory.js';
 import { makeEquip } from './items.js';
 import { gainExp } from './character.js';
+
+// The HUD tracker shows up to TRACK_MAX quests. Until the player pins or unpins one, every quest
+// in progress is tracked (`char.tracked` stays unset); after that the list is theirs, and newly
+// accepted quests join it.
+export const TRACK_MAX = 4;
 
 // 'locked' | 'available' | 'active' | 'ready' | 'done'
 export function questState(char, id) {
@@ -35,6 +43,12 @@ export function objectivesMet(char, id) {
 export function acceptQuest(char, id) {
   if (questState(char, id) !== 'available') return false;
   char.quests[id] = { state: 'active', kills: {} };
+  // A new quest goes on the tracker (once the player has picked what to track).
+  if (char.tracked) {
+    char.tracked = trackedQuests(char).filter((q) => q !== id);
+    char.tracked.push(id);
+    if (char.tracked.length > TRACK_MAX) char.tracked.shift();
+  }
   return true;
 }
 
@@ -81,4 +95,56 @@ export function rewardId(char, r) {
   const def = ITEMS[r.id];
   const family = JOBS[char.job]?.family;
   return GEAR_FAMILIES.includes(family) ? jobGearId(family, def.slot, def.reqLevel) : r.id;
+}
+
+// ---------- Tracking ----------
+
+const inProgress = (char) => Object.keys(char.quests).filter((id) => QUESTS[id] && ['active', 'ready'].includes(questState(char, id)));
+
+export function trackedQuests(char) {
+  const live = inProgress(char);
+  return (char.tracked ? char.tracked.filter((id) => live.includes(id)) : live).slice(0, TRACK_MAX);
+}
+
+export const isTracked = (char, id) => trackedQuests(char).includes(id);
+
+// Pins or unpins a quest; pinning past the limit drops the oldest pin.
+export function toggleTracked(char, id) {
+  const list = trackedQuests(char);
+  char.tracked = list.includes(id) ? list.filter((q) => q !== id) : [...list, id].slice(-TRACK_MAX);
+  return char.tracked.includes(id);
+}
+
+// ---------- Where to go ----------
+// Hints for the quest log and tracker: where a quest's giver stands, where its monsters live,
+// and who drops the items it wants.
+
+export function npcMap(npcId) {
+  return Object.values(MAPS).find((m) => m.npcs?.some((n) => n.id === npcId))?.id ?? null;
+}
+
+// Places a monster spawns, by name: a dungeon's rooms count as the dungeon.
+export function mobPlaces(mobId) {
+  const names = [];
+  for (const m of Object.values(MAPS)) {
+    if (!m.spawns?.some((s) => s.mob === mobId)) continue;
+    const name = m.dungeon ? DUNGEONS[m.dungeon]?.name ?? m.name : m.name;
+    if (!names.includes(name)) names.push(name);
+  }
+  return names;
+}
+
+// Monsters that drop an item.
+export function itemSources(itemId) {
+  return Object.values(MOBS).filter((m) => m.drops?.some((d) => d.id === itemId)).map((m) => m.id);
+}
+
+// One line saying where to work on an objective: "Petal Meadow", or for an item "Kitsune Kit,
+// Petal Meadow".
+export function objectiveHint(o) {
+  if (o.type === 'kill') return mobPlaces(o.mob).slice(0, 2).join(', ');
+  const from = itemSources(o.item)[0];
+  if (!from) return '';
+  const where = mobPlaces(from)[0];
+  return where ? `${MOBS[from].name}, ${where}` : MOBS[from].name;
 }

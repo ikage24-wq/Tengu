@@ -17,7 +17,7 @@ import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero } from '../render/hero.js';
 import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, rarityCell } from './kit.js';
+import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, rarityCell, fit } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
 
 export function questMarker(char, npcId) {
@@ -397,13 +397,6 @@ function makePreview(id, variant) {
   return previews.get(key);
 }
 
-// Shortens text with an ellipsis to fit `w` pixels.
-function fit(ctx, s, w, size) {
-  ctx.font = font(size, true);
-  if (ctx.measureText(s).width <= w) return s;
-  while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
-  return `${s}…`;
-}
 
 // A variant's color, darkened enough to read on the pale window.
 const readable = (c) => shade(c, lum(c) > 0.75 ? -45 : -8);

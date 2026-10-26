@@ -16,7 +16,7 @@ const PAGES = {
   ],
   Interface: [
     ['minimap', 'Minimap', 'The map in the top-left corner.'],
-    ['questTracker', 'Quest tracker', 'Quests in progress in the top-right corner.'],
+    ['questTracker', 'Quest tracker', 'Your pinned quests on a card you can drag anywhere.'],
     ['messageLog', 'Message log', 'Loot, quest, and system messages.'],
     ['mapBanner', 'Map name banner', 'The ribbon that drops in when you enter a map.'],
     ['monsterHp', 'Monster HP bars', 'Health bars over hurt monsters.'],

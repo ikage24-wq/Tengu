@@ -1,17 +1,13 @@
-// Player windows: Bag (inventory + equipment), Stats, Skills, and Quests.
+// Player windows: Bag (inventory + equipment), Stats, and Skills (Quests live in quests.js).
 
 import { ITEMS, EQUIP_SLOTS, RARITIES } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
-import { QUESTS } from '../data/quests.js';
-import { NPCS } from '../data/npcs.js';
-import { MOBS } from '../data/mobs.js';
 import { expToNext } from '../core/exp.js';
 import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js';
 import { equipFromBag, unequip, spendAp, autoAssignAp, learnSkill, canLearn, equipBlocker, STAT_KEYS, wearOutfit, removeOutfit, wornGear } from '../core/character.js';
 import { applyScroll, itemName } from '../core/items.js';
 import { removeItem, TAB_SIZE } from '../core/inventory.js';
-import { questState, objectiveProgress } from '../core/quests.js';
 import { useItem } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon, drawSkillIcon, skillTone } from '../render/icons.js';
@@ -350,62 +346,5 @@ export function skillsWindow(ui, state, world) {
   }
   if (job === 'novice' && char.level >= 10) {
     wrap(ctx, 'You can choose a job! Kestrel (archer) is in Sprout Village, Vex (thief) in Pastel Harbor, Brann (warrior) in Ember Crag, and Elowen (mage) in Moonleaf Grove. Press M for the world map.', win.x + 10, y + 10, W - 20, { size: 8, color: COLORS.accent });
-  }
-}
-
-// ---------- Quests ----------
-
-export function questsWindow(ui, state, world) {
-  const win = state.windows.quests;
-  const W = 196;
-  const H = 210;
-  if (!windowFrame(ui, win, W, H, 'Quests')) return;
-  const { ctx } = ui;
-  const th = ui.theme;
-  const char = world.char;
-  const ids = Object.keys(QUESTS);
-  const active = ids.filter((id) => ['active', 'ready'].includes(questState(char, id)));
-  const available = ids.filter((id) => questState(char, id) === 'available');
-  const x = win.x + 8;
-  const w = W - 16;
-  let y = win.y + 26;
-  const heading = (label, n) => {
-    box(ctx, x, y, w, 14, { fill: th.light, edge: null, r: 7 });
-    text(ctx, label, x + 8, y + 10, { size: 8, bold: true, color: th.ink });
-    text(ctx, `${n}`, x + w - 8, y + 10, { size: 8, bold: true, align: 'right', color: th.ink });
-    y += 18;
-  };
-  heading('In progress', active.length);
-  if (!active.length) {
-    text(ctx, 'Nothing yet. Talk to villagers with Up.', x + 4, y + 8, { role: 'secondary' });
-    y += 16;
-  }
-  for (const id of active) {
-    const q = QUESTS[id];
-    const ready = questState(char, id) === 'ready';
-    const objs = objectiveProgress(char, id);
-    const h = 18 + objs.length * 11;
-    box(ctx, x, y, w, h, { fill: ready ? '#effcf3' : '#ffffff', edge: ready ? COLORS.good : th.light, r: 7 });
-    text(ctx, `${ready ? '✓ ' : ''}${q.name}`, x + 6, y + 11, { size: 8.5, bold: true, color: ready ? '#2f8f52' : COLORS.ink });
-    text(ctx, ready ? `Back to ${NPCS[q.giver].name}` : NPCS[q.giver].name, x + w - 6, y + 11, { size: 6.5, align: 'right', color: COLORS.muted });
-    let oy = y + 22;
-    for (const o of objs) {
-      const name = o.type === 'kill' ? `Defeat ${MOBS[o.mob].name}` : ITEMS[o.item].name;
-      text(ctx, name, x + 8, oy, { size: 7, color: COLORS.muted });
-      bar(ctx, x + w - 62, oy - 6, 56, 7, o.have / o.count, o.have >= o.count ? COLORS.good : th.main, `${o.have}/${o.count}`, { size: 6 });
-      oy += 11;
-    }
-    y += h + 4;
-  }
-  y += 4;
-  heading('Available', available.length);
-  for (const id of available.slice(0, 4)) {
-    const hot = hover(ui, x, y, w, 14);
-    box(ctx, x, y, w, 14, { fill: hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 7 });
-    box(ctx, x + 3, y + 2.5, 9, 9, { fill: COLORS.select, edge: null, r: 4.5 });
-    text(ctx, '!', x + 7.5, y + 10, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#c99a1f' });
-    text(ctx, QUESTS[id].name, x + 16, y + 10, { size: 8 });
-    text(ctx, NPCS[QUESTS[id].giver].name, x + w - 6, y + 10, { size: 6.5, align: 'right', color: COLORS.muted });
-    y += 17;
   }
 }

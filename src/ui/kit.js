@@ -111,6 +111,14 @@ export function text(ctx, str, x, y, opts = {}) {
   ctx.textAlign = 'left';
 }
 
+// Shortens text with an ellipsis to fit `w` pixels.
+export function fit(ctx, s, w, size, bold = true) {
+  ctx.font = font(size, bold);
+  if (ctx.measureText(s).width <= w) return s;
+  while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
+  return `${s}…`;
+}
+
 // Wraps text to `width`; returns the y after the last line. `chars` limits how many characters
 // show, for typewriter text.
 export function wrap(ctx, str, x, y, width, opts = {}) {
@@ -442,6 +450,39 @@ const ICONS = {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(s * 0.14, s * 0.04, s * 0.06, 0, Math.PI * 2);
+    ctx.fill();
+  },
+  check(ctx, s) {
+    ctx.lineWidth = s * 0.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.32, 0);
+    ctx.lineTo(-s * 0.08, s * 0.24);
+    ctx.lineTo(s * 0.34, -s * 0.24);
+    ctx.stroke();
+  },
+  lock(ctx, s) {
+    roundRect(ctx, -s * 0.32, -s * 0.06, s * 0.64, s * 0.46, s * 0.1);
+    ctx.fill();
+    ctx.lineWidth = s * 0.12;
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.08, s * 0.2, Math.PI, 0);
+    ctx.stroke();
+  },
+  pin(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.14, s * 0.26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = s * 0.12;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.08);
+    ctx.lineTo(0, s * 0.44);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.arc(-s * 0.08, -s * 0.22, s * 0.08, 0, Math.PI * 2);
     ctx.fill();
   },
   skull(ctx, s) {

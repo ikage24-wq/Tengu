@@ -1,14 +1,10 @@
 // Always-on HUD: status bar, hotkeys, minimap, buffs, quest tracker, message log, map banner.
 
 import { SKILLS, skillAt } from '../data/skills.js';
-import { ITEMS } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
-import { QUESTS } from '../data/quests.js';
-import { MOBS } from '../data/mobs.js';
 import { expToNext } from '../core/exp.js';
 import { countItem, activeStar } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
-import { questState, objectiveProgress } from '../core/quests.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
 import { drawHero } from '../render/hero.js';
@@ -20,6 +16,7 @@ import { DUNGEONS } from '../data/dungeons.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
 import { questMarker } from './npc.js';
+import { drawQuestTracker } from './quests.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 
 const BAR_Y = 330;
@@ -268,7 +265,7 @@ export function drawHud(ui, state, world) {
   if (world.dungeon) {
     drawDungeonTracker(ui, world);
     drawCallout(ctx, world);
-  } else if (settings.questTracker) drawTracker(ui, world);
+  } else if (settings.questTracker) drawQuestTracker(ui, state, world);
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   if (settings.showFps) drawFps(ctx, state);
@@ -502,35 +499,6 @@ function drawBuffs(ui, world) {
     text(ctx, `${Math.ceil(left)}`, x + 9, y + 26, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: COLORS.ink });
     if (hover(ui, x, y, 18, 18)) tooltip(ui, [{ text: SKILLS[id].name, bold: true }, { text: `${Math.ceil(left)}s left`, color: COLORS.muted }]);
   });
-}
-
-// Tracked quests: a small card in the corner with progress bars.
-function drawTracker(ui, world) {
-  const { ctx } = ui;
-  const char = world.char;
-  const active = Object.keys(QUESTS).filter((id) => ['active', 'ready'].includes(questState(char, id))).slice(0, 3);
-  if (!active.length) return;
-  const th = THEMES.mint;
-  const w = 128;
-  const x = 640 - w - 6;
-  const rows = active.map((id) => ({ id, objs: objectiveProgress(char, id), ready: questState(char, id) === 'ready' }));
-  const h = 16 + rows.reduce((n, r) => n + 12 + r.objs.length * 10, 0);
-  const y = 6;
-  box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.82)', edge: th.main, r: 8, width: 1.2 });
-  box(ctx, x + 2, y + 2, w - 4, 11, { fill: th.main, edge: null, r: 5.5 });
-  icon(ctx, 'scroll', x + 9, y + 7.5, 8, '#ffffff');
-  text(ctx, 'Quests', x + 16, y + 10.5, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
-  let ty = y + 24;
-  for (const r of rows) {
-    text(ctx, `${r.ready ? '✓ ' : ''}${QUESTS[r.id].name}`, x + 6, ty, { size: 7.5, bold: true, color: r.ready ? '#2f8f52' : COLORS.ink });
-    for (const o of r.objs) {
-      ty += 10;
-      const name = o.type === 'kill' ? MOBS[o.mob].name : ITEMS[o.item].name;
-      text(ctx, name, x + 9, ty, { role: 'minor' });
-      bar(ctx, x + w - 46, ty - 6, 40, 6, o.have / o.count, o.have >= o.count ? COLORS.good : th.main, `${o.have}/${o.count}`, { size: 5 });
-    }
-    ty += 12;
-  }
 }
 
 // The message log: each line on its own soft pill so it reads over any background.

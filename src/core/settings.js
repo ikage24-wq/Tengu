@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS = {
   // Interface
   minimap: true,
   questTracker: true,
+  trackerPos: null, // where the quest tracker was dragged to ({ x, y }), or null for the top right
   mapBanner: true,
   showFps: false,
   messageLog: true,
