@@ -21,7 +21,6 @@ import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 
 const INVULN = 1.2;
-const LAST_WORDS = ['bye~', 'x_x', 'rip', 'oof', 'nooo', 'tell my mom', 'worth it', 'brb', 'ow', 'gg', 'whyyy', '*poof*'];
 const REGEN_EVERY = 5;
 const TALK_RANGE = 34;
 const PORTAL_RANGE = 22;
@@ -272,8 +271,6 @@ function killMob(world, m, byParty = false) {
   }
   world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss) });
-  // Now and then a monster gets a last word in on the way out.
-  if (!m.def.boss && Math.random() < 0.18) world.numbers.push({ x: m.x, y: m.y - (m.air ?? 0) - m.def.h - 24, text: LAST_WORDS[Math.floor(Math.random() * LAST_WORDS.length)], color: '#ffc2df', t: 0, small: true });
   world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.3 : 0.045);
   if (levels > 0) {
     world.events.push({ type: 'levelup', level: char.level });

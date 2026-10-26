@@ -23,10 +23,6 @@ const WINDOW = 0.45;
 // A step can be cut short into the next one this far through (heavy finishers play out longer).
 const CANCEL = 0.76;
 
-// Words that pop on heavy blows.
-const WORDS = ['POW!', 'WHAM!', 'BOOP!', 'SMACK!', 'OOF!', 'YEET!', 'KAPOW!', 'BONK!', 'THWACK!'];
-const pick = (list) => list[Math.floor(Math.random() * list.length)];
-
 // Smear colors: steel blue for a cut, gold for a heavy blow.
 const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
@@ -147,11 +143,6 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock;
     world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big });
   });
-  // Now and then a comic word pops on a heavy blow.
-  if (s.big && targets.length && Math.random() < 0.4) {
-    const m = targets[0];
-    world.fx.push({ kind: 'comic', x: m.x, y: m.y - (m.air ?? 0) - m.def.h - 6, text: pick(WORDS), t: 0, dur: 0.85 });
-  }
   if (targets.length) {
     world.hitstop = Math.max(world.hitstop, s.stop ?? (s.finisher ? 0.07 : 0.035));
     if (s.shake) world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });
