@@ -47,6 +47,8 @@ there and update the status file as they get done.
 
 - Commits end with the session's Co-Authored-By / Claude-Session lines; no model names in code or
   commits.
+- When reporting to the user, describe what changed in the game in plain words: no code, file
+  names, function names, or technical jargon. Show pictures instead.
 - Don't open pull requests unless asked.
 - Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
   maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
