@@ -229,7 +229,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   for (const buff of Object.values(world.char.buffs)) {
     if (!buff.summon) continue;
     const pos = summonPosition(world, summonIndex++);
-    drawSummon(ctx, buff.summon.art, pos.x - cam.x, pos.y - cam.y, time, b.facing);
+    drawSummon(ctx, buff.summon.art, pos.x - cam.x, pos.y - cam.y, time, b.facing, { now: world.now, since: buff.since, until: buff.until, summon: buff.summon });
   }
 
   // HD: light and color over the world, then effects on a glowing layer.
