@@ -254,7 +254,7 @@ function hairOf(look, rig) {
   const m = rig ? { root: rig.hair ?? 0, tip: rig.hairTip ?? rig.hair ?? 0, lift: rig.hairLift ?? 0, wave: rig.hairWave ?? 0 } : null;
   const p = hairParts(style, r, tint, m, look.face ?? 'smile');
   const front = [...p.front];
-  front.shade = p.front.length ? [F(E(HEAD_X, 9.4, 10.4, 4.6, '#000000')), ...p.shade] : [];
+  front.shade = p.front.length ? [F(E(HEAD_X, 8.2, 10.4, 3.2, '#000000')), ...p.shade] : [];
   return { style, r, head: p.head, hang: p.hang.map((sh) => ({ ...sh, hang: true })), front, top: p.top };
 }
 

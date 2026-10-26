@@ -302,20 +302,21 @@ const napeShadow = (r, y = 20) => F(E(HX, y, 9.6, 4.4, r.sh2));
 
 // The lower edge of the bangs, from the near temple across to the far one: tips and notches.
 const FRINGES = {
-  // Soft clumps of a few lengths, curving a little toward the face side.
-  soft: { pts: [[23.4, 14.2], [21.6, 11.6], [19.8, 15.2], [17.8, 12], [15.4, 15.8], [13.4, 12.2], [11, 15.2], [9.2, 12], [7.8, 13.8]], lean: 0.6 },
-  // Blunt: cut straight across with small V notches.
-  blunt: { pts: [[23.6, 14.8], [22.9, 13.9], [22.2, 14.9], [18.9, 15], [18.3, 14], [17.7, 15], [13.4, 15], [12.8, 14], [12.2, 15], [8.9, 14.9], [8.3, 13.9], [7.6, 14.8]], lean: 0, blunt: true },
-  // Wispy: many fine strands of uneven length with gaps where the forehead shows.
-  wispy: { pts: [[23.8, 12.6], [22.6, 10.4], [21.8, 14], [20.4, 9.8], [19, 15], [17.6, 10.2], [15.6, 16], [14.2, 10.4], [12.4, 15.2], [11, 10.8], [9.4, 14.4], [8.4, 11.2], [7.4, 13]], lean: -0.6 },
-  // Swept from a part on the near side across to the far side.
-  swept: { pts: [[23.6, 12.2], [22, 10.2], [20.6, 13.6], [18.4, 10.6], [16, 15], [14.2, 11.2], [11.4, 15.4], [10, 11.6], [7.8, 14.6]], lean: -1.1 },
-  // Parted in the middle and sweeping apart, so the brow shows.
-  part: { pts: [[23.2, 15], [21.6, 11.6], [19.8, 12.8], [17.4, 9.6], [HX, 7.6], [13.6, 9.6], [11.2, 12.8], [9.4, 11.6], [7.8, 15]], lean: 0 },
+  // A few big rounded clumps of different lengths, the middle one longest.
+  soft: { pts: [[23.8, 13], [22.2, 10.4], [20.4, 15.4], [18.2, 10.8], [15.6, 16.8], [13, 10.8], [10.6, 15.2], [8.8, 10.6], [7.2, 13.2]], lean: 0.9 },
+  // Blunt: one heavy straight cut low on the brow, with tiny V notches.
+  blunt: { pts: [[24.4, 15.6], [21.4, 15.7], [20.9, 14.6], [20.4, 15.7], [16.1, 15.8], [15.5, 14.7], [14.9, 15.8], [10.6, 15.7], [10.1, 14.6], [9.6, 15.7], [6.6, 15.6]], lean: 0, blunt: true },
+  // Wispy: soft separate strands of uneven length with rounded tips, a little forehead showing
+  // between them.
+  wispy: { pts: [[23.8, 13.4], [22.4, 10.8], [20.6, 15], [19, 11], [16.8, 15.8], [15.2, 11.2], [13, 15.4], [11.4, 11], [9.4, 14.6], [8, 11.6], [7, 13.2]], lean: -0.4, softTips: true },
+  // Swept: a strong diagonal from high on the near side down past the far eye.
+  swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[22.6, 2.6], [24.6, 6.6]] },
+  // Parted in the middle, curving apart to open a triangle of forehead.
+  part: { pts: [[23.4, 15.6], [22, 12], [20.8, 13.4], [18.6, 9.6], [16.4, 7.4], [HX, 6.2], [14.6, 7.4], [12.4, 9.6], [10.2, 13.4], [9, 12], [7.6, 15.6]], lean: 0, part: [[HX, 2.2], [HX, 6]] },
   // Short and choppy, high on the brow.
   short: { pts: [[23, 12.4], [21.4, 10.2], [19.6, 13], [17.6, 10.4], [15.2, 13.4], [13.2, 10.6], [11, 13], [9.2, 10.6], [7.6, 12.4]], lean: 0.5 },
   // Jagged spikes of every length, one long between the eyes.
-  spiky: { pts: [[23.6, 13.4], [21.6, 10.6], [19.8, 14.6], [17.8, 11], [15.4, 17], [13.4, 11.2], [10.8, 15], [9, 10.8], [7.4, 13]], lean: 0.4 },
+  spiky: { pts: [[23.6, 13.4], [21.6, 10.2], [19.8, 15], [17.8, 10.4], [15.4, 17.6], [13.4, 10.6], [10.8, 15.4], [9, 10.2], [7.4, 13.4]], lean: 0.4 },
   // Rounded scallops (for curly hair).
   curly: { pts: [[23.6, 13.8], [21.8, 14.8], [19.8, 13.8], [17.8, 15.2], [15.6, 14], [13.4, 15.2], [11.2, 13.8], [9.2, 14.8], [7.6, 13.8]], lean: 0, round: true },
 };
@@ -325,7 +326,8 @@ function bangs(kind, r, m, extra = []) {
   const f = FRINGES[kind];
   const edge = [];
   f.pts.forEach((p, i) => {
-    edge.push(f.round ? p : P(...p));
+    // Soft tips round off (the notches between them stay crisp).
+    edge.push(f.round || (f.softTips && i % 2 === 0) ? p : P(...p));
     const b = f.pts[i + 1];
     if (b && !f.blunt && !f.round) edge.push([(p[0] + b[0]) / 2 + f.lean, (p[1] + b[1]) / 2]);
   });
@@ -336,10 +338,12 @@ function bangs(kind, r, m, extra = []) {
   // Creases rise from the notches.
   if (!f.round) {
     const notches = f.blunt ? f.pts.filter((_, i) => i % 3 === 1) : f.pts.filter((_, i) => i % 2 === 1);
-    for (const [x, y] of notches) shapes.push(crease(x, y, f.blunt ? 2.6 : 3, r.sh1, f.lean * 0.5));
+    for (const [x, y] of notches) shapes.push(crease(x, y, f.blunt ? 2.4 : 3.4, r.sh2, f.lean * 0.5));
   } else {
     for (let i = 1; i < f.pts.length; i += 2) shapes.push(poly(smooth([[f.pts[i][0] - 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.2], [f.pts[i][0] + 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.7]]), r.sh1));
   }
+  // Where the hair parts, a dark line runs back over the crown.
+  if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
   // The band of forehead the bangs shade: a thin strip under each run of the edge over the face.
   const shade = [];
   let run = [];
@@ -349,7 +353,7 @@ function bangs(kind, r, m, extra = []) {
   };
   for (const p of pts) {
     const prev = run[run.length - 1];
-    if (p[0] > 7.6 && p[0] < 23.4 && p[1] > 9 && p[1] < 18) {
+    if (p[0] > 7.6 && p[0] < 23.4 && p[1] > 12.6 && p[1] < 18) {
       if (prev && Math.hypot(p[0] - prev[0], p[1] - prev[1]) > 2) flush();
       run.push(p);
     } else flush();
