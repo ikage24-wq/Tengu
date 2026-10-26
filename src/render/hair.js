@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -438,6 +438,19 @@ const STYLES = {
       tips: [36, 42],
     };
   },
+  // A big bow tied out of the hair on top, over long straight hair; blunt bangs.
+  bowhair(r, m) {
+    // The bow sits on top of the head, in front, so it reads from the front and from behind.
+    const bow = hairBow(HX + 0.6, 0.2, 1.35, r);
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r), ...sheet({ len: 40, flare: 12, wave: 1.2, n: 4 }, r, m)],
+      front: bangs('soft', r, m, [...sideLocks(r, m, [[25.2, 11], [26.4, 18], [26, 25], [26.8, 29]], undefined, 3.6), ...bow]),
+      top: bow,
+      tips: [31, 36],
+    };
+  },
+
 };
 
 // ---------- Two-tone ----------
