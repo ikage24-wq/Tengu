@@ -376,7 +376,16 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   // Knocked up into the air: drawn above its shadow, tumbling a little.
   // Bounders leave the ground on each leap, in step with how fast it carries them.
   const leap = m.def.gait === 'bound' && moving && !flying && !frozen ? Math.max(0, Math.sin(m.phase * 7)) * m.def.h * 0.3 : 0;
-  const air = (m.air > 0 && m.hp > 0 ? m.air : 0) + leap + lift;
+  // Body language: two happy hops while gloating, a little hop in an idle happy beat, and a
+  // nervous tremble when nearly beaten (bosses keep their dignity).
+  let act = 0;
+  if (m.hp > 0 && !frozen && !boss) {
+    const e = now - (m.gloatAt ?? -9);
+    if (e < 0.7) act = Math.abs(Math.sin((e / 0.35) * Math.PI)) * Math.max(3, m.def.h * 0.12);
+    else if (mood === 'happy' && !moving) act = Math.abs(Math.sin(t * 9)) * 1.5;
+    if (lowOn(m)) x += Math.floor(time * 20) % 2 ? 0.5 : -0.5;
+  }
+  const air = (m.air > 0 && m.hp > 0 ? m.air : 0) + leap + lift + act;
   ctx.save();
   ctx.translate(snap(x), snap(y - air));
   if (m.hp <= 0) ctx.rotate(rot);

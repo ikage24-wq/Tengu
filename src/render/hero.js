@@ -1077,7 +1077,7 @@ function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
     frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, hipIn: 0, air: false, squat: 0,
-    hair: 0, hairLift: 0, hairWave: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0,
+    hair: 0, hairLift: 0, hairWave: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0, lift: 0,
   };
 }
 
@@ -1088,6 +1088,294 @@ function breath(u) {
   if (b < 0.5) return 0.5 - 0.5 * Math.cos((b / 0.5) * Math.PI);
   if (b < 0.64) return 1;
   return 0.5 + 0.5 * Math.cos(((b - 0.64) / 0.36) * Math.PI);
+}
+
+// Body language: the expression acts with the whole body, not only the face. Idle, each mood has
+// its own stance and a beat timed with its face loop (a hop, a stretch and yawn, a startle, a
+// stomp, an "ohoho" with a hand under the chin); walking, each mood walks its own way (bouncy
+// skips, a strut, a stomp, a droop, small timid steps, a dizzy weave). Hand offsets are from
+// the hands' rest spots, in body px; `lift` raises the whole figure (a hop). Poses hold and snap
+// at 8 frames a second, like the faces.
+const WALK_STYLE = {
+  smile: 'bouncy', grin: 'bouncy', cat: 'bouncy', playful: 'bouncy', giggle: 'bouncy', excited: 'skip', love: 'skip',
+  smug: 'strut', proud: 'strut', cool: 'cool', sassy: 'sassy', angry: 'stomp', determined: 'stomp', pout: 'stomp',
+  sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic',
+};
+// Lean added to the walk (radians): stomps and droops bend forward, struts stand tall.
+export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02 };
+export const walkStyleOf = (mood) => WALK_STYLE[mood] ?? 'bouncy';
+
+function idleActing(r, mood, t, armed) {
+  const T = Math.floor(t * 8) / 8;
+  const at = (period) => (T % period) / period;
+  const win = (p, a, b) => p >= a && p < b;
+  const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
+  const hands = (bx, by, fx = -bx, fy = by) => {
+    r.backArm = [q(bx), q(by)];
+    if (!armed) r.frontArm = [q(fx), q(fy)];
+  };
+  const hop = (h) => { r.lift = q(h); if (h > 0.5) { r.frontLeg = [r.frontLeg[0], q(-h * 0.6), 4]; r.backLeg = [r.backLeg[0], q(-h * 0.4), -4]; } };
+  const slump = (k) => { r.by = q(r.by + k); r.hy = q(r.hy + k * 0.8); r.frontArm = [r.frontArm[0], q(r.frontArm[1] + k)]; r.backArm = [r.backArm[0], q(r.backArm[1] + k)]; };
+  // Hands on the hips: the elbows bend outward (see arm()).
+  const onHips = (both = true) => { hands(HIPS[0], HIPS[1], both ? -HIPS[0] : 0, both ? HIPS[1] : 0); r.armSide = -1; };
+  const CLASP = [5.6, -6.1];
+  const HIPS = [0.6, -4.2];
+  const CHIN = [3, -10];
+  switch (mood) {
+    case 'smile': {
+      // A happy little bounce on the beat the eyes close in a smile.
+      const p = at(5);
+      if (win(p, 0.6, 0.78)) hop(Math.round(bump(p, 0.6, 0.78) * 2) / 2 * 1.5);
+      break;
+    }
+    case 'grin': {
+      const p = at(3);
+      hop(win(p, 0, 0.45) ? Math.round(Math.abs(Math.sin(T * Math.PI * 3)) * 2) / 2 : 0);
+      hands(-1.5, -2.5);
+      break;
+    }
+    case 'smug': {
+      // A hand on the hip, weight on one leg, chin up.
+      onHips(false);
+      r.tx = q(1);
+      r.tilt = 2;
+      if (win(at(4.4), 0.7, 0.95)) r.tilt = 4;
+      break;
+    }
+    case 'sassy': {
+      // Both hands on the hips and a hip pop that snaps from side to side.
+      onHips();
+      const p = at(3.6);
+      r.tx = win(p, 0.45, 0.7) ? -1.5 : 1.5;
+      r.tilt = win(p, 0.45, 0.7) ? -4 : 4;
+      break;
+    }
+    case 'pout': {
+      // Arms crossed, turned away; a stomp now and then.
+      hands(9.5, -5.6, -9.7, -5.1);
+      r.tilt = -2;
+      const p = at(2.6);
+      if (win(p, 0.55, 0.65)) r.frontLeg = [1, -2.5, 0];
+      else if (win(p, 0.65, 0.75)) { r.squat = 1; r.by = q(r.by + 1); }
+      break;
+    }
+    case 'shy': {
+      // Hands clasped low, twisting side to side, head tipped away.
+      const p = at(3.2);
+      hands(5.5, -0.6);
+      r.tx = q(Math.sin(T * 2.4) * 0.8);
+      r.tilt = Math.sin(T * 2.4 - 0.6) > 0 ? -4 : -2;
+      r.hipIn = 0.25;
+      if (win(p, 0.85, 1)) hands(CLASP[0], CLASP[1]);
+      break;
+    }
+    case 'cool': {
+      // Hands in the pockets, weight back on one leg, barely moving.
+      hands(2, -1.5);
+      r.tx = q(-1);
+      r.tilt = -2;
+      break;
+    }
+    case 'cat': {
+      // Paws up by the chin, a little bounce while the note plays.
+      const p = at(3.4);
+      hands(4.5, -8.1);
+      if (win(p, 0.5, 0.85)) { hop(Math.round(Math.abs(Math.sin(T * Math.PI * 4))) * 1); r.tilt = Math.floor(T * 4) % 2 ? 4 : -4; }
+      break;
+    }
+    case 'angry': {
+      // Fists clenched at the sides; on the huff, a stomp and a shake.
+      hands(-1, -1.5);
+      const p = at(5);
+      if (win(p, 0.6, 0.85)) {
+        r.tx = Math.floor(T * 8) % 2 ? 0.5 : -0.5;
+        if (win(p, 0.6, 0.68)) r.frontLeg = [1, -3, 0];
+        else { r.squat = 1; r.by = q(r.by + 1); }
+        hands(-1.5, -3);
+      }
+      break;
+    }
+    case 'excited': {
+      // Hopping on the spot, fists pumping in turn.
+      const k = Math.abs(Math.sin(T * Math.PI * 2.5));
+      hop(Math.round(k * 2) / 2 * 2.5);
+      const up = Math.floor(T * 2.5) % 2;
+      hands(-2, up ? -11 : -6, 2, up ? -6 : -11);
+      break;
+    }
+    case 'love': {
+      // Hands clasped at the heart, swaying slowly side to side.
+      hands(CLASP[0], CLASP[1]);
+      r.tx = q(Math.sin(T * 1.8) * 1.2);
+      r.tilt = Math.round(Math.sin(T * 1.8 - 0.5) * 2) * 2;
+      if (win(at(3.6), 0.62, 0.86)) hop(0.5);
+      break;
+    }
+    case 'sleepy': {
+      // Slumped; nodding off (the head drops); then a big stretch with the yawn.
+      const p = at(6);
+      slump(1);
+      if (win(p, 0.35, 0.68)) { r.hy = q(r.hy + 1.5); r.tilt = 6; }
+      else if (win(p, 0.72, 0.9)) { hands(-2, -17, 2, -17); r.by = -0.5; r.hy = -0.5; r.lift = 0.5; }
+      else r.tilt = 2;
+      break;
+    }
+    case 'sad': {
+      // Slumped, head hung, arms limp; with the sob, hands to the chin and shaking.
+      const p = at(4.4);
+      slump(1);
+      r.hy = q(r.hy + 0.5);
+      hands(1.5, 0);
+      r.tilt = -2;
+      if (win(p, 0.68, 0.92)) { hands(CHIN[0], CHIN[1]); r.tx = Math.floor(T * 8) % 2 ? 0.5 : 0; }
+      break;
+    }
+    case 'shock': {
+      // The startle: a jump back with the arms flung up, then a frozen hold.
+      const p = at(3.4);
+      if (win(p, 0.15, 0.25)) { hop(2); hands(-3.5, -9, 3.5, -9); r.hy = -1; }
+      else if (win(p, 0.25, 0.7)) { hands(-3, -6, 3, -6); r.tx = Math.floor(T * 8) % 2 ? 0.5 : 0; }
+      break;
+    }
+    case 'playful': {
+      // A bouncy hip sway with a peace sign by the face on the wink.
+      r.tx = q(Math.sin(T * Math.PI * 1.3) * 1.2);
+      r.tilt = Math.sin(T * Math.PI * 1.3) > 0 ? 3 : -3;
+      if (!armed) r.frontArm = [2.5, -13.5];
+      r.backArm = [q(HIPS[0]), q(HIPS[1])];
+      r.armSide = -1;
+      break;
+    }
+    case 'proud': {
+      // Hands on the hips, chest out; the laugh puts a hand under the chin and shakes the body.
+      const p = at(4);
+      onHips();
+      r.by = q(r.by - 0.5);
+      r.tilt = -2;
+      if (win(p, 0.5, 0.85)) { r.backArm = [q(CHIN[0]), q(CHIN[1])]; r.armSide = 1; r.by = Math.floor(T * 8) % 2 ? 0 : -0.5; r.tilt = -4; }
+      break;
+    }
+    case 'dizzy': {
+      // Wobbling round in circles, arms out for balance, one foot staggering.
+      r.tx = q(Math.sin(T * 3) * 1.5);
+      r.tilt = Math.round(Math.sin(T * 3 - 0.6) * 3) * 2;
+      hands(-3.5 + Math.sin(T * 3) * 1, -6, 3.5 + Math.sin(T * 3) * 1, -6);
+      if (Math.sin(T * 3) > 0.6) r.frontLeg = [1.5, -1.5, 6];
+      break;
+    }
+    case 'nervous': {
+      // Fidgeting hands at the chest, quick little weight shifts; the gulp hunches the shoulders.
+      const p = at(3);
+      const f = Math.floor(T * 4) % 2 ? 0.5 : -0.5;
+      hands(CLASP[0] + f, CLASP[1], -CLASP[0] + f, CLASP[1]);
+      r.tx = Math.floor(T * 2) % 2 ? 0.5 : -0.5;
+      if (win(p, 0.7, 0.8)) { r.by = q(r.by + 1); r.hy = q(r.hy + 0.5); }
+      break;
+    }
+    case 'giggle': {
+      // A hand under the chin, the shoulders shaking with the giggle.
+      const p = at(2.8);
+      hands(CHIN[0], CHIN[1], armed ? 0 : -CHIN[0], CHIN[1]);
+      if (!win(p, 0.85, 1)) { r.by = Math.floor(T * 6) % 2 ? 0.5 : 0; r.hy = Math.floor(T * 6) % 2 ? -0.5 : 0; }
+      break;
+    }
+    case 'determined': {
+      // Fists up and a steady, springy readiness.
+      hands(2, -5, -1, -6);
+      r.squat = Math.sin(T * Math.PI * 1.5) > 0.3 ? 1 : 0;
+      r.frontLeg = [2, 0, 4];
+      r.backLeg = [-2, 0, -6];
+      break;
+    }
+    case 'tired': {
+      // Worn out: bent over, hands toward the knees, panting.
+      const pant = Math.floor(T * 3) % 2;
+      r.by = q(1.5 + pant * 0.5);
+      r.hy = q(1 + pant * 0.5);
+      hands(1.5, 2.5 + pant * 0.5);
+      r.squat = 1;
+      break;
+    }
+    default:
+  }
+}
+
+function walkActing(r, mood, p, gait, armed) {
+  const style = walkStyleOf(mood);
+  const u = (p * 2) % 1;
+  const step = p < 0.5 ? 1 : -1;
+  const scaleArms = (k, dy = 0) => {
+    r.backArm = [q(r.backArm[0] * k), q(r.backArm[1] * k + dy)];
+    if (!armed) r.frontArm = [q(r.frontArm[0] * k), q(r.frontArm[1] * k + dy)];
+  };
+  switch (style) {
+    case 'bouncy':
+      // A springy step: a little hop off each foot and the head tipping in time.
+      r.lift = q(Math.sin(Math.PI * u) * (1 + gait * 0.5));
+      r.tilt = step * 2;
+      scaleArms(1.15);
+      break;
+    case 'skip':
+      // Skipping: a big hop each step, arms swinging high, the head bobbing side to side.
+      r.lift = q(Math.sin(Math.PI * u) * 2.5);
+      r.tilt = step * 4;
+      scaleArms(1.4, -1);
+      break;
+    case 'strut':
+      // A strut: chest out, chin up, the hips rolling, a confident swing.
+      r.by = q(r.by - 0.5);
+      r.tx = q(r.tx + Math.sin(2 * Math.PI * p) * 0.8);
+      r.tilt = -2;
+      scaleArms(1.25);
+      break;
+    case 'sassy':
+      // A catwalk: the hips swing wide and the head snaps the other way.
+      r.tx = q(r.tx + Math.sin(2 * Math.PI * p) * 1.5);
+      r.tilt = step * -4;
+      r.backArm = [0.5, -4];
+      r.armSide = -1;
+      break;
+    case 'cool':
+      // Hands in the pockets, an easy lope.
+      r.backArm = [2, -1.5];
+      if (!armed) r.frontArm = [-2, -1.5];
+      r.tilt = -2;
+      break;
+    case 'stomp':
+      // A stomp: the knees give hard on each landing and the fists swing big.
+      if (u < 0.18) r.squat = Math.max(r.squat, 1);
+      r.by = q(r.by + (u < 0.18 ? 1 : 0));
+      scaleArms(1.35);
+      if (mood === 'pout') { r.backArm = [9.5, -5.6]; if (!armed) r.frontArm = [-9.7, -5.1]; }
+      break;
+    case 'droop':
+      // A droop: the head hangs, the shoulders slump, the arms barely swing, the feet drag.
+      r.hy = q(r.hy + 1.5);
+      r.by = q(r.by + 1);
+      scaleArms(0.35, 1);
+      r.tilt = mood === 'sleepy' ? (Math.sin(2 * Math.PI * p) > 0 ? 4 : 2) : 0;
+      break;
+    case 'timid':
+      // Small timid steps, hands held close, the head tipped down and away.
+      r.hy = q(r.hy + 0.5);
+      scaleArms(0.45, -1);
+      r.tilt = -2;
+      break;
+    case 'weave':
+      // Weaving: the body sways from side to side across the steps, arms out for balance.
+      r.tx = q(r.tx + Math.sin(Math.PI * p) * 2 - 1);
+      r.tilt = Math.round(Math.sin(2 * Math.PI * p) * 3) * 2;
+      r.backArm = [q(-3.5 + step), -6];
+      if (!armed) r.frontArm = [q(3.5 + step), -6];
+      break;
+    case 'panic':
+      // Panicking: arms flailing over the head.
+      r.backArm = [-3, q(-9 + step * 2)];
+      if (!armed) r.frontArm = [3, q(-9 - step * 2)];
+      r.lift = q(Math.sin(Math.PI * u));
+      break;
+    default:
+  }
 }
 
 function solveRig(state, anim, mv = null) {
@@ -1156,6 +1444,7 @@ function solveRig(state, anim, mv = null) {
     // The head rides a step behind the body's bob.
     r.hy = q(0.9 * (walkBob(p) - walkBob(p, 0.14)));
     r.tx = q(1 + 0.5 * gait);
+    if (state.mood) walkActing(r, state.mood, p, gait, state.armed);
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
     r.air = true;
@@ -1205,6 +1494,7 @@ function solveRig(state, anim, mv = null) {
     r.tx = q(0.6 * Math.sin(t * 0.45));
     // The head tips a little toward the hip the weight shifts onto, a beat after the body.
     r.tilt = Math.round(1.6 * Math.sin(t * 0.45 - 0.7)) * 2;
+    if (pose === 'idle' && state.mood) idleActing(r, state.mood, t, state.armed);
   }
 
   // Landing squash: the knees give, the hips drop, and the feet spread.
@@ -1480,7 +1770,8 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     const p = (Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
     const gait = Math.round(anim.gait * 4) / 4;
     const fly = flightAt(p, gaitShape(gait)) * gait;
-    mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait, turn: 1, stretch: 1 + 0.03 * fly, bodyOnly: true };
+    const lean = WALK_LEAN[walkStyleOf(state.low ? 'tired' : look.face ?? 'smile')] ?? 0;
+    mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait + lean, turn: 1, stretch: 1 + 0.03 * fly, bodyOnly: true };
   }
   // Hurt timing: hold the hit pose for a beat, then a decaying wobble back.
   let hx = 1;
@@ -1566,7 +1857,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const { pose = 'idle', facing = 1, alpha = 1, scale = 1 } = state;
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
-  const rig = solveRig(state, anim, mv);
+  // The body acts out the mood: the expression, or worn out at low health.
+  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
   rig.armIn = !attack;
   const idleW = !attack && pose === 'idle' && !state.ready && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
   if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
@@ -1577,7 +1869,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
-  const top = y - H * scale;
+  const top = y - H * scale - rig.lift * scale;
   // Mirror a point given in body coordinates when facing left.
   const sx = (px) => (flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale);
   const sy = (py) => top + (py + OY) * scale;

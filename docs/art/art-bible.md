@@ -132,6 +132,13 @@ en.md 16:
   the blow, a grin after; a whoop going up a jump, a gasp coming down; set and focused after a
   fight; fretting with sweat at low health; spiral eyes and stars when knocked out. Talking cycles
   syllable mouth shapes.
+- The body acts the mood too (anim.md, Sakuemon loops and Saint11 idle). Idle, each expression
+  has a stance and one beat timed with its face loop: hands on hips (elbows out), arms crossed,
+  hands clasped at the heart, paws by the chin, a hand under the chin for a laugh, a stretch with
+  the yawn, a startled jump with arms flung up, hops for joy, a dizzy wobble, a worn-out pant at
+  low health. Walking, each mood has a gait: bouncy, skipping, strutting, a sassy catwalk, hands
+  in pockets, stomping, drooping, small timid steps, a dizzy weave, a panicked flail. Holding a
+  weapon keeps the weapon arm on its own idle.
 - Monsters: "!" and "?" bubbles pop in with an overshoot; they gloat with a happy face after
   landing a hit, and sweat and blink nervously when nearly beaten.
 
