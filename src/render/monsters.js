@@ -17,19 +17,27 @@ import { ART as BOSSES } from './mobs/bosses.js';
 
 const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES };
 
-// How many frames an art has for walking (or flying), idling, and attacking (0: no attack pose).
+// How many frames an art has for walking (or flying), idling, and attacking (0: no attack pose),
+// and how its walk keeps time: `stride` is how far it travels in one walk cycle, `cycle` (seconds)
+// a fixed rhythm for designs that sway in place.
 export function framesOf(art) {
   const a = ARTS[art];
-  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0 };
+  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null };
 }
 
-// Each cycle takes the same time whatever its frame count, so more frames only make it smoother.
-const WALK_CYCLE = 0.6;
-const FLY_CYCLE = 0.45;
 const IDLE_CYCLE = 1.8;
 // An attack plays once: the first frame is the wind-up (held while a boss or a dungeon monster
 // gathers itself), the rest are the strike and its follow-through.
 export const ATTACK_TIME = 0.5;
+
+// Walkers step with the ground they cover, so their feet never slide and a fast monster's legs
+// move faster than a slow one's. Flyers beat their wings at the rate that stride and speed set.
+function walkFrame(m, fr, t, fast) {
+  const stride = fr.stride ?? m.def.w * 1.2;
+  if (fr.cycle || !m.def.speed) return Math.floor((t / (fr.cycle ?? 0.8)) * fr.walk) % fr.walk;
+  if (m.def.fly) return Math.floor(((t * fast * m.def.speed) / stride) * fr.walk) % fr.walk;
+  return Math.floor(((m.odo ?? 0) / stride) * fr.walk) % fr.walk;
+}
 
 function poseOf(m, fr, moving, t, now, fast) {
   if (fr.attack && m.hp > 0) {
@@ -37,7 +45,7 @@ function poseOf(m, fr, moving, t, now, fast) {
     const since = now - (m.attackAt ?? -9);
     if (since >= 0 && since < ATTACK_TIME) return ['attack', Math.min(fr.attack - 1, 1 + Math.floor((since / ATTACK_TIME) * (fr.attack - 1)))];
   }
-  if (moving) return ['walk', Math.floor(((t * fast) / (m.def.fly ? FLY_CYCLE : WALK_CYCLE)) * fr.walk) % fr.walk];
+  if (moving) return ['walk', walkFrame(m, fr, t, fast)];
   return ['idle', Math.floor((t / IDLE_CYCLE) * fr.idle) % fr.idle];
 }
 
@@ -118,6 +126,10 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   const mood = moodOf(m, t, now);
   const fast = mood === 'angry' ? 1.5 : 1;
   const fr = framesOf(m.def.art);
+  // The distance it has walked, as drawn (a teleport or a new spawn doesn't count).
+  const step = Math.abs(m.x - (m.seenX ?? m.x));
+  m.seenX = m.x;
+  if (step < 40) m.odo = (m.odo ?? 0) + step;
   const [pose, frame] = poseOf(m, fr, moving, t, now, fast);
   const s = monsterSprite(m.def.art, frame, mood, pose);
   let alpha = 1;
@@ -161,10 +173,12 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   }
 
   // Knocked up into the air: drawn above its shadow, tumbling a little.
-  const air = m.air > 0 ? m.air : 0;
+  // Bounders leave the ground on each leap, in step with how fast it carries them.
+  const leap = m.def.gait === 'bound' && moving && !flying && !frozen ? Math.max(0, Math.sin(m.phase * 7)) * m.def.h * 0.3 : 0;
+  const air = (m.air > 0 ? m.air : 0) + leap;
   ctx.save();
   ctx.translate(snap(x), snap(y - air));
-  if (air) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
+  if (m.air > 0) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
   else if (recoil && !m.def.boss) ctx.rotate(-(m.dir < 0 ? -1 : 1) * recoil * 0.12);
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });

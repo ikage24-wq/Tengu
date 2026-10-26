@@ -146,6 +146,19 @@ export function tickAir(m, dt) {
   return true;
 }
 
+// How fast a monster's gait carries it right now, as a share of its speed (averaging about 1).
+function pace(m, chasing, dt) {
+  m.walked = (m.walked ?? 0) + dt;
+  switch (m.def.gait) {
+    // Each leap covers ground fast, then it lands and gathers itself for the next.
+    case 'bound': return 2.6 * Math.max(0, Math.sin(m.phase * 7));
+    case 'dart': return 1.7;
+    // Creeps up, then breaks into a run (a chase starts at a run).
+    case 'stalk': return chasing ? 1.3 : Math.min(1.6, 0.4 + m.walked * 0.5);
+    default: return 1;
+  }
+}
+
 // Moves one monster. `player` is { x, y } so aggro'd monsters can chase.
 // Returns 'slam' on the frame a boss slam lands.
 export function updateMob(m, player, dt, now) {
@@ -187,16 +200,18 @@ export function updateMob(m, player, dt, now) {
     const dx = player.x - m.x;
     if (Math.abs(dx) > 6) m.dir = Math.sign(dx);
     m.state = 'walk';
-    m.x += m.dir * m.def.speed * 1.35 * dt;
+    m.x += m.dir * m.def.speed * 1.35 * pace(m, true, dt) * dt;
     if (m.def.fly) m.baseY += Math.sign(player.y - 30 - m.baseY) * 30 * dt;
   } else {
     m.timer -= dt;
     if (m.timer <= 0) {
       m.state = m.state === 'walk' ? 'idle' : 'walk';
-      m.timer = m.state === 'walk' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5;
+      const quick = m.def.gait === 'dart' ? 0.35 : 1;
+      m.timer = (m.state === 'walk' ? 1.5 + Math.random() * 2.5 : 0.8 + Math.random() * 1.5) * quick;
+      m.walked = 0;
       if (m.state === 'walk' && Math.random() < 0.5) m.dir *= -1;
     }
-    if (m.state === 'walk') m.x += m.dir * m.def.speed * dt;
+    if (m.state === 'walk') m.x += m.dir * m.def.speed * pace(m, false, dt) * dt;
   }
 
   if (m.x <= m.x1) { m.x = m.x1; m.dir = 1; }
