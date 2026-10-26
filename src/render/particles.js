@@ -5,7 +5,7 @@ import { snap } from './pixel.js';
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
-import { needle, starFlash, shardRing, puff, crown, shock, wisp, contrast, stepped, easeOut, easeIn } from './fxkit.js';
+import { needle, starFlash, shardRing, puff, crown, shock, wisp, contrast, stepped, inked, easeOut, easeIn } from './fxkit.js';
 
 const MAX = 600;
 
@@ -99,21 +99,21 @@ function blast(fx, x, y, r, n, delay, big) {
   add(fx, { x, y, vx: 0, vy: 0, delay: delay + 1 / 60, life: big ? 0.26 : 0.16, size: r * 1.3, shape: 'flash', rot: Math.random(), spikes: big ? 8 : 4 + Math.floor(Math.random() * 3), color: '#ffe9a8' });
   for (let i = 0; i < Math.ceil(n / 2); i++) {
     const a = (i / Math.ceil(n / 2)) * Math.PI * 2 + Math.random() * 0.6;
-    const sp = r * (2.2 + Math.random() * 1.6);
+    const sp = r * (3 + Math.random() * 2);
     add(fx, {
       x: x + Math.cos(a) * r * 0.2, y: y + Math.sin(a) * r * 0.2, delay: delay + 1 / 60,
       vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 - 10, drag: 6,
-      life: 0.15 + Math.random() * 0.1, size: r * (0.3 + Math.random() * 0.15), shape: 'puff', color: '#fff6c9', shade: '#ffb38a',
+      life: 0.15 + Math.random() * 0.1, size: r * (0.45 + Math.random() * 0.2), shape: 'puff', color: '#fff6c9', shade: '#ffb38a',
     });
   }
   const drift = (Math.random() - 0.5) * 16;
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
-    const sp = r * (1.4 + Math.random() * 1.2);
+    const sp = r * (3 + Math.random() * 2.5);
     add(fx, {
       x: x + Math.cos(a) * r * 0.35, y: y + Math.sin(a) * r * 0.35, delay: delay + 2 / 60,
       vx: Math.cos(a) * sp + drift, vy: Math.sin(a) * sp * 0.6 - 14, drag: 3.5, curl: 18, phase: Math.random() * 6,
-      life: 0.5 + Math.random() * 0.3, size: r * (0.3 + Math.random() * 0.2), shape: 'puff', holes: true, seed: Math.random(),
+      life: 0.5 + Math.random() * 0.3, size: r * (0.5 + Math.random() * 0.3), shape: 'puff', holes: true, seed: Math.random(),
       color: '#ffffff', shade: i % 3 ? '#e4dcf4' : '#f6dcea',
     });
   }
@@ -340,7 +340,9 @@ export function drawParticles(ctx, fx, cam, time) {
         contrast(ctx, x, y, p.size, p.color);
         break;
       case 'screenflash':
-        ctx.globalAlpha = 0.45 * (1 - t);
+        // Full-screen washes go on the main canvas only (on the glow layer too they'd blow out).
+        if (!inked(ctx)) break;
+        ctx.globalAlpha = 0.3 * (1 - t);
         ctx.fillRect(0, 0, 640, 360);
         break;
       case 'flash': {

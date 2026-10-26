@@ -5,7 +5,7 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { ghost } from './fxkit.js';
+import { ghost, wash } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -481,7 +481,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       if (full && p > 0.1 && p < 0.25) {
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
       }
       return true;
     }
@@ -564,7 +564,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         const a = Math.sin(Math.PI * Math.min(1, p * 1.1));
         ctx.globalAlpha = 0.28 * a;
         ctx.fillStyle = f.variant === 'coin' ? '#ffd66b' : f.variant === 'star' ? '#2b2050' : c.deep;
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
@@ -610,7 +610,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         const a = Math.sin(Math.PI * Math.min(1, p * 1.05));
         ctx.globalAlpha = 0.3 * a;
         ctx.fillStyle = '#4a0f24';
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
         const dir = f.dir || 1;
         const head = -120 + p * 900;
         const baseY = f.y - cam.y - 70;
@@ -742,7 +742,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
           const hy = ground - 60 - 260 * (1 - k * k);
           ctx.globalAlpha = 0.25 * k;
           ctx.fillStyle = '#fff6c9';
-          ctx.fillRect(0, 0, 640, 360);
+          wash(ctx);
           ctx.globalAlpha = 1;
           hammerShape(ctx, cx, hy, 1.6, c);
         } else {
@@ -750,7 +750,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
           if (k < 0.15) {
             ctx.globalAlpha = 0.85 * (1 - k / 0.15);
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, 640, 360);
+            wash(ctx);
           }
           ctx.globalAlpha = a * (1 - k * 0.6);
           hammerShape(ctx, cx, ground - 60, 1.6, c);
@@ -785,7 +785,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         const a = Math.sin(Math.PI * Math.min(1, p * 1.05));
         ctx.globalAlpha = 0.25 * a;
         ctx.fillStyle = '#1f3a2a';
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
         const dir = f.dir || 1;
         const ground = f.y - cam.y;
         for (let i = 0; i < 9; i++) {
@@ -822,7 +822,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         const a = Math.sin(Math.PI * Math.min(1, p * 1.05));
         ctx.globalAlpha = 0.45 * a;
         ctx.fillStyle = '#1a1030';
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
         const n = Math.floor(p * 40);
         for (let i = 0; i < n; i++) {
           const age = p - i / 40;

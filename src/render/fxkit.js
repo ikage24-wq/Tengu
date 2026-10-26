@@ -51,6 +51,12 @@ export function haloStroke(ctx, color) {
   ctx.stroke();
 }
 
+// A full-screen wash in the current fill (a tint, a flash, a dimming). Only on the main canvas:
+// on the glow layer it would add light over the whole view and blow everything out to white.
+export function wash(ctx) {
+  if (inked(ctx)) ctx.fillRect(0, 0, 640, 360);
+}
+
 // Holds an effect's progress on a grid of `frames` steps, so flashes and sparks pop from drawing
 // to drawing like hand-timed animation instead of tweening smoothly.
 export const stepped = (p, frames) => Math.min(1, Math.floor(p * frames) / frames);

@@ -7,7 +7,7 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
-import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, easeOut, easeIn } from './fxkit.js';
+import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
 
@@ -611,9 +611,11 @@ function ultimateCue(ctx, f, x, y) {
   }
   if (t < ULT_IMPACT) {
     const k = Math.min(1, t / 0.12) * (t > ULT_IMPACT - 0.08 ? (ULT_IMPACT - t) / 0.08 : 1);
-    ctx.globalAlpha = 0.24 * k;
-    ctx.fillStyle = '#2a1d40';
-    ctx.fillRect(0, 0, 640, 360);
+    if (inked(ctx)) {
+      ctx.globalAlpha = 0.24 * k;
+      ctx.fillStyle = '#2a1d40';
+      wash(ctx);
+    }
     ctx.globalAlpha = k;
     for (let i = 0; i < 6; i++) {
       const u = ((t * 3 + i / 6) % 1);
@@ -625,10 +627,10 @@ function ultimateCue(ctx, f, x, y) {
     return;
   }
   const after = t - ULT_IMPACT;
-  if (after < 2 / 60) {
-    ctx.globalAlpha = 0.32;
+  if (after < 2 / 60 && inked(ctx)) {
+    ctx.globalAlpha = 0.28;
     ctx.fillStyle = c.light;
-    ctx.fillRect(0, 0, 640, 360);
+    wash(ctx);
   }
   if (after < 0.25) {
     ctx.globalAlpha = 1;
@@ -747,7 +749,7 @@ function drawFx(ctx, f, cam, time) {
         // The whole screen glows while the storm lands.
         ctx.globalAlpha = 0.3 * Math.sin(Math.PI * p);
         ctx.fillStyle = gold ? '#fff3a6' : '#ff9b5c';
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
         break;
       }
       if (f.t < 0) break;
@@ -849,6 +851,8 @@ function drawFx(ctx, f, cam, time) {
           sparkle(ctx, x - 22 + ((i * 17) % 44), y - ((t * 100 + i * 23) % h), 3, ramp[(i + step) % ramp.length]);
         }
       }
+      // The words go on the main canvas only, so the glow doesn't wash the gold out to white.
+      if (!inked(ctx)) break;
       const word = 'LEVEL UP!';
       ctx.font = font(15, true);
       ctx.textAlign = 'left';
@@ -914,9 +918,10 @@ function drawFx(ctx, f, cam, time) {
       break;
     case 'tint': {
       // A heavy blow's impact frame: the whole view washes flat in one tone for two drawings.
-      ctx.globalAlpha = f.t < 2 / 60 ? 0.3 : 0;
+      if (!inked(ctx)) break;
+      ctx.globalAlpha = f.t < 2 / 60 ? 0.25 : 0;
       ctx.fillStyle = f.color ?? '#fff3c4';
-      ctx.fillRect(0, 0, 640, 360);
+      wash(ctx);
       break;
     }
     case 'crack':

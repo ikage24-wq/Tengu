@@ -3,7 +3,7 @@
 // needs no state. (x, y) is the effect's anchor in screen space: a monster's feet for per-target
 // effects, the caster's feet otherwise; `f.box` (world space) is the spell's area when it has one.
 
-import { inked, deep, shock, bloom, ghost } from './fxkit.js';
+import { inked, deep, shock, bloom, ghost, wash } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 
@@ -660,7 +660,7 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
         const a = Math.sin(Math.PI * Math.min(1, p * 1.15));
         ctx.globalAlpha = 0.32 * a;
         ctx.fillStyle = '#6fa8d8';
-        ctx.fillRect(0, 0, 640, 360);
+        wash(ctx);
         ctx.globalAlpha = 0.85 * a;
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
@@ -675,7 +675,7 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
         if ((p > 0.3 && p < 0.36) || (p > 0.55 && p < 0.6)) {
           ctx.globalAlpha = 0.45;
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, 640, 360);
+          wash(ctx);
         }
         return true;
       }
