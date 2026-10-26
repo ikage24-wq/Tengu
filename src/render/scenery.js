@@ -1145,7 +1145,7 @@ function drawDeco(ctx, map, cam, width, time, onLedges) {
     if (x + half < 0 || x - half > width) continue;
     const y = snap((wy ?? groundAt(map, wx)) - cam.y);
     if (b) place(ctx, b.art(seed, time), snap(x), y + 2);
-    else drawLandmark(ctx, kind, snap(x), y, time, seed);
+    else drawLandmark(ctx, kind, snap(x), y, time, seed, wx);
   }
 }
 

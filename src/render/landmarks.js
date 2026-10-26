@@ -5,6 +5,8 @@
 // among a few cached frames or adds soft canvas glows, beams, smoke, and glints on top.
 
 import { R, E, T, F, sprite, blit, shade, mix, snap } from './pixel.js';
+import { ramp, foliage, bark, stones, planks, crystal, lean, leanFrame, swing, pivoted, flicker, hash, leafRim } from './propkit.js';
+import { windTravel } from './terrain.js';
 
 const INK = '#3a2d4f';
 const BLUSH = '#ff9fb8';
@@ -13,8 +15,10 @@ const SINK = 3;
 
 // ---------- Sprite helpers (local copies of the scenery ones) ----------
 
+// Landmarks sit a contrast tier below the characters: their outlines are a thin, darkened shade
+// of each part's own colour (non-crisp), never the characters' heavier ink.
 function art(key, w, h, build) {
-  return sprite(`lm|${key}`, () => ({ w, h, shapes: build().filter(Boolean), res: 2, soft: 'cel', crisp: true }));
+  return sprite(`lm|${key}`, () => ({ w, h, shapes: build().filter(Boolean), res: 2, soft: 'cel' }));
 }
 function place(ctx, s, x, y, opts) {
   blit(ctx, s, snap(x - s.w / 2), snap(y - s.h), opts);
@@ -67,9 +71,43 @@ function bandPts(path, widthAt) {
 const band = (path, widthAt, c) => T(bandPts(path, widthAt), c);
 
 // An inner contour color: a deep shade of the part, so overlapping clumps read as layers.
-const line = (c) => mix(shade(c, -34), INK, 0.3);
-// An ellipse with a thin inner contour, for leaf clumps, cloud puffs, and stones.
-const ringed = (x, y, rx, ry, c, k = 0.9) => [F(E(x, y, rx + k, ry + k, line(c))), E(x, y, rx, ry, c)];
+const line = (c) => mix(ramp(c).deep, shade(c, -40), 0.5);
+// A rounded lump lit from the upper left, with a thin inner contour: moss and leaf clumps (which
+// break into leaf tips when big enough), cloud puffs, and stones. One-sided light: the lump sits
+// in its shadow tone, the lit body is drawn up and to the left of it, and a highlight sits on top.
+function ringed(x, y, rx, ry, c, k = 0.9) {
+  const r = ramp(c);
+  const out = [F(E(x, y, rx + k, ry + k, line(c)))];
+  const [h] = hueOf(c);
+  if (rx >= 3.4 && ry >= 2 && h > 75 && h < 175 && sat(c) > 0.25) {
+    const seed = x * 0.37 + y * 0.11;
+    out.push(F(T(leafRim(x, y, rx, ry, Math.max(6, Math.round(rx * 1.1)), seed, 0.2), r.sh)),
+      F(T(leafRim(x - rx * 0.14, y - ry * 0.2, rx * 0.78, ry * 0.68, Math.max(5, Math.round(rx * 0.9)), seed + 1.7, 0.24), r.base)),
+      F(E(x - rx * 0.36, y - ry * 0.42, rx * 0.3, ry * 0.22, r.hi)));
+    return out;
+  }
+  out.push(E(x, y, rx, ry, r.sh), F(E(x - rx * 0.1, y - ry * 0.14, rx * 0.86, ry * 0.8, c)), F(E(x - rx * 0.36, y - ry * 0.4, rx * 0.32, ry * 0.24, r.hi)));
+  return out;
+}
+function hueOf(c) {
+  const n = parseInt(c.slice(1, 7), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  if (max === min) return [0];
+  const d = max - min;
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60];
+}
+function sat(c) {
+  const n = parseInt(c.slice(1, 7), 16);
+  const v = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const max = Math.max(...v);
+  const min = Math.min(...v);
+  return max === 0 ? 0 : (max - min) / max;
+}
 
 // A five-petal flower.
 function bloom(x, y, r, c) {
@@ -153,14 +191,16 @@ function twinkles(ctx, x0, y0, pts, time, speed, color = '#ffffff', size = 2.6) 
 }
 
 // Soft puffs drifting up from (x, y).
-function smoke(ctx, x, y, time, seed = 0) {
+// The wind bends the plume over as it rises (each puff takes the wind it rose through).
+function smoke(ctx, x, y, time, seed = 0, wx = x) {
   ctx.save();
   for (let k = 0; k < 3; k++) {
     const p = (time * 0.3 + k / 3 + seed * 0.13) % 1;
+    const bend = (lean(time, wx, p * 1.2) + 0.5) * p * p * 16;
     ctx.globalAlpha = 0.55 * (1 - p) * Math.min(1, p * 6);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(x + Math.sin(p * 5 + k) * 2.4 + p * 5, y - p * 26, 2 + p * 4.4, 0, Math.PI * 2);
+    ctx.arc(x + Math.sin(p * 5 + k) * 2.4 + p * 3 + bend, y - p * 26, 2 + p * 4.4, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.restore();
@@ -172,70 +212,111 @@ const BARK = '#b8896a';
 const BARK_LIGHT = '#d6aa86';
 const BARK_DEEP = '#8a6450';
 
-function bigtreeArt(v, frame) {
-  const sway = [-1, 0, 1, 0][frame];
-  const pal = v
-    ? { back: '#74c294', mid: '#ffb3d1', front: '#ffd3e5', hi: '#fff0f6', dot: '#ffffff' }
-    : { back: '#62b884', mid: '#86d792', front: '#b0e99c', hi: '#dcf8c8', dot: '#ff9ab0' };
-  return art(`bigtree|${v}|${frame}`, 112, 172, () => {
+// The great tree is rigged in layers: roots and trunk (still), then three canopy layers that
+// ride the wind one after another, the back boughs least and the front leaves most.
+const TREE_PAL = [
+  { back: '#5fae84', mid: '#7fcf8c', front: '#98d98e', dot: '#ff9ab0' },
+  { back: '#6bb78c', mid: '#ffaecd', front: '#ffd0e2', dot: '#ffffff' },
+];
+const TREE_CLUMPS = [
+  // Back: deep clumps that frame the crown.
+  [[26, 74, 22, 15], [86, 74, 22, 15], [56, 54, 42, 30], [15, 50, 15, 14], [97, 50, 15, 14], [56, 22, 26, 18]],
+  // Middle.
+  [[36, 38, 22, 18], [76, 38, 22, 18], [56, 66, 28, 15], [20, 64, 14, 10], [92, 64, 14, 10], [56, 16, 19, 12]],
+  // Front: the brightest, smallest clumps, high on the lit side.
+  [[42, 24, 13, 10], [70, 27, 12, 9], [30, 53, 11, 8], [83, 53, 11, 8], [55, 46, 14, 10]],
+];
+
+function bigtrunkArt(v) {
+  return art(`bigtrunk|${v}`, 112, 172, () => {
+    const r = ramp(BARK);
     const out = [];
     // Roots spreading over the ground, then the twisting trunk and its two big boughs.
     for (const [path, w] of [[[[44, 150], [32, 163], [14, 172.6]], 6.4], [[[66, 150], [80, 163], [98, 172.6]], 6.4], [[[50, 160], [42, 167], [32, 172.6]], 3.6], [[[62, 160], [70, 167], [80, 172.6]], 3.6]]) {
-      out.push(band(path, (u) => w * (1 - u) + 1.2, BARK));
+      out.push(...bark(path, (u) => w * (1 - u) + 1.2, r, w, 1));
     }
-    out.push(band([[56, 174], [53, 154], [58, 132], [53, 110], [56, 90], [56, 70]], (u) => 15 - u * 7, BARK));
-    out.push(band([[53, 100], [42, 88], [28, 80]], (u) => 4.6 - u * 2.4, BARK), band([[59, 96], [71, 85], [86, 78]], (u) => 4.6 - u * 2.4, BARK));
-    out.push(F(band([[48, 162], [46.4, 142], [50.6, 122], [47.6, 104]], () => 1.1, BARK_LIGHT)), F(band([[64, 158], [65, 136], [61, 116]], () => 0.8, BARK_DEEP)),
-      F(band([[57, 146], [58.6, 136]], () => 0.6, BARK_DEEP)));
-    // The canopy: dark clumps at the back, mid clumps, then bright ones in front; tops sway most.
-    const s = (y) => sway * Math.max(0, (100 - y) / 90);
-    const clump = (x, y, rx, ry, c) => ringed(x + s(y), y, rx, ry, c);
-    for (const [x, y, rx, ry] of [[28, 72, 22, 15], [84, 72, 22, 15], [56, 52, 42, 30], [16, 48, 15, 14], [96, 48, 15, 14], [56, 20, 26, 18]]) out.push(...clump(x, y, rx, ry, pal.back));
-    for (const [x, y, rx, ry] of [[36, 36, 22, 18], [76, 36, 22, 18], [56, 64, 28, 16], [20, 62, 14, 10], [92, 62, 14, 10], [56, 14, 19, 12]]) out.push(...clump(x, y, rx, ry, pal.mid));
-    for (const [x, y, rx, ry] of [[44, 22, 13, 10], [69, 25, 12, 9], [31, 52, 11, 8], [82, 51, 11, 8], [56, 44, 14, 10]]) {
-      out.push(...clump(x, y, rx, ry, pal.front), F(E(x + s(y) - rx * 0.3, y - ry * 0.4, rx * 0.4, ry * 0.25, pal.hi)));
-    }
-    for (const [x, y] of [[22, 44], [40, 66], [70, 66], [94, 58], [60, 30], [32, 28], [84, 36], [14, 60], [50, 8], [76, 16]]) {
-      out.push(F(E(x + s(y), y, 1.6, 1.6, pal.dot)), F(E(x + s(y) - 0.5, y - 0.5, 0.5, 0.5, '#ffffff')));
-    }
+    out.push(...bark([[56, 174], [54, 164], [53, 154], [55.5, 143], [58, 132], [56, 121], [53, 110], [54.5, 100], [56, 90], [56, 80], [56, 70]], (u) => 15 - u * 7, r, 3, 8));
+    out.push(...bark([[53, 100], [42, 88], [28, 80]], (u) => 4.6 - u * 2.4, r, 5, 1), ...bark([[59, 96], [71, 85], [86, 78]], (u) => 4.6 - u * 2.4, r, 6, 1));
+    // The canopy's shadow falls across the top of the trunk.
+    out.push(F(E(50, 86, 7, 4, r.sh)), F(E(61, 85, 6, 3.4, r.sh)), F(E(56, 84, 9, 2.6, r.deep)));
     // A sleepy face in the bark, a knot-hole, and a tiny round door between the roots.
-    out.push(...face(55, 112, 4.6, 'closed', 'none', 1.6), F(E(55, 117, 1.2, 0.8, INK)));
-    out.push(E(63, 132, 3.2, 4, BARK_DEEP), F(E(63.4, 132.8, 2, 2.8, '#5a4048')), F(E(62, 129.4, 2.6, 0.8, BARK_LIGHT)));
-    out.push(R(49, 155, 13, 17, '#ffd08f'), E(55.5, 155, 6.5, 6, '#ffd08f'), R(50.4, 156, 10.2, 16, '#e39f6c'), E(55.5, 156, 5.1, 4.8, '#e39f6c'),
-      F(R(55, 152, 1, 20, '#c98457')), F(E(59, 164, 0.9, 0.9, '#ffe36b')), F(E(55.5, 155, 2, 2, '#fff3a6')), F(R(55.2, 153, 0.6, 4, '#c98457')), F(R(53.5, 154.7, 4, 0.6, '#c98457')),
+    out.push(...face(55, 112, 4.6, 'closed', 'none', 1.6), F(E(55, 117, 1.2, 0.8, '#5a3a48')));
+    out.push(E(63, 132, 3.2, 4, r.sh), F(E(63.4, 132.8, 2, 2.8, '#4e3446')), F(arc(63, 131.6, 3, 3.6, 200, 330, 0.8, r.hi)));
+    const door = ramp('#e8a878', 0.7);
+    out.push(R(49, 155, 13, 17, '#f2c48e'), E(55.5, 155, 6.5, 6, '#f2c48e'), R(50.4, 156, 10.2, 16, door.base), E(55.5, 156, 5.1, 4.8, door.base),
+      F(R(56, 152, 4.6, 20, door.sh)), F(R(55, 152, 1, 20, door.deep)), F(E(59, 164, 0.9, 0.9, '#ffe36b')), F(E(55.5, 155, 2, 2, '#fff3a6')), F(R(55.2, 153, 0.6, 4, door.deep)), F(R(53.5, 154.7, 4, 0.6, door.deep)),
       E(55.5, 172, 9, 1.6, '#d9d0e8'));
     // Mushrooms and grass at the foot.
-    out.push(R(30.6, 165, 2.4, 6, '#fff1dc'), E(31.8, 165, 4, 2.6, '#ff8fa8'), F(E(30.6, 164.2, 1, 0.6, '#ffffff')), R(36, 168, 1.8, 3.6, '#fff1dc'), E(36.9, 168, 2.6, 1.8, '#ff8fa8'),
+    out.push(R(30.6, 165, 2.4, 6, '#fff1dc'), E(31.8, 165, 4, 2.6, '#ff8fa8'), F(E(32.8, 165.8, 2.6, 1.2, '#e86f93')), F(E(30.6, 164.2, 1, 0.6, '#ffffff')), R(36, 168, 1.8, 3.6, '#fff1dc'), E(36.9, 168, 2.6, 1.8, '#ff8fa8'),
       tuft(78, 172), tuft(86, 172, '#7fcf86'), tuft(24, 172));
     return out;
   });
 }
 
+function bigcanopyArt(v, layer) {
+  const pal = TREE_PAL[v];
+  return art(`bigcanopy|${v}|${layer}`, 112, 100, () => {
+    const c = [pal.back, pal.mid, pal.front][layer];
+    const r = ramp(c);
+    const out = [];
+    TREE_CLUMPS[layer].forEach(([x, y, rx, ry], i) => out.push(...foliage(x, y, rx, ry, r, v * 3 + layer * 7 + i * 1.9, { tips: layer === 2 ? 2 : 4 })));
+    if (layer > 0) {
+      // Blossoms or fruit in little clusters of two or three.
+      for (const [x, y] of [[22, 44], [40, 66], [70, 66], [94, 58], [60, 30], [32, 28], [84, 36], [50, 8], [76, 16]].filter((_, i) => i % 2 === layer - 1)) {
+        out.push(F(E(x, y, 1.7, 1.7, pal.dot)), F(E(x + 2.4, y + 1.2, 1.3, 1.3, shade(pal.dot, -12))), F(E(x - 0.5, y - 0.6, 0.6, 0.6, '#ffffff')));
+      }
+    }
+    return out;
+  });
+}
+
+function drawBigtree(ctx, x, y, time, seed, wx) {
+  const v = variant(seed, 2);
+  place(ctx, bigtrunkArt(v), x, y);
+  const top = y - 172;
+  for (let layer = 0; layer < 3; layer++) {
+    // Root to tip: each layer leans further than the one behind it, and a beat later.
+    const k = [0.55, 0.85, 1.2][layer];
+    const l = lean(time, wx, layer * 0.18, seed);
+    blit(ctx, bigcanopyArt(v, layer), snap(x - 56 + l * 1.6 * k), snap(top + Math.abs(l) * 0.35 * k));
+  }
+}
+
 function giantshroomArt(v, blink) {
   const cap = ['#ff9ec0', '#ffb38a', '#c9a6ff'][v];
   return art(`giantshroom|${v}|${blink}`, 72, 92, () => {
-    const stalk = '#fff1dc';
+    const st = ramp('#fff1dc', 0.8);
+    const cr = ramp(cap);
+    const wood = ramp('#d39a6a', 0.8);
     const out = [
-      // Chimney poking out of the cap.
-      R(52, 6, 7, 14, '#c9bedc'), R(51, 4, 9, 3.4, '#b5a8c9'),
-      T([[22, 92], [24.6, 64], [23.6, 44], [48.4, 44], [47.4, 64], [50, 92]], stalk), E(36, 91, 18, 3, stalk),
-      F(T([[26, 90], [27.6, 64], [27, 48], [29.6, 48], [30, 64], [29, 90]], '#fffaf0')),
+      // A stone chimney poking out of the cap.
+      ...stones(52, 6, 7, 14, ramp('#c9bedc', 0.7), 3, { rowH: 3.6, blockW: 4 }), R(51, 3.6, 9, 3.4, '#b5a8c9'), F(R(51, 3.6, 9, 0.8, '#d6cdea')),
+      // The stalk: lit down the left, shaded under the cap and down the right.
+      T([[22, 92], [24.6, 64], [23.6, 44], [48.4, 44], [47.4, 64], [50, 92]], st.base), E(36, 91, 18, 3, st.base),
+      F(T([[39, 92], [41, 64], [40.6, 46], [48.4, 44], [47.4, 64], [50, 92]], st.sh)), F(T([[45.4, 92], [46.4, 64], [46.6, 46], [48.4, 44], [47.4, 64], [50, 92]], st.deep)),
+      F(T([[26, 90], [27.6, 64], [27, 48], [29.6, 48], [30, 64], [29, 90]], st.hi)), F(E(36, 47.6, 12.4, 3.4, st.sh)),
     ];
-    // Round window with a little curtain glow, and a door with a step.
-    out.push(E(29, 58, 4.8, 4.8, '#e0b98a'), F(E(29, 58, 3.6, 3.6, '#fff3a6')), F(R(28.6, 54.4, 0.8, 7.2, '#e0b98a')), F(R(25.4, 57.6, 7.2, 0.8, '#e0b98a')),
-      E(43, 62, 2.6, 2.6, '#e0b98a'), F(E(43, 62, 1.7, 1.7, '#fff3a6')),
-      R(31, 76, 11, 16, '#d39a6a'), E(36.5, 76, 5.5, 4.6, '#d39a6a'), F(R(36, 73, 0.8, 19, '#b97f55')), F(E(40, 84, 0.9, 0.9, '#ffe36b')), R(29, 90, 15, 2.4, '#e6dccd'));
-    // Gills under the cap, then the spotted cap with a happy face.
-    out.push(E(36, 44, 29, 5, '#f3d9c0'), F(E(36, 45, 24, 2.4, '#e6c4a6')));
-    const dome = [];
-    for (let i = 0; i <= 16; i++) {
-      const a = Math.PI + (Math.PI * i) / 16;
-      dome.push([36 + Math.cos(a) * 35, 42 + Math.sin(a) * 40]);
-    }
-    out.push(T(dome, cap), E(36, 41, 35, 5.4, cap), F(E(36, 44, 31, 2.4, shade(cap, -8))));
-    out.push(F(E(20, 14, 6, 3, shade(cap, 14))));
+    // Round window with a little curtain glow, and a plank door with a step.
+    out.push(E(29, 58, 4.8, 4.8, wood.base), F(E(29, 58, 3.6, 3.6, '#fff3a6')), F(E(30, 59, 2.6, 2.6, '#ffe08a')), F(R(28.6, 54.4, 0.8, 7.2, wood.base)), F(R(25.4, 57.6, 7.2, 0.8, wood.base)),
+      E(43, 62, 2.6, 2.6, wood.base), F(E(43, 62, 1.7, 1.7, '#ffe08a')),
+      ...planks(31, 76, 11, 16, wood, 3, v), E(36.5, 76, 5.5, 4.6, wood.base), F(E(36.5, 76.6, 4.2, 3.4, wood.sh)), F(E(40, 84, 0.9, 0.9, '#ffe36b')), R(29, 90, 15, 2.4, '#e6dccd'), F(R(29, 90, 15, 0.7, '#f6f0e6')));
+    // Gills under the cap, then the spotted cap: lit on the upper left, its shadow down the right.
+    out.push(E(36, 44, 29, 5, '#f3d9c0'), F(E(36, 45, 24, 2.4, '#e2bfa0')));
+    for (let k = -4; k <= 4; k++) out.push(F(R(36 + k * 5.4 - 0.3, 43.4, 0.6, 3.2 - Math.abs(k) * 0.3, '#d9b293')));
+    const domePts = (cx, cy, rx, ry) => {
+      const pts = [];
+      for (let i = 0; i <= 16; i++) {
+        const a = Math.PI + (Math.PI * i) / 16;
+        pts.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]);
+      }
+      return pts;
+    };
+    out.push(T(domePts(36, 42, 35, 40), cr.sh), E(36, 41, 35, 5.4, cr.sh), F(T(domePts(33, 41, 31, 38.4), cr.base)), F(E(33, 40.6, 31, 4.2, cr.base)),
+      F(E(36, 44, 31, 2.4, cr.deep)), F(E(18, 14, 7, 3.4, cr.hi)), F(E(15.6, 18.6, 2.4, 1.6, cr.hi)));
     for (const [x, y, rx, ry] of [[12, 28, 4.6, 3.6], [24, 10, 5, 3.6], [47, 9, 4, 3], [60, 26, 4.8, 3.6], [36, 5, 2.4, 1.6], [6, 38, 2.4, 1.8], [66, 38, 2.2, 1.8], [52, 20, 2, 1.6]]) {
-      out.push(F(E(x, y, rx, ry, '#ffffff')));
+      // Spots on the shaded side take a little of the cap's shadow.
+      const lit = x < 44;
+      out.push(F(E(x, y, rx, ry, lit ? '#ffffff' : mix('#ffffff', cr.sh, 0.35))), F(E(x + rx * 0.25, y + ry * 0.3, rx * 0.7, ry * 0.55, lit ? mix('#ffffff', cr.base, 0.25) : mix('#ffffff', cr.sh, 0.5))));
     }
     out.push(...face(36, 30, 6.4, blink ? 'closed' : 'happy', 'smile', 1.7));
     out.push(tuft(20, 92), tuft(53, 92, '#7fcf86'), ...bloom(16, 89, 1.3, '#ffe36b'), ...bloom(57, 90, 1.2, '#ffffff'));
@@ -245,15 +326,20 @@ function giantshroomArt(v, blink) {
 
 function signpostArt() {
   return art('signpost', 34, 46, () => {
-    const wood = '#c99a6b';
+    const post = ramp('#b88a5c', 0.8);
+    const board = ramp('#f0c290', 0.8);
+    const board2 = ramp('#ffd9ae', 0.8);
+    const sign = (pts, r, grain) => [T(pts, r.base), ...grain.map(([x, y, w]) => F(R(x, y, w, 0.7, r.sh)))];
     return [
-      R(15, 8, 4, 38, '#b88a5c'), F(R(15.6, 8, 1, 38, '#d0a274')), E(17, 8, 2.6, 1.6, '#a77a4f'),
-      T([[3, 12], [26, 12], [31, 16.6], [26, 21.2], [3, 21.2]], '#f0c290'), F(R(6, 15, 15, 1, wood)), F(R(6, 17.6, 10, 1, wood)), F(E(5, 16.6, 0.7, 0.7, '#8a5a3c')),
-      T([[3, 28.6], [8, 24], [31, 24], [31, 33.2], [8, 33.2]], '#ffd9ae'), F(R(12, 27, 15, 1, wood)), F(R(15, 29.6, 11, 1, wood)), F(E(29, 28.6, 0.7, 0.7, '#8a5a3c')),
-      // A little bluebird perched on top.
-      E(17, 4.6, 3.6, 2.8, '#9fd8ff'), E(19.6, 2.6, 2.4, 2.2, '#9fd8ff'), T([[21.6, 2.2], [23.6, 2.8], [21.6, 3.4]], '#ffb347'), T([[13.8, 4], [11.6, 2.6], [13.4, 5.6]], '#9fd8ff'),
-      F(E(20.2, 2.2, 0.45, 0.55, INK)), F(E(19.8, 3.4, 0.55, 0.3, BLUSH)), F(E(16, 4.8, 1.8, 1.1, '#c4e8ff')),
-      tuft(13, 46), tuft(22, 46, '#7fcf86'), ...bloom(9, 43.4, 1.3, '#ff9ec0'), E(26, 44.6, 3, 1.8, '#d6cfe6'),
+      R(15, 8, 4, 38, post.base), F(R(17.4, 8, 1.6, 38, post.sh)), F(R(15.4, 8, 0.8, 38, post.hi)), F(R(16.4, 30, 0.6, 7, post.deep)), E(17, 8, 2.6, 1.6, post.sh),
+      ...sign([[3, 12], [26, 12], [31, 16.6], [26, 21.2], [3, 21.2]], board, [[6, 15, 9], [17, 15, 5], [6, 17.6, 10]]),
+      F(T([[3, 19.6], [27.6, 19.6], [26, 21.2], [3, 21.2]], board.sh)), F(R(3, 12, 23, 0.7, board.hi)), F(E(5, 16.6, 0.7, 0.7, '#8a5a3c')),
+      ...sign([[3, 28.6], [8, 24], [31, 24], [31, 33.2], [8, 33.2]], board2, [[12, 27, 8], [22, 27, 5], [15, 29.6, 11]]),
+      F(T([[6.4, 31.6], [31, 31.6], [31, 33.2], [8, 33.2]], board2.sh)), F(R(8, 24, 23, 0.7, board2.hi)), F(E(29, 28.6, 0.7, 0.7, '#8a5a3c')),
+      // A little bluebird perched on top: lit back, shaded belly.
+      E(17, 4.6, 3.6, 2.8, '#9fd8ff'), F(E(17.6, 5.6, 2.6, 1.6, '#7fc0f0')), E(19.6, 2.6, 2.4, 2.2, '#9fd8ff'), T([[21.6, 2.2], [23.6, 2.8], [21.6, 3.4]], '#ffb347'), T([[13.8, 4], [11.6, 2.6], [13.4, 5.6]], '#7fc0f0'),
+      F(E(20.2, 2.2, 0.45, 0.55, INK)), F(E(19.8, 3.4, 0.55, 0.3, BLUSH)), F(E(16, 4.4, 1.8, 1, '#c4e8ff')),
+      tuft(13, 46), tuft(22, 46, '#7fcf86'), ...bloom(9, 43.4, 1.3, '#ff9ec0'), ...ringed(26, 44.6, 3, 1.8, '#d6cfe6', 0.6),
     ];
   });
 }
@@ -265,7 +351,10 @@ function flowerarchArt() {
     const wood = '#fff4e6';
     const vine = '#6cc070';
     const leaf = '#8fdc9a';
-    const out = [R(5, 26, 9, 50, wood), R(66, 26, 9, 50, wood), R(3, 73, 13, 5, '#f0e2cf'), R(64, 73, 13, 5, '#f0e2cf')];
+    const wr = ramp(wood, 0.7);
+    // Painted posts: lit on the left face, shaded on the right, on stone footings.
+    const out = [R(5, 26, 9, 50, wood), R(66, 26, 9, 50, wood), F(R(11, 26, 3, 50, wr.sh)), F(R(72, 26, 3, 50, wr.sh)), F(R(5, 26, 1, 50, wr.hi)), F(R(66, 26, 1, 50, wr.hi)),
+      ...stones(3, 73, 13, 5, ramp('#e6dcd0', 0.7), 1, { rowH: 5, blockW: 7 }), ...stones(64, 73, 13, 5, ramp('#e6dcd0', 0.7), 2, { rowH: 5, blockW: 7 })];
     // Lattice on the posts.
     for (const x of [5, 66]) {
       for (let y = 30; y < 70; y += 8) out.push(F(T([[x, y], [x + 1, y], [x + 9, y + 8], [x + 8, y + 8]], '#e6d6c4')), F(T([[x + 9, y], [x + 8, y], [x, y + 8], [x + 1, y + 8]], '#e6d6c4')));
@@ -279,7 +368,7 @@ function flowerarchArt() {
       }
       return p;
     };
-    out.push(band(pts(30.5, 26, 0, Math.PI, 18), () => 4.4, wood), F(band(pts(30.5, 26, 0.1, Math.PI - 0.1, 18), () => 0.6, '#e6d6c4')));
+    out.push(band(pts(30.5, 26, 0, Math.PI, 18), () => 4.4, wood), F(band(pts(28.6, 24.2, 0.08, Math.PI - 0.08, 18), () => 0.8, wr.sh)), F(band(pts(32.6, 28, 0.1, Math.PI - 0.1, 18), () => 0.5, wr.hi)));
     // Vines winding over the arch and down the posts, thick with leaves.
     out.push(band(pts(30.5, 26, -0.1, Math.PI + 0.1, 20, 0.08), () => 1.1, vine));
     out.push(band([[9.5, 30], [13, 38], [6, 46], [13, 54], [6, 62], [12, 70], [9, 76]], () => 0.9, vine), band([[70.5, 30], [67, 38], [74, 46], [67, 54], [74, 62], [68, 70], [71, 76]], () => 0.9, vine));
@@ -288,11 +377,6 @@ function flowerarchArt() {
       out.push(...ringed(x + Math.sin(i * 2.3) * 2.4, y + Math.cos(i * 1.9) * 2, 3.4, 2.6, i % 2 ? leaf : '#7fd19a', 0.7));
     });
     for (const [x, y] of [[13, 38], [6, 46], [13, 54], [6, 62], [12, 70], [67, 38], [74, 46], [67, 54], [74, 62], [68, 70]]) out.push(...ringed(x, y, 2.6, 2, leaf, 0.6));
-    // Wisteria hanging under the arch.
-    for (const [k, len] of [[5, 9], [8, 6], [11, 10], [14, 7], [17, 8]]) {
-      const [x, y] = pts(30.5, 26, 0, Math.PI, 22)[k];
-      out.push(R(x - 0.4, y + 2, 0.8, len * 0.5, vine), T([[x - 2.2, y + 3], [x + 2.2, y + 3], [x, y + 3 + len]], '#c9a6ff'), F(E(x - 0.6, y + 4.4, 0.8, 1.2, '#e6d6ff')));
-    }
     along.forEach(([x, y], i) => {
       if (i % 2 === 0) out.push(...bloom(x + Math.cos(i * 1.3) * 2.6, y - 1 + Math.sin(i * 2.1) * 1.6, 1.5, FLOWERS[i % FLOWERS.length]));
     });
@@ -303,32 +387,59 @@ function flowerarchArt() {
   });
 }
 
-function wellArt() {
-  return art('well', 46, 54, () => {
-    const stone = '#ddd6ec';
-    const out = [
-      R(8, 9, 2.8, 26, '#b88a5c'), R(35.2, 9, 2.8, 26, '#b88a5c'),
-      R(7, 32, 32, 20, stone), E(23, 52, 16, 2.4, stone),
-    ];
-    // Brick rows, staggered.
-    for (let r = 0; r < 4; r++) {
-      const y = 36 + r * 4.4;
-      out.push(F(R(7, y, 32, 0.7, '#bdb3d4')));
-      for (let x = 7 + (r % 2 ? 4 : 0) + 8; x < 39; x += 8) out.push(F(R(x, y - 3.7, 0.7, 3.7, '#bdb3d4')));
+// Wisteria hanging under the flower arch, each strand swinging from its root, the tip trailing.
+const WISTERIA = [[5, 9], [8, 6], [11, 10], [14, 7], [17, 8]];
+function wisteriaArt(f) {
+  return art(`wisteria|${f}`, 80, 78, () => {
+    const out = [];
+    const sway = (f - 2) * 0.9;
+    for (const [k, len] of WISTERIA) {
+      const a = Math.PI + (Math.PI * k) / 22;
+      const x = 40 + Math.cos(a) * 30.5;
+      const y = 30 + Math.sin(a) * 26;
+      const tip = x + sway * (len / 8);
+      const mid = x + sway * (len / 8) * 0.4;
+      out.push(band([[x, y + 2], [mid, y + 2 + len * 0.4], [tip, y + 3 + len * 0.6]], () => 0.4, '#6cc070'),
+        T([[x - 2.2, y + 3], [x + 2.2, y + 3], [mid + 1.6, y + 3 + len * 0.55], [tip, y + 3 + len]], '#c9a6ff'), F(T([[mid + 0.4, y + 3.6], [x + 2.2, y + 3], [mid + 1.6, y + 3 + len * 0.55], [tip, y + 3 + len]], '#a98ae6')),
+        F(E(x - 0.7, y + 4.6, 0.8, 1.3, '#e6d6ff')));
     }
-    out.push(E(23, 32, 17.4, 4.8, '#ece7f6'), F(E(23, 32, 13.6, 3.2, '#5a4a7a')), F(E(23, 33, 10.4, 1.9, '#8fd3ff')), F(E(20, 32.6, 3, 0.6, '#d6f2ff')),
-      // Crank, rope, and bucket.
-      R(8, 18, 30, 1.8, '#8a5a3c'), R(38, 17.4, 4, 1.6, '#8a5a3c'), R(40.6, 17.4, 1.6, 5, '#8a5a3c'), E(23, 19, 2.6, 2.6, '#e6c9a0'),
-      R(22.6, 20, 0.8, 5, '#e6c9a0'), T([[19.4, 25], [26.6, 25], [25.6, 31], [20.4, 31]], '#d9a273'), F(R(19.8, 26.6, 6.4, 0.8, '#8f7cc4')), F(R(20.2, 29.4, 5.6, 0.8, '#8f7cc4')),
-      // Roof with shingle rows and a heart.
-      R(4, 12, 38, 2.6, '#e07fa2'), T([[1, 13], [23, 0.4], [45, 13]], '#ff9ec0'));
-    for (const y of [5, 8.6]) out.push(F(T([[23 - (y + 0.5) * 1.7, y + 0.5], [23 + (y + 0.5) * 1.7, y + 0.5], [23 + (y + 1.2) * 1.7, y + 1.2], [23 - (y + 1.2) * 1.7, y + 1.2]], '#ffc6dc')));
-    out.push(F(E(22, 7.6, 1, 1, '#ffffff')), F(E(24, 7.6, 1, 1, '#ffffff')), F(T([[20.8, 8], [25.2, 8], [23, 10.4]], '#ffffff')));
-    // Moss and flowers around the base.
-    out.push(...ringed(8, 50, 3.4, 2.4, '#9fe0b0', 0.6), ...ringed(37, 51, 3, 2, '#9fe0b0', 0.6), tuft(4, 54), tuft(42, 54, '#7fcf86'),
-      ...bloom(6, 48.6, 1.2, '#ffe36b'), ...bloom(38.6, 49.6, 1.2, '#ff9ec0'), F(E(15, 40, 2.6, 1.4, '#c4ecc8')), F(E(30, 46, 2, 1.1, '#c4ecc8')));
     return out;
   });
+}
+
+function wellArt() {
+  return art('well', 46, 54, () => {
+    const st = ramp('#ddd6ec', 0.8);
+    const post = ramp('#b88a5c', 0.8);
+    const roof = ramp('#ff9ec0', 0.8);
+    const out = [
+      R(8, 9, 2.8, 26, post.base), R(35.2, 9, 2.8, 26, post.base), F(R(9.8, 9, 1, 26, post.sh)), F(R(37, 9, 1, 26, post.sh)), F(R(8, 14.6, 30, 3, post.deep)),
+      // The stone ring: courses of blocks, the right end turning into shadow.
+      ...stones(7, 32, 32, 20, st, 4, { rowH: 4.4, blockW: 7 }), F(R(33, 34, 6, 18, mix(st.sh, st.base, 0.2))), E(23, 52, 16, 2.4, st.sh),
+    ];
+    out.push(E(23, 32, 17.4, 4.8, st.hi), F(E(24, 32.8, 16, 3.6, st.base)), F(E(23, 32, 13.6, 3.2, '#4e3f70')), F(E(23, 33, 10.4, 1.9, '#7fc4f2')), F(E(20, 32.6, 3, 0.6, '#d6f2ff')),
+      // The crank and axle (the rope and bucket hang from it, drawn on their own).
+      R(8, 18, 30, 1.8, '#8a5a3c'), F(R(8, 18, 30, 0.6, '#a8784e')), R(38, 17.4, 4, 1.6, '#8a5a3c'), R(40.6, 17.4, 1.6, 5, '#8a5a3c'), E(23, 19, 2.6, 2.6, '#e6c9a0'), F(E(23.6, 19.6, 1.8, 1.8, '#d0ae84')),
+      // Roof: rows of shingles, each row lit along its top edge and shaded under the row above.
+      R(4, 12, 38, 2.6, roof.deep), T([[1, 13], [23, 0.4], [45, 13]], roof.base));
+    for (const y of [4.6, 8.4]) {
+      const at = (yy) => (yy - 0.4) * 1.7;
+      out.push(F(T([[23 - at(y), y], [23 + at(y), y], [23 + at(y + 1.2), y + 1.2], [23 - at(y + 1.2), y + 1.2]], roof.sh)), F(T([[23 - at(y + 1.2), y + 1.2], [23 + at(y + 1.2), y + 1.2], [23 + at(y + 1.9), y + 1.9], [23 - at(y + 1.9), y + 1.9]], roof.hi)));
+    }
+    out.push(F(T([[23, 0.4], [45, 13], [36, 13]], roof.sh)), F(E(22, 7.6, 1, 1, '#ffffff')), F(E(24, 7.6, 1, 1, '#ffffff')), F(T([[20.8, 8], [25.2, 8], [23, 10.4]], '#ffffff')));
+    // Moss and flowers around the base.
+    out.push(...ringed(8, 50, 3.4, 2.4, '#9fe0b0', 0.6), ...ringed(37, 51, 3, 2, '#9fe0b0', 0.6), tuft(4, 54), tuft(42, 54, '#7fcf86'),
+      ...bloom(6, 48.6, 1.2, '#ffe36b'), ...bloom(38.6, 49.6, 1.2, '#ff9ec0'), F(E(15, 40, 2.6, 1.4, '#b4e0c0')), F(E(30, 46, 2, 1.1, '#b4e0c0')));
+    return out;
+  });
+}
+
+// The well's rope and bucket, hanging from the axle (pivot at 23, 20).
+function bucketArt() {
+  return art('wellbucket', 46, 54, () => [
+    R(22.6, 20, 0.8, 5, '#e6c9a0'), T([[19.4, 25], [26.6, 25], [25.6, 31], [20.4, 31]], '#d9a273'), F(T([[23.6, 25], [26.6, 25], [25.6, 31], [23.2, 31]], '#c08a62')),
+    F(R(19.8, 26.6, 6.4, 0.8, '#8f7cc4')), F(R(20.2, 29.4, 5.6, 0.8, '#8f7cc4')), F(R(19.4, 25, 7.2, 0.6, '#ecc08e')),
+  ]);
 }
 
 // ---------- Crag ----------
@@ -350,23 +461,27 @@ function totemArt() {
     // Head crest feathers.
     out.push(T([[13, 16], [10, 4], [16, 12]], teal), T([[16, 13], [19, 1], [22, 13]], red), T([[22, 12], [28, 4], [25, 16]], yel));
     // Top: the eagle.
-    out.push(R(9, 22, 20, 32, wood), E(19, 21, 10, 8, wood), F(R(9, 46, 20, 2, red)), F(R(9, 49, 20, 1.2, yel)),
+    const wr = ramp(wood, 0.8);
+    const tr = ramp(teal, 0.8);
+    // Each carved section: lit strip down the left, its right flank in shadow, grain between.
+    const carve = (y0, y1, r) => [F(R(24.4, y0, 4.6, y1 - y0, r.sh)), F(R(9, y0, 1, y1 - y0, r.hi)), F(R(27.2, y0 + 2, 0.7, (y1 - y0) * 0.4, r.deep))];
+    out.push(R(9, 22, 20, 32, wood), E(19, 21, 10, 8, wood), ...carve(24, 54, wr), F(E(25, 20, 4, 5, wr.sh)), F(R(9, 46, 20, 2, red)), F(R(24.4, 46, 4.6, 2, shade(red, -12))), F(R(9, 49, 20, 1.2, yel)),
       F(E(14.4, 24, 3.4, 3, '#ffffff')), F(E(23.6, 24, 3.4, 3, '#ffffff')), F(E(15, 24.4, 1.6, 1.8, INK)), F(E(23, 24.4, 1.6, 1.8, INK)), F(E(14.6, 23.6, 0.5, 0.5, '#ffffff')), F(E(22.6, 23.6, 0.5, 0.5, '#ffffff')),
       F(T([[11, 20], [17, 21.6], [11, 22]], teal)), F(T([[27, 20], [21, 21.6], [27, 22]], teal)),
       F(T([[15.6, 28], [22.4, 28], [21.6, 33], [19, 37], [18.6, 33]], yel)), F(T([[19, 33], [21.6, 33], [19, 37]], '#f0a64a')),
       F(E(13, 30.6, 1.4, 0.7, BLUSH)), F(E(25, 30.6, 1.4, 0.7, BLUSH)), F(E(19, 42, 4, 1.6, shade(wood, -10))));
     // Middle: the owl, painted teal.
-    out.push(R(7, 52, 24, 3, '#c98a5c'), T([[8, 56], [7, 51], [12, 55]], teal), T([[30, 56], [31, 51], [26, 55]], teal), R(9, 55, 20, 30, teal),
+    out.push(R(7, 52, 24, 3, '#c98a5c'), F(R(7, 52, 24, 0.8, '#e2a978')), T([[8, 56], [7, 51], [12, 55]], teal), T([[30, 56], [31, 51], [26, 55]], tr.sh), R(9, 55, 20, 30, teal), ...carve(55, 85, tr),
       F(E(14, 64, 4.4, 4.4, yel)), F(E(24, 64, 4.4, 4.4, yel)), F(E(14, 64, 2.8, 2.8, '#ffffff')), F(E(24, 64, 2.8, 2.8, '#ffffff')), F(E(14.4, 64.4, 1.6, 1.6, INK)), F(E(23.6, 64.4, 1.6, 1.6, INK)),
       F(E(14, 63.6, 0.5, 0.5, '#ffffff')), F(E(23.2, 63.6, 0.5, 0.5, '#ffffff')), F(T([[17, 68], [21, 68], [19, 72.6]], '#ff9f5a')));
     for (const [x, y] of [[13, 77], [19, 79], [25, 77], [16, 81.6], [22, 81.6]]) out.push(arc(x, y, 2, 1.6, 20, 160, 0.7, '#5aa8a0'));
     // Bottom: the bear.
-    out.push(R(7, 84, 24, 3, '#c98a5c'), E(8, 91, 3.4, 3.4, wood), E(30, 91, 3.4, 3.4, wood), F(E(8, 91, 1.8, 1.8, red)), F(E(30, 91, 1.8, 1.8, red)), R(9, 87, 20, 35, wood),
+    out.push(R(7, 84, 24, 3, '#c98a5c'), F(R(7, 84, 24, 0.8, '#e2a978')), E(8, 91, 3.4, 3.4, wood), E(30, 91, 3.4, 3.4, wr.sh), F(E(8, 91, 1.8, 1.8, red)), F(E(30, 91, 1.8, 1.8, shade(red, -12))), R(9, 87, 20, 35, wood), ...carve(87, 120, wr),
       F(arc(14, 97, 3, 2, 200, 340, 1, teal)), F(arc(24, 97, 3, 2, 200, 340, 1, teal)), F(E(14, 99.4, 1.6, 1.8, INK)), F(E(24, 99.4, 1.6, 1.8, INK)),
       F(E(13.6, 98.8, 0.5, 0.5, '#ffffff')), F(E(23.6, 98.8, 0.5, 0.5, '#ffffff')),
       F(E(19, 106, 5.6, 4.4, '#f6d3a2')), F(E(19, 103.8, 2.2, 1.4, INK)), arc(19, 106, 2.4, 2, 30, 150, 0.6, INK), F(E(12.6, 104, 1.6, 0.8, BLUSH)), F(E(25.4, 104, 1.6, 0.8, BLUSH)),
       F(R(9, 113, 20, 2, red)), F(R(9, 116.4, 20, 1.2, teal)), F(T([[12, 118], [14, 120.4], [16, 118], [18, 120.4], [20, 118], [22, 120.4], [24, 118], [26, 120.4], [26, 121.6], [12, 121.6]], yel)),
-      R(6, 120, 26, 4, '#c98a5c'), tuft(5, 124), tuft(33, 124, '#9fd38a'));
+      R(6, 120, 26, 4, '#c98a5c'), F(R(6, 120, 26, 0.8, '#e2a978')), F(R(26, 120, 6, 4, '#a96f4a')), tuft(5, 124), tuft(33, 124, '#9fd38a'));
     return out;
   });
 }
@@ -381,11 +496,15 @@ function mesaArt() {
     for (const [y0, y1, c] of [[16, 22, '#f8cf9c'], [34, 37, '#d99a64'], [46, 56, '#f6c48e'], [70, 73, '#d99a64'], [84, 96, '#f8cf9c'], [108, 111, '#d99a64'], [122, 134, '#f6c48e'], [142, 145, '#d99a64']]) {
       out.push(F(strip(xl, xr, y0, y1, c)));
     }
-    // Light down the front and soft shade down one side.
-    out.push(F(T([[xr(12) - 7, 12], [xr(12) - 3, 12], [xr(150) - 4, 150], [xr(150) - 10, 150]], '#f8cf9c')));
-    out.push(F(T([[xl(30) + 1, 30], [xl(30) + 5, 30], [xl(60) + 6, 60], [xl(90) + 4, 90], [xl(90) + 1, 90]], '#dd9d68')));
+    // Light from the upper left: a lit strip down the left face, and the right face turning away
+    // into rose-brown shadow, deepest in the overhangs under each hard band.
+    const mr = ramp(sand);
+    const shadeX = (y) => xr(y) - (xr(y) - xl(y)) * 0.3;
+    out.push(F(T([[shadeX(12), 12], [xr(20), 20], [xr(50), 50], [xr(92), 92], [xr(130), 130], [xr(152), 152], [shadeX(152), 152], [shadeX(110) + 2, 110], [shadeX(72) - 1, 72], [shadeX(40) + 1, 40]], mr.sh)));
+    for (const y of [37, 73, 111, 145]) out.push(F(strip((yy) => shadeX(yy) - 2, xr, y, y + 1.6, mix(mr.sh, mr.deep, 0.6))));
+    out.push(F(T([[xl(24) + 1, 24], [xl(24) + 4, 24], [xl(80) + 5, 80], [xl(140) + 4, 140], [xl(140) + 1, 140], [xl(80) + 1.4, 80]], mr.hi)));
     // Cracks.
-    out.push(F(band([[30, 26], [33, 36], [29, 46], [32, 58]], (u) => 0.9 - u * 0.5, '#b87a4c')), F(band([[48, 100], [45, 110], [49, 120]], (u) => 0.8 - u * 0.4, '#b87a4c')),
+    out.push(F(band([[30, 26], [33, 36], [29, 46], [32, 58]], (u) => 0.9 - u * 0.5, mr.deep)), F(band([[48, 100], [45, 110], [49, 120]], (u) => 0.8 - u * 0.4, '#b87a4c')),
       F(band([[22, 120], [25, 128], [22, 138]], (u) => 0.8 - u * 0.4, '#b87a4c')), F(band([[45, 62], [47, 68]], () => 0.5, '#b87a4c')));
     // Scrub on top and a little nest.
     out.push(tuft(20, 7.4, '#9fd38a'), tuft(48, 7.4, '#8fcf86'), E(34, 5, 4.6, 2.2, '#c99a6b'), F(E(32.6, 3.8, 1.2, 0.9, '#bfe6ff')), F(E(35.2, 3.8, 1.2, 0.9, '#ffffff')));
@@ -399,20 +518,43 @@ function mesaArt() {
   });
 }
 
-function tentArt(frame) {
-  const w = [0, 1.4, 0.4][frame];
-  return art(`tent|${frame}`, 72, 64, () => {
+// A flag on a pole as a chain of segments: `k` how hard the wind holds it out (0 hanging slack, 1
+// a full gust), `ph` the ripple travelling from the pole to the tip. Returns shapes.
+function flagShapes(px, py, len, h, k, ph, c, c2) {
+  const top = [];
+  const bot = [];
+  const n = 5;
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const x = px + len * u * (0.72 + 0.28 * k);
+    const droop = (1 - k) * Math.pow(u, 1.4) * h * 0.9;
+    const ripple = Math.sin(u * 4.4 - ph * Math.PI * 2) * 0.9 * u * (0.4 + 0.6 * k);
+    top.push([x, py + droop + ripple]);
+    bot.push([x - (1 - k) * u * 1.2, py + h + droop * 1.15 + ripple]);
+  }
+  // A swallowtail notch at the tip.
+  const [tx, ty] = top[n];
+  const [bx, by] = bot[n];
+  const pts = [...top, [tx - 2.4 * (0.5 + 0.5 * k), (ty + by) / 2], ...bot.reverse()];
+  const shadeBand = top.map(([x, y], i) => [x, y + h * 0.55 + (i % 2 ? 0.3 : 0)]);
+  return [T(pts, c), F(T([...shadeBand.slice(1, 4), ...bot.slice(2, 5)], shade(c, -10))), F(T([top[0], top[1], [top[1][0], top[1][1] + h * 0.3], [top[0][0], top[0][1] + h * 0.3]], c2))];
+}
+
+function tentArt(f, ph) {
+  return art(`tent|${f}|${ph}`, 72, 64, () => {
     const red = '#ff8a7a';
     const cream = '#fff4e6';
-    const out = [R(35.2, 0.6, 1.6, 14, '#8a5a3c'), E(36, 1.4, 1.6, 1.6, '#ffd66b'),
-      T([[37, 2], [50 + w, 2.6 + w * 0.6], [46.4 + w * 0.6, 5.6], [50 + w, 8.6 - w * 0.3], [37, 9]], red), F(T([[37, 4.4], [46 + w, 5.4], [37, 6.4]], '#ffd66b'))];
+    const out = [R(35.2, 0.6, 1.6, 14, '#8a5a3c'), F(R(36, 0.6, 0.8, 14, '#6e4630')), E(36, 1.4, 1.6, 1.6, '#ffd66b'), ...flagShapes(37, 2, 13, 6.6, f / 4, ph / 3, red, '#ffd66b')];
     // Striped cloth from the peak.
     const n = 8;
     for (let i = 0; i < n; i++) {
       const xa = 2 + (68 * i) / n;
       const xb = 2 + (68 * (i + 1)) / n;
-      out.push(T([[36, 12], [xa, 62], [xb, 62]], i % 2 ? cream : red));
+      // Light from the upper left: the panels past the middle turn into the cloth's shadow.
+      const c = i % 2 ? cream : red;
+      out.push(T([[36, 12], [xa, 62], [xb, 62]], i >= n / 2 ? ramp(c, 0.8).sh : i === 0 ? ramp(c, 0.8).hi : c));
     }
+    out.push(F(T([[36, 12], [70, 62], [64, 62]], ramp(red, 0.8).deep)));
     // Scalloped collar.
     out.push(T([[22.4, 30], [49.6, 30], [52.4, 34], [19.6, 34]], '#ffd66b'));
     for (let x = 21.4; x <= 51; x += 3.8) out.push(E(x, 34.4, 1.9, 1.9, '#ffd66b'));
@@ -440,15 +582,18 @@ function ruinarchArt() {
   return art('ruinarch', 112, 122, () => {
     const out = [];
     // Left pillar, whole, with stones and a capital.
-    out.push(R(10, 36, 22, 78, STONE), R(7, 31, 28, 6, STONE_LIGHT), R(6, 112, 30, 10, STONE_LIGHT));
-    for (let y = 48, r = 0; y < 112; y += 12, r++) {
-      out.push(F(R(10, y, 22, 0.8, STONE_LINE)), F(R(r % 2 ? 17 : 24, y - 11.2, 0.8, 11.2, STONE_LINE)));
-    }
+    const sr = ramp(STONE, 0.8);
+    // Left pillar, whole: courses of dressed blocks, the right face turned into shadow, a capital
+    // and a plinth lit along their tops.
+    out.push(...stones(10, 36, 22, 78, sr, 1, { rowH: 12, blockW: 14 }), F(R(27, 36, 5, 78, mix(sr.sh, sr.base, 0.3))),
+      R(7, 31, 28, 6, STONE_LIGHT), F(R(7, 31, 28, 1, '#ffffff')), F(R(29, 31, 6, 6, sr.sh)), F(R(7, 36, 28, 1.2, sr.deep)),
+      R(6, 112, 30, 10, STONE_LIGHT), F(R(6, 112, 30, 1, '#ffffff')), F(R(29, 112, 7, 10, sr.sh)));
     // Right pillar, snapped off.
     const xl = 80;
     const xr = 102;
-    out.push(T([[xl, 114], [xl, 72], [83, 66], [87, 70], [91, 61], [95, 67], [99, 63], [xr, 68], [xr, 114]], STONE), R(76, 112, 30, 10, STONE_LIGHT));
-    for (let y = 80, r = 0; y < 112; y += 12, r++) out.push(F(R(xl, y, 22, 0.8, STONE_LINE)), F(R(r % 2 ? 87 : 94, y + 0.8, 0.8, 11.2, STONE_LINE)));
+    out.push(T([[xl, 114], [xl, 72], [83, 66], [87, 70], [91, 61], [95, 67], [99, 63], [xr, 68], [xr, 114]], STONE), ...stones(xl, 80, 22, 34, sr, 2, { rowH: 12, blockW: 14 }),
+      F(T([[xl, 80], [xl, 72], [83, 66], [87, 70], [91, 61], [95, 67], [99, 63], [xr, 68], [xr, 80]], STONE)), F(T([[83, 66], [87, 70], [91, 61], [95, 67], [99, 63], [99, 65], [95, 69], [91, 63.6], [87, 72], [83, 68]], sr.hi)),
+      F(R(97, 63, 5, 51, mix(sr.sh, sr.base, 0.3))), R(76, 112, 30, 10, STONE_LIGHT), F(R(76, 112, 30, 1, '#ffffff')), F(R(99, 112, 7, 10, sr.sh)));
     out.push(F(band([[90, 72], [92, 80], [89, 90]], (u) => 0.8 - u * 0.4, '#b4a6dc')));
     // The arch, broken off past its top.
     const ap = [];
@@ -465,7 +610,7 @@ function ruinarchArt() {
       const s = Math.sin(a);
       out.push(F(T([[56 + c * 28.4, 40 + s * 22.4], [56 + c * 41.6, 40 + s * 35.6], [56 + c * 41.6 + 0.8, 40 + s * 35.6 + 0.4], [56 + c * 28.4 + 0.8, 40 + s * 22.4 + 0.4]], STONE_LINE)));
     }
-    out.push(F(band(ap.slice(1, 13).map(([x, y]) => [x + (56 - x) * 0.02, y - 4.6]), () => 0.6, STONE_LIGHT)));
+    out.push(F(band(ap.slice(1, 13).map(([x, y]) => [x + (56 - x) * 0.02, y - 4.6]), () => 0.8, '#ffffff')), F(band(ap.slice(0, 15).map(([x, y]) => [x + (56 - x) * 0.04, y + 4.4]), () => 1.6, sr.sh)));
     // The rune stone set into the pillar.
     out.push(F(E(21, 74, 6.6, 6.6, '#cbbfee')), F(arc(21, 74, 5.4, 5.4, 0, 360, 1, '#5fd0ec')), F(diamond(21, 74, 2.2, 3.4, '#5fd0ec')), F(diamond(21, 74, 1, 1.6, '#e6fbff')),
       F(R(20.5, 66.4, 1, 3, '#5fd0ec')), F(R(20.5, 78.6, 1, 3, '#5fd0ec')), F(R(13.4, 73.5, 3, 1, '#5fd0ec')), F(R(25.6, 73.5, 3, 1, '#5fd0ec')));
@@ -475,13 +620,6 @@ function ruinarchArt() {
       const [x, y] = ap[k];
       out.push(...ringed(x, y - 6, 5, 2.4, MOSS, 0.6));
     }
-    for (const [k, len] of [[4, 22], [7, 14], [10, 26], [12, 12]]) {
-      const [x, y] = ap[k];
-      const path = [];
-      for (let j = 0; j <= 6; j++) path.push([x + Math.sin(j * 1.2 + k) * 1.4, y + 5 + (len * j) / 6]);
-      out.push(band(path, () => 0.7, VINE));
-      for (let j = 1; j <= 6; j += 2) out.push(E(path[j][0] + (j % 4 ? 1.6 : -1.6), path[j][1], 1.8, 1.2, MOSS));
-    }
     out.push(...ringed(8, 46, 2.6, 2, MOSS, 0.6), ...ringed(32, 92, 2.4, 1.8, MOSS, 0.6), ...ringed(81, 98, 2.6, 2, MOSS, 0.6));
     // Rubble at the foot of the broken side.
     out.push(T([[60, 122], [62, 114], [70, 113], [72, 122]], STONE), F(R(62, 117, 9, 0.7, STONE_LINE)), E(107, 120, 4, 2.6, STONE), E(52, 121, 3, 1.6, STONE_LIGHT),
@@ -490,11 +628,33 @@ function ruinarchArt() {
   });
 }
 
+// Vines hanging from the ruined arch, swinging from where they root (`f` a lean pose).
+function ruinvinesArt(f) {
+  return art(`ruinvines|${f}`, 112, 122, () => {
+    const out = [];
+    const sway = (f - 2) * 1.1;
+    for (const [k, len] of [[4, 22], [7, 14], [10, 26], [12, 12]]) {
+      const a = Math.PI + ((Math.PI * 0.62) * k) / 14;
+      const x = 56 + Math.cos(a) * 35;
+      const y = 40 + Math.sin(a) * 29;
+      const path = [];
+      // Root still, tip swinging furthest.
+      for (let j = 0; j <= 6; j++) path.push([x + Math.sin(j * 1.2 + k) * 1.4 + sway * (j / 6) ** 1.5 * (len / 20), y + 5 + (len * j) / 6]);
+      out.push(band(path, () => 0.7, VINE));
+      for (let j = 1; j <= 6; j += 2) out.push(...ringed(path[j][0] + (j % 4 ? 1.4 : -1.4), path[j][1], 1.6, 1.1, MOSS, 0.4));
+    }
+    return out;
+  });
+}
+
 function ruinpillarArt() {
   return art('ruinpillar', 40, 112, () => {
     const out = [R(4, 102, 26, 10, STONE_LIGHT), R(6, 98, 22, 5, STONE),
       T([[8, 99], [8, 26], [10, 19], [14, 22.4], [17, 14], [21, 20], [24, 16.4], [26, 22], [26, 99]], STONE)];
-    for (const x of [11.6, 16.6, 21.6]) out.push(F(R(x, 26, 1, 70, STONE_LINE)));
+    // Fluting: each groove lit on its right lip (light from the upper left), the far face in shadow.
+    const pr = ramp(STONE, 0.8);
+    for (const x of [11.6, 16.6, 21.6]) out.push(F(R(x, 26, 1, 70, STONE_LINE)), F(R(x + 1, 26, 0.6, 70, '#ffffff')));
+    out.push(F(R(22.6, 22, 3.4, 77, pr.sh)), F(R(6, 98, 22, 1, '#ffffff')), F(R(23, 98, 5, 5, pr.sh)), F(R(4, 102, 26, 1, '#ffffff')), F(R(24, 102, 6, 10, pr.sh)));
     out.push(F(R(8, 60, 18, 0.8, STONE_LINE)),
       F(band([[18, 30], [15.6, 40], [19, 48], [16.6, 56]], (u) => 0.9 - u * 0.5, '#b4a6dc')), F(band([[11, 72], [13.4, 80]], () => 0.5, '#b4a6dc')));
     // Moss on the break and ivy climbing up one side.
@@ -513,11 +673,15 @@ function statueArt() {
   return art('statue', 48, 86, () => {
     const st = '#e4ddf3';
     const deep = '#cbc0e6';
-    const out = [R(9, 60, 30, 23, '#dcd4ef'), R(5, 56, 38, 5, STONE_LIGHT), R(5, 82, 38, 4, STONE_LIGHT),
+    const pr = ramp('#dcd4ef', 0.8);
+    const out = [R(9, 60, 30, 23, '#dcd4ef'), F(R(33, 60, 6, 23, pr.sh)), R(5, 56, 38, 5, STONE_LIGHT), F(R(5, 56, 38, 1, '#ffffff')), F(R(36, 56, 7, 5, pr.sh)), F(R(9, 61, 30, 1.2, pr.deep)),
+      R(5, 82, 38, 4, STONE_LIGHT), F(R(5, 82, 38, 0.8, '#ffffff')), F(R(36, 82, 7, 4, pr.sh)),
       F(R(15, 66, 18, 9, deep)), F(R(17, 69, 14, 0.8, '#b4a6dc')), F(R(17, 71.6, 10, 0.8, '#b4a6dc')),
       F(band([[11, 62], [13, 68], [11.4, 74]], () => 0.5, '#b4a6dc'))];
     // The owl: round body, ear tufts, folded wings, sleepy carved eyes.
-    out.push(E(24, 42, 13, 15, st), E(24, 23, 12.4, 10, st), T([[13, 18], [11, 7], [19.6, 14]], st), T([[35, 18], [37, 7], [28.4, 14]], st),
+    const sr = ramp(st, 0.8);
+    out.push(E(24, 42, 13, 15, sr.sh), F(E(22.4, 40.6, 11.4, 13.6, st)), E(24, 23, 12.4, 10, sr.sh), F(E(22.6, 22, 11, 8.8, st)), F(E(18, 17.6, 4, 2, sr.hi)),
+      T([[13, 18], [11, 7], [19.6, 14]], st), T([[35, 18], [37, 7], [28.4, 14]], sr.sh),
       E(12.6, 44, 4, 10, deep), E(35.4, 44, 4, 10, deep), F(E(24, 46, 7.6, 9, '#f2eefa')),
       F(E(19, 23, 4.6, 4.6, '#f4f0fb')), F(E(29, 23, 4.6, 4.6, '#f4f0fb')), arc(19, 22.6, 2.2, 1.6, 20, 160, 0.8, '#8f80b8'), arc(29, 22.6, 2.2, 1.6, 20, 160, 0.8, '#8f80b8'),
       F(T([[22.4, 26], [25.6, 26], [24, 29.6]], '#d9c6a0')), E(19.6, 56, 2.6, 1.4, deep), E(28.4, 56, 2.6, 1.4, deep));
@@ -542,14 +706,7 @@ function crystalspireArt(v) {
   const { c } = CRYSTALS[v];
   return art(`crystalspire|${v}`, 72, 132, () => {
     const out = [];
-    // Each crystal: a prism split into a lit facet and a shaded one, with a shine sliver.
-    const prism = (x, w, top, tip, bot, col, lean = 0) => {
-      const L = x - w / 2;
-      const Rr = x + w / 2;
-      out.push(T([[L, bot], [L + lean * 0.6, top], [x + lean, tip], [Rr + lean * 0.6, top], [Rr, bot]], col));
-      out.push(F(T([[x, bot], [x + lean * 0.8, top + (tip - top) * 0.2], [x + lean, tip], [Rr + lean * 0.6, top], [Rr, bot]], shade(col, -9))));
-      out.push(F(T([[L + w * 0.18, bot - 4], [L + w * 0.18 + lean * 0.6, top + 2], [L + w * 0.32 + lean * 0.7, top - (top - tip) * 0.4], [L + w * 0.32, bot - 10]], mix(col, '#ffffff', 0.6))));
-    };
+    const prism = (x, w, top, tip, bot, col, lean = 0) => out.push(...crystal(x, w, top, tip, bot, ramp(col), lean));
     prism(10, 10, 100, 86, 128, shade(c, 6), -4);
     prism(62, 10, 98, 86, 128, shade(c, 4), 5);
     prism(19, 14, 70, 50, 126, c, -5);
@@ -558,8 +715,12 @@ function crystalspireArt(v) {
     prism(28, 9, 104, 92, 128, mix(c, '#ffc6f0', 0.4), -2);
     prism(46, 8, 108, 98, 128, mix(c, '#ffffff', 0.3), 2);
     // Rocky base with smaller crystal chips.
-    out.push(...ringed(36, 126, 32, 5.4, '#8f80c6', 0.8), ...ringed(8, 125, 7, 4, '#9a8cd0', 0.6), ...ringed(64, 125.4, 7, 3.6, '#9a8cd0', 0.6), F(E(26, 124, 8, 1.4, '#a99ce0')),
-      diamond(4, 120, 2, 4, c), diamond(68, 121, 1.8, 3.4, c), F(E(36, 129.4, 26, 1.2, '#7a6cb4')));
+    // Rocky base: faceted chunks, each lit on its upper-left face.
+    const rk = ramp('#9a8cd0');
+    const chunk = (x, w, h, y = 131) => [T([[x - w / 2, y], [x - w / 2 + 1, y - h * 0.7], [x - w * 0.15, y - h], [x + w * 0.35, y - h * 0.85], [x + w / 2, y - h * 0.3], [x + w / 2, y]], rk.sh),
+      F(T([[x - w / 2 + 1, y - h * 0.7], [x - w * 0.15, y - h], [x + w * 0.1, y - h * 0.6], [x - w / 2 + 1.2, y - h * 0.3]], rk.hi)), F(T([[x + w * 0.1, y - h * 0.6], [x + w * 0.35, y - h * 0.85], [x + w / 2, y - h * 0.3], [x + w / 2, y], [x + w * 0.05, y]], rk.deep))];
+    out.push(...chunk(36, 60, 7), ...chunk(8, 15, 9), ...chunk(64, 14, 8), ...chunk(24, 16, 5.4), ...chunk(48, 14, 5),
+      diamond(4, 120, 2, 4, c), diamond(68, 121, 1.8, 3.4, c));
     return out;
   });
 }
@@ -572,7 +733,9 @@ function stalagmiteArt() {
     const out = [T([[3, 92], [xl(70), 70], [xl(52), 52], [xl(32), 32], [xl(14), 14], [20, 3], [21, 1], [22, 3], [xr(14), 14], [xr(32), 32], [xr(52), 52], [xr(70), 70], [39, 92]], rock),
       E(10, 78, 6, 7, rock), E(32, 68, 5, 8, rock)];
     for (const [y0, y1, c] of [[24, 26, '#9484c8'], [44, 47, '#9484c8'], [62, 65, '#9484c8'], [80, 83, '#9484c8']]) out.push(F(strip(xl, xr, y0, y1, c)));
-    out.push(F(T([[19.4, 6], [20.6, 6], [17, 40], [14, 72], [11.4, 72], [14.6, 40]], '#bfb2e6')), F(E(21, 4, 1, 2, '#d6ccf5')));
+    const rr = ramp(rock);
+    out.push(F(T([[22, 4], [xr(14) - 1, 14], [xr(32) - 1, 32], [xr(52), 52], [xr(70), 70], [39, 92], [30, 92], [27, 70], [25, 40]], rr.sh)),
+      F(T([[19.4, 6], [20.6, 6], [17, 40], [14, 72], [11.4, 72], [14.6, 40]], rr.hi)), F(E(21, 4, 1, 2, '#d6ccf5')));
     // Crystals growing out of the sides, and specks set in the rock.
     out.push(T([[31, 58], [37, 50], [38.6, 52.6], [33, 60]], '#a8f0ff'), T([[31, 62], [39, 60], [39, 62.6], [32, 64]], '#c9f6ff'), F(T([[32, 58], [36.6, 52], [37, 53]], '#ffffff')),
       T([[8, 86], [2, 76], [4.2, 75], [10, 84]], '#ffc6f0'), T([[10, 85], [8.4, 74], [11, 74.4], [12, 84]], '#ffdaf6'));
@@ -592,7 +755,8 @@ const CLOUD_LINE = '#dfe3ff';
 function cloudpillarArt() {
   return art('cloudpillar', 82, 108, () => {
     const out = [];
-    const puff = (x, y, rx, ry) => out.push(F(E(x, y, rx + 1, ry + 1, CLOUD_LINE)), E(x, y, rx, ry, CLOUD));
+    // Each puff sits in a cool lavender shade, its lit body up and to the left.
+    const puff = (x, y, rx, ry) => out.push(F(E(x, y, rx + 1, ry + 1, CLOUD_LINE)), E(x, y, rx, ry, '#e8e8fb'), F(E(x - rx * 0.12, y - ry * 0.16, rx * 0.86, ry * 0.8, CLOUD)));
     // A column of puffs: wide at the foot, pinched in the middle, swelling to cup the island.
     for (const [x, y, rx, ry] of [
       [26, 14, 14, 9], [56, 14, 14, 9], [41, 10, 15, 9],
@@ -614,16 +778,26 @@ function skyislandArt() {
     const out = [T([[6, 25], [76, 25], [66, 34], [52, 46], [42, 50], [30, 44], [16, 34]], earth),
       F(T([[14, 31], [68, 31], [65, 33], [17, 33]], '#cdb8f5')), F(T([[24, 38.6], [58, 38.6], [54, 41], [28, 41]], '#cdb8f5')),
       F(R(33, 34, 0.8, 7, '#a8e0b0')), F(R(48, 34, 0.8, 9, '#a8e0b0')), F(R(58, 30, 0.8, 5, '#a8e0b0')),
-      E(41, 25, 36, 6, '#9fe0b0'), F(E(30, 22.4, 12, 2, '#c4f2cf'))];
+      F(T([[52, 25], [76, 25], [66, 34], [52, 46], [46, 48.6]], ramp(earth).sh)),
+      E(41, 25, 36, 6, '#8fd6a6'), F(E(39, 24.2, 33, 4.8, '#9fe0b0')), F(E(30, 22.4, 12, 2, '#c4f2cf'))];
     // A blossom tree, a bit of fence, and flowers.
-    out.push(R(17, 8, 3, 16, '#c9a27a'), ...ringed(18.6, 8, 11, 7.6, '#ffc6de', 0.7), ...ringed(11, 12, 5, 4, '#ffb3d1', 0.6), F(E(14, 5, 3.4, 1.4, '#ffe6f0')),
-      F(E(22, 10, 1, 1, '#ffffff')), F(E(13, 9, 1, 1, '#ffffff')), F(E(25, 5, 1, 1, '#ffffff')));
+    out.push(R(17, 8, 3, 16, '#c9a27a'), F(R(18.8, 8, 1.2, 16, '#a9826a')));
     for (const x of [50, 57, 64, 71]) out.push(R(x - 1, 14, 2, 10, '#fff4e0'), E(x, 14, 1, 1, '#fff4e0'));
     out.push(R(48, 16.6, 25, 1.4, '#fff4e0'), R(48, 20, 25, 1.4, '#fff4e0'));
     for (const [x, c] of [[30, '#ff9ec0'], [36, '#ffe36b'], [42, '#c9a6ff'], [55, '#ff9ec0'], [67, '#8fd3ff']]) {
       out.push(R(x - 0.4, 19, 0.8, 4, '#6cc070'), ...bloom(x, 18.4, 1.3, c));
     }
     return out;
+  });
+}
+
+// The sky island's blossom crown, leaning with the wind (`f` a lean pose).
+function skycrownArt(f) {
+  return art(`skycrown|${f}`, 82, 50, () => {
+    const d = (f - 2) * 0.6;
+    const r = ramp('#ffc6de');
+    return [...foliage(18.6 + d, 8, 11, 7.6, r, 3, { tips: 3 }), ...foliage(11 + d * 0.7, 12, 5, 4, ramp('#ffb3d1'), 5, { flat: true }),
+      F(E(22 + d, 10, 1, 1, '#ffffff')), F(E(13 + d, 9, 1, 1, '#ffffff')), F(E(25 + d, 5, 1, 1, '#ffffff'))];
   });
 }
 
@@ -634,7 +808,8 @@ function skygazeboArt() {
     const out = [R(3, 85, 86, 7, '#eceaff'), R(9, 79, 74, 7, white), F(R(9, 84, 74, 0.8, '#e0dcfa')), F(R(3, 88.6, 86, 0.8, '#d6d2f2'))];
     // Columns with capitals and fluting.
     for (const x of [15, 33, 59, 77]) {
-      out.push(R(x - 3, 38, 6, 42, white), R(x - 4.4, 36, 8.8, 3, '#f4f0ff'), R(x - 4, 76, 8, 3.4, '#f4f0ff'), F(R(x - 1.2, 40, 0.7, 35, '#e6e2fa')), F(R(x + 0.8, 40, 0.7, 35, '#e6e2fa')));
+      out.push(R(x - 3, 38, 6, 42, white), R(x - 4.4, 36, 8.8, 3, '#f4f0ff'), R(x - 4, 76, 8, 3.4, '#f4f0ff'), F(R(x - 1.2, 40, 0.7, 35, '#e6e2fa')), F(R(x + 0.8, 40, 0.7, 35, '#e6e2fa')),
+        F(R(x + 1.6, 38, 1.4, 42, '#e2ddf8')), F(R(x + 2, 36, 2.4, 3, '#e2ddf8')));
     }
     // Low railings on the sides; the middle is open.
     for (const [a, b] of [[15, 33], [59, 77]]) {
@@ -644,13 +819,15 @@ function skygazeboArt() {
     // Lintel with a garland, a bell, and the dome.
     out.push(R(7, 30, 78, 7, '#fbf8ff'), F(R(7, 35.4, 78, 0.8, '#e6e2fa')));
     for (let i = 0; i < 9; i++) out.push(arc(12 + i * 8.5, 37, 4.2, 3.4, 20, 160, 0.8, '#9fe0b0'), F(E(12 + i * 8.5 + 4.25, 37, 1.2, 1.2, i % 2 ? '#ffe36b' : '#ff9ec0')));
-    out.push(R(45.4, 37, 1.2, 7, '#e6c9a0'), T([[42.6, 50], [43.6, 44.6], [46, 43], [48.4, 44.6], [49.4, 50]], '#ffe36b'), F(E(46, 50.6, 1, 1, '#ffb347')), F(R(44, 45, 1, 4, '#fff6c9')));
+
     const dome = [];
     for (let i = 0; i <= 16; i++) {
       const a = Math.PI + (Math.PI * i) / 16;
       dome.push([46 + Math.cos(a) * 41, 31 + Math.sin(a) * 23]);
     }
-    out.push(T(dome, roof));
+    // Light from the upper left: the dome's right shoulder in its rose shadow.
+    const rr = ramp(roof, 0.8);
+    out.push(T(dome, roof), F(T(dome.slice(10).concat([[46 + 41 * 0.35, 31]]), rr.sh)));
     for (const k of [-2, -1, 0, 1, 2]) {
       const bx = 46 + k * 15.4;
       out.push(F(T([[46 + k * 1.2, 9], [46 + k * 1.2 + 1, 9], [bx + 1.4, 30], [bx - 0.4, 30]], '#ffd6ea')));
@@ -669,38 +846,80 @@ function skygazeboArt() {
   });
 }
 
+// The gazebo's bell, hanging from the lintel (pivot at 46, 37).
+function bellArt() {
+  return art('skybell', 92, 92, () => [
+    R(45.4, 37, 1.2, 7, '#e6c9a0'), T([[42.6, 50], [43.6, 44.6], [46, 43], [48.4, 44.6], [49.4, 50]], '#ffe36b'), F(T([[46.6, 43.2], [48.4, 44.6], [49.4, 50], [47, 50]], '#f0b84a')),
+    F(R(42.6, 49.2, 6.8, 0.8, '#e0a040')), F(E(46, 50.8, 1, 1, '#c98a3c')), F(R(44, 45, 1, 4, '#fff6c9')),
+  ]);
+}
+
 // ---------- Grove ----------
 
 const LANTERN_COLORS = ['#ffd27a', '#ff9ec0', '#9fe0ff', '#c9a6ff'];
 
-function lanterntreeArt() {
-  return art('lanterntree', 104, 152, () => {
-    const bark = '#a5809f';
+// The lantern tree is rigged like the great tree: a still trunk with its long boughs, and three
+// canopy layers riding the wind in turn. The lanterns swing from the boughs on their own.
+const LANTERN_CLUMPS = [
+  [[30, 62, 20, 14], [74, 60, 20, 14], [52, 42, 36, 26], [52, 16, 22, 15]],
+  [[36, 34, 20, 16], [68, 34, 20, 16], [52, 58, 24, 13], [52, 12, 16, 10]],
+  [[44, 22, 12, 9], [64, 24, 11, 8], [34, 50, 10, 7], [72, 48, 10, 7], [52, 40, 12, 8]],
+];
+function lanterntrunkArt() {
+  return art('lanterntrunk', 104, 152, () => {
+    const r = ramp('#a5809f');
     const out = [];
-    for (const [path, w] of [[[[46, 134], [34, 145], [18, 152.6]], 5], [[[58, 134], [70, 145], [86, 152.6]], 5], [[[50, 144], [42, 152.6]], 3]]) out.push(band(path, (u) => w * (1 - u) + 1, bark));
-    out.push(band([[52, 154], [48, 134], [54, 114], [49, 94], [52, 76]], (u) => 12 - u * 6, bark));
+    for (const [path, w] of [[[[46, 134], [34, 145], [18, 152.6]], 5], [[[58, 134], [70, 145], [86, 152.6]], 5], [[[50, 144], [42, 152.6]], 3]]) out.push(...bark(path, (u) => w * (1 - u) + 1, r, w, 1));
+    out.push(...bark([[52, 154], [50, 144], [48, 134], [51, 124], [54, 114], [51.6, 104], [49, 94], [50.6, 85], [52, 76]], (u) => 12 - u * 6, r, 2, 6));
     // Long boughs reaching out to hold lanterns.
-    out.push(band([[49, 98], [36, 90], [22, 90], [10, 96]], (u) => 3.6 - u * 2.2, bark), band([[55, 90], [70, 82], [84, 82], [95, 89]], (u) => 3.6 - u * 2.2, bark));
-    out.push(F(band([[47, 140], [45.4, 126], [49, 110], [46, 96]], () => 1, '#c4a2bc')), F(band([[56, 128], [57, 114]], () => 0.7, '#7f5f80')));
-    // Canopy: deep teal at the back to mint in front, flecked with glowing buds.
-    for (const [x, y, rx, ry] of [[30, 62, 20, 14], [74, 60, 20, 14], [52, 42, 36, 26], [52, 16, 22, 15]]) out.push(...ringed(x, y, rx, ry, '#4f9c9c'));
-    for (const [x, y, rx, ry] of [[36, 34, 20, 16], [68, 34, 20, 16], [52, 58, 24, 13], [52, 12, 16, 10]]) out.push(...ringed(x, y, rx, ry, '#6dc0ac'));
-    for (const [x, y, rx, ry] of [[44, 22, 12, 9], [64, 24, 11, 8], [34, 50, 10, 7], [72, 48, 10, 7], [52, 40, 12, 8]]) out.push(...ringed(x, y, rx, ry, '#9fe2c4'), F(E(x - rx * 0.3, y - ry * 0.4, rx * 0.4, ry * 0.25, '#cdf5e0')));
-    for (const [x, y] of [[24, 46], [40, 64], [64, 66], [82, 54], [58, 28], [30, 28], [76, 36], [48, 6], [70, 14], [20, 60]]) out.push(F(E(x, y, 1.4, 1.4, '#fff6c9')), F(E(x, y, 0.6, 0.6, '#ffffff')));
+    out.push(...bark([[49, 98], [36, 90], [22, 90], [10, 96]], (u) => 3.6 - u * 2.2, r, 4, 1), ...bark([[55, 90], [70, 82], [84, 82], [95, 89]], (u) => 3.6 - u * 2.2, r, 5, 1));
+    out.push(F(E(46, 80, 6, 3, r.sh)), F(E(57, 79, 6, 3, r.sh)));
     // A round window glowing in the trunk, and glowing mushrooms at the roots.
-    out.push(E(51, 116, 4.4, 5, '#7f5f80'), F(E(51, 116, 3.2, 3.8, '#ffe6a0')), F(R(50.6, 112.4, 0.8, 7.4, '#7f5f80')), F(R(47.8, 115.6, 6.4, 0.8, '#7f5f80')));
-    out.push(R(29, 146, 2.4, 6, '#e6f4ff'), E(30.2, 146, 4, 2.6, '#7fe6d6'), F(E(29, 145.4, 1, 0.6, '#ffffff')), R(72, 147, 2, 5, '#e6f4ff'), E(73, 147, 3.2, 2, '#ffb0d0'),
+    out.push(E(51, 116, 4.4, 5, r.deep), F(E(51, 116, 3.2, 3.8, '#ffe6a0')), F(E(52, 117, 2.2, 2.6, '#ffd27a')), F(R(50.6, 112.4, 0.8, 7.4, r.deep)), F(R(47.8, 115.6, 6.4, 0.8, r.deep)));
+    out.push(R(29, 146, 2.4, 6, '#e6f4ff'), E(30.2, 146, 4, 2.6, '#7fe6d6'), F(E(31.4, 146.8, 2.6, 1.2, '#5fc8c0')), F(E(29, 145.4, 1, 0.6, '#ffffff')), R(72, 147, 2, 5, '#e6f4ff'), E(73, 147, 3.2, 2, '#ffb0d0'),
       tuft(38, 152, '#9fe0b0'), tuft(64, 152, '#8fd6a6'));
     return out;
   });
 }
+function lanterncanopyArt(layer) {
+  return art(`lanterncanopy|${layer}`, 104, 80, () => {
+    const r = ramp(['#4f9c9c', '#6dc0ac', '#94dcbe'][layer]);
+    const out = [];
+    LANTERN_CLUMPS[layer].forEach(([x, y, rx, ry], i) => out.push(...foliage(x, y, rx, ry, r, 11 + layer * 7 + i * 1.3, { tips: layer === 2 ? 2 : 4 })));
+    // Glowing buds.
+    for (const [x, y] of [[24, 46], [40, 64], [64, 66], [82, 54], [58, 28], [30, 28], [76, 36], [48, 6], [70, 14], [20, 60]].filter((_, i) => i % 3 === layer)) {
+      out.push(F(E(x, y, 1.4, 1.4, '#fff6c9')), F(E(x, y, 0.6, 0.6, '#ffffff')));
+    }
+    return out;
+  });
+}
+function drawLanterntree(ctx, x, y, time, seed, wx) {
+  place(ctx, lanterntrunkArt(), x, y);
+  for (let layer = 0; layer < 3; layer++) {
+    const k = [0.5, 0.8, 1.1][layer];
+    const l = lean(time, wx, layer * 0.18, seed);
+    blit(ctx, lanterncanopyArt(layer), snap(x - 52 + l * 1.5 * k), snap(y - 152 + Math.abs(l) * 0.3 * k));
+  }
+  glow(ctx, x - 1, y - 36, 12, '#ffe6a0', 0.35 * flicker(time, seed));
+  // Each lantern swings from its bough a moment after the bough moves, and its flame flickers.
+  TREE_LANTERNS.forEach(([dx, dy, len, ci], i) => {
+    const c = LANTERN_COLORS[ci];
+    const a = swing(time, wx + dx, 1, seed + i * 1.7);
+    const px = x + dx;
+    const py = y + dy;
+    pivoted(ctx, px, py, a, () => blit(ctx, hangLanternArt(c, len), snap(px - 5), snap(py)));
+    const gx = px - Math.sin(a) * (len + 6.6);
+    glow(ctx, gx, py + len + 6.6, 16, c, 0.45 * flicker(time, seed + i));
+  });
+}
+
 // Where the lantern tree's lanterns hang from (offsets from its bottom center), string length, color.
 const TREE_LANTERNS = [[-42, -56, 8, 0], [-26, -62, 14, 1], [-14, -76, 6, 2], [14, -77, 9, 3], [26, -70, 5, 0], [43, -63, 10, 2]];
 
 function hangLanternArt(c, len) {
   return art(`lmlantern|${c}|${len}`, 10, len + 12, () => [
     R(4.6, 0, 0.8, len + 1, '#e6d6c4'), T([[1.4, len + 3], [5, len + 0.6], [8.6, len + 3]], '#7f5f80'),
-    E(5, len + 6.6, 4, 4.2, c), F(E(3.8, len + 5.4, 1.1, 2, '#fff6dc')), F(R(1.4, len + 6.6, 7.2, 0.6, shade(c, -10))), R(3.6, len + 10.4, 2.8, 1.4, '#7f5f80'),
+    E(5, len + 6.6, 4, 4.2, ramp(c).sh), F(E(4.4, len + 6.2, 3.4, 3.8, c)), F(E(3.8, len + 5.4, 1.1, 2, '#fff6dc')), F(R(1.4, len + 6.6, 7.2, 0.6, shade(c, -10))), R(3.6, len + 10.4, 2.8, 1.4, '#7f5f80'),
   ]);
 }
 
@@ -708,7 +927,8 @@ function moonstoneArt() {
   return art('moonstone', 42, 72, () => {
     const st = '#bdb3dc';
     const out = [T([[6, 72], [5, 42], [7, 24], [12, 11], [20, 4], [28, 6], [34, 16], [37, 34], [37, 72]], st),
-      F(T([[10, 66], [9, 40], [11, 24], [15, 14], [17, 13], [13, 26], [12, 42], [13, 66]], '#d4ccec')),
+      F(T([[27, 72], [29, 40], [27, 20], [28, 6], [34, 16], [37, 34], [37, 72]], ramp(st).sh)), F(T([[33, 72], [35, 40], [34, 22], [36, 26], [37, 34], [37, 72]], ramp(st).deep)),
+      F(T([[10, 66], [9, 40], [11, 24], [15, 14], [17, 13], [13, 26], [12, 42], [13, 66]], ramp(st).hi)),
       F(band([[31, 20], [29, 28], [32, 34]], () => 0.5, '#9a8fc4')), F(band([[12, 52], [15, 58]], () => 0.5, '#9a8fc4'))];
     // The carved ring and glowing crescent.
     out.push(F(arc(21.5, 34, 10, 10, 0, 360, 0.9, '#9a8fc4')), F(E(21, 34, 7.4, 7.4, '#6fdcf4')), F(E(21.4, 34, 6, 6, '#c9f6ff')), F(E(24.6, 31.4, 6.2, 6.2, st)));
@@ -733,6 +953,13 @@ function lighthouseArt() {
     const xr = edge([[42, 36], [150, 41]]);
     const out = [strip(xl, xr, 42, 150, '#ffffff')];
     for (const y of [54, 82, 110, 138]) out.push(strip(xl, xr, y, Math.min(150, y + 14), '#ff8fa8'));
+    // A round tower lit from the upper left: a lit band down the left, shade turning around the
+    // right (each paint in its own ramp), and the stones' courses hinted in the white.
+    const xs = (k) => (y) => xl(y) + (xr(y) - xl(y)) * k;
+    out.push(F(strip(xs(0.68), xr, 42, 150, '#e6e2f6')), F(strip(xs(0.88), xr, 42, 150, '#d2cbee')));
+    for (const y of [54, 82, 110, 138]) out.push(F(strip(xs(0.68), xr, y, Math.min(150, y + 14), '#ee7f9e')), F(strip(xs(0.88), xr, y, Math.min(150, y + 14), '#d86e94')));
+    out.push(F(strip(xs(0.08), xs(0.16), 42, 150, '#fff6fa')));
+    for (const y of [47, 75, 103, 131]) out.push(F(strip(xs(0.2), xs(0.6), y, y + 0.6, '#ece6f6')));
     // Windows and the door.
     for (const y of [72, 100]) out.push(E(26, y, 3, 4, '#9fb8ff'), F(E(26, y, 2, 3, '#fff3a6')), F(R(25.6, y - 3, 0.8, 6, '#9fb8ff')));
     out.push(R(21, 132, 10, 16, '#9fb8ff'), E(26, 132, 5, 4, '#9fb8ff'), F(R(25.6, 130, 0.8, 18, '#7f98e6')), F(E(29, 140, 0.8, 0.8, '#ffe36b')));
@@ -758,10 +985,13 @@ function cratesArt(frame) {
   const tail = [-1, 0, 1][frame];
   return art(`crates|${frame}`, 72, 52, () => {
     const out = [];
+    // A slatted crate: plank boards with grain, a frame lit along its top and left edges, a
+    // diagonal brace, and the right side of the box in shadow.
     const crate = (x, y, s, c) => {
-      out.push(R(x, y, s, s, c), F(R(x + 1.2, y + 1.2, s - 2.4, 1.4, shade(c, 8))), F(R(x, y + s * 0.5 - 0.6, s, 1.2, shade(c, -14))),
-        F(T([[x + 2, y + 2.4], [x + 3.6, y + 2.4], [x + s - 2, y + s - 2.4], [x + s - 3.6, y + s - 2.4]], shade(c, -8))),
-        F(R(x, y, 1.2, s, shade(c, -16))), F(R(x + s - 1.2, y, 1.2, s, shade(c, -16))));
+      const r = ramp(c, 0.8);
+      out.push(...planks(x, y, s, s, r, 4, x + y, true), F(R(x + s - 2.4, y, 2.4, s, r.sh)),
+        F(T([[x + 2, y + 2.4], [x + 3.8, y + 2.4], [x + s - 2, y + s - 2.6], [x + s - 3.8, y + s - 2.6]], r.sh)), F(T([[x + 2, y + 2.4], [x + 2.8, y + 2.4], [x + s - 3, y + s - 2.6], [x + s - 3.8, y + s - 2.6]], r.hi)),
+        F(R(x, y, s, 1.2, r.hi)), F(R(x, y, 1.2, s, mix(r.base, r.hi, 0.5))), F(R(x, y + s - 1.2, s, 1.2, r.deep)), F(R(x + s - 1.2, y, 1.2, s, r.deep)));
     };
     crate(2, 26, 26, '#e6b98a');
     crate(28, 30, 22, '#dcae80');
@@ -814,13 +1044,9 @@ function dome(cx, y, rx, ry, c, n = 14) {
   return T(pts, c);
 }
 
-// A crystal prism split into a lit facet and a shaded one, with a shine sliver.
+// A crystal prism in four facet tones (see propkit `crystal`).
 function prism(out, x, w, top, tip, bot, col, lean = 0) {
-  const L = x - w / 2;
-  const Rr = x + w / 2;
-  out.push(T([[L, bot], [L + lean * 0.6, top], [x + lean, tip], [Rr + lean * 0.6, top], [Rr, bot]], col));
-  out.push(F(T([[x, bot], [x + lean * 0.8, top + (tip - top) * 0.2], [x + lean, tip], [Rr + lean * 0.6, top], [Rr, bot]], shade(col, -9))));
-  out.push(F(T([[L + w * 0.18, bot - 2], [L + w * 0.18 + lean * 0.6, top + 2], [L + w * 0.32 + lean * 0.7, top - (top - tip) * 0.4], [L + w * 0.32, bot - 6]], mix(col, '#ffffff', 0.6))));
+  out.push(...crystal(x, w, top, tip, bot, ramp(col), lean));
 }
 
 // A soft glow squashed into an oval (glow on a pool's surface).
@@ -859,6 +1085,7 @@ function barnArt() {
     const deep = '#e8778b';
     const roof = '#b97aa0';
     const white = '#fffaf2';
+    const rr = ramp(red, 0.8);
     const out = [];
     // Walls and the gable, with planks running up.
     out.push(T([[14, 97], [14, 50], [24, 31], [55, 15], [86, 31], [96, 50], [96, 97]], red));
@@ -866,8 +1093,11 @@ function barnArt() {
     for (let x = 20; x < 95; x += 6) {
       const segs = x > 34 && x < 76 ? [[roofY(x) + 3, x > 42 && x < 68 ? 20 : 60]] : [[roofY(x) + 3, 95]];
       if (x > 42 && x < 68) segs.push([42, 60]);
-      for (const [a, b] of segs) if (b > a) out.push(F(R(x, a, 0.7, b - a, shade(red, -7))));
+      for (const [a, b] of segs) if (b > a) out.push(F(R(x, a, 0.7, b - a, rr.sh)), F(R(x + 0.7, a, 0.5, b - a, rr.hi)));
     }
+    // Light from the upper left: the right end of the wall in shadow, and the eaves' shadow
+    // across the top of the wall.
+    out.push(F(T([[84, 97], [84, 36], [86, 31], [96, 50], [96, 97]], rr.sh)), F(T([[14, 50], [24, 31], [55, 15], [86, 31], [96, 50], [96, 54], [86, 36], [55, 20], [24, 36], [14, 54]], rr.deep)));
     out.push(R(14, 50, 3, 46, white), R(93, 50, 3, 46, white), F(R(14, 59, 82, 1.6, white)));
     // The hayloft, doors swung open, stuffed with hay.
     out.push(R(37.6, 22.6, 6, 16.4, deep), R(66.4, 22.6, 6, 16.4, deep), F(band([[38.4, 23.6], [43, 38]], () => 0.5, white)), F(band([[71.6, 23.6], [67, 38]], () => 0.5, white)),
@@ -895,10 +1125,14 @@ function barnArt() {
     out.push(F(band([[13.4, 54], [26.2, 35.6], [55, 18], [83.8, 35.6], [96.6, 54]], () => 0.9, white)));
     out.push(T([...outer, ...[...inner].reverse()], roof));
     const lerpPath = (t) => outer.map(([x, y], i) => [x + (inner[i][0] - x) * t, y + (inner[i][1] - y) * t]);
-    out.push(F(band(lerpPath(0.38), () => 0.45, shade(roof, -10))), F(band(lerpPath(0.7), () => 0.45, shade(roof, -10))), F(band(lerpPath(0.16).slice(1, 4), () => 0.7, shade(roof, 12))));
+    // Shingle rows, the right-hand slopes in shadow, a lit ridge on the left.
+    const ro = ramp(roof, 0.8);
+    const half = (t0, t1) => [...lerpPath(t0).slice(2), ...lerpPath(t1).slice(2).reverse()];
+    out.push(F(T(half(0, 1), ro.sh)));
+    for (const t of [0.3, 0.55, 0.8]) out.push(F(band(lerpPath(t), () => 0.45, ro.deep)), F(band(lerpPath(t + 0.08).slice(0, 3), () => 0.35, ro.hi)));
+    out.push(F(band(lerpPath(0.12).slice(0, 3), () => 0.7, ro.hi)));
     // Stone footing.
-    out.push(R(11, 95, 88, 5, '#ddd6ec'));
-    for (const x of [18, 30, 46, 64, 80, 92]) out.push(F(R(x, 95.6, 0.6, 4, '#bdb3d4')));
+    out.push(...stones(11, 95, 88, 5, ramp('#ddd6ec', 0.7), 7, { rowH: 5, blockW: 11 }));
     // A hay bale, a chick, and grass.
     out.push(R(0.6, 87, 13, 11, '#ffd77a'), F(R(3.6, 87, 1, 11, '#d9a273')), F(R(9.6, 87, 1, 11, '#d9a273')), F(band([[2, 92], [6, 91.6], [12, 92.6]], () => 0.3, '#f0b452')),
       T([[0.6, 87], [2, 85.4], [3.4, 87.2], [5, 85.6], [7, 87], [9, 85.6], [11, 87], [13.6, 87]], '#ffe39a'));
@@ -943,7 +1177,12 @@ function haystackArt(v) {
       const y1 = Math.min(32, y0 + 8 + (k % 2) * 6);
       out.push(F(band([[x, y0], [x + (x - 23) * 0.08, y1]], () => 0.4, deep)));
     }
-    out.push(F(E(15, 17, 5, 2.6, '#fff0b8')), F(band([[4, 26], [14, 24], [23, 23.4], [32, 24], [42, 26]], () => 0.5, '#e8a85a')));
+    // The right flank turns into shadow (light from the upper left).
+    const hr = ramp(hay, 0.8);
+    const flank = [];
+    for (let x = 29; x <= 44; x += 1.5) flank.push([x, topAt(x) + 0.6]);
+    out.push(F(T([...flank, [44, 33.4], [31, 33.4]], hr.sh)));
+    out.push(F(E(15, 17, 5, 2.6, hr.hi)), F(band([[4, 26], [14, 24], [23, 23.4], [32, 24], [42, 26]], () => 0.5, hr.deep)));
     // Wisps on top and loose straw on the ground.
     out.push(T([[21, 8.6], [19, 4.4], [22.4, 7.6], [23.4, 3.6], [24.4, 7.8], [27, 5.4], [25.6, 9]], hay),
       F(band([[1, 33.4], [6, 32.6]], () => 0.35, deep)), F(band([[40, 32.8], [45, 33.6]], () => 0.35, deep)), F(band([[36, 33.6], [41, 33]], () => 0.35, hay)));
@@ -968,9 +1207,9 @@ function haystackArt(v) {
   });
 }
 
-function scarecrowArt(f) {
+function scarecrowArt(f, w) {
   const hop = [0, 4.2, 1.6][f];
-  return art(`scarecrow|${f}`, 36, 70, () => {
+  return art(`scarecrow|${f}|${w}`, 36, 70, () => {
     const wood = '#b88a5c';
     const straw = '#ffd77a';
     const shirt = '#9fc4ff';
@@ -997,7 +1236,10 @@ function scarecrowArt(f) {
     // The straw hat with a ribbon and a flower.
     out.push(T([[7, 12.6], [9, 15], [11, 12.8], [25, 12.8], [27, 15], [29, 12.6]], straw),
       E(18, 10.6, 13.4, 2.6, hat), T([[11.4, 10.4], [12.4, 3.4], [15, 1.4], [21, 1.4], [23.6, 3.4], [24.6, 10.4]], hat),
-      F(R(11.8, 6.6, 12.4, 2.2, '#ff9ec0')), F(E(15.6, 3, 3, 0.9, '#ffe39a')), ...bloom(22.4, 7.6, 1.5, '#ffffff'), F(band([[6, 11.6], [12, 12.4]], () => 0.3, '#e0a84e')));
+      F(R(11.8, 6.6, 12.4, 2.2, '#ff9ec0')), F(E(15.6, 3, 3, 0.9, '#ffe39a')), ...bloom(22.4, 7.6, 1.5, '#ffffff'), F(band([[6, 11.6], [12, 12.4]], () => 0.3, '#e0a84e')),
+      // The ribbon's tails stream off the hat with the wind, the tip trailing furthest.
+      band([[11.8, 7.6], [9.4 - w * 0.6, 8.6 + (2 - w) * 0.8], [7.2 - w * 1.2, 10 + (2 - w) * 1.4], [5.6 - w * 1.6, 11.2 + (2 - w) * 2]], (u) => 0.9 - u * 0.4, '#ff9ec0'),
+      F(T([[18, 26], [26, 26], [27, 49], [21, 49]], '#86aee8')));
     // The crow on the arm, hopping now and then.
     const cr = '#6f6590';
     const cy = 25.2 - hop;
@@ -1018,7 +1260,7 @@ function fenceArt(v) {
     const line = '#e6dccd';
     const out = [R(-1, 9, 66, 2.6, white), R(-1, 16, 66, 2.6, white), F(R(-1, 11, 66, 0.6, line)), F(R(-1, 18, 66, 0.6, line))];
     for (let x = 4; x < 64; x += 8) {
-      out.push(T([[x - 2.6, 23.6], [x - 2.6, 4], [x, 1.2], [x + 2.6, 4], [x + 2.6, 23.6]], white), F(R(x + 1.2, 4.6, 0.8, 18.6, line)));
+      out.push(T([[x - 2.6, 23.6], [x - 2.6, 4], [x, 1.2], [x + 2.6, 4], [x + 2.6, 23.6]], white), F(T([[x + 0.8, 23.6], [x + 0.8, 3], [x + 2.6, 4], [x + 2.6, 23.6]], '#efe6f2')), F(R(x + 1.8, 4.6, 0.8, 18.6, line)));
     }
     if (v === 1) {
       // A flowering vine along the top rail.
@@ -1047,7 +1289,10 @@ function cartArt() {
         T([[x - 1.4, y], [x - 3, y - 4.4], [x - 0.4, y - 1.4], [x, y - 5], [x + 0.6, y - 1.4], [x + 3, y - 4], [x + 1.4, y]], '#7fcf86'));
     };
     const pumpkin = (x, y, rx, ry, c, faceIt) => {
-      out.push(E(x, y, rx, ry, c), F(E(x - rx * 0.45, y, rx * 0.4, ry * 0.9, shade(c, -6))), F(E(x + rx * 0.45, y, rx * 0.4, ry * 0.9, shade(c, -6))), F(E(x, y, rx * 0.36, ry * 0.95, shade(c, 4))),
+      const r = ramp(c, 0.8);
+      // Ribs lit on the left, the right lobe in shadow; one light, no pillow shading.
+      out.push(E(x, y, rx, ry, r.sh), F(E(x - rx * 0.16, y - ry * 0.08, rx * 0.84, ry * 0.9, c)), F(E(x - rx * 0.45, y, rx * 0.4, ry * 0.9, r.hi)), F(E(x + rx * 0.5, y + ry * 0.1, rx * 0.36, ry * 0.8, r.sh)),
+        F(band([[x - 0.2, y - ry * 0.9], [x - 0.6, y], [x - 0.2, y + ry * 0.9]], () => 0.35, r.sh)),
         R(x - 0.7, y - ry - 2.2, 1.4, 2.8, '#6cc070'), F(E(x - rx * 0.4, y - ry * 0.5, rx * 0.25, ry * 0.18, '#fff0d8')));
       if (faceIt) out.push(...face(x, y + 0.4, rx * 0.36, 'happy', 'smile', 0.9));
     };
@@ -1059,7 +1304,7 @@ function cartArt() {
     pumpkin(29, 12, 8.4, 6.6, '#ffc07a', true);
     carrot(21, 9, 22, 18);
     // The bed.
-    out.push(R(4, 18, 46, 14, wood), F(R(4, 22.6, 46, 0.7, dark)), F(R(4, 27.2, 46, 0.7, dark)), R(2.6, 16.6, 48.8, 2.6, light), F(R(10, 18, 0.7, 14, dark)), F(R(44, 18, 0.7, 14, dark)),
+    out.push(...planks(4, 18, 46, 14, ramp(wood, 0.8), 3, 4, true), F(R(4, 30.4, 46, 1.6, ramp(wood, 0.8).sh)), R(2.6, 16.6, 48.8, 2.6, light), F(R(2.6, 16.6, 48.8, 0.7, '#fff0d6')), F(R(10, 18, 0.7, 14, dark)), F(R(44, 18, 0.7, 14, dark)),
       F(E(13, 25, 0.6, 0.6, '#8a5a3c')), F(E(41, 25, 0.6, 0.6, '#8a5a3c')), R(1.6, 17, 2.8, 15, dark));
     // Spoked wheels; the bed shows through between the spokes.
     for (const cx of [15, 39]) {
@@ -1083,8 +1328,9 @@ function cartArt() {
 
 // ---------- Flower field ----------
 
+// The stem bends from the root, the head swinging furthest (`frame` a wind pose, 0 ... 4).
 function giantflowerArt(v, frame, blink) {
-  const sway = [-1.6, 0, 1.6, 0][frame];
+  const sway = (frame - 2) * 0.9;
   return art(`giantflower|${v}|${frame}|${blink}`, 40, 90, () => {
     const out = [];
     const sx = (y) => sway * Math.pow(Math.max(0, (90 - y) / 66), 1.5);
@@ -1113,7 +1359,12 @@ function giantflowerArt(v, frame, blink) {
       const back = sun ? '#f5b73a' : '#e6e8ff';
       const n = sun ? 14 : 16;
       for (let k = 0; k < n; k++) out.push(petal(hx, hy, ((k + 0.5) / n) * Math.PI * 2, 5, sun ? 15.6 : 15, sun ? 3.2 : 2.4, back));
-      for (let k = 0; k < n; k++) out.push(petal(hx, hy, (k / n) * Math.PI * 2, 5, sun ? 17 : 16.4, sun ? 3.4 : 2.6, col));
+      // Petals facing away from the light (lower right) take the petal's shadow tone.
+      const away = (a) => Math.cos(a - Math.PI / 4) > 0.35;
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2;
+        out.push(petal(hx, hy, a, 5, sun ? 17 : 16.4, sun ? 3.4 : 2.6, away(a) ? ramp(col, 0.7).sh : col));
+      }
       for (let k = 0; k < n; k++) {
         const a = (k / n) * Math.PI * 2;
         out.push(F(band([[hx + Math.cos(a) * 8, hy + Math.sin(a) * 8], [hx + Math.cos(a) * 13, hy + Math.sin(a) * 13]], () => 0.3, sun ? '#f0b83a' : '#e0e2f6')));
@@ -1137,8 +1388,9 @@ function beehiveArt(blink) {
   return art(`beehive|${blink}`, 50, 80, () => {
     const out = [];
     // The stump the hive sits on.
-    for (const [path, w] of [[[[16, 74], [9, 78], [4, 80.4]], 3.4], [[[34, 74], [41, 78], [46, 80.4]], 3.4]]) out.push(band(path, (u) => w * (1 - u) + 1, BARK));
-    out.push(T([[11, 80.4], [13.4, 72], [14, 55], [36, 55], [36.6, 72], [39, 80.4]], BARK), F(band([[18, 60], [17.4, 76]], () => 0.7, BARK_LIGHT)), F(band([[31, 62], [32, 74]], () => 0.6, BARK_DEEP)),
+    const br = ramp(BARK);
+    for (const [path, w] of [[[[16, 74], [9, 78], [4, 80.4]], 3.4], [[[34, 74], [41, 78], [46, 80.4]], 3.4]]) out.push(...bark(path, (u) => w * (1 - u) + 1, br, w, 1));
+    out.push(T([[11, 80.4], [13.4, 72], [14, 55], [36, 55], [36.6, 72], [39, 80.4]], BARK), F(T([[29, 80.4], [30, 55], [36, 55], [36.6, 72], [39, 80.4]], br.sh)), F(band([[18, 60], [17.4, 76]], () => 0.7, br.hi)), F(band([[24, 62], [24.4, 70]], () => 0.4, br.deep)), F(band([[33, 62], [34, 74]], () => 0.5, br.deep)),
       E(25, 55, 11.4, 3.4, BARK_LIGHT), F(arc(25, 55, 7.6, 2.2, 0, 360, 0.5, '#c9946e')), F(E(25, 55, 2.6, 0.8, '#c9946e')));
     // The skep: stacked honey-gold coils, with a happy face and a round door.
     const yb = 54;
@@ -1149,6 +1401,8 @@ function beehiveArt(blink) {
     out.push(dome(25, yb, rx, ry, '#ffd66b', 16), E(25, yb - 0.4, rx, 2.6, '#ffd66b'));
     for (const [y0, y1] of [[19, 22.4], [27.4, 30.8], [43, 46.4]]) out.push(F(strip(xl, xr, y0, y1, '#f2b84b')));
     for (const y of [22.4, 30.8, 38, 46.4]) out.push(F(strip(xl, xr, y, y + 0.6, '#d99a3e')));
+    const hr = ramp('#ffd66b', 0.8);
+    out.push(F(strip((y) => xr(y) - (xr(y) - xl(y)) * 0.28, xr, 18, yb, hr.sh)), F(strip((y) => xr(y) - (xr(y) - xl(y)) * 0.1, xr, 24, yb, hr.deep)));
     out.push(F(T([[xl(26) + 2, 26], [xl(26) + 4.4, 26], [xl(48) + 4.6, 48], [xl(48) + 2.2, 48]], '#fff0a8')), F(E(21, 16.6, 2.6, 1.4, '#fff3b8')));
     out.push(...face(25, 34, 4.4, blink ? 'closed' : 'happy', 'smile', 1.3), E(25, 50.4, 3.6, 2.6, '#7a4e3e'), F(E(25, 51, 2.6, 1.6, '#5a3a32')),
       R(23.6, 52.4, 2.8, 1.6, '#e6a64a'));
@@ -1250,8 +1504,14 @@ function hollowlogArt() {
     // The log, its far end broken off in splinters.
     out.push(T([[14, 12], [102, 12.4], [108, 14], [104, 18], [111, 22], [105, 27], [112, 32], [106, 37], [109, 42], [100, 44.6], [14, 44.6]], bark),
       F(T([[103, 14], [107, 14.4], [104, 18], [109, 22], [104, 27], [110, 32], [105, 37], [107, 41.4], [103, 42]], wood)));
-    for (const y of [18, 24, 31, 37.6]) out.push(F(band([[24, y], [50, y + 0.8], [76, y - 0.4], [100, y + 0.4]], () => 0.45, deep)));
-    out.push(F(band([[22, 14.6], [60, 14.4], [98, 15]], () => 1.1, light)), F(band([[30, 41.6], [70, 42], [98, 41.4]], () => 1, deep)));
+    // A round log lit from above: a lit band along the top, the lower third in shadow, and bark
+    // grain in broken strokes running along it.
+    const lr = ramp(bark);
+    out.push(F(T([[14, 34], [104, 34.4], [106, 37], [109, 42], [100, 44.6], [14, 44.6]], lr.sh)));
+    for (const [y, x0, x1] of [[18, 26, 52], [19, 64, 92], [24, 34, 60], [25, 74, 99], [31, 22, 44], [30.6, 52, 80], [37.6, 30, 62], [38, 76, 98]]) {
+      out.push(F(band([[x0, y], [(x0 + x1) / 2, y + 0.5], [x1, y - 0.2]], (u) => 0.5 * Math.sin(Math.PI * (0.1 + u * 0.8)) + 0.1, y > 34 ? lr.deep : mix(lr.sh, lr.deep, 0.4))));
+    }
+    out.push(F(band([[22, 14.6], [60, 14.4], [98, 15]], () => 1.1, lr.hi)), F(band([[30, 42], [70, 42.4], [98, 41.8]], () => 1, lr.deep)));
     out.push(E(66, 30, 3.6, 2.4, deep), F(E(66, 30, 2, 1.2, '#6e5040')), F(E(65.4, 28.6, 2.4, 0.5, light)));
     // The open end: a ring of pale wood around a dark hollow.
     out.push(E(14, 28.4, 10.6, 16.4, wood), F(arc(14, 28.4, 8.8, 14.6, 0, 360, 0.5, '#e0b88a')), F(E(14.8, 28.6, 7.4, 13.4, '#4a3858')), F(E(15.6, 29.4, 5.6, 11, '#33263f')));
@@ -1279,9 +1539,12 @@ function stumphouseArt() {
       out.push(band(path, (u) => w * (1 - u) + 1.2, BARK));
     }
     out.push(T([[10, 90.6], [13.6, 76], [12, 44], [14, 26], [66, 26], [68, 44], [66.4, 76], [70, 90.6]], BARK));
-    for (const [x, c] of [[18, BARK_LIGHT], [26, BARK_DEEP], [56, BARK_DEEP], [62, BARK_LIGHT]]) out.push(F(band([[x, 30], [x - 1, 50], [x + 0.6, 70]], () => 0.5, c)));
-    // Chimney behind the mossy roof.
-    out.push(R(52, 3, 10, 22, '#cfc3ef'), R(50.6, 1.4, 12.8, 3.2, '#bdb3dc'), F(R(52, 9, 10, 0.6, '#b4a6dc')), F(R(52, 15, 10, 0.6, '#b4a6dc')), F(R(56, 4.6, 0.6, 4.4, '#b4a6dc')), F(R(58.4, 9.6, 0.6, 5.4, '#b4a6dc')));
+    // Bark: lit down the left, the right flank in shadow, grain in broken strokes.
+    const sr = ramp(BARK);
+    out.push(F(T([[54, 90.6], [56, 76], [55, 44], [56, 26], [66, 26], [68, 44], [66.4, 76], [70, 90.6]], sr.sh)), F(band([[15, 32], [14, 50], [15.4, 72]], () => 0.8, sr.hi)));
+    for (const [x, y0, y1] of [[20, 32, 48], [22, 58, 74], [30, 30, 40], [50, 34, 52], [60, 30, 46], [62, 56, 74], [34, 56, 62]]) out.push(F(band([[x, y0], [x - 0.8, (y0 + y1) / 2], [x + 0.4, y1]], (u) => 0.45 * Math.sin(Math.PI * (0.1 + u * 0.8)) + 0.1, sr.deep)));
+    // Stone chimney behind the mossy roof.
+    out.push(...stones(52, 3, 10, 22, ramp('#cfc3ef', 0.7), 9, { rowH: 4.4, blockW: 5 }), R(50.6, 1.4, 12.8, 3.2, '#bdb3dc'), F(R(50.6, 1.4, 12.8, 0.8, '#ddd6f2')));
     // The moss roof spilling over the cut top.
     for (const [x, y, rx, ry] of [[40, 26, 30, 6], [16, 24, 10, 6.4], [64, 24, 10, 6.4], [28, 19, 13, 7.4], [50, 19, 13, 7.4], [39, 14.6, 12, 6.4]]) out.push(...ringed(x, y, rx, ry, moss, 0.8));
     for (const [x, y, rx, ry] of [[22, 18, 6, 3], [44, 12, 6, 2.6], [56, 17, 5, 2.4], [12, 22.6, 4, 2.2], [66, 22.6, 4, 2.2]]) out.push(F(E(x, y, rx, ry, '#b4ecac')));
@@ -1485,11 +1748,21 @@ function pondArt(blink) {
     else out.push(F(E(fx - 2.2, fy - 2.6, 0.9, 0.9, '#ffffff')), F(E(fx + 2.2, fy - 2.6, 0.9, 0.9, '#ffffff')), F(E(fx - 2, fy - 2.5, 0.5, 0.6, INK)), F(E(fx + 2, fy - 2.5, 0.5, 0.6, INK)));
     out.push(arc(fx, fy - 0.6, 1.2, 0.9, 30, 150, 0.35, INK), F(E(fx - 2.8, fy - 0.6, 0.8, 0.4, BLUSH)), F(E(fx + 2.8, fy - 0.6, 0.8, 0.4, BLUSH)));
     // Cattails at one end, reeds at the other, and pebbles on the bank.
-    for (const [x, h, lean] of [[5, 15, -1.4], [9, 18, 0.4], [13, 12, 1.4]]) {
-      out.push(band([[x, 15], [x + lean * 0.5, 15 - h * 0.5], [x + lean, 15 - h]], () => 0.4, '#6cc070'), E(x + lean * 0.9, 15 - h + 3.4, 1.1, 2.4, '#b07a52'));
-    }
     out.push(...leaf(7, 15, 2, 6, 1, '#7fd19a'), ...leaf(100, 15, 104, 5, 1, '#7fd19a'), ...leaf(102, 15, 98, 4, 1, '#8fdc9a'), ...leaf(104, 15.4, 108, 8, 0.9, '#7fd19a'),
       ...ringed(92, 17.4, 2.4, 1.4, '#d6cfe6', 0.5), ...ringed(18, 18.4, 2, 1.2, '#d6cfe6', 0.5), ...bloom(96, 15.6, 1.1, '#ffffff'));
+    return out;
+  });
+}
+
+// The pond's cattails, bending from the root with the wind (`f` a lean pose).
+function cattailsArt(f) {
+  return art(`cattails|${f}`, 110, 20, () => {
+    const out = [];
+    const w = (f - 2) * 0.8;
+    for (const [x, h, tilt] of [[5, 15, -1.4], [9, 18, 0.4], [13, 12, 1.4]]) {
+      const tip = tilt + w * (h / 15);
+      out.push(band([[x, 15], [x + tip * 0.4, 15 - h * 0.5], [x + tip, 15 - h]], () => 0.4, '#6cc070'), E(x + tip * 0.9, 15 - h + 3.4, 1.1, 2.4, '#b07a52'), F(E(x + tip * 0.9 + 0.4, 15 - h + 4, 0.6, 1.6, '#8f5e44')));
+    }
     return out;
   });
 }
@@ -1750,35 +2023,44 @@ function rootgateArt() {
 // ---------- Drawing ----------
 
 const KINDS = {
-  bigtree: {
-    w: 112, h: 172,
-    draw(ctx, x, y, time, seed) {
-      const f = Math.floor(time * 1.6 + seed * 0.7) % 4;
-      place(ctx, bigtreeArt(variant(seed, 2), f), x, y);
-    },
-  },
+  bigtree: { w: 112, h: 172, draw: drawBigtree },
   giantshroom: {
     w: 72, h: 92,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, giantshroomArt(variant(seed, 3), blinking(time, seed) ? 1 : 0), x, y);
-      smoke(ctx, x + 19.5, y - 92 + 1, time, seed);
+      // Lamplight in the windows, flickering.
+      glow(ctx, x - 7, y - 34, 9, '#ffe6a0', 0.3 * flicker(time, seed));
+      smoke(ctx, x + 19.5, y - 92 + 1, time, seed, wx);
     },
   },
   signpost: { w: 34, h: 46, draw: (ctx, x, y) => place(ctx, signpostArt(), x, y) },
-  flowerarch: { w: 80, h: 78, draw: (ctx, x, y) => place(ctx, flowerarchArt(), x, y) },
-  well: { w: 46, h: 54, draw: (ctx, x, y) => place(ctx, wellArt(), x, y) },
+  flowerarch: {
+    w: 80, h: 78,
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, flowerarchArt(), x, y);
+      place(ctx, wisteriaArt(leanFrame(time, wx, 5, 0.25, seed)), x, y);
+    },
+  },
+  well: {
+    w: 46, h: 54,
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, wellArt(), x, y);
+      pivoted(ctx, x, y - 54 + 20, swing(time, wx, 0.8, seed), () => place(ctx, bucketArt(), x, y));
+    },
+  },
   totem: { w: 38, h: 124, draw: (ctx, x, y) => place(ctx, totemArt(), x, y) },
   mesa: { w: 74, h: 152, draw: (ctx, x, y) => place(ctx, mesaArt(), x, y) },
   tent: {
     w: 72, h: 64,
-    draw(ctx, x, y, time, seed) {
-      place(ctx, tentArt(Math.floor(time * 5 + seed) % 3), x, y);
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, tentArt(leanFrame(time, wx, 5, 0.2, seed), Math.floor(time * 3 + windTravel(time - wx / 320) * 4 + seed * 3) % 3), x, y);
     },
   },
   ruinarch: {
     w: 112, h: 122,
-    draw(ctx, x, y, time) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, ruinarchArt(), x, y);
+      place(ctx, ruinvinesArt(leanFrame(time, wx, 5, 0.3, seed)), x, y);
       const rx = x - 56 + 21;
       const ry = y - 122 + 74;
       const p = 0.5 + 0.5 * Math.sin(time * 1.8);
@@ -1790,7 +2072,7 @@ const KINDS = {
   statue: { w: 48, h: 86, draw: (ctx, x, y) => place(ctx, statueArt(), x, y) },
   crystalspire: {
     w: 72, h: 132,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const v = variant(seed, 2);
       const p = 0.5 + 0.5 * Math.sin(time * 1.5 + seed);
       glow(ctx, x, y - 64, 74 + p * 8, CRYSTALS[v].glow, 0.3 + 0.18 * p);
@@ -1801,44 +2083,33 @@ const KINDS = {
   },
   stalagmite: {
     w: 42, h: 92,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, stalagmiteArt(), x, y);
       twinkles(ctx, x - 21, y - 92, [[24, 30], [15, 46], [26, 56], [20, 70], [36, 52], [12, 60]], time + seed, 0.5, '#e6fbff', 2);
     },
   },
   cloudpillar: {
     w: 82, h: 150,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, cloudpillarArt(), x, y);
       const bob = Math.sin(time * 1.3 + seed) * 1.6;
       place(ctx, skyislandArt(), x, y - 100 + bob);
+      place(ctx, skycrownArt(leanFrame(time, wx, 5, 0.2, seed)), x, y - 100 + bob);
       twinkles(ctx, x - 41, y - 150 + bob, [[12, 30], [70, 26], [40, 56]], time, 0.35, '#fff6c9', 2);
     },
   },
   skygazebo: {
     w: 92, h: 92,
-    draw(ctx, x, y, time) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, skygazeboArt(), x, y);
+      pivoted(ctx, x, y - 92 + 37, swing(time, wx, 1.2, seed), () => place(ctx, bellArt(), x, y));
       twinkles(ctx, x - 46, y - 92, [[46, 1], [12, 24], [80, 22]], time, 0.4, '#fff6c9', 2.2);
     },
   },
-  lanterntree: {
-    w: 104, h: 152,
-    draw(ctx, x, y, time, seed) {
-      place(ctx, lanterntreeArt(), x, y);
-      glow(ctx, x - 1, y - 36, 12, '#ffe6a0', 0.35 + 0.1 * Math.sin(time * 2 + seed));
-      TREE_LANTERNS.forEach(([dx, dy, len, ci], i) => {
-        const c = LANTERN_COLORS[ci];
-        const swing = Math.sin(time * 1.4 + i * 1.3 + seed) * 0.8;
-        const s = hangLanternArt(c, len);
-        blit(ctx, s, snap(x + dx - 5 + swing), snap(y + dy));
-        glow(ctx, x + dx + swing, y + dy + len + 6.6, 16, c, 0.4 + 0.2 * Math.sin(time * 2.2 + i * 1.7));
-      });
-    },
-  },
+  lanterntree: { w: 104, h: 152, draw: drawLanterntree },
   moonstone: {
     w: 42, h: 72,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, moonstoneArt(), x, y);
       const p = 0.5 + 0.5 * Math.sin(time * 1.6 + seed);
       glow(ctx, x - 1.5, y - 72 + 34, 16 + p * 4, '#7fe6ff', 0.14 + 0.2 * p, true);
@@ -1847,7 +2118,7 @@ const KINDS = {
   },
   lighthouse: {
     w: 52, h: 152,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, lighthouseArt(), x, y);
       const lx = x;
       const ly = y - 152 + 28;
@@ -1876,21 +2147,22 @@ const KINDS = {
   },
   crates: {
     w: 72, h: 52,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const f = [0, 1, 2, 1][Math.floor(time * 2.4 + seed) % 4];
       place(ctx, cratesArt(f), x, y);
     },
   },  // Farm.
   barn: {
     w: 110, h: 100,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, barnArt(), x, y);
-      place(ctx, vaneArt(Math.floor(time * 1.4 + seed * 3) % 8), x, y - 100 + 11);
+      // The weathervane turns with the wind it catches.
+      place(ctx, vaneArt(Math.floor(windTravel(time - wx / 320) * 2.2 + seed * 3) % 8), x, y - 100 + 11);
     },
   },
   haystack: {
     w: 46, h: 34,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const v = variant(seed, 3);
       place(ctx, haystackArt(v), x, y);
       if (v !== 1) return;
@@ -1917,10 +2189,10 @@ const KINDS = {
   },
   scarecrow: {
     w: 36, h: 70,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       // The crow hops once every few seconds.
       const p = (time * 0.3 + seed * 0.37) % 1;
-      place(ctx, scarecrowArt(p < 0.05 ? 1 : p < 0.08 ? 2 : p > 0.5 && p < 0.53 ? 1 : 0), x, y);
+      place(ctx, scarecrowArt(p < 0.05 ? 1 : p < 0.08 ? 2 : p > 0.5 && p < 0.53 ? 1 : 0, leanFrame(time, wx, 5, 0.3, seed)), x, y);
     },
   },
   fence: { w: 64, h: 24, draw: (ctx, x, y, time, seed) => place(ctx, fenceArt(variant(seed, 3)), x, y) },
@@ -1928,14 +2200,13 @@ const KINDS = {
   // Flower field.
   giantflower: {
     w: 40, h: 90,
-    draw(ctx, x, y, time, seed) {
-      const f = Math.floor(time * 1.8 + seed * 0.7) % 4;
-      place(ctx, giantflowerArt(variant(seed, 3), f, blinking(time, seed) ? 1 : 0), x, y);
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, giantflowerArt(variant(seed, 3), leanFrame(time, wx, 5, 0.15, seed), blinking(time, seed) ? 1 : 0), x, y);
     },
   },
   beehive: {
     w: 50, h: 80,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const cy = y - 80 + 32;
       const bees = [0, 1, 2].map((k) => {
         const a = time * (1.6 + k * 0.35) + k * 2.1 + seed;
@@ -1948,7 +2219,7 @@ const KINDS = {
   },
   picnic: {
     w: 70, h: 26,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, picnicArt(), x, y);
       // A wisp of steam from the teapot spout.
       ctx.save();
@@ -1966,7 +2237,7 @@ const KINDS = {
   // Deep forest.
   hollowlog: {
     w: 120, h: 46,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, hollowlogArt(), x, y);
       // Two glowing eyes peering out of the hollow, blinking and glancing about.
       const ex = x - 60 + 15.4 + Math.sin(time * 0.5 + seed) * 1.2;
@@ -1985,18 +2256,18 @@ const KINDS = {
   },
   stumphouse: {
     w: 80, h: 90,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, stumphouseArt(), x, y);
-      smoke(ctx, x - 40 + 57, y - 90 + 1, time, seed);
+      smoke(ctx, x - 40 + 57, y - 90 + 1, time, seed, wx);
       const p = 0.5 + 0.5 * Math.sin(time * 2.1 + seed);
       glow(ctx, x - 40 + 23, y - 90 + 46, 10, '#ffe6a0', 0.25 + 0.12 * p);
       glow(ctx, x - 40 + 58, y - 90 + 44, 10, '#ffe6a0', 0.25 + 0.12 * (1 - p));
-      glow(ctx, x - 40 + 59, y - 90 + 66.6, 9, '#ffd27a', 0.4 + 0.15 * Math.sin(time * 3 + seed));
+      glow(ctx, x - 40 + 59, y - 90 + 66.6, 9, '#ffd27a', 0.5 * flicker(time, seed));
     },
   },
   mushring: {
     w: 90, h: 26,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       for (const { x: mx, y: my, s, c, k } of RING) {
         const p = 0.5 + 0.5 * Math.sin(time * 2 + k * 0.9 + seed);
         glow(ctx, x - 45 + mx, y - 26 + my - 4 * s, 8 * s, c, 0.12 + 0.22 * p, true);
@@ -2018,23 +2289,24 @@ const KINDS = {
   // Water. A waterfall's seed (when > 1) is its height in pixels.
   waterfall: {
     w: 60, h: 120,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       drawWaterfall(ctx, x, y, time, seed > 1 ? seed : 120, seed);
     },
   },
   pond: {
     w: 110, h: 20,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       // Set into the ground: its middle sits about on the ground line.
       const by = y + 6;
       place(ctx, pondArt(blinking(time, seed) ? 1 : 0), x, by);
+      place(ctx, cattailsArt(leanFrame(time, wx, 5, 0.1, seed)), x, by);
       shimmer(ctx, x, by - 8, 47, 5, time, seed);
     },
   },
   // Crystal cave.
   glowpool: {
     w: 100, h: 18,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const by = y + 6;
       const cy = by - 7;
       const p = 0.5 + 0.5 * Math.sin(time * 1.6 + seed);
@@ -2052,7 +2324,7 @@ const KINDS = {
   },
   throne: {
     w: 90, h: 110,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const p = 0.5 + 0.5 * Math.sin(time * 1.4 + seed);
       const X = (v) => x - 45 + v;
       const Y = (v) => y - 110 + v;
@@ -2069,15 +2341,16 @@ const KINDS = {
   bones: { w: 70, h: 30, draw: (ctx, x, y) => place(ctx, bonesArt(), x, y) },
   windmillcrag: {
     w: 60, h: 120,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       place(ctx, windtowerArt(), x, y);
-      place(ctx, windwheelArt(Math.floor(time * 14 + seed * 3) % 6), x, y - 120 + 18 + 18);
+      // The wheel spins with the wind: fast in a gust, idling when the air is still.
+      place(ctx, windwheelArt(Math.floor(windTravel(time - wx / 320) * 16 + time * 3 + seed * 3) % 6), x, y - 120 + 18 + 18);
     },
   },
   // Dusk forest gate.
   rootgate: {
     w: 140, h: 130,
-    draw(ctx, x, y, time, seed) {
+    draw(ctx, x, y, time, seed, wx) {
       const X = (v) => x - 70 + v;
       const Y = (v) => y - 130 + v;
       const p = 0.5 + 0.5 * Math.sin(time * 1.2 + seed);
@@ -2094,11 +2367,11 @@ const KINDS = {
         const [ax, ay] = archAt(t);
         const [nx, ny] = archNormal(t);
         const c = LANTERN_COLORS[ci];
-        const swing = Math.sin(time * 1.3 + i * 1.4 + seed) * 0.8;
         const lx = X(ax + nx * 8);
         const ly = Y(ay + ny * 8) - 1;
-        blit(ctx, hangLanternArt(c, len), snap(lx - 5 + swing), snap(ly));
-        glow(ctx, lx + swing, ly + len + 6.6, 16, c, 0.4 + 0.2 * Math.sin(time * 2.2 + i * 1.7));
+        const a = swing(time, wx, 0.8, seed + i * 1.4);
+        pivoted(ctx, lx, ly, a, () => blit(ctx, hangLanternArt(c, len), snap(lx - 5), snap(ly)));
+        glow(ctx, lx - Math.sin(a) * (len + 6.6), ly + len + 6.6, 16, c, 0.45 * flicker(time, seed + i));
       });
       // Fireflies drifting about the mouth.
       ctx.save();
@@ -2119,8 +2392,9 @@ const KINDS = {
 export const LANDMARKS = Object.fromEntries(Object.entries(KINDS).map(([k, { w, h }]) => [k, { w, h }]));
 
 // Draws landmark `kind` with its base centered at screen (x, y), y being the ground line.
-export function drawLandmark(ctx, kind, x, y, time, seed = 0) {
+// `wx` is its place in the world, so a gust rolls across the map and reaches it in turn.
+export function drawLandmark(ctx, kind, x, y, time, seed = 0, wx = x) {
   const k = KINDS[kind];
   if (!k) return;
-  k.draw(ctx, x, y + SINK, time, seed);
+  k.draw(ctx, x, y + SINK, time, seed, wx);
 }
