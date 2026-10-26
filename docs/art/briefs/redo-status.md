@@ -8,13 +8,13 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
 - Summons: Guardian Angel, Frost Sprite, Venom Salamander, Thunder Hawk re-rigged; Seraphim staff.
 - Hero rig: kit eyes, skin and hair ramps, clumped bangs, selective outlines, walk vs run gaits with
   planted feet, hair chain, held idle beat, hurt wobble, knocked-out pose; townsfolk eye/hair contrast.
-- Meadow monsters (all five) and the Basilisk Hatchling: rigs, chains, ramps, form shadows.
+- Meadow monsters (all five) and all of the wilds: Basilisk Hatchling, Manticore Cub, Dryad (warm
+  skin now apart from her green hair), Warg, Treant (glowEye embers): rigs, chains, ramps, form shadows.
 - Ruins: Will-o'-Wisp, Imp, Dullahan, Gem Mimic, Crystal Golem.
 - Hollow: Root Imp, Myconid Shaman, Bramble Bear, Spore Mite.
 
 ## Still to do
-- Monsters not yet redone (old faces/rig): Manticore Cub (scorpip), Dryad (leafling — skin blends
-  into her green hair), Warg (boarlet), Treant (mossgolem — use glowEye) in `mobs/wilds.js`; Wraith
+- Monsters not yet redone (old faces/rig): Wraith
   (shade) in `mobs/ruins.js` (the old helpers `xf`, `mv`, `rot` and `INK`/`MOUTH` imports stay only
   for it); Pegasus Foal, Sky Harpy, Star Seraph in `mobs/sky.js`; Corrupted Sapling in
   `mobs/hollow.js` (old helpers kept only for it).
