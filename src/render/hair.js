@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -310,7 +310,7 @@ const FRINGES = {
   // between them.
   wispy: { pts: [[23.8, 13.4], [22.4, 10.8], [20.6, 15], [19, 11], [16.8, 15.8], [15.2, 11.2], [13, 15.4], [11.4, 11], [9.4, 14.6], [8, 11.6], [7, 13.2]], lean: -0.4, softTips: true },
   // Swept: a strong diagonal from high on the near side down past the far eye.
-  swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[22.6, 2.6], [24.6, 6.6]] },
+  swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[21.4, 3.8], [23, 7]] },
   // Parted in the middle, curving apart to open a triangle of forehead.
   part: { pts: [[23.4, 15.2], [21.8, 12.4], [20.2, 14.2], [18.2, 11.2], [16.4, 10.2], [HX, 9.4], [14.6, 10.2], [12.8, 11.2], [10.8, 14.2], [9.2, 12.4], [7.6, 15.2]], lean: 0, part: [[HX, 2.2], [HX, 8.6]], softTips: true, noCrease: true },
   // Hime: one heavy, perfectly straight line low on the brow, no notches.
@@ -556,6 +556,19 @@ const STYLES = {
     };
   },
 
+  // A high ponytail with lots of body: it lifts out of the tie and falls in a long S, a lighter lock
+  // over it; swept bangs.
+  ponytail(r, m) {
+    const tail = [[5.4, 4.4], [1.6, 3.6], [-2, 6.6], [-4, 12], [-4.2, 19], [-2.6, 25], [-3.6, 31], [-2, 36.4], [0.4, 38]];
+    const light = [[5, 5.4], [2, 6], [-0.4, 10], [-1.6, 16], [-0.6, 22], [-1.4, 28]];
+    return {
+      head: [crown(r), F(E(5.4, 5, 1.6, 2, r.sh2))],
+      hang: [lock(tail, 8.6, r.sh1, m, 1.1, 0.12), lock(light, 3.8, r.base, m, 1.25), streak(-0.6, 9, -2, 18, 0.9, 0.6, r.hi, m, 1.25)],
+      front: bangs('mshape', r, m, sideLocks(r, m, [[25.2, 11], [26, 16], [25.6, 20.2]], undefined, 3)),
+      top: [F(E(5.4, 5, 1.6, 2, r.sh2))],
+      tips: [26, 31],
+    };
+  },
 };
 
 // ---------- Two-tone ----------
