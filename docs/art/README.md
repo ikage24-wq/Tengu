@@ -28,7 +28,7 @@ carry an improvement across every part of the game it applies to.
 - The face holds the strongest contrast in the sprite. Eye colour must contrast the hair colour.
   Hair separates from skin by value (a bangs shadow where face meets hair).
 - Every mood is acted by the whole face and differs per character: no stock `> <` everywhere.
-- Ears come in styles (`hero.js` `EAR_STYLES`: round, elf, long elf, pointed: broad and swept up and out like MapleStory elves). Elf ears are a pointed leaf
+- Ears come in styles (`hero.js` `EAR_STYLES`: round, elf, long elf, pointed: broad and swept up and out like MapleStory elves, droopy: long and slender, reaching out and drooping down a little). Elf ears are a pointed leaf
   drawn at the ears' layer, under the side locks, so the hair covers the base and the tip pokes
   out past it; the back ear is the front one mirrored in shadow, and from behind both tips show.
   The crowd and other players get a share of every new look option, so the world shows them too.
