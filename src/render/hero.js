@@ -763,8 +763,16 @@ const FOREARM = 4.7;
 // Shoulder to elbow in the sleeve color, then a forearm (bare unless the top has long sleeves).
 // The elbow bends outward (away from the body's middle) to bring the hand to (hx, hy).
 // The hand's shapes come last; `handAt` says where they start (the grip layer redraws them).
-function arm(sx, sy, hx, hy, sleeve, long, g, skin) {
-  const [[ex, ey], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, sx < HEAD_X ? 1 : -1);
+// `side` (0..1) is how much of the elbow's bend shows sideways: aimed arms bend in the picture's
+// plane (1); hanging, swinging arms bend mostly toward or away from the viewer, so the elbow only
+// eases out a little while the arm foreshortens, instead of jutting out like a wing.
+function arm(sx, sy, hx, hy, sleeve, long, g, skin, side = 1) {
+  const [[bx, by], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, sx < HEAD_X ? 1 : -1);
+  const k = UPPER_ARM / (UPPER_ARM + FOREARM);
+  const mx = sx + (wx - sx) * k;
+  const my = sy + (wy - sy) * k;
+  const ex = mx + (bx - mx) * side;
+  const ey = my + (by - my) * side;
   const out = [
     E(sx, sy + 0.4, 2, 2, sleeve),
     limb(sx, sy, ex, ey, 4.2, 3.6, sleeve),
@@ -787,9 +795,9 @@ const HAND_FORWARD = 1.4;
 const HAND_Y = 37.6;
 
 // A resting arm from the shoulder at (sx, SHOULDER_Y), the hand offset (dx, dy) from its rest spot.
-function armShapes(sx, dx, dy, sleeve, long, g, skin) {
+function armShapes(sx, dx, dy, sleeve, long, g, skin, side = 1) {
   const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
-  return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, g, skin);
+  return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, g, skin, side);
 }
 
 // Attack arms point along `angle` (0 = down, 90 = forward, 180 = up) from the front shoulder.
@@ -843,9 +851,9 @@ function bodyShapes(look, g, rig) {
   shapes.push(...offset([F(R(14.3, 22.6, 2.8, 4.8, sk.sh1)), F(R(14.3, 22.6, 2.8, 3.1, sk.sh2))], ux, uy));
   shapes.push(...offset(drape(topShapes(top.design, top.color, top, m), posed, rest, 36), ux, uy));
   if (g.cape) shapes.push(...offset(capeFrontShapes(g.cape.design, g.cape.color, g.cape, m), ux, uy));
-  shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin), ux, uy));
+  shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin, rig.armSide), ux, uy));
   // Out of combat the weapon arm is part of the body too, so it has no outline across the torso.
-  if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin), ux, uy));
+  if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin, rig.armSide), ux, uy));
   // The head rides the squashed body, so it moves by the squashed bob.
   const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy + NECK_LIFT);
   // The head (and the hair hanging from it) rolls about the neck.
@@ -982,7 +990,7 @@ const ease = (t) => 1 - (1 - t) ** 3;
 function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
-    frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], air: false, squat: 0,
+    frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0,
     hair: 0, hairLift: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0,
   };
 }
@@ -1028,11 +1036,22 @@ function solveRig(state, anim, mv = null) {
     const back = walkLeg((p + 0.5) % 1, G);
     r.frontLeg = legKey(front);
     r.backLeg = legKey(back);
-    // Each arm swings against the leg on its side; the hand lifts at the ends of the swing.
-    // Running, the arms pump higher with the elbows bent.
-    const hand = ([dx]) => [q(-0.5 * dx), q(-(0.8 + 1.2 * gait) * (dx / G.half) ** 2 - 1.5 * gait)];
-    r.frontArm = hand(front);
-    r.backArm = hand(back);
+    // Each arm swings against the leg on its side. The figure faces the screen while it walks
+    // sideways, so a swing toward the walking direction is only shown where it carries a hand
+    // outward; a swing that would carry it across the body shows as the hand lifting toward the
+    // viewer instead (with the forearm foreshortening), so the hands never meet over the belly.
+    // The hand rises at the ends of the swing; running, the arms pump higher with bent elbows.
+    const hand = ([dx], out) => {
+      const sw = Math.max(-1, Math.min(1, -dx / G.half));
+      const along = sw * (1.8 + 0.9 * gait);
+      const x = along * out >= 0 ? along : out * 0.5 * Math.abs(sw);
+      const lift = (1.1 + 1.9 * gait) * Math.abs(sw) + (along * out < 0 ? 1.1 * Math.abs(sw) : 0) + 1.6 * gait;
+      return [q(x), q(-lift)];
+    };
+    r.frontArm = hand(front, 1);
+    r.backArm = hand(back, -1);
+    // Swinging arms bend mostly toward and away from the viewer (see arm()).
+    r.armSide = 0.35;
     // Running, the hips give a little through each stance (the float is drawn in drawHeroBody).
     const u = (p * 2) % 1;
     if (u < G.stance * 2) r.squat = q(gait * 1.2 * Math.sin((Math.PI * u) / (G.stance * 2)));
@@ -1136,7 +1155,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
@@ -1448,9 +1467,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     hand = [aimed.hand[0] + rig.tx, aimed.hand[1] + bodyY];
     armKey = `a${Math.round(angles.arm / 5)}`;
   } else {
-    armShapesNow = armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin);
+    armShapesNow = armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin, rig.armSide);
     hand = [FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0] + rig.tx, HAND_Y + rig.frontArm[1] + bodyY];
-    armKey = `r${rig.frontArm.join(',')}`;
+    armKey = `r${rig.frontArm.join(',')},${rig.armSide}`;
   }
   const armDx = rig.tx;
   const armDy = bodyY;
