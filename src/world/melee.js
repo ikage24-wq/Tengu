@@ -23,6 +23,10 @@ const WINDOW = 0.45;
 // A step can be cut short into the next one this far through (heavy finishers play out longer).
 const CANCEL = 0.76;
 
+// Words that pop on heavy blows.
+const WORDS = ['POW!', 'WHAM!', 'BOOP!', 'SMACK!', 'OOF!', 'YEET!', 'KAPOW!', 'BONK!', 'THWACK!'];
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
 // Smear colors: steel blue for a cut, gold for a heavy blow.
 const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
@@ -78,15 +82,22 @@ export function skillCombo(world, skillId, params) {
 
 function playStep(world, step, scale, key, school = null) {
   const { body, now, stats } = world;
-  const dur = step.dur * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
+  // Basic swings run a touch quicker than their written timing.
+  const dur = step.dur * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
   const busy = dur * (step.finisher ? 0.92 : CANCEL);
   world.attackTimer = busy;
   world.lockTimer = Math.max(world.lockTimer ?? 0, busy);
   world.pose = { kind: step.move, t: dur, dur };
   world.comboUntil = now + dur + WINDOW;
+  // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
+  world.recoverAt = now + step.strikes.at(-1).at * dur + 0.03;
+  world.recoverKind = key.startsWith('basic') ? 'basic' : 'skill';
+  world.basicReadyAt = key.startsWith('basic') ? now + busy : now;
   // Step into it: carried forward until the first strike lands (or through `carry` of it).
   const first = (step.carry ?? step.strikes[0].at) * dur;
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
+  // Funny skills bring their own giant cartoon (a frying pan, a squeaky hammer...).
+  if (step.fx) world.fx.push({ kind: step.fx, x: body.x, y: body.y, dir: body.facing, w: step.fxW ?? 80, t: 0, dur: step.fx === 'squeaky' ? 0.9 : 0.5 });
   step.strikes.forEach((s, n) => {
     world.strikes.push({ ...s, n, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher });
   });
@@ -136,8 +147,14 @@ function land(world, s) {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
     const roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random);
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock;
-    world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big });
+    world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big, flat: s.flatten });
   });
+  // A comic word pops on the blow: the skill's own, or now and then a random one on a heavy hit.
+  const word = s.comic ?? (s.big && targets.length && Math.random() < 0.4 ? pick(WORDS) : null);
+  if (word && targets.length) {
+    const m = targets[0];
+    world.fx.push({ kind: 'comic', x: m.x, y: m.y - (m.air ?? 0) - m.def.h - 6, text: word, big: Boolean(s.comic), t: 0, dur: 0.85 });
+  }
   if (targets.length) {
     world.hitstop = Math.max(world.hitstop, s.stop ?? (s.finisher ? 0.07 : 0.035));
     if (s.shake) world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });

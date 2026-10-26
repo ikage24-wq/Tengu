@@ -21,6 +21,7 @@ import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 
 const INVULN = 1.2;
+const LAST_WORDS = ['bye~', 'x_x', 'rip', 'oof', 'nooo', 'tell my mom', 'worth it', 'brb', 'ow', 'gg', 'whyyy', '*poof*'];
 const REGEN_EVERY = 5;
 const TALK_RANGE = 34;
 const PORTAL_RANGE = 22;
@@ -271,6 +272,8 @@ function killMob(world, m, byParty = false) {
   }
   world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss) });
+  // Now and then a monster gets a last word in on the way out.
+  if (!m.def.boss && Math.random() < 0.18) world.numbers.push({ x: m.x, y: m.y - (m.air ?? 0) - m.def.h - 24, text: LAST_WORDS[Math.floor(Math.random() * LAST_WORDS.length)], color: '#ffc2df', t: 0, small: true });
   world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.3 : 0.045);
   if (levels > 0) {
     world.events.push({ type: 'levelup', level: char.level });
@@ -375,6 +378,15 @@ export function updateWorld(world, dt, input) {
     jump: held.has('Space') || held.has('AltLeft') || held.has('AltRight'),
   };
   // Attacking roots you on the ground, like the classics.
+  // After a move's blows land, walking or jumping cuts its follow-through short.
+  const acting = world.attackTimer > 0 || world.lockTimer > 0;
+  if (acting && (intent.left || intent.right || intent.jump) && world.recoverAt != null && world.now >= world.recoverAt) {
+    world.attackTimer = 0;
+    world.lockTimer = 0;
+    world.pose = null;
+    world.recoverAt = null;
+    world.lunge = null;
+  }
   const rooted = (world.attackTimer > 0.15 || world.lockTimer > 0) && world.body.onGround;
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
@@ -434,7 +446,12 @@ export function updateWorld(world, dt, input) {
     }
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
-    const hold = h.freeze || h.stun;
+    // Squeaky Hammer flattens them into pancakes for a while.
+    if (h.flat) {
+      m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + (m.def.boss ? h.flat / 2 : h.flat));
+      m.hold = 'flat';
+    }
+    const hold = !h.flat && (h.freeze || h.stun);
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });

@@ -94,6 +94,24 @@ to clear it.
   then flinging them away. **Titan Breaker** is a heavy three-blow combo in one press: a crushing
   smash, a rising drag that hurls them up, and a leaping dive that splits the ground. Charge now
   bowls monsters over.
+- **Smooth controls** — once a move's blows have landed, walking or jumping cuts its follow-through
+  short, and any skill can cut in right away (so you can weave Blade Rush into a sword combo);
+  ranged and magic attacks let you move again a moment after they fire. Skills pressed mid-swing
+  go off the moment they can.
+- **Funny skills** — the game doesn't take itself seriously, and neither do these (they're a bit
+  overpowered, on purpose). Everyone keeps the two Novice ones:
+  - **Frying Pan Bonk** (Novice): whack one monster to the moon. It comes back. Eventually.
+  - **Dance Party** (Novice): drop a disco ball; every monster around you dances instead of
+    fighting (bosses too, just less).
+  - **Squeaky Hammer** (Warrior): a gigantic squeaky toy hammer flattens everything in front of you
+    into pancakes.
+  - **Rubber Duck Meteor** (Mage): an enormous rubber duck falls on them. Everything it lands on
+    sees stars.
+  - **Baguette Barrage** (Archer): a whole baguette that goes through everything in a line.
+  - **Banana Peel** (Thief): monsters slip, flip, and lie there embarrassed.
+
+  Big blows pop comic words (BONK!, WHAM!, YEET!), and defeated monsters sometimes get a last word
+  in ("bye~", "tell my mom").
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings). Everything you
   wear shows on your character. Every job has its own set **every 5 levels, from 5 to 100**, in
   every armor slot, and each set looks a step grander than the one before:

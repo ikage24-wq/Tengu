@@ -59,10 +59,19 @@ export function pickTargets(mobs, body, range, targets) {
     .slice(0, targets);
 }
 
+// Once a move's blows have landed it can be cut short (see `recovering`): a skill can go off right
+// away, and so can a basic attack after a skill, but basic attacks keep their own rhythm.
+export function recovering(world) {
+  return world.recoverAt != null && world.now >= world.recoverAt;
+}
+
 // Why a skill can't be used right now, or null if it can.
 export function castBlocker(world, skillId) {
   const { char, stats } = world;
-  if (world.attackTimer > 0 || world.lockTimer > 0) return 'busy';
+  if (world.attackTimer > 0 || world.lockTimer > 0) {
+    if (!recovering(world) || (!skillId && world.recoverKind === 'basic')) return 'busy';
+  }
+  if (!skillId && world.now < (world.basicReadyAt ?? 0)) return 'busy';
   if (!skillId) return null;
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
@@ -116,6 +125,10 @@ export function cast(world, skillId, rng = Math.random) {
   const poseDur = Math.max(lock, s ? MOVE_MIN[pose] ?? 0 : 0, Math.min(0.35, world.attackTimer));
   if (s && !lock) world.lockTimer = Math.max(world.lockTimer ?? 0, poseDur * 0.8);
   world.pose = { kind: pose, t: poseDur, dur: poseDur };
+  // Free to move (or use something else) once the move has done its thing.
+  world.recoverAt = now + (lock || (s ? poseDur * 0.55 : Math.min(0.2, world.attackTimer)));
+  world.recoverKind = s ? 'skill' : 'basic';
+  if (!s) world.basicReadyAt = now + world.attackTimer;
   // Spells glow with a magic circle at your feet in their school's color; big weapon skills
   // flare with a burst of power instead.
   const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';
@@ -184,6 +197,19 @@ export function cast(world, skillId, rng = Math.random) {
     return { ok: true, targets: caught.length };
   }
 
+  // Dance Party: a disco ball drops and every monster around you dances instead of fighting.
+  if (type === 'party') {
+    const box = hitBox(body, params.range);
+    for (const m of world.mobs) {
+      if (m.hp <= 0 || !overlaps(box, mobBox(m))) continue;
+      m.frozenUntil = now + (m.def.boss ? params.hold / 2 : params.hold);
+      m.hold = 'dance';
+    }
+    world.fx.push({ kind: 'disco', x: body.x, y: body.y, r: params.range.w / 2, t: 0, dur: params.hold + 0.5 });
+    world.fx.push({ kind: 'comic', x: body.x, y: body.y - 70, text: 'PARTY!', big: true, t: 0, dur: 0.9 });
+    return { ok: true };
+  }
+
   if (type === 'revive') {
     reviveMember(world, reviveTarget(world, hitBox(body, params.range)), params.healPct);
     world.fx.push({ kind: 'heal', x: body.x, y: body.y, t: 0, dur: 0.8 });
@@ -206,7 +232,17 @@ export function cast(world, skillId, rng = Math.random) {
   const ultimate = Boolean(s?.ultimate);
   const look = { school: s?.school, variant: s?.variant };
 
-  if (!params.projectile && type !== 'blink') {
+  // Funny skills draw their own giant cartoon over the area (or from you), and a comic word.
+  if (s?.funny) {
+    const box = hitBox(body, area);
+    const fx = s.funny.at === 'center' ? box.x + box.w / 2 : body.x + body.facing * 10;
+    world.fx.push({ kind: s.fx, x: fx, y: s.fx === 'baguette' ? body.y - 26 : body.y, dir: body.facing, w: box.w, len: box.w, t: 0, dur: s.funny.dur });
+    if (targets.length) {
+      const m = targets[0];
+      const at = s.funny.speed ? Math.abs(m.x - body.x) / s.funny.speed : params.delay ?? 0.1;
+      world.fx.push({ kind: 'comic', x: m.x, y: m.y - m.def.h - 6, text: s.funny.comic, big: true, t: -at, dur: 0.85 });
+    }
+  } else if (!params.projectile && type !== 'blink') {
     const box = hitBox(body, area);
     world.fx.push({ kind: fxKind, ...look, x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: ultimate ? 0.9 : SWEEPS[fxKind] ?? 0.3, element });
     if (ultimate) world.juice?.push({ type: 'shake', mag: 3, dur: 0.9, delay: 0.3 });
@@ -220,7 +256,7 @@ export function cast(world, skillId, rng = Math.random) {
 
   targets.forEach((m, ti) => {
     const dist = Math.abs(m.x - body.x);
-    const travel = params.projectile ? dist / PROJECTILE_SPEED : params.delay ?? 0.1;
+    const travel = params.projectile ? dist / PROJECTILE_SPEED : s?.funny?.speed ? dist / s.funny.speed : params.delay ?? 0.1;
     for (let n = 0; n < params.hits; n++) {
       const at = now + travel + n * 0.09 + ti * 0.02;
       const miss = rng() >= hitChance(acc, char.level, m.def);
@@ -239,7 +275,7 @@ export function cast(world, skillId, rng = Math.random) {
       }
     }
     // An effect on each monster hit: the skill's own `hitFx`, or the spell itself landing.
-    const hitKind = s?.hitFx ?? ((type === 'magic' || type === 'heal' || ultimate) && !params.projectile && !params.chain ? fxKind : null);
+    const hitKind = s?.funny ? null : s?.hitFx ?? ((type === 'magic' || type === 'heal' || ultimate) && !params.projectile && !params.chain ? fxKind : null);
     if (hitKind) {
       const t = ultimate ? -ti * 0.025 : type === 'blink' ? -0.05 - ti * 0.04 : -(params.delay ?? 0) * 0.5;
       world.fx.push({ kind: hitKind, ...look, x: m.x, y: m.y, h: m.def.h, t, dur: ultimate ? 0.9 : 0.55, seed: rng() });
