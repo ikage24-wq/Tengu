@@ -36,6 +36,10 @@ export const MATERIALS = {
 
 const TILE = 64;
 
+// Drawing happens in screen space; anything that animates or varies along the land keys off the
+// world position (screen x + camX) instead, so it doesn't change as the camera moves.
+let camX = 0;
+
 // ---------- Textures ----------
 
 // Paints one tileable square of a material (shapes that cross an edge are drawn again on the
@@ -367,6 +371,7 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   theme = map.look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   const deco = map.look?.edges ?? null;
+  camX = cam.x;
   const runs = groundRuns(map, cam);
   const bottom = height + 40;
   // The land itself: everything under the line.
@@ -450,7 +455,7 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
     ctx.lineCap = 'round';
     forAlong(pts, 6, (x, y, k) => {
       if (x < -6 || x > width + 6 || hash(k * 1.7 + seed) < 0.5) return;
-      const sway = Math.sin(time * 2 + x * 0.05) * 0.8;
+      const sway = Math.sin(time * 2 + (x + camX) * 0.05) * 0.8;
       const h = 2.5 + hash(k + 3) * 3;
       ctx.beginPath();
       ctx.moveTo(x, y - 1);
@@ -470,7 +475,7 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
   forAlong(pts, 11, (x, y, k) => {
     const h = hash(k * 2.3 + seed * 7);
     if (x < -6 || x > width + 6 || h < 0.45) return;
-    const sway = Math.sin(time * 2 + x * 0.07) * 0.7;
+    const sway = Math.sin(time * 2 + (x + camX) * 0.07) * 0.7;
     if (kind === 'flowers') {
       const stem = 3 + h * 4;
       ctx.strokeStyle = '#5fb878';
@@ -629,7 +634,7 @@ function cliffFace(ctx, m, x, yTop, yBot, side, time, seed) {
   ctx.strokeStyle = shade(m.deep, -8);
   ctx.lineWidth = 1;
   for (let y = yTop + 12; y < yBot - 6; y += 14) {
-    const k = hash(seed * 7 + y);
+    const k = hash(seed * 7 + (y - yTop));
     if (k < 0.4) continue;
     ctx.beginPath();
     ctx.moveTo(fx + 2 + k * 4, y);
@@ -656,9 +661,9 @@ function cliffFace(ctx, m, x, yTop, yBot, side, time, seed) {
 // above y, so whatever it hangs from (drawn over it) hides where it's rooted.
 function drip(ctx, m, x, y, maxLen, time, seed) {
   if (!m.drip || maxLen < 6) return;
-  const k = hash(seed * 3.3 + x * 0.01);
+  const k = hash(seed * 3.3 + (x + camX) * 0.01);
   const len = Math.max(6, maxLen * (0.5 + k * 0.5));
-  const sway = Math.sin(time * 1.4 + seed + x * 0.02) * 1.6;
+  const sway = Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.6;
   const top = y - 5;
   // A point along the hanging curve, u from 0 (root) to 1 (tip).
   const at = (u) => {
@@ -765,6 +770,7 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
 export function drawIsland(ctx, theme, p, cam, time, pi, groundY, look = null) {
   theme = look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
+  camX = cam.x;
   const x = p.x - cam.x;
   const y = p.y - cam.y;
   const w = p.w;
@@ -868,7 +874,7 @@ function drawPlanks(ctx, m, x, y, w, time, seed, deco) {
   // The planks.
   for (let px = x; px < x + w - 0.5; px += 10) {
     const pw = Math.min(10, x + w - px);
-    ctx.fillStyle = hash(seed * 3.7 + px * 0.13) > 0.5 ? WOOD : shade(WOOD, -6);
+    ctx.fillStyle = hash(seed * 3.7 + (px - x) * 0.13) > 0.5 ? WOOD : shade(WOOD, -6);
     ctx.fillRect(px, y - 1, pw, 8);
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.fillRect(px + 1, y, pw - 2, 1.2);
@@ -918,7 +924,7 @@ function drawBridge(ctx, x, y, w, time, seed) {
   ctx.lineTo(x + w, y + 4);
   ctx.stroke();
   for (let px = x + 2; px < x + w - 4; px += 11) {
-    ctx.fillStyle = hash(seed + px * 0.31) > 0.5 ? WOOD : shade(WOOD, -8);
+    ctx.fillStyle = hash(seed + (px - x) * 0.31) > 0.5 ? WOOD : shade(WOOD, -8);
     ctx.fillRect(px, y - 1, 8, 5);
     ctx.strokeStyle = line;
     ctx.lineWidth = 0.8;

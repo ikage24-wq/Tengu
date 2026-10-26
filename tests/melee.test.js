@@ -229,3 +229,25 @@ test('the same no-spam rule holds for every job, spells and thief skills include
     assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
   }
 });
+
+test('one press of a skill key casts it once, even held a moment or pressed mid-swing', () => {
+  for (const midSwing of [false, true]) {
+    const w = arena();
+    w.char.skills.powerslash = 10;
+    w.char.hotkeys.KeyA = { skill: 'powerslash' };
+    w.char.baseMp = 99999;
+    w.char.mp = 99999;
+    let casts = 0;
+    let last = w.char.mp;
+    const tick = (input) => {
+      updateWorld(w, DT, input);
+      if (w.char.mp < last - 1) casts++;
+      last = w.char.mp;
+    };
+    if (midSwing) tick({ held: new Set(), pressed: new Set(['KeyZ']), locked: false });
+    tick({ held: new Set(['KeyA']), pressed: new Set(['KeyA']), locked: false });
+    for (let i = 0; i < 15; i++) tick({ held: new Set(['KeyA']), pressed: new Set(), locked: false });
+    for (let i = 0; i < 120; i++) tick(idle);
+    assert.equal(casts, 1, `one cast${midSwing ? ' (pressed mid-swing)' : ''}`);
+  }
+});

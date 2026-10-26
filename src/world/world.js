@@ -233,11 +233,14 @@ const BLOCKER_TEXT = {
   passive: null,
 };
 
-function useHotkey(world, binding) {
+const REPEAT_AFTER = 0.4; // seconds a skill key is held before it starts repeating
+
+function useHotkey(world, binding, fresh = true) {
   if (binding.skill) {
     const r = cast(world, binding.skill);
-    // Pressed mid-swing: it goes off as soon as the swing allows.
-    if (r.reason === 'busy') world.skillBuffer = { binding, until: world.now + 0.3 };
+    // Pressed mid-swing: it goes off as soon as the swing allows. Only a fresh press is
+    // remembered; holding the key just keeps trying, so one press never fires twice.
+    if (r.reason === 'busy' && fresh) world.skillBuffer = { binding, until: world.now + 0.3 };
     else if (r.ok) world.skillBuffer = null;
     if (!r.ok && BLOCKER_TEXT[r.reason] && world.warnTimer <= 0) {
       world.log(BLOCKER_TEXT[r.reason], '#ffb3c6');
@@ -400,12 +403,17 @@ export function updateWorld(world, dt, input) {
     if (attackKeys.some((k) => pressed.has(k))) world.attackBuffer = world.now + 0.3;
     if ((attackKeys.some((k) => held.has(k)) || world.attackBuffer > world.now) && cast(world, null).ok) world.attackBuffer = 0;
     const buffered = world.skillBuffer;
-    if (buffered && buffered.until > world.now && world.attackTimer <= 0 && world.lockTimer <= 0) useHotkey(world, buffered.binding);
+    if (buffered && buffered.until > world.now && world.attackTimer <= 0 && world.lockTimer <= 0) useHotkey(world, buffered.binding, false);
+    world.heldSince ??= {};
     for (const [code, binding] of Object.entries(char.hotkeys)) {
       if (!binding) continue;
-      // Attack skills repeat while held; everything else fires once per press.
-      const repeat = binding.skill && ['attack', 'magic'].includes(SKILLS[binding.skill]?.type);
-      if (pressed.has(code) || (repeat && held.has(code))) useHotkey(world, binding);
+      if (!held.has(code)) delete world.heldSince[code];
+      else world.heldSince[code] ??= world.now;
+      // Attack skills repeat once held a moment (like a key repeating); everything else fires
+      // once per press.
+      const repeat = binding.skill && ['attack', 'magic'].includes(SKILLS[binding.skill]?.type) && world.now - world.heldSince[code] >= REPEAT_AFTER;
+      if (pressed.has(code)) useHotkey(world, binding);
+      else if (repeat && held.has(code) && world.skillBuffer?.binding !== binding) useHotkey(world, binding, false);
     }
   } else {
     for (const [code, binding] of Object.entries(char.hotkeys)) {

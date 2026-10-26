@@ -785,6 +785,968 @@ function cratesArt(frame) {
   });
 }
 
+// ---------- Shared bits for the newer landmarks ----------
+
+// A petal (or leaf) pointing out from (cx, cy) at angle `a`, from radius r0 to r1, `w` half wide.
+function petal(cx, cy, a, r0, r1, w, c) {
+  const ca = Math.cos(a);
+  const sa = Math.sin(a);
+  const at = (r, off) => [cx + ca * r - sa * off, cy + sa * r + ca * off];
+  const d = r1 - r0;
+  return T([at(r0, 0), at(r0 + d * 0.3, w * 0.85), at(r0 + d * 0.65, w), at(r0 + d * 0.9, w * 0.55), at(r1, 0),
+    at(r0 + d * 0.9, -w * 0.55), at(r0 + d * 0.65, -w), at(r0 + d * 0.3, -w * 0.85)], c);
+}
+
+// A leaf from (x, y) toward (tx, ty), `w` half wide, with a vein.
+function leaf(x, y, tx, ty, w, c) {
+  const a = Math.atan2(ty - y, tx - x);
+  const r = Math.hypot(tx - x, ty - y);
+  return [petal(x, y, a, 0, r, w, c), F(band([[x, y], [x + (tx - x) * 0.8, y + (ty - y) * 0.8]], () => 0.3, shade(c, -14)))];
+}
+
+// A domed half-ellipse resting on y (mushroom caps, haystacks, skeps).
+function dome(cx, y, rx, ry, c, n = 14) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const a = Math.PI + (Math.PI * i) / n;
+    pts.push([cx + Math.cos(a) * rx, y + Math.sin(a) * ry]);
+  }
+  return T(pts, c);
+}
+
+// A crystal prism split into a lit facet and a shaded one, with a shine sliver.
+function prism(out, x, w, top, tip, bot, col, lean = 0) {
+  const L = x - w / 2;
+  const Rr = x + w / 2;
+  out.push(T([[L, bot], [L + lean * 0.6, top], [x + lean, tip], [Rr + lean * 0.6, top], [Rr, bot]], col));
+  out.push(F(T([[x, bot], [x + lean * 0.8, top + (tip - top) * 0.2], [x + lean, tip], [Rr + lean * 0.6, top], [Rr, bot]], shade(col, -9))));
+  out.push(F(T([[L + w * 0.18, bot - 2], [L + w * 0.18 + lean * 0.6, top + 2], [L + w * 0.32 + lean * 0.7, top - (top - tip) * 0.4], [L + w * 0.32, bot - 6]], mix(col, '#ffffff', 0.6))));
+}
+
+// A soft glow squashed into an oval (glow on a pool's surface).
+function ovalGlow(ctx, x, y, rx, ry, color, alpha, add = false) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, ry / rx);
+  glow(ctx, 0, 0, rx, color, alpha, add);
+  ctx.restore();
+}
+
+// Light glinting on water: short dashes sliding to and fro inside an oval.
+function shimmer(ctx, x, y, rx, ry, time, seed, n = 7, color = '#ffffff') {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = color;
+  for (let k = 0; k < n; k++) {
+    const p = time * 0.5 + k * 0.618 + seed * 0.31;
+    const a = Math.sin(p * Math.PI * 2) ** 2;
+    ctx.globalAlpha = 0.65 * a;
+    const dx = Math.sin(time * 0.6 + k * 2.4) * rx * 0.55 + ((k * 37) % 23) - 11;
+    const dy = (((k * 5) % 5) - 2) * ry * 0.3;
+    const len = 4 + (k % 3) * 2.4;
+    ctx.fillRect(x + dx - len / 2, y + dy - 0.4, len, 0.8);
+  }
+  ctx.restore();
+}
+
+// ---------- Farm ----------
+
+function barnArt() {
+  return art('barn', 110, 100, () => {
+    const red = '#ff8f9e';
+    const deep = '#e8778b';
+    const roof = '#b97aa0';
+    const white = '#fffaf2';
+    const out = [];
+    // Walls and the gable, with planks running up.
+    out.push(T([[14, 97], [14, 50], [24, 31], [55, 15], [86, 31], [96, 50], [96, 97]], red));
+    const roofY = (x) => (x < 24 ? 50 - (19 * (x - 14)) / 10 : x < 55 ? 31 - (16 * (x - 24)) / 31 : x < 86 ? 15 + (16 * (x - 55)) / 31 : 31 + (19 * (x - 86)) / 10);
+    for (let x = 20; x < 95; x += 6) {
+      const segs = x > 34 && x < 76 ? [[roofY(x) + 3, x > 42 && x < 68 ? 20 : 60]] : [[roofY(x) + 3, 95]];
+      if (x > 42 && x < 68) segs.push([42, 60]);
+      for (const [a, b] of segs) if (b > a) out.push(F(R(x, a, 0.7, b - a, shade(red, -7))));
+    }
+    out.push(R(14, 50, 3, 46, white), R(93, 50, 3, 46, white), F(R(14, 59, 82, 1.6, white)));
+    // The hayloft, doors swung open, stuffed with hay.
+    out.push(R(37.6, 22.6, 6, 16.4, deep), R(66.4, 22.6, 6, 16.4, deep), F(band([[38.4, 23.6], [43, 38]], () => 0.5, white)), F(band([[71.6, 23.6], [67, 38]], () => 0.5, white)),
+      R(44, 21, 22, 19, white), R(46, 23, 18, 15, '#6e4a62'),
+      T([[46, 38], [46, 32], [49, 29.6], [52, 32], [55, 28.4], [58.6, 31.6], [61, 29], [64, 32], [64, 38]], '#ffd66b'),
+      F(band([[49, 37], [50.4, 32]], () => 0.35, '#f0b452')), F(band([[56, 37], [55, 31]], () => 0.35, '#f0b452')), F(band([[61, 37], [61.6, 32]], () => 0.35, '#f0b452')),
+      R(54.6, 18, 0.8, 4, '#8a6450'), F(arc(55, 23.4, 1.2, 1.4, 0, 180, 0.4, '#8f7cc4')));
+    // Windows with flower boxes.
+    for (const wx of [21, 78]) {
+      out.push(R(wx - 1.2, 63.8, 13.4, 13.4, white), R(wx, 65, 11, 11, '#fff3a6'), F(R(wx + 5, 65, 1, 11, white)), F(R(wx, 70, 11, 1, white)), F(E(wx + 2.6, 67.4, 1.6, 1.2, '#ffffff')),
+        R(wx - 1.6, 77.6, 14.2, 3.4, '#c98a5c'), F(R(wx - 1.6, 78.6, 14.2, 0.6, '#a87050')));
+      for (const [dx, c] of [[1, '#ff9ec0'], [5, '#ffe36b'], [9.6, '#c9a6ff']]) out.push(...bloom(wx + dx, 76.6, 1.3, c));
+    }
+    // The big doors with white X braces.
+    out.push(R(35, 61, 40, 36, white), R(37, 63, 17.4, 34, deep), R(56.6, 63, 17.4, 34, deep));
+    for (const dx of [37, 56.6]) {
+      out.push(F(band([[dx + 1, 64.4], [dx + 16.4, 95.6]], () => 0.8, white)), F(band([[dx + 16.4, 64.4], [dx + 1, 95.6]], () => 0.8, white)), F(R(dx, 79.2, 17.4, 1.4, white)));
+    }
+    out.push(F(R(54.4, 63, 2.2, 34, white)), F(E(52, 82.6, 0.9, 0.9, '#ffe36b')), F(E(59, 82.6, 0.9, 0.9, '#ffe36b')));
+    // A heart over the doors.
+    out.push(F(E(53.6, 53, 1.8, 1.8, white)), F(E(56.4, 53, 1.8, 1.8, white)), F(T([[51.9, 53.6], [58.1, 53.6], [55, 57.2]], white)));
+    // The roof: a gambrel with shingle rows and a white eave trim.
+    const outer = [[3, 53], [19, 29], [55, 7], [91, 29], [107, 53]];
+    const inner = [[11, 53], [25, 33.6], [55, 15.6], [85, 33.6], [99, 53]];
+    out.push(F(band([[13.4, 54], [26.2, 35.6], [55, 18], [83.8, 35.6], [96.6, 54]], () => 0.9, white)));
+    out.push(T([...outer, ...[...inner].reverse()], roof));
+    const lerpPath = (t) => outer.map(([x, y], i) => [x + (inner[i][0] - x) * t, y + (inner[i][1] - y) * t]);
+    out.push(F(band(lerpPath(0.38), () => 0.45, shade(roof, -10))), F(band(lerpPath(0.7), () => 0.45, shade(roof, -10))), F(band(lerpPath(0.16).slice(1, 4), () => 0.7, shade(roof, 12))));
+    // Stone footing.
+    out.push(R(11, 95, 88, 5, '#ddd6ec'));
+    for (const x of [18, 30, 46, 64, 80, 92]) out.push(F(R(x, 95.6, 0.6, 4, '#bdb3d4')));
+    // A hay bale, a chick, and grass.
+    out.push(R(0.6, 87, 13, 11, '#ffd77a'), F(R(3.6, 87, 1, 11, '#d9a273')), F(R(9.6, 87, 1, 11, '#d9a273')), F(band([[2, 92], [6, 91.6], [12, 92.6]], () => 0.3, '#f0b452')),
+      T([[0.6, 87], [2, 85.4], [3.4, 87.2], [5, 85.6], [7, 87], [9, 85.6], [11, 87], [13.6, 87]], '#ffe39a'));
+    out.push(E(104, 96, 3.6, 3, '#fff07a'), E(102, 93.4, 2.4, 2.2, '#fff07a'), T([[99.8, 93.4], [98.2, 94], [99.8, 94.6]], '#ffb347'), F(E(101.4, 93, 0.45, 0.55, INK)), F(E(102.4, 94.4, 0.6, 0.3, BLUSH)),
+      F(E(105, 95.4, 1.6, 1, '#ffe14d')));
+    out.push(tuft(20, 100), tuft(90, 100, '#7fcf86'), tuft(34, 100, '#8fd690'), ...bloom(28, 98, 1.2, '#ffffff'), ...bloom(84, 98.4, 1.2, '#ff9ec0'));
+    return out;
+  });
+}
+
+function vaneArt(f) {
+  const c = Math.cos((f / 8) * Math.PI * 2);
+  return art(`barnvane|${f}`, 22, 16, () => {
+    const X = (u) => 11 + c * u;
+    const gold = '#ffd66b';
+    const iron = '#8f7cc4';
+    return [
+      R(10.4, 5, 1.2, 11, iron), R(4.4, 10, 13.2, 0.8, iron), E(4.4, 10.4, 1, 1, gold), E(17.6, 10.4, 1, 1, gold),
+      T([[X(-6), 4.8], [X(6), 4.8], [X(6), 6], [X(-6), 6]], iron),
+      T([[X(9.6), 5.4], [X(6), 3], [X(6), 7.8]], gold),
+      T([[X(-9.6), 2.6], [X(-6), 4.4], [X(-6), 6.4], [X(-9.6), 8.4], [X(-8), 5.4]], gold),
+      // The little rooster riding on top.
+      T([[X(-3.4), 3.6], [X(-4.6), 0.4], [X(-2), 2.4]], '#ff9f5a'),
+      E(X(0.4), 2.8, Math.abs(c) * 3 + 0.9, 2, gold), E(X(2.6), 1, Math.abs(c) * 1.4 + 0.6, 1.4, gold),
+      E(X(2.6), -0.6, Math.abs(c) * 0.9 + 0.4, 0.8, '#ff8fa8'), T([[X(3.8), 0.6], [X(5.2), 1.2], [X(3.8), 1.8]], '#ff9f5a'),
+      E(11, 5.4, 1.1, 1.1, gold),
+    ];
+  });
+}
+
+function haystackArt(v) {
+  return art(`haystack|${v}`, 46, 34, () => {
+    const hay = '#ffd77a';
+    const deep = '#f0b452';
+    const out = [];
+    if (v === 0) out.push(band([[30, 20], [41.6, 0.6]], () => 0.9, '#c99a6b'), F(band([[30.6, 19], [41.4, 1.2]], () => 0.3, '#e0b88a')));
+    out.push(dome(23, 33.4, 21, 26, hay, 18), E(23, 33, 21, 1.6, hay));
+    const topAt = (x) => 33.4 - 26 * Math.sqrt(Math.max(0, 1 - ((x - 23) / 21) ** 2));
+    for (let k = 0; k < 10; k++) {
+      const x = 5.4 + k * 3.9;
+      const y0 = topAt(x) + 3 + (k % 3) * 2;
+      const y1 = Math.min(32, y0 + 8 + (k % 2) * 6);
+      out.push(F(band([[x, y0], [x + (x - 23) * 0.08, y1]], () => 0.4, deep)));
+    }
+    out.push(F(E(15, 17, 5, 2.6, '#fff0b8')), F(band([[4, 26], [14, 24], [23, 23.4], [32, 24], [42, 26]], () => 0.5, '#e8a85a')));
+    // Wisps on top and loose straw on the ground.
+    out.push(T([[21, 8.6], [19, 4.4], [22.4, 7.6], [23.4, 3.6], [24.4, 7.8], [27, 5.4], [25.6, 9]], hay),
+      F(band([[1, 33.4], [6, 32.6]], () => 0.35, deep)), F(band([[40, 32.8], [45, 33.6]], () => 0.35, deep)), F(band([[36, 33.6], [41, 33]], () => 0.35, hay)));
+    if (v === 0) {
+      // The pitchfork stuck in the side.
+      out.push(E(30.2, 19.6, 2.2, 1.1, '#b8c0d8'), F(R(28.6, 20, 0.6, 2, '#b8c0d8')), F(R(31.2, 20, 0.6, 1.6, '#b8c0d8')), tuft(6, 34), ...bloom(40, 31.6, 1.2, '#ffffff'));
+    } else if (v === 1) {
+      // A kitten curled up asleep on top.
+      const cc = '#ffc89a';
+      out.push(E(25.6, 8, 6.4, 3.4, cc), E(18.8, 7.6, 3.4, 3, cc), T([[16.2, 5.6], [16.4, 2.6], [18.6, 5]], cc), T([[19.4, 5], [21.2, 2.6], [21.6, 5.6]], cc),
+        band([[31.6, 9], [33, 10.6], [31, 11.4], [26, 11.2]], () => 0.9, cc),
+        F(E(26, 6.2, 2.4, 1, '#f0a670')), F(E(29.4, 7, 1.4, 0.8, '#f0a670')), F(E(17.2, 4.4, 0.5, 0.6, '#ffb3c4')), ...face(18.8, 7.8, 1.2, 'closed', 'none'),
+        tuft(40, 34), ...bloom(5, 31.6, 1.2, '#ff9ec0'));
+    } else {
+      // A little bluebird perched on the top, and a sunflower tucked in.
+      out.push(E(23, 5.4, 3.2, 2.6, '#9fd8ff'), E(25.4, 3.6, 2.2, 2, '#9fd8ff'), T([[27.2, 3.2], [29, 3.8], [27.2, 4.4]], '#ffb347'), T([[20, 5], [17.8, 3.4], [19.4, 6.6]], '#9fd8ff'),
+        F(E(25.9, 3.2, 0.45, 0.55, INK)), F(E(25.6, 4.4, 0.55, 0.3, BLUSH)), F(E(22.4, 5.6, 1.6, 1, '#c4e8ff')));
+      for (let k = 0; k < 9; k++) out.push(petal(37, 16, (k / 9) * Math.PI * 2, 1.6, 4.6, 1.3, '#ffd84d'));
+      out.push(E(37, 16, 2, 2, '#c08a5e'), F(E(36.4, 15.4, 0.6, 0.6, '#e0b080')), tuft(8, 34, '#7fcf86'));
+    }
+    return out;
+  });
+}
+
+function scarecrowArt(f) {
+  const hop = [0, 4.2, 1.6][f];
+  return art(`scarecrow|${f}`, 36, 70, () => {
+    const wood = '#b88a5c';
+    const straw = '#ffd77a';
+    const shirt = '#9fc4ff';
+    const sack = '#f3dcb0';
+    const hat = '#f6c46b';
+    const out = [R(16.8, 24, 2.4, 46, wood), F(R(17.3, 50, 0.8, 20, '#d0a274')), R(1.6, 28.4, 32.8, 2.4, wood)];
+    // Straw spilling from the cuffs, then the patched shirt and overalls.
+    for (const s of [-1, 1]) {
+      const X = (u) => 18 + s * u;
+      out.push(T([[X(13.6), 27], [X(17.6), 25.4], [X(15.4), 28.6], [X(18), 29.6], [X(15.6), 31], [X(17.4), 33.6], [X(13.6), 33]], straw));
+      out.push(T([[X(6), 26], [X(14.4), 26.4], [X(14.6), 33.4], [X(6), 33.6]], shirt), F(R(Math.min(X(14), X(14.8)), 26.6, 0.8, 6.6, '#7fa8e6')));
+    }
+    out.push(T([[9, 49], [10.4, 52.6], [12.6, 49.6], [14.6, 53.4], [17, 49.6], [19.4, 53.6], [21.6, 49.6], [24, 53], [25.6, 49.6], [27, 52.6], [27.4, 49]], straw));
+    out.push(T([[10, 26], [26, 26], [27, 49], [9, 49]], shirt), F(R(12.6, 26, 0.6, 22, '#c4dcff')),
+      R(11.6, 36, 6, 6, '#ff9ec0'), F(R(11.6, 38.6, 6, 0.8, '#ffc6dc')), F(R(14.2, 36, 0.8, 6, '#ffc6dc')),
+      ...[[12.2, 36.6], [16.4, 36.6], [12.2, 40.8], [16.4, 40.8]].map(([x, y]) => F(R(x, y, 0.6, 0.6, '#ffffff'))),
+      R(27.6, 27.6, 3.6, 3.6, '#ffe36b'), F(R(28.2, 29.2, 2.4, 0.4, '#f0b452')),
+      F(E(18, 30.6, 0.8, 0.8, '#ffffff')), F(E(18, 34.6, 0.8, 0.8, '#ffffff')), F(R(9.6, 44.4, 17, 1.4, '#d9a273')), F(E(23.4, 45, 1.4, 1.4, '#d9a273')));
+    // Straw at the neck, the burlap head, and a happy stitched face.
+    out.push(T([[12, 26.6], [13, 22], [15, 25], [17, 21.4], [19, 25], [21.6, 21.4], [23, 25], [24.6, 22], [24, 26.6]], straw));
+    out.push(E(18, 16.6, 8.6, 8, sack), F(band([[10.6, 14], [12.4, 22]], () => 0.3, '#d9bf90')), F(band([[25.4, 14], [23.8, 22]], () => 0.3, '#d9bf90')),
+      ...face(18, 17, 3.4, 'open', 'smile', 1.15), F(R(16.4, 19.4, 0.4, 1.4, INK)), F(R(19.2, 19.4, 0.4, 1.4, INK)),
+      F(R(13, 23.2, 10, 0.9, '#c98a5c')));
+    // The straw hat with a ribbon and a flower.
+    out.push(T([[7, 12.6], [9, 15], [11, 12.8], [25, 12.8], [27, 15], [29, 12.6]], straw),
+      E(18, 10.6, 13.4, 2.6, hat), T([[11.4, 10.4], [12.4, 3.4], [15, 1.4], [21, 1.4], [23.6, 3.4], [24.6, 10.4]], hat),
+      F(R(11.8, 6.6, 12.4, 2.2, '#ff9ec0')), F(E(15.6, 3, 3, 0.9, '#ffe39a')), ...bloom(22.4, 7.6, 1.5, '#ffffff'), F(band([[6, 11.6], [12, 12.4]], () => 0.3, '#e0a84e')));
+    // The crow on the arm, hopping now and then.
+    const cr = '#6f6590';
+    const cy = 25.2 - hop;
+    out.push(T([[28.4, cy], [24.4, cy - 2.4], [25, cy + 1]], cr), E(31, cy, 3.8, 3, cr), E(33.6, cy - 2.8, 2.6, 2.4, cr),
+      T([[35.6, cy - 3.4], [38.4, cy - 2.4], [35.6, cy - 1.6]], '#ffb347'), F(E(34.4, cy - 3.4, 0.9, 1, '#ffffff')), F(E(34.7, cy - 3.3, 0.5, 0.6, INK)),
+      F(E(32.8, cy - 1.6, 0.7, 0.35, BLUSH)), F(E(31.6, cy + 1, 2, 1.4, '#968cb6')));
+    if (hop > 2) out.push(T([[29, cy - 1], [26, cy - 6], [31.4, cy - 2.4]], '#857aa6'), F(R(30, cy + 2.6, 0.5, 2.4, '#ffb347')), F(R(32, cy + 2.6, 0.5, 2.4, '#ffb347')));
+    else out.push(F(E(29.6, cy, 2.2, 1.4, '#857aa6')), F(R(30.4, cy + 2.6, 0.5, 1, '#ffb347')), F(R(32, cy + 2.6, 0.5, 1, '#ffb347')));
+    out.push(tuft(11, 70), tuft(25, 70, '#7fcf86'), ...bloom(28, 67.6, 1.2, '#ff9ec0'), E(18, 69.2, 4, 1, '#c9a27a'));
+    return out;
+  });
+}
+
+// A picket fence segment; rails run to the very edges so segments 64 apart join up.
+function fenceArt(v) {
+  return art(`fence|${v}`, 64, 24, () => {
+    const white = '#fffaf4';
+    const line = '#e6dccd';
+    const out = [R(-1, 9, 66, 2.6, white), R(-1, 16, 66, 2.6, white), F(R(-1, 11, 66, 0.6, line)), F(R(-1, 18, 66, 0.6, line))];
+    for (let x = 4; x < 64; x += 8) {
+      out.push(T([[x - 2.6, 23.6], [x - 2.6, 4], [x, 1.2], [x + 2.6, 4], [x + 2.6, 23.6]], white), F(R(x + 1.2, 4.6, 0.8, 18.6, line)));
+    }
+    if (v === 1) {
+      // A flowering vine along the top rail.
+      out.push(band([[1, 10.6], [10, 9], [20, 11.4], [30, 9.2], [40, 11.2], [50, 9], [63, 10.6]], () => 0.5, '#6cc070'));
+      for (const [x, c] of [[6, '#ff9ec0'], [17, '#ffe36b'], [27, '#c9a6ff'], [38, '#ff9ec0'], [49, '#ffffff'], [58, '#ffe36b']]) out.push(...ringed(x + 2, 9.8, 1.8, 1.2, '#8fdc9a', 0.5), ...bloom(x, 9.6, 1.3, c));
+    } else if (v === 2) {
+      // A little bird on a post and a watering can.
+      out.push(E(35, 6.6, 2.8, 2.2, '#ffb3c8'), E(37, 5.2, 1.8, 1.6, '#ffb3c8'), T([[38.6, 4.8], [40, 5.4], [38.6, 6]], '#ffb347'), F(E(37.4, 4.8, 0.4, 0.5, INK)), F(E(34.6, 6.8, 1.4, 0.8, '#ffd6e2')),
+        T([[32.6, 6], [31, 4.6], [32.4, 7.4]], '#ffb3c8'),
+        R(46, 18, 8, 6, '#9fd8ff'), E(50, 18, 4, 1, '#bfe6ff'), band([[54, 21], [58.6, 16.4]], () => 0.6, '#9fd8ff'), F(arc(50, 18, 3, 3, 180, 360, 0.6, '#7fbfe8')));
+    }
+    out.push(tuft(9, 24), tuft(31, 24, '#7fcf86'), tuft(56, 24, '#8fd690'), ...bloom(20, 22, 1.2, v === 1 ? '#ffffff' : '#ff9ec0'));
+    return out;
+  });
+}
+
+function cartArt() {
+  return art('cart', 64, 44, () => {
+    const wood = '#e0a878';
+    const dark = '#b07a52';
+    const light = '#f2c89a';
+    const out = [band([[44, 25], [63, 33.4]], () => 1.1, dark), band([[46, 22], [63.6, 27.6]], () => 0.9, dark)];
+    // The heap: carrots and pumpkins piled above the bed.
+    const carrot = (x, y, tx, ty) => {
+      out.push(T([[x - 2, y], [x + 2, y], [tx, ty]], '#ffa35a'), F(band([[x - 1, y + 1.4], [x + 0.4, y + 1.6]], () => 0.25, '#e07f3a')),
+        T([[x - 1.4, y], [x - 3, y - 4.4], [x - 0.4, y - 1.4], [x, y - 5], [x + 0.6, y - 1.4], [x + 3, y - 4], [x + 1.4, y]], '#7fcf86'));
+    };
+    const pumpkin = (x, y, rx, ry, c, faceIt) => {
+      out.push(E(x, y, rx, ry, c), F(E(x - rx * 0.45, y, rx * 0.4, ry * 0.9, shade(c, -6))), F(E(x + rx * 0.45, y, rx * 0.4, ry * 0.9, shade(c, -6))), F(E(x, y, rx * 0.36, ry * 0.95, shade(c, 4))),
+        R(x - 0.7, y - ry - 2.2, 1.4, 2.8, '#6cc070'), F(E(x - rx * 0.4, y - ry * 0.5, rx * 0.25, ry * 0.18, '#fff0d8')));
+      if (faceIt) out.push(...face(x, y + 0.4, rx * 0.36, 'happy', 'smile', 0.9));
+    };
+    pumpkin(17, 13.4, 7, 5.6, '#ffb070', false);
+    pumpkin(43.4, 14, 5.4, 4.4, '#ffd27a', false);
+    carrot(7, 10.6, 12, 20);
+    carrot(40, 8, 37, 18);
+    carrot(49, 9.4, 45, 19);
+    pumpkin(29, 12, 8.4, 6.6, '#ffc07a', true);
+    carrot(21, 9, 22, 18);
+    // The bed.
+    out.push(R(4, 18, 46, 14, wood), F(R(4, 22.6, 46, 0.7, dark)), F(R(4, 27.2, 46, 0.7, dark)), R(2.6, 16.6, 48.8, 2.6, light), F(R(10, 18, 0.7, 14, dark)), F(R(44, 18, 0.7, 14, dark)),
+      F(E(13, 25, 0.6, 0.6, '#8a5a3c')), F(E(41, 25, 0.6, 0.6, '#8a5a3c')), R(1.6, 17, 2.8, 15, dark));
+    // Spoked wheels; the bed shows through between the spokes.
+    for (const cx of [15, 39]) {
+      out.push(E(cx, 34.4, 9.4, 9.4, '#c98a5c'), E(cx, 34.4, 7, 7, 'none'));
+      const chord = [];
+      for (let i = 0; i <= 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        chord.push([cx + Math.cos(a) * 7.1, Math.min(32, 34.4 + Math.sin(a) * 7.1)]);
+      }
+      out.push(F(T(chord, wood)));
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI;
+        out.push(F(band([[cx - Math.cos(a) * 7.4, 34.4 - Math.sin(a) * 7.4], [cx + Math.cos(a) * 7.4, 34.4 + Math.sin(a) * 7.4]], () => 0.6, '#b07a52')));
+      }
+      out.push(E(cx, 34.4, 2.2, 2.2, '#8a6450'), F(E(cx - 0.5, 33.8, 0.7, 0.7, '#c9a27a')), F(arc(cx, 34.4, 8.6, 8.6, 200, 300, 0.6, '#e0a878')));
+    }
+    out.push(tuft(2, 44), tuft(28, 44, '#7fcf86'), tuft(56, 44));
+    return out;
+  });
+}
+
+// ---------- Flower field ----------
+
+function giantflowerArt(v, frame, blink) {
+  const sway = [-1.6, 0, 1.6, 0][frame];
+  return art(`giantflower|${v}|${frame}|${blink}`, 40, 90, () => {
+    const out = [];
+    const sx = (y) => sway * Math.pow(Math.max(0, (90 - y) / 66), 1.5);
+    const hx = 20 + sx(24);
+    const hy = 24;
+    const stem = [];
+    for (let i = 0; i <= 8; i++) {
+      const y = 90 - (i * 64) / 8;
+      stem.push([20 + sx(y) + Math.sin(i * 0.8) * 0.8, y]);
+    }
+    out.push(band(stem, (u) => 2 - u * 0.6, '#6cc070'), F(band(stem.slice(0, 7).map(([x, y]) => [x - 0.8, y]), () => 0.35, '#9fe0a0')));
+    out.push(...leaf(20 + sx(66), 66, 4 + sx(56), 54, 3.6, '#7fd18a'), ...leaf(20 + sx(52), 52, 36 + sx(42), 42, 3.2, '#8fdc9a'), ...leaf(20, 86, 9, 78, 2.6, '#7fd18a'));
+    if (v === 1) {
+      // A pink tulip, with a ladybug on its leaf.
+      out.push(E(hx, hy + 3, 10.4, 10, '#ff8fb4'),
+        T([[hx - 10.4, hy + 3], [hx - 10.6, hy - 9], [hx - 4, hy - 3.6], [hx - 1.6, hy + 8]], '#ffa8c8'),
+        T([[hx + 10.4, hy + 3], [hx + 10.6, hy - 9], [hx + 4, hy - 3.6], [hx + 1.6, hy + 8]], '#ffa8c8'),
+        T([[hx - 5.6, hy + 4], [hx, hy - 12], [hx + 5.6, hy + 4], [hx, hy + 9]], '#ffc0d6'),
+        F(band([[hx - 7.4, hy - 4], [hx - 7.8, hy + 5]], () => 0.6, '#ffd6e4')), F(band([[hx, hy - 8], [hx, hy + 2]], () => 0.6, '#ffe0ea')),
+        F(E(hx + 6, hy + 8, 2.6, 1.6, '#ff7fa8')));
+      const lx = 31 + sx(46);
+      out.push(E(lx, 45.4, 2.2, 1.7, '#ff6b6b'), E(lx + 2, 45.4, 1.1, 1.1, INK), F(R(lx - 0.2, 43.8, 0.4, 3.4, INK)), F(E(lx - 1, 45, 0.45, 0.45, INK)), F(E(lx + 0.8, 46, 0.45, 0.45, INK)));
+    } else {
+      const sun = v === 0;
+      const col = sun ? '#ffd84d' : '#ffffff';
+      const back = sun ? '#f5b73a' : '#e6e8ff';
+      const n = sun ? 14 : 16;
+      for (let k = 0; k < n; k++) out.push(petal(hx, hy, ((k + 0.5) / n) * Math.PI * 2, 5, sun ? 15.6 : 15, sun ? 3.2 : 2.4, back));
+      for (let k = 0; k < n; k++) out.push(petal(hx, hy, (k / n) * Math.PI * 2, 5, sun ? 17 : 16.4, sun ? 3.4 : 2.6, col));
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2;
+        out.push(F(band([[hx + Math.cos(a) * 8, hy + Math.sin(a) * 8], [hx + Math.cos(a) * 13, hy + Math.sin(a) * 13]], () => 0.3, sun ? '#f0b83a' : '#e0e2f6')));
+      }
+      const cr = sun ? 8.6 : 6.6;
+      out.push(E(hx, hy, cr, cr, sun ? '#c08a5e' : '#ffd84d'));
+      if (sun) {
+        for (let k = 0; k < 12; k++) {
+          const a = (k / 12) * Math.PI * 2;
+          out.push(F(E(hx + Math.cos(a) * 7, hy + Math.sin(a) * 7, 0.6, 0.6, '#9a6848')));
+        }
+      } else out.push(F(E(hx - 2.4, hy - 3, 1.8, 1, '#fff3a6')));
+      out.push(...face(hx, hy - 1, sun ? 3.6 : 2.8, blink ? 'closed' : 'open', 'smile', sun ? 1.6 : 1.3));
+    }
+    out.push(tuft(14, 90), tuft(27, 90, '#7fcf86'), ...bloom(9, 88, 1.2, '#ff9ec0'), ...bloom(32, 88.4, 1.1, '#ffe36b'));
+    return out;
+  });
+}
+
+function beehiveArt(blink) {
+  return art(`beehive|${blink}`, 50, 80, () => {
+    const out = [];
+    // The stump the hive sits on.
+    for (const [path, w] of [[[[16, 74], [9, 78], [4, 80.4]], 3.4], [[[34, 74], [41, 78], [46, 80.4]], 3.4]]) out.push(band(path, (u) => w * (1 - u) + 1, BARK));
+    out.push(T([[11, 80.4], [13.4, 72], [14, 55], [36, 55], [36.6, 72], [39, 80.4]], BARK), F(band([[18, 60], [17.4, 76]], () => 0.7, BARK_LIGHT)), F(band([[31, 62], [32, 74]], () => 0.6, BARK_DEEP)),
+      E(25, 55, 11.4, 3.4, BARK_LIGHT), F(arc(25, 55, 7.6, 2.2, 0, 360, 0.5, '#c9946e')), F(E(25, 55, 2.6, 0.8, '#c9946e')));
+    // The skep: stacked honey-gold coils, with a happy face and a round door.
+    const yb = 54;
+    const ry = 38;
+    const rx = 17;
+    const xl = (y) => 25 - rx * Math.sqrt(Math.max(0, 1 - ((yb - y) / ry) ** 2));
+    const xr = (y) => 50 - xl(y);
+    out.push(dome(25, yb, rx, ry, '#ffd66b', 16), E(25, yb - 0.4, rx, 2.6, '#ffd66b'));
+    for (const [y0, y1] of [[19, 22.4], [27.4, 30.8], [43, 46.4]]) out.push(F(strip(xl, xr, y0, y1, '#f2b84b')));
+    for (const y of [22.4, 30.8, 38, 46.4]) out.push(F(strip(xl, xr, y, y + 0.6, '#d99a3e')));
+    out.push(F(T([[xl(26) + 2, 26], [xl(26) + 4.4, 26], [xl(48) + 4.6, 48], [xl(48) + 2.2, 48]], '#fff0a8')), F(E(21, 16.6, 2.6, 1.4, '#fff3b8')));
+    out.push(...face(25, 34, 4.4, blink ? 'closed' : 'happy', 'smile', 1.3), E(25, 50.4, 3.6, 2.6, '#7a4e3e'), F(E(25, 51, 2.6, 1.6, '#5a3a32')),
+      R(23.6, 52.4, 2.8, 1.6, '#e6a64a'));
+    // Honey dripping down, a jar, and clover around the foot.
+    out.push(band([[34.6, 53], [35, 57], [34.8, 59.6]], (u) => 0.9 + u * 0.4, '#ffb347'), F(E(34.4, 54, 0.4, 1, '#ffe08a')),
+      R(39.6, 72, 7.4, 8, '#ffcf5a'), R(39, 70.6, 8.6, 2, '#ff9ec0'), F(R(40.4, 74.6, 2, 3.6, '#ffe8a8')), F(E(43.3, 70.6, 4.2, 0.5, '#ffc0d6')));
+    for (const [x, y] of [[6, 78], [10, 79.4]]) out.push(...ringed(x, y, 1.6, 1.3, '#8fdc9a', 0.5), ...ringed(x + 2, y - 0.8, 1.6, 1.3, '#8fdc9a', 0.5));
+    out.push(tuft(3, 80.4), tuft(33, 80.4, '#7fcf86'), ...bloom(8, 75.6, 1.2, '#ffffff'), ...bloom(48, 78, 1.1, '#c9a6ff'));
+    return out;
+  });
+}
+
+function bee(ctx, x, y, dir, time, k) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir, 1);
+  const flap = Math.sin(time * 40 + k) > 0 ? 1 : 0.55;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.strokeStyle = '#9fb8e6';
+  ctx.lineWidth = 0.4;
+  for (const dx of [-0.6, 0.8]) {
+    ctx.beginPath();
+    ctx.ellipse(dx, -2, 1.3, 1.8 * flap, dx * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#ffd84d';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 0.55;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 2.6, 1.9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = INK;
+  ctx.fillRect(-1.2, -2, 0.8, 4);
+  ctx.fillRect(0.4, -2, 0.8, 4);
+  ctx.restore();
+  ctx.stroke();
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.arc(1.9, -0.3, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function picnicArt() {
+  return art('picnic', 70, 26, () => {
+    const out = [];
+    // The gingham blanket, laid out in perspective.
+    const P = (u, v) => {
+      const L = 10 + (2 - 10) * v;
+      const Rr = 60 + (68 - 60) * v;
+      return [L + (Rr - L) * u, 14.6 + 10.8 * v];
+    };
+    out.push(T([P(0, 0), P(1, 0), P(1, 1), P(0, 1)], '#fff6f8'));
+    const nu = 10;
+    const nv = 4;
+    for (let i = 0; i < nu; i++) {
+      for (let j = 0; j < nv; j++) {
+        const a = i % 2 === 0;
+        const b = j % 2 === 0;
+        if (!a && !b) continue;
+        const c = a && b ? '#ff9fb8' : '#ffccd9';
+        out.push(F(T([P(i / nu, j / nv), P((i + 1) / nu, j / nv), P((i + 1) / nu, (j + 1) / nv), P(i / nu, (j + 1) / nv)], c)));
+      }
+    }
+    // A plate of cookies and a teacup.
+    out.push(E(38, 21.6, 5.4, 1.8, '#ffffff'), F(E(38, 21.6, 3.8, 1, '#f0ecf8')), E(36.4, 20.4, 2, 1.1, '#e8b06a'), E(39.8, 20.6, 2, 1.1, '#f0c080'),
+      F(E(36, 20.2, 0.35, 0.3, '#8a5a3c')), F(E(37, 20.6, 0.35, 0.3, '#8a5a3c')), F(E(40.2, 20.4, 0.35, 0.3, '#ff9ec0')));
+    out.push(E(61, 23, 4.4, 1.2, '#ffe0ea'), T([[57.4, 18.6], [64.6, 18.6], [63.6, 22.4], [58.4, 22.4]], '#ffffff'), F(E(61, 18.8, 3.2, 0.8, '#e0a070')), F(arc(65.2, 20.2, 1.4, 1.4, 270, 450, 0.5, '#ffd0dc')),
+      F(E(61, 20.8, 0.9, 0.7, '#ff9ec0')));
+    // The basket with a napkin, an apple, and bread poking out.
+    out.push(arc(24, 11.4, 8.6, 9, 180, 360, 1.5, '#c98f58'),
+      T([[15.4, 11.4], [20.4, 6.4], [24, 11.4]], '#ff9fb8'), F(T([[17.6, 9.2], [19.6, 9.2], [20.4, 6.4]], '#ffffff')),
+      band([[26, 11], [31, 4.6]], () => 1.6, '#f0c080'), F(band([[27.6, 8.6], [28.4, 7.6]], () => 0.4, '#d99a5a')), F(band([[29.2, 6.6], [30, 5.6]], () => 0.4, '#d99a5a')),
+      E(21.6, 10, 2.2, 2.1, '#ff8a8a'), F(R(21.4, 7, 0.5, 1.6, '#8a5a3c')), F(E(21, 9.4, 0.6, 0.5, '#ffd0d0')),
+      T([[14, 12], [34, 12], [32.4, 22.4], [15.6, 22.4]], '#e8b478'), R(13, 10.6, 22, 2.6, '#d99d62'));
+    for (const y of [15.4, 18.8]) out.push(F(R(14.6, y, 18.6, 0.6, '#c98f58')));
+    for (const x of [18, 22, 26, 30]) out.push(F(R(x, 13.2, 0.6, 9, '#f2c48c')));
+    // The teapot.
+    out.push(arc(43, 17.4, 2.6, 3, 90, 270, 1.1, '#a8d8ff'), T([[53.6, 16.4], [58, 11.4], [59.4, 12], [55, 19.4]], '#bfe4ff'),
+      E(49, 17, 6.6, 5.4, '#bfe4ff'), E(49, 21.8, 4.6, 1, '#a8d8ff'), E(49, 12.2, 3.8, 1.4, '#a8d8ff'), E(49, 10.6, 1.2, 1, '#ffd66b'),
+      F(E(46.6, 15, 1.6, 2.2, '#e6f6ff')), ...bloom(50.4, 17.6, 1.3, '#ff9ec0'));
+    return out;
+  });
+}
+
+// ---------- Deep forest ----------
+
+function hollowlogArt() {
+  return art('hollowlog', 120, 46, () => {
+    const bark = '#a88466';
+    const light = '#c9a382';
+    const deep = '#86644e';
+    const wood = '#f0d2a8';
+    const moss = '#8fd18f';
+    const out = [];
+    // The log, its far end broken off in splinters.
+    out.push(T([[14, 12], [102, 12.4], [108, 14], [104, 18], [111, 22], [105, 27], [112, 32], [106, 37], [109, 42], [100, 44.6], [14, 44.6]], bark),
+      F(T([[103, 14], [107, 14.4], [104, 18], [109, 22], [104, 27], [110, 32], [105, 37], [107, 41.4], [103, 42]], wood)));
+    for (const y of [18, 24, 31, 37.6]) out.push(F(band([[24, y], [50, y + 0.8], [76, y - 0.4], [100, y + 0.4]], () => 0.45, deep)));
+    out.push(F(band([[22, 14.6], [60, 14.4], [98, 15]], () => 1.1, light)), F(band([[30, 41.6], [70, 42], [98, 41.4]], () => 1, deep)));
+    out.push(E(66, 30, 3.6, 2.4, deep), F(E(66, 30, 2, 1.2, '#6e5040')), F(E(65.4, 28.6, 2.4, 0.5, light)));
+    // The open end: a ring of pale wood around a dark hollow.
+    out.push(E(14, 28.4, 10.6, 16.4, wood), F(arc(14, 28.4, 8.8, 14.6, 0, 360, 0.5, '#e0b88a')), F(E(14.8, 28.6, 7.4, 13.4, '#4a3858')), F(E(15.6, 29.4, 5.6, 11, '#33263f')));
+    // Moss along the top and dripping down the sides.
+    for (let x = 22; x <= 100; x += 7) {
+      const j = Math.sin(x * 0.7) * 1.2;
+      out.push(...ringed(x, 12 + j, 6, 2.8, x % 14 ? moss : '#a0dc98', 0.6));
+    }
+    for (const [x, len] of [[30, 6], [47, 4], [58, 8], [83, 5], [94, 7]]) out.push(T([[x - 2.4, 13], [x + 2.4, 13], [x + 0.6, 13 + len], [x - 0.6, 13 + len]], moss));
+    out.push(...ringed(8, 13.6, 4.4, 2.2, moss, 0.6), ...ringed(18, 12.6, 4.6, 2.2, '#a0dc98', 0.6), ...ringed(20, 44, 5, 2, moss, 0.6), ...ringed(88, 44.6, 6, 2, moss, 0.6));
+    // Mushrooms on top, a fern, and flowers.
+    out.push(R(76.6, 4.6, 3, 8, '#fff1dc'), E(78, 4.8, 6.6, 3.8, '#ff8fa8'), F(E(75.6, 3.4, 1.4, 1, '#ffffff')), F(E(80.6, 4, 1.1, 0.8, '#ffffff')), F(E(78.4, 2.2, 0.9, 0.7, '#ffffff')),
+      F(E(78, 7.6, 5.4, 0.8, '#e66f8e')), R(85.4, 7.6, 1.8, 4.6, '#fff1dc'), E(86.3, 7.8, 3, 1.9, '#ffb38a'), F(E(85.6, 7.2, 0.7, 0.5, '#ffffff')));
+    for (let k = 0; k < 5; k++) out.push(...leaf(44, 11, 44 + Math.cos(-2.6 + k * 0.5) * 9, 11 + Math.sin(-2.6 + k * 0.5) * 9, 1.6, '#7fd19a'));
+    out.push(tuft(4, 46), tuft(32, 46, '#7fcf86'), tuft(116, 46, '#86d98c'), ...bloom(110, 44, 1.2, '#c9a6ff'), ...bloom(26, 44.4, 1.1, '#ffffff'));
+    return out;
+  });
+}
+
+function stumphouseArt() {
+  return art('stumphouse', 80, 90, () => {
+    const moss = '#8fd18f';
+    const out = [];
+    for (const [path, w] of [[[[18, 80], [8, 86], [0, 90.6]], 5], [[[62, 80], [72, 86], [80, 90.6]], 5], [[[26, 84], [20, 90.6]], 3], [[[54, 84], [60, 90.6]], 3]]) {
+      out.push(band(path, (u) => w * (1 - u) + 1.2, BARK));
+    }
+    out.push(T([[10, 90.6], [13.6, 76], [12, 44], [14, 26], [66, 26], [68, 44], [66.4, 76], [70, 90.6]], BARK));
+    for (const [x, c] of [[18, BARK_LIGHT], [26, BARK_DEEP], [56, BARK_DEEP], [62, BARK_LIGHT]]) out.push(F(band([[x, 30], [x - 1, 50], [x + 0.6, 70]], () => 0.5, c)));
+    // Chimney behind the mossy roof.
+    out.push(R(52, 3, 10, 22, '#cfc3ef'), R(50.6, 1.4, 12.8, 3.2, '#bdb3dc'), F(R(52, 9, 10, 0.6, '#b4a6dc')), F(R(52, 15, 10, 0.6, '#b4a6dc')), F(R(56, 4.6, 0.6, 4.4, '#b4a6dc')), F(R(58.4, 9.6, 0.6, 5.4, '#b4a6dc')));
+    // The moss roof spilling over the cut top.
+    for (const [x, y, rx, ry] of [[40, 26, 30, 6], [16, 24, 10, 6.4], [64, 24, 10, 6.4], [28, 19, 13, 7.4], [50, 19, 13, 7.4], [39, 14.6, 12, 6.4]]) out.push(...ringed(x, y, rx, ry, moss, 0.8));
+    for (const [x, y, rx, ry] of [[22, 18, 6, 3], [44, 12, 6, 2.6], [56, 17, 5, 2.4], [12, 22.6, 4, 2.2], [66, 22.6, 4, 2.2]]) out.push(F(E(x, y, rx, ry, '#b4ecac')));
+    for (const [x, len] of [[14, 7], [24, 5], [56, 6], [67, 8]]) out.push(T([[x - 2.6, 28], [x + 2.6, 28], [x + 0.8, 28 + len], [x - 0.8, 28 + len]], moss));
+    out.push(R(38.6, 3.4, 1.2, 7, '#6cc070'), ...leaf(39.2, 5, 33.4, 2, 2, '#8fdc9a'), ...leaf(39.2, 4, 45, 1.4, 2, '#8fdc9a'),
+      ...bloom(20, 15, 1.3, '#ff9ec0'), ...bloom(60, 20, 1.2, '#ffe36b'), ...bloom(32, 12, 1.2, '#ffffff'));
+    // Round windows glowing warm, one with a flower box.
+    for (const [cx, cy, r] of [[23, 46, 5], [58, 44, 5.4]]) {
+      out.push(E(cx, cy, r + 1.6, r + 1.6, '#e0b98a'), F(E(cx, cy, r, r, '#fff3a6')), F(R(cx - 0.4, cy - r, 0.8, r * 2, '#e0b98a')), F(R(cx - r, cy - 0.4, r * 2, 0.8, '#e0b98a')),
+        F(E(cx - r * 0.45, cy - r * 0.45, r * 0.3, r * 0.22, '#ffffff')));
+    }
+    out.push(R(16.6, 52.4, 13, 3.2, '#c98a5c'), ...bloom(19, 51.6, 1.3, '#ff9ec0'), ...bloom(23, 51.4, 1.3, '#ffffff'), ...bloom(27, 51.6, 1.3, '#c9a6ff'));
+    // The round door with plank lines, a knob, and a stone step.
+    out.push(E(40, 74, 12.6, 12.6, '#ddd6ec'), E(40, 74, 10.4, 10.4, '#8fcfa8'));
+    for (const dx of [-5, 0, 5]) {
+      const h = Math.sqrt(10.4 ** 2 - dx ** 2) - 0.8;
+      out.push(F(R(40 + dx - 0.35, 74 - h, 0.7, h * 2, '#6fb08c')));
+    }
+    out.push(F(E(40, 74, 1.4, 1.4, '#ffe36b')), F(E(39.6, 73.6, 0.5, 0.5, '#ffffff')), F(arc(40, 74, 11.6, 11.6, 200, 340, 0.5, '#f4f0fb')), R(29, 86, 22, 4.6, '#e6dccd'));
+    // A lantern on a hook by the door, mushrooms, and grass.
+    out.push(band([[56, 60], [59, 60], [59, 62]], () => 0.4, '#8a6450'), R(58.4, 62, 1.2, 1.4, '#8a6450'), E(59, 66.6, 2.6, 3, '#ffd27a'), F(E(58.2, 65.6, 0.8, 1.2, '#fff6dc')),
+      R(57, 63, 4, 1.2, '#7f5f80'), R(57.6, 69.2, 2.8, 1.2, '#7f5f80'));
+    out.push(R(7, 84, 2.4, 6, '#fff1dc'), E(8.2, 84, 4, 2.6, '#ff8fa8'), F(E(7, 83.4, 1, 0.6, '#ffffff')), R(70, 85.6, 1.8, 4.6, '#fff1dc'), E(70.9, 85.6, 2.8, 1.8, '#c9a6ff'),
+      tuft(24, 90.6), tuft(58, 90.6, '#7fcf86'), E(34, 90, 2.4, 1, '#d9d0e8'), E(47, 90.2, 2, 0.9, '#d9d0e8'));
+    return out;
+  });
+}
+
+// The fairy ring: where each little mushroom stands (front ones last), its size and color.
+const RING_CAPS = ['#9fe8ff', '#c9a6ff', '#ffb3d9', '#a8f0c8'];
+const RING = Array.from({ length: 11 }, (_, k) => {
+  const a = (k / 11) * Math.PI * 2 + 0.2;
+  return { x: 45 + Math.cos(a) * 37, y: 17 + Math.sin(a) * 5.6, s: 1.1 + 0.5 * ((Math.sin(a) + 1) / 2), c: RING_CAPS[k % 4], k };
+}).sort((a, b) => a.y - b.y);
+
+function mushringArt() {
+  return art('mushring', 90, 26, () => {
+    const out = [];
+    for (const [x, y] of [[26, 23.6], [64, 23.6]]) out.push(tuft(x, y, '#9fe0b0'));
+    for (const { x, y, s, c } of RING) {
+      out.push(R(x - 0.9 * s, y - 3.8 * s, 1.8 * s, 3.8 * s, '#f4f8ff'), dome(x, y - 3.4 * s, 3.2 * s, 3 * s, c, 10), E(x, y - 3.4 * s, 3.2 * s, 0.8 * s, shade(c, -6)),
+        F(E(x - 1.2 * s, y - 4.8 * s, 0.7 * s, 0.6 * s, '#ffffff')), F(E(x + 1 * s, y - 5.6 * s, 0.5 * s, 0.45 * s, '#ffffff')));
+    }
+    // The biggest one, out front, smiles.
+    const lead = RING[RING.length - 1];
+    out.push(...face(lead.x, lead.y - 4.2 * lead.s, 1.2 * lead.s, 'happy', 'smile', 0.6 * lead.s));
+    return out;
+  });
+}
+
+// ---------- Water ----------
+
+function waterPoolArt() {
+  return art('waterpool', 60, 14, () => {
+    const stone = '#c9c0dc';
+    const out = [E(30, 8, 29, 5.6, '#9fdcff'), F(E(30, 8.4, 24, 3.6, '#8fd0f6')), F(E(22, 6.4, 8, 1, '#d6f2ff')), F(E(42, 9.6, 6, 0.8, '#d6f2ff'))];
+    for (const [x, y, rx, ry] of [[3, 9.6, 4.4, 3.2], [57, 9.4, 4.4, 3.4], [11, 12.4, 4, 2], [49, 12.4, 4.4, 2], [22, 13.4, 3.4, 1.2], [39, 13.4, 3, 1.2]]) out.push(...ringed(x, y, rx, ry, stone, 0.6));
+    out.push(...ringed(2, 7, 2.6, 1.6, '#9fe0b0', 0.5), ...ringed(58, 7, 2.6, 1.6, '#9fe0b0', 0.5), tuft(6, 14, '#86d98c'), tuft(55, 14), ...bloom(52, 11, 1.1, '#ffffff'));
+    return out;
+  });
+}
+
+function waterLedgeArt(front) {
+  return art(`waterledge|${front ? 1 : 0}`, 60, 20, () => {
+    const rock = '#b9aedb';
+    if (!front) {
+      return [...ringed(9, 12, 9, 7, rock, 0.8), ...ringed(51, 12, 9, 7, rock, 0.8), ...ringed(30, 10.6, 22, 6.6, rock, 0.8), F(E(30, 13.6, 18, 3, '#a597cc')),
+        ...ringed(30, 5, 24, 3, '#9fe0b0', 0.6), F(E(24, 4, 8, 1, '#c4f2cf')),
+        tuft(14, 3.6), tuft(46, 3.6, '#7fcf86'), ...bloom(38, 2, 1.2, '#ff9ec0'), ...bloom(20, 2.4, 1.1, '#ffffff')];
+    }
+    const out = [...ringed(12, 15, 6, 4.6, '#c4bae4', 0.8), ...ringed(48, 15, 6, 4.6, '#c4bae4', 0.8), F(E(10.6, 13.4, 2.6, 1, '#dcd4f2')), F(E(46.6, 13.4, 2.6, 1, '#dcd4f2')),
+      ...ringed(12, 11, 3.6, 1.6, '#9fe0b0', 0.5), ...ringed(48, 11, 3.6, 1.6, '#9fe0b0', 0.5)];
+    // Ivy trailing down the side rocks.
+    for (const [x, d] of [[4, 1], [56, -1]]) {
+      const p = [[x, 12], [x + d * 1.4, 15], [x - d * 0.6, 18], [x + d, 21]];
+      out.push(band(p, () => 0.5, '#7fcf9a'));
+      p.forEach(([px, py], i) => i && out.push(E(px + (i % 2 ? 1.2 : -1.2), py, 1.4, 1, '#9fe0b0')));
+    }
+    return out;
+  });
+}
+
+function drawWaterfall(ctx, x, y, time, H, seed) {
+  const top = y - H;
+  const y0 = top + 10;
+  const y1 = y - 7;
+  place(ctx, waterLedgeArt(false), x, top + 20);
+  place(ctx, waterPoolArt(), x, y);
+  const xa = (yy) => 13 + (3 * (yy - y0)) / (y1 - y0);
+  const col = () => {
+    ctx.beginPath();
+    ctx.moveTo(x - 13, y0);
+    ctx.lineTo(x + 13, y0);
+    ctx.lineTo(x + 16, y1);
+    ctx.lineTo(x - 16, y1);
+    ctx.closePath();
+  };
+  ctx.save();
+  col();
+  const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, '#d2f3ff');
+  g.addColorStop(0.35, '#a8e4ff');
+  g.addColorStop(1, '#8fd3ff');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.clip();
+  // Shade toward one side, light down the other, then streaks of foam rushing down.
+  const sg = ctx.createLinearGradient(x - 16, 0, x + 16, 0);
+  sg.addColorStop(0, 'rgba(255,255,255,0.35)');
+  sg.addColorStop(0.3, 'rgba(255,255,255,0)');
+  sg.addColorStop(0.75, 'rgba(110,150,220,0)');
+  sg.addColorStop(1, 'rgba(110,150,220,0.3)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(x - 17, y0, 34, y1 - y0);
+  ctx.fillStyle = '#ffffff';
+  const lanes = [-10.5, -7, -3, 0.5, 4, 7.5, 11];
+  lanes.forEach((dx, k) => {
+    const speed = 64 + ((k * 13) % 5) * 9;
+    const period = 30 + ((k * 7) % 11);
+    const len = 9 + ((k * 5) % 8);
+    const w = k % 2 ? 1 : 1.6;
+    ctx.globalAlpha = k % 3 ? 0.55 : 0.8;
+    const off = (time * speed + k * 17 + seed * 7) % period;
+    for (let sy = y0 - period + off; sy < y1; sy += period) {
+      const lx = x + dx * (xa(sy) / 13);
+      ctx.fillRect(lx - w / 2, sy, w, len);
+    }
+  });
+  ctx.restore();
+  // Ink edges down both sides, and the water curling over the ledge.
+  ctx.save();
+  ctx.strokeStyle = '#5f86c4';
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.moveTo(x - 13, y0);
+  ctx.lineTo(x - 16, y1);
+  ctx.moveTo(x + 13, y0);
+  ctx.lineTo(x + 16, y1);
+  ctx.stroke();
+  ctx.fillStyle = '#e6f8ff';
+  ctx.beginPath();
+  ctx.ellipse(x, y0, 13.4, 2.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  place(ctx, waterLedgeArt(true), x, top + 20);
+  // Ripples spreading over the pool.
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 0.7;
+  for (let k = 0; k < 3; k++) {
+    const p = (time * 0.7 + k / 3 + seed * 0.1) % 1;
+    ctx.globalAlpha = 0.6 * (1 - p);
+    ctx.beginPath();
+    ctx.ellipse(x, y1 + 1, 14 + p * 12, 2 + p * 2.2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+  // Foam churning where the water lands, mist, and glints.
+  glow(ctx, x, y1 - 3, 30, '#ffffff', 0.45);
+  ctx.save();
+  for (const [fill, grow] of [['#a8d4f0', 0.8], ['#ffffff', 0]]) {
+    ctx.fillStyle = fill;
+    for (let k = 0; k < 7; k++) {
+      const fx = x + (k - 3) * 4.8;
+      const fy = y1 - 1.2 + Math.sin(time * 7 + k * 1.9) * 0.9 - (k % 2) * 1.6;
+      const r = 2.6 + 1 * Math.sin(time * 5 + k * 2.3) + (k === 3 ? 1.4 : 0);
+      ctx.beginPath();
+      ctx.arc(fx, fy, r + grow, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  for (let k = 0; k < 4; k++) {
+    const p = (time * 0.35 + k / 4 + seed * 0.07) % 1;
+    ctx.globalAlpha = 0.4 * (1 - p) * Math.min(1, p * 5);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x + (k % 2 ? 1 : -1) * (10 + p * 14), y1 - 3 - p * 14, 3 + p * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  twinkles(ctx, x, y1, [[-20, -6], [19, -10], [-9, -15], [23, -2], [6, -20]], time + seed * 0.1, 0.7, '#ffffff', 2.2);
+}
+
+function pondArt(blink) {
+  return art(`pond|${blink}`, 110, 20, () => {
+    const out = [E(55, 12, 54, 7.6, '#b6e6a6'), F(E(55, 13, 52, 6.4, '#a4dc96')), E(55, 12, 49, 5.6, '#8fd3ff'), F(E(55, 12.8, 40, 3.6, '#7cc6f2')), F(E(46, 9.4, 26, 0.9, '#c9efff'))];
+    // Lily pads, a lotus, and a frog sitting on the biggest pad.
+    const pad = (x, y, r, c = '#7fd19a') => out.push(F(E(x, y, r + 0.7, r * 0.42 + 0.6, '#5fae7a')), F(E(x, y, r, r * 0.42, c)), F(T([[x, y], [x + r * 0.8, y - r * 0.2], [x + r * 0.9, y + 0.2]], '#7cc6f2')));
+    pad(26, 12.4, 4.4);
+    pad(36, 15, 3);
+    pad(70, 13.6, 6, '#8fdc9a');
+    pad(86, 11, 3.4);
+    for (let k = 0; k < 5; k++) out.push(petal(26, 11, -Math.PI / 2 + (k - 2) * 0.55, 0, 3.4, 1.1, k % 2 ? '#ffc6dc' : '#ff9ec0'));
+    out.push(F(E(26, 11, 0.8, 0.6, '#ffe36b')));
+    const fx = 70;
+    const fy = 10.6;
+    out.push(E(fx, fy, 4, 3, '#9fe0a0'), E(fx - 2.2, fy - 2.6, 1.6, 1.6, '#9fe0a0'), E(fx + 2.2, fy - 2.6, 1.6, 1.6, '#9fe0a0'), F(E(fx, fy + 1, 2.6, 1.6, '#d4f5c8')),
+      E(fx - 3.6, fy + 2, 1.6, 0.8, '#9fe0a0'), E(fx + 3.6, fy + 2, 1.6, 0.8, '#9fe0a0'));
+    if (blink) out.push(arc(fx - 2.2, fy - 2.8, 0.9, 0.6, 20, 160, 0.4, INK), arc(fx + 2.2, fy - 2.8, 0.9, 0.6, 20, 160, 0.4, INK));
+    else out.push(F(E(fx - 2.2, fy - 2.6, 0.9, 0.9, '#ffffff')), F(E(fx + 2.2, fy - 2.6, 0.9, 0.9, '#ffffff')), F(E(fx - 2, fy - 2.5, 0.5, 0.6, INK)), F(E(fx + 2, fy - 2.5, 0.5, 0.6, INK)));
+    out.push(arc(fx, fy - 0.6, 1.2, 0.9, 30, 150, 0.35, INK), F(E(fx - 2.8, fy - 0.6, 0.8, 0.4, BLUSH)), F(E(fx + 2.8, fy - 0.6, 0.8, 0.4, BLUSH)));
+    // Cattails at one end, reeds at the other, and pebbles on the bank.
+    for (const [x, h, lean] of [[5, 15, -1.4], [9, 18, 0.4], [13, 12, 1.4]]) {
+      out.push(band([[x, 15], [x + lean * 0.5, 15 - h * 0.5], [x + lean, 15 - h]], () => 0.4, '#6cc070'), E(x + lean * 0.9, 15 - h + 3.4, 1.1, 2.4, '#b07a52'));
+    }
+    out.push(...leaf(7, 15, 2, 6, 1, '#7fd19a'), ...leaf(100, 15, 104, 5, 1, '#7fd19a'), ...leaf(102, 15, 98, 4, 1, '#8fdc9a'), ...leaf(104, 15.4, 108, 8, 0.9, '#7fd19a'),
+      ...ringed(92, 17.4, 2.4, 1.4, '#d6cfe6', 0.5), ...ringed(18, 18.4, 2, 1.2, '#d6cfe6', 0.5), ...bloom(96, 15.6, 1.1, '#ffffff'));
+    return out;
+  });
+}
+
+// ---------- Crystal cave ----------
+
+function glowpoolArt() {
+  return art('glowpool', 100, 18, () => {
+    const rim = '#a898d6';
+    const out = [E(50, 11, 49, 6.6, rim), F(E(50, 12.4, 46, 5, '#9484c8')), E(50, 11, 44, 4.8, '#7fe6ff'), F(E(50, 11.4, 35, 3.2, '#b2f4ff')), F(E(50, 11.6, 22, 1.8, '#e0fbff'))];
+    for (const [x, h, c, lean] of [[5, 9, '#a8f0ff', -1.4], [9, 6, '#ffc6f0', 1], [91, 8, '#ffc6f0', -0.6], [95, 11, '#a8f0ff', 1.6], [40, 4, '#d4b4ff', 0], [68, 5, '#a8f0ff', 0.8]]) {
+      const yb = x > 30 && x < 70 ? 7 : 10;
+      out.push(T([[x - 1.8, yb], [x - 1.4 + lean * 0.5, yb - h * 0.7], [x + lean, yb - h], [x + 1.4 + lean * 0.5, yb - h * 0.7], [x + 1.8, yb]], c), F(T([[x - 0.9, yb - 0.6], [x - 0.6 + lean * 0.5, yb - h * 0.6], [x + lean * 0.8, yb - h * 0.85]], '#ffffff')));
+    }
+    for (const [x, y, rx, ry] of [[14, 15.6, 4, 1.8], [84, 15.4, 4.6, 2], [50, 17, 5, 1.2], [3, 13, 2.6, 2]]) out.push(...ringed(x, y, rx, ry, '#b4a6e0', 0.5));
+    return out;
+  });
+}
+
+function throneArt() {
+  return art('throne', 90, 110, () => {
+    const out = [];
+    const cr = '#9fdcff';
+    const cr2 = '#d4b4ff';
+    const gold = '#ffd66b';
+    const st = '#e4ddf3';
+    // Crystal spires rising behind the backrest.
+    prism(out, 14, 9, 54, 40, 80, cr, -5);
+    prism(out, 76, 9, 54, 40, 80, cr, 5);
+    prism(out, 27, 13, 36, 18, 72, cr2, -4);
+    prism(out, 63, 13, 36, 18, 72, cr2, 4);
+    prism(out, 45, 18, 22, 1, 60, cr, 0);
+    // The backrest: pale crystal frame, gold trim, pink tufted velvet, and a heart gem.
+    out.push(T([[21, 80], [21, 36], [29, 27], [45, 21], [61, 27], [69, 36], [69, 80]], '#f4f0ff'),
+      F(band([[21.6, 36], [29.4, 27.6], [45, 21.8], [60.6, 27.6], [68.4, 36]], () => 0.9, gold)),
+      T([[27, 74], [27, 38], [34, 32], [45, 27.6], [56, 32], [63, 38], [63, 74]], '#ff9ec8'));
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4 - (r === 0 ? 1 : 0); c++) {
+        const bx = 31.4 + c * 9 + (r % 2 ? 4.5 : 0) + (r === 0 ? 4.5 : 0);
+        const by = 38 + r * 9;
+        if (bx < 61 && !(r === 0 && Math.abs(bx - 45) < 6) && !(r === 1 && Math.abs(bx - 45) < 6)) out.push(F(E(bx, by, 0.9, 0.9, '#ffc6e0')));
+      }
+    }
+    out.push(F(E(45, 42.6, 8.4, 8.4, gold)), E(42.2, 40.6, 4, 4, '#ff7fb8'), E(47.8, 40.6, 4, 4, '#ff7fb8'), T([[38.3, 41.4], [51.7, 41.4], [45, 49]], '#ff7fb8'),
+      F(E(41.4, 39.4, 1.4, 1, '#ffd0e6')), F(E(45, 42, 0.6, 0.6, '#ffffff')));
+    // A little crown on top.
+    out.push(T([[38.4, 23], [38, 14.4], [41.6, 18], [45, 11.6], [48.4, 18], [52, 14.4], [51.6, 23]], gold), F(R(38.4, 20.4, 13.2, 1, '#f0b84a')),
+      E(38, 14, 1.2, 1.2, gold), E(52, 14, 1.2, 1.2, gold), E(45, 11.2, 1.3, 1.3, gold), F(diamond(45, 19, 1.4, 1.8, '#ff7fb8')), F(E(41.4, 20, 0.8, 0.8, cr)), F(E(48.6, 20, 0.8, 0.8, cr)));
+    // The seat: a plump cushion on a crystal block with a gem set in the front.
+    out.push(R(20, 78, 50, 14, '#c9bdf0'), F(R(20, 78, 50, 1.4, gold)), F(R(20, 89.6, 50, 1.2, gold)), F(diamond(45, 84.6, 3, 3.6, cr)), F(diamond(45, 84, 1.2, 1.6, '#ffffff')),
+      F(diamond(31, 84.6, 1.4, 1.8, cr2)), F(diamond(59, 84.6, 1.4, 1.8, cr2)),
+      R(22, 72, 46, 6.6, '#ff9ec8'), E(45, 72.4, 23, 3.6, '#ffb3d6'), F(E(36, 71.6, 7, 1, '#ffd6ea')), E(22.6, 76, 1.6, 1.6, gold), E(67.4, 76, 1.6, 1.6, gold));
+    // Armrests topped with glowing orbs.
+    for (const ax of [16.5, 73.5]) {
+      out.push(R(ax - 6.5, 60, 13, 32, st), F(R(ax - 6.5, 66, 13, 1.2, gold)), F(R(ax - 2.6, 70, 5.2, 16, '#d6ccf2')), F(diamond(ax, 78, 1.6, 2.4, cr2)),
+        E(ax, 60, 7.4, 3, '#f8f5ff'), E(ax, 58.4, 4, 1.4, gold), E(ax, 53.4, 5, 5, cr), F(E(ax - 1.6, 51.6, 1.6, 1.2, '#ffffff')));
+    }
+    // The dais steps with a pink runner and crystal clusters at the sides.
+    out.push(R(12, 92, 66, 8, '#d6cdf2'), R(3, 99, 84, 11, st), F(R(3, 103.4, 84, 0.7, '#cbbfe6')), F(R(12, 95.6, 66, 0.7, '#c4b8e6')),
+      R(37, 92, 16, 18, '#ff8fb8'), F(R(37, 92, 1, 18, gold)), F(R(52, 92, 1, 18, gold)), F(R(38, 99, 14, 0.7, '#ff7aa8')));
+    prism(out, 4, 5, 98, 90, 104, cr, -1.4);
+    prism(out, 86, 5, 98, 90, 104, cr2, 1.4);
+    prism(out, 8.6, 3.6, 101, 96, 104, cr2, 0.8);
+    return out;
+  });
+}
+
+// ---------- Canyon ----------
+
+function bonesArt() {
+  return art('bones', 70, 30, () => {
+    const bone = '#fff4e6';
+    const bone2 = '#f2e2cc';
+    const sand = '#f3d3a0';
+    const out = [E(36, 29, 34, 6, sand)];
+    // The ribcage arching out of the sand, linked by the spine.
+    const spine = [[34, 12], [42, 9], [50, 9.4], [58, 12.4], [65, 18]];
+    for (let i = 0; i < 5; i++) {
+      const [sx, sy] = spine[i];
+      const h = 27 - sy;
+      out.push(band([[sx, sy], [sx + 3.6, sy + h * 0.4], [sx + 2.6, 27.6]], (u) => 1.6 - u * 0.4, i % 2 ? bone2 : bone));
+    }
+    out.push(band(spine, () => 1.6, bone));
+    spine.forEach(([x, y]) => out.push(E(x, y - 0.6, 1.8, 1.6, bone)));
+    // The skull: a frill, a little horn, a big round socket with a flower growing in it, and a toothy grin.
+    out.push(dome(28, 24, 8, 16, bone2, 10), ...[[22.6, 11], [27, 8.4], [31.6, 9.6], [35, 14]].map(([x, y]) => E(x, y, 2.4, 2.4, bone2)), F(E(29.4, 15, 3.4, 6, '#e6d2b6')), T([[15.6, 9], [18.6, 0.8], [21.6, 8.4]], bone), F(T([[17.6, 7.6], [18.6, 2.4], [19.2, 7.6]], '#ffffff')));
+    out.push(E(19, 17.4, 11.6, 9, bone), T([[10, 12.6], [1.6, 16.4], [1, 22], [10, 25]], bone), E(2.6, 19.2, 2.2, 3, bone),
+      F(E(20.6, 15.6, 4, 4.4, '#9a7e94')), F(E(20.2, 16, 3, 3.4, '#7a6078')), F(E(4, 17.6, 0.9, 1.2, '#c9b0a0')), F(E(8, 15.6, 1, 1.2, '#c9b0a0')));
+    for (const x of [3.4, 6.4, 9.4, 12.4]) out.push(T([[x - 1.2, 22.6], [x + 1.2, 22.6], [x, 25]], '#ffffff'));
+    out.push(F(R(2, 22.4, 12, 0.5, '#d9c4aa')), F(band([[24, 22], [27, 18], [26, 24]], () => 0.35, '#d9c4aa')), F(E(14, 12, 3, 1.2, '#ffffff')));
+    out.push(F(R(20.4, 12, 0.5, 4, '#6cc070')), ...leaf(20.6, 14.4, 23.6, 12.6, 0.9, '#7fd19a'), ...bloom(20.6, 11, 1.4, '#ff9ec0'));
+    // Sand drifted over the bottoms, with ripples and pebbles.
+    out.push(T([[-0.6, 30], [0, 26.6], [8, 25], [18, 26.6], [30, 25.4], [42, 26.6], [54, 25.2], [64, 26.4], [70.6, 28], [70.6, 30]], sand),
+      F(band([[6, 27.6], [14, 27], [22, 28]], () => 0.35, '#e6bb84')), F(band([[40, 28], [50, 27.4], [60, 28.2]], () => 0.35, '#e6bb84')),
+      E(46, 26, 1.6, 1, '#e3a676'), E(26, 27, 1.2, 0.8, '#e3a676'), tuft(66, 26.6, '#b8d68a'));
+    return out;
+  });
+}
+
+function windtowerArt() {
+  return art('windtower', 60, 120, () => {
+    const wood = '#c99a6b';
+    const deep = '#a0704a';
+    const light = '#e2b88a';
+    const out = [];
+    // The tail vane, behind the wheel.
+    out.push(band([[30, 18], [50, 15.6]], () => 0.9, deep), T([[44, 11], [58.6, 8.4], [55, 15.6], [58.6, 22.8], [44, 20]], '#ff9a7a'), F(T([[48, 10.4], [51.6, 9.8], [51.6, 21.4], [48, 20.8]], '#ffd6c8')));
+    // Legs leaning in, braces crossing between them (one plank hanging loose), and the pump rod.
+    const xl = (y) => 12 + (13 * (119 - y)) / 87;
+    const xr = (y) => 60 - xl(y);
+    out.push(band([[30, 120], [30, 32]], () => 0.9, deep), R(29.4, 30, 1.2, 82, '#8f7cc4'));
+    const levels = [112, 92, 74, 58, 44];
+    for (let i = 0; i + 1 < levels.length; i++) {
+      const [a, b] = [levels[i], levels[i + 1]];
+      out.push(band([[xl(a), a], [xr(b), b]], () => 0.6, deep));
+      if (i !== 1) out.push(band([[xr(a), a], [xl(b), b]], () => 0.6, deep));
+    }
+    out.push(band([[xl(120), 120.4], [24.6, 32]], () => 1.7, wood), band([[xr(120), 120.4], [35.4, 32]], () => 1.7, wood),
+      F(band([[xl(118) + 0.5, 118], [25.2, 34]], () => 0.4, light)), F(band([[xr(118) - 0.8, 118], [35.2, 34]], () => 0.4, deep)));
+    for (const y of levels) out.push(R(xl(y) - 1.4, y - 1, xr(y) - xl(y) + 2.8, 2, light));
+    out.push(band([[xr(92) - 1, 91], [xr(92) + 4, 99]], () => 0.9, light), E(xr(92) - 0.6, 91, 0.6, 0.6, '#8a6450'));
+    // Platform and gearbox under the wheel; a little nest on the platform.
+    out.push(R(19, 30, 22, 3, light), R(25, 20, 10, 10.6, deep), F(R(26, 21, 8, 1, '#c08a5e')), E(37, 29, 3, 1.6, '#c99a6b'), F(E(36, 28.4, 0.9, 0.7, '#bfe6ff')), F(E(38, 28.4, 0.9, 0.7, '#ffffff')));
+    // At the foot: a trough fed by the pump spout, stones, and dry grass.
+    out.push(R(29, 103, 13, 1.6, '#8f7cc4'), R(41, 103, 1.6, 4, '#8f7cc4'), R(40, 108, 18, 11, deep), F(R(41.2, 108.6, 15.6, 2.2, '#8fd3ff')), F(R(40, 113, 18, 0.6, '#8a5a3c')),
+      R(39, 107, 20, 1.6, wood));
+    out.push(...ringed(6, 117, 5, 3.4, '#e3c0a0', 0.6), ...ringed(15, 119, 4, 2, '#d9b494', 0.5), tuft(22, 120.4, '#c9d98a'), tuft(4, 120.4, '#b8d68a'), tuft(59, 120.4, '#c9d98a'));
+    return out;
+  });
+}
+
+function windwheelArt(f) {
+  return art(`windwheel|${f}`, 36, 36, () => {
+    const out = [];
+    const rot = (f / 6) * (Math.PI / 6);
+    const cx = 18;
+    const cy = 18;
+    const at = (a, r) => [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+    for (let k = 0; k < 12; k++) {
+      const a = rot + (k * Math.PI) / 6;
+      out.push(T([at(a - 0.12, 4.6), at(a - 0.2, 16.4), at(a + 0.2, 16.4), at(a + 0.12, 4.6)], k % 2 ? '#fff4e6' : '#ffb3a8'));
+    }
+    out.push(arc(cx, cy, 16.8, 16.8, 0, 360, 1.1, '#a0704a'), F(arc(cx, cy, 10.4, 10.4, 0, 360, 0.6, '#c99a6b')), E(cx, cy, 3.6, 3.6, '#8f7cc4'), F(E(cx - 0.8, cy - 0.8, 1.1, 1.1, '#c9c0e8')));
+    return out;
+  });
+}
+
+// ---------- Dusk forest gate ----------
+
+const GATE_BARK = '#8f6f8a';
+const GATE_LIGHT = '#b394aa';
+const GATE_DEEP = '#6c5272';
+const RUNE = '#8ff0e0';
+
+// The arch's centerline from the left foot (t = 0) over the top to the right foot (t = 1), and
+// the unit normal pointing into the opening.
+function archAt(t) {
+  const th = Math.PI - Math.PI * t;
+  const s = Math.sin(th);
+  return [70 + Math.cos(th) * 46 * (1 + 0.14 * (1 - s)), 128 - 114 * Math.pow(s, 0.55)];
+}
+function archNormal(t) {
+  const [ax, ay] = archAt(Math.max(0, t - 0.01));
+  const [bx, by] = archAt(Math.min(1, t + 0.01));
+  const l = Math.hypot(bx - ax, by - ay) || 1;
+  return [-(by - ay) / l, (bx - ax) / l];
+}
+const GATE_RUNES = [0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9];
+const GATE_LANTERNS = [[0.3, 8, 0], [0.41, 14, 1], [0.59, 12, 3], [0.7, 6, 2]];
+
+function rootgateArt() {
+  return art('rootgate', 140, 130, () => {
+    const out = [];
+    const N = 44;
+    // The passage beyond: dark plum, with worn steps leading down.
+    const inner = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const [x, y] = archAt(t);
+      const [nx, ny] = archNormal(t);
+      inner.push([x + nx * 8, Math.min(129, y + ny * 8)]);
+    }
+    out.push(T(inner, '#4a3a62'), F(E(70, 104, 26, 34, '#3a2d52')), F(E(70, 112, 16, 22, '#30244a')));
+    for (const [y, w] of [[118, 30], [123, 36], [128, 42]]) out.push(F(R(70 - w / 2, y, w, 2.4, '#5e4c7a')), F(R(70 - w / 2, y, w, 0.6, '#7a68a0')));
+    // Root strands braiding around each other up one side, over the top, and down the other,
+    // thick at the feet. Each strand passes behind and in front of the others in turn.
+    const strands = [[0, GATE_BARK], [(Math.PI * 2) / 3, GATE_LIGHT], [(Math.PI * 4) / 3, '#9c7a96']];
+    const turns = Math.PI * 9;
+    const pathOf = (ph) => {
+      const p = [];
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        const [x, y] = archAt(t);
+        const [nx, ny] = archNormal(t);
+        const o = 5.4 * Math.sin(t * turns + ph);
+        p.push([x + nx * o, y + ny * o]);
+      }
+      return p;
+    };
+    const wAt = (t) => 3.4 + 4.6 * Math.pow(Math.abs(t - 0.5) * 2, 4);
+    for (const front of [false, true]) {
+      const segs = [];
+      for (const [ph, c] of strands) {
+        const p = pathOf(ph);
+        let i = 0;
+        while (i < N) {
+          const isFront = Math.cos((i / N) * turns + ph) > 0;
+          let j = i;
+          while (j < N && Math.cos(((j + 1) / N) * turns + ph) > 0 === isFront) j++;
+          if (isFront === front) segs.push([p.slice(i, Math.min(N, j + 1) + 1), i, c]);
+          i = j + 1;
+        }
+      }
+      const width = (i0, len, extra) => (u) => wAt((i0 + u * (len - 1)) / N) + extra;
+      for (const [p, i0, c] of segs) out.push(F(band(p, width(i0, p.length, 0.9), line(c))));
+      for (const [p, i0, c] of segs) out.push(band(p, width(i0, p.length, 0), c), F(band(p, (u) => width(i0, p.length, 0)(u) * 0.22, shade(c, 7))));
+    }
+    // Roots spreading over the ground at both feet.
+    for (const s of [-1, 1]) {
+      const X = (x) => 70 + s * x;
+      for (const [path, w] of [[[[50, 118], [60, 125], [68.6, 130.4]], 4], [[[46, 120], [40, 126], [34, 130.4]], 3.4], [[[56, 112], [64, 118], [69, 124]], 2.4]]) {
+        out.push(band(path.map(([x, y]) => [X(x), y]), (u) => w * (1 - u) + 1, GATE_BARK));
+      }
+    }
+    // Moss along the top and draped over the shoulders, with hanging wisps.
+    for (const [t, r] of [[0.27, 4.4], [0.44, 5.6], [0.56, 4.6], [0.72, 4]]) {
+      const [x, y] = archAt(t);
+      const [nx, ny] = archNormal(t);
+      const mx = x - nx * 7;
+      const my = y - ny * 7;
+      out.push(...ringed(mx - r * 0.6, my + 0.6, r * 0.6, r * 0.45, '#7fc9a0', 0.6), ...ringed(mx + r * 0.6, my + 0.6, r * 0.6, r * 0.45, '#7fc9a0', 0.6),
+        ...ringed(mx, my - 0.4, r * 0.7, r * 0.55, '#8fd6aa', 0.6), F(E(mx - 0.8, my - 1.2, r * 0.3, r * 0.15, '#c4f2d4')));
+    }
+    for (const [t, len] of [[0.36, 10], [0.45, 6], [0.55, 9], [0.64, 5]]) {
+      const [x, y] = archAt(t);
+      const [nx, ny] = archNormal(t);
+      const sx = x + nx * 9;
+      const sy = y + ny * 9;
+      const vine = [[sx, sy - 1], [sx + 1, sy + len * 0.35], [sx - 0.8, sy + len * 0.7], [sx + 0.4, sy + len]];
+      out.push(band(vine, () => 0.45, '#6fb890'));
+      vine.forEach(([vx, vy], i) => i && out.push(E(vx + (i % 2 ? 1.2 : -1.2), vy, 1.3, 0.9, '#8fd6aa')));
+    }
+    // Runes carved down both sides and at the keystone.
+    GATE_RUNES.forEach((t, k) => {
+      const [x, y] = archAt(t);
+      out.push(F(E(x, y, 3.8, 4.4, GATE_DEEP)));
+      if (k % 3 === 0) out.push(F(R(x - 0.4, y - 3, 0.8, 6, RUNE)), F(band([[x - 2.2, y - 0.6], [x, y - 2.8], [x + 2.2, y - 0.6]], () => 0.45, RUNE)));
+      else if (k % 3 === 1) out.push(F(diamond(x, y, 2.6, 3.4, RUNE)), F(diamond(x, y, 1.3, 1.9, GATE_DEEP)), F(E(x, y, 0.5, 0.5, RUNE)));
+      else out.push(F(arc(x, y, 2.4, 2.4, 0, 360, 0.8, RUNE)), F(R(x - 0.4, y - 3.4, 0.8, 6.8, RUNE)));
+    });
+    // Mushrooms and ferns at the feet.
+    out.push(R(6, 123, 2.4, 6, '#e6f4ff'), E(7.2, 123, 4, 2.6, '#7fe6d6'), F(E(6, 122.4, 1, 0.6, '#ffffff')), R(130, 124.4, 2, 5, '#e6f4ff'), E(131, 124.4, 3.2, 2, '#c9a6ff'),
+      tuft(14, 130.4, '#7fc9a0'), tuft(126, 130.4, '#8fd6aa'), tuft(44, 130.4, '#7fc9a0'), tuft(96, 130.4, '#7fc9a0'));
+    return out;
+  });
+}
+
 // ---------- Drawing ----------
 
 const KINDS = {
@@ -917,6 +1879,238 @@ const KINDS = {
     draw(ctx, x, y, time, seed) {
       const f = [0, 1, 2, 1][Math.floor(time * 2.4 + seed) % 4];
       place(ctx, cratesArt(f), x, y);
+    },
+  },  // Farm.
+  barn: {
+    w: 110, h: 100,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, barnArt(), x, y);
+      place(ctx, vaneArt(Math.floor(time * 1.4 + seed * 3) % 8), x, y - 100 + 11);
+    },
+  },
+  haystack: {
+    w: 46, h: 34,
+    draw(ctx, x, y, time, seed) {
+      const v = variant(seed, 3);
+      place(ctx, haystackArt(v), x, y);
+      if (v !== 1) return;
+      // The kitten's sleepy z's drifting up.
+      ctx.save();
+      ctx.strokeStyle = '#8f7cc4';
+      ctx.lineWidth = 0.6;
+      ctx.lineJoin = 'round';
+      for (let k = 0; k < 2; k++) {
+        const p = (time * 0.4 + k / 2 + seed * 0.13) % 1;
+        const s = 1.4 + p * 1.4;
+        const zx = x - 23 + 16 + p * 6 + Math.sin(p * 6) * 1.2;
+        const zy = y - 34 + 2 - p * 12;
+        ctx.globalAlpha = Math.min(1, p * 5) * (1 - p);
+        ctx.beginPath();
+        ctx.moveTo(zx - s, zy - s);
+        ctx.lineTo(zx + s, zy - s);
+        ctx.lineTo(zx - s, zy + s);
+        ctx.lineTo(zx + s, zy + s);
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+  },
+  scarecrow: {
+    w: 36, h: 70,
+    draw(ctx, x, y, time, seed) {
+      // The crow hops once every few seconds.
+      const p = (time * 0.3 + seed * 0.37) % 1;
+      place(ctx, scarecrowArt(p < 0.05 ? 1 : p < 0.08 ? 2 : p > 0.5 && p < 0.53 ? 1 : 0), x, y);
+    },
+  },
+  fence: { w: 64, h: 24, draw: (ctx, x, y, time, seed) => place(ctx, fenceArt(variant(seed, 3)), x, y) },
+  cart: { w: 64, h: 44, draw: (ctx, x, y) => place(ctx, cartArt(), x, y) },
+  // Flower field.
+  giantflower: {
+    w: 40, h: 90,
+    draw(ctx, x, y, time, seed) {
+      const f = Math.floor(time * 1.8 + seed * 0.7) % 4;
+      place(ctx, giantflowerArt(variant(seed, 3), f, blinking(time, seed) ? 1 : 0), x, y);
+    },
+  },
+  beehive: {
+    w: 50, h: 80,
+    draw(ctx, x, y, time, seed) {
+      const cy = y - 80 + 32;
+      const bees = [0, 1, 2].map((k) => {
+        const a = time * (1.6 + k * 0.35) + k * 2.1 + seed;
+        return { k, d: Math.sin(a), bx: x + Math.cos(a) * (19 + k * 3), by: cy + Math.sin(a) * 7 + Math.sin(time * 6 + k * 2) * 1.6 - k * 5, dir: Math.sin(a) > 0 ? -1 : 1 };
+      });
+      for (const b of bees) if (b.d < 0) bee(ctx, b.bx, b.by, b.dir, time, b.k);
+      place(ctx, beehiveArt(blinking(time, seed) ? 1 : 0), x, y);
+      for (const b of bees) if (b.d >= 0) bee(ctx, b.bx, b.by, b.dir, time, b.k);
+    },
+  },
+  picnic: {
+    w: 70, h: 26,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, picnicArt(), x, y);
+      // A wisp of steam from the teapot spout.
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 3; k++) {
+        const p = (time * 0.45 + k / 3 + seed * 0.1) % 1;
+        ctx.globalAlpha = 0.6 * (1 - p) * Math.min(1, p * 6);
+        ctx.beginPath();
+        ctx.arc(x - 35 + 59 + Math.sin(p * 6 + k) * 1.2 + p * 2, y - 26 + 10 - p * 12, 1 + p * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    },
+  },
+  // Deep forest.
+  hollowlog: {
+    w: 120, h: 46,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, hollowlogArt(), x, y);
+      // Two glowing eyes peering out of the hollow, blinking and glancing about.
+      const ex = x - 60 + 15.4 + Math.sin(time * 0.5 + seed) * 1.2;
+      const ey = y - 46 + 28;
+      const open = blinking(time * 1.3, seed + 0.5) ? 0.2 : 1;
+      glow(ctx, ex, ey, 9, '#fff3a6', 0.28 + 0.08 * Math.sin(time * 2 + seed), true);
+      ctx.save();
+      ctx.fillStyle = '#fff3a6';
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(ex + s * 2.6, ey, 1.2, 1.7 * open, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    },
+  },
+  stumphouse: {
+    w: 80, h: 90,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, stumphouseArt(), x, y);
+      smoke(ctx, x - 40 + 57, y - 90 + 1, time, seed);
+      const p = 0.5 + 0.5 * Math.sin(time * 2.1 + seed);
+      glow(ctx, x - 40 + 23, y - 90 + 46, 10, '#ffe6a0', 0.25 + 0.12 * p);
+      glow(ctx, x - 40 + 58, y - 90 + 44, 10, '#ffe6a0', 0.25 + 0.12 * (1 - p));
+      glow(ctx, x - 40 + 59, y - 90 + 66.6, 9, '#ffd27a', 0.4 + 0.15 * Math.sin(time * 3 + seed));
+    },
+  },
+  mushring: {
+    w: 90, h: 26,
+    draw(ctx, x, y, time, seed) {
+      for (const { x: mx, y: my, s, c, k } of RING) {
+        const p = 0.5 + 0.5 * Math.sin(time * 2 + k * 0.9 + seed);
+        glow(ctx, x - 45 + mx, y - 26 + my - 4 * s, 8 * s, c, 0.12 + 0.22 * p, true);
+      }
+      place(ctx, mushringArt(), x, y);
+      // Fairy motes drifting up from the ring.
+      ctx.save();
+      ctx.fillStyle = '#fff6c9';
+      for (let k = 0; k < 5; k++) {
+        const p = (time * 0.25 + k / 5 + seed * 0.1) % 1;
+        ctx.globalAlpha = Math.sin(p * Math.PI) * 0.9;
+        ctx.beginPath();
+        ctx.arc(x - 30 + k * 15 + Math.sin(time + k * 2) * 3, y - 10 - p * 26, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    },
+  },
+  // Water. A waterfall's seed (when > 1) is its height in pixels.
+  waterfall: {
+    w: 60, h: 120,
+    draw(ctx, x, y, time, seed) {
+      drawWaterfall(ctx, x, y, time, seed > 1 ? seed : 120, seed);
+    },
+  },
+  pond: {
+    w: 110, h: 20,
+    draw(ctx, x, y, time, seed) {
+      // Set into the ground: its middle sits about on the ground line.
+      const by = y + 6;
+      place(ctx, pondArt(blinking(time, seed) ? 1 : 0), x, by);
+      shimmer(ctx, x, by - 8, 47, 5, time, seed);
+    },
+  },
+  // Crystal cave.
+  glowpool: {
+    w: 100, h: 18,
+    draw(ctx, x, y, time, seed) {
+      const by = y + 6;
+      const cy = by - 7;
+      const p = 0.5 + 0.5 * Math.sin(time * 1.6 + seed);
+      ovalGlow(ctx, x, cy, 64, 22, '#7fe6ff', 0.3 + 0.15 * p, true);
+      place(ctx, glowpoolArt(), x, by);
+      shimmer(ctx, x, cy, 42, 4.4, time, seed, 6);
+      ctx.save();
+      for (let k = 0; k < 8; k++) {
+        const q = (time * 0.35 + k / 8 + seed * 0.1) % 1;
+        const sx = x + Math.sin(k * 2.7) * 34 + Math.sin(time * 1.2 + k) * 2;
+        sparkle(ctx, sx, cy - q * 40, 1.8 * Math.sin(q * Math.PI) + 0.3, k % 2 ? '#e6fbff' : '#ffd6f6', Math.sin(q * Math.PI));
+      }
+      ctx.restore();
+    },
+  },
+  throne: {
+    w: 90, h: 110,
+    draw(ctx, x, y, time, seed) {
+      const p = 0.5 + 0.5 * Math.sin(time * 1.4 + seed);
+      const X = (v) => x - 45 + v;
+      const Y = (v) => y - 110 + v;
+      glow(ctx, x, Y(46), 70 + p * 6, '#c9e6ff', 0.3 + 0.15 * p);
+      place(ctx, throneArt(), x, y);
+      glow(ctx, X(45), Y(41), 14, '#ff7fb8', 0.25 + 0.25 * p, true);
+      for (const [gx, gy, c, ph] of [[16.5, 53.4, '#9fe6ff', 0], [73.5, 53.4, '#9fe6ff', 1.6], [45, 84.6, '#9fe6ff', 3]]) {
+        glow(ctx, X(gx), Y(gy), 12, c, 0.2 + 0.25 * (0.5 + 0.5 * Math.sin(time * 2 + ph)), true);
+      }
+      twinkles(ctx, X(0), Y(0), [[45, 2], [23, 20], [67, 20], [12, 42], [78, 42], [45, 12]], time, 0.5, '#ffffff', 2.4);
+    },
+  },
+  // Canyon.
+  bones: { w: 70, h: 30, draw: (ctx, x, y) => place(ctx, bonesArt(), x, y) },
+  windmillcrag: {
+    w: 60, h: 120,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, windtowerArt(), x, y);
+      place(ctx, windwheelArt(Math.floor(time * 14 + seed * 3) % 6), x, y - 120 + 18 + 18);
+    },
+  },
+  // Dusk forest gate.
+  rootgate: {
+    w: 140, h: 130,
+    draw(ctx, x, y, time, seed) {
+      const X = (v) => x - 70 + v;
+      const Y = (v) => y - 130 + v;
+      const p = 0.5 + 0.5 * Math.sin(time * 1.2 + seed);
+      place(ctx, rootgateArt(), x, y);
+      // Something glimmers far down the passage.
+      glow(ctx, X(70), Y(100), 24, '#b48cff', 0.15 + 0.12 * p, true);
+      // Runes pulse one after another, up one side and down the other.
+      GATE_RUNES.forEach((t, k) => {
+        const [rx, ry] = archAt(t);
+        const q = 0.5 + 0.5 * Math.sin(time * 2.2 - k * 0.8 + seed);
+        glow(ctx, X(rx), Y(ry), 9, RUNE, 0.15 + 0.45 * q, true);
+      });
+      GATE_LANTERNS.forEach(([t, len, ci], i) => {
+        const [ax, ay] = archAt(t);
+        const [nx, ny] = archNormal(t);
+        const c = LANTERN_COLORS[ci];
+        const swing = Math.sin(time * 1.3 + i * 1.4 + seed) * 0.8;
+        const lx = X(ax + nx * 8);
+        const ly = Y(ay + ny * 8) - 1;
+        blit(ctx, hangLanternArt(c, len), snap(lx - 5 + swing), snap(ly));
+        glow(ctx, lx + swing, ly + len + 6.6, 16, c, 0.4 + 0.2 * Math.sin(time * 2.2 + i * 1.7));
+      });
+      // Fireflies drifting about the mouth.
+      ctx.save();
+      ctx.fillStyle = '#fff6a0';
+      for (let k = 0; k < 6; k++) {
+        const a = time * (0.4 + k * 0.07) + k * 1.9 + seed;
+        ctx.globalAlpha = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(time * 3 + k * 2.3));
+        ctx.beginPath();
+        ctx.arc(X(70 + Math.cos(a) * (30 + k * 4)), Y(80 + Math.sin(a * 1.3) * 26), 0.9, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     },
   },
 };

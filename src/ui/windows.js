@@ -70,16 +70,19 @@ export function bagWindow(ui, state, world) {
       drawItemIcon(ctx, SLOT_GHOST[slot], x + 1.5, y + 1.5);
       ctx.globalAlpha = 1;
     }
-    if (hover(ui, x, y, CELL, CELL)) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click to take off', color: COLORS.muted, size: 8 }] : [{ text: `${slot[0].toUpperCase() + slot.slice(1)}${outfit ? ' outfit' : ''}`, bold: true }, ...(outfit ? [{ text: 'Wear cash items from the Cash tab.', size: 8, color: COLORS.muted }] : [])]);
-    if (clicked(ui, x, y, CELL, CELL) && inst && outfit) {
-      if (ui.mouse.double || (state.lastClick?.key === `of:${slot}` && world.now - state.lastClick.at < 0.4)) {
+    if (hover(ui, x, y, CELL, CELL)) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click (or right-click) to take off', color: COLORS.muted, size: 8 }] : [{ text: `${slot[0].toUpperCase() + slot.slice(1)}${outfit ? ' outfit' : ''}`, bold: true }, ...(outfit ? [{ text: 'Wear cash items from the Cash tab.', size: 8, color: COLORS.muted }] : [])]);
+    // Read the click once: clicked() uses it up.
+    const hit = inst && (clicked(ui, x, y, CELL, CELL) || (ui.mouse.right && hover(ui, x, y, CELL, CELL)));
+    const dbl = hit && (ui.mouse.right || ui.mouse.double);
+    if (hit && outfit) {
+      if (dbl || (state.lastClick?.key === `of:${slot}` && world.now - state.lastClick.at < 0.4)) {
         if (!removeOutfit(char, slot)) world.log('Your Cash tab is full.', '#ffb3c6');
         state.lastClick = null;
       } else state.lastClick = { key: `of:${slot}`, at: world.now };
-    } else if (clicked(ui, x, y, CELL, CELL) && inst) {
+    } else if (hit) {
       if (state.scrollMode) {
         scrollOnto(state, world, inst);
-      } else if (ui.mouse.double || (state.lastClick?.key === `eq:${slot}` && world.now - state.lastClick.at < 0.4)) {
+      } else if (dbl || (state.lastClick?.key === `eq:${slot}` && world.now - state.lastClick.at < 0.4)) {
         if (!unequip(char, slot)) world.log('Your bag is full.', '#ffb3c6');
         state.lastClick = null;
       } else {
