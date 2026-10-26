@@ -550,7 +550,7 @@ const ART = {
 };
 
 export function monsterSprite(art, frame, mood = 'idle') {
-  return sprite(`mob|${art}|${frame}|${mood}`, () => ({ ...ART[art](frame, mood), res: 2, soft: 'cel', crisp: true, round: false }));
+  return sprite(`mob|${art}|${frame}|${mood}`, () => ({ ...ART[art](frame, mood), res: 2, soft: 'cel', crisp: true }));
 }
 
 // How a monster feels right now.

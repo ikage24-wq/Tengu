@@ -302,13 +302,12 @@ to clear it.
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in
   a bubble that soaks up damage until it pops; and **Revive** gets a fallen party member nearby back
   up, even mid-fight. Outside a dungeon they work on you.
-- **HD graphics** — on by default (Options: Display). Sprites are smoothed with a pixel-art
-  upscaler (EPX) so stair-steps become round curves, and drawn at sub-pixel positions so the camera
-  and everyone in the world glide instead of stepping. Each map gets its own lighting: warm light
-  and slanting sun rays from above, cool shade below, and a soft vignette. Spells, sparks, and
-  particles glow (bloom), the far backdrop is softly out of focus behind the play area, shadows
-  are soft, crits glow, and new maps fade in. Monsters keep their crisp art. On a slow device it
-  drops the glow, then the lighting, by itself. Turn it off for the crisp pixel-art look.
+- **HD graphics** — on by default (Options: Display). Everything in the world is placed on the
+  screen's own pixels, so the camera and everyone in it glide instead of stepping, while the art
+  itself stays crisp pixel art. Each map gets its own lighting: warm light and slanting sun rays
+  from above, cool shade below, and a soft vignette. Spells, sparks, and particles glow (bloom),
+  the far backdrop is softly out of focus behind the play area, shadows are soft, crits glow, and
+  new maps fade in. On a slow device it drops the glow, then the lighting, by itself.
 - **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
   adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
   **Natural** leaves the colors as drawn.

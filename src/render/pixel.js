@@ -5,10 +5,8 @@ export const OUTLINE = '#3a2d4f';
 const PAD = 1;
 const cache = new Map();
 
-// HD graphics: detailed sprites are rasterized as usual, then doubled with a pixel-art smoothing
-// filter (EPX) that turns stair-steps into smooth curves and diagonals, and drawn filtered at
-// sub-pixel positions instead of snapping to a pixel grid. Off, the game keeps its crisp
-// pixel-art look.
+// HD graphics: lighting, glow, and positions snapped to the screen's own pixels (so the camera
+// glides). Sprites stay crisp pixel art either way.
 export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false };
 // Rounds a position to the pixel grid: whole game pixels, or in HD the screen's own (finer) pixels,
 // so the camera and everything in the world glide instead of stepping.
@@ -269,29 +267,6 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   return { gw, gh, cells: out, colors };
 }
 
-// EPX (Scale2x): each cell becomes four, and a corner takes its neighbors' color where two
-// matching neighbors meet there, so stair-steps become smooth diagonals and curves.
-function smoothDouble({ gw, gh, cells, colors }) {
-  const w2 = gw * 2;
-  const out = new Int32Array(w2 * gh * 2);
-  const at = (x, y) => (x < 0 || y < 0 || x >= gw || y >= gh ? EMPTY : cells[y * gw + x]);
-  for (let y = 0; y < gh; y++) {
-    for (let x = 0; x < gw; x++) {
-      const p = cells[y * gw + x];
-      const a = at(x, y - 1);
-      const b = at(x + 1, y);
-      const c = at(x - 1, y);
-      const d = at(x, y + 1);
-      const i = y * 2 * w2 + x * 2;
-      out[i] = c === a && c !== d && a !== b ? a : p;
-      out[i + 1] = a === b && a !== c && b !== d ? b : p;
-      out[i + w2] = d === c && d !== b && c !== a ? c : p;
-      out[i + w2 + 1] = b === d && b !== a && d !== c ? d : p;
-    }
-  }
-  return { gw: w2, gh: gh * 2, cells: out, colors };
-}
-
 // '#rrggbb' or '#rrggbbaa'.
 function rgb(c) {
   const n = parseInt(c.slice(1, 7), 16);
@@ -365,17 +340,8 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, round = true } = build();
-    let raster = rasterize(w, h, shapes, res, soft, palette, crisp);
-    // Sprites built with `round: false` (monsters) keep their own crisp art in HD.
-    if (gfx.hd && round) {
-      // Plain pixel sprites (weapons, icons) are doubled twice to catch up.
-      for (let k = res > 1 ? 1 : 2; k > 0; k--) {
-        raster = smoothDouble(raster);
-        res *= 2;
-      }
-      crisp = false;
-    }
+    const { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    const raster = rasterize(w, h, shapes, res, soft, palette, crisp);
     const canvas = bake(raster);
     s = { canvas, w, h, res, crisp, white: null };
     cacheBytes += bytesOf(s);

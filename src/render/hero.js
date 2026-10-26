@@ -16,7 +16,7 @@ import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, gfx, snap } from './pixel.js';
+import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, snap } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
   hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y,
@@ -1168,8 +1168,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (!wpn) return;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.imageSmoothingEnabled = gfx.hd;
-    ctx.imageSmoothingQuality = 'high';
+    ctx.imageSmoothingEnabled = false;
     ctx.translate(snap(sx(hand[0])), snap(sy(hand[1]) - (idleW?.toss ?? 0) * scale));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);

@@ -8,7 +8,7 @@ import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, w
 const PAGES = {
   Display: [
     ['filter', 'Filter', 'A look for the whole screen.', ['natural', 'vivid', 'dreamy', 'retro']],
-    ['hdGraphics', 'HD graphics', 'Smooth, detailed art with lighting and glow. Off: crisp pixel art.'],
+    ['hdGraphics', 'HD graphics', 'Lighting, glow, and a smooth-gliding camera.'],
     ['particles', 'Particles', 'Dust, sparks, petals, and footsteps.', ['full', 'reduced', 'off']],
     ['jobAuras', 'Job auras', 'The glow around advanced jobs while idle.'],
     ['weaponEffects', 'Weapon effects', 'Live effects on weapons and elemental footsteps.'],
