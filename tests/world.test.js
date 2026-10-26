@@ -158,8 +158,24 @@ test('the boss slam hurts players standing on the floor', () => {
   w.body.x = boss.x - 150;
   w.invuln = 0;
   const hp = w.char.hp;
-  for (let i = 0; i < 60 * 9; i++) updateWorld(w, DT, idle);
+  let wound = false;
+  for (let i = 0; i < 60 * 9; i++) {
+    updateWorld(w, DT, idle);
+    wound ||= boss.special.warn > 0;
+  }
   assert.ok(w.char.hp < hp, 'took slam damage');
+  assert.ok(wound && boss.attackAt > 0, 'the slam is wound up, then played as an attack');
+});
+
+test('a monster plays its attack when it hits you on touch', () => {
+  const w = newWorld();
+  loadMap(w, 'meadow1', 'west');
+  const m = w.mobs[0];
+  w.invuln = 0;
+  w.body.x = m.x;
+  w.body.y = m.y;
+  updateWorld(w, DT, idle);
+  assert.equal(m.attackAt, w.now);
 });
 
 function mageAt50(second, third) {
