@@ -19,10 +19,17 @@ import { R, E, T, F } from './pixel.js';
 const HX = 15.5;
 const CY = 13.2;
 
-// New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail'];
-// Any style that no longer exists (older saves) draws as the first one.
-export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
+// Twenty styles: anime, princess and fantasy, cool, punk and cute.
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'spiky', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids'];
+// Older styles draw as the closest current one; anything else unknown draws as the first.
+const RETIRED = {
+  twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'spiky', hero: 'spiky',
+  mohawk: 'spiky', bun: 'odango', topknot: 'odango', long: 'wavylong', wavy: 'wavylong', fluffy: 'wavylong', curly: 'cloud', ahoge: 'pixie', braid: 'braids',
+};
+export const hairStyleOf = (look) => {
+  const s = RETIRED[look.hairStyle] ?? look.hairStyle;
+  return HAIR_STYLES.includes(s) ? s : HAIR_STYLES[0];
+};
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -320,7 +327,7 @@ const FRINGES = {
   // Jagged spikes of every length, one long between the eyes.
   spiky: { pts: [[23.6, 13.4], [21.6, 10.2], [19.8, 15], [17.8, 10.4], [15.4, 17.6], [13.4, 10.6], [10.8, 15.4], [9, 10.2], [7.4, 13.4]], lean: 0.4 },
   // Curtain: parted in the middle, sweeping out to the cheekbones, short at the centre.
-  curtain: { pts: [[23.6, 17.4], [22.2, 13.4], [20, 10.8], [17.6, 8.8], [HX, 8.2], [13.4, 8.8], [11, 10.8], [8.8, 13.4], [7.4, 17.4]], lean: 0, plain: true, part: [[HX, 2.2], [HX, 7.6]] },
+  curtain: { pts: [[23.6, 17.2], [22.4, 14], [20.6, 12], [18.4, 10.8], [HX, 10.2], [12.6, 10.8], [10.4, 12], [8.6, 14], [7.4, 17.2]], lean: 0, plain: true, part: [[HX, 2.2], [HX, 9.6]] },
   // Swept back: no fringe at all, the hairline high so the whole brow shows.
   slicked: { pts: [[24.4, 10.6], [20.6, 8], [HX, 7], [10.4, 8], [6.6, 10.6]], lean: 0, plain: true },
   // Baby bangs: very short and straight, high on the forehead.
@@ -567,6 +574,97 @@ const STYLES = {
       front: bangs('mshape', r, m, sideLocks(r, m, [[25.2, 11], [26, 16], [25.6, 20.2]], undefined, 3)),
       top: [F(E(5.4, 5, 1.6, 2, r.sh2))],
       tips: [26, 31],
+    };
+  },
+  // Half-up: the top gathered into a small loop of hair at the back, the rest left down in long
+  // waves; wispy bangs.
+  halfup(r, m) {
+    const loop = [...bun(4.2, 5.2, 3, 2.6, r, 1), F(E(5.8, 6.6, 1.2, 1.6, r.sh2))];
+    return {
+      head: [crown(r), ...loop],
+      hang: [napeShadow(r), ...sheet({ len: 44, flare: 14, wave: 1.1, n: 4 }, r, m)],
+      front: bangs('curtain', r, m, sideLocks(r, m, [[25.2, 10.6], [26.8, 17], [26.2, 24], [27.4, 29.4]], undefined, 3.4)),
+      top: loop,
+      tips: [33, 39],
+    };
+  },
+  // Spiky hero hair: big spikes swept back round the head, a jagged fringe.
+  spiky(r, m) {
+    const spikes = mass([[8, 22], P(1.6, 21.8), [3.4, 17], P(-2.6, 11.4), [3.6, 8.4], P(0.8, 1.6), [7.6, 3.4], P(7.8, -4.2), [12.6, 1.2], P(16.8, -5.2), [19.4, 1.4], P(25.2, -2.2), [26.6, 6], [27.6, 9], [27.6, 15], [23, 22]], r.sh1, m, 0.4);
+    return {
+      head: [spikes],
+      hang: [],
+      front: bangs('spiky', r, m, [lock([[25.2, 10.4], [27.8, 14.4], [30, 18.6]], 4, r.base, m, 0.8), lock([[5.8, 10.4], [3.2, 14.4], [1, 18.6]], 4, r.base, m, 0.8)]),
+      tips: [18, 21],
+    };
+  },
+  // A short choppy pixie with an ahoge that bounces, perks up when excited and wilts when sulking.
+  pixie(r, m, mood) {
+    const droop = mood === 'pout' || mood === 'shy';
+    const perk = mood === 'excited' || mood === 'angry';
+    const tx = 18.6 + (m?.tip ?? 0) * 1.2 + (droop ? 5 : 1.4);
+    const ty = droop ? 0.6 : perk ? -6.8 : -5;
+    const ahoge = poly(smooth([[13.6, 3.2], [15, -0.4], P(tx, ty), [16.6, 0.6], [15.8, 3.4]]), r.base);
+    const back = mass([[6, 21], P(4.2, 22.8), [3.6, 16], [3.6, 10], [7, 3], [13.2, 1.4], [20, 1.6], [27, 7], [27.4, 14], [26.6, 21], P(24.8, 22.6), [21, 21], P(15.5, 23.6), [10, 21]], r.sh1, m, 0.5);
+    const b = bangs('short', r, m, sideLocks(r, m, [[25.2, 10.6], [25.8, 15], [25.4, 18.6]], undefined, 3));
+    b.shapes.unshift(ahoge);
+    return { head: [back], hang: [], front: b, tips: [16, 19] };
+  },
+  // A fluffy bob to the jaw whose ends flip out in curls.
+  fluffybob(r, m) {
+    const flip = [[25.2, 10.6], [26.8, 16], [27.4, 20.6], [29.6, 22.8], [30.8, 21.6]];
+    return {
+      head: [crown(r, 0.8)],
+      hang: sheet({ len: 25, flare: 15.4, ends: 'curls', n: 4, w0: 12.6 }, r, m, 0.7),
+      front: bangs('baby', r, m, sideLocks(r, m, flip, undefined, 4)),
+      tips: [18, 22],
+    };
+  },
+  // Long big waves with lots of volume, curling at the ends.
+  wavylong(r, m) {
+    const wav = [[25.2, 10.6], [27.4, 16], [26, 21.6], [28.2, 26.6], [27, 31.6], [28.6, 33.4]];
+    return {
+      head: [crown(r, 1)],
+      hang: [napeShadow(r), ...sheet({ len: 41, flare: 17, wave: 1.8, ends: 'curls', n: 5, w0: 12.6 }, r, m)],
+      front: bangs('wispy', r, m, sideLocks(r, m, wav, undefined, 4.4)),
+      tips: [30, 35],
+    };
+  },
+  // A cloud of curls, much wider than the head: a scalloped outline of round curls all round.
+  cloud(r, m) {
+    // A soft cloud of curls much wider than the head: round puffs all the way round, each with a
+    // small curl line, and no points anywhere.
+    const puff = (list) => [...list.map(([x, y, rr]) => F(E(x, y, rr, rr * 0.92, r.sh1))), ...list.map(([x, y, rr]) => poly(smooth([[x - rr * 0.5, y + rr * 0.1], [x, y + rr * 0.45], [x + rr * 0.5, y + rr * 0.05], [x, y + rr * 0.25]]), r.sh2))];
+    // The lower puffs hang behind the body, so they never cover the chest.
+    const high = [[3.4, 8.6, 4.6], [1.6, 14.4, 4.8], [2.6, 20.4, 4.6], [8.8, 2.6, 4.6], [15.5, 0.6, 5], [22.2, 2.6, 4.6], [27.6, 8.6, 4.6], [29.4, 14.4, 4.8], [28.4, 20.4, 4.6]];
+    const low = [[5, 25.4, 4.4], [10.4, 27, 4.2], [15.5, 27.6, 4.4], [20.6, 27, 4.2], [26, 25.4, 4.4]];
+    return {
+      head: [F(E(HX, 13.4, 13.4, 12.6, r.sh1)), ...puff(high)],
+      hang: puff(low),
+      front: bangs('curly', r, m, sideLocks(r, m, [[25.2, 11], [27.4, 15.6], [26.8, 19.6], [28.4, 22]], undefined, 4)),
+      tips: [22, 26],
+    };
+  },
+
+  // Low twintails tied at the nape, lying forward over the shoulders in soft waves.
+  lowtails(r, m) {
+    const tail = [[25.6, 19.6], [28, 22.6], [27.4, 27.4], [28.6, 32], [27.6, 36.4], [28.8, 38.4]];
+    const pieces = (t) => [lock(t, 5.6, r.base, m, 1.2, 0.12), streak(t[0][0] + 0.4, t[0][1] + 2.4, t[2][0], t[2][1] + 2, 0.8, -0.4, r.hi, m, 1.2)];
+    return {
+      head: [crown(r)],
+      hang: [...sheet({ len: 24, flare: 11.8, n: 3 }, r, m), lock(tail, 5.6, r.sh1, m, 1.2, 0.12), lock(fx(tail), 5.6, r.sh1, m, 1.2, 0.12)],
+      front: bangs('heavy', r, m, [...sideLocks(r, m, [[25.2, 10.8], [26.2, 15], [25.8, 19]], undefined, 3), ...pieces(tail), ...pieces(fx(tail)), F(E(26.6, 20.6, 1.3, 1, r.sh2)), F(E(4.4, 20.6, 1.3, 1, r.sh2))]),
+      tips: [28, 33],
+    };
+  },
+  // Two plaits brought forward over the shoulders; parted bangs.
+  braids(r, m) {
+    const sp = [[25.4, 14], [26.6, 19], [26.2, 25], [26.8, 31]];
+    return {
+      head: [crown(r)],
+      hang: [...sheet({ len: 23, flare: 11.6, n: 3 }, r, m), ...plait(sp, 3.8, r, m, 1.1, r.sh1), ...plait(fx(sp), 3.8, r, m, 1.1, r.sh1)],
+      front: bangs('part', r, m, [lock([[24.6, 10], [26, 13], [25.6, 15]], 4, r.base, m), lock([[6.4, 10], [5, 13], [5.4, 15]], 4, r.base, m), ...plait(sp, 3.8, r, m, 1.1), ...plait(fx(sp), 3.8, r, m, 1.1)]),
+      tips: [28, 32],
     };
   },
 };

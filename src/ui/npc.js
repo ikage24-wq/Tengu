@@ -383,7 +383,8 @@ function styleWindow(ui, state, world) {
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const W = 400;
-  const H = 250;
+  // Tall enough for the hair tab's rows (styles, bangs, colour and tips).
+  const H = 290;
   // The salon is bigger than the talk box it opens from, so it starts centred on screen.
   if (!dlg.placed) {
     win.x = (640 - W) / 2;
@@ -398,10 +399,10 @@ function styleWindow(ui, state, world) {
   const char = world.char;
   dlg.tab ??= 0;
   box(ctx, win.x + 8, win.y + 24, 104, H - 32, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 170, { pose: 'idle', time: world.now, scale: 2.2 });
+  drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 });
   if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, char.appearance) })) dlg.look = { ...char.appearance };
   dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 56, h: 15 });
-  dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [24, 24, 24, 32][dlg.tab], time: world.now, gap: 2 }).look;
+  dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [20, 24, 24, 32][dlg.tab], time: world.now, gap: 2 }).look;
   const cost = npc.styleCost;
   const by = win.y + H - 22;
   if (button(ui, win.x + 122, by, 110, 15, `Done (${cost}g)`, { primary: true, enabled: char.gold >= cost && !sameLook(dlg.look, char.appearance) })) {

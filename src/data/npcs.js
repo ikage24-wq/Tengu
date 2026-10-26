@@ -16,7 +16,7 @@ export const NPCS = {
   mira: {
     id: 'mira', name: 'Mira', title: 'Village Guide', role: 'guide',
     building: 'kiosk', sign: 'Info',
-    look: { hairStyle: 'twintails', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
+    look: { hairStyle: 'candy', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
     quests: ['first_steps', 'fluffy', 'sprout_sweep'],
   },
@@ -33,7 +33,7 @@ export const NPCS = {
   lulu: {
     id: 'lulu', name: 'Lulu', title: 'Stylist', role: 'stylist',
     building: 'salon', sign: "Lulu's Salon",
-    look: { hairStyle: 'topknot', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
+    look: { hairStyle: 'odango', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
     greeting: 'New hair? New clothes? A fresh look is 500 gold, and my boutique has the cutest outfits!',
     styleCost: 500,
     shop: ['denim_jacket', 'cozy_sweater', 'overalls', 'sundress', 'school_blazer', 'puffer_jacket', 'maid_dress', 'pleated_skirt', 'blue_jeans', 'cargo_pants', 'long_skirt', 'hoodie', 'sailor_top'],
@@ -41,7 +41,7 @@ export const NPCS = {
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson' }, ...outfit('warrior', 50) },
-    look: { hairStyle: 'curly', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
+    look: { hairStyle: 'cloud', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {
@@ -82,7 +82,7 @@ export const NPCS = {
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
     building: 'office', sign: 'Harbor Office',
-    look: { hairStyle: 'hero', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
+    look: { hairStyle: 'spiky', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
     quests: ['mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart'],
   },
@@ -96,7 +96,7 @@ export const NPCS = {
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",
-    look: { hairStyle: 'ahoge', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
+    look: { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
     greeting: 'Finest goods on the coast. Bows, blades, armor, tonics, and charms!',
     shop: [
       'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll',
