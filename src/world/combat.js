@@ -31,6 +31,8 @@ const SHOT_IMPACTS = {
 };
 
 const BASE_DELAY = 0.5; // seconds between attacks at normal speed
+// Shots and spells leave from the hands, chest high above the feet.
+const HAND_Y = 17;
 const PROJECTILE_SPEED = 620;
 
 const BASIC_MELEE = { pct: 100, hits: 1, targets: 1, range: { w: 62, h: 52 }, mp: 0 };
@@ -250,7 +252,7 @@ export function cast(world, skillId, rng = Math.random) {
       });
       if (params.projectile) {
         world.fx.push({
-          kind: 'projectile', shot: fxKind, school: s?.school, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
+          kind: 'projectile', shot: fxKind, school: s?.school, x: body.x + body.facing * 10, y: body.y - HAND_Y,
           tx: m.x, ty: m.y - m.def.h / 2, t: -(n * 0.09 + ti * 0.02), dur: Math.max(0.08, travel), element,
         });
       }
@@ -266,8 +268,8 @@ export function cast(world, skillId, rng = Math.random) {
   // A projectile with nothing in range still flies, so the shot doesn't feel swallowed.
   if (params.projectile && !targets.length) {
     world.fx.push({
-      kind: 'projectile', shot: fxKind, x: body.x + body.facing * 10, y: body.y - body.h * 0.55,
-      tx: body.x + body.facing * params.range.w, ty: body.y - body.h * 0.55, t: 0, dur: params.range.w / PROJECTILE_SPEED, element, school: s?.school,
+      kind: 'projectile', shot: fxKind, x: body.x + body.facing * 10, y: body.y - HAND_Y,
+      tx: body.x + body.facing * params.range.w, ty: body.y - HAND_Y, t: 0, dur: params.range.w / PROJECTILE_SPEED, element, school: s?.school,
     });
   }
   return { ok: true, targets: targets.length };

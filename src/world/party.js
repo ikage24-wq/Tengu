@@ -407,7 +407,8 @@ function strike(bot, m, world, rng) {
   const power = special ? between(160, 230, rng) : 100;
   const range = st.magic ? magicRange(bot.stats, power * 1.3) : physicalRange(bot.stats, bot.stats.weaponType, power);
   const acc = accuracy(family, bot.stats, level);
-  const from = { x: body.x + body.facing * 10, y: body.y - 26 };
+  // Shots and spells leave from the hands, chest high.
+  const from = { x: body.x + body.facing * 10, y: body.y - 16 };
   const hits = special && !st.magic ? (st.ranged ? 3 : 2) : 1;
   // Melee members work through their weapon's combo, one step per swing: the hit lands as the
   // blade cuts, with that step's push and smear.

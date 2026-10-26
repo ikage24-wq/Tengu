@@ -23,11 +23,15 @@
 import { physicalRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS } from '../data/jobs.js';
 import { pickTargets, weaponElement } from './combat.js';
+import { moveAt } from '../render/moves.js';
 
 // How long after a step ends you can still carry the combo on.
 const WINDOW = 0.45;
 // A step can be cut short into the next one this far through (heavy finishers play out longer).
 const CANCEL = 0.76;
+
+// How high the hands are above the feet (where bows are held and stars thrown from).
+const HAND_Y = 15;
 
 // Smear colors: steel blue for a cut, gold for a heavy blow.
 const BLADE = '#8fb8ff';
@@ -120,7 +124,7 @@ function playStep(world, step, scale, key, school = null) {
   // A dash leaves speed lines and a shock cone along its path.
   if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   step.strikes.forEach((s, n) => {
-    world.strikes.push({ ...s, n, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher });
+    world.strikes.push({ ...s, n, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
   });
 }
 
@@ -190,8 +194,9 @@ function shotHit(world, s, m, delay, stack = 0) {
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, s) {
   const { body } = world;
-  const ox = body.x + s.dir * 12;
-  const oy = body.y - 27;
+  // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
+  const ox = body.x + s.dir * 10;
+  const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0);
   const speed = s.speed ?? 680;
   const box = { w: s.range, h: s.h ?? 60 };
   const element = s.key.startsWith('basic') ? weaponElement(world.char) : null;
