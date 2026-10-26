@@ -147,9 +147,10 @@ function bladed(m, f, d) {
   const r = m.rank;
   const th = m.theme;
   const k = d.k;
-  const L = d.L[r];
+  const g = m.step ?? 0;
+  const L = d.L[r] + g * 0.75 * k;
   const bw = d.bw[r];
-  const gw = d.gw[r];
+  const gw = d.gw[r] + g * 0.4;
   const gl = d.gl;
   const base = -2.5 - 1.5 * k;
   const top = base - L;
@@ -375,7 +376,7 @@ function gauntlet(m0, f) {
   // The held star spins a quarter turn over the weapon's animation.
   const frames = th || m.tier >= 9 ? 6 : m.tier >= 5 ? 4 : 1;
   const spin = ((f % frames) / frames) * (Math.PI / 2);
-  const SR = [4.4, 4.8, 5.2, 5.6, 6, 6.5][r];
+  const SR = [4.4, 4.8, 5.2, 5.6, 6, 6.5][r] + (m.step ?? 0) * 0.12;
   const sy = -7.2 - SR;
   const top = sy - SR;
   const a = { tip: [0, top], head: [0, sy], blade: [top, -4] };
@@ -522,9 +523,10 @@ function axe(m0, f) {
   const m = headLook(m0);
   const r = m.rank;
   const th = m.theme;
-  const H = [26, 28, 30, 32, 34, 37][r];
-  const hh = [12, 14, 15, 16, 18, 20][r];
-  const bx = [10, 11, 12, 13, 14, 16][r];
+  const g = m.step ?? 0;
+  const H = [26, 28, 30, 32, 34, 37][r] + g * 0.6;
+  const hh = [12, 14, 15, 16, 18, 20][r] + g * 0.4;
+  const bx = [10, 11, 12, 13, 14, 16][r] + g * 0.3;
   const top = -H;
   const mid = top + hh / 2;
   const s = [];
@@ -644,8 +646,9 @@ function spear(m0, f) {
   const m = headLook(m0);
   const r = m.rank;
   const th = m.theme;
-  const S = [34, 36, 38, 40, 42, 45][r];
-  const hl = [9, 10, 11, 13, 14, 16][r];
+  const g = m.step ?? 0;
+  const S = [34, 36, 38, 40, 42, 45][r] + g * 0.6;
+  const hl = [9, 10, 11, 13, 14, 16][r] + g * 0.4;
   const hw = [4, 4, 5, 5, 6, 6][r];
   const top = -S - hl;
   const sock = -S;
@@ -824,7 +827,7 @@ function focus(m, f, y, big, s, a, reach) {
 function wand(m, f) {
   const r = m.rank;
   const th = m.theme;
-  const L = [14, 15, 16, 17, 18, 20][r];
+  const L = [14, 15, 16, 17, 18, 20][r] + (m.step ?? 0) * 0.4;
   const y = -L - 3;
   const s = [];
   const a = { blade: [y - 6, -L + 4] };
@@ -847,7 +850,7 @@ function wand(m, f) {
 function staff(m, f) {
   const r = m.rank;
   const th = m.theme;
-  const S = [30, 32, 34, 36, 38, 40][r];
+  const S = [30, 32, 34, 36, 38, 40][r] + (m.step ?? 0) * 0.6;
   const y = -S - 6;
   const s = [];
   const a = { blade: [y - 10, -S + 4] };
@@ -907,7 +910,7 @@ function limbPoly(H, xAt, th, c) {
 function bow(m, f) {
   const r = m.rank;
   const th = m.theme;
-  const H = [20, 21, 22, 23, 24, 27][r];
+  const H = [20, 21, 22, 23, 24, 27][r] + (m.step ?? 0) * 0.4;
   const bulge = 8 + (r >= 5 ? 1 : 0) + (!th && r >= 3 ? 4 : 0);
   const thick = [2.4, 2.6, 2.8, 2.8, 3, 3.2][r];
   const sx = -bulge + thick / 2;
@@ -1051,8 +1054,8 @@ function crossbow(m0, f) {
   const m = headLook(m0);
   const r = m.rank;
   const th = m.theme;
-  const S = [9, 10, 10, 11, 12, 13][r];
-  const px = [21, 21, 22, 22, 23, 24][r];
+  const S = [9, 10, 10, 11, 12, 13][r] + (m.step ?? 0) * 0.25;
+  const px = [21, 21, 22, 22, 23, 24][r] + (m.step ?? 0) * 0.3;
   const cy = -4;
   const s = [];
   const a = { tip: [px + 5, cy], head: [px, cy], blade: [-14, 6] };

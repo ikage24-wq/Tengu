@@ -10,8 +10,59 @@
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
 import { GOLD, SILVER, INK, FIGURE, torsoPts, robePts, dressPts, band, side, MID, collar, tieBow, button, limb, reach, mirrorX } from './figure.js';
 import { JOB_GEAR } from './jobgear/index.js';
+import { finish, hang, hsl } from './jobgear/kit.js';
 
 export { limb, reach };
+
+// ---------- Materials ----------
+// Every piece is rendered as materials under one light (see jobgear/kit.js): shapes tagged with a
+// material keep it; the rest are sorted here by colour. A piece's trim metals, plain gold and
+// silver, and chain are metal; browns are leather; the accent is a gem when small and a glow
+// when big; a warrior's own colour is plate from the Militia set on; everything else is cloth.
+
+const isBrown = (c) => {
+  const [h, s, l] = hsl(c);
+  return h >= 10 && h <= 42 && s >= 0.16 && s <= 0.62 && l >= 0.18 && l <= 0.6;
+};
+const BASE_METALS = [GOLD, SILVER, '#aeb6c6', '#ffd23b', '#c9ccd6'];
+const FURS = new Set(['#f6ecdc']);
+const size = (s) => (s.t === 'r' ? Math.max(s.w, s.h) : s.t === 'e' ? Math.max(s.rx, s.ry) * 2 : Math.max(...s.pts.map((q) => q[0])) - Math.min(...s.pts.map((q) => q[0])) + Math.max(...s.pts.map((q) => q[1])) - Math.min(...s.pts.map((q) => q[1])));
+const matCache = new WeakMap();
+const plainMat = classifier(null);
+// The material sorter for a piece (or for plain designs, with no palette).
+function classifier(piece) {
+  const p = piece?.pal ?? null;
+  const metals = new Set(BASE_METALS);
+  const plate = new Set();
+  if (p) {
+    metals.add(p.trim).add(p.trimDark).add(p.trimLight);
+    if (piece.family === 'warrior' && piece.tier >= 1) for (const c of [p.main, p.dark, p.deep, p.light]) plate.add(c);
+  }
+  for (const c of [...metals]) metals.add(shadowTone(c));
+  for (const c of [...plate]) plate.add(shadowTone(c));
+  return (s) => {
+    const c = s.c;
+    if (metals.has(c) || plate.has(c)) return 'metal';
+    if (p && (c === p.accent || c === p.glow)) return size(s) <= 4.5 ? 'gem' : 'glow';
+    if (FURS.has(c)) return 'fur';
+    if (isBrown(c)) return 'leather';
+    return 'cloth';
+  };
+}
+function matFor(piece) {
+  if (!piece?.pal) return plainMat;
+  let m = matCache.get(piece.pal);
+  if (!m) {
+    m = classifier(piece);
+    matCache.set(piece.pal, m);
+  }
+  return m;
+}
+const done = (shapes, piece) => finish(shapes.filter(Boolean), matFor(piece));
+// Hanging cloth is drawn at rest and bent as a chain (kit.js `hang`) from its root.
+const STILL = (m) => ({ ...m, sway: 0, hair: 0 });
+const HANGS = new Set(['warrior', 'archer', 'mage']);
+const lowest = (shapes) => Math.max(...shapes.filter(Boolean).map((s) => (s.t === 'r' ? s.y + s.h : s.t === 'e' ? s.y + s.ry : Math.max(...s.pts.map((q) => q[1] + s.y)))));
 
 // Standing still, nothing swaying.
 const MOTION = { sway: 0, hair: 0, flap: 0 };
@@ -19,7 +70,7 @@ const MOTION = { sway: 0, hair: 0, flap: 0 };
 // ---------- Tops (torso part) ----------
 
 export function topShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return JOB_GEAR[piece.family].top(piece.tier, piece.pal, m).filter(Boolean);
+  if (piece?.family) return done(JOB_GEAR[piece.family].top(piece.tier, piece.pal, m), piece);
   const d = shade(c, -16);
   const l = shade(c, 18);
   const torso = torsoPts();
@@ -55,7 +106,7 @@ export function topShapes(design, c, piece = null, m = MOTION) {
       default: return [T(torso, c), collar(l), band(torso, 34.4, 35.8, d)];
     }
   })();
-  return parts.filter(Boolean);
+  return done(parts, piece);
 }
 
 // Sleeves follow the top's main color; armor shows metal.
@@ -76,7 +127,7 @@ export function longSleeves(design, piece = null) {
 // ---------- Bottoms (leg colors, hips, and an optional skirt) ----------
 
 export function legLook(design, c, skin, piece = null) {
-  if (piece?.family) return JOB_GEAR[piece.family].legs(piece.tier, piece.pal, skin);
+  if (piece?.family) return { ...JOB_GEAR[piece.family].legs(piece.tier, piece.pal, skin), piece };
   switch (design) {
     case 'shorts': return { top: c, low: skin, pad: null };
     case 'leather': return { top: c, low: c, pad: shade(c, 20) };
@@ -92,11 +143,24 @@ export function legLook(design, c, skin, piece = null) {
 }
 
 export function hipShapes(look) {
-  return [T(FIGURE.hips, look.top)];
+  return done([T(FIGURE.hips, look.top)], look.piece ?? null);
 }
 
 export function skirtShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return JOB_GEAR[piece.family].skirt(piece.tier, piece.pal, m)?.filter(Boolean) ?? null;
+  if (piece?.family) {
+    const fam = piece.family;
+    if (!HANGS.has(fam)) {
+      const out = JOB_GEAR[fam].skirt(piece.tier, piece.pal, m);
+      return out ? done(out, piece) : null;
+    }
+    const out = JOB_GEAR[fam].skirt(piece.tier, piece.pal, STILL(m));
+    return out ? done(hang(out.filter(Boolean), 34.4, lowest(out), m, 0.8), piece) : null;
+  }
+  const out = plainSkirt(design, c);
+  return out ? done(hang(out, 34.4, lowest(out), m, 0.8), null) : null;
+}
+
+function plainSkirt(design, c) {
   if (design === 'starskirt') return [T([[10.6, 34.4], [20, 34.4], [21.4, 36.4], [22.6, 41.6], [8.2, 41.6], [9.4, 36.4]], c), R(8.9, 40.6, 13, 1, GOLD), F(E(12, 38, 0.6, 0.6, GOLD)), F(E(17.5, 37, 0.6, 0.6, GOLD)), F(E(20, 39.4, 0.6, 0.6, '#ffffff'))];
   if (design === 'skirt') {
     // A short pleated skirt: alternating light and dark pleats and a waistband.
@@ -122,6 +186,10 @@ export const ANKLE_Y = 53;
 // x is the leg's left edge at rest. foot = [dx, dy, angle]: the ankle's offset from its rest spot
 // under the hip, and the foot's tilt in degrees (positive lifts the toe). hipY moves the hip.
 export function legShapes(x, look, shoe, back, foot = [0, 0, 0], hipY = HIP_Y) {
+  return done(legParts(x, look, shoe, back, foot, hipY), look.piece ?? null);
+}
+
+function legParts(x, look, shoe, back, foot, hipY) {
   const tint = (c) => (back ? shadowTone(c) : c);
   const top = tint(look.top);
   const low = tint(look.low);
@@ -156,7 +224,7 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
   const shaft = (h, col, w = 2.8) => limb(ax, ay, ax + ((kx - ax) / len) * h, ay + ((ky - ay) / len) * h, w, w, col);
   // Seen from the front: a small rounded shoe centered under the ankle.
   const sole = (col) => poly([[-1.8, -1.4], [1.8, -1.4], [2.7, 0.2], [3, 2], [2.6, 3], [-2.6, 3], [-3, 2], [-2.7, 0.2]], col);
-  if (shoe.family) return JOB_GEAR[shoe.family].shoe(shoe.tier, shoe.pal, { at, poly, dot, shaft, sole, c, tint }).filter(Boolean);
+  if (shoe.family) return done(JOB_GEAR[shoe.family].shoe(shoe.tier, shoe.pal, { at, poly, dot, shaft, sole, c, tint }), shoe);
   switch (shoe.design) {
     case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
     case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
@@ -170,7 +238,11 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
 // ---------- Hats ----------
 
 export function hatShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return JOB_GEAR[piece.family].hat(piece.tier, piece.pal, m).filter(Boolean);
+  if (piece?.family) return done(JOB_GEAR[piece.family].hat(piece.tier, piece.pal, m), piece);
+  return done(plainHat(design, c), null);
+}
+
+function plainHat(design, c) {
   const d = shade(c, -18);
   const l = shade(c, 20);
   switch (design) {
@@ -195,14 +267,14 @@ export const hatTucks = (hat) => Boolean(hat) && (hat.family ? JOB_GEAR[hat.fami
 export const hatHidesBangs = (hat) => Boolean(hat) && (hat.family ? JOB_GEAR[hat.family].hatHidesBangs(hat.tier) : hat.design === 'bunny');
 // Pauldrons and puffs over a shoulder at (0, 0); side -1 is the back arm, 1 the front.
 export function shoulderShapes(top, side) {
-  return top?.family ? JOB_GEAR[top.family].shoulder(top.tier, top.pal, side).filter(Boolean) : [];
+  return top?.family ? done(JOB_GEAR[top.family].shoulder(top.tier, top.pal, side), top) : [];
 }
 
 // Parts of a hat drawn behind the head: hoods and helmets wrap around it.
 export function hatBackShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return JOB_GEAR[piece.family].hatBack(piece.tier, piece.pal, m).filter(Boolean);
-  if (design === 'bunny') return [E(15.5, 14, 13.4, 12.8, '#ffffff'), E(15.5, 26, 9, 3, '#ffffff')];
-  if (design === 'helmet') return [E(15.5, 13.4, 12.4, 11.4, SILVER)];
+  if (piece?.family) return done(JOB_GEAR[piece.family].hatBack(piece.tier, piece.pal, m), piece);
+  if (design === 'bunny') return done([E(15.5, 14, 13.4, 12.8, '#ffffff'), E(15.5, 26, 9, 3, '#ffffff')], null);
+  if (design === 'helmet') return done([E(15.5, 13.4, 12.4, 11.4, SILVER)], null);
   if (design === 'witch') return [R(8, 8.6, 16, 3, shade(c, -18))];
   return [];
 }
@@ -211,7 +283,7 @@ export function hatBackShapes(design, c, piece = null, m = MOTION) {
 
 export function handShapes(hx, hy, glove, skin, ex = hx, ey = hy - 4) {
   if (!glove) return [E(hx, hy, 2, 2, skin)];
-  if (glove.family) return JOB_GEAR[glove.family].hand(glove.tier, glove.pal, hx, hy, ex, ey).filter(Boolean);
+  if (glove.family) return done(JOB_GEAR[glove.family].hand(glove.tier, glove.pal, hx, hy, ex, ey), glove);
   const c = glove.color;
   switch (glove.design) {
     case 'cuffed': return [E(hx, hy, 1.8, 1.9, c), R(hx - 1.8, hy - 2.8, 3.6, 1.4, shade(c, 25))];
@@ -236,10 +308,21 @@ export function earringShapes(design, c, piece = null) {
 // Capes hang from the shoulders behind the body, wide enough to show on both sides of it and down
 // past the hips; the hem sways with `sway`. Wings come in pairs and flap with `flap`.
 export function capeShapes(design, c, sway, flap, piece = null, m = null) {
-  if (piece?.family) return JOB_GEAR[piece.family].cape(piece.tier, piece.pal, m ?? { ...MOTION, sway, flap }).filter(Boolean);
+  const mo = m ?? { ...MOTION, sway, flap };
+  if (piece?.family) {
+    const fam = piece.family;
+    if (!HANGS.has(fam)) return done(JOB_GEAR[fam].cape(piece.tier, piece.pal, mo), piece);
+    const out = JOB_GEAR[fam].cape(piece.tier, piece.pal, STILL(mo)).filter(Boolean);
+    return done(hang(out, 26, lowest(out), mo), piece);
+  }
+  const out = plainCape(design, c, flap);
+  return done(design === 'fairy' || design === 'angel' ? out : hang(out, 26, lowest(out), mo), null);
+}
+
+function plainCape(design, c, flap) {
   const d = shade(c, -20);
-  const s = sway;
-  const h = s / 2;
+  const s = 0;
+  const h = 0;
   const cape = (bottom) => T([[8.6, 26], [22.4, 26], [25.4 + h, 36], [27 + s, bottom], [15.5 + s, bottom + 1.2], [4 + s, bottom], [5.6 + h, 36]], c);
   const hem = (bottom, col, th = 1.2) => T([[4 + s, bottom - th], [27 + s, bottom - th], [27 + s, bottom], [15.5 + s, bottom + 1.2], [4 + s, bottom]], col);
   switch (design) {
@@ -263,7 +346,7 @@ export function capeShapes(design, c, sway, flap, piece = null, m = null) {
 // The front of a cape: ties over the shoulders and a clasp (or a fur collar) at the neck,
 // drawn over the top.
 export function capeFrontShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return JOB_GEAR[piece.family].capeFront(piece.tier, piece.pal, m).filter(Boolean);
+  if (piece?.family) return done(JOB_GEAR[piece.family].capeFront(piece.tier, piece.pal, m), piece);
   if (design === 'fairy' || design === 'angel') return [];
   const ties = [T([[10, 26], [12.6, 26], [13.6, 29.4], [11, 29]], c), T([[21, 26], [18.4, 26], [17.4, 29.4], [20, 29]], c)];
   if (design === 'royal') return [T([[9.6, 25.6], [21.4, 25.6], [21, 28.6], [15.5, 29.6], [10, 28.6]], '#ffffff'), F(E(12.4, 27.4, 0.5, 0.5, INK)), F(E(18.6, 27.4, 0.5, 0.5, INK)), F(E(15.5, 28.6, 1, 1, GOLD))];

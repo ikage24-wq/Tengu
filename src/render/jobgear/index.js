@@ -21,7 +21,8 @@
 //   hand(t, p, hx, hy, ex, ey)  a gloved hand at (hx, hy), with the elbow at (ex, ey) for bracers
 //   cape(t, p, m)         behind the body; capeFront(t, p, m) over the top (clasps, scarf ends)
 
-import { shade, mix } from '../pixel.js';
+import { mix } from '../pixel.js';
+import { darker, lighter } from './kit.js';
 import { variantsFor } from '../../data/items.js';
 import warrior from './warrior.js';
 import archer from './archer.js';
@@ -55,14 +56,15 @@ export function gearPalette(family, t, color, accent = null, variant = null) {
   const acc = accent ?? ACCENTS[family]?.[band] ?? '#ffe36b';
   const p = {
     tier: t, band, variant, family,
-    main, dark: shade(main, -18), deep: shade(main, -34), light: shade(main, 18),
+    // A hue-shifted ramp: shadows turn cool (or toward red on warm colours), lights warm.
+    main, dark: darker(main, 0.15), deep: darker(main, 0.29), light: lighter(main, 0.12),
     // A second cloth that goes with the main one: darker under-layers for light colors and the
     // other way round.
     second: mix(main, lum(main) > 0.6 ? '#4a3f6a' : '#fff6ec', 0.55),
-    trim, trimDark: shade(trim, -24),
+    trim, trimDark: darker(trim, 0.22, 'metal'), trimLight: lighter(trim, 0.1),
     accent: acc, glow: t >= 10 && !look ? acc : null,
   };
-  p.secondDark = shade(p.second, -16);
+  p.secondDark = darker(p.second, 0.14);
   return p;
 }
 

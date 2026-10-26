@@ -83,7 +83,9 @@ export function lookFor(type, tier, theme, variant = null) {
   if (theme && THEMES[theme]) return { ...THEMES[theme], theme, rank: 5, tier: 21, beam: BEAMS[type] };
   const t = Math.max(0, Math.min(20, tier | 0));
   const base = MATERIALS[t];
-  const look = { ...base, ...ornaments(t), tier: t, rank: Math.ceil(t / 4), theme: null, variant: null };
+  // `step` (0-3) is the tier's place within its rank: each material is a little longer and
+  // broader than the last, so the ladder grows tier by tier, not only every fourth.
+  const look = { ...base, ...ornaments(t), tier: t, rank: Math.ceil(t / 4), step: t ? (t - 1) % 4 : 0, theme: null, variant: null };
   if (look.rune) look.runeDim = mix(base.bladeDark, base.rune, 0.3);
   if (base.name === 'genesis') look.prism = PRISM;
   const v = t > 0 && VARIANT_LOOKS[variant];

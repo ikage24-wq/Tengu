@@ -37,6 +37,12 @@ carry an improvement across every part of the game it applies to.
   monster sprites, `selout`).
 - Shadows shift hue (cooler or toward magenta) instead of going grey; highlights shift warm. At
   most 4 tones per material. No pillow shading; light from one direction.
+- Gear and weapons shade by material (`src/render/jobgear/kit.js`): each flat shape gets planes
+  clipped inside it (a half-plane clip, so the silhouette never changes). Metal: shadow plane on the
+  back, the base kept as reflected light on the far edge, a highlight patch at the upper front and a
+  specular corner. Cloth: one back shadow, no highlight. Gems: inverted (dark near the light).
+  Upright parts shade on the back, wide parts underneath. Step ramps by chroma, not HSL saturation,
+  or pale tints turn into strong peaches and lilacs in shadow.
 - Minimum readable line is 2/3 of an art pixel; no stray single pixels; snap feature anchors to the
   1/3-pixel grid so faces don't flicker as heads bob.
 
