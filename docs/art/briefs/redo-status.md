@@ -78,15 +78,23 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   are stacked flat lames with gap lines, knees and elbows pointed two-facet cops, a breastplate
   ridge and plackart line. One critique round.
 
+- Rough spots and hero items: Kitsune tails are one smooth plume each (Chaikin-rounded chain,
+  one shadow crescent down the underside, edge tufts, a V-notched cream tip), no more blotches;
+  Jackalope's dead hind legs stretch out behind past the tail with a sole pad. The player now
+  falls when knocked out (`town.js` `drawFallen`, shared with downed party members: knocked up
+  and back, a bounce with dust, lying still, a ghost rising out). Hero head rolls about the neck
+  (idle weight shift, hurt snap-back, knocked-out loll). Capes hang on two springs (root plus a
+  softer hem chasing it). Face sparkles and monster impact stars take a gold outline (`line` on a
+  shape, `sparkLine`) instead of grey. Deep skin gets darker (not just redder) shadows, so the
+  bangs band no longer reads lighter; dark hair's angel ring is a hue-shifted sheen, not grey.
+- Bag icons: near-black gear (demonic, cyber, dark thief bottoms and shoes, dark endgame weapons)
+  takes a monotone value lift in icons only (`icons.js` `liftTone`) and reads at 1x.
+- Thunder Hawk is now the archer's summon skill (`thunderhawk`: physical lightning feathers),
+  with a hand-drawn icon and a test.
+
 ## Still to do
 - Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs).
-- Gear: accent-colour audit per piece. Bag icons at 1x all draw now, but the darkest sets (demonic,
-  cyber and t45+ weapons, thief bottoms and shoes) read as near-black blobs at 1x.
-- Hero: critique rounds on attack/jump/climb/death motion; a player death pose (drawn in scene.js);
-  head tilt; capes on two springs; sparkle extras on excited/sassy faces get grey outlines; lighter
-  bangs band on dark skin.
-- Rough spots on finished designs: Kitsune body fur shading still a little blotchy; Jackalope's hind legs hide under the
-  body when dead.
+- Gear: accent-colour audit per piece.
+- Hero: critique rounds on attack/jump/climb motion.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
-- Thunder Hawk has no skill that summons it.
 - Props: shared prop kit is `src/render/propkit.js`.
