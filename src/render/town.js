@@ -623,7 +623,7 @@ function stroll(p, t) {
 // Walkers get their own animation state, stepped by how far they actually moved since the last
 // frame, so their legs keep pace with their feet (like the player's) and hair and capes follow.
 const anims = new Map();
-function animFor(key, x, facing, time) {
+function animFor(key, x, facing, time, body = null) {
   let a = anims.get(key);
   if (!a) {
     a = { anim: createAnim(), x, t: time };
@@ -634,7 +634,8 @@ function animFor(key, x, facing, time) {
   a.x = x;
   a.t = time;
   // A jump in position (arriving through a portal) isn't walking.
-  stepAnim(a.anim, { vx: Math.abs(vx) > 400 ? 0 : vx, vy: 0, onGround: true, rope: false, facing, y: 0 }, dt);
+  // Party members have real bodies, so they also stretch on take-off and squash on landing.
+  stepAnim(a.anim, { vx: Math.abs(vx) > 400 ? 0 : vx, vy: body?.vy ?? 0, onGround: body ? body.onGround : true, rope: body?.rope ?? false, facing, y: body?.y ?? 0 }, dt);
   if (anims.size > 200) anims.delete(anims.keys().next().value);
   return a.anim;
 }
@@ -737,7 +738,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
   const look = bot.bubble ? { ...bot.char.appearance, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.char.appearance;
   const seed = seedOf(bot.id);
   const facing = body ? body.facing : bot.facing;
-  const anim = animFor(bot.id, body ? body.x : bot.x, facing, time);
+  const anim = animFor(bot.id, body ? body.x : bot.x, facing, time, body);
   const state = {
     pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
     // Party members fighting nearby stand on guard between swings.

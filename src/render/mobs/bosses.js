@@ -1518,10 +1518,10 @@ function dragon(pose, f, mood) {
 }
 
 export const ART = {
-  mothercapper: { walk: 8, idle: 6, attack: 5, stride: 30, draw: queen },
-  tuskar: { walk: 8, idle: 6, attack: 5, stride: 34, draw: behemoth },
-  gnarlroot: { walk: 8, idle: 6, attack: 5, stride: 22, draw: treant },
-  crystalking: { walk: 8, idle: 6, attack: 5, stride: 30, draw: dragon },
+  mothercapper: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [80, 150, 420, 220], draw: queen },
+  tuskar: { walk: 8, idle: 6, attack: 5, stride: 34, atkMs: [70, 150, 380, 220], draw: behemoth },
+  gnarlroot: { walk: 8, idle: 6, attack: 5, stride: 22, atkMs: [90, 160, 520, 260], draw: treant },
+  crystalking: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [80, 150, 450, 240], draw: dragon },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

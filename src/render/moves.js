@@ -400,14 +400,19 @@ export function defaultMove(type, weaponType, params) {
   return 'slash';
 }
 
-// Melee swings get hand-animated timing: the wind-up is drawn out and held for a beat, the strike
-// itself is over in a couple of frames, and the recovery eases back slowly. The moves are written
-// with a wind-up to about 0.3 and the cut to about 0.65; this reshapes time around that.
+// Melee swings get hand-animated timing (MapleStory's swing is 300 / 150 / 350 ms; Slynyrd's sword
+// 100 / 50 / 50 / 50 / 100): a quick wind-up that eases into a short held beat (a player's
+// anticipation stays short, or it feels like lag), the cut itself in a few linear frames that carry
+// a touch past the hit pose, a sticky hold on that follow-through, then an eased settle. The moves
+// are written with a wind-up to about 0.3 and the cut to about 0.65; this reshapes time around
+// that, and keeps the blade through the target by the time the blow lands (strikes at 0.42-0.47).
 const SNAPPY = new Set(['slash', 'slash2', 'thrust', 'overhead']);
 function snap(p) {
-  if (p < 0.4) return 0.3 * ease(p / 0.4) ** 0.7; // wind up, slowing into a hold
-  if (p < 0.5) return 0.3 + 0.35 * ((p - 0.4) / 0.1); // the cut, in a flash
-  return 0.65 + 0.35 * ease((p - 0.5) / 0.5); // follow through and settle
+  if (p < 0.33) return 0.3 * ease(p / 0.33); // wind up
+  if (p < 0.39) return 0.3; // the held beat before the cut
+  if (p < 0.46) return 0.3 + 0.39 * ((p - 0.39) / 0.07); // the cut, in a flash, a little past the hit
+  if (p < 0.56) return 0.69 + 0.02 * ((p - 0.46) / 0.1); // hold the follow-through
+  return 0.71 + 0.29 * ease((p - 0.56) / 0.44); // and settle
 }
 
 export function moveAt(kind, progress, dur = 0.35) {

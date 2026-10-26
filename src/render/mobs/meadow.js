@@ -1030,11 +1030,11 @@ function jackalope(pose, f, mood) {
 }
 
 export const ART = {
-  puffle: { walk: 8, idle: 6, attack: 4, stride: 22, draw: kitsune },
-  snailbun: { walk: 8, idle: 6, attack: 4, stride: 12, draw: tortoise },
-  sproutling: { walk: 8, idle: 6, attack: 4, stride: 13, draw: mandrake },
-  mushkin: { walk: 8, idle: 6, attack: 4, stride: 18, draw: goblin },
-  piglet: { walk: 8, idle: 6, attack: 4, stride: 50, draw: jackalope },
+  puffle: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [45, 190, 140], draw: kitsune },
+  snailbun: { walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [70, 270, 210], draw: tortoise },
+  sproutling: { walk: 8, idle: 6, attack: 4, stride: 13, atkMs: [55, 240, 170], draw: mandrake },
+  mushkin: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [60, 250, 180], draw: goblin },
+  piglet: { walk: 8, idle: 6, attack: 4, stride: 50, atkMs: [40, 200, 130], draw: jackalope },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

@@ -1067,11 +1067,11 @@ function sapling(pose, f, mood) {
 }
 
 export const ART = {
-  rootling: { walk: 8, idle: 6, attack: 4, stride: 14, draw: rootImp },
-  sporecap: { walk: 8, idle: 6, attack: 4, stride: 16, draw: myconid },
-  thornback: { walk: 8, idle: 6, attack: 4, stride: 22, draw: brambleBear },
-  sporeling: { walk: 8, idle: 6, attack: 4, stride: 12, draw: sporeMite },
-  sapling: { walk: 8, idle: 6, attack: 4, cycle: 2.4, draw: sapling },
+  rootling: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [45, 190, 140], draw: rootImp },
+  sporecap: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [65, 250, 190], draw: myconid },
+  thornback: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 310, 230], draw: brambleBear },
+  sporeling: { walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [40, 170, 120], draw: sporeMite },
+  sapling: { walk: 8, idle: 6, attack: 4, cycle: 2.4, atkMs: [60, 240, 180], draw: sapling },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

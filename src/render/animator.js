@@ -13,6 +13,8 @@ export function createAnim() {
     cape: 0, capeV: 0,
     land: 0,
     rise: 0,
+    // Whole-body squash and stretch (x, y scale about the feet), easing back to 1 at a steady rate.
+    sqx: 1, sqy: 1,
     wasGround: true,
     prevVy: 0,
     trail: [],
@@ -21,11 +23,34 @@ export function createAnim() {
   };
 }
 
-// Critically-damped-ish spring toward `target`.
-function spring(a, key, vKey, target, k, damp, dt) {
-  a[vKey] += ((target - a[key]) * k - a[vKey] * damp) * dt;
-  a[key] += a[vKey] * dt;
+// A damped spring toward `target` (stiffness k, damping c), solved exactly over dt, so it moves
+// the same at 30, 60, or 144 fps and can't blow up on a long frame. Returns [x, v].
+export function springStep(x, v, target, k, c, dt) {
+  if (dt <= 0) return [x, v];
+  const w = Math.sqrt(k);
+  const z = c / (2 * w);
+  const y = x - target;
+  if (z >= 1) {
+    // Critically damped (or more): settles without overshoot.
+    const e = Math.exp(-w * dt);
+    const j = v + w * y;
+    return [target + e * (y + j * dt), e * (v - j * w * dt)];
+  }
+  const a = z * w;
+  const wd = w * Math.sqrt(1 - z * z);
+  const B = (v + a * y) / wd;
+  const e = Math.exp(-a * dt);
+  const cs = Math.cos(wd * dt);
+  const sn = Math.sin(wd * dt);
+  return [target + e * (y * cs + B * sn), e * ((B * wd - a * y) * cs - (y * wd + a * B) * sn)];
 }
+
+function spring(a, key, vKey, target, k, damp, dt) {
+  [a[key], a[vKey]] = springStep(a[key], a[vKey], target, k, damp, dt);
+}
+
+// Moves v toward goal by at most step.
+const approach = (v, goal, step) => (v < goal ? Math.min(goal, v + step) : Math.max(goal, v - step));
 
 // body: { vx, vy, onGround, rope, facing, y }. Returns this frame's events
 // ('step', 'land', 'jump') so the renderer can puff dust.
@@ -44,12 +69,21 @@ export function stepAnim(a, body, dt) {
 
   if (!a.wasGround && body.onGround && !body.rope && a.prevVy > 120) {
     a.land = Math.min(0.16, 0.08 + a.prevVy / 6000);
+    // Celeste's landing: squash by how hard you came down, then spring back up linearly.
+    const squish = Math.min(1, (a.prevVy - 100) / 450);
+    a.sqx = 1 + 0.26 * squish;
+    a.sqy = 1 - 0.26 * squish;
     a.events.push('land');
   }
   if (a.wasGround && !body.onGround && body.vy < -100 && !body.rope) {
     a.rise = 0.12;
+    // Take-off stretch: tall and thin for an instant.
+    a.sqx = 0.88;
+    a.sqy = 1.14;
     a.events.push('jump');
   }
+  a.sqx = approach(a.sqx, 1, 1.75 * dt);
+  a.sqy = approach(a.sqy, 1, 1.75 * dt);
   a.land = Math.max(0, a.land - dt);
   a.rise = Math.max(0, a.rise - dt);
   a.wasGround = body.onGround || Boolean(body.rope);
@@ -57,12 +91,15 @@ export function stepAnim(a, body, dt) {
 
   // Hair and cape trail behind motion and float when falling.
   const speed = Math.max(-1, Math.min(1, localVx / 125));
-  const idleSway = Math.sin(a.t * 1.3) * 0.5;
+  // Standing, a slow sway that the hair follows a beat behind the breath.
+  const idleSway = Math.sin(a.t * 1.3 - 0.9) * 0.5;
   const fall = body.onGround ? 0 : Math.max(-1, Math.min(1, body.vy / 500));
-  // Running, they stream out behind and ripple with each stride.
-  const ripple = body.onGround ? Math.sin((a.dist / STRIDE) * Math.PI * 4) * Math.abs(speed) : 0;
+  // Running, they stream out behind and ripple with each stride, the cape a beat after the hair.
+  const stride = (a.dist / STRIDE) * Math.PI * 4;
+  const ripple = body.onGround ? Math.sin(stride) * Math.abs(speed) : 0;
+  const capeRipple = body.onGround ? Math.sin(stride - 1.2) * Math.abs(speed) : 0;
   spring(a, 'hair', 'hairV', -speed * 3 + idleSway + fall * 0.6 + ripple * 0.9, 140, 11, dt);
-  spring(a, 'cape', 'capeV', -speed * 4 + idleSway * 0.8 + fall * 1.2 + ripple * 1.2, 70, 7, dt);
+  spring(a, 'cape', 'capeV', -speed * 4 + idleSway * 0.8 + fall * 1.2 + capeRipple * 1.2, 70, 7, dt);
 
   for (const p of a.trail) p.age += dt;
   a.trail = a.trail.filter((p) => p.age < 0.14);
@@ -71,4 +108,12 @@ export function stepAnim(a, body, dt) {
 
 export function walkPhase(a) {
   return (a.dist / STRIDE) % 1;
+}
+
+// A walk's body bob as a sharpened triangle wave (a sine reads floaty): 0 at the low point just
+// after each foot strikes, 1 at the passing pose. Two bobs per cycle.
+export function walkBob(p, lag = 0) {
+  const u = (((2 * p - 0.08 - lag) % 1) + 1) % 1;
+  const tri = 1 - Math.abs(u - 0.5) * 2;
+  return tri * tri * (3 - 2 * tri) * 0.4 + tri * 0.6;
 }

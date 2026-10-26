@@ -662,9 +662,9 @@ function seraph(pose, f, mood) {
 
 // Each design keeps its own cadence: `stride` is how far it travels in one walk or wingbeat cycle.
 export const ART = {
-  cloudsheep: { walk: 8, idle: 6, attack: 4, stride: 16, draw: pegasus },
-  windbird: { walk: 8, idle: 6, attack: 4, stride: 45, draw: harpy },
-  starspirit: { walk: 8, idle: 6, attack: 4, stride: 60, draw: seraph },
+  cloudsheep: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [60, 250, 180], draw: pegasus },
+  windbird: { walk: 8, idle: 6, attack: 4, stride: 45, atkMs: [45, 200, 140], draw: harpy },
+  starspirit: { walk: 8, idle: 6, attack: 4, stride: 60, atkMs: [60, 240, 180], draw: seraph },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

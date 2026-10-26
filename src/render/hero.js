@@ -23,7 +23,7 @@ import {
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
-import { walkPhase } from './animator.js';
+import { walkPhase, walkBob } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
 import { moveAt } from './moves.js';
 
@@ -764,11 +764,18 @@ function baseRig() {
   };
 }
 
+// An idle breath, 0 (out) to 1 (in), over one cycle of u: a slow swell, a quicker letting go.
+function breath(u) {
+  const b = ((u % 1) + 1) % 1;
+  return b < 0.62 ? 0.5 - 0.5 * Math.cos((b / 0.62) * Math.PI) : 0.5 + 0.5 * Math.cos(((b - 0.62) / 0.38) * Math.PI);
+}
+
 function solveRig(state, anim, mv = null) {
   const { pose = 'idle', time = 0, hurt = false, seed = 0 } = state;
   const r = baseRig();
   const t = time + seed * 1.37;
-  r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6) * 2) / 2;
+  // Without a spring (NPCs, menus) the hair still sways, its tips a beat behind the breath.
+  r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.4 - 1.4) * 0.35) * 2) / 2;
   r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
   r.flap = Math.floor(t * (pose === 'jump' ? 10 : 4)) % 2 === 0;
   // A blink every few seconds, slightly offset per character.
@@ -794,7 +801,8 @@ function solveRig(state, anim, mv = null) {
     const hand = ([dx]) => [q(-0.6 * dx), q(-0.9 * (dx / HALF_STRIDE) ** 2)];
     r.frontArm = hand(front);
     r.backArm = hand(back);
-    r.hy = q(0.4 * Math.sin(4 * Math.PI * p - 1));
+    // The body bobs on a triangle wave (see drawHeroBody); the head rides a step behind it.
+    r.hy = q(0.9 * (walkBob(p) - walkBob(p, 0.14)));
     r.tx = q(1);
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
@@ -837,10 +845,13 @@ function solveRig(state, anim, mv = null) {
   } else {
     // Idle breathing: the upper body eases down a pixel on each exhale, the arms follow, and the
     // weight drifts from foot to foot every few seconds.
-    r.by = q(0.5 + 0.5 * Math.sin(t * 2.4));
+    // The breath swells slowly and lets go quickly, and the head settles a beat after the chest.
+    const inhale = breath(t * 0.38);
+    r.by = q(1 - inhale);
+    r.hy = q(1.6 * (inhale - breath(t * 0.38 - 0.1)));
     r.frontArm = [0, r.by];
     r.backArm = [0, r.by];
-    r.tx = q(0.5 * Math.sin(t * 0.45));
+    r.tx = q(0.6 * Math.sin(t * 0.45));
   }
 
   // Landing squash: the knees give, the hips drop, and the feet spread.
@@ -1092,8 +1103,21 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   let mv = moved;
   if (!moved && pose === 'walk' && anim) {
     const p = walkPhase(anim);
-    mv = { lift: Math.max(0, Math.sin(p * Math.PI * 4)) * 1.2, lunge: 0, tilt: 0.07, turn: 1, stretch: 1, bodyOnly: true };
+    mv = { lift: walkBob(p) * 1.4, lunge: 0, tilt: 0.07, turn: 1, stretch: 1, bodyOnly: true };
   }
+  // Take-off stretch and landing squash (from the animator), about the feet.
+  const sq = anim && (anim.sqx !== 1 || anim.sqy !== 1);
+  if (sq) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(anim.sqx, anim.sqy);
+    ctx.translate(-x, -y);
+  }
+  drawMoved(ctx, look, gear, x, y, state, anim, mv, moved);
+  if (sq) ctx.restore();
+}
+
+function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
   if (!mv || (!mv.lift && !mv.lunge && !mv.tilt && mv.turn === 1 && mv.stretch === 1)) {
     paintHero(ctx, look, gear, x, y, state, anim, moved);
     return;

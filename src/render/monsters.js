@@ -8,6 +8,7 @@
 // marks, sweat, music notes, z's) float over their heads.
 
 import { sprite, blit, snap, footShadow } from './pixel.js';
+import { springStep } from './animator.js';
 import { ART as MEADOW } from './mobs/meadow.js';
 import { ART as WILDS } from './mobs/wilds.js';
 import { ART as RUINS } from './mobs/ruins.js';
@@ -21,16 +22,45 @@ const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...M
 
 // How many frames an art has for walking (or flying), idling, and attacking (0: no attack pose),
 // and how its walk keeps time: `stride` is how far it travels in one walk cycle, `cycle` (seconds)
-// a fixed rhythm for designs that sway in place.
+// a fixed rhythm for designs that sway in place. An art may also give `atkMs`, its attack timing
+// (see attackTiming).
 export function framesOf(art) {
   const a = ARTS[art];
   return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null };
 }
 
 const IDLE_CYCLE = 1.8;
-// An attack plays once: the first frame is the wind-up (held while a boss or a dungeon monster
-// gathers itself), the rest are the strike and its follow-through.
-export const ATTACK_TIME = 0.5;
+
+// Attack timing, after MapleStory's mob data and Slynyrd's per-weapon tables: frames are never
+// even. Frame 0 is the wind-up, held for as long as the monster gathers itself (a dungeon swing's
+// wind-up, a boss's warning); `atkMs` (per art, in ms) times the frames after it: the strike (a
+// quick smear), the impact (held: the blow lands on it), and then the settle and recovery. When a
+// wind-up came first, the strike plays in its last moments, so the impact frame shows the instant
+// the damage lands; a touch attack with no wind-up flicks through the strike first.
+const ATK_MS = { 4: [60, 230, 170], 5: [80, 150, 380, 220] };
+export function attackTiming(art) {
+  const a = ARTS[art];
+  if (!a.attack) return [];
+  return a.atkMs ?? ATK_MS[a.attack] ?? Array.from({ length: a.attack - 1 }, () => 120);
+}
+
+// Which attack frame shows: `wind` is the wind-up time left (s), `since` the time since the blow
+// landed (s), and `led` whether the strike already played at the end of the wind-up. -1: none.
+export function attackFrame(ms, wind, since, led) {
+  if (!ms.length) return -1;
+  if (wind > 0) return wind * 1000 < ms[0] ? 1 : 0;
+  if (!(since >= 0)) return -1;
+  let t = since * 1000;
+  if (!led) {
+    if (t < ms[0]) return 1;
+    t -= ms[0];
+  }
+  for (let i = 1; i < ms.length; i++) {
+    if (t < ms[i]) return i + 1;
+    t -= ms[i];
+  }
+  return -1;
+}
 
 // Walkers step with the ground they cover, so their feet never slide and a fast monster's legs
 // move faster than a slow one's. Flyers beat their wings at the rate that stride and speed set.
@@ -41,13 +71,15 @@ function walkFrame(m, fr, t, fast) {
   return Math.floor(((m.odo ?? 0) / stride) * fr.walk) % fr.walk;
 }
 
-function poseOf(m, fr, moving, t, now, fast) {
+function poseOf(m, fr, moving, t, now, mo) {
   if (fr.attack && m.hp > 0) {
-    if (m.special?.warn > 0 || m.windup > 0) return ['attack', 0];
-    const since = now - (m.attackAt ?? -9);
-    if (since >= 0 && since < ATTACK_TIME) return ['attack', Math.min(fr.attack - 1, 1 + Math.floor((since / ATTACK_TIME) * (fr.attack - 1)))];
+    const ms = attackTiming(m.def.art);
+    const wind = Math.max(m.special?.warn > 0 ? m.special.warn : 0, m.windup > 0 ? m.windup : 0);
+    const f = attackFrame(ms, wind, now - (m.attackAt ?? -9), (m.attackAt ?? -9) - mo.ledAt < 0.15);
+    if (wind > 0 && f === 1) mo.ledAt = now;
+    if (f >= 0) return ['attack', f];
   }
-  if (moving) return ['walk', walkFrame(m, fr, t, fast)];
+  if (moving) return ['walk', walkFrame(m, fr, t, mo.fast)];
   return ['idle', Math.floor((t / IDLE_CYCLE) * fr.idle) % fr.idle];
 }
 
@@ -57,10 +89,11 @@ export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
 }
 
 // How a monster feels right now.
-function moodOf(m, t, now) {
+function moodOf(m, t, now, held) {
   if (m.hp <= 0) return 'dead';
   if (m.flash > 0 || m.stagger > 0) return 'hurt';
   if (m.special?.warn > 0) return 'angry';
+  if (held) return 'hurt';
   if (now < m.aggroUntil && m.def.aggro) return 'angry';
   const cyc = (t * 0.3) % 1;
   if (cyc < 0.04) return 'blink';
@@ -116,45 +149,156 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
   ctx.restore();
 }
 
+// Render-side motion state that lives on the monster between frames: springs for squash, lean
+// and drag (solved exactly, so any frame rate looks the same), and what the last hit did.
+function motionOf(m, time) {
+  const mo = (m.motion ??= { t: time, sq: 0, sqV: 0, lean: 0, leanV: 0, shear: 0, shearV: 0, vs: 0, flash: 0, hitT: -9, hurtUntil: -9, push: 0, ledAt: -9, impactAt: -9, fast: 1 });
+  mo.dt = Math.max(0, Math.min(0.1, time - mo.t));
+  mo.t = time;
+  return mo;
+}
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = (k) => k * k * (3 - 2 * k);
+
+// Death, over the half second a fallen monster stays (m.dying 0 to 0.5): knocked up on an arc away
+// from the blow with a tumble, one bounce that squashes it flat, a held beat, then one white
+// contrast frame and a poof. Bosses buckle in place instead: thrown back, sinking, then gone.
+const DIE_ARC = 0.22;
+const DIE_LAND = 0.3;
+const DIE_POOF = 0.38;
+function deathPose(m, mo, D) {
+  const out = { dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, alpha: 1, white: 0, puff: -1 };
+  const push = mo.push || -(m.dir < 0 ? -1 : 1);
+  if (m.def.boss) {
+    const k = smooth(clamp(D / 0.3, 0, 1));
+    out.rot = push * 0.12 * k;
+    out.dx = push * 6 * k + (D < 0.3 ? Math.sin(D * 90) * 1.5 * (1 - k) : 0);
+    out.sy = 1 - 0.12 * k;
+    out.sx = 1 + 0.05 * k;
+    if (D > DIE_POOF) {
+      const u = (D - DIE_POOF) / (0.5 - DIE_POOF);
+      out.white = u < 0.3 ? 1 : 0.6;
+      out.alpha = 1 - smooth(u);
+    }
+    return out;
+  }
+  const peak = clamp(m.def.h * 0.45, 8, 20) + (mo.air0 ?? 0) * 0.3;
+  if (D < DIE_ARC) {
+    const k = D / DIE_ARC;
+    out.dy = -(4 * k * (1 - k) * peak + (mo.air0 ?? 0) * (1 - k));
+    out.dx = push * 12 * k;
+    out.rot = push * 0.32 * k;
+    // Stretched along the flight, squashing round at the top.
+    out.sy = 1 + 0.12 * (1 - k) - 0.08 * Math.sin(k * Math.PI);
+    out.sx = 2 - out.sy;
+  } else {
+    out.dx = push * 12;
+    out.rot = push * 0.32;
+    const b = (D - DIE_ARC) / (DIE_LAND - DIE_ARC);
+    // The bounce: flattened on landing, popping back with a little overshoot, then lying still.
+    const sq = D < DIE_LAND ? 0.32 * (1 - b) - 0.1 * Math.sin(b * Math.PI) : 0;
+    out.sx = 1 + sq;
+    out.sy = 1 - sq;
+    if (D >= DIE_POOF) {
+      const u = (D - DIE_POOF) / (0.5 - DIE_POOF);
+      out.white = u < 0.28 ? 1 : 0;
+      out.sx *= 1 + 0.5 * u;
+      out.sy *= Math.max(0.05, 1 - 1.1 * u);
+      out.alpha = u < 0.28 ? 1 : 1 - (u - 0.28) / 0.72;
+      out.puff = u;
+    }
+  }
+  return out;
+}
+
+// A small cartoon puff where the monster vanishes: soft round clouds swelling and thinning out.
+function poofCloud(ctx, x, y, w, u) {
+  ctx.save();
+  ctx.globalAlpha = 0.85 * (1 - u);
+  const r0 = Math.max(4, w * 0.16);
+  for (let i = 0; i < 5; i++) {
+    const a = Math.PI * (0.1 + (i / 4) * 0.8);
+    const d = r0 * (0.6 + u * 1.4);
+    const cx = x - Math.cos(a) * d * 1.3;
+    const cy = y - r0 * 0.8 - Math.sin(a) * d * 0.7;
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#f3ecff';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r0 * (0.55 + u * 0.5), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 // (x, y) is the monster's feet center in screen space; `now` is world time (for aggro).
-// Walkers bounce along with a squash on every landing, everyone breathes while idle, new
-// monsters pop in, hits squash them flat for a moment, and defeated ones shrink away.
+// Monsters squash into their wind-ups, stretch through the strike and squash on the impact; a hit
+// flattens them for one frame and they wobble back like jelly, leaning away from the blow with a
+// hurt face held for a beat; they drag a little behind sudden starts and stops; new monsters pop
+// in; and defeated ones are knocked up, bounce, and poof.
 export function drawMonster(ctx, m, x, y, time, now = time) {
   const frozen = m.frozenUntil > now && m.hp > 0;
   const flying = m.def.fly;
   const moving = !frozen && ((m.state === 'walk' && m.stagger <= 0) || flying);
+  const mo = motionOf(m, time);
+  const dt = frozen ? 0 : mo.dt;
+  const boss = Boolean(m.def.boss);
+  // A new hit: the flash timer jumps back up.
+  if (m.flash > mo.flash + 0.02) {
+    mo.hitT = time;
+    mo.push = Math.sign(m.knockVx ?? 0) || -(m.dir < 0 ? -1 : 1);
+    mo.hurtUntil = time + (boss ? 0.22 : 0.4);
+    if (m.hp > 0 && !frozen) {
+      // Saint11's take-hit: the most squashed, most thrown-back pose on the very first frame.
+      mo.sq = boss ? 0.06 : 0.16;
+      mo.sqV = 0;
+      mo.lean = mo.push * (boss ? 0.035 : 0.17);
+      mo.leanV = 0;
+    } else mo.air0 = m.air > 0 ? m.air : 0;
+  }
+  mo.flash = m.flash;
   // Frozen monsters stop animating: their clock stands still with the ice.
   const t = (frozen ? m.phase : time) + m.uid * 0.37;
-  const mood = moodOf(m, t, now);
-  const fast = mood === 'angry' ? 1.5 : 1;
+  const mood = moodOf(m, t, now, time < mo.hurtUntil);
+  mo.fast = mood === 'angry' ? 1.5 : 1;
   const fr = framesOf(m.def.art);
   // The distance it has walked, as drawn (a teleport or a new spawn doesn't count).
-  const step = Math.abs(m.x - (m.seenX ?? m.x));
+  const dx = m.x - (m.seenX ?? m.x);
+  const step = Math.abs(dx);
   m.seenX = m.x;
   if (step < 40) m.odo = (m.odo ?? 0) + step;
-  const [pose, frame] = poseOf(m, fr, moving, t, now, fast);
+  const [pose, frame] = poseOf(m, fr, moving, t, now, mo);
   const s = monsterSprite(m.def.art, frame, mood, pose);
-  let alpha = 1;
-  let sx = 1;
-  let sy = 1;
-  if (m.def.boss) {
-    sy = 1 + Math.sin(t * 2) * 0.015;
-    if (m.special?.warn > 0) {
-      // Wind-up: crouch and tremble before the slam.
-      sy = 0.9;
-      sx = 1.08;
-      x += Math.sin(time * 60) * 1.5;
+
+  // Squash (+ wide and short, - tall and thin) follows its pose on a jelly spring.
+  let sqGoal = 0;
+  let tremble = 0;
+  if (pose === 'attack' && m.hp > 0) {
+    if (frame === 0) {
+      // The wind-up gathers low and wide (bosses tremble with it): the monster's tell is big.
+      sqGoal = boss ? 0.1 : 0.12;
+      tremble = boss ? 1.5 : 0.5;
+    } else if (frame === 1) sqGoal = -0.08;
+    else if (frame === 2 && mo.impactAt !== m.attackAt) {
+      mo.impactAt = m.attackAt;
+      mo.sq = boss ? 0.09 : 0.12;
+      mo.sqV = 0;
     }
-  } else if (!moving) {
-    // The idle frames breathe; this only softens the steps between them.
-    sy = 1 + Math.sin(t * 3) * 0.012;
   }
-  // A hit squashes it and rocks it back, away from the blow.
-  const recoil = m.flash > 0 && m.hp > 0 ? Math.min(1, m.flash / 0.15) : 0;
-  if (m.flash > 0) {
-    sx *= 1.14;
-    sy *= 0.86;
+  if (dt > 0) {
+    [mo.sq, mo.sqV] = springStep(mo.sq, mo.sqV, sqGoal, 625, 15, dt);
+    [mo.lean, mo.leanV] = springStep(mo.lean, mo.leanV, 0, 200, 14, dt);
+    // Drag: the top lags a sudden start and swings past on a sudden stop (ignoring steady walking).
+    const vel = step < 40 && mo.dt > 0 ? dx / mo.dt : 0;
+    mo.vs += (vel - mo.vs) * (1 - Math.exp(-mo.dt / 0.18));
+    [mo.shear, mo.shearV] = springStep(mo.shear, mo.shearV, clamp((vel - mo.vs) / 140, -1, 1) * (boss ? 0.03 : 0.09), 130, 8, dt);
   }
+
+  let alpha = 1;
+  let sx = 1 + mo.sq;
+  let sy = 1 / (1 + mo.sq);
+  if (boss) sy *= 1 + Math.sin(t * 2) * 0.015;
+  else if (!moving && pose !== 'attack') sy *= 1 + Math.sin(t * 3) * 0.012; // the idle frames breathe
+  if (tremble) x += Math.sin(time * 60) * tremble;
   if (m.age < 0.3 && m.hp > 0) {
     // Spawn pop with a little overshoot.
     const k = m.age / 0.3;
@@ -163,28 +307,44 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
     sy *= k * pop;
     alpha = Math.min(1, k * 2);
   }
+  let rot = 0;
+  let lift = 0;
+  let white = 0;
+  let puff = -1;
   if (m.hp <= 0) {
-    alpha = Math.max(0, 1 - m.dying * 2.2);
-    sx *= 1 + m.dying * 0.6;
-    sy *= Math.max(0.05, 1 - m.dying * 1.8);
+    const d = deathPose(m, mo, m.dying ?? 0);
+    sx *= d.sx;
+    sy *= d.sy;
+    x += d.dx;
+    lift = -d.dy;
+    rot = d.rot;
+    alpha = d.alpha;
+    white = d.white;
+    puff = d.puff;
   }
   if (sx <= 0 || sy <= 0) return;
   if (!flying) {
-    // Ground shadow, along the slope it stands on.
-    footShadow(ctx, x, y, Math.max(8, s.w * 0.42), m.yAt ? (m.yAt(m.x + 6) - m.yAt(m.x - 6)) / 12 : 0, alpha);
+    // Ground shadow, along the slope it stands on (shrinking as a falling body flies up).
+    footShadow(ctx, x, y, Math.max(8, s.w * 0.42) * (1 - Math.min(0.5, lift / 60)), m.yAt ? (m.yAt(m.x + 6) - m.yAt(m.x - 6)) / 12 : 0, alpha);
   }
 
   // Knocked up into the air: drawn above its shadow, tumbling a little.
   // Bounders leave the ground on each leap, in step with how fast it carries them.
   const leap = m.def.gait === 'bound' && moving && !flying && !frozen ? Math.max(0, Math.sin(m.phase * 7)) * m.def.h * 0.3 : 0;
-  const air = (m.air > 0 ? m.air : 0) + leap;
+  const air = (m.air > 0 && m.hp > 0 ? m.air : 0) + leap + lift;
   ctx.save();
   ctx.translate(snap(x), snap(y - air));
-  if (m.air > 0) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
-  else if (recoil && !m.def.boss) ctx.rotate(-(m.dir < 0 ? -1 : 1) * recoil * 0.12);
+  if (m.hp <= 0) ctx.rotate(rot);
+  else if (m.air > 0) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6 + mo.lean * 0.5);
+  else if (mo.lean) ctx.rotate(mo.lean);
+  if (mo.shear && m.hp > 0) ctx.transform(1, 0, mo.shear, 1, 0, 0);
   ctx.scale(sx, sy);
-  blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
+  // The hit flash: one white frame, then a quick fade, so the hurt face reads through it.
+  const since = time - mo.hitT;
+  const flash = white || (m.flash > 0 || since < 0.12 ? (since < 0.035 ? 1 : Math.max(0, 0.55 * (1 - (since - 0.035) / 0.1))) : 0);
+  blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
   ctx.restore();
+  if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);
   if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
   else if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
