@@ -22,13 +22,22 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   now exports its rig, ramp and shape helpers.
 - Bosses: Myconid Queen (heroine.js face, veil/robe/hair chains, staff rides the hand, held
   wind-up with a floor ring telegraph) and Tuskar (IK gallop with planted hooves, flame mane and
-  tail chains, glowEye, rear-and-stomp), both on the hollow rig.
+  tail chains, glowEye, rear-and-stomp), both on the hollow rig. Tuskar's tail now swings down to
+  stay inside the sprite when rearing.
+- Bosses: Gnarlroot (three-joint trunk over planted stepping roots, root-tentacle arm chains with
+  claws, branch and twig chains, beating heart in a glowing bark split, glowEye amber hollows,
+  coiled held wind-up with floor glow telegraphs, arms driven to the floor with held root-spike
+  impact) and Prismaris (IK digitigrade stomp, wing spars as chains with transparent-gem crystal
+  panes, tail chain with crystal spines, faces.js slit eye, crown and scepter ride the rig, held
+  overhead charge with a floor telegraph, one-arc slam into a held crystal burst). The old
+  transform-stack helpers in bosses.js are gone; all four bosses use the hollow rig.
 
 ## Still to do
 - Sky designs still place feathers in absolute coordinates (wings are not yet
   chains); trim their shape counts.
-- Bosses in `mobs/bosses.js` still old: Gnarlroot, Prismaris (they keep the transform stack).
-  Queen/Tuskar rough spots: Tuskar's body is blocky and its flames read a bit like spikes; the
+- Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs); Prismaris'
+  dead pose and wing panes could use another look; the queen's floor ring dips ~1.5 px below the
+  sprite in attack 1. Queen/Tuskar: Tuskar's body is blocky and its flames read a bit like spikes; the
   queen's face is small under the cap.
 - Icon pass (`icons/items.js`, `icons/skills.js`): Basilisk Scale vs Dryad Leaf look alike; Fox
   Fluff and Star Pebble low contrast; Shining Ray and Holy Bolt gold on gold; Frost Sprite skill icon
