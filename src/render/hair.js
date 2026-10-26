@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -305,14 +305,14 @@ const FRINGES = {
   // A few big rounded clumps of different lengths, the middle one longest.
   soft: { pts: [[23.8, 13], [22.2, 10.4], [20.4, 15.4], [18.2, 10.8], [15.6, 16.8], [13, 10.8], [10.6, 15.2], [8.8, 10.6], [7.2, 13.2]], lean: 0.9 },
   // Blunt: one heavy straight cut low on the brow, with tiny V notches.
-  blunt: { pts: [[24.4, 15.6], [21.4, 15.7], [20.9, 14.6], [20.4, 15.7], [16.1, 15.8], [15.5, 14.7], [14.9, 15.8], [10.6, 15.7], [10.1, 14.6], [9.6, 15.7], [6.6, 15.6]], lean: 0, blunt: true },
+  blunt: { pts: [[23.6, 14.8], [22.9, 13.9], [22.2, 14.9], [18.9, 15], [18.3, 14], [17.7, 15], [13.4, 15], [12.8, 14], [12.2, 15], [8.9, 14.9], [8.3, 13.9], [7.6, 14.8]], lean: 0, blunt: true },
   // Wispy: soft separate strands of uneven length with rounded tips, a little forehead showing
   // between them.
   wispy: { pts: [[23.8, 13.4], [22.4, 10.8], [20.6, 15], [19, 11], [16.8, 15.8], [15.2, 11.2], [13, 15.4], [11.4, 11], [9.4, 14.6], [8, 11.6], [7, 13.2]], lean: -0.4, softTips: true },
   // Swept: a strong diagonal from high on the near side down past the far eye.
   swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[22.6, 2.6], [24.6, 6.6]] },
   // Parted in the middle, curving apart to open a triangle of forehead.
-  part: { pts: [[23.4, 15.6], [22, 12], [20.8, 13.4], [18.6, 9.6], [16.4, 7.4], [HX, 6.2], [14.6, 7.4], [12.4, 9.6], [10.2, 13.4], [9, 12], [7.6, 15.6]], lean: 0, part: [[HX, 2.2], [HX, 6]] },
+  part: { pts: [[23.4, 15.2], [21.8, 12.4], [20.2, 14.2], [18.2, 11.2], [16.4, 10.2], [HX, 9.4], [14.6, 10.2], [12.8, 11.2], [10.8, 14.2], [9.2, 12.4], [7.6, 15.2]], lean: 0, part: [[HX, 2.2], [HX, 8.6]], softTips: true, noCrease: true },
   // Short and choppy, high on the brow.
   short: { pts: [[23, 12.4], [21.4, 10.2], [19.6, 13], [17.6, 10.4], [15.2, 13.4], [13.2, 10.6], [11, 13], [9.2, 10.6], [7.6, 12.4]], lean: 0.5 },
   // Jagged spikes of every length, one long between the eyes.
@@ -336,7 +336,9 @@ function bangs(kind, r, m, extra = []) {
   const pts = dense(outline, 1.2).map(flutter);
   const shapes = [poly(pts, r.base)];
   // Creases rise from the notches.
-  if (!f.round) {
+  if (f.noCrease) {
+    // no creases
+  } else if (!f.round) {
     const notches = f.blunt ? f.pts.filter((_, i) => i % 3 === 1) : f.pts.filter((_, i) => i % 2 === 1);
     for (const [x, y] of notches) shapes.push(crease(x, y, f.blunt ? 2.4 : 3.4, r.sh2, f.lean * 0.5));
   } else {
@@ -424,6 +426,16 @@ const STYLES = {
       front: bangs('wispy', r, m, sideLocks(r, m, [[25.4, 11], [26.4, 17], [26.6, 22.4], [28, 24.6], [28.6, 23.2]], undefined, 3.2)),
       top,
       tips: [23, 27],
+    };
+  },
+  // Princess: very long flowing hair past the hips in waves, parted in the middle, with long locks
+  // framing the face.
+  princess(r, m) {
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r), ...sheet({ len: 49, flare: 13.4, wave: 2, ends: 'points', n: 5 }, r, m)],
+      front: bangs('part', r, m, sideLocks(r, m, [[25, 10], [26.6, 17], [26, 24], [27.6, 30], [27, 34]], undefined, 4.2)),
+      tips: [36, 42],
     };
   },
 };
