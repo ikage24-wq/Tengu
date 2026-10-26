@@ -85,7 +85,7 @@ carry an improvement across every part of the game it applies to.
 ## Tools
 Preview tools live in `tools/`: `mob-gallery.html` (every frame and mood of a monster group),
 `icon-gallery.html`, `skill-icon-gallery.html`. The Playwright scripts in `tools/art/` capture them
-with the game served at http://localhost:8000 (`npm start`). Run them from a scratch folder outside
+with the game served at http://localhost:8000 (`npm start`; set `PORT=` to use another port). Run them from a scratch folder outside
 the repo, since they write their images to the current directory:
 - `gallery.cjs <group> <out.png> [keys]`: screenshot a monster group's gallery.
 - `faces.cjs <out.png> key1,key2 [moods]`: big render of each design per mood.

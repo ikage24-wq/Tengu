@@ -4,7 +4,7 @@ const [OUT, tag, only] = process.argv.slice(2);
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-  await p.goto('http://localhost:8000'); await p.waitForTimeout(300);
+  await p.goto(`http://localhost:${process.env.PORT || 8000}`); await p.waitForTimeout(300);
   await p.evaluate(() => localStorage.clear());
   await p.reload(); await p.waitForTimeout(500);
   await p.keyboard.press('Enter'); await p.waitForTimeout(300);

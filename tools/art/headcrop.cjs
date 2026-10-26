@@ -4,7 +4,7 @@ const [out, keys, moodArg, topArg] = process.argv.slice(2);
 (async () => {
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 2400, height: 1400 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:8000/tools/mob-gallery.html?group=meadow&keys=puffle'); await p.waitForFunction(() => document.title === 'ready');
+  await p.goto(`http://localhost:${process.env.PORT || 8000}/tools/mob-gallery.html?group=meadow&keys=puffle`); await p.waitForFunction(() => document.title === 'ready');
   const size = await p.evaluate(async ([keys, moodArg, topArg]) => {
     const { monsterSprite } = await import('/src/render/monsters.js');
     const moods = (moodArg || 'idle,angry,hurt,happy,blink,dead').split(',');

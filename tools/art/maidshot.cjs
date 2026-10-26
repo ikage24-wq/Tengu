@@ -3,7 +3,7 @@ const [map, x, keys, out] = process.argv.slice(2);
 (async () => {
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('http://localhost:8000'); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+  await p.goto(`http://localhost:${process.env.PORT || 8000}`); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
   await p.evaluate(async ([map, x, keys, gap]) => {
     window.twzt.start('Rin'); const w = window.twzt.world; w.log = () => {};
     const W = await import('/src/world/world.js'); const M = await import('/src/world/mobs.js'); const Ph = await import('/src/world/physics.js');
