@@ -132,6 +132,23 @@ function ball(cx, cy, rx, ry, c, o = {}) {
   return out;
 }
 
+// A slash or gore streak: a crescent along an arc (degrees) that swells toward its leading end.
+function swoosh(cx, cy, r, a0, a1, th, glow, core = '#ffffff') {
+  const band = (w, rr, c) => {
+    const outer = [];
+    const inner = [];
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14;
+      const a = ((a0 + (a1 - a0) * t) * Math.PI) / 180;
+      const k = Math.sin(t * Math.PI) ** 0.8 * (0.35 + 0.65 * t);
+      outer.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
+      inner.push([cx + Math.cos(a) * (rr - w * k), cy + Math.sin(a) * (rr - w * k)]);
+    }
+    return fpoly([...outer, ...inner.reverse()], c);
+  };
+  return [band(th + 2, r + 1, glow), band(th * 0.55, r, core)];
+}
+
 // A four-point sparkle.
 function sparkle(x, y, r, c) {
   return fpoly([[x, y - r], [x + r * 0.28, y - r * 0.28], [x + r, y], [x + r * 0.28, y + r * 0.28], [x, y + r], [x - r * 0.28, y + r * 0.28], [x - r, y], [x - r * 0.28, y - r * 0.28]], c);
@@ -197,6 +214,55 @@ function knee(h, ft, a, b, dir) {
   return { k: kn, f: [kn[0] + ((ft[0] - kn[0]) / fl) * Math.min(b, fl), kn[1] + ((ft[1] - kn[1]) / fl) * Math.min(b, fl)] };
 }
 
+// ---------- Motion ----------
+
+const smooth = (k) => k * k * (3 - 2 * k);
+// Picks the attack frame's value from a list (or the fallback outside an attack).
+const key = (att, list, other) => (att >= 0 ? list[Math.min(att, list.length - 1)] : other);
+
+// Bends a finished drawing like a body over planted feet: a point takes the motion more the higher
+// it sits (fully at `top` and above), turning by `a` about (cx, top) and shifting by (dx, dy); then
+// the whole figure squashes by (sx, sy) about (cx, floor), so the feet never leave the ground.
+function bend(shapes, { cx, top, floor, a = 0, dx = 0, dy = 0, sx = 1, sy = 1 }) {
+  if (!a && !dx && !dy && sx === 1 && sy === 1) return shapes;
+  const map = (x, y) => {
+    const k = smooth(clamp((floor - y) / (floor - top), 0, 1));
+    const c = Math.cos(a * k);
+    const s = Math.sin(a * k);
+    const ox = x - cx;
+    const oy = y - top;
+    const nx = cx + ox * c - oy * s + dx * k;
+    const ny = top + ox * s + oy * c + dy * k;
+    return [cx + (nx - cx) * sx, floor - (floor - ny) * sy];
+  };
+  return shapes.map((sh) => {
+    if (sh.t === 'p') return { ...sh, x: 0, y: 0, pts: sh.pts.map(([x, y]) => map(x + sh.x, y + sh.y)) };
+    const [x, y] = map(sh.x, sh.y);
+    if (sh.t === 'e') return { ...sh, x, y, rx: sh.rx * sx, ry: sh.ry * sy };
+    return { ...sh, x, y };
+  });
+}
+
+// An impact on the ground at (x, y): a flat shock ring, a flash star, and debris kicked up.
+// k grows the ring (0..1 as it spreads); cols = [ring, light, debris].
+function impact(x, y, r, k, cols, seed = 1) {
+  const out = [];
+  const rr = r * (0.5 + k * 0.7);
+  for (const [a0, a1] of [[Math.PI, TAU], [0, Math.PI]]) {
+    out.push(F(poly([...ovalPts(x, y, rr + 2.4, (rr + 2.4) * 0.26, 16, 0, a0, a1), ...ovalPts(x, y, rr, rr * 0.2, 16, 0, a1, a0)], cols[0])));
+  }
+  if (k < 0.6) out.push(sparkle(x, y - r * 0.25, r * (0.55 - k * 0.4), cols[1]), sparkle(x, y - r * 0.25, r * (0.3 - k * 0.2), '#ffffff'));
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI * (1.12 + (i / 5) * 0.76);
+    const d = r * (0.35 + k * 0.75) * (0.8 + rnd(seed + i) * 0.4);
+    const px = x + Math.cos(a) * d;
+    const py = y + Math.sin(a) * d * 0.9 + k * k * r * 0.25;
+    const sz = (1.2 + rnd(seed + i + 9) * 1.4) * (1 - k * 0.35);
+    out.push(fpoly([[px - sz, py], [px - sz * 0.2, py - sz * 1.1], [px + sz, py - sz * 0.2], [px + sz * 0.3, py + sz * 0.8]], cols[2]));
+  }
+  return out;
+}
+
 // ---------- Eyes ----------
 
 // A boss eye: an inked almond with a glowing iris, a pupil, shines, and a lid that slants down
@@ -215,7 +281,7 @@ function eye(ex, ey, rx, ry, mood, o = {}) {
   const out = [];
   out.push(foval(ex, ey, rx + 0.7, ry + 0.7, ink), foval(ex, ey, rx, ry, o.white ?? '#ffffff'));
   const ic = angry ? o.hot ?? o.iris : o.iris;
-  const ix = ex + s * rx * 0.16 * (o.look ?? 1);
+  const ix = ex + s * rx * 0.16 * (o.look ?? 1) + (o.glance ?? 0) * rx * 0.22;
   out.push(foval(ix, ey + ry * 0.06, rx * 0.8, ry * 0.86, shade(ic, -16)), foval(ix, ey + ry * 0.14, rx * 0.66, ry * 0.7, ic), foval(ix, ey + ry * 0.42, rx * 0.5, ry * 0.32, mix(ic, '#ffffff', 0.45)));
   if (angry) {
     out.push(foval(ix, ey + ry * 0.08, rx * 0.34, ry * 0.36, '#fffbe8'));
@@ -259,22 +325,25 @@ function inside(pts, x, y) {
 
 function queen(pose, f, mood) {
   const walk = pose === 'walk';
-  const n = walk ? 6 : 4;
-  const ph = (f / n) * TAU;
+  const att = pose === 'attack' ? f : -1;
+  const n = walk ? 8 : 6;
+  const ph = att >= 0 ? 0 : (f / n) * TAU;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  // Gliding: two soft dips per cycle; the heavy cap follows a beat behind and squashes.
-  const bob = walk ? Math.sin(ph * 2) * 1.4 : Math.sin(ph) * 0.7;
-  const lag = walk ? Math.sin(ph * 2 - 1.3) : Math.sin(ph - 1.1);
-  const pulse = (Math.sin(ph) + 1) / 2;
-  const sway = walk ? Math.sin(ph) : 0;
+  // A stately glide: one slow rise and settle per stride, a sway from side to side, and the heavy
+  // cap and veil following a beat behind. The slam rises up tall, then drives the staff down.
+  const bob = (walk ? Math.sin(ph * 2) * 1.1 : Math.sin(ph) * 0.7) + key(att, [-1.2, 0.4, 2.2, 1.4, 0.4], 0);
+  const lag = walk ? Math.sin(ph * 2 - 1.3) : key(att, [-1, 0.6, 1.4, 0.8, 0.2], Math.sin(ph - 1.1));
+  const pulse = att >= 0 ? [1, 0.8, 1, 0.6, 0.4][att] : (Math.sin(ph) + 1) / 2;
+  const sway = walk ? Math.sin(ph) * 1.6 : key(att, [-1.6, 1, 2, 1.2, 0.3], Math.sin(ph) * 0.4);
+  const look = walk ? 0.8 : att >= 0 ? 1.4 : Math.sin(ph + 0.8) * 1.4;
   let lean = 0;
   let drop = 0;
-  let tilt = sway * 0.03;
-  let lift = 0;
-  if (angry) {
+  let tilt = sway * 0.02 + key(att, [-0.07, 0.03, 0.08, 0.05, 0.02], 0);
+  let lift = key(att, [-2.4, -1.4, 0, 0, 0], 0);
+  if (angry && att < 0) {
     lift = -3;
     tilt = 0.06;
   }
@@ -300,7 +369,7 @@ function queen(pose, f, mood) {
     const res = [];
     for (let i = 0; i < 9; i++) {
       if ((i % 2 === 0) !== front) continue;
-      const u = (rnd(i) + f / n + (walk ? 0 : 0.5)) % 1;
+      const u = (rnd(i) + (att >= 0 ? 0.2 : f / n) + (walk ? 0 : 0.5)) % 1;
       const x = 6 + rnd(i + 20) * 88 + Math.sin(u * TAU + i) * 3;
       const y = 104 - u * 96;
       const r = 0.9 + rnd(i + 40) * 1.3;
@@ -417,12 +486,17 @@ function queen(pose, f, mood) {
   const ex1 = hx - 3.6;
   const ex2 = hx + 7.4;
   const ey = hy - 0.6;
-  const eo = { iris: '#2fc4b4', hot: Q.hot, lid: Q.skin, slit: false, dIn: 0.1, dOut: 0.04 };
-  out.push(...[].concat(eye(ex1, ey, 2.9, 3.9, mood, { ...eo, s: -1, smug: happy })), ...[].concat(eye(ex2, ey, 3.3, 4.2, mood, { ...eo, s: 1, smug: happy })));
-  // Long queenly lashes.
+  // Regal almond eyes: wide, heavy-lidded, winged at the outer corner, with long upswept lashes.
+  const eo = { iris: '#2fc4b4', hot: Q.hot, lid: Q.skin, slit: false, dIn: 0.3, dOut: 0.26, glance: look };
+  out.push(...[].concat(eye(ex1, ey, 3.4, 3.1, mood, { ...eo, s: -1, smug: happy })), ...[].concat(eye(ex2, ey, 3.8, 3.3, mood, { ...eo, s: 1, smug: happy })));
+  if (!['hurt', 'dead', 'blink'].includes(mood) && !happy) {
+    // Lower lids, so the open eye reads as an almond.
+    out.push(line(arcPts(ex1, ey + 0.2, 3.5, 3, 35, 150, 6), 0.6, Q.skinDk), line(arcPts(ex2, ey + 0.2, 3.9, 3.2, 30, 145, 6), 0.6, Q.skinDk));
+  }
   if (!['hurt', 'dead'].includes(mood)) {
-    const ly = mood === 'blink' ? ey - 0.2 : ey - 3.2;
-    out.push(line([[ex1 - 2.6, ly + 0.6], [ex1 - 4.2, ly - 1.2]], 0.7, INK), line([[ex2 + 3, ly + 0.6], [ex2 + 4.8, ly - 1.2]], 0.7, INK), line([[ex2 + 2.4, ly - 0.2], [ex2 + 3.6, ly - 2.2]], 0.6, INK));
+    const ly = mood === 'blink' ? ey - 0.2 : ey - 1.8;
+    out.push(line([[ex1 - 3.6, ly + 0.8], [ex1 - 5.6, ly - 1.2], [ex1 - 6.2, ly - 2.8]], 0.8, INK, 3), line([[ex1 - 2.6, ly - 0.4], [ex1 - 3.8, ly - 2.6]], 0.6, INK));
+    out.push(line([[ex2 + 3.8, ly + 0.8], [ex2 + 5.8, ly - 1.2], [ex2 + 6.4, ly - 2.8]], 0.8, INK, 3), line([[ex2 + 2.8, ly - 0.4], [ex2 + 4, ly - 2.6]], 0.6, INK), line([[ex2 + 1.4, ly - 0.8], [ex2 + 1.8, ly - 2.8]], 0.5, INK));
   }
   if (angry) {
     out.push(line([[ex1 - 3.4, ey - 6.6], [ex1 + 2.4, ey - 4.4]], 1.3, Q.capDk), line([[ex2 + 4, ey - 6.8], [ex2 - 2.4, ey - 4.4]], 1.3, Q.capDk));
@@ -501,32 +575,53 @@ function queen(pose, f, mood) {
   });
 
   // Front arm and the staff: a gnarled crook with a glowing mushroom lantern in a bubble.
-  const lift2 = angry ? -9 : 0;
-  within(dead ? rot(88, 111, -0.07) : (x, y) => [x, y], () => {
+  const lift2 = angry && att < 0 ? -9 : 0;
+  // The slam: the staff hoisted high (held through the wind-up), driven down, planted.
+  const su = key(att, [-17, -6, 0, 0, -1.5], 0);
+  within(dead ? rot(88, 111, -0.07) : shift(0, su), () => {
     const sy = 30 + bob * 0.6 + lift2;
     out.push(taper([[88, 111], [86.6, 80], [86, 50 + lift2 * 0.5], [85, sy]], 4.2, 3, Q.wood), line([[87.8, 105], [86.4, 72], [86, sy + 6]], 0.8, Q.woodLt, 3),
       oval(86.4, 96, 2.8, 2, Q.wood), oval(85.4, 58 + lift2 * 0.5, 2.6, 1.8, Q.wood));
     out.push(taper([[85, sy + 1], [84, sy - 6], [87, sy - 12], [93, sy - 12.5], [95.4, sy - 8], [93, sy - 4.8]], 3.6, 1.8, Q.wood), line([[84.6, sy - 3], [86.4, sy - 10.4], [92, sy - 11.6]], 0.7, Q.woodLt, 3));
     const ox = 91;
     const oy = sy - 1;
-    const orb = angry ? 7.6 : 6.4 + pulse * 0.5;
+    const orb = att === 0 || att === 2 ? 8.4 : angry ? 7.6 : 6.4 + pulse * 0.5;
     out.push(foval(ox, oy, orb + 1, orb + 1, angry ? '#ffb3e6' : dead ? '#d8d2e2' : '#b6fff0'), foval(ox, oy, orb, orb, angry ? '#ffd6f2' : dead ? '#ece8f2' : '#e2fffa'));
     out.push(line([[92.8, sy - 5], [91.6, oy - 1]], 0.8, Q.gown), oval(91.4, oy + 0.4, 3.6, 2.3, glow, 0, 14), line([[91.4, oy + 1.4], [91.4, oy + 4]], 1.2, Q.gown), dot(90.2, oy - 0.2, 0.9, '#ffffff'));
     out.push(dot(ox + orb * 0.45, oy - orb * 0.5, 1, '#ffffff'));
     if (angry) {
       for (let k = 0; k < 4; k++) {
-        const a = (k / 4) * TAU + 0.4;
+        const a = (k / 4) * TAU + 0.4 + (att === 0 ? 0.4 : 0);
         out.push(sparkle(ox + Math.cos(a) * (orb + 4), oy + Math.sin(a) * (orb + 4), 2.6, k % 2 ? '#ffffff' : '#ffc6ec'));
       }
     }
   });
   // The sleeve and the hand gripping the staff.
-  const hy2 = top + 13 + (angry ? -6 : 0) + (dead ? 4 : 0);
+  const hy2 = top + 13 + (angry ? -6 : 0) + (dead ? 4 : 0) + su;
   out.push(poly([[62, top + 1], [71, top + 3], [80, hy2 - 6], [88, hy2 + 2], [77, hy2 + 7], [66, top + 14]], Q.robe), poly([[62, top + 1], [66, top + 14], [71, top + 12], [68, top + 3]], Q.robeDk),
     line([[79, hy2 - 6], [88.5, hy2 + 2], [77, hy2 + 7]], 1.6, Q.gold), ...ball(85.6, hy2 + 0.6, 3.8, 3.6, Q.skin, { dark: Q.skinDk, hi: false }), line([[83.6, hy2 + 2.6], [87.6, hy2 + 1.4]], 0.6, Q.skinDk));
   out.push(...spores(true));
+  // The slam's spore burst: speed streaks as the staff drops, a shock ring and a puff of spores
+  // where it strikes, billowing out and drifting away.
+  if (att === 1) for (const dx of [-6, 0, 6]) out.push(line([[91 + dx, 30], [91 + dx * 0.8, 44]], 0.9, '#ffffff'));
+  if (att >= 2 && att <= 4) {
+    const k = [0, 0, 0.15, 0.6, 1][att];
+    out.push(...impact(88, 110.6, 18, k, ['#ffd6f0', '#c9fff4', Q.capLt], 3));
+    for (let i = 0; i < 11; i++) {
+      const a = Math.PI * (1.05 + (i / 10) * 0.9);
+      const d = 8 + k * 26 + (i % 3) * 3;
+      const r = (2.2 + (i % 3) * 0.8) * (1 - k * 0.45);
+      const x = Math.min(97 - r, 82 + Math.cos(a) * d * 1.15);
+      const y = 106 + Math.sin(a) * d * 0.75 - k * 6;
+      const c = i % 3 ? Q.glow : '#ff9ad2';
+      out.push(dot(x, y, r + 0.8, mix(c, '#ffffff', 0.55)), dot(x, y, r, c), dot(x - r * 0.3, y - r * 0.3, r * 0.35, '#ffffff'));
+    }
+  }
+  // Weight: she rises tall as the staff goes up and sinks into the robe as it lands.
+  const sq = key(att, [0.012, -0.005, -0.025, -0.012, 0], walk ? Math.sin(ph * 2) * -0.012 : Math.sin(ph) * 0.008);
+  const shapes = bend(out, { cx: 52, top: 70, floor: 111, sx: 1 - sq * 0.6, sy: 1 + sq });
   // Headroom for the tiara.
-  return { w: 100, h: 122, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 10 })) };
+  return { w: 100, h: 122, res: 3, shapes: shapes.map((q) => ({ ...q, y: q.y + 10 })) };
 }
 
 // ---------- The Behemoth ----------
@@ -537,21 +632,49 @@ const B = {
   fire: '#ff7a45', fire2: '#ffbf4d', fire3: '#fff2b8', smoke: '#cbbfd9', mouth: '#4a1f3a',
 };
 
+// The Behemoth's eye: no white at all, just an ember in a sooty socket, a flame licking back off it.
+// Squints, blinks, and x's still read through it.
+function ember(ex, ey, mood, glance = 0, flick = 0.5) {
+  const angry = mood === 'angry';
+  const out = [foval(ex, ey, 4.8, 4.4, '#2a1830'), foval(ex + 0.3, ey + 0.3, 4, 3.6, '#4a1f3a')];
+  if (mood === 'blink') return [...out, line(arcPts(ex, ey, 3.6, 1.4, 15, 165), 1.3, B.fire2)];
+  if (mood === 'hurt') return [...out, line([[ex + 3, ey - 2.6], [ex - 2.2, ey], [ex + 3, ey + 2.6]], 1.4, B.fire2)];
+  if (mood === 'dead') return [...out, line([[ex - 2.4, ey - 2.4], [ex + 2.4, ey + 2.4]], 1.1, '#8a7d92'), line([[ex - 2.4, ey + 2.4], [ex + 2.4, ey - 2.4]], 1.1, '#8a7d92')];
+  if (mood === 'happy') return [...out, line(arcPts(ex, ey + 1.6, 3.4, 2.8, 200, 340), 1.5, B.fire2), line(arcPts(ex, ey + 1.6, 3.4, 2.8, 225, 315), 0.6, B.fire3)];
+  const gx = ex + glance * 0.9;
+  const big = angry ? 1.25 : 1;
+  // The flame trail streaming back from the eye.
+  const fl = (angry ? 7 : 4.6) + flick * 1.4;
+  out.push(fpoly([[gx - 1.6, ey - 2.2 * big], [gx - fl * 0.6, ey - 3.6 * big - flick], [gx - fl, ey - 2.4 * big], [gx - fl * 0.7, ey - 1], [gx - 2.4, ey + 0.4]], angry ? '#ff5a4a' : B.fire));
+  out.push(fpoly([[gx - 1.4, ey - 1.4], [gx - fl * 0.55, ey - 2.6 * big - flick * 0.6], [gx - fl * 0.6, ey - 1.4], [gx - 2, ey + 0.2]], B.fire2));
+  out.push(foval(gx, ey, 3.2 * big, 3 * big, angry ? '#ff7a45' : '#ff9a4a'), foval(gx + 0.2, ey + 0.2, 2.3 * big, 2.2 * big, B.fire2), foval(gx + 0.4, ey + 0.3, 1.3 * big, 1.3 * big, angry ? '#ffffff' : B.fire3));
+  out.push(dot(gx - 1, ey - 1, 0.7, '#ffffff'));
+  return out;
+}
+
 function behemoth(pose, f, mood) {
   const walk = pose === 'walk';
-  const n = walk ? 6 : 4;
-  const p = f / n;
+  const att = pose === 'attack' ? f : -1;
+  const n = walk ? 8 : 6;
+  const p = att >= 0 ? att / 5 : f / n;
   const ph = p * TAU;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  let bob = walk ? -2.6 * Math.sin(ph + 0.5) : Math.sin(ph) * 0.6;
-  let pitch = walk ? 0.05 * Math.sin(ph) : 0;
-  let headA = walk ? 0.06 * Math.sin(ph + 1.2) : 0.025 * Math.sin(ph);
-  let jaw = 0;
+  // A heavy charging gallop: one big bound per stride, the head and flames trailing it. The attack
+  // rears up on the hind legs, crashes the forehooves down, and gores upward.
+  let bob = walk ? -2.8 * Math.sin(ph + 0.5) : Math.sin(ph) * 0.6;
+  let pitch = walk ? 0.055 * Math.sin(ph) : 0;
+  let headA = walk ? 0.07 * Math.sin(ph - 0.6) : 0.03 * Math.sin(ph) + (f === 3 && !walk ? -0.03 : 0);
+  let jaw = walk ? 0.05 + 0.05 * Math.sin(ph * 2) : 0;
   let lower = 0;
-  if (angry) {
+  if (att >= 0) {
+    bob = [-1, 2.6, 3.4, 1.2, 0.3][att];
+    pitch = [-0.15, 0.04, 0.07, 0.02, 0][att];
+    headA = [-0.12, 0.12, 0.2, -0.2, -0.04][att];
+    jaw = [0.42, 0.3, 0.18, 0.45, 0.2][att];
+  } else if (angry) {
     headA += 0.12;
     pitch += 0.04;
     bob += 1.4;
@@ -569,7 +692,8 @@ function behemoth(pose, f, mood) {
     bob = 0;
     jaw = 0.2;
   }
-  const Tb = chain(shift(0, bob + lower), rot(62, 54, pitch));
+  // Rearing pivots on the hind legs; everything else rocks about the middle of the body.
+  const Tb = att >= 0 ? chain(shift(0, bob), rot(38, 64, pitch)) : chain(shift(0, bob + lower), rot(62, 54, pitch));
   const Th = chain(Tb, rot(88, 50, headA));
   const out = [];
   const flick = (k) => 1 + 0.22 * Math.sin(ph * 2 + k * 1.9);
@@ -581,10 +705,14 @@ function behemoth(pose, f, mood) {
     let fy = 87.5;
     if (dead) {
       fx = h[0] + (front ? 11 : -11);
+    } else if (att >= 0) {
+      // Forehooves pawing high in the rear, then slammed down; hind hooves dug in.
+      fx = h[0] + (front ? [9, 9, 7, 6, 4][att] : -7);
+      fy = front ? [Math.min(87.5, h[1] + 16), 84, 87.5, 87.5, 87.5][att] : 87.5;
     } else if (walk) {
       const th = ph + phase * TAU;
-      fx = h[0] + (front ? 3 : -2) + (front ? 15 : 13) * Math.cos(th);
-      fy = 87.5 - (front ? 11 : 9) * Math.max(0, -Math.sin(th));
+      fx = h[0] + (front ? 3 : -2) + (front ? 9.5 : 8.5) * Math.cos(th);
+      fy = 87.5 - (front ? 9 : 7.5) * Math.max(0, -Math.sin(th)) ** 0.8;
     } else if (angry) {
       fx = h[0] + (front ? 8 : -7);
     } else {
@@ -605,7 +733,7 @@ function behemoth(pose, f, mood) {
 
   // The tail with a flame tuft.
   within(Tb, () => {
-    const tw = walk ? Math.sin(ph * 2) * 2 : Math.sin(ph) * 0.8;
+    const tw = walk ? Math.sin(ph - 1.2) * 2.6 : key(att, [-2.4, 2.6, 1.6, -0.8, 0], Math.sin(ph - 0.8) * 1);
     out.push(taper([[16, 44], [9, 40 + tw * 0.3], [5, 34 + tw * 0.5], [6, 28 + tw]], 5, 2.4, B.furDk));
     if (!dead) out.push(...flame(6, 30 + tw, 9 * flick(5) * (angry ? 1.4 : 1), 3.4, -3 + tw, [B.fire, B.fire2, B.fire3]));
     else out.push(dot(5, 24 + tw, 2.4, B.smoke), dot(3, 19 + tw, 1.6, B.smoke));
@@ -635,8 +763,11 @@ function behemoth(pose, f, mood) {
         if (i % 2 === 0) out.push(dot(x - 1, y - 5 - (f % 2) * 2, 2.4, B.smoke), dot(x - 3, y - 10 - (f % 2) * 2, 1.6, B.smoke));
         return;
       }
-      const h = Math.min(y + 7, (11 + (i % 3) * 4 + Math.min(i, 6) * 0.9) * flick(i) * (angry ? 1.55 : hurt ? 0.6 : 1));
-      out.push(...flame(x, y + 3, h, 5.4 + (angry ? 1.2 : 0), walk ? -5 - (i % 2) * 2.5 : -1.5 + Math.sin(ph * 2 + i) * 2, angry ? ['#ff5a4a', B.fire, '#fff6d0'] : [B.fire, B.fire2, B.fire3]));
+      const flare = att >= 0 ? [1.05, 1, 1.35, 1.25, 1.1][att] : angry ? 1.55 : hurt ? 0.6 : 1;
+      const h = Math.min(y + 7, (11 + (i % 3) * 4 + Math.min(i, 6) * 0.9) * flick(i) * flare);
+      // The flames stream back with speed and whip a beat behind the body's bound.
+      const lean = walk ? -5 - (i % 2) * 2.5 - Math.sin(ph - 1 - i * 0.25) * 2.5 : att >= 0 ? [3, -6, -2, 4, 0][att] - (i % 2) : -1.5 + Math.sin(ph * 2 + i) * 2;
+      out.push(...flame(x, y + 3, h, 5.4 + (angry ? 1.2 : 0), lean, angry ? ['#ff5a4a', B.fire, '#fff6d0'] : [B.fire, B.fire2, B.fire3]));
     });
   });
 
@@ -694,10 +825,8 @@ function behemoth(pose, f, mood) {
     out.push(line([[90, 52], [101, 49.6], [109, 52.6], [116.4, 55]], 1.6, B.gold, 3), line([[90, 43.4], [100, 40], [108, 45.2]], 0.9, B.plateLt, 3));
     out.push(poly([[95, 39.6], [99, 29], [104, 41]], B.plateDk), fpoly([[99, 29], [104, 41], [100, 40.6]], B.plate));
     out.push(dot(94, 46, 0.9, B.goldDk), dot(106, 47.6, 0.9, B.goldDk));
-    // The burning eye under the helm.
-    const eo = { iris: '#ffab3d', hot: '#ffd34d', lid: B.fur, s: 1, look: 1.4, dIn: 0.28 };
-    if (mood === 'idle' || angry || happy) out.push(dot(102.6, 55.6, 5.6, angry ? '#ff9a4a' : '#ffcf8a', 4.8));
-    out.push(...[].concat(eye(102.6, 55.6, 3.7, 3.9, mood, { ...eo, smug: happy })));
+    // One burning ember eye in a sooty socket under the helm.
+    out.push(...ember(102.6, 55.6, mood, walk ? 0.4 : att >= 0 ? 0.6 : Math.sin(ph + 0.6) * 0.9, (Math.sin(ph * 2) + 1) / 2));
     if (angry) out.push(line([[97, 50.6], [107, 53.8]], 1.8, B.plateDk));
     // Huge curved tusks with gold rings.
     out.push(taper([[106, 72], [113.4, 73], [119, 67], [122, 57.6], [121, 47]], 7, 1, B.tusk, { tip: true }), line([[108, 73.4], [114, 72.6], [119.4, 66], [121.6, 57]], 0.8, B.tuskDk, 3));
@@ -733,8 +862,15 @@ function behemoth(pose, f, mood) {
     }
     if (angry) out.push(sparkle(nx + 2, ny - 6, 2.2, B.fire2), sparkle(nx - 6, ny + 10, 1.6, B.fire3));
   }
+  // The stomp: a shock ring of embers and dust under the forehooves; then the gore's fiery streak.
+  if (att >= 2) out.push(...impact(94, 91.6, 26, [0, 0, 0.15, 0.55, 0.95][att], ['#ffcf8a', B.fire3, B.smoke], 5));
+  if (att === 3) out.push(...swoosh(100, 64, 15, 85, -55, 4, B.fire2, '#fff6d0'));
+  if (att === 2) out.push(sparkle(108, 84, 5, B.fire3), sparkle(84, 86, 3, '#ffffff'));
+  // Weight: the body gathers low before rearing and squashes as the hooves land.
+  const sq = key(att, [0.015, -0.01, -0.035, -0.01, 0], walk ? Math.cos(ph + 0.5) * 0.018 : Math.sin(ph) * 0.008);
+  const shapes = bend(out, { cx: 62, top: 60, floor: 91.5, sx: 1 - sq * 0.5, sy: 1 + sq });
   // Extra headroom for the flames.
-  return { w: 124, h: 100, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 8 })) };
+  return { w: 124, h: 100, res: 3, shapes: shapes.map((q) => ({ ...q, y: q.y + 8 })) };
 }
 
 // ---------- The Hollow Heart (Elder Treant) ----------
@@ -761,17 +897,22 @@ const edgeAt = (side, y) => {
 
 function treant(pose, f, mood) {
   const walk = pose === 'walk';
-  const n = walk ? 6 : 4;
-  const ph = (f / n) * TAU;
+  const att = pose === 'attack' ? f : -1;
+  const n = walk ? 8 : 6;
+  const ph = att >= 0 ? att * 0.9 : (f / n) * TAU;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
-  const pulse = (Math.sin(ph * (walk ? 1 : 1)) + 1) / 2;
-  let sway = walk ? 3.2 * Math.sin(ph) : 0.8 * Math.sin(ph);
-  let lean = 0;
-  let drop = 0;
-  if (angry) lean = -0.05;
+  const pulse = att >= 0 ? [1, 0.7, 1, 0.8, 0.5][att] : (Math.sin(ph) + 1) / 2;
+  // A slow lurch: the trunk heaves forward and slumps onto it, then hauls its roots after it.
+  // The slam heaves both root arms overhead and brings them crashing down.
+  const heave = walk ? Math.sin(ph) + 0.35 * Math.sin(ph * 2) : 0;
+  let sway = walk ? 3.4 * heave : att >= 0 ? [-3, 1.5, 4, 3, 1][att] : 0.8 * Math.sin(ph);
+  let lean = att >= 0 ? [-0.06, 0.01, 0.045, 0.035, 0.01][att] : walk ? 0.012 * heave : 0;
+  let drop = att >= 0 ? [-2, 1.5, 5, 4, 1][att] : walk ? 2.2 * Math.max(0, Math.sin(ph - 0.4)) ** 2 : (1 + Math.sin(ph)) * 0.5;
+  const look = walk ? 0.6 : att >= 0 ? 0.4 : Math.sin(ph + 1) * 1.6;
+  if (angry && att < 0) lean = -0.05;
   if (hurt) lean = -0.08;
   if (dead) {
     lean = 0.06;
@@ -789,7 +930,9 @@ function treant(pose, f, mood) {
 
   // Roots: far ones behind, near ones in front. Their tips writhe.
   const root = (pts, w, c) => {
-    const wob = pts.map(([x, y], i) => (i < 2 ? [x, y] : [x + Math.sin(ph + i + pts[0][0]) * (dead ? 0 : 1.2) * (i / pts.length), Math.min(169.5, y + Math.cos(ph * (walk ? 1 : 1) + i) * (dead ? 0 : 1) * (i / pts.length))]));
+    // Walking, the root tips drag back along the floor and slide up again as the trunk lurches on.
+    const drag = walk && !dead ? -3.2 * Math.sin(ph - 1) : 0;
+    const wob = pts.map(([x, y], i) => (i < 2 ? [x, y] : [x + (Math.sin(ph + i + pts[0][0]) * (dead ? 0 : 1.2) + drag) * (i / pts.length), Math.min(169.5, y + Math.cos(ph + i) * (dead ? 0 : 1) * (i / pts.length))]));
     return [taper(wob, w, 2, c, { tip: true }), line(wob.slice(0, -1).map(([x, y]) => [x + 1, y - w * 0.18]), 1, G.barkLt, 3)];
   };
   out.push(...root([[52, 154], [38, 160], [24, 163], [12, 162], [6, 157]], 12, G.barkDk), ...root([[100, 154], [116, 158], [130, 160], [140, 157], [144, 151]], 12, G.barkDk));
@@ -800,7 +943,7 @@ function treant(pose, f, mood) {
     let a = a0;
     let [x, y] = base;
     for (let i = 0; i < segs; i++) {
-      a += bend + (dead ? 0 : (walk ? 0.16 : 0.08) * Math.sin(ph + phase - i * 0.9));
+      a += bend + (dead ? 0 : (walk ? 0.16 : att >= 0 ? 0.03 : 0.08) * Math.sin(ph + phase - i * 0.9)) + (att === 1 ? 0.06 * (far ? 1 : -1) : 0);
       x += Math.cos(a) * len;
       y += Math.sin(a) * len;
       if (dead) y = Math.min(y, 164);
@@ -825,8 +968,10 @@ function treant(pose, f, mood) {
       res.push(taper([[px, py], [px + 3, py - 6]], 2.2, 0.4, c, { tip: true }));
     }
     res.push(oval(pts[1][0], pts[1][1], 3, 2.4, far ? G.deep : G.barkDk, 0, 12));
+    hands.push([x, y]);
     return res;
   };
+  const hands = [];
   let fa = { a0: 2.75, bend: -0.13 };
   let na = { a0: 0.3, bend: 0.13 };
   if (angry) {
@@ -838,6 +983,15 @@ function treant(pose, f, mood) {
   } else if (dead) {
     fa = { a0: 2.0, bend: 0.0 };
     na = { a0: 1.1, bend: -0.05 };
+  }
+  if (att >= 0 && !dead) {
+    // Raised high and curled over (held), sweeping out, slammed flat on the floor, then lifting.
+    fa = { a0: [-1.95, -3.05, -3.9, -3.9, -3.55][att], bend: [0.13, 0.08, -0.02, -0.02, -0.06][att] };
+    na = { a0: [-1.2, -0.15, 0.78, 0.78, 0.45][att], bend: [-0.13, -0.08, 0.02, 0.02, 0.06][att] };
+  } else if (walk && !angry && !hurt && !dead) {
+    // The arms swing heavily against the lurch.
+    fa = { a0: fa.a0 - 0.12 * heave, bend: fa.bend };
+    na = { a0: na.a0 - 0.12 * heave, bend: na.bend };
   }
   out.push(...arm(Tw(48, 86), fa.a0, fa.bend, 7, 9, 13, 0, true));
 
@@ -946,7 +1100,7 @@ function treant(pose, f, mood) {
       const ry = angry ? 7.4 : 9;
       out.push(foval(x, y, 9.4, ry + 1, G.deep), foval(x + s * 0.4, y + 0.6, 8.2, ry, G.hole));
       const ec = angry ? G.eyeHot : G.eye;
-      const ex = x + 1.2;
+      const ex = x + 1.2 + look * 1.3;
       const ey = y + 1.4;
       if (mood === 'blink') out.push(line(arcPts(ex, ey - 1, 5, 2, 15, 165), 1.6, G.eye));
       else if (mood === 'happy') out.push(line(arcPts(ex, ey + 2, 5, 4.4, 200, 340), 2, G.eye), line(arcPts(ex, ey + 2, 5, 4.4, 220, 320), 0.8, '#fffbe0'));
@@ -1019,6 +1173,19 @@ function treant(pose, f, mood) {
       out.push(dot(x, y, 1.6, mix(glowC, '#ffffff', 0.5)), dot(x, y, 0.9, glowC));
     }
   }
+  // The slam: the heart flares in the wind-up, then the floor cracks and heaves where each arm lands.
+  if (att === 0 && !dead) {
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * TAU + 0.3;
+      const [hx, hy] = Tw(76 + Math.cos(a) * 19, 128 + Math.sin(a) * 21);
+      out.push(sparkle(hx, hy, k % 2 ? 2.6 : 3.6, k % 2 ? G.veinHot : '#ffffff'));
+    }
+  }
+  if (att >= 2 && !dead) {
+    const k = [0, 0, 0.1, 0.55, 0.95][att];
+    hands.forEach(([x], i) => out.push(...impact(clamp(x, 26, 124), 167, 24, k, [mix(G.veinHot, '#ffffff', 0.4), '#ffe0ff', G.barkDk], 11 + i * 7)));
+  }
+  if (att === 1) for (const [x, y] of hands) out.push(sparkle(x, y, 4, '#ffe0ff'));
   return { w: 150, h: 170, res: 3, shapes: out };
 }
 
@@ -1035,29 +1202,40 @@ const PINK = [D.pink, '#ffe3f4', '#ffffff'];
 
 function dragon(pose, f, mood) {
   const walk = pose === 'walk';
-  const n = walk ? 6 : 4;
-  const ph = (f / n) * TAU;
+  const att = pose === 'attack' ? f : -1;
+  const n = walk ? 8 : 6;
+  const ph = att >= 0 ? att * 1.1 : (f / n) * TAU;
   const angry = mood === 'angry';
   const hurt = mood === 'hurt';
   const dead = mood === 'dead';
   const happy = mood === 'happy';
   const s = Math.sin(ph);
   const pulse = (s + 1) / 2;
-  // A heavy stomp: one foot lifts and slams down while the body rises and dips.
-  const liftN = walk ? Math.max(0, s) * 7 : 0;
-  const liftF = walk ? Math.max(0, -s) * 7 : 0;
-  const step = walk ? Math.cos(ph) * 5 : 0;
-  let bob = walk ? -Math.abs(s) * 2.4 + 0.6 : Math.sin(ph) * 0.8;
-  let flap = walk ? Math.sin(ph * 2 + 0.6) * 0.07 : Math.sin(ph) * 0.04;
-  const tail = walk ? Math.sin(ph) : Math.sin(ph) * 0.5;
-  let headA = walk ? Math.sin(ph * 2) * 0.03 : Math.sin(ph) * 0.02;
-  let bodyA = walk ? Math.sin(ph) * 0.02 : 0;
+  // A heavy royal stomp: each foot lifts high and slams down, the body dropping onto it with a jolt;
+  // the wings, tail, and head settle a beat behind. The attack raises the scepter overhead, wings
+  // flared, then slams it down with a crystal flash.
+  const liftN = walk ? Math.max(0, s) ** 0.8 * 8 : 0;
+  const liftF = walk ? Math.max(0, -s) ** 0.8 * 8 : 0;
+  const step = walk ? Math.cos(ph) * 7.5 : 0;
+  let bob = walk ? -Math.abs(Math.sin(ph - 0.35)) * 2.8 + 0.8 : Math.sin(ph) * 0.8;
+  let flap = walk ? Math.sin(ph * 2 - 0.8) * 0.08 : Math.sin(ph) * 0.05;
+  const tail = walk ? Math.sin(ph - 1) * 1.3 : att >= 0 ? [-1.2, 1, 1.6, 0.6, 0][att] : Math.sin(ph - 0.7) * 0.7;
+  let headA = walk ? Math.sin(ph * 2 - 1.2) * 0.04 : Math.sin(ph) * 0.025;
+  let bodyA = walk ? Math.sin(ph) * 0.025 : 0;
+  const look = walk ? 0.5 : att >= 0 ? 0.8 : Math.sin(ph + 1) * 1.3;
   let open = 0;
   let drop = 0;
   if (angry) {
     open = 0.3;
     headA = -0.1;
     flap = 0;
+  }
+  if (att >= 0) {
+    bob = [-1.4, 0.6, 2.6, 1.6, 0.4][att];
+    bodyA = [-0.05, 0.015, 0.04, 0.025, 0.005][att];
+    headA = [-0.16, -0.02, 0.1, 0.05, -0.02][att];
+    open = [0.4, 0.35, 0.3, 0.2, 0.1][att];
+    flap = [0.2, -0.04, -0.12, -0.06, 0][att];
   }
   if (happy) headA -= 0.06;
   if (hurt) {
@@ -1074,6 +1252,7 @@ function dragon(pose, f, mood) {
     bob = 0;
   }
   const Tb = chain(shift(0, bob + drop), rot(78, 140, bodyA));
+  const wingA = att >= 0 ? flap : flap + open;
   const Th = chain(Tb, rot(90, 70, headA));
   const out = [];
 
@@ -1106,7 +1285,7 @@ function dragon(pose, f, mood) {
       out.push(foval(El[0], El[1], 2.6, 2.6, dark ? D.goldDk : D.gold), foval(W[0], W[1], 3, 3, dark ? D.goldDk : D.gold), dot(W[0] - 0.6, W[1] - 0.8, 1, D.goldLt));
     });
   };
-  wing(74, 68, 0.84, 0.16 + flap * 1.2 + open * 0.9, true);
+  wing(74, 68, 0.84, 0.16 + flap * 1.2 + (att >= 0 ? flap * 0.4 : open * 0.9), true);
 
   // Tail: a faceted, tapering crystal tail that sways, tipped with a shard cluster.
   {
@@ -1148,7 +1327,7 @@ function dragon(pose, f, mood) {
   out.push(...leg(62, 58 - step, liftF, true));
 
   // Near wing.
-  wing(66, 72, 1, flap + open, false);
+  wing(66, 72, 1, wingA, false);
 
   // Crystal spines along the back and neck.
   within(Tb, () => {
@@ -1216,7 +1395,8 @@ function dragon(pose, f, mood) {
       out.push(fpoly([[117.6, 50.4], [118.8, 53.6], [120.2, 50.4]], '#ffffff'));
     }
     // Brow crest and the glowing eye.
-    out.push(...[].concat(eye(107.6, 39.6, 4.4, 5.2, mood, { iris: D.eye, hot: '#ff4fc8', lid: D.body, slit: true, s: 1, look: 1.1, smug: happy, dIn: 0.24 })));
+    // A dragon's eye: all glowing iris (no white) split by a slit pupil.
+    out.push(...[].concat(eye(107.6, 39.6, 4.4, 5.2, mood, { iris: D.eye, hot: '#ff4fc8', white: angry ? '#ffd1ef' : '#c9f6ff', lid: D.body, slit: true, s: 1, look: 1.1, glance: look * 0.6, smug: happy, dIn: 0.24 })));
     out.push(C(poly([[100, 33], [108, 31.4], [116, 34.4], [114, 35.6], [107, 34], [101, 36]], D.bodyDk)));
     if (angry) out.push(line([[101, 34.4], [113, 37.2]], 1.6, D.bodyDk));
     if (!dead) out.push(dot(113.6, 45.6, 2.2, BLUSH, 1));
@@ -1249,39 +1429,55 @@ function dragon(pose, f, mood) {
     out.push(line(arcPts(89, 74.6, 11, 4, 150, 30, 6), 0.6, D.ermineDk));
   });
 
-  // The near arm and the prism scepter.
+  // The near arm and the prism scepter. The scepter is drawn upright about the hand, then turned:
+  // resting it stands tall; the slam swings it from high over the head down into the floor.
   {
-    const raise = angry;
-    const shaft = dead ? null : raise ? { x: 138, y0: 100, y1: 42 } : { x: 129, y0: 128, y1: 82 };
+    const raise = angry && att < 0;
+    let hand = dead ? Tb(104, 126) : raise ? [138, 82 + bob] : [129, 108 + bob];
+    let ang = 0;
+    let el = dead ? [94, 112] : raise ? [114, 90] : [108, 112];
+    if (att >= 0 && !dead) {
+      hand = [[133, 60], [124, 84], [123, 101], [124, 101], [129, 104]][att];
+      ang = [0.12, 0.6, 2.7, 2.62, 0.1][att];
+      el = [[116, 84], [112, 98], [106, 106], [106, 106], [108, 110]][att];
+      hand = [hand[0], hand[1] + bob];
+    }
     const drawScepter = () => {
-      if (!shaft) {
+      if (dead) {
         // Dropped on the floor.
         out.push(taper([[98, 148], [138, 146]], 3.2, 3.2, D.gold), line([[98, 147], [138, 145]], 0.8, D.goldLt));
         out.push(...shard(138, 146, -0.05, 11, 6, PINK), dot(98, 148, 2.2, D.goldDk));
         return;
       }
-      const { x, y0, y1 } = shaft;
-      out.push(taper([[x, y0], [x, y1]], 3.4, 3.4, D.goldDk), line([[x + 0.6, y0 - 2], [x + 0.6, y1 + 2]], 1, D.goldLt));
-      for (const t of [0.15, 0.5, 0.85]) out.push(line([[x - 2.6, lerp(y0, y1, t)], [x + 2.6, lerp(y0, y1, t)]], 1.6, D.gold));
-      out.push(foval(x, y0, 2.8, 2.4, D.gold), oval(x, y1 + 1, 5.6, 2.6, D.gold, 0, 16), dot(x + 1.4, y1 + 0.4, 1, D.goldLt));
-      // Prongs cradling the prism.
-      out.push(taper([[x - 4.6, y1 + 1], [x - 6, y1 - 5], [x - 4, y1 - 9]], 1.8, 1, D.gold), taper([[x + 4.6, y1 + 1], [x + 6, y1 - 5], [x + 4, y1 - 9]], 1.8, 1, D.gold));
-      const gk = angry ? 1.15 : 1;
-      const gy = y1 - 9;
-      const rr = (angry ? 11 : 8.4 + pulse * 0.6) * gk;
-      out.push(foval(x, gy, rr, rr, angry ? '#d4f7ff' : mix('#e6fbff', D.lav, 0.3)));
-      out.push(fpoly([[x, gy - 13 * gk], [x + 5 * gk, gy - 4], [x + 4 * gk, gy + 5], [x, gy + 8 * gk], [x - 4 * gk, gy + 5], [x - 5 * gk, gy - 4]], D.pinkDk));
-      out.push(fpoly([[x, gy - 13 * gk], [x + 5 * gk, gy - 4], [x + 4 * gk, gy + 5], [x, gy + 8 * gk], [x + 0.5, gy - 3]], D.pink), fpoly([[x, gy - 13 * gk], [x - 5 * gk, gy - 4], [x - 1, gy - 3]], '#ffe3f4'));
-      out.push(fpoly([[x - 5 * gk, gy - 4], [x + 0.5, gy - 3], [x - 4 * gk, gy + 5]], D.crys), dot(x - 1.6, gy - 6, 1.2, '#ffffff'));
-      for (let k = 0; k < (angry ? 4 : 2); k++) {
-        const a = ph + (k / (angry ? 4 : 2)) * TAU;
-        out.push(sparkle(x + Math.cos(a) * (rr + 2), gy + Math.sin(a) * (rr + 2), angry ? 3 : 2, k % 2 ? '#ffffff' : D.gem2));
-      }
+      const x = hand[0];
+      const y0 = hand[1] + (raise ? 18 : 20);
+      const y1 = hand[1] - (raise ? 40 : 26);
+      within(rot(hand[0], hand[1], ang), () => {
+        out.push(taper([[x, y0], [x, y1]], 3.4, 3.4, D.goldDk), line([[x + 0.6, y0 - 2], [x + 0.6, y1 + 2]], 1, D.goldLt));
+        for (const t of [0.15, 0.5, 0.85]) out.push(line([[x - 2.6, lerp(y0, y1, t)], [x + 2.6, lerp(y0, y1, t)]], 1.6, D.gold));
+        out.push(foval(x, y0, 2.8, 2.4, D.gold), oval(x, y1 + 1, 5.6, 2.6, D.gold, 0, 16), dot(x + 1.4, y1 + 0.4, 1, D.goldLt));
+        // Prongs cradling the prism.
+        out.push(taper([[x - 4.6, y1 + 1], [x - 6, y1 - 5], [x - 4, y1 - 9]], 1.8, 1, D.gold), taper([[x + 4.6, y1 + 1], [x + 6, y1 - 5], [x + 4, y1 - 9]], 1.8, 1, D.gold));
+        const charged = att === 0 || att === 2;
+        const gk = angry || charged ? 1.15 : 1;
+        const gy = y1 - 9;
+        const rr = (angry || charged ? 11 : 8.4 + pulse * 0.6) * gk * (att === 1 ? 0.8 : 1);
+        out.push(foval(x, gy, rr, rr, angry || charged ? '#d4f7ff' : mix('#e6fbff', D.lav, 0.3)));
+        out.push(fpoly([[x, gy - 13 * gk], [x + 5 * gk, gy - 4], [x + 4 * gk, gy + 5], [x, gy + 8 * gk], [x - 4 * gk, gy + 5], [x - 5 * gk, gy - 4]], D.pinkDk));
+        out.push(fpoly([[x, gy - 13 * gk], [x + 5 * gk, gy - 4], [x + 4 * gk, gy + 5], [x, gy + 8 * gk], [x + 0.5, gy - 3]], D.pink), fpoly([[x, gy - 13 * gk], [x - 5 * gk, gy - 4], [x - 1, gy - 3]], '#ffe3f4'));
+        out.push(fpoly([[x - 5 * gk, gy - 4], [x + 0.5, gy - 3], [x - 4 * gk, gy + 5]], D.crys), dot(x - 1.6, gy - 6, 1.2, '#ffffff'));
+        const m = angry || charged ? 4 : 2;
+        for (let k = 0; k < m; k++) {
+          const a = ph + (k / m) * TAU;
+          out.push(sparkle(x + Math.cos(a) * (rr + 2), gy + Math.sin(a) * (rr + 2), angry ? 3 : 2, k % 2 ? '#ffffff' : D.gem2));
+        }
+        if (att === 0) out.push(sparkle(x, gy - 2, 9, '#ffffff'), sparkle(x, gy - 2, 5, D.gem2));
+        // Speed streaks behind the swing.
+        if (att === 1) for (const dx of [-7, 0, 7]) out.push(line([[x + dx, gy - 4], [x + dx * 1.4 - 9, gy + 10]], 0.9, '#ffffff'));
+      });
     };
-    const hand = dead ? Tb(104, 126) : raise ? [shaft.x, 82 + bob] : [shaft.x, 108 + bob];
     within(Tb, () => {
       const sh = [86, 90];
-      const el = dead ? [94, 112] : raise ? [114, 90] : [108, 112];
       const [ex, ey] = X(...el);
       out.push(taper([sh, el], 14, 11, D.bodyDk, { n: 1 }), taper([[sh[0] + 1, sh[1] - 1], el], 11, 9, D.body, { n: 1 }), oval(el[0], el[1], 5.6, 5.4, D.bodyDk, 0, 16), oval(el[0] + 0.5, el[1] - 0.5, 4.6, 4.4, D.body, 0, 16));
       out.push(T([[ex - 4.4, ey - 4], [hand[0] - 3, hand[1] - 4.4], [hand[0] - 2, hand[1] + 4.4], [ex + 2.4, ey + 5]], D.body), dot(ex, ey - 1, 1.6, D.bodyLt));
@@ -1289,6 +1485,21 @@ function dragon(pose, f, mood) {
     drawScepter();
     out.push(...ball(hand[0], hand[1], 5.2, 4.8, D.body, { dark: D.bodyDk, hi: false }));
     for (const dy of [-2.4, 0.4, 3.2]) out.push(...shard(hand[0] + 3, hand[1] + dy, 0.3 + dy * 0.05, 3.6, 2.4, CRYS, { noShine: true }));
+  }
+
+  // The slam's crystal flash: a burst of light where the prism strikes, and shards erupting from
+  // the floor around it, shrinking back as the flash fades.
+  if (att >= 2 && !dead) {
+    const k = [0, 0, 0.15, 0.6, 0.95][att];
+    const cx = 129;
+    out.push(...impact(cx, 146, 18, k, ['#c9f6ff', '#ffffff', D.crysDk], 21));
+    const grow = [0, 0, 1, 0.75, 0.35][att];
+    for (const [dx, a, l] of [[-14, -2.1, 10], [-7, -1.85, 15], [8, -1.2, 13], [14, -0.95, 8], [0, -1.55, 18]]) {
+      if (cx + dx > 146) continue;
+      out.push(...shard(cx + dx, 147, a, l * grow, 5 * Math.max(0.5, grow), dx % 2 ? PINK : CRYS));
+    }
+    if (att === 2) out.push(foval(cx, 132, 14, 14, mix('#ffffff', D.crys, 0.3)), sparkle(cx, 132, 17, '#ffffff'), sparkle(cx, 132, 9, D.gem2), sparkle(cx - 12, 120, 4, D.pink));
+    if (att === 3) out.push(sparkle(cx - 10, 124, 4, '#ffffff'), sparkle(cx + 8, 118, 3, D.gem2));
   }
 
   // Glints in the air.
@@ -1300,14 +1511,17 @@ function dragon(pose, f, mood) {
       out.push(sparkle(x, y, 1.6 + Math.sin(u * Math.PI) * 1.4, i % 2 ? '#ffffff' : '#c9f6ff'));
     }
   }
-  return { w: 150, h: 150, res: 3, shapes: out };
+  // Weight: each stomp lands with a little squash; the slam sinks the whole body onto its legs.
+  const sq = key(att, [0.012, -0.004, -0.03, -0.015, 0], walk ? -Math.max(0, Math.cos(ph * 2)) * 0.015 : Math.sin(ph) * 0.006);
+  const shapes = bend(out, { cx: 80, top: 110, floor: 149, sx: 1 - sq * 0.5, sy: 1 + sq });
+  return { w: 150, h: 150, res: 3, shapes };
 }
 
 export const ART = {
-  mothercapper: { walk: 6, idle: 4, draw: queen },
-  tuskar: { walk: 6, idle: 4, draw: behemoth },
-  gnarlroot: { walk: 6, idle: 4, draw: treant },
-  crystalking: { walk: 6, idle: 4, draw: dragon },
+  mothercapper: { walk: 8, idle: 6, attack: 5, stride: 30, draw: queen },
+  tuskar: { walk: 8, idle: 6, attack: 5, stride: 34, draw: behemoth },
+  gnarlroot: { walk: 8, idle: 6, attack: 5, stride: 22, draw: treant },
+  crystalking: { walk: 8, idle: 6, attack: 5, stride: 30, draw: dragon },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.
