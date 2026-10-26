@@ -5,7 +5,8 @@
 
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
-import { R, E, T, F, shade, snap, footShadow, slopeAt } from './pixel.js';
+import { R, E, T, F, mix, shade, snap, footShadow, slopeAt } from './pixel.js';
+import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted } from './propkit.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES } from './hero.js';
 import { createAnim, stepAnim } from './animator.js';
@@ -21,6 +22,78 @@ const hash = (n) => {
 };
 const pick = (list, seed) => list[Math.floor(seed * list.length) % list.length];
 const TAU = Math.PI * 2;
+
+// ---------- Shared building parts ----------
+// Buildings are shaded by hand with the prop kit's ramps under the one world light from the upper
+// left (no automatic shade, which cut a hard strip down every wall): eaves cast a soft band on
+// the wall below, a facade turns away only in a thin edge on the right, posts are lit on the left.
+// Cloth (awnings, banners, notices) hangs as chains that ride the shared wind, cached in a few
+// poses.
+
+const POSES = 5;
+// The cached wind pose (0 ... POSES - 1) at world x, and the lean (-0.6 ... 0.9) it stands for.
+const windPose = (time, wx, lag = 0, seed = 0) => leanFrame(time, wx, POSES, lag, seed);
+const poseLean = (p) => (p / (POSES - 1)) * 1.5 - 0.6;
+
+// A round wooden post: lit left, shaded right, a grain stroke.
+function post(x, y, w, h, wood) {
+  const r = ramp(wood);
+  return [R(x, y, w, h, r.base), F(R(x, y, w * 0.3, h, r.hi)), F(R(x + w * 0.66, y, w * 0.34, h, r.sh)), F(R(x + w * 0.42, y + h * 0.3, 0.5, h * 0.22, r.sh))];
+}
+
+// The soft shadow an eave or ledge casts on the wall under it, and the thin turn of the wall's
+// right edge away from the light.
+function wallShade(x, y, w, h, r, d = 2.6) {
+  return [F(R(x, y, w, d, r.sh)), F(R(x, y + d, w, 1, mix(r.base, r.sh, 0.5))), F(R(x + w - 1.4, y, 1.4, h, mix(r.base, r.sh, 0.7)))];
+}
+
+// A trim beam or sill: lit top, shaded underside.
+function beam(x, y, w, h, c) {
+  const r = ramp(c);
+  return [R(x, y, w, h, c), F(R(x, y, w, Math.min(1, h * 0.35), r.hi)), F(R(x, y + h * 0.7, w, h * 0.3, r.sh))];
+}
+
+// A gable roof (left slope lit, right slope in shade) in courses of shingles from `base` up to
+// the peak at `peak`, across x0 ... x1.
+function gable(x0, x1, base, peak, c, seed = 0) {
+  const r = ramp(c, 0.8);
+  const cx = (x0 + x1) / 2;
+  const out = [T([[x0, base], [cx, peak], [x1, base]], c), F(T([[cx, peak], [x1, base], [cx + 1, base]], mix(c, r.sh, 0.65)))];
+  const half = (y) => ((y - peak) / (base - peak)) * (x1 - x0) / 2;
+  for (let y = base - 5, row = 0; y > peak + 4; y -= 5, row++) {
+    const hw = half(y) - 1;
+    out.push(F(R(cx - hw, y, hw * 2, 0.8, r.sh)));
+    // Gaps between tiles, staggered row to row.
+    for (let x = cx - hw + 3 + (row % 2) * 3; x < cx + hw - 2; x += 6) if (hash(seed + row * 3.1 + x) > 0.25) out.push(F(R(x, y - 4, 0.6, 4, x < cx ? r.sh : r.deep)));
+  }
+  // The lit verge down the left slope and a ridge cap glint.
+  out.push(F(T([[x0 + 1, base - 0.6], [cx, peak + 0.6], [cx, peak + 2.4], [x0 + 3.4, base - 0.6]], r.hi)), F(R(cx - 1, peak + 0.6, 1.6, 1.2, '#ffffff')));
+  return out;
+}
+
+// A cloth banner hanging from a rod as a chain: each segment swings out a little more than the
+// one above it under the wind's lean `s`, and a ripple `ph` (0 ... 1) runs down it. Swallowtail
+// foot, the right third in shade.
+function banner(x, y, w, h, s, ph, c, rod) {
+  const r = ramp(c, 0.8);
+  const L = [];
+  const Rt = [];
+  const n = 5;
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const dx = s * 2.4 * u * u + Math.sin(u * 3.2 - ph * TAU) * 0.6 * u;
+    L.push([x + dx, y + h * u]);
+    Rt.push([x + w + dx - Math.max(0, s) * 0.8 * u, y + h * u - s * 0.8 * u]);
+  }
+  const notch = [(L[n][0] + Rt[n][0]) / 2, (L[n][1] + Rt[n][1]) / 2 - 4];
+  const mid = L.map(([lx, ly], i) => [lx + (Rt[i][0] - lx) * 0.64, ly + (Rt[i][1] - ly) * 0.64]);
+  return [
+    T([...L, notch, ...[...Rt].reverse()], c),
+    F(T([...mid.slice(0, n), notch, ...Rt.slice(0, n).reverse()], r.sh)),
+    F(T([L[0], Rt[0], [Rt[1][0], Rt[1][1] - 1], [L[1][0], L[1][1] - 1]], r.hi)),
+    ...beam(x - 1.2, y - 1.4, w + 2.4, 2, rod),
+  ];
+}
 
 // ---------- Stalls ----------
 // A market stall: posts, a striped scalloped awning, a cloth back, and a counter with goods.
@@ -82,19 +155,47 @@ const STALLS = {
   },
 };
 
-function stallArt(kind, frame) {
+// `pose` the wind pose, `ph` (0 ... 3) the ripple running along the valance.
+function stallArt(kind, pose, ph) {
   const S = STALLS[kind];
-  return art(`stall|${kind}|${frame}`, 88, 74, () => {
-    const out = [R(10, 24, 68, 28, S.back), R(7, 12, 4, 62, S.wood), R(77, 12, 4, 62, S.wood)];
-    out.push(T([[2, 24], [10, 8], [78, 8], [86, 24]], S.awning[0]));
-    for (let i = 1; i < 8; i += 2) out.push(T([[2 + i * 10.5, 24], [10 + i * 8.5, 8], [10 + (i + 1) * 8.5, 8], [2 + (i + 1) * 10.5, 24]], S.awning[1]));
-    for (let i = 0; i < 8; i++) out.push(E(7.25 + i * 10.5, 24, 5.25, 3.6, S.awning[i % 2]));
-    out.push(R(8, 5, 72, 4, shade(S.awning[0], -12)));
-    out.push(...S.goods(frame));
-    out.push(R(4, 50, 80, 24, S.wood), R(2, 48, 84, 4, shade(S.wood, 12)), R(10, 56, 68, 14, S.cloth));
-    for (let i = 0; i < 6; i++) out.push(F(E(15.6 + i * 11.3, 56, 5.6, 2.4, shade(S.cloth, -8))));
+  return art(`stall|${kind}|${pose}|${ph}`, 88, 74, () => {
+    const s = poseLean(pose);
+    const back = ramp(S.back, 0.6);
+    const cloth = ramp(S.cloth, 0.8);
+    const wood = ramp(S.wood);
+    // The cloth back in soft folds, in the awning's shadow at the top.
+    const out = [R(10, 24, 68, 28, S.back)];
+    for (let i = 0; i < 5; i++) out.push(F(R(17 + i * 13, 27, 1.2, 24, back.sh)), F(R(18.2 + i * 13, 27, 0.8, 24, back.hi)));
+    out.push(F(R(10, 24, 68, 5, back.sh)), F(R(10, 29, 68, 1.2, mix(S.back, back.sh, 0.5))));
+    out.push(...post(7, 12, 4, 62, S.wood), ...post(77, 12, 4, 62, S.wood));
+    // The awning slope in stripes, each lit along its top.
+    const edge = (i, y) => { const v = (y - 8) / 16; return 10 + i * 8.5 + (2 + i * 10.5 - 10 - i * 8.5) * v; };
+    for (let i = 0; i < 8; i++) {
+      const c = S.awning[i % 2];
+      const r = ramp(c, 0.7);
+      out.push(T([[edge(i, 24), 24], [edge(i, 8), 8], [edge(i + 1, 8), 8], [edge(i + 1, 24), 24]], c));
+      out.push(F(T([[edge(i, 11), 11], [edge(i, 8.6), 8.6], [edge(i + 1, 8.6), 8.6], [edge(i + 1, 11), 11]], r.hi)));
+      out.push(F(T([[edge(i, 24), 24], [edge(i, 21.6), 21.6], [edge(i + 1, 21.6), 21.6], [edge(i + 1, 24), 24]], r.sh)));
+    }
+    out.push(...beam(8, 5, 72, 4, ramp(S.awning[0]).sh));
+    // The valance: scallops hanging off the awning's edge, a chain the wind lifts and ripples,
+    // those further along a beat later.
+    for (let i = 0; i < 8; i++) {
+      const c = S.awning[i % 2];
+      const r = ramp(c, 0.7);
+      const dx = s * 1.3 + 0.55 * Math.sin(i * 0.9 - (ph * Math.PI) / 2);
+      const dy = -Math.max(0, s) * 1.1 + 0.35 * Math.cos(i * 0.9 - (ph * Math.PI) / 2);
+      const cx = 7.25 + i * 10.5 + dx * 0.6;
+      out.push(T([[cx - 5.25, 23.4], [cx + 5.25, 23.4], [cx + 5 + dx * 0.4, 25 + dy], [cx + dx * 0.4, 27.6 + dy], [cx - 5 + dx * 0.4, 25 + dy]], c));
+      out.push(F(T([[cx + 1 + dx * 0.4, 26.6 + dy], [cx + 4.4 + dx * 0.4, 25 + dy], [cx + 5.25, 23.4], [cx + 3, 24.6 + dy * 0.5]], r.sh)));
+    }
+    out.push(...lightUL(S.goods(ph % 2), 0.8));
+    // The counter: boards with the lit top, a cloth panel in the top's shadow.
+    out.push(...planks(4, 50, 80, 24, wood, 6, kind.length, true), ...beam(2, 48, 84, 4, mix(S.wood, wood.hi, 0.4)), R(10, 56, 68, 14, S.cloth));
+    out.push(F(R(10, 56, 68, 1.6, cloth.sh)));
+    for (let i = 0; i < 6; i++) out.push(F(E(15.6 + i * 11.3, 56.6, 5.6, 2.4, cloth.sh)), F(R(12.6 + i * 11.3, 60, 0.8, 9, cloth.hi)));
     return out;
-  });
+  }, false);
 }
 
 // ---------- Guild halls ----------
@@ -115,76 +216,85 @@ function emblem(kind, cx, cy) {
   }
 }
 
-function hallArt(kind, frame) {
+function hallArt(kind, pose, ph) {
   const S = HALLS[kind];
   const W = 116;
   const H = 104;
-  return art(`hall|${kind}|${frame}`, W, H, () => {
+  return art(`hall|${kind}|${pose}|${ph}`, W, H, () => {
     const out = [];
     const top = kind === 'mage' ? 40 : 36;
-    // Walls, with plank or block lines.
-    out.push(R(12, top, W - 24, H - top, S.wall));
-    for (let y = top + 8; y < H - 4; y += 9) out.push(F(R(12, y, W - 24, 0.8, shade(S.wall, -6))));
-    out.push(R(10, top - 2, W - 20, 4, S.trim), R(10, H - 4, W - 20, 4, S.trim));
+    const wr = ramp(S.wall, 0.7);
+    const rr = ramp(S.roof, 0.8);
+    // Walls: dressed stone for the warrior and mage halls, boards for the lodge and the den.
+    if (kind === 'warrior' || kind === 'mage') out.push(...stones(12, top, W - 24, H - top, wr, kind.length, { rowH: 8, blockW: 15 }));
+    else out.push(...planks(12, top, W - 24, H - top, wr, 9, kind.length));
+    out.push(...wallShade(12, top + 2, W - 24, H - top - 2, wr, 3.4));
+    out.push(...beam(10, top - 2, W - 20, 4, S.trim), ...beam(10, H - 4, W - 20, 4, S.trim));
     // Roof by style.
     if (kind === 'warrior') {
-      out.push(R(8, top - 10, W - 16, 10, S.roof));
-      for (let x = 8; x < W - 10; x += 12) out.push(R(x, top - 16, 7, 7, S.roof));
+      out.push(R(8, top - 10, W - 16, 10, S.roof), F(R(8, top - 10, W - 16, 1.2, rr.hi)), F(R(8, top - 3, W - 16, 3, rr.sh)));
+      for (let x = 8; x < W - 10; x += 12) out.push(R(x, top - 16, 7, 7, S.roof), F(R(x, top - 16, 7, 1.2, rr.hi)), F(R(x, top - 16, 1.2, 7, rr.hi)), F(R(x + 5.4, top - 14.8, 1.6, 5.8, rr.sh)), F(R(x + 1, top - 9, 7, 1.4, rr.sh)));
     } else if (kind === 'mage') {
-      out.push(T([[4, top + 2], [W / 2, 2], [W - 4, top + 2]], S.roof), F(T([[14, top], [W / 2, 8], [W - 14, top], [W - 14, top + 1.4], [W / 2, 9.6], [14, top + 1.4]], shade(S.roof, 14))));
+      out.push(...gable(4, W - 4, top + 2, 2, S.roof, 3));
       out.push(star(W / 2, 22, 5, '#ffe36b'), star(30, top - 6, 2, '#ffffff'), star(86, top - 8, 2.4, '#ffffff'));
     } else {
-      out.push(T([[2, top + 4], [W / 2, top - 30], [W - 2, top + 4]], S.roof), F(T([[10, top + 1], [W / 2, top - 24], [W - 10, top + 1], [W - 10, top + 3], [W / 2, top - 22], [10, top + 3]], shade(S.roof, 14))));
+      out.push(...gable(2, W - 2, top + 4, top - 30, S.roof, kind.length));
     }
-    // The door, open and warmly lit.
+    // The door, open and warmly lit: the left jamb inside in shade, light spilling on the step.
     const dx = W / 2;
-    out.push(R(dx - 14, H - 40, 28, 40, S.trim), E(dx, H - 40, 14, 10, S.trim));
+    out.push(R(dx - 14, H - 40, 28, 40, S.trim), E(dx, H - 40, 14, 10, S.trim), F(R(dx - 14, H - 40, 1.4, 40, ramp(S.trim).hi)));
     out.push(R(dx - 11, H - 38, 22, 38, '#5a3f2a'), E(dx, H - 38, 11, 8, '#5a3f2a'));
-    out.push(F(R(dx - 9, H - 36, 18, 36, '#ffcf7a')), F(E(dx, H - 36, 9, 6.4, '#ffcf7a')), F(E(dx, H - 18, 7, 14, '#ffe6a8')));
-    // Windows, lit.
+    out.push(F(R(dx - 9, H - 36, 18, 36, '#ffcf7a')), F(E(dx, H - 36, 9, 6.4, '#ffcf7a')), F(E(dx + 1, H - 18, 7, 14, '#ffe6a8')), F(R(dx - 9, H - 36, 2.4, 36, '#e8a560')), F(E(dx, H - 36, 9, 2.4, '#e8a560')));
+    out.push(F(R(dx - 12, H - 4, 24, 1.4, '#ffe6a8')));
+    // Windows, lit from inside, with flower boxes.
     for (const wx of [24, W - 24]) {
-      out.push(R(wx - 8, top + 12, 16, 16, S.trim), F(R(wx - 6, top + 14, 12, 12, '#fff3a6')), F(R(wx - 0.5, top + 14, 1, 12, S.trim)), F(R(wx - 6, top + 19.5, 12, 1, S.trim)));
-      out.push(R(wx - 9, top + 28, 18, 3, shade(S.trim, -8)));
+      out.push(...windowPane(wx - 6, top + 14, 12, 12, S.trim, '#ffcf7a', '#fff3c4'));
+      out.push(...beam(wx - 9, top + 28, 18, 3, ramp(S.trim).sh), F(R(wx - 9, top + 31, 18, 1.4, wr.sh)));
       out.push(F(E(wx - 4, top + 27.4, 1.6, 1.6, '#ff9ec0')), F(E(wx, top + 27, 1.6, 1.6, '#ffe36b')), F(E(wx + 4, top + 27.4, 1.6, 1.6, '#9be08f')));
     }
-    // Banners either side of the door, waving a little.
-    const wave = [0, 1, 0, -1][frame % 4];
-    for (const bx of [dx - 24, dx + 18]) out.push(R(bx, top + 4, 6, 1.4, S.trim), T([[bx, top + 5], [bx + 6, top + 5], [bx + 6 + wave * 0.3, top + 24], [bx + 3 + wave * 0.5, top + 20], [bx + wave * 0.3, top + 24]], S.banner));
+    // Banners either side of the door, swinging in the wind.
+    const s = poseLean(pose);
+    for (const [k, bx] of [dx - 24, dx + 18].entries()) out.push(...banner(bx, top + 5, 6, 19, s * (k ? 0.85 : 1), (ph + k) / 4, S.banner, S.trim));
     // The guild emblem over the door.
-    out.push(E(dx, H - 56, 9, 9, '#ffffff'), E(dx, H - 56, 8, 8, S.banner), ...emblem(kind, dx, H - 56));
+    out.push(E(dx, H - 56, 9, 9, '#ffffff'), E(dx, H - 56, 8, 8, S.banner), F(E(dx + 1.6, H - 54.4, 6, 6, ramp(S.banner).sh)), F(E(dx - 0.6, H - 56.6, 6.6, 6.6, S.banner)), ...emblem(kind, dx, H - 56));
     return out;
-  });
+  }, false);
 }
 
 // ---------- Small buildings ----------
 
-function kioskArt() {
-  return art('kiosk', 70, 76, () => [
-    R(6, 20, 3.4, 56, '#c99a6b'), R(61, 20, 3.4, 56, '#c99a6b'),
-    T([[0, 22], [35, 4], [70, 22]], '#7fd1a8'), F(T([[6, 20], [35, 8], [64, 20], [64, 21.4], [35, 9.4], [6, 21.4]], '#bff0dc')),
-    R(4, 22, 62, 4, '#5fbf8a'),
-    R(10, 28, 50, 32, '#f0d6a8'), R(9, 27, 52, 2, '#c99a6b'), R(9, 59, 52, 2, '#c99a6b'),
-    // Notices and a little map pinned to the board.
-    R(13, 31, 12, 10, '#ffffff'), F(R(15, 33, 8, 0.8, '#c9a6ff')), F(R(15, 35, 6, 0.8, '#c9a6ff')), F(E(19, 31, 1, 1, '#ff6b8a')),
-    R(28, 30, 18, 14, '#d6f0ff'), F(E(33, 36, 3, 2.4, '#9be08f')), F(E(40, 39, 3.4, 2.4, '#9be08f')), F(R(34, 37, 6, 0.8, '#ffffff')), F(E(37, 30, 1, 1, '#ffe36b')),
-    R(49, 32, 9, 12, '#fff3a6'), F(R(51, 35, 5, 0.8, '#ffab5c')), F(E(53.5, 32, 1, 1, '#5aa8ff')),
-    R(14, 46, 14, 9, '#ffd6ea'), F(R(16, 49, 10, 0.8, '#ff8fc1')), F(E(21, 46, 1, 1, '#9be08f')),
-    R(32, 47, 24, 9, '#ffffff'), F(R(34, 50, 18, 0.8, '#9c86b8')), F(R(34, 52.4, 12, 0.8, '#9c86b8')), F(E(44, 47, 1, 1, '#ff6b8a')),
-  ]);
+function kioskArt(pose) {
+  return art(`kiosk|${pose}`, 70, 76, () => {
+    const s = poseLean(pose);
+    const board = ramp('#f0d6a8', 0.7);
+    const out = [...post(6, 20, 3.4, 56, '#c99a6b'), ...post(61, 20, 3.4, 56, '#c99a6b'), ...gable(0, 70, 22, 4, '#7fd1a8', 7), ...beam(4, 22, 62, 4, '#5fbf8a')];
+    out.push(...planks(10, 28, 50, 32, board, 5, 3, true), F(R(10, 28, 50, 2.4, board.sh)), ...beam(9, 27, 52, 2, '#c99a6b'), ...beam(9, 59, 52, 2, '#c99a6b'));
+    // Notices and a little map pinned to the board; the loose corner of one lifts in a gust.
+    out.push(...lightUL([
+      R(13, 31, 12, 10, '#ffffff'), F(R(15, 33, 8, 0.8, '#c9a6ff')), F(R(15, 35, 6, 0.8, '#c9a6ff')), F(E(19, 31, 1, 1, '#ff6b8a')),
+      R(28, 30, 18, 14, '#d6f0ff'), F(E(33, 36, 3, 2.4, '#9be08f')), F(E(40, 39, 3.4, 2.4, '#9be08f')), F(R(34, 37, 6, 0.8, '#ffffff')), F(E(37, 30, 1, 1, '#ffe36b')),
+      R(49, 32, 9, 12, '#fff3a6'), F(R(51, 35, 5, 0.8, '#ffab5c')), F(E(53.5, 32, 1, 1, '#5aa8ff')),
+      R(14, 46, 14, 9, '#ffd6ea'), F(R(16, 49, 10, 0.8, '#ff8fc1')), F(E(21, 46, 1, 1, '#9be08f')),
+      R(32, 47, 24, 9, '#ffffff'), F(R(34, 50, 18, 0.8, '#9c86b8')), F(R(34, 52.4, 12, 0.8, '#9c86b8')), F(E(44, 47, 1, 1, '#ff6b8a')),
+    ], 0.5));
+    const lift = Math.max(0, s + 0.2) * 3;
+    out.push(F(T([[56, 56], [56, 56 - 2 - lift], [52 - lift * 0.4, 56]], '#e6e0f4')), F(T([[56, 56 - 2 - lift], [56 + lift * 0.5, 54.4 - lift], [54.6, 56 - lift * 0.5]], '#ffffff')));
+    return out;
+  }, false);
 }
 
 function officeArt() {
   return art('office', 90, 82, () => {
-    const out = [R(8, 24, 74, 58, '#e8f4ff')];
-    for (let x = 8; x < 82; x += 7) out.push(F(R(x, 24, 0.8, 58, '#c9dcf0')));
-    out.push(T([[2, 26], [45, 4], [88, 26]], '#6f9cff'), F(T([[10, 24], [45, 8], [80, 24], [80, 25.6], [45, 9.6], [10, 25.6]], '#a8c8ff')));
-    out.push(R(32, 50, 26, 32, '#4f6fae'), F(R(34, 52, 22, 30, '#ffcf7a')));
+    const wall = ramp('#e8f4ff', 0.6);
+    const out = [...planks(8, 24, 74, 58, wall, 10, 7, true), ...wallShade(8, 25, 74, 57, wall, 3.4), ...gable(2, 88, 26, 4, '#6f9cff', 5)];
+    // The door, lit inside.
+    out.push(R(32, 50, 26, 32, '#4f6fae'), F(R(32, 50, 1.2, 32, '#7f9cd8')), F(R(34, 52, 22, 30, '#ffcf7a')), F(R(34, 52, 2.4, 30, '#e8a560')), F(R(34, 52, 22, 2, '#e8a560')), F(E(46, 70, 6, 10, '#ffe6a8')));
     // A life ring and an anchor sign.
-    out.push(E(18, 50, 7, 7, '#ff6b6b'), E(18, 50, 4, 4, 'none'), F(R(12, 49, 2.4, 2.4, '#ffffff')), F(R(21.6, 49, 2.4, 2.4, '#ffffff')));
-    out.push(E(45, 37, 8, 8, '#ffffff'), F(R(44.4, 31, 1.4, 11, '#4f6fae')), F(R(41, 33, 8.4, 1.4, '#4f6fae')), F(T([[39.6, 39], [45, 43.4], [50.4, 39], [49, 38.6], [45, 41.6], [41, 38.6]], '#4f6fae')));
-    out.push(R(64, 40, 12, 12, '#ffffff'), F(R(66, 42, 8, 8, '#fff3a6')), F(R(69.6, 42, 0.8, 8, '#ffffff')));
+    out.push(...lightUL([E(18, 50, 7, 7, '#ff6b6b')], 0.6), E(18, 50, 4, 4, '#ffffff'), F(E(18.6, 50.6, 3.4, 3.4, wall.sh)), F(R(12, 49, 2.4, 2.4, '#ffffff')), F(R(21.6, 49, 2.4, 2.4, '#ffffff')), F(R(17, 43.4, 2.4, 2.2, '#ffffff')), F(R(17, 54.6, 2.4, 2.2, '#ffffff')));
+    out.push(...lightUL([E(45, 37, 8, 8, '#ffffff')], 0.6), F(R(44.4, 31, 1.4, 11, '#4f6fae')), F(R(41, 33, 8.4, 1.4, '#4f6fae')), F(T([[39.6, 39], [45, 43.4], [50.4, 39], [49, 38.6], [45, 41.6], [41, 38.6]], '#4f6fae')));
+    out.push(...windowPane(66, 42, 8, 8, '#ffffff', '#ffcf7a', '#fff3c4'), ...beam(64, 51, 12, 2, '#ffffff'));
     return out;
-  });
+  }, false);
 }
 
 function anvilArt() {
@@ -194,24 +304,49 @@ function anvilArt() {
   ]);
 }
 
+// A flat-roofed adobe house: soft rounded stucco, beam ends casting little shadows, a deep-set door.
 function adobeArt(seed) {
   const wall = pick(['#f2c48d', '#f6d3a8', '#e8b07a'], seed);
-  return art(`adobe|${wall}`, 76, 62, () => [
-    R(8, 18, 60, 44, wall), E(14, 20, 6, 4, wall), E(62, 20, 6, 4, wall), R(6, 16, 64, 4, shade(wall, -8)),
-    ...[14, 26, 50, 62].map((x) => R(x, 20, 3, 3, '#8a5a3c')),
-    R(30, 36, 16, 26, '#b5784a'), E(38, 36, 8, 6, '#b5784a'), F(R(32, 38, 12, 24, '#7a4a2b')), F(E(38, 38, 6, 4, '#7a4a2b')),
-    R(14, 30, 10, 10, '#5fb8d8'), F(R(15.4, 31.4, 7.2, 7.2, '#fff3a6')), R(52, 30, 10, 10, '#5fb8d8'), F(R(53.4, 31.4, 7.2, 7.2, '#fff3a6')),
-    T([[26, 34], [38, 28], [50, 34]], '#e0504d'), F(T([[26, 34], [32, 31], [32, 34]], '#ffd66b')),
-    E(68, 58, 4, 4, '#8fbf6a'), R(66, 58, 4, 4, '#c97f4f'),
-  ]);
+  return art(`adobe|${wall}`, 76, 62, () => {
+    const r = ramp(wall, 0.7);
+    const out = [R(8, 18, 60, 44, wall), E(14, 19, 6, 4, wall), E(62, 19, 6, 4, wall), R(6, 16, 64, 4, wall), F(R(6, 16, 64, 1.2, r.hi)), F(E(12.6, 17.6, 4, 2, r.hi))];
+    out.push(...wallShade(8, 20, 60, 42, r, 2.2));
+    // Plaster patches and a hairline crack.
+    for (let i = 0; i < 5; i++) out.push(F(E(14 + hash(seed * 9 + i) * 48, 26 + hash(seed * 5 + i * 3) * 30, 2.6, 1.4, i % 2 ? mix(wall, r.hi, 0.5) : mix(wall, r.sh, 0.4))));
+    out.push(F(T([[60, 40], [61, 44], [59.6, 47], [60.2, 47], [61.6, 44], [60.6, 40]], r.sh)));
+    // Beam ends: lit on top, a shadow falling down and to the right of each.
+    for (const x of [14, 26, 50, 62]) out.push(F(T([[x + 1, 23], [x + 3, 23], [x + 4.4, 26.4], [x + 2.4, 26.4]], r.sh)), R(x, 20, 3, 3, '#8a5a3c'), F(R(x, 20, 3, 0.9, '#b98058')), F(R(x + 1.2, 21.4, 0.8, 0.8, '#5e3a24')));
+    // The door set deep in the wall: the left jamb and the arch in shade.
+    out.push(R(30, 36, 16, 26, '#b5784a'), E(38, 36, 8, 6, '#b5784a'), F(R(32, 38, 12, 24, '#7a4a2b')), F(E(38, 38, 6, 4, '#7a4a2b')), F(R(32, 38, 2.2, 24, '#5e3820')), F(E(38, 36.6, 5, 2, '#5e3820')));
+    out.push(...windowPane(15.4, 31.4, 7.2, 7.2, '#5fb8d8', '#ffcf7a', '#fff3c4'), ...windowPane(53.4, 31.4, 7.2, 7.2, '#5fb8d8', '#ffcf7a', '#fff3c4'));
+    // A cloth awning over the door, its shadow on the wall.
+    out.push(F(T([[27, 34], [49, 34], [50.4, 37], [28.4, 37]], r.sh)), T([[26, 34], [38, 28], [50, 34]], '#e0504d'), F(T([[26, 34], [32, 31], [32, 34]], '#ffd66b')), F(T([[38, 28], [50, 34], [44, 34]], '#b8363e')));
+    out.push(...lightUL([E(68, 57, 4, 4, '#8fbf6a'), R(66, 58, 4, 4, '#c97f4f')], 0.6), F(R(67.6, 53.6, 0.8, 1.4, '#ffe36b')));
+    return out;
+  }, false);
 }
 
-function fountainArt() {
-  return art('fountain', 72, 42, () => [
-    E(36, 36, 34, 6, '#c9bedc'), R(2, 26, 68, 10, '#c9bedc'), E(36, 26, 34, 6, '#ece4ff'), E(36, 26, 30, 4.4, '#8fd3ff'), F(E(28, 25.4, 8, 1.4, '#d6f0ff')),
-    R(31, 8, 10, 18, '#ece4ff'), E(36, 8, 9, 3, '#c9bedc'), E(36, 7, 7, 2, '#8fd3ff'), E(36, 2, 3, 3, '#ffffff'),
-    F(R(4, 30, 64, 0.8, '#b9aed0')),
-  ]);
+// The plaza fountain: a stone basin and a column with a bowl on top. `f` (0 ... 5) steps the rings
+// spreading on the basin water; the falling water itself is drawn live over it.
+const FOUNTAIN_FRAMES = 6;
+function fountainArt(f) {
+  return art(`fountain|${f}`, 72, 42, () => {
+    const st = ramp('#d6cce6', 0.7);
+    const out = [E(36, 36, 34, 6, st.sh), ...stones(2, 26, 68, 10, st, 4, { rowH: 5, blockW: 9 }), F(R(2, 26, 3, 10, st.hi)), F(E(36, 37.4, 30, 3, st.deep))];
+    // The rim and the water inside, darker under the far rim.
+    out.push(E(36, 26, 34, 6, st.hi), F(E(36, 26.4, 31.4, 4.8, st.base)), F(E(36, 26.8, 30, 4.2, '#8fd3ff')), F(E(36, 25.2, 28, 2.2, '#6fbbe8')), F(E(36, 27.4, 26, 2.8, '#8fd3ff')));
+    for (let k = 0; k < 2; k++) {
+      const u = (f / FOUNTAIN_FRAMES + k / 2) % 1;
+      const rx = 8 + u * 18;
+      out.push(F(E(36, 27, rx, rx * 0.15 + 0.6, u > 0.7 ? '#bfe6ff' : '#d6f0ff')), F(E(36, 27.2, rx - 1.2, rx * 0.15, '#8fd3ff')));
+    }
+    out.push(F(E(22 + (f % 3) * 3, 27.6, 3, 0.6, '#ffffff')), F(E(50 - (f % 2) * 4, 26.6, 2, 0.5, '#ffffff')));
+    // The column, round: lit left, shaded right, a band near the top.
+    out.push(R(31, 8, 10, 18, st.base), F(R(31, 8, 3, 18, st.hi)), F(R(38.4, 8, 2.6, 18, st.sh)), F(R(31, 12, 10, 1, st.sh)), F(R(31, 24, 10, 2, st.deep)));
+    // The top bowl, brimming.
+    out.push(E(36, 9, 9.4, 3, st.sh), E(36, 7, 9, 2.4, st.hi), F(E(36, 7.2, 7.4, 1.6, '#8fd3ff')), F(E(34, 6.8, 3, 0.6, '#d6f0ff')), E(36, 4, 1.8, 2, st.base), F(E(35.4, 3.4, 0.8, 0.8, st.hi)));
+    return out;
+  }, false);
 }
 
 // ---------- The street ----------
@@ -223,30 +358,88 @@ const STREET = {
   grove: ['treehouse', 'mushhouse'],
 };
 
-function buildingArt(kind, time) {
-  const frame = Math.floor(time * 4) % 4;
-  if (STALLS[kind]) return stallArt(kind, frame % 2);
-  if (HALLS[kind]) return hallArt(kind, frame);
-  if (kind === 'kiosk') return kioskArt();
+// The stall or hall art for this moment: its wind pose at world x `wx` and the ripple frame.
+function buildingArt(kind, time, wx = 0) {
+  const pose = windPose(time, wx);
+  const ph = Math.floor(time * 4) % 4;
+  if (STALLS[kind]) return stallArt(kind, pose, ph);
+  if (HALLS[kind]) return hallArt(kind, pose, ph);
+  if (kind === 'kiosk') return kioskArt(windPose(time, wx, 0.2));
   if (kind === 'office') return officeArt();
   return null;
 }
 
-// A wooden sign hanging from two chains, with the building's name.
-function hangingSign(ctx, x, y, label, time) {
+// A wooden sign hanging from two chains, with the building's name, swinging from its hooks in the
+// wind a moment after the gusts pass.
+function hangingSign(ctx, x, y, label, time, wx = x) {
   ctx.font = 'bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
-  const w = ctx.measureText(label).width + 12;
-  const sway = Math.sin(time * 1.6 + x * 0.01) * 0.8;
-  ctx.strokeStyle = '#8a6a4a';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x - w / 2 + 4, y - 6);
-  ctx.lineTo(x - w / 2 + 4 + sway, y);
-  ctx.moveTo(x + w / 2 - 4, y - 6);
-  ctx.lineTo(x + w / 2 - 4 + sway, y);
-  ctx.stroke();
-  box(ctx, x - w / 2 + sway, y, w, 11, { fill: '#f6dfb8', edge: '#a8764a', r: 3, width: 1.2 });
-  text(ctx, label, x + sway, y + 8, { size: 7, bold: true, align: 'center', color: '#6a4a2b' });
+  const w = Math.round(ctx.measureText(label).width + 12);
+  const r = ramp('#f0cf9a', 0.8);
+  pivoted(ctx, x, y - 6, swing(time, wx, 1.3, x * 0.01), () => {
+    const bx = Math.round(x - w / 2);
+    // Chains of small links from the hooks.
+    for (const cx of [bx + 4, bx + w - 5]) {
+      ctx.fillStyle = '#8a6a4a';
+      for (let k = 0; k < 3; k++) ctx.fillRect(cx, y - 6 + k * 2, 1, 1.4);
+      ctx.fillStyle = '#c9a676';
+      ctx.fillRect(cx, y - 7, 1, 1);
+    }
+    // The board: lit top edge, shaded foot, a grain line or two.
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(bx, y, w, 11, 3);
+    ctx.fillStyle = r.base;
+    ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = r.hi;
+    ctx.fillRect(bx, y, w, 1.6);
+    ctx.fillStyle = r.sh;
+    ctx.fillRect(bx, y + 8.6, w, 2.4);
+    ctx.fillRect(bx + 3, y + 3, w * 0.22, 0.6);
+    ctx.fillRect(bx + w * 0.6, y + 7, w * 0.25, 0.6);
+    ctx.restore();
+    ctx.strokeStyle = r.deep;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(bx + 0.5, y + 0.5, w - 1, 10, 3);
+    ctx.stroke();
+    text(ctx, label, x, y + 8, { size: 7, bold: true, align: 'center', color: '#6a4a2b' });
+  });
+}
+
+// Water spilling from the fountain's top bowl into the basin, flowing (dashes running down each
+// sheet), a bubbling jet at the top, and splashes where the sheets land.
+function fountainWater(ctx, x, gy, time) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(x + side * 8, gy - 35);
+    ctx.quadraticCurveTo(x + side * 13, gy - 35, x + side * 15, gy - 17);
+    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = '#8fd3ff';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+    ctx.globalAlpha = 0.9;
+    ctx.setLineDash([3, 5]);
+    ctx.lineDashOffset = -time * 26;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    const u = (time * 3 + (side > 0 ? 0.5 : 0)) % 1;
+    ctx.globalAlpha = 0.8 * (1 - u);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(Math.round(x + side * (15 + u * 3)), Math.round(gy - 18 - Math.sin(u * Math.PI) * 3), 1, 1);
+    ctx.fillRect(Math.round(x + side * (15 - u * 2)), Math.round(gy - 18 - Math.sin(u * Math.PI) * 2), 1, 1);
+  }
+  for (let k = 0; k < 4; k++) {
+    const u = (time * 1.4 + k / 4) % 1;
+    ctx.globalAlpha = 0.9 * (1 - u * 0.6);
+    ctx.fillStyle = k % 2 ? '#bfe6ff' : '#ffffff';
+    ctx.fillRect(Math.round(x + (k - 1.5) * u * 4), Math.round(gy - 40 - Math.sin(u * Math.PI) * 5), 1.5, 1.5);
+  }
+  ctx.restore();
 }
 
 // Draws houses, NPC buildings, and the fountain along the street. Called from the scenery, after
@@ -278,24 +471,8 @@ export function drawStreet(ctx, map, cam, width, time) {
     const x = snap(map.plaza - cam.x);
     const gy = ground(map.plaza);
     if (x > -60 && x < width + 60) {
-      place(ctx, fountainArt(), x, gy);
-      ctx.save();
-      for (let i = 0; i < 10; i++) {
-        const u = (time * 0.9 + i / 10) % 1;
-        const side = i % 2 ? 1 : -1;
-        const px = x + side * u * 22;
-        const py = gy - 40 - Math.sin(u * Math.PI) * 10 + u * 22;
-        ctx.globalAlpha = 0.8 * (1 - u * 0.5);
-        ctx.fillStyle = i % 3 ? '#bfe6ff' : '#ffffff';
-        ctx.fillRect(Math.round(px), Math.round(py), 2, 2);
-      }
-      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 3);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(x, gy - 16, 8 + ((time * 10) % 12), 1.6, 0, 0, TAU);
-      ctx.stroke();
-      ctx.restore();
+      place(ctx, fountainArt(Math.floor(time * 5) % FOUNTAIN_FRAMES), x, gy);
+      fountainWater(ctx, x, gy, time);
     }
   }
   // Each NPC's stall or hall, with its sign.
@@ -304,12 +481,12 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (!npc.building) continue;
     const x = snap(n.x - cam.x);
     if (x < -80 || x > width + 80) continue;
-    const s = buildingArt(npc.building, time);
+    const s = buildingArt(npc.building, time, n.x);
     if (!s) continue;
     const gy = ground(n.x);
     place(ctx, s, x, gy);
     if (npc.building === 'forge') forgeGlow(ctx, x, gy, time);
-    if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time);
+    if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, n.x);
   }
 }
 

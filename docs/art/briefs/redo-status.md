@@ -4,6 +4,13 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
 
 - Gear and weapons: material shading under one light, hue-shifted ramps, capes/skirts as chains,
   weapons growing every tier, weapon icons per rank. Weapons in hand now render at body resolution.
+- Town buildings and dungeon props, hand-shaded on the prop kit (no automatic shade, so no hard
+  strips down walls): stalls (lit awning stripes, valance scallops as a wind chain), guild halls
+  (stone or plank walls, shingled gables, eave shadows, banners as chains), kiosk (a notice lifts
+  in gusts), office (clapboard), adobe (beam-end shadows, deep-set door), fountain (stone basin,
+  spreading rings, flowing sheets), hanging sign (swings from its pivot with the wind); glowcap
+  (pulsing spots), cage (bark roots, stone plinth, iron padlock), seal (bark roots, carved stone
+  ring with runes lighting in turn), chest (plank grain, 3-step gold, iron caps), key (bark, glint).
 - Map props, landmarks, scenery: auto-lit props, foliage, wind poses, swirling portals.
 - Summons: Guardian Angel, Frost Sprite, Venom Salamander, Thunder Hawk re-rigged; Seraphim staff.
 - Hero rig: kit eyes, skin and hair ramps, clumped bangs, selective outlines, walk vs run gaits with
@@ -58,8 +65,5 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   Tortoise tail a stub.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
 - Thunder Hawk has no skill that summons it.
-- Props: town buildings in `town.js` (stalls, halls, kiosk, office, fountain, adobe, hanging sign —
-  the sign should swing with the wind) and dungeon props in `dungeon.js` (glowcap, cage, seal,
-  chest, key) only got automatic shading; backdrop far/mid silhouettes not redone; waterfall and
-  pond water colours still old; check rectangle-heavy props for hard shadow strips from the
-  automatic shading (clouds needed hand shading). Shared prop kit: `src/render/propkit.js`.
+- Props: backdrop far/mid silhouettes not redone; waterfall and pond water colours still old.
+  Shared prop kit: `src/render/propkit.js`.

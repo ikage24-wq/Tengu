@@ -3,7 +3,8 @@
 // root keys, and the floor telegraphs for boss attacks with the bursts they end in. Everything is
 // drawn in screen space with (x, y) the bottom center on the floor; `time` (seconds) animates.
 
-import { R, E, T, F, shade } from './pixel.js';
+import { R, E, T, F, mix } from './pixel.js';
+import { ramp, bark, stones, planks } from './propkit.js';
 import { art, place, face } from './scenery.js';
 import { puff, crown, shock, wisp, starFlash, easeOut } from './fxkit.js';
 
@@ -106,17 +107,26 @@ const blinking = (time, seed) => ((time * 0.35 + seed * 7.3) % 1) < 0.05;
 
 // ---------- Glowcap: a lamp mushroom the party lights ----------
 
-function glowcapArt(lit, blink) {
+// Hand-shaded under the world light from the upper left: the cap's lit crown and shaded right
+// flank, gills in shadow under the rim, a fibrous stalk in the cap's shade. `g` (0 ... 2) is how
+// brightly the spots glow in the pulse.
+function glowcapArt(lit, blink, g = 0) {
   const cap = lit ? '#ffcf7a' : '#9aa8c6';
   const stalk = lit ? '#fff4e0' : '#dad8e4';
-  const spot = lit ? '#c4fff2' : '#c2cadc';
-  return art(`dg-glowcap|${lit}|${blink}`, 24, 36, () => [
+  const cr = ramp(cap, 0.8);
+  const sr = ramp(stalk, 0.6);
+  const spot = lit ? mix('#c4fff2', '#ffffff', g * 0.3) : '#c2cadc';
+  return art(`dg-glowcap|${lit}|${blink}|${g}`, 24, 36, () => [
     E(12, 35, 7.4, 1.4, stalk), R(7.4, 18, 9.2, 17, stalk),
+    F(R(7.4, 18, 2.2, 17, sr.hi)), F(R(13.8, 18, 2.8, 17, sr.sh)), F(R(7.4, 19.6, 9.2, 3, sr.sh)), F(R(10.6, 24, 0.6, 9, sr.sh)),
     T([[0.8, 20], [2.2, 12], [6.4, 5.4], [12, 3], [17.6, 5.4], [21.8, 12], [23.2, 20]], cap),
-    F(E(12, 20, 10.4, 1.3, shade(cap, -14))),
+    F(T([[16, 6.6], [17.6, 5.4], [21.8, 12], [23.2, 20], [18.2, 20], [19.4, 13]], cr.sh)),
+    F(T([[3, 13.4], [5.8, 7.2], [10, 4.4], [13, 4.2], [8.6, 7.6], [5.8, 13.6]], cr.hi)),
+    F(E(12, 20, 10.4, 1.4, cr.sh)), F(E(12, 20.5, 8.6, 0.8, cr.deep)),
     F(E(6.4, 11.4, 2, 1.6, spot)), F(E(14.6, 7.4, 2.4, 1.6, spot)), F(E(18.6, 14, 1.6, 1.2, spot)), F(E(10.6, 15, 1.2, 1, spot)),
+    ...(lit && g ? [F(E(6, 11, 0.8, 0.6, '#ffffff')), F(E(14.2, 7, 0.9, 0.6, '#ffffff'))] : []),
     ...face(12, 26.4, 2.2, lit ? (blink ? 'closed' : 'happy') : 'closed', lit ? 'smile' : 'o'),
-  ]);
+  ], false);
 }
 
 // A lamp mushroom about 24 wide and 36 tall: dull and dozing until lit, then a warm glowing cap
@@ -134,7 +144,7 @@ export function drawGlowcap(ctx, x, y, lit, time) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(1 + pulse * 0.03, 1 - pulse * 0.025);
-  place(ctx, glowcapArt(true, blinking(time, 0.3)), 0, 0);
+  place(ctx, glowcapArt(true, blinking(time, 0.3), Math.round(pulse * 2)), 0, 0);
   ctx.restore();
   // Spores of light drifting up off the cap.
   for (let k = 0; k < 3; k++) {
@@ -161,7 +171,17 @@ function sproutArt(happy, frame) {
   });
 }
 
-// `strain` 0..2 bows the bars outward; `j` shifts them a hair to make them shudder.
+const ROOT_R = ramp(ROOT, 0.8);
+const ROOT_LIGHT_R = ramp(ROOT_LIGHT, 0.8);
+const PLINTH = ramp('#a497b8', 0.7);
+const IRON = ramp('#8d92b4', 0.9);
+
+// A mossy stone plinth the cage stands on.
+const plinth = (x, y, w, h) => [...stones(x, y, w, h, PLINTH, 2, { rowH: h, blockW: 8 }), F(E(x + w * 0.27, y + 0.4, 4, 1, MOSS)), F(E(x + w * 0.76, y + 0.3, 3, 0.9, MOSS))];
+
+// `strain` 0..2 bows the bars outward; `j` shifts them a hair to make them shudder. Roots are
+// bark (grain, lit left flank, shaded right); an iron padlock with a three-step shine hangs on
+// the door bar.
 function cageArt(strain, j) {
   return art(`dg-cage|${strain}|${j}`, 32, 36, () => {
     const out = [];
@@ -170,14 +190,17 @@ function cageArt(strain, j) {
       const s = Math.sign(xb - 16);
       const top = 16 + (xb - 16) * 0.22;
       const jit = j && strain ? (i % 2 ? 0.5 : -0.5) : 0;
-      out.push(band(curve(xb, 33, xb + s * (2 + bow) + jit, 12, top, 4.4), (u) => 1.5 - u * 0.5, i % 2 ? ROOT_LIGHT : ROOT));
+      out.push(...bark(curve(xb, 33, xb + s * (2 + bow) + jit, 12, top, 4.4), (u) => 1.5 - u * 0.5, i % 2 ? ROOT_LIGHT_R : ROOT_R, i, 1));
     }
     // Woven cross roots and a mossy knot on top with a leaf.
-    out.push(band(curve(1.6, 19, 16, 21.4 + bow, 30.4, 19), () => 1.1, ROOT_LIGHT), band(curve(5.4, 10.4, 16, 12.6 + bow * 0.6, 26.6, 10.4), () => 0.9, ROOT));
-    out.push(R(1, 31.4, 30, 4.4, ROOT_DEEP), E(16, 31.4, 15, 1.6, ROOT), F(E(9, 33.6, 2.4, 0.6, shade(ROOT_DEEP, 8))), F(E(23, 33.6, 2.4, 0.6, shade(ROOT_DEEP, 8))));
-    out.push(E(16, 4.4, 4, 3, ROOT), E(13.6, 2.8, 2.4, 1.4, MOSS), T([[17, 2.4], [19.6, -0.4], [22.4, 0.2], [20, 2.6]], LEAF));
+    out.push(...bark(curve(1.6, 19, 16, 21.4 + bow, 30.4, 19), () => 1.1, ROOT_LIGHT_R, 5, 1), ...bark(curve(5.4, 10.4, 16, 12.6 + bow * 0.6, 26.6, 10.4), () => 0.9, ROOT_R, 6, 1));
+    out.push(...plinth(1, 31, 30, 5));
+    out.push(E(16, 4.4, 4, 3, ROOT), F(E(16.8, 5.2, 3, 2, ROOT_R.sh)), F(E(15.2, 3.8, 2.4, 1.6, ROOT_LIGHT)), E(13.6, 2.8, 2.4, 1.4, MOSS), T([[17, 2.4], [19.6, -0.4], [22.4, 0.2], [20, 2.6]], LEAF), F(T([[19.6, -0.4], [22.4, 0.2], [20, 2.6]], '#6fc994')));
+    // The padlock on the right-hand door bar.
+    const lx = 22.2 + bow * 0.6;
+    out.push(band(curve(lx - 1.6, 23, lx, 19.8, lx + 1.6, 23, 4), () => 0.55, IRON.sh), R(lx - 2.4, 22.6, 4.8, 4, IRON.base), F(R(lx - 2.4, 22.6, 4.8, 1, IRON.hi)), F(R(lx + 0.9, 23.6, 1.5, 3, IRON.sh)), F(R(lx - 1.8, 23.2, 0.8, 0.8, '#ffffff')), F(R(lx - 0.3, 24, 0.6, 1.6, IRON.deep)));
     return out;
-  });
+  }, false);
 }
 
 function cageOpenArt() {
@@ -185,14 +208,14 @@ function cageOpenArt() {
     const out = [];
     for (const [i, [xb, dx, len]] of [[5, -4, 8], [11, -2, 6], [18, 0.6, 7], [25, 2.4, 6], [31, 4, 9]].entries()) {
       const pts = curve(xb, 12, xb + dx * 0.4, 12 - len * 0.6, xb + dx, 12 - len, 4);
-      out.push(band(pts, () => 1.5, i % 2 ? ROOT_LIGHT : ROOT));
+      out.push(...bark(pts, () => 1.5, i % 2 ? ROOT_LIGHT_R : ROOT_R, i, 0));
       const [tx, ty] = pts[4];
       // Snapped ends showing pale wood inside.
       out.push(T([[tx - 1.6, ty + 0.6], [tx - 0.6, ty - 1.6], [tx + 0.2, ty], [tx + 1.2, ty - 1.4], [tx + 1.6, ty + 0.6]], WOOD_IN));
     }
-    out.push(R(3, 10, 30, 4, ROOT_DEEP), E(18, 10, 15, 1.4, ROOT), E(8, 9, 3, 1.4, MOSS));
+    out.push(...plinth(3, 10, 30, 4));
     return out;
-  });
+  }, false);
 }
 
 // A cage of woven roots, about 32 wide and 36 tall, with a sprout trapped inside crying. While
@@ -252,6 +275,23 @@ const THORN_ROOT = '#8e5e72';
 const THORN_ROOT2 = '#ac788a';
 const THORN = '#f3d6d0';
 
+const THORN_R = ramp(THORN_ROOT, 0.8);
+const THORN_R2 = ramp(THORN_ROOT2, 0.8);
+const SEAL_STONE = ramp('#9a8fb0', 0.8);
+// Rune glyphs carved round the leaf-lock, as strokes in a unit box (x0, y0, x1, y1).
+const RUNES = [
+  [[0, -1, 0, 1], [0, 0, 0.8, -0.7]],
+  [[-0.6, -1, 0.6, 1], [0.6, -1, -0.6, 1]],
+  [[0, -1, 0, 1], [-0.8, -0.4, 0, 0.2], [0.8, -0.4, 0, 0.2]],
+  [[-0.7, 1, 0, -1], [0, -1, 0.7, 1]],
+  [[0, -1, 0, 1], [0, -1, 0.7, -0.4], [0.7, -0.4, 0, 0.2]],
+  [[-0.7, -0.7, 0.7, -0.7], [0, -0.7, 0, 1]],
+];
+const runeAt = (i) => {
+  const a = -Math.PI / 2 + (i * TAU) / RUNES.length;
+  return [Math.cos(a) * 10.4, Math.sin(a) * 10.4];
+};
+
 function sealArt(f) {
   return art(`dg-seal|${f}`, 48, 76, () => {
     const out = [];
@@ -268,9 +308,8 @@ function sealArt(f) {
       [[8, 76], [20 + w(5), 64 + w(2)], [36, 70], [44, 60]],
     ];
     roots.forEach((r, i) => {
-      const c = i % 2 ? THORN_ROOT2 : THORN_ROOT;
-      out.push(band(r, (u) => (i < 2 ? 4 : 2.8) - u * (i < 2 ? 1.4 : 1), c));
-      // Thorns along it, alternating sides.
+      out.push(...bark(r, (u) => (i < 2 ? 4 : 2.8) - u * (i < 2 ? 1.4 : 1), i % 2 ? THORN_R2 : THORN_R, i, i < 2 ? 2 : 1));
+      // Thorns along it, alternating sides, lit on their upper-left face.
       for (let k = 1; k < r.length; k++) {
         const [ax, ay] = r[k - 1];
         const [bx, by] = r[k];
@@ -283,14 +322,44 @@ function sealArt(f) {
         const tx = (bx - ax) / l;
         const ty = (by - ay) / l;
         const base = i < 2 ? 3.4 : 2.4;
-        out.push(T([[mx + nx * base - tx * 1.8, my + ny * base - ty * 1.8], [mx + nx * (base + 4) + tx * 1.2, my + ny * (base + 4) + ty * 1.2], [mx + nx * base + tx * 1.8, my + ny * base + ty * 1.8]], THORN));
+        const tip = [mx + nx * (base + 4) + tx * 1.2, my + ny * (base + 4) + ty * 1.2];
+        out.push(T([[mx + nx * base - tx * 1.8, my + ny * base - ty * 1.8], tip, [mx + nx * base + tx * 1.8, my + ny * base + ty * 1.8]], THORN));
+        out.push(F(T([[mx + nx * base + tx * 0.2, my + ny * base + ty * 0.2], tip, [mx + nx * base + tx * 1.8, my + ny * base + ty * 1.8]], '#d9b0b4')));
       }
     });
-    // The leaf-lock: a round wooden boss with a glowing leaf and a keyhole.
-    out.push(E(24, 40, 8.6, 8.6, ROOT_DEEP), E(24, 40, 6.6, 6.6, '#c99a7a'), T([[24, 33.4], [28.4, 37.6], [26.4, 43], [24, 44.6], [21.6, 43], [19.6, 37.6]], LEAF),
-      F(R(23.6, 35, 0.8, 9, '#d8ffe8')), F(E(24, 46.4, 1.2, 1.2, INK)), F(T([[23.3, 46.8], [24.7, 46.8], [25.2, 49], [22.8, 49]], INK)));
+    // The leaf-lock: a ring of carved stone, a round wooden boss with a glowing leaf, a keyhole.
+    out.push(E(24, 40, 13, 13, SEAL_STONE.base), F(E(25, 41.2, 12, 12, SEAL_STONE.sh)), F(E(23.4, 39.4, 11.6, 11.6, SEAL_STONE.base)), F(E(21, 33.4, 5, 2.2, SEAL_STONE.hi)));
+    RUNES.forEach((g, i) => {
+      const [rx, ry] = runeAt(i);
+      for (const [x0, y0, x1, y1] of g) out.push(F(band([[24 + rx + x0 * 1.6, 40 + ry + y0 * 1.6], [24 + rx + x1 * 1.6, 40 + ry + y1 * 1.6]], () => 0.4, SEAL_STONE.deep)));
+    });
+    out.push(E(24, 40, 7.6, 7.6, ROOT_DEEP), E(24, 40, 6, 6, '#c99a7a'), F(E(25, 41, 5, 5, '#ad7f64')), F(E(23.4, 39.4, 4.8, 4.8, '#c99a7a')), T([[24, 34], [28, 37.8], [26.2, 42.6], [24, 44], [21.8, 42.6], [20, 37.8]], LEAF),
+      F(T([[24, 34], [28, 37.8], [26.2, 42.6], [24, 44]], '#6fc994')), F(R(23.6, 35.4, 0.8, 8, '#d8ffe8')), F(E(24, 46.4, 1.2, 1.2, INK)), F(T([[23.3, 46.8], [24.7, 46.8], [25.2, 49], [22.8, 49]], INK)));
     return out;
+  }, false);
+}
+
+// The runes round the seal's lock light one after another, a glow running round the ring.
+function sealRunes(ctx, x, y, time) {
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
+  RUNES.forEach((g, i) => {
+    const [rx, ry] = runeAt(i);
+    const on = Math.pow(Math.max(0, Math.cos(time * 2.2 - (i * TAU) / RUNES.length)), 3);
+    const cx = x + rx;
+    const cy = y - 36 + ry;
+    if (on > 0.4) glow(ctx, cx, cy, 5, '#9ff0c8', on * 0.6);
+    ctx.globalAlpha = 0.3 + 0.7 * on;
+    ctx.strokeStyle = on > 0.6 ? '#f0fff6' : '#9ff0c8';
+    ctx.beginPath();
+    for (const [x0, y0, x1, y1] of g) {
+      ctx.moveTo(cx + x0 * 1.6, cy + y0 * 1.6);
+      ctx.lineTo(cx + x1 * 1.6, cy + y1 * 1.6);
+    }
+    ctx.stroke();
   });
+  ctx.restore();
 }
 
 function sealOpenArt() {
@@ -325,6 +394,7 @@ export function drawSeal(ctx, x, y, open, time) {
   ctx.save();
   ctx.translate(Math.round(Math.sin(time * 1.3) * 0.6), 0);
   place(ctx, sealArt(f), x, y);
+  sealRunes(ctx, x, y, time);
   ctx.restore();
   glow(ctx, x, y - 37, 7 + pulse * 2, '#d8ffe8', 0.35 + pulse * 0.3);
   ctx.globalAlpha = 0.6 + 0.4 * pulse;
@@ -334,6 +404,15 @@ export function drawSeal(ctx, x, y, open, time) {
 
 // ---------- Chest ----------
 
+const CHEST_WOOD = ramp('#b9805e', 0.8);
+const CHEST_LID = ramp('#c98d68', 0.8);
+const GOLD_R = ramp(GOLD, 0.8);
+// A gold strap or rim with a three-step shine: lit band, base, shade, and a hard glint.
+const strap = (x, y, w, h) => [R(x, y, w, h, GOLD), F(R(x, y, w * 0.36, h, GOLD_R.hi)), F(R(x + w * 0.68, y, w * 0.32, h, GOLD_R.sh)), F(R(x + 0.3, y + 1, 0.8, 0.8, '#ffffff'))];
+const rim = (x, y, w, h) => [R(x, y, w, h, GOLD), F(R(x, y, w, h * 0.34, GOLD_R.hi)), F(R(x, y + h * 0.7, w, h * 0.3, GOLD_R.sh)), F(R(x + 2, y + 0.2, 1, 0.6, '#ffffff'))];
+
+// Hand-shaded: plank grain on the body, the domed lid lit on its upper left and turning into
+// shade on the right, gold straps and iron corner caps that shine in three steps.
 function chestArt(open) {
   const lift = open ? 9 : 0;
   return art(`dg-chest|${open}`, 36, 28 + lift, () => {
@@ -341,19 +420,25 @@ function chestArt(open) {
     const out = [];
     if (open) {
       // The lid tipped back, seen from inside, and the treasure peeking out.
-      out.push(T([[3.4, b + 1], [0.6, 1.4], [35.4, 1.4], [32.6, b + 1]], '#c98d68'), T([[5.6, b], [3.6, 4], [32.4, 4], [30.4, b]], '#8a5a48'),
-        R(0.6, 0.4, 34.8, 2.6, GOLD), E(18, b - 0.6, 13.4, 4.2, GOLD), E(10, b - 1.4, 4, 2.4, '#ffe38a'), E(25, b - 2, 4.4, 2.6, '#ffe38a'),
+      out.push(T([[3.4, b + 1], [0.6, 1.4], [35.4, 1.4], [32.6, b + 1]], '#c98d68'), T([[5.6, b], [3.6, 4], [32.4, 4], [30.4, b]], '#8a5a48'));
+      for (let k = 0; k < 3; k++) out.push(F(R(4.6 + k * 0.4, 6.4 + k * 3.4, 27 - k * 0.8, 0.6, '#6e4636')));
+      out.push(...rim(0.6, 0.4, 34.8, 2.6), E(18, b - 0.6, 13.4, 4.2, GOLD), F(E(19.4, b + 0.4, 12, 3, GOLD_R.sh)), F(E(17, b - 1.4, 11, 2.8, GOLD)),
+        E(10, b - 1.4, 4, 2.4, '#ffe38a'), E(25, b - 2, 4.4, 2.6, '#ffe38a'),
         F(E(12, b - 2, 1.6, 0.8, '#fff6c9')), F(E(21, b - 3.4, 1.6, 0.8, '#fff6c9')), F(E(26, b - 3, 1.4, 0.7, '#fff6c9')), E(16.6, b - 3.2, 1.6, 1.6, '#ff9ec0'), F(E(16.2, b - 3.6, 0.5, 0.5, '#ffffff')));
     } else {
-      out.push(T([[2, 13], [3, 6], [8, 2.4], [18, 1.4], [28, 2.4], [33, 6], [34, 13]], '#c98d68'), F(E(12, 5, 4, 1, '#e3ad88')));
+      out.push(T([[2, 13], [3, 6], [8, 2.4], [18, 1.4], [28, 2.4], [33, 6], [34, 13]], '#c98d68'),
+        F(R(4, 6.4, 28, 0.6, CHEST_LID.sh)), F(R(3, 9.6, 30, 0.6, CHEST_LID.sh)),
+        F(T([[4, 7.6], [7.6, 3.4], [16, 2.4], [16, 3.4], [9, 4.6], [5.4, 8]], CHEST_LID.hi)),
+        F(T([[27.4, 2.6], [33, 6], [34, 13], [30.4, 13], [30.6, 7]], CHEST_LID.sh)), F(R(2, 11.6, 32, 1.4, CHEST_LID.sh)));
     }
-    out.push(R(2, b, 32, 15, '#b9805e'), F(R(4, b + 6, 28, 0.8, '#a06c50')), F(R(4, b + 10.4, 28, 0.8, '#a06c50')),
-      R(6, b + (open ? 0 : -10), 2.6, open ? 15 : 25, GOLD), R(27.4, b + (open ? 0 : -10), 2.6, open ? 15 : 25, GOLD), R(1.6, b - 0.6, 32.8, 2.4, GOLD),
-      T([[2, b + 15], [2, b + 10], [6, b + 13], [5, b + 15]], LEAF), T([[34, b + 15], [34, b + 10], [30, b + 13], [31, b + 15]], LEAF),
-      // The leaf clasp.
-      T([[18, b - 3], [21.6, b + 1.6], [18, b + 7], [14.4, b + 1.6]], GOLD), F(T([[18, b - 1], [19.8, b + 1.8], [18, b + 4.6], [16.2, b + 1.8]], LEAF)), F(R(17.7, b - 0.4, 0.6, 4.6, '#d8ffe8')));
+    out.push(...planks(2, b, 32, 15, CHEST_WOOD, 3, 5, true), F(R(31.2, b, 2.8, 15, CHEST_WOOD.sh)), F(R(2, b + 1.6, 32, 1.4, CHEST_WOOD.deep)));
+    out.push(...strap(6, b + (open ? 0 : -10), 2.6, open ? 15 : 25), ...strap(27.4, b + (open ? 0 : -10), 2.6, open ? 15 : 25), ...rim(1.6, b - 0.6, 32.8, 2.4));
+    // Iron corner caps.
+    for (const cx of [1.6, 30.4]) out.push(R(cx, b + 11, 4, 4, IRON.base), F(R(cx, b + 11, 4, 1, IRON.hi)), F(R(cx + 2.8, b + 12, 1.2, 3, IRON.sh)), F(R(cx + 0.6, b + 11.6, 0.8, 0.8, '#ffffff')));
+    // The leaf clasp.
+    out.push(T([[18, b - 3], [21.6, b + 1.6], [18, b + 7], [14.4, b + 1.6]], GOLD), F(T([[18, b - 3], [21.6, b + 1.6], [18, b + 7]], GOLD_R.sh)), F(T([[18, b - 1], [19.8, b + 1.8], [18, b + 4.6], [16.2, b + 1.8]], LEAF)), F(R(17.7, b - 0.4, 0.6, 4.6, '#d8ffe8')), F(R(15.6, b + 0.6, 0.8, 0.8, '#ffffff')));
     return out;
-  });
+  }, false);
 }
 
 // A root-wood treasure chest about 36 wide and 28 tall, trimmed in gold with a leaf clasp.
@@ -402,10 +487,11 @@ export function drawChest(ctx, x, y, open, time) {
 // ---------- Root key ----------
 
 const rootKeyArt = () => art('dg-rootkey', 12, 22, () => [
-  band([[6, 9], [5.6, 12], [6.4, 16], [6, 21]], () => 1.3, ROOT), R(6.6, 15.6, 3.2, 1.6, ROOT), R(6.6, 18.8, 2.4, 1.6, ROOT),
+  ...bark([[6, 9], [5.6, 12], [6.4, 16], [6, 21]], () => 1.3, ROOT_R, 3, 1), R(6.6, 15.6, 3.2, 1.6, ROOT), F(R(6.6, 16.6, 3.2, 0.6, ROOT_R.sh)), R(6.6, 18.8, 2.4, 1.6, ROOT), F(R(6.6, 19.8, 2.4, 0.6, ROOT_R.sh)),
   T([[5.4, 13], [3, 12.4], [2.6, 14]], MOSS),
-  T([[6, 0.4], [10.4, 3.6], [10.4, 7], [6, 10], [1.6, 7], [1.6, 3.6]], LEAF), F(E(6, 5.2, 1.8, 2.2, '#5fbf8a')), F(E(6, 5.2, 0.9, 1.2, '#d8ffe8')),
-]);
+  T([[6, 0.4], [10.4, 3.6], [10.4, 7], [6, 10], [1.6, 7], [1.6, 3.6]], LEAF), F(T([[6, 0.4], [10.4, 3.6], [10.4, 7], [6, 10]], '#6fc994')), F(T([[2.4, 4], [6, 1.4], [6, 2.6], [3.2, 5]], '#c8f7dc')),
+  F(E(6, 5.2, 1.8, 2.2, '#5fbf8a')), F(E(6, 5.2, 0.9, 1.2, '#d8ffe8')),
+], false);
 
 // A small floating key of root with a glowing leaf bow, about 12 wide and 22 tall, bobbing
 // above its spot on the ground.
@@ -418,6 +504,12 @@ export function drawRootKey(ctx, x, y, time) {
   const a = time * 2.4;
   ctx.globalAlpha = 0.6 + 0.4 * Math.sin(a * 2);
   sparkle(ctx, x + Math.cos(a) * 9, ky - 14 + Math.sin(a) * 5, 1.6, '#ffffff');
+  // Now and then a glint runs over the leaf bow.
+  const gl = (time * 0.45) % 1;
+  if (gl < 0.14) {
+    ctx.globalAlpha = Math.sin((gl / 0.14) * Math.PI);
+    sparkle(ctx, x - 3 + (gl / 0.14) * 6, ky - 20 + (gl / 0.14) * 3, 2.2, '#ffffff');
+  }
   ctx.globalAlpha = 1;
 }
 
