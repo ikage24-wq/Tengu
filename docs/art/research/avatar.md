@@ -85,9 +85,58 @@ says many more examples are on X, Pinterest and Reddit, so ask them for screensh
 6. **The inner layer is darker.** Hair seen behind the face and neck is a step darker, the same
    as our rule that back hair uses shadow 1.
 
+## What the reference library teaches (about 430 images; links in [avatar-refs.md](avatar-refs.md))
+
+**Hair (128 items).**
+- Each hairstyle is a strong shape: twin drills, giant curls, huge wavy manes, twintails with loops,
+  hime cuts, short shaggy cuts, side tails, braids and buns made of hair.
+- Very long hair is common, often reaching the knees in big S-waves, and the ends are almost
+  always curled or split into points.
+- Gradient and two-tone hair is common: tips fading to another colour, streaks, a panel of a
+  second colour under the top layer. **Tengu:** a tip colour or underlayer colour option would add
+  a lot for little cost.
+- Bangs come in many forms: blunt, wispy, side-swept, or long over one eye.
+
+**Outfits (139 items plus 16 design sheets).**
+- *Silhouette first.* Skirts are big, in 2–4 tiers of ruffles over a petticoat. Hems are often
+  uneven (high-low, fishtail, trains), sleeves are puffed or bell-shaped, and long sashes and
+  ribbons stream out as if in wind.
+- *Every edge gets a finish.* Lace, frills, scallops, piping or a contrasting band at the collar,
+  cuffs and hem. Bows go at the collar, waist and shoes.
+- *One theme motif, repeated small.* Strawberry, cherry, penguin, citrus, roses, stars, candy or
+  moon. The motif appears in the print, the trims, the props and the hat, so the whole set reads
+  as one idea.
+- *Colour.* Two or three main colours plus white or cream for the trims, mostly pastel. Dark
+  outfits (gothic, punk) use black with one vivid accent (red, purple, neon green). Every outfit
+  comes in several colourways.
+- *Types that come up again and again:* lolita dresses, sailor and school uniforms, idol and
+  magical-girl outfits, gothic and punk sets, maid outfits, Chinese hanfu and qipao, kimono,
+  fairy and angel dresses, cosy oversized sweaters and hoodies, streetwear, and suits.
+- *Legs.* Striped or lace stockings, garters, and platform shoes or boots with bows or straps.
+
+**Faces and eyes (36).**
+- Very large eyes with a gradient iris (darker at the top), two or three white highlights and
+  sometimes a star or heart in the pupil.
+- Thin, light brows, a pink wash of blush, sometimes freckles, and a tiny mouth.
+- Faces are sold as items, with different eyes, makeup and expressions.
+
+**Hats, props and accessories (27).**
+- Small tilted hats (boaters, mini top hats) with long ribbon tails; hair flowers and crowns.
+- Big props held, ridden or worn: a soda glass you sit in, a swim ring, a penguin, citrus slices,
+  wings and halo-like back pieces.
+
+**Stages and backdrops (15).**
+- Each set comes with a matching wallpaper, floor and frame, shown behind three silhouettes, so
+  the avatar always stands in a themed scene.
+
+**Full coordinates (57 player looks).**
+- Players finish a look with a themed backdrop, matching effects (petals, sparkles, bubbles)
+  and a pose. The whole picture shares one colour key, either light and pastel or dark and rich.
+
 ## To do with this reference
 
-- [ ] Get screenshots from the player of SELFY / CocoPPa hair and outfits, and measure them:
-  hair volume against head size, clump count, how the shine is drawn, and line colour.
+- [x] Gather a reference library: 128 hair, 139 outfits, faces, props, stages and full looks
+  (see [avatar-refs.md](avatar-refs.md)).
+- [ ] Try a two-tone hair option (tips or underlayer in a second colour).
 - [ ] Try a first themed set (for example a summer-soda set: hair, outfit, hat, a prop and
   colourways) as a shop or event set.
