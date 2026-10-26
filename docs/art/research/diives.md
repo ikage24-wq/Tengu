@@ -54,7 +54,7 @@ acting, expressions and design, not for pixel technique (see [sakuemon.md](sakue
 
 ## Apply to Tengu
 
-- **Expressions** (the face sets in ): stronger mouth shapes, hatched blush, heart
+- **Expressions** (the face sets in `hero.js`): stronger mouth shapes, hatched blush, heart
   pupils, popping symbols with a squash, and a head squash and stretch on startle and joy.
 - **Emotes and chat bubbles:** pop in with an overshoot, then hold.
 - **NPC dialog portraits:** acting with holds and quick changes; shy and nervous fidgets.
