@@ -568,7 +568,6 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   let alpha = 1;
   let sx = 1;
   let sy = 1;
-  let hop = 0;
   if (m.def.boss) {
     sy = 1 + Math.sin(t * 2) * 0.015;
     if (m.special?.warn > 0) {
@@ -577,15 +576,9 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
       sx = 1.08;
       x += Math.sin(time * 60) * 1.5;
     }
-  } else if (moving && !flying) {
-    const p = (t * 2.6 * fast) % 1;
-    hop = Math.sin(p * Math.PI) * (mood === 'angry' ? 4 : 3);
-    const squash = p < 0.12 || p > 0.9 ? 0.12 : 0;
-    sx = 1 + squash - (hop > 2 ? 0.04 : 0);
-    sy = 1 - squash + (hop > 2 ? 0.06 : 0);
-  } else {
-    sy = 1 + Math.sin(t * 3) * 0.03;
-    sx = 1 - Math.sin(t * 3) * 0.02;
+  } else if (!moving) {
+    // The idle frames breathe; this only softens the steps between them.
+    sy = 1 + Math.sin(t * 3) * 0.012;
   }
   if (m.flash > 0) {
     sx *= 1.14;
@@ -606,22 +599,22 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   }
   if (sx <= 0 || sy <= 0) return;
   if (!flying) {
-    // Ground shadow, along the slope it stands on; it shrinks a little at the top of each hop.
-    footShadow(ctx, x, y, Math.max(8, s.w * 0.42) * (1 - hop * 0.04), m.yAt ? (m.yAt(m.x + 6) - m.yAt(m.x - 6)) / 12 : 0, alpha);
+    // Ground shadow, along the slope it stands on.
+    footShadow(ctx, x, y, Math.max(8, s.w * 0.42), m.yAt ? (m.yAt(m.x + 6) - m.yAt(m.x - 6)) / 12 : 0, alpha);
   }
 
   // Knocked up into the air: drawn above its shadow, tumbling a little.
   const air = m.air > 0 ? m.air : 0;
   ctx.save();
-  ctx.translate(snap(x), snap(y - hop - air));
+  ctx.translate(snap(x), snap(y - air));
   if (air) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
   ctx.restore();
-  if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y - hop, s, time + m.uid);
+  if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);
   if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
   else if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
-  if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - hop - s.h * sy, t, now);
+  if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - s.h * sy, t, now);
 }
 
 // A clear block of ice around a frozen monster, with frosty edges, glints, and cracks as it thaws.
