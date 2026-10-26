@@ -26,6 +26,9 @@ import { pickTargets, weaponElement } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 
+// The longest freeze a blow gets; anything heavier turns the rest into slow motion.
+export const MAX_STOP = 0.1;
+
 // How long after a step ends you can still carry the combo on.
 const WINDOW = 0.45;
 // A step can be cut short into the next one this far through (heavy finishers play out longer).
@@ -125,7 +128,7 @@ function playStep(world, step, scale, key, school = null) {
   // A dash leaves speed lines and a shock cone along its path.
   if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   step.strikes.forEach((s, n) => {
-    world.strikes.push({ ...s, n, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
+    world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
   });
 }
 
@@ -178,8 +181,19 @@ function land(world, s) {
     world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big });
   });
   if (targets.length) {
-    world.hitstop = Math.max(world.hitstop, s.stop ?? (s.finisher ? 0.07 : 0.035));
-    if (s.shake) world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });
+    // Weight climbs a ladder: a light blow just stops; a heavy one stops, shakes, and kicks the
+    // view along the blow; the heaviest add a moment of slow motion after the stop instead of a
+    // longer freeze (past about 0.1 s a freeze starts to feel choppy). The middle blows of a
+    // flurry don't stop at all, so it flows into the hits that do. A strike hitting many
+    // monsters still stops once (the longest, never the sum).
+    const mid = s.of > 2 && s.n > 0 && s.n < s.of - 1 && !s.big;
+    const stop = s.stop ?? (s.finisher ? 0.07 : 0.035);
+    if (!mid) world.hitstop = Math.max(world.hitstop, Math.min(MAX_STOP, stop));
+    if (stop > MAX_STOP) world.slowmo = Math.max(world.slowmo ?? 0, 0.1 + (stop - MAX_STOP) * 2);
+    if (s.shake) {
+      world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });
+      world.juice.push({ type: 'kick', x: s.dir * Math.min(4, 1 + s.shake * 0.6), y: s.crack ? 2 : 0 });
+    }
   } else if (s.shake && s.crack) world.juice.push({ type: 'shake', mag: s.shake * 0.6, dur: 0.2 });
 }
 
@@ -216,8 +230,9 @@ function fire(world, s) {
     world.fx.push({ kind: 'projectile', shot: s.shot, school: s.school, element, starColor: star?.color, x: ox, y: oy, tx, ty, t: 0, dur: travel });
     return travel;
   };
-  // A little snap of the string (or flick of the wrist) as it goes.
-  world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16 });
+  // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
+  world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   if (s.pierce) {
     const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
     line.forEach((m, i) => shotHit(world, s, m, Math.abs(m.x - ox) / speed, i % 3, element));

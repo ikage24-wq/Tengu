@@ -8,7 +8,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
-import { COMBOS } from '../src/world/melee.js';
+import { COMBOS, MAX_STOP } from '../src/world/melee.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
 
@@ -114,6 +114,63 @@ test('Titan Breaker lands three heavy blows in one go', () => {
     last = m.hp;
   }
   assert.equal(marks.length, 3, `three blows (at frames ${marks})`);
+});
+
+// Records the hit-stop each blow asks for (tests never spend it, so it's read and cleared every tick).
+function stops(w, frames) {
+  const seen = [];
+  const m = w.mobs[0];
+  let last = m.hp;
+  const random = Math.random;
+  Math.random = () => 0.99; // always hit, never crit
+  try {
+    for (let i = 0; i < frames; i++) {
+      w.hitstop = 0;
+      updateWorld(w, DT, idle);
+      if (m.hp < last) seen.push({ stop: w.hitstop, slowmo: w.slowmo ?? 0 });
+      last = m.hp;
+      w.slowmo = 0;
+    }
+  } finally {
+    Math.random = random;
+  }
+  return seen;
+}
+
+test('only the first and last blows of a flurry stop the world', () => {
+  const w = arena('axe_20');
+  w.char.skills.whirlstrike = 10;
+  w.char.mp = 999;
+  assert.ok(cast(w, 'whirlstrike').ok);
+  const s = stops(w, 80);
+  assert.equal(s.length, 5, 'five blows');
+  assert.ok(s[0].stop > 0 && s[4].stop > 0, 'first and last stop');
+  for (const mid of s.slice(1, 4)) assert.equal(mid.stop, 0, 'the middle blows flow');
+});
+
+test('no freeze runs past MAX_STOP: the heaviest blows add slow motion instead', () => {
+  const w = arena('axe_20');
+  w.char.skills.titanbreaker = 10;
+  w.char.mp = 999;
+  assert.ok(cast(w, 'titanbreaker').ok);
+  const s = stops(w, 90);
+  assert.equal(s.length, 3);
+  for (const b of s) assert.ok(b.stop <= MAX_STOP, `stop ${b.stop}`);
+  assert.ok(s[2].slowmo > 0, 'the crushing last blow eases into slow motion');
+  assert.equal(s[0].slowmo, 0, 'lighter blows do not');
+});
+
+test('a blow that hits many monsters stops once, not once per monster', () => {
+  const w = arena();
+  for (let i = 0; i < 3; i++) updateWorld(w, DT, idle);
+  w.combo = 2;
+  w.comboUntil = w.now + 1;
+  const s = stops(w, 1);
+  assert.equal(s.length, 0);
+  updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
+  const hit = stops(w, 60);
+  assert.ok(hit.length >= 1);
+  assert.ok(hit[0].stop <= MAX_STOP, 'the cleave over three boars stops for its own length');
 });
 
 test('once a blow lands, moving cuts the follow-through short and skills can cut in', () => {

@@ -31,6 +31,13 @@ const SHOT_IMPACTS = {
   bigstar: 'xslash', wave: 'xslash', feather: 'claw',
 };
 
+// Hit-stop for a spell or shot landing: shots stop half as long as a blow, lightning a little
+// longer (it jolts), and an ultimate longest.
+function spellStop(s, params, ultimate) {
+  const base = ultimate ? 0.09 : params.projectile ? 0.02 : 0.035;
+  return base * (s?.school === 'lightning' ? 1.5 : 1);
+}
+
 const BASE_DELAY = 0.5; // seconds between attacks at normal speed
 // Shots and spells leave from the hands, chest high above the feet.
 const HAND_Y = 17;
@@ -253,8 +260,12 @@ export function cast(world, skillId, rng = Math.random) {
       const miss = rng() >= hitChance(acc, char.level, m.def);
       const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng, params.critRate ?? 0);
       const chainAt = params.chain ? ti * 0.06 : 0;
+      // Spells land with weight too: the first blow (and a long string's last) stops the world
+      // for a moment, but the hits in between don't, so a multi-hit flows.
+      const weighty = ti === 0 && type !== 'heal' && (n === 0 || (n === params.hits - 1 && params.hits > 2));
       world.pending.push({
         at: at + chainAt, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: n, knock: params.knock, launch: params.launch,
+        stop: weighty ? spellStop(s, params, ultimate) : undefined,
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
         burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school, element: star?.star.element,
       });

@@ -7,7 +7,7 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { drawBuffCast } from './buffs.js';
-import { crescent, starFlash, needle, shock, puff, crown, easeOut, easeIn } from './fxkit.js';
+import { crescent, starFlash, needle, shock, puff, crown, stepped, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
 
 const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
@@ -793,8 +793,18 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      // Where a blow lands: a star flash that snaps open and pulls in.
-      const k = p < 0.3 ? easeOut(p / 0.3) : 1 - (p - 0.3) / 0.7;
+      // A shot leaving the bow or hand: a white disc on its first drawings (the muzzle flash),
+      // then a small flash.
+      if (f.muzzle && p < 0.2) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, 5 * (1 - p * 2), 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      // Where a blow lands: a star flash that snaps open and pulls in, held on twos.
+      const q = stepped(p, Math.max(3, Math.round(f.dur * 30)));
+      const k = q < 0.3 ? easeOut(q / 0.3 + 0.34) : 1 - (q - 0.3) / 0.7;
       starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
       break;
     }
@@ -881,28 +891,70 @@ export function drawWarnings(ctx, world, cam, time) {
   }
 }
 
+// Damage numbers. Each one waits two ticks so the eye reads the spark first, then the number;
+// it pops in big and settles (1.4x to 1x in 80 ms, crits bigger with a white flash and a burst
+// behind them), then drifts up on a little arc, every other number leaning the other way so a
+// string of hits fans out instead of piling up. When three or more hits land on one monster
+// together, their total rises above them.
+const NUMBER_DELAY = 2 / 60;
+let numberSide = 0;
+const backOut = (p) => 1 + 2.7 * (p - 1) ** 3 + 1.7 * (p - 1) ** 2;
+const isDamage = (n) => /^\d+$/.test(n.text) && !n.small && n.color !== '#ff6b8a';
+
 export function drawNumbers(ctx, world, cam) {
   ctx.save();
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
+  const totals = new Map();
   for (const n of world.numbers) {
-    const p = n.t / 1.1;
-    const pop = n.t < 0.12 ? 1 + (0.12 - n.t) * 4 : 1;
-    // HD numbers pop smoothly (no whole-pixel font steps), ease upward, and crits glow.
-    const size = gfx.hd ? (n.crit ? 17 : n.small ? 10 : 14) * pop : Math.round((n.crit ? 17 : n.small ? 10 : 14) * pop);
-    const x = n.x - cam.x;
-    const y = n.y - cam.y - (gfx.hd ? 1 - (1 - p) ** 2 : p) * 26;
+    if (n.t < NUMBER_DELAY) continue;
+    n.side ??= (numberSide = -numberSide || 1);
+    const age = n.t - NUMBER_DELAY;
+    const p = Math.min(1, n.t / 1.1);
+    const popIn = Math.min(1, age / (n.crit ? 0.11 : 0.08));
+    const pop = n.crit ? 1.7 - 0.7 * backOut(popIn) : 1.4 - 0.4 * backOut(popIn);
+    const base = n.crit ? 17 : n.small ? 10 : 14;
+    // HD numbers pop smoothly (no whole-pixel font steps).
+    const size = gfx.hd ? base * pop : Math.round(base * pop);
+    const rise = easeOut(Math.min(1, age / 0.6)) * 24 + Math.max(0, age - 0.6) * 6;
+    const x = n.x - cam.x + n.side * (n.small ? 4 : 9) * easeOut(Math.min(1, age / 0.5));
+    const y = n.y - cam.y - rise;
     ctx.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
+    if (n.crit && age < 0.14) starFlash(ctx, x, y - size * 0.35, (size + 6) * (1 - age / 0.14) + 4, 8, age * 4, '#ffb347', '#fff3c4', 4);
     ctx.font = `bold ${size}px ${FONT}`;
-    ctx.shadowColor = gfx.hd && n.crit ? 'rgba(255,190,80,0.85)' : 'transparent';
-    ctx.shadowBlur = gfx.hd && n.crit ? 10 : 0;
     ctx.lineWidth = 4;
     ctx.strokeStyle = n.crit ? '#8a3a1f' : '#3a2d4f';
     ctx.strokeText(n.text, x, y);
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = n.color;
+    // A crit's first two drawings are white-hot before they take their color.
+    ctx.fillStyle = n.crit && age < 2 / 60 ? '#ffffff' : n.color;
     ctx.fillText(n.text, x, y);
     if (n.crit) sparkle(ctx, x - ctx.measureText(n.text).width / 2 - 6, y - size / 2, 4, '#ffe36b');
+    if (isDamage(n)) {
+      const key = Math.round(n.x / 14);
+      const g = totals.get(key) ?? { sum: 0, count: 0, top: Infinity, x: n.x, oldest: 0, youngest: 9 };
+      g.sum += Number(n.text);
+      g.count++;
+      g.top = Math.min(g.top, n.y);
+      g.oldest = Math.max(g.oldest, n.t);
+      g.youngest = Math.min(g.youngest, n.t);
+      totals.set(key, g);
+    }
+  }
+  for (const g of totals.values()) {
+    if (g.count < 3 || g.oldest - g.youngest > 0.65 || g.youngest < 0.12) continue;
+    const age = g.youngest - 0.12;
+    const pop = 1.35 - 0.35 * backOut(Math.min(1, age / 0.1));
+    const size = gfx.hd ? 13 * pop : Math.round(13 * pop);
+    const x = g.x - cam.x;
+    const y = g.top - cam.y - 34 - easeOut(Math.min(1, age / 0.5)) * 10;
+    ctx.globalAlpha = g.oldest > 0.8 ? Math.max(0, (1.1 - g.oldest) / 0.3) : 1;
+    ctx.font = `bold ${size}px ${FONT}`;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#5a3f7a';
+    const label = `${g.sum.toLocaleString('en-US')}`;
+    ctx.strokeText(label, x, y);
+    ctx.fillStyle = '#ffe36b';
+    ctx.fillText(label, x, y);
   }
   ctx.restore();
 }

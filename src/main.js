@@ -166,7 +166,12 @@ function frame(now) {
     }
   } else {
     const locked = routeInput(uiState, world, input, dt);
-    acc += dt;
+    // Slow motion after a big finish (a boss falling): `world.slowmo` seconds of real time at
+    // a third of the speed, once any hit-stop is over. Off along with hit-stop.
+    if (!settings.hitStop) world.slowmo = 0;
+    const slow = world.slowmo > 0 && !(world.hitstop > 0);
+    if (slow) world.slowmo -= dt;
+    acc += slow ? dt * 0.35 : dt;
     for (const code of input.pressed) queued.add(code);
     while (acc >= TICK) {
       acc -= TICK;

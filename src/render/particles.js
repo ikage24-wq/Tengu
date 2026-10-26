@@ -5,19 +5,27 @@ import { snap } from './pixel.js';
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
-import { needle, starFlash, shardRing, puff, crown, shock, wisp, easeOut, easeIn } from './fxkit.js';
+import { needle, starFlash, shardRing, puff, crown, shock, wisp, contrast, stepped, easeOut, easeIn } from './fxkit.js';
 
 const MAX = 600;
 
 export function createParticles() {
-  return { list: [], trauma: 0, delayed: [], ambientTimer: 0 };
+  return { list: [], trauma: 0, delayed: [], ambientTimer: 0, kick: { x: 0, y: 0 } };
 }
 
 function add(fx, p) {
   // The Particles setting thins or skips them; ambient motes are part of the scenery and stay.
   if (!p.ambient && settings.particles !== 'full' && (settings.particles === 'off' || Math.random() < 0.5)) return;
   if (fx.list.length >= MAX) fx.list.shift();
-  fx.list.push({ age: 0, g: 0, drag: 0, grow: 0, shape: 'dot', alpha: 1, spin: 0, ...p });
+  // `delay` holds a particle back (unseen and still) so a burst can play in order.
+  fx.list.push({ age: -(p.delay ?? 0), g: 0, drag: 0, grow: 0, shape: 'dot', alpha: 1, spin: 0, ...p });
+}
+
+// A camera kick: the view jolts a few pixels the way a blow went and springs back, on top of
+// the shake (a finisher pushes it forward, a slam down, getting hit away from the hitter).
+export function kick(fx, x, y) {
+  fx.kick.x = Math.max(-8, Math.min(8, fx.kick.x + x));
+  fx.kick.y = Math.max(-8, Math.min(8, fx.kick.y + y));
 }
 
 // Screen shake is "trauma": every jolt adds to it, it drains away over time, and the camera moves
@@ -37,9 +45,9 @@ const wobble = (t, seed) => (Math.sin(t * 17.3 + seed) + Math.sin(t * 29.1 + see
 
 // Camera offset for this frame.
 export function shakeOffset(fx, time) {
-  if (fx.trauma <= 0 || !settings.screenShake) return [0, 0];
+  if (!settings.screenShake) return [0, 0];
   const k = fx.trauma * fx.trauma * SHAKE_MAX;
-  return [snap(wobble(time, 1) * k), snap(wobble(time, 7) * k * 0.7)];
+  return [snap(wobble(time, 1) * k + fx.kick.x), snap(wobble(time, 7) * k * 0.7 + fx.kick.y)];
 }
 
 // Cel dust puffs kicked up from the ground: little two-tone lumps that pop up, drift, and
@@ -61,52 +69,76 @@ export function landing(fx, x, y, hard) {
   dust(fx, x, y, hard ? 6 : 3);
 }
 
-// A hit: a star flash where it lands, teardrop sparks flying off the way the blow went (falling
-// as they go), and a little shockwave. Crits flash bigger and burst a ring of shards.
+// A hit, drawn in order like a hand-timed impact: a dark contrast disc for a moment, then a star
+// flash snapping open over it (a different spike count each time), teardrop sparks flying off
+// the way the blow went (falling as they go), and a little shockwave. Crits flash bigger and
+// burst a ring of shards.
 export function sparks(fx, x, y, crit, dir, palette = null) {
   const hot = palette ? palette[0] : crit ? '#ffb347' : '#ffd66b';
-  add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.2 : 0.14, size: crit ? 16 : 10, shape: 'flash', rot: Math.random() * Math.PI, spikes: crit ? 6 : 4, color: hot });
+  const lag = 1 / 60;
+  add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.05 : 0.034, size: crit ? 10 : 6, shape: 'contrast', color: hot });
+  add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: crit ? 0.2 : 0.14, size: crit ? 17 : 10, shape: 'flash', rot: Math.random() * Math.PI, spikes: crit ? 6 : 4 + Math.floor(Math.random() * 2), color: hot });
   const n = crit ? 12 : 7;
   for (let i = 0; i < n; i++) {
     const a = (Math.random() - 0.5) * Math.PI * 1.3 + (dir > 0 ? 0 : Math.PI);
     const sp = 140 + Math.random() * (crit ? 230 : 150);
     add(fx, {
-      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 50, g: 420, drag: 4,
+      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 50, g: 420, drag: 4, delay: lag,
       life: 0.2 + Math.random() * 0.18, size: crit ? 3 : 2.5, shape: 'needle',
       color: palette ? palette[i % palette.length] : i % 3 ? hot : '#ffffff',
     });
   }
-  add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.2 : 0.13, size: 4, r1: crit ? 24 : 12, thick: crit ? 2.5 : 1.6, flat: 1, shape: 'shock', color: '#ffffff' });
-  if (crit) add(fx, { x, y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 30, thick: 4, shape: 'shards', n: 9, seed: Math.random(), rot: Math.random() * 6, color: hot });
+  add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: crit ? 0.2 : 0.13, size: 4, r1: crit ? 24 : 12, thick: crit ? 2.5 : 1.6, flat: 1, shape: 'shock', color: '#ffffff' });
+  if (crit) add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: 0.3, size: 6, r1: 30, thick: 4, shape: 'shards', n: 9, seed: Math.random(), rot: Math.random() * 6, color: hot });
 }
 
-// A defeated monster bursts into a cel smoke cloud: a flash, a ring of two-tone puffs that
-// billow out and shrink away, and a few stars tossed up. Bosses go up in a huge cloud with a
-// shockwave and a ring of shards.
-export function poof(fx, x, y, w, h, boss) {
-  const cy = y - h / 2;
-  add(fx, { x, y: cy, vx: 0, vy: 0, life: boss ? 0.3 : 0.16, size: boss ? 40 : Math.max(12, w * 0.6), shape: 'flash', rot: Math.random(), spikes: boss ? 8 : 4, color: '#ffe9a8' });
-  const n = boss ? 26 : 8;
-  const r = Math.max(w, h) * 0.3;
+// One blast of a defeat, in Saint11's layers: a dark contrast disc, a white flash, quick warm
+// fire puffs that burn out fast, then pale smoke that billows, curls, and tears apart slowly.
+function blast(fx, x, y, r, n, delay, big) {
+  add(fx, { x, y, vx: 0, vy: 0, delay, life: big ? 0.06 : 0.04, size: r * 0.7, shape: 'contrast', color: '#ffb38a' });
+  add(fx, { x, y, vx: 0, vy: 0, delay: delay + 1 / 60, life: big ? 0.26 : 0.16, size: r * 1.3, shape: 'flash', rot: Math.random(), spikes: big ? 8 : 4 + Math.floor(Math.random() * 3), color: '#ffe9a8' });
+  for (let i = 0; i < Math.ceil(n / 2); i++) {
+    const a = (i / Math.ceil(n / 2)) * Math.PI * 2 + Math.random() * 0.6;
+    const sp = r * (2.2 + Math.random() * 1.6);
+    add(fx, {
+      x: x + Math.cos(a) * r * 0.2, y: y + Math.sin(a) * r * 0.2, delay: delay + 1 / 60,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 - 10, drag: 6,
+      life: 0.15 + Math.random() * 0.1, size: r * (0.3 + Math.random() * 0.15), shape: 'puff', color: '#fff6c9', shade: '#ffb38a',
+    });
+  }
+  const drift = (Math.random() - 0.5) * 16;
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2 + Math.random() * 0.5;
-    const sp = (boss ? 90 : 38) + Math.random() * (boss ? 110 : 30);
+    const sp = r * (1.4 + Math.random() * 1.2);
     add(fx, {
-      x: x + Math.cos(a) * r * 0.4, y: cy + Math.sin(a) * r * 0.4,
-      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.7 - 18, drag: 4.5,
-      life: 0.32 + Math.random() * 0.18, size: (boss ? 9 : 4.5) + Math.random() * (boss ? 6 : 3), shape: 'puff',
+      x: x + Math.cos(a) * r * 0.35, y: y + Math.sin(a) * r * 0.35, delay: delay + 2 / 60,
+      vx: Math.cos(a) * sp + drift, vy: Math.sin(a) * sp * 0.6 - 14, drag: 3.5, curl: 18, phase: Math.random() * 6,
+      life: 0.5 + Math.random() * 0.3, size: r * (0.3 + Math.random() * 0.2), shape: 'puff', holes: true, seed: Math.random(),
       color: '#ffffff', shade: i % 3 ? '#e4dcf4' : '#f6dcea',
     });
   }
+}
+
+// A defeated monster bursts into a cel smoke cloud, and a few stars tossed up after it. Bosses
+// go up in a chain of blasts across their body, then a huge shockwave and a ring of shards.
+export function poof(fx, x, y, w, h, boss) {
+  const cy = y - h / 2;
+  const r = Math.max(w, h) * 0.3;
+  if (boss) {
+    for (let k = 0; k < 5; k++) {
+      const a = k * 2.4;
+      blast(fx, x + Math.cos(a) * w * 0.3 * (k ? 1 : 0), cy + Math.sin(a) * h * 0.3 * (k ? 1 : 0), Math.max(14, r * (k === 4 ? 0.9 : 0.6)), k === 4 ? 14 : 6, k * 0.08, k === 4);
+    }
+    add(fx, { x, y: cy, vx: 0, vy: 0, delay: 0.34, life: 0.5, size: 10, r1: 120, thick: 6, flat: 1, shape: 'shock', color: '#ffffff' });
+    add(fx, { x, y: cy, vx: 0, vy: 0, delay: 0.34, life: 0.55, size: 14, r1: 90, thick: 7, shape: 'shards', n: 12, seed: Math.random(), rot: 0, color: '#ffe36b' });
+  } else {
+    blast(fx, x, cy, Math.max(9, r), 7, 0, false);
+  }
   for (let i = 0; i < (boss ? 14 : 4); i++) {
     add(fx, {
-      x, y: cy, vx: (Math.random() - 0.5) * 170, vy: -90 - Math.random() * 130, g: 400,
+      x, y: cy, vx: (Math.random() - 0.5) * 170, vy: -90 - Math.random() * 130, g: 400, delay: boss ? 0.4 : 0.05,
       life: 0.7 + Math.random() * 0.3, size: 2, shape: 'star', spin: 6, color: ['#ffe36b', '#ff9ec0', '#8fe3ff'][i % 3],
     });
-  }
-  if (boss) {
-    add(fx, { x, y: cy, vx: 0, vy: 0, life: 0.5, size: 10, r1: 120, thick: 6, flat: 1, shape: 'shock', color: '#ffffff' });
-    add(fx, { x, y: cy, vx: 0, vy: 0, life: 0.55, size: 14, r1: 90, thick: 7, shape: 'shards', n: 12, seed: Math.random(), rot: 0, color: '#ffe36b' });
   }
 }
 
@@ -192,14 +224,27 @@ export function absorbJuice(fx, world) {
     if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, elementOf(world)?.sparks);
     else if (j.type === 'kill') {
       poof(fx, j.x, j.y, j.w, j.h, j.boss);
-      if (j.boss) shake(fx, 7, 0.8);
+      if (j.boss) {
+        // The boss stop: a white flash over everything, a quake, and the world easing into slow
+        // motion for a moment while the blasts go off.
+        shake(fx, 7, 0.8);
+        kick(fx, 0, 4);
+        if (settings.screenShake) add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: 0.12, size: 1, shape: 'screenflash', color: '#ffffff' });
+        world.slowmo = Math.max(world.slowmo ?? 0, 0.75);
+      }
     } else if (j.type === 'hurt') {
       shake(fx, 3, 0.22);
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.15, size: 13, shape: 'flash', rot: Math.random(), spikes: 4, color: '#ff6b8a' });
+      // Jolt the view away from whatever hit you.
+      const near = world.mobs.reduce((a, m) => (m.hp > 0 && (!a || Math.abs(m.x - j.x) < Math.abs(a.x - j.x)) ? m : a), null);
+      kick(fx, near ? -Math.sign(near.x - j.x) * 2.5 : 0, 1);
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.04, size: 8, shape: 'contrast', color: '#ff6b8a' });
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, delay: 1 / 60, life: 0.15, size: 13, shape: 'flash', rot: Math.random(), spikes: 4, color: '#ff6b8a' });
       for (let i = 0; i < 6; i++) {
         const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
-        add(fx, { x: j.x, y: j.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, g: 380, drag: 3, life: 0.3, size: 2, shape: 'needle', color: i % 2 ? '#ff9ec0' : '#ffffff' });
+        add(fx, { x: j.x, y: j.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, g: 380, drag: 3, delay: 1 / 60, life: 0.3, size: 2, shape: 'needle', color: i % 2 ? '#ff9ec0' : '#ffffff' });
       }
+    } else if (j.type === 'kick') {
+      kick(fx, j.x ?? 0, j.y ?? 0);
     } else if (j.type === 'shake') {
       if (j.delay) fx.delayed.push({ at: j.delay, mag: j.mag, dur: j.dur });
       else shake(fx, j.mag, j.dur);
@@ -212,6 +257,7 @@ export function absorbJuice(fx, world) {
       add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: '#c9b6ff' });
       for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, '#efe8fb', '#cdbfe6');
       landing(fx, j.x, j.y, true);
+      kick(fx, 0, 3);
       add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: '#ffffff' });
     }
   }
@@ -231,6 +277,10 @@ const AMBIENT = {
 
 export function updateParticles(fx, dt, world, cam, viewW, viewH) {
   fx.trauma = Math.max(0, fx.trauma - (fx.drain ?? 1) * dt);
+  // A kick springs back fast.
+  const spring = Math.exp(-16 * dt);
+  fx.kick.x *= spring;
+  fx.kick.y *= spring;
   for (const d of fx.delayed) {
     d.at -= dt;
     if (d.at <= 0) shake(fx, d.mag, d.dur);
@@ -250,7 +300,10 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
 
   for (const p of fx.list) {
     p.age += dt;
+    if (p.age < 0) continue;
     p.vy += p.g * dt;
+    // Smoke curls as it drifts.
+    if (p.curl) p.vx += Math.sin(p.age * 4 + p.phase) * p.curl * dt * 4;
     const k = Math.exp(-p.drag * dt);
     p.vx *= k;
     p.vy *= k;
@@ -262,11 +315,12 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
 }
 
 // Shapes drawn as solid cel art (see fxkit.js).
-const CEL = new Set(['needle', 'flash', 'shock', 'shards', 'puff', 'crown', 'wisp']);
+const CEL = new Set(['needle', 'flash', 'shock', 'shards', 'puff', 'crown', 'wisp', 'contrast']);
 
 export function drawParticles(ctx, fx, cam, time) {
   ctx.save();
   for (const p of fx.list) {
+    if (p.age < 0) continue;
     const t = p.age / p.life;
     // Ambient motes fade in and out; most effects fade out, and cel shapes stay solid and shrink
     // or break apart instead, only fading right at the end.
@@ -282,10 +336,19 @@ export function drawParticles(ctx, fx, cam, time) {
         needle(ctx, x, y, Math.atan2(p.vy, p.vx), Math.max(2, Math.min(10, sp * 0.05)) * (1 - t * 0.5), p.size * (1 - t * 0.7), p.color);
         break;
       }
+      case 'contrast':
+        contrast(ctx, x, y, p.size, p.color);
+        break;
+      case 'screenflash':
+        ctx.globalAlpha = 0.45 * (1 - t);
+        ctx.fillRect(0, 0, 640, 360);
+        break;
       case 'flash': {
-        // Snaps open in the first quarter, then the spikes pull in and thin out.
-        const k = t < 0.25 ? easeOut(t / 0.25) : 1 - (t - 0.25) / 0.75 * 0.55;
-        starFlash(ctx, x, y, p.size * k, p.spikes ?? 4, p.rot ?? 0, p.color, '#ffffff', p.size * 0.3 * (1 - t * 0.8));
+        // Opens tiny-to-huge in one jump, then the spikes pull in and thin out, held on twos
+        // (30 drawings a second) so it pops like hand-timed animation.
+        const st = stepped(t, Math.max(3, Math.round(p.life * 30)));
+        const k = st === 0 ? 0.45 : st < 0.3 ? 1.12 : 1 - ((st - 0.3) / 0.7) * 0.55;
+        starFlash(ctx, x, y, p.size * k, p.spikes ?? 4, p.rot ?? 0, p.color, '#ffffff', p.size * 0.3 * (1 - st * 0.8));
         break;
       }
       case 'shock': {
@@ -300,7 +363,7 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'puff': {
         // Billows out fast, then shrinks away.
         const k = t < 0.25 ? easeOut(t / 0.25) : 1 - ((t - 0.25) / 0.75) ** 0.8;
-        puff(ctx, x, y, p.size * k, p.color, p.shade ?? '#e4dcf4');
+        puff(ctx, x, y, p.size * k, p.color, p.shade ?? '#e4dcf4', p.holes && t > 0.45 ? (t - 0.45) / 0.55 : 0, p.seed ?? 0);
         break;
       }
       case 'crown': {

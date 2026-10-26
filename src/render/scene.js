@@ -37,13 +37,35 @@ export function createCamera() {
   return { x: 0, y: 0, ready: false };
 }
 
-// Follows the player smoothly and stays inside the map.
+// Follows the player smoothly and stays inside the map. It looks ahead the way you face (eased,
+// so turning drifts the view over rather than snapping, and a quick turn back and forth doesn't
+// swing it), leans toward a boss you're fighting, and only follows you up and down once you
+// land, so jumps don't bob the view (unless you'd leave the screen).
+const LOOKAHEAD = 44;
 export function updateCamera(cam, world, dt) {
   const map = world.map;
-  const tx = Math.max(0, Math.min(map.width - VIEW_W, world.body.x - VIEW_W / 2));
+  const b = world.body;
+  const fresh = !cam.ready || cam.mapId !== map.id;
+  // The lookahead turns around once you've faced the other way for a moment.
+  if (b.facing !== cam.face) {
+    cam.turned = (cam.turned ?? 0) + dt;
+    if (cam.turned > 0.25 || cam.face == null) {
+      cam.face = b.facing;
+      cam.turned = 0;
+    }
+  } else cam.turned = 0;
+  const boss = world.mobs.find((m) => m.def.boss && m.hp > 0 && Math.abs(m.x - b.x) < 300 && Math.abs(m.y - b.y) < 160);
+  const lookTo = boss ? Math.max(-90, Math.min(90, (boss.x - b.x) * 0.3)) : (cam.face ?? 1) * LOOKAHEAD;
+  cam.look = fresh ? lookTo : cam.look + (lookTo - cam.look) * (1 - Math.exp(-dt * 2.2));
+  const tx = Math.max(0, Math.min(map.width - VIEW_W, b.x + cam.look - VIEW_W / 2));
+  // Vertical follow happens on the ground (or a rope); in the air the camera holds, unless you
+  // get near the top or bottom of the view.
+  const footY = fresh || b.onGround || b.rope ? b.y : cam.footY;
+  const screenY = b.y - cam.y;
+  cam.footY = !fresh && (screenY < 70 || screenY > VIEW_H - 40) ? b.y : footY;
   // The camera can sit a bar's height below the map so the floor shows above the status bar.
-  const ty = Math.max(0, Math.min(map.height - VIEW_H + BAR_ROOM, world.body.y - VIEW_H * 0.6));
-  if (!cam.ready || cam.mapId !== map.id) {
+  const ty = Math.max(0, Math.min(map.height - VIEW_H + BAR_ROOM, cam.footY - VIEW_H * 0.6));
+  if (fresh) {
     cam.x = tx;
     cam.y = ty;
     cam.ready = true;
@@ -52,7 +74,7 @@ export function updateCamera(cam, world, dt) {
   }
   const k = 1 - Math.exp(-dt * 8);
   cam.x += (tx - cam.x) * k;
-  cam.y += (ty - cam.y) * k;
+  cam.y += (ty - cam.y) * (1 - Math.exp(-dt * (b.onGround ? 6 : 10)));
 }
 
 function playerPose(world) {

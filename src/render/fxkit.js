@@ -2,8 +2,55 @@
 // or three flat tones (a white-hot core inside a colored rim), no soft gradients. Effects built
 // from them grow fast, hold, and then thin out, shrink, and break apart instead of fading.
 // All functions draw in screen space with the current fill and alpha state saved by the caller.
+//
+// Bright shapes sit on an inked rim: a deeper shade of their own hue just outside the edge, so a
+// white-hot flash still reads against the pale pastel skies instead of washing out. The rim is
+// only drawn on the full-size canvas; the small blurred glow layer (see post.js) gets the bright
+// shapes alone, so the glow stays the effect's own color.
+
+import { mix } from './pixel.js';
 
 const TAU = Math.PI * 2;
+const INK = '#6b4f9e';
+
+const deepCache = new Map();
+// A deeper, inkier shade of a color for an effect's rim.
+export function deep(color) {
+  let v = deepCache.get(color);
+  if (!v) {
+    v = /^#[0-9a-f]{6}$/i.test(color) ? mix(color, INK, 0.5) : '#9a86c4';
+    deepCache.set(color, v);
+  }
+  return v;
+}
+
+const duskCache = new Map();
+// Halfway from a color to its deep shade: the trailing end of a smear.
+export function dusk(color) {
+  let v = duskCache.get(color);
+  if (!v) {
+    v = /^#[0-9a-f]{6}$/i.test(color) ? mix(color, deep(color), 0.55) : color;
+    duskCache.set(color, v);
+  }
+  return v;
+}
+
+// True on the full-size canvas (the glow layer is a quarter of it, and skips the ink).
+export const inked = (ctx) => ctx.canvas.width >= 600;
+
+// Holds an effect's progress on a grid of `frames` steps, so flashes and sparks pop from drawing
+// to drawing like hand-timed animation instead of tweening smoothly.
+export const stepped = (p, frames) => Math.min(1, Math.floor(p * frames) / frames);
+
+// The contrast frame in front of a flash: a dark disc for a moment, so the white that follows
+// feels brighter (an explosion's first drawing).
+export function contrast(ctx, x, y, r, color) {
+  if (r <= 0.3) return;
+  ctx.fillStyle = deep(deep(color));
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fill();
+}
 
 // Fast out, slow settle; and the reverse.
 export const easeOut = (p) => 1 - (1 - p) ** 3;
@@ -23,6 +70,10 @@ export function needle(ctx, x, y, angle, len, w, rim, core = '#ffffff') {
     ctx.quadraticCurveTo(x - nx * 1.4 - Math.cos(angle) * l * 0.25, y - ny * 1.4 - Math.sin(angle) * l * 0.25, bx, by);
     ctx.fill();
   };
+  if (w > 1.6 && inked(ctx)) {
+    ctx.fillStyle = deep(rim);
+    tear(len + 1.2, w / 2 + 0.8);
+  }
   ctx.fillStyle = rim;
   tear(len, w / 2);
   if (w > 1.2) {
@@ -43,6 +94,13 @@ export function starFlash(ctx, x, y, r, n, rot, rim, core = '#ffffff', coreR = r
     ctx.closePath();
     ctx.fill();
   };
+  if (r > 3 && inked(ctx)) {
+    ctx.fillStyle = deep(rim);
+    spikes(r + 1.6, coreR * 0.9 + 1);
+    ctx.beginPath();
+    ctx.arc(x, y, coreR * 1.25 + 1, 0, TAU);
+    ctx.fill();
+  }
   ctx.fillStyle = rim;
   spikes(r, coreR * 0.9);
   ctx.beginPath();
@@ -77,33 +135,52 @@ export function shardRing(ctx, x, y, r, thick, n, seed, rot, color) {
 }
 
 // A cel smoke puff: a round lump in the light tone with a shadow crescent along its lower side.
-export function puff(ctx, x, y, r, light, shadow) {
+// `holes` (0-1) punches holes through it that widen until it tears apart, the way smoke breaks
+// up instead of fading; `seed` places them.
+export function puff(ctx, x, y, r, light, shadow, holes = 0, seed = 0) {
   if (r <= 0.3) return;
+  const lump = (cx, cy, rr) => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr, 0, TAU);
+    if (holes > 0) {
+      // Holes stay inside the lump, so the even-odd fill cuts clean gaps through it.
+      for (let i = 0; i < 3; i++) {
+        const a = seed * 6.3 + i * 2.1;
+        const hr = r * (0.18 + 0.1 * i) * holes;
+        const d = Math.min(r * 0.42, r * 0.92 - hr);
+        ctx.moveTo(x + Math.cos(a) * d + hr, y + Math.sin(a) * d);
+        ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, hr, 0, TAU);
+      }
+    }
+    ctx.fill('evenodd');
+  };
+  if (r > 2 && inked(ctx)) {
+    ctx.fillStyle = deep(shadow);
+    lump(x, y, r + 0.9);
+  }
   ctx.fillStyle = shadow;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, TAU);
-  ctx.fill();
+  lump(x, y, r);
   ctx.fillStyle = light;
-  ctx.beginPath();
-  ctx.arc(x - r * 0.12, y - r * 0.16, r * 0.84, 0, TAU);
-  ctx.fill();
+  lump(x - r * 0.12, y - r * 0.16, r * 0.84);
 }
 
 // A smear: a filled crescent along a circle from angle a0 to a1 (radians, either direction), thick
-// in the middle and tapering to points at both ends, with a white core along its outer edge.
+// in the middle and tapering to points at both ends. Three tones run along it: a white core on the
+// outer edge of the leading part, the rim color, and a darker tail where it trails off.
 export function crescent(ctx, cx, cy, r, a0, a1, thick, rim, core = '#ffffff') {
   if (Math.abs(a1 - a0) < 0.02 || thick < 0.3) return;
   const steps = 14;
-  const band = (outer, inner) => {
+  const band = (outer, inner, u0 = 0, u1 = 1) => {
+    const n = Math.max(2, Math.round(steps * (u1 - u0)));
     ctx.beginPath();
-    for (let i = 0; i <= steps; i++) {
-      const u = i / steps;
+    for (let i = 0; i <= n; i++) {
+      const u = u0 + ((u1 - u0) * i) / n;
       const a = a0 + (a1 - a0) * u;
       const w = Math.sin(u * Math.PI) ** 0.7;
       ctx.lineTo(cx + Math.cos(a) * (r + outer * w), cy + Math.sin(a) * (r + outer * w));
     }
-    for (let i = steps; i >= 0; i--) {
-      const u = i / steps;
+    for (let i = n; i >= 0; i--) {
+      const u = u0 + ((u1 - u0) * i) / n;
       const a = a0 + (a1 - a0) * u;
       const w = Math.sin(u * Math.PI) ** 0.7;
       ctx.lineTo(cx + Math.cos(a) * (r - inner * w), cy + Math.sin(a) * (r - inner * w));
@@ -111,10 +188,16 @@ export function crescent(ctx, cx, cy, r, a0, a1, thick, rim, core = '#ffffff') {
     ctx.closePath();
     ctx.fill();
   };
+  if (thick > 2 && inked(ctx)) {
+    ctx.fillStyle = deep(rim);
+    band(thick * 0.5 + 1.1, thick * 0.5 + 1.1);
+  }
   ctx.fillStyle = rim;
   band(thick * 0.5, thick * 0.5);
+  ctx.fillStyle = dusk(rim);
+  band(thick * 0.5, thick * 0.5, 0, 0.3);
   ctx.fillStyle = core;
-  band(thick * 0.35, -thick * 0.05);
+  band(thick * 0.35, -thick * 0.05, 0.22, 1);
 }
 
 // Spikes bursting up from the ground at (x, y): the splash of something heavy landing.
@@ -145,6 +228,13 @@ export function crown(ctx, x, y, h, w, n, rim, core = '#ffffff') {
 // A shockwave: an ellipse outline `thick` wide (it should thin as it grows).
 export function shock(ctx, x, y, rx, ry, thick, color) {
   if (thick <= 0.15 || rx <= 0.3) return;
+  if (thick > 1 && inked(ctx)) {
+    ctx.strokeStyle = deep(color);
+    ctx.lineWidth = thick + 1.6;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, Math.max(0.3, ry), 0, 0, TAU);
+    ctx.stroke();
+  }
   ctx.strokeStyle = color;
   ctx.lineWidth = thick;
   ctx.beginPath();

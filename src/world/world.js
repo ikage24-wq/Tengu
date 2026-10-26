@@ -275,7 +275,9 @@ function killMob(world, m, byParty = false) {
   }
   world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss) });
-  world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.3 : 0.045);
+  // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
+  // render/particles.js).
+  world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.12 : 0.045);
   if (levels > 0) {
     world.events.push({ type: 'levelup', level: char.level });
     world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
