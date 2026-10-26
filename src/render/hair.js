@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -490,6 +490,18 @@ const STYLES = {
     };
   },
 
+  // Odango: two buns high on the head, a long thin tail from each, swinging; soft bangs.
+  odango(r, m) {
+    const tail = [[6.2, 6], [3.4, 9.4], [2.4, 16], [3.2, 22], [1.8, 28], [1.6, 34], [2.8, 38.4]];
+    const buns = [...bun(6.4, 3.4, 4.2, 3.8, r, 1), ...bun(24.6, 3.4, 4.2, 3.8, r, -1)];
+    return {
+      head: [crown(r), ...buns],
+      hang: [lock(tail, 4.6, r.sh1, m, 1.1), lock(fx(tail), 4.6, r.sh1, m, 1.1)],
+      front: bangs('soft', r, m, sideLocks(r, m, [[25.2, 11], [26.2, 16], [25.8, 20.4]], undefined, 3)),
+      top: buns,
+      tips: [29, 34],
+    };
+  },
 };
 
 // ---------- Two-tone ----------
