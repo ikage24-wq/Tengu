@@ -312,14 +312,26 @@ export function skillsWindow(ui, state, world) {
     const lv = char.skills[s.id] ?? 0;
     const sel = state.selectedSkill === s.id;
     const hot = hover(ui, win.x + 6, y, W - 40, 30);
-    box(ctx, win.x + 6, y, W - 12, 30, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : lv ? th.main : th.light, r: 8, width: sel ? 2 : 1.2 });
+    // A skill you could put a point into now breathes; one you can't reach yet is greyed out.
+    const open = canLearn(char, s.id);
+    const breathe = open && !sel ? 0.5 + 0.5 * Math.sin(world.now * 4) : 0;
+    box(ctx, win.x + 6, y, W - 12, 30, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : lv || open ? th.main : th.light, r: 8, width: sel ? 2 : 1.2 + breathe });
     // The icon sits on a plate in its own hue, shaped by its kind: round for passives, cut corners
     // for buffs, a rounded square for everything you cast.
     const kind = s.type === 'passive' ? 'passive' : s.type === 'buff' ? 'buff' : 'active';
     const [toneLight, toneDeep] = skillTone(s.id) ?? [th.light, th.dark];
     skillPlate(ctx, win.x + 20, y + 15, 11.5, kind, lv ? lighten(toneLight, 0.35) : COLORS.cell, lv ? toneDeep : '#d8cce6');
-    ctx.globalAlpha = lv ? 1 : 0.5;
+    // Icon states over the one drawing: brighter under the mouse, grey when out of reach.
+    if (hot && lv) ctx.filter = 'brightness(1.12) saturate(1.15)';
+    ctx.globalAlpha = lv || open ? 1 : 0.6;
     drawSkillIcon(ctx, s.id, win.x + 12, y + 7);
+    ctx.filter = 'none';
+    if (!lv && !open) {
+      ctx.globalCompositeOperation = 'saturation';
+      ctx.fillStyle = '#808080';
+      ctx.fillRect(win.x + 12, y + 7, 16, 16);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     ctx.globalAlpha = 1;
     // A little level gauge under the name, in the skill's hue.
     box(ctx, win.x + 35, y + 21, 70, 3, { fill: COLORS.cell, edge: null, r: 1.5 });
@@ -329,7 +341,7 @@ export function skillsWindow(ui, state, world) {
     text(ctx, kind === 'passive' ? 'Passive' : kind === 'buff' ? 'Buff' : 'Active', win.x + 109, y + 25, { role: 'minor' });
     ctx.globalAlpha = 1;
     text(ctx, `${lv}/${s.maxLevel}`, win.x + W - 34, y + 19, { size: 9, bold: true, align: 'right', color: lv ? COLORS.ink : COLORS.muted });
-    if (button(ui, win.x + W - 28, y + 7, 17, 16, '+', { enabled: canLearn(char, s.id), primary: canLearn(char, s.id) })) {
+    if (button(ui, win.x + W - 28, y + 7, 17, 16, '+', { enabled: open, primary: open })) {
       learnSkill(char, s.id);
     }
     if (hover(ui, win.x + 6, y, W - 40, 30)) tooltip(ui, [...skillTooltip(char, s.id), ...(lv && s.type !== 'passive' ? [{ text: 'Click, then press a hotkey to bind', color: COLORS.muted, size: 8 }] : [])]);

@@ -2,7 +2,7 @@
 
 import { NPCS, shopStock } from '../data/npcs.js';
 import { QUESTS } from '../data/quests.js';
-import { ITEMS, variantsFor } from '../data/items.js';
+import { ITEMS, RARITIES, variantsFor } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { questState, acceptQuest, completeQuest, objectiveProgress, rewardId } from '../core/quests.js';
@@ -16,7 +16,7 @@ import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font } from './kit.js';
+import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, rarityCell } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
 
 const HAIR_COLORS = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
@@ -351,8 +351,11 @@ function shopWindow(ui, state, world) {
     const variant = e.inst?.variant ?? (variants ? dlg.pick[e.id] ?? null : null);
     const shown = e.inst ?? { id: e.id, variant };
     const colors = itemColors(shown);
-    box(ctx, win.x + 8, y, W - 16, rowH - 2, { fill: COLORS.cell, edge: variant ? colors.main : null, r: 6, width: 1.2 });
+    // Gear you're selling shows its rarity on the row's edge and around its icon.
+    const rare = e.inst?.rarity ? RARITIES[e.inst.rarity].color : null;
+    box(ctx, win.x + 8, y, W - 16, rowH - 2, { fill: COLORS.cell, edge: rare ?? (variant ? colors.main : null), r: 6, width: rare ? 1.6 : 1.2 });
     drawItemIcon(ctx, e.id, win.x + 11, y + 2.5, 1, variant);
+    rarityCell(ctx, win.x + 9, y + 1, 18, rowH - 4, rare, e.inst?.rarity ?? 0, 5);
     const name = `${itemName(shown)}${e.qty > 1 ? ` x${e.qty}` : ''}`;
     text(ctx, fit(ctx, name, def.star ? 132 : 150, 7.5), win.x + 31, y + 9, { size: 7.5, bold: true, color: variant ? readable(colors.main) : COLORS.ink });
     if (def.star) text(ctx, `Lv ${def.reqLevel} · +${def.star.watk} attack`, win.x + 31, y + 18, { size: 6.5, color: char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });

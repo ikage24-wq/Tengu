@@ -648,15 +648,17 @@ export function tabs(ui, x, y, labels, current, { w = 46, h = 15 } = {}) {
     const tx = x + i * (w + 2);
     const on = i === current;
     const hot = hover(ui, tx, y, w, h);
+    // A pressed tab sinks a pixel straight away.
+    const dy = hot && ui.mouse.down ? 1 : 0;
     if (on) {
-      box(ctx, tx, y, w, h, { fill: th.main, edge: th.dark, r: h / 2, width: 1 });
+      box(ctx, tx, y + dy, w, h, { fill: th.main, edge: th.dark, r: h / 2, width: 1 });
       ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      roundRect(ctx, tx + 2, y + 1, w - 4, h * 0.38, h / 4);
+      roundRect(ctx, tx + 2, y + 1 + dy, w - 4, h * 0.38, h / 4);
       ctx.fill();
     } else if (hot) {
-      box(ctx, tx, y, w, h, { fill: 'rgba(255,255,255,0.75)', edge: null, r: h / 2 });
+      box(ctx, tx, y + dy, w, h, { fill: dy ? th.light : 'rgba(255,255,255,0.75)', edge: null, r: h / 2 });
     }
-    text(ctx, label, tx + w / 2, y + h - 4.5, { size: 8, bold: true, align: 'center', color: on ? '#ffffff' : th.ink, outline: on ? th.ink : null });
+    text(ctx, label, tx + w / 2, y + h - 4.5 + dy, { role: 'tab', align: 'center', color: on ? '#ffffff' : th.ink, outline: on ? th.ink : null });
     if (clicked(ui, tx, y, w, h)) picked = i;
   });
   return picked;

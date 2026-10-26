@@ -27,8 +27,8 @@ const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
 
 // Bar feedback, from how a value changed since last frame: the chunk just lost holds for a
-// moment and then drains; a heal flashes the bar white and sweeps a shine across it; a blow of a
-// tenth of the bar or more shakes it.
+// moment and then drains; a heal flashes the bar white and sweeps a shine across it; a blow
+// nudges it, and one of a tenth of the bar or more shakes it hard.
 function meter(state, key, ratio, t) {
   const hud = (state.hud ??= {});
   const m = (hud[key] ??= { v: ratio, trail: ratio, hold: 0, at: t, healAt: -9, hitAt: -9, hurtAt: -9 });
@@ -38,10 +38,11 @@ function meter(state, key, ratio, t) {
     if (ratio - m.v > 0.02) m.healAt = t;
     m.trail = Math.max(m.trail, ratio);
   } else if (ratio < m.v - 0.0005) {
-    if (m.trail <= m.v + 0.001) m.hold = t + 0.3;
+    if (m.trail <= m.v + 0.001) m.hold = t + 0.6;
     m.trail = Math.max(m.trail, m.v);
     m.hurtAt = t;
-    if (m.v - ratio >= 0.1) m.hitAt = t;
+    m.hitAt = t;
+    m.big = m.v - ratio >= 0.1;
   }
   m.v = ratio;
   if (t > m.hold) m.trail = ratio + (m.trail - ratio) * Math.exp(-dt * 4);
@@ -51,7 +52,7 @@ function meter(state, key, ratio, t) {
     trail: m.trail,
     flash: heal < 0.15 ? 1 - heal / 0.15 : 0,
     shine: heal < 0.4 ? heal / 0.4 : null,
-    shake: hit < 0.22 ? Math.round(Math.sin(hit * 80) * 2 * (1 - hit / 0.22)) : 0,
+    shake: hit < 0.22 ? Math.round(Math.sin(hit * 80) * (m.big ? 2 : 1) * (1 - hit / 0.22)) : 0,
     hurt: t - m.hurtAt,
   };
 }
@@ -116,7 +117,7 @@ export function drawHud(ui, state, world) {
   }
   if (hover(ui, 0, BAR_Y, 640, 7)) tooltip(ui, [{ text: 'Experience', bold: true, color: COLORS.gold }, { text: Number.isFinite(need) ? `${char.exp.toLocaleString()} / ${need.toLocaleString()} (${(pct * 100).toFixed(1)}%)` : 'Max level', size: 8 }]);
 
-  // HP and MP capsules with a heart and a drop.
+  // HP and MP capsules with a heart and a drop. Only HP shakes: MP drops whenever you cast.
   const hpR = char.hp / s.maxHp;
   const hp = meter(state, 'hp', hpR, t);
   const mp = meter(state, 'mp', char.mp / s.maxMp, t);
@@ -132,13 +133,24 @@ export function drawHud(ui, state, world) {
   text(ctx, JOBS[char.job].name, 44, BAR_Y + 27, { role: 'minor', size: 7 });
 
   bar(ctx, 106 + hp.shake, BAR_Y + 9, 110, 9, hpR, low ? (beat > 0.5 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { trail: hp.trail, trailColor: '#ffd3dc', flash: hp.flash, shine: hp.shine, pulse: low ? 0.25 + 0.5 * beat : 0 });
-  bar(ctx, 106 + mp.shake, BAR_Y + 20, 110, 9, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine });
+  bar(ctx, 106, BAR_Y + 20, 110, 9, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine });
   badge(ctx, 104 + hp.shake, BAR_Y + 13.5, 'heart', COLORS.hp, low ? 1 + beat * 0.25 : 1 + hp.flash * 0.2);
-  badge(ctx, 104 + mp.shake, BAR_Y + 24.5, 'drop', COLORS.mp, 1 + mp.flash * 0.2);
+  badge(ctx, 104, BAR_Y + 24.5, 'drop', COLORS.mp, 1 + mp.flash * 0.2);
+
+  // Loot lands with a bump: the coin when gold comes in, the Bag button when an item does.
+  const items = Object.values(char.inventory).reduce((n, tab) => n + tab.reduce((m, e) => m + (e ? e.qty ?? 1 : 0), 0), 0);
+  if (hud.items != null && items > hud.items) hud.bagAt = t;
+  if (hud.gold != null && char.gold > hud.gold) hud.goldAt = t;
+  hud.items = items;
+  hud.gold = char.gold;
+  const bump = (at) => {
+    const a = t - (at ?? -9);
+    return a < 0.25 ? 1 + 0.22 * Math.sin((a / 0.25) * Math.PI) : 1;
+  };
 
   // EXP percent and gold.
   text(ctx, Number.isFinite(need) ? `EXP ${(pct * 100).toFixed(1)}%` : 'MAX LEVEL', 226, BAR_Y + 17, { size: 7, bold: true, color: '#c99a1f' });
-  icon(ctx, 'coin', 230, BAR_Y + 24.5, 8, '#f0b53a');
+  icon(ctx, 'coin', 230, BAR_Y + 24.5, 8 * bump(hud.goldAt), '#f0b53a');
   // Big fortunes shorten (1.2m) so they never run into the menu buttons.
   text(ctx, char.gold >= 100000 ? price(char.gold) : char.gold.toLocaleString(), 237, BAR_Y + 27.5, { size: 8, bold: true, color: COLORS.gold });
   if (hover(ui, 226, BAR_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
@@ -153,18 +165,19 @@ export function drawHud(ui, state, world) {
     const open = state.windows[key].open;
     // Lifts under the mouse and sinks onto its lip the moment it's pressed.
     const lift = hot && ui.mouse.down ? 1.5 : hot ? -1.5 : 0;
+    const k = key === 'bag' ? bump(hud.bagAt) : 1;
     ctx.fillStyle = th.dark;
     ctx.beginPath();
-    ctx.arc(cx, cy + 1.5, 8.6, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 1.5, 8.6 * k, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = open ? th.main : hot ? '#ffffff' : th.light;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 8.6, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, 8.6 * k, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = th.dark;
     ctx.lineWidth = 1.2;
     ctx.stroke();
-    icon(ctx, ic, cx, cy + lift, 10, open ? '#ffffff' : th.dark);
+    icon(ctx, ic, cx, cy + lift, 10 * k, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
     if (clicked(ui, cx - 9, cy - 9, 18, 18)) state.windows[key].open = !open;
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);

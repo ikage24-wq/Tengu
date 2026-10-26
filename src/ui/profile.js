@@ -13,7 +13,7 @@ import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font } from './kit.js';
+import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, rarityCell, slotEdges } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 
 const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings' };
@@ -87,7 +87,9 @@ export function profileWindow(ui, state, world) {
       const rare = inst?.rarity ? RARITIES[inst.rarity] : null;
       box(ctx, rx, cy, rw, 20, { fill: hover(ui, rx, cy, rw, 20) ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
       box(ctx, rx + 1, cy + 1, 18, 18, { fill: th.light, edge: rare?.color ?? null, r: 5, width: rare ? 1.5 : 1 });
+      slotEdges(ctx, rx + 1, cy + 1, 18, 18, 5);
       if (inst) drawItemIcon(ctx, inst.id, rx + 2, cy + 2, 1, inst.variant);
+      if (inst) rarityCell(ctx, rx + 1, cy + 1, 18, 18, rare?.color, inst.rarity ?? 0, 5);
       text(ctx, SLOT_NAMES[slot], rx + 24, cy + 8, { size: 6, color: COLORS.muted });
       text(ctx, def ? `${itemName(inst)}${inst.upgrades ? ` +${inst.upgrades}` : ''}` : '—', rx + 24, cy + 16.5, { size: 7.5, bold: true, color: rare ? rare.color : def ? COLORS.ink : COLORS.muted });
       if (inst && hover(ui, rx, cy, rw, 20)) tooltip(ui, itemTooltip(world.char, inst.id, inst));
@@ -141,7 +143,9 @@ export function profileWindow(ui, state, world) {
     const rare = it.inst?.rarity ? RARITIES[it.inst.rarity] : null;
     box(ctx, rx, cy, rw, 20, { fill: '#ffffff', edge: th.light, r: 6, width: 1 });
     box(ctx, rx + 1, cy + 1, 18, 18, { fill: th.light, edge: rare?.color ?? null, r: 5, width: rare ? 1.5 : 1 });
+    slotEdges(ctx, rx + 1, cy + 1, 18, 18, 5);
     drawItemIcon(ctx, it.id, rx + 2, cy + 2, 1, it.inst?.variant);
+    rarityCell(ctx, rx + 1, cy + 1, 18, 18, rare?.color, it.inst?.rarity ?? 0, 5);
     text(ctx, `${itemName(it.inst ?? it.id)}${it.qty > 1 ? ` x${it.qty}` : ''}`, rx + 24, cy + 9, { size: 7, bold: true, color: rare ? rare.color : COLORS.ink });
     icon(ctx, 'coin', rx + 27, cy + 14.5, 6, '#f0b53a');
     text(ctx, price(it.price), rx + 32, cy + 17, { size: 7, bold: true, color: world.char.gold >= it.price ? COLORS.gold : COLORS.bad });
