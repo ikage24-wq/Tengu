@@ -30,7 +30,7 @@ export const QUESTS = {
   },
   hollow_heart: {
     id: 'hollow_heart', name: 'Heart of the Hollow', giver: 'bramble', minLevel: 10,
-    text: "Old Gnarlroot has been grumbling under the canyon for a week, and the whole Hollow woke up with him. Take a group down and calm him. Talk to me again when you're ready to go in.",
+    text: "Gnarlroot has been grumbling under the canyon for a week, and the whole Hollow woke up with him. Take a group down and calm him. Talk to me again when you're ready to go in.",
     objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
     rewards: { exp: 5000, gold: 3000, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
   },
@@ -60,7 +60,7 @@ export const QUESTS = {
   },
   crystal_heart: {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
-    text: 'Deep in the Crystal Cave sits the Crystal King. Defeat it and bring peace to the coast.',
+    text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
     rewards: { exp: 150000, gold: 50000, items: [{ id: 'warrior_cape_40', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 10 }] },
   },

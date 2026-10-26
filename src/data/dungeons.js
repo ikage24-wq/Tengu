@@ -8,7 +8,7 @@
 export const DUNGEONS = {
   hollow: {
     id: 'hollow', name: 'Rootwood Hollow', minLevel: 10,
-    blurb: 'Deep under an ancient tree, the roots have woken up grumpy. Clear the burrows, beat Mother Capper and Tuskar, and calm Old Gnarlroot at the Heart of the Hollow.',
+    blurb: 'Deep under an ancient tree, the roots have woken up grumpy. Clear the burrows, beat the Myconid Queen and Tuskar, and calm Gnarlroot at the Heart of the Hollow.',
     gate: 'hollow_gate', warden: 'bramble',
     rooms: ['hollow1', 'hollow2', 'hollow3', 'hollow4', 'hollow5', 'hollow6'],
     // Group finder levels for the players it brings in, by role.

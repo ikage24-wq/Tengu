@@ -112,31 +112,31 @@ export const MOBS = {
   sapling: mob({
     id: 'sapling', name: 'Corrupted Sapling', level: 12, hp: 700, atk: 0, def: 10, acc: 0, eva: 0, exp: 160, gold: [4, 12],
     speed: 0, w: 18, h: 36, art: 'sapling', drops: [],
-    // Saplings don't fight: they feed their life to Old Gnarlroot.
+    // Saplings don't fight: they feed their life to Gnarlroot.
     fight: { mender: true },
   }),
   mothercapper: mob({
-    id: 'mothercapper', name: 'Mother Capper', level: 12, hp: 7000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [300, 600],
-    speed: 34, w: 70, h: 72, art: 'mothercapper', boss: true,
+    id: 'mothercapper', name: 'Myconid Queen', level: 12, hp: 7000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [300, 600],
+    speed: 34, w: 70, h: 100, art: 'mothercapper', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }, { id: 'scroll_watk_60', chance: 0.25 }],
     fight: { every: 1.8, reach: 52, windup: 0.5 }, mech: 'capper',
   }),
   tuskar: mob({
-    id: 'tuskar', name: 'Tuskar', level: 13, hp: 9000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [400, 800],
-    speed: 44, w: 84, h: 64, art: 'tuskar', boss: true,
+    id: 'tuskar', name: 'Tuskar the Behemoth', level: 13, hp: 9000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [400, 800],
+    speed: 44, w: 96, h: 72, art: 'tuskar', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }, { id: 'scroll_def_60', chance: 0.25 }],
     fight: { every: 2, reach: 56, windup: 0.5 }, mech: 'boar',
   }),
   gnarlroot: mob({
-    id: 'gnarlroot', name: 'Old Gnarlroot', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [800, 1500],
-    speed: 16, w: 120, h: 130, art: 'gnarlroot', boss: true,
+    id: 'gnarlroot', name: 'Gnarlroot, the Hollow Heart', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [800, 1500],
+    speed: 16, w: 100, h: 150, art: 'gnarlroot', boss: true,
     drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }, { id: 'scroll_watk_60', chance: 0.5 }, { id: 'scroll_matk_60', chance: 0.5 }],
     fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',
   }),
 
   crystalking: mob({
-    id: 'crystalking', name: 'Crystal King', level: 45, hp: 160000, atk: 260, def: 60, acc: 110, eva: 12, exp: 120000,
-    gold: [4000, 8000], speed: 34, w: 110, h: 110, art: 'crystalking', boss: true,
+    id: 'crystalking', name: 'Prismaris, the Crystal King', level: 45, hp: 160000, atk: 260, def: 60, acc: 110, eva: 12, exp: 120000,
+    gold: [4000, 8000], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true,
     drops: [
       { id: 'king_crystal', chance: 1 },
       { id: 'seraphim_staff', chance: 0.08 },

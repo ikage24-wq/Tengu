@@ -277,12 +277,12 @@ to clear it.
     damage; the damage dealers focus what the tank is fighting, go for adds first,
     and help with the room's task between fights. Everyone steps out of telegraphed attacks.
   - Six rooms, each sealed until it's cleared: **Hollow Entrance** (trash packs, and light the
-    three glowcaps), **Capper's Garden** (mini-boss Mother Capper: Spore Rain patches to step out
+    three glowcaps), **Capper's Garden** (mini-boss the Myconid Queen: Spore Rain patches to step out
     of, and Spore Mites that rush the healer), **Bramble Tunnels** (trash, and free four trapped
     Sprouts from root cages), **Boar Den** (mini-boss Tuskar: a tank-busting Gore, and a charge down
     a telegraphed lane at someone; he crashes into the wall and is dazed, taking extra damage),
     **The Root Gate** (Bramble Bears carry the three Root Keys that open the gate), and **Heart of the
-    Hollow** (Old Gnarlroot: a Root Slam to jump or get on a ledge for, alternating Thorn strips,
+    Hollow** (Gnarlroot: a Root Slam to jump or get on a ledge for, alternating Thorn strips,
     Corrupted Saplings at half HP that heal him and halve his damage taken until killed, and a faster
     enrage at 20%).
   - Fall in a fight and your group gets you back up once it's over (no EXP lost; you can also

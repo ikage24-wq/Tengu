@@ -256,7 +256,7 @@ export function dungeonInteract(world) {
   const o = objectNear(world, world.body);
   if (!o) return false;
   if (o.kind === 'chest') {
-    if (!roomCleared(world)) world.log('The chest is wrapped in roots. Calm Old Gnarlroot first!', '#ffb3c6');
+    if (!roomCleared(world)) world.log('The chest is wrapped in roots. Calm Gnarlroot first!', '#ffb3c6');
     else openChest(world, o);
     return true;
   }
@@ -830,7 +830,7 @@ function bossMove(world, m, up, dt) {
     if (feeding) m.hp = Math.min(m.def.hp, m.hp + m.def.hp * 0.006 * feeding * dt);
     if (!s.enraged && frac <= 0.2) {
       s.enraged = true;
-      callout(world, 'Old Gnarlroot is furious!', 'Everything comes faster now');
+      callout(world, 'Gnarlroot is furious!', 'Everything comes faster now');
     }
     return m.slamming > world.now;
   }

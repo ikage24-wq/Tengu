@@ -312,24 +312,44 @@ function queen(pose, f, mood) {
   };
   out.push(...spores(false));
 
-  // The lace veil hanging from under the cap, behind the shoulders.
+  // The lace veil: a bell of netting hanging from under the cap and flaring behind the shoulders,
+  // ending in deep scallops.
   {
-    const vb = capY + 46 - drop * 0.3;
-    const veil = [[capX - 38, capY + 1], [capX - 44, capY + 16], [capX - 42, vb - 6]];
-    for (let i = 0; i <= 10; i++) {
-      const t = i / 10;
-      const x = capX - 41 + t * 84;
-      veil.push([x, vb + (i % 2 ? 3.2 : 0) + Math.sin(t * 6 + ph) * 1.2]);
+    const vb = capY + 40 - drop * 0.4;
+    const veil = [[capX - 34, capY + 1]];
+    for (let i = 0; i <= 8; i++) {
+      const t = i / 8;
+      veil.push([capX - 34 - 8 * Math.sin(t * 1.6) + sway * t, capY + 1 + t * (vb - capY - 1)]);
     }
-    veil.push([capX + 44, vb - 8], [capX + 44, capY + 14], [capX + 38, capY + 1]);
-    out.push(poly(veil, Q.lace));
-    for (let y = capY + 6; y < vb; y += 4.2) {
-      for (let x = capX - 44; x < capX + 46; x += 4.6) {
-        const xx = x + ((Math.round((y - capY) / 4.2) % 2) * 2.3);
-        if (inside(veil, xx, y) && inside(veil, xx + 2, y + 2) && inside(veil, xx - 2, y - 1)) out.push(fpoly([[xx, y - 1.3], [xx + 1.2, y], [xx, y + 1.3], [xx - 1.2, y]], Q.laceDk));
+    const sc = 8;
+    for (let i = 0; i < sc; i++) {
+      const x0 = capX - 42 + sway + (i / sc) * 84;
+      const x1 = capX - 42 + sway + ((i + 1) / sc) * 84;
+      for (let k = 1; k <= 4; k++) {
+        const t = k / 4;
+        veil.push([lerp(x0, x1, t), vb + Math.sin(t * Math.PI) * 4.4 + Math.sin(i + ph) * 0.8]);
       }
     }
-    for (let i = 0; i <= 10; i += 2) out.push(dot(capX - 41 + i * 8.4, vb + 2, 1.1, Q.capLt));
+    for (let i = 8; i >= 0; i--) {
+      const t = i / 8;
+      veil.push([capX + 34 + 8 * Math.sin(t * 1.6) + sway * t, capY + 1 + t * (vb - capY - 1)]);
+    }
+    out.push(poly(veil, Q.lace));
+    // Net: diagonal threads both ways, clipped to the veil.
+    const net = (dir) => {
+      for (let k = -12; k <= 12; k++) {
+        const pts = [];
+        for (let y = capY + 3; y <= vb + 4; y += 1.5) {
+          const x = capX + k * 6.4 + dir * (y - capY) * 0.55;
+          if (inside(veil, x, y) && inside(veil, x - 1, y + 1) && inside(veil, x + 1, y + 1)) pts.push([x, y]);
+          else if (pts.length) break;
+        }
+        if (pts.length > 2) out.push(line([pts[0], pts[pts.length - 1]], 0.5, Q.laceDk));
+      }
+    };
+    net(1);
+    net(-1);
+    for (let i = 0; i < 8; i++) out.push(dot(capX - 42 + sway + ((i + 0.5) / 8) * 84, vb + 3.8, 1.2, i % 2 ? Q.capLt : Q.glow));
   }
 
   // Back arm: a bell sleeve, the hand lifting the robe's edge.
@@ -373,7 +393,6 @@ function queen(pose, f, mood) {
     out.push(dot(lerp(53, 42, t) - 0.5, lerp(top, 108, t), 1.1, k % 2 ? Q.glow : '#ff9ad2'), dot(lerp(61, 78, t) + 0.5, lerp(top, 108, t), 1.1, k % 2 ? '#ff9ad2' : Q.glow));
   }
   // Ruffled hem frill, with little glowing mushrooms sprouting from it and root threads trailing.
-  out.push(line([[11, 110], [6, 111], [2, 109.5]], 1, Q.robeDk), line([[20, 111], [14, 111.6]], 0.8, Q.robeDk));
   for (let i = 0; i <= 13; i++) {
     const t = i / 13;
     const x = 12 + t * 76;
@@ -398,7 +417,7 @@ function queen(pose, f, mood) {
   const ex1 = hx - 3.6;
   const ex2 = hx + 7.4;
   const ey = hy - 0.6;
-  const eo = { iris: '#2fc4b4', hot: Q.hot, lid: Q.skin, slit: false, dIn: 0.24 };
+  const eo = { iris: '#2fc4b4', hot: Q.hot, lid: Q.skin, slit: false, dIn: 0.1, dOut: 0.04 };
   out.push(...[].concat(eye(ex1, ey, 2.9, 3.9, mood, { ...eo, s: -1, smug: happy })), ...[].concat(eye(ex2, ey, 3.3, 4.2, mood, { ...eo, s: 1, smug: happy })));
   // Long queenly lashes.
   if (!['hurt', 'dead'].includes(mood)) {
@@ -483,7 +502,7 @@ function queen(pose, f, mood) {
 
   // Front arm and the staff: a gnarled crook with a glowing mushroom lantern in a bubble.
   const lift2 = angry ? -9 : 0;
-  within(dead ? rot(88, 111, -0.28) : (x, y) => [x, y], () => {
+  within(dead ? rot(88, 111, -0.07) : (x, y) => [x, y], () => {
     const sy = 30 + bob * 0.6 + lift2;
     out.push(taper([[88, 111], [86.6, 80], [86, 50 + lift2 * 0.5], [85, sy]], 4.2, 3, Q.wood), line([[87.8, 105], [86.4, 72], [86, sy + 6]], 0.8, Q.woodLt, 3),
       oval(86.4, 96, 2.8, 2, Q.wood), oval(85.4, 58 + lift2 * 0.5, 2.6, 1.8, Q.wood));
@@ -506,7 +525,8 @@ function queen(pose, f, mood) {
   out.push(poly([[62, top + 1], [71, top + 3], [80, hy2 - 6], [88, hy2 + 2], [77, hy2 + 7], [66, top + 14]], Q.robe), poly([[62, top + 1], [66, top + 14], [71, top + 12], [68, top + 3]], Q.robeDk),
     line([[79, hy2 - 6], [88.5, hy2 + 2], [77, hy2 + 7]], 1.6, Q.gold), ...ball(85.6, hy2 + 0.6, 3.8, 3.6, Q.skin, { dark: Q.skinDk, hi: false }), line([[83.6, hy2 + 2.6], [87.6, hy2 + 1.4]], 0.6, Q.skinDk));
   out.push(...spores(true));
-  return { w: 100, h: 112, res: 3, shapes: out };
+  // Headroom for the tiara.
+  return { w: 100, h: 122, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 10 })) };
 }
 
 // ---------- The Behemoth ----------
@@ -543,8 +563,8 @@ function behemoth(pose, f, mood) {
     jaw = 0.14;
   }
   if (dead) {
-    lower = 13;
-    headA = 0.22;
+    lower = 10;
+    headA = 0.02;
     pitch = 0.03;
     bob = 0;
     jaw = 0.2;
@@ -563,8 +583,8 @@ function behemoth(pose, f, mood) {
       fx = h[0] + (front ? 11 : -11);
     } else if (walk) {
       const th = ph + phase * TAU;
-      fx = h[0] + (front ? 3 : -2) + (front ? 12 : 10) * Math.cos(th);
-      fy = 87.5 - (front ? 9 : 7) * Math.max(0, -Math.sin(th));
+      fx = h[0] + (front ? 3 : -2) + (front ? 15 : 13) * Math.cos(th);
+      fy = 87.5 - (front ? 11 : 9) * Math.max(0, -Math.sin(th));
     } else if (angry) {
       fx = h[0] + (front ? 8 : -7);
     } else {
@@ -573,7 +593,7 @@ function behemoth(pose, f, mood) {
     const { k, f: ft } = knee(h, [fx, fy], 15.5, 15.5, front ? 1 : -1);
     const c = far ? B.furDk : B.fur;
     const res = [];
-    res.push(oval(h[0], h[1] + 3, front ? 9 : 11, front ? 12 : 13, c), taper([h, k], front ? 13 : 14, 9, c, { n: 1 }), oval(k[0], k[1], 4.8, 4.6, c, 0, 16), taper([k, ft], 8.6, 6.6, far ? shade(B.furDk, -4) : B.furDk, { n: 1 }));
+    res.push(oval(h[0], h[1] + 3, front ? 10 : 12, front ? 13 : 14, c), taper([h, k], front ? 15 : 16, 10.4, c, { n: 1 }), oval(k[0], k[1], 5.4, 5.2, c, 0, 16), taper([k, ft], 9.6, 7.4, far ? shade(B.furDk, -4) : B.furDk, { n: 1 }));
     // Shaggy fetlock tufts and an armored hoof with an ember crack.
     const ax = ft[0];
     const ay = ft[1];
@@ -596,10 +616,10 @@ function behemoth(pose, f, mood) {
   within(Tb, () => {
     out.push(...ball(32, 53, 22, 21, B.fur, { dark: B.furDk }), ...ball(58, 52, 32, 22, B.fur, { dark: B.furDk }), ...ball(76, 44, 22, 21, B.fur, { dark: B.furDk }));
     out.push(foval(60, 66, 25, 7.4, B.belly));
-    for (let i = 0; i < 9; i++) {
-      const x = 32 + i * 6;
-      const y = 69 + Math.sin(i * 1.3) * 0.8 - (i > 6 ? (i - 6) * 1.6 : 0);
-      out.push(fpoly([[x - 3, y], [x - 0.6, y + 4 + (i % 2) * 1.6], [x + 3, y]], i % 2 ? B.furDk : shade(B.furDk, 6)));
+    for (let i = 0; i < 5; i++) {
+      const x = 38 + i * 9;
+      const y = 70.5 - (i > 3 ? 1.5 : 0);
+      out.push(poly([[x - 5, y - 1], [x - 2, y + 4.4], [x, y + 1.4], [x + 2.6, y + 5.2], [x + 5, y - 1]], B.furDk));
     }
     // Fur strokes over the haunch and shoulder.
     for (const [x, y, a] of [[24, 46, 0.6], [30, 52, 0.5], [22, 56, 0.7], [70, 40, -0.4], [78, 46, -0.2], [64, 44, -0.3]]) {
@@ -609,14 +629,14 @@ function behemoth(pose, f, mood) {
 
   // A mane of flame licking up between the armor plates.
   within(Tb, () => {
-    const base = [[20, 36], [33, 30], [46, 30], [58, 28], [68, 22], [79, 19]];
+    const base = [[16, 40], [24, 33], [33, 30], [41, 30], [50, 30], [58, 28], [65, 24], [72, 20], [80, 18], [87, 21]];
     base.forEach(([x, y], i) => {
       if (dead) {
         if (i % 2 === 0) out.push(dot(x - 1, y - 5 - (f % 2) * 2, 2.4, B.smoke), dot(x - 3, y - 10 - (f % 2) * 2, 1.6, B.smoke));
         return;
       }
-      const h = (8 + (i % 3) * 3 + i) * flick(i) * (angry ? 1.6 : hurt ? 0.6 : 1);
-      out.push(...flame(x, y + 2, h, 4 + (angry ? 1 : 0), walk ? -4 - (i % 2) * 2 : -1 + Math.sin(ph + i) * 1.4, angry ? ['#ff5a4a', B.fire, '#fff6d0'] : [B.fire, B.fire2, B.fire3]));
+      const h = Math.min(y + 7, (11 + (i % 3) * 4 + Math.min(i, 6) * 0.9) * flick(i) * (angry ? 1.55 : hurt ? 0.6 : 1));
+      out.push(...flame(x, y + 3, h, 5.4 + (angry ? 1.2 : 0), walk ? -5 - (i % 2) * 2.5 : -1.5 + Math.sin(ph * 2 + i) * 2, angry ? ['#ff5a4a', B.fire, '#fff6d0'] : [B.fire, B.fire2, B.fire3]));
     });
   });
 
@@ -708,11 +728,13 @@ function behemoth(pose, f, mood) {
       const r = (angry ? 2.6 : 1.8) + u * (angry ? 3.4 : 2.4);
       const x = Math.min(124 - r, nx + 1 + u * 4);
       const y = Math.min(90 - r, ny + 6 + u * (angry ? 14 : 11));
-      out.push(foval(x, y, r, r * 0.86, mix(B.smoke, '#ffffff', 0.3 + u * 0.3)), foval(x - r * 0.3, y + r * 0.2, r * 0.6, r * 0.45, shade(B.smoke, -6)));
+      const c = mix(B.smoke, '#ffffff', 0.25 + u * 0.35);
+      out.push(oval(x, y, r, r * 0.8, c, 0, 16), oval(x - r * 0.7, y + r * 0.35, r * 0.62, r * 0.55, c, 0, 14), oval(x + r * 0.6, y + r * 0.3, r * 0.55, r * 0.5, c, 0, 14), foval(x + r * 0.2, y - r * 0.3, r * 0.4, r * 0.25, '#ffffff'));
     }
     if (angry) out.push(sparkle(nx + 2, ny - 6, 2.2, B.fire2), sparkle(nx - 6, ny + 10, 1.6, B.fire3));
   }
-  return { w: 124, h: 92, res: 3, shapes: out };
+  // Extra headroom for the flames.
+  return { w: 124, h: 100, res: 3, shapes: out.map((q) => ({ ...q, y: q.y + 8 })) };
 }
 
 // ---------- The Hollow Heart (Elder Treant) ----------
@@ -752,7 +774,7 @@ function treant(pose, f, mood) {
   if (angry) lean = -0.05;
   if (hurt) lean = -0.08;
   if (dead) {
-    lean = 0.1;
+    lean = 0.06;
     drop = 9;
     sway = 0;
   }
@@ -805,8 +827,8 @@ function treant(pose, f, mood) {
     res.push(oval(pts[1][0], pts[1][1], 3, 2.4, far ? G.deep : G.barkDk, 0, 12));
     return res;
   };
-  let fa = { a0: 2.25, bend: -0.1 };
-  let na = { a0: 0.75, bend: 0.1 };
+  let fa = { a0: 2.75, bend: -0.13 };
+  let na = { a0: 0.3, bend: 0.13 };
   if (angry) {
     fa = { a0: -2.45, bend: 0.17 };
     na = { a0: -0.75, bend: -0.17 };
@@ -838,17 +860,12 @@ function treant(pose, f, mood) {
     }
   };
   within(Tw, () => {
-    branch(54, 56, -2.75, 22, 9, 0, 1);
-    branch(60, 46, -2.15, 22, 10, 0, 2);
-    branch(71, 42, -1.75, 21, 10, 0, 3);
-    branch(84, 42, -1.3, 22, 10, 0, 4);
-    branch(94, 46, -0.95, 22, 10, 0, 5);
-    branch(100, 56, -0.4, 22, 9, 0, 6);
-    // Hanging moss.
-    for (const [x, y, l] of [[38, 34, 12], [62, 24, 9], [104, 30, 13], [118, 40, 10]]) {
-      const w = Math.sin(ph + x) * 1.2;
-      out.push(taper([[x, y], [x + w * 0.5, y + l * 0.5], [x + w, y + l]], 2.6, 0.8, G.mossDk, { tip: true }), line([[x + 0.4, y + 1], [x + w * 0.5 + 0.4, y + l * 0.45]], 0.6, G.moss));
-    }
+    branch(54, 56, -2.75, 21, 9, 0, 1);
+    branch(60, 46, -2.2, 19, 10, 0, 2);
+    branch(71, 42, -1.8, 17, 10, 0, 3);
+    branch(84, 42, -1.28, 17, 10, 0, 4);
+    branch(94, 46, -0.9, 19, 10, 0, 5);
+    branch(100, 56, -0.4, 21, 9, 0, 6);
   });
   // Glowing leaves on some branch tips (fallen, dull ones when dead).
   tips.forEach(([x, y, a, seed], i) => {
@@ -857,7 +874,13 @@ function treant(pose, f, mood) {
     const la = a + 0.9 + flut;
     const c = angry ? (i % 2 ? '#ff6b9a' : '#ff9a4a') : dead ? '#9b8aa0' : i % 3 === 0 ? G.leaf2 : G.leaf;
     let [lx, ly] = Tw(x, y);
-    if (dead) ly = Math.min(165, ly + 30 + (i % 4) * 8);
+    if (dead) {
+      // Fallen, dull leaves on the floor.
+      lx = 14 + ((i * 37) % 118);
+      ly = 165;
+      out.push(foval(lx, ly, 3.4, 1.4, c));
+      return;
+    }
     out.push(foval(lx + Math.cos(la) * 2.6, ly + Math.sin(la) * 2.6, 4.2, 2.2, mix(c, '#ffffff', 0.5), la), foval(lx + Math.cos(la) * 2.6, ly + Math.sin(la) * 2.6, 3.2, 1.5, c, la),
       dot(lx + Math.cos(la) * 3.2, ly + Math.sin(la) * 3.2, 0.7, '#ffffff'));
   });
@@ -907,9 +930,9 @@ function treant(pose, f, mood) {
       hole.push([76 + Math.cos(a) * 13 * r, 127 + Math.sin(a) * 16 * r]);
     }
     out.push(poly(hole.map(([x, y]) => [76 + (x - 76) * 1.2, 127 + (y - 127) * 1.15]), G.barkDk), F(poly(hole, G.hole)));
-    const hk = dead ? 0.8 : 1 + pulse * 0.14 + (angry ? 0.2 : 0);
+    const hk = dead ? 0.62 : 0.74 + pulse * 0.1 + (angry ? 0.14 : 0);
     const hc = dead ? '#7d6f86' : angry ? '#ff5ce0' : G.heart;
-    if (!dead) out.push(foval(76, 128, 11 * hk, 12.5 * hk, mix(hc, G.hole, 0.55)));
+    if (!dead) out.push(foval(76, 128, 10.4, 12.4, mix(hc, G.hole, 0.72)), foval(76, 128, 13 * hk, 14 * hk, mix(hc, G.hole, 0.5)));
     const hp = (k, c) => fpoly([[76, 140 * 1 - (1 - k) * 0 + (k - 1) * 12], ...arcPts(70.5, 124, 6.2 * k, 6.4 * k, 140, 330, 7).map(([x, y]) => [76 + (x - 76) * 1, 128 + (y - 128) * 1]), ...arcPts(81.5, 124, 6.2 * k, 6.4 * k, 210, 400, 7)].map(([x, y]) => [76 + (x - 76) * k, 128 + (y - 128) * k]), c);
     out.push(hp(hk, shade(hc, -18)), hp(hk * 0.86, hc), hp(hk * 0.45, dead ? '#9b90a2' : G.core));
     out.push(dot(72 - hk, 122.6, 1.5 * hk, '#ffffff'));
@@ -937,14 +960,15 @@ function treant(pose, f, mood) {
     }
     // Brows: grumpy by default, fierce when angry, lifted when smug, slack when dead.
     const browDrop = { angry: 6, happy: -3, hurt: -2, dead: -1 }[mood] ?? 3;
-    const browY = { angry: 62, happy: 59, dead: 66 }[mood] ?? 62;
+    const browY = { angry: 66, happy: 60, dead: 67, hurt: 62 }[mood] ?? 65;
     for (const [x, s] of [[65, -1], [90, 1]]) {
       const inner = x - s * 9;
       const outer = x + s * 12;
       const yi = browY + (mood === 'hurt' ? -2 : browDrop);
       const yo = browY - (mood === 'hurt' ? -3 : browDrop * 0.4);
-      out.push(C(poly([[outer, yo - 5], [inner + s * 1, yi - 6], [inner - s * 2, yi], [lerp(inner, outer, 0.5), lerp(yi, yo, 0.5) + 1.6], [outer, yo + 1]], G.bark)));
-      out.push(line([[outer - s * 1, yo - 4], [inner, yi - 5]], 1, G.barkLt));
+      out.push(C(poly([[outer + s * 2, yo - 6], [inner + s * 1, yi - 7], [inner - s * 3, yi + 0.5], [lerp(inner, outer, 0.5), lerp(yi, yo, 0.5) + 2], [outer + s * 1, yo + 1.5]], G.deep)));
+      out.push(fpoly([[outer + s * 1.5, yo - 5.2], [inner + s * 1, yi - 6.2], [inner - s * 1.6, yi - 1.6], [lerp(inner, outer, 0.5), lerp(yi, yo, 0.5) - 1]], G.barkDk));
+      out.push(line([[outer + s * 1, yo - 5], [inner + s * 0.6, yi - 6]], 1.1, G.barkLt));
     }
     // A knot nose.
     out.push(oval(80, 86, 4.6, 3.6, G.barkDk, 0, 16), oval(80.6, 85.2, 3.6, 2.8, G.bark, 0, 16), dot(81.6, 84.2, 1, G.barkLt), foval(78.4, 87.6, 1, 0.7, G.deep), foval(82.6, 87.6, 1, 0.7, G.deep));
@@ -974,9 +998,6 @@ function treant(pose, f, mood) {
       const [x, y] = bline[i];
       out.push(fpoly([[x - 1.6, y + 0.4], [x + 0.4, y - (angry ? 4.4 : 3)], [x + 1.6, y + 0.4]], G.tooth));
     }
-    // A short beard of moss under the maw.
-    const by = Math.max(...mb.map((q) => q[1])) + 2;
-    out.push(poly([[64, by - 2], [72, by], [80, by + 1], [88, by], [95, by - 2], [92, by + 5], [87, by + 3], [84, by + 9], [80, by + 4], [76, by + 10], [72, by + 4], [68, by + 7], [66, by + 3]], G.mossDk), fpoly([[70, by], [80, by + 1.6], [88, by + 0.4], [84, by + 3], [76, by + 3]], G.moss));
   });
 
   // Near roots over the base.
@@ -1034,7 +1055,7 @@ function dragon(pose, f, mood) {
   let open = 0;
   let drop = 0;
   if (angry) {
-    open = 0.2;
+    open = 0.3;
     headA = -0.1;
     flap = 0;
   }
@@ -1117,8 +1138,8 @@ function dragon(pose, f, mood) {
     const res = [];
     const k = knee([tx, ty + 4], [ax, ay], 14, 14, 1).k;
     res.push(taper([[tx, ty + 4], k], 15, 10, far ? shade(D.bodyDk, -4) : D.bodyDk, { n: 1 }), taper([k, [ax, ay]], 10, 8, far ? shade(D.bodyDk, -4) : D.bodyDk, { n: 1 }));
-    res.push(...ball(tx, ty, 15, 17, c, { dark: far ? shade(D.bodyDk, -6) : D.bodyDk }));
-    if (!far) res.push(fpoly([[tx - 4, ty - 8], [tx + 6, ty - 12], [tx + 10, ty - 2], [tx + 2, ty + 2]], D.bodyLt), fpoly([[tx - 10, ty + 4], [tx - 3, ty + 1], [tx, ty + 10], [tx - 8, ty + 12]], shade(D.body, -6)));
+    res.push(...ball(tx, ty + 2, 12.5, 15, c, { dark: far ? shade(D.bodyDk, -6) : D.bodyDk, hi: false }));
+    if (!far) res.push(fpoly([[tx - 2, ty - 8], [tx + 6, ty - 10], [tx + 9, ty - 1], [tx + 2, ty + 1]], D.bodyLt), fpoly([[tx - 9, ty + 6], [tx - 3, ty + 3], [tx - 1, ty + 12], [tx - 7, ty + 13]], shade(D.body, -6)));
     res.push(poly([[ax - 7, ay - 3], [ax + 9, ay - 1], [ax + 14, ay + 4], [ax + 13, ay + 8], [ax - 7, ay + 8]], c), line([[ax - 5, ay + 5], [ax + 10, ay + 5]], 0.7, far ? D.bodyDk : D.bodyDk));
     for (const [dx, dy] of [[14, 6], [10, 7.2], [5, 7.8]]) res.push(...shard(ax + dx - 1, ay + dy - 1.4, 0.35, 4.4, 3, far ? CRYS_DK : CRYS, { noShine: true }));
     res.push(...shard(ax - 6, ay + 2, 2.9, 5, 3, far ? CRYS_DK : CRYS, { noShine: true }));
@@ -1145,14 +1166,14 @@ function dragon(pose, f, mood) {
   within(Tb, () => {
     out.push(...ball(79, 103, 26, 31, D.body, { dark: D.bodyDk, hi: false }));
     out.push(fpoly([[62, 88], [70, 80], [74, 92], [66, 100]], shade(D.body, -5)), fpoly([[90, 78], [100, 88], [94, 92]], D.bodyLt), fpoly([[60, 112], [68, 106], [70, 122], [62, 124]], shade(D.body, -7)));
-    out.push(oval(88, 110, 15, 23, D.bellyDk, 0, 26), oval(89, 109, 13.6, 21.6, D.belly, 0, 26));
+    out.push(oval(91, 108, 14, 23, D.bellyDk, 0, 26), oval(92, 107, 12.6, 21.6, D.belly, 0, 26));
     for (let k = 0; k < 6; k++) {
       const y = 98 + k * 5.6;
-      const w = 13 * Math.sqrt(Math.max(0, 1 - ((y - 109) / 22) ** 2));
-      out.push(line(arcPts(89, y - 2.2, w, 3, 25, 155, 6), 0.8, D.bellyDk));
+      const w = 12 * Math.sqrt(Math.max(0, 1 - ((y - 107) / 22) ** 2));
+      out.push(line(arcPts(92, y - 2.2, w, 3, 25, 155, 6), 0.8, D.bellyDk));
     }
     // Chest plate: a gold shield set with a great heart gem and smaller stones.
-    const cy = 88;
+    const cy = 95;
     out.push(poly([[78, cy - 8], [98, cy - 9], [100, cy + 1], [89, cy + 12], [77, cy + 2]], D.goldDk), poly([[79, cy - 7], [97, cy - 8], [98.6, cy + 0.6], [89, cy + 10.4], [78.4, cy + 1.6]], D.gold));
     out.push(line([[80, cy - 6], [96, cy - 7]], 0.8, D.goldLt));
     const hk = 1 + pulse * 0.08 + (angry ? 0.15 : 0);
@@ -1163,18 +1184,7 @@ function dragon(pose, f, mood) {
   });
 
   // Near leg.
-  out.push(...leg(86, 90 + step, liftN, false));
-
-  // Ermine collar.
-  within(Tb, () => {
-    for (let k = 0; k <= 8; k++) {
-      const a = Math.PI * (0.92 - (k / 8) * 0.95);
-      const x = 86 + Math.cos(a) * 16;
-      const y = 74 + Math.sin(a) * 7;
-      out.push(oval(x, y, 4.6, 4.2, k % 2 ? D.ermine : D.ermineDk, 0, 14));
-    }
-    for (const [x, y] of [[75, 76], [86, 81], [97, 76]]) out.push(fpoly([[x - 0.8, y - 1.6], [x + 0.8, y - 1.6], [x + 0.3, y + 1.6], [x - 0.3, y + 1.6]], INK));
-  });
+  out.push(...leg(80, 92 + step, liftN, false));
 
   // Neck and head.
   within(Th, () => {
@@ -1206,7 +1216,7 @@ function dragon(pose, f, mood) {
       out.push(fpoly([[117.6, 50.4], [118.8, 53.6], [120.2, 50.4]], '#ffffff'));
     }
     // Brow crest and the glowing eye.
-    out.push(...[].concat(eye(107.6, 39.6, 4.4, 5.2, mood, { iris: D.eye, hot: '#bff9ff', lid: D.body, slit: true, s: 1, look: 1.1, smug: happy, dIn: 0.24 })));
+    out.push(...[].concat(eye(107.6, 39.6, 4.4, 5.2, mood, { iris: D.eye, hot: '#ff4fc8', lid: D.body, slit: true, s: 1, look: 1.1, smug: happy, dIn: 0.24 })));
     out.push(C(poly([[100, 33], [108, 31.4], [116, 34.4], [114, 35.6], [107, 34], [101, 36]], D.bodyDk)));
     if (angry) out.push(line([[101, 34.4], [113, 37.2]], 1.6, D.bodyDk));
     if (!dead) out.push(dot(113.6, 45.6, 2.2, BLUSH, 1));
@@ -1225,10 +1235,24 @@ function dragon(pose, f, mood) {
     });
   });
 
+  // An ermine collar wrapped around the base of the neck: a fluffy scalloped band with dark tail tips.
+  within(Tb, () => {
+    const topE = arcPts(87, 72, 15, 5, 160, 20, 10);
+    const bot = [];
+    for (let k = 0; k <= 12; k++) {
+      const t = k / 12;
+      const a = Math.PI * (0.06 + t * 0.88);
+      bot.push([87 + Math.cos(a) * 17, 75 + Math.sin(a) * 9 + (k % 2 ? 2 : 0)]);
+    }
+    out.push(poly([...topE, ...bot], D.ermineDk), poly([...topE.map(([x, y]) => [x + 0.6, y + 0.4]), ...bot.map(([x, y]) => [x + (x - 87) * -0.06, y - 1.6])], D.ermine));
+    for (const [x, y] of [[75, 79], [87, 84.6], [98.6, 79]]) out.push(fpoly([[x - 0.9, y - 1.8], [x + 0.9, y - 1.8], [x + 0.4, y + 1.8], [x - 0.4, y + 1.8]], INK));
+    out.push(line(arcPts(89, 74.6, 11, 4, 150, 30, 6), 0.6, D.ermineDk));
+  });
+
   // The near arm and the prism scepter.
   {
     const raise = angry;
-    const shaft = dead ? null : raise ? { x: 121, y0: 112, y1: 14 } : { x: 121, y0: 148, y1: 44 };
+    const shaft = dead ? null : raise ? { x: 138, y0: 100, y1: 42 } : { x: 129, y0: 128, y1: 82 };
     const drawScepter = () => {
       if (!shaft) {
         // Dropped on the floor.
@@ -1254,15 +1278,13 @@ function dragon(pose, f, mood) {
         out.push(sparkle(x + Math.cos(a) * (rr + 2), gy + Math.sin(a) * (rr + 2), angry ? 3 : 2, k % 2 ? '#ffffff' : D.gem2));
       }
     };
-    const hand = dead ? Tb(110, 112) : raise ? [shaft.x, 64 + bob] : [shaft.x, 98 + bob];
+    const hand = dead ? Tb(104, 126) : raise ? [shaft.x, 82 + bob] : [shaft.x, 108 + bob];
     within(Tb, () => {
-      const sh = [92, 86];
-      const el = dead ? [100, 104] : raise ? [108, 82] : [104, 102];
-      out.push(taper([sh, el], 12, 9, D.bodyDk, { n: 1 }), taper([sh, el], 10, 7.6, D.body, { n: 1 }));
-      out.push(...ball(sh[0], sh[1], 7, 7, D.body, { dark: D.bodyDk }));
-      // Forearm out to the hand (the hand is placed in world space on the shaft).
+      const sh = [86, 90];
+      const el = dead ? [94, 112] : raise ? [114, 90] : [108, 112];
       const [ex, ey] = X(...el);
-      out.push(T([[ex - 4.5, ey - 1], [hand[0] - 3, hand[1] - 3.6], [hand[0] - 2, hand[1] + 3.6], [ex + 3.5, ey + 4]], D.body));
+      out.push(taper([sh, el], 14, 11, D.bodyDk, { n: 1 }), taper([[sh[0] + 1, sh[1] - 1], el], 11, 9, D.body, { n: 1 }), oval(el[0], el[1], 5.6, 5.4, D.bodyDk, 0, 16), oval(el[0] + 0.5, el[1] - 0.5, 4.6, 4.4, D.body, 0, 16));
+      out.push(T([[ex - 4.4, ey - 4], [hand[0] - 3, hand[1] - 4.4], [hand[0] - 2, hand[1] + 4.4], [ex + 2.4, ey + 5]], D.body), dot(ex, ey - 1, 1.6, D.bodyLt));
     });
     drawScepter();
     out.push(...ball(hand[0], hand[1], 5.2, 4.8, D.body, { dark: D.bodyDk, hi: false }));
