@@ -51,35 +51,46 @@ function puffs(list, col, { line = lineOf(col), hi = mix(col, '#ffffff', 0.6), s
   return out;
 }
 
-// A side-view wing from the shoulder (x, y): an arm toward `ang` (degrees, screen space), primaries
-// fanning backward from the wrist by `ps` degrees each, secondaries along the arm, a row of coverts,
-// and the leading edge. Scaled by k.
-function wing({ x, y, ang, ps, k = 1, col, tip, tipAt = 0.62, cov, vane, bone = col, hand, n = 5, sec = 4, arm = 6.5, plen = 11, pw = 3.3, slen = 8, sw = 3 }) {
+// A side-view wing as a chain: shoulder > forearm (toward `ang`, degrees, screen space) > hand,
+// each link trailing the one before by `lag` (degrees: where the wing was a moment ago minus where
+// it is now), so the root leads the stroke and the feather tips follow. Primaries fan backward from
+// the hand by `ps` degrees each, secondaries ride the forearm, coverts cap the roots (back vanes on the
+// primaries only, and only when `vane` is given). Scaled by k.
+function wing({ x, y, ang, ps, lag = 0, k = 1, col, tip, tipAt = 0.62, cov, vane, bone = col, hand, n = 5, sec = 4, arm = 6.5, plen = 11, pw = 3.3, slen = 8, sw = 3 }) {
+  lag = Math.max(-30, Math.min(30, lag));
   const [dx, dy] = dirOf(ang);
   const wx = x + dx * arm * k;
   const wy = y + dy * arm * k;
+  // The hand link bends after the forearm.
+  const ha = ang + lag * 0.45;
+  const [hx, hy] = dirOf(ha);
+  const tx = wx + hx * 1.8 * k;
+  const ty = wy + hy * 1.8 * k;
   const out = [];
   // Inner lines stay soft; the silhouette gets the strong outline anyway.
   const line = mix(col, lineOf(col), 0.72);
   for (let i = 0; i < n; i++) {
-    const a = ang + 4 - i * ps;
-    const back = i * 0.55 * k;
-    out.push(...feather(wx - dx * back, wy - dy * back, a, plen * k * (1 - i * 0.07), pw * k, col, { tip, tipAt, vane, shaft: false, line }));
+    // Outer primaries sit on the hand and lag most; inner ones root back toward the wrist.
+    const t = i / Math.max(1, n - 1);
+    const a = ha + 4 - i * ps + lag * (0.75 - t * 0.35);
+    out.push(...feather(lerp(tx, wx, t) - dx * t * 1.2 * k, lerp(ty, wy, t) - dy * t * 1.2 * k, a, plen * k * (1 - i * 0.07), pw * k, col, { tip, tipAt, vane, shaft: false, line }));
   }
   const sa = ang + 4 - n * ps;
   for (let j = 0; j < sec; j++) {
     const t = 1 - (j + 0.7) / (sec + 0.3);
-    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa - 6 - j * 7, slen * k * (1 - j * 0.06), sw * k, col, { tip, tipAt, vane, shaft: false, line }));
+    // Secondaries nearer the wrist trail more than those at the shoulder.
+    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa - 6 - j * 7 + lag * 0.4 * t, slen * k * (1 - j * 0.06), sw * k, col, { tip, tipAt, shaft: false, line }));
   }
-  // Coverts: one smooth band of three broad feathers over the feather roots.
+  // Coverts: one smooth band of two broad feathers over the feather roots.
   const cl = mix(cov, lineOf(cov), 0.8);
   const [nx, ny] = dirOf(sa + 20);
   out.push(...stroke([[x + nx * 1.2 * k, y + ny * 1.2 * k], [wx + nx * 1.2 * k, wy + ny * 1.2 * k]], 3.4 * k, cov, false));
-  for (let j = 0; j < 3; j++) {
-    const t = 0.9 - j * 0.36;
-    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa + 16 - j * 8, slen * 0.6 * k, sw * 1.2 * k, cov, { shaft: false, line: cl }));
+  for (let j = 0; j < 2; j++) {
+    const t = 0.88 - j * 0.5;
+    out.push(...feather(lerp(x, wx, t), lerp(y, wy, t), sa + 16 - j * 10 + lag * 0.25 * t, slen * 0.62 * k, sw * 1.25 * k, cov, { shaft: false, line: cl }));
   }
-  out.push(...stroke([[x, y], [wx, wy]], 2.4 * k, bone, false), E(wx, wy, 1.4 * k, 1.4 * k, bone), E(x, y, 1.9 * k, 1.9 * k, bone), F(E(lerp(x, wx, 0.45) - ny * 0.4, lerp(y, wy, 0.45) + nx * 0.4, 1.6 * k, 0.6 * k, mix(bone, '#ffffff', 0.55))));
+  // Leading edge: the forearm bone and the lagging hand link.
+  out.push(...stroke([[x, y], [wx, wy], [tx, ty]], 2.4 * k, bone, false), E(wx, wy, 1.4 * k, 1.4 * k, bone), E(x, y, 1.9 * k, 1.9 * k, bone), F(E(lerp(x, wx, 0.45) - ny * 0.4, lerp(y, wy, 0.45) + nx * 0.4, 1.6 * k, 0.6 * k, mix(bone, '#ffffff', 0.55))));
   if (hand) out.push(...hand(wx, wy));
   return out;
 }
@@ -157,8 +168,10 @@ function pegasus(pose, f, mood) {
   if (happy) wa += 8;
   if (hurt) [wa, ps] = [-104, 15];
   if (dead) [wa, ps] = [-176, 6];
+  // Where the wing was a moment ago: the feather tips trail the stroke.
+  const lag = dead || hurt ? 0 : ak ? ((PEG_ATK[(f + 3) % 4].wa - ak.wa) * 0.35) : walk ? 22 * (beat(u * 2 - 0.1) - bt) * 1.4 : 4 * (beat(u - 0.12) - beat(u)) * 2;
   const wingCol = { col: '#fbfaff', tip: '#a9d3ff', cov: '#ffffff', vane: '#e8eefb', k: 1.2, arm: 7 };
-  out.push(...B(wing({ x: 29.5, y: 21.5, ang: wa + 9 + (walk ? 18 * (beat(u * 2 - 0.06) - bt) : 0), ps, k: 1.08, arm: 7, col: '#e7e2f4', tip: '#b5d3f2', cov: '#efebf8', vane: '#dcd6ee' })));
+  out.push(...B(wing({ x: 29.5, y: 21.5, ang: wa + 9 + (walk ? 18 * (beat(u * 2 - 0.06) - bt) : 0), ps, lag, k: 1.08, arm: 7, col: '#e7e2f4', tip: '#b5d3f2', cov: '#efebf8' })));
 
   // Tail: a cotton-candy plume on a chain, carried high in the trot and swishing root to tip.
   const tsw = walk ? 1.2 : ak ? 0.4 : 0.6;
@@ -220,7 +233,7 @@ function pegasus(pose, f, mood) {
   out.push(...B([...stroke([[30, 24.6 + (hy - bob) * 0.3], [34.2, 26.4], [38.6, 25.6]], 1.5, '#9fd4ff'), ...stroke([[30.2, 24.1 + (hy - bob) * 0.3], [34.2, 25.9], [38.4, 25.1]], 0.4, '#d6efff')]),
     ...B(shift(sparkle(35.2, 28.2, 1.9, '#ffd66b', '#fff4c0'), walk ? Math.sin(2 * a - 1.4) * 0.4 : 0, walk ? Math.abs(Math.cos(a - 0.7)) * 0.4 : 0)));
   // Near wing, in front of the body.
-  out.push(...B(wing({ x: 27.5, y: 23, ang: wa, ps, ...wingCol })));
+  out.push(...B(wing({ x: 27.5, y: 23, ang: wa, ps, lag, ...wingCol })));
 
   // Head: ears flick and pin back with mood.
   let earTip = [33.2, 1.4];
@@ -301,6 +314,8 @@ function harpy(pose, f, mood) {
   if (angry && !ak) [ang, ps] = [ang + 8, ps + 2];
   if (hurt) [ang, ps] = [-100, 16];
   if (dead) [ang, ps, bob] = [128, 6, 0.6];
+  // Where the wing was a moment ago: on the fast downstroke the tips trail high, on the recovery low.
+  const wlag = dead || hurt ? 0 : ak ? ((((HARPY_ATK[(f + 3) % 4].ang - ak.ang + 540) % 360) - 180) * 0.3) : walk ? lerp(-108, -204, beat(u - 0.07)) - ang + (angry ? 8 : 0) : (lerp(-122, -140, beat(u - 0.1)) - ang + (angry ? 8 : 0)) * 1.5;
   // The head lags the body a little.
   let hx = 0;
   let hy = (ak ? bob : walk ? 0.8 - 1.8 * beat(u - 0.2) : 0.4 - 0.8 * beat(u - 0.2)) - bob + bob * 0.7 + (walk ? 0.25 : 0);
@@ -320,8 +335,8 @@ function harpy(pose, f, mood) {
   out.push(...B(tail));
 
   // Far wing, a touch behind the near one.
-  const wingOpts = { n: 6, sec: 4, arm: 7, plen: 11.6, pw: 3.4, slen: 8.2, sw: 3.2 };
-  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9 + (walk ? 96 * (bt - beat(u - 0.05)) : 0), ps, k: 1.12, col: '#dce8f6', tip: PLUME_D, tipAt: 0.72, cov: '#cfe0f4', bone: PLUME_D, vane: '#cfdcef', ...wingOpts })));
+  const wingOpts = { n: 5, sec: 4, arm: 7, plen: 11.6, pw: 3.4, slen: 8.2, sw: 3.2 };
+  out.push(...B(wing({ x: 30.6, y: 21.6, ang: ang + 9 + (walk ? 96 * (bt - beat(u - 0.05)) : 0), ps, lag: wlag, k: 1.12, col: '#dce8f6', tip: PLUME_D, tipAt: 0.72, cov: '#cfe0f4', bone: PLUME_D, ...wingOpts, sec: 3 })));
 
   // Legs and talons: dangling and swinging after the strokes, tucked or thrust out in the dive.
   const leg = (x, near) => {
@@ -364,7 +379,7 @@ function harpy(pose, f, mood) {
 
   // Near wing-arm, with a little hand at the wrist.
   const hand = (x, y) => [E(x + 0.4, y + 0.6, 1.3, 1.1, SKIN), ...stroke([[x + 0.6, y + 1.2], [x + 1.4, y + 2]], 0.7, SKIN, false), ...stroke([[x - 0.3, y + 1.3], [x - 0.2, y + 2.3]], 0.7, SKIN, false)];
-  out.push(...B(wing({ x: 24.8, y: 23.2, ang, ps, col: '#f8fcff', tip: PLUME, tipAt: 0.72, cov: '#e6f4ff', bone: PLUME, vane: '#e4effa', hand, k: 1.25, ...wingOpts })));
+  out.push(...B(wing({ x: 24.8, y: 23.2, ang, ps, lag: wlag, col: '#f8fcff', tip: PLUME, tipAt: 0.72, cov: '#e6f4ff', bone: PLUME, vane: '#e4effa', hand, k: 1.25, ...wingOpts })));
   // Head.
   const head = [E(29.6, 20.6, 1.8, 2.2, SKIN), F(E(32.6, 16.2, 7.05, 6.65, lineOf(SKIN))), E(32.6, 16.2, 6.6, 6.2, SKIN), E(33.4, 18.4, 5.4, 3.6, SKIN)];
   // Crest plumes, streaming behind.
@@ -476,8 +491,12 @@ function seraph(pose, f, mood) {
     { dx: 4.6, dy: 4.8, base: 54, amp: 9, n: 4, len: 11.5, w: 3.6, fan: 9, tip: WING_TIPS[2] },
   ];
   const wings = [];
+  // Each wing's sweep angle at phase t, so a link can trail where the wing was a moment ago.
+  const sweep = (i, t) => (ak ? ak.beat * (1 - i * 0.15) : Math.sin(t - i * 0.8) * (walk ? pairs[i].amp : pairs[i].amp * 0.4));
   pairs.forEach((p, i) => {
-    let beat = ak ? ak.beat * (1 - i * 0.15) : Math.sin(a - i * 0.8) * (walk ? p.amp : p.amp * 0.4);
+    let beat = sweep(i, a);
+    // A wing is a chain: a root spar, then two feather links; each link lags the one before.
+    const lag = dead || ak ? 0 : sweep(i, a - 0.7) - beat;
     if (angry && !ak) beat -= 10;
     if (happy) beat -= 5;
     if (hurt) beat += 10 + i * 2;
@@ -487,18 +506,29 @@ function seraph(pose, f, mood) {
       const rx = cx + side * p.dx;
       const ry = cy + p.dy;
       const one = [];
+      const d0 = p.base + beat;
+      // The spar: two links out from the root, the second trailing the first.
+      const spar = (t) => {
+        const a1 = d0 + lag * 0.4;
+        const [ux, uy] = dirOf(side > 0 ? d0 : 180 - d0);
+        const [vx, vy] = dirOf(side > 0 ? a1 : 180 - a1);
+        const l1 = Math.min(t, 0.5) * p.len * 0.5;
+        const l2 = Math.max(0, t - 0.5) * p.len * 0.5;
+        return [rx + ux * l1 + vx * l2, ry + uy * l1 + vy * l2];
+      };
       for (let j = p.n - 1; j >= 0; j--) {
-        // Feathers fan from the leading edge down to the trailing edge; the tips lag the sweep.
-        // A ripple runs from the leading edge to the trailing feathers, root to tip.
-        const lagT = dead ? 0 : Math.sin(a - i * 0.8 - 0.9 - j * 0.45) * (j / p.n) * (walk ? 6 : ak ? 3 : 3.4);
-        const d = p.base + beat + (j - (p.n - 1) * 0.35) * fan + lagT;
+        // Feathers fan from the leading edge to the trailing edge; the leading ones root further
+        // out on the spar and trail most, so the sweep runs root to tip.
+        const tj = 1 - j / p.n;
+        const [fx, fy] = spar(tj * 0.75);
+        const d = d0 + (j - (p.n - 1) * 0.35) * fan + lag * (0.5 + tj * 0.6);
         const ang = side > 0 ? d : 180 - d;
-        const len = p.len * (1 - Math.abs(j - 1) * 0.08);
-        one.push(...feather(rx, ry, ang, len, p.w, fade('#ffffff'), { tip: fade(p.tip), vane: fade('#f0ecfb'), line: fade('#bcaedf') }));
+        const len = p.len * (1 - Math.abs(j - 1) * 0.08) * (1 - tj * 0.22);
+        one.push(...feather(fx, fy, ang, len, p.w, fade('#ffffff'), { tip: fade(p.tip), vane: i < 2 ? fade('#f0ecfb') : null, line: fade('#bcaedf') }));
       }
-      for (let j = 0; j < 3; j++) {
-        const d = p.base + beat + (j - 1) * fan * 0.9 - fan * 0.4;
-        one.push(...feather(rx, ry, side > 0 ? d : 180 - d, p.len * 0.45, p.w * 1.1, fade('#fffaf0'), { shaft: false, line: fade('#c6b9e4'), tip: fade(mix(p.tip, '#ffffff', 0.5)) }));
+      for (let j = 0; j < 2; j++) {
+        const d = d0 + (j - 0.5) * fan * 1.1 - fan * 0.4 + lag * 0.3;
+        one.push(...feather(rx, ry, side > 0 ? d : 180 - d, p.len * 0.48, p.w * 1.15, fade('#fffaf0'), { shaft: false, line: fade('#c6b9e4'), tip: fade(mix(p.tip, '#ffffff', 0.5)) }));
       }
       wings.push(one);
     }

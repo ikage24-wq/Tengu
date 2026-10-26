@@ -331,7 +331,14 @@ function brambleBear(pose, f, mood) {
     const w = fore ? 6.8 : 7.6;
     const res = [];
     res.push(...ball(H[0], H[1] + 1, w * 0.62, w * 0.66, R, { hi: false }));
-    res.push(...limbR([H, K, Ft], w, w * 0.72, R, 0.5));
+    // The limb bends through a rounded knee or elbow: a curve from mid-thigh round the joint to
+    // mid-shin (never a hard corner), and a soft joint pad over it.
+    const mid = (A, B) => [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    const m0 = mid(H, K);
+    const m1 = mid(K, Ft);
+    const bend = [0.25, 0.5, 0.75].map((t) => [(1 - t) ** 2 * m0[0] + 2 * t * (1 - t) * K[0] + t * t * m1[0], (1 - t) ** 2 * m0[1] + 2 * t * (1 - t) * K[1] + t * t * m1[1]]);
+    res.push(...limbR([H, m0, ...bend, m1, Ft], w, w * 0.72, R, 0.5));
+    res.push(fov(bend[1][0], bend[1][1], w * 0.42, w * 0.42, R.base, 0, 12));
     res.push(...ball(Ft[0] + 0.9, Ft[1] - 0.2, 3.4, 1.9, R, { hi: false }));
     for (const k of [0, 1, 2]) {
       const cx = Ft[0] + 3.3 - k * 0.3;

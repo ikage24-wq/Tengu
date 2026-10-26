@@ -22,7 +22,7 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   now exports its rig and motion helpers (put, pivot, chain, beat, ik, gait, ...) for other modules.
 - Sky (all three): Pegasus Foal (IK prancing trot, kit eye/mouth), Sky Harpy (fast-down wingbeat,
   kit eyes/mouth, crown highlight band), Star Seraph (kit eyes with star pupils, three-tone halo,
-  wing ripple). Shape counts run ~270 per frame (feathers), a little over the 240 budget.
+  wing ripple).
 - Treant: the slam now reaches the ground (trunk lean plus the shoulder rolling down).
 - Hollow (all five): Root Imp, Myconid Shaman, Bramble Bear, Spore Mite, Corrupted Sapling (trunk
   chain, planted roots, branch and leaf chains, glowEye knot holes; old helpers removed). Hollow.js
@@ -67,19 +67,25 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   pulled toward the fill (`softenRim` in scenery.js). Thief hoods with tattered edges (Wraith Mask,
   Specter/Nightmare Visage) drew nothing (NaN points); fixed for the bag icons and the hero.
 
+- Monster/boss rough spots: sky wings are chains (shoulder > forearm > hand, each link trailing
+  the stroke by `lag`; Seraph wings a two-link spar whose leading feathers trail most), frames
+  back to ~205-250 shapes; Tuskar a round humped barrel with lit shoulder and hip planes, crease
+  lines, rounded thighs and knees, flames as bulb-rooted tapering tongues with an S-flicker, a
+  side lick and a breaking ember (`tongue`, `blob` in bosses.js); Queen face at full heroine
+  scale (QK 1) under a raised cap; Prismaris panes are two clean facets plus an edge glow and one
+  straight glint, and dead it slumps onto its belly with wings folded down over its back, panes
+  dulled; Bramble Bear knees and elbows bend through a curve with a joint pad; Dullahan pauldrons
+  are stacked flat lames with gap lines, knees and elbows pointed two-facet cops, a breastplate
+  ridge and plackart line. One critique round.
+
 ## Still to do
-- Sky designs still place feathers in absolute coordinates (wings are not yet
-  chains); trim their shape counts.
-- Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs); Prismaris'
-  dead pose and wing panes could use another look. Queen/Tuskar: Tuskar's body is blocky and its flames read a bit like spikes; the
-  queen's face is small under the cap.
+- Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs).
 - Gear: accent-colour audit per piece. Bag icons at 1x all draw now, but the darkest sets (demonic,
   cyber and t45+ weapons, thief bottoms and shoes) read as near-black blobs at 1x.
 - Hero: critique rounds on attack/jump/climb/death motion; a player death pose (drawn in scene.js);
   head tilt; capes on two springs; sparkle extras on excited/sassy faces get grey outlines; lighter
   bangs band on dark skin.
-- Rough spots on finished designs: Bramble Bear joints angular; Dullahan armour shapes round and
-  merged; Kitsune body fur shading still a little blotchy; Jackalope's hind legs hide under the
+- Rough spots on finished designs: Kitsune body fur shading still a little blotchy; Jackalope's hind legs hide under the
   body when dead.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
 - Thunder Hawk has no skill that summons it.

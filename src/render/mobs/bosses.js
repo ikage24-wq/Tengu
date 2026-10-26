@@ -53,7 +53,7 @@ const QR = {
   glowHi: '#e6fff9',
   ink: '#3a2448',
 };
-const QK = 0.8;
+const QK = 1;
 const QFACE = {
   k: QK,
   lineK: 1.15,
@@ -103,8 +103,8 @@ function queen(pose, f, mood) {
   const trail = (i, k = 1) => k * ((walk ? 0.05 + 0.05 * Math.sin(p - 1 - i * 0.7) : att >= 0 ? [-0.03, -0.05, 0.07, 0.05, 0.01][att] * (0.6 + i * 0.25) : 0.025 * Math.sin(it - 1.2 - i * 0.7)) + (hurt ? 0.08 : 0) + (dead ? -0.04 : 0));
   const MW = joint(ID, 50 + dx, 84 + by, lean);
   const MC = joint(MW, 0.6, -16, lean * 0.4 + (hurt ? -0.05 : 0));
-  const MH = snapJ(joint(MC, 2, -11, headA));
-  const MK = joint(MH, -0.4, -5.6, capA);
+  const MH = snapJ(joint(MC, 2, -12.2, headA));
+  const MK = joint(MH, -0.4, -9.4, capA);
   const out = [];
   const hk = (pts) => pts.map(([x, y]) => [x * QK, y * QK]);
 
@@ -385,13 +385,46 @@ const BR = {
   mouth: '#4a1f3a',
 };
 
-// A flame tongue as a chain from its root along angle a: three nested layers whose tips trail.
-function tongue(x, y, a, len, w, bend, cols) {
+// A closed smooth outline through control points (Catmull-Rom), for round masses.
+function blob(ctrl, c, n = 4) {
+  const m = ctrl.length;
   const out = [];
-  [[1, cols[0]], [0.72, cols[1]], [0.42, cols[2]]].forEach(([k, c], li) => {
-    const { pts } = chainPts(x, y + li * len * 0.06, a, 3, () => (len * (li ? k * 1.05 : 1)) / 3, (i) => bend * (i + 1) * 0.5);
-    out.push(F(rtaper(pts, w * k, 0.3, c)));
+  for (let i = 0; i < m; i++) {
+    const [p0, p1, p2, p3] = [ctrl[(i + m - 1) % m], ctrl[i], ctrl[(i + 1) % m], ctrl[(i + 2) % m]];
+    for (let k = 0; k < n; k++) {
+      const t = k / n;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const q = (j) => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3);
+      out.push([q(0), q(1)]);
+    }
+  }
+  return pg(out, c);
+}
+
+// A flame tongue as a chain from its root along angle a: a round bulb at the root tapering to a
+// licking point, three nested layers (the hot core sits low in the bulb), the chain bending in a
+// travelling S-wave that flickers with ph, a side lick forking off, and an ember breaking away.
+function tongue(x, y, a, len, w, bend, cols, ph = 0) {
+  const out = [];
+  const prof = (k) => (t) => w * k * (t < 0.26 ? 0.66 + 0.34 * Math.sin((t / 0.26) * (Math.PI / 2)) : Math.pow((1 - t) / 0.74, 1.2));
+  const spine = (x0, y0, L, wav) => chainPts(x0, y0, a, 5, L / 5, (i) => bend * (i + 1) * 0.11 + wav * Math.sin(ph - i * 1.15) * (i / 5));
+  // The side lick, behind the main tongue.
+  const sd = Math.sin(ph * 1.3) > 0 ? 1 : -1;
+  const { pts: lk } = chainPts(x + Math.cos(a) * len * 0.3, y + Math.sin(a) * len * 0.3, a + sd * 0.55 + bend * 0.6, 3, len * 0.14, (i) => -sd * 0.25 * (i + 1) + bend * 0.3);
+  out.push(F(rtaper(lk, w * 0.42, 0.2, cols[0])));
+  [[1, cols[0]], [0.66, cols[1]], [0.36, cols[2]]].forEach(([k, c], li) => {
+    const off = li * len * 0.05;
+    const { pts } = spine(x + Math.cos(a) * off, y + Math.sin(a) * off, len * (li ? k * 1.12 : 1), 0.5 + li * 0.12);
+    out.push(F(rtaper(pts, prof(k), 0, c)));
   });
+  // An ember breaking off the tip on alternate flickers.
+  const fl = Math.sin(ph * 0.9 + 1);
+  if (fl > 0.2) {
+    const { pts } = spine(x, y, len * (1.04 + fl * 0.08), 0.5);
+    const e = pts[5];
+    out.push(fov(e[0], e[1], w * 0.11 + 0.3, w * 0.13 + 0.35, cols[1], a, 8));
+  }
   return out;
 }
 
@@ -472,7 +505,9 @@ function behemoth(pose, f, mood) {
     }
     const [K, Ft] = ik(Hp, ft, 17, 16, L.dir);
     const R = L.R;
-    const res = [...limbR([Hp, K], 13, 8.6, R), ...limbR([K, Ft], 7.6, 5.8, R)];
+    // Thick round upper legs (the thigh or forearm mass), a rounded knee, then the slim cannon.
+    const mid = lerp2(Hp, K, 0.45);
+    const res = [...limbR([K, Ft], 7.2, 5.4, R), ...limbR([Hp, mid, K], 13.6, 7.6, R), fov(K[0] + 0.2, K[1] - 0.3, 3.6, 3.6, R.base, 0, 12), fov(mid[0], mid[1], 6.2, 5.6, R.base, 0, 14)];
     // A shaggy fetlock tuft and an armoured hoof with an ember crack.
     res.push(fp([[Ft[0] - 4, Ft[1] - 3.4], [Ft[0] + 3.4, Ft[1] - 3.6], [Ft[0] + 2.4, Ft[1] - 0.4], [Ft[0] - 3, Ft[1] - 0.2]], R.sh2));
     res.push(pg([[Ft[0] - 3.6, Ft[1] - 0.6], [Ft[0] + 3.6, Ft[1] - 0.6], [Ft[0] + 4.6, Ft[1] + 1.4], [Ft[0] - 3.6, Ft[1] + 1.4]], L.far ? P.hoof.sh : P.hoof.base), fp([[Ft[0] - 3.2, Ft[1] - 0.6], [Ft[0] + 3.4, Ft[1] - 0.6], [Ft[0] + 3.6, Ft[1]], [Ft[0] - 3.2, Ft[1]]], P.hoof.hi));
@@ -495,17 +530,30 @@ function behemoth(pose, f, mood) {
     }
     const { pts, a } = tc;
     out.push(...limb(pts, 2.6, 1.2, P.fur.sh, P.fur.sh2));
-    if (!dead) out.push(...tongue(pts[4][0], pts[4][1], a - 0.4, 7 * flare, 4, trail(4), P.fire.slice(1)));
+    if (!dead) out.push(...tongue(pts[4][0], pts[4][1], a - 0.4, 7 * flare, 4, trail(4), P.fire.slice(1), (walk ? p : it) * 2 + 1));
   }
 
   // The body: a heavy barrel, the belly lighter underneath, the form shadow along the back and
   // belly line, and the bristled neck mass.
   {
     const b = [];
-    b.push(C(pg([[-16, -4], [-12, -14], [4, -18], [26, -21], [42, -16], [50, -6], [48, 10], [36, 15], [12, 14], [-6, 12], [-16, 6]], P.fur.base)));
-    b.push(fp([[-16, -4], [-12, -14], [-6, -12], [-10, 2], [-6, 12], [-16, 6]], P.fur.sh));
-    b.push(fp([[-6, 12], [12, 14], [36, 15], [44, 11], [36, 9], [12, 9], [-2, 8]], P.belly.base), fp([[-4, 11.6], [12, 13.4], [34, 14], [36, 12], [12, 11], [0, 10.2]], P.belly.sh));
-    b.push(fp([[6, 3], [26, 4], [30, 8], [8, 8]], P.fur.sh), fp([[38, -2], [46, -8], [48, 4], [42, 8]], P.fur.hi));
+    // A round, weighty barrel: high humped shoulders, the back sloping to a round rump, a deep
+    // chest and a sagging belly.
+    b.push(C(blob([[-17, -2], [-13, -12], [0, -16], [16, -20], [30, -24], [43, -17], [50, -5], [47, 9], [34, 15], [14, 16], [-4, 13], [-14, 8]], P.fur.base)));
+    // Form shadow down the back of the rump and under the belly line.
+    b.push(F(blob([[-17, -2], [-13, -11], [-9, -8], [-11, 3], [-4, 12.6], [-14, 8]], P.fur.sh, 3)));
+    b.push(F(blob([[-4, 12.6], [14, 15.6], [34, 14.6], [44, 10], [34, 9.6], [14, 10.4], [0, 9]], P.belly.base, 3)), fp([[-1, 11.6], [14, 14.4], [33, 13.8], [35, 12], [14, 12], [2, 10.6]], P.belly.sh));
+    // The hip plane: a round haunch with its lit top and a crease along its front edge.
+    b.push(F(blob([[-14, -4], [-6, -11], [4, -9], [8, 0], [4, 9], [-6, 10], [-13, 4]], P.fur.base, 3)));
+    b.push(fp([[-11, -7], [-5, -10.6], [3, -8.6], [-2, -7.6], [-8, -5.4]], P.fur.hi));
+    b.push(F(rtaper([[3, -8], [7.6, -1], [6.6, 5], [3, 9.6]], 1.4, 0.5, P.fur.sh2)));
+    // The shoulder plane: the big lit scapula mass under the hump, set off from the barrel by a
+    // crease behind it.
+    b.push(F(rtaper([[24, -18], [21, -9], [22, 1], [26, 9]], 1.6, 0.6, P.fur.sh2)));
+    b.push(F(blob([[25, -17], [36, -21], [45, -13], [46, -1], [41, 8], [31, 8], [25, 0]], P.fur.base, 3)));
+    b.push(fp([[27, -16], [36, -20], [43, -14], [36, -14.6], [29, -12]], P.fur.hi), F(blob([[38, -6], [44, -9], [46, 2], [42, 6]], P.fur.hi, 2)));
+    // The barrel's lower flank, shaded between the two planes.
+    b.push(F(blob([[8, 4], [22, 3], [26, 9], [12, 10]], P.fur.sh, 2)));
     // Bristles at the scruff, each tuft a short chain lagging the head.
     for (let i = 0; i < 3; i++) {
       const x = 42 + i * 3;
@@ -529,8 +577,8 @@ function behemoth(pose, f, mood) {
       out.push(...place(MPl, pl));
       if (!dead) {
         const root = at(MPl, 0, -3.6);
-        const len = (13 + (i % 2) * 4 + (i === 2 ? 4 : 0)) * flare * (1 + 0.12 * Math.sin((walk ? p : it) * 2 + i * 1.9));
-        flames.push(...tongue(root[0], root[1], -Math.PI / 2 + a + pitch - 0.35, len, 8.4, trail(i) * 1.4, P.fire));
+        const len = (17 + (i % 2) * 4 + (i === 2 ? 5 : 0)) * flare * (1 + 0.12 * Math.sin((walk ? p : it) * 2 + i * 1.9));
+        flames.push(...tongue(root[0], root[1], -Math.PI / 2 + a + pitch - 0.3, len, 8.4, trail(i) * 1.6 - 0.1, P.fire, (walk ? p * 2 : it * 2) + i * 2.1));
       } else if (i % 2) flames.push(...mote(at(MPl, 0, -6)[0], at(MPl, 0, -6)[1] - (f % 3), 1.2, P.smoke));
     });
     out.push(...flames);
@@ -572,7 +620,7 @@ function behemoth(pose, f, mood) {
       const big = angry || att >= 0 ? 1.18 : 1;
       if (!hurt && mood !== 'blink' && !happy) {
         const fl = (angry || att >= 0 ? 6.6 : 4.4) * (1 + 0.15 * Math.sin((walk ? p : it) * 2));
-        h.push(...tongue(ex - 1.8, ey - 0.6, Math.PI + 0.35, fl, 3.4, 0.25, P.fire.slice(1)));
+        h.push(...tongue(ex - 1.8, ey - 0.6, Math.PI + 0.35, fl, 3.4, 0.25, P.fire.slice(1), (walk ? p : it) * 2 + 3));
       }
       const act = actOf(mood, { idle: { lid: 0.18 }, angry: { lid: 0.2, slant: 0.9, raise: 0.25 } });
       h.push(...glowEye(ex, ey, { shape: 'round', s: 1, w: 2.6 * big, h: 2.3 * big, c: angry || att >= 0 ? '#ff6a3a' : '#ff9a4a', hot: '#fff2b8', bg: '#2a1830', look: [0.4, 0.1], flick: (f % 4) / 4, ...act, ...(att >= 0 ? { lid: 0.16, slant: 0.9, closed: undefined } : {}) }));
@@ -999,12 +1047,16 @@ function prism(x, y, a, len, w, K, glint = true) {
 const gemDot = (x, y, r, K) => [fov(x, y, r + 0.4, r + 0.4, mix(K[0], '#2a2035', 0.4), 0, 12), fov(x, y, r, r, K[1], 0, 12), fov(x + r * 0.28, y - r * 0.28, r * 0.6, r * 0.55, K[0], 0, 10), fov(x - r * 0.35, y + r * 0.38, r * 0.42, r * 0.34, K[2], 0, 8), fov(x + r * 0.3, y - r * 0.45, Math.max(0.4, r * 0.22), Math.max(0.4, r * 0.22), K[3], 0, 6)];
 // A wing pane between spars (A the wrist, B the leading spar tip, C the trailing one).
 function pane(A, B, C, K) {
+  // A clean cut gem pane: split from the root to the outer edge into two flat facets (the one
+  // toward the light darker, the far one glowing), a glowing band inside the outer edge, and one
+  // straight glint along the leading edge.
   const m = (U, V, t) => [U[0] + (V[0] - U[0]) * t, U[1] + (V[1] - U[1]) * t];
+  const M = m(B, C, 0.45);
   return [
     pg([A, B, C], K[1]),
-    fp([A, B, m(B, C, 0.38), m(A, C, 0.22)], K[0]),
-    fp([m(A, C, 0.55), m(B, C, 0.7), C], K[2]),
-    fp([m(A, B, 0.55), m(A, B, 0.82), m(m(A, B, 0.7), C, 0.1)], K[3]),
+    fp([A, B, M], mix(K[0], K[1], 0.35)),
+    fp([m(A, M, 0.62), M, C, m(A, C, 0.7)], K[2]),
+    fp([m(A, B, 0.5), m(A, B, 0.86), m(m(A, B, 0.86), M, 0.12), m(m(A, B, 0.5), M, 0.1)], K[3]),
   ];
 }
 
@@ -1050,12 +1102,13 @@ function dragon(pose, f, mood) {
   }
   if (happy && att < 0) headA -= 0.08;
   if (dead) {
-    by = 20;
-    pitch = 0.7;
-    neckA = 0.45;
-    headA = 0.5;
+    // Collapsed: slumped forward onto its belly, the neck laid along the floor, the wings
+    // folded and draped down to the floor behind it, their panes gone dull.
+    by = 22;
+    pitch = 0.92;
+    neckA = 0.3;
+    headA = 0.35;
     jaw = 0.3;
-    flap = -0.85;
   }
   const MB = joint(ID, 62, 110 + by, pitch);
   const out = [];
@@ -1064,16 +1117,17 @@ function dragon(pose, f, mood) {
   // Wings: arm and forearm from the root, four finger spars fanning back from the wrist, crystal
   // panes between them; the far wing sits higher and darker.
   const wing = (root, far) => {
-    const a1 = -1.95 + flap + (far ? 0.3 : 0) + pitch * 0.5;
+    const a1 = dead ? -2.15 + (far ? 0.3 : 0) : -1.95 + flap + (far ? 0.3 : 0) + pitch * 0.5;
     const E = [root[0] + Math.cos(a1) * 18, root[1] + Math.sin(a1) * 18];
-    const a2 = a1 + 0.5 + lagW(0) * 0.6 + flap * 0.3;
+    const a2 = dead ? a1 - 1.25 : a1 + 0.5 + lagW(0) * 0.6 + flap * 0.3;
     const W = [E[0] + Math.cos(a2) * 18, E[1] + Math.sin(a2) * 18];
-    const tips = [-0.95, -1.5, -2.1, -2.6].map((d, k) => {
-      const a = a2 + d + lagW(k + 1) + (dead ? 0.3 * k : 0);
+    const tips = (dead ? [-0.15, -0.55, -0.95, -1.35] : [-0.95, -1.5, -2.1, -2.6]).map((d, k) => {
+      const a = a2 + d + lagW(k + 1);
       const l = [26, 30, 30, 26][k];
       return [clamp(W[0] + Math.cos(a) * l, 3, 147), clamp(W[1] + Math.sin(a) * l, 3, floor - 2)];
     });
-    const KS = far ? [dimK(P.lilac), dimK(P.ice), dimK(P.rose)] : [P.lilac, P.ice, P.rose];
+    const dull = (K) => (dead ? K.map((c) => mix(c, '#a99fc6', 0.45)) : K);
+    const KS = (far ? [dimK(P.lilac), dimK(P.ice), dimK(P.rose)] : [P.lilac, P.ice, P.rose]).map(dull);
     const R = far ? P.far : P.scale;
     const res = [];
     res.push(...pane(W, tips[0], tips[1], KS[0]), ...pane(W, tips[1], tips[2], KS[1]), ...pane(W, tips[2], tips[3], KS[2]), ...pane(W, tips[3], root, KS[0]));

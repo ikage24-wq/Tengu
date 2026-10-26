@@ -599,6 +599,24 @@ function helmet(mood, P, look, plumeA) {
   return h;
 }
 
+// Flat armour plates (Dullahan): a pauldron of stacked lames, each a flat band with its own lit
+// top plane and a dark gap line under the one above, so the plates read apart; and a pointed
+// cop (knee or elbow) in two facets, the upper front one lit.
+function lames(x, y, w, h, P, dark = false) {
+  const [base, top, low] = dark ? [P.s1, P.plate, P.s2] : [P.plate, P.plateHi, P.s1];
+  const cap = [[x - w * 0.5, y + h * 0.18], [x - w * 0.3, y - h * 0.5], [x + w * 0.3, y - h * 0.5], [x + w * 0.52, y - h * 0.18], [x + w * 0.52, y + h * 0.18]];
+  const out = [...oT(cap, base, 0.5), F(T([[x - w * 0.28, y - h * 0.5], [x + w * 0.3, y - h * 0.5], [x + w * 0.52, y - h * 0.18], [x - w * 0.1, y - h * 0.18]], top))];
+  [[0.2, 0.46, 0.54, 0.98, base], [0.48, 0.74, 0.5, 0.86, low]].forEach(([y0, y1, r0, r1, c]) => {
+    const band = [[x - w * r0, y + h * y0], [x + w * r0 + w * 0.02, y + h * y0], [x + w * r1 * 0.5, y + h * y1], [x - w * r1 * 0.5, y + h * y1]];
+    out.push(...oT(band, c, 0.5), F(T([[x - w * r0 * 0.9, y + h * y0 + 0.15], [x + w * r0 * 0.94, y + h * y0 + 0.15], [x + w * r0 * 0.9, y + h * y0 + 0.75], [x - w * r0 * 0.86, y + h * y0 + 0.75]], c === low ? base : top)));
+  });
+  return out;
+}
+function cop(x, y, r, P, dark = false) {
+  const [base, top] = dark ? [P.s1, P.plate] : [P.plate, P.plateHi];
+  return [...oT([[x - r, y], [x + 0.2, y - r], [x + r * 1.1, y - 0.1], [x + 0.2, y + r * 0.9]], base, 0.5), F(T([[x + 0.2, y - r], [x + r * 1.1, y - 0.1], [x + 0.3, y - 0.1]], top))];
+}
+
 function dullahan(pose, frame, mood) {
   const walk = pose === 'walk';
   const ak = pose === 'attack' ? DULL_ATK[frame] : null;
@@ -641,7 +659,7 @@ function dullahan(pose, frame, mood) {
     const pc = back ? P.s1 : P.plate;
     legs.push(...put(segF(hip, knee), limbPts([[0, 0], [6.1, 0]], 4.4, back ? P.suitD : P.suit)));
     legs.push(...put(segF(knee, foot), [...limbPts([[0, 0], [6.1, 0]], 4.6, pc), F(T([[0.6, -1.9], [5.6, -1.9], [5.6, -0.9], [0.6, -0.9]], back ? P.plate : P.plateHi))]));
-    legs.push(...oE(knee[0] + 0.4, knee[1], 2.2, 1.9, back ? P.plate : P.plateHi, 0.5));
+    legs.push(...cop(knee[0] + 0.4, knee[1], 2.3, P, back));
     // The sabaton stays flat while planted and tips its toe up as it swings through.
     legs.push(...put(pivot(move(ID, foot[0], foot[1]), 0, 0, -toe), [...oT([[-2.6, -0.8], [1.4, -1], [4.4, 1.6], [4, 2.4], [-2.6, 2.4]], pc, 0.5), F(T([[-2.2, -0.5], [1.2, -0.7], [2.8, 0.4], [-2.2, 0.4]], back ? P.plate : P.plateHi))]));
     if (walk && !dead && wrap(p) < 0.08) fxs.push(...dust(foot[0] + 1, 58, 0.55));
@@ -676,10 +694,12 @@ function dullahan(pose, frame, mood) {
   const bp = [[15, 25], [29, 25], [30.6, 31], [28.6, 38], [27.4, 41], [16.6, 41], [15.4, 38], [13.8, 31]];
   out.push(...put(torso, [...oT(bp, P.plate), F(T([[15, 25], [19, 25], [18, 33], [18.6, 41], [16.6, 41], [15.4, 38], [13.8, 31]], P.s1)), F(T([[14.4, 31], [15.4, 37.6], [16.4, 40.4], [15.6, 37.6]], P.back)),
     F(T([[24.4, 26], [28.6, 26], [29.8, 31], [27.6, 34.4], [25.6, 31]], P.plateHi)), F(T([[26.8, 35.4], [28.2, 35.6], [27.2, 39], [26.2, 38.6]], P.plateHi)), F(E(27.4, 28, 0.5, 0.5, '#ffffff')),
+    // A centre ridge parting the two flat planes, and the plackart's gap line across the belly.
+    F(T([[21.6, 25.2], [22.6, 25.2], [22.9, 34], [22, 34]], P.plateHi)), F(T([[21.1, 25.2], [21.6, 25.2], [22, 34], [21.5, 34]], P.s1)), F(T([[15.2, 33.8], [22.4, 34.6], [29.6, 33.8], [29.4, 34.6], [22.4, 35.4], [15.4, 34.6]], P.s2)),
     ...stroke([[21.6, 26], [22.2, 33], [21.8, 40.4]], 0.67, P.s1), F(T([[22.4, 30.4], [24, 32.4], [22.4, 34.6], [20.8, 32.4]], P.gold)), F(T([[22.4, 30.6], [23.4, 31.8], [22.4, 32.4]], P.goldHi)),
     ...oT([[16.2, 40.2], [27.8, 40.2], [28, 42.6], [16, 42.6]], P.suit, 0.5), F(T([[20.8, 40], [24, 40], [24, 42.8], [20.8, 42.8]], P.gold)), F(E(22.4, 41.4, 0.7, 0.6, P.suitD))]));
   // Back pauldron, bouncing a beat late on its strap.
-  out.push(...put(move(torso, 0, clank * 0.7), [...oE(15, 26.6, 4.4, 3.8, P.s1), F(E(15.6, 25.9, 3.6, 3, P.plate)), F(T(ovalPts(16.4, 24.4, 1.8, 0.8, -0.2), P.plateHi))]));
+  out.push(...put(move(torso, 0, clank * 0.7), lames(15.2, 26.4, 8.8, 7.8, P, true)));
 
   // The empty collar and its ghost-fire: three chained tongues, root leading, tips licking after.
   const fk = (angry ? 1.2 : dead ? 0.35 : 1) * (ak ? ak.fire / 1.2 : 1);
@@ -743,9 +763,9 @@ function dullahan(pose, frame, mood) {
   ];
   out.push(...put(joint(ID, hT[0], hT[1], sw), sword));
   out.push(...put(segF(sShoulder, sEl), limbPts([[0, 0], [5.4, 0]], 3.2, P.suit)), ...put(segF(sEl, hT), [...limbPts([[0, 0], [5.2, 0]], 3.8, P.plate), F(T([[0.6, -1.5], [4.6, -1.5], [4.6, -0.8], [0.6, -0.8]], P.plateHi))]));
-  out.push(...oE(sEl[0], sEl[1], 1.8, 1.6, P.plateHi, 0.5), ...oE(hT[0], hT[1] - 0.2, 2.1, 2, P.s1), F(E(hT[0] + 0.4, hT[1] - 0.8, 1.2, 0.8, P.plate)));
+  out.push(...cop(sEl[0], sEl[1], 1.9, P), ...oE(hT[0], hT[1] - 0.2, 2.1, 2, P.s1), F(E(hT[0] + 0.4, hT[1] - 0.8, 1.2, 0.8, P.plate)));
   // Front pauldron, layered and gold-rimmed, bouncing a beat late.
-  out.push(...put(move(torso, 0, clank * 0.6), [...oE(29.6, 26.8, 5.2, 4.4, P.s1), F(E(30.2, 26.2, 4.5, 3.7, P.plate)), arc(29.6, 27.4, 5, 3.8, 15, 165, 0.8, P.gold), F(T(ovalPts(31, 24.4, 2.4, 1, -0.2), P.plateHi)), F(E(32, 24.2, 0.45, 0.45, '#ffffff'))]));
+  out.push(...put(move(torso, 0, clank * 0.6), [...lames(29.8, 26.4, 9.6, 8.4, P), F(T([[26.2, 30.1], [33.4, 30.1], [33, 30.8], [26.6, 30.8]], P.gold)), F(E(32.6, 22.9, 0.45, 0.45, '#ffffff'))]));
   if (ak && frame === 2 && !dead) fxs.push(...burst(42, 54.6, 4, '#8a5aa8', '#8a5aa8', 6, 0.4), ...burst(42, 54.6, 3.4, '#fff3b0', '#ffffff', 6, 0.4), ...dust(39, 58, 0.8));
   return { w: 44, h: 58, res: 3, shapes: [...out, ...fxs] };
 }
