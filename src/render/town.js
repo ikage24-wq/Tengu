@@ -12,6 +12,7 @@ import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
+import { groundAt } from '../world/physics.js';
 import { ITEMS } from '../data/items.js';
 
 const hash = (n) => {
@@ -252,25 +253,30 @@ function hangingSign(ctx, x, y, label, time) {
 // the ground and before ledges and props.
 export function drawStreet(ctx, map, cam, width, time) {
   if (!map.isTown) return;
-  const gy = snap(map.groundY - cam.y);
+  const ground = (wx) => snap(groundAt(map, wx) - cam.y);
   const theme = map.theme;
   // Houses fill the gaps between NPCs, portals, and the plaza.
   const kinds = STREET[theme] ?? [];
   if (kinds.length) {
     for (let wx = 120, i = 0; wx < map.width - 100; wx += 150, i++) {
       if (map.npcs.some((n) => Math.abs(n.x - wx) < 110) || map.portals.some((p) => Math.abs(p.x - wx) < 70) || Math.abs((map.plaza ?? -999) - wx) < 90) continue;
+      // Houses stand on level ground, clear of the town's landmarks.
+      if (Math.abs(groundAt(map, wx - 36) - groundAt(map, wx + 36)) > 2) continue;
+      if ((map.deco ?? []).some(([, dx, , dy]) => dy == null && Math.abs(dx - wx) < 90)) continue;
       const x = wx - cam.x;
       if (x < -60 || x > width + 60) continue;
       const seed = hash(wx * 0.13 + map.width);
       const kind = pick(kinds, seed);
       const s = kind === 'house' ? houseArt(seed) : kind === 'adobe' ? adobeArt(seed) : kind === 'tent' ? tentArt(pick(['#e0504d', '#ffab5c', '#5fb8d8'], seed)) : kind === 'treehouse' ? treehouseArt(seed) : mushHouseArt(seed);
-      place(ctx, s, snap(x), gy);
-      if (kind === 'house' || kind === 'adobe') chimneySmoke(ctx, x + (kind === 'house' ? 17 : -24), gy - (kind === 'house' ? 84 : 46), time, seed);
+      const hy = ground(wx);
+      place(ctx, s, snap(x), hy);
+      if (kind === 'house' || kind === 'adobe') chimneySmoke(ctx, x + (kind === 'house' ? 17 : -24), hy - (kind === 'house' ? 84 : 46), time, seed);
     }
   }
   // The plaza fountain, with water arcing from the spout.
   if (map.plaza != null) {
     const x = snap(map.plaza - cam.x);
+    const gy = ground(map.plaza);
     if (x > -60 && x < width + 60) {
       place(ctx, fountainArt(), x, gy);
       ctx.save();
@@ -300,6 +306,7 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (x < -80 || x > width + 80) continue;
     const s = buildingArt(npc.building, time);
     if (!s) continue;
+    const gy = ground(n.x);
     place(ctx, s, x, gy);
     if (npc.building === 'forge') forgeGlow(ctx, x, gy, time);
     if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time);
@@ -684,10 +691,10 @@ const ITEM_COLORS = (id) => ITEMS[id]?.color ?? '#ffffff';
 
 export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = null) {
   if (!map.isTown || !settings.showCrowd) return;
-  const gy = snap(map.groundY - cam.y);
   for (const p of villagersOf(map)) {
     const at = stroll(p, time);
     const x = snap(at.x - cam.x);
+    const gy = snap(groundAt(map, at.x) - cam.y);
     if (x < -40 || x > width + 40) continue;
     const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
     shadow(ctx, x, gy);
@@ -698,6 +705,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
+    const gy = snap(groundAt(map, bot.x) - cam.y);
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
     drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said);
   }

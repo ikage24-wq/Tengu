@@ -1096,14 +1096,24 @@ function smoke(ctx, x, y, time, seed) {
 
 // ---------- Ground and ledges ----------
 
-// The map's landmarks (giant trees, totems, archways, crystal spires...), standing on the ground
-// behind everything that moves.
-function drawDeco(ctx, map, cam, width, time) {
-  for (const [kind, wx, seed = 0] of map.deco ?? []) {
-    const half = (LANDMARKS[kind]?.w ?? 120) / 2 + 160;
+// The map's landmarks (giant trees, totems, archways, crystal spires...) and, in towns, houses,
+// standing on the ground (or on a ledge, at `y`) behind everything that moves.
+const BUILDINGS = {
+  house: { w: 70, art: (seed) => houseArt(seed) },
+  mushhouse: { w: 56, art: (seed) => mushHouseArt(seed) },
+  treehouse: { w: 64, art: (seed) => treehouseArt(seed) },
+  windmill: { w: 60, art: (seed, time) => windmillArt(Math.floor(time * 4 + seed * 8) % 8) },
+};
+function drawDeco(ctx, map, cam, width, time, onLedges) {
+  for (const [kind, wx, seed = 0, wy] of map.deco ?? []) {
+    if ((wy != null) !== onLedges) continue;
+    const b = BUILDINGS[kind];
+    const half = (b?.w ?? LANDMARKS[kind]?.w ?? 120) / 2 + 160;
     const x = wx - cam.x;
     if (x + half < 0 || x - half > width) continue;
-    drawLandmark(ctx, kind, snap(x), snap(groundAt(map, wx) - cam.y), time, seed);
+    const y = snap((wy ?? groundAt(map, wx)) - cam.y);
+    if (b) place(ctx, b.art(seed, time), snap(x), y + 2);
+    else drawLandmark(ctx, kind, snap(x), y, time, seed);
   }
 }
 
@@ -1390,6 +1400,8 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
       if (s.ground && map.isTown && map.plaza && Math.abs(map.plaza - wx) < 46) continue;
       const sy = s.yAt(wx);
+      // Leave room around houses and landmarks standing on a ledge.
+      if (!s.ground && (map.deco ?? []).some(([, dx, , dy]) => dy === sy && Math.abs(dx - wx) < 46)) continue;
       if (map.ropes.some((r) => Math.abs(r.x - wx) < 16 && r.top <= sy + 1 && r.bottom >= sy - 1)) continue;
       // Nothing stands on a steep slope.
       if (Math.abs(s.yAt(wx + 6) - s.yAt(wx - 6)) > 5) continue;
@@ -1539,10 +1551,11 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   if (gfx.hd) drawSoft(ctx, BACKDROP_BLUR * gfx.scale, backdrop);
   else backdrop(ctx);
   drawTerrain(ctx, theme, map, cam, width, height, time);
-  drawDeco(ctx, map, cam, width, time);
+  drawDeco(ctx, map, cam, width, time, false);
   // Town buildings stand on the street, behind ledges and props.
   street?.();
   drawLedges(ctx, t, theme, map, cam, width, height, time);
+  drawDeco(ctx, map, cam, width, time, true);
   drawProps(ctx, t, map, cam, width, time);
   drawRopes(ctx, map, cam);
   drawPortals(ctx, map, cam, time, nearPortalId);

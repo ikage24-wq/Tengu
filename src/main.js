@@ -198,12 +198,14 @@ function npcPointer(ui) {
   if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
-    const gy = world.map.groundY;
     if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
     // Party members, wherever they are on the map.
     if (!npc) bot = partyMembers(world.bots).find((b) => b.body && b.map === world.map.id && Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
     if (!npc && !bot && settings.showCrowd && world.map.isTown) {
-      bot = botsIn(world.bots, world.map.id).find((b) => (Math.abs(b.x - wx) < 13 && wy > gy - 46 && wy < gy + 22) || (b.shop && Math.abs(b.x - wx) < 40 && wy > gy - 76 && wy < gy - 58)) ?? null;
+      bot = botsIn(world.bots, world.map.id).find((b) => {
+        const by = groundAt(world.map, b.x);
+        return (Math.abs(b.x - wx) < 13 && wy > by - 46 && wy < by + 22) || (b.shop && Math.abs(b.x - wx) < 40 && wy > by - 76 && wy < by - 58);
+      }) ?? null;
     }
     const b = world.body;
     if (!npc && !bot) self = Math.abs(b.x - wx) < 12 && wy > b.y - 46 && wy < b.y + 13;

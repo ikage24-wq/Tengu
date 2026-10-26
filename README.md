@@ -325,7 +325,11 @@ to clear it.
   (archers, a pastel village with archery targets), Pastel Harbor (thieves, moonlit docks with
   string lights and alley cats), Ember Crag (warriors, sandstone mesas with forges, banners, and
   training dummies), and Moonleaf Grove (mages, a starry forest with glowing treehouses and
-  floating lanterns). The world map (M) shows Tengu Island with every road between maps and a
+  floating lanterns). Towns are built in tiers like classic side-scroller towns: the streets rise
+  and fall over gentle hills, and floating decks above them, reached by ladders, hold more of
+  the town (houses, a windmill and a mushroom house in Sprout Village, harbor houses under a
+  lighthouse in Pastel Harbor, war tents and a totem on Ember Crag's rocks, treehouses and
+  moonstones up in Moonleaf Grove), always clear of the NPCs' own buildings. The world map (M) shows Tengu Island with every road between maps and a
   "you are here" pin; click a town to fly there from any town for a little gold.
 - **Living towns** — every NPC works from their own place: striped market stalls for Pip's Goods,
   Tora's Forge, Nim's Spells, Marlo's Wares, and Lulu's Salon; guild halls for the Archer Lodge,
