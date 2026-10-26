@@ -23,7 +23,7 @@ const PAGES = {
     ['showFps', 'FPS counter', 'Frames per second, for the curious.'],
   ],
   Gameplay: [
-    ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.'],
+    ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.', ['full', 'low', 'off']],
     ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
     ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],
     ['autoLoot', 'Auto-loot', 'Pick up items just by walking over them.'],
@@ -36,7 +36,7 @@ const PAGES = {
 const CONTROLS = [
   ['← →', 'Move'], ['↑ ↓', 'Climb, talk, enter portals'], ['Space', 'Jump'], ['Z', 'Attack'], ['X', 'Pick up loot'],
   ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'],
-  ['Enter', 'Chat'], ['Esc', 'Close windows / Options'],
+  ['Enter', 'Chat'], ['Esc', 'Close windows / Options'], ['Drag', 'Move items, wear gear, set hotkeys'],
 ];
 
 const TAB_NAMES = [...Object.keys(PAGES), 'Controls', 'Character'];

@@ -45,8 +45,9 @@ const wobble = (t, seed) => (Math.sin(t * 17.3 + seed) + Math.sin(t * 29.1 + see
 
 // Camera offset for this frame.
 export function shakeOffset(fx, time) {
-  if (!settings.screenShake) return [0, 0];
-  const k = fx.trauma * fx.trauma * SHAKE_MAX;
+  if (!settings.screenShake || settings.screenShake === 'off') return [0, 0];
+  // Low keeps the feel of a hit with less than half the movement.
+  const k = fx.trauma * fx.trauma * SHAKE_MAX * (settings.screenShake === 'low' ? 0.45 : 1);
   return [snap(wobble(time, 1) * k + fx.kick.x), snap(wobble(time, 7) * k * 0.7 + fx.kick.y)];
 }
 
@@ -229,7 +230,7 @@ export function absorbJuice(fx, world) {
         // motion for a moment while the blasts go off.
         shake(fx, 7, 0.8);
         kick(fx, 0, 4);
-        if (settings.screenShake) add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: 0.12, size: 1, shape: 'screenflash', color: '#ffffff' });
+        if (settings.screenShake === 'full' || settings.screenShake === true) add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: 0.12, size: 1, shape: 'screenflash', color: '#ffffff' });
         world.slowmo = Math.max(world.slowmo ?? 0, 0.75);
       }
     } else if (j.type === 'hurt') {

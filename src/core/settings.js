@@ -7,7 +7,7 @@ export const DEFAULT_SETTINGS = {
   // Display
   hdGraphics: true,
   filter: 'vivid', // 'natural' | 'vivid' | 'dreamy' | 'retro'
-  screenShake: true,
+  screenShake: 'full', // 'full' | 'low' | 'off'
   hitStop: true,
   damageNumbers: true,
   particles: 'full', // 'full' | 'reduced' | 'off'
@@ -34,6 +34,8 @@ export const settings = { ...DEFAULT_SETTINGS };
 export function loadSettings() {
   try {
     Object.assign(settings, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem(KEY) ?? '{}'));
+    // Saves from when screen shake was only on or off.
+    if (typeof settings.screenShake === 'boolean') settings.screenShake = settings.screenShake ? 'full' : 'off';
   } catch {
     Object.assign(settings, DEFAULT_SETTINGS);
   }

@@ -159,6 +159,16 @@ carry an improvement across every part of the game it applies to.
   and double-clicks still work; the item rides the cursor, leaves a faded copy, and every place
   that takes it lights up (cells, the hero to wear it, hotkeys for potions). A live stat panel
   under the hero shows each total's change while trying something on.
+- Every window that lists things is a list plus a detail pane (Bag, Quests, Skills): the list
+  shows state at a glance (badges, breathing borders for what you can act on, grey for what's
+  out of reach), the pane explains and holds the actions. Anything that decides something gets
+  a preview before you commit: trying gear on, +1 stat previews in Stats, Now/Next in Skills.
+- Skills and Use items drag onto the hotkey bar; while something is dragged every hotkey slot
+  shows it can take it and the one under the mouse lights up.
+- Speech bubbles are queued and laid out once per frame (`chat.js` `flushBubbles`): they stack
+  instead of overlapping, and a lifted bubble's tail stretches to its speaker.
+- Damage numbers scale with the share of the monster's HP a hit took and fade for party hits;
+  picked-up loot flies into the Bag button before it bumps. Screen shake is full / low / off.
 - Text over the scene always has an outline or backing; the world dims behind windows; bars give
   feedback (lingering lost chunk, heal flash, low-HP pulse).
 - Props (landmarks, buildings, scenery) use `src/render/propkit.js`: one world light from the upper
