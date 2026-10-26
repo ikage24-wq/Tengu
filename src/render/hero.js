@@ -210,7 +210,6 @@ function gearKey(gear) {
 // touch toward the facing side. Hair is built around that skull: a crown behind the head, soft
 // rounded bangs and side locks in front, and longer styles that hang behind the body.
 
-const RIBBON = '#ff9ec0';
 const HEAD_X = 15.5;
 const HEAD_Y = 14.6;
 // The face sits a little forward on the skull, toward the facing side.
@@ -274,13 +273,6 @@ function subdivide(pts, step) {
   return out;
 }
 
-// A white ribbon bow tied at (x, y), with a pink knot so it shows on any hair color.
-const BOW = '#fff6fb';
-const bow = (x, y) => [T([[x, y], [x - 2.8, y - 1.8], [x - 2.6, y + 1.6]], BOW), T([[x, y], [x + 2.8, y - 1.8], [x + 2.6, y + 1.6]], BOW), F(E(x, y, 0.9, 0.9, RIBBON))];
-// A big pink ribbon bow with two tails, for the half-up style.
-const bigBow = (x, y) => [T([[x - 1, y + 1], [x - 2.2, y + 5.4], [x - 0.6, y + 4.6], [x + 0.2, y + 1.4]], RIBBON), T([[x + 0.6, y + 1], [x + 2.6, y + 5.2], [x + 1.2, y + 4.8], [x - 0.2, y + 1.4]], RIBBON),
-  T([[x, y], [x - 4.4, y - 2.8], [x - 4.2, y + 2.6]], RIBBON), T([[x, y], [x + 4.4, y - 2.8], [x + 4.2, y + 2.6]], RIBBON), F(E(x, y, 1.3, 1.3, '#ffd3e4'))];
-
 // A tapered, curved lock from its root (x0, y0) to its tip (x1, y1), w wide at the root. `bend`
 // bows the middle sideways (positive bows to the left of the root-to-tip direction).
 function curvedLock(x0, y0, x1, y1, w, bend, c, from = 0, to = 1) {
@@ -314,7 +306,7 @@ function lockWithStrand(x0, y0, x1, y1, w, bend, c) {
 // locks (shadow 1) over a deeper mass (shadow 2) that shows only in the gaps between them, so the
 // locks read as clumps.
 function hairBack(style, front, root, tip, lift) {
-  return hairBackShapes(style, front, root, tip, lift).map((sh) => (sh.c === RIBBON || sh.c === BOW || sh.c === '#ffd66b' ? sh : F(sh)));
+  return hairBackShapes(style, front, root, tip, lift).map((sh) => F(sh));
 }
 function hairBackShapes(style, front, root, tip, lift) {
   // Hair behind the head is one shade darker, so the bangs stand out in front of it.
@@ -340,13 +332,13 @@ function hairBackShapes(style, front, root, tip, lift) {
     ])];
     case 'ponytail': return [crown, ...sw([
       ...locks([[3.6, 6.6, 0.2, 35, 8, 3.2], [3, 10, 2.8, 30, 4.2, -1.2]]),
-    ]), E(4.4, 8.4, 2, 1.8, '#ffd66b')];
+    ]), E(4.4, 8.4, 1.8, 1.5, m)];
     case 'curly': {
       // Soft, fluffy curls all around the head, a little fuller at the back.
       const curls = [[5, 8.6, 2.6], [4, 13.4, 2.6], [4.6, 18.4, 2.4], [6.8, 22, 2.2], [10, 4.4, 2.6], [15.5, 3, 2.8], [21, 4.4, 2.6], [26, 8.6, 2.6], [27, 13.4, 2.4], [26.4, 18.4, 2.2], [24.4, 21.6, 2]];
       return [E(HEAD_X, 13.2, 11.8, 10.8, c), ...curls.map(([x, y, r]) => E(x, y, r, r * 0.92, c))];
     }
-    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, r.hi), E(HEAD_X, 6.6, 4.6, 1.3, RIBBON),
+    case 'bun': return [crown, E(HEAD_X, 2.8, 5.4, 4.4, c), arc(HEAD_X, 3.2, 4, 3, 200, 300, 0.8, r.hi), E(HEAD_X, 6.4, 4.2, 1, m),
       ...sw(locks([[6, 14, 6.6, 24.6, 3.2, 0.6], [25, 14, 24.4, 24.6, 3.2, -0.6]]))];
     case 'ahoge':
     case 'sweep':
@@ -395,8 +387,8 @@ function hairBackShapes(style, front, root, tip, lift) {
       const puffs = [...side, ...side.map(([x, y, rr]) => [31 - x, y, rr]), [13, 38, 3.6], [18, 38, 3.6]];
       return [E(HEAD_X, 13, 12.6, 11.6, c), ...sw([T([[4, 14], [27, 14], [28, 34], [24, 38], [7, 38], [3, 34]], m), ...puffs.map(([x, y, rr]) => E(x, y, rr, rr * 0.92, c))])];
     }
-    // Half-up: a little top-knot tied with a big ribbon bow on the crown, the rest left down.
-    case 'halfup': return [crown, E(HEAD_X - 1.4, 1.6, 3.6, 3, c), arc(HEAD_X - 1.4, 1.8, 2.6, 2, 200, 300, 0.7, r.hi), ...bigBow(HEAD_X + 3.6, 0.6), ...sw([
+    // Half-up: the top section gathered into a high knot on the crown, the rest left down.
+    case 'halfup': return [crown, E(HEAD_X, 0.8, 4.4, 3.6, c), arc(HEAD_X, 1, 3.2, 2.6, 200, 300, 0.8, r.hi), E(HEAD_X, 3.8, 3, 0.9, m), ...sw([
       // The rest left down, long and straight, its ends splitting into points.
       T([[3.8, 13], [27.2, 13], [28, 30], [27.2, 38], [3.8, 38], [3, 30]], m),
       ...locks([[4.8, 15, 4.6, 41, 5.4, -1], [9.8, 18, 10.2, 42.4, 5.6, 0.6], [15.5, 20, 15.5, 43, 6.2, 0], [21.2, 18, 20.8, 42.4, 5.6, -0.6], [26.2, 15, 26.4, 41, 5.4, 1]]),
@@ -452,7 +444,7 @@ function hairFront(style, c, sway = 0, mood = 'smile') {
       const tip = sh.pts.reduce((a, b) => (b[1] > a[1] ? b : a));
       if (tip[1] > 11 && tip[1] < 17.5 && tip[0] > 7.4 && tip[0] < 23.6) shade1.push(nudge(sh, 0, 1.1, null));
     }
-    out.push(sh.f || sh.c === RIBBON || sh.c === BOW ? sh : F({ ...sh, cast: 0 }));
+    out.push(sh.f ? sh : F({ ...sh, cast: 0 }));
   }
   out.shade = shade1;
   return out;
@@ -527,7 +519,7 @@ function fringe(style, r, sway, mood) {
         const x = bx + (k % 2 ? 0.7 : -0.7) - k * 0.2;
         out.push(E(x, y, 2.3 - k * 0.12, 1.7, c), arc(x, y - 0.1, 2.2 - k * 0.12, 1.6, 20, 160, 0.5, d));
       }
-      out.push(E(bx - 1, 33.6, 1.4, 1.8, c), ...bow(bx - 0.8, 32));
+      out.push(E(bx - 1, 33.6, 1.4, 1.8, c), F(E(bx - 0.8, 32, 1.6, 0.8, d)));
       out.push(shine);
       return out;
     }
@@ -551,14 +543,14 @@ function fringe(style, r, sway, mood) {
         out.push(lock(HEAD_X + side * 8.6, 8.4, x0, 20.4, 4.4, side * 1));
         out.push(lock(x0 - side * 0.4, 20, x0 + side * 0.6 + sw2, 36, 6.8, side * -1.6), lock(x0 + side * 1.4, 21, x0 + side * 3.2 + sw2 * 1.2, 34, 4.2, side * 1),
           lock(x0 - side * 1.2, 22, x0 - side * 1.6 + sw2 * 0.8, 33, 3.4, side * -0.6));
-        out.push(...bow(x0, 20.4));
+        out.push(F(E(x0, 20.4, 2.4, 0.9, d)));
       }
       out.push(shine);
       return out;
     }
     case 'drills':
       return [cap, lock(11, 7, 9.6, 14.4, 6, 0.8), lock(15.6, 6.6, 15.2, 15.2, 5.6, 0.2), lock(19.6, 6.8, 20.6, 14.6, 5.4, -0.5), lock(22.4, 7, 23.4, 13.8, 4.6, -0.8),
-        lock(7.2, 8, 5.8, 17, 4.2, 1), lock(24.8, 8.4, 25.8, 16.4, 3.8, -1), ...bow(4.4, 9), ...bow(26.6, 9), shine];
+        lock(7.2, 8, 5.8, 17, 4.2, 1), lock(24.8, 8.4, 25.8, 16.4, 3.8, -1), shine];
     default: {
       const short = style === 'curly';
       const side = short ? 20 : 23;
@@ -815,7 +807,8 @@ function headShapes(look, g, rig) {
     [-1, 1].forEach((side, i) => (style === 'eyecover' && side > 0) || out.push(brow(FACE_X + EYE_DX * side, side, f.brows[i][0], f.brows[i][1], hr.brow)));
   }
   if (f.extra) out.push(...faceExtras(f.extra));
-  if (style === 'twintails' && !tucked) out.push(...bow(3.6, 12), ...bow(27.4, 12));
+  // Hair ties where the twintails gather (no bows, so nothing clashes with a hat).
+  if (style === 'twintails' && !tucked) out.push(F(E(3.6, 12, 1.6, 1.1, hairRamp(hair).sh2)), F(E(27.4, 12, 1.6, 1.1, hairRamp(hair).sh2)));
   // An earring under each ear.
   if (g.earring) {
     const ring = offset(earringShapes(g.earring.design, g.earring.color, g.earring), -1.6, 0);
