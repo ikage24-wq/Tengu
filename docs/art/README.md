@@ -69,6 +69,11 @@ carry an improvement across every part of the game it applies to.
   themselves (plus the hairline) 1 px down in skin shadow, drawn under the eyes.
 - A two-link hair chain is enough: a root spring on the body and a softer tip spring chasing it;
   points blend from root to tip by depth (`b`, `b²`) and lift a little when they disagree.
+  Bend every hanging shape point by point (cut outlines into ~1.5 px steps, ellipses included),
+  easing in below the skull (smoothstep), or a long sheet shears like a card; let locks further
+  from the middle trail a touch more so they fan instead of moving as one (`hero.js` `swayShape`).
+- Every hairstyle needs its own silhouette: if two read the same in a thumbnail, cut one
+  (retired styles map to their closest kept look in `hairStyleOf`, so saves still draw).
   Capes are the same two-link chain (`animator.js` `cape`/`capeTip`, kit.js `hang`): the root
   spring rides the shoulders (stiffer, damping ratio ~0.5), the hem chases it on a softer one
   (~0.4), so it lags a start and swings past on a stop before settling.

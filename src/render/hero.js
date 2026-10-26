@@ -28,9 +28,12 @@ import { drawJobAura, AURA_JOBS } from './aura.js';
 import { moveAt } from './moves.js';
 import { heroineEye } from './mobs/heroine.js';
 
-export const HAIR_STYLES = ['bob', 'wavy', 'twintails', 'ponytail', 'short', 'curly', 'bun', 'long', 'ahoge', 'curtain', 'sweep', 'quiff', 'wolf', 'hime', 'odango', 'drills', 'braid', 'eyecover'];
+export const HAIR_STYLES = ['bob', 'pixie', 'curtain', 'sweep', 'ahoge', 'quiff', 'wolf', 'curly', 'fluffy', 'wavy', 'hime', 'halfup', 'eyecover', 'ponytail', 'twintails', 'lowtails', 'odango', 'bun', 'braid', 'drills'];
 // Spiky hair was retired; old saves that used it get soft curls instead.
-const hairStyleOf = (look) => (look.hairStyle === 'spiky' ? 'curly' : look.hairStyle ?? 'bob');
+// Retired styles draw as their closest kept look: spiky became soft curls; 'short' and 'long'
+// were near twins of the curtain cut and the wavy long hair.
+const RETIRED_HAIR = { spiky: 'curly', short: 'curtain', long: 'wavy' };
+export const hairStyleOf = (look) => RETIRED_HAIR[look.hairStyle] ?? look.hairStyle ?? 'bob';
 export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
@@ -228,23 +231,55 @@ function arc(cx, cy, rx, ry, a0, a1, th, c) {
 // Hair that hangs below the head is a chain: near the root it follows the root spring, toward the
 // tips it follows the tip spring, which lags and overshoots it, so a swing travels down the hair.
 // Where root and tip disagree the tips also ride up a little, tracing a loop instead of a line.
+// Every shape is cut into short steps and bent point by point (ellipses too), so a long sheet of
+// hair curves as it swings instead of shearing like a card; the bend eases in below the skull, and
+// locks further out from the middle trail a touch more, so they fan apart instead of moving as one.
+const HANG_TOP = 13;
+const HANG_LEN = 24;
 function swayShape(shape, root, tip, lift) {
-  const bend = (py) => Math.max(0, Math.min(1, (py - 14) / 16));
-  const dx = (b) => root * b + (tip - root) * b * b;
-  const up = (b) => -Math.abs(tip - root) * 0.35 * b * b;
-  if (shape.t === 'p') {
-    return { ...shape, pts: shape.pts.map(([px, py]) => {
-      const b = bend(shape.y + py);
-      return [px + q(dx(b)), py + q(up(b)) + (shape.y + py >= 22 ? lift : 0)];
-    }) };
+  const bend = (py) => {
+    const u = Math.max(0, Math.min(1, (py - HANG_TOP) / HANG_LEN));
+    return u * u * (3 - 2 * u);
+  };
+  const move = ([px, py]) => {
+    const b = bend(py);
+    const fan = 1 + 0.22 * Math.min(1, Math.abs(px - HEAD_X) / 12);
+    const dx = (root * b + (tip - root) * b * b) * fan;
+    const up = -Math.abs(tip - root) * 0.3 * b * b;
+    return [px + q(dx), py + q(up) + (py >= 22 ? lift : 0)];
+  };
+  if (!root && !tip && !lift) return shape;
+  const pts = shape.t === 'p' ? shape.pts.map(([px, py]) => [px + shape.x, py + shape.y]) : shape.t === 'e' ? ellipsePts(shape) : null;
+  if (!pts) {
+    const [nx, ny] = move([shape.x, shape.y]);
+    return { ...shape, x: nx, y: ny };
   }
-  const b = bend(shape.y);
-  return { ...shape, x: shape.x + q(dx(b)), y: shape.y + q(up(b)) + (shape.y >= 22 ? lift : 0) };
+  if (Math.max(...pts.map(([, py]) => py)) <= HANG_TOP) return shape;
+  const { rx, ry, ...rest } = shape;
+  return { ...rest, t: 'p', x: 0, y: 0, pts: subdivide(pts, 1.5).map(move) };
+}
+
+const ellipsePts = (e, n = 24) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  return [e.x + Math.cos(a) * e.rx, e.y + Math.sin(a) * e.ry];
+});
+function subdivide(pts, step) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
+    for (let k = 0; k < n; k++) out.push([a[0] + ((b[0] - a[0]) * k) / n, a[1] + ((b[1] - a[1]) * k) / n]);
+  }
+  return out;
 }
 
 // A white ribbon bow tied at (x, y), with a pink knot so it shows on any hair color.
 const BOW = '#fff6fb';
 const bow = (x, y) => [T([[x, y], [x - 2.8, y - 1.8], [x - 2.6, y + 1.6]], BOW), T([[x, y], [x + 2.8, y - 1.8], [x + 2.6, y + 1.6]], BOW), F(E(x, y, 0.9, 0.9, RIBBON))];
+// A big pink ribbon bow with two tails, for the half-up style.
+const bigBow = (x, y) => [T([[x - 1, y + 1], [x - 2.2, y + 5.4], [x - 0.6, y + 4.6], [x + 0.2, y + 1.4]], RIBBON), T([[x + 0.6, y + 1], [x + 2.6, y + 5.2], [x + 1.2, y + 4.8], [x - 0.2, y + 1.4]], RIBBON),
+  T([[x, y], [x - 4.4, y - 2.8], [x - 4.2, y + 2.6]], RIBBON), T([[x, y], [x + 4.4, y - 2.8], [x + 4.2, y + 2.6]], RIBBON), F(E(x, y, 1.3, 1.3, '#ffd3e4'))];
 
 // A tapered, curved lock from its root (x0, y0) to its tip (x1, y1), w wide at the root. `bend`
 // bows the middle sideways (positive bows to the left of the root-to-tip direction).
@@ -300,17 +335,12 @@ function hairBackShapes(style, front, root, tip, lift) {
       ...locks([[4, 14, 3.4, 41, 6, -3], [8.6, 18, 9.6, 42.6, 5.6, 2.6], [15.5, 20, 15.5, 43.4, 6.4, -2], [22.4, 18, 21.4, 42.6, 5.6, -2.6], [27, 14, 27.6, 41, 6, 3]]),
       E(3.8, 40.2, 1.8, 1.6, c), E(27.2, 40.2, 1.8, 1.6, c),
     ])];
-    case 'long': return [crown, ...sw([
-      T([[3.6, 13], [27.4, 13], [28.2, 30], [27.4, 40], [3.6, 40], [2.8, 30]], m),
-      ...locks([[4.6, 15, 4.4, 43, 5.4, -1], [9.6, 18, 10, 44.4, 5.6, 0.6], [15.5, 20, 15.5, 45, 6.2, 0], [21.4, 18, 21, 44.4, 5.6, -0.6], [26.4, 15, 26.6, 43, 5.4, 1]]),
-    ])];
     case 'twintails': return [crown, ...sw([
       ...locks([[3, 11, 1.2, 38.4, 7.6, 2.8], [3.8, 13, 4.8, 34, 4.2, -1.2], [28, 11, 29.8, 38.4, 7.6, -2.8], [27.2, 13, 26.2, 34, 4.2, 1.2]]),
     ])];
     case 'ponytail': return [crown, ...sw([
       ...locks([[3.6, 6.6, 0.2, 35, 8, 3.2], [3, 10, 2.8, 30, 4.2, -1.2]]),
     ]), E(4.4, 8.4, 2, 1.8, '#ffd66b')];
-    case 'short': return [E(HEAD_X, 13.2, 11.6, 10.6, c), E(HEAD_X, 19.6, 9.6, 4, c), ...locks([[7, 16, 8, 23.4, 4.2, 0.6], [24, 16, 23, 23.4, 4.2, -0.6]])];
     case 'curly': {
       // Soft, fluffy curls all around the head, a little fuller at the back.
       const curls = [[5, 8.6, 2.6], [4, 13.4, 2.6], [4.6, 18.4, 2.4], [6.8, 22, 2.2], [10, 4.4, 2.6], [15.5, 3, 2.8], [21, 4.4, 2.6], [26, 8.6, 2.6], [27, 13.4, 2.4], [26.4, 18.4, 2.2], [24.4, 21.6, 2]];
@@ -353,6 +383,24 @@ function hairBackShapes(style, front, root, tip, lift) {
       return [crown, ...sw([...coil(3.6, 1), ...coil(27.4, -1)])];
     }
     case 'braid': return [E(HEAD_X, 13.2, 12, 11, c), E(HEAD_X, 19.6, 10, 4.4, c)];
+    // A pixie cut hugs the skull: a close crown and two little flicks at the nape.
+    case 'pixie': return [E(HEAD_X, 12.8, 11.4, 10.4, c), ...locks([[8, 17.6, 7, 22.2, 3, 0.4], [23, 17.6, 24, 22.2, 3, -0.4]])];
+    // Low twintails: the tails are tied at the jaw and fall in front of the shoulders (see the
+    // fringe); behind is only a short mass to the nape.
+    case 'lowtails': return [crown, ...sw([E(HEAD_X, 18.6, 11.4, 6.6, m)])];
+    case 'fluffy': {
+      // A big soft cloud of long hair: puffs stacked down both sides and across the hem over a
+      // deeper mass, much wider than the head.
+      const side = [[3.4, 16, 4.2], [2.6, 22, 4.4], [3.2, 28, 4.4], [4.8, 33.4, 4], [8.6, 36.8, 3.6]];
+      const puffs = [...side, ...side.map(([x, y, rr]) => [31 - x, y, rr]), [13, 38, 3.6], [18, 38, 3.6]];
+      return [E(HEAD_X, 13, 12.6, 11.6, c), ...sw([T([[4, 14], [27, 14], [28, 34], [24, 38], [7, 38], [3, 34]], m), ...puffs.map(([x, y, rr]) => E(x, y, rr, rr * 0.92, c))])];
+    }
+    // Half-up: a little top-knot tied with a big ribbon bow on the crown, the rest left down.
+    case 'halfup': return [crown, E(HEAD_X - 1.4, 1.6, 3.6, 3, c), arc(HEAD_X - 1.4, 1.8, 2.6, 2, 200, 300, 0.7, r.hi), ...bigBow(HEAD_X + 3.6, 0.6), ...sw([
+      // The rest left down, long and straight, its ends splitting into points.
+      T([[3.8, 13], [27.2, 13], [28, 30], [27.2, 38], [3.8, 38], [3, 30]], m),
+      ...locks([[4.8, 15, 4.6, 41, 5.4, -1], [9.8, 18, 10.2, 42.4, 5.6, 0.6], [15.5, 20, 15.5, 43, 6.2, 0], [21.2, 18, 20.8, 42.4, 5.6, -0.6], [26.2, 15, 26.4, 41, 5.4, 1]]),
+    ])];
     default: return [crown];
   }
 }
@@ -483,11 +531,36 @@ function fringe(style, r, sway, mood) {
       out.push(shine);
       return out;
     }
+    case 'pixie':
+      // Short wispy bangs swept to one side, ending high so the forehead shows, and short sides.
+      return [cap, lock(10.2, 6.4, 7.6, 11.8, 5.2, 1.2), lock(14.2, 6, 12.4, 11.4, 5, 0.8), lock(18, 6, 19.6, 11.8, 4.8, -0.6), lock(21.8, 6.6, 23.4, 10.8, 3.8, -0.8),
+        lock(7, 8, 6.2, 15.4, 3.6, 0.8), lock(24.6, 8.4, 25.4, 15, 3.4, -0.8), shine];
+    case 'fluffy':
+      // Soft rounded bangs, and curls framing the face down both cheeks.
+      return [cap, lock(10.4, 7, 9, 13.6, 6.4, 1), lock(15, 6.6, 14.6, 14.4, 6.4, 0.3), lock(19.4, 6.8, 20.6, 13.8, 6, -0.6),
+        E(4.4, 15.6, 3.2, 3.6, c), E(3.8, 21.2, 3, 3.2, c), E(26.6, 15.6, 3.2, 3.6, c), E(27.2, 21.2, 3, 3.2, c),
+        arc(4.4, 15.4, 2.8, 3.2, 200, 290, 0.6, l), arc(26.6, 15.4, 2.8, 3.2, 200, 290, 0.6, l), shine];
+    case 'lowtails': {
+      // Two tails tied low at the jaw with ribbons, lying forward over the shoulders and swinging
+      // a beat behind the head; each ends in two points.
+      const out = [cap];
+      for (const [x0, y0, x1, y1, w, bend] of [[10.6, 7, 9.4, 14.2, 6.2, 0.8], [14.8, 6.6, 14.2, 15.4, 6, 0.3], [19, 6.6, 19.6, 14.8, 5.8, -0.4], [22.6, 7, 23.6, 13.4, 4.8, -0.8]]) out.push(lock(x0, y0, x1, y1, w, bend));
+      for (const side of [-1, 1]) {
+        const x0 = HEAD_X + side * 10.2;
+        const sw2 = sway * (side < 0 ? 0.6 : 0.45);
+        out.push(lock(HEAD_X + side * 8.6, 8.4, x0, 20.4, 4.4, side * 1));
+        out.push(lock(x0 - side * 0.4, 20, x0 + side * 0.6 + sw2, 36, 6.8, side * -1.6), lock(x0 + side * 1.4, 21, x0 + side * 3.2 + sw2 * 1.2, 34, 4.2, side * 1),
+          lock(x0 - side * 1.2, 22, x0 - side * 1.6 + sw2 * 0.8, 33, 3.4, side * -0.6));
+        out.push(...bow(x0, 20.4));
+      }
+      out.push(shine);
+      return out;
+    }
     case 'drills':
       return [cap, lock(11, 7, 9.6, 14.4, 6, 0.8), lock(15.6, 6.6, 15.2, 15.2, 5.6, 0.2), lock(19.6, 6.8, 20.6, 14.6, 5.4, -0.5), lock(22.4, 7, 23.4, 13.8, 4.6, -0.8),
         lock(7.2, 8, 5.8, 17, 4.2, 1), lock(24.8, 8.4, 25.8, 16.4, 3.8, -1), ...bow(4.4, 9), ...bow(26.6, 9), shine];
     default: {
-      const short = style === 'short' || style === 'curly';
+      const short = style === 'curly';
       const side = short ? 20 : 23;
       const out = [cap];
       // Four bang clumps of different lengths (a long one off-centre, a short one at the temple)

@@ -23,7 +23,7 @@ export const NPCS = {
   pip: {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',
     building: 'goods', sign: "Pip's Goods",
-    look: { hairStyle: 'short', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
+    look: { hairStyle: 'pixie', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
     shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', 'star_pebble', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
     // Job gear for your own job (a Novice sees every job's starter set), by level.
@@ -48,7 +48,7 @@ export const NPCS = {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     showJob: 'bishop',
-    look: { hairStyle: 'long', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
+    look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'Moonleaf Grove welcomes you. Magic is patience and a lot of MP. Shall we begin?',
   },
   kestrel: {
@@ -60,7 +60,7 @@ export const NPCS = {
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
-    look: { hairStyle: 'short', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
+    look: { hairStyle: 'sweep', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
   },
   tora: {
@@ -82,7 +82,7 @@ export const NPCS = {
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
     building: 'office', sign: 'Harbor Office',
-    look: { hairStyle: 'short', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
+    look: { hairStyle: 'curtain', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
     quests: ['mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart'],
   },
