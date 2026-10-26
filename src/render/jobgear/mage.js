@@ -8,6 +8,7 @@
 // Hat tips and feathers follow m.hair; hems, tails, and charms swing with m.sway; wings beat with m.flap.
 
 import { R, E, T, F, mix } from '../pixel.js';
+import { hsl } from './kit.js';
 import { FIGURE, band, side, MID, limb, mirrorX } from '../figure.js';
 
 const WHITE = '#ffffff';
@@ -418,15 +419,38 @@ function fan(rx, ry, n, p) {
   return [T(pts(1.06), p.trim), T(pts(1), p.second), T(pts(0.8), p.dark), ...ring(n + 1, (i) => F(E(...pts(0.97)[i * 2], 0.6, 0.6, p.accent)))];
 }
 
+// A colour from hue (degrees), saturation and lightness (0..1).
+function hex(h, s, l) {
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    const c = l - s * Math.min(l, 1 - l) * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(c * 255).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// The wing ramp in the set's own hue, clean rather than greyed: shadows lean toward violet,
+// lights toward the warm side of the hue (cyan for blues, rose for purples), three steps.
+function wingRamp(p) {
+  const [h] = hsl(p.main);
+  const lit = h >= 170 && h < 270 ? h - 16 : h + 16;
+  const shade = h >= 170 && h < 270 ? h + 14 : h - 14;
+  return { deep: hex(shade, 0.42, 0.3), mid: hex(h, 0.5, 0.48), light: hex(lit, 0.62, 0.7) };
+}
+
 // Arcane wings of long feathers fanning out behind the shoulders; up is the beat.
 function wings(p, up, sw) {
+  const r = wingRamp(p);
   const w = [[-15, 3, 5.4], [-21, 12, 6], [-22, 22, 5.6], [-17, 32, 4.6]].flatMap(([x, y, wd], i) => {
     const tip = [x + sw * 0.3 * i, y + up * (1 - i * 0.3)];
     const dx = tip[0] - 12.5;
     const dy = tip[1] - 29;
     const len = Math.hypot(dx, dy);
     const at = (u, k) => [12.5 + dx * u - (dy / len) * k, 29 + dy * u + (dx / len) * k];
-    return [T([[12.5, 29], at(0.5, wd / 2), tip, at(0.62, -wd / 2)], i % 2 ? p.second : mix(p.light, p.accent, 0.4)), i % 2 ? null : F(T([at(0.3, 0.4), at(0.55, 1.2), at(0.85, 0.2), at(0.6, -0.8)], p.glow ?? p.accent))];
+    // Back row deep, front row mid with a lit leading vane, and a glow streak down the quill.
+    const feather = T([[12.5, 29], at(0.5, wd / 2), tip, at(0.62, -wd / 2)], i % 2 ? r.deep : r.mid);
+    if (i % 2) return [feather];
+    return [feather, T([[12.5, 29], at(0.5, wd / 2), tip, at(0.55, 0.2)], r.light), F(T([at(0.3, 0.2), at(0.55, 0.7), at(0.85, 0.1), at(0.6, -0.4)], p.glow ?? p.accent))];
   }).filter(Boolean);
   return [...w, ...mirrorX(w)];
 }

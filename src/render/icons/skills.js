@@ -293,9 +293,9 @@ function pebble() {
     streak([1.6, 12.6], [7.4, 9], 1.5, '#fff6fb'),
     streak([3, 14.4], [7.6, 10.8], 1, '#ffd6ea'),
     streak([1.4, 9.6], [6.8, 7.8], 0.9, '#ffd6ea'),
-    ...solid(oval(10.2, 7.4, 3.9, 3.4, -20, 30), '#ffbedb', { glow: 1.1 }),
-    S(starPts(10.5, 7.7, 2.1, 0.85), shade(GOLD, -12)),
-    S(starPts(10.3, 7.5, 1.8, 0.7), '#fff3a6'),
+    ...solid(oval(10.2, 7.4, 3.9, 3.4, -20, 30), '#6f5cc4', { glow: 1.1, ink: '#2a1a5a' }),
+    S(starPts(10.5, 7.7, 2.3, 0.9), '#b8661a'),
+    S(starPts(10.3, 7.5, 2, 0.8), '#ffe36b'),
     ...glint(8.4, 5.4, 0.7),
     ...spark(13.8, 2.8, 1.7),
     ...spark(4.4, 3.4, 1.1, '#fff3a6'),
@@ -992,7 +992,7 @@ function heal() {
 
 function holybolt() {
   const gold = '#ffe36b';
-  const out = [...tile('dawn', 'active'), ...aura(11, 5, 5.4, '#ffffff', 1.2)];
+  const out = [...tile('storm', 'active'), ...aura(11, 5, 5.4, '#fff8d0', 1.2)];
   out.push(S(tube([[1, 15], [10.2, 5.8]], (t) => 0.2 + 3.4 * t), '#fffbe0'));
   const a = [2.6, 13.4];
   const b = [12.8, 3.2];
@@ -1049,19 +1049,31 @@ function icespire() {
 }
 
 function frostsprite() {
-  const body = '#e8faff';
-  const out = [...tile('ice', 'buff'), ...aura(8, 8, 6.8, '#ffffff', 1.1)];
-  // Tiny wings.
-  out.push(...solid(oval(3.6, 7.6, 2.2, 3, -25, 20), '#b4ecff', { d: 0.4, ink: '#1a4a8a' }), ...solid(oval(12.4, 7.6, 2.2, 3, 25, 20), '#b4ecff', { d: 0.4, ink: '#1a4a8a' }));
-  // A round spirit with a wispy tail.
-  const spirit = [...arcPts(8, 8.4, 4.4, 4.2, 180, 360, 16), ...bez3([12.4, 8.4], [12.6, 12], [10.2, 12.8], [8.8, 14.8], 8).slice(1), ...bez3([8.8, 14.8], [8.6, 13.4], [5, 13.4], [3.6, 8.4], 8).slice(1)];
-  out.push(...solid(spirit, body, { light: W }));
-  // A crown of ice crystals.
-  out.push(...[[6, 4.6, -20], [8, 3.4, 0], [10, 4.6, 20]].flatMap(([x, y, a]) => facet(turn([[x - 0.8, y + 1.4], [x, y - 1.8], [x + 0.8, y + 1.4]], a, x, y), [x, y - 1.8], [x, y + 1.4], '#8fe3ff', { d: 0.35, ink: '#1a4a8a', shadow: false })));
-  out.push(S(oval(6.6, 8.6, 0.65, 0.9, 0, 12), '#2a3a6a'), S(oval(9.6, 8.6, 0.65, 0.9, 0, 12), '#2a3a6a'), S(oval(6.4, 8.2, 0.25, 0.3, 0, 8), W), S(oval(9.4, 8.2, 0.25, 0.3, 0, 8), W));
-  out.push(S(oval(5.4, 10, 0.8, 0.4, 0, 10), '#ffc4dc'), S(oval(10.8, 10, 0.8, 0.4, 0, 10), '#ffc4dc'));
-  out.push(S(arcPts(8.1, 10, 0.6, 0.45, 20, 160, 6).concat(arcPts(8.1, 10, 0.25, 0.15, 160, 20, 6)), '#4a5a8a'));
-  out.push(...snowflake(13.6, 13.2, 1.2, W, 0.35), ...spark(2.4, 13, 1));
+  // The summon: a tiny ice fairy with icy hair, violet eyes, a bell dress, and crystal wings.
+  const out = [...tile('ice', 'buff'), ...aura(8, 7.4, 6.8, '#ffffff', 1.1)];
+  const iceInk = '#1a4a8a';
+  // Crystal shard wings, an upper and a lower pair, each split into a lit and a shaded facet.
+  const wing = (root, tip, side, wd) => {
+    const m = [(root[0] + tip[0]) / 2, (root[1] + tip[1]) / 2];
+    const u = N(root, tip);
+    const pts = [root, add(m, [-u[1], u[0]], wd * side), tip, add(m, [-u[1], u[0]], -wd * 0.4 * side)];
+    return facet(pts, root, tip, '#c8f2ff', { ink: iceInk, d: 0.4, dark: '#8fcff0' });
+  };
+  out.push(...wing([6.8, 10.2], [0.9, 5.4], 1, 2.6), ...wing([9.2, 10.2], [15.1, 5.4], -1, 2.6));
+  out.push(...wing([6.8, 10.8], [1.8, 13.4], -1, 1.5), ...wing([9.2, 10.8], [14.2, 13.4], 1, 1.5));
+  // A bell dress below the head.
+  const dress = [[6.8, 10], [9.2, 10], [10.8, 14.4], [5.2, 14.4]];
+  out.push(...solid(dress, '#8fe0fa', { ink: iceInk, d: 0.4, light: '#d8f8ff' }), S([[5.8, 13.6], [10.2, 13.6], [10.8, 14.4], [5.2, 14.4]], '#d8f8ff'));
+  // Head: skin face under a cap of icy hair with a crystal bun on top.
+  out.push(...solid(oval(8, 7, 3.4, 3.1, 0, 24), '#fff1ec', { ink: '#4f7fcf', d: 0.4, light: W }));
+  const hair = [...arcPts(8, 7, 3.6, 3.4, 170, 370, 16), [10.8, 6.4], [9.6, 5.6], [8.6, 6.6], [7.4, 5.6], [6, 6.8], [5.2, 6.4]];
+  out.push(...edge(hair, '#2f5aa8', 0.4), S(hair, '#a6dcff'), S(clip(hair, oval(6.6, 3.8, 2.6, 1.6)), '#e6f7ff'));
+  out.push(...facet([[7, 3.6], [8, 1.2], [9, 3.6]], [8, 1.2], [8, 3.6], '#e8fbff', { ink: iceInk, d: 0.35, shadow: false }));
+  // Big violet eyes with white glints, blush, and a small smile.
+  for (const x of [6.7, 9.3]) out.push(S(oval(x, 8, 0.7, 0.95, 0, 12), '#5a2aa0'), S(oval(x, 8.3, 0.45, 0.5, 0, 10), '#c46cff'), S(oval(x - 0.25, 7.6, 0.28, 0.3, 0, 8), W));
+  out.push(S(oval(5.6, 9.2, 0.7, 0.35, 0, 10), '#ffa6c8'), S(oval(10.4, 9.2, 0.7, 0.35, 0, 10), '#ffa6c8'));
+  out.push(S(arcPts(8, 9.2, 0.55, 0.4, 20, 160, 6).concat(arcPts(8, 9.2, 0.2, 0.12, 160, 20, 6)), '#b8406a'));
+  out.push(...snowflake(13.4, 2.6, 1, W, 0.3), ...spark(2.6, 2.6, 0.9));
   return out;
 }
 
@@ -1141,8 +1153,8 @@ function seraphmastery() {
 }
 
 function shiningray() {
-  const out = [...tile('holy', 'active'), ...aura(8, 8, 7.4, '#ffffff', 1.25, 5)];
-  out.push(...solid(starPts(8, 8, 7.2, 1.6, 4, -90), '#fff8d0', { light: W, ink: '#a0601a', d: 0.45 }));
+  const out = [...tile('steel', 'active'), ...aura(8, 8, 7.4, '#fff8d0', 0.75, 5)];
+  out.push(...solid(starPts(8, 8, 7.2, 1.6, 4, -90), '#ffd84a', { light: '#fff3a6', ink: '#8a4a10', d: 0.5 }));
   out.push(S(starPts(8, 8, 4.4, 1.2, 4, -45), '#ffe36b'));
   out.push(S(starPts(8, 8, 4.8, 1, 4, -90), W));
   out.push(S(oval(8, 8, 1.6, 1.6, 0, 16), W));

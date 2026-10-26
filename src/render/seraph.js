@@ -185,9 +185,14 @@ function twinkle(ctx, x, y, r, color) {
   ctx.fill();
 }
 
+// Bag icon: a winged staff — a gold-ringed pink crystal on an ivory shaft, with a white wing
+// sweeping out on each side (no halo on top, which read as a hat at 1x).
 export const SERAPH_ICON = [
-  E(4, 6, 3, 2, WHITE), E(12, 6, 3, 2, WHITE),
-  T([[2, 15], [7, 10], [8, 11], [3, 16]], IVORY),
-  E(8, 7, 2.5, 3, '#fff6dc'), F(R(8, 7, 1, 1, GEM)),
-  E(8, 2, 3, 1, GOLD), F(R(6, 9, 1, 1, GOLD)), F(R(10, 9, 1, 1, GOLD)),
+  T([[2, 14.4], [8.6, 7.8], [9.8, 9], [3.2, 15.6]], IVORY), T([[2.6, 15], [9.2, 8.4], [9.8, 9], [3.2, 15.6]], IVORY_SH),
+  F(R(7, 9, 2, 2, GOLD)), F(R(1, 15, 2, 1, GOLD)),
+  T([[8.4, 5.6], [5, 1.6], [1, 1.2], [3, 3.2], [0.6, 4], [3.4, 5.6], [1.4, 6.8], [5, 7.4], [8.4, 7.4]], WHITE),
+  T([[12, 5.6], [13.6, 2], [15.6, 1.2], [15, 3.8], [15.8, 5], [14, 6.6], [12, 7.4]], WHITE),
+  F(T([[7.6, 6.2], [3.4, 5.6], [5, 7.4], [8.4, 7.4]], FEATHER_SH)), F(T([[12.6, 6.4], [15, 5.2], [14, 6.6], [12, 7.4]], FEATHER_SH)),
+  E(10.2, 6.4, 2.6, 2.8, GOLD), E(10.2, 6.4, 1.6, 2, GEM), F(R(10, 7, 1, 1, GEM_DK)), F(R(9, 5, 1, 1, WHITE)),
+  F(R(10, 2, 1, 1, GOLD_LT)),
 ];

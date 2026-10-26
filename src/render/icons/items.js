@@ -230,8 +230,8 @@ const turn = (pts, deg, cx = 8, cy = 8) => {
 // ---------- Monster drops ----------
 
 function fluff() {
-  const cream = '#fff3e8';
-  const pink = '#ff8fc0';
+  const cream = '#ffcf9e';
+  const pink = '#ff5fa2';
   const n = 20;
   const spine = bez3([7.2, 15], [1.6, 12.4], [2.6, 4.2], [15, 1.4], n);
   const nrm = (i) => {
@@ -380,23 +380,29 @@ function ribbon() {
 }
 
 function pebble() {
-  const c = '#3fc49c';
-  const a = -18;
-  const shape = (s, dy = 0) => turn([...arcPts(8, 6.4 + dy, 5.8 * s, 5 * s, 180, 360, 18), ...bez([8 + 5.8 * s, 6.4 + dy], [8 + 5.2 * s, 11 + dy], [8, 6.4 + dy + 9.2 * s], 8).slice(1), ...bez([8, 6.4 + dy + 9.2 * s], [8 - 5.2 * s, 11 + dy], [8 - 5.8 * s, 6.4 + dy], 8).slice(1)], a);
-  const body = shape(1.05, -0.2);
-  const inner = shape(0.86, 0.3);
-  const out = [S(body, dk(c)), S(clip(body, oval(6.4, 5.4, 6.6, 6.4)), shade(c, -6)), S(inner, c)];
-  // A raised keel: lit left face, shaded right face.
-  const [kt, kb] = turn([[8, 2.4], [8, 15]], a);
-  out.push(S(cut(inner, kb, kt), sh(c)));
-  out.push(S(clip(cut(inner, kt, kb), oval(5.2, 5.4, 3.4, 4.2)), lt(c)));
-  out.push(line([kt, kb], 0.42, hi(c)));
-  // Fine scale texture toward the tip.
-  for (const [x, y, k] of [[6.2, 10.2, 1], [9.8, 10.2, 1], [8, 12.2, 0.9], [8, 8.4, 1]]) out.push(S(tube(turn(arcPts(x, y - 1, 1.5 * k, 1.2 * k, 25, 155, 6), a), 0.32), x > 8 || (x === 8 && y > 9) ? dk(c) : sh(c)));
-  // An iridescent rim catching the light, and reflected light below.
-  out.push(S(tube(turn(arcPts(8, 6.4, 5.4, 4.6, 195, 265, 8), a), 0.55, 0.2), '#e4ff9a'));
-  out.push(S(tube(turn(bez([12.6, 9.4], [12, 12], [9.4, 14], 6), a), 0.4, 0.15), mix(c, '#b8fff0', 0.5)));
-  out.push(...glint(4.6, 4.4, 0.85));
+  // A basilisk scute: a glossy jade-teal hexagonal plate with a raised keel and growth ridges,
+  // nothing like a leaf (no point, no stem, no veins).
+  const c = '#22a6a8';
+  const a = -12;
+  const hex = (k, dy = 0) => turn([[8, 8 - 6.8 * k], [8 + 5.8 * k, 8 - 3.4 * k], [8 + 5.6 * k, 8 + 3.2 * k], [8, 8 + 6.8 * k], [8 - 5.6 * k, 8 + 3.2 * k], [8 - 5.8 * k, 8 - 3.4 * k]].map(([x, y]) => [x, y + dy]), a);
+  const body = hex(1);
+  const face = hex(0.84, -0.3);
+  const out = [S(body, dk(c)), S(face, c)];
+  // Lit upper-left half, shaded lower right.
+  const [kt, kb] = turn([[8, 0.8], [8, 15.2]], a);
+  out.push(S(cut(face, kb, kt), sh(c)));
+  out.push(S(clip(cut(face, kt, kb), oval(5.4, 5.2, 3.6, 3.6)), lt(c)));
+  // Growth ridges: two nested hex rings, lit on the top edges and dark below.
+  for (const k of [0.62, 0.4]) {
+    const r = hex(k, -0.3);
+    out.push(line([r[5], r[0], r[1]], 0.5, hi(c)), line([r[2], r[3], r[4]], 0.5, dk(c)));
+  }
+  // The raised keel down the middle.
+  out.push(line([kt, kb].map(([x, y], i) => [x + (i ? -0.4 : 0.4), y + (i ? -2.6 : 2.4)]), 0.55, hi(c)));
+  // Gloss: a bright streak along the top-left edge and a glint.
+  out.push(S(tube([body[5], body[0]].map(([x, y]) => [x + 0.9, y + 0.9]), 0.55, 0.2), '#e8fff6'));
+  out.push(S(tube(turn([[11.6, 9.6], [9.4, 12.4]], a), 0.4, 0.15), mix(c, '#b8fff0', 0.5)));
+  out.push(...glint(5, 4.6, 0.95));
   return out;
 }
 
@@ -429,10 +435,10 @@ function stinger() {
 }
 
 function leaf_fragment() {
-  const g = '#5fd08a';
+  const g = '#7ccc3e';
   const glow = '#f2ffb8';
   const L = leaf([2.2, 14.2], [14.4, 1.4], 9.2, g, { bend: 0.6, rib: glow, veins: 3, veinC: '#d6ffa0' });
-  const out = [line(bez([0.8, 15.4], [1.4, 14.8], [2.6, 13.8], 3), 0.7, '#4a9a5a'), ...L.shapes];
+  const out = [line(bez([0.8, 15.4], [1.4, 14.8], [2.6, 13.8], 3), 0.8, '#8a5a2a'), ...L.shapes];
   // A soft inner glow along the spine.
   out.push(S(tube(L.mid.slice(3, 12), 0.9, 0.5), mix(g, glow, 0.45)), S(tube(L.mid.slice(1, 13), 0.42, 0.18), glow));
   out.push(twinkle(13.6, 9.6, 1.5, '#fff6a8'), twinkle(3.2, 3.6, 1.1, '#fff6a8'), twinkle(11.6, 13.6, 0.8, W));

@@ -32,6 +32,15 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   overhead charge with a floor telegraph, one-arc slam into a held crystal burst). The old
   transform-stack helpers in bosses.js are gone; all four bosses use the hollow rig.
 
+- Icons: Basilisk Scale is now a jade-teal hexagonal scute (keel, growth ridges, gloss) and Dryad
+  Leaf a warm spring green with a brown stem; Fox Fluff apricot with a deeper pink tip; Star Pebble's
+  stone is dark periwinkle under a gold star; Holy Bolt (storm tile) and Shining Ray (steel tile,
+  gold star) no longer gold on gold; Frost Sprite skill icon redrawn as the ice-winged fairy; the
+  Seraphim bag icon is a winged staff (no halo). One critique round.
+- Gear: archer t15–19 back wings root lower and sweep out sideways (shorter), temple wings on
+  t16–19 shorter and upright, so face and hair read; mage t17–19 wings use a clean hue-shifted
+  ramp built from the set's own hue (`wingRamp` in mage.js) instead of grey. One critique round.
+
 ## Still to do
 - Sky designs still place feathers in absolute coordinates (wings are not yet
   chains); trim their shape counts.
@@ -39,11 +48,7 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   dead pose and wing panes could use another look; the queen's floor ring dips ~1.5 px below the
   sprite in attack 1. Queen/Tuskar: Tuskar's body is blocky and its flames read a bit like spikes; the
   queen's face is small under the cap.
-- Icon pass (`icons/items.js`, `icons/skills.js`): Basilisk Scale vs Dryad Leaf look alike; Fox
-  Fluff and Star Pebble low contrast; Shining Ray and Holy Bolt gold on gold; Frost Sprite skill icon
-  no longer matches the fairy summon; the Seraphim bag icon's halo reads as a hat.
-- Gear: archer t15–19 leaf frill engulfs the head; mage t17–18 muddy grey wings; check job-gear bag
-  icons at 1x; accent-colour audit per piece.
+- Gear: check job-gear bag icons at 1x; accent-colour audit per piece.
 - Hero: critique rounds on attack/jump/climb/death motion; a player death pose (drawn in scene.js);
   head tilt; capes on two springs; sparkle extras on excited/sassy faces get grey outlines; lighter
   bangs band on dark skin.

@@ -175,20 +175,20 @@ function crown(t, p, m) {
       ]), ...brow(p, 1.8), E(15.5, 6.6, 2.6, 2.6, p.main), E(15.5, 6.6, 1.4, 1.4, p.light), ...gem(15.5, 6.6, 0.8, g));
       return out;
     case 16: // Evergreen: a tiara of tall pointed leaves and big leaf wings.
-      out.push(...wings(4, 14.9, 3.2, -14, -66, [p.main, p.light]), ...fan(15.5, 9, 7, 9, 3, -54, 54, [p.main, p.light], 0), ...brow(p, 1.8), leaf(15.5, 8, 12, 4, 0, p.main), leaf(15.5, 7, 8, 2.2, 0, p.light), ...gem(15.5, 7.4, 1.3, g));
+      out.push(...wings(3, 10, 2.6, -10, -40, [p.main, p.light]), ...fan(15.5, 9, 7, 9, 3, -54, 54, [p.main, p.light], 0), ...brow(p, 1.8), leaf(15.5, 8, 12, 4, 0, p.main), leaf(15.5, 7, 8, 2.2, 0, p.light), ...gem(15.5, 7.4, 1.3, g));
       return out;
     case 17: // Starsinger: a crescent cradling a big star, star-tipped wings, a halo of motes.
-      out.push(...wings(4, 14.9, 3, -12, -66, [p.light, p.main]), ...pair([star(-1, -0.4, 1.8, tr), F(E(3, -4, 0.7, 0.7, g))]), ...brow(p, 1.8),
+      out.push(...wings(3, 10, 2.5, -8, -40, [p.light, p.main]), ...pair([star(-1, -0.4, 1.8, tr), F(E(3, -4, 0.7, 0.7, g))]), ...brow(p, 1.8),
         arc(15.5, 2.6, 5.4, 5.4, 2, -125, 125, tr), star(15.5, 1.8, 3.6, g), F(star(15.5, 1.8, 1.4, WHITE)), ...gem(15.5, 7.6, 1, g));
       return out;
     case 18: { // Lightbloom: a lotus of glowing petals around a bright heart.
       const petals = (r, n, len, w, colors) => fan(15.5, 8.6, n, len, w, -r, r, colors);
-      out.push(...wings(3, 13.8, 3.2, -18, -62, [p.light, p.main]), ...petals(80, 5, 10, 5, [p.main]), ...petals(50, 4, 11, 5, [p.light]), leaf(15.5, 8.6, 12, 5.4, 0, p.main), leaf(15.5, 8, 7, 3, 0, WHITE), ...brow(p, 1.8), ...gem(15.5, 7.8, 1.6, g));
+      out.push(...wings(3, 9.4, 2.6, -12, -42, [p.light, p.main]), ...petals(80, 5, 10, 5, [p.main]), ...petals(50, 4, 11, 5, [p.light]), leaf(15.5, 8.6, 12, 5.4, 0, p.main), leaf(15.5, 8, 7, 3, 0, WHITE), ...brow(p, 1.8), ...gem(15.5, 7.8, 1.6, g));
       return out;
     }
     default: { // Worldtree: a luminous crown of branches and leaves, wide leaf wings.
       const lit = mix(g, WHITE, 0.4);
-      out.push(...wings(4, 17.2, 3.5, -10, -68, [p.main, lit, p.light]), ...pair([limb(9, 8.6, 6, -1, 1.6, 0.8, tr), leaf(6, -1, 7, 3.6, -14 + h, p.light), leaf(6.6, 2, 5, 3, -60 + h, lit)]),
+      out.push(...wings(3, 11.5, 2.8, -6, -40, [p.main, lit, p.light]), ...pair([limb(9, 8.6, 6, -1, 1.6, 0.8, tr), leaf(6, -1, 7, 3.6, -14 + h, p.light), leaf(6.6, 2, 5, 3, -60 + h, lit)]),
         limb(15.5, 8, 15.5, -4, 2, 1, tr), ...fan(15.5, -2, 5, 8, 3.8, -70, 70, [p.main, lit, p.light]), leaf(15.5, -3, 9, 4.4, 0, lit), ...brow(p, 2), ...gem(15.5, 7, 1.7, g), F(E(15.5, -1, 1, 1, WHITE)));
       return out;
     }
@@ -349,16 +349,17 @@ function cloakPts(bottom, n, s, flare = 0) {
 
 // One wing of leaf-shaped feathers fanned from the back, on the left; mirrored for the right.
 function wing(t, p, m) {
-  const up = m.flap ? 12 : -4;
+  const up = m.flap ? 10 : -3;
   const lit = mix(p.accent, WHITE, 0.45);
-  const len = 30 + (t - 15) * 2;
+  const len = 22 + (t - 15) * 1.5;
   const n = t >= 17 ? 6 : 5;
   const out = [];
-  // Long leaf feathers, the top ones longest, then a shorter inner row that glows up high.
-  for (let i = 0; i < n; i++) out.push(leaf(12 - i * 0.3, 29 + i * 0.8, len * (1 - i * 0.12), 7, -30 - i * 16 + up, i % 2 ? p.light : p.main));
-  for (let i = 0; i < 3; i++) out.push(leaf(12, 29, len * (0.62 - i * 0.06), 4.4, -38 - i * 18 + up, t >= 17 ? lit : p.light));
-  if (t >= 17) out.push(...[0, 1, 2].map((i) => F(E(...along(12, 29, len * (1 - i * 0.12) * 0.98, -30 - i * 16 + up), 1, 1, WHITE))));
-  if (t >= 18) out.push(leaf(12, 29, len * 0.42, 2.6, -52 + up, p.trim), leaf(12, 29, len * 0.36, 2.2, -88 + up, p.trim));
+  // Leaf feathers rooted low on the back and swept out sideways (the top one tips out at ear
+  // height), so the head and hair stay clear; the top ones longest, then a shorter glowing row.
+  for (let i = 0; i < n; i++) out.push(leaf(12 - i * 0.3, 31 + i * 0.8, len * (1 - i * 0.1), 5.6, -58 - i * 15 + up, i % 2 ? p.light : p.main));
+  for (let i = 0; i < 3; i++) out.push(leaf(12, 31, len * (0.6 - i * 0.06), 3.6, -64 - i * 17 + up, t >= 17 ? lit : p.light));
+  if (t >= 17) out.push(...[0, 1, 2].map((i) => F(E(...along(12 - i * 0.3, 31 + i * 0.8, len * (1 - i * 0.1) * 0.96, -58 - i * 15 + up), 0.9, 0.9, WHITE))));
+  if (t >= 18) out.push(leaf(12, 31, len * 0.42, 2.2, -70 + up, p.trim), leaf(12, 31, len * 0.36, 2, -100 + up, p.trim));
   return out;
 }
 
