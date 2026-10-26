@@ -1421,6 +1421,41 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   if (sq) ctx.restore();
 }
 
+// Where the weapon is at a moment of an attack move, as offsets from the feet (screen pixels at
+// `scale`), worked out exactly as it's drawn: the aimed arm's hand, the weapon's angle, its tip
+// (from the weapon's own length), and the front shoulder, all carried through the whole-body
+// lunge, lift, tilt, turn and stretch. Effects use it so a smear or a thrust's spike lines up with
+// the weapon instead of a fixed height. Returns null for moves without an aimed arm.
+export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 1) {
+  const mv = moveAt(POSE_MOVES[move] ?? move, progress, dur);
+  if (!mv || mv.arm == null || mv.weapon == null) return null;
+  const g = resolveGear(look, gear);
+  const rig = solveRig({ pose: move, progress, dur, time: 0, facing }, null, mv);
+  const bodyY = rig.by + hipDrop(rig);
+  const rad = (mv.arm * Math.PI) / 180;
+  const hand = [squashX(FRONT_SHOULDER + Math.sin(rad) * 8.6 + rig.tx), squashY(SHOULDER_Y + Math.cos(rad) * 8.6 + bodyY)];
+  const shoulder = [squashX(FRONT_SHOULDER + rig.tx), squashY(SHOULDER_Y + bodyY)];
+  const dir = facing < 0 ? -1 : 1;
+  // Body coordinates to offsets from the feet, mirrored when facing left.
+  const at = ([px, py]) => [dir * ((px + OX) - W / 2) * scale, ((py + OY) - H) * scale];
+  const wpn = g.weapon ? weaponSprite(g.weapon, 0) : null;
+  const len = wpn ? (wpn.grip[1] - 6) * scale * WEAPON_SCALE : 0;
+  const wa = (mv.weapon * Math.PI) / 180;
+  const h = at(hand);
+  const tip = [h[0] + Math.sin(wa) * len * dir, h[1] - Math.cos(wa) * len];
+  // The whole-body move, about the pivot, as drawMoved applies it.
+  const pivot = -H * scale * 0.42;
+  const turn = Math.abs(mv.turn) < 0.05 ? 0.05 * Math.sign(mv.turn || 1) : mv.turn;
+  const c = Math.cos(mv.tilt * dir);
+  const sn = Math.sin(mv.tilt * dir);
+  const body = ([px, py]) => {
+    const x0 = px * turn;
+    const y0 = (py - pivot) * mv.stretch;
+    return [x0 * c - y0 * sn + dir * mv.lunge * scale, x0 * sn + y0 * c + pivot - mv.lift * scale];
+  };
+  return { hand: body(h), tip: body(tip), shoulder: body(at(shoulder)), angle: mv.weapon, reach: len, dir };
+}
+
 function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
   if (!mv || (!mv.lift && !mv.lunge && !mv.tilt && mv.turn === 1 && mv.stretch === 1)) {
     paintHero(ctx, look, gear, x, y, state, anim, moved);

@@ -10,6 +10,8 @@ import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
+import { strikePose } from './hero.js';
+import { wornGear } from '../core/character.js';
 
 
 const SHOT_COLORS = {
@@ -705,9 +707,17 @@ function drawFx(ctx, f, cam, time) {
       // A thrust: one long spike shooting forward with a shock ring popping at its tip.
       const b = f.box;
       const dir = f.dir ?? 1;
-      const by = b.y + b.h / 2 - cam.y;
-      const from = dir > 0 ? b.x - cam.x : b.x + b.w - cam.x;
-      const reach = b.w * easeOut(Math.min(1, p / 0.35));
+      // From the weapon's point, at its height, out to the end of the blow's reach.
+      // When the weapon isn't level at that moment (a dash still winding through), the spike
+      // leaves from the hand at its height instead.
+      const pose = strikeAt(f);
+      const level = pose && Math.abs(pose.angle - 90) < 30;
+      const from0 = pose ? (level ? pose.tip : pose.hand) : null;
+      const end = dir > 0 ? b.x + b.w : b.x;
+      const start = from0 ? f.x + from0[0] : dir > 0 ? b.x : b.x + b.w;
+      const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
+      const from = start - cam.x;
+      const reach = Math.max(18, Math.abs(end - start)) * easeOut(Math.min(1, p / 0.35));
       const tipX = from + dir * reach;
       ctx.globalAlpha = p < 0.6 ? 1 : (1 - p) / 0.4;
       needle(ctx, tipX, by, dir > 0 ? 0 : Math.PI, reach, 7 * (1 - p * 0.7), '#a8e8ff');
@@ -910,9 +920,14 @@ function drawFx(ctx, f, cam, time) {
       starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
       break;
     }
-    case 'arc':
-      arcSmear(ctx, f, x, y, p);
+    case 'arc': {
+      // The smear follows the weapon's tip: centered on the shoulder it swings from, as far out
+      // as the tip was when the blow landed.
+      const pose = f.flat ? null : strikeAt(f);
+      if (pose) arcSmear(ctx, { ...f, r: Math.max(16, Math.hypot(pose.tip[0] - pose.shoulder[0], pose.tip[1] - pose.shoulder[1])) }, f.bx + pose.shoulder[0] - cam.x, f.by + pose.shoulder[1] - cam.y, p);
+      else arcSmear(ctx, f, x, y, p);
       break;
+    }
     case 'ultcue':
       ultimateCue(ctx, f, x, y);
       break;
@@ -984,8 +999,19 @@ function drawFx(ctx, f, cam, time) {
   ctx.restore();
 }
 
+// The hero whose blows the smears and spikes belong to, so they line up with the weapon.
+let hero = null;
 export function drawEffects(ctx, world, cam, time) {
+  hero = world.char ? { look: world.char.appearance, gear: wornGear(world.char) } : null;
   for (const f of world.fx) drawFx(ctx, f, cam, time);
+}
+
+// Where the weapon was at the moment a blow landed (offsets from the feet), or null.
+const posed = new WeakMap();
+function strikeAt(f) {
+  if (!hero || !f.move) return null;
+  if (!posed.has(f)) posed.set(f, strikePose(hero.look, hero.gear, f.move, f.at, f.moveDur, f.dir));
+  return posed.get(f);
 }
 
 // The boss's wind-up warning, a telegraph that reads at a glance: the danger zone pulses on the
