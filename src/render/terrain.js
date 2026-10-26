@@ -34,7 +34,20 @@ export const MATERIALS = {
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
 };
 
+// One breeze for the whole scene: a steady push with gusts every several seconds. Grass, flowers,
+// vines, drifting petals, and foreground leaves all lean with it, so weather reads as one thing.
+// `windAt` lets a gust roll across the world from left to right; `windTravel` is how far the air
+// has carried something (the wind's running total), for things that drift with it.
+export const wind = (time) => 0.6 + 0.4 * Math.sin(time * 0.8) + 0.25 * Math.sin(time * 1.9 + 1.3);
+export const windAt = (time, wx) => wind(time - wx / 320);
+export const windTravel = (time) => 0.6 * time - 0.5 * Math.cos(time * 0.8) - 0.13 * Math.cos(time * 1.9 + 1.3);
+
 const TILE = 64;
+// Textures bake as a block of 3 x 2 tiles, each laid out on its own, so the land doesn't show a
+// grid of one repeated square.
+const TW = TILE * 3;
+const TH = TILE * 2;
+const AREA = (TW * TH) / (TILE * TILE);
 
 // Drawing happens in screen space; anything that animates or varies along the land keys off the
 // world position (screen x + camX) instead, so it doesn't change as the camera moves.
@@ -46,17 +59,17 @@ let camX = 0;
 // other side so the tile wraps seamlessly).
 function paintTile(g, m, theme) {
   g.fillStyle = m.body;
-  g.fillRect(0, 0, TILE, TILE);
+  g.fillRect(0, 0, TW, TH);
   const wrap = (draw) => {
-    for (const dx of [-TILE, 0, TILE]) for (const dy of [-TILE, 0, TILE]) draw(dx, dy);
+    for (const dx of [-TW, 0, TW]) for (const dy of [-TH, 0, TH]) draw(dx, dy);
   };
   const seed = theme.length * 7.3;
   const line = edge(m.body);
   if (m.style === 'cobble') {
     // Rounded stones in staggered rows, each lit on top and shaded below.
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
-        const k = seed + row * 4 + col;
+    for (let row = 0; row < TH / 16; row++) {
+      for (let col = 0; col < TW / 16; col++) {
+        const k = seed + row * 16 + col;
         const w = 12 + hash(k) * 4;
         const h = 9 + hash(k + 1) * 3;
         const x = col * 16 + (row % 2) * 8 + hash(k + 2) * 2;
@@ -78,16 +91,27 @@ function paintTile(g, m, theme) {
       }
     }
   } else if (m.style === 'brick') {
-    // Big stone blocks with soft corners, a few cracked or mossy.
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 2; col++) {
-        const k = seed + row * 2 + col;
+    // Big stone blocks with soft corners, a few cracked or mossy, the odd one chipped at a corner
+    // or sunk back into the wall (a dark gap), so the wall never reads as one stamped block.
+    for (let row = 0; row < TH / 16; row++) {
+      for (let col = 0; col < TW / 32; col++) {
+        const k = seed + row * 16 + col;
         const x = col * 32 + (row % 2) * 16 + 1;
         const y = row * 16 + 1;
+        const kind = hash(k + 6);
         wrap((dx, dy) => {
           g.fillStyle = m.deep;
           rounded(g, x + dx, y + dy + 1, 30, 14, 3);
           g.fill();
+          if (kind > 0.93) {
+            // A sunken block: a shadowed hollow lit only along its bottom lip.
+            g.fillStyle = mix(m.deep, INK, 0.25);
+            rounded(g, x + dx, y + dy, 30, 13, 3);
+            g.fill();
+            g.fillStyle = hexA(m.stone, 0.5);
+            g.fillRect(x + dx + 3, y + dy + 10.5, 24, 1.2);
+            return;
+          }
           g.fillStyle = mix(m.stone, m.body, 0.25 + hash(k) * 0.4);
           rounded(g, x + dx, y + dy, 30, 13, 3);
           g.fill();
@@ -105,32 +129,50 @@ function paintTile(g, m, theme) {
             g.lineTo(x + dx + 19, y + dy + 11);
             g.stroke();
           }
+          if (kind > 0.84) {
+            // A chipped corner.
+            const right = hash(k + 7) > 0.5;
+            const cx = right ? x + dx + 30 : x + dx;
+            const sx = right ? -1 : 1;
+            g.fillStyle = m.deep;
+            poly(g, [[cx, y + dy + 4], [cx, y + dy], [cx + sx * 6, y + dy]]);
+            g.fill();
+          } else if (kind > 0.72) {
+            // Moss (or, in crystal halls, a sprinkle of crystal) along the top.
+            g.fillStyle = m.glow ? hexA(m.glow, 0.85) : '#a6d9a0';
+            const n = m.glow ? 2 : 4;
+            for (let j = 0; j < n; j++) {
+              g.beginPath();
+              g.ellipse(x + dx + 6 + j * 6 + hash(k + j) * 3, y + dy + 1, m.glow ? 1.4 : 3.4, m.glow ? 1.4 : 2, 0, 0, Math.PI * 2);
+              g.fill();
+            }
+          }
         });
       }
     }
   } else if (m.style === 'farm') {
     // Tilled farmland: rows of furrows, with pebbles and the odd buried carrot.
-    for (let row = 0; row < 8; row++) {
+    for (let row = 0; row < TH / 8; row++) {
       const y0 = row * 8 + 5;
       g.strokeStyle = row % 2 ? m.deep : mix(m.deep, m.body, 0.4);
       g.lineWidth = 1.6;
       g.beginPath();
-      for (let x = 0; x <= TILE; x += 4) g.lineTo(x, y0 + Math.sin((x / TILE) * Math.PI * 4 + row) * 0.8);
+      for (let x = 0; x <= TW; x += 4) g.lineTo(x, y0 + Math.sin((x / TILE) * Math.PI * 4 + row) * 0.8);
       g.stroke();
     }
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 8 * AREA; i++) {
       const k = seed + i * 5.9;
       wrap((dx, dy) => {
         g.fillStyle = m.stone;
         g.beginPath();
-        g.ellipse(hash(k) * TILE + dx, hash(k + 1) * TILE + dy, 2 + hash(k + 2), 1.3, 0, 0, Math.PI * 2);
+        g.ellipse(hash(k) * TW + dx, hash(k + 1) * TH + dy, 2 + hash(k + 2), 1.3, 0, 0, Math.PI * 2);
         g.fill();
       });
     }
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 2 * AREA; i++) {
       const k = seed + i * 17.3 + 50;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       wrap((dx, dy) => {
         g.fillStyle = '#ff9d4a';
         poly(g, [[x + dx - 2, y + dy], [x + dx + 2, y + dy], [x + dx, y + dy + 7]]);
@@ -142,13 +184,13 @@ function paintTile(g, m, theme) {
     }
   } else if (m.style === 'slab') {
     // Big sandstone slabs, stacked a little unevenly: lit tops, shaded bottoms, chips and cracks.
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        const k = seed + row * 3 + col;
+    for (let row = 0; row < 6; row++) {
+      for (let col = 0; col < 9; col++) {
+        const k = seed + row * 16 + col;
         const w = 19 + hash(k) * 4;
         const h = 18 + hash(k + 1) * 3;
-        const x = col * 22 + (row % 2) * 11 + hash(k + 2) * 2 - 1;
-        const y = row * 22 + 1 + hash(k + 3) * 2;
+        const x = col * (TW / 9) + (row % 2) * (TW / 18) + hash(k + 2) * 2 - 1;
+        const y = row * (TH / 6) + 1 + hash(k + 3) * 2;
         wrap((dx, dy) => {
           g.fillStyle = m.deep;
           rounded(g, x + dx, y + dy + 2, w, h, 5);
@@ -179,30 +221,30 @@ function paintTile(g, m, theme) {
     }
   } else if (m.style === 'strata') {
     // Layered sandstone: wavy bands, cracks, and flecks of grit.
-    for (let band = 0; band < 4; band++) {
+    for (let band = 0; band < TH / 16; band++) {
       const y0 = band * 16;
       g.fillStyle = band % 2 ? m.deep : mix(m.body, m.stone, 0.35);
       g.beginPath();
       g.moveTo(0, y0 + 10);
-      for (let x = 0; x <= TILE; x += 8) g.lineTo(x, y0 + 10 + Math.sin((x / TILE) * Math.PI * 2 + band) * 2);
-      g.lineTo(TILE, y0 + 16);
+      for (let x = 0; x <= TW; x += 8) g.lineTo(x, y0 + 10 + Math.sin((x / TILE) * Math.PI * 2 + band) * 2);
+      g.lineTo(TW, y0 + 16);
       g.lineTo(0, y0 + 16);
       g.closePath();
       g.globalAlpha = 0.55;
       g.fill();
       g.globalAlpha = 1;
     }
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 14 * AREA; i++) {
       const k = seed + i * 3.1;
       wrap((dx, dy) => {
         g.fillStyle = hash(k) > 0.5 ? m.stone : m.deep;
-        g.fillRect(hash(k + 1) * TILE + dx, hash(k + 2) * TILE + dy, 1.5, 1.5);
+        g.fillRect(hash(k + 1) * TW + dx, hash(k + 2) * TH + dy, 1.5, 1.5);
       });
     }
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 3 * AREA; i++) {
       const k = seed + i * 9.7;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       wrap((dx, dy) => {
         g.strokeStyle = m.deep;
         g.lineWidth = 0.9;
@@ -215,10 +257,10 @@ function paintTile(g, m, theme) {
     }
   } else if (m.style === 'rock') {
     // Faceted rock with a lit face on each chunk, and specks of crystal.
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 7 * AREA; i++) {
       const k = seed + i * 5.3;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       const r = 8 + hash(k + 2) * 6;
       wrap((dx, dy) => {
         g.fillStyle = m.deep;
@@ -229,20 +271,20 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5 * AREA; i++) {
       const k = seed + i * 2.9 + 40;
       wrap((dx, dy) => {
         g.fillStyle = hash(k) > 0.5 ? '#bff0ff' : '#e6c8ff';
-        poly(g, [[hash(k + 1) * TILE + dx, hash(k + 2) * TILE + dy], [hash(k + 1) * TILE + dx + 1.5, hash(k + 2) * TILE + dy - 4], [hash(k + 1) * TILE + dx + 3, hash(k + 2) * TILE + dy]]);
+        poly(g, [[hash(k + 1) * TW + dx, hash(k + 2) * TH + dy], [hash(k + 1) * TW + dx + 1.5, hash(k + 2) * TH + dy - 4], [hash(k + 1) * TW + dx + 3, hash(k + 2) * TH + dy]]);
         g.fill();
       });
     }
   } else if (m.style === 'cloud') {
     // Soft cloud puffs, lighter on top.
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 9 * AREA; i++) {
       const k = seed + i * 3.7;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       const r = 7 + hash(k + 2) * 7;
       wrap((dx, dy) => {
         g.fillStyle = m.deep;
@@ -259,10 +301,10 @@ function paintTile(g, m, theme) {
     }
   } else {
     // Loam: soft dark clumps, pebbles, and thin roots.
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 10 * AREA; i++) {
       const k = seed + i * 4.1;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       wrap((dx, dy) => {
         g.fillStyle = m.deep;
         g.globalAlpha = 0.5;
@@ -272,10 +314,10 @@ function paintTile(g, m, theme) {
         g.globalAlpha = 1;
       });
     }
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 9 * AREA; i++) {
       const k = seed + i * 6.7 + 20;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       const r = 1.6 + hash(k + 2) * 2;
       wrap((dx, dy) => {
         g.fillStyle = m.deep;
@@ -288,10 +330,10 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 2 * AREA; i++) {
       const k = seed + i * 11.3 + 60;
-      const x = hash(k) * TILE;
-      const y = hash(k + 1) * TILE;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
       wrap((dx, dy) => {
         g.strokeStyle = m.deep;
         g.lineWidth = 1.1;
@@ -303,12 +345,12 @@ function paintTile(g, m, theme) {
       });
     }
     if (m.glow) {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3 * AREA; i++) {
         const k = seed + i * 13.1 + 80;
         wrap((dx, dy) => {
           g.fillStyle = m.glow;
           g.beginPath();
-          g.arc(hash(k) * TILE + dx, hash(k + 1) * TILE + dy, 1.1, 0, Math.PI * 2);
+          g.arc(hash(k) * TW + dx, hash(k + 1) * TH + dy, 1.1, 0, Math.PI * 2);
           g.fill();
         });
       }
@@ -340,8 +382,8 @@ function patternFor(ctx, theme, m) {
   let entry = patterns.get(key);
   if (!entry) {
     const c = document.createElement('canvas');
-    c.width = TILE * res;
-    c.height = TILE * res;
+    c.width = TW * res;
+    c.height = TH * res;
     const g = c.getContext('2d');
     g.scale(res, res);
     paintTile(g, m, theme);
@@ -355,7 +397,7 @@ function patternFor(ctx, theme, m) {
 // Fills the current path with the material, anchored to the world so it scrolls with it.
 function fillLand(ctx, theme, m, cam) {
   const { p, res } = patternFor(ctx, theme, m);
-  p.setTransform(new DOMMatrix().translate(-cam.x % TILE, -cam.y % TILE).scale(1 / res));
+  p.setTransform(new DOMMatrix().translate(-cam.x % TW, -cam.y % TH).scale(1 / res));
   ctx.fillStyle = p;
   ctx.fill();
 }
@@ -384,14 +426,22 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   });
   ctx.closePath();
   fillLand(ctx, theme, m, cam);
-  // It darkens with depth below the surface.
-  const top = Math.min(...runs.flat().map((p) => p[1]));
+  // The land darkens and cools with depth below its own surface: lightest just under the lip,
+  // then deeper and inkier, so it reads as a solid mass instead of a flat slab. Laid in narrow
+  // strips that each follow the surface above them, so slopes and plateaus shade alike.
   ctx.clip();
-  const g = ctx.createLinearGradient(0, top + 20, 0, top + 220);
-  g.addColorStop(0, 'rgba(0,0,0,0)');
-  g.addColorStop(1, hexA(m.deep, 0.75));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, top, width, bottom - top);
+  const deepest = mix(m.deep, INK, 0.22);
+  const STRIP = 16;
+  for (let sx = -STRIP; sx < width + STRIP; sx += STRIP) {
+    const top = surfaceY(runs, sx + STRIP / 2);
+    if (top == null || top > height) continue;
+    const g = ctx.createLinearGradient(0, top + 14, 0, top + 190);
+    g.addColorStop(0, hexA(m.deep, 0));
+    g.addColorStop(0.4, hexA(m.deep, 0.38));
+    g.addColorStop(1, hexA(deepest, 0.82));
+    ctx.fillStyle = g;
+    ctx.fillRect(sx, top - 40, STRIP, bottom - top + 40);
+  }
   ctx.restore();
 
   // Cliff faces: where the ground drops at a wall, the high side shows a shaded face.
@@ -405,8 +455,27 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
     cliffFace(ctx, m, a[0], yTop, yBot, highLeft ? -1 : 1, time, i);
   }
   // The lip along the top of every run.
-  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, 7, deco));
+  // The lip casts a soft shadow onto the dirt just under it.
+  for (const pts of runs) strokeAlong(ctx, pts, 12, hexA(INK, 0.16), 6);
+  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, 10, deco));
   if (map.look?.ceiling) drawCeiling(ctx, m, map, cam, width, time);
+}
+
+// The ground's surface height at screen x (the higher side at a cliff), or null off the land.
+function surfaceY(runs, x) {
+  let best = null;
+  for (const pts of runs) {
+    if (x < pts[0][0] - 8 || x > pts[pts.length - 1][0] + 8) continue;
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1];
+      const [x1, y1] = pts[i];
+      if (x < x0 - 8 || x > x1 + 8) continue;
+      const u = x1 > x0 ? Math.max(0, Math.min(1, (x - x0) / (x1 - x0))) : 0;
+      const y = y0 + (y1 - y0) * u;
+      if (best == null || y < best) best = y;
+    }
+  }
+  return best;
 }
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
@@ -439,7 +508,7 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
       ctx.stroke();
     } else {
       ctx.beginPath();
-      ctx.arc(x, y + depth - 1, 4, 0, Math.PI);
+      ctx.arc(x, y + depth - 1, 3.4 + hash(k * 1.3 + seed * 17) * 1.6, 0, Math.PI);
       ctx.fill();
       ctx.stroke();
     }
@@ -455,7 +524,8 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
     ctx.lineCap = 'round';
     forAlong(pts, 6, (x, y, k) => {
       if (x < -6 || x > width + 6 || hash(k * 1.7 + seed) < 0.5) return;
-      const sway = Math.sin(time * 2 + (x + camX) * 0.05) * 0.8;
+      const w = windAt(time, x + camX);
+      const sway = Math.sin(time * 2 + (x + camX) * 0.05) * 0.5 * (0.5 + w) + w * 1.1;
       const h = 2.5 + hash(k + 3) * 3;
       ctx.beginPath();
       ctx.moveTo(x, y - 1);
@@ -475,7 +545,8 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
   forAlong(pts, 11, (x, y, k) => {
     const h = hash(k * 2.3 + seed * 7);
     if (x < -6 || x > width + 6 || h < 0.45) return;
-    const sway = Math.sin(time * 2 + (x + camX) * 0.07) * 0.7;
+    const w = windAt(time, x + camX);
+    const sway = Math.sin(time * 2 + (x + camX) * 0.07) * 0.45 * (0.5 + w) + w * 0.9;
     if (kind === 'flowers') {
       const stem = 3 + h * 4;
       ctx.strokeStyle = '#5fb878';
@@ -663,7 +734,7 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
   if (!m.drip || maxLen < 6) return;
   const k = hash(seed * 3.3 + (x + camX) * 0.01);
   const len = Math.max(6, maxLen * (0.5 + k * 0.5));
-  const sway = Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.6;
+  const sway = Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.2 + windAt(time, x + camX) * 1.2;
   const top = y - 5;
   // A point along the hanging curve, u from 0 (root) to 1 (tip).
   const at = (u) => {
