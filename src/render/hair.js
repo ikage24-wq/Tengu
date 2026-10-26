@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // New styles are added one at a time as each is approved.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun'];
 // Any style that no longer exists (older saves) draws as the first one.
 export const hairStyleOf = (look) => (HAIR_STYLES.includes(look.hairStyle) ? look.hairStyle : HAIR_STYLES[0]);
 // Styles whose long fringe hides the near eye and brow.
@@ -261,15 +261,19 @@ function sheet({ len, flare = 13, wave = 0, ends = 'points', n = 3, top = 13, w0
       }
     }
   } else if (ends === 'curls') {
+    // Each end turns in a round curl: a lobe that swells below the hem, deep notches between
+    // them, and a dark spiral inside each.
     for (let i = 0; i < n; i++) {
       const xa = x0 + ((x1 - x0) * i) / n;
       const xb = x0 + ((x1 - x0) * (i + 1)) / n;
       const cx = (xa + xb) / 2;
       const rr = (xb - xa) / 2;
       const dir = cx < HX ? -1 : 1;
-      bottom.push([xa + rr * 0.1, len - 1.6], [cx - rr * 0.6 * dir, len + 0.6], [cx + rr * 0.2 * dir, len + 1.2], [xb - rr * 0.1, len - 0.4]);
-      if (i < n - 1) bottom.push(P(xb, len - 2.6));
-      extra.push(poly(smooth([[cx - rr * 0.8, len - 0.6], [cx, len + 0.6], [cx + rr * 0.8, len - 0.8], [cx, len - 0.1]]), r.sh2));
+      const out = i === 0 || i === n - 1 ? 0.8 : 0;
+      bottom.push([xa + rr * 0.05 - (i === 0 ? out : 0), len - 2.2], [xa + rr * 0.3 - (i === 0 ? out : 0), len + 0.6], [cx, len + 1.6], [xb - rr * 0.3 + (i === n - 1 ? out : 0), len + 0.6], [xb - rr * 0.05 + (i === n - 1 ? out : 0), len - 2.2]);
+      if (i < n - 1) bottom.push(P(xb, len - 3.8));
+      extra.push(poly(smooth([[cx - rr * 0.75 * dir, len - 1.6], [cx - rr * 0.2 * dir, len + 0.9], [cx + rr * 0.7 * dir, len + 0.2], [cx + rr * 0.3 * dir, len - 0.8], [cx - rr * 0.1 * dir, len - 0.2]]), r.sh2));
+      if (i < n - 1) extra.push(crease(xb, len - 3.8, 4, r.sh2, 0));
     }
   } else {
     for (let i = 0; i <= n; i++) {
@@ -277,6 +281,13 @@ function sheet({ len, flare = 13, wave = 0, ends = 'points', n = 3, top = 13, w0
       bottom.push(P(x, len));
       if (i < n) bottom.push(P(x + (x1 - x0) / n / 2 - 0.5, len), P(x + (x1 - x0) / n / 2, len - 1.2), P(x + (x1 - x0) / n / 2 + 0.5, len));
     }
+  }
+  // Lighter streaks run down the flow near each side, so the sheet reads as hair, not cloth.
+  for (const dir of [-1, 1]) {
+    const xa = HX + dir * (w0 - 2.2);
+    const xb = HX + dir * (flare - 2.8);
+    extra.push(streak(xa, top + 3, xb + wave * 0.6, foot - 2.4, 1.3, -0.9 * dir, r.base));
+    extra.push(streak(xa - dir * 3.4, top + 6, xb - dir * 3.6, foot - 4, 0.9, -0.5 * dir, r.base));
   }
   const out = [mass([...left, ...bottom, ...right.reverse()], c, m, k)];
   const mv = mover(m, k);
@@ -391,6 +402,24 @@ const STYLES = {
       hang: [...sheet({ len: 23, flare: 11.6, n: 3 }, r, m), lock(tail, 7.6, r.sh1, m, 1.1, 0.16)],
       front: bangs('swept', r, m, [...sideLocks(r, m, null, [[5.8, 11], [5, 16], [5.6, 20.4]], 3.2), ...pieces]),
       tips: [26, 31],
+    };
+  },
+  // Cat-ear buns: two little coils of hair on top shaped like ears, over a bell-shaped cut that
+  // ends in curls; wispy bangs.
+  catbun(r, m) {
+    const ear = (dir) => {
+      const pts = [[5.6, 6.4], [4.4, 3.4], [4.8, 0.6], P(6.4, -1), [8.6, 0.4], [10.8, 2.4], [10.4, 4.8]];
+      const p = dir > 0 ? pts : fx(pts);
+      const s = dir > 0 ? (q) => q : (q) => [31 - q[0], q[1]];
+      return [poly(smooth(p), r.base), streak(...s([6.6, 0.4]), ...s([9.8, 3.8]), 0.8, 0.9 * dir, r.sh1), streak(...s([5.6, 2]), ...s([7.6, 5.4]), 0.7, 0.7 * dir, r.sh1), streak(...s([5.4, 0.8]), ...s([5.2, 4.4]), 0.9, -0.4 * dir, r.hi)];
+    };
+    const top = [...ear(1), ...ear(-1)];
+    return {
+      head: [crown(r), ...top],
+      hang: sheet({ len: 30, flare: 14.6, ends: 'curls', n: 5, w0: 12 }, r, m),
+      front: bangs('wispy', r, m, sideLocks(r, m, [[25.4, 11], [26.4, 17], [26.6, 22.4], [28, 24.6], [28.6, 23.2]], undefined, 3.2)),
+      top,
+      tips: [23, 27],
     };
   },
 };
