@@ -195,6 +195,7 @@ export function drawHud(ui, state, world) {
   // again.
   const keys = (hud.keys ??= {});
   const typing = state.chat?.typing != null;
+  const carrying = Boolean(state.windows.skills?.carry?.live || (state.windows.bag?.carry?.live && state.windows.bag.tab === 1));
   HOTKEYS.forEach((code, i) => {
     const b = char.hotkeys[code];
     const k = (keys[code] ??= { at: -9, ok: true, readyAt: -9, short: false });
@@ -213,7 +214,10 @@ export function drawHud(ui, state, world) {
     const y = BAR_Y + 9;
     const hot = hover(ui, x, y, 18, 18);
     box(ctx, x, y + 1.5, 18, 18, { fill: '#dccbee', edge: null, r: 5 });
-    box(ctx, x, y + sink, 18, 18, { fill: hot ? '#ffffff' : '#fffdfb', edge: b ? LAV.main : '#e2d3f0', r: 5, width: 1.2 });
+    // While a skill or potion is being dragged from a window, every slot shows it can take it,
+    // and the one under the mouse lights up.
+    const target = carrying && hot;
+    box(ctx, x, y + sink, 18, 18, { fill: target ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: target ? COLORS.select : carrying ? LAV.dark : b ? LAV.main : '#e2d3f0', r: 5, width: target ? 2 : 1.2 });
     if (b?.skill) {
       const pop = !k.short && age < 0.16 ? 1 + 0.15 * Math.sin((age / 0.16) * Math.PI) : 1;
       ctx.save();

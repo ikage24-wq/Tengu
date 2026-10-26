@@ -64,6 +64,11 @@ export function itemTooltip(char, id, inst = null) {
   return lines;
 }
 
+// What a skill does at one level, in a line: "180% damage, 3 hits, up to 4 foes, 12 MP".
+export function describeSkill(skillId, lv) {
+  return describe(skillAt(skillId, lv));
+}
+
 function describe(params) {
   const parts = [];
   if (params.pct) parts.push(`${params.pct}% damage`);

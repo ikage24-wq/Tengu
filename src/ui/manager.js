@@ -3,7 +3,8 @@
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { HOTKEYS } from '../core/character.js';
-import { statsWindow, skillsWindow } from './windows.js';
+import { statsWindow } from './windows.js';
+import { skillsWindow } from './skills.js';
 import { bagWindow } from './bag.js';
 import { questsWindow } from './quests.js';
 import { npcWindow, deathWindow } from './npc.js';
