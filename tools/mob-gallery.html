@@ -17,7 +17,7 @@ setHd(true, S);
 const { ART } = await import(`../src/render/mobs/${group}.js`);
 const keys = (q.get('keys') ?? Object.keys(ART).join(',')).split(',').filter((k) => ART[k]);
 const MOODS = ['idle', 'angry', 'hurt', 'dead', 'blink', 'happy'];
-const spr = (k, pose, f, mood) => sprite(`gal|${k}|${pose}${f}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, ...ART[k].draw(pose, f, mood) }));
+const spr = (k, pose, f, mood) => sprite(`gal|${k}|${pose}${f}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, ...ART[k].draw(pose, f, mood) }));
 const rows = [];
 let H = 10;
 let W = 0;

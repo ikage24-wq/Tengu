@@ -68,11 +68,16 @@ export function mix(a, b, t) {
 const outlineCache = new Map();
 // Soft sprites outline each part in a deep shade of its own color, pulled toward the ink.
 // Crisp sprites use a darker, inkier line, like classic pixel art.
-function outlineFor(c, crisp) {
-  const k = `${c}${crisp ? 1 : 0}`;
+// Selective outlines ("sel-out") take `side`: -1 on edges facing the light (top and front), where
+// the line is a lighter shade of the part's own hue, +1 on the bottom and back, where it's the
+// darkest, and 0 between.
+function outlineFor(c, crisp, side = 0) {
+  const k = `${c}${crisp ? 1 : 0}${side}`;
   let v = outlineCache.get(k);
   if (!v) {
-    v = crisp ? mix(shade(c, -58), '#2a2035', 0.5) : mix(shade(c, -42), OUTLINE, 0.35);
+    if (side < 0) v = shade(c, -34);
+    else if (side > 0) v = mix(shade(c, -62), '#2a2035', 0.6);
+    else v = crisp ? mix(shade(c, -58), '#2a2035', 0.5) : mix(shade(c, -42), OUTLINE, 0.35);
     outlineCache.set(k, v);
   }
   return v;
@@ -90,7 +95,7 @@ function outlineFor(c, crisp) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false) {
   const gw = (w + PAD * 2) * res;
   const gh = (h + PAD * 2) * res;
   const colors = [];
@@ -232,6 +237,9 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   }
   const best = new Float32Array(gw * gh).fill(Infinity);
   const from = new Int32Array(gw * gh);
+  // Which way each outline cell faces (for sel-out): its offset from the cell it grew from.
+  const faceX = selout ? new Int8Array(gw * gh) : null;
+  const faceY = selout ? new Int8Array(gw * gh) : null;
   for (let y = 0; y < gh; y++) {
     for (let x = 0; x < gw; x++) {
       const i = y * gw + x;
@@ -244,6 +252,10 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         if (grid[t] === EMPTY && d < best[t]) {
           best[t] = d;
           from[t] = grid[i];
+          if (selout) {
+            faceX[t] = dx;
+            faceY[t] = dy;
+          }
         }
       }
     }
@@ -260,10 +272,13 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
       continue;
     }
     const corner = best[t] >= softCorner;
-    const key = from[t] * 2 + (corner ? 1 : 0);
+    // Light comes from above and in front (sprites face right): up counts most.
+    const facing = selout ? (-faceY[t] * 0.75 + faceX[t] * 0.35) / Math.hypot(faceX[t], faceY[t]) : 0;
+    const side = facing > 0.45 ? -1 : facing < -0.3 ? 1 : 0;
+    const key = (from[t] * 2 + (corner ? 1 : 0)) * 3 + side + 1;
     let v = inkFor.get(key);
     if (v === undefined) {
-      const line = outlineFor(colors[from[t]], crisp);
+      const line = outlineFor(colors[from[t]], crisp, side);
       v = idOf(corner ? `${line}80` : line);
       inkFor.set(key, v);
     }
@@ -345,11 +360,11 @@ export function sprite(key, build) {
   if (s) {
     cache.delete(key);
   } else {
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false } = build();
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false } = build();
     // Detailed sprites (characters, monsters, scenery) are drawn at the screen's own pixel
     // density, so every cell is exactly one screen pixel: sharp and even at any window size.
     if (res > 1) res = Math.max(res, Math.round(gfx.scale));
-    const raster = rasterize(w, h, shapes, res, soft, palette, crisp);
+    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout);
     const canvas = bake(raster);
     s = { canvas, w, h, res, crisp, white: null };
     cacheBytes += bytesOf(s);
