@@ -80,7 +80,10 @@ function poseOf(m, fr, moving, t, now, mo) {
     if (f >= 0) return ['attack', f];
   }
   if (moving) return ['walk', walkFrame(m, fr, t, mo.fast)];
-  return ['idle', Math.floor((t / IDLE_CYCLE) * fr.idle) % fr.idle];
+  // Idles linger on their two extremes and pass quickly between them (uneven holds, like
+  // MapleStory's stand frames), so the breath reads as poses rather than a steady drift.
+  const u = (t / IDLE_CYCLE) % 1;
+  return ['idle', Math.floor((u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle + fr.idle) % fr.idle];
 }
 
 export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
