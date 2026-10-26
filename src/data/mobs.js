@@ -88,6 +88,32 @@ export const MOBS = {
     speed: 34, w: 34, h: 36, art: 'starspirit', fly: true, drops: [{ id: 'stardust', chance: 0.45 }],
   }),
 
+  // Spirit maidens out of myth. Not placed in any map yet: they're ready for new areas.
+  sylph: mob({
+    id: 'sylph', name: 'Sylph', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [26, 66],
+    speed: 70, w: 24, h: 46, art: 'sylph', fly: true, drops: [{ id: 'feather', chance: 0.45 }],
+  }),
+  nekomata: mob({
+    id: 'nekomata', name: 'Nekomata', level: 23, hp: 820, atk: 76, def: 16, acc: 54, eva: 14, exp: 600, gold: [30, 74],
+    speed: 74, gait: 'dart', w: 24, h: 46, art: 'nekomata', drops: [{ id: 'fluff', chance: 0.45 }],
+  }),
+  kitsunemiko: mob({
+    id: 'kitsunemiko', name: 'Kitsune Miko', level: 27, hp: 1250, atk: 86, def: 24, acc: 58, eva: 10, exp: 790, gold: [38, 92],
+    speed: 40, w: 24, h: 48, art: 'kitsunemiko', drops: [{ id: 'wisp_flame', chance: 0.45 }],
+  }),
+  lupina: mob({
+    id: 'lupina', name: 'Lupina', level: 29, hp: 1500, atk: 96, def: 28, acc: 62, eva: 10, exp: 900, gold: [42, 100],
+    speed: 50, gait: 'stalk', w: 24, h: 50, art: 'lupina', drops: [{ id: 'tusk', chance: 0.45 }],
+  }),
+  lamia: mob({
+    id: 'lamia', name: 'Lamia', level: 33, hp: 2500, atk: 116, def: 40, acc: 68, eva: 8, exp: 1320, gold: [52, 124],
+    speed: 36, w: 28, h: 50, art: 'lamia', drops: [{ id: 'pebble', chance: 0.5 }],
+  }),
+  yukionna: mob({
+    id: 'yukionna', name: 'Yuki-onna', level: 36, hp: 2800, atk: 128, def: 36, acc: 74, eva: 12, exp: 1520, gold: [56, 136],
+    speed: 32, w: 24, h: 50, art: 'yukionna', drops: [{ id: 'crystal_gel', chance: 0.45 }],
+  }),
+
   // Rootwood Hollow (the Lv 10 dungeon). In a dungeon monsters don't hurt on touch: they swing at
   // whoever they're angriest at (`fight`: every seconds, reach px, wind-up seconds; ranged ones
   // spit from `range` away). Bosses add their own moves (`mech`, see world/dungeon.js).
