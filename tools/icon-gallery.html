@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Item icon gallery</title>
+<style>body { margin: 0; background: #e9e2f5; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: renders every hand-drawn drop and tonic icon at 1x, 3x and 6x on a light and a dark
+// background. Open /tools/icon-gallery.html (&ids=a,b limits it to some icons).
+import { setHd } from '../src/render/pixel.js';
+import { ITEMS } from '../src/data/items.js';
+import { ITEM_ART } from '../src/render/icons/items.js';
+import { drawItemIcon } from '../src/render/icons.js';
+
+const q = new URLSearchParams(location.search);
+const ids = (q.get('ids') ?? Object.keys(ITEM_ART).join(',')).split(',').filter((id) => ITEM_ART[id]);
+const COLS = 2;
+const ROW = 112;
+const COL = 640;
+const BG = ['#fbf7ff', '#2b2340'];
+const c = document.getElementById('c');
+c.width = COL * COLS;
+c.height = Math.ceil(ids.length / COLS) * ROW + 8;
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#e9e2f5';
+ctx.fillRect(0, 0, c.width, c.height);
+for (const S of [1, 3, 6]) {
+  setHd(true, S);
+  ids.forEach((id, n) => {
+    const ox = (n % COLS) * COL;
+    const oy = Math.floor(n / COLS) * ROW + 8;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (S === 1) {
+      ctx.fillStyle = '#3a2d4f';
+      ctx.font = 'bold 13px sans-serif';
+      ctx.fillText(ITEMS[id].name, ox + 8, oy + 18);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#8f7cc4';
+      ctx.fillText(id, ox + 8, oy + 34);
+    }
+    // Light then dark panel at this scale.
+    const x0 = { 1: 150, 3: 210, 6: 370 }[S];
+    BG.forEach((bg, k) => {
+      const size = 16 * S + 8;
+      const px = ox + x0 + k * (S === 1 ? 0 : size + 6);
+      const py = oy + (S === 1 ? k * 34 + 8 : 0);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = bg;
+      ctx.fillRect(px, py, size, size);
+      ctx.setTransform(S, 0, 0, S, px + 4, py + 4);
+      ctx.imageSmoothingEnabled = false;
+      drawItemIcon(ctx, id, 0, 0);
+    });
+  });
+}
+document.title = 'ready';
+</script>

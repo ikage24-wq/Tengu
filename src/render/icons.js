@@ -7,6 +7,7 @@ import { weaponIcon } from './weapons.js';
 import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, skirtShapes, hatShapes, hatBackShapes, handShapes, capeShapes, capeFrontShapes, earringShapes, limb } from './gear.js';
 import { SCHOOL_COLORS } from './spells.js';
+import { ITEM_ART } from './icons/items.js';
 
 const GOLD = '#ffd66b';
 
@@ -130,6 +131,7 @@ function itemShapes(def, variant = null) {
       default: return [R(4, 4, 8, 8, c)];
     }
   }
+  if (ITEM_ART[def.id]) return ITEM_ART[def.id]();
   if (def.scroll) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), E(8, 8, 3, 3, c), P(7, 7, '#ffffff')];
   if (def.effect?.returnTown) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), R(6, 6, 4, 5, c), R(5, 6, 6, 1, d)];
   // Throwing stars: a little pile of shuriken in the set's color.
@@ -146,12 +148,15 @@ function itemShapes(def, variant = null) {
   return [E(8, 9, 5, 5, c), E(6, 7, 2, 2, l), P(10, 12, d)];
 }
 
-// Worn-shape icons rasterize at twice the detail so small parts survive the shrink.
+// Worn-shape icons rasterize at twice the detail so small parts survive the shrink; hand-drawn
+// drops and tonics at three times, with a crisp inked outline.
 export function itemIcon(id, variant = null) {
   const def = ITEMS[id];
   const look = def.type === 'cash' && def.skin ? ITEMS[def.skin] : def;
   const fine = look.design === 'job' || look.design === 'jewel';
-  return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: itemShapes(def, variant), ...(fine ? { res: 2, soft: 'cel' } : {}) }));
+  const art = def.type !== 'cash' && ITEM_ART[id];
+  const detail = art ? { res: 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
+  return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: itemShapes(def, variant), ...detail }));
 }
 
 export function drawItemIcon(ctx, id, x, y, scale = 1, variant = null) {
