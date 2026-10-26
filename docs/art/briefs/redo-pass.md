@@ -50,3 +50,18 @@ scratchpad: /tmp/claude-0/-home-user-Twzt/b83c50f6-dbf8-5bef-8415-22f5394e79c8/s
   heading (short, concrete) in the same commit — the user wants everything we learn saved. Keep
   edits to that file small and additive (other teams may add lines too; re-read before editing).
 - Report: what changed per piece, commit hashes, before/after paths, anything left undone.
+
+## Animation and rigging are part of the redo (user: "remember animations and rerigging and stuff")
+Redrawing isn't enough: re-rig and re-animate every design in your area.
+- Rig: build each character/monster from proper parts with pivots at real joints (hips, knees,
+  shoulders, elbows, neck, tail/hair roots, wing roots) and a clear hierarchy, so poses are made by
+  rotating/translating parts rather than redrawing loose shapes per frame. Limbs keep their length
+  across frames; feet plant on the ground; heads and faces follow the neck pivot.
+- Chains: hair, tails, ears, capes, ribbons, tentacles, vines, wings use chained segments driven by
+  the body with a per-segment delay (root leads, tip follows), not a single rigid shape.
+- Cycles: rebuild walk/fly, idle, attack, hurt and death on that rig with the README's timing
+  (contact/passing/up/down poses, held beats, anticipation, smears on fast arcs, overshoot and
+  settle, sideways sway in idles); quadrupeds, serpents and flyers get their own proper gaits.
+- Gear and attachments ride the rig: weapons, hats, capes and props follow their parent part's
+  transform so nothing floats or detaches in any frame.
+- Check every pose at 1x and zoomed, and make walk/idle/attack/hurt/death GIFs for every design.
