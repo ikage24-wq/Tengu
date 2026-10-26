@@ -16,7 +16,7 @@ import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, FACE_STYLES, OUTFIT_STYLES } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect } from './kit.js';
+import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
 
 const HAIR_COLORS = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
@@ -105,9 +105,9 @@ function dialogFrame(ui, win, npc, H, world) {
   ctx.restore();
 
   // The name ribbon.
-  ctx.font = `bold 10px "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
+  ctx.font = font(10, true);
   const nw = ctx.measureText(npc.name).width;
-  ctx.font = `bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
+  ctx.font = font(7, true);
   const tw = ctx.measureText(npc.title).width;
   const rx = x + 104;
   box(ctx, rx, y - 9, nw + tw + 30, 18, { fill: th.main, edge: '#ffffff', r: 9, width: 2 });
@@ -436,7 +436,7 @@ function makePreview(id, variant) {
 
 // Shortens text with an ellipsis to fit `w` pixels.
 function fit(ctx, s, w, size) {
-  ctx.font = `bold ${size}px sans-serif`;
+  ctx.font = font(size, true);
   if (ctx.measureText(s).width <= w) return s;
   while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
   return `${s}…`;

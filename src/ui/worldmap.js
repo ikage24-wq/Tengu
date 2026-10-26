@@ -6,7 +6,7 @@ import { MAPS, TOWNS, getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS } from '../data/jobs.js';
 import { travelTo, travelCost } from '../world/world.js';
-import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, roundRect } from './kit.js';
+import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, roundRect, font } from './kit.js';
 
 const W = 420;
 const H = 290;
@@ -304,7 +304,7 @@ export function worldMapWindow(ui, state, world) {
     const y = oy + m.world.y;
     if (m.isTown) {
       drawTown(ctx, x, y, JOB_COLORS[m.job] ?? COLORS.accent, state.travelPick === m.id);
-      ctx.font = 'bold 7px sans-serif';
+      ctx.font = font(7, true);
       const w = ctx.measureText(m.name).width + 8;
       box(ctx, x - w / 2, y + 4, w, 10, { fill: JOB_COLORS[m.job], edge: '#ffffff', r: 4, width: 1 });
       text(ctx, m.name, x, y + 11.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: INK });

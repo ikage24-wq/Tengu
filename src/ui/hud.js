@@ -10,7 +10,7 @@ import { countItem, activeStar } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { questState, objectiveProgress } from '../core/quests.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle } from './kit.js';
+import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
 import { drawHero } from '../render/hero.js';
 import { settings } from '../core/settings.js';
 import { partyMembers, PLAYSTYLES } from '../world/party.js';
@@ -19,17 +19,63 @@ import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
+import { questMarker } from './npc.js';
+import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 
 const BAR_Y = 330;
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
 
-// Smoothly trailing values for the HP/MP "just lost" trail.
-function trailOf(state, key, value) {
+// Bar feedback, from how a value changed since last frame: the chunk just lost holds for a
+// moment and then drains; a heal flashes the bar white and sweeps a shine across it; a blow of a
+// tenth of the bar or more shakes it.
+function meter(state, key, ratio, t) {
   const hud = (state.hud ??= {});
-  const prev = hud[key] ?? value;
-  hud[key] = value > prev ? value : prev + (value - prev) * 0.04;
-  return hud[key];
+  const m = (hud[key] ??= { v: ratio, trail: ratio, hold: 0, at: t, healAt: -9, hitAt: -9, hurtAt: -9 });
+  const dt = Math.max(0, Math.min(0.1, t - m.at));
+  m.at = t;
+  if (ratio > m.v + 0.0005) {
+    if (ratio - m.v > 0.02) m.healAt = t;
+    m.trail = Math.max(m.trail, ratio);
+  } else if (ratio < m.v - 0.0005) {
+    if (m.trail <= m.v + 0.001) m.hold = t + 0.3;
+    m.trail = Math.max(m.trail, m.v);
+    m.hurtAt = t;
+    if (m.v - ratio >= 0.1) m.hitAt = t;
+  }
+  m.v = ratio;
+  if (t > m.hold) m.trail = ratio + (m.trail - ratio) * Math.exp(-dt * 4);
+  const heal = t - m.healAt;
+  const hit = t - m.hitAt;
+  return {
+    trail: m.trail,
+    flash: heal < 0.15 ? 1 - heal / 0.15 : 0,
+    shine: heal < 0.4 ? heal / 0.4 : null,
+    shake: hit < 0.22 ? Math.round(Math.sin(hit * 80) * 2 * (1 - hit / 0.22)) : 0,
+    hurt: t - m.hurtAt,
+  };
+}
+
+// The red edge that pulses on the world while HP is low: drawn once, then faded in and out.
+let vignette = null;
+function lowHpVignette(ctx, k) {
+  if (!vignette) {
+    vignette = document.createElement('canvas');
+    vignette.width = 320;
+    vignette.height = 180;
+    const v = vignette.getContext('2d');
+    const g = v.createRadialGradient(160, 90, 70, 160, 90, 190);
+    g.addColorStop(0, 'rgba(255,60,100,0)');
+    g.addColorStop(0.55, 'rgba(255,60,100,0.3)');
+    g.addColorStop(1, 'rgba(230,30,80,0.85)');
+    v.fillStyle = g;
+    v.fillRect(0, 0, 320, 180);
+  }
+  ctx.globalAlpha = k;
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(vignette, 0, 0, 640, BAR_Y + 4);
+  ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = 1;
 }
 
 export function drawHud(ui, state, world) {
@@ -70,18 +116,25 @@ export function drawHud(ui, state, world) {
   }
   if (hover(ui, 0, BAR_Y, 640, 7)) tooltip(ui, [{ text: 'Experience', bold: true, color: COLORS.gold }, { text: Number.isFinite(need) ? `${char.exp.toLocaleString()} / ${need.toLocaleString()} (${(pct * 100).toFixed(1)}%)` : 'Max level', size: 8 }]);
 
-  drawPortrait(ctx, char, world);
-  text(ctx, char.name, 44, BAR_Y + 17, { size: 9, bold: true });
-  text(ctx, JOBS[char.job].name, 44, BAR_Y + 27, { size: 7, color: COLORS.muted });
-
   // HP and MP capsules with a heart and a drop.
-  const hpT = trailOf(state, 'hp', char.hp / s.maxHp);
-  const mpT = trailOf(state, 'mp', char.mp / s.maxMp);
-  const low = char.hp / s.maxHp < 0.25;
-  bar(ctx, 106, BAR_Y + 9, 110, 9, char.hp / s.maxHp, low ? (Math.sin(t * 10) > 0 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { trail: hpT });
-  bar(ctx, 106, BAR_Y + 20, 110, 9, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { trail: mpT });
-  badge(ctx, 104, BAR_Y + 13.5, 'heart', COLORS.hp, low ? 1 + Math.abs(Math.sin(t * 8)) * 0.25 : 1);
-  badge(ctx, 104, BAR_Y + 24.5, 'drop', COLORS.mp, 1);
+  const hpR = char.hp / s.maxHp;
+  const hp = meter(state, 'hp', hpR, t);
+  const mp = meter(state, 'mp', char.mp / s.maxMp, t);
+  const low = hpR < 0.2 && char.hp > 0;
+  const beat = low ? 0.5 + 0.5 * Math.sin(t * 7) : 0;
+  if (low) lowHpVignette(ctx, 0.25 + 0.3 * beat);
+
+  const hud = state.hud;
+  if (hud.level != null && char.level > hud.level) hud.levelAt = t;
+  hud.level = char.level;
+  drawPortrait(ctx, char, world, { hurt: hp.hurt < 0.35, low, cheer: t - (hud.levelAt ?? -9) < 3 });
+  text(ctx, char.name, 44, BAR_Y + 17, { size: 9, bold: true });
+  text(ctx, JOBS[char.job].name, 44, BAR_Y + 27, { role: 'minor', size: 7 });
+
+  bar(ctx, 106 + hp.shake, BAR_Y + 9, 110, 9, hpR, low ? (beat > 0.5 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { trail: hp.trail, trailColor: '#ffd3dc', flash: hp.flash, shine: hp.shine, pulse: low ? 0.25 + 0.5 * beat : 0 });
+  bar(ctx, 106 + mp.shake, BAR_Y + 20, 110, 9, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine });
+  badge(ctx, 104 + hp.shake, BAR_Y + 13.5, 'heart', COLORS.hp, low ? 1 + beat * 0.25 : 1 + hp.flash * 0.2);
+  badge(ctx, 104 + mp.shake, BAR_Y + 24.5, 'drop', COLORS.mp, 1 + mp.flash * 0.2);
 
   // EXP percent and gold.
   text(ctx, Number.isFinite(need) ? `EXP ${(pct * 100).toFixed(1)}%` : 'MAX LEVEL', 226, BAR_Y + 17, { size: 7, bold: true, color: '#c99a1f' });
@@ -98,7 +151,8 @@ export function drawHud(ui, state, world) {
     const th = THEMES[theme];
     const hot = hover(ui, cx - 9, cy - 9, 18, 18);
     const open = state.windows[key].open;
-    const lift = hot ? -1.5 : 0;
+    // Lifts under the mouse and sinks onto its lip the moment it's pressed.
+    const lift = hot && ui.mouse.down ? 1.5 : hot ? -1.5 : 0;
     ctx.fillStyle = th.dark;
     ctx.beginPath();
     ctx.arc(cx, cy + 1.5, 8.6, 0, Math.PI * 2);
@@ -125,33 +179,69 @@ export function drawHud(ui, state, world) {
     }
   });
 
-  // Hotkeys: little keycaps with a lip, the key printed in a corner tab.
+  // Hotkeys: little keycaps with a lip, the key printed in a corner tab. A key sinks when pressed;
+  // a skill it casts pops with a white flash, and one you can't afford shakes instead. Skills
+  // without the MP for them grey out under a blue veil and flash a white rim when they're ready
+  // again.
+  const keys = (hud.keys ??= {});
+  const typing = state.chat?.typing != null;
   HOTKEYS.forEach((code, i) => {
-    const x = 400 + i * 19.6;
-    const y = BAR_Y + 9;
     const b = char.hotkeys[code];
+    const k = (keys[code] ??= { at: -9, ok: true, readyAt: -9, short: false });
+    const lv = b?.skill ? char.skills[b.skill] ?? 0 : 0;
+    const noMp = Boolean(lv && SKILLS[b.skill].type !== 'passive' && char.mp < skillAt(b.skill, lv).mp);
+    if (b?.skill && !noMp && !k.ok) k.readyAt = t;
+    k.ok = !noMp;
+    if (!typing && ui.input.pressed?.has(code)) {
+      k.at = t;
+      k.short = noMp;
+    }
+    const age = t - k.at;
+    const sink = age < 0.09 ? 1.5 : 0;
+    const shake = k.short && age < 0.2 ? Math.round(Math.sin(age * 90) * 1.5) : 0;
+    const x = 400 + i * 19.6 + shake;
+    const y = BAR_Y + 9;
     const hot = hover(ui, x, y, 18, 18);
     box(ctx, x, y + 1.5, 18, 18, { fill: '#dccbee', edge: null, r: 5 });
-    box(ctx, x, y, 18, 18, { fill: hot ? '#ffffff' : '#fffdfb', edge: b ? LAV.main : '#e2d3f0', r: 5, width: 1.2 });
+    box(ctx, x, y + sink, 18, 18, { fill: hot ? '#ffffff' : '#fffdfb', edge: b ? LAV.main : '#e2d3f0', r: 5, width: 1.2 });
     if (b?.skill) {
-      drawSkillIcon(ctx, b.skill, x + 1, y + 1);
-      const lv = char.skills[b.skill] ?? 0;
-      const noMp = lv && SKILLS[b.skill].type !== 'passive' && char.mp < skillAt(b.skill, lv).mp;
+      const pop = !k.short && age < 0.16 ? 1 + 0.15 * Math.sin((age / 0.16) * Math.PI) : 1;
+      ctx.save();
+      ctx.translate(x + 9, y + 9 + sink);
+      ctx.scale(pop, pop);
+      drawSkillIcon(ctx, b.skill, -8, -8);
       if (noMp) {
-        ctx.fillStyle = 'rgba(111,184,255,0.5)';
-        ctx.fillRect(x + 1, y + 1, 16, 16);
+        roundRect(ctx, -8, -8, 16, 16, 3);
+        ctx.globalCompositeOperation = 'saturation';
+        ctx.fillStyle = '#808080';
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(70,110,190,0.42)';
+        ctx.fill();
+      }
+      if (!k.short && age < 0.12) {
+        roundRect(ctx, -8, -8, 16, 16, 3);
+        ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - age / 0.12)})`;
+        ctx.fill();
+      }
+      ctx.restore();
+      const ready = t - k.readyAt;
+      if (ready < 0.3) {
+        ctx.globalAlpha = 1 - ready / 0.3;
+        box(ctx, x - 1, y - 1 + sink, 20, 20, { fill: null, edge: '#ffffff', r: 6, width: 2 });
+        ctx.globalAlpha = 1;
       }
       if (hot) tooltip(ui, skillTooltip(char, b.skill));
     } else if (b?.item) {
       const n = countItem(char.inventory, b.item);
       ctx.globalAlpha = n ? 1 : 0.35;
-      drawItemIcon(ctx, b.item, x + 1, y + 1);
+      drawItemIcon(ctx, b.item, x + 1, y + 1 + sink);
       ctx.globalAlpha = 1;
-      text(ctx, `${n}`, x + 17, y + 17, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
+      text(ctx, `${n}`, x + 17, y + 17 + sink, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
       if (hot) tooltip(ui, itemTooltip(char, b.item));
     }
-    box(ctx, x - 1, y - 2, 8, 7, { fill: LAV.main, edge: null, r: 3 });
-    text(ctx, KEY_LABEL(code), x + 3, y + 3.5, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
+    box(ctx, x - 1, y - 2 + sink, 8, 7, { fill: LAV.main, edge: null, r: 3 });
+    text(ctx, KEY_LABEL(code), x + 3, y + 3.5 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
     if (b && ui.mouse.right && hot) {
       delete char.hotkeys[code];
       ui.used = true;
@@ -211,8 +301,9 @@ function badge(ctx, x, y, name, color, k) {
   ctx.restore();
 }
 
-// The hero's face in a round medallion with a level ribbon.
-function drawPortrait(ctx, char, world) {
+// The hero's face in a round medallion with a level ribbon. The face reacts: a wince when hit,
+// a worried pout while HP is low, and a cheer after a level up.
+function drawPortrait(ctx, char, world, { hurt = false, low = false, cheer = false } = {}) {
   const cx = 22;
   const cy = BAR_Y + 6;
   const r = 15;
@@ -227,13 +318,15 @@ function drawPortrait(ctx, char, world) {
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.clip();
   const bg = ctx.createRadialGradient(cx, cy - 4, 2, cx, cy, r);
-  bg.addColorStop(0, '#fff3fa');
-  bg.addColorStop(1, '#ffc2df');
+  bg.addColorStop(0, low ? '#fff0f2' : '#fff3fa');
+  bg.addColorStop(1, low ? '#ff9fb4' : '#ffc2df');
   ctx.fillStyle = bg;
   ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
-  drawHero(ctx, char.appearance, null, cx, cy + 27, { pose: 'idle', time: world.now, scale: 1.25, facing: 1 });
+  const face = cheer ? 'excited' : low ? 'pout' : char.appearance.face;
+  const look = face === char.appearance.face ? char.appearance : { ...char.appearance, face };
+  drawHero(ctx, look, null, cx, cy + 27, { pose: 'idle', time: world.now, scale: 1.25, facing: 1, hurt });
   ctx.restore();
-  ctx.strokeStyle = COLORS.accent;
+  ctx.strokeStyle = low && Math.sin(world.now * 7) > 0 ? '#ff4f6b' : COLORS.accent;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -243,6 +336,11 @@ function drawPortrait(ctx, char, world) {
 }
 
 const SKY = THEMES.sky;
+
+function luma(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+}
 
 function drawMinimap(ui, world) {
   const { ctx } = ui;
@@ -261,11 +359,17 @@ function drawMinimap(ui, world) {
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.clip();
+  // The map's own colors: its sky, and its hills for the ground, so each map's box has its own
+  // tint and the ground reads as a solid shape.
+  const look = { ...(SCENE_THEMES[map.theme] ?? SCENE_THEMES.meadow), ...map.look };
   const sky = ctx.createLinearGradient(0, y, 0, y + h);
-  sky.addColorStop(0, '#e6f2ff');
-  sky.addColorStop(1, '#f6e8ff');
+  sky.addColorStop(0, lighten(look.sky[0], 0.55));
+  sky.addColorStop(1, lighten(look.sky[1], 0.6));
   ctx.fillStyle = sky;
   ctx.fillRect(x, y, w, h);
+  // Pale town hills would vanish into the sky, so those use the ground's own color.
+  const land = luma(look.mid) > 0.85 ? look.ground : look.mid;
+  const edge = darken(land, 0.35);
   // The ground's shape: hills, plateaus, and cliffs.
   const line = map.terrain ?? [[0, map.groundY], [map.width, map.groundY]];
   ctx.beginPath();
@@ -273,31 +377,50 @@ function drawMinimap(ui, world) {
   for (const [tx, ty] of line) ctx.lineTo(x + tx * scale, y + ty * scale);
   ctx.lineTo(x + w, y + h);
   ctx.closePath();
-  ctx.fillStyle = '#b9e3b0';
+  ctx.fillStyle = land;
   ctx.fill();
-  ctx.strokeStyle = '#8fcf86';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = edge;
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
   ctx.beginPath();
   line.forEach(([tx, ty], i) => (i ? ctx.lineTo(x + tx * scale, y + ty * scale) : ctx.moveTo(x + tx * scale, y + ty * scale)));
   ctx.stroke();
-  ctx.fillStyle = '#c9a6e8';
-  for (const p of map.platforms) ctx.fillRect(x + p.x * scale, y + p.y * scale, Math.max(1, p.w * scale), 1.5);
-  ctx.fillStyle = '#c99a6b';
-  for (const r of map.ropes) ctx.fillRect(x + r.x * scale, y + r.top * scale, 1, (r.bottom - r.top) * scale);
+  // Footholds as solid ledges, ropes as thin lines.
+  ctx.fillStyle = edge;
+  for (const p of map.platforms) ctx.fillRect(x + p.x * scale, y + p.y * scale - 0.5, Math.max(1, p.w * scale), 2);
+  ctx.fillStyle = '#b8875a';
+  for (const r of map.ropes) ctx.fillRect(x + r.x * scale - 0.5, y + r.top * scale, 1, (r.bottom - r.top) * scale);
+  // Portals as little violet arches.
   for (const p of map.portals) {
     if (p.hidden) continue;
+    const px = x + p.x * scale;
+    const py = y + p.y * scale;
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, px - 3, py - 8, 6, 8, 3);
+    ctx.fill();
     ctx.fillStyle = '#9b6cff';
-    ctx.beginPath();
-    ctx.ellipse(x + p.x * scale, y + p.y * scale - 2.5, 1.8, 2.8, 0, 0, Math.PI * 2);
+    roundRect(ctx, px - 2.2, py - 7.2, 4.4, 7.2, 2.2);
+    ctx.fill();
+    ctx.fillStyle = '#e6dcff';
+    roundRect(ctx, px - 1, py - 5, 2, 5, 1);
     ctx.fill();
   }
+  // People: yellow pips, with a "!" or "?" when they have a quest for you.
   for (const n of map.npcs) {
-    ctx.fillStyle = '#ffc94f';
+    const nx = x + n.x * scale;
+    const ny = y + groundAt(map, n.x) * scale - 2.5;
+    const mark = questMarker(world.char, n.id);
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(x + n.x * scale, y + groundAt(map, n.x) * scale - 2, 1.6, 0, Math.PI * 2);
+    ctx.arc(nx, ny, mark ? 3.2 : 2.4, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = mark === '?' ? '#3fc48a' : '#ffbf2f';
+    ctx.beginPath();
+    ctx.arc(nx, ny, mark ? 2.4 : 1.6, 0, Math.PI * 2);
+    ctx.fill();
+    if (mark) text(ctx, mark, nx, ny + 1.6, { size: 4.5, bold: true, align: 'center', color: '#ffffff' });
   }
-  ctx.fillStyle = '#ff6b8a';
+  ctx.fillStyle = '#ff5f86';
   for (const m of world.mobs) if (m.hp > 0) ctx.fillRect(x + m.x * scale - 0.75, y + m.y * scale - 1.5, 1.5, 1.5);
   // Party members, out hunting on their own, in their playstyle's color.
   for (const b of partyMembers(world.bots)) {
@@ -311,8 +434,10 @@ function drawMinimap(ui, world) {
     ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
+  // You: a pink arrow pointing the way you face, with a ring pulsing out from it.
   const px = x + world.body.x * scale;
-  const py = y + world.body.y * scale - 2;
+  const py = y + world.body.y * scale - 3;
+  const f = world.body.facing ?? 1;
   const pulse = (world.now * 1.5) % 1;
   ctx.strokeStyle = COLORS.accent;
   ctx.globalAlpha = 1 - pulse;
@@ -321,14 +446,20 @@ function drawMinimap(ui, world) {
   ctx.arc(px, py, 2 + pulse * 5, 0, Math.PI * 2);
   ctx.stroke();
   ctx.globalAlpha = 1;
+  const arrow = (k) => {
+    ctx.beginPath();
+    ctx.moveTo(px + f * 3.6 * k, py);
+    ctx.lineTo(px - f * 2.6 * k, py - 3 * k);
+    ctx.lineTo(px - f * 1.2 * k, py);
+    ctx.lineTo(px - f * 2.6 * k, py + 3 * k);
+    ctx.closePath();
+    ctx.fill();
+  };
   ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(px, py, 2.6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = COLORS.accent;
-  ctx.beginPath();
-  ctx.arc(px, py, 1.8, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.lineJoin = 'round';
+  arrow(1.45);
+  ctx.fillStyle = '#ff5fa2';
+  arrow(1);
   ctx.restore();
 }
 
@@ -395,7 +526,7 @@ function drawLog(ui, world, state) {
   const msgs = world.messages;
   // While chatting the log sits above the chat bar and shows in full.
   const typing = state.chat?.typing != null;
-  ctx.font = `bold 8px "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
+  ctx.font = font(8, true);
   msgs.forEach((m, i) => {
     const y = BAR_Y - (typing ? 26 : 8) - (msgs.length - 1 - i) * 12;
     const a = typing ? 1 : Math.min(1, m.t);
@@ -417,7 +548,7 @@ function drawBanner(ctx, world, state) {
   const y = 30 + (1 - ease) * -24;
   ctx.save();
   ctx.globalAlpha = Math.min(1, state.banner * 1.5, drop * 2);
-  ctx.font = `bold 15px "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
+  ctx.font = font(15, true);
   const w = ctx.measureText(world.map.name).width + 40;
   const x = 320 - w / 2;
   const th = THEMES.lavender;

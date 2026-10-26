@@ -8,7 +8,9 @@ import { pieceOf, JOB_GEAR } from './jobgear/index.js';
 import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, skirtShapes, hatShapes, hatBackShapes, handShapes, capeShapes, capeFrontShapes, earringShapes, limb } from './gear.js';
 import { SCHOOL_COLORS } from './spells.js';
 import { ITEM_ART } from './icons/items.js';
-import { SKILL_ART } from './icons/skills.js';
+import { SKILL_ART, skillTone } from './icons/skills.js';
+
+export { skillTone };
 
 const GOLD = '#ffd66b';
 

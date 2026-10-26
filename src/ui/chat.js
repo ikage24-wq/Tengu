@@ -4,7 +4,7 @@
 
 import { NPCS } from '../data/npcs.js';
 import { FACE_STYLES } from '../render/hero.js';
-import { COLORS, text, box, roundRect } from './kit.js';
+import { COLORS, text, box, roundRect, font } from './kit.js';
 import { isGm, unlockGm, gmCommand } from '../world/gm.js';
 
 const MAX_LEN = 70;
@@ -157,7 +157,7 @@ export function drawChatBar(ui, chat, world) {
   const y = 311;
   box(ctx, 4, y, 300, 15, { fill: 'rgba(255,255,255,0.92)', edge: COLORS.accent, r: 6 });
   text(ctx, `${world.char.name}:`, 10, y + 11, { size: 8, bold: true, color: COLORS.accent });
-  ctx.font = 'bold 8px sans-serif';
+  ctx.font = font(8, true);
   const nameW = ctx.measureText(`${world.char.name}:`).width;
   const caret = Math.floor(world.now * 2) % 2 ? '|' : '';
   text(ctx, chat.typing + caret, 14 + nameW, y + 11, { size: 8, color: COLORS.ink });
@@ -168,7 +168,7 @@ export function drawChatBar(ui, chat, world) {
 export function drawBubble(ctx, x, y, words, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.font = 'bold 8px sans-serif';
+  ctx.font = font(8, true);
   // Wrap to a comfortable width.
   const lines = [];
   let line = '';

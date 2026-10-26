@@ -1,6 +1,7 @@
 // Hand-drawn 16x16 skill icons, one per skill. Each is a framed, rounded tile: a bevelled rim
 // (pearl for actives, gold for buffs, silver with studs for passives), a banded gradient in the
-// job's or spell school's colors, and a bold central motif lit from the top left, inked, and
+// colors of the skill's job, spell school, or role (heals blue, wards green, blessings rose), so
+// no two in a book share a hue, and a bold central motif lit from the top left, inked, and
 // glinting. Built with the item icons' kit so both share one look. `SKILL_ART[id]()` returns the
 // shapes; icons.js draws them at res 3.
 
@@ -29,6 +30,7 @@ const BG = {
   poison: ['#d4f594', '#4f3196'],
   dawn: ['#fff4c0', '#e0703a'],
   royal: ['#8a78e0', '#1a1440'],
+  seraph: ['#ffd2ec', '#9a3f9e'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -962,7 +964,7 @@ function holymastery() {
 }
 
 function bless() {
-  const out = [...tile('holy', 'buff'), ...aura(8, 4, 7, '#ffffff', 1.1)];
+  const out = [...tile('seraph', 'buff'), ...aura(8, 4, 7, '#ffffff', 1.1)];
   // Rays of blessing pouring down.
   for (const [x0, x1] of [[5, 2.4], [7, 5.8], [9, 10.2], [11, 13.6]]) out.push(S([[x0 - 0.5, 5], [x0 + 0.5, 5], [x1 + 1, 15], [x1 - 1, 15]], '#fffbe0'));
   const halo = tube([...oval(8, 4.4, 5, 1.9, 0, 30), oval(8, 4.4, 5, 1.9, 0, 30)[0]], 1.3);
@@ -975,7 +977,7 @@ function bless() {
 
 function heal() {
   const g = '#6fe07a';
-  const out = [...tile('holy', 'active'), ...aura(8, 8, 7.2, '#ffffff', 1.1)];
+  const out = [...tile('sky', 'active'), ...aura(8, 8, 7.2, '#ffffff', 1.1)];
   for (let i = 0; i < 8; i++) {
     const a = (i * 45 + 22.5) * D2R;
     out.push(S([[8 + Math.cos(a - 0.12) * 3, 8 + Math.sin(a - 0.12) * 3], [8 + Math.cos(a) * 8, 8 + Math.sin(a) * 8], [8 + Math.cos(a + 0.12) * 3, 8 + Math.sin(a + 0.12) * 3]], '#fffbe0'));
@@ -990,7 +992,7 @@ function heal() {
 
 function holybolt() {
   const gold = '#ffe36b';
-  const out = [...tile('holy', 'active'), ...aura(11, 5, 5.4, '#ffffff', 1.2)];
+  const out = [...tile('dawn', 'active'), ...aura(11, 5, 5.4, '#ffffff', 1.2)];
   out.push(S(tube([[1, 15], [10.2, 5.8]], (t) => 0.2 + 3.4 * t), '#fffbe0'));
   const a = [2.6, 13.4];
   const b = [12.8, 3.2];
@@ -1149,7 +1151,7 @@ function shiningray() {
 }
 
 function sanctuary() {
-  const out = [...tile('holy', 'buff')];
+  const out = [...tile('mint', 'buff')];
   const dome = [...arcPts(8, 12.6, 6.4, 8.4, 180, 360, 24)];
   out.push(...edge(dome, '#a0601a', 0.45), S(dome, '#fff3b0'), S(clip(dome, oval(8, 12.6, 5.2, 7.2)), '#fff8d0'), S(clip(dome, oval(8, 12.6, 3.6, 5.6)), '#ffffff'));
   out.push(S(tube(arcPts(8, 12.6, 5.6, 7.6, 200, 250, 10), (t) => 0.9 * Math.sin(Math.PI * t)), W));
@@ -1166,7 +1168,7 @@ function sanctuary() {
 
 function guardianangel() {
   const skin = '#fff0e6';
-  const out = [...tile('holy', 'buff'), ...aura(8, 7.4, 7, '#ffffff', 1.15)];
+  const out = [...tile('sky', 'buff'), ...aura(8, 7.4, 7, '#ffffff', 1.15)];
   for (const s of [1, -1]) {
     const wing = [[8 + s * 1.6, 9], [8 + s * 4.6, 4.6], [8 + s * 6.8, 4.4], [8 + s * 6.8, 7], [8 + s * 7, 9], [8 + s * 5.4, 11.6], [8 + s * 2, 11.6]];
     out.push(...solid(wing, '#ffffff', { light: '#ffffff', ink: '#a0702a' }));
@@ -1184,7 +1186,7 @@ function guardianangel() {
 }
 
 function judgment() {
-  const out = [...tile('dawn', 'active')];
+  const out = [...tile('shadow', 'active')];
   // Three pillars of light slamming down, each bursting where it lands.
   for (const [x, w] of [[3.4, 2.4], [8, 3.4], [12.6, 2.4]]) {
     const pil = [[x - w * 0.32, 0.9], [x + w * 0.32, 0.9], [x + w / 2, 12.6], [x - w / 2, 12.6]];
@@ -1263,5 +1265,18 @@ const ART = {
   gmsmite, gmhaste, gmblessing,
 };
 
+// Each skill's background tones [light, deep], noted as its tile is built, so windows can tint
+// the plate behind an icon to match it.
+const TONES = {};
+
 // Every design is clipped to the tile, so nothing spills past the frame's own outline.
-export const SKILL_ART = Object.fromEntries(Object.entries(ART).map(([id, draw]) => [id, () => draw().filter(Boolean).map((s) => ({ ...s, pts: clip(s.pts, OUTER) })).filter((s) => s.pts.length > 2)]));
+export const SKILL_ART = Object.fromEntries(Object.entries(ART).map(([id, draw]) => [id, () => {
+  const shapes = draw().filter(Boolean);
+  TONES[id] = [cur.top, cur.deep];
+  return shapes.map((s) => ({ ...s, pts: clip(s.pts, OUTER) })).filter((s) => s.pts.length > 2);
+}]));
+
+export function skillTone(id) {
+  if (!TONES[id] && SKILL_ART[id]) SKILL_ART[id]();
+  return TONES[id] ?? null;
+}

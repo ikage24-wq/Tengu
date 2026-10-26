@@ -4,7 +4,7 @@ import { MAPS } from '../data/maps.js';
 import { JOBS } from '../data/jobs.js';
 import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
-import { COLORS, FONT, text, box, button, wrap, bar, hover, clicked, roundRect } from './kit.js';
+import { COLORS, text, box, button, wrap, bar, hover, clicked, roundRect, font } from './kit.js';
 import { stats, wornGear } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
 import { lookRows, LOOK_OPTIONS } from './npc.js';
@@ -299,7 +299,7 @@ export function selectScreen(ui, time, chars, state) {
     }
     if (c) {
       drawHero(ctx, c.appearance, wornGear(c), x, y, { pose: on ? 'walk' : 'idle', time, seed: i });
-      ctx.font = `bold 8px ${FONT}`;
+      ctx.font = font(8, true);
       const tw = ctx.measureText(c.name).width + 10;
       box(ctx, x - tw / 2, y + 3, tw, 12, { fill: 'rgba(70,50,95,0.8)', edge: null, r: 4 });
       text(ctx, c.name, x, y + 12, { size: 8, bold: true, align: 'center', color: '#ffffff' });

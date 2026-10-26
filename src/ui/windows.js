@@ -14,8 +14,8 @@ import { removeItem, TAB_SIZE } from '../core/inventory.js';
 import { questState, objectiveProgress } from '../core/quests.js';
 import { useItem } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
-import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
-import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle } from './kit.js';
+import { drawItemIcon, drawSkillIcon, skillTone } from '../render/icons.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle, skillPlate, rarityCell, lighten, slotEdges, itemShadow } from './kit.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 
 const CELL = 19;
@@ -63,7 +63,12 @@ export function bagWindow(ui, state, world) {
     const inst = worn[slot];
     const rare = inst?.rarity ? RARITIES[inst.rarity].color : null;
     box(ctx, x, y, CELL, CELL, { fill: hover(ui, x, y, CELL, CELL) ? '#ffffff' : outfit ? '#ffe6f2' : th.light, edge: state.scrollMode && inst && !outfit ? COLORS.accent : rare ?? (outfit ? '#ff8fc1' : th.main), r: 5, width: rare ? 2 : 1 });
-    if (inst) drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5, 1, inst.variant);
+    slotEdges(ctx, x, y, CELL, CELL, 5);
+    if (inst) {
+      itemShadow(ctx, x + 9.5, y + 16);
+      drawItemIcon(ctx, inst.id, x + 1.5, y + 1.5, 1, inst.variant);
+      rarityCell(ctx, x, y, CELL, CELL, rare, inst.rarity ?? 0, 5);
+    }
     else {
       // An empty slot shows a faded outline of what goes there.
       ctx.globalAlpha = 0.25;
@@ -114,8 +119,11 @@ export function bagWindow(ui, state, world) {
     const rare = tab === 'equip' && entry?.rarity ? RARITIES[entry.rarity].color : null;
     const hot = hover(ui, x, y, CELL - 1, CELL - 1);
     box(ctx, x, y, CELL - 1, CELL - 1, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : rare ?? th.light, r: 4, width: sel || rare ? 2 : 1 });
+    slotEdges(ctx, x, y, CELL - 1, CELL - 1);
     if (!entry) continue;
+    itemShadow(ctx, x + 9, y + 15.5);
     drawItemIcon(ctx, itemIdOf(entry), x + 1, y + 1, 1, entry.variant);
+    rarityCell(ctx, x, y, CELL - 1, CELL - 1, rare, entry.rarity ?? 0);
     if (entry.qty > 1) text(ctx, `${entry.qty}`, x + CELL - 3, y + CELL - 3, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
     if (tab === 'equip' && equipBlocker(char, entry)) {
       ctx.fillStyle = 'rgba(255,107,138,0.18)';
@@ -305,16 +313,20 @@ export function skillsWindow(ui, state, world) {
     const sel = state.selectedSkill === s.id;
     const hot = hover(ui, win.x + 6, y, W - 40, 30);
     box(ctx, win.x + 6, y, W - 12, 30, { fill: sel ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: sel ? COLORS.select : lv ? th.main : th.light, r: 8, width: sel ? 2 : 1.2 });
-    box(ctx, win.x + 9, y + 4, 22, 22, { fill: lv ? th.light : COLORS.cell, edge: null, r: 6 });
+    // The icon sits on a plate in its own hue, shaped by its kind: round for passives, cut corners
+    // for buffs, a rounded square for everything you cast.
+    const kind = s.type === 'passive' ? 'passive' : s.type === 'buff' ? 'buff' : 'active';
+    const [toneLight, toneDeep] = skillTone(s.id) ?? [th.light, th.dark];
+    skillPlate(ctx, win.x + 20, y + 15, 11.5, kind, lv ? lighten(toneLight, 0.35) : COLORS.cell, lv ? toneDeep : '#d8cce6');
     ctx.globalAlpha = lv ? 1 : 0.5;
-    drawSkillIcon(ctx, s.id, win.x + 11, y + 6);
+    drawSkillIcon(ctx, s.id, win.x + 12, y + 7);
     ctx.globalAlpha = 1;
-    // A little level gauge under the name.
-    box(ctx, win.x + 34, y + 21, 70, 3, { fill: COLORS.cell, edge: null, r: 1.5 });
-    if (lv) box(ctx, win.x + 34, y + 21, Math.max(3, (70 * lv) / s.maxLevel), 3, { fill: th.main, edge: null, r: 1.5 });
+    // A little level gauge under the name, in the skill's hue.
+    box(ctx, win.x + 35, y + 21, 70, 3, { fill: COLORS.cell, edge: null, r: 1.5 });
+    if (lv) box(ctx, win.x + 35, y + 21, Math.max(3, (70 * lv) / s.maxLevel), 3, { fill: toneDeep, edge: null, r: 1.5 });
     ctx.globalAlpha = lv ? 1 : 0.55;
     text(ctx, s.name, win.x + 35, y + 13, { size: 9, bold: true });
-    text(ctx, s.type === 'passive' ? 'Passive' : s.type === 'buff' ? 'Buff' : 'Active', win.x + 108, y + 25, { size: 6.5, color: COLORS.muted });
+    text(ctx, kind === 'passive' ? 'Passive' : kind === 'buff' ? 'Buff' : 'Active', win.x + 109, y + 25, { role: 'minor' });
     ctx.globalAlpha = 1;
     text(ctx, `${lv}/${s.maxLevel}`, win.x + W - 34, y + 19, { size: 9, bold: true, align: 'right', color: lv ? COLORS.ink : COLORS.muted });
     if (button(ui, win.x + W - 28, y + 7, 17, 16, '+', { enabled: canLearn(char, s.id), primary: canLearn(char, s.id) })) {

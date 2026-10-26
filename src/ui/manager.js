@@ -135,7 +135,28 @@ function inside(win, m) {
   return win.open && win.w && m.x >= win.x && m.x < win.x + win.w && m.y >= win.y && m.y < win.y + win.h;
 }
 
+// How much the world dims behind what's open: most for dialogs that take over the controls,
+// a little for the big menus, a touch for the everyday windows you keep open while playing.
+const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06 };
+
+// Darkens the world (not the HUD) toward a deep plum, easing in and out, so open windows stand
+// apart from busy scenes.
+function dimWorld(ctx, state) {
+  let target = 0;
+  for (const [key, win] of Object.entries(state.windows)) if (win.open) target = Math.max(target, DIM[key] ?? 0);
+  if (state.npc) target = Math.max(target, DIM.npc);
+  if (state.death) target = Math.max(target, DIM.death);
+  const t = performance.now() / 1000;
+  const dt = Math.min(0.1, t - (state.dimAt ?? t));
+  state.dimAt = t;
+  state.dim = target + ((state.dim ?? 0) - target) * Math.exp(-dt * 14);
+  if (state.dim < 0.004) return;
+  ctx.fillStyle = `rgba(40,22,62,${state.dim.toFixed(3)})`;
+  ctx.fillRect(0, 0, 640, 360);
+}
+
 export function drawUi(ui, state, world) {
+  dimWorld(ui.ctx, state);
   drawHud(ui, state, world);
   drawPartyPanel(ui, state, world);
   drawChatBar(ui, state.chat, world);

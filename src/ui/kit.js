@@ -5,7 +5,20 @@
 // scalloped title ribbon, a cream body, and a soft shadow. Buttons are glossy candy
 // with a lip that presses down; bars are glossy capsules with a shine that sweeps across.
 
-export const FONT = '"Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+// Nunito (Google Fonts, loaded by index.html) has the rounded strokes of the candy look and reads
+// well down to 6 px; the system fonts stand in until it arrives or when offline. Regular text is
+// weight 500 and bold 800: fallback fonts round those to their own regular and bold.
+export const FONT = 'Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+
+// A canvas font string in the UI family.
+export function font(size, bold = false) {
+  return `${bold ? 800 : 500} ${size}px ${FONT}`;
+}
+
+// Ask for the web font early, so the first frames that draw text don't each trigger a load.
+if (typeof document !== 'undefined' && document.fonts?.load) {
+  for (const w of [500, 800]) document.fonts.load(`${w} 10px Nunito`).catch(() => {});
+}
 
 export const COLORS = {
   panel: '#fffaf6',
@@ -36,11 +49,34 @@ export const THEMES = {
   gold: { main: '#ffc94f', light: '#fff0c4', dark: '#e0a52f', ink: '#9a6a12' },
 };
 
+// One fixed style per label role, so the same kind of text always looks the same. Pass
+// `{ role: 'secondary' }` to text() and wrap(); other options override the role.
+export const TEXT = {
+  heading: { size: 10, bold: true },
+  subheading: { size: 9, bold: true },
+  body: { size: 8.5 },
+  emphasis: { size: 8.5, bold: true, color: COLORS.accent },
+  secondary: { size: 7.5, color: COLORS.muted },
+  minor: { size: 6.5, color: COLORS.muted },
+  positive: { size: 8, bold: true, color: COLORS.good },
+  negative: { size: 8, bold: true, color: COLORS.bad },
+  button: { size: 9, bold: true },
+  tab: { size: 8, bold: true },
+  action: { size: 8, bold: true, color: COLORS.accent },
+  value: { size: 8, bold: true },
+};
+
 const now = () => performance.now() / 1000;
 
+// Device pixels per UI pixel this frame, so text can sit on whole device pixels and stay crisp.
+let px = 1;
+
 export function beginUi(ctx, input) {
+  px = ctx.getTransform?.().a || 1;
   return { ctx, input, mouse: input.mouse, used: false, tooltip: null, dragging: null };
 }
+
+const snap = (v) => Math.round(v * px) / px;
 
 export function hover(ui, x, y, w, h) {
   const m = ui.mouse;
@@ -57,9 +93,12 @@ export function clicked(ui, x, y, w, h) {
   return false;
 }
 
-export function text(ctx, str, x, y, { size = 9, color = COLORS.ink, align = 'left', bold = false, outline = null } = {}) {
-  ctx.font = `${bold ? 'bold ' : ''}${size}px ${FONT}`;
+export function text(ctx, str, x, y, opts = {}) {
+  const { size = 9, color = COLORS.ink, align = 'left', bold = false, outline = null } = opts.role ? { ...TEXT[opts.role], ...opts } : opts;
+  ctx.font = font(size, bold);
   ctx.textAlign = align;
+  x = snap(x);
+  y = snap(y);
   ctx.textBaseline = 'alphabetic';
   if (outline) {
     ctx.lineJoin = 'round';
@@ -74,8 +113,11 @@ export function text(ctx, str, x, y, { size = 9, color = COLORS.ink, align = 'le
 
 // Wraps text to `width`; returns the y after the last line. `chars` limits how many characters
 // show, for typewriter text.
-export function wrap(ctx, str, x, y, width, { size = 9, color = COLORS.ink, lineHeight = size + 3, bold = false, chars = Infinity } = {}) {
-  ctx.font = `${bold ? 'bold ' : ''}${size}px ${FONT}`;
+export function wrap(ctx, str, x, y, width, opts = {}) {
+  const o = opts.role ? { ...TEXT[opts.role], ...opts } : opts;
+  const { size = 9, color = COLORS.ink, bold = false, chars = Infinity } = o;
+  const lineHeight = o.lineHeight ?? size + 3;
+  ctx.font = font(size, bold);
   let line = '';
   let shown = 0;
   const lines = [];
@@ -111,8 +153,10 @@ export function roundRect(ctx, x, y, w, h, r) {
 
 export function box(ctx, x, y, w, h, { fill = COLORS.panel, edge = COLORS.panelEdge, r = 6, width = 1.5 } = {}) {
   roundRect(ctx, x, y, w, h, r);
-  ctx.fillStyle = fill;
-  ctx.fill();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
   if (edge) {
     ctx.strokeStyle = edge;
     ctx.lineWidth = width;
@@ -140,6 +184,90 @@ export function well(ctx, x, y, w, h, theme = THEMES.pink, r = 7) {
   ctx.fillStyle = theme.light;
   ctx.globalAlpha = 0.35;
   ctx.fillRect(x, y, w, 3);
+  ctx.restore();
+}
+
+// The plate behind a skill icon, centered on (x, y) with radius r. Its shape says what kind of
+// skill it is: a circle for passives, a square with cut corners for buffs, and a rounded square
+// for skills you cast.
+export function skillPlate(ctx, x, y, r, kind, fill, edge) {
+  ctx.beginPath();
+  if (kind === 'passive') ctx.arc(x, y, r, 0, Math.PI * 2);
+  else if (kind === 'buff') {
+    const c = r * 0.42;
+    ctx.moveTo(x - r + c, y - r);
+    ctx.lineTo(x + r - c, y - r);
+    ctx.lineTo(x + r, y - r + c);
+    ctx.lineTo(x + r, y + r - c);
+    ctx.lineTo(x + r - c, y + r);
+    ctx.lineTo(x - r + c, y + r);
+    ctx.lineTo(x - r, y + r - c);
+    ctx.lineTo(x - r, y - r + c);
+    ctx.closePath();
+  } else roundRect(ctx, x - r, y - r, r * 2, r * 2, r * 0.45);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = edge;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  // A top-left inner highlight, like the candy buttons.
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillRect(x - r, y - r, r * 2, r * 0.6);
+  ctx.restore();
+}
+
+// A slot's depth as 1 px edge lines: a white lip along the top and a soft shade along the bottom,
+// so an item cell reads as a little recess without any blur.
+export function slotEdges(ctx, x, y, w, h, r = 4) {
+  ctx.save();
+  roundRect(ctx, x, y, w, h, r);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillRect(x, y + 1, w, 1);
+  ctx.fillStyle = 'rgba(110,70,140,0.13)';
+  ctx.fillRect(x, y + h - 2, w, 1.5);
+  ctx.restore();
+}
+
+// The little ground shadow an item sits on in the bag (centered at x, on the line y).
+export function itemShadow(ctx, x, y) {
+  ctx.fillStyle = 'rgba(90,50,120,0.16)';
+  ctx.beginPath();
+  ctx.ellipse(x, y, 5.5, 1.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Rarity on an item cell, drawn over the icon: a tint washing in from the corners for Epic and
+// up, and a shine that sweeps across Legendary items every couple of seconds.
+export function rarityCell(ctx, x, y, w, h, color, tier, r = 4) {
+  if (!color || tier < 2) return;
+  ctx.save();
+  roundRect(ctx, x, y, w, h, r);
+  ctx.clip();
+  for (const [cx, cy] of [[x, y], [x + w, y + h]]) {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.6);
+    g.addColorStop(0, color);
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+  }
+  if (tier >= 3) {
+    const k = (now() * 0.45 + x * 0.003) % 1.3;
+    if (k < 1) {
+      const sx = x - h + k * (w + h * 2);
+      ctx.globalAlpha = 0.7 * Math.sin(k * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(sx, y + h);
+      ctx.lineTo(sx + h, y);
+      ctx.lineTo(sx + h + 3, y);
+      ctx.lineTo(sx + 3, y + h);
+      ctx.fill();
+    }
+  }
   ctx.restore();
 }
 
@@ -499,7 +627,7 @@ export function button(ui, x, y, w, h, label, { enabled = true, primary = false,
   const color = !enabled ? '#b8a8c8' : th ? '#ffffff' : COLORS.ink;
   const ty = y + dy + (h - lip) / 2 + size / 2.8;
   if (iconName) {
-    ctx.font = `bold ${size}px ${FONT}`;
+    ctx.font = font(size, true);
     const tw = ctx.measureText(label).width;
     const ix = x + w / 2 - (tw + size + 3) / 2 + size / 2;
     icon(ctx, iconName, ix, y + dy + (h - lip) / 2, size * 1.1, color);
@@ -534,13 +662,21 @@ export function tabs(ui, x, y, labels, current, { w = 46, h = 15 } = {}) {
   return picked;
 }
 
-// A glossy capsule meter with a shine that sweeps across now and then.
-export function bar(ctx, x, y, w, h, ratio, color, label, { textColor = '#ffffff', size = 7, trail = null } = {}) {
+// A glossy capsule meter with a shine that sweeps across now and then. Options for feedback:
+// `trail` (a lagging ratio drawn as a chunk in `trailColor`, what was just lost), `flash` (0..1, a
+// white flash over the fill, for heals), `pulse` (0..1, a red glow on the rim, for danger), and
+// `shine` (0..1, the progress of one bright sweep, for refills).
+export function bar(ctx, x, y, w, h, ratio, color, label, { textColor = '#ffffff', size = 7, trail = null, trailColor = '#ffffff', flash = 0, pulse = 0, shine = null } = {}) {
   const r = h / 2;
+  if (pulse > 0) {
+    ctx.globalAlpha = pulse;
+    box(ctx, x - 1.5, y - 1.5, w + 3, h + 3, { fill: '#ff4f6b', edge: null, r: r + 1.5 });
+    ctx.globalAlpha = 1;
+  }
   box(ctx, x, y, w, h, { fill: 'rgba(74,53,96,0.32)', edge: null, r });
   const fw = Math.max(0, Math.min(1, ratio)) * w;
-  // A pale trail shows what was just lost, draining after the bar.
-  if (trail != null && trail > ratio) box(ctx, x, y, Math.max(h, Math.min(1, trail) * w), h, { fill: '#ffffff', edge: null, r });
+  // The chunk just lost, draining after the bar.
+  if (trail != null && trail > ratio) box(ctx, x, y, Math.max(h, Math.min(1, trail) * w), h, { fill: trailColor, edge: null, r });
   if (fw > 0) {
     ctx.save();
     roundRect(ctx, x, y, Math.max(h, fw), h, r);
@@ -553,16 +689,22 @@ export function bar(ctx, x, y, w, h, ratio, color, label, { textColor = '#ffffff
     ctx.fillRect(x, y, fw, h);
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
     ctx.fillRect(x, y + 1, fw, Math.max(1, h / 4));
-    const k = (now() * 0.4) % 1.6;
+    // The idle sweep, or the bright one a refill asks for.
+    const k = shine ?? (now() * 0.4) % 1.6;
     if (k < 1) {
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillStyle = shine != null ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.35)';
       ctx.beginPath();
+      const sw = shine != null ? 7 : 4;
       const sx = x + k * (w + 20) - 10;
       ctx.moveTo(sx, y + h);
       ctx.lineTo(sx + 6, y);
-      ctx.lineTo(sx + 10, y);
-      ctx.lineTo(sx + 4, y + h);
+      ctx.lineTo(sx + 6 + sw, y);
+      ctx.lineTo(sx + sw, y + h);
       ctx.fill();
+    }
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${0.75 * flash})`;
+      ctx.fillRect(x, y, fw, h);
     }
     ctx.restore();
   }
@@ -615,7 +757,7 @@ export function endUi(ui) {
   const { ctx } = ui;
   const lines = ui.tooltip;
   const w = Math.max(...lines.map((l) => {
-    ctx.font = `${l.bold ? 'bold ' : ''}${l.size ?? 9}px ${FONT}`;
+    ctx.font = font(l.size ?? 9, l.bold);
     return ctx.measureText(l.text).width;
   })) + 18;
   const h = lines.reduce((n, l) => n + (l.size ?? 9) + 3, 10);

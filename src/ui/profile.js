@@ -13,7 +13,7 @@ import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon } from './kit.js';
+import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 
 const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings' };
@@ -59,7 +59,7 @@ export function profileWindow(ui, state, world) {
   text(ctx, `Lv ${char.level} ${JOBS[char.job].name}`, lx + 52, ly + 136, { size: 7, align: 'center', color: COLORS.muted });
   if (bot?.guild) text(ctx, `<${bot.guild}>`, lx + 52, ly + 147, { size: 7, bold: true, align: 'center', color: '#4f95e0' });
   const tag = (label, y, fill) => {
-    ctx.font = 'bold 7px sans-serif';
+    ctx.font = font(7, true);
     const w = ctx.measureText(label).width + 12;
     box(ctx, lx + 52 - w / 2, y, w, 12, { fill, edge: null, r: 6 });
     text(ctx, label, lx + 52, y + 8.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });

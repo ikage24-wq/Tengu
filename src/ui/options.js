@@ -3,7 +3,7 @@
 // Settings save as soon as they change.
 
 import { settings, saveSettings, resetSettings } from '../core/settings.js';
-import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap } from './kit.js';
+import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap, font } from './kit.js';
 
 const PAGES = {
   Display: [
@@ -84,7 +84,7 @@ export function optionsWindow(ui, state, world) {
     CONTROLS.forEach(([keys, what], i) => {
       const cx = x + (i % 2) * 142;
       const cy = y + Math.floor(i / 2) * 22;
-      ctx.font = 'bold 7px sans-serif';
+      ctx.font = font(7, true);
       const kw = Math.min(70, ctx.measureText(keys).width + 10);
       box(ctx, cx, cy, kw, 13, { fill: th.light, edge: th.main, r: 4, width: 1 });
       text(ctx, keys, cx + kw / 2, cy + 9.5, { size: keys.length > 12 ? 5.5 : 7, bold: true, align: 'center', color: th.ink });
