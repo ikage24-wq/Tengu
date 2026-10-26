@@ -133,6 +133,12 @@ says many more examples are on X, Pinterest and Reddit, so ask them for screensh
 - Players finish a look with a themed backdrop, matching effects (petals, sparkles, bubbles)
   and a pose. The whole picture shares one colour key, either light and pastel or dark and rich.
 
+**Tried and dropped: CocoPPa eyes at sprite size.** A close-up painted test face (brown feathered
+lashes, glowing pale iris bottom, freckles) drew well, but scaled down to our sprite eyes it turned
+into muddy blobs: the soft gradients and fine lashes need far more pixels than a chibi sprite has.
+The player chose to keep our own face style. Borrow only single ideas from these faces, never the
+whole look.
+
 ## The body the player wants (Sakuemon-style curvy chibi)
 
 The player's "dream body" reference is Sakuemon's pixel sprites (same source as in
