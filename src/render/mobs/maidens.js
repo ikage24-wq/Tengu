@@ -47,8 +47,12 @@ const rnd = (i) => {
   return v - Math.floor(v);
 };
 
-// The dark line around a part that overlaps another (the rasterizer only outlines the silhouette).
-const ink = (c) => mix(shade(c, -50), '#2a2035', 0.45);
+// The line around a part that overlaps another (the rasterizer only outlines the silhouette): a
+// darkened shade of the part's own hue, one sprite cell wide. The renderer grows the silhouette
+// outline from whatever colour sits on the edge, so a near-black line here would come out as a
+// heavy black double ring; a mid-dark one keeps the maidens as light as the queens.
+const ink = (c) => mix(shade(c, -26), '#5a3f6e', 0.18);
+const INK_W = 0.34;
 
 // Grow a polygon outward by d (miter offset).
 function grow(pts, d) {
@@ -81,9 +85,9 @@ function grow(pts, d) {
 const poly = (pts, c) => T(pts.map(([x, y]) => X(x, y)), c);
 const fpoly = (pts, c) => F(poly(pts, c));
 // A polygon with its own ink line, so it reads over whatever lies behind it.
-function opoly(pts, c, d = 0.55) {
+function opoly(pts, c, d = INK_W) {
   const w = pts.map(([x, y]) => X(x, y));
-  return [F(T(grow(w, d), ink(c))), T(w, c)];
+  return [F(T(grow(w, Math.min(d, INK_W)), ink(c))), T(w, c)];
 }
 function ovalPts(cx, cy, rx, ry, n = 24, a = 0) {
   const out = [];
@@ -97,7 +101,7 @@ function ovalPts(cx, cy, rx, ry, n = 24, a = 0) {
 }
 const oval = (cx, cy, rx, ry, c, a = 0, n = 24) => poly(ovalPts(cx, cy, rx, ry, n, a), c);
 const foval = (cx, cy, rx, ry, c, a = 0, n = 20) => F(oval(cx, cy, rx, ry, c, a, n));
-const ooval = (cx, cy, rx, ry, c, a = 0, d = 0.55) => opoly(ovalPts(cx, cy, rx, ry, 22, a), c, d);
+const ooval = (cx, cy, rx, ry, c, a = 0, d = INK_W) => opoly(ovalPts(cx, cy, rx, ry, 22, a), c, d);
 const dot = (x, y, rx, c, ry = rx) => {
   const [px, py] = X(x, y);
   return F(E(px, py, rx, ry, c));
@@ -152,9 +156,9 @@ function bandPts(pts, wf, n = 4) {
 const band = (pts, wf, c, n = 4) => T(bandPts(pts, wf, n), c);
 const fband = (pts, wf, c, n = 4) => F(band(pts, wf, c, n));
 // Banded with an ink line.
-function oband(pts, wf, c, n = 4, d = 0.55) {
+function oband(pts, wf, c, n = 4, d = INK_W) {
   const w = bandPts(pts, wf, n);
-  return [F(T(grow(w, d), ink(c))), T(w, c)];
+  return [F(T(grow(w, Math.min(d, INK_W)), ink(c))), T(w, c)];
 }
 const taperW = (w0, w1) => (t) => lerp(w0, w1, t);
 // A soft lock or tail: thin root, full belly, pointed tip.
@@ -222,6 +226,13 @@ function fade(P, mood) {
   return out;
 }
 
+// The idle's rhythm for the body (hip height, px, + is down), one value per idle frame: a slow
+// rise over three frames, a held top, then a quick drop and settle. Steps are a third of a pixel
+// (one sprite cell) so each frame moves cleanly; hair and tails keep their own even wave on top,
+// so on the held frame the body rests while the hair still travels.
+const BREATH = [0.5, 0.17, -0.17, -0.5, -0.5, 0.17];
+const breath = (pose, f) => (pose === 'idle' ? BREATH[f % BREATH.length] : 0);
+
 // ---------- Heads, faces and hair ----------
 
 // Faces come from the heroine kit (heroine.js) at maiden scale, drawn in the head's own space
@@ -248,7 +259,7 @@ function fadeDeep(v) {
   return out;
 }
 function faceLook(look, mood) {
-  const l = { k: HK, lineK: 1.5, browsOnTop: true, blushLines: true, blushN: 2, ...look };
+  const l = { k: HK, lineK: 1.5, browsOnTop: true, blushLines: true, blushN: 2, chibi: true, mouthK: 1.35, ...look };
   return mood === 'dead' ? fadeDeep(l) : l;
 }
 // The skin, face and neck (draw before the hair) and the brows and sweat (after it).
@@ -433,11 +444,12 @@ const KM = {
   robe: '#fffaf6', robeDk: '#e9dcea', red: '#ef5d74', redDk: '#c8435d', redLt: '#ff8a9a', gold: '#ffd36b', fire: '#a3b6ff', fire2: '#e4ecff', fireHot: '#ff8fd0',
   wood: '#c98f5c', paper: '#ffffff', tabi: '#ffffff', zori: '#ef5d74', lip: '#d8556e',
 };
-// Fox eyes: almond, lifted at the outer corner, gold with slit pupils and a red liner flick; a
+// Fox eyes: almond, lifted at the outer corner, fox-fire violet (a strong contrast to her orange
+// hair) with slit pupils and a red liner flick; a
 // sly closed smile, a fang when roused.
 const FOX_FACE = {
   skin: KM.skin, skinSh: '#f6cdc2', skinSh2: '#e2a0a2', blush: '#ff9fb2', lip: '#d8556e', lipLine: '#9e3550',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.1, ry: 3, tilt: 0.55, iris: '#ff9a3c', irisDk: '#a8400f', irisLt: '#ffe07a', hot: '#ff4f6e', hotDk: '#8e1430', pupil: 'slit', pupilC: '#43120a', wing: 1.8, flicks: 1, lashLen: 1.2, liner: '#e8384f', ink: '#4a1e26', crease: false, lower: '#e3a59e' },
+  eye: { nearX: 1.5, farX: 9.8, rx: 4.1, ry: 3, tilt: 0.55, iris: '#8f6bff', irisDk: '#3a238f', irisLt: '#d6c8ff', hot: '#ff4f6e', hotDk: '#8e1430', pupil: 'slit', pupilC: '#1c1048', wing: 1.8, flicks: 1, lashLen: 1.2, liner: '#e8384f', ink: '#4a1e26', crease: false, lower: '#e3a59e' },
   brow: { c: '#b8622f', kind: 'soft', w: 0.8 },
   fang: 'angry',
   moods: { idle: { open: 0.86, mouth: 'sly' }, angry: { mouth: 'snarl', pupil: 0.5 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
@@ -470,7 +482,7 @@ function kitsune(pose, f, mood) {
   } else {
     // Poised: weight on the back leg, hip cocked, chin tipped coyly.
     hip[0] += Math.sin(ph) * 0.5;
-    hip[1] += Math.sin(ph) * 0.3;
+    hip[1] += breath(pose, f);
     lean = -0.04;
     tilt = 0.08 + Math.sin(ph) * 0.03;
     feet = [[-1.2, 0], [3.8, 0]];
@@ -679,10 +691,11 @@ const SY = {
   skin: '#f3fffa', skinDk: '#d2efe6', hair: '#8fe2c4', hairDk: '#5fc2a2', hairLt: '#dcfff0', dress: '#86dcb4', dressDk: '#5fbf98', dressLt: '#c8f6dc',
   leaf: '#78d494', ribbon: '#ffc4e4', ribbonDk: '#f09ccb', wing: '#effdff', wingDk: '#c8eef0', vein: '#8fd6cc', wingTint: '#f2dcff', gust: '#d4fff1', gust2: '#ffffff', flower: '#ffb3d9', gold: '#ffe08a',
 };
-// Round, glowing sea-green eyes with a star glint, soft lashes; airy and sweet, she gasps when struck.
+// Round, glowing lilac eyes (set against her mint hair) with a star glint, soft lashes; airy and
+// sweet, she gasps when struck.
 const SYLPH_FACE = {
   skin: SY.skin, skinSh: '#d2efe6', skinSh2: '#a6d2cc', blush: '#ffb0d0', lip: '#ff7fb0', lipLine: '#c0457a',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.3, ry: 3.5, tilt: 0.04, iris: '#3fd6c0', irisDk: '#0f7a78', irisLt: '#d0fff2', hot: '#ff6fb8', hotDk: '#a01a6a', pupil: 'round', pupilC: '#0b4a52', sparkle: true, wing: 1.1, flicks: 1, lashLen: 1.2, ink: '#1f5a5a', crease: false, lower: '#a8d8cc', lashSh: '#c8e8e2' },
+  eye: { nearX: 1.5, farX: 9.8, rx: 4.3, ry: 3.5, tilt: 0.04, iris: '#b07cff', irisDk: '#4a2a9a', irisLt: '#efe2ff', hot: '#ff6fb8', hotDk: '#a01a6a', pupil: 'round', pupilC: '#22145a', sparkle: true, wing: 1.1, flicks: 1, lashLen: 1.2, ink: '#1f5a5a', crease: false, lower: '#a8d8cc', lashSh: '#c8e8e2' },
   brow: { c: '#3f9a86', kind: 'soft', w: 0.7 },
   moods: { idle: { mouth: 'soft', gaze: [0.06, -0.03] }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' }, happy: { mouth: 'laugh' } },
 };
@@ -932,7 +945,7 @@ function yuki(pose, f, mood) {
   const n = walk ? 8 : atk ? 4 : 6;
   const ph = (f / n) * TAU;
   // A ghostly glide: no steps at all, just a slow float with the hem rippling back.
-  let hip = [31, 42.6 + (walk ? Math.sin(ph * 2) * 0.45 : Math.sin(ph) * 0.7)];
+  let hip = [31, 42.6 + (walk ? Math.sin(ph * 2) * 0.45 : pose === 'idle' ? breath(pose, f) * 1.3 : Math.sin(ph) * 0.7)];
   // An elegant S-curve: hips forward, shoulders back, head bowed a little to the side.
   let lean = walk ? 0.07 : -0.03 + Math.sin(ph) * 0.02;
   let tilt = walk ? 0.06 : Math.sin(ph - 0.8) * 0.04 + 0.1;
@@ -1145,7 +1158,7 @@ function nekomata(pose, f, mood) {
   } else {
     // Hip cocked, weight on the back leg, the front foot pointed.
     hip[0] += Math.sin(ph) * 0.5;
-    hip[1] += Math.sin(ph) * 0.3;
+    hip[1] += breath(pose, f);
     lean = 0.02;
     feet = [[-2.4, 0], [4.4, -0.6]];
   }
@@ -1577,7 +1590,7 @@ function lupina(pose, f, mood) {
   } else {
     // Hand on hip, weight on one leg, chin up: a huntress who knows she's the predator.
     hip[0] += Math.sin(ph) * 0.4;
-    hip[1] += Math.sin(ph) * 0.3;
+    hip[1] += breath(pose, f);
     lean = -0.04;
     feet = [[-2.6, 0], [4.2, 0]];
     tilt = -0.05 + Math.sin(ph - 1) * 0.03;
@@ -1785,12 +1798,12 @@ function arrow(p, a, P, tail) {
 }
 
 export const ART = {
-  kitsunemiko: { walk: 8, idle: 6, attack: 4, stride: 14, draw: kitsune },
-  sylph: { walk: 8, idle: 6, attack: 4, stride: 40, draw: sylph },
-  yukionna: { walk: 8, idle: 6, attack: 4, stride: 30, draw: yuki },
-  nekomata: { walk: 8, idle: 6, attack: 4, stride: 18, draw: nekomata },
-  lamia: { walk: 8, idle: 6, attack: 4, stride: 32, draw: lamia },
-  lupina: { walk: 8, idle: 6, attack: 4, stride: 20, draw: lupina },
+  kitsunemiko: { walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [60, 240, 180], draw: kitsune },
+  sylph: { walk: 8, idle: 6, attack: 4, stride: 40, atkMs: [50, 210, 160], draw: sylph },
+  yukionna: { walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [70, 260, 200], draw: yuki },
+  nekomata: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [40, 190, 130], draw: nekomata },
+  lamia: { walk: 8, idle: 6, attack: 4, stride: 32, atkMs: [60, 250, 190], draw: lamia },
+  lupina: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [45, 220, 150], draw: lupina },
 };
 
 export const INFO = {

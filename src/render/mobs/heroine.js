@@ -32,6 +32,9 @@
 //   nose, mouth    [x, y] tip / centre (defaults sit on the 3/4 centre line); lip, lipLine,
 //                  mouthIn, tongue, fang 'always'|'angry', noseC
 //   mole           [x, y] a beauty mark;  sweatAt, veinAt: where heroineTop puts them
+//   chibi          a small (maiden-scale) head: the mouth leads the expression (bigger, brighter
+//                  shapes, scaled by mouthK), hurt eyes become clean > < glyphs, the bangs cast a
+//                  deeper shadow, and the lash loses its fine streak (it would only speckle)
 //   moods          { idle: {...}, angry: {...}, ... } per-mood overrides of MOODS
 //
 // An expression (see MOODS) sets: lids 'open'|'blink'|'happy'|'squeeze'|'dead', open (upper lid,
@@ -302,7 +305,7 @@ function drawEye(pen, e, x, look) {
   const lids = x.lids ?? 'open';
 
   if (lids !== 'open') {
-    closedEye(pen, e, x, g, { ink, lw, E, skin, sh2, lowerC });
+    closedEye(pen, e, x, g, { ink, lw, E, skin, sh2, lowerC, look });
     return;
   }
 
@@ -361,6 +364,9 @@ function drawEye(pen, e, x, look) {
   const lidPts = g.ts.map((t) => g.upper(t));
   const center = [...lidPts.map(([px, py], i) => { const w = lw * lerp(0.5, 1, smooth(Math.min(1, i / (g.N * 0.45)))); return [px, py - w * 0.4]; }), wingTip];
   pen.strip(center, (t) => lw * (t < 0.45 ? lerp(0.5, 1, smooth(t / 0.45)) : t > 0.88 ? lerp(1, 0.35, (t - 0.88) / 0.12) : 1), ink, { n: 2 });
+  // A lighter streak in the lash's own hue along its outer half, so the heaviest dark on the face
+  // reads as a lash and not a hole (queen scale only; on a small head it would speckle).
+  if (e.near && !look.chibi) pen.strip(center.slice(Math.round(g.N * 0.5), g.N - 1).map(([px, py]) => [px - o * 0.1, py - lw * 0.18]), (t) => lw * 0.32 * Math.sin(PI * clamp(t, 0.08, 0.92)) ** 0.6, E.lashLt ?? mix(ink, E.iris, 0.45), { n: 2 });
   clumps(pen, (t) => { const [px, py] = g.upper(Math.min(1, t)); return [px, py - lw * 0.7]; }, e, E.flicks ?? 2, (E.lashLen ?? 1.3) * (ry / 3), -1, ink, lw, E.leafLash);
   // Coloured liner (Tamamo's kumadori red): one stroke below the wing, sweeping up past it.
   if (E.liner) {
@@ -380,7 +386,7 @@ function drawEye(pen, e, x, look) {
 // (k: the head's scale, so the grid stays one sprite cell on a small head).
 const snap3 = (v, k = 1) => Math.round(v * 3 * k) / (3 * k);
 
-function closedEye(pen, e, x, g, { ink, lw, E, skin, sh2, lowerC }) {
+function closedEye(pen, e, x, g, { ink, lw, E, skin, sh2, lowerC, look }) {
   const { rx, ry, o, cx, cy } = e;
   const lids = x.lids;
   const tilt = E.tilt ?? 0.15;
@@ -392,6 +398,18 @@ function closedEye(pen, e, x, g, { ink, lw, E, skin, sh2, lowerC }) {
     lid(c, lw * 0.9);
     clumps(pen, (t) => { const [px, py] = c(Math.min(1, t)); return [px, py - lw * 0.3]; }, e, 1, 1.1, -1, ink, lw * 0.9, E.leafLash);
     pen.strip(g.ts.slice(3, 10).map((t) => { const [px, py] = c(t); return [px + o * 0.1, py + ry * 0.95]; }), (t) => 0.42 * Math.sin(PI * t), lowerC, { n: 2 });
+    return;
+  }
+  if (lids === 'squeeze' && look.chibi) {
+    // At maiden scale a clean > < glyph reads better than a drawn lid: one heavy chevron pointing
+    // at the nose, its outer arms ending in the lash's own taper, and a fold of shadow above.
+    const apex = [cx - o * rx * 0.55, cy + ry * 0.12];
+    const top = [cx + o * rx * 0.85, cy - ry * 0.8 - tilt * ry * 0.4];
+    const bot = [cx + o * rx * 0.8, cy + ry * 0.95];
+    const w = lw * 1.05;
+    pen.strip([top, [lerp(top[0], apex[0], 0.5), lerp(top[1], apex[1], 0.5) - 0.1], apex], (t) => w * lerp(0.75, 1, t), ink, { n: 1 });
+    pen.strip([apex, [lerp(apex[0], bot[0], 0.5), lerp(apex[1], bot[1], 0.5) + 0.1], bot], (t) => w * lerp(1, 0.6, t), ink, { n: 1 });
+    pen.oval(apex[0], apex[1], w * 0.55, w * 0.55, ink, 'f', 0, 8);
     return;
   }
   if (lids === 'squeeze') {
@@ -523,9 +541,14 @@ export function heroineHead(at, mood, look) {
   // A fine jaw line on the near side, fading toward the ear.
   pen.strip(spline([[chx - 0.6, chy - 0.1], [chx - 5, chy - 1.25], [-3.8, 13.1], [-8.6, 9.8]], 2), (t) => 0.55 * (1 - t) ** 0.7, sh, { n: 1 });
   // The bangs' shadow on the forehead, following the bang tips.
+  // (Dungeon Fighter's rule: wherever skin lies under hair, it's in shadow.) A small head gets a
+  // deeper band, at least one sprite pixel, and a darker sliver right under the clump tips, so
+  // the hair always separates from the face.
   if (look.bangs) {
     const b = look.bangs;
-    pen.poly([...b.map(([px, py], i) => [px, py + (i % 2 ? 1.5 : 1.1)]), [b[b.length - 1][0], -14], [b[0][0], -14]], sh);
+    const dk = Math.max(1, 0.66 / k);
+    pen.poly([...b.map(([px, py], i) => [px, py + (i % 2 ? 1.5 : 1.1) * dk]), [b[b.length - 1][0], -14], [b[0][0], -14]], sh);
+    if (look.chibi) pen.poly([...b.map(([px, py], i) => [px, py + (i % 2 ? 0.75 : 0.5) * dk]), [b[b.length - 1][0], -14], [b[0][0], -14]], mix(sh, sh2, 0.6));
   }
 
   // Blush: a small soft two-tone patch on each cheek, clear of the eyes and the contour.
@@ -565,7 +588,15 @@ export function heroineHead(at, mood, look) {
 
   // Beauty mark, mouth, tears.
   if (look.mole) pen.oval(look.mole[0], look.mole[1], 0.45, 0.45, look.moleC ?? '#6a3a5c');
-  mouth(pen, L0.mouth, x, look, mood);
+  if (look.chibi) {
+    // The mouth leads at maiden scale: the same shapes, scaled up around their centre (line
+    // weights kept), in brighter colours.
+    const s = look.mouthK ?? 1.35;
+    const [mx, my] = L0.mouth;
+    const mp = painter((px, py) => at(mx * k + (px - mx * k) * s, my * k + (py - my * k) * s), k, pen.wk / s);
+    mouth(mp, L0.mouth, x, { mouthIn: '#c8405e', tongue: '#ff9ab4', ...look }, mood);
+    pen.out.push(...mp.out);
+  } else mouth(pen, L0.mouth, x, look, mood);
   if (x.tear) tear(pen, near.cx - near.rx * 0.9, near.cy + near.ry * 0.75, 1, look);
   return pen.out;
 }
