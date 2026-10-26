@@ -175,4 +175,31 @@ export const MOBS = {
     // Every few seconds the king slams the ground; anyone standing on it takes heavy damage.
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 420, range: 420 },
   }),
+
+  // Queens out of myth: field bosses not placed in any map yet. Each winds up a big attack every
+  // few seconds that hits anyone on the floor near her.
+  sylvana: mob({
+    id: 'sylvana', name: 'Sylvana, the Dryad Queen', level: 22, hp: 40000, atk: 110, def: 26, acc: 60, eva: 6, exp: 30000,
+    gold: [1200, 2400], speed: 26, w: 64, h: 122, art: 'sylvana', boss: true,
+    drops: [{ id: 'leaf_fragment', chance: 1, qty: 10 }, { id: 'moss_stone', chance: 1, qty: 5 }, { id: 'elixir', chance: 1, qty: 2 }],
+    special: { kind: 'slam', every: 6.5, warn: 1.3, damage: 200, range: 340 },
+  }),
+  tamamo: mob({
+    id: 'tamamo', name: 'Tamamo, the Nine-Tailed Empress', level: 30, hp: 70000, atk: 170, def: 38, acc: 78, eva: 10, exp: 60000,
+    gold: [2000, 4000], speed: 30, w: 70, h: 118, art: 'tamamo', boss: true,
+    drops: [{ id: 'fluff', chance: 1, qty: 20 }, { id: 'wisp_flame', chance: 1, qty: 5 }, { id: 'elixir', chance: 1, qty: 3 }],
+    special: { kind: 'slam', every: 6, warn: 1.2, damage: 290, range: 380 },
+  }),
+  lilith: mob({
+    id: 'lilith', name: 'Lilith, the Succubus Queen', level: 38, hp: 110000, atk: 220, def: 48, acc: 94, eva: 12, exp: 90000,
+    gold: [3000, 6000], speed: 36, w: 62, h: 120, art: 'lilith', boss: true,
+    drops: [{ id: 'bat_wing', chance: 1, qty: 20 }, { id: 'shade_cloth', chance: 1, qty: 5 }, { id: 'elixir', chance: 1, qty: 4 }],
+    special: { kind: 'slam', every: 6, warn: 1.1, damage: 360, range: 400 },
+  }),
+  selene: mob({
+    id: 'selene', name: 'Selene, the Moon Valkyrie', level: 50, hp: 190000, atk: 290, def: 66, acc: 118, eva: 14, exp: 150000,
+    gold: [5000, 9000], speed: 40, w: 62, h: 122, art: 'selene', boss: true,
+    drops: [{ id: 'stardust', chance: 1, qty: 20 }, { id: 'king_crystal', chance: 0.5 }, { id: 'elixir', chance: 1, qty: 5 }],
+    special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 480, range: 440 },
+  }),
 };

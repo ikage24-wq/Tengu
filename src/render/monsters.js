@@ -15,8 +15,9 @@ import { ART as SKY } from './mobs/sky.js';
 import { ART as HOLLOW } from './mobs/hollow.js';
 import { ART as BOSSES } from './mobs/bosses.js';
 import { ART as MAIDENS } from './mobs/maidens.js';
+import { ART as QUEENS } from './mobs/queens.js';
 
-const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS };
+const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS };
 
 // How many frames an art has for walking (or flying), idling, and attacking (0: no attack pose),
 // and how its walk keeps time: `stride` is how far it travels in one walk cycle, `cycle` (seconds)
