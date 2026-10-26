@@ -492,6 +492,7 @@ export function updateWorld(world, dt, input) {
   else for (const m of world.mobs) {
     const event = updateMob(m, world.body, dt, world.now);
     if (event === 'slam') {
+      m.attackAt = world.now;
       world.fx.push({ kind: 'slam', x: m.x, y: m.y, t: 0, dur: 0.6, range: m.def.special.range });
       world.juice.push({ type: 'shake', mag: 6, dur: 0.5 }, { type: 'slam', x: m.x, y: m.y, range: m.def.special.range });
       const onFloor = world.body.onGround && world.body.surface?.ground;
@@ -499,6 +500,7 @@ export function updateWorld(world, dt, input) {
     }
     if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
+    m.attackAt = world.now;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
       hurtPlayer(world, m.def.atk, m.x);
     } else {

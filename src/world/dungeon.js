@@ -665,6 +665,7 @@ function fight(world, m, up, dt) {
 // melee swing; spit flies to its target).
 function swing(world, m, up) {
   const g = up.find((o) => o.id === m.swingAt);
+  m.attackAt = world.now;
   if (!g) return;
   const f = m.def.fight;
   const mul = m.swingMul ?? 1;

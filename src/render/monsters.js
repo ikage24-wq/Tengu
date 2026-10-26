@@ -17,10 +17,28 @@ import { ART as BOSSES } from './mobs/bosses.js';
 
 const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES };
 
-// How many frames an art has for walking (or flying) and for idling.
+// How many frames an art has for walking (or flying), idling, and attacking (0: no attack pose).
 export function framesOf(art) {
   const a = ARTS[art];
-  return { walk: a.walk ?? 4, idle: a.idle ?? 2 };
+  return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0 };
+}
+
+// Each cycle takes the same time whatever its frame count, so more frames only make it smoother.
+const WALK_CYCLE = 0.6;
+const FLY_CYCLE = 0.45;
+const IDLE_CYCLE = 1.8;
+// An attack plays once: the first frame is the wind-up (held while a boss or a dungeon monster
+// gathers itself), the rest are the strike and its follow-through.
+export const ATTACK_TIME = 0.5;
+
+function poseOf(m, fr, moving, t, now, fast) {
+  if (fr.attack && m.hp > 0) {
+    if (m.special?.warn > 0 || m.windup > 0) return ['attack', 0];
+    const since = now - (m.attackAt ?? -9);
+    if (since >= 0 && since < ATTACK_TIME) return ['attack', Math.min(fr.attack - 1, 1 + Math.floor((since / ATTACK_TIME) * (fr.attack - 1)))];
+  }
+  if (moving) return ['walk', Math.floor(((t * fast) / (m.def.fly ? FLY_CYCLE : WALK_CYCLE)) * fr.walk) % fr.walk];
+  return ['idle', Math.floor((t / IDLE_CYCLE) * fr.idle) % fr.idle];
 }
 
 export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
@@ -100,8 +118,7 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   const mood = moodOf(m, t, now);
   const fast = mood === 'angry' ? 1.5 : 1;
   const fr = framesOf(m.def.art);
-  const pose = moving ? 'walk' : 'idle';
-  const frame = moving ? Math.floor(t * (flying ? 3 : 2) * fr.walk * fast) % fr.walk : Math.floor(t * 1.6) % fr.idle;
+  const [pose, frame] = poseOf(m, fr, moving, t, now, fast);
   const s = monsterSprite(m.def.art, frame, mood, pose);
   let alpha = 1;
   let sx = 1;
@@ -118,6 +135,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
     // The idle frames breathe; this only softens the steps between them.
     sy = 1 + Math.sin(t * 3) * 0.012;
   }
+  // A hit squashes it and rocks it back, away from the blow.
+  const recoil = m.flash > 0 && m.hp > 0 ? Math.min(1, m.flash / 0.15) : 0;
   if (m.flash > 0) {
     sx *= 1.14;
     sy *= 0.86;
@@ -146,6 +165,7 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   ctx.save();
   ctx.translate(snap(x), snap(y - air));
   if (air) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6);
+  else if (recoil && !m.def.boss) ctx.rotate(-(m.dir < 0 ? -1 : 1) * recoil * 0.12);
   ctx.scale(sx, sy);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: m.flash, alpha });
   ctx.restore();
