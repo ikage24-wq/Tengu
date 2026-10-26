@@ -27,6 +27,12 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 - `tests/melee.test.js` checks these rules (including the no-spam rule for several jobs); extend it
   when adding skills.
 
+## Art, animation, and effects
+
+Before drawing or animating anything (sprites, faces, hair, effects, maps, UI), read
+`docs/art/README.md` and `docs/art/art-bible.md`: the rules learned from deep multilingual research,
+with the full findings in `docs/art/research/`. Save anything new we learn there too.
+
 ## Other standing rules
 
 - Commits end with the session's Co-Authored-By / Claude-Session lines; no model names in code or
