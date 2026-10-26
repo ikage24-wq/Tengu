@@ -8,6 +8,7 @@ import { createCharacter } from './core/character.js';
 import { addItem } from './core/inventory.js';
 import { saveGame, loadGame, hasSave, deleteSave, SLOTS } from './core/save.js';
 import { createWorld, updateWorld } from './world/world.js';
+import { groundAt } from './world/physics.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
 import { setHd, gfx } from './render/pixel.js';
@@ -198,7 +199,7 @@ function npcPointer(ui) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
     const gy = world.map.groundY;
-    if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > gy - 50 && wy < gy + 14) ?? null;
+    if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
     // Party members, wherever they are on the map.
     if (!npc) bot = partyMembers(world.bots).find((b) => b.body && b.map === world.map.id && Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
     if (!npc && !bot && settings.showCrowd && world.map.isTown) {

@@ -18,6 +18,7 @@ import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { taskProgress, clock } from '../world/dungeon.js';
+import { groundAt } from '../world/physics.js';
 
 const BAR_Y = 330;
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
@@ -265,10 +266,20 @@ function drawMinimap(ui, world) {
   sky.addColorStop(1, '#f6e8ff');
   ctx.fillStyle = sky;
   ctx.fillRect(x, y, w, h);
+  // The ground's shape: hills, plateaus, and cliffs.
+  const line = map.terrain ?? [[0, map.groundY], [map.width, map.groundY]];
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  for (const [tx, ty] of line) ctx.lineTo(x + tx * scale, y + ty * scale);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
   ctx.fillStyle = '#b9e3b0';
-  ctx.fillRect(x, y + map.groundY * scale, w, Math.max(1, h - map.groundY * scale));
-  ctx.fillStyle = '#8fcf86';
-  ctx.fillRect(x, y + map.groundY * scale, w, 1);
+  ctx.fill();
+  ctx.strokeStyle = '#8fcf86';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  line.forEach(([tx, ty], i) => (i ? ctx.lineTo(x + tx * scale, y + ty * scale) : ctx.moveTo(x + tx * scale, y + ty * scale)));
+  ctx.stroke();
   ctx.fillStyle = '#c9a6e8';
   for (const p of map.platforms) ctx.fillRect(x + p.x * scale, y + p.y * scale, Math.max(1, p.w * scale), 1.5);
   ctx.fillStyle = '#c99a6b';
@@ -283,7 +294,7 @@ function drawMinimap(ui, world) {
   for (const n of map.npcs) {
     ctx.fillStyle = '#ffc94f';
     ctx.beginPath();
-    ctx.arc(x + n.x * scale, y + map.groundY * scale - 2, 1.6, 0, Math.PI * 2);
+    ctx.arc(x + n.x * scale, y + groundAt(map, n.x) * scale - 2, 1.6, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.fillStyle = '#ff6b8a';

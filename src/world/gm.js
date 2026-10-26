@@ -13,6 +13,7 @@ import { addItem } from '../core/inventory.js';
 import { clampVitals, stats as statsOf, bindFreeHotkey } from '../core/character.js';
 import { loadMap } from './world.js';
 import { spawnMob } from './mobs.js';
+import { groundAt } from './physics.js';
 
 const GM_HASH = '01a1ea974eb6725f52e6b8b8fe2c3261eaab572040dece2a859559cf8b3f6039';
 const STORE_KEY = 'twzt-gm';
@@ -93,7 +94,7 @@ export function teleport(world, mapId) {
 export function spawn(world, mobId, count = 1) {
   if (!MOBS[mobId]) return false;
   for (let i = 0; i < Math.max(1, Math.min(20, count)); i++) {
-    const m = spawnMob(world.map, { mob: mobId, x: world.body.x + world.body.facing * (60 + i * 30), y: world.map.groundY });
+    const m = spawnMob(world.map, { mob: mobId, x: world.body.x + world.body.facing * (60 + i * 30), y: groundAt(world.map, world.body.x + world.body.facing * (60 + i * 30)) });
     world.mobs.push(m);
   }
   return true;

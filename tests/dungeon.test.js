@@ -232,7 +232,10 @@ test("a warrior's tank skills: Provoke, Chain Hook, Shield Wall", async () => {
   // Out in the field, the hook drags a monster in front of you over to you.
   loadMap(world, 'woods', 'west');
   const b = world.body;
-  const m = world.mobs.find((x) => x.y === world.map.groundY && x.x > 300 && x.def.hp >= 300);
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const m = spawnMob(world.map, { mob: 'mossgolem', x: 460, y: world.map.groundY });
+  world.spawner.slots = [];
+  world.mobs = [m];
   Object.assign(b, { x: m.x - 200, y: world.map.groundY, onGround: true, facing: 1 });
   ready();
   assert.equal(cast(world, 'chainhook').targets >= 1, true);

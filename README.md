@@ -207,8 +207,15 @@ to clear it.
   boss stomp bursts rock spikes up from the ground. Plus screen shake, short hitstop on crits and
   kills, and ambient petals, fireflies, and glints in every map.
 - **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
-  meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room) with
-  one-way ledges, ropes, and portals that name where they lead. Every region has its own
+  meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room). Field maps
+  are built like classic side-scroller maps: the ground rolls in hills and slopes, rises into
+  plateaus, and drops away at cliff walls you jump up or climb by ladder; above it, floating
+  islands of the same land stack four or five levels high, linked by jumps, ropes, and ladders.
+  Each region's land has its own look (cobbled meadow earth, mossy forest loam, stacked sandstone
+  slabs, temple bricks, crystal rock, cloud), with grassy or mossy lips, hanging vines and roots,
+  and big landmarks: giant trees and mushrooms, wishing wells and flower arches, totems and mesas,
+  broken archways and statues, crystal spires, cloud pillars and gazebos. Portals name where they
+  lead. Every region has its own
   monsters (dandelion Fuzzlets and Bloomsnails in the meadow, Pebblets and Scorpips in the canyon,
   Leafoxes in the woods, Skelly Knights in the ruins, Gemjellies in the cave, Flufframs in the sky),
   and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
@@ -361,7 +368,7 @@ src/world/              simulation: physics, monsters, loot, combat, the world u
 src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects, towns
                         and elements, animator,
                         particles,
-                        monsters, scenery, effects, icons, scene
+                        monsters, scenery, terrain, landmarks, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
 tests/                  node:test suites for rules, content integrity, and world behavior
 ```
@@ -373,7 +380,9 @@ npm test
 ```
 
 The suites cover the formulas and progression rules, gear designs and rarity, content integrity (every portal, drop,
-reward, and ledge resolves and is reachable), world behavior (movement, ropes, portals, NPC
+reward, and portal resolves; every surface of every map can be reached and left again), terrain
+(slopes, cliff walls, and party members finding their way between any two spots on every field
+map), world behavior (movement, ropes, portals, NPC
 talk, combat and loot, respawns, death, the boss slam), and dungeons (roles, the group finder,
 threat, and a whole Rootwood Hollow run played by an autopilot).
 

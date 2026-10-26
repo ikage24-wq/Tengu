@@ -9,6 +9,7 @@ import { drawMonster } from './monsters.js';
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
 import { nearbyNpc } from '../world/world.js';
+import { groundAt } from '../world/physics.js';
 import { summonPosition } from '../world/combat.js';
 import { drawSummon } from './summons.js';
 import { text, box, COLORS } from '../ui/kit.js';
@@ -68,7 +69,7 @@ function drawNpcs(ctx, world, cam, time) {
   for (const n of world.map.npcs) {
     const npc = NPCS[n.id];
     const x = n.x - cam.x;
-    const y = world.map.groundY - cam.y;
+    const y = groundAt(world.map, n.x) - cam.y;
     if (x < -40 || x > VIEW_W + 40) continue;
     // Each NPC runs their own idle routine, but turns to face you while you're close.
     const r = npcRoutine(n.id, time + (n.x % 97) * 0.1);
@@ -268,7 +269,7 @@ function drawBubbles(ctx, world, cam) {
     const npc = who === 'player' ? null : world.map.npcs.find((n) => n.id === who);
     if (who !== 'player' && !npc) continue;
     const x = who === 'player' ? world.body.x : npc.x;
-    const y = who === 'player' ? world.body.y : world.map.groundY;
+    const y = who === 'player' ? world.body.y : groundAt(world.map, npc.x);
     drawBubble(ctx, snap(x - cam.x), snap(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2));
   }
 }

@@ -1,7 +1,7 @@
 // Monster runtime: spawning, respawning, patrol and chase AI, knockback, and the boss slam.
 
 import { MOBS } from '../data/mobs.js';
-import { surfacesOf } from './physics.js';
+import { surfacesOf, groundPieceAt } from './physics.js';
 
 const RESPAWN = 4;
 // Each spawn point holds this many monsters (bosses stay single), spread a little apart.
@@ -13,8 +13,8 @@ const HOVER = 46;
 let nextUid = 1;
 
 function surfaceFor(map, x, y) {
-  const fits = surfacesOf(map).filter((s) => s.y === y && x >= s.x1 && x <= s.x2);
-  return fits[0] ?? surfacesOf(map)[0];
+  const fits = surfacesOf(map).filter((s) => x >= s.x1 && x <= s.x2 && Math.abs(s.yAt(x) - y) < 4);
+  return fits[0] ?? groundPieceAt(map, x);
 }
 
 export function spawnMob(map, spawn) {
@@ -23,13 +23,16 @@ export function spawnMob(map, spawn) {
   // Walkers stay on their ledge; flyers roam a band around their spawn point.
   const x1 = def.fly ? Math.max(def.w, spawn.x - 180) : surface.x1 + def.w / 2;
   const x2 = def.fly ? Math.min(map.width - def.w, spawn.x + 180) : surface.x2 - def.w / 2;
+  const x = Math.max(x1, Math.min(x2, spawn.x));
   return {
     uid: nextUid++,
     def,
     spawn,
-    x: Math.max(x1, Math.min(x2, spawn.x)),
-    y: def.fly ? spawn.y - HOVER : surface.y,
-    baseY: def.fly ? spawn.y - HOVER : surface.y,
+    x,
+    y: def.fly ? spawn.y - HOVER : surface.yAt(x),
+    baseY: def.fly ? spawn.y - HOVER : surface.yAt(x),
+    // Walkers follow their surface's height (up and down slopes).
+    yAt: def.fly ? null : surface.yAt,
     x1, x2,
     hp: def.hp,
     dir: Math.random() < 0.5 ? -1 : 1,
@@ -97,6 +100,7 @@ export function tickYank(m, dt) {
   }
   m.yank.t -= dt;
   m.x += (m.yank.x - m.x) * Math.min(1, dt * 16);
+  if (m.yAt) m.y = m.yAt(m.x);
   if (m.yank.t <= 0) {
     m.x = m.yank.x;
     m.yank = null;
@@ -129,6 +133,7 @@ export function tickAir(m, dt) {
   m.air = (m.air ?? 0) + m.airV * dt;
   m.airV -= AIR_GRAVITY * dt;
   m.x = Math.max(m.x1, Math.min(m.x2, m.x + (m.knockVx ?? 0) * dt));
+  if (m.yAt) m.y = m.yAt(m.x);
   m.knockVx = (m.knockVx ?? 0) * 0.97;
   m.state = 'idle';
   if (m.air <= 0) {
@@ -197,5 +202,6 @@ export function updateMob(m, player, dt, now) {
   if (m.x <= m.x1) { m.x = m.x1; m.dir = 1; }
   if (m.x >= m.x2) { m.x = m.x2; m.dir = -1; }
   if (m.def.fly) m.y = m.baseY + Math.sin(m.phase * 2.2) * 6;
+  else if (m.yAt) m.y = m.yAt(m.x);
   return event;
 }

@@ -93,8 +93,9 @@ export function updateDrops(drops, map, dt) {
     if (d.vy < 0) continue;
     for (const s of surfaces) {
       if (d.x < s.x1 || d.x > s.x2) continue;
-      if (prev <= s.y && d.y >= s.y) {
-        d.y = s.y;
+      const sy = s.yAt(d.x);
+      if ((prev <= sy && d.y >= sy) || (s.ground && d.y >= sy)) {
+        d.y = sy;
         d.landed = true;
         break;
       }

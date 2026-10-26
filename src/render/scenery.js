@@ -6,9 +6,8 @@
 
 import { R, E, T, F, sprite, blit, shade, mix, snap, gfx } from './pixel.js';
 import { drawSoft } from './post.js';
-
-// How soft the HD backdrop is: it's drawn at one cell per this many game pixels.
-const BACKDROP_BLUR = 1.5;
+import { groundAt, surfacesOf } from '../world/physics.js';
+import { drawTerrain, drawIsland, drawLadder } from './terrain.js';
 import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {
@@ -16,6 +15,9 @@ const hash = (n) => {
   return s - Math.floor(s);
 };
 const pick = (list, seed) => list[Math.floor(seed * list.length) % list.length];
+
+// How soft the HD backdrop is: it's drawn at one cell per this many game pixels.
+const BACKDROP_BLUR = 1.5;
 
 export const THEMES = {
   town: {
@@ -1093,169 +1095,18 @@ function smoke(ctx, x, y, time, seed) {
 
 // ---------- Ground and ledges ----------
 
-function drawGround(ctx, t, theme, map, cam, width, height, time) {
-  const y = snap(map.groundY - cam.y);
-  if (y > height) return;
-  const off = cam.x;
-  rect(ctx, 0, y, width, height - y, t.ground);
-  const line = edge(t.ground);
-  switch (theme) {
-    case 'town': {
-      // Rounded cobblestones under a white curb.
-      ctx.fillStyle = t.groundDeep;
-      for (let row = 0; row * 9 + 9 < height - y; row++) {
-        const shift = row % 2 ? 9 : 0;
-        for (let gx = -((off + shift) % 18) - 18; gx < width; gx += 18) {
-          roundRect(ctx, snap(gx) + 1, y + 9 + row * 9, 15, 6, 3);
-          ctx.fill();
-        }
-      }
-      break;
-    }
-    case 'harbor': {
-      // Boardwalk planks with nails.
-      for (let gx = -(off % 16) - 16; gx < width; gx += 16) {
-        const k = Math.floor((gx + off) / 16);
-        rect(ctx, gx, y, 15, height - y, hash(k) > 0.5 ? t.ground : shade(t.ground, -5));
-        rect(ctx, gx + 15, y, 1, height - y, line);
-        rect(ctx, gx + 3, y + 6, 1.5, 1.5, shade(t.groundDeep, -20));
-        rect(ctx, gx + 11, y + 6, 1.5, 1.5, shade(t.groundDeep, -20));
-      }
-      break;
-    }
-    case 'ruins': {
-      // Big stone tiles with cracks.
-      for (let row = 0; row * 16 < height - y; row++) {
-        const shift = row % 2 ? 16 : 0;
-        for (let gx = -((off + shift) % 32) - 32; gx < width; gx += 32) {
-          ctx.strokeStyle = t.groundDeep;
-          ctx.lineWidth = 1;
-          ctx.strokeRect(snap(gx) + 0.5, y + row * 16 + 6.5, 32, 16);
-          if (hash(Math.floor((gx + off + shift) / 32) + row * 31) > 0.7) rect(ctx, gx + 10, y + row * 16 + 11, 6, 1, t.groundDeep);
-        }
-      }
-      break;
-    }
-    case 'sky': {
-      // Soft lavender folds deeper in the cloud.
-      const g = ctx.createLinearGradient(0, y, 0, height);
-      g.addColorStop(0, '#ffffff');
-      g.addColorStop(1, t.groundDeep);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, y, width, height - y);
-      ctx.fillStyle = 'rgba(214,224,255,0.45)';
-      for (let gx = -(off % 56) - 56; gx < width + 56; gx += 56) {
-        ctx.beginPath();
-        ctx.arc(gx + 28, y + 30, 22, Math.PI, 0);
-        ctx.fill();
-      }
-      break;
-    }
-    default: {
-      // Dirt with soft pebbles.
-      ctx.fillStyle = t.groundDeep;
-      for (let row = 0; row < 5; row++) {
-        for (let gx = -(off % 24) - 24; gx < width; gx += 24) {
-          const k = Math.floor((gx + off) / 24) * 7 + row;
-          if (hash(k) < 0.45) continue;
-          ctx.beginPath();
-          ctx.ellipse(gx + hash(k + 1) * 20, y + 14 + row * 10 + hash(k + 2) * 4, 3 + hash(k + 3) * 2, 1.8, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      if (theme === 'hollow') {
-        // Thin roots winding through the dirt, and specks of glow.
-        ctx.strokeStyle = t.groundDeep;
-        ctx.lineWidth = 1.6;
-        ctx.lineCap = 'round';
-        for (let gx = -(off % 110) - 110; gx < width + 110; gx += 110) {
-          const k = Math.floor((gx + off) / 110);
-          const ry = y + 12 + hash(k + 4) * 22;
-          ctx.beginPath();
-          ctx.moveTo(gx, ry);
-          ctx.bezierCurveTo(gx + 30, ry - 8, gx + 50, ry + 10, gx + 78, ry + 2);
-          ctx.quadraticCurveTo(gx + 88, ry - 3, gx + 84, ry - 7);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(gx + 40, ry + 1);
-          ctx.quadraticCurveTo(gx + 44, ry + 10, gx + 52, ry + 13);
-          ctx.stroke();
-          ctx.globalAlpha = 0.55 + 0.35 * Math.sin(time * 2 + k);
-          ctx.fillStyle = pick(t.shrooms, hash(k + 9));
-          ctx.beginPath();
-          ctx.arc(gx + 20 + hash(k + 1) * 60, y + 20 + hash(k + 2) * 30, 1.3, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = t.groundDeep;
-        }
-        ctx.lineCap = 'butt';
-      }
-      if (theme === 'cave') {
-        for (let gx = -(off % 70) - 70; gx < width; gx += 70) {
-          const k = Math.floor((gx + off) / 70);
-          const c = hash(k) > 0.5 ? '#a8e8ff' : '#e0b8ff';
-          ctx.globalAlpha = 0.6 + 0.3 * Math.sin(time * 2 + k);
-          sparkle(ctx, gx + 30, y + 22 + hash(k + 1) * 14, 3, c);
-          ctx.globalAlpha = 1;
-        }
-      }
-    }
-  }
-  // The top: a scalloped strip (grass, curb, rope edge, or cloud puffs) with an outline.
-  const top = t.trim;
-  if (theme === 'sky') {
-    ctx.fillStyle = '#ffffff';
-    for (let gx = -(off % 16) - 16; gx < width + 16; gx += 16) {
-      ctx.beginPath();
-      ctx.arc(gx + 8, y + 2, 9, Math.PI, 0);
-      ctx.fill();
-    }
-    rect(ctx, 0, y, width, 6, '#ffffff');
-    return;
-  }
-  const scallop = theme === 'meadow' || theme === 'forest' || theme === 'grove' || theme === 'hollow';
-  ctx.fillStyle = top;
-  ctx.fillRect(0, y - 1, width, 6);
-  if (scallop) {
-    for (let gx = -(off % 10) - 10; gx < width + 10; gx += 10) {
-      ctx.beginPath();
-      ctx.arc(gx + 5, y + 5, 4, 0, Math.PI);
-      ctx.fill();
-    }
-  }
-  ctx.strokeStyle = edge(top);
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, y - 1.5);
-  ctx.lineTo(width, y - 1.5);
-  ctx.stroke();
-  if (scallop) {
-    ctx.beginPath();
-    for (let gx = -(off % 10) - 10; gx < width + 10; gx += 10) {
-      ctx.moveTo(gx + 9.5, y + 5);
-      ctx.arc(gx + 5, y + 5, 4.5, 0, Math.PI);
-    }
-    ctx.stroke();
-  } else {
-    ctx.beginPath();
-    ctx.moveTo(0, y + 5.5);
-    ctx.lineTo(width, y + 5.5);
-    ctx.stroke();
-  }
-  rect(ctx, 0, y, width, 1, shade(top, 22));
-}
 
 function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of map.platforms.entries()) {
     const x = Math.round(p.x - cam.x);
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
-    // A soft shadow below.
-    ctx.fillStyle = 'rgba(58,45,79,0.1)';
-    ctx.beginPath();
-    ctx.ellipse(x + p.w / 2, y + 22, p.w / 2 - 6, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
     if (theme === 'sky') {
+      // A soft shadow below.
+      ctx.fillStyle = 'rgba(58,45,79,0.1)';
+      ctx.beginPath();
+      ctx.ellipse(x + p.w / 2, y + 22, p.w / 2 - 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
       // A fluffy cloud ledge.
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = edge('#e6ecff');
@@ -1273,6 +1124,8 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
       rootLedge(ctx, t, x, y, p.w, pi, time);
       continue;
     }
+    drawIsland(ctx, theme, p, cam, time, pi, groundAt(map, p.x + p.w / 2));
+    continue;
     const body = t.ledge;
     ctx.fillStyle = t.ledgeShade;
     roundRect(ctx, x, y + 2, p.w, 13, 6);
@@ -1442,6 +1295,10 @@ function rootLedge(ctx, t, x, y, w, pi, time) {
 
 function drawRopes(ctx, map, cam) {
   for (const r of map.ropes) {
+    if (r.ladder) {
+      drawLadder(ctx, r, cam);
+      continue;
+    }
     const x = Math.round(r.x - cam.x);
     const top = r.top - cam.y;
     const bottom = r.bottom - cam.y;
@@ -1603,7 +1460,7 @@ const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal',
 const BIG_PROPS = ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus', 'hlantern'];
 
 function drawProps(ctx, t, map, cam, width, time) {
-  const surfaces = [{ x: 0, y: map.groundY, w: map.width, ground: true }, ...map.platforms];
+  const surfaces = surfacesOf(map).map((s) => ({ x: s.x1, w: s.x2 - s.x1, ground: s.ground, yAt: s.yAt }));
   const keep = map.isTown ? 0.66 : 0.52;
   surfaces.forEach((s, si) => {
     const step = s.ground ? 38 : 44;
@@ -1614,13 +1471,16 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 44)) continue;
       if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
       if (s.ground && map.isTown && map.plaza && Math.abs(map.plaza - wx) < 46) continue;
-      if (map.ropes.some((r) => Math.abs(r.x - wx) < 16 && r.top <= s.y + 1 && r.bottom >= s.y - 1)) continue;
+      const sy = s.yAt(wx);
+      if (map.ropes.some((r) => Math.abs(r.x - wx) < 16 && r.top <= sy + 1 && r.bottom >= sy - 1)) continue;
+      // Nothing stands on a steep slope.
+      if (Math.abs(s.yAt(wx + 6) - s.yAt(wx - 6)) > 5) continue;
       const x = wx - cam.x;
       if (x < -40 || x > width + 40) continue;
       let kind = t.props[Math.floor(hash(wx + si) * t.props.length)];
       // Ledges only get small things.
       if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? (t.ledgeProp ?? 'flower') : kind;
-      prop(ctx, kind, Math.round(x), Math.round(s.y - cam.y), seed, t, time);
+      prop(ctx, kind, snap(x), snap(sy - cam.y), seed, t, time);
     }
   });
 }
@@ -1657,14 +1517,14 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
       const frame = cyc > 2 && cyc % 0.6 < 0.3 ? 2 : 0;
       const x = wx - cam.x;
       if (x < -20 || x > width + 20) continue;
-      place(ctx, birdArt(pick(['#ffffff', '#ffd6a5', '#bfe0ff', '#ffc6de'], hash(i + 2)), frame), x, map.groundY - cam.y - hop, { flip: hash(i + 7) <= 0.5 });
+      place(ctx, birdArt(pick(['#ffffff', '#ffd6a5', '#bfe0ff', '#ffc6de'], hash(i + 2)), frame), x, groundAt(map, wx) - cam.y - hop, { flip: hash(i + 7) <= 0.5 });
     }
   }
   // Butterflies flutter in loops above the ground.
   if (kinds.includes('butterfly')) {
     for (let i = 0; i < Math.ceil(map.width / 520); i++) {
       const bx = 100 + hash(i * 5.1 + 2) * (map.width - 200) + Math.sin(time * 0.6 + i) * 60;
-      const by = map.groundY - 40 - hash(i + 9) * 90 + Math.sin(time * 1.7 + i * 2) * 14;
+      const by = groundAt(map, bx) - 40 - hash(i + 9) * 90 + Math.sin(time * 1.7 + i * 2) * 14;
       const x = bx - cam.x;
       if (x < -20 || x > width + 20) continue;
       place(ctx, butterflyArt(pick(['#ff9ec0', '#ffe36b', '#c9a6ff', '#8fd3ff'], hash(i + 1)), Math.floor(time * 8 + i) % 2), x, by - cam.y);
@@ -1760,7 +1620,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   // HD: the backdrop is softly out of focus, so the play area stands out in front of it.
   if (gfx.hd) drawSoft(ctx, BACKDROP_BLUR * gfx.scale, backdrop);
   else backdrop(ctx);
-  drawGround(ctx, t, theme, map, cam, width, height, time);
+  drawTerrain(ctx, theme, map, cam, width, height, time);
   // Town buildings stand on the street, behind ledges and props.
   street?.();
   drawLedges(ctx, t, theme, map, cam, width, height, time);

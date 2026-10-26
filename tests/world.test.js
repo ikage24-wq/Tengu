@@ -16,8 +16,16 @@ const run = (body, map, intent, seconds) => {
   for (let i = 0; i < seconds * 60; i++) stepBody(body, map, intent, DT);
 };
 
+// A small map for movement: flat ground at 440, a ledge at x 180-420 (y 360), and a rope at
+// x 1100 from a ledge at 210 down to the ground.
+const FIELD = {
+  width: 1600, height: 480, groundY: 440,
+  platforms: [{ x: 180, y: 360, w: 240 }, { x: 1000, y: 210, w: 200 }],
+  ropes: [{ x: 1100, top: 210, bottom: 440 }],
+};
+
 test('jumping returns to the ground and can land on a ledge above', () => {
-  const map = MAPS.meadow1; // ledge at x 180-420, y 360; ground 440
+  const map = FIELD;
   const body = createBody(300, map.groundY);
   run(body, map, { jump: true }, 0.05);
   run(body, map, {}, 1);
@@ -26,7 +34,7 @@ test('jumping returns to the ground and can land on a ledge above', () => {
 });
 
 test('walking off a ledge falls, and Down+Jump drops through one', () => {
-  const map = MAPS.meadow1;
+  const map = FIELD;
   const body = createBody(400, 360);
   run(body, map, {}, 0.1);
   assert.equal(body.y, 360);
@@ -41,7 +49,7 @@ test('walking off a ledge falls, and Down+Jump drops through one', () => {
 });
 
 test('ropes climb up onto the ledge and back down', () => {
-  const map = MAPS.meadow1; // rope x 1100 from 210 to 440
+  const map = FIELD;
   const body = createBody(1100, map.groundY);
   run(body, map, { up: true }, 4);
   assert.equal(body.y, 210);

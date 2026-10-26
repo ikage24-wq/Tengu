@@ -11,7 +11,7 @@ import { gainExp, usePotion, applyDeath } from '../core/character.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
-import { createBody, stepBody, knockBack } from './physics.js';
+import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
@@ -210,7 +210,7 @@ function interact(world) {
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');
     return true;
   }
-  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(world.map.groundY - b.y) < 6);
+  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6);
   if (npc) {
     world.events.push({ type: 'talk', npc: npc.id });
     return true;
@@ -220,7 +220,7 @@ function interact(world) {
 
 export function nearbyNpc(world) {
   const b = world.body;
-  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(world.map.groundY - b.y) < 6) ?? null;
+  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6) ?? null;
 }
 
 const BLOCKER_TEXT = {

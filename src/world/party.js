@@ -5,7 +5,7 @@
 // and drop loot for you). They chat and level up alongside you, until you leave the party (or
 // they log off).
 
-import { createBody, stepBody } from './physics.js';
+import { createBody, stepBody, groundAt } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, autoAssignAp } from '../core/character.js';
 import { physicalRange, magicRange, accuracy, hitChance, rollHit } from '../core/formulas.js';
@@ -82,8 +82,7 @@ export function joinParty(bots, bot, world) {
   bot.map = world.map.id;
   // They'll stay a good while, but not forever.
   bot.session = Math.max(bot.session, 0) + between(600, 1500, bots.rng);
-  bot.body = createBody(bot.x, b.onGround ? world.map.groundY : b.y);
-  bot.body.y = world.map.groundY;
+  bot.body = createBody(bot.x, groundAt(world.map, bot.x));
   bot.stats = computeStats(bot.char);
   bot.cooldown = between(0.5, 1, bots.rng);
   bot.stuck = 0;
@@ -460,7 +459,7 @@ export function shareKill(bots, world, mob) {
       bot.level = bot.char.level;
       bot.stats = computeStats(bot.char);
       say(bot, speak(bots.memory, 'levelUp', { player: world.char.name, level: bot.level }, bot.style, bots.rng));
-      world.fx.push({ kind: 'levelup', x: bot.body?.x ?? bot.x, y: bot.body?.y ?? world.map.groundY, t: 0, dur: 1.6 });
+      world.fx.push({ kind: 'levelup', x: bot.body?.x ?? bot.x, y: bot.body?.y ?? groundAt(world.map, bot.x), t: 0, dur: 1.6 });
       world.log(`${bot.name} reached level ${bot.level}!`, '#ffe36b');
     }
   }

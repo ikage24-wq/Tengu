@@ -12,8 +12,8 @@ import { SKILLS, skillAt } from '../src/data/skills.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
 import { acceptQuest, questState, recordKill, completeQuest } from '../src/core/quests.js';
 import { addItem } from '../src/core/inventory.js';
-
-const JUMP_REACH = 100;
+import { surfacesOf, groundAt, ropeTop } from '../src/world/physics.js';
+import { navOf } from '../src/world/nav.js';
 
 test('every portal leads to a real map and a real portal there', () => {
   for (const map of Object.values(MAPS)) {
@@ -34,26 +34,58 @@ test('spawns, NPCs, and towns reference real things', () => {
   }
 });
 
-test('every ledge is reachable by a jump or a rope', () => {
+test('every surface can be reached from the way in, and left again', () => {
   for (const map of Object.values(MAPS)) {
-    const surfaces = [{ x: 0, y: map.groundY, w: map.width }, ...map.platforms];
+    const surfaces = surfacesOf(map);
+    const nav = navOf(map);
+    const start = map.portals.find((p) => !p.hidden) ?? map.portals[0];
+    const s0 = surfaces.findIndex((s) => start.x >= s.x1 && start.x <= s.x2 && Math.abs(s.yAt(start.x) - start.y) < 2);
+    assert.ok(s0 >= 0, `${map.id}: the entrance stands on a surface`);
+    const reach = (back) => {
+      const seen = new Set([s0]);
+      const queue = [s0];
+      while (queue.length) {
+        const i = queue.shift();
+        surfaces.forEach((_, j) => {
+          const linked = back ? nav.edges[j].some((e) => e.to === i) : nav.edges[i].some((e) => e.to === j);
+          if (linked && !seen.has(j)) {
+            seen.add(j);
+            queue.push(j);
+          }
+        });
+      }
+      return seen;
+    };
+    const there = reach(false);
+    const home = reach(true);
+    surfaces.forEach((s, i) => {
+      const name = s.ground ? `ground ${s.x1}-${s.x2}` : `ledge at (${s.x1}, ${s.y})`;
+      assert.ok(there.has(i), `${map.id}: ${name} can't be reached`);
+      assert.ok(home.has(i), `${map.id}: ${name} is a dead end`);
+    });
+  }
+});
+
+test('ropes hang from a surface and reach one below; ledges clear the ground', () => {
+  for (const map of Object.values(MAPS)) {
+    const surfaces = surfacesOf(map);
+    for (const r of map.ropes) {
+      const bottom = surfaces.some((s) => r.x >= s.x1 && r.x <= s.x2 && Math.abs(s.yAt(r.x) - r.bottom) < 2);
+      assert.ok(ropeTop(map, r) && bottom, `${map.id}: rope at x=${r.x}`);
+    }
     for (const p of map.platforms) {
-      const fromBelow = surfaces.some((s) => s !== p && s.y > p.y && s.y - p.y <= JUMP_REACH
-        && s.x < p.x + p.w + 40 && s.x + s.w > p.x - 40);
-      const byRope = map.ropes.some((r) => r.top === p.y && r.x >= p.x && r.x <= p.x + p.w);
-      assert.ok(fromBelow || byRope, `${map.id}: ledge at (${p.x}, ${p.y}) can't be reached`);
+      for (let x = p.x; x <= p.x + p.w; x += 10) assert.ok(groundAt(map, x) - p.y >= 44, `${map.id}: ledge at (${p.x}, ${p.y}) sits on the ground at x ${x}`);
     }
   }
 });
 
-test('ropes hang from a ledge and reach a surface below', () => {
+test('monsters and portals stand on something, and NPCs on flat ground', () => {
   for (const map of Object.values(MAPS)) {
-    const surfaces = [{ x: 0, y: map.groundY, w: map.width }, ...map.platforms];
-    for (const r of map.ropes) {
-      const top = map.platforms.some((p) => p.y === r.top && r.x >= p.x && r.x <= p.x + p.w);
-      const bottom = surfaces.some((s) => s.y === r.bottom && r.x >= s.x && r.x <= s.x + s.w);
-      assert.ok(top && bottom, `${map.id}: rope at x=${r.x}`);
-    }
+    const surfaces = surfacesOf(map);
+    const on = (x, y, slack) => surfaces.some((s) => x >= s.x1 && x <= s.x2 && Math.abs(s.yAt(x) - y) < slack);
+    for (const sp of map.spawns) assert.ok(on(sp.x, sp.y, 4), `${map.id}: ${sp.mob} at (${sp.x}, ${sp.y})`);
+    for (const p of map.portals) assert.ok(on(p.x, p.y, 2), `${map.id}: portal ${p.id}`);
+    for (const n of map.npcs) assert.equal(groundAt(map, n.x - 12), groundAt(map, n.x + 12), `${map.id}: ${n.id}`);
   }
 });
 

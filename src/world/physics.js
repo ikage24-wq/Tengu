@@ -9,8 +9,74 @@ export const MAX_FALL = 700;
 const ROPE_GRAB = 10;
 const DROP_TIME = 0.22;
 
+// The ground follows the map's `terrain`, a line of [x, y] points from one side to the other: it
+// can rise and fall in slopes, and two points at the same x make a cliff wall. A map without
+// one has flat ground at groundY. The ground between walls is one walkable piece; walls block
+// anyone below their top.
+const STICK = 14; // how far a step can rise or fall while walking and still stay on the ground
+const WALL_PAD = 6; // how close a body's center gets to a wall
+
+function lineY(pts, x) {
+  if (x <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) {
+    const [x1, y1] = pts[i];
+    if (x <= x1) {
+      const [x0, y0] = pts[i - 1];
+      return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
+    }
+  }
+  return pts[pts.length - 1][1];
+}
+
+function groundPieces(map) {
+  const pts = map.terrain ?? [[0, map.groundY], [map.width, map.groundY]];
+  const pieces = [];
+  let run = [pts[0]];
+  for (const p of pts.slice(1)) {
+    if (p[0] === run[run.length - 1][0]) {
+      pieces.push(run);
+      run = [p];
+    } else run.push(p);
+  }
+  pieces.push(run);
+  return pieces.filter((r) => r.length > 1).map((r) => {
+    const flat = r.every((q) => q[1] === r[0][1]);
+    return { x1: r[0][0], x2: r[r.length - 1][0], y: Math.min(...r.map((q) => q[1])), ground: true, pts: r, yAt: flat ? () => r[0][1] : (x) => lineY(r, x) };
+  });
+}
+
+// Every surface you can stand on: the ground pieces and the one-way ledges. Each has `yAt(x)`,
+// the height of its top at x (flat ledges are the same everywhere).
+const surfaceCache = new WeakMap();
 export function surfacesOf(map) {
-  return [{ x1: 0, x2: map.width, y: map.groundY, ground: true }, ...map.platforms.map((p) => ({ x1: p.x, x2: p.x + p.w, y: p.y, ground: false }))];
+  let list = surfaceCache.get(map);
+  if (!list) {
+    list = [...groundPieces(map), ...map.platforms.map((p) => ({ x1: p.x, x2: p.x + p.w, y: p.y, ground: false, yAt: () => p.y }))];
+    surfaceCache.set(map, list);
+  }
+  return list;
+}
+
+// The ground piece under x (at a wall, the one on the right).
+export function groundPieceAt(map, x) {
+  const pieces = surfacesOf(map).filter((s) => s.ground);
+  return pieces.find((s) => x >= s.x1 && x < s.x2) ?? (x < pieces[0].x1 ? pieces[0] : pieces[pieces.length - 1]);
+}
+
+// The height of the ground at x.
+export function groundAt(map, x) {
+  return groundPieceAt(map, x).yAt(x);
+}
+
+// Stops a body walking (or flying) into a cliff wall that rises above its feet.
+function blockWalls(map, body, nx) {
+  const dir = Math.sign(nx - body.x);
+  if (!dir) return nx;
+  const piece = groundPieceAt(map, nx + dir * WALL_PAD);
+  if (piece.yAt(nx + dir * WALL_PAD) >= body.y - STICK) return nx;
+  const wall = dir > 0 ? piece.x1 : piece.x2;
+  body.vx = 0;
+  return dir > 0 ? Math.min(nx, Math.max(body.x, wall - WALL_PAD)) : Math.max(nx, Math.min(body.x, wall + WALL_PAD));
 }
 
 export function createBody(x, y) {
@@ -23,12 +89,20 @@ export function createBody(x, y) {
 
 function ropeAt(map, body, wantDown) {
   return map.ropes.find((r) => {
+    // Grab from below or mid-rope with Up; from the top ledge with Down (from the cliff's edge,
+    // for a rope hanging beside one).
+    if (wantDown) return Math.abs(body.x - r.x) <= ROPE_GRAB + ROPE_REACH && Math.abs(body.y - r.top) < 4;
     if (Math.abs(body.x - r.x) > ROPE_GRAB) return false;
-    // Grab from below or mid-rope with Up; from the top ledge with Down.
-    if (wantDown) return Math.abs(body.y - r.top) < 4;
     return body.y > r.top + 2 && body.y <= r.bottom + 2;
   });
 }
+
+// The surface at the top of a rope: the one it hangs from, or one right beside it (a rope down
+// a cliff face).
+export function ropeTop(map, r) {
+  return surfacesOf(map).find((s) => r.x >= s.x1 - ROPE_REACH && r.x <= s.x2 + ROPE_REACH && Math.abs(s.yAt(Math.max(s.x1, Math.min(s.x2, r.x))) - r.top) < 2) ?? null;
+}
+const ROPE_REACH = 16;
 
 // intent: { left, right, up, down, jump } booleans. `speed` and `jump` are percentages (100 = normal).
 export function stepBody(body, map, intent, dt, { speed = 100, jump = 100 } = {}) {
@@ -53,12 +127,15 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100 } = {}
       body.y = r.top;
       body.rope = null;
       body.onGround = true;
-      body.surface = surfacesOf(map).find((s) => s.y === r.top && body.x >= s.x1 && body.x <= s.x2) ?? null;
+      // A rope hanging beside a cliff puts you on top of it.
+      const top = ropeTop(map, r);
+      if (top) body.x = Math.max(top.x1 + 4, Math.min(top.x2 - 4, body.x));
+      body.surface = top;
     } else if (body.y >= r.bottom) {
       body.y = r.bottom;
       body.rope = null;
       body.onGround = true;
-      body.surface = surfacesOf(map).find((s) => s.y === r.bottom && body.x >= s.x1 && body.x <= s.x2) ?? null;
+      body.surface = surfacesOf(map).find((s) => Math.abs(s.yAt(body.x) - r.bottom) < 2 && body.x >= s.x1 && body.x <= s.x2) ?? null;
     }
     return;
   }
@@ -101,23 +178,46 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100 } = {}
 
   // ----- Gravity and landing -----
   const prevY = body.y;
+  const was = body.onGround ? body.surface : null;
   body.vy = Math.min(MAX_FALL, body.vy + GRAVITY * dt);
-  body.x += body.vx * dt;
+  body.x = blockWalls(map, body, Math.max(body.w / 2, Math.min(map.width - body.w / 2, body.x + body.vx * dt)));
   body.y += body.vy * dt;
-  body.x = Math.max(body.w / 2, Math.min(map.width - body.w / 2, body.x));
 
   body.onGround = false;
   if (body.vy >= 0) {
-    for (const s of surfacesOf(map)) {
+    // Walking along the ground keeps your feet on it, up and down slopes and over small steps.
+    if (was?.ground) {
+      const piece = groundPieceAt(map, body.x);
+      const gy = piece.yAt(body.x);
+      if (Math.abs(gy - prevY) <= STICK) {
+        body.y = gy;
+        body.vy = 0;
+        body.onGround = true;
+        body.surface = piece;
+      }
+    }
+    for (const s of body.onGround ? [] : surfacesOf(map)) {
       if (!s.ground && body.dropTimer > 0) continue;
       if (body.x < s.x1 || body.x > s.x2) continue;
-      if (prevY <= s.y + 1 && body.y >= s.y) {
-        body.y = s.y;
+      const sy = s.yAt(body.x);
+      if (prevY <= sy + 1 && body.y >= sy) {
+        body.y = sy;
         body.vy = 0;
         body.onGround = true;
         body.surface = s;
         break;
       }
+    }
+  }
+  // The ground is solid all the way down: nothing ends up inside it.
+  if (!body.onGround && body.vy >= 0) {
+    const piece = groundPieceAt(map, body.x);
+    const gy = piece.yAt(body.x);
+    if (body.y > gy) {
+      body.y = gy;
+      body.vy = 0;
+      body.onGround = true;
+      body.surface = piece;
     }
   }
   if (!body.onGround) body.surface = null;

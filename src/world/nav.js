@@ -4,9 +4,10 @@
 // left/right/up/down/jump intents for physics.js. Party members use it to reach monsters
 // anywhere on a field map.
 
-import { surfacesOf, CLIMB_SPEED, WALK_SPEED } from './physics.js';
+import { surfacesOf, ropeTop, CLIMB_SPEED, WALK_SPEED } from './physics.js';
 
 const REACH_UP = 86; // how high a jump reliably lands (the full jump is ~100px)
+const JUMP_TOP = 104; // how high a jump goes, at most
 const REACH_SIDE = 44; // how wide a gap a running jump clears
 const INSET = 10; // keep landings this far inside a ledge's ends
 
@@ -16,18 +17,24 @@ const contains = (s, x) => x >= s.x1 && x <= s.x2;
 
 // The surface something standing at (x, y) is on, or the first one below it.
 export function surfaceBelow(nav, x, y) {
+  const best = firstBelow(nav, x, y);
+  return best < 0 ? nav.ground : best;
+}
+
+// The highest surface at x whose top is at or below y, or -1.
+function firstBelow(nav, x, y) {
   let best = -1;
   nav.surfaces.forEach((s, i) => {
-    if (contains(s, x) && s.y >= y - 3 && (best < 0 || s.y < nav.surfaces[best].y)) best = i;
+    if (contains(s, x) && s.yAt(x) >= y - 3 && (best < 0 || s.yAt(x) < nav.surfaces[best].yAt(x))) best = i;
   });
-  return best < 0 ? nav.ground : best;
+  return best;
 }
 
 // The surface a body is standing on (bodies get fresh surface objects each step, so match by
 // position), or -1 in the air or on a rope.
 export function surfaceOf(nav, body) {
   if (!body.onGround) return -1;
-  return nav.surfaces.findIndex((s) => Math.abs(s.y - body.y) < 1.5 && contains(s, body.x));
+  return nav.surfaces.findIndex((s) => contains(s, body.x) && Math.abs(s.yAt(body.x) - body.y) < 1.5);
 }
 
 export function navOf(map) {
@@ -40,38 +47,60 @@ export function navOf(map) {
   surfaces.forEach((a, i) => {
     surfaces.forEach((b, j) => {
       if (i === j) return;
-      // Jump up: straight up from under the ledge, or a running jump across a small gap.
-      if (b.y < a.y && a.y - b.y <= REACH_UP) {
-        const lo = Math.max(a.x1 + 4, b.x1 + INSET);
-        const hi = Math.min(a.x2 - 4, b.x2 - INSET);
-        if (lo <= hi) nav.edges[i].push({ to: j, kind: 'jump', lo, hi });
-        else if (b.x1 - a.x2 > 0 && b.x1 - a.x2 <= REACH_SIDE) nav.edges[i].push({ to: j, kind: 'jump', lo: a.x2 - 6, hi: a.x2 - 6, land: b.x1 + INSET + 6 });
-        else if (a.x1 - b.x2 > 0 && a.x1 - b.x2 <= REACH_SIDE) nav.edges[i].push({ to: j, kind: 'jump', lo: a.x1 + 6, hi: a.x1 + 6, land: b.x2 - INSET - 6 });
+      // Jump up: straight up from under the ledge (wherever it's in reach over this surface)...
+      const lo = Math.max(a.x1 + 4, b.x1 + INSET);
+      const hi = Math.min(a.x2 - 4, b.x2 - INSET);
+      // A jump only lands where nothing else is in the way: a ledge between the target and the
+      // top of the jump would catch you first.
+      const clear = (x, from) => !surfaces.some((c) => c !== a && c !== b && contains(c, x) && c.yAt(x) < b.yAt(x) && c.yAt(x) > from - JUMP_TOP);
+      if (lo <= hi) {
+        const ok = (x) => a.yAt(x) - b.yAt(x) > 0 && a.yAt(x) - b.yAt(x) <= REACH_UP && clear(x, a.yAt(x));
+        let run = null;
+        let best = null;
+        for (let x = lo; x <= hi + 0.01; x += Math.max(1, Math.min(8, hi - lo))) {
+          if (ok(x)) {
+            run = run ? { lo: run.lo, hi: x } : { lo: x, hi: x };
+            if (!best || run.hi - run.lo >= best.hi - best.lo) best = run;
+          } else run = null;
+          if (hi === lo) break;
+        }
+        if (best) nav.edges[i].push({ to: j, kind: 'jump', lo: best.lo, hi: best.hi });
+        return;
       }
+      // ...or a running jump across a small gap (or up a cliff wall from right below it).
+      const across = (from, to, dir) => {
+        const rise = a.yAt(from) - b.yAt(to);
+        if (rise > 0 && rise <= REACH_UP && clear(to + dir * 6, a.yAt(from))) nav.edges[i].push({ to: j, kind: 'jump', lo: from, hi: from, land: to + dir * 6 });
+      };
+      if (b.x1 >= a.x2 && b.x1 - a.x2 <= REACH_SIDE) across(a.x2 - 6, b.x1 + INSET, 1);
+      else if (a.x1 >= b.x2 && a.x1 - b.x2 <= REACH_SIDE) across(a.x1 + 6, b.x2 - INSET, -1);
     });
-    if (a.ground) return;
-    // Drop through the ledge onto whatever is right below, wherever that's this surface.
-    const drops = new Map();
-    for (let x = a.x1 + 6; x <= a.x2 - 6; x += 8) {
-      const j = below(x, a.y);
-      if (j === i) continue;
-      const r = drops.get(j);
-      if (r) r.hi = x;
-      else drops.set(j, { lo: x, hi: x });
+    // Drop through a ledge onto whatever is right below, wherever that's this surface.
+    if (!a.ground) {
+      const drops = new Map();
+      for (let x = a.x1 + 6; x <= a.x2 - 6; x += 8) {
+        const j = below(x, a.y);
+        if (j === i) continue;
+        const r = drops.get(j);
+        if (r) r.hi = x;
+        else drops.set(j, { lo: x, hi: x });
+      }
+      for (const [j, r] of drops) nav.edges[i].push({ to: j, kind: 'drop', lo: r.lo, hi: r.hi });
     }
-    for (const [j, r] of drops) nav.edges[i].push({ to: j, kind: 'drop', lo: r.lo, hi: r.hi });
-    // Walk off either end.
-    for (const x of [a.x1 - 8, a.x2 + 8]) {
+    // Walk off either end, onto whatever is below (not up a cliff wall).
+    for (const [x, from] of [[a.x1 - 8, a.x1], [a.x2 + 8, a.x2]]) {
       if (x < 12 || x > map.width - 12) continue;
-      nav.edges[i].push({ to: below(x, a.y), kind: 'walk', lo: x, hi: x });
+      const j = firstBelow(nav, x, a.yAt(from));
+      if (j >= 0 && j !== i) nav.edges[i].push({ to: j, kind: 'walk', lo: x, hi: x });
     }
   });
   for (const r of map.ropes) {
-    const bottom = nav.surfaces.findIndex((s) => Math.abs(s.y - r.bottom) < 2 && contains(s, r.x));
-    const top = nav.surfaces.findIndex((s) => Math.abs(s.y - r.top) < 2 && contains(s, r.x));
+    const bottom = nav.surfaces.findIndex((s) => contains(s, r.x) && Math.abs(s.yAt(r.x) - r.bottom) < 2);
+    const top = nav.surfaces.indexOf(ropeTop(map, r));
     if (bottom < 0 || top < 0) continue;
     nav.edges[bottom].push({ to: top, kind: 'ropeUp', lo: r.x, hi: r.x, rope: r });
-    nav.edges[top].push({ to: bottom, kind: 'ropeDown', lo: r.x, hi: r.x, rope: r });
+    const at = Math.max(nav.surfaces[top].x1 + 4, Math.min(nav.surfaces[top].x2 - 4, r.x));
+    nav.edges[top].push({ to: bottom, kind: 'ropeDown', lo: at, hi: at, rope: r });
   }
   cache.set(map, nav);
   return nav;
