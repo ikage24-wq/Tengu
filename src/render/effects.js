@@ -177,6 +177,50 @@ function crack(ctx, f, x, y, p) {
   ctx.restore();
 }
 
+// A four-point throwing star around the origin: plum-outlined steel blades, each with a lit half,
+// and a hole in the middle. Without an outline it's a flat silhouette (for afterimages).
+function shuriken(ctx, r, body, lit, ink) {
+  const pt = (k, d, off = 0) => {
+    const a = (k * Math.PI) / 2 - Math.PI / 2 + off;
+    return [Math.cos(a) * d, Math.sin(a) * d];
+  };
+  ctx.beginPath();
+  for (let k = 0; k < 4; k++) {
+    const p = [pt(k, r), pt(k, r * 0.5, 0.4), pt(k, r * 0.3, Math.PI / 4)];
+    p.forEach(([px, py], i) => (k || i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+  }
+  ctx.closePath();
+  if (ink) {
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+  ctx.fillStyle = body;
+  ctx.fill();
+  if (!ink) return;
+  // The lit half of each blade.
+  ctx.fillStyle = lit;
+  for (let k = 0; k < 4; k++) {
+    const [tx, ty] = pt(k, r - 0.8);
+    const [ix, iy] = pt(k, r * 0.3, -Math.PI / 4);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(tx, ty);
+    ctx.lineTo(ix, iy);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.fillStyle = '#8a92a3';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = ink;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function drawShot(ctx, f, cam) {
   const p = Math.max(0, Math.min(1, f.t / f.dur));
   if (f.t < 0) return;
@@ -218,12 +262,30 @@ function drawShot(ctx, f, cam) {
       ctx.fillRect(-15, 1, 4, 2);
       break;
     }
-    case 'star':
+    case 'star': {
+      // A spinning shuriken with a faint trail of its own afterimage.
+      const trail = f.element ? c : '#dfe6ff';
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = trail;
+      ctx.beginPath();
+      ctx.moveTo(x - dir * 22, y);
+      ctx.lineTo(x - dir * 2, y - 3.5);
+      ctx.lineTo(x - dir * 2, y + 3.5);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      for (const [k, a] of [[2, 0.22], [1, 0.45]]) {
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.translate(x - dir * k * 5, y);
+        ctx.rotate((f.t - k * 0.02) * 20);
+        shuriken(ctx, 6.5, trail, trail, null);
+        ctx.restore();
+      }
       ctx.translate(x, y);
       ctx.rotate(f.t * 20);
-      sparkle(ctx, 0, 0, 6, c);
-      sparkle(ctx, 0, 0, 3, '#ffffff');
+      shuriken(ctx, 7, '#b9c0cc', '#eef2f7', '#3a2d4f');
       break;
+    }
     case 'bolt': case 'holy': case 'fire': case 'bomb': {
       const r = f.shot === 'fire' ? 7 : 6;
       const g = ctx.createRadialGradient(x, y, 1, x, y, r * 2.2);

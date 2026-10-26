@@ -95,7 +95,7 @@ test('old saves lose weapons that no longer exist instead of breaking', () => {
 });
 
 test('every weapon type has a weapon every 5 levels and every endgame design, each with art and an icon', () => {
-  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet']) {
     const ids = WEAPON_LEVELS.map((L) => `${type}_${L}`).concat(ENDGAME_THEMES.map((th) => (type === 'staff' && th === 'holy' ? 'seraphim_staff' : `${type}_${th}`)));
     let last = 0;
     for (const id of ids) {
@@ -117,7 +117,7 @@ test('every weapon type has a weapon every 5 levels and every endgame design, ea
 
 test('better weapons animate more', () => {
   const live = (type, tier, theme = null) => Boolean(weaponShapes(type, tier, 0, theme).live);
-  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw']) {
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet']) {
     assert.equal(live(type, 0), false, `${type} tier 0 is still`);
     assert.equal(weaponFrames(type, 0), 1, `${type} tier 0 has one frame`);
     assert.ok(weaponFrames(type, 5) > weaponFrames(type, 4), `${type} gems shine from Silver`);
@@ -129,7 +129,7 @@ test('better weapons animate more', () => {
 
 test('every weapon tier looks different, and variants recolor progression weapons only', () => {
   const art = (type, tier, theme = null, variant = null) => JSON.stringify(weaponShapes(type, tier, 0, theme, variant).shapes);
-  for (const type of ['sword', 'bow', 'staff', 'claw']) {
+  for (const type of ['sword', 'bow', 'staff', 'gauntlet']) {
     assert.equal(new Set(WEAPON_LEVELS.map((_, t) => art(type, t))).size, WEAPON_LEVELS.length, `${type} has a look per tier`);
     assert.ok(weaponShapes(type, 20).w * weaponShapes(type, 20).h > weaponShapes(type, 1).w * weaponShapes(type, 1).h, `${type} grows`);
     for (const v of ['dark', 'white', 'crimson', 'azure', 'gilded']) {
@@ -138,4 +138,15 @@ test('every weapon tier looks different, and variants recolor progression weapon
       assert.equal(art(type, 21, 'bone', v), art(type, 21, 'bone'), `${type} themes ignore ${v}`);
     }
   }
+});
+
+test('old saves turn their claws into the gauntlets that replaced them', async () => {
+  const { dropRetiredItems } = await import('../src/core/save.js');
+  const { createCharacter } = await import('../src/core/character.js');
+  const c = createCharacter('Old', {});
+  c.equipment.weapon = { uid: 1, id: 'claw_20' };
+  c.inventory.equip.push({ uid: 2, id: 'claw_cyber' }, { uid: 3, id: 'claw_2' });
+  dropRetiredItems(c);
+  assert.equal(c.equipment.weapon.id, 'gauntlet_20');
+  assert.deepEqual(c.inventory.equip.map((e) => e.id), ['gauntlet_cyber', 'gauntlet_20']);
 });

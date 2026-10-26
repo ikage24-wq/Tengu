@@ -7,7 +7,8 @@
 //           shroud with a chest guard and an obi · 15-19 shadow shroud with a high collar and runes
 //   bottom  pants with shin wraps, a belt flap from 5, hakama from 10 (zigzag and glowing at 15)
 //   shoes   split-toe tabi, then wrapped tabi boots, then plated steps with spiked heels
-//   gloves  bandage wraps, fingerless gloves with bracers, then claws (glowing at 15)
+//   gloves  bandage wraps, fingerless gloves with bracers, then armored gloves with knuckle
+//           studs (glowing, with a star emblem and a bracer fin, at 15)
 //   cape    a long scarf that streams behind with sway: one tail, then two, then three
 //           tattered, glowing tails
 // The thief is the one family whose masks cover the mouth and nose (never the eyes).
@@ -397,16 +398,18 @@ function hand(t, p, hx, hy, ex, ey) {
     // Fingerless gloves and a bracer with a trim band.
     return [cuff(0.8, 4, 3.8, p.dark), F(limb(...back(2.2), ...back(2.9), 3.9, 3.9, p.trim)), E(hx, hy, 1.9, 1.9, p.dark), F(E(hx, hy + 1, 1.2, 0.7, '#fff0e6'))];
   }
-  // Claws: three blades from the knuckles along the forearm's line, then a guard with a gem.
-  const claw = (off, len) => {
-    const bx = hx + dx * 1.2 - dy * off;
-    const by = hy + dy * 1.2 + dx * off;
-    return T([[bx - dy * 0.5, by + dx * 0.5], [bx + dx * len, by + dy * len], [bx + dy * 0.5, by - dx * 0.5]], t >= 15 ? p.accent : p.trim);
-  };
-  const len = t >= 15 ? 5 : 4;
-  const out = [claw(-1.2, len * 0.85), claw(0, len), claw(1.2, len * 0.85)];
-  out.push(cuff(0.8, 4.4, 4.2, p.deep), F(limb(...back(1.4), ...back(2), 4.3, 4.3, p.trim)), E(hx, hy, 2, 2, p.dark), F(E(...back(3.2), 0.7, 0.7, p.accent)));
-  if (t >= 15) out.push(T([[...back(2)], [back(4.6)[0] + dy * 2.6, back(4.6)[1] - dx * 2.6], [...back(4.2)]], p.deep));
+  // Armored gloves: plates over the back of the hand, a row of knuckle studs, and a bracer with
+  // a gem; from 15 the studs glow, a star emblem replaces the gem, and a fin sweeps off the bracer.
+  const glow = t >= 15;
+  const out = [cuff(0.8, 4.4, 4.2, p.deep), F(limb(...back(1.4), ...back(2), 4.3, 4.3, p.trim)), E(hx, hy, 2, 2, p.dark)];
+  out.push(F(limb(hx - dy * 1.5, hy + dx * 1.5, hx + dy * 1.5, hy - dx * 1.5, 1.1, 1.1, p.trim)));
+  for (const off of [-1.3, 0, 1.3]) out.push(F(E(hx + dx * 1.1 - dy * off, hy + dy * 1.1 + dx * off, 0.55, 0.55, glow ? p.accent : p.trimDark)));
+  const [sx, sy] = back(3.2);
+  if (glow) {
+    const k = 1.4;
+    out.push(T([[...back(2)], [back(4.6)[0] + dy * 2.6, back(4.6)[1] - dx * 2.6], [...back(4.2)]], p.deep));
+    out.push(F(T([[sx, sy - k], [sx + 0.35, sy - 0.35], [sx + k, sy], [sx + 0.35, sy + 0.35], [sx, sy + k], [sx - 0.35, sy + 0.35], [sx - k, sy], [sx - 0.35, sy - 0.35]], p.accent)));
+  } else out.push(F(E(sx, sy, 0.7, 0.7, p.accent)));
   return out;
 }
 

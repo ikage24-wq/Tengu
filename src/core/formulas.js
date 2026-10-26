@@ -15,7 +15,7 @@ export const WEAPON_TYPES = {
   bow: { mult: 2.4, primary: 'dex', secondary: ['str'], ranged: true },
   crossbow: { mult: 2.6, primary: 'dex', secondary: ['str'], ranged: true },
   dagger: { mult: 1.6, primary: 'luk', secondary: ['str', 'dex'], ranged: false },
-  claw: { mult: 2.4, primary: 'luk', secondary: ['str', 'dex'], ranged: true },
+  gauntlet: { mult: 2.4, primary: 'luk', secondary: ['str', 'dex'], ranged: true },
 };
 
 export const BASE_CRIT_RATE = 0.05;

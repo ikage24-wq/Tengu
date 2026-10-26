@@ -16,7 +16,7 @@ export const JOBS = {
   novice: {
     id: 'novice', name: 'Novice', family: 'beginner', tier: 0, parent: null,
     hp: 16, mp: 12, advanceHp: 0, advanceMp: 0,
-    weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'],
+    weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'],
     blurb: 'Everyone starts here. Train up to level 10, then pick a path.',
   },
 
@@ -37,8 +37,8 @@ export const JOBS = {
   },
   thief: {
     id: 'thief', name: 'Thief', family: 'thief', tier: 1, parent: 'novice', level: 10,
-    hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'claw'],
-    blurb: 'Quick hits with LUK. Daggers up close or claws at range.',
+    hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
+    blurb: 'Quick hits with LUK. Daggers up close, or a gauntlet that hurls throwing stars at range.',
   },
 
   ilwizard: {
@@ -76,7 +76,7 @@ export const JOBS = {
   gamemaster: {
     id: 'gamemaster', name: 'Game Master', family: 'gm', tier: 9, parent: null, hidden: true,
     hp: 60, mp: 60, advanceHp: 5000, advanceMp: 5000,
-    weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'claw'],
+    weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'],
     blurb: 'Keeper of Tengu Island. Uses anything, goes anywhere.',
   },
 };

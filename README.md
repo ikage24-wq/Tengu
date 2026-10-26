@@ -87,8 +87,8 @@ to clear it.
   as the blade cuts, you step into every swing, and the smear follows the blade's real path (blue
   cuts, gold heavy blows). Light hits barely push; finishers knock monsters away or launch them
   into the air, and hits keep them up there for a juggle. Heavy blows hit-stop, shake the screen,
-  and crack the ground. Party members swing through the same combos. Bows, crossbows, and throwing
-  stars chain too: two snap shots and then a heavy piercing arrow (or bolt) that tears through the
+  and crack the ground. Party members swing through the same combos. Bows, crossbows, and the
+  thief's star-throwing gauntlets chain too: two snap shots and then a heavy piercing arrow (or bolt) that tears through the
   whole line, or two throws and a three-star barrage. Arrows leave on the string's snap, fly to
   their target pointed along their path, and hit when they arrive; you hop back a little with each
   shot.
@@ -153,7 +153,7 @@ to clear it.
   All / Gear / Arms / Other filters), and weapons you can use. Half of all gear drops are for
   your job, and quest gear rewards come as your job's piece. Other players wear their own job's
   sets, often in a matching color, and the job instructors show off their Lv 50 sets.
-- **Weapons** — every type (sword, axe, spear, wand, staff, bow, crossbow, dagger, claw) has a
+- **Weapons** — every type (sword, axe, spear, wand, staff, bow, crossbow, dagger, gauntlet) has a
   weapon every 5 levels: a wood or stone trainer, then Copper, Bronze, Iron, Steel, Silver,
   Mithril, Cobalt, Crystal, Runic, Starsteel, Moonsilver, Sunforged, Dragonbone, Obsidian,
   Adamant, Phoenix, Abyssal, Astral, Celestial, and Genesis (Lv 100). They grow every four
@@ -208,7 +208,7 @@ to clear it.
   telegraphs a ground slam.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
-  dagger toss, claw jab). Advanced jobs get a quiet aura that fades in while idle: a soft glow at
+  dagger toss, gauntlet flick). Advanced jobs get a quiet aura that fades in while idle: a soft glow at
   the feet in the job's color with a few drifting snowflakes, embers, or sparkles, plus a slowly
   turning rune ring for the Archmages (crackling with lightning for Stormfrost, ringed with
   dancing flames for Venomflame) and a halo and angel wings for the Bishop. Elowen shows off the Bishop

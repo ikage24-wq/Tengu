@@ -1046,11 +1046,11 @@ function weaponIdle(type, t) {
       const air = p > 0.6 ? (p - 0.6) / 0.4 : 0;
       return { arm: [0, -2 * bump(p, 0.55, 1)], angle: 25 + Math.sin(t * 2) * 5 + air * 720, toss: Math.sin(air * Math.PI) * 18 };
     }
-    case 'claw': {
-      // Flexes the claws, with a quick jab every few seconds.
+    case 'gauntlet': {
+      // Flexes the gauntlet, with a quick wrist-flick practice throw every few seconds.
       const p = at(3.5);
-      const jab = bump(p, 0.78, 0.9);
-      return { arm: [4 * jab, -1.5 * jab], angle: 100 + Math.sin(t * 6) * 6 - 15 * jab };
+      const flick = bump(p, 0.78, 0.9);
+      return { arm: [4 * flick, -2 * flick], angle: 70 + Math.sin(t * 4) * 5 - 25 * flick };
     }
     default:
       return null;
@@ -1151,9 +1151,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const armDx = rig.tx;
   const armDy = bodyY;
 
-  const restAngle = { crossbow: 55, claw: 100 }[g.weapon?.type] ?? 25;
+  const restAngle = { crossbow: 55, gauntlet: 70 }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
-  const guard = state.ready && pose === 'idle' ? { crossbow: 80, claw: 110, bow: 20 }[g.weapon?.type] ?? 62 : null;
+  const guard = state.ready && pose === 'idle' ? { crossbow: 80, gauntlet: 95, bow: 20 }[g.weapon?.type] ?? 62 : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.

@@ -214,7 +214,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'claw_20', 'startoss'], ['warrior', 'sword_20', 'powerslash']]) {
+  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'startoss'], ['warrior', 'sword_20', 'powerslash']]) {
     const w = arena(weapon);
     w.char.job = job;
     w.char.skills[skill] = 10;

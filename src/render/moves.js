@@ -376,7 +376,7 @@ const COMBOS = {
   axe: ['slash', 'slash2', 'overhead'],
   spear: ['thrust', 'slash2', 'thrust'],
   dagger: ['thrust', 'slash', 'thrust'],
-  claw: ['throw', 'throw'],
+  gauntlet: ['throw', 'throw'],
   bow: ['draw'],
   crossbow: ['draw'],
   wand: ['castforward'],
@@ -395,7 +395,7 @@ export function defaultMove(type, weaponType, params) {
   if (type === 'heal') return 'pray';
   if (type === 'magic') return params?.projectile ? 'castforward' : params?.range?.around ? 'castup' : 'castforward';
   if (weaponType === 'bow' || weaponType === 'crossbow') return 'draw';
-  if (weaponType === 'claw') return 'throw';
+  if (weaponType === 'gauntlet') return 'throw';
   if (weaponType === 'spear') return 'thrust';
   return 'slash';
 }

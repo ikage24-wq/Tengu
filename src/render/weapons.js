@@ -64,7 +64,7 @@ const ICONS = {
   staff: (c) => [T([[2, 15], [8, 8], [9, 9], [3, 16]], c.handle), E(11, 5, 4, 4, c.trim), E(11, 5, 2.6, 2.6, c.main), P(10, 4, c.accent)],
   bow: (c) => [T([[2, 2], [7, 3], [11, 7], [13, 12], [14, 14], [12, 13], [10, 9], [6, 5]], c.handle), T([[2, 2], [3, 2], [14, 13], [14, 14]], '#fff6fb'), R(9, 7, 2, 2, c.grip), P(8, 4, c.accent)],
   crossbow: (c) => [R(1, 7, 10, 3, c.handle), R(12, 2, 2, 12, c.trim), R(6, 8, 6, 1, c.dark), R(3, 10, 3, 3, c.handle), P(14, 8, c.accent)],
-  claw: (c) => [R(3, 9, 8, 6, c.trim), T([[4, 9], [4, 3], [6, 9]], c.main), T([[7, 9], [8, 1], [9, 9]], c.main), T([[10, 9], [12, 3], [11, 9]], c.main), P(7, 12, c.accent)],
+  gauntlet: (c) => [T([[1, 12], [4, 9], [8, 13], [5, 16]], c.trim), T([[2, 11], [3, 10], [7, 14], [6, 15]], c.dark), T([[4, 9], [6, 7], [10, 11], [8, 13]], c.handle), T([[5, 7], [7, 5], [11, 9], [9, 11]], c.trim), P(7, 5, c.dark), P(9, 7, c.dark), R(12, 0, 1, 7, c.main), R(9, 3, 7, 1, c.main), R(11, 2, 3, 3, c.main), F(P(12, 3, c.dark)), P(6, 12, c.accent)],
 };
 
 // A little mark for each theme so endgame icons stand out at a glance.

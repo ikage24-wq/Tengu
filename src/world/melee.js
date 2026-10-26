@@ -1,5 +1,5 @@
-// Combos. Basic attacks with a blade, axe, spear, dagger, bare fists, bow, crossbow, or throwing
-// stars chain into a combo (each step its own move, reach, and weight, ending in a heavy finisher),
+// Combos. Basic attacks with a blade, axe, spear, dagger, bare fists, bow, crossbow, or gauntlet
+// (throwing stars) chain into a combo (each step its own move, reach, and weight, ending in a heavy finisher),
 // and the warrior's and archer's skills are built the same way.
 //
 // A step is one move that plays for `dur` seconds, with one or more strikes landing at set moments
@@ -70,7 +70,7 @@ export const COMBOS = {
     { move: 'quickshot', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'arrow', pct: 105, range: 300, h: 56, knock: 50, speed: 820 }] },
     { move: 'aimshot', dur: 0.66, step: -12, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: 190, range: 340, h: 56, targets: 3, pierce: true, speed: 1000, knock: 240, big: true, stop: 0.07, shake: 3 }] },
   ],
-  claw: [
+  gauntlet: [
     { move: 'throw', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 270, h: 60, knock: 25 }] },
     { move: 'throw', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 90, range: 270, h: 60, knock: 25 }] },
     { move: 'barrage', dur: 0.56, step: -6, finisher: true, strikes: [0.2, 0.5, 0.8].map((at) => ({ at, shot: 'star', pct: 70, range: 280, h: 70, knock: 60, fan: 1 })) },

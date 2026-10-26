@@ -274,8 +274,8 @@ export const SKILLS = {
   }),
   startoss: skill({
     id: 'startoss', name: 'Star Toss', job: 'thief', type: 'attack', fx: 'star',
-    desc: 'Throw two stars at the nearest monster. Needs a claw.',
-    weapons: ['claw'],
+    desc: 'Throw two stars at the nearest monster. Needs a gauntlet.',
+    weapons: ['gauntlet'],
     at: (lv, m) => ({ mp: lerp(4, 12, lv, m), pct: lerp(65, 125, lv, m), hits: 2, targets: 1, range: { w: 290, h: 60 }, projectile: true }),
   }),
   haste: skill({

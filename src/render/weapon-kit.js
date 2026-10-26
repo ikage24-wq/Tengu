@@ -75,7 +75,7 @@ export const THEMES = {
   cyber: { blade: '#2a2738', bladeDark: '#1a1824', edge: '#3bf0ff', trim: '#4a4660', trimDark: '#2e2b3d', handle: '#33304a', handleDark: '#211f30', grip: '#1a1824', gem: '#ff3bd4', neon: ['#3bf0ff', '#ff3bd4'] },
 };
 
-export const BEAMS = { sword: '#4fd8ff', axe: '#ff4f6b', spear: '#7dff6b', wand: '#ff6bf0', staff: '#b48cff', bow: '#5ff3ff', crossbow: '#ffcf4f', dagger: '#ff4f6b', claw: '#7dff6b' };
+export const BEAMS = { sword: '#4fd8ff', axe: '#ff4f6b', spear: '#7dff6b', wand: '#ff6bf0', staff: '#b48cff', bow: '#5ff3ff', crossbow: '#ffcf4f', dagger: '#ff4f6b', gauntlet: '#7dff6b' };
 
 // The look for a weapon: a progression tier (0-20), maybe recolored by a variant, or an endgame
 // theme (themes ignore variants).

@@ -12,7 +12,7 @@ function add(def) {
 }
 
 // ---------- Weapons ----------
-// Every weapon type (sword, axe, spear, wand, staff, bow, crossbow, dagger, claw; see
+// Every weapon type (sword, axe, spear, wand, staff, bow, crossbow, dagger, gauntlet; see
 // core/formulas.js) comes in five progression tiers, `${type}_0` to `${type}_4`, and six endgame
 // designs, `${type}_${theme}`. A weapon item is an equip with slot 'weapon', a `weaponType`, a
 // `tier`, and for endgame ones a `theme`, which is also its `element`: the glow, footsteps, and
@@ -34,7 +34,7 @@ const WEAPON_LINES = {
   bow: { scale: 0.8, main: 'dex', names: ['Shortbow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Runic Bow'], themes: { holy: 'Wings of Dawn', demonic: 'Hellstring', bone: 'Ribcage Bow', laser: 'Photon Bow', chainsaw: 'Sawtooth Bow', cyber: 'Neon Arc' } },
   crossbow: { scale: 0.78, main: 'dex', names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Arbalest', 'Mithril Crossbow', 'Runic Arbalest'], themes: { holy: 'Judgment', demonic: 'Doombolt', bone: 'Marrow Repeater', laser: 'Railgun', chainsaw: 'Sawlauncher', cyber: 'Cyber Repeater' } },
   dagger: { scale: 0.98, main: 'luk', names: ['Wooden Knife', 'Iron Dagger', 'Steel Dirk', 'Mithril Stiletto', 'Runic Kris'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
-  claw: { scale: 0.75, main: 'luk', names: ['Leather Claw', 'Iron Claw', 'Steel Talons', 'Mithril Talons', 'Runic Talons'], themes: { holy: 'Seraph Talons', demonic: 'Demon Grip', bone: 'Grave Hand', laser: 'Photon Claws', chainsaw: 'Shred Claws', cyber: 'Neon Talons' } },
+  gauntlet: { scale: 0.75, main: 'luk', names: ['Leather Gauntlet', 'Iron Gauntlet', 'Steel Gauntlet', 'Mithril Gauntlet', 'Runic Gauntlet'], themes: { holy: 'Seraph Gauntlet', demonic: 'Hellfist', bone: 'Grave Gauntlet', laser: 'Photon Gauntlet', chainsaw: 'Buzzsaw Gauntlet', cyber: 'Neon Gauntlet' } },
 };
 
 // Progression weapons come every 5 levels: a level-0 training weapon (`${type}_0`) and then one
@@ -55,7 +55,7 @@ const WEAPON_NOUNS = {
   bow: ['Shortbow', 'Bow', 'Recurve', 'Longbow', 'Warbow'],
   crossbow: ['Crossbow', 'Arbalest', 'Repeater', 'Heavy Arbalest', 'Siegebow'],
   dagger: ['Knife', 'Dagger', 'Dirk', 'Stiletto', 'Kris'],
-  claw: ['Claw', 'Talons', 'Rippers', 'Razorclaws', 'Fangs'],
+  gauntlet: ['Gauntlet', 'Bracer', 'Starfist', 'Vambrace', 'Starcaster'],
 };
 // Colors along the ladder (the training weapon first), used for names, trails, and drops.
 const WEAPON_COLORS = [
@@ -78,7 +78,7 @@ const THEME_BONUS = {
   cyber: (main) => ({ [main]: 10, speed: 8, eva: 10, jump: 4 }),
 };
 const THEME_COLORS = { holy: '#ffe36b', demonic: '#ff3b2b', bone: '#6bff9a', chainsaw: '#ffb03b', cyber: '#3bf0ff' };
-const LASER_COLORS = { sword: '#4fd8ff', axe: '#ff4f6b', spear: '#7dff6b', wand: '#ff6bf0', staff: '#b48cff', bow: '#5ff3ff', crossbow: '#ffcf4f', dagger: '#ff4f6b', claw: '#7dff6b' };
+const LASER_COLORS = { sword: '#4fd8ff', axe: '#ff4f6b', spear: '#7dff6b', wand: '#ff6bf0', staff: '#b48cff', bow: '#5ff3ff', crossbow: '#ffcf4f', dagger: '#ff4f6b', gauntlet: '#7dff6b' };
 
 export const ENDGAME_THEMES = ['holy', 'demonic', 'bone', 'laser', 'chainsaw', 'cyber'];
 
@@ -111,6 +111,9 @@ for (const [type, line] of Object.entries(WEAPON_LINES)) {
 // of the same level.
 export const RENAMED_ITEMS = {};
 for (const type of Object.keys(WEAPON_LINES)) for (const t of [1, 2, 3, 4]) RENAMED_ITEMS[`${type}_${t}`] = `${type}_${t * 10}`;
+// Claws became star-throwing gauntlets: every old claw is now the gauntlet in its place.
+for (const id of Object.keys(ITEMS)) if (id.startsWith('gauntlet_')) RENAMED_ITEMS[id.replace('gauntlet_', 'claw_')] = id;
+for (const t of [1, 2, 3, 4]) RENAMED_ITEMS[`claw_${t}`] = `gauntlet_${t * 10}`;
 
 export const WEAPON_IDS = Object.values(ITEMS).filter((d) => d.slot === 'weapon').map((d) => d.id);
 
@@ -196,7 +199,7 @@ export const JOB_SETS = {
   thief: {
     names: ['Pickpocket', 'Footpad', 'Cutpurse', 'Sneak', 'Nightstalker', 'Rogue', 'Phantom', 'Viper', 'Raven', 'Assassin',
       'Wraith', 'Nightblade', 'Shade', 'Duskfang', 'Umbral', 'Voidwalker', 'Specter', 'Oblivion', 'Nightmare', 'Shadow King'],
-    nouns: { hat: byTier(['Bandana', 'Hood', 'Mask', 'Visage']), top: byTier(['Garb', 'Garb', 'Shroud', 'Shroud']), bottom: byTier(['Pants', 'Pants', 'Hakama', 'Hakama']), shoes: byTier(['Tabi', 'Tabi', 'Steps', 'Steps']), gloves: byTier(['Wraps', 'Wraps', 'Claws', 'Claws']), cape: byTier(['Scarf', 'Scarf', 'Longscarf', 'Shadowscarf']) },
+    nouns: { hat: byTier(['Bandana', 'Hood', 'Mask', 'Visage']), top: byTier(['Garb', 'Garb', 'Shroud', 'Shroud']), bottom: byTier(['Pants', 'Pants', 'Hakama', 'Hakama']), shoes: byTier(['Tabi', 'Tabi', 'Steps', 'Steps']), gloves: byTier(['Wraps', 'Wraps', 'Bracers', 'Bracers']), cape: byTier(['Scarf', 'Scarf', 'Longscarf', 'Shadowscarf']) },
     colors: ['#8a7a6a', '#6a6a7a', '#5a5a6f', '#4a4a62', '#3b3a5a', '#5a3a4a', '#6a5a9a', '#2f6a4a', '#2a2a3a', '#7a1f2f',
       '#5f6f8a', '#1f2a4a', '#4a3f6a', '#6a2f2a', '#2a1f3a', '#1a1a2a', '#cfd6e8', '#3a0f2a', '#160f1f', '#2a1a4a'],
   },

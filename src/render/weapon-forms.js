@@ -15,7 +15,7 @@ const flapAt = (f) => FLAP[f % 6];
 const SOUL = '#6bff9a';
 const HORN = '#4a2a35';
 
-// Common heads use stone instead of wood for axes, spears, and claws.
+// Common heads use stone instead of wood for axes, spears, and gauntlet stars.
 const headLook = (m) => (m.rank === 0 ? { ...m, ...STONE } : m);
 
 // A mirrored polygon: `half` lists the right side from top to bottom.
@@ -332,92 +332,185 @@ function bladed(m, f, d) {
 const SWORD = { k: 1, L: [22, 25, 28, 30, 33, 36], bw: [5, 5, 6, 6, 7, 7.5], gw: [10, 11, 13, 15, 15, 16], gl: 6 };
 const DAGGER = { k: 0.7, L: [11, 12, 13, 14, 15, 17], bw: [3.6, 3.6, 4, 4.4, 4.6, 5], gw: [7, 7, 8, 9, 9, 10], gl: 4 };
 
-// ---------- Claws ----------
+// ---------- Gauntlets ----------
+//
+// A throwing gauntlet worn on the hand: a bracer over the wrist and forearm (toward +y, behind the
+// grip), plates over the knuckles, and a shuriken held ready at the fingertips (toward -y). Ranks
+// grow from a leather wrap with a plain stone star to plated steel, then flared, gem-set bracers
+// with spare stars slotted in a holster on the side, and a bigger, runic, glowing star.
 
-function claw(m0, f) {
+// A four-point throwing star at (x, y), radius `r`, turned by `ang`: blades with one curved
+// trailing edge (a pinwheel), the lit half of each blade in `lit`, and a hub with a hole.
+function shuriken(x, y, r, ang, c, lit, hub, hole = true) {
+  const at = (a, d) => [x + Math.cos(a) * d, y + Math.sin(a) * d];
+  const outline = [];
+  const facets = [];
+  for (let k = 0; k < 4; k++) {
+    const a = ang - Math.PI / 2 + (k * Math.PI) / 2;
+    outline.push(at(a, r), at(a + 0.38, r * 0.52), at(a + Math.PI / 4, r * 0.3));
+    facets.push(T([[x, y], at(a, r - 0.4), at(a - Math.PI / 4, r * 0.3)], lit));
+  }
+  const out = [T(outline, c), ...facets];
+  if (hub) out.push(E(x, y, Math.max(1.2, r * 0.3), Math.max(1.2, r * 0.3), hub));
+  if (hole) out.push(E(x, y, Math.max(0.6, r * 0.12), Math.max(0.6, r * 0.12), 'none'));
+  return out;
+}
+
+// The tips of a star as `shuriken` draws it, for live effects.
+function starTips(x, y, r, ang) {
+  return [0, 1, 2, 3].map((k) => {
+    const a = ang - Math.PI / 2 + (k * Math.PI) / 2;
+    return [x + Math.cos(a) * r, y + Math.sin(a) * r];
+  });
+}
+
+const IVORY_GLOVE = '#f3ead8';
+
+function gauntlet(m0, f) {
   const m = headLook(m0);
   const r = m.rank;
   const th = m.theme;
-  const L = [11, 12, 13, 14, 15, 16][r];
   const s = [];
-  const a = { tip: [0, -5 - L], head: [0, -5 - L * 0.5], blade: [-5 - L, -5] };
   const reach = [];
-  const glove = r === 0 ? m0.handle : th ? m.trim : r === 1 ? m.trimDark : m.handleDark;
-  const orn = th ? null : motif(m, f, { emblem: [0, -0.5], crown: [0, -5.5], top: [0, -10 - L], orbit: [0, -5 - L * 0.55], guard: [0, -3, 4.5, [-1, 1]] }, 8, a);
+  // The held star spins a quarter turn over the weapon's animation.
+  const frames = th || m.tier >= 9 ? 6 : m.tier >= 5 ? 4 : 1;
+  const spin = ((f % frames) / frames) * (Math.PI / 2);
+  const SR = [4.4, 4.8, 5.2, 5.6, 6, 6.5][r];
+  const sy = -7.2 - SR;
+  const top = sy - SR;
+  const a = { tip: [0, top], head: [0, sy], blade: [top, -4] };
+  // The bracer, from the wrist back along the forearm, flaring a little toward the elbow.
+  const by = 2.2;
+  const be = by + [3.2, 3.6, 4, 4.4, 4.8, 5.2][r];
+  const bw0 = r === 0 ? 3.4 : 3.6;
+  const bw1 = r === 0 ? 3.8 : 4.1 + (r >= 4 ? 0.3 : 0);
+
+  let plate, band, knuck, ridge;
+  if (th === 'holy') [plate, band, knuck, ridge] = [m.blade, m.trim, m.trim, m.trimDark];
+  else if (th === 'demonic') [plate, band, knuck, ridge] = [m.handle, m.trim, m.trim, m.trimDark];
+  else if (th === 'bone') [plate, band, knuck, ridge] = [m.handleDark, m.handle, m.blade, m.bladeDark];
+  else if (th === 'laser') [plate, band, knuck, ridge] = [m.trim, m.trimDark, m.trim, m.trimDark];
+  else if (th === 'chainsaw') [plate, band, knuck, ridge] = [m.handle, m.trim, m.trim, m.trimDark];
+  else if (th === 'cyber') [plate, band, knuck, ridge] = [m.handle, m.trim, m.trim, m.trimDark];
+  else if (r === 0) [plate, band, knuck, ridge] = [m0.handle, m0.grip, m0.handleDark, m0.trimDark];
+  else if (r === 1) [plate, band, knuck, ridge] = [m.handleDark, m.trim, m.trim, m.trimDark];
+  else [plate, band, knuck, ridge] = [m.trim, m.trimDark, m.trim, m.trimDark];
+
+  const orn = th ? null : motif(m, f, { emblem: [0, (by + be) / 2], crown: [0, -6], top: [0, top - 4], orbit: [0, sy], guard: [0, by + 1.5, bw0, [-1, 1]], flank: [0, by + 3, bw0, [-1, 1]] }, 8, a);
   if (orn) s.push(...orn.back);
-  if (!th && m.spikes) for (const sd of [-1, 1]) s.push(T([[sd * 5, -5], [sd * (7.5 + r * 0.3), -8 - r * 0.4], [sd * 5, -1.5]], m.trim));
-  if (th === 'chainsaw') {
-    s.push(...sawDisc(1, -12, 7, f, 6, m));
-    s.push(R(-1, -7, 4, 3, m.handleDark));
-    a.sparks = [[1, -20], [8, -12]];
-    a.exhaust = [-5, -4];
-    a.tip = [1, -21];
-    a.head = [1, -12];
-    a.blade = [-20, -5];
+
+  // Spare stars slotted in a holster on the bracer's side (rank 3 up), behind the plate.
+  if (!th && r >= 3) {
+    const n = r >= 4 ? 2 : 1;
+    for (let i = 0; i < n; i++) s.push(...shuriken(-bw1 - 1, by + 1.4 + i * 3.4, 2.4, 0.35, m.blade, m.edge, null, false));
   }
-  // The three talons.
-  [-3.3, 0, 3.3].forEach((x, i) => {
-    if (th === 'chainsaw') return;
-    const l = L * (i === 1 ? 1 : 0.86);
-    const cv = l * (th === 'demonic' ? 0.32 : 0.2);
-    const y0 = -5;
-    if (th === 'laser') {
-      s.push(R(x - 1, y0 - 2, 2, 2, m.trim), F(R(x - 0.6, y0 - 2.4, 1.2, 0.5, m.beam)));
-      (a.beams ??= []).push({ pts: [[x, y0 - 2.5], [x + cv * 0.2, y0 - l * 0.55], [x + cv, y0 - l]], w: 1.1 });
-      reach.push([x + cv, y0 - l - 1]);
-      return;
-    }
-    if (th === 'bone') {
-      for (let j = 0; j < 3; j++) {
-        const yy = y0 - 2 - j * (l / 3.4);
-        s.push(E(x + cv * (j / 3) * 0.6, yy, 1.4 - j * 0.15, l / 7.5, m.blade), F(P(x + cv * (j / 3) * 0.6 - 0.5, yy + l / 7.5 - 0.6, m.bladeDark)));
-      }
-      s.push(T([[x - 0.8 + cv * 0.6, y0 - l * 0.85], [x + cv, y0 - l], [x + 0.9 + cv * 0.6, y0 - l * 0.8]], m.edge));
-      return;
-    }
-    const pts = [[x - 1.3, y0], [x - 1.2, y0 - l * 0.5], [x + cv, y0 - l], [x + 1.3, y0 - l * 0.55], [x + 1.3, y0]];
-    s.push(T(pts, th === 'holy' ? WHITE : m.blade));
-    if (th === 'holy') s.push(F(R(x - 0.2, y0 - l * 0.7, 0.6, l * 0.65, GOLD)), T([[x - 1.2, y0 - l * 0.3], [x - 2.4, y0 - l * 0.45], [x - 1.2, y0 - l * 0.5]], '#e8eeff'));
-    else if (th === 'demonic') s.push(F(T([[x + cv, y0 - l], [x + 1.3, y0 - l * 0.55], [x + 1.3, y0 - 1], [x + 0.6, y0 - 1], [x + 0.6, y0 - l * 0.55]], m.hot)));
-    else if (th === 'cyber') s.push(neon(x + 0.4, y0 - l * 0.55, 0.8, l * 0.5, m.neon[(i + f) % 2]), T([[x + 0.4, y0 - l * 0.55], [x + cv, y0 - l], [x + 1.2, y0 - l * 0.55]], m.neon[0]));
-    else if (m.tier >= 4) s.push(T([[x + 0.3, y0 - l * 0.5], [x + cv, y0 - l + 0.5], [x + 1.2, y0 - l * 0.55], [x + 1.2, y0]], m.edge));
-    if (!th) s.push(...inlay(m, f, x - 1.2, x + 1.2, y0 - l * 0.6, y0, 1, x));
-    if (m.rune) s.push(F(P(x - 0.5, y0 - l * 0.35 - ((f + i) % 3), m.rune)), F(P(x - 0.5, y0 - l * 0.2, m.runeDim)));
-  });
-  // The gauntlet over the knuckles.
-  s.push(R(-5.2, -5.5, 10.4, 9, glove));
-  if (th === 'bone') {
-    const sk = skull(0, -1.5, 2.8, SOUL, m.blade, m.trimDark);
-    s.push(R(-5.2, -5.5, 10.4, 1.6, m.handleDark), ...sk.shapes);
-    a.eyes = sk.eyes;
-  } else if (th === 'demonic') {
-    s.push(...[-3.3, 0, 3.3].map((x) => T([[x - 1, -5.5], [x, -8], [x + 1, -5.5]], m.trimDark)));
-    s.push(...demonEye(0, -1, 1.5));
-    a.eye = [0, -1, 1.5];
-    a.flames = [[-3.3, -9], [0, -11], [3.3, -9]];
-  } else if (th === 'holy') {
-    s.push(...wings(0, -3, 8, flapAt(f), [-1, 1], 4.5), R(-5.2, -5.5, 10.4, 1.8, m.trim), ...gem(0, -1, 1.5, m.gem, f));
-    s.push(...halo(0, -7 - L - 3, 3.6, 1.3));
-    a.halo = [0, -10 - L, 3.6, 1.3];
-    a.wings = [[-6, -2], [6, -2]];
+  // Fins along the bracer from Runic.
+  if (!th && m.spikes) for (const sd of r >= 4 ? [-1, 1] : [1]) s.push(T([[sd * bw0, by + 1], [sd * (bw1 + 2.2 + r * 0.2), by + 3.5], [sd * bw1, by + 5.5]], m.trim));
+
+  // Theme parts behind the gauntlet.
+  if (th === 'holy') {
+    s.push(...wings(0, by + 2.5, 6.5, flapAt(f), [-1], bw0 - 0.5));
+    a.wings = [[-bw0 - 4.5, by + 2.5]];
+  }
+  if (th === 'demonic') for (const sd of [-1, 1]) for (const y of [by + 2, by + 5.5]) s.push(T([[sd * bw0, y], [sd * (bw1 + 2.6), y + 0.6], [sd * bw1, y + 2.4]], m.trimDark));
+  if (th === 'chainsaw') s.push(R(-bw1 - 2, by + 2, 2.4, 4, m.handleDark), R(-bw1 - 3, by + 2.4, 1.4, 1.2, m.trimDark));
+
+  // The held star.
+  let st = [m.blade, m.edge, r === 0 ? m.bladeDark : m.rune ?? m.bladeDark];
+  if (th === 'holy') st = [WHITE, GOLD, m.trim];
+  else if (th === 'demonic') st = [m.blade, m.trimDark, m.trim];
+  else if (th === 'bone') st = [m.blade, m.edge, m.trimDark];
+  if (th === 'chainsaw') {
+    s.push(...sawDisc(0, sy, SR - 1, f, 6, m));
+    a.sparks = [[0, top - 1], [SR + 1, sy]];
+    a.tip = [0, top - 1.5];
   } else if (th === 'laser') {
-    s.push(R(-5.2, -5.5, 10.4, 1.5, m.trimDark), F(R(-3.5, -1, 7, 0.8, m.beam)));
-    a.emit = [0, -7];
-  } else if (th === 'chainsaw') {
-    s.push(...hazard(-5.2, -1, 10.4, 1.6), R(-7, -4, 2, 3, m.handleDark));
-  } else if (th === 'cyber') {
-    s.push(neon(-5.2, -2, 10.4, 0.8, m.neon[f % 2]), neon(-3.5, 1, 7, 0.6, m.neon[(f + 1) % 2]));
-    a.ring = [0, 0, 7, 2];
-    a.neon = [[[-5, -2], [5, -2]]];
+    // A projector pad; the star is hard light, drawn live.
+    s.push(R(-2.2, -7.6, 4.4, 1.6, m.trimDark), F(R(-1.4, -7.9, 2.8, 0.6, m.beam)));
+    const pts = [];
+    for (let k = 0; k < 4; k++) {
+      const ang = spin - Math.PI / 2 + (k * Math.PI) / 2;
+      pts.push([Math.cos(ang) * SR, sy + Math.sin(ang) * SR], [Math.cos(ang + Math.PI / 4) * SR * 0.32, sy + Math.sin(ang + Math.PI / 4) * SR * 0.32]);
+    }
+    a.beams = [{ pts, w: 0.45, fill: true }, { pts: [[0, -7.8], [0, sy + SR * 0.32]], w: 0.35 }];
+    a.emit = [0, -8];
+    for (const p of starTips(0, sy, SR + 1.5, spin)) reach.push(p);
   } else {
-    if (r >= 1) s.push(R(-5.2, -5.5, 10.4, 1.8, m.trim));
-    if (r === 0) for (let x = -4; x < 5; x += 2) s.push(F(P(x, -2, '#e6d2a8')));
-    if (r === 1) s.push(F(P(-4, -1, m.trim)), F(P(3, -1, m.trim)));
-    if (r >= 3) s.push(R(-5.2, 2, 10.4, 1.5, m.trim));
-    if (m.gems >= 1) s.push(...gem(0, -0.5, 1.5, gemOf(m, f), f));
-    if (m.gems >= 2) s.push(...gem(-3.4, 0, 0.9, gemOf(m, f, 1), f), ...gem(3.4, 0, 0.9, gemOf(m, f, 2), f));
-    if (m.rune) a.runes = [0, -5 - L, -5];
-    a.gem = [0, -0.5];
+    if (th === 'cyber') {
+      // A hologram: a flat neon star with a dark core, its colors trading places as it turns.
+      s.push(...shuriken(0, sy, SR, spin, m.neon[f % 2], m.neon[f % 2], null, false).map(F));
+      s.push(...shuriken(0, sy, SR - 1.6, spin, m.blade, m.bladeDark, m.neon[(f + 1) % 2]).map(F));
+      const tips = starTips(0, sy, SR, spin);
+      a.neon = [[...tips, tips[0]]];
+      a.ring = [0, sy, SR + 2, 1.6];
+    } else s.push(...shuriken(0, sy, SR, spin, st[0], st[1], st[2]));
+    if (th === 'demonic') {
+      for (const [x, y] of starTips(0, sy, SR - 1.5, spin)) s.push(F(E(x * 0.9, sy + (y - sy) * 0.9, 0.7, 0.7, m.hot)));
+      s.push(F(E(0, sy, 1, 1, m.ember)));
+      a.flames = starTips(0, sy, SR - 1, spin);
+    }
+    if (th === 'holy') s.push(...gem(0, sy, 1.2, m.gem, f));
+    if (!th && m.rune) {
+      // Runes cut into the blades, lit in turn.
+      starTips(0, sy, SR * 0.62, spin).forEach(([x, y], i) => s.push(F(P(x - 0.5, y - 0.5, (i + f) % 3 ? m.runeDim : m.rune))));
+    }
+    if (!th && m.gems >= 3) s.push(...gem(0, sy, 1, gemOf(m, f, 2), f));
+  }
+
+  // The bracer.
+  s.push(T([[-bw0, by], [bw0, by], [bw1, be], [-bw1, be]], plate));
+  if (th === 'bone') {
+    // Stacked bone plates.
+    for (let y = by + 0.3; y < be - 1; y += 2.4) s.push(E(0, y + 1.1, bw0 + 0.3, 1.2, m.blade), F(P(-bw0 + 1, y + 1, m.bladeDark)));
+  } else if (th === 'laser') {
+    s.push(R(-bw1, be - 1.6, bw1 * 2, 1.6, band), F(R(-bw0 + 1.2, by + 1.5, 0.8, be - by - 3.5, m.beam)), F(R(bw0 - 2, by + 1.5, 0.8, be - by - 3.5, m.beam)));
+  } else if (th === 'chainsaw') {
+    s.push(R(-bw1, be - 1.8, bw1 * 2, 1.8, band), ...hazard(-bw0, by + 1, bw0 * 2, 1.6));
+    a.exhaust = [-bw1 - 3, by + 2.4];
+  } else if (th === 'cyber') {
+    s.push(R(-bw1, be - 1.6, bw1 * 2, 1.6, band));
+    for (let i = 0; i < 3; i++) s.push(neon(-bw0 + 0.6, by + 1.2 + i * 2.2, bw0 * 2 - 1.2, 0.7, m.neon[(i + f) % 2]));
+  } else if (r === 0) {
+    // A leather wrap: crossing bands of cloth.
+    for (let y = by + 0.8; y < be - 1; y += 2.2) s.push(T([[-bw0, y + 1.2], [bw0, y], [bw0, y + 0.8], [-bw0, y + 2]], band));
+  } else {
+    s.push(R(-bw1, be - 1.6, bw1 * 2, 1.6, band));
+    if (r >= 2 || th) s.push(R(-bw0, by, bw0 * 2, 1.4, band));
+    if (r >= 2 && !th) s.push(F(R(-bw0 + 1, by + 2, 0.8, be - by - 4.2, m.edge)));
+    if (r >= 4 && !th) s.push(T([[-bw1, be - 1.6], [bw1, be - 1.6], [bw1 + 1.2, be + 0.6], [-bw1 - 1.2, be + 0.6]], m.trim));
+    if (r >= 3 && !th) s.push(F(P(-bw0 + 0.5, by + 0.2, GOLD)), F(P(bw0 - 1.5, by + 0.2, GOLD)), F(P(-bw1 + 0.6, be - 1.2, GOLD)), F(P(bw1 - 1.6, be - 1.2, GOLD)));
+  }
+  const gy = (by + be) / 2 + 0.3;
+  if (th === 'demonic') {
+    s.push(...demonEye(0, gy, 1.5));
+    a.eye = [0, gy, 1.5];
+  } else if (th === 'holy') {
+    s.push(R(-bw0, by, bw0 * 2, 1.4, band), R(-bw1, be - 1.6, bw1 * 2, 1.6, band), ...gem(0, gy, 1.4, m.gem, f));
+    s.push(...halo(0, top - 3, 3.6, 1.3));
+    a.halo = [0, top - 3, 3.6, 1.3];
+    a.gem = [0, gy];
+  } else if (!th) {
+    if (m.gems >= 1) s.push(E(0, gy, 2.1, 2.1, m.trimDark), ...gem(0, gy, 1.4, gemOf(m, f), f));
+    if (m.gems >= 2) s.push(...gem(-bw0 + 1.3, be - 2.8, 0.8, gemOf(m, f, 1), f), ...gem(bw0 - 1.3, be - 2.8, 0.8, gemOf(m, f, 1), f));
+    if (m.rune) {
+      for (const x of [-bw0 + 1.6, bw0 - 1.6]) s.push(...runes(x, by + 1.8, be - 1.6, f, m.rune, m.runeDim, 4));
+      a.runes = [0, by + 1, be];
+    }
+    a.gem = [0, m.gems >= 1 ? gy : sy];
+  }
+
+  // The glove and the plates over the knuckles.
+  const glove = th === 'holy' ? IVORY_GLOVE : th === 'laser' ? m.handleDark : th ? m.handleDark : r === 0 ? m0.handleDark : m.handleDark;
+  s.push(R(-2.8, -3, 5.6, 5.6, glove), E(3.2, -2.4, 1.3, 1.6, glove));
+  s.push(T([[-4.4, -6.2], [4.4, -6.2], [4.6, -3.4], [3.8, -2.4], [-3.8, -2.4], [-4.6, -3.4]], knuck));
+  if (th === 'bone') {
+    const sk = skull(0, -4.6, 2.5, SOUL, m.blade, m.trimDark);
+    s.push(...sk.shapes);
+    a.eyes = sk.eyes;
+  } else {
+    for (const x of [-3.3, -1.1, 1.1, 3.3]) s.push(E(x, -6.2, 1.15, 0.9, knuck), F(P(x - 0.5, -6.8, r === 0 && !th ? m0.trim : th === 'cyber' ? m.neon[0] : th === 'laser' ? m.beam : m.edge)));
+    s.push(F(R(-4.2, -3.4, 8.4, 0.6, ridge)));
+    if (th === 'demonic') for (const x of [-3.3, 0, 3.3]) s.push(T([[x - 0.9, -6.6], [x, -8.8], [x + 0.9, -6.6]], m.trimDark));
   }
   if (orn) s.push(...orn.front);
   return { shapes: s, blade: a.blade, reach, a };
@@ -1059,7 +1152,7 @@ function crossbow(m0, f) {
 export const FORMS = {
   sword: (m, f) => bladed(m, f, SWORD),
   dagger: (m, f) => bladed(m, f, DAGGER),
-  claw,
+  gauntlet,
   axe,
   spear,
   wand,

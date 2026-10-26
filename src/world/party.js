@@ -144,7 +144,7 @@ function weaponStyle(bot) {
   const type = bot.stats.weaponType;
   const mage = JOBS[bot.char.job].family === 'mage';
   if (mage) return { reach: 170, lift: 100, pose: 'castforward', shot: 'bolt', magic: true, ranged: true };
-  if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'claw' ? 'throw' : 'draw', shot: type === 'claw' ? 'star' : 'arrow', ranged: true };
+  if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
   return { reach: 42, lift: 30, pose: type === 'spear' ? 'thrust' : pick2(['slash', 'slash2']), shot: null, ranged: false };
 }
 function pick2(list) {
