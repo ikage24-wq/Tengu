@@ -335,6 +335,30 @@ export const MOVES = {
     return MOVES.plunge((p - 0.6) / 0.4);
   },
 
+  // A shield shove: brace low behind the guard, then drive forward shoulder and hilt first (the
+  // shield of light flares at the front of it), and settle back.
+  bash(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(25, 70, t), arm: lerp(60, 75, t), tilt: -0.1 * t, lunge: -3 * t, rig: (r) => { r.squat = t > 0.5 ? 2 : 1; wideLegs(r); r.backArm = [3, -2]; r.tx = -1; } };
+    }
+    const t = ease(seg(p, 0.3, 0.44));
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 70, arm: lerp(75, 100, t) - 20 * back, lunge: lerp(-3, 9, t) * (1 - back * 0.8), tilt: lerp(-0.1, 0.25, t) * (1 - back), stretch: 1 - 0.05 * t * (1 - back),
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.2); r.backArm = [-4, -1]; strikeFace(r); r.cape = -3; },
+    };
+  },
+
+  // Rampage: three wild chops, each quicker than a normal swing, then a leap into a crater-making
+  // dive. The chops land at about 0.075, 0.235 and 0.395, the dive at 0.79.
+  rampage(p) {
+    if (p < 0.16) return MOVES.slash(snap(p / 0.16));
+    if (p < 0.32) return MOVES.slash2(snap((p - 0.16) / 0.16));
+    if (p < 0.48) return MOVES.slash(snap((p - 0.32) / 0.16));
+    return MOVES.plunge((p - 0.48) / 0.52);
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -367,7 +391,7 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3,
 };
 
 // Basic attacks chain into a combo per weapon type.

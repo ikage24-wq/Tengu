@@ -55,10 +55,11 @@ to clear it.
 
 - **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (each instructor lives in their
   job's home town). Every first job has a movement skill (Charge, Blink, Backflip, Shadow Step).
-  For now only the Mage advances further: three branches at level 30, and one third job per
+  The Mage advances further: three branches at level 30, and one third job per
   branch at level 50 with a signature skill, a summon, and a screen-wide ultimate that hits up to
-  15 monsters twice. The Mage has the least HP in the game, but heals and shields the party. Warrior,
-  Archer, and Thief stop at their first job for now.
+  15 monsters twice. The Mage has the least HP in the game, but heals and shields the party. The
+  Warrior picks one of two paths at level 30 (below), after passing Brann's trial. Archer and Thief
+  stop at their first job for now.
 
   | Class | Branch (30) | Third job (50) | Plays like | Ultimate |
   |---|---|---|---|---|
@@ -274,7 +275,7 @@ to clear it.
   head off on their own (or log off after a long session).
 - **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
   Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
-  form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank,
+  form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank (Berserkers deal damage),
   mages (and every mage job after them) heal, archers and thieves deal damage**. Your party comes
   with you if it fits the roles, and the group finder brings in players for any open spot. Inside:
   - Everyone in the group has HP (shown under their names and in the group panel), and monsters
@@ -309,6 +310,20 @@ to clear it.
   (bosses are too heavy to move, but still turn on you); **Shield Wall** takes a share off every
   hit for a while; **Rally Cry** does the same for you and the party around you; and **Stalwart**
   adds max HP and defense. They all work outside dungeons too.
+- **Warrior paths (level 30)** — at 30, Brann in Ember Crag sets **The Warrior's Trial** (break 20
+  Crystal Golems in the Crystal Cave); pass it and pick a path:
+  - **Paladin**, the tank: **Aegis Smite** is a three-press combo (a shove behind a shield of light
+    that stuns, a rising cut that throws them up, an overhead smite that calls pillars of light down
+    on them); **Hallowed Ground** drives the blade into the floor so a ring of holy light bursts out,
+    turns every monster it hits on you, and lifts them on pillars of light; **Divine Aegis** guards
+    you and the party around you (less damage taken, slow healing); **Paladin Mastery** adds
+    mastery, defense, and max HP. Idle, a ring of light diamonds turns at their feet.
+  - **Berserker**, a damage dealer: every blow builds **Rage** (a flame gauge over the hotkeys) that
+    drains once the fighting stops. **Ravage** is a three-press combo (two bleeding chops, a
+    bleeding spin, a ground-cracking skull-splitter); **Blood Frenzy** raises attack, attack speed,
+    and crits and gives a quarter of your Rage; **Rampage** needs 30 Rage and spends it all on three
+    wild chops and a leaping smash, up to double damage at full Rage; **Berserker Mastery** adds
+    mastery, attack, and critical damage. Idle, small red flames lick at their feet.
 - **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
   **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in

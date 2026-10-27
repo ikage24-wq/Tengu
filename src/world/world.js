@@ -36,6 +36,8 @@ export function createWorld(char) {
     drops: [],
     pending: [],
     strikes: [],
+    // A Berserker's Rage (see melee.js).
+    rage: 0,
     fx: [],
     numbers: [],
     messages: [],
@@ -261,6 +263,7 @@ const BLOCKER_TEXT = {
   weapon: "That skill needs a different weapon.",
   noone: 'No fallen party member nearby.',
   stars: 'You need throwing stars! Shops sell them.',
+  rage: 'Not enough Rage. Land some blows first!',
   unlearned: null,
   passive: null,
 };

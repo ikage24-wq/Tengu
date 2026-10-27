@@ -308,3 +308,154 @@ test('one press of a skill key casts it once, even held a moment or pressed mid-
     assert.equal(casts, 1, `one cast${midSwing ? ' (pressed mid-swing)' : ''}`);
   }
 });
+
+// ---------- The warrior's level 30 paths ----------
+
+// The arena's warrior, raised to 30 and advanced to `job` (Brann's trial done first).
+function advanced(job, weapon = 'sword_20') {
+  const w = arena(weapon);
+  w.char.quests.warrior_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(w.char, job), `advanced to ${job}`);
+  w.char.mp = 9999;
+  w.char.baseMp = 99999;
+  return w;
+}
+
+test("both warrior paths wait on Brann's trial", async () => {
+  const { acceptQuest, questState } = await import('../src/core/quests.js');
+  const w = arena();
+  assert.equal(advanceJob(w.char, 'paladin'), false, 'no path before the trial');
+  assert.equal(questState(w.char, 'warrior_trial'), 'available');
+  assert.ok(acceptQuest(w.char, 'warrior_trial'));
+  w.char.quests.warrior_trial.state = 'done';
+  assert.ok(advanceJob(w.char, 'berserker'));
+  const mage = createCharacter('M', {});
+  gainExp(mage, 1e6);
+  advanceJob(mage, 'mage');
+  assert.equal(questState(mage, 'warrior_trial'), 'locked', 'only warriors take it');
+});
+
+test('Paladins tank and Berserkers deal damage in a group', async () => {
+  const { roleOf } = await import('../src/data/dungeons.js');
+  assert.equal(roleOf('paladin', 'warrior'), 'tank');
+  assert.equal(roleOf('berserker', 'warrior'), 'dps');
+  assert.equal(roleOf('warrior', 'warrior'), 'tank');
+});
+
+test("Aegis Smite's shove stuns, and its smite calls pillars of light", () => {
+  const w = advanced('paladin');
+  w.char.skills.aegissmite = 10;
+  const random = Math.random;
+  Math.random = () => 0.5;
+  try {
+    assert.ok(cast(w, 'aegissmite').ok);
+    run(w, 0.4);
+    assert.ok(w.mobs.some((m) => m.hold === 'stun' && m.frozenUntil > w.now), 'the shove stunned');
+    assert.ok(w.fx.some((f) => f.kind === 'aegis'), 'a shield of light flared');
+    run(w, 0.2);
+    assert.ok(cast(w, 'aegissmite').ok);
+    run(w, 0.55);
+    assert.ok(cast(w, 'aegissmite').ok);
+    assert.equal(w.pose.kind, 'overhead');
+    let pillars = 0;
+    for (let i = 0; i < 50; i++) {
+      updateWorld(w, DT, idle);
+      pillars = Math.max(pillars, w.fx.filter((f) => f.kind === 'pillar').length);
+    }
+    assert.ok(pillars >= 2, `pillars of light on the monsters hit (${pillars})`);
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('Hallowed Ground turns every monster it hits on you', () => {
+  const w = advanced('paladin');
+  w.char.skills.hallowedground = 10;
+  for (const m of w.mobs) m.aggroUntil = 0;
+  assert.ok(cast(w, 'hallowedground').ok);
+  run(w, 0.3);
+  assert.ok(w.mobs.every((m) => !m.aggroUntil), 'nothing until the blade hits the ground');
+  run(w, 0.3);
+  assert.ok(w.mobs.every((m) => m.aggroUntil > w.now), 'all of them come after you');
+  assert.ok(w.fx.some((f) => f.kind === 'consecrate'), 'a ring of holy light');
+});
+
+test("a Berserker's blows build Rage, which drains once the fighting stops", () => {
+  const w = advanced('berserker', 'axe_20');
+  w.char.skills.ravage = 10;
+  assert.equal(w.rage, 0);
+  const tap = { held: new Set(), pressed: new Set(['KeyZ']), locked: false };
+  updateWorld(w, DT, tap);
+  run(w, 0.5);
+  assert.ok(w.rage > 0, 'a basic blow builds a little');
+  const after = w.rage;
+  assert.ok(cast(w, 'ravage').ok);
+  run(w, 0.6);
+  assert.ok(w.rage > after + 8, `Ravage builds more (${after} -> ${w.rage})`);
+  const held = w.rage;
+  run(w, 3);
+  assert.equal(w.rage, held, 'holds for a moment');
+  run(w, 4);
+  assert.ok(w.rage < held, 'then drains away');
+  // Other jobs never build it.
+  const p = advanced('paladin');
+  updateWorld(p, DT, tap);
+  run(p, 0.5);
+  assert.equal(p.rage, 0);
+});
+
+test('Rampage needs Rage, spends all of it, and hits harder the more there was', () => {
+  const damageAt = (rage) => {
+    const w = advanced('berserker', 'axe_20');
+    w.char.skills.rampage = 10;
+    const random = Math.random;
+    Math.random = () => 0.5;
+    try {
+      w.rage = rage;
+      w.rageAt = w.now;
+      const r = cast(w, 'rampage');
+      if (!r.ok) return r.reason;
+      assert.equal(w.rage, 0, 'spent it all');
+      const m = w.mobs[0];
+      const marks = [];
+      let last = m.hp;
+      for (let i = 0; i < 100; i++) {
+        updateWorld(w, DT, idle);
+        if (m.hp < last) marks.push(i);
+        last = m.hp;
+      }
+      assert.equal(marks.length, 4, `three chops and the dive (at frames ${marks})`);
+      return 1e9 - m.hp;
+    } finally {
+      Math.random = random;
+    }
+  };
+  assert.equal(damageAt(10), 'rage');
+  const some = damageAt(30);
+  const full = damageAt(100);
+  assert.ok(full > some * 1.4, `full Rage hits much harder (${some} vs ${full})`);
+});
+
+test('Blood Frenzy raises attack and gives a quarter of your Rage', () => {
+  const w = advanced('berserker', 'axe_20');
+  w.char.skills.bloodfrenzy = 10;
+  assert.ok(cast(w, 'bloodfrenzy').ok);
+  assert.equal(w.rage, 25);
+  assert.ok(w.char.buffs.bloodfrenzy.values.watk > 0);
+});
+
+test('the no-spam rule holds for the Paladin and the Berserker too', () => {
+  for (const [job, weapon, skill, rage] of [['paladin', 'sword_20', 'aegissmite'], ['paladin', 'sword_20', 'hallowedground'], ['berserker', 'axe_20', 'ravage'], ['berserker', 'axe_20', 'rampage', true]]) {
+    const w = advanced(job, weapon);
+    w.char.skills[skill] = 10;
+    if (rage) w.rage = 100;
+    assert.ok(cast(w, skill).ok, `${skill} goes off`);
+    run(w, 0.15);
+    if (rage) w.rage = 100;
+    for (let i = 0; i < 3; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion, even after moving`);
+    run(w, 1.4);
+    if (rage) w.rage = 100;
+    assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
+  }
+});

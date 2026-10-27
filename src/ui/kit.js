@@ -410,6 +410,16 @@ const ICONS = {
     ctx.quadraticCurveTo(-s * 0.4, s * 0.02, 0, -s * 0.44);
     ctx.fill();
   },
+  flame(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.46);
+    ctx.quadraticCurveTo(s * 0.12, -s * 0.12, s * 0.3, -s * 0.06);
+    ctx.quadraticCurveTo(s * 0.44, s * 0.18, s * 0.26, s * 0.36);
+    ctx.quadraticCurveTo(0, s * 0.5, -s * 0.26, s * 0.36);
+    ctx.quadraticCurveTo(-s * 0.44, s * 0.14, -s * 0.18, -s * 0.12);
+    ctx.quadraticCurveTo(-s * 0.08, -s * 0.24, 0, -s * 0.46);
+    ctx.fill();
+  },
   coin(ctx, s) {
     ctx.beginPath();
     ctx.arc(0, 0, s * 0.42, 0, Math.PI * 2);

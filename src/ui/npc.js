@@ -169,7 +169,7 @@ export function npcWindow(ui, state, world) {
   const win = state.windows.npc;
   const char = world.char;
   const { ctx } = ui;
-  const jobOptions = dlg.job ? nextJobs(char.job, char.level).filter((j) => !npc.family || j.family === npc.family) : [];
+  const jobOptions = dlg.job ? nextJobs(char.job, char.level, char.quests).filter((j) => !npc.family || j.family === npc.family) : [];
   const questIds = (npc.quests ?? []).filter((id) => !['locked', 'done'].includes(questState(char, id)));
 
   // What you can say: each quest (new, in progress, or ready to hand in), the NPC's own service,
@@ -187,8 +187,9 @@ export function npcWindow(ui, state, world) {
   if (npc.role === 'dungeon') choices.push({ label: `Enter ${DUNGEONS[npc.dungeon].name}`, sub: `Lv ${DUNGEONS[npc.dungeon].minLevel}+ · a group of four`, icon: 'star', primary: true, run: () => (dlg.dungeon = true) });
   if (npc.role === 'arena') choices.push({ label: 'Boss Battles', sub: `${npc.bosses.length} challenger${npc.bosses.length > 1 ? 's' : ''} waiting`, icon: 'star', primary: true, run: () => (dlg.arena = true) });
   if (npc.role === 'instructor') {
-    const ready = nextJobs(char.job, char.level).some((j) => j.family === npc.family);
-    choices.push({ label: 'Job advancement', sub: ready ? 'You are ready!' : 'Not yet', icon: 'star', primary: ready, run: () => (dlg.job = true) });
+    const ready = nextJobs(char.job, char.level, char.quests).some((j) => j.family === npc.family);
+    const trial = !ready && nextJobs(char.job, char.level).some((j) => j.family === npc.family && j.trial);
+    choices.push({ label: 'Job advancement', sub: ready ? 'You are ready!' : trial ? 'Pass my trial first' : 'Not yet', icon: 'star', primary: ready, run: () => (dlg.job = true) });
   }
   choices.push({ label: 'Goodbye', sub: null, icon: 'door', run: () => (dlg.bye = true) });
   const rows = Math.ceil(choices.length / 2);
@@ -227,7 +228,8 @@ export function npcWindow(ui, state, world) {
     let y = area.y - 4;
     if (!options.length) {
       const next = Object.values(JOBS).filter((j) => j.parent === char.job && (!npc.family || j.family === npc.family));
-      const msg = next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
+      const trial = next.find((j) => j.trial && char.level >= j.level)?.trial;
+      const msg = trial ? `First, pass my trial: ${QUESTS[trial].name}. Then I'll teach you more.` : next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
       const fam = JOBS[char.job].family;
       const words = npc.family && char.job !== 'novice' && fam !== npc.family ? 'You walk a different path. Seek your own instructor.' : msg;
       wrap(ctx, words, tx, y + 8, tw, { size: 8.5, chars: typed(ui, dlg, `job:${words}`, world, area, words.length) });

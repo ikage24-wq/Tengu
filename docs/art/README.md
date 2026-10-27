@@ -149,6 +149,14 @@ carry an improvement across every part of the game it applies to.
 - Screen shake is trauma that stacks and drains (camera moves by its square along smooth noise).
   Struck monsters shudder during hit-stop.
 - Damage numbers pop in with an overshoot, drift on alternating arcs, and total multi-hits.
+- Hit-stop freezes effects too, so a one-frame dark contrast disc in front of a big burst holds on
+  screen and reads as a flat ball over the hero: skip it on effects that land with hit-stop (the
+  Berserker's `rageburst`). `deep()` of a warm red mixes toward ink purple and reads pink or mauve
+  on our pastel skies; give red effects their own near-black crimson or a hand-picked red ramp.
+- Holy pillars (`strikes.js` `pillar`): a thin ray first, then a tapered wedge (narrow at the sky,
+  wide at the foot) in four nested tones, a rounded bloom at the foot, and slices that vanish from
+  the top down; flat straight-sided columns read as UI bars. Ground rings stay flat (height about
+  0.12 of the width) and unfilled, or they wash over the fighters standing in them.
 
 **Maps and UI**
 - Far silhouettes: flat, no outline, a lit rim on the upper-left by filling the shape in the rim

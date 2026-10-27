@@ -58,6 +58,14 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'boneknight', count: 25 }],
     rewards: { exp: 18000, gold: 6000, items: [{ id: 'scroll_watk_10', qty: 1 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
   },
+  // A job trial: Brann asks it of a warrior before teaching either level 30 path (`family` keeps
+  // it to warriors).
+  warrior_trial: {
+    id: 'warrior_trial', name: "The Warrior's Trial", giver: 'brann', minLevel: 30, family: 'warrior',
+    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. Come back and I'll show you the Paladin's way and the Berserker's way.",
+    objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
+    rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
+  },
   crystal_heart: {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
     text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',

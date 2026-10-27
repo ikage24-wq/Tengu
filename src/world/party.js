@@ -157,6 +157,8 @@ export function makeAI(bot, rng, kind = null) {
     : bot.pro && rng() < 0.6 ? 'showoff'
     : ['cleric', 'bishop'].includes(bot.char.job) || (family === 'mage' && rng() < 0.35) ? 'healer'
     : st.ranged ? (rng() < 0.75 ? 'sniper' : 'showoff')
+    : bot.char.job === 'paladin' ? (rng() < 0.8 ? 'guardian' : 'rusher')
+    : bot.char.job === 'berserker' ? (rng() < 0.8 ? 'rusher' : 'showoff')
     : rng() < 0.55 ? 'rusher' : 'guardian';
   const base = {
     rusher: { keep: 0.6, react: [0.12, 0.25], rhythm: [0.6, 0.95], special: 0.22, habits: ['roar', 'cheer'] },

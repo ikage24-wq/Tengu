@@ -18,13 +18,19 @@
 // drops that many arrows from the sky on monsters in the `rainW` px starting `rainFrom` ahead,
 // over `span` seconds. A step's `step` can be negative (hop back as you shoot), and `guard` makes
 // you untouchable for that long (dodges).
+// A blow can also leave something on what it hits: `stun` (seconds), `bleed` ({ pct, secs }),
+// `provoke` (seconds they stick to you, the tank's taunt), and `fx` (an effect on each monster hit,
+// like a pillar of light). `burst` is one effect where the blow lands (a shield of light, a holy
+// ring, a burst of rage), `burstAt` how far out along the reach (0 = on you). `rage` is the Rage
+// a Berserker's blow builds (see addRage).
 // Pressing again while a step plays carries on to the next one; wait too long and it starts over.
 
 import { physicalRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
-import { JOBS } from '../data/jobs.js';
+import { JOBS, jobChain } from '../data/jobs.js';
 import { pickTargets, weaponElement } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
+import { provoke } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -37,9 +43,11 @@ const CANCEL = 0.76;
 // How high the hands are above the feet (where bows are held and stars thrown from).
 const HAND_Y = 15;
 
-// Smear colors: steel blue for a cut, gold for a heavy blow.
+// Smear colors: steel blue for a cut, gold for a heavy blow; a Paladin's light cuts in pale gold
+// and a Berserker's rage in red.
 const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
+const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#f0303f', '#ff4a1f'] };
 
 export const COMBOS = {
   sword: [
@@ -88,6 +96,17 @@ export const COMBOS = {
 
 export const hasCombo = (weaponType) => Boolean(COMBOS[weaponType]);
 
+// Rage: a Berserker's blows build it up to RAGE_MAX, and it drains away once the fighting stops.
+export const RAGE_MAX = 100;
+const RAGE_HOLD = 5; // seconds after the last gain before it starts draining
+const RAGE_DRAIN = 12; // per second
+export const hasRage = (char) => jobChain(char.job).includes('berserker');
+export function addRage(world, n) {
+  if (!hasRage(world.char) || n <= 0) return;
+  world.rage = Math.min(RAGE_MAX, (world.rage ?? 0) + n);
+  world.rageAt = world.now;
+}
+
 // Basic attack with a melee weapon: the next step of its combo.
 export function basicCombo(world) {
   const steps = COMBOS[world.stats.weaponType];
@@ -96,13 +115,13 @@ export function basicCombo(world) {
 }
 
 // A combo skill: each use plays its next step (a one-step skill just plays it).
-export function skillCombo(world, skillId, params) {
+export function skillCombo(world, skillId, params, scale = 100) {
   const chain = (world.chains ??= {});
   const c = chain[skillId];
   const i = c && world.now <= c.until ? (c.i + 1) % params.combo.length : 0;
   const step = params.combo[i];
   chain[skillId] = { i, until: world.now + step.dur + WINDOW };
-  playStep(world, step, 100, skillId, params.school);
+  playStep(world, step, scale, skillId, params.school);
 }
 
 function playStep(world, step, scale, key, school = null) {
@@ -135,6 +154,7 @@ function playStep(world, step, scale, key, school = null) {
 // Every tick: the step-in, and strikes landing.
 export function tickMelee(world, dt) {
   const b = world.body;
+  if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -168,18 +188,34 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: s.big ? HEAVY : BLADE, element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   if (s.crack) {
     world.fx.push({ kind: 'crack', x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
   }
+  if (s.burst) {
+    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: 0.7, seed: Math.random() });
+  }
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
     const roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random);
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock;
-    world.pending.push({ at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big });
+    world.pending.push({
+      at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
+      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school,
+    });
+    if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
   });
+  // A tank's taunting blow: everything it hits turns on you (in a dungeon, sticking for a while).
+  if (s.provoke && targets.length) {
+    if (world.dungeon) provoke(world, 'you', body, s.reach, s.provoke);
+    else for (const m of targets) {
+      m.aggroUntil = now + 6;
+      m.dir = Math.sign(body.x - m.x) || m.dir;
+    }
+  }
+  if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   if (targets.length) {
     // Weight climbs a ladder: a light blow just stops; a heavy one stops, shakes, and kicks the
     // view along the blow; the heaviest add a moment of slow motion after the stop instead of a

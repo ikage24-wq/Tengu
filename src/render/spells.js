@@ -22,6 +22,7 @@ export const SCHOOL_COLORS = {
   shadow: { main: '#9b6bff', light: '#e6dcff', deep: '#3a2a6b' },
   sakura: { main: '#ff9ec0', light: '#fff0f6', deep: '#c94f8a' },
   gold: { main: '#ffd66b', light: '#fff6c9', deep: '#c98a2b' },
+  rage: { main: '#ff5a4a', light: '#ffd7a0', deep: '#8a1838' },
 };
 
 const ease = (p) => 1 - (1 - p) * (1 - p);

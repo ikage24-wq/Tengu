@@ -88,10 +88,12 @@ function rollLevel(pro, rng) {
   return Math.floor(between(40, 56, rng));
 }
 
-// The job path a character of this level would be on. Only mages advance past their first job.
+// The job path a character of this level would be on. Mages and warriors advance past their
+// first job (warriors stop at their level 30 path for now).
 function jobPath(level, rng) {
   if (level < 10) return ['novice'];
   const first = pick(['warrior', 'mage', 'archer', 'thief'], rng);
+  if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first !== 'mage' || level < 30) return [first];
   const second = pick(['ilwizard', 'fpwizard', 'cleric'], rng);
   if (level < 50) return [first, second];
@@ -148,7 +150,12 @@ function gearFor(char, slot, pro, rng, variant) {
 export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name, level = rollLevel(pro, rng), jobs = null } = {}) {
   const char = createCharacter(name, makeLook(rng));
   while (char.level < level) gainExp(char, expToNext(char.level));
-  for (const job of jobs ?? jobPath(char.level, rng)) if (job !== 'novice') advanceJob(char, job);
+  for (const job of jobs ?? jobPath(char.level, rng)) {
+    if (job === 'novice') continue;
+    // Anyone past a job's trial has passed it.
+    if (JOBS[job].trial) char.quests[JOBS[job].trial] = { state: 'done', kills: {} };
+    advanceJob(char, job);
+  }
   let r = rng();
   const build = BUILDS.find((b) => (r -= b.weight) < 0)?.id ?? 'standard';
   spendBuild(char, build, rng);

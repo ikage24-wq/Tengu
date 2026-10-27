@@ -1,7 +1,8 @@
 // Idle auras for advanced jobs: a quiet touch around a hero who stands still, layered behind
 // ('back') and in front of ('front') the sprite. They stay small, soft, and slow: a glow at the
 // feet, a few motes drifting up, and for third jobs a signature: a rune ring with crackling
-// lightning or dancing flames, or a halo and angel wings.
+// lightning or dancing flames, or a halo and angel wings. Warrior paths: a ring of light diamonds
+// for the Paladin, red flames and rising embers for the Berserker.
 // Nothing flashes, and nothing covers the face. Everything is drawn from time alone.
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
 
@@ -50,12 +51,15 @@ function runeRing(ctx, x, y, t, s, color, a, front) {
 }
 
 // A few small motes drifting up around the hero and fading. `draw(ctx, x, y, r, i)` paints one.
-function motes(ctx, x, y, t, s, a, { n = 4, spread = 14, height = 34, speed = 0.35, size = 1.3, draw }) {
+// `inner` keeps them that far out to either side, clear of the face.
+function motes(ctx, x, y, t, s, a, { n = 4, spread = 14, height = 34, speed = 0.35, size = 1.3, inner = 0, draw }) {
   for (let i = 0; i < n; i++) {
     const cyc = t * speed + i / n;
     const u = cyc % 1;
     const seed = Math.floor(cyc) * 7 + i;
-    const mx = x + (hash(seed) - 0.5) * spread * 2 * s + Math.sin(t * 1.5 + i) * 2 * s;
+    const h = hash(seed) - 0.5;
+    const off = inner ? Math.sign(h || 1) * (inner + Math.abs(h) * 2 * (spread - inner)) : h * spread * 2;
+    const mx = x + off * s + Math.sin(t * 1.5 + i) * 2 * s;
     const my = y - (4 + u * height) * s;
     ctx.save();
     ctx.globalAlpha = a * Math.sin(u * Math.PI);
@@ -101,6 +105,73 @@ const sparkle = (color) => (ctx, x, y, r) => {
   ctx.quadraticCurveTo(x, y, x, y - r * 1.8);
   ctx.fill();
 };
+
+// A small diamond of light: the holy jobs' rounded, spike-free spark.
+const glim = (color) => (ctx, x, y, r) => {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r * 1.5);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r * 1.5);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+  ctx.fill();
+};
+
+// A rage ember: a small teardrop of flame pointing up, a dark red rim around a hot core, that
+// flicks sideways as it rises.
+const rageEmber = (ctx, x, y, r, i, t) => {
+  const fx = x + Math.sin(t * 9 + i * 2) * r * 0.8;
+  const tear = (R, color) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(fx, y - R * 2.6);
+    ctx.quadraticCurveTo(fx + R * 1.1, y - R * 0.4, fx, y + R);
+    ctx.quadraticCurveTo(fx - R * 1.1, y - R * 0.4, fx, y - R * 2.6);
+    ctx.fill();
+  };
+  tear(r * 1.3, '#a81838');
+  tear(r, i % 2 ? '#ff5a3c' : '#ff3f4f');
+  tear(r * 0.5, '#ffd27a');
+};
+
+// Small red flames licking up around the feet (Berserker), the far ones behind the hero.
+function rageFlames(ctx, x, y, t, s, a, front) {
+  ctx.save();
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * TAU + 0.3;
+    const sin = Math.sin(ang);
+    if (front !== sin > 0) continue;
+    const fx = x + Math.cos(ang) * 11 * s;
+    const fy = y + sin * 3 * s;
+    const h = (3.5 + 2 * Math.sin(t * 8 + i * 1.9) + 1.2 * Math.sin(t * 15 + i)) * s;
+    const lean = Math.sin(t * 5 + i) * 1 * s;
+    for (const [color, w, k] of [['#a81838', 2, 1.1], ['#ff4a3c', 1.5, 1], ['#ffc46b', 0.7, 0.5]]) {
+      ctx.globalAlpha = a * 0.9;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(fx - w * s, fy);
+      ctx.quadraticCurveTo(fx - w * s, fy - h * k * 0.5, fx + lean, fy - h * k);
+      ctx.quadraticCurveTo(fx + w * s, fy - h * k * 0.5, fx + w * s, fy);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// A ring of small diamonds at the feet turning slowly, split so the hero stands inside it.
+function glimRing(ctx, x, y, t, s, color, a, front) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * TAU + t * 0.5;
+    const sin = Math.sin(ang);
+    if (front !== sin > 0) continue;
+    glim(i % 2 ? '#ffffff' : color)(ctx, x + Math.cos(ang) * 14 * s, y + sin * 3.6 * s - 1.5 * s, 1.1 * s);
+  }
+  ctx.restore();
+}
 
 // A thin halo floating over the head, bobbing gently.
 function halo(ctx, x, y, t, s, a) {
@@ -255,6 +326,28 @@ const JOBS = {
     front: (ctx, x, y, t, s, k) => {
       halo(ctx, x, y, t, s, k * 0.75);
       motes(ctx, x, y, t, s, k, { n: 4, draw: sparkle('#fff6c9') });
+    },
+  },
+  // Paladin: a warm golden light, a slow ring of light diamonds, and diamonds drifting up.
+  paladin: {
+    back: (ctx, x, y, t, s, k) => {
+      footGlow(ctx, x, y, s, '#ffe08a', k * 0.85);
+      glimRing(ctx, x, y, t, s, '#ffd24f', k * 0.8, false);
+    },
+    front: (ctx, x, y, t, s, k) => {
+      glimRing(ctx, x, y, t, s, '#ffd24f', k * 0.8, true);
+      motes(ctx, x, y, t, s, k, { n: 3, speed: 0.3, inner: 10, spread: 16, draw: glim('#fff6c9') });
+    },
+  },
+  // Berserker: a low red glow and embers that flick as they climb, quicker than a mage's.
+  berserker: {
+    back: (ctx, x, y, t, s, k) => {
+      footGlow(ctx, x, y, s, '#ff4a3c', k * (0.85 + 0.15 * Math.sin(t * 3)));
+      rageFlames(ctx, x, y, t, s, k, false);
+    },
+    front: (ctx, x, y, t, s, k) => {
+      rageFlames(ctx, x, y, t, s, k, true);
+      motes(ctx, x, y, t, s, k, { n: 3, speed: 0.5, height: 30, size: 1, inner: 11, spread: 17, draw: rageEmber });
     },
   },
   // The Game Master: a faint ring and a few stars in every color.

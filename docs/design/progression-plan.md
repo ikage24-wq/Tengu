@@ -12,7 +12,8 @@ it, and tick it off here.
 
 - Levels 1–100 and gear every 5 levels up to 100, but maps and monsters only go up to about 50.
 - Quests: 9, loose, no story thread. Every map is open from the start.
-- Jobs: every class gets a first job at 10; only the Mage advances at 30 and 50.
+- Jobs: every class gets a first job at 10; the Mage advances at 30 and 50, the Warrior at 30
+  (Paladin or Berserker, after a trial).
 - Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses), the Crystal King,
   and Boss Rush (Dancing Green, Lv 40+, with a cutscene).
 - Drawn but unused: Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna, and four queens
@@ -60,7 +61,7 @@ Side quests stay optional but pay well and tell small stories about each town.
   30/50 jobs move to 30/60 or stay at 50; decide when building).
 - Each advancement is a short trial quest from the instructor: go somewhere, prove yourself in a
   solo trial room, come back to a ceremony with a new look (aura, title, outfit piece).
-- First up: Warrior 2nd jobs (a tank branch and a damage branch), then Archer and Thief.
+- Warrior 2nd jobs are in (Paladin tank, Berserker damage); Archer and Thief next.
 - Role stays tied to job like FFXIV: warriors tank, mages heal, archers and thieves deal damage.
   The 2nd job can add a second role (for example a warrior branch that deals damage).
 
@@ -120,8 +121,10 @@ jobs.)
   locked regions that open with the story, chapters 1–3 (up to Sylvana's trial), and story
   cutscenes reusing the Dancing Green cutscene system. Rework the 9 existing quests into
   chapter steps or side quests.
-- [ ] **Phase 2: Warrior 2nd job.** Two warrior branches at 30 with a trial quest, skills built
-  to the combat rules, and a new look.
+- [x] **Phase 2: Warrior 2nd job.** Done: Brann's trial at 30, then Paladin (tank: Aegis Smite,
+  Hallowed Ground, Divine Aegis, mastery) or Berserker (damage, Rage gauge: Ravage, Blood Frenzy,
+  Rampage, mastery), with idle auras, icons, effects, and generated players on both paths.
+  Later: trials for the other classes' advancements, and the Mage's 30 advancement as a trial too.
 - [ ] **Phase 3: Collecting.** Monster book, achievements, and titles under the name.
 - [ ] **Phase 4: Chapters 4–7.** Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.

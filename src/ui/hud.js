@@ -13,6 +13,7 @@ import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
+import { hasRage, RAGE_MAX } from '../world/melee.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
 import { questMarker } from './npc.js';
@@ -268,6 +269,7 @@ export function drawHud(ui, state, world) {
   });
 
   if (s.weaponType === 'gauntlet') drawStars(ui, world);
+  if (hasRage(char)) drawRage(ui, world);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -330,6 +332,26 @@ function drawStars(ui, world) {
   if (set) drawItemIcon(ctx, set.id, x + 2, y);
   text(ctx, set ? `${set.qty}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: low ? COLORS.bad : COLORS.ink });
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
+}
+
+// A Berserker's Rage: a flame and a gauge that fills as blows land, with a notch where Rampage
+// opens up, burning bright and pulsing once it's full.
+const RAGE = '#ff5a4a';
+function drawRage(ui, world) {
+  const { ctx } = ui;
+  const x = 566;
+  const y = BAR_Y - 20;
+  const k = Math.min(1, (world.rage ?? 0) / RAGE_MAX);
+  const full = k >= 1;
+  const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 9) : 0;
+  box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? RAGE : '#ffb347') : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
+  badge(ctx, x + 8, y + 8, 'flame', RAGE, 1 + beat * 0.15);
+  bar(ctx, x + 16, y + 5, 40, 6, k, full ? (beat > 0.5 ? '#ff7a3c' : RAGE) : RAGE, '', { pulse: full ? 0.3 * beat : 0 });
+  const need = (SKILLS.rampage?.rageCost ?? 30) / RAGE_MAX;
+  ctx.fillStyle = k >= need ? '#ffffff' : 'rgba(74,53,96,0.55)';
+  ctx.fillRect(Math.round(x + 16 + 40 * need), y + 4, 1, 8);
+  text(ctx, `${Math.floor(world.rage ?? 0)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? RAGE : COLORS.ink });
+  if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: 'Rage', bold: true, color: RAGE }, { text: 'Your blows build it; it drains once the fighting stops. Rampage spends it all.', size: 8, color: COLORS.muted }]);
 }
 
 // Frames per second, smoothed.

@@ -2,7 +2,7 @@
 // a chain of rooms. Each room is a map with `dungeon` set; its sealed exit opens once the room is
 // cleared (every monster down and the room's task done). See world/dungeon.js for the runtime.
 //
-// Roles come from your job: warriors tank, mages (and every job after them) heal, and everyone
+// Roles come from your job: warriors tank (a Berserker deals damage instead), mages (and every job after them) heal, and everyone
 // else deals damage. Novices can't join a dungeon group.
 
 export const DUNGEONS = {
@@ -30,6 +30,7 @@ export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
+  if (jobId === 'berserker') return 'dps';
   if (family === 'warrior') return 'tank';
   if (family === 'mage') return 'healer';
   return 'dps';

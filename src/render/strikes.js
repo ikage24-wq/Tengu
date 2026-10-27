@@ -1,11 +1,13 @@
 // Weapon-skill effects for warriors, archers, and thieves: power flares, charges, sword waves,
+// the Paladin's light (a shield of light, pillars from the sky, a holy ring) and the Berserker's
+// rage bursts,
 // whirlwinds, quakes, X-slashes, beams, smoke, claw marks, and the screen-wide ultimates (a rain
 // of swords, arrows, stars, or coins; a dragon; a hammer of light; a spirit stampede; a blade
 // storm). Like the spell effects, everything is drawn from progress `p` (0-1) and a seed, colored
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { ghost, wash } from './fxkit.js';
+import { ghost, wash, needle, bloom, shardRing, shock, starFlash, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -331,6 +333,162 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         ctx.globalAlpha = fade;
         if (f.school === 'sakura') petal(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.45, a, c);
         else sparkle(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.45, 2.5, i % 2 ? '#ffffff' : c.main);
+      }
+      return true;
+    }
+    case 'pillar': {
+      // A pillar of light from the sky, in order (holy light comes from above and plays one step
+      // after another): a thin ray drops onto the monster, snaps open into a column that flares
+      // at its foot with a bloom, then narrows and breaks into slices from the top down while
+      // light diamonds float up.
+      const top = y - 130;
+      const cy = y - (f.h ?? 24) / 2;
+      if (p < 0.14) {
+        const k = stepped(p / 0.14, 4);
+        const bottom = top + (y - top) * k;
+        ctx.fillStyle = c.deep;
+        ctx.fillRect(Math.round(x - 2.5), top, 5, bottom - top);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(Math.round(x - 1), top, 2, bottom - top);
+        return true;
+      }
+      const k = (p - 0.14) / 0.86;
+      const open = k < 0.06 ? 1.3 : 1;
+      const w = 9 * open * (1 - easeIn(Math.max(0, (k - 0.3) / 0.7)));
+      // The column: a tall wedge, narrow at the sky and wide at the foot, in four nested tones.
+      const slices = 8;
+      const gone = Math.max(0, (k - 0.4) / 0.6);
+      for (let i = 0; i < slices; i++) {
+        const u0 = i / slices;
+        const u1 = (i + 1) / slices;
+        // Slices near the top go first, and each shrinks to a sliver before it vanishes.
+        const keep = 1 - Math.min(1, Math.max(0, gone * 1.6 - (1 - u0) * 0.6) * 1.4);
+        if (keep <= 0.05 || w <= 0.4) continue;
+        const y0 = top + (y - top) * u0;
+        const y1 = y0 + (y - top) * (u1 - u0) * keep;
+        const band = (k2, color) => {
+          const w0 = w * k2 * (0.45 + 0.55 * u0);
+          const w1 = w * k2 * (0.45 + 0.55 * u1);
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(x - w0, y0);
+          ctx.lineTo(x + w0, y0);
+          ctx.lineTo(x + w1, y1);
+          ctx.lineTo(x - w1, y1);
+          ctx.closePath();
+          ctx.fill();
+        };
+        if (inked(ctx)) band(1.18, deep(c.deep));
+        band(1, c.main);
+        band(0.66, c.light);
+        band(0.28, '#ffffff');
+      }
+      if (k < 0.5) {
+        const b = stepped(k / 0.5, 6);
+        bloom(ctx, x, y - 6, 15 * (0.7 + b * 0.6), 6, f.seed * 3, c.main, '#ffffff', 0.5 + b * 1.4);
+        shock(ctx, x, y - 1, 10 + 20 * easeOut(b), 2 + 3.5 * easeOut(b), 3 * (1 - b), c.main);
+      }
+      if (k > 0.05 && k < 0.3) bloom(ctx, x, cy, 9 * (1 - (k - 0.05) / 0.25) + 2, 4, f.seed * 5 + 0.4, c.light, '#ffffff', 1);
+      // Diamonds of light drifting up, slowing as they go (light rises; it doesn't fall).
+      for (let i = 0; i < 5; i++) {
+        const u = Math.max(0, k - 0.15 - i * 0.06);
+        if (u <= 0 || u >= 0.7) continue;
+        const d = easeOut(u / 0.7);
+        const r = 3 * (1 - d) + 0.6;
+        const dx = x + (rand(i * 5.3 + f.seed * 7) - 0.5) * 34;
+        const dy = y - 6 - d * (40 + rand(i * 2.1) * 30);
+        diamond(ctx, dx, dy, r, i % 2 ? c.main : '#ffffff');
+      }
+      return true;
+    }
+    case 'aegis': {
+      // A shield of light snaps up in front of the shove (overshooting as it opens), holds for the
+      // blow, then cracks into shards that fly off ahead.
+      const sx = x;
+      const sy = y - 22;
+      const dir = f.dir || 1;
+      if (p < 0.5) {
+        const g = p < 0.08 ? 0.5 + (p / 0.08) * 0.7 : p < 0.16 ? 1.2 - ((p - 0.08) / 0.08) * 0.2 : 1;
+        const rx = 7 * g;
+        const ry = 19 * g;
+        if (inked(ctx)) {
+          ctx.fillStyle = deep(c.deep);
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, rx + 1.4, ry + 1.4, 0, 0, TAU);
+          ctx.fill();
+        }
+        ctx.fillStyle = c.main;
+        ctx.beginPath();
+        ctx.ellipse(sx, sy, rx, ry, 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = c.light;
+        ctx.beginPath();
+        ctx.ellipse(sx + dir * rx * 0.2, sy, rx * 0.72, ry * 0.8, 0, 0, TAU);
+        ctx.fill();
+        // The emblem: a gold diamond with a white heart, and a glint across the upper face.
+        diamond(ctx, sx + dir * rx * 0.2, sy, 5 * g, c.deep);
+        diamond(ctx, sx + dir * rx * 0.2, sy, 2.6 * g, '#ffffff');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(sx + dir * rx * 0.1 - 1, sy - ry * 0.7, 2, ry * 0.35);
+        // The push: a ring rolling forward off the face.
+        const k = Math.max(0, (p - 0.08) / 0.42);
+        if (k > 0) shock(ctx, sx + dir * (4 + 16 * easeOut(k)), sy, 3 + 4 * easeOut(k), ry * (1 + 0.3 * k), 2.5 * (1 - k), c.light);
+        return true;
+      }
+      const k = (p - 0.5) / 0.5;
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 6 - 0.5) * 2.2;
+        const d = easeOut(k) * (18 + rand(i * 4.1 + f.seed) * 16);
+        const px = sx + dir * Math.cos(a) * d;
+        const py = sy + Math.sin(a) * d * 1.4 + k * k * 10;
+        const r = 4 * (1 - k) + 0.3;
+        ctx.globalAlpha = 1;
+        diamond(ctx, px, py, r, i % 2 ? c.main : c.light);
+      }
+      return true;
+    }
+    case 'consecrate': {
+      // Hallowed ground: a flash of light where the blade goes in, two flat rings of light racing
+      // out over the floor (thin, so the fighters stay clear in front of them), and diamond runes
+      // that stand on the outer ring and then lift away as it settles.
+      const R = f.r ?? 110;
+      const ring = easeOut(Math.min(1, p / 0.32));
+      const fade = p > 0.6 ? 1 - (p - 0.6) / 0.4 : 1;
+      if (p < 0.22) {
+        const b = stepped(p / 0.22, 5);
+        bloom(ctx, x, y - 10, 26 * (0.6 + b * 0.5), 8, f.seed * 3, c.main, '#ffffff', 0.5 + b * 1.4);
+      }
+      const rx = 12 + (R - 12) * ring;
+      shock(ctx, x, y - 1, rx, rx * 0.12, (4 * (1 - ring) + 1.6) * fade, c.main);
+      shock(ctx, x, y - 1, rx * 0.7, rx * 0.7 * 0.12, 1.4 * fade, '#ffffff');
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + 0.15;
+        const lift = Math.max(0, (p - 0.35) / 0.65);
+        const px = x + Math.cos(a) * rx;
+        const py = y - 3 + Math.sin(a) * rx * 0.12 - easeOut(lift) * (20 + rand(i + f.seed) * 26);
+        diamond(ctx, px, py, (3.2 * (1 - lift) + 0.4) * Math.min(1, ring * 1.5), i % 2 ? '#ffffff' : c.main);
+      }
+      return true;
+    }
+    case 'rageburst': {
+      // Rage breaks out of the blow: a jagged red flash, a ring of shards that scatters, and
+      // embers flung up and out. (No dark contrast disc: hit-stop holds effects still, and a
+      // held disc reads as a flat ball over the hero.)
+      const R = Math.max(50, (f.r ?? 90) * 0.8);
+      const cy = y - 14;
+      const k = p;
+      if (k < 0.3) {
+        const s = stepped(k / 0.3, 5);
+        starFlash(ctx, x, cy, R * 0.55 * (s < 0.2 ? 0.7 : 1 - s * 0.5), 7, f.seed * 6, c.main, '#ffffff', 8 * (1 - s));
+      }
+      ctx.globalAlpha = 1;
+      shardRing(ctx, x, cy, 12 + R * easeOut(k), 7 * (1 - k), 9, f.seed, f.seed * 4, k < 0.5 ? c.main : c.deep);
+      for (let i = 0; i < 11; i++) {
+        const a = -Math.PI * (0.08 + 0.84 * rand(i * 2.9 + f.seed * 13));
+        const d = easeOut(k) * (20 + rand(i * 7.1 + f.seed) * R * 0.8);
+        const len = 9 * (1 - k) + 1;
+        if (k > 0.85) continue;
+        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d + k * k * 18, a, len, 2.6 * (1 - k) + 0.6, i % 3 ? c.main : '#ffb347', c.light);
       }
       return true;
     }
@@ -889,6 +1047,26 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     default:
       sparkle(ctx, x, y, 5 * s, c.main);
   }
+}
+
+// A small diamond of light on an inked rim (the holy school's spark: no spikes).
+function diamond(ctx, x, y, r, color) {
+  if (r <= 0.3) return;
+  const shape = (R) => {
+    ctx.beginPath();
+    ctx.moveTo(x, y - R * 1.3);
+    ctx.lineTo(x + R, y);
+    ctx.lineTo(x, y + R * 1.3);
+    ctx.lineTo(x - R, y);
+    ctx.closePath();
+    ctx.fill();
+  };
+  if (r > 1.2 && inked(ctx)) {
+    ctx.fillStyle = deep(color);
+    shape(r + 0.9);
+  }
+  ctx.fillStyle = color;
+  shape(r);
 }
 
 function petal(ctx, x, y, rot, c) {

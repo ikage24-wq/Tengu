@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
-import { hasCombo, basicCombo, skillCombo } from './melee.js';
+import { hasCombo, basicCombo, skillCombo, addRage, RAGE_MAX } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -95,6 +95,7 @@ export function castBlocker(world, skillId) {
   if (s.type === 'passive') return 'passive';
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
+  if (s.rageCost && (world.rage ?? 0) < s.rageCost) return 'rage';
   if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
   return null;
 }
@@ -120,7 +121,14 @@ export function cast(world, skillId, rng = Math.random) {
   }
   if (params.combo) {
     if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
-    skillCombo(world, skillId, { ...params, school: s.school });
+    // Rampage spends all your Rage: the more there was, the harder every blow hits (double at full).
+    let scale = 100;
+    if (s.rageCost) {
+      scale += Math.round((100 * world.rage) / RAGE_MAX);
+      if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
+      world.rage = 0;
+    }
+    skillCombo(world, skillId, { ...params, school: s.school }, scale);
     return { ok: true };
   }
 
@@ -174,6 +182,7 @@ export function cast(world, skillId, rng = Math.random) {
     const summon = params.summon ? { ...params.summon, timer: 0.6 } : null;
     char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name, summon };
     if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
+    if (params.rageGain) addRage(world, params.rageGain);
     world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, t: 0, dur: 1.1 });
     // Support buffs land on the party around you too.
     if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));

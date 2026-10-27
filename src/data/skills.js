@@ -24,7 +24,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (arcane, ice, lightning, fire, poison, holy) colors the casting circle.
+// `school` (arcane, ice, lightning, fire, poison, holy, rage) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -151,6 +151,99 @@ export const SKILLS = {
     id: 'stalwart', name: 'Stalwart', job: 'warrior', type: 'passive', fx: null,
     desc: 'Tougher all around: more max HP and weapon defense.',
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
+  }),
+
+  // ---------- Paladin (the warrior's tank path: holy light, stuns, taunts, blessings) ----------
+  paladinmastery: skill({
+    id: 'paladinmastery', name: 'Paladin Mastery', job: 'paladin', type: 'passive', fx: null,
+    desc: 'Steadier blows, thicker armor, and more max HP.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), wdef: lerp(5, 40, lv, m), maxHpPct: lerpf(0.02, 0.15, lv, m) } }),
+  }),
+  aegissmite: skill({
+    id: 'aegissmite', name: 'Aegis Smite', job: 'paladin', type: 'attack', fx: 'slash', school: 'holy',
+    desc: 'A three-part combo, one part per press: a shove behind a shield of light that stuns, a rising cut that throws them up, then an overhead smite that calls pillars of light down on them.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(3, 5);
+      return {
+        mp: k(6, 14), pct: k(110, 180), hits: 3, targets,
+        combo: [
+          { move: 'bash', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: k(110, 180), reach: 70, h: 64, targets, knock: 120, stun: lerpf(1, 2, lv, m), burst: 'aegis', stop: 0.05, rage: 0 }] },
+          { move: 'slash2', dur: 0.44, step: 8, strikes: [{ at: 0.45, pct: k(120, 200), reach: 80, h: 80, targets, knock: 40, launch: 360, arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
+          { move: 'overhead', dur: 0.7, step: 12, finisher: true, strikes: [{ at: 0.47, pct: k(220, 380), reach: 100, h: 82, targets: targets + 2, knock: 200, arc: [-105, 190], thick: 13, big: true, fx: 'pillar', stop: 0.1, shake: 4 }] },
+        ],
+      };
+    },
+  }),
+  hallowedground: skill({
+    id: 'hallowedground', name: 'Hallowed Ground', job: 'paladin', type: 'attack', fx: 'quake', icon: 'hallowed', school: 'holy',
+    desc: 'Drive your blade into the ground: a ring of holy light bursts out, every monster it hits turns on you, and pillars of light lift them up.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(5, 8);
+      return {
+        mp: k(14, 30), pct: k(100, 170), hits: 2, targets,
+        combo: [{ move: 'slam', dur: 0.85, step: 4, finisher: true, strikes: [
+          { at: 0.46, pct: k(100, 170), reach: 120, h: 90, around: true, targets, knock: 60, provoke: lerpf(3, 5, lv, m), burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
+          { at: 0.8, pct: k(80, 140), reach: 130, h: 90, around: true, targets, knock: 30, launch: 220, fx: 'pillar', stop: 0.04 },
+        ] }],
+      };
+    },
+  }),
+  divineaegis: skill({
+    id: 'divineaegis', name: 'Divine Aegis', job: 'paladin', type: 'buff', fx: 'shield', icon: 'aegis', school: 'holy', party: true, lock: 0.45,
+    desc: 'Raise your blade to the sky: you and the party around you take less damage and slowly heal for a while.',
+    at: (lv, m) => ({ mp: lerp(20, 40, lv, m), duration: lerp(20, 40, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } }),
+  }),
+
+  // ---------- Berserker (the warrior's damage path: Rage, bleeding, savage flurries) ----------
+  // Every blow a Berserker lands builds Rage (0-100, see world/melee.js); it drains away out of a
+  // fight. `rageCost` is the least Rage a skill needs; Rampage spends all of it.
+  berserkermastery: skill({
+    id: 'berserkermastery', name: 'Berserker Mastery', job: 'berserker', type: 'passive', fx: null,
+    desc: 'Steadier blows, more attack, and harder critical hits.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(3, 30, lv, m), critDamage: lerpf(0.05, 0.25, lv, m) } }),
+  }),
+  ravage: skill({
+    id: 'ravage', name: 'Ravage', job: 'berserker', type: 'attack', fx: 'slash', icon: 'ravage', school: 'rage',
+    desc: 'A three-part combo, one part per press: two savage chops, a spinning cut all around you, then a skull-splitting smash that cracks the ground. The chops and the spin make them bleed. Builds a lot of Rage.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(2, 4);
+      const bleed = { pct: lerpf(0.15, 0.3, lv, m), secs: 4 };
+      return {
+        mp: k(5, 12), pct: k(85, 140), hits: 4, targets,
+        combo: [
+          { move: 'cross', dur: 0.5, step: 10, strikes: [
+            { at: 0.22, pct: k(85, 140), reach: 74, h: 60, targets, knock: 30, bleed, arc: [-115, 205], thick: 10, rage: 6 },
+            { at: 0.72, pct: k(85, 140), reach: 74, h: 62, targets, knock: 50, bleed, arc: [100, -215], thick: 10, rage: 6 },
+          ] },
+          { move: 'spin', dur: 0.5, step: 16, strikes: [{ at: 0.5, pct: k(110, 180), reach: 78, h: 70, around: true, targets: targets + 2, knock: 90, bleed, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] },
+          { move: 'overhead', dur: 0.72, step: 14, finisher: true, strikes: [{ at: 0.47, pct: k(240, 400), reach: 98, h: 78, targets: targets + 1, knock: 240, arc: [-105, 190], thick: 15, big: true, crack: true, burst: 'rageburst', stop: 0.1, shake: 5, rage: 12 }] },
+        ],
+      };
+    },
+  }),
+  bloodfrenzy: skill({
+    id: 'bloodfrenzy', name: 'Blood Frenzy', job: 'berserker', type: 'buff', fx: 'buff', icon: 'frenzy', school: 'rage',
+    desc: 'Let out a furious roar: more attack, attack speed, and critical hits for a while, and a quarter of your Rage at once.',
+    at: (lv, m) => ({ mp: lerp(16, 32, lv, m), duration: lerp(60, 180, lv, m), rageGain: 25, buff: { watk: lerp(5, 35, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), critRate: lerpf(0.02, 0.1, lv, m) } }),
+  }),
+  rampage: skill({
+    id: 'rampage', name: 'Rampage', job: 'berserker', type: 'attack', fx: 'quake', icon: 'rampage', school: 'rage', rageCost: 30,
+    desc: 'Needs 30 Rage, and spends all of it: three wild chops, then a leap that smashes the ground around you. The more Rage, the harder it hits (double at full Rage).',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 7);
+      const chop = (at, arc) => ({ at, pct: k(110, 190), reach: 82, h: 70, targets, knock: 40, arc, thick: 12, rage: 0 });
+      return {
+        mp: k(10, 20), pct: k(110, 190), hits: 4, targets, flare: true,
+        combo: [{ move: 'rampage', dur: 1.35, step: 30, carry: 0.6, finisher: true, strikes: [
+          chop(0.075, [-115, 205]), chop(0.235, [100, -215]), chop(0.395, [-110, 200]),
+          { at: 0.79, pct: k(300, 520), reach: 120, h: 92, around: true, targets: targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
+        ] }],
+      };
+    },
   }),
 
   // ---------- Mage (spells and support) ----------
@@ -492,6 +585,7 @@ const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
   provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
+  aegissmite: 'bash', hallowedground: 'slam', divineaegis: 'castup', ravage: 'cross', bloodfrenzy: 'roar', rampage: 'rampage',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', thunderhawk: 'castup', backflip: 'flip', arrowrain: 'skyshot',

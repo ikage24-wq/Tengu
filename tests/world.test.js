@@ -336,7 +336,7 @@ test('big skills root you for a short wind-up and never go on cooldown', async (
   assert.equal(cast(w, 'meteor').ok, true, 'usable again as soon as the lock ends');
 });
 
-test('the mage branches three ways at 30, each branch with one third job and an ultimate; other classes stop at their first job', async () => {
+test('the mage branches three ways at 30, each branch with one third job and an ultimate; the warrior branches two ways; archers and thieves stop at their first job', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
   const seconds = nextJobs('mage', 30);
@@ -350,8 +350,9 @@ test('the mage branches three ways at 30, each branch with one third job and an 
   }
   for (const first of ['warrior', 'mage', 'archer', 'thief']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
-    if (first !== 'mage') assert.equal(nextJobs(first, 200).length, 0, `${first} has no advanced jobs for now`);
+    if (first === 'archer' || first === 'thief') assert.equal(nextJobs(first, 200).length, 0, `${first} has no advanced jobs for now`);
   }
+  assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
 });
 
