@@ -381,21 +381,39 @@ OUTFITS.toad = {
 // The toad outfit with the shades pushed up onto the head, so the eyes show.
 OUTFITS.toadup = { ...OUTFITS.toad, hat: () => OUTFITS.toad.hat().map((h) => (h.t === 'p' ? { ...h, pts: h.pts.map(([x, y]) => [15.5 + (x - 15.5) * 0.92, y - 8.4]) } : { ...h, y: h.y - 8.4 })) };
 
-// The frog backup dancers' outfit: a white disco shirt open at the collar with big pointed collar
-// flaps, rolled short sleeves, teal flares, and white shoes.
-const DANCER_TEAL = '#3fa89a';
-const DANCER_TEAL_DK = '#2c7f74';
+// The frog backup dancers' outfit: a frog onesie. A green hood with two big bulging frog eyes on
+// top and a pink-cheeked rim around the face, a green suit with a pale yellow belly, a white disco
+// collar peeking out at the neck, and webbed green frog feet.
+const FROG = '#5fc24a';
+const FROG_DK = '#3f9a34';
+const FROG_LT = '#9be07a';
+const BELLY = '#f4f0b0';
 OUTFITS.frogdancer = {
-  top: (p) => [T(TORSO, '#f6f4fb'),
-    T([[MID - 2.6, 25], [MID + 2.6, 25], [MID, 30.6]], p.skin),
-    T([[MID - 2.6, 25], [MID - 6, 26.4], [MID - 1.4, 29.2]], '#ffffff'), T([[MID + 2.6, 25], [MID + 6, 26.4], [MID + 1.4, 29.2]], '#ffffff'),
-    F(limb(MID - 2.6, 25.2, MID - 5.6, 26.4, 0.4, 0.3, '#c9c4dc')), F(limb(MID + 2.6, 25.2, MID + 5.6, 26.4, 0.4, 0.3, '#c9c4dc')),
-    F(R(MID - 0.2, 30.4, 0.4, 5, '#d8d4e6')), F(E(MID, 31.6, 0.45, 0.45, '#c9c4dc')), F(E(MID, 33.6, 0.45, 0.45, '#c9c4dc')),
-    band(TORSO, 34.6, 35.8, DANCER_TEAL_DK)],
-  sleeve: () => '#f6f4fb',
-  legs: () => ({ top: DANCER_TEAL, low: DANCER_TEAL, pad: null, cuff: DANCER_TEAL_DK }),
-  skirt: () => [F(R(MID - 0.25, 36.2, 0.5, 2.6, DANCER_TEAL_DK))],
-  shoe: (p, k, c) => [k.sole(c('#f6f4fb')), k.poly([[-2.9, 2.1], [2.9, 2.1], [2.6, 3], [-2.6, 3]], c('#c9c4dc'))],
+  hat: () => [
+    // The hood dome, its rim around the face, and a shine.
+    E(15.5, 8.8, 12.4, 9.4, FROG), F(E(13, 4.4, 5, 2, FROG_LT)),
+    F(T([[3.4, 12], [6, 9.8], [25, 9.8], [27.6, 12], [27, 13.6], [4, 13.6]], FROG_DK)),
+    // The bulging eyes: green domes with white eyes and big black pupils, and a highlight.
+    E(8.4, 1.2, 4.2, 3.8, FROG), E(22.6, 1.2, 4.2, 3.8, FROG),
+    F(E(8.4, 1, 3, 2.8, '#ffffff')), F(E(22.6, 1, 3, 2.8, '#ffffff')),
+    F(E(8.9, 1.3, 1.6, 1.8, '#1a1a1a')), F(E(22.1, 1.3, 1.6, 1.8, '#1a1a1a')),
+    F(E(9.4, 0.5, 0.6, 0.6, '#ffffff')), F(E(22.6, 0.5, 0.6, 0.6, '#ffffff')),
+    // Pink cheek spots on the hood's sides.
+    F(E(5, 15, 1.4, 1, '#ff9ab4')), F(E(26, 15, 1.4, 1, '#ff9ab4')),
+  ],
+  top: () => [T(TORSO, FROG),
+    // The pale belly and a white disco collar at the neck.
+    F(E(MID, 31.4, 4.2, 4.6, BELLY)), F(R(MID - 2.6, 29, 5.2, 0.4, '#e2dc98')), F(R(MID - 2.8, 31.4, 5.6, 0.4, '#e2dc98')), F(R(MID - 2.6, 33.6, 5.2, 0.4, '#e2dc98')),
+    T([[MID - 2.6, 25], [MID - 6, 26.4], [MID - 1.4, 28.6]], '#ffffff'), T([[MID + 2.6, 25], [MID + 6, 26.4], [MID + 1.4, 28.6]], '#ffffff'),
+    // Darker spots on the back and shoulders.
+    F(E(10.6, 28, 1.2, 0.9, FROG_DK)), F(E(20.6, 30, 1, 0.8, FROG_DK)), F(E(11.4, 33.4, 0.9, 0.7, FROG_DK))],
+  sleeve: () => FROG,
+  long: true,
+  shoulder: () => [E(0, 1, 2.6, 2.4, FROG), F(E(0.4, 0.2, 1, 0.5, FROG_LT))],
+  legs: () => ({ top: FROG, low: FROG, pad: FROG_DK }),
+  skirt: () => [],
+  // Webbed frog feet: three round toes.
+  shoe: (p, k, c) => [k.dot(-2.6, 2.2, 1.5, c(FROG_DK)), k.dot(0, 2.6, 1.6, c(FROG)), k.dot(2.6, 2.2, 1.5, c(FROG_DK)), k.poly([[-2.4, -0.6], [2.4, -0.6], [3, 2], [-3, 2]], c(FROG))],
 };
 
 // The basics under the outfit, shown wherever a top, bottoms or shoes are taken off: a soft

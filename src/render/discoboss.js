@@ -33,6 +33,10 @@ const P = {
   wobbleR: { arm: 100, body: { tilt: 0.12 }, rig: { tx: 1.5, tilt: 6, backArm: [-2, -6], frontLeg: [1.5, 0, 4], backLeg: [-1.5, -1, -8], squat: 1 } },
   sit: { arm: 20, body: { tilt: -0.2, stretch: 0.86 }, rig: { backArm: [-4, 2], frontLeg: [5, -3, 50], backLeg: [-4, -2, -40], squat: 2, by: 3, hy: 1.5, tilt: -8 } },
   roar: { arm: 140, body: { stretch: 1.05, tilt: -0.04 }, rig: { backArm: [-5, -13], frontLeg: [3.5, 0, 12], backLeg: [-3.5, 0, -12], hy: -1 } },
+  // The Twist: a finger snap by the ear, and a spin with the arms flung out.
+  snap: { arm: 158, body: { tilt: -0.05 }, rig: { tx: -0.5, tilt: -4, backArm: HIPS, armSide: -1, frontLeg: [2, 0, 6], backLeg: [-1.5, 0, -4] } },
+  spin: { arm: 100, body: { turn: -1, lift: 2, tilt: 0.04 }, rig: { backArm: [-6, -9], frontLeg: [1.5, -2, 10], backLeg: [-1.5, 0, -4] } },
+  victory: { arm: 165, body: { tilt: -0.06, stretch: 1.03 }, rig: { backArm: HIPS, armSide: -1, tilt: -6, frontLeg: [3, 0, 10], backLeg: [-1, 0, -3] } },
   reveal: { arm: 92, body: { tilt: 0.03 }, rig: { backArm: [3, -14], frontLeg: [2.5, 0, 8], backLeg: [-1.5, 0, -4] } },
   push: { arm: 160, body: { tilt: -0.02 }, rig: { backArm: [3, -14], frontLeg: [2, 0, 6], backLeg: [-1.5, 0, -4] } },
   // The stage form's intro poses.
@@ -48,8 +52,12 @@ export const MOVES = {
   // leans back, strikes the point, changes, and strikes his toad-form pose.
   cut: { period: 13.4, once: true, keys: [[0, 'stand', 'smug'], [3.6, 'hkick', 'excited'], [4.2, 'hlean', 'grin'], [5.2, 'hpoint', 'grin'], [8.8, 'reveal', 'smug', 1], [11.6, 'push', 'excited'], [12.1, 'reveal', 'excited']] },
   intro: { period: 7.2, once: true, human: 3.6, keys: [[0, 'stand', 'smug'], [0.8, 'hkick', 'excited'], [1.3, 'hlean', 'grin'], [1.8, 'hpoint', 'grin'], [5.6, 'reveal', 'smug', 1], [6.5, 'push', 'excited'], [6.9, 'reveal', 'excited']] },
-  hustle: { period: 2.6, once: true, keys: [[0, 'stand', 'smug'], [0.5, 'wind', 'determined', 1], [1.3, 'hitL', 'angry', 1], [1.9, 'stand', 'grin']] },
-  twist: { period: 4, once: true, keys: [[0, 'ready', 'determined', 1], [0.8, 'hitL', 'angry', 1], [1.15, 'ready', 'determined', 1], [1.4, 'hitL', 'angry', 1], [1.75, 'ready', 'determined', 1], [2, 'hitL', 'angry', 1], [2.35, 'ready', 'determined', 1], [2.6, 'hitL', 'angry', 1], [2.95, 'ready', 'determined', 1], [3.2, 'hitR', 'angry', 1], [3.7, 'stand', 'smug']] },
+  hustle: { period: 2.6, once: true, keys: [[0, 'stand', 'smug'], [0.5, 'wind', 'determined'], [1.3, 'hitR', 'angry'], [1.9, 'stand', 'grin']] },
+  // The Twists: finger snaps on the beat with a playful wink, then a spin into each lunge toward
+  // your side (the face lighting up mid-spin, shouting on the hit), and the last spin round to the
+  // other side; he finishes with a proud point.
+  twist2: { period: 4, once: true, keys: [[0, 'stand', 'smug'], [0.3, 'snap', 'playful'], [0.55, 'stand', 'smug'], [0.8, 'snap', 'playful'], [1.15, 'spin', 'excited'], [1.4, 'hitR', 'yell'], [1.75, 'spin', 'excited'], [2, 'hitR', 'yell'], [2.35, 'snap', 'sassy'], [2.95, 'spin', 'excited'], [3.2, 'hitL', 'yell'], [3.6, 'victory', 'proud']] },
+  twist4: { period: 4, once: true, keys: [[0, 'snap', 'playful'], [0.3, 'stand', 'smug'], [0.55, 'spin', 'excited'], [0.8, 'hitR', 'yell'], [1.15, 'spin', 'excited'], [1.4, 'hitR', 'yell'], [1.75, 'spin', 'excited'], [2, 'hitR', 'yell'], [2.35, 'spin', 'excited'], [2.6, 'hitR', 'yell'], [2.95, 'spin', 'excited'], [3.2, 'hitL', 'yell'], [3.6, 'victory', 'proud']] },
   deepcut: { period: 2.4, once: true, keys: [[0, 'stand', 'smug'], [0.6, 'kickUp', 'determined', 1], [1.1, 'kickOut', 'angry', 1], [1.6, 'stand', 'cool']] },
   funky: { period: 1.2, keys: [[0, 'stompUp', 'excited'], [0.4, 'stompDown', 'grin']] },
   disco: { period: 3.2, once: true, keys: [[0, 'crouch', 'smug'], [0.5, 'armsUp', 'excited'], [2.2, 'groove', 'love']] },
@@ -113,8 +121,8 @@ export function poseOf(name, time, clock) {
 
 const STAGE = { hairStyle: 'wolf', hairColor: '#e2e84a', hairTip: '#4fcf5a', skinTone: '#b97e5a', eyeStyle: 'cat', eyeColor: '#e0469c', browStyle: 'sharp', earStyle: 'bunny' };
 export const SCALE = 2.6;
-// His frog backup dancers: green frog-folk with big dark afros, in white disco shirts and teal flares.
-const DANCER = { hairStyle: 'cloud', hairColor: '#1c2216', skinTone: '#9ad86e', eyeStyle: 'big', eyeColor: '#2a1a10', browStyle: 'none', earStyle: 'round', outfit: 'frogdancer', outfitColor: '#f6f4fb', face: 'smug' };
+// His frog backup dancers, dressed in frog onesies with bulging-eyed hoods.
+const DANCER = { hairStyle: 'fluffybob', hairColor: '#3a2a1a', skinTone: '#f6d2b8', eyeStyle: 'big', eyeColor: '#2a1a10', browStyle: 'none', earStyle: 'round', outfit: 'frogdancer', outfitColor: '#f6f4fb', face: 'smug' };
 
 function tail(ctx, x, gy, s, time, body, dir) {
   const lean = (body.tilt + (body.lunge ?? 0) * 0.02) * dir;
@@ -151,7 +159,10 @@ export function drawDiscoBoss(ctx, m, x, y, time) {
   const look = human
     ? { ...STAGE, outfit: 'disco', face: pz.face }
     : { ...STAGE, outfit: pz.shades ? 'toad' : 'toadup', face: pz.face, frog: 'record' };
-  if (name === 'moon') look.dance = 'cool';
+  // Moonwalking: the step runs backwards (hero.js, the 'disco' walk).
+  if (name === 'moon') look.dance = 'disco';
+  // Between the two glides he strikes a pose.
+  if (name === 'moon' && !b.sliding) Object.assign(look, { face: 'proud' });
   // The red energy of the change, building over the intro's charge.
   if (b.charge > 0) {
     const g = ctx.createRadialGradient(x, y - 60, 4, x, y - 60, 30 + 110 * b.charge);
@@ -173,11 +184,11 @@ export function drawDiscoBoss(ctx, m, x, y, time) {
   ctx.beginPath();
   ctx.ellipse(x, y + 1, 30 - (pz.body.lift ?? 0) * 2, 5, 0, 0, Math.PI * 2);
   ctx.fill();
-  const state = name === 'moon'
-    ? { pose: 'walk', time: time * 1.1, facing: dir, seed: 0, scale: SCALE, body: { tilt: -0.06 }, flash: m.flash > 0 ? 0.5 : 0 }
+  const state = name === 'moon' && b.sliding
+    ? { pose: 'walk', time: time * 1.1, facing: dir, seed: 0, scale: SCALE, body: { tilt: -0.06 }, flash: m.flash > 0 ? 0.12 : 0 }
     : b.walking
-      ? { pose: 'walk', time, facing: dir, seed: 0, scale: SCALE, body: { tilt: -0.03 }, flash: m.flash > 0 ? 0.5 : 0 }
-      : { pose: 'idle', time, facing: dir, seed: 0, scale: SCALE, body: pz.body, rig: pz.rig, flash: m.flash > 0 ? 0.5 : 0, alpha: m.hp <= 0 ? Math.max(0, 1 - Math.max(0, (m.dying ?? 0) - 3.4) * 2) : 1 };
+      ? { pose: 'walk', time, facing: dir, seed: 0, scale: SCALE, body: { tilt: -0.03 }, flash: m.flash > 0 ? 0.12 : 0 }
+      : { pose: 'idle', time, facing: dir, seed: 0, scale: SCALE, body: pz.body, rig: pz.rig, flash: m.flash > 0 ? 0.12 : 0, alpha: m.hp <= 0 ? Math.max(0, 1 - Math.max(0, (m.dying ?? 0) - 3.4) * 2) : 1 };
   if (b.walking) look.dance = 'proud';
   drawHero(ctx, look, null, x, y, state);
 }
@@ -185,6 +196,8 @@ export function drawDiscoBoss(ctx, m, x, y, time) {
 // ---------- Telegraphs and hits ----------
 
 const RAINBOW = ['#ff5b7f', '#ffb347', '#ffe36b', '#7fe07a', '#5bc8ff', '#b07aff'];
+// Ride the Waves' glass slabs, as in the fight: magenta, yellow, teal and blue.
+const WAVE_COLORS = ['#e050e8', '#f2e040', '#40e0d8', '#6a70ff'];
 
 function heart(ctx, x, y, s, col) {
   ctx.fillStyle = col;
@@ -376,14 +389,47 @@ export function drawDiscoZones(ctx, world, cam, now) {
         ctx.fillRect(x0, gy - 2, x1 - x0, H);
         if (z.cubes) cubeWall(ctx, x0, x1, z.side, gy, u);
         else if (!z.blind) glassPanes(ctx, x0, x1, z.side, gy, u);
-      } else if (since < 0.45) {
-        const a = 1 - since / 0.45;
-        // The hit: a sweep of white light across that half, with a rainbow edge.
-        ctx.fillStyle = `rgba(255,240,255,${0.55 * a})`;
-        ctx.fillRect(x0, 0, x1 - x0, H);
-        const edge = z.side < 0 ? x1 : x0;
-        RAINBOW.forEach((c, i) => { ctx.fillStyle = c; ctx.globalAlpha = 0.7 * a; ctx.fillRect(edge - z.side * (i * 3 + 3), 0, 3, H); });
+      } else if (since < 0.5) {
+        const a = 1 - since / 0.5;
+        // The hit stays on the floor: the tiles of that half flash in rainbow colours, a low wave of
+        // light rolls out along the ground from his side, and the cube wall shatters.
+        const T = 72;
+        for (let i = Math.floor((z.x0) / T); i <= Math.floor(z.x1 / T); i++) {
+          const tx = Math.max(x0, X(i * T));
+          const tw = Math.min(x1, X((i + 1) * T)) - tx;
+          if (tw <= 0) continue;
+          ctx.fillStyle = RAINBOW[((i % RAINBOW.length) + RAINBOW.length) % RAINBOW.length];
+          ctx.globalAlpha = 0.55 * a;
+          ctx.fillRect(tx, gy - 2, tw, H);
+        }
         ctx.globalAlpha = 1;
+        const from = z.side < 0 ? x1 : x0;
+        const reach = (x1 - x0) * Math.min(1, since / 0.25);
+        const g = ctx.createLinearGradient(0, gy - 34, 0, gy + 4);
+        g.addColorStop(0, 'rgba(255,200,240,0)');
+        g.addColorStop(1, `rgba(255,220,250,${0.8 * a})`);
+        ctx.fillStyle = g;
+        ctx.fillRect(z.side < 0 ? from - reach : from, gy - 34, reach, 38);
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fillRect(z.side < 0 ? from - reach - 2 : from + reach - 2, gy - 30, 4, 32);
+        if (z.cubes) {
+          for (let k = 0; k < 14; k++) {
+            const ang = -Math.PI / 2 + (k / 13 - 0.5) * 2.2;
+            const sp = 60 + (k % 4) * 30;
+            const cx = (z.side < 0 ? x1 - 60 : x0 + 60) + Math.cos(ang) * sp * since * 2 + z.side * k * 3;
+            const cy = gy - 30 + Math.sin(ang) * sp * since * 2 + 160 * since * since;
+            ctx.globalAlpha = a;
+            ctx.fillStyle = RAINBOW[k % RAINBOW.length];
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(since * 10 + k);
+            ctx.fillRect(-4, -4, 8, 8);
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillRect(-4, -4, 8, 2);
+            ctx.restore();
+          }
+          ctx.globalAlpha = 1;
+        }
       }
     } else if (z.kind === 'tiles') {
       for (let i = Math.floor(cam.x / z.T) - 1; i < Math.floor(cam.x / z.T) + 12; i++) {
@@ -399,7 +445,7 @@ export function drawDiscoZones(ctx, world, cam, now) {
         } else if (since < 0.4) {
           const a = 1 - since / 0.4;
           ctx.fillStyle = `rgba(255,220,160,${0.85 * a})`;
-          ctx.fillRect(x0, gy - 50 * a, z.T, H);
+          ctx.fillRect(x0, gy - 2 - 18 * a, z.T, H);
           ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`;
           ctx.fillRect(x0 + 4, gy - 50 * a, z.T - 8, 3);
         }
@@ -432,62 +478,191 @@ export function drawDiscoZones(ctx, world, cam, now) {
         ctx.fillRect(Math.min(x0, x1), gy - 100, Math.abs(x1 - x0), 106);
       }
     } else if (z.kind === 'wave') {
+      // Ride the Waves: the floor tiles at the edge it comes from glow orange with white chevrons
+      // pointing the way it will go; then a slab of coloured glass slides across the floor, the
+      // tiles it passes lighting up in its colour behind it. Jump it.
       if (now < z.from) continue;
-      const wx = X(z.x0 + z.dir * z.speed * Math.max(0, now - z.at));
+      const col = WAVE_COLORS[z.color ?? 0];
+      const T = 72;
       if (warn) {
-        // Arrows lighting up at the edge it will come from.
-        for (let i = 0; i < 3; i++) {
-          const on = Math.floor(now * 8) % 3 === i;
-          ctx.fillStyle = on ? '#bfefff' : 'rgba(120,200,255,0.5)';
-          const ax = X(z.x0) + z.dir * i * 9;
+        // Chevrons running across the whole floor the way it will come.
+        const W2 = ctx.canvas.width / (ctx.getTransform().a || 1);
+        const off = ((now * 120 * z.dir) % 40 + 40) % 40;
+        for (let cx = -40 + off; cx < W2 + 40; cx += 40) {
+          ctx.strokeStyle = `rgba(255,190,110,${0.55 + 0.35 * Math.sin(now * 12)})`;
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
-          ctx.moveTo(ax, gy - 18);
-          ctx.lineTo(ax + z.dir * 7, gy - 12);
-          ctx.lineTo(ax, gy - 6);
+          ctx.moveTo(cx - z.dir * 5, gy + 30);
+          ctx.lineTo(cx + z.dir * 5, gy + 38);
+          ctx.lineTo(cx - z.dir * 5, gy + 46);
+          ctx.stroke();
+        }
+        const ex = z.dir > 0 ? 0 : world.map.width - T * 2;
+        for (let t = 0; t < 2; t++) {
+          const tx = X(ex + t * T);
+          const pulse = 0.5 + 0.5 * Math.sin(now * 14 - t * 2 * z.dir);
+          const g = ctx.createLinearGradient(0, gy, 0, gy + 26);
+          g.addColorStop(0, `rgba(255,150,60,${0.55 + 0.3 * pulse})`);
+          g.addColorStop(1, 'rgba(200,70,20,0.3)');
+          ctx.fillStyle = g;
+          ctx.fillRect(tx + 2, gy, T - 4, 24);
+          ctx.strokeStyle = '#ffd08a';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(tx + 2.5, gy + 0.5, T - 5, 23);
+          // Chevrons, lighting up in turn toward where it will go.
+          for (let c = 0; c < 3; c++) {
+            const on = (Math.floor(now * 9) + (z.dir > 0 ? -c : c)) % 3 === 0;
+            ctx.strokeStyle = on ? '#ffffff' : 'rgba(255,240,220,0.5)';
+            ctx.lineWidth = 2.5;
+            const cx = tx + T / 2 + (c - 1) * 14;
+            ctx.beginPath();
+            ctx.moveTo(cx - z.dir * 4, gy + 5);
+            ctx.lineTo(cx + z.dir * 4, gy + 12);
+            ctx.lineTo(cx - z.dir * 4, gy + 19);
+            ctx.stroke();
+          }
+        }
+      } else {
+        const wx = X(z.x0 + z.dir * z.speed * (now - z.at));
+        if (wx < -80 || wx > ctx.canvas.width + 80) continue;
+        // The lit trail of tiles behind it.
+        for (let t = 1; t <= 4; t++) {
+          const tx = wx - z.dir * t * 44;
+          ctx.globalAlpha = 0.45 * (1 - t / 5);
+          ctx.fillStyle = col;
+          ctx.fillRect(tx - 22, gy, 44, 24);
+        }
+        ctx.globalAlpha = 1;
+        // The glass block: a big tile of coloured glass sliding over the floor, its top face lit and
+        // a bright rim, a shine sweeping across it.
+        const sw = 44;
+        const sh = 26;
+        const dep = 8;
+        ctx.save();
+        ctx.translate(wx, gy + 4);
+        ctx.globalAlpha = 0.92;
+        const face = ctx.createLinearGradient(0, -sh, 0, 0);
+        face.addColorStop(0, col);
+        face.addColorStop(1, '#ffffff');
+        ctx.fillStyle = face;
+        ctx.fillRect(-sw / 2, -sh, sw, sh);
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.moveTo(-sw / 2, -sh);
+        ctx.lineTo(-sw / 2 + dep, -sh - dep);
+        ctx.lineTo(sw / 2 + dep, -sh - dep);
+        ctx.lineTo(sw / 2, -sh);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = col;
+        ctx.globalAlpha = 0.6;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-sw / 2 + 0.5, -sh + 0.5, sw - 1, sh - 1);
+        ctx.beginPath();
+        ctx.moveTo(-sw / 2, -sh);
+        ctx.lineTo(-sw / 2 + dep, -sh - dep);
+        ctx.lineTo(sw / 2 + dep, -sh - dep);
+        ctx.lineTo(sw / 2 + dep, -dep);
+        ctx.lineTo(sw / 2, 0);
+        ctx.stroke();
+        const sh2 = ((now * 3) % 1.4) - 0.2;
+        if (sh2 > 0 && sh2 < 1) {
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.moveTo(-sw / 2 + sh2 * sw, -sh);
+          ctx.lineTo(-sw / 2 + sh2 * sw + 8, -sh);
+          ctx.lineTo(-sw / 2 + sh2 * sw - 4, 0);
+          ctx.lineTo(-sw / 2 + sh2 * sw - 12, 0);
           ctx.fill();
         }
-      } else if (wx > -40 && wx < ctx.canvas.width + 40) {
-        // A row of glowing white tiles racing over the floor, with a light trail.
-        const g = ctx.createLinearGradient(wx - z.dir * 70, 0, wx, 0);
-        g.addColorStop(0, 'rgba(160,220,255,0)');
-        g.addColorStop(1, 'rgba(200,240,255,0.6)');
-        ctx.fillStyle = g;
-        ctx.fillRect(Math.min(wx, wx - z.dir * 70), gy - 4, 70, 30);
-        ctx.fillStyle = 'rgba(240,250,255,0.95)';
-        ctx.fillRect(wx - 7, gy - 20, 14, 22);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(wx - 7.5, gy - 20.5, 15, 23);
+        ctx.restore();
+        // A glow on the floor ahead of it and sparkles kicked up behind.
+        const glow = ctx.createRadialGradient(wx, gy + 4, 2, wx, gy + 4, 40);
+        glow.addColorStop(0, 'rgba(255,255,255,0.5)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(wx - 40, gy - 36, 80, 50);
+        for (let k = 0; k < 6; k++) {
+          const sx = wx - z.dir * (16 + ((now * 200 + k * 17) % 50));
+          const sy = gy - 4 - ((k * 7 + now * 60) % 22);
+          ctx.fillStyle = k % 2 ? '#ffffff' : col;
+          ctx.fillRect(Math.round(sx), Math.round(sy), 2, 2);
+        }
       }
     } else if (z.kind === 'spot') {
-      // Spotlights: tall glowing cylinders of light with a bright ring where they meet the floor.
+      // Spotlights: soft columns of white light falling from a lamp above, brightest at the floor,
+      // with slow shimmer streaks inside, motes drifting up, and a glowing ring and pool where they
+      // land. The one you stand in glows gold; they flicker when the timer is about to run out.
       if (now < z.from) continue;
-      const fade = Math.min(1, (now - z.from) / 0.3);
-      for (const l of z.lights) {
-        const lx = X(l.x + l.vx * (now - z.from));
-        const left = z.at - now;
-        const hot = left < 1 && left > 0 ? 0.15 * (0.5 + 0.5 * Math.sin(now * 20)) : 0;
-        const g = ctx.createLinearGradient(lx - z.w / 2, 0, lx + z.w / 2, 0);
-        g.addColorStop(0, `rgba(255,250,235,${0.18 * fade})`);
-        g.addColorStop(0.5, `rgba(255,250,235,${(0.45 + hot) * fade})`);
-        g.addColorStop(1, `rgba(255,250,235,${0.18 * fade})`);
-        ctx.fillStyle = g;
-        ctx.fillRect(lx - z.w / 2, 0, z.w, gy + 4);
-        ctx.strokeStyle = `rgba(255,255,255,${0.5 * fade})`;
-        ctx.lineWidth = 1;
+      const fade = Math.min(1, (now - z.from) / 0.4);
+      const left = z.at - now;
+      const urgent = left < 1.2 && left > 0;
+      for (const [li, l] of z.lights.entries()) {
+        const wxl = l.x + l.vx * (now - z.from);
+        const lx = X(wxl);
+        if (lx < -60 || lx > ctx.canvas.width + 60) continue;
+        const mine = Math.abs(world.body.x - wxl) < z.w / 2;
+        const flick = urgent ? 0.75 + 0.25 * Math.sin(now * 30 + li) : 1;
+        const tint = mine ? '255,236,170' : '255,250,240';
+        const half = z.w / 2;
+        // The column: soft at the edges, fading toward the top.
+        ctx.save();
+        ctx.globalAlpha = fade * flick;
+        const hz = ctx.createLinearGradient(lx - half, 0, lx + half, 0);
+        hz.addColorStop(0, `rgba(${tint},0)`);
+        hz.addColorStop(0.2, `rgba(${tint},0.22)`);
+        hz.addColorStop(0.5, `rgba(${tint},0.42)`);
+        hz.addColorStop(0.8, `rgba(${tint},0.22)`);
+        hz.addColorStop(1, `rgba(${tint},0)`);
+        // Fading toward the top: drawn in bands, faint high up and full near the floor.
+        ctx.fillStyle = hz;
+        const bands = 14;
+        for (let k = 0; k < bands; k++) {
+          ctx.globalAlpha = fade * flick * (0.15 + 0.85 * ((k + 1) / bands) ** 1.5);
+          ctx.fillRect(lx - half, (gy + 4) * (k / bands), z.w, (gy + 4) / bands + 0.5);
+        }
+        ctx.globalAlpha = fade * flick;
+        // Shimmer streaks sliding down inside.
+        for (let k = 0; k < 4; k++) {
+          const sx = lx - half * 0.6 + k * half * 0.4;
+          const sy = ((now * 90 + k * 53) % (gy + 40)) - 40;
+          const sg = ctx.createLinearGradient(0, sy, 0, sy + 40);
+          sg.addColorStop(0, `rgba(${tint},0)`);
+          sg.addColorStop(0.5, `rgba(${tint},0.5)`);
+          sg.addColorStop(1, `rgba(${tint},0)`);
+          ctx.fillStyle = sg;
+          ctx.fillRect(sx, sy, 1.5, 40);
+        }
+        // Motes floating up.
+        for (let k = 0; k < 6; k++) {
+          const my = gy - ((now * 25 + k * 23 + li * 9) % (gy * 0.7));
+          const mx = lx + Math.sin(now * 2 + k * 1.7) * half * 0.6;
+          ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.4 * Math.sin(now * 5 + k)})`;
+          ctx.fillRect(Math.round(mx), Math.round(my), 1.5, 1.5);
+        }
+        // The pool and ring on the floor.
+        const pool = ctx.createRadialGradient(lx, gy + 4, 2, lx, gy + 4, half + 6);
+        pool.addColorStop(0, `rgba(${tint},0.75)`);
+        pool.addColorStop(1, `rgba(${tint},0)`);
+        ctx.fillStyle = pool;
         ctx.beginPath();
-        ctx.moveTo(lx - z.w / 2, 0);
-        ctx.lineTo(lx - z.w / 2, gy + 4);
-        ctx.moveTo(lx + z.w / 2, 0);
-        ctx.lineTo(lx + z.w / 2, gy + 4);
-        ctx.stroke();
-        ctx.strokeStyle = `rgba(255,250,220,${0.9 * fade})`;
+        ctx.ellipse(lx, gy + 4, half + 6, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = mine ? '#ffe08a' : '#ffffff';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.ellipse(lx, gy + 4, z.w / 2, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(lx, gy + 4, half, 6.5, 0, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = `rgba(255,250,220,${0.25 * fade})`;
-        ctx.fill();
+        ctx.strokeStyle = `rgba(${tint},0.6)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(lx, gy + 4, half + 4 + 3 * Math.sin(now * 4 + li), 8, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
     } else if (z.kind === 'track') {
       // A silver star frog spins along the track, lighting it pink; then it bursts.
@@ -506,8 +681,12 @@ export function drawDiscoZones(ctx, world, cam, now) {
         starFrog(ctx, head, gy - 18, 14, now * -6 * z.dir);
       } else if (since < 0.45) {
         const a = 1 - since / 0.45;
-        ctx.fillStyle = `rgba(255,140,200,${0.8 * a})`;
-        ctx.fillRect(x0, gy - 70 * a, x1 - x0, H);
+        // The track bursts along the floor: a pink glow rising off the tiles, not a wall.
+        const tg = ctx.createLinearGradient(0, gy - 30, 0, gy + 20);
+        tg.addColorStop(0, 'rgba(255,140,200,0)');
+        tg.addColorStop(1, `rgba(255,140,200,${0.8 * a})`);
+        ctx.fillStyle = tg;
+        ctx.fillRect(x0, gy - 30, x1 - x0, 50);
         starFrog(ctx, z.dir > 0 ? x1 : x0, gy - 18 - since * 60, 14, now * -10, a);
       }
     } else if (z.kind === 'beats') {
@@ -526,10 +705,19 @@ export function drawDiscoZones(ctx, world, cam, now) {
         }
       } else if (since < 0.35) {
         const a = 1 - since / 0.35;
-        ctx.fillStyle = `rgba(255,240,240,${0.8 * a})`;
-        ctx.beginPath();
-        ctx.ellipse(px, gy - 10, 34 * (1 + since * 2), 30 * a, 0, 0, Math.PI * 2);
-        ctx.fill();
+        // The burst: red rings popping outward along the floor, with a few sparks.
+        for (let i = 0; i < 2; i++) {
+          ctx.strokeStyle = `rgba(255,${90 + i * 100},${110 + i * 80},${a})`;
+          ctx.lineWidth = 3 - i;
+          ctx.beginPath();
+          ctx.ellipse(px, gy + 3, 20 + since * 120 + i * 8, 5 + since * 24 + i * 2, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        for (let k = 0; k < 8; k++) {
+          const ang = -Math.PI / 2 + (k / 7 - 0.5) * 2.4;
+          ctx.fillStyle = `rgba(255,200,210,${a})`;
+          ctx.fillRect(Math.round(px + Math.cos(ang) * since * 140), Math.round(gy + Math.sin(ang) * since * 90), 2, 2);
+        }
       }
     }
   }
@@ -651,7 +839,7 @@ export function drawDiscoCasts(ctx, world, cam, now, W, H) {
       } else {
         // The burst: a white flash ring rushing out.
         const u = (e - lead) / 0.6;
-        ctx.fillStyle = `rgba(255,230,230,${0.6 * (1 - u)})`;
+        ctx.fillStyle = `rgba(255,200,210,${0.22 * (1 - u)})`;
         ctx.fillRect(0, 0, W, H);
         ctx.strokeStyle = `rgba(255,120,140,${1 - u})`;
         ctx.lineWidth = 6 * (1 - u) + 1;
@@ -659,6 +847,65 @@ export function drawDiscoCasts(ctx, world, cam, now, W, H) {
         ctx.arc(x, y, 60 + u * 360, 0, Math.PI * 2);
         ctx.stroke();
       }
+    } else if (c.kind === 'swirl') {
+      // A twist: swirling slashes whipping round him, red and blue in turn, with sparks flung off.
+      const e = now - c.at + 0.12;
+      if (e < 0 || e > 0.55) continue;
+      const u = e / 0.55;
+      const col = c.blue ? ['#5ab8ff', '#c8ecff'] : ['#ff3a64', '#ffc0d0'];
+      ctx.save();
+      ctx.translate(x, y + 8);
+      ctx.scale(1, 0.55);
+      ctx.lineCap = 'round';
+      for (let k = 0; k < 3; k++) {
+        const r = 30 + k * 16 + u * 34;
+        const a0 = (c.blue ? -1 : 1) * (u * 7 + k * 2.1);
+        ctx.strokeStyle = k === 1 ? col[1] : col[0];
+        ctx.globalAlpha = (1 - u) * (k === 1 ? 1 : 0.8);
+        ctx.lineWidth = 9 - k * 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, a0, a0 + 2.6 * (c.blue ? -1 : 1), c.blue);
+        ctx.stroke();
+      }
+      ctx.restore();
+      for (let k = 0; k < 10; k++) {
+        const a = k * 0.63 + now * 6;
+        const r = 30 + u * 70;
+        ctx.globalAlpha = 1 - u;
+        ctx.fillStyle = k % 2 ? '#ffffff' : col[0];
+        ctx.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + 8 + Math.sin(a) * r * 0.55), 2, 2);
+      }
+      ctx.globalAlpha = 1;
+    } else if (c.kind === 'snap') {
+      // A finger snap: a little star burst by his raised hand and a bouncing SNAP!
+      const e = now - c.at;
+      if (e < 0 || e > 0.45) continue;
+      const u = e / 0.45;
+      const hx = x + (c.dir ?? 1) * 22;
+      const hy = gy - 120;
+      ctx.strokeStyle = `rgba(255,240,150,${1 - u})`;
+      ctx.lineWidth = 1.5;
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(hx + Math.cos(a) * (4 + u * 6), hy + Math.sin(a) * (4 + u * 6));
+        ctx.lineTo(hx + Math.cos(a) * (8 + u * 12), hy + Math.sin(a) * (8 + u * 12));
+        ctx.stroke();
+      }
+      ctx.save();
+      ctx.globalAlpha = 1 - u;
+      ctx.translate(hx + (c.dir ?? 1) * 16, hy - 8 - u * 8);
+      const sc = u < 0.2 ? u / 0.2 * 1.2 : 1.2 - Math.min(0.2, (u - 0.2));
+      ctx.scale(sc, sc);
+      ctx.rotate(-0.15 * (c.dir ?? 1));
+      ctx.font = '900 14px "Trebuchet MS", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#5a1a6a';
+      ctx.strokeText('SNAP!', 0, 0);
+      ctx.fillStyle = '#ffe96a';
+      ctx.fillText('SNAP!', 0, 0);
+      ctx.restore();
     } else if (c.kind === 'burst') {
       const e = now - c.at;
       if (e < 0 || e > 0.8) continue;

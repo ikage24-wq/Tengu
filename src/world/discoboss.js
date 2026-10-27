@@ -32,7 +32,7 @@ const STEPS = [
   { move: 'hustle', dur: 3, run: hustle },
   { move: 'groove', dur: 1 },
   { move: 'deepcut', dur: 2.4, run: deepCut },
-  { move: 'twist', dur: 4, run: (w, m, s) => twist(w, m, s, 2) },
+  { move: 'twist2', dur: 4, run: (w, m, s) => twist(w, m, s, 2) },
   { move: 'celebrate', dur: 2.6, run: celebrate },
   { move: 'funky', dur: 5.2, run: funky },
   { move: 'disco', dur: 9, run: discoInfernal },
@@ -42,7 +42,7 @@ const STEPS = [
   { move: 'dance', dur: 4.2, run: letsDance },
   { move: 'pose', dur: 2.6, run: letsPose },
   { move: 'moon', dur: 4, run: frogtourage },
-  { move: 'twist', dur: 4, run: (w, m, s) => twist(w, m, s, 4) },
+  { move: 'twist4', dur: 4, run: (w, m, s) => twist(w, m, s, 4) },
   { move: 'groove', dur: 2 },
 ];
 
@@ -81,6 +81,10 @@ function twist(w, m, s, snaps) {
   for (const at of hits) zone(w, { kind: 'half', side, x0, x1, from: s, at: s + at, dmg: atk(m, 1.1), cubes: true });
   // The last snap hits the other side, with no wall to warn you.
   zone(w, { kind: 'half', side: -side, x0: o0, x1: o1, from: s + hits.at(-1) + 0.05, at: s + 3.2, dmg: atk(m, 1.3), blind: true });
+  // The show: finger snaps first, then a swirl of slashes round him on every hit, red and blue in turn.
+  const snapsAt = snaps === 2 ? [0.3, 0.8, 2.35] : [0];
+  for (const at of snapsAt) cast(w, 'snap', s + at, { x: m.x, dir: m.dir });
+  [...hits, 3.2].forEach((at, i) => cast(w, 'swirl', s + at, { x: m.x, blue: i % 2 === 1 }));
   call(w, `${snaps}-snap Twist!`, '#c6e8ff');
 }
 
@@ -111,9 +115,9 @@ function discoInfernal(w, m, s) {
 }
 
 function waves(w, m, s) {
-  zone(w, { kind: 'wave', x0: 20, dir: 1, speed: 360, from: s, at: s + 0.9, dmg: atk(m, 1.4) });
-  zone(w, { kind: 'wave', x0: w.map.width - 20, dir: -1, speed: 360, from: s + 1.8, at: s + 2.7, dmg: atk(m, 1.4) });
-  zone(w, { kind: 'wave', x0: 20, dir: 1, speed: 420, from: s + 3.1, at: s + 3.8, dmg: atk(m, 1.4) });
+  zone(w, { kind: 'wave', x0: 20, dir: 1, speed: 360, from: s, at: s + 0.9, dmg: atk(m, 1.4), color: 0 });
+  zone(w, { kind: 'wave', x0: w.map.width - 20, dir: -1, speed: 360, from: s + 1.8, at: s + 2.7, dmg: atk(m, 1.4), color: 1 });
+  zone(w, { kind: 'wave', x0: 20, dir: 1, speed: 420, from: s + 3.1, at: s + 3.8, dmg: atk(m, 1.4), color: 2 });
   call(w, 'Ride the Waves!', '#8fe0ff');
 }
 
@@ -252,6 +256,19 @@ export function tickDisco(world, dt) {
       st.run?.(world, m, world.now);
     }
   }
+  // Frogtourage: he moonwalks while the frogs dance: gliding backwards across the stage (facing
+  // the way he came), then moonwalking back to his spot.
+  if (brain.move === 'moon') {
+    const t = world.now - brain.moveT;
+    const out = Math.min(1, t / 1.8);
+    const back = Math.max(0, Math.min(1, (t - 2) / 1.8));
+    const away = HOME < world.map.width / 2 ? 1 : -1;
+    const k = (u) => u * u * (3 - 2 * u);
+    m.x = HOME + away * 230 * (k(out) - k(back));
+    // Moonwalking, he faces against the way he slides.
+    m.dir = t < 1.9 ? -away : away;
+    brain.sliding = (t < 1.8 || (t > 2 && t < 3.8));
+  } else brain.sliding = false;
   // Let's Dance: he points toward each cleave as it comes.
   const dancing = b.zones.find((z) => z.dance && !z.hit && world.now >= z.from);
   if (dancing && STEPS[brain.step]?.move === 'dance') {
@@ -273,7 +290,7 @@ export function tickDisco(world, dt) {
         z.hit = true;
         continue;
       }
-      if (!world.dead && Math.abs(world.body.x - wx) < 12 && world.body.y > world.map.groundY - 18) {
+      if (!world.dead && Math.abs(world.body.x - wx) < 24 && world.body.y > world.map.groundY - 32) {
         z.hit = true;
         hurtPlayer(world, z.dmg, wx - z.dir * 20);
       }
@@ -289,7 +306,7 @@ export function tickDisco(world, dt) {
   b.zones = b.zones.filter((z) => !(z.hit && world.now - z.at > 0.6) && !(z.until && world.now > z.until));
   b.callouts = b.callouts.filter((c) => world.now - c.at < c.dur);
   b.hearts = b.hearts.filter((h) => world.now - h.at < 1.6);
-  b.casts = b.casts.filter((c) => world.now - c.at < 1.6);
+  b.casts = b.casts.filter((c) => world.now - c.at < 1.6 || c.at > world.now);
   // Eighth Beats rings stay under you until they burst.
   for (const z of b.zones) if (z.kind === 'beats' && !z.hit) z.x = world.body.x;
 }
