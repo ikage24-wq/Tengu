@@ -381,6 +381,23 @@ OUTFITS.toad = {
 // The toad outfit with the shades pushed up onto the head, so the eyes show.
 OUTFITS.toadup = { ...OUTFITS.toad, hat: () => OUTFITS.toad.hat().map((h) => (h.t === 'p' ? { ...h, pts: h.pts.map(([x, y]) => [15.5 + (x - 15.5) * 0.92, y - 8.4]) } : { ...h, y: h.y - 8.4 })) };
 
+// The frog backup dancers' outfit: a white disco shirt open at the collar with big pointed collar
+// flaps, rolled short sleeves, teal flares, and white shoes.
+const DANCER_TEAL = '#3fa89a';
+const DANCER_TEAL_DK = '#2c7f74';
+OUTFITS.frogdancer = {
+  top: (p) => [T(TORSO, '#f6f4fb'),
+    T([[MID - 2.6, 25], [MID + 2.6, 25], [MID, 30.6]], p.skin),
+    T([[MID - 2.6, 25], [MID - 6, 26.4], [MID - 1.4, 29.2]], '#ffffff'), T([[MID + 2.6, 25], [MID + 6, 26.4], [MID + 1.4, 29.2]], '#ffffff'),
+    F(limb(MID - 2.6, 25.2, MID - 5.6, 26.4, 0.4, 0.3, '#c9c4dc')), F(limb(MID + 2.6, 25.2, MID + 5.6, 26.4, 0.4, 0.3, '#c9c4dc')),
+    F(R(MID - 0.2, 30.4, 0.4, 5, '#d8d4e6')), F(E(MID, 31.6, 0.45, 0.45, '#c9c4dc')), F(E(MID, 33.6, 0.45, 0.45, '#c9c4dc')),
+    band(TORSO, 34.6, 35.8, DANCER_TEAL_DK)],
+  sleeve: () => '#f6f4fb',
+  legs: () => ({ top: DANCER_TEAL, low: DANCER_TEAL, pad: null, cuff: DANCER_TEAL_DK }),
+  skirt: () => [F(R(MID - 0.25, 36.2, 0.5, 2.6, DANCER_TEAL_DK))],
+  shoe: (p, k, c) => [k.sole(c('#f6f4fb')), k.poly([[-2.9, 2.1], [2.9, 2.1], [2.6, 3], [-2.6, 3]], c('#c9c4dc'))],
+};
+
 // The basics under the outfit, shown wherever a top, bottoms or shoes are taken off: a soft
 // pink tank top with a deeper pink trim and a tiny bow, lavender shorts, and plain slip-on flats. Not a
 // pickable outfit.

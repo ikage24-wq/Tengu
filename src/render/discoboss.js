@@ -113,6 +113,8 @@ export function poseOf(name, time, clock) {
 
 const STAGE = { hairStyle: 'wolf', hairColor: '#e2e84a', hairTip: '#4fcf5a', skinTone: '#b97e5a', eyeStyle: 'cat', eyeColor: '#e0469c', browStyle: 'sharp', earStyle: 'bunny' };
 export const SCALE = 2.6;
+// His frog backup dancers: green frog-folk with big dark afros, in white disco shirts and teal flares.
+const DANCER = { hairStyle: 'cloud', hairColor: '#1c2216', skinTone: '#9ad86e', eyeStyle: 'big', eyeColor: '#2a1a10', browStyle: 'none', earStyle: 'round', outfit: 'frogdancer', outfitColor: '#f6f4fb', face: 'smug' };
 
 function tail(ctx, x, gy, s, time, body, dir) {
   const lean = (body.tilt + (body.lunge ?? 0) * 0.02) * dir;
@@ -193,39 +195,6 @@ function heart(ctx, x, y, s, col) {
   ctx.fill();
 }
 
-function frog(ctx, fx, fy, s, raise, flip = 1) {
-  ctx.fillStyle = '#4fbf5a';
-  ctx.beginPath();
-  ctx.ellipse(fx, fy - 6 * s, 5 * s, 6 * s, 0, 0, 7);
-  ctx.fill();
-  ctx.fillStyle = '#7fe07a';
-  ctx.beginPath();
-  ctx.ellipse(fx, fy - 12 * s, 4.5 * s, 3.5 * s, 0, 0, 7);
-  ctx.fill();
-  for (const sx of [-2, 2]) {
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(fx + sx * s, fy - 14.5 * s, 1.6 * s, 0, 7);
-    ctx.fill();
-    ctx.fillStyle = '#222';
-    ctx.beginPath();
-    ctx.arc(fx + sx * s + flip * 0.3 * s, fy - 14.5 * s, 0.7 * s, 0, 7);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#ff7fb0';
-  ctx.fillRect(fx - 2 * s, fy - 10.5 * s, 4 * s, 0.8 * s);
-  ctx.strokeStyle = '#4fbf5a';
-  ctx.lineWidth = 1.6 * s;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  if (raise) {
-    ctx.moveTo(fx + raise * 4 * s, fy - 8 * s);
-    ctx.lineTo(fx + raise * 8 * s, fy - 16 * s);
-  }
-  ctx.moveTo(fx - (raise || 1) * 4 * s, fy - 8 * s);
-  ctx.lineTo(fx - (raise || 1) * 6 * s, fy - 3 * s);
-  ctx.stroke();
-}
 
 // A silver star dancer (a Frogtourage frog spinning): five points around a dark core, turning.
 function starFrog(ctx, x, y, r, spin, alpha = 1) {
@@ -564,29 +533,42 @@ export function drawDiscoZones(ctx, world, cam, now) {
       }
     }
   }
-  // Frog dancers on their pedestals for Let's Dance: each poses a hand when its turn comes, and
-  // blue lightning tethers it to him while its cleave is coming.
+  // Frog dancers on their pedestals for Let's Dance: little frog-folk in white disco shirts and teal
+  // flares (drawn on the hero body), standing on the pedestals at the back of the stage. They pop up
+  // and groove; when its turn comes each one throws a pose pointing left or right, and blue
+  // lightning tethers it to him while its cleave is coming.
   if (b.frogs) {
-    for (const f of b.frogs) {
-      const x = X(f.x);
-      const pop = Math.max(0, Math.min(1, (now - f.from) / 0.25));
-      if (pop <= 0) continue;
-      const raise = now >= f.poseAt ? f.hand : 0;
-      const lit = now >= f.poseAt && now < f.poseAt + 0.5;
-      if (lit) {
-        ctx.fillStyle = 'rgba(255,240,170,0.35)';
-        ctx.beginPath();
-        ctx.ellipse(x, gy - 46, 16, 22, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      frog(ctx, x, gy - 30, 1.6 * Math.min(1, pop * 1.2), raise);
-    }
+    const W = ctx.canvas.width / (ctx.getTransform().a || 1);
+    // The pedestals sit at the back of the stage, which drifts at 0.9 of the floor (discostage.js).
+    const PX = (wx) => W / 2 + (wx - (cam.x + W / 2)) * 0.9;
+    const top = gy - 32;
     const tether = b.zones.find((z) => z.dance && !z.hit && now >= z.from);
-    if (tether && boss) {
-      const i = b.zones.filter((z) => z.dance).indexOf(tether);
-      const f = b.frogs[i];
-      if (f) bolt(ctx, X(boss.x), gy - 70, X(f.x), gy - 50, now);
-    }
+    const turn = tether ? b.zones.filter((z) => z.dance).indexOf(tether) : -1;
+    b.frogs.forEach((f, i) => {
+      const x = PX(f.x);
+      const e = now - f.from;
+      if (e <= 0) return;
+      const pop = e < 0.15 ? (e / 0.15) * 1.2 : e < 0.3 ? 1.2 - ((e - 0.15) / 0.15) * 0.2 : 1;
+      const posing = now >= f.poseAt;
+      const lit = i === turn || (posing && now < f.poseAt + 0.5);
+      if (lit) {
+        const g = ctx.createRadialGradient(x, top - 18, 2, x, top - 18, 26);
+        g.addColorStop(0, 'rgba(255,245,190,0.5)');
+        g.addColorStop(1, 'rgba(255,245,190,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - 26, top - 44, 52, 48);
+      }
+      const beat = (now % 0.5) / 0.5;
+      const dip = Math.round(Math.max(0, Math.sin(Math.PI * Math.min(1, beat * 1.6))) * 4) / 4;
+      // Grooving: a hand on the hip, the other swinging, bobbing on the beat. Posing: turned to its
+      // side, the disco point thrown up and out that way.
+      const rig = posing
+        ? { armOver: 'point', backArm: [0.6, -4.2], armSide: -1, tilt: 4, tx: 1, by: dip, frontLeg: [2.5, 0, 8], backLeg: [-1, 0, -3] }
+        : { armOver: 60 + Math.round(Math.sin(now * Math.PI * 2 + i) * 15), backArm: [0.6, -4.2], armSide: -1, by: dip, frontLeg: [1.5, 0, 4], backLeg: [-1.5, 0, -4], tilt: (i % 2 ? 2 : -2) };
+      const look = { ...DANCER, face: posing ? 'excited' : 'smug' };
+      drawHero(ctx, look, null, x, top + 1, { pose: 'idle', time: now + i, facing: posing ? f.hand : 1, seed: i, scale: 0.95 * pop, rig, body: { tilt: posing ? 0.06 : 0 } });
+    });
+    if (tether && boss && b.frogs[turn]) bolt(ctx, X(boss.x), gy - 70, PX(b.frogs[turn].x), top - 24, now);
   }
   // Pillars of light falling where frogs appear.
   for (const c of b.casts ?? []) {
