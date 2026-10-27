@@ -7,6 +7,8 @@ Usage: python3 tools/build-fx.py PACKS_DIR
 PACKS_DIR holds the unzipped packs (licenses and sources in assets/fx/CREDITS.md):
   pvfx/      PVFX Foundry (Pixel VFX Studio, CC0): https://nerijs.itch.io/pvfx-foundry
              (its effects/<name>/grid/sprite-sheet.png: 96x96 cells, five columns, 20 fps)
+  tbbk/      Pixel art sword slash effect (tbbk, CC0):
+             https://opengameart.org/content/pixel-art-sword-slash-effect (slash.png: 64x47 cells, 3x3)
   codemanu/  Free Pixel Effects Pack (CodeManu, CC0):
              https://opengameart.org/content/free-pixel-effects-pack
              (<n>_<name>_spritesheet.png: 100x100 cells in a square grid)
@@ -27,7 +29,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # name: (pack, effect, options). `hue` recolours to that hue (0-360), `sat` scales saturation,
 # `fps` overrides the pack's rate, `loop` marks a looping effect, `start` skips opening frames,
-# `clip` erases everything further left of the burst's middle than that many pixels.
+# `tpivot` / `cpivot` set the anchor in the trimmed frame / the pack's cell (a slash's anchor is the
+# middle of its curve), `light` darkens (or brightens, above 1) (below 1) all but the whitest pixels, `clip` erases everything further left of the burst's middle than that many pixels.
 FX = {
     # The Ranger's wind.
     'leafgust': ('pvfx', 'leaf-gust', {'hue': 118, 'sat': 1.05}),
@@ -45,6 +48,7 @@ FX = {
     'charge': ('pvfx', 'focus-charge', {}),
     'beam': ('pvfx', 'lattice-beam', {'loop': True}),
     'shrapnel': ('pvfx', 'solar-shrapnel', {'hue': 205, 'sat': 0.8}),
+    'impact': ('pvfx', 'solar-shrapnel', {}),
     'frostnova': ('pvfx', 'frost-nova', {}),
     'freezing': ('codemanu', 'freezing', {'fps': 40}),
     'icestar': ('codemanu', 'nebula', {'fps': 40}),
@@ -53,6 +57,39 @@ FX = {
     'deadstar': ('codemanu', 'phantom', {'hue': 345, 'sat': 1.3, 'fps': 40}),
     'hitring': ('codemanu', 'weaponhit', {'fps': 40}),
     'breakring': ('pvfx', 'resonant-break', {}),
+    # Blades (every melee weapon): PVFX's crescent slash (a cut over the top of a circle, anchored
+    # at the circle's middle so it can be turned to follow any swing) in steel, the Paladin's gold
+    # and the Berserker's red; tbbk's little slash as the cut mark where a blow lands.
+    'slash': ('pvfx', 'crescent-slash', {'cpivot': [52, 65], 'start': 1, 'hue': 212, 'sat': 0.5, 'fps': 30}),
+    'slashgold': ('pvfx', 'crescent-slash', {'cpivot': [52, 65], 'start': 1, 'hue': 44, 'sat': 1.6, 'fps': 30}),
+    'slashred': ('pvfx', 'crescent-slash', {'cpivot': [52, 65], 'start': 1, 'hue': 356, 'sat': 1.8, 'light': 0.85, 'fps': 30}),
+    'cut': ('tbbk', 'slash', {'hue': 212, 'sat': 0.35, 'fps': 30}),
+    'thrust': ('pvfx', 'ember-jet', {'hue': 205, 'sat': 0.45}),
+    'steelspin': ('codemanu', 'firespin', {'hue': 215, 'sat': 0.3, 'fps': 30, 'loop': True}),
+    'firespin': ('codemanu', 'firespin', {'fps': 30, 'loop': True}),
+    # The Paladin's light.
+    'holyburst': ('pvfx', 'radiant-heal', {}),
+    'holyshield': ('pvfx', 'arcane-parry', {'hue': 46, 'sat': 1.2}),
+    'holypillar': ('pvfx', 'mass-release', {'hue': 46, 'sat': 1.6, 'light': 1.1, 'start': 5}),
+    'holyring': ('pvfx', 'splash-crown', {'hue': 48, 'sat': 1.5, 'light': 1.2}),
+    'holycharge': ('pvfx', 'focus-charge', {'hue': 46, 'sat': 1.2}),
+    # The Berserker's rage and blood.
+    'ragejet': ('pvfx', 'ember-jet', {}),
+    'ragering': ('codemanu', 'flamelash', {'fps': 40}),
+    'ragecharge': ('pvfx', 'focus-charge', {'hue': 2, 'sat': 1.4}),
+    'bloodmoon': ('codemanu', 'vortex', {'fps': 30, 'loop': True}),
+    'blood': ('pvfx', 'acid-splash', {'hue': 352, 'sat': 1.3}),
+    'flower': ('pvfx', 'cinder-orchid', {}),
+    # The ground, and rings of force by school (a skill's power-up, a roar).
+    'quake': ('pvfx', 'earth-rupture', {}),
+    'steelring': ('pvfx', 'splash-crown', {'hue': 215, 'sat': 0.4}),
+    'redring': ('pvfx', 'splash-crown', {'hue': 2, 'sat': 1.3}),
+    'arcanering': ('pvfx', 'splash-crown', {'hue': 275, 'sat': 1}),
+    'icering': ('pvfx', 'splash-crown', {}),
+    'firering': ('pvfx', 'splash-crown', {'hue': 24, 'sat': 1.4}),
+    'poisonring': ('pvfx', 'splash-crown', {'hue': 100, 'sat': 1.2}),
+    'goldring': ('pvfx', 'splash-crown', {'hue': 44, 'sat': 1.7, 'light': 1.15}),
+    'shadowring': ('pvfx', 'splash-crown', {'hue': 265, 'sat': 0.8}),
 }
 
 
@@ -74,7 +111,13 @@ def codemanu_frames(base, effect):
     return frames, [50, 50], 60
 
 
-def recolour(img, hue, sat):
+def tbbk_frames(base, effect):
+    sheet = Image.open(os.path.join(base, 'tbbk', f'{effect}.png')).convert('RGBA')
+    frames = [sheet.crop((c * 64, r * 47, c * 64 + 64, r * 47 + 47)) for r in range(sheet.height // 47) for c in range(sheet.width // 64)]
+    return frames, [32, 24], 30
+
+
+def recolour(img, hue, sat, light=1):
     px = img.load()
     for y in range(img.height):
         for x in range(img.width):
@@ -82,7 +125,7 @@ def recolour(img, hue, sat):
             if a == 0:
                 continue
             h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
-            r2, g2, b2 = colorsys.hls_to_rgb(hue / 360, l, min(1, s * sat))
+            r2, g2, b2 = colorsys.hls_to_rgb(hue / 360, min(1, l * light) if l < 0.97 else l, min(1, s * sat))
             px[x, y] = (round(r2 * 255), round(g2 * 255), round(b2 * 255), a)
     return img
 
@@ -92,7 +135,7 @@ def build(base):
     os.makedirs(out_dir, exist_ok=True)
     sheets = {}
     for name, (pack, effect, o) in FX.items():
-        frames, pivot, fps = (pvfx_frames if pack == 'pvfx' else codemanu_frames)(base, effect)
+        frames, pivot, fps = {'pvfx': pvfx_frames, 'codemanu': codemanu_frames, 'tbbk': tbbk_frames}[pack](base, effect)
         frames = frames[o.get('start', 0):]
         if 'clip' in o:
             # Measured from the burst's own middle (its last frame, the ring alone), and the
@@ -104,7 +147,7 @@ def build(base):
             pivot = [cx, cy]
         frames = [f for f in frames if f.getbbox()]
         if 'hue' in o:
-            frames = [recolour(f, o['hue'], o.get('sat', 1)) for f in frames]
+            frames = [recolour(f, o['hue'], o.get('sat', 1), o.get('light', 1)) for f in frames]
         boxes = [f.getbbox() for f in frames]
         x0 = min(b[0] for b in boxes)
         y0 = min(b[1] for b in boxes)
@@ -115,7 +158,10 @@ def build(base):
         for i, f in enumerate(frames):
             strip.paste(f.crop((x0, y0, x1, y1)), (i * w, 0))
         strip.save(os.path.join(out_dir, f'{name}.png'), optimize=True)
-        sheets[name] = {'w': w, 'h': h, 'n': len(frames), 'fps': o.get('fps', fps), 'px': pivot[0] - x0, 'py': pivot[1] - y0, 'loop': bool(o.get('loop'))}
+        px, py = o.get('tpivot', (pivot[0] - x0, pivot[1] - y0))
+        if 'cpivot' in o:
+            px, py = o['cpivot'][0] - x0, o['cpivot'][1] - y0
+        sheets[name] = {'w': w, 'h': h, 'n': len(frames), 'fps': o.get('fps', fps), 'px': px, 'py': py, 'loop': bool(o.get('loop'))}
         print(f'{name:10s} {len(frames):3d} frames {w}x{h}')
     lines = ['// Generated by tools/build-fx.py: the effect sprite strips in assets/fx/ (hand-drawn pixel',
              '// art from effect packs; see assets/fx/CREDITS.md). Each strip is `n` frames of w x h laid',

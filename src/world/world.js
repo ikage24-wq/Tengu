@@ -498,7 +498,7 @@ export function updateWorld(world, dt, input) {
       world.hitsAt = world.now;
       if (h.gauge) addAim(world, h.gauge);
     }
-    if (!h.ownSpark) world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
+    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

@@ -30,4 +30,5 @@ test('every effect strip the code uses is listed, and the packs are credited', (
   const credits = readFileSync(new URL('assets/fx/CREDITS.md', root), 'utf8');
   assert.match(credits, /PVFX Foundry/);
   assert.match(credits, /CodeManu/);
+  assert.match(credits, /tbbk/);
 });

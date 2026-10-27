@@ -2043,15 +2043,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.restore();
   };
 
-  // Weapon trail: remember where the tip was during a swing, drawn as a fading ribbon.
-  if (anim && wpn && mv?.trail) {
-    const len = (wpn.grip[1] - 6) * ws;
-    const rad = (weaponAngle * Math.PI) / 180;
-    const tipX = sx(hand[0]) + Math.sin(rad) * len * (flip ? -1 : 1);
-    const tipY = sy(hand[1]) - Math.cos(rad) * len;
-    anim.trail.push({ dx: tipX - x, dy: tipY - y, hx: sx(hand[0]) - x, hy: sy(hand[1]) - y, age: 0 });
-  }
-  if (anim && anim.trail.length > 1) drawTrail(ctx, anim.trail, x, y, g.weapon?.color ?? '#ffffff');
+  // (A swing's smear is the effect pack's slash, drawn with the blow; see effects.js bladeCut.)
 
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
@@ -2156,25 +2148,3 @@ function drawString(ctx, st, pull, nock, ws, twang = 0, spares = 0) {
   ctx.restore();
 }
 
-function drawTrail(ctx, trail, x, y, color) {
-  ctx.save();
-  for (let i = 1; i < trail.length; i++) {
-    const a = trail[i - 1];
-    const b = trail[i];
-    const fade = 1 - b.age / 0.14;
-    ctx.globalAlpha = Math.max(0, fade) * 0.7;
-    ctx.fillStyle = i % 2 ? '#ffffff' : shade(color, 30);
-    ctx.beginPath();
-    // A quad between two tip samples and points two-thirds of the way down the blade.
-    const mid = (p) => [x + p.hx + (p.dx - p.hx) * 0.45, y + p.hy + (p.dy - p.hy) * 0.45];
-    const [am, an] = mid(a);
-    const [bm, bn] = mid(b);
-    ctx.moveTo(x + a.dx, y + a.dy);
-    ctx.lineTo(x + b.dx, y + b.dy);
-    ctx.lineTo(bm, bn);
-    ctx.lineTo(am, an);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
-}

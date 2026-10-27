@@ -169,8 +169,14 @@ carry an improvement across every part of the game it applies to.
   `tools/build-fx.py`, which can recolour them (a fire swirl became the Ranger's wind). Play them
   with `fx-sprites.js` `fxSprite`: one strip pixel is half a game pixel, so they land on the
   screen's own pixels in HD. No gradients in effects; code draws only small supporting parts
-  (arrow and bolt shafts, a sight's ticks). The archer paths are done this way; the older
-  effects across the game still need the same pass.
+  (arrow and bolt shafts, a sight's ticks). The archer and warrior paths and every buff's cast
+  are done this way (`archery.js`, `warrior-fx.js`, `effects.js` `bladeCut`); the mage and thief
+  paths, monsters, and buffs' lasting looks still need the same pass.
+- Warriors: every blade cut is the pack's crescent slash, turned to the blade's own path and
+  sized past the tip, with a fainter copy a beat behind so it reads thick; downward cuts lean
+  forward instead of diving into the floor. Keep sprites near their own size (scale about 2 or
+  less): blown up four times they turn into chunky blobs, and a finisher stacked with five big
+  layers reads as mush. A finisher is one big burst plus one ring and a few small pieces.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

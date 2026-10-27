@@ -121,60 +121,8 @@ const glim = (color) => (ctx, x, y, r) => {
   ctx.fill();
 };
 
-// A rage ember: a small teardrop of flame pointing up, a dark red rim around a hot core, that
-// flicks sideways as it rises.
-const rageEmber = (ctx, x, y, r, i, t) => {
-  const fx = x + Math.sin(t * 9 + i * 2) * r * 0.8;
-  const tear = (R, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(fx, y - R * 2.6);
-    ctx.quadraticCurveTo(fx + R * 1.1, y - R * 0.4, fx, y + R);
-    ctx.quadraticCurveTo(fx - R * 1.1, y - R * 0.4, fx, y - R * 2.6);
-    ctx.fill();
-  };
-  tear(r * 1.3, '#a81838');
-  tear(r, i % 2 ? '#ff5a3c' : '#ff3f4f');
-  tear(r * 0.5, '#ffd27a');
-};
 
-// Small red flames licking up around the feet (Berserker), the far ones behind the hero.
-function rageFlames(ctx, x, y, t, s, a, front) {
-  ctx.save();
-  for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * TAU + 0.3;
-    const sin = Math.sin(ang);
-    if (front !== sin > 0) continue;
-    const fx = x + Math.cos(ang) * 11 * s;
-    const fy = y + sin * 3 * s;
-    const h = (3.5 + 2 * Math.sin(t * 8 + i * 1.9) + 1.2 * Math.sin(t * 15 + i)) * s;
-    const lean = Math.sin(t * 5 + i) * 1 * s;
-    for (const [color, w, k] of [['#a81838', 2, 1.1], ['#ff4a3c', 1.5, 1], ['#ffc46b', 0.7, 0.5]]) {
-      ctx.globalAlpha = a * 0.9;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(fx - w * s, fy);
-      ctx.quadraticCurveTo(fx - w * s, fy - h * k * 0.5, fx + lean, fy - h * k);
-      ctx.quadraticCurveTo(fx + w * s, fy - h * k * 0.5, fx + w * s, fy);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-}
 
-// A ring of small diamonds at the feet turning slowly, split so the hero stands inside it.
-function glimRing(ctx, x, y, t, s, color, a, front) {
-  ctx.save();
-  ctx.globalAlpha = a;
-  for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * TAU + t * 0.5;
-    const sin = Math.sin(ang);
-    if (front !== sin > 0) continue;
-    glim(i % 2 ? '#ffffff' : color)(ctx, x + Math.cos(ang) * 14 * s, y + sin * 3.6 * s - 1.5 * s, 1.1 * s);
-  }
-  ctx.restore();
-}
 
 // A thin halo floating over the head, bobbing gently.
 function halo(ctx, x, y, t, s, a) {
@@ -331,27 +279,15 @@ const JOBS = {
       motes(ctx, x, y, t, s, k, { n: 4, draw: sparkle('#fff6c9') });
     },
   },
-  // Paladin: a warm golden light, a slow ring of light diamonds, and diamonds drifting up.
+  // Paladin: the golden rune wheel turning slowly and faintly at her chest.
   paladin: {
-    back: (ctx, x, y, t, s, k) => {
-      footGlow(ctx, x, y, s, '#ffe08a', k * 0.85);
-      glimRing(ctx, x, y, t, s, '#ffd24f', k * 0.8, false);
-    },
-    front: (ctx, x, y, t, s, k) => {
-      glimRing(ctx, x, y, t, s, '#ffd24f', k * 0.8, true);
-      motes(ctx, x, y, t, s, k, { n: 3, speed: 0.3, inner: 10, spread: 16, draw: glim('#fff6c9') });
-    },
+    back: () => {},
+    front: (ctx, x, y, t, s, k) => fxSprite(ctx, 'holycharge', x, y - 22 * s, { frame: 1, rot: t * 0.3, scale: s * 0.55, alpha: k * 0.45 }),
   },
-  // Berserker: a low red glow and embers that flick as they climb, quicker than a mage's.
+  // Berserker: a slow, faint ring of fire at his feet.
   berserker: {
-    back: (ctx, x, y, t, s, k) => {
-      footGlow(ctx, x, y, s, '#ff4a3c', k * (0.85 + 0.15 * Math.sin(t * 3)));
-      rageFlames(ctx, x, y, t, s, k, false);
-    },
-    front: (ctx, x, y, t, s, k) => {
-      rageFlames(ctx, x, y, t, s, k, true);
-      motes(ctx, x, y, t, s, k, { n: 3, speed: 0.5, height: 30, size: 1, inner: 11, spread: 17, draw: rageEmber });
-    },
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'firespin', x, y - 2 * s, { t: t * 0.6, scale: s * 1.5, sy: 0.3, alpha: k * 0.55 }),
+    front: () => {},
   },
   // Ranger: a slow, faint spin of wind at her feet (effect-pack art, no glow).
   ranger: {
@@ -395,126 +331,28 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 // glow, then a turning ring of light diamonds, then a halo and slow rays behind; full (Sanctified)
 // adds wings of light.
 
-// A flame tongue standing at (fx, fy), `h` tall, leaning by `lean`, three tones from rim to core.
-function tongue(ctx, fx, fy, h, w, lean, a) {
-  for (const [color, ww, hk] of [['#8a1030', w * 1.35, 1.12], ['#f0303f', w, 1], ['#ff9b3c', w * 0.55, 0.62], ['#ffe0a0', w * 0.25, 0.32]]) {
-    ctx.globalAlpha = a;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(fx - ww, fy);
-    ctx.quadraticCurveTo(fx - ww * 1.1, fy - h * hk * 0.45, fx + lean, fy - h * hk);
-    ctx.quadraticCurveTo(fx + ww * 1.1, fy - h * hk * 0.45, fx + ww, fy);
-    ctx.closePath();
-    ctx.fill();
-  }
-}
 
+// Rage: fire from the effect packs (fx-sprites.js), no glows: a ring of fire turning at his feet
+// that widens and quickens as Rage builds, from halfway a ring of flame bursting round his body
+// again and again, and full (Berserk), red rings blasting out from his feet.
 function rageAura(ctx, x, y, t, s, k, layer) {
-  const cy = y - 20 * s;
   if (layer === 'back') {
-    // The heat: a red glow that grows with Rage.
-    footGlow(ctx, x, y, s * (1 + k), '#ff3f3f', 0.4 + 0.5 * k);
-    ctx.save();
-    ctx.globalAlpha = 0.18 + 0.32 * k;
-    const g = ctx.createRadialGradient(x, cy, 2 * s, x, cy, (16 + 14 * k) * s);
-    g.addColorStop(0, '#ff5a3c');
-    g.addColorStop(1, 'rgba(255,60,60,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x, cy, (16 + 14 * k) * s, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-    // Flames standing around the body, climbing higher as Rage fills; the back ones taller.
-    if (k > 0.25) {
-      const f = Math.min(1, (k - 0.25) / 0.6);
-      ctx.save();
-      for (let i = 0; i < 9; i++) {
-        const side = i % 2 ? 1 : -1;
-        const row = Math.floor(i / 2);
-        const fx = x + side * (7 + (row % 2) * 4 + Math.sin(t * 3 + i) * 1.2) * s;
-        const fy = y - row * 6 * s * f;
-        const h = (6 + 12 * f + 4 * Math.sin(t * 9 + i * 1.7) + 2 * Math.sin(t * 17 + i)) * s;
-        tongue(ctx, fx, fy, h, 2.2 * s, Math.sin(t * 6 + i) * 1.5 * s + side * s, 0.85);
-      }
-      ctx.restore();
-    }
-    // Berserk: a red ring pulsing out from the feet.
-    if (k >= 1) {
-      const u = (t * 1.6) % 1;
-      ctx.save();
-      ctx.globalAlpha = 0.8 * (1 - u);
-      ctx.strokeStyle = '#f0303f';
-      ctx.lineWidth = Math.max(1, 2.2 * (1 - u) * s);
-      ctx.beginPath();
-      ctx.ellipse(x, y, (10 + 26 * u) * s, (3 + 6 * u) * s, 0, 0, TAU);
-      ctx.stroke();
-      ctx.restore();
-    }
+    if (k > 0.1) fxSprite(ctx, 'firespin', x, y - 2 * s, { t: t * (1 + k), scale: s * (1.4 + 1.6 * k), sy: 0.3, alpha: Math.min(1, (k - 0.1) * 2) });
+    if (k >= 1) fxSprite(ctx, 'redring', x, y, { t: t % 0.55, scale: s * 1.6 });
     return;
   }
-  // Front: flames at the hips in front of the body, and embers streaming up off the shoulders.
-  if (k > 0.5) {
-    const f = Math.min(1, (k - 0.5) / 0.5);
-    ctx.save();
-    for (let i = 0; i < 4; i++) {
-      const side = i % 2 ? 1 : -1;
-      const fx = x + side * (9 + (i >> 1) * 3) * s;
-      const h = (5 + 8 * f + 3 * Math.sin(t * 11 + i * 2.3)) * s;
-      tongue(ctx, fx, y - (i >> 1) * 3 * s, h, 1.8 * s, Math.sin(t * 7 + i) * s, 0.9);
-    }
-    ctx.restore();
-  }
-  if (k > 0.1) motes(ctx, x, y, t, s, Math.min(1, k * 1.5), { n: 2 + Math.round(5 * k), speed: 0.5 + 0.4 * k, height: 30 + 14 * k, size: 1 + 0.3 * k, inner: 10, spread: 18, draw: rageEmber });
+  if (k > 0.5) fxSprite(ctx, 'ragering', x, y - 22 * s, { t: (t * 0.8) % 1.1, scale: s * (0.9 + 0.5 * k), alpha: Math.min(1, (k - 0.5) * 2.5) * 0.85 });
 }
 
+// Faith: light from the effect packs: a golden ring at her feet, the golden rune wheel turning at
+// her chest as Faith builds, and full (Sanctified), a burst of light and its column again and again.
 function faithAura(ctx, x, y, t, s, k, layer) {
-  const cy = y - 22 * s;
   if (layer === 'back') {
-    footGlow(ctx, x, y, s * (1 + 0.8 * k), '#ffe08a', 0.4 + 0.5 * k);
-    ctx.save();
-    ctx.globalAlpha = 0.15 + 0.3 * k;
-    const g = ctx.createRadialGradient(x, cy, 2 * s, x, cy, (18 + 14 * k) * s);
-    g.addColorStop(0, '#fff6c9');
-    g.addColorStop(1, 'rgba(255,240,180,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x, cy, (18 + 14 * k) * s, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-    // Rays of light turning slowly behind her.
-    if (k > 0.6) {
-      const f = Math.min(1, (k - 0.6) / 0.4);
-      ctx.save();
-      ctx.globalAlpha = 0.3 * f;
-      const rays = ctx.createRadialGradient(x, cy, 4 * s, x, cy, 40 * s);
-      rays.addColorStop(0, '#fff2a0');
-      rays.addColorStop(0.6, '#ffd24f');
-      rays.addColorStop(1, 'rgba(255,210,80,0)');
-      ctx.fillStyle = rays;
-      for (let i = 0; i < 10; i++) {
-        const a = (i / 10) * TAU + t * 0.25;
-        const len = (24 + 10 * f + (i % 2) * 8) * s;
-        ctx.beginPath();
-        ctx.moveTo(x, cy);
-        ctx.lineTo(x + Math.cos(a - 0.08) * len, cy + Math.sin(a - 0.08) * len);
-        ctx.lineTo(x + Math.cos(a + 0.08) * len, cy + Math.sin(a + 0.08) * len);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    if (k >= 1) {
-      ctx.save();
-      ctx.filter = 'none';
-      angelWings(ctx, x, y + 2 * s, t, s * 1.1, 0.9);
-      ctx.restore();
-    }
-    if (k > 0.25) glimRing(ctx, x, y, t * (1 + k), s * (1 + 0.3 * k), '#ffd24f', Math.min(1, (k - 0.25) * 2.5), false);
+    if (k > 0.25) fxSprite(ctx, 'goldring', x, y, { frame: 6, scale: s * (1 + 0.5 * k), sy: 0.8, alpha: Math.min(1, (k - 0.25) * 2) * 0.8 });
+    if (k >= 1) fxSprite(ctx, 'holyburst', x, y + 4 * s, { t: t % 0.7, scale: s * 1.3 });
     return;
   }
-  if (k > 0.25) glimRing(ctx, x, y, t * (1 + k), s * (1 + 0.3 * k), '#ffd24f', Math.min(1, (k - 0.25) * 2.5), true);
-  if (k > 0.6) halo(ctx, x, y, t, s, Math.min(1, (k - 0.6) * 2.5));
-  if (k > 0.1) motes(ctx, x, y, t, s, Math.min(1, k * 1.5), { n: 2 + Math.round(4 * k), speed: 0.35, height: 34, inner: 10, spread: 17, draw: glim('#fff6c9') });
+  if (k > 0.4) fxSprite(ctx, 'holycharge', x, y - 22 * s, { frame: 1, rot: t * (0.3 + 0.6 * k), scale: s * (0.6 + 0.5 * k), alpha: Math.min(1, (k - 0.4) * 2.5) * 0.85 });
 }
 
 // Gale: wind from the effect packs (fx-sprites.js), no glows: a spin of wind at her feet that

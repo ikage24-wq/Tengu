@@ -1,5 +1,5 @@
 // Per-character animation state that lives across frames: a distance-driven walk cycle, springs
-// for hair and cape follow-through, landing squash, blinking, and the weapon trail.
+// for hair and cape follow-through, landing squash, and blinking.
 // The renderer reads it; the world simulation never does.
 
 // The gait changes with speed: a stroll covers less ground per cycle (two steps) than a run, so
@@ -28,7 +28,6 @@ export function createAnim() {
     sqx: 1, sqy: 1,
     wasGround: true,
     prevVy: 0,
-    trail: [],
     events: [],
     lastPhase: 0,
   };
@@ -123,8 +122,6 @@ export function stepAnim(a, body, dt) {
   // and settles a beat after the shoulders.
   spring(a, 'capeTip', 'capeTipV', a.cape * 1.15, 32, 4.6, dt);
 
-  for (const p of a.trail) p.age += dt;
-  a.trail = a.trail.filter((p) => p.age < 0.14);
   return a.events;
 }
 

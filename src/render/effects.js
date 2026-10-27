@@ -6,6 +6,7 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
+import { fxSprite } from './fx-sprites.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
@@ -68,117 +69,7 @@ function slash(ctx, cx, cy, dir, radius, p, color, thick = 6) {
   }
 }
 
-// A melee cut's smear along the blade's real path: `start` and `sweep` in degrees for a hero
-// facing right (0 = forward, -90 = up; mirrored when facing left). The head races ahead and the
-// tail catches up, with a white-hot inner edge; heavy blows get a second, fatter smear and a flash
-// where the cut ends. `flat` squashes it into a whirl around the body.
-function arcSmear(ctx, f, x, y, p) {
-  const rad = Math.PI / 180;
-  let a0 = f.start * rad;
-  let sweep = f.sweep * rad;
-  if (f.dir < 0) {
-    a0 = Math.PI - a0;
-    sweep = -sweep;
-  }
-  const head = easeOut(Math.min(1, p / 0.4));
-  const tail = easeIn(Math.max(0, (p - 0.1) / 0.9));
-  const from = a0 + sweep * tail;
-  const to = a0 + sweep * head;
-  const el = f.element ? ELEMENTS[f.element] : null;
-  const color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
-  const thick = f.thick * (f.big ? 1.25 : 1) * (1.5 - p);
-  ctx.save();
-  ctx.translate(x, y);
-  if (f.flat) ctx.scale(1, 0.45);
-  if (f.big) {
-    ctx.globalAlpha = 0.45 * (1 - p);
-    crescent(ctx, 0, 0, f.r + thick * 0.6, from, to, thick * 1.9, color);
-    ctx.globalAlpha = 1;
-  }
-  crescent(ctx, 0, 0, f.r, from, to, thick, color);
-  // Speed lines peeling off the outside.
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineCap = 'round';
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = Math.max(0, 1 - p * 1.5);
-  for (let i = 0; i < 3; i++) {
-    const a = from + (to - from) * (0.3 + i * 0.25);
-    const r = f.r + thick * (0.8 + i * 0.35);
-    ctx.beginPath();
-    ctx.arc(0, 0, r, a - 0.14 * Math.sign(sweep), a + 0.14 * Math.sign(sweep), sweep < 0);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-  // Sparks flung off the tip, and on a heavy blow a flash where it ends.
-  if (p < 0.5) {
-    const tx = Math.cos(to) * f.r;
-    const ty = Math.sin(to) * f.r;
-    const fly = to + (Math.PI / 2) * Math.sign(sweep);
-    for (let i = 0; i < 2; i++) needle(ctx, tx + Math.cos(fly) * (4 + i * 5) * p * 6, ty + Math.sin(fly) * (4 + i * 5) * p * 6, fly, 6 - i * 2, 2.2 - i * 0.6, color);
-    if (f.big) starFlash(ctx, tx, ty, 16 * (1 - p * 2), 6, 0.3, color, '#ffffff', 4 * (1 - p * 2));
-  }
-  if (el && p < 0.8) {
-    for (let i = 0; i < 6; i++) {
-      const a = from + (to - from) * (i / 5);
-      ctx.globalAlpha = (1 - p) * 0.9;
-      ctx.fillStyle = el.sparks[i % el.sparks.length];
-      const r = f.r + Math.sin(i * 3.1) * 6 + p * 10;
-      ctx.fillRect(Math.round(Math.cos(a) * r), Math.round(Math.sin(a) * r), 2, 2);
-    }
-  }
-  ctx.restore();
-}
 
-// The floor splitting open under a heavy blow: jagged cracks racing out both ways, chips of
-// ground flung up, a burst of spikes, and dust rolling out.
-function crack(ctx, f, x, y, p) {
-  const out = easeOut(Math.min(1, p / 0.18));
-  const fade = p > 0.55 ? 1 - (p - 0.55) / 0.45 : 1;
-  const half = f.w / 2;
-  ctx.save();
-  ctx.globalAlpha = fade;
-  // The cracks run just under the grass line: a dark split with a hot glow inside.
-  for (const side of [-1, 1]) {
-    for (let k = 0; k < 3; k++) {
-      ctx.strokeStyle = ['#ffb36b', '#4a2f3a', '#fff3c9'][k];
-      ctx.lineWidth = [6, 3, 1][k];
-      ctx.globalAlpha = fade * (k === 0 ? 0.45 : 1);
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(x, y + 5);
-      const n = 7;
-      for (let i = 1; i <= n; i++) {
-        const u = (i / n) * out;
-        const jag = Math.sin((i + f.seed * 10) * 2.7 + side) * 3;
-        ctx.lineTo(x + side * half * u, y + 5 + jag + (i % 2 ? 2 : -1));
-      }
-      ctx.stroke();
-      // A branch off the middle.
-      ctx.beginPath();
-      ctx.moveTo(x + side * half * 0.35 * out, y + 5);
-      ctx.lineTo(x + side * half * 0.5 * out, y + 11);
-      ctx.stroke();
-    }
-  }
-  ctx.globalAlpha = 1;
-  if (p < 0.35) crown(ctx, x, y + 1, 26 * Math.sin((p / 0.35) * Math.PI), 18, 5, '#e8c8a8');
-  // Chips of ground thrown up and falling back.
-  for (let i = 0; i < 8; i++) {
-    const sd = i % 2 ? 1 : -1;
-    const vx = sd * (30 + ((i * 37 + f.seed * 50) % 50));
-    const vy = 160 + ((i * 53) % 90);
-    const t = p * 0.7;
-    const cx = x + vx * t;
-    const cy = y - (vy * t - 450 * t * t);
-    if (cy > y + 2) continue;
-    ctx.globalAlpha = fade;
-    ctx.fillStyle = i % 3 ? '#c9a27a' : '#8a6a5a';
-    ctx.fillRect(Math.round(cx - 1.5), Math.round(cy - 1.5), 3, 3);
-  }
-  ctx.globalAlpha = fade * 0.9;
-  for (const side of [-1, 1]) puff(ctx, x + side * (10 + half * 0.7 * easeOut(p)), y - 4 - p * 4, 6 * (1 - p) + 2, '#f6e2c8', '#d9b89a');
-  ctx.restore();
-}
 
 // A four-point throwing star around the origin: plum-outlined steel blades, each with a lit half,
 // and a hole in the middle. Without an outline it's a flat silhouette (for afterimages).
@@ -702,24 +593,19 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'pierce': {
-      // A thrust: one long spike shooting forward with a shock ring popping at its tip.
+      // A thrust: the effect pack's jet bursting forward from the weapon's point to the end of the
+      // blow's reach (steel; a Berserker's in fire). When the weapon isn't level at that moment
+      // (a dash still winding through), it leaves from the hand instead.
       const b = f.box;
       const dir = f.dir ?? 1;
-      // From the weapon's point, at its height, out to the end of the blow's reach.
-      // When the weapon isn't level at that moment (a dash still winding through), the spike
-      // leaves from the hand at its height instead.
       const pose = strikeAt(f);
       const level = pose && Math.abs(pose.angle - 90) < 30;
       const from0 = pose ? (level ? pose.tip : pose.hand) : null;
       const end = dir > 0 ? b.x + b.w : b.x;
       const start = from0 ? f.x + from0[0] : dir > 0 ? b.x : b.x + b.w;
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
-      const from = start - cam.x;
-      const reach = Math.max(18, Math.abs(end - start)) * easeOut(Math.min(1, p / 0.35));
-      const tipX = from + dir * reach;
-      ctx.globalAlpha = p < 0.6 ? 1 : (1 - p) / 0.4;
-      needle(ctx, tipX, by, dir > 0 ? 0 : Math.PI, reach, 7 * (1 - p * 0.7), '#a8e8ff');
-      if (p > 0.2) shock(ctx, tipX, by, 4 + 14 * easeOut((p - 0.2) / 0.8), 9 * easeOut((p - 0.2) / 0.8), 3 * (1 - p), '#ffffff');
+      const reach = Math.max(24, Math.abs(end - start));
+      fxSprite(ctx, f.school === 'rage' ? 'ragejet' : 'thrust', start - cam.x + dir * reach * 0.55, by + 2, { p, flip: dir < 0, scale: reach / 32, sy: 0.7 });
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -903,34 +789,22 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      // A shot leaving the bow or hand: a white disc on its first drawings (the muzzle flash),
-      // then a small flash.
-      if (f.muzzle && p < 0.2) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x, y, 5 * (1 - p * 2), 0, Math.PI * 2);
-        ctx.fill();
+      // A shot leaving the bow or hand: a small ring of force. Where a blow lands: a blade cut
+      // across the target and a ring for cuts, the effect pack's impact burst for everything else
+      // and for crits.
+      if (f.muzzle) {
+        fxSprite(ctx, 'hitring', x, y, { p, scale: 0.6 });
         break;
       }
-      // Where a blow lands: a star flash that snaps open and pulls in, held on twos.
-      const q = stepped(p, Math.max(3, Math.round(f.dur * 30)));
-      const k = q < 0.3 ? easeOut(q / 0.3 + 0.34) : 1 - (q - 0.3) / 0.7;
-      starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
+      if (f.via === 'blade' && !f.crit) {
+        fxSprite(ctx, 'cut', x + 4, y, { p, rot: -0.7 + (f.seed ?? 0.5) * 0.6, scale: 0.7 });
+        fxSprite(ctx, 'hitring', x, y, { p, scale: 0.7 });
+      } else fxSprite(ctx, 'impact', x, y + 6, { p, scale: f.crit ? 1 : 0.7 });
       break;
     }
-    case 'arc': {
-      // The smear follows the weapon's tip: centered on the shoulder it swings from, as far out
-      // as the tip was when the blow landed.
-      // Best: trace the blade's own path through the cut, so every move's smear matches it.
-      const path = f.flat ? null : bladePath(f);
-      if (path) bladeSmear(ctx, f, path, f.bx - cam.x, f.by - cam.y, p);
-      else {
-        const pose = f.flat ? null : strikeAt(f);
-        if (pose) arcSmear(ctx, { ...f, r: Math.max(16, Math.hypot(pose.tip[0] - pose.shoulder[0], pose.tip[1] - pose.shoulder[1])) }, f.bx + pose.shoulder[0] - cam.x, f.by + pose.shoulder[1] - cam.y, p);
-        else arcSmear(ctx, f, x, y, p);
-      }
+    case 'arc':
+      bladeCut(ctx, f, cam, p);
       break;
-    }
     case 'ultcue':
       ultimateCue(ctx, f, x, y);
       break;
@@ -943,16 +817,14 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'crack':
-      crack(ctx, f, x, y, p);
+      // The ground ruptures under a heavy blow: rock spikes bursting up across its width.
+      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 80)); i < n; i++) fxSprite(ctx, 'quake', x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y + 6, { p: Math.min(1, p * 1.2 + i * 0.05), scale: 1.6 });
       break;
-    case 'roar': {
-      // Provoke: rings of a battle roar rolling out to its reach.
-      ctx.globalAlpha = 1 - p;
-      const k = easeOut(p);
-      shock(ctx, x, y - 24, 14 + (f.r ?? 120) * k, 10 + 36 * k, 4 * (1 - p) + 0.5, '#ff7a6b');
-      shock(ctx, x, y - 24, 8 + (f.r ?? 120) * 0.7 * k, 6 + 24 * k, 3 * (1 - p) + 0.5, '#ffffff');
+    case 'roar':
+      // Provoke: rings of a battle roar bursting out to its reach.
+      fxSprite(ctx, 'redring', x, y, { p, scale: (f.r ?? 120) / 40 });
+      fxSprite(ctx, 'steelring', x, y, { p: Math.min(1, p * 1.3), scale: (f.r ?? 120) / 60 });
       break;
-    }
     case 'hook': {
       // Chain Hook: links race out to each monster caught, then reel it in.
       const out = Math.min(1, p / 0.3);
@@ -1051,87 +923,57 @@ function bladePath(f) {
   return path;
 }
 
-// A smear along the traced path: a ribbon from partway down the blade out to its tip, fat in the
-// middle and tapering to points at both ends, whose head races along the path and whose tail
-// follows to close it. Inked rim, the colour, a white-hot band along the outer edge, and a darker
-// trailing end; heavy blows get a wider ghost band behind.
-function bladeSmear(ctx, f, path, ox, oy, p) {
-  const n = path.length - 1;
-  const head = easeOut(Math.min(1, p / 0.22)) * n;
-  const tail = easeIn(Math.max(0, (p - 0.12) / 0.88)) * n;
-  if (head - tail < 0.05) return;
-  const at = (v) => {
-    const i = Math.min(n - 1, Math.floor(v));
-    const u = v - i;
-    const a = path[i];
-    const b = path[i + 1];
-    return { tip: [a.tip[0] + (b.tip[0] - a.tip[0]) * u, a.tip[1] + (b.tip[1] - a.tip[1]) * u], hand: [a.hand[0] + (b.hand[0] - a.hand[0]) * u, a.hand[1] + (b.hand[1] - a.hand[1]) * u] };
-  };
-  const steps = Math.max(4, Math.ceil((head - tail) * 3));
-  const ribbon = (inner, outer, from = 0, to = 1, grow = 0) => {
-    const outerPts = [];
-    const innerPts = [];
-    for (let i = 0; i <= steps; i++) {
-      const s = from + ((to - from) * i) / steps;
-      const v = tail + (head - tail) * s;
-      const q = at(v);
-      const w = Math.pow(Math.sin(Math.PI * s), 0.7);
-      const kIn = 1 - (1 - inner) * w;
-      const kOut = 1 + (outer - 1) * w;
-      const dx = q.tip[0] - q.hand[0];
-      const dy = q.tip[1] - q.hand[1];
-      const len = Math.hypot(dx, dy) || 1;
-      outerPts.push([ox + q.hand[0] + dx * kOut + (dx / len) * grow, oy + q.hand[1] + dy * kOut + (dy / len) * grow]);
-      innerPts.push([ox + q.hand[0] + dx * kIn - (dx / len) * grow, oy + q.hand[1] + dy * kIn - (dy / len) * grow]);
-    }
-    ctx.beginPath();
-    outerPts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
-    for (let i = innerPts.length - 1; i >= 0; i--) ctx.lineTo(innerPts[i][0], innerPts[i][1]);
-    ctx.closePath();
-    ctx.fill();
-  };
-  const el = f.element ? ELEMENTS[f.element] : null;
-  const color = el?.color ?? f.color ?? '#ffe9f3';
-  const fade = 1 - p;
-  const reachIn = f.big ? 0.32 : 0.45;
-  ctx.save();
-  if (f.big) {
-    ctx.globalAlpha = 0.22 * fade;
-    ctx.fillStyle = color;
-    ribbon(reachIn + 0.1, 1.12);
-    ctx.globalAlpha = 1;
-  }
-  if (inked(ctx)) {
-    ctx.fillStyle = deepTone(color);
-    ribbon(reachIn, 1.04, 0, 1, 1.1);
-  }
-  ctx.fillStyle = color;
-  ribbon(reachIn, 1.04);
-  ctx.fillStyle = mix(color, '#3a2a5a', 0.25);
-  ribbon(reachIn, 1.04, 0, 0.28);
-  ctx.fillStyle = '#ffffff';
-  ribbon(0.8, 1.0, 0.25, 1);
-  // Sparks flung off the tip as the head passes, and a flash where a heavy blow ends.
-  if (p < 0.45) {
-    const q = at(head);
-    const prev = at(Math.max(0, head - 0.6));
-    const dir = Math.atan2(q.tip[1] - prev.tip[1], q.tip[0] - prev.tip[0]);
-    const tx = ox + q.tip[0];
-    const ty = oy + q.tip[1];
-    for (let i = 0; i < 3; i++) {
-      const a = dir + (i - 1) * 0.5;
-      const d = (5 + i * 4) * p * 6;
-      needle(ctx, tx + Math.cos(a) * d, ty + Math.sin(a) * d, a, 7 - i * 1.5, 2.4 - i * 0.5, color);
-    }
-    if (f.big) starFlash(ctx, tx, ty, 18 * (1 - p * 2), 6, dir, color, '#ffffff', 4.5 * (1 - p * 2));
-  }
-  ctx.restore();
-}
 
-const deepTones = new Map();
-function deepTone(c) {
-  if (!deepTones.has(c)) deepTones.set(c, /^#[0-9a-f]{6}$/i.test(c) ? mix(c, '#3a2a6a', 0.55) : '#6b4f9e');
-  return deepTones.get(c);
+
+// A blade's cut, from the effect pack's crescent slash (fx-sprites.js): turned and mirrored to follow
+// the blade's own path through the move (sampled from the hero's pose, `bladePath`), sized to the
+// reach, in steel, the Paladin's gold (and any heavy blow's) or the Berserker's red. A cut all
+// around (a whirl) is a spinning ring of steel or fire instead.
+function bladeCut(ctx, f, cam, p) {
+  const name = f.snd === 'rage' ? 'slashred' : f.snd === 'holy' || f.big ? 'slashgold' : 'slash';
+  if (f.flat) {
+    fxSprite(ctx, f.snd === 'rage' ? 'firespin' : 'steelspin', f.x - cam.x, f.y - cam.y + 8, { t: f.t * 1.6, scale: (f.r ?? 60) / 14, sy: 0.4, alpha: 1 - p * p });
+    return;
+  }
+  const path = bladePath(f);
+  let cx, cy, mid, cw, r;
+  if (path) {
+    // The middle of the cut: the hands' average, the tip's angle halfway along, and which way
+    // round it went.
+    const hx = path.reduce((a, q) => a + q.hand[0], 0) / path.length;
+    const hy = path.reduce((a, q) => a + q.hand[1], 0) / path.length;
+    const a0 = Math.atan2(path[0].tip[1] - hy, path[0].tip[0] - hx);
+    const m = path[Math.floor(path.length / 2)];
+    const a1 = Math.atan2(path.at(-1).tip[1] - hy, path.at(-1).tip[0] - hx);
+    mid = Math.atan2(m.tip[1] - hy, m.tip[0] - hx);
+    cw = Math.sin(a1 - a0) >= 0;
+    r = path.reduce((a, q) => a + Math.hypot(q.tip[0] - hx, q.tip[1] - hy), 0) / path.length;
+    cx = f.bx + hx - cam.x;
+    cy = f.by + hy - cam.y;
+  } else {
+    const dir = f.dir || 1;
+    const deg = (a) => ((dir > 0 ? a : 180 - a) * Math.PI) / 180;
+    mid = deg(f.start + f.sweep / 2);
+    cw = (f.sweep > 0) === (dir > 0);
+    r = f.r ?? 30;
+    cx = f.x - cam.x;
+    cy = f.y - cam.y;
+  }
+  // The pack's slash cuts over the top of its circle, left to right (clockwise): turn it so its
+  // middle meets the blade's, and mirror it for a cut the other way round.
+  // The full crescent (frames 1-3) holds through most of the swing's life, then breaks up.
+  const frame = p < 0.06 ? 0 : p < 0.62 ? 1 + Math.min(2, Math.floor(((p - 0.06) / 0.56) * 3)) : Math.min(8, 4 + Math.floor(((p - 0.62) / 0.38) * 5));
+  // Sized so the crescent rides just past the blade's tip, with a fainter copy a beat behind it
+  // so the cut reads thick and fast.
+  // A downward cut stays above the floor: the crescent leans forward rather than diving into the ground.
+  if (Math.sin(mid) > -0.05) {
+    mid = Math.atan2(-0.05, Math.sign(Math.cos(mid) || 1));
+    cy -= 6;
+  }
+  const scale = (r / 12) * (f.big ? 1.2 : 1);
+  const back = cw ? -0.32 : 0.32;
+  fxSprite(ctx, name, cx, cy, { frame, rot: mid + back + Math.PI / 2, flip: !cw, scale: scale * 0.9, alpha: 0.55 });
+  fxSprite(ctx, name, cx, cy, { frame, rot: mid + Math.PI / 2, flip: !cw, scale });
 }
 
 function strikeAt(f) {
