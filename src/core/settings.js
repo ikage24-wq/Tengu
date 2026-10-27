@@ -24,6 +24,10 @@ export const DEFAULT_SETTINGS = {
   mapBanner: true,
   showFps: false,
   messageLog: true,
+  // Sound ('off' | 'low' | 'mid' | 'high')
+  masterVolume: 'mid',
+  musicVolume: 'mid',
+  sfxVolume: 'high',
   // Gameplay
   autoLoot: false,
   npcClick: true,

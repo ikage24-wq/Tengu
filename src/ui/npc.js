@@ -1,6 +1,7 @@
 // NPC conversations: quests, shops, the stylist, and job advancement. Also the "fainted" dialog.
 
 import { NPCS } from '../data/npcs.js';
+import { sfx } from '../audio/sfx.js';
 import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
@@ -98,9 +99,10 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
 }
 
 // Typewriter text: how many characters of the current page show. Clicking the text finishes it.
-// `len` is the page's length, so the NPC talks (mouth moving) only while words are still coming;
+// `text` is the page, so the NPC talks (mouth moving) only while words are still coming;
 // Space finishes the page at once, like clicking it.
-function typed(ui, dlg, page, world, area, len = Infinity) {
+function typed(ui, dlg, page, world, area, text = '') {
+  const len = text.length;
   if (dlg.page !== page) {
     dlg.page = page;
     dlg.typedAt = world.now;
@@ -108,7 +110,26 @@ function typed(ui, dlg, page, world, area, len = Infinity) {
   if (clicked(ui, area.x, area.y - 10, area.w, 30) || ui.input.pressed?.has('Space')) dlg.typedAt = -1e9;
   const n = (world.now - dlg.typedAt) * 70;
   dlg.talking = n < len;
+  // Their voice: a blip every other letter as the words type out (none on spaces), at their own
+  // pitch, rising on the last words of a question and brighter on an exclamation.
+  const said = Math.floor(Math.min(n, len) / 2);
+  if (dlg.talking && said > (dlg.blips ?? -1)) {
+    const i = said * 2;
+    const ch = text[i] ?? '';
+    const end = text.slice(i).search(/[.!?]/);
+    const mark = end >= 0 ? text[i + end] : '';
+    if (ch.trim()) sfx('blip', { ...voiceOf(dlg.id), ch, rise: mark === '?' && end < 8 ? 4 * (1 - end / 8) : 0, loud: mark === '!' && end < 8 });
+  }
+  dlg.blips = dlg.talking ? said : -1;
   return n;
+}
+
+// Each NPC's speaking voice: a base note and a timbre picked from their id, so everyone sounds
+// their own (from a low G to a high E; soft triangle, bright pulse, or a raspy flipping pulse).
+function voiceOf(id = '') {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return { base: [67, 69, 72, 74, 76, 79, 81, 84, 88][h % 9], kind: ['tri', 'pulse', 'tri', 'rasp'][(h >> 4) % 4] };
 }
 
 // Number keys pick dialog choices (the world ignores them while a dialog is open).
@@ -169,7 +190,7 @@ export function npcWindow(ui, state, world) {
   const win = state.windows.npc;
   const char = world.char;
   const { ctx } = ui;
-  const jobOptions = dlg.job ? nextJobs(char.job, char.level).filter((j) => !npc.family || j.family === npc.family) : [];
+  const jobOptions = dlg.job ? nextJobs(char.job, char.level, char.quests).filter((j) => !npc.family || j.family === npc.family) : [];
   const questIds = (npc.quests ?? []).filter((id) => !['locked', 'done'].includes(questState(char, id)));
 
   // What you can say: each quest (new, in progress, or ready to hand in), the NPC's own service,
@@ -187,8 +208,9 @@ export function npcWindow(ui, state, world) {
   if (npc.role === 'dungeon') choices.push({ label: `Enter ${DUNGEONS[npc.dungeon].name}`, sub: `Lv ${DUNGEONS[npc.dungeon].minLevel}+ · a group of four`, icon: 'star', primary: true, run: () => (dlg.dungeon = true) });
   if (npc.role === 'arena') choices.push({ label: 'Boss Battles', sub: `${npc.bosses.length} challenger${npc.bosses.length > 1 ? 's' : ''} waiting`, icon: 'star', primary: true, run: () => (dlg.arena = true) });
   if (npc.role === 'instructor') {
-    const ready = nextJobs(char.job, char.level).some((j) => j.family === npc.family);
-    choices.push({ label: 'Job advancement', sub: ready ? 'You are ready!' : 'Not yet', icon: 'star', primary: ready, run: () => (dlg.job = true) });
+    const ready = nextJobs(char.job, char.level, char.quests).some((j) => j.family === npc.family);
+    const trial = !ready && nextJobs(char.job, char.level).some((j) => j.family === npc.family && j.trial);
+    choices.push({ label: 'Job advancement', sub: ready ? 'You are ready!' : trial ? 'Pass my trial first' : 'Not yet', icon: 'star', primary: ready, run: () => (dlg.job = true) });
   }
   choices.push({ label: 'Goodbye', sub: null, icon: 'door', run: () => (dlg.bye = true) });
   const rows = Math.ceil(choices.length / 2);
@@ -227,10 +249,11 @@ export function npcWindow(ui, state, world) {
     let y = area.y - 4;
     if (!options.length) {
       const next = Object.values(JOBS).filter((j) => j.parent === char.job && (!npc.family || j.family === npc.family));
-      const msg = next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
+      const trial = next.find((j) => j.trial && char.level >= j.level)?.trial;
+      const msg = trial ? `First, pass my trial: ${QUESTS[trial].name}. Then I'll teach you more.` : next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
       const fam = JOBS[char.job].family;
       const words = npc.family && char.job !== 'novice' && fam !== npc.family ? 'You walk a different path. Seek your own instructor.' : msg;
-      wrap(ctx, words, tx, y + 8, tw, { size: 8.5, chars: typed(ui, dlg, `job:${words}`, world, area, words.length) });
+      wrap(ctx, words, tx, y + 8, tw, { size: 8.5, chars: typed(ui, dlg, `job:${words}`, world, area, words) });
     } else dlg.talking = false;
     // One card per path: its name, what it's about, what it fights with and the stat it grows,
     // and a Choose button (or its number key).
@@ -258,7 +281,7 @@ export function npcWindow(ui, state, world) {
 
   // The greeting, typed out, with a bouncing sparkle when it's done; then the choices in two
   // columns, each with its number key.
-  const chars = typed(ui, dlg, `hi:${dlg.id}`, world, area, npc.greeting.length);
+  const chars = typed(ui, dlg, `hi:${dlg.id}`, world, area, npc.greeting);
   const end = wrap(ctx, npc.greeting, tx, area.y + 2, tw, { size: 8.5, chars, lineHeight: 11.5 });
   if (chars >= npc.greeting.length) sparkle(ctx, tx + tw - 4, end - 10 + Math.sin(world.now * 6) * 1.5, 2.5, th.main);
   const colW = (tw - 6) / 2;
@@ -280,7 +303,7 @@ function questPage(ui, state, world, npc, area, key) {
   const q = QUESTS[dlg.quest];
   const st = questState(char, dlg.quest);
   const words = st === 'ready' ? 'You did it! Thank you so much. Here is your reward.' : q.text;
-  const chars = typed(ui, dlg, `q:${dlg.quest}:${st}`, world, area, words.length);
+  const chars = typed(ui, dlg, `q:${dlg.quest}:${st}`, world, area, words);
   text(ctx, q.name, tx, area.y, { size: 9.5, bold: true, color: th.ink });
   ctx.font = font(9.5, true);
   const nw = ctx.measureText(q.name).width;

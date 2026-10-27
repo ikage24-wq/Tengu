@@ -15,7 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
-import { tickMelee } from './melee.js';
+import { tickMelee, faithGuard, addAim } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
@@ -36,6 +36,9 @@ export function createWorld(char) {
     drops: [],
     pending: [],
     strikes: [],
+    // A Berserker's Rage and a Paladin's Faith (see melee.js).
+    rage: 0,
+    faith: 0,
     fx: [],
     numbers: [],
     messages: [],
@@ -255,12 +258,18 @@ export function nearbyNpc(world) {
   return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6) ?? null;
 }
 
+// The hit counter: every hit you land within this many seconds of the last adds one; a pause
+// lets it drop. Finishers spend it (`hitsCost` in data/skills.js).
+export const HITS_WINDOW = 3;
+
 const BLOCKER_TEXT = {
   mp: 'Not enough MP.',
   busy: null,
   weapon: "That skill needs a different weapon.",
   noone: 'No fallen party member nearby.',
   stars: 'You need throwing stars! Shops sell them.',
+  rage: 'Not enough Rage. Land some blows first!',
+  hits: 'A finisher needs a longer combo. Keep the hits coming!',
   unlearned: null,
   passive: null,
 };
@@ -276,6 +285,7 @@ function useHotkey(world, binding, fresh = true) {
     else if (r.ok) world.skillBuffer = null;
     if (!r.ok && BLOCKER_TEXT[r.reason] && world.warnTimer <= 0) {
       world.log(BLOCKER_TEXT[r.reason], '#ffb3c6');
+      world.juice.push({ type: 'denied' });
       world.warnTimer = 1.5;
     }
   } else if (binding.item) {
@@ -325,7 +335,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -364,9 +374,14 @@ export function updateWorld(world, dt, input) {
   world.invuln = Math.max(0, world.invuln - dt);
   world.warnTimer = Math.max(0, world.warnTimer - dt);
   world.lootTimer = Math.max(0, world.lootTimer - dt);
+  // The window runs from your last hit, but never drops the count mid-move (long finishers).
+  if (world.hits && !world.pose && world.now - world.hitsAt > HITS_WINDOW) world.hits = 0;
   if (world.pose) {
     world.pose.t -= dt;
-    if (world.pose.t <= 0) world.pose = null;
+    if (world.pose.t <= 0) {
+      world.lastPose = { ...world.pose, endedAt: world.now };
+      world.pose = null;
+    }
   }
 
   // Buffs: drop expired ones with a note.
@@ -431,6 +446,10 @@ export function updateWorld(world, dt, input) {
     stepBody(world.body, world.map, bodyIntent, dt, world.stats);
   }
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
+  // What the controls ask for (attacks read Up for a launcher), and how long you've been running
+  // (an attack after a short run becomes a dash attack).
+  world.intent = intent;
+  world.runFor = (intent.left || intent.right) && world.body.onGround && Math.abs(world.body.x - wasX) > 0.5 && !acting ? (world.runFor ?? 0) + dt : 0;
 
   if (!world.body.rope) {
     // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
@@ -473,14 +492,20 @@ export function updateWorld(world, dt, input) {
       continue;
     }
     world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit, weight: h.damage / m.def.hp, party: Boolean(h.party) });
-    world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
-    world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
+    // Your own hits keep the hit counter going (see HITS_WINDOW).
+    if (!h.party) {
+      world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
+      world.hitsAt = world.now;
+      if (h.gauge) addAim(world, h.gauge);
+    }
+    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);
     if (element) world.fx.push({ kind: 'impact', element, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.4, seed: Math.random() });
     // Spell shots burst where they land.
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
-    else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
+    else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: h.big, crit: h.crit, rank: h.rank, dir: h.dir ?? (Math.sign(m.x - h.fromX) || 1), t: 0, dur: 0.45, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
     // Heavy shots land with their own weight.
     if (h.stop) world.hitstop = Math.max(world.hitstop, h.stop);
@@ -495,6 +520,7 @@ export function updateWorld(world, dt, input) {
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
+      if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
       if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : 'stun';
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
@@ -567,6 +593,22 @@ export function updateWorld(world, dt, input) {
 
   // ----- Visual timers -----
   for (const f of world.fx) f.t += dt;
+  // Arrows and bolts track the monster they were loosed at (knocked back, launched, walking): a
+  // shot heads for where it is now; a piercing one keeps its line through it out to its reach.
+  for (const f of world.fx) {
+    const m = f.mob;
+    if (f.kind !== 'projectile' || !m || m.hp <= 0 || f.t >= f.dur) continue;
+    const mx = m.x;
+    const my = m.y - (m.air ?? 0) - m.def.h / 2;
+    if (!f.reach) {
+      f.tx = mx;
+      f.ty = my;
+    } else {
+      const d = Math.hypot(mx - f.x, my - f.y) || 1;
+      f.tx = f.x + ((mx - f.x) / d) * f.reach;
+      f.ty = f.y + ((my - f.y) / d) * f.reach;
+    }
+  }
   world.fx = world.fx.filter((f) => f.t < f.dur);
   for (const n of world.numbers) n.t += dt;
   world.numbers = world.numbers.filter((n) => n.t < 1.1);

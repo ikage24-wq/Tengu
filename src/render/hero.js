@@ -1639,7 +1639,7 @@ function funWeapon(fun) {
   return funWeapons.get(key);
 }
 
-function weaponSprite(w, time) {
+function weaponSprite(w, time, unstrung = false) {
   if (w.fun) {
     const def = funWeapon(w.fun);
     const s = sprite(`funweapon|${w.fun.fun}|${w.fun.t}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
@@ -1647,10 +1647,10 @@ function weaponSprite(w, time) {
   }
   const frames = weaponFrames(w.type, w.tier, w.theme);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant);
+  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant, unstrung);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
-  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live };
+  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors };
 }
 
 // A sprite's canvas size in art pixels (HD sprites hold several cells per art pixel).
@@ -1836,13 +1836,33 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   drawJobAura(ctx, job, 'front', x, y, t, s, k);
 }
 
+// Eases from one move's pose (`a`) into another's (`b`) by `w` (0-1, eased here): angles take the
+// short way round, the body's lift, lean and lunge glide, and the rig tweaks switch halfway.
+function blendMove(a, b, w) {
+  if (!a || !b) return b;
+  const k = w * w * (3 - 2 * w);
+  const mix = (x, y) => x + (y - x) * k;
+  const angle = (x, y) => (x == null || y == null ? y : y - ((((y - x) % 360) + 540) % 360 - 180) * (1 - k));
+  return {
+    ...b,
+    weapon: angle(a.weapon, b.weapon), arm: angle(a.arm, b.arm),
+    lift: mix(a.lift, b.lift), lunge: mix(a.lunge, b.lunge), tilt: mix(a.tilt, b.tilt), turn: mix(a.turn, b.turn), stretch: mix(a.stretch, b.stretch),
+    rig: k < 0.5 ? a.rig ?? b.rig : b.rig,
+  };
+}
+
 // Older pose names still used by callers map onto moves.
 const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
 
 // Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const pose = state.pose ?? 'idle';
-  const moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  let moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  // A move that cut in on another eases out of it over its first few frames.
+  if (moved && state.from && state.blend < 1) {
+    const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur);
+    moved = blendMove(from, moved, Math.max(0, state.blend));
+  }
   // Walking, the whole body leans into the run and rises a little at each passing step.
   let mv = moved;
   // A choreographed body move (boss dances): lift, lean, spin, squash and stretch of the whole figure.
@@ -1965,7 +1985,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const skin = look.skinTone ?? '#fff0e6';
   const sleeve = sleeveColor(g.top.design, g.top.color, g.top);
   const long = longSleeves(g.top.design, g.top);
-  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
+  // A bow being drawn (`mv.pull`) is drawn without its straight string; the string is bent back
+  // to the draw hand live, with the arrow on it (see drawString).
+  const drawn = (mv?.pull != null || mv?.twang > 0) && g.weapon?.type === 'bow' && !g.weapon.fun;
+  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0, drawn) : null;
   const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : over != null ? { weapon: 0, arm: over } : null;
 
   // Front arm layer; it moves with the upper body, which sinks with the hips.
@@ -1988,7 +2011,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   const restAngle = { crossbow: 55, gauntlet: 70 }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
-  const guard = state.ready && pose === 'idle' ? { crossbow: 80, gauntlet: 95, bow: 20 }[g.weapon?.type] ?? 62 : null;
+  // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
+  // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
+  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 20 }[g.weapon?.type] ?? 62 : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
@@ -2010,6 +2035,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (el) elementGlow(ctx, wpn, el, time, ws);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
     else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws);
+    if (drawn && wpn.anchors?.string) drawString(ctx, wpn.anchors.string, mv.pull ?? 0, mv.nock ?? mv.pull > 0.05, ws, mv.twang ?? 0, mv.spares ?? 0);
     if (settings.weaponEffects) {
       if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
       wpn.live?.(ctx, time, ws, wpn.grip);
@@ -2017,15 +2043,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.restore();
   };
 
-  // Weapon trail: remember where the tip was during a swing, drawn as a fading ribbon.
-  if (anim && wpn && mv?.trail) {
-    const len = (wpn.grip[1] - 6) * ws;
-    const rad = (weaponAngle * Math.PI) / 180;
-    const tipX = sx(hand[0]) + Math.sin(rad) * len * (flip ? -1 : 1);
-    const tipY = sy(hand[1]) - Math.cos(rad) * len;
-    anim.trail.push({ dx: tipX - x, dy: tipY - y, hx: sx(hand[0]) - x, hy: sy(hand[1]) - y, age: 0 });
-  }
-  if (anim && anim.trail.length > 1) drawTrail(ctx, anim.trail, x, y, g.weapon?.color ?? '#ffffff');
+  // (A swing's smear is the effect pack's slash, drawn with the blow; see effects.js bladeCut.)
 
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
@@ -2056,25 +2074,77 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 
-function drawTrail(ctx, trail, x, y, color) {
+// A bow's string drawn back to the hand, in the bow's own frame (grip at the origin, tips up and
+// down at `h`, the string at `x`, behind the grip): two straight runs from the tips to the nock,
+// pulled back by `pull` (0-1, a full draw is about 10 px), and the arrow lying on it, its head
+// past the bow's belly (archery research: the string and arrow are what read a draw at small
+// size; the string snaps straight on the loose, in one frame, and rings; research/archery.md).
+const PULL = 10;
+const SHAFT = '#c89a6a';
+function drawString(ctx, st, pull, nock, ws, twang = 0, spares = 0) {
+  const nx = (st.x - PULL * Math.max(0, Math.min(1, pull)) - 1) * ws;
+  const tx = (st.x - 1) * ws;
+  const ty = st.h * ws;
+  const y0 = -ws;
   ctx.save();
-  for (let i = 1; i < trail.length; i++) {
-    const a = trail[i - 1];
-    const b = trail[i];
-    const fade = 1 - b.age / 0.14;
-    ctx.globalAlpha = Math.max(0, fade) * 0.7;
-    ctx.fillStyle = i % 2 ? '#ffffff' : shade(color, 30);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = st.color;
+  ctx.lineWidth = 0.8 * ws;
+  // Just loosed, the string rings: two faint lines at the ends of its swing (where a vibrating
+  // string moves slowest), closing in as it dies down. Otherwise one line to the nock.
+  const ring = twang > 0 && pull <= 0 ? [-1, 1].map((sd) => tx + sd * 1.6 * twang * ws) : [nx];
+  if (ring.length > 1) ctx.globalAlpha = 0.6;
+  for (const mx of ring) {
     ctx.beginPath();
-    // A quad between two tip samples and points two-thirds of the way down the blade.
-    const mid = (p) => [x + p.hx + (p.dx - p.hx) * 0.45, y + p.hy + (p.dy - p.hy) * 0.45];
-    const [am, an] = mid(a);
-    const [bm, bn] = mid(b);
-    ctx.moveTo(x + a.dx, y + a.dy);
-    ctx.lineTo(x + b.dx, y + b.dy);
-    ctx.lineTo(bm, bn);
-    ctx.lineTo(am, an);
-    ctx.closePath();
+    ctx.moveTo(tx, y0 - ty);
+    ctx.lineTo(mx, y0);
+    ctx.lineTo(tx, y0 + ty);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // Spare arrows held fanned in the draw hand (a volley; research/archery.md 21).
+  for (let i = 0; i < spares; i++) {
+    const a = 0.35 + i * 0.3;
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.lineWidth = 1.8 * ws;
+    ctx.beginPath();
+    ctx.moveTo(nx, y0);
+    ctx.lineTo(nx + Math.cos(a) * 12 * ws, y0 + Math.sin(a) * 12 * ws);
+    ctx.stroke();
+    ctx.strokeStyle = SHAFT;
+    ctx.lineWidth = 0.8 * ws;
+    ctx.stroke();
+    ctx.fillStyle = '#ff8fb0';
+    ctx.fillRect(nx - ws, y0 + (i + 0.5) * ws, 2.4 * ws, ws);
+  }
+  if (nock) {
+    // The arrow: inked shaft from the nock to past the belly, a steel head, pink fletching.
+    const hx = nx + 22 * ws;
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.lineWidth = 2 * ws;
+    ctx.beginPath();
+    ctx.moveTo(nx, y0);
+    ctx.lineTo(hx, y0);
+    ctx.stroke();
+    ctx.strokeStyle = SHAFT;
+    ctx.lineWidth = 0.9 * ws;
+    ctx.stroke();
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.moveTo(hx + 3.6 * ws, y0);
+    ctx.lineTo(hx - 0.6 * ws, y0 - 2 * ws);
+    ctx.lineTo(hx - 0.6 * ws, y0 + 2 * ws);
     ctx.fill();
+    ctx.fillStyle = '#eef3ff';
+    ctx.beginPath();
+    ctx.moveTo(hx + 2.6 * ws, y0);
+    ctx.lineTo(hx, y0 - 1.2 * ws);
+    ctx.lineTo(hx, y0 + 1.2 * ws);
+    ctx.fill();
+    ctx.fillStyle = '#ff8fb0';
+    ctx.fillRect(nx + 0.6 * ws, y0 - 1.8 * ws, 3 * ws, 1.2 * ws);
+    ctx.fillRect(nx + 0.6 * ws, y0 + 0.6 * ws, 3 * ws, 1.2 * ws);
   }
   ctx.restore();
 }
+

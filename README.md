@@ -55,10 +55,11 @@ to clear it.
 
 - **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (each instructor lives in their
   job's home town). Every first job has a movement skill (Charge, Blink, Backflip, Shadow Step).
-  For now only the Mage advances further: three branches at level 30, and one third job per
+  The Mage advances further: three branches at level 30, and one third job per
   branch at level 50 with a signature skill, a summon, and a screen-wide ultimate that hits up to
-  15 monsters twice. The Mage has the least HP in the game, but heals and shields the party. Warrior,
-  Archer, and Thief stop at their first job for now.
+  15 monsters twice. The Mage has the least HP in the game, but heals and shields the party. The
+  Warrior picks one of two paths at level 30 (below), after passing Brann's trial. Archer and Thief
+  stop at their first job for now.
 
   | Class | Branch (30) | Third job (50) | Plays like | Ultimate |
   |---|---|---|---|---|
@@ -112,6 +113,18 @@ to clear it.
   once, one per monster. **Arrow Rain** shoots a volley into the sky that pours down on everything
   ahead. **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread
   of arrows at whatever was on you.
+- **Command combos** — with a sword, axe, spear, dagger or bare hands: **Up + attack** is a
+  launcher that throws monsters up and hops you after them; **attacking in the air** plays an air
+  combo (two cuts that keep you hanging, then a dive that slams into the ground on landing); and
+  **attacking out of a run** is a lunging dash attack. Each move eases out of the one before it
+  instead of snapping.
+- **Hit counter, Links and finishers** — every hit you land keeps a counter going on the right
+  (it drops after 3 seconds without a hit, but never mid-move), with tiers at 10 (Nice), 25
+  (Great), 50 (Awesome) and 100 (Legendary). Start a skill right after a combo's last blow lands
+  and it's a **LINK** for +25% damage. At 25 hits a finisher is ready: the Paladin's **Grand
+  Verdict** (rise on a column of light and drive a giant sword of light into the ground) and the
+  Berserker's **Crimson Eclipse** (spin up in a whirlwind under a blood moon and crash down; fills
+  Rage). A finisher spends the counter.
 - **Smooth controls** — once a move's blows have landed (or its arrows are away), walking or
   jumping cuts its follow-through short, and a basic attack can flow straight into a skill (so you
   can weave Blade Rush into a sword combo). Each skill plays out its own motion before another
@@ -274,7 +287,7 @@ to clear it.
   head off on their own (or log off after a long session).
 - **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
   Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
-  form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank,
+  form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank (Berserkers deal damage),
   mages (and every mage job after them) heal, archers and thieves deal damage**. Your party comes
   with you if it fits the roles, and the group finder brings in players for any open spot. Inside:
   - Everyone in the group has HP (shown under their names and in the group panel), and monsters
@@ -309,6 +322,69 @@ to clear it.
   (bosses are too heavy to move, but still turn on you); **Shield Wall** takes a share off every
   hit for a while; **Rally Cry** does the same for you and the party around you; and **Stalwart**
   adds max HP and defense. They all work outside dungeons too.
+- **Warrior paths (level 30)** — at 30, Brann in Ember Crag sets **The Warrior's Trial** (break 20
+  Crystal Golems in the Crystal Cave); pass it and pick a path:
+  - **Paladin**, the tank: **Aegis Smite** is a three-press combo (a shove behind a shield of light
+    that stuns, a rising cut that throws them up, an overhead smite that calls pillars of light down
+    on them); **Hallowed Ground** drives the blade into the floor so a ring of holy light bursts out,
+    turns every monster it hits on you, and lifts them on pillars of light; **Divine Aegis** guards
+    you and the party around you (less damage taken, slow healing); **Paladin Mastery** adds
+    mastery, defense, and max HP. Idle, a ring of light diamonds turns at their feet. **Faith** (a
+    star gauge over the hotkeys) builds from her blows and from the hits she takes, drains once the
+    fight stops, and cuts the damage she takes (up to 15% at full). Golden light builds around her
+    as it fills: a glow, a turning ring of light, then a halo and rays; full (**Sanctified**) adds
+    wings of light.
+  - **Berserker**, a damage dealer: every blow builds **Rage** (a flame gauge over the hotkeys) that
+    drains once the fighting stops. **Ravage** is a three-press combo (two bleeding chops, a
+    bleeding spin, a ground-cracking skull-splitter); **Blood Frenzy** raises attack, attack speed,
+    and crits and gives a quarter of your Rage; **Rampage** needs 30 Rage and spends it all on three
+    wild chops and a leaping smash, up to double damage at full Rage; **Berserker Mastery** adds
+    mastery, attack, and critical damage. Idle, small red flames lick at their feet. Rage shows on
+    him as it builds (a red heat, then flames climbing his body, embers streaming off), makes every
+    blow up to 25% harder, and at full (**Berserk**) a red ring pulses from his feet and the screen
+    edges burn red.
+  - Each path fights in its own style, with its own basic combo and moves. The Paladin is upright
+    and disciplined, always leading with the shield arm: a measured cut, a shield shove that
+    dazes, a lunging thrust, and a two-handed smite from a held overhead raise; Aegis Smite
+    rises in a long arc, Hallowed Ground kneels and plants the blade point-down, and Divine Aegis
+    is a knight's salute. The Berserker is wild and twisting: a huge wound-up horizontal cleave,
+    the return cleave, a low crouching whirl, and a leaping skull-splitter; Blood Frenzy is a
+    hunched war roar, and Rampage chains the cleaves into the skull-splitter.
+  - Both paths hit heavy: longer hit-stops and harder knockback (the Berserker most), a stomp of
+    dust and a dip of the view as a big move starts, power gathering at the weapon (embers or
+    diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.
+- **Archer paths (level 30)** — at 30, Kestrel in Sprout Village sets **The Archer's Trial**
+  (shoot down 15 Wraiths in the Crystal Cave); pass it and pick a path. Both deal damage in a group.
+  - **Ranger** (bow), light and quick on the wind: every arrow that lands builds **Gale** (a curl of
+    wind over the hotkeys) that blows out once the fighting stops; the fuller it is the faster she
+    shoots (up to a quarter quicker), and full (**Tailwind**) every basic shot looses a twin arrow
+    and two wind spirits that swoop out on curves and home in.
+    **Gale Volley** is a three-press combo (a twirl that looses two wind arrows, a leap that fans
+    three down on them, then a gale arrow through the whole line that blows them away);
+    **Cyclone Arrow** sends a slow whirlwind down the line that cuts everything it passes three
+    more times and lifts it (a real tornado, twice her height); **Tailwind** speeds up running,
+    shooting and dodging, leaves streaks of wind at her heels, and gives half a Gale; **Ranger Mastery** adds mastery, attack and accuracy. Bands of green wind circle her as
+    Gale fills, then leaves; full, a ring of wind blows out from her feet.
+  - **Sniper** (crossbow), planted and patient: bolts that land and standing still mid-fight build
+    **Focus** (a sight over the hotkeys); running bleeds it away. The fuller it is the likelier a
+    critical (up to 30% more), and full, the next bolt is a **Deadeye**: it always crits, tears
+    through the whole line, and spends the Focus. **Marksman's Chain** is a three-press combo (a
+    kneeling heavy bolt through the line, a crank and two more, then a ballista bolt that kicks her
+    back and blasts through everything); **Glacier Bolt** shatters on its mark in a burst of frost
+    that freezes everything close around it; **Steady Aim** sharpens crits and aim and gives half a
+    Focus; **Sniper Mastery** adds mastery, critical damage and accuracy. A sight ring turns
+    round her as Focus fills, tightening; full, it locks rose-red and pulses.
+  - Each has its own basic combo (the Ranger: a snap shot, a twirl and two arrows, a leaping fan of
+    gale arrows; the Sniper: a kneeling heavy bolt, a crank-and-fire, a blast bolt that bursts on
+    its mark) and command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
+    **attacking in the air** shoots down at them and holds you up (a Sniper's bolt kicks her back
+    up), and **attacking out of a run** is a Ranger's slide shot or a Sniper's roll into a kneeling
+    bolt. Her leaping shot is a backflip. Their finishers (25 hits): the Ranger's **Storm Volley**
+    (a gust throws her spinning high, the sky turns stormy and arrows pour down all around, then
+    she dives in a burst of storm wind; fills Gale) and the
+    Sniper's **Heartseeker** (a long aim as a sight locks onto every monster in the line, then one
+    enormous bolt that always crits, and its shockwave). A finisher shot that connects opens a
+    Link, for every archer.
 - **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
   **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in
@@ -323,7 +399,41 @@ to clear it.
 - **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
   adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
   **Natural** leaves the colors as drawn.
-- **Options** — Esc (or the gear button) opens Options. Display: filter, HD graphics, particles
+- **Sound** — "real plus modern": recorded instruments (flute, strings, harp, guitar, horns,
+  piano, choir, marimba, celesta and more, from the FluidR3 soundfont) and recorded effects (from
+  Kenney's packs), mixed with synths, drums and effects made in code (credits in
+  `assets/audio/CREDITS.md`). The archer paths' effects are hand-drawn pixel effect art from
+  public-domain packs (credits in `assets/fx/CREDITS.md`). Every song and effect is rendered once in a background worker and
+  played from buffers; the rules come from the research in `docs/audio/`. **Music**: a written
+  song for every area: a swung village tune on flute, guitar and plucked strings; a running meadow
+  song with marimba and pop drums; an accordion sea song in 6/8 at the harbor; sitar and oboe over
+  toms in the crags; pan flute and harp in the forest; a waltz for oboe and celesta in the mage
+  grove; choir, harp and horn in the ruins; echoing celesta in the cave; flute and bells in the sky;
+  a grumbling horn march in the Hollow; a galloping boss theme with brass, strings, choir and
+  timpani that cuts in on its sting; and a piano title theme. Songs crossfade between areas and
+  pick up where they left off when you come back. **Funky Fever**, Dancing Green's disco song (F
+  minor, 120 bpm, matched to the feel of his FFXIV theme with our own melody), is locked to the
+  stage lights: a muffled groove that opens up as he struts in, a riser and snare roll, a boom and a
+  heartbeat while he transforms, the drop on a bar line with the chorus on the stage's drop, a phase
+  sting into Hi-NRG Fever (a whole step up) on the next bar, and the victory fanfare on the beat when
+  he falls. **Jingles** on real instruments follow the Japanese RPG formula (quick notes rushing
+  into a long, rising landing note): level up, quest accepted and complete, rare drops, job
+  advancement, boss defeated, healing, and a gentle faint; the music dips under them and they never
+  overlap. **Effects**: blows are recorded punches with a body that climbs in pitch through a combo
+  (finishers thump, crits ring), each path's and element's colour (holy bells, rage crunch, fire,
+  glassy ice, zaps). Combat is recorded from free combat sound packs (JC Sounds, The Soundrack,
+  artisticdude, Ogrebane, rubberduck, Still North Media): every weapon type swings with its own
+  recordings (sword, axe, spear, dagger, bare hands), timed so the whoosh peaks as the blow lands,
+  and lands its own way (an axe chops, a dagger cuts, fists thump); blade clangs and cuts, longbow
+  and recurve shots, crossbows clacking bolts away, arrows thudding in, throwing stars, and every school of magic casting and
+  landing with its own sound (fire, ice, lightning, holy, poison, dark, wind, earth, water);
+  monsters squish and cry when they pop. Buffs, shields, teleports, every Paladin and Berserker
+  effect, recorded footsteps by ground, jumps, landings, coins that chime up the scale,
+  pickups, real menu clicks, and NPCs who talk in soft voice blips at their own pitch, rising at
+  the end of a question. Sounds pan to where they happen; a limiter keeps busy fights clean. Sound
+  starts on your first key press or click. Options: Sound has volume for everything, music, and
+  effects.
+- **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: filter, HD graphics, particles
   (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest
   tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: screen shake,
   hit-stop, damage numbers, auto-loot, click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and
@@ -385,6 +495,9 @@ src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon f
                         particles,
                         monsters, scenery, terrain, landmarks, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
+src/audio/              the studio and its songs, sound recipes, the sample bank, the render
+                        worker, the mixer, and the listener that turns the world into sound
+assets/audio/           the recorded instruments and effects (built by tools/build-audio.mjs)
 tests/                  node:test suites for rules, content integrity, and world behavior
 ```
 

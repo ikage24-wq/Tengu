@@ -17,6 +17,10 @@ import { createBots, updateBots, botsIn } from './world/bots.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
 import { openProfile } from './ui/profile.js';
+import { unlock } from './audio/engine.js';
+import { hearWorld, hearUi } from './audio/listen.js';
+import { updateMusic } from './audio/music.js';
+import { preloadFxSprites } from './render/fx-sprites.js';
 
 loadSettings();
 
@@ -48,6 +52,9 @@ let world = null;
 let uiState = null;
 let camera = null;
 let autosave = AUTOSAVE_EVERY;
+
+// The effect sprite strips load in the background from the start.
+preloadFxSprites();
 
 function startGame(char) {
   world = createWorld(char);
@@ -126,6 +133,9 @@ function blended(world, alpha, draw) {
   }
 }
 
+// Browsers only allow sound after the player does something: start it on the first key or click.
+for (const ev of ['pointerdown', 'pointerup', 'keydown', 'touchstart', 'touchend']) window.addEventListener(ev, unlock, { passive: true });
+
 function frame(now) {
   const raw = (now - last) / 1000;
   const dt = Math.min(0.1, raw);
@@ -137,6 +147,7 @@ function frame(now) {
   setHd(settings.hdGraphics, pixelScale);
   const ui = beginUi(ctx, input);
 
+  if (screen !== 'game') updateMusic('title');
   if (screen === 'title') {
     if (titleScreen(ui, time)) {
       loadChars();
@@ -179,6 +190,9 @@ function frame(now) {
       if (!settings.hitStop) world.hitstop = 0;
       if (world.hitstop > 0) {
         world.hitstop -= TICK;
+        // Effects already on screen keep playing through the stop (only the world freezes), so
+        // a flash meant for one frame never hangs there; ones still waiting to start stay put.
+        for (const f of world.fx) if (f.t >= 0) f.t += TICK;
         continue;
       }
       remember(world);
@@ -192,6 +206,8 @@ function frame(now) {
       saveGame(world.char);
       autosave = AUTOSAVE_EVERY;
     }
+    // Sounds for whatever just happened, before the renderer drains the cues.
+    hearWorld(world, camera);
     blended(world, acc / TICK, () => {
       updateCamera(camera, world, dt);
       drawWorld(ctx, world, camera, time);
@@ -200,6 +216,7 @@ function frame(now) {
     uiState.cam = camera;
     // A boss cutscene plays without the HUD.
     if (!world.cutscene) drawUi(ui, uiState, world);
+    hearUi(uiState);
     npcPointer(ui);
     // The Options window can send you back to character select or the title.
     if (uiState.action) {

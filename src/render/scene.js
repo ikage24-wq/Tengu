@@ -1,6 +1,9 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
 import { wornGear } from '../core/character.js';
+import { drawCombatAura } from './aura.js';
+import { hasRage, hasFaith, hasGale, hasFocus, RAGE_MAX, FAITH_MAX, GALE_MAX, FOCUS_MAX } from '../world/melee.js';
+import { moveAt } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
@@ -81,9 +84,13 @@ export function updateCamera(cam, world, dt) {
   cam.y += (ty - cam.y) * (1 - Math.exp(-dt * (b.onGround ? 6 : 10)));
 }
 
+// How long a new move takes to ease out of the one before it (a few frames; long enough to hide the
+// snap, short enough that the wind-up still reads as instant).
+const BLEND = 0.07;
+
 function playerPose(world) {
   const b = world.body;
-  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur };
+  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / BLEND };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };
@@ -206,7 +213,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawParty(ctx, partyMembers(world.bots).filter((b) => b.map === world.map.id), cam, VIEW_W, time, world.hoverBot);
 
   const p = playerPose(world);
-  const blink = world.invuln > 0 && Math.floor(time * 16) % 2 === 0;
+  // Blink while recovering from a hit, but not through a move's own untouchable stretch (dashes,
+  // dodges, finishers): that should read as power, not as being hurt.
+  const blink = world.invuln > 0 && !world.pose && Math.floor(time * 16) % 2 === 0;
   if (b.onGround) footShadow(ctx, b.x - cam.x, b.y - cam.y, 13, slopeAt(b.surface, b.x));
   // A chat emoticon shows on the face for a few seconds.
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;
@@ -234,7 +243,14 @@ export function drawWorld(ctx, world, viewCam, time) {
   } else {
     feel.fellAt = undefined;
     feel.fellDust = false;
+    // A path's gauge builds up around them as the fight goes on: a Berserker's Rage, a Paladin's
+    // Faith, a Ranger's Gale, a Sniper's Focus.
+    const power = hasRage(world.char) ? ['rage', (world.rage ?? 0) / RAGE_MAX] : hasFaith(world.char) ? ['faith', (world.faith ?? 0) / FAITH_MAX]
+      : hasGale(world.char) ? ['gale', (world.gale ?? 0) / GALE_MAX] : hasFocus(world.char) ? ['focus', (world.focus ?? 0) / FOCUS_MAX] : null;
+    const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
+    if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, 1, power[1]);
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+    if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, 1, power[1]);
   }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
   drawSupport(ctx, buffs, hx, hy, time, world.now);

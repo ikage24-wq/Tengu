@@ -11,7 +11,7 @@ carry an improvement across every part of the game it applies to.
 - [research/](research/): the full findings, each with its source, the game or artist, and where it
   applies in Tengu: [en](research/en.md), [ja](research/ja.md), [ko](research/ko.md),
   [zh](research/zh.md), [ru](research/ru.md), [fx](research/fx.md) (effects and game feel),
-  [env](research/env.md) (maps, UI, icons), [anim](research/anim.md) (animation craft),
+  [env](research/env.md) (maps, UI, icons), [anim](research/anim.md) (animation craft), [archery](research/archery.md) (bows, crossbows, archer skill effects),
   [fanart](research/fanart.md) (how pros put anime characters into small sprites),
   [avatar](research/avatar.md) (dress-up avatar games the player named as references: SELFY /
   attrade and CocoPPa Play; read before any hair, outfit or cosmetic work),
@@ -19,6 +19,8 @@ carry an improvement across every part of the game it applies to.
   proportions, idles, attacks, jumps and walks),
   [diives](research/diives.md) (Diives' safe-for-work character acting: expressions, emotion symbols,
   squash and timing),
+  [combat](research/combat.md) (combo counters, links, finishers and cut-ins, juggles, blending
+  between moves),
   [dancing-green](research/dancing-green.md) (the FFXIV boss the player wants as a disco boss: his
   look, how he moves, and every attack with its tell).
 - [briefs/](briefs/): the briefs the art and improvement passes worked from (conventions, quality
@@ -149,6 +151,83 @@ carry an improvement across every part of the game it applies to.
 - Screen shake is trauma that stacks and drains (camera moves by its square along smooth noise).
   Struck monsters shudder during hit-stop.
 - Damage numbers pop in with an overshoot, drift on alternating arcs, and total multi-hits.
+- Hit-stop freezes effects too, so a one-frame dark contrast disc in front of a big burst holds on
+  screen and reads as a flat ball over the hero: skip it on effects that land with hit-stop (the
+  Berserker's `rageburst`). `deep()` of a warm red mixes toward ink purple and reads pink or mauve
+  on our pastel skies; give red effects their own near-black crimson or a hand-picked red ramp.
+- A move's own untouchable stretch (dashes, dodges, finishers) must not use the hurt blink: it
+  reads as weakness and made finishers flicker. Only blink while recovering from a hit.
+- Moves cut into each other ease out of the previous pose over about 70 ms (`hero.js`
+  `blendMove`, `scene.js` BLEND): angles take the short way round, rig tweaks switch halfway.
+- Each path's effects keep one shape language (fx.md C14), so a hit says whose it is: the
+  Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
+  streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
+  step white, main, deep from head to tail (fx.md D), not faded copies.
+- **Effects are built from smooth HD effect art, never pixel effects or drawn shapes.** The
+  player found code-drawn effects with gradients "childishly made", then rejected pixel-art effect
+  packs too ("only use HD smooth ones"). `assets/fx/` holds strips cut by `tools/build-fx.py`
+  from CC0 HD packs (`assets/fx/CREDITS.md`): rendered flipbooks (Sinestesia's hit flashes, blood
+  and explosions; Thomas Iché's fire, flame and smoke) play as they are, and Kenney's white
+  particle textures (flares, rays, rings, beams, twirls, a crescent, a magic circle, a sigil) are
+  coloured like light at build time (the colour at the thin edges, white where dense) and
+  animated in code with `fxPulse` (grow, turn, fade), the way a particle system plays them. HD
+  strips are drawn smoothed, one strip pixel to one screen pixel at scale 1.
+- On the game's light pastel maps, additive light only works for white, steel and cold colours:
+  red added onto lavender turns pink and gold turns white. Warm effects (gold, red, fire, blood)
+  draw normally; a thin white additive copy inside a crescent gives its edge. Dark rendered smoke
+  reads as dirt here, so smoke and dust are lifted pale at build time.
+- Warriors (`warrior-fx.js`, `effects.js` `bladeCut`): every blade cut is one smooth crescent of
+  light (steel blue, the Paladin's gold, the Berserker's red), turned to the blade's own path and
+  sized just past the tip, wiping round the way the blade went; downward cuts lean forward
+  instead of diving into the floor. Hits are a cut line and a flash; the Paladin's are gold
+  flashes with a slim column of light, the Berserker's are blood bursts. Big moments stack a
+  magic circle on the floor, columns of light, rings racing out and one burst of light; heavy
+  blows throw up pale dust and clods of earth. The archer paths still use the old pixel strips
+  and need the same HD pass, as do the mage and thief paths, monsters, and buffs' lasting looks.
+- The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
+  hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
+  dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill
+  arrows are drawn big; and she has signature moments (wind spirits at full Gale, a tornado, a
+  storm sky). Every path needs a bold colour and at least one moment of its own.
+- Archers (research/archery.md):
+  - A bow's string bends back to the draw hand with the arrow on it while drawing.
+  - On the loose the string snaps straight in one frame (never eased), then rings as two faint
+    lines for a few frames.
+  - The draw hand flies back past the ear and holds there; the follow-through is the longest beat.
+  - Volleys hold spare arrows fanned in the draw hand.
+  - Air shots tip the body forward with the bow arm down, and pop up a little on each loose.
+  - A crossbow never bends: the back hand's cocking pull after the shot is its motion, and between
+    shots it rests at low ready, just under the aim, so a shot settles instead of dropping.
+  - Sniper bolts give the view a small kick. No tracer line: the player wants to see the bolt
+    itself fly (a thin white line read as a laser, not an arrow), so bolts are drawn big, with
+    fins, at a speed you can follow (720-950 px/s; MapleStory's arrows are always visible).
+  - Lock-ons dim the world and pop sights on one at a time, each tick a step higher.
+  - Charging shots glow in steps (none, blue, white with a rose rim), with a flash at each step.
+  - Ice cracks first, flashes white at the instant it breaks, then shards fly and mist lingers.
+  - Not done yet: arrow hits still freeze the whole world; the research says only the arrow and
+    the target should stop.
+- A blast is a sequence (fx.md C12, C17): a white flash, then lumps that burst outward and tear
+  open as they go, then smoke that rises and breaks up. One swelling fireball reads as a flat
+  orange disc.
+- No finisher cut-ins: the player asked for them to be removed.
+- The player prefers effects that move smoothly over held anime frames: `fxkit.js` `stepped` now
+  passes progress straight through.
+- Effects keep playing through hit-stop (`main.js`: only the world freezes), as Toylogic's notes
+  say; otherwise a one-frame flash, a white first drawing or a wash hangs on screen as a blob.
+- Smears trace the blade's own path (`effects.js` `bladePath`/`bladeSmear`): the tip and hand
+  sampled from the hero's pose over the cut, trimmed to where the blade is actually moving (drop
+  the slow wind-up), corner-cut twice so it curves, drawn as a tapered ribbon. Every move, old or
+  new, gets a smear that matches it.
+- Monster hit flash is a light tint (0.8, then a short fade), not solid white: a crowd hit at
+  once otherwise blooms into white blobs.
+- A body twist (`turn`) below about 0.8 squashes a front-facing chibi into a sliver; keep wind-up
+  twists at 0.84 or more.
+- A giant sword of light must be wide (blade about 44 px with a winged cross-guard) or it reads
+  as one more pillar.
+- Holy pillars (`strikes.js` `pillar`): a thin ray first, then a tapered wedge (narrow at the sky,
+  wide at the foot) in four nested tones, a rounded bloom at the foot, and slices that vanish from
+  the top down; flat straight-sided columns read as UI bars. Ground rings stay flat (height about
+  0.12 of the width) and unfilled, or they wash over the fighters standing in them.
 
 **Maps and UI**
 - Far silhouettes: flat, no outline, a lit rim on the upper-left by filling the shape in the rim

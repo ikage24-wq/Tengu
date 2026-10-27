@@ -24,7 +24,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (arcane, ice, lightning, fire, poison, holy) colors the casting circle.
+// `school` (arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -153,6 +153,134 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
   }),
 
+  // ---------- Paladin (the warrior's tank path: holy light, stuns, taunts, blessings) ----------
+  paladinmastery: skill({
+    id: 'paladinmastery', name: 'Paladin Mastery', job: 'paladin', type: 'passive', fx: null,
+    desc: 'Steadier blows, thicker armor, and more max HP.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), wdef: lerp(5, 40, lv, m), maxHpPct: lerpf(0.02, 0.15, lv, m) } }),
+  }),
+  aegissmite: skill({
+    id: 'aegissmite', name: 'Aegis Smite', job: 'paladin', type: 'attack', fx: 'slash', school: 'holy',
+    desc: 'A three-part combo, one part per press: a shove behind a shield of light that stuns, a rising cut that throws them up, then an overhead smite that calls pillars of light down on them.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(3, 5);
+      return {
+        mp: k(6, 14), pct: k(110, 180), hits: 3, targets,
+        combo: [
+          { move: 'bash', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: k(110, 180), reach: 70, h: 64, targets, knock: 120, stun: lerpf(1, 2, lv, m), burst: 'aegis', stop: 0.05, rage: 0 }] },
+          { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: k(120, 200), reach: 80, h: 84, targets, knock: 40, launch: 380, arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
+          { move: 'smite', dur: 0.74, step: 12, finisher: true, strikes: [{ at: 0.43, pct: k(220, 380), reach: 100, h: 82, targets: targets + 2, knock: 200, arc: [-95, 185], thick: 13, big: true, fx: 'pillar', stop: 0.1, shake: 4 }] },
+        ],
+      };
+    },
+  }),
+  hallowedground: skill({
+    id: 'hallowedground', name: 'Hallowed Ground', job: 'paladin', type: 'attack', fx: 'quake', icon: 'hallowed', school: 'holy',
+    desc: 'Drive your blade into the ground: a ring of holy light bursts out, every monster it hits turns on you, and pillars of light lift them up.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(5, 8);
+      return {
+        mp: k(14, 30), pct: k(100, 170), hits: 2, targets,
+        combo: [{ move: 'consecrate', dur: 0.9, step: 4, finisher: true, strikes: [
+          { at: 0.46, pct: k(100, 170), reach: 120, h: 90, around: true, targets, knock: 60, provoke: lerpf(3, 5, lv, m), burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
+          { at: 0.8, pct: k(80, 140), reach: 130, h: 90, around: true, targets, knock: 30, launch: 220, fx: 'pillar', stop: 0.04 },
+        ] }],
+      };
+    },
+  }),
+  divineaegis: skill({
+    id: 'divineaegis', name: 'Divine Aegis', job: 'paladin', type: 'buff', fx: 'shield', icon: 'aegis', school: 'holy', party: true, lock: 0.45,
+    desc: 'Raise your blade to the sky: you and the party around you take less damage and slowly heal for a while.',
+    at: (lv, m) => ({ mp: lerp(20, 40, lv, m), duration: lerp(20, 40, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } }),
+  }),
+
+  grandverdict: skill({
+    id: 'grandverdict', name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. Kneel, rise on a column of light, then drive a giant sword of light down on everything around you; pillars of light strike every monster it hits.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
+        combo: [{ move: 'verdict', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
+          { at: 0.24, pct: k(60, 110), reach: 150, h: 130, around: true, targets, pull: 90, burst: 'consecrate', burstAt: 0, stop: 0.03, rage: 0 },
+          { at: 0.66, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 120, launch: 440, burst: 'verdict', burstAt: 0, fx: 'pillar', big: true, stop: 0.16, shake: 8 },
+          { at: 0.82, pct: k(150, 260), reach: 180, h: 150, around: true, targets, knock: 260, burst: 'consecrate', burstAt: 0, big: true, stop: 0.05, shake: 3 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Berserker (the warrior's damage path: Rage, bleeding, savage flurries) ----------
+  // Every blow a Berserker lands builds Rage (0-100, see world/melee.js); it drains away out of a
+  // fight. `rageCost` is the least Rage a skill needs; Rampage spends all of it.
+// Finishers (`hitsCost`) need that long a hit counter and spend it (see world/world.js HITS_WINDOW).
+  berserkermastery: skill({
+    id: 'berserkermastery', name: 'Berserker Mastery', job: 'berserker', type: 'passive', fx: null,
+    desc: 'Steadier blows, more attack, and harder critical hits.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(3, 30, lv, m), critDamage: lerpf(0.05, 0.25, lv, m) } }),
+  }),
+  ravage: skill({
+    id: 'ravage', name: 'Ravage', job: 'berserker', type: 'attack', fx: 'slash', icon: 'ravage', school: 'rage',
+    desc: 'A four-part combo, one part per press: a huge wound-up cleave, a rising return cleave, a low whirl all around you, then a leaping skull-splitter that cracks the ground. Everything before the smash makes them bleed. Builds a lot of Rage.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(2, 4);
+      const bleed = { pct: lerpf(0.15, 0.3, lv, m), secs: 4 };
+      return {
+        mp: k(5, 12), pct: k(85, 140), hits: 4, targets,
+        combo: [
+          { move: 'cleave1', dur: 0.5, step: 10, strikes: [{ at: 0.4, pct: k(110, 180), reach: 80, h: 62, targets: targets + 1, knock: 60, bleed, arc: [-150, 230], thick: 12, rage: 7 }] },
+          { move: 'cleave2', dur: 0.5, step: 8, strikes: [{ at: 0.42, pct: k(110, 180), reach: 80, h: 70, targets: targets + 1, knock: 50, launch: 200, bleed, arc: [110, -240], thick: 12, rage: 7 }] },
+          { move: 'gyre', dur: 0.55, step: 16, strikes: [{ at: 0.5, pct: k(110, 180), reach: 80, h: 56, around: true, targets: targets + 2, knock: 90, bleed, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] },
+          { move: 'reaver', dur: 0.82, step: 16, finisher: true, strikes: [{ at: 0.47, pct: k(260, 420), reach: 98, h: 78, targets: targets + 1, knock: 240, arc: [-110, 200], thick: 15, big: true, crack: true, burst: 'rageburst', stop: 0.1, shake: 5, rage: 12 }] },
+        ],
+      };
+    },
+  }),
+  bloodfrenzy: skill({
+    id: 'bloodfrenzy', name: 'Blood Frenzy', job: 'berserker', type: 'buff', fx: 'buff', icon: 'frenzy', school: 'rage',
+    desc: 'Let out a furious roar: more attack, attack speed, and critical hits for a while, and a quarter of your Rage at once.',
+    at: (lv, m) => ({ mp: lerp(16, 32, lv, m), duration: lerp(60, 180, lv, m), rageGain: 25, buff: { watk: lerp(5, 35, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), critRate: lerpf(0.02, 0.1, lv, m) } }),
+  }),
+  rampage: skill({
+    id: 'rampage', name: 'Rampage', job: 'berserker', type: 'attack', fx: 'quake', icon: 'rampage', school: 'rage', rageCost: 30,
+    desc: 'Needs 30 Rage, and spends all of it: three wild cleaves back and forth, then a leaping skull-splitter that smashes the ground around you. The more Rage, the harder it hits (double at full Rage).',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 7);
+      const chop = (at, arc) => ({ at, pct: k(110, 190), reach: 82, h: 70, targets, knock: 40, arc, thick: 12, rage: 0 });
+      return {
+        mp: k(10, 20), pct: k(110, 190), hits: 4, targets, flare: true,
+        combo: [{ move: 'rampage', dur: 1.45, step: 30, carry: 0.6, finisher: true, strikes: [
+          chop(0.064, [-150, 230]), chop(0.227, [110, -240]), chop(0.384, [-150, 230]),
+          { at: 0.724, pct: k(300, 520), reach: 120, h: 92, around: true, targets: targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  crimsoneclipse: skill({
+    id: 'crimsoneclipse', name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. A whirlwind spins you up into the air, sucking monsters in, then you crash down under a blood-red moon in one enormous smash. Fills your Rage to the top.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const whirl = (at, i) => ({ at, pct: k(60, 100), reach: 96, h: 120, around: true, targets, pull: 80, arc: [i % 2 ? 180 : 0, 300], thick: 12, stop: 0.02, rage: 0 });
+      return {
+        mp: k(30, 50), pct: k(440, 760), hits: 7, targets, rageGain: 100,
+        combo: [{ move: 'eclipse', dur: 1.6, step: 6, finisher: true, guard: 1.3, strikes: [
+          ...[0.08, 0.17, 0.26, 0.35, 0.44].map(whirl),
+          { at: 0.47, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoon', burstAt: 0, rage: 0 },
+          { at: 0.68, pct: k(440, 760), reach: 175, h: 150, around: true, targets, knock: 300, launch: 380, crack: true, burst: 'eclipse', burstAt: 0, big: true, stop: 0.16, shake: 8, rage: 0 },
+          { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 200, burst: 'rageburst', burstAt: 0.3, big: true, stop: 0.05, shake: 3, rage: 0 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Mage (spells and support) ----------
   magicbolt: skill({
     id: 'magicbolt', name: 'Magic Bolt', job: 'mage', type: 'magic', fx: 'bolt', school: 'arcane',
@@ -271,6 +399,128 @@ export const SKILLS = {
     id: 'keeneye', name: 'Keen Eye', job: 'archer', type: 'passive', fx: null,
     desc: 'Permanently raises critical rate and critical damage.',
     at: (lv, m) => ({ passive: { critRate: lerpf(0.01, 0.15, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
+  }),
+
+  // ---------- Ranger (the archer's bow path: wind, speed, leaps and storms of arrows) ----------
+  // Every arrow a Ranger lands builds Gale (0-100, see world/melee.js): the fuller it is the
+  // quicker she shoots, and full, every basic shot looses a twin. `aimGain` adds to it at once.
+  rangermastery: skill({
+    id: 'rangermastery', name: 'Ranger Mastery', job: 'ranger', type: 'passive', fx: null,
+    desc: 'Steadier shots, more attack, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  galevolley: skill({
+    id: 'galevolley', name: 'Gale Volley', job: 'ranger', type: 'attack', fx: 'arrow', icon: 'galevolley', school: 'wind',
+    desc: 'A three-part combo, one part per press: twirl and loose two wind arrows, leap and fan three down on them, then a gale arrow that tears through the whole line and blows them away.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const wind = (at, pct, knock = 25) => ({ at, shot: 'windarrow', pct, range: 310, h: 60, knock, speed: 900 });
+      return {
+        mp: k(6, 13), pct: k(80, 135), hits: 6, targets: 1,
+        combo: [
+          { move: 'spinshot', dur: 0.5, step: 6, strikes: [wind(0.32, k(75, 125)), wind(0.72, k(80, 135), 40)] },
+          { move: 'leapshot', dur: 0.6, step: -8, strikes: [{ at: 0.55, shot: 'windarrow', fan: 3, pct: k(80, 130), range: 300, h: 120, knock: 60, launch: 120, speed: 900 }] },
+          { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'galearrow', pct: k(200, 330), range: 360, h: 64, targets: k(4, 7), pierce: true, speed: 950, knock: 300, launch: 180, big: true, stop: 0.07, shake: 3, muzzle: 'gust' }] },
+        ],
+      };
+    },
+  }),
+  cyclonearrow: skill({
+    id: 'cyclonearrow', name: 'Cyclone Arrow', job: 'ranger', type: 'attack', fx: 'arrow', icon: 'cyclone', school: 'wind',
+    desc: 'Loose an arrow wrapped in a whirlwind. It tears slowly down the line, cutting everything it passes three more times and lifting it off its feet.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 28), pct: k(70, 120), hits: 4, targets: k(4, 7),
+        combo: [{ move: 'galeshot', dur: 0.7, step: -6, strikes: [{ at: 0.6, shot: 'cyclone', pct: k(70, 120), range: 340, h: 80, targets: k(4, 7), pierce: true, ticks: 3, tickGap: 0.14, speed: 460, knock: 40, launch: 160, big: true, stop: 0.04, shake: 1, muzzle: 'gust' }] }],
+      };
+    },
+  }),
+  tailwind: skill({
+    id: 'tailwind', name: 'Tailwind', job: 'ranger', type: 'buff', fx: 'buff', icon: 'tailwind', school: 'wind', anim: 'tailwind',
+    desc: 'Call the wind to your back: run faster, shoot faster, and dodge more for a while, and half your Gale at once.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { speed: lerp(5, 20, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), eva: lerp(5, 25, lv, m) } }),
+  }),
+  stormvolley: skill({
+    id: 'stormvolley', name: 'Storm Volley', job: 'ranger', type: 'attack', fx: 'rain', icon: 'stormvolley', school: 'wind', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. A gust throws you spinning high into the air, loosing arrows in every direction that pour down all around you, then you dive back down in a burst of storm wind that blows everything away. Fills your Gale.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const pour = (at) => ({ at, rain: k(6, 9), around: true, pct: k(70, 120), rainW: 340, span: 0.32, knock: 20, variant: 'windarrow', gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 22, targets, aimGain: 100,
+        combo: [{ move: 'stormvolley', dur: 1.7, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.12, pct: k(50, 90), reach: 120, h: 110, around: true, targets, pull: 70, burst: 'galeburst', burstAt: 0, sky: 1.4, quiet: true, via: 'wind', school: 'wind', stop: 0.02, gauge: 0 },
+          pour(0.3), pour(0.42), pour(0.54),
+          { at: 0.8, pct: k(420, 720), reach: 175, h: 150, around: true, targets, knock: 320, launch: 380, burst: 'stormburst', burstAt: 0, quiet: true, via: 'wind', school: 'wind', big: true, stop: 0.15, shake: 7, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Sniper (the archer's crossbow path: Focus, heavy bolts, frost and blasts) ----------
+  // Bolts that land and standing still build Focus (0-100, see world/melee.js): sharper criticals,
+  // and full, the next bolt is a Deadeye.
+  snipermastery: skill({
+    id: 'snipermastery', name: 'Sniper Mastery', job: 'sniper', type: 'passive', fx: null,
+    desc: 'Steadier bolts, harder critical hits, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), critDamage: lerpf(0.05, 0.3, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  marksman: skill({
+    id: 'marksman', name: "Marksman's Chain", job: 'sniper', type: 'attack', fx: 'arrow', icon: 'marksman', school: 'focus',
+    desc: 'A three-part combo, one part per press: drop to a knee and send a heavy bolt through the line, crank and fire two more, then a ballista bolt that kicks you back and blasts straight through everything in its way.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(2, 4);
+      const bolt = (at, pct, knock = 80) => ({ at, shot: 'heavybolt', pct, range: 340, h: 56, knock, speed: 780, pierce: true, targets });
+      return {
+        mp: k(6, 13), pct: k(130, 210), hits: 4, targets,
+        combo: [
+          { move: 'kneelshot', dur: 0.58, step: -2, strikes: [bolt(0.56, k(140, 230), 110)] },
+          { move: 'crankshot', dur: 0.64, step: -3, charge: true, strikes: [bolt(0.5, k(90, 150)), bolt(0.8, k(95, 155), 120)] },
+          { move: 'ballista', dur: 0.86, step: -6, finisher: true, strikes: [{ at: 0.62, shot: 'ballista', pct: k(260, 430), range: 380, h: 60, targets: targets + 3, pierce: true, speed: 820, knock: 320, launch: 160, kickback: 26, big: true, stop: 0.1, shake: 4, muzzle: 'boltshock' }] },
+        ],
+      };
+    },
+  }),
+  glacierbolt: skill({
+    id: 'glacierbolt', name: 'Glacier Bolt', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'glacier', school: 'ice',
+    desc: 'Fire a bolt of ice at the nearest monster. It shatters into a burst of frost that freezes everything close around it solid.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 7);
+      return {
+        mp: k(14, 28), pct: k(150, 250), hits: 1, targets,
+        combo: [{ move: 'kneelshot', dur: 0.66, step: -4, strikes: [{ at: 0.6, shot: 'frostbolt', pct: k(150, 250), range: 340, h: 60, targets, blast: 80, blastFx: 'frostshard', freeze: lerpf(1.2, 2.4, lv, m), burst: 'frostburst', speed: 720, knock: 60, big: true, stop: 0.06, shake: 2 }] }],
+      };
+    },
+  }),
+  steadyaim: skill({
+    id: 'steadyaim', name: 'Steady Aim', job: 'sniper', type: 'buff', fx: 'buff', icon: 'steadyaim', school: 'focus', anim: 'steadyaim', lock: 0.4,
+    desc: 'Settle your breathing and sight down the bolt: more critical hits, harder critical hits, and sharper aim for a while, and half your Focus at once.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { critRate: lerpf(0.05, 0.15, lv, m), critDamage: lerpf(0.05, 0.2, lv, m), acc: lerp(5, 30, lv, m) } }),
+  }),
+  heartseeker: skill({
+    id: 'heartseeker', name: 'Heartseeker', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'heartseeker', school: 'focus', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. Kneel and take a long, steady aim as a sight locks onto every monster in the line, then one enormous bolt that always crits tears through all of them, and its shockwave follows.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(480, 820), hits: 2, targets, aimGain: 0,
+        combo: [{ move: 'heartseeker', dur: 1.7, step: 0, finisher: true, guard: 1.4, mark: true, strikes: [
+          { at: 0.6, shot: 'heartbolt', pct: k(480, 820), range: 560, h: 76, targets, pierce: true, crit: true, speed: 950, knock: 340, launch: 220, kickback: 40, big: true, stop: 0.16, shake: 8, muzzle: 'heartshock', gauge: 0 },
+          { at: 0.74, shot: 'wave', pct: k(150, 260), range: 560, h: 90, targets, pierce: true, speed: 900, knock: 200, big: true, stop: 0.05, shake: 3, gauge: 0 },
+        ] }],
+      };
+    },
   }),
 
   // ---------- Thief ----------
@@ -492,9 +742,11 @@ const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
   provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
+  aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', thunderhawk: 'castup', backflip: 'flip', arrowrain: 'skyshot',
+  galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
   fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',

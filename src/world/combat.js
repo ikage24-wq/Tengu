@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
-import { hasCombo, basicCombo, skillCombo } from './melee.js';
+import { hasCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -39,6 +39,9 @@ function spellStop(s, params, ultimate) {
 }
 
 const BASE_DELAY = 0.5; // seconds between attacks at normal speed
+// Linking a skill onto a finisher: how soon after it connects, and the bonus (% damage).
+export const LINK_WINDOW = 0.7;
+const LINK_BONUS = 25;
 // Shots and spells leave from the hands, chest high above the feet.
 const HAND_Y = 17;
 const PROJECTILE_SPEED = 620;
@@ -57,14 +60,23 @@ export function hitBox(body, range) {
   // A dash's path: the stretch just crossed, behind where the player now stands.
   if (range.back) return { x: body.facing > 0 ? body.x + 20 - range.w : body.x - 20, y: cy - range.h / 2, w: range.w, h: range.h };
   const x = body.facing > 0 ? body.x - 6 : body.x + 6 - range.w;
-  return { x, y: cy - range.h / 2, w: range.w, h: range.h };
+  // `dy` shifts the box down (or up), for shots aimed below or above you.
+  return { x, y: cy - range.h / 2 + (range.dy ?? 0), w: range.w, h: range.h };
+}
+
+// A monster's box stretched up to wherever it's been knocked into the air, so blows reach it both
+// on the ground under it and up where it flies (air combos).
+function airBox(m) {
+  const b = mobBox(m);
+  const air = Math.max(0, m.air ?? 0);
+  return air ? { ...b, y: b.y - air, h: b.h + air } : b;
 }
 
 // Live monsters in the box, nearest first, up to `targets`.
 export function pickTargets(mobs, body, range, targets) {
   const box = hitBox(body, range);
   return mobs
-    .filter((m) => m.hp > 0 && overlaps(box, mobBox(m)))
+    .filter((m) => m.hp > 0 && overlaps(box, airBox(m)))
     .sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x))
     .slice(0, targets);
 }
@@ -95,6 +107,8 @@ export function castBlocker(world, skillId) {
   if (s.type === 'passive') return 'passive';
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
+  if (s.rageCost && (world.rage ?? 0) < s.rageCost) return 'rage';
+  if (s.hitsCost && (world.hits ?? 0) < s.hitsCost) return 'hits';
   if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
   return null;
 }
@@ -120,7 +134,27 @@ export function cast(world, skillId, rng = Math.random) {
   }
   if (params.combo) {
     if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
-    skillCombo(world, skillId, { ...params, school: s.school });
+    // Rampage spends all your Rage: the more there was, the harder every blow hits (double at full).
+    let scale = 100;
+    // A Link: a skill started right after a combo finisher connects (a basic combo's last blow, or
+    // another skill's) hits harder.
+    const f = world.finisherAt;
+    if (f && world.now - f.at <= LINK_WINDOW && f.key !== skillId) {
+      scale += LINK_BONUS;
+      world.finisherAt = null;
+      world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'LINK!', color: '#ffd24f', t: 0, link: true });
+      world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.4 });
+    }
+    // A finisher spends the hit counter.
+    if (s.hitsCost) world.hits = 0;
+    if (params.rageGain) addRage(world, params.rageGain);
+    if (params.aimGain) addAim(world, params.aimGain);
+    if (s.rageCost) {
+      scale += Math.round((100 * world.rage) / RAGE_MAX);
+      if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
+      world.rage = 0;
+    }
+    skillCombo(world, skillId, { ...params, school: s.school }, scale);
     return { ok: true };
   }
 
@@ -140,7 +174,7 @@ export function cast(world, skillId, rng = Math.random) {
   }
   const poseDur = Math.max(lock, s ? MOVE_MIN[pose] ?? 0 : 0, Math.min(0.35, world.attackTimer));
   if (s && !lock) world.lockTimer = Math.max(world.lockTimer ?? 0, poseDur * 0.8);
-  world.pose = { kind: pose, t: poseDur, dur: poseDur };
+  world.pose = { from: outgoing(world), kind: pose, t: poseDur, dur: poseDur, since: world.now };
   // Free to move (or use something else) once the move has done its thing.
   world.recoverAt = now + (lock || (s ? poseDur * 0.55 : Math.min(0.2, world.attackTimer)));
   world.recoverKind = s ? 'skill' : 'basic';
@@ -174,6 +208,8 @@ export function cast(world, skillId, rng = Math.random) {
     const summon = params.summon ? { ...params.summon, timer: 0.6 } : null;
     char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name, summon };
     if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
+    if (params.rageGain) addRage(world, params.rageGain);
+    if (params.aimGain) addAim(world, params.aimGain);
     world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, t: 0, dur: 1.1 });
     // Support buffs land on the party around you too.
     if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));
@@ -208,7 +244,7 @@ export function cast(world, skillId, rng = Math.random) {
     caught.forEach((m, i) => {
       const miss = rng() >= hitChance(acc, char.level, m.def);
       const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
-      world.pending.push({ at: now + 0.15 + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: 0 });
+      world.pending.push({ at: now + 0.15 + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: 0, via: 'chain' });
     });
     world.fx.push({ kind: 'hook', x: body.x + body.facing * 10, y: body.y - 28, mobs: caught, reach: body.x + body.facing * params.range.w, t: 0, dur: 0.5 });
     return { ok: true, targets: caught.length };
@@ -271,6 +307,8 @@ export function cast(world, skillId, rng = Math.random) {
         stop: weighty ? spellStop(s, params, ultimate) : undefined,
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
         burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school, element: star?.star.element,
+        // What landed (for its sound): the shot, a spell, or a blade.
+        via: params.projectile || fxKind === 'rain' ? fxKind : type === 'magic' || type === 'heal' ? 'spell' : 'blade',
       });
       if (params.projectile) {
         world.fx.push({
@@ -316,7 +354,7 @@ export function summonStrike(world, summon, from, rng = Math.random) {
     const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
     world.pending.push({
       at: now + travel + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: from.x, stack: 0,
-      freeze: summon.freeze, poison: summon.poison, burst: SHOT_IMPACTS[summon.fx], school: summon.school,
+      freeze: summon.freeze, poison: summon.poison, burst: SHOT_IMPACTS[summon.fx], school: summon.school, via: 'spell',
     });
     world.fx.push({ kind: 'projectile', shot: summon.fx, school: summon.school, x: from.x, y: from.y, tx: m.x, ty: m.y - m.def.h / 2, t: -i * 0.03, dur: Math.max(0.08, travel) });
   });

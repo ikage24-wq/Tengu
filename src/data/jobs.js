@@ -41,6 +41,30 @@ export const JOBS = {
     blurb: 'Quick hits with LUK. Daggers up close, or a gauntlet that hurls throwing stars at range.',
   },
 
+  // Warrior branches. Both ask for Brann's trial first (see `trial`).
+  paladin: {
+    id: 'paladin', name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    hp: 32, mp: 14, advanceHp: 600, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
+    blurb: 'The shield of the party. Holy light stuns and taunts, and blessings guard everyone near. The tank of any dungeon group.',
+  },
+  berserker: {
+    id: 'berserker', name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    hp: 30, mp: 12, advanceHp: 450, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
+    blurb: 'Rage made flesh. Every blow builds Rage and makes them bleed; Rampage spends it all in one savage flurry. Deals damage in a group.',
+  },
+
+  // Archer branches. Both ask for Kestrel's trial first.
+  ranger: {
+    id: 'ranger', name: 'Ranger', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    hp: 24, mp: 18, advanceHp: 320, advanceMp: 280, weapons: ['bow'],
+    blurb: 'Rides the wind with a bow. Every arrow that lands builds Gale; the fuller it is the faster you shoot, and full, every shot looses a twin. Leaps, spins, and storms of arrows.',
+  },
+  sniper: {
+    id: 'sniper', name: 'Sniper', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    hp: 24, mp: 17, advanceHp: 300, advanceMp: 260, weapons: ['crossbow'],
+    blurb: 'One bolt, one kill. Holding still and landing bolts builds Focus for sharper criticals; full, the next bolt is a Deadeye that always crits and tears through the line. Heavy, frost, and blast bolts.',
+  },
+
   ilwizard: {
     id: 'ilwizard', name: 'Stormfrost Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],
@@ -82,15 +106,16 @@ export const JOBS = {
 };
 
 // Jobs renamed or retired since older saves were made, and what they became.
-// Warrior, archer, and thief advanced jobs are retired for now; those characters return to their first job.
+// Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
 export const RETIRED_JOBS = {
   pyromancer: 'fpwizard', infernosage: 'fparchmage', seraph: 'bishop',
-  blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', paladin: 'warrior', ranger: 'archer', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', beastmaster: 'archer', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
+  blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'archer', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', beastmaster: 'archer', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 
-// Jobs a character can advance into right now, given their current job and level.
-export function nextJobs(jobId, level) {
-  return Object.values(JOBS).filter((j) => j.parent === jobId && level >= j.level);
+// Jobs a character can advance into right now, given their current job and level. Some ask for a
+// trial quest first: pass the character's quest records to leave those out until it's done.
+export function nextJobs(jobId, level, quests = null) {
+  return Object.values(JOBS).filter((j) => j.parent === jobId && level >= j.level && (!quests || !j.trial || quests[j.trial]?.state === 'done'));
 }
 
 // The chain of jobs from Novice to `jobId`, oldest first. Skills from every job in the chain stay usable.

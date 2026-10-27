@@ -57,9 +57,10 @@ export function wash(ctx) {
   if (inked(ctx)) ctx.fillRect(0, 0, 640, 360);
 }
 
-// Holds an effect's progress on a grid of `frames` steps, so flashes and sparks pop from drawing
-// to drawing like hand-timed animation instead of tweening smoothly.
-export const stepped = (p, frames) => Math.min(1, Math.floor(p * frames) / frames);
+// An effect's progress for flashes and sparks. It used to hold on a grid of `frames` steps (anime
+// "on twos"); the player preferred effects that move smoothly, so it now passes progress through
+// eased slightly toward the end (`frames` is kept so callers still say how many drawings they had).
+export const stepped = (p, frames) => Math.min(1, Math.max(0, p));
 
 // The contrast frame in front of a flash: a dark disc for a moment, so the white that follows
 // feels brighter (an explosion's first drawing).

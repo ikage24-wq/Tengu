@@ -549,6 +549,163 @@ function stalwart() {
   ].filter((s) => s);
 }
 
+// ---------- Paladin ----------
+
+// A kite shield: a silver rim around a colored face, its back half in shadow.
+function kite(c, o = {}) {
+  const { cx = 8, cy = 8, k = 1, rimC = '#eef2fb' } = o;
+  const P = (pts) => pts.map(([x, y]) => [cx + (x - 8) * k, cy + (y - 8) * k]);
+  const outer = P([[2.4, 2.6], [8, 1.4], [13.6, 2.6], [13.4, 8], [11.4, 12], [8, 14.8], [4.6, 12], [2.6, 8]]);
+  const inner = P([[3.6, 3.6], [8, 2.6], [12.4, 3.6], [12.2, 7.8], [10.5, 11.2], [8, 13.4], [5.5, 11.2], [3.8, 7.8]]);
+  return { outer, inner, shapes: [drop(outer), ...edge(outer, ink(rimC), 0.5), ...bevel(outer, inner, rimC, c), S(cut(inner, [cx, 0], [cx, 16]), sh(c)), S(clip(inner, oval(cx - 2.4 * k, cy - 3.4 * k, 3 * k, 2.4 * k)), lt(c))] };
+}
+// A diamond of light (the holy jobs' emblem).
+const gem4 = (x, y, r, c = W, o = {}) => solid(polyPts(x, y, r, 4, -90, 1.3), c, { shadow: false, d: 0.35, ...o });
+
+function paladinmastery() {
+  const out = [...tile('holy', 'passive'), ...aura(8, 8, 6.8, '#fffbe0')];
+  return [
+    ...out,
+    ...kite('#ffd24f').shapes,
+    ...gem4(8, 7.8, 2.6, W, { ink: '#a8661a' }),
+    S(polyPts(8, 7.8, 1.2, 4, -90, 1.3), '#ffe9a0'),
+    ...glint(5.2, 4.6, 0.55),
+    ...spark(13.8, 13.6, 1.1),
+  ];
+}
+
+function aegissmite() {
+  const out = [...tile('holy', 'active'), ...aura(6, 9, 6.4, '#fffbe0', 1.1)];
+  // A round shield of light pushed forward, a sword cutting down behind it, and the shove's ring.
+  out.push(...sword([3.4, 13.4], [13.6, 2.6], { w: 2.2, gem: '#7fd8ff' }));
+  const face = oval(6.2, 9.4, 3.8, 4.6, 0, 30);
+  out.push(drop(face), ...edge(face, '#a8661a', 0.5), S(face, '#ffe36b'), S(clip(face, oval(6.8, 9.4, 2.8, 3.6)), '#fff6c9'));
+  out.push(...gem4(6.8, 9.4, 1.6, W, { ink: '#c98a2b' }));
+  out.push(...swoosh(9.6, 9.6, 4.4, 5.6, -60, 60, 1, '#fff6c9', { ink: '#a8661a' }));
+  out.push(...spark(13.4, 2.6, 1.4, '#fff6c0'), ...spark(2.4, 3.2, 1));
+  return out;
+}
+
+function hallowedground() {
+  const out = [...tile('dawn', 'active'), ...aura(8, 11, 6.4, '#fffbe0', 1.2)];
+  // Rays of light rising from the ring.
+  for (const x of [2.8, 5.4, 10.6, 13.2]) out.push(streak([x, 2.4 + Math.abs(x - 8) * 0.5], [x, 11.6], 1.1, '#fff6c9'));
+  const ring = tube([...oval(8, 12.2, 6.2, 2, 0, 32), oval(8, 12.2, 6.2, 2, 0, 32)[0]], 0.9);
+  out.push(...edge(ring, '#a8661a', 0.4), S(ring, '#fff3a6'));
+  // The sword driven into the ground in the middle.
+  out.push(...sword([8, 3.4], [8, 13], { w: 2.4, gw: 4.6, gem: '#7fd8ff' }));
+  out.push(...[[3.2, 12.6], [12.8, 12.6], [8, 14.4]].flatMap(([x, y]) => gem4(x, y, 0.9)));
+  out.push(...spark(13.6, 2.4, 1.2, '#fff6c0'));
+  return out;
+}
+
+function divineaegis() {
+  const out = [...tile('holy', 'buff'), ...aura(8, 8.6, 6.8, '#fffbe0', 1.1)];
+  const sh0 = kite('#ffe9a0', { cy: 9, k: 0.85 });
+  // Small wings either side of the shield, and a halo above.
+  for (const sd of [-1, 1]) {
+    const wing = [[8 + sd * 3.4, 6.4], [8 + sd * 7, 3.6], [8 + sd * 6.6, 6.8], [8 + sd * 7.2, 8.6], [8 + sd * 5.6, 9.6], [8 + sd * 3.6, 9.4]];
+    out.push(...solid(wing, '#ffffff', { d: 0.4, ink: '#a8661a', k: 0.8 }));
+  }
+  out.push(...sh0.shapes);
+  out.push(...gem4(8, 8.8, 2, W, { ink: '#a8661a' }));
+  const halo = tube([...oval(8, 2.2, 2.8, 0.9, 0, 24), oval(8, 2.2, 2.8, 0.9, 0, 24)[0]], 0.55);
+  out.push(...edge(halo, '#a8661a', 0.35), S(halo, '#ffe36b'));
+  out.push(...glint(6, 6.6, 0.5));
+  return out;
+}
+
+function grandverdict() {
+  const out = [...tile('dawn', 'active'), ...aura(8, 9, 7, '#ffffff', 1.4)];
+  // A giant sword of light driven point-first into the ground, rays and a ring around the impact.
+  for (const a of [-170, -140, -40, -10]) {
+    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    out.push(streak(add([8, 13.2], u, 7.4), add([8, 13.2], u, 3), 1.2, '#fff6c9'));
+  }
+  const ring = tube([...oval(8, 13.4, 6.4, 1.7, 0, 32), oval(8, 13.4, 6.4, 1.7, 0, 32)[0]], 0.8);
+  out.push(...edge(ring, '#a8661a', 0.4), S(ring, '#fff3a6'));
+  out.push(...sword([8, 3.6], [8, 14.2], { w: 3.8, gw: 7, glen: 2.6, metal: '#fff6c9', gem: '#ffffff' }));
+  out.push(...gem4(8, 1.6, 1.1, W, { ink: '#a8661a' }));
+  out.push(...spark(13.4, 3.2, 1.3, '#ffffff'), ...spark(2.6, 4, 1, '#fff6c0'));
+  return out;
+}
+
+// ---------- Berserker ----------
+
+// An axe from the butt of the haft (base) to its top (tip): a wooden haft and a broad bearded
+// blade on the forward side near the top.
+function axe(base, tip, o = {}) {
+  const { metal = '#e8eefa', edgeC = '#ffffff', haft = '#a8704a', side = 1, size = 1 } = o;
+  const u = N(base, tip);
+  const n = [-u[1] * side, u[0] * side];
+  const len = Math.hypot(tip[0] - base[0], tip[1] - base[1]);
+  const p = along(base, u, n);
+  const h = tube([p(0), p(len)], 0.75);
+  const at = len - 2.6 * size;
+  const blade = [p(at - 1.4 * size, 0.4), p(at - 2.6 * size, 3.4 * size), p(at - 0.6 * size, 5.2 * size), p(at + 1.6 * size, 5.4 * size), p(at + 2.6 * size, 3.6 * size), p(at + 1.6 * size, 0.4)];
+  const bite = [p(at - 2.2 * size, 3.6 * size), p(at - 0.6 * size, 5.2 * size), p(at + 1.6 * size, 5.4 * size), p(at + 2.4 * size, 3.8 * size), p(at + 0.8 * size, 4.4 * size)];
+  return [
+    drop(h), ...edge(h, ink(haft), 0.45), S(h, haft), S(tube([p(0.4, -0.2), p(len - 0.4, -0.2)], 0.25), lt(haft)),
+    drop(blade), ...edge(blade, ink(metal), 0.5), S(blade, sh(metal)), S(clip(blade, cut(blade, p(at - 2, 2.4 * size), p(at + 2, 2.4 * size))), lt(metal)), S(bite, edgeC),
+    ...solid(oval(...p(len), 0.8, 0.8, 0, 12), GOLD, { shadow: false, d: 0.35 }),
+  ];
+}
+
+function berserkermastery() {
+  return [
+    ...tile('crimson', 'passive'),
+    ...aura(8, 7, 6.6, '#ffd0c0'),
+    ...axe([4, 14], [12, 2.4], { size: 1.1 }),
+    ...flame(3.2, 14.6, 1.6, 4.2, ['#c8243a', '#ff6b3b', '#ffd27a'], { shadow: false }),
+    ...flame(12.8, 14.6, 1.4, 3.6, ['#c8243a', '#ff6b3b', '#ffd27a'], { shadow: false }),
+    ...glint(10.4, 3.6, 0.5),
+  ];
+}
+
+function ravage() {
+  const out = [...tile('crimson', 'active'), ...aura(8, 8, 6.4, '#ffd8c8', 1.1)];
+  // Three red claw-like gashes torn across the tile behind a big axe.
+  for (const [cx, cy] of [[11.5, 4.2], [12.5, 7.4], [13.5, 10.6]]) out.push(...swoosh(cx, cy, 7, 7, 100, 160, 1.3, '#ff3f4f', { ink: '#5a0a1a', core: '#ffd0c0' }));
+  out.push(...axe([3, 14], [10.6, 2], { size: 1.35 }));
+  out.push(...spark(2.4, 3, 1.1, '#fff6c0'));
+  return out;
+}
+
+function bloodfrenzy() {
+  const out = [...tile('ember', 'buff'), ...aura(8, 9, 6.6, '#ffd8c0', 1.2)];
+  out.push(...flame(8, 15.4, 9.4, 14, ['#c8243a', '#ff6b3b', '#ffd27a']));
+  // A small blood drop low in the heart of the flame.
+  const drop0 = [...arcPts(8, 11.8, 1.9, 1.9, -20, 200, 14), [8, 8.2]];
+  out.push(...solid(drop0, '#e8304a', { d: 0.4, ink: '#5a0a1a' }));
+  out.push(S(oval(7.4, 11.3, 0.5, 0.7, -20, 10), '#ffb0b8'));
+  out.push(...spark(13.6, 3, 1.2, '#fff6c0'), ...spark(2.6, 4.4, 0.9));
+  return out;
+}
+
+function rampage() {
+  const out = [...tile('fire', 'active'), ...aura(8, 12, 6.6, '#ffe0b0', 1.3)];
+  // A jagged burst where the axe comes down, and shards flying.
+  out.push(...solid(starPts(8, 12.6, 6.4, 2.4, 7, -90), '#ff5a3c', { shadow: false, d: 0.45, ink: '#6a0a1a' }));
+  out.push(S(starPts(8, 12.6, 3.6, 1.4, 7, -90), '#ffd27a'));
+  out.push(...axe([12.6, 2], [8.4, 11.6], { size: 1.15, side: -1 }));
+  for (const [x, y, a] of [[2.4, 7.4, -30], [13.8, 7, 30], [4, 3.6, -60]]) out.push(...solid(turn([[x, y - 1.2], [x + 0.7, y], [x, y + 1.2], [x - 0.7, y]], a, x, y), '#ff8a3c', { shadow: false, d: 0.3, ink: '#6a0a1a' }));
+  out.push(...spark(13.6, 13.8, 1, '#fff6c0'));
+  return out;
+}
+
+function crimsoneclipse() {
+  const out = [...tile('royal', 'active')];
+  // A blood moon with the eclipse's bite, and the axe crashing down across it.
+  const moon = oval(8.6, 6.4, 5.4, 5.4, 0, 36);
+  out.push(...edge(moon, '#3a0814', 0.5), S(moon, '#c8243a'), S(clip(moon, oval(8, 5.8, 4.2, 4.2, 0, 30)), '#ff5a4a'));
+  out.push(S(clip(moon, oval(11.2, 5.6, 4.4, 4.4, 0, 30)), '#4a0a1e'));
+  out.push(S(clip(tube(arcPts(8.6, 6.4, 5, 5, 110, 240, 14), 0.45), moon), '#ffd27a'));
+  out.push(...swoosh(8, 9, 6.6, 6.6, 200, 330, 1.5, '#f0303f', { ink: '#3a0814', core: '#ffd0c0' }));
+  out.push(...axe([12.6, 1.4], [6.2, 12.4], { size: 1.2, side: -1 }));
+  out.push(...spark(2.6, 13.4, 1.1, '#ffb347'), ...spark(13.6, 13, 0.9));
+  return out;
+}
+
 // ---------- Mage ----------
 
 function magicbolt() {
@@ -805,6 +962,154 @@ function keeneye() {
   out.push(...arrow([15.4, 1.4], [7.6, 8.4], { hw: 1.2, hl: 1.9, sw: 0.55, fl: '#7fd8a8' }));
   out.push(...[-50, 0, 50, 140, 200].map((a) => streak(add([7.4, 8.6], [Math.cos(a * D2R), Math.sin(a * D2R)], 2.2), add([7.4, 8.6], [Math.cos(a * D2R), Math.sin(a * D2R)], 0.8), 0.4, W)));
   out.push(...glint(4, 5.4, 0.6), ...spark(2.4, 2.6, 1.2, '#fff3a6'));
+  return out;
+}
+
+// ---------- Ranger ----------
+
+// A longbow from the lower tip to the upper, bowed toward `side`, with its string.
+function longbow(lo, hi0, bow = 3, o = {}) {
+  const { wood = '#c88a5a', grip = '#2f9468', string = '#fff6e0' } = o;
+  const m = [(lo[0] + hi0[0]) / 2, (lo[1] + hi0[1]) / 2];
+  const u = N(lo, hi0);
+  const n = [-u[1], u[0]];
+  const pts = bez(lo, add(m, n, bow * 2), hi0, 18);
+  const limb = tube(pts, (t) => 0.55 + 0.6 * Math.sin(Math.PI * t));
+  const g = tube([add(add(m, n, bow), u, -0.9), add(add(m, n, bow), u, 0.9)], 0.95);
+  return [drop(limb), line([lo, hi0], 0.28, string), ...edge(limb, ink(wood), 0.45), S(limb, wood), S(tube(pts.slice(2, 10), 0.22), lt(wood)), ...edge(g, ink(grip), 0.35), S(g, grip)];
+}
+// A curl of wind: a swoosh with a hooked end.
+const curl = (cx, cy, r, a0, c = '#e8fff4') => swoosh(cx, cy, r, r * 0.7, a0, a0 + 250, 1.1, c, { ink: '#1a6a5a' });
+
+function rangermastery() {
+  const out = [...tile('wind', 'passive'), ...aura(8, 8, 6.6, '#f0fff8')];
+  out.push(...curl(8.6, 9, 5, 120, '#c4f5d4'));
+  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2));
+  out.push(...arrow([3.4, 8.2], [14.4, 7.8], { hw: 1.25, hl: 2, fl: '#ffd25a' }));
+  out.push(...leaf([10.4, 13.6], [14, 10.4], 2.6, '#7fd86a', { bend: 0.6, veins: 1 }).shapes);
+  out.push(...glint(6.2, 4.4, 0.5), ...spark(13.6, 2.8, 1.1));
+  return out;
+}
+
+function galevolley() {
+  const out = [...tile('wind', 'active'), ...aura(9, 8, 6.4, '#f0fff8', 1.1)];
+  // Three arrows flying out of one curl of wind, fanned.
+  out.push(...swoosh(6.6, 9, 5.4, 4.4, 60, 320, 1.6, '#e8fff4', { ink: '#1a6a5a' }));
+  for (const [a, fl] of [[-30, '#ff8fb0'], [0, '#ffd25a'], [30, '#ff8fb0']]) {
+    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    out.push(...arrow(add([5, 8.6], u, 3.4), add([5, 8.6], u, 10.2), { hw: 1.2, hl: 1.9, sw: 0.5, fl }));
+  }
+  out.push(...spark(14, 13.4, 1.1), ...spark(2.2, 2.6, 1));
+  return out;
+}
+
+function cyclone() {
+  const out = [...tile('sky', 'active')];
+  // A funnel of wind, wide at the top, with an arrow driving through its heart.
+  for (const [cy, rx, c] of [[3.4, 6, '#f0fff8'], [6.2, 4.8, '#c8ecff'], [9, 3.6, '#f0fff8'], [11.6, 2.5, '#c8ecff'], [13.8, 1.5, '#f0fff8']]) {
+    out.push(...swoosh(8, cy, rx, rx * 0.34, -200, 120, 1.15, c, { ink: '#1f5a6a' }));
+  }
+  out.push(...arrow([1.2, 9.6], [15, 7.2], { hw: 1.3, hl: 2.1, fl: '#ffd25a', head: '#ffffff' }));
+  out.push(...leaf([2.4, 4], [4.6, 2.2], 1.8, '#7fd86a', {}).shapes, ...leaf([12, 13.6], [14.6, 12.4], 1.8, '#7fd86a', {}).shapes);
+  return out;
+}
+
+function tailwind() {
+  const out = [...tile('mint', 'buff'), ...aura(9, 7, 6.6, '#f4fff0', 1.1)];
+  // A white feather swept forward on three streams of wind.
+  for (const [y, len] of [[4.6, 9], [8.4, 11], [12.2, 8]]) out.push(streak([14.2 - len, y + 1], [14.2, y], 1.4, '#e8fff4'));
+  out.push(...leaf([3, 13.6], [13.6, 2.6], 4.6, '#fffaf2', { bend: 0.9, rib: '#c4e8d4', veins: 3, veinC: '#c4e8d4' }).shapes);
+  out.push(line([[2.2, 14.6], [4.4, 12.2]], 0.5, '#9a6a48'));
+  out.push(...curl(10.6, 11.2, 2.6, 200, '#c4f5b4'));
+  out.push(...spark(13.6, 13.6, 1.1, '#fff3a6'), ...spark(2.4, 3, 1));
+  return out;
+}
+
+function stormvolley() {
+  const out = [...tile('storm', 'active'), ...aura(8, 9, 6.6, '#e8fff4', 1.1)];
+  // A ring of wind on the ground with arrows pouring down into it from every side.
+  out.push(...swoosh(8, 11.6, 6, 2.2, -190, 150, 1.4, '#8fe8c0', { ink: '#1a4a5a' }));
+  for (const [x, y] of [[3.4, 10.6], [6.6, 12.8], [9.6, 9.4], [12.6, 11.6]]) {
+    out.push(streak([x - 1.4, y - 9.6], [x - 0.9, y - 6.6], 0.9, '#e8fff4'));
+    out.push(...arrow([x - 1.2, y - 6.4], [x, y], { hw: 1.2, hl: 1.9, sw: 0.5, fl: '#ffd25a', head: '#ffffff' }));
+  }
+  out.push(...spark(8, 2, 1.3, '#e8fff4'), ...spark(14, 3.4, 0.9));
+  return out;
+}
+
+// ---------- Sniper ----------
+
+// A crossbow seen side-on, pointing along base -> tip: the stock, the prod across its front, the
+// string drawn back, and a bolt laid in it.
+function crossbowArt(base, tip, o = {}) {
+  const { wood = '#8a5a3a', prod = '#cfe0ff', bolt0 = '#ff5a7a' } = o;
+  const u = N(base, tip);
+  const n = [-u[1], u[0]];
+  const p = along(base, u, n);
+  const len = Math.hypot(tip[0] - base[0], tip[1] - base[1]);
+  const stock = tube([p(0, 0.4), p(len * 0.45, 0), p(len, 0)], (t) => 1.5 - 0.6 * t);
+  const pr = tube(bez(p(len - 1.6, -4.6), p(len + 1.2, 0), p(len - 1.6, 4.6), 14), (t) => 0.5 + 0.5 * Math.sin(Math.PI * t));
+  const bolt1 = arrow(p(len * 0.35, 0), p(len + 2.6, 0), { hw: 1.1, hl: 1.7, sw: 0.45, fl: bolt0, head: '#ffffff', shadow: false });
+  return [drop(stock), drop(pr), line([p(len - 1.6, -4.6), p(len * 0.42, 0), p(len - 1.6, 4.6)], 0.25, '#fff6e0'), ...edge(stock, ink(wood), 0.45), S(stock, wood), S(tube([p(0.5, -0.3), p(len - 1, -0.3)], 0.3), lt(wood)), ...edge(pr, ink(prod), 0.45), S(pr, prod), ...bolt1];
+}
+// A sight: a ring with four ticks, in the Sniper's rose.
+function sightArt(cx, cy, r, c = '#ff5a7a', w = 0.6) {
+  const ring = tube([...oval(cx, cy, r, r, 0, 32), oval(cx, cy, r, r, 0, 32)[0]], w);
+  const ticks = [0, 90, 180, 270].map((a) => {
+    const v = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    return tube([add([cx, cy], v, r - 1.4), add([cx, cy], v, r + 1.6)], w);
+  });
+  return [...edge(ring, ink(c), 0.35), S(ring, c), ...ticks.flatMap((t) => [...edge(t, ink(c), 0.3), S(t, c)])];
+}
+
+function snipermastery() {
+  const out = [...tile('steel', 'passive'), ...aura(8, 8, 6.6, '#e8f2ff')];
+  out.push(...sightArt(8.4, 8, 5.4, '#eef8ff', 0.5));
+  out.push(...crossbowArt([2, 11.4], [12.4, 6.4]));
+  out.push(...glint(5, 9.6, 0.5), ...spark(13.6, 13.6, 1.1));
+  return out;
+}
+
+function marksman() {
+  const out = [...tile('steel', 'active'), ...aura(5, 8, 5.6, '#e8f2ff', 1.1)];
+  // Three bolts in a line, one after another, on hard streaks.
+  for (const [y, x] of [[4.2, 0], [8, 2], [11.8, 0]]) {
+    out.push(streak([x + 1, y + 0.6], [x + 7, y], 1.6, '#eef8ff'));
+    out.push(...arrow([x + 4.2, y], [x + 13.4, y], { hw: 1.35, hl: 2, sw: 0.65, fl: '#ff5a7a', head: '#ffffff', shaft: '#d4cde8' }));
+  }
+  out.push(...spark(14.2, 2.2, 1.1), ...spark(14, 14, 0.9));
+  return out;
+}
+
+function glacier() {
+  const out = [...tile('ice', 'active'), ...aura(11, 7, 6, '#ffffff', 1.1)];
+  // A bolt with an ice crystal for a head, and frost shards bursting off it.
+  out.push(streak([1, 13.6], [6, 9.4], 1.6, '#e8fbff'));
+  out.push(...arrow([2.4, 13.4], [9.6, 6.8], { hw: 1.2, hl: 1.8, sw: 0.6, fl: '#8fe3ff', head: '#e8fbff', shaft: '#d4cde8' }));
+  const crystal = [[11.6, 2], [13.8, 4.6], [12.6, 7.6], [9.8, 8.6], [8.6, 6.4], [9.4, 3.6]];
+  out.push(...facet(crystal, [11.6, 2], [9.8, 8.6], '#bff0ff', { ink: '#1c4a9a', dark: '#7fc8f0' }));
+  for (const [x, y, a] of [[14, 9.6, 30], [6.4, 3, -150], [12, 11.2, 70], [14.4, 1.6, -40]]) out.push(...solid(polyPts(x, y, 1.1, 4, a, 1.6), '#e8fbff', { shadow: false, d: 0.35, ink: '#1c4a9a' }));
+  out.push(...glint(11, 3.6, 0.5));
+  return out;
+}
+
+function steadyaim() {
+  const out = [...tile('glacier', 'buff'), ...aura(8, 8, 6.8, '#e8f6ff', 1.1)];
+  out.push(...sightArt(8, 8, 5.4, '#ff8aa8', 0.7));
+  out.push(...sightArt(8, 8, 2.6, '#eef8ff', 0.45));
+  out.push(...solid(polyPts(8, 8, 1.3, 4, -90, 1.2), '#ff5a7a', { shadow: false, d: 0.35, ink: '#6a1030' }));
+  out.push(...spark(13.6, 2.6, 1.2), ...spark(2.6, 13.4, 1, '#fff3a6'));
+  return out;
+}
+
+function heartseeker() {
+  const out = [...tile('royal', 'active'), ...aura(10, 6, 6.4, '#ffd0dc', 1.2)];
+  // A sight locked on a rose heart, and a giant bolt of light driven through both.
+  out.push(...sightArt(10, 6, 4.6, '#ff8aa8', 0.6));
+  out.push(...solid(heartPts(10, 6.4, 3.2), '#ff5a7a', { glow: 1.15 }));
+  out.push(streak([0.6, 15.6], [6, 10.2], 2.4, '#eef8ff'));
+  out.push(...arrow([2, 14.2], [14.6, 1.6], { hw: 1.7, hl: 2.6, sw: 0.75, fl: '#7fc4ff', head: '#ffffff', shaft: '#eef8ff' }));
+  out.push(...spark(14, 13.4, 1.2, '#ffd0dc'), ...spark(2.6, 2.6, 1));
   return out;
 }
 
@@ -1299,8 +1604,12 @@ function gmblessing() {
 const ART = {
   pebble, cozyrest, quickstep,
   powerslash, whirlstrike, titanbreaker, ironskin, charge, vigor, provoke, chainhook, shieldwall, rallycry, stalwart,
+  paladinmastery, aegissmite, hallowedground, divineaegis, grandverdict,
+  berserkermastery, ravage, bloodfrenzy, rampage, crimsoneclipse,
   magicbolt, sparkburst, blink, manashield, arcanemind, mend, renew, barrier, revive,
   doubleshot, scattershot, arrowrain, eaglefocus, thunderhawk, backflip, keeneye,
+  rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,
+  snipermastery, marksman, glacierbolt: glacier, steadyaim, heartseeker,
   twinstab, startoss, haste, shadowstep, nimble,
   ilmastery, coldbeam, thunderbolt, stormfocus,
   firemastery, fireball, poisonmist, meditate,

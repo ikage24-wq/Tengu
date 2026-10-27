@@ -385,3 +385,24 @@ loop) and `scene.js` (camera).
 4. Damage-number scatter, overshoot pop, delay and totals (27, 28).
 5. Effect lights in post.js (18, M); camera lookahead (9, M); boss-kill slow-mo (10).
 6. Fire tongues and smoke hole-breakup (11, 12, M); loot, level-up and shine sequences (26, 29).
+
+## 5. HD effect packs we can ship (CC0), and how they're played
+The player rejected both code-drawn gradient effects and pixel-art effect packs: effects must be
+smooth HD art. These are free packs whose license (CC0) allows shipping the files in the game:
+- Brackeys VFX Bundle — https://brackeysgames.itch.io/brackeys-vfx-bundle (EN). Kenney and
+  Picster's white particle textures with alpha (spotlights, stars, ray bursts, rings, magic
+  circles, traces, twirls, slashes, dirt) and Thomas Iché's flipbooks (fire, flame, explosion
+  smoke, wispy smoke). Its "predrawn" folder is CodeManu's pixel pack (not used).
+- Kenney Particle Pack and Smoke Particle Assets — https://opengameart.org/content/particle-pack-80-sprites,
+  https://opengameart.org/content/smoke-particle-assets (EN). The same textures; white puffs.
+- Sinestesia on OpenGameArt — hit flashes at 1024 px a frame (https://opengameart.org/node/80085,
+  https://opengameart.org/node/84746), blood and hit bursts (https://opengameart.org/node/81933),
+  explosions at 512 px a frame (https://opengameart.org/node/74923) (EN).
+- Cethiel, Weapon Slash - Effect — https://opengameart.org/content/weapon-slash-effect (EN).
+  Glowing crescents, thrusts and slash lines in four colours, small frames (126x150).
+- MetaShinryu's Slash Effect Collection (CC0) is flat grey vector shapes, too plain to use.
+How they're played: a flipbook plays as is; a texture is coloured like light (deep colour at its
+thin edges, white where dense) and animated as a particle system would (grow fast then settle,
+turn, fade). On light pastel maps additive blending only suits white and cold colours (red goes
+pink, gold goes white), so warm effects draw normally; dark rendered smoke reads as dirt there
+and is lifted pale.

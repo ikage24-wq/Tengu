@@ -6,6 +6,8 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
+import { fxSprite, fxPulse } from './fx-sprites.js';
+import { debris, groundRing } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
@@ -68,119 +70,7 @@ function slash(ctx, cx, cy, dir, radius, p, color, thick = 6) {
   }
 }
 
-// A melee cut's smear along the blade's real path: `start` and `sweep` in degrees for a hero
-// facing right (0 = forward, -90 = up; mirrored when facing left). The head races ahead and the
-// tail catches up, with a white-hot inner edge; heavy blows get a second, fatter smear and a flash
-// where the cut ends. `flat` squashes it into a whirl around the body.
-function arcSmear(ctx, f, x, y, p) {
-  const rad = Math.PI / 180;
-  let a0 = f.start * rad;
-  let sweep = f.sweep * rad;
-  if (f.dir < 0) {
-    a0 = Math.PI - a0;
-    sweep = -sweep;
-  }
-  const head = easeOut(Math.min(1, p / 0.4));
-  const tail = easeIn(Math.max(0, (p - 0.1) / 0.9));
-  const from = a0 + sweep * tail;
-  const to = a0 + sweep * head;
-  const el = f.element ? ELEMENTS[f.element] : null;
-  let color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
-  // A heavy blow's very first drawing flashes in the complementary hue, so the eye catches it.
-  if (f.big && f.t < 1.5 / 60) color = color === '#ffb347' ? '#8fc8ff' : '#ffffff';
-  const thick = f.thick * (f.big ? 1.25 : 1) * (1.5 - p);
-  ctx.save();
-  ctx.translate(x, y);
-  if (f.flat) ctx.scale(1, 0.45);
-  if (f.big) {
-    ctx.globalAlpha = 0.45 * (1 - p);
-    crescent(ctx, 0, 0, f.r + thick * 0.6, from, to, thick * 1.9, color);
-    ctx.globalAlpha = 1;
-  }
-  crescent(ctx, 0, 0, f.r, from, to, thick, color);
-  // Speed lines peeling off the outside.
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineCap = 'round';
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = Math.max(0, 1 - p * 1.5);
-  for (let i = 0; i < 3; i++) {
-    const a = from + (to - from) * (0.3 + i * 0.25);
-    const r = f.r + thick * (0.8 + i * 0.35);
-    ctx.beginPath();
-    ctx.arc(0, 0, r, a - 0.14 * Math.sign(sweep), a + 0.14 * Math.sign(sweep), sweep < 0);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-  // Sparks flung off the tip, and on a heavy blow a flash where it ends.
-  if (p < 0.5) {
-    const tx = Math.cos(to) * f.r;
-    const ty = Math.sin(to) * f.r;
-    const fly = to + (Math.PI / 2) * Math.sign(sweep);
-    for (let i = 0; i < 2; i++) needle(ctx, tx + Math.cos(fly) * (4 + i * 5) * p * 6, ty + Math.sin(fly) * (4 + i * 5) * p * 6, fly, 6 - i * 2, 2.2 - i * 0.6, color);
-    if (f.big) starFlash(ctx, tx, ty, 16 * (1 - p * 2), 6, 0.3, color, '#ffffff', 4 * (1 - p * 2));
-  }
-  if (el && p < 0.8) {
-    for (let i = 0; i < 6; i++) {
-      const a = from + (to - from) * (i / 5);
-      ctx.globalAlpha = (1 - p) * 0.9;
-      ctx.fillStyle = el.sparks[i % el.sparks.length];
-      const r = f.r + Math.sin(i * 3.1) * 6 + p * 10;
-      ctx.fillRect(Math.round(Math.cos(a) * r), Math.round(Math.sin(a) * r), 2, 2);
-    }
-  }
-  ctx.restore();
-}
 
-// The floor splitting open under a heavy blow: jagged cracks racing out both ways, chips of
-// ground flung up, a burst of spikes, and dust rolling out.
-function crack(ctx, f, x, y, p) {
-  const out = easeOut(Math.min(1, p / 0.18));
-  const fade = p > 0.55 ? 1 - (p - 0.55) / 0.45 : 1;
-  const half = f.w / 2;
-  ctx.save();
-  ctx.globalAlpha = fade;
-  // The cracks run just under the grass line: a dark split with a hot glow inside.
-  for (const side of [-1, 1]) {
-    for (let k = 0; k < 3; k++) {
-      ctx.strokeStyle = ['#ffb36b', '#4a2f3a', '#fff3c9'][k];
-      ctx.lineWidth = [6, 3, 1][k];
-      ctx.globalAlpha = fade * (k === 0 ? 0.45 : 1);
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(x, y + 5);
-      const n = 7;
-      for (let i = 1; i <= n; i++) {
-        const u = (i / n) * out;
-        const jag = Math.sin((i + f.seed * 10) * 2.7 + side) * 3;
-        ctx.lineTo(x + side * half * u, y + 5 + jag + (i % 2 ? 2 : -1));
-      }
-      ctx.stroke();
-      // A branch off the middle.
-      ctx.beginPath();
-      ctx.moveTo(x + side * half * 0.35 * out, y + 5);
-      ctx.lineTo(x + side * half * 0.5 * out, y + 11);
-      ctx.stroke();
-    }
-  }
-  ctx.globalAlpha = 1;
-  if (p < 0.35) crown(ctx, x, y + 1, 26 * Math.sin((p / 0.35) * Math.PI), 18, 5, '#e8c8a8');
-  // Chips of ground thrown up and falling back.
-  for (let i = 0; i < 8; i++) {
-    const sd = i % 2 ? 1 : -1;
-    const vx = sd * (30 + ((i * 37 + f.seed * 50) % 50));
-    const vy = 160 + ((i * 53) % 90);
-    const t = p * 0.7;
-    const cx = x + vx * t;
-    const cy = y - (vy * t - 450 * t * t);
-    if (cy > y + 2) continue;
-    ctx.globalAlpha = fade;
-    ctx.fillStyle = i % 3 ? '#c9a27a' : '#8a6a5a';
-    ctx.fillRect(Math.round(cx - 1.5), Math.round(cy - 1.5), 3, 3);
-  }
-  ctx.globalAlpha = fade * 0.9;
-  for (const side of [-1, 1]) puff(ctx, x + side * (10 + half * 0.7 * easeOut(p)), y - 4 - p * 4, 6 * (1 - p) + 2, '#f6e2c8', '#d9b89a');
-  ctx.restore();
-}
 
 // A four-point throwing star around the origin: plum-outlined steel blades, each with a lit half,
 // and a hole in the middle. Without an outline it's a flat silhouette (for afterimages).
@@ -704,24 +594,23 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'pierce': {
-      // A thrust: one long spike shooting forward with a shock ring popping at its tip.
+      // A thrust: a streak of light shooting forward from the weapon's point to the end of the
+      // blow's reach, a burst of light at its end (steel; a Berserker's in red). When the weapon isn't level at that moment
+      // (a dash still winding through), it leaves from the hand instead.
       const b = f.box;
       const dir = f.dir ?? 1;
-      // From the weapon's point, at its height, out to the end of the blow's reach.
-      // When the weapon isn't level at that moment (a dash still winding through), the spike
-      // leaves from the hand at its height instead.
       const pose = strikeAt(f);
       const level = pose && Math.abs(pose.angle - 90) < 30;
       const from0 = pose ? (level ? pose.tip : pose.hand) : null;
       const end = dir > 0 ? b.x + b.w : b.x;
       const start = from0 ? f.x + from0[0] : dir > 0 ? b.x : b.x + b.w;
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
-      const from = start - cam.x;
-      const reach = Math.max(18, Math.abs(end - start)) * easeOut(Math.min(1, p / 0.35));
-      const tipX = from + dir * reach;
-      ctx.globalAlpha = p < 0.6 ? 1 : (1 - p) / 0.4;
-      needle(ctx, tipX, by, dir > 0 ? 0 : Math.PI, reach, 7 * (1 - p * 0.7), '#a8e8ff');
-      if (p > 0.2) shock(ctx, tipX, by, 4 + 14 * easeOut((p - 0.2) / 0.8), 9 * easeOut((p - 0.2) / 0.8), 3 * (1 - p), '#ffffff');
+      const reach = Math.max(24, Math.abs(end - start));
+      const a = p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5;
+      const sx0 = start - cam.x;
+      const len = reach * Math.min(1, p / 0.15 + 0.3);
+      fxSprite(ctx, f.school === 'rage' ? 'hdbeamred' : 'hdstreak', sx0 + (dir * len) / 2, by + 2, { frame: 0, rot: Math.PI / 2, sx: 0.7, sy: len / 95, alpha: a });
+      fxSprite(ctx, f.school === 'rage' ? 'hdthrustred' : 'hdthrust', sx0 + dir * reach * 0.85, by + 2, { p, flip: dir < 0, rot: (dir > 0 ? 1 : -1) * 0.75, scale: 0.8 });
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -905,29 +794,25 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      // A shot leaving the bow or hand: a white disc on its first drawings (the muzzle flash),
-      // then a small flash.
-      if (f.muzzle && p < 0.2) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x, y, 5 * (1 - p * 2), 0, Math.PI * 2);
-        ctx.fill();
+      // A shot leaving the bow or hand: a small flare. Where a blow lands: a cut of light across
+      // the target and a steel flash for blade cuts, a hit flash and a star for everything else
+      // and for crits.
+      if (f.muzzle) {
+        fxPulse(ctx, 'hdflare', x, y, p, { from: 0.45, to: 0.2 });
         break;
       }
-      // Where a blow lands: a star flash that snaps open and pulls in, held on twos.
-      const q = stepped(p, Math.max(3, Math.round(f.dur * 30)));
-      const k = q < 0.3 ? easeOut(q / 0.3 + 0.34) : 1 - (q - 0.3) / 0.7;
-      starFlash(ctx, x, y, (f.crit ? 18 : 11) * k, f.crit ? 8 : 4, f.crit ? 0.4 : 0.8, f.crit ? '#ffb347' : '#ffd66b', '#ffffff', (f.crit ? 5 : 3.2) * k);
+      if (f.via === 'blade' && !f.crit) {
+        fxSprite(ctx, 'hdcut', x, y, { p, rot: (f.seed ?? 0.5) * 1.2 - 0.6, scale: 0.55 });
+        fxSprite(ctx, 'hdhitsteel', x, y, { p, scale: 0.4 });
+      } else {
+        fxSprite(ctx, 'hdhit', x, y, { p, scale: f.crit ? 0.75 : 0.5 });
+        fxPulse(ctx, 'hdstar', x, y, p, { from: f.crit ? 0.8 : 0.5, to: 0.2, hold: 0.05, fadeIn: 0.01 });
+      }
       break;
     }
-    case 'arc': {
-      // The smear follows the weapon's tip: centered on the shoulder it swings from, as far out
-      // as the tip was when the blow landed.
-      const pose = f.flat ? null : strikeAt(f);
-      if (pose) arcSmear(ctx, { ...f, r: Math.max(16, Math.hypot(pose.tip[0] - pose.shoulder[0], pose.tip[1] - pose.shoulder[1])) }, f.bx + pose.shoulder[0] - cam.x, f.by + pose.shoulder[1] - cam.y, p);
-      else arcSmear(ctx, f, x, y, p);
+    case 'arc':
+      bladeCut(ctx, f, cam, p);
       break;
-    }
     case 'ultcue':
       ultimateCue(ctx, f, x, y);
       break;
@@ -940,16 +825,15 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'crack':
-      crack(ctx, f, x, y, p);
+      // The ground ruptures under a heavy blow: dust and clods of earth blasting up across its width.
+      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n), (f.seed ?? 0) + i);
       break;
-    case 'roar': {
-      // Provoke: rings of a battle roar rolling out to its reach.
-      ctx.globalAlpha = 1 - p;
-      const k = easeOut(p);
-      shock(ctx, x, y - 24, 14 + (f.r ?? 120) * k, 10 + 36 * k, 4 * (1 - p) + 0.5, '#ff7a6b');
-      shock(ctx, x, y - 24, 8 + (f.r ?? 120) * 0.7 * k, 6 + 24 * k, 3 * (1 - p) + 0.5, '#ffffff');
+    case 'roar':
+      // Provoke: rings of a battle roar bursting out to its reach.
+      groundRing(ctx, 'hdringred', x, y, p, f.r ?? 120);
+      groundRing(ctx, 'hdring', x, y, Math.min(1, p * 1.3), (f.r ?? 120) * 0.7);
+      fxPulse(ctx, 'hdraysred', x, y - 26, p, { from: 0.5, to: 1.3, hold: 0.15 });
       break;
-    }
     case 'hook': {
       // Chain Hook: links race out to each monster caught, then reel it in.
       const out = Math.min(1, p / 0.3);
@@ -1008,6 +892,105 @@ export function drawEffects(ctx, world, cam, time) {
 
 // Where the weapon was at the moment a blow landed (offsets from the feet), or null.
 const posed = new WeakMap();
+// The blade's path through a cut: where the hand and the tip were over the last stretch of the
+// move before the blow landed (and a touch after), sampled from the hero's own pose. Null when the
+// tip barely travels (a thrust), so a plain arc stands in.
+const traced = new WeakMap();
+function bladePath(f) {
+  if (!hero || !f.move || f.at == null) return null;
+  if (traced.has(f)) return traced.get(f);
+  const span = f.span ?? 0.22;
+  let pts = [];
+  for (let i = 0; i <= 28; i++) {
+    const u = Math.max(0, f.at - span + ((span + 0.03) * i) / 28);
+    const pose = strikePose(hero.look, hero.gear, f.move, u, f.moveDur, f.dir);
+    if (pose) pts.push({ tip: pose.tip, hand: pose.hand });
+  }
+  // Keep only the cut itself: drop the slow wind-up (and any hold) before the blade gets moving,
+  // so the smear starts where the swing does.
+  const speed = pts.map((q, i) => (i ? Math.hypot(q.tip[0] - pts[i - 1].tip[0], q.tip[1] - pts[i - 1].tip[1]) : 0));
+  const peak = Math.max(...speed);
+  let first = speed.findIndex((v) => v >= peak * 0.25);
+  first = Math.max(0, first - 1);
+  pts = pts.slice(first).filter((q, i, a) => i === 0 || Math.hypot(q.tip[0] - a[i - 1].tip[0], q.tip[1] - a[i - 1].tip[1]) > 0.5);
+  // Round the corners off (one pass of corner cutting), so the ribbon curves smoothly.
+  for (let pass = 0; pass < 2 && pts.length > 2; pass++) {
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      const mixp = (k) => ({ tip: [a.tip[0] + (b.tip[0] - a.tip[0]) * k, a.tip[1] + (b.tip[1] - a.tip[1]) * k], hand: [a.hand[0] + (b.hand[0] - a.hand[0]) * k, a.hand[1] + (b.hand[1] - a.hand[1]) * k] });
+      out.push(mixp(0.25), mixp(0.75));
+    }
+    out.push(pts.at(-1));
+    pts = out;
+  }
+  let travel = 0;
+  for (let i = 1; i < pts.length; i++) travel += Math.hypot(pts[i].tip[0] - pts[i - 1].tip[0], pts[i].tip[1] - pts[i - 1].tip[1]);
+  const path = pts.length >= 4 && travel > 24 ? pts : null;
+  traced.set(f, path);
+  return path;
+}
+
+
+
+// A blade's cut, a smooth crescent of light from the HD effect art (fx-sprites.js): turned to
+// follow the blade's own path through the move (sampled from the hero's pose, `bladePath`), sized
+// to the reach, in steel, the Paladin's gold (and any heavy blow's) or the Berserker's red. A cut
+// all around (a whirl) is twirls of light spinning flat round the body instead.
+function bladeCut(ctx, f, cam, p) {
+  const name = f.snd === 'rage' ? 'hdslasharcred' : f.snd === 'holy' || f.big ? 'hdslasharcgold' : 'hdslasharc';
+  if (f.flat) {
+    // A whirl: twirls of light spinning flat round the body.
+    const tw = f.snd === 'rage' ? 'hdtwirlred' : 'hdtwirl';
+    for (const [k, sp] of [[1, 14], [0.75, -10]]) fxSprite(ctx, tw, f.x - cam.x, f.y - cam.y + 6, { frame: 0, rot: f.t * sp, scale: ((f.r ?? 60) / 50) * k, sy: 0.4, alpha: 1 - p * p });
+    return;
+  }
+  const path = bladePath(f);
+  let cx, cy, mid, cw, r;
+  if (path) {
+    // The middle of the cut: the hands' average, the tip's angle halfway along, and which way
+    // round it went.
+    const hx = path.reduce((a, q) => a + q.hand[0], 0) / path.length;
+    const hy = path.reduce((a, q) => a + q.hand[1], 0) / path.length;
+    const a0 = Math.atan2(path[0].tip[1] - hy, path[0].tip[0] - hx);
+    const m = path[Math.floor(path.length / 2)];
+    const a1 = Math.atan2(path.at(-1).tip[1] - hy, path.at(-1).tip[0] - hx);
+    mid = Math.atan2(m.tip[1] - hy, m.tip[0] - hx);
+    cw = Math.sin(a1 - a0) >= 0;
+    r = path.reduce((a, q) => a + Math.hypot(q.tip[0] - hx, q.tip[1] - hy), 0) / path.length;
+    cx = f.bx + hx - cam.x;
+    cy = f.by + hy - cam.y;
+  } else {
+    const dir = f.dir || 1;
+    const deg = (a) => ((dir > 0 ? a : 180 - a) * Math.PI) / 180;
+    mid = deg(f.start + f.sweep / 2);
+    cw = (f.sweep > 0) === (dir > 0);
+    r = f.r ?? 30;
+    cx = f.x - cam.x;
+    cy = f.y - cam.y;
+  }
+  // A downward cut stays above the floor: the crescent leans out in front rather than diving into
+  // the ground.
+  if (Math.sin(mid) > -0.05) {
+    // Moved to the front from behind, it's mirrored, so it turns the other way round too.
+    if (Math.cos(mid) * (f.dir || 1) < 0) cw = !cw;
+    mid = Math.atan2(-0.05, f.dir || 1);
+    cy -= 6;
+  }
+  // The crescent's middle (it bows away from its centre) meets the blade's, sized to ride just
+  // past the tip. It wipes round the way the blade went, swelling a touch, then fades; a white-hot
+  // copy of light inside it gives the edge.
+  const scale = (r / 31) * 1.1 * (f.big ? 1.15 : 1);
+  const turn = cw ? 1 : -1;
+  const k = Math.min(1, p / 0.3);
+  const rot = mid - Math.PI / 2 - turn * 0.55 * (1 - easeOut(k));
+  const a = p < 0.05 ? p / 0.05 : p < 0.35 ? 1 : 1 - (p - 0.35) / 0.65;
+  const grow = 0.88 + 0.2 * easeOut(Math.min(1, p / 0.5));
+  fxSprite(ctx, name, cx, cy, { frame: 0, rot, flip: !cw, scale: scale * grow, alpha: a });
+  fxSprite(ctx, 'hdslashcore', cx, cy, { frame: 0, rot: rot + turn * 0.04, flip: !cw, scale: scale * grow * 0.97, alpha: a * 0.45 });
+}
+
 function strikeAt(f) {
   if (!hero || !f.move) return null;
   if (!posed.has(f)) posed.set(f, strikePose(hero.look, hero.gear, f.move, f.at, f.moveDur, f.dir));

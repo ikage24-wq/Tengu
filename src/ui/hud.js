@@ -4,7 +4,7 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
 import { countItem, activeStar } from '../core/inventory.js';
-import { HOTKEYS } from '../core/character.js';
+import { HOTKEYS, wornGear } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
 import { drawHero } from '../render/hero.js';
@@ -13,6 +13,8 @@ import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
+import { hasRage, hasFaith, hasGale, hasFocus } from '../world/melee.js';
+import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
 import { questMarker } from './npc.js';
@@ -267,7 +269,12 @@ export function drawHud(ui, state, world) {
     clicked(ui, x, y, 18, 18);
   });
 
+  drawHits(ui, state, world);
   if (s.weaponType === 'gauntlet') drawStars(ui, world);
+  if (hasRage(char)) drawGauge(ui, world, 'rage', world.rage ?? 0);
+  else if (hasFaith(char)) drawGauge(ui, world, 'faith', world.faith ?? 0);
+  else if (hasGale(char)) drawGauge(ui, world, 'gale', world.gale ?? 0);
+  else if (hasFocus(char)) drawGauge(ui, world, 'focus', world.focus ?? 0);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -330,6 +337,104 @@ function drawStars(ui, world) {
   if (set) drawItemIcon(ctx, set.id, x + 2, y);
   text(ctx, set ? `${set.qty}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: low ? COLORS.bad : COLORS.ink });
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
+}
+
+// A path's gauge over the hotkeys: a Berserker's Rage (a flame), a Paladin's Faith (a star), a
+// Ranger's Gale (a curl of wind) or a Sniper's Focus (a sight). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
+// names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
+const GAUGES = {
+  rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
+    tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all.' },
+  faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
+    tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take.' },
+  gale: { color: '#2fa880', hot: '#8fe8c0', icon: 'gust', name: 'Gale', full: 'TAILWIND', notch: () => null, edge: 'rgba(80,220,170,', ink: '#1f6a50',
+    tip: 'Your arrows build it and it blows out once the fighting stops. The fuller it is, the faster you shoot; full, every basic shot looses a twin arrow.' },
+  focus: { color: '#3a7fd8', hot: '#ff5a7a', icon: 'sight', name: 'Focus', full: 'DEADEYE', notch: () => null, edge: 'rgba(255,90,122,', ink: '#8a2040',
+    tip: 'Your bolts and standing still build it; running loses it. The fuller it is, the likelier a critical; full, your next bolt always crits and tears through the whole line.' },
+};
+function drawGauge(ui, world, kind, value) {
+  const { ctx } = ui;
+  const G = GAUGES[kind];
+  const x = 566;
+  const y = BAR_Y - 20;
+  const k = Math.min(1, value / 100);
+  const full = k >= 1;
+  // Full, a slow pulse (about a second); every gain flashes the bar white for a moment, and from
+  // 80 it turns its hot colour, almost there (FFXIV's gauges; research/archery.md 31).
+  const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 7) : 0;
+  const gainAt = world[`${kind}At`] ?? -9;
+  const gained = !full && world.now - gainAt < 0.09;
+  if (full) edgeTint(ctx, G.edge ?? (kind === 'rage' ? 'rgba(232,40,60,' : 'rgba(255,214,90,'), 0.22 + 0.12 * beat);
+  box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
+  badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
+  bar(ctx, x + 16, y + 5, 40, 6, k, gained ? '#ffffff' : (full && beat > 0.5) || (!full && k >= 0.8) ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
+  const notch = G.notch();
+  if (notch) {
+    ctx.fillStyle = value >= notch ? '#ffffff' : 'rgba(74,53,96,0.55)';
+    ctx.fillRect(Math.round(x + 16 + 40 * (notch / 100)), y + 4, 1, 8);
+  }
+  text(ctx, `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
+  if (full) text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
+  if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: G.name, bold: true, color: G.color }, { text: G.tip, size: 8, color: COLORS.muted }]);
+}
+
+// A soft colour around the screen's edges (a full gauge's state).
+function edgeTint(ctx, rgba, a) {
+  ctx.save();
+  const g = ctx.createRadialGradient(320, 170, 140, 320, 170, 380);
+  g.addColorStop(0, `${rgba}0)`);
+  g.addColorStop(1, `${rgba}${a})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 640, BAR_Y);
+  ctx.restore();
+}
+
+// The hit counter, on the right: the count pops each time it climbs, takes a warmer colour and a
+// word at each tier, and fades as the combo is about to drop. Once it's long enough for a finisher
+// you know, it says so.
+const HIT_TIERS = [
+  [100, '#ff5ab4', 'LEGENDARY!'],
+  [50, '#ff8a3c', 'AWESOME!'],
+  [25, '#ffc83c', 'GREAT!'],
+  [10, '#6fd0ff', 'NICE!'],
+  [0, '#ffffff', ''],
+];
+function drawHits(ui, state, world) {
+  const { ctx } = ui;
+  const hud = (state.hud ??= {});
+  const n = world.hits ?? 0;
+  const now = performance.now() / 1000;
+  if (n !== hud.hits) {
+    if (n > (hud.hits ?? 0)) hud.hitsPop = now;
+    hud.hits = n;
+  }
+  if (n < 2) return;
+  const left = HITS_WINDOW - (world.now - (world.hitsAt ?? world.now));
+  const a = Math.max(0, Math.min(1, left / 0.6));
+  const pop = Math.max(0, 1 - (now - (hud.hitsPop ?? -9)) / 0.16);
+  const [, color, word] = HIT_TIERS.find(([min]) => n >= min);
+  const x = 628;
+  const y = 150;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(x, y);
+  ctx.scale(1 + pop * 0.45, 1 + pop * 0.45);
+  ctx.rotate(-0.06);
+  text(ctx, `${n}`, 0, 0, { size: 24, bold: true, align: 'right', color, outline: '#4a3560' });
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = a;
+  text(ctx, 'HITS', x, y + 11, { size: 8, bold: true, align: 'right', color: '#ffffff', outline: '#4a3560' });
+  if (word) text(ctx, word, x, y + 22, { size: 9, bold: true, align: 'right', color, outline: '#4a3560' });
+  // The bar under it drains toward the drop.
+  box(ctx, x - 52, y + 26, 52, 3, { fill: 'rgba(74,53,96,0.4)', edge: null, r: 1.5 });
+  box(ctx, x - 52, y + 26, 52 * Math.max(0, left / HITS_WINDOW), 3, { fill: color, edge: null, r: 1.5 });
+  const fin = Object.values(SKILLS).find((k) => k.hitsCost && (world.char.skills[k.id] ?? 0) > 0);
+  if (fin && n >= fin.hitsCost) {
+    const beat = 0.5 + 0.5 * Math.sin(now * 8);
+    text(ctx, 'FINISHER READY', x, y + 40, { size: 8.5, bold: true, align: 'right', color: beat > 0.5 ? '#ffffff' : '#ffe36b', outline: '#c8243a' });
+  }
+  ctx.restore();
 }
 
 // Frames per second, smoothed.

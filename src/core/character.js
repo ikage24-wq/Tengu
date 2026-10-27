@@ -85,7 +85,7 @@ export function gainExp(char, amount) {
 }
 
 export function canAdvance(char, jobId) {
-  return nextJobs(char.job, char.level).some((j) => j.id === jobId);
+  return nextJobs(char.job, char.level, char.quests).some((j) => j.id === jobId);
 }
 
 export function advanceJob(char, jobId) {

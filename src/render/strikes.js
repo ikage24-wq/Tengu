@@ -1,11 +1,16 @@
 // Weapon-skill effects for warriors, archers, and thieves: power flares, charges, sword waves,
+// the Paladin's light (a shield of light, pillars from the sky, a holy ring) and the Berserker's
+// rage bursts,
 // whirlwinds, quakes, X-slashes, beams, smoke, claw marks, and the screen-wide ultimates (a rain
 // of swords, arrows, stars, or coins; a dragon; a hammer of light; a spirit stampede; a blade
 // storm). Like the spell effects, everything is drawn from progress `p` (0-1) and a seed, colored
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { ghost, wash } from './fxkit.js';
+import { drawArcheryShot, drawArchery, windRainPiece } from './archery.js';
+import { fxSprite } from './fx-sprites.js';
+import { drawWarriorFx } from './warrior-fx.js';
+import { ghost, wash, needle, bloom, shardRing, shock, starFlash, crescent, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -233,7 +238,7 @@ export function drawStrikeShot(ctx, f, x, y, dir, time) {
       return true;
     }
     default:
-      return false;
+      return drawArcheryShot(ctx, f, x, y, dir, time);
   }
 }
 
@@ -241,171 +246,18 @@ export function drawStrikeShot(ctx, f, x, y, dir, time) {
 
 export function drawStrike(ctx, f, x, y, p, cam, time) {
   if (f.t < 0) return true;
+  // The warrior paths' effects and skill power-ups come from effect sprites (warrior-fx.js).
+  if (drawWarriorFx(ctx, f, x, y, p, cam, time)) return true;
   const c = colors(f);
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   switch (f.kind) {
-    case 'powerup': {
-      // A burst of power from the feet: a ground ring and streaks shooting upward.
-      const k = Math.min(1, p * 3);
-      const a = p > 0.6 ? (1 - p) / 0.4 : 1;
-      glow(ctx, x, y - 20, (f.big ? 46 : 30) * ease(k), c.main, a * 0.5);
-      ctx.globalAlpha = a;
-      ctx.strokeStyle = c.light;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(x, y - 1, (f.big ? 34 : 22) * ease(k), (f.big ? 8 : 5) * ease(k), 0, 0, TAU);
-      ctx.stroke();
-      for (let i = 0; i < (f.big ? 12 : 7); i++) {
-        const sx = x + (rand(i * 3.1) - 0.5) * (f.big ? 56 : 36);
-        const u = (p * 1.8 + rand(i)) % 1;
-        const len = 8 + rand(i * 7) * 14;
-        ctx.globalAlpha = a * (1 - u);
-        ctx.fillStyle = i % 2 ? c.main : c.light;
-        ctx.fillRect(Math.round(sx), Math.round(y - 4 - u * (f.big ? 80 : 50) - len), 2, len);
-      }
-      return true;
-    }
-    case 'chargetrail': {
-      // Speed lines and a shock cone along the dash, kicking up dust behind.
-      const tx = f.tx - cam.x;
-      const fade = 1 - p;
-      ctx.globalAlpha = fade;
-      const g = ctx.createLinearGradient(x, 0, tx, 0);
-      g.addColorStop(0, 'rgba(255,255,255,0)');
-      g.addColorStop(1, c.main);
-      ctx.fillStyle = g;
-      ctx.fillRect(Math.min(x, tx), y - 34, Math.abs(tx - x), 30);
-      for (let i = 0; i < 9; i++) {
-        const ly = y - 6 - rand(i * 2.3) * 34;
-        const lx = x + (tx - x) * rand(i * 5.7);
-        ctx.fillStyle = i % 2 ? '#ffffff' : c.light;
-        ctx.fillRect(Math.round(Math.min(lx, lx - f.dir * 24)), Math.round(ly), 24, 1.5);
-      }
-      // Afterimages along the path, the oldest vanishing first.
-      for (let i = 0; i < 3; i++) {
-        const left = 0.18 + i * 0.1 - p;
-        if (left <= 0) continue;
-        ctx.globalAlpha = 0.75;
-        ghost(ctx, x + (tx - x) * (0.25 + i * 0.25), y, 0.9 * Math.min(1, left / 0.08), i === 2 ? '#ffffff' : c.main);
-      }
-      ctx.globalAlpha = 1 - p;
-      // The shockwave cone in front of where you stopped.
-      ctx.strokeStyle = c.light;
-      ctx.lineWidth = 3 * fade + 1;
-      ctx.beginPath();
-      ctx.arc(tx - f.dir * 4, y - 18, 12 + ease(p) * 16, f.dir > 0 ? -1.1 : Math.PI - 1.1, f.dir > 0 ? 1.1 : Math.PI + 1.1);
-      ctx.stroke();
-      for (let i = 0; i < 6; i++) {
-        ctx.globalAlpha = fade * 0.6;
-        ctx.fillStyle = '#e8d8c8';
-        ctx.beginPath();
-        ctx.arc(x + (tx - x) * (i / 6) - f.dir * p * 10, y - 3 - p * 6 * rand(i), 3 + p * 5, 0, TAU);
-        ctx.fill();
-      }
-      return true;
-    }
-    case 'vortex': {
-      if (!box) return true;
-      // A whirlwind of blades: spinning crescent arcs layered around the area, with motes flung out.
-      const cx = box.x + box.w / 2;
-      const cy = box.y + box.h / 2;
-      const k = ease(Math.min(1, p * 2));
-      const fade = p > 0.6 ? 1 - (p - 0.6) / 0.4 : 1;
-      for (let ring = 0; ring < 3; ring++) {
-        const rx = (box.w / 2) * (0.45 + ring * 0.25) * k;
-        const ry = (box.h / 2) * (0.35 + ring * 0.2) * k;
-        const spin = time * (14 - ring * 3) * (ring % 2 ? -1 : 1);
-        ctx.globalAlpha = fade * (0.9 - ring * 0.2);
-        ctx.strokeStyle = ring === 1 ? c.light : c.main;
-        ctx.lineWidth = 4 - ring;
-        ctx.lineCap = 'round';
-        for (let arc = 0; arc < 2; arc++) {
-          ctx.beginPath();
-          ctx.ellipse(cx, cy, rx, ry, 0, spin + arc * Math.PI, spin + arc * Math.PI + 1.6);
-          ctx.stroke();
-        }
-      }
-      for (let i = 0; i < 12; i++) {
-        const a = (i / 12) * TAU + time * 6;
-        const d = (box.w / 2) * k * (0.6 + rand(i) * 0.5);
-        ctx.globalAlpha = fade;
-        if (f.school === 'sakura') petal(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.45, a, c);
-        else sparkle(ctx, cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.45, 2.5, i % 2 ? '#ffffff' : c.main);
-      }
-      return true;
-    }
-    case 'quake': {
-      if (box) {
-        // A shockwave races along the ground with a crack of light, flinging rocks or thorns.
-        const k = ease(Math.min(1, p * 1.8));
-        const fade = p > 0.55 ? 1 - (p - 0.55) / 0.45 : 1;
-        const gy = f.y - cam.y;
-        const around = f.box.w > 0 && Math.abs(f.box.x + f.box.w / 2 - f.x) < 4;
-        if (around) {
-          // A spear (or fist) driven into the ground: an impact flash and rings racing outward.
-          glow(ctx, x0Center(box), gy - 10, 46 * (1 - p) + 10, c.light, fade);
-          for (let r = 0; r < 2; r++) {
-            const rk = Math.max(0, k - r * 0.15);
-            ctx.globalAlpha = fade * (1 - rk);
-            ctx.strokeStyle = r ? c.light : c.main;
-            ctx.lineWidth = 4 - r;
-            ctx.beginPath();
-            ctx.ellipse(x0Center(box), gy - 2, 10 + (box.w / 2) * rk, 3 + 12 * rk, 0, 0, TAU);
-            ctx.stroke();
-          }
-        }
-        const x0 = around ? box.x + box.w / 2 : f.dir > 0 ? box.x : box.x + box.w;
-        const reach = around ? box.w / 2 : box.w;
-        ctx.globalAlpha = fade;
-        for (const side of around ? [-1, 1] : [f.dir]) {
-          const front = x0 + side * reach * k;
-          // The glowing crack.
-          ctx.strokeStyle = c.light;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(x0, gy);
-          for (let i = 1; i <= 8; i++) ctx.lineTo(x0 + side * reach * k * (i / 8), gy + (rand(i * 3.3) - 0.5) * 4);
-          ctx.stroke();
-          // The wave crest: a hump of earth (or energy) rolling along.
-          glow(ctx, front, gy - 10, 30, c.main, fade * 0.8);
-          ctx.fillStyle = c.main;
-          ctx.beginPath();
-          ctx.ellipse(front, gy, 16, 16 * (1 - p * 0.4), 0, Math.PI, 0);
-          ctx.fill();
-          ctx.fillStyle = c.light;
-          ctx.beginPath();
-          ctx.ellipse(front - side * 3, gy, 8, 9 * (1 - p * 0.4), 0, Math.PI, 0);
-          ctx.fill();
-        }
-        // Debris: rocks for earth, thorns for nature, embers for dragons.
-        for (let i = 0; i < 18; i++) {
-          const side = around ? (i % 2 ? 1 : -1) : f.dir;
-          const dx = side * reach * k * rand(i * 4.7);
-          const up = Math.sin(Math.min(1, p * 2 + rand(i)) * Math.PI) * (18 + rand(i) * 26);
-          const px = x0 + dx;
-          const py = gy - up;
-          ctx.globalAlpha = fade;
-          if (f.school === 'nature') thorn(ctx, px, gy, 4, up + 6, c);
-          else if (f.school === 'dragon') glow(ctx, px, py, 5, i % 2 ? c.light : c.main, fade);
-          else {
-            ctx.fillStyle = i % 2 ? c.deep : c.main;
-            ctx.fillRect(Math.round(px - 3), Math.round(py - 3), 5 + (i % 3) * 2, 5 + (i % 2) * 2);
-            ctx.fillStyle = c.light;
-            ctx.fillRect(Math.round(px - 2), Math.round(py - 2), 2, 2);
-          }
-        }
+    case 'gather': {
+      // A Sniper gathers her aim with the effect pack's charging core (fx-sprites.js).
+      if (f.school === 'focus') {
+        fxSprite(ctx, 'charge', x + (f.dir || 1) * 12, y - 18, { p, scale: f.big ? 1.2 : 0.9 });
         return true;
       }
-      // Each monster gets a burst of rubble (or thorns) from under its feet.
-      const k = ease(p);
-      ctx.globalAlpha = 1 - p;
-      for (let i = 0; i < 5; i++) {
-        const a = -Math.PI * (0.15 + (i / 4) * 0.7);
-        const d = k * (14 + rand(f.seed * 9 + i) * 10);
-        ctx.fillStyle = i % 2 ? c.main : c.deep;
-        ctx.fillRect(Math.round(x + Math.cos(a) * d - 2), Math.round(y - 4 + Math.sin(a) * d + p * p * 16), 4, 4);
-      }
-      return true;
+      return false;
     }
     case 'xslash': {
       // Two crossing slashes, one after the other, with a flash where they meet.
@@ -568,7 +420,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -580,7 +432,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) / 2;
       if (p < hit) {
         const k = p / hit;
-        const px = x + (f.variant === 'arrow' ? -80 : 30) * (1 - k);
+        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' ? -80 : 30) * (1 - k);
         const py = cy - 220 * (1 - k * k);
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
@@ -851,7 +703,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       return drawStrike(ctx, { ...f, kind: 'xslash', t: 1 }, x, y, (p - hit) / (1 - hit), cam, time);
     }
     default:
-      return false;
+      return drawArchery(ctx, f, x, y, p, cam, time);
   }
 }
 
@@ -878,6 +730,9 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     case 'arrow':
       arrow(ctx, x, y, Math.atan2(2.6, 1), 22 * s, c);
       break;
+    case 'windarrow':
+      windRainPiece(ctx, x, y, s, time);
+      break;
     case 'star':
       glow(ctx, x, y, 10 * s, c.main, 0.6);
       star(ctx, x, y, 8 * s, time * 12, c.deep, c.light);
@@ -889,6 +744,26 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     default:
       sparkle(ctx, x, y, 5 * s, c.main);
   }
+}
+
+// A small diamond of light on an inked rim (the holy school's spark: no spikes).
+function diamond(ctx, x, y, r, color) {
+  if (r <= 0.3) return;
+  const shape = (R) => {
+    ctx.beginPath();
+    ctx.moveTo(x, y - R * 1.3);
+    ctx.lineTo(x + R, y);
+    ctx.lineTo(x, y + R * 1.3);
+    ctx.lineTo(x - R, y);
+    ctx.closePath();
+    ctx.fill();
+  };
+  if (r > 1.2 && inked(ctx)) {
+    ctx.fillStyle = deep(color);
+    shape(r + 0.9);
+  }
+  ctx.fillStyle = color;
+  shape(r);
 }
 
 function petal(ctx, x, y, rot, c) {

@@ -1,9 +1,14 @@
 // Idle auras for advanced jobs: a quiet touch around a hero who stands still, layered behind
 // ('back') and in front of ('front') the sprite. They stay small, soft, and slow: a glow at the
 // feet, a few motes drifting up, and for third jobs a signature: a rune ring with crackling
-// lightning or dancing flames, or a halo and angel wings.
+// lightning or dancing flames, or a halo and angel wings. Warrior paths: a ring of light diamonds
+// for the Paladin, red flames and rising embers for the Berserker. Archer paths: a band of wind and
+// drifting leaves for the Ranger, a slow sight ring for the Sniper.
 // Nothing flashes, and nothing covers the face. Everything is drawn from time alone.
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
+
+import { fxSprite, fxPulse } from './fx-sprites.js';
+import { column } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -50,12 +55,15 @@ function runeRing(ctx, x, y, t, s, color, a, front) {
 }
 
 // A few small motes drifting up around the hero and fading. `draw(ctx, x, y, r, i)` paints one.
-function motes(ctx, x, y, t, s, a, { n = 4, spread = 14, height = 34, speed = 0.35, size = 1.3, draw }) {
+// `inner` keeps them that far out to either side, clear of the face.
+function motes(ctx, x, y, t, s, a, { n = 4, spread = 14, height = 34, speed = 0.35, size = 1.3, inner = 0, draw }) {
   for (let i = 0; i < n; i++) {
     const cyc = t * speed + i / n;
     const u = cyc % 1;
     const seed = Math.floor(cyc) * 7 + i;
-    const mx = x + (hash(seed) - 0.5) * spread * 2 * s + Math.sin(t * 1.5 + i) * 2 * s;
+    const h = hash(seed) - 0.5;
+    const off = inner ? Math.sign(h || 1) * (inner + Math.abs(h) * 2 * (spread - inner)) : h * spread * 2;
+    const mx = x + off * s + Math.sin(t * 1.5 + i) * 2 * s;
     const my = y - (4 + u * height) * s;
     ctx.save();
     ctx.globalAlpha = a * Math.sin(u * Math.PI);
@@ -101,6 +109,21 @@ const sparkle = (color) => (ctx, x, y, r) => {
   ctx.quadraticCurveTo(x, y, x, y - r * 1.8);
   ctx.fill();
 };
+
+// A small diamond of light: the holy jobs' rounded, spike-free spark.
+const glim = (color) => (ctx, x, y, r) => {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r * 1.5);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r * 1.5);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+  ctx.fill();
+};
+
+
+
 
 // A thin halo floating over the head, bobbing gently.
 function halo(ctx, x, y, t, s, a) {
@@ -257,6 +280,26 @@ const JOBS = {
       motes(ctx, x, y, t, s, k, { n: 4, draw: sparkle('#fff6c9') });
     },
   },
+  // Paladin: soft golden rays turning slowly and faintly behind her (HD light art).
+  paladin: {
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'hdraysgold', x, y - 24 * s, { frame: 0, rot: t * 0.25, scale: s * 0.55, alpha: k * 0.35 }),
+    front: () => {},
+  },
+  // Berserker: a faint red ring of light at his feet, breathing.
+  berserker: {
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'hdringred', x, y, { frame: 0, scale: s * (0.85 + 0.05 * Math.sin(t * 2)), sy: 0.3, alpha: k * 0.45 }),
+    front: () => {},
+  },
+  // Ranger: a slow, faint spin of wind at her feet (effect-pack art, no glow).
+  ranger: {
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'windspin', x, y - 2 * s, { t: t * 0.6, scale: s * 1.5, sy: 0.3, alpha: k * 0.6 }),
+    front: () => {},
+  },
+  // Sniper: the rune wheel turning slowly and faintly at her chest.
+  sniper: {
+    back: () => {},
+    front: (ctx, x, y, t, s, k) => fxSprite(ctx, 'charge', x, y - 22 * s, { frame: 1, rot: t * 0.3, scale: s * 0.55, alpha: k * 0.45 }),
+  },
   // The Game Master: a faint ring and a few stars in every color.
   gamemaster: {
     back: (ctx, x, y, t, s, k) => {
@@ -278,5 +321,71 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
   if (!def?.[layer] || k <= 0) return;
   ctx.save();
   def[layer](ctx, x, y, time, scale, k);
+  ctx.restore();
+}
+
+
+// ---------- Combat auras: power that builds as the fight goes on ----------
+// A Berserker's Rage and a Paladin's Faith show on the hero in stages (0-1, `k`), in a fight as well
+// as at rest. Rage: a red heat glow, then flames licking up around the body, then flames climbing
+// to the shoulders with embers streaming off; full (Berserk) adds a pulsing ring. Faith: a warm
+// glow, then a turning ring of light diamonds, then a halo and slow rays behind; full (Sanctified)
+// adds wings of light.
+
+
+// Rage: real fire from the HD effect art (fx-sprites.js): a red ring of light at his feet that
+// widens as Rage builds, from halfway flames licking up round his legs, and full (Berserk), red
+// rings racing out from his feet again and again.
+function rageAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.1) fxSprite(ctx, 'hdringred', x, y, { frame: 0, scale: s * (0.8 + 0.6 * k), sy: 0.3, alpha: Math.min(1, (k - 0.1) * 2) * 0.8 });
+    if (k > 0.5) for (const [dx, o] of [[-9, 0], [9, 0.4], [0, 0.8]]) fxSprite(ctx, 'hdflame', x + dx * s, y - 22 * s, { t: t + o, scale: s * (0.5 + 0.3 * k), alpha: Math.min(1, (k - 0.5) * 2.5) * 0.9 });
+    if (k >= 1) fxPulse(ctx, 'hdringred', x, y, (t % 0.7) / 0.7, { from: s * 0.5, to: s * 2, sy: 0.3, hold: 0.1 });
+    return;
+  }
+  if (k >= 1) fxSprite(ctx, 'hdflame', x, y - 26 * s, { t: t + 0.2, scale: s * 0.7, alpha: 0.6 });
+}
+
+// Faith: light from the HD effect art: a golden ring of light at her feet, golden rays turning
+// behind her as Faith builds, and full (Sanctified), a magic circle turning under her and a column
+// of light rising again and again.
+function faithAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.25) fxSprite(ctx, 'hdringgold', x, y, { frame: 0, scale: s * (0.8 + 0.5 * k), sy: 0.3, alpha: Math.min(1, (k - 0.25) * 2) * 0.8 });
+    if (k > 0.4) fxSprite(ctx, 'hdraysgold', x, y - 24 * s, { frame: 0, rot: t * (0.3 + 0.5 * k), scale: s * (0.5 + 0.4 * k), alpha: Math.min(1, (k - 0.4) * 2.5) * 0.6 });
+    if (k >= 1) {
+      fxSprite(ctx, 'hdcircle', x, y, { frame: 0, scale: s * 0.9, sy: 0.28, alpha: 0.7 });
+      column(ctx, 'hdbeam', x, y, (t % 1.1) / 1.1, 90 * s, 1.2 * s);
+    }
+  }
+}
+
+// Gale: wind from the effect packs (fx-sprites.js), no glows: a spin of wind at her feet that
+// widens and quickens as it fills, gusts of leaves blowing past from halfway, and full (Tailwind),
+// rings of wind bursting out from her feet.
+function galeAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'windspin', x, y - 2 * s, { t: t * (1 + k), scale: s * (1.6 + 1.4 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'windring', x, y, { t: t % 0.55, scale: s * 1.6 });
+    return;
+  }
+  if (k > 0.5) fxSprite(ctx, 'leafgust', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.7, flip: Math.floor(t * 0.9 / 0.7) % 2 === 1, scale: s * (0.8 + 0.4 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
+}
+
+// Focus: the pack's charging rune wheel turning slowly at her chest, growing as it fills; full
+// (Deadeye), the rose star flashes over it on a slow beat.
+function focusAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back' || k <= 0.25) return;
+  const cy = y - 22 * s;
+  fxSprite(ctx, 'charge', x, cy, { frame: 1, rot: t * (0.4 + k), scale: s * (0.6 + 0.5 * k), alpha: Math.min(1, (k - 0.25) * 2) * 0.85 });
+  if (k >= 1) fxSprite(ctx, 'deadstar', x, cy, { t: t % 1.2, scale: s * 0.7, alpha: 0.9 });
+}
+
+// Draws a combat aura: `kind` 'rage', 'faith', 'gale' or 'focus', `k` how full (0-1).
+const COMBAT = { rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
+export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
+  if (k <= 0.02 || !COMBAT[kind]) return;
+  ctx.save();
+  COMBAT[kind](ctx, x, y, time, scale, Math.min(1, k), layer);
   ctx.restore();
 }

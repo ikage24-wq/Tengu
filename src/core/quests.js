@@ -23,6 +23,7 @@ export function questState(char, id) {
   if (rec?.state === 'done') return 'done';
   if (rec?.state === 'active') return objectivesMet(char, id) ? 'ready' : 'active';
   if (char.level < q.minLevel) return 'locked';
+  if (q.family && JOBS[char.job]?.family !== q.family) return 'locked';
   if (q.prereq && char.quests[q.prereq]?.state !== 'done') return 'locked';
   return 'available';
 }

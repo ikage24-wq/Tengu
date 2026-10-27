@@ -2,15 +2,16 @@
 // front of the hero, even while moving), and a cast moment when it goes up: a burst shaped for the
 // skill, with its name popping over your head. Everything is drawn from time alone.
 
-import { haloStroke, shock } from './fxkit.js';
+import { haloStroke } from './fxkit.js';
 import { font } from '../ui/kit.js';
+import { SKILLS } from '../data/skills.js';
+import { groundRing, lightBurst, ringOf } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return v - Math.floor(v);
 };
-const easeOut = (p) => 1 - (1 - p) * (1 - p);
 
 function glow(ctx, x, y, r, color, a) {
   if (a <= 0 || r <= 0) return;
@@ -902,139 +903,12 @@ export function drawBuffEffects(ctx, buffs, layer, x, y, time, now, dir) {
 export function drawBuffCast(ctx, f, x, y, p, time) {
   const look = BUFF_LOOKS[f.skill] ?? { color: '#ffe36b', cast: 'burst' };
   const c = look.color;
-  const fade = 1 - p;
-  const e = easeOut(Math.min(1, p * 1.6));
   ctx.save();
-  // The moment it goes up, in order: a round white pop at the chest for two drawings, then a
-  // ring of the buff's color snapping out along the ground, then its own shape.
-  const t = f.t;
-  if (t < 2 / 60) {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y - 26, 12, 0, TAU);
-    ctx.fill();
-  }
-  if (t > 1 / 60 && t < 0.3) {
-    const k = easeOut((t - 1 / 60) / 0.28);
-    ctx.globalAlpha = 1 - k;
-    shock(ctx, x, y - 1, 8 + 38 * k, 2 + 8 * k, 4 * (1 - k) + 0.5, c);
-    ctx.globalAlpha = 1;
-  }
-  glow(ctx, x, y - 24, 40 * (1 - p * 0.5), c, fade * 0.6);
-  switch (look.cast) {
-    case 'pillar': case 'shower': case 'dome': case 'summon': {
-      // A column of light (or a falling shower) around you.
-      const w = 22 * (1 - p * 0.6);
-      const g = ctx.createLinearGradient(0, y - 110, 0, y);
-      g.addColorStop(0, 'rgba(255,255,255,0)');
-      g.addColorStop(1, c);
-      ctx.globalAlpha = fade * 0.7;
-      ctx.fillStyle = g;
-      ctx.fillRect(x - w / 2, y - 110, w, 110);
-      if (look.cast === 'shower') for (let i = 0; i < 10; i++) star(ctx, x + (hash(i) - 0.5) * 40, y - 90 + ((p * 1.5 + hash(i + 5)) % 1) * 90, 2, '#ffffff', fade);
-      if (look.cast === 'dome') ring(ctx, x, y - 24, 30 * e, 36 * e, c, 2, fade);
-      if (look.cast === 'summon') {
-        ring(ctx, x, y, 34 * e, 8 * e, c, 2, fade);
-        ring(ctx, x, y, 24 * e, 6 * e, '#ffffff', 1, fade);
-      }
-      break;
-    }
-    case 'converge': {
-      // Bits of the buff fly in from all around and lock on.
-      for (let i = 0; i < 8; i++) {
-        const ang = (i / 8) * TAU;
-        const d = 40 * (1 - e) + 6;
-        star(ctx, x + Math.cos(ang) * d, y - 24 + Math.sin(ang) * d, 3, c, fade);
-      }
-      if (p > 0.55) ring(ctx, x, y - 24, 22, 26, '#ffffff', 2, (1 - p) * 2);
-      break;
-    }
-    case 'gust': case 'gears': {
-      for (let i = 0; i < 3; i++) ring(ctx, x, y - 4 - i * 14, (12 + i * 4) * (0.5 + e), 3 + i, c, 1.5, fade);
-      break;
-    }
-    case 'slam': {
-      ring(ctx, x, y, 44 * e, 10 * e, c, 3, fade);
-      for (let i = 0; i < 8; i++) {
-        const ang = Math.PI + (i / 7) * Math.PI;
-        stone(ctx, x + Math.cos(ang) * 30 * e, y + Math.sin(ang) * 20 * e - 10 * Math.sin(p * Math.PI), 3, fade);
-      }
-      break;
-    }
-    case 'blades': {
-      for (let i = 0; i < 6; i++) {
-        const ang = (i / 6) * TAU + p * 6;
-        miniBlade(ctx, x + Math.cos(ang) * 26 * e, y - 26 + Math.sin(ang) * 26 * e, 7, ang + Math.PI / 2, c, fade);
-      }
-      break;
-    }
-    case 'roar': case 'howl': {
-      // Shockwaves bursting out from the chest, quick and thinning as they go.
-      for (let r = 0; r < 3; r++) {
-        const rp = Math.max(0, p - r * 0.12);
-        if (rp <= 0) continue;
-        ring(ctx, x, y - 28, 8 + easeOut(rp) * 70, 6 + easeOut(rp) * 40, r === 1 ? '#ffffff' : c, 3 * (1 - rp), (1 - rp) * 0.9);
-      }
-      for (let i = 0; i < 10; i++) {
-        const ang = (i / 10) * TAU;
-        star(ctx, x + Math.cos(ang) * 40 * e, y - 28 + Math.sin(ang) * 26 * e, 2.5, c, fade);
-      }
-      break;
-    }
-    case 'bolt': {
-      if (p < 0.4) {
-        ctx.globalAlpha = 1 - p / 0.4;
-        ctx.strokeStyle = '#fffbe0';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(x + 6, y - 130);
-        ctx.lineTo(x - 6, y - 90);
-        ctx.lineTo(x + 5, y - 70);
-        ctx.lineTo(x - 3, y - 40);
-        ctx.lineTo(x, y - 24);
-        haloStroke(ctx, c);
-      }
-      ring(ctx, x, y, 30 * e, 7 * e, c, 2, fade);
-      break;
-    }
-    case 'lotus': {
-      lotus(ctx, x, y, time, fade, e * 1.8);
-      break;
-    }
-    case 'shine': case 'lock': {
-      star(ctx, x, y - 62, 12 * (1 - p) + 2, '#ffffff', fade);
-      ring(ctx, x, y - 62, 18 * e, 18 * e, c, 1.5, fade);
-      break;
-    }
-    case 'clover': {
-      for (let i = 0; i < 6; i++) {
-        const ang = (i / 6) * TAU;
-        clover(ctx, x + Math.cos(ang) * 30 * e, y - 30 + Math.sin(ang) * 22 * e, 3, p * 4 + i, fade);
-      }
-      break;
-    }
-    case 'smoke': {
-      for (let i = 0; i < 9; i++) {
-        const ang = (i / 9) * TAU;
-        glow(ctx, x + Math.cos(ang) * 22 * e, y - 22 + Math.sin(ang) * 14 * e, 14, i % 2 ? '#3a2a6b' : '#7a5ac8', fade * 0.8);
-      }
-      break;
-    }
-    case 'split': {
-      for (const side of [-1, 1]) {
-        glow(ctx, x + side * 20 * e, y - 24, 16, '#ffd66b', fade);
-        star(ctx, x + side * 20 * e, y - 30, 4, '#ffffff', fade);
-      }
-      break;
-    }
-    default: {
-      for (let i = 0; i < 10; i++) {
-        const ang = (i / 10) * TAU;
-        star(ctx, x + Math.cos(ang) * 34 * e, y - 26 + Math.sin(ang) * 28 * e, 3, c, fade);
-      }
-      ring(ctx, x, y, 34 * e, 8 * e, c, 2.5, fade);
-    }
-  }
+  // The moment it goes up, from the HD effect art (fx-sprites.js): a ring of the skill's school
+  // racing out along the ground and a burst of its light at the chest.
+  const school = SKILLS[f.skill]?.school ?? 'steel';
+  groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 55);
+  lightBurst(ctx, school, x, y - 24, Math.min(1, p * 1.2), 0.8);
   ctx.restore();
   // The skill's name pops up over your head.
   if (f.name) {
