@@ -386,6 +386,11 @@ export function tickMelee(world, dt) {
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
+  // Tailwind at a Ranger's heels: streaks of wind peel off behind her as she runs.
+  if (world.char.buffs.tailwind && (world.runFor ?? 0) > 0 && b.onGround && world.now - (world.windStepAt ?? -9) > 0.12) {
+    world.windStepAt = world.now;
+    world.fx.push({ kind: 'windstep', x: b.x, y: b.y, dir: b.facing, t: 0, dur: 0.4 });
+  }
   if (hasFocus(world.char)) {
     // Standing still with a fight on (a bolt landed lately) steadies the aim; running loses it.
     const fighting = world.now - (world.focusAt ?? -9) < FOCUS_HOLD;
@@ -447,6 +452,11 @@ function land(world, s) {
   if (s.crack) {
     world.fx.push({ kind: 'crack', x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
+  }
+  // A storm sky over the whole view (Storm Volley): a green wash, wind tearing across, arrows.
+  if (s.sky) {
+    world.fx.push({ kind: 'stormsky', x: body.x, y: body.y, t: 0, dur: s.sky });
+    world.fx.push({ kind: 'rain', variant: 'windarrow', school: 'wind', box: { x: body.x - 320, y: body.y - 330, w: 640, h: 330 }, x: body.x, y: body.y, t: 0, dur: s.sky });
   }
   if (s.burst) {
     world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: 0.7, seed: Math.random() });
@@ -562,7 +572,9 @@ function fire(world, strike) {
   const tracer = hasFocus(world.char);
   const fly = (tx, ty) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, x: ox, y: oy, tx, ty, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, x: ox, y: oy, tx, ty, t: -lag, dur: travel });
+    // A gale shot leaves a band of wind hanging along the path it tore through.
+    if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     if (tracer) world.fx.push({ kind: 'tracer', x: ox, y: oy, tx, ty, big: s.big || s.deadeye, t: 0, dur: Math.max(0.14, travel + 0.08) });
     return travel + lag;
   };
@@ -574,7 +586,11 @@ function fire(world, strike) {
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
   // A full Gale looses a twin arrow beside every basic shot, a little lighter.
-  if (hasGale(world.char) && (world.gale ?? 0) >= GALE_MAX && s.key.startsWith('basic') && !s.twin) fire(world, { ...s, twin: true, fan: 1, pierce: false, pct: s.pct * 0.6, oy: -5, lag: 0.04, big: false, stop: 0, shake: 0, gauge: 1 });
+  // ...and two wind spirits that swoop out on curves and home in (Wind Archer's Trifling Wind).
+  if (hasGale(world.char) && (world.gale ?? 0) >= GALE_MAX && s.key.startsWith('basic') && !s.twin) {
+    fire(world, { ...s, twin: true, fan: 1, pierce: false, pct: s.pct * 0.6, oy: -5, lag: 0.04, big: false, stop: 0, shake: 0, gauge: 1 });
+    for (const bend of [-38, 38]) fire(world, { ...s, shot: 'wisp', twin: true, fan: 1, pierce: false, pct: s.pct * 0.4, speed: 480, bend, lag: 0.08, burst: 'galehit', big: false, stop: 0, shake: 0, gauge: 1 });
+  }
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
   if (s.pierce) {

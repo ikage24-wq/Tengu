@@ -702,11 +702,14 @@ test("a Ranger's Gale builds as arrows land, quickens her shots, and full looses
   updateWorld(w, DT, press('KeyZ'));
   assert.ok(w.pose.dur < slow * 0.85, `faster at full Gale: ${slow} -> ${w.pose.dur}`);
   let most = 0;
+  let spirits = 0;
   for (let i = 0; i < 40; i++) {
     updateWorld(w, DT, idle);
     most = Math.max(most, shots(w));
+    spirits = Math.max(spirits, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'wisp').length);
   }
   assert.ok(most >= 2, 'a twin arrow goes with the shot');
+  assert.ok(spirits >= 2, `two wind spirits swoop out with it (${spirits})`);
 });
 
 test("a Sniper's Focus builds standing still, bleeds away running, and full fires a Deadeye", async () => {

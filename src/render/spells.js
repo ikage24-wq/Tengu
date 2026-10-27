@@ -17,7 +17,8 @@ export const SCHOOL_COLORS = {
   steel: { main: '#cfe0ff', light: '#ffffff', deep: '#6f8fd8' },
   earth: { main: '#e0a96b', light: '#fff0c9', deep: '#8a5a3a' },
   dragon: { main: '#ff5a5a', light: '#ffe36b', deep: '#a02a4a' },
-  wind: { main: '#8fe8c0', light: '#f0fff8', deep: '#2fa880' },
+  // Wind: a saturated emerald, so it reads on purple and blue maps (pale mint vanished there).
+  wind: { main: '#36e0a0', light: '#effff8', deep: '#0f9a74' },
   nature: { main: '#8fd86b', light: '#eaffd0', deep: '#4f8a3a' },
   shadow: { main: '#9b6bff', light: '#e6dcff', deep: '#3a2a6b' },
   sakura: { main: '#ff9ec0', light: '#fff0f6', deep: '#c94f8a' },

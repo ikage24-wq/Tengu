@@ -454,7 +454,7 @@ export const SKILLS = {
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 22, targets, aimGain: 100,
         combo: [{ move: 'stormvolley', dur: 1.7, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.12, pct: k(50, 90), reach: 120, h: 110, around: true, targets, pull: 70, burst: 'galeburst', burstAt: 0, quiet: true, via: 'wind', school: 'wind', stop: 0.02, gauge: 0 },
+          { at: 0.12, pct: k(50, 90), reach: 120, h: 110, around: true, targets, pull: 70, burst: 'galeburst', burstAt: 0, sky: 1.4, quiet: true, via: 'wind', school: 'wind', stop: 0.02, gauge: 0 },
           pour(0.3), pour(0.42), pour(0.54),
           { at: 0.8, pct: k(420, 720), reach: 175, h: 150, around: true, targets, knock: 320, launch: 380, burst: 'stormburst', burstAt: 0, quiet: true, via: 'wind', school: 'wind', big: true, stop: 0.15, shake: 7, gauge: 0 },
         ] }],

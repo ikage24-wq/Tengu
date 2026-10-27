@@ -357,12 +357,13 @@ to clear it.
   (shoot down 15 Wraiths in the Crystal Cave); pass it and pick a path. Both deal damage in a group.
   - **Ranger** (bow), light and quick on the wind: every arrow that lands builds **Gale** (a curl of
     wind over the hotkeys) that blows out once the fighting stops; the fuller it is the faster she
-    shoots (up to a quarter quicker), and full (**Tailwind**) every basic shot looses a twin arrow.
+    shoots (up to a quarter quicker), and full (**Tailwind**) every basic shot looses a twin arrow
+    and two wind spirits that swoop out on curves and home in.
     **Gale Volley** is a three-press combo (a twirl that looses two wind arrows, a leap that fans
     three down on them, then a gale arrow through the whole line that blows them away);
     **Cyclone Arrow** sends a slow whirlwind down the line that cuts everything it passes three
-    more times and lifts it; **Tailwind** speeds up running, shooting and dodging and gives half a
-    Gale; **Ranger Mastery** adds mastery, attack and accuracy. Bands of green wind circle her as
+    more times and lifts it (a real tornado, twice her height); **Tailwind** speeds up running,
+    shooting and dodging, leaves streaks of wind at her heels, and gives half a Gale; **Ranger Mastery** adds mastery, attack and accuracy. Bands of green wind circle her as
     Gale fills, then leaves; full, a ring of wind blows out from her feet.
   - **Sniper** (crossbow), planted and patient: bolts that land and standing still mid-fight build
     **Focus** (a sight over the hotkeys); running bleeds it away. The fuller it is the likelier a
@@ -378,8 +379,9 @@ to clear it.
     its mark) and command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
     **attacking in the air** shoots down at them and holds you up (a Sniper's bolt kicks her back
     up), and **attacking out of a run** is a Ranger's slide shot or a Sniper's roll into a kneeling
-    bolt. Their finishers (25 hits): the Ranger's **Storm Volley** (a gust throws her spinning
-    high, arrows pour down all around, then she dives in a burst of storm wind; fills Gale) and the
+    bolt. Her leaping shot is a backflip. Their finishers (25 hits): the Ranger's **Storm Volley**
+    (a gust throws her spinning high, the sky turns stormy and arrows pour down all around, then
+    she dives in a burst of storm wind; fills Gale) and the
     Sniper's **Heartseeker** (a long aim as a sight locks onto every monster in the line, then one
     enormous bolt that always crits, and its shockwave). A finisher shot that connects opens a
     Link, for every archer.

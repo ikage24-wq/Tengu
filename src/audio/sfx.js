@@ -83,7 +83,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
+const SHOTS = { wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   thunder: 'lightning', chain: 'lightning', chainbolt: 'lightning', burst: 'zapHit', beam: 'zapHit',

@@ -624,13 +624,16 @@ export const MOVES = {
 
   // A leaping fan: crouch, hop up and back, and loose a spread of arrows down at them from the top
   // of the hop. Shot at 0.55.
+  // The leap is a backflip (MapleStory builds its somersault by turning the whole body, 0 to 360,
+  // on a steady beat; archery.md 11): she comes round upright at the top and looses from there.
   leapshot(p) {
     const crouch = bump(p, 0, 0.22);
     const hop = Math.sin(seg(p, 0.15, 0.9) * Math.PI);
     const pull = ease(seg(p, 0.25, 0.52));
     const snap = seg(p, 0.55, 0.66);
+    const flip = ease(seg(p, 0.14, 0.5));
     return {
-      weapon: 25 * hop - 8 * snap * (1 - seg(p, 0.7, 1)), arm: 80 - 12 * hop, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.55), lift: 30 * hop, tilt: 0.14 * hop - 0.08 * snap, lunge: -2 * snap,
+      weapon: 25 * hop - 8 * snap * (1 - seg(p, 0.7, 1)), arm: 80 - 12 * hop, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.55), lift: 34 * hop, tilt: -flip * Math.PI * 2 + 0.14 * hop - 0.08 * snap, lunge: -2 * snap,
       rig: (r) => { if (hop > 0.15) tuck(r); else if (crouch > 0.3) r.squat = 2; r.backArm = snap > 0 ? [-7, -2] : [q(2 - 6 * pull), -2]; r.hairLift = hop > 0.3 ? -1 : 0; if (snap > 0 && snap < 1) strikeFace(r); },
     };
   },

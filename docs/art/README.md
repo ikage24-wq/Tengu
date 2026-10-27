@@ -163,6 +163,11 @@ carry an improvement across every part of the game it applies to.
   Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
   streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
   step white, main, deep from head to tail (fx.md D), not faded copies.
+- The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
+  hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
+  dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill
+  arrows are drawn big; and she has signature moments (wind spirits at full Gale, a tornado, a
+  storm sky). Every path needs a bold colour and at least one moment of its own.
 - Archers (research/archery.md):
   - A bow's string bends back to the draw hand with the arrow on it while drawing.
   - On the loose the string snaps straight in one frame (never eased), then rings as two faint
