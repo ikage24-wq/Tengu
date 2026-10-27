@@ -10,7 +10,7 @@
 // - Songs are built from 8-bar sections (A A B A and the like) whose last bar leads back to the
 //   first, so the loop never shows its seam.
 // - Dancing Green's stage has his own disco song, "Funky Fever", at 120 bpm to match the stage's
-//   lights, with a muffled groove and a heartbeat for his entrance, and the same song a whole step
+//   lights and in F minor like his FFXIV theme, with a muffled groove and a heartbeat for his entrance, and the same song a whole step
 //   up with doubled hats and a drive for his Hi-NRG Fever.
 
 // ---------- Helpers for writing patterns ----------
@@ -304,76 +304,90 @@ const hollow = {
   order: ['A', 'A', 'B', 'A'],
 };
 
-// ---------- Dancing Green: "Funky Fever" (E dorian disco, 120 bpm, locked to the stage) ----------
-// The chorus hook, the verse riff and the progressions are his song from before, now on the chip.
-const HOOK1 = ['E5:3 r:1 G5:2 A5:3 r:1 B5:3 r:1 A5:2', 'G#5:3 r:1 E5:3 r:1 C#5:2 E5:6', 'F#5:3 r:1 A5:2 B5:3 r:1 D6:2 B5:2 A5:2', 'B5:3 r:1 A5:3 r:1 F#5:3 r:1 E5:4'];
-const HOOK2 = [HOOK1[0], 'G#5:3 r:1 B5:3 r:1 G#5:2 E5:2 C#5:4', 'B4:2 E5:2 G5:3 r:1 B5:3 r:1 D6:2 E6:2', 'D6:5 r:1 B5:2 A5:3 r:1 F#5:4'];
-const RIFF = ['r:2 B4:2 r:2 D5:2 E5:4 r:4', 'r:2 C#5:2 r:2 E5:2 C#5:3 r:1 B4:3 r:1'];
+// ---------- Dancing Green: "Funky Fever" (F minor disco, 120 bpm, locked to the stage) ----------
+// Matched to the feel of his FFXIV fight theme (measured from the track: 120 bpm, F minor, four on
+// the floor with offbeat hats and busy claps, a bass-heavy muffled opening, and the flat-six,
+// flat-seven lift to the home chord), with our own melody: none of its tune or lyrics is used.
+// The chorus climbs Db - Eb - Fm twice and lands the second time on a bright F major.
+const HOOK1 = ['F5:3 r:1 Ab5:2 Db6:3 r:1 C6:2 Ab5:2 F5:2', 'G5:3 r:1 Bb5:2 Eb6:3 r:1 Db6:2 C6:2 Bb5:2', 'C6:6 Ab5:2 F5:4 G5:2 Ab5:2', 'C6:3 r:1 C6:2 Bb5:2 Ab5:2 G5:2 F5:4'];
+const HOOK2 = ['F5:3 r:1 Ab5:2 Db6:3 r:1 F6:2 Eb6:2 Db6:2', 'Eb6:3 r:1 Db6:2 C6:3 r:1 Bb5:2 G5:2 Bb5:2', 'A5:4 C6:4 F6:8', 'E6:2 F6:2 G6:2 F6:2 C6:4 A5:4'];
+// The verse: a plucked call and answer on the chord tones.
+const RIFF = {
+  Fm: 'r:2 C5:2 r:2 Eb5:2 F5:3 r:1 Ab5:2 F5:2',
+  Fm2: 'r:2 C5:2 r:2 Eb5:2 G5:2 F5:2 Eb5:2 C5:2',
+  Db: 'r:2 Db5:2 r:2 F5:2 Ab5:3 r:1 F5:2 Db5:2',
+  Eb: 'r:2 Eb5:2 r:2 G5:2 Bb5:3 r:1 G5:2 Eb5:2',
+  C: 'r:2 E5:2 r:2 G5:2 Bb5:3 r:1 G5:2 E5:2',
+};
 // Chord tones for each chord (for the sparkling arpeggio) and the bass roots.
-const CH = { Em: ['E', 'G', 'B', 'D'], A: ['A', 'C#', 'E', 'G#'], D: ['D', 'F#', 'A', 'C#'], Bm: ['B', 'D', 'F#', 'A'], C: ['C', 'E', 'G', 'B'] };
-const ROOT = { Em: ['E2', 'E3'], A: ['A1', 'A2'], D: ['D2', 'D3'], Bm: ['B1', 'B2'], C: ['C2', 'C3'] };
-const discoBass = (c, last = 'D3') => `${ROOT[c][0]}:2 ${ROOT[c][1]}:2 ${ROOT[c][0]}:2 ${ROOT[c][1]}:2 ${ROOT[c][0]}:2 ${ROOT[c][1]}:2 ${ROOT[c][0]}:2 ${ROOT[c][1]}:1 ${last}:1`;
+const CH = { Fm: ['F', 'Ab', 'C', 'Eb'], Db: ['Db', 'F', 'Ab', 'C'], Eb: ['Eb', 'G', 'Bb', 'D'], C: ['C', 'E', 'G', 'Bb'], F: ['F', 'A', 'C', 'E'] };
+const ROOT = { Fm: ['F2', 'F3'], Db: ['Db2', 'Db3'], Eb: ['Eb2', 'Eb3'], C: ['C2', 'C3'], F: ['F2', 'F3'] };
+const MINOR = new Set(['Fm']);
+const discoBass = (c, last = 'Eb3') => `${ROOT[c][0]}:2 ${ROOT[c][1]}:2 ${ROOT[c][0]}:2 ${ROOT[c][1]}:2 ${ROOT[c][0]}:2 ${ROOT[c][1]}:2 ${ROOT[c][0]}:2 ${ROOT[c][1]}:1 ${last}:1`;
 // Chord tones climbing and falling in 16ths, two octaves up.
 function arp16(c) {
   // The chord stacked upward from its root in the fifth octave.
   const up = [];
   for (const n of CH[c]) {
-    let m = 72 + NOTE[n[0]] + (n[1] === '#' ? 1 : 0);
+    let m = 72 + NOTE[n[0]] + (n[1] === '#' ? 1 : n[1] === 'b' ? -1 : 0);
     while (up.length && m <= up[up.length - 1]) m += 12;
     up.push(m);
   }
   const name = (m) => `${NAMES[m % 12]}${Math.floor(m / 12) - 1}`;
   return [0, 1, 2, 3, 2, 1, 0, 1, 2, 3, 2, 1, 0, 1, 2, 3].map((i) => `${name(up[i])}:1`).join(' ');
 }
-const stab = (c) => `@${c === 'Em' || c === 'Bm' ? 'arpMin' : 'arpMaj'} r:2 ${ROOT[c][1].replace(/\d/, '4')}:2 r:6 ${ROOT[c][1].replace(/\d/, '4')}:2 r:4`;
-const VERSE = ['Em', 'A', 'Em', 'A', 'D', 'C', 'Bm', 'Bm'];
-const CHORUS = ['Em', 'A', 'D', 'Bm', 'Em', 'A', 'C', 'Bm'];
+const stab = (c) => `@${MINOR.has(c) ? 'arpMin' : 'arpMaj'} r:2 ${ROOT[c][1].replace(/\d/, '4')}:2 r:6 ${ROOT[c][1].replace(/\d/, '4')}:2 r:4`;
+const VERSE = ['Fm', 'Fm', 'Db', 'Eb', 'Fm', 'Fm', 'Db', 'C'];
+const VERSE_RIFF = ['Fm', 'Fm2', 'Db', 'Eb', 'Fm', 'Fm2', 'Db', 'C'];
+const CHORUS = ['Db', 'Eb', 'Fm', 'Fm', 'Db', 'Eb', 'F', 'F'];
 const DISCO = 'KhohChohKhohChoh';
+// The second bar of each pair adds a clap pickup, for the busier clap line.
+const DISCO2 = 'KhohChohKhohChoc';
 const funkyPatterns = (fever) => ({
   chorus: {
     p1: bars(...HOOK1, ...HOOK2),
     p2: bars(...CHORUS.map((c) => `@sparkle ${arp16(c)}`)),
     wave: bars(...CHORUS.map(stab)),
     tri: bars(...CHORUS.map((c) => discoBass(c))),
-    noise: fever ? bars('OhohChohKhohChKh', times('KhohChohKhohChKh', 6), 'KhohChohB.B.BBBB') : bars('OhohChoh' + 'KhohChoh', times(DISCO, 6), 'KhohChohB.S.SSSS'),
+    noise: fever ? bars('OhohChohKhohChKh', times('KhohChohKhohChKh', 6), 'KhohChohB.B.BBBB') : bars('OhohChohKhohChoh', DISCO2, DISCO, DISCO2, DISCO, DISCO2, DISCO, 'KhohChohB.S.SSSS'),
   },
   verse: {
-    p1: bars(...VERSE.map((_, i) => `@pluck ${RIFF[i % 2]}`)),
+    p1: bars(...VERSE_RIFF.map((r) => `@pluck ${RIFF[r]}`)),
     p2: fever ? bars(...VERSE.map((c) => `@sparkle ${arp16(c)}`)) : bars(...VERSE.map((c) => `@pad ${CH[c][2]}4:16`)),
     wave: bars(...VERSE.map(stab)),
     tri: bars(...VERSE.map((c) => discoBass(c))),
-    noise: fever ? bars(times('KhohChohKhohChKh', 7), 'KhohChohB.B.BBBB') : bars(times(DISCO, 7), 'KhohChohB.S.SSSS'),
+    noise: fever ? bars(times('KhohChohKhohChKh', 7), 'KhohChohB.B.BBBB') : bars(DISCO, DISCO2, DISCO, DISCO2, DISCO, DISCO2, DISCO, 'KhohChohB.S.SSSS'),
   },
   // The breakdown: the drums drop out, held chords swell, then a snare build into the chorus.
   break: {
-    p1: bars('@pad G5:16', 'A5:16', 'B5:16', 'B5:8 E6:8'),
-    p2: bars('@pad E5:16', 'F#5:16', 'G5:16', 'G5:16'),
-    tri: bars('@bassFull C2:16', 'D2:16', `@bassDisco ${discoBass('Em')}`, discoBass('Em')),
+    p1: bars('@pad F5:16', 'Ab5:16', 'G5:16', 'Bb5:8 Eb6:8'),
+    p2: bars('@pad Db5:16', 'F5:16', 'Eb5:16', 'G5:16'),
+    tri: bars('@bassFull Db2:16', 'Db2:16', `@bassDisco ${discoBass('Eb')}`, discoBass('Eb', 'C3')),
     noise: bars('c.......c.......', 'c.......c.......', 'K...C...K...C...', 'S.S.S.S.SSSSSSSS'),
   },
 });
 const funkyInst = { ...I, sparkle: { duty: '0', vol: '7 5 3 1 0' }, pad: { duty: '1', vol: '3 5 6 7 7 | 7 / 6 5 4 3 2 1 0', vib: VIB(24, 5, 12) } };
 const funky = {
-  name: 'funky', bpm: 120, inst: funkyInst, drums: 1.1,
+  name: 'funky', bpm: 120, inst: funkyInst, drums: 1.2, hp: 30,
   voices: { p1: 'brass', p2: 'sparkle', tri: 'bassDisco', wave: 'arpMaj' },
   patterns: funkyPatterns(false),
   intro: ['chorus'],
   order: ['verse', 'chorus', 'break', 'chorus'],
 };
 // Hi-NRG Fever: the same song a whole step up, every hat a sixteenth, and the arpeggio all through.
-const funkyFever = { ...funky, name: 'funky-fever', transpose: 2, drums: 1.2, patterns: funkyPatterns(true) };
+const funkyFever = { ...funky, name: 'funky-fever', transpose: 2, drums: 1.3, patterns: funkyPatterns(true) };
 // His entrance: the groove from behind a door (the player opens it up with a filter), then a
 // heartbeat and a low drone while he transforms.
 const funkyGroove = {
-  name: 'funky-groove', bpm: 120, inst: funkyInst, drums: 1,
+  name: 'funky-groove', bpm: 120, inst: funkyInst, drums: 1.1, hp: 30,
   voices: { p1: 'brass', wave: 'arpMin', tri: 'bassDisco' },
-  patterns: { G: { tri: bars(discoBass('Em'), discoBass('Em', 'B2')), wave: bars(stab('Em'), stab('Em')), noise: bars(DISCO, 'KhohChohKhohChKh') } },
+  patterns: { G: { tri: bars(discoBass('Fm'), discoBass('Fm', 'C3')), wave: bars(stab('Fm'), stab('Fm')), noise: bars(DISCO, DISCO2) } },
   order: ['G'],
 };
 const funkyHeart = {
-  name: 'funky-heart', bpm: 120, inst: funkyInst, drums: 0.9,
+  name: 'funky-heart', bpm: 120, inst: funkyInst, drums: 0.9, hp: 30,
   voices: { p1: 'pad', tri: 'bassFull' },
-  patterns: { H: { p1: bars('@pad E3:16', 'E3:16'), tri: bars('E2:16', 'E2:16'), noise: bars('K..K............', 'K..K............') } },
+  patterns: { H: { p1: bars('@pad F3:16', 'F3:16'), tri: bars('F2:16', 'F2:16'), noise: bars('K..K............', 'K..K............') } },
   order: ['H'],
 };
 

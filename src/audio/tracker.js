@@ -11,7 +11,7 @@
 // Drums are one character per row: K kick, S snare, h closed hat, o open hat, c clap, t tom,
 // x crystal ting, C kick + clap, O kick + open hat, B kick + snare, H kick + hat, . nothing (bars
 // marked with `|` are ignored). `transpose` (semitones) shifts every melodic note; `drums` scales
-// the kit's level.
+// the kit's level, and `hp` sets the output's low cut (90 Hz like the NES; lower for more bass).
 
 import { renderNote, tone, midiHz } from './chip.js';
 
@@ -178,8 +178,8 @@ export function renderSong(song, sr = 44100) {
       right[j] += v * gr;
     }
   }
-  tone(left, sr);
-  tone(right, sr);
+  tone(left, sr, song.hp ?? 90);
+  tone(right, sr, song.hp ?? 90);
   normalize(left, right, song.level ?? 1);
   return { left, right, sampleRate: sr, loopStart, loopEnd };
 }

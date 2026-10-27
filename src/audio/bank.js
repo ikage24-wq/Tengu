@@ -126,11 +126,12 @@ export function songBuffer(key, then) {
 }
 
 // Asks for songs ahead of time (the ones the player will likely hear next).
-export function prepareSongs(keys) {
-  for (const k of keys) {
-    if (!SONGS[k] || songBufs.has(k) || pending.has(k)) continue;
+// `front` puts them ahead of everything else waiting (first key first).
+export function prepareSongs(keys, front = false) {
+  for (const k of front ? [...keys].reverse() : keys) {
+    if (!SONGS[k] || songBufs.has(k) || (pending.has(k) && !front)) continue;
     pending.add(k);
     asked.delete(`song:${k}`);
-    want({ type: 'song', key: k });
+    want({ type: 'song', key: k }, front);
   }
 }

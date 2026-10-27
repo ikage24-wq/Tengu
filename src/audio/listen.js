@@ -98,7 +98,7 @@ export function hearWorld(world, cam) {
   // ----- The hero's state -----
   const first = m.level == null;
   // Get the songs of the maps next door ready, so walking on never waits for one.
-  if (world.map.id !== m.map) prepareSongs((world.map.portals ?? []).map((pt) => pt.to && getMap(pt.to)).filter(Boolean).map((mp) => songFor(mp)));
+  if (world.map.id !== m.map) prepareSongs((world.map.portals ?? []).map((pt) => pt.to && getMap(pt.to)).filter(Boolean).flatMap((mp) => (mp.id === 'discostage' ? ['funky-groove', 'funky-heart', 'funky'] : [songFor(mp)])));
   if (!first) {
     if (char.job !== m.job) sfx('jobUp');
     else if (char.level > m.level) sfx('levelup');

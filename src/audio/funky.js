@@ -40,7 +40,7 @@ function once(name, o = {}) {
 export function updateFunky(key, cut = 0) {
   if (!st) {
     st = { key: null, done: {} };
-    prepareSongs(['funky-groove', 'funky-heart', 'funky', 'funky-fever']);
+    prepareSongs(['funky-groove', 'funky-heart', 'funky', 'funky-fever'], true);
   }
   if (key === 'funky-intro') intro(cut);
   else if (key === 'funky') fight();
@@ -113,7 +113,7 @@ function fever() {
   stop(st.song, 0.02, at);
 }
 
-// His defeat: the music stops on the next beat and the fanfare plays (a whole step up, in the
+// His defeat: the music stops on the next beat and the fanfare plays (moved up from D to F, the
 // song's key), then quiet.
 function win() {
   if (st.done.win) return;
@@ -125,6 +125,6 @@ function win() {
     stop(st[k], 0.25, at);
     st[k] = null;
   }
-  play(fanfare, { db: -7, at, rate: Math.pow(2, 2 / 12) });
+  play(fanfare, { db: -7, at, rate: Math.pow(2, 3 / 12) });
   play(sfxBuffer('crash'), { db: -12, at });
 }
