@@ -169,7 +169,7 @@ carry an improvement across every part of the game it applies to.
   `tools/build-fx.py`, which can recolour them (a fire swirl became the Ranger's wind). Play them
   with `fx-sprites.js` `fxSprite`: one strip pixel is half a game pixel, so they land on the
   screen's own pixels in HD. No gradients in effects; code draws only small supporting parts
-  (arrow shafts, tracer lines, a sight's ticks). The archer paths are done this way; the older
+  (arrow and bolt shafts, a sight's ticks). The archer paths are done this way; the older
   effects across the game still need the same pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
@@ -185,7 +185,9 @@ carry an improvement across every part of the game it applies to.
   - Air shots tip the body forward with the bow arm down, and pop up a little on each loose.
   - A crossbow never bends: the back hand's cocking pull after the shot is its motion, and between
     shots it rests at low ready, just under the aim, so a shot settles instead of dropping.
-  - Sniper bolts leave a thin tracer that shrinks toward the hit, and give the view a small kick.
+  - Sniper bolts give the view a small kick. No tracer line: the player wants to see the bolt
+    itself fly (a thin white line read as a laser, not an arrow), so bolts are drawn big, with
+    fins, at a speed you can follow (720-950 px/s; MapleStory's arrows are always visible).
   - Lock-ons dim the world and pop sights on one at a time, each tick a step higher.
   - Charging shots glow in steps (none, blue, white with a rose rim), with a flash at each step.
   - Ice cracks first, flashes white at the instant it breaks, then shards fly and mist lingers.

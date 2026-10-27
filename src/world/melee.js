@@ -121,9 +121,9 @@ export const PATH_COMBOS = {
     { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'galearrow', fan: 3, pct: 95, range: 310, h: 110, knock: 130, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
   ],
   sniper: [
-    { move: 'kneelshot', dur: 0.56, step: -2, strikes: [{ at: 0.56, shot: 'heavybolt', pct: 120, range: 330, h: 56, knock: 80, speed: 1050, pierce: true, targets: 2 }] },
-    { move: 'crankshot', dur: 0.62, step: -3, charge: true, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 130, range: 330, h: 56, knock: 90, speed: 1050, pierce: true, targets: 2 }] },
-    { move: 'ballista', dur: 0.82, step: -12, finisher: true, strikes: [{ at: 0.64, shot: 'blastbolt', pct: 210, range: 350, h: 56, blast: 56, targets: 4, speed: 1000, knock: 220, launch: 140, big: true, stop: 0.08, shake: 3, burst: 'blast' }] },
+    { move: 'kneelshot', dur: 0.56, step: -2, strikes: [{ at: 0.56, shot: 'heavybolt', pct: 120, range: 330, h: 56, knock: 80, speed: 760, pierce: true, targets: 2 }] },
+    { move: 'crankshot', dur: 0.62, step: -3, charge: true, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 130, range: 330, h: 56, knock: 90, speed: 760, pierce: true, targets: 2 }] },
+    { move: 'ballista', dur: 0.82, step: -12, finisher: true, strikes: [{ at: 0.64, shot: 'blastbolt', pct: 210, range: 350, h: 56, blast: 56, targets: 4, speed: 720, knock: 220, launch: 140, big: true, stop: 0.08, shake: 3, burst: 'blast' }] },
   ],
 };
 
@@ -141,11 +141,11 @@ const ARCHER_COMMANDS = {
     dash: { move: 'slideshot', dur: 0.5, step: 46, carry: 0.6, strikes: [{ at: 0.35, shot: 'windarrow', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }, { at: 0.62, shot: 'windarrow', pct: 90, range: 300, h: 60, knock: 90, speed: 900 }] },
   },
   sniper: {
-    up: { move: 'skyshot', dur: 0.56, step: -4, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 140, range: 300, h: 190, lift: 50, knock: 30, launch: 420, speed: 1050, big: true, stop: 0.06, shake: 1 }] },
+    up: { move: 'skyshot', dur: 0.56, step: -4, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 140, range: 300, h: 190, lift: 50, knock: 30, launch: 420, speed: 760, big: true, stop: 0.06, shake: 1 }] },
     air: [
-      { move: 'airshot', dur: 0.5, hang: true, strikes: [{ at: 0.5, shot: 'heavybolt', pct: 120, range: 300, h: 170, drop: 50, knock: 80, recoil: 260, speed: 1050, pierce: true, targets: 2 }] },
+      { move: 'airshot', dur: 0.5, hang: true, strikes: [{ at: 0.5, shot: 'heavybolt', pct: 120, range: 300, h: 170, drop: 50, knock: 80, recoil: 260, speed: 760, pierce: true, targets: 2 }] },
     ],
-    dash: { move: 'rollshot', dur: 0.66, step: 40, carry: 0.45, guard: 0.3, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 150, range: 330, h: 56, knock: 160, speed: 1050, pierce: true, targets: 3, big: true, stop: 0.05, shake: 1 }] },
+    dash: { move: 'rollshot', dur: 0.66, step: 40, carry: 0.45, guard: 0.3, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 150, range: 330, h: 56, knock: 160, speed: 760, pierce: true, targets: 3, big: true, stop: 0.05, shake: 1 }] },
   },
 };
 
@@ -568,16 +568,14 @@ function fire(world, strike) {
   const speed = s.speed ?? 680;
   const box = { w: s.range, h: s.h ?? 60 };
   const element = star?.star.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
-  // A twin arrow trails its first a beat behind (`lag`). A Sniper's bolts leave a thin tracer to
-  // where they're headed that shrinks toward the hit (research/archery.md 30).
+  // A twin arrow trails its first a beat behind (`lag`).
   const lag = s.lag ?? 0;
-  const tracer = hasFocus(world.char);
+  const sniper = hasFocus(world.char);
   const fly = (tx, ty) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
     world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, x: ox, y: oy, tx, ty, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
-    if (tracer) world.fx.push({ kind: 'tracer', x: ox, y: oy, tx, ty, big: s.big || s.deadeye, t: 0, dur: Math.max(0.14, travel + 0.08) });
     return travel + lag;
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
@@ -586,7 +584,7 @@ function fire(world, strike) {
   else if (!hasGale(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back; every Sniper bolt does a little (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
-  else if (tracer) world.juice.push({ type: 'kick', x: -s.dir * 1, y: 0 });
+  else if (sniper) world.juice.push({ type: 'kick', x: -s.dir * 1, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
   // A full Gale looses a twin arrow beside every basic shot, a little lighter.

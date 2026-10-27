@@ -3,7 +3,7 @@
 // full of leaves, spinning wind (a swirl recoloured from the packs), rings of wind, dust. The
 // Sniper's are steel and frost: bolt bursts, sparks, shrapnel, a charging core, a lattice beam,
 // frost novas, ice stars, a real explosion, and a rose star for the Deadeye. Code draws only the
-// small supporting parts: the arrow and bolt shafts, a sniper's tracer line, and the sight's ticks.
+// small supporting parts: the arrow and bolt shafts and the sight's ticks.
 //
 // Shots draw at their head (x, y) flying along `dir`; the rest are drawn from progress `p` (0-1)
 // and a seed, at a monster's feet for per-target effects and the bow hand for muzzle bursts.
@@ -137,53 +137,54 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'heavybolt': {
+      // A crossbow bolt, drawn big enough to follow (a steel head, a thick shaft, fins); no streak
+      // behind it (a line read as a laser, not a bolt).
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      shaft(ctx, 12, 2, '#dfe9ff', FOCUS.main, true);
+      shaft(ctx, 24, 2.6, '#eef4ff', FOCUS.main, true);
       ctx.restore();
       return true;
     }
     case 'blastbolt': {
       // A bolt with a charge in its head: the pack's charging core, held at its brightest.
-      fxSprite(ctx, 'charge', x + dir * 4, y, { frame: 3 + (Math.floor(time * 20) % 2), scale: 0.7 });
+      fxSprite(ctx, 'charge', x + dir * 6, y, { frame: 3 + (Math.floor(time * 20) % 2), scale: 0.7 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      shaft(ctx, 13, 2.2, '#ffd27a', FOCUS.main, true);
+      shaft(ctx, 26, 2.8, '#ffd27a', FOCUS.main, true);
       ctx.restore();
       return true;
     }
     case 'frostbolt': {
       // A bolt with an ice star spinning at its head.
-      fxSprite(ctx, 'icestar', x + dir * 4, y, { t: time, scale: 0.55 });
+      fxSprite(ctx, 'icestar', x + dir * 6, y, { t: time, scale: 0.6 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      shaft(ctx, 12, 2, '#bff0ff', '#3f9fd8', true);
+      shaft(ctx, 24, 2.6, '#bff0ff', '#3f9fd8', true);
       ctx.restore();
       return true;
     }
     case 'ballista': {
       // A huge bolt pushing rings of force ahead of it.
-      fxSprite(ctx, 'hitring', x + dir * 10, y, { t: time * 2, scale: 1.4, sx: 0.4 });
+      fxSprite(ctx, 'hitring', x + dir * 12, y, { t: time * 2, scale: 1.4, sx: 0.4 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      shaft(ctx, 22, 3.4, '#ffffff', SIGHT, true);
+      shaft(ctx, 36, 4, '#ffffff', SIGHT, true);
       ctx.restore();
       return true;
     }
     case 'heartbolt': {
-      // Heartseeker: the pack's lattice beam stretched out behind a giant bolt, a rose star
-      // turning at its head.
-      const len = Math.min(260, Math.hypot(x - f.x, y - f.y) + 40);
-      fxSprite(ctx, 'beam', x - Math.cos(ang) * len / 2, y - Math.sin(ang) * len / 2, { t: time, rot: ang, sx: len / 45, scale: 1, sy: 2.4 });
-      fxSprite(ctx, 'deadstar', x + dir * 6, y, { t: time, scale: 0.8 });
+      // Heartseeker: one giant bolt (twice a ballista's size), a rose star turning at its head and
+      // rings of force pushed ahead of it; no beam (it should read as a bolt, not a laser).
+      fxSprite(ctx, 'hitring', x + dir * 18, y, { t: time * 2.5, scale: 2, sx: 0.4 });
+      fxSprite(ctx, 'deadstar', x + dir * 8, y, { t: time, scale: 0.8 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      shaft(ctx, 30, 4.4, '#ffffff', SIGHT, true);
+      shaft(ctx, 52, 5, '#ffffff', SIGHT, true);
       ctx.restore();
       return true;
     }
@@ -325,28 +326,6 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       ctx.fill();
       ctx.restore();
       if (lock >= 1) shock(ctx, mx, my, r + 10 * easeOut((p - 0.85) / 0.15), r + 10 * easeOut((p - 0.85) / 0.15), 2 * (1 - (p - 0.85) / 0.15), SIGHT);
-      return true;
-    }
-    case 'tracer': {
-      // A Sniper's tracer: one thin bright line from the bow to where the bolt is headed, there in
-      // full on the release, then shrinking from the bow end toward the hit (research/archery.md 30).
-      const tx = f.tx - cam.x;
-      const ty = f.ty - cam.y;
-      const k = easeOut(p);
-      const sx0 = x + (tx - x) * k;
-      const sy0 = y + (ty - y) * k;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = f.big ? SIGHT : FOCUS.main;
-      ctx.lineWidth = (f.big ? 3 : 2) * (1 - p * 0.5);
-      ctx.globalAlpha = 0.6;
-      ctx.beginPath();
-      ctx.moveTo(sx0, sy0);
-      ctx.lineTo(tx, ty);
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = f.big ? 1.4 : 0.9;
-      ctx.globalAlpha = 1;
-      ctx.stroke();
       return true;
     }
     case 'aimdim': {

@@ -477,13 +477,13 @@ export const SKILLS = {
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(2, 4);
-      const bolt = (at, pct, knock = 80) => ({ at, shot: 'heavybolt', pct, range: 340, h: 56, knock, speed: 1100, pierce: true, targets });
+      const bolt = (at, pct, knock = 80) => ({ at, shot: 'heavybolt', pct, range: 340, h: 56, knock, speed: 780, pierce: true, targets });
       return {
         mp: k(6, 13), pct: k(130, 210), hits: 4, targets,
         combo: [
           { move: 'kneelshot', dur: 0.58, step: -2, strikes: [bolt(0.56, k(140, 230), 110)] },
           { move: 'crankshot', dur: 0.64, step: -3, charge: true, strikes: [bolt(0.5, k(90, 150)), bolt(0.8, k(95, 155), 120)] },
-          { move: 'ballista', dur: 0.86, step: -6, finisher: true, strikes: [{ at: 0.62, shot: 'ballista', pct: k(260, 430), range: 380, h: 60, targets: targets + 3, pierce: true, speed: 1200, knock: 320, launch: 160, kickback: 26, big: true, stop: 0.1, shake: 4, muzzle: 'boltshock' }] },
+          { move: 'ballista', dur: 0.86, step: -6, finisher: true, strikes: [{ at: 0.62, shot: 'ballista', pct: k(260, 430), range: 380, h: 60, targets: targets + 3, pierce: true, speed: 820, knock: 320, launch: 160, kickback: 26, big: true, stop: 0.1, shake: 4, muzzle: 'boltshock' }] },
         ],
       };
     },
@@ -497,7 +497,7 @@ export const SKILLS = {
       const targets = k(4, 7);
       return {
         mp: k(14, 28), pct: k(150, 250), hits: 1, targets,
-        combo: [{ move: 'kneelshot', dur: 0.66, step: -4, strikes: [{ at: 0.6, shot: 'frostbolt', pct: k(150, 250), range: 340, h: 60, targets, blast: 80, blastFx: 'frostshard', freeze: lerpf(1.2, 2.4, lv, m), burst: 'frostburst', speed: 900, knock: 60, big: true, stop: 0.06, shake: 2 }] }],
+        combo: [{ move: 'kneelshot', dur: 0.66, step: -4, strikes: [{ at: 0.6, shot: 'frostbolt', pct: k(150, 250), range: 340, h: 60, targets, blast: 80, blastFx: 'frostshard', freeze: lerpf(1.2, 2.4, lv, m), burst: 'frostburst', speed: 720, knock: 60, big: true, stop: 0.06, shake: 2 }] }],
       };
     },
   }),
@@ -516,7 +516,7 @@ export const SKILLS = {
       return {
         mp: k(30, 50), pct: k(480, 820), hits: 2, targets, aimGain: 0,
         combo: [{ move: 'heartseeker', dur: 1.7, step: 0, finisher: true, guard: 1.4, mark: true, strikes: [
-          { at: 0.6, shot: 'heartbolt', pct: k(480, 820), range: 560, h: 76, targets, pierce: true, crit: true, speed: 1500, knock: 340, launch: 220, kickback: 40, big: true, stop: 0.16, shake: 8, muzzle: 'heartshock', gauge: 0 },
+          { at: 0.6, shot: 'heartbolt', pct: k(480, 820), range: 560, h: 76, targets, pierce: true, crit: true, speed: 950, knock: 340, launch: 220, kickback: 40, big: true, stop: 0.16, shake: 8, muzzle: 'heartshock', gauge: 0 },
           { at: 0.74, shot: 'wave', pct: k(150, 260), range: 560, h: 90, targets, pierce: true, speed: 900, knock: 200, big: true, stop: 0.05, shake: 3, gauge: 0 },
         ] }],
       };
