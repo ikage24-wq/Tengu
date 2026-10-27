@@ -11,7 +11,7 @@ export const FX_SHEETS = {
   windslash: { w: 72, h: 36, n: 10, fps: 20, px: 30, py: 28, loop: false },
   dust: { w: 81, h: 45, n: 14, fps: 20, px: 40, py: 19, loop: false },
   smoke: { w: 63, h: 46, n: 14, fps: 20, px: 31, py: 17, loop: false },
-  boltburst: { w: 88, h: 50, n: 8, fps: 20, px: 63, py: 22, loop: false },
+  boltburst: { w: 39, h: 50, n: 7, fps: 20, px: 14, py: 22, loop: false },
   boltspark: { w: 76, h: 51, n: 13, fps: 20, px: 37, py: 29, loop: false },
   charge: { w: 69, h: 57, n: 13, fps: 20, px: 34, py: 28, loop: false },
   beam: { w: 91, h: 21, n: 16, fps: 20, px: 10, py: 10, loop: true },

@@ -571,9 +571,11 @@ function fire(world, strike) {
   // A twin arrow trails its first a beat behind (`lag`).
   const lag = s.lag ?? 0;
   const sniper = hasFocus(world.char);
-  const fly = (tx, ty) => {
+  // A shot aimed at a monster follows it in flight (`mob`; see world.js): it homes in on where the
+  // monster is now, and a piercing one keeps its line through it out to `reach`.
+  const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, x: ox, y: oy, tx, ty, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     return travel + lag;
@@ -597,14 +599,21 @@ function fire(world, strike) {
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
   if (s.pierce) {
     const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
+    // It flies at the first monster in its line (up or down to it, from the air or onto a slope)
+    // and on through, out to its full range; each one it passes is hit as the bolt gets there.
+    const first = line[0];
+    const aim = first ? Math.atan2(first.y - (first.air ?? 0) - first.def.h / 2 - oy, first.x - ox) : s.dir > 0 ? 0 : Math.PI;
+    const ux = Math.cos(aim);
+    const uy = Math.sin(aim);
     // A whirling shot keeps cutting what it passes (`ticks` more times, `tickGap` apart).
     line.forEach((m, i) => {
-      const at = Math.abs(m.x - ox) / speed + lag;
+      const at = Math.max(0, (m.x - ox) * ux + (m.y - (m.air ?? 0) - m.def.h / 2 - oy) * uy) / speed + lag;
       // Each monster it passes through lands a little bigger than the last (Piercing Arrow).
       shotHit(world, s, m, at, i % 3, element, i);
       for (let k = 1; k <= (s.ticks ?? 0); k++) shotHit(world, { ...s, knock: 10, stop: 0, shake: 0, big: false, gauge: 1 }, m, at + k * s.tickGap, (i + k) % 3, element);
     });
-    fly(ox + s.dir * s.range, oy);
+    const len = Math.max(s.range, first ? Math.hypot(first.x - ox, first.y - oy) + 60 : 0);
+    fly(ox + ux * len, oy + uy * len, first, len);
     return;
   }
   const n = s.fan ?? 1;
@@ -612,7 +621,7 @@ function fire(world, strike) {
   for (let i = 0; i < n; i++) {
     const m = targets[i];
     if (m) {
-      const travel = fly(m.x, m.y - (m.air ?? 0) - m.def.h / 2);
+      const travel = fly(m.x, m.y - (m.air ?? 0) - m.def.h / 2, m);
       shotHit(world, s, m, travel, 0, element);
       // A blast bolt bursts where it lands, catching everything close around it too.
       if (s.blast) {

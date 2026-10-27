@@ -832,3 +832,32 @@ test("each archer path's finisher needs a 25-hit combo, spends it, and lands its
     assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
   }
 });
+
+test('arrows and bolts fly at the monster they hit, and follow it as it moves', () => {
+  // From the air, a Sniper's piercing bolt angles down at the monster below instead of flying
+  // straight on over its head.
+  const w = archer('sniper');
+  w.body.vy = -500;
+  w.body.onGround = false;
+  run(w, 0.15);
+  updateWorld(w, DT, press('KeyZ'));
+  let shot = null;
+  for (let i = 0; i < 60 && !shot; i++) {
+    updateWorld(w, DT, idle);
+    shot = w.fx.find((f) => f.kind === 'projectile' && f.shot === 'heavybolt');
+  }
+  assert.ok(shot, 'a bolt flies');
+  assert.ok(shot.ty > shot.y + 5, `it angles down at the monster (${shot.y} -> ${shot.ty})`);
+  // A shot heads for where its monster is now.
+  const v = archer('ranger');
+  updateWorld(v, DT, press('KeyZ'));
+  let arrow = null;
+  for (let i = 0; i < 60 && !arrow; i++) {
+    updateWorld(v, DT, idle);
+    arrow = v.fx.find((f) => f.kind === 'projectile' && f.mob);
+  }
+  assert.ok(arrow, 'an arrow flies at a monster');
+  arrow.mob.x += 40;
+  updateWorld(v, DT, idle);
+  assert.equal(Math.round(arrow.tx), Math.round(arrow.mob.x), 'it follows the monster');
+});

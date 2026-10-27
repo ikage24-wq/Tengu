@@ -593,6 +593,22 @@ export function updateWorld(world, dt, input) {
 
   // ----- Visual timers -----
   for (const f of world.fx) f.t += dt;
+  // Arrows and bolts track the monster they were loosed at (knocked back, launched, walking): a
+  // shot heads for where it is now; a piercing one keeps its line through it out to its reach.
+  for (const f of world.fx) {
+    const m = f.mob;
+    if (f.kind !== 'projectile' || !m || m.hp <= 0 || f.t >= f.dur) continue;
+    const mx = m.x;
+    const my = m.y - (m.air ?? 0) - m.def.h / 2;
+    if (!f.reach) {
+      f.tx = mx;
+      f.ty = my;
+    } else {
+      const d = Math.hypot(mx - f.x, my - f.y) || 1;
+      f.tx = f.x + ((mx - f.x) / d) * f.reach;
+      f.ty = f.y + ((my - f.y) / d) * f.reach;
+    }
+  }
   world.fx = world.fx.filter((f) => f.t < f.dur);
   for (const n of world.numbers) n.t += dt;
   world.numbers = world.numbers.filter((n) => n.t < 1.1);

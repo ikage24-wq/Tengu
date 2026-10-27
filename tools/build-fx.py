@@ -26,7 +26,8 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # name: (pack, effect, options). `hue` recolours to that hue (0-360), `sat` scales saturation,
-# `fps` overrides the pack's rate, `loop` marks a looping effect, `start` skips opening frames.
+# `fps` overrides the pack's rate, `loop` marks a looping effect, `start` skips opening frames,
+# `clip` erases everything further left of the burst's middle than that many pixels.
 FX = {
     # The Ranger's wind.
     'leafgust': ('pvfx', 'leaf-gust', {'hue': 118, 'sat': 1.05}),
@@ -37,7 +38,9 @@ FX = {
     'dust': ('pvfx', 'landing-dust', {}),
     'smoke': ('pvfx', 'smoke-puff', {}),
     # The Sniper's steel, frost and blasts.
-    'boltburst': ('pvfx', 'beam-cutoff-burst', {'start': 3}),
+    # A beam's cut-off burst, kept as a bolt's hit: the beam leading into it is erased (`clip`), or
+    # it reads as a second bolt stuck in the monster.
+    'boltburst': ('pvfx', 'beam-cutoff-burst', {'start': 4, 'clip': 14}),
     'boltspark': ('pvfx', 'electric-impact', {}),
     'charge': ('pvfx', 'focus-charge', {}),
     'beam': ('pvfx', 'lattice-beam', {'loop': True}),
@@ -90,7 +93,16 @@ def build(base):
     sheets = {}
     for name, (pack, effect, o) in FX.items():
         frames, pivot, fps = (pvfx_frames if pack == 'pvfx' else codemanu_frames)(base, effect)
-        frames = [f for f in frames[o.get('start', 0):] if f.getbbox()]
+        frames = frames[o.get('start', 0):]
+        if 'clip' in o:
+            # Measured from the burst's own middle (its last frame, the ring alone), and the
+            # effect is anchored there instead.
+            b = [f for f in frames if f.getbbox()][-1].getbbox()
+            cx, cy = (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
+            for f in frames:
+                f.paste((0, 0, 0, 0), (0, 0, max(0, cx - o['clip']), f.height))
+            pivot = [cx, cy]
+        frames = [f for f in frames if f.getbbox()]
         if 'hue' in o:
             frames = [recolour(f, o['hue'], o.get('sat', 1)) for f in frames]
         boxes = [f.getbbox() for f in frames]
