@@ -237,6 +237,26 @@ const R = {
       { seq: 'r:80 D4+A4+D5:900', inst: 'brass_section', db: -8 },
     ],
   },
+  // The Thief: Shadow topping out (a hush, a low bell, a breath of strings: Phantom), night
+  // falling for her dagger finisher, the full moon rising for her star finisher, and the giant
+  // crescent moon's cut.
+  phantom: {
+    db: -11, max: 1, room: true, duck: [-5, 900], layers: [
+      { rec: 'teleOut', len: 900, db: -4 },
+      { seq: 'A3+E4:900', inst: 'string_ensemble_1', attack: 0.15, db: -8 },
+      { seq: 'r:120 E6:700', inst: 'celesta', db: -6 },
+    ],
+  },
+  nightfall: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', len: 1400 }, { rec: 'teleOut', db: -6 }, { seq: 'A2+E3:1200', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
+  fullmoon: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 900 }, { seq: 'A5:60 C6:60 E6:60 A6:700', inst: 'celesta', db: -4 }, { seq: 'A3+E4+A4:1100', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
+  crescentcut: {
+    db: -8, max: 1, duck: [-8, 1200], layers: [
+      { rec: 'bladeSwingHeavy', rate: 0.8 },
+      { rec: 'darkImpact', len: 1400, db: -4 },
+      thump(70, 460, { slide: -1.5 }),
+      { seq: 'A3+E4+A4+C5:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
+    ],
+  },
   // The archer paths' gauges topping out: Gale (a rush of wind, a rising flute and harp) and the
   // Sniper's lock (a sharp metal click, a high glint).
   galeFull: {

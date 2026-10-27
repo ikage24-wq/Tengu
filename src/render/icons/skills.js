@@ -1063,7 +1063,7 @@ function heartseeker() {
 
 // ---------- Thief ----------
 
-function twinstab() {
+function twinfang() {
   const out = [...tile('shadow', 'active'), ...aura(8, 8, 6.8, '#d8ccff')];
   const dagger = { w: 2.3, gw: 3.6, glen: 2.1, guard: '#c9a6ff', grip: '#3a2d4f', gem: '#ff5a8a' };
   out.push(...sword([5.2, 10.8], [12.4, 3.6], dagger));
@@ -1073,19 +1073,26 @@ function twinstab() {
   return out;
 }
 
-function startoss() {
+// A four-point throwing star, lit and shaded blade by blade, with its hole.
+function throwStar(cx, cy, r, rot, metal = '#dfe6f8') {
+  const pts = starPts(cx, cy, r, r * 0.34, 4, rot);
+  const res = [...solid(pts, metal, { d: 0.45 })];
+  for (let i = 0; i < 4; i++) {
+    const a = pts[i * 2];
+    res.push(S([a, pts[(i * 2 + 1) % 8], [cx, cy]], i % 2 ? sh(metal) : hi(metal)));
+  }
+  res.push(S(oval(cx, cy, r * 0.22, r * 0.22, 0, 12), '#3a2d4f'));
+  return res;
+}
+// A crescent moon: the outer arc of a disc with an offset disc bitten out of it.
+function crescentPts(cx, cy, r, bite = [1.8, -1.4], k = 0.82) {
+  return [...arcPts(cx, cy, r, r, -40, 230, 22), ...arcPts(cx + bite[0], cy + bite[1], r * k, r * k, 230, -40, 22)];
+}
+
+function luckyseven() {
   const metal = '#dfe6f8';
   const out = [...tile('shadow', 'active')];
-  const star = (cx, cy, r, rot) => {
-    const pts = starPts(cx, cy, r, r * 0.34, 4, rot);
-    const res = [...solid(pts, metal, { d: 0.45 })];
-    for (let i = 0; i < 4; i++) {
-      const a = pts[i * 2];
-      res.push(S([a, pts[(i * 2 + 1) % 8], [cx, cy]], i % 2 ? sh(metal) : hi(metal)));
-    }
-    res.push(S(oval(cx, cy, r * 0.22, r * 0.22, 0, 12), '#3a2d4f'));
-    return res;
-  };
+  const star = (cx, cy, r, rot) => throwStar(cx, cy, r, rot, metal);
   out.push(streak([0.8, 11], [6.2, 9.6], 1.8, '#b4a6ee'), streak([2.4, 14.4], [7.6, 13], 1.2, '#b4a6ee'));
   out.push(streak([3.6, 6.8], [8.4, 5.6], 1.2, '#b4a6ee'));
   out.push(...aura(11, 6, 4.4, '#e6dcff'));
@@ -1094,19 +1101,19 @@ function startoss() {
   return out;
 }
 
-function haste() {
+function quickhaste() {
   const out = [...tile('shadow', 'buff'), ...aura(9, 8, 6, '#e6dcff')];
   out.push(streak([0.8, 5], [5, 5], 0.9, '#c4b6ff'), streak([0.8, 11], [5, 11], 0.9, '#c4b6ff'), streak([1.6, 8], [4.4, 8], 1.1, '#e6dcff'));
   const chev = (x, c) => [[x, 2.8], [x + 3, 2.8], [x + 7, 8], [x + 3, 13.2], [x, 13.2], [x + 4, 8]];
-  out.push(...solid(chev(3.6, 0), '#7fe8ff', { d: 0.45 }));
-  out.push(...solid(chev(7.8, 0), '#fff36b', { d: 0.45 }));
+  out.push(...solid(chev(3.6, 0), '#b89cff', { d: 0.45 }));
+  out.push(...solid(chev(7.8, 0), '#e8e4ff', { d: 0.45 }));
   out.push(S([[7.8, 2.8], [10.8, 2.8], [12.8, 5.4], [9.8, 5.4]], W));
   out.push(S([[3.6, 2.8], [6.6, 2.8], [8.6, 5.4], [5.6, 5.4]], '#dcfaff'));
   out.push(...spark(14, 13.6, 1.1));
   return out;
 }
 
-function shadowstep() {
+function shadowdash() {
   const navy = '#2e2466';
   const out = [...tile('dusk', 'active')];
   // A masked shadow dashing ahead: scarf tails and smoke streaming behind.
@@ -1126,7 +1133,7 @@ function shadowstep() {
   return out;
 }
 
-function nimble() {
+function nimblefeet() {
   const out = [...tile('shadow', 'passive'), ...aura(8, 8, 6.6, '#e6dcff')];
   out.push(...swoosh(9, 12, 6.6, 4, 150, 260, 1.4, '#c4b6ff', { ink: '#2a1f5e' }));
   const f = leaf([3.6, 13.4], [13.4, 2.4], 5, '#f8f4ff', { bend: -1.4, rib: '#c9b8ff', veins: 4, veinC: '#d8ccf0' });
@@ -1135,6 +1142,72 @@ function nimble() {
   // Notches in the vane.
   out.push(S([[9, 6], [11, 5.2], [10.6, 6]], '#4a3a90'), S([[6, 10.6], [5.6, 9.2], [6.6, 9.8]], '#4a3a90'));
   out.push(...spark(13.6, 12.6, 1.2), ...spark(2.6, 3, 1.1, '#fff3a6'));
+  return out;
+}
+
+function backstab() {
+  const out = [...tile('dusk', 'active'), ...aura(9, 8, 6.4, '#e6dcff')];
+  // A puff of smoke left where she was, and the dagger driving in from behind.
+  out.push(...puffs([[3.4, 11.6, 2.2], [5.6, 12.6, 2], [2.6, 13.8, 1.5]], '#c9b4ff', { shadow: false, dark: '#8a6ae8', ink: '#2a1a6a' }));
+  out.push(streak([2, 6.4], [7.4, 6.4], 1.1, '#e6dcff'), streak([3, 8.6], [7.6, 8.6], 0.8, '#c4b6ff'));
+  out.push(...sword([13.6, 12.8], [6.4, 4.2], { w: 2.4, gw: 3.6, glen: 2.1, guard: '#c9a6ff', grip: '#3a2d4f', gem: '#ff5a8a' }));
+  out.push(...spark(5.6, 3.6, 1.4, '#fff6ff'), ...spark(13.6, 3, 0.9));
+  return out;
+}
+
+function daggermastery() {
+  const out = [...tile('shadow', 'passive'), ...aura(8, 8, 6.6, '#e6dcff')];
+  out.push(...solid(crescentPts(8, 8.4, 5.8), '#e8e4ff', { d: 0.4, ink: '#2a1a6a' }));
+  out.push(...sword([4.6, 13], [11.8, 3.4], { w: 2.2, gw: 3.4, glen: 2, guard: '#c9a6ff', grip: '#3a2d4f', gem: '#7fd8ff' }));
+  out.push(...glint(6, 5, 0.5), ...spark(13.6, 12.6, 1.1));
+  return out;
+}
+
+function moonlitassassin() {
+  const out = [...tile('royal', 'active'), ...aura(8, 6, 6.8, '#e8e4ff', 1.1)];
+  // A big crescent moon over the night, and a dagger's X cut across it.
+  out.push(...solid(crescentPts(8, 7, 6.2, [2.2, -1.6]), '#f2f0ff', { d: 0.45, ink: '#2a1a6a', glow: 1.1 }));
+  const blade = (a, b) => [streak(a, b, 1.5, '#c9b4ff'), streak(a, b, 0.6, W)];
+  out.push(...blade([2.6, 14.2], [13.6, 3.2]), ...blade([2.6, 3.2], [13.6, 14.2]));
+  out.push(...spark(8, 8.6, 1.6, W), ...spark(2.6, 2.4, 0.9), ...spark(13.8, 13.6, 1));
+  return out;
+}
+
+function starfan() {
+  const out = [...tile('shadow', 'active'), ...aura(3, 13, 5, '#e6dcff', 1.1)];
+  const o = [2.2, 13.8];
+  for (const [a, r] of [[-82, 1.9], [-62, 2.2], [-43, 2.5], [-24, 2.2], [-5, 1.9]]) {
+    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    out.push(streak(add(o, u, 3), add(o, u, 8.4), 0.8, '#c4b6ff'));
+    out.push(...throwStar(o[0] + u[0] * 10.6, o[1] + u[1] * 10.6, r, a));
+  }
+  out.push(...puffs([[2.6, 13.2, 1.8]], '#c9b4ff', { shadow: false, dark: '#8a6ae8', ink: '#2a1a6a' }));
+  out.push(...spark(13.6, 13.4, 1));
+  return out;
+}
+
+function gauntletmastery() {
+  const out = [...tile('shadow', 'passive'), ...aura(8, 8, 6.6, '#e6dcff')];
+  // A gauntlet's knuckle plate with a star held up from it.
+  const glove = [[3.4, 15], [3.2, 10.4], [4.6, 8.6], [11.4, 8.6], [12.8, 10.4], [12.6, 15]];
+  out.push(...solid(glove, '#6a4ab8', { d: 0.45, ink: '#2a1a6a' }));
+  out.push(...[4.8, 7.1, 9.4, 11.6].map((x) => S(oval(x, 9.4, 1, 0.8, 0, 10), '#c9b4ff')));
+  out.push(...throwStar(8, 4.6, 3.6, -20));
+  out.push(...glint(5.6, 11.6, 0.5), ...spark(13.6, 3, 1.1, '#fff6ff'));
+  return out;
+}
+
+function fullmoonvolley() {
+  const out = [...tile('royal', 'active'), ...aura(8, 6.4, 6.6, '#f2f0ff', 1.1)];
+  // A full moon with stars raining down from it.
+  const moon = oval(8, 6, 4.6, 4.6, 0, 28);
+  out.push(...solid(moon, '#e8e4ff', { d: 0.45, ink: '#2a1a6a', glow: 1.15 }));
+  out.push(S(oval(9.4, 7.4, 1.1, 1.1, 0, 12), '#c4b6ff'), S(oval(6.6, 5, 0.8, 0.8, 0, 10), '#c4b6ff'));
+  for (const [x, y, r] of [[2.6, 12.4, 1.7], [7.4, 13.6, 1.9], [12.6, 12, 1.6]]) {
+    out.push(streak([x - 1.4, y - 4], [x - 0.4, y - 1.4], 0.7, '#c4b6ff'));
+    out.push(...throwStar(x, y, r, -30));
+  }
+  out.push(...spark(14, 2.4, 1, W), ...spark(2, 2.6, 0.8));
   return out;
 }
 
@@ -1558,7 +1631,7 @@ const ART = {
   twinshot, arrowfan, arrowshower, flipshot, huntersfocus, bowmastery, eagleeye, falcondive,
   rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,
   snipermastery, marksman, glacierbolt: glacier, steadyaim, heartseeker,
-  twinstab, startoss, haste, shadowstep, nimble,
+  shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ilmastery, coldbeam, thunderbolt, stormfocus,
   firemastery, fireball, poisonmist, meditate,
   holymastery, bless, heal, holybolt,

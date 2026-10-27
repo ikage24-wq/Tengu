@@ -130,6 +130,26 @@ to clear it.
   Eye** are passives. Her finisher, **Falcon Dive**, needs full Momentum and spends it: she raises
   her bow to the sky, a great golden falcon of light wheels down, and she looses it through the
   whole line with a storm of feathers in its wake.
+- **Thief** (violet and midnight with moonlight silver: crescent moons and smoke) — the first job
+  builds the base for both of the Thief's later paths, so its book is a choice: put points into
+  the dagger skills, the gauntlet skills, or both. With a dagger she has her own basic combo (a
+  stab, a slash, an X-cut) and her own dagger command moves (a flipping launcher, fast air stabs
+  and a diving stab, a dash that slips through the line); with a gauntlet her own star combo (a
+  star, two stars, a big moon star through the line) and command throws (up at fliers, from the
+  air, out of a run). **Shadow** is her gauge (a crescent moon): every hit builds it, faster while
+  hits land in a quick chain, and it fades fast once the fighting stops. Full, she has
+  **Phantom**: a violet shadow copy of her repeats every attack a beat later (its stars don't come
+  out of your bag). Shared skills: **Shadow Step** (dart through the monsters in smoke, untouchable),
+  **Haste** (you and the party run and jump faster), **Nimble** (avoid and accuracy). Dagger:
+  **Twin Fang** (a three-press combo: stab, stab, cross-slash), **Backstab** (slip through a
+  monster, turn, and stab it in the back; much harder on one facing away), **Dagger Mastery**, and
+  the finisher **Moonlit Assassination** (needs full Shadow and spends it: night falls, she
+  vanishes and blinks from monster to monster cutting each one, then a giant crescent moon cuts the
+  line). Gauntlet: **Lucky Seven** (a three-press combo: two stars, two more, one big spinning moon
+  star), **Star Fan** (one star per monster), **Gauntlet Mastery**, and the finisher **Full Moon
+  Volley** (needs full Shadow: a storm of stars gathers into a full moon over the monsters, bursts
+  into a rain of stars, and a giant crescent moon cuts the line). The masteries only count with
+  their own weapon.
 - **Command combos** — with a sword, axe, spear, dagger or bare hands: **Up + attack** is a
   launcher that throws monsters up and hops you after them; **attacking in the air** plays an air
   combo (two cuts that keep you hanging, then a dive that slams into the ground on landing); and

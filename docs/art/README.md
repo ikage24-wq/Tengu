@@ -193,8 +193,14 @@ carry an improvement across every part of the game it applies to.
     Dive a great golden falcon of light (wings of long gold feathers tipped sky blue) that wheels
     over her and dives through the line. Gold alone was too close to the Paladin's light, so the
     sky blue is what makes a hit read as hers.
-  - Mages, thieves, monsters, and buffs' lasting looks are still code-drawn and need the same
-    pass.
+  - The Thief (first job) is violet and midnight with moonlight silver: thin violet dagger swipes,
+    a violet X with a silver glint on every hit, puffs of violet smoke for steps and vanishing,
+    violet streaks behind thrown stars, wisps of shadow and little crescents rising as Shadow
+    builds, a crescent-and-dagger emblem, a full moon for Full Moon Volley and a giant crescent
+    moon for both finishers' last cut. Her Phantom is a violet shadow copy of the hero herself.
+    The moon first came out a flat white disc (the match snaps pale tones to white), so it is
+    drawn a step darker, lavender with violet shading.
+  - Mages, monsters, and buffs' lasting looks are still code-drawn and need the same pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

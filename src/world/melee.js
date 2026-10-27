@@ -113,6 +113,18 @@ export const PATH_COMBOS = {
     { move: 'rapid', dur: 0.46, step: -4, strikes: [{ at: 0.17, shot: 'hawkarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 800 }, { at: 0.5, shot: 'hawkarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 800 }] },
     { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 175, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 210, big: true, stop: 0.06, shake: 2 }] },
   ],
+  // The Thief, by weapon. With a dagger: a stab, a quick slash, then an X-cut that throws them
+  // back. With a gauntlet: a star, two stars, then a big spinning moon star through the line.
+  thiefdagger: [
+    { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 58, h: 46, knock: 30, pierce: true }] },
+    { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
+    { move: 'cross', dur: 0.46, step: 10, finisher: true, strikes: [{ at: 0.22, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.72, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
+  ],
+  thiefstar: [
+    { move: 'throw', dur: 0.38, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 280, h: 60, knock: 25, speed: 760 }] },
+    { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
+    { move: 'throw', dur: 0.5, step: -8, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2 }] },
+  ],
   paladin: [
     { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
     { move: 'bash', dur: 0.44, step: 12, strikes: [{ at: 0.42, pct: 85, reach: 60, h: 62, knock: 120, stun: 0.4, burst: 'aegis' }] },
@@ -145,6 +157,16 @@ export const PATH_COMBOS = {
 // back up (`recoil`). Running: the Ranger slides in under them loosing two arrows, the Sniper rolls
 // and comes up on one knee with a bolt.
 const ARCHER_COMMANDS = {
+  // The Thief with a gauntlet: a star flung up at whatever flies, stars thrown down from a hang in
+  // the air, and a star thrown out of a run.
+  thiefstar: {
+    up: { move: 'upthrow', dur: 0.44, step: -2, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 100, range: 260, h: 190, lift: 50, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    air: [
+      { move: 'airthrow', dur: 0.34, hang: true, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 760 }] },
+      { move: 'airthrow', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 820, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'dashstab', dur: 0.44, step: 40, carry: 0.5, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 800 }] },
+  },
   // The Archer: a shot up that pops fliers higher, two shots loosed down from a hang in the air, and
   // a sliding shot out of a run.
   archer: {
@@ -185,6 +207,17 @@ const AIR = [
 ];
 // Running into an attack: a lunging thrust through the line.
 const DASH = { move: 'dashstab', dur: 0.46, step: 44, carry: 0.55, strikes: [{ at: 0.38, pct: 140, reach: 84, h: 52, targets: 3, pierce: true, knock: 200, big: true, stop: 0.05, shake: 1 }] };
+// The Thief's own dagger commands: a quick flipping launcher, three fast air stabs then a diving
+// stab, and a dash that slips through the line stabbing as it goes.
+const DAGGER_COMMANDS = {
+  up: { move: 'rising', dur: 0.42, step: 6, strikes: [{ at: 0.38, pct: 105, reach: 64, h: 84, targets: 3, knock: 20, launch: 460, hop: 420, arc: [80, -175], thick: 6, big: true, stop: 0.05 }] },
+  air: [
+    { move: 'airslash', dur: 0.28, hang: true, strikes: [{ at: 0.45, pct: 80, reach: 60, h: 80, targets: 2, knock: 10, launch: 140, arc: [-115, 205], thick: 5 }] },
+    { move: 'airslash2', dur: 0.28, hang: true, strikes: [{ at: 0.45, pct: 80, reach: 60, h: 80, targets: 2, knock: 10, launch: 150, arc: [100, -215], thick: 5 }] },
+    { move: 'meteor', dur: 0.44, dive: 820, finisher: true, strikes: [{ onLand: true, pct: 170, reach: 70, h: 64, around: true, targets: 4, knock: 180, big: true, stop: 0.07, shake: 3 }] },
+  ],
+  dash: { move: 'dashstab', dur: 0.4, step: 60, carry: 0.6, strikes: [{ at: 0.32, pct: 90, reach: 80, h: 50, targets: 3, pierce: true, knock: 60 }, { at: 0.55, pct: 110, reach: 80, h: 50, targets: 3, pierce: true, knock: 180, big: true, stop: 0.04 }] },
+};
 // How long you must have been running for an attack to become a dash attack.
 const DASH_AFTER = 0.3;
 // How slowly you sink while an air cut hangs you up (px/s).
@@ -289,10 +322,28 @@ export function loseMomentum(world) {
   world.momentum *= 1 - MOMENTUM_LOSS;
   world.streak = 0;
 }
-// A job's own gauge: which one the character has ('valor', 'momentum', 'rage', 'faith', 'gale' or
-// 'focus'), and how full it is (0-1). Finishers need it full and spend it.
+// Shadow: the Thief's gauge (first job, both weapons). Hits that land in quick chains build it,
+// each one more while the chain lasts (`chain`, kept while hits land within SHADOW_CHAIN seconds of
+// each other); it fades fast once the fighting stops. Full (Phantom), a shadow copy of the thief
+// repeats every attack a beat later, at PHANTOM_POWER of its strength.
+export const SHADOW_MAX = 100;
+const SHADOW_HOLD = 3;
+const SHADOW_DRAIN = 16;
+const SHADOW_CHAIN = 0.9;
+export const PHANTOM_POWER = 0.5;
+const PHANTOM_LAG = 0.1;
+export const hasShadow = (char) => char.job === 'thief';
+export function addShadow(world, n) {
+  if (!hasShadow(world.char) || n <= 0) return;
+  world.chain = world.now - (world.shadowAt ?? -9) <= SHADOW_CHAIN ? (world.chain ?? 0) + 1 : 0;
+  world.shadow = Math.min(SHADOW_MAX, (world.shadow ?? 0) + n * (1 + 0.12 * Math.min(10, world.chain)));
+  world.shadowAt = world.now;
+}
+export const phantom = (world) => hasShadow(world.char) && (world.shadow ?? 0) >= SHADOW_MAX;
+// A job's own gauge: which one the character has ('valor', 'momentum', 'shadow', 'rage', 'faith',
+// 'gale' or 'focus'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
+  return hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -302,6 +353,7 @@ export function gaugeFull(world) {
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n) {
   addMomentum(world, n);
+  addShadow(world, n);
   addGale(world, n);
   addFocus(world, n);
 }
@@ -311,6 +363,7 @@ function pathOf(world) {
   const w = world.stats.weaponType;
   if (MELEE.has(w) && w !== 'none') return hasValor(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
   if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
+  if (hasShadow(char)) return w === 'dagger' ? 'thiefdagger' : w === 'gauntlet' ? 'thiefstar' : null;
   if (w === 'bow' && hasGale(char)) return 'ranger';
   if (w === 'crossbow' && hasFocus(char)) return 'sniper';
   return null;
@@ -334,19 +387,21 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
+    const own = pathOf(world) === 'thiefdagger' ? DAGGER_COMMANDS : null;
+    const air = own?.air ?? AIR;
     if (!body.onGround && !body.rope) {
-      if ((world.airCombo ?? 0) >= AIR.length) return;
-      playStep(world, AIR[world.airCombo], 100, `basicair${world.airCombo}`);
+      if ((world.airCombo ?? 0) >= air.length) return;
+      playStep(world, air[world.airCombo], 100, `basicair${world.airCombo}`);
       world.airCombo += 1;
       return;
     }
     if (world.intent?.up) {
-      playStep(world, LAUNCHER, 100, 'basiclaunch');
+      playStep(world, own?.up ?? LAUNCHER, 100, 'basiclaunch');
       world.combo = -1;
       return;
     }
     if ((world.runFor ?? 0) >= DASH_AFTER) {
-      playStep(world, DASH, 100, 'basicdash');
+      playStep(world, own?.dash ?? DASH, 100, 'basicdash');
       world.combo = -1;
       return;
     }
@@ -416,7 +471,7 @@ function playStep(world, step, scale, key, school = null) {
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
   // A Sniper plants her feet the same way, and gathers her aim at the bow.
-  const heavy = hasValor(world.char) || hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
+  const heavy = hasValor(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
@@ -444,6 +499,15 @@ function playStep(world, step, scale, key, school = null) {
     body.vy = step.dive;
     world.dive = { strike: { ...step.strikes.find((st) => st.onLand), n: 0, of: 1, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur, at: 1 }, until: now + 1.2 };
   }
+  // Phantom (full Shadow): a shadow copy of the thief repeats every blow and throw a beat later,
+  // lighter (finishers are hers alone).
+  if (phantom(world) && (!step.finisher || key.startsWith('basic'))) {
+    world.phantom = { kind: step.move, since: now + PHANTOM_LAG, dur, until: now + PHANTOM_LAG + dur };
+    step.strikes.forEach((s, n) => {
+      if (s.onLand || (!s.pct && !s.rain)) return;
+      world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur + PHANTOM_LAG, dir: body.facing, scale: scale * PHANTOM_POWER, key, school: 'shadow', finisher: false, move: step.move, dur, phantom: true, quiet: true, stop: 0, shake: 0, big: false, gauge: 0, hop: 0, burst: undefined, muzzle: undefined });
+    });
+  }
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
     // The blade's whoosh starts during the wind-up, so it peaks as the blow lands (audio cue).
@@ -459,6 +523,7 @@ export function tickMelee(world, dt) {
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
+  if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
   // Tailwind at a Ranger's heels: streaks of wind peel off behind her as she runs.
   if (world.char.buffs.tailwind && (world.runFor ?? 0) > 0 && b.onGround && world.now - (world.windStepAt ?? -9) > 0.12) {
@@ -504,7 +569,9 @@ export function tickMelee(world, dt) {
 
 function land(world, s) {
   const { char, stats, body, now } = world;
-  // Strikes follow the way you were facing when the step began.
+  // Strikes follow the way you were facing when the step began; a `turn` strike (Backstab) turns
+  // round to hit what you just passed.
+  if (s.turn) s = { ...s, dir: -s.dir, turn: false };
   body.facing = s.dir;
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
@@ -521,7 +588,7 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasShadow(char) ? 'shadow' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   if (s.crack) {
     world.fx.push({ kind: 'crack', x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
@@ -537,7 +604,9 @@ function land(world, s) {
   }
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
-    const roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random);
+    let roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random);
+    // A backstab hits harder on a monster that isn't facing you.
+    if (roll && s.backstab && Math.sign(m.dir || 1) === Math.sign(m.x - body.x)) roll = { ...roll, damage: Math.round(roll.damage * s.backstab), crit: true };
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
@@ -557,6 +626,7 @@ function land(world, s) {
   }
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
+  if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   // A launcher hops you up after them, ready for an air combo.
@@ -600,7 +670,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : hasFocus(char) ? (FOCUS_CRIT * (world.focus ?? 0)) / FOCUS_MAX : 0;
   const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
+  const spark = hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, burst: s.burst ?? spark, dir: s.dir,
@@ -616,7 +686,7 @@ function fire(world, strike) {
   const { body } = world;
   // A gauntlet throws real stars: one each, from the set in your bag.
   let star = null;
-  if (s.shot === 'star') {
+  if ((s.shot === 'star' || s.shot === 'moonstar') && !s.phantom) {
     star = useStars(world.char, s.pierce ? 1 : s.fan ?? 1);
     if (!star) {
       if (world.warnTimer <= 0) world.log('Out of throwing stars!', '#ffb3c6');
@@ -658,7 +728,7 @@ function fire(world, strike) {
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, shadow: hasShadow(world.char), phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     return travel + lag;

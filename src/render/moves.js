@@ -829,6 +829,64 @@ export const MOVES = {
     return MOVES.draw(0.2 + seg(p, 0.34, 1) * 0.8);
   },
 
+  // Backstab: crouch and dart forward low through the monster (squashed thin as if into smoke),
+  // then turn and stab. The game turns the hero round as the stab lands (about 0.62).
+  backstab(p) {
+    if (p < 0.45) {
+      const t = seg(p, 0, 0.45);
+      const dart = MOVES.dashstab(t * 0.6);
+      return { ...dart, turn: 1 - 0.7 * bump(t, 0.25, 1), stretch: 1 + 0.25 * bump(t, 0.25, 1) };
+    }
+    return MOVES.thrust(seg(p, 0.45, 1));
+  },
+
+  // Moonlit Assassination: crouch as night falls, vanish (squashed to a sliver as she blinks from
+  // monster to monster), then reappear high with the dagger raised and cut down as the crescent
+  // moon falls (about 0.74), and settle.
+  assassinate(p, dur) {
+    if (p < 0.2) {
+      const t = ease(p / 0.2);
+      return { weapon: lerp(25, 70, t), arm: lerp(60, 40, t), tilt: 0.1 * t, rig: (r) => { r.squat = 3; wideLegs(r); r.backArm = [2, 1]; r.eyes = 'half'; } };
+    }
+    if (p < 0.62) {
+      const flick = Math.abs(Math.sin(p * dur * 30));
+      return { weapon: 92, arm: 100, turn: 0.08 + 0.12 * flick, stretch: 1.4, lift: 6, tilt: 0.2, rig: (r) => { tuck(r); r.hairLift = -1; } };
+    }
+    if (p < 0.72) {
+      const t = ease(seg(p, 0.62, 0.7));
+      return { weapon: lerp(-150, -150, t), arm: 178, lift: 30 * (1 - t * 0.3), tilt: -0.1, rig: (r) => { tuck(r); r.backArm = [-2, -5]; r.hairLift = -1; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.72, 0.76));
+    const settle = seg(p, 0.8, 1);
+    return {
+      weapon: lerp(-150, 170, ease(seg(p, 0.72, 0.76))), arm: lerp(178, 30, t), lift: 21 * (1 - t), tilt: 0.25 * t * (1 - settle), trail: p < 0.8,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [2, 2]; strikeFace(r); },
+    };
+  },
+
+  // Full Moon Volley: a spin flinging a storm of stars up into the sky, arm held high while the moon
+  // gathers, then a hard throw forward as it bursts.
+  moonthrow(p) {
+    if (p < 0.24) {
+      const t = ease(seg(p, 0, 0.24));
+      return { weapon: lerp(60, -60, t), arm: lerp(90, 190, t), turn: Math.cos(t * Math.PI * 2), tilt: -0.15 * t, lift: 6 * bump(t, 0, 1), rig: (r) => { r.backArm = [-2, -5]; wideLegs(r); r.hairLift = -1; strikeFace(r); } };
+    }
+    if (p < 0.66) return { weapon: -60, arm: 175, tilt: -0.12, rig: (r) => { r.backArm = [-2, -5]; wideLegs(r); r.hairLift = -1; r.eyes = 'half'; } };
+    return MOVES.throw(seg(p, 0.6, 1));
+  },
+
+  // A star flung up at whatever flies: a throw aimed high.
+  upthrow(p) {
+    const m = MOVES.throw(p);
+    return { ...m, arm: m.arm + 40, tilt: (m.tilt ?? 0) - 0.12 };
+  },
+
+  // A star thrown down from the air: a quick throw aimed low.
+  airthrow(p) {
+    const m = MOVES.throw(p);
+    return { ...m, arm: m.arm - 25, rig: (r) => { m.rig?.(r); tuck(r); } };
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -862,7 +920,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
-  spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, falcondive: 1.5,
+  spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, falcondive: 1.5, backstab: 0.5, assassinate: 1.5, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
 };
 
 // Basic attacks chain into a combo per weapon type.

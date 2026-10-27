@@ -15,11 +15,11 @@ const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'ho
 export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', shadow: 'celembshadow' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight', 'celringhawk']);
+const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight', 'celringhawk', 'celringshadow']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
@@ -48,11 +48,12 @@ export function debris(ctx, x, y, p, w) {
 }
 
 // A hit landing on a monster in a path's colour: the Warrior's cross of blades, the Paladin's
-// star of light, the Berserker's claw marks, a burst for anyone else.
+// star of light, the Berserker's claw marks, the Thief's violet X, a burst for anyone else.
 export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1 } = {}) {
   const k = big ? 1.15 : 0.85;
   if (school === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: k });
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
+  else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else fxSprite(ctx, 'celcross', x, y, { p, scale: k, rot: (seed - 0.5) * 0.8 });
 }
 
@@ -73,8 +74,12 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
-      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
-      fxSprite(ctx, 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
+      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'shadow' ? 'celstreakshadow' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
+      fxSprite(ctx, f.school === 'shadow' ? 'celsmoke' : 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
+      if (f.school === 'shadow') {
+        fxSprite(ctx, 'celsmoke', tx, y, { p: Math.min(1, p * 1.2), scale: 0.6 });
+        return true;
+      }
       fxSprite(ctx, f.school === 'rage' ? 'celhitred' : 'celhit', tx + dir * 10, y - 22, { p, scale: 0.8 });
       return true;
     }

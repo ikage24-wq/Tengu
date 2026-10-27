@@ -29,6 +29,8 @@
     // The Archer: warm gold (hawk) with sky blue beside it.
     hawk: ['#ffffff', '#fff1bc', '#ffc94a', '#f0942e', '#a8543a'],
     sky: ['#ffffff', '#dcf4ff', '#7fcfff', '#3f9cf0', '#2f5cb8'],
+    // The Thief's moonlight: silver with violet in its shadows.
+    moon: ['#ffffff', '#f2f0ff', '#d2cff0', '#a6a0d8', '#5a5296'],
   };
   const DUST = ['#ffffff', '#fff6ee', '#f2e2d6', '#d9bdc4', '#9a7a9a'];
   const ROCK = ['#ffffff', '#ece4ff', '#c8b8ec', '#9a88cc', '#6a5aa0'];
@@ -1758,6 +1760,216 @@
     feather(ctx, 0, -2, 104, -Math.PI / 2, pal, PAL.sky);
   });
 
+  // ---------- The Thief's shadow and moonlight (first job: violet, midnight and moon silver) ----------
+  // A dagger's cut: a thin violet swipe.
+  E.slashshadow = swipe(PAL.shadow, { seed: 17 });
+  E.streakshadow = streaks(PAL.shadow);
+  // A dagger hit: two thin violet slashes crossing in an X, a silver glint at the cross, then they
+  // break into beads and a wisp of smoke.
+  E.shadowhit = {
+    w: 200, h: 200, n: 6, fps: 26, px: 100, py: 100,
+    draw(ctx, i) {
+      const c = 100;
+      if (i === 0) return sparkle(ctx, PAL.moon, c, c, 18, 0.3);
+      if (i <= 2) {
+        celCrescent(ctx, PAL.shadow, c - 30, c + 60, 90, -1.75, -0.55, i === 1 ? 16 : 20);
+        celCrescent(ctx, PAL.shadow, c + 30, c + 60, 90, -2.6, -1.4, i === 1 ? 16 : 20);
+        sparkle(ctx, PAL.moon, c, c - 6, i === 1 ? 22 : 16, 0.2);
+        return;
+      }
+      const k = (i - 2) / 3;
+      puff(ctx, PAL.shadow, c - 10, c + 10, 22 * (1 - k * 0.4), 201, { holes: k, lobes: 4 });
+      const R = rng(203);
+      for (let j = 0; j < 6; j++) {
+        const a = (j / 6) * TAU + R();
+        const d = 26 + k * 50;
+        if (i < 5 || j % 2) shard(ctx, j % 2 ? PAL.moon : PAL.shadow, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 10 * (1.2 - k * 0.6), 3 * (1.2 - k * 0.5));
+      }
+    },
+  };
+  // Smoke: a violet cloud bursts up and out (vanishing, a dash), then thins away full of holes.
+  E.smoke = {
+    w: 240, h: 200, n: 7, fps: 18, px: 120, py: 170,
+    draw(ctx, i) {
+      const k = i / 6;
+      const R = rng(211);
+      for (let j = 0; j < 5; j++) {
+        const a = -Math.PI / 2 + (j - 2) * 0.6;
+        const d = 10 + k * 60;
+        puff(ctx, j === 2 ? PAL.moon : PAL.shadow, 120 + Math.cos(a) * d * 1.3, 140 + Math.sin(a) * d * 0.8 - k * 20, (24 + R() * 10) * (0.7 + k * 0.5) * (i > 4 ? 1 - (i - 4) * 0.3 : 1), 212 + j, { holes: Math.max(0, (i - 3) / 3), lobes: 4 });
+      }
+      if (i >= 2 && i <= 4) for (let j = 0; j < 3; j++) sparkle(ctx, PAL.moon, 70 + j * 50, 60 + (j % 2) * 30, 9, j);
+    },
+  };
+  // A big X slash (Moonlit Assassination on each monster): two long violet blades of light
+  // crossing, white at the core, then breaking apart.
+  E.xslash = {
+    w: 260, h: 260, n: 6, fps: 22, px: 130, py: 130,
+    draw(ctx, i) {
+      const c = 130;
+      const bar = (a, len, wid) => {
+        const ux = Math.cos(a);
+        const uy = Math.sin(a);
+        const p = (s, t) => [c + ux * s - uy * t, c + uy * s + ux * t];
+        inked(ctx, [p(-len, 0), p(0, -wid), p(len, 0), p(0, wid)], PAL.shadow[3], PAL.shadow[4], 4);
+        fill(ctx, [p(-len * 0.85, 0), p(0, -wid * 0.6), p(len * 0.85, 0), p(0, wid * 0.6)], PAL.shadow[2]);
+        fill(ctx, [p(-len * 0.7, 0), p(0, -wid * 0.3), p(len * 0.7, 0), p(0, wid * 0.3)], PAL.moon[1]);
+      };
+      const len = [70, 120, 118, 100, 0, 0][i];
+      const wid = [6, 14, 11, 6, 0, 0][i];
+      if (len) {
+        bar(-0.8, len, wid);
+        if (i > 0) bar(0.8, len, wid);
+        if (i === 1 || i === 2) sparkle(ctx, PAL.moon, c, c, 20, 0.4);
+      }
+      if (i >= 3) {
+        const k = (i - 3) / 2;
+        const R = rng(221);
+        for (let j = 0; j < 10; j++) {
+          const a = (j / 10) * TAU + R() * 0.3;
+          const d = 40 + k * 70;
+          shard(ctx, j % 2 ? PAL.moon : PAL.shadow, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 14 * (1.2 - k * 0.6), 3.5);
+        }
+      }
+    },
+  };
+  // A giant crescent moon cutting (the finishers' last blow): a thin silver line opens into a great
+  // crescent, white-edged and violet underneath, holds, then breaks into beads and stars.
+  E.crescent = {
+    w: 420, h: 260, n: 8, fps: 18, px: 210, py: 150,
+    draw(ctx, i) {
+      const cx = 210;
+      const cy = 150;
+      // A crescent lying on its back like a blade: the band between two circles of the same
+      // radius, the inner edge `th` under the outer at the top and meeting it at both points.
+      const band = (R, th, ox = 0) => {
+        const oy = cy + R * 0.62;
+        const a0 = Math.PI + 0.5;
+        const a1 = TAU - 0.5;
+        const pts = [];
+        for (let j = 0; j <= 40; j++) {
+          const a = lerp(a0, a1, j / 40);
+          pts.push([cx + ox + Math.cos(a) * R * 1.25, oy + Math.sin(a) * R]);
+        }
+        for (let j = 40; j >= 0; j--) {
+          const a = lerp(a0, a1, j / 40);
+          pts.push([cx + ox + Math.cos(a) * R * 1.25, oy + Math.sin(a) * R + th * Math.pow(Math.sin((Math.PI * j) / 40), 0.8)]);
+        }
+        return pts;
+      };
+      const th = [6, 30, 48, 46, 34, 0, 0, 0][i];
+      if (th) {
+        const R = 150;
+        inked(ctx, band(R, th), PAL.shadow[3], PAL.shadow[4], 5);
+        fill(ctx, band(R, th * 0.78), PAL.moon[3]);
+        fill(ctx, band(R, th * 0.56), PAL.moon[2]);
+        fill(ctx, band(R, th * 0.34), PAL.moon[1]);
+        fill(ctx, band(R, th * 0.14), '#ffffff');
+        if (i === 2 || i === 3) for (const [x, y] of [[cx - 160, cy - 30], [cx + 150, cy - 40], [cx, cy - 130]]) sparkle(ctx, PAL.moon, x, y, 14, 0.3);
+      }
+      if (i >= 4) {
+        const q = (i - 4) / 3;
+        const R = rng(231);
+        for (let j = 0; j < 14; j++) {
+          const a = Math.PI + (j / 13) * Math.PI;
+          const x = cx + Math.cos(a) * 190 * (1 + q * 0.2);
+          const y = cy + Math.sin(a) * 110 - q * 20 + R() * 10;
+          if (i < 7 || j % 2) {
+            if (j % 3 === 0) sparkle(ctx, PAL.moon, x, y, 12 * (1.1 - q * 0.6), j);
+            else shard(ctx, j % 2 ? PAL.moon : PAL.shadow, x, y, a + Math.PI / 2, 16 * (1.2 - q * 0.7), 4);
+          }
+        }
+      }
+    },
+  };
+  // A full moon rising over the monsters (Full Moon Volley): silver with violet shading and soft
+  // craters, ringed by stars, held, then it bursts into falling stars.
+  E.moon = {
+    w: 260, h: 260, n: 6, fps: 12, px: 130, py: 130,
+    draw(ctx, i) {
+      const c = 130;
+      const r = [40, 80, 88, 88, 0, 0][i];
+      if (r) {
+        ctx.beginPath();
+        ctx.arc(c, c, r + 4, 0, TAU);
+        ctx.fillStyle = PAL.shadow[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(c, c, r, 0, TAU);
+        ctx.fillStyle = PAL.shadow[3];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(c - r * 0.12, c - r * 0.12, r * 0.86, 0, TAU);
+        ctx.fillStyle = PAL.moon[3];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(c - r * 0.25, c - r * 0.25, r * 0.6, 0, TAU);
+        ctx.fillStyle = PAL.moon[2];
+        ctx.fill();
+        for (const [dx, dy, cr] of [[0.3, 0.2, 0.16], [-0.2, 0.4, 0.1], [0.45, -0.25, 0.08]]) {
+          ctx.beginPath();
+          ctx.arc(c + dx * r, c + dy * r, cr * r, 0, TAU);
+          ctx.fillStyle = PAL.shadow[2];
+          ctx.fill();
+        }
+        if (i >= 1) for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU + i * 0.3;
+          sparkle(ctx, j % 2 ? PAL.shadow : PAL.moon, c + Math.cos(a) * (r + 22), c + Math.sin(a) * (r + 22), 10, j);
+        }
+      }
+      if (i >= 4) {
+        const q = (i - 4);
+        for (let j = 0; j < 12; j++) {
+          const a = (j / 12) * TAU;
+          const d = 60 + q * 50;
+          sparkle(ctx, j % 2 ? PAL.shadow : PAL.moon, c + Math.cos(a) * d, c + Math.sin(a) * d + q * 20, 12 * (1 - q * 0.4), j);
+        }
+      }
+    },
+  };
+  // The trail behind a thrown star, looping: violet speed lines and a silver glint.
+  E.shadowtrail = {
+    w: 170, h: 60, n: 3, fps: 18, px: 160, py: 30,
+    draw(ctx, i) {
+      const R = rng(241 + i);
+      for (let j = 0; j < 3; j++) {
+        const y = 14 + j * 16 + (R() - 0.5) * 6;
+        const len = 70 + R() * 60;
+        speedLine(ctx, j === 1 ? PAL.moon : PAL.shadow, 156 - len, y, 156, y, j === 1 ? 4.5 : 3.5);
+      }
+      sparkle(ctx, PAL.moon, 50 + i * 26, 16 + (i % 2) * 28, 8, i);
+    },
+  };
+  // Shadow building, looping: wisps of violet smoke curling up round the thief, little silver
+  // crescents drifting among them.
+  E.shadowaura = {
+    w: 170, h: 220, n: 8, fps: 10, px: 85, py: 210, loop: true,
+    draw(ctx, i) {
+      const R = rng(251);
+      for (let j = 0; j < 6; j++) {
+        const life = (i / 8 + j / 6) % 1;
+        const side = j % 2 ? 1 : -1;
+        const x = 85 + side * (24 + R() * 26) + Math.sin(life * 6 + j) * 8;
+        const y = 200 - life * 170;
+        const k = Math.sin(Math.PI * life);
+        if (k < 0.15) continue;
+        if (j % 3 === 2) sparkle(ctx, PAL.moon, x, y, 9 * k + 2, j);
+        else celCrescent(ctx, PAL.shadow, x - side * 10, y + 16, 22 * k + 4, side > 0 ? -2.2 : -1.9, side > 0 ? -0.9 : -3.2, 10 * k + 2);
+      }
+    },
+  };
+  // The Thief's emblem: a silver crescent moon with a violet dagger across it.
+  E.embshadow = emblem(PAL.shadow, (ctx, pal) => {
+    celCrescent(ctx, PAL.moon, 10, 0, 50, 1.9, 4.6, 30);
+    ctx.save();
+    ctx.rotate(-0.7);
+    inked(ctx, [[-8, -66], [0, -80], [8, -66], [8, 20], [-8, 20]], pal[2], pal[4], 5);
+    fill(ctx, [[-3, -64], [0, -70], [3, -64], [3, 16], [-3, 16]], pal[0]);
+    inked(ctx, [[-22, 20], [22, 20], [22, 30], [-22, 30]], PAL.moon[2], pal[4], 4);
+    inked(ctx, [[-6, 30], [6, 30], [6, 54], [-6, 54]], pal[3], pal[4], 4);
+    ctx.restore();
+  });
+
   // ---------- Big versions ----------
   // Pixel art can't be blown up without its pixels growing past the sprites', so effects that play
   // large (rings across a whole group, the magic circle, a whirlwind over an area, the ground
@@ -1778,7 +1990,8 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight', 'ringhawk']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight', 'ringhawk', 'ringshadow']) E[`${s}big`] = big(E[s], 2.6);
+  E.crescentbig = big(E.crescent, 1.6);
   E.fissurebig = big(E.fissure, 1.5);
   E.circlebig = big(E.circle, 2.4);
   E.spinbig = big(E.spin, 2);

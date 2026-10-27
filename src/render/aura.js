@@ -406,9 +406,22 @@ function momentumAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembhawk', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Draws a combat aura: `kind` a job's gauge ('valor', 'momentum', 'rage', 'faith', 'gale' or
+// Shadow: a violet ring at the thief's feet, wisps of shadow curling up round her as it builds,
+// and full (Phantom), the crescent emblem over her head and violet rings racing out (the shadow
+// copy itself is drawn with the hero).
+function shadowAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'celringshadow', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celringshadow', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    return;
+  }
+  if (k > 0.4) fxSprite(ctx, 'celshadowaura', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.55 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
+  if (k >= 1) fxSprite(ctx, 'celembshadow', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+}
+
+// Draws a combat aura: `kind` a job's gauge ('valor', 'momentum', 'shadow', 'rage', 'faith', 'gale' or
 // 'focus'), `k` how full (0-1).
-const COMBAT = { valor: valorAura, momentum: momentumAura, rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
+const COMBAT = { valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

@@ -481,4 +481,9 @@ characters; style mismatch, not just quality, is what made earlier effects feel 
   disappears behind it at the key moment.
 - Colour: a job's colour needs a second accent when its main hue is shared (the Archer's gold vs
   the Paladin's gold): the accent (sky blue) on every hit and trail is what says whose hit it is.
+- The Thief followed MapleStory's first-job Rogue: one book for both weapons, Double Stab for the
+  dagger and Lucky Seven for the claw, so the player picks a side with their points before the
+  2nd-job split (Assassin with claws, Bandit with daggers). Her shapes are the night's: smoke,
+  crescent moons, a full moon; a shadow copy of the hero (like the later Shadow Partner) reads
+  instantly as "full power" without any new effect art.
 

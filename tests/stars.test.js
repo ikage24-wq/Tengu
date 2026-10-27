@@ -87,14 +87,16 @@ test('every throw uses up stars, and with none left you cannot throw', () => {
   run(w, 1);
   assert.ok(stars(c) < 500, 'a basic throw used a star');
   const before = stars(c);
-  c.skills.startoss = 10;
+  c.skills.luckyseven = 10;
   c.mp = 9999;
-  assert.ok(cast(w, 'startoss').ok);
-  assert.equal(before - stars(c), 2, 'Star Toss throws two');
+  assert.ok(cast(w, 'luckyseven').ok);
+  assert.equal(before - stars(c), 0, 'the stars leave on the throw, not the press');
+  run(w, 0.4);
+  assert.equal(before - stars(c), 2, "Lucky Seven's first part throws two");
   run(w, 1.5);
   c.inventory.use = [];
   assert.equal(cast(w, null).reason, 'stars');
-  assert.equal(cast(w, 'startoss').reason, 'stars');
+  assert.equal(cast(w, 'luckyseven').reason, 'stars');
 });
 
 test('recharging a set costs what its missing stars are worth', () => {

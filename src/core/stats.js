@@ -24,13 +24,16 @@ export function equipmentBonus(equipment) {
   return total;
 }
 
-// Passive bonuses from every learned passive in the character's job chain.
+// Passive bonuses from every learned passive in the character's job chain. A weapon's own passive
+// (`weapons`, like Dagger Mastery) only counts while that weapon is held.
 export function passiveBonus(char) {
   const chain = new Set(jobChain(char.job));
+  const weapon = char.equipment ? weaponTypeOf(char) : null;
   const out = {};
   for (const [id, lv] of Object.entries(char.skills)) {
     const s = SKILLS[id];
     if (!s || s.type !== 'passive' || lv <= 0 || !chain.has(s.job)) continue;
+    if (s.weapons && weapon && !s.weapons.includes(weapon)) continue;
     for (const [k, v] of Object.entries(skillAt(id, lv).passive)) {
       // Mastery doesn't stack between books; the best one wins.
       out[k] = k === 'mastery' ? Math.max(out[k] ?? 0, v) : (out[k] ?? 0) + v;

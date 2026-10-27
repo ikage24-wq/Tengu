@@ -7,6 +7,7 @@ import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { fxSprite } from './fx-sprites.js';
+import { shuriken } from './thief-fx.js';
 import { FX_SHEETS } from './fx-sheets.js';
 import { debris, groundRing, hitMark } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
@@ -73,50 +74,6 @@ function slash(ctx, cx, cy, dir, radius, p, color, thick = 6) {
 
 
 
-// A four-point throwing star around the origin: plum-outlined steel blades, each with a lit half,
-// and a hole in the middle. Without an outline it's a flat silhouette (for afterimages).
-function shuriken(ctx, r, body, lit, ink) {
-  const pt = (k, d, off = 0) => {
-    const a = (k * Math.PI) / 2 - Math.PI / 2 + off;
-    return [Math.cos(a) * d, Math.sin(a) * d];
-  };
-  ctx.beginPath();
-  for (let k = 0; k < 4; k++) {
-    const p = [pt(k, r), pt(k, r * 0.5, 0.4), pt(k, r * 0.3, Math.PI / 4)];
-    p.forEach(([px, py], i) => (k || i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
-  }
-  ctx.closePath();
-  if (ink) {
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.4;
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-  }
-  ctx.fillStyle = body;
-  ctx.fill();
-  if (!ink) return;
-  // The lit half of each blade.
-  ctx.fillStyle = lit;
-  for (let k = 0; k < 4; k++) {
-    const [tx, ty] = pt(k, r - 0.8);
-    const [ix, iy] = pt(k, r * 0.3, -Math.PI / 4);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(tx, ty);
-    ctx.lineTo(ix, iy);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.fillStyle = '#8a92a3';
-  ctx.beginPath();
-  ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = ink;
-  ctx.beginPath();
-  ctx.arc(0, 0, r * 0.14, 0, Math.PI * 2);
-  ctx.fill();
-}
-
 function drawShot(ctx, f, cam) {
   const p = Math.max(0, Math.min(1, f.t / f.dur));
   if (f.t < 0) return;
@@ -158,7 +115,20 @@ function drawShot(ctx, f, cam) {
       ctx.fillRect(-15, 1, 4, 2);
       break;
     }
-    case 'star': {
+    case 'star': case 'moonstar': {
+      // A Thief's stars trail violet streaks; a big moon star is drawn large; the Phantom's copies
+      // are violet shadows of a star.
+      if (f.shadow) {
+        const big = f.shot === 'moonstar';
+        fxSprite(ctx, 'celshadowtrail', x - dir * (big ? 26 : 18), y, { t: f.t, flip: dir < 0, scale: big ? 0.8 : 0.5 });
+        if (big) fxSprite(ctx, 'celsmoke', x - dir * 40, y + 12, { t: f.t % 0.38, flip: dir < 0, scale: 0.35 });
+        ctx.translate(x, y);
+        ctx.rotate(f.t * (big ? 16 : 20));
+        if (f.phantom) ctx.globalAlpha = 0.65;
+        const body = f.phantom ? '#8a6ae8' : big ? '#d2cff0' : f.starColor ?? '#b9c0cc';
+        shuriken(ctx, big ? 12 : 7, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.55), '#3a2d4f');
+        break;
+      }
       // A spinning shuriken with a faint trail of its own afterimage.
       const trail = f.element ? c : '#dfe6ff';
       ctx.globalAlpha = 0.35;
@@ -808,7 +778,7 @@ function drawFx(ctx, f, cam, time) {
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path) hitMark(ctx, 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'shadow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
       else fxSprite(ctx, 'celhit', x, y, { p, scale: 0.65 });
       break;
@@ -943,7 +913,7 @@ function bladePath(f) {
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  const name = school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
     fxSprite(ctx, school === 'rage' ? 'celspinred' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });

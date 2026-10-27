@@ -23,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (steel, hawk, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, shadow, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -527,33 +527,143 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Thief ----------
-  twinstab: skill({
-    id: 'twinstab', name: 'Twin Stab', job: 'thief', type: 'attack', fx: 'flurry',
-    desc: 'Two quick stabs. Needs a dagger.',
-    weapons: ['dagger'],
-    at: (lv, m) => ({ mp: lerp(4, 12, lv, m), pct: lerp(80, 145, lv, m), hits: 2, targets: 1, range: { w: 75, h: 60 } }),
+  // ---------- Thief (violet and midnight with moonlight silver: crescent moons and smoke) ----------
+  // Every Thief shares Shadow (0-100, see world/melee.js): hits landing in quick chains build it,
+  // and full (Phantom) a shadow copy repeats every attack. The rest of the book is a choice: dagger
+  // skills or gauntlet skills (the two paths of the 2nd job), each with its own finisher that
+  // needs full Shadow and spends it.
+  shadowdash: skill({
+    id: 'shadowdash', name: 'Shadow Step', job: 'thief', type: 'attack', fx: 'blink', icon: 'shadowdash', maxLevel: 10, school: 'shadow', movement: true,
+    desc: 'Melt into smoke and dart a long way forward through the monsters, cutting each one you pass. Nothing touches you on the way. Works with either weapon.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const hit = (at) => ({ at, pct: k(60, 110), reach: 50, h: 64, around: true, targets: 4, knock: 60, gauge: 2 });
+      return {
+        mp: k(10, 6), pct: k(60, 110), hits: 2, targets: 4,
+        combo: [{ move: 'dashstab', dur: 0.4, step: k(110, 170), carry: 0.6, guard: 0.45, trail: true, strikes: [hit(0.3), hit(0.55)] }],
+      };
+    },
   }),
-  startoss: skill({
-    id: 'startoss', name: 'Star Toss', job: 'thief', type: 'attack', fx: 'star',
-    desc: 'Throw two stars at the nearest monster. Needs a gauntlet.',
-    weapons: ['gauntlet'],
-    at: (lv, m) => ({ mp: lerp(4, 12, lv, m), pct: lerp(65, 125, lv, m), hits: 2, targets: 1, range: { w: 290, h: 60 }, projectile: true }),
+  quickhaste: skill({
+    id: 'quickhaste', name: 'Haste', job: 'thief', type: 'buff', fx: 'buff', icon: 'quickhaste', school: 'shadow', party: true,
+    desc: 'You and the party around you run faster and jump higher.',
+    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { speed: lerp(8, 30, lv, m), jump: lerp(4, 18, lv, m) }, range: { w: 440, h: 160, around: true } }),
   }),
-  haste: skill({
-    id: 'haste', name: 'Haste', job: 'thief', type: 'buff', fx: 'buff',
-    desc: 'Run faster and jump higher.',
-    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { speed: lerp(8, 30, lv, m), jump: lerp(4, 18, lv, m) } }),
-  }),
-  shadowstep: skill({
-    id: 'shadowstep', name: 'Shadow Step', job: 'thief', type: 'blink', fx: 'blink', maxLevel: 10, school: 'shadow',
-    desc: 'Melt into the shadows and step out a long way ahead.',
-    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: lerp(90, 160, lv, m) }),
-  }),
-  nimble: skill({
-    id: 'nimble', name: 'Nimble', job: 'thief', type: 'passive', fx: null,
+  nimblefeet: skill({
+    id: 'nimblefeet', name: 'Nimble', job: 'thief', type: 'passive', fx: null, icon: 'nimblefeet',
     desc: 'Permanently raises avoid and accuracy.',
     at: (lv, m) => ({ passive: { eva: lerp(3, 30, lv, m), acc: lerp(2, 20, lv, m) } }),
+  }),
+  // The dagger skills (up close).
+  twinfang: skill({
+    id: 'twinfang', name: 'Twin Fang', job: 'thief', type: 'attack', fx: 'flurry', icon: 'twinfang', school: 'shadow',
+    desc: 'A three-part combo, one part per press: a quick stab, a second stab, then a cross-slash that throws them back. Needs a dagger.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const stab = (at, pct) => ({ at, pct, reach: 66, h: 50, targets: 2, knock: 25, pierce: true });
+      return {
+        mp: k(4, 10), pct: k(80, 140), hits: 5, targets: 2,
+        combo: [
+          { move: 'thrust', dur: 0.3, step: 8, strikes: [stab(0.42, k(80, 140))] },
+          { move: 'flurry', dur: 0.36, step: 8, strikes: [stab(0.3, k(60, 100)), stab(0.7, k(60, 100))] },
+          { move: 'cross', dur: 0.48, step: 12, finisher: true, strikes: [
+            { at: 0.22, pct: k(90, 150), reach: 70, h: 58, targets: 3, knock: 50, arc: [-110, 200], thick: 7 },
+            { at: 0.72, pct: k(130, 210), reach: 72, h: 60, targets: 3, knock: 200, launch: 160, arc: [100, -210], thick: 8, big: true, stop: 0.07, shake: 2 },
+          ] },
+        ],
+      };
+    },
+  }),
+  backstab: skill({
+    id: 'backstab', name: 'Backstab', job: 'thief', type: 'attack', fx: 'flurry', icon: 'backstab', school: 'shadow',
+    desc: "Slip through the monster in front of you in a puff of smoke, turn, and stab it in the back. Hits much harder on a monster that isn't facing you. Needs a dagger.",
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(8, 16), pct: k(180, 300), hits: 1, targets: 2,
+        combo: [{ move: 'backstab', dur: 0.56, step: 90, carry: 0.35, guard: 0.35, trail: true, strikes: [{ at: 0.62, pct: k(180, 300), reach: 70, h: 56, targets: 2, turn: true, backstab: 1.6, knock: 160, pierce: true, big: true, stop: 0.08, shake: 2 }] }],
+      };
+    },
+  }),
+  daggermastery: skill({
+    id: 'daggermastery', name: 'Dagger Mastery', job: 'thief', type: 'passive', fx: null, icon: 'daggermastery',
+    desc: 'Steadier, stronger dagger hits and more critical hits with a dagger.',
+    weapons: ['dagger'],
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), watk: lerp(2, 18, lv, m) } }),
+  }),
+  moonlitassassin: skill({
+    id: 'moonlitassassin', name: 'Moonlit Assassination', job: 'thief', type: 'attack', fx: 'flurry', icon: 'moonlitassassin', school: 'shadow', maxLevel: 10, fullGauge: true,
+    desc: 'Dagger finisher: needs full Shadow, and spends it. Night falls; you vanish and blink from monster to monster cutting each one, then a giant crescent moon cuts through the whole line.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const cut = (at) => ({ at, pct: k(70, 120), reach: 200, h: 140, around: true, targets, knock: 20, fx: 'moonslash', quiet: true, stop: 0.03, gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 6, targets,
+        combo: [{ move: 'assassinate', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, burst: 'nightfall', burstAt: 0, quiet: true, gauge: 0 },
+          cut(0.3), cut(0.38), cut(0.46), cut(0.54),
+          { at: 0.74, pct: k(420, 720), reach: 220, h: 150, around: true, targets, knock: 280, launch: 360, burst: 'crescentcut', burstAt: 0.35, big: true, stop: 0.15, shake: 7, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+  // The gauntlet skills (throwing stars from range).
+  luckyseven: skill({
+    id: 'luckyseven', name: 'Lucky Seven', job: 'thief', type: 'attack', fx: 'star', icon: 'luckyseven', school: 'shadow',
+    desc: 'A three-part combo, one part per press: two stars, two more, then one big spinning star that tears through the line. Needs a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const star = (at, oy = 0) => ({ at, shot: 'star', pct: k(60, 105), range: 290, h: 60, knock: 25, speed: 760, oy });
+      return {
+        mp: k(4, 10), pct: k(60, 105), hits: 5, targets: 1,
+        combo: [
+          { move: 'barrage', dur: 0.4, step: -2, strikes: [star(0.17, -3), star(0.5, 3)] },
+          { move: 'barrage', dur: 0.4, step: -3, strikes: [star(0.17, 3), star(0.5, -3)] },
+          { move: 'throw', dur: 0.5, step: -6, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', pct: k(160, 260), range: 330, h: 64, targets: k(2, 4), pierce: true, speed: 820, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2 }] },
+        ],
+      };
+    },
+  }),
+  starfan: skill({
+    id: 'starfan', name: 'Star Fan', job: 'thief', type: 'attack', fx: 'star', icon: 'starfan', school: 'shadow',
+    desc: 'Fling a fan of stars at once; each one finds its own monster. Needs a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const n = k(3, 5);
+      return {
+        mp: k(10, 20), pct: k(90, 150), hits: 1, targets: n,
+        combo: [{ move: 'throw', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'star', fan: n, pct: k(90, 150), range: 290, h: 150, knock: 80, speed: 760, muzzle: 'smokepuff' }] }],
+      };
+    },
+  }),
+  gauntletmastery: skill({
+    id: 'gauntletmastery', name: 'Gauntlet Mastery', job: 'thief', type: 'passive', fx: null, icon: 'gauntletmastery',
+    desc: 'Steadier, stronger stars and sharper aim with a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  fullmoonvolley: skill({
+    id: 'fullmoonvolley', name: 'Full Moon Volley', job: 'thief', type: 'attack', fx: 'star', icon: 'fullmoonvolley', school: 'shadow', maxLevel: 10, fullGauge: true,
+    desc: 'Gauntlet finisher: needs full Shadow, and spends it. Hurl a spinning storm of stars up that gathers into a full moon over the monsters, then it bursts and rains stars down on all of them, and a giant crescent moon cuts the line.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 16, targets,
+        combo: [{ move: 'moonthrow', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.18, pct: 0, reach: 0, h: 0, targets: 0, burst: 'fullmoon', burstAt: 0, quiet: true, gauge: 0 },
+          { at: 0.5, rain: k(10, 14), pct: k(80, 130), rainFrom: 30, rainW: 320, span: 0.4, knock: 30, variant: 'moonstar', school: 'shadow', gauge: 0 },
+          { at: 0.78, pct: k(420, 720), reach: 220, h: 150, around: true, targets, knock: 280, launch: 360, burst: 'crescentcut', burstAt: 0.6, big: true, stop: 0.15, shake: 7, gauge: 0 },
+        ] }],
+      };
+    },
   }),
 
   // ---------- Stormfrost Wizard (ice & lightning) ----------
@@ -750,7 +860,7 @@ const MOVES_BY_SKILL = {
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   twinshot: 'rapid', arrowfan: 'draw', huntersfocus: 'cheer', flipshot: 'flip', arrowshower: 'skyshot', falcondive: 'falcondive',
   galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
-  twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
+  shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
   fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',
   bless: 'pray', heal: 'pray', holybolt: 'castforward',

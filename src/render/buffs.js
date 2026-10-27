@@ -349,28 +349,11 @@ export const BUFF_LOOKS = {
       if ((t % 1.6) < 0.2) star(ctx, x + dir * 8, y - 42, 3, '#ffffff', a);
     },
   },
-  haste: {
-    color: '#ffe86b', cast: 'gust',
-    front: (ctx, x, y, t, dir, a) => {
-      // Crackling yellow sparks at the heels and long speed streaks behind.
-      speedLines(ctx, x, y, t, dir, a, '#fff3a6', 5);
-      ring(ctx, x, y - 1, 13 + Math.sin(t * 12) * 1.5, 3.5, '#ffe86b', 1.5, a * 0.9);
-      for (let i = 0; i < 4; i++) {
-        if ((t * 6 + i * 0.25) % 1 > 0.5) continue;
-        ctx.save();
-        ctx.globalAlpha = a;
-        ctx.strokeStyle = '#ffe86b';
-        ctx.lineWidth = 1.2;
-        const bx = x + Math.cos(t * 5 + i * 1.6) * 13;
-        ctx.beginPath();
-        ctx.moveTo(bx, y - 2);
-        ctx.lineTo(bx - dir * 3, y - 6);
-        ctx.lineTo(bx, y - 7);
-        ctx.lineTo(bx - dir * 3, y - 11);
-        ctx.stroke();
-        ctx.restore();
-      }
-    },
+  quickhaste: {
+    color: '#b89cff', cast: 'gust',
+    // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).
+    back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celringshadow', x, y, { frame: 2, scale: 0.32, sy: 0.32, alpha: a * 0.6 }),
+    front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celstreakshadow', x - dir * 22, y - 10, { frame: Math.floor(t * 10) % 2, flip: dir < 0, scale: 0.3, alpha: a * 0.75 }),
   },
   rage: {
     color: '#ff5a4a', cast: 'burst',

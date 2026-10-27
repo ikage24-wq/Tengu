@@ -2,7 +2,7 @@
 
 import { wornGear } from '../core/character.js';
 import { drawCombatAura } from './aura.js';
-import { gaugeOf } from '../world/melee.js';
+import { gaugeOf, phantom } from '../world/melee.js';
 import { moveAt } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
@@ -231,6 +231,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
+  // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
+  // beat after she does.
+  if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
   // Knocked out: the same fall as a downed party member (up and back, a bounce, lying with a ghost).
   if (world.dead) {
     if (feel.fellAt === undefined) feel.fellAt = time;
@@ -335,6 +338,16 @@ export function drawWorld(ctx, world, viewCam, time) {
 }
 
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
+function drawPhantom(ctx, world, look, gear, x, y, state) {
+  const ph = world.phantom;
+  const live = ph && world.now >= ph.since && world.now < ph.until;
+  const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
+  ctx.save();
+  ctx.filter = 'brightness(0.35) sepia(1) hue-rotate(215deg) saturate(3.5)';
+  drawHero(ctx, look, gear, x - state.facing * (live ? 10 : 16), y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 });
+  ctx.restore();
+}
+
 function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
   const clone = (dx, alpha, filter) => {
     ctx.save();

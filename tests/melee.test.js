@@ -282,7 +282,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'startoss'], ['warrior', 'sword_20', 'bladerush']]) {
+  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'bladerush']]) {
     const w = arena(weapon);
     w.char.job = job;
     if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
@@ -1035,4 +1035,154 @@ test('War Cry turns the monsters around on you and guards you and the party', ()
   assert.ok(cast(w, 'warcry').ok);
   assert.ok(w.mobs.every((m) => m.aggroUntil > w.now), 'every monster around turns on you');
   assert.ok(w.char.buffs.warcry?.values.dmgCut > 0, 'and you take less damage');
+});
+
+// ---------- The Thief: Shadow, Phantom, and a dagger or a gauntlet ----------
+
+function thief(weapon = 'dagger_20') {
+  const w = arena(weapon);
+  w.char.job = 'thief';
+  w.char.mp = 9999;
+  w.char.baseMp = 99999;
+  if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
+  if (weapon.startsWith('gauntlet')) w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Thief has her own basic combo with each weapon', () => {
+  for (const [weapon, path] of [['dagger_20', 'thiefdagger'], ['gauntlet_20', 'thiefstar']]) {
+    const w = thief(weapon);
+    const seen = [];
+    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+    for (let i = 0; i < 90; i++) {
+      updateWorld(w, DT, hold);
+      if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
+    }
+    assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS[path].map((s) => s.move), path);
+    assert.ok(w.mobs.some((m) => m.hp < 1e9), `${weapon} hits`);
+  }
+});
+
+test("a Thief's hits build Shadow, faster in a quick chain, and it fades once the fighting stops", () => {
+  const w = thief();
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  run(w, 1.5, hold);
+  assert.ok(w.shadow > 0, 'hits build it');
+  assert.ok(w.chain > 2, 'quick hits keep a chain going');
+  const chained = w.shadow;
+  // The same hits spread out (the chain broken each time) build less.
+  const slow = thief();
+  for (let i = 0; i < 4; i++) {
+    updateWorld(slow, DT, press('KeyZ'));
+    run(slow, 1.2);
+  }
+  assert.ok(slow.chain === 0 || slow.chain === undefined, 'slow hits break the chain');
+  assert.ok(slow.shadow < chained, `a broken chain builds less (${slow.shadow} vs ${chained})`);
+  run(w, 10);
+  assert.equal(w.shadow, 0, 'faded once the fighting stopped');
+});
+
+test('full Shadow (Phantom): a shadow copy repeats every attack a beat later, lighter', () => {
+  const hits = (shadow) => {
+    const w = thief();
+    w.shadow = shadow;
+    w.shadowAt = 1e9;
+    let n = 0;
+    let last = w.mobs[0].hp;
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 40; i++) {
+      updateWorld(w, DT, idle);
+      if (w.mobs[0].hp < last) n += 1;
+      last = w.mobs[0].hp;
+    }
+    return { n, w };
+  };
+  assert.equal(hits(0).n, 1, 'one stab');
+  const full = hits(100);
+  assert.equal(full.n, 2, 'the stab and its shadow');
+  assert.ok(full.w.phantom, 'the copy plays the move');
+  // With a gauntlet the copy throws too, without using up stars.
+  const w = thief('gauntlet_20');
+  w.shadow = 100;
+  w.shadowAt = 1e9;
+  const stars = () => w.char.inventory.use.reduce((n, s) => n + (s?.qty ?? 0), 0);
+  const before = stars();
+  updateWorld(w, DT, press('KeyZ'));
+  assert.ok(w.strikes.some((s) => s.phantom && s.shot), 'the copy throws a star of its own');
+  run(w, 0.5);
+  assert.equal(before - stars(), 1, 'the shadow star is not from your bag');
+});
+
+test('dagger skills need a dagger and gauntlet skills a gauntlet; shared skills work with both', () => {
+  const d = thief();
+  Object.assign(d.char.skills, { luckyseven: 5, twinfang: 5, shadowdash: 5, daggermastery: 20, gauntletmastery: 20 });
+  assert.equal(cast(d, 'luckyseven').reason, 'weapon');
+  assert.ok(cast(d, 'twinfang').ok);
+  const g = thief('gauntlet_20');
+  Object.assign(g.char.skills, { luckyseven: 5, twinfang: 5, shadowdash: 5 });
+  assert.equal(cast(g, 'twinfang').reason, 'weapon');
+  assert.ok(cast(g, 'luckyseven').ok);
+  run(g, 1);
+  const x = g.body.x;
+  assert.ok(cast(g, 'shadowdash').ok, 'Shadow Step works with a gauntlet');
+  assert.ok(g.invuln > 0, 'untouchable on the way');
+  run(g, 0.5);
+  assert.ok(g.body.x > x + 60, 'darted forward');
+});
+
+test('Backstab slips through, turns, and hits much harder on a monster facing away', () => {
+  const dealt = (facing) => {
+    const w = thief();
+    w.mobs = [w.mobs[0]];
+    w.mobs[0].dir = facing;
+    w.char.skills.backstab = 10;
+    const random = Math.random;
+    Math.random = () => 0.5;
+    try {
+      const x = w.body.x;
+      assert.ok(cast(w, 'backstab').ok);
+      run(w, 0.7);
+      assert.ok(w.body.x > w.mobs[0].x, 'came out the far side');
+      assert.equal(w.body.facing, -1, 'turned round to stab');
+      assert.ok(w.body.x > x);
+      return 1e9 - w.mobs[0].hp;
+    } finally {
+      Math.random = random;
+    }
+  };
+  // The monster faces the thief (-1) as she comes in, so once she's past it, its back is to her.
+  assert.ok(dealt(-1) > dealt(1) * 1.4, 'from behind hits much harder');
+});
+
+test("each of the Thief's finishers needs full Shadow, spends it, and lands its big moment", () => {
+  for (const [weapon, skill] of [['dagger_20', 'moonlitassassin'], ['gauntlet_20', 'fullmoonvolley']]) {
+    const w = thief(weapon);
+    w.char.skills[skill] = 10;
+    w.shadow = 80;
+    assert.equal(cast(w, skill).reason, 'gauge:shadow', `${skill} waits for full Shadow`);
+    w.shadow = 100;
+    assert.ok(cast(w, skill).ok);
+    assert.equal(w.shadow, 0, 'spends all of it');
+    run(w, 2);
+    assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, `${skill} hits the whole line`);
+    assert.ok((w.shadow ?? 0) < 100, 'and does not refill it');
+    w.shadow = 100;
+    assert.ok(cast(w, skill).ok);
+    run(w, 0.3);
+    w.shadow = 100;
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
+  }
+});
+
+test("a weapon's own mastery only counts while that weapon is held", async () => {
+  const { computeStats } = await import('../src/core/stats.js');
+  const w = thief();
+  const plain = computeStats(w.char, 0).watk;
+  w.char.skills.daggermastery = 20;
+  assert.ok(computeStats(w.char, 0).watk > plain, 'Dagger Mastery with a dagger');
+  w.char.equipment.weapon = makeEquip('gauntlet_20', {});
+  const g = computeStats(w.char, 0).watk;
+  w.char.skills.daggermastery = 0;
+  assert.equal(computeStats(w.char, 0).watk, g, 'nothing from it with a gauntlet');
 });

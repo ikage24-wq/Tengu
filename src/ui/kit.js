@@ -451,6 +451,13 @@ const ICONS = {
     ctx.fillRect(-s * 0.06, -s * 0.28, s * 0.12, s * 0.56);
     ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
   },
+  // A crescent moon (the Thief's Shadow).
+  moon(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.42, 0, Math.PI * 2);
+    ctx.arc(s * 0.2, -s * 0.12, s * 0.34, 0, Math.PI * 2, true);
+    ctx.fill('evenodd');
+  },
   // A feather (the Archer's Momentum).
   feather(ctx, s) {
     ctx.save();

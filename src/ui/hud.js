@@ -346,6 +346,8 @@ const GAUGES = {
     tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
   momentum: { color: '#e8962a', hot: '#7fcfff', icon: 'feather', name: 'Momentum', full: 'HAWKEYE', notch: () => null, edge: 'rgba(255,200,90,', ink: '#8a4a1a',
     tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
+  shadow: { color: '#7a52e0', hot: '#d2cff0', icon: 'moon', name: 'Shadow', full: 'PHANTOM', notch: () => null, edge: 'rgba(90,60,200,', ink: '#2a1a6a',
+    tip: 'Your hits build it, faster when they land in a quick chain; it fades fast once the fighting stops. Full, a shadow copy of you repeats every attack, and your finisher is ready.' },
   rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
     tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,

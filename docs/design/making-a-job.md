@@ -28,13 +28,13 @@ blow).
 - **Basic combo** (`world/melee.js`): three steps with a finisher on the third, each a move, a
   duration and strikes timed with `at`.
 - **Command moves**: up + attack, attacking in the air, attacking out of a run.
-- **Its own gauge** (like Valor, Momentum, Rage, Faith, Gale, Focus in `world/melee.js`):
+- **Its own gauge** (like Valor, Momentum, Shadow, Rage, Faith, Gale, Focus in `world/melee.js`):
   - It builds in a fight in the job's own way (Valor from blows, faster the more monsters one
-    blow catches; Momentum from shots landing in a row, halved when hit; Rage from blows, Faith
+    blow catches; Momentum from shots landing in a row, halved when hit; Shadow from hits landing in a quick chain; Rage from blows, Faith
     also from hits taken, Gale from arrows landing, Focus from standing still and aiming).
   - It drains once the fighting stops.
   - The fuller it is, the stronger something gets.
-  - While it's full, something special happens: Unbroken, Hawkeye, Berserk, Sanctified,
+  - While it's full, something special happens: Unbroken, Hawkeye, Phantom, Berserk, Sanctified,
     Tailwind's twin arrows, Deadeye.
   - Show it on the HUD (`ui/hud.js` GAUGES) with an aura on the hero (`render/aura.js`).
 - **Skills** (`data/skills.js`): built as timed combo steps; limited by MP and their own
@@ -50,6 +50,11 @@ blow).
   - the finisher waits for a full gauge and spends it;
   - the no-spam rule holds;
   - any special behaviour is tested (e.g. Sniper bolts pierce the line).
+
+- **A first job with two weapons** (like the Thief's dagger and gauntlet) is the base for both
+  2nd-job paths: one shared gauge and a few shared skills, then a set of skills for each weapon
+  (each set with its own finisher and mastery, gated by `weapons`), so the player chooses where
+  the points go, and its own basic combo and command moves for each weapon.
 
 ## 3. Animation
 
