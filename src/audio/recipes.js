@@ -218,7 +218,7 @@ const R = {
     ],
   },
   // A sight closing on its mark: a soft rising beep and a click as it locks.
-  lockOn: { db: -18, gap: 300, max: 1, layers: [{ wave: 'sine', f0: 1400, slide: 1.2, env: { a: 300, s: 600, d: 120 }, db: -6 }, { rec: 'metalClick', at: 900, rate: 1.4 }] },
+  lockOn: { db: -18, gap: 40, max: 3, layers: [{ wave: 'sine', f0: 1400, slide: 1.2, env: { a: 300, s: 600, d: 120 }, db: -6 }, { rec: 'metalClick', at: 900, rate: 1.4 }] },
   // The archer paths' shots and bursts.
   cycloneShot: { db: -9, gap: 120, max: 1, layers: [{ rec: 'windWhoosh', len: 1100 }, { rec: 'bowLongbow', rate: 0.85, db: -2 }] },
   boltKick: { db: -11, gap: 120, max: 1, layers: [{ rec: 'crossbowShoot', rate: 0.8 }, thump(80, 180, { db: -2 }), { rec: 'metalClick', at: 260, rate: 0.8, db: -8 }] },

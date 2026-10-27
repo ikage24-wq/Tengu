@@ -8,7 +8,7 @@
 // and a seed, at a monster's feet for per-target effects and the bow hand for muzzle bursts.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { needle, starFlash, shardRing, crescent, shock, puff, crown, wisp, easeOut, easeIn, deep, inked } from './fxkit.js';
+import { needle, starFlash, shardRing, crescent, shock, puff, crown, wisp, wash, easeOut, easeIn, deep, inked } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const WIND = SCHOOL_COLORS.wind;
@@ -332,7 +332,8 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // A Sniper's bolt landing: a hard four-point glint turned on its corner, a rose sight tick,
       // and shrapnel kicked on along the shot (fx research D: three needles on every hit).
       const cy = y - (f.h ?? 24) / 2;
-      const big = f.big || f.crit ? 1.5 : 1;
+      // Each monster a bolt passes through lands a little bigger than the last (Piercing Arrow).
+      const big = (f.big || f.crit ? 1.5 : 1) * (1 + 0.12 * Math.min(6, f.rank ?? 0));
       const dir = f.dir || 1;
       if (p < 0.35) starFlash(ctx, x, cy, 16 * big * (1 - p / 0.35 * 0.5), 4, Math.PI / 4, FOCUS.main, '#ffffff', 3 * big * (1 - p / 0.35));
       if (p < 0.5) {
@@ -401,15 +402,40 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'frostburst': {
-      // A frost bolt shattering: a crown of ice spikes out of the ground, a ring of ice shards,
-      // and frost glittering down.
+      // A frost bolt shattering, in the order ice breaks (CyberConnect2; research/archery.md
+      // 34-35): cracks race across the ground and up the target first, then a white flash at the
+      // instant it breaks, then a crown of spikes, a ring of shards with navy among the blue, and
+      // frost and a low mist that linger.
       const cy = y - (f.h ?? 24) / 2;
-      const k = easeOut(p);
-      const up = p < 0.25 ? easeOut(p / 0.25) : 1 - easeIn(Math.max(0, (p - 0.55) / 0.45));
+      if (p < 0.3) {
+        const c = easeOut(p / 0.3);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.4;
+        for (let i = 0; i < 7; i++) {
+          const a = (i / 7) * TAU + f.seed * 4;
+          const len = 30 * c * (0.6 + 0.4 * rand(i + f.seed));
+          ctx.beginPath();
+          ctx.moveTo(x, cy);
+          ctx.lineTo(x + Math.cos(a) * len * 0.5 + 3, cy + Math.sin(a) * len * 0.4);
+          ctx.lineTo(x + Math.cos(a) * len, cy + Math.sin(a) * len * 0.8);
+          ctx.stroke();
+        }
+        return true;
+      }
+      const q = (p - 0.3) / 0.7;
+      const k = easeOut(q);
+      if (q < 0.12) {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, cy, 30 * (1 - q * 3), 0, TAU);
+        ctx.fill();
+      }
+      const up = q < 0.25 ? easeOut(q / 0.25) : 1 - easeIn(Math.max(0, (q - 0.55) / 0.45));
       crown(ctx, x, y + 1, 34 * up, 34, 7, ICE.main, '#ffffff');
-      if (p < 0.2) starFlash(ctx, x, cy, 30 * (1 - p / 0.2 * 0.4), 6, f.seed * 5, ICE.main, '#ffffff', 6);
-      shardRing(ctx, x, cy, 10 + 56 * k, 7 * (1 - p), 10, f.seed, f.seed * 3, p < 0.5 ? ICE.main : ICE.deep);
-      shock(ctx, x, y - 1, 16 + 70 * k, (16 + 70 * k) * 0.22, 3 * (1 - p), ICE.light);
+      shardRing(ctx, x, cy, 10 + 56 * k, 7 * (1 - q), 10, f.seed, f.seed * 3, q < 0.5 ? ICE.main : ICE.deep);
+      shardRing(ctx, x, cy, 6 + 44 * k, 5 * (1 - q), 6, f.seed + 3, f.seed * 5, '#1c3a8c');
+      shock(ctx, x, y - 1, 16 + 70 * k, (16 + 70 * k) * 0.22, 3 * (1 - q), ICE.light);
+      if (q > 0.3) puff(ctx, x, y - 4, 26 * (1 - q * 0.6), '#eef8ff', '#a8d8ff', q, f.seed);
       for (let i = 0; i < 10; i++) {
         const u = Math.max(0, p - rand(i) * 0.3);
         ctx.globalAlpha = 1 - u;
@@ -583,6 +609,57 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       ctx.fill();
       ctx.restore();
       if (lock >= 1) shock(ctx, mx, my, r + 10 * easeOut((p - 0.85) / 0.15), r + 10 * easeOut((p - 0.85) / 0.15), 2 * (1 - (p - 0.85) / 0.15), SIGHT);
+      return true;
+    }
+    case 'tracer': {
+      // A Sniper's tracer: one thin bright line from the bow to where the bolt is headed, there in
+      // full on the release, then shrinking from the bow end toward the hit (research/archery.md 30).
+      const tx = f.tx - cam.x;
+      const ty = f.ty - cam.y;
+      const k = easeOut(p);
+      const sx0 = x + (tx - x) * k;
+      const sy0 = y + (ty - y) * k;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = f.big ? SIGHT : FOCUS.main;
+      ctx.lineWidth = (f.big ? 3 : 2) * (1 - p * 0.5);
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(sx0, sy0);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = f.big ? 1.4 : 0.9;
+      ctx.globalAlpha = 1;
+      ctx.stroke();
+      return true;
+    }
+    case 'aimdim': {
+      // The world dims while a sight locks on, so the rose sights are the brightest thing there
+      // (Red Dead's Dead Eye; research/archery.md 27).
+      const a = Math.min(1, p / 0.15) * (p > 0.8 ? (1 - p) / 0.2 : 1);
+      ctx.globalAlpha = 0.32 * a;
+      ctx.fillStyle = '#1a1440';
+      wash(ctx);
+      ctx.globalAlpha = 1;
+      return true;
+    }
+    case 'chargeglow': {
+      // A bolt charging as the crank winds: a ring closing in on the bolt's tip, which glows in
+      // three steps (none, steel blue, then white with a rose rim), with a flash at each step.
+      const tipx = x + (f.dir || 1) * 6;
+      const lv = p < 0.33 ? 0 : p < 0.66 ? 1 : 2;
+      const since = p - [0, 0.33, 0.66][lv];
+      const r = 4 + 22 * (1 - easeIn(p));
+      shock(ctx, tipx, y, r, r, 1 + 1.6 * p, lv < 2 ? FOCUS.main : SIGHT);
+      if (lv > 0) {
+        glow(ctx, tipx, y, 8 + 4 * lv, lv === 2 ? '#ffffff' : FOCUS.main, 0.9);
+        ctx.fillStyle = lv === 2 ? '#ffffff' : FOCUS.light;
+        ctx.beginPath();
+        ctx.arc(tipx, y, 1.6 + lv, 0, TAU);
+        ctx.fill();
+        if (lv === 2) shock(ctx, tipx, y, 3.6 + lv, 3.6 + lv, 1.2, SIGHT);
+      }
+      if (lv > 0 && since < 0.06) starFlash(ctx, tipx, y, 10 + 4 * lv, 4, 0, FOCUS.main, '#ffffff', 2.5);
       return true;
     }
     case 'deadeye': {

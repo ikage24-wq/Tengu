@@ -62,7 +62,8 @@ export function hearWorld(world, cam) {
       case 'blink': sfx('blink', { pan: p }); break;
       case 'gather': sfx('gather', { dur: f.dur, school: f.school, pan: p }); break;
       case 'freeze': sfx('freeze', { pan: p }); break;
-      case 'reticle': sfx('lockOn', { pan: p }); break;
+      // Each sight locking on ticks a step higher than the last (Rez; research/archery.md 26).
+      case 'reticle': sfx('lockOn', { pan: p, rate: Math.pow(2, (2 * Math.min(8, f.n ?? 0)) / 12) }); break;
       case 'poisonpuff': sfx('dot', { bleed: f.bleed, pan: p }); break;
       default:
         if (NAMED.has(f.kind)) sfx(f.kind, { pan: p });

@@ -11,7 +11,7 @@ carry an improvement across every part of the game it applies to.
 - [research/](research/): the full findings, each with its source, the game or artist, and where it
   applies in Tengu: [en](research/en.md), [ja](research/ja.md), [ko](research/ko.md),
   [zh](research/zh.md), [ru](research/ru.md), [fx](research/fx.md) (effects and game feel),
-  [env](research/env.md) (maps, UI, icons), [anim](research/anim.md) (animation craft),
+  [env](research/env.md) (maps, UI, icons), [anim](research/anim.md) (animation craft), [archery](research/archery.md) (bows, crossbows, archer skill effects),
   [fanart](research/fanart.md) (how pros put anime characters into small sprites),
   [avatar](research/avatar.md) (dress-up avatar games the player named as references: SELFY /
   attrade and CocoPPa Play; read before any hair, outfit or cosmetic work),
@@ -163,6 +163,21 @@ carry an improvement across every part of the game it applies to.
   Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
   streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
   step white, main, deep from head to tail (fx.md D), not faded copies.
+- Archers (research/archery.md):
+  - A bow's string bends back to the draw hand with the arrow on it while drawing.
+  - On the loose the string snaps straight in one frame (never eased), then rings as two faint
+    lines for a few frames.
+  - The draw hand flies back past the ear and holds there; the follow-through is the longest beat.
+  - Volleys hold spare arrows fanned in the draw hand.
+  - Air shots tip the body forward with the bow arm down, and pop up a little on each loose.
+  - A crossbow never bends: the back hand's cocking pull after the shot is its motion, and between
+    shots it rests at low ready, just under the aim, so a shot settles instead of dropping.
+  - Sniper bolts leave a thin tracer that shrinks toward the hit, and give the view a small kick.
+  - Lock-ons dim the world and pop sights on one at a time, each tick a step higher.
+  - Charging shots glow in steps (none, blue, white with a rose rim), with a flash at each step.
+  - Ice cracks first, flashes white at the instant it breaks, then shards fly and mist lingers.
+  - Not done yet: arrow hits still freeze the whole world; the research says only the arrow and
+    the target should stop.
 - A blast is a sequence (fx.md C12, C17): a white flash, then lumps that burst outward and tear
   open as they go, then smoke that rises and breaks up. One swelling fireball reads as a flat
   orange disc.

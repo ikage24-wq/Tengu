@@ -482,7 +482,7 @@ export const SKILLS = {
         mp: k(6, 13), pct: k(130, 210), hits: 4, targets,
         combo: [
           { move: 'kneelshot', dur: 0.58, step: -2, strikes: [bolt(0.56, k(140, 230), 110)] },
-          { move: 'crankshot', dur: 0.64, step: -3, strikes: [bolt(0.5, k(90, 150)), bolt(0.8, k(95, 155), 120)] },
+          { move: 'crankshot', dur: 0.64, step: -3, charge: true, strikes: [bolt(0.5, k(90, 150)), bolt(0.8, k(95, 155), 120)] },
           { move: 'ballista', dur: 0.86, step: -6, finisher: true, strikes: [{ at: 0.62, shot: 'ballista', pct: k(260, 430), range: 380, h: 60, targets: targets + 3, pierce: true, speed: 1200, knock: 320, launch: 160, kickback: 26, big: true, stop: 0.1, shake: 4, muzzle: 'boltshock' }] },
         ],
       };

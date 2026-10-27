@@ -359,11 +359,15 @@ function drawGauge(ui, world, kind, value) {
   const y = BAR_Y - 20;
   const k = Math.min(1, value / 100);
   const full = k >= 1;
-  const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 9) : 0;
+  // Full, a slow pulse (about a second); every gain flashes the bar white for a moment, and from
+  // 80 it turns its hot colour, almost there (FFXIV's gauges; research/archery.md 31).
+  const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 7) : 0;
+  const gainAt = world[`${kind}At`] ?? -9;
+  const gained = !full && world.now - gainAt < 0.09;
   if (full) edgeTint(ctx, G.edge ?? (kind === 'rage' ? 'rgba(232,40,60,' : 'rgba(255,214,90,'), 0.22 + 0.12 * beat);
   box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
   badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
-  bar(ctx, x + 16, y + 5, 40, 6, k, full && beat > 0.5 ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
+  bar(ctx, x + 16, y + 5, 40, 6, k, gained ? '#ffffff' : (full && beat > 0.5) || (!full && k >= 0.8) ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
   const notch = G.notch();
   if (notch) {
     ctx.fillStyle = value >= notch ? '#ffffff' : 'rgba(74,53,96,0.55)';
