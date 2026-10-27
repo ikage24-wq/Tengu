@@ -381,8 +381,12 @@ to clear it.
   for every NPC while their words type out (each at their own pitch). Sounds pan to where they
   happen on screen. **Music** is composed as it plays: each town, field, dungeon and boss has its
   own key, tempo, chords and instruments (a soft pad, bass, a plucked, bell, flute or chiptune
-  lead, and light drums), the melody a motif that repeats and varies; the Funky Fever Stage plays
-  four-on-the-floor disco at the boss's 120 bpm. Sound starts on your first key press or click.
+  lead, and light drums), the melody a motif that repeats and varies. Dancing Green has his own written song,
+  **Funky Fever** (an original disco / Hi-NRG track, `src/audio/funky.js`), locked to the stage
+  lights' 120 bpm beat and following the fight: a muffled groove that opens up as he struts in, a
+  riser and snare roll while the red energy gathers, a boom as he transforms, a heartbeat pause,
+  the drop into the chorus hook when the fight starts, then verse, chorus and a breakdown; Hi-NRG
+  Fever jumps the key up a step with double-time arps and a siren; a brass fanfare when he falls. Sound starts on your first key press or click.
   Options: Sound has volume for everything, music, and effects.
 - **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: filter, HD graphics, particles
   (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest

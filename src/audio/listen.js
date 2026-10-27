@@ -17,9 +17,16 @@ const memo = new WeakMap();
 const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood' };
 const TOWN_SONG = { sprout: 'town', harbor: 'harbor', crag: 'crag', grove: 'grove' };
 
-export function songFor(map) {
+export function songFor(map, world = null) {
   if (!map) return 'title';
-  if (map.id === 'discostage') return 'disco';
+  // Dancing Green's stage plays his song, following the fight.
+  if (map.id === 'discostage') {
+    const boss = world?.mobs.find((m) => m.def.disco);
+    // Gone (or falling): the victory fanfare, then quiet.
+    if (!boss || boss.hp <= 0) return 'funky-win';
+    if (world.cutscene) return 'funky-intro';
+    return boss.brain?.enraged ? 'funky-fever' : 'funky';
+  }
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
   if (map.dungeon) return 'hollow';
   if (map.isTown) return TOWN_SONG[map.town] ?? 'town';
@@ -133,7 +140,7 @@ export function hearWorld(world, cam) {
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
   Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, rage: world.rage, faith: world.faith });
 
-  updateMusic(songFor(world.map));
+  updateMusic(songFor(world.map, world), world.disco?.cut ?? 0);
 }
 
 function countItems(char) {

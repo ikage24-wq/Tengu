@@ -8,6 +8,7 @@
 // Fever Stage (120 bpm, matching the boss's beat).
 
 import { note, beat, now, audioReady, hz } from './engine.js';
+import { updateFunky, stopFunky } from './funky.js';
 
 const MODES = {
   major: [0, 2, 4, 5, 7, 9, 11],
@@ -42,8 +43,19 @@ let step = 0;
 let phrase = null;
 
 // Call every frame with the music that should be playing (or null for silence).
-export function updateMusic(key) {
+// Dancing Green's stage plays his own written song instead ('funky-...' keys, see funky.js);
+// `cut` is how far into his cutscene it is.
+export function updateMusic(key, cut = 0) {
   if (!audioReady()) return;
+  if (key?.startsWith('funky')) {
+    if (songKey && !songKey.startsWith('funky')) {
+      song = null;
+      songKey = null;
+    }
+    updateFunky(key, cut);
+    return;
+  }
+  stopFunky();
   if (key !== songKey) {
     songKey = key;
     song = key ? SONGS[key] : null;
