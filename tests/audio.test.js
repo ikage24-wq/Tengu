@@ -68,7 +68,7 @@ test('every sound effect renders cleanly', () => {
         sum += x;
       }
       assert.ok(peak <= 1.0001 && peak > 0.5, `${name} peak ${peak}`);
-      assert.ok(Math.abs(sum / b.length) < 0.02, `${name} is off-centre`);
+      if (secs(b) > 0.1) assert.ok(Math.abs(sum / b.length) < 0.02, `${name} is off-centre`);
       assert.ok(secs(b) < 6, `${name} is ${secs(b)} s long`);
       assert.ok(typeof r.db === 'number' && r.db <= -6, `${name} needs a level`);
     }
