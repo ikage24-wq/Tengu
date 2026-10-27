@@ -178,8 +178,12 @@ carry an improvement across every part of the game it applies to.
     Berserker's rose red); hits leave the Warrior's cross of blades, the Paladin's star of light,
     the Berserker's claws; buffs rise as a pillar of light with the path's emblem; Grand Verdict
     drives a sword of light down over the magic circle; Crimson Eclipse raises a crimson eclipse.
-  - The archer paths still use pack strips (PVFX Foundry, CodeManu) and need the same pass, as do
-    mages, thieves, monsters, and buffs' lasting looks.
+  - Archers: the Ranger's emerald wind (curls of wind, gusts of leaves, a wind-orb spirit, a
+    tornado, rings of wind); the Sniper's ice-blue lens of light tearing through each monster a
+    bolt pierces (every Sniper bolt pierces the line), snowflakes and a frost burst, a puffy blast,
+    a rose sight for the Deadeye.
+  - Mages, thieves, monsters, and buffs' lasting looks are still code-drawn and need the same
+    pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

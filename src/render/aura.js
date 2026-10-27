@@ -290,15 +290,15 @@ const JOBS = {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringrage', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
     front: () => {},
   },
-  // Ranger: a slow, faint spin of wind at her feet (effect-pack art, no glow).
+  // Ranger: a slow, faint curl of wind at her feet.
   ranger: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'windspin', x, y - 2 * s, { t: t * 0.6, scale: s * 1.5, sy: 0.3, alpha: k * 0.6 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * 0.6, scale: s * 0.5, sy: 0.3, alpha: k * 0.6 }),
     front: () => {},
   },
-  // Sniper: the rune wheel turning slowly and faintly at her chest.
+  // Sniper: a faint rose ring at her feet.
   sniper: {
-    back: () => {},
-    front: (ctx, x, y, t, s, k) => fxSprite(ctx, 'charge', x, y - 22 * s, { frame: 1, rot: t * 0.3, scale: s * 0.55, alpha: k * 0.45 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringsight', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
+    front: () => {},
   },
   // The Game Master: a faint ring and a few stars in every color.
   gamemaster: {
@@ -360,25 +360,25 @@ function faithAura(ctx, x, y, t, s, k, layer) {
   if (k > 0.4) fxSprite(ctx, 'celmotes', x, y, { t, scale: s * 0.6, alpha: Math.min(1, (k - 0.4) * 2.5) });
 }
 
-// Gale: wind from the effect packs (fx-sprites.js), no glows: a spin of wind at her feet that
-// widens and quickens as it fills, gusts of leaves blowing past from halfway, and full (Tailwind),
-// rings of wind bursting out from her feet.
+// Gale, in Tengu's own effect art: a curl of wind spinning at her feet that widens and quickens
+// as it fills, leaves blowing past from halfway, and full (Tailwind), rings of wind racing out
+// from her feet.
 function galeAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'windspin', x, y - 2 * s, { t: t * (1 + k), scale: s * (1.6 + 1.4 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'windring', x, y, { t: t % 0.55, scale: s * 1.6 });
+    if (k > 0.15) fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * (1 + k), scale: s * (0.5 + 0.4 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celringwind', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
     return;
   }
-  if (k > 0.5) fxSprite(ctx, 'leafgust', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.7, flip: Math.floor(t * 0.9 / 0.7) % 2 === 1, scale: s * (0.8 + 0.4 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
+  if (k > 0.5) fxSprite(ctx, 'celleaves', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.45, flip: Math.floor((t * 0.9) / 0.45) % 2 === 1, scale: s * (0.4 + 0.2 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
 }
 
-// Focus: the pack's charging rune wheel turning slowly at her chest, growing as it fills; full
-// (Deadeye), the rose star flashes over it on a slow beat.
+// Focus: lines of light gathering at her chest, growing as it fills; full (Deadeye), the rose
+// sight snaps shut over it on a slow beat.
 function focusAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back' || k <= 0.25) return;
   const cy = y - 22 * s;
-  fxSprite(ctx, 'charge', x, cy, { frame: 1, rot: t * (0.4 + k), scale: s * (0.6 + 0.5 * k), alpha: Math.min(1, (k - 0.25) * 2) * 0.85 });
-  if (k >= 1) fxSprite(ctx, 'deadstar', x, cy, { t: t % 1.2, scale: s * 0.7, alpha: 0.9 });
+  fxSprite(ctx, 'celcharge', x, cy, { t, scale: s * (0.35 + 0.25 * k), alpha: Math.min(1, (k - 0.25) * 2) * 0.85 });
+  if (k >= 1) fxSprite(ctx, 'celdeadeye', x, cy, { t: (t % 1.2) * 0.8, scale: s * 0.5, alpha: 0.9 });
 }
 
 // Draws a combat aura: `kind` 'rage', 'faith', 'gale' or 'focus', `k` how full (0-1).

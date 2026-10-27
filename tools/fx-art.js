@@ -21,7 +21,8 @@
     arcane: ['#ffffff', '#f1e6ff', '#cfa8ff', '#a374f0', '#6f4ac8'],
     ice: ['#ffffff', '#e2fbff', '#9ae9ff', '#5ab8ee', '#3a78c8'],
     fire: ['#ffffff', '#fff1c0', '#ffbe72', '#ff8a5c', '#cc566a'],
-    wind: ['#ffffff', '#ddfff0', '#86ecbe', '#3fc69a', '#22808a'],
+    wind: ['#ffffff', '#d2ffe9', '#5ee6a8', '#22b886', '#13706e'],
+    sight: ['#ffffff', '#ffd6e2', '#ff8fae', '#f2577f', '#a8306a'],
     poison: ['#ffffff', '#f0ffd2', '#bdf08a', '#86cc5a', '#4f8a5a'],
     lightning: ['#ffffff', '#fffad2', '#ffeb7a', '#ffc25a', '#c9805a'],
     shadow: ['#ffffff', '#ebe0ff', '#b89cff', '#8a6ae8', '#5a3fb8'],
@@ -1215,6 +1216,270 @@
     tongue(ctx, pal, 0, 44, 40, 110, 10);
   });
 
+  // ---------- The Ranger's wind ----------
+  const LEAF = ['#ffffff', '#e2ffc8', '#9de86a', '#5cba4a', '#2f7a46'];
+  // A leaf: a pointed oval with a centre vein, turned to `a`.
+  function leaf(ctx, x, y, r, a) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const shape = (k) => {
+      ctx.beginPath();
+      ctx.moveTo(-r * k, 0);
+      ctx.quadraticCurveTo(0, -r * 0.75 * k, r * k, 0);
+      ctx.quadraticCurveTo(0, r * 0.75 * k, -r * k, 0);
+    };
+    shape(1.2);
+    ctx.fillStyle = LEAF[4];
+    ctx.fill();
+    shape(1);
+    ctx.fillStyle = LEAF[2];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.7, -1);
+    ctx.quadraticCurveTo(0, -r * 0.5, r * 0.7, -1);
+    ctx.lineTo(-r * 0.7, -1);
+    ctx.fillStyle = LEAF[1];
+    ctx.fill();
+    ctx.strokeStyle = LEAF[3];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.9, 0);
+    ctx.lineTo(r * 0.8, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+  // A curl of wind: a crescent that hooks round into a spiral at its head.
+  function curl(ctx, pal, cx, cy, R, a0, sweep, th) {
+    celCrescent(ctx, pal, cx, cy, R, a0, a0 + sweep, th);
+    celCrescent(ctx, pal, cx + Math.cos(a0 + sweep) * R * 0.55, cy + Math.sin(a0 + sweep) * R * 0.55, R * 0.45, a0 + sweep, a0 + sweep + 3.4, th * 0.6);
+  }
+  // Wind spinning, looping: two curls chasing round, drawn side on (the game squashes it flat).
+  E.windspin = {
+    w: 200, h: 200, n: 6, fps: 18, px: 100, py: 100, loop: true,
+    draw(ctx, i) {
+      const t = (i / 6) * TAU;
+      curl(ctx, PAL.wind, 100, 100, 74, t, 1.7, 22);
+      curl(ctx, PAL.wind, 100, 100, 60, t + Math.PI, 1.5, 18);
+    },
+  };
+  // A gust: leaves tumbling along on a swoosh of wind, blown out of shape as they go.
+  E.leaves = {
+    w: 260, h: 160, n: 7, fps: 16, px: 70, py: 80,
+    draw(ctx, i) {
+      const k = i / 6;
+      if (i < 4) celCrescent(ctx, PAL.wind, 110 + k * 40, 210, 150, -2.3 + k * 0.3, -1.3 + k * 0.3, 18 * (1 - k * 0.6));
+      const R = rng(71);
+      for (let j = 0; j < 7; j++) {
+        const x = 40 + j * 22 + k * (60 + R() * 60);
+        const y = 80 + Math.sin(j * 1.7 + k * 6) * 26 - k * R() * 30;
+        if (i < 6 || j % 2) leaf(ctx, x, y, 12 * (1 - k * 0.35), j + k * 9 * (j % 2 ? 1 : -1));
+      }
+    },
+  };
+  // A Ranger's arrow landing: a curl of wind cuts across the target, leaves burst off it, and
+  // the curl unwinds into beads.
+  E.windhit = {
+    w: 220, h: 200, n: 6, fps: 24, px: 110, py: 100,
+    draw(ctx, i) {
+      const c = 110;
+      if (i === 0) return starburst(ctx, PAL.wind, c, 100, 30, 8, 72, { inner: 0.5, tones: 3 });
+      if (i <= 2) {
+        curl(ctx, PAL.wind, c - 10, 120, 62, -2.6, 2.3, i === 1 ? 26 : 30);
+        starburst(ctx, PAL.wind, c, 100, i === 1 ? 50 : 40, 8, 72, { inner: 0.45 });
+      }
+      const k = (i - 1) / 4;
+      const R = rng(73);
+      for (let j = 0; j < 6; j++) {
+        const a = (j / 6) * TAU + R() * 0.5;
+        const d = 30 + k * 60;
+        if (i < 5 || j % 2) leaf(ctx, c + Math.cos(a) * d, 100 + Math.sin(a) * d * 0.8, 11 * (1.1 - k * 0.4), a + k * 4);
+      }
+      if (i >= 3) for (let j = 0; j < 5; j++) shard(ctx, PAL.wind, c - 40 + j * 22, 70 - k * 20 + (j % 2) * 18, 0.3, 8, 3 * (1.2 - k * 0.5));
+    },
+  };
+  // A wind spirit: a little round wind orb with a curly tail, bobbing (looping).
+  E.wisp = {
+    w: 160, h: 120, n: 4, fps: 12, px: 110, py: 60, loop: true,
+    draw(ctx, i) {
+      const bob = Math.sin((i / 4) * TAU) * 4;
+      curl(ctx, PAL.wind, 70, 70 + bob, 34, Math.PI * 0.6 + i * 0.2, 2.2, 14);
+      ctx.beginPath();
+      ctx.arc(110, 60 + bob, 26, 0, TAU);
+      ctx.fillStyle = PAL.wind[4];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(110, 60 + bob, 22, 0, TAU);
+      ctx.fillStyle = PAL.wind[2];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(106, 55 + bob, 15, 0, TAU);
+      ctx.fillStyle = PAL.wind[1];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(101, 50 + bob, 6, 0, TAU);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    },
+  };
+  // A tornado, looping: bands of wind stacked into a funnel (narrow at the foot), each turning on
+  // its own phase and swaying, leaves caught up in it.
+  E.tornado = {
+    w: 260, h: 320, n: 6, fps: 16, px: 130, py: 305, loop: true,
+    draw(ctx, i) {
+      const t = (i / 6) * TAU;
+      for (let b = 0; b < 7; b++) {
+        const k = b / 6;
+        const y = 290 - k * 250;
+        const rx = 22 + k * 95;
+        const sway = Math.sin(t + k * 3) * 10 * k;
+        ctx.save();
+        ctx.translate(130 + sway, y);
+        ctx.scale(1, 0.32);
+        celCrescent(ctx, PAL.wind, 0, 0, rx, t * (b % 2 ? -1 : 1) + b, t * (b % 2 ? -1 : 1) + b + 4.2, 16 + k * 10);
+        ctx.restore();
+      }
+      const R = rng(74);
+      for (let j = 0; j < 5; j++) {
+        const k = ((i / 6) + j / 5) % 1;
+        leaf(ctx, 130 + Math.cos(t * 2 + j * 1.3) * (20 + k * 80), 280 - k * 230, 11, t * 3 + j);
+      }
+      void R;
+    },
+  };
+
+  // ---------- The Sniper's bolts, frost and blasts ----------
+  // A bolt tearing through: a long lens of light along the shot, a ring, beads thrown forward
+  // (drawn flying to the right).
+  E.boltburst = {
+    w: 240, h: 160, n: 6, fps: 26, px: 110, py: 80,
+    draw(ctx, i) {
+      const pal = PAL.ice;
+      const c = 80;
+      if (i === 0) return starburst(ctx, pal, 110, c, 26, 8, 81, { inner: 0.5, tones: 3 });
+      const len = [0, 110, 116, 90, 50, 0][i];
+      const wid = [0, 16, 12, 8, 5, 0][i];
+      if (len) {
+        inked(ctx, [[110 - len * 0.6, c], [110, c - wid], [110 + len, c], [110, c + wid]], pal[3], pal[4], 4);
+        fill(ctx, [[110 - len * 0.5, c], [110, c - wid * 0.6], [110 + len * 0.9, c], [110, c + wid * 0.6]], pal[1]);
+        fill(ctx, [[110 - len * 0.3, c], [110, c - wid * 0.25], [110 + len * 0.75, c], [110, c + wid * 0.25]], pal[0]);
+      }
+      if (i === 1 || i === 2) {
+        ctx.save();
+        ctx.translate(110, c);
+        ctx.scale(0.45, 1);
+        celRing(ctx, pal, 0, 0, i === 1 ? 34 : 46, 9, { seed: 82 });
+        ctx.restore();
+      }
+      if (i >= 2) {
+        const k = (i - 2) / 3;
+        const R = rng(83);
+        for (let j = 0; j < 6; j++) shard(ctx, pal, 130 + k * 80 + R() * 30, c + (R() - 0.5) * 60 * (0.4 + k), 0, 10 * (1.1 - k * 0.5), 3 * (1.1 - k * 0.5));
+      }
+    },
+  };
+  // A bolt leaving the crossbow: a small forward burst and speed lines.
+  E.boltspark = {
+    w: 140, h: 100, n: 4, fps: 24, px: 30, py: 50,
+    draw(ctx, i) {
+      const pal = PAL.ice;
+      const k = i / 3;
+      if (i < 2) starburst(ctx, pal, 40, 50, i ? 30 : 20, 7, 84, { inner: 0.45, tones: 3 });
+      for (const dy of [-16, 0, 16]) speedLine(ctx, pal, 40 + k * 30, 50 + dy * (1 + k * 0.4), 100 + k * 34, 50 + dy * (1 + k * 0.6), 3 * (1 - k * 0.5));
+    },
+  };
+  // A snowflake: six arms with side branches.
+  function snowflake(ctx, pal, x, y, r, rot) {
+    const arm = (w, colour) => {
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = w;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let j = 0; j < 6; j++) {
+        const a = rot + (j * TAU) / 6;
+        const cx = Math.cos(a);
+        const sn = Math.sin(a);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + cx * r, y + sn * r);
+        for (const [d, l] of [[0.5, 0.3], [0.75, 0.22]]) {
+          const bx = x + cx * r * d;
+          const by = y + sn * r * d;
+          for (const s of [-1, 1]) {
+            ctx.moveTo(bx, by);
+            ctx.lineTo(bx + Math.cos(a + s * 0.9) * r * l, by + Math.sin(a + s * 0.9) * r * l);
+          }
+        }
+      }
+      ctx.stroke();
+    };
+    arm(Math.max(4, r * 0.16), pal[4]);
+    arm(Math.max(2.5, r * 0.1), pal[1]);
+    diamond(ctx, pal, x, y, r * 0.18, 1);
+  }
+  E.snowflake = {
+    w: 120, h: 120, n: 4, fps: 12, px: 60, py: 60, loop: true,
+    draw(ctx, i) {
+      snowflake(ctx, PAL.ice, 60, 60, 46, (i / 4) * (TAU / 6));
+    },
+  };
+  // A frost bolt shattering: a great snowflake bursts open over an icy ring, then breaks into ice
+  // beads and little flakes drifting down.
+  E.frostburst = {
+    w: 260, h: 260, n: 7, fps: 20, px: 130, py: 130,
+    draw(ctx, i) {
+      const pal = PAL.ice;
+      const c = 130;
+      if (i === 0) return starburst(ctx, pal, c, c, 34, 6, 85, { inner: 0.5, tones: 3 });
+      if (i <= 3) {
+        celRing(ctx, pal, c, c, [0, 70, 96, 110][i], [0, 14, 10, 6][i], { broken: i === 3 ? 0.4 : 0, seed: 86 });
+        snowflake(ctx, pal, c, c, [0, 70, 92, 84][i], 0.2 + i * 0.08);
+        return;
+      }
+      const k = (i - 3) / 3;
+      const R = rng(87);
+      for (let j = 0; j < 10; j++) {
+        const a = (j / 10) * TAU + R() * 0.4;
+        const d = 60 + k * 50;
+        if (j % 3) shard(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d + k * 20, a, 10 * (1.1 - k * 0.5), 3.5);
+        else snowflake(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d + k * 30, 14 * (1.1 - k * 0.5), k * 2);
+      }
+    },
+  };
+  // A blast bolt bursting: a soft star of fire, puffs of cloud billowing out of it, breaking up.
+  E.blast = {
+    w: 280, h: 240, n: 8, fps: 20, px: 140, py: 200,
+    draw(ctx, i) {
+      const c = 140;
+      const cy = 130;
+      if (i === 0) return starburst(ctx, PAL.fire, c, cy, 50, 10, 88, { inner: 0.5, tones: 3 });
+      if (i <= 2) starburst(ctx, PAL.fire, c, cy, i === 1 ? 110 : 96, 10, 88, { inner: 0.42 });
+      if (i >= 2) {
+        const k = (i - 2) / 5;
+        const R = rng(89);
+        for (let j = 0; j < 6; j++) {
+          const a = -Math.PI / 2 + (j - 2.5) * 0.55;
+          const d = 30 + k * 60;
+          puff(ctx, j % 2 ? DUST : PAL.fire, c + Math.cos(a) * d, cy + 20 + Math.sin(a) * d * 0.7 - k * 30, (26 + R() * 10) * (1 - k * 0.5), 90 + j, { holes: Math.max(0, (i - 5) / 3), lobes: 3 });
+        }
+      }
+    },
+  };
+  // A Deadeye: a rose sight snapping shut on the bow, a star of light bursting inside it.
+  E.deadeye = {
+    w: 220, h: 220, n: 6, fps: 20, px: 110, py: 110,
+    draw(ctx, i) {
+      const pal = PAL.sight;
+      const c = 110;
+      const r = [96, 70, 56, 60, 72, 84][i];
+      celRing(ctx, pal, c, c, r, 8, { broken: 0.25, seed: 91 });
+      for (let j = 0; j < 4; j++) {
+        const a = (j / 4) * TAU;
+        speedLine(ctx, pal, c + Math.cos(a) * (r + 22), c + Math.sin(a) * (r + 22), c + Math.cos(a) * (r - 14), c + Math.sin(a) * (r - 14), 4);
+      }
+      if (i >= 2 && i <= 4) starburst(ctx, pal, c, c, [0, 0, 50, 44, 30][i], 8, 92, { inner: 0.35 });
+    },
+  };
+
   // ---------- Big versions ----------
   // Pixel art can't be blown up without its pixels growing past the sprites', so effects that play
   // large (rings across a whole group, the magic circle, a whirlwind over an area, the ground
@@ -1235,7 +1500,7 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight']) E[`${s}big`] = big(E[s], 2.6);
   E.circlebig = big(E.circle, 2.4);
   E.spinbig = big(E.spin, 2);
   E.spinredbig = big(E.spinred, 2);

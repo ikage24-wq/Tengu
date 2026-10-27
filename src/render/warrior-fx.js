@@ -19,7 +19,7 @@ const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel' }
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celring', 'celringholy', 'celringrage']);
+const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {

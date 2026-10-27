@@ -1,9 +1,9 @@
-// The archer paths' effects, built from hand-drawn effect sprites (fx-sprites.js; the packs and
-// their credits are in assets/fx/), not drawn shapes (CLAUDE.md). The Ranger's are wind: a gust
-// full of leaves, spinning wind (a swirl recoloured from the packs), rings of wind, dust. The
-// Sniper's are steel and frost: bolt bursts, sparks, shrapnel, a charging core, a lattice beam,
-// frost novas, ice stars, a real explosion, and a rose star for the Deadeye. Code draws only the
-// small supporting parts: the arrow and bolt shafts and the sight's ticks.
+// The archer paths' effects, in Tengu's own effect art (tools/fx-art.js, the `cel*` strips),
+// matched to the sprites like every other effect (CLAUDE.md). The Ranger's are emerald wind:
+// curls of wind spinning, gusts of leaves, a wind spirit, a tornado, rings of wind. The Sniper's
+// are ice blue and rose: a lens of light tearing through each monster a bolt pierces, sparks off
+// the crossbow, snowflakes and a frost burst, a puffy blast, and a rose sight for the Deadeye.
+// Code draws only the small supporting parts: the arrow and bolt shafts and the sight's ticks.
 //
 // Shots draw at their head (x, y) flying along `dir`; the rest are drawn from progress `p` (0-1)
 // and a seed, at a monster's feet for per-target effects and the bow hand for muzzle bursts.
@@ -11,6 +11,7 @@
 import { SCHOOL_COLORS } from './spells.js';
 import { shock, wash, easeOut, deep, inked } from './fxkit.js';
 import { fxSprite } from './fx-sprites.js';
+import { groundRing } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const FOCUS = SCHOOL_COLORS.focus;
@@ -80,7 +81,7 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
     case 'windarrow': {
       // An arrow riding a spin of wind: the swirl turns round its tail as it flies.
       const [tx, ty] = along(12);
-      fxSprite(ctx, 'windspin', tx, ty, { t: time + (f.seed ?? 0), rot: ang, scale: 0.9, sy: 0.7 });
+      fxSprite(ctx, 'celwindspin', tx, ty, { t: time + (f.seed ?? 0), rot: ang, scale: 0.32, sy: 0.7 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
@@ -95,10 +96,10 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       // two spins of wind wrapped along it and a gust of leaves torn off behind.
       for (let i = 0; i < 3; i++) {
         const [tx, ty] = along(8 + i * 16);
-        fxSprite(ctx, 'windspin', tx, ty, { t: time * (1 + i * 0.2) + i * 0.3, rot: ang, scale: 1.7 - i * 0.35, sy: 0.75 });
+        fxSprite(ctx, 'celwindspin', tx, ty, { t: time * (1 + i * 0.2) + i * 0.3, rot: ang, scale: 0.6 - i * 0.12, sy: 0.75 });
       }
       const [gx, gy] = along(30);
-      fxSprite(ctx, 'leafgust', gx, gy + 6, { t: (time * 1.5) % 0.7, flip: dir < 0, scale: 1.1 });
+      fxSprite(ctx, 'celleaves', gx, gy + 6, { t: (time * 1.5) % 0.45, flip: dir < 0, scale: 0.55 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
@@ -107,18 +108,12 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'cyclone': {
-      // A tornado on the ground line, built of spinning wind stacked into a funnel twice her
-      // height (narrow at the foot, wide at the top, each band on its own phase and swaying), with
-      // a gust of leaves whirling at its foot and dust kicked up, and the arrow at its heart.
+      // A tornado on the ground line twice her height (bands of wind stacked into a funnel, leaves
+      // caught up in it), dust kicked up at its foot, and the arrow at its heart.
       const grow = easeOut(Math.min(1, u * 4));
       const foot = y + 22;
-      for (let i = 0; i < 7; i++) {
-        const k = i / 6;
-        const sway = Math.sin(time * 6 + k * 3) * 4 * k;
-        fxSprite(ctx, 'windspin', x + sway, foot - k * 70 * grow, { t: time * (1.2 + k * 0.5) + i * 0.17, scale: (0.8 + k * 1.9) * grow, sy: 0.55, flip: i % 2 === 1 });
-      }
-      fxSprite(ctx, 'dust', x - dir * 6, foot + 2, { t: (time * 1.2) % 0.6, scale: 1.2 * grow, flip: dir < 0 });
-      fxSprite(ctx, 'leafgust', x, foot - 18, { t: (time * 1.4) % 0.7, scale: 1.3 * grow, flip: Math.floor(time * 3) % 2 === 0 });
+      fxSprite(ctx, 'celtornado', x, foot, { t: time, scale: 0.7 * grow });
+      fxSprite(ctx, 'celdust', x - dir * 6, foot, { t: (time * 1.2) % 0.35, scale: 0.7 * grow, flip: dir < 0 });
       ctx.save();
       ctx.translate(x, y - 20);
       ctx.rotate(ang);
@@ -127,13 +122,12 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'wisp': {
-      // A wind spirit from a full Gale: the pack's flying wind orb, swooping out on a curve and
-      // homing in (Wind Archer's Trifling Wind; archery.md 23), a little spin of wind behind it.
+      // A wind spirit from a full Gale: a little wind orb with a curly tail, swooping out on a curve
+      // and homing in (Wind Archer's Trifling Wind; archery.md 23).
       const bend = (f.bend ?? 30) * Math.sin(Math.PI * u);
       const hx = x - Math.sin(ang) * bend;
       const hy = y + Math.cos(ang) * bend;
-      fxSprite(ctx, 'windspin', hx - Math.cos(ang) * 8, hy - Math.sin(ang) * 8, { t: time, rot: ang, scale: 0.7, sy: 0.6 });
-      fxSprite(ctx, 'windwisp', hx, hy, { frame: 1 + (Math.floor(time * 20) % 3), rot: ang, scale: 1.1 });
+      fxSprite(ctx, 'celwisp', hx, hy, { t: time, rot: ang, scale: 0.5 });
       return true;
     }
     case 'heavybolt': {
@@ -147,8 +141,8 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'blastbolt': {
-      // A bolt with a charge in its head: the pack's charging core, held at its brightest.
-      fxSprite(ctx, 'charge', x + dir * 6, y, { frame: 3 + (Math.floor(time * 20) % 2), scale: 0.7 });
+      // A bolt with a charge in its head: lines of light rushing into a swelling diamond.
+      fxSprite(ctx, 'celchargegold', x + dir * 6, y, { t: time, scale: 0.4 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
@@ -157,8 +151,8 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'frostbolt': {
-      // A bolt with an ice star spinning at its head.
-      fxSprite(ctx, 'icestar', x + dir * 6, y, { t: time, scale: 0.6 });
+      // A bolt with a snowflake spinning at its head.
+      fxSprite(ctx, 'celsnowflake', x + dir * 6, y, { t: time, scale: 0.4 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
@@ -168,7 +162,7 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
     }
     case 'ballista': {
       // A huge bolt pushing rings of force ahead of it.
-      fxSprite(ctx, 'hitring', x + dir * 12, y, { t: time * 2, scale: 1.4, sx: 0.4 });
+      fxSprite(ctx, 'celring', x + dir * 12, y, { t: (time * 2) % 0.25, scale: 0.4, sx: 0.4 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
@@ -177,10 +171,9 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'heartbolt': {
-      // Heartseeker: one giant bolt (twice a ballista's size), a rose star turning at its head and
-      // rings of force pushed ahead of it; no beam (it should read as a bolt, not a laser).
-      fxSprite(ctx, 'hitring', x + dir * 18, y, { t: time * 2.5, scale: 2, sx: 0.4 });
-      fxSprite(ctx, 'deadstar', x + dir * 8, y, { t: time, scale: 0.8 });
+      // Heartseeker: one giant bolt (twice a ballista's size), rose rings of force pushed ahead of
+      // it; no beam (it should read as a bolt, not a laser).
+      fxSprite(ctx, 'celringsight', x + dir * 18, y, { t: (time * 2.5) % 0.25, scale: 0.6, sx: 0.4 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
@@ -196,7 +189,7 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
 // One falling arrow of a wind rain (Storm Volley).
 export function windRainPiece(ctx, x, y, s, time) {
   const a = Math.atan2(2.6, 1);
-  fxSprite(ctx, 'windspin', x - Math.cos(a) * 12 * s, y - Math.sin(a) * 12 * s, { t: time, rot: a, scale: 0.8 * s, sy: 0.7 });
+  fxSprite(ctx, 'celwindspin', x - Math.cos(a) * 12 * s, y - Math.sin(a) * 12 * s, { t: time, rot: a, scale: 0.3 * s, sy: 0.7 });
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(a);
@@ -210,81 +203,78 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
     case 'galehit': {
-      // A Ranger's arrow landing: a wind slash cut across the target and a gust of leaves blown on
-      // along the shot; heavy shots and crits add a ring of wind bursting out.
+      // A Ranger's arrow landing: a curl of wind cuts across the target and leaves burst off it;
+      // heavy shots and crits add a ring of wind racing out along the ground.
       const cy = y - (f.h ?? 24) / 2;
       const big = f.big || f.crit;
-      fxSprite(ctx, 'windslash', x, cy + 4, { p, flip, scale: big ? 1.4 : 1.05 });
-      fxSprite(ctx, 'leafgust', x - (f.dir || 1) * 6, cy + 8, { p, flip, scale: big ? 1.5 : 1.1 });
-      if (big) fxSprite(ctx, 'windring', x, y, { p, scale: 1.3 });
+      fxSprite(ctx, 'celwindhit', x, cy, { p, flip, scale: big ? 0.95 : 0.7 });
+      if (big) groundRing(ctx, 'celringwind', x, y, p, 50);
       return true;
     }
     case 'focushit': {
-      // A Sniper's bolt landing: the pack's bolt burst, and shrapnel on heavy hits and crits. Each
-      // monster a bolt passes through lands a little bigger than the last (Piercing Arrow).
+      // A Sniper's bolt tearing through: a lens of light along the shot with a ring round it, a
+      // star burst on crits. Each monster a bolt passes through lands a little bigger than the last
+      // (Piercing Arrow).
       const cy = y - (f.h ?? 24) / 2;
-      const grow = 1 + 0.12 * Math.min(6, f.rank ?? 0);
-      fxSprite(ctx, 'boltburst', x, cy, { p, flip, scale: 0.9 * grow });
-      if (f.big || f.crit) fxSprite(ctx, 'shrapnel', x, cy + 6, { p, scale: 1.1 * grow });
+      const grow = 1 + 0.1 * Math.min(6, f.rank ?? 0);
+      fxSprite(ctx, 'celboltburst', x, cy, { p, flip, scale: 0.65 * grow });
+      if (f.big || f.crit) fxSprite(ctx, 'celcrit', x, cy, { p, scale: 0.5 * grow });
       return true;
     }
     case 'blast': {
-      // A blast bolt bursting: the pack's explosion, a burst of light at its heart, then smoke.
-      const cy = y - (f.h ?? 24) / 2;
-      fxSprite(ctx, 'sunburst', x, cy, { p: Math.min(1, p * 2), scale: 1.3, alpha: p < 0.5 ? 1 : 0 });
-      fxSprite(ctx, 'explosion', x, y + 4, { p, scale: 1.8 });
-      if (p > 0.4) fxSprite(ctx, 'smoke', x, y - 6, { p: (p - 0.4) / 0.6, scale: 1.6 });
+      // A blast bolt bursting: a soft star of fire, puffs of cloud billowing out and breaking up.
+      fxSprite(ctx, 'celblast', x, y, { p, scale: 0.85 });
       return true;
     }
     case 'frostburst': {
-      // A frost bolt shattering: the pack's frost nova on the ground and a swirl of snowflakes
-      // freezing everything around.
-      fxSprite(ctx, 'frostnova', x, y + 4, { p, scale: 2 });
-      fxSprite(ctx, 'freezing', x, y - (f.h ?? 24) / 2, { p, scale: 1.3 });
+      // A frost bolt shattering: a great snowflake bursts open over an icy ring, then breaks into
+      // ice beads and little flakes.
+      fxSprite(ctx, 'celfrostburst', x, y - (f.h ?? 24) / 2, { p, scale: 0.8 });
+      groundRing(ctx, 'celringice', x, y, p, 60);
       return true;
     }
     case 'frostshard': {
-      fxSprite(ctx, 'icestar', x, y - (f.h ?? 24) / 2, { p, scale: 0.8 });
+      fxSprite(ctx, 'celsnowflake', x, y - (f.h ?? 24) / 2, { t: time, scale: 0.4, alpha: 1 - p });
       return true;
     }
     case 'gust': {
-      // A gust off the bow as a big arrow goes.
-      fxSprite(ctx, 'leafgust', x + (f.dir || 1) * 14, y + 6, { p, flip, scale: 1 });
+      // A gust of leaves off the bow as a big arrow goes.
+      fxSprite(ctx, 'celleaves', x + (f.dir || 1) * 14, y + 6, { p, flip, scale: 0.6 });
       return true;
     }
     case 'boltshock': {
-      // A heavy bolt's kick: sparks off the bow and dust off her heels.
-      fxSprite(ctx, 'boltspark', x + (f.dir || 1) * 8, y, { p, flip, scale: f.small ? 0.55 : 0.9 });
-      if (!f.small) fxSprite(ctx, 'dust', x - (f.dir || 1) * 14, y + 16, { p, flip: !flip, scale: 0.9 });
+      // A heavy bolt's kick: sparks off the crossbow and dust off her heels.
+      fxSprite(ctx, 'celboltspark', x + (f.dir || 1) * 6, y, { p, flip, scale: f.small ? 0.45 : 0.7 });
+      if (!f.small) fxSprite(ctx, 'celdust', x - (f.dir || 1) * 14, y + 16, { p, flip: !flip, scale: 0.55 });
       return true;
     }
     case 'heartshock': {
-      // Heartseeker's release: a ring of force breaking out from the bow, shrapnel, and a skid of
-      // dust as she's shoved back.
-      fxSprite(ctx, 'breakring', x + (f.dir || 1) * 10, y, { p, scale: 1.6 });
-      fxSprite(ctx, 'shrapnel', x + (f.dir || 1) * 10, y + 6, { p, scale: 1.6 });
-      fxSprite(ctx, 'dust', x - (f.dir || 1) * 18, y + 16, { p, flip: !flip, scale: 1.4 });
+      // Heartseeker's release: a rose ring of force breaking out from the bow, sparks, and a skid
+      // of dust as she's shoved back.
+      fxSprite(ctx, 'celringsight', x + (f.dir || 1) * 10, y, { p, scale: 0.9, sx: 0.5 });
+      fxSprite(ctx, 'celboltspark', x + (f.dir || 1) * 10, y, { p, flip, scale: 1 });
+      fxSprite(ctx, 'celdust', x - (f.dir || 1) * 18, y + 16, { p, flip: !flip, scale: 0.8 });
       return true;
     }
     case 'galeburst': {
-      // Storm Volley's lift-off: a ring of wind bursting from her feet, gusts of leaves blown up
+      // Storm Volley's lift-off: a ring of wind racing out from her feet, gusts of leaves blown up
       // either side, and wind spinning up around her.
-      fxSprite(ctx, 'windring', x, y, { p, scale: 2 });
-      fxSprite(ctx, 'leafgust', x - 10, y - 10, { p, flip: true, scale: 1.4 });
-      fxSprite(ctx, 'leafgust', x + 10, y - 10, { p, scale: 1.4 });
-      for (let i = 0; i < 3; i++) fxSprite(ctx, 'windspin', x, y - 8 - p * 40 - i * 14, { t: time + i * 0.2, scale: 1.4 + i * 0.5, sy: 0.5, alpha: 1 - p });
+      groundRing(ctx, 'celringwind', x, y, p, 70);
+      fxSprite(ctx, 'celleaves', x - 10, y - 10, { p, flip: true, scale: 0.75 });
+      fxSprite(ctx, 'celleaves', x + 10, y - 10, { p, scale: 0.75 });
+      for (let i = 0; i < 3; i++) fxSprite(ctx, 'celwindspin', x, y - 8 - p * 40 - i * 14, { t: time + i * 0.2, scale: 0.5 + i * 0.15, sy: 0.4, alpha: 1 - p });
       return true;
     }
     case 'stormburst': {
       // The dive landing: rings of wind blasting out along the ground, gusts of leaves thrown both
       // ways, dust kicked up, and wind spinning out wide.
-      fxSprite(ctx, 'windring', x, y, { p, scale: 3.6 });
-      fxSprite(ctx, 'windring', x, y, { p: Math.min(1, p * 1.4), scale: 2.2 });
+      groundRing(ctx, 'celringwind', x, y, p, 140);
+      groundRing(ctx, 'celringwind', x, y, Math.min(1, p * 1.4), 80);
       for (const sd of [-1, 1]) {
-        fxSprite(ctx, 'leafgust', x + sd * 30, y - 12, { p, flip: sd < 0, scale: 2 });
-        fxSprite(ctx, 'dust', x + sd * 40, y + 6, { p, flip: sd < 0, scale: 1.8 });
+        fxSprite(ctx, 'celleaves', x + sd * 30, y - 12, { p, flip: sd < 0, scale: 1 });
+        fxSprite(ctx, 'celdust', x + sd * 40, y + 2, { p, flip: sd < 0, scale: 0.9 });
       }
-      fxSprite(ctx, 'windspin', x, y - 16, { t: time, scale: 4 * (0.6 + 0.4 * p), sy: 0.35, alpha: 1 - p });
+      fxSprite(ctx, 'celwindspin', x, y - 16, { t: time, scale: 1.4 * (0.6 + 0.4 * p), sy: 0.3, alpha: 1 - p });
       return true;
     }
     case 'reticle': {
@@ -339,12 +329,12 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'chargeglow': {
-      // A bolt charging as the crank winds: the pack's focus charge closing in on the bolt's tip.
-      fxSprite(ctx, 'charge', x + (f.dir || 1) * 6, y, { p, scale: 0.9 });
+      // A bolt charging as the crank winds: lines of light rushing in to the bolt's tip.
+      fxSprite(ctx, 'celcharge', x + (f.dir || 1) * 6, y, { t: f.t, scale: 0.5, alpha: p < 0.15 ? p / 0.15 : 1 });
       return true;
     }
     case 'windtrail': {
-      // The path a gale shot tore through the air: spins of wind left hanging along it, fading,
+      // The path a gale shot tore through the air: curls of wind left hanging along it, fading,
       // and a gust of leaves drifting out of the middle.
       const tx = f.tx - cam.x;
       const ty = f.ty - cam.y;
@@ -353,15 +343,15 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       for (let i = 0; i < n; i++) {
         const k = (i + 0.5) / n;
         if (k > Math.min(1, p / 0.15)) break;
-        fxSprite(ctx, 'windspin', x + (tx - x) * k, y + (ty - y) * k - p * 10, { t: time + i * 0.13, rot: ang, scale: f.big ? 1.3 : 1, sy: 0.6, alpha: 1 - p });
+        fxSprite(ctx, 'celwindspin', x + (tx - x) * k, y + (ty - y) * k - p * 10, { t: time + i * 0.13, rot: ang, scale: f.big ? 0.5 : 0.38, sy: 0.6, alpha: 1 - p });
       }
-      fxSprite(ctx, 'leafgust', (x + tx) / 2, (y + ty) / 2 + 6, { p, flip: tx < x, scale: 1.2 });
+      fxSprite(ctx, 'celleaves', (x + tx) / 2, (y + ty) / 2 + 6, { p, flip: tx < x, scale: 0.6 });
       return true;
     }
     case 'windstep': {
       // Tailwind at her heels: a puff of dust and a gust of leaves peeling off behind her.
-      fxSprite(ctx, 'dust', x - (f.dir || 1) * 10, y + 2, { p, flip: !flip, scale: 0.8 });
-      fxSprite(ctx, 'leafgust', x - (f.dir || 1) * 14, y - 6, { p, flip: !flip, scale: 0.8 });
+      fxSprite(ctx, 'celdust', x - (f.dir || 1) * 10, y + 2, { p, flip: !flip, scale: 0.5 });
+      fxSprite(ctx, 'celleaves', x - (f.dir || 1) * 14, y - 6, { p, flip: !flip, scale: 0.45 });
       return true;
     }
     case 'stormsky': {
@@ -374,14 +364,15 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       ctx.globalAlpha = 1;
       for (let i = 0; i < 6; i++) {
         const u = (p * 2 + rand(i * 2.7)) % 1;
-        fxSprite(ctx, 'leafgust', -60 + u * 760, 40 + rand(i * 5.3) * 220, { p: (u * 1.3) % 1, scale: 1.6, alpha: a });
+        fxSprite(ctx, 'celleaves', -60 + u * 760, 40 + rand(i * 5.3) * 220, { p: (u * 1.3) % 1, scale: 0.9, alpha: a });
       }
       return true;
     }
     case 'deadeye': {
-      // A Deadeye: the rose star flashing round the bow, and a sight ring blowing out.
-      fxSprite(ctx, 'deadstar', x, y, { p, scale: 1.1 });
-      fxSprite(ctx, 'hitring', x, y, { p, scale: 2 });
+      // A Deadeye: a rose sight snapping shut round the bow with a star of light inside it, and a
+      // rose ring blowing out.
+      fxSprite(ctx, 'celdeadeye', x, y, { p, scale: 0.75 });
+      fxSprite(ctx, 'celringsight', x, y, { p, scale: 0.9 });
       return true;
     }
     default:

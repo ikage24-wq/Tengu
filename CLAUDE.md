@@ -48,7 +48,7 @@ darkest underneath). `tools/build-fx.py` renders them into the `cel*` strips in 
 effect is a short run of key drawings: a shape pops in, holds a beat, then breaks up into beads and
 sparkles. Keep pixel art near scale 1 (draw a big version rather than blowing one up). The player
 rejected code-drawn gradient glows, pack effects (pixel and HD alike) and bold black-outlined
-anime effects; the archer paths still use pack strips until they get the same pass. Look at
+anime effects; every effect in `assets/fx/` is now Tengu's own. Look at
 references first (research/fx.md section 6, MapleStory) for what each moment should show. Code
 drawing is for small supporting touches only (a tracer line, a sight's ticks).
 

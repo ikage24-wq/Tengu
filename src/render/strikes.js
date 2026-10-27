@@ -252,9 +252,9 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   switch (f.kind) {
     case 'gather': {
-      // A Sniper gathers her aim with the effect pack's charging core (fx-sprites.js).
+      // A Sniper gathers her aim: lines of light rushing in to a diamond (fx-sprites.js).
       if (f.school === 'focus') {
-        fxSprite(ctx, 'charge', x + (f.dir || 1) * 12, y - 18, { p, scale: f.big ? 1.2 : 0.9 });
+        fxSprite(ctx, 'celcharge', x + (f.dir || 1) * 12, y - 18, { t: f.t, scale: f.big ? 0.75 : 0.55 });
         return true;
       }
       return false;

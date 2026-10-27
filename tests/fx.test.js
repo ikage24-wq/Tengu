@@ -1,6 +1,5 @@
-// The effect sprite strips (assets/fx/, from effect packs): every strip the game lists exists and
-// is the size the list says, every strip named in the effect code is listed, and the packs are
-// credited.
+// The effect sprite strips (assets/fx/, Tengu's own art): every strip the game lists exists and is
+// the size the list says, and every strip named in the effect code is listed.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -21,7 +20,7 @@ test('every effect strip exists at the size its list says', () => {
   }
 });
 
-test('every effect strip the code uses is listed, and the packs are credited', () => {
+test('every effect strip the code uses is listed', () => {
   const dir = new URL('src/render/', root);
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.js'))) {
     const src = readFileSync(new URL(file, dir), 'utf8');
@@ -31,9 +30,6 @@ test('every effect strip the code uses is listed, and the packs are credited', (
     if (!src.includes("from './fx-sprites.js'")) continue;
     for (const [, name] of src.matchAll(/'(cel[a-z]+)'/g)) assert.ok(FX_SHEETS[name], `${file} names "${name}"`);
   }
-  const credits = readFileSync(new URL('assets/fx/CREDITS.md', root), 'utf8');
-  assert.match(credits, /PVFX Foundry/);
-  assert.match(credits, /CodeManu/);
 
 });
 

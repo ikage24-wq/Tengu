@@ -557,6 +557,9 @@ function fire(world, strike) {
     world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'DEADEYE!', color: '#ff5a7a', t: 0, link: true });
     world.juice.push({ type: 'deadeye' });
   }
+  // Every Sniper bolt pierces: it flies on through the whole line, hitting each monster it passes
+  // (at least three), out to its full range.
+  if (hasFocus(world.char) && s.shot !== 'star') s = { ...s, pierce: true, targets: Math.max(s.targets ?? 1, 3) };
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
   const ox = body.x + s.dir * 10;
   const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
@@ -612,6 +615,18 @@ function fire(world, strike) {
       shotHit(world, s, m, at, i % 3, element, i);
       for (let k = 1; k <= (s.ticks ?? 0); k++) shotHit(world, { ...s, knock: 10, stop: 0, shake: 0, big: false, gauge: 1 }, m, at + k * s.tickGap, (i + k) % 3, element);
     });
+    // A blast bolt bursts round each monster it tears through, catching those close beside the
+    // line too, spreading outward from each hit.
+    if (s.blast) {
+      const hit = new Set(line);
+      line.forEach((m) => {
+        const at = Math.max(0, (m.x - ox) * ux + (m.y - (m.air ?? 0) - m.def.h / 2 - oy) * uy) / speed + lag;
+        world.mobs.filter((o) => !hit.has(o) && o.hp > 0 && Math.abs(o.x - m.x) <= s.blast && Math.abs(o.y - m.y) < 70).forEach((o, k) => {
+          hit.add(o);
+          shotHit(world, { ...s, burst: s.blastFx ?? 'spark', pct: s.pct * 0.7 }, o, at + 0.05 + Math.abs(o.x - m.x) / 400, (k + 1) % 3, element);
+        });
+      });
+    }
     const len = Math.max(s.range, first ? Math.hypot(first.x - ox, first.y - oy) + 60 : 0);
     fly(ox + ux * len, oy + uy * len, first, len);
     return;

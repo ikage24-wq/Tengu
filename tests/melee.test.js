@@ -861,3 +861,28 @@ test('arrows and bolts fly at the monster they hit, and follow it as it moves', 
   updateWorld(v, DT, idle);
   assert.equal(Math.round(arrow.tx), Math.round(arrow.mob.x), 'it follows the monster');
 });
+
+test("every Sniper bolt pierces: the basic combo's three shots each pass through the line", () => {
+  const w = archer('sniper');
+  const struck = [];
+  for (let step = 0; step < 3; step++) {
+    const seen = new Set();
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 70; i++) {
+      for (const h of w.pending) seen.add(h.mob);
+      updateWorld(w, DT, idle);
+    }
+    struck.push(seen.size);
+  }
+  for (const [i, n] of struck.entries()) assert.ok(n >= 2, `shot ${i + 1} passes through ${n} monsters`);
+  // Glacier Bolt pierces too, and still freezes those around the ones it passes.
+  const v = archer('sniper');
+  v.char.skills.glacierbolt = 10;
+  const seen = new Set();
+  assert.ok(cast(v, 'glacierbolt').ok);
+  for (let i = 0; i < 70; i++) {
+    for (const h of v.pending) seen.add(h.mob);
+    updateWorld(v, DT, idle);
+  }
+  assert.ok(seen.size >= 3, `Glacier Bolt reaches ${seen.size}`);
+});
