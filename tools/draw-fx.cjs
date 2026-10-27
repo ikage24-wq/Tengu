@@ -1,4 +1,5 @@
-// Renders Tengu's own effect art (tools/fx-art.js) in the browser: every effect's frames as PNGs
+// Renders Tengu's own effect art (tools/fx-art.js) in the browser, matched to the sprites' pixel
+// look: every effect's frames as PNGs
 // in OUT/<name>/<i>.png, and OUT/meta.json with each effect's pivot, rate and swing.
 // Usage: node tools/draw-fx.cjs OUT   (build-fx.py runs it; needs Playwright)
 const { chromium } = require('playwright');
@@ -14,15 +15,17 @@ const path = require('path');
   const effects = await p.evaluate(() => {
     const res = {};
     for (const [name, e] of Object.entries(window.FXART)) {
+      // Every frame is drawn smooth, then matched to the sprites' pixel look.
       const frames = [];
       for (let i = 0; i < e.n; i++) {
         const c = document.createElement('canvas');
         c.width = e.w;
         c.height = e.h;
         e.draw(c.getContext('2d'), i);
-        frames.push(c.toDataURL('image/png'));
+        frames.push(window.FXMATCH.match(c).toDataURL('image/png'));
       }
-      res[name] = { frames, meta: { w: e.w, h: e.h, n: e.n, fps: e.fps, px: e.px, py: e.py, loop: Boolean(e.loop), swing: e.swing ?? null } };
+      const m = window.FXMATCH.matched(e);
+      res[name] = { frames, meta: { w: m.w, h: m.h, n: e.n, fps: e.fps, px: m.px, py: m.py, loop: Boolean(e.loop), swing: e.swing ? [e.swing[0], e.swing[1], m.r] : null } };
     }
     return res;
   });

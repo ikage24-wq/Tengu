@@ -39,18 +39,18 @@ E (UI) and F (Icons); for effects and game feel `research/fx.md`; for animation
 own older work, and save anything new we learn back there (the rule in `README.md`, the finding
 with its source in `research/`).
 
-**Effects come from good effect art, never simple drawn shapes.** The player finds simple
-code-drawn effects (soft gradient glows, plain rings, flat blobs) childish and rejects low-quality
-effects; pixel-art effects are fine when they're actually good. The target is MapleStory's skill
-effects (research/fx.md section 6): every hit lands as its own bright shape, big skills show one
-recognisable picture, buffs rise as a pillar of light with an emblem, everything ends breaking into
-sparkles. Before making any effect, look at references and for effect packs (painted or rendered
-flipbooks, pixel sheets, particle textures, emblem shapes) that cover it, and build the effect from
-those: `assets/fx/` holds the packs we use, built by `tools/build-fx.py` (credits in
-`assets/fx/CREDITS.md`; only use packs whose license allows shipping them in the game's files,
-such as CC0 or CC BY). Recolouring, combining frames, and moving, turning, growing and fading art
-in code (the way a particle system plays it) is fine. Code drawing is for small supporting touches
-only (a tracer line, a sight's ticks).
+**Effects are Tengu's own art, in the style the player picked: matched to the sprites.** Effects
+are drawn for the game in `tools/fx-art.js` as soft pastel shapes (4-tone ramps that lean violet in
+the shadows, white cores, the game's curvy sparkle stars), then matched to the characters' sprites
+(redrawn at their pixel size, one art pixel = two screen pixels, colours snapped to a ramp of their
+own hue, outlined like the sprites in a darker shade of their own colour, lighter on top edges and
+darkest underneath). `tools/build-fx.py` renders them into the `cel*` strips in `assets/fx/`. Every
+effect is a short run of key drawings: a shape pops in, holds a beat, then breaks up into beads and
+sparkles. Keep pixel art near scale 1 (draw a big version rather than blowing one up). The player
+rejected code-drawn gradient glows, pack effects (pixel and HD alike) and bold black-outlined
+anime effects; the archer paths still use pack strips until they get the same pass. Look at
+references first (research/fx.md section 6, MapleStory) for what each moment should show. Code
+drawing is for small supporting touches only (a tracer line, a sight's ticks).
 
 "Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
 `docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items

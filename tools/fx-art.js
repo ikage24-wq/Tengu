@@ -1,31 +1,33 @@
-/* Tengu's own effect art, drawn in an anime cel style: hard-edged shapes in flat tones (a white-hot
-   edge, a light band, the colour, a deep band) with a dark ink outline, no gradients. Every effect
-   is a short run of key drawings, not tweens: a shape snaps in, holds for a beat, then splits
-   into pieces and shards that fly apart and shrink away (research/fx.md: Saint11, Hashimoto,
-   Kanada; docs/art/README.md).
+/* Tengu's own effect art, in the game's own look (the style the player picked): soft pastel shapes
+   drawn smooth, then matched to the characters' sprites (`match`): redrawn at the sprites' pixel
+   size (one art pixel is two screen pixels, one game pixel), colours snapped to a 4-tone ramp of
+   their own hue, and outlined the way the sprites are, in a darker shade of their own colour,
+   lighter along top edges and darkest underneath. Every effect is a short run of key drawings: a
+   shape pops in, holds for a beat, then breaks up into beads and the game's curvy sparkle stars
+   (research/fx.md; docs/art/README.md).
 
    tools/draw-fx.cjs loads this in the browser and renders every effect's frames to PNGs, which
-   tools/build-fx.py cuts into the game's strips (one strip pixel is one screen pixel at scale 1).
-   Each effect: { w, h, n, fps, px, py (the point that sits on the effect's position), loop?,
-   swing? ([middle angle (rad), sweep direction (1 clockwise on screen), radius]), draw(ctx, i) }. */
+   tools/build-fx.py cuts into the game's strips. Each effect: { w, h, n, fps, px, py (the point
+   that sits on the effect's position), loop?, swing? ([middle angle (rad), sweep direction
+   (1 clockwise on screen), radius]), draw(ctx, i) }, drawn at about 3.2 times its size on screen. */
 (function () {
   const TAU = Math.PI * 2;
 
-  // Cel palettes: [white-hot, light, colour, deep, ink].
+  // Pastel ramps: [white, light, base, shade, line]. Shades lean violet, never grey (art bible).
   const PAL = {
-    steel: ['#ffffff', '#c9f3ff', '#52b8ff', '#2261d8', '#132662'],
-    holy: ['#ffffff', '#fff3a8', '#ffc22a', '#e47400', '#5e2400'],
-    rage: ['#fff4f4', '#ffb2b2', '#ff2a3d', '#9c001b', '#22000a'],
-    arcane: ['#ffffff', '#f1dcff', '#b86cff', '#6a2bd6', '#26104f'],
-    ice: ['#ffffff', '#dafbff', '#66e4ff', '#1d8fd8', '#0c3561'],
-    fire: ['#ffffff', '#fff1a0', '#ff9a1f', '#df3f08', '#521200'],
-    wind: ['#ffffff', '#d9ffea', '#3fe090', '#0f9a5b', '#093a26'],
-    poison: ['#ffffff', '#ecffc2', '#93e23c', '#4c9b10', '#1d3a06'],
-    lightning: ['#ffffff', '#fffbc2', '#ffe23a', '#d29d00', '#563800'],
-    shadow: ['#ffffff', '#e2d2ff', '#8c5cff', '#4a1fb0', '#190a3e'],
+    steel: ['#ffffff', '#e4f3ff', '#9fd2ff', '#6f9cf0', '#4f5fcc'],
+    holy: ['#ffffff', '#fff6d0', '#ffdc78', '#ffad62', '#d9776a'],
+    rage: ['#fff6f8', '#ffd1de', '#ff86aa', '#e85486', '#a8366e'],
+    arcane: ['#ffffff', '#f1e6ff', '#cfa8ff', '#a374f0', '#6f4ac8'],
+    ice: ['#ffffff', '#e2fbff', '#9ae9ff', '#5ab8ee', '#3a78c8'],
+    fire: ['#ffffff', '#fff1c0', '#ffbe72', '#ff8a5c', '#cc566a'],
+    wind: ['#ffffff', '#ddfff0', '#86ecbe', '#3fc69a', '#22808a'],
+    poison: ['#ffffff', '#f0ffd2', '#bdf08a', '#86cc5a', '#4f8a5a'],
+    lightning: ['#ffffff', '#fffad2', '#ffeb7a', '#ffc25a', '#c9805a'],
+    shadow: ['#ffffff', '#ebe0ff', '#b89cff', '#8a6ae8', '#5a3fb8'],
   };
-  const DUST = ['#fffaf2', '#f4ead8', '#e2cfb4', '#b59878', '#4f3b30'];
-  const ROCK = ['#ffffff', '#c9bddb', '#9a8ab4', '#675a86', '#2a2240'];
+  const DUST = ['#ffffff', '#fff6ee', '#f2e2d6', '#d9bdc4', '#9a7a9a'];
+  const ROCK = ['#ffffff', '#ece4ff', '#c8b8ec', '#9a88cc', '#6a5aa0'];
 
   function rng(seed) {
     let s = seed >>> 0 || 1;
@@ -62,7 +64,7 @@
   // comes to a point there, like a flag (the slash shape: wide leading head, tapering tail).
   // Only the stretch u0..u1 of it is drawn (0 tail, 1 head), pushed `out` further from the centre.
   function crescent(cx, cy, R, a0, a1, th, { u0 = 0, u1 = 1, out = 0, n = 40, rough = 0, seed = 1 } = {}) {
-    const width = (u) => th * Math.pow(Math.sin(Math.PI * Math.pow(u, 2.2)), 0.8);
+    const width = (u) => th * Math.pow(Math.sin(Math.PI * Math.pow(u, 1.5)), 0.6);
     const r = rng(seed);
     const jag = Array.from({ length: n + 1 }, () => (r() - 0.5) * rough);
     const outer = [];
@@ -91,27 +93,52 @@
   }
 
   // ---------- Small pieces ----------
-  // A shard: a long thin sliver pointing along `a`.
+  // A bead: a small rounded drop stretched along `a` (what shapes break up into).
   function shard(ctx, pal, x, y, a, len, wid) {
-    const [core, , mid, , ink] = pal;
-    const c = Math.cos(a);
-    const s = Math.sin(a);
-    const pts = [[x + c * len, y + s * len], [x - s * wid, y + c * wid], [x - c * len * 0.5, y - s * len * 0.5], [x + s * wid, y - c * wid]];
-    inked(ctx, pts, mid, ink, 2.5);
-    fill(ctx, [[x + c * len * 0.8, y + s * len * 0.8], [x - s * wid * 0.35, y + c * wid * 0.35], [x - c * len * 0.2, y - s * len * 0.2], [x + s * wid * 0.35, y - c * wid * 0.35]], core);
+    const [core, light, mid, , ink] = pal;
+    const r = Math.max(1.5, wid * 1.3);
+    const l = Math.max(r, len * 0.45);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, l + 1.5, r + 1.5, 0, 0, TAU);
+    ctx.fillStyle = ink;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, l, r, 0, 0, TAU);
+    ctx.fillStyle = mid;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(-l * 0.2, -r * 0.25, l * 0.55, r * 0.5, 0, 0, TAU);
+    ctx.fillStyle = light;
+    ctx.fill();
+    ctx.restore();
   }
-  // A four-point sparkle, sides curving in.
+  // The game's sparkle: a four-point star with curved sides.
   function sparkle(ctx, pal, x, y, r, rot = 0) {
     const [core, light, , , ink] = pal;
-    const pts = [];
-    for (let i = 0; i < 8; i++) {
-      const a = rot + (i * TAU) / 8;
-      const rr = i % 2 ? r * 0.24 : r;
-      pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
-    }
-    inked(ctx, pts, light, ink, 2.5);
-    const inner = pts.map(([px, py]) => [x + (px - x) * 0.5, y + (py - y) * 0.5]);
-    fill(ctx, inner, core);
+    const path = (rr) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      ctx.moveTo(0, -rr);
+      ctx.quadraticCurveTo(0, 0, rr, 0);
+      ctx.quadraticCurveTo(0, 0, 0, rr);
+      ctx.quadraticCurveTo(0, 0, -rr, 0);
+      ctx.quadraticCurveTo(0, 0, 0, -rr);
+      ctx.restore();
+    };
+    path(r + 2);
+    ctx.fillStyle = ink;
+    ctx.fill();
+    path(r);
+    ctx.fillStyle = light;
+    ctx.fill();
+    path(r * 0.55);
+    ctx.fillStyle = core;
+    ctx.fill();
   }
   // A diamond (light and holy shapes are rounded or square, never spiky).
   function diamond(ctx, pal, x, y, r, tall = 1.4) {
@@ -120,26 +147,45 @@
     fill(ctx, [[x, y - r * tall * 0.7], [x + r * 0.6, y], [x, y + r * tall * 0.7], [x - r * 0.6, y]], light);
     fill(ctx, [[x, y - r * tall * 0.4], [x + r * 0.28, y - r * 0.1], [x, y + r * tall * 0.2], [x - r * 0.28, y - r * 0.1]], core);
   }
-  // A spiky star burst with uneven spikes.
+  // A soft star burst: points joined by curves that dip toward the middle (rounded, cute; long and
+  // short points alternate).
   function starburst(ctx, pal, x, y, r, spikes, seed, { inner = 0.38, tones = 4, rot = 0 } = {}) {
     const R = rng(seed);
-    const lens = Array.from({ length: spikes }, () => 0.6 + R() * 0.4);
-    const offs = Array.from({ length: spikes }, () => (R() - 0.5) * 0.5);
-    const pts = (k) => {
-      const out = [];
-      for (let i = 0; i < spikes; i++) {
-        const a = rot + ((i + offs[i] * 0.3) * TAU) / spikes;
-        out.push([x + Math.cos(a) * r * lens[i] * k, y + Math.sin(a) * r * lens[i] * k]);
-        const b = rot + ((i + 0.5) * TAU) / spikes;
-        out.push([x + Math.cos(b) * r * inner * k, y + Math.sin(b) * r * inner * k]);
+    const lens = Array.from({ length: spikes }, (_, i) => (i % 2 ? 0.66 : 1) * (0.88 + R() * 0.12));
+    const path = (k) => {
+      ctx.beginPath();
+      for (let i = 0; i <= spikes; i++) {
+        const j = i % spikes;
+        const a = rot + (j * TAU) / spikes;
+        const px = x + Math.cos(a) * r * lens[j] * k;
+        const py = y + Math.sin(a) * r * lens[j] * k;
+        if (i === 0) ctx.moveTo(px, py);
+        else {
+          const b = rot + ((i - 0.5) * TAU) / spikes;
+          ctx.quadraticCurveTo(x + Math.cos(b) * r * inner * 0.6 * k, y + Math.sin(b) * r * inner * 0.6 * k, px, py);
+        }
       }
-      return out;
+      ctx.closePath();
     };
     const [core, light, mid, deep, ink] = pal;
-    inked(ctx, pts(1), tones > 3 ? deep : mid, ink, 4);
-    if (tones > 3) fill(ctx, pts(0.78), mid);
-    fill(ctx, pts(0.55), light);
-    fill(ctx, pts(0.3), core);
+    path(1);
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = tones > 3 ? deep : mid;
+    ctx.fill();
+    if (tones > 3) {
+      path(0.78);
+      ctx.fillStyle = mid;
+      ctx.fill();
+    }
+    path(0.55);
+    ctx.fillStyle = light;
+    ctx.fill();
+    path(0.3);
+    ctx.fillStyle = core;
+    ctx.fill();
   }
   // A ring of the given thickness, banded: deep inside, the colour, a light band, a white rim.
   function celRing(ctx, pal, x, y, r, th, { broken = 0, seed = 3 } = {}) {
@@ -560,10 +606,10 @@
       w: 260, h: 260, n: 6, fps: 26, px: c, py: c,
       draw(ctx, i) {
         if (i === 0) {
-          starburst(ctx, ['#ffffff', '#3a2a4a', '#24182e', '#14101c', '#000000'], c, c, 110, 11, 50, { inner: 0.3 });
+          starburst(ctx, ['#ffffff', '#ffe6f2', '#ffb8d8', '#ff8ec2', '#c4508e'], c, c, 110, 12, 50, { inner: 0.3 });
           for (let j = 0; j < 8; j++) {
             const a = (j / 8) * TAU + 0.2;
-            speedLine(ctx, ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#000000'], c + Math.cos(a) * 20, c + Math.sin(a) * 20, c + Math.cos(a) * 115, c + Math.sin(a) * 115, 4);
+            speedLine(ctx, PAL.holy, c + Math.cos(a) * 20, c + Math.sin(a) * 20, c + Math.cos(a) * 115, c + Math.sin(a) * 115, 4);
           }
           return;
         }
@@ -751,7 +797,7 @@
       ...f,
       draw(ctx, i) {
         const save = PAL.fire;
-        PAL.fire = ['#ffe9e9', '#ff8a6a', '#ff2a3d', '#8f0018', '#1c0006'];
+        PAL.fire = PAL.rage;
         f.draw(ctx, i);
         PAL.fire = save;
       },
@@ -808,9 +854,9 @@
       ctx.fill();
       ctx.beginPath();
       ctx.arc(c, c, 57, 0, TAU);
-      ctx.fillStyle = '#12000a';
+      ctx.fillStyle = '#6a3a8e';
       ctx.fill();
-      celCrescent(ctx, ['#ff7a8a', '#5a0016', '#3a000e', '#25000a', '#000000'], c, c, 50, -2.6, -0.6, 12);
+      celCrescent(ctx, ['#ffd1e8', '#c87ac8', '#a05ab8', '#86469e', '#5a2f7a'], c, c, 50, -2.6, -0.6, 12);
     },
   };
 
@@ -1122,5 +1168,142 @@
   E.chargegold = charge(PAL.holy);
   E.chargered = charge(PAL.rage);
 
+  // ---------- Emblems (rising in a buff's pillar of light) ----------
+  // A little badge: it pops in, holds, then breaks into sparkles. Holy is a shield with a cross,
+  // steel two crossed swords, rage a flame.
+  function emblem(pal, drawShape) {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 5, fps: 12, px: c, py: c,
+      draw(ctx, i) {
+        if (i < 3) {
+          ctx.save();
+          ctx.translate(c, c);
+          ctx.scale(i === 0 ? 0.75 : 1, i === 0 ? 0.75 : 1);
+          drawShape(ctx, pal);
+          ctx.restore();
+          return;
+        }
+        const k = (i - 2) / 2;
+        for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU + 0.4;
+          sparkle(ctx, pal, c + Math.cos(a) * (20 + k * 30), c + Math.sin(a) * (20 + k * 30) - k * 16, 12 * (1.1 - k * 0.5));
+        }
+      },
+    };
+  }
+  const badge = (ctx, pal, pts) => {
+    inked(ctx, pts, pal[2], pal[4], 6);
+    fill(ctx, pts.map(([x, y]) => [x * 0.72, y * 0.72 - 3]), pal[1]);
+  };
+  E.embholy = emblem(PAL.holy, (ctx, pal) => {
+    badge(ctx, pal, [[-46, -52], [46, -52], [46, 8], [0, 58], [-46, 8]]);
+    fill(ctx, [[-9, -40], [9, -40], [9, -18], [30, -18], [30, 0], [9, 0], [9, 34], [-9, 34], [-9, 0], [-30, 0], [-30, -18], [-9, -18]], pal[0]);
+  });
+  E.embsteel = emblem(PAL.steel, (ctx, pal) => {
+    for (const s of [-1, 1]) {
+      ctx.save();
+      ctx.rotate(s * 0.75);
+      inked(ctx, [[-9, -62], [0, -74], [9, -62], [9, 30], [-9, 30]], pal[1], pal[4], 6);
+      fill(ctx, [[-3, -60], [0, -66], [3, -60], [3, 26], [-3, 26]], pal[0]);
+      inked(ctx, [[-26, 30], [26, 30], [26, 42], [-26, 42]], pal[2], pal[4], 5);
+      inked(ctx, [[-7, 42], [7, 42], [7, 68], [-7, 68]], pal[3], pal[4], 5);
+      ctx.restore();
+    }
+  });
+  E.embrage = emblem(PAL.rage, (ctx, pal) => {
+    tongue(ctx, pal, 0, 44, 40, 110, 10);
+  });
+
+  // ---------- Big versions ----------
+  // Pixel art can't be blown up without its pixels growing past the sprites', so effects that play
+  // large (rings across a whole group, the magic circle, a whirlwind over an area, the ground
+  // rupturing under a finisher) are drawn large here instead.
+  function big(e, k) {
+    return {
+      ...e,
+      w: Math.ceil(e.w * k),
+      h: Math.ceil(e.h * k),
+      px: e.px * k,
+      py: e.py * k,
+      swing: e.swing ? [e.swing[0], e.swing[1], e.swing[2] * k] : undefined,
+      draw(ctx, i) {
+        ctx.save();
+        ctx.scale(k, k);
+        e.draw(ctx, i);
+        ctx.restore();
+      },
+    };
+  }
+  for (const s of ['ring', 'ringholy', 'ringrage']) E[`${s}big`] = big(E[s], 2.6);
+  E.circlebig = big(E.circle, 2.4);
+  E.spinbig = big(E.spin, 2);
+  E.spinredbig = big(E.spinred, 2);
+  E.quakebig = big(E.quake, 1.8);
+  E.clawbig = big(E.claw, 1.7);
+
+  // Matches an effect to the characters' sprites: drawn smooth at full size, shrunk to art pixels
+  // (`F` drawn pixels each), colours snapped to a 4-tone ramp of their own hue kept saturated,
+  // outlined like the sprites (a darker shade of the colour beside it: lighter on top edges,
+  // darkest underneath), then doubled so each art pixel is two screen pixels.
+  const F = 3.2;
+  function match(src, frame) {
+    const W = Math.ceil(src.width / F);
+    const H = Math.ceil(src.height / F);
+    const s = document.createElement('canvas');
+    s.width = W;
+    s.height = H;
+    const sx = s.getContext('2d');
+    sx.drawImage(src, 0, 0, W, H);
+    const d = sx.getImageData(0, 0, W, H);
+    const px = d.data;
+    const on = (x, y) => x >= 0 && y >= 0 && x < W && y < H && px[(y * W + x) * 4 + 3] > 110;
+    const out = sx.createImageData(W, H);
+    const o = out.data;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const j = (y * W + x) * 4;
+        if (on(x, y)) {
+          const r = px[j];
+          const g = px[j + 1];
+          const b = px[j + 2];
+          const l = (r + g + b) / 765;
+          const band = Math.max(0, Math.min(3, Math.floor((l - 0.45) * 7.5)));
+          const [t, wh] = [[0.62, 0], [0.82, 0], [0.92, 0.25], [1, 0.7]][band];
+          const m = Math.max(r, g, b) || 1;
+          for (let q = 0; q < 3; q++) o[j + q] = Math.min(255, (px[j + q] / m) * 255 * t * (1 - wh) + 255 * wh);
+          const avg = (o[j] + o[j + 1] + o[j + 2]) / 3;
+          for (let q = 0; q < 3; q++) o[j + q] = Math.max(0, Math.min(255, avg + (o[j + q] - avg) * 1.6));
+          o[j + 3] = 255;
+        } else {
+          const n = [[0, -1], [0, 1], [-1, 0], [1, 0]].find(([dx, dy]) => on(x + dx, y + dy));
+          if (!n) continue;
+          const q = ((y + n[1]) * W + x + n[0]) * 4;
+          const dark = n[1] < 0 ? 0.42 : n[1] > 0 ? 0.68 : 0.55;
+          o[j] = px[q] * dark * 0.8 + 8;
+          o[j + 1] = px[q + 1] * dark * 0.7 + 9;
+          o[j + 2] = px[q + 2] * dark * 0.85 + 10;
+          if (n[1] > 0) {
+            o[j] *= 0.6;
+            o[j + 1] *= 0.6;
+            o[j + 2] *= 0.7;
+          }
+          o[j + 3] = 255;
+        }
+      }
+    }
+    sx.putImageData(out, 0, 0);
+    const c = document.createElement('canvas');
+    c.width = W * 2;
+    c.height = H * 2;
+    const cx = c.getContext('2d');
+    cx.imageSmoothingEnabled = false;
+    cx.drawImage(s, 0, 0, W * 2, H * 2);
+    return c;
+  }
+  // An effect's size and anchor once matched (strip pixels).
+  const matched = (e) => ({ w: Math.ceil(e.w / F) * 2, h: Math.ceil(e.h / F) * 2, px: Math.round((e.px / F) * 2), py: Math.round((e.py / F) * 2), r: e.swing ? (e.swing[2] / F) * 2 : null });
+
   window.FXART = E;
+  window.FXMATCH = { match, matched };
 })();

@@ -6,9 +6,9 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
-import { fxSprite, fxPulse, fxEmblem } from './fx-sprites.js';
+import { fxSprite } from './fx-sprites.js';
 import { FX_SHEETS } from './fx-sheets.js';
-import { debris, groundRing } from './warrior-fx.js';
+import { debris, groundRing, hitMark } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
@@ -595,9 +595,9 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'pierce': {
-      // A thrust: a streak of light shooting forward from the weapon's point to the end of the
-      // blow's reach, a burst of light at its end (steel; a Berserker's in red). When the weapon isn't level at that moment
-      // (a dash still winding through), it leaves from the hand instead.
+      // A thrust: speed streaks shooting forward from the weapon's point to the end of the blow's
+      // reach, a burst at its end (steel; a Berserker's in rose red). When the weapon isn't level
+      // at that moment (a dash still winding through), it leaves from the hand instead.
       const b = f.box;
       const dir = f.dir ?? 1;
       const pose = strikeAt(f);
@@ -607,11 +607,10 @@ function drawFx(ctx, f, cam, time) {
       const start = from0 ? f.x + from0[0] : dir > 0 ? b.x : b.x + b.w;
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
       const reach = Math.max(24, Math.abs(end - start));
-      const a = p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5;
       const sx0 = start - cam.x;
-      const len = reach * Math.min(1, p / 0.15 + 0.3);
-      fxSprite(ctx, f.school === 'rage' ? 'hdbeamred' : 'hdstreak', sx0 + (dir * len) / 2, by + 2, { frame: 0, rot: Math.PI / 2, sx: 0.7, sy: len / 95, alpha: a });
-      fxSprite(ctx, f.school === 'rage' ? 'hdthrustred' : 'hdthrust', sx0 + dir * reach * 0.85, by + 2, { p, flip: dir < 0, rot: (dir > 0 ? 1 : -1) * 0.75, scale: 0.8 });
+      const rage = f.school === 'rage';
+      fxSprite(ctx, rage ? 'celstreakred' : 'celstreak', sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
+      fxSprite(ctx, rage ? 'celhitred' : 'celhit', sx0 + dir * reach, by + 2, { p, scale: 0.6 });
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -795,23 +794,23 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      // A shot leaving the bow or hand: a small flare. Where a blow lands: a cross of glowing
-      // slashes over a painted flash for blade cuts, a rendered impact for everything else, the
-      // anime star burst for crits.
+      // A shot leaving the bow or hand: a small pop of light. Where a blow lands: the burst for a
+      // crit, the hero's mark for a blade cut (the Warrior's cross, the Paladin's star, the
+      // Berserker's claws), a burst for everything else.
       if (f.muzzle) {
-        fxPulse(ctx, 'hdflare', x, y, p, { from: 0.45, to: 0.2 });
+        fxSprite(ctx, 'celhit', x, y, { p: Math.min(1, p * 1.5), scale: 0.35 });
         break;
       }
       if (f.crit) {
-        // A crit: the anime star burst.
-        fxSprite(ctx, 'jcrit', x, y, { p, scale: 0.75, rot: (f.seed ?? 0.5) * 2 });
+        fxSprite(ctx, 'celcrit', x, y, { p, scale: 0.75 });
         break;
       }
+      // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
+      // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        // A blade's cut: a glowing cross of slashes struck across the target over a flash.
-        fxSprite(ctx, 'jhitcyan', x, y, { p, scale: 0.55 });
-        fxEmblem(ctx, 'gx', x, y, p, { scale: 0.65, rot: ((f.seed ?? 0.5) - 0.5) * 1.4, hold: 0.35, pop: 0.08 });
-      } else fxSprite(ctx, 'jhit', x, y, { p, scale: 0.6 });
+        if (!f.path) hitMark(ctx, 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+      }
+      else fxSprite(ctx, 'celhit', x, y, { p, scale: 0.65 });
       break;
     }
     case 'arc':
@@ -829,14 +828,13 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'crack':
-      // The ground ruptures under a heavy blow: dust and clods of earth blasting up across its width.
-      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n), (f.seed ?? 0) + i);
+      // The ground ruptures under a heavy blow: rock thrust up and dust across its width.
+      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n));
       break;
     case 'roar':
-      // Provoke: a spectral lion roaring out in front, rings of the roar bursting out to its reach.
-      groundRing(ctx, 'hdringred', x, y, p, f.r ?? 120);
-      groundRing(ctx, 'hdring', x, y, Math.min(1, p * 1.3), (f.r ?? 120) * 0.7);
-      fxEmblem(ctx, 'glion', x + (f.dir || 1) * 26, y - 40, p, { scale: 0.6, hold: 0.5, flip: (f.dir || 1) < 0 });
+      // Provoke: zig-zag rings of a battle cry bursting out, a rose-red ring racing out to its reach.
+      fxSprite(ctx, 'celshoutred', x, y - 26, { p, scale: 0.9 });
+      groundRing(ctx, 'celringrage', x, y, p, f.r ?? 120);
       break;
     case 'hook': {
       // Chain Hook: links race out to each monster caught, then reel it in.
@@ -938,17 +936,17 @@ function bladePath(f) {
 
 
 
-// A blade's cut: a painted swipe (fx-sprites.js) laid along the blade's own path through the move
-// (sampled from the hero's pose, `bladePath`), sized to the reach: steel blue, the Paladin's white
-// gold (and any heavy blow's), or the Berserker's blood-red ink. A cut all around (a whirl) is the
-// painted spin slash instead.
+// A blade's cut: the swipe (Tengu's own art, fx-sprites.js) laid along the blade's own path through
+// the move (sampled from the hero's pose, `bladePath`), sized to the reach: steel blue, the
+// Paladin's gold (and any heavy blow's), or the Berserker's rose red. A cut all around (a whirl) is
+// the spin slash instead.
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'rage' ? 'jslashred' : school === 'holy' || f.big ? 'jslashgold' : 'jslash';
+  const name = school === 'rage' ? 'celslashred' : school === 'holy' || f.big ? 'celslashgold' : 'celslash';
   if (f.flat) {
-    // A whirl: the painted spin slash sweeping right round the body, seen flat.
-    fxSprite(ctx, school === 'rage' ? 'jspinred' : 'jspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 48, sy: 0.42, flip: (f.dir || 1) < 0 });
+    // A whirl: the spin slash sweeping right round the body, seen flat.
+    fxSprite(ctx, school === 'rage' ? 'celspinred' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
     return;
   }
   const path = bladePath(f);
@@ -975,7 +973,7 @@ function bladeCut(ctx, f, cam, p) {
     cx = f.x - cam.x;
     cy = f.y - cam.y;
   }
-  // jellyfish0's painted swipe, turned so the middle of its sweep meets the middle of the blade's,
+  // The swipe, turned so the middle of its sweep meets the middle of the blade's,
   // mirrored when it sweeps the other way round, and sized so its arc rides just past the tip; it
   // plays its own sweep over the cut. A downward cut stays above the floor: it leans out in front
   // rather than diving into the ground.

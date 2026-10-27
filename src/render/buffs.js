@@ -6,7 +6,7 @@ import { haloStroke } from './fxkit.js';
 import { font } from '../ui/kit.js';
 import { SKILLS } from '../data/skills.js';
 import { groundRing, pillarOf, ringOf } from './warrior-fx.js';
-import { fxEmblem } from './fx-sprites.js';
+import { fxSprite } from './fx-sprites.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -901,22 +901,21 @@ export function drawBuffEffects(ctx, buffs, layer, x, y, time, now, dir) {
 }
 
 // The cast moment for buff `f.skill`: a burst shaped for the skill, and its name popping up.
-// The emblem rising in a buff's pillar: the skill's own, else its school's.
-const CAST_EMBLEMS = { ironskin: 'gshield', shieldwall: 'gshield', divineaegis: 'gaegis', bloodfrenzy: 'gdemonwings' };
-const SCHOOL_EMBLEMS = { steel: 'gswords', holy: 'gholy', rage: 'gskull' };
-
 export function drawBuffCast(ctx, f, x, y, p, time) {
   const look = BUFF_LOOKS[f.skill] ?? { color: '#ffe36b', cast: 'burst' };
   const c = look.color;
   ctx.save();
   // The moment it goes up, as MapleStory draws a buff: a pillar of the skill's light from the
-  // ground with its emblem rising inside and breaking into sparkles. Rally Cry sends a spectral
-  // lion roaring out instead.
+  // ground with the path's emblem rising inside (Tengu's own effect art). Rally Cry is a battle cry
+  // bursting out instead, Iron Skin plates of steel snapping round the body.
   const school = SKILLS[f.skill]?.school ?? 'steel';
   if (f.skill === 'rallycry') {
-    groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 70);
-    fxEmblem(ctx, 'glion', x + 30, y - 40, p, { scale: 0.7, hold: 0.5 });
-  } else pillarOf(ctx, school, CAST_EMBLEMS[f.skill] ?? SCHOOL_EMBLEMS[school], x, y, p, { h: 120, scale: 0.42 });
+    fxSprite(ctx, 'celshout', x, y - 26, { p, scale: 1 });
+    groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 60);
+  } else if (f.skill === 'ironskin' || f.skill === 'shieldwall') {
+    pillarOf(ctx, school, x, y, p);
+    fxSprite(ctx, 'celplates', x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });
+  } else pillarOf(ctx, school, x, y, p);
   ctx.restore();
   // The skill's name pops up over your head.
   if (f.name) {

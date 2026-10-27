@@ -457,3 +457,11 @@ What makes them read:
   toon dust and blood).
 - Can't ship (their terms forbid redistributing the files): Pipoya's packs, jasontomlee's Slash
   FX and Blood FX, Cartoon Coffee, CraftPix, unTied Games.
+
+## 8. The style the player picked (18 samples)
+Samples of one swing, one hit and one buff were shown in 18 styles: pastel glow, bold anime
+(black ink), neon lines, ink brush, pixel, storybook stickers, crystal, candy, manga, watercolour,
+paper ribbon, crayon, matched-to-sprites, kawaii, bubbles, petals, clouds, jewels. The player
+picked **matched to the sprites**: pastel shapes redrawn at the characters' pixel size with the
+sprites' own outline rule. Lesson: effects must look like they were drawn by the same hand as the
+characters; style mismatch, not just quality, is what made earlier effects feel wrong.
