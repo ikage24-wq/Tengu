@@ -26,6 +26,9 @@
     poison: ['#ffffff', '#f0ffd2', '#bdf08a', '#86cc5a', '#4f8a5a'],
     lightning: ['#ffffff', '#fffad2', '#ffeb7a', '#ffc25a', '#c9805a'],
     shadow: ['#ffffff', '#ebe0ff', '#b89cff', '#8a6ae8', '#5a3fb8'],
+    // The Archer: warm gold (hawk) with sky blue beside it.
+    hawk: ['#ffffff', '#fff1bc', '#ffc94a', '#f0942e', '#a8543a'],
+    sky: ['#ffffff', '#dcf4ff', '#7fcfff', '#3f9cf0', '#2f5cb8'],
   };
   const DUST = ['#ffffff', '#fff6ee', '#f2e2d6', '#d9bdc4', '#9a7a9a'];
   const ROCK = ['#ffffff', '#ece4ff', '#c8b8ec', '#9a88cc', '#6a5aa0'];
@@ -864,8 +867,7 @@
   // ---------- The Paladin's light ----------
   // A shield of light: one hexagon flashes up, the full honeycomb shield snaps out, a glint sweeps
   // across it, cracks run through it, then it shatters into flying plates.
-  E.shield = (() => {
-    const pal = PAL.holy;
+  function shieldOf(pal) {
     const c = 110;
     const cells = [[0, 0]];
     for (let j = 0; j < 6; j++) cells.push([Math.cos((j * TAU) / 6 + Math.PI / 6) * 38, Math.sin((j * TAU) / 6 + Math.PI / 6) * 38]);
@@ -882,7 +884,7 @@
         if (i === 0) return hex(ctx, c, c, 30);
         if (i <= 3) {
           cells.forEach(([x, y]) => hex(ctx, c + x, c + y, 21));
-          if (i === 2) speedLine(ctx, PAL.holy, c - 70, c + 40, c + 60, c - 60, 5);
+          if (i === 2) speedLine(ctx, pal, c - 70, c + 40, c + 60, c - 60, 5);
           if (i === 3) {
             ctx.strokeStyle = pal[4];
             ctx.lineWidth = 3;
@@ -905,7 +907,9 @@
         });
       },
     };
-  })();
+  }
+  E.shield = shieldOf(PAL.holy);
+  E.shieldsteel = shieldOf(PAL.steel);
 
   // A golden magic circle (drawn from above; the game lays it flat on the floor and turns it):
   // double rings, a square and a diamond woven into a star, rune marks round the band.
@@ -968,8 +972,7 @@
 
   // A sword of light (Grand Verdict): a great blade with a white-hot edge line, a crossguard and a
   // hilt, held whole, then cracking apart into shards along its length.
-  E.sword = (() => {
-    const pal = PAL.holy;
+  function swordOf(pal) {
     const w = 140;
     const h = 380;
     const cx = 70;
@@ -1003,12 +1006,13 @@
         if (i < 4) for (let j = 0; j < 5; j++) diamond(ctx, pal, cx + (R() - 0.5) * 90, 80 + R() * 260 - k * 40, 6);
       },
     };
-  })();
+  }
+  E.sword = swordOf(PAL.holy);
+  E.steelsword = swordOf(PAL.steel);
 
   // A cross of light (Grand Verdict's blow): a vertical blade of light and a horizontal one burst
   // out from the point together, banded, then thin and break into diamonds.
-  E.lightcross = (() => {
-    const pal = PAL.holy;
+  function crossOf(pal) {
     const c = 160;
     const bar = (ctx, len, wid, vertical) => {
       const p = (x, y) => (vertical ? [c + y, c + x] : [c + x, c + y]);
@@ -1038,7 +1042,9 @@
         }
       },
     };
-  })();
+  }
+  E.lightcross = crossOf(PAL.holy);
+  E.steelcross = crossOf(PAL.steel);
 
   // Diamonds of light rising, looping (a Paladin's Faith building).
   E.motes = {
@@ -1480,6 +1486,278 @@
     },
   };
 
+  // ---------- The Warrior's steel (first job) ----------
+  // A giant sword of steel forming (Titan Breaker): the shards of the steel sword flying together
+  // into the whole blade (the sword shattering, played backward), then held whole.
+  E.swordform = (() => {
+    const sw = E.steelsword;
+    return { ...sw, n: 5, fps: 14, draw: (ctx, i) => sw.draw(ctx, [4, 3, 2, 1, 0][i]) };
+  })();
+  // The ground splitting open under Titan Breaker: a white-hot seam runs out both ways, tears wide
+  // with steel light bursting up out of it in blades, then closes into beads and sparkles.
+  E.fissure = (() => {
+    const pal = PAL.steel;
+    const w = 520;
+    const h = 200;
+    const g = 170;
+    const c = w / 2;
+    const R = rng(131);
+    const zig = Array.from({ length: 17 }, (_, j) => [((j - 8) / 8) * 240, (R() - 0.5) * 10]);
+    const seam = (ctx, len, gap) => {
+      const top = [];
+      const bot = [];
+      zig.forEach(([x, y]) => {
+        const k = Math.abs(x) / 240;
+        if (k > len) return;
+        const open = gap * (1 - Math.pow(k / Math.max(0.01, len), 2)) + 1;
+        top.push([c + x, g + y - open]);
+        bot.push([c + x, g + y + open * 0.6]);
+      });
+      if (top.length < 2) return;
+      inked(ctx, top.concat(bot.reverse()), pal[1], pal[4], 4);
+      fill(ctx, top.map(([x, y]) => [x, y + gap * 0.35]).concat(top.map(([x, y]) => [x, y + gap * 0.75]).reverse()), pal[0]);
+    };
+    const blade = (ctx, x, tall, k) => {
+      if (tall * k < 6) return;
+      inked(ctx, [[x - 9 * k, g], [x, g - tall * k], [x + 9 * k, g]], pal[2], pal[4], 3.5);
+      fill(ctx, [[x - 4 * k, g], [x, g - tall * k * 0.8], [x + 4 * k, g]], pal[0]);
+    };
+    const blades = Array.from({ length: 9 }, (_, j) => ({ x: c + (j - 4) * 50 + (R() - 0.5) * 16, tall: 70 + R() * 70 * (1 - Math.abs(j - 4) * 0.15) }));
+    return {
+      w, h, n: 9, fps: 20, px: c, py: g,
+      draw(ctx, i) {
+        const len = [0.25, 0.7, 1, 1, 1, 1, 0.9, 0.6, 0][i];
+        const gap = [3, 7, 14, 18, 16, 12, 7, 3, 0][i];
+        if (len) seam(ctx, len, gap);
+        const k = [0, 0.4, 1, 1.1, 0.9, 0.6, 0.3, 0, 0][i];
+        if (k) blades.forEach((b, j) => blade(ctx, b.x, b.tall, Math.abs(b.x - c) / 240 <= len ? k * (j % 2 ? 0.8 : 1) : 0));
+        if (i >= 4) {
+          const q = (i - 4) / 4;
+          blades.forEach((b, j) => {
+            if (i < 8 || j % 2) sparkle(ctx, pal, b.x + (j % 2 ? 8 : -8), g - b.tall * (0.5 + q * 0.5), 12 * (1.1 - q * 0.6), j);
+            shard(ctx, pal, b.x, g - 20 - q * 40, -Math.PI / 2, 12 * (1.2 - q), 3.5 * (1.2 - q));
+          });
+        }
+      },
+    };
+  })();
+  // Valor building, looping: steel chevrons and diamonds rising round the hero, a little cross
+  // glinting among them (the Warrior's shape).
+  E.valor = {
+    w: 160, h: 220, n: 8, fps: 10, px: 80, py: 210, loop: true,
+    draw(ctx, i) {
+      const pal = PAL.steel;
+      const R = rng(141);
+      for (let j = 0; j < 6; j++) {
+        const life = (i / 8 + j / 6) % 1;
+        const x = 80 + (j % 2 ? 1 : -1) * (26 + R() * 30);
+        const y = 200 - life * 170;
+        const k = Math.sin(Math.PI * life);
+        if (k < 0.15) continue;
+        if (j % 3 === 0) {
+          const s = 10 * k;
+          inked(ctx, [[x - s, y + s * 0.6], [x, y - s * 0.4], [x + s, y + s * 0.6], [x + s, y + s * 1.3], [x, y + s * 0.3], [x - s, y + s * 1.3]], pal[2], pal[4], 3);
+          fill(ctx, [[x - s * 0.6, y + s * 0.5], [x, y - s * 0.1], [x + s * 0.6, y + s * 0.5], [x, y + s * 0.2]], pal[0]);
+        } else if (j % 3 === 1) diamond(ctx, pal, x, y, 7 * k, 1.5);
+        else sparkle(ctx, pal, x, y, 10 * k, 0.4);
+      }
+    },
+  };
+
+  // ---------- The Archer's hawk (first job: warm gold and sky blue) ----------
+  // A feather: a long pointed vane on a quill, notched along its edge, turned to `a`.
+  function feather(ctx, x, y, len, a, pal = PAL.hawk, tip = PAL.sky) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const w = len * 0.26;
+    const vane = [[-len * 0.5, 0], [-len * 0.3, -w * 0.9], [len * 0.15, -w], [len * 0.5, 0], [len * 0.15, w * 0.85], [-len * 0.05, w * 0.55], [-len * 0.15, w * 0.95], [-len * 0.4, w * 0.6]];
+    inked(ctx, vane, pal[3], pal[4], 3);
+    fill(ctx, vane.map(([px, py]) => [px * 0.85, py * 0.7 - w * 0.12]), pal[2]);
+    fill(ctx, [[len * 0.2, -w * 0.7], [len * 0.5, 0], [len * 0.2, w * 0.6], [len * 0.28, 0]], tip[2]);
+    fill(ctx, [[-len * 0.35, -w * 0.45], [len * 0.1, -w * 0.6], [len * 0.3, -w * 0.15], [-len * 0.2, -w * 0.15]], pal[1]);
+    ctx.strokeStyle = pal[0];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-len * 0.62, 0);
+    ctx.lineTo(len * 0.42, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+  // An Archer's shot landing: a gold star pops, a sky-blue swoosh cuts across it, feathers burst
+  // off and tumble, then beads.
+  E.hawkhit = {
+    w: 220, h: 200, n: 6, fps: 24, px: 110, py: 100,
+    draw(ctx, i) {
+      const c = 110;
+      if (i === 0) return starburst(ctx, PAL.hawk, c, 100, 30, 8, 151, { inner: 0.5, tones: 3 });
+      if (i <= 2) {
+        celCrescent(ctx, PAL.sky, c - 20, 150, 80, -2.4, -0.7, i === 1 ? 22 : 26);
+        starburst(ctx, PAL.hawk, c, 100, i === 1 ? 52 : 42, 8, 151, { inner: 0.42 });
+      }
+      const k = (i - 1) / 4;
+      const R = rng(153);
+      for (let j = 0; j < 6; j++) {
+        const a = (j / 6) * TAU + R() * 0.5;
+        const d = 28 + k * 60;
+        if (i < 5 || j % 2) feather(ctx, c + Math.cos(a) * d, 100 + Math.sin(a) * d * 0.8 + k * k * 20, 30 * (1.1 - k * 0.4), a + k * 3);
+      }
+      if (i >= 3) for (let j = 0; j < 5; j++) shard(ctx, j % 2 ? PAL.sky : PAL.hawk, c - 40 + j * 22, 72 - k * 20 + (j % 2) * 18, 0.3, 8, 3 * (1.2 - k * 0.5));
+    },
+  };
+  // A gust of feathers off the bow: they fan out forward on a sky-blue swoosh, then tumble down.
+  E.feathers = {
+    w: 260, h: 180, n: 7, fps: 16, px: 60, py: 90,
+    draw(ctx, i) {
+      const k = i / 6;
+      if (i < 4) celCrescent(ctx, PAL.sky, 100 + k * 40, 220, 150, -2.2 + k * 0.3, -1.25 + k * 0.3, 18 * (1 - k * 0.6));
+      const R = rng(161);
+      for (let j = 0; j < 7; j++) {
+        const a = (j / 6 - 0.5) * 1.1;
+        const d = 30 + k * (110 + R() * 40);
+        const x = 60 + Math.cos(a) * d;
+        const y = 90 + Math.sin(a) * d + k * k * 50;
+        if (i < 6 || j % 2) feather(ctx, x, y, 32 * (1 - k * 0.3), a + k * (j % 2 ? 4 : -4));
+      }
+    },
+  };
+  // The trail behind a gold arrow, looping: sky-blue speed lines and a glint.
+  E.hawktrail = {
+    w: 200, h: 70, n: 3, fps: 18, px: 190, py: 35, loop: true,
+    draw(ctx, i) {
+      const R = rng(171 + i);
+      for (let j = 0; j < 3; j++) {
+        const y = 18 + j * 17 + (R() - 0.5) * 6;
+        const len = 90 + R() * 70;
+        speedLine(ctx, j === 1 ? PAL.hawk : PAL.sky, 186 - len, y, 186, y, j === 1 ? 5 : 3.5);
+      }
+      sparkle(ctx, PAL.hawk, 60 + i * 30, 20 + (i % 2) * 30, 9, i);
+    },
+  };
+  // The great falcon of light (Falcon Dive), flying to the right, looping its wingbeat: a gold
+  // body with a white breast, a hooked head, wings of long gold feathers tipped sky blue, a fanned
+  // tail and a glow of beads streaming off it.
+  E.falcon = (() => {
+    const pal = PAL.hawk;
+    const sky = PAL.sky;
+    const w = 340;
+    const h = 260;
+    const cx = 180;
+    const cy = 140;
+    // A wing from the shoulder to its tip: a curved leading edge, and a trailing edge that breaks
+    // into five long feathers tipped sky blue.
+    const wing = (ctx, tip, far) => {
+      const S = [cx - 4, cy - 12];
+      const B = [cx - 58, cy + 6];
+      const lead = [];
+      const bulge = [(S[0] + tip[0]) / 2 + 10, (S[1] + tip[1]) / 2 - 34];
+      for (let k = 0; k <= 10; k++) {
+        const u = k / 10;
+        lead.push([(1 - u) ** 2 * S[0] + 2 * u * (1 - u) * bulge[0] + u * u * tip[0], (1 - u) ** 2 * S[1] + 2 * u * (1 - u) * bulge[1] + u * u * tip[1]]);
+      }
+      const trail = [];
+      const tips = [];
+      for (let f = 0; f < 5; f++) {
+        const u = f / 5;
+        const a = [lerp(tip[0], B[0], u), lerp(tip[1], B[1], u)];
+        const b = [lerp(tip[0], B[0], u + 0.2), lerp(tip[1], B[1], u + 0.2)];
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const len = Math.hypot(dx, dy) || 1;
+        // Each feather tip juts out past the edge, away from the leading edge.
+        const out = [dy / len, -dx / len];
+        const tipPt = [(a[0] + b[0]) / 2 + out[0] * -26, (a[1] + b[1]) / 2 + out[1] * -26];
+        trail.push(a, tipPt);
+        tips.push([a, tipPt, b]);
+      }
+      trail.push(B);
+      const shape = lead.concat(trail);
+      inked(ctx, shape, far ? pal[3] : pal[2], pal[4], 4);
+      tips.forEach(([a, t, b]) => fill(ctx, [[lerp(a[0], t[0], 0.45), lerp(a[1], t[1], 0.45)], t, [lerp(b[0], t[0], 0.45), lerp(b[1], t[1], 0.45)]], sky[far ? 3 : 2]));
+      if (!far) {
+        const inner = lead.map(([x, y], k) => [lerp(x, cx - 30, 0.25), lerp(y, cy, 0.25) + 4]);
+        fill(ctx, inner.slice(0, 9).concat([[cx - 20, cy - 2]]), pal[1]);
+        fill(ctx, lead.slice(1, 8).map(([x, y]) => [x, y + 5]).concat(lead.slice(1, 8).reverse()), pal[0]);
+      }
+    };
+    return {
+      w, h, n: 4, fps: 12, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const tipY = [-120, -40, 40, -40][i];
+        const tipX = [-60, -150, -110, -150][i];
+        wing(ctx, [cx + tipX + 20, cy + tipY - 14], true);
+        // The tail, fanned behind.
+        for (let f = -2; f <= 2; f++) feather(ctx, cx - 98, cy + 12 + f * 5, 60, Math.PI + f * 0.2, pal, sky);
+        // A plump body tapering to the tail, a white breast.
+        const body = [[cx - 80, cy + 12], [cx - 40, cy - 22], [cx + 20, cy - 30], [cx + 56, cy - 18], [cx + 60, cy + 10], [cx + 24, cy + 30], [cx - 40, cy + 26]];
+        inked(ctx, body, pal[3], pal[4], 4);
+        fill(ctx, body.map(([x, y]) => [lerp(cx, x, 0.88), lerp(cy, y, 0.75) - 5]), pal[2]);
+        fill(ctx, [[cx - 10, cy + 8], [cx + 40, cy - 2], [cx + 54, cy + 10], [cx + 20, cy + 24], [cx - 20, cy + 20]], pal[0]);
+        // The head: round, a white cheek, a sky-blue hooked beak and a fierce eye.
+        const hx = cx + 66;
+        const hy = cy - 22;
+        ctx.beginPath();
+        ctx.arc(hx, hy, 27, 0, TAU);
+        ctx.fillStyle = pal[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(hx, hy, 24, 0, TAU);
+        ctx.fillStyle = pal[2];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(hx - 4, hy - 6, 15, 0, TAU);
+        ctx.fillStyle = pal[1];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(hx + 6, hy + 10, 14, 9, 0, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        inked(ctx, [[hx + 18, hy - 10], [hx + 44, hy - 2], [hx + 38, hy + 14], [hx + 30, hy + 6], [hx + 20, hy + 6]], sky[2], sky[4], 3.5);
+        fill(ctx, [[hx + 22, hy - 8], [hx + 40, hy - 2], [hx + 28, hy - 1]], '#ffffff');
+        ctx.beginPath();
+        ctx.arc(hx + 8, hy - 6, 6, 0, TAU);
+        ctx.fillStyle = sky[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(hx + 7, hy - 8, 2.4, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        fill(ctx, [[hx - 6, hy - 16], [hx + 18, hy - 14], [hx + 16, hy - 10]], pal[4]);
+        wing(ctx, [cx + tipX, cy + tipY], false);
+        // Beads of light streaming off behind.
+        const R = rng(181 + i);
+        for (let j = 0; j < 5; j++) shard(ctx, j % 2 ? sky : pal, 30 - j * 4 + R() * 10, cy - 30 + j * 20 + R() * 8, 0, 16, 3.5);
+        sparkle(ctx, pal, cx + 10, cy - 70 + (i % 2) * 10, 11, i);
+      },
+    };
+  })();
+  // Momentum building, looping: gold feathers circling the hero on a ring of sky-blue wind.
+  E.momentum = {
+    w: 180, h: 200, n: 8, fps: 12, px: 90, py: 190, loop: true,
+    draw(ctx, i) {
+      const t = (i / 8) * TAU;
+      ctx.save();
+      ctx.translate(90, 110);
+      ctx.scale(1, 0.45);
+      celCrescent(ctx, PAL.sky, 0, 0, 70, t, t + 2, 14);
+      celCrescent(ctx, PAL.sky, 0, 0, 62, t + Math.PI, t + Math.PI + 1.6, 11);
+      ctx.restore();
+      for (let j = 0; j < 3; j++) {
+        const a = t + (j / 3) * TAU;
+        const x = 90 + Math.cos(a) * 64;
+        const y = 110 + Math.sin(a) * 28 - j * 26;
+        feather(ctx, x, y, 34, a + Math.PI / 2 + 0.4);
+      }
+    },
+  };
+  // The Archer's emblem: two gold feathers crossed over a sky-blue diamond.
+  E.embhawk = emblem(PAL.hawk, (ctx, pal) => {
+    badge(ctx, PAL.sky, [[0, -60], [44, -6], [0, 60], [-44, -6]]);
+    feather(ctx, -14, 4, 92, -Math.PI / 2 - 0.5, pal, PAL.sky);
+    feather(ctx, 14, 4, 92, -Math.PI / 2 + 0.5, pal, PAL.sky);
+    feather(ctx, 0, -2, 104, -Math.PI / 2, pal, PAL.sky);
+  });
+
   // ---------- Big versions ----------
   // Pixel art can't be blown up without its pixels growing past the sprites', so effects that play
   // large (rings across a whole group, the magic circle, a whirlwind over an area, the ground
@@ -1500,7 +1778,8 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight', 'ringhawk']) E[`${s}big`] = big(E[s], 2.6);
+  E.fissurebig = big(E.fissure, 1.5);
   E.circlebig = big(E.circle, 2.4);
   E.spinbig = big(E.spin, 2);
   E.spinredbig = big(E.spinred, 2);

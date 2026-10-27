@@ -1,11 +1,11 @@
 // Summoned helpers that float beside the player: a guardian angel, a frost sprite, a venom
-// salamander, and a thunder hawk.
+// salamander.
 //
 // Each is a small rig drawn at res 3 like the monsters (selective outline, hue-shifted ramps,
 // light from the upper front): a root that bobs, a body that leans, and chained parts (wing
 // bones, hair locks, ribbons, tails, flames) whose segments follow the root a beat later. Faces
 // come from the kits: the heroine kit for the angel and the sprite, the creature kit for the
-// salamander and the hawk.
+// salamander.
 //
 // drawSummon(ctx, art, x, y, time, facing, state)
 //   state (optional) = { now, since, until, summon } from the summon's buff. With it the summon
@@ -21,7 +21,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const smooth = (t) => t * t * (3 - 2 * t);
 
-const GLOWS = { angel: 'rgba(255,243,166,0.6)', sprite: 'rgba(143,227,255,0.55)', salamander: 'rgba(255,138,60,0.55)', hawk: 'rgba(255,232,107,0.5)' };
+const GLOWS = { angel: 'rgba(255,243,166,0.6)', sprite: 'rgba(143,227,255,0.55)', salamander: 'rgba(255,138,60,0.55)' };
 
 // ---------- Transform stack ----------
 
@@ -232,8 +232,6 @@ function beat(p, keys) {
   return keys[0][1];
 }
 const BIRD_BEAT = [[0, 1], [0.14, 0.96], [0.42, -1], [0.54, -0.86], [1, 1]];
-// The hawk flaps twice, then glides on held wings.
-const HAWK_BEAT = [[0, 1], [0.1, -1], [0.18, -0.7], [0.3, 0.95], [0.4, -1], [0.48, -0.6], [0.6, 0.15], [0.94, 0.1], [1, 1]];
 
 // Cast stages: 0 none, 1 wind-up (held), 2 strike (the shot leaves), 3 held impact, 4 settle.
 // `k` is how far into the pose the body is: anticipation pulls back, the strike overshoots.
@@ -348,7 +346,7 @@ function backHair(H, low = 6.4, sway = 0) {
   return [...opoly(pts, H.sh2, 0.34, ink(H.sh2)), fpoly(pts.slice(0, 11).map(([x, y]) => [x * 0.9 - 0.3, y * 0.9 - 0.3]), H.sh)];
 }
 
-// ---------- Feathered wing (angel and hawk) ----------
+// ---------- Feathered wing (the angel's) ----------
 
 // A feather from (bx, by) toward angle a: a long leaf with its own line, a shaded back vane and
 // an optional tinted tip.
@@ -767,101 +765,11 @@ function salamander(fp, cast, mood) {
   return { w: 40, h: 34, res: 3, shapes: out };
 }
 
-// ---------- Thunder Hawk ----------
-
-const HW = {
-  wing: { c: '#6688e4', c2: '#5a7bdc', sh: '#4a58bc', lt: '#a8c4ff', tip: '#ffe86b', tip2: null, cov: '#7a9cf0', line: '#2e3482' },
-  wingFar: { c: '#4f64c6', c2: '#4858bc', sh: '#3a429e', lt: '#7f9cec', tip: '#e8c64a', tip2: null, cov: '#5a72d4', line: '#262a6e' },
-  body: '#7a98ec', bodySh: '#5068c8', bodyLt: '#b4c8ff',
-  head: '#ffffff', headSh: '#dfe2fa', headSh2: '#b8bbe6',
-  beak: '#ffd25a', beakSh: '#e08a36', beakTip: '#8a4a2a',
-  bolt: '#ffe86b', boltLt: '#fff9cc',
-};
-
-// A storm hawk seen from the side, flapping twice and then gliding on held wings. The wing is a
-// three-bone chain (the tip trails the shoulder), with lightning-gold tips on the primaries.
-function hawk(fp, cast, mood) {
-  const P = HW;
-  const ph = fp * TAU;
-  const ck = CAST[cast];
-  const F0 = (d = 0) => (cast === 1 ? 1 : cast === 2 || cast === 3 ? -1 : cast === 4 ? -0.4 : beat(fp - d, HAWK_BEAT));
-  const bob = cast ? -ck * 0.5 : -F0(0.06) * 0.9;
-  const body = [19 - (cast === 1 ? 1.4 : cast >= 2 ? -ck * 1.2 : 0), 19 + bob];
-  const bodyA = cast === 1 ? -0.3 : cast >= 2 ? 0.12 : -0.08 + F0(0.1) * 0.04;
-  const out = [];
-  const wingAng = (far) => (i) => {
-    const f = F0(i * 0.05);
-    return lerp(-2.7 - i * 0.25, -1.75 - i * 0.1, (f + 1) / 2) + bodyA + (far ? 0.18 : 0);
-  };
-  const T0 = at(body[0], body[1], bodyA);
-  const pt = (x, y) => within(T0, () => X(x, y));
-  const prim = [[0.05, 8.6, 2.5], [-0.3, 8.4, 2.5], [-0.65, 7.8, 2.4], [-1, 6.8, 2.3]];
-  const point = 0.05;
-  out.push(...featherWing(pt(-1, -3), wingAng(true), P.wingFar, { bones: [3, 4, 3.4], primaries: prim, point, covert: 3.4 }));
-
-  // Tail fan: three long feathers trailing a beat behind the body.
-  within(T0, () => {
-    [[-0.12, 8, 2.6, P.wingFar], [0.08, 8.6, 2.8, P.wing], [0.3, 7.6, 2.5, P.wingFar]].forEach(([da, len, w, c], i) => out.push(...feather(-5, 1.2, Math.PI - 0.05 + da + Math.sin(ph - 1.4 - i * 0.3) * 0.08 - (cast === 1 ? 0.2 : 0), len, w, c, { tip: P.bolt, point })));
-  });
-  // Talons tucked under the belly (they reach out on the strike).
-  {
-    const hip = pt(0.6, 3.4);
-    const foot = cast >= 2 ? [hip[0] + 3.4, hip[1] + 2.6] : [hip[0] - 1.6, hip[1] + 2.4];
-    out.push(...oband([hip, foot], taperW(1.6, 1.2), P.beak, 1, 0.3, ink(P.beakSh)));
-    for (const a of cast >= 2 ? [-0.6, 0.2, 0.9] : [0.4, 1.2]) out.push(...oband([foot, [foot[0] + Math.cos(a) * 1.5, foot[1] + Math.sin(a) * 1.5]], taperW(0.8, 0.3), P.beakTip, 1, 0.25));
-  }
-  // The body: a teardrop, white breast, blue back.
-  within(T0, () => {
-    const bd = spline([[-6, -0.6], [-2.6, -4], [2.4, -4.4], [5.6, -2.4], [6.4, 0.8], [4.4, 3.8], [0, 4.6], [-4, 3], [-6, -0.6]], 3);
-    out.push(...opoly(bd, P.body, 0.36, ink(P.bodySh)));
-    out.push(fpoly(spline([[-6, -0.6], [-4, 3], [0, 4.6], [4.4, 3.8], [3, 2], [-1, 1.8]], 2), P.bodySh));
-    out.push(fpoly(spline([[2.4, -2.6], [5.2, -1.6], [6.2, 1], [4.4, 3.4], [2.6, 3.2], [2, 0.6]], 2), P.head));
-    out.push(fpoly(spline([[3.4, 2.8], [4.4, 3.4], [2.6, 3.2], [2.2, 2.2]], 1), P.headSh));
-    out.push(fband([[-3.4, -3.2], [0, -4.1], [2.6, -4]], 0.6, P.bodyLt, 1));
-  });
-  // The near wing over the body.
-  out.push(...featherWing(pt(0, -3.2), wingAng(false), P.wing, { bones: [3.4, 4.4, 3.8], primaries: prim, point, covert: 3.8 }));
-  // A spark crawling along the near wing's leading edge (on the beat and on the strike).
-  if (cast === 2 || (!cast && Math.round(fp * 12) % 6 === 1)) {
-    const a = wingAng(false);
-    const s0 = pt(0, -3.2);
-    const m = [s0[0] + Math.cos(a(0)) * 3.4, s0[1] + Math.sin(a(0)) * 3.4];
-    const e = [m[0] + Math.cos(a(1)) * 4.4, m[1] + Math.sin(a(1)) * 4.4];
-    out.push(fband([s0, [lerp(s0[0], m[0], 0.5) + 0.8, lerp(s0[1], m[1], 0.5) - 0.6], m, [lerp(m[0], e[0], 0.5) - 0.6, lerp(m[1], e[1], 0.5) + 0.5], e], 0.6, P.bolt, 1));
-  }
-
-  // Head on its neck pivot: white, a hooked gold beak, a stern raptor eye under a brow ridge.
-  {
-    const ha = cast === 1 ? -0.3 : cast >= 2 ? 0.12 : Math.sin(ph - 0.8) * 0.05 - bodyA * 0.6;
-    const hp = pt(5.2, -4.4);
-    within(at(hp[0], hp[1], ha), () => {
-      const hd = spline([[-3.4, 1], [-2.6, -2.6], [0.4, -4], [3.4, -3.2], [4.6, -0.8], [3.8, 1.8], [0.6, 3], [-2.4, 2.8], [-3.4, 1]], 3);
-      out.push(...opoly(hd, P.head, 0.36, ink(P.headSh2)));
-      out.push(fpoly(spline([[-3.4, 1], [-2.4, 2.8], [0.6, 3], [3.8, 1.8], [1.4, 1.4], [-1.6, 0.8]], 2), P.headSh));
-      // A crest of three swept-back plumes, lightning-tipped, trailing a beat behind the head.
-      [[-1.4, -3, 3.4], [-2.4, -2.2, 3], [-3, -1, 2.4]].forEach(([x, y, len], i) => out.push(...oband([[x, y], [x - len * 0.6, y - len * 0.5 + Math.sin(ph - 1.6 - i * 0.4) * 0.4], [x - len, y - len * 0.25 + Math.sin(ph - 2 - i * 0.4) * 0.6]], taperW(1.4, 0.2), i === 1 ? P.headSh : P.head, 2, 0.3, ink(P.headSh2))));
-      // The beak: upper mandible hooked over the lower; it gapes on the strike.
-      const open = cast === 2 || cast === 3 ? 1 : 0;
-      out.push(...opoly([[3.4, -1.8], [6, -1.6], [7.6, -0.4], [7.4, 1], [6.6, 0.4], [3.6, 0.2]], P.beak, 0.32, ink(P.beakSh)));
-      out.push(fpoly([[6.6, 0.4], [7.4, 1], [7.6, -0.4], [7, -0.6]], P.beakTip));
-      out.push(fpoly([[3.6, -0.4], [6.4, -0.2], [6.6, 0.4], [3.6, 0.2]], P.beakSh));
-      out.push(...opoly([[3.6, 0.4 + open * 0.4], [6.2, 0.8 + open * 1.2], [5.4, 1.6 + open * 1.4], [3.6, 1.4]], P.beakSh, 0.3, ink(P.beakSh)));
-      out.push(fband([[4, -1.5], [5.8, -1.3]], 0.4, '#fff6c0', 1));
-      // Raptor eye: gold iris, sharp shape, a dark brow ridge that sets the stare.
-      const eo = { shape: 'sharp', iris: '#ffb52e', sclera: null, pupil: 'round', lashC: '#262a6e', rim: 0.35, irisW: 0.9, irisH: 0.95, look: [0.6, 0], shine: 0.8 };
-      if (mood === 'blink') out.push(...place(creatureEye(1.8, -1, { ...eo, s: 1, w: 1.6, h: 1.5, closed: 'blink' })));
-      else out.push(...place(creatureEye(1.8, -1, { ...eo, s: 1, w: 1.6, h: 1.6, slant: mood === 'angry' ? 0.6 : 0.25, lid: mood === 'angry' ? 0.2 : 0.1 })));
-      out.push(fband([[0, -2.6], [1.8, -2.9], [3.6, -2.2]], taperW(0.9, 0.5), P.headSh2, 1));
-    });
-  }
-  return { w: 40, h: 34, res: 3, shapes: out };
-}
-
-const ART = { angel, sprite: frostSprite, salamander, hawk };
+const ART = { angel, sprite: frostSprite, salamander };
 // Frames per flying cycle and the cycle's length (s): wings beat on their own rhythm.
-const CYCLE = { angel: [8, 0.9], sprite: [8, 0.8], salamander: [8, 1], hawk: [12, 1.4] };
+const CYCLE = { angel: [8, 0.9], sprite: [8, 0.8], salamander: [8, 1] };
 // When each summon blinks: every few seconds, at its own offset.
-const BLINK = { angel: [3.4, 0.4], sprite: [2.9, 1.2], salamander: [3.8, 2], hawk: [4.4, 0.8] };
+const BLINK = { angel: [3.4, 0.4], sprite: [2.9, 1.2], salamander: [3.8, 2] };
 
 // Cast timing (s). The summon winds up while its next shot is due, strikes as it leaves, holds
 // the blow, then settles back into its flight.
@@ -945,7 +853,7 @@ export function drawSummon(ctx, art, x, y, time, facing, state = null) {
   if (burst >= 0) sparkles(ctx, x, y + dy, burst, art);
 }
 
-const SPARK = { angel: '#fff3a6', sprite: '#d8f8ff', salamander: '#ffc94a', hawk: '#ffe86b' };
+const SPARK = { angel: '#fff3a6', sprite: '#d8f8ff', salamander: '#ffc94a' };
 function sparkles(ctx, x, y, u, art) {
   ctx.save();
   ctx.fillStyle = SPARK[art];

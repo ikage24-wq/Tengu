@@ -200,6 +200,43 @@ const R = {
       { seq: 'r:400 C7:800', inst: 'glockenspiel', db: -8 },
     ],
   },
+  // The first jobs' gauges topping out: Valor (a steel ring and a brass call, Unbroken) and
+  // Momentum (a hawk's rush of wind and a bright harp run, Hawkeye).
+  unbroken: {
+    db: -10, max: 1, duck: [-5, 900], layers: [
+      { rec: 'unsheathe', rate: 0.9, len: 700 },
+      { rec: 'clangHeavy', rate: 1.1, db: -8 },
+      { seq: 'r:120 C4+G4+C5:800', inst: 'brass_section', db: -6 },
+    ],
+  },
+  hawkeye: {
+    db: -11, max: 1, room: true, duck: [-5, 900], layers: [
+      { rec: 'windWhoosh', len: 1000 },
+      { seq: 'D5:60 F#5:60 A5:60 D6:60 A6:600', inst: 'orchestral_harp', db: -4 },
+      { seq: 'r:200 A6:600', inst: 'glockenspiel', db: -8 },
+    ],
+  },
+  // The finishers' big moments: Titan Breaker's sword forming and the ground splitting under it,
+  // and Falcon Dive's call (a rising wind and brass) and the falcon's strike.
+  titanrise: { db: -12, max: 1, layers: [{ rec: 'unsheathe', rate: 0.7, len: 900 }, { seq: 'C3+G3:900', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
+  titanbreak: {
+    db: -8, max: 1, duck: [-8, 1300], layers: [
+      { rec: 'clangHeavy', db: -2 },
+      { rec: 'punchHeavy', rate: 0.7, db: -4 },
+      { rec: 'thunder', db: -8 },
+      thump(60, 520, { slide: -1.5 }),
+      { seq: 'C3+G3+C4+E4:1000', inst: 'brass_section', db: -8, at: 60 },
+    ],
+  },
+  falconcall: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 1200 }, { seq: 'D4:200 A4:200 D5:800', inst: 'french_horn', db: -6 }] },
+  falconloose: {
+    db: -9, max: 1, duck: [-7, 1100], layers: [
+      { rec: 'windWhoosh', rate: 1.3, len: 900 },
+      thump(90, 380, { slide: -2, db: -4 }),
+      { seq: 'D5:50 F#5:50 A5:50 D6:50 F#6:600', inst: 'orchestral_harp', db: -6 },
+      { seq: 'r:80 D4+A4+D5:900', inst: 'brass_section', db: -8 },
+    ],
+  },
   // The archer paths' gauges topping out: Gale (a rush of wind, a rising flute and harp) and the
   // Sniper's lock (a sharp metal click, a high glint).
   galeFull: {

@@ -12,7 +12,7 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   (pulsing spots), cage (bark roots, stone plinth, iron padlock), seal (bark roots, carved stone
   ring with runes lighting in turn), chest (plank grain, 3-step gold, iron caps), key (bark, glint).
 - Map props, landmarks, scenery: auto-lit props, foliage, wind poses, swirling portals.
-- Summons: Guardian Angel, Frost Sprite, Venom Salamander, Thunder Hawk re-rigged; Seraphim staff.
+- Summons: Guardian Angel, Frost Sprite, Venom Salamander re-rigged; Seraphim staff.
 - Hero rig: kit eyes, skin and hair ramps, clumped bangs, selective outlines, walk vs run gaits with
   planted feet, hair chain, held idle beat, hurt wobble, knocked-out pose; townsfolk eye/hair contrast.
 - Meadow monsters (all five) and all of the wilds: Basilisk Hatchling, Manticore Cub, Dryad (warm
@@ -89,8 +89,8 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   bangs band no longer reads lighter; dark hair's angel ring is a hue-shifted sheen, not grey.
 - Bag icons: near-black gear (demonic, cyber, dark thief bottoms and shoes, dark endgame weapons)
   takes a monotone value lift in icons only (`icons.js` `liftTone`) and reads at 1x.
-- Thunder Hawk is now the archer's summon skill (`thunderhawk`: physical lightning feathers),
-  with a hand-drawn icon and a test.
+- Thunder Hawk (the archer's old summon) was removed when the first-job Archer was remade; her
+  falcon now lives in Falcon Dive, her finisher.
 
 ## Still to do
 - Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs).

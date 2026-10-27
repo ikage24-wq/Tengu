@@ -333,14 +333,6 @@ export const MOVES = {
     return p < 0.5 ? MOVES.slash(snap(p / 0.5)) : MOVES.slash2(snap((p - 0.5) / 0.5));
   },
 
-  // Titan Breaker: a smash, a rising drag that throws them up, then a leap and a crater-making
-  // dive. Three moves as one.
-  titan(p) {
-    if (p < 0.36) return MOVES.overhead(snap(p / 0.36));
-    if (p < 0.6) return MOVES.rising((p - 0.36) / 0.24);
-    return MOVES.plunge((p - 0.6) / 0.4);
-  },
-
   // A shield shove: brace low behind the guard, then drive forward shoulder and hilt first (the
   // shield of light flares at the front of it), and settle back.
   bash(p) {
@@ -805,6 +797,38 @@ export const MOVES = {
     };
   },
 
+  // Titan Breaker (the Warrior's finisher): sink into a deep crouch with the blade drawn back,
+  // spring high with it raised over the head (the giant steel sword forms above), hang a beat at the
+  // top, then crash straight down splitting the ground. The crash lands at about 0.62.
+  titanbreak(p, dur) {
+    if (p < 0.24) {
+      const t = ease(p / 0.24);
+      const shake = t > 0.7 ? Math.sin(p * dur * 70) * 0.6 : 0;
+      return { weapon: lerp(25, 60, t), arm: lerp(60, 40, t), lunge: -3 * t + shake, tilt: 0.08 * t, rig: (r) => { r.squat = 3; wideLegs(r); r.backArm = [2, 1]; r.eyes = t > 0.6 ? 'half' : undefined; } };
+    }
+    if (p < 0.56) {
+      const t = ease(seg(p, 0.24, 0.42));
+      const hang = Math.sin(seg(p, 0.42, 0.56) * Math.PI) * 2;
+      return { weapon: lerp(60, -160, t), arm: lerp(40, 178, t), lift: 58 * t + hang, tilt: -0.14 * t, rig: (r) => { tuck(r); r.backArm = [-2, -5]; r.hairLift = -1; r.cape -= 3; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.56, 0.62));
+    const settle = seg(p, 0.7, 1);
+    return {
+      weapon: lerp(-160, 178, ease(seg(p, 0.56, 0.61))), arm: lerp(178, 25, t), lift: 60 * (1 - t), tilt: 0.28 * t * (1 - settle), trail: p < 0.68,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [2, 2]; strikeFace(r); },
+    };
+  },
+
+  // Falcon Dive (the Archer's finisher): raise the bow to the sky and call the falcon down, then
+  // bring it level, draw full and loose it (at about 0.63), and a big kick of recoil.
+  falcondive(p) {
+    if (p < 0.34) {
+      const call = MOVES.skyshot(seg(p, 0, 0.34) * 0.48);
+      return { ...call, lift: 2 * bump(p, 0.05, 0.34), rig: (r) => { call.rig(r); r.hairLift = -1; r.eyes = 'half'; } };
+    }
+    return MOVES.draw(0.2 + seg(p, 0.34, 1) * 0.8);
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -837,8 +861,8 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
-  spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
+  spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, falcondive: 1.5,
 };
 
 // Basic attacks chain into a combo per weapon type.

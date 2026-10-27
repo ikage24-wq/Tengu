@@ -295,8 +295,8 @@ export const BUFF_LOOKS = {
       star(ctx, x - dir * 6, y - 2, 2.5, '#ffffff', a * (0.5 + 0.5 * Math.sin(t * 9)));
     },
   },
-  ironskin: {
-    color: '#cfd8e8', cast: 'converge',
+  ironguard: {
+    color: '#9fd2ff', cast: 'converge',
     back: (ctx, x, y, t, dir, a) => {
       glow(ctx, x, y - 24, 30, '#cfd8e8', a * 0.6);
       orbit(ctx, x, y - 26, t, { n: 4, rx: 15, ry: 18, speed: 0.8, draw: (px, py) => {
@@ -338,10 +338,10 @@ export const BUFF_LOOKS = {
       orbit(ctx, x, y - 24, t, { n: 6, rx: 20, ry: 22, speed: 1.2, draw: (px, py, z, i) => rune(ctx, px, py, 3.5, i, '#ffffff', a * 0.9) }, true);
     },
   },
-  eaglefocus: {
-    color: '#ffd66b', cast: 'shine',
+  huntersfocus: {
+    color: '#ffc94a', cast: 'shine',
     front: (ctx, x, y, t, dir, a) => {
-      // A golden eagle's eye watching from over your head, blinking now and then.
+      // A golden hawk's eye watching from over your head, blinking now and then.
       const blink = (t % 3.5) < 0.12 ? 0.2 : 1;
       glow(ctx, x, y - 62, 16, '#ffe36b', a * 0.8);
       eyeSigil(ctx, x, y - 62, 10, '#ffb020', a, t);
@@ -756,7 +756,6 @@ export const BUFF_LOOKS = {
   frostsprite: { color: '#8fe3ff', cast: 'summon' },
   salamander: { color: '#ff8a3c', cast: 'summon' },
   guardianangel: { color: '#fff3a6', cast: 'summon' },
-  thunderhawk: { color: '#ffe86b', cast: 'summon' },
 };
 
 // A whirl of wind circling the ankles; `front` draws the near half.
@@ -906,15 +905,17 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   const c = look.color;
   ctx.save();
   // The moment it goes up, as MapleStory draws a buff: a pillar of the skill's light from the
-  // ground with the path's emblem rising inside (Tengu's own effect art). Rally Cry is a battle cry
-  // bursting out instead, Iron Skin plates of steel snapping round the body.
+  // ground with the job's emblem rising inside (Tengu's own effect art). War Cry is a battle cry
+  // bursting out instead; Iron Guard snaps plates of steel round the body behind a steel shield.
   const school = SKILLS[f.skill]?.school ?? 'steel';
-  if (f.skill === 'rallycry') {
-    fxSprite(ctx, 'celshout', x, y - 26, { p, scale: 1 });
-    groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 60);
-  } else if (f.skill === 'ironskin' || f.skill === 'shieldwall') {
+  if (f.skill === 'warcry') {
+    fxSprite(ctx, 'celshout', x, y - 26, { p, scale: 1.1 });
+    groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 90);
+    if (p > 0.1) fxSprite(ctx, 'celembsteel', x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
+  } else if (f.skill === 'ironguard') {
     pillarOf(ctx, school, x, y, p);
     fxSprite(ctx, 'celplates', x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });
+    fxSprite(ctx, 'celshieldsteel', x + (f.dir || 1) * 16, y - 26, { p, scale: 0.6, sx: 0.7 });
   } else pillarOf(ctx, school, x, y, p);
   ctx.restore();
   // The skill's name pops up over your head.

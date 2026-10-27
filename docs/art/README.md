@@ -178,10 +178,21 @@ carry an improvement across every part of the game it applies to.
     Berserker's rose red); hits leave the Warrior's cross of blades, the Paladin's star of light,
     the Berserker's claws; buffs rise as a pillar of light with the path's emblem; Grand Verdict
     drives a sword of light down over the magic circle; Crimson Eclipse raises a crimson eclipse.
+    The Warrior (first job) is steel blue and white: his Valor aura is steel chevrons and diamonds
+    rising round him (the steel emblem over his head when Unbroken); Titan Breaker gathers a giant
+    steel sword out of shards over his leap, then drives it into the ground in a cross of steel
+    light while the ground splits open with blades of light (`celfissure`); Iron Guard snaps up a
+    steel honeycomb shield.
   - Archers: the Ranger's emerald wind (curls of wind, gusts of leaves, a wind-orb spirit, a
     tornado, rings of wind); the Sniper's ice-blue lens of light tearing through each monster a
     bolt pierces (every Sniper bolt pierces the line), snowflakes and a frost burst, a puffy blast,
     a rose sight for the Deadeye.
+  - The Archer (first job) is warm gold with sky blue: gold arrows trailing sky-blue streaks,
+    hits that pop a gold star with a sky swoosh and burst into feathers, gusts of gold feathers
+    off the bow, a feather emblem, gold feathers circling her as Momentum builds, and for Falcon
+    Dive a great golden falcon of light (wings of long gold feathers tipped sky blue) that wheels
+    over her and dives through the line. Gold alone was too close to the Paladin's light, so the
+    sky blue is what makes a hit read as hers.
   - Mages, thieves, monsters, and buffs' lasting looks are still code-drawn and need the same
     pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,

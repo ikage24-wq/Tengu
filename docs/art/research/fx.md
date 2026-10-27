@@ -465,3 +465,20 @@ paper ribbon, crayon, matched-to-sprites, kawaii, bubbles, petals, clouds, jewel
 picked **matched to the sprites**: pastel shapes redrawn at the characters' pixel size with the
 sprites' own outline rule. Lesson: effects must look like they were drawn by the same hand as the
 characters; style mismatch, not just quality, is what made earlier effects feel wrong.
+
+## 9. The first jobs remade (Warrior: Valor; Archer: Hawk)
+- MapleStory gives each first job a few big readable shapes rather than many small ones, and the
+  finisher-level moments are a single giant object (a giant blade or a great bird) more than a
+  spray of particles: for example the Hero's and Kaiser's giant swords and the Bowmaster's
+  Phoenix (a great bird that flies out and strikes), all in the job's own colours. We followed
+  that: Titan Breaker is one giant steel sword that forms over the leap and is driven into the
+  ground; Falcon Dive is one great falcon that dives through the line.
+- A bird read as a bird only once it had a round head with a white cheek, a hooked beak in the
+  accent colour, a plump body, and wings whose back edge breaks into separate long feathers;
+  straight wing slabs read as a jet. Wingbeat in four drawings (up, mid, down, mid) is enough at
+  12 fps.
+- A finisher's big object must land a little ahead of the hero, not on top of them, or the hero
+  disappears behind it at the key moment.
+- Colour: a job's colour needs a second accent when its main hue is shared (the Archer's gold vs
+  the Paladin's gold): the accent (sky blue) on every hit and trail is what says whose hit it is.
+

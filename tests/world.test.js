@@ -239,23 +239,6 @@ test('summons attack nearby monsters on their own', () => {
   assert.ok(after < before, 'the angel dealt damage without the player attacking');
 });
 
-test('a summoned thunder hawk dives on monsters on its own, with physical damage', () => {
-  const w = newWorld();
-  gainExp(w.char, 1e5);
-  assert.equal(advanceJob(w.char, 'archer'), true);
-  w.char.skills.thunderhawk = 10;
-  w.char.mp = 999;
-  w.char.hotkeys = { KeyQ: { skill: 'thunderhawk' } };
-  crowd(w, 3, 'cloudsheep');
-  updateWorld(w, DT, keys([], ['KeyQ']));
-  assert.equal(w.char.buffs.thunderhawk?.summon?.art, 'hawk', 'hawk summoned');
-  assert.ok(w.char.buffs.thunderhawk.summon.physical);
-  const before = w.mobs.reduce((n, m) => n + m.hp, 0);
-  for (let i = 0; i < 60 * 3; i++) updateWorld(w, DT, idle);
-  const after = w.mobs.reduce((n, m) => n + m.hp, 0);
-  assert.ok(after < before, 'the hawk dealt damage without the player attacking');
-});
-
 test('every town connects to every other town by road', () => {
   for (const a of TOWNS) for (const b of TOWNS) assert.ok(Number.isFinite(hops(a, b)), `${a} -> ${b}`);
   for (const t of TOWNS) assert.ok(MAPS[t].isTown && MAPS[t].job, `${t} is a job's home town`);
@@ -357,16 +340,16 @@ test('the mage branches three ways at 30, each branch with one third job and an 
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
 });
 
-test('a charge dashes forward and hits the monsters it passes through', () => {
+test('a shoulder charge dashes forward and hits the monsters it passes through', () => {
   const w = newWorld();
   gainExp(w.char, 3e5);
   assert.equal(advanceJob(w.char, 'warrior'), true);
-  w.char.skills.charge = 10;
+  w.char.skills.shouldercharge = 10;
   w.char.mp = 999;
   crowd(w, 4, 'cloudsheep');
   w.body.facing = 1;
   const x = w.body.x;
-  assert.equal(cast(w, 'charge').ok, true);
+  assert.equal(cast(w, 'shouldercharge').ok, true);
   for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
   assert.ok(w.body.x > x + 60, 'moved forward');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 4, 'hit everything it passed');

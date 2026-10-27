@@ -381,8 +381,34 @@ function focusAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celdeadeye', x, cy, { t: (t % 1.2) * 0.8, scale: s * 0.5, alpha: 0.9 });
 }
 
-// Draws a combat aura: `kind` 'rage', 'faith', 'gale' or 'focus', `k` how full (0-1).
-const COMBAT = { rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
+// Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
+// him from halfway, and full (Unbroken), the steel emblem over his head and rings racing out
+// again and again.
+function valorAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'celring', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celring', x, y, { t: t % 0.6, scale: s * 0.8, sy: 0.32 });
+    return;
+  }
+  if (k > 0.5) fxSprite(ctx, 'celvalor', x, y, { t, scale: s * (0.6 + 0.3 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
+  if (k >= 1) fxSprite(ctx, 'celembsteel', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+}
+
+// Momentum: a sky-blue ring at her feet, gold feathers circling her on a ring of wind as it
+// builds, and full (Hawkeye), the hawk emblem over her head and gold rings racing out.
+function momentumAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'celringsky', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celringhawk', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    return;
+  }
+  if (k > 0.4) fxSprite(ctx, 'celmomentum', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.55 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
+  if (k >= 1) fxSprite(ctx, 'celembhawk', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+}
+
+// Draws a combat aura: `kind` a job's gauge ('valor', 'momentum', 'rage', 'faith', 'gale' or
+// 'focus'), `k` how full (0-1).
+const COMBAT = { valor: valorAura, momentum: momentumAura, rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

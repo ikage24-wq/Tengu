@@ -143,9 +143,11 @@ function weaponStyle(bot) {
   const type = bot.stats.weaponType;
   const mage = JOBS[bot.char.job].family === 'mage';
   if (mage) return { reach: 170, lift: 100, pose: 'castforward', shot: 'bolt', magic: true, ranged: true };
-  // The archer paths shoot their own way: a Ranger's wind arrows, a Sniper's heavy bolts.
+  // Archers shoot their own way: an Archer's gold arrows, a Ranger's wind arrows, a Sniper's
+  // heavy bolts.
   if (bot.char.job === 'ranger') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
   if (bot.char.job === 'sniper') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
+  if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
   return { reach: 42, lift: 30, pose: type === 'spear' ? 'thrust' : pick2(['slash', 'slash2']), shot: null, ranged: false };
 }

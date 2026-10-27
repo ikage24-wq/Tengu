@@ -1,5 +1,7 @@
-// The archer paths' effects, in Tengu's own effect art (tools/fx-art.js, the `cel*` strips),
-// matched to the sprites like every other effect (CLAUDE.md). The Ranger's are emerald wind:
+// The archers' effects, in Tengu's own effect art (tools/fx-art.js, the `cel*` strips), matched to
+// the sprites like every other effect (CLAUDE.md). The Archer's are warm gold and sky blue: gold
+// arrows trailing sky-blue streaks, bursts of gold feathers, and a great falcon of light. The
+// Ranger's are emerald wind:
 // curls of wind spinning, gusts of leaves, a wind spirit, a tornado, rings of wind. The Sniper's
 // are ice blue and rose: a lens of light tearing through each monster a bolt pierces, sparks off
 // the crossbow, snowflakes and a frost burst, a puffy blast, and a rose sight for the Deadeye.
@@ -11,11 +13,12 @@
 import { SCHOOL_COLORS } from './spells.js';
 import { shock, wash, easeOut, deep, inked } from './fxkit.js';
 import { fxSprite } from './fx-sprites.js';
-import { groundRing } from './warrior-fx.js';
+import { groundRing, lightPillar } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const FOCUS = SCHOOL_COLORS.focus;
 const GALE = SCHOOL_COLORS.wind;
+const HAWK = SCHOOL_COLORS.hawk;
 // The Sniper's sight.
 export const SIGHT = '#ff5a7a';
 const INK = '#3a2d4f';
@@ -78,6 +81,54 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
   const u = f.dur ? Math.min(1, f.t / f.dur) : 0;
   const along = (d) => [x - Math.cos(ang) * d, y - Math.sin(ang) * d];
   switch (f.shot) {
+    case 'hawkarrow': {
+      // A gold arrow trailing sky-blue streaks. Under Hawkeye it bends as it homes in.
+      const bend = (f.bend ?? 0) * Math.sin(Math.PI * u);
+      const hx = x - Math.sin(ang) * bend;
+      const hy = y + Math.cos(ang) * bend;
+      const [tx, ty] = [hx - Math.cos(ang) * 22, hy - Math.sin(ang) * 22];
+      fxSprite(ctx, 'celhawktrail', tx, ty, { t: time + (f.seed ?? 0), rot: ang, scale: 0.45 });
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.rotate(ang);
+      if (u < 0.15) ctx.rotate(Math.sin(u * 120) * 0.08 * (1 - u / 0.15));
+      shaft(ctx, 20, 1.7, HAWK.light, HAWK.main);
+      ctx.restore();
+      return true;
+    }
+    case 'hawkbig': {
+      // A skill's heavy gold arrow, drawn big: a long sky-blue trail and feathers torn off behind.
+      const bend = (f.bend ?? 0) * Math.sin(Math.PI * u);
+      const hx = x - Math.sin(ang) * bend;
+      const hy = y + Math.cos(ang) * bend;
+      const [tx, ty] = [hx - Math.cos(ang) * 34, hy - Math.sin(ang) * 34];
+      fxSprite(ctx, 'celhawktrail', tx, ty, { t: time + (f.seed ?? 0), rot: ang, scale: 0.75 });
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.rotate(ang);
+      shaft(ctx, 30, 3, '#ffffff', HAWK.main);
+      ctx.restore();
+      return true;
+    }
+    case 'falcon': {
+      // Falcon Dive: the great falcon of light itself, beating its wings as it dives through the
+      // line, a long trail of sky-blue streaks and feathers behind it.
+      const flip = Math.cos(ang) < 0;
+      const tilt = flip ? Math.atan2(-(f.ty - f.y), -(f.tx - f.x)) : ang;
+      const [tx, ty] = along(90);
+      fxSprite(ctx, 'celhawktrail', tx, ty, { t: time, rot: ang, scale: 0.9 });
+      fxSprite(ctx, 'celfeathers', tx, ty, { t: (time * 1.4) % 0.44, flip, scale: 0.8 });
+      fxSprite(ctx, 'celfalcon', x - Math.cos(ang) * 30, y - Math.sin(ang) * 30, { t: time * 1.6, flip, rot: tilt * (flip ? -1 : 1), scale: 1 });
+      return true;
+    }
+    case 'featherwake': {
+      // The falcon's wake: a storm of gold feathers streaming along its line.
+      for (let i = 0; i < 3; i++) {
+        const [tx, ty] = along(10 + i * 50);
+        fxSprite(ctx, 'celfeathers', tx, ty + (i % 2 ? 10 : -10), { t: (time * 1.3 + i * 0.13) % 0.44, flip: dir < 0, scale: 0.8 - i * 0.15 });
+      }
+      return true;
+    }
     case 'windarrow': {
       // An arrow riding a spin of wind: the swirl turns round its tail as it flies.
       const [tx, ty] = along(12);
@@ -187,6 +238,17 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
 }
 
 // One falling arrow of a wind rain (Storm Volley).
+// One gold arrow of the Archer's Arrow Rain, falling.
+export function hawkRainPiece(ctx, x, y, s, time) {
+  const ang = Math.atan2(2.6, 1);
+  fxSprite(ctx, 'celhawktrail', x - Math.cos(ang) * 16 * s, y - Math.sin(ang) * 16 * s, { t: time, rot: ang, scale: 0.4 * s });
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  shaft(ctx, 16 * s, 1.6, HAWK.light, HAWK.main);
+  ctx.restore();
+}
+
 export function windRainPiece(ctx, x, y, s, time) {
   const a = Math.atan2(2.6, 1);
   fxSprite(ctx, 'celwindspin', x - Math.cos(a) * 12 * s, y - Math.sin(a) * 12 * s, { t: time, rot: a, scale: 0.3 * s, sy: 0.7 });
@@ -202,6 +264,47 @@ export function windRainPiece(ctx, x, y, s, time) {
 export function drawArchery(ctx, f, x, y, p, cam, time) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
+    case 'hawkhit': {
+      // An Archer's arrow landing: a gold star pops with a sky-blue swoosh across it and gold
+      // feathers burst off; heavy shots and crits add a gold ring racing out along the ground.
+      const cy = y - (f.h ?? 24) / 2;
+      const big = f.big || f.crit;
+      fxSprite(ctx, 'celhawkhit', x, cy, { p, flip, scale: big ? 0.95 : 0.7 });
+      if (f.crit) fxSprite(ctx, 'celcrit', x, cy, { p, scale: 0.5 });
+      if (big) groundRing(ctx, 'celringhawk', x, y, p, 50);
+      return true;
+    }
+    case 'feathers': {
+      // A gust of gold feathers off the bow.
+      fxSprite(ctx, 'celfeathers', x + (f.dir || 1) * 6, y, { p, flip, scale: 0.7 });
+      return true;
+    }
+    case 'falconcall': {
+      // Falcon Dive begins: a pillar of gold light with the hawk emblem, a ring racing out, and the
+      // falcon wheeling high above, gathering.
+      lightPillar(ctx, 'celpillarhawk', x, y, Math.min(1, p * 1.2), 120);
+      groundRing(ctx, 'celringhawk', x, y, Math.min(1, p * 1.4), 70);
+      if (p > 0.1) fxSprite(ctx, 'celembhawk', x, y - 62 - 14 * Math.min(1, p * 2), { p: (p - 0.1) / 0.9, scale: 0.55 });
+      const a = time * 4;
+      const k = Math.min(1, p * 3) * (p > 0.85 ? (1 - p) / 0.15 : 1);
+      fxSprite(ctx, 'celfalcon', x + Math.cos(a) * 46, y - 112 + Math.sin(a) * 10, { t: time * 1.5, flip: Math.sin(a) > 0, scale: 0.5 * k, alpha: k });
+      return true;
+    }
+    case 'falconloose': {
+      // The falcon leaves the bow: a gold ring of force breaks out and feathers burst.
+      fxSprite(ctx, 'celringhawk', x + (f.dir || 1) * 10, y, { p, scale: 0.9, sx: 0.5 });
+      fxSprite(ctx, 'celfeathers', x + (f.dir || 1) * 8, y, { p, flip, scale: 1 });
+      fxSprite(ctx, 'celdust', x - (f.dir || 1) * 18, y + 16, { p, flip: !flip, scale: 0.8 });
+      return true;
+    }
+    case 'falconhit': {
+      // The falcon tearing through a monster: a big gold burst of feathers and a ring.
+      const cy = y - (f.h ?? 24) / 2;
+      fxSprite(ctx, 'celhawkhit', x, cy, { p, flip, scale: 1.25 });
+      fxSprite(ctx, 'celcrit', x, cy, { p, scale: 0.6 });
+      groundRing(ctx, 'celringhawk', x, y, p, 70);
+      return true;
+    }
     case 'galehit': {
       // A Ranger's arrow landing: a curl of wind cuts across the target and leaves burst off it;
       // heavy shots and crits add a ring of wind racing out along the ground.

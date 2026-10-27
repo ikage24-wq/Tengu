@@ -10,13 +10,12 @@
 // `combo` makes a skill a combo of steps that play as timed strikes (see world/melee.js):
 // each use plays the next step, so pressing again keeps it going.
 //
-//   provoke - every monster in range turns on you (`hold` seconds of sticking to you in a dungeon)
-//   hook    - a chain flies forward and drags the monsters it catches (up to `targets`) to you
 //   blink   - teleports you `distance` forward
 //   buff    - timed bonuses; `buff` keys are added to the player's stats while active. `party`
 //             buffs also land on party members in `range` (in a dungeon). `regenPct` heals that
 //             share of max HP every second; `barrier` absorbs damage up to that share of max HP;
-//             `dmgCut` takes that share off every hit.
+//             `dmgCut` takes that share off every hit. `taunt` (seconds) also turns every monster
+//             in `range` on you (a war cry; how long they stick to you in a dungeon).
 //   passive - always-on bonuses once learned
 //
 // Range: `w`/`h` is the hit box in front of the player. `projectile` skills hit the nearest
@@ -24,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -52,10 +51,13 @@ export const SKILLS = {
     at: (lv) => ({ mp: 8, duration: 60 + lv * 30, buff: { speed: 8 + lv * 4, jump: 3 + lv * 2 } }),
   }),
 
-  // ---------- Warrior ----------
-  powerslash: skill({
-    id: 'powerslash', name: 'Blade Rush', job: 'warrior', type: 'attack', fx: 'slash', school: 'steel',
-    desc: 'A three-part combo, one part per press: a quick cross-cut, a rising launcher that throws them into the air, and a leaping dive that cracks the ground.',
+  // ---------- Warrior (steel blue and white: the blue cross, swords, a shield) ----------
+  // Every blow a Warrior lands builds Valor (0-100, see world/melee.js), faster the more monsters
+  // one blow catches; full (Unbroken), his blows land heavier and nothing knocks him back. Titan
+  // Breaker needs it full and spends it. He is the dungeon tank: War Cry taunts, Iron Guard braces.
+  bladerush: skill({
+    id: 'bladerush', name: 'Blade Rush', job: 'warrior', type: 'attack', fx: 'slash', school: 'steel',
+    desc: 'A three-part combo, one part per press: a quick cross-cut, a rising launcher that throws them into the air, and a leaping slam that cracks the ground.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(3, 5);
@@ -72,85 +74,69 @@ export const SKILLS = {
       };
     },
   }),
-  whirlstrike: skill({
-    id: 'whirlstrike', name: 'Whirlwind', job: 'warrior', type: 'attack', fx: 'spin', school: 'steel',
-    desc: 'Spin into a whirlwind that carries you forward, hitting everything around you five times and sucking monsters in, then flinging them away.',
+  whirlwind: skill({
+    id: 'whirlwind', name: 'Whirlwind', job: 'warrior', type: 'attack', fx: 'spin', school: 'steel',
+    desc: 'Spin into a whirlwind that carries you forward, hitting everything around you five times and sucking monsters in, then flinging them away. Builds Valor fast in a crowd.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(4, 8);
-      const hit = (at, i) => ({ at, pct: k(40, 72), reach: 80, h: 76, around: true, targets, pull: 70, arc: [i % 2 ? 180 : 0, 300], thick: 10, stop: 0.02 });
+      const hit = (at, i) => ({ at, pct: k(40, 72), reach: 80, h: 76, around: true, targets, pull: 70, arc: [i % 2 ? 180 : 0, 300], thick: 10, stop: 0.02, gauge: 2 });
       return {
         mp: k(10, 24), pct: k(40, 72), hits: 5, targets,
         combo: [{ move: 'spin', dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
           ...[0.15, 0.3, 0.45, 0.6].map(hit),
-          { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3 },
+          { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4 },
         ] }],
       };
     },
   }),
-  titanbreaker: skill({
-    id: 'titanbreaker', name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'quake', school: 'steel',
-    desc: 'A heavy three-blow combo in one go: a crushing smash, a rising drag that hurls them up, and a leaping dive that splits the ground wide open.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(4, 7);
-      return {
-        mp: k(18, 36), pct: k(180, 320), hits: 3, targets, flare: true,
-        combo: [{ move: 'titan', dur: 1.1, step: 14, finisher: true, strikes: [
-          { at: 0.17, pct: k(150, 260), reach: 94, h: 74, targets, knock: 140, arc: [-105, 190], thick: 14, big: true, crack: true, stop: 0.08, shake: 3 },
-          { at: 0.46, pct: k(130, 230), reach: 90, h: 86, targets, knock: 50, launch: 470, arc: [80, -175], thick: 12, big: true, stop: 0.06 },
-          { at: 0.83, pct: k(260, 460), reach: 112, h: 92, around: true, targets: targets + 2, knock: 290, crack: true, big: true, stop: 0.15, shake: 7 },
-        ] }],
-      };
-    },
-  }),
-  ironskin: skill({
-    id: 'ironskin', name: 'Iron Skin', job: 'warrior', type: 'buff', fx: 'buff',
-    desc: 'Harden up and raise your weapon defense.',
-    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { wdef: lerp(10, 60, lv, m) } }),
-  }),
-  charge: skill({
-    id: 'charge', name: 'Charge', job: 'warrior', type: 'attack', fx: 'charge', maxLevel: 10, school: 'steel', movement: true,
+  shouldercharge: skill({
+    id: 'shouldercharge', name: 'Shoulder Charge', job: 'warrior', type: 'attack', fx: 'charge', icon: 'charge', maxLevel: 10, school: 'steel', movement: true,
     desc: 'Barrel forward shoulder-first, bowling over every monster in your path and tossing them aside. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const hit = (at) => ({ at, pct: k(90, 160), reach: 46, h: 64, around: true, targets: 4, knock: 300, launch: 180 });
       return {
-        mp: k(10, 6), pct: k(90, 160), hits: 1, targets: 4,
+        mp: k(10, 6), pct: k(90, 160), hits: 2, targets: 4,
         combo: [{ move: 'dash', dur: 0.42, step: k(80, 140), carry: 0.7, guard: 0.45, trail: true, strikes: [hit(0.25), { ...hit(0.6), big: true, stop: 0.06, shake: 2 }] }],
       };
     },
   }),
-  vigor: skill({
-    id: 'vigor', name: 'Vigor', job: 'warrior', type: 'passive', fx: null,
-    desc: 'Raises max HP and HP recovery.',
-    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.02, 0.2, lv, m), restRegen: lerp(2, 20, lv, m) } }),
+  warcry: skill({
+    id: 'warcry', name: 'War Cry', job: 'warrior', type: 'buff', fx: 'buff', icon: 'warcry', school: 'steel', party: true,
+    desc: 'A great shout: every monster around you turns on you, and you and the party around you take less damage for a while.',
+    at: (lv, m) => ({ mp: lerp(10, 22, lv, m), duration: lerp(20, 45, lv, m), taunt: lerpf(2, 4, lv, m), buff: { dmgCut: lerpf(0.06, 0.18, lv, m) }, range: { w: lerp(320, 480, lv, m), h: 160, around: true } }),
   }),
-  // Tanking: warriors hold the monsters so the rest of the group can fight.
-  provoke: skill({
-    id: 'provoke', name: 'Provoke', job: 'warrior', type: 'provoke', fx: 'roar', icon: 'provoke', school: 'steel', maxLevel: 10,
-    desc: 'Roar at every monster around you so they all come after you.',
-    at: (lv, m) => ({ mp: lerp(8, 4, lv, m), hold: lerpf(2, 4, lv, m), range: { w: lerp(300, 480, lv, m), h: 140, around: true } }),
+  ironguard: skill({
+    id: 'ironguard', name: 'Iron Guard', job: 'warrior', type: 'buff', fx: 'shield', icon: 'ironguard', school: 'steel',
+    desc: 'Plant your feet behind your guard: much less damage from every hit and harder armor for a while.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(12, 30, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m), wdef: lerp(10, 50, lv, m) } }),
   }),
-  chainhook: skill({
-    id: 'chainhook', name: 'Chain Hook', job: 'warrior', type: 'hook', fx: 'hook', icon: 'hook', school: 'steel', lock: 0.25,
-    desc: 'Hurl a chain hook ahead and drag the monsters it catches right to you, gathered up for the party.',
-    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), pct: lerp(60, 130, lv, m), hits: 1, targets: lerp(3, 8, lv, m), range: { w: lerp(180, 320, lv, m), h: 80 }, pull: true }),
+  swordmastery: skill({
+    id: 'swordmastery', name: 'Weapon Mastery', job: 'warrior', type: 'passive', fx: null, icon: 'swordmastery',
+    desc: 'Steadier blows and more attack with every blade.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), watk: lerp(2, 20, lv, m) } }),
   }),
-  shieldwall: skill({
-    id: 'shieldwall', name: 'Shield Wall', job: 'warrior', type: 'buff', fx: 'shield', school: 'steel',
-    desc: 'Brace behind your shield and take less damage from every hit for a while.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(10, 25, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m) } }),
+  toughness: skill({
+    id: 'toughness', name: 'Toughness', job: 'warrior', type: 'passive', fx: null, icon: 'toughness',
+    desc: 'Tougher all around: more max HP, weapon defense, and HP recovery.',
+    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m), restRegen: lerp(2, 20, lv, m) } }),
   }),
-  rallycry: skill({
-    id: 'rallycry', name: 'Rally Cry', job: 'warrior', type: 'buff', fx: 'buff', icon: 'rally', school: 'steel', party: true,
-    desc: 'A rousing shout: you and the party around you take less damage.',
-    at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(20, 45, lv, m), buff: { dmgCut: lerpf(0.06, 0.18, lv, m) }, range: { w: 440, h: 160, around: true } }),
-  }),
-  stalwart: skill({
-    id: 'stalwart', name: 'Stalwart', job: 'warrior', type: 'passive', fx: null,
-    desc: 'Tougher all around: more max HP and weapon defense.',
-    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
+  titanbreak: skill({
+    id: 'titanbreak', name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Valor, and spends it. Crouch and leap high with the blade raised as a giant sword of steel forms above you, then crash down and split the ground in two, throwing everything around you into the air.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
+        combo: [{ move: 'titanbreak', dur: 1.5, step: 10, finisher: true, guard: 1.2, strikes: [
+          { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, burst: 'titanrise', burstAt: 0, quiet: true, gauge: 0 },
+          { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'titanbreak', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'titanwave', burstAt: 0, big: true, stop: 0.05, shake: 3, gauge: 0 },
+        ] }],
+      };
+    },
   }),
 
   // ---------- Paladin (the warrior's tank path: holy light, stuns, taunts, blessings) ----------
@@ -330,76 +316,93 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(40, 22, lv, m), healPct: lerpf(0.3, 0.7, lv, m), range: { w: 300, h: 140, around: true } }),
   }),
 
-  // ---------- Archer ----------
-  doubleshot: skill({
-    id: 'doubleshot', name: 'Rapid Fire', job: 'archer', type: 'attack', fx: 'arrow', school: 'wind',
-    desc: 'A three-part combo, one part per press: three quick arrows, three more as you hop back, then a heavy arrow that tears through the whole line.',
+  // ---------- Archer (warm gold and sky blue: a hawk, its feathers, gold arrows) ----------
+  // Every shot an Archer lands builds Momentum (0-100, see world/melee.js), more for each one in a
+  // row; a hit taken knocks half of it away. Full (Hawkeye), arrows fly faster and curve to find
+  // monsters. Falcon Dive needs it full and spends it.
+  twinshot: skill({
+    id: 'twinshot', name: 'Double Shot', job: 'archer', type: 'attack', fx: 'arrow', icon: 'twinshot', school: 'hawk',
+    desc: 'A two-part combo, one part per press: two gold arrows loosed a beat apart, then a hop back and a full draw that sends a heavy pair tearing through the line.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const quick = (at) => ({ at, shot: 'arrow', pct: k(45, 75), range: 310, h: 60, knock: 20, speed: 820 });
+      const quick = (at, oy = 0) => ({ at, shot: 'hawkarrow', pct: k(70, 120), range: 310, h: 60, knock: 30, speed: 840, oy });
+      const heavy = (at, oy) => ({ at, shot: 'hawkbig', pct: k(110, 190), range: 340, h: 64, targets: k(2, 4), pierce: true, speed: 920, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2, oy });
       return {
-        mp: k(5, 11), pct: k(45, 75), hits: 7, targets: 1,
+        mp: k(5, 11), pct: k(70, 120), hits: 4, targets: 1,
         combo: [
-          { move: 'rapid', dur: 0.52, step: -2, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
-          { move: 'rapid', dur: 0.52, step: -12, strikes: [quick(0.17), quick(0.5), quick(0.83)] },
-          { move: 'aimshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: k(180, 300), range: 360, h: 64, targets: k(3, 6), pierce: true, speed: 950, knock: 230, launch: 150, big: true, stop: 0.07, shake: 2 }] },
+          { move: 'rapid', dur: 0.46, step: -3, strikes: [quick(0.17, -3), quick(0.5, 3)] },
+          { move: 'aimshot', dur: 0.66, step: -14, finisher: true, strikes: [heavy(0.68, -4), heavy(0.74, 4)] },
         ],
       };
     },
   }),
-  scattershot: skill({
-    id: 'scattershot', name: 'Arrow Fan', job: 'archer', type: 'attack', fx: 'arrow', school: 'wind',
-    desc: 'Loose a fan of arrows at once; each one finds its own monster.',
+  arrowfan: skill({
+    id: 'arrowfan', name: 'Arrow Fan', job: 'archer', type: 'attack', fx: 'arrow', icon: 'arrowfan', school: 'hawk',
+    desc: 'Loose a fan of five gold arrows at once; each one finds its own monster, and a gust of feathers bursts off the bow.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(10, 22), pct: k(100, 170), hits: 1, targets: k(3, 6),
-        combo: [{ move: 'draw', dur: 0.62, step: -6, strikes: [{ at: 0.6, shot: 'arrow', fan: k(3, 6), pct: k(100, 170), range: 300, h: 150, knock: 90, speed: 780 }] }],
+        mp: k(10, 22), pct: k(100, 170), hits: 1, targets: 5,
+        combo: [{ move: 'draw', dur: 0.62, step: -6, strikes: [{ at: 0.6, shot: 'hawkarrow', fan: 5, pct: k(100, 170), range: 300, h: 150, knock: 90, speed: 800, muzzle: 'feathers' }] }],
       };
     },
   }),
-  arrowrain: skill({
-    id: 'arrowrain', name: 'Arrow Rain', job: 'archer', type: 'attack', fx: 'rain', icon: 'rain-arrow', school: 'wind',
-    desc: 'Shoot a volley into the sky; arrows pour down on everything in the area ahead.',
+  arrowshower: skill({
+    id: 'arrowshower', name: 'Arrow Rain', job: 'archer', type: 'attack', fx: 'rain', icon: 'arrowshower', school: 'hawk',
+    desc: 'Shoot a volley into the sky; gold arrows pour down on everything in the area ahead.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(16, 32), pct: k(60, 100), hits: k(8, 14), targets: 6,
-        combo: [{ move: 'skyshot', dur: 0.75, step: -4, finisher: true, strikes: [{ at: 0.58, rain: k(8, 14), pct: k(60, 100), rainFrom: 60, rainW: 280, span: 0.7, knock: 20 }] }],
+        combo: [{ move: 'skyshot', dur: 0.75, step: -4, finisher: true, strikes: [{ at: 0.58, rain: k(8, 14), pct: k(60, 100), rainFrom: 60, rainW: 280, span: 0.7, knock: 20, variant: 'hawkarrow', gauge: 2 }] }],
       };
     },
   }),
-  eaglefocus: skill({
-    id: 'eaglefocus', name: 'Eagle Focus', job: 'archer', type: 'buff', fx: 'buff',
-    desc: 'Sharpen your aim: more accuracy and critical hits.',
-    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { acc: lerp(5, 30, lv, m), critRate: lerpf(0.03, 0.15, lv, m) } }),
-  }),
-  thunderhawk: skill({
-    id: 'thunderhawk', name: 'Thunder Hawk', job: 'archer', type: 'buff', fx: 'buff', icon: 'hawk', school: 'lightning', lock: 0.8,
-    desc: 'Call a storm hawk that circles above you and dives lightning-edged feathers into nearby monsters.',
-    at: (lv, m) => ({
-      mp: lerp(40, 80, lv, m), duration: lerp(60, 180, lv, m), buff: {},
-      summon: { art: 'hawk', every: 2.4, power: lerp(60, 140, lv, m), targets: 3, range: { w: 400, h: 200, around: true }, fx: 'feather', physical: true },
-    }),
-  }),
-  backflip: skill({
-    id: 'backflip', name: 'Backflip Shot', job: 'archer', type: 'attack', fx: 'blink', maxLevel: 10, school: 'wind', movement: true,
-    desc: 'Flip backward out of danger on a gust of wind, firing a spread of arrows at whatever was on you. Nothing touches you mid-flip.',
+  flipshot: skill({
+    id: 'flipshot', name: 'Backflip Shot', job: 'archer', type: 'attack', fx: 'blink', icon: 'flipshot', maxLevel: 10, school: 'hawk', movement: true,
+    desc: 'Flip backward out of danger in a flurry of feathers, firing a spread of arrows at whatever was on you. Nothing touches you mid-flip.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: k(70, 120), hits: 3, targets: 3,
-        combo: [{ move: 'flip', dur: 0.5, step: -k(80, 140), carry: 0.75, guard: 0.5, strikes: [{ at: 0.42, shot: 'arrow', fan: 3, pct: k(70, 120), range: 300, h: 130, knock: 80, speed: 820 }] }],
+        combo: [{ move: 'flip', dur: 0.5, step: -k(80, 140), carry: 0.75, guard: 0.5, strikes: [{ at: 0.42, shot: 'hawkarrow', fan: 3, pct: k(70, 120), range: 300, h: 130, knock: 80, speed: 820, muzzle: 'feathers' }] }],
       };
     },
   }),
-  keeneye: skill({
-    id: 'keeneye', name: 'Keen Eye', job: 'archer', type: 'passive', fx: null,
+  huntersfocus: skill({
+    id: 'huntersfocus', name: "Hunter's Focus", job: 'archer', type: 'buff', fx: 'buff', icon: 'huntersfocus', school: 'hawk',
+    desc: 'Sharpen your eye like a hunting hawk: more accuracy and critical hits for a while.',
+    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { acc: lerp(5, 30, lv, m), critRate: lerpf(0.03, 0.15, lv, m) } }),
+  }),
+  bowmastery: skill({
+    id: 'bowmastery', name: 'Archery Mastery', job: 'archer', type: 'passive', fx: null, icon: 'bowmastery',
+    desc: 'Steadier shots and sharper aim with bows and crossbows.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  eagleeye: skill({
+    id: 'eagleeye', name: 'Eagle Eye', job: 'archer', type: 'passive', fx: null, icon: 'eagleeye',
     desc: 'Permanently raises critical rate and critical damage.',
     at: (lv, m) => ({ passive: { critRate: lerpf(0.01, 0.15, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
+  }),
+  falcondive: skill({
+    id: 'falcondive', name: 'Falcon Dive', job: 'archer', type: 'attack', fx: 'arrow', icon: 'falcondive', school: 'hawk', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Momentum, and spends it. Raise your bow to the sky and call down a great golden falcon of light, then loose it: it dives through the whole line, and a storm of feathers follows in its wake.',
+    weapons: ['bow', 'crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 2, targets,
+        combo: [{ move: 'falcondive', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
+          { at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, burst: 'falconcall', burstAt: 0, quiet: true, gauge: 0 },
+          { at: 0.63, shot: 'falcon', pct: k(420, 720), range: 600, h: 150, targets, pierce: true, speed: 1000, oy: -60, knock: 320, launch: 260, big: true, stop: 0.16, shake: 7, muzzle: 'falconloose', burst: 'falconhit', gauge: 0 },
+          { at: 0.74, shot: 'featherwake', pct: k(150, 260), range: 600, h: 150, targets, pierce: true, speed: 900, knock: 180, big: true, stop: 0.05, shake: 3, burst: 'hawkhit', gauge: 0 },
+        ] }],
+      };
+    },
   }),
 
   // ---------- Ranger (the archer's bow path: wind, speed, leaps and storms of arrows) ----------
@@ -741,12 +744,11 @@ export const SKILLS = {
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
-  powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
-  provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
+  bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
-  doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', thunderhawk: 'castup', backflip: 'flip', arrowrain: 'skyshot',
+  twinshot: 'rapid', arrowfan: 'draw', huntersfocus: 'cheer', flipshot: 'flip', arrowshower: 'skyshot', falcondive: 'falcondive',
   galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',

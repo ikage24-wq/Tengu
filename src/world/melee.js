@@ -99,7 +99,20 @@ export const hasCombo = (weaponType) => Boolean(COMBOS[weaponType]);
 // The warrior paths' own basic combos. The Paladin: a measured cut behind the shield arm, a shield
 // shove that dazes, a lunging thrust, and a two-handed smite. The Berserker: a huge wound-up
 // cleave, the return cleave, and a leaping skull-splitter; slower, and every one heavy.
+// The first jobs fight their own way too. The Warrior: a quick cut, the return cut, then a
+// heavy two-handed cleave that knocks them flying. The Archer: a snap shot, a double shot (two
+// gold arrows a beat apart), then a full draw whose hawk arrow tears through the line.
 export const PATH_COMBOS = {
+  warrior: [
+    { move: 'slash', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
+    { move: 'slash2', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
+    { move: 'cleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
+  ],
+  archer: [
+    { move: 'quickshot', dur: 0.44, step: -3, strikes: [{ at: 0.5, shot: 'hawkarrow', pct: 90, range: 300, h: 60, knock: 25, speed: 800 }] },
+    { move: 'rapid', dur: 0.46, step: -4, strikes: [{ at: 0.17, shot: 'hawkarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 800 }, { at: 0.5, shot: 'hawkarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 800 }] },
+    { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 175, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 210, big: true, stop: 0.06, shake: 2 }] },
+  ],
   paladin: [
     { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
     { move: 'bash', dur: 0.44, step: 12, strikes: [{ at: 0.42, pct: 85, reach: 60, h: 62, knock: 120, stun: 0.4, burst: 'aegis' }] },
@@ -132,6 +145,16 @@ export const PATH_COMBOS = {
 // back up (`recoil`). Running: the Ranger slides in under them loosing two arrows, the Sniper rolls
 // and comes up on one knee with a bolt.
 const ARCHER_COMMANDS = {
+  // The Archer: a shot up that pops fliers higher, two shots loosed down from a hang in the air, and
+  // a sliding shot out of a run.
+  archer: {
+    up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 880, big: true, stop: 0.05 }] },
+    air: [
+      { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'hawkarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 880 }] },
+      { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 920, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'hawkarrow', pct: 95, range: 300, h: 60, knock: 80, speed: 880 }] },
+  },
   ranger: {
     up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'galearrow', fan: 2, pct: 110, range: 280, h: 190, lift: 50, knock: 20, launch: 380, speed: 900, big: true, stop: 0.05 }] },
     air: [
@@ -230,10 +253,46 @@ export function addFocus(world, n) {
   world.focus = Math.min(FOCUS_MAX, (world.focus ?? 0) + n);
   world.focusAt = world.now;
 }
-// A path's own gauge: which one the character has ('rage', 'faith', 'gale' or 'focus'), and how
-// full it is (0-1). Finishers need it full and spend it.
+// Valor: the Warrior's gauge (first job; the paths have their own). Every blow that lands builds
+// it, and faster the more monsters one blow catches at once; it fades once the fighting stops.
+// Full (Unbroken), his blows land heavier and knock harder, and nothing knocks him back.
+export const VALOR_MAX = 100;
+const VALOR_HOLD = 5;
+const VALOR_DRAIN = 12;
+export const hasValor = (char) => char.job === 'warrior';
+export function addValor(world, n) {
+  if (!hasValor(world.char) || n <= 0) return;
+  world.valor = Math.min(VALOR_MAX, (world.valor ?? 0) + n);
+  world.valorAt = world.now;
+}
+export const unbroken = (world) => hasValor(world.char) && (world.valor ?? 0) >= VALOR_MAX;
+// Momentum: the Archer's gauge (first job). Shots that land build it, more for each one landed in
+// a row (`streak`, kept while they land within MOMENTUM_ROW seconds of each other); taking a hit
+// knocks half of it away, and it fades once the fighting stops. Full (Hawkeye), arrows fly faster
+// and curve to find monsters above and below.
+export const MOMENTUM_MAX = 100;
+const MOMENTUM_HOLD = 4;
+const MOMENTUM_DRAIN = 14;
+const MOMENTUM_ROW = 1.6;
+export const MOMENTUM_LOSS = 0.5;
+export const hasMomentum = (char) => char.job === 'archer';
+export function addMomentum(world, n) {
+  if (!hasMomentum(world.char) || n <= 0) return;
+  world.streak = world.now - (world.momentumAt ?? -9) <= MOMENTUM_ROW ? (world.streak ?? 0) + 1 : 0;
+  world.momentum = Math.min(MOMENTUM_MAX, (world.momentum ?? 0) + n * (1 + 0.1 * Math.min(10, world.streak)));
+  world.momentumAt = world.now;
+}
+export const hawkeye = (world) => hasMomentum(world.char) && (world.momentum ?? 0) >= MOMENTUM_MAX;
+// Getting hit breaks an Archer's rhythm: half her Momentum and the streak are gone.
+export function loseMomentum(world) {
+  if (!hasMomentum(world.char) || !world.momentum) return;
+  world.momentum *= 1 - MOMENTUM_LOSS;
+  world.streak = 0;
+}
+// A job's own gauge: which one the character has ('valor', 'momentum', 'rage', 'faith', 'gale' or
+// 'focus'), and how full it is (0-1). Finishers need it full and spend it.
 export function gaugeOf(char) {
-  return hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
+  return hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -242,6 +301,7 @@ export function gaugeFull(world) {
 
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n) {
+  addMomentum(world, n);
   addGale(world, n);
   addFocus(world, n);
 }
@@ -249,7 +309,8 @@ export function addAim(world, n) {
 function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
-  if (MELEE.has(w) && w !== 'none') return hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
+  if (MELEE.has(w) && w !== 'none') return hasValor(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
+  if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
   if (w === 'bow' && hasGale(char)) return 'ranger';
   if (w === 'crossbow' && hasFocus(char)) return 'sniper';
   return null;
@@ -258,8 +319,9 @@ function pathOf(world) {
 // Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
 const RAGE_POWER = 0.25;
 // How much heavier each path's blows land: longer hit-stop, harder knockback.
-const WEIGHT = { berserker: 1.4, paladin: 1.2 };
-const weightOf = (char) => (hasRage(char) ? WEIGHT.berserker : hasFaith(char) ? WEIGHT.paladin : 1);
+const WEIGHT = { berserker: 1.4, paladin: 1.2, unbroken: 1.35 };
+// Unbroken (full Valor) lands a Warrior's blows heavier too.
+const weightOf = (world) => (hasRage(world.char) ? WEIGHT.berserker : hasFaith(world.char) ? WEIGHT.paladin : unbroken(world) ? WEIGHT.unbroken : 1);
 export function addRage(world, n) {
   if (!hasRage(world.char) || n <= 0) return;
   world.rage = Math.min(RAGE_MAX, (world.rage ?? 0) + n);
@@ -354,7 +416,7 @@ function playStep(world, step, scale, key, school = null) {
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
   // A Sniper plants her feet the same way, and gathers her aim at the bow.
-  const heavy = hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
+  const heavy = hasValor(world.char) || hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
@@ -396,6 +458,8 @@ export function tickMelee(world, dt) {
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
+  if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
+  if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
   // Tailwind at a Ranger's heels: streaks of wind peel off behind her as she runs.
   if (world.char.buffs.tailwind && (world.runFor ?? 0) > 0 && b.onGround && world.now - (world.windStepAt ?? -9) > 0.12) {
     world.windStepAt = world.now;
@@ -448,7 +512,7 @@ function land(world, s) {
   const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const power = hasRage(char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1;
-  const weight = weightOf(char);
+  const weight = weightOf(world);
   const dmgRange = physicalRange(stats, stats.weaponType, (s.pct * s.scale * power) / 100);
   const cy = body.y - body.h / 2;
   // The smear, spike, or whirl of the blow.
@@ -481,7 +545,7 @@ function land(world, s) {
     });
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
     // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
-    if (!miss && weight > 1) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, dir: s.dir, t: 0, dur: s.big ? 0.42 : 0.32, seed: Math.random() });
+    if (!miss && (hasRage(char) || hasFaith(char))) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, dir: s.dir, t: 0, dur: s.big ? 0.42 : 0.32, seed: Math.random() });
   });
   // A tank's taunting blow: everything it hits turns on you (in a dungeon, sticking for a while).
   if (s.provoke && targets.length) {
@@ -492,6 +556,8 @@ function land(world, s) {
     }
   }
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
+  // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
+  if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   // A launcher hops you up after them, ready for an air combo.
   if (s.hop && body.onGround) {
@@ -534,7 +600,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : hasFocus(char) ? (FOCUS_CRIT * (world.focus ?? 0)) / FOCUS_MAX : 0;
   const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
+  const spark = hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, burst: s.burst ?? spark, dir: s.dir,
@@ -564,6 +630,12 @@ function fire(world, strike) {
     world.fx.push({ kind: 'deadeye', school: 'focus', x: body.x + s.dir * 14, y: body.y - HAND_Y, dir: s.dir, t: 0, dur: 0.5 });
     world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'DEADEYE!', color: '#ff5a7a', t: 0, link: true });
     world.juice.push({ type: 'deadeye' });
+  }
+  // Hawkeye (full Momentum): arrows fly faster and reach further, and curve to find monsters above
+  // and below (a taller search box, and a bend in their flight as they home in).
+  if (hawkeye(world) && !s.hawkeye) {
+    world.volley = ((world.volley ?? 0) + 1) % 2;
+    s = { ...s, hawkeye: true, speed: (s.speed ?? 680) * 1.4, range: s.range + 70, h: Math.max(140, (s.h ?? 60) * 2), bend: s.bend ?? (world.volley ? 22 : -22) };
   }
   // Every Sniper bolt pierces: it flies on through the whole line, hitting each monster it passes
   // (at least three), out to its full range.

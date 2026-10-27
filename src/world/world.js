@@ -15,7 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
@@ -36,7 +36,10 @@ export function createWorld(char) {
     drops: [],
     pending: [],
     strikes: [],
-    // A Berserker's Rage and a Paladin's Faith (see melee.js).
+    // The job gauges (see melee.js): a Warrior's Valor, an Archer's Momentum, a Berserker's Rage,
+    // a Paladin's Faith.
+    valor: 0,
+    momentum: 0,
     rage: 0,
     faith: 0,
     fx: [],
@@ -269,6 +272,8 @@ const BLOCKER_TEXT = {
   noone: 'No fallen party member nearby.',
   stars: 'You need throwing stars! Shops sell them.',
   rage: 'Not enough Rage. Land some blows first!',
+  'gauge:valor': 'A finisher needs full Valor. Keep fighting, the more at once the better!',
+  'gauge:momentum': 'A finisher needs full Momentum. Land your shots and keep out of harm!',
   'gauge:rage': 'A finisher needs full Rage. Keep swinging!',
   'gauge:faith': 'A finisher needs full Faith. Keep fighting!',
   'gauge:gale': 'A finisher needs a full Gale. Keep your arrows landing!',
@@ -348,7 +353,9 @@ export function hurtPlayer(world, rawAtk, fromX) {
   world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 6, text: `${dmg}`, color: '#ff6b8a', t: 0 });
   world.invuln = INVULN;
   world.juice.push({ type: 'hurt', x: world.body.x, y: world.body.y - world.body.h / 2 });
-  knockBack(world.body, fromX);
+  // Unbroken (full Valor), nothing knocks a Warrior back; a hit breaks an Archer's Momentum.
+  if (!unbroken(world)) knockBack(world.body, fromX);
+  loseMomentum(world);
   if (char.hp <= 0 && !world.dead) {
     world.dead = true;
     world.events.push({ type: 'death' });

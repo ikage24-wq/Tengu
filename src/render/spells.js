@@ -23,6 +23,8 @@ export const SCHOOL_COLORS = {
   shadow: { main: '#9b6bff', light: '#e6dcff', deep: '#3a2a6b' },
   sakura: { main: '#ff9ec0', light: '#fff0f6', deep: '#c94f8a' },
   gold: { main: '#ffd66b', light: '#fff6c9', deep: '#c98a2b' },
+  // Hawk: the Archer's warm gold with sky blue (deep) under it.
+  hawk: { main: '#ffc94a', light: '#fff4c8', deep: '#3a8ae0' },
   rage: { main: '#ff5a4a', light: '#ffd7a0', deep: '#8a1838' },
   // A Sniper's aim: a cool steel blue, with her sight's rose-red (see strikes.js `SIGHT`).
   focus: { main: '#7fc4ff', light: '#eef8ff', deep: '#3a5fc4' },

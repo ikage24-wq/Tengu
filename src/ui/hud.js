@@ -13,7 +13,7 @@ import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
-import { hasRage, hasFaith, hasGale, hasFocus } from '../world/melee.js';
+import { gaugeOf } from '../world/melee.js';
 import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
@@ -271,10 +271,8 @@ export function drawHud(ui, state, world) {
 
   drawHits(ui, state, world);
   if (s.weaponType === 'gauntlet') drawStars(ui, world);
-  if (hasRage(char)) drawGauge(ui, world, 'rage', world.rage ?? 0);
-  else if (hasFaith(char)) drawGauge(ui, world, 'faith', world.faith ?? 0);
-  else if (hasGale(char)) drawGauge(ui, world, 'gale', world.gale ?? 0);
-  else if (hasFocus(char)) drawGauge(ui, world, 'focus', world.focus ?? 0);
+  const gauge = gaugeOf(char);
+  if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -339,10 +337,15 @@ function drawStars(ui, world) {
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
 }
 
-// A path's gauge over the hotkeys: a Berserker's Rage (a flame), a Paladin's Faith (a star), a
-// Ranger's Gale (a curl of wind) or a Sniper's Focus (a sight). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
+// A job's gauge over the hotkeys: a Warrior's Valor (a shield), an Archer's Momentum (a feather), a
+// Berserker's Rage (a flame), a Paladin's Faith (a star), a Ranger's Gale (a curl of wind) or a
+// Sniper's Focus (a sight). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
 // names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
 const GAUGES = {
+  valor: { color: '#4f7fe0', hot: '#9fd2ff', icon: 'shield', name: 'Valor', full: 'UNBROKEN', notch: () => null, edge: 'rgba(110,160,255,', ink: '#24307a',
+    tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
+  momentum: { color: '#e8962a', hot: '#7fcfff', icon: 'feather', name: 'Momentum', full: 'HAWKEYE', notch: () => null, edge: 'rgba(255,200,90,', ink: '#8a4a1a',
+    tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
   rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
     tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,

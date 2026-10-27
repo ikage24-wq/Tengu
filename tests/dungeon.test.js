@@ -216,50 +216,40 @@ test("a mage's support skills heal, shield, and revive the group", async () => {
   assert.ok(dps.bot.hp > 50, 'renewed');
 });
 
-test("a warrior's tank skills: Provoke, Chain Hook, Shield Wall", async () => {
+test("a warrior's tank skills: War Cry taunts and guards, Iron Guard braces", async () => {
   const { cast } = await import('../src/world/combat.js');
   const { loadMap } = await import('../src/world/world.js');
   const { hurtMember } = await import('../src/world/dungeon.js');
   const rng = seeded(31);
   const world = heroAt(rng, 12, ['warrior']);
-  Object.assign(world.char.skills, { provoke: 5, chainhook: 10, shieldwall: 10, rallycry: 5 });
+  Object.assign(world.char.skills, { warcry: 5, ironguard: 10 });
   world.char.mp = 999;
   const ready = () => {
     world.attackTimer = 0;
     world.lockTimer = 0;
     world.skillReadyAt = 0;
   };
-  // Out in the field, the hook drags a monster in front of you over to you.
-  loadMap(world, 'woods', 'west');
-  const b = world.body;
-  const { spawnMob } = await import('../src/world/mobs.js');
-  const m = spawnMob(world.map, { mob: 'mossgolem', x: 460, y: world.map.groundY });
-  world.spawner.slots = [];
-  world.mobs = [m];
-  Object.assign(b, { x: m.x - 200, y: world.map.groundY, onGround: true, facing: 1 });
-  ready();
-  assert.equal(cast(world, 'chainhook').targets >= 1, true);
-  for (let i = 0; i < 30; i++) updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: true });
-  assert.ok(Math.abs(m.x - b.x) < 80, `dragged over (now ${Math.round(Math.abs(m.x - b.x))}px away)`);
-  // In a dungeon, Provoke turns a pack on you.
+  // In a dungeon, War Cry turns a pack on you and guards the party around you.
   loadMap(world, 'hollow_gate', 'start');
   assert.equal(startRun(world), null);
   const pack = world.mobs.filter((x) => x.spawn.pack === 'a');
   Object.assign(world.body, { x: pack[0].x - 120, y: world.map.groundY, onGround: true });
   ready();
-  assert.ok(cast(world, 'provoke').ok);
+  assert.ok(cast(world, 'warcry').ok);
   for (const x of pack) {
     assert.ok(x.engaged);
     assert.equal(x.taunt.id, 'you');
   }
-  // Shield Wall takes a share off every hit.
+  assert.ok(world.char.buffs.warcry?.values.dmgCut > 0, 'the cry guards you');
+  delete world.char.buffs.warcry;
+  // Iron Guard takes a share off every hit.
   const me = groupOf(world).find((g) => !g.bot);
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
   const plain = world.stats.maxHp - world.char.hp;
   ready();
-  assert.ok(cast(world, 'shieldwall').ok);
+  assert.ok(cast(world, 'ironguard').ok);
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
-  assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the shield');
+  assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the guard');
 });

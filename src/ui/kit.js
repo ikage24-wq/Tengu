@@ -437,6 +437,38 @@ const ICONS = {
     ctx.lineTo(-s * 0.02, s * 0.26);
     ctx.stroke();
   },
+  // A kite shield with a cross cut into it (the Warrior's Valor).
+  shield(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.36, -s * 0.38);
+    ctx.lineTo(s * 0.36, -s * 0.38);
+    ctx.lineTo(s * 0.34, s * 0.04);
+    ctx.quadraticCurveTo(s * 0.22, s * 0.32, 0, s * 0.46);
+    ctx.quadraticCurveTo(-s * 0.22, s * 0.32, -s * 0.34, s * 0.04);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-s * 0.06, -s * 0.28, s * 0.12, s * 0.56);
+    ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
+  },
+  // A feather (the Archer's Momentum).
+  feather(ctx, s) {
+    ctx.save();
+    ctx.rotate(0.6);
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.5);
+    ctx.quadraticCurveTo(s * 0.28, -s * 0.1, s * 0.06, s * 0.36);
+    ctx.lineTo(-s * 0.06, s * 0.36);
+    ctx.quadraticCurveTo(-s * 0.28, -s * 0.1, 0, -s * 0.5);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = s * 0.07;
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.36);
+    ctx.lineTo(0, s * 0.5);
+    ctx.stroke();
+    ctx.restore();
+  },
   // A sight: a ring with four ticks and a dot (the Sniper's Focus).
   sight(ctx, s) {
     ctx.lineWidth = s * 0.11;

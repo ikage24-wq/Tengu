@@ -8,7 +8,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
-import { COMBOS, MAX_STOP } from '../src/world/melee.js';
+import { PATH_COMBOS, MAX_STOP } from '../src/world/melee.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
 
@@ -41,7 +41,7 @@ const run = (w, seconds, input = idle) => {
   for (let i = 0; i < seconds * 60; i++) updateWorld(w, DT, input);
 };
 
-test('holding attack with a sword chains the whole combo, ending in the finisher', () => {
+test("holding attack with a sword chains the Warrior's own combo, ending in the finisher", () => {
   const w = arena();
   const seen = [];
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
@@ -49,7 +49,7 @@ test('holding attack with a sword chains the whole combo, ending in the finisher
     updateWorld(w, DT, hold);
     if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
   }
-  assert.deepEqual(seen.slice(0, 4), COMBOS.sword.map((s) => s.move));
+  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.warrior.map((s) => s.move));
 });
 
 test('a blow lands when the blade cuts, and you step into it', () => {
@@ -78,7 +78,7 @@ test('pauses reset the combo, and taps mid-swing are remembered', () => {
 
 test('finishers and launchers knock monsters up into the air', () => {
   const w = arena();
-  w.char.skills.powerslash = 10;
+  w.char.skills.bladerush = 10;
   w.char.mp = 999;
   const hits = (id) => {
     w.attackTimer = 0;
@@ -86,34 +86,40 @@ test('finishers and launchers knock monsters up into the air', () => {
     w.skillReadyAt = 0;
     assert.ok(cast(w, id).ok);
   };
-  hits('powerslash'); // cross-cut
+  hits('bladerush'); // cross-cut
   run(w, 0.5);
-  hits('powerslash'); // launcher
+  hits('bladerush'); // launcher
   let air = 0;
   for (let i = 0; i < 40; i++) {
     updateWorld(w, DT, idle);
     air = Math.max(air, ...w.mobs.map((m) => m.air ?? 0));
   }
   assert.ok(air > 30, `launched (${Math.round(air)}px)`);
-  assert.equal(w.chains.powerslash.i, 1);
-  hits('powerslash'); // the dive
+  assert.equal(w.chains.bladerush.i, 1);
+  hits('bladerush'); // the dive
   assert.equal(w.pose.kind, 'plunge');
 });
 
-test('Titan Breaker lands three heavy blows in one go', () => {
+test('Titan Breaker needs full Valor, spends it, and lands its crash and its aftershock', () => {
   const w = arena('axe_20');
-  w.char.skills.titanbreaker = 10;
+  w.char.skills.titanbreak = 10;
   w.char.mp = 999;
   const m = w.mobs[0];
-  assert.ok(cast(w, 'titanbreaker').ok);
+  w.valor = 90;
+  assert.equal(cast(w, 'titanbreak').reason, 'gauge:valor', 'waits for full Valor');
+  w.valor = 100;
+  assert.ok(cast(w, 'titanbreak').ok);
+  assert.equal(w.valor, 0, 'spends all of it');
   const marks = [];
   let last = m.hp;
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 100; i++) {
     updateWorld(w, DT, idle);
     if (m.hp < last) marks.push(i);
     last = m.hp;
   }
-  assert.equal(marks.length, 3, `three blows (at frames ${marks})`);
+  assert.equal(marks.length, 2, `two blows (at frames ${marks})`);
+  assert.ok(marks[0] > 50, 'the crash lands after the leap, not on the press');
+  assert.equal(w.valor ?? 0, 0, 'it does not refill Valor');
 });
 
 // Records the hit-stop each blow asks for (tests never spend it, so it's read and cleared every tick).
@@ -139,9 +145,9 @@ function stops(w, frames) {
 
 test('only the first and last blows of a flurry stop the world', () => {
   const w = arena('axe_20');
-  w.char.skills.whirlstrike = 10;
+  w.char.skills.whirlwind = 10;
   w.char.mp = 999;
-  assert.ok(cast(w, 'whirlstrike').ok);
+  assert.ok(cast(w, 'whirlwind').ok);
   const s = stops(w, 80);
   assert.equal(s.length, 5, 'five blows');
   assert.ok(s[0].stop > 0 && s[4].stop > 0, 'first and last stop');
@@ -150,20 +156,21 @@ test('only the first and last blows of a flurry stop the world', () => {
 
 test('no freeze runs past MAX_STOP: the heaviest blows add slow motion instead', () => {
   const w = arena('axe_20');
-  w.char.skills.titanbreaker = 10;
+  w.char.skills.titanbreak = 10;
   w.char.mp = 999;
-  assert.ok(cast(w, 'titanbreaker').ok);
-  const s = stops(w, 90);
-  assert.equal(s.length, 3);
+  w.valor = 100;
+  assert.ok(cast(w, 'titanbreak').ok);
+  const s = stops(w, 100);
+  assert.equal(s.length, 2);
   for (const b of s) assert.ok(b.stop <= MAX_STOP, `stop ${b.stop}`);
-  assert.ok(s[2].slowmo > 0, 'the crushing last blow eases into slow motion');
-  assert.equal(s[0].slowmo, 0, 'lighter blows do not');
+  assert.ok(s[0].slowmo > 0, 'the crushing blow eases into slow motion');
+  assert.equal(s[1].slowmo, 0, 'the lighter aftershock does not');
 });
 
 test('a blow that hits many monsters stops once, not once per monster', () => {
   const w = arena();
   for (let i = 0; i < 3; i++) updateWorld(w, DT, idle);
-  w.combo = 2;
+  w.combo = 1;
   w.comboUntil = w.now + 1;
   const s = stops(w, 1);
   assert.equal(s.length, 0);
@@ -175,7 +182,7 @@ test('a blow that hits many monsters stops once, not once per monster', () => {
 
 test('once a blow lands, moving cuts the follow-through short and skills can cut in', () => {
   const w = arena();
-  w.char.skills.powerslash = 5;
+  w.char.skills.bladerush = 5;
   w.char.mp = 999;
   updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
   run(w, 0.05);
@@ -183,7 +190,7 @@ test('once a blow lands, moving cuts the follow-through short and skills can cut
   updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
   assert.ok(w.attackTimer > 0, 'still winding up: no cancel before the blow');
   run(w, 0.2);
-  assert.equal(cast(w, 'powerslash').ok, true, 'a skill cuts into the recovery');
+  assert.equal(cast(w, 'bladerush').ok, true, 'a skill cuts into the recovery');
   run(w, 0.6);
   for (let i = 0; i < 20; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
   assert.ok(w.body.x < x, 'walking away after the blows');
@@ -209,7 +216,7 @@ test('bow shots chain into a combo, fly to their target, and land when they arri
     if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
     if (firstHit == null && m.hp < 1e9) firstHit = i;
   }
-  assert.deepEqual(seen.slice(0, 3).map((s) => s.move), COMBOS.bow.map((s) => s.move));
+  assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS.archer.map((s) => s.move));
   assert.ok(firstHit > 16, `the arrow took time to arrive (frame ${firstHit})`);
   assert.ok(w.body.x < x, 'hopped back while shooting');
 });
@@ -221,9 +228,9 @@ test('the finishing arrow pierces the whole line', () => {
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'all three in the line got hit');
 });
 
-test("the archer's skills: Rapid Fire, Arrow Fan, Arrow Rain, Backflip Shot", () => {
+test("the archer's skills: Double Shot, Arrow Fan, Arrow Rain, Backflip Shot", () => {
   const w = range();
-  Object.assign(w.char.skills, { doubleshot: 10, scattershot: 10, arrowrain: 10, backflip: 5 });
+  Object.assign(w.char.skills, { twinshot: 10, arrowfan: 10, arrowshower: 10, flipshot: 5 });
   w.char.mp = 9999;
   const go = (id) => {
     w.attackTimer = 0;
@@ -233,20 +240,23 @@ test("the archer's skills: Rapid Fire, Arrow Fan, Arrow Rain, Backflip Shot", ()
     assert.ok(cast(w, id).ok, id);
   };
   const hurt = () => w.mobs.filter((m) => m.hp < 1e9).length;
-  go('scattershot');
+  go('arrowfan');
+  assert.equal(w.fx.filter((f) => f.kind === 'projectile').length, 0, 'the fan leaves on the release, not the press');
   run(w, 0.8);
   assert.equal(hurt(), 3, 'one arrow for each monster');
   w.mobs.forEach((m) => (m.hp = 1e9));
-  go('arrowrain');
+  go('arrowshower');
   run(w, 1.3);
   assert.equal(hurt(), 3, 'the rain fell on all of them');
-  for (let i = 0; i < 3; i++) {
-    go('doubleshot');
-    run(w, 0.5);
-  }
-  assert.equal(w.chains.doubleshot.i, 2, 'three presses, three parts');
+  w.mobs.forEach((m) => (m.hp = 1e9));
+  go('twinshot');
+  run(w, 0.5);
+  go('twinshot');
+  assert.equal(w.chains.twinshot.i, 1, 'two presses, two parts');
+  run(w, 1);
+  assert.equal(hurt(), 3, 'the heavy pair tore through the line');
   const x = w.body.x;
-  go('backflip');
+  go('flipshot');
   assert.ok(w.invuln > 0, 'untouchable mid-flip');
   run(w, 0.5);
   assert.ok(w.body.x < x - 60, 'flipped back');
@@ -254,25 +264,25 @@ test("the archer's skills: Rapid Fire, Arrow Fan, Arrow Rain, Backflip Shot", ()
 
 test("skills can't be spammed back to back, even by moving, but basic attacks still flow into them", () => {
   const w = range();
-  Object.assign(w.char.skills, { scattershot: 10, arrowrain: 10 });
+  Object.assign(w.char.skills, { arrowfan: 10, arrowshower: 10 });
   w.char.mp = 9999;
-  assert.ok(cast(w, 'scattershot').ok);
+  assert.ok(cast(w, 'arrowfan').ok);
   run(w, 0.4);
-  assert.equal(cast(w, 'arrowrain').reason, 'busy', 'the fan is still being loosed');
+  assert.equal(cast(w, 'arrowshower').reason, 'busy', 'the fan is still being loosed');
   const left = { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false };
   for (let i = 0; i < 3; i++) updateWorld(w, DT, left);
-  assert.equal(cast(w, 'arrowrain').reason, 'busy', 'walking cuts the follow-through, not the wait');
+  assert.equal(cast(w, 'arrowshower').reason, 'busy', 'walking cuts the follow-through, not the wait');
   run(w, 0.4);
-  assert.ok(cast(w, 'arrowrain').ok, 'free once the motion is done');
+  assert.ok(cast(w, 'arrowshower').ok, 'free once the motion is done');
   // A basic shot flows straight into a skill once its arrow is away.
   run(w, 1.5);
   updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
   run(w, 0.25);
-  assert.ok(cast(w, 'scattershot').ok, 'weaved in after the arrow left');
+  assert.ok(cast(w, 'arrowfan').ok, 'weaved in after the arrow left');
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'startoss'], ['warrior', 'sword_20', 'powerslash']]) {
+  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'startoss'], ['warrior', 'sword_20', 'bladerush']]) {
     const w = arena(weapon);
     w.char.job = job;
     if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
@@ -290,8 +300,8 @@ test('the same no-spam rule holds for every job, spells and thief skills include
 test('one press of a skill key casts it once, even held a moment or pressed mid-swing', () => {
   for (const midSwing of [false, true]) {
     const w = arena();
-    w.char.skills.powerslash = 10;
-    w.char.hotkeys.KeyA = { skill: 'powerslash' };
+    w.char.skills.bladerush = 10;
+    w.char.hotkeys.KeyA = { skill: 'bladerush' };
     w.char.baseMp = 99999;
     w.char.mp = 99999;
     let casts = 0;
@@ -879,4 +889,150 @@ test("every Sniper bolt pierces: the basic combo's three shots each pass through
     updateWorld(v, DT, idle);
   }
   assert.ok(seen.size >= 3, `Glacier Bolt reaches ${seen.size}`);
+});
+
+// ---------- The first jobs' gauges: the Warrior's Valor and the Archer's Momentum ----------
+
+test("a Warrior's blows build Valor, faster the more monsters one blow catches, and it drains", () => {
+  const gain = (n) => {
+    const w = arena();
+    w.mobs = w.mobs.slice(0, n);
+    w.mobs.forEach((m) => (m.x = 340));
+    const random = Math.random;
+    Math.random = () => 0.5;
+    try {
+      w.combo = 1;
+      w.comboUntil = w.now + 1;
+      updateWorld(w, DT, press('KeyZ'));
+      run(w, 0.6);
+    } finally {
+      Math.random = random;
+    }
+    return w;
+  };
+  const one = gain(1);
+  const three = gain(3);
+  assert.ok(one.valor > 0, 'a blow builds it');
+  assert.ok(three.valor >= one.valor * 1.8, `a blow on three builds it faster (${one.valor} vs ${three.valor})`);
+  run(three, 9);
+  assert.equal(three.valor, 0, 'drained once the fighting stopped');
+});
+
+test('full Valor (Unbroken): nothing knocks the Warrior back, and his blows land heavier', async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const knocked = (valor) => {
+    const w = arena();
+    w.god = false;
+    w.char.hp = 99999;
+    w.valor = valor;
+    w.valorAt = 1e9;
+    hurtPlayer(w, 10, w.body.x + 30);
+    return Math.abs(w.body.vx);
+  };
+  assert.ok(knocked(0) > 0, 'a plain hit knocks him back');
+  assert.equal(knocked(100), 0, 'Unbroken stands firm');
+  const stopOf = (valor) => {
+    const w = arena();
+    w.valor = valor;
+    w.valorAt = 1e9;
+    w.combo = 1;
+    w.comboUntil = w.now + 1;
+    updateWorld(w, DT, press('KeyZ'));
+    return stops(w, 40)[0]?.stop ?? 0;
+  };
+  assert.ok(stopOf(100) > stopOf(0), 'heavier blows while Unbroken');
+});
+
+test("an Archer's shots build Momentum, more in a row; a hit knocks half of it away", async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const w = range();
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  run(w, 1.2, hold);
+  const built = w.momentum;
+  assert.ok(built > 0, 'landing shots builds it');
+  assert.ok(w.streak > 0, 'shots landing in a row keep a streak');
+  w.god = false;
+  w.char.hp = 99999;
+  hurtPlayer(w, 10, w.body.x + 30);
+  assert.ok(Math.abs(w.momentum - built / 2) < 0.01, 'a hit knocks half of it away');
+  assert.equal(w.streak, 0, 'and breaks the streak');
+  run(w, 9);
+  assert.equal(w.momentum, 0, 'it fades once the fighting stops');
+});
+
+test('full Momentum (Hawkeye): arrows fly faster and reach monsters above and below', () => {
+  const speedOf = (momentum) => {
+    const w = range();
+    w.momentum = momentum;
+    w.momentumAt = 1e9;
+    updateWorld(w, DT, press('KeyZ'));
+    let shot = null;
+    for (let i = 0; i < 40 && !shot; i++) {
+      updateWorld(w, DT, idle);
+      shot = w.fx.find((f) => f.kind === 'projectile');
+    }
+    return Math.hypot(shot.tx - shot.x, shot.ty - shot.y) / shot.dur;
+  };
+  assert.ok(speedOf(100) > speedOf(0) * 1.3, 'faster under Hawkeye');
+  // A monster up on a ledge above: a plain shot passes under it, a Hawkeye shot curves up to it.
+  const above = (momentum) => {
+    const w = range();
+    w.mobs = [w.mobs[0]];
+    const m = w.mobs[0];
+    m.yAt = () => w.map.groundY - 75;
+    m.y = m.baseY = w.map.groundY - 75;
+    w.momentum = momentum;
+    w.momentumAt = 1e9;
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 1);
+    return w.mobs[0].hp < 1e9;
+  };
+  assert.equal(above(0), false, 'a plain shot misses the ledge');
+  assert.equal(above(100), true, 'a Hawkeye shot finds it');
+});
+
+test('Falcon Dive needs full Momentum, spends it, and its falcon dives through the whole line', () => {
+  const w = range();
+  w.char.skills.falcondive = 10;
+  w.char.mp = 9999;
+  w.momentum = 70;
+  assert.equal(cast(w, 'falcondive').reason, 'gauge:momentum', 'waits for full Momentum');
+  w.momentum = 100;
+  assert.ok(cast(w, 'falcondive').ok);
+  assert.equal(w.momentum, 0, 'spends all of it');
+  run(w, 0.8);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 0, 'nothing lands before the falcon is loosed');
+  run(w, 1.4);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'the falcon tore through all of them');
+  assert.ok((w.momentum ?? 0) < 100, 'it does not refill Momentum');
+  // The no-spam rule holds.
+  w.momentum = 100;
+  assert.ok(cast(w, 'falcondive').ok);
+  run(w, 0.3);
+  w.momentum = 100;
+  assert.equal(cast(w, 'falcondive').reason, 'busy');
+});
+
+test('the Archer has command shots too: up at fliers, from the air, and on the run', () => {
+  const w = range();
+  updateWorld(w, DT, { held: new Set(['ArrowUp']), pressed: new Set(['KeyZ']), locked: false });
+  assert.equal(w.pose.kind, 'skyshot', 'up + attack shoots up');
+  run(w, 0.6);
+  w.body.onGround = false;
+  w.body.vy = -200;
+  w.attackTimer = 0;
+  w.lockTimer = 0;
+  w.basicReadyAt = 0;
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose.kind, 'airshot', 'shooting from the air');
+});
+
+test('War Cry turns the monsters around on you and guards you and the party', () => {
+  const w = arena();
+  w.char.skills.warcry = 10;
+  w.char.mp = 999;
+  w.mobs.forEach((m) => (m.aggroUntil = 0));
+  assert.ok(cast(w, 'warcry').ok);
+  assert.ok(w.mobs.every((m) => m.aggroUntil > w.now), 'every monster around turns on you');
+  assert.ok(w.char.buffs.warcry?.values.dmgCut > 0, 'and you take less damage');
 });

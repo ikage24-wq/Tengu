@@ -83,7 +83,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
+const SHOTS = { hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   thunder: 'lightning', chain: 'lightning', chainbolt: 'lightning', burst: 'zapHit', beam: 'zapHit',
@@ -93,8 +93,9 @@ const SPELLS = {
   judgment: 'holyBurst', shiningray: 'holyBurst', holy: 'holyBurst',
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
+  feathers: 'gust', titanwave: 'quake',
 };
-const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt']);
+const ARROWS = new Set(['hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt']);
 // Crossbow shots that kick harder than a plain bolt (the archer paths' own have their own sound).
 const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt']);
 // Heavy bolts that land with a thud of their own.

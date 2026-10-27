@@ -28,13 +28,14 @@ blow).
 - **Basic combo** (`world/melee.js`): three steps with a finisher on the third, each a move, a
   duration and strikes timed with `at`.
 - **Command moves**: up + attack, attacking in the air, attacking out of a run.
-- **Its own gauge** (like Rage, Faith, Gale, Focus in `world/melee.js`):
-  - It builds in a fight in the job's own way (Rage from blows, Faith also from hits taken, Gale
-    from arrows landing, Focus from standing still and aiming).
+- **Its own gauge** (like Valor, Momentum, Rage, Faith, Gale, Focus in `world/melee.js`):
+  - It builds in a fight in the job's own way (Valor from blows, faster the more monsters one
+    blow catches; Momentum from shots landing in a row, halved when hit; Rage from blows, Faith
+    also from hits taken, Gale from arrows landing, Focus from standing still and aiming).
   - It drains once the fighting stops.
   - The fuller it is, the stronger something gets.
-  - While it's full, something special happens: Berserk, Sanctified, Tailwind's twin arrows,
-    Deadeye.
+  - While it's full, something special happens: Unbroken, Hawkeye, Berserk, Sanctified,
+    Tailwind's twin arrows, Deadeye.
   - Show it on the HUD (`ui/hud.js` GAUGES) with an aura on the hero (`render/aura.js`).
 - **Skills** (`data/skills.js`): built as timed combo steps; limited by MP and their own
   animation only.

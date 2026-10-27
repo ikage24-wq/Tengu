@@ -1,25 +1,25 @@
 // The warrior paths' effects (and the skill power-ups and buff casts every class shares), in
 // Tengu's own effect art (tools/fx-art.js, the `cel*` strips): soft pastel shapes matched to the
 // sprites' pixel size and outlines, each a short run of key drawings that pops in, holds, then
-// breaks up into beads and sparkles (docs/art/README.md). The Warrior is steel blue, the Paladin
-// gold, the Berserker rose red.
+// breaks up into beads and sparkles (docs/art/README.md). The Warrior is steel blue and white, the
+// Paladin gold, the Berserker rose red (and the Archer's buffs warm gold and sky blue).
 //
 // Drawn from progress `p` (0-1) and a seed; (x, y) is a monster's feet for per-target effects and
 // the hero's feet otherwise. Returns false for kinds it doesn't draw.
 
 import { fxSprite } from './fx-sprites.js';
 
-const SCHOOLS = new Set(['holy', 'rage', 'arcane', 'ice', 'fire', 'wind', 'poison', 'lightning', 'shadow']);
+const SCHOOLS = new Set(['holy', 'rage', 'arcane', 'ice', 'fire', 'wind', 'poison', 'lightning', 'shadow', 'hawk']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
 // A ring of force and a pillar of light in a school's colour (steel is the plain one).
 export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight']);
+const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight', 'celringhawk']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
@@ -120,6 +120,37 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const fall = Math.min(1, p / 0.12);
       fxSprite(ctx, 'celsword', x, y + 4 - 160 * (1 - fall * fall), { p: p < 0.3 ? 0 : (p - 0.3) / 0.7, scale: 0.8 });
       if (p > 0.1) fxSprite(ctx, 'cellightcross', x, y - 40, { p: (p - 0.1) / 0.9, scale: 1.1 });
+      return true;
+    }
+    case 'titanrise': {
+      // Titan Breaker's leap: steel light bursting up from the ground he leaps from, and a giant
+      // sword of steel flying together out of shards high over him, held there until he crashes
+      // down (the crash, 'titanbreak', drives it into the ground).
+      groundRing(ctx, 'celring', x, y, Math.min(1, p * 1.6), 70);
+      if (p < 0.5) lightPillar(ctx, 'celpillar', x, y, p * 2, 120);
+      const form = Math.min(1, p / 0.35);
+      if (p < 0.66) fxSprite(ctx, 'celswordform', x, y - 92, { frame: Math.min(4, Math.floor(form * 4.99)), scale: 1, alpha: p > 0.6 ? (0.66 - p) / 0.06 : 1 });
+      return true;
+    }
+    case 'titanbreak': {
+      // The crash: the steel sword drives down into the ground and shatters, a cross of steel light
+      // bursts where it lands, and the ground splits open wide with blades of light bursting up
+      // out of it, a ring racing out.
+      const r = f.r ?? 170;
+      const fall = Math.min(1, p / 0.1);
+      fxSprite(ctx, 'celsteelsword', x, y + 6 - 120 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1.05 });
+      fxSprite(ctx, 'celfissurebig', x, y, { p, scale: r / 230 });
+      debris(ctx, x, y, p, r * 0.8);
+      if (p > 0.06) fxSprite(ctx, 'celsteelcross', x, y - 44, { p: (p - 0.06) / 0.94, scale: 1.1 });
+      groundRing(ctx, 'celring', x, y, p, r * 1.1);
+      return true;
+    }
+    case 'titanwave': {
+      // The aftershock: rings of steel racing out along the ground, dust thrown both ways.
+      const r = f.r ?? 180;
+      groundRing(ctx, 'celring', x, y, p, r);
+      groundRing(ctx, 'celring', x, y, Math.min(1, p * 1.5), r * 0.6);
+      for (const sd of [-1, 1]) fxSprite(ctx, 'celdust', x + sd * r * 0.35, y + 2, { p, flip: sd < 0, scale: 1 });
       return true;
     }
     case 'bloodmoon': {

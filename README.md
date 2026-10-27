@@ -101,18 +101,35 @@ to clear it.
   first set in your bag is the one thrown (double-click a set to throw it), the HUD shows how
   many are left, and any shop recharges a part-thrown set for what its missing stars are worth.
   Out of stars, a gauntlet can't attack.
-- **Warrior skills** — **Blade Rush** is a three-press combo: a quick cross-cut, a rising
-  launcher that throws them into the air, and a leaping dive that cracks the ground around you.
-  **Whirlwind** spins you forward hitting everything around you five times, sucking monsters in,
-  then flinging them away. **Titan Breaker** is a heavy three-blow combo in one press: a crushing
-  smash, a rising drag that hurls them up, and a leaping dive that splits the ground. **Charge**
-  dashes through everything in your path (untouchable on the way), bowling monsters over and
-  tossing them aside.
-- **Archer skills** — **Rapid Fire** is a three-press combo: three quick arrows, three more as you
-  hop back, then a heavy arrow that tears through the line. **Arrow Fan** looses a fan of arrows at
-  once, one per monster. **Arrow Rain** shoots a volley into the sky that pours down on everything
-  ahead. **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread
-  of arrows at whatever was on you.
+- **Warrior** (steel blue and white: the blue cross, swords, a shield) — his own basic combo (a
+  cut, the return cut, a two-handed cleave that knocks them flying) and the sword's command moves
+  below. **Valor** is his gauge (a shield on the HUD): every blow that lands builds it, faster the
+  more monsters one blow catches at once, and it drains once the fighting stops. Full, he is
+  **Unbroken**: his blows land heavier and knock harder, and nothing knocks him back. Skills:
+  **Blade Rush**, a three-press combo (a quick cross-cut, a rising launcher that throws them into
+  the air, a leaping slam that cracks the ground); **Whirlwind** spins you forward hitting
+  everything around you five times, sucking monsters in, then flinging them away;
+  **Shoulder Charge** barrels through everything in your path (untouchable on the way); **War
+  Cry** turns every monster around on you and guards you and the party around you; **Iron Guard**
+  braces you behind your guard (much less damage, harder armor); **Weapon Mastery** and
+  **Toughness** are passives. His finisher, **Titan Breaker**, needs full Valor and spends it: he
+  leaps high as a giant sword of steel forms over him, then crashes down and drives it into the
+  ground, splitting it open with blades of steel light and throwing everything around into the
+  air.
+- **Archer** (warm gold and sky blue: a hawk, its feathers, gold arrows) — her own basic combo
+  with a bow or crossbow (a snap shot, two gold arrows a beat apart, a full draw that tears through
+  the line) and her own command shots (up + attack shoots fliers higher, two shots from a hang in
+  the air, a sliding shot out of a run). **Momentum** is her gauge (a feather): every shot that
+  lands builds it, more for each one landed in a row, and taking a hit knocks half of it away.
+  Full, she has **Hawkeye**: her arrows fly faster and reach further, and curve to find monsters
+  above and below. Skills: **Double Shot**, a two-press combo (two gold arrows, then a hop back and
+  a heavy pair that tears through the line); **Arrow Fan** looses five gold arrows at once, one per
+  monster, in a gust of feathers; **Arrow Rain** pours gold arrows down on everything ahead;
+  **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread of
+  arrows; **Hunter's Focus** sharpens your aim and critical hits; **Archery Mastery** and **Eagle
+  Eye** are passives. Her finisher, **Falcon Dive**, needs full Momentum and spends it: she raises
+  her bow to the sky, a great golden falcon of light wheels down, and she looses it through the
+  whole line with a storm of feathers in its wake.
 - **Command combos** — with a sword, axe, spear, dagger or bare hands: **Up + attack** is a
   launcher that throws monsters up and hops you after them; **attacking in the air** plays an air
   combo (two cuts that keep you hanging, then a dive that slams into the ground on landing); and
@@ -295,8 +312,8 @@ to clear it.
     don't hurt on touch: they wind up and swing at whoever they're angriest at. Damage builds
     **threat**, a tank's five times over, and healing builds a little. Monsters in a pack fight
     together. Tanks hold them with the warrior's tank skills (below).
-  - The group plays its roles: the tank leads and, once everyone is ready, Chain Hooks the next
-    pack back to the group, hooks or Provokes loose monsters back, and holds the boss; the healer hangs back and heals whoever is hurt (a group
+  - The group plays its roles: the tank leads and, once everyone is ready, hooks the next pack
+    back to the group, taunts loose monsters back, and holds the boss; the healer hangs back and heals whoever is hurt (a group
     heal when several are), keeps a barrier on the tank, and Renews the group when it's taking
     damage; the damage dealers focus what the tank is fighting, go for adds first,
     and help with the room's task between fights. Everyone steps out of telegraphed attacks.
@@ -316,13 +333,11 @@ to clear it.
   - The chest at the end holds EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
     Hollow Acorns, and Elixirs. Bramble's quest, Heart of the Hollow, pays out for calming Old
     Gnarlroot. Run it as often as you like.
-- **Warrior tanking** — warriors are the tanks, with five tank skills in the Warrior book:
-  **Provoke** roars at every monster around you so they all come after you (in a dungeon they
-  stick to you for a few seconds); **Chain Hook** hurls a chain ahead and drags the monsters it
-  catches (up to 8) right to you along their ledge, gathered up for the party to hit together
-  (bosses are too heavy to move, but still turn on you); **Shield Wall** takes a share off every
-  hit for a while; **Rally Cry** does the same for you and the party around you; and **Stalwart**
-  adds max HP and defense. They all work outside dungeons too.
+- **Warrior tanking** — warriors are the tanks: **War Cry** turns every monster around you on you
+  (in a dungeon they stick to you for a few seconds) and guards you and the party around you,
+  **Iron Guard** takes a big share off every hit for a while, **Toughness** adds max HP and
+  defense, and Unbroken (full Valor) keeps you from being knocked back. They all work outside
+  dungeons too.
 - **Warrior paths (level 30)** — at 30, Brann in Ember Crag sets **The Warrior's Trial** (break 20
   Crystal Golems in the Crystal Cave); pass it and pick a path:
   - **Paladin**, the tank: **Aegis Smite** is a three-press combo (a shove behind a shield of light
@@ -403,8 +418,8 @@ to clear it.
 - **Sound** — "real plus modern": recorded instruments (flute, strings, harp, guitar, horns,
   piano, choir, marimba, celesta and more, from the FluidR3 soundfont) and recorded effects (from
   Kenney's packs), mixed with synths, drums and effects made in code (credits in
-  `assets/audio/CREDITS.md`). The archer paths' effects are hand-drawn pixel effect art from
-  public-domain packs (credits in `assets/fx/CREDITS.md`). Every song and effect is rendered once in a background worker and
+  `assets/audio/CREDITS.md`). Every skill effect is Tengu's own art, drawn to match the sprites
+  (`tools/fx-art.js`, `assets/fx/CREDITS.md`). Every song and effect is rendered once in a background worker and
   played from buffers; the rules come from the research in `docs/audio/`. **Music**: a written
   song for every area: a swung village tune on flute, guitar and plucked strings; a running meadow
   song with marimba and pop drums; an accordion sea song in 6/8 at the harbor; sitar and oboe over

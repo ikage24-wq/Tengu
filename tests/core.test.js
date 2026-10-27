@@ -99,7 +99,7 @@ test('skills: learning needs SP and the right job, and binds a hotkey', () => {
   const c = fresh();
   gainExp(c, 20);
   assert.ok(c.sp >= 1);
-  assert.equal(learnSkill(c, 'powerslash'), false, 'warrior skill locked for novices');
+  assert.equal(learnSkill(c, 'bladerush'), false, 'warrior skill locked for novices');
   assert.equal(learnSkill(c, 'pebble'), true);
   assert.equal(c.skills.pebble, 1);
   assert.deepEqual(c.hotkeys.KeyQ, { skill: 'pebble' });
