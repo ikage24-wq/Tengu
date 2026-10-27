@@ -27,6 +27,30 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 - `tests/melee.test.js` checks these rules (including the no-spam rule for several jobs); extend it
   when adding skills.
 
+## Making a job (every new job or path, the standard the player approved)
+
+Build every future job the way the Warrior paths (Paladin, Berserker) and archer paths (Ranger,
+Sniper) were built; the player signed off on that result and wants all jobs made like it.
+
+- **Research first.** Read the art research (below) and look at real references for the job
+  (MapleStory first: research/fx.md section 6), and save new findings back there.
+- **Its own feel in combat:** its own basic combo (3 steps with a finisher), command moves (up +
+  attack, in the air, on the run), a gauge or aura that builds in a fight and does something when
+  full, skills built as timed combo steps, a 25-hit finisher with a big signature moment. Follow
+  the combat rules below and extend `tests/melee.test.js` for it.
+- **Its own animation:** moves drawn for its weapon (a bow really draws, a crossbow kneels and
+  cranks), with weight that matches each blow.
+- **Its own colour and shape language**, bold enough to read on every map, so a hit says whose it
+  is (the Warrior's blue cross, the Paladin's gold star, the Berserker's rose claws, the Ranger's
+  emerald wind and leaves, the Sniper's ice-blue streaks and rose sight).
+- **Effects in Tengu's own art** (`tools/fx-art.js`, matched to the sprites; see the effects rule
+  below): swipes or shots, a hit mark, a buff pillar with its emblem, a gauge aura, and a picture
+  for each big skill. Never packs or code-drawn glows.
+- **Everything else it touches:** icons, HUD gauge, sounds, bots and party play, its trial or
+  quest to unlock, docs (README and the art notes).
+- **Show it:** record demo videos of every skill and send them; fix what looks wrong before
+  calling it done.
+
 ## Art, animation, and effects
 
 **Always consult the research first.** `docs/art/research/` is the saved research guide: about 350
