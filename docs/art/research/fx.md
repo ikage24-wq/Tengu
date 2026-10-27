@@ -466,6 +466,15 @@ picked **matched to the sprites**: pastel shapes redrawn at the characters' pixe
 sprites' own outline rule. Lesson: effects must look like they were drawn by the same hand as the
 characters; style mismatch, not just quality, is what made earlier effects feel wrong.
 
+Later the player asked for effects that look "sharp, smooth, HD and fluid" and was shown 11
+treatments on the same effects (smoothing filters, upscalers such as hq2x/xBR, outline
+anti-aliasing, additive blending, bloom, motion trails, frame in-betweens, HD redraws with and
+without glow). The pick was **HD + soft glow** (option 9): the same art rendered at three pixels
+per game pixel, with a glow blurred from the bright parts only. Lessons: blur the whole effect and
+its dark outline smudges into a grey halo, so the glow must come from a bright-only mask; a
+cross-fade between key drawings makes 12 fps effects flow, but mixing colours of two drawings
+leaves dark fringes, so fade each drawing's opacity instead (both at full strength mid-step).
+
 ## 9. The first jobs remade (Warrior: Valor; Archer: Hawk)
 - MapleStory gives each first job a few big readable shapes rather than many small ones, and the
   finisher-level moments are a single giant object (a giant blade or a great bird) more than a

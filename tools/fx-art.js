@@ -2429,12 +2429,15 @@
   });
 
   // ---------- Big versions ----------
-  // Pixel art can't be blown up without its pixels growing past the sprites', so effects that play
-  // large (rings across a whole group, the magic circle, a whirlwind over an area, the ground
-  // rupturing under a finisher) are drawn large here instead.
+  // Effects that play large (rings across a whole group, the magic circle, a whirlwind over an
+  // area, the ground rupturing under a finisher) are listed under their own names. Drawn smooth in
+  // HD, a big version is just its effect played at `bigK` (the game scales the one strip), so it
+  // costs no extra art: `base` names the effect it plays.
   function big(e, k) {
     return {
       ...e,
+      base: e,
+      bigK: k,
       w: Math.ceil(e.w * k),
       h: Math.ceil(e.h * k),
       px: e.px * k,
@@ -2461,68 +2464,51 @@
   E.quakebig = big(E.quake, 1.8);
   E.clawbig = big(E.claw, 1.7);
 
-  // Matches an effect to the characters' sprites: drawn smooth at full size, shrunk to art pixels
-  // (`F` drawn pixels each), colours snapped to a 4-tone ramp of their own hue kept saturated,
-  // outlined like the sprites (a darker shade of the colour beside it: lighter on top edges,
-  // darkest underneath), then doubled so each art pixel is two screen pixels.
-  const F = 3.2;
-  function match(src, frame) {
-    const W = Math.ceil(src.width / F);
-    const H = Math.ceil(src.height / F);
-    const s = document.createElement('canvas');
-    s.width = W;
-    s.height = H;
-    const sx = s.getContext('2d');
-    sx.drawImage(src, 0, 0, W, H);
-    const d = sx.getImageData(0, 0, W, H);
-    const px = d.data;
-    const on = (x, y) => x >= 0 && y >= 0 && x < W && y < H && px[(y * W + x) * 4 + 3] > 110;
-    const out = sx.createImageData(W, H);
-    const o = out.data;
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const j = (y * W + x) * 4;
-        if (on(x, y)) {
-          const r = px[j];
-          const g = px[j + 1];
-          const b = px[j + 2];
-          const l = (r + g + b) / 765;
-          const band = Math.max(0, Math.min(3, Math.floor((l - 0.45) * 7.5)));
-          const [t, wh] = [[0.62, 0], [0.82, 0], [0.92, 0.25], [1, 0.7]][band];
-          const m = Math.max(r, g, b) || 1;
-          for (let q = 0; q < 3; q++) o[j + q] = Math.min(255, (px[j + q] / m) * 255 * t * (1 - wh) + 255 * wh);
-          const avg = (o[j] + o[j + 1] + o[j + 2]) / 3;
-          for (let q = 0; q < 3; q++) o[j + q] = Math.max(0, Math.min(255, avg + (o[j + q] - avg) * 1.6));
-          o[j + 3] = 255;
-        } else {
-          const n = [[0, -1], [0, 1], [-1, 0], [1, 0]].find(([dx, dy]) => on(x + dx, y + dy));
-          if (!n) continue;
-          const q = ((y + n[1]) * W + x + n[0]) * 4;
-          const dark = n[1] < 0 ? 0.42 : n[1] > 0 ? 0.68 : 0.55;
-          o[j] = px[q] * dark * 0.8 + 8;
-          o[j + 1] = px[q + 1] * dark * 0.7 + 9;
-          o[j + 2] = px[q + 2] * dark * 0.85 + 10;
-          if (n[1] > 0) {
-            o[j] *= 0.6;
-            o[j + 1] *= 0.6;
-            o[j + 2] *= 0.7;
-          }
-          o[j + 3] = 255;
-        }
-      }
-    }
-    sx.putImageData(out, 0, 0);
+  // HD with a soft glow (the look the player picked): every drawing is rendered smooth at `d` strip
+  // pixels per game pixel (the drawings are made at RAW drawing pixels per game pixel), and a soft
+  // halo of its own bright colours (never its dark outlines) is laid behind it, GLOW game pixels
+  // wide. The game draws the strips smoothed, so they stay sharp at any screen size.
+  const RAW = 3.2;
+  const GLOW = 2.5;
+  function canvas(w, h) {
     const c = document.createElement('canvas');
-    c.width = W * 2;
-    c.height = H * 2;
-    const cx = c.getContext('2d');
-    cx.imageSmoothingEnabled = false;
-    cx.drawImage(s, 0, 0, W * 2, H * 2);
+    c.width = w;
+    c.height = h;
     return c;
   }
-  // An effect's size and anchor once matched (strip pixels).
-  const matched = (e) => ({ w: Math.ceil(e.w / F) * 2, h: Math.ceil(e.h / F) * 2, px: Math.round((e.px / F) * 2), py: Math.round((e.py / F) * 2), r: e.swing ? (e.swing[2] / F) * 2 : null });
+  function render(e, i, d) {
+    const K = d / RAW;
+    const pad = Math.ceil(GLOW * d * 2.5);
+    const W = Math.ceil(e.w * K) + pad * 2;
+    const H = Math.ceil(e.h * K) + pad * 2;
+    const art = canvas(W, H);
+    const ax = art.getContext('2d');
+    ax.translate(pad, pad);
+    ax.scale(K, K);
+    e.draw(ax, i);
+    // The glow comes from the bright parts only: alpha faded out over dark colours.
+    const mask = canvas(W, H);
+    const mx = mask.getContext('2d');
+    mx.drawImage(art, 0, 0);
+    const img = mx.getImageData(0, 0, W, H);
+    const px = img.data;
+    for (let j = 0; j < px.length; j += 4) {
+      const lum = Math.max(px[j], px[j + 1], px[j + 2]);
+      px[j + 3] *= Math.max(0, Math.min(1, (lum - 120) / 100));
+    }
+    mx.putImageData(img, 0, 0);
+    const out = canvas(W, H);
+    const ox = out.getContext('2d');
+    ox.filter = `blur(${GLOW * d}px) brightness(1.18)`;
+    ox.globalAlpha = 0.85;
+    ox.drawImage(mask, 0, 0);
+    ox.drawImage(mask, 0, 0);
+    ox.filter = 'none';
+    ox.globalAlpha = 1;
+    ox.drawImage(art, 0, 0);
+    return { canvas: out, px: e.px * K + pad, py: e.py * K + pad, r: e.swing ? e.swing[2] * K : null };
+  }
 
   window.FXART = E;
-  window.FXMATCH = { match, matched };
+  window.FXHD = { render, RAW };
 })();

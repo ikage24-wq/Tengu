@@ -45,7 +45,7 @@ step-by-step recipe is `docs/design/making-a-job.md`: read it before starting an
 - **Its own colour and shape language**, bold enough to read on every map, so a hit says whose it
   is (the Warrior's steel-blue cross and giant sword, the Archer's gold arrows and sky-blue feathers, the Mage's pink petals and mint flowers of light, the Thief's violet smoke and crescent moons, the Assassin's crimson and crows, the Night Lord's indigo and gold constellations, the Paladin's gold star, the Berserker's rose claws, the Ranger's
   emerald wind and leaves, the Sniper's ice-blue streaks and rose sight).
-- **Effects in Tengu's own art** (`tools/fx-art.js`, matched to the sprites; see the effects rule
+- **Effects in Tengu's own art** (`tools/fx-art.js`, HD with a soft glow; see the effects rule
   below): swipes or shots, a hit mark, a buff pillar with its emblem, a gauge aura, and a picture
   for each big skill. Never packs or code-drawn glows.
 - **Everything else it touches:** icons, HUD gauge, sounds, bots and party play, its trial or
@@ -65,15 +65,15 @@ E (UI) and F (Icons); for effects and game feel `research/fx.md`; for animation
 own older work, and save anything new we learn back there (the rule in `README.md`, the finding
 with its source in `research/`).
 
-**Effects are Tengu's own art, in the style the player picked: matched to the sprites.** Effects
+**Effects are Tengu's own art, in the style the player picked: HD with a soft glow.** Effects
 are drawn for the game in `tools/fx-art.js` as soft pastel shapes (4-tone ramps that lean violet in
-the shadows, white cores, the game's curvy sparkle stars), then matched to the characters' sprites
-(redrawn at their pixel size, one art pixel = two screen pixels, colours snapped to a ramp of their
-own hue, outlined like the sprites in a darker shade of their own colour, lighter on top edges and
-darkest underneath). `tools/build-fx.py` renders them into the `cel*` strips in `assets/fx/`. Every
-effect is a short run of key drawings: a shape pops in, holds a beat, then breaks up into beads and
-sparkles. Keep pixel art near scale 1 (draw a big version rather than blowing one up). The player
-rejected code-drawn gradient glows, pack effects (pixel and HD alike) and bold black-outlined
+the shadows, white cores, the game's curvy sparkle stars, outlined in a darker shade of their own
+colour), rendered in HD (`FXHD.render`: three strip pixels per game pixel, smooth edges) with a soft
+glow bloomed from their bright parts only. `tools/build-fx.py` renders them into the `cel*` strips
+in `assets/fx/`; the game draws them smoothed, and blends each drawing into the next so effects
+flow instead of stepping. Every effect is a short run of key drawings: a shape pops in, holds a
+beat, then breaks up into beads and sparkles. Big versions (`big()`) are re-rendered at their own
+size from the same art, never stretched strips. The player rejected code-drawn gradient glows, pack effects (pixel and HD alike) and bold black-outlined
 anime effects; every effect in `assets/fx/` is now Tengu's own. Look at
 references first (research/fx.md section 6, MapleStory) for what each moment should show. Code
 drawing is for small supporting touches only (a tracer line, a sight's ticks).

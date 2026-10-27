@@ -13,6 +13,12 @@ const pngSize = (path) => {
 
 test('every effect strip exists at the size its list says', () => {
   for (const [name, s] of Object.entries(FX_SHEETS)) {
+    // A big version plays another strip larger.
+    if (s.of) {
+      assert.ok(FX_SHEETS[s.of] && !FX_SHEETS[s.of].of && s.k > 1, `${name} plays ${s.of} larger`);
+      continue;
+    }
+    assert.ok(s.d >= 2, `${name} is drawn in HD`);
     const { w, h } = pngSize(`assets/fx/${name}.png`);
     assert.equal(w, s.w * s.n, `${name} is ${s.n} frames of ${s.w} wide`);
     assert.equal(h, s.h, `${name} height`);

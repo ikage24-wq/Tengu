@@ -163,17 +163,20 @@ carry an improvement across every part of the game it applies to.
   Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
   streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
   step white, main, deep from head to tail (fx.md D), not faded copies.
-- **Effects are Tengu's own art, matched to the sprites** (the player's pick out of 18 sample
-  styles, after rejecting gradient glows, pixel packs, HD packs and black-outlined anime cel):
+- **Effects are Tengu's own art, HD with a soft glow** (the player first picked "matched to the
+  sprites" out of 18 sample styles, after rejecting gradient glows, pixel packs, HD packs and
+  black-outlined anime cel; later, shown 11 ways to smooth them, picked HD + soft glow):
   - Drawn in `tools/fx-art.js` as soft pastel shapes: 4-tone ramps (white, light, base, shade)
     that lean violet in the shadows, an outline colour that is a darker shade of the effect's own
     hue, rounded crescents and petal bursts, beads and the game's curvy four-point sparkle.
-  - Then matched to the sprites (`match`): shrunk to art pixels, colours snapped to a ramp of
-    their own hue and kept saturated, outlined like the sprites (lighter on top edges, darkest
-    underneath), and doubled so one art pixel is two screen pixels, the characters' own size.
+  - Then rendered in HD (`FXHD.render`): three strip pixels per game pixel with smooth edges,
+    plus a soft glow blurred from the bright parts only (so dark outlines never smudge), drawn
+    under the art. The game draws them smoothed and fades each drawing into the next (an
+    in-between), so a 12 fps strip flows at the screen's rate.
   - Every effect is a few key drawings: pop in, hold a beat, break into beads and sparkles.
-  - Pixel art must stay near scale 1: effects that play large (rings across a group, the magic
-    circle, a whirlwind, a finisher's rupture) have big versions drawn large (`*big`).
+  - Effects that play large (rings across a group, the magic circle, a whirlwind, a finisher's
+    rupture) have big versions (`*big`) that play their strip larger; in HD that stays sharp, so
+    they share the small one's strip instead of a second file.
   - Warriors: swipes laid along the blade's own swing (steel blue, the Paladin's gold, the
     Berserker's rose red); hits leave the Warrior's cross of blades, the Paladin's star of light,
     the Berserker's claws; buffs rise as a pillar of light with the path's emblem; Grand Verdict

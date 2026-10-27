@@ -78,13 +78,14 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
 - **Style**:
   - Soft pastel shapes in 4-tone ramps.
   - White cores, the game's curvy sparkle stars and beads.
-  - Matched to the sprites: drawn at their pixel size, outlined in a darker shade of their own
-    colour.
+  - HD with a soft glow (the player's pick): outlined in a darker shade of their own colour,
+    rendered at three strip pixels per game pixel, with a soft glow from their bright parts; the
+    game smooths them and blends each drawing into the next.
   - Every effect is a few key drawings: it pops in, holds a beat, then breaks into beads and
     sparkles.
 - **Never** use effect packs or code-drawn glows.
-- **Keep pixel art near scale 1.** For something that plays large, add a big version (`big()` in
-  fx-art.js) rather than stretching a small one.
+- **Draw big things big.** For something that plays large, add a big version (`big()` in
+  fx-art.js); it is re-rendered from the art at its own size rather than stretched.
 - **Each job needs**:
   - its swipe or shot;
   - a hit mark that says whose hit it is;

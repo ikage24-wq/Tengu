@@ -956,7 +956,7 @@ function bladeCut(ctx, f, cam, p) {
   const sheet = FX_SHEETS[name];
   const flip = (cw ? 1 : -1) !== sheet.turn;
   const rot = mid - (flip ? Math.PI - sheet.mid : sheet.mid);
-  const scale = ((r * 1.15) / (sheet.r * 0.5)) * (f.big ? 1.15 : 1);
+  const scale = ((r * 1.15) / (sheet.r / sheet.d)) * (f.big ? 1.15 : 1);
   fxSprite(ctx, name, cx, cy, { p, rot, flip, scale });
 }
 
