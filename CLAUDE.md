@@ -30,7 +30,8 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 ## Making a job (every new job or path, the standard the player approved)
 
 Build every future job the way the Warrior paths (Paladin, Berserker) and archer paths (Ranger,
-Sniper) were built; the player signed off on that result and wants all jobs made like it.
+Sniper) were built; the player signed off on that result and wants all jobs made like it. The full
+step-by-step recipe is `docs/design/making-a-job.md`: read it before starting any job. In short:
 
 - **Research first.** Read the art research (below) and look at real references for the job
   (MapleStory first: research/fx.md section 6), and save new findings back there.
