@@ -938,12 +938,12 @@ function bladePath(f) {
 
 // A blade's cut: the swipe (Tengu's own art, fx-sprites.js) laid along the blade's own path through
 // the move (sampled from the hero's pose, `bladePath`), sized to the reach: steel blue, the
-// Paladin's gold (and any heavy blow's), or the Berserker's rose red. A cut all around (a whirl) is
+// Paladin's gold (and any heavy blow's but the Warrior's), or the Berserker's rose red. A cut all around (a whirl) is
 // the spin slash instead.
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'rage' ? 'celslashred' : school === 'holy' || f.big ? 'celslashgold' : 'celslash';
+  const name = school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
     fxSprite(ctx, school === 'rage' ? 'celspinred' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
