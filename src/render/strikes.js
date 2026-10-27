@@ -8,6 +8,7 @@
 
 import { SCHOOL_COLORS } from './spells.js';
 import { drawArcheryShot, drawArchery, windRainPiece } from './archery.js';
+import { fxSprite } from './fx-sprites.js';
 import { ghost, wash, needle, bloom, shardRing, shock, starFlash, crescent, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
 
 const TAU = Math.PI * 2;
@@ -616,6 +617,11 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'gather': {
+      // A Sniper gathers her aim with the effect pack's charging core (fx-sprites.js).
+      if (f.school === 'focus') {
+        fxSprite(ctx, 'charge', x + (f.dir || 1) * 12, y - 18, { p, scale: f.big ? 1.2 : 0.9 });
+        return true;
+      }
       // Power gathering before a big blow, at the weapon hand: a ring of the school's colour that
       // closes in on it, motes pulled in along with it (embers for rage, diamonds of light for
       // holy), and a small soft orb that swells until the blow lands.

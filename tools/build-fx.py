@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Builds the effect sprite strips in assets/fx/ from downloaded effect packs (hand-drawn pixel
+art), and the list the game reads (src/render/fx-sheets.js).
+
+Usage: python3 tools/build-fx.py PACKS_DIR
+
+PACKS_DIR holds the unzipped packs (licenses and sources in assets/fx/CREDITS.md):
+  pvfx/      PVFX Foundry (Pixel VFX Studio, CC0): https://nerijs.itch.io/pvfx-foundry
+             (its effects/<name>/grid/sprite-sheet.png: 96x96 cells, five columns, 20 fps)
+  codemanu/  Free Pixel Effects Pack (CodeManu, CC0):
+             https://opengameart.org/content/free-pixel-effects-pack
+             (<n>_<name>_spritesheet.png: 100x100 cells in a square grid)
+
+Each effect is cut into frames, blank frames dropped, optionally recoloured (a hue shift that
+keeps each pixel's lightness, so the artist's shading survives), trimmed to the box all its
+frames share, and laid out as one horizontal strip. Needs Pillow.
+"""
+
+import colorsys
+import json
+import os
+import sys
+
+from PIL import Image
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# name: (pack, effect, options). `hue` recolours to that hue (0-360), `sat` scales saturation,
+# `fps` overrides the pack's rate, `loop` marks a looping effect, `start` skips opening frames.
+FX = {
+    # The Ranger's wind.
+    'leafgust': ('pvfx', 'leaf-gust', {'hue': 118, 'sat': 1.05}),
+    'windspin': ('codemanu', 'firespin', {'hue': 152, 'sat': 0.85, 'fps': 30, 'loop': True}),
+    'windring': ('pvfx', 'splash-crown', {'hue': 150, 'sat': 1.1}),
+    'windwisp': ('pvfx', 'magical-projectile', {'hue': 150}),
+    'windslash': ('pvfx', 'crescent-slash', {'hue': 150, 'sat': 1.2}),
+    'dust': ('pvfx', 'landing-dust', {}),
+    'smoke': ('pvfx', 'smoke-puff', {}),
+    # The Sniper's steel, frost and blasts.
+    'boltburst': ('pvfx', 'beam-cutoff-burst', {'start': 3}),
+    'boltspark': ('pvfx', 'electric-impact', {}),
+    'charge': ('pvfx', 'focus-charge', {}),
+    'beam': ('pvfx', 'lattice-beam', {'loop': True}),
+    'shrapnel': ('pvfx', 'solar-shrapnel', {'hue': 205, 'sat': 0.8}),
+    'frostnova': ('pvfx', 'frost-nova', {}),
+    'freezing': ('codemanu', 'freezing', {'fps': 40}),
+    'icestar': ('codemanu', 'nebula', {'fps': 40}),
+    'explosion': ('pvfx', 'warm-explosion', {}),
+    'sunburst': ('codemanu', 'sunburn', {'fps': 40}),
+    'deadstar': ('codemanu', 'phantom', {'hue': 345, 'sat': 1.3, 'fps': 40}),
+    'hitring': ('codemanu', 'weaponhit', {'fps': 40}),
+    'breakring': ('pvfx', 'resonant-break', {}),
+}
+
+
+def pvfx_frames(base, effect):
+    d = os.path.join(base, 'pvfx', 'effects', effect, 'grid')
+    sheet = Image.open(os.path.join(d, 'sprite-sheet.png')).convert('RGBA')
+    m = json.load(open(os.path.join(d, 'manifest.json')))
+    frames = [sheet.crop((f['sheet']['x'], f['sheet']['y'], f['sheet']['x'] + 96, f['sheet']['y'] + 96)) for f in m['frames']]
+    return frames, m.get('pivot', [48, 48]), 20
+
+
+def codemanu_frames(base, effect):
+    d = os.path.join(base, 'codemanu')
+    name = next(f for f in os.listdir(d) if f.endswith(f'_{effect}_spritesheet.png'))
+    sheet = Image.open(os.path.join(d, name)).convert('RGBA')
+    cols = sheet.width // 100
+    rows = sheet.height // 100
+    frames = [sheet.crop((c * 100, r * 100, c * 100 + 100, r * 100 + 100)) for r in range(rows) for c in range(cols)]
+    return frames, [50, 50], 60
+
+
+def recolour(img, hue, sat):
+    px = img.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            h, l, s = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+            r2, g2, b2 = colorsys.hls_to_rgb(hue / 360, l, min(1, s * sat))
+            px[x, y] = (round(r2 * 255), round(g2 * 255), round(b2 * 255), a)
+    return img
+
+
+def build(base):
+    out_dir = os.path.join(ROOT, 'assets', 'fx')
+    os.makedirs(out_dir, exist_ok=True)
+    sheets = {}
+    for name, (pack, effect, o) in FX.items():
+        frames, pivot, fps = (pvfx_frames if pack == 'pvfx' else codemanu_frames)(base, effect)
+        frames = [f for f in frames[o.get('start', 0):] if f.getbbox()]
+        if 'hue' in o:
+            frames = [recolour(f, o['hue'], o.get('sat', 1)) for f in frames]
+        boxes = [f.getbbox() for f in frames]
+        x0 = min(b[0] for b in boxes)
+        y0 = min(b[1] for b in boxes)
+        x1 = max(b[2] for b in boxes)
+        y1 = max(b[3] for b in boxes)
+        w, h = x1 - x0, y1 - y0
+        strip = Image.new('RGBA', (w * len(frames), h), (0, 0, 0, 0))
+        for i, f in enumerate(frames):
+            strip.paste(f.crop((x0, y0, x1, y1)), (i * w, 0))
+        strip.save(os.path.join(out_dir, f'{name}.png'), optimize=True)
+        sheets[name] = {'w': w, 'h': h, 'n': len(frames), 'fps': o.get('fps', fps), 'px': pivot[0] - x0, 'py': pivot[1] - y0, 'loop': bool(o.get('loop'))}
+        print(f'{name:10s} {len(frames):3d} frames {w}x{h}')
+    lines = ['// Generated by tools/build-fx.py: the effect sprite strips in assets/fx/ (hand-drawn pixel',
+             '// art from effect packs; see assets/fx/CREDITS.md). Each strip is `n` frames of w x h laid',
+             '// side by side, played at `fps`; (px, py) is the point in a frame that sits on the effect\'s',
+             '// position (the pack\'s pivot).', '', 'export const FX_SHEETS = {']
+    for name, s in sheets.items():
+        lines.append(f"  {name}: {{ w: {s['w']}, h: {s['h']}, n: {s['n']}, fps: {s['fps']}, px: {s['px']}, py: {s['py']}, loop: {str(s['loop']).lower()} }},")
+    lines.append('};')
+    open(os.path.join(ROOT, 'src', 'render', 'fx-sheets.js'), 'w').write('\n'.join(lines) + '\n')
+
+
+if __name__ == '__main__':
+    build(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'packs'))

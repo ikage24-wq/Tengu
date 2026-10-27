@@ -163,6 +163,14 @@ carry an improvement across every part of the game it applies to.
   Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
   streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
   step white, main, deep from head to tail (fx.md D), not faded copies.
+- **Effects are built from effect-pack art, not drawn shapes** (the player: code-drawn effects
+  with gradients look "childishly made"). `assets/fx/` holds hand-drawn pixel effect strips cut
+  from CC0 packs (PVFX Foundry, CodeManu's Free Pixel Effects Pack; `assets/fx/CREDITS.md`) by
+  `tools/build-fx.py`, which can recolour them (a fire swirl became the Ranger's wind). Play them
+  with `fx-sprites.js` `fxSprite`: one strip pixel is half a game pixel, so they land on the
+  screen's own pixels in HD. No gradients in effects; code draws only small supporting parts
+  (arrow shafts, tracer lines, a sight's ticks). The archer paths are done this way; the older
+  effects across the game still need the same pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

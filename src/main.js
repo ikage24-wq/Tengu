@@ -20,6 +20,7 @@ import { openProfile } from './ui/profile.js';
 import { unlock } from './audio/engine.js';
 import { hearWorld, hearUi } from './audio/listen.js';
 import { updateMusic } from './audio/music.js';
+import { preloadFxSprites } from './render/fx-sprites.js';
 
 loadSettings();
 
@@ -51,6 +52,9 @@ let world = null;
 let uiState = null;
 let camera = null;
 let autosave = AUTOSAVE_EVERY;
+
+// The effect sprite strips load in the background from the start.
+preloadFxSprites();
 
 function startGame(char) {
   world = createWorld(char);

@@ -529,6 +529,8 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, burst: s.burst ?? spark, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank,
+    // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
+    ownSpark: Boolean(spark),
   });
 }
 
@@ -579,7 +581,9 @@ function fire(world, strike) {
     return travel + lag;
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
-  world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
+  if (hasFocus(world.char)) world.fx.push({ kind: 'boltshock', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.35, small: true });
+  else if (!hasGale(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back; every Sniper bolt does a little (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   else if (tracer) world.juice.push({ type: 'kick', x: -s.dir * 1, y: 0 });

@@ -66,6 +66,8 @@ export function hearWorld(world, cam) {
       case 'reticle': sfx('lockOn', { pan: p, rate: Math.pow(2, (2 * Math.min(8, f.n ?? 0)) / 12) }); break;
       case 'poisonpuff': sfx('dot', { bleed: f.bleed, pan: p }); break;
       default:
+        // (A bolt's small muzzle sparks ride on the shot's own sound.)
+        if (f.small && f.kind === 'boltshock') break;
         if (NAMED.has(f.kind)) sfx(f.kind, { pan: p });
         else if (SPELLS.has(f.kind) || f.kind === 'fire' || f.kind === 'holy') sfx('spell', { kind: f.kind, pan: p });
     }

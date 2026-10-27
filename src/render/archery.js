@@ -1,95 +1,30 @@
-// The archer paths' effects. The Ranger's are the wind's shape language: rounded swirls, ribbons
-// and leaves that flow and curl, green and white (fx research C14: rounded, flowing, trails that
-// start fast then slow). The Sniper's are the opposite: hard straight lines, sharp glints, a rose
-// sight, and heavy kicks; frost bolts that shatter into shards, and blasts that flash, swell, and
-// break up into smoke (fx research C12, C17: a blast is a sequence, not one orange disc).
+// The archer paths' effects, built from hand-drawn effect sprites (fx-sprites.js; the packs and
+// their credits are in assets/fx/), not drawn shapes (CLAUDE.md). The Ranger's are wind: a gust
+// full of leaves, spinning wind (a swirl recoloured from the packs), rings of wind, dust. The
+// Sniper's are steel and frost: bolt bursts, sparks, shrapnel, a charging core, a lattice beam,
+// frost novas, ice stars, a real explosion, and a rose star for the Deadeye. Code draws only the
+// small supporting parts: the arrow and bolt shafts, a sniper's tracer line, and the sight's ticks.
 //
 // Shots draw at their head (x, y) flying along `dir`; the rest are drawn from progress `p` (0-1)
 // and a seed, at a monster's feet for per-target effects and the bow hand for muzzle bursts.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { needle, starFlash, shardRing, crescent, shock, puff, crown, wisp, wash, easeOut, easeIn, deep, inked } from './fxkit.js';
+import { shock, wash, easeOut, deep, inked } from './fxkit.js';
+import { fxSprite } from './fx-sprites.js';
 
 const TAU = Math.PI * 2;
-const WIND = SCHOOL_COLORS.wind;
-// The Ranger's own tones: the wind school plus a dark teal ink (bright effects get a dark rim to
-// read on pastel maps) and two leaf greens.
-const GALE = { ...WIND, ink: '#0b5046', leaf: '#8fef5a', leaf2: '#d4ff8a' };
 const FOCUS = SCHOOL_COLORS.focus;
-const ICE = SCHOOL_COLORS.ice;
-// The Sniper's sight, and the hot core of a blast.
+const GALE = SCHOOL_COLORS.wind;
+// The Sniper's sight.
 export const SIGHT = '#ff5a7a';
-const BLAST = { main: '#ff8a3c', light: '#ffe9a8', deep: '#e0442b', smoke: '#e8dcef', shadow: '#a898c0' };
 const INK = '#3a2d4f';
 const rand = (n) => {
   const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return v - Math.floor(v);
 };
 
-function glow(ctx, x, y, r, color, a) {
-  if (a <= 0 || r <= 0) return;
-  ctx.save();
-  ctx.globalAlpha *= a;
-  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-  g.addColorStop(0, color);
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(x - r, y - r, r * 2, r * 2);
-  ctx.restore();
-}
-
-// A leaf, pointed both ends, turned by `rot`.
-function leaf(ctx, x, y, r, rot, color) {
-  if (r <= 0.3) return;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rot);
-  const shape = (R) => {
-    ctx.beginPath();
-    ctx.moveTo(-R, 0);
-    ctx.quadraticCurveTo(0, -R * 0.7, R, 0);
-    ctx.quadraticCurveTo(0, R * 0.7, -R, 0);
-    ctx.fill();
-  };
-  if (r > 1.4 && inked(ctx)) {
-    ctx.fillStyle = GALE.ink;
-    shape(r + 0.9);
-  }
-  ctx.fillStyle = color;
-  shape(r);
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillRect(-r * 0.6, -0.4, r * 1.2, 0.8);
-  ctx.restore();
-}
-
-// A tapering ribbon along points (each [x, y]), widest at the head (the last point), stepping
-// white, main, deep from head to tail (fx research D: trails step colour instead of fading).
-function ribbon(ctx, pts, w, c) {
-  if (pts.length < 2) return;
-  const band = (k, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    const n = pts.length;
-    const side = (i, s) => {
-      const [x0, y0] = pts[Math.max(0, i - 1)];
-      const [x1, y1] = pts[Math.min(n - 1, i + 1)];
-      const l = Math.hypot(x1 - x0, y1 - y0) || 1;
-      const ww = (w * k * (i / (n - 1))) / 2;
-      return [pts[i][0] - ((y1 - y0) / l) * ww * s, pts[i][1] + ((x1 - x0) / l) * ww * s];
-    };
-    for (let i = 0; i < n; i++) ctx.lineTo(...side(i, 1));
-    for (let i = n - 1; i >= 0; i--) ctx.lineTo(...side(i, -1));
-    ctx.closePath();
-    ctx.fill();
-  };
-  if (c.ink && inked(ctx)) band(1.45, c.ink);
-  band(1, c.deep);
-  band(0.7, c.main);
-  band(0.3, '#ffffff');
-}
-
-// An arrow (or bolt) along angle `a` with its head at (0, 0) after translating: shaft, head,
-// fletching. `bolt` makes it short and thick with fins.
+// An arrow (or bolt) along +x with its head at (0, 0): shaft, head, fletching. `bolt` makes it
+// short and thick with fins.
 function shaft(ctx, len, w, head, fletch, bolt = false) {
   ctx.strokeStyle = INK;
   ctx.lineWidth = w + 1.6;
@@ -131,98 +66,60 @@ function shaft(ctx, len, w, head, fletch, bolt = false) {
   }
 }
 
-// A hard streak behind a bolt: a straight wedge from nothing to full at the head.
-function streak(ctx, len, w, color) {
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(-len, 0);
-  ctx.lineTo(0, -w / 2);
-  ctx.lineTo(0, w / 2);
-  ctx.closePath();
-  ctx.fill();
-}
+
+// ---------- Shots ----------
+
 
 // ---------- Shots ----------
 
 export function drawArcheryShot(ctx, f, x, y, dir, time) {
   const ang = Math.atan2(f.ty - f.y, f.tx - f.x);
   const u = f.dur ? Math.min(1, f.t / f.dur) : 0;
+  const along = (d) => [x - Math.cos(ang) * d, y - Math.sin(ang) * d];
   switch (f.shot) {
     case 'windarrow': {
-      // An arrow riding two curling ribbons of wind.
+      // An arrow riding a spin of wind: the swirl turns round its tail as it flies.
+      const [tx, ty] = along(12);
+      fxSprite(ctx, 'windspin', tx, ty, { t: time + (f.seed ?? 0), rot: ang, scale: 0.9, sy: 0.7 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      for (const s of [1, -1]) {
-        const pts = [];
-        for (let i = 0; i <= 8; i++) {
-          const k = i / 8;
-          pts.push([-44 + k * 40, s * Math.sin(k * 5 + time * 30 + (s > 0 ? 0 : Math.PI)) * 5 * (1 - k * 0.6)]);
-        }
-        ribbon(ctx, pts, 3.4, GALE);
-      }
       // The archer's paradox: a hero arrow shivers for its first moments of flight (archery.md 5).
       if (u < 0.15) ctx.rotate(Math.sin(u * 120) * 0.08 * (1 - u / 0.15));
-      glow(ctx, 2, 0, 8, GALE.main, 0.7);
       shaft(ctx, 20, 1.7, '#ffffff', GALE.main);
       ctx.restore();
       return true;
     }
     case 'galearrow': {
-      // A bigger arrow in a spiral of wind, shedding leaves.
-      ctx.save();
       // A skill arrow, drawn big (MapleStory's skill arrows run 1.5-3x the hero; archery.md 10):
-      // a gale wrapped round it in three ribbons, a bright head, and leaves torn off behind.
-      glow(ctx, x, y, 26, GALE.main, 0.75);
+      // two spins of wind wrapped along it and a gust of leaves torn off behind.
+      for (let i = 0; i < 3; i++) {
+        const [tx, ty] = along(8 + i * 16);
+        fxSprite(ctx, 'windspin', tx, ty, { t: time * (1 + i * 0.2) + i * 0.3, rot: ang, scale: 1.7 - i * 0.35, sy: 0.75 });
+      }
+      const [gx, gy] = along(30);
+      fxSprite(ctx, 'leafgust', gx, gy + 6, { t: (time * 1.5) % 0.7, flip: dir < 0, scale: 1.1 });
+      ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      for (let s = 0; s < 3; s++) {
-        const pts = [];
-        for (let i = 0; i <= 12; i++) {
-          const k = i / 12;
-          pts.push([-84 + k * 80, Math.sin(k * 9 + time * 36 + (s * TAU) / 3) * 11 * (1 - k * 0.55)]);
-        }
-        ribbon(ctx, pts, 5, GALE);
-      }
-      for (let i = 0; i < 5; i++) {
-        const k = (time * 3 + i / 5) % 1;
-        leaf(ctx, -26 - k * 56, Math.sin(i * 2.1 + time * 9) * 14 * k, 3.4 * (1 - k) + 1, time * 10 + i, i % 2 ? GALE.leaf : GALE.leaf2);
-      }
       shaft(ctx, 32, 3, '#ffffff', GALE.deep);
-      starFlash(ctx, 9, 0, 11, 4, time * 8, GALE.main, '#ffffff', 3);
       ctx.restore();
       return true;
     }
     case 'cyclone': {
-      // A whirlwind tearing along the ground line with an arrow at its heart: rings of wind
-      // stacked into a funnel, spinning, with leaves caught in it.
-      ctx.save();
-      // A real tornado on the ground line: a funnel twice her height of spinning wind bands, wide
-      // at the top, swaying, kicking up dust at its foot, with leaves whirled up through it.
+      // A tornado on the ground line, built of spinning wind stacked into a funnel twice her
+      // height (narrow at the foot, wide at the top, each band on its own phase and swaying), with
+      // a gust of leaves whirling at its foot and dust kicked up, and the arrow at its heart.
       const grow = easeOut(Math.min(1, u * 4));
       const foot = y + 22;
-      const H = 76 * grow;
-      for (let i = 0; i < 9; i++) {
-        const k = i / 8;
-        const rx = (6 + k * 26) * grow;
-        const cy = foot - k * H;
+      for (let i = 0; i < 7; i++) {
+        const k = i / 6;
         const sway = Math.sin(time * 6 + k * 3) * 4 * k;
-        const spin = time * 24 + i * 0.8;
-        crescent(ctx, x + sway, cy, rx, spin, spin + 3.8, 3 + k * 2.4, i % 2 ? GALE.main : GALE.deep, '#ffffff');
-        shock(ctx, x + sway, cy, rx, rx * 0.26, 1.2, i % 2 ? GALE.light : GALE.main);
+        fxSprite(ctx, 'windspin', x + sway, foot - k * 70 * grow, { t: time * (1.2 + k * 0.5) + i * 0.17, scale: (0.8 + k * 1.9) * grow, sy: 0.55, flip: i % 2 === 1 });
       }
-      for (let i = 0; i < 4; i++) {
-        const k = (time * 3 + i / 4) % 1;
-        ctx.fillStyle = i % 2 ? '#e8dcef' : '#c9b8dc';
-        ctx.beginPath();
-        ctx.arc(x - dir * k * 26 + (i - 1.5) * 6, foot - k * 6, 5 * (1 - k) + 1, 0, TAU);
-        ctx.fill();
-      }
-      for (let i = 0; i < 9; i++) {
-        const a = time * 14 + (i / 9) * TAU;
-        const h = ((time * 0.8 + i / 9) % 1) * H;
-        leaf(ctx, x + Math.cos(a) * (8 + h * 0.36) * grow, foot - h + Math.sin(a) * 4, 2.8, a * 2, i % 2 ? GALE.leaf : GALE.leaf2);
-      }
+      fxSprite(ctx, 'dust', x - dir * 6, foot + 2, { t: (time * 1.2) % 0.6, scale: 1.2 * grow, flip: dir < 0 });
+      fxSprite(ctx, 'leafgust', x, foot - 18, { t: (time * 1.4) % 0.7, scale: 1.3 * grow, flip: Math.floor(time * 3) % 2 === 0 });
+      ctx.save();
       ctx.translate(x, y - 20);
       ctx.rotate(ang);
       shaft(ctx, 20, 2.2, '#ffffff', GALE.main);
@@ -230,117 +127,63 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       return true;
     }
     case 'wisp': {
-      // A wind spirit from a full Gale: a little white-green comet that swoops out on a curve and
-      // homes in (Wind Archer's Trifling Wind; archery.md 23), a spiral tail curling behind it.
+      // A wind spirit from a full Gale: the pack's flying wind orb, swooping out on a curve and
+      // homing in (Wind Archer's Trifling Wind; archery.md 23), a little spin of wind behind it.
       const bend = (f.bend ?? 30) * Math.sin(Math.PI * u);
-      const nx = -Math.sin(ang) * bend;
-      const ny = Math.cos(ang) * bend;
-      const hx = x + nx;
-      const hy = y + ny;
-      const pts = [];
-      for (let i = 0; i <= 8; i++) {
-        const v = Math.max(0, u - (8 - i) * 0.03);
-        const b = (f.bend ?? 30) * Math.sin(Math.PI * v);
-        const px = f.x - (f.cx ?? 0) + (f.tx - f.x) * v - Math.sin(ang) * b;
-        const py = f.y - (f.cy ?? 0) + (f.ty - f.y) * v + Math.cos(ang) * b;
-        pts.push([px + Math.sin(i + time * 30) * 2, py]);
-      }
-      // The tail is laid in world space, so move it by the head's own offset.
-      const ox = hx - pts[8][0];
-      const oy = hy - pts[8][1];
-      ribbon(ctx, pts.map(([px, py]) => [px + ox, py + oy]), 5, GALE);
-      glow(ctx, hx, hy, 12, GALE.main, 0.9);
-      starFlash(ctx, hx, hy, 7, 4, time * 12, GALE.main, '#ffffff', 2.4);
-      leaf(ctx, hx - Math.cos(ang) * 6, hy - Math.sin(ang) * 6 + Math.sin(time * 20) * 3, 2.4, time * 14, GALE.leaf);
+      const hx = x - Math.sin(ang) * bend;
+      const hy = y + Math.cos(ang) * bend;
+      fxSprite(ctx, 'windspin', hx - Math.cos(ang) * 8, hy - Math.sin(ang) * 8, { t: time, rot: ang, scale: 0.7, sy: 0.6 });
+      fxSprite(ctx, 'windwisp', hx, hy, { frame: 1 + (Math.floor(time * 20) % 3), rot: ang, scale: 1.1 });
       return true;
     }
     case 'heavybolt': {
-      // A short, heavy bolt on a hard straight streak.
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      streak(ctx, 40, 4, FOCUS.deep);
-      streak(ctx, 30, 2.4, FOCUS.main);
-      streak(ctx, 18, 1, '#ffffff');
       shaft(ctx, 12, 2, '#dfe9ff', FOCUS.main, true);
       ctx.restore();
       return true;
     }
     case 'blastbolt': {
-      // A bolt with a glowing charge in its head, spitting sparks behind it.
+      // A bolt with a charge in its head: the pack's charging core, held at its brightest.
+      fxSprite(ctx, 'charge', x + dir * 4, y, { frame: 3 + (Math.floor(time * 20) % 2), scale: 0.7 });
       ctx.save();
-      for (let i = 0; i < 5; i++) {
-        const k = ((time * 6 + i / 5) % 1);
-        ctx.fillStyle = i % 2 ? BLAST.main : BLAST.light;
-        ctx.fillRect(Math.round(x - dir * (8 + k * 30)), Math.round(y + (rand(i + Math.floor(time * 20)) - 0.5) * 8 * k), 2, 2);
-      }
       ctx.translate(x, y);
       ctx.rotate(ang);
-      streak(ctx, 34, 3.4, BLAST.deep);
-      streak(ctx, 22, 1.6, BLAST.light);
-      shaft(ctx, 13, 2.2, BLAST.main, FOCUS.main, true);
+      shaft(ctx, 13, 2.2, '#ffd27a', FOCUS.main, true);
       ctx.restore();
-      glow(ctx, x + dir * 4, y, 9 + Math.sin(time * 40), BLAST.light, 0.9);
       return true;
     }
     case 'frostbolt': {
-      // A bolt with a head of ice crystal, trailing frost.
+      // A bolt with an ice star spinning at its head.
+      fxSprite(ctx, 'icestar', x + dir * 4, y, { t: time, scale: 0.55 });
       ctx.save();
-      for (let i = 0; i < 6; i++) {
-        const k = (time * 4 + i / 6) % 1;
-        ctx.globalAlpha = 1 - k;
-        ctx.fillStyle = i % 2 ? '#ffffff' : ICE.main;
-        const px = x - dir * (6 + k * 34);
-        const py = y + Math.sin(i * 2.7) * 6 * k;
-        ctx.fillRect(Math.round(px), Math.round(py), 2, 2);
-      }
-      ctx.globalAlpha = 1;
-      glow(ctx, x, y, 12, ICE.light, 0.8);
       ctx.translate(x, y);
       ctx.rotate(ang);
-      streak(ctx, 30, 3.4, ICE.deep);
-      streak(ctx, 20, 1.6, ICE.light);
-      shaft(ctx, 12, 2, ICE.main, ICE.deep, true);
-      // The crystal: three shards fanned around the head.
-      for (const [a, l] of [[0, 9], [0.7, 5.5], [-0.7, 5.5]]) needle(ctx, 4 + Math.cos(a) * l, Math.sin(a) * l, a, l + 2, 2.4, ICE.main, '#ffffff');
+      shaft(ctx, 12, 2, '#bff0ff', '#3f9fd8', true);
       ctx.restore();
       return true;
     }
     case 'ballista': {
-      // A huge bolt pushing a shock cone ahead of it, on a long hard streak.
+      // A huge bolt pushing rings of force ahead of it.
+      fxSprite(ctx, 'hitring', x + dir * 10, y, { t: time * 2, scale: 1.4, sx: 0.4 });
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang);
-      streak(ctx, 90, 9, FOCUS.deep);
-      streak(ctx, 70, 5.5, FOCUS.main);
-      streak(ctx, 46, 2, '#ffffff');
       shaft(ctx, 22, 3.4, '#ffffff', SIGHT, true);
-      for (let i = 0; i < 2; i++) {
-        const k = (time * 8 + i / 2) % 1;
-        ctx.globalAlpha = 1 - k;
-        shock(ctx, 6 - k * 26, 0, 2 + k * 3, 6 + k * 10, 1.6 * (1 - k) + 0.4, i ? '#ffffff' : FOCUS.main);
-      }
       ctx.restore();
       return true;
     }
     case 'heartbolt': {
-      // Heartseeker: a giant bolt of light, a white core on a blue beam, with the sight's rose
-      // rings strung along it.
+      // Heartseeker: the pack's lattice beam stretched out behind a giant bolt, a rose star
+      // turning at its head.
+      const len = Math.min(260, Math.hypot(x - f.x, y - f.y) + 40);
+      fxSprite(ctx, 'beam', x - Math.cos(ang) * len / 2, y - Math.sin(ang) * len / 2, { t: time, rot: ang, sx: len / 45, scale: 1, sy: 2.4 });
+      fxSprite(ctx, 'deadstar', x + dir * 6, y, { t: time, scale: 0.8 });
       ctx.save();
-      glow(ctx, x, y, 34, FOCUS.light, 0.9);
       ctx.translate(x, y);
       ctx.rotate(ang);
-      streak(ctx, 220, 18, FOCUS.deep);
-      streak(ctx, 180, 12, FOCUS.main);
-      streak(ctx, 140, 5, '#ffffff');
-      for (let i = 0; i < 4; i++) {
-        const k = (time * 5 + i / 4) % 1;
-        ctx.globalAlpha = 1 - k * 0.8;
-        shock(ctx, -k * 150, 0, 3 + k * 2, 9 + 8 * (1 - k), 2 * (1 - k) + 0.6, i % 2 ? SIGHT : '#ffffff');
-      }
-      ctx.globalAlpha = 1;
       shaft(ctx, 30, 4.4, '#ffffff', SIGHT, true);
-      starFlash(ctx, 10, 0, 14, 4, time * 6, FOCUS.main, '#ffffff', 4);
       ctx.restore();
       return true;
     }
@@ -351,12 +194,11 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
 
 // One falling arrow of a wind rain (Storm Volley).
 export function windRainPiece(ctx, x, y, s, time) {
+  const a = Math.atan2(2.6, 1);
+  fxSprite(ctx, 'windspin', x - Math.cos(a) * 12 * s, y - Math.sin(a) * 12 * s, { t: time, rot: a, scale: 0.8 * s, sy: 0.7 });
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(Math.atan2(2.6, 1));
-  const pts = [];
-  for (let i = 0; i <= 6; i++) pts.push([-34 * s + i * 5 * s, Math.sin(i + time * 30) * 3 * s]);
-  ribbon(ctx, pts, 3.2 * s, GALE);
+  ctx.rotate(a);
   shaft(ctx, 18 * s, 1.7 * s, '#ffffff', GALE.main);
   ctx.restore();
 }
@@ -364,279 +206,84 @@ export function windRainPiece(ctx, x, y, s, time) {
 // ---------- Hits, bursts, and sights ----------
 
 export function drawArchery(ctx, f, x, y, p, cam, time) {
+  const flip = (f.dir || 1) < 0;
   switch (f.kind) {
     case 'galehit': {
-      // A Ranger's arrow landing, in layers that start one after another (CyberConnect2; archery.md
-      // 34): a white star flash, two wind slashes crossing on the target, a swirl that spins out,
-      // and a spray of leaves flung on along the shot. Bigger shots and crits add a second swirl.
+      // A Ranger's arrow landing: a wind slash cut across the target and a gust of leaves blown on
+      // along the shot; heavy shots and crits add a ring of wind bursting out.
       const cy = y - (f.h ?? 24) / 2;
-      const big = f.big || f.crit ? 1.5 : 1;
-      const dir = f.dir || 1;
-      const k = easeOut(p);
-      if (p < 0.22) starFlash(ctx, x, cy, 14 * big * (1 - p * 2), 4, f.seed * 3, GALE.main, '#ffffff', 3.4 * big * (1 - p / 0.22));
-      const slash = Math.min(1, p / 0.35);
-      if (p < 0.7) {
-        for (const sd of [1, -1]) {
-          const a0 = (dir > 0 ? -0.3 : Math.PI + 0.3) + sd * 0.9;
-          crescent(ctx, x - dir * 4, cy + sd * 2, 15 * big, a0, a0 + dir * 1.9 * slash, 5.4 * big * (1 - p), GALE.main, '#ffffff');
-        }
-      }
-      ctx.save();
-      ctx.translate(x, cy);
-      ctx.scale(1, 0.55);
-      const turns = big > 1 ? 2 : 1;
-      for (let j = 0; j < turns; j++) {
-        const a0 = p * 7 * dir + j * Math.PI;
-        if (p > 0.08 && p < 0.85) crescent(ctx, 0, 0, (10 + 16 * k) * big, a0, a0 + 2.6 * dir, 4.4 * big * (1 - p), j ? GALE.deep : GALE.main, '#ffffff');
-      }
-      ctx.restore();
-      for (let i = 0; i < (f.big ? 8 : 5); i++) {
-        const a = (dir > 0 ? 0 : Math.PI) + (rand(i * 3.1 + f.seed * 7) - 0.5) * 2.4;
-        const d = k * (14 + rand(i * 1.7) * 24) * big;
-        leaf(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d + p * p * 12, 3.4 * (1 - p) + 0.8, a + time * 8 + i, i % 2 ? GALE.leaf : GALE.leaf2);
-      }
+      const big = f.big || f.crit;
+      fxSprite(ctx, 'windslash', x, cy + 4, { p, flip, scale: big ? 1.4 : 1.05 });
+      fxSprite(ctx, 'leafgust', x - (f.dir || 1) * 6, cy + 8, { p, flip, scale: big ? 1.5 : 1.1 });
+      if (big) fxSprite(ctx, 'windring', x, y, { p, scale: 1.3 });
       return true;
     }
     case 'focushit': {
-      // A Sniper's bolt landing: a hard four-point glint turned on its corner, a rose sight tick,
-      // and shrapnel kicked on along the shot (fx research D: three needles on every hit).
+      // A Sniper's bolt landing: the pack's bolt burst, and shrapnel on heavy hits and crits. Each
+      // monster a bolt passes through lands a little bigger than the last (Piercing Arrow).
       const cy = y - (f.h ?? 24) / 2;
-      // Each monster a bolt passes through lands a little bigger than the last (Piercing Arrow).
-      const big = (f.big || f.crit ? 1.5 : 1) * (1 + 0.12 * Math.min(6, f.rank ?? 0));
-      const dir = f.dir || 1;
-      if (p < 0.35) starFlash(ctx, x, cy, 16 * big * (1 - p / 0.35 * 0.5), 4, Math.PI / 4, FOCUS.main, '#ffffff', 3 * big * (1 - p / 0.35));
-      if (p < 0.5) {
-        ctx.save();
-        ctx.globalAlpha = 1 - p / 0.5;
-        ctx.strokeStyle = SIGHT;
-        ctx.lineWidth = 1.4;
-        const r = (7 + 10 * easeOut(p)) * big;
-        for (let i = 0; i < 4; i++) {
-          const a = (i * Math.PI) / 2;
-          ctx.beginPath();
-          ctx.moveTo(x + Math.cos(a) * r, cy + Math.sin(a) * r);
-          ctx.lineTo(x + Math.cos(a) * (r + 4), cy + Math.sin(a) * (r + 4));
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
-      for (let i = 0; i < 3; i++) {
-        const a = (dir > 0 ? 0 : Math.PI) + (rand(i * 2.3 + f.seed * 5) - 0.5) * 1.4;
-        const d = easeOut(p) * (10 + i * 7) * big;
-        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d, a, 8 * (1 - p) + 1, 2 * (1 - p) + 0.5, i % 2 ? FOCUS.main : '#ffffff', '#ffffff');
-      }
+      const grow = 1 + 0.12 * Math.min(6, f.rank ?? 0);
+      fxSprite(ctx, 'boltburst', x, cy, { p, flip, scale: 0.9 * grow });
+      if (f.big || f.crit) fxSprite(ctx, 'shrapnel', x, cy + 6, { p, scale: 1.1 * grow });
       return true;
     }
     case 'blast': {
-      // A blast bolt bursting: a white flash, a fireball that swells and breaks up into smoke,
-      // a ring of shards, and a shockwave along the ground.
+      // A blast bolt bursting: the pack's explosion, a burst of light at its heart, then smoke.
       const cy = y - (f.h ?? 24) / 2;
-      const R = 46;
-      if (p < 0.1) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x, cy, R * 0.55, 0, TAU);
-        ctx.fill();
-        return true;
-      }
-      const k = (p - 0.1) / 0.9;
-      shock(ctx, x, y - 1, 14 + R * 1.2 * easeOut(k), (14 + R * 1.2 * easeOut(k)) * 0.22, 4 * (1 - k), BLAST.main);
-      // The fireball: lumps that burst outward from the heart and tear open as they go, so it
-      // never sits as one flat disc.
-      if (k < 0.5) {
-        const s = easeOut(k / 0.5);
-        glow(ctx, x, cy, R * (0.6 + 0.6 * s), BLAST.light, 0.8 * (1 - s));
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * TAU + f.seed * 3;
-          const d = R * (0.12 + 0.5 * s) * (0.8 + 0.4 * rand(i + f.seed));
-          puff(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d * 0.75, R * (0.24 - 0.1 * s) * (0.8 + 0.4 * rand(i * 3.1)), i % 2 ? BLAST.light : BLAST.main, BLAST.deep, Math.max(0, s * 1.4 - 0.3), f.seed + i);
-        }
-        puff(ctx, x, cy, R * 0.22 * (1 - s), '#ffffff', BLAST.light);
-      }
-      // Then smoke: the puffs drift up and tear apart.
-      if (k > 0.25) {
-        const s = (k - 0.25) / 0.75;
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * TAU + f.seed * 5;
-          puff(ctx, x + Math.cos(a) * R * (0.4 + 0.3 * s), cy + Math.sin(a) * R * 0.3 - s * 22, R * 0.3 * (1 - s * 0.7), BLAST.smoke, BLAST.shadow, s, f.seed + i);
-        }
-      }
-      shardRing(ctx, x, cy, 12 + R * easeOut(k), 6 * (1 - k), 9, f.seed, f.seed * 4, k < 0.5 ? BLAST.main : BLAST.deep);
-      for (let i = 0; i < 9; i++) {
-        if (k > 0.8) continue;
-        const a = -Math.PI * (0.05 + 0.9 * rand(i * 2.9 + f.seed * 13));
-        const d = easeOut(k) * (20 + rand(i * 7.1) * R);
-        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d + k * k * 26, a, 9 * (1 - k) + 1, 2.4 * (1 - k) + 0.5, i % 3 ? BLAST.main : BLAST.light, '#ffffff');
-      }
+      fxSprite(ctx, 'sunburst', x, cy, { p: Math.min(1, p * 2), scale: 1.3, alpha: p < 0.5 ? 1 : 0 });
+      fxSprite(ctx, 'explosion', x, y + 4, { p, scale: 1.8 });
+      if (p > 0.4) fxSprite(ctx, 'smoke', x, y - 6, { p: (p - 0.4) / 0.6, scale: 1.6 });
       return true;
     }
     case 'frostburst': {
-      // A frost bolt shattering, in the order ice breaks (CyberConnect2; research/archery.md
-      // 34-35): cracks race across the ground and up the target first, then a white flash at the
-      // instant it breaks, then a crown of spikes, a ring of shards with navy among the blue, and
-      // frost and a low mist that linger.
-      const cy = y - (f.h ?? 24) / 2;
-      if (p < 0.3) {
-        const c = easeOut(p / 0.3);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.4;
-        for (let i = 0; i < 7; i++) {
-          const a = (i / 7) * TAU + f.seed * 4;
-          const len = 30 * c * (0.6 + 0.4 * rand(i + f.seed));
-          ctx.beginPath();
-          ctx.moveTo(x, cy);
-          ctx.lineTo(x + Math.cos(a) * len * 0.5 + 3, cy + Math.sin(a) * len * 0.4);
-          ctx.lineTo(x + Math.cos(a) * len, cy + Math.sin(a) * len * 0.8);
-          ctx.stroke();
-        }
-        return true;
-      }
-      const q = (p - 0.3) / 0.7;
-      const k = easeOut(q);
-      if (q < 0.12) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x, cy, 30 * (1 - q * 3), 0, TAU);
-        ctx.fill();
-      }
-      const up = q < 0.25 ? easeOut(q / 0.25) : 1 - easeIn(Math.max(0, (q - 0.55) / 0.45));
-      crown(ctx, x, y + 1, 34 * up, 34, 7, ICE.main, '#ffffff');
-      shardRing(ctx, x, cy, 10 + 56 * k, 7 * (1 - q), 10, f.seed, f.seed * 3, q < 0.5 ? ICE.main : ICE.deep);
-      shardRing(ctx, x, cy, 6 + 44 * k, 5 * (1 - q), 6, f.seed + 3, f.seed * 5, '#1c3a8c');
-      shock(ctx, x, y - 1, 16 + 70 * k, (16 + 70 * k) * 0.22, 3 * (1 - q), ICE.light);
-      if (q > 0.3) puff(ctx, x, y - 4, 26 * (1 - q * 0.6), '#eef8ff', '#a8d8ff', q, f.seed);
-      for (let i = 0; i < 10; i++) {
-        const u = Math.max(0, p - rand(i) * 0.3);
-        ctx.globalAlpha = 1 - u;
-        ctx.fillStyle = i % 2 ? '#ffffff' : ICE.main;
-        ctx.fillRect(Math.round(x + (rand(i * 3.3 + f.seed) - 0.5) * 90), Math.round(cy - 30 + u * 50), 2, 2);
-      }
-      ctx.globalAlpha = 1;
+      // A frost bolt shattering: the pack's frost nova on the ground and a swirl of snowflakes
+      // freezing everything around.
+      fxSprite(ctx, 'frostnova', x, y + 4, { p, scale: 2 });
+      fxSprite(ctx, 'freezing', x, y - (f.h ?? 24) / 2, { p, scale: 1.3 });
       return true;
     }
     case 'frostshard': {
-      // Frost catching a monster beside the burst: three ice shards and a cold flash.
-      const cy = y - (f.h ?? 24) / 2;
-      if (p < 0.3) starFlash(ctx, x, cy, 12 * (1 - p), 4, f.seed, ICE.main, '#ffffff', 2.4);
-      for (let i = 0; i < 3; i++) {
-        const a = -Math.PI / 2 + (i - 1) * 0.9;
-        const d = easeOut(p) * 14;
-        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d, a, 8 * (1 - p) + 1, 2.6 * (1 - p) + 0.4, ICE.main, '#ffffff');
-      }
+      fxSprite(ctx, 'icestar', x, y - (f.h ?? 24) / 2, { p, scale: 0.8 });
       return true;
     }
     case 'gust': {
-      // A gust off the bow as a big arrow goes: a ring of wind opening forward and three streaks.
-      const dir = f.dir || 1;
-      const k = easeOut(p);
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(dir, 1);
-      shock(ctx, 6 + 18 * k, 0, 3 + 4 * k, 8 + 12 * k, 2.4 * (1 - p), WIND.main);
-      for (let i = 0; i < 3; i++) {
-        const yy = (i - 1) * 8;
-        const len = 26 * (1 - p);
-        if (len > 1) ribbon(ctx, [[10 + 30 * k - len, yy], [10 + 30 * k - len / 2, yy + Math.sin(i + p * 6) * 2], [10 + 30 * k, yy]], 2.4 * (1 - p) + 0.6, WIND);
-      }
-      ctx.restore();
+      // A gust off the bow as a big arrow goes.
+      fxSprite(ctx, 'leafgust', x + (f.dir || 1) * 14, y + 6, { p, flip, scale: 1 });
       return true;
     }
     case 'boltshock': {
-      // A heavy bolt's kick: a white muzzle flash, a cone of shock rings forward, and dust off
-      // her heels.
-      const dir = f.dir || 1;
-      if (p < 0.1) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x + dir * 6, y, 8, 0, TAU);
-        ctx.fill();
-      }
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(dir, 1);
-      for (let i = 0; i < 2; i++) {
-        const k = easeOut(Math.max(0, p - i * 0.08));
-        shock(ctx, 8 + 30 * k + i * 10, 0, 2 + 5 * k, 8 + 14 * k, 2.6 * (1 - k), i ? '#ffffff' : FOCUS.main);
-      }
-      ctx.restore();
-      wisp(ctx, x - dir * 16, y + 15, 24 * (1 - p), 6 * (1 - p), -dir, '#f3ecf7', '#c9b8dc');
+      // A heavy bolt's kick: sparks off the bow and dust off her heels.
+      fxSprite(ctx, 'boltspark', x + (f.dir || 1) * 8, y, { p, flip, scale: f.small ? 0.55 : 0.9 });
+      if (!f.small) fxSprite(ctx, 'dust', x - (f.dir || 1) * 14, y + 16, { p, flip: !flip, scale: 0.9 });
       return true;
     }
     case 'heartshock': {
-      // Heartseeker's release: a burst of white, rings of force thrown down the line one after
-      // another, the sight's rose ring blowing out, and a skid of dust as she's shoved back.
-      const dir = f.dir || 1;
-      if (p < 0.08) {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x + dir * 8, y, 22, 0, TAU);
-        ctx.fill();
-      }
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(dir, 1);
-      for (let i = 0; i < 4; i++) {
-        const k = easeOut(Math.max(0, Math.min(1, (p - i * 0.07) / 0.6)));
-        if (k <= 0) continue;
-        shock(ctx, 14 + 90 * k + i * 22, 0, 3 + 8 * k, 12 + 26 * (1 - i * 0.15) * k, 4 * (1 - k), i % 2 ? SIGHT : '#ffffff');
-      }
-      shock(ctx, 0, 0, 12 + 50 * easeOut(p), 12 + 50 * easeOut(p), 3 * (1 - p), SIGHT);
-      ctx.restore();
-      glow(ctx, x, y, 50 * (1 - p), FOCUS.light, 1 - p);
-      wisp(ctx, x - dir * 18, y + 15, 46 * (1 - p * 0.7), 9 * (1 - p), -dir, '#f3ecf7', '#c9b8dc');
+      // Heartseeker's release: a ring of force breaking out from the bow, shrapnel, and a skid of
+      // dust as she's shoved back.
+      fxSprite(ctx, 'breakring', x + (f.dir || 1) * 10, y, { p, scale: 1.6 });
+      fxSprite(ctx, 'shrapnel', x + (f.dir || 1) * 10, y + 6, { p, scale: 1.6 });
+      fxSprite(ctx, 'dust', x - (f.dir || 1) * 18, y + 16, { p, flip: !flip, scale: 1.4 });
       return true;
     }
     case 'galeburst': {
-      // Storm Volley's lift-off: wind spiralling up around her from the ground, leaves pulled up
-      // in it.
-      for (let i = 0; i < 4; i++) {
-        const k = Math.max(0, Math.min(1, (p - i * 0.08) / 0.7));
-        if (k <= 0 || k >= 1) continue;
-        const r = 18 + 28 * easeOut(k);
-        const cy = y - 4 - k * 50 - i * 6;
-        ctx.save();
-        ctx.translate(x, cy);
-        ctx.scale(1, 0.32);
-        const a = k * 7 + i * 1.7;
-        crescent(ctx, 0, 0, r, a, a + 3.2, 7 * (1 - k), i % 2 ? WIND.main : WIND.light, '#ffffff');
-        ctx.restore();
-      }
-      shock(ctx, x, y - 1, 16 + 46 * easeOut(p), (16 + 46 * easeOut(p)) * 0.25, 3 * (1 - p), WIND.main);
-      for (let i = 0; i < 8; i++) {
-        const u = Math.max(0, p - rand(i) * 0.3);
-        const a = u * 9 + i;
-        leaf(ctx, x + Math.cos(a) * (16 + 10 * u), y - 4 - u * 70, 2.6 * (1 - u) + 0.6, a * 2, i % 2 ? WIND.main : '#c4f5b4');
-      }
+      // Storm Volley's lift-off: a ring of wind bursting from her feet, gusts of leaves blown up
+      // either side, and wind spinning up around her.
+      fxSprite(ctx, 'windring', x, y, { p, scale: 2 });
+      fxSprite(ctx, 'leafgust', x - 10, y - 10, { p, flip: true, scale: 1.4 });
+      fxSprite(ctx, 'leafgust', x + 10, y - 10, { p, scale: 1.4 });
+      for (let i = 0; i < 3; i++) fxSprite(ctx, 'windspin', x, y - 8 - p * 40 - i * 14, { t: time + i * 0.2, scale: 1.4 + i * 0.5, sy: 0.5, alpha: 1 - p });
       return true;
     }
     case 'stormburst': {
-      // The dive landing: a white-green flash, rings of wind blasting out along the ground,
-      // crescents of wind whirling wide, and leaves and broken arrows thrown everywhere.
-      const R = Math.max(90, (f.r ?? 170) * 0.9);
-      const cy = y - 16;
-      if (p < 0.22) starFlash(ctx, x, cy, R * 0.6 * (1 - p * 2), 8, f.seed * 6, WIND.main, '#ffffff', 12 * (1 - p / 0.22));
-      for (let i = 0; i < 3; i++) {
-        const k = easeOut(Math.max(0, Math.min(1, (p - i * 0.06) / 0.8)));
-        shock(ctx, x, y - 1, 20 + R * k, (20 + R * k) * 0.2, 5 * (1 - k), i % 2 ? WIND.light : WIND.main);
+      // The dive landing: rings of wind blasting out along the ground, gusts of leaves thrown both
+      // ways, dust kicked up, and wind spinning out wide.
+      fxSprite(ctx, 'windring', x, y, { p, scale: 3.6 });
+      fxSprite(ctx, 'windring', x, y, { p: Math.min(1, p * 1.4), scale: 2.2 });
+      for (const sd of [-1, 1]) {
+        fxSprite(ctx, 'leafgust', x + sd * 30, y - 12, { p, flip: sd < 0, scale: 2 });
+        fxSprite(ctx, 'dust', x + sd * 40, y + 6, { p, flip: sd < 0, scale: 1.8 });
       }
-      ctx.save();
-      ctx.translate(x, cy);
-      ctx.scale(1, 0.42);
-      for (let i = 0; i < 3; i++) {
-        const k = easeOut(Math.min(1, p / 0.7));
-        const a = p * 6 + (i / 3) * TAU;
-        if (p < 0.8) crescent(ctx, 0, 0, 20 + R * 0.7 * k, a, a + 2.4, 12 * (1 - p), i % 2 ? WIND.main : WIND.light, '#ffffff');
-      }
-      ctx.restore();
-      for (let i = 0; i < 16; i++) {
-        if (p > 0.9) continue;
-        const a = -Math.PI * (0.04 + 0.92 * rand(i * 2.9 + f.seed * 13));
-        const d = easeOut(p) * (30 + rand(i * 7.1 + f.seed) * R);
-        const px = x + Math.cos(a) * d;
-        const py = cy + Math.sin(a) * d * 0.7 + p * p * 30;
-        if (i % 3) leaf(ctx, px, py, 3.2 * (1 - p) + 0.8, a + time * 6, i % 2 ? WIND.main : '#c4f5b4');
-        else needle(ctx, px, py, a, 12 * (1 - p) + 1, 2.6 * (1 - p) + 0.5, WIND.main, '#ffffff');
-      }
+      fxSprite(ctx, 'windspin', x, y - 16, { t: time, scale: 4 * (0.6 + 0.4 * p), sy: 0.35, alpha: 1 - p });
       return true;
     }
     case 'reticle': {
@@ -713,84 +360,49 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'chargeglow': {
-      // A bolt charging as the crank winds: a ring closing in on the bolt's tip, which glows in
-      // three steps (none, steel blue, then white with a rose rim), with a flash at each step.
-      const tipx = x + (f.dir || 1) * 6;
-      const lv = p < 0.33 ? 0 : p < 0.66 ? 1 : 2;
-      const since = p - [0, 0.33, 0.66][lv];
-      const r = 4 + 22 * (1 - easeIn(p));
-      shock(ctx, tipx, y, r, r, 1 + 1.6 * p, lv < 2 ? FOCUS.main : SIGHT);
-      if (lv > 0) {
-        glow(ctx, tipx, y, 8 + 4 * lv, lv === 2 ? '#ffffff' : FOCUS.main, 0.9);
-        ctx.fillStyle = lv === 2 ? '#ffffff' : FOCUS.light;
-        ctx.beginPath();
-        ctx.arc(tipx, y, 1.6 + lv, 0, TAU);
-        ctx.fill();
-        if (lv === 2) shock(ctx, tipx, y, 3.6 + lv, 3.6 + lv, 1.2, SIGHT);
-      }
-      if (lv > 0 && since < 0.06) starFlash(ctx, tipx, y, 10 + 4 * lv, 4, 0, FOCUS.main, '#ffffff', 2.5);
+      // A bolt charging as the crank winds: the pack's focus charge closing in on the bolt's tip.
+      fxSprite(ctx, 'charge', x + (f.dir || 1) * 6, y, { p, scale: 0.9 });
       return true;
     }
     case 'windtrail': {
-      // The path a gale shot tore through the air: a band of wind left hanging along it that
-      // curls up and thins away, with a few leaves drifting out of it.
+      // The path a gale shot tore through the air: spins of wind left hanging along it, fading,
+      // and a gust of leaves drifting out of the middle.
       const tx = f.tx - cam.x;
       const ty = f.ty - cam.y;
-      const len = Math.hypot(tx - x, ty - y) || 1;
       const ang = Math.atan2(ty - y, tx - x);
-      const show = Math.min(1, p / 0.15);
-      const fade = 1 - easeIn(p);
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(ang);
-      for (const sd of [1, -1]) {
-        const pts = [];
-        for (let i = 0; i <= 14; i++) {
-          const k = i / 14;
-          if (k > show) break;
-          pts.push([k * len, sd * (4 + 10 * p) * Math.sin(k * 10 + p * 8 + (sd > 0 ? 0 : 1.6))]);
-        }
-        if (pts.length > 1 && fade > 0.05) ribbon(ctx, pts.reverse(), (f.big ? 6 : 4) * fade, GALE);
+      const n = Math.max(2, Math.round(Math.hypot(tx - x, ty - y) / 40));
+      for (let i = 0; i < n; i++) {
+        const k = (i + 0.5) / n;
+        if (k > Math.min(1, p / 0.15)) break;
+        fxSprite(ctx, 'windspin', x + (tx - x) * k, y + (ty - y) * k - p * 10, { t: time + i * 0.13, rot: ang, scale: f.big ? 1.3 : 1, sy: 0.6, alpha: 1 - p });
       }
-      for (let i = 0; i < 4; i++) leaf(ctx, len * (0.2 + i * 0.22), -p * 26 * (1 + (i % 2)), 2.6 * fade, p * 10 + i, i % 2 ? GALE.leaf : GALE.leaf2);
-      ctx.restore();
+      fxSprite(ctx, 'leafgust', (x + tx) / 2, (y + ty) / 2 + 6, { p, flip: tx < x, scale: 1.2 });
       return true;
     }
     case 'windstep': {
-      // Tailwind at her heels: streaks of wind and a leaf peeling off behind her as she runs.
-      const dir = f.dir || 1;
-      const k = easeOut(p);
-      for (let i = 0; i < 3; i++) {
-        const yy = y - 4 - i * 9;
-        const len = 26 * (1 - p);
-        if (len > 1) ribbon(ctx, [[x - dir * (8 + 30 * k + len), yy], [x - dir * (8 + 30 * k + len / 2), yy - 2], [x - dir * (8 + 30 * k), yy]], 2.6 * (1 - p) + 0.5, GALE);
-      }
-      leaf(ctx, x - dir * (14 + 26 * k), y - 12 - k * 10, 2.4 * (1 - p), p * 9, GALE.leaf);
+      // Tailwind at her heels: a puff of dust and a gust of leaves peeling off behind her.
+      fxSprite(ctx, 'dust', x - (f.dir || 1) * 10, y + 2, { p, flip: !flip, scale: 0.8 });
+      fxSprite(ctx, 'leafgust', x - (f.dir || 1) * 14, y - 6, { p, flip: !flip, scale: 0.8 });
       return true;
     }
     case 'stormsky': {
-      // Storm Volley's sky: a green storm wash over the whole view and wind tearing across it in
-      // long streaks, while the arrows pour down (the rain itself is drawn by 'rain').
+      // Storm Volley's sky: a green storm cast over the whole view, and gusts of leaves blown
+      // across it while the arrows pour down (the rain itself is drawn by 'rain').
       const a = Math.min(1, p / 0.12) * (p > 0.8 ? (1 - p) / 0.2 : 1);
       ctx.globalAlpha = 0.22 * a;
       ctx.fillStyle = '#0f6a5a';
       wash(ctx);
-      ctx.globalAlpha = a;
-      for (let i = 0; i < 9; i++) {
-        const u = (p * 2.4 + rand(i * 2.7)) % 1;
-        const yy = 30 + rand(i * 5.3) * 260;
-        const xx = -120 + u * 900;
-        ribbon(ctx, [[xx - 140, yy + 30], [xx - 70, yy + 12 + Math.sin(i + p * 9) * 6], [xx, yy]], 3 + (i % 3), GALE);
-      }
       ctx.globalAlpha = 1;
+      for (let i = 0; i < 6; i++) {
+        const u = (p * 2 + rand(i * 2.7)) % 1;
+        fxSprite(ctx, 'leafgust', -60 + u * 760, 40 + rand(i * 5.3) * 220, { p: (u * 1.3) % 1, scale: 1.6, alpha: a });
+      }
       return true;
     }
     case 'deadeye': {
-      // A Deadeye: the sight flashes round the bow, rose and white, with four long glints.
-      const k = easeOut(p);
-      if (p < 0.4) starFlash(ctx, x, y, 26 * (1 - p), 4, 0, SIGHT, '#ffffff', 4 * (1 - p / 0.4));
-      shock(ctx, x, y, 8 + 22 * k, 8 + 22 * k, 2.4 * (1 - p), SIGHT);
-      shock(ctx, x, y, 4 + 30 * k, 4 + 30 * k, 1.4 * (1 - p), '#ffffff');
+      // A Deadeye: the rose star flashing round the bow, and a sight ring blowing out.
+      fxSprite(ctx, 'deadstar', x, y, { p, scale: 1.1 });
+      fxSprite(ctx, 'hitring', x, y, { p, scale: 2 });
       return true;
     }
     default:

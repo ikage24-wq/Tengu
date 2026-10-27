@@ -402,7 +402,8 @@ to clear it.
 - **Sound** — "real plus modern": recorded instruments (flute, strings, harp, guitar, horns,
   piano, choir, marimba, celesta and more, from the FluidR3 soundfont) and recorded effects (from
   Kenney's packs), mixed with synths, drums and effects made in code (credits in
-  `assets/audio/CREDITS.md`). Every song and effect is rendered once in a background worker and
+  `assets/audio/CREDITS.md`). The archer paths' effects are hand-drawn pixel effect art from
+  public-domain packs (credits in `assets/fx/CREDITS.md`). Every song and effect is rendered once in a background worker and
   played from buffers; the rules come from the research in `docs/audio/`. **Music**: a written
   song for every area: a swung village tune on flute, guitar and plucked strings; a running meadow
   song with marimba and pop drums; an accordion sea song in 6/8 at the harbor; sitar and oboe over
