@@ -7,7 +7,7 @@ const cache = new Map();
 
 // HD graphics: lighting, glow, and positions snapped to the screen's own pixels (so the camera
 // glides). Sprites stay crisp pixel art either way.
-export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false };
+export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false, glowPass: false };
 // Rounds a position to the pixel grid: whole game pixels, or in HD the screen's own (finer) pixels,
 // so the camera and everything in the world glide instead of stepping.
 export const snap = (v) => (gfx.hd ? Math.round(v * gfx.scale) / gfx.scale : Math.round(v));

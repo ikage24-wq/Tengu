@@ -2,6 +2,8 @@
 // the sky in soft rays, each map gets its own color grade, and a soft vignette frames the view.
 // Only in HD graphics; the pixel-art look skips all of it.
 
+import { gfx } from './pixel.js';
+
 // Per map theme: the warm light from above, the cool shade below and in the corners, how strong
 // the light rays are (0 for night and underground maps), and how strongly pools of light gather
 // around the hero and the portals (`pool`, strongest at night and underground, tinted `warm`).
@@ -29,9 +31,13 @@ const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 
 // ---------- Glow ----------
 
-// Effects are drawn as usual, and once more into a small layer (a quarter of the screen's size);
-// stretched back up over the screen, that copy spreads each spark into a soft halo.
+// The soft glow (the player's pick, the same as the effect strips' own, `FXHD` in tools/fx-art.js):
+// effects are drawn into a layer of their own, and once more into a small one (a quarter of the
+// screen's size). Only the bright parts of that copy are kept, so dark outlines never smudge; it
+// is blurred, laid down first, and the effects go on top of their glow. The effect strips carry
+// their glow already, so they sit the small copy out (`gfx.glowPass`).
 const GLOW_SHRINK = 4;
+const GLOW = 3.5;
 const layers = new Map();
 function layer(key, w, h) {
   let c = layers.get(key);
@@ -43,22 +49,55 @@ function layer(key, w, h) {
   return c;
 }
 
+function brightOnly(c) {
+  const g = c.getContext('2d', { willReadFrequently: true });
+  const img = g.getImageData(0, 0, c.width, c.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const k = (Math.max(d[i], d[i + 1], d[i + 2]) - 100) / 90;
+    d[i + 3] = k <= 0 ? 0 : k >= 1 ? d[i + 3] : d[i + 3] * k;
+  }
+  g.putImageData(img, 0, 0);
+}
+
 export function drawGlowing(ctx, draw) {
-  draw(ctx);
-  const c = layer('glow', Math.ceil(ctx.canvas.width / GLOW_SHRINK), Math.ceil(ctx.canvas.height / GLOW_SHRINK));
-  const g = c.getContext('2d');
+  const W = ctx.canvas.width;
+  const H = ctx.canvas.height;
+  const m = ctx.getTransform();
+  const art = layer('fxart', W, H);
+  const a = art.getContext('2d');
+  a.setTransform(1, 0, 0, 1, 0, 0);
+  a.clearRect(0, 0, W, H);
+  a.setTransform(m);
+  a.imageSmoothingEnabled = ctx.imageSmoothingEnabled;
+  draw(a);
+  const c = layer('glow', Math.ceil(W / GLOW_SHRINK), Math.ceil(H / GLOW_SHRINK));
+  const g = c.getContext('2d', { willReadFrequently: true });
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, c.width, c.height);
-  const m = ctx.getTransform();
   g.setTransform(m.a / GLOW_SHRINK, 0, 0, m.d / GLOW_SHRINK, m.e / GLOW_SHRINK, m.f / GLOW_SHRINK);
   g.imageSmoothingEnabled = true;
-  draw(g);
+  gfx.glowPass = true;
+  try {
+    draw(g);
+  } finally {
+    gfx.glowPass = false;
+  }
+  brightOnly(c);
+  const soft = layer('glowsoft', c.width, c.height);
+  const s = soft.getContext('2d');
+  s.clearRect(0, 0, soft.width, soft.height);
+  s.filter = `blur(${(GLOW * m.a) / GLOW_SHRINK}px) brightness(1.18)`;
+  s.drawImage(c, 0, 0);
+  s.filter = 'none';
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha = 0.7;
-  ctx.drawImage(c, 0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.globalAlpha = 0.9;
+  for (let i = 0; i < 3; i++) ctx.drawImage(soft, 0, 0, W, H);
+  ctx.globalAlpha = 1;
+  ctx.drawImage(art, 0, 0);
   ctx.restore();
 }
 

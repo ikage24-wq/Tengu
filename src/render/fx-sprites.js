@@ -6,6 +6,7 @@
 // drawings the next one fades in over the last, so effects flow instead of stepping.
 
 import { FX_SHEETS } from './fx-sheets.js';
+import { gfx } from './pixel.js';
 
 const images = {};
 function image(name) {
@@ -52,6 +53,8 @@ export function fxSprite(ctx, name, x, y, { p, t, frame, scale = 1, flip = false
   const { name: strip, s, k: big } = sheetOf(name);
   const img = s && image(strip);
   if (!img || alpha <= 0) return false;
+  // The strips carry their own glow: the screen's glow pass leaves them out.
+  if (gfx.glowPass) return true;
   const pos = frame ?? framePos(s, { p, t });
   if (pos < 0) return false;
   const f = Math.floor(pos);

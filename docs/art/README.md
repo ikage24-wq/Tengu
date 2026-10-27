@@ -173,6 +173,10 @@ carry an improvement across every part of the game it applies to.
     plus a soft glow blurred from the bright parts only (so dark outlines never smudge), drawn
     under the art. The game draws them smoothed and fades each drawing into the next (an
     in-between), so a 12 fps strip flows at the screen's rate.
+  - The small pieces still drawn in code (stars and shots in flight, trails, hit sparks, dust,
+    poofs, dungeon attacks) get the same soft glow on screen in HD: a bright-only copy of them is
+    blurred and laid under them (`drawGlowing` in post.js); the strips sit that pass out, since
+    their glow is already drawn in.
   - Every effect is a few key drawings: pop in, hold a beat, break into beads and sparkles.
   - Effects that play large (rings across a group, the magic circle, a whirlwind, a finisher's
     rupture) have big versions (`*big`) that play their strip larger; in HD that stays sharp, so
