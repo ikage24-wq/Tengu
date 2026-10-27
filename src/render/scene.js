@@ -6,7 +6,7 @@ import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
 import { drawHero } from './hero.js';
 import { drawMonster } from './monsters.js';
-import { drawDiscoZones, drawDiscoTop, drawDiscoCut, cutShot } from './discoboss.js';
+import { drawDiscoZones, drawDiscoTop, drawDiscoCut, drawDiscoCasts, cutShot } from './discoboss.js';
 
 // Scratch canvas for a cutscene's zoom.
 let zoomCanvas = null;
@@ -292,7 +292,10 @@ export function drawWorld(ctx, world, viewCam, time) {
     ctx.drawImage(src, sx * k, sy * k, w * k, h * k, 0, 0, VIEW_W, VIEW_H);
     ctx.restore();
   }
-  if (!shot) drawDiscoTop(ctx, world, cam, world.now);
+  if (!shot) {
+    drawDiscoCasts(ctx, world, cam, world.now, VIEW_W, VIEW_H);
+    drawDiscoTop(ctx, world, cam, world.now);
+  }
   // The flash of his transformation.
   if (world.disco?.flashAt && world.now - world.disco.flashAt < 0.7) {
     const e = (world.now - world.disco.flashAt) / 0.7;

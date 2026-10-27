@@ -227,43 +227,194 @@ function frog(ctx, fx, fy, s, raise, flip = 1) {
   ctx.stroke();
 }
 
+// A silver star dancer (a Frogtourage frog spinning): five points around a dark core, turning.
+function starFrog(ctx, x, y, r, spin, alpha = 1) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.scale(1, 0.92);
+  const pts = (rr) => {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = spin + (i / 10) * Math.PI * 2 - Math.PI / 2;
+      const k = i % 2 ? rr * 0.48 : rr;
+      ctx.lineTo(Math.cos(a) * k, Math.sin(a) * k);
+    }
+    ctx.closePath();
+  };
+  pts(r * 1.15);
+  ctx.fillStyle = 'rgba(200,220,255,0.35)';
+  ctx.fill();
+  pts(r);
+  const g = ctx.createLinearGradient(-r, -r, r, r);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.5, '#a8b2d0');
+  g.addColorStop(1, '#5e6890');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = '#2a3050';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  pts(r * 0.45);
+  ctx.fillStyle = '#2a2a48';
+  ctx.fill();
+  ctx.fillStyle = '#7fe0ff';
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// A jagged lightning line from (x0, y0) to (x1, y1), redrawn every few frames.
+function bolt(ctx, x0, y0, x1, y1, now, col = '#7fe8ff') {
+  const n = 8;
+  const seed = Math.floor(now * 20);
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    for (let i = 1; i < n; i++) {
+      const u = i / n;
+      const j = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453;
+      const off = ((j - Math.floor(j)) - 0.5) * 12;
+      ctx.lineTo(x0 + (x1 - x0) * u, y0 + (y1 - y0) * u + off);
+    }
+    ctx.lineTo(x1, y1);
+  };
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = col;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 4;
+  path();
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1.4;
+  path();
+  ctx.stroke();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 0.6;
+  path();
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A stepped wall of glowing glass cubes on one side of the stage, tallest against the line through
+// him and stepping down outward, rising cube by cube; the cubes are tinted through the rainbow.
+function cubeWall(ctx, x0, x1, side, gy, u) {
+  const C = 16;
+  const cols = Math.min(7, Math.floor((x1 - x0) / C));
+  for (let col = 0; col < cols; col++) {
+    const rows = cols - col;
+    for (let row = 0; row < rows; row++) {
+      const v = Math.max(0, Math.min(1, u * (cols + 2) - (row + col * 0.6)));
+      if (v <= 0) continue;
+      const cx = side < 0 ? x1 - 40 - (col + 1) * C : x0 + 40 + col * C;
+      const cy = gy - (row + 1) * (C - 2) + (1 - v) * 8;
+      ctx.globalAlpha = v * 0.8;
+      ctx.fillStyle = RAINBOW[(row + col) % RAINBOW.length];
+      ctx.fillRect(cx, cy, C - 2, C - 3);
+      ctx.globalAlpha = v * 0.7;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(cx + 1, cy + 1, C - 4, 3);
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx + 0.5, cy + 0.5, C - 3, C - 4);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Tall panes of rainbow glass standing along one side (Do the Hustle).
+function glassPanes(ctx, x0, x1, side, gy, u) {
+  const n = 3;
+  for (let i = 0; i < n; i++) {
+    const px = side < 0 ? x1 - 62 - i * 26 : x0 + 42 + i * 26;
+    const h = 120 * Math.min(1, u * 1.4 - i * 0.12);
+    if (h <= 0) continue;
+    const g = ctx.createLinearGradient(px, 0, px + 20, 0);
+    RAINBOW.forEach((c, k) => g.addColorStop(k / (RAINBOW.length - 1), c));
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = g;
+    ctx.fillRect(px, gy - h, 20, h);
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 0.5, gy - h + 0.5, 19, h - 1);
+  }
+  ctx.globalAlpha = 1;
+}
+
 // Floor telegraphs and hits, drawn under the actors. `now` is world time.
 export function drawDiscoZones(ctx, world, cam, now) {
   const b = world.disco;
   if (!b) return;
   const gy = world.map.groundY - cam.y;
   const H = ctx.canvas.height;
+  const X = (wx) => wx - cam.x;
+  const boss = world.mobs.find((m) => m.def.disco);
+  // Funky Floor: the stage floor turns to a red-orange and black checkerboard.
+  if (b.funky && now >= b.funky.from && now < b.funky.until) {
+    const T = 72;
+    const k = Math.min(1, (now - b.funky.from) / 0.3) * Math.min(1, (b.funky.until - now) / 0.3);
+    ctx.globalAlpha = k;
+    for (let i = Math.floor(cam.x / T) - 1; i < Math.floor(cam.x / T) + 12; i++) {
+      for (let r = 0; r < 3; r++) {
+        const on = ((i + r) % 2 + 2) % 2 === 0;
+        const g = ctx.createLinearGradient(0, gy - 2 + r * 26, 0, gy + 24 + r * 26);
+        g.addColorStop(0, on ? '#ff6a2a' : '#1a0c14');
+        g.addColorStop(1, on ? '#d8401a' : '#2a1018');
+        ctx.fillStyle = g;
+        ctx.fillRect(X(i * T), gy - 2 + r * 26, T, 26);
+      }
+    }
+    ctx.fillStyle = 'rgba(255,170,90,0.9)';
+    for (let i = Math.floor(cam.x / T) - 1; i < Math.floor(cam.x / T) + 12; i++) ctx.fillRect(X(i * T) - 1, gy - 2, 2, H);
+    ctx.globalAlpha = 1;
+  }
+  // The boss's red ring at his feet.
+  if (boss && boss.hp > 0 && b.cut == null) {
+    const bx = X(boss.x);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,60,80,0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(bx, gy + 2, 46, 9, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,120,140,0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(bx, gy + 2, 52, 11, 0, Math.PI * 0.1, Math.PI * 0.9);
+    ctx.stroke();
+    // The facing notch.
+    ctx.fillStyle = 'rgba(255,90,110,0.9)';
+    const fx = bx + (boss.dir < 0 ? -48 : 48);
+    ctx.beginPath();
+    ctx.moveTo(fx, gy - 2);
+    ctx.lineTo(fx + (boss.dir < 0 ? -6 : 6), gy + 2);
+    ctx.lineTo(fx, gy + 6);
+    ctx.fill();
+    ctx.restore();
+  }
   for (const z of b.zones) {
     const warn = now < z.at;
     const since = now - z.at;
-    const X = (wx) => wx - cam.x;
     if (z.kind === 'half') {
       const x0 = X(z.x0);
       const x1 = X(z.x1);
       if (warn) {
-        // A rainbow wall rising on that side, and the floor there tinted.
         const u = Math.min(1, (now - z.from) / Math.max(0.2, z.at - z.from));
-        ctx.fillStyle = `rgba(255,120,190,${0.08 + 0.14 * u})`;
-        ctx.fillRect(x0, gy - 140, x1 - x0, H);
-        const wx = z.side < 0 ? x0 + 6 : x1 - 24;
-        if (!z.blind) RAINBOW.forEach((c, i) => { ctx.fillStyle = c; ctx.globalAlpha = 0.85; ctx.fillRect(wx + i * 3, gy - 120 * u, 3, 120 * u); });
-        if (z.cubes) {
-          for (let col = 0; col < 5; col++) for (let row = 0; row < 5 - col; row++) {
-            const v = Math.max(0, Math.min(1, u * 6 - (row + col * 0.5)));
-            if (v <= 0) continue;
-            ctx.globalAlpha = v * 0.9;
-            ctx.fillStyle = '#f2f2ff';
-            const cx = z.side < 0 ? x0 + 4 + col * 12 : x1 - 16 - col * 12;
-            ctx.fillRect(cx, gy - 12 - row * 11 + (1 - v) * 5, 11, 10);
-            ctx.fillStyle = '#c4cbff';
-            ctx.fillRect(cx, gy - 4 - row * 11 + (1 - v) * 5, 11, 2);
-          }
-        }
-        ctx.globalAlpha = 1;
+        ctx.fillStyle = `rgba(255,140,200,${0.06 + 0.12 * u})`;
+        ctx.fillRect(x0, gy - 2, x1 - x0, H);
+        if (z.cubes) cubeWall(ctx, x0, x1, z.side, gy, u);
+        else if (!z.blind) glassPanes(ctx, x0, x1, z.side, gy, u);
       } else if (since < 0.45) {
-        const a = 0.65 * (1 - since / 0.45);
-        ctx.fillStyle = `rgba(255,${z.side < 0 ? 120 : 190},${z.side < 0 ? 210 : 140},${a})`;
+        const a = 1 - since / 0.45;
+        // The hit: a sweep of white light across that half, with a rainbow edge.
+        ctx.fillStyle = `rgba(255,240,255,${0.55 * a})`;
         ctx.fillRect(x0, 0, x1 - x0, H);
+        const edge = z.side < 0 ? x1 : x0;
+        RAINBOW.forEach((c, i) => { ctx.fillStyle = c; ctx.globalAlpha = 0.7 * a; ctx.fillRect(edge - z.side * (i * 3 + 3), 0, 3, H); });
+        ctx.globalAlpha = 1;
       }
     } else if (z.kind === 'tiles') {
       for (let i = Math.floor(cam.x / z.T) - 1; i < Math.floor(cam.x / z.T) + 12; i++) {
@@ -271,86 +422,153 @@ export function drawDiscoZones(ctx, world, cam, now) {
         const x0 = X(i * z.T);
         if (warn) {
           const u = Math.min(1, (now - z.from) / (z.at - z.from));
-          const blink = 0.5 + 0.5 * Math.sin(now * (10 + u * 20));
-          ctx.fillStyle = `rgba(255,70,60,${0.3 + 0.35 * u * blink})`;
-          ctx.fillRect(x0 + 1, gy - 2, z.T - 2, H);
-          ctx.fillStyle = `rgba(255,140,90,${0.25 + 0.25 * u})`;
-          ctx.fillRect(x0 + 1, gy - 2 - 26 * u, z.T - 2, 26 * u);
-          ctx.strokeStyle = '#fff0b0';
+          ctx.fillStyle = `rgba(255,${200 - 80 * u},120,${0.15 + 0.35 * u * (0.6 + 0.4 * Math.sin(now * (10 + 20 * u)))})`;
+          ctx.fillRect(x0 + 2, gy, z.T - 4, H);
+          ctx.strokeStyle = '#ffe0a0';
           ctx.lineWidth = 2;
-          ctx.strokeRect(x0 + 2, gy - 1, z.T - 4, H);
+          ctx.strokeRect(x0 + 2, gy, z.T - 4, H);
         } else if (since < 0.4) {
-          ctx.fillStyle = `rgba(255,160,90,${0.8 * (1 - since / 0.4)})`;
-          ctx.fillRect(x0, gy - 60 * (1 - since / 0.4), z.T, H);
+          const a = 1 - since / 0.4;
+          ctx.fillStyle = `rgba(255,220,160,${0.85 * a})`;
+          ctx.fillRect(x0, gy - 50 * a, z.T, H);
+          ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`;
+          ctx.fillRect(x0 + 4, gy - 50 * a, z.T - 8, 3);
         }
       }
     } else if (z.kind === 'cone') {
       const x0 = X(z.x0);
       const x1 = X(z.x1);
+      const ox = z.dir > 0 ? x0 : x1;
+      const fx = z.dir > 0 ? x1 : x0;
       if (warn) {
-        ctx.fillStyle = 'rgba(255,90,140,0.25)';
+        const u = Math.min(1, (now - z.from) / Math.max(0.2, z.at - z.from));
+        ctx.fillStyle = `rgba(255,90,140,${0.15 + 0.2 * u})`;
         ctx.beginPath();
-        const ox = z.dir > 0 ? x0 : x1;
-        ctx.moveTo(ox, gy - 60);
-        ctx.lineTo(z.dir > 0 ? x1 : x0, gy - 100);
-        ctx.lineTo(z.dir > 0 ? x1 : x0, gy + 4);
+        ctx.moveTo(ox, gy - 40);
+        ctx.lineTo(fx, gy - 100);
+        ctx.lineTo(fx, gy + 6);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255,190,220,0.8)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
       } else if (since < 0.4) {
-        ctx.fillStyle = `rgba(255,120,170,${0.7 * (1 - since / 0.4)})`;
-        ctx.fillRect(x0, gy - 110, x1 - x0, 116);
+        const a = 1 - since / 0.4;
+        // A crescent slash and sparks thrown along it.
+        ctx.strokeStyle = `rgba(255,255,255,${a})`;
+        ctx.lineWidth = 4 * a + 1;
+        ctx.beginPath();
+        ctx.arc(ox, gy - 40, 40 + since * 260, z.dir > 0 ? -0.6 : Math.PI - 0.6, z.dir > 0 ? 0.6 : Math.PI + 0.6);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(255,120,170,${0.5 * a})`;
+        ctx.fillRect(Math.min(x0, x1), gy - 100, Math.abs(x1 - x0), 106);
       }
     } else if (z.kind === 'wave') {
       if (now < z.from) continue;
       const wx = X(z.x0 + z.dir * z.speed * Math.max(0, now - z.at));
       if (warn) {
-        ctx.fillStyle = 'rgba(120,200,255,0.35)';
-        ctx.fillRect(X(z.x0) - 4, gy - 22, 8, 22);
-      } else if (wx > -40 && wx < ctx.canvas.width + 40) {
-        for (let r = 0; r < 2; r++) {
-          ctx.fillStyle = r ? 'rgba(200,240,255,0.95)' : 'rgba(110,200,255,0.75)';
-          ctx.fillRect(wx - 7 + r * 3, gy - 18 + r * 4, 14 - r * 6, 18 - r * 4);
+        // Arrows lighting up at the edge it will come from.
+        for (let i = 0; i < 3; i++) {
+          const on = Math.floor(now * 8) % 3 === i;
+          ctx.fillStyle = on ? '#bfefff' : 'rgba(120,200,255,0.5)';
+          const ax = X(z.x0) + z.dir * i * 9;
+          ctx.beginPath();
+          ctx.moveTo(ax, gy - 18);
+          ctx.lineTo(ax + z.dir * 7, gy - 12);
+          ctx.lineTo(ax, gy - 6);
+          ctx.fill();
         }
-        ctx.fillStyle = 'rgba(110,200,255,0.25)';
-        ctx.fillRect(wx - z.dir * 40, gy - 6, 40 * z.dir, 6);
+      } else if (wx > -40 && wx < ctx.canvas.width + 40) {
+        // A row of glowing white tiles racing over the floor, with a light trail.
+        const g = ctx.createLinearGradient(wx - z.dir * 70, 0, wx, 0);
+        g.addColorStop(0, 'rgba(160,220,255,0)');
+        g.addColorStop(1, 'rgba(200,240,255,0.6)');
+        ctx.fillStyle = g;
+        ctx.fillRect(Math.min(wx, wx - z.dir * 70), gy - 4, 70, 30);
+        ctx.fillStyle = 'rgba(240,250,255,0.95)';
+        ctx.fillRect(wx - 7, gy - 20, 14, 22);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(wx - 7.5, gy - 20.5, 15, 23);
       }
     } else if (z.kind === 'spot') {
-      // Spotlights drifting across the floor; when the timer runs out, stand in one.
+      // Spotlights: tall glowing cylinders of light with a bright ring where they meet the floor.
+      if (now < z.from) continue;
+      const fade = Math.min(1, (now - z.from) / 0.3);
       for (const l of z.lights) {
         const lx = X(l.x + l.vx * (now - z.from));
         const left = z.at - now;
-        ctx.fillStyle = `rgba(255,250,220,${0.14 + (left < 1 && left > 0 ? 0.12 * Math.sin(now * 20) : 0)})`;
+        const hot = left < 1 && left > 0 ? 0.15 * (0.5 + 0.5 * Math.sin(now * 20)) : 0;
+        const g = ctx.createLinearGradient(lx - z.w / 2, 0, lx + z.w / 2, 0);
+        g.addColorStop(0, `rgba(255,250,235,${0.18 * fade})`);
+        g.addColorStop(0.5, `rgba(255,250,235,${(0.45 + hot) * fade})`);
+        g.addColorStop(1, `rgba(255,250,235,${0.18 * fade})`);
+        ctx.fillStyle = g;
+        ctx.fillRect(lx - z.w / 2, 0, z.w, gy + 4);
+        ctx.strokeStyle = `rgba(255,255,255,${0.5 * fade})`;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(lx - 4, 0);
-        ctx.lineTo(lx + 4, 0);
-        ctx.lineTo(lx + z.w / 2, gy + 4);
+        ctx.moveTo(lx - z.w / 2, 0);
         ctx.lineTo(lx - z.w / 2, gy + 4);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,250,220,0.45)';
+        ctx.moveTo(lx + z.w / 2, 0);
+        ctx.lineTo(lx + z.w / 2, gy + 4);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(255,250,220,${0.9 * fade})`;
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.ellipse(lx, gy + 4, z.w / 2, 6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(255,250,220,${0.25 * fade})`;
         ctx.fill();
       }
     } else if (z.kind === 'track') {
-      // A frog moonwalks along the track, leaving it glowing; then it bursts.
+      // A silver star frog spins along the track, lighting it pink; then it bursts.
       const x0 = X(z.x0);
       const x1 = X(z.x1);
       const u = Math.max(0, Math.min(1, (now - z.from) / (z.walk ?? 1.5)));
+      if (now < z.from) continue;
       const head = z.dir > 0 ? x0 + (x1 - x0) * u : x1 - (x1 - x0) * u;
       if (warn) {
-        ctx.fillStyle = 'rgba(255,90,170,0.35)';
-        if (z.dir > 0) ctx.fillRect(x0, gy - 2, head - x0, 10);
-        else ctx.fillRect(head, gy - 2, x1 - head, 10);
-        frog(ctx, head, gy, 1.5, 0, -z.dir);
+        ctx.fillStyle = 'rgba(255,90,170,0.3)';
+        if (z.dir > 0) ctx.fillRect(x0, gy - 2, head - x0, H);
+        else ctx.fillRect(head, gy - 2, x1 - head, H);
+        ctx.strokeStyle = 'rgba(255,170,220,0.9)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(Math.min(x0, x1), gy - 2, Math.abs(x1 - x0), H);
+        starFrog(ctx, head, gy - 18, 14, now * -6 * z.dir);
       } else if (since < 0.45) {
-        ctx.fillStyle = `rgba(255,110,180,${0.75 * (1 - since / 0.45)})`;
-        ctx.fillRect(x0, gy - 70 * (1 - since / 0.45), x1 - x0, H);
+        const a = 1 - since / 0.45;
+        ctx.fillStyle = `rgba(255,140,200,${0.8 * a})`;
+        ctx.fillRect(x0, gy - 70 * a, x1 - x0, H);
+        starFrog(ctx, z.dir > 0 ? x1 : x0, gy - 18 - since * 60, 14, now * -10, a);
+      }
+    } else if (z.kind === 'beats') {
+      // Eighth Beats: red rings closing in under you, then a burst.
+      if (now < z.from) continue;
+      const px = X(z.x ?? world.body.x);
+      if (warn) {
+        const u = Math.min(1, (now - z.from) / (z.at - z.from));
+        for (let i = 0; i < 3; i++) {
+          const r = 34 - ((now * 30 + i * 11) % 33) * (0.4 + 0.6 * u);
+          ctx.strokeStyle = `rgba(255,70,90,${0.5 + 0.4 * u})`;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.ellipse(px, gy + 3, Math.max(4, r), Math.max(1, r * 0.22), 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (since < 0.35) {
+        const a = 1 - since / 0.35;
+        ctx.fillStyle = `rgba(255,240,240,${0.8 * a})`;
+        ctx.beginPath();
+        ctx.ellipse(px, gy - 10, 34 * (1 + since * 2), 30 * a, 0, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
   }
-  // Frog dancers on their pedestals for Let's Dance: each poses a hand when its turn comes.
+  // Frog dancers on their pedestals for Let's Dance: each poses a hand when its turn comes, and
+  // blue lightning tethers it to him while its cleave is coming.
   if (b.frogs) {
     for (const f of b.frogs) {
-      const x = f.x - cam.x;
+      const x = X(f.x);
       const pop = Math.max(0, Math.min(1, (now - f.from) / 0.25));
       if (pop <= 0) continue;
       const raise = now >= f.poseAt ? f.hand : 0;
@@ -362,6 +580,131 @@ export function drawDiscoZones(ctx, world, cam, now) {
         ctx.fill();
       }
       frog(ctx, x, gy - 30, 1.6 * Math.min(1, pop * 1.2), raise);
+    }
+    const tether = b.zones.find((z) => z.dance && !z.hit && now >= z.from);
+    if (tether && boss) {
+      const i = b.zones.filter((z) => z.dance).indexOf(tether);
+      const f = b.frogs[i];
+      if (f) bolt(ctx, X(boss.x), gy - 70, X(f.x), gy - 50, now);
+    }
+  }
+  // Pillars of light falling where frogs appear.
+  for (const c of b.casts ?? []) {
+    if (c.kind !== 'pillars') continue;
+    const e = now - (c.at - 0.5);
+    if (e < 0 || e > 1.1) continue;
+    for (const wx of c.xs) {
+      const px = X(wx);
+      const k = e < 0.3 ? e / 0.3 : 1 - (e - 0.3) / 0.8;
+      const g = ctx.createLinearGradient(px - 18, 0, px + 18, 0);
+      g.addColorStop(0, 'rgba(160,220,255,0)');
+      g.addColorStop(0.5, `rgba(230,245,255,${0.8 * k})`);
+      g.addColorStop(1, 'rgba(160,220,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(px - 18, 0, 36, gy + 4);
+      ctx.strokeStyle = `rgba(200,240,255,${k})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(px, gy + 4, 22 + e * 20, 5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+}
+
+// The big casts over the stage: the dark red orb (Disco Infernal, the enrage) and the white-red
+// burst with rainbow speed lines (Celebrate Good Times, Let's Pose!).
+export function drawDiscoCasts(ctx, world, cam, now, W, H) {
+  const b = world.disco;
+  if (!b?.casts) return;
+  const gy = world.map.groundY - cam.y;
+  for (const c of b.casts) {
+    const x = c.x - cam.x;
+    const y = gy - 70;
+    if (c.kind === 'orb') {
+      const lead = c.big ? 3 : 1.2;
+      const e = now - (c.at - lead);
+      if (e < 0 || e > lead + 0.6) continue;
+      if (e < lead) {
+        // Swelling: a dark red sphere with a glow, a rune ring turning round it.
+        const u = e / lead;
+        const r = 20 + u * (c.big ? 160 : 110);
+        const g = ctx.createRadialGradient(x, y, r * 0.1, x, y, r);
+        g.addColorStop(0, 'rgba(255,220,200,0.9)');
+        g.addColorStop(0.25, 'rgba(230,60,70,0.75)');
+        g.addColorStop(0.8, 'rgba(90,10,30,0.6)');
+        g.addColorStop(1, 'rgba(255,90,110,0.0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(now * 1.4);
+        ctx.strokeStyle = 'rgba(255,200,190,0.9)';
+        ctx.lineWidth = 1.2;
+        for (const rr of [r * 0.62, r * 0.7]) {
+          ctx.beginPath();
+          ctx.arc(0, 0, rr, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          ctx.save();
+          ctx.rotate(a);
+          ctx.strokeRect(r * 0.63, -2, 5, 4);
+          ctx.beginPath();
+          ctx.moveTo(r * 0.3, 0);
+          ctx.lineTo(r * 0.55, 0);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.rotate(-now * 2.8);
+        ctx.beginPath();
+        for (let i = 0; i <= 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          ctx.lineTo(Math.cos(a) * r * 0.42, Math.sin(a) * r * 0.42);
+        }
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        // The burst: a white flash ring rushing out.
+        const u = (e - lead) / 0.6;
+        ctx.fillStyle = `rgba(255,230,230,${0.6 * (1 - u)})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = `rgba(255,120,140,${1 - u})`;
+        ctx.lineWidth = 6 * (1 - u) + 1;
+        ctx.beginPath();
+        ctx.arc(x, y, 60 + u * 360, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (c.kind === 'burst') {
+      const e = now - c.at;
+      if (e < 0 || e > 0.8) continue;
+      const u = e / 0.8;
+      // Rainbow speed lines rushing out from him.
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 40; i++) {
+        const a = i * 2.39996;
+        const r0 = 20 + u * 140 + (i % 5) * 12;
+        const len = 30 + (i % 7) * 12;
+        ctx.strokeStyle = i % 3 === 0 ? `rgba(255,255,255,${1 - u})` : RAINBOW[i % RAINBOW.length];
+        ctx.globalAlpha = 1 - u;
+        ctx.lineWidth = 1.5 + (i % 3);
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0 * 0.7);
+        ctx.lineTo(x + Math.cos(a) * (r0 + len), y + Math.sin(a) * (r0 + len) * 0.7);
+        ctx.stroke();
+      }
+      ctx.restore();
+      const g = ctx.createRadialGradient(x, y, 2, x, y, 80);
+      g.addColorStop(0, `rgba(255,255,255,${1 - u})`);
+      g.addColorStop(0.4, `rgba(255,90,120,${0.8 * (1 - u)})`);
+      g.addColorStop(1, 'rgba(255,60,90,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, 80, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 }
@@ -386,6 +729,62 @@ export function drawDiscoTop(ctx, world, cam, now) {
     ctx.fillStyle = c.color ?? '#ffe36b';
     ctx.fillText(c.text, 0, 0);
     ctx.restore();
+  }
+  // PERFECT GROOVE: chunky gold letters with a neon dancer sign, bouncing in.
+  if (b.perfectAt != null) {
+    const e = now - b.perfectAt;
+    if (e >= 0 && e < 2.4) {
+      const W = ctx.canvas.width / (ctx.getTransform().a || 1);
+      const s = Math.min(1, e / 0.15) * (1 + 0.25 * Math.max(0, 1 - (e - 0.15) / 0.25));
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, (2.4 - e) * 3);
+      ctx.translate(W / 2, 120);
+      ctx.scale(s, s);
+      ctx.rotate(-0.08);
+      for (const [word, dx, dy] of [['PERFECT', -30, -14], ['GROOVE', 24, 22]]) {
+        ctx.font = '900 34px "Impact", "Arial Black", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 9;
+        ctx.strokeStyle = '#3a1a08';
+        ctx.strokeText(word, dx, dy);
+        const g = ctx.createLinearGradient(0, dy - 28, 0, dy);
+        g.addColorStop(0, '#fff6b0');
+        g.addColorStop(0.5, '#ffc83a');
+        g.addColorStop(1, '#e07a10');
+        ctx.fillStyle = g;
+        ctx.fillText(word, dx, dy);
+      }
+      // A tiny neon dancer line-up beside it, the bulbs chasing.
+      for (let i = 0; i < 12; i++) {
+        const on = (i + Math.floor(now * 12)) % 3 === 0;
+        ctx.fillStyle = on ? '#fff6c8' : '#ff8fd0';
+        ctx.beginPath();
+        ctx.arc(70 + (i % 6) * 8, -26 + Math.floor(i / 6) * 10, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+  // Burn Baby Burn: a countdown over your head while a spotlight timer runs.
+  const spot = b.zones.find((z) => z.kind === 'spot' && !z.hit && now >= z.from);
+  if (spot) {
+    const left = Math.max(0, spot.at - now);
+    const px = world.body.x - cam.x;
+    const py = world.body.y - cam.y - 62;
+    ctx.fillStyle = 'rgba(40,10,30,0.85)';
+    ctx.beginPath();
+    ctx.arc(px, py, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = left < 1.5 ? '#ff5a6a' : '#ffb347';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(px, py, 9, -Math.PI / 2, -Math.PI / 2 + (left / (spot.at - spot.from)) * Math.PI * 2);
+    ctx.stroke();
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(String(Math.ceil(left)), px, py + 3);
   }
   // Blown hearts and confetti from his moves.
   for (const h of b.hearts ?? []) {

@@ -48,6 +48,10 @@ const STEPS = [
 
 const atk = (m, k) => Math.round(m.def.atk * k);
 const call = (w, text, color, dur = 1.6, size = 18) => w.disco.callouts.push({ text, color, at: w.now, dur, size });
+// A big visual cast on the stage: `orb` (a dark red sphere with a turning rune ring that swells over
+// him and bursts), `burst` (a white-red blast with rainbow speed lines), `pillars` (light falling
+// where frogs appear).
+const cast = (w, kind, at, extra = {}) => w.disco.casts.push({ kind, at, ...extra });
 const sideOf = (w, m) => (w.body.x < m.x ? -1 : 1);
 // The half of the stage on one side of the boss.
 const half = (w, m, side) => (side < 0 ? [0, m.x] : [m.x, w.map.width]);
@@ -82,19 +86,27 @@ function twist(w, m, s, snaps) {
 
 function celebrate(w, m, s) {
   zone(w, { kind: 'raid', from: s, at: s + 0.7, dmg: atk(m, 0.5) });
+  cast(w, 'burst', s + 0.7, { x: m.x });
   call(w, 'Celebrate Good Times!', '#ffe36b');
 }
 
 function funky(w, m, s) {
   const T = 72;
+  // The whole floor turns to a red-orange and black checkerboard while it lasts.
+  w.disco.funky = { from: s, until: s + 5 };
   for (let i = 0; i < 4; i++) zone(w, { kind: 'tiles', T, parity: i % 2, from: s + i * 1.2, at: s + i * 1.2 + 0.9, dmg: atk(m, 1.2) });
   call(w, 'Funky Floor!', '#ffb347');
 }
 
 function discoInfernal(w, m, s) {
-  const lights = [0, 1, 2].map((i) => ({ x: 120 + i * 380 + Math.random() * 80, vx: (i % 2 ? -1 : 1) * (40 + Math.random() * 30) }));
-  zone(w, { kind: 'spot', lights, w: 60, from: s, at: s + 4.5, dmg: atk(m, 2.2), until: s + 8.5 });
-  zone(w, { kind: 'spot', lights, w: 60, from: s, at: s + 8, dmg: atk(m, 2.2) });
+  // The cast: a dark red orb swells over him and bursts (a hit on everyone), then the spotlights
+  // drop and drift. When "Burn Baby Burn" runs out, be standing in one.
+  cast(w, 'orb', s + 1.2, { x: m.x });
+  zone(w, { kind: 'raid', from: s, at: s + 1.2, dmg: atk(m, 0.4) });
+  // Three of them, spread around where you stand, drifting slowly back and forth over the stage.
+  const lights = [-1, 0, 1].map((i) => ({ x: Math.max(80, Math.min(w.map.width - 80, w.body.x + i * 200 + (Math.random() - 0.5) * 60)), vx: (i % 2 ? -1 : 1) * (18 + Math.random() * 14) }));
+  zone(w, { kind: 'spot', lights, w: 56, from: s + 1.3, at: s + 5, dmg: atk(m, 2.2), until: s + 8.5 });
+  zone(w, { kind: 'spot', lights, w: 56, from: s + 1.3, at: s + 8, dmg: atk(m, 2.2) });
   call(w, 'Bask in the spotlight!', '#fff6c8');
 }
 
@@ -124,8 +136,9 @@ function letsDance(w, m, s) {
 
 function letsPose(w, m, s) {
   const perfect = w.disco.groove >= 8;
-  if (perfect) call(w, 'PERFECT GROOVE!', '#ffe36b', 2.2, 24);
   zone(w, { kind: 'raid', from: s, at: s + 0.6, dmg: atk(m, perfect ? 0.2 : 0.5 + 0.25 * (8 - w.disco.groove)) });
+  cast(w, 'burst', s + 0.6, { x: m.x });
+  if (perfect) w.disco.perfectAt = s + 0.2;
   w.disco.hearts.push({ x: m.x + m.dir * 30, y: m.y - 80, dx: m.dir, at: s + 0.6 });
   w.disco.frogs = null;
 }
@@ -133,12 +146,17 @@ function letsPose(w, m, s) {
 function frogtourage(w, m, s) {
   // Two frogs moonwalk across the floor; their tracks burst a beat after they finish.
   const segs = Math.random() < 0.5 ? [[60, 400], [700, 1040]] : [[280, 820]];
-  segs.forEach(([x0, x1], i) => zone(w, { kind: 'track', x0, x1, dir: i % 2 ? -1 : 1, from: s + 0.3, walk: 1.6, at: s + 2.6, dmg: atk(m, 1.5) }));
+  // Pillars of light drop where the frogs arrive; they spin in as silver stars and moonwalk.
+  cast(w, 'pillars', s + 0.5, { xs: segs.map(([x0, x1], i) => (i % 2 ? x1 : x0)) });
+  segs.forEach(([x0, x1], i) => zone(w, { kind: 'track', x0, x1, dir: i % 2 ? -1 : 1, from: s + 0.6, walk: 1.6, at: s + 2.8, dmg: atk(m, 1.5) }));
+  // Eighth Beats: a red ring locks under you and bursts.
+  zone(w, { kind: 'beats', from: s + 0.4, at: s + 3.4, dmg: atk(m, 0.6) });
   call(w, 'Back to it, dancers!', '#9fff8f');
 }
 
 function enrage(w, m, s) {
   zone(w, { kind: 'raid', from: s, at: s + 3, dmg: 999999 });
+  cast(w, 'orb', s + 3, { x: m.x, big: true });
   call(w, 'Hi-NRG Fever!', '#ff6b8a', 3, 24);
 }
 
@@ -148,7 +166,7 @@ function inZone(w, z) {
   if (z.kind === 'half' || z.kind === 'cone') return b.x >= z.x0 && b.x <= z.x1 && (z.kind === 'half' || b.y > w.map.groundY - 90);
   if (z.kind === 'tiles') return b.onGround && ((Math.floor(b.x / z.T) % 2) + 2) % 2 === z.parity;
   if (z.kind === 'track') return b.onGround && b.x >= z.x0 && b.x <= z.x1;
-  if (z.kind === 'raid') return true;
+  if (z.kind === 'raid' || z.kind === 'beats') return true;
   if (z.kind === 'spot') return !z.lights.some((l) => Math.abs(b.x - (l.x + l.vx * (w.now - z.from))) < z.w / 2);
   return false;
 }
@@ -160,7 +178,7 @@ export function tickDisco(world, dt) {
     world.cutscene = false;
     return;
   }
-  const b = (world.disco ??= { zones: [], callouts: [], hearts: [], frogs: null, groove: 0 });
+  const b = (world.disco ??= { zones: [], callouts: [], hearts: [], casts: [], frogs: null, groove: 0 });
   const brain = (m.brain ??= { form: 'human', move: 'cut', moveT: world.now, cutAt: world.now, step: -1, stepAt: 0, started: world.now + CUT, charge: 0, fightT: 0 });
   if (m.hp <= 0) {
     b.zones = [];
@@ -271,4 +289,7 @@ export function tickDisco(world, dt) {
   b.zones = b.zones.filter((z) => !(z.hit && world.now - z.at > 0.6) && !(z.until && world.now > z.until));
   b.callouts = b.callouts.filter((c) => world.now - c.at < c.dur);
   b.hearts = b.hearts.filter((h) => world.now - h.at < 1.6);
+  b.casts = b.casts.filter((c) => world.now - c.at < 1.6);
+  // Eighth Beats rings stay under you until they burst.
+  for (const z of b.zones) if (z.kind === 'beats' && !z.hit) z.x = world.body.x;
 }

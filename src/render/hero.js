@@ -2050,7 +2050,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     return;
   }
   drawWeapon();
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
+  // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
+  // the heavy ink of a swinging weapon arm.
+  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 
