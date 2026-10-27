@@ -42,8 +42,6 @@ const BASE_DELAY = 0.5; // seconds between attacks at normal speed
 // Linking a skill onto a finisher: how soon after it connects, and the bonus (% damage).
 export const LINK_WINDOW = 0.7;
 const LINK_BONUS = 25;
-// How long the world holds still for a finisher's cut-in (real seconds; hit-stop freezes it).
-const CUTIN_HOLD = 0.55;
 // Shots and spells leave from the hands, chest high above the feet.
 const HAND_Y = 17;
 const PROJECTILE_SPEED = 620;
@@ -146,12 +144,8 @@ export function cast(world, skillId, rng = Math.random) {
       world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'LINK!', color: '#ffd24f', t: 0, link: true });
       world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.4 });
     }
-    // A finisher spends the hit counter, with a cut-in while the world holds its breath.
-    if (s.hitsCost) {
-      world.hits = 0;
-      world.cutin = { skill: skillId, name: s.name, school: s.school, at: world.now };
-      world.hitstop = Math.max(world.hitstop ?? 0, CUTIN_HOLD);
-    }
+    // A finisher spends the hit counter.
+    if (s.hitsCost) world.hits = 0;
     if (params.rageGain) addRage(world, params.rageGain);
     if (s.rageCost) {
       scale += Math.round((100 * world.rage) / RAGE_MAX);

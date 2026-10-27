@@ -615,48 +615,92 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'gather': {
-      // Power gathering before a big blow: motes of the school's colour pulled in from all around
-      // to the hero's chest, faster as they arrive, around a glow that swells until the blow lands.
-      const cx = x + (f.dir || 1) * 4;
-      const cy = y - 24;
-      const n = f.big ? 14 : 9;
-      const R = f.big ? 70 : 50;
+      // Power gathering before a big blow, at the weapon hand: a ring of the school's colour that
+      // closes in on it, motes pulled in along with it (embers for rage, diamonds of light for
+      // holy), and a small soft orb that swells until the blow lands.
+      const cx = x + (f.dir || 1) * 9;
+      const cy = y - 22;
+      const ring = 1 - easeIn(p);
+      shock(ctx, cx, cy, 6 + (f.big ? 34 : 24) * ring, (6 + (f.big ? 34 : 24) * ring) * 0.85, 1 + 2 * p, c.main);
+      const n = f.big ? 10 : 7;
       for (let i = 0; i < n; i++) {
-        const a = rand(i * 3.3 + 1) * TAU;
-        const start = rand(i * 1.9) * 0.45;
-        const u = (p - start) / (1 - start);
-        if (u <= 0 || u >= 1) continue;
-        const d = R * (1 - easeIn(u));
+        const a = (i / n) * TAU + f.dir * p * 2;
+        const u = (p * 1.6 + rand(i * 1.9)) % 1;
+        const d = (f.big ? 40 : 30) * (1 - easeIn(u));
         const px = cx + Math.cos(a) * d;
         const py = cy + Math.sin(a) * d * 0.8;
-        if (f.school === 'holy') diamond(ctx, px, py, 2.4 * (1 - u * 0.5), i % 2 ? '#ffffff' : c.main);
-        else needle(ctx, px, py, a + Math.PI, 6 + 8 * u, 2.2, i % 3 ? c.main : '#ffb347', c.light);
+        if (f.school === 'holy') diamond(ctx, px, py, 1.8 * (0.5 + u), i % 2 ? '#ffffff' : c.main);
+        else needle(ctx, px, py, a + Math.PI, 4 + 6 * u, 1.8, i % 3 ? c.main : '#ffb347', c.light);
       }
-      const g = easeIn(p);
-      if (f.school === 'holy') bloom(ctx, cx, cy, 6 + 12 * g, 6, time * 2, c.main, '#ffffff', 0.6);
-      else starFlash(ctx, cx, cy, 6 + 14 * g, 6, time * 5, c.main, '#ffd27a', 2 + 3 * g);
+      const orb = (f.big ? 7 : 5) * easeIn(p) + 1.5;
+      ctx.fillStyle = c.main;
+      ctx.beginPath();
+      ctx.arc(cx, cy, orb + 1.2, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx, cy, orb * 0.6, 0, TAU);
+      ctx.fill();
       return true;
     }
     case 'ragehit': {
-      // A Berserker's blow: a jagged red flash on the target and shards of rage flung outward.
+      // A Berserker's blow: a brutal red gash torn across the target along the swing (it shoots
+      // out from the middle, then thins to a line), a jagged flash under it, shards flung the way
+      // the blow went, and a dark ring.
       const cy = y - (f.h ?? 24) / 2;
-      const k = stepped(p, 5);
-      if (k < 0.5) starFlash(ctx, x, cy, (f.big ? 20 : 12) * (k < 0.2 ? 0.7 : 1 - k), 5, f.seed * 6, '#f0303f', '#ffd27a', 3 * (1 - k));
-      for (let i = 0; i < (f.big ? 6 : 4); i++) {
-        const a = (i / (f.big ? 6 : 4)) * TAU + f.seed * 6;
-        const d = easeOut(p) * (f.big ? 26 : 16);
-        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d, a, 7 * (1 - p) + 1, 2.2 * (1 - p) + 0.6, i % 2 ? '#f0303f' : '#ff8a3c', '#ffd27a');
+      const dir = f.dir || 1;
+      const big = f.big ? 1.5 : 1;
+      const open = easeOut(Math.min(1, p / 0.25));
+      const thin = Math.max(0, 1 - p * 1.6);
+      if (p < 0.3) starFlash(ctx, x, cy, 14 * big * (0.6 + 0.6 * open) * (1 - p / 0.3), 5, f.seed * 6, '#f0303f', '#ffd27a', 3.5 * big * (1 - p / 0.3));
+      const ang = dir > 0 ? -0.55 : Math.PI + 0.55;
+      const len = 26 * big * open;
+      if (thin > 0) {
+        for (const [w, color] of [[6 * big * thin + 1.5, '#5a0a1e'], [4.4 * big * thin + 0.8, '#f0303f'], [1.6 * big * thin + 0.3, '#fff0d0']]) {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(x - Math.cos(ang) * len, cy - Math.sin(ang) * len);
+          ctx.quadraticCurveTo(x - Math.sin(ang) * w, cy + Math.cos(ang) * w, x + Math.cos(ang) * len, cy + Math.sin(ang) * len);
+          ctx.quadraticCurveTo(x + Math.sin(ang) * w, cy - Math.cos(ang) * w, x - Math.cos(ang) * len, cy - Math.sin(ang) * len);
+          ctx.fill();
+        }
+      }
+      shock(ctx, x, cy, 6 + 20 * big * easeOut(p), (6 + 20 * big * easeOut(p)) * 0.8, 2.4 * (1 - p), '#c8243a');
+      for (let i = 0; i < (f.big ? 7 : 5); i++) {
+        const a = (dir > 0 ? 0 : Math.PI) + (rand(i * 3.7 + f.seed * 11) - 0.5) * 2.2;
+        const d = easeOut(p) * (14 + rand(i * 2.3) * 18) * big;
+        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d + p * p * 10, a, (7 + 3 * big) * (1 - p) + 1, 2.4 * (1 - p) + 0.5, i % 2 ? '#f0303f' : '#ff8a3c', '#ffd27a');
       }
       return true;
     }
     case 'holyhit': {
-      // A Paladin's blow: a small bloom of light on the target and diamonds that rise off it.
+      // A Paladin's blow: a four-pointed glint of light that swells past full size and settles
+      // back as it fades, a thin golden ring, and diamonds lifting off the target.
       const cy = y - (f.h ?? 24) / 2;
-      const k = stepped(p, 5);
-      if (k < 0.6) bloom(ctx, x, cy, (f.big ? 16 : 10) * (0.7 + k * 0.5), 5, f.seed * 4, c.main, '#ffffff', 0.6 + k * 1.4);
+      const big = f.big ? 1.45 : 1;
+      const pop = p < 0.18 ? easeOut(p / 0.18) * 1.15 : 1.15 - 0.15 * easeOut(Math.min(1, (p - 0.18) / 0.2));
+      const fade = 1 - easeIn(p);
+      const r = 15 * big * pop * fade;
+      if (r > 0.6) {
+        const ray = (len, w, color) => {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          for (let i = 0; i < 4; i++) {
+            const a = (i * Math.PI) / 2 + f.seed;
+            ctx.lineTo(x + Math.cos(a) * len, cy + Math.sin(a) * len);
+            ctx.lineTo(x + Math.cos(a + Math.PI / 4) * w, cy + Math.sin(a + Math.PI / 4) * w);
+          }
+          ctx.closePath();
+          ctx.fill();
+        };
+        if (inked(ctx)) ray(r + 1.5, r * 0.26 + 1.2, deep(c.deep));
+        ray(r, r * 0.26, c.main);
+        ray(r * 0.62, r * 0.16, '#ffffff');
+      }
+      shock(ctx, x, cy, 5 + 18 * big * easeOut(p), (5 + 18 * big * easeOut(p)) * 0.9, 2 * (1 - p), c.main);
       for (let i = 0; i < 3; i++) {
-        const u = Math.max(0, p - i * 0.1);
-        diamond(ctx, x + (rand(i + f.seed * 5) - 0.5) * 22, cy - easeOut(u) * 24, 2.4 * (1 - u) + 0.4, i % 2 ? '#ffffff' : c.main);
+        const u = Math.max(0, p - i * 0.08);
+        diamond(ctx, x + (rand(i + f.seed * 5) - 0.5) * 24, cy - easeOut(u) * 26, 2.6 * (1 - u) + 0.4, i % 2 ? '#ffffff' : c.main);
       }
       return true;
     }

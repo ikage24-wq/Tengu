@@ -159,14 +159,19 @@ carry an improvement across every part of the game it applies to.
   reads as weakness and made finishers flicker. Only blink while recovering from a hit.
 - Moves cut into each other ease out of the previous pose over about 70 ms (`hero.js`
   `blendMove`, `scene.js` BLEND): angles take the short way round, rig tweaks switch halfway.
-- Finisher cut-ins (`hud.js` `drawCutin`): a gently slanted band (about 60 px rise over the screen,
-  steeper looks like a falling slab), the hero's head and shoulders at 4x inside it, the name
-  sliding in a beat behind, and it draws over the whole HUD.
-- Power that builds (Rage, Faith) shows on the hero in stages, not as one fade: heat, then flames
-  low, then flames climbing to the shoulders, then a pulsing ring at full; or a glow, a ring of
-  light, a halo and rays, then wings. Rays and glows over the dark purple maps need a warm
-  gradient (`#fff2a0` to `#ffd24f`); flat pale fills read grey there. Keep embers and motes out
-  to the sides (`motes` `inner`) so they never cross the face.
+- No finisher cut-ins: the player asked for them to be removed.
+- The player prefers effects that move smoothly over held anime frames: `fxkit.js` `stepped` now
+  passes progress straight through.
+- Effects keep playing through hit-stop (`main.js`: only the world freezes), as Toylogic's notes
+  say; otherwise a one-frame flash, a white first drawing or a wash hangs on screen as a blob.
+- Smears trace the blade's own path (`effects.js` `bladePath`/`bladeSmear`): the tip and hand
+  sampled from the hero's pose over the cut, trimmed to where the blade is actually moving (drop
+  the slow wind-up), corner-cut twice so it curves, drawn as a tapered ribbon. Every move, old or
+  new, gets a smear that matches it.
+- Monster hit flash is a light tint (0.8, then a short fade), not solid white: a crowd hit at
+  once otherwise blooms into white blobs.
+- A body twist (`turn`) below about 0.8 squashes a front-facing chibi into a sliver; keep wind-up
+  twists at 0.84 or more.
 - A giant sword of light must be wide (blade about 44 px with a winged cross-guard) or it reads
   as one more pillar.
 - Holy pillars (`strikes.js` `pillar`): a thin ray first, then a tapered wedge (narrow at the sky,

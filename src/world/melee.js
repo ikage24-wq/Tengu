@@ -96,6 +96,23 @@ export const COMBOS = {
 
 export const hasCombo = (weaponType) => Boolean(COMBOS[weaponType]);
 
+// The warrior paths' own basic combos. The Paladin: a measured cut behind the shield arm, a shield
+// shove that dazes, a lunging thrust, and a two-handed smite. The Berserker: a huge wound-up
+// cleave, the return cleave, and a leaping skull-splitter; slower, and every one heavy.
+export const PATH_COMBOS = {
+  paladin: [
+    { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
+    { move: 'bash', dur: 0.44, step: 12, strikes: [{ at: 0.42, pct: 85, reach: 60, h: 62, knock: 120, stun: 0.4, burst: 'aegis' }] },
+    { move: 'pthrust', dur: 0.4, step: 16, strikes: [{ at: 0.42, pct: 105, reach: 90, h: 44, knock: 70, pierce: true, targets: 2 }] },
+    { move: 'smite', dur: 0.66, step: 12, finisher: true, strikes: [{ at: 0.43, pct: 200, reach: 92, h: 80, targets: 3, knock: 200, arc: [-95, 185], thick: 13, big: true, crack: true, stop: 0.08, shake: 3 }] },
+  ],
+  berserker: [
+    { move: 'cleave1', dur: 0.52, step: 8, strikes: [{ at: 0.4, pct: 115, reach: 80, h: 60, targets: 2, knock: 70, arc: [-150, 230], thick: 11 }] },
+    { move: 'cleave2', dur: 0.52, step: 8, strikes: [{ at: 0.42, pct: 120, reach: 80, h: 66, targets: 2, knock: 60, launch: 160, arc: [110, -240], thick: 11 }] },
+    { move: 'reaver', dur: 0.8, step: 16, finisher: true, strikes: [{ at: 0.47, pct: 270, reach: 96, h: 76, targets: 3, knock: 250, arc: [-110, 200], thick: 15, big: true, crack: true, stop: 0.1, shake: 4 }] },
+  ],
+};
+
 // The command variants of a melee basic combo (any blade, axe, spear, dagger or bare hands).
 const MELEE = new Set(['sword', 'axe', 'spear', 'dagger', 'none']);
 // Up + attack: a rising launcher that throws them up and hops you after them (`hop`, px/s).
@@ -182,7 +199,9 @@ export function basicCombo(world) {
       return;
     }
   }
-  const steps = COMBOS[world.stats.weaponType];
+  // The warrior paths fight their own way with any blade, axe or spear.
+  const path = MELEE.has(world.stats.weaponType) && world.stats.weaponType !== 'none' && (hasRage(world.char) ? 'berserker' : hasFaith(world.char) ? 'paladin' : null);
+  const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   world.combo = world.now <= (world.comboUntil ?? -9) ? ((world.combo ?? -1) + 1) % steps.length : 0;
   playStep(world, steps[world.combo], 100, `basic${world.combo}`);
 }
@@ -312,7 +331,7 @@ function land(world, s) {
     });
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
     // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
-    if (!miss && weight > 1) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, t: 0, dur: s.big ? 0.4 : 0.28, seed: Math.random() });
+    if (!miss && weight > 1) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, dir: s.dir, t: 0, dur: s.big ? 0.42 : 0.32, seed: Math.random() });
   });
   // A tank's taunting blow: everything it hits turns on you (in a dungeon, sticking for a while).
   if (s.provoke && targets.length) {

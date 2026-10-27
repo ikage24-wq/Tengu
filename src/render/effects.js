@@ -85,9 +85,7 @@ function arcSmear(ctx, f, x, y, p) {
   const from = a0 + sweep * tail;
   const to = a0 + sweep * head;
   const el = f.element ? ELEMENTS[f.element] : null;
-  let color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
-  // A heavy blow's very first drawing flashes in the complementary hue, so the eye catches it.
-  if (f.big && f.t < 1.5 / 60) color = color === '#ffb347' ? '#8fc8ff' : '#ffffff';
+  const color = el?.color ?? (f.school ? SCHOOL_COLORS[f.school]?.main : null) ?? f.color ?? '#ffe9f3';
   const thick = f.thick * (f.big ? 1.25 : 1) * (1.5 - p);
   ctx.save();
   ctx.translate(x, y);
@@ -923,9 +921,14 @@ function drawFx(ctx, f, cam, time) {
     case 'arc': {
       // The smear follows the weapon's tip: centered on the shoulder it swings from, as far out
       // as the tip was when the blow landed.
-      const pose = f.flat ? null : strikeAt(f);
-      if (pose) arcSmear(ctx, { ...f, r: Math.max(16, Math.hypot(pose.tip[0] - pose.shoulder[0], pose.tip[1] - pose.shoulder[1])) }, f.bx + pose.shoulder[0] - cam.x, f.by + pose.shoulder[1] - cam.y, p);
-      else arcSmear(ctx, f, x, y, p);
+      // Best: trace the blade's own path through the cut, so every move's smear matches it.
+      const path = f.flat ? null : bladePath(f);
+      if (path) bladeSmear(ctx, f, path, f.bx - cam.x, f.by - cam.y, p);
+      else {
+        const pose = f.flat ? null : strikeAt(f);
+        if (pose) arcSmear(ctx, { ...f, r: Math.max(16, Math.hypot(pose.tip[0] - pose.shoulder[0], pose.tip[1] - pose.shoulder[1])) }, f.bx + pose.shoulder[0] - cam.x, f.by + pose.shoulder[1] - cam.y, p);
+        else arcSmear(ctx, f, x, y, p);
+      }
       break;
     }
     case 'ultcue':
@@ -1008,6 +1011,129 @@ export function drawEffects(ctx, world, cam, time) {
 
 // Where the weapon was at the moment a blow landed (offsets from the feet), or null.
 const posed = new WeakMap();
+// The blade's path through a cut: where the hand and the tip were over the last stretch of the
+// move before the blow landed (and a touch after), sampled from the hero's own pose. Null when the
+// tip barely travels (a thrust), so a plain arc stands in.
+const traced = new WeakMap();
+function bladePath(f) {
+  if (!hero || !f.move || f.at == null) return null;
+  if (traced.has(f)) return traced.get(f);
+  const span = f.span ?? 0.22;
+  let pts = [];
+  for (let i = 0; i <= 28; i++) {
+    const u = Math.max(0, f.at - span + ((span + 0.03) * i) / 28);
+    const pose = strikePose(hero.look, hero.gear, f.move, u, f.moveDur, f.dir);
+    if (pose) pts.push({ tip: pose.tip, hand: pose.hand });
+  }
+  // Keep only the cut itself: drop the slow wind-up (and any hold) before the blade gets moving,
+  // so the smear starts where the swing does.
+  const speed = pts.map((q, i) => (i ? Math.hypot(q.tip[0] - pts[i - 1].tip[0], q.tip[1] - pts[i - 1].tip[1]) : 0));
+  const peak = Math.max(...speed);
+  let first = speed.findIndex((v) => v >= peak * 0.25);
+  first = Math.max(0, first - 1);
+  pts = pts.slice(first).filter((q, i, a) => i === 0 || Math.hypot(q.tip[0] - a[i - 1].tip[0], q.tip[1] - a[i - 1].tip[1]) > 0.5);
+  // Round the corners off (one pass of corner cutting), so the ribbon curves smoothly.
+  for (let pass = 0; pass < 2 && pts.length > 2; pass++) {
+    const out = [pts[0]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      const mixp = (k) => ({ tip: [a.tip[0] + (b.tip[0] - a.tip[0]) * k, a.tip[1] + (b.tip[1] - a.tip[1]) * k], hand: [a.hand[0] + (b.hand[0] - a.hand[0]) * k, a.hand[1] + (b.hand[1] - a.hand[1]) * k] });
+      out.push(mixp(0.25), mixp(0.75));
+    }
+    out.push(pts.at(-1));
+    pts = out;
+  }
+  let travel = 0;
+  for (let i = 1; i < pts.length; i++) travel += Math.hypot(pts[i].tip[0] - pts[i - 1].tip[0], pts[i].tip[1] - pts[i - 1].tip[1]);
+  const path = pts.length >= 4 && travel > 24 ? pts : null;
+  traced.set(f, path);
+  return path;
+}
+
+// A smear along the traced path: a ribbon from partway down the blade out to its tip, fat in the
+// middle and tapering to points at both ends, whose head races along the path and whose tail
+// follows to close it. Inked rim, the colour, a white-hot band along the outer edge, and a darker
+// trailing end; heavy blows get a wider ghost band behind.
+function bladeSmear(ctx, f, path, ox, oy, p) {
+  const n = path.length - 1;
+  const head = easeOut(Math.min(1, p / 0.22)) * n;
+  const tail = easeIn(Math.max(0, (p - 0.12) / 0.88)) * n;
+  if (head - tail < 0.05) return;
+  const at = (v) => {
+    const i = Math.min(n - 1, Math.floor(v));
+    const u = v - i;
+    const a = path[i];
+    const b = path[i + 1];
+    return { tip: [a.tip[0] + (b.tip[0] - a.tip[0]) * u, a.tip[1] + (b.tip[1] - a.tip[1]) * u], hand: [a.hand[0] + (b.hand[0] - a.hand[0]) * u, a.hand[1] + (b.hand[1] - a.hand[1]) * u] };
+  };
+  const steps = Math.max(4, Math.ceil((head - tail) * 3));
+  const ribbon = (inner, outer, from = 0, to = 1, grow = 0) => {
+    const outerPts = [];
+    const innerPts = [];
+    for (let i = 0; i <= steps; i++) {
+      const s = from + ((to - from) * i) / steps;
+      const v = tail + (head - tail) * s;
+      const q = at(v);
+      const w = Math.pow(Math.sin(Math.PI * s), 0.7);
+      const kIn = 1 - (1 - inner) * w;
+      const kOut = 1 + (outer - 1) * w;
+      const dx = q.tip[0] - q.hand[0];
+      const dy = q.tip[1] - q.hand[1];
+      const len = Math.hypot(dx, dy) || 1;
+      outerPts.push([ox + q.hand[0] + dx * kOut + (dx / len) * grow, oy + q.hand[1] + dy * kOut + (dy / len) * grow]);
+      innerPts.push([ox + q.hand[0] + dx * kIn - (dx / len) * grow, oy + q.hand[1] + dy * kIn - (dy / len) * grow]);
+    }
+    ctx.beginPath();
+    outerPts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+    for (let i = innerPts.length - 1; i >= 0; i--) ctx.lineTo(innerPts[i][0], innerPts[i][1]);
+    ctx.closePath();
+    ctx.fill();
+  };
+  const el = f.element ? ELEMENTS[f.element] : null;
+  const color = el?.color ?? f.color ?? '#ffe9f3';
+  const fade = 1 - p;
+  const reachIn = f.big ? 0.32 : 0.45;
+  ctx.save();
+  if (f.big) {
+    ctx.globalAlpha = 0.22 * fade;
+    ctx.fillStyle = color;
+    ribbon(reachIn + 0.1, 1.12);
+    ctx.globalAlpha = 1;
+  }
+  if (inked(ctx)) {
+    ctx.fillStyle = deepTone(color);
+    ribbon(reachIn, 1.04, 0, 1, 1.1);
+  }
+  ctx.fillStyle = color;
+  ribbon(reachIn, 1.04);
+  ctx.fillStyle = mix(color, '#3a2a5a', 0.25);
+  ribbon(reachIn, 1.04, 0, 0.28);
+  ctx.fillStyle = '#ffffff';
+  ribbon(0.8, 1.0, 0.25, 1);
+  // Sparks flung off the tip as the head passes, and a flash where a heavy blow ends.
+  if (p < 0.45) {
+    const q = at(head);
+    const prev = at(Math.max(0, head - 0.6));
+    const dir = Math.atan2(q.tip[1] - prev.tip[1], q.tip[0] - prev.tip[0]);
+    const tx = ox + q.tip[0];
+    const ty = oy + q.tip[1];
+    for (let i = 0; i < 3; i++) {
+      const a = dir + (i - 1) * 0.5;
+      const d = (5 + i * 4) * p * 6;
+      needle(ctx, tx + Math.cos(a) * d, ty + Math.sin(a) * d, a, 7 - i * 1.5, 2.4 - i * 0.5, color);
+    }
+    if (f.big) starFlash(ctx, tx, ty, 18 * (1 - p * 2), 6, dir, color, '#ffffff', 4.5 * (1 - p * 2));
+  }
+  ctx.restore();
+}
+
+const deepTones = new Map();
+function deepTone(c) {
+  if (!deepTones.has(c)) deepTones.set(c, /^#[0-9a-f]{6}$/i.test(c) ? mix(c, '#3a2a6a', 0.55) : '#6b4f9e');
+  return deepTones.get(c);
+}
+
 function strikeAt(f) {
   if (!hero || !f.move) return null;
   if (!posed.has(f)) posed.set(f, strikePose(hero.look, hero.gear, f.move, f.at, f.moveDur, f.dir));

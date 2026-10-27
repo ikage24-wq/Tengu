@@ -124,8 +124,7 @@ to clear it.
   and it's a **LINK** for +25% damage. At 25 hits a finisher is ready: the Paladin's **Grand
   Verdict** (rise on a column of light and drive a giant sword of light into the ground) and the
   Berserker's **Crimson Eclipse** (spin up in a whirlwind under a blood moon and crash down; fills
-  Rage). A finisher spends the counter and opens with a cut-in: the screen dims, letterbox bars
-  slide in, and a banner sweeps across with your hero and the move's name.
+  Rage). A finisher spends the counter.
 - **Smooth controls** — once a move's blows have landed (or its arrows are away), walking or
   jumping cuts its follow-through short, and a basic attack can flow straight into a skill (so you
   can weave Blade Rush into a sword combo). Each skill plays out its own motion before another
@@ -344,6 +343,13 @@ to clear it.
     him as it builds (a red heat, then flames climbing his body, embers streaming off), makes every
     blow up to 25% harder, and at full (**Berserk**) a red ring pulses from his feet and the screen
     edges burn red.
+  - Each path fights in its own style, with its own basic combo and moves. The Paladin is upright
+    and disciplined, always leading with the shield arm: a measured cut, a shield shove that
+    dazes, a lunging thrust, and a two-handed smite from a held overhead raise; Aegis Smite
+    rises in a long arc, Hallowed Ground kneels and plants the blade point-down, and Divine Aegis
+    is a knight's salute. The Berserker is wild and twisting: a huge wound-up horizontal cleave,
+    the return cleave, a low crouching whirl, and a leaping skull-splitter; Blood Frenzy is a
+    hunched war roar, and Rampage chains the cleaves into the skull-splitter.
   - Both paths hit heavy: longer hit-stops and harder knockback (the Berserker most), a stomp of
     dust and a dip of the view as a big move starts, power gathering at the weapon (embers or
     diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.

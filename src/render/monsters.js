@@ -401,7 +401,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   ctx.scale(sx, sy);
   // The hit flash: one white frame, then a quick fade, so the hurt face reads through it.
   const since = time - mo.hitT;
-  const flash = white || (m.flash > 0 || since < 0.12 ? (since < 0.035 ? 1 : Math.max(0, 0.55 * (1 - (since - 0.035) / 0.1))) : 0);
+  // A light tint rather than solid white, so a crowd hit at once doesn't turn into white blobs.
+  const flash = white || (m.flash > 0 || since < 0.1 ? (since < 0.03 ? 0.8 : Math.max(0, 0.45 * (1 - (since - 0.03) / 0.07))) : 0);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);

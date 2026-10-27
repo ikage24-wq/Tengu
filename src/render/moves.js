@@ -350,13 +350,13 @@ export const MOVES = {
     };
   },
 
-  // Rampage: three wild chops, each quicker than a normal swing, then a leap into a crater-making
-  // dive. The chops land at about 0.075, 0.235 and 0.395, the dive at 0.79.
+  // Rampage: three wild cleaves, back and forth, each quicker than a normal one, then the
+  // skull-splitter. The cleaves land at about 0.064, 0.227 and 0.384, the smash at 0.724.
   rampage(p) {
-    if (p < 0.16) return MOVES.slash(snap(p / 0.16));
-    if (p < 0.32) return MOVES.slash2(snap((p - 0.16) / 0.16));
-    if (p < 0.48) return MOVES.slash(snap((p - 0.32) / 0.16));
-    return MOVES.plunge((p - 0.48) / 0.52);
+    if (p < 0.16) return MOVES.cleave1(p / 0.16);
+    if (p < 0.32) return MOVES.cleave2((p - 0.16) / 0.16);
+    if (p < 0.48) return MOVES.cleave1((p - 0.32) / 0.16);
+    return MOVES.reaver((p - 0.48) / 0.52);
   },
 
   // Air cuts: the same slash and backhand with the legs tucked up under you.
@@ -448,6 +448,157 @@ export const MOVES = {
     };
   },
 
+  // ---------- Paladin: upright and disciplined, the shield arm always leading ----------
+
+  // A measured cut: the shield arm held out in front, a short draw back, then a clean diagonal
+  // stroke that stops dead and holds. Lands at 0.45.
+  pslash(p) {
+    const m = MOVES.slash(p);
+    return { ...m, tilt: m.tilt * 0.5, lunge: (m.lunge ?? 0) * 0.8, rig: (r) => { m.rig?.(r); r.backArm = [3, -1]; r.hairLift = 0; } };
+  },
+
+  // A lunging thrust past the raised shield arm, the body square behind it. Lands at 0.42.
+  pthrust(p) {
+    const m = MOVES.thrust(p);
+    return { ...m, tilt: m.tilt * 0.6, rig: (r) => { m.rig?.(r); r.backArm = [3, -2]; } };
+  },
+
+  // Rising cut: the blade comes up from low behind in one long arc while the body rises tall onto
+  // its toes, and holds high, pointing at the sky, for a beat. Lands at 0.45.
+  ascend(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(40, 205, t), arm: lerp(60, 15, t), tilt: 0.05 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.backArm = [3, 0]; r.tx = 0; } };
+    }
+    const t = ease(seg(p, 0.3, 0.5));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(205, -10, t) + 35 * settle, arm: lerp(15, 172, t) - 100 * settle, lift: 3 * t * (1 - settle), stretch: 1 + 0.05 * t * (1 - settle), tilt: -0.1 * t * (1 - settle), trail: p < 0.6,
+      rig: (r) => { r.tx = 1; r.frontLeg = [2.6, 0, 2]; r.backLeg = [-2.4, 0, -4]; r.backArm = [-2, -3]; strikeFace(r); },
+    };
+  },
+
+  // The smite: both hands lift the blade straight overhead, the body leaning back and holding it
+  // there, then one vertical chop with a long step in that drives into a deep crouch. Lands at 0.43.
+  smite(p) {
+    if (p < 0.34) {
+      const t = ease(p / 0.34);
+      const hold = Math.sin(p * 60) * 0.3 * t;
+      return { weapon: lerp(25, -12, t), arm: lerp(60, 182, t), tilt: -0.12 * t, lunge: -2 * t + hold, rig: (r) => { r.squat = 0; r.frontLeg = [1.5, 0, 0]; r.backLeg = [-2, 0, -2]; r.backArm = [1, -6]; r.hairLift = -1; } };
+    }
+    const t = easeIn(seg(p, 0.34, 0.44));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-12, 155, t) - 25 * settle, arm: lerp(182, 48, t) + 15 * settle, lunge: 9 * t * (1 - 0.6 * settle), tilt: lerp(-0.12, 0.2, t) * (1 - settle), stretch: 1 + 0.06 * (t < 1 ? t : 0), trail: p < 0.55,
+      rig: (r) => { r.tx = 2; if (t >= 1) { r.squat = settle < 0.5 ? 3 : 1; } lungeLegs(r, 1.3); r.backArm = [2, 1]; strikeFace(r); },
+    };
+  },
+
+  // Hallowed Ground: the blade turned point-down and raised overhead in both hands, a rise onto the
+  // toes, then driven straight down into the floor in front as she drops to one knee, and held
+  // there while the light rises. Lands at 0.46.
+  consecrate(p) {
+    if (p < 0.38) {
+      const t = ease(p / 0.38);
+      return { weapon: lerp(25, 182, t), arm: lerp(60, 170, t), lift: 3 * t, stretch: 1 + 0.04 * t, tilt: -0.06 * t, rig: (r) => { r.frontLeg = [1.5, 0, 0]; r.backLeg = [-1.5, 0, 0]; r.backArm = [1, -6]; r.hairLift = -1; } };
+    }
+    const t = easeIn(seg(p, 0.38, 0.46));
+    const up = ease(seg(p, 0.86, 1));
+    return {
+      weapon: 180, arm: lerp(170, 95, t) - 30 * up, lift: 3 * (1 - t), lunge: 3 * t * (1 - up), tilt: 0.12 * t * (1 - up),
+      rig: (r) => { if (t >= 1 && up < 0.6) { r.squat = 3; r.frontLeg = [3.5, 0, 6]; r.backLeg = [-3, 2, -30]; r.eyes = 'blink'; } else wideLegs(r); r.backArm = [3, -1]; r.tx = 1; },
+    };
+  },
+
+  // A knight's salute: the blade raised upright before the face, the free hand over the heart,
+  // eyes closed, rising a little on the light.
+  salute(p) {
+    const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
+    return {
+      weapon: lerp(25, -2, k), arm: lerp(60, 128, k), lift: 2 * k, tilt: -0.04 * k,
+      rig: (r) => { r.backArm = [q(3 * k), q(-3 * k)]; r.frontLeg = [1.5, 0, 0]; r.backLeg = [-1.5, 0, 0]; if (k > 0.5) r.eyes = 'blink'; r.cape -= 1; },
+    };
+  },
+
+  // ---------- Berserker: wild, twisting, everything thrown into each swing ----------
+
+  // The cleave: the whole body winds up away from the target with the axe far behind, then
+  // unwinds in a huge horizontal sweep that over-rotates and drags him forward. Lands at 0.4.
+  cleave1(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(25, -120, t), arm: lerp(60, 150, t), turn: lerp(1, 0.84, t), tilt: -0.16 * t, lunge: -3 * t, rig: (r) => { r.squat = 1 + Math.round(t); wideLegs(r); r.tx = -1; r.backArm = [-3, -2]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.3, 0.42));
+    const over = ease(seg(p, 0.42, 0.6));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-120, 100, t) + 60 * over - 50 * settle, arm: lerp(150, 92, t) - 20 * over + 10 * settle, turn: lerp(0.84, 1, t),
+      lunge: 10 * t * (1 - 0.6 * settle), tilt: lerp(-0.16, 0.24, t) * (1 - settle), trail: p < 0.65,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.4); r.squat = settle < 0.5 ? 2 : 1; r.backArm = [-4, -1]; strikeFace(r); r.hairLift = -1; r.cape = -4; },
+    };
+  },
+
+  // The return cleave: from low in front, a rising backhand that hauls the axe up and over the
+  // shoulder, the body twisting the other way with a hop. Lands at 0.42.
+  cleave2(p) {
+    if (p < 0.28) {
+      const t = ease(p / 0.28);
+      return { weapon: lerp(100, 170, t), arm: lerp(80, 30, t), turn: lerp(1, 0.86, t), tilt: 0.14 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.backArm = [2, 1]; r.tx = 1; } };
+    }
+    const t = ease(seg(p, 0.28, 0.44));
+    const settle = ease(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(170, -80, t) + 90 * settle, arm: lerp(30, 178, t) - 110 * settle, turn: lerp(0.86, 1, t), lift: 6 * bump(p, 0.3, 0.75), lunge: 5 * t * (1 - settle),
+      tilt: -0.16 * t * (1 - settle), trail: p < 0.62,
+      rig: (r) => { r.tx = 1; if (p < 0.7) tuck(r); else wideLegs(r); r.backArm = [-3, -4]; strikeFace(r); r.hairLift = -1; },
+    };
+  },
+
+  // A low whirl: dropping into a crouch, leaning in, the axe sweeping all the way round at knee
+  // height. Lands at 0.5.
+  gyre(p) {
+    const a = ease(seg(p, 0.12, 0.8));
+    return {
+      weapon: 110 + a * 360, arm: 95, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), tilt: 0.2 * bump(p, 0.05, 0.95), trail: p > 0.12 && p < 0.85,
+      rig: (r) => { r.squat = p < 0.08 || p > 0.9 ? 1 : 3; wideLegs(r); r.backArm = [-4, -2]; r.hairLift = -1; strikeFace(r); r.cape = -4; },
+    };
+  },
+
+  // The skull-splitter: a deep crouch, a leap with the axe swung all the way back behind the head
+  // and the body arched, then a crash straight down into a crater and a long held crouch.
+  // Lands at 0.47.
+  reaver(p) {
+    if (p < 0.18) {
+      const t = ease(p / 0.18);
+      return { weapon: lerp(25, 60, t), arm: lerp(60, 40, t), tilt: 0.1 * t, rig: (r) => { r.squat = 3; wideLegs(r); r.backArm = [2, 2]; } };
+    }
+    if (p < 0.4) {
+      const t = ease(seg(p, 0.18, 0.4));
+      return { weapon: lerp(60, -160, t), arm: lerp(40, 188, t), lift: 20 * Math.sin(t * Math.PI * 0.6), tilt: -0.28 * t, stretch: 1 + 0.06 * t, rig: (r) => { tuck(r); r.backArm = [-1, -6]; r.hairLift = -1; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.4, 0.47));
+    const settle = ease(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(-160, 148, t) - 20 * settle, arm: lerp(188, 44, t) + 15 * settle, lift: 16 * (1 - t), tilt: lerp(-0.28, 0.32, t) * (1 - settle), stretch: t < 1 ? 1.1 : 1, lunge: 4 * t,
+      trail: p < 0.55,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [3, 2]; strikeFace(r); },
+    };
+  },
+
+  // A war roar: hunched low gathering it in, then reared back with the axe thrust up one-handed,
+  // the whole body shaking.
+  warroar(p) {
+    const hunch = ease(seg(p, 0, 0.25));
+    const rear = ease(seg(p, 0.25, 0.4));
+    const calm = seg(p, 0.85, 1);
+    const shake = Math.sin(p * 120) * 1.1 * rear * (1 - calm);
+    return {
+      weapon: lerp(lerp(25, 80, hunch), -20, rear), arm: lerp(lerp(60, 40, hunch), 175, rear), lunge: shake, tilt: lerp(0.18 * hunch, -0.18, rear) * (1 - calm), lift: 2 * rear * (1 - calm),
+      rig: (r) => { r.squat = rear < 0.5 ? 2 : 0; wideLegs(r); r.backArm = rear > 0.3 ? [-4, -5] : [2, 2]; r.hairLift = -1; r.mouth = 'open'; },
+    };
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -480,7 +631,7 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -519,7 +670,7 @@ export function defaultMove(type, weaponType, params) {
 // a touch past the hit pose, a sticky hold on that follow-through, then an eased settle. The moves
 // are written with a wind-up to about 0.3 and the cut to about 0.65; this reshapes time around
 // that, and keeps the blade through the target by the time the blow lands (strikes at 0.42-0.47).
-const SNAPPY = new Set(['slash', 'slash2', 'thrust', 'overhead', 'airslash', 'airslash2']);
+const SNAPPY = new Set(['slash', 'slash2', 'thrust', 'overhead', 'airslash', 'airslash2', 'pslash', 'pthrust']);
 function snap(p) {
   if (p < 0.33) return 0.3 * ease(p / 0.33); // wind up
   if (p < 0.39) return 0.3; // the held beat before the cut

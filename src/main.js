@@ -179,6 +179,9 @@ function frame(now) {
       if (!settings.hitStop) world.hitstop = 0;
       if (world.hitstop > 0) {
         world.hitstop -= TICK;
+        // Effects already on screen keep playing through the stop (only the world freezes), so
+        // a flash meant for one frame never hangs there; ones still waiting to start stay put.
+        for (const f of world.fx) if (f.t >= 0) f.t += TICK;
         continue;
       }
       remember(world);

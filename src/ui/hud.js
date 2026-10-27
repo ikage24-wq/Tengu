@@ -282,8 +282,6 @@ export function drawHud(ui, state, world) {
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   if (settings.showFps) drawFps(ctx, state);
-  // A finisher's cut-in covers everything else.
-  if (world.cutin) drawCutin(ui, state, world);
 }
 
 // Loot you pick up flies into the Bag button: from where it lay, up and over on a curve, shrinking
@@ -426,80 +424,6 @@ function drawHits(ui, state, world) {
     const beat = 0.5 + 0.5 * Math.sin(now * 8);
     text(ctx, 'FINISHER READY', x, y + 40, { size: 8.5, bold: true, align: 'right', color: beat > 0.5 ? '#ffffff' : '#ffe36b', outline: '#c8243a' });
   }
-  ctx.restore();
-}
-
-// A finisher's cut-in (Dungeon Fighter's awakening cut-ins, FFXIV's limit breaks): the scene dims,
-// letterbox bars slide in, and a slanted banner in the skill's colours sweeps across with the
-// hero in close-up and the move's name, then everything slides away. Real time, since the world
-// holds still under it.
-const CUTIN = 0.9;
-function drawCutin(ui, state, world) {
-  const { ctx } = ui;
-  const c = world.cutin;
-  const now = performance.now() / 1000;
-  c.shown ??= now;
-  const e = now - c.shown;
-  if (e > CUTIN) {
-    world.cutin = null;
-    return;
-  }
-  const holy = c.school === 'holy';
-  const main = holy ? '#ffd24f' : '#e8304a';
-  const deep = holy ? '#c98a2b' : '#7a1030';
-  const light = holy ? '#fff6c9' : '#ffb0a0';
-  const inK = Math.min(1, e / 0.14);
-  const outK = Math.max(0, (e - (CUTIN - 0.18)) / 0.18);
-  const ein = 1 - (1 - inK) ** 3;
-  const eout = outK * outK;
-  ctx.save();
-  // Dim, then letterbox.
-  ctx.fillStyle = `rgba(28,14,44,${0.38 * ein * (1 - eout)})`;
-  ctx.fillRect(0, 0, 640, 360);
-  ctx.fillStyle = '#140a22';
-  const bar = 30 * ein * (1 - eout);
-  ctx.fillRect(0, 0, 640, bar);
-  ctx.fillRect(0, 360 - bar, 640, bar);
-  // The banner: a gently slanted band that sweeps in from the right and leaves to the left.
-  const slide = (1 - ein) * 680 - eout * 720;
-  const y0 = 112;
-  const h = 100;
-  const band = (dy, hh) => {
-    ctx.beginPath();
-    ctx.moveTo(slide - 40, y0 + 34 + dy);
-    ctx.lineTo(slide + 700, y0 - 26 + dy);
-    ctx.lineTo(slide + 700, y0 - 26 + dy + hh);
-    ctx.lineTo(slide - 40, y0 + 34 + dy + hh);
-    ctx.closePath();
-  };
-  band(-4, h + 8);
-  ctx.fillStyle = deep;
-  ctx.fill();
-  band(0, h);
-  ctx.fillStyle = main;
-  ctx.fill();
-  band(h * 0.66, h * 0.34);
-  ctx.fillStyle = light;
-  ctx.fill();
-  ctx.save();
-  band(0, h);
-  ctx.clip();
-  // Speed lines racing across the band.
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  for (let i = 0; i < 9; i++) {
-    const ly = y0 - 16 + ((i * 37) % (h + 30));
-    const lx = ((now * 900 + i * 173) % 820) - 100;
-    ctx.fillRect(slide + 640 - lx, ly + (640 - lx) * -0.08, 60 + (i % 3) * 30, 1.5);
-  }
-  // The hero in close-up (head and shoulders), drifting slowly the other way.
-  const drift = e * 14;
-  drawHero(ctx, world.char.appearance, wornGear(world.char), slide + 130 - drift, y0 + 205, { pose: 'idle', ready: true, time: now, seed: 1, scale: 4, facing: 1, job: world.char.job });
-  ctx.restore();
-  // The move's name, sliding in a beat behind the band.
-  const nameIn = Math.min(1, Math.max(0, (e - 0.08) / 0.16));
-  const nx = 600 + (1 - (1 - (1 - nameIn) ** 3)) * 260 - eout * 700;
-  text(ctx, c.name.toUpperCase(), nx, y0 + 52, { size: 26, bold: true, align: 'right', color: '#ffffff', outline: deep });
-  text(ctx, 'FINISHER', nx, y0 + 18, { size: 10, bold: true, align: 'right', color: light, outline: deep });
   ctx.restore();
 }
 
