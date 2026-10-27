@@ -125,6 +125,8 @@ jobs.)
   Hallowed Ground, Divine Aegis, mastery) or Berserker (damage, Rage gauge: Ravage, Blood Frenzy,
   Rampage, mastery), with idle auras, icons, effects, and generated players on both paths.
   Later: trials for the other classes' advancements, and the Mage's 30 advancement as a trial too.
+  Combat additions: command combos (launcher, air combo and slam, dash attack), a hit counter,
+  Links, and a finisher per warrior path (more finishers to come for other jobs).
 - [ ] **Phase 3: Collecting.** Monster book, achievements, and titles under the name.
 - [ ] **Phase 4: Chapters 4–7.** Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.

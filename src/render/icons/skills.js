@@ -615,6 +615,21 @@ function divineaegis() {
   return out;
 }
 
+function grandverdict() {
+  const out = [...tile('dawn', 'active'), ...aura(8, 9, 7, '#ffffff', 1.4)];
+  // A giant sword of light driven point-first into the ground, rays and a ring around the impact.
+  for (const a of [-170, -140, -40, -10]) {
+    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    out.push(streak(add([8, 13.2], u, 7.4), add([8, 13.2], u, 3), 1.2, '#fff6c9'));
+  }
+  const ring = tube([...oval(8, 13.4, 6.4, 1.7, 0, 32), oval(8, 13.4, 6.4, 1.7, 0, 32)[0]], 0.8);
+  out.push(...edge(ring, '#a8661a', 0.4), S(ring, '#fff3a6'));
+  out.push(...sword([8, 3.6], [8, 14.2], { w: 3.8, gw: 7, glen: 2.6, metal: '#fff6c9', gem: '#ffffff' }));
+  out.push(...gem4(8, 1.6, 1.1, W, { ink: '#a8661a' }));
+  out.push(...spark(13.4, 3.2, 1.3, '#ffffff'), ...spark(2.6, 4, 1, '#fff6c0'));
+  return out;
+}
+
 // ---------- Berserker ----------
 
 // An axe from the butt of the haft (base) to its top (tip): a wooden haft and a broad bearded
@@ -675,6 +690,19 @@ function rampage() {
   out.push(...axe([12.6, 2], [8.4, 11.6], { size: 1.15, side: -1 }));
   for (const [x, y, a] of [[2.4, 7.4, -30], [13.8, 7, 30], [4, 3.6, -60]]) out.push(...solid(turn([[x, y - 1.2], [x + 0.7, y], [x, y + 1.2], [x - 0.7, y]], a, x, y), '#ff8a3c', { shadow: false, d: 0.3, ink: '#6a0a1a' }));
   out.push(...spark(13.6, 13.8, 1, '#fff6c0'));
+  return out;
+}
+
+function crimsoneclipse() {
+  const out = [...tile('royal', 'active')];
+  // A blood moon with the eclipse's bite, and the axe crashing down across it.
+  const moon = oval(8.6, 6.4, 5.4, 5.4, 0, 36);
+  out.push(...edge(moon, '#3a0814', 0.5), S(moon, '#c8243a'), S(clip(moon, oval(8, 5.8, 4.2, 4.2, 0, 30)), '#ff5a4a'));
+  out.push(S(clip(moon, oval(11.2, 5.6, 4.4, 4.4, 0, 30)), '#4a0a1e'));
+  out.push(S(clip(tube(arcPts(8.6, 6.4, 5, 5, 110, 240, 14), 0.45), moon), '#ffd27a'));
+  out.push(...swoosh(8, 9, 6.6, 6.6, 200, 330, 1.5, '#f0303f', { ink: '#3a0814', core: '#ffd0c0' }));
+  out.push(...axe([12.6, 1.4], [6.2, 12.4], { size: 1.2, side: -1 }));
+  out.push(...spark(2.6, 13.4, 1.1, '#ffb347'), ...spark(13.6, 13, 0.9));
   return out;
 }
 
@@ -1428,8 +1456,8 @@ function gmblessing() {
 const ART = {
   pebble, cozyrest, quickstep,
   powerslash, whirlstrike, titanbreaker, ironskin, charge, vigor, provoke, chainhook, shieldwall, rallycry, stalwart,
-  paladinmastery, aegissmite, hallowedground, divineaegis,
-  berserkermastery, ravage, bloodfrenzy, rampage,
+  paladinmastery, aegissmite, hallowedground, divineaegis, grandverdict,
+  berserkermastery, ravage, bloodfrenzy, rampage, crimsoneclipse,
   magicbolt, sparkburst, blink, manashield, arcanemind, mend, renew, barrier, revive,
   doubleshot, scattershot, arrowrain, eaglefocus, thunderhawk, backflip, keeneye,
   twinstab, startoss, haste, shadowstep, nimble,

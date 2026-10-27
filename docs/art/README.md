@@ -19,6 +19,8 @@ carry an improvement across every part of the game it applies to.
   proportions, idles, attacks, jumps and walks),
   [diives](research/diives.md) (Diives' safe-for-work character acting: expressions, emotion symbols,
   squash and timing),
+  [combat](research/combat.md) (combo counters, links, finishers and cut-ins, juggles, blending
+  between moves),
   [dancing-green](research/dancing-green.md) (the FFXIV boss the player wants as a disco boss: his
   look, how he moves, and every attack with its tell).
 - [briefs/](briefs/): the briefs the art and improvement passes worked from (conventions, quality
@@ -153,6 +155,15 @@ carry an improvement across every part of the game it applies to.
   screen and reads as a flat ball over the hero: skip it on effects that land with hit-stop (the
   Berserker's `rageburst`). `deep()` of a warm red mixes toward ink purple and reads pink or mauve
   on our pastel skies; give red effects their own near-black crimson or a hand-picked red ramp.
+- A move's own untouchable stretch (dashes, dodges, finishers) must not use the hurt blink: it
+  reads as weakness and made finishers flicker. Only blink while recovering from a hit.
+- Moves cut into each other ease out of the previous pose over about 70 ms (`hero.js`
+  `blendMove`, `scene.js` BLEND): angles take the short way round, rig tweaks switch halfway.
+- Finisher cut-ins (`hud.js` `drawCutin`): a gently slanted band (about 60 px rise over the screen,
+  steeper looks like a falling slab), the hero's head and shoulders at 4x inside it, the name
+  sliding in a beat behind, and it draws over the whole HUD.
+- A giant sword of light must be wide (blade about 44 px with a winged cross-guard) or it reads
+  as one more pillar.
 - Holy pillars (`strikes.js` `pillar`): a thin ray first, then a tapered wedge (narrow at the sky,
   wide at the foot) in four nested tones, a rounded bloom at the foot, and slices that vanish from
   the top down; flat straight-sided columns read as UI bars. Ground rings stay flat (height about

@@ -81,9 +81,13 @@ export function updateCamera(cam, world, dt) {
   cam.y += (ty - cam.y) * (1 - Math.exp(-dt * (b.onGround ? 6 : 10)));
 }
 
+// How long a new move takes to ease out of the one before it (a few frames; long enough to hide the
+// snap, short enough that the wind-up still reads as instant).
+const BLEND = 0.07;
+
 function playerPose(world) {
   const b = world.body;
-  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur };
+  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / BLEND };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };
@@ -206,7 +210,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawParty(ctx, partyMembers(world.bots).filter((b) => b.map === world.map.id), cam, VIEW_W, time, world.hoverBot);
 
   const p = playerPose(world);
-  const blink = world.invuln > 0 && Math.floor(time * 16) % 2 === 0;
+  // Blink while recovering from a hit, but not through a move's own untouchable stretch (dashes,
+  // dodges, finishers): that should read as power, not as being hurt.
+  const blink = world.invuln > 0 && !world.pose && Math.floor(time * 16) % 2 === 0;
   if (b.onGround) footShadow(ctx, b.x - cam.x, b.y - cam.y, 13, slopeAt(b.surface, b.x));
   // A chat emoticon shows on the face for a few seconds.
   const look = world.emote ? { ...world.char.appearance, face: world.emote.face } : world.char.appearance;

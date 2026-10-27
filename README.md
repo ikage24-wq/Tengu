@@ -113,6 +113,19 @@ to clear it.
   once, one per monster. **Arrow Rain** shoots a volley into the sky that pours down on everything
   ahead. **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread
   of arrows at whatever was on you.
+- **Command combos** — with a sword, axe, spear, dagger or bare hands: **Up + attack** is a
+  launcher that throws monsters up and hops you after them; **attacking in the air** plays an air
+  combo (two cuts that keep you hanging, then a dive that slams into the ground on landing); and
+  **attacking out of a run** is a lunging dash attack. Each move eases out of the one before it
+  instead of snapping.
+- **Hit counter, Links and finishers** — every hit you land keeps a counter going on the right
+  (it drops after 3 seconds without a hit, but never mid-move), with tiers at 10 (Nice), 25
+  (Great), 50 (Awesome) and 100 (Legendary). Start a skill right after a combo's last blow lands
+  and it's a **LINK** for +25% damage. At 25 hits a finisher is ready: the Paladin's **Grand
+  Verdict** (rise on a column of light and drive a giant sword of light into the ground) and the
+  Berserker's **Crimson Eclipse** (spin up in a whirlwind under a blood moon and crash down; fills
+  Rage). A finisher spends the counter and opens with a cut-in: the screen dims, letterbox bars
+  slide in, and a banner sweeps across with your hero and the move's name.
 - **Smooth controls** — once a move's blows have landed (or its arrows are away), walking or
   jumping cuts its follow-through short, and a basic attack can flow straight into a skill (so you
   can weave Blade Rush into a sword combo). Each skill plays out its own motion before another

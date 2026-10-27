@@ -4,7 +4,7 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
 import { countItem, activeStar } from '../core/inventory.js';
-import { HOTKEYS } from '../core/character.js';
+import { HOTKEYS, wornGear } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
 import { drawHero } from '../render/hero.js';
@@ -14,6 +14,7 @@ import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { hasRage, RAGE_MAX } from '../world/melee.js';
+import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
 import { questMarker } from './npc.js';
@@ -268,6 +269,7 @@ export function drawHud(ui, state, world) {
     clicked(ui, x, y, 18, 18);
   });
 
+  drawHits(ui, state, world);
   if (s.weaponType === 'gauntlet') drawStars(ui, world);
   if (hasRage(char)) drawRage(ui, world);
   if (settings.minimap) drawMinimap(ui, world);
@@ -279,6 +281,8 @@ export function drawHud(ui, state, world) {
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   if (settings.showFps) drawFps(ctx, state);
+  // A finisher's cut-in covers everything else.
+  if (world.cutin) drawCutin(ui, state, world);
 }
 
 // Loot you pick up flies into the Bag button: from where it lay, up and over on a curve, shrinking
@@ -352,6 +356,128 @@ function drawRage(ui, world) {
   ctx.fillRect(Math.round(x + 16 + 40 * need), y + 4, 1, 8);
   text(ctx, `${Math.floor(world.rage ?? 0)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? RAGE : COLORS.ink });
   if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: 'Rage', bold: true, color: RAGE }, { text: 'Your blows build it; it drains once the fighting stops. Rampage spends it all.', size: 8, color: COLORS.muted }]);
+}
+
+// The hit counter, on the right: the count pops each time it climbs, takes a warmer colour and a
+// word at each tier, and fades as the combo is about to drop. Once it's long enough for a finisher
+// you know, it says so.
+const HIT_TIERS = [
+  [100, '#ff5ab4', 'LEGENDARY!'],
+  [50, '#ff8a3c', 'AWESOME!'],
+  [25, '#ffc83c', 'GREAT!'],
+  [10, '#6fd0ff', 'NICE!'],
+  [0, '#ffffff', ''],
+];
+function drawHits(ui, state, world) {
+  const { ctx } = ui;
+  const hud = (state.hud ??= {});
+  const n = world.hits ?? 0;
+  const now = performance.now() / 1000;
+  if (n !== hud.hits) {
+    if (n > (hud.hits ?? 0)) hud.hitsPop = now;
+    hud.hits = n;
+  }
+  if (n < 2) return;
+  const left = HITS_WINDOW - (world.now - (world.hitsAt ?? world.now));
+  const a = Math.max(0, Math.min(1, left / 0.6));
+  const pop = Math.max(0, 1 - (now - (hud.hitsPop ?? -9)) / 0.16);
+  const [, color, word] = HIT_TIERS.find(([min]) => n >= min);
+  const x = 628;
+  const y = 150;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(x, y);
+  ctx.scale(1 + pop * 0.45, 1 + pop * 0.45);
+  ctx.rotate(-0.06);
+  text(ctx, `${n}`, 0, 0, { size: 24, bold: true, align: 'right', color, outline: '#4a3560' });
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = a;
+  text(ctx, 'HITS', x, y + 11, { size: 8, bold: true, align: 'right', color: '#ffffff', outline: '#4a3560' });
+  if (word) text(ctx, word, x, y + 22, { size: 9, bold: true, align: 'right', color, outline: '#4a3560' });
+  // The bar under it drains toward the drop.
+  box(ctx, x - 52, y + 26, 52, 3, { fill: 'rgba(74,53,96,0.4)', edge: null, r: 1.5 });
+  box(ctx, x - 52, y + 26, 52 * Math.max(0, left / HITS_WINDOW), 3, { fill: color, edge: null, r: 1.5 });
+  const fin = Object.values(SKILLS).find((k) => k.hitsCost && (world.char.skills[k.id] ?? 0) > 0);
+  if (fin && n >= fin.hitsCost) {
+    const beat = 0.5 + 0.5 * Math.sin(now * 8);
+    text(ctx, 'FINISHER READY', x, y + 40, { size: 8.5, bold: true, align: 'right', color: beat > 0.5 ? '#ffffff' : '#ffe36b', outline: '#c8243a' });
+  }
+  ctx.restore();
+}
+
+// A finisher's cut-in (Dungeon Fighter's awakening cut-ins, FFXIV's limit breaks): the scene dims,
+// letterbox bars slide in, and a slanted banner in the skill's colours sweeps across with the
+// hero in close-up and the move's name, then everything slides away. Real time, since the world
+// holds still under it.
+const CUTIN = 0.9;
+function drawCutin(ui, state, world) {
+  const { ctx } = ui;
+  const c = world.cutin;
+  const now = performance.now() / 1000;
+  c.shown ??= now;
+  const e = now - c.shown;
+  if (e > CUTIN) {
+    world.cutin = null;
+    return;
+  }
+  const holy = c.school === 'holy';
+  const main = holy ? '#ffd24f' : '#e8304a';
+  const deep = holy ? '#c98a2b' : '#7a1030';
+  const light = holy ? '#fff6c9' : '#ffb0a0';
+  const inK = Math.min(1, e / 0.14);
+  const outK = Math.max(0, (e - (CUTIN - 0.18)) / 0.18);
+  const ein = 1 - (1 - inK) ** 3;
+  const eout = outK * outK;
+  ctx.save();
+  // Dim, then letterbox.
+  ctx.fillStyle = `rgba(28,14,44,${0.38 * ein * (1 - eout)})`;
+  ctx.fillRect(0, 0, 640, 360);
+  ctx.fillStyle = '#140a22';
+  const bar = 30 * ein * (1 - eout);
+  ctx.fillRect(0, 0, 640, bar);
+  ctx.fillRect(0, 360 - bar, 640, bar);
+  // The banner: a gently slanted band that sweeps in from the right and leaves to the left.
+  const slide = (1 - ein) * 680 - eout * 720;
+  const y0 = 112;
+  const h = 100;
+  const band = (dy, hh) => {
+    ctx.beginPath();
+    ctx.moveTo(slide - 40, y0 + 34 + dy);
+    ctx.lineTo(slide + 700, y0 - 26 + dy);
+    ctx.lineTo(slide + 700, y0 - 26 + dy + hh);
+    ctx.lineTo(slide - 40, y0 + 34 + dy + hh);
+    ctx.closePath();
+  };
+  band(-4, h + 8);
+  ctx.fillStyle = deep;
+  ctx.fill();
+  band(0, h);
+  ctx.fillStyle = main;
+  ctx.fill();
+  band(h * 0.66, h * 0.34);
+  ctx.fillStyle = light;
+  ctx.fill();
+  ctx.save();
+  band(0, h);
+  ctx.clip();
+  // Speed lines racing across the band.
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  for (let i = 0; i < 9; i++) {
+    const ly = y0 - 16 + ((i * 37) % (h + 30));
+    const lx = ((now * 900 + i * 173) % 820) - 100;
+    ctx.fillRect(slide + 640 - lx, ly + (640 - lx) * -0.08, 60 + (i % 3) * 30, 1.5);
+  }
+  // The hero in close-up (head and shoulders), drifting slowly the other way.
+  const drift = e * 14;
+  drawHero(ctx, world.char.appearance, wornGear(world.char), slide + 130 - drift, y0 + 205, { pose: 'idle', ready: true, time: now, seed: 1, scale: 4, facing: 1, job: world.char.job });
+  ctx.restore();
+  // The move's name, sliding in a beat behind the band.
+  const nameIn = Math.min(1, Math.max(0, (e - 0.08) / 0.16));
+  const nx = 600 + (1 - (1 - (1 - nameIn) ** 3)) * 260 - eout * 700;
+  text(ctx, c.name.toUpperCase(), nx, y0 + 52, { size: 26, bold: true, align: 'right', color: '#ffffff', outline: deep });
+  text(ctx, 'FINISHER', nx, y0 + 18, { size: 10, bold: true, align: 'right', color: light, outline: deep });
+  ctx.restore();
 }
 
 // Frames per second, smoothed.

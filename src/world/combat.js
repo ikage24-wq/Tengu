@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
-import { hasCombo, basicCombo, skillCombo, addRage, RAGE_MAX } from './melee.js';
+import { hasCombo, basicCombo, skillCombo, addRage, RAGE_MAX, outgoing } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -39,6 +39,11 @@ function spellStop(s, params, ultimate) {
 }
 
 const BASE_DELAY = 0.5; // seconds between attacks at normal speed
+// Linking a skill onto a finisher: how soon after it connects, and the bonus (% damage).
+export const LINK_WINDOW = 0.7;
+const LINK_BONUS = 25;
+// How long the world holds still for a finisher's cut-in (real seconds; hit-stop freezes it).
+const CUTIN_HOLD = 0.55;
 // Shots and spells leave from the hands, chest high above the feet.
 const HAND_Y = 17;
 const PROJECTILE_SPEED = 620;
@@ -60,11 +65,19 @@ export function hitBox(body, range) {
   return { x, y: cy - range.h / 2, w: range.w, h: range.h };
 }
 
+// A monster's box stretched up to wherever it's been knocked into the air, so blows reach it both
+// on the ground under it and up where it flies (air combos).
+function airBox(m) {
+  const b = mobBox(m);
+  const air = Math.max(0, m.air ?? 0);
+  return air ? { ...b, y: b.y - air, h: b.h + air } : b;
+}
+
 // Live monsters in the box, nearest first, up to `targets`.
 export function pickTargets(mobs, body, range, targets) {
   const box = hitBox(body, range);
   return mobs
-    .filter((m) => m.hp > 0 && overlaps(box, mobBox(m)))
+    .filter((m) => m.hp > 0 && overlaps(box, airBox(m)))
     .sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x))
     .slice(0, targets);
 }
@@ -96,6 +109,7 @@ export function castBlocker(world, skillId) {
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
   if (s.rageCost && (world.rage ?? 0) < s.rageCost) return 'rage';
+  if (s.hitsCost && (world.hits ?? 0) < s.hitsCost) return 'hits';
   if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
   return null;
 }
@@ -123,6 +137,22 @@ export function cast(world, skillId, rng = Math.random) {
     if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
     // Rampage spends all your Rage: the more there was, the harder every blow hits (double at full).
     let scale = 100;
+    // A Link: a skill started right after a combo finisher connects (a basic combo's last blow, or
+    // another skill's) hits harder.
+    const f = world.finisherAt;
+    if (f && world.now - f.at <= LINK_WINDOW && f.key !== skillId) {
+      scale += LINK_BONUS;
+      world.finisherAt = null;
+      world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'LINK!', color: '#ffd24f', t: 0, link: true });
+      world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.4 });
+    }
+    // A finisher spends the hit counter, with a cut-in while the world holds its breath.
+    if (s.hitsCost) {
+      world.hits = 0;
+      world.cutin = { skill: skillId, name: s.name, school: s.school, at: world.now };
+      world.hitstop = Math.max(world.hitstop ?? 0, CUTIN_HOLD);
+    }
+    if (params.rageGain) addRage(world, params.rageGain);
     if (s.rageCost) {
       scale += Math.round((100 * world.rage) / RAGE_MAX);
       if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
@@ -148,7 +178,7 @@ export function cast(world, skillId, rng = Math.random) {
   }
   const poseDur = Math.max(lock, s ? MOVE_MIN[pose] ?? 0 : 0, Math.min(0.35, world.attackTimer));
   if (s && !lock) world.lockTimer = Math.max(world.lockTimer ?? 0, poseDur * 0.8);
-  world.pose = { kind: pose, t: poseDur, dur: poseDur };
+  world.pose = { from: outgoing(world), kind: pose, t: poseDur, dur: poseDur, since: world.now };
   // Free to move (or use something else) once the move has done its thing.
   world.recoverAt = now + (lock || (s ? poseDur * 0.55 : Math.min(0.2, world.attackTimer)));
   world.recoverKind = s ? 'skill' : 'basic';

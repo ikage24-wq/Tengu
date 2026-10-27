@@ -1836,13 +1836,33 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   drawJobAura(ctx, job, 'front', x, y, t, s, k);
 }
 
+// Eases from one move's pose (`a`) into another's (`b`) by `w` (0-1, eased here): angles take the
+// short way round, the body's lift, lean and lunge glide, and the rig tweaks switch halfway.
+function blendMove(a, b, w) {
+  if (!a || !b) return b;
+  const k = w * w * (3 - 2 * w);
+  const mix = (x, y) => x + (y - x) * k;
+  const angle = (x, y) => (x == null || y == null ? y : y - ((((y - x) % 360) + 540) % 360 - 180) * (1 - k));
+  return {
+    ...b,
+    weapon: angle(a.weapon, b.weapon), arm: angle(a.arm, b.arm),
+    lift: mix(a.lift, b.lift), lunge: mix(a.lunge, b.lunge), tilt: mix(a.tilt, b.tilt), turn: mix(a.turn, b.turn), stretch: mix(a.stretch, b.stretch),
+    rig: k < 0.5 ? a.rig ?? b.rig : b.rig,
+  };
+}
+
 // Older pose names still used by callers map onto moves.
 const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
 
 // Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const pose = state.pose ?? 'idle';
-  const moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  let moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  // A move that cut in on another eases out of it over its first few frames.
+  if (moved && state.from && state.blend < 1) {
+    const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur);
+    moved = blendMove(from, moved, Math.max(0, state.blend));
+  }
   // Walking, the whole body leans into the run and rises a little at each passing step.
   let mv = moved;
   // A choreographed body move (boss dances): lift, lean, spin, squash and stretch of the whole figure.

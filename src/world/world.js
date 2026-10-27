@@ -257,6 +257,10 @@ export function nearbyNpc(world) {
   return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6) ?? null;
 }
 
+// The hit counter: every hit you land within this many seconds of the last adds one; a pause
+// lets it drop. Finishers spend it (`hitsCost` in data/skills.js).
+export const HITS_WINDOW = 3;
+
 const BLOCKER_TEXT = {
   mp: 'Not enough MP.',
   busy: null,
@@ -264,6 +268,7 @@ const BLOCKER_TEXT = {
   noone: 'No fallen party member nearby.',
   stars: 'You need throwing stars! Shops sell them.',
   rage: 'Not enough Rage. Land some blows first!',
+  hits: 'A finisher needs a longer combo. Keep the hits coming!',
   unlearned: null,
   passive: null,
 };
@@ -367,9 +372,14 @@ export function updateWorld(world, dt, input) {
   world.invuln = Math.max(0, world.invuln - dt);
   world.warnTimer = Math.max(0, world.warnTimer - dt);
   world.lootTimer = Math.max(0, world.lootTimer - dt);
+  // The window runs from your last hit, but never drops the count mid-move (long finishers).
+  if (world.hits && !world.pose && world.now - world.hitsAt > HITS_WINDOW) world.hits = 0;
   if (world.pose) {
     world.pose.t -= dt;
-    if (world.pose.t <= 0) world.pose = null;
+    if (world.pose.t <= 0) {
+      world.lastPose = { ...world.pose, endedAt: world.now };
+      world.pose = null;
+    }
   }
 
   // Buffs: drop expired ones with a note.
@@ -434,6 +444,10 @@ export function updateWorld(world, dt, input) {
     stepBody(world.body, world.map, bodyIntent, dt, world.stats);
   }
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
+  // What the controls ask for (attacks read Up for a launcher), and how long you've been running
+  // (an attack after a short run becomes a dash attack).
+  world.intent = intent;
+  world.runFor = (intent.left || intent.right) && world.body.onGround && Math.abs(world.body.x - wasX) > 0.5 && !acting ? (world.runFor ?? 0) + dt : 0;
 
   if (!world.body.rope) {
     // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
@@ -476,6 +490,11 @@ export function updateWorld(world, dt, input) {
       continue;
     }
     world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit, weight: h.damage / m.def.hp, party: Boolean(h.party) });
+    // Your own hits keep the hit counter going (see HITS_WINDOW).
+    if (!h.party) {
+      world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
+      world.hitsAt = world.now;
+    }
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, dir: Math.sign(m.x - h.fromX) || 1 });
     // Endgame weapons add an elemental impact on every hit.

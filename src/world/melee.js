@@ -96,6 +96,32 @@ export const COMBOS = {
 
 export const hasCombo = (weaponType) => Boolean(COMBOS[weaponType]);
 
+// The command variants of a melee basic combo (any blade, axe, spear, dagger or bare hands).
+const MELEE = new Set(['sword', 'axe', 'spear', 'dagger', 'none']);
+// Up + attack: a rising launcher that throws them up and hops you after them (`hop`, px/s).
+const LAUNCHER = { move: 'rising', dur: 0.5, step: 8, strikes: [{ at: 0.4, pct: 120, reach: 72, h: 86, targets: 3, knock: 30, launch: 480, hop: 400, arc: [80, -175], thick: 11, big: true, stop: 0.06 }] };
+// In the air: two cuts that keep you hanging (`hang`), then a dive that slams into the ground
+// and lands its blow on touchdown (`dive`: the fall speed; the strike marked `onLand`).
+const AIR = [
+  { move: 'airslash', dur: 0.36, hang: true, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205] }] },
+  { move: 'airslash2', dur: 0.36, hang: true, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 84, targets: 2, knock: 15, launch: 170, arc: [100, -215] }] },
+  { move: 'meteor', dur: 0.5, dive: 760, finisher: true, strikes: [{ onLand: true, pct: 210, reach: 84, h: 70, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] },
+];
+// Running into an attack: a lunging thrust through the line.
+const DASH = { move: 'dashstab', dur: 0.46, step: 44, carry: 0.55, strikes: [{ at: 0.38, pct: 140, reach: 84, h: 52, targets: 3, pierce: true, knock: 200, big: true, stop: 0.05, shake: 1 }] };
+// How long you must have been running for an attack to become a dash attack.
+const DASH_AFTER = 0.3;
+// How slowly you sink while an air cut hangs you up (px/s).
+const HANG_FALL = 30;
+
+// The pose a new move starts from: whatever move is still playing (or just ended), so the drawing
+// can ease out of it over a few frames instead of snapping (see render/hero.js `blendMove`).
+export function outgoing(world) {
+  const p = world.pose ?? world.lastPose;
+  if (!p || (!world.pose && world.now - p.endedAt > 0.1)) return null;
+  return { kind: p.kind, progress: world.pose ? 1 - p.t / p.dur : 1, dur: p.dur };
+}
+
 // Rage: a Berserker's blows build it up to RAGE_MAX, and it drains away once the fighting stops.
 export const RAGE_MAX = 100;
 const RAGE_HOLD = 5; // seconds after the last gain before it starts draining
@@ -109,6 +135,27 @@ export function addRage(world, n) {
 
 // Basic attack with a melee weapon: the next step of its combo.
 export function basicCombo(world) {
+  const { body } = world;
+  // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
+  // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
+  if (MELEE.has(world.stats.weaponType)) {
+    if (!body.onGround && !body.rope) {
+      if ((world.airCombo ?? 0) >= AIR.length) return;
+      playStep(world, AIR[world.airCombo], 100, `basicair${world.airCombo}`);
+      world.airCombo += 1;
+      return;
+    }
+    if (world.intent?.up) {
+      playStep(world, LAUNCHER, 100, 'basiclaunch');
+      world.combo = -1;
+      return;
+    }
+    if ((world.runFor ?? 0) >= DASH_AFTER) {
+      playStep(world, DASH, 100, 'basicdash');
+      world.combo = -1;
+      return;
+    }
+  }
   const steps = COMBOS[world.stats.weaponType];
   world.combo = world.now <= (world.comboUntil ?? -9) ? ((world.combo ?? -1) + 1) % steps.length : 0;
   playStep(world, steps[world.combo], 100, `basic${world.combo}`);
@@ -133,10 +180,11 @@ function playStep(world, step, scale, key, school = null) {
   const busy = dur * (step.finisher ? 0.92 : ranged ? 0.86 : CANCEL);
   world.attackTimer = busy;
   world.lockTimer = Math.max(world.lockTimer ?? 0, busy);
-  world.pose = { kind: step.move, t: dur, dur };
+  world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now };
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
-  world.recoverAt = now + step.strikes.at(-1).at * dur + 0.03;
+  const timed = step.strikes.filter((st) => !st.onLand);
+  world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
   world.recoverKind = key.startsWith('basic') ? 'basic' : 'skill';
   if (key.startsWith('basic')) world.basicReadyAt = now + busy;
   else world.skillReadyAt = now + busy;
@@ -146,7 +194,13 @@ function playStep(world, step, scale, key, school = null) {
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
   if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
+  world.hangUntil = step.hang ? now + dur + 0.15 : 0;
+  if (step.dive) {
+    body.vy = step.dive;
+    world.dive = { strike: { ...step.strikes.find((st) => st.onLand), n: 0, of: 1, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur, at: 1 }, until: now + 1.2 };
+  }
   step.strikes.forEach((s, n) => {
+    if (s.onLand) return;
     world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
   });
 }
@@ -163,6 +217,20 @@ export function tickMelee(world, dt) {
   if (world.lunge) {
     if (world.now >= world.lunge.until || !b.onGround) world.lunge = null;
     else b.x = Math.max(b.w / 2, Math.min(world.map.width - b.w / 2, b.x + world.lunge.v * dt));
+  }
+  // Air cuts hold you up; landing ends the air combo, and a dive lands its blow on touchdown.
+  if (!b.onGround && world.now < (world.hangUntil ?? 0)) b.vy = Math.min(b.vy, HANG_FALL);
+  if (b.onGround || b.rope) world.airCombo = 0;
+  if (world.dive) {
+    if (b.onGround) {
+      const strike = world.dive.strike;
+      world.dive = null;
+      world.pose = { from: outgoing(world), kind: 'landslam', t: 0.34, dur: 0.34, since: world.now };
+      world.attackTimer = Math.max(world.attackTimer, 0.22);
+      world.recoverAt = world.now + 0.08;
+      land(world, strike);
+    } else if (world.now > world.dive.until || b.rope) world.dive = null;
+    else b.vy = Math.max(b.vy, 600);
   }
   if (!world.strikes.length) return;
   const due = world.strikes.filter((s) => s.due <= world.now);
@@ -216,6 +284,14 @@ function land(world, s) {
     }
   }
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
+  // A launcher hops you up after them, ready for an air combo.
+  if (s.hop && body.onGround) {
+    body.vy = -s.hop;
+    body.onGround = false;
+    world.airCombo = 0;
+  }
+  // A finisher that connects opens a moment to Link a skill onto it (see combat.js).
+  if (s.finisher && targets.length) world.finisherAt = { at: now, key: s.key };
   if (targets.length) {
     // Weight climbs a ladder: a light blow just stops; a heavy one stops, shakes, and kicks the
     // view along the blow; the heaviest add a moment of slow motion after the stop instead of a

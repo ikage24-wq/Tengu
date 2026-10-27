@@ -359,6 +359,95 @@ export const MOVES = {
     return MOVES.plunge((p - 0.48) / 0.52);
   },
 
+  // Air cuts: the same slash and backhand with the legs tucked up under you.
+  airslash(p) {
+    const m = MOVES.slash(p);
+    return { ...m, lunge: 0, rig: (r) => { m.rig?.(r); tuck(r); r.squat = 0; r.hairLift = -1; } };
+  },
+  airslash2(p) {
+    const m = MOVES.slash2(p);
+    return { ...m, lift: 0, rig: (r) => { m.rig?.(r); tuck(r); r.squat = 0; r.hairLift = -1; } };
+  },
+
+  // The air finisher: a beat with the weapon cocked high, then the point driven straight down as
+  // you dive (held until you land; see `landslam`).
+  meteor(p) {
+    const cock = ease(seg(p, 0, 0.25));
+    const drive = ease(seg(p, 0.25, 0.4));
+    return {
+      weapon: lerp(lerp(20, -120, cock), 178, drive), arm: lerp(lerp(90, 180, cock), 30, drive), tilt: lerp(-0.18 * cock, 0.3, drive), stretch: 1 + 0.08 * drive,
+      trail: drive > 0 && drive < 1,
+      rig: (r) => { tuck(r); r.backArm = [-2, -5]; r.hairLift = -1; if (drive > 0) strikeFace(r); r.cape = -4; },
+    };
+  },
+
+  // Touchdown from a dive: the weapon buried in the floor in a deep crouch, then rising out of it.
+  landslam(p) {
+    return MOVES.slam(0.46 + 0.54 * p);
+  },
+
+  // A dash attack: lean way in with the point leading and drive through the line.
+  dashstab(p) {
+    if (p < 0.25) {
+      const t = ease(p / 0.25);
+      return { weapon: 92, arm: lerp(80, 50, t), tilt: 0.1 * t, lunge: -1 * t, rig: (r) => { r.squat = 1; r.frontLeg = [4, 0, 6]; r.backLeg = [-4, 0, -12]; r.backArm = [1, -1]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.25, 0.42));
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 90, arm: lerp(50, 108, t) - 25 * back, tilt: lerp(0.1, 0.34, t) * (1 - back), lunge: 9 * t * (1 - back * 0.8), stretch: 1 - 0.05 * t * (1 - back),
+      trail: p < 0.6,
+      rig: (r) => { r.tx = 2; r.frontLeg = [5, 0, 10]; r.backLeg = [-5, 0, -16]; r.backArm = [-4, -1]; strikeFace(r); r.hairLift = -1; r.cape = -5; },
+    };
+  },
+
+  // Grand Verdict (the Paladin's finisher): kneel and raise the blade to the sky, rise on the light
+  // with it held high, hang a beat, then drive it down into the ground in one blow and hold the
+  // crouch while the light breaks. The blow lands at about 0.66.
+  verdict(p, dur) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      const shake = Math.sin(p * dur * 60) * 0.5 * t;
+      return { weapon: lerp(25, -8, t), arm: lerp(60, 178, t), lunge: shake, tilt: -0.06 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.backArm = [-3, -5]; r.hairLift = -1; r.eyes = t > 0.5 ? 'blink' : undefined; } };
+    }
+    if (p < 0.6) {
+      const t = ease(seg(p, 0.3, 0.5));
+      const hang = Math.sin(seg(p, 0.5, 0.6) * Math.PI) * 1.5;
+      return { weapon: lerp(-8, -150, ease(seg(p, 0.45, 0.6))), arm: 178, lift: 34 * t + hang, tilt: -0.12 * t, rig: (r) => { tuck(r); r.backArm = [-2, -5]; r.hairLift = -1; r.cape -= 3; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.6, 0.66));
+    const settle = seg(p, 0.72, 1);
+    return {
+      weapon: lerp(-150, 175, ease(seg(p, 0.6, 0.65))), arm: lerp(178, 30, t), lift: 35 * (1 - t), tilt: 0.25 * t * (1 - settle), trail: p < 0.7,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [2, 2]; strikeFace(r); },
+    };
+  },
+
+  // Crimson Eclipse (the Berserker's finisher): a whirlwind that spins you up into the air, a beat
+  // at the top with the axe raised against the red moon, then a crash straight down. The crash
+  // lands at about 0.68.
+  eclipse(p, dur) {
+    if (p < 0.45) {
+      const a = ease(seg(p, 0, 0.45)) * 2;
+      const rise = ease(seg(p, 0.05, 0.45));
+      return {
+        weapon: 95 + a * 360, arm: 100, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), lift: 30 * rise, trail: true,
+        rig: (r) => { tuck(r); r.backArm = [-3, -3]; r.hairLift = -1; strikeFace(r); },
+      };
+    }
+    if (p < 0.62) {
+      const t = ease(seg(p, 0.45, 0.55));
+      const shake = Math.sin(p * dur * 70) * 0.6;
+      return { weapon: lerp(95, -125, t), arm: lerp(100, 182, t), lift: 30 + 3 * t, lunge: shake, tilt: -0.16 * t, rig: (r) => { tuck(r); r.backArm = [-1, -5]; r.hairLift = -1; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.62, 0.68));
+    const settle = seg(p, 0.74, 1);
+    return {
+      weapon: lerp(-125, 170, ease(seg(p, 0.62, 0.67))), arm: lerp(182, 40, t), lift: 33 * (1 - t), tilt: 0.26 * t * (1 - settle), trail: p < 0.72,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [2, 1]; strikeFace(r); },
+    };
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -391,7 +480,7 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -430,7 +519,7 @@ export function defaultMove(type, weaponType, params) {
 // a touch past the hit pose, a sticky hold on that follow-through, then an eased settle. The moves
 // are written with a wind-up to about 0.3 and the cut to about 0.65; this reshapes time around
 // that, and keeps the blade through the target by the time the blow lands (strikes at 0.42-0.47).
-const SNAPPY = new Set(['slash', 'slash2', 'thrust', 'overhead']);
+const SNAPPY = new Set(['slash', 'slash2', 'thrust', 'overhead', 'airslash', 'airslash2']);
 function snap(p) {
   if (p < 0.33) return 0.3 * ease(p / 0.33); // wind up
   if (p < 0.39) return 0.3; // the held beat before the cut

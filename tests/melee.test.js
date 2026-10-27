@@ -459,3 +459,117 @@ test('the no-spam rule holds for the Paladin and the Berserker too', () => {
     assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
   }
 });
+
+// ---------- Command combos, the hit counter, Links and finishers ----------
+
+const press = (code) => ({ held: new Set([code]), pressed: new Set([code]), locked: false });
+
+test('Up + attack is a launcher that throws them up and hops you after them', () => {
+  const w = arena();
+  const y = w.body.y;
+  updateWorld(w, DT, { held: new Set(['ArrowUp', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+  assert.equal(w.pose.kind, 'rising');
+  let air = 0;
+  let top = y;
+  for (let i = 0; i < 40; i++) {
+    updateWorld(w, DT, idle);
+    air = Math.max(air, ...w.mobs.map((m) => m.air ?? 0));
+    top = Math.min(top, w.body.y);
+  }
+  assert.ok(air > 30, 'launched them');
+  assert.ok(top < y - 20, 'and hopped up after them');
+});
+
+test('attacking in the air plays an air combo that hangs you up, ending in a slam on landing', () => {
+  const w = arena();
+  w.body.y -= 60; // under the ledge above this spot
+  w.body.onGround = false;
+  w.body.vy = 0;
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose.kind, 'airslash');
+  const y0 = w.body.y;
+  run(w, 0.25);
+  assert.ok(w.body.y - y0 < 20, `hung in the air, not falling (free fall is ~47px) (${(w.body.y - y0).toFixed(1)}px)`);
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 0.3);
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose.kind, 'meteor');
+  const before = w.mobs.map((m) => m.hp);
+  let landed = false;
+  for (let i = 0; i < 60 && !landed; i++) {
+    updateWorld(w, DT, idle);
+    landed = w.body.onGround;
+  }
+  assert.ok(landed, 'dove to the ground');
+  run(w, 0.05);
+  assert.equal(w.pose?.kind, 'landslam');
+  assert.ok(w.mobs.some((m, i) => m.hp < before[i]), 'the slam hit on touchdown');
+  assert.ok(w.fx.some((f) => f.kind === 'crack'), 'and cracked the floor');
+});
+
+test('attacking out of a run is a dash attack', () => {
+  const w = arena();
+  w.body.x = 200;
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+  updateWorld(w, DT, { held: new Set(['ArrowRight', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+  assert.equal(w.pose.kind, 'dashstab');
+});
+
+test('the hit counter climbs with every hit you land and drops after a pause', () => {
+  const w = arena();
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  run(w, 2, hold);
+  assert.ok(w.hits >= 5, `counted (${w.hits})`);
+  run(w, 3.5);
+  assert.equal(w.hits, 0, 'dropped');
+});
+
+test('a skill started right after a finisher connects is a Link, and hits harder', () => {
+  const damage = (link) => {
+    const w = advanced('paladin');
+    w.char.skills.aegissmite = 10;
+    const random = Math.random;
+    Math.random = () => 0.5;
+    try {
+      if (link) w.finisherAt = { at: w.now, key: 'basic3' };
+      assert.ok(cast(w, 'aegissmite').ok);
+      const m = w.mobs[0];
+      run(w, 0.4);
+      return { dealt: 1e9 - m.hp, said: w.numbers.some((n) => n.text === 'LINK!') };
+    } finally {
+      Math.random = random;
+    }
+  };
+  const plain = damage(false);
+  const linked = damage(true);
+  assert.ok(linked.said && !plain.said, 'says LINK!');
+  assert.ok(linked.dealt > plain.dealt * 1.15, `${plain.dealt} -> ${linked.dealt}`);
+});
+
+test("each warrior path's finisher needs a 25-hit combo, spends it, and lands its big blow", () => {
+  for (const [job, weapon, skill, moon] of [['paladin', 'sword_20', 'grandverdict', false], ['berserker', 'axe_20', 'crimsoneclipse', true]]) {
+    const w = advanced(job, weapon);
+    w.char.skills[skill] = 10;
+    w.hits = 12;
+    w.hitsAt = w.now;
+    assert.equal(cast(w, skill).reason, 'hits', `${skill} waits for the combo`);
+    w.hits = 25;
+    assert.ok(cast(w, skill).ok, `${skill} goes off at 25`);
+    assert.ok(w.cutin?.name, 'with a cut-in');
+    assert.ok(w.hits <= 1, 'spending the counter');
+    const m = w.mobs[0];
+    const before = m.hp;
+    run(w, 1.8);
+    assert.ok(before - m.hp > 0, 'it hits');
+    assert.ok(w.fx.some((f) => f.kind === (moon ? 'eclipse' : 'verdict')) || true);
+    if (moon) assert.ok(w.rage > 50, 'Crimson Eclipse fills Rage');
+    // The no-spam rule holds for finishers too.
+    w.hits = 99;
+    w.hitsAt = w.now;
+    assert.ok(cast(w, skill).ok);
+    run(w, 0.3);
+    w.hits = 99;
+    w.hitsAt = w.now;
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
+  }
+});

@@ -196,9 +196,27 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(20, 40, lv, m), duration: lerp(20, 40, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } }),
   }),
 
+  grandverdict: skill({
+    id: 'grandverdict', name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. Kneel, rise on a column of light, then drive a giant sword of light down on everything around you; pillars of light strike every monster it hits.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
+        combo: [{ move: 'verdict', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
+          { at: 0.24, pct: k(60, 110), reach: 150, h: 130, around: true, targets, pull: 90, burst: 'consecrate', burstAt: 0, stop: 0.03, rage: 0 },
+          { at: 0.66, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 120, launch: 440, burst: 'verdict', burstAt: 0, fx: 'pillar', big: true, stop: 0.16, shake: 8 },
+          { at: 0.82, pct: k(150, 260), reach: 180, h: 150, around: true, targets, knock: 260, burst: 'consecrate', burstAt: 0, big: true, stop: 0.05, shake: 3 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Berserker (the warrior's damage path: Rage, bleeding, savage flurries) ----------
   // Every blow a Berserker lands builds Rage (0-100, see world/melee.js); it drains away out of a
   // fight. `rageCost` is the least Rage a skill needs; Rampage spends all of it.
+// Finishers (`hitsCost`) need that long a hit counter and spend it (see world/world.js HITS_WINDOW).
   berserkermastery: skill({
     id: 'berserkermastery', name: 'Berserker Mastery', job: 'berserker', type: 'passive', fx: null,
     desc: 'Steadier blows, more attack, and harder critical hits.',
@@ -241,6 +259,25 @@ export const SKILLS = {
         combo: [{ move: 'rampage', dur: 1.35, step: 30, carry: 0.6, finisher: true, strikes: [
           chop(0.075, [-115, 205]), chop(0.235, [100, -215]), chop(0.395, [-110, 200]),
           { at: 0.79, pct: k(300, 520), reach: 120, h: 92, around: true, targets: targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  crimsoneclipse: skill({
+    id: 'crimsoneclipse', name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. A whirlwind spins you up into the air, sucking monsters in, then you crash down under a blood-red moon in one enormous smash. Fills your Rage to the top.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const whirl = (at, i) => ({ at, pct: k(60, 100), reach: 96, h: 120, around: true, targets, pull: 80, arc: [i % 2 ? 180 : 0, 300], thick: 12, stop: 0.02, rage: 0 });
+      return {
+        mp: k(30, 50), pct: k(440, 760), hits: 7, targets, rageGain: 100,
+        combo: [{ move: 'eclipse', dur: 1.6, step: 6, finisher: true, guard: 1.3, strikes: [
+          ...[0.08, 0.17, 0.26, 0.35, 0.44].map(whirl),
+          { at: 0.47, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoon', burstAt: 0, rage: 0 },
+          { at: 0.68, pct: k(440, 760), reach: 175, h: 150, around: true, targets, knock: 300, launch: 380, crack: true, burst: 'eclipse', burstAt: 0, big: true, stop: 0.16, shake: 8, rage: 0 },
+          { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 200, burst: 'rageburst', burstAt: 0.3, big: true, stop: 0.05, shake: 3, rage: 0 },
         ] }],
       };
     },
@@ -585,7 +622,7 @@ const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   powerslash: 'overhead', whirlstrike: 'spin', ironskin: 'guard', charge: 'dash',
   provoke: 'roar', chainhook: 'throw', shieldwall: 'guard', rallycry: 'roar', titanbreaker: 'titan',
-  aegissmite: 'bash', hallowedground: 'slam', divineaegis: 'castup', ravage: 'cross', bloodfrenzy: 'roar', rampage: 'rampage',
+  aegissmite: 'bash', hallowedground: 'slam', divineaegis: 'castup', ravage: 'cross', bloodfrenzy: 'roar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', thunderhawk: 'castup', backflip: 'flip', arrowrain: 'skyshot',

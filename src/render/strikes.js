@@ -7,7 +7,7 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { ghost, wash, needle, bloom, shardRing, shock, starFlash, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
+import { ghost, wash, needle, bloom, shardRing, shock, starFlash, crescent, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -467,6 +467,150 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         const px = x + Math.cos(a) * rx;
         const py = y - 3 + Math.sin(a) * rx * 0.12 - easeOut(lift) * (20 + rand(i + f.seed) * 26);
         diamond(ctx, px, py, (3.2 * (1 - lift) + 0.4) * Math.min(1, ring * 1.5), i % 2 ? '#ffffff' : c.main);
+      }
+      return true;
+    }
+    case 'verdict': {
+      // Grand Verdict: a giant sword of light drops out of the sky and buries its point in the
+      // ground, a flash and a cross of light burst from the impact while flat rings race out, it
+      // stands glowing while diamonds of light rise, then it breaks apart from the hilt down.
+      const R = f.r ?? 170;
+      const drop = 0.1;
+      const k = Math.min(1, p / drop);
+      const dy = -240 * (1 - k * k);
+      const breakUp = Math.max(0, (p - 0.62) / 0.38);
+      const blade = (W, top, bottom, color) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x - W, top);
+        ctx.lineTo(x + W, top);
+        ctx.lineTo(x + W * 0.8, bottom - W * 1.6);
+        ctx.lineTo(x, bottom);
+        ctx.lineTo(x - W * 0.8, bottom - W * 1.6);
+        ctx.closePath();
+        ctx.fill();
+      };
+      // The sword, cut into bands that vanish from the hilt end as it breaks up.
+      const top = y - 210 + dy;
+      const bottom = y + 6 + dy;
+      const cut = top + (bottom - top) * Math.min(1, breakUp * 1.2);
+      const shrink = 1 - easeIn(breakUp);
+      if (shrink > 0.05) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x - 90, cut, 180, bottom - cut + 2);
+        ctx.clip();
+        if (inked(ctx)) blade(22 * shrink + 2, top, bottom + 2, deep(c.deep));
+        blade(22 * shrink, top, bottom, c.main);
+        blade(15 * shrink, top, bottom - 6, c.light);
+        blade(5 * shrink, top, bottom - 14, '#ffffff');
+        // The cross-guard and hilt.
+        if (cut < top) {
+          // A broad cross-guard swept up at the ends like wings, a grip, and a diamond pommel.
+          const gy = top - 6;
+          const guard = (gw, gh, color) => {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x - gw, gy - gh * 1.6);
+            ctx.quadraticCurveTo(x - gw * 0.5, gy + gh * 0.2, x, gy + gh * 0.6);
+            ctx.quadraticCurveTo(x + gw * 0.5, gy + gh * 0.2, x + gw, gy - gh * 1.6);
+            ctx.quadraticCurveTo(x + gw * 0.5, gy + gh * 1.6, x, gy + gh * 1.9);
+            ctx.quadraticCurveTo(x - gw * 0.5, gy + gh * 1.6, x - gw, gy - gh * 1.6);
+            ctx.fill();
+          };
+          if (inked(ctx)) guard(54 * shrink + 2, 8 + 1.5, deep(c.deep));
+          guard(54 * shrink, 8, c.deep);
+          guard(48 * shrink, 5, c.main);
+          ctx.fillStyle = c.main;
+          ctx.fillRect(x - 6 * shrink, gy - 34, 12 * shrink, 30);
+          ctx.fillStyle = c.light;
+          ctx.fillRect(x - 2 * shrink, gy - 34, 4 * shrink, 30);
+          diamond(ctx, x, gy - 40, 9 * shrink, '#ffffff');
+          diamond(ctx, x, gy + 6, 7 * shrink, '#ffffff');
+        }
+        ctx.restore();
+      }
+      if (p >= drop) {
+        const i = (p - drop) / (1 - drop);
+        if (i < 0.18) {
+          const b = stepped(i / 0.18, 4);
+          bloom(ctx, x, y - 16, 46 * (0.6 + b * 0.6), 8, f.seed * 3, c.main, '#ffffff', 0.5 + b * 1.4);
+          // A cross of light: long thin rays out along the ground and up the blade.
+          needle(ctx, x + 10 + 120 * b, y - 8, 0, 60 * (1 - b) + 8, 6 * (1 - b) + 1, c.main, '#ffffff');
+          needle(ctx, x - 10 - 120 * b, y - 8, Math.PI, 60 * (1 - b) + 8, 6 * (1 - b) + 1, c.main, '#ffffff');
+        }
+        const r1 = easeOut(Math.min(1, i / 0.4));
+        const fade = 1 - Math.max(0, (i - 0.5) / 0.5);
+        shock(ctx, x, y - 1, 20 + R * r1, (20 + R * r1) * 0.12, (6 * (1 - r1) + 1.5) * fade, c.main);
+        shock(ctx, x, y - 1, (20 + R * r1) * 0.66, (20 + R * r1) * 0.08, 2 * fade, '#ffffff');
+        for (let j = 0; j < 9; j++) {
+          const u = Math.max(0, i - 0.12 - j * 0.04);
+          if (u <= 0 || u >= 0.8) continue;
+          const d = easeOut(u / 0.8);
+          const dx = x + (rand(j * 4.3 + f.seed * 9) - 0.5) * R * 1.4;
+          diamond(ctx, dx, y - 8 - d * (50 + rand(j * 1.7) * 60), 4 * (1 - d) + 0.6, j % 2 ? c.main : '#ffffff');
+        }
+      }
+      return true;
+    }
+    case 'bloodmoon': {
+      // The Berserker's moon: at the top of Crimson Eclipse a blood-red moon rises behind the axe,
+      // a dark bite across it, then it's swallowed as the smash comes down.
+      const mx = x - (f.dir || 1) * 8;
+      const my = y - 120;
+      const g = p < 0.15 ? easeOut(p / 0.15) * 1.15 : p < 0.25 ? 1.15 - ((p - 0.15) / 0.1) * 0.15 : 1;
+      const out = Math.max(0, (p - 0.55) / 0.45);
+      const r = 30 * g * (1 - easeIn(out));
+      if (r <= 0.5) return true;
+      if (inked(ctx)) {
+        ctx.fillStyle = '#3a0814';
+        ctx.beginPath();
+        ctx.arc(mx, my, r + 2, 0, TAU);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#c8243a';
+      ctx.beginPath();
+      ctx.arc(mx, my, r, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ff5a4a';
+      ctx.beginPath();
+      ctx.arc(mx - r * 0.18, my - r * 0.2, r * 0.74, 0, TAU);
+      ctx.fill();
+      // The bite of the eclipse, sliding across.
+      ctx.fillStyle = '#4a0a1e';
+      ctx.beginPath();
+      ctx.arc(mx + r * (0.9 - 0.5 * Math.min(1, p / 0.5)), my - r * 0.1, r * 0.82, 0, TAU);
+      ctx.fill();
+      // A thin bright rim on the lit edge.
+      ctx.strokeStyle = '#ffd27a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(mx, my, r - 0.75, Math.PI * 0.6, Math.PI * 1.35);
+      ctx.stroke();
+      return true;
+    }
+    case 'eclipse': {
+      // The crash under the red moon: a giant crimson crescent cut down through the impact, a
+      // jagged flash, a ring of shards and red rings racing over the floor, embers flung wide.
+      const R = f.r ?? 175;
+      const dir = f.dir || 1;
+      const cy = y - 20;
+      if (p < 0.3) {
+        const k = stepped(p / 0.3, 5);
+        const a0 = dir > 0 ? -Math.PI * 0.85 : -Math.PI * 0.15;
+        const a1 = dir > 0 ? Math.PI * 0.25 : Math.PI * 0.75;
+        crescent(ctx, x, cy - 10, 70, a0, a0 + (a1 - a0) * Math.min(1, k * 1.6), 26 * (1 - k * 0.6), '#f0303f', '#ffd27a');
+        starFlash(ctx, x + dir * 20, y - 10, 70 * (k < 0.2 ? 0.7 : 1 - k * 0.5), 8, f.seed * 6, c.main, '#ffffff', 12 * (1 - k));
+      }
+      const r1 = easeOut(Math.min(1, p / 0.45));
+      const fade = 1 - Math.max(0, (p - 0.5) / 0.5);
+      shock(ctx, x, y - 1, 20 + R * r1, (20 + R * r1) * 0.12, (6 * (1 - r1) + 1.5) * fade, '#f0303f');
+      shardRing(ctx, x, cy, 16 + R * 0.7 * r1, 9 * (1 - r1), 11, f.seed, f.seed * 4, p < 0.4 ? c.main : c.deep);
+      for (let i = 0; i < 16; i++) {
+        const a = -Math.PI * (0.05 + 0.9 * rand(i * 2.9 + f.seed * 13));
+        const d = easeOut(p) * (30 + rand(i * 7.1 + f.seed) * R);
+        if (p > 0.85) continue;
+        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d + p * p * 30, a, 12 * (1 - p) + 1, 3 * (1 - p) + 0.6, i % 3 ? c.main : '#ffb347', c.light);
       }
       return true;
     }
