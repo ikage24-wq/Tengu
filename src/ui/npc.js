@@ -1,6 +1,7 @@
 // NPC conversations: quests, shops, the stylist, and job advancement. Also the "fainted" dialog.
 
 import { NPCS } from '../data/npcs.js';
+import { sfx } from '../audio/sfx.js';
 import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
@@ -108,7 +109,18 @@ function typed(ui, dlg, page, world, area, len = Infinity) {
   if (clicked(ui, area.x, area.y - 10, area.w, 30) || ui.input.pressed?.has('Space')) dlg.typedAt = -1e9;
   const n = (world.now - dlg.typedAt) * 70;
   dlg.talking = n < len;
+  // Their voice: a blip every few letters while the words type out, at their own pitch.
+  const said = Math.floor(Math.min(n, len) / 3);
+  if (dlg.talking && Number.isFinite(len) && said > (dlg.blips ?? -1)) sfx('blip', voiceOf(dlg.id));
+  dlg.blips = dlg.talking ? said : -1;
   return n;
+}
+
+// Each NPC's speaking voice: a pitch and a timbre picked from their id, so everyone sounds their own.
+function voiceOf(id = '') {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return { pitch: 380 + (h % 9) * 55, kind: ['triangle', 'square', 'sine'][h % 3] };
 }
 
 // Number keys pick dialog choices (the world ignores them while a dialog is open).

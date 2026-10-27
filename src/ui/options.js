@@ -1,8 +1,9 @@
-// The Options window (Esc with nothing else open, or the gear button): display, interface, and
-// gameplay settings, the controls, and the way out to change character or return to the title.
+// The Options window (Esc with nothing else open, or the gear button): display, interface, sound,
+// and gameplay settings, the controls, and the way out to change character or return to the title.
 // Settings save as soon as they change.
 
 import { settings, saveSettings, resetSettings } from '../core/settings.js';
+import { applyVolumes } from '../audio/engine.js';
 import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap, font } from './kit.js';
 
 const PAGES = {
@@ -21,6 +22,11 @@ const PAGES = {
     ['mapBanner', 'Map name banner', 'The ribbon that drops in when you enter a map.'],
     ['monsterHp', 'Monster HP bars', 'Health bars over hurt monsters.'],
     ['showFps', 'FPS counter', 'Frames per second, for the curious.'],
+  ],
+  Sound: [
+    ['masterVolume', 'Volume', 'Everything at once.', ['off', 'low', 'mid', 'high']],
+    ['musicVolume', 'Music', 'A tune for every town, field, dungeon, and boss.', ['off', 'low', 'mid', 'high']],
+    ['sfxVolume', 'Sound effects', 'Hits, spells, steps, loot, menus, and voices.', ['off', 'low', 'mid', 'high']],
   ],
   Gameplay: [
     ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.', ['full', 'low', 'off']],
@@ -48,7 +54,7 @@ export function optionsWindow(ui, state, world) {
   if (!windowFrame(ui, win, W, H, 'Options')) return;
   const { ctx } = ui;
   const th = ui.theme;
-  win.tab = tabs(ui, win.x + 8, win.y + 24, TAB_NAMES, win.tab ?? 0, { w: 55 });
+  win.tab = tabs(ui, win.x + 8, win.y + 24, TAB_NAMES, win.tab ?? 0, { w: 46 });
   const page = TAB_NAMES[win.tab];
   const x = win.x + 10;
   let y = win.y + 46;
@@ -69,6 +75,7 @@ export function optionsWindow(ui, state, world) {
           if (clicked(ui, bx, y + 7, 36, 13) && !on) {
             settings[key] = c;
             saveSettings();
+            applyVolumes();
           }
         });
       } else {
@@ -100,7 +107,10 @@ export function optionsWindow(ui, state, world) {
     y += 28;
     if (button(ui, x, y, W - 20, 22, 'Exit to title', { iconName: 'door', size: 9 })) state.action = 'title';
     y += 28;
-    if (button(ui, x, y, W - 20, 20, 'Reset all settings', { size: 8 })) resetSettings();
+    if (button(ui, x, y, W - 20, 20, 'Reset all settings', { size: 8 })) {
+      resetSettings();
+      applyVolumes();
+    }
   }
   if (button(ui, win.x + W - 78, win.y + H - 24, 68, 18, 'Resume', { primary: true, size: 8 })) win.open = false;
 }

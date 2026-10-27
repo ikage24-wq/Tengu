@@ -5,6 +5,7 @@
 // scalloped title ribbon, a cream body, and a soft shadow. Buttons are glossy candy
 // with a lip that presses down; bars are glossy capsules with a shine that sweeps across.
 
+import { sfx } from '../audio/sfx.js';
 import { RARITIES } from '../data/items.js';
 import { drawItemIcon } from '../render/icons.js';
 
@@ -92,6 +93,7 @@ export function clicked(ui, x, y, w, h) {
   if (ui.mouse.clicked && hover(ui, x, y, w, h)) {
     ui.used = true;
     ui.mouse.clicked = false;
+    sfx('click');
     return true;
   }
   return false;

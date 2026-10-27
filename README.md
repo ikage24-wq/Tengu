@@ -367,7 +367,24 @@ to clear it.
 - **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
   adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
   **Natural** leaves the colors as drawn.
-- **Options** — Esc (or the gear button) opens Options. Display: filter, HD graphics, particles
+- **Sound** — every sound is made in code with the Web Audio API, like the art (no audio files;
+  `src/audio/`). Effects for everything: swings that get heavier with the blow (shimmering for a
+  Paladin, growling for a Berserker), hits with a crisp click and a thump (deeper for heavy
+  blows, a ping on crits, bells for holy light, a crunch for rage, and each weapon element's own
+  colour), bow twangs and star throws, a sound per spell school (fire whooshes, glassy ice,
+  crackling lightning, bubbling poison, choir-like holy light), buffs, heals, dashes and
+  teleports, ground cracks and stomps, power gathering before big blows, every Paladin and
+  Berserker effect, monster pops and boss booms, your own hurt and knock-out, footsteps that
+  change with the ground (grass, stone, wooden docks, sand, crystal, cloud), jumps, landings,
+  climbing, portals, loot drops, coins, pickups, level-ups, job advancements, quests, the hit
+  counter's tiers, LINK!, going Berserk or Sanctified, menu clicks and windows, and a voice blip
+  for every NPC while their words type out (each at their own pitch). Sounds pan to where they
+  happen on screen. **Music** is composed as it plays: each town, field, dungeon and boss has its
+  own key, tempo, chords and instruments (a soft pad, bass, a plucked, bell, flute or chiptune
+  lead, and light drums), the melody a motif that repeats and varies; the Funky Fever Stage plays
+  four-on-the-floor disco at the boss's 120 bpm. Sound starts on your first key press or click.
+  Options: Sound has volume for everything, music, and effects.
+- **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: filter, HD graphics, particles
   (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest
   tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: screen shake,
   hit-stop, damage numbers, auto-loot, click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and
@@ -429,6 +446,7 @@ src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon f
                         particles,
                         monsters, scenery, terrain, landmarks, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
+src/audio/              synthesized sound effects and music, and the listener that plays them
 tests/                  node:test suites for rules, content integrity, and world behavior
 ```
 
