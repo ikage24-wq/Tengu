@@ -18,7 +18,9 @@ carry an improvement across every part of the game it applies to.
   [sakuemon](research/sakuemon.md) (Sakuemon's pixel animation: the player's main reference for body
   proportions, idles, attacks, jumps and walks),
   [diives](research/diives.md) (Diives' safe-for-work character acting: expressions, emotion symbols,
-  squash and timing).
+  squash and timing),
+  [dancing-green](research/dancing-green.md) (the FFXIV boss the player wants as a disco boss: his
+  look, how he moves, and every attack with its tell).
 - [briefs/](briefs/): the briefs the art and improvement passes worked from (conventions, quality
   bar, review loop).
 
