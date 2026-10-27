@@ -28,6 +28,44 @@ tier (M5 / M5S, patch 7.2), built on the hero body. Sources are listed at the en
 - **Moonwalk:** his frog dancers moonwalk across the floor and leave tracks that explode.
 - **Savage intro:** a red flash of the toad's soul around him.
 
+## From the full fight video (the player's upload, M5 on Dawntrail)
+- **Intro (0–53 s):**
+  - A close-up of platform shoes stepping in, then a cocky dance on the stage in front of a neon
+    sign with disco balls: a knee-up kick, a lean back with the arms out, and a straight-leg kick.
+  - The hero walks onto the 8x8 glowing tile floor.
+  - He strikes the point pose and a close-up shows the shades and pin. Red energy builds around
+    him and swallows him.
+  - **He transforms into his toad form**, the shape he fights in. Shown in order: orange frog
+    feet with big round toes under chrome flares; a frog hand covered in rings holding a vinyl
+    record; then the head.
+  - He ends on a pose: one hand behind the head, the other arm pointing the record straight out.
+- **The toad form (how he looks for the whole fight):**
+  - **Head:** a tall frog head, lime green, still with the rabbit ears, and big pink goggle eyes
+    like a visor. A thick red scarf ruff at the neck.
+  - **Upper body:** a cropped, shiny purple jacket with rolled sleeves over a silver ribbed chest.
+  - **Waist and legs:** a white belt with a round buckle, and chrome or silver bell-bottoms
+    sculpted like armour panels.
+  - **Hands and feet:** big orange frog hands with rings, and orange frog feet.
+  - **Tail:** a long red curling tail (or ribbon) that whips around him all fight. It's the
+    liveliest part of his silhouette.
+  - **Scale:** about twice the hero's height.
+- **How he moves in the fight:** he stays at the middle of the floor and snaps from pose to
+  pose on the music. Typical poses:
+  - leaning with both arms thrown wide (a T), one knee up;
+  - a deep side lunge with one arm pointing;
+  - hip twists with his arms out.
+
+  The red tail swings in big S-curves behind every move. On the Twists, a stepped wall of
+  glowing white cubes builds up on one side and that side flashes, beat by beat. For Do the
+  Hustle he poses toward the side that gets hit.
+- **Floor and effects seen:**
+  - Funky Floor turns the tiles into a red-orange and black checkerboard, and then into a
+    rainbow of glowing tiles.
+  - Disco Infernal drops white spotlight cylinders that drift around.
+  - The frog dancers stand on pedestals along the back wall, tethered to him by blue lightning.
+  - "PERFECT GROOVE" flashes in big neon letters when the party dodges everything.
+  - Frogtourage frogs spin out as star-shaped dancers.
+
 ## What he does in the fight (ability order and tells)
 - **Do the Hustle:** a wall of rainbow tiles lights up one side, then a half-room cleave there.
   Move to the other half.
