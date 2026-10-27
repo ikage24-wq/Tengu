@@ -546,29 +546,25 @@ test('a skill started right after a finisher connects is a Link, and hits harder
   assert.ok(linked.dealt > plain.dealt * 1.15, `${plain.dealt} -> ${linked.dealt}`);
 });
 
-test("each warrior path's finisher needs a 25-hit combo, spends it, and lands its big blow", () => {
-  for (const [job, weapon, skill, moon] of [['paladin', 'sword_20', 'grandverdict', false], ['berserker', 'axe_20', 'crimsoneclipse', true]]) {
+test("each warrior path's finisher needs its gauge full, spends it, and lands its big blow", () => {
+  for (const [job, weapon, skill, gauge] of [['paladin', 'sword_20', 'grandverdict', 'faith'], ['berserker', 'axe_20', 'crimsoneclipse', 'rage']]) {
     const w = advanced(job, weapon);
     w.char.skills[skill] = 10;
-    w.hits = 12;
-    w.hitsAt = w.now;
-    assert.equal(cast(w, skill).reason, 'hits', `${skill} waits for the combo`);
-    w.hits = 25;
-    assert.ok(cast(w, skill).ok, `${skill} goes off at 25`);
-    assert.ok(w.hits <= 1, 'spending the counter');
+    w[gauge] = 80;
+    w[`${gauge}At`] = w.now;
+    assert.equal(cast(w, skill).reason, `gauge:${gauge}`, `${skill} waits for full ${gauge}`);
+    w[gauge] = 100;
+    assert.ok(cast(w, skill).ok, `${skill} goes off at full ${gauge}`);
+    assert.equal(w[gauge], 0, `spending the ${gauge}`);
     const m = w.mobs[0];
     const before = m.hp;
     run(w, 1.8);
     assert.ok(before - m.hp > 0, 'it hits');
-    assert.ok(w.fx.some((f) => f.kind === (moon ? 'eclipse' : 'verdict')) || true);
-    if (moon) assert.ok(w.rage > 50, 'Crimson Eclipse fills Rage');
     // The no-spam rule holds for finishers too.
-    w.hits = 99;
-    w.hitsAt = w.now;
+    w[gauge] = 100;
     assert.ok(cast(w, skill).ok);
     run(w, 0.3);
-    w.hits = 99;
-    w.hitsAt = w.now;
+    w[gauge] = 100;
     assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
   }
 });
@@ -712,7 +708,7 @@ test("a Ranger's Gale builds as arrows land, quickens her shots, and full looses
   assert.ok(spirits >= 2, `two wind spirits swoop out with it (${spirits})`);
 });
 
-test("a Sniper's Focus builds standing still, bleeds away running, and full fires a Deadeye", async () => {
+test("a Sniper's Focus builds standing still, bleeds away running, and full makes every bolt a Deadeye", async () => {
   const { FOCUS_MAX } = await import('../src/world/melee.js');
   const w = archer('sniper');
   updateWorld(w, DT, press('KeyZ'));
@@ -724,7 +720,7 @@ test("a Sniper's Focus builds standing still, bleeds away running, and full fire
   const held = w.focus;
   run(w, 0.8, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
   assert.ok(w.focus < held, 'running bleeds it away');
-  // Full: the next bolt always crits, tears through the line, and spends it.
+  // Full: every bolt always crits and tears through the line (Heartseeker is what spends it).
   Object.assign(w.body, { x: 300, facing: 1 });
   run(w, 0.3);
   w.focus = FOCUS_MAX;
@@ -738,7 +734,6 @@ test("a Sniper's Focus builds standing still, bleeds away running, and full fire
     updateWorld(w, DT, idle);
   }
   assert.ok(w.numbers.some((n) => n.text === 'DEADEYE!'), 'says DEADEYE!');
-  assert.ok(w.focus < FOCUS_MAX / 2, 'it spends the Focus');
   const dead = crits.filter((h) => !h.party);
   assert.ok(dead.length >= 3, `it tears through the line (${dead.length})`);
   assert.ok(dead.every((h) => h.crit && !h.miss), 'every hit a critical');
@@ -803,16 +798,17 @@ test("Tailwind and Steady Aim fill half the gauge at once", () => {
   }
 });
 
-test("each archer path's finisher needs a 25-hit combo, spends it, and lands its big blow", () => {
-  for (const [job, skill] of [['ranger', 'stormvolley'], ['sniper', 'heartseeker']]) {
+test("each archer path's finisher needs its gauge full, spends it, and lands its big blow", () => {
+  for (const [job, skill, gauge] of [['ranger', 'stormvolley', 'gale'], ['sniper', 'heartseeker', 'focus']]) {
     const w = archer(job);
     w.char.skills[skill] = 10;
-    w.hits = 12;
-    w.hitsAt = w.now;
-    assert.equal(cast(w, skill).reason, 'hits', `${skill} waits for the combo`);
-    w.hits = 25;
-    assert.ok(cast(w, skill).ok, `${skill} goes off at 25`);
-    assert.ok(w.hits <= 1, 'spending the counter');
+    w[gauge] = 60;
+    w[`${gauge}At`] = w.now;
+    assert.equal(cast(w, skill).reason, `gauge:${gauge}`, `${skill} waits for full ${gauge}`);
+    w[gauge] = 100;
+    w[`${gauge}At`] = w.now;
+    assert.ok(cast(w, skill).ok, `${skill} goes off at full ${gauge}`);
+    assert.equal(w[gauge], 0, `spending the ${gauge}`);
     if (skill === 'heartseeker') assert.ok(w.fx.some((f) => f.kind === 'reticle'), 'the sights lock on first');
     const m = w.mobs[0];
     const seen = new Set();
@@ -822,13 +818,11 @@ test("each archer path's finisher needs a 25-hit combo, spends it, and lands its
     }
     assert.ok(m.hp < 1e9, 'it hits');
     if (skill === 'heartseeker') assert.ok([...seen].filter((h) => h.via === 'heartbolt').every((h) => h.crit), 'the bolt always crits');
-    else assert.equal(w.gale, 100, 'Storm Volley fills Gale');
-    w.hits = 99;
-    w.hitsAt = w.now;
+    w[gauge] = 100;
+    w[`${gauge}At`] = w.now;
     assert.ok(cast(w, skill).ok);
     run(w, 0.3);
-    w.hits = 99;
-    w.hitsAt = w.now;
+    w[gauge] = 100;
     assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
   }
 });

@@ -344,13 +344,13 @@ function drawStars(ui, world) {
 // names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
 const GAUGES = {
   rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
-    tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all.' },
+    tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
-    tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take.' },
+    tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
   gale: { color: '#2fa880', hot: '#8fe8c0', icon: 'gust', name: 'Gale', full: 'TAILWIND', notch: () => null, edge: 'rgba(80,220,170,', ink: '#1f6a50',
-    tip: 'Your arrows build it and it blows out once the fighting stops. The fuller it is, the faster you shoot; full, every basic shot looses a twin arrow.' },
+    tip: 'Your arrows build it and it blows out once the fighting stops. The fuller it is, the faster you shoot; full, every basic shot looses a twin arrow, and Storm Volley is ready.' },
   focus: { color: '#3a7fd8', hot: '#ff5a7a', icon: 'sight', name: 'Focus', full: 'DEADEYE', notch: () => null, edge: 'rgba(255,90,122,', ink: '#8a2040',
-    tip: 'Your bolts and standing still build it; running loses it. The fuller it is, the likelier a critical; full, your next bolt always crits and tears through the whole line.' },
+    tip: 'Your bolts and standing still build it; running loses it. The fuller it is, the likelier a critical; full, every bolt always crits and tears through the whole line, and Heartseeker is ready.' },
 };
 function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;
@@ -374,7 +374,13 @@ function drawGauge(ui, world, kind, value) {
     ctx.fillRect(Math.round(x + 16 + 40 * (notch / 100)), y + 4, 1, 8);
   }
   text(ctx, `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
-  if (full) text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
+  if (full) {
+    text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
+    // A full gauge is what a finisher spends: say so when you know one.
+    if (Object.values(SKILLS).some((k) => k.fullGauge && (world.char.skills[k.id] ?? 0) > 0)) {
+      text(ctx, 'FINISHER READY', x + 35, y - 13, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffe36b' : '#ffffff', outline: '#c8243a' });
+    }
+  }
   if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: G.name, bold: true, color: G.color }, { text: G.tip, size: 8, color: COLORS.muted }]);
 }
 
@@ -429,11 +435,6 @@ function drawHits(ui, state, world) {
   // The bar under it drains toward the drop.
   box(ctx, x - 52, y + 26, 52, 3, { fill: 'rgba(74,53,96,0.4)', edge: null, r: 1.5 });
   box(ctx, x - 52, y + 26, 52 * Math.max(0, left / HITS_WINDOW), 3, { fill: color, edge: null, r: 1.5 });
-  const fin = Object.values(SKILLS).find((k) => k.hitsCost && (world.char.skills[k.id] ?? 0) > 0);
-  if (fin && n >= fin.hitsCost) {
-    const beat = 0.5 + 0.5 * Math.sin(now * 8);
-    text(ctx, 'FINISHER READY', x, y + 40, { size: 8.5, bold: true, align: 'right', color: beat > 0.5 ? '#ffffff' : '#ffe36b', outline: '#c8243a' });
-  }
   ctx.restore();
 }
 

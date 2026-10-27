@@ -197,8 +197,8 @@ export const SKILLS = {
   }),
 
   grandverdict: skill({
-    id: 'grandverdict', name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, hitsCost: 25,
-    desc: 'Finisher: needs a 25-hit combo, and spends it. Kneel, rise on a column of light, then drive a giant sword of light down on everything around you; pillars of light strike every monster it hits.',
+    id: 'grandverdict', name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Faith, and spends it. Kneel, rise on a column of light, then drive a giant sword of light down on everything around you; pillars of light strike every monster it hits.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
@@ -216,7 +216,8 @@ export const SKILLS = {
   // ---------- Berserker (the warrior's damage path: Rage, bleeding, savage flurries) ----------
   // Every blow a Berserker lands builds Rage (0-100, see world/melee.js); it drains away out of a
   // fight. `rageCost` is the least Rage a skill needs; Rampage spends all of it.
-// Finishers (`hitsCost`) need that long a hit counter and spend it (see world/world.js HITS_WINDOW).
+// Finishers (`fullGauge`) need the path's own gauge full (Rage, Faith, Gale or Focus) and spend
+// all of it (see world/combat.js).
   berserkermastery: skill({
     id: 'berserkermastery', name: 'Berserker Mastery', job: 'berserker', type: 'passive', fx: null,
     desc: 'Steadier blows, more attack, and harder critical hits.',
@@ -263,14 +264,14 @@ export const SKILLS = {
   }),
 
   crimsoneclipse: skill({
-    id: 'crimsoneclipse', name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, hitsCost: 25,
-    desc: 'Finisher: needs a 25-hit combo, and spends it. A whirlwind spins you up into the air, sucking monsters in, then you crash down under a blood-red moon in one enormous smash. Fills your Rage to the top.',
+    id: 'crimsoneclipse', name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Rage, and spends it. A whirlwind spins you up into the air, sucking monsters in, then you crash down under a blood-red moon in one enormous smash.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       const whirl = (at, i) => ({ at, pct: k(60, 100), reach: 96, h: 120, around: true, targets, pull: 80, arc: [i % 2 ? 180 : 0, 300], thick: 12, stop: 0.02, rage: 0 });
       return {
-        mp: k(30, 50), pct: k(440, 760), hits: 7, targets, rageGain: 100,
+        mp: k(30, 50), pct: k(440, 760), hits: 7, targets,
         combo: [{ move: 'eclipse', dur: 1.6, step: 6, finisher: true, guard: 1.3, strikes: [
           ...[0.08, 0.17, 0.26, 0.35, 0.44].map(whirl),
           { at: 0.47, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoon', burstAt: 0, rage: 0 },
@@ -444,15 +445,15 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { speed: lerp(5, 20, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), eva: lerp(5, 25, lv, m) } }),
   }),
   stormvolley: skill({
-    id: 'stormvolley', name: 'Storm Volley', job: 'ranger', type: 'attack', fx: 'rain', icon: 'stormvolley', school: 'wind', maxLevel: 10, hitsCost: 25,
-    desc: 'Finisher: needs a 25-hit combo, and spends it. A gust throws you spinning high into the air, loosing arrows in every direction that pour down all around you, then you dive back down in a burst of storm wind that blows everything away. Fills your Gale.',
+    id: 'stormvolley', name: 'Storm Volley', job: 'ranger', type: 'attack', fx: 'rain', icon: 'stormvolley', school: 'wind', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Gale, and spends it. A gust throws you spinning high into the air, loosing arrows in every direction that pour down all around you, then you dive back down in a burst of storm wind that blows everything away.',
     weapons: ['bow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       const pour = (at) => ({ at, rain: k(6, 9), around: true, pct: k(70, 120), rainW: 340, span: 0.32, knock: 20, variant: 'windarrow', gauge: 0 });
       return {
-        mp: k(30, 50), pct: k(420, 720), hits: 22, targets, aimGain: 100,
+        mp: k(30, 50), pct: k(420, 720), hits: 22, targets,
         combo: [{ move: 'stormvolley', dur: 1.7, step: 0, finisher: true, guard: 1.4, strikes: [
           { at: 0.12, pct: k(50, 90), reach: 120, h: 110, around: true, targets, pull: 70, burst: 'galeburst', burstAt: 0, sky: 1.4, quiet: true, via: 'wind', school: 'wind', stop: 0.02, gauge: 0 },
           pour(0.3), pour(0.42), pour(0.54),
@@ -507,14 +508,14 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { critRate: lerpf(0.05, 0.15, lv, m), critDamage: lerpf(0.05, 0.2, lv, m), acc: lerp(5, 30, lv, m) } }),
   }),
   heartseeker: skill({
-    id: 'heartseeker', name: 'Heartseeker', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'heartseeker', school: 'focus', maxLevel: 10, hitsCost: 25,
-    desc: 'Finisher: needs a 25-hit combo, and spends it. Kneel and take a long, steady aim as a sight locks onto every monster in the line, then one enormous bolt that always crits tears through all of them, and its shockwave follows.',
+    id: 'heartseeker', name: 'Heartseeker', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'heartseeker', school: 'focus', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Focus, and spends it. Kneel and take a long, steady aim as a sight locks onto every monster in the line, then one enormous bolt that always crits tears through all of them, and its shockwave follows.',
     weapons: ['crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       return {
-        mp: k(30, 50), pct: k(480, 820), hits: 2, targets, aimGain: 0,
+        mp: k(30, 50), pct: k(480, 820), hits: 2, targets,
         combo: [{ move: 'heartseeker', dur: 1.7, step: 0, finisher: true, guard: 1.4, mark: true, strikes: [
           { at: 0.6, shot: 'heartbolt', pct: k(480, 820), range: 560, h: 76, targets, pierce: true, crit: true, speed: 950, knock: 340, launch: 220, kickback: 40, big: true, stop: 0.16, shake: 8, muzzle: 'heartshock', gauge: 0 },
           { at: 0.74, shot: 'wave', pct: k(150, 260), range: 560, h: 90, targets, pierce: true, speed: 900, knock: 200, big: true, stop: 0.05, shake: 3, gauge: 0 },

@@ -121,10 +121,11 @@ to clear it.
 - **Hit counter, Links and finishers** — every hit you land keeps a counter going on the right
   (it drops after 3 seconds without a hit, but never mid-move), with tiers at 10 (Nice), 25
   (Great), 50 (Awesome) and 100 (Legendary). Start a skill right after a combo's last blow lands
-  and it's a **LINK** for +25% damage. At 25 hits a finisher is ready: the Paladin's **Grand
-  Verdict** (rise on a column of light and drive a giant sword of light into the ground) and the
-  Berserker's **Crimson Eclipse** (spin up in a whirlwind under a blood moon and crash down; fills
-  Rage). A finisher spends the counter.
+  and it's a **LINK** for +25% damage. When a path's own gauge is full, its finisher is ready
+  ("FINISHER READY" over the gauge): the Paladin's **Grand Verdict** at full Faith (rise on a
+  column of light and drive a giant sword of light into the ground) and the Berserker's **Crimson
+  Eclipse** at full Rage (spin up in a whirlwind under a blood moon and crash down). A finisher
+  spends the whole gauge.
 - **Smooth controls** — once a move's blows have landed (or its arrows are away), walking or
   jumping cuts its follow-through short, and a basic attack can flow straight into a skill (so you
   can weave Blade Rush into a sword combo). Each skill plays out its own motion before another
@@ -367,8 +368,8 @@ to clear it.
     Gale fills, then leaves; full, a ring of wind blows out from her feet.
   - **Sniper** (crossbow), planted and patient: bolts that land and standing still mid-fight build
     **Focus** (a sight over the hotkeys); running bleeds it away. The fuller it is the likelier a
-    critical (up to 30% more), and full, the next bolt is a **Deadeye**: it always crits, tears
-    through the whole line, and spends the Focus. **Marksman's Chain** is a three-press combo (a
+    critical (up to 30% more), and while it's full every bolt is a **Deadeye**: it always crits
+    and tears through the whole line (Heartseeker spends it). **Marksman's Chain** is a three-press combo (a
     kneeling heavy bolt through the line, a crank and two more, then a ballista bolt that kicks her
     back and blasts through everything); **Glacier Bolt** shatters on its mark in a burst of frost
     that freezes everything close around it; **Steady Aim** sharpens crits and aim and gives half a
@@ -379,9 +380,9 @@ to clear it.
     its mark) and command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
     **attacking in the air** shoots down at them and holds you up (a Sniper's bolt kicks her back
     up), and **attacking out of a run** is a Ranger's slide shot or a Sniper's roll into a kneeling
-    bolt. Her leaping shot is a backflip. Their finishers (25 hits): the Ranger's **Storm Volley**
+    bolt. Her leaping shot is a backflip. Their finishers (at a full gauge, spending it): the Ranger's **Storm Volley**
     (a gust throws her spinning high, the sky turns stormy and arrows pour down all around, then
-    she dives in a burst of storm wind; fills Gale) and the
+    she dives in a burst of storm wind) at full Gale and the
     Sniper's **Heartseeker** (a long aim as a sight locks onto every monster in the line, then one
     enormous bolt that always crits, and its shockwave). A finisher shot that connects opens a
     Link, for every archer.

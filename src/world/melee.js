@@ -216,8 +216,8 @@ export function addGale(world, n) {
 }
 // Focus: the Sniper's gauge. Bolts that land build it, and so does standing still mid-fight;
 // running bleeds it away, and it fades once the fighting stops. The fuller it is the likelier a
-// critical (up to FOCUS_CRIT more at full); full, the next bolt is a Deadeye: it always crits and
-// tears through the whole line, and spends all of it.
+// critical (up to FOCUS_CRIT more at full); while full, every bolt is a Deadeye: it always crits
+// and tears through the whole line. Her finisher spends it.
 export const FOCUS_MAX = 100;
 const FOCUS_HOLD = 5;
 const FOCUS_DRAIN = 10;
@@ -230,6 +230,16 @@ export function addFocus(world, n) {
   world.focus = Math.min(FOCUS_MAX, (world.focus ?? 0) + n);
   world.focusAt = world.now;
 }
+// A path's own gauge: which one the character has ('rage', 'faith', 'gale' or 'focus'), and how
+// full it is (0-1). Finishers need it full and spend it.
+export function gaugeOf(char) {
+  return hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
+}
+export function gaugeFull(world) {
+  const g = gaugeOf(world.char);
+  return Boolean(g) && (world[g] ?? 0) >= 100;
+}
+
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n) {
   addGale(world, n);
@@ -548,10 +558,8 @@ function fire(world, strike) {
       return;
     }
   }
-  // A full Focus turns the shot into a Deadeye: it always crits, tears through the whole line, and
-  // spends the Focus.
+  // While Focus is full, every shot is a Deadeye: it always crits and tears through the whole line.
   if (hasFocus(world.char) && (world.focus ?? 0) >= FOCUS_MAX && !s.deadeye) {
-    world.focus = 0;
     s = { ...s, deadeye: true, pierce: true, targets: Math.max(s.targets ?? 1, 3) + 3, range: s.range + 60, big: true, stop: Math.max(s.stop ?? 0, 0.07), shake: Math.max(s.shake ?? 0, 2), knock: Math.max(s.knock, 200) };
     world.fx.push({ kind: 'deadeye', school: 'focus', x: body.x + s.dir * 14, y: body.y - HAND_Y, dir: s.dir, t: 0, dur: 0.5 });
     world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'DEADEYE!', color: '#ff5a7a', t: 0, link: true });

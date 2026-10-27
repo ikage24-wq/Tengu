@@ -259,7 +259,7 @@ export function nearbyNpc(world) {
 }
 
 // The hit counter: every hit you land within this many seconds of the last adds one; a pause
-// lets it drop. Finishers spend it (`hitsCost` in data/skills.js).
+// lets it drop (it's for show and for Links; finishers need a full path gauge instead).
 export const HITS_WINDOW = 3;
 
 const BLOCKER_TEXT = {
@@ -269,7 +269,10 @@ const BLOCKER_TEXT = {
   noone: 'No fallen party member nearby.',
   stars: 'You need throwing stars! Shops sell them.',
   rage: 'Not enough Rage. Land some blows first!',
-  hits: 'A finisher needs a longer combo. Keep the hits coming!',
+  'gauge:rage': 'A finisher needs full Rage. Keep swinging!',
+  'gauge:faith': 'A finisher needs full Faith. Keep fighting!',
+  'gauge:gale': 'A finisher needs a full Gale. Keep your arrows landing!',
+  'gauge:focus': 'A finisher needs full Focus. Stand steady and keep firing!',
   unlearned: null,
   passive: null,
 };

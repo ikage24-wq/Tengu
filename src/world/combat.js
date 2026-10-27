@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
-import { hasCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing } from './melee.js';
+import { hasCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -108,7 +108,7 @@ export function castBlocker(world, skillId) {
   if (s.weapons && !s.weapons.includes(stats.weaponType)) return 'weapon';
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
   if (s.rageCost && (world.rage ?? 0) < s.rageCost) return 'rage';
-  if (s.hitsCost && (world.hits ?? 0) < s.hitsCost) return 'hits';
+  if (s.fullGauge && !gaugeFull(world)) return `gauge:${gaugeOf(char) ?? 'none'}`;
   if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
   return null;
 }
@@ -145,8 +145,8 @@ export function cast(world, skillId, rng = Math.random) {
       world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'LINK!', color: '#ffd24f', t: 0, link: true });
       world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.4 });
     }
-    // A finisher spends the hit counter.
-    if (s.hitsCost) world.hits = 0;
+    // A finisher spends the path's whole gauge.
+    if (s.fullGauge) world[gaugeOf(char)] = 0;
     if (params.rageGain) addRage(world, params.rageGain);
     if (params.aimGain) addAim(world, params.aimGain);
     if (s.rageCost) {

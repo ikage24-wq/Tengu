@@ -35,8 +35,9 @@ Sniper) were built; the player signed off on that result and wants all jobs made
 - **Research first.** Read the art research (below) and look at real references for the job
   (MapleStory first: research/fx.md section 6), and save new findings back there.
 - **Its own feel in combat:** its own basic combo (3 steps with a finisher), command moves (up +
-  attack, in the air, on the run), a gauge or aura that builds in a fight and does something when
-  full, skills built as timed combo steps, a 25-hit finisher with a big signature moment. Follow
+  attack, in the air, on the run), its own gauge that builds in a fight in its own way and does
+  something while full, skills built as timed combo steps, and a finisher with a big signature
+  moment that needs the gauge full and spends all of it (`fullGauge`; never a hit-count cost). Follow
   the combat rules below and extend `tests/melee.test.js` for it.
 - **Its own animation:** moves drawn for its weapon (a bow really draws, a crossbow kneels and
   cranks), with weight that matches each blow.
