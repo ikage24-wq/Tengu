@@ -20,6 +20,16 @@ export const NPCS = {
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
     quests: ['first_steps', 'fluffy', 'sprout_sweep'],
   },
+  roxy: {
+    id: 'roxy', name: 'Roxy', title: 'Boss Rush Host', role: 'arena',
+    building: 'arena',
+    look: { hairStyle: 'wolf', hairColor: '#ff4f8a', hairTip: '#ffd84a', skinTone: '#f2c9a8', eyeColor: '#ffd84a', eyeStyle: 'cat', browStyle: 'sharp', outfitColor: '#2a2238', face: 'smug', earStyle: 'pointed' },
+    // Her armor without the helmet, so the hair shows.
+    gear: (({ hat, ...rest }) => ({ weapon: { id: 'sword_70', variant: 'crimson' }, ...rest }))(outfit('warrior', 70, 'crimson')),
+    greeting: "Welcome to the Boss Rush! The toughest bosses around are waiting backstage. Think you've got what it takes?",
+    // Bosses you can challenge here: the boss, the stage it fights on, and the level she lets you in at.
+    bosses: [{ mob: 'dancinggreen', map: 'discostage', portal: 'west', minLevel: 40, blurb: 'The disco king of Solution Nine. He dances to the beat, so his attacks do too: watch for the rainbow walls, the glowing tiles and the frog dancers, and stand in the spotlight when the music says so.', stars: 4, rewards: 'attack charms, elixirs' }],
+  },
   pip: {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',
     building: 'goods', sign: "Pip's Goods",

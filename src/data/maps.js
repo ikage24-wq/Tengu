@@ -26,7 +26,6 @@ export const MAPS = {
       { x: 960, y: 280, w: 160, thick: 44 },
       { x: 1290, y: 400, w: 180 },
       { x: 1300, y: 320, w: 260, thick: 44 },
-      { x: 1580, y: 350, w: 160 },
     ],
     ropes: [
       { x: 200, top: 320, bottom: 400, ladder: true },
@@ -35,9 +34,11 @@ export const MAPS = {
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
+      // Where you come back from a Boss Rush stage, in front of Roxy's booth.
+      { id: 'arena', x: 1640, y: 430, hidden: true },
       { id: 'east', x: 1740, y: 430, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 360 }, { id: 'kestrel', x: 720 }, { id: 'pip', x: 860 }, { id: 'lulu', x: 1200 }],
+    npcs: [{ id: 'mira', x: 360 }, { id: 'kestrel', x: 720 }, { id: 'pip', x: 860 }, { id: 'lulu', x: 1200 }, { id: 'roxy', x: 1640 }],
     deco: [['house', 240, 0.2, 320], ['windmill', 560, 0, 300], ['mushhouse', 1070, 0.5, 280], ['house', 1470, 0.6, 320], ['well', 298], ['flowerarch', 1540]],
     spawns: [],
   },
@@ -316,6 +317,16 @@ export const MAPS = {
     deco: [['crystalspire', 420, 1], ['crystalspire', 760, 0], ['throne', 600]],
     spawns: [{ mob: 'crystalking', x: 560, y: 380, respawn: 300 }],
   },
+};
+
+// ---------- Dancing Green's stage ----------
+MAPS.discostage = {
+  id: 'discostage', name: 'Funky Fever Stage', theme: 'cave', town: 'grove', world: { x: 380, y: 170 },
+  width: 1100, height: 420, groundY: 350,
+  look: { stage: 'disco', light: 'disco', sky: ['#120c26', '#2a1748', '#4a2160'], far: '#2a1748', mid: '#3a2a4e', front: null, drift: null, props: [], critters: [] },
+  platforms: [], ropes: [],
+  portals: [{ id: 'west', x: 50, y: 350, to: 'sprout', toPortal: 'arena', label: 'Sprout Village' }],
+  npcs: [], deco: [], spawns: [{ mob: 'dancinggreen', x: 640, y: 350, respawn: 300 }],
 };
 
 // ---------- The warrior and mage homes, and the canyon road up to the warriors ----------

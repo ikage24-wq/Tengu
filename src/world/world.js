@@ -18,6 +18,7 @@ import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
 import { tickMelee } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
+import { tickDisco } from './discoboss.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 
 const INVULN = 1.2;
@@ -320,7 +321,7 @@ function killMob(world, m, byParty = false) {
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');
 }
 
-function hurtPlayer(world, rawAtk, fromX) {
+export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god) return;
   const char = world.char;
   const s = world.stats;
@@ -522,7 +523,8 @@ export function updateWorld(world, dt, input) {
   // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
   if (world.dungeon) tickDungeon(world, dt);
-  else for (const m of world.mobs) {
+  else tickDisco(world, dt);
+  if (!world.dungeon) for (const m of world.mobs) {
     const event = updateMob(m, world.body, dt, world.now);
     if (event === 'slam') {
       m.attackAt = world.now;
@@ -534,7 +536,7 @@ export function updateWorld(world, dt, input) {
         m.gloatAt = world.now;
       }
     }
-    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now) continue;
+    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now || m.def.disco) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
     m.attackAt = world.now;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
@@ -546,7 +548,7 @@ export function updateWorld(world, dt, input) {
     }
   }
   world.mobs.push(...tickSpawner(world.spawner, world.map, world.now));
-  world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < 0.5);
+  world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < (m.def.disco ? 4 : 0.5));
 
   world.drops = updateDrops(world.drops, world.map, dt);
 

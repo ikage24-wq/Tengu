@@ -17,6 +17,8 @@ const hash = (n) => {
 };
 const pick = (list, seed) => list[Math.floor(seed * list.length) % list.length];
 
+import { drawDiscoBack } from './discostage.js';
+
 export const THEMES = {
   town: {
     sky: ['#ffc6e6', '#e2d2ff', '#fff4fb'], sun: '#fff6c9', far: '#ead9ff', mid: '#f3e6ff', midTrim: '#c9b6ff',
@@ -2180,10 +2182,12 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     veil = null;
     drawHaze(g, t, width, map.groundY - cam.y);
   };
-  backdrop(ctx);
-  drawDrift(ctx, t, cam, width, height, time, 'back');
+  // A stage map (Dancing Green's disco) draws its whole backdrop and floor itself.
+  if (t.stage === 'disco') drawDiscoBack(ctx, map, cam, width, height, time);
+  else backdrop(ctx);
+  if (t.stage !== 'disco') drawDrift(ctx, t, cam, width, height, time, 'back');
   drawDeco(ctx, map, cam, width, time, 'behind', air);
-  drawTerrain(ctx, theme, map, cam, width, height, time);
+  if (t.stage !== 'disco') drawTerrain(ctx, theme, map, cam, width, height, time);
   drawDeco(ctx, map, cam, width, time, 'ground');
   // Town buildings stand on the street, behind ledges and props.
   street?.();

@@ -6,6 +6,7 @@ import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
 import { drawHero } from './hero.js';
 import { drawMonster } from './monsters.js';
+import { drawDiscoZones, drawDiscoTop } from './discoboss.js';
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
 import { nearbyNpc } from '../world/world.js';
@@ -192,6 +193,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
+  drawDiscoZones(ctx, world, cam, world.now);
   drawMobs(ctx, world, cam, time);
 
   drawParty(ctx, partyMembers(world.bots).filter((b) => b.map === world.map.id), cam, VIEW_W, time, world.hoverBot);
@@ -265,6 +267,13 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
   if (settings.filter === 'dreamy') drawDreamy(ctx);
+  drawDiscoTop(ctx, world, cam, world.now);
+  // The flash of his transformation.
+  if (world.disco?.flashAt && world.now - world.disco.flashAt < 0.7) {
+    const e = (world.now - world.disco.flashAt) / 0.7;
+    ctx.fillStyle = `rgba(255,${Math.round(90 + 165 * e)},${Math.round(120 + 135 * e)},${1 - e})`;
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  }
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.

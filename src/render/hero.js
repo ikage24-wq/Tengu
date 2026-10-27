@@ -771,7 +771,12 @@ function headShapes(look, g, rig) {
   // is flat colour from its own ramp: the light comes from the upper front (the facing side, on
   // the right), so the back ear and a thin crescent down the back of the face sit in shadow.
   const ears = look.earStyle ?? 'round';
-  out.push(...mirror(earShapes(ears, sk.sh1, sk.sh2)), ...earShapes(ears, skin, sk.sh1));
+  if (ears === 'bunny') {
+    // Viera ears: tall, furred in the hair's colour, pink inside, the far one a shade darker.
+    const bunny = (c, inner, lean) => [F(T([[17.4, 7], [17.2, 1], [17.6 + lean * 0.3, -5], [18.6 + lean, -10.6], [20.4 + lean, -11.4], [21.6 + lean * 0.8, -8], [21.4 + lean * 0.4, -1], [20.6, 7]], c)),
+      F(T([[18.4, 4], [18.4, -1], [19 + lean * 0.5, -6.6], [19.8 + lean, -9.4], [20.6 + lean * 0.8, -7.6], [20.4 + lean * 0.4, -1], [19.8, 4]], inner))];
+    out.push(...mirror(bunny(hr.sh1, '#e88ab4', 1.4)), ...bunny(hr.base, '#ffa8cc', 1.8));
+  } else out.push(...mirror(earShapes(ears, sk.sh1, sk.sh2)), ...earShapes(ears, skin, sk.sh1));
   out.push(F(E(FACE_X, 15, 10.2, 9.8, sk.sh1)), F(E(FACE_X, 19, 9.4, 5.8, sk.sh1)));
   out.push(F(E(FACE_X + 0.6, 15, 9.6, 9.8, skin)), F(E(FACE_X + 0.5, 19, 8.9, 5.8, skin)));
   // A hurt or knocked-out face drops the expression's own play (sparkles, notes, winks, puffed
@@ -862,9 +867,31 @@ function arm(sx, sy, hx, hy, sleeve, long, g, skin, side = 1) {
     ...offset(shoulderShapes(g.top, sx < HEAD_X ? -1 : 1), sx, sy),
   ];
   out.handAt = out.length;
-  out.push(...handShapes(wx, wy, g.gloves, skin, ex, ey));
+  if (FROG) {
+    // A big orange frog hand with round fingertips and a gold ring; the front hand holds a record.
+    const dx = wx - ex;
+    const dy = wy - ey;
+    const l = Math.hypot(dx, dy) || 1;
+    const [ux, uy] = [dx / l, dy / l];
+    out.push(E(wx, wy, 2.4, 2.4, '#e8894a'));
+    for (const a of [-0.6, 0, 0.6]) {
+      const c = Math.cos(a);
+      const s2 = Math.sin(a);
+      const [fx, fy] = [ux * c - uy * s2, ux * s2 + uy * c];
+      out.push(F(E(wx + fx * 2.6, wy + fy * 2.6, 1, 1, '#f09a5a')));
+    }
+    out.push(F(E(wx - uy * 1.2, wy + ux * 1.2, 0.6, 0.6, '#ffd66b')));
+    if (FROG === 'record' && sx > HEAD_X) {
+      const [rx, ry] = [wx + ux * 2.4, wy + uy * 2.4];
+      out.push(F(E(rx, ry, 4.2, 4.2, '#2c2238')), F(E(rx, ry, 3.2, 3.2, '#3e3250')), F(E(rx, ry, 2.2, 2.2, '#2c2238')), F(E(rx, ry, 1.3, 1.3, '#ff5b9a')), F(E(rx, ry, 0.35, 0.35, '#ffffff')), F(E(rx - 1.6, ry - 1.8, 0.9, 0.4, '#8a7aa8')));
+    }
+  } else out.push(...handShapes(wx, wy, g.gloves, skin, ex, ey));
   return out;
 }
+
+// Dancing Green's toad form draws frog hands ('record' adds the vinyl in the front hand). Set
+// for the duration of one paintHero (sprites are built inside it).
+let FROG = false;
 
 // Facing the screen: a shoulder at each edge of the torso, so the arms hang down the sides, each
 // hand resting a little out from the hip so the elbow bends softly. The "back" arm is the one on
@@ -879,6 +906,19 @@ const HAND_Y = 37.6;
 function armShapes(sx, dx, dy, sleeve, long, g, skin, side = 1) {
   const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
   return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, g, skin, side);
+}
+
+// The disco point: the front arm thrown straight up past the head, index finger to the sky (a
+// dance pose; it reaches higher than a resting arm can, so it has its own shape).
+function pointArm(sleeve, long, g, skin) {
+  const [sx, sy] = [FRONT_SHOULDER, SHOULDER_Y];
+  const [ex, ey] = [28.8, 19.6];
+  const [hx, hy] = [31.4, 8.4];
+  const shapes = [E(sx, sy + 0.4, 2, 2, sleeve), limb(sx, sy, ex, ey, 4.2, 3.8, sleeve), E(ex, ey, 1.9, 1.9, sleeve), limb(ex, ey, hx, hy + 1.6, 3.8, 3.2, long ? sleeve : skin),
+    ...offset(shoulderShapes(g.top, 1), sx, sy)];
+  if (long) shapes.push(limb(ex + (hx - ex) * 0.6, ey + (hy - ey) * 0.6, hx, hy + 2, 3.9, 3.5, shade(sleeve, -14)));
+  shapes.push(E(hx, hy + 0.6, 1.9, 1.9, skin), limb(hx + 0.3, hy, hx + 1.2, hy - 3.4, 1.1, 0.9, skin));
+  return { shapes, hand: [hx, hy] };
 }
 
 // Attack arms point along `angle` (0 = down, 90 = forward, 180 = up) from the front shoulder.
@@ -1085,7 +1125,7 @@ function baseRig() {
   return {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
     frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, hipIn: 0, air: false, squat: 0,
-    hair: 0, hairLift: 0, hairWave: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0, lift: 0,
+    hair: 0, hairLift: 0, hairWave: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0, lift: 0, armOver: null,
   };
 }
 
@@ -1295,6 +1335,37 @@ function idleActing(r, mood, t, armed) {
       r.backLeg = [-2, 0, -6];
       break;
     }
+    case 'disco': {
+      // The disco king's routine over 4 s in 8-count beats: the point up (finger to the sky, the
+      // other hand on the hip, hip popped), the point down across the body, the point again; a
+      // twist (hips and knees swinging on every eighth); then a snap with a hop.
+      const p = at(4);
+      const e8 = Math.floor(T * 8) % 2;
+      if (win(p, 0, 0.25) || win(p, 0.375, 0.5)) {
+        r.backArm = [q(HIPS[0]), q(HIPS[1])];
+        r.armSide = -1;
+        if (!armed) r.armOver = 'point';
+        r.tx = 1.5; r.tilt = 4;
+        r.frontLeg = [2.5, 0, 6]; r.backLeg = [-1.5, 0, -4];
+      } else if (win(p, 0.25, 0.375)) {
+        r.backArm = [q(HIPS[0]), q(HIPS[1])];
+        r.armSide = -1;
+        if (!armed) r.frontArm = [-6.5, -2];
+        r.tx = -1; r.tilt = -2; r.by = 0.5;
+        r.frontLeg = [1.5, 0, 4]; r.backLeg = [-2.5, 0, -6];
+      } else if (win(p, 0.5, 0.75)) {
+        r.tx = e8 ? 1.5 : -1.5; r.tilt = e8 ? 4 : -4;
+        hands(e8 ? -1 : -2.5, -6, e8 ? 2.5 : 1, -6);
+        r.frontLeg = e8 ? [1.5, -1, 8] : [0.5, 0, -6]; r.backLeg = e8 ? [-0.5, 0, 6] : [-1.5, -1, -8];
+        r.squat = 1;
+      } else {
+        const snap = win(p, 0.75, 0.81) || win(p, 0.87, 0.93);
+        hands(-4, snap ? -11 : -8, 4, snap ? -11 : -8);
+        if (snap) hop(1.5);
+        r.tilt = snap ? 0 : 2;
+      }
+      break;
+    }
     case 'tired': {
       // Worn out: bent over, hands toward the knees, panting.
       const pant = Math.floor(T * 3) % 2;
@@ -1421,7 +1492,9 @@ function solveRig(state, anim, mv = null) {
 
   if (pose === 'walk') {
     const phase = anim ? walkPhase(anim) : (t * 0.9) % 1;
-    const p = (Math.round(phase * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
+    const p0 = (Math.round(phase * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
+    // The moonwalk: the step runs backwards, so the feet glide the wrong way.
+    const p = state.mood === 'disco' ? (1 - p0) % 1 : p0;
     const gait = anim ? Math.round(anim.gait * 4) / 4 : 0;
     const G = gaitShape(gait);
     const front = walkLeg(p, G);
@@ -1550,7 +1623,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
@@ -1772,6 +1845,8 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
   // Walking, the whole body leans into the run and rises a little at each passing step.
   let mv = moved;
+  // A choreographed body move (boss dances): lift, lean, spin, squash and stretch of the whole figure.
+  if (state.body) mv = { lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, bodyOnly: true, ...state.body };
   if (!moved && pose === 'walk' && anim) {
     // Walking, the body leans in a little; running, more, and it floats between steps (the whole
     // figure lifts, both feet off the ground) with a touch of stretch.
@@ -1863,11 +1938,16 @@ function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
 
 function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const { pose = 'idle', facing = 1, alpha = 1, scale = 1 } = state;
+  FROG = look.frog ?? false;
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
   // The body acts out the mood: the expression, or worn out at low health.
-  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
-  rig.armIn = !attack;
+  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
+  // A choreographed pose overrides the rig (boss dances).
+  if (state.rig) Object.assign(rig, state.rig);
+  // A dance pose can lift the front arm over the head (drawn on top, like an attack arm).
+  const over = attack ? null : rig.armOver ?? null;
+  rig.armIn = !attack && over == null;
   const idleW = !attack && pose === 'idle' && !state.ready && g.weapon && rig.view !== 'back' ? weaponIdle(g.weapon.type, (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
   if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
@@ -1886,7 +1966,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const sleeve = sleeveColor(g.top.design, g.top.color, g.top);
   const long = longSleeves(g.top.design, g.top);
   const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
-  const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : null;
+  const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : over != null ? { weapon: 0, arm: over } : null;
 
   // Front arm layer; it moves with the upper body, which sinks with the hips.
   const bodyY = rig.by + hipDrop(rig);
@@ -1894,10 +1974,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   let hand;
   let armKey;
   if (angles) {
-    const aimed = aimedArm(angles.arm, sleeve, long, g, skin);
+    const aimed = over === 'point' ? pointArm(sleeve, long, g, skin) : aimedArm(angles.arm, sleeve, long, g, skin);
     armShapesNow = aimed.shapes;
     hand = [aimed.hand[0] + rig.tx, aimed.hand[1] + bodyY];
-    armKey = `a${Math.round(angles.arm / 5)}`;
+    armKey = over === 'point' ? 'point' : `a${Math.round(angles.arm / 5)}`;
   } else {
     armShapesNow = armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin, rig.armSide);
     hand = [FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0] + rig.tx, HAND_Y + rig.frontArm[1] + bodyY];
@@ -1961,7 +2041,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     }, scale, flip ? -1 : 1, (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   }
   if (rig.view === 'back') return;
-  if (!attack) {
+  if (!attack && over == null) {
     if (!wpn) return;
     drawWeapon();
     const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));

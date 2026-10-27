@@ -50,6 +50,7 @@ export const THEMES = {
   mint: { main: '#5fd3a0', light: '#d2f5e4', dark: '#3fb383', ink: '#2a7f5c' },
   sky: { main: '#6fb8ff', light: '#d6ebff', dark: '#4f95e0', ink: '#336aa8' },
   gold: { main: '#ffc94f', light: '#fff0c4', dark: '#e0a52f', ink: '#9a6a12' },
+  ruby: { main: '#ff4f8a', light: '#ffd3e4', dark: '#d12e68', ink: '#86204a' },
 };
 
 // One fixed style per label role, so the same kind of text always looks the same. Pass

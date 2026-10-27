@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { drawArenaBooth } from './arena.js';
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, shade, snap, footShadow, slopeAt } from './pixel.js';
@@ -453,6 +454,11 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (!npc.building) continue;
     const x = snap(n.x - cam.x);
     if (x < -80 || x > width + 80) continue;
+    // The Boss Rush booth is drawn live (neon, chasing bulbs, spotlights).
+    if (npc.building === 'arena') {
+      drawArenaBooth(ctx, x, ground(n.x), time);
+      continue;
+    }
     const s = buildingArt(npc.building, time, n.x);
     if (!s) continue;
     const gy = ground(n.x);
