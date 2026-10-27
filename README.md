@@ -388,8 +388,12 @@ to clear it.
   advancement, boss defeated, healing, and a gentle faint; the music dips under them and they never
   overlap. **Effects**: blows are recorded punches with a body that climbs in pitch through a combo
   (finishers thump, crits ring), each path's and element's colour (holy bells, rage crunch, fire,
-  glassy ice, zaps), whooshing swings by weight, bows, casts, spells, buffs, every Paladin and
-  Berserker effect, recorded footsteps by ground, jumps, landings, coins that chime up the scale,
+  glassy ice, zaps). Combat is recorded from free combat sound packs (JC Sounds, The Soundrack,
+  artisticdude, Ogrebane, rubberduck): real sword, axe and dagger swings, blade clangs and cuts,
+  bows drawing and arrows thudding in, throwing stars, and every school of magic casting and
+  landing with its own sound (fire, ice, lightning, holy, poison, dark, wind, earth, water);
+  monsters squish and cry when they pop. Buffs, shields, teleports, every Paladin and Berserker
+  effect, recorded footsteps by ground, jumps, landings, coins that chime up the scale,
   pickups, real menu clicks, and NPCs who talk in soft voice blips at their own pitch, rising at
   the end of a question. Sounds pan to where they happen; a limiter keeps busy fights clean. Sound
   starts on your first key press or click. Options: Sound has volume for everything, music, and

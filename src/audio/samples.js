@@ -1,7 +1,7 @@
 // The sample bank: the recorded instruments and effects (assets/audio, built by
 // tools/build-audio.mjs), fetched and decoded once, as soon as the page loads (no click needed:
 // decoding uses an offline audio context). Instruments are decoded at 24 kHz and kept as 16-bit
-// numbers to save memory; effects at 44.1 kHz.
+// numbers to save memory; effects at 44.1 kHz, also as 16-bit numbers.
 //
 // The bank: { inst: { name: { data, scale, sr, offset, lead, slot, notes, sustain } },
 //   sfx: { data, scale, sr, offset, lead, items: { name: [[start, length], ...] } } }.
@@ -46,7 +46,7 @@ export function loadSamples(fresh = false, base = new URL('../../', import.meta.
       }),
     );
     const x = await decode(new URL(MANIFEST.sfx.file, base), SFX_SR);
-    const sfx = { ...MANIFEST.sfx, data: x, scale: 1, sr: SFX_SR, offset: offsetOf(x, SFX_SR), lead: MANIFEST.lead };
+    const sfx = { ...MANIFEST.sfx, data: toInt16(x), scale: 1 / 32767, sr: SFX_SR, offset: offsetOf(x, SFX_SR), lead: MANIFEST.lead };
     return { inst, sfx };
   })();
   return loading;

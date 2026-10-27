@@ -327,7 +327,7 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
-      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school,
+      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school, via: 'blade',
     });
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
     // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
@@ -378,7 +378,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null) {
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const miss = Math.random() >= hitChance(acc, char.level, m.def);
   const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random);
-  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element });
+  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element, via: s.shot });
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.

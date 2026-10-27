@@ -7,6 +7,12 @@
 //   instruments: the FluidR3 GM soundfont by Frank Wen, CC BY 3.0, as packaged by
 //                gleitz/midi-js-soundfonts
 //   effects:     Kenney's RPG Audio, Impact Sounds and Interface Sounds packs, CC0
+//   combat:      JC Sounds' Fantasy SFX Pack Vol 1 (CC BY 4.0), The Soundrack's Magic Spell SFX
+//                pack (CC BY 4.0, from itch.io), artisticdude's RPG Sound Pack and Swishes (CC0),
+//                Ogrebane's Battle Sound Effects (CC0) and rubberduck's 80 CC0 RPG SFX (CC0), the
+//                last four from OpenGameArt
+//
+// Needs node, ffmpeg, curl, unzip, 7z (for the .7z pack) and unar (for the .rar pack).
 //
 // Every strip starts with a short click at MARK seconds (then silence until LEAD), so the game can
 // line the slots up exactly however the browser's decoder pads the start of the file.
@@ -99,6 +105,66 @@ const EFFECTS = {
   pluck: ['ui/pluck_001.ogg', 'ui/pluck_002.ogg'],
   sparkle: ['ui/glass_001.ogg', 'ui/glass_002.ogg', 'ui/glass_003.ogg'],
   question: ['ui/question_001.ogg'],
+  // ---------- Combat packs: 'pack:file' (the file's name, or its end), with @skip and ~length in seconds ----------
+  bladeSwing: ['jc:Sword_Swing_01', 'jc:Sword_Swing_02', 'jc:Sword_Swing_03'],
+  bladeSwingHeavy: ['jc:Heavy Sword_Swing_01', 'jc:Heavy Sword_Swing_02', 'jc:Heavy Sword_Swing_03'],
+  stab: ['jc:Dagger_Swing_01', 'jc:Dagger_Swing_02', 'jc:Dagger_Swing_03'],
+  swish: ['swish:swish-1', 'swish:swish-4', 'swish:swish-8', 'battle:swish_2', 'battle:swish_4'],
+  cut: ['oga80:blade_01', 'oga80:blade_02', 'oga80:blade_03'],
+  clang: ['jc:Sword_Hit_Metal_01', 'jc:Sword_Hit_Metal_02', 'jc:Sword_Hit_Metal_03'],
+  clangHeavy: ['jc:Heavy Sword_Hit_Metal_01', 'jc:Heavy Sword_Hit_Metal_02', 'jc:Heavy Sword_Hit_Metal_03'],
+  clangLight: ['jc:Dagger_Hit_Metal_01', 'jc:Dagger_Hit_Metal_02', 'jc:Dagger_Hit_Metal_03'],
+  unsheathe: ['rpgpack:sword-unsheathe', 'rpgpack:sword-unsheathe2', 'rpgpack:sword-unsheathe3'],
+  bowShoot: ['jc:Bow_Arrow_Shoot_01', 'jc:Bow_Arrow_Shoot_02', 'battle:Bow'],
+  bowDraw: ['jc:Bow_Arrow_Draw_01~0.6', 'jc:Bow_Arrow_Draw_02~0.6'],
+  arrowHit: ['jc:Bow_Arrow_Hit_01', 'jc:Bow_Arrow_Hit_02'],
+  fireLaunch: ['jc:Fireball Launch_01@0.25~0.9', 'jc:Fireball Launch_02@0.2~0.9', 'oga80:spell_fire_01', 'oga80:spell_fire_02~0.6'],
+  fireImpact: ['mg:fire_spell_fireball_burst_warm_01~1.2', 'mg:fire_spell_fireball_burst_warm_02~1.2', 'mg:fire_spell_fireball_burst_warm_04~1', 'jc:Fireball Impact_01@0.08~1'],
+  fireCharge: ['jc:Fireball_Buildup@0.3'],
+  iceLaunch: ['jc:Ice Shard Projectile_Launch_01~0.9', 'jc:Ice Shard Projectile_Launch_02~0.9'],
+  iceImpact: ['jc:Ice Shard  Projectile_Impact_01~0.7', 'jc:Ice Shard  Projectile_Impact_02~0.7', 'mg:Ice_Spell_cast_and_impact_05~0.9', 'mg:Ice_Spell_cast_and_impact_06~0.9'],
+  iceBig: ['mg:Ice_Spell_cast_and_impact_03~2', 'mg:Ice_Spell_cast_and_impact_04~2.1'],
+  iceCharge: ['jc:Ice Spell_Buildup@0.2'],
+  zapLaunch: ['jc:Electric Spell_Launch_01@0.12~0.8', 'jc:Electric Spell_Launch_02@0.12~0.8'],
+  zapImpact: ['jc:Electric Spell_Hit_01~0.65', 'mg:lighting_spell_electric_zap_blast_sparkle_bright_01', 'mg:lighting_spell_electric_zap_blast_sparkle_bright_03', 'mg:lighting_spell_electric_zap_blast_sparkle_bright_06'],
+  zapCharge: ['jc:Electric Spell_Buildup'],
+  thunder: ['mg:lighting_spell_electric_impact_thunder_loud_dark_03@0.6~1.2', 'mg:lighting_spell_electric_impact_thunder_loud_dark_01@0.9~1.5'],
+  holyBlast: ['mg:Holy_spell_blast_cast_01~1.5', 'mg:Holy_spell_blast_cast_02~1.1', 'mg:Holy_spell_blast_cast_06~1'],
+  holyWave: ['mg:Holy_spell_wave_cast_02~2', 'mg:Holy_spell_wave_cast_05~2'],
+  holyProtect: ['mg:Holy_spell_protect_cast_01~2', 'mg:Holy_spell_protect_cast_03~2'],
+  holyHeal: ['mg:Holy_spell_heal_cast_bright_02~1.1', 'jc:Healing Chime_01@0.3~2.2'],
+  shield: ['jc:Magic Shield_Activation_01@0.2~1.7', 'jc:Magic Shield_Activation_02@0.25~1.6'],
+  teleIn: ['jc:Teleport_In'],
+  teleOut: ['jc:Teleport_Out'],
+  poisonCast: ['mg:acid_spell_cast_bubble_poison_03~1.5', 'mg:acid_spell_cast_poison_gas_02~1.6'],
+  acidHit: ['mg:acid_spell_cast_squish_ball_impact_01~0.6', 'mg:acid_spell_cast_squish_ball_impact_02~0.8', 'mg:acid_spell_cast_squish_ball_impact_03~0.9'],
+  darkFire: ['mg:dark_spell_cast_dark_fire_02~1.1', 'mg:dark_spell_cast_dark_fire_04~1.2'],
+  darkImpact: ['mg:dark_spell_cast_charge_impact_03~2', 'mg:dark_spell_cast_charge_impact_01~2.2'],
+  darkWave: ['mg:dark_spell_cast_energy_wave_02@0.15~2', 'mg:dark_spell_cast_energy_wave_05@0.15~2.2'],
+  darkRiser: ['mg:dark_spell_cast_energy_riser_02~2.2'],
+  windShot: ['mg:wind_spell_cast_air_sharp_shoot_02~0.5', 'mg:wind_spell_cast_air_sharp_shoot_01~0.8', 'mg:wind_spell_cast_air_sharp_shoot_04~0.8'],
+  windWhoosh: ['mg:wind_spell_cast_air_transient_whoosh_02~0.8', 'mg:wind_spell_cast_air_transient_whoosh_06@0.05~1', 'mg:wind_spell_cast_air_transient_whoosh_01~1'],
+  rockHit: ['mg:earth_spell_cast_impact_ground_rock_debris_01', 'mg:earth_spell_cast_impact_ground_rock_debris_02~1.6'],
+  rockThrow: ['mg:earth_spell_cast_throw_rock_fast_whoosh_impact_01~1.1', 'mg:earth_spell_cast_throw_rock_fast_whoosh_impact_03~1.1'],
+  meteor: ['mg:earth_spell_cast_meteor_explosion_02@0.8~2.5', 'mg:earth_spell_cast_meteor_explosion_03@1.2~2.5'],
+  splash: ['mg:water_spell_cast_splash_whoosh_01~1.8', 'mg:water_spell_cast_splash_whoosh_04~1.8'],
+  creatureHurt: ['oga80:creature_hurt_01', 'oga80:creature_hurt_02', 'oga80:creature_misc_03'],
+  creatureDie: ['oga80:creature_die_01'],
+  slime: ['rpgpack:slime1', 'rpgpack:slime2', 'rpgpack:slime4', 'rpgpack:slime5', 'rpgpack:slime10'],
+  ogre: ['rpgpack:ogre1', 'rpgpack:ogre3', 'rpgpack:ogre4'],
+  coins2: ['oga80:item_coins_01', 'oga80:item_coins_02', 'oga80:item_coins_03'],
+};
+
+// The combat packs: where to get each, and how it's packed.
+const OGA = 'https://opengameart.org/sites/default/files/';
+const PACKS = {
+  jc: { url: `${OGA}fantasy_sfx_pack_vol_1.7z`, file: 'jc.7z' },
+  oga80: { url: `${OGA}80-CC0-RPG-SFX_0.zip`, file: 'oga80.zip' },
+  rpgpack: { url: `${OGA}rpg_sound_pack.zip`, file: 'rpgpack.zip' },
+  swish: { url: `${OGA}swishes.zip`, file: 'swish.zip' },
+  battle: { url: `${OGA}battle_sound_effects_0.zip`, file: 'battle.zip' },
+  // itch.io: two parts of one .rar, free downloads (fetched through the page's own download flow).
+  mg: { itch: 'https://thesoundrack.itch.io/freemagicspellsfx', uploads: [19749727, 19749730] },
 };
 
 const run = (args) => execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args]);
@@ -106,8 +172,8 @@ const get = (url, file) => {
   if (!fs.existsSync(file)) execFileSync('curl', ['-sSfL', '--max-time', '120', '-o', file, url]);
   return file;
 };
-function decode(file) {
-  const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', file, '-ac', '1', '-ar', String(SR), '-f', 'f32le', '-']);
+function decode(file, seconds = 60) {
+  const raw = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', file, '-t', String(seconds), '-ac', '1', '-ar', String(SR), '-f', 'f32le', '-'], { maxBuffer: 1 << 30 });
   return new Float32Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.length));
 }
 function encode(samples, file) {
@@ -156,6 +222,67 @@ for (const [name, lo, hi, slot, sustain] of INSTRUMENTS) {
   console.log(name, notes.length, 'notes, gain', norm);
 }
 
+// ---------- Combat packs ----------
+const packDir = (name) => path.join(CACHE, 'packs', name === 'mg' ? 'magic' : name);
+function fetchPack(name) {
+  const dir = packDir(name);
+  if (fs.existsSync(dir)) return;
+  const p = PACKS[name];
+  fs.mkdirSync(dir, { recursive: true });
+  if (p.url) {
+    const file = get(p.url, path.join(CACHE, p.file));
+    if (file.endsWith('.7z')) execFileSync('7z', ['x', '-y', `-o${dir}`, file], { stdio: 'ignore' });
+    else execFileSync('unzip', ['-q', '-o', file, '-d', dir]);
+    return;
+  }
+  // itch.io: open the purchase page (free), ask for the download page, then each file's link.
+  const jar = path.join(CACHE, 'itch-cookies.txt');
+  const curl = (...args) => execFileSync('curl', ['-sS', '-c', jar, '-b', jar, ...args]).toString();
+  curl(`${p.itch}/purchase`);
+  const page = JSON.parse(curl('-X', 'POST', `${p.itch}/download_url`)).url;
+  const html = curl(page);
+  const csrf = /csrf_token" value="([^"]+)/.exec(html)[1];
+  const key = /download\/([^"?]+)/.exec(page)[1];
+  const parts = p.uploads.map((id, i) => {
+    const link = JSON.parse(curl('-X', 'POST', '--data-urlencode', `csrf_token=${csrf}`, `${p.itch}/file/${id}?source=game_download&key=${key}`)).url;
+    const out = path.join(CACHE, `${name}.part${i + 1}.rar`);
+    if (!fs.existsSync(out)) execFileSync('curl', ['-sSfL', '-o', out, link]);
+    return out;
+  });
+  execFileSync('unar', ['-q', '-f', '-o', dir, parts[0]], { stdio: 'ignore' });
+}
+// Every sound file in a pack, by name (the 48 kHz copies where a pack has several).
+const index = {};
+function findIn(pack, key) {
+  if (!index[pack]) {
+    fetchPack(pack);
+    const files = [];
+    const walk = (d) => {
+      for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+        const f = path.join(d, e.name);
+        if (e.isDirectory()) {
+          if (!/__MACOSX|peaks|96000/.test(e.name)) walk(f);
+        } else if (/\.(wav|ogg|mp3)$/i.test(e.name)) files.push(f);
+      }
+    };
+    walk(packDir(pack));
+    index[pack] = files.sort((a, b) => /48000/.test(b) - /48000/.test(a) || /\.ogg$/.test(b) - /\.ogg$/.test(a));
+  }
+  const name = (f) => path.basename(f).replace(/\.[^.]+$/, '');
+  const hit = index[pack].find((f) => name(f) === key) ?? index[pack].find((f) => name(f).endsWith(`_${key}`) || name(f).endsWith(key));
+  if (!hit) throw new Error(`${pack} has no ${key}`);
+  return hit;
+}
+// 'pack:name@skip~length' -> { file, skip, max }.
+function source(spec) {
+  if (!spec.includes(':')) {
+    const [pack, file] = spec.split('/');
+    return { file: path.join(CACHE, K[pack], 'Audio', file), skip: 0, max: 2.5 };
+  }
+  const m = /^(\w+):([^@~]+)(?:@([\d.]+))?(?:~([\d.]+))?$/.exec(spec);
+  return { file: findIn(m[1], m[2]), skip: Number(m[3] ?? 0), max: Number(m[4] ?? 2.5) };
+}
+
 // ---------- Effects ----------
 for (const pack of Object.values(K)) {
   const zipDir = path.join(CACHE, pack);
@@ -171,13 +298,23 @@ let t = LEAD;
 for (const [name, files] of Object.entries(EFFECTS)) {
   manifest.sfx.items[name] = [];
   for (const f of files) {
-    const [pack, file] = f.split('/');
-    const x = decode(path.join(CACHE, K[pack], 'Audio', file));
-    let s = 0;
+    const src = source(f);
+    const x = decode(src.file, src.skip + src.max + 3);
+    let s = Math.round(src.skip * SR);
     while (s < x.length && Math.abs(x[s]) < 0.002) s++;
     let e = x.length;
     while (e > s && Math.abs(x[e - 1]) < 0.001) e--;
-    const clip = x.slice(s, Math.min(e, s + Math.round(2.5 * SR)));
+    // Longer than its limit: cut there, with a gentle fade.
+    const end = Math.min(e, s + Math.round(src.max * SR));
+    const clip = x.slice(s, end);
+    if (end < e) {
+      const fade = Math.min(clip.length, Math.round(0.15 * SR));
+      for (let i = 0; i < fade; i++) clip[clip.length - 1 - i] *= i / fade;
+    }
+    // Every clip at the same peak, so recipes set the balance.
+    let peak = 0;
+    for (const v of clip) peak = Math.max(peak, Math.abs(v));
+    if (peak > 0) for (let i = 0; i < clip.length; i++) clip[i] *= 0.8 / peak;
     pieces.push([t, clip]);
     manifest.sfx.items[name].push([+t.toFixed(4), +(clip.length / SR).toFixed(4)]);
     t += clip.length / SR + 0.08;

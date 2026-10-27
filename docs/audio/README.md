@@ -20,6 +20,9 @@ How it fits together:
   note every three semitones, evened out in loudness; one strip of effects) and writes
   `src/audio/manifest.js`. Credits in `assets/audio/CREDITS.md` (FluidR3 GM, CC BY 3.0; Kenney,
   CC0).
+- Combat sounds come from free packs (see `assets/audio/CREDITS.md`): pick a take by its name in
+  the build script's `EFFECTS` ('pack:file@skip~length'); the build trims, levels and packs it.
+  Prefer takes that hit within 0.1 s (sounds land on the animation), and skip a take's wind-up.
 - `samples.js` loads and decodes them when the page opens; `bank.js` hands them to a worker that
   renders every effect (`synth.js` + `recipes.js`) and song (`studio.js` + `songs.js`) once.
 - `songs.js`: each song is melodies written note by note plus a chord chart; helpers turn the chart

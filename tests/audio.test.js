@@ -78,7 +78,7 @@ test('every sound effect renders cleanly', () => {
 test('jingles keep to their lengths', () => {
   const len = (name) => audible(render(RECIPES[name], SR, 1, bank));
   // Small rewards 0.4-1.2 s, normal ones 1.5-2.5 s, ceremonies 3-5 s (with ring-out).
-  for (const n of ['itemGet', 'healJingle', 'questAccept']) assert.ok(len(n) >= 0.3 && len(n) <= 1.8, `${n} ${len(n)}`);
+  for (const n of ['itemGet', 'heal', 'questAccept']) assert.ok(len(n) >= 0.3 && len(n) <= 1.8, `${n} ${len(n)}`);
   for (const n of ['levelup', 'questDone', 'rareDrop', 'death']) assert.ok(len(n) >= 1.2 && len(n) <= 3.2, `${n} ${len(n)}`);
   for (const n of ['jobUp', 'bossDefeated']) assert.ok(len(n) >= 2.5 && len(n) <= 5.5, `${n} ${len(n)}`);
 });

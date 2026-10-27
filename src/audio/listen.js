@@ -83,8 +83,8 @@ export function hearWorld(world, cam) {
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
   }
   if (hit) {
-    const school = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : null;
-    sfx('hit', { big: hit.big, crit: hit.crit, school, element: hit.element, many: hits, pan: pan(hit.x) });
+    const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : null;
+    sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, element: hit.element, many: hits, pan: pan(hit.x) });
   }
 
   // ----- Floating words -----

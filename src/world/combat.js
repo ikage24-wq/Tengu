@@ -241,7 +241,7 @@ export function cast(world, skillId, rng = Math.random) {
     caught.forEach((m, i) => {
       const miss = rng() >= hitChance(acc, char.level, m.def);
       const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
-      world.pending.push({ at: now + 0.15 + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: 0 });
+      world.pending.push({ at: now + 0.15 + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: 0, via: 'chain' });
     });
     world.fx.push({ kind: 'hook', x: body.x + body.facing * 10, y: body.y - 28, mobs: caught, reach: body.x + body.facing * params.range.w, t: 0, dur: 0.5 });
     return { ok: true, targets: caught.length };
@@ -304,6 +304,8 @@ export function cast(world, skillId, rng = Math.random) {
         stop: weighty ? spellStop(s, params, ultimate) : undefined,
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
         burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school, element: star?.star.element,
+        // What landed (for its sound): the shot, a spell, or a blade.
+        via: params.projectile ? fxKind : type === 'magic' || type === 'heal' ? 'spell' : 'blade',
       });
       if (params.projectile) {
         world.fx.push({
@@ -349,7 +351,7 @@ export function summonStrike(world, summon, from, rng = Math.random) {
     const roll = miss ? null : rollHit(range, stats, m.def, char.level, rng);
     world.pending.push({
       at: now + travel + i * 0.03, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: from.x, stack: 0,
-      freeze: summon.freeze, poison: summon.poison, burst: SHOT_IMPACTS[summon.fx], school: summon.school,
+      freeze: summon.freeze, poison: summon.poison, burst: SHOT_IMPACTS[summon.fx], school: summon.school, via: 'spell',
     });
     world.fx.push({ kind: 'projectile', shot: summon.fx, school: summon.school, x: from.x, y: from.y, tx: m.x, ty: m.y - m.def.h / 2, t: -i * 0.03, dur: Math.max(0.08, travel) });
   });
