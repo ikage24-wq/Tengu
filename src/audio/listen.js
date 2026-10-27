@@ -8,6 +8,8 @@
 
 import { sfx } from './sfx.js';
 import { updateMusic } from './music.js';
+import { prepareSongs } from './bank.js';
+import { getMap } from '../data/maps.js';
 import { hasRage, hasFaith } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
 
@@ -95,6 +97,8 @@ export function hearWorld(world, cam) {
 
   // ----- The hero's state -----
   const first = m.level == null;
+  // Get the songs of the maps next door ready, so walking on never waits for one.
+  if (world.map.id !== m.map) prepareSongs((world.map.portals ?? []).map((pt) => pt.to && getMap(pt.to)).filter(Boolean).map((mp) => songFor(mp)));
   if (!first) {
     if (char.job !== m.job) sfx('jobUp');
     else if (char.level > m.level) sfx('levelup');

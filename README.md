@@ -367,27 +367,31 @@ to clear it.
 - **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
   adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
   **Natural** leaves the colors as drawn.
-- **Sound** — every sound is made in code with the Web Audio API, like the art (no audio files;
-  `src/audio/`). Effects for everything: swings that get heavier with the blow (shimmering for a
-  Paladin, growling for a Berserker), hits with a crisp click and a thump (deeper for heavy
-  blows, a ping on crits, bells for holy light, a crunch for rage, and each weapon element's own
-  colour), bow twangs and star throws, a sound per spell school (fire whooshes, glassy ice,
-  crackling lightning, bubbling poison, choir-like holy light), buffs, heals, dashes and
-  teleports, ground cracks and stomps, power gathering before big blows, every Paladin and
-  Berserker effect, monster pops and boss booms, your own hurt and knock-out, footsteps that
-  change with the ground (grass, stone, wooden docks, sand, crystal, cloud), jumps, landings,
-  climbing, portals, loot drops, coins, pickups, level-ups, job advancements, quests, the hit
-  counter's tiers, LINK!, going Berserk or Sanctified, menu clicks and windows, and a voice blip
-  for every NPC while their words type out (each at their own pitch). Sounds pan to where they
-  happen on screen. **Music** is composed as it plays: each town, field, dungeon and boss has its
-  own key, tempo, chords and instruments (a soft pad, bass, a plucked, bell, flute or chiptune
-  lead, and light drums), the melody a motif that repeats and varies. Dancing Green has his own written song,
-  **Funky Fever** (an original disco / Hi-NRG track, `src/audio/funky.js`), locked to the stage
-  lights' 120 bpm beat and following the fight: a muffled groove that opens up as he struts in, a
-  riser and snare roll while the red energy gathers, a boom as he transforms, a heartbeat pause,
-  the drop into the chorus hook when the fight starts, then verse, chorus and a breakdown; Hi-NRG
-  Fever jumps the key up a step with double-time arps and a siren; a brass fanfare when he falls. Sound starts on your first key press or click.
-  Options: Sound has volume for everything, music, and effects.
+- **Sound** — 8-bit "chip" sound, made in code like the art (no audio files; `src/audio/`). A
+  small NES / Game Boy-style chip (two pulse voices, a triangle, a noise channel and a wave voice,
+  with tracker-style instruments) renders every effect and song loop once, in a background worker,
+  and the game plays them from buffers. The rules come from the saved research in `docs/audio/`
+  (chiptune practice, sfxr-style effects, and what FFXIV, Pokémon, Dragon Quest, Kirby and Animal
+  Crossing do). **Music**: a written song for every area, note by note: a cozy swung village tune,
+  a running D dorian field song, a lilting 6/8 harbor, an E Phrygian desert march, a gentle forest,
+  a waltz in the mage grove, a shimmering ruins bed, glassy cave echoes, an airy Lydian sky, a
+  grumbling dungeon march, a galloping boss theme that cuts in on its sting, and a title theme.
+  Songs crossfade between areas and pick up where they left off when you come back.
+  **Funky Fever**, Dancing Green's disco song, is locked to the stage lights' 120 bpm: a muffled
+  groove that opens up as he struts in, a riser and snare roll, a boom and a heartbeat while he
+  transforms, the drop on a bar line with the chorus on the stage's drop, a phase sting into Hi-NRG
+  Fever (a whole step up, doubled hats) on the next bar, and the victory fanfare on the beat when
+  he falls. **Jingles** follow the Japanese RPG formula (quick notes rushing into a long, rising
+  landing note with vibrato): level up, quest accepted and complete, rare drops, job advancement,
+  boss defeated, healing, and a gentle faint; the music dips under them and they never overlap.
+  **Effects**: hits with a click and a body that climbs in pitch through a combo (a finisher
+  thumps), crit pings, each path's and element's colour (holy bells, rage crunch, fire, ice, zap),
+  swings by weight, shots, casts by school, spells, buffs, every Paladin and Berserker effect,
+  footsteps by ground, jumps, landings, climbing, portals, coins that chime up the scale, pickups,
+  menu sounds that are high, tiny and dry, and NPCs who talk in letter-by-letter voice blips from
+  their own three-note set, rising at the end of a question. Sounds pan to where they happen; a
+  limiter keeps busy fights clean. Sound starts on your first key press or click. Options: Sound
+  has volume for everything, music, and effects.
 - **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: filter, HD graphics, particles
   (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest
   tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: screen shake,
@@ -450,7 +454,8 @@ src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon f
                         particles,
                         monsters, scenery, terrain, landmarks, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
-src/audio/              synthesized sound effects and music, and the listener that plays them
+src/audio/              the chip, the tracker and its songs, sound recipes, the sound bank and
+                        worker, the mixer, and the listener that turns the world into sound
 tests/                  node:test suites for rules, content integrity, and world behavior
 ```
 

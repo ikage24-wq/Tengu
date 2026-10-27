@@ -39,7 +39,9 @@ onUnlock((ac) => {
   } catch {
     worker = null;
   }
-  for (const name of [...FIRST, ...Object.keys(RECIPES)]) want({ type: 'sfx', name });
+  // The everyday sounds now; the rest a moment later, so the first song isn't kept waiting.
+  for (const name of FIRST) want({ type: 'sfx', name });
+  setTimeout(() => Object.keys(RECIPES).forEach((name) => want({ type: 'sfx', name })), 1500);
 });
 
 function want(job, front = false) {
@@ -80,7 +82,7 @@ function receive(m) {
     pending.delete(m.key);
     songBufs.set(m.key, song);
     // A minute of stereo is about 20 MB, so only the most recent few songs are kept.
-    while (songBufs.size > 5) songBufs.delete(songBufs.keys().next().value);
+    while (songBufs.size > 6) songBufs.delete(songBufs.keys().next().value);
     for (const fn of waiting.get(m.key) ?? []) fn(song);
     waiting.delete(m.key);
   } else if (m.type === 'error') console.warn('sound', m.key, m.message);
