@@ -35,7 +35,7 @@ const P = {
   roar: { arm: 140, body: { stretch: 1.05, tilt: -0.04 }, rig: { backArm: [-5, -13], frontLeg: [3.5, 0, 12], backLeg: [-3.5, 0, -12], hy: -1 } },
   // The Twist: a finger snap by the ear, and a spin with the arms flung out.
   snap: { arm: 158, body: { tilt: -0.05 }, rig: { tx: -0.5, tilt: -4, backArm: HIPS, armSide: -1, frontLeg: [2, 0, 6], backLeg: [-1.5, 0, -4] } },
-  spin: { arm: 100, body: { turn: -1, lift: 2, tilt: 0.04 }, rig: { backArm: [-6, -9], frontLeg: [1.5, -2, 10], backLeg: [-1.5, 0, -4] } },
+  spin: { arm: 110, body: { lift: 3, tilt: 0.1, stretch: 1.04 }, rig: { tx: 1, tilt: 6, backArm: [-7, -10], frontLeg: [1.5, -3, 14], backLeg: [-1.5, 0, -4] } },
   victory: { arm: 165, body: { tilt: -0.06, stretch: 1.03 }, rig: { backArm: HIPS, armSide: -1, tilt: -6, frontLeg: [3, 0, 10], backLeg: [-1, 0, -3] } },
   reveal: { arm: 92, body: { tilt: 0.03 }, rig: { backArm: [3, -14], frontLeg: [2.5, 0, 8], backLeg: [-1.5, 0, -4] } },
   push: { arm: 160, body: { tilt: -0.02 }, rig: { backArm: [3, -14], frontLeg: [2, 0, 6], backLeg: [-1.5, 0, -4] } },
@@ -149,7 +149,8 @@ function tail(ctx, x, gy, s, time, body, dir) {
 // Draws the boss at his feet (x, y) on screen. `b` is his brain (world/discoboss.js).
 export function drawDiscoBoss(ctx, m, x, y, time) {
   const b = m.brain ?? { move: 'groove', moveT: 0, form: 'toad', clock: time };
-  const dir = m.dir < 0 ? -1 : 1;
+  // He always faces the front (never mirrored), like the player characters do on screen.
+  const dir = 1;
   let name = b.move;
   let t = time - b.moveT;
   if (m.hp <= 0) { name = 'defeat'; t = m.dying ?? 0; }
@@ -334,23 +335,38 @@ export function drawDiscoZones(ctx, world, cam, now) {
   const H = ctx.canvas.height;
   const X = (wx) => wx - cam.x;
   const boss = world.mobs.find((m) => m.def.disco);
-  // Funky Floor: the stage floor turns to a red-orange and black checkerboard.
+  // Funky Floor: the whole floor turns to black and glowing orange in a checkerboard; the orange
+  // tiles are the ones about to burst. The pattern swaps with each set.
   if (b.funky && now >= b.funky.from && now < b.funky.until) {
     const T = 72;
     const k = Math.min(1, (now - b.funky.from) / 0.3) * Math.min(1, (b.funky.until - now) / 0.3);
+    const next = b.zones.filter((z) => z.kind === 'tiles' && (!z.hit || now - z.at < 0.5)).sort((p, q) => p.at - q.at)[0];
+    const parity = next ? next.parity : 0;
+    const u = next ? Math.max(0, Math.min(1, (now - next.from) / (next.at - next.from))) : 0;
     ctx.globalAlpha = k;
     for (let i = Math.floor(cam.x / T) - 1; i < Math.floor(cam.x / T) + 12; i++) {
       for (let r = 0; r < 3; r++) {
-        const on = ((i + r) % 2 + 2) % 2 === 0;
-        const g = ctx.createLinearGradient(0, gy - 2 + r * 26, 0, gy + 24 + r * 26);
-        g.addColorStop(0, on ? '#ff6a2a' : '#1a0c14');
-        g.addColorStop(1, on ? '#d8401a' : '#2a1018');
-        ctx.fillStyle = g;
-        ctx.fillRect(X(i * T), gy - 2 + r * 26, T, 26);
+        const y0 = gy - 2 + r * 26;
+        const hot = (((i + r) % 2) + 2) % 2 === parity;
+        if (hot) {
+          const pulse = 0.75 + 0.25 * Math.sin(now * (8 + 22 * u));
+          const g = ctx.createLinearGradient(0, y0, 0, y0 + 26);
+          g.addColorStop(0, `rgba(255,${140 + 60 * pulse},70,1)`);
+          g.addColorStop(1, '#c8361a');
+          ctx.fillStyle = g;
+          ctx.fillRect(X(i * T), y0, T, 26);
+          ctx.fillStyle = `rgba(255,240,200,${0.25 * pulse})`;
+          ctx.fillRect(X(i * T) + 3, y0 + 2, T - 6, 3);
+        } else {
+          ctx.fillStyle = r % 2 ? '#1a0e18' : '#140a14';
+          ctx.fillRect(X(i * T), y0, T, 26);
+        }
       }
     }
-    ctx.fillStyle = 'rgba(255,170,90,0.9)';
+    // Glowing orange seams.
+    ctx.fillStyle = 'rgba(255,150,70,0.95)';
     for (let i = Math.floor(cam.x / T) - 1; i < Math.floor(cam.x / T) + 12; i++) ctx.fillRect(X(i * T) - 1, gy - 2, 2, H);
+    for (let r = 0; r <= 3; r++) ctx.fillRect(0, gy - 2 + r * 26 - 1, ctx.canvas.width, 2);
     ctx.globalAlpha = 1;
   }
   // The boss's red ring at his feet.
@@ -432,24 +448,34 @@ export function drawDiscoZones(ctx, world, cam, now) {
         }
       }
     } else if (z.kind === 'tiles') {
+      // The hot tiles burst: each one shoots up into a block of glowing coloured glass that hangs a
+      // moment and fades back into the floor.
+      if (warn || since > 0.6) continue;
+      const rise = since < 0.08 ? since / 0.08 : 1;
+      const a = since < 0.3 ? 1 : 1 - (since - 0.3) / 0.3;
       for (let i = Math.floor(cam.x / z.T) - 1; i < Math.floor(cam.x / z.T) + 12; i++) {
-        if (((i % 2) + 2) % 2 !== z.parity) continue;
-        const x0 = X(i * z.T);
-        if (warn) {
-          const u = Math.min(1, (now - z.from) / (z.at - z.from));
-          ctx.fillStyle = `rgba(255,${200 - 80 * u},120,${0.15 + 0.35 * u * (0.6 + 0.4 * Math.sin(now * (10 + 20 * u)))})`;
-          ctx.fillRect(x0 + 2, gy, z.T - 4, H);
-          ctx.strokeStyle = '#ffe0a0';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x0 + 2, gy, z.T - 4, H);
-        } else if (since < 0.4) {
-          const a = 1 - since / 0.4;
-          ctx.fillStyle = `rgba(255,220,160,${0.85 * a})`;
-          ctx.fillRect(x0, gy - 2 - 18 * a, z.T, H);
-          ctx.fillStyle = `rgba(255,255,255,${0.7 * a})`;
-          ctx.fillRect(x0 + 4, gy - 50 * a, z.T - 8, 3);
+        for (let r = 0; r < 3; r++) {
+          if ((((i + r) % 2) + 2) % 2 !== z.parity) continue;
+          const x0 = X(i * z.T);
+          const y0 = gy - 2 + r * 26;
+          const col = RAINBOW[(((i * 3 + r * 2) % RAINBOW.length) + RAINBOW.length) % RAINBOW.length];
+          const h = (r === 0 ? 34 : 20) * rise;
+          ctx.globalAlpha = 0.92 * a;
+          const g = ctx.createLinearGradient(0, y0 - h, 0, y0 + 26);
+          g.addColorStop(0, '#ffffff');
+          g.addColorStop(0.2, col);
+          g.addColorStop(1, col);
+          ctx.fillStyle = g;
+          ctx.fillRect(x0 + 3, y0 - h, z.T - 6, h + 24);
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(x0 + 3.5, y0 - h + 0.5, z.T - 7, h + 23);
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.fillRect(x0 + 3, y0 - h, z.T - 6, 3);
         }
       }
+      ctx.globalAlpha = 1;
     } else if (z.kind === 'cone') {
       const x0 = X(z.x0);
       const x1 = X(z.x1);
@@ -750,11 +776,13 @@ export function drawDiscoZones(ctx, world, cam, now) {
       const dip = Math.round(Math.max(0, Math.sin(Math.PI * Math.min(1, beat * 1.6))) * 4) / 4;
       // Grooving: a hand on the hip, the other swinging, bobbing on the beat. Posing: turned to its
       // side, the disco point thrown up and out that way.
-      const rig = posing
+      const rig = posing && f.hand < 0
+        ? { armOver: 25, backArm: [-6.5, -15], tilt: -4, tx: -1, by: dip, frontLeg: [1, 0, 3], backLeg: [-2.5, 0, -8] }
+        : posing
         ? { armOver: 'point', backArm: [0.6, -4.2], armSide: -1, tilt: 4, tx: 1, by: dip, frontLeg: [2.5, 0, 8], backLeg: [-1, 0, -3] }
         : { armOver: 60 + Math.round(Math.sin(now * Math.PI * 2 + i) * 15), backArm: [0.6, -4.2], armSide: -1, by: dip, frontLeg: [1.5, 0, 4], backLeg: [-1.5, 0, -4], tilt: (i % 2 ? 2 : -2) };
       const look = { ...DANCER, face: posing ? 'excited' : 'smug' };
-      drawHero(ctx, look, null, x, top + 1, { pose: 'idle', time: now + i, facing: posing ? f.hand : 1, seed: i, scale: 0.95 * pop, rig, body: { tilt: posing ? 0.06 : 0 } });
+      drawHero(ctx, look, null, x, top + 1, { pose: 'idle', time: now + i, facing: 1, seed: i, scale: 0.95 * pop, rig, body: { tilt: posing ? 0.06 * f.hand : 0 } });
     });
     if (tether && boss && b.frogs[turn]) bolt(ctx, X(boss.x), gy - 70, PX(b.frogs[turn].x), top - 24, now);
   }
