@@ -127,6 +127,32 @@ export const RAGE_MAX = 100;
 const RAGE_HOLD = 5; // seconds after the last gain before it starts draining
 const RAGE_DRAIN = 12; // per second
 export const hasRage = (char) => jobChain(char.job).includes('berserker');
+
+// Faith: the Paladin's gauge. Her blows and the hits she takes build it; it drains slowly once the
+// fighting stops, and the fuller it is the less damage she takes (up to FAITH_CUT at full).
+export const FAITH_MAX = 100;
+const FAITH_HOLD = 6;
+const FAITH_DRAIN = 8;
+export const FAITH_CUT = 0.15;
+const FAITH_ON_HURT = 7;
+export const hasFaith = (char) => jobChain(char.job).includes('paladin');
+export function addFaith(world, n) {
+  if (!hasFaith(world.char) || n <= 0) return;
+  world.faith = Math.min(FAITH_MAX, (world.faith ?? 0) + n);
+  world.faithAt = world.now;
+}
+// The share Faith takes off a hit; a hit taken also builds it.
+export function faithGuard(world) {
+  if (!hasFaith(world.char)) return 0;
+  const cut = (FAITH_CUT * (world.faith ?? 0)) / FAITH_MAX;
+  addFaith(world, FAITH_ON_HURT);
+  return cut;
+}
+// Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
+const RAGE_POWER = 0.25;
+// How much heavier each path's blows land: longer hit-stop, harder knockback.
+const WEIGHT = { berserker: 1.4, paladin: 1.2 };
+const weightOf = (char) => (hasRage(char) ? WEIGHT.berserker : hasFaith(char) ? WEIGHT.paladin : 1);
 export function addRage(world, n) {
   if (!hasRage(world.char) || n <= 0) return;
   world.rage = Math.min(RAGE_MAX, (world.rage ?? 0) + n);
@@ -194,6 +220,14 @@ function playStep(world, step, scale, key, school = null) {
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
   if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
+  // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
+  // and power gathering at the weapon until the first blow lands.
+  const heavy = hasRage(world.char) || hasFaith(world.char);
+  if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
+    world.juice.push({ type: 'stomp', x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
+    const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
+    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
+  }
   world.hangUntil = step.hang ? now + dur + 0.15 : 0;
   if (step.dive) {
     body.vy = step.dive;
@@ -209,6 +243,7 @@ function playStep(world, step, scale, key, school = null) {
 export function tickMelee(world, dt) {
   const b = world.body;
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
+  if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -248,7 +283,9 @@ function land(world, s) {
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
   const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
-  const dmgRange = physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
+  const power = hasRage(char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1;
+  const weight = weightOf(char);
+  const dmgRange = physicalRange(stats, stats.weaponType, (s.pct * s.scale * power) / 100);
   const cy = body.y - body.h / 2;
   // The smear, spike, or whirl of the blow.
   if (s.pierce) {
@@ -268,12 +305,14 @@ function land(world, s) {
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
     const roll = miss ? null : rollHit(dmgRange, stats, m.def, char.level, Math.random);
-    const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock;
+    const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
       stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school,
     });
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
+    // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
+    if (!miss && weight > 1) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, t: 0, dur: s.big ? 0.4 : 0.28, seed: Math.random() });
   });
   // A tank's taunting blow: everything it hits turns on you (in a dungeon, sticking for a while).
   if (s.provoke && targets.length) {
@@ -284,6 +323,7 @@ function land(world, s) {
     }
   }
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
+  if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   // A launcher hops you up after them, ready for an air combo.
   if (s.hop && body.onGround) {
     body.vy = -s.hop;
@@ -299,15 +339,16 @@ function land(world, s) {
     // flurry don't stop at all, so it flows into the hits that do. A strike hitting many
     // monsters still stops once (the longest, never the sum).
     const mid = s.of > 2 && s.n > 0 && s.n < s.of - 1 && !s.big;
-    const stop = s.stop ?? (s.finisher ? 0.07 : 0.035);
+    const stop = (s.stop ?? (s.finisher ? 0.07 : 0.035)) * weight;
     if (!mid) world.hitstop = Math.max(world.hitstop, Math.min(MAX_STOP, stop));
     if (stop > MAX_STOP) {
       world.slowmo = Math.max(world.slowmo ?? 0, 0.1 + (stop - MAX_STOP) * 2);
       world.fx.push({ kind: 'tint', x: 0, y: 0, t: 0, dur: 0.05 });
     }
-    if (s.shake) {
-      world.juice.push({ type: 'shake', mag: s.shake, dur: 0.18 + s.shake * 0.05 });
-      world.juice.push({ type: 'kick', x: s.dir * Math.min(4, 1 + s.shake * 0.6), y: s.crack ? 2 : 0 });
+    const shakeMag = s.shake ? s.shake + (weight > 1 && s.big ? 1 : 0) : weight > 1.3 && s.big ? 1.5 : 0;
+    if (shakeMag) {
+      world.juice.push({ type: 'shake', mag: shakeMag, dur: 0.18 + shakeMag * 0.05 });
+      world.juice.push({ type: 'kick', x: s.dir * Math.min(4, 1 + shakeMag * 0.6), y: s.crack ? 2 : 0 });
     }
   } else if (s.shake && s.crack) world.juice.push({ type: 'shake', mag: s.shake * 0.6, dur: 0.2 });
 }

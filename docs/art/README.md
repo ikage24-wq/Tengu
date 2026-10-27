@@ -162,6 +162,11 @@ carry an improvement across every part of the game it applies to.
 - Finisher cut-ins (`hud.js` `drawCutin`): a gently slanted band (about 60 px rise over the screen,
   steeper looks like a falling slab), the hero's head and shoulders at 4x inside it, the name
   sliding in a beat behind, and it draws over the whole HUD.
+- Power that builds (Rage, Faith) shows on the hero in stages, not as one fade: heat, then flames
+  low, then flames climbing to the shoulders, then a pulsing ring at full; or a glow, a ring of
+  light, a halo and rays, then wings. Rays and glows over the dark purple maps need a warm
+  gradient (`#fff2a0` to `#ffd24f`); flat pale fills read grey there. Keep embers and motes out
+  to the sides (`motes` `inner`) so they never cross the face.
 - A giant sword of light must be wide (blade about 44 px with a winged cross-guard) or it reads
   as one more pillar.
 - Holy pillars (`strikes.js` `pillar`): a thin ray first, then a tapered wedge (narrow at the sky,

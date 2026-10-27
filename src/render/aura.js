@@ -373,3 +373,142 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
   def[layer](ctx, x, y, time, scale, k);
   ctx.restore();
 }
+
+
+// ---------- Combat auras: power that builds as the fight goes on ----------
+// A Berserker's Rage and a Paladin's Faith show on the hero in stages (0-1, `k`), in a fight as well
+// as at rest. Rage: a red heat glow, then flames licking up around the body, then flames climbing
+// to the shoulders with embers streaming off; full (Berserk) adds a pulsing ring. Faith: a warm
+// glow, then a turning ring of light diamonds, then a halo and slow rays behind; full (Sanctified)
+// adds wings of light.
+
+// A flame tongue standing at (fx, fy), `h` tall, leaning by `lean`, three tones from rim to core.
+function tongue(ctx, fx, fy, h, w, lean, a) {
+  for (const [color, ww, hk] of [['#8a1030', w * 1.35, 1.12], ['#f0303f', w, 1], ['#ff9b3c', w * 0.55, 0.62], ['#ffe0a0', w * 0.25, 0.32]]) {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(fx - ww, fy);
+    ctx.quadraticCurveTo(fx - ww * 1.1, fy - h * hk * 0.45, fx + lean, fy - h * hk);
+    ctx.quadraticCurveTo(fx + ww * 1.1, fy - h * hk * 0.45, fx + ww, fy);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function rageAura(ctx, x, y, t, s, k, layer) {
+  const cy = y - 20 * s;
+  if (layer === 'back') {
+    // The heat: a red glow that grows with Rage.
+    footGlow(ctx, x, y, s * (1 + k), '#ff3f3f', 0.4 + 0.5 * k);
+    ctx.save();
+    ctx.globalAlpha = 0.18 + 0.32 * k;
+    const g = ctx.createRadialGradient(x, cy, 2 * s, x, cy, (16 + 14 * k) * s);
+    g.addColorStop(0, '#ff5a3c');
+    g.addColorStop(1, 'rgba(255,60,60,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, cy, (16 + 14 * k) * s, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    // Flames standing around the body, climbing higher as Rage fills; the back ones taller.
+    if (k > 0.25) {
+      const f = Math.min(1, (k - 0.25) / 0.6);
+      ctx.save();
+      for (let i = 0; i < 9; i++) {
+        const side = i % 2 ? 1 : -1;
+        const row = Math.floor(i / 2);
+        const fx = x + side * (7 + (row % 2) * 4 + Math.sin(t * 3 + i) * 1.2) * s;
+        const fy = y - row * 6 * s * f;
+        const h = (6 + 12 * f + 4 * Math.sin(t * 9 + i * 1.7) + 2 * Math.sin(t * 17 + i)) * s;
+        tongue(ctx, fx, fy, h, 2.2 * s, Math.sin(t * 6 + i) * 1.5 * s + side * s, 0.85);
+      }
+      ctx.restore();
+    }
+    // Berserk: a red ring pulsing out from the feet.
+    if (k >= 1) {
+      const u = (t * 1.6) % 1;
+      ctx.save();
+      ctx.globalAlpha = 0.8 * (1 - u);
+      ctx.strokeStyle = '#f0303f';
+      ctx.lineWidth = Math.max(1, 2.2 * (1 - u) * s);
+      ctx.beginPath();
+      ctx.ellipse(x, y, (10 + 26 * u) * s, (3 + 6 * u) * s, 0, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+    return;
+  }
+  // Front: flames at the hips in front of the body, and embers streaming up off the shoulders.
+  if (k > 0.5) {
+    const f = Math.min(1, (k - 0.5) / 0.5);
+    ctx.save();
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 ? 1 : -1;
+      const fx = x + side * (9 + (i >> 1) * 3) * s;
+      const h = (5 + 8 * f + 3 * Math.sin(t * 11 + i * 2.3)) * s;
+      tongue(ctx, fx, y - (i >> 1) * 3 * s, h, 1.8 * s, Math.sin(t * 7 + i) * s, 0.9);
+    }
+    ctx.restore();
+  }
+  if (k > 0.1) motes(ctx, x, y, t, s, Math.min(1, k * 1.5), { n: 2 + Math.round(5 * k), speed: 0.5 + 0.4 * k, height: 30 + 14 * k, size: 1 + 0.3 * k, inner: 10, spread: 18, draw: rageEmber });
+}
+
+function faithAura(ctx, x, y, t, s, k, layer) {
+  const cy = y - 22 * s;
+  if (layer === 'back') {
+    footGlow(ctx, x, y, s * (1 + 0.8 * k), '#ffe08a', 0.4 + 0.5 * k);
+    ctx.save();
+    ctx.globalAlpha = 0.15 + 0.3 * k;
+    const g = ctx.createRadialGradient(x, cy, 2 * s, x, cy, (18 + 14 * k) * s);
+    g.addColorStop(0, '#fff6c9');
+    g.addColorStop(1, 'rgba(255,240,180,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, cy, (18 + 14 * k) * s, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    // Rays of light turning slowly behind her.
+    if (k > 0.6) {
+      const f = Math.min(1, (k - 0.6) / 0.4);
+      ctx.save();
+      ctx.globalAlpha = 0.3 * f;
+      const rays = ctx.createRadialGradient(x, cy, 4 * s, x, cy, 40 * s);
+      rays.addColorStop(0, '#fff2a0');
+      rays.addColorStop(0.6, '#ffd24f');
+      rays.addColorStop(1, 'rgba(255,210,80,0)');
+      ctx.fillStyle = rays;
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * TAU + t * 0.25;
+        const len = (24 + 10 * f + (i % 2) * 8) * s;
+        ctx.beginPath();
+        ctx.moveTo(x, cy);
+        ctx.lineTo(x + Math.cos(a - 0.08) * len, cy + Math.sin(a - 0.08) * len);
+        ctx.lineTo(x + Math.cos(a + 0.08) * len, cy + Math.sin(a + 0.08) * len);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    if (k >= 1) {
+      ctx.save();
+      ctx.filter = 'none';
+      angelWings(ctx, x, y + 2 * s, t, s * 1.1, 0.9);
+      ctx.restore();
+    }
+    if (k > 0.25) glimRing(ctx, x, y, t * (1 + k), s * (1 + 0.3 * k), '#ffd24f', Math.min(1, (k - 0.25) * 2.5), false);
+    return;
+  }
+  if (k > 0.25) glimRing(ctx, x, y, t * (1 + k), s * (1 + 0.3 * k), '#ffd24f', Math.min(1, (k - 0.25) * 2.5), true);
+  if (k > 0.6) halo(ctx, x, y, t, s, Math.min(1, (k - 0.6) * 2.5));
+  if (k > 0.1) motes(ctx, x, y, t, s, Math.min(1, k * 1.5), { n: 2 + Math.round(4 * k), speed: 0.35, height: 34, inner: 10, spread: 17, draw: glim('#fff6c9') });
+}
+
+// Draws a combat aura: `kind` 'rage' or 'faith', `k` how full (0-1).
+export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
+  if (k <= 0.02) return;
+  ctx.save();
+  if (kind === 'rage') rageAura(ctx, x, y, time, scale, Math.min(1, k), layer);
+  else if (kind === 'faith') faithAura(ctx, x, y, time, scale, Math.min(1, k), layer);
+  ctx.restore();
+}

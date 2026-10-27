@@ -573,3 +573,58 @@ test("each warrior path's finisher needs a 25-hit combo, spends it, and lands it
     assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
   }
 });
+
+// ---------- Weight, Rage power, and Faith ----------
+
+test("a Paladin's blows and the hits she takes build Faith, and Faith softens hits", async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const w = advanced('paladin');
+  w.char.skills.aegissmite = 10;
+  assert.ok(cast(w, 'aegissmite').ok);
+  run(w, 0.4);
+  assert.ok(w.faith > 0, 'blows build it');
+  const taken = (faith) => {
+    const p = advanced('paladin');
+    p.god = false;
+    p.invuln = 0;
+    p.faith = faith;
+    p.char.hp = p.stats.maxHp;
+    const before = p.char.hp;
+    const random = Math.random;
+    Math.random = () => 0.5;
+    try {
+      hurtPlayer(p, 700, p.body.x + 20);
+    } finally {
+      Math.random = random;
+    }
+    return { lost: before - p.char.hp, faith: p.faith };
+  };
+  const none = taken(0);
+  const full = taken(100);
+  assert.ok(none.faith > 0, 'a hit taken builds it');
+  assert.ok(full.lost < none.lost * 0.9, `full Faith takes less (${none.lost} vs ${full.lost})`);
+});
+
+test('Rage makes every Berserker blow hit harder, and his blows land heavier than a plain warrior', () => {
+  const dealt = (rage) => {
+    const w = advanced('berserker', 'axe_20');
+    const random = Math.random;
+    Math.random = () => 0.99;
+    try {
+      w.rage = rage;
+      w.rageAt = 1e9;
+      updateWorld(w, DT, press('KeyZ'));
+      run(w, 0.4);
+      return 1e9 - w.mobs[0].hp;
+    } finally {
+      Math.random = random;
+    }
+  };
+  assert.ok(dealt(100) > dealt(0) * 1.15, 'full Rage hits harder');
+  const stopOf = (w) => stops(w, 30)[0]?.stop ?? 0;
+  const plain = arena('axe_20');
+  const ber = advanced('berserker', 'axe_20');
+  updateWorld(plain, DT, press('KeyZ'));
+  updateWorld(ber, DT, press('KeyZ'));
+  assert.ok(stopOf(ber) > stopOf(plain), 'longer hit-stop on his blows');
+});

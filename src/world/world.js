@@ -15,7 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
-import { tickMelee } from './melee.js';
+import { tickMelee, faithGuard } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
@@ -36,8 +36,9 @@ export function createWorld(char) {
     drops: [],
     pending: [],
     strikes: [],
-    // A Berserker's Rage (see melee.js).
+    // A Berserker's Rage and a Paladin's Faith (see melee.js).
     rage: 0,
+    faith: 0,
     fx: [],
     numbers: [],
     messages: [],
@@ -333,7 +334,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

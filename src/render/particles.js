@@ -253,6 +253,13 @@ export function absorbJuice(fx, world) {
       add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.4, size: 4, r1: 34, thick: 3, flat: 0.3, shape: 'shock', color: j.color });
       for (let i = 0; i < 8; i++) add(fx, { x: j.x + (Math.random() - 0.5) * 16, y: j.y, vx: (Math.random() - 0.5) * 30, vy: -110 - Math.random() * 90, drag: 2.5, life: 0.5, size: 1.8, shape: 'needle', color: i % 2 ? j.color : '#ffffff' });
       for (let i = 0; i < 5; i++) add(fx, { x: j.x + (Math.random() - 0.5) * 16, y: j.y, vx: 0, vy: -50 - Math.random() * 60, drag: 1, life: 0.7, size: 1.5, shape: 'star', spin: 4, color: i % 2 ? j.color : '#ffffff' });
+    } else if (j.type === 'stomp') {
+      // A warrior plants a foot to put their weight into a big move: a puff of dust skids out
+      // from under it, the view dips, and a heavy move adds a small ring on the ground.
+      dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, '#efe8fb', '#cdbfe6');
+      dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, '#efe8fb', '#cdbfe6');
+      kick(fx, 0, j.big ? 2 : 1);
+      if (j.big) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
     } else if (j.type === 'slam') {
       // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out.
       add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: '#c9b6ff' });

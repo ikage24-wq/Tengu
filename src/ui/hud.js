@@ -13,7 +13,7 @@ import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
-import { hasRage, RAGE_MAX } from '../world/melee.js';
+import { hasRage, hasFaith } from '../world/melee.js';
 import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
@@ -271,7 +271,8 @@ export function drawHud(ui, state, world) {
 
   drawHits(ui, state, world);
   if (s.weaponType === 'gauntlet') drawStars(ui, world);
-  if (hasRage(char)) drawRage(ui, world);
+  if (hasRage(char)) drawGauge(ui, world, 'rage', world.rage ?? 0);
+  else if (hasFaith(char)) drawGauge(ui, world, 'faith', world.faith ?? 0);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -338,24 +339,46 @@ function drawStars(ui, world) {
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
 }
 
-// A Berserker's Rage: a flame and a gauge that fills as blows land, with a notch where Rampage
-// opens up, burning bright and pulsing once it's full.
-const RAGE = '#ff5a4a';
-function drawRage(ui, world) {
+// A warrior path's gauge over the hotkeys: a Berserker's Rage (a flame) or a Paladin's Faith (a
+// star). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
+// names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
+const GAUGES = {
+  rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
+    tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all.' },
+  faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
+    tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take.' },
+};
+function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;
+  const G = GAUGES[kind];
   const x = 566;
   const y = BAR_Y - 20;
-  const k = Math.min(1, (world.rage ?? 0) / RAGE_MAX);
+  const k = Math.min(1, value / 100);
   const full = k >= 1;
   const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 9) : 0;
-  box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? RAGE : '#ffb347') : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
-  badge(ctx, x + 8, y + 8, 'flame', RAGE, 1 + beat * 0.15);
-  bar(ctx, x + 16, y + 5, 40, 6, k, full ? (beat > 0.5 ? '#ff7a3c' : RAGE) : RAGE, '', { pulse: full ? 0.3 * beat : 0 });
-  const need = (SKILLS.rampage?.rageCost ?? 30) / RAGE_MAX;
-  ctx.fillStyle = k >= need ? '#ffffff' : 'rgba(74,53,96,0.55)';
-  ctx.fillRect(Math.round(x + 16 + 40 * need), y + 4, 1, 8);
-  text(ctx, `${Math.floor(world.rage ?? 0)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? RAGE : COLORS.ink });
-  if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: 'Rage', bold: true, color: RAGE }, { text: 'Your blows build it; it drains once the fighting stops. Rampage spends it all.', size: 8, color: COLORS.muted }]);
+  if (full) edgeTint(ctx, kind === 'rage' ? 'rgba(232,40,60,' : 'rgba(255,214,90,', 0.22 + 0.12 * beat);
+  box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
+  badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
+  bar(ctx, x + 16, y + 5, 40, 6, k, full && beat > 0.5 ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
+  const notch = G.notch();
+  if (notch) {
+    ctx.fillStyle = value >= notch ? '#ffffff' : 'rgba(74,53,96,0.55)';
+    ctx.fillRect(Math.round(x + 16 + 40 * (notch / 100)), y + 4, 1, 8);
+  }
+  text(ctx, `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
+  if (full) text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: kind === 'rage' ? '#7a1030' : '#a8661a' });
+  if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: G.name, bold: true, color: G.color }, { text: G.tip, size: 8, color: COLORS.muted }]);
+}
+
+// A soft colour around the screen's edges (a full gauge's state).
+function edgeTint(ctx, rgba, a) {
+  ctx.save();
+  const g = ctx.createRadialGradient(320, 170, 140, 320, 170, 380);
+  g.addColorStop(0, `${rgba}0)`);
+  g.addColorStop(1, `${rgba}${a})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 640, BAR_Y);
+  ctx.restore();
 }
 
 // The hit counter, on the right: the count pops each time it climbs, takes a warmer colour and a

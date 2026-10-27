@@ -1,6 +1,9 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
 import { wornGear } from '../core/character.js';
+import { drawCombatAura } from './aura.js';
+import { hasRage, hasFaith, RAGE_MAX, FAITH_MAX } from '../world/melee.js';
+import { moveAt } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
@@ -240,7 +243,12 @@ export function drawWorld(ctx, world, viewCam, time) {
   } else {
     feel.fellAt = undefined;
     feel.fellDust = false;
+    // A Berserker's Rage or a Paladin's Faith builds up around them as the fight goes on.
+    const power = hasRage(world.char) ? ['rage', (world.rage ?? 0) / RAGE_MAX] : hasFaith(world.char) ? ['faith', (world.faith ?? 0) / FAITH_MAX] : null;
+    const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
+    if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, 1, power[1]);
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+    if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, 1, power[1]);
   }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
   drawSupport(ctx, buffs, hx, hy, time, world.now);

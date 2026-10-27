@@ -614,6 +614,52 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       }
       return true;
     }
+    case 'gather': {
+      // Power gathering before a big blow: motes of the school's colour pulled in from all around
+      // to the hero's chest, faster as they arrive, around a glow that swells until the blow lands.
+      const cx = x + (f.dir || 1) * 4;
+      const cy = y - 24;
+      const n = f.big ? 14 : 9;
+      const R = f.big ? 70 : 50;
+      for (let i = 0; i < n; i++) {
+        const a = rand(i * 3.3 + 1) * TAU;
+        const start = rand(i * 1.9) * 0.45;
+        const u = (p - start) / (1 - start);
+        if (u <= 0 || u >= 1) continue;
+        const d = R * (1 - easeIn(u));
+        const px = cx + Math.cos(a) * d;
+        const py = cy + Math.sin(a) * d * 0.8;
+        if (f.school === 'holy') diamond(ctx, px, py, 2.4 * (1 - u * 0.5), i % 2 ? '#ffffff' : c.main);
+        else needle(ctx, px, py, a + Math.PI, 6 + 8 * u, 2.2, i % 3 ? c.main : '#ffb347', c.light);
+      }
+      const g = easeIn(p);
+      if (f.school === 'holy') bloom(ctx, cx, cy, 6 + 12 * g, 6, time * 2, c.main, '#ffffff', 0.6);
+      else starFlash(ctx, cx, cy, 6 + 14 * g, 6, time * 5, c.main, '#ffd27a', 2 + 3 * g);
+      return true;
+    }
+    case 'ragehit': {
+      // A Berserker's blow: a jagged red flash on the target and shards of rage flung outward.
+      const cy = y - (f.h ?? 24) / 2;
+      const k = stepped(p, 5);
+      if (k < 0.5) starFlash(ctx, x, cy, (f.big ? 20 : 12) * (k < 0.2 ? 0.7 : 1 - k), 5, f.seed * 6, '#f0303f', '#ffd27a', 3 * (1 - k));
+      for (let i = 0; i < (f.big ? 6 : 4); i++) {
+        const a = (i / (f.big ? 6 : 4)) * TAU + f.seed * 6;
+        const d = easeOut(p) * (f.big ? 26 : 16);
+        needle(ctx, x + Math.cos(a) * d, cy + Math.sin(a) * d, a, 7 * (1 - p) + 1, 2.2 * (1 - p) + 0.6, i % 2 ? '#f0303f' : '#ff8a3c', '#ffd27a');
+      }
+      return true;
+    }
+    case 'holyhit': {
+      // A Paladin's blow: a small bloom of light on the target and diamonds that rise off it.
+      const cy = y - (f.h ?? 24) / 2;
+      const k = stepped(p, 5);
+      if (k < 0.6) bloom(ctx, x, cy, (f.big ? 16 : 10) * (0.7 + k * 0.5), 5, f.seed * 4, c.main, '#ffffff', 0.6 + k * 1.4);
+      for (let i = 0; i < 3; i++) {
+        const u = Math.max(0, p - i * 0.1);
+        diamond(ctx, x + (rand(i + f.seed * 5) - 0.5) * 22, cy - easeOut(u) * 24, 2.4 * (1 - u) + 0.4, i % 2 ? '#ffffff' : c.main);
+      }
+      return true;
+    }
     case 'rageburst': {
       // Rage breaks out of the blow: a jagged red flash, a ring of shards that scatters, and
       // embers flung up and out. (No dark contrast disc: hit-stop holds effects still, and a

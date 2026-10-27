@@ -330,13 +330,23 @@ to clear it.
     on them); **Hallowed Ground** drives the blade into the floor so a ring of holy light bursts out,
     turns every monster it hits on you, and lifts them on pillars of light; **Divine Aegis** guards
     you and the party around you (less damage taken, slow healing); **Paladin Mastery** adds
-    mastery, defense, and max HP. Idle, a ring of light diamonds turns at their feet.
+    mastery, defense, and max HP. Idle, a ring of light diamonds turns at their feet. **Faith** (a
+    star gauge over the hotkeys) builds from her blows and from the hits she takes, drains once the
+    fight stops, and cuts the damage she takes (up to 15% at full). Golden light builds around her
+    as it fills: a glow, a turning ring of light, then a halo and rays; full (**Sanctified**) adds
+    wings of light.
   - **Berserker**, a damage dealer: every blow builds **Rage** (a flame gauge over the hotkeys) that
     drains once the fighting stops. **Ravage** is a three-press combo (two bleeding chops, a
     bleeding spin, a ground-cracking skull-splitter); **Blood Frenzy** raises attack, attack speed,
     and crits and gives a quarter of your Rage; **Rampage** needs 30 Rage and spends it all on three
     wild chops and a leaping smash, up to double damage at full Rage; **Berserker Mastery** adds
-    mastery, attack, and critical damage. Idle, small red flames lick at their feet.
+    mastery, attack, and critical damage. Idle, small red flames lick at their feet. Rage shows on
+    him as it builds (a red heat, then flames climbing his body, embers streaming off), makes every
+    blow up to 25% harder, and at full (**Berserk**) a red ring pulses from his feet and the screen
+    edges burn red.
+  - Both paths hit heavy: longer hit-stops and harder knockback (the Berserker most), a stomp of
+    dust and a dip of the view as a big move starts, power gathering at the weapon (embers or
+    diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.
 - **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
   **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in
