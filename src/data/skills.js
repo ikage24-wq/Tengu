@@ -23,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (steel, hawk, shadow, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, shadow, crow, night, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -666,6 +666,151 @@ export const SKILLS = {
     },
   }),
 
+  // ---------- Assassin (the thief's dagger path: black, crimson and silver; crows and a blood moon) ----------
+  // Hits from behind and critical hits build Killing Intent (0-100, see world/melee.js); full
+  // (Execution), the first cut on each monster is sure to crit and a weakened monster dies in one
+  // blow. Blood Moon Requiem needs it full and spends it.
+  assassinmastery: skill({
+    id: 'assassinmastery', name: 'Assassin Mastery', job: 'assassin', type: 'passive', fx: null, icon: 'assassinmastery',
+    desc: 'Steadier dagger cuts, and harder, more frequent critical hits.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), critRate: lerpf(0.02, 0.15, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
+  }),
+  crowcombo: skill({
+    id: 'crowcombo', name: 'Crow Combo', job: 'assassin', type: 'attack', fx: 'flurry', icon: 'crowcombo', school: 'crow',
+    desc: 'A four-part combo, one part per press: a stab, a slash, the return slash, then a leaping X-cut that scatters crows.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(3, 5);
+      return {
+        mp: k(5, 12), pct: k(100, 170), hits: 5, targets,
+        combo: [
+          { move: 'thrust', dur: 0.28, step: 10, strikes: [{ at: 0.42, pct: k(100, 170), reach: 70, h: 50, targets, knock: 30, pierce: true }] },
+          { move: 'slash', dur: 0.3, step: 8, strikes: [{ at: 0.45, pct: k(100, 170), reach: 70, h: 56, targets, knock: 35, arc: [-110, 200], thick: 6 }] },
+          { move: 'slash2', dur: 0.3, step: 8, strikes: [{ at: 0.45, pct: k(110, 180), reach: 70, h: 58, targets, knock: 35, launch: 140, arc: [100, -210], thick: 6 }] },
+          { move: 'cross', dur: 0.5, step: 16, finisher: true, strikes: [
+            { at: 0.22, pct: k(120, 200), reach: 78, h: 62, targets, knock: 60, arc: [-110, 200], thick: 8 },
+            { at: 0.72, pct: k(170, 280), reach: 80, h: 64, targets, knock: 220, launch: 200, arc: [100, -210], thick: 9, big: true, burst: 'crowburst', burstAt: 0.6, stop: 0.08, shake: 3 },
+          ] },
+        ],
+      };
+    },
+  }),
+  markdeath: skill({
+    id: 'markdeath', name: 'Mark for Death', job: 'assassin', type: 'attack', fx: 'flurry', icon: 'markdeath', school: 'crow',
+    desc: 'Flick a crow feather at the nearest monster and mark it: for a while every hit on it lands harder and builds Killing Intent twice as fast.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(8, 14), pct: k(80, 140), hits: 1, targets: 1,
+        combo: [{ move: 'throw', dur: 0.42, step: -2, strikes: [{ at: 0.5, pct: k(80, 140), reach: 280, h: 70, targets: 1, knock: 20, mark: lerpf(8, 16, lv, m), markPower: lerpf(0.15, 0.3, lv, m), fx: 'deathmark' }] }],
+      };
+    },
+  }),
+  vanish: skill({
+    id: 'vanish', name: 'Vanish', job: 'assassin', type: 'buff', fx: 'buff', icon: 'vanish', school: 'crow', maxLevel: 10,
+    desc: 'Melt into the dark: monsters lose track of you and you dodge far more often, and your first cut out of it is a sure backstab.',
+    at: (lv, m) => ({ mp: lerp(14, 8, lv, m), duration: lerpf(3, 6, lv, m), buff: { eva: lerp(40, 120, lv, m) } }),
+  }),
+  poisonblade: skill({
+    id: 'poisonblade', name: 'Poisoned Blade', job: 'assassin', type: 'buff', fx: 'buff', icon: 'poisonblade', school: 'crow',
+    desc: 'Coat your dagger in nightshade: every cut makes them bleed for a while.',
+    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { venom: lerpf(0.06, 0.18, lv, m) } }),
+  }),
+  bloodmoonrequiem: skill({
+    id: 'bloodmoonrequiem', name: 'Blood Moon Requiem', job: 'assassin', type: 'attack', fx: 'flurry', icon: 'bloodmoonrequiem', school: 'crow', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Killing Intent, and spends it. The moon turns red and crows burst across the sky; you appear behind each monster in turn and cut it down, then a crimson crescent tears through them all.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const cut = (at) => ({ at, pct: k(90, 150), reach: 220, h: 150, around: true, targets, knock: 30, fx: 'crowcut', quiet: true, crit: true, stop: 0.03, gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(460, 780), hits: 6, targets,
+        combo: [{ move: 'assassinate', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoonrise', burstAt: 0, quiet: true, gauge: 0 },
+          cut(0.3), cut(0.38), cut(0.46), cut(0.54),
+          { at: 0.74, pct: k(460, 780), reach: 230, h: 150, around: true, targets, knock: 300, launch: 380, burst: 'redcrescent', burstAt: 0.35, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Night Lord (the thief's gauntlet path: deep indigo and starlight gold; constellations) ----------
+  // Stars that land build Starlight (0-100, see world/melee.js), more when they pile onto the same
+  // monster; full (Constellation), every star thrown splits into three. Galaxy Fall needs it full
+  // and spends it.
+  nightlordmastery: skill({
+    id: 'nightlordmastery', name: 'Night Lord Mastery', job: 'nightlord', type: 'passive', fx: null, icon: 'nightlordmastery',
+    desc: 'Steadier stars, more attack, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 20, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  starstorm: skill({
+    id: 'starstorm', name: 'Star Storm', job: 'nightlord', type: 'attack', fx: 'star', icon: 'starstorm', school: 'night',
+    desc: 'A four-part combo, one part per press: two stars, two more, three in a row, then a fan of stars at everything ahead.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const star = (at, oy = 0) => ({ at, shot: 'star', pct: k(70, 115), range: 300, h: 60, knock: 25, speed: 800, oy });
+      return {
+        mp: k(5, 12), pct: k(70, 115), hits: 9, targets: 1,
+        combo: [
+          { move: 'barrage', dur: 0.38, step: -2, strikes: [star(0.17, -3), star(0.5, 3)] },
+          { move: 'barrage', dur: 0.38, step: -2, strikes: [star(0.17, 3), star(0.5, -3)] },
+          { move: 'barrage', dur: 0.46, step: -3, strikes: [star(0.17), star(0.5, -4), star(0.83, 4)] },
+          { move: 'throw', dur: 0.5, step: -8, finisher: true, strikes: [{ at: 0.5, shot: 'nightstar', fan: k(4, 6), pct: k(110, 180), range: 310, h: 150, knock: 120, launch: 100, speed: 820, big: true, stop: 0.05, shake: 2 }] },
+        ],
+      };
+    },
+  }),
+  giantshuriken: skill({
+    id: 'giantshuriken', name: 'Giant Shuriken', job: 'nightlord', type: 'attack', fx: 'star', icon: 'giantshuriken', school: 'night',
+    desc: 'Hurl one huge spinning star that cuts through the whole line, then whirls back through them again to your hand.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(12, 24), pct: k(130, 220), hits: 2, targets: k(4, 7),
+        combo: [{ move: 'throw', dur: 0.6, step: -6, strikes: [{ at: 0.5, shot: 'giantstar', pct: k(130, 220), range: 320, h: 80, targets: k(4, 7), pierce: true, boomerang: true, speed: 620, knock: 60, big: true, stop: 0.04, shake: 1 }] }],
+      };
+    },
+  }),
+  starmark: skill({
+    id: 'starmark', name: 'Star Mark', job: 'nightlord', type: 'attack', fx: 'star', icon: 'starmark', school: 'night',
+    desc: 'Throw three glowing stars that stick in the monsters they hit and burst a moment later, catching everything close by.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 20), pct: k(60, 100), hits: 2, targets: 3,
+        combo: [{ move: 'throw', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'nightstar', fan: 3, pct: k(60, 100), range: 300, h: 140, knock: 20, speed: 760, stick: { delay: 0.9, pct: k(150, 260), r: 60 } }] }],
+      };
+    },
+  }),
+  shadowshuriken: skill({
+    id: 'shadowshuriken', name: 'Shadow Shuriken', job: 'nightlord', type: 'buff', fx: 'buff', icon: 'shadowshuriken', school: 'night',
+    desc: 'For a while, a shadow star flies beside every star you throw, free.',
+    at: (lv, m) => ({ mp: lerp(16, 30, lv, m), duration: lerp(30, 90, lv, m), buff: { shadowStar: lerpf(0.3, 0.6, lv, m) } }),
+  }),
+  galaxyfall: skill({
+    id: 'galaxyfall', name: 'Galaxy Fall', job: 'nightlord', type: 'attack', fx: 'star', icon: 'galaxyfall', school: 'night', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Starlight, and spends it. Fling stars into the sky that join into a giant constellation over the monsters, then it falls on all of them at once and bursts in a ring of starlight.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(440, 760), hits: 18, targets,
+        combo: [{ move: 'moonthrow', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.18, pct: 0, reach: 0, h: 0, targets: 0, burst: 'constellation', burstAt: 0, quiet: true, gauge: 0 },
+          { at: 0.55, rain: k(12, 16), pct: k(80, 130), rainFrom: 30, rainW: 340, span: 0.35, knock: 30, variant: 'goldstar', school: 'night', gauge: 0 },
+          { at: 0.8, pct: k(440, 760), reach: 230, h: 150, around: true, targets, knock: 300, launch: 380, burst: 'galaxyburst', burstAt: 0.6, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Stormfrost Wizard (ice & lightning) ----------
   ilmastery: skill({
     id: 'ilmastery', name: 'Stormfrost Mastery', job: 'ilwizard', type: 'passive', fx: null,
@@ -861,6 +1006,8 @@ const MOVES_BY_SKILL = {
   twinshot: 'rapid', arrowfan: 'draw', huntersfocus: 'cheer', flipshot: 'flip', arrowshower: 'skyshot', falcondive: 'falcondive',
   galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
+  crowcombo: 'thrust', markdeath: 'throw', vanish: 'vanish', poisonblade: 'cheer', bloodmoonrequiem: 'assassinate',
+  starstorm: 'barrage', giantshuriken: 'throw', starmark: 'throw', shadowshuriken: 'cheer', galaxyfall: 'moonthrow',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
   fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',
   bless: 'pray', heal: 'pray', holybolt: 'castforward',

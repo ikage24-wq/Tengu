@@ -35,8 +35,8 @@ export function songFor(map, world = null) {
   return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove' }[map.theme] ?? 'meadow';
 }
 
-const SPELLS = new Set(['titanwave', 'feathers', 'moonslash', 'smokepuff', 'thunder', 'icespire', 'meteor', 'tempest', 'judgment', 'shiningray', 'mist', 'toxicblaze', 'chainbolt', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock']);
-const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut']);
+const SPELLS = new Set(['titanwave', 'feathers', 'moonslash', 'smokepuff', 'crowburst', 'crowcut', 'execute', 'starpop', 'thunder', 'icespire', 'meteor', 'tempest', 'judgment', 'shiningray', 'mist', 'toxicblaze', 'chainbolt', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock']);
+const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut', 'bloodmoonrise', 'redcrescent', 'constellation', 'galaxyburst']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
@@ -129,6 +129,8 @@ export function hearWorld(world, cam) {
     if ((world.valor ?? 0) >= 100 && !(m.valor >= 100)) sfx('unbroken');
     if ((world.momentum ?? 0) >= 100 && !(m.momentum >= 100)) sfx('hawkeye');
     if ((world.shadow ?? 0) >= 100 && !(m.shadow >= 100)) sfx('phantom');
+    if ((world.killintent ?? 0) >= 100 && !(m.killintent >= 100)) sfx('execution');
+    if ((world.starlight ?? 0) >= 100 && !(m.starlight >= 100)) sfx('constellation');
     if ((world.rage ?? 0) >= 100 && !(m.rage >= 100)) sfx('berserk');
     if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
     if ((world.gale ?? 0) >= 100 && !(m.gale >= 100)) sfx('galeFull');
@@ -156,7 +158,7 @@ export function hearWorld(world, cam) {
     [m.active, m.done] = questCounts(char);
   }
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
-  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, rage: world.rage, faith: world.faith, gale: world.gale, focus: world.focus });
+  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, killintent: world.killintent, starlight: world.starlight, rage: world.rage, faith: world.faith, gale: world.gale, focus: world.focus });
 
   updateMusic(songFor(world.map, world), world.disco?.cut ?? 0);
 }

@@ -65,6 +65,18 @@ export const JOBS = {
     blurb: 'One bolt, one kill. Holding still and landing bolts builds Focus for sharper criticals; full, the next bolt is a Deadeye that always crits and tears through the line. Heavy, frost, and blast bolts.',
   },
 
+  // Thief branches. Both ask for Vex's trial first; each keeps to one of the Thief's two weapons.
+  assassin: {
+    id: 'assassin', name: 'Assassin', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
+    blurb: 'Death from behind with a dagger. Hits from behind and critical hits build Killing Intent; full, every first cut on a monster is sure to crit and the weakened die in one blow. Marks, vanishing, poisoned blades and crows.',
+  },
+  nightlord: {
+    id: 'nightlord', name: 'Night Lord', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    hp: 23, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['gauntlet'],
+    blurb: 'A storm of stars from a gauntlet. Stars that land build Starlight, faster when they pile onto one target; full, every star splits into three. Giant shuriken, sticky exploding stars and falling constellations.',
+  },
+
   ilwizard: {
     id: 'ilwizard', name: 'Stormfrost Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],

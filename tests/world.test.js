@@ -319,7 +319,7 @@ test('big skills root you for a short wind-up and never go on cooldown', async (
   assert.equal(cast(w, 'meteor').ok, true, 'usable again as soon as the lock ends');
 });
 
-test('the mage branches three ways at 30, each branch with one third job and an ultimate; the warrior and the archer branch two ways; thieves stop at their first job', async () => {
+test('the mage branches three ways at 30, each branch with one third job and an ultimate; the warrior, the archer and the thief branch two ways', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
   const seconds = nextJobs('mage', 30);
@@ -333,10 +333,10 @@ test('the mage branches three ways at 30, each branch with one third job and an 
   }
   for (const first of ['warrior', 'mage', 'archer', 'thief']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
-    if (first === 'thief') assert.equal(nextJobs(first, 200).length, 0, `${first} has no advanced jobs for now`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
   assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['ranger', 'sniper'], 'archer has two paths at 30');
+  assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['assassin', 'nightlord'], 'thief has two paths at 30');
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
 });
 
@@ -417,6 +417,10 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
   assert.deepEqual(c.skills, { meteor: 10, fireball: 20 });
   assert.equal(c.hotkeys.KeyQ, null);
   assert.deepEqual(c.hotkeys.KeyW, { skill: 'meteor' });
+  // A job that exists today stays, even if an old retired job once had the same id.
+  const r = { job: 'ranger', sp: 0, skills: {}, hotkeys: {} };
+  updateRetiredJobs(r);
+  assert.equal(r.job, 'ranger');
 });
 
 test('auto-loot picks up drops without holding X', async () => {

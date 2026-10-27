@@ -1186,3 +1186,191 @@ test("a weapon's own mastery only counts while that weapon is held", async () =>
   w.char.skills.daggermastery = 0;
   assert.equal(computeStats(w.char, 0).watk, g, 'nothing from it with a gauntlet');
 });
+
+// ---------- The Thief's paths: the Assassin (dagger) and the Night Lord (gauntlet) ----------
+
+function thiefPath(job) {
+  const weapon = job === 'assassin' ? 'dagger_20' : 'gauntlet_20';
+  const w = arena(weapon);
+  const c = createCharacter('T', {});
+  gainExp(c, 1e6);
+  advanceJob(c, 'thief');
+  c.quests.thief_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, job), `advanced to ${job}`);
+  c.equipment.weapon = makeEquip(weapon, {});
+  c.mp = 9999;
+  c.baseMp = 99999;
+  if (job === 'nightlord') addItem(c.inventory, 'star_pebble', 500);
+  w.char = c;
+  if (job === 'nightlord') w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
+  for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {
+  const { JOBS } = await import('../src/data/jobs.js');
+  const c = createCharacter('T', {});
+  gainExp(c, 1e6);
+  advanceJob(c, 'thief');
+  assert.equal(advanceJob(c, 'assassin'), false, 'not before the trial');
+  assert.deepEqual(JOBS.assassin.weapons, ['dagger']);
+  assert.deepEqual(JOBS.nightlord.weapons, ['gauntlet']);
+});
+
+test('each thief path has its own basic combo', () => {
+  for (const job of ['assassin', 'nightlord']) {
+    const w = thiefPath(job);
+    const seen = [];
+    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+    for (let i = 0; i < 100; i++) {
+      updateWorld(w, DT, hold);
+      if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
+    }
+    assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS[job].map((s) => s.move), job);
+    assert.ok(w.mobs.some((m) => m.hp < 1e9), `${job} hits`);
+  }
+});
+
+test("an Assassin's cuts build Killing Intent, far more from behind and on a marked monster", () => {
+  const built = (facing, mark = false) => {
+    const w = thiefPath('assassin');
+    w.mobs = [w.mobs[0]];
+    w.mobs[0].dir = facing;
+    if (mark) {
+      w.mobs[0].markedUntil = 1e9;
+      w.mobs[0].markPower = 0.2;
+    }
+    const random = Math.random;
+    Math.random = () => 0.9;
+    try {
+      updateWorld(w, DT, press('KeyZ'));
+      run(w, 0.4);
+    } finally {
+      Math.random = random;
+    }
+    return w.killintent;
+  };
+  const front = built(-1);
+  assert.ok(front > 0, 'a cut builds it');
+  assert.ok(built(1) > front * 2, 'from behind builds it far faster');
+  assert.ok(built(-1, true) > front * 1.5, 'a marked monster too');
+});
+
+test('full Killing Intent (Execution): the first cut on each monster crits, and a weakened one dies in it', () => {
+  const w = thiefPath('assassin');
+  w.killintent = 100;
+  w.killintentAt = 1e9;
+  const [weak, strong] = w.mobs;
+  weak.hp = 1e9 * 0.2;
+  const random = Math.random;
+  Math.random = () => 0.9;
+  try {
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 0.4);
+  } finally {
+    Math.random = random;
+  }
+  assert.ok(weak.hp <= 0, 'the weakened monster was executed');
+  assert.ok(w.numbers.some((n) => n.crit), 'and the cut was a crit');
+  assert.ok(w.executed?.has(weak), 'each monster gets its one sure cut');
+  assert.ok(strong.hp === 1e9 || strong.hp > 0, 'a healthy one just takes the hit');
+});
+
+test("Mark for Death, Vanish and Poisoned Blade", () => {
+  const w = thiefPath('assassin');
+  Object.assign(w.char.skills, { markdeath: 10, vanish: 10, poisonblade: 10 });
+  const ready = () => {
+    w.attackTimer = 0;
+    w.lockTimer = 0;
+    w.skillReadyAt = 0;
+  };
+  assert.ok(cast(w, 'markdeath').ok);
+  run(w, 0.5);
+  assert.ok(w.mobs[0].markedUntil > w.now, 'the nearest monster is marked');
+  ready();
+  assert.ok(cast(w, 'vanish').ok);
+  assert.ok(w.char.buffs.vanish, 'vanished');
+  run(w, 0.2);
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 0.4);
+  assert.equal(w.char.buffs.vanish, undefined, 'striking out of it spends it');
+  ready();
+  run(w, 1.2);
+  assert.ok(cast(w, 'poisonblade').ok);
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 0.5);
+  assert.ok(w.mobs.some((x) => x.poison?.kind === 'bleed'), 'cuts make them bleed');
+});
+
+test("a Night Lord's stars build Starlight, more when they pile onto one monster", () => {
+  const w = thiefPath('nightlord');
+  w.mobs = [w.mobs[0]];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  run(w, 1.4, hold);
+  assert.ok(w.starlight > 0, 'stars build it');
+  assert.ok(w.mobs[0].starHits > 2, 'they piled onto the one monster');
+  run(w, 9);
+  assert.equal(w.starlight, 0, 'it fades once the fighting stops');
+});
+
+test('full Starlight (Constellation): every star splits into three, the extra two free', () => {
+  const thrown = (full) => {
+    const w = thiefPath('nightlord');
+    w.starlight = full ? 100 : 0;
+    w.starlightAt = 1e9;
+    const stars = () => w.char.inventory.use.reduce((n, s) => n + (s?.qty ?? 0), 0);
+    const before = stars();
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 0.5);
+    return { shots: w.fx.filter((f) => f.kind === 'projectile').length, used: before - stars() };
+  };
+  const plain = thrown(false);
+  const full = thrown(true);
+  assert.ok(full.shots >= plain.shots * 3, `three times the stars (${plain.shots} vs ${full.shots})`);
+  assert.equal(full.used, plain.used, 'the split stars are free');
+});
+
+test('Giant Shuriken cuts the line going out and again coming back; Star Mark bursts a moment later', () => {
+  const w = thiefPath('nightlord');
+  Object.assign(w.char.skills, { giantshuriken: 10, starmark: 10, shadowshuriken: 10 });
+  const counts = new Map(w.mobs.map((m) => [m, 0]));
+  const last = new Map(w.mobs.map((m) => [m, m.hp]));
+  assert.ok(cast(w, 'giantshuriken').ok);
+  for (let i = 0; i < 120; i++) {
+    updateWorld(w, DT, idle);
+    for (const m of w.mobs) {
+      if (m.hp < last.get(m)) counts.set(m, counts.get(m) + 1);
+      last.set(m, m.hp);
+    }
+  }
+  assert.ok([...counts.values()].every((n) => n >= 2), `each monster cut twice (${[...counts.values()]})`);
+  w.mobs.forEach((m) => (m.hp = 1e9));
+  w.attackTimer = 0;
+  w.lockTimer = 0;
+  w.skillReadyAt = 0;
+  assert.ok(cast(w, 'starmark').ok);
+  run(w, 0.7);
+  assert.ok(w.fx.some((f) => f.kind === 'stuckstar'), 'the stars stuck');
+  const hp = w.mobs.map((m) => m.hp);
+  run(w, 1.2);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp[i]), 'and burst');
+});
+
+test("each thief path's finisher needs its gauge full, spends it, and lands its big moment", () => {
+  for (const [job, skill, gauge] of [['assassin', 'bloodmoonrequiem', 'killintent'], ['nightlord', 'galaxyfall', 'starlight']]) {
+    const w = thiefPath(job);
+    w.char.skills[skill] = 10;
+    w[gauge] = 80;
+    assert.equal(cast(w, skill).reason, `gauge:${gauge}`, `${skill} waits for full ${gauge}`);
+    w[gauge] = 100;
+    assert.ok(cast(w, skill).ok);
+    assert.equal(w[gauge], 0, 'spends all of it');
+    run(w, 2);
+    assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, `${skill} hits the whole line`);
+    w[gauge] = 100;
+    assert.ok(cast(w, skill).ok);
+    run(w, 0.3);
+    w[gauge] = 100;
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
+  }
+});

@@ -349,6 +349,17 @@ export const BUFF_LOOKS = {
       if ((t % 1.6) < 0.2) star(ctx, x + dir * 8, y - 42, 3, '#ffffff', a);
     },
   },
+  // The Assassin's: Poisoned Blade drips crimson round her feet; Vanish is drawn on the hero (she
+  // fades to a shadow). The Night Lord's Shadow Shuriken: shadow stars turning round him.
+  poisonblade: {
+    color: '#ff5c7e', cast: 'shine',
+    back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celringcrimson', x, y, { frame: 2, scale: 0.3, sy: 0.32, alpha: a * 0.55 }),
+  },
+  vanish: { color: '#d6d0e6', cast: 'gust' },
+  shadowshuriken: {
+    color: '#8e96ff', cast: 'shine',
+    front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celstuckstar', x + Math.cos(t * 4) * 16, y - 26 + Math.sin(t * 4) * 6, { t, scale: 0.4, alpha: a * 0.8 }),
+  },
   quickhaste: {
     color: '#b89cff', cast: 'gust',
     // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).
@@ -895,6 +906,9 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
     fxSprite(ctx, 'celshout', x, y - 26, { p, scale: 1.1 });
     groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 90);
     if (p > 0.1) fxSprite(ctx, 'celembsteel', x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
+  } else if (f.skill === 'vanish') {
+    fxSprite(ctx, 'celsmoke', x, y, { p, scale: 1.1 });
+    fxSprite(ctx, 'celcrowburst', x, y - 10, { p, scale: 0.6 });
   } else if (f.skill === 'ironguard') {
     pillarOf(ctx, school, x, y, p);
     fxSprite(ctx, 'celplates', x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });

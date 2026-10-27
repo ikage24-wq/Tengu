@@ -200,6 +200,12 @@ carry an improvement across every part of the game it applies to.
     moon for both finishers' last cut. Her Phantom is a violet shadow copy of the hero herself.
     The moon first came out a flat white disc (the match snaps pale tones to white), so it is
     drawn a step darker, lavender with violet shading.
+  - The Thief's paths: the Assassin is crimson and raven black (crimson dagger swipes, a crimson X
+    with black feathers on every cut, flocks of crows, a crimson ring for a mark for death, a red
+    moon and a crimson crescent); the Night Lord is deep indigo and starlight gold (gold stars
+    trailing indigo streaks, a gold star in an indigo ring on every hit, stuck stars that glow and
+    burst, and a great five-pointed constellation that falls). Crows only read once they were big,
+    near-black with a gold beak; small violet ones were blobs.
   - Mages, monsters, and buffs' lasting looks are still code-drawn and need the same pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a

@@ -15,7 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, unbroken, loseMomentum } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
@@ -41,6 +41,8 @@ export function createWorld(char) {
     valor: 0,
     momentum: 0,
     shadow: 0,
+    killintent: 0,
+    starlight: 0,
     rage: 0,
     faith: 0,
     fx: [],
@@ -275,6 +277,8 @@ const BLOCKER_TEXT = {
   rage: 'Not enough Rage. Land some blows first!',
   'gauge:valor': 'A finisher needs full Valor. Keep fighting, the more at once the better!',
   'gauge:momentum': 'A finisher needs full Momentum. Land your shots and keep out of harm!',
+  'gauge:killintent': 'A finisher needs full Killing Intent. Strike from behind and land critical hits!',
+  'gauge:starlight': 'A finisher needs full Starlight. Pile your stars onto one target!',
   'gauge:shadow': 'A finisher needs full Shadow. Keep your hits coming fast!',
   'gauge:rage': 'A finisher needs full Rage. Keep swinging!',
   'gauge:faith': 'A finisher needs full Faith. Keep fighting!',
@@ -508,9 +512,9 @@ export function updateWorld(world, dt, input) {
     if (!h.party) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
       world.hitsAt = world.now;
-      if (h.gauge) addAim(world, h.gauge);
+      if (h.gauge) addAim(world, h.gauge, m);
     }
-    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasShadow(world.char) ? 'shadow' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasIntent(world.char) ? 'crow' : hasShadow(world.char) ? 'shadow' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

@@ -421,6 +421,33 @@ to clear it.
     Sniper's **Heartseeker** (a long aim as a sight locks onto every monster in the line, then one
     enormous bolt that always crits, and its shockwave). A finisher shot that connects opens a
     Link, for every archer.
+- **Thief paths (level 30)** — at 30, Vex in Pastel Harbor sets **The Thief's Trial** (put 20
+  Dullahans down in the Twilight Ruins); pass it and pick a path. Each keeps to one of the Thief's
+  two weapons, and keeps her first-job skills for that weapon.
+  - **Assassin** (dagger; black, crimson and silver, crows and a blood moon): her own combo (a
+    stab, a slash, then a slip through the line that turns and stabs in the back) and dagger
+    command moves (a launcher that scatters crows, air cuts and a plunging stab, and out of a run
+    a turning backstab). **Killing Intent** builds from every cut, far more from behind, on
+    critical hits and on a monster marked for death. Full, **Execution**: the first cut on each
+    monster is sure to crit, and a monster under a quarter of its HP dies in that cut (not
+    bosses). Skills: **Crow Combo** (four presses: stab, slash, slash, a leaping X-cut that
+    scatters crows), **Mark for Death** (marks the nearest monster: it takes more from every hit
+    and builds Intent twice as fast), **Vanish** (fade to a shadow: monsters lose track of you, you
+    dodge far more, and your first cut out of it is a sure backstab), **Poisoned Blade** (cuts make
+    them bleed), **Assassin Mastery**, and the finisher **Blood Moon Requiem** (needs full Killing
+    Intent: the moon turns red and crows stream across the sky, she appears behind each monster in
+    turn and cuts it, then a crimson crescent tears through them all).
+  - **Night Lord** (gauntlet; deep indigo and starlight gold, constellations): his own combo
+    (three stars, three more, then a giant star through the line) and command throws (a giant star
+    up at fliers, a fan of three from the air, stars out of a dash). **Starlight** builds from
+    stars that land, more when they pile onto the same monster. Full, **Constellation**: every
+    star he throws splits into three (the extra two free). Skills: **Star Storm** (four presses
+    ending in a fan of gold stars), **Giant Shuriken** (a huge star cuts through the line and
+    whirls back through it to your hand), **Star Mark** (three glowing stars stick in the monsters
+    and burst a moment later), **Shadow Shuriken** (a free shadow star flies beside every star),
+    **Night Lord Mastery**, and the finisher **Galaxy Fall** (needs full Starlight: stars join into
+    a giant constellation over the monsters, it falls on all of them and bursts in a ring of
+    starlight).
 - **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
   **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in

@@ -3,7 +3,7 @@
 import { setNextUid, makeEquip } from './items.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
-import { RETIRED_JOBS } from '../data/jobs.js';
+import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
 import { addItem } from './inventory.js';
 
@@ -62,7 +62,8 @@ export function dropRetiredItems(char) {
 
 // Jobs that were renamed move to their new job, and skills that were removed give their SP back.
 export function updateRetiredJobs(char) {
-  char.job = RETIRED_JOBS[char.job] ?? char.job;
+  // A job that exists today is never retired, even if an old job once had its id (the Ranger).
+  if (!JOBS[char.job]) char.job = RETIRED_JOBS[char.job] ?? char.job;
   for (const [id, lv] of Object.entries(char.skills ?? {})) {
     if (SKILLS[id]) continue;
     char.sp += lv;

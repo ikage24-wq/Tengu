@@ -486,4 +486,8 @@ characters; style mismatch, not just quality, is what made earlier effects feel 
   2nd-job split (Assassin with claws, Bandit with daggers). Her shapes are the night's: smoke,
   crescent moons, a full moon; a shadow copy of the hero (like the later Shadow Partner) reads
   instantly as "full power" without any new effect art.
+- The Thief's 2nd jobs follow MapleStory's split: a dagger Assassin (Bandit/Shadower side:
+  stealth, backstabs, marks) and a gauntlet Night Lord (Assassin/Night Lord side: star storms,
+  Shadow Stars, Triple Throw, Showdown). Each finisher is again one big object: a red moon with
+  crows, a giant constellation.
 

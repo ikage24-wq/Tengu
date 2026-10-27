@@ -115,18 +115,20 @@ function drawShot(ctx, f, cam) {
       ctx.fillRect(-15, 1, 4, 2);
       break;
     }
-    case 'star': case 'moonstar': {
+    case 'star': case 'moonstar': case 'nightstar': case 'giantstar': {
       // A Thief's stars trail violet streaks; a big moon star is drawn large; the Phantom's copies
       // are violet shadows of a star.
       if (f.shadow) {
-        const big = f.shot === 'moonstar';
-        fxSprite(ctx, 'celshadowtrail', x - dir * (big ? 26 : 18), y, { t: f.t, flip: dir < 0, scale: big ? 0.8 : 0.5 });
+        const big = f.shot === 'moonstar' || f.shot === 'giantstar';
+        const giant = f.shot === 'giantstar';
+        fxSprite(ctx, f.night ? 'celnighttrail' : 'celshadowtrail', x - dir * (big ? 26 : 18), y, { t: f.t, flip: dir < 0, scale: big ? 0.8 : 0.5 });
         if (big) fxSprite(ctx, 'celsmoke', x - dir * 40, y + 12, { t: f.t % 0.38, flip: dir < 0, scale: 0.35 });
         ctx.translate(x, y);
         ctx.rotate(f.t * (big ? 16 : 20));
         if (f.phantom) ctx.globalAlpha = 0.65;
-        const body = f.phantom ? '#8a6ae8' : big ? '#d2cff0' : f.starColor ?? '#b9c0cc';
-        shuriken(ctx, big ? 12 : 7, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.55), '#3a2d4f');
+        // A Night Lord's own stars are gold; a giant star is drawn twice the size.
+        const body = f.phantom ? '#8a6ae8' : f.shot === 'nightstar' || giant ? '#ffe17a' : big ? '#d2cff0' : f.starColor ?? '#b9c0cc';
+        shuriken(ctx, giant ? 20 : big ? 12 : 7, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.55), '#3a2d4f');
         break;
       }
       // A spinning shuriken with a faint trail of its own afterimage.
@@ -778,7 +780,7 @@ function drawFx(ctx, f, cam, time) {
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path || f.path === 'shadow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'shadow' || f.path === 'crow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
       else fxSprite(ctx, 'celhit', x, y, { p, scale: 0.65 });
       break;
@@ -913,7 +915,7 @@ function bladePath(f) {
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  const name = school === 'crow' ? 'celslashcrimson' : school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
     fxSprite(ctx, school === 'rage' ? 'celspinred' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
