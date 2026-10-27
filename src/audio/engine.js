@@ -1,6 +1,15 @@
-// The sound engine: every sound in the game is synthesized here with the Web Audio API (no audio
-// files), like the art is drawn in code. Sounds go through three buses (effects, music, voices)
-// into a master gain, a gentle compressor, and a shared reverb send for space.
+// The sound engine. Every sound in the game is made in code (no audio files), the way the art is
+// drawn in code. The chip (chip.js, synth.js, tracker.js) renders each effect and each song loop
+// into samples once; this file plays those buffers through the Web Audio API.
+//
+// The mix, after docs/audio/research-sfx.md and research-japanese.md:
+// - Four buses into the master: effects, music, voices (NPC text blips) and the interface. The
+//   interface is dry, in front, and never dipped.
+// - The music dips under jingles and big blows (`duck`), the way FFXIV and Pokemon keep their
+//   fanfares clear, and comes back up smoothly.
+// - A brick-wall limiter on the end, so a busy fight never clips, instead of a squashing
+//   compressor; and only a short, small room (0.3 s) that magic and holy sounds send a little to.
+//   Chip music needs no reverb (its echoes are written into the songs).
 //
 // Browsers only allow audio after the player has done something, so nothing plays until
 // `unlock()` runs on the first key press or click. Without Web Audio (tests, old browsers) every
@@ -11,16 +20,24 @@ import { settings } from '../core/settings.js';
 let ac = null;
 let master = null;
 let buses = null;
-let verb = null;
-let noiseBuf = null;
+let room = null;
+let duckGain = null;
 let output = null;
+let duckUntil = 0;
+let duckDepth = 0;
+const ready = [];
 
 // Volume levels as the Options window offers them.
 export const LEVELS = { off: 0, low: 0.35, mid: 0.65, high: 1 };
 const level = (v) => (typeof v === 'number' ? v : LEVELS[v] ?? 0.65);
+const dbGain = (db) => Math.pow(10, db / 20);
 
 export const audioReady = () => Boolean(ac) && ac.state === 'running';
 export const now = () => (ac ? ac.currentTime : 0);
+export const sampleRate = () => (ac ? ac.sampleRate : 44100);
+export const context = () => ac;
+// Runs `fn` once audio has started (at once if it already has).
+export const onUnlock = (fn) => (ac ? fn(ac) : ready.push(fn));
 
 export function unlock() {
   const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
@@ -29,43 +46,53 @@ export function unlock() {
     if (ac.state === 'suspended') ac.resume();
     return;
   }
-  ac = new AC();
-  const comp = ac.createDynamicsCompressor();
-  comp.threshold.value = -16;
-  comp.knee.value = 12;
-  comp.ratio.value = 4;
-  comp.attack.value = 0.004;
-  comp.release.value = 0.2;
+  ac = new AC({ latencyHint: 'interactive' });
+  // The limiter: catches peaks only (threshold -3 dB, hard knee, fast), so sounds keep their punch.
+  const lim = ac.createDynamicsCompressor();
+  lim.threshold.value = -3;
+  lim.knee.value = 0;
+  lim.ratio.value = 20;
+  lim.attack.value = 0.001;
+  lim.release.value = 0.08;
   master = ac.createGain();
-  master.connect(comp);
-  comp.connect(ac.destination);
-  output = comp;
+  master.connect(lim);
+  lim.connect(ac.destination);
+  output = lim;
   buses = {};
-  for (const name of ['sfx', 'music', 'voice']) {
+  for (const name of ['sfx', 'music', 'voice', 'ui']) {
     buses[name] = ac.createGain();
     buses[name].connect(master);
   }
-  // A soft room: a short decaying noise impulse, sent to from each sound by its own amount.
-  verb = ac.createConvolver();
-  verb.buffer = impulse(1.8, 2.6);
+  // The music bus goes through its own ducking gain.
+  buses.music.disconnect();
+  duckGain = ac.createGain();
+  buses.music.connect(duckGain);
+  duckGain.connect(master);
+  // A small room: 0.3 s of softly decaying noise, about -18 dB.
+  room = ac.createConvolver();
+  room.buffer = impulse(0.3, 3);
   const wet = ac.createGain();
-  wet.gain.value = 0.32;
-  verb.connect(wet);
+  wet.gain.value = dbGain(-18) * 2;
+  room.connect(wet);
   wet.connect(master);
-  noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
-  const d = noiseBuf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   applyVolumes();
+  // Some browsers suspend audio when the tab is hidden; wake it on the way back.
+  document.addEventListener?.('visibilitychange', () => {
+    if (!document.hidden && ac.state === 'suspended') ac.resume();
+  });
+  for (const fn of ready.splice(0)) fn(ac);
 }
 
 // Picks up the volume settings (call after they change).
 export function applyVolumes() {
   if (!ac) return;
   const t = ac.currentTime;
-  master.gain.setTargetAtTime(level(settings.masterVolume) * 0.9, t, 0.05);
-  buses.sfx.gain.setTargetAtTime(level(settings.sfxVolume), t, 0.05);
-  buses.voice.gain.setTargetAtTime(level(settings.sfxVolume) * 0.8, t, 0.05);
-  buses.music.gain.setTargetAtTime(level(settings.musicVolume) * 0.55, t, 0.05);
+  const sfxV = level(settings.sfxVolume);
+  master.gain.setTargetAtTime(level(settings.masterVolume), t, 0.05);
+  buses.sfx.gain.setTargetAtTime(sfxV, t, 0.05);
+  buses.ui.gain.setTargetAtTime(sfxV, t, 0.05);
+  buses.voice.gain.setTargetAtTime(sfxV, t, 0.05);
+  buses.music.gain.setTargetAtTime(level(settings.musicVolume), t, 0.05);
 }
 
 function impulse(secs, decay) {
@@ -78,122 +105,101 @@ function impulse(secs, decay) {
   return buf;
 }
 
-// The end of a voice's chain: optional pan, the bus, and a share sent to the reverb.
-function out(node, { bus = 'sfx', pan = 0, verb: send = 0.15 } = {}) {
-  let last = node;
-  if (pan && ac.createStereoPanner) {
+// Dips the music by `db` (negative) for `ms`, then lets it back up over about half a second.
+// Overlapping dips keep the deepest and the latest end.
+export function duck(db, ms) {
+  if (!ac) return;
+  const t = ac.currentTime;
+  const depth = Math.min(db, t < duckUntil ? duckDepth : 0);
+  duckDepth = depth;
+  duckUntil = Math.max(duckUntil, t + ms / 1000);
+  const g = duckGain.gain;
+  g.cancelScheduledValues(t);
+  g.setTargetAtTime(dbGain(depth), t, 0.03);
+  g.setTargetAtTime(1, duckUntil, 0.18);
+}
+
+// Turns a Float32Array (mono) or [left, right] into an AudioBuffer.
+export function toBuffer(data, sr) {
+  const chans = Array.isArray(data) ? data : [data];
+  const buf = ac.createBuffer(chans.length, chans[0].length, sr ?? ac.sampleRate);
+  chans.forEach((c, i) => buf.copyToChannel ? buf.copyToChannel(c, i) : buf.getChannelData(i).set(c));
+  return buf;
+}
+
+// Plays a buffer once. o: { bus, db, rate (playback speed, 2 = an octave up), pan, room (send
+// 0-1), at (audio time), detune (cents) }. Returns { src, gain } so it can be stopped.
+export function play(buffer, o = {}) {
+  if (!ac || !buffer) return null;
+  const src = ac.createBufferSource();
+  src.buffer = buffer;
+  if (o.rate) src.playbackRate.value = o.rate;
+  if (o.detune && src.detune) src.detune.value = o.detune;
+  const gain = ac.createGain();
+  gain.gain.value = dbGain(o.db ?? 0);
+  src.connect(gain);
+  let last = gain;
+  if (o.pan && ac.createStereoPanner) {
     const p = ac.createStereoPanner();
-    p.pan.value = Math.max(-0.8, Math.min(0.8, pan));
+    p.pan.value = Math.max(-0.8, Math.min(0.8, o.pan));
     last.connect(p);
     last = p;
   }
-  last.connect(buses[bus]);
-  if (send > 0) {
+  last.connect(buses[o.bus ?? 'sfx']);
+  if (o.room) {
     const g = ac.createGain();
-    g.gain.value = send;
+    g.gain.value = o.room;
     last.connect(g);
-    g.connect(verb);
+    g.connect(room);
   }
+  src.start(o.at ?? 0);
+  return { src, gain };
 }
 
-// An envelope on a gain node: a quick attack to `peak`, then an exponential fall over `dur`.
-function env(g, t, peak, attack, dur, curve = 'exp') {
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.linearRampToValueAtTime(peak, t + attack);
-  if (curve === 'exp') g.gain.exponentialRampToValueAtTime(0.0001, t + attack + dur);
-  else g.gain.linearRampToValueAtTime(0.0001, t + attack + dur);
-}
-
-// One oscillator voice. `f` is the start frequency, `to` where it slides to over `slide` seconds.
-// Options: type, gain, attack, dur, delay, filter ({ type, f, q, to }), vibrato ({ rate, depth }),
-// detune (cents), pan, verb, bus, curve.
-export function tone(f, o = {}) {
-  if (!ac) return;
-  const t = ac.currentTime + (o.delay ?? 0);
-  const dur = o.dur ?? 0.2;
-  const osc = ac.createOscillator();
-  osc.type = o.type ?? 'sine';
-  osc.frequency.setValueAtTime(f, t);
-  if (o.to) osc.frequency.exponentialRampToValueAtTime(Math.max(20, o.to), t + (o.slide ?? dur));
-  if (o.detune) osc.detune.value = o.detune;
-  let node = osc;
-  if (o.vibrato) {
-    const lfo = ac.createOscillator();
-    const depth = ac.createGain();
-    lfo.frequency.value = o.vibrato.rate;
-    depth.gain.value = o.vibrato.depth;
-    lfo.connect(depth);
-    depth.connect(osc.frequency);
-    lfo.start(t);
-    lfo.stop(t + (o.attack ?? 0.005) + dur + 0.05);
-  }
-  if (o.filter) node = filtered(node, o.filter, t, dur);
-  if (o.drive) node = driven(node, o.drive);
-  const g = ac.createGain();
-  env(g, t, o.gain ?? 0.2, o.attack ?? 0.005, dur, o.curve);
-  node.connect(g);
-  out(g, o);
-  osc.start(t);
-  osc.stop(t + (o.attack ?? 0.005) + dur + 0.05);
-}
-
-// A burst of noise through a filter (`filter`: { type, f, q, to } sweeping f to `to`).
-export function noise(o = {}) {
-  if (!ac) return;
-  const t = ac.currentTime + (o.delay ?? 0);
-  const dur = o.dur ?? 0.15;
+// A looping music source on the music bus, starting at audio time `at`, `offset` seconds into
+// the buffer, fading in over `fade` seconds. o.filter: a lowpass to open up over time (cutscenes).
+export function loop(buffer, { at = 0, offset = 0, loopStart = 0, loopEnd = buffer.duration, fade = 0, db = 0, filter = null } = {}) {
+  if (!ac) return null;
   const src = ac.createBufferSource();
-  src.buffer = noiseBuf;
-  src.playbackRate.value = o.rate ?? 1;
-  let node = filtered(src, o.filter ?? { type: 'bandpass', f: 1200, q: 1 }, t, dur);
-  if (o.drive) node = driven(node, o.drive);
-  const g = ac.createGain();
-  env(g, t, o.gain ?? 0.2, o.attack ?? 0.003, dur, o.curve);
-  node.connect(g);
-  out(g, o);
-  src.start(t, Math.random() * 1.5);
-  src.stop(t + (o.attack ?? 0.003) + dur + 0.05);
+  src.buffer = buffer;
+  src.loop = true;
+  src.loopStart = loopStart;
+  src.loopEnd = loopEnd;
+  const gain = ac.createGain();
+  const t = Math.max(at, ac.currentTime);
+  const peak = dbGain(db);
+  if (fade > 0) {
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(peak, t + fade);
+  } else gain.gain.value = peak;
+  let lp = null;
+  src.connect(gain);
+  if (filter) {
+    lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = filter;
+    lp.Q.value = 0.9;
+    gain.connect(lp);
+    lp.connect(buses.music);
+  } else gain.connect(buses.music);
+  src.start(t, offset % Math.max(0.001, loopEnd));
+  return { src, gain, lp, startedAt: t, offset, loopStart, loopEnd };
 }
 
-function filtered(node, fl, t, dur) {
-  const f = ac.createBiquadFilter();
-  f.type = fl.type ?? 'lowpass';
-  f.frequency.setValueAtTime(fl.f, t);
-  if (fl.to) f.frequency.exponentialRampToValueAtTime(Math.max(30, fl.to), t + (fl.slide ?? dur));
-  f.Q.value = fl.q ?? 0.8;
-  node.connect(f);
-  return f;
-}
-
-const curves = new Map();
-function driven(node, amount) {
-  const ws = ac.createWaveShaper();
-  if (!curves.has(amount)) {
-    const n = 1024;
-    const c = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const x = (i / (n - 1)) * 2 - 1;
-      c[i] = Math.tanh(x * amount) / Math.tanh(amount);
-    }
-    curves.set(amount, c);
+// Fades a playing source out over `fade` seconds (from audio time `at`, or now) and stops it.
+export function stop(voice, fade = 0.05, at = 0) {
+  if (!ac || !voice) return;
+  const t = Math.max(ac.currentTime, at);
+  const g = voice.gain.gain;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value, t);
+  g.linearRampToValueAtTime(0, t + Math.max(0.01, fade));
+  try {
+    voice.src.stop(t + Math.max(0.01, fade) + 0.02);
+  } catch {
+    // Already stopped.
   }
-  ws.curve = curves.get(amount);
-  node.connect(ws);
-  return ws;
 }
-
-// Music notes are scheduled ahead at exact times, so they take an absolute start `at`.
-export function note(f, at, o = {}) {
-  if (!ac) return;
-  tone(f, { ...o, bus: 'music', delay: Math.max(0, at - ac.currentTime) });
-}
-export function beat(at, o = {}) {
-  if (!ac) return;
-  noise({ ...o, bus: 'music', delay: Math.max(0, at - ac.currentTime) });
-}
-
-// Semitones from A4 to a frequency.
-export const hz = (semis) => 440 * Math.pow(2, semis / 12);
 
 // A live stream of everything the game plays (for recording a clip with sound).
 export function captureStream() {

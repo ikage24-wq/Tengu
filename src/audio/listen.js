@@ -75,7 +75,7 @@ export function hearWorld(world, cam) {
     if (j.type === 'hit') {
       hits++;
       if (!hit || j.crit || j.big) hit = j;
-    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x) });
+    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, stage: world.map.id === 'discostage', pan: pan(j.x) });
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });

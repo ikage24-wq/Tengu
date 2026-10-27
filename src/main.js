@@ -130,7 +130,7 @@ function blended(world, alpha, draw) {
 }
 
 // Browsers only allow sound after the player does something: start it on the first key or click.
-for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, unlock, { passive: true });
+for (const ev of ['pointerdown', 'pointerup', 'keydown', 'touchstart', 'touchend']) window.addEventListener(ev, unlock, { passive: true });
 
 function frame(now) {
   const raw = (now - last) / 1000;
