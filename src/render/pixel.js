@@ -75,9 +75,15 @@ const outlineCache = new Map();
 // Selective outlines ("sel-out") take `side`: -1 on edges facing the light (top and front), where
 // the line is a lighter shade of the part's own hue, +1 on the bottom and back, where it's the
 // darkest, and 0 between.
-function outlineFor(c, crisp, side = 0) {
-  const k = `${c}${crisp ? 1 : 0}${side}`;
+// Thin lines (characters, monsters and their weapons: the player's pick) are half as wide and
+// stay in the part's own colour, a deeper shade of it rather than a near-black ink.
+function outlineFor(c, crisp, side = 0, thin = false) {
+  const k = `${c}${crisp ? 1 : 0}${side}${thin ? 1 : 0}`;
   let v = outlineCache.get(k);
+  if (!v && thin) {
+    v = side < 0 ? shade(c, -30) : side > 0 ? mix(shade(c, -58), '#2a2035', 0.35) : mix(shade(c, -48), '#2a2035', 0.22);
+    outlineCache.set(k, v);
+  }
   if (!v) {
     if (side < 0) v = shade(c, -34);
     else if (side > 0) v = mix(shade(c, -62), '#2a2035', 0.6);
@@ -99,7 +105,7 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, thin = false) {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + PAD) * res;
   const colors = [];
@@ -236,7 +242,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
 
   // Outline: every empty cell within `reach` cells of the silhouette (a disc, so it's round),
   // grown outward from the filled cells and colored after the nearest one.
-  const reach = res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
+  const reach = res === 1 ? 1 : crisp ? (thin ? Math.max(1, Math.round(res * 0.5)) : res) : Math.max(1, Math.round(res * 0.67));
   const ring = [];
   for (let dy = -reach; dy <= reach; dy++) {
     for (let dx = -reach; dx <= reach; dx++) {
@@ -287,7 +293,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     let v = inkFor.get(key);
     if (v === undefined) {
       const own = lineOf.get(from[t]);
-      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side);
+      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side, thin);
       v = idOf(corner ? `${line}80` : line);
       inkFor.set(key, v);
     }
@@ -371,11 +377,11 @@ export function sprite(key, build) {
   } else {
     // `pad` is the margin left of, right of and above the w x h box that parts may reach into
     // (wings, tails, smears): the sprite keeps its feet and centre where w x h puts them.
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD } = build();
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, thin = false } = build();
     // Detailed sprites (characters, monsters, scenery) are drawn at the screen's own pixel
     // density, so every cell is exactly one screen pixel: sharp and even at any window size.
     if (res > 1) res = Math.max(res, Math.round(gfx.scale));
-    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad);
+    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, thin);
     const canvas = bake(raster);
     s = { canvas, w, h, res, crisp, pad, white: null };
     cacheBytes += bytesOf(s);

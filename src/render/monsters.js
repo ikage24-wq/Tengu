@@ -90,7 +90,7 @@ function poseOf(m, fr, moving, t, now, mo) {
 
 export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
   const a = ARTS[art];
-  return sprite(`mob|${art}|${pose}${frame}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, pad: a.pad ?? 4, ...a.draw(pose, frame, mood) }));
+  return sprite(`mob|${art}|${pose}${frame}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, thin: true, pad: a.pad ?? 4, ...a.draw(pose, frame, mood) }));
 }
 
 // How a monster feels right now.
