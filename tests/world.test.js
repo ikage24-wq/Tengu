@@ -180,24 +180,6 @@ test('a monster plays its attack when it hits you on touch', () => {
   assert.equal(m.attackAt, w.now);
 });
 
-function mageAt50(second, third) {
-  return jobAt50('mage', second, third);
-}
-
-function jobAt50(first, second, third) {
-  const w = newWorld();
-  gainExp(w.char, 3e7);
-  assert.ok(w.char.level >= 50);
-  assert.equal(advanceJob(w.char, third), false, 'third job needs the second job first');
-  advanceJob(w.char, first);
-  advanceJob(w.char, second);
-  assert.equal(advanceJob(w.char, third), true);
-  w.char.base.int = 250;
-  w.char.mp = 99999;
-  w.char.baseMp = 99999;
-  return w;
-}
-
 function crowd(w, count, type = 'starspirit') {
   loadMap(w, 'sky', 'west');
   w.spawner.slots = [];
@@ -210,34 +192,6 @@ function crowd(w, count, type = 'starspirit') {
     w.mobs.push(m);
   }
 }
-
-const THIRD_JOBS = [
-  ['mage', 'cleric', 'bishop', 'judgment'], ['mage', 'fpwizard', 'fparchmage', 'meteor'], ['mage', 'ilwizard', 'ilarchmage', 'tempest'],
-];
-for (const [first, second, third, ult] of THIRD_JOBS) {
-  test(`${third}: the ultimate hits 15 of 20 monsters twice`, () => {
-    const w = jobAt50(first, second, third);
-    w.char.skills[ult] = 20;
-    crowd(w, 20);
-    const result = cast(w, ult);
-    assert.equal(result.ok, true);
-    assert.equal(result.targets, 15);
-    assert.equal(w.pending.length, 30, '15 targets x 2 hits');
-  });
-}
-
-test('summons attack nearby monsters on their own', () => {
-  const w = mageAt50('cleric', 'bishop');
-  w.char.skills.guardianangel = 10;
-  w.char.hotkeys = { KeyQ: { skill: 'guardianangel' } };
-  crowd(w, 3, 'cloudsheep');
-  updateWorld(w, DT, keys([], ['KeyQ']));
-  assert.ok(w.char.buffs.guardianangel?.summon, 'angel summoned');
-  const before = w.mobs.reduce((n, m) => n + m.hp, 0);
-  for (let i = 0; i < 60 * 3; i++) updateWorld(w, DT, idle);
-  const after = w.mobs.reduce((n, m) => n + m.hp, 0);
-  assert.ok(after < before, 'the angel dealt damage without the player attacking');
-});
 
 test('every town connects to every other town by road', () => {
   for (const a of TOWNS) for (const b of TOWNS) assert.ok(Number.isFinite(hops(a, b)), `${a} -> ${b}`);
@@ -299,38 +253,26 @@ test('the Game Master stays locked without the passphrase, and its tools work on
   assert.ok(w.mobs.every((m) => m.hp === 0));
 });
 
-test('big skills root you for a short wind-up and never go on cooldown', async () => {
+test('skills never go on cooldown: a spell is free again as soon as its motion ends', async () => {
   const { setJob, setLevel, gmCommand } = await import('../src/world/gm.js');
   const w = newWorld();
-  setJob(w.char, 'fparchmage');
-  setLevel(w.char, 120);
-  w.char.skills.meteor = 1;
+  setJob(w.char, 'mage');
+  setLevel(w.char, 40);
+  w.char.equipment.weapon = makeEquip('wand_20', {});
+  w.char.skills.petalstorm = 10;
   w.char.baseMp = 5000;
   gmCommand(w, 'heal', []);
   updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'meteor').ok, true);
-  assert.ok(w.lockTimer > 1, 'the cast plants you');
-  const x = w.body.x;
-  for (let i = 0; i < 30; i++) updateWorld(w, DT, keys(['ArrowRight']));
-  assert.equal(w.body.x, x, "can't walk during the lock");
-  assert.equal(cast(w, null).reason, 'busy', 'no attacks during the lock');
-  for (let i = 0; i < 60; i++) updateWorld(w, DT, idle);
-  assert.equal(w.lockTimer, 0);
-  assert.equal(cast(w, 'meteor').ok, true, 'usable again as soon as the lock ends');
+  assert.equal(cast(w, 'petalstorm').ok, true);
+  assert.equal(cast(w, 'petalstorm').reason, 'busy', 'not while the storm is being raised');
+  for (let i = 0; i < 70; i++) updateWorld(w, DT, idle);
+  assert.equal(cast(w, 'petalstorm').ok, true, 'usable again as soon as the motion ends');
 });
 
-test('the mage branches three ways at 30, each branch with one third job and an ultimate; the warrior, the archer and the thief branch two ways', async () => {
+test('the warrior, the archer and the thief branch two ways at 30; the mage paths are being remade', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  const seconds = nextJobs('mage', 30);
-  assert.equal(seconds.length, 3, 'mage has three branches');
-  for (const second of seconds) {
-    const thirds = nextJobs(second.id, 50);
-    assert.equal(thirds.length, 1, `${second.id} has one third job`);
-    const skills = Object.values(SKILLS).filter((k) => k.job === thirds[0].id);
-    assert.equal(skills.filter((k) => k.ultimate).length, 1, `${thirds[0].id} has one ultimate`);
-    assert.ok(skills.some((k) => k.type === 'passive'), `${thirds[0].id} has a mastery`);
-  }
+  assert.equal(nextJobs('mage', 200).length, 0, 'no mage paths for now');
   for (const first of ['warrior', 'mage', 'archer', 'thief']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
@@ -355,68 +297,29 @@ test('a shoulder charge dashes forward and hits the monsters it passes through',
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 4, 'hit everything it passed');
 });
 
-test('ice freezes monsters in place, and they can\'t hurt you while frozen', () => {
-  const w = mageAt50('ilwizard', 'ilarchmage');
-  w.char.skills.icespire = 20;
-  crowd(w, 3, 'cloudsheep');
-  w.body.facing = 1;
-  assert.equal(cast(w, 'icespire').ok, true);
-  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
-  const m = w.mobs[0];
-  assert.ok(m.frozenUntil > w.now, 'frozen');
-  const x = m.x;
-  m.state = 'walk';
-  for (let i = 0; i < 60; i++) updateWorld(w, DT, idle);
-  assert.equal(m.x, x, "a frozen monster doesn't move");
-});
-
-test('poison keeps damaging monsters after the hit', () => {
-  const w = mageAt50('fpwizard', 'fparchmage');
-  w.char.skills.poisonmist = 20;
-  crowd(w, 2, 'cloudsheep');
-  w.body.facing = 1;
-  assert.equal(cast(w, 'poisonmist').ok, true);
-  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
-  const m = w.mobs[0];
-  assert.ok(m.poison, 'poisoned');
-  const hp = m.hp;
-  for (let i = 0; i < 60 * 2.2; i++) updateWorld(w, DT, idle);
-  assert.ok(m.hp < hp, 'took poison damage over time');
-});
-
-test('chain lightning leaps through several monsters, one after another', () => {
-  const w = mageAt50('ilwizard', 'ilarchmage');
-  w.char.skills.chainlightning = 20;
-  crowd(w, 8, 'cloudsheep');
-  w.body.facing = 1;
-  const r = cast(w, 'chainlightning');
-  assert.equal(r.targets, 6);
-  const times = w.pending.map((h) => h.at);
-  assert.ok(times.every((t, i) => i === 0 || t > times[i - 1]), 'each hop lands after the last');
-  assert.ok(w.fx.some((f) => f.kind === 'chainbolt' && f.points.length === 7));
-});
-
-test('Blink teleports the mage forward', () => {
+test('Blink scatters the mage into petals and gathers her up ahead, untouchable on the way', () => {
   const w = newWorld();
   gainExp(w.char, 1e5);
   advanceJob(w.char, 'mage');
-  w.char.skills.blink = 10;
+  w.char.skills.petalblink = 10;
   updateWorld(w, DT, idle);
   w.body.facing = 1;
   const x = w.body.x;
-  assert.equal(cast(w, 'blink').ok, true);
-  assert.equal(w.body.x, x + 150);
+  assert.equal(cast(w, 'petalblink').ok, true);
+  assert.ok(w.invuln > 0, 'untouchable');
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
+  assert.ok(w.body.x > x + 100, 'well ahead');
 });
 
 test('old saves move to the renamed jobs and get SP back for removed skills', async () => {
   const { updateRetiredJobs } = await import('../src/core/save.js');
-  const c = { job: 'infernosage', sp: 0, skills: { meteor: 10, overload: 5, shadowcross: 3, fireball: 20 }, hotkeys: { KeyQ: { skill: 'overload' }, KeyW: { skill: 'meteor' } } };
+  const c = { job: 'infernosage', sp: 0, skills: { petalbolt: 10, overload: 5, shadowcross: 3, fireball: 20 }, hotkeys: { KeyQ: { skill: 'overload' }, KeyW: { skill: 'petalbolt' } } };
   updateRetiredJobs(c);
-  assert.equal(c.job, 'fparchmage');
-  assert.equal(c.sp, 8);
-  assert.deepEqual(c.skills, { meteor: 10, fireball: 20 });
+  assert.equal(c.job, 'mage', 'the retired mage paths go back to the first-job Mage');
+  assert.equal(c.sp, 28);
+  assert.deepEqual(c.skills, { petalbolt: 10 });
   assert.equal(c.hotkeys.KeyQ, null);
-  assert.deepEqual(c.hotkeys.KeyW, { skill: 'meteor' });
+  assert.deepEqual(c.hotkeys.KeyW, { skill: 'petalbolt' });
   // A job that exists today stays, even if an old retired job once had the same id.
   const r = { job: 'ranger', sp: 0, skills: {}, hotkeys: {} };
   updateRetiredJobs(r);

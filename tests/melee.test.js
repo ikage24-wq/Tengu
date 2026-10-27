@@ -282,7 +282,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['mage', 'wand_20', 'magicbolt'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'bladerush']]) {
+  for (const [job, weapon, skill] of [['mage', 'wand_20', 'petalbolt'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'bladerush']]) {
     const w = arena(weapon);
     w.char.job = job;
     if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
@@ -1373,4 +1373,98 @@ test("each thief path's finisher needs its gauge full, spends it, and lands its 
     w[gauge] = 100;
     assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
   }
+});
+
+// ---------- The Mage: Bloom, Full Bloom, damage and healing ----------
+
+function mage() {
+  const w = arena('wand_20');
+  w.char.job = 'mage';
+  w.char.base.int = 200;
+  w.char.mp = 9999;
+  w.char.baseMp = 99999;
+  w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Mage has her own spell combo with a wand, and her spells hit with magic', () => {
+  const w = mage();
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  for (let i = 0; i < 100; i++) {
+    updateWorld(w, DT, hold);
+    if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
+  }
+  assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS.mage.map((s) => s.move));
+  const dealt = (int) => {
+    const x = mage();
+    x.char.base.int = int;
+    updateWorld(x, DT, idle);
+    const random = Math.random;
+    Math.random = () => 0.5;
+    try {
+      updateWorld(x, DT, press('KeyZ'));
+      run(x, 1);
+    } finally {
+      Math.random = random;
+    }
+    return 1e9 - x.mobs[0].hp;
+  };
+  assert.ok(dealt(300) > dealt(50) * 1.5, 'INT makes her spells hit harder');
+});
+
+test("a Mage's spells and heals build Bloom, and it fades once the fighting stops", () => {
+  const w = mage();
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  run(w, 1.5, hold);
+  const fromSpells = w.bloom;
+  assert.ok(fromSpells > 0, 'spells that land build it');
+  w.char.skills.healingbloom = 10;
+  w.char.hp = 10;
+  w.attackTimer = 0;
+  w.lockTimer = 0;
+  w.skillReadyAt = 0;
+  run(w, 0.6);
+  assert.ok(cast(w, 'healingbloom').ok);
+  assert.equal(w.char.hp, 10, 'the heal lands as the flower opens, not on the press');
+  run(w, 0.6);
+  assert.ok(w.char.hp > 10, 'healed');
+  assert.ok(w.bloom > fromSpells, 'healing builds it too');
+  run(w, 10);
+  assert.equal(w.bloom, 0);
+});
+
+test('full Bloom: every damage spell also heals allies near where it lands', () => {
+  const healed = (bloom) => {
+    const w = mage();
+    w.mobs.forEach((m) => (m.x = 340));
+    w.char.hp = 10;
+    w.bloom = bloom;
+    w.bloomAt = 1e9;
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 1);
+    return w.char.hp;
+  };
+  assert.equal(healed(0), 10, 'a plain bolt only hurts');
+  assert.ok(healed(100) > 10, 'under Full Bloom the bolt landing nearby heals her');
+});
+
+test('Garden of Light needs full Bloom, spends it, hits the whole line and heals the party', () => {
+  const w = mage();
+  w.char.skills.gardenoflight = 10;
+  w.bloom = 80;
+  assert.equal(cast(w, 'gardenoflight').reason, 'gauge:bloom', 'waits for full Bloom');
+  w.bloom = 100;
+  w.char.hp = 10;
+  assert.ok(cast(w, 'gardenoflight').ok);
+  assert.equal(w.bloom, 0, 'spends all of it');
+  run(w, 2);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'hits the whole line');
+  assert.ok(w.char.hp > 10, 'and heals');
+  w.bloom = 100;
+  assert.ok(cast(w, 'gardenoflight').ok);
+  run(w, 0.3);
+  w.bloom = 100;
+  assert.equal(cast(w, 'gardenoflight').reason, 'busy');
 });

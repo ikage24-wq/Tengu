@@ -9,17 +9,17 @@
 
 import { fxSprite } from './fx-sprites.js';
 
-const SCHOOLS = new Set(['holy', 'rage', 'arcane', 'ice', 'fire', 'wind', 'poison', 'lightning', 'shadow', 'hawk', 'night']);
+const SCHOOLS = new Set(['holy', 'rage', 'arcane', 'ice', 'fire', 'wind', 'poison', 'lightning', 'shadow', 'hawk', 'night', 'bloom']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : school === 'crow' ? 'crimson' : '');
 // A ring of force and a pillar of light in a school's colour (steel is the plain one).
 export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar', bloom: 'celembbloom' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight', 'celringhawk', 'celringshadow', 'celringcrimson', 'celringnight']);
+const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringsight', 'celringhawk', 'celringshadow', 'celringcrimson', 'celringnight', 'celringbloom', 'celringmint']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
@@ -75,10 +75,16 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
-      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'shadow' || f.school === 'crow' ? 'celstreakshadow' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
+      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'shadow' || f.school === 'crow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
       fxSprite(ctx, f.school === 'shadow' || f.school === 'crow' ? 'celsmoke' : 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
       if (f.school === 'shadow' || f.school === 'crow') {
         fxSprite(ctx, 'celsmoke', tx, y, { p: Math.min(1, p * 1.2), scale: 0.6 });
+        return true;
+      }
+      // A Mage's Blink: she scatters into petals and gathers again ahead.
+      if (f.school === 'bloom') {
+        fxSprite(ctx, 'celbloomhit', x, y - 22, { p, scale: 0.8 });
+        fxSprite(ctx, 'celbloomhit', tx, y - 22, { p: Math.max(0, 1 - p * 1.6), scale: 0.8 });
         return true;
       }
       fxSprite(ctx, f.school === 'rage' ? 'celhitred' : 'celhit', tx + dir * 10, y - 22, { p, scale: 0.8 });

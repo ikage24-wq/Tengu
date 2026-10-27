@@ -650,138 +650,89 @@ function crimsoneclipse() {
 
 // ---------- Mage ----------
 
-function magicbolt() {
-  const out = [...tile('arcane', 'active'), ...aura(10, 6, 5.6, '#f4e8ff', 1.1)];
-  // A broad comet tail of raw magic, with motes shed along it.
-  const tail = (a, w, c) => S(tube(bez(a, [(a[0] + 10.4) / 2 + 0.8, (a[1] + 6) / 2 + 0.8], [10.4, 6], 10), (t) => 0.2 + w * Math.pow(t, 0.9)), c);
-  out.push(tail([0.8, 15.2], 7, '#c9a6ff'), tail([2, 14.2], 4.6, '#e6d2ff'), tail([3.6, 13], 2.2, W));
-  for (const [x, y, r] of [[2.4, 9.6, 0.8], [6.2, 13.8, 0.7], [4.4, 7.4, 0.55]]) out.push(S(polyPts(x, y, r, 4, 0), '#f4e8ff'));
-  const orb = oval(10.4, 6, 3.7, 3.7, 0, 30);
-  out.push(...solid(orb, '#b98aff', { glow: 1, light: '#e6d2ff', ink: '#3a1a7a' }));
-  for (const a of [0, 120, 240]) {
-    const arm = turn(arcPts(10.4, 6, 2.6, 2.6, 0, 110, 10), a + 20, 10.4, 6);
-    out.push(S(tube(arm, (t) => 0.15 + 0.8 * Math.sin(Math.PI * t)), '#ffffff'));
+// A five-petal flower: pink petals round a gold heart (mint for healing).
+function bloomFlower(cx, cy, r, petal = '#ffa6cc', rot = -90) {
+  const out = [];
+  for (let i = 0; i < 5; i++) {
+    const a = (rot + i * 72) * D2R;
+    out.push(...solid(oval(cx + Math.cos(a) * r * 0.55, cy + Math.sin(a) * r * 0.55, r * 0.5, r * 0.4, rot + i * 72, 14), petal, { shadow: i === 0, d: 0.35, ink: '#a0386e' }));
   }
-  out.push(S(starPts(10.4, 6, 1.7, 0.6, 4, -90), '#fff3a6'), S(oval(10.4, 6, 0.6, 0.6, 0, 10), W));
-  out.push(...glint(8.8, 4, 0.5), ...spark(14, 11.6, 1.3), ...spark(4, 3, 1.1));
+  out.push(...solid(oval(cx, cy, r * 0.32, r * 0.32, 0, 12), '#ffe17a', { shadow: false, d: 0.3, ink: '#a0386e' }));
   return out;
 }
 
-function sparkburst() {
-  const out = [...tile('arcane', 'active'), ...aura(8, 8, 7, '#fff4c8', 1.1)];
-  const ring = tube([...oval(8, 8, 5.4, 5.4, 0, 36), oval(8, 8, 5.4, 5.4, 0, 36)[0]], 1.1);
-  out.push(...edge(ring, '#4a2a80', 0.4), S(ring, '#e6d2ff'));
-  // Runes around the ring.
-  for (let i = 0; i < 6; i++) {
-    const a = (i * 60 - 90) * D2R;
-    const [x, y] = [8 + Math.cos(a) * 5.4, 8 + Math.sin(a) * 5.4];
-    out.push(S(polyPts(x, y, 1.3, 4, i * 60), '#4a2a80'), S(polyPts(x, y, 0.85, 4, i * 60), '#fff3a6'));
-  }
-  out.push(...solid(starPts(8, 8, 4.6, 1.5, 8, -90), '#fff3a6', { glow: 1.2, d: 0.45 }));
-  out.push(S(starPts(8, 8, 2.4, 0.9, 4, -45), W));
-  out.push(...spark(13.6, 2.6, 1.2), ...spark(2.4, 13.4, 1.1));
+function petalbolt() {
+  const out = [...tile('sakura', 'active'), ...aura(10, 6, 5.4, '#ffe2ef', 1.1)];
+  out.push(streak([1.4, 13.6], [7.2, 8.6], 1.4, '#ffe2ef'));
+  for (const [x, y, a] of [[3.6, 11.2, 30], [5.8, 13, 60], [2.2, 9, 10]]) out.push(...solid(oval(x, y, 1.1, 0.7, a, 10), '#ffa6cc', { shadow: false, d: 0.3, ink: '#a0386e' }));
+  out.push(...solid(oval(10.4, 6, 3.6, 3.6, 0, 22), '#f26aa4', { d: 0.4, ink: '#a0386e', glow: 1.15 }));
+  out.push(S(oval(9.4, 5, 1.6, 1.6, 0, 12), '#ffe2ef'));
+  out.push(...spark(13.8, 2.4, 1, W));
   return out;
 }
 
-function blink() {
-  const out = [...tile('arcane', 'active')];
-  // Dissolving motes on the left, a flash on the right.
-  for (const [x, y, s, c] of [[2.4, 8, 1.2, '#e6d2ff'], [3.4, 5.6, 0.9, '#c9a6ff'], [4.2, 10.6, 1, '#e6d2ff'], [5.4, 7.6, 1.3, W], [2.2, 11.6, 0.6, '#c9a6ff'], [5.8, 4.4, 0.6, W], [6.4, 11.4, 0.8, '#c9a6ff']]) {
-    out.push(S(polyPts(x, y, s, 4, 45), '#5a33a3'), S(polyPts(x - 0.1, y - 0.1, s * 0.7, 4, 45), c));
-  }
-  out.push(...aura(10.6, 8, 5.4, '#ffffff', 1.2));
-  out.push(S(tube(bez([4.2, 13.6], [7, 15], [9.6, 12.4], 10), (t) => 0.2 + 0.8 * t), '#e6d2ff'));
-  const flash = starPts(10.6, 8, 5.2, 1.2, 4, -90);
-  out.push(...solid(flash, '#fff6ff', { d: 0.4, ink: '#6a3ab8' }));
-  out.push(S(starPts(10.6, 8, 3, 0.8, 4, -45), '#e6d2ff'), S(oval(10.6, 8, 1.2, 1.2, 0, 14), W));
-  const ring = tube([...oval(10.6, 8, 3.4, 3.4, 0, 30), oval(10.6, 8, 3.4, 3.4, 0, 30)[0]], 0.45);
-  out.push(S(ring, '#f4e8ff'));
-  out.push(...spark(14, 3, 1));
+function petalstorm() {
+  const out = [...tile('sakura', 'active'), ...aura(8, 8, 6.6, '#ffe2ef')];
+  for (const [cy, rx, ry, a0] of [[4.4, 6, 1.8, 200], [8, 4.8, 1.5, 30], [11.4, 3.4, 1.1, 210]]) out.push(...swoosh(8, cy, rx, ry, a0, a0 + 290, 1.2, '#dcfff2', { ink: '#1f7a6a' }));
+  for (const [x, y, a] of [[3, 4, 20], [12.6, 5, -30], [5, 9, 60], [11, 10, 10], [7.6, 13.4, -40], [9, 2.6, 80]]) out.push(...solid(oval(x, y, 1.2, 0.8, a, 10), '#ffa6cc', { shadow: false, d: 0.3, ink: '#a0386e' }));
   return out;
 }
 
-function manashield() {
-  const out = [...tile('arcane', 'buff'), ...aura(8, 8, 6.8, '#d8e8ff', 1.1)];
-  const hex = polyPts(8, 8.2, 6.4, 6, -90);
-  out.push(drop(hex), ...edge(hex, '#2a3a8a', 0.5), ...bevel(hex, polyPts(8, 8.2, 4.8, 6, -90), '#9cc4ff', '#7fa8ff'));
-  out.push(S(clip(polyPts(8, 8.2, 4.8, 6, -90), oval(6.4, 6.4, 4, 3.2)), '#a8c8ff'));
-  out.push(...solid(flamePts(8, 11.8, 4.2, 6.6), '#5fa0ff', { drop: 0.5, d: 0.4, glow: 1.2, light: '#d8eaff' }));
-  out.push(...glint(7, 8.4, 0.55));
-  out.push(...[0, 1, 2, 3, 4, 5].map((i) => S(oval(...polyPts(8, 8.2, 5.6, 6, -90)[i], 0.4, 0.4, 0, 8), W)));
+function healingbloom() {
+  const out = [...tile('mint', 'active'), ...aura(8, 9, 6.6, '#dcfff2', 1.1)];
+  out.push(...bloomFlower(8, 11, 5.4, '#8ef0c8'));
+  out.push(...solid([[7, 1.6], [9, 1.6], [9, 3.6], [11, 3.6], [11, 5.6], [9, 5.6], [9, 7.6], [7, 7.6], [7, 5.6], [5, 5.6], [5, 3.6], [7, 3.6]], '#ffffff', { d: 0.35, ink: '#1f7a6a' }));
+  out.push(...spark(2.6, 3, 1, '#ffe2ef'), ...spark(13.4, 3.6, 0.9, '#ffe2ef'));
   return out;
 }
 
-function arcanemind() {
-  const gem = '#8fb4ff';
-  const top = [8, 1.4];
-  const bot = [8, 14.8];
-  const L = [3.4, 7.4];
-  const Rr = [12.6, 7.4];
-  const M = [8.6, 8.6];
-  const out = [...tile('arcane', 'passive'), ...aura(8, 8, 7, '#e0eaff', 1.1)];
-  out.push(drop([top, Rr, bot, L]), ...edge([top, Rr, bot, L], '#2a2a7a', 0.5));
-  out.push(S([top, M, L], hi(gem)), S([top, Rr, M], lt(gem)), S([L, M, bot], gem), S([M, Rr, bot], sh(gem)));
-  out.push(S([top, [8.3, 5.4], [5.6, 6.2]], W));
-  // Orbiting motes.
-  out.push(S(tube(arcPts(8, 8.2, 7, 2.4, 20, 160, 14), 0.4), '#f4e8ff'));
-  out.push(...spark(2.4, 10.6, 1.2), ...spark(13.8, 4, 1.4, '#fff3a6'), ...spark(12.8, 12.6, 0.9));
+function bloombarrier() {
+  const out = [...tile('sakura', 'buff'), ...aura(8, 8, 6.6, '#ffe2ef')];
+  for (const [x, y, a, r] of [[4.6, 9.6, -20, 3.8], [11.4, 9.6, 20, 3.8], [6, 6, -10, 3.4], [10, 6, 10, 3.4], [8, 4, 0, 3]]) out.push(...solid(oval(x, y, r * 0.62, r, a, 18), '#ffa6cc', { d: 0.4, ink: '#a0386e' }));
+  out.push(S(oval(8, 9.4, 1.6, 2.4, 0, 14), '#ffe2ef'));
+  out.push(...spark(13.6, 2.6, 1, W));
   return out;
 }
 
-function mend() {
-  const pink = '#ff7aa0';
-  const out = [...tile('mint', 'active'), ...aura(8, 8.4, 6.8, '#f0fff0', 1.1)];
-  out.push(...solid(heartPts(8, 8.8, 6.2), pink, { glow: 1.15 }));
-  out.push(...solid([[6.9, 4.8], [9.1, 4.8], [9.1, 7.2], [11.4, 7.2], [11.4, 9.4], [9.1, 9.4], [9.1, 11.8], [6.9, 11.8], [6.9, 9.4], [4.6, 9.4], [4.6, 7.2], [6.9, 7.2]], W, { drop: 0.5, d: 0.35, ink: '#b03a62' }));
-  out.push(...glint(4.6, 4.8, 0.6));
-  out.push(...spark(13.6, 2.6, 1.3), ...spark(2.4, 13, 1, '#fff3a6'), ...spark(13.6, 13.4, 0.9));
+function petalblink() {
+  const out = [...tile('sakura', 'active'), ...aura(11, 8, 5, '#ffe2ef', 1.1)];
+  out.push(streak([1, 8], [7, 8], 1.4, '#ffe2ef'), streak([2, 5], [6, 5.6], 0.9, '#dcfff2'), streak([2, 11], [6, 10.4], 0.9, '#dcfff2'));
+  for (const [x, y, a] of [[2.6, 7.4, 10], [4.4, 9.2, 50], [5.4, 6, -30]]) out.push(...solid(oval(x, y, 1, 0.7, a, 10), '#ffa6cc', { shadow: false, d: 0.3, ink: '#a0386e' }));
+  out.push(...bloomFlower(11.2, 8, 4.2));
   return out;
 }
 
-function renew() {
-  const g = '#7fd86a';
-  const out = [...tile('mint', 'buff'), ...aura(8, 9, 6.8, '#f4fff0', 1.1)];
-  const ring = tube([...oval(8, 11.4, 5.4, 2.2, 0, 32), oval(8, 11.4, 5.4, 2.2, 0, 32)[0]], 0.9);
-  out.push(...edge(ring, '#2a7a4a', 0.4), S(ring, '#fff8c0'));
-  out.push(...solid(tube(bez([8, 12.4], [8.4, 9.6], [7.8, 6.6], 8), 0.9), '#5fb84f', { shadow: false, d: 0.35 }));
-  out.push(...leaf([7.8, 7.4], [2.6, 3.8], 3.6, g, { bend: 0.8, veins: 2 }).shapes);
-  out.push(...leaf([8, 7], [13.4, 2.6], 4, g, { bend: -0.9, veins: 2 }).shapes);
-  out.push(...[[3.2, 9], [12.8, 9.6], [5.4, 14], [11, 14]].flatMap(([x, y]) => [S(tube([[x - 0.9, y], [x + 0.9, y]], 0.5), W), S(tube([[x, y - 0.9], [x, y + 0.9]], 0.5), W)]));
-  out.push(...spark(13.8, 13.4, 1, '#fff3a6'));
+function rebloom() {
+  const out = [...tile('mint', 'active'), ...aura(8, 7, 6.6, '#dcfff2', 1.1)];
+  out.push(...solid([[7.2, 15], [8.8, 15], [8.6, 8], [7.4, 8]], '#40c898', { d: 0.35, ink: '#1f7a6a' }));
+  out.push(...solid(oval(5.6, 11, 2.2, 1, -30, 12), '#8ef0c8', { shadow: false, d: 0.3, ink: '#1f7a6a' }), ...solid(oval(10.4, 10.4, 2.2, 1, 30, 12), '#8ef0c8', { shadow: false, d: 0.3, ink: '#1f7a6a' }));
+  out.push(...bloomFlower(8, 5.6, 4.4));
+  out.push(...spark(2.6, 3, 1, W), ...spark(13.6, 2.6, 0.9, W));
   return out;
 }
 
-function barrier() {
-  const out = [...tile('arcane', 'buff')];
-  const ball0 = oval(8, 8.2, 6.2, 6.2, 0, 40);
-  out.push(drop(ball0), ...edge(ball0, '#4a2a90', 0.45));
-  out.push(S(ball0, '#c0a8ff'), S(clip(ball0, oval(7.4, 7.4, 5.6, 5.6)), '#d4c0ff'), S(clip(ball0, oval(7, 7, 4.2, 4.2)), '#e4d8ff'));
-  // A honeycomb of force across the bubble.
-  for (const [x, y] of [[8, 8.2], [5.2, 6.6], [10.8, 6.6], [5.2, 9.8], [10.8, 9.8], [8, 4.9], [8, 11.5]]) {
-    const h = polyPts(x, y, 1.75, 6, 0);
-    out.push(...h.map((q, i) => S(clip(tube([q, h[(i + 1) % 6]], 0.22), ball0), '#f4ecff')));
-  }
-  out.push(S(tube(arcPts(8, 8.2, 5.6, 5.6, 20, 140, 16), (t) => 1.2 * Math.sin(Math.PI * t)), '#ffc4e8'));
-  out.push(S(tube(arcPts(8, 8.2, 5.6, 5.6, 150, 230, 12), (t) => 0.9 * Math.sin(Math.PI * t)), '#b4f0ff'));
-  out.push(S(tube(arcPts(8, 8.2, 4.6, 4.6, 195, 255, 10), (t) => 1.3 * Math.sin(Math.PI * t)), W));
-  out.push(S(oval(11, 4.8, 0.7, 0.7, 0, 12), W));
-  out.push(...spark(13.8, 13.6, 1.1), ...spark(2.4, 2.8, 1));
+function spellmastery() {
+  const out = [...tile('sakura', 'passive'), ...aura(8, 8, 6.6, '#ffe2ef')];
+  out.push(...solid(tube([[4, 14], [11, 4]], 0.9), '#c88a5a', { d: 0.35 }));
+  out.push(...bloomFlower(11.2, 4.4, 3.8));
+  out.push(...glint(6, 10, 0.5), ...spark(3, 3, 1, '#dcfff2'));
   return out;
 }
 
-function revive() {
-  const out = [...tile('holy', 'active'), ...aura(8, 9, 6.6, '#fffbe0', 1.2)];
-  // Light rising.
-  for (const x of [5, 8, 11]) out.push(streak([x, 15], [x, 9], 1.2, '#fffbe0'));
-  for (const s of [1, -1]) {
-    const wing = [[8 + s * 2, 8.2], [8 + s * 5.4, 4], [8 + s * 7.2, 4.6], [8 + s * 6.6, 7.4], [8 + s * 7, 9], [8 + s * 5.2, 11], [8 + s * 2.4, 11]];
-    out.push(...solid(wing, '#ffffff', { light: '#ffffff', ink: '#b08a3a' }));
-    out.push(line([[8 + s * 5.4, 7.2], [8 + s * 2.8, 9]], 0.35, '#e6dcc0'), line([[8 + s * 5.4, 9.4], [8 + s * 2.8, 10.2]], 0.35, '#e6dcc0'));
-  }
-  out.push(...solid(heartPts(8, 9.8, 4.6), '#ff6b8a', { glow: 1.1 }));
-  out.push(...glint(6.6, 8.4, 0.5));
-  const halo = tube([...oval(8, 2.6, 3, 1, 0, 24), oval(8, 2.6, 3, 1, 0, 24)[0]], 0.75);
-  out.push(...edge(halo, '#a0702a', 0.35), S(halo, '#fff3a6'));
+function blossomheart() {
+  const out = [...tile('sakura', 'passive'), ...aura(8, 8.4, 6.8, '#ffe2ef')];
+  out.push(...solid(heartPts(8, 8.6, 6.2), '#f26aa4', { glow: 1.1 }));
+  out.push(...bloomFlower(8, 8, 2.8, '#ffe2ef'));
+  out.push(...spark(13.6, 2.6, 1.2, '#dcfff2'));
+  return out;
+}
+
+function gardenoflight() {
+  const out = [...tile('sakura', 'active'), ...aura(8, 6, 6.8, '#ffe2ef', 1.15)];
+  out.push(...solid([[7.4, 15.2], [8.6, 15.2], [8.4, 9], [7.6, 9]], '#40c898', { d: 0.3, ink: '#1f7a6a' }));
+  for (const x of [2.6, 13.4]) out.push(...bloomFlower(x, 13.4, 2, '#8ef0c8'));
+  out.push(...bloomFlower(8, 6, 5.6));
+  out.push(...spark(2.4, 2.6, 1, W), ...spark(13.6, 2.4, 1, '#dcfff2'));
   return out;
 }
 
@@ -1341,366 +1292,6 @@ function galaxyfall() {
   return out;
 }
 
-// ---------- Ice / lightning wizard ----------
-
-function frostEmblem(x, y) {
-  return [...snowflake(x, y, 2.1, W, 0.5), S(oval(x, y, 0.6, 0.6, 0, 10), '#fff36b')];
-}
-function ilmastery() {
-  return [...tile('ice', 'passive'), ...aura(8.4, 8.4, 6.6, '#e8fbff'), ...tome('#4f8ae0', '#8fd8ff', frostEmblem), ...spark(14, 13.8, 1, '#fff36b')];
-}
-
-function coldbeam() {
-  const ice = '#c8f4ff';
-  const out = [...tile('ice', 'active'), ...aura(9, 7, 6.4, '#f0fdff')];
-  out.push(S(tube([[0.6, 15.4], [7.6, 8.4]], (t) => 0.4 + 3.6 * t), '#e8fbff'), S(tube([[1.6, 14.4], [7.6, 8.4]], (t) => 0.2 + 1.4 * t), W));
-  for (const [x, y] of [[2.4, 10.4], [5.2, 13.6], [1.8, 6.6]]) out.push(...snowflake(x, y, 0.9, '#f0fdff', 0.32));
-  // The lance: a long six-sided crystal, pointed at both ends.
-  const a = [4.6, 11.4];
-  const b = [14.6, 1.4];
-  const u = N(a, b);
-  const n = [-u[1], u[0]];
-  const p = along(a, u, n);
-  const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-  const lance = [p(0, 0), p(3, 1.9), p(L - 3.6, 1.6), p(L, 0), p(L - 3.6, -1.6), p(3, -1.9)];
-  out.push(...facet(lance, p(0, 0), p(L, 0), ice, { ink: '#1a4a8a' }));
-  out.push(S([p(3, -1.9), p(L - 3.6, -1.6), p(L - 3.4, -0.5), p(3, -0.6)], hi(ice)));
-  out.push(S([p(L - 3.6, 1.6), p(L, 0), p(L - 3.4, 0.4)], '#8fd4f8'), S([p(0, 0), p(3, 1.9), p(3, 0.5)], '#8fd4f8'));
-  out.push(line([p(2.2, -0.2), p(L - 2.2, -0.2)], 0.25, W));
-  out.push(...spark(13.8, 1.8, 1.6), ...spark(12.8, 10.4, 1.1), ...spark(6, 2.6, 1));
-  return out;
-}
-
-function thunderbolt() {
-  const out = [...tile('storm', 'active'), ...aura(8, 11, 5, '#fff8c0', 1.1)];
-  out.push(...bolt([[9.6, 3.4], [6.2, 8.4], [9.6, 8.6], [5.4, 15]], 3.4, '#ffe86b', { ink: '#4a3a10' }));
-  out.push(...puffs([[3.4, 3.6, 2.4], [7, 2.8, 2.9], [10.8, 3, 2.6], [13.2, 4, 1.8], [8.6, 4.8, 2.2]], '#6a70b8', { shadow: false, light: '#9aa0e0', dark: '#4a4f98', ink: '#1a1a50' }));
-  out.push(S(tube([[11.2, 6.4], [12.8, 8.6], [12, 9], [13.6, 11.4]], (t) => 0.8 * (1 - t) + 0.1), '#fff8c0'));
-  out.push(S(tube([[3, 6.6], [2.4, 8.4], [3.4, 8.8], [2.4, 10.8]], (t) => 0.7 * (1 - t) + 0.1), '#fff8c0'));
-  out.push(...spark(11.8, 14, 1.2, '#fff8c0'));
-  return out;
-}
-
-function stormfocus() {
-  const out = [...tile('storm', 'buff'), ...aura(8, 8, 7, '#fff4a0', 1.1)];
-  const orb = oval(8, 8, 4, 4, 0, 30);
-  out.push(...solid(orb, '#ffe86b', { glow: 1.2, light: '#fffbe0' }));
-  out.push(S(tube([[6.6, 5.4], [8.4, 7.4], [7.2, 8.2], [9.6, 10.8]], (t) => 0.8 * (1 - t) + 0.2), W));
-  // Static arcs crackling around it.
-  for (const [pts, w] of [[[[2, 4.4], [3.6, 5.4], [2.8, 6.6], [4.4, 7.6]], 0.7], [[[14.2, 9], [12.6, 9.6], [13.6, 11], [11.8, 11.6]], 0.7], [[[11.4, 1.6], [11, 3.4], [12.4, 3.4], [11.8, 5]], 0.6], [[[3.6, 14.4], [4.4, 12.8], [3.2, 12.6], [4.8, 11.2]], 0.6]]) {
-    out.push(...edge(tube(pts, w), '#2c2f86', 0.3), S(tube(pts, w), '#fff8c0'));
-  }
-  out.push(...glint(6.2, 5.8, 0.6));
-  return out;
-}
-
-// ---------- Fire / poison wizard ----------
-
-function fireEmblem(x, y) {
-  return [S(flamePts(x, y + 2, 2.6, 4.2), '#ff5a3a'), S(flamePts(x + 0.1, y + 1.8, 1.5, 2.6), '#ffe9a0')];
-}
-function firemastery() {
-  return [...tile('fire', 'passive'), ...aura(8.4, 8.4, 6.6, '#fff0c0'), ...tome('#9b4fe0', '#ffd27a', fireEmblem), ...spark(14, 13.8, 1, '#fff36b')];
-}
-
-function fireball() {
-  const out = [...tile('fire', 'active'), ...aura(10, 6, 6, '#fff4c0', 1.1)];
-  // Trailing flames, then the blazing head.
-  const tail = (a, b, w, c) => S(tube(bez(a, [(a[0] + b[0]) / 2 + 1.2, (a[1] + b[1]) / 2 + 1.2], b, 10), (t) => 0.2 + w * Math.pow(t, 0.8)), c);
-  out.push(tail([1, 15], [8.4, 7.6], 4.6, '#ff6a3a'), tail([2.4, 13], [8.8, 7.4], 3, '#ffa23c'), tail([4, 12.4], [9.2, 7.2], 1.6, '#ffe9a0'));
-  out.push(tail([1.4, 10.4], [7, 7.2], 1.2, '#ffa23c'), tail([5.4, 15], [9, 9.6], 1.4, '#ff6a3a'));
-  const head = oval(10.2, 5.8, 3.8, 3.8, 0, 30);
-  out.push(...edge(head, '#7a1a10', 0.5), S(head, '#ff6a3a'), S(oval(10.4, 5.6, 2.9, 2.9, 0, 26), '#ffa23c'), S(oval(10.7, 5.3, 1.8, 1.8, 0, 20), '#ffe9a0'), S(oval(11, 5, 0.8, 0.8, 0, 12), W));
-  out.push(...spark(14.2, 12.4, 1.1, '#fff4c0'), ...spark(3.4, 2.6, 1));
-  return out;
-}
-
-function poisonmist() {
-  const out = [...tile('poison', 'active')];
-  out.push(...puffs([[4, 10.6, 3], [8.2, 8.6, 4], [12.2, 10.4, 3], [8, 12.4, 3]], '#a8e86b', { light: '#d8ffa8', dark: '#6fb84f', ink: '#2a4a1a' }));
-  // A sickly little skull in the cloud.
-  out.push(...solid(oval(8.2, 9, 2.6, 2.4, 0, 22), '#f4ffe8', { shadow: false, d: 0.35, ink: '#2a4a1a' }));
-  out.push(...solid(rect(6.9, 10.6, 2.6, 1.6), '#f4ffe8', { shadow: false, flat: true, d: 0.35, ink: '#2a4a1a' }));
-  out.push(S(oval(7.2, 9.1, 0.75, 0.85, 0, 12), '#5a2a8a'), S(oval(9.2, 9.1, 0.75, 0.85, 0, 12), '#5a2a8a'), S([[8.2, 10], [7.8, 10.7], [8.6, 10.7]], '#5a2a8a'));
-  out.push(line([[7.7, 11.2], [7.7, 12.2]], 0.25, '#7a9a6a'), line([[8.7, 11.2], [8.7, 12.2]], 0.25, '#7a9a6a'));
-  // Bubbles.
-  for (const [x, y, r] of [[3.4, 4.6, 1.2], [12.6, 3.4, 1], [6.6, 2.4, 0.7], [13.4, 6.4, 0.6]]) out.push(...solid(oval(x, y, r, r, 0, 16), '#c88aff', { shadow: false, d: 0.3, ink: '#3a1a6a' }), S(oval(x - r * 0.35, y - r * 0.35, r * 0.3, r * 0.3, 0, 8), W));
-  return out;
-}
-
-function meditate() {
-  const petal = '#ffb8d0';
-  const out = [...tile('fire', 'buff'), ...aura(8, 6, 6, '#fff6c0', 1.2)];
-  out.push(...flame(8, 8.8, 4, 7.4, ['#ff6a3a', '#ffb347', '#fff1a8'], { lean: 0.4 }));
-  // A lotus beneath the flame.
-  for (const [b, t, w] of [[[7.6, 13], [1.4, 8.6], 3.2], [[8.4, 13], [14.6, 8.6], 3.2], [[7.8, 13.2], [3.8, 7.4], 3.4], [[8.2, 13.2], [12.2, 7.4], 3.4]]) {
-    const lf = leaf(b, t, w, petal, { rib: '#fff0f6' });
-    out.push(...edge([...lf.A, ...lf.B.slice().reverse()], '#9a2a5a', 0.4), ...lf.shapes);
-  }
-  const front = leaf([8, 13.6], [8, 7.6], 3.6, '#ffd0e0', { rib: W });
-  out.push(...edge([...front.A, ...front.B.slice().reverse()], '#9a2a5a', 0.4), ...front.shapes);
-  out.push(...solid(oval(8, 13.8, 4.6, 1, 0, 24), '#7fd86a', { shadow: false, d: 0.35 }));
-  out.push(...spark(13.6, 2.8, 1.2, '#fff6c0'), ...spark(2.6, 3.4, 1));
-  return out;
-}
-
-// ---------- Cleric ----------
-
-function crossEmblem(x, y) {
-  return [S(rect(x - 0.6, y - 2.2, 1.2, 4.4), W), S(rect(x - 1.8, y - 1.1, 3.6, 1.2), W)];
-}
-function holymastery() {
-  return [...tile('holy', 'passive'), ...aura(8.4, 8.4, 6.6, '#fffbe0'), ...tome('#f4f0ff', '#ffc84a', crossEmblem), ...spark(14, 13.8, 1)];
-}
-
-function bless() {
-  const out = [...tile('seraph', 'buff'), ...aura(8, 4, 7, '#ffffff', 1.1)];
-  // Rays of blessing pouring down.
-  for (const [x0, x1] of [[5, 2.4], [7, 5.8], [9, 10.2], [11, 13.6]]) out.push(S([[x0 - 0.5, 5], [x0 + 0.5, 5], [x1 + 1, 15], [x1 - 1, 15]], '#fffbe0'));
-  const halo = tube([...oval(8, 4.4, 5, 1.9, 0, 30), oval(8, 4.4, 5, 1.9, 0, 30)[0]], 1.3);
-  out.push(drop(halo), ...edge(halo, '#a0601a', 0.45), S(halo, '#ffd84a'), S(tube(arcPts(8, 4.4, 5, 1.9, 190, 300, 12), 0.5), '#fffbe0'));
-  // Little feathers drifting.
-  for (const [b, t] of [[[4, 13.6], [2.6, 9.6]], [[11.6, 12.6], [13.6, 9]]]) out.push(...solid([...leaf(b, t, 1.8, W).A, ...leaf(b, t, 1.8, W).B.reverse()], W, { d: 0.35, ink: '#a0702a', light: W }));
-  out.push(...spark(8, 10.6, 2, W), ...spark(5.6, 8, 0.9), ...spark(10.8, 8.4, 0.9));
-  return out;
-}
-
-function heal() {
-  const g = '#6fe07a';
-  const out = [...tile('sky', 'active'), ...aura(8, 8, 7.2, '#ffffff', 1.1)];
-  for (let i = 0; i < 8; i++) {
-    const a = (i * 45 + 22.5) * D2R;
-    out.push(S([[8 + Math.cos(a - 0.12) * 3, 8 + Math.sin(a - 0.12) * 3], [8 + Math.cos(a) * 8, 8 + Math.sin(a) * 8], [8 + Math.cos(a + 0.12) * 3, 8 + Math.sin(a + 0.12) * 3]], '#fffbe0'));
-  }
-  const cross = [[6.2, 2.2], [9.8, 2.2], [9.8, 6.2], [13.8, 6.2], [13.8, 9.8], [9.8, 9.8], [9.8, 13.8], [6.2, 13.8], [6.2, 9.8], [2.2, 9.8], [2.2, 6.2], [6.2, 6.2]];
-  out.push(drop(cross), ...edge(cross, '#1a5a2a', 0.55));
-  out.push(...bevel(cross, [[6.9, 2.9], [9.1, 2.9], [9.1, 6.9], [13.1, 6.9], [13.1, 9.1], [9.1, 9.1], [9.1, 13.1], [6.9, 13.1], [6.9, 9.1], [2.9, 9.1], [2.9, 6.9], [6.9, 6.9]], g, '#8ff09a'));
-  out.push(S([[7.2, 3.2], [8.2, 3.2], [8.2, 7], [7.2, 8]], '#d4ffd8'));
-  out.push(...spark(13.4, 2.6, 1.3), ...spark(2.6, 13.4, 1.1), ...spark(13.4, 13.4, 0.9, '#fff3a6'));
-  return out;
-}
-
-function holybolt() {
-  const gold = '#ffe36b';
-  const out = [...tile('storm', 'active'), ...aura(11, 5, 5.4, '#fff8d0', 1.2)];
-  out.push(S(tube([[1, 15], [10.2, 5.8]], (t) => 0.2 + 3.4 * t), '#fffbe0'));
-  const a = [2.6, 13.4];
-  const b = [12.8, 3.2];
-  const u = N(a, b);
-  const n = [-u[1], u[0]];
-  const p = along(a, u, n);
-  const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
-  out.push(...solid(tube([p(0), p(L - 3)], 1.1), gold, { d: 0.45 }));
-  const head = [p(L, 0), p(L - 3.6, 1.8), p(L - 3, 0), p(L - 3.6, -1.8)];
-  out.push(...facet(head, p(L, 0), p(L - 3, 0), '#fff8d0', { d: 0.45, ink: '#9a5a10' }));
-  out.push(...solid(tube([p(L - 3.4, 1.9), p(L - 3.4, -1.9)], 0.9), gold, { shadow: false, d: 0.35 }));
-  out.push(S(starPts(13, 3, 3, 0.7, 4, -90), W), S(starPts(13, 3, 1.8, 0.5, 4, -45), '#fff3a6'));
-  out.push(...spark(4, 4, 1.2), ...spark(13.8, 12.6, 1));
-  return out;
-}
-
-// ---------- Ice / lightning archmage ----------
-
-function ilarchmastery() {
-  const emblem = (x, y) => [...snowflake(x, y, 2.2, W, 0.45), S(tube([[x + 0.6, y - 2], [x - 0.6, y], [x + 0.6, y], [x - 0.6, y + 2]], 0.5), '#fff36b')];
-  return [...tile('ice', 'passive'), ...aura(9.4, 6.6, 6, '#f0fdff', 1.1), ...staffHead('#6fc8ff', emblem, { wood: '#4f6ad0' }), ...spark(13.8, 13.4, 1.2, '#fff36b'), ...spark(2.6, 3, 1)];
-}
-
-function chainlightning() {
-  const out = [...tile('storm', 'active')];
-  const nodes = [[2.8, 12.6], [6.6, 4], [10, 11.6], [13.4, 3.4]];
-  nodes.forEach(([x, y]) => out.push(...aura(x, y, 2.8, '#fff8c0', 1.1, 3)));
-  for (let i = 0; i < 3; i++) {
-    const [a, b] = [nodes[i], nodes[i + 1]];
-    const u = N(a, b);
-    const n = [-u[1], u[0]];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    const zig = [a, ...[0.22, 0.42, 0.6, 0.8].map((t, k) => add(add(a, u, len * t), n, (k % 2 ? -1 : 1) * 1.1)), b];
-    out.push(drop(tube(zig, 1.2)), ...edge(tube(zig, 1.2), '#1a1a40', 0.45), S(tube(zig, 1.2), '#ffe86b'), S(tube(zig, 0.45), W));
-  }
-  nodes.forEach(([x, y]) => out.push(...solid(oval(x, y, 1.25, 1.25, 0, 16), '#8fd0ff', { shadow: false, d: 0.4, ink: '#1a2a6a', light: W }), S(starPts(x, y, 2.4, 0.4, 4, -45), W)));
-  return out;
-}
-
-function icespire() {
-  const ice = '#d4f6ff';
-  const out = [...tile('glacier', 'active'), ...aura(8, 10, 6.8, '#c8f0ff', 1.1)];
-  const spike = (x, base, top, w, lean = 0) => {
-    const pts = [[x - w / 2, base], [x + lean, top], [x + w / 2, base]];
-    return facet(pts, [x + lean, top], [x + lean * 0.2, base], ice, { ink: '#0a2a6a', d: 0.5, dark: '#8fd0f4' });
-  };
-  out.push(...spike(3.4, 14, 6, 3.6, -1.2), ...spike(12.8, 14, 4.8, 3.8, 1.2), ...spike(8, 14.4, 1.4, 5, 0.2));
-  out.push(S([[7.2, 12.4], [8.1, 2.8], [8.5, 4.8]], W), S([[2.4, 12.6], [2.4, 7.2], [3, 9.2]], W), S([[11.8, 12.6], [13.6, 6], [13.2, 8]], W));
-  out.push(...solid([[0.8, 13.4], [4, 12.8], [8, 13.6], [12, 12.8], [15.2, 13.4], [15.2, 15.2], [0.8, 15.2]], '#e8f8ff', { shadow: false, d: 0.4, ink: '#0a2a6a' }));
-  out.push(...facet([[5.2, 4.4], [5.8, 2.6], [6.4, 4.4]], [5.8, 2.6], [5.8, 4.4], ice, { d: 0.35, ink: '#0a2a6a' }));
-  out.push(...facet([[10.4, 6.6], [11.6, 5.2], [11.4, 7.2]], [11.6, 5.2], [10.8, 7], ice, { d: 0.35, ink: '#0a2a6a' }));
-  out.push(...spark(13.6, 2.4, 1.3), ...spark(1.8, 3.4, 1));
-  return out;
-}
-
-function frostsprite() {
-  // The summon: a tiny ice fairy with icy hair, violet eyes, a bell dress, and crystal wings.
-  const out = [...tile('ice', 'buff'), ...aura(8, 7.4, 6.8, '#ffffff', 1.1)];
-  const iceInk = '#1a4a8a';
-  // Crystal shard wings, an upper and a lower pair, each split into a lit and a shaded facet.
-  const wing = (root, tip, side, wd) => {
-    const m = [(root[0] + tip[0]) / 2, (root[1] + tip[1]) / 2];
-    const u = N(root, tip);
-    const pts = [root, add(m, [-u[1], u[0]], wd * side), tip, add(m, [-u[1], u[0]], -wd * 0.4 * side)];
-    return facet(pts, root, tip, '#c8f2ff', { ink: iceInk, d: 0.4, dark: '#8fcff0' });
-  };
-  out.push(...wing([6.8, 10.2], [0.9, 5.4], 1, 2.6), ...wing([9.2, 10.2], [15.1, 5.4], -1, 2.6));
-  out.push(...wing([6.8, 10.8], [1.8, 13.4], -1, 1.5), ...wing([9.2, 10.8], [14.2, 13.4], 1, 1.5));
-  // A bell dress below the head.
-  const dress = [[6.8, 10], [9.2, 10], [10.8, 14.4], [5.2, 14.4]];
-  out.push(...solid(dress, '#8fe0fa', { ink: iceInk, d: 0.4, light: '#d8f8ff' }), S([[5.8, 13.6], [10.2, 13.6], [10.8, 14.4], [5.2, 14.4]], '#d8f8ff'));
-  // Head: skin face under a cap of icy hair with a crystal bun on top.
-  out.push(...solid(oval(8, 7, 3.4, 3.1, 0, 24), '#fff1ec', { ink: '#4f7fcf', d: 0.4, light: W }));
-  const hair = [...arcPts(8, 7, 3.6, 3.4, 170, 370, 16), [10.8, 6.4], [9.6, 5.6], [8.6, 6.6], [7.4, 5.6], [6, 6.8], [5.2, 6.4]];
-  out.push(...edge(hair, '#2f5aa8', 0.4), S(hair, '#a6dcff'), S(clip(hair, oval(6.6, 3.8, 2.6, 1.6)), '#e6f7ff'));
-  out.push(...facet([[7, 3.6], [8, 1.2], [9, 3.6]], [8, 1.2], [8, 3.6], '#e8fbff', { ink: iceInk, d: 0.35, shadow: false }));
-  // Big violet eyes with white glints, blush, and a small smile.
-  for (const x of [6.7, 9.3]) out.push(S(oval(x, 8, 0.7, 0.95, 0, 12), '#5a2aa0'), S(oval(x, 8.3, 0.45, 0.5, 0, 10), '#c46cff'), S(oval(x - 0.25, 7.6, 0.28, 0.3, 0, 8), W));
-  out.push(S(oval(5.6, 9.2, 0.7, 0.35, 0, 10), '#ffa6c8'), S(oval(10.4, 9.2, 0.7, 0.35, 0, 10), '#ffa6c8'));
-  out.push(S(arcPts(8, 9.2, 0.55, 0.4, 20, 160, 6).concat(arcPts(8, 9.2, 0.2, 0.12, 160, 20, 6)), '#b8406a'));
-  out.push(...snowflake(13.4, 2.6, 1, W, 0.3), ...spark(2.6, 2.6, 0.9));
-  return out;
-}
-
-function tempest() {
-  const out = [...tile('storm', 'active')];
-  // Ice lances and a bolt falling from a freezing sky.
-  const lance = (x, y, s) => facet([[x - 0.8 * s, y - 3.4 * s], [x + 0.8 * s, y - 3.4 * s], [x + 0.4 * s, y + 1.2 * s]], [x, y - 3.4 * s], [x + 0.4 * s, y + 1.2 * s], '#c8f4ff', { ink: '#0a1a4a', d: 0.4 });
-  out.push(...aura(8, 11, 5, '#c8f4ff', 1, 3));
-  out.push(...lance(3.4, 12.6, 1), ...lance(12.6, 13.2, 1.05), ...lance(10, 9.6, 0.8), ...lance(5.8, 15, 0.8));
-  out.push(...bolt([[8.8, 4.4], [6.6, 8.6], [9.2, 9], [7, 14.6]], 2.6, '#ffe86b', { ink: '#2a2a10' }));
-  out.push(...puffs([[3, 3.6, 2.4], [6.6, 2.6, 2.8], [10.4, 2.8, 2.6], [13.4, 3.8, 1.9], [8.4, 4.6, 2]], '#b8d8ff', { shadow: false, light: '#f0f8ff', dark: '#7f9ad8', ink: '#0a1a4a' }));
-  out.push(...snowflake(13.4, 8.4, 1.1, W, 0.35), ...snowflake(2.4, 8.6, 0.9, W, 0.3));
-  return out;
-}
-
-// ---------- Fire / poison archmage ----------
-
-function infernomastery() {
-  const emblem = (x, y) => [S(flamePts(x, y + 2.1, 2.8, 4.6, 0.3), '#9be86b'), S(flamePts(x + 0.1, y + 1.9, 1.6, 2.8, 0.2), '#f4ffd0')];
-  return [...tile('fire', 'passive'), ...aura(9.4, 6.6, 6, '#fff0c0', 1.1), ...staffHead('#ff6a3a', emblem, { wood: '#9b4fe0', metal: '#ffc23a' }), ...spark(13.8, 13.4, 1.2, '#fff36b'), ...spark(2.6, 3, 1)];
-}
-
-function toxicblaze() {
-  const cols = ['#5fd84a', '#b4f56b', '#f4ffd0'];
-  const out = [...tile('poison', 'active'), ...aura(8, 11, 7, '#e8ffc0', 1.1)];
-  out.push(...flame(3.4, 14.6, 3.6, 8.6, cols, { lean: 0.8 }));
-  out.push(...flame(12.6, 14.6, 3.6, 9.2, cols, { lean: 0.6 }));
-  out.push(...flame(8, 14.8, 5.4, 13, cols, { lean: 1 }));
-  // Violet venom licks inside.
-  out.push(S(flamePts(8.1, 14.4, 2.4, 5.4, 0.3), '#c88aff'), S(flamePts(8.1, 14.2, 1.2, 2.8, 0.2), '#f4e0ff'));
-  for (const [x, y] of [[2.2, 4], [13.8, 3], [5, 2.2]]) out.push(...solid(oval(x, y, 0.8, 0.8, 0, 12), '#c88aff', { shadow: false, d: 0.3, ink: '#3a1a6a' }));
-  return out;
-}
-
-function salamander() {
-  const skin = '#ff8a3c';
-  const out = [...tile('fire', 'buff'), ...aura(8, 8, 6.8, '#fff4c0', 1.1)];
-  // Flame crest along the back of the head.
-  out.push(...flame(4.6, 7.6, 2.8, 6.4, ['#9be86b', '#d8ff9a', '#f4ffe0'], { lean: -1 }), ...flame(7.4, 6.4, 2.8, 6, ['#9be86b', '#d8ff9a', '#f4ffe0'], { lean: -0.6 }));
-  // The head and snout.
-  const head = [...arcPts(7.4, 9.4, 5, 4, 160, 350, 16), [14.4, 9.6], [14.6, 11], [12.8, 12.6], [7.4, 13.6], [3, 12.6]];
-  out.push(...solid(head, skin, { k: 0.9 }));
-  out.push(S(clip(head, rect(0, 11.6, 16, 3)), '#ffd27a'));
-  out.push(line([[8.4, 11.6], [14.4, 10.8]], 0.4, '#a03a1a'));
-  for (const [x, y] of [[5, 9.2], [6.6, 8], [4.4, 11]]) out.push(S(oval(x, y, 0.55, 0.45, 0, 10), '#ffd27a'));
-  // A big cute eye.
-  out.push(S(oval(9.8, 8.8, 1.4, 1.5, 0, 16), '#2a2035'), S(oval(9.5, 8.3, 0.55, 0.55, 0, 10), W), S(oval(10.3, 9.4, 0.25, 0.25, 0, 8), W));
-  out.push(S(oval(12.6, 8.9, 0.3, 0.25, 0, 8), '#8a2a1a'));
-  out.push(S(oval(11.6, 11.8, 0.8, 0.45, 0, 10), '#ff8aa0'));
-  out.push(...glint(4, 8.8, 0.45));
-  // A spat ember.
-  out.push(...solid(oval(14.4, 13.8, 0.9, 0.9, 0, 12), '#9be86b', { d: 0.3 }), ...spark(13.4, 2.4, 1.2, '#fff6c0'));
-  return out;
-}
-
-function meteor() {
-  const rock = '#a8705a';
-  const out = [...tile('fire', 'active'), ...aura(10.4, 10.4, 5.4, '#fff4c0', 1.2)];
-  const trail = (a, b, w, c) => S(tube([a, b], (t) => 0.2 + w * Math.pow(t, 0.7)), c);
-  out.push(trail([0.6, 0.6], [9.6, 9.6], 6.4, '#ff6a3a'), trail([1.6, 1.2], [9.6, 9.6], 4.4, '#ffa23c'), trail([3.4, 2.6], [9.8, 9.6], 2.4, '#ffe9a0'));
-  // A smaller meteor behind.
-  out.push(trail([7.6, 0.4], [12.6, 4.6], 2.2, '#ffa23c'), ...solid(oval(12.8, 4.8, 1.3, 1.3, 0, 14), rock, { d: 0.35 }));
-  const head = [[7.2, 9.6], [8.6, 7.2], [11.4, 6.8], [13.6, 8.6], [14, 11.6], [12, 13.8], [9, 13.8], [7.4, 12]];
-  out.push(...solid(head, rock, { k: 0.85 }));
-  out.push(S(clip(head, oval(9.8, 9.4, 2.8, 2.4)), '#ffb37a'), S(clip(head, oval(9.2, 8.8, 1.4, 1.1)), '#ffe0b0'));
-  out.push(S(oval(11.8, 11.4, 0.9, 0.7, 0, 12), sh(rock)), S(oval(12.6, 9.2, 0.6, 0.5, 0, 10), sh(rock)), S(oval(9.6, 12.4, 0.5, 0.4, 0, 10), sh(rock)));
-  out.push(...spark(3.4, 12.6, 1.2, '#fff4c0'), ...spark(14, 1.8, 0.9));
-  return out;
-}
-
-// ---------- Bishop ----------
-
-function seraphmastery() {
-  const emblem = (x, y) => [S(starPts(x, y, 2.2, 0.8, 4, -90), W), S(oval(x, y, 0.6, 0.6, 0, 10), '#ffe36b')];
-  const wings = [-1, 1].flatMap((s) => solid([[9.4 + s * 2.8, 6.6], [9.4 + s * 5.6, 3], [9.4 + s * 6.4, 5.4], [9.4 + s * 5.8, 8.6], [9.4 + s * 3, 9]].map(([x, y]) => [Math.max(1.4, Math.min(14.8, x)), y]), W, { d: 0.4, ink: '#a0702a', light: W }));
-  return [...tile('holy', 'passive'), ...aura(9.4, 6.6, 6.4, '#ffffff', 1.1), ...staffHead('#8fd8ff', emblem, { wood: '#f0e6ff', behind: wings }), ...spark(13.8, 13.4, 1.2), ...spark(2.4, 9.6, 0.9)];
-}
-
-function shiningray() {
-  const out = [...tile('steel', 'active'), ...aura(8, 8, 7.4, '#fff8d0', 0.75, 5)];
-  out.push(...solid(starPts(8, 8, 7.2, 1.6, 4, -90), '#ffd84a', { light: '#fff3a6', ink: '#8a4a10', d: 0.5 }));
-  out.push(S(starPts(8, 8, 4.4, 1.2, 4, -45), '#ffe36b'));
-  out.push(S(starPts(8, 8, 4.8, 1, 4, -90), W));
-  out.push(S(oval(8, 8, 1.6, 1.6, 0, 16), W));
-  out.push(...spark(3, 3, 1.1), ...spark(13, 13, 1.1), ...spark(13.2, 3, 0.8), ...spark(2.8, 13, 0.8));
-  return out;
-}
-
-function sanctuary() {
-  const out = [...tile('mint', 'buff')];
-  const dome = [...arcPts(8, 12.6, 6.4, 8.4, 180, 360, 24)];
-  out.push(...edge(dome, '#a0601a', 0.45), S(dome, '#fff3b0'), S(clip(dome, oval(8, 12.6, 5.2, 7.2)), '#fff8d0'), S(clip(dome, oval(8, 12.6, 3.6, 5.6)), '#ffffff'));
-  out.push(S(tube(arcPts(8, 12.6, 5.6, 7.6, 200, 250, 10), (t) => 0.9 * Math.sin(Math.PI * t)), W));
-  // A shield sheltered inside.
-  const shield = [[5.6, 7.6], [8, 6.8], [10.4, 7.6], [10.2, 10.6], [8, 12.6], [5.8, 10.6]];
-  out.push(...solid(shield, '#ffd25a', { d: 0.4 }), S(cut(shield, [8, 0], [8, 16]), '#f0b43a'), S(tube([[8, 7.4], [8, 11.6]], 0.5), W), S(tube([[6.6, 8.8], [9.4, 8.8]], 0.5), W));
-  out.push(...solid([[0.8, 12.6], [15.2, 12.6], [15.2, 15.2], [0.8, 15.2]], '#e8c070', { shadow: false, d: 0.4 }));
-  out.push(S(rect(0.8, 12.6, 14.4, 0.6), '#fff3c0'));
-  const halo = tube([...oval(8, 2.6, 2.8, 0.9, 0, 24), oval(8, 2.6, 2.8, 0.9, 0, 24)[0]], 0.7);
-  out.push(...edge(halo, '#a0601a', 0.35), S(halo, '#ffe36b'));
-  out.push(...spark(13.6, 3.4, 1), ...spark(2.4, 4.4, 0.9));
-  return out;
-}
-
-function guardianangel() {
-  const skin = '#fff0e6';
-  const out = [...tile('sky', 'buff'), ...aura(8, 7.4, 7, '#ffffff', 1.15)];
-  for (const s of [1, -1]) {
-    const wing = [[8 + s * 1.6, 9], [8 + s * 4.6, 4.6], [8 + s * 6.8, 4.4], [8 + s * 6.8, 7], [8 + s * 7, 9], [8 + s * 5.4, 11.6], [8 + s * 2, 11.6]];
-    out.push(...solid(wing, '#ffffff', { light: '#ffffff', ink: '#a0702a' }));
-    out.push(line([[8 + s * 5.6, 7.4], [8 + s * 2.6, 9.4]], 0.35, '#e6dcc0'), line([[8 + s * 5.4, 9.8], [8 + s * 2.6, 10.8]], 0.35, '#e6dcc0'));
-  }
-  // A little robed angel.
-  out.push(...solid([[6.4, 9.6], [9.6, 9.6], [11, 14.8], [5, 14.8]], '#f4f0ff', { d: 0.45 }), S([[8, 9.6], [9.6, 9.6], [11, 14.8], [8.6, 14.8]], '#ddd4f4'));
-  out.push(...solid(oval(8, 7.4, 2.8, 2.7, 0, 24), skin, { d: 0.45 }));
-  out.push(...solid([...arcPts(8, 7.2, 3, 2.9, 180, 360, 14), [10.4, 6.6], [9, 5.6], [7.4, 6.8], [5.6, 6.8]], '#ffd27a', { shadow: false, d: 0.35 }));
-  out.push(S(oval(7, 8.2, 0.4, 0.55, 0, 10), '#3a2d4f'), S(oval(9, 8.2, 0.4, 0.55, 0, 10), '#3a2d4f'), S(oval(6.3, 9, 0.5, 0.3, 0, 8), '#ffb0c4'), S(oval(9.7, 9, 0.5, 0.3, 0, 8), '#ffb0c4'));
-  const halo = tube([...oval(8, 3.3, 2.6, 0.85, 0, 24), oval(8, 3.3, 2.6, 0.85, 0, 24)[0]], 0.7);
-  out.push(...edge(halo, '#a0601a', 0.35), S(halo, '#ffe36b'));
-  out.push(...spark(13.8, 13.6, 1), ...spark(2.2, 13.6, 1));
-  return out;
-}
-
-function judgment() {
-  const out = [...tile('shadow', 'active')];
-  // Three pillars of light slamming down, each bursting where it lands.
-  for (const [x, w] of [[3.4, 2.4], [8, 3.4], [12.6, 2.4]]) {
-    const pil = [[x - w * 0.32, 0.9], [x + w * 0.32, 0.9], [x + w / 2, 12.6], [x - w / 2, 12.6]];
-    out.push(S(inTile(grow(pil, 1.5, x, 7)), '#fff6c8'), ...edge(inTile(pil), '#c06a1a', 0.35), S(inTile(pil), '#ffe36b'), S(inTile([[x - w * 0.12, 0.9], [x + w * 0.12, 0.9], [x + w * 0.2, 12.6], [x - w * 0.2, 12.6]]), W));
-  }
-  out.push(...solid([[0.8, 13], [15.2, 13], [15.2, 15.2], [0.8, 15.2]], '#c88a5a', { shadow: false, d: 0.35 }));
-  out.push(line([[3.4, 13.2], [2.6, 14.4], [3, 15]], 0.35, '#7a4a2a'), line([[8, 13.2], [9, 14.6]], 0.35, '#7a4a2a'), line([[12.6, 13.2], [11.8, 14.8]], 0.35, '#7a4a2a'));
-  for (const [x, r] of [[3.4, 2.2], [8, 3], [12.6, 2.2]]) out.push(S(starPts(x, 12.8, r, r * 0.3, 4, -90), W), S(oval(x, 12.9, r * 0.45, r * 0.3, 0, 12), '#fff3a6'));
-  out.push(...spark(5.7, 5, 0.9), ...spark(10.3, 3.6, 0.9));
-  return out;
-}
-
 // ---------- Game master ----------
 
 function gmsmite() {
@@ -1757,19 +1348,13 @@ const ART = {
   bladerush, whirlwind, shouldercharge, warcry, ironguard, swordmastery, toughness, titanbreak,
   paladinmastery, aegissmite, hallowedground, divineaegis, grandverdict,
   berserkermastery, ravage, bloodfrenzy, rampage, crimsoneclipse,
-  magicbolt, sparkburst, blink, manashield, arcanemind, mend, renew, barrier, revive,
+  petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
   twinshot, arrowfan, arrowshower, flipshot, huntersfocus, bowmastery, eagleeye, falcondive,
   rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,
   snipermastery, marksman, glacierbolt: glacier, steadyaim, heartseeker,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   assassinmastery, crowcombo, markdeath, vanish, poisonblade, bloodmoonrequiem,
   nightlordmastery, starstorm, giantshuriken, starmark, shadowshuriken, galaxyfall,
-  ilmastery, coldbeam, thunderbolt, stormfocus,
-  firemastery, fireball, poisonmist, meditate,
-  holymastery, bless, heal, holybolt,
-  ilarchmastery, chainlightning, icespire, frostsprite, tempest,
-  infernomastery, toxicblaze, salamander, meteor,
-  seraphmastery, shiningray, sanctuary, guardianangel, judgment,
   gmsmite, gmhaste, gmblessing,
 };
 

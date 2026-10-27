@@ -349,6 +349,11 @@ export const BUFF_LOOKS = {
       if ((t % 1.6) < 0.2) star(ctx, x + dir * 8, y - 42, 3, '#ffffff', a);
     },
   },
+  // The Mage's Bloom Barrier: a bud of petals curled round her, faint, until it bursts.
+  bloombarrier: {
+    color: '#ffa6cc', cast: 'converge',
+    front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celbudshield', x, y + 4, { t, scale: 0.42, alpha: a * 0.55 }),
+  },
   // The Assassin's: Poisoned Blade drips crimson round her feet; Vanish is drawn on the hero (she
   // fades to a shadow). The Night Lord's Shadow Shuriken: shadow stars turning round him.
   poisonblade: {

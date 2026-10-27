@@ -346,6 +346,8 @@ const GAUGES = {
     tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
   momentum: { color: '#e8962a', hot: '#7fcfff', icon: 'feather', name: 'Momentum', full: 'HAWKEYE', notch: () => null, edge: 'rgba(255,200,90,', ink: '#8a4a1a',
     tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
+  bloom: { color: '#f26aa4', hot: '#8ef0c8', icon: 'flower', name: 'Bloom', full: 'FULL BLOOM', notch: () => null, edge: 'rgba(255,140,190,', ink: '#7a2050',
+    tip: 'Your spells that land and your heals build it; it fades once the fighting stops. Full, every damage spell also heals allies near where it lands, and Garden of Light is ready.' },
   killintent: { color: '#d42a52', hot: '#ff8aa4', icon: 'dagger', name: 'Killing Intent', full: 'EXECUTION', notch: () => null, edge: 'rgba(200,30,70,', ink: '#4a0a20',
     tip: 'Your cuts build it, far more from behind, on critical hits, or on a monster marked for death; it fades once the fighting stops. Full, your first cut on each monster is sure to crit and finishes off a weakened one, and Blood Moon Requiem is ready.' },
   starlight: { color: '#5452d6', hot: '#ffe17a', icon: 'shuriken', name: 'Starlight', full: 'CONSTELLATION', notch: () => null, edge: 'rgba(90,90,230,', ink: '#1a1660',

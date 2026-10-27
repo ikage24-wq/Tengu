@@ -28,13 +28,13 @@ blow).
 - **Basic combo** (`world/melee.js`): three steps with a finisher on the third, each a move, a
   duration and strikes timed with `at`.
 - **Command moves**: up + attack, attacking in the air, attacking out of a run.
-- **Its own gauge** (like Valor, Momentum, Shadow, Killing Intent, Starlight, Rage, Faith, Gale, Focus in `world/melee.js`):
+- **Its own gauge** (like Valor, Momentum, Bloom, Shadow, Killing Intent, Starlight, Rage, Faith, Gale, Focus in `world/melee.js`):
   - It builds in a fight in the job's own way (Valor from blows, faster the more monsters one
     blow catches; Momentum from shots landing in a row, halved when hit; Shadow from hits landing in a quick chain; Rage from blows, Faith
     also from hits taken, Gale from arrows landing, Focus from standing still and aiming).
   - It drains once the fighting stops.
   - The fuller it is, the stronger something gets.
-  - While it's full, something special happens: Unbroken, Hawkeye, Phantom, Execution, Constellation, Berserk, Sanctified,
+  - While it's full, something special happens: Unbroken, Hawkeye, Full Bloom, Phantom, Execution, Constellation, Berserk, Sanctified,
     Tailwind's twin arrows, Deadeye.
   - Show it on the HUD (`ui/hud.js` GAUGES) with an aura on the hero (`render/aura.js`).
 - **Skills** (`data/skills.js`): built as timed combo steps; limited by MP and their own
@@ -58,6 +58,10 @@ blow).
 
 - **Check names before using them on the world.** The world already keeps the player's key
   presses as `intent`, so a gauge can't be called that (Killing Intent is `killintent`).
+
+- **A support job** (the Mage) builds its spells the same way: `magic` strikes hit with magic
+  attack, `heal` strikes mend you and the party in range when the spell lands (never on the
+  press), and its gauge can build from healing as well as hits.
 
 ## 3. Animation
 

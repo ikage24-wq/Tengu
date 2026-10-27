@@ -8,7 +8,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { hasCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -127,7 +127,7 @@ export function cast(world, skillId, rng = Math.random) {
   char.mp -= params.mp ?? 0;
 
   // Melee basic attacks and combo skills play out as timed strikes (see melee.js).
-  if (!s && hasCombo(stats.weaponType)) {
+  if (!s && (hasCombo(stats.weaponType) || hasPathCombo(world))) {
     basicCombo(world);
     return { ok: true };
   }

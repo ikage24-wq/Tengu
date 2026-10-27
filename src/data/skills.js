@@ -23,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (steel, hawk, shadow, crow, night, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, shadow, crow, night, bloom, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -268,52 +268,103 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Mage (spells and support) ----------
-  magicbolt: skill({
-    id: 'magicbolt', name: 'Magic Bolt', job: 'mage', type: 'magic', fx: 'bolt', school: 'arcane',
-    desc: 'Fire a spinning bolt of raw magic at the nearest monster.',
-    at: (lv, m) => ({ mp: lerp(6, 14, lv, m), power: lerp(170, 310, lv, m), hits: 1, targets: 1, range: { w: 270, h: 60 }, projectile: true }),
+  // ---------- Mage (rose pink and mint: flowers, petals and light) ----------
+  // Damage and support at once. Spells that land and heals build Bloom (0-100, see world/melee.js);
+  // full (Full Bloom), every damage spell also heals allies near where it lands. Garden of Light
+  // needs it full and spends it. Spells are timed combo steps like every other attack: `magic`
+  // strikes hit with magic attack, and `heal` strikes mend you and the party around you.
+  petalbolt: skill({
+    id: 'petalbolt', name: 'Petal Bolt', job: 'mage', type: 'attack', fx: 'bolt', icon: 'petalbolt', school: 'bloom',
+    desc: 'A three-part combo, one cast per press: a bolt of petals, two more, then a great blossom bolt that bursts through the whole line.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const bolt = (at, pct, oy = 0) => ({ at, shot: 'petalbolt', magic: true, pct, range: 300, h: 60, knock: 25, speed: 620, oy });
+      return {
+        mp: k(6, 14), pct: k(150, 260), hits: 4, targets: 1,
+        combo: [
+          { move: 'castforward', dur: 0.42, step: -2, strikes: [bolt(0.5, k(150, 260))] },
+          { move: 'castforward', dur: 0.46, step: -2, strikes: [bolt(0.32, k(100, 170), -4), bolt(0.66, k(100, 170), 4)] },
+          { move: 'castspin', dur: 0.62, step: -4, finisher: true, strikes: [{ at: 0.55, shot: 'bloombolt', magic: true, pct: k(220, 360), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 700, knock: 180, launch: 120, big: true, stop: 0.06, shake: 2 }] },
+        ],
+      };
+    },
   }),
-  sparkburst: skill({
-    id: 'sparkburst', name: 'Arcane Burst', job: 'mage', type: 'magic', fx: 'burst', school: 'arcane',
-    desc: 'Detonate a ring of runes that hits a group in front of you.',
-    at: (lv, m) => ({ mp: lerp(12, 28, lv, m), power: lerp(95, 175, lv, m), hits: 1, targets: lerp(4, 6, lv, m), range: { w: 190, h: 90 } }),
+  petalstorm: skill({
+    id: 'petalstorm', name: 'Petal Storm', job: 'mage', type: 'attack', fx: 'burst', icon: 'petalstorm', school: 'bloom',
+    desc: 'Raise a whirling storm of petals over the monsters ahead: it cuts them four times, drawing them together, then flings them away.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 8);
+      const cut = (at) => ({ at, magic: true, pct: k(70, 120), reach: 230, h: 120, targets, knock: 0, pull: 40, quiet: true, stop: 0.02 });
+      return {
+        mp: k(12, 26), pct: k(70, 120), hits: 4, targets,
+        combo: [{ move: 'castspin', dur: 1, step: -2, strikes: [
+          { ...cut(0.3), burst: 'petalstorm', burstAt: 0.55 }, cut(0.45), cut(0.6),
+          { ...cut(0.75), pull: 0, knock: 180, launch: 160, big: true, stop: 0.06, shake: 2 },
+        ] }],
+      };
+    },
   }),
-  blink: skill({
-    id: 'blink', name: 'Blink', job: 'mage', type: 'blink', fx: 'blink', maxLevel: 10, school: 'arcane',
-    desc: 'Vanish in a flash and reappear a short way ahead. Monsters lose track of you for a moment.',
-    at: (lv, m) => ({ mp: lerp(10, 6, lv, m), distance: lerp(80, 150, lv, m) }),
+  healingbloom: skill({
+    id: 'healingbloom', name: 'Healing Bloom', job: 'mage', type: 'attack', fx: 'heal', icon: 'healingbloom', school: 'bloom',
+    desc: 'A flower of light opens at your feet: it heals you and the party around you, and its petals cut the monsters close by.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 30), pct: k(80, 140), hits: 1, targets: 6,
+        combo: [{ move: 'pray', dur: 0.7, step: 0, strikes: [{ at: 0.5, magic: true, pct: k(80, 140), reach: 130, h: 120, around: true, targets: 6, knock: 60, heal: lerpf(0.15, 0.35, lv, m), healR: 260, burst: 'healbloom', burstAt: 0, quiet: true }] }],
+      };
+    },
   }),
-  manashield: skill({
-    id: 'manashield', name: 'Mana Shield', job: 'mage', type: 'buff', fx: 'shield', school: 'arcane',
-    desc: 'Part of the damage you take comes out of MP instead.',
-    at: (lv, m) => ({ mp: lerp(10, 25, lv, m), duration: lerp(60, 180, lv, m), buff: { manaShield: lerpf(0.3, 0.8, lv, m) } }),
-  }),
-  arcanemind: skill({
-    id: 'arcanemind', name: 'Arcane Mind', job: 'mage', type: 'passive', fx: null,
-    desc: 'Raises max MP and MP recovery.',
-    at: (lv, m) => ({ passive: { maxMpPct: lerpf(0.03, 0.3, lv, m), mpRegen: lerp(2, 24, lv, m) } }),
-  }),
-  // Support: mages are the healers of a dungeon group.
-  mend: skill({
-    id: 'mend', name: 'Mend', job: 'mage', type: 'heal', fx: 'heal', school: 'holy', lock: 0.3,
-    desc: 'Restore HP to you and every party member around you.',
-    at: (lv, m) => ({ mp: lerp(10, 24, lv, m), healPct: lerpf(0.12, 0.32, lv, m), power: 0, hits: 1, targets: 0, range: { w: 440, h: 160, around: true } }),
-  }),
-  renew: skill({
-    id: 'renew', name: 'Renew', job: 'mage', type: 'buff', fx: 'buff', icon: 'renew', school: 'holy', party: true,
-    desc: 'A soothing glow on you and the party around you that restores HP every second.',
-    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), duration: lerp(15, 30, lv, m), buff: { regenPct: lerpf(0.015, 0.04, lv, m) }, range: { w: 440, h: 160, around: true } }),
-  }),
-  barrier: skill({
-    id: 'barrier', name: 'Arcane Barrier', job: 'mage', type: 'buff', fx: 'shield', school: 'arcane', party: true,
-    desc: 'Wrap you and the party around you in a bubble that soaks up damage until it pops.',
+  bloombarrier: skill({
+    id: 'bloombarrier', name: 'Bloom Barrier', job: 'mage', type: 'buff', fx: 'shield', icon: 'bloombarrier', school: 'bloom', party: true,
+    desc: 'Wrap you and the party around you in a bud of petals that soaks up damage until it bursts.',
     at: (lv, m) => ({ mp: lerp(14, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { barrier: lerpf(0.12, 0.35, lv, m) }, range: { w: 440, h: 160, around: true } }),
   }),
-  revive: skill({
-    id: 'revive', name: 'Revive', job: 'mage', type: 'revive', fx: 'heal', icon: 'revive', school: 'holy', maxLevel: 10, lock: 0.6,
+  petalblink: skill({
+    id: 'petalblink', name: 'Blink', job: 'mage', type: 'attack', fx: 'blink', icon: 'petalblink', maxLevel: 10, school: 'bloom', movement: true,
+    desc: 'Scatter into petals and gather again a long way ahead. Nothing touches you on the way.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: 0, hits: 0, targets: 0,
+        combo: [{ move: 'vanish', dur: 0.34, step: k(120, 180), carry: 0.3, guard: 0.4, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
+      };
+    },
+  }),
+  rebloom: skill({
+    id: 'rebloom', name: 'Rebloom', job: 'mage', type: 'revive', fx: 'heal', icon: 'rebloom', school: 'bloom', maxLevel: 10, lock: 0.6,
     desc: 'Get a fallen party member nearby back on their feet, even mid-fight.',
     at: (lv, m) => ({ mp: lerp(40, 22, lv, m), healPct: lerpf(0.3, 0.7, lv, m), range: { w: 300, h: 140, around: true } }),
+  }),
+  spellmastery: skill({
+    id: 'spellmastery', name: 'Spell Mastery', job: 'mage', type: 'passive', fx: null, icon: 'spellmastery',
+    desc: 'Steadier spells and more magic attack.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.45, lv, m), matk: lerp(2, 20, lv, m) } }),
+  }),
+  blossomheart: skill({
+    id: 'blossomheart', name: 'Blossom Heart', job: 'mage', type: 'passive', fx: null, icon: 'blossomheart',
+    desc: 'Sturdier and steadier: more max HP and MP, and faster HP recovery.',
+    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.15, lv, m), maxMpPct: lerpf(0.03, 0.15, lv, m), restRegen: lerp(2, 20, lv, m) } }),
+  }),
+  gardenoflight: skill({
+    id: 'gardenoflight', name: 'Garden of Light', job: 'mage', type: 'attack', fx: 'heal', icon: 'gardenoflight', school: 'bloom', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Bloom, and spends it. Raise your wand and a garden springs up under the monsters ahead: a giant flower of light blooms and bursts through them, and its petals rain down healing on the party.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
+        combo: [{ move: 'castup', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.15, pct: 0, reach: 0, h: 0, targets: 0, burst: 'gardenbud', burstAt: 0, quiet: true, gauge: 0 },
+          { at: 0.5, magic: true, pct: k(150, 260), reach: 240, h: 150, targets, knock: 40, launch: 200, quiet: true, stop: 0.04, gauge: 0 },
+          { at: 0.7, magic: true, pct: k(420, 720), reach: 260, h: 160, targets, knock: 300, launch: 380, burst: 'gardenbloom', burstAt: 0.55, big: true, stop: 0.15, shake: 7, heal: 0.4, healR: 400, gauge: 0 },
+        ] }],
+      };
+    },
   }),
 
   // ---------- Archer (warm gold and sky blue: a hawk, its feathers, gold arrows) ----------
@@ -811,172 +862,6 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Stormfrost Wizard (ice & lightning) ----------
-  ilmastery: skill({
-    id: 'ilmastery', name: 'Stormfrost Mastery', job: 'ilwizard', type: 'passive', fx: null,
-    desc: 'Steadier spells and more magic attack.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.6, lv, m), matk: lerp(2, 20, lv, m) } }),
-  }),
-  coldbeam: skill({
-    id: 'coldbeam', name: 'Cold Beam', job: 'ilwizard', type: 'magic', fx: 'icebeam', school: 'ice',
-    desc: 'Launch a spear of ice that freezes the monster solid. Frozen monsters can\'t move or hurt you.',
-    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(190, 330, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true, freeze: lerpf(1.5, 3, lv, m) }),
-  }),
-  thunderbolt: skill({
-    id: 'thunderbolt', name: 'Thunder Bolt', job: 'ilwizard', type: 'magic', fx: 'thunder', school: 'lightning', lock: 0.5,
-    desc: 'Call jagged lightning down on every monster in front of you.',
-    at: (lv, m) => ({ mp: lerp(18, 36, lv, m), power: lerp(130, 250, lv, m), hits: 1, targets: 6, range: { w: 260, h: 120 }, delay: 0.15 }),
-  }),
-  stormfocus: skill({
-    id: 'stormfocus', name: 'Storm Focus', job: 'ilwizard', type: 'buff', fx: 'buff', icon: 'storm', school: 'lightning',
-    desc: 'Charge yourself with static: more magic attack and faster casting.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { matk: lerp(4, 22, lv, m), attackSpeed: lerpf(0.05, 0.2, lv, m) } }),
-  }),
-
-  // ---------- Venomflame Wizard (fire & poison) ----------
-  firemastery: skill({
-    id: 'firemastery', name: 'Venomflame Mastery', job: 'fpwizard', type: 'passive', fx: null,
-    desc: 'Steadier spells and more magic attack.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.6, lv, m), matk: lerp(2, 20, lv, m) } }),
-  }),
-  fireball: skill({
-    id: 'fireball', name: 'Fireball', job: 'fpwizard', type: 'magic', fx: 'fire', school: 'fire',
-    desc: 'Hurl a roaring fireball that explodes on the nearest monster.',
-    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(210, 370, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
-  }),
-  poisonmist: skill({
-    id: 'poisonmist', name: 'Poison Mist', job: 'fpwizard', type: 'magic', fx: 'mist', school: 'poison', lock: 0.5,
-    desc: 'Exhale a choking green mist. Everything caught in it is poisoned and keeps taking damage.',
-    at: (lv, m) => ({
-      mp: lerp(18, 36, lv, m), power: lerp(60, 120, lv, m), hits: 1, targets: 6, range: { w: 240, h: 110 }, delay: 0.2,
-      poison: { pct: lerpf(0.25, 0.5, lv, m), secs: lerp(4, 8, lv, m) },
-    }),
-  }),
-  meditate: skill({
-    id: 'meditate', name: 'Meditate', job: 'fpwizard', type: 'buff', fx: 'buff', school: 'fire',
-    desc: 'Raises magic attack for a while.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { matk: lerp(5, 30, lv, m) } }),
-  }),
-
-  // ---------- Cleric (holy) ----------
-  holymastery: skill({
-    id: 'holymastery', name: 'Holy Mastery', job: 'cleric', type: 'passive', fx: null,
-    desc: 'Steadier spells and more magic attack.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.6, lv, m), matk: lerp(2, 16, lv, m) } }),
-  }),
-  bless: skill({
-    id: 'bless', name: 'Bless', job: 'cleric', type: 'buff', fx: 'buff', school: 'holy',
-    desc: 'Raises defense, accuracy, and avoid.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 200, lv, m), buff: { wdef: lerp(5, 30, lv, m), acc: lerp(5, 25, lv, m), eva: lerp(5, 25, lv, m) } }),
-  }),
-  heal: skill({
-    id: 'heal', name: 'Heal', job: 'cleric', type: 'heal', fx: 'heal', school: 'holy', lock: 0.5,
-    desc: 'Restore HP and burn nearby monsters with holy light.',
-    at: (lv, m) => ({ mp: lerp(16, 34, lv, m), healPct: lerpf(0.15, 0.5, lv, m), power: lerp(70, 180, lv, m), hits: 1, targets: 5, range: { w: 220, h: 120, around: true } }),
-  }),
-  holybolt: skill({
-    id: 'holybolt', name: 'Holy Bolt', job: 'cleric', type: 'magic', fx: 'holy', school: 'holy',
-    desc: 'A spear of light at the nearest monster.',
-    at: (lv, m) => ({ mp: lerp(12, 26, lv, m), power: lerp(210, 370, lv, m), hits: 1, targets: 1, range: { w: 300, h: 60 }, projectile: true }),
-  }),
-
-  // ---------- Stormfrost Archmage (third job) ----------
-  ilarchmastery: skill({
-    id: 'ilarchmastery', name: 'Archmage Mastery', job: 'ilarchmage', type: 'passive', fx: null,
-    desc: 'Steadier, sharper spells: more mastery, magic attack, and critical damage.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 40, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
-  }),
-  chainlightning: skill({
-    id: 'chainlightning', name: 'Chain Lightning', job: 'ilarchmage', type: 'magic', fx: 'chain', school: 'lightning', lock: 0.55,
-    desc: 'A bolt of lightning that leaps from monster to monster, striking up to six.',
-    at: (lv, m) => ({ mp: lerp(24, 48, lv, m), power: lerp(230, 400, lv, m), hits: 1, targets: 6, range: { w: 380, h: 160 }, delay: 0.05, chain: true }),
-  }),
-  icespire: skill({
-    id: 'icespire', name: 'Glacier Spikes', job: 'ilarchmage', type: 'magic', fx: 'icespire', school: 'ice', lock: 0.6,
-    desc: 'Giant spikes of ice burst out of the ground, impaling and freezing a whole crowd.',
-    at: (lv, m) => ({ mp: lerp(28, 52, lv, m), power: lerp(200, 360, lv, m), hits: 1, targets: 8, range: { w: 300, h: 120 }, delay: 0.25, freeze: lerpf(2, 4, lv, m) }),
-  }),
-  frostsprite: skill({
-    id: 'frostsprite', name: 'Frost Sprite', job: 'ilarchmage', type: 'buff', fx: 'buff', icon: 'sprite', school: 'ice', lock: 0.8,
-    desc: 'Summon a little ice spirit that floats beside you and pelts monsters with freezing shards.',
-    at: (lv, m) => ({
-      mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
-      summon: { art: 'sprite', every: 2.2, power: lerp(150, 290, lv, m), targets: 5, range: { w: 420, h: 220, around: true }, fx: 'icebeam', freeze: 1 },
-    }),
-  }),
-  tempest: skill({
-    id: 'tempest', name: 'Glacial Tempest', job: 'ilarchmage', type: 'magic', fx: 'tempest', school: 'ice', ultimate: true, lock: 1.1,
-    desc: 'The sky freezes over: a blizzard of ice lances and lightning crashes onto up to 15 monsters, twice, freezing them all.',
-    at: (lv, m) => ({
-      mp: lerp(70, 120, lv, m), power: lerp(280, 510, lv, m), hits: 2, targets: 15,
-      range: { w: 620, h: 320, around: true }, critRate: lerpf(0.05, 0.15, lv, m), delay: 0.4, freeze: 3,
-    }),
-  }),
-
-  // ---------- Venomflame Archmage (third job) ----------
-  infernomastery: skill({
-    id: 'infernomastery', name: 'Inferno Mastery', job: 'fparchmage', type: 'passive', fx: null,
-    desc: 'Steadier, fiercer spells: more mastery, magic attack, and critical damage.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 40, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
-  }),
-  toxicblaze: skill({
-    id: 'toxicblaze', name: 'Plague Inferno', job: 'fparchmage', type: 'magic', fx: 'toxicblaze', school: 'poison', lock: 0.6,
-    desc: 'A roaring wall of venom-green fire sweeps forward, burning and poisoning everything in its path.',
-    at: (lv, m) => ({
-      mp: lerp(28, 52, lv, m), power: lerp(190, 340, lv, m), hits: 1, targets: 8, range: { w: 300, h: 120 }, delay: 0.2,
-      poison: { pct: lerpf(0.3, 0.6, lv, m), secs: lerp(5, 9, lv, m) },
-    }),
-  }),
-  salamander: skill({
-    id: 'salamander', name: 'Venom Salamander', job: 'fparchmage', type: 'buff', fx: 'buff', icon: 'salamander', school: 'fire', lock: 0.8,
-    desc: 'Summon a fiery salamander that rides beside you and spits poisoned fire at nearby monsters.',
-    at: (lv, m) => ({
-      mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
-      summon: { art: 'salamander', every: 2.4, power: lerp(160, 300, lv, m), targets: 5, range: { w: 420, h: 220, around: true }, fx: 'venomfire', poison: { pct: 0.3, secs: 4 } },
-    }),
-  }),
-  meteor: skill({
-    id: 'meteor', name: 'Meteor Shower', job: 'fparchmage', type: 'magic', fx: 'meteor', school: 'fire', ultimate: true, lock: 1.1,
-    desc: 'Rain blazing meteors on up to 15 monsters across a huge area, twice.',
-    at: (lv, m) => ({
-      mp: lerp(70, 120, lv, m), power: lerp(290, 520, lv, m), hits: 2, targets: 15,
-      range: { w: 620, h: 320, around: true }, critRate: lerpf(0.05, 0.15, lv, m), delay: 0.4,
-    }),
-  }),
-
-  // ---------- Bishop (third job) ----------
-  seraphmastery: skill({
-    id: 'seraphmastery', name: 'Divine Mastery', job: 'bishop', type: 'passive', fx: null,
-    desc: 'Steadier, brighter spells: more mastery, magic attack, and critical rate.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.7, lv, m), matk: lerp(10, 36, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
-  }),
-  shiningray: skill({
-    id: 'shiningray', name: 'Shining Ray', job: 'bishop', type: 'magic', fx: 'shiningray', school: 'holy', lock: 0.55,
-    desc: 'A blinding cross of light bursts out around you, striking every monster near it.',
-    at: (lv, m) => ({ mp: lerp(26, 50, lv, m), power: lerp(210, 370, lv, m), hits: 2, targets: 8, range: { w: 300, h: 160, around: true }, delay: 0.2 }),
-  }),
-  sanctuary: skill({
-    id: 'sanctuary', name: 'Sanctuary', job: 'bishop', type: 'buff', fx: 'shield', school: 'holy', lock: 0.6,
-    desc: 'A halo of light: huge defense, avoid, and max HP.',
-    at: (lv, m) => ({ mp: lerp(40, 80, lv, m), duration: lerp(60, 240, lv, m), buff: { wdef: lerp(30, 120, lv, m), eva: lerp(10, 40, lv, m), maxHpPct: lerpf(0.1, 0.4, lv, m) } }),
-  }),
-  guardianangel: skill({
-    id: 'guardianangel', name: 'Guardian Angel', job: 'bishop', type: 'buff', fx: 'buff', icon: 'angel', school: 'holy', lock: 0.8,
-    desc: 'Summon an angel that floats beside you and strikes nearby monsters with light.',
-    at: (lv, m) => ({
-      mp: lerp(60, 110, lv, m), duration: lerp(60, 180, lv, m), buff: {},
-      summon: { art: 'angel', every: 2.2, power: lerp(150, 280, lv, m), targets: 6, range: { w: 420, h: 220, around: true }, fx: 'holy' },
-    }),
-  }),
-  judgment: skill({
-    id: 'judgment', name: 'Radiant Judgment', job: 'bishop', type: 'magic', fx: 'judgment', school: 'holy', ultimate: true, lock: 1.1,
-    desc: 'Pillars of holy light strike up to 15 monsters across a huge area, twice. Strong criticals.',
-    at: (lv, m) => ({
-      mp: lerp(70, 120, lv, m), power: lerp(280, 500, lv, m), hits: 2, targets: 15,
-      range: { w: 620, h: 320, around: true }, critRate: lerpf(0.1, 0.25, lv, m), delay: 0.4,
-    }),
-  }),
-
   // ---------- Game Master (hidden) ----------
   gmsmite: skill({
     id: 'gmsmite', name: 'GM Smite', job: 'gamemaster', type: 'magic', fx: 'judgment', maxLevel: 1,
@@ -1001,19 +886,12 @@ const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
-  magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
-  mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
+  petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',
   twinshot: 'rapid', arrowfan: 'draw', huntersfocus: 'cheer', flipshot: 'flip', arrowshower: 'skyshot', falcondive: 'falcondive',
   galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   crowcombo: 'thrust', markdeath: 'throw', vanish: 'vanish', poisonblade: 'cheer', bloodmoonrequiem: 'assassinate',
   starstorm: 'barrage', giantshuriken: 'throw', starmark: 'throw', shadowshuriken: 'cheer', galaxyfall: 'moonthrow',
-  coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
-  fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',
-  bless: 'pray', heal: 'pray', holybolt: 'castforward',
-  chainlightning: 'castforward', icespire: 'slam', frostsprite: 'castup', tempest: 'castup',
-  toxicblaze: 'castspin', salamander: 'castup', meteor: 'castup',
-  shiningray: 'castspin', sanctuary: 'pray', guardianangel: 'pray', judgment: 'castup',
   gmsmite: 'castup', gmhaste: 'cheer',
 };
 for (const [id, move] of Object.entries(MOVES_BY_SKILL)) SKILLS[id].anim = move;

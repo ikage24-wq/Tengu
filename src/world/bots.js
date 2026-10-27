@@ -88,18 +88,15 @@ function rollLevel(pro, rng) {
   return Math.floor(between(40, 56, rng));
 }
 
-// The job path a character of this level would be on. Mages, warriors and archers advance past
-// their first job (warriors, archers and thieves stop at their level 30 path for now).
+// The job path a character of this level would be on. Warriors, archers and thieves advance to a
+// level 30 path; mages stay Mages until their paths are remade.
 function jobPath(level, rng) {
   if (level < 10) return ['novice'];
   const first = pick(['warrior', 'mage', 'archer', 'thief'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['ranger', 'sniper'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['assassin', 'nightlord'], rng)];
-  if (first !== 'mage' || level < 30) return [first];
-  const second = pick(['ilwizard', 'fpwizard', 'cleric'], rng);
-  if (level < 50) return [first, second];
-  return [first, second, { ilwizard: 'ilarchmage', fpwizard: 'fparchmage', cleric: 'bishop' }[second]];
+  return [first];
 }
 
 const BUILDS = [

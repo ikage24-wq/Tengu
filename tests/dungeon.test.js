@@ -30,7 +30,7 @@ function heroAt(rng, level, jobs) {
 
 test('warriors tank, mages heal, everyone else deals damage', () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
-  for (const job of ['mage', 'cleric', 'bishop', 'fpwizard']) assert.equal(roleOf(job, 'mage'), 'healer');
+  assert.equal(roleOf('mage', 'mage'), 'healer');
   for (const [job, fam] of [['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
   assert.equal(roleOf('novice', 'beginner'), null);
 });
@@ -171,7 +171,7 @@ test("a mage's support skills heal, shield, and revive the group", async () => {
   const { hurtMember } = await import('../src/world/dungeon.js');
   const rng = seeded(21);
   const world = heroAt(rng, 12, ['mage']);
-  Object.assign(world.char.skills, { mend: 10, renew: 5, barrier: 5, revive: 5 });
+  Object.assign(world.char.skills, { healingbloom: 10, bloombarrier: 5, rebloom: 5 });
   world.char.mp = 999;
   assert.equal(startRun(world), null);
   assert.equal(world.dungeon.roles.you, 'healer');
@@ -184,36 +184,31 @@ test("a mage's support skills heal, shield, and revive the group", async () => {
     world.lockTimer = 0;
     world.skillReadyAt = 0;
   };
-  // Mend: everyone around you gets HP back.
+  // Healing Bloom: everyone around you gets HP back as the flower opens (not on the press).
   for (const g of bots) g.bot.hp = Math.round(g.bot.stats.maxHp / 2);
   ready();
-  assert.ok(cast(world, 'mend').ok);
+  assert.ok(cast(world, 'healingbloom').ok);
+  assert.ok(bots.every((g) => g.bot.hp === Math.round(g.bot.stats.maxHp / 2)), 'not yet');
+  for (let i = 0; i < 30; i++) updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: true });
   for (const g of bots) assert.ok(g.bot.hp > g.bot.stats.maxHp / 2, `${g.name} healed`);
-  // Arcane Barrier: a bubble on everyone that soaks up damage first.
+  // Bloom Barrier: a bud of petals on everyone that soaks up damage first.
   ready();
-  assert.ok(cast(world, 'barrier').ok);
+  assert.ok(cast(world, 'bloombarrier').ok);
   const tank = bots.find((g) => g.role === 'tank');
-  const shield = tank.bot.buffs.barrier.shield;
-  assert.ok(shield > 0 && world.char.buffs.barrier.shield > 0);
+  const shield = tank.bot.buffs.bloombarrier.shield;
+  assert.ok(shield > 0 && world.char.buffs.bloombarrier.shield > 0);
   tank.bot.hp = tank.bot.stats.maxHp;
   hurtMember(world, tank, 1, 0, { pierce: true });
   assert.equal(tank.bot.hp, tank.bot.stats.maxHp, 'absorbed');
-  assert.equal(tank.bot.buffs.barrier.shield, shield - 1);
-  // Revive: nobody to raise, then a fallen tank gets back up.
+  assert.equal(tank.bot.buffs.bloombarrier.shield, shield - 1);
+  // Rebloom: nobody to raise, then a fallen tank gets back up.
   ready();
-  assert.equal(cast(world, 'revive').reason, 'noone');
+  assert.equal(cast(world, 'rebloom').reason, 'noone');
   tank.bot.down = true;
   tank.bot.hp = 0;
   ready();
-  assert.ok(cast(world, 'revive').ok);
+  assert.ok(cast(world, 'rebloom').ok);
   assert.ok(!tank.bot.down && tank.bot.hp > 0);
-  // Renew: HP comes back every second.
-  ready();
-  assert.ok(cast(world, 'renew').ok);
-  const dps = bots.find((g) => g.role === 'dps');
-  dps.bot.hp = 50;
-  for (let i = 0; i < 70; i++) updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: true });
-  assert.ok(dps.bot.hp > 50, 'renewed');
 });
 
 test("a warrior's tank skills: War Cry taunts and guards, Iron Guard braces", async () => {

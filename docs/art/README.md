@@ -206,7 +206,12 @@ carry an improvement across every part of the game it applies to.
     trailing indigo streaks, a gold star in an indigo ring on every hit, stuck stars that glow and
     burst, and a great five-pointed constellation that falls). Crows only read once they were big,
     near-black with a gold beak; small violet ones were blobs.
-  - Mages, monsters, and buffs' lasting looks are still code-drawn and need the same pass.
+  - The Mage (first job) is rose pink and mint: pink orbs wrapped in turning petals with petal
+    trails, a flower that pops open and scatters on every hit, a whirling storm of petals on mint
+    wind, a mint flower of light with a rising column for every heal (this replaced the old
+    code-drawn heal sparkles everywhere, revives and GM heals too), a bud of petals for the
+    barrier, and a giant flower of light over a ring of little flowers for Garden of Light.
+  - Monsters and some buffs' lasting looks are still code-drawn and need the same pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

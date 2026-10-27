@@ -54,25 +54,16 @@ to clear it.
 ## Systems
 
 - **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (each instructor lives in their
-  job's home town). Every first job has a movement skill (Charge, Blink, Backflip, Shadow Step).
-  The Mage advances further: three branches at level 30, and one third job per
-  branch at level 50 with a signature skill, a summon, and a screen-wide ultimate that hits up to
-  15 monsters twice. The Mage has the least HP in the game, but heals and shields the party. The
-  Warrior picks one of two paths at level 30 (below), after passing Brann's trial. Archer and Thief
-  stop at their first job for now.
-
-  | Class | Branch (30) | Third job (50) | Plays like | Ultimate |
-  |---|---|---|---|---|
-  | Mage | Stormfrost Wizard | Stormfrost Archmage | Ice freezes monsters solid, lightning chains through crowds | Glacial Tempest |
-  | Mage | Venomflame Wizard | Venomflame Archmage | Fire bursts, and poison keeps damaging monsters after | Meteor Shower |
-  | Mage | Cleric | Bishop | Heals, buffs, holy light; the sturdiest mage | Radiant Judgment |
+  job's home town). Every first job has a movement skill (Shoulder Charge, Blink, Backflip Shot,
+  Shadow Step). The Warrior, Archer and Thief each pick one of two paths at level 30 (below), after
+  their instructor's trial. The Mage has the least HP in the game, but heals and shields the
+  party; her paths are being remade, so she stays a Mage for now.
 
   Monsters can be **frozen** (in a block of ice) or **stunned** (seeing stars) so they can't move or
   hurt you, and **poisoned** (green) or **bleeding** (red) so they take damage every second. Spells
   cast over a magic circle in their school's color; big weapon skills flare with a burst of
-  power. Old Pyromancer, Inferno Sage, and Seraph saves move to the new mage jobs, saves in a
-  retired warrior, archer, or thief job return to that first job, and skills that were removed
-  give their SP back.
+  power. Saves in a retired job return to that first job, and skills that were removed give their
+  SP back.
 - **Stats** — STR, DEX, INT, LUK with 5 AP per level (an Auto button spends them for your job).
   Damage uses a primary and secondary stat per weapon type, mastery raises your minimum damage,
   magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.
@@ -130,6 +121,21 @@ to clear it.
   Eye** are passives. Her finisher, **Falcon Dive**, needs full Momentum and spends it: she raises
   her bow to the sky, a great golden falcon of light wheels down, and she looses it through the
   whole line with a storm of feathers in its wake.
+- **Mage** (rose pink and mint: flowers, petals and light) — damage and support at once, and the
+  healer of any dungeon group. With a wand or staff she has her own spell combo (a petal bolt, a
+  second, then a blossom bolt that bursts through the line) and her own command spells (a bolt up
+  at fliers, petal bolts from a float in the air, a bolt out of a glide). **Bloom** is her gauge (a
+  flower): spells that land and heals build it. Full, she is in **Full Bloom**: every damage spell
+  also heals the allies near where it lands. Skills: **Petal Bolt** (a three-cast combo), **Petal
+  Storm** (a whirling storm of petals over the monsters ahead), **Healing Bloom** (a flower of light
+  at her feet heals her and the party around her and cuts the monsters close by), **Bloom Barrier**
+  (a bud of petals on her and the party that soaks up damage), **Blink** (scatter into petals and
+  gather again ahead, untouchable), **Rebloom** (raise a fallen party member), **Spell Mastery** and
+  **Blossom Heart**, and the finisher **Garden of Light** (needs full Bloom and spends it: a garden
+  springs up under the monsters, a giant flower of light bursts through them, and its petals heal
+  the party). Her spells hit with magic attack (INT). The Mage's later paths (the Wizards, the
+  Cleric and their level 50 jobs) are retired while they're remade; mages on them are back to
+  the first-job Mage, with their skill points returned.
 - **Thief** (violet and midnight with moonlight silver: crescent moons and smoke) — the first job
   builds the base for both of the Thief's later paths, so its book is a choice: put points into
   the dagger skills, the gauntlet skills, or both. With a dagger she has her own basic combo (a
@@ -286,11 +292,9 @@ to clear it.
   telegraphs a ground slam.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
-  dagger toss, gauntlet flick). Advanced jobs get a quiet aura that fades in while idle: a soft glow at
-  the feet in the job's color with a few drifting snowflakes, embers, or sparkles, plus a slowly
-  turning rune ring for the Archmages (crackling with lightning for Stormfrost, ringed with
-  dancing flames for Venomflame) and a halo and angel wings for the Bishop. Elowen shows off the Bishop
-  aura in Moonleaf Grove.
+  dagger toss, gauntlet flick). The level 30 paths get a quiet aura that fades in while idle in the
+  path's own art (diamonds of light for the Paladin, a rose ring for the Berserker, a curl of wind
+  for the Ranger, a rose ring for the Sniper).
 - **Interface** — a candy-pastel UI. Each window has its own color and icon badge (peach Bag,
   pink Stats, lavender Skills, mint Quests, sky-blue World Map) on a scalloped title ribbon, and
   pops open with a little bounce. The HUD has a portrait medallion with your hero's face and
@@ -448,11 +452,11 @@ to clear it.
     **Night Lord Mastery**, and the finisher **Galaxy Fall** (needs full Starlight: stars join into
     a giant constellation over the monsters, it falls on all of them and bursts in a ring of
     starlight).
-- **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
-  **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
-  around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in
-  a bubble that soaks up damage until it pops; and **Revive** gets a fallen party member nearby back
-  up, even mid-fight. Outside a dungeon they work on you.
+- **Mage support** — mages are the healers: **Healing Bloom** heals you and every party member
+  around you; **Bloom Barrier** wraps you and the party around you in a bud of petals that soaks up
+  damage until it bursts; **Rebloom** gets a fallen party member nearby back up, even mid-fight;
+  and Full Bloom turns every damage spell into a heal for the allies near where it lands. Outside
+  a dungeon they work on you.
 - **HD graphics** — on by default (Options: Display). Everything in the world is placed on the
   screen's own pixels, so the camera and everyone in it glide instead of stepping, while the art
   itself stays crisp pixel art. Each map gets its own lighting: warm light and slanting sun rays

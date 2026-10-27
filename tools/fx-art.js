@@ -37,6 +37,9 @@
     // The Night Lord: deep indigo, and starlight gold.
     night: ['#ffffff', '#dfe2ff', '#8e96ff', '#5452d6', '#24206a'],
     starlight: ['#ffffff', '#fff6cc', '#ffe17a', '#f2b544', '#8a5a2a'],
+    // The Mage: rose pink, and mint.
+    bloom: ['#ffffff', '#ffe2ef', '#ffa6cc', '#f26aa4', '#a0386e'],
+    mint: ['#ffffff', '#dcfff2', '#8ef0c8', '#40c898', '#1f7a6a'],
   };
   const DUST = ['#ffffff', '#fff6ee', '#f2e2d6', '#d9bdc4', '#9a7a9a'];
   const ROCK = ['#ffffff', '#ece4ff', '#c8b8ec', '#9a88cc', '#6a5aa0'];
@@ -2201,6 +2204,230 @@
     starburst(ctx, PAL.starlight, 0, 0, 40, 8, 371, { inner: 0.3 });
   });
 
+  // ---------- The Mage (rose pink and mint: flowers, petals and light) ----------
+  // A petal: a soft rounded teardrop with a notch at its tip, pink with a lighter middle, turned
+  // to `a`.
+  function petal(ctx, x, y, len, a, pal = PAL.bloom) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const w = len * 0.42;
+    const shape = (k) => {
+      ctx.beginPath();
+      ctx.moveTo(-len * 0.5 * k, 0);
+      ctx.bezierCurveTo(-len * 0.2 * k, -w * k, len * 0.45 * k, -w * k, len * 0.5 * k, -w * 0.15 * k);
+      ctx.lineTo(len * 0.36 * k, 0);
+      ctx.lineTo(len * 0.5 * k, w * 0.15 * k);
+      ctx.bezierCurveTo(len * 0.45 * k, w * k, -len * 0.2 * k, w * k, -len * 0.5 * k, 0);
+      ctx.closePath();
+    };
+    shape(1);
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = pal[4];
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fillStyle = pal[2];
+    ctx.fill();
+    shape(0.7);
+    ctx.fillStyle = pal[1];
+    ctx.fill();
+    shape(0.35);
+    ctx.fillStyle = pal[0];
+    ctx.fill();
+    ctx.restore();
+  }
+  // A flower seen from the front: `n` petals round a mint-and-gold heart, opened `k` (0 a bud).
+  function flower(ctx, x, y, r, k, rot = 0, pal = PAL.bloom, n = 5) {
+    for (let j = 0; j < n; j++) {
+      const a = rot + (j / n) * TAU - Math.PI / 2;
+      petal(ctx, x + Math.cos(a) * r * 0.5 * k, y + Math.sin(a) * r * 0.5 * k, r * (0.6 + 0.4 * k), a, pal);
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.3, 0, TAU);
+    ctx.fillStyle = PAL.mint[4];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.24, 0, TAU);
+    ctx.fillStyle = '#ffe17a';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - r * 0.07, y - r * 0.07, r * 0.11, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+  E.slashbloom = swipe(PAL.bloom, { seed: 23 });
+  E.streakbloom = streaks(PAL.bloom);
+  // A petal bolt in flight, looping: a pink orb with petals turning round it.
+  E.petalorb = {
+    w: 140, h: 140, n: 4, fps: 14, px: 70, py: 70, loop: true,
+    draw(ctx, i) {
+      const t = (i / 4) * TAU;
+      for (let j = 0; j < 4; j++) {
+        const a = t + (j / 4) * TAU;
+        petal(ctx, 70 + Math.cos(a) * 34, 70 + Math.sin(a) * 34, 30, a + Math.PI / 2);
+      }
+      ctx.beginPath();
+      ctx.arc(70, 70, 24, 0, TAU);
+      ctx.fillStyle = PAL.bloom[4];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(70, 70, 21, 0, TAU);
+      ctx.fillStyle = PAL.bloom[2];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(66, 66, 13, 0, TAU);
+      ctx.fillStyle = PAL.bloom[1];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(63, 63, 6, 0, TAU);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    },
+  };
+  // Petals trailing behind a bolt, looping.
+  E.petaltrail = {
+    w: 180, h: 70, n: 3, fps: 16, px: 170, py: 35, loop: true,
+    draw(ctx, i) {
+      const R = rng(401 + i);
+      speedLine(ctx, PAL.mint, 40, 35, 166, 35, 4);
+      for (let j = 0; j < 4; j++) petal(ctx, 30 + j * 34 + R() * 10, 20 + R() * 30, 22 - j * 2, R() * TAU);
+    },
+  };
+  // A spell landing: a flower pops open on the monster, then its petals scatter and mint
+  // sparkles twinkle.
+  E.bloomhit = {
+    w: 200, h: 200, n: 6, fps: 22, px: 100, py: 100,
+    draw(ctx, i) {
+      const c = 100;
+      if (i <= 2) flower(ctx, c, c, [24, 44, 50][i], [0.2, 0.9, 1][i], i * 0.2);
+      if (i >= 2) {
+        const k = (i - 2) / 3;
+        const R = rng(411);
+        for (let j = 0; j < 7; j++) {
+          const a = (j / 7) * TAU + R() * 0.4;
+          const d = 30 + k * 60;
+          if (i < 5 || j % 2) petal(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d + k * k * 20, 26 * (1 - k * 0.4), a + k * 3);
+        }
+        for (let j = 0; j < 3; j++) sparkle(ctx, PAL.mint, c - 40 + j * 40, c - 40 + (j % 2) * 70, 10 * (1.1 - k * 0.5), j);
+      }
+    },
+  };
+  // A storm of petals (Petal Storm), looping: swirls of mint wind laced with whirling petals.
+  E.petalstorm = {
+    w: 300, h: 220, n: 6, fps: 16, px: 150, py: 200, loop: true,
+    draw(ctx, i) {
+      const t = (i / 6) * TAU;
+      for (let b = 0; b < 3; b++) {
+        ctx.save();
+        ctx.translate(150, 170 - b * 55);
+        ctx.scale(1, 0.38);
+        celCrescent(ctx, PAL.mint, 0, 0, 120 - b * 20, t + b, t + b + 2.2, 16);
+        ctx.restore();
+        for (let j = 0; j < 5; j++) {
+          const a = t * (1 + b * 0.2) + (j / 5) * TAU + b;
+          petal(ctx, 150 + Math.cos(a) * (110 - b * 20), 170 - b * 55 + Math.sin(a) * 30, 26, a * 2);
+        }
+      }
+    },
+  };
+  // Healing light (Healing Bloom, Full Bloom's petals, a heal on the hero): a mint flower of
+  // light opens at the feet, a column of mint light rises with plus-shaped sparkles, then petals.
+  E.healbloom = {
+    w: 220, h: 240, n: 7, fps: 18, px: 110, py: 220,
+    draw(ctx, i) {
+      const c = 110;
+      const g = 210;
+      if (i <= 4) {
+        ctx.save();
+        ctx.translate(c, g);
+        ctx.scale(1, 0.4);
+        flower(ctx, 0, 0, [30, 60, 80, 84, 80][i], [0.3, 0.8, 1, 1, 1][i], i * 0.15, PAL.mint, 6);
+        ctx.restore();
+      }
+      if (i >= 1 && i <= 5) {
+        const h = [0, 100, 170, 190, 180, 120][i];
+        const half = [0, 14, 22, 20, 14, 8][i];
+        inked(ctx, [[c - half, g], [c - half, g - h + half], [c, g - h], [c + half, g - h + half], [c + half, g]], PAL.mint[2], PAL.mint[4], 3);
+        fill(ctx, [[c - half * 0.5, g], [c - half * 0.5, g - h + half], [c, g - h + 4], [c + half * 0.5, g - h + half], [c + half * 0.5, g]], PAL.mint[0]);
+      }
+      const k = i / 6;
+      for (let j = 0; j < 5; j++) {
+        const x = c + (j - 2) * 30;
+        const y = g - 30 - k * 140 - (j % 2) * 30;
+        if (i >= 2) {
+          const r = 9 * (1.1 - k * 0.5);
+          inked(ctx, [[x - r * 0.35, y - r], [x + r * 0.35, y - r], [x + r * 0.35, y - r * 0.35], [x + r, y - r * 0.35], [x + r, y + r * 0.35], [x + r * 0.35, y + r * 0.35], [x + r * 0.35, y + r], [x - r * 0.35, y + r], [x - r * 0.35, y + r * 0.35], [x - r, y + r * 0.35], [x - r, y - r * 0.35], [x - r * 0.35, y - r * 0.35]], j % 2 ? PAL.mint[1] : PAL.bloom[1], PAL.mint[4], 2.5);
+        }
+      }
+      if (i >= 5) for (let j = 0; j < 6; j++) petal(ctx, c + (j - 2.5) * 30, g - 160 + (i - 5) * 30 + (j % 2) * 20, 20, j);
+    },
+  };
+  // A bud of petals closing round the mage (Bloom Barrier), looping: petals curled into a soft
+  // shell, swaying.
+  E.budshield = {
+    w: 200, h: 220, n: 4, fps: 8, px: 100, py: 200, loop: true,
+    draw(ctx, i) {
+      const sway = Math.sin((i / 4) * TAU) * 0.06;
+      for (let j = 0; j < 6; j++) {
+        const side = j % 2 ? 1 : -1;
+        const row = Math.floor(j / 2);
+        const x = 100 + side * (60 - row * 14);
+        const y = 170 - row * 50;
+        petal(ctx, x, y, 90 - row * 14, -Math.PI / 2 + side * (0.35 + row * 0.25) + sway);
+      }
+    },
+  };
+  // A giant flower of light blooming under the monsters (Garden of Light): a bud pushes up, the
+  // great flower bursts open over a ring of little flowers, holds, and blows apart into petals.
+  E.garden = {
+    w: 420, h: 300, n: 9, fps: 14, px: 210, py: 260,
+    draw(ctx, i) {
+      const c = 210;
+      const g = 260;
+      if (i >= 1) for (let j = 0; j < 7; j++) {
+        const x = c + (j - 3) * 56;
+        flower(ctx, x, g - 8 - Math.abs(j - 3) * 2, 20, Math.min(1, (i - 1) / 2), j, j % 2 ? PAL.mint : PAL.bloom, 5);
+      }
+      const open = [0.1, 0.25, 0.6, 1, 1, 1, 0.9, 0, 0][i];
+      const r = [30, 50, 80, 110, 120, 118, 110, 0, 0][i];
+      if (open) {
+        inked(ctx, [[c - 8, g], [c - 6, g - 80], [c + 6, g - 80], [c + 8, g]], PAL.mint[3], PAL.mint[4], 3);
+        flower(ctx, c, g - 120, r, open, i * 0.1, PAL.bloom, 8);
+        if (i >= 3 && i <= 5) for (let j = 0; j < 6; j++) sparkle(ctx, PAL.mint, c + Math.cos(j) * (r + 30), g - 120 + Math.sin(j) * (r + 20), 14, j);
+      }
+      if (i >= 6) {
+        const k = (i - 6) / 2;
+        for (let j = 0; j < 14; j++) {
+          const a = (j / 14) * TAU;
+          const d = 80 + k * 110;
+          petal(ctx, c + Math.cos(a) * d, g - 120 + Math.sin(a) * d * 0.7 + k * 40, 34 * (1 - k * 0.4), a + k * 5, j % 3 ? PAL.bloom : PAL.mint);
+        }
+      }
+    },
+  };
+  // Bloom building, looping: petals drifting up round the mage, a mint sparkle among them.
+  E.bloomaura = {
+    w: 170, h: 220, n: 8, fps: 10, px: 85, py: 210, loop: true,
+    draw(ctx, i) {
+      const R = rng(421);
+      for (let j = 0; j < 6; j++) {
+        const life = (i / 8 + j / 6) % 1;
+        const side = j % 2 ? 1 : -1;
+        const x = 85 + side * (24 + R() * 26) + Math.sin(life * 6 + j) * 10;
+        const y = 200 - life * 170;
+        const k = Math.sin(Math.PI * life);
+        if (k < 0.15) continue;
+        if (j % 3 === 2) sparkle(ctx, PAL.mint, x, y, 9 * k + 2, j);
+        else petal(ctx, x, y, 22 * k + 6, life * 8 + j);
+      }
+    },
+  };
+  // The Mage's emblem: a pink flower on a mint leaf diamond.
+  E.embbloom = emblem(PAL.bloom, (ctx, pal) => {
+    badge(ctx, PAL.mint, [[0, -60], [46, 0], [0, 60], [-46, 0]]);
+    flower(ctx, 0, 0, 44, 1, 0, pal, 5);
+  });
+
   // ---------- Big versions ----------
   // Pixel art can't be blown up without its pixels growing past the sprites', so effects that play
   // large (rings across a whole group, the magic circle, a whirlwind over an area, the ground
@@ -2221,7 +2448,9 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight', 'ringbloom', 'ringmint']) E[`${s}big`] = big(E[s], 2.6);
+  E.gardenbig = big(E.garden, 1.3);
+  E.petalstormbig = big(E.petalstorm, 1.2);
   E.redcrescentbig = big(E.redcrescent, 1.6);
   E.constellationbig = big(E.constellation, 1.3);
   E.crescentbig = big(E.crescent, 1.6);

@@ -25,12 +25,12 @@
 // a Berserker's blow builds (see addRage).
 // Pressing again while a step plays carries on to the next one; wait too long and it starts over.
 
-import { physicalRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
+import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { pickTargets, weaponElement } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
-import { provoke } from './dungeon.js';
+import { provoke, healMembers } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -95,6 +95,8 @@ export const COMBOS = {
 };
 
 export const hasCombo = (weaponType) => Boolean(COMBOS[weaponType]);
+// Whether a basic attack plays a job's own combo (a Mage's wand has no plain combo of its own).
+export const hasPathCombo = (world) => Boolean(PATH_COMBOS[pathOf(world)]);
 
 // The warrior paths' own basic combos. The Paladin: a measured cut behind the shield arm, a shield
 // shove that dazes, a lunging thrust, and a two-handed smite. The Berserker: a huge wound-up
@@ -115,6 +117,12 @@ export const PATH_COMBOS = {
   ],
   // The Thief, by weapon. With a dagger: a stab, a quick slash, then an X-cut that throws them
   // back. With a gauntlet: a star, two stars, then a big spinning moon star through the line.
+  // The Mage: a petal bolt, a second, then a bursting blossom bolt through the line.
+  mage: [
+    { move: 'castforward', dur: 0.44, step: -2, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, pct: 90, range: 280, h: 60, knock: 25, speed: 600 }] },
+    { move: 'castforward', dur: 0.44, step: -2, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, pct: 95, range: 280, h: 60, knock: 25, speed: 600 }] },
+    { move: 'castspin', dur: 0.6, step: -6, finisher: true, strikes: [{ at: 0.55, shot: 'bloombolt', magic: true, pct: 170, range: 300, h: 64, targets: 3, pierce: true, speed: 680, knock: 190, big: true, stop: 0.06, shake: 2 }] },
+  ],
   thiefdagger: [
     { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 58, h: 46, knock: 30, pierce: true }] },
     { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
@@ -169,6 +177,16 @@ export const PATH_COMBOS = {
 // back up (`recoil`). Running: the Ranger slides in under them loosing two arrows, the Sniper rolls
 // and comes up on one knee with a bolt.
 const ARCHER_COMMANDS = {
+  // The Mage: a bolt cast up at whatever flies, petal bolts cast down from a float in the air,
+  // and a bolt cast out of a glide.
+  mage: {
+    up: { move: 'castup', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'bloombolt', magic: true, pct: 110, range: 260, h: 190, lift: 50, targets: 2, pierce: true, knock: 20, launch: 380, speed: 650, big: true, stop: 0.05 }] },
+    air: [
+      { move: 'castforward', dur: 0.4, hang: true, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 620 }] },
+      { move: 'castspin', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.55, shot: 'bloombolt', magic: true, fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 660, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'castforward', dur: 0.46, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 640 }] },
+  },
   // The Night Lord: a giant star flung up at whatever flies, a fan of three from a hang in the air,
   // and stars thrown out of a dash.
   nightlord: {
@@ -404,13 +422,40 @@ export function addStarlight(world, n, mob = null) {
   world.starlightAt = world.now;
 }
 export const constellation = (world) => hasStarlight(world.char) && (world.starlight ?? 0) >= STARLIGHT_MAX;
+// Bloom: the Mage's gauge (first job). Spells that land and heals build it; it fades once the
+// fighting stops. Full (Full Bloom), every damage spell also heals allies near where it lands
+// (BLOOM_HEAL of their max HP).
+export const BLOOM_MAX = 100;
+const BLOOM_HOLD = 5;
+const BLOOM_DRAIN = 10;
+export const BLOOM_HEAL = 0.03;
+export const hasBloom = (char) => char.job === 'mage';
+export function addBloom(world, n) {
+  if (!hasBloom(world.char) || n <= 0) return;
+  world.bloom = Math.min(BLOOM_MAX, (world.bloom ?? 0) + n);
+  world.bloomAt = world.now;
+}
+export const fullBloom = (world) => hasBloom(world.char) && (world.bloom ?? 0) >= BLOOM_MAX;
+// Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal spell, or Full
+// Bloom's petals where a spell lands); healing builds Bloom.
+export function healAround(world, x, y, pct, r) {
+  const { char, body, stats } = world;
+  if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
+    const amount = Math.max(1, Math.round(stats.maxHp * pct));
+    char.hp = Math.min(stats.maxHp, char.hp + amount);
+    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${amount}`, color: '#7ee0b0', t: 0 });
+    world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
+  }
+  if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
+  addBloom(world, 40 * pct);
+}
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'nightstar', 'giantstar']);
-// A job's own gauge: which one the character has ('killintent', 'starlight', 'valor', 'momentum',
+// A job's own gauge: which one the character has ('bloom', 'killintent', 'starlight', 'valor', 'momentum',
 // 'shadow', 'rage', 'faith', 'gale' or 'focus'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasIntent(char) ? 'killintent' : hasStarlight(char) ? 'starlight' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
+  return hasBloom(char) ? 'bloom' : hasIntent(char) ? 'killintent' : hasStarlight(char) ? 'starlight' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -419,6 +464,7 @@ export function gaugeFull(world) {
 
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n, mob = null) {
+  addBloom(world, n);
   addStarlight(world, n, mob);
   addMomentum(world, n);
   addShadow(world, n);
@@ -429,6 +475,7 @@ export function addAim(world, n, mob = null) {
 function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
+  if ((w === 'wand' || w === 'staff') && hasBloom(char)) return 'mage';
   if (w === 'dagger' && hasIntent(char)) return 'assassin';
   if (w === 'gauntlet' && hasStarlight(char)) return 'nightlord';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
@@ -593,6 +640,7 @@ export function tickMelee(world, dt) {
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
+  if (world.bloom > 0 && world.now - (world.bloomAt ?? 0) > BLOOM_HOLD) world.bloom = Math.max(0, world.bloom - BLOOM_DRAIN * dt);
   if (world.killintent > 0 && world.now - (world.killintentAt ?? 0) > INTENT_HOLD) world.killintent = Math.max(0, world.killintent - INTENT_DRAIN * dt);
   if (world.starlight > 0 && world.now - (world.starlightAt ?? 0) > STARLIGHT_HOLD) world.starlight = Math.max(0, world.starlight - STARLIGHT_DRAIN * dt);
   // Execution lasts while Killing Intent stays full: each monster gets its one sure cut.
@@ -643,6 +691,8 @@ export function tickMelee(world, dt) {
 
 function land(world, s) {
   const { char, stats, body, now } = world;
+  // Full Bloom's petals healing where a spell landed (queued for the moment it lands).
+  if (s.healAt) return healAround(world, s.x, s.y, s.amount, 150);
   // Strikes follow the way you were facing when the step began; a `turn` strike (Backstab) turns
   // round to hit what you just passed.
   if (s.turn) s = { ...s, dir: -s.dir, turn: false };
@@ -662,7 +712,7 @@ function land(world, s) {
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const power = hasRage(char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1;
   const weight = weightOf(world);
-  const dmgRange = physicalRange(stats, stats.weaponType, (s.pct * s.scale * power) / 100);
+  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * power) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * power) / 100);
   const cy = body.y - body.h / 2;
   // The smear, spike, or whirl of the blow.
   if (s.pierce) {
@@ -727,6 +777,9 @@ function land(world, s) {
   }
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
+  // A healing spell mends you and the party around you as it blooms.
+  if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220);
+  if (s.magic && targets.length && !s.phantom) addBloom(world, s.gauge ?? 4);
   if (intent) addIntent(world, intent * (1 + 0.3 * (targets.length - 1)) / targets.length);
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
@@ -771,8 +824,9 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const sure = s.crit || s.deadeye;
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : hasFocus(char) ? (FOCUS_CRIT * (world.focus ?? 0)) / FOCUS_MAX : 0;
-  const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
+  const range = s.magic ? magicRange(stats, (s.pct * s.scale) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
+  const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
+  const spark = hasBloom(char) ? 'bloomhit' : hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, burst: s.burst ?? spark, dir: s.dir,
@@ -780,6 +834,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),
   });
+  // Full Bloom: a damage spell scatters healing petals over the allies near where it lands.
+  if (fullBloom(world) && !miss && s.magic && s.pct > 0) {
+    world.strikes.push({ healAt: true, x: m.x, y: m.y, amount: BLOOM_HEAL, due: world.now + delay });
+    world.fx.push({ kind: 'healpetals', x: m.x, y: m.y, t: -delay, dur: 0.6 });
+  }
   // A star that sticks (Star Mark) glows in the monster, then bursts a moment later, catching
   // everything close by.
   if (s.stick && !miss) {

@@ -490,4 +490,7 @@ characters; style mismatch, not just quality, is what made earlier effects feel 
   stealth, backstabs, marks) and a gauntlet Night Lord (Assassin/Night Lord side: star storms,
   Shadow Stars, Triple Throw, Showdown). Each finisher is again one big object: a red moon with
   crows, a giant constellation.
+- The Mage followed MapleStory's first-job Magician (Energy Bolt, Magic Claw, Magic Guard, Teleport)
+  but as a damage-and-support hybrid like its later Bishop: every damage spell's look is a flower
+  (bolt, hit, storm), every heal is a mint flower of light, so the two halves read as one job.
 

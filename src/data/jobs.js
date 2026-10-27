@@ -1,4 +1,4 @@
-// Jobs: a Novice start, four first jobs at level 10, second-job branches at level 30, and third jobs at 50.
+// Jobs: a Novice start, four first jobs at level 10, and second-job branches at level 30.
 // HP/MP growth follows the classic split: warriors tanky, mages MP-heavy, archers and thieves between.
 
 export const FAMILY_STATS = {
@@ -10,8 +10,7 @@ export const FAMILY_STATS = {
   gm: { primary: 'int', secondary: 'luk' },
 };
 
-// Every class follows the same template: a first job at 10, three second-job branches at 30,
-// and one third job per branch at 50 with a summon or signature buff and a screen-wide ultimate.
+// Every class follows the same template: a first job at 10, then two paths at 30 after a trial.
 export const JOBS = {
   novice: {
     id: 'novice', name: 'Novice', family: 'beginner', tier: 0, parent: null,
@@ -28,7 +27,7 @@ export const JOBS = {
   mage: {
     id: 'mage', name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
     hp: 13, mp: 24, advanceHp: 100, advanceMp: 380, weapons: ['wand', 'staff'],
-    blurb: 'Spells and support: big magic damage with INT, plus heals and barriers for the party. The healer of any dungeon group.',
+    blurb: 'Spells of flowers and light: petal bolts and storms for damage with INT, plus heals, barriers and revives for the party. Builds Bloom; full, every damage spell also heals allies near where it lands. The healer of any dungeon group.',
   },
   archer: {
     id: 'archer', name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
@@ -77,37 +76,6 @@ export const JOBS = {
     blurb: 'A storm of stars from a gauntlet. Stars that land build Starlight, faster when they pile onto one target; full, every star splits into three. Giant shuriken, sticky exploding stars and falling constellations.',
   },
 
-  ilwizard: {
-    id: 'ilwizard', name: 'Stormfrost Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
-    hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],
-    blurb: 'Ice and lightning. Freezes monsters solid, then shatters them with thunder.',
-  },
-  fpwizard: {
-    id: 'fpwizard', name: 'Venomflame Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
-    hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],
-    blurb: 'Fire and poison. Burns everything, and the venom keeps eating them after.',
-  },
-  cleric: {
-    id: 'cleric', name: 'Cleric', family: 'mage', tier: 2, parent: 'mage', level: 30,
-    hp: 18, mp: 24, advanceHp: 220, advanceMp: 400, weapons: ['wand', 'staff'],
-    blurb: 'Holy light that heals you and smites everything nearby. The sturdiest mage.',
-  },
-  ilarchmage: {
-    id: 'ilarchmage', name: 'Stormfrost Archmage', short: 'Archmage', family: 'mage', tier: 3, parent: 'ilwizard', level: 50,
-    hp: 16, mp: 30, advanceHp: 250, advanceMp: 900, weapons: ['wand', 'staff'],
-    blurb: 'Master of the storm. Chains lightning through crowds and buries them in a glacial tempest.',
-  },
-  fparchmage: {
-    id: 'fparchmage', name: 'Venomflame Archmage', short: 'Archmage', family: 'mage', tier: 3, parent: 'fpwizard', level: 50,
-    hp: 16, mp: 30, advanceHp: 250, advanceMp: 900, weapons: ['wand', 'staff'],
-    blurb: 'Master of plague and flame. Raises toxic infernos and calls down meteor storms.',
-  },
-  bishop: {
-    id: 'bishop', name: 'Bishop', family: 'mage', tier: 3, parent: 'cleric', level: 50,
-    hp: 20, mp: 28, advanceHp: 400, advanceMp: 800, weapons: ['wand', 'staff'],
-    blurb: 'Judges whole crowds with pillars of light, guarded by a summoned angel.',
-  },
-
   // Hidden: only unlocked with the Game Master passphrase, never offered by an instructor.
   gamemaster: {
     id: 'gamemaster', name: 'Game Master', family: 'gm', tier: 9, parent: null, hidden: true,
@@ -120,7 +88,9 @@ export const JOBS = {
 // Jobs renamed or retired since older saves were made, and what they became.
 // Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
 export const RETIRED_JOBS = {
-  pyromancer: 'fpwizard', infernosage: 'fparchmage', seraph: 'bishop',
+  // The mage paths are retired for now (to be remade like the warrior's and archer's): those
+  // characters return to the first-job Mage.
+  pyromancer: 'mage', infernosage: 'mage', seraph: 'mage', ilwizard: 'mage', fpwizard: 'mage', cleric: 'mage', ilarchmage: 'mage', fparchmage: 'mage', bishop: 'mage',
   blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'archer', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', beastmaster: 'archer', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 
