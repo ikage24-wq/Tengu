@@ -965,6 +965,154 @@ function keeneye() {
   return out;
 }
 
+// ---------- Ranger ----------
+
+// A longbow from the lower tip to the upper, bowed toward `side`, with its string.
+function longbow(lo, hi0, bow = 3, o = {}) {
+  const { wood = '#c88a5a', grip = '#2f9468', string = '#fff6e0' } = o;
+  const m = [(lo[0] + hi0[0]) / 2, (lo[1] + hi0[1]) / 2];
+  const u = N(lo, hi0);
+  const n = [-u[1], u[0]];
+  const pts = bez(lo, add(m, n, bow * 2), hi0, 18);
+  const limb = tube(pts, (t) => 0.55 + 0.6 * Math.sin(Math.PI * t));
+  const g = tube([add(add(m, n, bow), u, -0.9), add(add(m, n, bow), u, 0.9)], 0.95);
+  return [drop(limb), line([lo, hi0], 0.28, string), ...edge(limb, ink(wood), 0.45), S(limb, wood), S(tube(pts.slice(2, 10), 0.22), lt(wood)), ...edge(g, ink(grip), 0.35), S(g, grip)];
+}
+// A curl of wind: a swoosh with a hooked end.
+const curl = (cx, cy, r, a0, c = '#e8fff4') => swoosh(cx, cy, r, r * 0.7, a0, a0 + 250, 1.1, c, { ink: '#1a6a5a' });
+
+function rangermastery() {
+  const out = [...tile('wind', 'passive'), ...aura(8, 8, 6.6, '#f0fff8')];
+  out.push(...curl(8.6, 9, 5, 120, '#c4f5d4'));
+  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2));
+  out.push(...arrow([3.4, 8.2], [14.4, 7.8], { hw: 1.25, hl: 2, fl: '#ffd25a' }));
+  out.push(...leaf([10.4, 13.6], [14, 10.4], 2.6, '#7fd86a', { bend: 0.6, veins: 1 }).shapes);
+  out.push(...glint(6.2, 4.4, 0.5), ...spark(13.6, 2.8, 1.1));
+  return out;
+}
+
+function galevolley() {
+  const out = [...tile('wind', 'active'), ...aura(9, 8, 6.4, '#f0fff8', 1.1)];
+  // Three arrows flying out of one curl of wind, fanned.
+  out.push(...swoosh(6.6, 9, 5.4, 4.4, 60, 320, 1.6, '#e8fff4', { ink: '#1a6a5a' }));
+  for (const [a, fl] of [[-30, '#ff8fb0'], [0, '#ffd25a'], [30, '#ff8fb0']]) {
+    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    out.push(...arrow(add([5, 8.6], u, 3.4), add([5, 8.6], u, 10.2), { hw: 1.2, hl: 1.9, sw: 0.5, fl }));
+  }
+  out.push(...spark(14, 13.4, 1.1), ...spark(2.2, 2.6, 1));
+  return out;
+}
+
+function cyclone() {
+  const out = [...tile('sky', 'active')];
+  // A funnel of wind, wide at the top, with an arrow driving through its heart.
+  for (const [cy, rx, c] of [[3.4, 6, '#f0fff8'], [6.2, 4.8, '#c8ecff'], [9, 3.6, '#f0fff8'], [11.6, 2.5, '#c8ecff'], [13.8, 1.5, '#f0fff8']]) {
+    out.push(...swoosh(8, cy, rx, rx * 0.34, -200, 120, 1.15, c, { ink: '#1f5a6a' }));
+  }
+  out.push(...arrow([1.2, 9.6], [15, 7.2], { hw: 1.3, hl: 2.1, fl: '#ffd25a', head: '#ffffff' }));
+  out.push(...leaf([2.4, 4], [4.6, 2.2], 1.8, '#7fd86a', {}).shapes, ...leaf([12, 13.6], [14.6, 12.4], 1.8, '#7fd86a', {}).shapes);
+  return out;
+}
+
+function tailwind() {
+  const out = [...tile('mint', 'buff'), ...aura(9, 7, 6.6, '#f4fff0', 1.1)];
+  // A white feather swept forward on three streams of wind.
+  for (const [y, len] of [[4.6, 9], [8.4, 11], [12.2, 8]]) out.push(streak([14.2 - len, y + 1], [14.2, y], 1.4, '#e8fff4'));
+  out.push(...leaf([3, 13.6], [13.6, 2.6], 4.6, '#fffaf2', { bend: 0.9, rib: '#c4e8d4', veins: 3, veinC: '#c4e8d4' }).shapes);
+  out.push(line([[2.2, 14.6], [4.4, 12.2]], 0.5, '#9a6a48'));
+  out.push(...curl(10.6, 11.2, 2.6, 200, '#c4f5b4'));
+  out.push(...spark(13.6, 13.6, 1.1, '#fff3a6'), ...spark(2.4, 3, 1));
+  return out;
+}
+
+function stormvolley() {
+  const out = [...tile('storm', 'active'), ...aura(8, 9, 6.6, '#e8fff4', 1.1)];
+  // A ring of wind on the ground with arrows pouring down into it from every side.
+  out.push(...swoosh(8, 11.6, 6, 2.2, -190, 150, 1.4, '#8fe8c0', { ink: '#1a4a5a' }));
+  for (const [x, y] of [[3.4, 10.6], [6.6, 12.8], [9.6, 9.4], [12.6, 11.6]]) {
+    out.push(streak([x - 1.4, y - 9.6], [x - 0.9, y - 6.6], 0.9, '#e8fff4'));
+    out.push(...arrow([x - 1.2, y - 6.4], [x, y], { hw: 1.2, hl: 1.9, sw: 0.5, fl: '#ffd25a', head: '#ffffff' }));
+  }
+  out.push(...spark(8, 2, 1.3, '#e8fff4'), ...spark(14, 3.4, 0.9));
+  return out;
+}
+
+// ---------- Sniper ----------
+
+// A crossbow seen side-on, pointing along base -> tip: the stock, the prod across its front, the
+// string drawn back, and a bolt laid in it.
+function crossbowArt(base, tip, o = {}) {
+  const { wood = '#8a5a3a', prod = '#cfe0ff', bolt0 = '#ff5a7a' } = o;
+  const u = N(base, tip);
+  const n = [-u[1], u[0]];
+  const p = along(base, u, n);
+  const len = Math.hypot(tip[0] - base[0], tip[1] - base[1]);
+  const stock = tube([p(0, 0.4), p(len * 0.45, 0), p(len, 0)], (t) => 1.5 - 0.6 * t);
+  const pr = tube(bez(p(len - 1.6, -4.6), p(len + 1.2, 0), p(len - 1.6, 4.6), 14), (t) => 0.5 + 0.5 * Math.sin(Math.PI * t));
+  const bolt1 = arrow(p(len * 0.35, 0), p(len + 2.6, 0), { hw: 1.1, hl: 1.7, sw: 0.45, fl: bolt0, head: '#ffffff', shadow: false });
+  return [drop(stock), drop(pr), line([p(len - 1.6, -4.6), p(len * 0.42, 0), p(len - 1.6, 4.6)], 0.25, '#fff6e0'), ...edge(stock, ink(wood), 0.45), S(stock, wood), S(tube([p(0.5, -0.3), p(len - 1, -0.3)], 0.3), lt(wood)), ...edge(pr, ink(prod), 0.45), S(pr, prod), ...bolt1];
+}
+// A sight: a ring with four ticks, in the Sniper's rose.
+function sightArt(cx, cy, r, c = '#ff5a7a', w = 0.6) {
+  const ring = tube([...oval(cx, cy, r, r, 0, 32), oval(cx, cy, r, r, 0, 32)[0]], w);
+  const ticks = [0, 90, 180, 270].map((a) => {
+    const v = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    return tube([add([cx, cy], v, r - 1.4), add([cx, cy], v, r + 1.6)], w);
+  });
+  return [...edge(ring, ink(c), 0.35), S(ring, c), ...ticks.flatMap((t) => [...edge(t, ink(c), 0.3), S(t, c)])];
+}
+
+function snipermastery() {
+  const out = [...tile('steel', 'passive'), ...aura(8, 8, 6.6, '#e8f2ff')];
+  out.push(...sightArt(8.4, 8, 5.4, '#eef8ff', 0.5));
+  out.push(...crossbowArt([2, 11.4], [12.4, 6.4]));
+  out.push(...glint(5, 9.6, 0.5), ...spark(13.6, 13.6, 1.1));
+  return out;
+}
+
+function marksman() {
+  const out = [...tile('steel', 'active'), ...aura(5, 8, 5.6, '#e8f2ff', 1.1)];
+  // Three bolts in a line, one after another, on hard streaks.
+  for (const [y, x] of [[4.2, 0], [8, 2], [11.8, 0]]) {
+    out.push(streak([x + 1, y + 0.6], [x + 7, y], 1.6, '#eef8ff'));
+    out.push(...arrow([x + 4.2, y], [x + 13.4, y], { hw: 1.35, hl: 2, sw: 0.65, fl: '#ff5a7a', head: '#ffffff', shaft: '#d4cde8' }));
+  }
+  out.push(...spark(14.2, 2.2, 1.1), ...spark(14, 14, 0.9));
+  return out;
+}
+
+function glacier() {
+  const out = [...tile('ice', 'active'), ...aura(11, 7, 6, '#ffffff', 1.1)];
+  // A bolt with an ice crystal for a head, and frost shards bursting off it.
+  out.push(streak([1, 13.6], [6, 9.4], 1.6, '#e8fbff'));
+  out.push(...arrow([2.4, 13.4], [9.6, 6.8], { hw: 1.2, hl: 1.8, sw: 0.6, fl: '#8fe3ff', head: '#e8fbff', shaft: '#d4cde8' }));
+  const crystal = [[11.6, 2], [13.8, 4.6], [12.6, 7.6], [9.8, 8.6], [8.6, 6.4], [9.4, 3.6]];
+  out.push(...facet(crystal, [11.6, 2], [9.8, 8.6], '#bff0ff', { ink: '#1c4a9a', dark: '#7fc8f0' }));
+  for (const [x, y, a] of [[14, 9.6, 30], [6.4, 3, -150], [12, 11.2, 70], [14.4, 1.6, -40]]) out.push(...solid(polyPts(x, y, 1.1, 4, a, 1.6), '#e8fbff', { shadow: false, d: 0.35, ink: '#1c4a9a' }));
+  out.push(...glint(11, 3.6, 0.5));
+  return out;
+}
+
+function steadyaim() {
+  const out = [...tile('glacier', 'buff'), ...aura(8, 8, 6.8, '#e8f6ff', 1.1)];
+  out.push(...sightArt(8, 8, 5.4, '#ff8aa8', 0.7));
+  out.push(...sightArt(8, 8, 2.6, '#eef8ff', 0.45));
+  out.push(...solid(polyPts(8, 8, 1.3, 4, -90, 1.2), '#ff5a7a', { shadow: false, d: 0.35, ink: '#6a1030' }));
+  out.push(...spark(13.6, 2.6, 1.2), ...spark(2.6, 13.4, 1, '#fff3a6'));
+  return out;
+}
+
+function heartseeker() {
+  const out = [...tile('royal', 'active'), ...aura(10, 6, 6.4, '#ffd0dc', 1.2)];
+  // A sight locked on a rose heart, and a giant bolt of light driven through both.
+  out.push(...sightArt(10, 6, 4.6, '#ff8aa8', 0.6));
+  out.push(...solid(heartPts(10, 6.4, 3.2), '#ff5a7a', { glow: 1.15 }));
+  out.push(streak([0.6, 15.6], [6, 10.2], 2.4, '#eef8ff'));
+  out.push(...arrow([2, 14.2], [14.6, 1.6], { hw: 1.7, hl: 2.6, sw: 0.75, fl: '#7fc4ff', head: '#ffffff', shaft: '#eef8ff' }));
+  out.push(...spark(14, 13.4, 1.2, '#ffd0dc'), ...spark(2.6, 2.6, 1));
+  return out;
+}
+
 // ---------- Thief ----------
 
 function twinstab() {
@@ -1460,6 +1608,8 @@ const ART = {
   berserkermastery, ravage, bloodfrenzy, rampage, crimsoneclipse,
   magicbolt, sparkburst, blink, manashield, arcanemind, mend, renew, barrier, revive,
   doubleshot, scattershot, arrowrain, eaglefocus, thunderhawk, backflip, keeneye,
+  rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,
+  snipermastery, marksman, glacierbolt: glacier, steadyaim, heartseeker,
   twinstab, startoss, haste, shadowstep, nimble,
   ilmastery, coldbeam, thunderbolt, stormfocus,
   firemastery, fireball, poisonmist, meditate,

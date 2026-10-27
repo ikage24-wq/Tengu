@@ -13,7 +13,7 @@ import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
-import { hasRage, hasFaith } from '../world/melee.js';
+import { hasRage, hasFaith, hasGale, hasFocus } from '../world/melee.js';
 import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
@@ -273,6 +273,8 @@ export function drawHud(ui, state, world) {
   if (s.weaponType === 'gauntlet') drawStars(ui, world);
   if (hasRage(char)) drawGauge(ui, world, 'rage', world.rage ?? 0);
   else if (hasFaith(char)) drawGauge(ui, world, 'faith', world.faith ?? 0);
+  else if (hasGale(char)) drawGauge(ui, world, 'gale', world.gale ?? 0);
+  else if (hasFocus(char)) drawGauge(ui, world, 'focus', world.focus ?? 0);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -337,14 +339,18 @@ function drawStars(ui, world) {
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
 }
 
-// A warrior path's gauge over the hotkeys: a Berserker's Rage (a flame) or a Paladin's Faith (a
-// star). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
+// A path's gauge over the hotkeys: a Berserker's Rage (a flame), a Paladin's Faith (a star), a
+// Ranger's Gale (a curl of wind) or a Sniper's Focus (a sight). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
 // names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
 const GAUGES = {
   rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
     tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
     tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take.' },
+  gale: { color: '#2fa880', hot: '#8fe8c0', icon: 'gust', name: 'Gale', full: 'TAILWIND', notch: () => null, edge: 'rgba(80,220,170,', ink: '#1f6a50',
+    tip: 'Your arrows build it and it blows out once the fighting stops. The fuller it is, the faster you shoot; full, every basic shot looses a twin arrow.' },
+  focus: { color: '#3a7fd8', hot: '#ff5a7a', icon: 'sight', name: 'Focus', full: 'DEADEYE', notch: () => null, edge: 'rgba(255,90,122,', ink: '#8a2040',
+    tip: 'Your bolts and standing still build it; running loses it. The fuller it is, the likelier a critical; full, your next bolt always crits and tears through the whole line.' },
 };
 function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;
@@ -354,7 +360,7 @@ function drawGauge(ui, world, kind, value) {
   const k = Math.min(1, value / 100);
   const full = k >= 1;
   const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 9) : 0;
-  if (full) edgeTint(ctx, kind === 'rage' ? 'rgba(232,40,60,' : 'rgba(255,214,90,', 0.22 + 0.12 * beat);
+  if (full) edgeTint(ctx, G.edge ?? (kind === 'rage' ? 'rgba(232,40,60,' : 'rgba(255,214,90,'), 0.22 + 0.12 * beat);
   box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
   badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
   bar(ctx, x + 16, y + 5, 40, 6, k, full && beat > 0.5 ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
@@ -364,7 +370,7 @@ function drawGauge(ui, world, kind, value) {
     ctx.fillRect(Math.round(x + 16 + 40 * (notch / 100)), y + 4, 1, 8);
   }
   text(ctx, `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
-  if (full) text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: kind === 'rage' ? '#7a1030' : '#a8661a' });
+  if (full) text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
   if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: G.name, bold: true, color: G.color }, { text: G.tip, size: 8, color: COLORS.muted }]);
 }
 

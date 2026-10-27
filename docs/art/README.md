@@ -159,6 +159,13 @@ carry an improvement across every part of the game it applies to.
   reads as weakness and made finishers flicker. Only blink while recovering from a hit.
 - Moves cut into each other ease out of the previous pose over about 70 ms (`hero.js`
   `blendMove`, `scene.js` BLEND): angles take the short way round, rig tweaks switch halfway.
+- Each path's effects keep one shape language (fx.md C14), so a hit says whose it is: the
+  Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
+  streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
+  step white, main, deep from head to tail (fx.md D), not faded copies.
+- A blast is a sequence (fx.md C12, C17): a white flash, then lumps that burst outward and tear
+  open as they go, then smoke that rises and breaks up. One swelling fireball reads as a flat
+  orange disc.
 - No finisher cut-ins: the player asked for them to be removed.
 - The player prefers effects that move smoothly over held anime frames: `fxkit.js` `stepped` now
   passes progress straight through.

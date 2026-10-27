@@ -24,7 +24,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (arcane, ice, lightning, fire, poison, holy, rage) colors the casting circle.
+// `school` (arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -401,6 +401,128 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { critRate: lerpf(0.01, 0.15, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
   }),
 
+  // ---------- Ranger (the archer's bow path: wind, speed, leaps and storms of arrows) ----------
+  // Every arrow a Ranger lands builds Gale (0-100, see world/melee.js): the fuller it is the
+  // quicker she shoots, and full, every basic shot looses a twin. `aimGain` adds to it at once.
+  rangermastery: skill({
+    id: 'rangermastery', name: 'Ranger Mastery', job: 'ranger', type: 'passive', fx: null,
+    desc: 'Steadier shots, more attack, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  galevolley: skill({
+    id: 'galevolley', name: 'Gale Volley', job: 'ranger', type: 'attack', fx: 'arrow', icon: 'galevolley', school: 'wind',
+    desc: 'A three-part combo, one part per press: twirl and loose two wind arrows, leap and fan three down on them, then a gale arrow that tears through the whole line and blows them away.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const wind = (at, pct, knock = 25) => ({ at, shot: 'windarrow', pct, range: 310, h: 60, knock, speed: 900 });
+      return {
+        mp: k(6, 13), pct: k(80, 135), hits: 6, targets: 1,
+        combo: [
+          { move: 'spinshot', dur: 0.5, step: 6, strikes: [wind(0.32, k(75, 125)), wind(0.72, k(80, 135), 40)] },
+          { move: 'leapshot', dur: 0.6, step: -8, strikes: [{ at: 0.55, shot: 'windarrow', fan: 3, pct: k(80, 130), range: 300, h: 120, knock: 60, launch: 120, speed: 900 }] },
+          { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'galearrow', pct: k(200, 330), range: 360, h: 64, targets: k(4, 7), pierce: true, speed: 950, knock: 300, launch: 180, big: true, stop: 0.07, shake: 3, muzzle: 'gust' }] },
+        ],
+      };
+    },
+  }),
+  cyclonearrow: skill({
+    id: 'cyclonearrow', name: 'Cyclone Arrow', job: 'ranger', type: 'attack', fx: 'arrow', icon: 'cyclone', school: 'wind',
+    desc: 'Loose an arrow wrapped in a whirlwind. It tears slowly down the line, cutting everything it passes three more times and lifting it off its feet.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 28), pct: k(70, 120), hits: 4, targets: k(4, 7),
+        combo: [{ move: 'galeshot', dur: 0.7, step: -6, strikes: [{ at: 0.6, shot: 'cyclone', pct: k(70, 120), range: 340, h: 80, targets: k(4, 7), pierce: true, ticks: 3, tickGap: 0.14, speed: 460, knock: 40, launch: 160, big: true, stop: 0.04, shake: 1, muzzle: 'gust' }] }],
+      };
+    },
+  }),
+  tailwind: skill({
+    id: 'tailwind', name: 'Tailwind', job: 'ranger', type: 'buff', fx: 'buff', icon: 'tailwind', school: 'wind', anim: 'tailwind',
+    desc: 'Call the wind to your back: run faster, shoot faster, and dodge more for a while, and half your Gale at once.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { speed: lerp(5, 20, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), eva: lerp(5, 25, lv, m) } }),
+  }),
+  stormvolley: skill({
+    id: 'stormvolley', name: 'Storm Volley', job: 'ranger', type: 'attack', fx: 'rain', icon: 'stormvolley', school: 'wind', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. A gust throws you spinning high into the air, loosing arrows in every direction that pour down all around you, then you dive back down in a burst of storm wind that blows everything away. Fills your Gale.',
+    weapons: ['bow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const pour = (at) => ({ at, rain: k(6, 9), around: true, pct: k(70, 120), rainW: 340, span: 0.32, knock: 20, variant: 'windarrow', gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(420, 720), hits: 22, targets, aimGain: 100,
+        combo: [{ move: 'stormvolley', dur: 1.7, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.12, pct: k(50, 90), reach: 120, h: 110, around: true, targets, pull: 70, burst: 'galeburst', burstAt: 0, quiet: true, via: 'wind', school: 'wind', stop: 0.02, gauge: 0 },
+          pour(0.3), pour(0.42), pour(0.54),
+          { at: 0.8, pct: k(420, 720), reach: 175, h: 150, around: true, targets, knock: 320, launch: 380, burst: 'stormburst', burstAt: 0, quiet: true, via: 'wind', school: 'wind', big: true, stop: 0.15, shake: 7, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Sniper (the archer's crossbow path: Focus, heavy bolts, frost and blasts) ----------
+  // Bolts that land and standing still build Focus (0-100, see world/melee.js): sharper criticals,
+  // and full, the next bolt is a Deadeye.
+  snipermastery: skill({
+    id: 'snipermastery', name: 'Sniper Mastery', job: 'sniper', type: 'passive', fx: null,
+    desc: 'Steadier bolts, harder critical hits, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), critDamage: lerpf(0.05, 0.3, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  marksman: skill({
+    id: 'marksman', name: "Marksman's Chain", job: 'sniper', type: 'attack', fx: 'arrow', icon: 'marksman', school: 'focus',
+    desc: 'A three-part combo, one part per press: drop to a knee and send a heavy bolt through the line, crank and fire two more, then a ballista bolt that kicks you back and blasts straight through everything in its way.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(2, 4);
+      const bolt = (at, pct, knock = 80) => ({ at, shot: 'heavybolt', pct, range: 340, h: 56, knock, speed: 1100, pierce: true, targets });
+      return {
+        mp: k(6, 13), pct: k(130, 210), hits: 4, targets,
+        combo: [
+          { move: 'kneelshot', dur: 0.58, step: -2, strikes: [bolt(0.56, k(140, 230), 110)] },
+          { move: 'crankshot', dur: 0.64, step: -3, strikes: [bolt(0.5, k(90, 150)), bolt(0.8, k(95, 155), 120)] },
+          { move: 'ballista', dur: 0.86, step: -6, finisher: true, strikes: [{ at: 0.62, shot: 'ballista', pct: k(260, 430), range: 380, h: 60, targets: targets + 3, pierce: true, speed: 1200, knock: 320, launch: 160, kickback: 26, big: true, stop: 0.1, shake: 4, muzzle: 'boltshock' }] },
+        ],
+      };
+    },
+  }),
+  glacierbolt: skill({
+    id: 'glacierbolt', name: 'Glacier Bolt', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'glacier', school: 'ice',
+    desc: 'Fire a bolt of ice at the nearest monster. It shatters into a burst of frost that freezes everything close around it solid.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 7);
+      return {
+        mp: k(14, 28), pct: k(150, 250), hits: 1, targets,
+        combo: [{ move: 'kneelshot', dur: 0.66, step: -4, strikes: [{ at: 0.6, shot: 'frostbolt', pct: k(150, 250), range: 340, h: 60, targets, blast: 80, blastFx: 'frostshard', freeze: lerpf(1.2, 2.4, lv, m), burst: 'frostburst', speed: 900, knock: 60, big: true, stop: 0.06, shake: 2 }] }],
+      };
+    },
+  }),
+  steadyaim: skill({
+    id: 'steadyaim', name: 'Steady Aim', job: 'sniper', type: 'buff', fx: 'buff', icon: 'steadyaim', school: 'focus', anim: 'steadyaim', lock: 0.4,
+    desc: 'Settle your breathing and sight down the bolt: more critical hits, harder critical hits, and sharper aim for a while, and half your Focus at once.',
+    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { critRate: lerpf(0.05, 0.15, lv, m), critDamage: lerpf(0.05, 0.2, lv, m), acc: lerp(5, 30, lv, m) } }),
+  }),
+  heartseeker: skill({
+    id: 'heartseeker', name: 'Heartseeker', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'heartseeker', school: 'focus', maxLevel: 10, hitsCost: 25,
+    desc: 'Finisher: needs a 25-hit combo, and spends it. Kneel and take a long, steady aim as a sight locks onto every monster in the line, then one enormous bolt that always crits tears through all of them, and its shockwave follows.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(480, 820), hits: 2, targets, aimGain: 0,
+        combo: [{ move: 'heartseeker', dur: 1.7, step: 0, finisher: true, guard: 1.4, mark: true, strikes: [
+          { at: 0.6, shot: 'heartbolt', pct: k(480, 820), range: 560, h: 76, targets, pierce: true, crit: true, speed: 1500, knock: 340, launch: 220, kickback: 40, big: true, stop: 0.16, shake: 8, muzzle: 'heartshock', gauge: 0 },
+          { at: 0.74, shot: 'wave', pct: k(150, 260), range: 560, h: 90, targets, pierce: true, speed: 900, knock: 200, big: true, stop: 0.05, shake: 3, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Thief ----------
   twinstab: skill({
     id: 'twinstab', name: 'Twin Stab', job: 'thief', type: 'attack', fx: 'flurry',
@@ -624,6 +746,7 @@ const MOVES_BY_SKILL = {
   magicbolt: 'castforward', sparkburst: 'castspin', blink: 'vanish', manashield: 'castup',
   mend: 'pray', renew: 'castup', barrier: 'castup', revive: 'pray',
   doubleshot: 'rapid', scattershot: 'draw', eaglefocus: 'cheer', thunderhawk: 'castup', backflip: 'flip', arrowrain: 'skyshot',
+  galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   twinstab: 'flurry', startoss: 'barrage', haste: 'cheer', shadowstep: 'vanish',
   coldbeam: 'castforward', thunderbolt: 'castup', stormfocus: 'castup',
   fireball: 'castforward', poisonmist: 'castforward', meditate: 'pray',

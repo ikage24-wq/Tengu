@@ -2,7 +2,7 @@
 
 import { wornGear } from '../core/character.js';
 import { drawCombatAura } from './aura.js';
-import { hasRage, hasFaith, RAGE_MAX, FAITH_MAX } from '../world/melee.js';
+import { hasRage, hasFaith, hasGale, hasFocus, RAGE_MAX, FAITH_MAX, GALE_MAX, FOCUS_MAX } from '../world/melee.js';
 import { moveAt } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
@@ -243,8 +243,10 @@ export function drawWorld(ctx, world, viewCam, time) {
   } else {
     feel.fellAt = undefined;
     feel.fellDust = false;
-    // A Berserker's Rage or a Paladin's Faith builds up around them as the fight goes on.
-    const power = hasRage(world.char) ? ['rage', (world.rage ?? 0) / RAGE_MAX] : hasFaith(world.char) ? ['faith', (world.faith ?? 0) / FAITH_MAX] : null;
+    // A path's gauge builds up around them as the fight goes on: a Berserker's Rage, a Paladin's
+    // Faith, a Ranger's Gale, a Sniper's Focus.
+    const power = hasRage(world.char) ? ['rage', (world.rage ?? 0) / RAGE_MAX] : hasFaith(world.char) ? ['faith', (world.faith ?? 0) / FAITH_MAX]
+      : hasGale(world.char) ? ['gale', (world.gale ?? 0) / GALE_MAX] : hasFocus(world.char) ? ['focus', (world.focus ?? 0) / FOCUS_MAX] : null;
     const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, 1, power[1]);
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);

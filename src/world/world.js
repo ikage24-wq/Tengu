@@ -15,7 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
-import { tickMelee, faithGuard } from './melee.js';
+import { tickMelee, faithGuard, addAim } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
@@ -496,6 +496,7 @@ export function updateWorld(world, dt, input) {
     if (!h.party) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
       world.hitsAt = world.now;
+      if (h.gauge) addAim(world, h.gauge);
     }
     world.fx.push({ kind: 'spark', x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon });
@@ -504,7 +505,7 @@ export function updateWorld(world, dt, input) {
     if (element) world.fx.push({ kind: 'impact', element, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.4, seed: Math.random() });
     // Spell shots burst where they land.
     if (h.burst === 'fire' || h.burst === 'holy') world.fx.push({ kind: 'impact', element: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
-    else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.45, seed: Math.random() });
+    else if (h.burst) world.fx.push({ kind: h.burst, x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: h.big, crit: h.crit, dir: h.dir ?? (Math.sign(m.x - h.fromX) || 1), t: 0, dur: 0.45, seed: Math.random() });
     if (h.crit) world.hitstop = Math.max(world.hitstop, 0.03);
     // Heavy shots land with their own weight.
     if (h.stop) world.hitstop = Math.max(world.hitstop, h.stop);

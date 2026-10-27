@@ -10,7 +10,7 @@ import { sfx } from './sfx.js';
 import { updateMusic } from './music.js';
 import { prepareSongs } from './bank.js';
 import { getMap } from '../data/maps.js';
-import { hasRage, hasFaith } from '../world/melee.js';
+import { hasRage, hasFaith, hasGale } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
 
 const memo = new WeakMap();
@@ -35,7 +35,7 @@ export function songFor(map, world = null) {
   return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove' }[map.theme] ?? 'meadow';
 }
 
-const SPELLS = new Set(['thunder', 'icespire', 'meteor', 'tempest', 'judgment', 'shiningray', 'mist', 'toxicblaze', 'chainbolt', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain']);
+const SPELLS = new Set(['thunder', 'icespire', 'meteor', 'tempest', 'judgment', 'shiningray', 'mist', 'toxicblaze', 'chainbolt', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock']);
 const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook']);
 
 export function hearWorld(world, cam) {
@@ -62,6 +62,7 @@ export function hearWorld(world, cam) {
       case 'blink': sfx('blink', { pan: p }); break;
       case 'gather': sfx('gather', { dur: f.dur, school: f.school, pan: p }); break;
       case 'freeze': sfx('freeze', { pan: p }); break;
+      case 'reticle': sfx('lockOn', { pan: p }); break;
       case 'poisonpuff': sfx('dot', { bleed: f.bleed, pan: p }); break;
       default:
         if (NAMED.has(f.kind)) sfx(f.kind, { pan: p });
@@ -87,7 +88,7 @@ export function hearWorld(world, cam) {
     else if (j.type === 'swing') sfx(j.pierce ? 'thrust' : 'swing', { weight: j.big ? 1.8 : j.thick > 11 ? 1.4 : 1, school: j.school, weapon: j.weapon, lead: j.in, pan: 0 });
   }
   if (hit) {
-    const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : null;
+    const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasGale(char) ? 'wind' : null;
     sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x) });
   }
 
@@ -97,6 +98,7 @@ export function hearWorld(world, cam) {
     n.heard = true;
     if (n.text === 'MISS') sfx('miss', { pan: pan(n.x) });
     else if (n.text === 'LINK!') sfx('link');
+    else if (n.text === 'DEADEYE!') sfx('crit', { pan: pan(n.x) });
   }
 
   // ----- The hero's state -----
@@ -123,6 +125,8 @@ export function hearWorld(world, cam) {
     m.tier = tier;
     if ((world.rage ?? 0) >= 100 && !(m.rage >= 100)) sfx('berserk');
     if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
+    if ((world.gale ?? 0) >= 100 && !(m.gale >= 100)) sfx('galeFull');
+    if ((world.focus ?? 0) >= 100 && !(m.focus >= 100)) sfx('deadeye');
     // Jumps, landings, steps, and climbing.
     if (m.ground && !b.onGround && !b.rope && b.vy < -50) sfx('jump', { pan: 0 });
     if (!m.ground && b.onGround && m.map === world.map.id) sfx('land', { hard: (m.fall ?? 0) > 520, pan: 0 });
@@ -146,7 +150,7 @@ export function hearWorld(world, cam) {
     [m.active, m.done] = questCounts(char);
   }
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
-  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, rage: world.rage, faith: world.faith });
+  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, rage: world.rage, faith: world.faith, gale: world.gale, focus: world.focus });
 
   updateMusic(songFor(world.map, world), world.disco?.cut ?? 0);
 }

@@ -353,6 +353,36 @@ to clear it.
   - Both paths hit heavy: longer hit-stops and harder knockback (the Berserker most), a stomp of
     dust and a dip of the view as a big move starts, power gathering at the weapon (embers or
     diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.
+- **Archer paths (level 30)** — at 30, Kestrel in Sprout Village sets **The Archer's Trial**
+  (shoot down 15 Wraiths in the Crystal Cave); pass it and pick a path. Both deal damage in a group.
+  - **Ranger** (bow), light and quick on the wind: every arrow that lands builds **Gale** (a curl of
+    wind over the hotkeys) that blows out once the fighting stops; the fuller it is the faster she
+    shoots (up to a quarter quicker), and full (**Tailwind**) every basic shot looses a twin arrow.
+    **Gale Volley** is a three-press combo (a twirl that looses two wind arrows, a leap that fans
+    three down on them, then a gale arrow through the whole line that blows them away);
+    **Cyclone Arrow** sends a slow whirlwind down the line that cuts everything it passes three
+    more times and lifts it; **Tailwind** speeds up running, shooting and dodging and gives half a
+    Gale; **Ranger Mastery** adds mastery, attack and accuracy. Bands of green wind circle her as
+    Gale fills, then leaves; full, a ring of wind blows out from her feet.
+  - **Sniper** (crossbow), planted and patient: bolts that land and standing still mid-fight build
+    **Focus** (a sight over the hotkeys); running bleeds it away. The fuller it is the likelier a
+    critical (up to 30% more), and full, the next bolt is a **Deadeye**: it always crits, tears
+    through the whole line, and spends the Focus. **Marksman's Chain** is a three-press combo (a
+    kneeling heavy bolt through the line, a crank and two more, then a ballista bolt that kicks her
+    back and blasts through everything); **Glacier Bolt** shatters on its mark in a burst of frost
+    that freezes everything close around it; **Steady Aim** sharpens crits and aim and gives half a
+    Focus; **Sniper Mastery** adds mastery, critical damage and accuracy. A sight ring turns
+    round her as Focus fills, tightening; full, it locks rose-red and pulses.
+  - Each has its own basic combo (the Ranger: a snap shot, a twirl and two arrows, a leaping fan of
+    gale arrows; the Sniper: a kneeling heavy bolt, a crank-and-fire, a blast bolt that bursts on
+    its mark) and command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
+    **attacking in the air** shoots down at them and holds you up (a Sniper's bolt kicks her back
+    up), and **attacking out of a run** is a Ranger's slide shot or a Sniper's roll into a kneeling
+    bolt. Their finishers (25 hits): the Ranger's **Storm Volley** (a gust throws her spinning
+    high, arrows pour down all around, then she dives in a burst of storm wind; fills Gale) and the
+    Sniper's **Heartseeker** (a long aim as a sight locks onto every monster in the line, then one
+    enormous bolt that always crits, and its shockwave). A finisher shot that connects opens a
+    Link, for every archer.
 - **Mage support** — mages are the healers, with four support skills in the Mage book (it scrolls):
   **Mend** heals you and every party member around you; **Renew** puts a glow on you and the party
   around you that restores HP every second; **Arcane Barrier** wraps you and the party around you in

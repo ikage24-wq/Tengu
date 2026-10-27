@@ -200,6 +200,38 @@ const R = {
       { seq: 'r:400 C7:800', inst: 'glockenspiel', db: -8 },
     ],
   },
+  // The archer paths' gauges topping out: Gale (a rush of wind, a rising flute and harp) and the
+  // Sniper's lock (a sharp metal click, a high glint).
+  galeFull: {
+    db: -11, max: 1, room: true, duck: [-5, 900], layers: [
+      { rec: 'windWhoosh', len: 1400 },
+      { seq: 'G5:60 A5:60 C6:60 D6:60 G6:600', inst: 'flute', db: -3 },
+      { seq: 'r:120 G4:60 C5:60 D5:60 G5:700', inst: 'orchestral_harp', db: -6 },
+    ],
+  },
+  deadeye: {
+    db: -11, max: 1, duck: [-5, 600], layers: [
+      { rec: 'metalClick', rate: 0.9 },
+      { rec: 'unsheathe', rate: 1.3, len: 500, at: 40, db: -6 },
+      { seq: 'r:50 A7:500', synth: 'bell', tail: 1200, db: -6 },
+      { seq: 'r:60 A4+E5:500', inst: 'string_ensemble_1', attack: 0.02, db: -10 },
+    ],
+  },
+  // A sight closing on its mark: a soft rising beep and a click as it locks.
+  lockOn: { db: -18, gap: 300, max: 1, layers: [{ wave: 'sine', f0: 1400, slide: 1.2, env: { a: 300, s: 600, d: 120 }, db: -6 }, { rec: 'metalClick', at: 900, rate: 1.4 }] },
+  // The archer paths' shots and bursts.
+  cycloneShot: { db: -9, gap: 120, max: 1, layers: [{ rec: 'windWhoosh', len: 1100 }, { rec: 'bowLongbow', rate: 0.85, db: -2 }] },
+  boltKick: { db: -11, gap: 120, max: 1, layers: [{ rec: 'crossbowShoot', rate: 0.8 }, thump(80, 180, { db: -2 }), { rec: 'metalClick', at: 260, rate: 0.8, db: -8 }] },
+  heartshock: {
+    db: -7, max: 1, duck: [-8, 900], layers: [
+      { rec: 'crossbowShoot', rate: 0.7 },
+      { rec: 'heavyArrowPass', rate: 0.8, at: 20 },
+      { rec: 'thunder', len: 1400, db: -6, at: 30 },
+      thump(55, 600, { slide: -1.5, db: -2 }),
+    ],
+  },
+  blast: { db: -9, gap: 120, vary: 4, max: 2, duck: [-4, 400], layers: [{ rec: 'fireImpact', len: 900 }, { rec: 'rockHit', len: 600, db: -4 }, thump(70, 300, { db: -3 })] },
+  stormburst: { db: -8, max: 1, duck: [-6, 800], layers: [{ rec: 'windWhoosh', len: 1300, rate: 0.8 }, { rec: 'punchHeavy', rate: 0.75, db: -2 }, thump(60, 500, { slide: -1.5, db: -2 })] },
   link: { db: -13, max: 1, layers: [{ seq: 'E6:40 B6:140', synth: 'pluck', cut: 6000, ring: 0.2, tail: 200 }, sparkle('r:40 E7:120', { db: -8 })] },
   // A ding for each tier of the hit counter: the same bell every time, a little higher per tier (sfx.js).
   tier: { db: -17, max: 1, layers: [{ seq: 'D7+A7:350', synth: 'bell', tail: 1300 }] },

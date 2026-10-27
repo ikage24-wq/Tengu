@@ -2,7 +2,8 @@
 // ('back') and in front of ('front') the sprite. They stay small, soft, and slow: a glow at the
 // feet, a few motes drifting up, and for third jobs a signature: a rune ring with crackling
 // lightning or dancing flames, or a halo and angel wings. Warrior paths: a ring of light diamonds
-// for the Paladin, red flames and rising embers for the Berserker.
+// for the Paladin, red flames and rising embers for the Berserker. Archer paths: a band of wind and
+// drifting leaves for the Ranger, a slow sight ring for the Sniper.
 // Nothing flashes, and nothing covers the face. Everything is drawn from time alone.
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
 
@@ -350,6 +351,28 @@ const JOBS = {
       motes(ctx, x, y, t, s, k, { n: 3, speed: 0.5, height: 30, size: 1, inner: 11, spread: 17, draw: rageEmber });
     },
   },
+  // Ranger: a breath of green wind circling her and a leaf or two drifting up.
+  ranger: {
+    back: (ctx, x, y, t, s, k) => {
+      footGlow(ctx, x, y, s, '#8fe8c0', k * 0.8);
+      windBands(ctx, x, y, t * 0.6, s, k * 0.7, 1, false);
+    },
+    front: (ctx, x, y, t, s, k) => {
+      windBands(ctx, x, y, t * 0.6, s, k * 0.7, 1, true);
+      motes(ctx, x, y, t, s, k, { n: 2, speed: 0.3, inner: 10, spread: 16, draw: windLeaf });
+    },
+  },
+  // Sniper: a cool glow and a slow sight ring at the chest, a few cold glints.
+  sniper: {
+    back: (ctx, x, y, t, s, k) => {
+      footGlow(ctx, x, y, s, '#a8d8ff', k * 0.8);
+      sightRing(ctx, x, y - 22 * s, t * 0.3, s, k * 0.6, 20, '#7fc4ff', false);
+    },
+    front: (ctx, x, y, t, s, k) => {
+      sightRing(ctx, x, y - 22 * s, t * 0.3, s, k * 0.6, 20, '#7fc4ff', true);
+      motes(ctx, x, y, t, s, k, { n: 2, speed: 0.25, inner: 10, spread: 16, draw: glim('#eef8ff') });
+    },
+  },
   // The Game Master: a faint ring and a few stars in every color.
   gamemaster: {
     back: (ctx, x, y, t, s, k) => {
@@ -504,11 +527,123 @@ function faithAura(ctx, x, y, t, s, k, layer) {
   if (k > 0.1) motes(ctx, x, y, t, s, Math.min(1, k * 1.5), { n: 2 + Math.round(4 * k), speed: 0.35, height: 34, inner: 10, spread: 17, draw: glim('#fff6c9') });
 }
 
-// Draws a combat aura: `kind` 'rage' or 'faith', `k` how full (0-1).
-export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
-  if (k <= 0.02) return;
+// Bands of wind circling the body at a slant, split into the half behind her and the half in
+// front, each a tapering ribbon that thins toward its tail.
+function windBands(ctx, x, y, t, s, a, n, front, color = '#8fe8c0') {
+  for (let i = 0; i < n; i++) {
+    const h = (8 + (i * 26) / Math.max(1, n - 1)) * s;
+    const R = (12 + 3 * Math.sin(i * 1.7)) * s;
+    const head = t * (3 + i * 0.4) + i * 2.1;
+    ctx.lineCap = 'round';
+    for (let j = 0; j < 7; j++) {
+      const a0 = head - j * 0.2;
+      const a1 = a0 - 0.2;
+      if ((Math.sin((a0 + a1) / 2) > 0) !== front) continue;
+      ctx.globalAlpha = a * (1 - j / 7);
+      ctx.strokeStyle = j < 2 ? '#ffffff' : color;
+      ctx.lineWidth = Math.max(0.6, (2.2 - j * 0.25) * s);
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a0) * R, y - h + Math.sin(a0) * R * 0.3 - Math.sin(a0 * 2) * s);
+      ctx.lineTo(x + Math.cos(a1) * R, y - h + Math.sin(a1) * R * 0.3 - Math.sin(a1 * 2) * s);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+// A leaf carried on the wind (a mote drawer).
+const windLeaf = (ctx, x, y, r, i, t) => {
   ctx.save();
-  if (kind === 'rage') rageAura(ctx, x, y, time, scale, Math.min(1, k), layer);
-  else if (kind === 'faith') faithAura(ctx, x, y, time, scale, Math.min(1, k), layer);
+  ctx.translate(x, y);
+  ctx.rotate(t * 4 + i);
+  ctx.fillStyle = i % 2 ? '#8fe8c0' : '#c4f5b4';
+  ctx.beginPath();
+  ctx.moveTo(-r * 1.6, 0);
+  ctx.quadraticCurveTo(0, -r, r * 1.6, 0);
+  ctx.quadraticCurveTo(0, r, -r * 1.6, 0);
+  ctx.fill();
+  ctx.restore();
+};
+
+// Gale: a soft green glow, then bands of wind circling her that multiply and quicken as it
+// fills, then leaves caught up in them; full (Tailwind), a ring of wind blowing out from her feet.
+function galeAura(ctx, x, y, t, s, k, layer) {
+  const n = 1 + Math.round(3 * k);
+  const speed = 1 + k;
+  if (layer === 'back') {
+    footGlow(ctx, x, y, s * (1 + 0.7 * k), '#8fe8c0', 0.35 + 0.45 * k);
+    if (k > 0.15) windBands(ctx, x, y, t * speed, s, Math.min(1, (k - 0.15) * 2), n, false);
+    if (k >= 1) {
+      const u = (t * 1.4) % 1;
+      ctx.save();
+      ctx.globalAlpha = 0.8 * (1 - u);
+      ctx.strokeStyle = '#8fe8c0';
+      ctx.lineWidth = Math.max(1, 2 * (1 - u) * s);
+      ctx.beginPath();
+      ctx.ellipse(x, y, (10 + 26 * u) * s, (3 + 6 * u) * s, 0, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+    return;
+  }
+  if (k > 0.15) windBands(ctx, x, y, t * speed, s, Math.min(1, (k - 0.15) * 2), n, true);
+  if (k > 0.5) motes(ctx, x, y, t, s, Math.min(1, (k - 0.5) * 2.5), { n: 2 + Math.round(3 * k), speed: 0.6 + 0.4 * k, height: 34, size: 1.2, inner: 10, spread: 18, draw: windLeaf });
+}
+
+// A Sniper's sight: a broken ring with four ticks, tilted flat around her chest.
+function sightRing(ctx, x, cy, t, s, a, r, color, front) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(0.8, 1.3 * s);
+  for (let i = 0; i < 4; i++) {
+    const a0 = t * 0.8 + (i / 4) * TAU + 0.3;
+    const a1 = a0 + TAU / 4 - 0.6;
+    if ((Math.sin((a0 + a1) / 2) > 0) !== front) continue;
+    ctx.beginPath();
+    ctx.ellipse(x, cy, r * s, r * 0.3 * s, 0, a0, a1);
+    ctx.stroke();
+    const m = a1 + 0.3;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(m) * (r - 3) * s, cy + Math.sin(m) * (r - 3) * 0.3 * s);
+    ctx.lineTo(x + Math.cos(m) * (r + 4) * s, cy + Math.sin(m) * (r + 4) * 0.3 * s);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Focus: a cool blue glow, then a sight ring that turns round her chest and tightens as it
+// fills, cold glints rising; full (Deadeye), it locks rose-red and pulses.
+function focusAura(ctx, x, y, t, s, k, layer) {
+  const cy = y - 22 * s;
+  const full = k >= 1;
+  const r = 22 - 6 * k;
+  const color = full ? '#ff5a7a' : '#7fc4ff';
+  const spin = full ? 0 : t * (0.6 + k);
+  if (layer === 'back') {
+    footGlow(ctx, x, y, s * (1 + 0.6 * k), full ? '#ff9ab8' : '#a8d8ff', 0.35 + 0.45 * k);
+    if (k > 0.25) sightRing(ctx, x, cy, spin, s, Math.min(1, (k - 0.25) * 2.5), r, color, false);
+    return;
+  }
+  if (k > 0.25) sightRing(ctx, x, cy, spin, s, Math.min(1, (k - 0.25) * 2.5), r, color, true);
+  if (full) {
+    const u = (t * 2) % 1;
+    ctx.save();
+    ctx.globalAlpha = 0.7 * (1 - u);
+    ctx.strokeStyle = '#ff5a7a';
+    ctx.lineWidth = Math.max(0.8, 1.6 * (1 - u) * s);
+    ctx.beginPath();
+    ctx.ellipse(x, cy, (r + 10 * u) * s, (r + 10 * u) * 0.3 * s, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (k > 0.1) motes(ctx, x, y, t, s, Math.min(1, k * 1.5), { n: 1 + Math.round(3 * k), speed: 0.3, height: 32, inner: 10, spread: 16, draw: glim(full ? '#ffd0dc' : '#eef8ff') });
+}
+
+// Draws a combat aura: `kind` 'rage', 'faith', 'gale' or 'focus', `k` how full (0-1).
+const COMBAT = { rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
+export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
+  if (k <= 0.02 || !COMBAT[kind]) return;
+  ctx.save();
+  COMBAT[kind](ctx, x, y, time, scale, Math.min(1, k), layer);
   ctx.restore();
 }

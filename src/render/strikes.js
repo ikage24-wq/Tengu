@@ -7,6 +7,7 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
+import { drawArcheryShot, drawArchery, windRainPiece } from './archery.js';
 import { ghost, wash, needle, bloom, shardRing, shock, starFlash, crescent, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
 
 const TAU = Math.PI * 2;
@@ -235,7 +236,7 @@ export function drawStrikeShot(ctx, f, x, y, dir, time) {
       return true;
     }
     default:
-      return false;
+      return drawArcheryShot(ctx, f, x, y, dir, time);
   }
 }
 
@@ -960,7 +961,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -972,7 +973,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) / 2;
       if (p < hit) {
         const k = p / hit;
-        const px = x + (f.variant === 'arrow' ? -80 : 30) * (1 - k);
+        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' ? -80 : 30) * (1 - k);
         const py = cy - 220 * (1 - k * k);
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
@@ -1243,7 +1244,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       return drawStrike(ctx, { ...f, kind: 'xslash', t: 1 }, x, y, (p - hit) / (1 - hit), cam, time);
     }
     default:
-      return false;
+      return drawArchery(ctx, f, x, y, p, cam, time);
   }
 }
 
@@ -1269,6 +1270,9 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
       break;
     case 'arrow':
       arrow(ctx, x, y, Math.atan2(2.6, 1), 22 * s, c);
+      break;
+    case 'windarrow':
+      windRainPiece(ctx, x, y, s, time);
       break;
     case 'star':
       glow(ctx, x, y, 10 * s, c.main, 0.6);

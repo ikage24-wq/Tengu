@@ -422,6 +422,38 @@ const ICONS = {
     ctx.quadraticCurveTo(-s * 0.08, -s * 0.24, 0, -s * 0.46);
     ctx.fill();
   },
+  // A curl of wind (the Ranger's Gale).
+  gust(ctx, s) {
+    ctx.lineWidth = s * 0.13;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.42, -s * 0.14);
+    ctx.lineTo(s * 0.12, -s * 0.14);
+    ctx.arc(s * 0.12, -s * 0.28, s * 0.14, Math.PI / 2, -Math.PI * 0.9, true);
+    ctx.moveTo(-s * 0.42, s * 0.06);
+    ctx.lineTo(s * 0.26, s * 0.06);
+    ctx.arc(s * 0.26, s * 0.2, s * 0.14, -Math.PI / 2, Math.PI * 0.9);
+    ctx.moveTo(-s * 0.3, s * 0.26);
+    ctx.lineTo(-s * 0.02, s * 0.26);
+    ctx.stroke();
+  },
+  // A sight: a ring with four ticks and a dot (the Sniper's Focus).
+  sight(ctx, s) {
+    ctx.lineWidth = s * 0.11;
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.28, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * s * 0.16, Math.sin(a) * s * 0.16);
+      ctx.lineTo(Math.cos(a) * s * 0.46, Math.sin(a) * s * 0.46);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.07, 0, Math.PI * 2);
+    ctx.fill();
+  },
   coin(ctx, s) {
     ctx.beginPath();
     ctx.arc(0, 0, s * 0.42, 0, Math.PI * 2);

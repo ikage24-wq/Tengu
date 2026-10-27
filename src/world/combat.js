@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke, hookMobs } from './dungeon.js';
 import { yank } from './mobs.js';
-import { hasCombo, basicCombo, skillCombo, addRage, RAGE_MAX, outgoing } from './melee.js';
+import { hasCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -60,7 +60,8 @@ export function hitBox(body, range) {
   // A dash's path: the stretch just crossed, behind where the player now stands.
   if (range.back) return { x: body.facing > 0 ? body.x + 20 - range.w : body.x - 20, y: cy - range.h / 2, w: range.w, h: range.h };
   const x = body.facing > 0 ? body.x - 6 : body.x + 6 - range.w;
-  return { x, y: cy - range.h / 2, w: range.w, h: range.h };
+  // `dy` shifts the box down (or up), for shots aimed below or above you.
+  return { x, y: cy - range.h / 2 + (range.dy ?? 0), w: range.w, h: range.h };
 }
 
 // A monster's box stretched up to wherever it's been knocked into the air, so blows reach it both
@@ -147,6 +148,7 @@ export function cast(world, skillId, rng = Math.random) {
     // A finisher spends the hit counter.
     if (s.hitsCost) world.hits = 0;
     if (params.rageGain) addRage(world, params.rageGain);
+    if (params.aimGain) addAim(world, params.aimGain);
     if (s.rageCost) {
       scale += Math.round((100 * world.rage) / RAGE_MAX);
       if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
@@ -207,6 +209,7 @@ export function cast(world, skillId, rng = Math.random) {
     char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name, summon };
     if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
     if (params.rageGain) addRage(world, params.rageGain);
+    if (params.aimGain) addAim(world, params.aimGain);
     world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, t: 0, dur: 1.1 });
     // Support buffs land on the party around you too.
     if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));

@@ -599,6 +599,203 @@ export const MOVES = {
     };
   },
 
+  // ---------- Ranger: light on her feet, the bow always moving with her ----------
+  // (Timing after MapleStory's shoot2, 160 / 160 / 250 / 100 / 150 ms: a short raise, a short
+  // draw, a held aim, the loose, a settle. A player's anticipation stays compressed.)
+
+  // A twirl shot: loose one arrow, spin a full turn on the spot with the bow swung out, and loose
+  // another as she comes back round. Shots at 0.32 and 0.72.
+  spinshot(p) {
+    const spin = ease(seg(p, 0.36, 0.62));
+    const turn = Math.cos(spin * Math.PI * 2);
+    const pull = (a, b) => ease(seg(p, a, b));
+    const k = p < 0.36 ? pull(0.05, 0.3) * (1 - seg(p, 0.3, 0.36)) : pull(0.6, 0.7) * (1 - seg(p, 0.72, 0.8));
+    return {
+      weapon: -4 * k - 30 * Math.sin(spin * Math.PI), arm: 95 - 25 * Math.sin(spin * Math.PI), turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 3 * Math.sin(spin * Math.PI), lunge: 3 * spin * (1 - seg(p, 0.8, 1)),
+      rig: (r) => { r.backArm = [q(2 - 6 * k), -3]; if (spin > 0 && spin < 1) { r.hairLift = -1; r.cape -= 2; r.frontLeg = [2, -1, 6]; r.backLeg = [-2, 0, -6]; } else { r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.6, 0, 0]; } if (k > 0.8) strikeFace(r); },
+    };
+  },
+
+  // A leaping fan: crouch, hop up and back, and loose a spread of arrows down at them from the top
+  // of the hop. Shot at 0.55.
+  leapshot(p) {
+    const crouch = bump(p, 0, 0.22);
+    const hop = Math.sin(seg(p, 0.15, 0.9) * Math.PI);
+    const pull = ease(seg(p, 0.25, 0.52));
+    const snap = seg(p, 0.55, 0.66);
+    return {
+      weapon: 25 * hop - 8 * snap * (1 - seg(p, 0.7, 1)), arm: 80 - 12 * hop, lift: 20 * hop, tilt: 0.14 * hop - 0.08 * snap, lunge: -2 * snap,
+      rig: (r) => { if (hop > 0.15) tuck(r); else if (crouch > 0.3) r.squat = 2; r.backArm = snap > 0 ? [-4, -1] : [q(2 - 6 * pull), -2]; r.hairLift = hop > 0.3 ? -1 : 0; if (snap > 0 && snap < 1) strikeFace(r); },
+    };
+  },
+
+  // The gale shot: a wide low stance, a long full draw as the wind gathers at the arrowhead, then
+  // a loose that rocks her back on her heels. Shot at 0.6.
+  galeshot(p) {
+    const raise = ease(seg(p, 0, 0.16));
+    const pull = ease(seg(p, 0.12, 0.5));
+    const shiver = p > 0.42 && p < 0.58 ? Math.sin(p * 260) * 1.2 : 0;
+    const snap = seg(p, 0.6, 0.7);
+    const back = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-50, 0, raise) + shiver - 10 * snap * (1 - back), arm: lerp(60, 95, raise) + 6 * snap * (1 - back), lunge: -6 * snap * (1 - back * 0.6), tilt: -0.08 * pull * (1 - snap) - 0.14 * snap * (1 - back),
+      rig: (r) => { r.squat = snap > 0 ? 1 : pull > 0.3 ? 2 : 0; wideLegs(r); r.backArm = snap > 0 ? [q(-5 + 3 * back), -2] : [q(2 - 7 * pull), -3]; r.hairLift = -1; r.cape -= 2; if (snap > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
+  // Tailwind: a quick twirl with the bow raised high as the wind wraps round her, ending on a
+  // light skip.
+  tailwind(p) {
+    const spin = ease(seg(p, 0.1, 0.6));
+    const turn = Math.cos(spin * Math.PI * 2);
+    const skip = bump(p, 0.6, 0.9);
+    return {
+      weapon: lerp(10, -20, spin), arm: 150 - 40 * skip, turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 4 * Math.sin(spin * Math.PI) + 5 * skip,
+      rig: (r) => { r.backArm = [-3, -5]; r.hairLift = -1; r.cape -= 3; if (skip > 0.2) tuck(r); r.mouth = 'open'; },
+    };
+  },
+
+  // Storm Volley (the Ranger's finisher): a gust throws her spinning up into the air; at the top
+  // she whirls, loosing arrows every way; then she dives down bow first and lands in a crouch as
+  // the storm bursts. The pours land 0.3-0.54; the dive's burst at 0.8.
+  stormvolley(p, dur) {
+    if (p < 0.24) {
+      const rise = ease(seg(p, 0.04, 0.24));
+      const crouch = bump(p, 0, 0.1);
+      return { weapon: -40 * rise, arm: 120 + 40 * rise, lift: 40 * rise, tilt: -0.2 * rise, rig: (r) => { if (rise > 0.1) tuck(r); else if (crouch > 0.3) r.squat = 2; r.backArm = [-2, -4]; r.hairLift = -1; r.cape -= 3; } };
+    }
+    if (p < 0.66) {
+      // Whirling at the top: two full turns, each beat a pull and a loose up and out.
+      const a = seg(p, 0.24, 0.66) * 2;
+      const turn = Math.cos(a * Math.PI * 2);
+      const k = Math.abs(Math.sin(p * dur * 14));
+      return {
+        weapon: -45 + 20 * Math.sin(a * Math.PI * 2), arm: 140, turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 40 + 3 * Math.sin(a * Math.PI * 2), tilt: -0.1,
+        rig: (r) => { tuck(r); r.backArm = [q(1 - 5 * k), -5]; r.hairLift = -1; r.cape -= 3; strikeFace(r); },
+      };
+    }
+    const t = easeIn(seg(p, 0.66, 0.8));
+    const settle = seg(p, 0.82, 1);
+    return {
+      weapon: lerp(-45, 60, t), arm: lerp(140, 70, t), lift: 40 * (1 - t), tilt: 0.3 * t * (1 - settle), trail: p < 0.82,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [-2, -1]; strikeFace(r); },
+    };
+  },
+
+  // In the air: the bow tipped down at them, a quick pull and loose. Shot at 0.45 (0.5 for the
+  // second, a fuller draw).
+  airshot(p) {
+    const pull = ease(seg(p, 0.05, 0.42));
+    const snap = seg(p, 0.45, 0.56);
+    return {
+      weapon: 35 - 6 * snap, arm: 65, tilt: 0.12 - 0.08 * snap,
+      rig: (r) => { tuck(r); r.backArm = snap > 0 ? [-4, 0] : [q(2 - 6 * pull), -1]; r.hairLift = -1; if (snap > 0 && snap < 1) strikeFace(r); },
+    };
+  },
+  airshot2(p) {
+    const pull = ease(seg(p, 0.05, 0.48));
+    const snap = seg(p, 0.5, 0.62);
+    return {
+      weapon: 40 - 10 * snap, arm: 60, tilt: 0.16 - 0.12 * snap, lift: 2 * snap,
+      rig: (r) => { tuck(r); r.backArm = snap > 0 ? [-5, 0] : [q(2 - 7 * pull), -1]; r.hairLift = -1; r.cape -= 2; if (snap > 0) strikeFace(r); },
+    };
+  },
+
+  // A slide shot: drop into a low skid along the ground, loosing an arrow, then another as she
+  // comes up out of it. Shots at 0.35 and 0.62.
+  slideshot(p) {
+    const low = ease(seg(p, 0, 0.15)) * (1 - ease(seg(p, 0.6, 0.85)));
+    const k = Math.abs(Math.sin(seg(p, 0.15, 0.7) * Math.PI * 2));
+    return {
+      weapon: -10 * low - 4 * k, arm: 95 + 4 * k, tilt: -0.3 * low, lunge: 0,
+      rig: (r) => { r.squat = low > 0.4 ? 3 : low > 0.1 ? 1 : 0; r.frontLeg = [q(3 + 2 * low), 0, 30 * low]; r.backLeg = [q(-3 - 1 * low), 0, -8]; r.backArm = [q(2 - 5 * k), -3]; r.hairLift = -1; r.cape -= 3; },
+    };
+  },
+
+  // ---------- Sniper: planted, patient, every bolt a heavy kick ----------
+
+  // Drop to one knee, settle the stock, a held beat, then the bolt and a sharp kick of recoil.
+  // Shot at 0.56.
+  kneelshot(p) {
+    const kneel = ease(seg(p, 0, 0.22));
+    const hold = seg(p, 0.22, 0.56);
+    const kick = seg(p, 0.56, 0.64);
+    const back = ease(seg(p, 0.66, 1));
+    const sway = Math.sin(hold * Math.PI * 2) * 0.6 * (1 - hold);
+    return {
+      weapon: sway - 16 * kick * (1 - back), arm: 92 + 10 * kick * (1 - back), lunge: -5 * kick * (1 - back * 0.7), tilt: 0.04 * kneel * (1 - kick) - 0.14 * kick * (1 - back),
+      rig: (r) => { r.squat = kneel > 0.5 ? (kick > 0 && back < 0.5 ? 2 : 3) : 1; r.frontLeg = [3.4, 0, 6]; r.backLeg = [-3.6, -1, -30 * kneel * (1 - back)]; r.backArm = [-1, -2]; r.eyes = hold > 0.3 && kick === 0 ? 'half' : undefined; if (kick > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+
+  // Crank and fire: the crossbow tipped down as she winds the crank twice, then up, a bolt, a
+  // quick re-aim, and a second. Shots at 0.5 and 0.8.
+  crankshot(p) {
+    const down = ease(seg(p, 0, 0.12)) * (1 - ease(seg(p, 0.34, 0.44)));
+    const crank = seg(p, 0.1, 0.36);
+    const kick = (a) => seg(p, a, a + 0.07) * (1 - ease(seg(p, a + 0.08, a + 0.22)));
+    const k = Math.max(kick(0.5), kick(0.8));
+    return {
+      weapon: 18 * down - 14 * k, arm: 95 - 12 * down + 8 * k, lunge: -4 * k, tilt: 0.06 * down - 0.1 * k,
+      rig: (r) => { r.squat = 1; wideLegs(r); r.backArm = down > 0.3 ? [q(1 + 2 * Math.cos(crank * Math.PI * 4)), q(1 + 2 * Math.sin(crank * Math.PI * 4))] : [-1, -2]; if (k > 0.5) strikeFace(r); },
+    };
+  },
+
+  // The ballista bolt: brace wide and low, a long steady aim, then a kick that shoves her back and
+  // throws the crossbow up. Shot at 0.62.
+  ballista(p) {
+    const brace = ease(seg(p, 0, 0.22));
+    const hold = seg(p, 0.22, 0.62);
+    const kick = seg(p, 0.62, 0.68);
+    const back = ease(seg(p, 0.72, 1));
+    const shake = hold > 0.6 ? Math.sin(p * 300) * 0.8 : 0;
+    return {
+      weapon: shake - 34 * kick * (1 - back), arm: 92 + 22 * kick * (1 - back), lunge: -9 * kick * (1 - back * 0.5), tilt: 0.06 * brace * (1 - kick) - 0.24 * kick * (1 - back),
+      rig: (r) => { r.squat = kick > 0 && back < 0.5 ? 1 : 2; wideLegs(r); r.backArm = [-1, -2]; r.hairLift = kick > 0 && back < 0.6 ? -1 : 0; r.cape -= kick > 0 ? 3 : 0; r.eyes = hold > 0.3 && kick === 0 ? 'half' : undefined; if (kick > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
+  // A roll: tuck and tumble forward along the ground, and come up on one knee for the bolt.
+  // Shot at 0.66.
+  rollshot(p) {
+    const roll = ease(seg(p, 0.02, 0.45));
+    const kneel = seg(p, 0.45, 0.6);
+    const kick = seg(p, 0.66, 0.74);
+    const back = ease(seg(p, 0.76, 1));
+    if (roll < 1) return { weapon: 40, arm: 60, tilt: roll * Math.PI * 2, lift: 4 * Math.sin(roll * Math.PI), rig: (r) => { tuck(r); r.squat = 2; r.backArm = [1, 0]; r.hairLift = -1; } };
+    return {
+      weapon: -16 * kick * (1 - back), arm: lerp(70, 92, ease(kneel)) + 10 * kick * (1 - back), lunge: -5 * kick * (1 - back), tilt: -0.14 * kick * (1 - back),
+      rig: (r) => { r.squat = 3 - (back > 0.6 ? 2 : 0); r.frontLeg = [3.4, 0, 6]; r.backLeg = [-3.6, -1, -30 * (1 - back)]; r.backArm = [-1, -2]; if (kick > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+
+  // Steady Aim: lift the crossbow to the eye, a slow breath (the body rises and settles), and a
+  // calm nod.
+  steadyaim(p) {
+    const lift = ease(seg(p, 0, 0.25));
+    const breath = Math.sin(seg(p, 0.25, 0.85) * Math.PI);
+    const nod = bump(p, 0.8, 1);
+    return {
+      weapon: lerp(30, 0, lift), arm: lerp(60, 95, lift), lift: 1.5 * breath, tilt: -0.03 * breath + 0.04 * nod,
+      rig: (r) => { r.frontLeg = [2.8, 0, 0]; r.backLeg = [-2.8, 0, 0]; r.backArm = [-1, -2]; r.eyes = breath > 0.4 ? 'blink' : undefined; },
+    };
+  },
+
+  // Heartseeker (the Sniper's finisher): drop to a knee, a long, steady aim while the sights close
+  // in (the body barely breathes, the bow trembles just before), then the bolt: a kick that throws
+  // her back along the ground, and a slow rise. The bolt at 0.6, the shockwave at 0.74.
+  heartseeker(p, dur) {
+    const kneel = ease(seg(p, 0, 0.14));
+    const hold = seg(p, 0.14, 0.6);
+    const kick = seg(p, 0.6, 0.65);
+    const back = ease(seg(p, 0.7, 1));
+    const tremble = hold > 0.8 ? Math.sin(p * dur * 90) * 0.9 : Math.sin(hold * Math.PI * 3) * 0.3;
+    return {
+      weapon: tremble - 40 * kick * (1 - back), arm: 92 + 26 * kick * (1 - back), lunge: -10 * kick * (1 - back * 0.4), tilt: 0.05 * kneel * (1 - kick) - 0.3 * kick * (1 - back),
+      rig: (r) => { r.squat = kick > 0 && back < 0.4 ? 2 : back > 0.7 ? 1 : 3; r.frontLeg = [3.4, 0, 6]; r.backLeg = [-3.6, -1, -30 * (1 - back)]; r.backArm = [-1, -2]; r.hairLift = kick > 0 && back < 0.6 ? -1 : 0; r.cape -= kick > 0 && back < 0.6 ? 4 : 0; r.eyes = hold > 0.1 && kick === 0 ? 'half' : undefined; if (kick > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -632,6 +829,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, titan: 1.1, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
+  spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5,
 };
 
 // Basic attacks chain into a combo per weapon type.

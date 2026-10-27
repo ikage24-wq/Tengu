@@ -627,3 +627,205 @@ test('Rage makes every Berserker blow hit harder, and his blows land heavier tha
   updateWorld(ber, DT, press('KeyZ'));
   assert.ok(stopOf(ber) > stopOf(plain), 'longer hit-stop on his blows');
 });
+
+// ---------- The archer paths: the Ranger (bow, Gale) and the Sniper (crossbow, Focus) ----------
+
+// A level 30+ archer on a path, in the woods with sturdy boars in a row ahead.
+function archer(job, weapon = job === 'sniper' ? 'crossbow_20' : 'bow_20') {
+  const w = arena(weapon);
+  const c = createCharacter('A', {});
+  gainExp(c, 1e6);
+  advanceJob(c, 'archer');
+  c.quests.archer_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, job), `advanced to ${job}`);
+  c.equipment.weapon = makeEquip(weapon, {});
+  c.mp = 9999;
+  c.baseMp = 99999;
+  w.char = c;
+  for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
+  return w;
+}
+const shots = (w) => w.fx.filter((f) => f.kind === 'projectile' && f.t < 0.02).length;
+
+test("both archer paths wait on Kestrel's trial, and each keeps to its own weapon", async () => {
+  const { acceptQuest, questState } = await import('../src/core/quests.js');
+  const { JOBS } = await import('../src/data/jobs.js');
+  const { roleOf } = await import('../src/data/dungeons.js');
+  const c = createCharacter('A', {});
+  gainExp(c, 1e6);
+  advanceJob(c, 'archer');
+  assert.equal(advanceJob(c, 'ranger'), false, 'no path before the trial');
+  assert.equal(questState(c, 'archer_trial'), 'available');
+  assert.ok(acceptQuest(c, 'archer_trial'));
+  c.quests.archer_trial.state = 'done';
+  assert.ok(advanceJob(c, 'sniper'));
+  assert.deepEqual(JOBS.ranger.weapons, ['bow']);
+  assert.deepEqual(JOBS.sniper.weapons, ['crossbow']);
+  assert.equal(roleOf('ranger', 'archer'), 'dps');
+  assert.equal(roleOf('sniper', 'archer'), 'dps');
+});
+
+test("each archer path has its own basic combo, and its shots land when they arrive", async () => {
+  const { PATH_COMBOS } = await import('../src/world/melee.js');
+  for (const job of ['ranger', 'sniper']) {
+    const w = archer(job);
+    const seen = [];
+    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+    for (let i = 0; i < 160; i++) {
+      updateWorld(w, DT, hold);
+      if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
+    }
+    assert.deepEqual(seen.slice(0, 3), PATH_COMBOS[job].map((s) => s.move), `${job} combo`);
+    const v = archer(job);
+    const m = v.mobs[0];
+    updateWorld(v, DT, press('KeyZ'));
+    run(v, 0.15);
+    assert.equal(m.hp, 1e9, `${job}: nothing on the press`);
+    run(v, 0.6);
+    assert.ok(m.hp < 1e9, `${job}: the shot arrives and hits`);
+  }
+});
+
+test("a Ranger's Gale builds as arrows land, quickens her shots, and full looses twin arrows", async () => {
+  const { GALE_MAX } = await import('../src/world/melee.js');
+  const w = archer('ranger');
+  updateWorld(w, DT, press('KeyZ'));
+  const slow = w.pose.dur;
+  run(w, 1);
+  assert.ok(w.gale > 0, 'arrows that land build Gale');
+  run(w, 8);
+  assert.equal(w.gale, 0, 'it blows out once the fighting stops');
+  w.gale = GALE_MAX;
+  w.galeAt = w.now;
+  w.combo = -1;
+  w.comboUntil = -9;
+  updateWorld(w, DT, press('KeyZ'));
+  assert.ok(w.pose.dur < slow * 0.85, `faster at full Gale: ${slow} -> ${w.pose.dur}`);
+  let most = 0;
+  for (let i = 0; i < 40; i++) {
+    updateWorld(w, DT, idle);
+    most = Math.max(most, shots(w));
+  }
+  assert.ok(most >= 2, 'a twin arrow goes with the shot');
+});
+
+test("a Sniper's Focus builds standing still, bleeds away running, and full fires a Deadeye", async () => {
+  const { FOCUS_MAX } = await import('../src/world/melee.js');
+  const w = archer('sniper');
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 1);
+  const after = w.focus;
+  assert.ok(after > 0, 'bolts that land build Focus');
+  run(w, 1);
+  assert.ok(w.focus > after, 'standing still with a fight on builds it more');
+  const held = w.focus;
+  run(w, 0.8, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
+  assert.ok(w.focus < held, 'running bleeds it away');
+  // Full: the next bolt always crits, tears through the line, and spends it.
+  Object.assign(w.body, { x: 300, facing: 1 });
+  run(w, 0.3);
+  w.focus = FOCUS_MAX;
+  w.focusAt = w.now;
+  w.combo = -1;
+  w.comboUntil = -9;
+  updateWorld(w, DT, press('KeyZ'));
+  const crits = [];
+  for (let i = 0; i < 60; i++) {
+    for (const h of w.pending) if (!crits.includes(h)) crits.push(h);
+    updateWorld(w, DT, idle);
+  }
+  assert.ok(w.numbers.some((n) => n.text === 'DEADEYE!'), 'says DEADEYE!');
+  assert.ok(w.focus < FOCUS_MAX / 2, 'it spends the Focus');
+  const dead = crits.filter((h) => !h.party);
+  assert.ok(dead.length >= 3, `it tears through the line (${dead.length})`);
+  assert.ok(dead.every((h) => h.crit && !h.miss), 'every hit a critical');
+});
+
+test('the archer paths have command shots: up at flyers, from the air, and on the run', () => {
+  for (const [job, run0] of [['ranger', 'slideshot'], ['sniper', 'rollshot']]) {
+    const w = archer(job);
+    updateWorld(w, DT, { held: new Set(['ArrowUp', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+    assert.equal(w.pose.kind, 'skyshot', `${job}: up + attack shoots up`);
+    run(w, 1);
+    w.body.vy = -500;
+    w.body.onGround = false;
+    updateWorld(w, DT, press('KeyZ'));
+    assert.equal(w.pose.kind, 'airshot', `${job}: a shot from the air`);
+    assert.ok(w.hangUntil > w.now, 'it holds you up');
+    run(w, 1.5);
+    Object.assign(w.body, { x: 200, facing: 1 });
+    run(w, 0.5, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+    updateWorld(w, DT, { held: new Set(['ArrowRight', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+    assert.equal(w.pose.kind, run0, `${job}: a running shot`);
+  }
+});
+
+test('the no-spam rule holds for the Ranger and the Sniper too', () => {
+  for (const [job, skill] of [['ranger', 'galevolley'], ['ranger', 'cyclonearrow'], ['sniper', 'marksman'], ['sniper', 'glacierbolt']]) {
+    const w = archer(job);
+    w.char.skills[skill] = 10;
+    assert.ok(cast(w, skill).ok, `${skill} goes off`);
+    run(w, 0.15);
+    for (let i = 0; i < 3; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion, even after moving`);
+    run(w, 1.2);
+    assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
+  }
+});
+
+test('Cyclone Arrow keeps cutting what it passes, and Glacier Bolt freezes the ones around its mark', () => {
+  const w = archer('ranger');
+  w.char.skills.cyclonearrow = 10;
+  assert.ok(cast(w, 'cyclonearrow').ok);
+  const hits = new Set();
+  for (let i = 0; i < 120; i++) {
+    for (const h of w.pending) hits.add(h);
+    updateWorld(w, DT, idle);
+  }
+  assert.ok([...hits].filter((h) => h.mob === w.mobs[0]).length >= 4, 'the first boar is cut four times');
+  const v = archer('sniper');
+  v.char.skills.glacierbolt = 10;
+  assert.ok(cast(v, 'glacierbolt').ok);
+  run(v, 1);
+  assert.ok(v.mobs.filter((m) => m.frozenUntil > v.now).length >= 2, 'the burst freezes its neighbours too');
+});
+
+test("Tailwind and Steady Aim fill half the gauge at once", () => {
+  for (const [job, skill, gauge] of [['ranger', 'tailwind', 'gale'], ['sniper', 'steadyaim', 'focus']]) {
+    const w = archer(job);
+    w.char.skills[skill] = 10;
+    assert.ok(cast(w, skill).ok);
+    assert.equal(w[gauge], 50, `${skill} fills ${gauge}`);
+    assert.ok(w.char.buffs[skill], `${skill} is on`);
+  }
+});
+
+test("each archer path's finisher needs a 25-hit combo, spends it, and lands its big blow", () => {
+  for (const [job, skill] of [['ranger', 'stormvolley'], ['sniper', 'heartseeker']]) {
+    const w = archer(job);
+    w.char.skills[skill] = 10;
+    w.hits = 12;
+    w.hitsAt = w.now;
+    assert.equal(cast(w, skill).reason, 'hits', `${skill} waits for the combo`);
+    w.hits = 25;
+    assert.ok(cast(w, skill).ok, `${skill} goes off at 25`);
+    assert.ok(w.hits <= 1, 'spending the counter');
+    if (skill === 'heartseeker') assert.ok(w.fx.some((f) => f.kind === 'reticle'), 'the sights lock on first');
+    const m = w.mobs[0];
+    const seen = new Set();
+    for (let i = 0; i < 2 * 60; i++) {
+      for (const h of w.pending) seen.add(h);
+      updateWorld(w, DT, idle);
+    }
+    assert.ok(m.hp < 1e9, 'it hits');
+    if (skill === 'heartseeker') assert.ok([...seen].filter((h) => h.via === 'heartbolt').every((h) => h.crit), 'the bolt always crits');
+    else assert.equal(w.gale, 100, 'Storm Volley fills Gale');
+    w.hits = 99;
+    w.hitsAt = w.now;
+    assert.ok(cast(w, skill).ok);
+    run(w, 0.3);
+    w.hits = 99;
+    w.hitsAt = w.now;
+    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
+  }
+});

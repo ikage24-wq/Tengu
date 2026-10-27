@@ -53,6 +53,18 @@ export const JOBS = {
     blurb: 'Rage made flesh. Every blow builds Rage and makes them bleed; Rampage spends it all in one savage flurry. Deals damage in a group.',
   },
 
+  // Archer branches. Both ask for Kestrel's trial first.
+  ranger: {
+    id: 'ranger', name: 'Ranger', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    hp: 24, mp: 18, advanceHp: 320, advanceMp: 280, weapons: ['bow'],
+    blurb: 'Rides the wind with a bow. Every arrow that lands builds Gale; the fuller it is the faster you shoot, and full, every shot looses a twin. Leaps, spins, and storms of arrows.',
+  },
+  sniper: {
+    id: 'sniper', name: 'Sniper', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    hp: 24, mp: 17, advanceHp: 300, advanceMp: 260, weapons: ['crossbow'],
+    blurb: 'One bolt, one kill. Holding still and landing bolts builds Focus for sharper criticals; full, the next bolt is a Deadeye that always crits and tears through the line. Heavy, frost, and blast bolts.',
+  },
+
   ilwizard: {
     id: 'ilwizard', name: 'Stormfrost Wizard', short: 'Wizard', family: 'mage', tier: 2, parent: 'mage', level: 30,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 420, weapons: ['wand', 'staff'],

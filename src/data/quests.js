@@ -66,6 +66,13 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
+  // Kestrel's trial for an archer before either level 30 path.
+  archer_trial: {
+    id: 'archer_trial', name: "The Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
+    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths, then come back and I'll show you the Ranger's way and the Sniper's way.",
+    objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
+    rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
+  },
   crystal_heart: {
     id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
     text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',

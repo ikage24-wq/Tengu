@@ -61,7 +61,8 @@ Side quests stay optional but pay well and tell small stories about each town.
   30/50 jobs move to 30/60 or stay at 50; decide when building).
 - Each advancement is a short trial quest from the instructor: go somewhere, prove yourself in a
   solo trial room, come back to a ceremony with a new look (aura, title, outfit piece).
-- Warrior 2nd jobs are in (Paladin tank, Berserker damage); Archer and Thief next.
+- Warrior 2nd jobs are in (Paladin tank, Berserker damage), and Archer 2nd jobs (Ranger and
+  Sniper, both damage); Thief next.
 - Role stays tied to job like FFXIV: warriors tank, mages heal, archers and thieves deal damage.
   The 2nd job can add a second role (for example a warrior branch that deals damage).
 
@@ -130,7 +131,12 @@ jobs.)
 - [ ] **Phase 3: Collecting.** Monster book, achievements, and titles under the name.
 - [ ] **Phase 4: Chapters 4–7.** Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.
-- [ ] **Phase 5: Archer and Thief 2nd jobs.**
+- [ ] **Phase 5: Archer and Thief 2nd jobs.** Archer done: Kestrel's trial at 30 (shoot down 15
+  Wraiths), then Ranger (bow, Gale gauge: Gale Volley, Cyclone Arrow, Tailwind, mastery, Storm
+  Volley finisher) or Sniper (crossbow, Focus gauge and Deadeye: Marksman's Chain, Glacier Bolt,
+  Steady Aim, mastery, Heartseeker finisher), each with its own basic combo, command shots (up,
+  air, running), moves, effects, sounds, icons, auras, and generated players on both paths.
+  Thief next.
 - [ ] **Phase 6: Bosses and routines.** Normal/Hard, weekly clears, dungeon tokens, daily
   dungeon bonus, daily town tasks and town currencies, Boss Rush grades.
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).

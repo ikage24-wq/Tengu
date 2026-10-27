@@ -83,7 +83,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
+const SHOTS = { windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   thunder: 'lightning', chain: 'lightning', chainbolt: 'lightning', burst: 'zapHit', beam: 'zapHit',
@@ -94,7 +94,11 @@ const SPELLS = {
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
 };
-const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow', 'rain']);
+const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt']);
+// Crossbow shots that kick harder than a plain bolt (the archer paths' own have their own sound).
+const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt']);
+// Heavy bolts that land with a thud of their own.
+const HEAVY_HITS = new Set(['ballista', 'heartbolt', 'galearrow', 'blastbolt']);
 // Each melee weapon's swing [light, heavy], and the cut its blows land with.
 const SWINGS = { sword: ['swing', 'swingHeavy'], axe: ['axeSwing', 'axeSwingHeavy'], spear: ['spearSwing', 'spearSwingHeavy'], dagger: ['daggerSwing', 'swing'], none: ['fistSwing', 'fistSwing'] };
 const BLADE_HITS = { axe: 'hitAxe', spear: 'hitSpear', dagger: 'hitDagger', none: 'hitFist' };
@@ -113,7 +117,7 @@ const SOUNDS = {
   // school's own impact. Then the path's (Rage, Faith) or the weapon's element colour.
   hit({ big, crit, path, school, via = 'blade', weapon, element, many = 1, pan }) {
     const db = Math.min(3, (many - 1) * 1);
-    if (ARROWS.has(via)) voice(big ? 'arrowHitHeavy' : 'arrowHit', { pan, db });
+    if (ARROWS.has(via) || HEAVY_HITS.has(via)) voice(big || HEAVY_HITS.has(via) ? 'arrowHitHeavy' : 'arrowHit', { pan, db });
     else if (via === 'star' || via === 'pebble') voice('starHit', { pan, db });
     else if (via !== 'blade' && via !== 'chain' && school && COLOUR[school]) voice(COLOUR[school], { pan, db: db + 2 });
     else {
@@ -152,7 +156,7 @@ const SOUNDS = {
   stomp: ({ big, pan }) => voice(big ? 'landHard' : 'stomp', { pan }),
   dot: ({ pan }) => voice('dot', { pan }),
   shot({ kind, weapon, pan }) {
-    if (weapon === 'crossbow' && ARROWS.has(kind)) return voice(kind === 'bigarrow' ? 'crossbowHeavy' : 'crossbow', { pan });
+    if (weapon === 'crossbow' && ARROWS.has(kind) && kind !== 'heavybolt') return voice(HEAVY_BOLTS.has(kind) ? 'crossbowHeavy' : 'crossbow', { pan });
     voice(SHOTS[kind] ?? 'zap', { pan, rate: kind === 'bigstar' ? 0.85 : 1 });
   },
   cast({ school = 'arcane', big, pan }) {

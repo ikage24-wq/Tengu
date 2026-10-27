@@ -111,6 +111,42 @@ export const PATH_COMBOS = {
     { move: 'cleave2', dur: 0.52, step: 8, strikes: [{ at: 0.42, pct: 120, reach: 80, h: 66, targets: 2, knock: 60, launch: 160, arc: [110, -240], thick: 11 }] },
     { move: 'reaver', dur: 0.8, step: 16, finisher: true, strikes: [{ at: 0.47, pct: 270, reach: 96, h: 76, targets: 3, knock: 250, arc: [-110, 200], thick: 15, big: true, crack: true, stop: 0.1, shake: 4 }] },
   ],
+  // The archer paths. The Ranger: a snap shot, a twirl that looses two arrows, then a hop that
+  // fans three gale arrows down on them; light and quick. The Sniper: a kneeling heavy bolt through
+  // two in a line, a crank-and-fire, then a blast bolt that bursts on the first monster; slower,
+  // and every bolt heavy.
+  ranger: [
+    { move: 'quickshot', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'spinshot', dur: 0.48, step: 6, strikes: [{ at: 0.32, shot: 'windarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 860 }, { at: 0.72, shot: 'windarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 860 }] },
+    { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'galearrow', fan: 3, pct: 95, range: 310, h: 110, knock: 130, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+  ],
+  sniper: [
+    { move: 'kneelshot', dur: 0.56, step: -2, strikes: [{ at: 0.56, shot: 'heavybolt', pct: 120, range: 330, h: 56, knock: 80, speed: 1050, pierce: true, targets: 2 }] },
+    { move: 'crankshot', dur: 0.62, step: -3, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 130, range: 330, h: 56, knock: 90, speed: 1050, pierce: true, targets: 2 }] },
+    { move: 'ballista', dur: 0.82, step: -12, finisher: true, strikes: [{ at: 0.64, shot: 'blastbolt', pct: 210, range: 350, h: 56, blast: 56, targets: 4, speed: 1000, knock: 220, launch: 140, big: true, stop: 0.08, shake: 3, burst: 'blast' }] },
+  ],
+};
+
+// The archer paths' command shots. Up + attack: a shot up at whatever flies, knocking it higher.
+// In the air: shots that hold you up (`hang`) and loose down at them; a Sniper's bolt kicks her
+// back up (`recoil`). Running: the Ranger slides in under them loosing two arrows, the Sniper rolls
+// and comes up on one knee with a bolt.
+const ARCHER_COMMANDS = {
+  ranger: {
+    up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'galearrow', fan: 2, pct: 110, range: 280, h: 190, lift: 50, knock: 20, launch: 380, speed: 900, big: true, stop: 0.05 }] },
+    air: [
+      { move: 'airshot', dur: 0.36, hang: true, strikes: [{ at: 0.45, shot: 'windarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 900 }] },
+      { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'galearrow', fan: 3, pct: 90, range: 280, h: 190, drop: 60, knock: 120, speed: 950, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'slideshot', dur: 0.5, step: 46, carry: 0.6, strikes: [{ at: 0.35, shot: 'windarrow', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }, { at: 0.62, shot: 'windarrow', pct: 90, range: 300, h: 60, knock: 90, speed: 900 }] },
+  },
+  sniper: {
+    up: { move: 'skyshot', dur: 0.56, step: -4, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 140, range: 300, h: 190, lift: 50, knock: 30, launch: 420, speed: 1050, big: true, stop: 0.06, shake: 1 }] },
+    air: [
+      { move: 'airshot', dur: 0.5, hang: true, strikes: [{ at: 0.5, shot: 'heavybolt', pct: 120, range: 300, h: 170, drop: 50, knock: 80, recoil: 260, speed: 1050, pierce: true, targets: 2 }] },
+    ],
+    dash: { move: 'rollshot', dur: 0.66, step: 40, carry: 0.45, guard: 0.3, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 150, range: 330, h: 56, knock: 160, speed: 1050, pierce: true, targets: 3, big: true, stop: 0.05, shake: 1 }] },
+  },
 };
 
 // The command variants of a melee basic combo (any blade, axe, spear, dagger or bare hands).
@@ -165,6 +201,50 @@ export function faithGuard(world) {
   addFaith(world, FAITH_ON_HURT);
   return cut;
 }
+// Gale: the Ranger's gauge. Every arrow that lands builds it, and it blows itself out once the
+// fighting stops. The fuller it is the quicker she shoots (up to GALE_SPEED quicker at full); full
+// (Tailwind), every basic shot looses a twin arrow beside it.
+export const GALE_MAX = 100;
+const GALE_HOLD = 4;
+const GALE_DRAIN = 14;
+export const GALE_SPEED = 0.25;
+export const hasGale = (char) => jobChain(char.job).includes('ranger');
+export function addGale(world, n) {
+  if (!hasGale(world.char) || n <= 0) return;
+  world.gale = Math.min(GALE_MAX, (world.gale ?? 0) + n);
+  world.galeAt = world.now;
+}
+// Focus: the Sniper's gauge. Bolts that land build it, and so does standing still mid-fight;
+// running bleeds it away, and it fades once the fighting stops. The fuller it is the likelier a
+// critical (up to FOCUS_CRIT more at full); full, the next bolt is a Deadeye: it always crits and
+// tears through the whole line, and spends all of it.
+export const FOCUS_MAX = 100;
+const FOCUS_HOLD = 5;
+const FOCUS_DRAIN = 10;
+const FOCUS_STILL = 9; // per second, standing still with a fight on
+const FOCUS_RUN = 18; // per second lost while running
+export const FOCUS_CRIT = 0.3;
+export const hasFocus = (char) => jobChain(char.job).includes('sniper');
+export function addFocus(world, n) {
+  if (!hasFocus(world.char) || n <= 0) return;
+  world.focus = Math.min(FOCUS_MAX, (world.focus ?? 0) + n);
+  world.focusAt = world.now;
+}
+// What a shot that lands builds on an archer path's gauge (see world.js).
+export function addAim(world, n) {
+  addGale(world, n);
+  addFocus(world, n);
+}
+// The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
+function pathOf(world) {
+  const { char } = world;
+  const w = world.stats.weaponType;
+  if (MELEE.has(w) && w !== 'none') return hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
+  if (w === 'bow' && hasGale(char)) return 'ranger';
+  if (w === 'crossbow' && hasFocus(char)) return 'sniper';
+  return null;
+}
+
 // Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
 const RAGE_POWER = 0.25;
 // How much heavier each path's blows land: longer hit-stop, harder knockback.
@@ -199,8 +279,28 @@ export function basicCombo(world) {
       return;
     }
   }
-  // The warrior paths fight their own way with any blade, axe or spear.
-  const path = MELEE.has(world.stats.weaponType) && world.stats.weaponType !== 'none' && (hasRage(world.char) ? 'berserker' : hasFaith(world.char) ? 'paladin' : null);
+  // The paths fight their own way: warriors with any blade, axe or spear, archers with their own
+  // bow, and the archer paths have their own command shots.
+  const path = pathOf(world);
+  const cmd = ARCHER_COMMANDS[path];
+  if (cmd) {
+    if (!body.onGround && !body.rope) {
+      if ((world.airCombo ?? 0) >= cmd.air.length) return;
+      playStep(world, cmd.air[world.airCombo], 100, `basicair${world.airCombo}`);
+      world.airCombo += 1;
+      return;
+    }
+    if (world.intent?.up) {
+      playStep(world, cmd.up, 100, 'basiclaunch');
+      world.combo = -1;
+      return;
+    }
+    if ((world.runFor ?? 0) >= DASH_AFTER) {
+      playStep(world, cmd.dash, 100, 'basicdash');
+      world.combo = -1;
+      return;
+    }
+  }
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   world.combo = world.now <= (world.comboUntil ?? -9) ? ((world.combo ?? -1) + 1) % steps.length : 0;
   playStep(world, steps[world.combo], 100, `basic${world.combo}`);
@@ -219,9 +319,11 @@ export function skillCombo(world, skillId, params, scale = 100) {
 function playStep(world, step, scale, key, school = null) {
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
-  const dur = step.dur * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
-  // Shots need the whole draw and loose, so they hold you a little longer than a cut.
+  // Shots need the whole draw and loose, so they hold you a little longer than a cut; a Ranger's
+  // Gale quickens them.
   const ranged = step.strikes.some((s) => s.shot || s.rain);
+  const gale = ranged && hasGale(world.char) && !step.finisher ? 1 - (GALE_SPEED * (world.gale ?? 0)) / GALE_MAX : 1;
+  const dur = step.dur * gale * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
   const busy = dur * (step.finisher ? 0.92 : ranged ? 0.86 : CANCEL);
   world.attackTimer = busy;
   world.lockTimer = Math.max(world.lockTimer ?? 0, busy);
@@ -241,11 +343,18 @@ function playStep(world, step, scale, key, school = null) {
   if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
-  const heavy = hasRage(world.char) || hasFaith(world.char);
+  // A Sniper plants her feet the same way, and gathers her aim at the bow.
+  const heavy = hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
-    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
+    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : hasFocus(world.char) ? 'focus' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
+  }
+  // A marked shot locks on first: a sight closes in on each monster in its line until it fires.
+  if (step.mark) {
+    const s0 = step.strikes.find((st) => st.shot);
+    const lead = s0.at * dur;
+    for (const m of pickTargets(world.mobs, body, { w: s0.range, h: s0.h ?? 60 }, s0.targets ?? 1)) world.fx.push({ kind: 'reticle', school, mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: lead + 0.1 });
   }
   world.hangUntil = step.hang ? now + dur + 0.15 : 0;
   if (step.dive) {
@@ -255,7 +364,7 @@ function playStep(world, step, scale, key, school = null) {
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
     // The blade's whoosh starts during the wind-up, so it peaks as the blow lands (audio cue).
-    if (!s.shot && !s.rain) world.juice.push({ type: 'swing', in: s.at * dur, big: s.big || step.finisher, thick: s.thick ?? 7, pierce: Boolean(s.pierce && !s.arc), school, weapon: stats.weaponType });
+    if (!s.shot && !s.rain && !s.quiet) world.juice.push({ type: 'swing', in: s.at * dur, big: s.big || step.finisher, thick: s.thick ?? 7, pierce: Boolean(s.pierce && !s.arc), school, weapon: stats.weaponType });
     world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
   });
 }
@@ -265,6 +374,14 @@ export function tickMelee(world, dt) {
   const b = world.body;
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
+  if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
+  if (hasFocus(world.char)) {
+    // Standing still with a fight on (a bolt landed lately) steadies the aim; running loses it.
+    const fighting = world.now - (world.focusAt ?? -9) < FOCUS_HOLD;
+    if (fighting && world.stillTime > 0.25 && world.focus < FOCUS_MAX) world.focus = Math.min(FOCUS_MAX, world.focus + FOCUS_STILL * dt);
+    else if ((world.runFor ?? 0) > 0.1 && world.focus > 0) world.focus = Math.max(0, world.focus - FOCUS_RUN * dt);
+    else if (!fighting && world.focus > 0) world.focus = Math.max(0, world.focus - FOCUS_DRAIN * dt);
+  }
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -329,7 +446,7 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
-      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school, via: 'blade', weapon: stats.weaponType,
+      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge,
     });
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
     // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
@@ -375,16 +492,28 @@ function land(world, s) {
 }
 
 // How a shot would hit a monster: rolled now, landing when it arrives.
+// A Sniper's Focus sharpens her crits; a Deadeye (or a strike marked `crit`) always crits. Each
+// archer path's own spark lands with every shot (a swirl of wind, a sight's glint), unless the shot
+// bursts with its own (`burst`). Shots that land build the path's gauge (`gauge`, or 3 for a basic
+// shot and 5 for a skill's).
 function shotHit(world, s, m, delay, stack = 0, element = null) {
   const { char, stats, body } = world;
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
-  const miss = Math.random() >= hitChance(acc, char.level, m.def);
-  const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random);
-  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element, via: s.shot ?? (s.rain ? 'rain' : undefined) });
+  const sure = s.crit || s.deadeye;
+  const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
+  const extraCrit = sure ? 1 : hasFocus(char) ? (FOCUS_CRIT * (world.focus ?? 0)) / FOCUS_MAX : 0;
+  const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random, extraCrit);
+  const spark = hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
+  world.pending.push({
+    at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
+    via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, burst: s.burst ?? spark, dir: s.dir,
+    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5),
+  });
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
-function fire(world, s) {
+function fire(world, strike) {
+  let s = strike;
   const { body } = world;
   // A gauntlet throws real stars: one each, from the set in your bag.
   let star = null;
@@ -396,9 +525,23 @@ function fire(world, s) {
       return;
     }
   }
+  // A full Focus turns the shot into a Deadeye: it always crits, tears through the whole line, and
+  // spends the Focus.
+  if (hasFocus(world.char) && (world.focus ?? 0) >= FOCUS_MAX && !s.deadeye) {
+    world.focus = 0;
+    s = { ...s, deadeye: true, pierce: true, targets: Math.max(s.targets ?? 1, 3) + 3, range: s.range + 60, big: true, stop: Math.max(s.stop ?? 0, 0.07), shake: Math.max(s.shake ?? 0, 2), knock: Math.max(s.knock, 200) };
+    world.fx.push({ kind: 'deadeye', school: 'focus', x: body.x + s.dir * 14, y: body.y - HAND_Y, dir: s.dir, t: 0, dur: 0.5 });
+    world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'DEADEYE!', color: '#ff5a7a', t: 0, link: true });
+    world.juice.push({ type: 'deadeye' });
+  }
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
   const ox = body.x + s.dir * 10;
-  const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0);
+  const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
+  // A recoiling shot kicks you back (`recoil` in the air hops you up; `kickback` shoves you on
+  // the ground), and some burst at the bow as they go (`muzzle`).
+  if (s.recoil) body.vy = Math.min(body.vy, -s.recoil);
+  if (s.kickback && body.onGround) world.lunge = { v: (-s.dir * s.kickback) / 0.14, until: world.now + 0.14 };
+  if (s.muzzle) world.fx.push({ kind: s.muzzle, school: s.school, x: ox, y: oy, dir: s.dir, t: 0, dur: 0.6, seed: Math.random() });
   const speed = s.speed ?? 680;
   const box = { w: s.range, h: s.h ?? 60 };
   const element = star?.star.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
@@ -410,9 +553,20 @@ function fire(world, s) {
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
+  // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
+  if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
+  // A full Gale looses a twin arrow beside every basic shot, a little lighter.
+  if (hasGale(world.char) && (world.gale ?? 0) >= GALE_MAX && s.key.startsWith('basic') && !s.twin) fire(world, { ...s, twin: true, fan: 1, pierce: false, pct: s.pct * 0.6, oy: -5, big: false, stop: 0, shake: 0, gauge: 1 });
+  // A finisher shot that finds a mark opens a Link too (see land).
+  if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
   if (s.pierce) {
     const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
-    line.forEach((m, i) => shotHit(world, s, m, Math.abs(m.x - ox) / speed, i % 3, element));
+    // A whirling shot keeps cutting what it passes (`ticks` more times, `tickGap` apart).
+    line.forEach((m, i) => {
+      const at = Math.abs(m.x - ox) / speed;
+      shotHit(world, s, m, at, i % 3, element);
+      for (let k = 1; k <= (s.ticks ?? 0); k++) shotHit(world, { ...s, knock: 10, stop: 0, shake: 0, big: false, gauge: 1 }, m, at + k * s.tickGap, (i + k) % 3, element);
+    });
     fly(ox + s.dir * s.range, oy);
     return;
   }
@@ -423,9 +577,14 @@ function fire(world, s) {
     if (m) {
       const travel = fly(m.x, m.y - (m.air ?? 0) - m.def.h / 2);
       shotHit(world, s, m, travel, 0, element);
+      // A blast bolt bursts where it lands, catching everything close around it too.
+      if (s.blast) {
+        const near = world.mobs.filter((o) => o !== m && o.hp > 0 && Math.abs(o.x - m.x) <= s.blast && Math.abs(o.y - m.y) < 70).slice(0, (s.targets ?? 4) - 1);
+        near.forEach((o, k) => shotHit(world, { ...s, burst: s.blastFx ?? 'spark', pct: s.pct * 0.7 }, o, travel + 0.03, (k + 1) % 3, element));
+      }
     } else {
-      // Nothing to aim at: it flies off at its place in the fan.
-      const a = n > 1 ? (i / (n - 1) - 0.5) * 0.7 : 0;
+      // Nothing to aim at: it flies off at its place in the fan (angled down from the air).
+      const a = (n > 1 ? (i / (n - 1) - 0.5) * 0.7 : 0) + (s.drop ? 0.45 : s.lift ? -0.6 : 0);
       fly(ox + s.dir * Math.cos(a) * s.range, oy + Math.sin(a) * s.range);
     }
   }
@@ -434,13 +593,14 @@ function fire(world, s) {
 // Arrows rain down on the monsters in an area ahead, one after another.
 function rain(world, s) {
   const { body } = world;
-  const x0 = s.dir > 0 ? body.x + s.rainFrom : body.x - s.rainFrom - s.rainW;
+  // `around` rains on both sides of you at once.
+  const x0 = s.around ? body.x - s.rainW / 2 : s.dir > 0 ? body.x + s.rainFrom : body.x - s.rainFrom - s.rainW;
   const area = world.mobs.filter((m) => m.hp > 0 && m.x >= x0 && m.x <= x0 + s.rainW && Math.abs(m.y - body.y) < 120);
   for (let k = 0; k < s.rain; k++) {
     const delay = 0.12 + (k * s.span) / s.rain;
     const m = area.length ? area[k % area.length] : null;
     const x = m ? m.x + ((k * 13) % 17) - 8 : x0 + ((k * 37) % s.rainW);
-    world.fx.push({ kind: 'rain', variant: 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
+    world.fx.push({ kind: 'rain', variant: s.variant ?? 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
     if (m) shotHit(world, s, m, delay + 0.18, k % 3);
   }
 }
