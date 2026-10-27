@@ -7,7 +7,8 @@
 // Nothing flashes, and nothing covers the face. Everything is drawn from time alone.
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
 
-import { fxSprite } from './fx-sprites.js';
+import { fxSprite, fxPulse } from './fx-sprites.js';
+import { column } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -279,14 +280,14 @@ const JOBS = {
       motes(ctx, x, y, t, s, k, { n: 4, draw: sparkle('#fff6c9') });
     },
   },
-  // Paladin: the golden rune wheel turning slowly and faintly at her chest.
+  // Paladin: soft golden rays turning slowly and faintly behind her (HD light art).
   paladin: {
-    back: () => {},
-    front: (ctx, x, y, t, s, k) => fxSprite(ctx, 'holycharge', x, y - 22 * s, { frame: 1, rot: t * 0.3, scale: s * 0.55, alpha: k * 0.45 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'hdraysgold', x, y - 24 * s, { frame: 0, rot: t * 0.25, scale: s * 0.55, alpha: k * 0.35 }),
+    front: () => {},
   },
-  // Berserker: a slow, faint ring of fire at his feet.
+  // Berserker: a faint red ring of light at his feet, breathing.
   berserker: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'firespin', x, y - 2 * s, { t: t * 0.6, scale: s * 1.5, sy: 0.3, alpha: k * 0.55 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'hdringred', x, y, { frame: 0, scale: s * (0.85 + 0.05 * Math.sin(t * 2)), sy: 0.3, alpha: k * 0.45 }),
     front: () => {},
   },
   // Ranger: a slow, faint spin of wind at her feet (effect-pack art, no glow).
@@ -332,27 +333,31 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 // adds wings of light.
 
 
-// Rage: fire from the effect packs (fx-sprites.js), no glows: a ring of fire turning at his feet
-// that widens and quickens as Rage builds, from halfway a ring of flame bursting round his body
-// again and again, and full (Berserk), red rings blasting out from his feet.
+// Rage: real fire from the HD effect art (fx-sprites.js): a red ring of light at his feet that
+// widens as Rage builds, from halfway flames licking up round his legs, and full (Berserk), red
+// rings racing out from his feet again and again.
 function rageAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.1) fxSprite(ctx, 'firespin', x, y - 2 * s, { t: t * (1 + k), scale: s * (1.4 + 1.6 * k), sy: 0.3, alpha: Math.min(1, (k - 0.1) * 2) });
-    if (k >= 1) fxSprite(ctx, 'redring', x, y, { t: t % 0.55, scale: s * 1.6 });
+    if (k > 0.1) fxSprite(ctx, 'hdringred', x, y, { frame: 0, scale: s * (0.8 + 0.6 * k), sy: 0.3, alpha: Math.min(1, (k - 0.1) * 2) * 0.8 });
+    if (k > 0.5) for (const [dx, o] of [[-9, 0], [9, 0.4], [0, 0.8]]) fxSprite(ctx, 'hdflame', x + dx * s, y - 22 * s, { t: t + o, scale: s * (0.5 + 0.3 * k), alpha: Math.min(1, (k - 0.5) * 2.5) * 0.9 });
+    if (k >= 1) fxPulse(ctx, 'hdringred', x, y, (t % 0.7) / 0.7, { from: s * 0.5, to: s * 2, sy: 0.3, hold: 0.1 });
     return;
   }
-  if (k > 0.5) fxSprite(ctx, 'ragering', x, y - 22 * s, { t: (t * 0.8) % 1.1, scale: s * (0.9 + 0.5 * k), alpha: Math.min(1, (k - 0.5) * 2.5) * 0.85 });
+  if (k >= 1) fxSprite(ctx, 'hdflame', x, y - 26 * s, { t: t + 0.2, scale: s * 0.7, alpha: 0.6 });
 }
 
-// Faith: light from the effect packs: a golden ring at her feet, the golden rune wheel turning at
-// her chest as Faith builds, and full (Sanctified), a burst of light and its column again and again.
+// Faith: light from the HD effect art: a golden ring of light at her feet, golden rays turning
+// behind her as Faith builds, and full (Sanctified), a magic circle turning under her and a column
+// of light rising again and again.
 function faithAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.25) fxSprite(ctx, 'goldring', x, y, { frame: 6, scale: s * (1 + 0.5 * k), sy: 0.8, alpha: Math.min(1, (k - 0.25) * 2) * 0.8 });
-    if (k >= 1) fxSprite(ctx, 'holyburst', x, y + 4 * s, { t: t % 0.7, scale: s * 1.3 });
-    return;
+    if (k > 0.25) fxSprite(ctx, 'hdringgold', x, y, { frame: 0, scale: s * (0.8 + 0.5 * k), sy: 0.3, alpha: Math.min(1, (k - 0.25) * 2) * 0.8 });
+    if (k > 0.4) fxSprite(ctx, 'hdraysgold', x, y - 24 * s, { frame: 0, rot: t * (0.3 + 0.5 * k), scale: s * (0.5 + 0.4 * k), alpha: Math.min(1, (k - 0.4) * 2.5) * 0.6 });
+    if (k >= 1) {
+      fxSprite(ctx, 'hdcircle', x, y, { frame: 0, scale: s * 0.9, sy: 0.28, alpha: 0.7 });
+      column(ctx, 'hdbeam', x, y, (t % 1.1) / 1.1, 90 * s, 1.2 * s);
+    }
   }
-  if (k > 0.4) fxSprite(ctx, 'holycharge', x, y - 22 * s, { frame: 1, rot: t * (0.3 + 0.6 * k), scale: s * (0.6 + 0.5 * k), alpha: Math.min(1, (k - 0.4) * 2.5) * 0.85 });
 }
 
 // Gale: wind from the effect packs (fx-sprites.js), no glows: a spin of wind at her feet that

@@ -5,8 +5,7 @@
 import { haloStroke } from './fxkit.js';
 import { font } from '../ui/kit.js';
 import { SKILLS } from '../data/skills.js';
-import { fxSprite } from './fx-sprites.js';
-import { ringOf } from './warrior-fx.js';
+import { groundRing, lightBurst, ringOf } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -901,23 +900,15 @@ export function drawBuffEffects(ctx, buffs, layer, x, y, time, now, dir) {
 }
 
 // The cast moment for buff `f.skill`: a burst shaped for the skill, and its name popping up.
-// Each school's burst as a buff goes up: [strip, scale, drop below the feet].
-const CAST_BURSTS = {
-  holy: ['holyburst', 1.1, 4], rage: ['ragering', 1.1, -20], steel: ['steelspin', 1.3, -24], wind: ['windspin', 1.2, -22],
-  ice: ['freezing', 1, -20], fire: ['firering', 1.1, -2], arcane: ['arcanering', 1, -24], lightning: ['boltspark', 1.2, -22],
-  poison: ['poisonring', 1, -2], shadow: ['shadowring', 1.1, -24], focus: ['charge', 1, -24],
-};
-
 export function drawBuffCast(ctx, f, x, y, p, time) {
   const look = BUFF_LOOKS[f.skill] ?? { color: '#ffe36b', cast: 'burst' };
   const c = look.color;
   ctx.save();
-  // The moment it goes up, from the effect packs (fx-sprites.js): a ring of the skill's school
-  // snapping out along the ground and its burst rising around you.
+  // The moment it goes up, from the HD effect art (fx-sprites.js): a ring of the skill's school
+  // racing out along the ground and a burst of its light at the chest.
   const school = SKILLS[f.skill]?.school ?? 'steel';
-  fxSprite(ctx, ringOf(school), x, y, { p: Math.min(1, p * 1.3), scale: 1.6 });
-  const burst = CAST_BURSTS[school];
-  if (burst) fxSprite(ctx, burst[0], x, y + (burst[2] ?? 0), { p: Math.min(1, p * 1.15), scale: burst[1] });
+  groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 55);
+  lightBurst(ctx, school, x, y - 24, Math.min(1, p * 1.2), 0.8);
   ctx.restore();
   // The skill's name pops up over your head.
   if (f.name) {

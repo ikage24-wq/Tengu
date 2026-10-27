@@ -163,20 +163,27 @@ carry an improvement across every part of the game it applies to.
   Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
   streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
   step white, main, deep from head to tail (fx.md D), not faded copies.
-- **Effects are built from effect-pack art, not drawn shapes** (the player: code-drawn effects
-  with gradients look "childishly made"). `assets/fx/` holds hand-drawn pixel effect strips cut
-  from CC0 packs (PVFX Foundry, CodeManu's Free Pixel Effects Pack; `assets/fx/CREDITS.md`) by
-  `tools/build-fx.py`, which can recolour them (a fire swirl became the Ranger's wind). Play them
-  with `fx-sprites.js` `fxSprite`: one strip pixel is half a game pixel, so they land on the
-  screen's own pixels in HD. No gradients in effects; code draws only small supporting parts
-  (arrow and bolt shafts, a sight's ticks). The archer and warrior paths and every buff's cast
-  are done this way (`archery.js`, `warrior-fx.js`, `effects.js` `bladeCut`); the mage and thief
-  paths, monsters, and buffs' lasting looks still need the same pass.
-- Warriors: every blade cut is the pack's crescent slash, turned to the blade's own path and
-  sized past the tip, with a fainter copy a beat behind so it reads thick; downward cuts lean
-  forward instead of diving into the floor. Keep sprites near their own size (scale about 2 or
-  less): blown up four times they turn into chunky blobs, and a finisher stacked with five big
-  layers reads as mush. A finisher is one big burst plus one ring and a few small pieces.
+- **Effects are built from smooth HD effect art, never pixel effects or drawn shapes.** The
+  player found code-drawn effects with gradients "childishly made", then rejected pixel-art effect
+  packs too ("only use HD smooth ones"). `assets/fx/` holds strips cut by `tools/build-fx.py`
+  from CC0 HD packs (`assets/fx/CREDITS.md`): rendered flipbooks (Sinestesia's hit flashes, blood
+  and explosions; Thomas Iché's fire, flame and smoke) play as they are, and Kenney's white
+  particle textures (flares, rays, rings, beams, twirls, a crescent, a magic circle, a sigil) are
+  coloured like light at build time (the colour at the thin edges, white where dense) and
+  animated in code with `fxPulse` (grow, turn, fade), the way a particle system plays them. HD
+  strips are drawn smoothed, one strip pixel to one screen pixel at scale 1.
+- On the game's light pastel maps, additive light only works for white, steel and cold colours:
+  red added onto lavender turns pink and gold turns white. Warm effects (gold, red, fire, blood)
+  draw normally; a thin white additive copy inside a crescent gives its edge. Dark rendered smoke
+  reads as dirt here, so smoke and dust are lifted pale at build time.
+- Warriors (`warrior-fx.js`, `effects.js` `bladeCut`): every blade cut is one smooth crescent of
+  light (steel blue, the Paladin's gold, the Berserker's red), turned to the blade's own path and
+  sized just past the tip, wiping round the way the blade went; downward cuts lean forward
+  instead of diving into the floor. Hits are a cut line and a flash; the Paladin's are gold
+  flashes with a slim column of light, the Berserker's are blood bursts. Big moments stack a
+  magic circle on the floor, columns of light, rings racing out and one burst of light; heavy
+  blows throw up pale dust and clods of earth. The archer paths still use the old pixel strips
+  and need the same HD pass, as do the mage and thief paths, monsters, and buffs' lasting looks.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

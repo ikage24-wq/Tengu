@@ -1,4 +1,4 @@
-// Plays the effect sprite strips (hand-drawn pixel art from effect packs, assets/fx/; the list is
+// Plays the effect sprite strips (effect art from effect packs, assets/fx/; the list is
 // fx-sheets.js). Effects are built from these frames rather than drawn shapes (CLAUDE.md):
 // `fxSprite` draws one frame of a strip at a point, picked by progress `p` (0-1, the whole
 // animation over the effect's life) or by time `t` (seconds, at the strip's own rate; looping
@@ -35,8 +35,9 @@ export function fxFrame(name, { p, t } = {}) {
 }
 
 // Draws a strip's frame with its pivot at (x, y). `scale` (1 = half a game pixel per strip pixel),
-// `flip` mirrors it (face the other way), `rot` turns it (radians), `alpha` fades it.
-export function fxSprite(ctx, name, x, y, { p, t, frame, scale = 1, flip = false, rot = 0, alpha = 1, sx = 1, sy = 1 } = {}) {
+// `flip` mirrors it (face the other way), `rot` turns it (radians), `alpha` fades it. HD strips
+// are drawn smoothed; light (`add` strips, or `add: true`) is added onto what's under it.
+export function fxSprite(ctx, name, x, y, { p, t, frame, scale = 1, flip = false, rot = 0, alpha = 1, sx = 1, sy = 1, add } = {}) {
   const s = FX_SHEETS[name];
   const img = s && image(name);
   if (!img || alpha <= 0) return false;
@@ -44,12 +45,24 @@ export function fxSprite(ctx, name, x, y, { p, t, frame, scale = 1, flip = false
   if (f < 0) return false;
   const k = scale * 0.5;
   ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha *= alpha;
+  ctx.imageSmoothingEnabled = Boolean(s.hd);
+  if (s.hd) ctx.imageSmoothingQuality = 'high';
+  if (add ?? s.add) ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= Math.min(1, alpha);
   ctx.translate(x, y);
   if (rot) ctx.rotate(rot);
   ctx.scale((flip ? -k : k) * sx, k * sy);
   ctx.drawImage(img, f * s.w, 0, s.w, s.h, -s.px, -s.py, s.w, s.h);
   ctx.restore();
   return true;
+}
+
+// A texture (a one-frame HD strip) played as an effect: it grows from `from` to `to` times its size
+// over the effect's life (fast at first, settling), fades in over the first `fadeIn` and holds
+// until `hold`, then fades out. Other options pass to `fxSprite` (rot, flip, sx, sy, add).
+export function fxPulse(ctx, name, x, y, p, { from = 0.6, to = 1.2, fadeIn = 0.06, hold = 0.25, alpha = 1, ...rest } = {}) {
+  if (p < 0 || p > 1) return false;
+  const e = 1 - (1 - p) ** 3;
+  const a = p < fadeIn ? p / fadeIn : p < hold ? 1 : 1 - (p - hold) / (1 - hold);
+  return fxSprite(ctx, name, x, y, { ...rest, frame: 0, scale: from + (to - from) * e, alpha: alpha * a });
 }

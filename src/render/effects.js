@@ -6,7 +6,8 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
-import { fxSprite } from './fx-sprites.js';
+import { fxSprite, fxPulse } from './fx-sprites.js';
+import { debris, groundRing } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
@@ -593,8 +594,8 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'pierce': {
-      // A thrust: the effect pack's jet bursting forward from the weapon's point to the end of the
-      // blow's reach (steel; a Berserker's in fire). When the weapon isn't level at that moment
+      // A thrust: a streak of light shooting forward from the weapon's point to the end of the
+      // blow's reach, a burst of light at its end (steel; a Berserker's in red). When the weapon isn't level at that moment
       // (a dash still winding through), it leaves from the hand instead.
       const b = f.box;
       const dir = f.dir ?? 1;
@@ -605,7 +606,11 @@ function drawFx(ctx, f, cam, time) {
       const start = from0 ? f.x + from0[0] : dir > 0 ? b.x : b.x + b.w;
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
       const reach = Math.max(24, Math.abs(end - start));
-      fxSprite(ctx, f.school === 'rage' ? 'ragejet' : 'thrust', start - cam.x + dir * reach * 0.55, by + 2, { p, flip: dir < 0, scale: reach / 32, sy: 0.7 });
+      const a = p < 0.5 ? 1 : 1 - (p - 0.5) / 0.5;
+      const sx0 = start - cam.x;
+      const len = reach * Math.min(1, p / 0.15 + 0.3);
+      fxSprite(ctx, f.school === 'rage' ? 'hdbeamred' : 'hdstreak', sx0 + (dir * len) / 2, by + 2, { frame: 0, rot: Math.PI / 2, sx: 0.7, sy: len / 95, alpha: a });
+      fxSprite(ctx, f.school === 'rage' ? 'hdthrustred' : 'hdthrust', sx0 + dir * reach * 0.85, by + 2, { p, flip: dir < 0, rot: (dir > 0 ? 1 : -1) * 0.75, scale: 0.8 });
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -789,17 +794,20 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      // A shot leaving the bow or hand: a small ring of force. Where a blow lands: a blade cut
-      // across the target and a ring for cuts, the effect pack's impact burst for everything else
+      // A shot leaving the bow or hand: a small flare. Where a blow lands: a cut of light across
+      // the target and a steel flash for blade cuts, a hit flash and a star for everything else
       // and for crits.
       if (f.muzzle) {
-        fxSprite(ctx, 'hitring', x, y, { p, scale: 0.6 });
+        fxPulse(ctx, 'hdflare', x, y, p, { from: 0.45, to: 0.2 });
         break;
       }
       if (f.via === 'blade' && !f.crit) {
-        fxSprite(ctx, 'cut', x + 4, y, { p, rot: -0.7 + (f.seed ?? 0.5) * 0.6, scale: 0.7 });
-        fxSprite(ctx, 'hitring', x, y, { p, scale: 0.7 });
-      } else fxSprite(ctx, 'impact', x, y + 6, { p, scale: f.crit ? 1 : 0.7 });
+        fxSprite(ctx, 'hdcut', x, y, { p, rot: (f.seed ?? 0.5) * 1.2 - 0.6, scale: 0.55 });
+        fxSprite(ctx, 'hdhitsteel', x, y, { p, scale: 0.4 });
+      } else {
+        fxSprite(ctx, 'hdhit', x, y, { p, scale: f.crit ? 0.75 : 0.5 });
+        fxPulse(ctx, 'hdstar', x, y, p, { from: f.crit ? 0.8 : 0.5, to: 0.2, hold: 0.05, fadeIn: 0.01 });
+      }
       break;
     }
     case 'arc':
@@ -817,13 +825,14 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'crack':
-      // The ground ruptures under a heavy blow: rock spikes bursting up across its width.
-      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 80)); i < n; i++) fxSprite(ctx, 'quake', x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y + 6, { p: Math.min(1, p * 1.2 + i * 0.05), scale: 1.6 });
+      // The ground ruptures under a heavy blow: dust and clods of earth blasting up across its width.
+      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n), (f.seed ?? 0) + i);
       break;
     case 'roar':
       // Provoke: rings of a battle roar bursting out to its reach.
-      fxSprite(ctx, 'redring', x, y, { p, scale: (f.r ?? 120) / 40 });
-      fxSprite(ctx, 'steelring', x, y, { p: Math.min(1, p * 1.3), scale: (f.r ?? 120) / 60 });
+      groundRing(ctx, 'hdringred', x, y, p, f.r ?? 120);
+      groundRing(ctx, 'hdring', x, y, Math.min(1, p * 1.3), (f.r ?? 120) * 0.7);
+      fxPulse(ctx, 'hdraysred', x, y - 26, p, { from: 0.5, to: 1.3, hold: 0.15 });
       break;
     case 'hook': {
       // Chain Hook: links race out to each monster caught, then reel it in.
@@ -925,14 +934,16 @@ function bladePath(f) {
 
 
 
-// A blade's cut, from the effect pack's crescent slash (fx-sprites.js): turned and mirrored to follow
-// the blade's own path through the move (sampled from the hero's pose, `bladePath`), sized to the
-// reach, in steel, the Paladin's gold (and any heavy blow's) or the Berserker's red. A cut all
-// around (a whirl) is a spinning ring of steel or fire instead.
+// A blade's cut, a smooth crescent of light from the HD effect art (fx-sprites.js): turned to
+// follow the blade's own path through the move (sampled from the hero's pose, `bladePath`), sized
+// to the reach, in steel, the Paladin's gold (and any heavy blow's) or the Berserker's red. A cut
+// all around (a whirl) is twirls of light spinning flat round the body instead.
 function bladeCut(ctx, f, cam, p) {
-  const name = f.snd === 'rage' ? 'slashred' : f.snd === 'holy' || f.big ? 'slashgold' : 'slash';
+  const name = f.snd === 'rage' ? 'hdslasharcred' : f.snd === 'holy' || f.big ? 'hdslasharcgold' : 'hdslasharc';
   if (f.flat) {
-    fxSprite(ctx, f.snd === 'rage' ? 'firespin' : 'steelspin', f.x - cam.x, f.y - cam.y + 8, { t: f.t * 1.6, scale: (f.r ?? 60) / 14, sy: 0.4, alpha: 1 - p * p });
+    // A whirl: twirls of light spinning flat round the body.
+    const tw = f.snd === 'rage' ? 'hdtwirlred' : 'hdtwirl';
+    for (const [k, sp] of [[1, 14], [0.75, -10]]) fxSprite(ctx, tw, f.x - cam.x, f.y - cam.y + 6, { frame: 0, rot: f.t * sp, scale: ((f.r ?? 60) / 50) * k, sy: 0.4, alpha: 1 - p * p });
     return;
   }
   const path = bladePath(f);
@@ -959,12 +970,6 @@ function bladeCut(ctx, f, cam, p) {
     cx = f.x - cam.x;
     cy = f.y - cam.y;
   }
-  // The pack's slash cuts over the top of its circle, left to right (clockwise): turn it so its
-  // middle meets the blade's, and mirror it for a cut the other way round.
-  // The full crescent (frames 1-3) holds through most of the swing's life, then breaks up.
-  const frame = p < 0.06 ? 0 : p < 0.62 ? 1 + Math.min(2, Math.floor(((p - 0.06) / 0.56) * 3)) : Math.min(8, 4 + Math.floor(((p - 0.62) / 0.38) * 5));
-  // Sized so the crescent rides just past the blade's tip, with a fainter copy a beat behind it
-  // so the cut reads thick and fast.
   // A downward cut stays above the floor: the crescent leans out in front rather than diving into
   // the ground.
   if (Math.sin(mid) > -0.05) {
@@ -973,10 +978,17 @@ function bladeCut(ctx, f, cam, p) {
     mid = Math.atan2(-0.05, f.dir || 1);
     cy -= 6;
   }
-  const scale = (r / 12) * (f.big ? 1.2 : 1);
-  const back = cw ? -0.32 : 0.32;
-  fxSprite(ctx, name, cx, cy, { frame, rot: mid + back + Math.PI / 2, flip: !cw, scale: scale * 0.9, alpha: 0.55 });
-  fxSprite(ctx, name, cx, cy, { frame, rot: mid + Math.PI / 2, flip: !cw, scale });
+  // The crescent's middle (it bows away from its centre) meets the blade's, sized to ride just
+  // past the tip. It wipes round the way the blade went, swelling a touch, then fades; a white-hot
+  // copy of light inside it gives the edge.
+  const scale = (r / 31) * 1.1 * (f.big ? 1.15 : 1);
+  const turn = cw ? 1 : -1;
+  const k = Math.min(1, p / 0.3);
+  const rot = mid - Math.PI / 2 - turn * 0.55 * (1 - easeOut(k));
+  const a = p < 0.05 ? p / 0.05 : p < 0.35 ? 1 : 1 - (p - 0.35) / 0.65;
+  const grow = 0.88 + 0.2 * easeOut(Math.min(1, p / 0.5));
+  fxSprite(ctx, name, cx, cy, { frame: 0, rot, flip: !cw, scale: scale * grow, alpha: a });
+  fxSprite(ctx, 'hdslashcore', cx, cy, { frame: 0, rot: rot + turn * 0.04, flip: !cw, scale: scale * grow * 0.97, alpha: a * 0.45 });
 }
 
 function strikeAt(f) {
