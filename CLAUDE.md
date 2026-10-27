@@ -39,16 +39,18 @@ E (UI) and F (Icons); for effects and game feel `research/fx.md`; for animation
 own older work, and save anything new we learn back there (the rule in `README.md`, the finding
 with its source in `research/`).
 
-**Effects come from smooth HD effect art, not pixel effects or simple drawn shapes.** The player
-finds simple code-drawn effects (soft gradient glows, plain rings, flat blobs) childish, and
-doesn't want pixel-art effects or low-quality ones either: only smooth, high-resolution effect
-art. Before making any effect, look for art references and for HD effect packs (rendered or
-painted flipbooks, particle textures) that cover it, and build the effect from those:
-`assets/fx/` holds the packs we use, built by `tools/build-fx.py` (credits in
+**Effects come from good effect art, never simple drawn shapes.** The player finds simple
+code-drawn effects (soft gradient glows, plain rings, flat blobs) childish and rejects low-quality
+effects; pixel-art effects are fine when they're actually good. The target is MapleStory's skill
+effects (research/fx.md section 6): every hit lands as its own bright shape, big skills show one
+recognisable picture, buffs rise as a pillar of light with an emblem, everything ends breaking into
+sparkles. Before making any effect, look at references and for effect packs (painted or rendered
+flipbooks, pixel sheets, particle textures, emblem shapes) that cover it, and build the effect from
+those: `assets/fx/` holds the packs we use, built by `tools/build-fx.py` (credits in
 `assets/fx/CREDITS.md`; only use packs whose license allows shipping them in the game's files,
-such as CC0 or CC BY). Recolouring, combining frames, and moving, turning, growing and fading
-textures in code (the way a particle system plays them) is fine. Code drawing is for small
-supporting touches only (a tracer line, a sight's ticks).
+such as CC0 or CC BY). Recolouring, combining frames, and moving, turning, growing and fading art
+in code (the way a particle system plays it) is fine. Code drawing is for small supporting touches
+only (a tracer line, a sight's ticks).
 
 "Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
 `docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items

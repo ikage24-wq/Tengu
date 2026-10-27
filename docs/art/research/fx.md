@@ -406,3 +406,54 @@ thin edges, white where dense) and animated as a particle system would (grow fas
 turn, fade). On light pastel maps additive blending only suits white and cold colours (red goes
 pink, gold goes white), so warm effects draw normally; dark rendered smoke reads as dirt there
 and is lifted pale.
+
+## 6. MapleStory's warrior effects, frame by frame (the target look)
+Source: MapleStory Classic World skill animations hosted by meowdb (e.g.
+https://meowdb.com/msclassic/skills/white-knight/charged-blow; animations at
+`/msclassic/skill-anim/<id>-cast.gif`: Power Strike 1001001, Slash Blast 1001002, Coma 1111002,
+Armor Crash 1111004, Shout 1111003, Charged Blow 1211000, Fire/Ice/Lightning Charge 1211001-3,
+Elemental Crash 1211004, Threaten 1201004, Piercing Crusher 1311000, Dragon Fury 1311001, Dragon
+Roar 1311002, Power Crash 1311003, Hyper Body 1311005, Power Guard 1111005). Studied, not shipped.
+What makes them read:
+- **The hit lands on the monster as its own big shape**, not a puff: Power Strike is a gold
+  star-burst at the hero, then a red X of two crossing slashes over the target, white-hot at the
+  core with a red glow; Slash Blast cuts a red V; Coma strikes three blue-white lightning slashes.
+  Each is bigger than the monster's head and lasts 4-6 frames.
+- **Big skills show a symbol**: Shout is a cyan spectral lion roaring out of a white burst;
+  Dragon Roar is a magenta magic circle with a dragon's head inside; Piercing Crusher is a huge
+  blue dragon wing and a lance of light; Threaten is a black ghost; Power Guard a stone tablet
+  outlined in gold. One recognisable picture per skill.
+- **Buffs are a pillar of coloured light from the ground with an emblem inside** (a shield, a
+  cross, a lightning gem), the pillar thinning out and dissolving into falling sparkles (Armor
+  Crash, Elemental Crash, Power Crash). Elemental charges wrap a crescent swoosh round the body,
+  then a tall flame of the element rises through it.
+- **Shapes are crisp with a white core, a saturated body and a soft glow**; saturated enough to
+  read on bright maps. Effects run 2-3 times the hero's height. Everything ends by breaking into
+  sparkles, never by a plain fade.
+- Jason Tom Lee's slash tutorial (https://jasontomlee.itch.io/slashfx/devlog/629732/tutorial-2-slash-shape-fundamentals):
+  a slash is one clean curve shaped like a flag, wide at the leading head and tapering to the
+  trailing end; it follows the weapon's arc; the full shape is the climax and shows for only 1-2
+  frames; stray pixels ruin it. (His SlashFX pack says CC BY 4.0 but also "you may not
+  redistribute", so it can't ship in our files.)
+- Emblems we can ship: game-icons.net (https://game-icons.net, CC BY 3.0, credit each author;
+  some CC0): lion, dragon heads, griffin, holy symbol, shields, angel wings, skulls, crossed
+  swords. Rendered as glowing emblems (white core, coloured body, soft glow), they give skills
+  MapleStory's "one picture per skill" read.
+
+## 7. Better effect packs (searched again; all shippable)
+- jellyfish0, Sprite Effects parts 1-2 (CC0) — https://opengameart.org/content/sprite-effects-part-1,
+  https://opengameart.org/content/sprite-effects-part-2 (EN). About 98 smooth painted effects in
+  1024 px frames: crescent sword swipes that sweep round (50e-50j), a spin slash, claw slashes,
+  pillars of light, a golden magic circle, hex and orb shields, vortices, shockwave rings,
+  speed streaks. The closest free match to MapleStory / Dungeon Fighter. No fire or blood.
+- Inguz Media, 2DFX Impact Spritesheets (CC BY 4.0) — https://opengameart.org/content/2dfx-impact-spritesheets.
+  Rendered impact bursts, 64 frames of 1024 px.
+- Raja_Kutai, Slash (CC0) — https://opengameart.org/content/slash-0. A slash streak turning into
+  an anime white-yellow star burst with a bubble and red droplets: a crit.
+- Pavel Kutejnikov, Auras (CC0) — https://opengameart.org/content/auras. Looping ring auras
+  (fire, blue, purple), 60 frames.
+- Also CC0 and usable: System G6 RPG VFX Pack (https://opengameart.org/content/rpg-vfx-pack), para's
+  Animated Particle Effects 2, rubberduck's 25 Blender effects, Sam's FREE 2D VFX PACK (itch.io,
+  toon dust and blood).
+- Can't ship (their terms forbid redistributing the files): Pipoya's packs, jasontomlee's Slash
+  FX and Blood FX, Cartoon Coffee, CraftPix, unTied Games.

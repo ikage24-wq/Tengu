@@ -163,27 +163,36 @@ carry an improvement across every part of the game it applies to.
   Ranger's wind is rounded curls, ribbons and leaves (`archery.js`); the Sniper's is straight hard
   streaks, four-point glints on the corner, and a rose sight. Shot trails are tapered ribbons that
   step white, main, deep from head to tail (fx.md D), not faded copies.
-- **Effects are built from smooth HD effect art, never pixel effects or drawn shapes.** The
-  player found code-drawn effects with gradients "childishly made", then rejected pixel-art effect
-  packs too ("only use HD smooth ones"). `assets/fx/` holds strips cut by `tools/build-fx.py`
-  from CC0 HD packs (`assets/fx/CREDITS.md`): rendered flipbooks (Sinestesia's hit flashes, blood
-  and explosions; Thomas Iché's fire, flame and smoke) play as they are, and Kenney's white
-  particle textures (flares, rays, rings, beams, twirls, a crescent, a magic circle, a sigil) are
-  coloured like light at build time (the colour at the thin edges, white where dense) and
-  animated in code with `fxPulse` (grow, turn, fade), the way a particle system plays them. HD
-  strips are drawn smoothed, one strip pixel to one screen pixel at scale 1.
-- On the game's light pastel maps, additive light only works for white, steel and cold colours:
-  red added onto lavender turns pink and gold turns white. Warm effects (gold, red, fire, blood)
-  draw normally; a thin white additive copy inside a crescent gives its edge. Dark rendered smoke
-  reads as dirt here, so smoke and dust are lifted pale at build time.
-- Warriors (`warrior-fx.js`, `effects.js` `bladeCut`): every blade cut is one smooth crescent of
-  light (steel blue, the Paladin's gold, the Berserker's red), turned to the blade's own path and
-  sized just past the tip, wiping round the way the blade went; downward cuts lean forward
-  instead of diving into the floor. Hits are a cut line and a flash; the Paladin's are gold
-  flashes with a slim column of light, the Berserker's are blood bursts. Big moments stack a
-  magic circle on the floor, columns of light, rings racing out and one burst of light; heavy
-  blows throw up pale dust and clods of earth. The archer paths still use the old pixel strips
-  and need the same HD pass, as do the mage and thief paths, monsters, and buffs' lasting looks.
+- **Effects are built from good effect art, never drawn shapes.** The player rejected code-drawn
+  gradient effects ("childishly made"), then thin pixel packs and plain soft HD textures as low
+  quality; what they want is MapleStory's look (research/fx.md section 6). Pixel art is fine
+  when it's good. `assets/fx/` holds strips cut by `tools/build-fx.py` from CC0 / CC BY packs
+  (`assets/fx/CREDITS.md`):
+  - jellyfish0's painted effects are the warriors' main art: real sword swipes that sweep round
+    with the blade, a spin slash, claw marks, a pillar of light, a magic circle, an orb shield.
+  - game-icons.net shapes rendered into glowing art at build time (a white-hot heart, the colour,
+    a deep rim, a soft glow, then frames breaking up into rising sparkles), played with
+    `fxEmblem`: the picture a big skill shows (a roaring lion, a winged sword, demon wings, the
+    holy symbol) and the cross of slashes a hit leaves.
+  - Rendered flipbooks for hits, crits, blood, fire and dust; Kenney's textures (rings, rays,
+    beams) animated with `fxPulse` only as supporting light.
+- On the game's light pastel maps, additive light only suits white and cold colours (red goes
+  pink, gold goes white); warm effects draw normally. Dark rendered smoke reads as dirt here, so
+  smoke and dust are lifted pale at build time.
+- Warriors (`warrior-fx.js`, `effects.js` `bladeCut`), after MapleStory:
+  - Every swing plays a painted swipe turned and mirrored so its sweep follows the blade's own,
+    sized just past the tip: steel blue for the Warrior, white gold for the Paladin (and any
+    heavy blow), blood-red ink for the Berserker, on basic attacks too.
+  - Every hit leaves its own shape on the monster: a glowing cross of slashes for the Warrior,
+    a gold crescent burst for the Paladin, red claw marks and blood for the Berserker, the anime
+    star burst for crits.
+  - Big skills show one picture: Rally Cry and Provoke a roaring lion, Aegis Smite a golden
+    shield, Hallowed Ground the sun, Grand Verdict a winged sword driven down out of the sky,
+    Crimson Eclipse demon wings under a blood moon with a horned skull in it.
+  - Buffs and power-ups rise as a pillar of the path's light with the skill's emblem in it.
+  - Keep pillars slim (a wide painted pillar washes the screen white) and dust small.
+  - The archer paths still use the old pixel strips and need the same pass, as do the mage and
+    thief paths, monsters, and buffs' lasting looks.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a
   dark teal ink rim; hits layer a star flash, two crossing wind slashes, a swirl and leaves; skill

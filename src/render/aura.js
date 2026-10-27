@@ -8,7 +8,7 @@
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
 
 import { fxSprite, fxPulse } from './fx-sprites.js';
-import { column } from './warrior-fx.js';
+import { lightPillar } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -333,12 +333,12 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 // adds wings of light.
 
 
-// Rage: real fire from the HD effect art (fx-sprites.js): a red ring of light at his feet that
+// Rage: real fire from the HD effect art (fx-sprites.js): a turning ring of fire at his feet that
 // widens as Rage builds, from halfway flames licking up round his legs, and full (Berserk), red
 // rings racing out from his feet again and again.
 function rageAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.1) fxSprite(ctx, 'hdringred', x, y, { frame: 0, scale: s * (0.8 + 0.6 * k), sy: 0.3, alpha: Math.min(1, (k - 0.1) * 2) * 0.8 });
+    if (k > 0.1) fxSprite(ctx, 'jfirering', x, y, { t, scale: s * (0.45 + 0.35 * k), sy: 0.32, alpha: Math.min(1, (k - 0.1) * 2) });
     if (k > 0.5) for (const [dx, o] of [[-9, 0], [9, 0.4], [0, 0.8]]) fxSprite(ctx, 'hdflame', x + dx * s, y - 22 * s, { t: t + o, scale: s * (0.5 + 0.3 * k), alpha: Math.min(1, (k - 0.5) * 2.5) * 0.9 });
     if (k >= 1) fxPulse(ctx, 'hdringred', x, y, (t % 0.7) / 0.7, { from: s * 0.5, to: s * 2, sy: 0.3, hold: 0.1 });
     return;
@@ -347,15 +347,15 @@ function rageAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Faith: light from the HD effect art: a golden ring of light at her feet, golden rays turning
-// behind her as Faith builds, and full (Sanctified), a magic circle turning under her and a column
-// of light rising again and again.
+// behind her as Faith builds, and full (Sanctified), the golden magic circle under her and a
+// pillar of light rising through her again and again.
 function faithAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
     if (k > 0.25) fxSprite(ctx, 'hdringgold', x, y, { frame: 0, scale: s * (0.8 + 0.5 * k), sy: 0.3, alpha: Math.min(1, (k - 0.25) * 2) * 0.8 });
     if (k > 0.4) fxSprite(ctx, 'hdraysgold', x, y - 24 * s, { frame: 0, rot: t * (0.3 + 0.5 * k), scale: s * (0.5 + 0.4 * k), alpha: Math.min(1, (k - 0.4) * 2.5) * 0.6 });
     if (k >= 1) {
-      fxSprite(ctx, 'hdcircle', x, y, { frame: 0, scale: s * 0.9, sy: 0.28, alpha: 0.7 });
-      column(ctx, 'hdbeam', x, y, (t % 1.1) / 1.1, 90 * s, 1.2 * s);
+      fxSprite(ctx, 'jcircle', x, y, { t, scale: s * 0.55, sy: 0.3, alpha: 0.85 });
+      lightPillar(ctx, 'jpillar', x, y, (t % 1.1) / 1.1, 90 * s, 0.5 * s);
     }
   }
 }

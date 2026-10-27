@@ -6,7 +6,8 @@ import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
 import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
-import { fxSprite, fxPulse } from './fx-sprites.js';
+import { fxSprite, fxPulse, fxEmblem } from './fx-sprites.js';
+import { FX_SHEETS } from './fx-sheets.js';
 import { debris, groundRing } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
@@ -794,20 +795,23 @@ function drawFx(ctx, f, cam, time) {
       break;
     }
     case 'spark': {
-      // A shot leaving the bow or hand: a small flare. Where a blow lands: a cut of light across
-      // the target and a steel flash for blade cuts, a hit flash and a star for everything else
-      // and for crits.
+      // A shot leaving the bow or hand: a small flare. Where a blow lands: a cross of glowing
+      // slashes over a painted flash for blade cuts, a rendered impact for everything else, the
+      // anime star burst for crits.
       if (f.muzzle) {
         fxPulse(ctx, 'hdflare', x, y, p, { from: 0.45, to: 0.2 });
         break;
       }
-      if (f.via === 'blade' && !f.crit) {
-        fxSprite(ctx, 'hdcut', x, y, { p, rot: (f.seed ?? 0.5) * 1.2 - 0.6, scale: 0.55 });
-        fxSprite(ctx, 'hdhitsteel', x, y, { p, scale: 0.4 });
-      } else {
-        fxSprite(ctx, 'hdhit', x, y, { p, scale: f.crit ? 0.75 : 0.5 });
-        fxPulse(ctx, 'hdstar', x, y, p, { from: f.crit ? 0.8 : 0.5, to: 0.2, hold: 0.05, fadeIn: 0.01 });
+      if (f.crit) {
+        // A crit: the anime star burst.
+        fxSprite(ctx, 'jcrit', x, y, { p, scale: 0.75, rot: (f.seed ?? 0.5) * 2 });
+        break;
       }
+      if (f.via === 'blade') {
+        // A blade's cut: a glowing cross of slashes struck across the target over a flash.
+        fxSprite(ctx, 'jhitcyan', x, y, { p, scale: 0.55 });
+        fxEmblem(ctx, 'gx', x, y, p, { scale: 0.65, rot: ((f.seed ?? 0.5) - 0.5) * 1.4, hold: 0.35, pop: 0.08 });
+      } else fxSprite(ctx, 'jhit', x, y, { p, scale: 0.6 });
       break;
     }
     case 'arc':
@@ -829,10 +833,10 @@ function drawFx(ctx, f, cam, time) {
       for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n), (f.seed ?? 0) + i);
       break;
     case 'roar':
-      // Provoke: rings of a battle roar bursting out to its reach.
+      // Provoke: a spectral lion roaring out in front, rings of the roar bursting out to its reach.
       groundRing(ctx, 'hdringred', x, y, p, f.r ?? 120);
       groundRing(ctx, 'hdring', x, y, Math.min(1, p * 1.3), (f.r ?? 120) * 0.7);
-      fxPulse(ctx, 'hdraysred', x, y - 26, p, { from: 0.5, to: 1.3, hold: 0.15 });
+      fxEmblem(ctx, 'glion', x + (f.dir || 1) * 26, y - 40, p, { scale: 0.6, hold: 0.5, flip: (f.dir || 1) < 0 });
       break;
     case 'hook': {
       // Chain Hook: links race out to each monster caught, then reel it in.
@@ -934,16 +938,17 @@ function bladePath(f) {
 
 
 
-// A blade's cut, a smooth crescent of light from the HD effect art (fx-sprites.js): turned to
-// follow the blade's own path through the move (sampled from the hero's pose, `bladePath`), sized
-// to the reach, in steel, the Paladin's gold (and any heavy blow's) or the Berserker's red. A cut
-// all around (a whirl) is twirls of light spinning flat round the body instead.
+// A blade's cut: a painted swipe (fx-sprites.js) laid along the blade's own path through the move
+// (sampled from the hero's pose, `bladePath`), sized to the reach: steel blue, the Paladin's white
+// gold (and any heavy blow's), or the Berserker's blood-red ink. A cut all around (a whirl) is the
+// painted spin slash instead.
 function bladeCut(ctx, f, cam, p) {
-  const name = f.snd === 'rage' ? 'hdslasharcred' : f.snd === 'holy' || f.big ? 'hdslasharcgold' : 'hdslasharc';
+  // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
+  const school = f.snd ?? f.path;
+  const name = school === 'rage' ? 'jslashred' : school === 'holy' || f.big ? 'jslashgold' : 'jslash';
   if (f.flat) {
-    // A whirl: twirls of light spinning flat round the body.
-    const tw = f.snd === 'rage' ? 'hdtwirlred' : 'hdtwirl';
-    for (const [k, sp] of [[1, 14], [0.75, -10]]) fxSprite(ctx, tw, f.x - cam.x, f.y - cam.y + 6, { frame: 0, rot: f.t * sp, scale: ((f.r ?? 60) / 50) * k, sy: 0.4, alpha: 1 - p * p });
+    // A whirl: the painted spin slash sweeping right round the body, seen flat.
+    fxSprite(ctx, school === 'rage' ? 'jspinred' : 'jspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 48, sy: 0.42, flip: (f.dir || 1) < 0 });
     return;
   }
   const path = bladePath(f);
@@ -970,25 +975,19 @@ function bladeCut(ctx, f, cam, p) {
     cx = f.x - cam.x;
     cy = f.y - cam.y;
   }
-  // A downward cut stays above the floor: the crescent leans out in front rather than diving into
-  // the ground.
-  if (Math.sin(mid) > -0.05) {
-    // Moved to the front from behind, it's mirrored, so it turns the other way round too.
+  // jellyfish0's painted swipe, turned so the middle of its sweep meets the middle of the blade's,
+  // mirrored when it sweeps the other way round, and sized so its arc rides just past the tip; it
+  // plays its own sweep over the cut. A downward cut stays above the floor: it leans out in front
+  // rather than diving into the ground.
+  if (Math.sin(mid) > 0.35) {
     if (Math.cos(mid) * (f.dir || 1) < 0) cw = !cw;
-    mid = Math.atan2(-0.05, f.dir || 1);
-    cy -= 6;
+    mid = Math.atan2(0.35, (f.dir || 1) * Math.sqrt(1 - 0.35 * 0.35));
   }
-  // The crescent's middle (it bows away from its centre) meets the blade's, sized to ride just
-  // past the tip. It wipes round the way the blade went, swelling a touch, then fades; a white-hot
-  // copy of light inside it gives the edge.
-  const scale = (r / 31) * 1.1 * (f.big ? 1.15 : 1);
-  const turn = cw ? 1 : -1;
-  const k = Math.min(1, p / 0.3);
-  const rot = mid - Math.PI / 2 - turn * 0.55 * (1 - easeOut(k));
-  const a = p < 0.05 ? p / 0.05 : p < 0.35 ? 1 : 1 - (p - 0.35) / 0.65;
-  const grow = 0.88 + 0.2 * easeOut(Math.min(1, p / 0.5));
-  fxSprite(ctx, name, cx, cy, { frame: 0, rot, flip: !cw, scale: scale * grow, alpha: a });
-  fxSprite(ctx, 'hdslashcore', cx, cy, { frame: 0, rot: rot + turn * 0.04, flip: !cw, scale: scale * grow * 0.97, alpha: a * 0.45 });
+  const sheet = FX_SHEETS[name];
+  const flip = (cw ? 1 : -1) !== sheet.turn;
+  const rot = mid - (flip ? Math.PI - sheet.mid : sheet.mid);
+  const scale = ((r * 1.15) / (sheet.r * 0.5)) * (f.big ? 1.15 : 1);
+  fxSprite(ctx, name, cx, cy, { p, rot, flip, scale });
 }
 
 function strikeAt(f) {

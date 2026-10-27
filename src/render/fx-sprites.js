@@ -66,3 +66,16 @@ export function fxPulse(ctx, name, x, y, p, { from = 0.6, to = 1.2, fadeIn = 0.0
   const a = p < fadeIn ? p / fadeIn : p < hold ? 1 : 1 - (p - hold) / (1 - hold);
   return fxSprite(ctx, name, x, y, { ...rest, frame: 0, scale: from + (to - from) * e, alpha: alpha * a });
 }
+
+// A glowing shape (a slash, a hit mark, an emblem; the strips whose later frames break the shape
+// up into sparkles) played over an effect's life: it pops in (overshooting a touch), holds whole
+// until `hold`, then breaks up into rising sparkles. Other options pass to `fxSprite`.
+export function fxEmblem(ctx, name, x, y, p, { scale = 1, hold = 0.5, pop = 0.12, ...rest } = {}) {
+  const s = FX_SHEETS[name];
+  if (!s || p < 0 || p > 1) return false;
+  const k = Math.min(1, p / pop);
+  const back = 1 + 2.4 * (k - 1) ** 3 + 1.4 * (k - 1) ** 2;
+  const grow = 0.4 + 0.6 * back;
+  const frame = p < hold ? 0 : Math.min(s.n - 1, 1 + Math.floor(((p - hold) / (1 - hold)) * (s.n - 1)));
+  return fxSprite(ctx, name, x, y, { ...rest, frame, scale: scale * grow, alpha: (rest.alpha ?? 1) * Math.min(1, p / 0.04) });
+}

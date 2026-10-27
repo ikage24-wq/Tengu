@@ -36,4 +36,7 @@ test('every effect strip the code uses is listed, and the packs are credited', (
   assert.match(credits, /Brackeys/);
   assert.match(credits, /Sinestesia/);
   assert.match(credits, /Cethiel/);
+  assert.match(credits, /jellyfish0/);
+  assert.match(credits, /Inguz Media/);
+  assert.match(credits, /game-icons\.net/);
 });
