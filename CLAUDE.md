@@ -54,3 +54,9 @@ there and update the status file as they get done.
   maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
   monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece
   that prompted it.
+
+## Progression plan
+
+"Continue the progression plan" means: read `docs/design/progression-plan.md` (the MapleStory +
+FFXIV-style plan: story, job advancement, dungeons, bosses, collecting), pick the next unchecked
+phase, build it, and tick it off there.
