@@ -118,7 +118,7 @@ const R = {
   arrowHeavy: { db: -7, gap: 80, vary: 4, max: 2, layers: [{ rec: 'bowLongbow', rate: 0.9 }, { rec: 'heavyArrowPass', db: -3 }] },
   crossbow: { db: -7, gap: 50, vary: 4, max: 3, layers: [{ rec: 'crossbowShoot' }, { rec: 'boltPass', db: -8, at: 30 }] },
   crossbowHeavy: { db: -8, gap: 80, vary: 3, max: 2, layers: [{ rec: 'crossbowShoot', rate: 0.9 }, { rec: 'heavyArrowPass', db: -4 }] },
-  star: { db: -16, gap: 50, vary: 6, max: 3, layers: [{ rec: 'windShot', rate: 1.4, len: 350 }, { rec: 'stab', rate: 1.3, db: -4 }] },
+  star: { db: -16, gap: 70, vary: 6, max: 3, layers: [{ rec: 'windShot', rate: 1.4, len: 350 }, { rec: 'stab', rate: 1.3, db: -4 }] },
   zap: { db: -15, vary: 4, max: 3, layers: [{ rec: 'zapLaunch', len: 600 }] },
   cast: {
     db: -14, vary: 2, max: 2, room: true, layers: [
@@ -137,21 +137,21 @@ const R = {
   fire: { db: -10, vary: 5, max: 2, layers: [{ rec: 'fireLaunch', len: 900 }] },
   ice: { db: -11, vary: 3, max: 2, layers: [{ rec: 'iceLaunch', len: 900 }] },
   lightning: {
-    db: -11, vary: 4, max: 2, duck: [-4, 400], layers: [
+    db: -11, gap: 120, vary: 4, max: 2, duck: [-4, 400], layers: [
       { rec: 'thunder' },
       { rec: 'zapImpact', len: 500, db: -4 },
     ],
   },
   poison: { db: -15, vary: 6, max: 2, layers: [{ rec: 'poisonCast', len: 1400 }] },
   holyChime: { db: -13, max: 2, room: true, layers: [{ rec: 'holyBlast', len: 1000 }, { seq: 'E6+B6:600', inst: 'glockenspiel', db: -8 }] },
-  holyBurst: { db: -11, max: 2, room: true, duck: [-3, 400], layers: [{ rec: 'holyWave', len: 1600 }, { rec: 'holyBlast', len: 900, db: -4 }] },
-  fireBurst: { db: -11, vary: 4, max: 2, duck: [-4, 400], layers: [{ rec: 'fireImpact', len: 1200 }, thump(80, 300, { db: -4, slide: -2 })] },
-  iceBurst: { db: -11, vary: 3, max: 2, duck: [-3, 400], layers: [{ rec: 'iceBig', len: 2000 }] },
+  holyBurst: { db: -11, gap: 150, max: 2, room: true, duck: [-3, 400], layers: [{ rec: 'holyWave', len: 1600 }, { rec: 'holyBlast', len: 900, db: -4 }] },
+  fireBurst: { db: -11, gap: 150, vary: 4, max: 2, duck: [-4, 400], layers: [{ rec: 'fireImpact', len: 1200 }, thump(80, 300, { db: -4, slide: -2 })] },
+  iceBurst: { db: -11, gap: 150, vary: 3, max: 2, duck: [-3, 400], layers: [{ rec: 'iceBig', len: 2000 }] },
   meteor: { db: -9, max: 1, duck: [-6, 900], layers: [{ rec: 'meteor' }, thump(60, 500, { slide: -1.5, db: -2 })] },
-  quake: { db: -10, vary: 4, max: 2, duck: [-5, 600], layers: [{ rec: 'rockHit', len: 1500 }, { rec: 'rockThrow', len: 900, db: -6 }, thump(70, 400, { slide: -2 })] },
-  gust: { db: -13, vary: 5, max: 2, layers: [{ rec: 'windWhoosh', len: 1000 }] },
-  mist: { db: -14, max: 2, layers: [{ rec: 'splash', len: 1500 }, { rec: 'poisonCast', len: 1200, db: -6 }] },
-  bladestorm: { db: -12, max: 2, layers: [{ rec: 'bladeSwing' }, { rec: 'bladeSwing', at: 110, db: -3 }, { rec: 'bladeSwingHeavy', at: 230, db: -2 }, { rec: 'cut', at: 300, db: -4 }] },
+  quake: { db: -10, gap: 150, vary: 4, max: 2, duck: [-5, 600], layers: [{ rec: 'rockHit', len: 1500 }, { rec: 'rockThrow', len: 900, db: -6 }, thump(70, 400, { slide: -2 })] },
+  gust: { db: -13, gap: 120, vary: 5, max: 2, layers: [{ rec: 'windWhoosh', len: 1000 }] },
+  mist: { db: -14, gap: 150, max: 2, layers: [{ rec: 'splash', len: 1500 }, { rec: 'poisonCast', len: 1200, db: -6 }] },
+  bladestorm: { db: -12, gap: 150, max: 2, layers: [{ rec: 'bladeSwing' }, { rec: 'bladeSwing', at: 110, db: -3 }, { rec: 'bladeSwingHeavy', at: 230, db: -2 }, { rec: 'cut', at: 300, db: -4 }] },
   buff: { db: -13, max: 1, layers: [{ rec: 'shield', len: 1200 }, { seq: 'G5:70 A5:70 B5:70 D6:300', synth: 'pluck', cut: 4000, ring: 0.3, db: -8 }] },
   partyBuff: { db: -12, max: 1, room: true, layers: [{ rec: 'shield', len: 1400 }, { seq: 'G4:70 C5:70 E5:70 G5:70 C6:400', inst: 'orchestral_harp', db: -4 }, { seq: 'r:280 C5+E5+G5:600', inst: 'string_ensemble_1', attack: 0.05, db: -10 }] },
   powerup: { db: -13, max: 2, layers: [{ rec: 'bladeDraw' }, { rec: 'shield', len: 900, db: -8 }] },
