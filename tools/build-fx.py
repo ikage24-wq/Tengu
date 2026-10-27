@@ -84,7 +84,7 @@ FX = {
 # HD effects: (pack, file, options). `grid` [cols, rows] cuts a flipbook (`n` frames of it),
 # `files` is a folder of numbered frames, otherwise the file is one texture the game animates by
 # moving, turning, growing and fading it. `size` is the longest side in strip pixels, `step` keeps every so many frames, `tint`
-# colours a white texture, `lum` turns a black-backed (additive) image into one with alpha, `lift` turns dark smoke pale, `add`
+# colours a white texture (`white` caps how white its dense parts burn), `lum` turns a black-backed (additive) image into one with alpha, `lift` turns dark smoke pale, `add`
 # marks it for additive drawing (light that brightens what's under it): only white, steel and cold
 # colours, since added onto the game's light pastel maps red turns pink and gold turns white.
 STEEL, GOLD, RED, BLOOD, EMBER = '#5fa8ff', '#ffb52e', '#ff3b2e', '#c4001f', '#ff7a1a'
@@ -132,15 +132,15 @@ HD = {
     'hdraysgold': ('brackeys', 'particles/alpha/effect_02_a.png', {'size': 220, 'tint': GOLD}),
     'hdraysred': ('brackeys', 'particles/alpha/effect_02_a.png', {'size': 220, 'tint': RED}),
     'hdrayssteel': ('brackeys', 'particles/alpha/effect_03_a.png', {'size': 220, 'tint': STEEL, 'add': True}),
-    'hdring': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': STEEL, 'add': True}),
-    'hdringgold': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': GOLD}),
-    'hdringred': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': RED}),
-    'hdringarcane': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#b05cff', 'add': True}),
-    'hdringice': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#3fd2ff', 'add': True}),
-    'hdringfire': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': EMBER}),
-    'hdringpoison': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#5fe03a'}),
-    'hdringwind': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#22d68a', 'add': True}),
-    'hdringshadow': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#7a3cff', 'add': True}),
+    'hdring': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': STEEL, 'white': 0.35, 'add': True}),
+    'hdringgold': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': GOLD, 'white': 0.35}),
+    'hdringred': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': RED, 'white': 0.35}),
+    'hdringarcane': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#b05cff', 'white': 0.35, 'add': True}),
+    'hdringice': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#3fd2ff', 'white': 0.35, 'add': True}),
+    'hdringfire': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': EMBER, 'white': 0.35}),
+    'hdringpoison': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#5fe03a', 'white': 0.35}),
+    'hdringwind': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#22d68a', 'white': 0.35, 'add': True}),
+    'hdringshadow': ('brackeys', 'particles/alpha/circle_02_a.png', {'size': 200, 'tint': '#7a3cff', 'white': 0.35, 'add': True}),
     'hdbeam': ('brackeys', 'particles/alpha/trace_07_a.png', {'size': 220, 'tint': GOLD}),
     'hdbeamsteel': ('brackeys', 'particles/alpha/trace_07_a.png', {'size': 220, 'tint': STEEL, 'add': True}),
     'hdbeamred': ('brackeys', 'particles/alpha/trace_07_a.png', {'size': 220, 'tint': RED}),
@@ -338,7 +338,7 @@ def glow_frames(shape, o, seed):
     return frames
 
 
-def tint(img, colour):
+def tint(img, colour, white=1.0):
     # A white texture coloured like light: the colour where it's thin, white where it's dense.
     r0, g0, b0 = (int(colour[i:i + 2], 16) for i in (1, 3, 5))
     px = img.load()
@@ -349,7 +349,7 @@ def tint(img, colour):
                 continue
             d = (a / 255) * (max(r, g, b) / 255)
             k = max(0, d - 0.55) / 0.45
-            k = k * k
+            k = k * k * white
             px[x, y] = (round(r0 + (255 - r0) * k), round(g0 + (255 - g0) * k), round(b0 + (255 - b0) * k), min(255, round(a * 1.15)))
     return img
 
@@ -421,7 +421,7 @@ def build(base):
         elif 'light' in o and hd:
             frames = [recolour_light(f, o['light']) for f in frames]
         if 'tint' in o:
-            frames = [tint(f, o['tint']) for f in frames]
+            frames = [tint(f, o['tint'], o.get('white', 1.0)) for f in frames]
         boxes = [f.getbbox() for f in frames]
         x0 = min(b[0] for b in boxes)
         y0 = min(b[1] for b in boxes)
