@@ -928,7 +928,9 @@ function bow(m, f) {
   const stringColor = th === 'demonic' ? m.hot : th === 'bone' ? '#bfffe0' : th === 'cyber' ? m.neon[0] : STRING;
   if (th === 'laser') {
     a.beams = [{ pts: [[tipX, -H], [tipX, H]], w: 0.4 }];
-  } else s.push(th === 'demonic' || th === 'bone' || th === 'cyber' ? neon(tipX - 0.4, -H, 0.8, H * 2, stringColor) : R(tipX - 0.4, -H, 0.8, H * 2, stringColor));
+  } else s.push({ ...(th === 'demonic' || th === 'bone' || th === 'cyber' ? neon(tipX - 0.4, -H, 0.8, H * 2, stringColor) : R(tipX - 0.4, -H, 0.8, H * 2, stringColor)), string: true });
+  // Where the string runs, so a draw can bend it back to the hand live (hero.js `drawString`).
+  a.string = { x: tipX, h: H, color: stringColor };
 
   if (th === 'holy') {
     // Wing feathers along each limb, sweeping out toward the tips and growing longer.

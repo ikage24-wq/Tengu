@@ -27,16 +27,17 @@ export function weaponFrames(type, tier = 0, theme = null) {
 const built = new Map();
 
 // `variant` (dark, white, crimson, azure, gilded, or null) recolors a progression weapon.
-export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = null) {
+// `unstrung` leaves a bow's string out, for drawing it pulled back live.
+export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = null, unstrung = false) {
   const form = FORMS[type];
   if (!form) return null;
   if (type === 'staff' && theme === 'holy') return seraphShapes(frame);
-  const key = `${type}|${tier}|${theme}|${variant}|${frame}`;
+  const key = `${type}|${tier}|${theme}|${variant}|${frame}|${unstrung}`;
   let def = built.get(key);
   if (!def) {
     const look = lookFor(type, tier, theme, variant);
     const { shapes, blade, reach, a } = form(look, frame);
-    def = pack(finish(shapes, materialsOf(look)), { blade, reach, anchors: a, live: liveFor(look, a) });
+    def = pack(finish(unstrung ? shapes.filter((sh) => !sh.string) : shapes, materialsOf(look)), { blade, reach, anchors: a, live: liveFor(look, a) });
     built.set(key, def);
   }
   return def;

@@ -5,6 +5,7 @@
 //   lift, lunge  — whole-body hop (px up) and forward shove (px), drawn only (no physics)
 //   tilt         — whole-body lean in radians (+ forward), turn (x scale, for spins), stretch (y scale)
 //   trail        — whether the weapon tip leaves a ribbon
+//   pull, nock   — for bows: how far the string is drawn back (0-1) and whether an arrow is on it
 // `dur` is the move's length in seconds, so long ultimates can loop their motion.
 
 const RES = 2;
@@ -180,7 +181,7 @@ export const MOVES = {
     const snap = seg(p, 0.55, 0.7);
     const shiver = p > 0.42 && p < 0.55 ? Math.sin(p * 220) * 1.5 : 0;
     return {
-      weapon: lerp(-55, 0, raise) + shiver, arm: lerp(60, 95, raise), lunge: -2 * snap * (1 - seg(p, 0.7, 1)), tilt: -0.06 * pull * (1 - snap) - 0.05 * snap,
+      weapon: lerp(-55, 0, raise) + shiver, arm: lerp(60, 95, raise), lunge: -2 * snap * (1 - seg(p, 0.7, 1)), pull: snap > 0 ? 0 : pull, nock: snap === 0, tilt: -0.06 * pull * (1 - snap) - 0.05 * snap,
       rig: (r) => { r.backArm = snap > 0 ? [-4, -2] : [q(2 - 6 * pull), -3]; r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.6, 0, 0]; r.tx = snap > 0 ? -1 : 0; },
     };
   },
@@ -192,7 +193,7 @@ export const MOVES = {
     const snap = seg(p, 0.48, 0.58);
     const back = ease(seg(p, 0.62, 1));
     return {
-      weapon: lerp(-40, 0, raise) - 6 * snap * (1 - back), arm: lerp(70, 95, raise) + 4 * snap * (1 - back),
+      weapon: lerp(-40, 0, raise) - 6 * snap * (1 - back), arm: lerp(70, 95, raise) + 4 * snap * (1 - back), pull: snap > 0 ? 0 : pull, nock: snap === 0,
       lunge: -3 * snap * (1 - back), tilt: -0.04 * pull * (1 - snap) - 0.07 * snap * (1 - back),
       rig: (r) => { r.backArm = snap > 0 ? [q(-4 + 3 * back), -2] : [q(2 - 6 * pull), -3]; r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.8, 0, -2]; r.tx = snap > 0 && back < 0.5 ? -1 : 0; if (snap > 0 && back < 0.4) strikeFace(r); },
     };
@@ -202,7 +203,7 @@ export const MOVES = {
   rapid(p) {
     const k = Math.abs(Math.sin(p * Math.PI * 3));
     return {
-      weapon: -4 * k, arm: 95 + 4 * k, lunge: -2 * k, tilt: -0.04 * k,
+      weapon: -4 * k, arm: 95 + 4 * k, lunge: -2 * k, tilt: -0.04 * k, pull: 1 - k, nock: k < 0.6,
       rig: (r) => { r.backArm = [q(2 - 5 * k), -3]; r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.6, 0, 0]; },
     };
   },
@@ -223,7 +224,7 @@ export const MOVES = {
     const pull = ease(seg(p, 0, 0.5));
     const snap = seg(p, 0.5, 0.65);
     return {
-      weapon: -45, arm: 140, tilt: -0.18 * pull, lunge: -2 * snap, lift: 2 * snap,
+      weapon: -45, arm: 140, tilt: -0.18 * pull, lunge: -2 * snap, lift: 2 * snap, pull: snap > 0 ? 0 : pull, nock: snap === 0,
       rig: (r) => { r.backArm = snap > 0 ? [-4, -5] : [q(1 - 5 * pull), -5]; wideLegs(r); r.hairLift = -1; },
     };
   },
@@ -611,7 +612,7 @@ export const MOVES = {
     const pull = (a, b) => ease(seg(p, a, b));
     const k = p < 0.36 ? pull(0.05, 0.3) * (1 - seg(p, 0.3, 0.36)) : pull(0.6, 0.7) * (1 - seg(p, 0.72, 0.8));
     return {
-      weapon: -4 * k - 30 * Math.sin(spin * Math.PI), arm: 95 - 25 * Math.sin(spin * Math.PI), turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 3 * Math.sin(spin * Math.PI), lunge: 3 * spin * (1 - seg(p, 0.8, 1)),
+      weapon: -4 * k - 30 * Math.sin(spin * Math.PI), arm: 95 - 25 * Math.sin(spin * Math.PI), pull: k, nock: k > 0.05, turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 3 * Math.sin(spin * Math.PI), lunge: 3 * spin * (1 - seg(p, 0.8, 1)),
       rig: (r) => { r.backArm = [q(2 - 6 * k), -3]; if (spin > 0 && spin < 1) { r.hairLift = -1; r.cape -= 2; r.frontLeg = [2, -1, 6]; r.backLeg = [-2, 0, -6]; } else { r.frontLeg = [2.6, 0, 0]; r.backLeg = [-2.6, 0, 0]; } if (k > 0.8) strikeFace(r); },
     };
   },
@@ -624,7 +625,7 @@ export const MOVES = {
     const pull = ease(seg(p, 0.25, 0.52));
     const snap = seg(p, 0.55, 0.66);
     return {
-      weapon: 25 * hop - 8 * snap * (1 - seg(p, 0.7, 1)), arm: 80 - 12 * hop, lift: 20 * hop, tilt: 0.14 * hop - 0.08 * snap, lunge: -2 * snap,
+      weapon: 25 * hop - 8 * snap * (1 - seg(p, 0.7, 1)), arm: 80 - 12 * hop, pull: snap > 0 ? 0 : pull, nock: snap === 0, lift: 20 * hop, tilt: 0.14 * hop - 0.08 * snap, lunge: -2 * snap,
       rig: (r) => { if (hop > 0.15) tuck(r); else if (crouch > 0.3) r.squat = 2; r.backArm = snap > 0 ? [-4, -1] : [q(2 - 6 * pull), -2]; r.hairLift = hop > 0.3 ? -1 : 0; if (snap > 0 && snap < 1) strikeFace(r); },
     };
   },
@@ -638,7 +639,7 @@ export const MOVES = {
     const snap = seg(p, 0.6, 0.7);
     const back = ease(seg(p, 0.72, 1));
     return {
-      weapon: lerp(-50, 0, raise) + shiver - 10 * snap * (1 - back), arm: lerp(60, 95, raise) + 6 * snap * (1 - back), lunge: -6 * snap * (1 - back * 0.6), tilt: -0.08 * pull * (1 - snap) - 0.14 * snap * (1 - back),
+      weapon: lerp(-50, 0, raise) + shiver - 10 * snap * (1 - back), arm: lerp(60, 95, raise) + 6 * snap * (1 - back), pull: snap > 0 ? 0 : pull, nock: snap === 0, lunge: -6 * snap * (1 - back * 0.6), tilt: -0.08 * pull * (1 - snap) - 0.14 * snap * (1 - back),
       rig: (r) => { r.squat = snap > 0 ? 1 : pull > 0.3 ? 2 : 0; wideLegs(r); r.backArm = snap > 0 ? [q(-5 + 3 * back), -2] : [q(2 - 7 * pull), -3]; r.hairLift = -1; r.cape -= 2; if (snap > 0 && back < 0.5) strikeFace(r); },
     };
   },
@@ -670,7 +671,7 @@ export const MOVES = {
       const turn = Math.cos(a * Math.PI * 2);
       const k = Math.abs(Math.sin(p * dur * 14));
       return {
-        weapon: -45 + 20 * Math.sin(a * Math.PI * 2), arm: 140, turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 40 + 3 * Math.sin(a * Math.PI * 2), tilt: -0.1,
+        weapon: -45 + 20 * Math.sin(a * Math.PI * 2), arm: 140, pull: 1 - k, nock: k < 0.6, turn: Math.sign(turn || 1) * Math.max(0.3, Math.abs(turn)), lift: 40 + 3 * Math.sin(a * Math.PI * 2), tilt: -0.1,
         rig: (r) => { tuck(r); r.backArm = [q(1 - 5 * k), -5]; r.hairLift = -1; r.cape -= 3; strikeFace(r); },
       };
     }
@@ -688,7 +689,7 @@ export const MOVES = {
     const pull = ease(seg(p, 0.05, 0.42));
     const snap = seg(p, 0.45, 0.56);
     return {
-      weapon: 35 - 6 * snap, arm: 65, tilt: 0.12 - 0.08 * snap,
+      weapon: 35 - 6 * snap, arm: 65, tilt: 0.12 - 0.08 * snap, pull: snap > 0 ? 0 : pull, nock: snap === 0,
       rig: (r) => { tuck(r); r.backArm = snap > 0 ? [-4, 0] : [q(2 - 6 * pull), -1]; r.hairLift = -1; if (snap > 0 && snap < 1) strikeFace(r); },
     };
   },
@@ -696,7 +697,7 @@ export const MOVES = {
     const pull = ease(seg(p, 0.05, 0.48));
     const snap = seg(p, 0.5, 0.62);
     return {
-      weapon: 40 - 10 * snap, arm: 60, tilt: 0.16 - 0.12 * snap, lift: 2 * snap,
+      weapon: 40 - 10 * snap, arm: 60, tilt: 0.16 - 0.12 * snap, lift: 2 * snap, pull: snap > 0 ? 0 : pull, nock: snap === 0,
       rig: (r) => { tuck(r); r.backArm = snap > 0 ? [-5, 0] : [q(2 - 7 * pull), -1]; r.hairLift = -1; r.cape -= 2; if (snap > 0) strikeFace(r); },
     };
   },
@@ -707,7 +708,7 @@ export const MOVES = {
     const low = ease(seg(p, 0, 0.15)) * (1 - ease(seg(p, 0.6, 0.85)));
     const k = Math.abs(Math.sin(seg(p, 0.15, 0.7) * Math.PI * 2));
     return {
-      weapon: -10 * low - 4 * k, arm: 95 + 4 * k, tilt: -0.3 * low, lunge: 0,
+      weapon: -10 * low - 4 * k, arm: 95 + 4 * k, tilt: -0.3 * low, lunge: 0, pull: 1 - k, nock: k < 0.6 && p < 0.75,
       rig: (r) => { r.squat = low > 0.4 ? 3 : low > 0.1 ? 1 : 0; r.frontLeg = [q(3 + 2 * low), 0, 30 * low]; r.backLeg = [q(-3 - 1 * low), 0, -8]; r.backArm = [q(2 - 5 * k), -3]; r.hairLift = -1; r.cape -= 3; },
     };
   },

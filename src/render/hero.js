@@ -1639,7 +1639,7 @@ function funWeapon(fun) {
   return funWeapons.get(key);
 }
 
-function weaponSprite(w, time) {
+function weaponSprite(w, time, unstrung = false) {
   if (w.fun) {
     const def = funWeapon(w.fun);
     const s = sprite(`funweapon|${w.fun.fun}|${w.fun.t}`, () => ({ w: def.w, h: def.h, shapes: def.shapes }));
@@ -1647,10 +1647,10 @@ function weaponSprite(w, time) {
   }
   const frames = weaponFrames(w.type, w.tier, w.theme);
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
-  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant);
+  const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant, unstrung);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
-  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live };
+  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors };
 }
 
 // A sprite's canvas size in art pixels (HD sprites hold several cells per art pixel).
@@ -1985,7 +1985,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const skin = look.skinTone ?? '#fff0e6';
   const sleeve = sleeveColor(g.top.design, g.top.color, g.top);
   const long = longSleeves(g.top.design, g.top);
-  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0) : null;
+  // A bow being drawn (`mv.pull`) is drawn without its straight string; the string is bent back
+  // to the draw hand live, with the arrow on it (see drawString).
+  const drawn = mv?.pull != null && g.weapon?.type === 'bow' && !g.weapon.fun;
+  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0, drawn) : null;
   const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : over != null ? { weapon: 0, arm: over } : null;
 
   // Front arm layer; it moves with the upper body, which sinks with the hips.
@@ -2030,6 +2033,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (el) elementGlow(ctx, wpn, el, time, ws);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
     else paint(-(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws);
+    if (drawn && wpn.anchors?.string) drawString(ctx, wpn.anchors.string, mv.pull, mv.nock ?? mv.pull > 0.05, ws);
     if (settings.weaponEffects) {
       if (el && wpn.blade) drawElementAura(ctx, el, (wpn.blade[0] - wpn.grip[1]) * ws, (wpn.blade[1] - wpn.grip[1]) * ws, time, ws);
       wpn.live?.(ctx, time, ws, wpn.grip);
@@ -2074,6 +2078,58 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // the heavy ink of a swinging weapon arm.
   const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+}
+
+// A bow's string drawn back to the hand, in the bow's own frame (grip at the origin, tips up and
+// down at `h`, the string at `x`, behind the grip): two straight runs from the tips to the nock,
+// pulled back by `pull` (0-1, a full draw is about 10 px), and the arrow lying on it, its head
+// past the bow's belly (archery research: the string and arrow are what read a draw at small
+// size; the string snaps straight on the loose).
+const PULL = 10;
+const SHAFT = '#c89a6a';
+function drawString(ctx, st, pull, nock, ws) {
+  const nx = (st.x - PULL * Math.max(0, Math.min(1, pull)) - 1) * ws;
+  const tx = (st.x - 1) * ws;
+  const ty = st.h * ws;
+  const y0 = -ws;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = st.color;
+  ctx.lineWidth = 0.8 * ws;
+  ctx.beginPath();
+  ctx.moveTo(tx, y0 - ty);
+  ctx.lineTo(nx, y0);
+  ctx.lineTo(tx, y0 + ty);
+  ctx.stroke();
+  if (nock) {
+    // The arrow: inked shaft from the nock to past the belly, a steel head, pink fletching.
+    const hx = nx + 22 * ws;
+    ctx.strokeStyle = '#3a2d4f';
+    ctx.lineWidth = 2 * ws;
+    ctx.beginPath();
+    ctx.moveTo(nx, y0);
+    ctx.lineTo(hx, y0);
+    ctx.stroke();
+    ctx.strokeStyle = SHAFT;
+    ctx.lineWidth = 0.9 * ws;
+    ctx.stroke();
+    ctx.fillStyle = '#3a2d4f';
+    ctx.beginPath();
+    ctx.moveTo(hx + 3.6 * ws, y0);
+    ctx.lineTo(hx - 0.6 * ws, y0 - 2 * ws);
+    ctx.lineTo(hx - 0.6 * ws, y0 + 2 * ws);
+    ctx.fill();
+    ctx.fillStyle = '#eef3ff';
+    ctx.beginPath();
+    ctx.moveTo(hx + 2.6 * ws, y0);
+    ctx.lineTo(hx, y0 - 1.2 * ws);
+    ctx.lineTo(hx, y0 + 1.2 * ws);
+    ctx.fill();
+    ctx.fillStyle = '#ff8fb0';
+    ctx.fillRect(nx + 0.6 * ws, y0 - 1.8 * ws, 3 * ws, 1.2 * ws);
+    ctx.fillRect(nx + 0.6 * ws, y0 + 0.6 * ws, 3 * ws, 1.2 * ws);
+  }
+  ctx.restore();
 }
 
 function drawTrail(ctx, trail, x, y, color) {
