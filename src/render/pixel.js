@@ -75,15 +75,9 @@ const outlineCache = new Map();
 // Selective outlines ("sel-out") take `side`: -1 on edges facing the light (top and front), where
 // the line is a lighter shade of the part's own hue, +1 on the bottom and back, where it's the
 // darkest, and 0 between.
-// Characters, monsters and their weapons (`ownHue`, the player's pick) keep their lines in the
-// part's own colour, a deeper shade of it rather than a near-black ink.
-function outlineFor(c, crisp, side = 0, ownHue = false) {
-  const k = `${c}${crisp ? 1 : 0}${side}${ownHue ? 1 : 0}`;
+function outlineFor(c, crisp, side = 0) {
+  const k = `${c}${crisp ? 1 : 0}${side}`;
   let v = outlineCache.get(k);
-  if (!v && ownHue) {
-    v = side < 0 ? shade(c, -28) : side > 0 ? mix(shade(c, -54), '#2a2035', 0.22) : mix(shade(c, -42), '#2a2035', 0.1);
-    outlineCache.set(k, v);
-  }
   if (!v) {
     if (side < 0) v = shade(c, -34);
     else if (side > 0) v = mix(shade(c, -62), '#2a2035', 0.6);
@@ -105,7 +99,7 @@ function outlineFor(c, crisp, side = 0, ownHue = false) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, ownHue = false) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD) {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + PAD) * res;
   const colors = [];
@@ -293,7 +287,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     let v = inkFor.get(key);
     if (v === undefined) {
       const own = lineOf.get(from[t]);
-      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side, ownHue);
+      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side);
       v = idOf(corner ? `${line}80` : line);
       inkFor.set(key, v);
     }
@@ -377,11 +371,11 @@ export function sprite(key, build) {
   } else {
     // `pad` is the margin left of, right of and above the w x h box that parts may reach into
     // (wings, tails, smears): the sprite keeps its feet and centre where w x h puts them.
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, ownHue = false } = build();
+    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD } = build();
     // Detailed sprites (characters, monsters, scenery) are drawn at the screen's own pixel
     // density, so every cell is exactly one screen pixel: sharp and even at any window size.
     if (res > 1) res = Math.max(res, Math.round(gfx.scale));
-    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, ownHue);
+    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad);
     const canvas = bake(raster);
     s = { canvas, w, h, res, crisp, pad, white: null };
     cacheBytes += bytesOf(s);

@@ -1649,7 +1649,7 @@ function weaponSprite(w, time, unstrung = false) {
   const frame = frames > 1 ? Math.floor(time * 9) % frames : 0;
   const def = weaponShapes(w.type, w.tier, frame, w.theme, w.variant, unstrung);
   if (!def) return null;
-  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true, ownHue: true }));
+  const s = sprite(`weapon|${w.type}|${w.tier}|${w.theme}|${w.variant}|${frame}|${unstrung}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
   return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors };
 }
 
@@ -1973,7 +1973,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
-  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, ownHue: true }));
+  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
@@ -2062,7 +2062,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (!attack && over == null) {
     if (!wpn) return;
     drawWeapon();
-    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true, ownHue: true }));
+    const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return;
@@ -2070,7 +2070,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   drawWeapon();
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
   // the heavy ink of a swinging weapon arm.
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true, ownHue: true }));
+  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
 }
 

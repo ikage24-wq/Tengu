@@ -58,10 +58,8 @@ carry an improvement across every part of the game it applies to.
 - Outlines are a darkened shade of the part's own hue, never neutral black. Selective outlines:
   lighter on edges facing the light, darkest at the bottom and back (done by the renderer for
   monster sprites, `selout`).
-- Characters wear a **coloured outline** (the player's pick over the old near-navy line; a
-  thinner line was tried and turned down, so the width stays): a deeper shade of the part it
-  wraps with only a touch of ink, lighter on top edges (`ownHue` sprites in pixel.js: heroes,
-  NPCs, townsfolk, monsters, bosses, summons and held weapons).
+- Character outlines stay as they are: the player tried a thinner line and a line in each part's
+  own colour (instead of the deep, near-navy ink) and chose to keep the original.
 - Shadows shift hue (cooler or toward magenta) instead of going grey; highlights shift warm. At
   most 4 tones per material. No pillow shading; light from one direction.
 - Gear and weapons shade by material (`src/render/jobgear/kit.js`): each flat shape gets planes

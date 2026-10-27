@@ -814,7 +814,7 @@ export function drawSummon(ctx, art, x, y, time, facing, state = null) {
   const age = state ? state.now - state.since : 9;
   const left = state ? state.until - state.now : 9;
   const mood = cast === 1 || cast === 2 || cast === 3 ? 'angry' : age < APPEAR + 0.4 ? 'happy' : blink ? 'blink' : 'idle';
-  const s = sprite(`summon|${art}|${frame}|${cast}|${mood}`, () => ({ soft: 'cel', crisp: true, selout: true, ownHue: true, ...ART[art](frame / n, cast, mood) }));
+  const s = sprite(`summon|${art}|${frame}|${cast}|${mood}`, () => ({ soft: 'cel', crisp: true, selout: true, ...ART[art](frame / n, cast, mood) }));
 
   // Appearing: a flash of light, then the summon pops out of it with an overshoot and settles.
   // Dismissed: it rises, shrinks into its glow and fades.
