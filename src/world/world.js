@@ -403,8 +403,10 @@ export function updateWorld(world, dt, input) {
   }
 
   // ----- Player control -----
-  const held = input.locked || world.dead ? new Set() : input.held;
-  const pressed = input.locked || world.dead ? new Set() : input.pressed;
+  // A boss cutscene takes the controls; Space, Enter or Escape skips it.
+  if (world.cutscene && ['Space', 'Enter', 'Escape'].some((k) => input.pressed?.has(k))) world.cutSkip = true;
+  const held = input.locked || world.dead || world.cutscene ? new Set() : input.held;
+  const pressed = input.locked || world.dead || world.cutscene ? new Set() : input.pressed;
   const intent = {
     left: held.has('ArrowLeft'),
     right: held.has('ArrowRight'),

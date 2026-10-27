@@ -209,7 +209,9 @@ to clear it.
 - **Boss Rush: Dancing Green** — Roxy, the Boss Rush Host, runs a neon booth at the east end of
   Sprout Village (from level 40). Challenge Dancing Green, the Party Animal, on the Funky Fever
   Stage: a disco arena with a giant neon sign, mirror balls, dancing neon figures and a glowing
-  tile floor, all pulsing to a 120 bpm beat. He dances in, transforms in a burst of red energy, and
+  tile floor, all pulsing to a 120 bpm beat. A cutscene opens the fight (skip it with Space or
+  Enter): letterboxed shots pan the stage, he struts in and dances, says his line, and red energy
+  swallows him; quick close-ups reveal his toad form, then his name card slams in. Then
   every attack lands on the beat and is shown first: rainbow walls and cube walls that hit half
   the stage, a slashing kick, flashing floor tiles, spotlights to stand in, waves to jump, frog
   backup dancers who call his cleaves, moonwalking frogs whose tracks burst, and a Hi-NRG Fever

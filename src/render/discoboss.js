@@ -44,6 +44,9 @@ const P = {
 // Moves: keys [time, pose, face, shades down]; loop after `period` unless `once`.
 export const MOVES = {
   groove: { period: 2, keys: [[0, 'groove', 'smug'], [1, 'stand', 'grin']] },
+  // The cutscene before the fight (world/discoboss.js times the camera to it): he struts in, kicks,
+  // leans back, strikes the point, changes, and strikes his toad-form pose.
+  cut: { period: 13.4, once: true, keys: [[0, 'stand', 'smug'], [3.6, 'hkick', 'excited'], [4.2, 'hlean', 'grin'], [5.2, 'hpoint', 'grin'], [8.8, 'reveal', 'smug', 1], [11.6, 'push', 'excited'], [12.1, 'reveal', 'excited']] },
   intro: { period: 7.2, once: true, human: 3.6, keys: [[0, 'stand', 'smug'], [0.8, 'hkick', 'excited'], [1.3, 'hlean', 'grin'], [1.8, 'hpoint', 'grin'], [5.6, 'reveal', 'smug', 1], [6.5, 'push', 'excited'], [6.9, 'reveal', 'excited']] },
   hustle: { period: 2.6, once: true, keys: [[0, 'stand', 'smug'], [0.5, 'wind', 'determined', 1], [1.3, 'hitL', 'angry', 1], [1.9, 'stand', 'grin']] },
   twist: { period: 4, once: true, keys: [[0, 'ready', 'determined', 1], [0.8, 'hitL', 'angry', 1], [1.15, 'ready', 'determined', 1], [1.4, 'hitL', 'angry', 1], [1.75, 'ready', 'determined', 1], [2, 'hitL', 'angry', 1], [2.35, 'ready', 'determined', 1], [2.6, 'hitL', 'angry', 1], [2.95, 'ready', 'determined', 1], [3.2, 'hitR', 'angry', 1], [3.7, 'stand', 'smug']] },
@@ -391,5 +394,168 @@ export function drawDiscoTop(ctx, world, cam, now) {
     ctx.globalAlpha = Math.min(1, (1 - u) * 3);
     heart(ctx, h.x - cam.x + h.dx * u * 60, h.y - cam.y - u * 30 + Math.sin(u * 10) * 4, 4 + u * 3, '#ff5f9f');
     ctx.globalAlpha = 1;
+  }
+}
+
+// ---------- The cutscene ----------
+
+const smoothstep = (a, b, t) => {
+  const u = Math.max(0, Math.min(1, (t - a) / (b - a)));
+  return u * u * (3 - 2 * u);
+};
+
+// The camera for the cutscene at time t: where it looks (world x, y), how far it zooms in, and how
+// far the letterbox bars are in. Shots: a pan across the stage; following him as he struts in;
+// closer on the dance; close on the point; pulling back as the energy builds; quick cuts to his new
+// feet, his hand and record, and his face; the reveal pose; then back out to the fight.
+export function cutShot(world, m, t) {
+  const gy = world.map.groundY;
+  const hx = m.x;
+  const SHOTS = [
+    [0, { x: 260, y: gy - 120, z: 1 }],
+    [1.4, { x: 700, y: gy - 120, z: 1 }],
+    [1.5, { x: hx, y: gy - 80, z: 1.25 }],
+    [3.6, { x: hx, y: gy - 80, z: 1.25 }],
+    [3.7, { x: hx, y: gy - 70, z: 1.6 }],
+    [5.1, { x: hx, y: gy - 72, z: 1.7 }],
+    [5.2, { x: hx + 8, y: gy - 72, z: 2.2 }],
+    [6.7, { x: hx + 8, y: gy - 74, z: 2.3 }],
+    [6.8, { x: hx, y: gy - 80, z: 1.7 }],
+    [8.6, { x: hx, y: gy - 80, z: 1.25 }],
+    [8.9, { x: hx, y: gy - 12, z: 3.4 }],
+    [9.4, { x: hx, y: gy - 12, z: 3.5 }],
+    [9.45, { x: hx + 22 * (m.dir || 1), y: gy - 62, z: 3.2 }],
+    [9.95, { x: hx + 22 * (m.dir || 1), y: gy - 64, z: 3.3 }],
+    [10, { x: hx, y: gy - 80, z: 3 }],
+    [10.5, { x: hx, y: gy - 80, z: 3.1 }],
+    [10.55, { x: hx, y: gy - 80, z: 1.5 }],
+    [12.6, { x: hx, y: gy - 82, z: 1.55 }],
+    [13.4, { x: hx, y: gy - 120, z: 1 }],
+  ];
+  let i = 0;
+  while (i < SHOTS.length - 2 && SHOTS[i + 1][0] <= t) i++;
+  const [t0, a] = SHOTS[i];
+  const [t1, b] = SHOTS[i + 1];
+  // Short gaps are hard cuts; long ones glide.
+  const k = t1 - t0 < 0.15 ? (t >= t1 ? 1 : 0) : smoothstep(t0, t1, t);
+  return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, z: a.z + (b.z - a.z) * k, bars: smoothstep(0, 0.8, t) * (1 - smoothstep(12.7, 13.4, t)) };
+}
+
+function slab(ctx, text, x, y, size, fill, stroke, skew = -0.2) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.transform(1, 0, skew, 1, 0, 0);
+  ctx.font = `900 ${size}px "Trebuchet MS", "Segoe UI", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = size * 0.28;
+  ctx.strokeStyle = stroke;
+  ctx.strokeText(text, 0, 0);
+  ctx.fillStyle = fill;
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+}
+
+// The cutscene's overlay, in screen space: letterbox bars, the stage title, his line (in a box
+// under the top bar, clear of his face), the red of the
+// change, the name card, and a skip hint.
+export function drawDiscoCut(ctx, world, W, H) {
+  const b = world.disco;
+  if (b?.cut == null) return;
+  const t = b.cut;
+  const m = world.mobs.find((x) => x.def.disco);
+  if (!m) return;
+  const shot = cutShot(world, m, t);
+  // The red of the change: building, then a full flash, then the red-lit close-ups.
+  if (t > 6.8 && t < 8.6) {
+    ctx.fillStyle = `rgba(255,40,70,${0.35 * smoothstep(6.8, 8.6, t)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (t >= 8.6 && t < 8.95) {
+    ctx.fillStyle = `rgba(255,${t < 8.75 ? 70 : 230},${t < 8.75 ? 90 : 230},${t < 8.75 ? 1 : 1 - (t - 8.75) / 0.2})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (t >= 8.95 && t < 10.5) {
+    ctx.fillStyle = 'rgba(255,50,80,0.28)';
+    ctx.fillRect(0, 0, W, H);
+    // Speed lines rushing past the close-ups.
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 18; i++) {
+      const y = (i * 41 + Math.floor(t * 30) * 13) % H;
+      const len = 40 + (i * 37) % 80;
+      const x = ((i * 97 + t * 900) % (W + len)) - len;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + len, y);
+      ctx.stroke();
+    }
+  }
+  // Letterbox bars.
+  const bar = Math.round(44 * shot.bars);
+  if (bar > 0) {
+    ctx.fillStyle = '#08040f';
+    ctx.fillRect(0, 0, W, bar);
+    ctx.fillRect(0, H - bar, W, bar);
+  }
+  // The stage title over the opening pan.
+  if (t < 1.6) {
+    const a = smoothstep(0.1, 0.5, t) * (1 - smoothstep(1.2, 1.6, t));
+    ctx.globalAlpha = a;
+    slab(ctx, 'FUNKY FEVER STAGE', W / 2, H / 2 - 6, 26, '#ffe96a', '#5a1a6a');
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Solution Nine  ·  Boss Rush', W / 2, H / 2 + 12);
+    ctx.globalAlpha = 1;
+  }
+  // His line, typed out in a speech box under the close-up.
+  if (t > 5.3 && t < 6.8) {
+    const line = 'Are you ready to get down?';
+    const n = Math.min(line.length, Math.floor((t - 5.3) * 30));
+    ctx.fillStyle = 'rgba(20,10,35,0.85)';
+    const by = bar + 8;
+    ctx.fillRect(W / 2 - 150, by, 300, 26);
+    ctx.strokeStyle = '#ff8fd0';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(W / 2 - 150, by, 300, 26);
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#c6e83a';
+    ctx.fillText('Dancing Green', W / 2 - 142, by + 10);
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(line.slice(0, n), W / 2 - 142, by + 22);
+  }
+  // The name card: slides in from the side with stripes behind it, holds, and slides away.
+  if (t > 10.6 && t < 12.9) {
+    const inK = smoothstep(10.6, 10.9, t);
+    const outK = smoothstep(12.5, 12.9, t);
+    const off = (1 - inK) * -W + outK * W;
+    ctx.save();
+    ctx.translate(off, 0);
+    const y = H * 0.58;
+    for (const [dy, h, c] of [[-26, 52, 'rgba(198,232,58,0.85)'], [-22, 44, 'rgba(155,63,214,0.92)']]) {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.moveTo(0, y + dy);
+      ctx.lineTo(W * 0.62, y + dy);
+      ctx.lineTo(W * 0.62 - 20, y + dy + h);
+      ctx.lineTo(0, y + dy + h);
+      ctx.fill();
+    }
+    slab(ctx, 'DANCING GREEN', W * 0.3, y + 6, 28, '#c6e83a', '#2a0f3a');
+    ctx.font = 'bold italic 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd0f0';
+    ctx.fillText('— The Party Animal —', W * 0.3, y + 18);
+    ctx.restore();
+  }
+  // Skip hint.
+  if (t > 0.6 && t < 12.6) {
+    ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('Space / Enter: skip', W - 8, H - Math.max(6, bar - 14));
   }
 }

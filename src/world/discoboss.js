@@ -20,6 +20,9 @@ import { hurtPlayer } from './world.js';
 
 const BEAT = 0.5;
 const ENRAGE_AT = 330; // seconds of fighting before Hi-NRG Fever
+const CUT = 13.4; // the cutscene before the fight
+const HOME = 640; // centre stage
+const WINGS = 1040; // where he struts in from
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -154,13 +157,15 @@ export function tickDisco(world, dt) {
   const m = world.mobs.find((x) => x.def.disco);
   if (!m) {
     world.disco = null;
+    world.cutscene = false;
     return;
   }
   const b = (world.disco ??= { zones: [], callouts: [], hearts: [], frogs: null, groove: 0 });
-  const brain = (m.brain ??= { form: 'human', move: 'intro', moveT: world.now, step: -1, stepAt: 0, started: world.now + 7.2, charge: 0, fightT: 0 });
+  const brain = (m.brain ??= { form: 'human', move: 'cut', moveT: world.now, cutAt: world.now, step: -1, stepAt: 0, started: world.now + CUT, charge: 0, fightT: 0 });
   if (m.hp <= 0) {
     b.zones = [];
     b.frogs = null;
+    world.cutscene = false;
     if (!brain.saidBye) {
       brain.saidBye = true;
       call(world, 'That was one helluva party!', '#ffe36b', 3, 16);
@@ -168,22 +173,45 @@ export function tickDisco(world, dt) {
     b.callouts = b.callouts.filter((c) => world.now - c.at < c.dur);
     return;
   }
-  // The intro: dancing in his stage clothes, then the change.
+  // The cutscene: controls are off and the camera is the director's (render/scene.js reads
+  // b.cut). Any key skips to the fight.
   if (world.now < brain.started) {
-    const t = world.now - brain.moveT;
-    brain.charge = t > 1.8 && t < 5.6 ? ((t - 1.8) / 3.8) ** 1.5 : 0;
-    if (t >= 5.4 && brain.form === 'human') {
+    if (world.cutSkip) {
+      brain.started = world.now;
       brain.form = 'toad';
-      world.juice.push({ type: 'shake', mag: 8, dur: 0.6 });
-      b.flashAt = world.now;
-      call(world, 'Dancing Green', '#ff9ad6', 2.4, 26);
+    } else {
+      const t = world.now - brain.cutAt;
+      b.cut = t;
+      world.cutscene = true;
+      // He struts in from the wings to centre stage.
+      const walk = Math.max(0, Math.min(1, (t - 1.5) / 2.1));
+      m.x = HOME + (WINGS - HOME) * (1 - walk);
+      brain.walking = t > 1.5 && t < 3.6;
+      m.dir = brain.walking ? -1 : 1;
+      if (t < 1.5) m.x = WINGS;
+      // Keep you out of his way, facing the stage.
+      world.body.x = Math.min(world.body.x, HOME - 220);
+      world.body.facing = 1;
+      brain.charge = t > 6.8 && t < 8.8 ? ((t - 6.8) / 2) ** 1.5 : 0;
+      if (t > 6.8 && t < 8.6 && Math.floor(t * 8) !== Math.floor((t - dt) * 8)) world.juice.push({ type: 'shake', mag: 2 + 5 * brain.charge, dur: 0.15 });
+      if (t >= 8.7 && brain.form === 'human') {
+        brain.form = 'toad';
+        b.flashAt = world.now;
+        world.juice.push({ type: 'shake', mag: 8, dur: 0.6 });
+      }
+      return;
     }
-    if (t < 0.1 && !brain.saidHi) {
-      brain.saidHi = true;
-      call(world, 'Are you ready to get down?', '#ffe36b', 2.2, 16);
-    }
-    m.dir = world.body.x < m.x ? -1 : 1;
-    return;
+  }
+  if (b.cut != null) {
+    b.cut = null;
+    world.cutscene = false;
+    world.cutSkip = false;
+    brain.walking = false;
+    brain.charge = 0;
+    brain.form = 'toad';
+    m.x = HOME;
+    brain.stepAt = world.now + 0.6;
+    call(world, "Let's dance!", '#ffe36b', 1.6, 22);
   }
   brain.charge = 0;
   brain.fightT += dt;

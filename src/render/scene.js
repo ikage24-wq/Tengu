@@ -6,7 +6,10 @@ import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
 import { drawHero } from './hero.js';
 import { drawMonster } from './monsters.js';
-import { drawDiscoZones, drawDiscoTop } from './discoboss.js';
+import { drawDiscoZones, drawDiscoTop, drawDiscoCut, cutShot } from './discoboss.js';
+
+// Scratch canvas for a cutscene's zoom.
+let zoomCanvas = null;
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
 import { nearbyNpc } from '../world/world.js';
@@ -150,7 +153,7 @@ function drawMobs(ctx, world, cam, time) {
       box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: COLORS.hp, edge: null, r: 2 });
     }
   }
-  if (boss && boss.hp > 0) {
+  if (boss && boss.hp > 0 && !world.cutscene) {
     box(ctx, 170, 60, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
     box(ctx, 171, 61, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
     text(ctx, `${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#5a3f7a' });
@@ -185,7 +188,11 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (element && !world.dead) elementAura(feel.fx, b.x, b.y, element, dt);
   updateParticles(feel.fx, dt, world, viewCam, VIEW_W, VIEW_H);
   const [ox, oy] = shakeOffset(feel.fx, time);
-  const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
+  // During a boss cutscene the camera follows the shot instead of you.
+  const cutBoss = world.disco?.cut != null ? world.mobs.find((m) => m.def.disco) : null;
+  const shot = cutBoss ? cutShot(world, cutBoss, world.disco.cut) : null;
+  const camX = shot ? Math.max(0, Math.min(world.map.width - VIEW_W, shot.x - VIEW_W / 2)) : viewCam.x;
+  const cam = { x: camX + ox, y: viewCam.y + oy };
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time));
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot);
@@ -267,13 +274,32 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
   if (settings.filter === 'dreamy') drawDreamy(ctx);
-  drawDiscoTop(ctx, world, cam, world.now);
+  // The cutscene's zoom: the frame is copied and blown up around the shot's focus.
+  if (shot && shot.z > 1.01) {
+    const k = ctx.getTransform().a || 1;
+    const src = (zoomCanvas ??= document.createElement('canvas'));
+    src.width = ctx.canvas.width;
+    src.height = ctx.canvas.height;
+    src.getContext('2d').drawImage(ctx.canvas, 0, 0);
+    const fx = shot.x - cam.x;
+    const fy = shot.y - cam.y;
+    const w = VIEW_W / shot.z;
+    const h = VIEW_H / shot.z;
+    const sx = Math.max(0, Math.min(VIEW_W - w, fx - w / 2));
+    const sy = Math.max(0, Math.min(VIEW_H - h, fy - h / 2));
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(src, sx * k, sy * k, w * k, h * k, 0, 0, VIEW_W, VIEW_H);
+    ctx.restore();
+  }
+  if (!shot) drawDiscoTop(ctx, world, cam, world.now);
   // The flash of his transformation.
   if (world.disco?.flashAt && world.now - world.disco.flashAt < 0.7) {
     const e = (world.now - world.disco.flashAt) / 0.7;
     ctx.fillStyle = `rgba(255,${Math.round(90 + 165 * e)},${Math.round(120 + 135 * e)},${1 - e})`;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
   }
+  drawDiscoCut(ctx, world, VIEW_W, VIEW_H);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
