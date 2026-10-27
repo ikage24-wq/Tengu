@@ -1,4 +1,4 @@
-// Background music: each area's written chip song (songs.js), rendered once into a seamless loop
+// Background music: each area's written song (songs.js), rendered once into a seamless loop
 // (bank.js) and played from that buffer, so the timing is exact and the loop never shows a seam.
 //
 // Moving between areas, the old song fades out over a second while the new one fades in, and an

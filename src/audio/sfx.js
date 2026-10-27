@@ -1,4 +1,4 @@
-// Every sound effect: `sfx(name, opts)` plays one. The sounds themselves are chip recipes
+// Every sound effect: `sfx(name, opts)` plays one. The sounds themselves are recipes
 // (recipes.js) rendered once into buffers (bank.js); this file picks the right one for what
 // happened and plays it with the right pitch, level, pan and bus.
 //

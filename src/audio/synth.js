@@ -5,53 +5,72 @@
 // restarts the pitch ("bwip-bwip"), vibrato and tremolo, duty sweeps on pulse waves, pitched and
 // NES-style noise, swept resonant filters, bit crushing and a short echo, in physical units.
 //
-// Jingles and menu sounds are written as notes instead (a `seq` layer: "G4:70 B4:70 r:40 D5:700",
-// lengths in ms) and played on the chip's instruments (chip.js), like the music.
+// Layers can also be recordings: `rec` plays a recorded effect (samples.js; a different take for
+// each variant), `seq` plays written notes ("G4:70 B4:70 r:40 D5+G5:700", lengths in ms) on a
+// recorded instrument (`inst`) or one of the studio's synths (`synth`), and `drum` one hit of the
+// studio's drum kit.
 //
 // Algorithms after sfxr (DrPetter, MIT), jsfxr (Unlicense), ZzFX (Frank Force, MIT) and bfxr2
 // (Stephen Lavelle, MIT); no code is copied from them.
 
-import { renderNote, midiHz } from './chip.js';
+import { sampleNote, SYNTHS, DRUMS, midiOf, rng as studioRng } from './studio.js';
+import { effectSamples } from './samples.js';
 
 const TAU = Math.PI * 2;
-const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const midiOf = (name) => {
-  const m = /^([A-G])([#b]?)(-?\d)$/.exec(name);
-  if (!m) throw new Error(`bad note ${name}`);
-  return 12 * (Number(m[3]) + 1) + NOTE[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
-};
 
-// "G4:70 r:40 D5:700" -> [{ at, ms, midi }] (ms).
+// "G4:70 r:40 D5+G5:700" -> [{ at, ms, midis }] (ms).
 export function parseSeq(src) {
   const out = [];
   let at = 0;
   for (const tok of src.trim().split(/\s+/)) {
     const [name, ms] = tok.split(':');
     const len = Number(ms);
-    if (name !== 'r') out.push({ at, ms: len, midi: midiOf(name) });
+    if (name !== 'r') {
+      const midis = name.split('+').map(midiOf);
+      if (midis.some((m) => m == null)) throw new Error(`bad note ${tok}`);
+      out.push({ at, ms: len, midis });
+    }
     at += len;
   }
   return out;
 }
 
-// A chip line: one voice, each note cutting the last (with a 3 ms fade), the last one ringing out.
-function renderSeqLayer(L, sr) {
+// Written notes on a recorded instrument or a synth; each note rings out under the next.
+function renderSeqLayer(L, sr, bank, seed) {
   const notes = parseSeq(L.seq);
   const end = notes.length ? notes[notes.length - 1].at + notes[notes.length - 1].ms : 0;
-  const n = Math.ceil(((end + (L.tail ?? 400)) / 1000) * sr);
-  const out = new Float32Array(n);
-  const fade = Math.round(0.003 * sr);
-  notes.forEach((e, i) => {
+  const out = new Float32Array(Math.ceil(((end + (L.tail ?? 600)) / 1000) * sr));
+  const rand = studioRng(seed);
+  for (const e of notes) {
     const s0 = Math.round((e.at / 1000) * sr);
-    const cut = notes[i + 1] && notes[i + 1].at < e.at + e.ms + (L.tail ?? 400) ? Math.round(((notes[i + 1].at - e.at) / 1000) * sr) : n - s0;
-    const tmp = new Float32Array(Math.max(1, Math.min(n - s0, cut + fade)));
-    renderNote(tmp, 0, sr, L.inst ?? {}, { midi: e.midi + (L.transpose ?? 0), len: (e.ms / 1000) * (L.gate ?? 1), detune: L.detune });
-    for (let k = 0; k < tmp.length; k++) out[s0 + k] += tmp[k] * (k < cut ? 1 : Math.max(0, 1 - (k - cut) / fade));
-  });
-  if (L.lpf) {
-    const lp = biquad('lp');
-    lp.set(L.lpf[0], L.lpf[2] ?? 0.7, sr);
-    for (let i = 0; i < n; i++) out[i] = lp.run(out[i]);
+    const d = (e.ms / 1000) * (L.gate ?? 1);
+    for (const m0 of e.midis) {
+      const m = m0 + (L.transpose ?? 0);
+      const g = 1 / Math.sqrt(e.midis.length);
+      if (L.inst) sampleNote(out, s0, sr, bank, { sample: L.inst, rel: L.rel, attack: L.attack }, m, d, g);
+      else {
+        const x = SYNTHS[L.synth](m, d, sr, rand, L);
+        for (let i = 0; i < x.length && s0 + i < out.length; i++) out[s0 + i] += x[i] * g;
+      }
+    }
+  }
+  return out;
+}
+
+// A recorded effect, retuned by `rate` (and so shortened or stretched), optionally cut to `len` ms.
+function renderRecLayer(L, sr, bank, seed, index) {
+  const pick = (seed * 0.618 + index * 0.37) % 1;
+  const x = effectSamples(bank, L.rec, pick);
+  if (!x) return new Float32Array(1);
+  const step = (L.rate ?? 1) * (bank.sfx.sr / sr);
+  let n = Math.floor((x.length - 1) / step);
+  if (L.len) n = Math.min(n, Math.round((L.len / 1000) * sr));
+  const out = new Float32Array(n);
+  const fade = Math.round(0.01 * sr);
+  for (let i = 0; i < n; i++) {
+    const p = i * step;
+    const k = Math.floor(p);
+    out[i] = (x[k] + (x[k + 1] - x[k]) * (p - k)) * (L.len && i > n - fade ? (n - i) / fade : 1);
   }
   return out;
 }
@@ -130,8 +149,10 @@ function biquad(type) {
   };
 }
 
-function renderLayer(L, sr, rand) {
-  if (L.seq) return renderSeqLayer(L, sr);
+function renderLayer(L, sr, rand, bank, seed, index) {
+  if (L.seq) return renderSeqLayer(L, sr, bank, seed);
+  if (L.rec) return renderRecLayer(L, sr, bank, seed, index);
+  if (L.drum) return DRUMS[L.drum](sr, studioRng(seed + index), bank);
   const lenMs = layerLen(L);
   const n = Math.max(1, Math.ceil((lenMs / 1000) * sr));
   const out = new Float32Array(n);
@@ -245,12 +266,10 @@ function renderLayer(L, sr, rand) {
 }
 
 // Renders a recipe ({ layers: [...] }) to a mono buffer, peak-normalized to 1, with a DC blocker
-// and tiny fades so it never clicks.
-export { midiHz };
-
-export function render(recipe, sr = 44100, seed = 1) {
+// and tiny fades so it never clicks. `bank` holds the recordings (samples.js).
+export function render(recipe, sr = 44100, seed = 1, bank = null) {
   const rand = rng(seed * 7919 + 13);
-  const parts = recipe.layers.map((L) => ({ L, buf: renderLayer(L, sr, rand), at: Math.round(((L.at ?? 0) / 1000) * sr) }));
+  const parts = recipe.layers.map((L, i) => ({ L, buf: renderLayer(L, sr, rand, bank, seed, i), at: Math.round(((L.at ?? 0) / 1000) * sr) }));
   const n = Math.max(...parts.map((p) => p.at + p.buf.length));
   const out = new Float32Array(n);
   for (const { L, buf, at } of parts) {

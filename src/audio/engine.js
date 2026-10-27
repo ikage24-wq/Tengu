@@ -1,6 +1,6 @@
-// The sound engine. Every sound in the game is made in code (no audio files), the way the art is
-// drawn in code. The chip (chip.js, synth.js, tracker.js) renders each effect and each song loop
-// into samples once; this file plays those buffers through the Web Audio API.
+// The sound engine. Songs (studio.js) and effects (synth.js) are made from recorded instruments
+// and effects (samples.js) mixed with synths made in code, rendered once into samples (bank.js);
+// this file plays those buffers through the Web Audio API.
 //
 // The mix, after docs/audio/research-sfx.md and research-japanese.md:
 // - Four buses into the master: effects, music, voices (NPC text blips) and the interface. The
@@ -8,8 +8,8 @@
 // - The music dips under jingles and big blows (`duck`), the way FFXIV and Pokemon keep their
 //   fanfares clear, and comes back up smoothly.
 // - A brick-wall limiter on the end, so a busy fight never clips, instead of a squashing
-//   compressor; and only a short, small room (0.3 s) that magic and holy sounds send a little to.
-//   Chip music needs no reverb (its echoes are written into the songs).
+//   compressor; and only a short, small room (0.3 s) that magic and holy sounds send a little to
+//   (the songs carry their own reverb).
 //
 // Browsers only allow audio after the player has done something, so nothing plays until
 // `unlock()` runs on the first key press or click. Without Web Audio (tests, old browsers) every

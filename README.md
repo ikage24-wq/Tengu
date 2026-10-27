@@ -367,31 +367,33 @@ to clear it.
 - **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
   adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
   **Natural** leaves the colors as drawn.
-- **Sound** — 8-bit "chip" sound, made in code like the art (no audio files; `src/audio/`). A
-  small NES / Game Boy-style chip (two pulse voices, a triangle, a noise channel and a wave voice,
-  with tracker-style instruments) renders every effect and song loop once, in a background worker,
-  and the game plays them from buffers. The rules come from the saved research in `docs/audio/`
-  (chiptune practice, sfxr-style effects, and what FFXIV, Pokémon, Dragon Quest, Kirby and Animal
-  Crossing do). **Music**: a written song for every area, note by note: a cozy swung village tune,
-  a running D dorian field song, a lilting 6/8 harbor, an E Phrygian desert march, a gentle forest,
-  a waltz in the mage grove, a shimmering ruins bed, glassy cave echoes, an airy Lydian sky, a
-  grumbling dungeon march, a galloping boss theme that cuts in on its sting, and a title theme.
-  Songs crossfade between areas and pick up where they left off when you come back.
-  **Funky Fever**, Dancing Green's disco song, is locked to the stage lights' 120 bpm: a muffled
-  groove that opens up as he struts in, a riser and snare roll, a boom and a heartbeat while he
-  transforms, the drop on a bar line with the chorus on the stage's drop, a phase sting into Hi-NRG
-  Fever (a whole step up, doubled hats) on the next bar, and the victory fanfare on the beat when
-  he falls. **Jingles** follow the Japanese RPG formula (quick notes rushing into a long, rising
-  landing note with vibrato): level up, quest accepted and complete, rare drops, job advancement,
-  boss defeated, healing, and a gentle faint; the music dips under them and they never overlap.
-  **Effects**: hits with a click and a body that climbs in pitch through a combo (a finisher
-  thumps), crit pings, each path's and element's colour (holy bells, rage crunch, fire, ice, zap),
-  swings by weight, shots, casts by school, spells, buffs, every Paladin and Berserker effect,
-  footsteps by ground, jumps, landings, climbing, portals, coins that chime up the scale, pickups,
-  menu sounds that are high, tiny and dry, and NPCs who talk in letter-by-letter voice blips from
-  their own three-note set, rising at the end of a question. Sounds pan to where they happen; a
-  limiter keeps busy fights clean. Sound starts on your first key press or click. Options: Sound
-  has volume for everything, music, and effects.
+- **Sound** — "real plus modern": recorded instruments (flute, strings, harp, guitar, horns,
+  piano, choir, marimba, celesta and more, from the FluidR3 soundfont) and recorded effects (from
+  Kenney's packs), mixed with synths, drums and effects made in code (credits in
+  `assets/audio/CREDITS.md`). Every song and effect is rendered once in a background worker and
+  played from buffers; the rules come from the research in `docs/audio/`. **Music**: a written
+  song for every area: a swung village tune on flute, guitar and plucked strings; a running meadow
+  song with marimba and pop drums; an accordion sea song in 6/8 at the harbor; sitar and oboe over
+  toms in the crags; pan flute and harp in the forest; a waltz for oboe and celesta in the mage
+  grove; choir, harp and horn in the ruins; echoing celesta in the cave; flute and bells in the sky;
+  a grumbling horn march in the Hollow; a galloping boss theme with brass, strings, choir and
+  timpani that cuts in on its sting; and a piano title theme. Songs crossfade between areas and
+  pick up where they left off when you come back. **Funky Fever**, Dancing Green's disco song (F
+  minor, 120 bpm, matched to the feel of his FFXIV theme with our own melody), is locked to the
+  stage lights: a muffled groove that opens up as he struts in, a riser and snare roll, a boom and a
+  heartbeat while he transforms, the drop on a bar line with the chorus on the stage's drop, a phase
+  sting into Hi-NRG Fever (a whole step up) on the next bar, and the victory fanfare on the beat when
+  he falls. **Jingles** on real instruments follow the Japanese RPG formula (quick notes rushing
+  into a long, rising landing note): level up, quest accepted and complete, rare drops, job
+  advancement, boss defeated, healing, and a gentle faint; the music dips under them and they never
+  overlap. **Effects**: blows are recorded punches with a body that climbs in pitch through a combo
+  (finishers thump, crits ring), each path's and element's colour (holy bells, rage crunch, fire,
+  glassy ice, zaps), whooshing swings by weight, bows, casts, spells, buffs, every Paladin and
+  Berserker effect, recorded footsteps by ground, jumps, landings, coins that chime up the scale,
+  pickups, real menu clicks, and NPCs who talk in soft voice blips at their own pitch, rising at
+  the end of a question. Sounds pan to where they happen; a limiter keeps busy fights clean. Sound
+  starts on your first key press or click. Options: Sound has volume for everything, music, and
+  effects.
 - **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: filter, HD graphics, particles
   (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest
   tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: screen shake,
@@ -454,8 +456,9 @@ src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon f
                         particles,
                         monsters, scenery, terrain, landmarks, effects, icons, scene
 src/ui/                 HUD, windows, NPC dialogs, title and creator screens
-src/audio/              the chip, the tracker and its songs, sound recipes, the sound bank and
+src/audio/              the studio and its songs, sound recipes, the sample bank, the render
                         worker, the mixer, and the listener that turns the world into sound
+assets/audio/           the recorded instruments and effects (built by tools/build-audio.mjs)
 tests/                  node:test suites for rules, content integrity, and world behavior
 ```
 
