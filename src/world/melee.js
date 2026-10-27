@@ -255,7 +255,7 @@ function playStep(world, step, scale, key, school = null) {
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
     // The blade's whoosh starts during the wind-up, so it peaks as the blow lands (audio cue).
-    if (s.arc || s.pierce) world.juice.push({ type: 'swing', in: s.at * dur, big: s.big || step.finisher, thick: s.thick ?? 7, pierce: Boolean(s.pierce && !s.arc), school });
+    if (!s.shot && !s.rain) world.juice.push({ type: 'swing', in: s.at * dur, big: s.big || step.finisher, thick: s.thick ?? 7, pierce: Boolean(s.pierce && !s.arc), school, weapon: stats.weaponType });
     world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
   });
 }
@@ -329,7 +329,7 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
-      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school, via: 'blade',
+      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, school: s.school, via: 'blade', weapon: stats.weaponType,
     });
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, t: -i * 0.03, dur: 0.6, seed: Math.random() });
     // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
@@ -404,7 +404,7 @@ function fire(world, s) {
   const element = star?.star.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
   const fly = (tx, ty) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', shot: s.shot, school: s.school, element, starColor: star?.color, x: ox, y: oy, tx, ty, t: 0, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, x: ox, y: oy, tx, ty, t: 0, dur: travel });
     return travel;
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.

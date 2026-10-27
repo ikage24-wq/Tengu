@@ -40,7 +40,7 @@ function once(name, o = {}) {
 export function updateFunky(key, cut = 0) {
   if (!st) {
     st = { key: null, done: {} };
-    prepareSongs(['funky-groove', 'funky-heart', 'funky', 'funky-fever'], true);
+    prepareSongs(['funky-groove', 'funky-heart', 'funky', 'funky-fever'], 0);
   }
   if (key === 'funky-intro') intro(cut);
   else if (key === 'funky') fight();

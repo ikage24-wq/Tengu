@@ -37,13 +37,25 @@ const R = {
   blink: { db: -15, max: 1, room: true, layers: [{ rec: 'teleOut', len: 800 }, sparkle('G6:30 C7:30 E7:150', { at: 40, db: -10 })] },
   // ---------- Swings and blows ----------
   // A swing: a swept whoosh with a recorded blade's edge in it; heavier swings are lower and longer.
-  swing: { db: -16, vary: 5, max: 3, layers: [{ rec: 'bladeSwing' }, whoosh(170, 2400, 1000, { focus: 0.65, db: -12 })] },
-  swingHeavy: { db: -13, vary: 4, max: 2, layers: [{ rec: 'bladeSwingHeavy' }, { wave: 'tri', f0: 160, slide: -0.7, len: 400, env: { bell: true, focus: 0.4 }, db: -12 }] },
+  // Swings, by weapon (sfx.js picks them); every take peaks about 0.06 s in.
+  swing: { db: -15, vary: 4, max: 3, layers: [{ rec: 'swingSword' }, whoosh(150, 2400, 1000, { focus: 0.35, db: -14 })] },
+  swingHeavy: { db: -13, vary: 4, max: 2, layers: [{ rec: 'swingSwordHeavy' }, { wave: 'tri', f0: 160, slide: -0.7, len: 300, env: { bell: true, focus: 0.25 }, db: -14 }] },
+  axeSwing: { db: -14, vary: 4, max: 3, layers: [{ rec: 'swingAxe' }] },
+  axeSwingHeavy: { db: -12, vary: 3, max: 2, layers: [{ rec: 'swingAxe', rate: 0.85 }, { rec: 'swingSwordHeavy', db: -6 }] },
+  spearSwing: { db: -15, vary: 4, max: 3, layers: [{ rec: 'swingSpear' }] },
+  spearSwingHeavy: { db: -13, vary: 3, max: 2, layers: [{ rec: 'swingSpear', rate: 0.88 }, { rec: 'swingSwordHeavy', db: -8 }] },
+  spearThrust: { db: -15, vary: 4, max: 2, layers: [{ rec: 'swingSpear', rate: 1.15, len: 300 }, { rec: 'stab', db: -6 }] },
+  daggerSwing: { db: -16, vary: 5, max: 3, layers: [{ rec: 'swingDagger' }] },
+  fistSwing: { db: -18, vary: 6, max: 3, layers: [{ rec: 'swingFist' }] },
   thrust: { db: -16, vary: 5, max: 2, layers: [{ rec: 'stab' }] },
   // Blows: a recorded punch for the contact, a synth body for weight (it climbs through a combo in
   // sfx.js), a crisp click on top; heavy blows add a sub thump and a metal plate; crits ring.
   hit: { db: -12, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -10 }] },
   hitMedium: { db: -11, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -8 }, { rec: 'clangLight', db: -16 }] },
+  hitAxe: { db: -11, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'chop', db: -4 }, { rec: 'wood', db: -14 }] },
+  hitSpear: { db: -12, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', rate: 0.85, db: -8 }] },
+  hitDagger: { db: -13, vary: 4, max: 4, layers: [{ rec: 'punch', rate: 1.1 }, { rec: 'cut', db: -5 }] },
+  hitFist: { db: -12, vary: 4, max: 4, layers: [{ rec: 'punch' }, { rec: 'soft', db: -8 }] },
   // The body under a blow: a short round tone, played higher with each step of a combo (sfx.js).
   hitTone: { db: -17, max: 4, layers: [thump(240, 80, { slide: -2 })] },
   hitHeavy: {
@@ -101,8 +113,10 @@ const R = {
   },
   hook: { db: -16, max: 1, layers: [whoosh(150, 1500, 3500, { focus: 0.3 }), { rec: 'metal', rate: 1.3, len: 200, at: 100, db: -4 }, { rec: 'metalClick', at: 220, db: -6 }] },
   // ---------- Shots and spells ----------
-  arrow: { db: -15, vary: 5, max: 3, layers: [{ rec: 'bowShoot' }] },
-  arrowHeavy: { db: -12, vary: 4, max: 2, layers: [{ rec: 'bowShoot', rate: 0.85 }, { rec: 'windShot', len: 500, db: -6 }] },
+  arrow: { db: -15, vary: 5, max: 3, layers: [{ rec: 'bowLongbow' }, { rec: 'bowShoot', db: -8 }] },
+  arrowHeavy: { db: -12, vary: 4, max: 2, layers: [{ rec: 'bowLongbow', rate: 0.9 }, { rec: 'heavyArrowPass', db: -3 }] },
+  crossbow: { db: -14, vary: 4, max: 3, layers: [{ rec: 'crossbowShoot' }, { rec: 'boltPass', db: -8, at: 30 }] },
+  crossbowHeavy: { db: -12, vary: 3, max: 2, layers: [{ rec: 'crossbowShoot', rate: 0.9 }, { rec: 'heavyArrowPass', db: -4 }] },
   star: { db: -16, vary: 6, max: 3, layers: [{ rec: 'windShot', rate: 1.4, len: 350 }, { rec: 'stab', rate: 1.3, db: -4 }] },
   zap: { db: -15, vary: 4, max: 3, layers: [{ rec: 'zapLaunch', len: 600 }] },
   cast: {
@@ -139,7 +153,7 @@ const R = {
   bladestorm: { db: -12, max: 2, layers: [{ rec: 'bladeSwing' }, { rec: 'bladeSwing', at: 110, db: -3 }, { rec: 'bladeSwingHeavy', at: 230, db: -2 }, { rec: 'cut', at: 300, db: -4 }] },
   buff: { db: -13, max: 1, layers: [{ rec: 'shield', len: 1200 }, { seq: 'G5:70 A5:70 B5:70 D6:300', synth: 'pluck', cut: 4000, ring: 0.3, db: -8 }] },
   partyBuff: { db: -12, max: 1, room: true, layers: [{ rec: 'shield', len: 1400 }, { seq: 'G4:70 C5:70 E5:70 G5:70 C6:400', inst: 'orchestral_harp', db: -4 }, { seq: 'r:280 C5+E5+G5:600', inst: 'string_ensemble_1', attack: 0.05, db: -10 }] },
-  powerup: { db: -13, max: 2, layers: [{ rec: 'unsheathe' }, { rec: 'shield', len: 900, db: -6 }] },
+  powerup: { db: -13, max: 2, layers: [{ rec: 'bladeDraw' }, { rec: 'shield', len: 900, db: -8 }] },
   gather: { db: -16, max: 1, layers: [{ rec: 'zapCharge', len: 900 }, { wave: 'saw', f0: 220, slide: 2.6, env: { a: 380, d: 40 }, lpf: [3000], db: -12 }] },
   gatherHoly: { db: -16, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 900 }, { seq: 'C5+G5:420', inst: 'choir_aahs', attack: 0.3, db: -6 }] },
   // ---------- The warrior paths ----------

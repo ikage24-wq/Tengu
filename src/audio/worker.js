@@ -1,6 +1,8 @@
 // Renders sounds and song loops off the main thread, so the game never hitches while they're made.
 // First it's handed the sample bank ({ type: 'bank', bank }); then it's asked for
-// { type: 'sfx', name, sr, front } or { type: 'song', key, sr, front } and answers with the samples.
+// { type: 'sfx', name, sr, prio } or { type: 'song', key, sr, prio } and answers with the samples.
+// Lower `prio` goes first: a song wanted right now (0), the everyday effects (1), every other
+// effect (2), and songs prepared for later (3).
 
 import { render } from './synth.js';
 import { RECIPES, variantsOf } from './recipes.js';
@@ -8,14 +10,16 @@ import { renderSong } from './studio.js';
 import { SONGS } from './songs.js';
 
 let bank = null;
-// Jobs wait in a line (until the bank arrives); one runs per tick so a newly asked-for song
-// (`front`) can jump ahead.
+// Jobs wait in a line by priority (until the bank arrives); one runs per tick so a newly
+// asked-for job can jump ahead.
 const line = [];
 let busy = false;
 self.onmessage = ({ data: m }) => {
   if (m.type === 'bank') bank = m.bank;
-  else if (m.front) line.unshift(m);
-  else line.push(m);
+  else {
+    const i = line.findIndex((j) => j.prio > m.prio);
+    i < 0 ? line.push(m) : line.splice(i, 0, m);
+  }
   if (!busy && bank) {
     busy = true;
     setTimeout(next, 0);

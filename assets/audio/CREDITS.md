@@ -22,6 +22,10 @@
     (CC0): swishes and a bow.
   - [80 CC0 RPG SFX](https://opengameart.org/content/80-cc0-rpg-sfx) by **rubberduck** (CC0):
     blade cuts, creature cries, coins, fire spells.
+  - [Medieval sound effects - Weapon Textures](https://opengameart.org/content/medieval-sound-effects-weapon-textures)
+    by **Still North Media** (Ben Jaszczak and Brian Nelson), CC0: axe, spear, katana, sabre,
+    dagger and seax swings, longbow and recurve shots, crossbow shots and bolts, blade draws.
+  - [3 Melee Sounds](https://opengameart.org/content/3-melee-sounds) (CC0): a bare-hand swish.
 - Everything else (synths, drums, mixing, every song and arrangement) is made in code for this game.
 
 Rebuild these files with `node tools/build-audio.mjs`.

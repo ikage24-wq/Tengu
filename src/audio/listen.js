@@ -53,7 +53,7 @@ export function hearWorld(world, cam) {
       // A combo's own swings are heard from their wind-up (the 'swing' cue below); arcs without a
       // move (party members' cuts) are heard here.
       case 'arc': if (!f.move) sfx('swing', { weight: f.big ? 1.8 : (f.thick ?? 7) > 11 ? 1.4 : 1, school: f.snd, pan: p }); break;
-      case 'projectile': sfx('shot', { kind: f.shot, pan: p }); break;
+      case 'projectile': sfx('shot', { kind: f.shot, weapon: f.weapon, pan: p }); break;
       case 'castcircle': sfx('cast', { school: f.school, big: f.big, pan: p }); break;
       case 'powerup': sfx('powerup', { school: f.school, big: f.big, pan: p }); break;
       case 'buffcast': sfx('buff', { party: SKILLS[f.skill]?.party, pan: p }); break;
@@ -82,11 +82,11 @@ export function hearWorld(world, cam) {
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
-    else if (j.type === 'swing') sfx(j.pierce ? 'thrust' : 'swing', { weight: j.big ? 1.8 : j.thick > 11 ? 1.4 : 1, school: j.school, lead: j.in, pan: 0 });
+    else if (j.type === 'swing') sfx(j.pierce ? 'thrust' : 'swing', { weight: j.big ? 1.8 : j.thick > 11 ? 1.4 : 1, school: j.school, weapon: j.weapon, lead: j.in, pan: 0 });
   }
   if (hit) {
     const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : null;
-    sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, element: hit.element, many: hits, pan: pan(hit.x) });
+    sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x) });
   }
 
   // ----- Floating words -----

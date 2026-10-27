@@ -10,7 +10,8 @@
 //   combat:      JC Sounds' Fantasy SFX Pack Vol 1 (CC BY 4.0), The Soundrack's Magic Spell SFX
 //                pack (CC BY 4.0, from itch.io), artisticdude's RPG Sound Pack and Swishes (CC0),
 //                Ogrebane's Battle Sound Effects (CC0) and rubberduck's 80 CC0 RPG SFX (CC0), the
-//                last four from OpenGameArt
+//                last four from OpenGameArt; Still North Media's Medieval Weapon Textures (Ben
+//                Jaszczak and Brian Nelson, CC0) and qubodup's 3 Melee Sounds (CC0)
 //
 // Needs node, ffmpeg, curl, unzip, 7z (for the .7z pack) and unar (for the .rar pack).
 //
@@ -153,6 +154,19 @@ const EFFECTS = {
   slime: ['rpgpack:slime1', 'rpgpack:slime2', 'rpgpack:slime4', 'rpgpack:slime5', 'rpgpack:slime10'],
   ogre: ['rpgpack:ogre1', 'rpgpack:ogre3', 'rpgpack:ogre4'],
   coins2: ['oga80:item_coins_01', 'oga80:item_coins_02', 'oga80:item_coins_03'],
+  // ---------- Each weapon's own swing (Medieval Weapon Textures: one file of several takes each) ----------
+  // Every take is cut so its loudest moment comes about 0.06 s in, so the game can time it to the blow.
+  swingSword: ['jc:Sword_Swing_01@0.12', 'jc:Sword_Swing_02@0.12', 'jc:Sword_Swing_03@0.11', 'med:Katana Swing#7', 'med:Katana Swing#5'],
+  swingSwordHeavy: ['jc:Heavy Sword_Swing_01@0.13', 'jc:Heavy Sword_Swing_02@0.12', 'jc:Heavy Sword_Swing_03@0.12', 'med:Sabre Swing#48', 'med:Sabre Swing#50'],
+  swingAxe: ['med:Axe Swing#2', 'med:Axe Swing#6', 'med:Axe Swing#7', 'med:Axe Swing#3'],
+  swingSpear: ['med:Spear Swing#0@0.21~0.4', 'med:Spear Swing#1@0.19~0.4'],
+  swingDagger: ['med:Dagger Swing#2', 'med:Dagger Swing#5', 'med:Seax Swing#3', 'med:Seax Swing#9'],
+  swingFist: ['melee3:melee sound@0.04', 'swish:swish-4', 'swish:swish-8'],
+  bowLongbow: ['med:English Longbow Shoot#3', 'med:English Longbow Shoot#0', 'med:Scythian Recurve Shoot#6', 'med:Scythian Recurve Shoot#0'],
+  crossbowShoot: ['med:Crossbow Shoot#0', 'med:Crossbow Shoot#2', 'med:Crossbow Shoot#3'],
+  boltPass: ['med:Crossbow Bolt Pass#0~0.4'],
+  heavyArrowPass: ['med:Scythian Recurve Heavy Arrow Pass#3@0.12', 'med:Scythian Recurve Heavy Arrow Pass#4@0.15'],
+  bladeDraw: ['med:Katana Draw Fast#0', 'med:Katana Draw Fast#2'],
 };
 
 // The combat packs: where to get each, and how it's packed.
@@ -163,6 +177,8 @@ const PACKS = {
   rpgpack: { url: `${OGA}rpg_sound_pack.zip`, file: 'rpgpack.zip' },
   swish: { url: `${OGA}swishes.zip`, file: 'swish.zip' },
   battle: { url: `${OGA}battle_sound_effects_0.zip`, file: 'battle.zip' },
+  med: { urls: [`${OGA}medieval_sfx_textures_1_of_2.7z`, `${OGA}medieval_sfx_textures_2_of_2.7z`], file: 'med' },
+  melee3: { url: `${OGA}melee%20sounds.zip`, file: 'melee3.zip' },
   // itch.io: two parts of one .rar, free downloads (fetched through the page's own download flow).
   mg: { itch: 'https://thesoundrack.itch.io/freemagicspellsfx', uploads: [19749727, 19749730] },
 };
@@ -229,6 +245,10 @@ function fetchPack(name) {
   if (fs.existsSync(dir)) return;
   const p = PACKS[name];
   fs.mkdirSync(dir, { recursive: true });
+  if (p.urls) {
+    p.urls.forEach((u, i) => execFileSync('7z', ['x', '-y', `-o${dir}`, get(u, path.join(CACHE, `${p.file}${i + 1}.7z`))], { stdio: 'ignore' }));
+    return;
+  }
   if (p.url) {
     const file = get(p.url, path.join(CACHE, p.file));
     if (file.endsWith('.7z')) execFileSync('7z', ['x', '-y', `-o${dir}`, file], { stdio: 'ignore' });
@@ -273,14 +293,40 @@ function findIn(pack, key) {
   if (!hit) throw new Error(`${pack} has no ${key}`);
   return hit;
 }
-// 'pack:name@skip~length' -> { file, skip, max }.
+// 'pack:name#take@skip~length' -> { file, take, skip, max }. `#take` picks one take from a file
+// that holds several (recorded one after another with silence between).
 function source(spec) {
   if (!spec.includes(':')) {
     const [pack, file] = spec.split('/');
     return { file: path.join(CACHE, K[pack], 'Audio', file), skip: 0, max: 2.5 };
   }
-  const m = /^(\w+):([^@~]+)(?:@([\d.]+))?(?:~([\d.]+))?$/.exec(spec);
-  return { file: findIn(m[1], m[2]), skip: Number(m[3] ?? 0), max: Number(m[4] ?? 2.5) };
+  const m = /^(\w+):([^@~#]+)(?:#(\d+))?(?:@([\d.]+))?(?:~([\d.]+))?$/.exec(spec);
+  return { file: findIn(m[1], m[2]), take: m[3] == null ? null : Number(m[3]), skip: Number(m[4] ?? 0), max: Number(m[5] ?? 2.5) };
+}
+
+// The takes in a recording: stretches louder than 4% of its peak (10 ms steps), split where it
+// stays quiet for 0.12 s. Returns [start, end] sample pairs.
+function takes(x) {
+  const w = Math.round(0.01 * SR);
+  const env = [];
+  for (let i = 0; i + w <= x.length; i += w) {
+    let e = 0;
+    for (let k = 0; k < w; k++) e += x[i + k] * x[i + k];
+    env.push(Math.sqrt(e / w));
+  }
+  const thr = Math.max(...env) * 0.04;
+  const out = [];
+  for (let i = 0; i < env.length; ) {
+    if (env[i] <= thr) {
+      i++;
+      continue;
+    }
+    let j = i;
+    while (j < env.length && env.slice(j, j + 12).some((v) => v > thr)) j++;
+    out.push([Math.max(0, i - 1) * w, Math.min(x.length, (j + 5) * w)]);
+    i = j;
+  }
+  return out;
 }
 
 // ---------- Effects ----------
@@ -299,7 +345,11 @@ for (const [name, files] of Object.entries(EFFECTS)) {
   manifest.sfx.items[name] = [];
   for (const f of files) {
     const src = source(f);
-    const x = decode(src.file, src.skip + src.max + 3);
+    let x = decode(src.file, src.take == null ? src.skip + src.max + 3 : 120);
+    if (src.take != null) {
+      const [a, b] = takes(x)[src.take];
+      x = x.slice(a, b);
+    }
     let s = Math.round(src.skip * SR);
     while (s < x.length && Math.abs(x[s]) < 0.002) s++;
     let e = x.length;
@@ -307,6 +357,8 @@ for (const [name, files] of Object.entries(EFFECTS)) {
     // Longer than its limit: cut there, with a gentle fade.
     const end = Math.min(e, s + Math.round(src.max * SR));
     const clip = x.slice(s, end);
+    // A short fade in, so a take cut partway in starts cleanly.
+    for (let i = 0; i < Math.min(clip.length, 0.004 * SR); i++) clip[i] *= i / (0.004 * SR);
     if (end < e) {
       const fade = Math.min(clip.length, Math.round(0.15 * SR));
       for (let i = 0; i < fade; i++) clip[clip.length - 1 - i] *= i / fade;

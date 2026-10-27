@@ -89,20 +89,23 @@ const SPELLS = {
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
 };
 const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow']);
+// Each melee weapon's swing [light, heavy], and the cut its blows land with.
+const SWINGS = { sword: ['swing', 'swingHeavy'], axe: ['axeSwing', 'axeSwingHeavy'], spear: ['spearSwing', 'spearSwingHeavy'], dagger: ['daggerSwing', 'swing'], none: ['fistSwing', 'fistSwing'] };
+const BLADE_HITS = { axe: 'hitAxe', spear: 'hitSpear', dagger: 'hitDagger', none: 'hitFist' };
 
 const SOUNDS = {
   // A swing: a recorded sword (a heavier blade for big or rage swings), a little brighter for holy.
   // `lead`: seconds until the blow lands; the whoosh is started early so its peak lands with it.
-  swing({ weight = 1, school, lead = 0, pan }) {
+  // Each weapon swings with its own recordings (every take peaks about 0.06 s in).
+  swing({ weight = 1, school, weapon = 'sword', lead = 0, pan }) {
     const heavy = weight > 1.2 || school === 'rage';
-    const at = now() + Math.max(0, lead - (heavy ? 0.2 : 0.14));
-    if (heavy) voice('swingHeavy', { pan, at, rate: school === 'rage' ? 0.92 : 1 });
-    else voice('swing', { pan, at, rate: school === 'holy' ? 1.05 : 1 });
+    const set = SWINGS[weapon] ?? SWINGS.sword;
+    voice(heavy ? set[1] : set[0], { pan, at: now() + Math.max(0, lead - 0.06), rate: school === 'rage' ? 0.94 : school === 'holy' ? 1.04 : 1 });
   },
   // A blow landing. Blades: a punch and a cut whose body climbs with each step of a quick chain,
   // a finisher's thump and clang, a crit's ring. Arrows and stars thud in; spells land with their
   // school's own impact. Then the path's (Rage, Faith) or the weapon's element colour.
-  hit({ big, crit, path, school, via = 'blade', element, many = 1, pan }) {
+  hit({ big, crit, path, school, via = 'blade', weapon, element, many = 1, pan }) {
     const db = Math.min(3, (many - 1) * 1);
     if (ARROWS.has(via)) voice(big ? 'arrowHitHeavy' : 'arrowHit', { pan, db });
     else if (via === 'star' || via === 'pebble') voice('starHit', { pan, db });
@@ -118,7 +121,7 @@ const SOUNDS = {
         combo.step = -1;
       } else {
         const climb = [0, 5, 7][Math.min(2, Math.max(0, combo.step) % 3)];
-        voice(many > 2 ? 'hitMedium' : 'hit', { pan, db });
+        voice(BLADE_HITS[weapon] ?? (many > 2 ? 'hitMedium' : 'hit'), { pan, db });
         voice('hitTone', { pan, db, rate: semis(climb) });
       }
       if (school === 'steel') voice('steelHit', { pan, db: -4 });
@@ -127,7 +130,7 @@ const SOUNDS = {
     const colour = COLOUR[path] ?? COLOUR[element];
     if (colour) voice(colour, { pan, db: -2 });
   },
-  thrust: ({ lead = 0, pan }) => voice('thrust', { pan, at: now() + Math.max(0, lead - 0.06) }),
+  thrust: ({ weapon, lead = 0, pan }) => voice(weapon === 'spear' ? 'spearThrust' : 'thrust', { pan, at: now() + Math.max(0, lead - 0.06) }),
   miss: ({ pan }) => voice('miss', { pan }),
   hurt: ({ pan }) => voice('hurt', { pan }),
   // A monster pops: a soft squish and a little cry; a boss booms.
@@ -142,7 +145,8 @@ const SOUNDS = {
   boom: ({ size = 1, pan }) => voice('boom', { pan, rate: size > 1.5 ? 0.8 : 1 }),
   stomp: ({ big, pan }) => voice(big ? 'landHard' : 'stomp', { pan }),
   dot: ({ pan }) => voice('dot', { pan }),
-  shot({ kind, pan }) {
+  shot({ kind, weapon, pan }) {
+    if (weapon === 'crossbow' && ARROWS.has(kind)) return voice(kind === 'bigarrow' ? 'crossbowHeavy' : 'crossbow', { pan });
     voice(SHOTS[kind] ?? 'zap', { pan, rate: kind === 'bigstar' ? 0.85 : 1 });
   },
   cast({ school = 'arcane', big, pan }) {

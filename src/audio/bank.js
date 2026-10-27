@@ -40,7 +40,7 @@ if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
         worker.onerror = async () => {
           worker = null;
           bank = await loadSamples(true);
-          for (const job of [...asked].map((id) => id.split(':'))) if (!(job[0] === 'sfx' ? raw.has(job[1]) : songBufs.has(job[1]))) queue.push(job[0] === 'sfx' ? { type: 'sfx', name: job[1] } : { type: 'song', key: job[1] });
+          for (const job of [...asked].map((id) => id.split(':'))) if (!(job[0] === 'sfx' ? raw.has(job[1]) : songBufs.has(job[1]))) queue.push(job[0] === 'sfx' ? { type: 'sfx', name: job[1], prio: 2 } : { type: 'song', key: job[1], prio: 0 });
           pump();
         };
         worker.postMessage({ type: 'bank', bank: b }, transferables(b));
@@ -48,10 +48,12 @@ if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
         worker = null;
         bank = b;
       }
-      // The title song is made before the first click, so the title screen has music at once.
-      prepareSongs(['title', 'town'], true);
-      for (const name of FIRST) want({ type: 'sfx', name });
-      setTimeout(() => Object.keys(RECIPES).forEach((name) => want({ type: 'sfx', name })), 1500);
+      // The title song is made before the first click, so the title screen has music at once;
+      // then the everyday effects, the town's song, and every other effect.
+      prepareSongs(['title'], 0);
+      for (const name of FIRST) want({ type: 'sfx', name }, 1);
+      prepareSongs(['town'], 1);
+      for (const name of Object.keys(RECIPES)) want({ type: 'sfx', name }, 2);
       // Jobs asked for before the recordings arrived.
       for (const job of queue.splice(0)) post(job);
     })
@@ -62,17 +64,20 @@ onUnlock(() => {
   for (const [name, variants] of raw) sfxBufs.set(name, variants.map((v) => toBuffer(v, SFX_SR)));
 });
 
-function want(job, front = false) {
+// Asks for a job at a priority (lower first: 0 a song wanted now, 1 everyday effects, 2 other
+// effects, 3 songs for later).
+function want(job, prio = 2) {
   const id = `${job.type}:${job.name ?? job.key}`;
   if (asked.has(id)) return;
   asked.add(id);
-  post(job, front);
+  post({ ...job, prio });
 }
 
-function post(job, front = false) {
-  if (worker) worker.postMessage({ ...job, sr: job.type === 'song' ? SONG_SR : SFX_SR, front });
+function post(job) {
+  if (worker) worker.postMessage({ ...job, sr: job.type === 'song' ? SONG_SR : SFX_SR });
   else {
-    front ? queue.unshift(job) : queue.push(job);
+    const i = queue.findIndex((j) => j.prio > job.prio);
+    i < 0 ? queue.push(job) : queue.splice(i, 0, job);
     pump();
   }
 }
@@ -123,7 +128,7 @@ export function sfxBuffer(name) {
   const bufs = sfxBufs.get(name);
   if (bufs) return bufs[Math.floor(Math.random() * bufs.length)];
   if (!RECIPES[name]) return null;
-  if (!asked.has(`sfx:${name}`)) want({ type: 'sfx', name }, true);
+  if (!asked.has(`sfx:${name}`)) want({ type: 'sfx', name }, 1);
   return null;
 }
 
@@ -141,18 +146,18 @@ export function songBuffer(key, then) {
   if (!pending.has(key)) {
     pending.add(key);
     asked.delete(`song:${key}`);
-    want({ type: 'song', key }, true);
+    want({ type: 'song', key }, 0);
   }
   return null;
 }
 
-// Asks for songs ahead of time (the ones the player will likely hear next); `front` puts them
-// ahead of everything else waiting (first key first).
-export function prepareSongs(keys, front = false) {
-  for (const k of front ? [...keys].reverse() : keys) {
-    if (!SONGS[k] || songBufs.has(k) || (pending.has(k) && !front)) continue;
+// Asks for songs ahead of time (the ones the player will likely hear next), after the effects;
+// `prio` 0 makes them as urgent as a song wanted now.
+export function prepareSongs(keys, prio = 3) {
+  for (const k of keys) {
+    if (!SONGS[k] || songBufs.has(k) || (pending.has(k) && prio > 0)) continue;
     pending.add(k);
     asked.delete(`song:${k}`);
-    want({ type: 'song', key: k }, front);
+    want({ type: 'song', key: k }, prio);
   }
 }

@@ -389,8 +389,10 @@ to clear it.
   overlap. **Effects**: blows are recorded punches with a body that climbs in pitch through a combo
   (finishers thump, crits ring), each path's and element's colour (holy bells, rage crunch, fire,
   glassy ice, zaps). Combat is recorded from free combat sound packs (JC Sounds, The Soundrack,
-  artisticdude, Ogrebane, rubberduck): real sword, axe and dagger swings, blade clangs and cuts,
-  bows drawing and arrows thudding in, throwing stars, and every school of magic casting and
+  artisticdude, Ogrebane, rubberduck, Still North Media): every weapon type swings with its own
+  recordings (sword, axe, spear, dagger, bare hands), timed so the whoosh peaks as the blow lands,
+  and lands its own way (an axe chops, a dagger cuts, fists thump); blade clangs and cuts, longbow
+  and recurve shots, crossbows clacking bolts away, arrows thudding in, throwing stars, and every school of magic casting and
   landing with its own sound (fire, ice, lightning, holy, poison, dark, wind, earth, water);
   monsters squish and cry when they pop. Buffs, shields, teleports, every Paladin and Berserker
   effect, recorded footsteps by ground, jumps, landings, coins that chime up the scale,
