@@ -965,9 +965,12 @@ function bladeCut(ctx, f, cam, p) {
   const frame = p < 0.06 ? 0 : p < 0.62 ? 1 + Math.min(2, Math.floor(((p - 0.06) / 0.56) * 3)) : Math.min(8, 4 + Math.floor(((p - 0.62) / 0.38) * 5));
   // Sized so the crescent rides just past the blade's tip, with a fainter copy a beat behind it
   // so the cut reads thick and fast.
-  // A downward cut stays above the floor: the crescent leans forward rather than diving into the ground.
+  // A downward cut stays above the floor: the crescent leans out in front rather than diving into
+  // the ground.
   if (Math.sin(mid) > -0.05) {
-    mid = Math.atan2(-0.05, Math.sign(Math.cos(mid) || 1));
+    // Moved to the front from behind, it's mirrored, so it turns the other way round too.
+    if (Math.cos(mid) * (f.dir || 1) < 0) cw = !cw;
+    mid = Math.atan2(-0.05, f.dir || 1);
     cy -= 6;
   }
   const scale = (r / 12) * (f.big ? 1.2 : 1);
