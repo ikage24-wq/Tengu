@@ -42,8 +42,10 @@ const R = {
   thrust: { db: -16, vary: 5, max: 2, layers: [{ rec: 'stab' }] },
   // Blows: a recorded punch for the contact, a synth body for weight (it climbs through a combo in
   // sfx.js), a crisp click on top; heavy blows add a sub thump and a metal plate; crits ring.
-  hit: { db: -12, vary: 5, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -7 }, thump(220, 70, { db: -7 })] },
-  hitMedium: { db: -11, vary: 5, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -5 }, { rec: 'clangLight', db: -14 }, thump(190, 90, { db: -6 })] },
+  hit: { db: -12, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -10 }] },
+  hitMedium: { db: -11, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -8 }, { rec: 'clangLight', db: -16 }] },
+  // The body under a blow: a short round tone, played higher with each step of a combo (sfx.js).
+  hitTone: { db: -17, max: 4, layers: [thump(240, 80, { slide: -2 })] },
   hitHeavy: {
     db: -9, vary: 4, max: 2, duck: [-4, 300], layers: [
       { rec: 'punchHeavy' },

@@ -254,6 +254,8 @@ function playStep(world, step, scale, key, school = null) {
   }
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
+    // The blade's whoosh starts during the wind-up, so it peaks as the blow lands (audio cue).
+    if (s.arc || s.pierce) world.juice.push({ type: 'swing', in: s.at * dur, big: s.big || step.finisher, thick: s.thick ?? 7, pierce: Boolean(s.pierce && !s.arc), school });
     world.strikes.push({ ...s, n, of: step.strikes.length, due: now + s.at * dur, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur });
   });
 }

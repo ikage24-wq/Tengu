@@ -92,9 +92,12 @@ const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow']);
 
 const SOUNDS = {
   // A swing: a recorded sword (a heavier blade for big or rage swings), a little brighter for holy.
-  swing({ weight = 1, school, pan }) {
-    if (weight > 1.2 || school === 'rage') voice('swingHeavy', { pan, rate: school === 'rage' ? 0.9 : 1 });
-    else voice('swing', { pan, rate: school === 'holy' ? 1.08 : 1 });
+  // `lead`: seconds until the blow lands; the whoosh is started early so its peak lands with it.
+  swing({ weight = 1, school, lead = 0, pan }) {
+    const heavy = weight > 1.2 || school === 'rage';
+    const at = now() + Math.max(0, lead - (heavy ? 0.2 : 0.14));
+    if (heavy) voice('swingHeavy', { pan, at, rate: school === 'rage' ? 0.92 : 1 });
+    else voice('swing', { pan, at, rate: school === 'holy' ? 1.05 : 1 });
   },
   // A blow landing. Blades: a punch and a cut whose body climbs with each step of a quick chain,
   // a finisher's thump and clang, a crit's ring. Arrows and stars thud in; spells land with their
@@ -108,13 +111,15 @@ const SOUNDS = {
       const t = now();
       combo.step = t - combo.at < 0.7 ? combo.step + 1 : 0;
       combo.at = t;
+      // The recordings keep their own pitch; a soft tone under them climbs through the chain.
       if (big) {
         voice('hitHeavy', { pan, db });
-        voice('hit', { pan, rate: 2, db: db - 6 });
+        voice('hitTone', { pan, rate: 2, db: db - 4 });
         combo.step = -1;
       } else {
         const climb = [0, 5, 7][Math.min(2, Math.max(0, combo.step) % 3)];
-        voice(many > 2 ? 'hitMedium' : 'hit', { pan, db, rate: semis(climb) });
+        voice(many > 2 ? 'hitMedium' : 'hit', { pan, db });
+        voice('hitTone', { pan, db, rate: semis(climb) });
       }
       if (school === 'steel') voice('steelHit', { pan, db: -4 });
     }
@@ -122,7 +127,7 @@ const SOUNDS = {
     const colour = COLOUR[path] ?? COLOUR[element];
     if (colour) voice(colour, { pan, db: -2 });
   },
-  thrust: ({ pan }) => voice('thrust', { pan }),
+  thrust: ({ lead = 0, pan }) => voice('thrust', { pan, at: now() + Math.max(0, lead - 0.06) }),
   miss: ({ pan }) => voice('miss', { pan }),
   hurt: ({ pan }) => voice('hurt', { pan }),
   // A monster pops: a soft squish and a little cry; a boss booms.
