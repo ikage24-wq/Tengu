@@ -66,11 +66,12 @@ function renderRecLayer(L, sr, bank, seed, index) {
   let n = Math.floor((x.length - 1) / step);
   if (L.len) n = Math.min(n, Math.round((L.len / 1000) * sr));
   const out = new Float32Array(n);
-  const fade = Math.round(0.01 * sr);
+  // Cut short (`len`): a 60 ms fade; played whole: a short fade anyway, in case it ends loud.
+  const fade = Math.min(n, Math.round((L.len ? 0.06 : 0.012) * sr));
   for (let i = 0; i < n; i++) {
     const p = i * step;
     const k = Math.floor(p);
-    out[i] = (x[k] + (x[k + 1] - x[k]) * (p - k)) * (L.len && i > n - fade ? (n - i) / fade : 1);
+    out[i] = (x[k] + (x[k + 1] - x[k]) * (p - k)) * (i > n - fade ? (n - i) / fade : 1);
   }
   return out;
 }
@@ -286,7 +287,7 @@ export function render(recipe, sr = 44100, seed = 1, bank = null) {
     out[i] = y;
   }
   const fin = Math.round(0.0003 * sr);
-  const fout = Math.round(0.005 * sr);
+  const fout = Math.round(0.012 * sr);
   let peak = 0;
   for (let i = 0; i < n; i++) {
     if (i < fin) out[i] *= i / fin;

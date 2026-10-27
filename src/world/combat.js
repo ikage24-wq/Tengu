@@ -305,7 +305,7 @@ export function cast(world, skillId, rng = Math.random) {
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
         burst: params.projectile && s?.school ? SHOT_IMPACTS[fxKind] : null, school: s?.school, element: star?.star.element,
         // What landed (for its sound): the shot, a spell, or a blade.
-        via: params.projectile ? fxKind : type === 'magic' || type === 'heal' ? 'spell' : 'blade',
+        via: params.projectile || fxKind === 'rain' ? fxKind : type === 'magic' || type === 'heal' ? 'spell' : 'blade',
       });
       if (params.projectile) {
         world.fx.push({

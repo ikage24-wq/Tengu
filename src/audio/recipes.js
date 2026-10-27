@@ -2,7 +2,8 @@
 // recorded instruments (FluidR3) layered with synth sweeps, thumps and sparkles, the same "real
 // plus modern" mix as the music. Units: Hz, ms, octaves per second (slide), dB. Each recipe:
 // { layers, db (peak level once normalized), vary (± % random pitch per play), max (voices at
-// once), duck: [dB the music dips, ms], room (a little of the short room) }.
+// once), gap (ms: repeats closer than this play once; 35 by default), duck: [dB the music dips,
+// ms], room (a little of the short room) }.
 //
 // Layer kinds: { rec: 'punch', rate } a recording; { seq: 'G4:70 C5+E5:300', inst | synth } written
 // notes; { drum: 'K' } a drum hit; anything else is a synth layer (synth.js). See
@@ -14,12 +15,12 @@ const whoosh = (len, from, to, o = {}) => ({ wave: 'noise', len, env: { bell: tr
 // A thump: a sine body dropping fast (the weight of a blow).
 const thump = (f, d, o = {}) => ({ wave: 'sine', f0: f, slide: o.slide ?? -3, env: { s: o.s ?? 10, d, punch: 0.5 }, db: o.db ?? 0, at: o.at ?? 0 });
 // A sparkle: quick bell notes.
-const sparkle = (notes, o = {}) => ({ seq: notes, synth: 'bell', db: o.db ?? -8, at: o.at ?? 0, tail: 500 });
+const sparkle = (notes, o = {}) => ({ seq: notes, synth: 'bell', db: o.db ?? -8, at: o.at ?? 0, tail: 1300 });
 
 const R = {
   // ---------- Loot and progress ----------
   // Coins: real coins, and a bright two-note chime (stepped up for coins in a row, in sfx.js).
-  coin: { db: -14, max: 3, layers: [{ rec: 'coins2', len: 350 }, { seq: 'A6:40 E7:120', synth: 'pluck', cut: 6000, ring: 0.12, db: -8, tail: 150 }] },
+  coin: { db: -14, gap: 50, max: 3, layers: [{ rec: 'coins2', len: 350 }, { seq: 'A6:40 E7:120', synth: 'pluck', cut: 6000, ring: 0.12, db: -8, tail: 150 }] },
   pickup: { db: -15, max: 3, layers: [{ rec: 'leather', len: 220 }, { seq: 'E6:40 A6:90', synth: 'pluck', cut: 5000, ring: 0.1, db: -8, tail: 120 }] },
   // ---------- Moving ----------
   jump: { db: -20, vary: 4, max: 1, layers: [{ rec: 'cloth', len: 160, db: -2 }, whoosh(120, 900, 2400, { db: -8 })] },
@@ -44,10 +45,10 @@ const R = {
   axeSwingHeavy: { db: -12, vary: 3, max: 2, layers: [{ rec: 'swingAxe', rate: 0.85 }, { rec: 'swingSwordHeavy', db: -6 }] },
   spearSwing: { db: -15, vary: 4, max: 3, layers: [{ rec: 'swingSpear' }] },
   spearSwingHeavy: { db: -13, vary: 3, max: 2, layers: [{ rec: 'swingSpear', rate: 0.88 }, { rec: 'swingSwordHeavy', db: -8 }] },
-  spearThrust: { db: -15, vary: 4, max: 2, layers: [{ rec: 'swingSpear', rate: 1.15, len: 300 }, { rec: 'stab', db: -6 }] },
+  spearThrust: { db: -13, vary: 4, max: 2, layers: [{ rec: 'swingSpear', rate: 1.15, len: 300 }, { rec: 'stab', db: -6 }] },
   daggerSwing: { db: -16, vary: 5, max: 3, layers: [{ rec: 'swingDagger' }] },
   fistSwing: { db: -18, vary: 6, max: 3, layers: [{ rec: 'swingFist' }] },
-  thrust: { db: -16, vary: 5, max: 2, layers: [{ rec: 'stab' }] },
+  thrust: { db: -12, vary: 5, max: 2, layers: [{ rec: 'stab' }] },
   // Blows: a recorded punch for the contact, a synth body for weight (it climbs through a combo in
   // sfx.js), a crisp click on top; heavy blows add a sub thump and a metal plate; crits ring.
   hit: { db: -12, vary: 3, max: 4, layers: [{ rec: 'punch' }, { rec: 'cut', db: -10 }] },
@@ -57,7 +58,7 @@ const R = {
   hitDagger: { db: -13, vary: 4, max: 4, layers: [{ rec: 'punch', rate: 1.1 }, { rec: 'cut', db: -5 }] },
   hitFist: { db: -12, vary: 4, max: 4, layers: [{ rec: 'punch' }, { rec: 'soft', db: -8 }] },
   // The body under a blow: a short round tone, played higher with each step of a combo (sfx.js).
-  hitTone: { db: -17, max: 4, layers: [thump(240, 80, { slide: -2 })] },
+  hitTone: { db: -21, max: 4, layers: [thump(240, 80, { slide: -2 })] },
   hitHeavy: {
     db: -9, vary: 4, max: 2, duck: [-4, 300], layers: [
       { rec: 'punchHeavy' },
@@ -66,26 +67,26 @@ const R = {
       thump(95, 200, { db: -1, slide: -2.5 }),
     ],
   },
-  crit: { db: -10, vary: 2, max: 2, layers: [{ rec: 'punch' }, { rec: 'clang', db: -3 }, sparkle('A6+E7:200', { at: 15, db: -8 })] },
+  crit: { db: -10, gap: 120, vary: 2, max: 2, layers: [{ rec: 'punch' }, { rec: 'clang', db: -3 }, sparkle('A6+E7:200', { at: 15, db: -8 })] },
   // Path and element colours, laid over a blow.
-  holyHit: { db: -15, max: 2, room: true, layers: [{ rec: 'holyBlast', len: 700 }, sparkle('E6+B6:400', { db: -6 })] },
-  rageHit: { db: -12, vary: 4, max: 2, layers: [{ rec: 'punchHeavy', rate: 0.85, len: 260 }, { rec: 'darkFire', len: 400, db: -5 }] },
-  fireHit: { db: -14, vary: 5, max: 2, layers: [{ rec: 'fireImpact', len: 700 }] },
-  iceHit: { db: -15, vary: 3, max: 2, layers: [{ rec: 'iceImpact', len: 600 }] },
-  zapHit: { db: -15, vary: 4, max: 2, layers: [{ rec: 'zapImpact', len: 500 }] },
-  poisonHit: { db: -15, vary: 5, max: 2, layers: [{ rec: 'acidHit', len: 600 }] },
-  darkHit: { db: -14, vary: 4, max: 2, layers: [{ rec: 'darkFire', len: 600 }, { rec: 'punch', db: -8 }] },
-  windHit: { db: -16, vary: 5, max: 2, layers: [{ rec: 'windShot', len: 400 }, { rec: 'punch', db: -10 }] },
-  waterHit: { db: -15, vary: 5, max: 2, layers: [{ rec: 'splash', len: 600 }] },
-  steelHit: { db: -14, vary: 4, max: 3, layers: [{ rec: 'clang' }] },
-  arcaneHit: { db: -15, vary: 4, max: 2, layers: [{ rec: 'zapImpact', rate: 0.8, len: 400 }, sparkle('E6:30 B6:150', { db: -8 })] },
-  arrowHit: { db: -13, vary: 6, max: 4, layers: [{ rec: 'arrowHit' }, { rec: 'punch', db: -9 }] },
-  arrowHitHeavy: { db: -11, vary: 4, max: 2, duck: [-3, 250], layers: [{ rec: 'arrowHit' }, { rec: 'punchHeavy', db: -4 }, thump(100, 160, { db: -4 })] },
-  starHit: { db: -14, vary: 6, max: 4, layers: [{ rec: 'arrowHit', rate: 1.3 }, { rec: 'clangLight', db: -8 }] },
-  enemyHurt: { db: -18, vary: 12, max: 3, layers: [{ rec: 'creatureHurt', rate: 1.35 }] },
+  holyHit: { db: -15, gap: 90, max: 2, room: true, layers: [{ rec: 'holyBlast', len: 700 }, sparkle('E6+B6:400', { db: -6 })] },
+  rageHit: { db: -12, gap: 90, vary: 4, max: 2, layers: [{ rec: 'punchHeavy', rate: 0.85, len: 260 }, { rec: 'darkFire', len: 400, db: -5 }] },
+  fireHit: { db: -14, gap: 90, vary: 5, max: 2, layers: [{ rec: 'fireImpact', len: 700 }] },
+  iceHit: { db: -12, gap: 90, vary: 3, max: 2, layers: [{ rec: 'iceImpact', len: 600 }] },
+  zapHit: { db: -15, gap: 90, vary: 4, max: 2, layers: [{ rec: 'zapImpact', len: 500 }] },
+  poisonHit: { db: -12, gap: 90, vary: 5, max: 2, layers: [{ rec: 'acidHit', len: 600 }] },
+  darkHit: { db: -14, gap: 90, vary: 4, max: 2, layers: [{ rec: 'darkFire', len: 600 }, { rec: 'punch', db: -8 }] },
+  windHit: { db: -16, gap: 90, vary: 5, max: 2, layers: [{ rec: 'windShot', len: 400 }, { rec: 'punch', db: -10 }] },
+  waterHit: { db: -15, gap: 90, vary: 5, max: 2, layers: [{ rec: 'splash', len: 600 }] },
+  steelHit: { db: -16, gap: 90, vary: 4, max: 3, layers: [{ rec: 'clang' }] },
+  arcaneHit: { db: -15, gap: 90, vary: 4, max: 2, layers: [{ rec: 'zapImpact', rate: 0.8, len: 400 }, sparkle('E6:30 B6:150', { db: -8 })] },
+  arrowHit: { db: -9, gap: 60, vary: 6, max: 4, layers: [{ rec: 'arrowHit' }, { rec: 'punch', db: -9 }] },
+  arrowHitHeavy: { db: -11, gap: 80, vary: 4, max: 2, duck: [-3, 250], layers: [{ rec: 'arrowHit' }, { rec: 'punchHeavy', db: -4 }, thump(100, 160, { db: -4 })] },
+  starHit: { db: -11, gap: 60, vary: 6, max: 4, layers: [{ rec: 'arrowHit', rate: 1.3 }, { rec: 'clangLight', db: -8 }] },
+  enemyHurt: { db: -18, gap: 60, vary: 12, max: 3, layers: [{ rec: 'creatureHurt', rate: 1.35 }] },
   miss: { db: -20, vary: 6, max: 2, layers: [{ rec: 'swish', db: 0 }] },
   hurt: { db: -12, vary: 4, max: 1, layers: [{ rec: 'softHeavy', len: 220 }, { wave: 'tri', f0: 560, slide: -6, vib: [18, 6], env: { s: 20, d: 120, punch: 0.3 }, lpf: [2500], db: -8 }] },
-  poof: { db: -14, vary: 6, max: 3, layers: [{ rec: 'slime', db: -2 }, { wave: 'noise', env: { a: 2, s: 30, d: 200 }, lpf: [3000, 400], db: -6 }, sparkle('C7:20 G7:80', { db: -12, at: 20 })] },
+  poof: { db: -14, gap: 50, vary: 6, max: 3, layers: [{ rec: 'slime', db: -2 }, { wave: 'noise', env: { a: 2, s: 30, d: 200 }, lpf: [3000, 400], db: -6 }, sparkle('C7:20 G7:80', { db: -12, at: 20 })] },
   boom: {
     db: -9, vary: 4, max: 2, duck: [-6, 500], layers: [
       { wave: 'pnoise', f0: 60, slide: -0.5, env: { s: 80, d: 450, punch: 0.6 }, lpf: [2500, 500], drive: 0.3 },
@@ -103,7 +104,7 @@ const R = {
   },
   dot: { db: -22, vary: 8, max: 2, layers: [{ rec: 'acidHit', len: 300 }] },
   stun: { db: -18, max: 2, layers: [sparkle('G6:60 A6:60 G6:60 A6:60 G6:60 A6:200', { db: 0 })] },
-  freeze: { db: -14, vary: 3, max: 2, layers: [{ rec: 'iceImpact', len: 700 }, sparkle('A6:30 C7:30 D7:30 B6:200', { db: -8 })] },
+  freeze: { db: -14, gap: 120, vary: 3, max: 2, layers: [{ rec: 'iceImpact', len: 700 }, sparkle('A6:30 C7:30 D7:30 B6:200', { db: -8 })] },
   roar: {
     db: -11, max: 1, duck: [-3, 500], layers: [
       { rec: 'ogre', rate: 0.75 },
@@ -113,11 +114,11 @@ const R = {
   },
   hook: { db: -16, max: 1, layers: [whoosh(150, 1500, 3500, { focus: 0.3 }), { rec: 'metal', rate: 1.3, len: 200, at: 100, db: -4 }, { rec: 'metalClick', at: 220, db: -6 }] },
   // ---------- Shots and spells ----------
-  arrow: { db: -15, vary: 5, max: 3, layers: [{ rec: 'bowLongbow' }, { rec: 'bowShoot', db: -8 }] },
-  arrowHeavy: { db: -12, vary: 4, max: 2, layers: [{ rec: 'bowLongbow', rate: 0.9 }, { rec: 'heavyArrowPass', db: -3 }] },
-  crossbow: { db: -14, vary: 4, max: 3, layers: [{ rec: 'crossbowShoot' }, { rec: 'boltPass', db: -8, at: 30 }] },
-  crossbowHeavy: { db: -12, vary: 3, max: 2, layers: [{ rec: 'crossbowShoot', rate: 0.9 }, { rec: 'heavyArrowPass', db: -4 }] },
-  star: { db: -16, vary: 6, max: 3, layers: [{ rec: 'windShot', rate: 1.4, len: 350 }, { rec: 'stab', rate: 1.3, db: -4 }] },
+  arrow: { db: -7, gap: 50, vary: 5, max: 3, layers: [{ rec: 'bowLongbow' }, { rec: 'bowShoot', db: -8 }] },
+  arrowHeavy: { db: -7, gap: 80, vary: 4, max: 2, layers: [{ rec: 'bowLongbow', rate: 0.9 }, { rec: 'heavyArrowPass', db: -3 }] },
+  crossbow: { db: -7, gap: 50, vary: 4, max: 3, layers: [{ rec: 'crossbowShoot' }, { rec: 'boltPass', db: -8, at: 30 }] },
+  crossbowHeavy: { db: -8, gap: 80, vary: 3, max: 2, layers: [{ rec: 'crossbowShoot', rate: 0.9 }, { rec: 'heavyArrowPass', db: -4 }] },
+  star: { db: -16, gap: 50, vary: 6, max: 3, layers: [{ rec: 'windShot', rate: 1.4, len: 350 }, { rec: 'stab', rate: 1.3, db: -4 }] },
   zap: { db: -15, vary: 4, max: 3, layers: [{ rec: 'zapLaunch', len: 600 }] },
   cast: {
     db: -14, vary: 2, max: 2, room: true, layers: [
@@ -125,16 +126,16 @@ const R = {
       { seq: 'C5:60 E5:60 G5:60 C6:250', inst: 'celesta', db: -4 },
     ],
   },
-  castFire: { db: -14, max: 2, layers: [{ rec: 'fireCharge' }] },
-  castIce: { db: -14, max: 2, layers: [{ rec: 'iceCharge' }] },
-  castZap: { db: -14, max: 2, layers: [{ rec: 'zapCharge', len: 900 }] },
-  castHoly: { db: -14, max: 2, room: true, layers: [{ rec: 'holyHeal', len: 1000 }, { seq: 'C5+G5:600', inst: 'choir_aahs', attack: 0.1, db: -10 }] },
+  castFire: { db: -9, max: 2, layers: [{ rec: 'fireCharge', len: 650 }] },
+  castIce: { db: -10, max: 2, layers: [{ rec: 'iceCharge' }] },
+  castZap: { db: -11, max: 2, layers: [{ rec: 'zapCharge', len: 900 }] },
+  castHoly: { db: -10, max: 2, room: true, layers: [{ rec: 'holyHeal', len: 1000 }, { seq: 'C5+G5:600', inst: 'choir_aahs', attack: 0.1, db: -10 }] },
   castPoison: { db: -15, max: 2, layers: [{ rec: 'poisonCast', len: 1200 }] },
   castDark: { db: -14, max: 2, layers: [{ rec: 'darkRiser', len: 1400 }] },
   castWind: { db: -15, max: 2, layers: [{ rec: 'windWhoosh', len: 900 }] },
-  castSteel: { db: -14, max: 2, layers: [{ rec: 'unsheathe' }, { rec: 'swish', rate: 0.8, db: -6, at: 120 }] },
-  fire: { db: -13, vary: 5, max: 2, layers: [{ rec: 'fireLaunch', len: 900 }] },
-  ice: { db: -14, vary: 3, max: 2, layers: [{ rec: 'iceLaunch', len: 900 }] },
+  castSteel: { db: -11, max: 2, layers: [{ rec: 'unsheathe' }, { rec: 'swish', rate: 0.8, db: -6, at: 120 }] },
+  fire: { db: -10, vary: 5, max: 2, layers: [{ rec: 'fireLaunch', len: 900 }] },
+  ice: { db: -11, vary: 3, max: 2, layers: [{ rec: 'iceLaunch', len: 900 }] },
   lightning: {
     db: -11, vary: 4, max: 2, duck: [-4, 400], layers: [
       { rec: 'thunder' },
@@ -201,7 +202,7 @@ const R = {
   },
   link: { db: -13, max: 1, layers: [{ seq: 'E6:40 B6:140', synth: 'pluck', cut: 6000, ring: 0.2, tail: 200 }, sparkle('r:40 E7:120', { db: -8 })] },
   // A ding for each tier of the hit counter: the same bell every time, a little higher per tier (sfx.js).
-  tier: { db: -13, max: 1, layers: [{ seq: 'D7+A7:350', synth: 'bell' }] },
+  tier: { db: -17, max: 1, layers: [{ seq: 'D7+A7:350', synth: 'bell', tail: 1300 }] },
   // ---------- Jingles (docs/audio/research-japanese.md, Part 5), on real instruments ----------
   // Quick notes rushing into a long landing note on the home note (or its fifth), reached by an
   // upward leap; a lead, a second voice a third or sixth under it, a bass tapping the roots, and
@@ -275,16 +276,16 @@ const R = {
   roll: { db: -14, max: 1, layers: [0, 250, 500, 700, 850, 975, 1100, 1200, 1300, 1375, 1450, 1525, 1600, 1650, 1700, 1750, 1800, 1850].map((at, i) => ({ drum: 'S', at, db: -12 + i * 0.6 })) },
   crash: { db: -14, max: 2, layers: [{ drum: '*' }] },
   // ---------- Interface: real clicks, high, short and dry ----------
-  click: { db: -14, max: 2, layers: [{ rec: 'click' }] },
-  cursor: { db: -18, max: 2, layers: [{ rec: 'tick' }] },
-  cancel: { db: -16, max: 2, layers: [{ rec: 'back' }] },
-  open: { db: -16, max: 1, layers: [{ rec: 'open' }] },
-  close: { db: -17, max: 1, layers: [{ rec: 'close' }] },
+  click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
+  cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },
+  cancel: { db: -16, max: 2, layers: [{ rec: 'back', len: 200 }] },
+  open: { db: -20, max: 1, layers: [{ rec: 'open', len: 260 }] },
+  close: { db: -20, max: 1, layers: [{ rec: 'close' }] },
   denied: { db: -15, max: 1, layers: [{ rec: 'error' }] },
   // NPC voices: a soft round "boop" (rendered at C5 and played back at each speaker's pitch).
-  blipTri: { db: -20, max: 1, layers: [{ wave: 'sine', f0: N.C5, overtones: [3, 0.25], env: { a: 3, s: 15, d: 35 }, lpf: [3000] }] },
-  blipPulse: { db: -21, max: 1, layers: [{ wave: 'tri', f0: N.C5, slide: 0.6, env: { a: 2, s: 15, d: 30 }, lpf: [3500] }] },
-  blipRasp: { db: -21, max: 1, layers: [{ wave: 'saw', f0: N.C5, env: { a: 2, s: 15, d: 30 }, lpf: [1500] }] },
+  blipTri: { db: -20, gap: 70, max: 1, layers: [{ wave: 'sine', f0: N.C5, overtones: [3, 0.25], env: { a: 3, s: 15, d: 35 }, lpf: [3000] }] },
+  blipPulse: { db: -21, gap: 70, max: 1, layers: [{ wave: 'tri', f0: N.C5, slide: 0.6, env: { a: 2, s: 15, d: 30 }, lpf: [3500] }] },
+  blipRasp: { db: -21, gap: 70, max: 1, layers: [{ wave: 'saw', f0: N.C5, env: { a: 2, s: 15, d: 30 }, lpf: [1500] }] },
 };
 
 export const RECIPES = R;

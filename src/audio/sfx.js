@@ -38,8 +38,9 @@ function voice(name, o = {}) {
   const r = RECIPES[name];
   if (!r) return;
   const t = now();
-  // Repeats inside 35 ms are one sound, a touch louder.
-  if (t - (last.get(name) ?? -9) < 0.035) return;
+  // Repeats inside a recipe's gap (35 ms unless it says) are one sound: a volley of spell hits,
+  // a fan of arrows, or quick dialog letters don't machine-gun.
+  if (t - (last.get(name) ?? -9) < (r.gap ?? 35) / 1000) return;
   last.set(name, t);
   for (let i = voices.length - 1; i >= 0; i--) if (voices[i].end < t) voices.splice(i, 1);
   const mine = voices.filter((v) => v.name === name);
@@ -66,7 +67,12 @@ function voice(name, o = {}) {
   }
   played.push(name);
   if (played.length > 300) played.shift();
+  log.push({ name, at: at || t, len: buf.duration / rate });
+  if (log.length > 600) log.shift();
 }
+
+// Every sound played, with when it starts and how long it rings (for tools and play tests).
+export const log = [];
 
 const STEPS = { grass: 'stepGrass', stone: 'stepStone', wood: 'stepWood', sand: 'stepSand', cloud: 'stepCloud', crystal: 'stepCrystal' };
 // What each element or school adds to a blow (weapon themes, star elements, spell schools).
@@ -88,7 +94,7 @@ const SPELLS = {
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
 };
-const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow']);
+const ARROWS = new Set(['arrow', 'rapid', 'draw', 'bigarrow', 'rain']);
 // Each melee weapon's swing [light, heavy], and the cut its blows land with.
 const SWINGS = { sword: ['swing', 'swingHeavy'], axe: ['axeSwing', 'axeSwingHeavy'], spear: ['spearSwing', 'spearSwingHeavy'], dagger: ['daggerSwing', 'swing'], none: ['fistSwing', 'fistSwing'] };
 const BLADE_HITS = { axe: 'hitAxe', spear: 'hitSpear', dagger: 'hitDagger', none: 'hitFist' };

@@ -380,7 +380,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null) {
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const miss = Math.random() >= hitChance(acc, char.level, m.def);
   const roll = miss ? null : rollHit(physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100), stats, m.def, char.level, Math.random);
-  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element, via: s.shot });
+  world.pending.push({ at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element, via: s.shot ?? (s.rain ? 'rain' : undefined) });
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.

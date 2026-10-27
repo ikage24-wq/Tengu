@@ -285,6 +285,7 @@ function useHotkey(world, binding, fresh = true) {
     else if (r.ok) world.skillBuffer = null;
     if (!r.ok && BLOCKER_TEXT[r.reason] && world.warnTimer <= 0) {
       world.log(BLOCKER_TEXT[r.reason], '#ffb3c6');
+      world.juice.push({ type: 'denied' });
       world.warnTimer = 1.5;
     }
   } else if (binding.item) {
@@ -518,6 +519,7 @@ export function updateWorld(world, dt, input) {
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
+      if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
       if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : 'stun';
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }

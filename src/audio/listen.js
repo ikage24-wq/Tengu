@@ -82,6 +82,8 @@ export function hearWorld(world, cam) {
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
+    else if (j.type === 'stun') sfx('stun', { pan: pan(j.x) });
+    else if (j.type === 'denied') sfx('denied');
     else if (j.type === 'swing') sfx(j.pierce ? 'thrust' : 'swing', { weight: j.big ? 1.8 : j.thick > 11 ? 1.4 : 1, school: j.school, weapon: j.weapon, lead: j.in, pan: 0 });
   }
   if (hit) {
