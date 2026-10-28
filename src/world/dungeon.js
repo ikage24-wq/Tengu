@@ -9,7 +9,7 @@
 //   - fallen members get back up once the fight is over; if everyone falls, the room resets and
 //     the group regroups at its entrance.
 
-import { faithGuard } from './melee.js';
+import { faithGuard, pathSchool } from './melee.js';
 import { rodGuard } from './storm.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
@@ -409,15 +409,16 @@ function taunt(world, m, who, hold) {
   m.taunt = { id: who, until: world.now + hold };
 }
 
-// Every monster within `range` turns on `who`: the warrior's Provoke.
-export function provoke(world, who, body, range = PROVOKE.range, hold = PROVOKE.hold) {
+// Every monster within `range` turns on `who`: the warrior's Provoke, in the colour of the path
+// that cried it (`school`; yours by default).
+export function provoke(world, who, body, range = PROVOKE.range, hold = PROVOKE.hold, school = who === 'you' ? pathSchool(world.char) : 'steel') {
   let n = 0;
   for (const m of world.mobs) {
     if (m.hp <= 0 || m.def.fight?.mender || Math.abs(m.x - body.x) > range || Math.abs(m.y - body.y) > 120) continue;
     taunt(world, m, who, hold);
     n++;
   }
-  world.fx.push({ kind: 'roar', x: body.x, y: body.y, r: range, t: 0, dur: 0.6 });
+  world.fx.push({ kind: 'roar', school, x: body.x, y: body.y, r: range, t: 0, dur: 0.6 });
   return n;
 }
 
@@ -1095,7 +1096,7 @@ export function roleThink(bot, world, rng) {
         botHook(world, bot, far.slice(0, 4), rng);
         br.hookAt = world.now + between(3, 4.5, rng);
       } else if (loose.length && world.now >= (br.provokeAt ?? 0) && loose.some((m) => Math.abs(m.x - body.x) < PROVOKE.range)) {
-        provoke(world, bot.id, body);
+        provoke(world, bot.id, body, undefined, undefined, pathSchool(bot.char));
         bot.attack = { pose: 'roar', t: 0, dur: 0.5 };
         br.provokeAt = world.now + between(2.2, 3.2, rng);
         if (rng() < 0.25) bot.bubble = { text: pick(['over here!', 'on me!', 'got it', 'hey ugly!']), t: 2.5 };

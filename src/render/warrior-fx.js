@@ -22,12 +22,18 @@ const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', 
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringcrimson', 'celringnight', 'celringbloom', 'celringmint']);
+const BIG = new Set(['celshockred', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringcrimson', 'celringnight', 'celringbloom', 'celringmint']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
   if (r > 60 && BIG.has(name)) fxSprite(ctx, `${name}big`, x, y, { p, scale: r / (38 * 2.6), sy });
   else fxSprite(ctx, name, x, y, { p, scale: r / 38, sy });
+}
+
+// A path's wave racing out along the ground to radius `r`: a smooth ring in the school's colour,
+// but the Berserker's is a ring of jagged teeth (his shapes are torn, never smooth or lit).
+export function groundWave(ctx, school, x, y, p, r) {
+  groundRing(ctx, school === 'rage' ? 'celshockred' : ringOf(school), x, y, p, r);
 }
 
 // A pillar of light bursting up out of the ground at (x, y), about `h` tall.
@@ -37,16 +43,35 @@ export function lightPillar(ctx, name, x, y, p, h = 100) {
 
 // A buff or power going up, as MapleStory draws it: a pillar of the school's light from the feet,
 // a ring racing out along the ground, the path's emblem rising inside.
+// The Berserker's power has no pillar of light (that's the Paladin's): fire flares up at his feet,
+// a jagged shockwave rips out, embers climb round him and his emblem rises through them.
 export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
+  if (school === 'rage') {
+    rageFlare(ctx, x, y, p, h);
+    return;
+  }
   groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 40);
   lightPillar(ctx, pillarSprite(school), x, y, p, h);
   const emblem = EMBLEMS[school];
   if (emblem && p > 0.15) fxSprite(ctx, emblem, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.55 });
 }
 
-// Dust and rock thrust up where a heavy blow meets the ground, about `w` wide (gold for a
-// Paladin's blow, blood red for a Berserker's).
+export function rageFlare(ctx, x, y, p, h = 90, time = p) {
+  const fade = p < 0.75 ? 1 : (1 - p) / 0.25;
+  groundWave(ctx, 'rage', x, y, Math.min(1, p * 1.4), 46);
+  fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 0.45 + 0.25 * Math.min(1, p * 4), alpha: fade });
+  fxSprite(ctx, 'celembers', x, y, { t: p * 1.2, scale: h / 85, alpha: fade });
+  if (p > 0.15) fxSprite(ctx, EMBLEMS.rage, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.55 });
+}
+
+// Torn ground where a heavy blow lands, about `w` wide: dust and rock thrust up (gold for a
+// Paladin's blow), but a Berserker's tears the earth open in three glowing claw gashes.
 export function debris(ctx, x, y, p, w, school = null) {
+  if (school === 'rage') {
+    if (w > 120) fxSprite(ctx, 'celgashbig', x, y, { p, scale: w / (95 * 1.7) });
+    else fxSprite(ctx, 'celgash', x, y, { p, scale: w / 95 });
+    return;
+  }
   const name = pathTint(school, 'celquake', 'celquakegold', 'celquakered');
   if (w > 120) fxSprite(ctx, `${name}big`, x, y, { p, scale: w / (88 * 1.8) });
   else fxSprite(ctx, name, x, y, { p, scale: w / 88 });
@@ -114,6 +139,20 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celshield', x + dir * 20, y - 28, { p, scale: 0.75, sx: 0.7 });
       return true;
     }
+    case 'shieldslam': {
+      // The Paladin's shield slam: a great honeycomb shield of light drops out of the air flat onto
+      // them and slams into the ground, a star of light bursts where it lands, a golden ring races
+      // out and diamonds of light rise, then the shield shatters.
+      const r = f.r ?? 92;
+      const fall = Math.min(1, p / 0.14);
+      fxSprite(ctx, 'celshield', x, y - 30 - 60 * (1 - fall * fall), { p: Math.min(1, p * 1.1), scale: 1.15, sx: 0.85 });
+      if (p > 0.12) {
+        groundWave(ctx, 'holy', x, y, (p - 0.12) / 0.88, r * 1.2);
+        fxSprite(ctx, 'celholyhit', x, y - 16, { p: (p - 0.12) / 0.88, scale: 1.3 });
+        fxSprite(ctx, 'celmotes', x, y, { t: time, scale: r / 60, alpha: 1 - p });
+      }
+      return true;
+    }
     case 'consecrate': {
       // Hallowed ground: the golden magic circle on the floor, a ring racing out, pillars of light
       // at its edges and diamonds of light rising.
@@ -177,13 +216,13 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'eclipse': {
-      // The crash under the moon: claw marks torn huge across the ground, the ground thrust up,
-      // fire bursting and a rose-red ring racing out.
+      // The crash under the moon: claw marks torn huge across the ground, the ground gashed open,
+      // fire bursting and a jagged shockwave ripping out.
       const r = f.r ?? 175;
       fxSprite(ctx, 'celclawbig', x, y - 40, { p, scale: 0.95, flip });
       debris(ctx, x, y, p, r * 0.9, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      groundRing(ctx, 'celringrage', x, y, p, r);
+      groundWave(ctx, 'rage', x, y, p, r);
       return true;
     }
     case 'gather': {
@@ -214,10 +253,13 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'rageburst': {
-      // Rage breaks out of the blow: fire bursting up, a rose-red ring racing out.
+      // Rage breaks out of the blow: the ground torn open, fire bursting up out of it, embers
+      // flying and a jagged shockwave ripping out.
       const r = Math.min(150, Math.max(70, f.r ?? 90));
+      debris(ctx, x, y, p, r * 0.9, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: r / 90, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      groundRing(ctx, 'celringrage', x, y, p, r);
+      fxSprite(ctx, 'celembers', x, y, { t: p, scale: r / 80, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
+      groundWave(ctx, 'rage', x, y, p, r);
       return true;
     }
     case 'quake': {

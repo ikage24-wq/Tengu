@@ -90,9 +90,9 @@ const JOBS = {
     back: () => {},
     front: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celmotes', x, y, { t: t * 0.6, scale: s * 0.5, alpha: k * 0.5 }),
   },
-  // Berserker: a faint rose-red ring at his feet.
+  // Berserker: a few embers drifting up round him, faintly.
   berserker: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringrage', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celembers', x, y, { t: t * 0.5, scale: s * 0.45, alpha: k * 0.45 }),
     front: () => {},
   },
   // Beastmaster: a slow, faint curl of wind and leaves at her feet.
@@ -139,10 +139,10 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 
 
 // Rage, in Tengu's own effect art (fx-sprites.js), demonic and meant to frighten, in three stages:
-// as it builds, black smoke curls up round his feet over a blood-red ring; from halfway, a flame
+// as it builds, black smoke curls up round his feet and embers climb; from halfway, a flame
 // aura burns up round his whole body, behind him and see-through so he shows inside it (the way a
 // Dragon Ball fighter powers up), with only a faint lick of it over him; full (Berserk), the
-// ground splits open in cracks of ember light round him, and rings race out with every heartbeat
+// ground splits open in cracks of ember light round him, and a jagged shockwave rips out with every heartbeat
 // (the screen's edges thump in time; ui/hud.js).
 function rageAura(ctx, x, y, t, s, k, layer) {
   const fire = Math.min(1, (k - 0.5) * 2.5);
@@ -152,9 +152,9 @@ function rageAura(ctx, x, y, t, s, k, layer) {
     if (k >= 1) {
       fxSprite(ctx, 'celragecracks', x, y, { t, scale: s * 0.9, sy: 0.6, alpha: 0.95 });
     }
-    if (k > 0.1) fxSprite(ctx, 'celringrage', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.1) * 2) });
+    if (k > 0.1) fxSprite(ctx, 'celembers', x, y, { t, scale: s * (0.4 + 0.3 * k), alpha: Math.min(1, (k - 0.1) * 2) });
     if (k > 0.15) fxSprite(ctx, 'celblacksmoke', x, y + 2 * s, { t, scale: s * (0.5 + 0.35 * k), alpha: Math.min(0.9, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringrage', x, y, { t: heartbeat(t) * 0.5, scale: s * 0.9, sy: 0.32 });
+    if (k >= 1 && heartbeat(t) < 1) fxSprite(ctx, 'celshockred', x, y, { p: heartbeat(t), scale: s * 0.9, sy: 0.32 });
     if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.62 * flicker });
     return;
   }

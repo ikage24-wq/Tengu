@@ -198,7 +198,12 @@ carry an improvement across every part of the game it applies to.
     they share the small one's strip instead of a second file.
   - Warriors: swipes laid along the blade's own swing (steel blue, the Paladin's gold, the
     Berserker's rose red); hits leave the Warrior's cross of blades, the Paladin's star of light,
-    the Berserker's claws; buffs rise as a pillar of light with the path's emblem; Grand Verdict
+    the Berserker's claws; buffs rise as a pillar of light with the path's emblem, except the
+    Berserker's, which flare up in fire and climbing embers (`celembers`) round his emblem. The two
+    paths once shared shapes in two colours (red pillars and smooth red rings beside her gold ones,
+    and the same swings), so they read alike: now his ground is torn open in three claw gashes
+    (`celgash`) and his waves are rings of jagged teeth (`celshockred`), while pillars, smooth rings
+    and stars stay hers. Give each path its own shapes, not only its own colour; Grand Verdict
     drives a sword of light down over the magic circle; Crimson Eclipse raises a crimson eclipse.
     The Warrior (first job) is steel blue and white: his Valor aura is steel chevrons and diamonds
     rising round him (the steel emblem over his head when Unbroken); Titan Breaker gathers a giant

@@ -9,7 +9,7 @@ import { drawStrike, drawStrikeShot } from './strikes.js';
 import { fxSprite } from './fx-sprites.js';
 import { shuriken } from './thief-fx.js';
 import { FX_SHEETS } from './fx-sheets.js';
-import { debris, groundRing, hitMark, pathTint } from './warrior-fx.js';
+import { debris, groundRing, groundWave, hitMark, pathTint } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
@@ -803,9 +803,10 @@ function drawFx(ctx, f, cam, time) {
       for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n), f.school);
       break;
     case 'roar':
-      // Provoke: zig-zag rings of a battle cry bursting out, a rose-red ring racing out to its reach.
-      fxSprite(ctx, 'celshoutred', x, y - 26, { p, scale: 0.9 });
-      groundRing(ctx, 'celringrage', x, y, p, f.r ?? 120);
+      // Provoke: zig-zag rings of a battle cry bursting out, and a wave racing out to its reach, in
+      // the colour of the path that cried it (steel, the Paladin's gold, the Berserker's red).
+      fxSprite(ctx, pathTint(f.school, 'celshout', 'celshoutgold', 'celshoutred'), x, y - 26, { p, scale: 0.9 });
+      groundWave(ctx, f.school, x, y, p, f.r ?? 120);
       break;
     case 'hook': {
       // Chain Hook: links race out to each monster caught, then reel it in.

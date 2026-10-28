@@ -2342,3 +2342,28 @@ test('Thunderhead needs full Charge, spends it, and the storm hits everything on
   assert.ok(giant, 'then one giant bolt');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster both ways is hit');
 });
+
+// The Paladin and the Berserker are two different fighters: none of their swings is the other's
+// (both grew from the Warrior's, and his shared ones once made them look alike).
+test("the Paladin and the Berserker never share a swing, and the Berserker shares none with the Warrior", () => {
+  const moves = (path) => new Set(PATH_VARIANTS[path].flat().map((s) => s.move));
+  const pal = moves('paladin');
+  const ber = moves('berserker');
+  const war = moves('warrior');
+  for (const m of ber) assert.ok(!pal.has(m), `both swing ${m}`);
+  for (const m of ber) assert.ok(!war.has(m), `the Berserker borrows the Warrior's ${m}`);
+  for (const m of ['axehurl', 'bodyslam', 'dragrise']) assert.ok(ber.has(m) && MOVES[m], `the Berserker's ${m}`);
+  assert.ok(pal.has('shieldslam') && MOVES.shieldslam, "the Paladin's shield slam");
+  assert.ok(PATH_VARIANTS.berserker.at(-1).every((s) => s.finisher && s.strikes.some((st) => st.crack)), 'every Berserker finisher tears the ground');
+});
+
+// A provoke (Hallowed Ground's taunt in a dungeon) cries out in the colour of whoever cried it:
+// it was always the Berserker's red, even for a Paladin.
+test("a provoke takes the colour of the path that cried it", async () => {
+  const { provoke } = await import('../src/world/dungeon.js');
+  for (const [job, school] of [['paladin', 'holy'], ['berserker', 'rage']]) {
+    const w = advanced(job);
+    provoke(w, 'you', w.body);
+    assert.equal(w.fx.find((f) => f.kind === 'roar').school, school, job);
+  }
+});

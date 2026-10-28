@@ -993,6 +993,141 @@
     },
   };
 
+  // The Berserker's ground: three claw gashes torn into the earth where a heavy blow lands, seen
+  // flat along the ground. Slits rip open into jagged pits glowing ember-hot inside, chips of rock
+  // and embers spit up out of them, then they seal back into glowing seams that break into beads.
+  // (The Paladin's ground is pillars of light and smooth rings; his is torn, never lit.)
+  E.gash = (() => {
+    const pal = PAL.rage;
+    const [core, light, mid, deep, ink] = pal;
+    const w = 300;
+    const h = 150;
+    const g = 110;
+    const c = w / 2;
+    const R = rng(91);
+    // Three tears side by side like a claw's rake, slanting the way a downward blow drags.
+    const tears = [-1, 0, 1].map((j) => ({ x: c + j * 30, y: g + j * 17, len: 190 - Math.abs(j) * 36, lean: 0.16, seed: 92 + j }));
+    // Torn rock: dark and blood-tinted, so the chips read as broken earth, not bubbles.
+    const CHIP = ['#fff0e2', '#b0727a', '#6e3446', '#40182a', '#1e0618'];
+    // A jagged lens along a tear, `open` wide at its middle.
+    const lens = (t, open, k = 1) => {
+      const r = rng(t.seed);
+      const n = 12;
+      const top = [];
+      const bot = [];
+      for (let j = 0; j <= n; j++) {
+        const u = j / n;
+        const x = t.x - (t.len * k) / 2 + t.len * k * u;
+        const y = t.y + (u - 0.5) * t.len * k * t.lean;
+        const wd = Math.pow(Math.sin(Math.PI * u), 0.8) * open * (0.75 + r() * 0.5);
+        top.push([x, y - wd * 0.55]);
+        bot.push([x + (r() - 0.5) * 3, y + wd * 0.45]);
+      }
+      return top.concat(bot.reverse());
+    };
+    const chips = Array.from({ length: 10 }, (_, j) => ({ t: j % 3, u: 0.2 + R() * 0.6, a: -Math.PI / 2 + (R() - 0.5) * 1.3, sp: 22 + R() * 26, r: 5 + R() * 4 }));
+    return {
+      w, h, n: 8, fps: 20, px: c, py: g,
+      draw(ctx, i) {
+        const open = [3, 13, 16, 15, 12, 8, 4, 2][i];
+        for (const t of tears) {
+          if (i === 0) {
+            // The rip: a white-hot slit flashing along the ground.
+            fill(ctx, lens(t, 6, 0.8), light);
+            fill(ctx, lens(t, 3, 0.8), core);
+            continue;
+          }
+          inked(ctx, lens(t, open + 4), CHIP[2], ink, 3.5);
+          fill(ctx, lens(t, open), '#2a0c22');
+          if (i < 7) fill(ctx, lens(t, open * 0.55), deep);
+          fill(ctx, lens(t, open * 0.32), mid);
+          fill(ctx, lens(t, Math.max(1.5, open * 0.14)), i < 5 ? core : light);
+        }
+        if (i >= 1 && i < 7) {
+          for (const ch of chips) {
+            const t = tears[ch.t];
+            const d = ch.sp * (i - 0.5);
+            const x = t.x - t.len / 2 + t.len * ch.u + Math.cos(ch.a) * d;
+            const y = t.y + (ch.u - 0.5) * t.len * t.lean + Math.sin(ch.a) * d + (i - 1) * (i - 1) * 5;
+            if (ch.t === 1 || i < 4) shard(ctx, CHIP, x, y, ch.a, ch.r * 1.4, ch.r * (0.8 - i * 0.07));
+            else shard(ctx, [core, light, mid, deep, ink], x, y - 10, -Math.PI / 2, 9 * (1.2 - i * 0.12), 2);
+          }
+        }
+        if (i >= 6) {
+          for (let j = 0; j < 7; j++) sparkle(ctx, pal, c - 100 + j * 33, g - 8 - (i - 5) * 10 - (j % 2) * 8, 6 - (i - 6) * 2, j * 0.4);
+        }
+      },
+    };
+  })();
+
+  // Embers rising (the Berserker's power, in place of a pillar of light): sparks of fire torn off
+  // and climbing on a hot wind, flicking side to side, burning out to beads as they go. Loops.
+  E.embers = (() => {
+    const pal = PAL.rage;
+    const [core, light, mid, deep, ink] = pal;
+    const R = rng(97);
+    const sparks = Array.from({ length: 16 }, (_, j) => ({ x: 70 + (R() - 0.5) * 80, phase: j / 16 + R() * 0.05, len: 16 + R() * 14, sway: 6 + R() * 10, rate: 1 + Math.round(R()) }));
+    return {
+      w: 140, h: 240, n: 8, fps: 14, px: 70, py: 225, loop: true,
+      draw(ctx, i) {
+        const t = i / 8;
+        for (const s of sparks) {
+          const life = (t * s.rate + s.phase) % 1;
+          const x = s.x + Math.sin(life * 7 + s.phase * 9) * s.sway * (0.3 + life);
+          const y = 220 - life * 200;
+          const k = 1 - life * 0.75;
+          if (life < 0.8) {
+            tongue(ctx, [core, light, mid, deep, ink], x, y, 4.5 * k + 1.5, s.len * k * 1.4, Math.cos(life * 7 + s.phase * 9) * 5);
+          } else sparkle(ctx, pal, x, y, 6, s.phase * 3);
+        }
+      },
+    };
+  })();
+
+  // The Berserker's shockwave (in place of a smooth ring): a ring of jagged teeth pointing out,
+  // ripping out from the blow and splintering into shards. Drawn round; the game lays it flat.
+  E.shockred = (() => {
+    const pal = PAL.rage;
+    const [core, light, mid, deep, ink] = pal;
+    const c = 130;
+    const R = rng(103);
+    const teeth = Array.from({ length: 18 }, () => ({ len: 0.6 + R() * 0.7, wob: (R() - 0.5) * 0.12 }));
+    return {
+      w: 260, h: 260, n: 6, fps: 24, px: c, py: c,
+      draw(ctx, i) {
+        const r = [36, 66, 90, 104, 114, 120][i];
+        const th = [16, 14, 11, 8, 5, 3][i];
+        const tooth = [22, 26, 22, 16, 10, 6][i];
+        const keep = (j) => i < 3 || (j * 7 + i) % 5 > i - 3;
+        const n = teeth.length;
+        for (let j = 0; j < n; j++) {
+          if (!keep(j)) continue;
+          const a0 = (j / n) * TAU + teeth[j].wob;
+          const a1 = ((j + 1) / n) * TAU + teeth[(j + 1) % n].wob;
+          const am = (a0 + a1) / 2;
+          const tip = r + tooth * teeth[j].len;
+          const seg = (k) => [
+            [c + Math.cos(a0) * (r - th * k), c + Math.sin(a0) * (r - th * k)],
+            [c + Math.cos(a0) * r, c + Math.sin(a0) * r],
+            [c + Math.cos(am) * (r + (tip - r) * k), c + Math.sin(am) * (r + (tip - r) * k)],
+            [c + Math.cos(a1) * r, c + Math.sin(a1) * r],
+            [c + Math.cos(a1) * (r - th * k), c + Math.sin(a1) * (r - th * k)],
+          ];
+          inked(ctx, seg(1), deep, ink, 3.5);
+          fill(ctx, seg(0.7), mid);
+          fill(ctx, seg(0.4), light);
+          if (i < 4) fill(ctx, seg(0.18), core);
+        }
+        if (i >= 3) {
+          for (let j = 0; j < 9; j++) {
+            const a = (j / 9) * TAU + 0.3;
+            shard(ctx, pal, c + Math.cos(a) * (r + 18), c + Math.sin(a) * (r + 18), a, 10 - (i - 3) * 2, 2.6);
+          }
+        }
+      },
+    };
+  })();
+
   // ---------- The Paladin's light ----------
   // A shield of light: one hexagon flashes up, the full honeycomb shield snaps out, a glint sweeps
   // across it, cracks run through it, then it shatters into flying plates.
@@ -2989,6 +3124,8 @@
   E.quakegoldbig = big(E.quakegold, 1.8);
   E.quakeredbig = big(E.quakered, 1.8);
   E.clawbig = big(E.claw, 1.7);
+  E.gashbig = big(E.gash, 1.7);
+  E.shockredbig = big(E.shockred, 2.6);
 
   // HD with a soft glow (the look the player picked): every drawing is rendered smooth at `d` strip
   // pixels per game pixel (the drawings are made at RAW drawing pixels per game pixel), and a soft

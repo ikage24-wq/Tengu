@@ -3,7 +3,7 @@
 // skill, with its name popping over your head. Everything is drawn from time alone.
 
 import { SKILLS } from '../data/skills.js';
-import { groundRing, pillarOf, ringOf, pathTint } from './warrior-fx.js';
+import { groundWave, pillarOf, pathTint } from './warrior-fx.js';
 import { fxSprite } from './fx-sprites.js';
 
 const TAU = Math.PI * 2;
@@ -208,7 +208,7 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   const school = f.school ?? SKILLS[f.skill]?.school ?? 'steel';
   if (f.skill === 'warcry') {
     fxSprite(ctx, pathTint(school, 'celshout', 'celshoutgold', 'celshoutred'), x, y - 26, { p, scale: 1.1 });
-    groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 90);
+    groundWave(ctx, school, x, y, Math.min(1, p * 1.3), 90);
     if (p > 0.1) fxSprite(ctx, `celemb${school}`, x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
   } else if (f.skill === 'vanish') {
     fxSprite(ctx, 'celsmoke', x, y, { p, scale: 1.1 });

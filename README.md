@@ -313,7 +313,7 @@ to clear it.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
   dagger toss, gauntlet flick). The level 30 paths get a quiet aura that fades in while idle in the
-  path's own art (diamonds of light for the Paladin, a rose ring for the Berserker, a curl of wind
+  path's own art (diamonds of light for the Paladin, a few embers drifting up for the Berserker, a curl of wind
   and leaves for the Beastmaster).
 - **Interface** — a candy-pastel UI. Each window has its own color and icon badge (peach Bag,
   pink Stats, lavender Skills, mint Quests, sky-blue World Map) on a scalloped title ribbon, and
@@ -421,19 +421,26 @@ to clear it.
     mastery, attack, and critical damage. Idle, small red flames lick at their feet. Rage shows on
     him as it builds (a red heat, then flames climbing his body, embers streaming off), makes every
     blow up to 25% harder: black smoke round his feet, then fire, and at full (**Berserk**) the
-    ground cracks with ember light, a red ring pulses from
+    ground cracks with ember light, a jagged shockwave rips out from
     his feet to a heartbeat and the screen edges throb blood red.
   - Each path fights in its own style, with its own basic combo, each swing drawn from a pool so
     the string keeps changing (the first combo is the path's own). The Paladin is upright and
     disciplined, always leading with the shield arm: a measured cut, sweep or flash cut; a shield
     shove that dazes, a shoulder check behind a flare of light, or a spinning backhand; a lunging
-    thrust, a rising cut that lifts them on light, or a driving stab; then a two-handed smite, or
-    a leaping chop or sky-splitter that calls pillars of light down. Hallowed Ground kneels and
+    thrust, a rising cut that lifts them on light, or a driving stab; then a two-handed smite, a
+    shield slam that brings a great shield of light crashing down on them, or a leaping chop or
+    sky-splitter that calls pillars of light down. Hallowed Ground kneels and
     plants the blade point-down. The Berserker is wild and twisting, and everything he catches
-    bleeds: a huge wound-up horizontal cleave, a sweep, or a blur of savage stabs; the return
-    cleave, a spinning backhand, or a low crouching whirl; then a leaping skull-splitter, a
-    sky-splitter or a leaping chop that bursts with rage. Rampage chains the cleaves into the
-    skull-splitter.
+    bleeds, and none of his swings are the Warrior's or the Paladin's: a huge wound-up horizontal
+    cleave, or a blur of savage stabs; the return cleave, a low crouching whirl, or the axe flung
+    out at arm's length dragging him round twice; then a leaping skull-splitter, a body slam that
+    crashes down shoulder first, or the axe dragged sparking along the ground in a charge and
+    ripped up in a huge uppercut, every one tearing the ground open. Rampage chains the cleaves
+    into the skull-splitter.
+  - Their shapes never cross: the Paladin's power is pillars of light, smooth golden rings and
+    stars; the Berserker's is torn, never lit: claw gashes ripped into the ground, fire and
+    embers climbing, and jagged shockwaves of teeth (his buffs, Rampage and Demon Form flare up
+    in fire and embers with his emblem, not a pillar).
   - Both paths hit heavy: longer hit-stops and harder knockback (the Berserker most), a stomp of
     dust and a dip of the view as a big move starts, power gathering at the weapon (embers or
     diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.

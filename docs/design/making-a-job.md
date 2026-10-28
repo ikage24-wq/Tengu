@@ -15,8 +15,10 @@ new is learned.
   Save what you learn, with sources, in `docs/art/research/`.
 - Decide the job's identity before writing code: its fantasy, its weapon, its **colour**, and its
   **shape language** (the Warrior's blue cross, the Paladin's gold star and pillars of light, the
-  Berserker's rose claws and fire, the Ranger's emerald wind and leaves, the Sniper's ice-blue
-  streaks and rose sight). Pick a colour bold enough to read on every map (pale mint vanished on
+  Berserker's rose claws, fire, torn ground and jagged shockwaves, the Ranger's emerald wind and
+  leaves, the Sniper's ice-blue streaks and rose sight). The shapes must be its own, not another
+  job's in a new colour: the Paladin and Berserker once shared pillars, rings and swings and read
+  as the same job twice. Pick a colour bold enough to read on every map (pale mint vanished on
   purple maps).
 
 ## 2. Combat

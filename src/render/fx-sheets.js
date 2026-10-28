@@ -57,6 +57,9 @@ export const FX_SHEETS = {
   celholyglow: { w: 148, h: 161, n: 4, fps: 8, px: 74, py: 137, d: 3, loop: true },
   celblacksmoke: { w: 127, h: 121, n: 6, fps: 10, px: 69, py: 116, d: 3, loop: true },
   celragecracks: { w: 222, h: 77, n: 4, fps: 8, px: 124, py: 40, d: 3, loop: true },
+  celgash: { w: 232, h: 166, n: 8, fps: 20, px: 112, py: 122, d: 3, loop: false },
+  celembers: { w: 115, h: 222, n: 8, fps: 14, px: 59, py: 206, d: 3, loop: true },
+  celshockred: { w: 282, h: 282, n: 6, fps: 24, px: 141, py: 141, d: 3, loop: false },
   celshield: { w: 240, h: 230, n: 7, fps: 20, px: 120, py: 107, d: 3, loop: false },
   celshieldsteel: { w: 240, h: 230, n: 7, fps: 20, px: 120, py: 107, d: 3, loop: false },
   celshieldred: { w: 236, h: 227, n: 7, fps: 20, px: 118, py: 104, d: 3, loop: false },
@@ -185,4 +188,6 @@ export const FX_SHEETS = {
   celquakegoldbig: { of: 'celquakegold', k: 1.8 },
   celquakeredbig: { of: 'celquakered', k: 1.8 },
   celclawbig: { of: 'celclaw', k: 1.7 },
+  celgashbig: { of: 'celgash', k: 1.7 },
+  celshockredbig: { of: 'celshockred', k: 2.6 },
 };

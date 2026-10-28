@@ -72,6 +72,11 @@ const SLAM_TINTS = {
   rage: ['#e01c3c', '#ffd0c8', '#c0102e', '#ff7a4e'],
 };
 
+// Embers spitting up out of the ground (a Berserker's blows), `n` of them across `w`.
+function embers(fx, x, y, n, w = 30) {
+  for (let i = 0; i < n; i++) add(fx, { x: x + (Math.random() - 0.5) * w, y, vx: (Math.random() - 0.5) * 60, vy: -120 - Math.random() * 120, drag: 1.8, life: 0.5 + Math.random() * 0.3, size: 2, shape: 'needle', color: ['#ff7a4e', '#ffd7a0', '#e01c3c'][i % 3] });
+}
+
 // Landing: dust skids out to both sides along the ground, with puffs.
 export function landing(fx, x, y, hard) {
   for (const side of [-1, 1]) add(fx, { x: x + side * 4, y, vx: side * (hard ? 70 : 45), vy: 0, drag: 6, life: hard ? 0.4 : 0.3, size: hard ? 14 : 9, h: hard ? 5 : 3.5, dir: side, shape: 'wisp', color: '#f6ece2', shade: '#e2d2c4' });
@@ -268,7 +273,8 @@ export function absorbJuice(fx, world) {
       dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, puff, puffShade);
       dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, puff, puffShade);
       kick(fx, 0, j.big ? 2 : 1);
-      if (j.big) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
+      if (j.big && j.school === 'rage') embers(fx, j.x, j.y, 6);
+      else if (j.big) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
     } else if (j.type === 'slam') {
       // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out
       // (lavender rock, or a Paladin's gold or a Berserker's blood red).
@@ -277,7 +283,10 @@ export function absorbJuice(fx, world) {
       for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, puff, puffShade);
       landing(fx, j.x, j.y, true);
       kick(fx, 0, 3);
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
+      // A Berserker's has no smooth ring (his shockwaves are jagged; render/warrior-fx.js): embers
+      // spit up out of the torn ground instead.
+      if (j.school === 'rage') embers(fx, j.x, j.y, 14, j.range);
+      else add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
     }
   }
   world.juice.length = 0;

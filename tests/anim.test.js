@@ -113,7 +113,7 @@ test('a spinning blade sweeps smoothly round through every flip', async () => {
     const mv = rigid(moveAt(kind, p, dur));
     return { a: mv.turn * mv.weapon, orbit: mv.orbit };
   };
-  for (const [kind, dur] of [['spin', 0.9], ['spin', 0.5], ['gyre', 0.55], ['eclipse', 1.6], ['spinback', 0.46], ['cleave', 0.62]]) {
+  for (const [kind, dur] of [['spin', 0.9], ['spin', 0.5], ['gyre', 0.55], ['eclipse', 1.6], ['spinback', 0.46], ['cleave', 0.62], ['axehurl', 0.62]]) {
     assert.ok(MOVES[kind]);
     let last = null;
     for (let i = 0; i <= 400; i++) {

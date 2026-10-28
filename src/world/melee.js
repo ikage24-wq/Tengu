@@ -286,26 +286,37 @@ export const PATH_VARIANTS = {
   // The Paladin, steady and holy. Openers: her measured cut, a sweep, or a flash cut. Second: the
   // shield bash, a shoulder check behind a flare of light that dazes, or a spinning backhand.
   // Third: her lunging thrust, a rising cut that lifts them on light (Aegis Smite's old ascent),
-  // or a driving stab. Finisher: the two-handed smite, or a leaping chop or sky-splitter that
-  // calls pillars of light down on everything they hit.
+  // or a driving stab. Finisher: the two-handed smite, her shield slam that brings a great shield
+  // of light crashing down on them, or a leaping chop or sky-splitter that calls pillars of light
+  // down on everything they hit.
   paladin: [
     [PATH_COMBOS.paladin[0], SWINGS.sweep, SWINGS.flashcut],
     [PATH_COMBOS.paladin[1], dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), SWINGS.spinback],
     [PATH_COMBOS.paladin[2],
       { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
       SWINGS.drivestab],
-    [PATH_COMBOS.paladin[3], dressed(SWINGS.leapchop, { fx: 'pillar' }), dressed(SWINGS.skysplit, { fx: 'pillar' })],
+    [PATH_COMBOS.paladin[3],
+      { move: 'shieldslam', dur: 0.72, step: 14, finisher: true, strikes: [{ at: 0.5, pct: 220, reach: 92, h: 80, targets: 4, knock: 220, stun: 0.8, arc: [-95, 185], thick: 14, burst: 'shieldslam', burstAt: 0.55, big: true, stop: 0.1, shake: 5 }] },
+      dressed(SWINGS.leapchop, { fx: 'pillar' }), dressed(SWINGS.skysplit, { fx: 'pillar' })],
   ],
-  // The Berserker, wild and heavy, and everything bleeds. Openers: his wound-up cleave, a sweep, or
-  // a blur of savage stabs. Second: the return cleave, a spinning backhand, or a low whirl all
-  // around him (Ravage's old gyre). Finisher: the skull-splitter, or a sky-splitter or leaping chop
-  // that bursts with rage.
+  // The Berserker, wild and heavy, and everything bleeds; none of his swings are the other paths'.
+  // Openers: his wound-up cleave, or a blur of savage stabs. Second: the return cleave, a low whirl
+  // all around him (Ravage's old gyre), or the axe flung out at arm's length dragging him round
+  // twice. Finisher: the skull-splitter, a body slam that crashes down shoulder first, or the
+  // axe dragged along the ground in a charge and ripped up in a huge uppercut; all of them tear
+  // the ground open.
   berserker: [
-    [PATH_COMBOS.berserker[0], dressed(SWINGS.sweep, { bleed: WOUND }),
+    [PATH_COMBOS.berserker[0],
       { move: 'flurry', dur: 0.5, step: 10, strikes: [0.15, 0.35, 0.55, 0.75].map((at, i) => ({ at, pct: 34, reach: 82, h: 52, targets: 2, pierce: true, knock: i === 3 ? 140 : 15, bleed: WOUND, stop: i === 3 ? 0.05 : 0 })) }],
-    [PATH_COMBOS.berserker[1], dressed(SWINGS.spinback, { bleed: WOUND }),
+    [PATH_COMBOS.berserker[1],
+      { move: 'axehurl', dur: 0.62, step: 8, strikes: [
+        { at: 0.42, pct: 65, reach: 98, h: 60, around: true, targets: 4, knock: 40, bleed: WOUND, arc: [0, 330], thick: 12, stop: 0.03 },
+        { at: 0.68, pct: 80, reach: 98, h: 60, around: true, targets: 4, knock: 130, bleed: WOUND, arc: [180, 330], thick: 12, big: true, stop: 0.05, shake: 1 },
+      ] },
       { move: 'gyre', dur: 0.55, step: 16, strikes: [{ at: 0.5, pct: 120, reach: 80, h: 56, around: true, targets: 4, knock: 90, bleed: WOUND, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] }],
-    [PATH_COMBOS.berserker[2], dressed(SWINGS.skysplit, { burst: 'rageburst' }), dressed(SWINGS.leapchop, { burst: 'rageburst' })],
+    [PATH_COMBOS.berserker[2],
+      { move: 'bodyslam', dur: 0.9, step: 20, finisher: true, strikes: [{ at: 0.55, pct: 250, reach: 96, h: 80, around: true, targets: 5, knock: 260, launch: 240, bleed: WOUND, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.12, shake: 6 }] },
+      { move: 'dragrise', dur: 0.95, step: 34, carry: 0.42, trail: true, finisher: true, strikes: [{ at: 0.5, pct: 270, reach: 100, h: 110, targets: 4, knock: 120, launch: 440, bleed: WOUND, arc: [80, -175], thick: 16, crack: true, burst: 'rageburst', burstAt: 0.4, big: true, stop: 0.12, shake: 5 }] }],
   ],
   // The Archer, nimble and showy, her gold hawk arrows in every shot. Openers: her snap shot, a
   // stomping kick then a shot point-blank, or a twirl that looses two. Second: her double shot,
@@ -819,7 +830,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
-    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
+    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
   }
   // A marked shot locks on first: the world dims, and a sight pops onto each monster in its line,
   // nearest first, one after another (Rez, Red Dead's Dead Eye; research/archery.md 26-27), each
