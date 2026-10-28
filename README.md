@@ -438,6 +438,12 @@ to clear it.
     crashes down shoulder first, or the axe dragged sparking along the ground in a charge and
     ripped up in a huge uppercut, every one tearing the ground open. Rampage chains the cleaves
     into the skull-splitter.
+  - Each charges its own way with Shoulder Charge: the Paladin's **Shield Rush** raises a wall of
+    golden light and marches in behind it, shoving and gathering monsters up, then plants her
+    blade and the wall bursts in pillars of light that stun them; the Berserker's **Reckless
+    Charge** sprints hunched low with the axe dragging sparks, tramples through, then leaps and
+    crashes down in a cleave that tears the ground. Running into an attack, she drives in a
+    shield shove and he leaps into a chop.
   - Like the Warrior's own steel (motion-blurred cuts, sparks of struck metal, rushing air, cold
     light), both are drawn as real light and real fire, no outlines: her shafts of sunlight, waves of
     light and lens flares; his flickering flames, molten gashes, red-hot claws, embers and black
