@@ -1992,15 +1992,26 @@ export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 
   const h = at(hand);
   const tip = [h[0] + Math.sin(wa) * len * dir, h[1] - Math.cos(wa) * len];
   // The whole-body move, about the pivot, as drawMoved applies it (a turn is only ever a flip).
-  const pivot = -H * scale * 0.42;
-  const c = Math.cos(mv.tilt * dir);
-  const sn = Math.sin(mv.tilt * dir);
+  const { pivot: pk, tilt } = leanOf(mv);
+  const pivot = -H * scale * pk;
+  const c = Math.cos(tilt * dir);
+  const sn = Math.sin(tilt * dir);
   const body = ([px, py]) => {
     const x0 = px * mv.turn;
     const y0 = py - pivot;
     return [x0 * c - y0 * sn + dir * mv.lunge * scale, x0 * sn + y0 * c + pivot - mv.lift * scale];
   };
   return { hand: body(h), tip: body(tip), shoulder: body(at(shoulder)), angle: mv.weapon, reach: len, dir };
+}
+
+// How high up the figure leans from (a share of its height) and how far: on the ground from low
+// down (about the knees), so the feet stay planted while the body leans into a blow, and no further
+// than 0.5 rad; in the air about its middle (flips, dives), as far as the move says.
+const GROUND_PIVOT = 0.16;
+function leanOf(mv) {
+  const air = Math.min(1, Math.abs(mv.lift) / 6);
+  const tilt = Math.max(-0.5, Math.min(0.5, mv.tilt)) * (1 - air) + mv.tilt * air;
+  return { pivot: GROUND_PIVOT + (0.42 - GROUND_PIVOT) * air, tilt };
 }
 
 function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
@@ -2010,10 +2021,13 @@ function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
   }
   const scale = state.scale ?? 1;
   const dir = (state.facing ?? 1) < 0 ? -1 : 1;
-  const pivot = y - H * scale * 0.42;
+  // On the ground the figure leans from low down (about the knees), so the feet stay planted while
+  // the body leans into a blow; in the air it turns about its middle (flips, dives).
+  const { pivot: pk, tilt } = leanOf(mv);
+  const pivot = y - H * scale * pk;
   ctx.save();
   ctx.translate(x + dir * mv.lunge * scale, pivot - mv.lift * scale);
-  ctx.rotate(mv.tilt * dir);
+  ctx.rotate(tilt * dir);
   // Only ever a mirror flip (see `rigid`): never narrowed or stretched.
   if (mv.turn < 0) ctx.scale(-1, 1);
   ctx.translate(-x, -pivot);

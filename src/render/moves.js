@@ -1310,20 +1310,35 @@ function rawMoveAt(kind, progress, dur) {
 // leans and steps into the blow and crouches under the hardest ones, rocking back on a backswing,
 // and settles as the swing dies (power chains from the hips; research/anim.md 16, 19). A spin's
 // sweep (`orbit`) and a still weapon (bows, casting) add nothing; a move's own lean and lunge stay.
-const SWAY = { window: 0.18, lean: 0.3, step: 7, at: 100 };
+const SWAY = { window: 0.18, lean: 0.3, step: 7, at: 100, lead: 0.07, overshoot: 0.4 };
 function sway(kind, progress, dur, mv) {
   if (mv.weapon == null || mv.orbit || mv.pull != null || mv.nock) return mv;
   const back = rawMoveAt(kind, Math.max(0, progress - SWAY.window), dur);
   if (back.weapon == null || back.orbit) return mv;
-  const k = Math.tanh((mv.weapon - back.weapon) / SWAY.at);
-  if (Math.abs(k) < 0.02) return mv;
+  // How hard it's going forward: the blade swinging round, or the arm driving out (a thrust, a
+  // throw, a cast), whichever is the bigger.
+  const dw = mv.weapon - back.weapon;
+  const da = mv.arm != null && back.arm != null ? (mv.arm - back.arm) * 1.2 : 0;
+  const k = Math.tanh((Math.abs(da) > Math.abs(dw) ? da : dw) / SWAY.at);
+  // Follow-through: the blade and arm run on a little past where the swing stops and spring back
+  // (it reads as a snap on the hit; research/anim.md 19, Saint11's overshot). It's how far they
+  // moved over the last moment, carried on.
+  const near = rawMoveAt(kind, Math.max(0, progress - SWAY.lead), dur);
+  const over = (a, b) => (a == null || b == null ? 0 : Math.max(-40, Math.min(40, (a - b) * SWAY.overshoot)));
+  const weapon = mv.weapon + over(mv.weapon, near.weapon);
+  const arm = mv.arm == null ? mv.arm : mv.arm + over(mv.arm, near.arm) * 0.6;
+  if (Math.abs(k) < 0.02) return { ...mv, weapon, arm };
   const rig = mv.rig;
   return {
     ...mv,
+    weapon,
+    arm,
     tilt: mv.tilt + SWAY.lean * k,
     lunge: mv.lunge + SWAY.step * k,
     rig: (r) => {
       rig?.(r);
+      // The upper body leads over the hips (the legs stay where they are).
+      r.tx = q((r.tx ?? 0) + 1.5 * k);
       if (k > 0.55 && !r.air) r.squat = Math.max(r.squat ?? 0, k > 0.85 ? 2 : 1);
       // The free arm flies back against the swing, to balance it.
       if (r.backArm && !r.air) r.backArm = [q(r.backArm[0] - 2 * k), q(r.backArm[1] - 1.5 * Math.abs(k))];
