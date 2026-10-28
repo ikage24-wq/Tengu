@@ -14,7 +14,7 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, weaponElement, braceOnHit } from './combat.js';
+import { cast, castBlocker, weaponElement, braceOnHit } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -444,16 +444,29 @@ export function updateWorld(world, dt, input) {
     jump: held.has('Space') || held.has('AltLeft') || held.has('AltRight'),
   };
   // Attacking roots you on the ground, like the classics.
-  // After a move's blows land, walking or jumping cuts its follow-through short.
+  // After a move's blows land, walking or jumping cuts its follow-through short; but while the
+  // attack key (or a repeating attack skill's key) is held, you stay planted and keep attacking (a
+  // held direction only turns the next attack round), so holding one with a direction doesn't
+  // stutter between each attack and a run. Jumping still cuts in, for the air attacks.
+  const attackKeys = ['KeyZ', 'ControlLeft', 'ControlRight'];
+  const basicHeld = attackKeys.some((k) => held.has(k)) && !world.body.rope;
+  const repeats = (b) => Boolean(b?.skill) && ['attack', 'magic'].includes(SKILLS[b.skill]?.type);
+  const skillHeld = Object.entries(char.hotkeys).some(([code, b]) => repeats(b) && held.has(code)) && !world.body.rope;
+  const attackHeld = basicHeld || skillHeld;
   const acting = world.attackTimer > 0 || world.lockTimer > 0;
-  if (acting && (intent.left || intent.right || intent.jump) && world.recoverAt != null && world.now >= world.recoverAt) {
+  const walkAway = (intent.left || intent.right) && !attackHeld;
+  // An attack about to start faces the way you're holding (planted, you turn on the spot).
+  const faceHeld = (skillId) => {
+    if (intent.left !== intent.right && world.body.onGround && !castBlocker(world, skillId)) world.body.facing = intent.left ? -1 : 1;
+  };
+  if (acting && (walkAway || intent.jump) && world.recoverAt != null && world.now >= world.recoverAt) {
     world.attackTimer = 0;
     world.lockTimer = 0;
     world.pose = null;
     world.recoverAt = null;
     world.lunge = null;
   }
-  const rooted = (world.attackTimer > 0.15 || world.lockTimer > 0) && world.body.onGround;
+  const rooted = (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
   if (!(pressed.has('ArrowUp') && interact(world))) {
@@ -463,14 +476,18 @@ export function updateWorld(world, dt, input) {
   // What the controls ask for (attacks read Up for a launcher), and how long you've been running
   // (an attack after a short run becomes a dash attack).
   world.intent = intent;
-  world.runFor = (intent.left || intent.right) && world.body.onGround && Math.abs(world.body.x - wasX) > 0.5 && !acting ? (world.runFor ?? 0) + dt : 0;
+  // Pressing attack mid-run plants you, but the run still counts for the swing it starts.
+  const running = (intent.left || intent.right) && world.body.onGround && !acting;
+  world.runFor = running && Math.abs(world.body.x - wasX) > 0.5 ? (world.runFor ?? 0) + dt : running && attackHeld ? world.runFor ?? 0 : 0;
 
   if (!world.body.rope) {
     // Attacks fire on a fresh press too, so a tap shorter than a frame still counts.
     // A tap during a swing is remembered for a moment, so combos chain on time.
-    const attackKeys = ['KeyZ', 'ControlLeft', 'ControlRight'];
     if (attackKeys.some((k) => pressed.has(k))) world.attackBuffer = world.now + 0.3;
-    if ((attackKeys.some((k) => held.has(k)) || world.attackBuffer > world.now) && cast(world, null).ok) world.attackBuffer = 0;
+    if (basicHeld || world.attackBuffer > world.now) {
+      faceHeld(null);
+      if (cast(world, null).ok) world.attackBuffer = 0;
+    }
     const buffered = world.skillBuffer;
     if (buffered && buffered.until > world.now && world.attackTimer <= 0 && world.lockTimer <= 0) useHotkey(world, buffered.binding, false);
     world.heldSince ??= {};
@@ -480,7 +497,8 @@ export function updateWorld(world, dt, input) {
       else world.heldSince[code] ??= world.now;
       // Attack skills repeat once held a moment (like a key repeating); everything else fires
       // once per press.
-      const repeat = binding.skill && ['attack', 'magic'].includes(SKILLS[binding.skill]?.type) && world.now - world.heldSince[code] >= REPEAT_AFTER;
+      const repeat = repeats(binding) && world.now - world.heldSince[code] >= REPEAT_AFTER;
+      if (binding.skill && (pressed.has(code) || (repeat && held.has(code)))) faceHeld(binding.skill);
       if (pressed.has(code)) useHotkey(world, binding);
       else if (repeat && held.has(code) && world.skillBuffer?.binding !== binding) useHotkey(world, binding, false);
     }

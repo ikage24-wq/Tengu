@@ -8,7 +8,8 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
-import { PATH_COMBOS, MAX_STOP } from '../src/world/melee.js';
+import { PATH_COMBOS, PATH_VARIANTS, planCombo, MAX_STOP } from '../src/world/melee.js';
+import { MOVES } from '../src/render/moves.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
 
@@ -56,7 +57,55 @@ test("holding attack with a sword chains the Warrior's own combo, ending in the 
     updateWorld(w, DT, hold);
     if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
   }
-  assert.deepEqual(seen.slice(0, PATH_COMBOS.warrior.length), PATH_COMBOS.warrior.map((s) => s.move));
+  // Each step plays one of its swings, and the last is a finisher.
+  const steps = PATH_VARIANTS.warrior;
+  seen.slice(0, steps.length).forEach((move, i) => assert.ok(steps[i].some((s) => s.move === move), `step ${i + 1}: ${move}`));
+  assert.ok(steps.at(-1).every((s) => s.finisher), 'every last swing is a finisher');
+});
+
+test("the Warrior's combo mixes its swings: a fresh string each time, never the same one twice", () => {
+  const steps = PATH_VARIANTS.warrior;
+  assert.equal(steps.length, PATH_COMBOS.warrior.length);
+  for (const [i, choices] of steps.entries()) {
+    assert.equal(choices[0], PATH_COMBOS.warrior[i], 'the first choice is the plain combo');
+    for (const s of choices) assert.ok(MOVES[s.move], `${s.move} is drawn`);
+  }
+  const fresh = steps.flat().map((s) => s.move).filter((m) => !PATH_COMBOS.warrior.some((s) => s.move === m));
+  assert.equal(new Set(fresh).size, 10, `ten new swings (${fresh})`);
+  // Heavier swings land harder: within each step, a longer swing deals more in all and pushes
+  // further (the quick ones trade power for speed).
+  for (const choices of steps) {
+    const total = (s) => s.strikes.reduce((n, st) => n + st.pct * (st.targets ?? 1), 0);
+    const byLength = [...choices].sort((a, b) => a.dur - b.dur);
+    const quick = byLength[0];
+    const heavy = byLength.at(-1);
+    if (heavy.dur - quick.dur < 0.15) continue;
+    assert.ok(total(heavy) > total(quick), `${heavy.move} outhits ${quick.move}`);
+    assert.ok(Math.max(...heavy.strikes.map((st) => st.knock ?? 0)) > Math.max(...quick.strikes.map((st) => st.knock ?? 0)), `${heavy.move} throws harder than ${quick.move}`);
+  }
+  // Never the same string twice in a row, even with dice that keep rolling the same.
+  let last = null;
+  for (let i = 0; i < 200; i++) {
+    const plan = planCombo(steps, last, i % 3 ? Math.random : () => 0);
+    if (last) assert.notDeepEqual(plan, last);
+    last = plan;
+  }
+  // Played out (with fixed dice): over a minute and a half of combos every new swing shows up.
+  const w = arena();
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  const seen = new Set();
+  const random = Math.random;
+  let seed = 11;
+  Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  try {
+    for (let i = 0; i < 60 * 90; i++) {
+      updateWorld(w, DT, hold);
+      if (w.pose) seen.add(w.pose.kind);
+    }
+  } finally {
+    Math.random = random;
+  }
+  for (const m of fresh) assert.ok(seen.has(m), `${m} came up`);
 });
 
 test('a blow lands when the blade cuts, and you step into it', () => {
@@ -1616,4 +1665,71 @@ test("potions can't be chugged by mashing their key", () => {
   for (let i = 0; i < 60; i++) updateWorld(w, DT, press('Digit1'));
   assert.ok(before - count() <= 3, `${before - count()} potions in one second`);
   assert.ok(before - count() >= 2, 'but they still go down quickly');
+});
+
+// Holding attack and a direction together: you stay planted and keep swinging (the direction only
+// turns the next swing round), instead of every swing being cut short into a burst of running.
+test('holding attack and a direction swings on smoothly, planted, turning with the direction', () => {
+  const w = arena();
+  const hold = (dir) => ({ held: new Set(['KeyZ', dir]), pressed: new Set(), locked: false });
+  updateWorld(w, DT, { held: new Set(['KeyZ', 'ArrowRight']), pressed: new Set(['KeyZ']), locked: false });
+  // Between swings you stand your ground (the only beat out of a swing is the pause after a
+  // finisher, standing still): never a step of walking, let alone a run.
+  let walked = 0;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, hold('ArrowRight'));
+    if (Math.abs(w.body.vx) > 8) walked++;
+  }
+  assert.equal(walked, 0, 'no walking or running between swings');
+  // Turning round mid-combo: the next swing faces the other way, and stays facing it.
+  const flips = [];
+  for (let i = 0; i < 60 * 2; i++) {
+    updateWorld(w, DT, hold('ArrowLeft'));
+    if (flips.at(-1) !== w.body.facing) flips.push(w.body.facing);
+  }
+  assert.deepEqual(flips, [1, -1], `turned once, and stayed turned (${flips})`);
+  // Letting go of attack, you walk off at once.
+  const x = w.body.x;
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
+  assert.ok(w.body.x < x - 20, 'walking away once attack is let go');
+});
+
+test('attacking out of a run is still a dash attack', () => {
+  const w = arena();
+  Object.assign(w.body, { x: 120 });
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+  updateWorld(w, DT, { held: new Set(['ArrowRight', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+  assert.equal(w.pose?.kind, 'dashstab');
+});
+
+// The same for a held attack skill, every kind of job: you stay planted and keep casting it (the
+// key repeats once held), turning with the direction, never walking off between casts.
+test('holding an attack skill and a direction keeps casting it, planted, for every job', () => {
+  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'twinshot'], ['thief', 'gauntlet_20', 'luckyseven'], ['mage', 'wand_20', 'petalbolt']]) {
+    const casts = (dir) => {
+      const w = arena(weapon);
+      w.char.job = job;
+      if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
+      w.char.skills[skill] = 10;
+      w.char.hotkeys.KeyA = { skill };
+      w.char.baseMp = 99999;
+      w.char.mp = 99999;
+      let n = 0;
+      let walked = 0;
+      let last = w.char.mp;
+      for (let i = 0; i < 60 * 3; i++) {
+        updateWorld(w, DT, { held: new Set(['KeyA', ...(dir ? [dir] : [])]), pressed: i === 0 ? new Set(['KeyA']) : new Set(), locked: false });
+        if (w.char.mp < last - 0.5) n++;
+        last = w.char.mp;
+        if (w.body.onGround && Math.abs(w.body.vx) > 8) walked++;
+      }
+      return { n, walked, facing: w.body.facing };
+    };
+    const alone = casts(null);
+    const left = casts('ArrowLeft');
+    assert.ok(alone.n >= 3, `${skill} repeats when held (${alone.n})`);
+    assert.equal(left.walked, 0, `${job}: no walking between ${skill} casts`);
+    assert.equal(left.n, alone.n, `${job}: as many casts with a direction held`);
+    assert.equal(left.facing, -1, `${job}: turned to face the way held`);
+  }
 });

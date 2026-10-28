@@ -7,7 +7,7 @@
 // Animation: jointed limbs (hip, knee, ankle; shoulder, elbow, wrist) solved by two-bone reach; a
 // 24-frame walk cycle driven by distance walked (heel strike with the toe up, a planted foot that
 // rolls onto its toe, a high heel kick behind, the knee swinging through, counter-swinging arms,
-// and hips that sink when the feet are spread), a breathing idle with blinks, stretch when rising, squash when landing, spring-driven hair and
+// and hips that sink when the feet are spread), a breathing idle with blinks, legs tucked when rising, knees giving on landing, spring-driven hair and
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
@@ -1526,7 +1526,7 @@ function solveRig(state, anim, mv = null) {
     const vy = state.vy ?? -1;
     r.air = true;
     if (anim?.rise > 0 || vy < -250) {
-      // Rising: stretched tall, legs tucked, arms swept back.
+      // Rising: legs tucked, arms swept back.
       r.by = -1;
       r.frontLeg = [2.6, -5, 10];
       r.backLeg = [-1.6, -2.6, -10];
@@ -1574,7 +1574,7 @@ function solveRig(state, anim, mv = null) {
     if (pose === 'idle' && state.mood) idleActing(r, state.mood, t, state.armed);
   }
 
-  // Landing squash: the knees give, the hips drop, and the feet spread.
+  // Landing: the knees give, the hips drop, and the feet spread (a pose; the figure keeps its shape).
   if (anim?.land > 0 && pose !== 'jump') {
     const k = anim.land > 0.06 ? 2 : 1;
     r.by = 0;
@@ -1585,8 +1585,8 @@ function solveRig(state, anim, mv = null) {
     r.backArm = [-k, 1];
   }
 
-  // Hurt: the first beat is held at the most squashed, leaning hard away from the blow, then the
-  // body wobbles back like jelly (hurtK runs 1 -> overshoot -> 0, see drawHeroBody).
+  // Hurt: the first beat is held at the deepest crouch, leaning hard away from the blow, then the
+  // body rocks back upright (hurtK runs 1 -> overshoot -> 0, see drawHeroBody).
   if (hurt) {
     const k = state.hurtK ?? 0.7;
     r.tx = q(-1.6 * k);
@@ -1859,54 +1859,53 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur);
     moved = blendMove(from, moved, Math.max(0, state.blend));
   }
+  // The pose the arm and weapon are drawn from follows the same rule as the body (see `rigid`).
+  moved = rigid(moved);
   // Walking, the whole body leans into the run and rises a little at each passing step.
   let mv = moved;
-  // A choreographed body move (boss dances): lift, lean, spin, squash and stretch of the whole figure.
+  // A choreographed body move (boss dances): lift, lean and spin of the whole figure.
   if (state.body) mv = { lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, bodyOnly: true, ...state.body };
   if (!moved && pose === 'walk' && anim) {
     // Walking, the body leans in a little; running, more, and it floats between steps (the whole
-    // figure lifts, both feet off the ground) with a touch of stretch.
+    // figure lifts, both feet off the ground).
     const p = (Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
     const gait = Math.round(anim.gait * 4) / 4;
     const fly = flightAt(p, gaitShape(gait)) * gait;
     const lean = WALK_LEAN[walkStyleOf(state.low ? 'tired' : look.face ?? 'smile')] ?? 0;
-    mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait + lean, turn: 1, stretch: 1 + 0.03 * fly, bodyOnly: true };
+    mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait + lean, turn: 1, stretch: 1, bodyOnly: true };
   }
-  // Hurt timing: hold the hit pose for a beat, then a decaying wobble back.
-  let hx = 1;
-  let hy = 1;
+  // Hurt timing: hold the hit pose for a beat, then a decaying wobble back (in the pose).
   if (anim) {
     if (state.hurt) {
       if (!anim.hurtOn) anim.hurtAt = state.time ?? 0;
       const e = Math.max(0, (state.time ?? 0) - anim.hurtAt);
       const k = e < 0.09 ? 1 : Math.exp(-(e - 0.09) * 7) * Math.cos((e - 0.09) * 26);
       state = { ...state, hurtK: Math.round(k * 4) / 4 };
-      hx = 1 + 0.1 * k;
-      hy = 1 - 0.1 * k;
     }
     anim.hurtOn = Boolean(state.hurt);
   }
-  // Take-off stretch and landing squash (from the animator), about the feet.
-  const sx = (anim?.sqx ?? 1) * hx;
-  const sy = (anim?.sqy ?? 1) * hy;
-  const sq = sx !== 1 || sy !== 1;
-  if (sq) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(sx, sy);
-    ctx.translate(-x, -y);
-  }
-  drawMoved(ctx, look, gear, x, y, state, anim, mv, moved);
-  if (sq) ctx.restore();
+  drawMoved(ctx, look, gear, x, y, state, anim, rigid(mv), moved);
+}
+
+// The figure never squashes, stretches or narrows (the player's standing rule): a move may lift,
+// lunge, lean or crouch it, but a turn is a clean mirror flip (its sign, so a spin flips at each
+// half turn) and the height stays its own. A spinning blade (`orbit`) keeps its path on screen
+// through the flip: the flip would mirror its angle, so it's mirrored back, and the sweep runs on
+// round the body instead of jumping and running backwards for half the turn.
+export function rigid(mv) {
+  if (!mv) return mv;
+  const turn = Math.sign(mv.turn ?? 1) || 1;
+  const weapon = mv.orbit && turn < 0 && mv.weapon != null ? -mv.weapon : mv.weapon;
+  return { ...mv, turn, weapon, stretch: 1 };
 }
 
 // Where the weapon is at a moment of an attack move, as offsets from the feet (screen pixels at
 // `scale`), worked out exactly as it's drawn: the aimed arm's hand, the weapon's angle, its tip
 // (from the weapon's own length), and the front shoulder, all carried through the whole-body
-// lunge, lift, tilt, turn and stretch. Effects use it so a smear or a thrust's spike lines up with
+// lunge, lift, tilt and turn (a flip). Effects use it so a smear or a thrust's spike lines up with
 // the weapon instead of a fixed height. Returns null for moves without an aimed arm.
 export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 1) {
-  const mv = moveAt(POSE_MOVES[move] ?? move, progress, dur);
+  const mv = rigid(moveAt(POSE_MOVES[move] ?? move, progress, dur));
   if (!mv || mv.arm == null || mv.weapon == null) return null;
   const g = resolveGear(look, gear);
   const rig = solveRig({ pose: move, progress, dur, time: 0, facing }, null, mv);
@@ -1922,14 +1921,13 @@ export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 
   const wa = (mv.weapon * Math.PI) / 180;
   const h = at(hand);
   const tip = [h[0] + Math.sin(wa) * len * dir, h[1] - Math.cos(wa) * len];
-  // The whole-body move, about the pivot, as drawMoved applies it.
+  // The whole-body move, about the pivot, as drawMoved applies it (a turn is only ever a flip).
   const pivot = -H * scale * 0.42;
-  const turn = Math.abs(mv.turn) < 0.05 ? 0.05 * Math.sign(mv.turn || 1) : mv.turn;
   const c = Math.cos(mv.tilt * dir);
   const sn = Math.sin(mv.tilt * dir);
   const body = ([px, py]) => {
-    const x0 = px * turn;
-    const y0 = (py - pivot) * mv.stretch;
+    const x0 = px * mv.turn;
+    const y0 = py - pivot;
     return [x0 * c - y0 * sn + dir * mv.lunge * scale, x0 * sn + y0 * c + pivot - mv.lift * scale];
   };
   return { hand: body(h), tip: body(tip), shoulder: body(at(shoulder)), angle: mv.weapon, reach: len, dir };
@@ -1946,7 +1944,8 @@ function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
   ctx.save();
   ctx.translate(x + dir * mv.lunge * scale, pivot - mv.lift * scale);
   ctx.rotate(mv.tilt * dir);
-  ctx.scale(Math.abs(mv.turn) < 0.05 ? 0.05 * Math.sign(mv.turn || 1) : mv.turn, mv.stretch);
+  // Only ever a mirror flip (see `rigid`): never narrowed or stretched.
+  if (mv.turn < 0) ctx.scale(-1, 1);
   ctx.translate(-x, -pivot);
   paintHero(ctx, look, gear, x, y, state, anim, moved);
   ctx.restore();

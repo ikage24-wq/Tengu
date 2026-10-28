@@ -340,6 +340,8 @@ function titanbreak() {
 }
 
 function shouldercharge() {
+  // The tile first: it sets the palette the helmet's drop shadows are cut from.
+  const plate = tile('steel', 'active');
   const helm = '#dfe8f8';
   const dome = [...arcPts(8.6, 9.4, 4.8, 5.2, 180, 360, 18), [13.4, 12.4], [3.8, 12.4]];
   const head = [
@@ -353,7 +355,7 @@ function shouldercharge() {
     ...glint(6, 6.2, 0.6),
   ];
   return [
-    ...tile('steel', 'active'),
+    ...plate,
     ...aura(11, 8.6, 6, '#e4f2ff', 1.1),
     streak([0.6, 4.4], [5, 5.6], 1.2, '#fff0e4'), streak([0.6, 8.4], [4.6, 8.8], 1.7, '#fff6ee'), streak([0.6, 12.4], [5, 11.8], 1.2, '#fff0e4'),
     streak([2, 14.6], [5.6, 13.6], 0.8, '#c4dcff'),

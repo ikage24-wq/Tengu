@@ -93,9 +93,16 @@ to clear it.
   many are left, and any shop recharges a part-thrown set for what its missing stars are worth.
   Out of stars, a gauntlet can't attack.
 - **Warrior** (steel blue and white: the blue cross, swords, a shield) — he fights with his basic
-  attacks, and his skills go off on their own from them. His own basic combo: a cut, the return
-  cut, a stepping cross-cut, then a two-handed cleave that knocks them flying; plus the sword's
-  command moves below, and down + attack for a leaping slam that cracks the ground all around.
+  attacks, and his skills go off on their own from them. His own basic combo is four swings, each
+  drawn from a few so the string keeps changing (the first combo is the classic one, and never
+  the same string twice in a row after that), all played big and heavy: an opener (a cut, a
+  hip-height sweep, three lightning jabs, or a flash cut that blurs through the line); a second
+  blow (the return cut, a spinning backhand, a shoulder check, or a driving stab); a third (a
+  stepping cross-cut, a rising diagonal that pops them up, or a wound-up home-run swing that
+  sends them flying); then a finisher (a two-handed cleave, a leaping chop, or a sky-splitter that
+  leaps high and splits the ground in slow motion). Quick swings hit light and fast; heavy ones
+  hold a longer impact, shake the screen and throw monsters far. Plus the sword's command moves
+  below, and down + attack for a leaping slam that cracks the ground all around.
   **Valor** is his gauge (a shield on the HUD): every blow that lands builds it, faster the more
   monsters one blow catches at once, and it drains once the fighting stops. Full, he is
   **Unbroken**: his blows land heavier and knock harder, and nothing knocks him back. Skills that

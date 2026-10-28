@@ -79,3 +79,69 @@ test('every monster walks and idles through clean in-between poses', async () =>
     }
   }
 });
+
+// The player's standing rule: the character never squashes, stretches or narrows. Moves may lift,
+// lunge, lean and crouch it, but whatever a move asks for, it's drawn at its own width and height
+// (a spin flips it cleanly), and jumping and landing show in the pose alone.
+test('the character keeps its shape: no squash, stretch or narrowing in any move', async () => {
+  const { MOVES, moveAt } = await import('../src/render/moves.js');
+  const { rigid } = await import('../src/render/hero.js');
+  const { createAnim, stepAnim } = await import('../src/render/animator.js');
+  for (const kind of Object.keys(MOVES)) {
+    for (let i = 0; i <= 40; i++) {
+      const mv = rigid(moveAt(kind, i / 40, 0.6));
+      assert.equal(Math.abs(mv.turn), 1, `${kind} at ${i / 40}: turned only as a flip`);
+      assert.equal(mv.stretch, 1, `${kind} at ${i / 40}: no stretch`);
+    }
+  }
+  // A jump and a hard landing leave the animator with no squash or stretch to apply.
+  const a = createAnim();
+  stepAnim(a, { vx: 0, vy: -500, onGround: false, rope: false, facing: 1, y: 0 }, 1 / 60);
+  stepAnim(a, { vx: 0, vy: 600, onGround: false, rope: false, facing: 1, y: 0 }, 1 / 60);
+  stepAnim(a, { vx: 0, vy: 0, onGround: true, rope: false, facing: 1, y: 0 }, 1 / 60);
+  assert.ok(a.land > 0, 'the landing still shows (in the pose)');
+  assert.equal(a.sqx, undefined);
+  assert.equal(a.sqy, undefined);
+});
+
+// With the figure flipping cleanly instead of squeezing, a spinning blade must keep sweeping round
+// the body as seen: never jumping across or running backwards when the body flips.
+test('a spinning blade sweeps smoothly round through every flip', async () => {
+  const { MOVES, moveAt } = await import('../src/render/moves.js');
+  const { rigid } = await import('../src/render/hero.js');
+  const seen = (kind, p, dur) => {
+    const mv = rigid(moveAt(kind, p, dur));
+    return { a: mv.turn * mv.weapon, orbit: mv.orbit };
+  };
+  for (const [kind, dur] of [['spin', 0.9], ['spin', 0.5], ['gyre', 0.55], ['eclipse', 1.6], ['spinback', 0.46], ['cleave', 0.62]]) {
+    assert.ok(MOVES[kind]);
+    let last = null;
+    for (let i = 0; i <= 400; i++) {
+      const now = seen(kind, i / 400, dur);
+      if (last && now.orbit && last.orbit) {
+        // The same direction on screen: the shortest way from the last angle to this one.
+        const step = ((((now.a - last.a) % 360) + 540) % 360) - 180;
+        assert.ok(Math.abs(step) < 45, `${kind} at ${(i / 400).toFixed(3)}: the blade jumps ${Math.round(step)} degrees`);
+        assert.ok(step >= -1, `${kind} at ${(i / 400).toFixed(3)}: the blade runs backwards (${Math.round(step)})`);
+      }
+      last = now;
+    }
+  }
+});
+
+// Every skill icon sets its own tile (and the palette its shadows use) before drawing on it, so
+// any of them can be the first one drawn: a fresh game whose first hotkey is Shoulder Charge
+// once crashed here, drawing its helmet before its tile.
+test('every skill icon draws on its own, even as the first one drawn', async () => {
+  const { SKILL_ART } = await import(`../src/render/icons/skills.js?fresh=${Date.now()}`);
+  assert.ok(SKILL_ART.shouldercharge().length > 0, 'Shoulder Charge first, on a fresh palette');
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/render/icons/skills.js', import.meta.url), 'utf8');
+  for (const [, name, body] of src.matchAll(/^function (\w+)\(\) \{\n([\s\S]*?)^\}/gm)) {
+    const tileAt = body.search(/\btile\(/);
+    const usedAt = body.search(/\b(solid|drop|facet)\(/);
+    if (tileAt < 0 || usedAt < 0) continue;
+    assert.ok(tileAt < usedAt, `${name} sets its tile before drawing on it`);
+  }
+  for (const [id, draw] of Object.entries(SKILL_ART)) assert.ok(draw().length > 0, `${id} draws`);
+});

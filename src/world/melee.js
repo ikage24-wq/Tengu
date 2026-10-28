@@ -185,6 +185,55 @@ export const PATH_COMBOS = {
   ],
 };
 
+// A path's combo with a choice of swings at each step, so holding attack doesn't play the same
+// string over and over: each time the combo starts, one swing is drawn for every step, and never
+// the same whole string twice in a row (see planCombo). The first choice at each step is the
+// path's own combo above; the others keep its rhythm (an opener, a quick second blow, a medium or
+// heavy third, a heavy finisher) and land with power to match their weight: fast ones hit
+// lightly but quickly, heavy ones hold a longer stop, shake the screen and throw monsters far.
+export const PATH_VARIANTS = {
+  // The Warrior. Openers: a cut, a hip-height sweep, three lightning jabs, or a flash cut that
+  // blurs through the line. Second: the return cut, a spinning backhand, a shoulder check, or a
+  // driving stab through the line. Third: the cross-cut, a rising diagonal that pops them up, or
+  // a wound-up home-run swing that sends them flying. Finisher: the cleave, a leaping chop, or a
+  // sky-splitter that leaps high and splits the ground in slow motion.
+  warrior: [
+    [PATH_COMBOS.warrior[0],
+      { move: 'sweep', dur: 0.42, step: 8, strikes: [{ at: 0.45, pct: 85, reach: 80, h: 48, targets: 3, knock: 90, arc: [-160, 250], thick: 9, stop: 0.04 }] },
+      { move: 'jabs', dur: 0.44, step: 8, strikes: [
+        { at: 0.2, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
+        { at: 0.45, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
+        { at: 0.7, pct: 55, reach: 90, h: 44, targets: 2, pierce: true, knock: 90, stop: 0.04 },
+      ] },
+      { move: 'flashcut', dur: 0.4, step: 34, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] }],
+    [PATH_COMBOS.warrior[1],
+      { move: 'spinback', dur: 0.46, step: 10, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, targets: 2, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
+      { move: 'shove', dur: 0.38, step: 14, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
+      { move: 'drivestab', dur: 0.5, step: 22, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] }],
+    [PATH_COMBOS.warrior[2],
+      { move: 'risecut', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
+      { move: 'hammer', dur: 0.8, step: 10, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] }],
+    [PATH_COMBOS.warrior[3],
+      { move: 'leapchop', dur: 0.66, step: 22, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
+      { move: 'skysplit', dur: 0.95, step: 24, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] }],
+  ],
+};
+
+// Picks one swing for each step of a combo with choices, never the same string as `last`. The
+// very first string is the path's own combo, so it opens the way you know it.
+export function planCombo(variants, last = null, rng = Math.random) {
+  if (!last) return variants.map(() => 0);
+  for (let i = 0; i < 12; i++) {
+    const plan = variants.map((v) => Math.floor(rng() * v.length));
+    if (!last || plan.some((c, k) => c !== last[k])) return plan;
+  }
+  // Out of luck with the dice: change the first step that has a choice.
+  const plan = [...last];
+  const k = variants.findIndex((v) => v.length > 1);
+  plan[k] = (plan[k] + 1) % variants[k].length;
+  return plan;
+}
+
 // The archer paths' command shots. Up + attack: a shot up at whatever flies, knocking it higher.
 // In the air: shots that hold you up (`hang`) and loose down at them; a Sniper's bolt kicks her
 // back up (`recoil`). Running: the Ranger slides in under them loosing two arrows, the Sniper rolls
@@ -576,7 +625,10 @@ export function basicCombo(world) {
   }
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   world.combo = world.now <= (world.comboUntil ?? -9) ? ((world.combo ?? -1) + 1) % steps.length : 0;
-  playStep(world, steps[world.combo], 100, `basic${world.combo}`);
+  // A path with a choice of swings draws a fresh string each time the combo starts over.
+  const variants = PATH_VARIANTS[path];
+  if (variants && (world.combo === 0 || !world.comboPlan)) world.comboPlan = planCombo(variants, world.comboPlan);
+  playStep(world, variants ? variants[world.combo][world.comboPlan[world.combo]] : steps[world.combo], 100, `basic${world.combo}`);
 }
 
 // A combo skill: each use plays its next step (a one-step skill just plays it).
@@ -736,7 +788,9 @@ function land(world, s) {
   // Strikes follow the way you were facing when the step began; a `turn` strike (Backstab) turns
   // round to hit what you just passed.
   if (s.turn) s = { ...s, dir: -s.dir, turn: false };
-  body.facing = s.dir;
+  // A proc's extra cuts land where they were aimed, but never turn you round: you may already be
+  // swinging the other way.
+  if (!s.keepFacing) body.facing = s.dir;
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
@@ -865,7 +919,7 @@ function land(world, s) {
 function rushStrikes(world, s, p) {
   const cut = (delay, arc, knock) => ({
     at: s.at, due: world.now + delay, pct: p.pct, reach: 76, h: 62, targets: p.targets, knock, arc, thick: 9, school: 'steel',
-    n: 0, of: 1, dir: s.dir, scale: 100, key: 'procbladerush', move: s.move, dur: s.dur, finisher: false, quiet: true,
+    n: 0, of: 1, dir: s.dir, scale: 100, key: 'procbladerush', move: s.move, dur: s.dur, finisher: false, quiet: true, keepFacing: true,
   });
   world.strikes.push(cut(0.1, [-115, 205], 30), cut(0.22, [100, -215], 70));
 }

@@ -86,6 +86,12 @@ anime effects; every effect in `assets/fx/` is now Tengu's own. Look at
 references first (research/fx.md section 6, MapleStory) for what each moment should show. Code
 drawing is for small supporting touches only (a tracer line, a sight's ticks).
 
+**The character never squashes, stretches or narrows (the player's standing rule, for every
+move, job and future animation).** Moves may lift, lunge, lean, crouch, tuck and flip the figure,
+but it is always drawn at its own width and height: a spin is a clean mirror flip at each half
+turn, never a squeeze, and jumping, landing and getting hit show in the pose alone. `rigid` in
+`render/hero.js` enforces it and `tests/anim.test.js` checks every move against it.
+
 "Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
 `docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items
 there and update the status file as they get done.

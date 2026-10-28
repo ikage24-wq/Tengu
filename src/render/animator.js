@@ -1,5 +1,5 @@
 // Per-character animation state that lives across frames: a distance-driven walk cycle, springs
-// for hair and cape follow-through, landing squash, and blinking.
+// for hair and cape follow-through, the landing and take-off beats, and blinking.
 // The renderer reads it; the world simulation never does.
 
 // The gait changes with speed: a stroll covers less ground per cycle (two steps) than a run, so
@@ -24,8 +24,6 @@ export function createAnim() {
     cape: 0, capeV: 0, capeTip: 0, capeTipV: 0,
     land: 0,
     rise: 0,
-    // Whole-body squash and stretch (x, y scale about the feet), easing back to 1 at a steady rate.
-    sqx: 1, sqy: 1,
     wasGround: true,
     prevVy: 0,
     events: [],
@@ -59,9 +57,6 @@ function spring(a, key, vKey, target, k, damp, dt) {
   [a[key], a[vKey]] = springStep(a[key], a[vKey], target, k, damp, dt);
 }
 
-// Moves v toward goal by at most step.
-const approach = (v, goal, step) => (v < goal ? Math.min(goal, v + step) : Math.max(goal, v - step));
-
 // body: { vx, vy, onGround, rope, facing, y }. Returns this frame's events
 // ('step', 'land', 'jump') so the renderer can puff dust.
 export function stepAnim(a, body, dt) {
@@ -83,23 +78,16 @@ export function stepAnim(a, body, dt) {
   }
   if (body.rope) a.climb = body.y;
 
+  // Landing and take-off show in the pose (the knees give, the legs tuck), never by squashing or
+  // stretching the figure: the player's standing rule is that the character keeps its shape.
   if (!a.wasGround && body.onGround && !body.rope && a.prevVy > 120) {
     a.land = Math.min(0.16, 0.08 + a.prevVy / 6000);
-    // Celeste's landing: squash by how hard you came down, then spring back up linearly.
-    const squish = Math.min(1, (a.prevVy - 100) / 450);
-    a.sqx = 1 + 0.26 * squish;
-    a.sqy = 1 - 0.26 * squish;
     a.events.push('land');
   }
   if (a.wasGround && !body.onGround && body.vy < -100 && !body.rope) {
     a.rise = 0.12;
-    // Take-off stretch: tall and thin for an instant.
-    a.sqx = 0.88;
-    a.sqy = 1.14;
     a.events.push('jump');
   }
-  a.sqx = approach(a.sqx, 1, 1.75 * dt);
-  a.sqy = approach(a.sqy, 1, 1.75 * dt);
   a.land = Math.max(0, a.land - dt);
   a.rise = Math.max(0, a.rise - dt);
   a.wasGround = body.onGround || Boolean(body.rope);

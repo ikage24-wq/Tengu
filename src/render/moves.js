@@ -3,7 +3,10 @@
 //                  90 = straight forward, 180 = straight up)
 //   rig(r)       — body tweaks on the solved rig (lean, squat, legs, the free arm, face)
 //   lift, lunge  — whole-body hop (px up) and forward shove (px), drawn only (no physics)
-//   tilt         — whole-body lean in radians (+ forward), turn (x scale, for spins), stretch (y scale)
+//   tilt         — whole-body lean in radians (+ forward), turn (for spins: only its sign is drawn,
+//                  as a clean mirror flip), stretch (ignored: the figure never squashes or stretches)
+//   orbit        — the weapon angle is the blade's path around the body as seen, so it keeps that
+//                  path when a turn flips the figure (a spin's sweep runs on instead of mirroring)
 //   trail        — whether the weapon tip leaves a ribbon
 //   pull, nock   — for bows: how far the string is drawn back (0-1) and whether an arrow is on it;
 //   twang, spares  the string ringing after the loose (0-1), and spare arrows held in the draw hand
@@ -111,7 +114,7 @@ export const MOVES = {
     const turns = dur > 0.8 ? 2 : 1;
     const a = ease(seg(p, 0.08, 0.85)) * turns;
     return {
-      weapon: 95 + a * 360, arm: 100, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), lift: 4 * bump(p, 0.1, 0.85), trail: p > 0.08 && p < 0.88,
+      weapon: 95 + a * 360, arm: 100, orbit: true, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), lift: 4 * bump(p, 0.1, 0.85), trail: p > 0.08 && p < 0.88,
       rig: (r) => { r.squat = p < 0.08 || p > 0.88 ? 1 : 0; wideLegs(r); r.backArm = [-3, -3]; r.hairLift = -1; strikeFace(r); },
     };
   },
@@ -323,7 +326,7 @@ export const MOVES = {
     const turn = Math.cos(t * Math.PI * 2);
     return {
       weapon: lerp(-135, 225, t) - 40 * ease(settle), arm: lerp(175, 85, t), lunge: 8 * t * (1 - settle * 0.6), lift: 6 * bump(p, 0.38, 0.7),
-      turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.16 * t * (1 - settle), trail: p < 0.7,
+      orbit: true, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.16 * t * (1 - settle), trail: p < 0.7,
       rig: (r) => { r.tx = 2; if (p < 0.66) tuck(r); else { r.squat = settle < 0.5 ? 2 : 1; wideLegs(r); } r.backArm = [-4, -2]; r.hairLift = -1; r.cape = -4; strikeFace(r); },
     };
   },
@@ -331,6 +334,171 @@ export const MOVES = {
   // Two quick cuts in one breath: a downward slash, then the backhand.
   cross(p) {
     return p < 0.5 ? MOVES.slash(snap(p / 0.5)) : MOVES.slash2(snap((p - 0.5) / 0.5));
+  },
+
+  // ---------- The Warrior's alternate combo swings (see PATH_VARIANTS in world/melee.js) ----------
+  // Each stands in for a step of his combo now and then, so the string keeps changing. They're
+  // played big, for power (the player asked for exaggerated, fun swings): deep crouches, long
+  // lunges, hard leans and high hops. Never by squashing or stretching the figure, though: the
+  // power is in the pose, the reach and the timing (quick ones snap, heavy ones hold the wind-up).
+
+  // A wide sweep at hip height: coil hard with the shoulders turned away and the blade trailing flat
+  // behind, then unwind and rip it level through everything in front. Lands at about 0.45.
+  sweep(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(25, -105, t), arm: lerp(60, 72, t), tilt: -0.14 * t, lunge: -5 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.tx = -1; r.backArm = [3, 0]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.3, 0.52));
+    const settle = ease(seg(p, 0.64, 1));
+    return {
+      weapon: lerp(-105, 118, t) - 55 * settle, arm: lerp(72, 100, t) - 25 * settle, lunge: lerp(-5, 10, t) * (1 - settle * 0.6), tilt: 0.18 * t * (1 - settle), trail: p < 0.66,
+      rig: (r) => { r.tx = 2; r.squat = settle < 0.5 ? 2 : 1; lungeLegs(r, 1.3); r.backArm = [-5, 0]; r.cape = -4; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A spinning backhand: whip all the way round on the front foot with the blade low, hopping off
+  // the ground, and come out of the turn cutting up and over. Lands at about 0.55.
+  spinback(p) {
+    if (p < 0.45) {
+      const a = ease(p / 0.45);
+      const turn = Math.cos(a * Math.PI * 2);
+      return {
+        weapon: lerp(40, 150, a), arm: lerp(60, 30, a), orbit: true, turn: Math.sign(turn || 1), lift: 6 * bump(p, 0.05, 0.45), tilt: -0.08 * a,
+        rig: (r) => { r.squat = 1; wideLegs(r); r.backArm = [-4, -3]; r.hairLift = -1; r.cape = -5; },
+      };
+    }
+    const t = ease(seg(p, 0.45, 0.64));
+    const back = ease(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(150, -75, t) + 100 * back, arm: lerp(30, 176, t) - 114 * back, lunge: 7 * t * (1 - back), lift: 3 * bump(p, 0.45, 0.8), tilt: -0.16 * t * (1 - back), trail: p < 0.74,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.1); r.backArm = [-4, -3]; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A shoulder check: drop the blade low at the side, sink deep, then slam the shoulder into them
+  // in a short, brutal shove, and rock back. Lands at about 0.42.
+  shove(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(25, 135, t), arm: lerp(60, 28, t), lunge: -6 * t, tilt: -0.16 * t, rig: (r) => { r.squat = t > 0.4 ? 3 : 1; wideLegs(r); r.tx = -1; r.backArm = [3, -1]; } };
+    }
+    const t = ease(seg(p, 0.3, 0.4));
+    const back = ease(seg(p, 0.56, 1));
+    return {
+      weapon: 135 - 20 * back, arm: 28 + 10 * back, lunge: lerp(-6, 16, t) * (1 - back * 0.85), tilt: lerp(-0.16, 0.42, t) * (1 - back),
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.5); r.backArm = [3, -3]; r.cape = -5; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A rising diagonal: drop low with the blade down and back, then rip up through them and on
+  // past the shoulder, springing off the ground with it (it pops monsters up). Lands at 0.42.
+  risecut(p) {
+    if (p < 0.28) {
+      const t = ease(p / 0.28);
+      return { weapon: lerp(30, 210, t), arm: lerp(60, 20, t), lunge: 3 * t, tilt: 0.12 * t, rig: (r) => { r.squat = 3; lungeLegs(r, 1.2); r.tx = -1; r.backArm = [1, 1]; } };
+    }
+    const t = ease(seg(p, 0.28, 0.5));
+    const settle = ease(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(210, 10, t) + 30 * settle, arm: lerp(20, 168, t) - 36 * settle, lift: 12 * bump(p, 0.3, 0.8), lunge: 3 + 7 * t * (1 - settle * 0.6), tilt: lerp(0.12, -0.24, t) * (1 - settle), trail: p < 0.64,
+      rig: (r) => { if (p > 0.36 && p < 0.72) tuck(r); else lungeLegs(r, 0.9); r.tx = 2; r.backArm = [-4, -4]; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A leaping chop: a big hop forward with the blade raised high in both hands, then chop straight
+  // down as you land and hold the low crouch. Lands at about 0.52.
+  leapchop(p) {
+    if (p < 0.36) {
+      const t = ease(p / 0.36);
+      return { weapon: lerp(25, -75, t), arm: lerp(60, 186, t), lift: 20 * Math.sin(t * Math.PI * 0.55), lunge: 6 * t, tilt: -0.2 * t, rig: (r) => { tuck(r); r.backArm = [-1, -6]; r.hairLift = -1; } };
+    }
+    const t = easeIn(seg(p, 0.36, 0.5));
+    const settle = ease(seg(p, 0.64, 1));
+    return {
+      weapon: lerp(-75, 165, t) - 25 * settle, arm: lerp(186, 40, t) + 15 * settle, lift: 20 * Math.sin(Math.PI * 0.55) * (1 - t), lunge: 6 + 5 * t, tilt: lerp(-0.2, 0.36, t) * (1 - settle), trail: p < 0.6,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.tx = 2; r.backArm = [-2, 1]; r.cape = -5; strikeFace(r); },
+    };
+  },
+
+  // Lightning jabs: three stabs so fast the arm blurs, the point snapping out low, high, then dead
+  // centre on the last and hardest. Stabs land at about 0.2, 0.45 and 0.7.
+  jabs(p) {
+    const at = [0.2, 0.45, 0.7];
+    const i = p < 0.33 ? 0 : p < 0.58 ? 1 : 2;
+    const k = Math.max(0, Math.sin(clamp01((p - at[i] + 0.11) / 0.22) * Math.PI));
+    const last = i === 2 ? 1.3 : 1;
+    return {
+      weapon: 90 + [10, -10, 0][i] * k, arm: 50 + 58 * k * last, lunge: 2 + 9 * k * last, tilt: 0.06 + 0.12 * k * last, trail: k > 0.6,
+      rig: (r) => { r.tx = 2; r.squat = 1; lungeLegs(r, 1.2); r.backArm = [-4 + 3 * k, -1]; r.hairLift = k > 0.5 ? -1 : 0; strikeFace(r); },
+    };
+  },
+
+  // A flash cut: drop into a crouch with the blade held low and back, then blur forward across the
+  // ground in one level cut, ending far past them with the blade swept out behind. Lands at 0.4.
+  flashcut(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(25, 150, t), arm: lerp(60, 20, t), lunge: -4 * t, tilt: 0.14 * t, rig: (r) => { r.squat = 3; wideLegs(r); r.tx = -1; r.backArm = [3, 1]; } };
+    }
+    const t = ease(seg(p, 0.3, 0.42));
+    const settle = ease(seg(p, 0.6, 1));
+    return {
+      weapon: lerp(150, -95, t) + 60 * settle, arm: lerp(20, 100, t) - 30 * settle, lunge: lerp(-4, 12, t) * (1 - settle * 0.7), tilt: 0.3 * (1 - settle), trail: p < 0.55,
+      rig: (r) => { r.tx = 2; r.squat = settle < 0.6 ? 2 : 1; lungeLegs(r, 1.6); r.backArm = [-5, 1]; r.cape = -5; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A driving stab: pull the blade right back past the hip and coil, then explode forward behind
+  // the point with the whole body, far out over the front foot, and hold. Lands at about 0.42.
+  drivestab(p) {
+    if (p < 0.32) {
+      const t = ease(p / 0.32);
+      return { weapon: 95, arm: lerp(70, 30, t), lunge: -7 * t, tilt: -0.2 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.tx = -2; r.backArm = [4, -1]; } };
+    }
+    const t = ease(seg(p, 0.32, 0.42));
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 92, arm: lerp(30, 110, t) - 30 * back, lunge: lerp(-7, 18, t) * (1 - back * 0.8), tilt: lerp(-0.2, 0.34, t) * (1 - back), trail: p > 0.32 && p < 0.55,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.7); r.backArm = [-5, -1]; r.cape = -5; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A home-run swing: haul the blade back over the far shoulder and hold it there, trembling with
+  // the load, then let go in one enormous level swing that carries the whole body round and
+  // through. The heavy blow mid-combo. Lands at about 0.56.
+  hammer(p) {
+    if (p < 0.46) {
+      const t = ease(seg(p, 0, 0.3));
+      const shake = p > 0.3 ? Math.sin(p * 140) * 1.5 : 0;
+      return { weapon: lerp(25, -130, t) + shake, arm: lerp(60, 172, t), lunge: -5 * t, tilt: -0.22 * t, rig: (r) => { r.squat = t > 0.5 ? 3 : 1; wideLegs(r); r.tx = -2; r.backArm = [4, -2]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.46, 0.6));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-130, 205, t) - 60 * settle, arm: lerp(172, 78, t) + 10 * settle, lunge: lerp(-5, 13, t) * (1 - settle * 0.6), lift: 4 * bump(p, 0.46, 0.75), tilt: lerp(-0.22, 0.34, t) * (1 - settle), trail: p < 0.74,
+      rig: (r) => { r.tx = 2; r.squat = settle < 0.6 ? 2 : 1; lungeLegs(r, 1.5); r.backArm = [-5, -1]; r.cape = -6; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // A sky-splitter: sink deep, spring high into the air with the blade swung all the way back over
+  // the head and the body arched, hang a beat at the top, then crash straight down and split the
+  // ground, and hold the deep crouch. The heaviest finisher. Lands at about 0.6.
+  skysplit(p) {
+    if (p < 0.16) {
+      const t = ease(p / 0.16);
+      return { weapon: lerp(25, 60, t), arm: lerp(60, 40, t), tilt: 0.14 * t, rig: (r) => { r.squat = 3; wideLegs(r); r.backArm = [2, 2]; } };
+    }
+    if (p < 0.5) {
+      const t = ease(seg(p, 0.16, 0.42));
+      return { weapon: lerp(60, -165, t), arm: lerp(40, 192, t), lift: 30 * Math.sin(t * Math.PI * 0.55), lunge: 6 * t, tilt: -0.34 * t, rig: (r) => { tuck(r); r.backArm = [-1, -6]; r.hairLift = -1; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.5, 0.6));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-165, 168, t) - 20 * settle, arm: lerp(192, 36, t) + 18 * settle, lift: 30 * Math.sin(Math.PI * 0.55) * (1 - t), lunge: 6 + 6 * t, tilt: lerp(-0.34, 0.42, t) * (1 - settle), trail: p < 0.66,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.7 ? 3 : 1; wideLegs(r); } r.tx = 2; r.backArm = [3, 2]; r.cape = -6; strikeFace(r); },
+    };
   },
 
   // A shield shove: brace low behind the guard, then drive forward shoulder and hilt first (the
@@ -429,7 +597,7 @@ export const MOVES = {
       const a = ease(seg(p, 0, 0.45)) * 2;
       const rise = ease(seg(p, 0.05, 0.45));
       return {
-        weapon: 95 + a * 360, arm: 100, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), lift: 30 * rise, trail: true,
+        weapon: 95 + a * 360, arm: 100, orbit: true, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), lift: 30 * rise, trail: true,
         rig: (r) => { tuck(r); r.backArm = [-3, -3]; r.hairLift = -1; strikeFace(r); },
       };
     }
@@ -558,7 +726,7 @@ export const MOVES = {
   gyre(p) {
     const a = ease(seg(p, 0.12, 0.8));
     return {
-      weapon: 110 + a * 360, arm: 95, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), tilt: 0.2 * bump(p, 0.05, 0.95), trail: p > 0.12 && p < 0.85,
+      weapon: 110 + a * 360, arm: 95, orbit: true, turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))), tilt: 0.2 * bump(p, 0.05, 0.95), trail: p > 0.12 && p < 0.85,
       rig: (r) => { r.squat = p < 0.08 || p > 0.9 ? 1 : 3; wideLegs(r); r.backArm = [-4, -2]; r.hairLift = -1; strikeFace(r); r.cape = -4; },
     };
   },
@@ -919,7 +1087,7 @@ export const MOVES = {
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
-  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
+  flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
   spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, falcondive: 1.5, backstab: 0.5, assassinate: 1.5, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
 };
 

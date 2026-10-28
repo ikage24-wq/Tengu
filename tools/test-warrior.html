@@ -1,0 +1,59 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Test Warrior</title>
+<style>body { margin: 0; padding: 24px; font: 15px system-ui, sans-serif; background: #f6f0ff; color: #3a2d4f; } b { color: #8a5cf0; }</style>
+<p id="msg">Making a test Warrior...</p>
+<script type="module">
+// Dev tool: makes a ready-to-test Warrior in this browser's saves and opens the game. Open
+// /tools/test-warrior.html (served with the game). A level 45 Warrior (not yet on a path) with a
+// sword, the Warrior gear set, every Warrior skill maxed (the procs, the passives, Shoulder Charge
+// and Titan Breaker), stats spent, potions on the hotkeys, starting in Mossy Woods. It goes in
+// the first empty character slot. Add ?level=30 for another level, ?slot=3 for a given slot.
+import { createCharacter, gainExp, advanceJob, autoAssignAp } from '../src/core/character.js';
+import { expToNext } from '../src/core/exp.js';
+import { makeEquip } from '../src/core/items.js';
+import { addItem } from '../src/core/inventory.js';
+import { computeStats } from '../src/core/stats.js';
+import { saveGame, hasSave, SLOTS } from '../src/core/save.js';
+import { jobGearId, JOB_SLOTS, ITEMS } from '../src/data/items.js';
+import { lookFor } from '../src/render/townlife.js';
+
+const q = new URLSearchParams(location.search);
+const level = Math.max(10, Math.min(100, Number(q.get('level')) || 45));
+const msg = document.getElementById('msg');
+let slot = q.get('slot') != null ? Number(q.get('slot')) : -1;
+if (slot < 0) for (let i = 0; i < SLOTS && slot < 0; i++) if (!hasSave(i)) slot = i;
+if (slot < 0) {
+  msg.innerHTML = 'All 8 character slots are full. Delete one in the game, or open this page with <b>?slot=7</b> to replace the last one.';
+} else {
+  const c = createCharacter('TestWarrior', lookFor(7));
+  c.slot = slot;
+  // One level at a time, so it lands exactly on the level asked for.
+  const up = () => gainExp(c, expToNext(c.level) - c.exp);
+  while (c.level < 10) up();
+  advanceJob(c, 'warrior');
+  while (c.level < level) up();
+  autoAssignAp(c);
+  Object.assign(c.skills, { bladerush: 20, whirlwind: 20, warcry: 20, ironguard: 20, swordmastery: 20, toughness: 20, shouldercharge: 10, titanbreak: 10 });
+  c.sp = 0;
+  const gear = Math.floor(level / 5) * 5;
+  c.equipment.weapon = makeEquip(`sword_${gear}`);
+  for (const s of JOB_SLOTS) if (ITEMS[jobGearId('warrior', s, gear)]) c.equipment[s] = makeEquip(jobGearId('warrior', s, gear));
+  addItem(c.inventory, 'red_potion', 200);
+  addItem(c.inventory, 'blue_potion', 200);
+  addItem(c.inventory, 'elixir', 20);
+  // A spear and an axe too, to try the swings with every warrior weapon.
+  addItem(c.inventory, `spear_${gear}`, 1);
+  addItem(c.inventory, `axe_${gear}`, 1);
+  c.hotkeys = { KeyQ: { skill: 'shouldercharge' }, KeyW: { skill: 'titanbreak' }, Digit1: { item: 'red_potion' }, Digit2: { item: 'blue_potion' } };
+  c.gold = 1e6;
+  c.mapId = 'woods';
+  c.portal = 'west';
+  const stats = computeStats(c);
+  c.hp = stats.maxHp;
+  c.mp = stats.maxMp;
+  saveGame(c);
+  msg.innerHTML = `Made <b>TestWarrior</b> (level ${c.level} Warrior) in slot ${slot + 1}. Opening the game: pick your world, then TestWarrior on the character tree...`;
+  setTimeout(() => (location.href = '../'), 1800);
+}
+</script>
