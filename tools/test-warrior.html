@@ -8,44 +8,61 @@
 // /tools/test-warrior.html (served with the game). A level 45 Warrior (not yet on a path) with a
 // sword, the Warrior gear set, every Warrior skill maxed (the procs, the passives, Shoulder Charge
 // and Titan Breaker), stats spent, potions on the hotkeys, starting in Mossy Woods. It goes in
-// the first empty character slot. Add ?level=30 for another level, ?slot=3 for a given slot.
+// the first empty character slot. Add ?job=paladin or ?job=berserker for one on a path (with the
+// path's skills maxed too and its finisher on W; a Berserker gets an axe), ?level=30 for another
+// level (30 or more for a path), ?slot=3 for a given slot.
 import { createCharacter, gainExp, advanceJob, autoAssignAp } from '../src/core/character.js';
 import { expToNext } from '../src/core/exp.js';
 import { makeEquip } from '../src/core/items.js';
 import { addItem } from '../src/core/inventory.js';
+import { SKILLS } from '../src/data/skills.js';
 import { computeStats } from '../src/core/stats.js';
 import { saveGame, hasSave, SLOTS } from '../src/core/save.js';
 import { jobGearId, JOB_SLOTS, ITEMS } from '../src/data/items.js';
 import { lookFor } from '../src/render/townlife.js';
 
+const PATHS = {
+  warrior: { name: 'TestWarrior', title: 'Warrior', weapon: 'sword', skills: {}, finisher: 'titanbreak' },
+  paladin: { name: 'TestPaladin', title: 'Paladin', weapon: 'sword', skills: { paladinmastery: 20, aegissmite: 20, hallowedground: 20, divineaegis: 20, sacredbulwark: 10, judgment: 10, grandverdict: 10 }, finisher: 'grandverdict' },
+  berserker: { name: 'TestBerserker', title: 'Berserker', weapon: 'axe', skills: { berserkermastery: 20, ravage: 20, bloodfrenzy: 20, rampage: 20, bloodlust: 10, demonform: 10, crimsoneclipse: 10 }, finisher: 'crimsoneclipse' },
+};
 const q = new URLSearchParams(location.search);
-const level = Math.max(10, Math.min(100, Number(q.get('level')) || 45));
+const path = PATHS[q.get('job')] ?? PATHS.warrior;
+const job = Object.keys(PATHS).find((k) => PATHS[k] === path);
+const level = Math.max(job === 'warrior' ? 10 : 30, Math.min(100, Number(q.get('level')) || 45));
 const msg = document.getElementById('msg');
+msg.textContent = `Making a test ${path.title}...`;
 let slot = q.get('slot') != null ? Number(q.get('slot')) : -1;
 if (slot < 0) for (let i = 0; i < SLOTS && slot < 0; i++) if (!hasSave(i)) slot = i;
 if (slot < 0) {
   msg.innerHTML = 'All 8 character slots are full. Delete one in the game, or open this page with <b>?slot=7</b> to replace the last one.';
 } else {
-  const c = createCharacter('TestWarrior', lookFor(7));
+  const c = createCharacter(path.name, lookFor(job === 'paladin' ? 21 : job === 'berserker' ? 33 : 7));
   c.slot = slot;
   // One level at a time, so it lands exactly on the level asked for.
   const up = () => gainExp(c, expToNext(c.level) - c.exp);
   while (c.level < 10) up();
   advanceJob(c, 'warrior');
+  if (job !== 'warrior') {
+    while (c.level < 30) up();
+    c.quests.warrior_trial = { state: 'done', kills: {} };
+    advanceJob(c, job);
+  }
   while (c.level < level) up();
   autoAssignAp(c);
-  Object.assign(c.skills, { bladerush: 20, whirlwind: 20, warcry: 20, ironguard: 20, swordmastery: 20, toughness: 20, shouldercharge: 10, titanbreak: 10 });
+  // Late skills (minLevel) only once the level reaches them.
+  for (const id of Object.keys(path.skills)) if (c.level < (SKILLS[id].minLevel ?? 0)) delete path.skills[id];
+  Object.assign(c.skills, { bladerush: 20, whirlwind: 20, warcry: 20, ironguard: 20, swordmastery: 20, toughness: 20, shouldercharge: 10, titanbreak: 10 }, path.skills);
   c.sp = 0;
   const gear = Math.floor(level / 5) * 5;
-  c.equipment.weapon = makeEquip(`sword_${gear}`);
+  c.equipment.weapon = makeEquip(`${path.weapon}_${gear}`);
   for (const s of JOB_SLOTS) if (ITEMS[jobGearId('warrior', s, gear)]) c.equipment[s] = makeEquip(jobGearId('warrior', s, gear));
   addItem(c.inventory, 'red_potion', 200);
   addItem(c.inventory, 'blue_potion', 200);
   addItem(c.inventory, 'elixir', 20);
-  // A spear and an axe too, to try the swings with every warrior weapon.
-  addItem(c.inventory, `spear_${gear}`, 1);
-  addItem(c.inventory, `axe_${gear}`, 1);
-  c.hotkeys = { KeyQ: { skill: 'shouldercharge' }, KeyW: { skill: 'titanbreak' }, Digit1: { item: 'red_potion' }, Digit2: { item: 'blue_potion' } };
+  // The other warrior weapons too, to try the swings with each.
+  for (const w of ['sword', 'spear', 'axe']) if (w !== path.weapon) addItem(c.inventory, `${w}_${gear}`, 1);
+  c.hotkeys = { KeyQ: { skill: 'shouldercharge' }, KeyW: { skill: path.finisher }, Digit1: { item: 'red_potion' }, Digit2: { item: 'blue_potion' } };
   c.gold = 1e6;
   c.mapId = 'woods';
   c.portal = 'west';
@@ -53,7 +70,7 @@ if (slot < 0) {
   c.hp = stats.maxHp;
   c.mp = stats.maxMp;
   saveGame(c);
-  msg.innerHTML = `Made <b>TestWarrior</b> (level ${c.level} Warrior) in slot ${slot + 1}. Opening the game: pick your world, then TestWarrior on the character tree...`;
+  msg.innerHTML = `Made <b>${path.name}</b> (level ${c.level} ${path.title}) in slot ${slot + 1}. Opening the game: pick your world, then ${path.name} on the character tree...`;
   setTimeout(() => (location.href = '../'), 1800);
 }
 </script>

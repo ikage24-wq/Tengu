@@ -409,121 +409,304 @@ test('Paladins tank and Berserkers deal damage in a group', async () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
 });
 
-test("Aegis Smite's shove stuns, and its smite calls pillars of light", () => {
-  const w = advanced('paladin');
-  w.char.skills.aegissmite = 10;
+// The warrior paths' skills are procs too (see data/skills.js). Runs `fn` with fixed dice: low
+// rolls make every proc go off (and every blow hit and crit), high ones none.
+function dice(value, fn) {
   const random = Math.random;
-  Math.random = () => 0.5;
+  Math.random = () => value;
   try {
-    assert.ok(cast(w, 'aegissmite').ok);
-    run(w, 0.4);
-    assert.ok(w.mobs.some((m) => m.hold === 'stun' && m.frozenUntil > w.now), 'the shove stunned');
-    assert.ok(w.fx.some((f) => f.kind === 'aegis'), 'a shield of light flared');
-    settle(w);
-    assert.ok(cast(w, 'aegissmite').ok);
-    settle(w);
-    assert.ok(cast(w, 'aegissmite').ok);
-    assert.equal(w.pose.kind, 'smite');
-    let pillars = 0;
-    for (let i = 0; i < 50; i++) {
-      updateWorld(w, DT, idle);
-      pillars = Math.max(pillars, w.fx.filter((f) => f.kind === 'pillar').length);
-    }
-    assert.ok(pillars >= 2, `pillars of light on the monsters hit (${pillars})`);
+    return fn();
   } finally {
     Math.random = random;
   }
+}
+// Plays the path's combo finisher (the first combo is always the path's own).
+function finisher(w) {
+  w.combo = PATH_VARIANTS[w.char.job].length - 2;
+  w.comboUntil = w.now + 1;
+  updateWorld(w, DT, press('KeyZ'));
+}
+
+test("Aegis Smite: a swing sometimes calls down a pillar of light that stuns, hit or miss", () => {
+  const w = advanced('paladin');
+  w.char.skills.aegissmite = 20;
+  assert.equal(cast(w, 'aegissmite').reason, 'passive', 'not a key to press any more');
+  const said = new Set();
+  dice(0.01, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 40; i++) {
+      updateWorld(w, DT, idle);
+      for (const s of w.strikes) said.add(s.key);
+    }
+  });
+  assert.ok(said.has('procaegissmite'), 'the pillar comes down');
+  assert.ok(w.fx.some((f) => f.kind === 'pillar'), 'pillars of light on what it hit');
+  assert.ok(w.mobs.some((m) => m.hold === 'stun' && m.frozenUntil > w.now), 'and they are stunned');
+  // Swinging at nothing still calls it (a flare of light ahead, no pillars on anyone).
+  const empty = advanced('paladin');
+  empty.char.skills.aegissmite = 20;
+  empty.mobs = [];
+  dice(0.01, () => {
+    updateWorld(empty, DT, press('KeyZ'));
+    run(empty, 0.6);
+  });
+  assert.ok(empty.fx.some((f) => f.kind === 'aegis'), 'a flare of light ahead');
 });
 
-test('Hallowed Ground turns every monster it hits on you', () => {
+test('Hallowed Ground: the combo finisher drives the blade down and turns every monster it hits on you', () => {
   const w = advanced('paladin');
   w.char.skills.hallowedground = 10;
   for (const m of w.mobs) m.aggroUntil = 0;
-  assert.ok(cast(w, 'hallowedground').ok);
-  run(w, 0.3);
-  assert.ok(w.mobs.every((m) => !m.aggroUntil), 'nothing until the blade hits the ground');
-  run(w, 0.3);
+  // The smite catches all three boars, so it always goes off (no lucky roll needed).
+  dice(0.99, () => {
+    finisher(w);
+    run(w, 0.6);
+  });
+  assert.equal(w.pose.kind, 'consecrate', 'the blade goes into the ground');
+  dice(0.99, () => run(w, 0.6));
   assert.ok(w.mobs.every((m) => m.aggroUntil > w.now), 'all of them come after you');
   assert.ok(w.fx.some((f) => f.kind === 'consecrate'), 'a ring of holy light');
 });
 
-test("a Berserker's blows build Rage, which drains once the fighting stops", () => {
-  const w = advanced('berserker', 'axe_20');
-  w.char.skills.ravage = 10;
-  assert.equal(w.rage, 0);
-  const tap = { held: new Set(), pressed: new Set(['KeyZ']), locked: false };
-  updateWorld(w, DT, tap);
-  run(w, 0.5);
-  assert.ok(w.rage > 0, 'a basic blow builds a little');
-  const after = w.rage;
-  assert.ok(cast(w, 'ravage').ok);
-  run(w, 0.6);
-  assert.ok(w.rage > after + 5, `Ravage builds more (${after} -> ${w.rage})`);
-  const held = w.rage;
-  run(w, 3);
-  assert.equal(w.rage, held, 'holds for a moment');
-  run(w, 4);
-  assert.ok(w.rage < held, 'then drains away');
+test("a Berserker's blows build Rage (Ravage's cleaves more), which drains once the fighting stops", () => {
+  const rageAfter = (ravage) => {
+    const w = advanced('berserker', 'axe_20');
+    if (ravage) w.char.skills.ravage = 20;
+    dice(0.01, () => {
+      updateWorld(w, DT, press('KeyZ'));
+      run(w, 0.7);
+    });
+    return w;
+  };
+  const plain = rageAfter(false);
+  const ravaged = rageAfter(true);
+  assert.ok(plain.rage > 0, 'a basic blow builds a little');
+  assert.ok(ravaged.rage > plain.rage + 5, `Ravage's cleaves build more (${plain.rage} -> ${ravaged.rage})`);
+  assert.ok(ravaged.mobs.some((m) => m.poison?.kind === 'bleed'), 'and they bleed');
+  const held = ravaged.rage;
+  run(ravaged, 6);
+  assert.equal(ravaged.rage, held, 'holds for a while');
+  run(ravaged, 4);
+  assert.ok(ravaged.rage < held, 'then drains away');
   // Other jobs never build it.
   const p = advanced('paladin');
-  updateWorld(p, DT, tap);
+  updateWorld(p, DT, press('KeyZ'));
   run(p, 0.5);
   assert.equal(p.rage, 0);
 });
 
-test('Rampage needs Rage, spends all of it, and hits harder the more there was', () => {
-  const damageAt = (rage) => {
+test('Rampage: with enough Rage the combo finisher flows into it, keeping the Rage, harder the more there was', () => {
+  const rampageAt = (rage) => {
     const w = advanced('berserker', 'axe_20');
-    w.char.skills.rampage = 10;
-    const random = Math.random;
-    Math.random = () => 0.5;
-    try {
-      w.rage = rage;
-      w.rageAt = w.now;
-      const r = cast(w, 'rampage');
-      if (!r.ok) return r.reason;
-      assert.equal(w.rage, 0, 'spent it all');
-      const m = w.mobs[0];
-      const marks = [];
-      let last = m.hp;
-      for (let i = 0; i < 100; i++) {
+    w.char.skills.rampage = 20;
+    w.rage = rage;
+    w.rageAt = 1e9;
+    const m = w.mobs[0];
+    let from = null;
+    let spent = null;
+    dice(0.01, () => {
+      finisher(w);
+      for (let i = 0; i < 150; i++) {
         updateWorld(w, DT, idle);
-        if (m.hp < last) marks.push(i);
-        last = m.hp;
+        if (w.pose?.kind === 'rampage' && from == null) {
+          from = m.hp;
+          spent = w.rage;
+        }
       }
-      assert.equal(marks.length, 4, `three chops and the dive (at frames ${marks})`);
-      return 1e9 - m.hp;
-    } finally {
-      Math.random = random;
-    }
+    });
+    return from == null ? null : { dealt: from - m.hp, spent };
   };
-  assert.equal(damageAt(10), 'rage');
-  const some = damageAt(30);
-  const full = damageAt(100);
-  assert.ok(full > some * 1.4, `full Rage hits much harder (${some} vs ${full})`);
+  assert.equal(rampageAt(10), null, 'not enough Rage: no Rampage');
+  const some = rampageAt(40);
+  const full = rampageAt(100);
+  assert.ok(some && full, 'it goes off with the Rage');
+  assert.ok(full.spent >= 95, 'it feeds on the Rage without spending it');
+  assert.ok(full.dealt > some.dealt * 1.25, `full Rage hits much harder (${some.dealt} vs ${full.dealt})`);
 });
 
-test('Blood Frenzy raises attack and gives a quarter of your Rage', () => {
+test('Blood Frenzy: a critical hit sometimes sends you into a frenzy, with a quarter of your Rage', async () => {
+  const { frenzyOnCrit } = await import('../src/world/combat.js');
   const w = advanced('berserker', 'axe_20');
   w.char.skills.bloodfrenzy = 10;
-  assert.ok(cast(w, 'bloodfrenzy').ok);
+  assert.equal(cast(w, 'bloodfrenzy').reason, 'passive');
+  frenzyOnCrit(w, () => 0.99);
+  assert.ok(!w.char.buffs.bloodfrenzy, 'an unlucky roll: no frenzy');
+  frenzyOnCrit(w, () => 0);
   assert.equal(w.rage, 25);
   assert.ok(w.char.buffs.bloodfrenzy.values.watk > 0);
+  // From a real blow: low dice crit, and crits set it off.
+  const b = advanced('berserker', 'axe_20');
+  b.char.skills.bloodfrenzy = 10;
+  dice(0.01, () => {
+    updateWorld(b, DT, press('KeyZ'));
+    run(b, 0.5);
+  });
+  assert.ok(b.char.buffs.bloodfrenzy, 'a crit set it off');
+});
+
+test('Divine Aegis: a hit that leaves the Paladin under half HP raises it, once at a time', async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const w = advanced('paladin');
+  w.god = false;
+  w.char.skills.divineaegis = 10;
+  w.char.hp = w.stats.maxHp;
+  hurtPlayer(w, 1, w.body.x + 20);
+  assert.ok(!w.char.buffs.divineaegis, 'not while healthy');
+  w.invuln = 0;
+  w.char.hp = Math.round(w.stats.maxHp * 0.55);
+  hurtPlayer(w, 400, w.body.x + 20);
+  assert.ok(w.char.hp < w.stats.maxHp * 0.5, 'knocked under half');
+  assert.ok(w.char.buffs.divineaegis?.values.dmgCut > 0, 'the blade goes up');
+  const since = w.char.buffs.divineaegis.since;
+  w.invuln = 0;
+  hurtPlayer(w, 50, w.body.x + 20);
+  assert.equal(w.char.buffs.divineaegis.since, since, 'not again while it holds');
+});
+
+test('late skills open at their own level: Sacred Bulwark at 50, Judgment and Demon Form at 70', async () => {
+  const { canLearn } = await import('../src/core/character.js');
+  const w = advanced('paladin');
+  w.char.sp = 5;
+  w.char.level = 49;
+  assert.equal(canLearn(w.char, 'sacredbulwark'), false, 'not yet at 49');
+  w.char.level = 50;
+  assert.ok(canLearn(w.char, 'sacredbulwark'), 'open at 50');
+  assert.equal(canLearn(w.char, 'judgment'), false, 'Judgment waits for 70');
+  w.char.level = 70;
+  assert.ok(canLearn(w.char, 'judgment'));
+});
+
+test('Sacred Bulwark: a blocked hit does no damage and answers with a stunning holy shockwave', async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const w = advanced('paladin');
+  w.god = false;
+  w.char.skills.sacredbulwark = 10;
+  w.char.hp = w.stats.maxHp;
+  dice(0.99, () => hurtPlayer(w, 300, w.body.x + 20));
+  assert.ok(w.char.hp < w.stats.maxHp, 'an unlucky roll: the hit lands');
+  w.invuln = 0;
+  w.char.hp = w.stats.maxHp;
+  dice(0.01, () => {
+    hurtPlayer(w, 300, w.body.x + 20);
+    assert.equal(w.char.hp, w.stats.maxHp, 'blocked outright');
+    run(w, 0.4);
+  });
+  assert.ok(w.fx.some((f) => f.kind === 'aegis'), 'a shield of light flashes up');
+  assert.ok(w.mobs.some((m) => m.hold === 'stun' && m.frozenUntil > w.now), 'the shockwave stuns');
+});
+
+test('Judgment: at full Faith every combo finisher rains holy swords and mends you', () => {
+  const swordsAt = (faith) => {
+    const w = advanced('paladin');
+    w.char.skills.judgment = 10;
+    w.faith = faith;
+    w.faithAt = 1e9;
+    w.char.hp = Math.round(w.stats.maxHp / 2);
+    const hp = w.char.hp;
+    dice(0.99, () => {
+      finisher(w);
+      run(w, 0.7);
+    });
+    return { rained: w.fx.some((f) => f.kind === 'rain' && f.variant === 'sword'), healed: w.char.hp > hp };
+  };
+  assert.deepEqual(swordsAt(50), { rained: false, healed: false }, 'not without full Faith');
+  assert.deepEqual(swordsAt(100), { rained: true, healed: true }, 'swords fall, and their light mends');
+});
+
+test('Bloodlust: blows heal the Berserker, more the lower his HP', () => {
+  const healed = (share) => {
+    const w = advanced('berserker', 'axe_20');
+    w.char.skills.bloodlust = 10;
+    w.char.hp = Math.round(w.stats.maxHp * share);
+    const hp = w.char.hp;
+    dice(0.5, () => {
+      updateWorld(w, DT, press('KeyZ'));
+      run(w, 0.5);
+    });
+    return w.char.hp - hp;
+  };
+  const high = healed(0.9);
+  const low = healed(0.1);
+  assert.ok(high > 0, 'a blow heals a little');
+  assert.ok(low > high * 1.3, `much more when low (${high} vs ${low})`);
+});
+
+test('Demon Form: when Rage fills, every swing strikes twice and Rage holds until it ends', async () => {
+  const { addRage, inForm } = await import('../src/world/melee.js');
+  const w = advanced('berserker', 'axe_20');
+  w.char.skills.demonform = 10;
+  addRage(w, 100);
+  assert.ok(inForm(w), 'the demon takes him');
+  assert.ok(w.char.buffs.demonform, 'shown as a buff');
+  const m = w.mobs[0];
+  const x = m.x;
+  dice(0.5, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 0.6);
+  });
+  assert.ok(w.formSwing, 'his demon shadow strikes too');
+  // And his cuts reach farther: a monster just out of a normal swing's reach is caught.
+  const reachOf = (demon) => {
+    const v = advanced('berserker', 'axe_20');
+    v.char.skills.demonform = 10;
+    if (demon) addRage(v, 100);
+    v.mobs = v.mobs.slice(0, 1);
+    v.mobs[0].x = v.body.x + 105;
+    const hp = v.mobs[0].hp;
+    dice(0.5, () => {
+      updateWorld(v, DT, press('KeyZ'));
+      run(v, 0.5);
+    });
+    return v.mobs[0].hp < hp;
+  };
+  assert.equal(reachOf(false), false, 'out of reach normally');
+  assert.ok(reachOf(true), 'caught in Demon Form');
+  assert.ok(w.numbers.filter((n) => /^\d+$/.test(n.text)).length >= 2, 'two hits from one swing');
+  run(w, 8);
+  assert.equal(w.rage, 100, 'Rage holds while he is the demon');
+  w.now = w.formUntil + 0.1;
+  w.rageAt = -99;
+  run(w, 1);
+  assert.ok(w.rage < 100, 'then drains once it ends');
+  void x;
+});
+
+test("Judgment: when Faith fills the Paladin ascends, every swing strikes twice and Faith holds", async () => {
+  const { addFaith, inForm } = await import('../src/world/melee.js');
+  const w = advanced('paladin');
+  w.char.skills.judgment = 10;
+  addFaith(w, 100);
+  assert.ok(inForm(w), 'she ascends');
+  assert.ok(w.char.buffs.judgment, 'shown as a buff');
+  let burst = false;
+  dice(0.5, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 36; i++) {
+      updateWorld(w, DT, idle);
+      burst ||= w.fx.some((f) => f.kind === 'formburst' && f.school === 'holy');
+    }
+  });
+  assert.ok(w.formSwing, 'her swings strike again');
+  assert.ok(burst, 'swings burst with holy light');
+  run(w, 8);
+  assert.equal(w.faith, 100, 'Faith holds while she is ascended');
+  // A Berserker's Demon Form never comes from a Paladin's skills, and the other way round.
+  const b = advanced('berserker', 'axe_20');
+  b.char.skills.judgment = 10;
+  addFaith(b, 100);
+  assert.ok(!inForm(b), 'no Faith, no Judgment');
 });
 
 test('the no-spam rule holds for the Paladin and the Berserker too', () => {
-  for (const [job, weapon, skill, rage] of [['paladin', 'sword_20', 'aegissmite'], ['paladin', 'sword_20', 'hallowedground'], ['berserker', 'axe_20', 'ravage'], ['berserker', 'axe_20', 'rampage', true]]) {
+  for (const [job, weapon] of [['paladin', 'sword_20'], ['berserker', 'axe_20']]) {
     const w = advanced(job, weapon);
-    w.char.skills[skill] = 10;
-    if (rage) w.rage = 100;
-    assert.ok(cast(w, skill).ok, `${skill} goes off`);
+    w.char.skills.shouldercharge = 10;
+    assert.ok(cast(w, 'shouldercharge').ok, `${job}: Shoulder Charge goes off`);
     run(w, 0.15);
-    if (rage) w.rage = 100;
     for (let i = 0; i < 3; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
-    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion, even after moving`);
+    assert.equal(cast(w, 'shouldercharge').reason, 'busy', `${job}: can't be recast mid-motion, even after moving`);
     settle(w);
-    if (rage) w.rage = 100;
-    assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
+    assert.ok(cast(w, 'shouldercharge').ok, `${job}: free again once its motion is done`);
   }
 });
 
@@ -594,12 +777,12 @@ test('the hit counter climbs with every hit you land and drops after a pause', (
 test('a skill started right after a finisher connects is a Link, and hits harder', () => {
   const damage = (link) => {
     const w = advanced('paladin');
-    w.char.skills.aegissmite = 10;
+    w.char.skills.shouldercharge = 10;
     const random = Math.random;
     Math.random = () => 0.5;
     try {
       if (link) w.finisherAt = { at: w.now, key: 'basic3' };
-      assert.ok(cast(w, 'aegissmite').ok);
+      assert.ok(cast(w, 'shouldercharge').ok);
       const m = w.mobs[0];
       run(w, 0.4);
       return { dealt: 1e9 - m.hp, said: w.numbers.some((n) => n.text === 'LINK!') };
@@ -642,8 +825,7 @@ test("each warrior path's finisher needs its gauge full, spends it, and lands it
 test("a Paladin's blows and the hits she takes build Faith, and Faith softens hits", async () => {
   const { hurtPlayer } = await import('../src/world/world.js');
   const w = advanced('paladin');
-  w.char.skills.aegissmite = 10;
-  assert.ok(cast(w, 'aegissmite').ok);
+  updateWorld(w, DT, press('KeyZ'));
   run(w, 0.4);
   assert.ok(w.faith > 0, 'blows build it');
   const taken = (faith) => {
@@ -1141,13 +1323,13 @@ test('Blade Rush and Whirlwind go off from the swing itself, even with nothing i
     // Swing through the whole combo at thin air.
     for (let i = 0; i < 240; i++) {
       updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
-      for (const n of w.numbers) if (n.link) said.add(n.text);
+      for (const s of w.strikes) said.add(s.key);
     }
   } finally {
     Math.random = random;
   }
-  assert.ok(said.has('BLADE RUSH!'), 'a swing at nothing still rushes on');
-  assert.ok(said.has('WHIRLWIND!'), 'and the combo still spins into a Whirlwind');
+  assert.ok(said.has('procbladerush'), 'a swing at nothing still rushes on');
+  assert.ok(said.has('procwhirlwind'), 'and the combo still spins into a Whirlwind');
 });
 
 test('Iron Guard braces against a hard hit, and the proc skills free their old hotkeys', async () => {
@@ -1731,5 +1913,30 @@ test('holding an attack skill and a direction keeps casting it, planted, for eve
     assert.equal(left.walked, 0, `${job}: no walking between ${skill} casts`);
     assert.equal(left.n, alone.n, `${job}: as many casts with a direction held`);
     assert.equal(left.facing, -1, `${job}: turned to face the way held`);
+  }
+});
+
+test("the Paladin's and the Berserker's combos mix their own swing pools too", () => {
+  for (const [job, weapon] of [['paladin', 'sword_20'], ['berserker', 'axe_20']]) {
+    const steps = PATH_VARIANTS[job];
+    assert.equal(steps.length, PATH_COMBOS[job].length, `${job}: a choice for every step`);
+    steps.forEach((choices, i) => {
+      assert.equal(choices[0], PATH_COMBOS[job][i], `${job}: the path's own swing comes first`);
+      assert.ok(choices.length >= 2, `${job}: step ${i + 1} has a choice`);
+      for (const s of choices) assert.ok(MOVES[s.move], `${job}: ${s.move} is drawn`);
+    });
+    assert.ok(steps.at(-1).every((s) => s.finisher), `${job}: every last swing is a finisher`);
+    // Played out with fixed dice, every swing in the pool comes up.
+    const w = advanced(job, weapon);
+    const seen = new Set();
+    let seed = 7;
+    dice(0, () => {
+      Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 60 * 60; i++) {
+        updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+        if (w.pose) seen.add(w.pose.kind);
+      }
+    });
+    for (const s of steps.flat()) assert.ok(seen.has(s.move), `${job}: ${s.move} came up`);
   }
 });

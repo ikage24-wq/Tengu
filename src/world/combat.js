@@ -8,7 +8,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -104,7 +104,7 @@ export function applyBuff(world, skillId, params) {
   const s = SKILLS[skillId];
   char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name };
   if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
-  world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, dir: body.facing, t: 0, dur: 1.1 });
+  world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, school: schoolFor(char, s.school), x: body.x, y: body.y, dir: body.facing, t: 0, dur: 1.1 });
   if (params.taunt) {
     if (world.dungeon) provoke(world, 'you', body, params.range.w / 2, params.taunt);
     else {
@@ -132,19 +132,12 @@ export function procOf(char, skillId) {
   return lv > 0 ? skillAt(skillId, lv).proc ?? null : null;
 }
 
-// A proc going off says so over your head, like a Link.
-export function announce(world, text, color = '#bfe0ff') {
-  const { body } = world;
-  world.numbers.push({ x: body.x, y: body.y - body.h - 18, text, color, t: 0, link: true });
-}
-
 // War Cry: your gauge just filled, so you shout.
 export function cryOut(world) {
   const p = procOf(world.char, 'warcry');
   if (!p || world.dead) return;
   applyBuff(world, 'warcry', p);
-  world.fx.push({ kind: 'powerup', school: 'steel', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
-  announce(world, 'WAR CRY!');
+  world.fx.push({ kind: 'powerup', school: pathSchool(world.char), x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
 }
 
 // Iron Guard: a hit that took at least `hard` of your max HP may make you brace (not while
@@ -154,7 +147,78 @@ export function braceOnHit(world, dmg, rng = Math.random) {
   if (!p || world.dead || dmg < world.stats.maxHp * p.hard) return;
   if ((world.char.buffs.ironguard?.until ?? 0) > world.now || rng() >= p.chance) return;
   applyBuff(world, 'ironguard', p);
-  announce(world, 'IRON GUARD!');
+}
+
+// Divine Aegis (Paladin): a hit that leaves you under `low` of your max HP makes you raise your
+// blade, guarding and mending you and the party around you (not while it's already up).
+export function rallyOnHit(world) {
+  const p = procOf(world.char, 'divineaegis');
+  const { char, stats } = world;
+  if (!p || world.dead || char.hp >= stats.maxHp * p.low) return;
+  if ((char.buffs.divineaegis?.until ?? 0) > world.now) return;
+  applyBuff(world, 'divineaegis', p);
+  world.fx.push({ kind: 'powerup', school: 'holy', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
+}
+
+// Sacred Bulwark (Paladin): before a hit lands, a shield of light may flash up and block it
+// outright, then a holy shockwave answers it. True if it blocked. `rng` for tests.
+export function blockOnHit(world, rng = Math.random) {
+  const p = procOf(world.char, 'sacredbulwark');
+  if (!p || world.dead || rng() >= p.chance) return false;
+  const { body } = world;
+  world.invuln = Math.max(world.invuln, 0.5);
+  world.fx.push({ kind: 'aegis', school: 'holy', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.6 });
+  world.fx.push({ kind: 'powerup', school: 'holy', x: body.x, y: body.y, t: 0, dur: 0.5 });
+  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
+  world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
+  bulwarkWave(world, p);
+  return true;
+}
+
+// A warrior path's form: his Rage (Demon Form) or her Faith (Judgment) just filled, so the form
+// takes them for a while (not while it already has).
+export function transform(world) {
+  const id = formSkill(world.char);
+  const p = procOf(world.char, id);
+  if (!p || world.dead || inForm(world)) return;
+  world.formUntil = world.now + p.duration;
+  applyBuff(world, id, p);
+  world.juice.push({ type: 'shake', mag: 3, dur: 0.3 });
+}
+
+// Bloodlust (Berserker): a blow that lands heals him for a share of its damage, more the lower his
+// HP. The healing is added up and shown about twice a second, not on every hit.
+export function drinkBlood(world, dmg) {
+  const p = procOf(world.char, 'bloodlust');
+  const { char, stats, body } = world;
+  if (!p || world.dead || dmg <= 0 || char.hp >= stats.maxHp) return 0;
+  const missing = 1 - char.hp / stats.maxHp;
+  const heal = Math.min(stats.maxHp - char.hp, Math.max(1, Math.round(dmg * p.steal * (1 + (p.low - 1) * missing))));
+  char.hp += heal;
+  world.drunk = (world.drunk ?? 0) + heal;
+  if (world.now - (world.drunkAt ?? -9) >= 0.5) {
+    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${world.drunk}`, color: '#ff8a9a', t: 0 });
+    world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.5 });
+    world.drunk = 0;
+    world.drunkAt = world.now;
+  }
+  return heal;
+}
+
+// Everything that answers a hit you take.
+export function hurtProcs(world, dmg) {
+  braceOnHit(world, dmg);
+  rallyOnHit(world);
+}
+
+// Blood Frenzy (Berserker): a critical hit may send you into a frenzy, with a quarter of your Rage
+// at once (not while you're already in one). `rng` for tests.
+export function frenzyOnCrit(world, rng = Math.random) {
+  const p = procOf(world.char, 'bloodfrenzy');
+  if (!p || world.dead || (world.char.buffs.bloodfrenzy?.until ?? 0) > world.now || rng() >= p.chance) return;
+  applyBuff(world, 'bloodfrenzy', p);
+  addRage(world, p.rageGain);
+  world.fx.push({ kind: 'powerup', school: 'rage', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
 }
 
 // Uses a skill (or a basic attack when skillId is null). Returns { ok, reason }.
@@ -198,7 +262,7 @@ export function cast(world, skillId, rng = Math.random) {
       if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
       world.rage = 0;
     }
-    skillCombo(world, skillId, { ...params, school: s.school, fullGauge: s.fullGauge }, scale);
+    skillCombo(world, skillId, { ...params, school: schoolFor(char, s.school), fullGauge: s.fullGauge }, scale);
     return { ok: true };
   }
 

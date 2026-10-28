@@ -8,6 +8,7 @@ import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
 import { drawHero } from '../render/hero.js';
+import { heartbeat } from '../render/aura.js';
 import { settings } from '../core/settings.js';
 import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
@@ -354,7 +355,7 @@ const GAUGES = {
     tip: 'Your stars build it, more when they pile onto the same monster; it fades once the fighting stops. Full, every star you throw splits into three, and Galaxy Fall is ready.' },
   shadow: { color: '#7a52e0', hot: '#d2cff0', icon: 'moon', name: 'Shadow', full: 'PHANTOM', notch: () => null, edge: 'rgba(90,60,200,', ink: '#2a1a6a',
     tip: 'Your hits build it, faster when they land in a quick chain; it fades fast once the fighting stops. Full, a shadow copy of you repeats every attack, and your finisher is ready.' },
-  rage: { color: '#ff5a4a', hot: '#ff7a3c', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
+  rage: { color: '#c0102e', hot: '#ff6a3a', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
     tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
     tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
@@ -375,7 +376,12 @@ function drawGauge(ui, world, kind, value) {
   const beat = full ? 0.5 + 0.5 * Math.sin(world.now * 7) : 0;
   const gainAt = world[`${kind}At`] ?? -9;
   const gained = !full && world.now - gainAt < 0.09;
-  if (full) edgeTint(ctx, G.edge ?? (kind === 'rage' ? 'rgba(232,40,60,' : 'rgba(255,214,90,'), 0.22 + 0.12 * beat);
+  // Berserk's edges are dark blood that thumps with a heartbeat (lub-dub, render/aura.js), with
+  // the demon behind him; every other full gauge glows its colour on a slow pulse.
+  if (full && kind === 'rage') {
+    const h = heartbeat(world.now);
+    edgeTint(ctx, 'rgba(110,4,28,', 0.3 + 0.28 * (1 - h) * (h < 1 ? 1 : 0));
+  } else if (full) edgeTint(ctx, G.edge ?? 'rgba(255,214,90,', 0.22 + 0.12 * beat);
   box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
   badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
   bar(ctx, x + 16, y + 5, 40, 6, k, gained ? '#ffffff' : (full && beat > 0.5) || (!full && k >= 0.8) ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });

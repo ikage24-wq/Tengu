@@ -9,7 +9,7 @@ import { drawStrike, drawStrikeShot } from './strikes.js';
 import { fxSprite } from './fx-sprites.js';
 import { shuriken } from './thief-fx.js';
 import { FX_SHEETS } from './fx-sheets.js';
-import { debris, groundRing, hitMark } from './warrior-fx.js';
+import { debris, groundRing, hitMark, pathTint } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
 import { crescent, starFlash, needle, shock, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
@@ -580,9 +580,8 @@ function drawFx(ctx, f, cam, time) {
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
       const reach = Math.max(24, Math.abs(end - start));
       const sx0 = start - cam.x;
-      const rage = f.school === 'rage';
-      fxSprite(ctx, rage ? 'celstreakred' : 'celstreak', sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
-      fxSprite(ctx, rage ? 'celhitred' : 'celhit', sx0 + dir * reach, by + 2, { p, scale: 0.6 });
+      fxSprite(ctx, pathTint(f.school, 'celstreak', 'celstreakgold', 'celstreakred'), sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
+      fxSprite(ctx, pathTint(f.school, 'celhit', 'celholyhit', 'celhitred'), sx0 + dir * reach, by + 2, { p, scale: 0.6 });
       break;
     }
     case 'blaze': case 'fire': case 'holy': case 'heal': {
@@ -782,7 +781,7 @@ function drawFx(ctx, f, cam, time) {
       if (f.via === 'blade') {
         if (!f.path || f.path === 'shadow' || f.path === 'crow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
-      else fxSprite(ctx, 'celhit', x, y, { p, scale: 0.65 });
+      else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
       break;
     }
     case 'arc':
@@ -801,7 +800,7 @@ function drawFx(ctx, f, cam, time) {
     }
     case 'crack':
       // The ground ruptures under a heavy blow: rock thrust up and dust across its width.
-      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n));
+      for (let i = 0, n = Math.max(1, Math.round((f.w ?? 80) / 90)); i < n; i++) debris(ctx, x + ((i + 0.5) / n - 0.5) * (f.w ?? 80), y, Math.min(1, p * 1.2 + i * 0.05), Math.min(100, (f.w ?? 80) / n), f.school);
       break;
     case 'roar':
       // Provoke: zig-zag rings of a battle cry bursting out, a rose-red ring racing out to its reach.
@@ -918,7 +917,7 @@ function bladeCut(ctx, f, cam, p) {
   const name = school === 'crow' ? 'celslashcrimson' : school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
-    fxSprite(ctx, school === 'rage' ? 'celspinred' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
+    fxSprite(ctx, school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
     return;
   }
   const path = bladePath(f);

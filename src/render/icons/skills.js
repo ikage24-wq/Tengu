@@ -500,6 +500,34 @@ function divineaegis() {
   return out;
 }
 
+function sacredbulwark() {
+  const out = [...tile('holy', 'passive'), ...aura(8, 8.4, 7, '#ffffff', 1.3)];
+  // A big shield of light flashing up, rays bursting out behind it, and the shockwave ring at its foot.
+  for (const a of [-160, -125, -90, -55, -20]) {
+    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
+    out.push(streak(add([8, 8.6], u, 7.6), add([8, 8.6], u, 4.6), 1.1, '#fff6c9'));
+  }
+  const ring = tube([...oval(8, 13.6, 6.4, 1.6, 0, 32), oval(8, 13.6, 6.4, 1.6, 0, 32)[0]], 0.7);
+  out.push(...edge(ring, '#a8661a', 0.4), S(ring, '#fff3a6'));
+  out.push(...kite('#ffe36b', { cy: 8.4, k: 0.95 }).shapes);
+  out.push(...gem4(8, 8.2, 2.4, W, { ink: '#a8661a' }));
+  out.push(...glint(5.4, 5.2, 0.55), ...spark(13.6, 2.6, 1.2, '#ffffff'));
+  return out;
+}
+
+function judgment() {
+  const out = [...tile('dawn', 'active'), ...aura(8, 6, 7, '#ffffff', 1.3)];
+  // Three swords of light falling point-first out of a glowing sky.
+  out.push(S(inTile(rect(-1, -1, 18, 3.6)), '#fff6c9'));
+  for (const [x, top, len] of [[3.6, 1.8, 9], [8, 0.8, 12], [12.4, 2.4, 8.4]]) {
+    out.push(...sword([x, top], [x, top + len], { w: 2, gw: 4, glen: 1.6, metal: '#fff6c9', gem: '#ffffff' }));
+    out.push(streak([x, top - 0.6], [x, top - 3], 0.7, '#ffffff'));
+  }
+  out.push(...[[3.6, 14], [12.4, 14]].flatMap(([x, y]) => gem4(x, y, 0.9)));
+  out.push(...spark(13.8, 13.4, 1, '#fff6c0'));
+  return out;
+}
+
 function grandverdict() {
   const out = [...tile('dawn', 'active'), ...aura(8, 9, 7, '#ffffff', 1.4)];
   // A giant sword of light driven point-first into the ground, rays and a ring around the impact.
@@ -575,6 +603,32 @@ function rampage() {
   out.push(...axe([12.6, 2], [8.4, 11.6], { size: 1.15, side: -1 }));
   for (const [x, y, a] of [[2.4, 7.4, -30], [13.8, 7, 30], [4, 3.6, -60]]) out.push(...solid(turn([[x, y - 1.2], [x + 0.7, y], [x, y + 1.2], [x - 0.7, y]], a, x, y), '#ff8a3c', { shadow: false, d: 0.3, ink: '#6a0a1a' }));
   out.push(...spark(13.6, 13.8, 1, '#fff6c0'));
+  return out;
+}
+
+function bloodlust() {
+  const out = [...tile('blood', 'passive'), ...aura(8, 8, 6.6, '#ffb0b8', 1.2)];
+  // A big blood drop with three claw gashes torn across it, drops flying off.
+  const big = [...arcPts(8, 10, 4.6, 4.6, -20, 200, 20), [8, 1.6]];
+  out.push(...solid(big, '#d81e3c', { d: 0.45, ink: '#3a0814' }));
+  out.push(S(clip(big, oval(6.6, 9.2, 2.2, 2.8, -20, 16)), '#ff5a6a'), S(oval(6.2, 8.8, 0.7, 1.1, -20, 10), '#ffd0d4'));
+  for (const [cx, cy] of [[11, 4.8], [12, 8], [13, 11.2]]) out.push(...swoosh(cx, cy, 6, 6, 110, 165, 0.9, '#1e0618', { ink: '#1e0618', core: '#7c0a34' }));
+  out.push(...solid([...arcPts(2.6, 13.4, 0.9, 0.9, -20, 200, 10), [2.6, 11.4]], '#e8304a', { shadow: false, d: 0.3, ink: '#3a0814' }));
+  out.push(...spark(13.6, 2.6, 1, '#ffd0c0'));
+  return out;
+}
+
+function demonform() {
+  const out = [...tile('blood', 'active'), ...aura(8, 8, 7, '#ff4a1f', 1.3)];
+  // A horned demon head, burning slit eyes and a jagged grin, flames licking up behind.
+  out.push(...flame(3, 15, 3, 9, ['#7c0a34', '#e01c3c', '#ff7a4e'], { shadow: false }));
+  out.push(...flame(13, 15, 3, 9, ['#7c0a34', '#e01c3c', '#ff7a4e'], { shadow: false }));
+  for (const sd of [-1, 1]) out.push(...solid([[8 + sd * 3.2, 5.4], [8 + sd * 6.6, 1.2], [8 + sd * 5.4, 5], [8 + sd * 4.6, 7]], '#2a0a18', { d: 0.4, ink: '#120612' }));
+  const head = [[3.6, 6], [8, 4.2], [12.4, 6], [12.6, 10.4], [10.4, 14], [8, 14.8], [5.6, 14], [3.4, 10.4]];
+  out.push(...solid(head, '#3a0a1e', { d: 0.45, ink: '#120612' }));
+  for (const sd of [-1, 1]) out.push(...solid([[8 + sd * 1.2, 8.6], [8 + sd * 3.8, 7.6], [8 + sd * 3.2, 9.4]], '#ffd27a', { shadow: false, d: 0.3, ink: '#c0102e' }));
+  out.push(...solid([[5, 11], [6, 12.2], [7, 11.2], [8, 12.4], [9, 11.2], [10, 12.2], [11, 11], [10, 13.2], [6, 13.2]], '#ff4a1f', { shadow: false, d: 0.3, ink: '#120612' }));
+  out.push(...spark(13.8, 13.6, 1, '#ffb347'));
   return out;
 }
 
@@ -1289,8 +1343,8 @@ function gmblessing() {
 const ART = {
   pebble, cozyrest, quickstep,
   bladerush, whirlwind, shouldercharge, warcry, ironguard, swordmastery, toughness, titanbreak,
-  paladinmastery, aegissmite, hallowedground, divineaegis, grandverdict,
-  berserkermastery, ravage, bloodfrenzy, rampage, crimsoneclipse,
+  paladinmastery, aegissmite, hallowedground, divineaegis, sacredbulwark, judgment, grandverdict,
+  berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
   twinshot, arrowfan, arrowshower, flipshot, huntersfocus, bowmastery, eagleeye, falcondive,
   rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,

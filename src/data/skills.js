@@ -121,46 +121,41 @@ export const SKILLS = {
   }),
 
   // ---------- Paladin (the warrior's tank path: holy light, stuns, taunts, blessings) ----------
+  // Like the Warrior, she fights with her basic attacks and her skills set themselves off (procs,
+  // see the Warrior above): Aegis Smite from her swings, Hallowed Ground from her combo's last
+  // swing, Divine Aegis when a hit leaves her low. Her buttons are Shoulder Charge and Grand
+  // Verdict, the big finisher on full Faith.
   paladinmastery: skill({
     id: 'paladinmastery', name: 'Paladin Mastery', job: 'paladin', type: 'passive', fx: null,
     desc: 'Steadier blows, thicker armor, and more max HP.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), wdef: lerp(5, 40, lv, m), maxHpPct: lerpf(0.02, 0.15, lv, m) } }),
   }),
   aegissmite: skill({
-    id: 'aegissmite', name: 'Aegis Smite', job: 'paladin', type: 'attack', fx: 'slash', school: 'holy',
-    desc: 'A three-part combo, one part per press: a shove behind a shield of light that stuns, a rising cut that throws them up, then an overhead smite that calls pillars of light down on them.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(3, 5);
-      return {
-        mp: k(6, 14), pct: k(110, 180), hits: 3, targets,
-        combo: [
-          { move: 'bash', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: k(110, 180), reach: 70, h: 64, targets, knock: 120, stun: lerpf(1, 2, lv, m), burst: 'aegis', stop: 0.05, rage: 0 }] },
-          { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: k(120, 200), reach: 80, h: 84, targets, knock: 40, launch: 380, arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
-          { move: 'smite', dur: 0.74, step: 12, finisher: true, strikes: [{ at: 0.43, pct: k(220, 380), reach: 100, h: 82, targets: targets + 2, knock: 200, arc: [-95, 185], thick: 13, big: true, fx: 'pillar', stop: 0.1, shake: 4 }] },
-        ],
-      };
-    },
+    id: 'aegissmite', name: 'Aegis Smite', job: 'paladin', type: 'passive', fx: null, school: 'holy',
+    desc: 'Your swings sometimes call a pillar of light down just ahead of you, hit or miss: holy damage to everything under it, and a stun.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), pct: lerp(80, 150, lv, m), targets: lerp(2, 4, lv, m), stun: lerpf(0.6, 1.4, lv, m) } }),
   }),
   hallowedground: skill({
-    id: 'hallowedground', name: 'Hallowed Ground', job: 'paladin', type: 'attack', fx: 'quake', icon: 'hallowed', school: 'holy',
-    desc: 'Drive your blade into the ground: a ring of holy light bursts out, every monster it hits turns on you, and pillars of light lift them up.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(5, 8);
-      return {
-        mp: k(14, 30), pct: k(100, 170), hits: 2, targets,
-        combo: [{ move: 'consecrate', dur: 0.9, step: 4, finisher: true, strikes: [
-          { at: 0.46, pct: k(100, 170), reach: 120, h: 90, around: true, targets, knock: 60, provoke: lerpf(3, 5, lv, m), burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
-          { at: 0.8, pct: k(80, 140), reach: 130, h: 90, around: true, targets, knock: 30, launch: 220, fx: 'pillar', stop: 0.04 },
-        ] }],
-      };
-    },
+    id: 'hallowedground', name: 'Hallowed Ground', job: 'paladin', type: 'passive', fx: null, icon: 'hallowed', school: 'holy',
+    desc: 'The last swing of your combo sometimes drives the blade into the ground, hit or miss: a ring of holy light bursts out, every monster it hits turns on you, and pillars of light lift them up. Always, if the swing catches three or more.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.6, lv, m), crowd: 3, pct: lerp(100, 170, lv, m), targets: lerp(5, 8, lv, m), provoke: lerpf(3, 5, lv, m) } }),
   }),
   divineaegis: skill({
-    id: 'divineaegis', name: 'Divine Aegis', job: 'paladin', type: 'buff', fx: 'shield', icon: 'aegis', school: 'holy', party: true, lock: 0.45,
-    desc: 'Raise your blade to the sky: you and the party around you take less damage and slowly heal for a while.',
-    at: (lv, m) => ({ mp: lerp(20, 40, lv, m), duration: lerp(20, 40, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } }),
+    id: 'divineaegis', name: 'Divine Aegis', job: 'paladin', type: 'passive', fx: null, icon: 'aegis', school: 'holy', party: true,
+    desc: 'When a hit leaves you under half your HP, you raise your blade to the sky: you and the party around you take less damage and slowly heal for a while.',
+    at: (lv, m) => ({ passive: {}, proc: { low: 0.5, duration: lerp(12, 24, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } } }),
+  }),
+
+  // Her late skills (`minLevel`: they open at that level, see core/character.js).
+  sacredbulwark: skill({
+    id: 'sacredbulwark', name: 'Sacred Bulwark', job: 'paladin', type: 'passive', fx: null, icon: 'bulwark', school: 'holy', maxLevel: 10, minLevel: 50,
+    desc: 'A shield of light sometimes flashes up and blocks a hit outright, then answers with a holy shockwave that stuns everything around you.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.08, 0.2, lv, m), pct: lerp(120, 220, lv, m), targets: lerp(4, 7, lv, m), stun: lerpf(1, 2, lv, m) } }),
+  }),
+  judgment: skill({
+    id: 'judgment', name: 'Judgment', job: 'paladin', type: 'passive', fx: null, icon: 'judgment', school: 'holy', maxLevel: 10, minLevel: 70,
+    desc: 'When your Faith fills, you ascend for a while: every swing strikes again with holy light (no knockback), your swings reach farther, your Faith stays full, and the last swing of every combo calls a rain of holy swords down ahead of you that mends you and the party around you a little.',
+    at: (lv, m) => ({ passive: {}, proc: { duration: lerp(8, 15, lv, m), echo: lerp(50, 80, lv, m), buff: { watk: lerp(10, 40, lv, m), dmgCut: lerpf(0.05, 0.12, lv, m) }, swords: lerp(5, 8, lv, m), pct: lerp(90, 150, lv, m), heal: lerpf(0.01, 0.02, lv, m) } }),
   }),
 
   grandverdict: skill({
@@ -182,7 +177,10 @@ export const SKILLS = {
 
   // ---------- Berserker (the warrior's damage path: Rage, bleeding, savage flurries) ----------
   // Every blow a Berserker lands builds Rage (0-100, see world/melee.js); it drains away out of a
-  // fight. `rageCost` is the least Rage a skill needs; Rampage spends all of it.
+  // fight. `rageCost` is the least Rage Rampage needs to go off; it feeds on the Rage without spending it. Like the
+  // Warrior, he fights with his basic attacks and his skills set themselves off (procs): Ravage
+  // from his swings, Rampage from his combo's last swing once he has the Rage, Blood Frenzy from a
+  // critical hit. His buttons are Shoulder Charge and Crimson Eclipse on full Rage.
 // Finishers (`fullGauge`) need the path's own gauge full (Rage, Faith, Gale or Focus) and spend
 // all of it (see world/combat.js).
   berserkermastery: skill({
@@ -191,43 +189,31 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(3, 30, lv, m), critDamage: lerpf(0.05, 0.25, lv, m) } }),
   }),
   ravage: skill({
-    id: 'ravage', name: 'Ravage', job: 'berserker', type: 'attack', fx: 'slash', icon: 'ravage', school: 'rage',
-    desc: 'A four-part combo, one part per press: a huge wound-up cleave, a rising return cleave, a low whirl all around you, then a leaping skull-splitter that cracks the ground. Everything before the smash makes them bleed. Builds a lot of Rage.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(2, 4);
-      const bleed = { pct: lerpf(0.15, 0.3, lv, m), secs: 4 };
-      return {
-        mp: k(5, 12), pct: k(85, 140), hits: 4, targets,
-        combo: [
-          { move: 'cleave1', dur: 0.5, step: 10, strikes: [{ at: 0.4, pct: k(110, 180), reach: 80, h: 62, targets: targets + 1, knock: 60, bleed, arc: [-150, 230], thick: 12, rage: 7 }] },
-          { move: 'cleave2', dur: 0.5, step: 8, strikes: [{ at: 0.42, pct: k(110, 180), reach: 80, h: 70, targets: targets + 1, knock: 50, launch: 200, bleed, arc: [110, -240], thick: 12, rage: 7 }] },
-          { move: 'gyre', dur: 0.55, step: 16, strikes: [{ at: 0.5, pct: k(110, 180), reach: 80, h: 56, around: true, targets: targets + 2, knock: 90, bleed, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] },
-          { move: 'reaver', dur: 0.82, step: 16, finisher: true, strikes: [{ at: 0.47, pct: k(260, 420), reach: 98, h: 78, targets: targets + 1, knock: 240, arc: [-110, 200], thick: 15, big: true, crack: true, burst: 'rageburst', stop: 0.1, shake: 5, rage: 12 }] },
-        ],
-      };
-    },
+    id: 'ravage', name: 'Ravage', job: 'berserker', type: 'passive', fx: null, icon: 'ravage', school: 'rage',
+    desc: 'Your swings sometimes rip on into two savage cleaves, hit or miss, that make everything they catch bleed. Builds Rage.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), pct: lerp(70, 120, lv, m), targets: lerp(2, 4, lv, m), bleed: { pct: lerpf(0.15, 0.3, lv, m), secs: 4 } } }),
   }),
   bloodfrenzy: skill({
-    id: 'bloodfrenzy', name: 'Blood Frenzy', job: 'berserker', type: 'buff', fx: 'buff', icon: 'frenzy', school: 'rage',
-    desc: 'Let out a furious roar: more attack, attack speed, and critical hits for a while, and a quarter of your Rage at once.',
-    at: (lv, m) => ({ mp: lerp(16, 32, lv, m), duration: lerp(60, 180, lv, m), rageGain: 25, buff: { watk: lerp(5, 35, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), critRate: lerpf(0.02, 0.1, lv, m) } }),
+    id: 'bloodfrenzy', name: 'Blood Frenzy', job: 'berserker', type: 'passive', fx: null, icon: 'frenzy', school: 'rage',
+    desc: 'A critical hit sometimes sends you into a frenzy: more attack, attack speed, and critical hits for a while, and a quarter of your Rage at once.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.5, 1, lv, m), duration: lerp(10, 20, lv, m), rageGain: 25, buff: { watk: lerp(5, 35, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), critRate: lerpf(0.02, 0.1, lv, m) } } }),
   }),
   rampage: skill({
-    id: 'rampage', name: 'Rampage', job: 'berserker', type: 'attack', fx: 'quake', icon: 'rampage', school: 'rage', rageCost: 30,
-    desc: 'Needs 30 Rage, and spends all of it: three wild cleaves back and forth, then a leaping skull-splitter that smashes the ground around you. The more Rage, the harder it hits (double at full Rage).',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(4, 7);
-      const chop = (at, arc) => ({ at, pct: k(110, 190), reach: 82, h: 70, targets, knock: 40, arc, thick: 12, rage: 0 });
-      return {
-        mp: k(10, 20), pct: k(110, 190), hits: 4, targets, flare: true,
-        combo: [{ move: 'rampage', dur: 1.45, step: 30, carry: 0.6, finisher: true, strikes: [
-          chop(0.064, [-150, 230]), chop(0.227, [110, -240]), chop(0.384, [-150, 230]),
-          { at: 0.724, pct: k(300, 520), reach: 120, h: 92, around: true, targets: targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
-        ] }],
-      };
-    },
+    id: 'rampage', name: 'Rampage', job: 'berserker', type: 'passive', fx: null, icon: 'rampage', school: 'rage', rageCost: 30,
+    desc: 'With 30 Rage or more, the last swing of your combo sometimes flows on into a Rampage: three wild cleaves back and forth, then a leaping skull-splitter that smashes the ground around you. It feeds on your Rage without spending it: the more Rage, the harder it hits (double at full Rage).',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.25, 0.7, lv, m), pct: lerp(110, 190, lv, m), smash: lerp(300, 520, lv, m), targets: lerp(4, 7, lv, m) } }),
+  }),
+
+  // His late skills (`minLevel`).
+  bloodlust: skill({
+    id: 'bloodlust', name: 'Bloodlust', job: 'berserker', type: 'passive', fx: null, icon: 'bloodlust', school: 'rage', maxLevel: 10, minLevel: 50,
+    desc: 'Your blows drink blood: they heal you for a share of the damage they do, up to three times as much the lower your HP.',
+    at: (lv, m) => ({ passive: {}, proc: { steal: lerpf(0.02, 0.05, lv, m), low: 3 } }),
+  }),
+  demonform: skill({
+    id: 'demonform', name: 'Demon Form', job: 'berserker', type: 'passive', fx: null, icon: 'demonform', school: 'rage', maxLevel: 10, minLevel: 70,
+    desc: 'When your Rage fills, the demon takes you over for a while: a blood-red shadow of you stands behind you and strikes again after every swing (no knockback), your swings reach farther, and your Rage stays full until it ends.',
+    at: (lv, m) => ({ passive: {}, proc: { duration: lerp(8, 15, lv, m), echo: lerp(50, 80, lv, m), buff: { watk: lerp(10, 40, lv, m) } } }),
   }),
 
   crimsoneclipse: skill({

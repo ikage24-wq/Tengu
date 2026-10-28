@@ -138,16 +138,34 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 // adds wings of light.
 
 
-// Rage, in Tengu's own effect art (fx-sprites.js): a rose-red ring at his feet that widens as Rage
-// builds, from halfway a fire burning round his legs, and full (Berserk), rings racing out again
-// and again.
+// Rage, in Tengu's own effect art (fx-sprites.js), demonic and meant to frighten, in three stages:
+// as it builds, black smoke curls up round his feet over a blood-red ring; from halfway, a flame
+// aura burns up round his whole body, behind him and see-through so he shows inside it (the way a
+// Dragon Ball fighter powers up), with only a faint lick of it over him; full (Berserk), the
+// ground splits open in cracks of ember light round him, and rings race out with every heartbeat
+// (the screen's edges thump in time; ui/hud.js).
 function rageAura(ctx, x, y, t, s, k, layer) {
+  const fire = Math.min(1, (k - 0.5) * 2.5);
+  // The flame aura flickers a little as it burns.
+  const flicker = 0.9 + 0.1 * Math.sin(t * 17) * Math.sin(t * 7.3);
   if (layer === 'back') {
+    if (k >= 1) {
+      fxSprite(ctx, 'celragecracks', x, y, { t, scale: s * 0.9, sy: 0.6, alpha: 0.95 });
+    }
     if (k > 0.1) fxSprite(ctx, 'celringrage', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.1) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringrage', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    if (k > 0.15) fxSprite(ctx, 'celblacksmoke', x, y + 2 * s, { t, scale: s * (0.5 + 0.35 * k), alpha: Math.min(0.9, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celringrage', x, y, { t: heartbeat(t) * 0.5, scale: s * 0.9, sy: 0.32 });
+    if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.62 * flicker });
     return;
   }
-  if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 2 * s, { t, scale: s * (0.35 + 0.25 * k), alpha: Math.min(1, (k - 0.5) * 2.5) * 0.9 });
+  if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t: t + 0.3, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.16 * flicker });
+}
+
+// Where a heart's beat is (0-1 through each thump), lub-dub about 70 beats a minute: two quick
+// pulses close together, then a rest. Shared with the screen's Berserk edges (ui/hud.js).
+export function heartbeat(t) {
+  const c = t % 0.86;
+  return c < 0.18 ? c / 0.18 : c < 0.34 ? (c - 0.18) / 0.16 : 1;
 }
 
 // Faith: a golden ring at her feet, diamonds of light rising round her as Faith builds, and full

@@ -64,6 +64,13 @@ export function dust(fx, x, y, count, dir = 0, color = '#f6ece2', shade = '#e2d2
   }
 }
 
+// A slam's colours for each path: [rock spikes, dust, dust shade, shockwave].
+const SLAM_TINTS = {
+  steel: ['#c9b6ff', '#efe8fb', '#cdbfe6', '#ffffff'],
+  holy: ['#ffdc78', '#fff6d0', '#ffd9a0', '#fff6d0'],
+  rage: ['#e01c3c', '#ffd0c8', '#c0102e', '#ff7a4e'],
+};
+
 // Landing: dust skids out to both sides along the ground, with puffs.
 export function landing(fx, x, y, hard) {
   for (const side of [-1, 1]) add(fx, { x: x + side * 4, y, vx: side * (hard ? 70 : 45), vy: 0, drag: 6, life: hard ? 0.4 : 0.3, size: hard ? 14 : 9, h: hard ? 5 : 3.5, dir: side, shape: 'wisp', color: '#f6ece2', shade: '#e2d2c4' });
@@ -256,17 +263,20 @@ export function absorbJuice(fx, world) {
     } else if (j.type === 'stomp') {
       // A warrior plants a foot to put their weight into a big move: a puff of dust skids out
       // from under it, the view dips, and a heavy move adds a small ring on the ground.
-      dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, '#efe8fb', '#cdbfe6');
-      dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, '#efe8fb', '#cdbfe6');
+      const [, puff, puffShade] = SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
+      dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, puff, puffShade);
+      dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, puff, puffShade);
       kick(fx, 0, j.big ? 2 : 1);
       if (j.big) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
     } else if (j.type === 'slam') {
-      // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out.
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: '#c9b6ff' });
-      for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, '#efe8fb', '#cdbfe6');
+      // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out
+      // (lavender rock, or a Paladin's gold or a Berserker's blood red).
+      const [spike, puff, puffShade, ring] = SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: spike });
+      for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, puff, puffShade);
       landing(fx, j.x, j.y, true);
       kick(fx, 0, 3);
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: '#ffffff' });
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
     }
   }
   world.juice.length = 0;

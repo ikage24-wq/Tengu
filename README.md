@@ -374,32 +374,56 @@ to clear it.
   dungeons too.
 - **Warrior paths (level 30)** — at 30, Brann in Ember Crag sets **The Warrior's Trial** (break 20
   Crystal Golems in the Crystal Cave); pass it and pick a path:
-  - **Paladin**, the tank: **Aegis Smite** is a three-press combo (a shove behind a shield of light
-    that stuns, a rising cut that throws them up, an overhead smite that calls pillars of light down
-    on them); **Hallowed Ground** drives the blade into the floor so a ring of holy light bursts out,
-    turns every monster it hits on you, and lifts them on pillars of light; **Divine Aegis** guards
-    you and the party around you (less damage taken, slow healing); **Paladin Mastery** adds
+  - **Paladin**, the tank. Like the Warrior, she fights with her basic attacks and her skills go
+    off on their own: **Aegis Smite** (a swing, hit or miss, sometimes calls a pillar of light down
+    just ahead that stuns), **Hallowed Ground** (her combo's last swing sometimes drives the blade
+    into the floor so a ring of holy light bursts out, turns every monster it hits on you, and lifts
+    them on pillars of light; always when it catches three or more), **Divine Aegis** (a hit that
+    leaves her under half HP makes her raise her blade, guarding and mending her and the party
+    around her). Two late skills open with level: **Sacred Bulwark** (level 50: a shield of light
+    sometimes flashes up and blocks a hit outright, answering with a holy shockwave that stuns all
+    around her) and **Judgment** (level 70: when her Faith fills she ascends for a while, the Paladin's
+    answer to Demon Form: every swing strikes again with holy light, her swings reach a third farther, her aura grows, a gold glow breathes round her
+    and flashes with each heartbeat, swings burst with holy light, her Faith stays full, and every
+    combo finisher calls a rain of holy swords down ahead of her, mending her and the party). Her buttons are Shoulder Charge
+    and Grand Verdict. Inherited Warrior effects (Blade Rush, Whirlwind, War Cry, Iron Guard, the
+    charge) turn holy gold on her. **Paladin Mastery** adds
     mastery, defense, and max HP. Idle, a ring of light diamonds turns at their feet. **Faith** (a
     star gauge over the hotkeys) builds from her blows and from the hits she takes, drains once the
     fight stops, and cuts the damage she takes (up to 15% at full). Golden light builds around her
     as it fills: a glow, a turning ring of light, then a halo and rays; full (**Sanctified**) adds
     wings of light.
   - **Berserker**, a damage dealer: every blow builds **Rage** (a flame gauge over the hotkeys) that
-    drains once the fighting stops. **Ravage** is a three-press combo (two bleeding chops, a
-    bleeding spin, a ground-cracking skull-splitter); **Blood Frenzy** raises attack, attack speed,
-    and crits and gives a quarter of your Rage; **Rampage** needs 30 Rage and spends it all on three
-    wild chops and a leaping smash, up to double damage at full Rage; **Berserker Mastery** adds
+    drains once the fighting stops. He fights with his basic attacks and his skills go off on their
+    own: **Ravage** (a swing, hit or miss, sometimes rips on into two savage cleaves that make them
+    bleed), **Rampage** (with 30 Rage or more, his combo's last swing sometimes flows into three wild
+    chops and a leaping smash that feeds on his Rage without spending it, up to double damage at full
+    Rage), **Blood
+    Frenzy** (a critical hit sometimes sends him into a frenzy: more attack, attack speed and crits,
+    and a quarter of his Rage). Two late skills open with level: **Bloodlust** (level 50: his blows
+    heal him for a share of their damage, up to three times as much the lower his HP) and **Demon
+    Form** (level 70: when his Rage fills, the demon takes him over for a while; a blood-red shadow of
+    himself stands behind him and strikes again after every swing, with no knockback; his swings
+    reach a third farther, his aura grows, a blood-red glow breathes round him and flashes with each
+    heartbeat, and his Rage stays full until it ends). His buttons
+    are Shoulder Charge and Crimson Eclipse. Inherited Warrior effects turn blood red and black on
+    him. **Berserker Mastery** adds
     mastery, attack, and critical damage. Idle, small red flames lick at their feet. Rage shows on
     him as it builds (a red heat, then flames climbing his body, embers streaming off), makes every
-    blow up to 25% harder, and at full (**Berserk**) a red ring pulses from his feet and the screen
-    edges burn red.
-  - Each path fights in its own style, with its own basic combo and moves. The Paladin is upright
-    and disciplined, always leading with the shield arm: a measured cut, a shield shove that
-    dazes, a lunging thrust, and a two-handed smite from a held overhead raise; Aegis Smite
-    rises in a long arc, Hallowed Ground kneels and plants the blade point-down, and Divine Aegis
-    is a knight's salute. The Berserker is wild and twisting: a huge wound-up horizontal cleave,
-    the return cleave, a low crouching whirl, and a leaping skull-splitter; Blood Frenzy is a
-    hunched war roar, and Rampage chains the cleaves into the skull-splitter.
+    blow up to 25% harder: black smoke round his feet, then fire, and at full (**Berserk**) the
+    ground cracks with ember light, a red ring pulses from
+    his feet to a heartbeat and the screen edges throb blood red.
+  - Each path fights in its own style, with its own basic combo, each swing drawn from a pool so
+    the string keeps changing (the first combo is the path's own). The Paladin is upright and
+    disciplined, always leading with the shield arm: a measured cut, sweep or flash cut; a shield
+    shove that dazes, a shoulder check behind a flare of light, or a spinning backhand; a lunging
+    thrust, a rising cut that lifts them on light, or a driving stab; then a two-handed smite, or
+    a leaping chop or sky-splitter that calls pillars of light down. Hallowed Ground kneels and
+    plants the blade point-down. The Berserker is wild and twisting, and everything he catches
+    bleeds: a huge wound-up horizontal cleave, a sweep, or a blur of savage stabs; the return
+    cleave, a spinning backhand, or a low crouching whirl; then a leaping skull-splitter, a
+    sky-splitter or a leaping chop that bursts with rage. Rampage chains the cleaves into the
+    skull-splitter.
   - Both paths hit heavy: longer hit-stops and harder knockback (the Berserker most), a stomp of
     dust and a dip of the view as a big move starts, power gathering at the weapon (embers or
     diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.

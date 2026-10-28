@@ -27,7 +27,8 @@
 
 import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS, jobChain } from '../data/jobs.js';
-import { pickTargets, weaponElement, procOf, announce, cryOut } from './combat.js';
+import { SKILLS } from '../data/skills.js';
+import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { provoke, healMembers } from './dungeon.js';
@@ -54,7 +55,15 @@ const HAND_Y = 15;
 // and a Berserker's rage in red.
 const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
-const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#f0303f', '#ff4a1f'] };
+const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
+
+// The colour a warrior path's own skills come in: the Warrior's steel, the Paladin's holy gold,
+// the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
+// War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
+export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : 'steel');
+export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school);
+// The colour a proc's name pops up in, by its school.
+export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
 
 export const COMBOS = {
   sword: [
@@ -191,6 +200,28 @@ export const PATH_COMBOS = {
 // path's own combo above; the others keep its rhythm (an opener, a quick second blow, a medium or
 // heavy third, a heavy finisher) and land with power to match their weight: fast ones hit
 // lightly but quickly, heavy ones hold a longer stop, shake the screen and throw monsters far.
+// The big swings the warrior paths share (each path dresses them its own way below).
+const SWINGS = {
+  sweep: { move: 'sweep', dur: 0.42, step: 8, strikes: [{ at: 0.45, pct: 85, reach: 80, h: 48, targets: 3, knock: 90, arc: [-160, 250], thick: 9, stop: 0.04 }] },
+  jabs: { move: 'jabs', dur: 0.44, step: 8, strikes: [
+    { at: 0.2, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
+    { at: 0.45, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
+    { at: 0.7, pct: 55, reach: 90, h: 44, targets: 2, pierce: true, knock: 90, stop: 0.04 },
+  ] },
+  flashcut: { move: 'flashcut', dur: 0.4, step: 34, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] },
+  spinback: { move: 'spinback', dur: 0.46, step: 10, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, targets: 2, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
+  shove: { move: 'shove', dur: 0.38, step: 14, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
+  drivestab: { move: 'drivestab', dur: 0.5, step: 22, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] },
+  risecut: { move: 'risecut', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
+  hammer: { move: 'hammer', dur: 0.8, step: 10, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] },
+  leapchop: { move: 'leapchop', dur: 0.66, step: 22, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
+  skysplit: { move: 'skysplit', dur: 0.95, step: 24, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] },
+};
+// A swing with something added to every blow of it (a path's own touch).
+const dressed = (step, fields) => ({ ...step, strikes: step.strikes.map((st) => ({ ...st, ...fields })) });
+// The Berserker's wounds: everything his wild swings catch bleeds a little.
+const WOUND = { pct: 0.15, secs: 3 };
+
 export const PATH_VARIANTS = {
   // The Warrior. Openers: a cut, a hip-height sweep, three lightning jabs, or a flash cut that
   // blurs through the line. Second: the return cut, a spinning backhand, a shoulder check, or a
@@ -198,24 +229,34 @@ export const PATH_VARIANTS = {
   // a wound-up home-run swing that sends them flying. Finisher: the cleave, a leaping chop, or a
   // sky-splitter that leaps high and splits the ground in slow motion.
   warrior: [
-    [PATH_COMBOS.warrior[0],
-      { move: 'sweep', dur: 0.42, step: 8, strikes: [{ at: 0.45, pct: 85, reach: 80, h: 48, targets: 3, knock: 90, arc: [-160, 250], thick: 9, stop: 0.04 }] },
-      { move: 'jabs', dur: 0.44, step: 8, strikes: [
-        { at: 0.2, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
-        { at: 0.45, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
-        { at: 0.7, pct: 55, reach: 90, h: 44, targets: 2, pierce: true, knock: 90, stop: 0.04 },
-      ] },
-      { move: 'flashcut', dur: 0.4, step: 34, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] }],
-    [PATH_COMBOS.warrior[1],
-      { move: 'spinback', dur: 0.46, step: 10, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, targets: 2, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
-      { move: 'shove', dur: 0.38, step: 14, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
-      { move: 'drivestab', dur: 0.5, step: 22, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] }],
-    [PATH_COMBOS.warrior[2],
-      { move: 'risecut', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
-      { move: 'hammer', dur: 0.8, step: 10, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] }],
-    [PATH_COMBOS.warrior[3],
-      { move: 'leapchop', dur: 0.66, step: 22, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
-      { move: 'skysplit', dur: 0.95, step: 24, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] }],
+    [PATH_COMBOS.warrior[0], SWINGS.sweep, SWINGS.jabs, SWINGS.flashcut],
+    [PATH_COMBOS.warrior[1], SWINGS.spinback, SWINGS.shove, SWINGS.drivestab],
+    [PATH_COMBOS.warrior[2], SWINGS.risecut, SWINGS.hammer],
+    [PATH_COMBOS.warrior[3], SWINGS.leapchop, SWINGS.skysplit],
+  ],
+  // The Paladin, steady and holy. Openers: her measured cut, a sweep, or a flash cut. Second: the
+  // shield bash, a shoulder check behind a flare of light that dazes, or a spinning backhand.
+  // Third: her lunging thrust, a rising cut that lifts them on light (Aegis Smite's old ascent),
+  // or a driving stab. Finisher: the two-handed smite, or a leaping chop or sky-splitter that
+  // calls pillars of light down on everything they hit.
+  paladin: [
+    [PATH_COMBOS.paladin[0], SWINGS.sweep, SWINGS.flashcut],
+    [PATH_COMBOS.paladin[1], dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), SWINGS.spinback],
+    [PATH_COMBOS.paladin[2],
+      { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
+      SWINGS.drivestab],
+    [PATH_COMBOS.paladin[3], dressed(SWINGS.leapchop, { fx: 'pillar' }), dressed(SWINGS.skysplit, { fx: 'pillar' })],
+  ],
+  // The Berserker, wild and heavy, and everything bleeds. Openers: his wound-up cleave, a sweep, or
+  // a blur of savage stabs. Second: the return cleave, a spinning backhand, or a low whirl all
+  // around him (Ravage's old gyre). Finisher: the skull-splitter, or a sky-splitter or leaping chop
+  // that bursts with rage.
+  berserker: [
+    [PATH_COMBOS.berserker[0], dressed(SWINGS.sweep, { bleed: WOUND }),
+      { move: 'flurry', dur: 0.5, step: 10, strikes: [0.15, 0.35, 0.55, 0.75].map((at, i) => ({ at, pct: 34, reach: 82, h: 52, targets: 2, pierce: true, knock: i === 3 ? 140 : 15, bleed: WOUND, stop: i === 3 ? 0.05 : 0 })) }],
+    [PATH_COMBOS.berserker[1], dressed(SWINGS.spinback, { bleed: WOUND }),
+      { move: 'gyre', dur: 0.55, step: 16, strikes: [{ at: 0.5, pct: 120, reach: 80, h: 56, around: true, targets: 4, knock: 90, bleed: WOUND, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] }],
+    [PATH_COMBOS.berserker[2], dressed(SWINGS.skysplit, { burst: 'rageburst' }), dressed(SWINGS.leapchop, { burst: 'rageburst' })],
   ],
 };
 
@@ -346,8 +387,8 @@ export function outgoing(world) {
 
 // Rage: a Berserker's blows build it up to RAGE_MAX, and it drains away once the fighting stops.
 export const RAGE_MAX = 100;
-const RAGE_HOLD = 5; // seconds after the last gain before it starts draining
-const RAGE_DRAIN = 12; // per second
+const RAGE_HOLD = 8; // seconds after the last gain before it starts draining
+const RAGE_DRAIN = 8; // per second
 export const hasRage = (char) => jobChain(char.job).includes('berserker');
 
 // Faith: the Paladin's gauge. Her blows and the hits she takes build it; it drains slowly once the
@@ -363,7 +404,10 @@ export function addFaith(world, n) {
   const before = world.faith ?? 0;
   world.faith = Math.min(FAITH_MAX, before + n);
   world.faithAt = world.now;
-  if (before < FAITH_MAX && world.faith >= FAITH_MAX) cryOut(world);
+  if (before < FAITH_MAX && world.faith >= FAITH_MAX) {
+    cryOut(world);
+    transform(world);
+  }
 }
 // The share Faith takes off a hit; a hit taken also builds it.
 export function faithGuard(world) {
@@ -568,8 +612,18 @@ export function addRage(world, n) {
   const before = world.rage ?? 0;
   world.rage = Math.min(RAGE_MAX, before + n);
   world.rageAt = world.now;
-  if (before < RAGE_MAX && world.rage >= RAGE_MAX) cryOut(world);
+  if (before < RAGE_MAX && world.rage >= RAGE_MAX) {
+    cryOut(world);
+    transform(world);
+  }
 }
+// A warrior path's form, while it lasts (see combat.js's transform): Demon Form for a Berserker,
+// Judgment for a Paladin. The gauge stays full, the cuts reach farther and higher, and each swing
+// strikes again (a Berserker's blood-red shadow swings it; a Paladin's is light alone).
+const FORM_REACH = 1.35;
+const FORM_HEIGHT = 1.2;
+export const inForm = (world) => (hasRage(world.char) || hasFaith(world.char)) && (world.formUntil ?? 0) > world.now;
+export const formSkill = (char) => (hasRage(char) ? 'demonform' : 'judgment');
 
 // Basic attack with a melee weapon: the next step of its combo.
 export function basicCombo(world) {
@@ -681,7 +735,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // A Sniper plants her feet the same way, and gathers her aim at the bow.
   const heavy = hasValor(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
-    world.juice.push({ type: 'stomp', x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
+    world.juice.push({ type: 'stomp', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
     if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : hasFocus(world.char) ? 'focus' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
   }
@@ -727,8 +781,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
 // Every tick: the step-in, and strikes landing.
 export function tickMelee(world, dt) {
   const b = world.body;
-  if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
-  if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
+  if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
+  if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.bloom > 0 && world.now - (world.bloomAt ?? 0) > BLOOM_HOLD) world.bloom = Math.max(0, world.bloom - BLOOM_DRAIN * dt);
@@ -793,6 +847,8 @@ function land(world, s) {
   if (!s.keepFacing) body.facing = s.dir;
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
+  // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
+  if (inForm(world) && !s.formGrown) s = { ...s, reach: s.reach * FORM_REACH, h: s.h * FORM_HEIGHT, formGrown: true };
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
   const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
   // The Assassin's own edges: Execution (full Killing Intent), a Vanish to strike out of (spent by
@@ -811,14 +867,14 @@ function land(world, s) {
   // The smear, spike, or whirl of the blow.
   if (s.pierce) {
     const x = s.dir > 0 ? body.x - 6 : body.x + 6 - s.reach;
-    world.fx.push({ kind: 'pierce', x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur });
+    world.fx.push({ kind: 'pierce', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur });
   }
   if (s.arc) {
     world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasIntent(char) ? 'crow' : hasShadow(char) ? 'shadow' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   if (s.crack) {
-    world.fx.push({ kind: 'crack', x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
-    world.juice.push({ type: 'slam', x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
+    world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
+    world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
   }
   // A storm sky over the whole view (Storm Volley): a green wash, wind tearing across, arrows.
   if (s.sky) {
@@ -828,6 +884,7 @@ function land(world, s) {
   if (s.burst) {
     world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: 0.7, seed: Math.random() });
   }
+  let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
     // Execution: the first cut on each monster is sure to crit (`crit` strikes always are).
@@ -852,6 +909,7 @@ function land(world, s) {
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
       stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed ?? (venom ? { pct: venom, secs: 3 } : undefined), school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge,
     });
+    if (roll?.crit) crits++;
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, mob: s.mark ? m : undefined, dir: s.dir, t: -i * 0.03, dur: s.mark ? s.mark : 0.6, seed: Math.random() });
     // Mark for Death: marked monsters take more from every hit and build Killing Intent faster.
     if (s.mark && !miss) {
@@ -869,8 +927,16 @@ function land(world, s) {
       m.dir = Math.sign(body.x - m.x) || m.dir;
     }
   }
-  // Procs go off from the swing itself, hit or miss (Whirlwind's crowd rule needs a hit, though).
+  // Procs go off from the swing itself, hit or miss (Whirlwind's crowd rule needs a hit, though);
+  // Blood Frenzy from a critical hit.
   if (s.key.startsWith('basic')) bladeProcs(world, s, targets.length);
+  if (s.key.startsWith('basic') && !s.phantom && inForm(world)) {
+    formEcho(world, s);
+    // Too much power for the blow to hold: it bursts where the swing ends (just for show).
+    world.fx.push({ kind: 'formburst', school: pathSchool(char), x: body.x + s.dir * s.reach * 0.7, y: body.y - body.h * 0.5, dir: s.dir, t: 0, dur: 0.4, seed: Math.random() });
+    world.juice.push({ type: 'shake', mag: 1.2, dur: 0.12 });
+  }
+  if (crits && !s.phantom) frenzyOnCrit(world);
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing spell mends you and the party around you as it blooms.
@@ -910,18 +976,35 @@ function land(world, s) {
 }
 
 // ---------- Blade procs ----------
-// A warrior's skills set themselves off from his basic swings, hit or miss (see data/skills.js):
-// a swing may rush on into Blade Rush's extra cross-cut, and a combo's last swing may spin on
-// into a Whirlwind (always, when it catches a crowd). Proc strikes aren't basic swings, so they
-// never set off procs.
+// The warrior paths' skills set themselves off from their basic swings, hit or miss (see
+// data/skills.js). Any swing may rush on into extra blows: Blade Rush's cross-cut of steel, Aegis
+// Smite's pillar of light (Paladin), Ravage's bleeding cleaves (Berserker). A combo's last swing
+// may flow on into a whole move: the path's own (Hallowed Ground for the Paladin, Rampage for the
+// Berserker once he has the Rage) or, failing that, the Warrior's Whirlwind. Proc strikes aren't
+// basic swings, so they never set off procs.
+
+// The fields every proc strike shares: aimed the way the swing was, never turning you round.
+const procStrike = (world, s, key, delay, fields) => ({
+  at: s.at, due: world.now + delay, n: 0, of: 1, dir: s.dir, scale: 100, key, move: s.move, dur: s.dur, finisher: false, quiet: true, keepFacing: true, ...fields,
+});
 
 // Blade Rush's cross-cut: two cuts of steel a beat after the blow, slashing what's in front.
 function rushStrikes(world, s, p) {
-  const cut = (delay, arc, knock) => ({
-    at: s.at, due: world.now + delay, pct: p.pct, reach: 76, h: 62, targets: p.targets, knock, arc, thick: 9, school: 'steel',
-    n: 0, of: 1, dir: s.dir, scale: 100, key: 'procbladerush', move: s.move, dur: s.dur, finisher: false, quiet: true, keepFacing: true,
-  });
+  const cut = (delay, arc, knock) => procStrike(world, s, 'procbladerush', delay, { pct: p.pct, reach: 76, h: 62, targets: p.targets, knock, arc, thick: 9, school: pathSchool(world.char) });
   world.strikes.push(cut(0.1, [-115, 205], 30), cut(0.22, [100, -215], 70));
+}
+
+// Aegis Smite's pillar: light crashes down just ahead, on everything under it, and stuns.
+function smiteStrikes(world, s, p) {
+  world.strikes.push(procStrike(world, s, 'procaegissmite', 0.14, {
+    pct: p.pct, reach: 92, h: 110, targets: p.targets, knock: 60, stun: p.stun, fx: 'pillar', burst: 'aegis', burstAt: 0.75, school: 'holy', stop: 0.05, shake: 1,
+  }));
+}
+
+// Ravage's cleaves: two savage chops back and forth that make them bleed.
+function ravageStrikes(world, s, p) {
+  const chop = (delay, arc, knock) => procStrike(world, s, 'procravage', delay, { pct: p.pct, reach: 82, h: 66, targets: p.targets, knock, arc, thick: 12, bleed: p.bleed, school: 'rage', rage: 4 });
+  world.strikes.push(chop(0.1, [-150, 230], 40), chop(0.24, [110, -240], 90));
 }
 
 // Whirlwind's spin: carried forward, four pulling hits all around, then a fling.
@@ -933,29 +1016,85 @@ function whirlStep(p) {
   ] };
 }
 
+// Hallowed Ground: the blade driven into the ground, a ring of holy light that turns everything
+// it hits on you, then pillars of light lifting them.
+function hallowedStep(p) {
+  return { move: 'consecrate', dur: 0.9, step: 4, finisher: true, strikes: [
+    { at: 0.46, pct: p.pct, reach: 120, h: 90, around: true, targets: p.targets, knock: 60, provoke: p.provoke, burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
+    { at: 0.8, pct: Math.round(p.pct * 0.8), reach: 130, h: 90, around: true, targets: p.targets, knock: 30, launch: 220, fx: 'pillar', stop: 0.04 },
+  ] };
+}
+
+// Rampage: three wild cleaves back and forth, then a leaping skull-splitter.
+function rampageStep(p) {
+  const chop = (at, arc) => ({ at, pct: p.pct, reach: 82, h: 70, targets: p.targets, knock: 40, arc, thick: 12, rage: 0 });
+  return { move: 'rampage', dur: 1.45, step: 30, carry: 0.6, finisher: true, strikes: [
+    chop(0.064, [-150, 230]), chop(0.227, [110, -240]), chop(0.384, [-150, 230]),
+    { at: 0.724, pct: p.smash, reach: 120, h: 92, around: true, targets: p.targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
+  ] };
+}
+
+// Judgment (Paladin, at full Faith): holy swords rain down ahead, and their light mends you and
+// the party around you.
+function judgmentRain(world, s, p) {
+  world.strikes.push(procStrike(world, s, 'procjudgment', 0.1, {
+    pct: p.pct, rain: p.swords, variant: 'sword', rainFrom: 10, rainW: 240, span: 0.55, targets: p.swords, knock: 40, stun: 0.3, school: 'holy',
+  }));
+  healAround(world, world.body.x, world.body.y, p.heal, 260);
+}
+
+// Sacred Bulwark (Paladin): the holy shockwave that answers a blocked hit, stunning all around.
+export function bulwarkWave(world, p) {
+  const s = { at: 0, dir: world.body.facing, move: null, dur: 0 };
+  world.strikes.push(procStrike(world, s, 'procsacredbulwark', 0.08, {
+    pct: p.pct, reach: 110, h: 90, around: true, targets: p.targets, knock: 160, stun: p.stun, burst: 'consecrate', burstAt: 0, big: true, stop: 0.06, shake: 3, school: 'holy',
+  }));
+}
+
+// A form's echo: each swing strikes again a beat later, lighter, and knocks nothing back (in Demon
+// Form his blood-red shadow plays the swing; render/scene.js).
+function formEcho(world, s) {
+  const p = procOf(world.char, formSkill(world.char));
+  if (!p) return;
+  world.strikes.push({ ...s, due: world.now + 0.13, key: 'procform', fx: undefined, provoke: undefined, scale: (s.scale * p.echo) / 100, keepFacing: true, quiet: true, knock: 0, launch: 0, pull: 0, hop: 0, crack: false, burst: undefined, big: false, stop: 0.02, shake: 0, rage: 0, faith: 0, gauge: 0, finisher: false, school: pathSchool(world.char), arc: undefined, pierce: false });
+  if (!(world.formSwing && world.now < world.formSwing.until)) world.formSwing = { kind: s.move, since: world.now + 0.13 - s.at * s.dur, dur: s.dur, until: world.now + 0.13 + (1 - s.at) * s.dur };
+}
+
 // After a basic swing lands (on `count` monsters, maybe none). `rng` for tests.
 function bladeProcs(world, s, count, rng = Math.random) {
   const { char } = world;
-  const rush = procOf(char, 'bladerush');
-  if (rush && rng() < rush.chance) {
-    rushStrikes(world, s, rush);
-    announce(world, 'BLADE RUSH!');
+  for (const [id, strikes] of [['bladerush', rushStrikes], ['aegissmite', smiteStrikes], ['ravage', ravageStrikes]]) {
+    const p = procOf(char, id);
+    if (p && rng() < p.chance) strikes(world, s, p);
   }
-  // Only the ground combo's own finisher spins (not a dive, a slam, or a dash).
+  // Only the ground combo's own finisher flows on (not a dive, a slam, or a dash).
+  if (!s.finisher || !/^basic\d$/.test(s.key)) return;
+  const judgment = procOf(char, 'judgment');
+  if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
+  if (world.queuedStep) return;
+  const queue = (step, key, school, extra = {}) => (world.queuedStep = { at: world.now + 0.12, step, key, school, ...extra });
+  const hallowed = procOf(char, 'hallowedground');
+  if (hallowed && (count >= hallowed.crowd || rng() < hallowed.chance)) return queue(hallowedStep(hallowed), 'prochallowedground', 'holy');
+  const rampage = procOf(char, 'rampage');
+  if (rampage && (world.rage ?? 0) >= SKILLS.rampage.rageCost && rng() < rampage.chance) return queue(rampageStep(rampage), 'procrampage', 'rage', { feedsOnRage: true });
   const whirl = procOf(char, 'whirlwind');
-  if (whirl && s.finisher && /^basic\d$/.test(s.key) && !world.queuedStep && (count >= whirl.crowd || rng() < whirl.chance)) {
-    world.queuedStep = { at: world.now + 0.12, step: whirlStep(whirl), key: 'procwhirlwind', name: 'WHIRLWIND!' };
-  }
+  if (whirl && (count >= whirl.crowd || rng() < whirl.chance)) queue(whirlStep(whirl), 'procwhirlwind', pathSchool(char));
 }
 
 // A proc's own move, a beat after the blow that set it off (on the ground, and still standing).
+// Rampage feeds on your Rage without spending it: the more you have, the harder it hits (double
+// at full Rage).
 function playQueued(world) {
   const q = world.queuedStep;
   if (!q || world.now < q.at) return;
   world.queuedStep = null;
   if (world.dead || !world.body.onGround) return;
-  playStep(world, q.step, 100, q.key, 'steel', AFTER.finisher);
-  announce(world, q.name);
+  let scale = 100;
+  if (q.feedsOnRage) {
+    scale += Math.round((100 * (world.rage ?? 0)) / RAGE_MAX);
+    world.fx.push({ kind: 'powerup', school: 'rage', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, big: true });
+  }
+  playStep(world, q.step, scale, q.key, q.school ?? pathSchool(world.char), AFTER.finisher);
 }
 
 // How a shot would hit a monster: rolled now, landing when it arrives.

@@ -10,7 +10,7 @@
 //     the group regroups at its entrance.
 
 import { faithGuard } from './melee.js';
-import { braceOnHit } from './combat.js';
+import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
@@ -451,7 +451,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
     }
     return dmg;
   }
-  if (world.god) return 0;
+  if (world.god || blockOnHit(world)) return 0;
   const char = world.char;
   const s = world.stats;
   let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));
@@ -471,7 +471,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
     world.events.push({ type: 'death' });
     world.log('You fainted! Your group can get you back up after the fight.', '#ff6b8a');
   }
-  braceOnHit(world, dmg);
+  hurtProcs(world, dmg);
   return dmg;
 }
 

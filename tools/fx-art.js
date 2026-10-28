@@ -17,7 +17,10 @@
   const PAL = {
     steel: ['#ffffff', '#e4f3ff', '#9fd2ff', '#6f9cf0', '#4f5fcc'],
     holy: ['#ffffff', '#fff6d0', '#ffdc78', '#ffad62', '#d9776a'],
-    rage: ['#fff6f8', '#ffd1de', '#ff86aa', '#e85486', '#a8366e'],
+    // The Berserker is demonic (the player's call): a white-hot ember core, ember orange, blood
+    // crimson, deep blood, and an ink near black with violet in it. Dark tones mostly, so the glow
+    // (which only blooms from bright parts) comes off as embers burning out of black and blood.
+    rage: ['#fff0e2', '#ff7a4e', '#e01c3c', '#7c0a34', '#1e0618'],
     arcane: ['#ffffff', '#f1e6ff', '#cfa8ff', '#a374f0', '#6f4ac8'],
     ice: ['#ffffff', '#e2fbff', '#9ae9ff', '#5ab8ee', '#3a78c8'],
     fire: ['#ffffff', '#fff1c0', '#ffbe72', '#ff8a5c', '#cc566a'],
@@ -426,6 +429,8 @@
     };
   }
   E.spin = spin(PAL.steel);
+  // The Paladin's gold (the Warrior's Whirlwind, on a Paladin).
+  E.spingold = spin(PAL.holy);
   E.spinred = spin(PAL.rage, 0.3);
 
   // ---------- Hits ----------
@@ -737,7 +742,7 @@
   // ---------- The ground ----------
   // A heavy blow cracks the ground: a glowing fissure, then shards of rock burst up in a fan,
   // pale dust billows out from the foot and breaks apart while the rocks fall back.
-  E.quake = (() => {
+  function quakeOf(ROCK) {
     const w = 280;
     const h = 220;
     const g = 200;
@@ -770,7 +775,11 @@
         }
       },
     };
-  })();
+  }
+  E.quake = quakeOf(ROCK);
+  // The same rock in a Paladin's gold and a Berserker's blood red (their slams and dives).
+  E.quakegold = quakeOf(PAL.holy);
+  E.quakered = quakeOf(PAL.rage);
 
   // Dust kicked up (a dash, a landing): a puff that billows, drifts and breaks apart.
   E.dust = {
@@ -867,13 +876,118 @@
       corona(0.86, PAL.rage[1]);
       ctx.beginPath();
       ctx.arc(c, c, 62, 0, TAU);
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = PAL.rage[0];
       ctx.fill();
       ctx.beginPath();
       ctx.arc(c, c, 57, 0, TAU);
-      ctx.fillStyle = '#6a3a8e';
+      ctx.fillStyle = '#120612';
       ctx.fill();
-      celCrescent(ctx, ['#ffd1e8', '#c87ac8', '#a05ab8', '#86469e', '#5a2f7a'], c, c, 50, -2.6, -0.6, 12);
+      celCrescent(ctx, ['#ff9a7a', '#c0283e', '#7c0a34', '#3a0a22', '#120612'], c, c, 50, -2.6, -0.6, 12);
+    },
+  };
+
+  // ---------- The Berserker's demon (his Rage aura, see render/aura.js) ----------
+  // A band along a run of points, `w0` thick at the start and `w1` at the end (limbs, horns).
+  function tube(pts, w0, w1) {
+    const left = [];
+    const right = [];
+    pts.forEach(([x, y], i) => {
+      const [ax, ay] = pts[Math.max(0, i - 1)];
+      const [bx, by] = pts[Math.min(pts.length - 1, i + 1)];
+      const l = Math.hypot(bx - ax, by - ay) || 1;
+      const w = lerp(w0, w1, i / (pts.length - 1)) / 2;
+      left.push([x - ((by - ay) / l) * w, y + ((bx - ax) / l) * w]);
+      right.push([x + ((by - ay) / l) * w, y - ((bx - ax) / l) * w]);
+    });
+    return left.concat(right.reverse());
+  }
+  // A curve through three points, sampled (for horns and claws).
+  const curve = (a, b, c, n = 10) => Array.from({ length: n + 1 }, (_, i) => {
+    const u = i / n;
+    return [(1 - u) * (1 - u) * a[0] + 2 * u * (1 - u) * b[0] + u * u * c[0], (1 - u) * (1 - u) * a[1] + 2 * u * (1 - u) * b[1] + u * u * c[1]];
+  });
+
+  // A form's glow: a soft haze round the whole hero, hottest at the heart, with sparks drifting up
+  // through it (the game swells and flashes it; render/scene.js). Feet anchored. `stops` are the
+  // haze's colours from the heart out; `pal` the sparks'.
+  function glowOf(stops, pal, seed) {
+    return {
+      w: 160, h: 210, n: 4, fps: 8, px: 80, py: 196, loop: true,
+      draw(ctx, i) {
+        const R = rng(seed + i);
+        ctx.save();
+        ctx.translate(80, 140);
+        ctx.scale(1.1, 1.15);
+        const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 62);
+        [0, 0.35, 0.7, 1].forEach((at, k) => g.addColorStop(at, stops[k]));
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(0, 0, 62, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+        for (let j = 0; j < 5; j++) shard(ctx, pal, 40 + R() * 80, 60 + ((R() * 120 + i * 18) % 120), -Math.PI / 2, 5 + R() * 4, 1.5);
+      },
+    };
+  }
+  // Demon Form's: blood red, embers. Judgment's: gold light, motes of light.
+  E.demonglow = glowOf(['rgba(255, 122, 78, 0.75)', 'rgba(224, 28, 60, 0.5)', 'rgba(124, 10, 52, 0.22)', 'rgba(124, 10, 52, 0)'], PAL.rage, 400);
+  E.holyglow = glowOf(['rgba(255, 255, 240, 0.8)', 'rgba(255, 220, 120, 0.55)', 'rgba(255, 173, 98, 0.22)', 'rgba(255, 173, 98, 0)'], PAL.holy, 420);
+
+  // Black smoke curling up round a raging Berserker's feet, with embers rising through it.
+  E.blacksmoke = {
+    w: 170, h: 120, n: 6, fps: 10, px: 85, py: 112, loop: true,
+    draw(ctx, i) {
+      const [core, light, , deep, ink] = PAL.rage;
+      const R = rng(41);
+      for (let j = 0; j < 8; j++) {
+        const life = ((i / 6) + j / 8) % 1;
+        const x = 30 + R() * 110 + Math.sin(life * 5 + j) * 8;
+        const y = 104 - life * 80;
+        const r = (8 + R() * 10) * (0.6 + life * 0.7);
+        ctx.globalAlpha = 1 - life * 0.75;
+        ctx.beginPath();
+        ctx.arc(x, y, r + 2.5, 0, TAU);
+        ctx.fillStyle = ink;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, TAU);
+        ctx.fillStyle = '#2a0c22';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x - r * 0.3, y - r * 0.35, r * 0.45, 0, TAU);
+        ctx.fillStyle = deep;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      for (let j = 0; j < 5; j++) {
+        const life = ((i / 6) + j / 5 + 0.13) % 1;
+        shard(ctx, [core, light, light, deep, ink], 40 + R() * 90, 100 - life * 95, -Math.PI / 2, 6 * (1 - life) + 2, 1.5);
+      }
+    },
+  };
+
+  // Cracks of ember light splitting the ground round a Berserker at full Rage, pulsing.
+  E.ragecracks = {
+    w: 300, h: 70, n: 4, fps: 8, px: 150, py: 35, loop: true,
+    draw(ctx, i) {
+      const [core, light, mid, , ink] = PAL.rage;
+      const pulse = [0.7, 1, 0.85, 0.6][i];
+      const R = rng(77);
+      for (let j = 0; j < 9; j++) {
+        const a = (j / 9) * TAU + R() * 0.3;
+        const pts = [[150, 35]];
+        let x = 150;
+        let y = 35;
+        const len = 70 + R() * 70;
+        for (let k = 1; k <= 5; k++) {
+          x = 150 + Math.cos(a) * (len * k) / 5 + (R() - 0.5) * 14;
+          y = 35 + Math.sin(a) * (len * k) / 5 * 0.28 + (R() - 0.5) * 6;
+          pts.push([x, y]);
+        }
+        inked(ctx, tube(pts, 9 * pulse, 1), mid, ink, 3);
+        fill(ctx, tube(pts, 4.5 * pulse, 0.5), light);
+        fill(ctx, tube(pts.slice(0, 3), 2 * pulse, 0.5), core);
+      }
     },
   };
 
@@ -923,6 +1037,7 @@
   }
   E.shield = shieldOf(PAL.holy);
   E.shieldsteel = shieldOf(PAL.steel);
+  E.shieldred = shieldOf(PAL.rage);
 
   // A golden magic circle (drawn from above; the game lays it flat on the floor and turns it):
   // double rings, a square and a diamond woven into a star, rune marks round the band.
@@ -1058,6 +1173,7 @@
   }
   E.lightcross = crossOf(PAL.holy);
   E.steelcross = crossOf(PAL.steel);
+  E.ragecross = crossOf(PAL.rage);
 
   // Diamonds of light rising, looping (a Paladin's Faith building).
   E.motes = {
@@ -1120,6 +1236,7 @@
   }
   E.shout = shout(PAL.steel);
   E.shoutred = shout(PAL.rage);
+  E.shoutgold = shout(PAL.holy);
 
   // A dash's streaks: a bundle of speed lines stretched out behind, thinning away.
   function streaks(pal) {
@@ -1138,10 +1255,10 @@
   }
   E.streak = streaks(PAL.steel);
   E.streakred = streaks(PAL.rage);
+  E.streakgold = streaks(PAL.holy);
 
   // Iron skin: plates of steel snap into a ring round the body, flash, then shatter outward.
-  E.plates = (() => {
-    const pal = PAL.steel;
+  function platesOf(pal) {
     const c = 110;
     const plate = (ctx, x, y, a, s) => {
       const pts = [];
@@ -1165,7 +1282,10 @@
         if (i === 3) sparkle(ctx, pal, c, c, 34, 0.4);
       },
     };
-  })();
+  }
+  E.plates = platesOf(PAL.steel);
+  E.platesgold = platesOf(PAL.holy);
+  E.platesred = platesOf(PAL.rage);
 
   // Power gathering: lines of the path's light rushing in to a point that swells into a diamond.
   function charge(pal) {
@@ -1502,14 +1622,15 @@
   // ---------- The Warrior's steel (first job) ----------
   // A giant sword of steel forming (Titan Breaker): the shards of the steel sword flying together
   // into the whole blade (the sword shattering, played backward), then held whole.
-  E.swordform = (() => {
-    const sw = E.steelsword;
-    return { ...sw, n: 5, fps: 14, draw: (ctx, i) => sw.draw(ctx, [4, 3, 2, 1, 0][i]) };
-  })();
+  const swordForm = (sw) => ({ ...sw, n: 5, fps: 14, draw: (ctx, i) => sw.draw(ctx, [4, 3, 2, 1, 0][i]) });
+  E.swordform = swordForm(E.steelsword);
+  // The same for a Paladin (gold) and a Berserker (blood red) using Titan Breaker.
+  E.ragesword = swordOf(PAL.rage);
+  E.swordformgold = swordForm(E.sword);
+  E.swordformred = swordForm(E.ragesword);
   // The ground splitting open under Titan Breaker: a white-hot seam runs out both ways, tears wide
   // with steel light bursting up out of it in blades, then closes into beads and sparkles.
-  E.fissure = (() => {
-    const pal = PAL.steel;
+  function fissureOf(pal) {
     const w = 520;
     const h = 200;
     const g = 170;
@@ -1553,7 +1674,10 @@
         }
       },
     };
-  })();
+  }
+  E.fissure = fissureOf(PAL.steel);
+  E.fissuregold = fissureOf(PAL.holy);
+  E.fissurered = fissureOf(PAL.rage);
   // Valor building, looping: steel chevrons and diamonds rising round the hero, a little cross
   // glinting among them (the Warrior's shape).
   E.valor = {
@@ -2459,10 +2583,15 @@
   E.constellationbig = big(E.constellation, 1.3);
   E.crescentbig = big(E.crescent, 1.6);
   E.fissurebig = big(E.fissure, 1.5);
+  E.fissuregoldbig = big(E.fissuregold, 1.5);
+  E.fissureredbig = big(E.fissurered, 1.5);
   E.circlebig = big(E.circle, 2.4);
   E.spinbig = big(E.spin, 2);
   E.spinredbig = big(E.spinred, 2);
+  E.spingoldbig = big(E.spingold, 2);
   E.quakebig = big(E.quake, 1.8);
+  E.quakegoldbig = big(E.quakegold, 1.8);
+  E.quakeredbig = big(E.quakered, 1.8);
   E.clawbig = big(E.claw, 1.7);
 
   // HD with a soft glow (the look the player picked): every drawing is rendered smooth at `d` strip

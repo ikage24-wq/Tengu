@@ -2,9 +2,8 @@
 // front of the hero, even while moving), and a cast moment when it goes up: a burst shaped for the
 // skill, with its name popping over your head. Everything is drawn from time alone.
 
-import { font } from '../ui/kit.js';
 import { SKILLS } from '../data/skills.js';
-import { groundRing, pillarOf, ringOf } from './warrior-fx.js';
+import { groundRing, pillarOf, ringOf, pathTint } from './warrior-fx.js';
 import { fxSprite } from './fx-sprites.js';
 
 const TAU = Math.PI * 2;
@@ -275,43 +274,24 @@ export function drawBuffEffects(ctx, buffs, layer, x, y, time, now, dir) {
   }
 }
 
-// The cast moment for buff `f.skill`: a burst shaped for the skill, and its name popping up.
+// The cast moment for buff `f.skill`: a burst shaped for the skill.
 export function drawBuffCast(ctx, f, x, y, p, time) {
-  const look = BUFF_LOOKS[f.skill] ?? { color: '#ffe36b', cast: 'burst' };
-  const c = look.color;
   ctx.save();
   // The moment it goes up, as MapleStory draws a buff: a pillar of the skill's light from the
   // ground with the job's emblem rising inside (Tengu's own effect art). War Cry is a battle cry
   // bursting out instead; Iron Guard snaps plates of steel round the body behind a steel shield.
-  const school = SKILLS[f.skill]?.school ?? 'steel';
+  const school = f.school ?? SKILLS[f.skill]?.school ?? 'steel';
   if (f.skill === 'warcry') {
-    fxSprite(ctx, 'celshout', x, y - 26, { p, scale: 1.1 });
+    fxSprite(ctx, pathTint(school, 'celshout', 'celshoutgold', 'celshoutred'), x, y - 26, { p, scale: 1.1 });
     groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 90);
-    if (p > 0.1) fxSprite(ctx, 'celembsteel', x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
+    if (p > 0.1) fxSprite(ctx, `celemb${school}`, x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
   } else if (f.skill === 'vanish') {
     fxSprite(ctx, 'celsmoke', x, y, { p, scale: 1.1 });
     fxSprite(ctx, 'celcrowburst', x, y - 10, { p, scale: 0.6 });
   } else if (f.skill === 'ironguard') {
     pillarOf(ctx, school, x, y, p);
-    fxSprite(ctx, 'celplates', x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });
-    fxSprite(ctx, 'celshieldsteel', x + (f.dir || 1) * 16, y - 26, { p, scale: 0.6, sx: 0.7 });
+    fxSprite(ctx, pathTint(school, 'celplates', 'celplatesgold', 'celplatesred'), x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });
+    fxSprite(ctx, pathTint(school, 'celshieldsteel', 'celshield', 'celshieldred'), x + (f.dir || 1) * 16, y - 26, { p, scale: 0.6, sx: 0.7 });
   } else pillarOf(ctx, school, x, y, p);
   ctx.restore();
-  // The skill's name pops up over your head.
-  if (f.name) {
-    // It pops in big, overshoots a touch small, and settles.
-    const k = Math.min(1, p * 9);
-    const pop = 1.5 - 0.5 * (1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2);
-    ctx.save();
-    ctx.globalAlpha = p > 0.75 ? (1 - p) / 0.25 : 1;
-    ctx.font = font((9 * pop).toFixed(1), true);
-    ctx.textAlign = 'center';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#3a2d4f';
-    ctx.strokeText(f.name, x, y - 74 - p * 10);
-    ctx.fillStyle = c;
-    ctx.fillText(f.name, x, y - 74 - p * 10);
-    ctx.restore();
-  }
 }

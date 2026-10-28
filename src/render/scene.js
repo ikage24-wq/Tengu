@@ -1,8 +1,8 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
 import { wornGear } from '../core/character.js';
-import { drawCombatAura } from './aura.js';
-import { gaugeOf, phantom } from '../world/melee.js';
+import { drawCombatAura, heartbeat } from './aura.js';
+import { gaugeOf, phantom, inForm, hasFaith } from '../world/melee.js';
 import { moveAt } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
@@ -23,6 +23,7 @@ import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffs
 import { ITEMS } from '../data/items.js';
 import { drawBubble, flushBubbles } from '../ui/chat.js';
 import { drawBuffEffects } from './buffs.js';
+import { fxSprite } from './fx-sprites.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
@@ -234,6 +235,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
   if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
+  // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
+  // a blood-red shadow of him just behind him that strikes again a beat after each swing.
+  if (!world.dead && inForm(world)) drawForm(ctx, world, look, gear, hx, hy, heroState, time);
   // Knocked out: the same fall as a downed party member (up and back, a bounce, lying with a ghost).
   if (world.dead) {
     if (feel.fellAt === undefined) feel.fellAt = time;
@@ -249,11 +253,14 @@ export function drawWorld(ctx, world, viewCam, time) {
     // A job's gauge builds up around them as the fight goes on: a Warrior's Valor, an Archer's
     // Momentum, a Berserker's Rage, a Paladin's Faith, a Ranger's Gale, a Sniper's Focus (each 0-100).
     const gauge = gaugeOf(world.char);
-    const power = gauge ? [gauge, (world[gauge] ?? 0) / 100] : null;
+    // In a form the aura stays at its fullest.
+    const power = gauge ? [gauge, inForm(world) ? 1 : (world[gauge] ?? 0) / 100] : null;
     const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
-    if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, 1, power[1]);
+    // A form draws the whole aura larger.
+    const auraScale = inForm(world) ? 1.4 : 1;
+    if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1]);
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
-    if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, 1, power[1]);
+    if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1]);
   }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
   drawSupport(ctx, buffs, hx, hy, time, world.now);
@@ -338,6 +345,29 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
   ctx.save();
   ctx.filter = 'brightness(0.35) sepia(1) hue-rotate(215deg) saturate(3.5)';
   drawHero(ctx, look, gear, x - state.facing * (live ? 10 : 16), y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 });
+  ctx.restore();
+}
+
+// The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).
+const FORM_LOOKS = {
+  rage: { glow: 'celdemonglow', shadow: 'brightness(0.38) sepia(1) hue-rotate(-52deg) saturate(8)' },
+  holy: { glow: 'celholyglow', shadow: null },
+};
+
+function drawForm(ctx, world, look, gear, x, y, state, time) {
+  const sw = world.formSwing;
+  const form = FORM_LOOKS[hasFaith(world.char) ? 'holy' : 'rage'];
+  const live = sw && world.now >= sw.since && world.now < sw.until;
+  const pose = live ? { pose: sw.kind, progress: (world.now - sw.since) / sw.dur, dur: sw.dur, from: null, blend: 1 } : {};
+  const beat = heartbeat(time);
+  // A glow round them that breathes (a slow swell) and blinks bright on each heartbeat.
+  const breath = 0.5 + 0.5 * Math.sin(time * 2.4);
+  const blink = beat < 1 ? 1 - beat : 0;
+  fxSprite(ctx, form.glow, x, y + 10, { t: time, scale: 1.6 + 0.25 * breath + 0.15 * blink, alpha: Math.min(1, 0.45 + 0.3 * breath + 0.4 * blink) });
+  if (!form.shadow) return;
+  ctx.save();
+  ctx.filter = form.shadow;
+  drawHero(ctx, look, gear, x - state.facing * (live ? 8 : 12), y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) });
   ctx.restore();
 }
 

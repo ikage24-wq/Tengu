@@ -14,6 +14,9 @@ const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'ho
 // A ring of force and a pillar of light in a school's colour (steel is the plain one).
 export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
+// A Warrior effect in a path's own colour: steel for the Warrior, gold for the Paladin, blood red
+// for the Berserker (they share the Warrior's skills).
+export const pathTint = (school, steel, gold, red) => (school === 'holy' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
 const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar', bloom: 'celembbloom' };
 
@@ -41,10 +44,12 @@ export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   if (emblem && p > 0.15) fxSprite(ctx, emblem, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.55 });
 }
 
-// Dust and rock thrust up where a heavy blow meets the ground, about `w` wide.
-export function debris(ctx, x, y, p, w) {
-  if (w > 120) fxSprite(ctx, 'celquakebig', x, y, { p, scale: w / (88 * 1.8) });
-  else fxSprite(ctx, 'celquake', x, y, { p, scale: w / 88 });
+// Dust and rock thrust up where a heavy blow meets the ground, about `w` wide (gold for a
+// Paladin's blow, blood red for a Berserker's).
+export function debris(ctx, x, y, p, w, school = null) {
+  const name = pathTint(school, 'celquake', 'celquakegold', 'celquakered');
+  if (w > 120) fxSprite(ctx, `${name}big`, x, y, { p, scale: w / (88 * 1.8) });
+  else fxSprite(ctx, name, x, y, { p, scale: w / 88 });
 }
 
 // A hit landing on a monster in a path's colour: the Warrior's cross of blades, the Paladin's
@@ -75,7 +80,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
-      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'shadow' || f.school === 'crow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
+      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : f.school === 'shadow' || f.school === 'crow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
       fxSprite(ctx, f.school === 'shadow' || f.school === 'crow' ? 'celsmoke' : 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
       if (f.school === 'shadow' || f.school === 'crow') {
         fxSprite(ctx, 'celsmoke', tx, y, { p: Math.min(1, p * 1.2), scale: 0.6 });
@@ -87,14 +92,14 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
         fxSprite(ctx, 'celbloomhit', tx, y - 22, { p: Math.max(0, 1 - p * 1.6), scale: 0.8 });
         return true;
       }
-      fxSprite(ctx, f.school === 'rage' ? 'celhitred' : 'celhit', tx + dir * 10, y - 22, { p, scale: 0.8 });
+      fxSprite(ctx, f.school === 'rage' ? 'celhitred' : f.school === 'holy' ? 'celholyhit' : 'celhit', tx + dir * 10, y - 22, { p, scale: 0.8 });
       return true;
     }
     case 'vortex': {
       // A whirlwind of blades over the area: spin slashes turning through it, stacked up.
       if (!box) return true;
       const cx = box.x + box.w / 2;
-      const name = f.school === 'rage' ? 'celspinredbig' : 'celspinbig';
+      const name = pathTint(f.school, 'celspinbig', 'celspingoldbig', 'celspinredbig');
       for (let i = 0; i < 3; i++) fxSprite(ctx, name, cx, box.y + box.h - 10 - i * 20, { t: time * (1 + i * 0.3) + i * 0.2, scale: (box.w / 164) * (1 - i * 0.12), sy: 0.35, flip: i % 2 === 1 });
       return true;
     }
@@ -138,10 +143,10 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // Titan Breaker's leap: steel light bursting up from the ground he leaps from, and a giant
       // sword of steel flying together out of shards high over him, held there until he crashes
       // down (the crash, 'titanbreak', drives it into the ground).
-      groundRing(ctx, 'celring', x, y, Math.min(1, p * 1.6), 70);
-      if (p < 0.5) lightPillar(ctx, 'celpillar', x, y, p * 2, 120);
+      groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.6), 70);
+      if (p < 0.5) lightPillar(ctx, pillarSprite(f.school), x, y, p * 2, 120);
       const form = Math.min(1, p / 0.35);
-      if (p < 0.66) fxSprite(ctx, 'celswordform', x, y - 92, { frame: Math.min(4, Math.floor(form * 4.99)), scale: 1, alpha: p > 0.6 ? (0.66 - p) / 0.06 : 1 });
+      if (p < 0.66) fxSprite(ctx, pathTint(f.school, 'celswordform', 'celswordformgold', 'celswordformred'), x, y - 92, { frame: Math.min(4, Math.floor(form * 4.99)), scale: 1, alpha: p > 0.6 ? (0.66 - p) / 0.06 : 1 });
       return true;
     }
     case 'titanbreak': {
@@ -150,18 +155,18 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // out of it, a ring racing out.
       const r = f.r ?? 170;
       const fall = Math.min(1, p / 0.1);
-      fxSprite(ctx, 'celsteelsword', x, y + 6 - 120 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1.05 });
-      fxSprite(ctx, 'celfissurebig', x, y, { p, scale: r / 230 });
-      debris(ctx, x, y, p, r * 0.8);
-      if (p > 0.06) fxSprite(ctx, 'celsteelcross', x, y - 44, { p: (p - 0.06) / 0.94, scale: 1.1 });
-      groundRing(ctx, 'celring', x, y, p, r * 1.1);
+      fxSprite(ctx, pathTint(f.school, 'celsteelsword', 'celsword', 'celragesword'), x, y + 6 - 120 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1.05 });
+      fxSprite(ctx, pathTint(f.school, 'celfissurebig', 'celfissuregoldbig', 'celfissureredbig'), x, y, { p, scale: r / 230 });
+      debris(ctx, x, y, p, r * 0.8, f.school);
+      if (p > 0.06) fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 44, { p: (p - 0.06) / 0.94, scale: 1.1 });
+      groundRing(ctx, ringOf(f.school), x, y, p, r * 1.1);
       return true;
     }
     case 'titanwave': {
       // The aftershock: rings of steel racing out along the ground, dust thrown both ways.
       const r = f.r ?? 180;
-      groundRing(ctx, 'celring', x, y, p, r);
-      groundRing(ctx, 'celring', x, y, Math.min(1, p * 1.5), r * 0.6);
+      groundRing(ctx, ringOf(f.school), x, y, p, r);
+      groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.5), r * 0.6);
       for (const sd of [-1, 1]) fxSprite(ctx, 'celdust', x + sd * r * 0.35, y + 2, { p, flip: sd < 0, scale: 1 });
       return true;
     }
@@ -176,7 +181,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // fire bursting and a rose-red ring racing out.
       const r = f.r ?? 175;
       fxSprite(ctx, 'celclawbig', x, y - 40, { p, scale: 0.95, flip });
-      debris(ctx, x, y, p, r * 0.9);
+      debris(ctx, x, y, p, r * 0.9, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       groundRing(ctx, 'celringrage', x, y, p, r);
       return true;
@@ -199,6 +204,13 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'holyhit': {
       // A Paladin's blow: a star of light bursting on the target.
       hitMark(ctx, 'holy', x, y - (f.h ?? 24) / 2, p, { big: f.big, seed, dir });
+      return true;
+    }
+    case 'formburst': {
+      // A form's overflow: power bursting out at the end of a swing, a flash inside a jagged ring of
+      // force (blood red in Demon Form, gold in Judgment).
+      fxSprite(ctx, pathTint(f.school, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 1.35, rot: (seed - 0.5) * 0.8, flip });
+      fxSprite(ctx, pathTint(f.school, 'celshout', 'celshoutgold', 'celshoutred'), x, y, { p: Math.min(1, p * 1.3), scale: 0.45 });
       return true;
     }
     case 'rageburst': {

@@ -14,7 +14,7 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, castBlocker, weaponElement, braceOnHit } from './combat.js';
+import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -354,7 +354,7 @@ function killMob(world, m, byParty = false) {
 }
 
 export function hurtPlayer(world, rawAtk, fromX) {
-  if (world.god) return;
+  if (world.god || blockOnHit(world)) return;
   const char = world.char;
   const s = world.stats;
   let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));
@@ -375,7 +375,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
     world.events.push({ type: 'death' });
     world.log('You fainted...', '#ff6b8a');
   }
-  braceOnHit(world, dmg);
+  hurtProcs(world, dmg);
 }
 
 function playerBox(b) {
@@ -529,6 +529,7 @@ export function updateWorld(world, dt, input) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
       world.hitsAt = world.now;
       if (h.gauge) addAim(world, h.gauge, m);
+      drinkBlood(world, h.damage);
     }
     if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasIntent(world.char) ? 'crow' : hasShadow(world.char) ? 'shadow' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon });
