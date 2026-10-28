@@ -449,8 +449,10 @@ to clear it.
     moonlight. She has a body of her own and finds her own way round (walking, jumping up to
     ledges, dropping through them, climbing ropes) and picks her own fights, but never far from the
     Beastmaster: only monsters close to her (whatever's closing in on the Beastmaster first, then
-    the nearest by the way there, finishing off what's hurt). She cuts them close in, flicks
-    crescents of moonlight up and down ledges, or, when one is out of her reach, leaps on it, the
+    the nearest by the way there, finishing off what's hurt). She cuts them close in, lobs junk
+    out of her sleeve up and down ledges without looking (a rock, an old sandal, a fish, a rubber
+    duck, a teacup that shatters, a sleepy cat that naps on its head and holds it still, or a cookie
+    she eats instead: BONK!), or, when one is out of her reach, leaps on it, the
     sword dragging her through the air, and lands with a blow all round; with nothing left she waits
     beside the Beastmaster. She waddles slowly, the tip scraping the ground, on a skeleton of her
     own that's played for laughs: sighs with a huff of steam, dozing off on her feet, the sword

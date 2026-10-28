@@ -580,7 +580,29 @@ function slumped(p, k) {
   return { ...p, ears: [p.ears[0] + 30 * k, p.ears[1] + 32 * k], hy: p.hy + 1.5 * k, by: p.by + k, mouth: 'flat', lid: 0.95, extras: [`dots${1 + Math.min(2, Math.floor((1 - k) * 4))}`], tail: 0 };
 }
 
-const DOING = { swing: spinning, slam: slamming, flick: flicking, cast: casting, howl: howling, ward: warding, leap: leaping, straw: strawing, snack: snacking };
+// Sleeve Junk: she rummages around in her big sleeve with her free hand, head down, peering in;
+// pulls something out and, eyes shut, not even looking, lobs it overhand (it leaves at 0.42 s);
+// her arm flops back down. If it's a cookie, she stops, looks at it, and eats it instead.
+function tossing(t, a) {
+  const rummage = t < 0.32;
+  if (a?.item === 'cookie' && t > 0.32) {
+    const munch = t > 0.5;
+    return pose({ free: munch ? [3, -8] : [2, -6], hy: munch ? 1.5 : 0.5, lid: munch ? 0.6 : 0, brows: munch ? REST.brows : [[0.9, -0.3], [0.9, -0.3]], mouth: munch ? (Math.floor(t * 9) % 2 ? 'cat' : 'o') : 'o', blush: munch ? 1.5 : 1, extras: munch ? ['hearts'] : ['q'], ears: [-6, -6], tail: munch ? 20 * Math.sin(t * 20) : 0 });
+  }
+  if (rummage) {
+    const dig = Math.sin(t * 40) * 0.8;
+    return pose({ free: [-4 + dig, -1], hx: -1, hy: 2.2, tilt: 4, mouth: 'flat', lid: 0.6, ears: [12, 14], tail: 4 * Math.sin(t * 10) });
+  }
+  const up = seg(t, 0.32, 0.42);
+  const out = seg(t, 0.42, 0.52);
+  const flop = seg(t, 0.55, 0.75);
+  return pose({
+    free: up < 1 ? [lerp(-4, -1, up), lerp(-1, -12, up)] : out < 1 ? [lerp(-1, 6, out), lerp(-12, -5, out)] : [lerp(6, 0.4, flop), lerp(-5, 0.6, flop)],
+    tilt: up < 1 ? -4 * up : 6 * (1 - flop), tx: out * (1 - flop), hx: -0.8, hy: 1, lid: 1, mouth: 'bored', ears: [6, 6], tail: 8 * out * (1 - flop),
+  });
+}
+
+const DOING = { toss: tossing, swing: spinning, slam: slamming, flick: flicking, cast: casting, howl: howling, ward: warding, leap: leaping, straw: strawing, snack: snacking };
 
 // Blending: every number eases over, angles the short way round.
 function blend(a, b, k) {
@@ -632,7 +654,7 @@ export function drawSnowWolf(ctx, world, s, cam, time) {
     p = spinning(t);
   } else if (a && DOING[a.kind]) {
     doing = a.kind;
-    p = DOING[a.kind](t);
+    p = DOING[a.kind](t, a);
   } else if (s.moving) {
     // Her stride, in her own (smaller) body px a cycle: long slow waddling steps (about two and a
     // half a second at her pace), a quicker run.

@@ -945,7 +945,7 @@ test('Snow wolf picks her own fights, and comes back to the Beastmaster when the
   // Nothing left: she comes back and waits beside the Beastmaster, wherever she walks.
   w.mobs = [];
   run(w, 1.2, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
-  run(w, 3);
+  run(w, 5);
   assert.ok(Math.abs(w.pets.snow.x - w.body.x) < 80 && Math.abs(w.pets.snow.y - w.body.y) < 30, 'back beside her');
 });
 
@@ -1084,6 +1084,37 @@ test("Snow wolf won't take the same order again until it has cooled down", async
   run(w, 5);
   s.act = null;
   assert.ok(moonfall(w, w.mobs[0], 100), 'and once it has cooled, Moonfall goes again');
+});
+
+test('Sleeve Junk: further off, Snow wolf lobs whatever is in her sleeve; it bonks, the cat naps on it, the cookie she eats', () => {
+  const junk = (roll) => {
+    const w = archer('beastmaster');
+    const s = w.pets.snow;
+    Object.assign(s.body, { x: w.body.x - 20, vx: 0, facing: 1 });
+    Object.assign(s, { act: null, next: 0, leapAt: Infinity });
+    w.bolts = [];
+    w.mobs = [w.mobs[0]];
+    Object.assign(w.mobs[0], { x: w.body.x + 180 });
+    const seen = { item: null, bonk: false, nap: false };
+    dice(roll, () => {
+      for (let i = 0; i < 60 * 1.6; i++) {
+        updateWorld(w, DT, idle);
+        if (s.act?.kind === 'toss') seen.item ??= s.act.item;
+        seen.bonk ||= w.fx.some((f) => f.kind === 'bonk');
+        seen.nap ||= w.fx.some((f) => f.kind === 'catnap') && w.mobs[0].hold === 'stun';
+      }
+    });
+    return { ...seen, hit: w.mobs[0].hp < 1e9 };
+  };
+  const rock = junk(0.01);
+  assert.equal(rock.item, 'rock', 'out comes a rock');
+  assert.ok(rock.bonk && rock.hit, 'BONK');
+  const cat = junk(0.88);
+  assert.equal(cat.item, 'cat');
+  assert.ok(cat.nap, 'the cat naps on its head, holding it still');
+  const cookie = junk(0.97);
+  assert.equal(cookie.item, 'cookie');
+  assert.ok(!cookie.hit, 'the cookie she eats instead');
 });
 
 test('Moon Ward: Snow wolf plants her sword in front of a hit and answers it', async () => {

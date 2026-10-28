@@ -5,7 +5,8 @@
 // Dev tool: a real game world (the same code the game runs) with a Beastmaster, Snow wolf and a
 // row of training dummies, her gauge full, and Last Straw cast, drawn with the game's own scene
 // renderer. Open /tools/snowwolf-finisher.html (served with the game); ?snack also casts Snack
-// Time first; ?manual steps frames from outside (window.step) for recording.
+// Time first; ?flick casts nothing and keeps her from leaping, so she flicks crescents at them;
+// ?manual steps frames from outside (window.step) for recording.
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
@@ -60,7 +61,8 @@ w.bondAt = 1e9;
 let cast0 = false;
 function step(dt) {
   t += dt;
-  if (!cast0 && t > 0.6) {
+  if (q.has('flick')) w.pets.snow.leapAt = Infinity;
+  if (!cast0 && t > 0.6 && !q.has('flick')) {
     cast0 = true;
     w.bond = 100;
     console.log('cast', JSON.stringify(cast(w, 'stampede')));

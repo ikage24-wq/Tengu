@@ -7,7 +7,7 @@
 // monster to go after (close by path, not already given up on, and first of all whatever is
 // closing in on the Beastmaster), then a spot beside it on its own ledge; between swings she
 // walks there. Close in she swings or slams the greatsword; further off (even a ledge above or
-// below) she flicks a crescent of moonlight. The Beastmaster's skills also make her act
+// below) she lobs junk out of her sleeve at it. The Beastmaster's skills also make her act
 // (Fine, I'll Go; Moonfall; Lunar Howl; Moon Ward; Snack Time, which makes her happy; and the
 // finisher, Last Straw, which makes her snap), and her Patience (the Bond gauge) running out makes
 // her Fed Up: she hits harder and quicker, faster still with Queen's Awakening. Her hits
@@ -46,6 +46,17 @@ export const WILD_POWER = 1.4;
 const SPIN = { dur: 1.2, hit: 0.46 };
 const SLAM_T = { dur: 1.45, hit: 0.6 };
 const FLICK_T = { dur: 0.55, at: 0.25 };
+// Sleeve Junk (her own ranged attack): she rummages in her sleeve and lobs whatever's in there,
+// without looking. What comes out (and how likely): a cookie she eats instead, and a sleepy cat
+// that naps on its head (stunning it). How long it takes, when it's thrown, how long it flies,
+// and how long the cookie takes to eat.
+const JUNK = [['rock', 3], ['sandal', 2], ['fish', 2], ['duck', 2], ['teacup', 2], ['cat', 1], ['cookie', 1]];
+const TOSS_T = { dur: 0.75, at: 0.42, fly: 0.5, eat: 1.1, nap: 1.2 };
+function pickJunk() {
+  let r = Math.random() * JUNK.reduce((n, [, w]) => n + w, 0);
+  for (const [item, w] of JUNK) if ((r -= w) < 0) return item;
+  return 'rock';
+}
 const CAST_T = { dur: 1.0, fx: 0.42, hit: 0.55 };
 // The leap: getting ready, the flight (take-off at `up`, landing at `hit`), and the slam's end lag.
 const LEAP_T = { dur: 1.75, up: 0.45, hit: 0.9 };
@@ -126,9 +137,15 @@ function lastStraw(world, s) {
   world.fx.push({ kind: 'strawmoon', x: s.x, y: s.y, dir: s.dir, r: STRAW_T.r, hit: STRAW_T.hit / STRAW_T.dur, t: 0, dur: STRAW_T.dur });
 }
 
+// A piece of sleeve junk lobbed at `m`: it arcs over and lands on its head a beat later.
+function lob(world, s, m, item, pct, gauge) {
+  world.fx.push({ kind: 'junk', item, x: s.x + s.dir * 6, y: s.y - 26, tx: m.x, ty: m.y - m.def.h, t: 0, dur: TOSS_T.fly, seed: Math.random() });
+  (world.bolts ??= []).push({ mob: m, at: world.now + TOSS_T.fly, pct, x: s.x, gauge, item });
+}
+
 // A crescent of moonlight flicked at `m`: it flies, and lands a beat later (the hit waits for it).
 function bolt(world, s, m, pct, gauge) {
-  const dur = Math.max(0.08, Math.hypot(m.x - s.x, m.y - s.y) / BOLT);
+  const dur = Math.max(0.18, Math.hypot(m.x - s.x, m.y - s.y) / BOLT);
   world.fx.push({ kind: 'moonbolt', x: s.x + s.dir * 10, y: s.y - 14, tx: m.x, ty: m.y - m.def.h / 2, dir: Math.sign(m.x - s.x) || s.dir, t: 0, dur });
   (world.bolts ??= []).push({ mob: m, at: world.now + dur, pct, x: s.x, gauge });
 }
@@ -206,7 +223,17 @@ export function tickPets(world, dt) {
   if (world.bolts?.length) {
     world.bolts = world.bolts.filter((o) => {
       if (world.now < o.at) return true;
-      if (alive(o.mob)) beastHit(world, o.mob, { pct: o.pct, x: o.x, knock: 120, stop: 0.03, burst: 'moonhit', gauge: o.gauge });
+      if (!alive(o.mob)) return false;
+      if (!o.item) {
+        beastHit(world, o.mob, { pct: o.pct, x: o.x, knock: 120, stop: 0.03, burst: 'moonhit', gauge: o.gauge });
+        return false;
+      }
+      // Junk: BONK on the head, and it bounces off (the cat stays, asleep on it, holding it still).
+      const m = o.mob;
+      const cat = o.item === 'cat';
+      beastHit(world, m, { pct: o.pct, x: o.x, knock: 50, launch: cat ? 0 : 90, stop: 0.04, burst: 'bonk', gauge: o.gauge, stun: cat ? TOSS_T.nap : undefined });
+      if (cat) world.fx.push({ kind: 'catnap', mob: m, x: m.x, y: m.y, t: 0, dur: TOSS_T.nap });
+      else world.fx.push({ kind: 'junkbounce', item: o.item, x: m.x, y: m.y - m.def.h, dir: Math.sign(m.x - o.x) || 1, t: 0, dur: 0.7, seed: Math.random() });
       return false;
     });
   }
@@ -361,6 +388,12 @@ function act(world, s, dt, power) {
         const far = world.mobs.filter((m) => alive(m) && Math.sign(m.x - s.x) === s.dir && Math.abs(m.x - s.x) < FLICK && Math.abs(m.y - s.y) < 120).sort((m, o) => Math.abs(o.x - s.x) - Math.abs(m.x - s.x))[0];
         if (far) bolt(world, s, far, a.pct * 0.6, a.gauge);
       }
+    }
+    if (t >= a.dur) s.act = null;
+  } else if (a.kind === 'toss') {
+    if (!a.hit && t >= TOSS_T.at && a.item !== 'cookie') {
+      a.hit = true;
+      if (alive(a.mob)) lob(world, s, a.mob, a.item, a.pct, a.gauge);
     }
     if (t >= a.dur) s.act = null;
   } else if (a.kind === 'flick') {
@@ -525,7 +558,8 @@ function attack(world, s, fed, awake) {
     s.leapAt = world.now + LEAP.every;
     s.brain.path = null;
   } else if (dx < FLICK && dy < 160) {
-    s.act = { kind: 'flick', own: true, t0: world.now, dur: FLICK_T.dur, mob: m, pct: pct * 0.8, gauge, speed };
+    const item = pickJunk();
+    s.act = { kind: 'toss', own: true, t0: world.now, dur: item === 'cookie' ? TOSS_T.eat : TOSS_T.dur, mob: m, item, pct: pct * 0.8, gauge, speed };
   } else return;
   s.body.vx = 0;
   s.next = world.now + every;
