@@ -405,8 +405,8 @@ export const SKILLS = {
   // (Fed Up), Snow wolf fights on her own, and the finisher spends it. Like the Archer, she fights
   // with her basic shots and her skills set themselves off: Fine, I'll Go and Moonfall from any
   // shot, Lunar Howl from her combo's last shot. Her late skills (`minLevel`): Moon Ward and
-  // Queen's Awakening. Her buttons are the Archer's Vault and Wrath of the Wolf Queen. (The skill
-  // ids are the old animals' names, kept for saves.)
+  // Queen's Awakening. Her buttons are the Archer's Vault, Snack Time and the finisher, Last Straw.
+  // (The skill ids are the old animals' names, kept for saves.)
   beastmastery: skill({
     id: 'beastmastery', name: 'Beast Mastery', job: 'beastmaster', type: 'passive', fx: null,
     desc: 'Steadier shots, more attack, and sharper aim, and Snow wolf hits harder too.',
@@ -432,25 +432,29 @@ export const SKILLS = {
     desc: 'A hit sometimes never reaches you: Snow wolf plants her greatsword in front of it, a crescent shield of moonlight takes it, and she flicks a crescent back at the attacker.',
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m), pct: lerp(120, 200, lv, m) } }),
   }),
+  snacktime: skill({
+    id: 'snacktime', name: 'Snack Time', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'wind', maxLevel: 10,
+    desc: "Toss Snow wolf a moon cookie. For a while she's happy: ears up, tail wagging, she keeps up with you instead of waddling, attacks harder and more often, gets through each attack quicker, and her Patience holds instead of fading. When it wears off she slumps right back.",
+    at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { snackPct: lerpf(1.25, 1.6, lv, m), snackSpeed: lerpf(1.2, 1.45, lv, m) } }),
+  }),
   alpha: skill({
     id: 'alpha', name: "Queen's Awakening", job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10, minLevel: 70,
     desc: 'While Snow wolf is Fed Up (full Bond), the wolf head on her greatsword wakes: her eyes open, she attacks faster and harder, and every swing also throws a crescent of moonlight at the farthest monster.',
     at: (lv, m) => ({ passive: {}, proc: { pct: lerp(150, 260, lv, m), every: lerpf(1.3, 0.9, lv, m) } }),
   }),
   stampede: skill({
-    id: 'stampede', name: 'Wrath of the Wolf Queen', job: 'beastmaster', type: 'attack', fx: null, school: 'wind', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Bond, and spends it. Raise your bow to the sky and Snow wolf finally snaps: a great full moon rises over you, and crescents of moonlight sweep out across the whole screen one after another, cutting everything in their way and throwing it into the air.',
+    id: 'stampede', name: 'Last Straw', job: 'beastmaster', type: 'attack', fx: null, school: 'wind', maxLevel: 10, fullGauge: true,
+    desc: "Finisher: needs full Bond, and spends it. That's it: Snow wolf snaps. She's beside you in a flash, fuming, eyes blazing; for once she lifts the greatsword in one hand as if it weighed nothing, twirls it, leaps, and brings it down under a great full moon: everything across the whole screen around her is cut and thrown into the air. Then she keels over asleep.",
     weapons: ['bow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
-      const run = (at) => ({ at, pct: k(90, 150), reach: 560, h: 150, targets, knock: 220, launch: 200, fx: 'moonhit', stop: 0.03, gauge: 0 });
+      // The Beastmaster raises her bow and gives the signal; Snow wolf acts it out and lands the
+      // blow (world/pets.js lastStraw), with the skill's pct.
       return {
-        mp: k(30, 50), pct: k(420, 720), hits: 5, targets,
-        combo: [{ move: 'skyshot', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.18, pct: 0, reach: 0, h: 0, targets: 0, burst: 'moonwrath', burstAt: 0, burstDur: 1.5, quiet: true, gauge: 0 },
-          run(0.34), run(0.44), run(0.54), run(0.64),
-          { at: 0.76, pct: k(300, 520), reach: 600, h: 160, targets, knock: 380, launch: 440, fx: 'moonhit', big: true, stop: 0.14, shake: 6, gauge: 0 },
+        mp: k(30, 50), pct: k(900, 1500), hits: 1, targets,
+        combo: [{ move: 'skyshot', dur: 0.9, step: 0, finisher: true, guard: 0.9, strikes: [
+          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, burst: 'laststraw', burstAt: 0, burstDur: 0.1, quiet: true, gauge: 0 },
         ] }],
       };
     },
@@ -763,7 +767,7 @@ export const SKILLS = {
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   vault: 'vault', cometarrow: 'comet',
-  stampede: 'skyshot',
+  stampede: 'skyshot', snacktime: 'throw',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',

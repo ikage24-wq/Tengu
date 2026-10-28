@@ -1027,9 +1027,10 @@ test("Fed Up (full Bond): Snow wolf hits harder and quicker, quicker still with 
     }
     return { n, dmg: w.mobs.reduce((t, m) => t + (1e9 - m.hp), 0) };
   };
-  const calm = hits(0, false);
-  const fed = hits(100, false);
-  const awake = hits(100, true);
+  // The same rolls each time (which blow she picks, crits), so only her mood differs.
+  const calm = dice(0.5, () => hits(0, false));
+  const fed = dice(0.5, () => hits(100, false));
+  const awake = dice(0.5, () => hits(100, true));
   assert.ok(fed.dmg > calm.dmg, `Fed Up she hits harder (${calm.dmg} -> ${fed.dmg})`);
   assert.ok(awake.n >= fed.n, 'awake, at least as often');
 });
@@ -1051,6 +1052,40 @@ test("Snow wolf's sword cleaves: a swing cuts everything all round her, a slam e
   }
 });
 
+test('out of her reach, Snow wolf leaps on them and lands with a blow that hits all round', () => {
+  const w = archer('beastmaster');
+  const s = w.pets.snow;
+  Object.assign(s.body, { x: 300, vx: 0, facing: 1 });
+  Object.assign(s, { act: null, next: 0, leapAt: 0 });
+  w.bolts = [];
+  w.mobs.forEach((m, i) => Object.assign(m, { x: 520 + i * 20 }));
+  let leapt = false;
+  let landed = null;
+  for (let i = 0; i < 60 * 2 && !landed; i++) {
+    updateWorld(w, DT, idle);
+    leapt ||= s.act?.kind === 'leap';
+    if (leapt && w.fx.some((f) => f.kind === 'moonquake')) landed = w.mobs.filter((m) => m.hp < 1e9).length;
+  }
+  assert.ok(leapt, 'she leaps');
+  assert.ok(Math.abs(s.x - 540) < 60, `landing beside them (${Math.round(s.x)})`);
+  assert.equal(landed, 3, 'the landing hits all three');
+});
+
+test("Snow wolf won't take the same order again until it has cooled down", async () => {
+  const { sendSnow, moonfall } = await import('../src/world/pets.js');
+  const w = archer('beastmaster');
+  const s = w.pets.snow;
+  Object.assign(s, { act: null, next: Infinity });
+  assert.ok(moonfall(w, w.mobs[0], 100), 'the first Moonfall goes');
+  run(w, 1.2);
+  s.act = null;
+  assert.equal(moonfall(w, w.mobs[0], 100), false, 'a second one right after waits');
+  assert.ok(sendSnow(w, w.mobs[0], 100), 'another order still goes');
+  run(w, 5);
+  s.act = null;
+  assert.ok(moonfall(w, w.mobs[0], 100), 'and once it has cooled, Moonfall goes again');
+});
+
 test('Moon Ward: Snow wolf plants her sword in front of a hit and answers it', async () => {
   const { hurtPlayer } = await import('../src/world/world.js');
   const w = archer('beastmaster');
@@ -1067,26 +1102,81 @@ test('Moon Ward: Snow wolf plants her sword in front of a hit and answers it', a
   });
 });
 
-test('Wrath of the Wolf Queen needs full Bond, spends it, and moonlight sweeps everything ahead', () => {
+test('Last Straw needs full Bond, spends it, and Snow wolf snaps: one blow all round her, the whole screen across', () => {
   const w = archer('beastmaster');
   w.char.skills.stampede = 10;
   w.char.mp = 9999;
   w.bond = 60;
   assert.equal(cast(w, 'stampede').reason, 'gauge:bond', 'waits for full Bond');
   w.bond = 100;
+  // Far off when it's cast: she's beside the Beastmaster in a flash.
+  w.pets.snow.body.x = w.body.x - 300;
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-260, 200, 380][i] }));
   assert.ok(cast(w, 'stampede').ok);
   assert.equal(w.bond, 0, 'spends all of it');
+  let snapped = false;
   let moon = false;
   let air = 0;
-  for (let i = 0; i < 60 * 2; i++) {
+  for (let i = 0; i < 60 * 3; i++) {
     updateWorld(w, DT, idle);
-    moon ||= w.fx.some((f) => f.kind === 'moonwrath');
+    if (w.pets.snow.act?.kind === 'straw') snapped ||= Math.abs(w.pets.snow.x - w.body.x) < 60;
+    moon ||= w.fx.some((f) => f.kind === 'strawmoon');
     air = Math.max(air, ...w.mobs.map((m) => m.air ?? 0));
   }
+  assert.ok(snapped, 'she snaps, right beside the Beastmaster');
   assert.ok(moon, 'the full moon rises');
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'over all of them');
-  assert.ok(air > 30, 'throwing them into the air');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster both ways is hit');
+  assert.ok(air > 30, 'and thrown into the air');
 });
+
+test('Snack Time: Snow wolf catches the cookie and is happy for a while: her Patience holds and her attacks come quicker', () => {
+  const w = archer('beastmaster');
+  w.char.skills.snacktime = 10;
+  w.char.mp = 9999;
+  assert.ok(cast(w, 'snacktime').ok);
+  let caught = false;
+  for (let i = 0; i < 30; i++) {
+    updateWorld(w, DT, idle);
+    caught ||= w.pets.snow.act?.kind === 'snack';
+  }
+  assert.ok(caught, 'she catches the cookie');
+  assert.ok(w.fx.some((f) => f.kind === 'cookie') || caught, 'tossed to her');
+  assert.ok(w.pets.snow.happy, 'and is happy');
+  // Her Patience holds while she's happy.
+  w.mobs = [];
+  w.bond = 50;
+  w.bondAt = w.now - 100;
+  updateWorld(w, DT, idle);
+  const held = w.bond;
+  run(w, 2);
+  assert.equal(w.bond, held, 'her Patience holds');
+  // Her own attacks: quicker.
+  const attacks = (snack) => {
+    const v = archer('beastmaster');
+    if (snack) {
+      v.char.skills.snacktime = 10;
+      v.char.mp = 9999;
+      cast(v, 'snacktime');
+      run(v, 1.1);
+    }
+    let n = 0;
+    for (let i = 0; i < 60 * 6; i++) {
+      updateWorld(v, DT, idle);
+      if (v.pets.snow.act?.own && v.pets.snow.act.t0 === v.now) n++;
+    }
+    return n;
+  };
+  assert.ok(attacks(true) > attacks(false), 'she attacks more often');
+});
+
+test('Snow wolf keeps close: monsters far from the Beastmaster are left alone', () => {
+  const w = archer('beastmaster');
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 600 + i * 20 }));
+  run(w, 5);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 0, 'none of them hit');
+  assert.ok(Math.abs(w.pets.snow.x - w.body.x) < 80, 'she stays by the Beastmaster');
+});
+
 
 test("the Beastmaster has her own basic combo, and its shots land when they arrive", async () => {
   const { PATH_COMBOS } = await import('../src/world/melee.js');

@@ -33,7 +33,7 @@ const PATHS = {
   paladin: { name: 'TestPaladin', title: 'Paladin', weapon: 'sword', skills: { paladinmastery: 20, aegissmite: 20, hallowedground: 20, divineaegis: 20, sacredbulwark: 10, judgment: 10, grandverdict: 10 }, finisher: 'grandverdict' },
   berserker: { name: 'TestBerserker', title: 'Berserker', weapon: 'axe', skills: { berserkermastery: 20, ravage: 20, bloodfrenzy: 20, rampage: 20, bloodlust: 10, demonform: 10, crimsoneclipse: 10 }, finisher: 'crimsoneclipse' },
   archer: { name: 'TestArcher', title: 'Archer', family: 'archer', weapon: 'bow', skills: {}, finisher: 'cometarrow' },
-  beastmaster: { name: 'TestBeastmaster', title: 'Beastmaster', family: 'archer', weapon: 'bow', skills: { beastmastery: 20, wolfpounce: 20, hawkstrike: 20, packhowl: 20, loyalguard: 10, alpha: 10, stampede: 10 }, finisher: 'stampede' },
+  beastmaster: { name: 'TestBeastmaster', title: 'Beastmaster', family: 'archer', weapon: 'bow', skills: { beastmastery: 20, wolfpounce: 20, hawkstrike: 20, packhowl: 20, loyalguard: 10, alpha: 10, snacktime: 10, stampede: 10 }, finisher: 'stampede', buff: 'snacktime' },
   stormcaller: { name: 'TestStormcaller', title: 'Stormcaller', family: 'archer', weapon: 'crossbow', skills: {}, finisher: 'cometarrow' },
 };
 const q = new URLSearchParams(location.search);
@@ -74,7 +74,7 @@ if (slot < 0) {
   addItem(c.inventory, 'elixir', 20);
   // The family's other weapons too, to try the swings with each.
   for (const w of family.weapons) if (w !== path.weapon) addItem(c.inventory, `${w}_${gear}`, 1);
-  c.hotkeys = { KeyQ: { skill: family.move }, KeyW: { skill: path.finisher }, Digit1: { item: 'red_potion' }, Digit2: { item: 'blue_potion' } };
+  c.hotkeys = { KeyQ: { skill: family.move }, KeyW: { skill: path.finisher }, ...(path.buff ? { KeyE: { skill: path.buff } } : {}), Digit1: { item: 'red_potion' }, Digit2: { item: 'blue_potion' } };
   c.gold = 1e6;
   c.mapId = 'woods';
   c.portal = 'west';

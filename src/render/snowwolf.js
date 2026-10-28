@@ -171,7 +171,8 @@ const GRIP = -6.2;
 //   legF, legB                          each foot's [ahead, up (negative), tilt]
 //   ears, tail, cloth, clothRoot, kick  ears and tail (degrees), the kimono's hem and root, the hair
 //                                       thrown up
-//   mouth, lid, brows, extras, turned   the face, and whether she's turned round (mid-spin)
+//   mouth, lid, brows, extras, blush,   the face (blush and puffed cheeks too), and whether she's
+//   puff, turned                        turned round (mid-spin)
 //   front                               the sword drawn in front of her (stood before her)
 // Each thing she does is a function of time giving a pose; switching from one to the next blends
 // over a moment, so nothing ever jumps. The sword is a bone: drawn from her right hand where the
@@ -179,7 +180,7 @@ const GRIP = -6.2;
 const REST = {
   tx: 0, by: 0, squat: 0, lift: 0, hx: 0, hy: 1, tilt: -3, hand: [-4.6, 0.6], free: [0.4, 0.2], sword: 'trail', skip: 0, abs: false,
   legF: [0.8, 0, 0], legB: [-0.8, 0, 0], hipIn: 0, ears: [4, 4], tail: 0, cloth: 0, clothRoot: 0, kick: 0,
-  mouth: 'bored', lid: null, brows: [[-0.2, 0.2], [-0.2, 0.2]], extras: [], turned: false, air: false, view: 'side', climb: 0, glow: 0, front: false, frontK: 0,
+  mouth: 'bored', lid: null, brows: [[-0.2, 0.2], [-0.2, 0.2]], extras: [], blush: 1, puff: false, turned: false, air: false, view: 'side', climb: 0, glow: 0, front: false, frontK: 0,
 };
 const pose = (o) => ({ ...REST, ...o });
 
@@ -196,17 +197,49 @@ const TRAIL = 2.9;
 // the rig's tall proportions, so its height is drawn shorter: hence the 0.6).
 const handAlong = (a, r = 8) => [1.4 + Math.cos(a) * r, -9.4 + (Math.sin(a) * r) / 0.6];
 
-// Standing about, fed up (a 5.2 s cycle): breathing; a big sigh (steam, ears flat back, the hair
-// lifting as she breathes in and dropping as she lets it out); then fuming (a vein, ears pinned,
-// the tail thumping); a grudging tug at the sword; a long "...". Ears twitch now and then.
+// Standing about (a 12 s routine).
+//   0-5.2 s    fed up: breathing; a big sigh (steam, ears flat back, the hair lifting as she breathes
+//              in and dropping as she lets it out); fuming (a vein, ears pinned, the tail thumping);
+//              a grudging tug at the sword; a long "..."
+//   5.2-9.6    dozing off on her feet: leaning on it, her eyes closing, z's, her head sinking, ears
+//              drooping, until it drops with a jerk and she snaps awake with a "!", wide-eyed, and
+//              looks round as if nothing happened, a bead of sweat
+//   9.6-12     a huge yawn, a hand to her mouth, ears back, a stretch of the tail
+// Ears twitch now and then all through it.
 function standing(t) {
-  const p = (t % 5.2) / 5.2;
+  const c = t % 12;
+  const tw = t % 3.3;
+  const twitch = [-(tw < 0.12 ? 18 : 0), -(tw > 1.9 && tw < 2.02 ? 18 : 0)];
+  if (c >= 5.2 && c < 9.6) {
+    const d = c - 5.2;
+    const sleep = ease(seg(d, 0, 1.6));
+    const nod = d > 3.2 && d < 3.45;
+    const awake = d >= 3.45;
+    const look = awake ? Math.sin((d - 3.45) * 9) * (1 - seg(d, 3.45, 4.4)) : 0;
+    return pose({
+      by: nod ? 1.6 : awake ? -0.8 * (1 - seg(d, 3.45, 3.8)) : 0.6 * sleep + 0.3 * Math.sin(t * 1.6),
+      hy: nod ? 3.5 : awake ? 0 : 1 + 1.6 * sleep, hx: 1.2 * look, tilt: nod ? 9 : awake ? -3 : -3 + 7 * sleep,
+      hand: [-4.6, 0.6 + 0.8 * sleep], free: [0.4, 0.6 * sleep], lid: awake ? 0 : 0.85 + 0.15 * sleep,
+      mouth: awake ? (d < 3.9 ? 'o' : 'flat') : sleep > 0.6 ? 'tiny' : 'bored', brows: awake && d < 4 ? [[0.9, -0.3], [0.9, -0.3]] : REST.brows,
+      extras: awake ? (d < 3.85 ? ['shock'] : ['sweat0']) : sleep > 0.5 ? [`zzz${Math.floor(t * 1.5) % 3}`] : [],
+      ears: awake ? [-10 + twitch[0], -10 + twitch[1]] : [4 + 22 * sleep + twitch[0], 4 + 24 * sleep + twitch[1]],
+      tail: awake ? 22 * (1 - seg(d, 3.45, 3.8)) : 4 * Math.sin(t * 0.8), kick: nod ? -1.5 : awake && d < 3.6 ? 1.5 : 0,
+    });
+  }
+  if (c >= 9.6) {
+    const y = bump(c, 9.7, 11.2);
+    return pose({
+      by: -0.6 * y, hy: 1 - 1.5 * y, tilt: -3 - 6 * y, mouth: y > 0.25 ? 'ah' : 'bored', lid: y > 0.25 ? 1 : null,
+      free: [2.6 * y, -9 * y], ears: [4 + 24 * y + twitch[0], 4 + 26 * y + twitch[1]], tail: -18 * y, kick: y,
+      extras: y > 0.3 && y < 0.9 && c > 10.4 ? ['tears'] : [],
+    });
+  }
+  const p = c / 5.2;
   const sigh = bump(p, 0.08, 0.44);
   const inhale = bump(p, 0.08, 0.26);
   const out = bump(p, 0.26, 0.44);
   const fume = p > 0.44 && p < 0.76;
   const tug = p > 0.7 && p < 0.8;
-  const tw = t % 3.3;
   const extras = [];
   if (p > 0.12 && p < 0.42) extras.push(`steam${Math.min(2, Math.floor((p - 0.12) * 10))}`);
   if (fume) extras.push(Math.floor(t * 4) % 2 ? 'veinbig' : 'vein');
@@ -219,7 +252,7 @@ function standing(t) {
     hand: tug ? [-6, 0.4] : [-4.6, 0.6 - inhale],
     free: [0.4, 0.2 - inhale],
     skip: tug ? 0.08 : 0,
-    ears: [4 + 3 * Math.sin(t * 1.3) + 34 * sigh + (fume ? 22 : 0) - (tw < 0.12 ? 18 : 0) - (tug ? 10 : 0), 4 + 3 * Math.sin(t * 1.3 - 0.8) + 34 * sigh + (fume ? 22 : 0) - (tw > 1.9 && tw < 2.02 ? 18 : 0) - (tug ? 10 : 0)],
+    ears: [4 + 3 * Math.sin(t * 1.3) + 34 * sigh + (fume ? 22 : 0) + twitch[0] - (tug ? 10 : 0), 4 + 3 * Math.sin(t * 1.3 - 0.8) + 34 * sigh + (fume ? 22 : 0) + twitch[1] - (tug ? 10 : 0)],
     tail: tug ? 20 : fume ? (Math.floor(t * 5) % 2 ? -26 : 8) : 9 * Math.sin(t * 1.7),
     cloth: (tug ? -2.5 : Math.sin(t * 1.4) * 0.8 + Math.sin(t * 2.3 + 1) * 0.4) + 1.2 * sigh * Math.sin(t * 9),
     kick: -1.2 * inhale + out,
@@ -227,26 +260,44 @@ function standing(t) {
   });
 }
 
-// Plodding along dragging it (`p` the walk cycle, two steps): short heavy steps, feet barely off the
-// ground, leaning into the pull; the hand dips on each footfall and hauls the sword on, the tip
+// Waddling along dragging it (`p` the walk cycle, two steps; `t` the time): slow, short-legged steps, feet
+// apart and barely lifted, her weight rocking from one foot onto the other (the body swaying
+// over the planted foot and tipping with it, the head tipping back the other way), a little bob
+// up as she rocks over each; the hand dips on each footfall and hauls the sword on, the tip
 // skipping over the ground; ears flop with each step, the tail sways, the kimono trails.
 function plodding(p, t) {
-  const leg = (q) => [2.2 * Math.cos(TAU * q), -Math.max(0, 1.5 * Math.sin(TAU * q)), Math.cos(TAU * q) * 12];
+  const leg = (q) => [3 * Math.cos(TAU * q), -Math.max(0, 1.2 * Math.sin(TAU * q)), Math.cos(TAU * q) * 10];
   const u = (p * 2) % 1;
   const side = p < 0.5 ? 1 : -1;
+  const rock = Math.sin(Math.PI * u);
   const flop = Math.exp(-u * 5) * Math.cos(u * 14);
+  // Every 7 s or so the sword snags on something: she's yanked back with a "!", then turns and
+  // glares at it, fuming, and waddles on.
+  const c = t % 7;
+  if (c < 0.9) {
+    const yank = bump(c, 0, 0.3);
+    const glare = seg(c, 0.25, 0.4) * (1 - seg(c, 0.75, 0.9));
+    return pose({
+      legF: leg(p), legB: leg(p + 0.5), hipIn: 0, by: 0.6, tx: -2.5 * yank - glare, tilt: -12 * yank - 4 * glare, hy: 1.5, hx: -1.5 * glare,
+      hand: [-7 * Math.max(yank, glare * 0.6), 0.6], free: [3 * yank, -4 * yank - 2 * glare], skip: 0.1 * yank,
+      mouth: yank > 0.2 ? 'o' : 'grit', lid: yank > 0.2 ? 0 : null, brows: glare > 0.3 ? [[-0.2, 0.9], [-0.2, 0.9]] : [[0.9, -0.3], [0.9, -0.3]],
+      extras: yank > 0.2 ? ['shock'] : glare > 0.3 ? [Math.floor(t * 6) % 2 ? 'veinbig' : 'vein'] : [],
+      ears: [30 * yank + 26 * glare, 32 * yank + 28 * glare], tail: 26 * yank, cloth: 2 * yank, kick: 1.6 * yank,
+    });
+  }
   return pose({
-    legF: leg(p), legB: leg(p + 0.5), hipIn: 0.5,
-    by: 0.7 * (1 - Math.sin(Math.PI * u)), tx: 1, tilt: -1 + side * 2, hy: 1.5,
+    legF: leg(p), legB: leg(p + 0.5), hipIn: 0,
+    by: 0.6 - 0.9 * rock, tx: 0.5 + side * 1.5 * rock, tilt: -1 + side * 7 * rock, hy: 1.5, hx: -side * 0.5 * rock,
     hand: [-4.8 - 0.8 * side, 0.6 + 2.2 * Math.sin(Math.min(1, u / 0.4) * Math.PI)],
-    free: [1.2 * Math.sin(TAU * p), 0.4],
-    skip: 0.03 * Math.abs(Math.sin(t * 19)) + 0.02 * Math.abs(Math.sin(t * 31 + 1)) + (u < 0.12 ? 0.05 : 0),
-    ears: [10 + 20 * flop, 10 + 20 * Math.exp(-u * 5) * Math.cos(u * 14 - 0.9)], tail: side * 12 * Math.sin(u * Math.PI) - 6 * flop,
-    cloth: -1.5 - 1.2 * Math.sin(u * Math.PI), clothRoot: -0.5, kick: -1.2 * flop,
+    free: [1.5 + side * 1.2 * rock, 0.4 - rock],
+    skip: 0.03 * Math.abs(Math.sin(t * 13)) + 0.02 * Math.abs(Math.sin(t * 21 + 1)) + (u < 0.12 ? 0.05 : 0),
+    ears: [10 + 20 * flop - side * 6 * rock, 10 + 20 * Math.exp(-u * 5) * Math.cos(u * 14 - 0.9) + side * 6 * rock], tail: side * 16 * rock - 6 * flop,
+    cloth: -1 + side * 1.2 * rock, clothRoot: side * 0.5 * rock, kick: -1.2 * flop,
   });
 }
 
-// Running to catch up: longer strides, a real lean, the sword bouncing along behind, ears back.
+// Running to catch up: longer strides, a real lean, the sword bouncing along behind, ears back,
+// tongue out and panting, sweating.
 function running(p, t) {
   const leg = (q) => [3.4 * Math.cos(TAU * q), -Math.max(0, 3 * Math.sin(TAU * q)), Math.cos(TAU * q) * 18];
   const u = (p * 2) % 1;
@@ -256,6 +307,7 @@ function running(p, t) {
     hand: [-6, 1 + 1.4 * Math.sin(Math.PI * u)], free: [2.4 * Math.sin(TAU * p), -1.4],
     skip: 0.12 * Math.sin(Math.PI * u) + 0.02 * Math.sin(t * 40),
     ears: [24, 26], tail: 14 * Math.sin(TAU * p), cloth: -3, clothRoot: -1, kick: -1.6 * Math.sin(Math.PI * u),
+    mouth: 'tongue', lid: 0.5, extras: [`sweat${Math.floor(t * 4) % 3}`], blush: 1.4,
   });
 }
 
@@ -304,82 +356,231 @@ function spinning(t) {
 }
 
 // The slam: she heaves it up over her head, trembling, leaning back under it; it comes down all at
-// once (lands at 0.6 s) and buries itself in the ground; a beat of stillness; it's stuck: two tugs;
-// she wrenches it free and hauls it back over and down behind her, stumbling a step back.
+// once (lands at 0.6 s) and buries itself in the ground; a beat of stillness; it's stuck: two tugs,
+// and on the second it comes free all at once and she goes over backwards onto her bottom, feet in
+// the air, the sword flopping down behind her; she sits a beat, fuming, and gets up.
 function slamming(t) {
   const UP = TRAIL + 1.15;
   const DOWN = TAU + 0.45;
   if (t < 0.5) {
     const k = ease(t / 0.5);
     const a = lerp(TRAIL, UP, k) + Math.sin(t * 150) * 0.05 * k;
-    return pose({ sword: a, hand: handAlong(a, 8.5), squat: k < 0.5 ? 2 : 1, tx: -1.5 * k, tilt: -7 * k, hy: 1 - 1.5 * k, legF: [3, 0, 2], legB: [-3, 0, -2], mouth: 'grit', ears: [24, 26], tail: -14 * k, free: [-1, -6 * k], kick: -k });
+    return pose({ sword: a, hand: handAlong(a, 8.5), squat: k < 0.5 ? 2 : 1, tx: -1.5 * k, tilt: -7 * k, hy: 1 - 1.5 * k, legF: [3, 0, 2], legB: [-3, 0, -2], mouth: 'grit', ears: [24, 26], tail: -14 * k, free: [-1, -6 * k], kick: -k, puff: k > 0.5 });
   }
   if (t < 0.6) {
     const k = easeIn(seg(t, 0.5, 0.6));
     const a = lerp(UP, DOWN, k);
     return pose({ sword: a, hand: handAlong(a, 9), tx: lerp(-1.5, 3, k), tilt: lerp(-7, 9, k), squat: 3 * k, legF: [3.6, 0, 4], legB: [-3, 0, -10], mouth: 'yell', ears: [30, 32], tail: 20 * k, cloth: 2.5 * k, kick: 1.5 * k });
   }
-  if (t < 1.05) {
+  if (t < 0.92) {
     // Stuck: the hit held, then two tugs leaning back on the grip.
-    const tug = bump(t, 0.72, 0.82) + bump(t, 0.88, 0.98);
+    const tug = bump(t, 0.7, 0.78) + 1.4 * bump(t, 0.82, 0.92);
     const a = DOWN - 0.07 * tug;
-    return pose({ sword: a, hand: handAlong(a, 9 - 1.5 * tug), tx: 3 - 4 * tug, tilt: 9 - 14 * tug, squat: t < 0.68 ? 3 : 2, legF: [3.6, 0, 4], legB: [-3, 0, -10], mouth: tug > 0.3 ? 'grit' : 'flat', ears: [20 + 10 * tug, 22 + 10 * tug], tail: 10 - 20 * tug, extras: t > 0.7 ? ['sweat0'] : [] });
+    return pose({ sword: a, hand: handAlong(a, 9 - 1.5 * tug), tx: 3 - 4 * tug, tilt: 9 - 14 * tug, squat: t < 0.68 ? 3 : 2, legF: [3.6, 0, 4], legB: [-3, 0, -10], mouth: tug > 0.3 ? 'grit' : 'flat', puff: tug > 0.6, ears: [20 + 10 * tug, 22 + 10 * tug], tail: 10 - 20 * tug, extras: t > 0.7 ? ['sweat0'] : [] });
   }
-  // Free: hauled back up and over, down behind her.
-  const k = ease(seg(t, 1.05, 1.3));
-  const a = lerp(DOWN, TRAIL + TAU, k);
-  return pose({ sword: a, hand: handAlong(a, lerp(9, 6, k)), tx: lerp(-1, 0, k), tilt: lerp(-8, -3, k), squat: 1 - k, legF: [lerp(2, 0.8, k), 0, 0], legB: [lerp(-3, -0.8, k), 0, 0], mouth: 'flat', ears: [16, 18], cloth: -2 * (1 - k) });
+  if (t < 1.2) {
+    // Free! Over she goes: sat down hard, feet up, the sword flopping over behind her.
+    const k = ease(seg(t, 0.92, 1.02));
+    const a = lerp(DOWN - 0.1, TRAIL + TAU, k);
+    const flail = 1 - seg(t, 1.0, 1.2);
+    return pose({
+      sword: a, hand: handAlong(a, lerp(9, 6, k)), squat: 3, tx: -2.5 * k, tilt: -14 * k + 4 * seg(t, 1.0, 1.2), by: 1.5 * k,
+      legF: [3.4, -4 * k * flail - 1, 30 * k], legB: [2.4, -3 * k * flail - 0.5, 18 * k], free: [-3, -6 * flail],
+      mouth: 'o', lid: 0, brows: [[0.9, -0.3], [0.9, -0.3]], extras: ['shock'], ears: [38, 40], tail: 30 * flail, cloth: 3 * flail, kick: 2 * flail,
+    });
+  }
+  // Sat a beat, fuming, then up again, dusting herself off.
+  const up = ease(seg(t, 1.3, 1.45));
+  return pose({
+    sword: TRAIL + TAU, squat: 3 - 3 * up, tx: -2.5 * (1 - up), tilt: lerp(-10, -3, up), by: 1.5 * (1 - up),
+    legF: [lerp(3.4, 0.8, up), -1 * (1 - up), 30 * (1 - up)], legB: [lerp(2.4, -0.8, up), -0.5 * (1 - up), 18 * (1 - up)], free: [-2 + 2 * up, -1],
+    mouth: 'grit', brows: [[-0.2, 0.9], [-0.2, 0.9]], extras: [Math.floor(t * 6) % 2 ? 'veinbig' : 'vein'], ears: [26, 28], tail: Math.floor(t * 8) % 2 ? -20 : 10,
+  });
 }
 
-// The crescent flick: barely bothering. She tips the blade up a little and flicks her free hand
-// at them (the crescent leaves at 0.25 s); the sword drops back down with a little slump.
+// The crescent flick: barely bothering. Mid-yawn, eyes shut, not even looking, she tips the blade
+// up a little and flicks her free hand at them (the crescent leaves at 0.25 s); the sword drops
+// back down with a little slump.
 function flicking(t) {
   const up = bump(t, 0, 0.4);
   const flick = bump(t, 0.15, 0.32);
-  return pose({ sword: TRAIL + 0.35 * up, hand: [-4.6, 0.6 - up], free: [3 + 3 * flick, -6 * flick - 2 * up], tilt: -3 + 3 * flick, tx: flick, squat: t > 0.4 && t < 0.5 ? 1 : 0, glow: 1 - seg(t, 0.3, 0.55), ears: [6, 6], tail: 6 * flick });
+  const yawn = bump(t, 0.05, 0.5);
+  return pose({ sword: TRAIL + 0.35 * up, hand: [-4.6, 0.6 - up], free: [3 + 3 * flick, -6 * flick - 2 * up], tilt: -3 + 3 * flick - 4 * yawn, hy: 1 - yawn, tx: flick, squat: t > 0.4 && t < 0.5 ? 1 : 0, glow: 1 - seg(t, 0.3, 0.55), ears: [6 + 16 * yawn, 6 + 18 * yawn], tail: 6 * flick, mouth: yawn > 0.3 ? 'ah' : 'bored', lid: yawn > 0.3 ? 1 : null, kick: yawn });
 }
 
-// Moonfall: she drags the sword up to point at the sky, shaking (the crescent lights), holds it
-// there while the moonlight comes down (0.42-0.55 s), then can't any more: it topples forward with
-// a thud, and she hauls it back down behind her.
+// Moonfall: she drags the sword up to point at the sky, cheeks puffed, shaking harder and harder
+// (the crescent lights, sweat flies), holds it there while the moonlight comes down (0.42-0.55 s),
+// then can't any more: it topples forward and drags her a stumbling step after it; she hauls it
+// back down behind her with a long "...".
 function casting(t) {
   const SKY = TAU - Math.PI / 2;
   if (t < 0.35) {
     const k = ease(t / 0.35);
     const a = lerp(TRAIL, SKY, k) + Math.sin(t * 130) * 0.04 * k;
-    return pose({ sword: a, hand: handAlong(a, 9), squat: 2, tilt: -6 * k, hy: 1 - 1.5 * k, legF: [2.6, 0, 2], legB: [-2.6, 0, -2], mouth: 'grit', glow: k, free: [-1, -5 * k], ears: [10, 12] });
+    return pose({ sword: a, hand: handAlong(a, 9), squat: 2, tilt: -6 * k, hy: 1 - 1.5 * k, legF: [2.6, 0, 2], legB: [-2.6, 0, -2], mouth: 'grit', puff: k > 0.4, glow: k, free: [-1, -5 * k], ears: [10, 12] });
   }
   if (t < 0.6) {
-    const a = SKY + Math.sin(t * 160) * (0.03 + 0.06 * seg(t, 0.35, 0.6));
-    return pose({ sword: a, hand: handAlong(a, 9.5), squat: 1, tilt: -6, hy: -0.5, legF: [2.6, 0, 2], legB: [-2.6, 0, -2], mouth: 'grit', glow: 1, free: [2, -9], ears: [-4, -4], tail: 10, extras: ['sweat0'] });
+    const shake = 0.03 + 0.08 * seg(t, 0.35, 0.6);
+    const a = SKY + Math.sin(t * 160) * shake;
+    return pose({ sword: a, hand: handAlong(a, 9.5), squat: 1, tilt: -6 + Math.sin(t * 90) * 2, hy: -0.5, tx: Math.sin(t * 70), legF: [2.6, 0, 2], legB: [-2.6, 0, -2], mouth: 'flat', puff: true, blush: 1.6, glow: 1, free: [2, -9], ears: [-4, -4], tail: 10, extras: [`sweat${Math.floor(t * 12) % 3}`] });
   }
-  if (t < 0.72) {
-    const k = easeIn(seg(t, 0.6, 0.72));
+  if (t < 0.78) {
+    // It goes, and takes her with it a step.
+    const k = easeIn(seg(t, 0.6, 0.7));
+    const step = seg(t, 0.66, 0.78);
     const a = lerp(SKY, TAU + 0.4, k);
-    return pose({ sword: a, hand: handAlong(a, 9), tx: 2 * k, tilt: lerp(-6, 8, k), squat: 2 * k, legF: [3.4, 0, 4], legB: [-2.6, 0, -8], mouth: 'o', glow: 1 - k, ears: [20, 22] });
+    return pose({ sword: a, hand: handAlong(a, 9), tx: 2 * k + 2 * step, tilt: lerp(-6, 12, k), squat: 2 * k, legF: [3.4 + 1.5 * step, -2 * bump(t, 0.66, 0.78), 4], legB: [-2.6, 0, -8], mouth: 'o', lid: 0, brows: [[0.9, -0.3], [0.9, -0.3]], extras: ['shock'], glow: 1 - k, ears: [30, 32], tail: 24, free: [4, -4] });
   }
-  const k = ease(seg(t, 0.72, 1));
+  const k = ease(seg(t, 0.78, 1));
   const a = lerp(TAU + 0.4, TRAIL + TAU, k);
-  return pose({ sword: a, hand: handAlong(a, lerp(9, 6, k)), tx: 2 * (1 - k), tilt: lerp(8, -3, k), squat: 1 - k, mouth: 'flat', ears: [12, 14] });
+  return pose({ sword: a, hand: handAlong(a, lerp(9, 6, k)), tx: 4 * (1 - k), tilt: lerp(10, -3, k), squat: 1 - k, mouth: 'flat', ears: [12, 14], extras: [`dots${1 + Math.min(2, Math.floor(k * 3))}`] });
 }
 
-// Lunar Howl: head thrown back, a grudging howl, ears back, the tail up; the sword left lying.
+// Lunar Howl: head thrown back, a grudging howl, ears back, the tail up; then her voice cracks
+// into a squeak, and she goes red and looks away with a "...".
 function howling(t) {
-  const k = ease(seg(t, 0, 0.2)) * (1 - ease(seg(t, 0.65, 0.8)));
-  return pose({ hy: 1 - 2 * k, tilt: -3 - 9 * k, by: -0.6 * k, mouth: k > 0.3 ? 'ah' : 'bored', lid: k > 0.3 ? 0.6 : null, ears: [4 + 26 * k, 4 + 28 * k], tail: -24 * k, free: [2 * k, -4 * k], kick: k, cloth: 1.5 * k });
+  const k = ease(seg(t, 0, 0.2)) * (1 - ease(seg(t, 0.5, 0.6)));
+  const crack = seg(t, 0.5, 0.58);
+  return pose({
+    hy: 1 - 2 * k, hx: -1.2 * crack, tilt: -3 - 9 * k + 3 * crack, by: -0.6 * k, mouth: k > 0.3 ? 'ah' : crack > 0 ? 'wavy' : 'bored', lid: k > 0.3 ? 0.6 : crack > 0 ? 0.5 : null,
+    blush: 1 + 1.2 * crack, extras: crack > 0 ? [`dots${1 + Math.min(2, Math.floor(seg(t, 0.55, 0.8) * 3))}`, 'sweat0'] : [],
+    ears: [4 + 26 * k + 20 * crack, 4 + 28 * k + 20 * crack], tail: -24 * k - 10 * crack, free: [2 * k + 3 * crack, -4 * k - 6 * crack], kick: k, cloth: 1.5 * k,
+  });
 }
 
-// Moon Ward: braced behind the greatsword stood point-down in front of her, gritting her teeth.
-// (The ground hides the blade's lower half: it's driven in.)
+// Moon Ward: she drives the greatsword point-down into the ground in front of her and leans on it,
+// half asleep behind it, a yawn on the way. (The ground hides the blade's lower half: it's driven in.)
 function warding(t) {
   const k = ease(seg(t, 0, 0.15)) * (1 - ease(seg(t, 0.55, 0.7)));
   // Her hand up on the grip, the blade stood point-down in the ground before her.
   const a = lerp(TRAIL, TAU + 1.42, k);
   const h = handAlong(lerp(TRAIL, TAU - 1.2, k), lerp(6, 9.5, k));
-  return pose({ sword: a, hand: h, front: k > 0.05, frontK: k, squat: 2 * k, tilt: -4 * k, tx: -k, legF: [3, 0, 2], legB: [-3, 0, -2], mouth: k > 0.5 ? 'grit' : 'bored', ears: [4 + 22 * k, 4 + 24 * k], tail: -10 * k, free: [3 * k, -4 * k] });
+  const yawn = bump(t, 0.2, 0.6);
+  return pose({ sword: a, hand: h, front: k > 0.05, frontK: k, squat: k, tilt: 6 * k - 4 * yawn, tx: 1.5 * k, hy: 1 + 1.5 * k - yawn, legF: [2, 0, 2], legB: [-2.4, 0, -2], mouth: yawn > 0.3 ? 'ah' : 'bored', lid: 0.95, ears: [16 * k + 10 * yawn, 18 * k + 10 * yawn], tail: 4 * Math.sin(t * 4), free: [2 * k, -1 - 7 * yawn], extras: k > 0.5 && yawn < 0.3 ? ['zzz0'] : [] });
 }
 
-const DOING = { swing: spinning, slam: slamming, flick: flicking, cast: casting, howl: howling, ward: warding };
+// The leap (a target out of her reach), played for laughs: the sword is too heavy for her, so it's
+// the sword that does the leaping and she goes along with it.
+//   0-0.45 s   "ugh, fine": a sigh with a huff of steam and her ears flat, then two little bounces
+//              in a crouch to gather herself, dragging the sword round
+//   0.45-0.9   she heaves it up and it yanks her into the air: wide-eyed, mouth open, a "!", legs
+//              pedalling, the free arm flailing, ears streaming, tail whirling, hair and kimono
+//              flying; at the top it tips over, and she comes down screaming behind it
+//   0.9-1.75   the crash, seeing stars, then the slam's end lag from there: stuck, the tug that
+//              sends her over backwards, fuming as she gets up
+function leaping(t) {
+  if (t < 0.45) {
+    const sigh = bump(t, 0, 0.14);
+    const bounce = t < 0.12 ? 0 : Math.abs(Math.sin((Math.PI * (t - 0.12)) / 0.165));
+    const k = ease(seg(t, 0.12, 0.45));
+    const sw = TRAIL + 0.4 * k;
+    return pose({
+      sword: sw, hand: handAlong(sw, 7), squat: t < 0.12 ? 1 : 1 + 2 * bounce, by: sigh, hy: 1 + sigh, tilt: -3 + 9 * k, tx: 1.5 * k,
+      legF: [3, 0, 2], legB: [-3, 0, -2], free: [-2 * k, -1 + bounce], mouth: t < 0.12 ? 'flat' : 'grit', ears: [10 + 30 * sigh + 14 * k, 10 + 30 * sigh + 16 * k],
+      tail: 10 * Math.sin(t * 30) * k, cloth: -1.5 * k, kick: -bounce, extras: t < 0.14 ? [`steam${Math.min(2, Math.floor(t * 20))}`] : [],
+    });
+  }
+  if (t < 0.9) {
+    const f = seg(t, 0.45, 0.9);
+    const UPF = TAU - 1.25;
+    const DOWN = TAU + 0.45;
+    // The sword's path: whipped up and over in front of her, held aloft at the top, brought down.
+    const sw = f < 0.25 ? lerp(TRAIL + 0.4, UPF + 0, ease(f / 0.25)) : f < 0.72 ? UPF - 0.25 * Math.sin(((f - 0.25) / 0.47) * Math.PI) : lerp(UPF, DOWN, easeIn(seg(f, 0.72, 1)));
+    const pedal = t * 42;
+    const down = f >= 0.72;
+    return pose({
+      air: true, sword: sw, hand: handAlong(sw, 9.5), tilt: down ? 10 : lerp(10, 2, seg(f, 0, 0.5)), tx: 2, by: -1,
+      legF: down ? [2.6, -5, 10] : [2.4 * Math.sin(pedal), -3.5 - 1.5 * Math.cos(pedal), 20 * Math.sin(pedal)],
+      legB: down ? [-1.6, -2.6, -10] : [2.4 * Math.sin(pedal + Math.PI), -3.5 - 1.5 * Math.cos(pedal + Math.PI), 20 * Math.sin(pedal + Math.PI)],
+      free: down ? [2, -6] : [2.5 * Math.sin(t * 36), -5 + 3 * Math.cos(t * 36)],
+      mouth: down ? 'yell' : 'D', lid: 0, brows: [[0.9, -0.3], [0.9, -0.3]], extras: down ? ['sweat0'] : f < 0.5 ? ['shock'] : ['sweat0'],
+      ears: [44 + 6 * Math.sin(t * 50), 46 + 6 * Math.sin(t * 50 + 1)], tail: 30 * Math.sin(t * 28), cloth: down ? -3 : 3, clothRoot: down ? -1 : 1.5, kick: down ? -2 : 2,
+    });
+  }
+  // Down: the slam's crash and end lag, but dazed first and cross after.
+  const u = t - 0.9;
+  const p = slamming(0.6 + u);
+  if (u < 0.1) return { ...p, mouth: 'wavy', lid: 0.4, extras: [`orbit${Math.floor(t * 14) % 8}`], ears: [34, 30], tail: -8 };
+  return p;
+}
+
+// Last Straw (the finisher): she snaps.
+//   0-0.6 s    fuming: shaking, steam pouring off her, a great vein, eyes wide open and blazing,
+//              brows down, teeth gritted, red in the face, hair and tail bristling, ears pinned
+//   0.6-0.95   she lifts the sword in one hand as if it weighed nothing and twirls it overhead
+//   0.95-1.25  and leaps, screaming, the sword raised behind her
+//   1.25-1.55  down (it lands at 1.35 s), the sword buried, crouched in the crash
+//   1.55-2.7   spent: the sword topples back over her head (bonk), and she keels over backwards and
+//              falls asleep where she sits
+function strawing(t) {
+  const SKY = TAU - Math.PI / 2;
+  const DOWN = TAU + 0.45;
+  const angry = { lid: 0, brows: [[-0.2, 0.9], [-0.2, 0.9]], blush: 1.8 };
+  if (t < 0.6) {
+    const k = ease(t / 0.3);
+    return pose({
+      ...angry, squat: 2 * k, tx: Math.sin(t * 80) * 0.8 * k, tilt: -2 + Math.sin(t * 60) * 2 * k, sword: TRAIL, skip: Math.abs(Math.sin(t * 50)) * 0.06 * k,
+      hand: [-4.6, 1.4], free: [1.6, 1.2], legF: [2.6, 0, 2], legB: [-2.6, 0, -2], mouth: 'grit',
+      extras: ['veinbig', `steam${Math.floor(t * 12) % 3}`], ears: [44, 46], tail: 30 * Math.sin(t * 40), kick: 2 * k, cloth: Math.sin(t * 50) * 1.5,
+    });
+  }
+  if (t < 0.95) {
+    const k = ease(seg(t, 0.6, 0.72));
+    const spin = SKY + TAU * 3 * ease(seg(t, 0.68, 0.95));
+    const a = lerp(TRAIL, SKY, k) + (t > 0.68 ? spin - SKY : 0);
+    return pose({ ...angry, sword: a, hand: handAlong(lerp(TRAIL, SKY, k), 9.5), squat: 1, legF: [2.6, 0, 2], legB: [-2.6, 0, -2], mouth: 'yell', extras: ['veinbig'], ears: [44, 46], tail: 24, kick: 2, cloth: 2, free: [3, -2] });
+  }
+  if (t < 1.25) {
+    const k = ease(seg(t, 0.95, 1.25));
+    const a = lerp(SKY, SKY - 0.7, k);
+    return pose({ ...angry, air: true, lift: 40 * k, sword: a, hand: handAlong(a, 9.5), legF: [2.6, -5, 10], legB: [-1.6, -2.6, -10], tilt: -4, mouth: 'yell', extras: ['veinbig'], ears: [46, 48], tail: -24, kick: 2.5, cloth: 3, free: [3, -6] });
+  }
+  if (t < 1.55) {
+    const k = easeIn(seg(t, 1.25, 1.35));
+    const a = lerp(SKY - 0.7, DOWN, k);
+    return pose({ ...angry, lift: 40 * (1 - k), sword: a, hand: handAlong(a, 9.5), squat: 3 * k, tilt: lerp(-4, 10, k), tx: 3 * k, legF: [3.6, 0, 4], legB: [-3, 0, -10], mouth: 'yell', ears: [40, 42], tail: 24, kick: -2 * k, cloth: -3 });
+  }
+  // Spent.
+  const fall = ease(seg(t, 1.55, 1.8));
+  const a = lerp(DOWN, TRAIL + TAU, ease(seg(t, 1.6, 1.85)));
+  const asleep = t > 1.9;
+  return pose({
+    sword: a, hand: handAlong(a, lerp(9, 6, fall)), squat: 3, by: 1.5 * fall, tx: -2.5 * fall, tilt: -3 - 12 * fall, hy: 1 + 2 * fall,
+    legF: [3.4, -1, 30 * fall], legB: [2.4, -0.5, 18 * fall], free: [-1, 1],
+    mouth: asleep ? 'tiny' : 'o', lid: asleep ? 1 : 0.5, extras: t > 1.8 && t < 1.95 ? ['bang'] : asleep ? [`zzz${Math.floor(t * 1.5) % 3}`] : ['orbit0'],
+    ears: [30 * fall, 34 * fall], tail: 0, kick: 0,
+  });
+}
+
+// Snack Time: she spots the cookie coming (eyes wide), catches it in one hand with a little hop,
+// and munches it, eyes squeezed happy, blushing, hearts, the tail going.
+function snacking(t) {
+  const catchIt = bump(t, 0.15, 0.4);
+  const munch = t > 0.35;
+  return pose({
+    lift: 3 * catchIt, free: munch ? [3, -8] : [2, -11 * seg(t, 0.1, 0.3)], hy: munch ? 1.5 : 0, tilt: munch ? 2 : -4,
+    mouth: munch ? (Math.floor(t * 9) % 2 ? 'cat' : 'o') : 'o', lid: munch ? 0.6 : 0, blush: munch ? 1.6 : 1,
+    extras: munch ? ['hearts'] : ['shock'], ears: [-12, -12], tail: 26 * Math.sin(t * 22), kick: catchIt,
+  });
+}
+
+// Happy (Snack Time): ears up, tail wagging, eyes open and smiling, a little bounce, humming; she
+// keeps up instead of waddling. Laid over whatever she's doing that doesn't have a face of its own.
+function happier(p, t, standing) {
+  const own = !['bored', 'flat', 'grit'].includes(p.mouth) || p.extras.length;
+  return {
+    ...p, ears: [Math.min(p.ears[0], 0) - 8, Math.min(p.ears[1], 0) - 8], tail: 24 * Math.sin(t * 14), blush: 1.3,
+    ...(own ? {} : { mouth: 'smile', lid: 0.1, extras: standing && t % 2.4 < 1.2 ? ['note'] : [] }),
+    ...(standing ? { by: p.by - 0.6 * Math.abs(Math.sin(t * 5)), tilt: -1 + 3 * Math.sin(t * 2.5), hand: p.hand } : {}),
+  };
+}
+
+// Just after Snack Time wears off: she slumps right back, with a "...".
+function slumped(p, k) {
+  return { ...p, ears: [p.ears[0] + 30 * k, p.ears[1] + 32 * k], hy: p.hy + 1.5 * k, by: p.by + k, mouth: 'flat', lid: 0.95, extras: [`dots${1 + Math.min(2, Math.floor((1 - k) * 4))}`], tail: 0 };
+}
+
+const DOING = { swing: spinning, slam: slamming, flick: flicking, cast: casting, howl: howling, ward: warding, leap: leaping, straw: strawing, snack: snacking };
 
 // Blending: every number eases over, angles the short way round.
 function blend(a, b, k) {
@@ -413,11 +614,14 @@ export function drawSnowWolf(ctx, world, s, cam, time) {
   const y = Math.round(s.y - cam.y);
   const body = s.body ?? { onGround: true, rope: null, vy: 0, y: s.y };
   const a = s.act;
-  const t = a ? world.now - a.t0 : 0;
+  const t = a ? (world.now - a.t0) * (a.speed ?? 1) : 0;
   // What she's doing, and her pose for it.
   let doing;
   let p;
-  if (body.rope) {
+  if (a?.kind === 'leap') {
+    doing = 'leap';
+    p = leaping(t);
+  } else if (body.rope) {
     doing = 'climb';
     p = climbing(body.y);
   } else if (!body.onGround) {
@@ -430,15 +634,24 @@ export function drawSnowWolf(ctx, world, s, cam, time) {
     doing = a.kind;
     p = DOING[a.kind](t);
   } else if (s.moving) {
-    // Her stride is in her own (smaller) body px: about 20 px a cycle plodding, 34 running.
-    const run = s.hurry || (a?.kind === 'go');
-    st.phase = (st.phase + (Math.abs(s.vx) * dt) / ((run ? 34 : 20) * SCALE)) % 1;
+    // Her stride, in her own (smaller) body px a cycle: long slow waddling steps (about two and a
+    // half a second at her pace), a quicker run.
+    const run = s.hurry || (a?.kind === 'go') || Boolean(s.happy);
+    st.phase = (st.phase + (Math.abs(s.vx) * dt) / ((run ? 34 : 42) * SCALE)) % 1;
     doing = run ? 'run' : 'walk';
     p = run ? running(st.phase, time) : plodding(st.phase, time);
   } else {
     doing = 'stand';
     p = standing(time);
   }
+  // Happy (Snack Time) brightens whatever has no face of its own; just after, she slumps.
+  if (s.happy) {
+    st.happyEnd = null;
+    if (doing === 'run' && !s.hurry) p = { ...p, mouth: 'smile', lid: 0.1, extras: [], blush: 1.3 };
+    if (doing === 'stand' || doing === 'walk' || doing === 'run') p = happier(p, time, doing === 'stand');
+  } else if (st.wasHappy) st.happyEnd = time;
+  st.wasHappy = Boolean(s.happy);
+  if (st.happyEnd != null && time - st.happyEnd < 1.6 && (doing === 'stand' || doing === 'walk')) p = slumped(p, 1 - (time - st.happyEnd) / 1.6);
   // Fed Up the crescent burns; Queen's Awakening opens her eyes.
   const fed = wild(world);
   const awake = fed && procOf(world.char, 'alpha');
@@ -469,7 +682,7 @@ export function drawSnowWolf(ctx, world, s, cam, time) {
     hair: q(Math.max(-3, Math.min(3, st.hair))), hairTip: q(Math.max(-4, Math.min(4, st.tip))), hairLift: q(-(P.kick ?? 0)), hairWave: Math.floor((((time / 2.6) % 1) + 1) % 1 * 8),
     cape: q(P.cloth), capeRoot: q(P.clothRoot), ears: [deg3(P.ears[0]), deg3(P.ears[1])], tail: deg3(P.tail), climb: P.climb,
     eyes: blink < 0.012 || (blink > 0.03 && blink < 0.042) ? 'half' : blink < 0.03 ? 'blink' : 'open',
-    face: { brows: P.brows, extra: P.extras },
+    face: { brows: P.brows, extra: P.extras, blush: P.blush, puff: P.puff },
   };
   if (body.onGround && !body.rope) footShadow(ctx, x, y, 9, 0, 0.8);
   // Dust off the dragged tip.

@@ -959,13 +959,24 @@ function alpha() {
   return out;
 }
 
+function snacktime() {
+  const out = [...tile('dawn', 'buff'), ...aura(8, 8.4, 6.8, '#fff6e0', 1.2)];
+  // Snack Time: a moon cookie with a crescent of blue icing, crumbs, little hearts.
+  out.push(...solid(oval(8, 8.6, 5.2, 5, 0, 26), '#e8c08a', { d: 0.45, ink: '#8a5a30', light: '#f8dcb0' }));
+  out.push(...solid(moonCrescent(8.6, 8, 2.6, 0), '#cfe0ff', { shadow: false, d: 0.3, ink: MOON_INK }));
+  for (const [x, y] of [[5, 6], [6.4, 11.6], [10.8, 11.4]]) out.push(S(oval(x, y, 0.5, 0.45, 0, 8), '#8a5a30'));
+  for (const [x, y, s] of [[13, 3, 1.2], [3, 3.2, 1]]) out.push(...solid(heartPts(x, y, s * 2.2), '#ff7aa8', { shadow: false, d: 0.3, ink: '#a8306a' }));
+  return out;
+}
+
 function stampede() {
   const out = [...tile('indigo', 'active'), ...aura(8, 7, 7, '#e8f0ff', 1.4)];
-  // Wrath of the Wolf Queen: a great full moon, crescents of moonlight sweeping out under it.
+  // Last Straw: a great full moon, crescents of moonlight sweeping out under it, and an anger vein.
   out.push(...solid(oval(8, 6, 4.6, 4.6, 0, 28), MOON, { d: 0.45, ink: MOON_INK, light: '#ffffff' }));
   for (const [x, y, r] of [[6.4, 4.6, 0.9], [9.6, 7.4, 1.2], [9.2, 3.8, 0.6]]) out.push(S(oval(x, y, r, r, 0, 10), '#c4d2f0'));
   for (const [y, rx] of [[12.2, 7], [14.2, 6]]) out.push(...swoosh(8, y - 4, rx, 4, 40, 140, 1.3, '#cfe0ff', { ink: MOON_INK }));
-  out.push(...spark(14, 2.4, 1.1, '#ffffff'), ...spark(2, 3, 0.8, '#ffffff'));
+  for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) out.push(S(tube([[12.6 + sx * 0.5, 3 + sy * 1.5], [12.6 + sx * 0.5, 3 + sy * 0.5], [12.6 + sx * 1.5, 3 + sy * 0.5]], 0.55), '#ff4d6d'));
+  out.push(...spark(2, 3, 0.8, '#ffffff'));
   return out;
 }
 
@@ -1306,7 +1317,7 @@ const ART = {
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
   blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
-  beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, stampede,
+  beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   assassinmastery, crowcombo, markdeath, vanish, poisonblade, bloodmoonrequiem,
   nightlordmastery, starstorm, giantshuriken, starmark, shadowshuriken, galaxyfall,

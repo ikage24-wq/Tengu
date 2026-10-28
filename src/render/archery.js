@@ -359,6 +359,17 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celdust', x, y, { p, flip, scale: 0.7 });
       return true;
     }
+    case 'moonquake': {
+      // Her leap landing: the greatsword crashes down, a burst of moonlight, two rings of cold light
+      // racing out along the ground as wide as it hit, dust thrown up.
+      const r = f.r ?? 84;
+      fxSprite(ctx, 'celmoonhit', x, y - 12, { p, flip, scale: 1.4 });
+      groundRing(ctx, 'celringice', x, y, p, r);
+      groundRing(ctx, 'celringice', x, y, Math.min(1, p * 1.6), r * 0.6);
+      fxSprite(ctx, 'celdust', x - 20, y, { p, flip: true, scale: 0.9 });
+      fxSprite(ctx, 'celdust', x + 20, y, { p, flip: false, scale: 0.9 });
+      return true;
+    }
     case 'moonbolt': {
       // A crescent of moonlight flicked from the blade, flying to its target.
       const tx = f.tx - cam.x;
@@ -385,19 +396,57 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'cellunarcrescent', x + (f.dir || 1) * 6, y - 26, { p, scale: 0.3, rot: (f.dir || 1) * (Math.PI / 2) });
       return true;
     }
-    case 'moonwrath': {
-      // Wrath of the Wolf Queen: a great full moon rises over her, then crescents of moonlight sweep
-      // out across the whole screen one after another, rings of cold light racing under them.
-      const dir = f.dir || 1;
-      const frame = p < 0.12 ? 0 : p < 0.24 ? 1 : p < 0.8 ? 2 + (Math.floor(time * 6) % 2) : p < 0.9 ? 4 : 5;
-      fxSprite(ctx, 'cellunarmoon', x - dir * 20, y - 140, { frame, scale: 1.1 });
-      for (let i = 0; i < 5; i++) {
-        const q = (p - 0.22 - i * 0.09) / 0.42;
-        if (q <= 0 || q >= 1) continue;
-        const wx = x - dir * 60 + dir * q * 640;
-        fxSprite(ctx, 'cellunarcrescent', wx, y - 20 - (i % 2) * 18, { p: Math.min(0.99, 0.35 + q * 0.5), flip, scale: 0.5 + (i % 2) * 0.12, rot: dir * (Math.PI / 2), alpha: Math.min(1, (1 - q) * 4) });
-        if (i % 2 === 0) groundRing(ctx, 'celringice', wx, y, q, 60);
+    case 'laststraw':
+      // The finisher's signal: Snow wolf acts it out (strawmoon, and her own drawing).
+      return true;
+    case 'strawmoon': {
+      // Last Straw: a great full moon rises behind her as she fumes; as she lands (`f.hit`), it
+      // bursts: a flash of moonlight, crescents racing out both ways across the whole screen, rings
+      // of cold light under them.
+      const hit = f.hit ?? 0.5;
+      const frame = p < 0.08 ? 0 : p < 0.16 ? 1 : p < hit + 0.15 ? 2 + (Math.floor(time * 6) % 2) : p < hit + 0.25 ? 4 : 5;
+      if (p < hit + 0.35) fxSprite(ctx, 'cellunarmoon', x - (f.dir || 1) * 10, y - 120, { frame, scale: 1.2 });
+      const q = (p - hit) / (1 - hit);
+      if (q > 0 && q < 0.6) {
+        const k = q / 0.6;
+        fxSprite(ctx, 'celmoonhit', x, y - 20, { p: k, scale: 2.4 });
+        groundRing(ctx, 'celringice', x, y, k, f.r ?? 420);
+        groundRing(ctx, 'celringice', x, y, Math.min(1, k * 1.6), (f.r ?? 420) * 0.5);
+        for (const side of [-1, 1]) {
+          for (let i = 0; i < 3; i++) {
+            const d = (k - i * 0.12) / 0.7;
+            if (d <= 0 || d >= 1) continue;
+            fxSprite(ctx, 'cellunarcrescent', x + side * d * (f.r ?? 420), y - 18, { p: Math.min(0.99, 0.35 + d * 0.5), flip: side < 0, scale: 0.55, rot: side * (Math.PI / 2), alpha: Math.min(1, (1 - d) * 4) });
+          }
+        }
       }
+      return true;
+    }
+    case 'cookie': {
+      // Snack Time: a moon cookie tossed in an arc from the Beastmaster to Snow wolf, spinning.
+      const tx = f.tx - cam.x;
+      const ty = f.ty - cam.y;
+      const cx = x + (tx - x) * p;
+      const cy = y + (ty - y) * p - 40 * p * (1 - p) * 4;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(time * 12);
+      ctx.beginPath();
+      ctx.arc(0, 0, 3.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8c08a';
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#8a5a30';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0.4, -0.2, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = '#cfe0ff';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(1.2, -0.8, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#e8c08a';
+      ctx.fill();
+      ctx.restore();
       return true;
     }
     case 'cometfall': {

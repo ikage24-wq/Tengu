@@ -446,15 +446,16 @@ to clear it.
     kimono, barefoot) who very much doesn't want to be here. She drags the **Fang of the Wolf
     Queen** behind her, a greatsword far too big for her to lift (a silver wolf's head for a guard
     with the blade in its jaws, a gold crown, a crescent moon cut through the blade) that casts
-    moonlight. She doesn't follow the Beastmaster about: she has a body of her own and finds her
-    own way round the map (walking, jumping up to ledges, dropping through them, climbing ropes),
-    picks her own fights (whatever's closing in on the Beastmaster first, then the nearest by the
-    way there, finishing off what's hurt), cuts them close in or flicks crescents of moonlight up
-    and down ledges, and only comes back to wait beside the Beastmaster when there's nothing left
-    (in a flash of moonlight if she's hopelessly far). The tip scrapes the ground as she goes; she
-    has her own rig (sighs with a huff of steam, an anger vein, a
-    grudging tug at the sword, ears that flop and flatten, a tail that wags and thumps, bouncing
-    hair and kimono). The Beastmaster's shots that land, and Snow wolf's hits, wear down Snow
+    moonlight. She has a body of her own and finds her own way round (walking, jumping up to
+    ledges, dropping through them, climbing ropes) and picks her own fights, but never far from the
+    Beastmaster: only monsters close to her (whatever's closing in on the Beastmaster first, then
+    the nearest by the way there, finishing off what's hurt). She cuts them close in, flicks
+    crescents of moonlight up and down ledges, or, when one is out of her reach, leaps on it, the
+    sword dragging her through the air, and lands with a blow all round; with nothing left she waits
+    beside the Beastmaster. She waddles slowly, the tip scraping the ground, on a skeleton of her
+    own that's played for laughs: sighs with a huff of steam, dozing off on her feet, the sword
+    snagging as she walks, end lag on every heavy swing (stuck in the ground, a pratfall when it
+    comes free), ears, tail, hair and kimono all bouncing. The Beastmaster's shots that land, and Snow wolf's hits, wear down Snow
     wolf's **Patience** (the Bond gauge, a moon over the hotkeys), which recovers once the fighting
     stops; gone (**Fed Up**), the crescent on her sword burns and she hits harder and quicker
     (spinning the sword round, heaving it overhead and dropping it, flicking crescents). The
@@ -471,10 +472,15 @@ to clear it.
     reaches the Beastmaster: Snow wolf plants the sword in front of it behind a crescent shield of
     moonlight and flicks a crescent back) and **Queen's Awakening** (level 70: while Snow wolf is
     Fed Up, the wolf head on her sword wakes and her eyes open; she attacks faster and harder, and
-    every swing also throws a crescent at the farthest monster). The finisher, **Wrath of the Wolf
-    Queen**, needs full Bond and spends it: a great full moon rises and crescents of moonlight
-    sweep out across the whole screen, throwing everything into the air. Her buttons are the
-    Archer's Vault and Wrath of the Wolf Queen.
+    every swing also throws a crescent at the farthest monster). **Snack Time** is a buff: the
+    Beastmaster tosses her a moon cookie, she catches it and munches it, and for a while she's
+    happy (ears up, tail wagging, smiling): she keeps up instead of waddling, attacks harder, more
+    often and quicker, and her Patience holds; when it wears off she slumps right back. The
+    finisher, **Last Straw**, needs full Bond and spends it: Snow wolf snaps. Beside the
+    Beastmaster in a flash, fuming and shaking, eyes blazing, she lifts the greatsword in one hand
+    as if it weighed nothing, twirls it, leaps, and brings it down under a great full moon on
+    everything across the whole screen around her, then keels over asleep. Her buttons are the
+    Archer's Vault, Snack Time and Last Straw.
   - **Stormcaller** (crossbow): lightning that chains between monsters, charged ground and a
     thunderstorm from a darkened sky. Her own skills are still being made; until then she fights
     with the Archer's shots and skills.
