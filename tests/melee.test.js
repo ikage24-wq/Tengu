@@ -945,8 +945,10 @@ test('Snow wolf picks her own fights, and comes back to the Beastmaster when the
   // Nothing left: she comes back and waits beside the Beastmaster, wherever she walks.
   w.mobs = [];
   run(w, 1.2, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
-  run(w, 5);
-  assert.ok(Math.abs(w.pets.snow.x - w.body.x) < 80 && Math.abs(w.pets.snow.y - w.body.y) < 30, 'back beside her');
+  // She waddles (slowly, by design), so from the far end of a fight it can take her a while.
+  const beside = () => Math.abs(w.pets.snow.x - w.body.x) < 80 && Math.abs(w.pets.snow.y - w.body.y) < 30;
+  for (let i = 0; i < 60 * 8 && !beside(); i++) updateWorld(w, DT, idle);
+  assert.ok(beside(), 'back beside her');
 });
 
 test('Snow wolf finds her own way up onto a ledge to reach a monster', async () => {
