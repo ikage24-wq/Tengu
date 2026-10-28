@@ -5,6 +5,7 @@ import { snap } from './pixel.js';
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
+import { hasValor, hasFaith, hasRage } from '../world/melee.js';
 import { needle, starFlash, shardRing, puff, crown, shock, wisp, contrast, stepped, inked, easeOut, easeIn } from './fxkit.js';
 
 const MAX = 600;
@@ -53,13 +54,13 @@ export function shakeOffset(fx, time) {
 
 // Cel dust puffs kicked up from the ground: little two-tone lumps that pop up, drift, and
 // shrink away. `dir` sends them one way (a footstep); 0 spreads them both ways.
-export function dust(fx, x, y, count, dir = 0, color = '#f6ece2', shade = '#e2d2c4') {
+export function dust(fx, x, y, count, dir = 0, color = '#f6ece2', shade = '#e2d2c4', soft = false) {
   for (let i = 0; i < count; i++) {
     const side = dir || (i % 2 ? 1 : -1);
     add(fx, {
       x: x + side * (2 + Math.random() * 4), y: y - 2,
       vx: side * (25 + Math.random() * 45), vy: -12 - Math.random() * 22,
-      drag: 5, life: 0.32 + Math.random() * 0.18, size: 2.4 + Math.random() * 1.6, shape: 'puff', color, shade,
+      drag: 5, life: 0.32 + Math.random() * 0.18, size: (2.4 + Math.random() * 1.6) * (soft ? 2.2 : 1), shape: soft ? 'haze' : 'puff', color, shade,
     });
   }
 }
@@ -238,12 +239,19 @@ function elementOf(world) {
 
 // The paths drawn as real light, fire and lightning (the Paladin, the Berserker, the Stormcaller):
 // their hits throw only sparks of their own colour, no cartoon star or ring.
-const REAL_SPARKS = { holy: ['#fff3c4', '#ffd36a', '#ffffff'], rage: ['#ffd27a', '#ff7a3a', '#e0301c'], storm: ['#efe4ff', '#b48cff', '#ffffff'] };
+const REAL_SPARKS = { holy: ['#fff3c4', '#ffd36a', '#ffffff'], rage: ['#ffd27a', '#ff7a3a', '#e0301c'], storm: ['#efe4ff', '#b48cff', '#ffffff'], steel: ['#ffffff', '#ffc070', '#e6f4ff'] };
+// A blow's school when the hit doesn't say: a warrior's path (the Warrior's steel is his alone; a
+// Thief's blade is drawn the old way still).
+const blowSchool = (j, char) => j.school ?? (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasValor(char) ? 'steel' : null);
+const realOf = (j, char) => {
+  const school = blowSchool(j, char);
+  return school === 'steel' && !hasValor(char) ? null : REAL_SPARKS[school];
+};
 
 // Handles the world's game-feel cues.
 export function absorbJuice(fx, world) {
   for (const j of world.juice) {
-    if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, REAL_SPARKS[j.school] ?? elementOf(world)?.sparks, Boolean(REAL_SPARKS[j.school]));
+    if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, realOf(j, world.char) ?? elementOf(world)?.sparks, Boolean(realOf(j, world.char)));
     else if (j.type === 'kill') {
       poof(fx, j.x, j.y, j.w, j.h, j.boss);
       if (j.boss) {
@@ -277,27 +285,34 @@ export function absorbJuice(fx, world) {
     } else if (j.type === 'stomp') {
       // A warrior plants a foot to put their weight into a big move: a puff of dust skids out
       // from under it, the view dips, and a heavy move adds a small ring on the ground.
-      const [, puff, puffShade] = SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
-      dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, puff, puffShade);
-      dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, puff, puffShade);
+      // The realistic jobs' (the Warrior and his paths) kicks up soft earthy dust, no outline.
+      const soft = hasValor(world.char) || hasFaith(world.char) || hasRage(world.char);
+      const [, puff, puffShade] = soft ? [null, '#d8cec4', '#b0a69e'] : SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
+      dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, puff, puffShade, soft);
+      dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, puff, puffShade, soft);
       kick(fx, 0, j.big ? 2 : 1);
       if (j.big && j.school === 'rage') embers(fx, j.x, j.y, 6);
-      else if (j.big) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
+      else if (j.big && !soft) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
     } else if (j.type === 'slam') {
       // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out
       // in lavender rock; the paths' are real light and fire (render/warrior-fx.js draws their
       // burst), so a Paladin's throws up specks of light and a Berserker's embers instead.
-      const [spike, puff, puffShade, ring] = SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
-      if (j.school === 'holy') {
+      const real = j.school === 'steel' && hasValor(world.char);
+      const [spike, puff, puffShade, ring] = real ? ['#ffffff', '#e8e2dc', '#b0a69e', '#ffffff'] : SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
+      if (real) {
+        // The Warrior's: hot sparks off the struck ground (his burst is drawn in warrior-fx.js).
+        for (let i = 0; i < 12; i++) add(fx, { x: j.x + (Math.random() - 0.5) * j.range * 0.6, y: j.y, vx: (Math.random() - 0.5) * 160, vy: -80 - Math.random() * 140, g: 420, drag: 2, life: 0.4 + Math.random() * 0.3, size: 1.8, shape: 'needle', color: i % 3 ? '#ffc070' : '#ffffff' });
+      } else if (j.school === 'holy') {
         for (let i = 0; i < 12; i++) add(fx, { x: j.x + (Math.random() - 0.5) * j.range, y: j.y, vx: (Math.random() - 0.5) * 40, vy: -90 - Math.random() * 110, drag: 1.6, life: 0.6 + Math.random() * 0.3, size: 1.8, shape: 'needle', color: i % 3 ? '#ffe9a0' : '#ffffff' });
       } else if (j.school !== 'rage') add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: spike });
-      for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, puff, puffShade);
-      landing(fx, j.x, j.y, true);
+      const soft = real || j.school === 'holy' || j.school === 'rage';
+      for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, soft ? '#d8cec4' : puff, puffShade, soft);
+      if (!soft) landing(fx, j.x, j.y, true);
       kick(fx, 0, 3);
       // A Berserker's has no smooth ring (his shockwaves are jagged; render/warrior-fx.js): embers
       // spit up out of the torn ground instead.
       if (j.school === 'rage') embers(fx, j.x, j.y, 14, j.range);
-      else if (j.school !== 'holy') add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
+      else if (j.school !== 'holy' && !real) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
     }
   }
   world.juice.length = 0;
@@ -401,6 +416,21 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'shards':
         shardRing(ctx, x, y, p.size + (p.r1 - p.size) * easeOut(t), p.thick * (1 - t) ** 1.2, p.n, p.seed, p.rot + t * 0.6, p.color);
         break;
+      case 'haze': {
+        // Soft dust, no outline (the realistic jobs' stomps): a blurred cloud that swells and thins.
+        const k = t < 0.2 ? easeOut(t / 0.2) : 1;
+        const r = p.size * (0.6 + 0.6 * t) * k;
+        ctx.save();
+        for (const [rr, al] of [[1, 0.18], [0.65, 0.22], [0.35, 0.2]]) {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = al * (1 - t);
+          ctx.beginPath();
+          ctx.arc(x, y, r * rr, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+        break;
+      }
       case 'puff': {
         // Billows out fast, then shrinks away.
         const k = t < 0.25 ? easeOut(t / 0.25) : 1 - ((t - 0.25) / 0.75) ** 0.8;

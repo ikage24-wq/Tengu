@@ -3722,6 +3722,151 @@
     },
   };
 
+  // ---------- Real steel (the Warrior) ----------
+  // The Warrior followed the paths (the player asked for it): his steel blue and white as real
+  // light and real motion, no outline. His cut is a motion blur behind the blade, a razor-bright
+  // edge smearing back into a fading cold wake; his hit two bright cuts crossing with sparks of
+  // struck metal flying off; his ring a ring of rushing air; his pillar cold light with sheen
+  // sliding up it like light along a blade. The rest of his drawings go through `asLight`.
+  const STEELL = ['#ffffff', '#e6f4ff', '#9fd2ff', '#5a86e0'];
+  const SPARK = ['#ffffff', '#fff2cc', '#ffc070', '#ff8a3a'];
+  const steelRamp = ramp([[0, '#5a86e0'], [0.4, '#9fd2ff'], [0.75, '#e6f4ff'], [1, '#ffffff']]);
+  // A four-point glint (light catching an edge).
+  const glint = (ctx, x, y, r, a) => {
+    glow(ctx, [[x - r, y], [x + r, y]], 1.2, STEELL, a);
+    glow(ctx, [[x, y - r], [x, y + r]], 1.2, STEELL, a);
+  };
+  // The motion-blur cut along the swipe's own arc (same geometry and swing as `swipe`).
+  E.slash = {
+    w: 260, h: 200, n: 8, fps: 30, px: 130, py: 150, swing: [-Math.PI / 2, 1, 100],
+    draw(ctx, i) {
+      const cx = 130;
+      const cy = 150;
+      const R = 100;
+      const a0 = (-168 * Math.PI) / 180;
+      const a1 = (-12 * Math.PI) / 180;
+      const head = [0.45, 1, 1, 1, 1, 1, 1, 1][i];
+      const tail = [0.1, 0, 0.05, 0.25, 0.45, 0.65, 0.8, 0.92][i];
+      const a = [0.8, 1, 1, 0.85, 0.65, 0.45, 0.25, 0.1][i];
+      const N = 40;
+      for (let k = 0; k < N; k++) {
+        const u = k / N;
+        if (u < tail || u > head) continue;
+        const v = (u - tail) / Math.max(0.01, head - tail);
+        const th = 4 + 26 * Math.pow(v, 1.5);
+        for (const [rr, w, c, al] of [[R - th * 0.5, th * 1.2, STEELL[3], 0.35], [R - th * 0.35, th * 0.7, STEELL[2], 0.7], [R - 3, 7, STEELL[1], 0.95], [R - 1.5, 3, STEELL[0], 1]]) {
+          ctx.save();
+          ctx.globalAlpha *= al * a * (0.45 + 0.55 * v);
+          ctx.strokeStyle = c;
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.arc(cx, cy, rr, a0 + (a1 - a0) * u, a0 + (a1 - a0) * (u + 1 / N));
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      if (i >= 1 && i <= 3) glint(ctx, cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 18, 1 - (i - 1) * 0.3);
+    },
+  };
+  // His hit: two bright cuts crossing, a glint where they meet, hot sparks of struck metal flying
+  // off and falling.
+  E.cross = {
+    w: 200, h: 200, n: 6, fps: 30, px: 100, py: 100,
+    draw(ctx, i) {
+      const a = [1, 1, 0.8, 0.55, 0.3, 0.12][i];
+      const len = [50, 70, 74, 70, 60, 50][i];
+      bloomDisc(ctx, 100, 100, 30 * a + 8, 30 * a + 8, STEELL, a * 0.9);
+      for (const sd of [-1, 1]) glow(ctx, [[100 - len * 0.7, 100 - sd * len * 0.7], [100 + len * 0.7, 100 + sd * len * 0.7]], 2.2 * a + 0.6, STEELL, a);
+      const R = rng(800);
+      if (i >= 1) {
+        for (let j = 0; j < 10; j++) {
+          const ang = R() * TAU;
+          const d = (i - 0.5) * (18 + R() * 16);
+          const x = 100 + Math.cos(ang) * d;
+          const y = 100 + Math.sin(ang) * d + (i - 1) ** 2 * 3;
+          glow(ctx, [[x, y], [x - Math.cos(ang) * 7, y - Math.sin(ang) * 7]], 1.1, SPARK, Math.min(1, a * 1.2));
+        }
+      }
+      if (i <= 2) glint(ctx, 100, 100, 22, 1);
+    },
+  };
+  // His ring: a ring of displaced air racing out, a pale bright rim and a faint wash behind it.
+  E.ring = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const r = [40, 70, 92, 106, 116, 122][i];
+      const a = [1, 1, 0.8, 0.55, 0.3, 0.12][i];
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.hypot(x - 130, y - 130);
+        const v = (Math.exp(-(((d - r) / (4 + i * 2)) ** 2)) + (d < r ? 0.18 * (d / r) ** 3 : 0)) * a * (0.8 + 0.4 * (fbm(Math.atan2(y - 130, x - 130) * 4, i, 2) - 0.5));
+        return [v, v * 1.1];
+      }, steelRamp);
+    },
+  };
+  // His pillar: cold steel-blue light rising from his feet, sheen sliding up it like light along a
+  // blade, glints flashing up it, a pool of cold light on the ground.
+  E.pillar = {
+    w: 150, h: 330, n: 8, fps: 20, px: 75, py: 318,
+    draw(ctx, i) {
+      const a = [0.4, 1, 1, 0.95, 0.85, 0.6, 0.35, 0.15][i];
+      const wid = [10, 40, 38, 36, 32, 24, 14, 7][i];
+      const t = i / 8;
+      painted(ctx, 0, 0, 150, 330, (x, y) => {
+        const core = Math.max(0, 1 - Math.abs(x - 75) / wid);
+        const sheen = 0.7 + 0.6 * Math.pow(Math.max(0, Math.sin((y / 330 - t * 2) * Math.PI * 3)), 6);
+        const v = Math.pow(core, 0.9) * sheen * sstep(0, 80, y) * sstep(330, 300, y) * a;
+        return [v * 1.2, v * 1.2];
+      }, steelRamp);
+      bloomDisc(ctx, 75, 318, wid * 1.8, wid * 0.45, STEELL, a);
+      const R = rng(810);
+      for (let j = 0; j < 5; j++) {
+        const life = (t * 1.5 + j / 5) % 1;
+        glint(ctx, 75 + (R() - 0.5) * wid * 1.4, 300 - life * 260, 8 * Math.sin(life * Math.PI) * a, a);
+      }
+    },
+  };
+  // A heavy blow cracking the ground: dust billowing out soft, chips of rock flung up (no outline),
+  // sparks off the struck stone.
+  E.quake = {
+    w: 280, h: 220, n: 9, fps: 22, px: 140, py: 200,
+    draw(ctx, i) {
+      const g = 200;
+      const a = [0.8, 1, 1, 0.85, 0.7, 0.5, 0.35, 0.2, 0.08][i];
+      const k = i / 8;
+      painted(ctx, 0, 60, 280, 160, (x, y) => {
+        const d = Math.hypot((x - 140) / (60 + k * 90), (y - g + 10) / (24 + k * 34));
+        const v = Math.max(0, 1 - d) * (0.6 + 0.8 * (fbm(x / 20 + i * 0.3, y / 20, 4) - 0.5)) * Math.min(1, a * 1.5);
+        return [0.5, sstep(0, 0.3, v) * 0.85];
+      }, () => rgb('#e2dcd6'));
+      const R = rng(820);
+      for (let j = 0; j < 9; j++) {
+        const ang = -Math.PI * (0.15 + R() * 0.7);
+        const d = 20 + (i + 0.5) * (12 + R() * 10);
+        const x = 140 + Math.cos(ang) * d;
+        const y = g + Math.sin(ang) * d + (i * 0.9) ** 2 * 2.4;
+        const r = (4 + R() * 4) * (1 - k * 0.4);
+        fill(ctx, [[x - r, y], [x - r * 0.3, y - r], [x + r, y - r * 0.4], [x + r * 0.5, y + r * 0.7]], '#6e625e');
+        fill(ctx, [[x - r * 0.6, y - r * 0.2], [x - r * 0.2, y - r * 0.8], [x + r * 0.5, y - r * 0.4]], '#a39890');
+      }
+      if (i < 4) for (let j = 0; j < 6; j++) {
+        const ang = -Math.PI * (0.2 + R() * 0.6);
+        const d = (i + 1) * 14;
+        glow(ctx, [[140 + Math.cos(ang) * d, g + Math.sin(ang) * d], [140 + Math.cos(ang) * (d - 8), g + Math.sin(ang) * (d - 8)]], 1, SPARK, a);
+      }
+    },
+  };
+  E.spin = asLight(E.spin, PAL.steel);
+  E.streak = asLight(E.streak, PAL.steel);
+  E.charge = asLight(E.charge, PAL.steel);
+  E.shout = asLight(E.shout, PAL.steel);
+  E.plates = asLight(E.plates, PAL.steel);
+  E.shieldsteel = asLight(E.shieldsteel, PAL.steel, { deep: 0.4, mid: 0.62 });
+  E.steelsword = asLight(E.steelsword, PAL.steel);
+  E.steelcross = asLight(E.steelcross, PAL.steel);
+  E.swordform = asLight(E.swordform, PAL.steel);
+  E.fissure = asLight(E.fissure, PAL.steel);
+  E.valor = asLight(E.valor, PAL.steel);
+
   function big(e, k) {
     return {
       ...e,

@@ -772,10 +772,12 @@ function drawFx(ctx, f, cam, time) {
         fxSprite(ctx, 'celhit', x, y, { p: Math.min(1, p * 1.5), scale: 0.35 });
         break;
       }
-      // A crit: the shared burst, but the paths' are their own real light and fire (a big flare of
-      // light for the Paladin, a white-hot burst and claws for the Berserker).
+      // A crit: the shared burst, but the warriors' are their own real light and fire (a big flare
+      // of light for the Paladin, a white-hot burst and claws for the Berserker, a big cross of
+      // cuts and sparks for the Warrior).
       if (f.crit) {
         if (f.path === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: 1 });
+        else if (f.path === 'steel') fxSprite(ctx, 'celcross', x, y, { p, scale: 1.15, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
         else if (f.path === 'rage') {
           fxSprite(ctx, 'celhitred', x, y, { p, scale: 0.95 });
           fxSprite(ctx, 'celclaw', x, y, { p, scale: 0.55, flip: (f.dir ?? 1) < 0 });
@@ -785,7 +787,7 @@ function drawFx(ctx, f, cam, time) {
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path || f.path === 'shadow' || f.path === 'crow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'crow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
       else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
       break;

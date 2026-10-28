@@ -11,6 +11,9 @@ import { fxSprite } from './fx-sprites.js';
 
 const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'storm']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : school === 'crow' ? 'crimson' : '');
+// The schools drawn as real light, fire and motion (no outlined cartoon dust): the Warrior's steel,
+// the Paladin's light, the Berserker's fire.
+const REAL = new Set(['steel', 'holy', 'rage']);
 // A ring of force and a pillar of light in a school's colour (steel is the plain one).
 export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
@@ -106,7 +109,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
       fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : f.school === 'shadow' || f.school === 'crow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
-      fxSprite(ctx, f.school === 'shadow' || f.school === 'crow' ? 'celsmoke' : 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
+      if (f.school === 'shadow' || f.school === 'crow') fxSprite(ctx, 'celsmoke', x, y, { p, flip: !flip, scale: 0.8 });
+      else if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x, y + 8, { p, flip: !flip, scale: 0.4 });
+      else fxSprite(ctx, 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
       if (f.school === 'shadow' || f.school === 'crow') {
         fxSprite(ctx, 'celsmoke', tx, y, { p: Math.min(1, p * 1.2), scale: 0.6 });
         return true;
@@ -206,7 +211,10 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const r = f.r ?? 180;
       groundRing(ctx, ringOf(f.school), x, y, p, r);
       groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.5), r * 0.6);
-      for (const sd of [-1, 1]) fxSprite(ctx, 'celdust', x + sd * r * 0.35, y + 2, { p, flip: sd < 0, scale: 1 });
+      for (const sd of [-1, 1]) {
+        if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x + sd * r * 0.35, y + 6, { p, flip: sd < 0, scale: 0.55 });
+        else fxSprite(ctx, 'celdust', x + sd * r * 0.35, y + 2, { p, flip: sd < 0, scale: 1 });
+      }
       return true;
     }
     case 'bloodmoon': {

@@ -248,6 +248,14 @@ carry an improvement across every part of the game it applies to.
     hits throw only sparks of their own colour (no cartoon star or ring), their crits are their own
     (a bigger flare; a white-hot burst with claws; for the Stormcaller a bigger crackle), a bleed
     drips real blood, and their stomps kick up earthy dust. Emblems keep their outline.
+  - The Warrior then followed, in his steel blue and white: his cut is a motion blur behind the
+    blade (a razor-bright edge smearing back into a fading cold wake, a glint at its tip), his hit
+    two bright cuts crossing with orange-white sparks of struck metal, his ring a ring of rushing
+    air, his pillar cold light with sheen sliding up it like light along a blade, a heavy blow
+    soft dust with chips of stone and sparks. The rest of his (whirl, dashes, gathering, war cry,
+    Iron Guard, Titan Breaker's sword, crack and cross, Valor aura) goes through `asLight`. His
+    crits are a big cross of cuts, and his stomps and Titan Breaker kick up soft dust (the `haze`
+    particle; `REAL` in warrior-fx.js), not outlined cartoon puffs.
   - The Archer (first job) is warm gold with sky blue: gold arrows trailing sky-blue streaks,
     hits that pop a gold star with a sky swoosh and burst into feathers, gusts of gold feathers
     off the bow, a feather emblem, gold feathers circling her as Momentum builds, and for Falcon
