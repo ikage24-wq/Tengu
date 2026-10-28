@@ -27,6 +27,21 @@ Raw page dumps are in `scratchpad/ranim/p/` and contact sheets of our GIFs are i
   the hero's idle acting moved from 8 to 30 steps a second. The player asked for "smooth and
   fluid" over the stepped, MapleStory-style holds, after liking in-between blending on effects.
 
+- **Update (combat feel pass):** the player found combat stiff: only the arm and weapon moved.
+  Now (render/moves.js `sway`, `FEEL`, `after`; render/hero.js `drawMoved`):
+  - the body leans and steps into every blow from how far the blade has swung or the hand has
+    reached forward over the last part of the move, rocks back on wind-ups, crouches under the
+    hardest, swings the free arm back, and the upper body leads over the hips (finding 16);
+  - re-rig: on the ground the legs are drawn upright and planted while everything from the waist
+    up leans from the hips (the figure is drawn in two parts that overlap at the waist); in the
+    air the whole figure still turns as one;
+  - follow-through: blade and arm overshoot a little past each stop and spring back (finding 19);
+  - each weapon its own feel, its time bent round the moment the blow lands (never moving it):
+    axe a held wind-up then everything into the chop, spear a long step into the reach, dagger
+    quick flicks, stars a whipping arm, bow and crossbow recoil, wand and staff a twirl;
+  - finishers rebound up off the blow then settle (combat.md 25); a finished move eases back to
+    the guard over 0.17 s instead of snapping to idle (combat.md 22).
+
 ## 3. Top findings (technique, numbers, source, how it applies, effort)
 
 ### Timing data from shipped games

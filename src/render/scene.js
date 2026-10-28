@@ -97,9 +97,9 @@ function playerPose(world) {
   const b = world.body;
   const last = world.lastPose;
   if (!world.pose && last && b.onGround && !b.rope && Math.abs(b.vx) <= 8 && world.now - last.endedAt < SETTLE && MOVES[last.kind]) {
-    return { pose: last.kind, progress: 1, dur: last.dur, settle: (world.now - last.endedAt) / SETTLE, ready: true };
+    return { pose: last.kind, progress: 1, dur: last.dur, settle: (world.now - last.endedAt) / SETTLE, ready: true, hit: last.hit, fin: last.fin };
   }
-  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / BLEND };
+  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / BLEND, hit: world.pose.hit, fin: world.pose.fin };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };

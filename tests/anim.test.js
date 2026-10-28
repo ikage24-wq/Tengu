@@ -145,3 +145,22 @@ test('every skill icon draws on its own, even as the first one drawn', async () 
   }
   for (const [id, draw] of Object.entries(SKILL_ART)) assert.ok(draw().length > 0, `${id} draws`);
 });
+
+// Each weapon swings its own way, but the blow lands at the same moment (the hit is timed by the
+// game, not the drawing), and the body leans into a swing while the feet stay planted.
+test('every weapon keeps its blow on time and leans into it', async () => {
+  const { moveAt, FEEL } = await import('../src/render/moves.js');
+  for (const weapon of Object.keys(FEEL)) {
+    for (const hit of [0.3, 0.45, 0.6]) {
+      const plain = moveAt('slash', hit, 0.4);
+      const felt = moveAt('slash', hit, 0.4, { weapon, hit });
+      assert.ok(Math.abs(plain.weapon - felt.weapon) < 1e-6 || FEEL[weapon].over || FEEL[weapon].twirl, `${weapon}: the blade is where it was when the blow lands`);
+    }
+  }
+  // Mid-cut the body leans forward into the slash; on the wind-up it rocks back.
+  assert.ok(moveAt('slash', 0.44, 0.4).tilt > 0.1, 'leans into the cut');
+  assert.ok(moveAt('slash', 0.2, 0.4).tilt < 0, 'rocks back on the wind-up');
+  // A finisher bounces up off the blow, then settles back down.
+  const fin = (p) => moveAt('slash', p, 0.4, { hit: 0.4, fin: true }).lift;
+  assert.ok(fin(0.52) > 2 && fin(0.99) < 0.5, 'a finisher bounces, then rests');
+});

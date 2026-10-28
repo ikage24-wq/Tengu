@@ -1921,10 +1921,12 @@ const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
 // Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   const pose = state.pose ?? 'idle';
-  let moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35);
+  // Each weapon swings in its own way (render/moves.js `feel`), bent round the moment the blow lands.
+  const feel = { weapon: resolveGear(look, gear).weapon?.type, hit: state.hit, fin: state.fin };
+  let moved = moveAt(POSE_MOVES[pose] ?? pose, state.progress ?? 0, state.dur ?? 0.35, feel);
   // A move that cut in on another eases out of it over its first few frames.
   if (moved && state.from && state.blend < 1) {
-    const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur);
+    const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur, { weapon: feel.weapon });
     moved = blendMove(from, moved, Math.max(0, state.blend));
   }
   // A move that just ended eases back to the standing guard (`settle`, 0-1) instead of snapping.
@@ -1974,8 +1976,8 @@ export function rigid(mv) {
 // (from the weapon's own length), and the front shoulder, all carried through the whole-body
 // lunge, lift, tilt and turn (a flip). Effects use it so a smear or a thrust's spike lines up with
 // the weapon instead of a fixed height. Returns null for moves without an aimed arm.
-export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 1) {
-  const mv = rigid(moveAt(POSE_MOVES[move] ?? move, progress, dur));
+export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 1, blow = {}) {
+  const mv = rigid(moveAt(POSE_MOVES[move] ?? move, progress, dur, { weapon: resolveGear(look, gear).weapon?.type, hit: blow.hit, fin: blow.fin }));
   if (!mv || mv.arm == null || mv.weapon == null) return null;
   const g = resolveGear(look, gear);
   const rig = solveRig({ pose: move, progress, dur, time: 0, facing }, null, mv);
@@ -2007,7 +2009,9 @@ export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 
 // How high up the figure leans from (a share of its height) and how far: on the ground from low
 // down (about the knees), so the feet stay planted while the body leans into a blow, and no further
 // than 0.5 rad; in the air about its middle (flips, dives), as far as the move says.
-const GROUND_PIVOT = 0.16;
+const GROUND_PIVOT = 0.135;
+// How far (game pixels) the leaning upper body and the upright legs overlap at the waist.
+const WAIST_OVERLAP = 1.5;
 function leanOf(mv) {
   const air = Math.min(1, Math.abs(mv.lift) / 6);
   const tilt = Math.max(-0.5, Math.min(0.5, mv.tilt)) * (1 - air) + mv.tilt * air;
@@ -2025,12 +2029,38 @@ function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
   // the body leans into a blow; in the air it turns about its middle (flips, dives).
   const { pivot: pk, tilt } = leanOf(mv);
   const pivot = y - H * scale * pk;
+  const whole = (c, t) => {
+    c.translate(x + dir * mv.lunge * scale, pivot - mv.lift * scale);
+    c.rotate(t * dir);
+    // Only ever a mirror flip (see `rigid`): never narrowed or stretched.
+    if (mv.turn < 0) c.scale(-1, 1);
+    c.translate(-x, -pivot);
+  };
+  // Planted (on the ground, leaning), the figure is drawn in two parts: the legs stand upright on
+  // their feet, and everything from the waist up leans from the hips, overlapping a little at the
+  // waist so no gap opens. In the air the whole figure turns as one.
+  if (pk < 0.2 && Math.abs(tilt) > 0.01 && Math.abs(tilt) < 0.6 && mv.turn > 0) {
+    const cut = pivot + WAIST_OVERLAP * scale;
+    const span = W * scale * 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - span, cut - 2 * WAIST_OVERLAP * scale, span * 2, H * scale);
+    ctx.clip();
+    whole(ctx, 0);
+    paintHero(ctx, look, gear, x, y, state, anim, moved);
+    ctx.restore();
+    ctx.save();
+    whole(ctx, tilt);
+    // The upper part, clipped in the leaning frame just under the hips.
+    ctx.beginPath();
+    ctx.rect(x - span, pivot - H * scale * 2, span * 2, H * scale * 2 + WAIST_OVERLAP * scale);
+    ctx.clip();
+    paintHero(ctx, look, gear, x, y, state, anim, moved);
+    ctx.restore();
+    return;
+  }
   ctx.save();
-  ctx.translate(x + dir * mv.lunge * scale, pivot - mv.lift * scale);
-  ctx.rotate(tilt * dir);
-  // Only ever a mirror flip (see `rigid`): never narrowed or stretched.
-  if (mv.turn < 0) ctx.scale(-1, 1);
-  ctx.translate(-x, -pivot);
+  whole(ctx, tilt);
   paintHero(ctx, look, gear, x, y, state, anim, moved);
   ctx.restore();
 }

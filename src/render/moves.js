@@ -1311,42 +1311,97 @@ function rawMoveAt(kind, progress, dur) {
 // and settles as the swing dies (power chains from the hips; research/anim.md 16, 19). A spin's
 // sweep (`orbit`) and a still weapon (bows, casting) add nothing; a move's own lean and lunge stay.
 const SWAY = { window: 0.18, lean: 0.3, step: 7, at: 100, lead: 0.07, overshoot: 0.4 };
-function sway(kind, progress, dur, mv) {
+
+// Each weapon's own feel (the player asked for every weapon to be smooth, snappy and fun, each its
+// own way). `pre`/`post` bend the move's time before and after the blow lands (the blow itself never
+// moves, so it still lands with the hit): above 1 holds back then rushes in, below 1 rushes then
+// lingers. `lean`, `step` and `over` scale the body's lean, its step in and the blade's
+// follow-through; `squat` sinks deeper under a heavy blow; `recoil` kicks the body back as a shot
+// leaves; `twirl` spins the weapon round in the hand after a cast.
+//   axe: a long heavy wind-up, then everything thrown into the chop and carried a long way through.
+//   spear: coiled, then a long step into the thrust, the body kept upright behind the reach.
+//   dagger: quick flicks, the blade whipping past and back, straight back on guard.
+//   gauntlet: the whole arm whipping each star out.
+//   bow: a kick back as the arrow leaves; crossbow a harder one.
+//   wand and staff: a flourish of the weapon round in the hand after each cast.
+export const FEEL = {
+  sword: {},
+  none: {},
+  axe: { pre: 1.8, post: 0.55, lean: 1.4, step: 1.15, over: 1.5, squat: 1 },
+  spear: { pre: 1.35, post: 0.8, lean: 0.55, step: 2.3, over: 0.5 },
+  dagger: { pre: 1.45, post: 0.5, lean: 0.75, step: 1.35, over: 1.9 },
+  gauntlet: { pre: 1.5, post: 0.6, lean: 1.1, over: 1.6, armOver: 2 },
+  bow: { recoil: 1.4 },
+  crossbow: { recoil: 2.2 },
+  wand: { twirl: 1, lean: 0.8 },
+  staff: { twirl: 1, lean: 0.9 },
+};
+const bend = (p, hit, pre = 1, post = 1) => {
+  if (hit == null || hit <= 0.04 || hit >= 0.96) return p;
+  return p < hit ? hit * Math.pow(p / hit, pre) : hit + (1 - hit) * Math.pow((p - hit) / (1 - hit), post);
+};
+
+function sway(kind, progress, dur, mv, f = {}) {
   if (mv.weapon == null || mv.orbit || mv.pull != null || mv.nock) return mv;
   const back = rawMoveAt(kind, Math.max(0, progress - SWAY.window), dur);
   if (back.weapon == null || back.orbit) return mv;
   // How hard it's going forward: the blade swinging round, or the arm driving out (a thrust, a
   // throw, a cast), whichever is the bigger.
   const dw = mv.weapon - back.weapon;
-  const da = mv.arm != null && back.arm != null ? (mv.arm - back.arm) * 1.2 : 0;
+  // (How far forward the hand reaches: an arm raised overhead for a wind-up isn't going forward.)
+  const reach = (deg) => Math.sin((deg * Math.PI) / 180);
+  const da = mv.arm != null && back.arm != null ? (reach(mv.arm) - reach(back.arm)) * 130 : 0;
   const k = Math.tanh((Math.abs(da) > Math.abs(dw) ? da : dw) / SWAY.at);
   // Follow-through: the blade and arm run on a little past where the swing stops and spring back
   // (it reads as a snap on the hit; research/anim.md 19, Saint11's overshot). It's how far they
   // moved over the last moment, carried on.
   const near = rawMoveAt(kind, Math.max(0, progress - SWAY.lead), dur);
-  const over = (a, b) => (a == null || b == null ? 0 : Math.max(-40, Math.min(40, (a - b) * SWAY.overshoot)));
+  const lim = 40 * (f.over ?? 1);
+  const over = (a, b, x = 1) => (a == null || b == null ? 0 : Math.max(-lim, Math.min(lim, (a - b) * SWAY.overshoot * (f.over ?? 1) * x)));
   const weapon = mv.weapon + over(mv.weapon, near.weapon);
-  const arm = mv.arm == null ? mv.arm : mv.arm + over(mv.arm, near.arm) * 0.6;
+  const arm = mv.arm == null ? mv.arm : mv.arm + over(mv.arm, near.arm, 0.6 * (f.armOver ?? 1));
   if (Math.abs(k) < 0.02) return { ...mv, weapon, arm };
   const rig = mv.rig;
   return {
     ...mv,
     weapon,
     arm,
-    tilt: mv.tilt + SWAY.lean * k,
-    lunge: mv.lunge + SWAY.step * k,
+    tilt: mv.tilt + SWAY.lean * (f.lean ?? 1) * k,
+    lunge: mv.lunge + SWAY.step * (f.step ?? 1) * k,
     rig: (r) => {
       rig?.(r);
       // The upper body leads over the hips (the legs stay where they are).
       r.tx = q((r.tx ?? 0) + 1.5 * k);
-      if (k > 0.55 && !r.air) r.squat = Math.max(r.squat ?? 0, k > 0.85 ? 2 : 1);
+      if (k > 0.55 && !r.air) r.squat = Math.max(r.squat ?? 0, (k > 0.85 ? 2 : 1) + (f.squat ?? 0));
       // The free arm flies back against the swing, to balance it.
       if (r.backArm && !r.air) r.backArm = [q(r.backArm[0] - 2 * k), q(r.backArm[1] - 1.5 * Math.abs(k))];
     },
   };
 }
 
-export function moveAt(kind, progress, dur = 0.35) {
+// What happens after the blow, by weapon and move: a shot's recoil, a caster's twirl, and a
+// finisher's rebound (a hop up off the blow, then a smaller one, then rest: research/combat.md 25).
+function after(mv, p, hit, f, fin) {
+  if (hit == null) return mv;
+  const since = p - hit;
+  let out = mv;
+  if (f.recoil && since >= 0 && since < 0.22) {
+    const k = f.recoil * (1 - since / 0.22) * Math.min(1, since / 0.03);
+    out = { ...out, tilt: out.tilt - 0.06 * k, lunge: out.lunge - 2.2 * k };
+  }
+  if (f.twirl && out.weapon != null && !out.orbit && since > 0.06) {
+    const t = clamp01((since - 0.06) / Math.max(0.2, 0.9 - hit));
+    out = { ...out, weapon: out.weapon + 360 * f.twirl * (t * t * (3 - 2 * t)) };
+  }
+  if (fin && since > 0) out = { ...out, lift: out.lift + 5 * bump(p, hit, hit + 0.24) + 1.6 * bump(p, hit + 0.26, hit + 0.42) };
+  return out;
+}
+
+// A move's pose at `progress` (0-1) of `dur` seconds. `feel` is how it's swung: { weapon (its type),
+// hit (when its first blow lands, 0-1), fin (a finisher) }.
+export function moveAt(kind, progress, dur = 0.35, feel = null) {
   if (!MOVES[kind]) return null;
-  return sway(kind, progress, dur, rawMoveAt(kind, progress, dur));
+  const f = FEEL[feel?.weapon] ?? {};
+  const p = bend(clamp01(progress), feel?.hit, f.pre, f.post);
+  return after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
 }

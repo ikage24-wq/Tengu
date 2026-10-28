@@ -885,7 +885,7 @@ function bladePath(f) {
   let pts = [];
   for (let i = 0; i <= 28; i++) {
     const u = Math.max(0, f.at - span + ((span + 0.03) * i) / 28);
-    const pose = strikePose(hero.look, hero.gear, f.move, u, f.moveDur, f.dir);
+    const pose = strikePose(hero.look, hero.gear, f.move, u, f.moveDur, f.dir, 1, f);
     if (pose) pts.push({ tip: pose.tip, hand: pose.hand });
   }
   // Keep only the cut itself: drop the slow wind-up (and any hold) before the blade gets moving,
@@ -970,7 +970,7 @@ function bladeCut(ctx, f, cam, p) {
 
 function strikeAt(f) {
   if (!hero || !f.move) return null;
-  if (!posed.has(f)) posed.set(f, strikePose(hero.look, hero.gear, f.move, f.at, f.moveDur, f.dir));
+  if (!posed.has(f)) posed.set(f, strikePose(hero.look, hero.gear, f.move, f.at, f.moveDur, f.dir, 1, f));
   return posed.get(f);
 }
 
