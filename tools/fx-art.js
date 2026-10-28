@@ -3455,6 +3455,30 @@
   E.lightcross = asLight(E.lightcross, PAL.holy);
   E.circle = asLight(E.circle, PAL.holy, { deep: 0.5, mid: 0.8 });
   E.motes = asLight(E.motes, PAL.holy);
+  // Shield Rush's wall: a tall honeycomb of golden light held up before the Paladin as she
+  // marches, shimmering, a band of light sweeping down it again and again. Loops (the game holds
+  // it up, then lets it fade as she plants the blade).
+  E.lightwall = asLight({
+    w: 120, h: 240, n: 6, fps: 14, px: 60, py: 228, loop: true,
+    draw(ctx, i) {
+      const pal = PAL.holy;
+      const r = 15;
+      const band = 228 - ((i / 6) * 260) % 260;
+      for (let row = 0; row < 8; row++) {
+        for (let col = -1; col <= 1; col++) {
+          const x = 60 + col * r * 1.5;
+          const y = 214 - row * r * 1.72 - (Math.abs(col) === 1 ? r * 0.86 : 0);
+          if (y < 14) continue;
+          const lit = Math.abs(y - band) < 26;
+          const pts = [];
+          for (let j = 0; j < 6; j++) pts.push([x + Math.cos((j * TAU) / 6) * r, y + Math.sin((j * TAU) / 6) * r]);
+          inked(ctx, pts, pal[2], pal[3], 3);
+          fill(ctx, pts.map(([px, py]) => [lerp(x, px, 0.78), lerp(y, py, 0.78)]), lit ? pal[1] : pal[2]);
+          fill(ctx, pts.map(([px, py]) => [lerp(x, px, 0.4) - r * 0.12, lerp(y, py, 0.4) - r * 0.12]), lit ? pal[0] : pal[1]);
+        }
+      }
+    },
+  }, PAL.holy, { deep: 0.55, mid: 0.75 });
   E.slashred = asLight(E.slashred, PAL.rage, { deep: 0.28 });
   E.spinred = asLight(E.spinred, PAL.rage, { deep: 0.28 });
   E.streakred = asLight(E.streakred, PAL.rage, { deep: 0.45 });

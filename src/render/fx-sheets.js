@@ -166,6 +166,7 @@ export const FX_SHEETS = {
   celgarden: { w: 405, h: 320, n: 9, fps: 14, px: 203, py: 263, d: 3, loop: false },
   celbloomaura: { w: 143, h: 173, n: 8, fps: 10, px: 78, py: 178, d: 3, loop: true },
   celembbloom: { w: 126, h: 153, n: 5, fps: 12, px: 63, py: 82, d: 3, loop: false },
+  cellightwall: { w: 104, h: 242, n: 6, fps: 14, px: 52, py: 225, d: 3, loop: true },
   celringbig: { of: 'celring', k: 2.6 },
   celringholybig: { of: 'celringholy', k: 2.6 },
   celringragebig: { of: 'celringrage', k: 2.6 },

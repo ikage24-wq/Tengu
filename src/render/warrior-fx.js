@@ -144,6 +144,17 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celshield', x + dir * 20, y - 28, { p, scale: 0.75, sx: 0.7 });
       return true;
     }
+    case 'shieldwall': {
+      // Shield Rush: a wall of golden light held up before the Paladin as she marches (it travels
+      // with her), shimmering, with a soft column of light behind it; it shatters as she plants.
+      const pp = p < 0.12 ? (p / 0.12) * 0.36 : p < 0.86 ? 0.4 + 0.04 * Math.sin(time * 14) : 0.57 + ((p - 0.86) / 0.14) * 0.43;
+      const a = p < 0.86 ? 1 : 1 - (p - 0.86) / 0.14;
+      lightPillar(ctx, 'celpillarholy', x + dir * 2, y, Math.min(0.5, 0.25 + p * 0.3), 80);
+      const up = Math.min(1, p / 0.12);
+      if (p < 0.86) fxSprite(ctx, 'cellightwall', x, y + 2, { t: time, scale: 0.78 * up, sx: 0.85, flip, alpha: up });
+      else fxSprite(ctx, 'celshield', x, y - 34, { p: pp, scale: 1.3, sx: 0.6, flip, alpha: Math.max(0.3, a) });
+      return true;
+    }
     case 'shieldslam': {
       // The Paladin's shield slam: a great honeycomb shield of light drops out of the air flat onto
       // them and slams into the ground, a star of light bursts where it lands, a golden ring races

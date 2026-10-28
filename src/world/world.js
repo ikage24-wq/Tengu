@@ -631,7 +631,15 @@ export function updateWorld(world, dt, input) {
   }
 
   // ----- Visual timers -----
-  for (const f of world.fx) f.t += dt;
+  for (const f of world.fx) {
+    f.t += dt;
+    // An effect carried along with the hero (the Paladin's wall of light as she rushes).
+    if (f.follow) {
+      f.dir = world.body.facing;
+      f.x = world.body.x + f.dir * (f.ahead ?? 0);
+      f.y = world.body.y;
+    }
+  }
   // Arrows and bolts track the monster they were loosed at (knocked back, launched, walking): a
   // shot heads for where it is now; a piercing one keeps its line through it out to its reach.
   for (const f of world.fx) {

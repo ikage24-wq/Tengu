@@ -73,13 +73,31 @@ export const SKILLS = {
   }),
   shouldercharge: skill({
     id: 'shouldercharge', name: 'Shoulder Charge', job: 'warrior', type: 'attack', fx: 'charge', icon: 'charge', maxLevel: 10, school: 'steel', movement: true,
-    desc: 'Barrel forward shoulder-first, bowling over every monster in your path and tossing them aside. Nothing touches you on the way.',
+    desc: 'Barrel forward shoulder-first, bowling over every monster in your path and tossing them aside. Nothing touches you on the way. A Paladin rushes behind a wall of light instead (Shield Rush), a Berserker charges dragging his axe and crashes down in a cleave (Reckless Charge).',
+    pathNames: { paladin: 'Shield Rush', berserker: 'Reckless Charge' },
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const hit = (at) => ({ at, pct: k(90, 160), reach: 46, h: 64, around: true, targets: 4, knock: 300, launch: 180 });
       return {
         mp: k(10, 6), pct: k(90, 160), hits: 2, targets: 4,
         combo: [{ move: 'dash', dur: 0.42, step: k(80, 140), carry: 0.7, guard: 0.45, trail: true, strikes: [hit(0.25), { ...hit(0.6), big: true, stop: 0.06, shake: 2 }] }],
+        // Each warrior path charges its own way (it's the same skill and key, in their style):
+        paths: {
+          // Shield Rush: she raises her blade flat before her and a wall of golden light snaps up;
+          // she marches in behind it in heavy steps, shoving and gathering monsters up ahead of
+          // her, then plants the blade and the wall bursts in pillars of light that stun them.
+          paladin: [{ move: 'shieldrush', dur: 0.9, step: k(90, 140), carry: 0.74, guard: 0.8, wall: true, strikes: [
+            ...[0.22, 0.4, 0.58].map((at) => ({ at, pct: k(35, 60), reach: 50, h: 70, targets: 5, knock: 180, stop: 0.02 })),
+            { at: 0.8, pct: k(110, 190), reach: 70, h: 90, targets: 5, knock: 90, stun: k(1, 1.8), fx: 'pillar', burst: 'shieldslam', burstAt: 0.45, big: true, stop: 0.08, shake: 4 },
+          ] }],
+          // Reckless Charge: he hunches low and sprints, the axe dragging sparks along the ground,
+          // trampling through everything in his way, then leaps and crashes down in a cleave that
+          // tears the ground open.
+          berserker: [{ move: 'recklesscharge', dur: 0.95, step: k(100, 160), carry: 0.66, guard: 0.85, trail: true, strikes: [
+            ...[0.25, 0.45].map((at) => ({ at, pct: k(45, 80), reach: 46, h: 64, around: true, targets: 5, knock: 70, launch: 140, bleed: { pct: 0.15, secs: 3 }, stop: 0.02 })),
+            { at: 0.8, pct: k(140, 230), reach: 90, h: 90, around: true, targets: 5, knock: 260, launch: 300, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.1, shake: 5 },
+          ] }],
+        },
       };
     },
   }),

@@ -445,6 +445,12 @@ const AIR = [
 // Running into an attack: a lunging thrust through the line.
 const DASH = { move: 'dashstab', dur: 0.46, step: 44, carry: 0.55, strikes: [{ at: 0.38, pct: 140, reach: 84, h: 52, targets: 3, pierce: true, knock: 200, big: true, stop: 0.05, shake: 1 }] };
 // Down + attack (the warrior paths): a leaping two-handed slam that cracks the ground all around.
+// Running + attack, the paths' own: the Paladin drives her shield shoulder in behind a flare of
+// light that dazes them; the Berserker leaps into a chop that tears the ground.
+const PATH_DASH = {
+  paladin: { move: 'bash', dur: 0.48, step: 56, carry: 0.45, strikes: [{ at: 0.42, pct: 140, reach: 64, h: 62, targets: 3, knock: 240, stun: 0.6, burst: 'aegis', burstAt: 0.7, big: true, stop: 0.06, shake: 2 }] },
+  berserker: { move: 'leapchop', dur: 0.6, step: 64, carry: 0.5, strikes: [{ at: 0.55, pct: 150, reach: 86, h: 72, targets: 3, knock: 220, crack: true, bleed: { pct: 0.15, secs: 3 }, arc: [-105, 190], thick: 14, big: true, stop: 0.08, shake: 3 }] },
+};
 const SLAM = { move: 'plunge', dur: 0.62, step: 18, strikes: [{ at: 0.56, pct: 170, reach: 88, h: 80, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] };
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasValor(char) || hasRage(char) || hasFaith(char);
@@ -741,7 +747,7 @@ export function basicCombo(world) {
       return;
     }
     if ((world.runFor ?? 0) >= DASH_AFTER) {
-      playStep(world, own?.dash ?? DASH, 100, 'basicdash');
+      playStep(world, own?.dash ?? PATH_DASH[hasFaith(world.char) ? 'paladin' : hasRage(world.char) ? 'berserker' : null] ?? DASH, 100, 'basicdash');
       world.combo = -1;
       return;
     }
@@ -825,6 +831,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
+  // Shield Rush's wall of light, carried before her as she marches.
+  if (step.wall) world.fx.push({ kind: 'shieldwall', follow: true, ahead: 22, x: body.x + body.facing * 22, y: body.y, dir: body.facing, t: 0, dur: dur * 0.82 });
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.

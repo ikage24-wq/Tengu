@@ -2419,3 +2419,21 @@ test("a dashing basic swing leaves its trail in the path's own colour", () => {
   assert.ok(trails.length, 'the drag-and-rip dashed');
   assert.ok(trails.every((f) => f.school === 'rage'), trails.map((f) => f.school).join());
 });
+
+// Shoulder Charge is each warrior path's own: the Paladin's Shield Rush marches behind a wall of
+// light, the Berserker's Reckless Charge sprints and crashes down; each runs into its own attack.
+test("the warrior paths charge their own way, and run into their own attack", () => {
+  for (const [job, move, wall, dash] of [['paladin', 'shieldrush', true, 'bash'], ['berserker', 'recklesscharge', false, 'leapchop']]) {
+    const w = advanced(job);
+    w.char.skills.shouldercharge = 10;
+    w.char.mp = 999;
+    assert.ok(cast(w, 'shouldercharge').ok, job);
+    assert.equal(w.pose.kind, move, `${job} charges with ${move}`);
+    assert.equal(w.fx.some((f) => f.kind === 'shieldwall' && f.follow), wall, `${job}: the wall of light`);
+    run(w, 2);
+    w.mobs = [];
+    run(w, 0.6, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+    updateWorld(w, DT, { held: new Set(['ArrowRight', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+    assert.equal(w.pose?.kind, dash, `${job} runs into ${dash}`);
+  }
+});

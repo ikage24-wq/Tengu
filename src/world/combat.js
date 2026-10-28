@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
 import { guard } from './pets.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -241,7 +241,7 @@ export function cast(world, skillId, rng = Math.random) {
   const s = skillId ? SKILLS[skillId] : null;
   const element = weaponElement(char);
   const ranged = WEAPON_TYPES[stats.weaponType]?.ranged;
-  const params = s ? skillAt(skillId, char.skills[skillId]) : ranged ? BASIC_RANGED : BASIC_MELEE;
+  let params = s ? skillAt(skillId, char.skills[skillId]) : ranged ? BASIC_RANGED : BASIC_MELEE;
   const type = s ? s.type : 'attack';
 
   char.mp -= params.mp ?? 0;
@@ -252,6 +252,9 @@ export function cast(world, skillId, rng = Math.random) {
     return { ok: true };
   }
   if (params.combo) {
+    // A skill a warrior path does its own way (Shoulder Charge: Shield Rush, Reckless Charge).
+    const path = hasFaith(char) ? 'paladin' : hasRage(char) ? 'berserker' : null;
+    if (params.paths?.[path]) params = { ...params, combo: params.paths[path] };
     if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
     // Rampage spends all your Rage: the more there was, the harder every blow hits (double at full).
     let scale = 100;
