@@ -422,7 +422,17 @@ const ICONS = {
     ctx.quadraticCurveTo(-s * 0.08, -s * 0.24, 0, -s * 0.46);
     ctx.fill();
   },
-  // A curl of wind (the Ranger's Gale).
+  // A paw print (the Beastmaster's Bond): a broad pad and four toes.
+  paw(ctx, s) {
+    ctx.beginPath();
+    ctx.ellipse(0, s * 0.16, s * 0.24, s * 0.2, 0, 0, Math.PI * 2);
+    for (const [x, y] of [[-0.3, -0.12], [-0.11, -0.32], [0.11, -0.32], [0.3, -0.12]]) {
+      ctx.moveTo(x * s + s * 0.1, y * s);
+      ctx.ellipse(x * s, y * s, s * 0.1, s * 0.12, 0, 0, Math.PI * 2);
+    }
+    ctx.fill();
+  },
+  // A curl of wind.
   gust(ctx, s) {
     ctx.lineWidth = s * 0.13;
     ctx.lineCap = 'round';

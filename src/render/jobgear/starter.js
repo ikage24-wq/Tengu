@@ -204,6 +204,56 @@ const OUTFITS = {
     shoe: (p, k, c) => [k.sole(c(p.pop)), k.poly([[-2.4, -0.4], [2.4, -0.4], [2.8, 1.2], [-2.8, 1.2]], c(WHITE)), k.poly([[-2.9, 2.1], [2.9, 2.1], [2.6, 3], [-2.6, 3]], c(WHITE)), k.dot(0, -0.9, 0.4, c(p.pop))],
   },
 
+  // A kimono: the collar wrapped left over right over a white under-collar, a wide obi with a cord
+  // tied round it, a long straight robe with the overlap running down the front and a darker hem,
+  // little flowers scattered over it, and a big bow of the obi at the back; white tabi and zori.
+  kimono: {
+    top: (p) => [T(TORSO, p.main), T([[MID - 2.8, 25.8], [MID + 2.8, 25.8], [MID - 0.4, 31.2]], WHITE),
+      T([[MID + 1.4, 25.8], [MID + 3.2, 25.8], [MID + 0.4, 31.6], [MID - 1.4, 31.6]], p.main),
+      F(limb(MID + 2.6, 25.9, MID - 0.6, 31.4, 0.55, 0.55, p.deep)), F(limb(MID - 2.8, 25.9, MID - 0.6, 29.6, 0.5, 0.5, p.dark)),
+      band(TORSO, 31.2, 34.6, p.pop), F(R(9.8, 31.2, 11.6, 0.45, shade(p.pop, -22))), F(R(9.8, 32.7, 11.6, 0.5, GOLD)), F(E(MID + 1.2, 32.95, 0.7, 0.6, GOLD)),
+      ...flower(11.4, 28.4, 0.9, pale(p), GOLD), ...flower(19.8, 29.6, 0.8, pale(p), GOLD)],
+    sleeve: (p) => p.main,
+    long: true,
+    back: (p) => [T([[15.5, 33], [8.2, 29.6], [7.2, 34.4], [9, 37]], p.pop), T([[15.5, 33], [22.8, 29.6], [23.8, 34.4], [22, 37]], p.pop),
+      T([[14.4, 33.4], [12.2, 40.6], [15.5, 40.2]], shade(p.pop, -16)), T([[16.6, 33.4], [18.8, 40.6], [15.5, 40.2]], shade(p.pop, -16))],
+    legs: () => ({ top: WHITE, low: WHITE, pad: null }),
+    skirt: (p) => [T([[9.8, 34.2], [21.2, 34.2], [22.2, 51.6], [8.8, 51.6]], p.main), F(R(8.9, 49.8, 13.2, 1.8, p.dark)),
+      F(limb(MID - 1, 34.6, MID - 2.4, 51.4, 0.5, 0.5, p.deep)), F(limb(MID - 0.4, 34.6, MID - 1.7, 51.4, 0.35, 0.35, p.light)),
+      ...flower(12, 39, 1.1, pale(p), GOLD), ...flower(19.4, 37.8, 1, pale(p), GOLD), ...flower(18, 45, 1.1, pale(p), p.pop), ...flower(10.8, 46.4, 1, pale(p), GOLD)],
+    shoe: (p, k, c) => [k.poly([[-3, 1.8], [3, 1.8], [3, 3], [-3, 3]], c('#c9a77a')), k.poly([[-2.6, -0.4], [2.6, -0.4], [2.8, 1.8], [-2.8, 1.8]], c(WHITE)),
+      k.poly([[-0.4, 0.2], [0.4, 0.2], [2.4, 1.6], [-2.4, 1.6]], c(p.pop))],
+  },
+
+  // An oversized kimono, worn barefoot: a loose robe sliding wide at the collar, dropped shoulders,
+  // sleeves so long they swallow the hands, a soft sash tied loosely, and a hem that pools at the
+  // feet with only the toes peeking out.
+  bigkimono: {
+    top: (p, m) => [T(loose(37, 1.4), p.main), T([[MID - 4, 25.6], [MID + 4, 25.6], [MID - 0.6, 32.4]], p.skin),
+      T([[MID + 2.2, 25.6], [MID + 4.6, 25.6], [MID + 0.4, 32.8], [MID - 1.8, 32.8]], p.main),
+      F(limb(MID + 3.8, 25.7, MID - 0.8, 32.6, 0.7, 0.7, p.light)), F(limb(MID - 4, 25.7, MID - 1, 30.4, 0.6, 0.6, p.dark)),
+      T([[9, 32.4], [22.2, 32.2], [22.4, 35.2], [8.8, 35.4]], p.pop), F(R(8.9, 33.6, 13.4, 0.5, shade(p.pop, -22))),
+      F(limb(19.2, 34, 20.4 + (m?.sway ?? 0) * 0.9, 38.6, 0.8, 0.5, p.pop)), F(limb(19.8, 34, 21.8 + (m?.sway ?? 0) * 1.3, 37.8 - Math.abs(m?.sway ?? 0) * 0.3, 0.7, 0.4, shade(p.pop, -12))),
+      F(limb(11.4, 27.6, 12.6, 31.6, 0.4, 0.4, p.dark)), F(limb(20, 28, 19.2, 31.6, 0.4, 0.4, p.dark))],
+    sleeve: (p) => p.main,
+    long: true,
+    shoulder: (p) => [E(0, 1, 3, 2.6, p.main), F(E(0, 2.6, 2.4, 0.6, p.dark))],
+    hand: (p, hx, hy, ex, ey) => {
+      // The sleeve runs on past the wrist and flares open, the hand lost inside it.
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const at = (a, b) => [hx + ux * a - uy * b, hy + uy * a + ux * b];
+      return [T([at(-2.4, -1.9), at(-2.4, 1.9), at(1.4, 3.4), at(2.4, 2.2), at(2.4, -2.2), at(1.4, -3.4)], p.main),
+        F(T([at(1.6, -2.4), at(2.3, -1.4), at(2.3, 1.4), at(1.6, 2.4), at(1.1, 0)], p.dark)), F(limb(...at(-1.6, -1.7), ...at(1.2, -3), 0.35, 0.35, p.dark))];
+    },
+    legs: (p, skin) => ({ top: skin, low: skin, pad: null }),
+    skirt: (p) => [T([[9, 34.2], [22.2, 34.2], [24, 51], [22, 51.8], [9.6, 51.8], [7.2, 51]], p.main), F(R(7.8, 50.2, 15.6, 1.4, p.dark)),
+      F(limb(MID - 1, 35, MID - 2.8, 51.4, 0.6, 0.6, p.dark)), F(limb(MID - 0.4, 35, MID - 2, 51.4, 0.4, 0.4, p.light)),
+      F(limb(11, 37, 9.6, 50, 0.4, 0.3, p.dark)), F(limb(20.4, 37, 21.8, 50, 0.4, 0.3, p.dark))],
+    shoe: (p, k, c) => [k.poly([[-1.8, -1.2], [1.8, -1.2], [2.6, 0.4], [3, 2.2], [2.4, 3], [-2.4, 3], [-2.8, 2.2], [-2.6, 0.4]], c(p.skin)),
+      k.dot(-1.6, 2.4, 0.5, c(shade(p.skin, -7))), k.dot(-0.2, 2.6, 0.5, c(shade(p.skin, -7))), k.dot(1.2, 2.6, 0.5, c(shade(p.skin, -7)))],
+  },
+
   // A summer sundress: thin straps and a sweetheart bodice, a ribbon at the waist, and a skirt in
   // two ruffled tiers scattered with little flowers; sandals.
   sundress: {
@@ -440,7 +490,7 @@ export default {
   hatBack: (t, p, m) => of(t).hatBack?.(p, m) ?? [],
   hatTucks: () => false,
   hatHidesBangs: () => false,
-  top: (t, p) => of(t).top(p),
+  top: (t, p, m) => of(t).top(p, m),
   sleeve: (t, p) => of(t).sleeve(p),
   longSleeves: (t) => Boolean(of(t).long),
   shoulder: (t, p, side) => of(t).shoulder?.(p, side) ?? [],
@@ -450,7 +500,7 @@ export default {
     return out.length ? out : null;
   },
   shoe: (t, p, k) => of(t).shoe(p, k, k.tint),
-  hand: (t, p, hx, hy) => [E(hx, hy, 2, 2, p.skin)],
+  hand: (t, p, hx, hy, ex, ey) => of(t).hand?.(p, hx, hy, ex, ey) ?? [E(hx, hy, 2, 2, p.skin)],
   cape: (t, p) => of(t).back?.(p) ?? [],
   capeFront: (t, p) => of(t).front?.(p) ?? [],
 };
@@ -459,3 +509,4 @@ export default {
 export const starterHasBack = (t) => Boolean(of(t).back);
 // Whether an outfit comes with a hat or face accessory.
 export const starterHasHat = (t) => Boolean(of(t).hat);
+export const starterHasHands = (t) => Boolean(of(t).hand);

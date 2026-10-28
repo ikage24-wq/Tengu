@@ -398,123 +398,59 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Ranger (the archer's bow path: wind, speed, leaps and storms of arrows) ----------
-  // Every arrow a Ranger lands builds Gale (0-100, see world/melee.js): the fuller it is the
-  // quicker she shoots, and full, every basic shot looses a twin. `aimGain` adds to it at once.
-  rangermastery: skill({
-    id: 'rangermastery', name: 'Ranger Mastery', job: 'ranger', type: 'passive', fx: null,
-    desc: 'Steadier shots, more attack, and sharper aim.',
+  // ---------- Beastmaster (the archer's bow path: green wild arrows, and Snow wolf) ----------
+  // She hunts with a companion (world/pets.js): Snow wolf, a small, fed-up wolf girl dragging the
+  // Fang of the Wolf Queen, a greatsword that casts moonlight. Her shots that land, and Snow wolf's
+  // hits, build Bond (0-100, see world/melee.js), shown as Snow wolf's Patience running out; full
+  // (Fed Up), Snow wolf fights on her own, and the finisher spends it. Like the Archer, she fights
+  // with her basic shots and her skills set themselves off: Fine, I'll Go and Moonfall from any
+  // shot, Lunar Howl from her combo's last shot. Her late skills (`minLevel`): Moon Ward and
+  // Queen's Awakening. Her buttons are the Archer's Vault and Wrath of the Wolf Queen. (The skill
+  // ids are the old animals' names, kept for saves.)
+  beastmastery: skill({
+    id: 'beastmastery', name: 'Beast Mastery', job: 'beastmaster', type: 'passive', fx: null,
+    desc: 'Steadier shots, more attack, and sharper aim, and Snow wolf hits harder too.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
-  galevolley: skill({
-    id: 'galevolley', name: 'Gale Volley', job: 'ranger', type: 'attack', fx: 'arrow', icon: 'galevolley', school: 'wind',
-    desc: 'A three-part combo, one part per press: twirl and loose two wind arrows, leap and fan three down on them, then a gale arrow that tears through the whole line and blows them away.',
-    weapons: ['bow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const wind = (at, pct, knock = 25) => ({ at, shot: 'windarrow', pct, range: 310, h: 60, knock, speed: 900 });
-      return {
-        mp: k(6, 13), pct: k(80, 135), hits: 6, targets: 1,
-        combo: [
-          { move: 'spinshot', dur: 0.5, step: 6, strikes: [wind(0.32, k(75, 125)), wind(0.72, k(80, 135), 40)] },
-          { move: 'leapshot', dur: 0.6, step: -8, strikes: [{ at: 0.55, shot: 'windarrow', fan: 3, pct: k(80, 130), range: 300, h: 120, knock: 60, launch: 120, speed: 900 }] },
-          { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'galearrow', pct: k(200, 330), range: 360, h: 64, targets: k(4, 7), pierce: true, speed: 950, knock: 300, launch: 180, big: true, stop: 0.07, shake: 3, muzzle: 'gust' }] },
-        ],
-      };
-    },
+  wolfpounce: skill({
+    id: 'wolfpounce', name: "Fine, I'll Go", job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
+    desc: 'Your shots sometimes make Snow wolf drag herself over to the nearest monster in front of you, hit or miss, and spin her greatsword round in a full circle of moonlight, cutting everything close.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.14, 0.32, lv, m), pct: lerp(90, 160, lv, m) } }),
   }),
-  cyclonearrow: skill({
-    id: 'cyclonearrow', name: 'Cyclone Arrow', job: 'ranger', type: 'attack', fx: 'arrow', icon: 'cyclone', school: 'wind',
-    desc: 'Loose an arrow wrapped in a whirlwind. It tears slowly down the line, cutting everything it passes three more times and lifting it off its feet.',
-    weapons: ['bow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(14, 28), pct: k(70, 120), hits: 4, targets: k(4, 7),
-        combo: [{ move: 'galeshot', dur: 0.7, step: -6, strikes: [{ at: 0.6, shot: 'cyclone', pct: k(70, 120), range: 340, h: 80, targets: k(4, 7), pierce: true, ticks: 3, tickGap: 0.14, speed: 460, knock: 40, launch: 160, big: true, stop: 0.04, shake: 1, muzzle: 'gust' }] }],
-      };
-    },
+  hawkstrike: skill({
+    id: 'hawkstrike', name: 'Moonfall', job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
+    desc: 'Your shots sometimes make Snow wolf plant her greatsword with a sigh, hit or miss: a beam of moonlight crashes down on the farthest monster in front of you and throws it into the air.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.14, 0.32, lv, m), pct: lerp(80, 140, lv, m) } }),
   }),
-  tailwind: skill({
-    id: 'tailwind', name: 'Tailwind', job: 'ranger', type: 'buff', fx: 'buff', icon: 'tailwind', school: 'wind', anim: 'tailwind',
-    desc: 'Call the wind to your back: run faster, shoot faster, and dodge more for a while, and half your Gale at once.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { speed: lerp(5, 20, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), eva: lerp(5, 25, lv, m) } }),
+  packhowl: skill({
+    id: 'packhowl', name: 'Lunar Howl', job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
+    desc: 'The last shot of your combo sometimes makes Snow wolf let out a grudging howl, a pale moon rising behind her: every monster close round her is knocked away and stunned. Always, if three or more monsters are in front of you.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), crowd: 3, pct: lerp(80, 140, lv, m), stun: lerpf(0.8, 1.6, lv, m), r: lerp(90, 130, lv, m) } }),
   }),
-  stormvolley: skill({
-    id: 'stormvolley', name: 'Storm Volley', job: 'ranger', type: 'attack', fx: 'rain', icon: 'stormvolley', school: 'wind', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Gale, and spends it. A gust throws you spinning high into the air, loosing arrows in every direction that pour down all around you, then you dive back down in a burst of storm wind that blows everything away.',
+  loyalguard: skill({
+    id: 'loyalguard', name: 'Moon Ward', job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10, minLevel: 50,
+    desc: 'A hit sometimes never reaches you: Snow wolf plants her greatsword in front of it, a crescent shield of moonlight takes it, and she flicks a crescent back at the attacker.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m), pct: lerp(120, 200, lv, m) } }),
+  }),
+  alpha: skill({
+    id: 'alpha', name: "Queen's Awakening", job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10, minLevel: 70,
+    desc: 'While Snow wolf is Fed Up (full Bond), the wolf head on her greatsword wakes: her eyes open, she attacks faster and harder, and every swing also throws a crescent of moonlight at the farthest monster.',
+    at: (lv, m) => ({ passive: {}, proc: { pct: lerp(150, 260, lv, m), every: lerpf(1.3, 0.9, lv, m) } }),
+  }),
+  stampede: skill({
+    id: 'stampede', name: 'Wrath of the Wolf Queen', job: 'beastmaster', type: 'attack', fx: null, school: 'wind', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Bond, and spends it. Raise your bow to the sky and Snow wolf finally snaps: a great full moon rises over you, and crescents of moonlight sweep out across the whole screen one after another, cutting everything in their way and throwing it into the air.',
     weapons: ['bow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
-      const pour = (at) => ({ at, rain: k(6, 9), around: true, pct: k(70, 120), rainW: 340, span: 0.32, knock: 20, variant: 'windarrow', gauge: 0 });
+      const run = (at) => ({ at, pct: k(90, 150), reach: 560, h: 150, targets, knock: 220, launch: 200, fx: 'moonhit', stop: 0.03, gauge: 0 });
       return {
-        mp: k(30, 50), pct: k(420, 720), hits: 22, targets,
-        combo: [{ move: 'stormvolley', dur: 1.7, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.12, pct: k(50, 90), reach: 120, h: 110, around: true, targets, pull: 70, burst: 'galeburst', burstAt: 0, sky: 1.4, quiet: true, via: 'wind', school: 'wind', stop: 0.02, gauge: 0 },
-          pour(0.3), pour(0.42), pour(0.54),
-          { at: 0.8, pct: k(420, 720), reach: 175, h: 150, around: true, targets, knock: 320, launch: 380, burst: 'stormburst', burstAt: 0, quiet: true, via: 'wind', school: 'wind', big: true, stop: 0.15, shake: 7, gauge: 0 },
-        ] }],
-      };
-    },
-  }),
-
-  // ---------- Sniper (the archer's crossbow path: Focus, heavy bolts, frost and blasts) ----------
-  // Bolts that land and standing still build Focus (0-100, see world/melee.js): sharper criticals,
-  // and full, the next bolt is a Deadeye.
-  snipermastery: skill({
-    id: 'snipermastery', name: 'Sniper Mastery', job: 'sniper', type: 'passive', fx: null,
-    desc: 'Steadier bolts, harder critical hits, and sharper aim.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), critDamage: lerpf(0.05, 0.3, lv, m), acc: lerp(3, 25, lv, m) } }),
-  }),
-  marksman: skill({
-    id: 'marksman', name: "Marksman's Chain", job: 'sniper', type: 'attack', fx: 'arrow', icon: 'marksman', school: 'focus',
-    desc: 'A three-part combo, one part per press: drop to a knee and send a heavy bolt through the line, crank and fire two more, then a ballista bolt that kicks you back and blasts straight through everything in its way.',
-    weapons: ['crossbow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(2, 4);
-      const bolt = (at, pct, knock = 80) => ({ at, shot: 'heavybolt', pct, range: 340, h: 56, knock, speed: 780, pierce: true, targets });
-      return {
-        mp: k(6, 13), pct: k(130, 210), hits: 4, targets,
-        combo: [
-          { move: 'kneelshot', dur: 0.58, step: -2, strikes: [bolt(0.56, k(140, 230), 110)] },
-          { move: 'crankshot', dur: 0.64, step: -3, charge: true, strikes: [bolt(0.5, k(90, 150)), bolt(0.8, k(95, 155), 120)] },
-          { move: 'ballista', dur: 0.86, step: -6, finisher: true, strikes: [{ at: 0.62, shot: 'ballista', pct: k(260, 430), range: 380, h: 60, targets: targets + 3, pierce: true, speed: 820, knock: 320, launch: 160, kickback: 26, big: true, stop: 0.1, shake: 4, muzzle: 'boltshock' }] },
-        ],
-      };
-    },
-  }),
-  glacierbolt: skill({
-    id: 'glacierbolt', name: 'Glacier Bolt', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'glacier', school: 'ice',
-    desc: 'Fire a bolt of ice at the nearest monster. It shatters into a burst of frost that freezes everything close around it solid.',
-    weapons: ['crossbow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(4, 7);
-      return {
-        mp: k(14, 28), pct: k(150, 250), hits: 1, targets,
-        combo: [{ move: 'kneelshot', dur: 0.66, step: -4, strikes: [{ at: 0.6, shot: 'frostbolt', pct: k(150, 250), range: 340, h: 60, targets, blast: 80, blastFx: 'frostshard', freeze: lerpf(1.2, 2.4, lv, m), burst: 'frostburst', speed: 720, knock: 60, big: true, stop: 0.06, shake: 2 }] }],
-      };
-    },
-  }),
-  steadyaim: skill({
-    id: 'steadyaim', name: 'Steady Aim', job: 'sniper', type: 'buff', fx: 'buff', icon: 'steadyaim', school: 'focus', anim: 'steadyaim', lock: 0.4,
-    desc: 'Settle your breathing and sight down the bolt: more critical hits, harder critical hits, and sharper aim for a while, and half your Focus at once.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(60, 180, lv, m), aimGain: 50, buff: { critRate: lerpf(0.05, 0.15, lv, m), critDamage: lerpf(0.05, 0.2, lv, m), acc: lerp(5, 30, lv, m) } }),
-  }),
-  heartseeker: skill({
-    id: 'heartseeker', name: 'Heartseeker', job: 'sniper', type: 'attack', fx: 'arrow', icon: 'heartseeker', school: 'focus', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Focus, and spends it. Kneel and take a long, steady aim as a sight locks onto every monster in the line, then one enormous bolt that always crits tears through all of them, and its shockwave follows.',
-    weapons: ['crossbow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(8, 12);
-      return {
-        mp: k(30, 50), pct: k(480, 820), hits: 2, targets,
-        combo: [{ move: 'heartseeker', dur: 1.7, step: 0, finisher: true, guard: 1.4, mark: true, strikes: [
-          { at: 0.6, shot: 'heartbolt', pct: k(480, 820), range: 560, h: 76, targets, pierce: true, crit: true, speed: 950, knock: 340, launch: 220, kickback: 40, big: true, stop: 0.16, shake: 8, muzzle: 'heartshock', gauge: 0 },
-          { at: 0.74, shot: 'wave', pct: k(150, 260), range: 560, h: 90, targets, pierce: true, speed: 900, knock: 200, big: true, stop: 0.05, shake: 3, gauge: 0 },
+        mp: k(30, 50), pct: k(420, 720), hits: 5, targets,
+        combo: [{ move: 'skyshot', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.18, pct: 0, reach: 0, h: 0, targets: 0, burst: 'moonwrath', burstAt: 0, burstDur: 1.5, quiet: true, gauge: 0 },
+          run(0.34), run(0.44), run(0.54), run(0.64),
+          { at: 0.76, pct: k(300, 520), reach: 600, h: 160, targets, knock: 380, launch: 440, fx: 'moonhit', big: true, stop: 0.14, shake: 6, gauge: 0 },
         ] }],
       };
     },
@@ -827,10 +763,10 @@ export const SKILLS = {
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   vault: 'vault', cometarrow: 'comet',
+  stampede: 'skyshot',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',
-  galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   crowcombo: 'thrust', markdeath: 'throw', vanish: 'vanish', poisonblade: 'cheer', bloodmoonrequiem: 'assassinate',
   starstorm: 'barrage', giantshuriken: 'throw', starmark: 'throw', shadowshuriken: 'cheer', galaxyfall: 'moonthrow',

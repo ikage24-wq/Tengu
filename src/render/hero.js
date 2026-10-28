@@ -14,7 +14,7 @@
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
-import { STARTER_OUTFITS, starterHasBack, starterHasHat } from './jobgear/starter.js';
+import { STARTER_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
@@ -213,7 +213,8 @@ function resolveGear(look, gear) {
     // creator's hairstyle thumbnails), a real hat is equipped, or the top is off.
     hat: piece('hat', starterHasHat(style) && look.outfitHat !== false && dressed ? starter : null),
     cape: piece('cape', starterHasBack(style) && dressed ? starter : null),
-    gloves: piece('gloves', null),
+    // Outfits whose sleeves cover the hands draw them as their own gloves.
+    gloves: piece('gloves', starterHasHands(style) && dressed ? starter : null),
     earring: piece('earring', null),
     weapon,
   };
@@ -311,7 +312,7 @@ function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
   const gy = f.look === 'down' ? 0.13 : f.look === 'up' ? -0.1 : 0;
   const wide = f.wide && lids === 'open';
   const x = {
-    lids, open: mode === 'half' ? 0.36 : wide ? 1 : (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), gy],
+    lids, open: mode === 'half' ? Math.min(0.36, (st.open ?? 1) * (1 - lid * 0.85)) : wide ? 1 : (st.open ?? 1) * (1 - lid * 0.85), inner: cross, raise: cross * 0.4, gaze: [-(g + 0.3) / (2 * st.rx), gy],
     iris: st.iris * (cross ? 0.9 : 1) * (wide ? 0.62 : 1), pupil: wide ? 0.4 : cross ? 0.75 : f.heart ? 1.7 : 1,
   };
   const kit = {
@@ -384,7 +385,7 @@ function earShapes(style, c, inner) {
 
 // Eyebrow styles, each its own silhouette (art bible: brows taper at both ends, in the hair's
 // darkest shade, never ink). `round` is hikimayu: small soft ovals set high. `none` hides them.
-export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'none'];
+export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'stubby', 'none'];
 
 // A tapered ribbon along `pts`, `ws` thick at each point.
 function ribbon(pts, ws, c) {
@@ -419,6 +420,9 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
     case 'thick':
       // Bold and straight-ish, a little longer, thinning only at the tail.
       return ribbon([at(-0.08), at(0.35, 0.1), at(0.75, 0.1), at(1.08)], g([1.25, 1.35, 1.2, 0.6]), c);
+    case 'stubby':
+      // Short and thick: a small bold dash over the middle of the eye, squared off at both ends.
+      return ribbon([at(0.08), at(0.35, 0.08), at(0.72, 0.04)], g([1.35, 1.45, 1.25]), c);
     case 'round': {
       // Hikimayu: a small soft oval, set high over the inner half of the eye.
       const [cx, cy] = at(0.3, 0.9);
@@ -454,6 +458,8 @@ function mouthShapes(kind, sk) {
     case 'pout': return [arc(x, MY + 0.9, 0.8, 0.7, 200, 340, 0.6, LIP), arc(x, MY + 0.9, 0.8, 0.7, 20, 160, 0.6, LIP)];
     case 'wavy': return [stroke([[x - 1.6, MY + 0.6], [x - 0.8, MY + 0.1], [x, MY + 0.6], [x + 0.8, MY + 0.1], [x + 1.6, MY + 0.6]], 0.6, LIP)];
     case 'flat': return [F(R(x - 1, MY + 0.4, 2, 0.6, LIP))];
+    // Bored: a long thin line off to one side, sagging a little at the corner.
+    case 'bored': return [stroke([[x - 1.8, MY + 0.5], [x + 0.6, MY + 0.5], [x + 1.6, MY + 0.8]], 0.5, LIP)];
     case 'cat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP)];
     case 'grit': return [F(R(x - 1.8, MY, 3.6, 1.5, MOUTH)), F(R(x - 1.5, MY + 0.3, 3, 0.9, '#ffffff')), F(R(x - 1.5, MY + 0.7, 3, 0.15, '#d9cde6'))];
     case 'yell': return [F(E(x, MY + 1, 1.8, 1.5, MOUTH)), F(E(x, MY + 1.8, 1, 0.6, '#ff9fb8'))];
@@ -732,7 +738,16 @@ function liveFace(look, state, mv) {
   if (pose === 'jump') {
     return (state.vy ?? -1) < 0 ? { mouth: 'D', brows: [[0.9, -0.3], [0.9, -0.3]] } : { mouth: 'o', brows: [[1.1, -0.4], [1.1, -0.4]], look: 'down' };
   }
-  const base = faceFrame(look.face ?? 'smile', time);
+  let base = faceFrame(look.face ?? 'smile', time);
+  if (look.act === 'drag') {
+    // Fed up: a huff of steam with each sigh, a vein throbbing after it, and a long "..." now and then.
+    const p = (time % 5.2) / 5.2;
+    const extra = [...(base.extra ?? [])];
+    if (p > 0.12 && p < 0.42) extra.push(`steam${Math.min(2, Math.floor((p - 0.12) * 10))}`);
+    if (p > 0.45 && p < 0.75) extra.push(Math.floor(time * 4) % 2 ? 'veinbig' : 'vein');
+    if (p > 0.8) extra.push(`dots${Math.min(3, 1 + Math.floor((p - 0.8) * 15))}`);
+    base = { ...base, extra };
+  }
   if (state.low) {
     // Frets: worried brows, a wobbly mouth, sweat sliding and a nervous glance back and forth.
     const p = (time % 2.4) / 2.4;
@@ -773,12 +788,24 @@ function headShapes(look, g, rig) {
     const bunny = (c, inner, lean) => [F(T([[17.4, 7], [17.2, 1], [17.6 + lean * 0.3, -5], [18.6 + lean, -10.6], [20.4 + lean, -11.4], [21.6 + lean * 0.8, -8], [21.4 + lean * 0.4, -1], [20.6, 7]], c)),
       F(T([[18.4, 4], [18.4, -1], [19 + lean * 0.5, -6.6], [19.8 + lean, -9.4], [20.6 + lean * 0.8, -7.6], [20.4 + lean * 0.4, -1], [19.8, 4]], inner))];
     out.push(...mirror(bunny(hr.sh1, '#e88ab4', 1.4)), ...bunny(hr.base, '#ffa8cc', 1.8));
+  } else if (ears === 'wolf') {
+    // Wolf ears: tall and pointed, set up on the head and turned a little out, furred in the hair's
+    // colour with a pale fluff inside; the far one a shade darker.
+    const fluff = mix(hr.base, '#fff4ee', 0.6);
+    const wolf = (c, inner) => [F(T([[17.0, 6.6], [18.8, 3.4], [21.0, 0.6], [23.6, -2.4], [24.8, -3.0], [25.2, 0.6], [25.4, 4.4], [25.0, 9.4]], c)),
+      F(T([[19.0, 6.4], [20.6, 3.8], [22.6, 1.0], [23.9, -0.6], [24.0, 3.2], [23.8, 7.8]], inner)),
+      F(T([[20.2, 6.6], [21.4, 4.8], [22.4, 3.6], [21.8, 5.6], [22.6, 5.0], [22.2, 7.2]], c))];
+    const [near, far] = rig.ears ?? [0, 0];
+    out.push(...roll(mirror(wolf(hr.sh1, mix(fluff, hr.sh1, 0.35))), 9.8, 7.8, -far), ...roll(wolf(hr.base, fluff), 21.2, 7.8, near));
   } else out.push(...mirror(earShapes(ears, sk.sh1, sk.sh2)), ...earShapes(ears, skin, sk.sh1));
   out.push(F(E(FACE_X, 15, 10.2, 9.8, sk.sh1)), F(E(FACE_X, 19, 9.4, 5.8, sk.sh1)));
   out.push(F(E(FACE_X + 0.6, 15, 9.6, 9.8, skin)), F(E(FACE_X + 0.5, 19, 8.9, 5.8, skin)));
   // A hurt or knocked-out face drops the expression's own play (sparkles, notes, winks, puffed
   // cheeks): pain squeezes the brows together and a sweat drop flies; out cold, the brows go slack.
   let f = rig.face ?? {};
+  // A look can keep the eyes half closed (heavy lids), or keep one mouth, whatever the expression.
+  if (look.lid) f = { ...f, lid: Math.max(f.lid ?? 0, look.lid) };
+  if (look.mouth) f = { ...f, mouth: look.mouth };
   if (rig.eyes === 'hurt') f = { brows: [[0.5, 0.7], [0.5, 0.7]], extra: ['sweat0'] };
   else if (rig.eyes === 'dead') f = { brows: [[0.2, -0.3], [0.2, -0.3]] };
   else if (rig.mouth && f.puff) f = { ...f, puff: false };
@@ -810,7 +837,7 @@ function headShapes(look, g, rig) {
   });
   if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', sk));
   else if (rig.eyes === 'dead') out.push(...mouthShapes('open', sk));
-  else out.push(...mouthShapes(rig.mouth ?? f.mouth ?? 'smile', sk));
+  else out.push(...mouthShapes(look.mouth ?? rig.mouth ?? f.mouth ?? 'smile', sk));
   if (front) out.push(...front);
   // Brows, in the look's style; an expression that doesn't move them leaves them at rest. The
   // eye-cover lock hides that side's brow.
@@ -955,6 +982,7 @@ function bodyShapes(look, g, rig) {
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
+  const tail = look.tail === 'wolf' ? wolfTail(look, rig, ux, drop + rig.by * 0.5) : [];
   // Walking, the pelvis turns toward the way it's going: the hips draw together on screen (they
   // part in depth instead), so the legs scissor past each other rather than splaying from wide
   // hips into splits and an X, and the far leg falls into shadow.
@@ -983,7 +1011,28 @@ function bodyShapes(look, g, rig) {
   // The head (and the hair hanging from it) rolls about the neck.
   const nx = squashX(15.5 + ux) + rig.hx;
   const ny = 25 + uy * KY + rig.hy + NECK_LIFT;
-  return move([...roll(hang, nx, ny, rig.tilt), ...squash(shapes), ...roll(head, nx, ny, rig.tilt)], 0, 0);
+  return move([...tail, ...roll(hang, nx, ny, rig.tilt), ...squash(shapes), ...roll(head, nx, ny, rig.tilt)], 0, 0);
+}
+
+// A wolf tail: big and bushy, from behind the hips out to the back side and curling up, in the
+// hair's colour with a shadowed underside and a pale tip; it sways with the cape spring. Drawn in
+// the squashed frame, behind everything.
+function wolfTail(look, rig, dx, dy) {
+  const hr = hairRamp(look.hairColor ?? '#e9ebfa');
+  const sway = (rig.cape ?? 0) * 0.6;
+  const at = (pts) => pts.map(([x, y]) => [x + dx * KX - Math.max(0, 30 - y) * sway * 0.08, y + dy * KY]);
+  const body = at([[12.6, 32.2], [9.6, 35.0], [5.4, 36.2], [1.0, 35.4], [-2.6, 33.0], [-4.8, 29.4], [-5.4, 25.4], [-4.6, 21.6], [-3.0, 19.0], [-1.6, 17.8], [-1.4, 20.6], [-0.6, 24.0], [1.2, 27.2], [4.2, 29.6], [8.2, 30.4], [12.0, 29.8]]);
+  const under = at([[12.6, 32.2], [9.6, 35.0], [5.4, 36.2], [1.0, 35.4], [-2.6, 33.0], [-4.8, 29.4], [-5.4, 25.4], [-3.0, 28.6], [0.6, 31.6], [5.0, 32.8], [9.4, 32.4]]);
+  const tip = at([[-5.2, 23.2], [-4.6, 21.0], [-3.0, 19.0], [-1.6, 17.8], [-1.2, 19.8], [-1.4, 21.8], [-3.0, 21.8], [-4.4, 23.6]]);
+  const lock = at([[-1.6, 25.0], [0.0, 28.4], [3.0, 31.0], [0.4, 30.0], [-1.4, 27.6]]);
+  // rig.tail (degrees) swings it about the root, bending more toward the tip.
+  const [rx, ry] = [12.4 + dx * KX, 31 + dy * KY];
+  const swing = (pts) => pts.map(([x, y]) => {
+    const a = ((rig.tail ?? 0) * Math.PI / 180) * (0.35 + 0.65 * Math.min(1, Math.hypot(x - rx, y - ry) / 16));
+    const [c, sn] = [Math.cos(a), Math.sin(a)];
+    return [rx + (x - rx) * c - (y - ry) * sn, ry + (x - rx) * sn + (y - ry) * c];
+  });
+  return [F(T(swing(body), hr.base)), F(T(swing(under), hr.sh1)), F(T(swing(tip), mix(hr.base, '#ffffff', 0.7))), F(T(swing(lock), hr.sh1))];
 }
 
 // Turns shapes by deg about (cx, cy): polygons point by point, ellipses and rects by their centres
@@ -1121,6 +1170,7 @@ function baseRig() {
     view: 'side', tx: 0, by: 0, hx: 0, hy: 0,
     frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], frontArm: [0, 0], backArm: [0, 0], armSide: 1, hipIn: 0, air: false, squat: 0,
     hair: 0, hairLift: 0, hairWave: 0, cape: 0, flap: false, eyes: 'open', mouth: null, climb: 0, tilt: 0, lift: 0, armOver: null,
+    ears: [0, 0], tail: 0,
   };
 }
 
@@ -1142,10 +1192,10 @@ function breath(u) {
 const WALK_STYLE = {
   smile: 'bouncy', grin: 'bouncy', cat: 'bouncy', playful: 'bouncy', giggle: 'bouncy', excited: 'skip', love: 'skip',
   smug: 'strut', proud: 'strut', cool: 'cool', sassy: 'sassy', angry: 'stomp', determined: 'stomp', pout: 'stomp',
-  sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic',
+  sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic', drag: 'drag',
 };
 // Lean added to the walk (radians): stomps and droops bend forward, struts stand tall.
-export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02 };
+export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02, drag: 0.07 };
 export const walkStyleOf = (mood) => WALK_STYLE[mood] ?? 'bouncy';
 
 function idleActing(r, mood, t, armed) {
@@ -1211,6 +1261,19 @@ function idleActing(r, mood, t, armed) {
       r.tilt = Math.sin(T * 2.4 - 0.6) > 0 ? -4 : -2;
       r.hipIn = 0.25;
       if (win(p, 0.85, 1)) hands(CLASP[0], CLASP[1]);
+      break;
+    }
+    case 'drag': {
+      // Dragging a sword far too big for her: one hand (her right, on the back side) holding the
+      // hilt down behind her, the other arm hanging limp, the shoulders slumped, the head hanging.
+      // Every few seconds a big put-upon sigh (the shoulders rise and drop) and a grudging tug.
+      const p = at(5.2);
+      hands(-4.6, 0.6, 0.4, 0.2);
+      r.hy = q(r.hy + 1);
+      r.tilt = -3;
+      const sigh = bump(p, 0.1, 0.42);
+      r.by = q(r.by - sigh * 1 + (win(p, 0.42, 0.52) ? 1 : 0));
+      if (win(p, 0.7, 0.8)) { hands(-5.6, 0.8, 0.8, 0); r.tx = q(-1); r.tilt = -6; }
       break;
     }
     case 'cool': {
@@ -1409,6 +1472,17 @@ function walkActing(r, mood, p, gait, armed) {
       r.tilt = step * -4;
       r.backArm = [0.5, -4];
       r.armSide = -1;
+      break;
+    case 'drag':
+      // Hauling the sword one-handed: slow, heavy steps leaning into the pull, the back hand kept
+      // down behind her on the hilt, the free arm swinging limply, a tug and a sag on every step.
+      r.backArm = [q(-4.8 - step * 0.3), q(0.6 + (u < 0.3 ? 0.5 : 0))];
+      if (!armed) r.frontArm = [q(step * 1), 0];
+      r.hy = q(r.hy + 1);
+      r.by = q(r.by + (u < 0.3 ? 1 : 0));
+      r.tx = q(r.tx + 1 - (u < 0.3 ? 0.5 : 0));
+      r.tilt = step * 2 - 2;
+      r.lift = 0;
       break;
     case 'cool':
       // Hands in the pockets, an easy lope.
@@ -1613,13 +1687,70 @@ function solveRig(state, anim, mv = null) {
     r.tilt = 8;
   }
 
+  if (state.mood === 'drag') wolfGirlBounce(r, t, pose, anim);
   // Attack and skill moves shape the body on top of everything else.
   if (mv) mv.rig?.(r);
   return r;
 }
 
+// Snow wolf's own rig (no player uses it): ears, tail and hair that bounce and say how she feels.
+// Walking, every step lands with a flop of the ears, a bob of the tail and a bounce of the hair.
+// Standing, the ears twitch now and then and the tail wags lazily; with each put-upon sigh (see
+// the drag act) the ears flatten back, then pin while the vein throbs, and the tail thumps.
+function wolfGirlBounce(r, t, pose, anim) {
+  const deg = (v) => Math.round(v / 3) * 3;
+  if (pose === 'walk' && anim) {
+    const p = walkPhase(anim);
+    const u = (p * 2) % 1;
+    const side = p < 0.5 ? 1 : -1;
+    // A damped flop after each footfall.
+    const flop = Math.exp(-u * 5) * Math.cos(u * 14);
+    r.ears = [deg(10 + 22 * flop), deg(10 + 22 * Math.exp(-u * 5) * Math.cos(u * 14 - 0.9))];
+    r.tail = deg(side * 14 * Math.sin(u * Math.PI) - 8 * flop);
+    r.hairLift = q(-1.6 * flop);
+    r.hair = q(r.hair + side * 1.2 * Math.sin(u * Math.PI));
+    r.hairTip = q(r.hairTip + side * 1.8 * Math.sin(u * Math.PI - 0.6));
+    // The big kimono trails behind her, its hem swishing with each step, the sash ends flapping.
+    r.cape = q(-1.5 - 1.5 * Math.sin(u * Math.PI) + side * 0.5);
+    r.capeRoot = q(-0.5 - side * 0.8 * Math.sin(u * Math.PI));
+    return;
+  }
+  if (pose !== 'idle') return;
+  const p = (t % 5.2) / 5.2;
+  const ease = (a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
+  // Lazy wag, the tips of the ears drifting with the breath.
+  let near = 4 + 3 * Math.sin(t * 1.3);
+  let far = 4 + 3 * Math.sin(t * 1.3 - 0.8);
+  let tail = 9 * Math.sin(t * 1.7);
+  // Twitches: one ear flicks, then the other.
+  const tw = t % 3.3;
+  if (tw < 0.12) near -= 18;
+  if (tw > 1.9 && tw < 2.02) far -= 18;
+  // The sigh: ears go flat back, the hair lifts as she draws breath and falls as she lets it out.
+  const sigh = ease(0.08, 0.44);
+  near += 34 * sigh;
+  far += 34 * sigh;
+  r.hairLift = q(-1.2 * ease(0.08, 0.26) + 1 * ease(0.26, 0.44));
+  // Fuming: ears pinned, the tail thumping hard.
+  if (p > 0.44 && p < 0.76) {
+    near += 22;
+    far += 22;
+    tail = Math.floor(t * 5) % 2 ? -26 : 8;
+  }
+  // The tug: everything jolts.
+  if (p > 0.7 && p < 0.8) { near -= 10; far -= 10; tail = 20; r.hair = q(r.hair - 1.5); r.hairTip = q(r.hairTip - 2); }
+  r.ears = [deg(near), deg(far)];
+  r.tail = deg(tail);
+  // The kimono drifts in the air; the sigh ruffles it, the tug yanks it.
+  let cloth = Math.sin(t * 1.4) * 0.8 + Math.sin(t * 2.3 + 1) * 0.4;
+  cloth += 1.2 * sigh * Math.sin(t * 9);
+  if (p > 0.7 && p < 0.8) cloth = -2.5;
+  r.cape = q(cloth);
+  r.capeRoot = q(cloth * 0.5);
+}
+
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, ...r.ears, r.tail, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
@@ -1871,7 +2002,7 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     const p = (Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
     const gait = Math.round(anim.gait * 4) / 4;
     const fly = flightAt(p, gaitShape(gait)) * gait;
-    const lean = WALK_LEAN[walkStyleOf(state.low ? 'tired' : look.face ?? 'smile')] ?? 0;
+    const lean = WALK_LEAN[walkStyleOf(state.low ? 'tired' : look.act ?? look.face ?? 'smile')] ?? 0;
     mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait + lean, turn: 1, stretch: 1, bodyOnly: true };
   }
   // Hurt timing: hold the hit pose for a beat, then a decaying wobble back (in the pose).
@@ -1957,7 +2088,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
   // The body acts out the mood: the expression, or worn out at low health.
-  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
+  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.act ?? look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
   // A choreographed pose overrides the rig (boss dances).
   if (state.rig) Object.assign(rig, state.rig);
   // A dance pose can lift the front arm over the head (drawn on top, like an attack arm).

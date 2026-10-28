@@ -339,8 +339,7 @@ function drawStars(ui, world) {
 }
 
 // A job's gauge over the hotkeys: a Warrior's Valor (a shield), an Archer's Momentum (a feather), a
-// Berserker's Rage (a flame), a Paladin's Faith (a star), a Ranger's Gale (a curl of wind) or a
-// Sniper's Focus (a sight). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
+// Berserker's Rage (a flame), a Paladin's Faith (a star) or a Beastmaster's Bond (Snow wolf's Patience, a moon). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
 // names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
 const GAUGES = {
   valor: { color: '#4f7fe0', hot: '#9fd2ff', icon: 'shield', name: 'Valor', full: 'UNBROKEN', notch: () => null, edge: 'rgba(110,160,255,', ink: '#24307a',
@@ -359,10 +358,8 @@ const GAUGES = {
     tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
     tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
-  gale: { color: '#2fa880', hot: '#8fe8c0', icon: 'gust', name: 'Gale', full: 'TAILWIND', notch: () => null, edge: 'rgba(80,220,170,', ink: '#1f6a50',
-    tip: 'Your arrows build it and it blows out once the fighting stops. The fuller it is, the faster you shoot; full, every basic shot looses a twin arrow, and Storm Volley is ready.' },
-  focus: { color: '#3a7fd8', hot: '#ff5a7a', icon: 'sight', name: 'Focus', full: 'DEADEYE', notch: () => null, edge: 'rgba(255,90,122,', ink: '#8a2040',
-    tip: 'Your bolts and standing still build it; running loses it. The fuller it is, the likelier a critical; full, every bolt always crits and tears through the whole line, and Heartseeker is ready.' },
+  bond: { color: '#6f8fe0', hot: '#d6e8ff', icon: 'moon', name: 'Patience', full: 'FED UP', notch: () => null, edge: 'rgba(170,200,255,', ink: '#2a3a7a',
+    tip: 'Snow wolf\'s patience running out: your shots and her hits wear it down, and it recovers once the fighting stops. Gone, she\'s Fed Up and fights on her own, and Wrath of the Wolf Queen is ready.' },
 };
 function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;

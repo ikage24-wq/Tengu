@@ -94,7 +94,7 @@ function jobPath(level, rng) {
   if (level < 10) return ['novice'];
   const first = pick(['warrior', 'mage', 'archer', 'thief'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
-  if (first === 'archer' && level >= 30) return [first, pick(['ranger', 'sniper'], rng)];
+  if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['assassin', 'nightlord'], rng)];
   return [first];
 }

@@ -20,7 +20,7 @@ const HX = 15.5;
 const CY = 13.2;
 
 // Twenty styles: anime, princess and fantasy, cool, punk and cute.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'spiky', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids'];
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'spiky', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek'];
 // Older styles draw as the closest current one; anything else unknown draws as the first.
 const RETIRED = {
   twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'spiky', hero: 'spiky',
@@ -549,6 +549,18 @@ const STYLES = {
       hang: sheet({ len: 33, flare: 14.6, ends: 'points', n: 5, w0: 12.6 }, r, m),
       front: bangs('spiky', r, m, [...flick([[25, 9.4], [29, 11.6], [32.4, 12.4]], 4.2), ...flick([[25.2, 13], [27.4, 18.4], [31.6, 22.6]], 4.6), ...flick([[24.8, 17], [26, 23], [29.2, 27.4]], 3.8)]),
       tips: [22, 27],
+    };
+  },
+  // Short wolf cut: the wolf cut's shaggy layers cropped short and boyish, straighter, the locks
+  // falling to the jaw with only a slight flick out at the ends, the back stopping at the nape.
+  wolfsleek(r, m) {
+    const fall = (pts, w = 4.2) => [lock(pts, w, r.base, m, 1.1), lock(fx(pts), w, r.base, m, 1.1)];
+    const mid = (pts) => [lock(pts, 4.2, r.sh1, m, 1), lock(fx(pts), 4.2, r.sh1, m, 1)];
+    return {
+      head: [crown(r, 0.8), ...mid([[24.5, 12], [27.8, 16.5], [30.2, 19.7]])],
+      hang: sheet({ len: 26, flare: 12.6, ends: 'points', n: 4, w0: 12 }, r, m),
+      front: bangs('spiky', r, m, [...fall([[25, 9.5], [28.3, 12.3], [30.7, 14.7]], 4.1), ...fall([[25.2, 13], [27, 17.6], [29.2, 21]], 4.5), ...fall([[24.8, 16.4], [25.6, 20.6], [27.2, 23.6]], 3.7)]),
+      tips: [18, 22],
     };
   },
 

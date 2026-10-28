@@ -302,7 +302,7 @@ test('the warrior, the archer and the thief branch two ways at 30; the mage path
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
-  assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['ranger', 'sniper'], 'archer has two paths at 30');
+  assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['beastmaster', 'stormcaller'], 'archer has two paths at 30');
   assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['assassin', 'nightlord'], 'thief has two paths at 30');
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
 });
@@ -345,10 +345,14 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
   assert.deepEqual(c.skills, { petalbolt: 10 });
   assert.equal(c.hotkeys.KeyQ, null);
   assert.deepEqual(c.hotkeys.KeyW, { skill: 'petalbolt' });
-  // A job that exists today stays, even if an old retired job once had the same id.
-  const r = { job: 'ranger', sp: 0, skills: {}, hotkeys: {} };
-  updateRetiredJobs(r);
-  assert.equal(r.job, 'ranger');
+  // The Ranger and Sniper were remade as the Beastmaster and the Stormcaller; a job that exists
+  // today stays, even if an old retired job once had its id (the Beastmaster).
+  for (const [was, now] of [['ranger', 'beastmaster'], ['sniper', 'stormcaller'], ['beastmaster', 'beastmaster']]) {
+    const r = { job: was, sp: 0, skills: { galevolley: 10, twinshot: 5 }, hotkeys: {} };
+    updateRetiredJobs(r);
+    assert.equal(r.job, now, was);
+    assert.equal(r.sp, 15, `${was}: the old skills' points come back`);
+  }
 });
 
 test('auto-loot picks up drops without holding X', async () => {

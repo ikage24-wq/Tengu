@@ -290,8 +290,7 @@ const BLOCKER_TEXT = {
   'gauge:shadow': 'A finisher needs full Shadow. Keep your hits coming fast!',
   'gauge:rage': 'A finisher needs full Rage. Keep swinging!',
   'gauge:faith': 'A finisher needs full Faith. Keep fighting!',
-  'gauge:gale': 'A finisher needs a full Gale. Keep your arrows landing!',
-  'gauge:focus': 'A finisher needs full Focus. Stand steady and keep firing!',
+  'gauge:bond': "Snow wolf isn't fed up enough yet. Keep fighting!",
   unlearned: null,
   passive: null,
 };
@@ -354,7 +353,7 @@ function killMob(world, m, byParty = false) {
 }
 
 export function hurtPlayer(world, rawAtk, fromX) {
-  if (world.god || blockOnHit(world)) return;
+  if (world.god || blockOnHit(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
   let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));

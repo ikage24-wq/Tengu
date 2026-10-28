@@ -9,8 +9,8 @@
 // sword, the Warrior gear set, every Warrior skill maxed (the procs, the passives, Shoulder Charge
 // and Titan Breaker), stats spent, potions on the hotkeys, starting in Mossy Woods. It goes in
 // the first empty character slot. Add ?job=paladin or ?job=berserker for one on a path (with the
-// path's skills maxed too and its finisher on W; a Berserker gets an axe), ?job=archer, ranger or
-// sniper for the Archer family the same way (a bow; a crossbow for the Sniper), ?level=30 for
+// path's skills maxed too and its finisher on W; a Berserker gets an axe), ?job=archer, beastmaster or
+// stormcaller for the Archer family the same way (a bow; a crossbow for the Stormcaller), ?level=30 for
 // another level (30 or more for a path), ?slot=3 for a given slot.
 import { createCharacter, gainExp, advanceJob, autoAssignAp } from '../src/core/character.js';
 import { expToNext } from '../src/core/exp.js';
@@ -33,8 +33,8 @@ const PATHS = {
   paladin: { name: 'TestPaladin', title: 'Paladin', weapon: 'sword', skills: { paladinmastery: 20, aegissmite: 20, hallowedground: 20, divineaegis: 20, sacredbulwark: 10, judgment: 10, grandverdict: 10 }, finisher: 'grandverdict' },
   berserker: { name: 'TestBerserker', title: 'Berserker', weapon: 'axe', skills: { berserkermastery: 20, ravage: 20, bloodfrenzy: 20, rampage: 20, bloodlust: 10, demonform: 10, crimsoneclipse: 10 }, finisher: 'crimsoneclipse' },
   archer: { name: 'TestArcher', title: 'Archer', family: 'archer', weapon: 'bow', skills: {}, finisher: 'cometarrow' },
-  ranger: { name: 'TestRanger', title: 'Ranger', family: 'archer', weapon: 'bow', skills: { rangermastery: 20, galevolley: 20, cyclonearrow: 20, tailwind: 20, stormvolley: 10 }, finisher: 'stormvolley' },
-  sniper: { name: 'TestSniper', title: 'Sniper', family: 'archer', weapon: 'crossbow', skills: { snipermastery: 20, marksman: 20, glacierbolt: 20, steadyaim: 20, heartseeker: 10 }, finisher: 'heartseeker' },
+  beastmaster: { name: 'TestBeastmaster', title: 'Beastmaster', family: 'archer', weapon: 'bow', skills: { beastmastery: 20, wolfpounce: 20, hawkstrike: 20, packhowl: 20, loyalguard: 10, alpha: 10, stampede: 10 }, finisher: 'stampede' },
+  stormcaller: { name: 'TestStormcaller', title: 'Stormcaller', family: 'archer', weapon: 'crossbow', skills: {}, finisher: 'cometarrow' },
 };
 const q = new URLSearchParams(location.search);
 const path = PATHS[q.get('job')] ?? PATHS.warrior;
@@ -49,7 +49,7 @@ if (slot < 0) for (let i = 0; i < SLOTS && slot < 0; i++) if (!hasSave(i)) slot 
 if (slot < 0) {
   msg.innerHTML = 'All 8 character slots are full. Delete one in the game, or open this page with <b>?slot=7</b> to replace the last one.';
 } else {
-  const c = createCharacter(path.name, lookFor({ paladin: 21, berserker: 33, archer: 12, ranger: 15, sniper: 27 }[job] ?? 7));
+  const c = createCharacter(path.name, lookFor({ paladin: 21, berserker: 33, archer: 12, beastmaster: 15, stormcaller: 27 }[job] ?? 7));
   c.slot = slot;
   // One level at a time, so it lands exactly on the level asked for.
   const up = () => gainExp(c, expToNext(c.level) - c.exp);

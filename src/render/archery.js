@@ -335,6 +335,71 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
       return true;
     }
+    // ---- Snow wolf's moon magic (world/pets.js) ----
+    case 'moonhit': {
+      // Her hits: a crescent of moonlight cut across the target, sparkles thrown off it.
+      const cy = y - (f.h ?? 24) / 2;
+      const big = f.big || f.crit;
+      fxSprite(ctx, 'celmoonhit', x, cy, { p, flip, scale: big ? 0.75 : 0.55 });
+      if (big) groundRing(ctx, 'celringice', x, y, p, 46);
+      return true;
+    }
+    case 'moonslash': {
+      // The greatsword spun round her: a full ring of moonlight crescents as wide as its reach, a
+      // ring of cold light racing out along the ground under it.
+      fxSprite(ctx, 'cellunarcrescent', x, y - 18, { p, flip, scale: 1.25 });
+      fxSprite(ctx, 'cellunarcrescent', x, y - 10, { p: Math.min(1, p * 1.15), flip: !flip, scale: 1.25, rot: Math.PI });
+      groundRing(ctx, 'celringice', x, y, p, 84);
+      return true;
+    }
+    case 'moonslam': {
+      // The greatsword dropped on the ground ahead: a cold burst, a ring of light and dust.
+      fxSprite(ctx, 'celmoonhit', x, y - 10, { p, flip, scale: 1.1 });
+      groundRing(ctx, 'celringice', x, y, p, 64);
+      fxSprite(ctx, 'celdust', x, y, { p, flip, scale: 0.7 });
+      return true;
+    }
+    case 'moonbolt': {
+      // A crescent of moonlight flicked from the blade, flying to its target.
+      const tx = f.tx - cam.x;
+      const ty = f.ty - cam.y;
+      const ang = Math.atan2(ty - y, (tx - x) * (f.dir || 1));
+      fxSprite(ctx, 'celmoonbolt', x + (tx - x) * p, y + (ty - y) * p, { t: time, flip, scale: 0.42, rot: ang * (f.dir || 1) });
+      return true;
+    }
+    case 'moonfall': {
+      // Moonfall: a beam of moonlight crashing down from the sky onto one monster.
+      fxSprite(ctx, 'celmoonbeam', x, y, { p, scale: 0.62 });
+      return true;
+    }
+    case 'lunarhowl': {
+      // Lunar Howl: a pale moon rising behind her, rings of cold light racing out along the ground.
+      const r = f.r ?? 110;
+      fxSprite(ctx, 'cellunarmoon', x - (f.dir || 1) * 6, y - 46, { p, scale: 0.42 });
+      groundRing(ctx, 'celringice', x, y, p, r);
+      groundRing(ctx, 'celringice', x, y, Math.min(1, p * 1.5), r * 0.6);
+      return true;
+    }
+    case 'moonward': {
+      // Moon Ward: a crescent shield of moonlight standing up in front of the planted greatsword.
+      fxSprite(ctx, 'cellunarcrescent', x + (f.dir || 1) * 6, y - 26, { p, scale: 0.3, rot: (f.dir || 1) * (Math.PI / 2) });
+      return true;
+    }
+    case 'moonwrath': {
+      // Wrath of the Wolf Queen: a great full moon rises over her, then crescents of moonlight sweep
+      // out across the whole screen one after another, rings of cold light racing under them.
+      const dir = f.dir || 1;
+      const frame = p < 0.12 ? 0 : p < 0.24 ? 1 : p < 0.8 ? 2 + (Math.floor(time * 6) % 2) : p < 0.9 ? 4 : 5;
+      fxSprite(ctx, 'cellunarmoon', x - dir * 20, y - 140, { frame, scale: 1.1 });
+      for (let i = 0; i < 5; i++) {
+        const q = (p - 0.22 - i * 0.09) / 0.42;
+        if (q <= 0 || q >= 1) continue;
+        const wx = x - dir * 60 + dir * q * 640;
+        fxSprite(ctx, 'cellunarcrescent', wx, y - 20 - (i % 2) * 18, { p: Math.min(0.99, 0.35 + q * 0.5), flip, scale: 0.5 + (i % 2) * 0.12, rot: dir * (Math.PI / 2), alpha: Math.min(1, (1 - q) * 4) });
+        if (i % 2 === 0) groundRing(ctx, 'celringice', wx, y, q, 60);
+      }
+      return true;
+    }
     case 'cometfall': {
       // Comet Arrow falling: the flaming arrow streaks from high over her down into the ground ahead
       // (the first quarter of its life), its fire trail pointing back up the way it came.

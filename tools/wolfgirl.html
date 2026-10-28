@@ -1,0 +1,210 @@
+<!doctype html>
+<html><body style="margin:0;background:#6d8a6a">
+<canvas id="c" width="1500" height="560"></canvas>
+<script type="module">
+// Preview: Snow wolf, the Beastmaster's companion-to-be, dragging a sword far too big for her.
+// Left: standing (fed up); right: hauling it along. Add ?manual to step frames from outside
+// (window.step) for recording.
+import { drawHero } from '../src/render/hero.js';
+import { createAnim, stepAnim } from '../src/render/animator.js';
+
+const ctx = document.getElementById('c').getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const LOOK = {
+  hairStyle: 'wolfsleek', hairColor: '#eef1f8', hairTip: '#9fd8ff', eyeStyle: 'cat', eyeColor: '#4fc8ff', browStyle: 'stubby',
+  earStyle: 'wolf', tail: 'wolf', face: 'cool', lid: 0.85, mouth: 'bored', outfit: 'bigkimono', outfitColor: '#f6f8fc', act: 'drag',
+};
+const S = 3.6;
+const GROUND = 470;
+const SPEED = 26;
+
+// The sword, drawn in its own units (1 = one body px) along its axis: the hilt at 0, the blade
+// running to +LEN (toward the tip on the ground), the grip and pommel back toward -9.
+const LEN = 64;
+const RES = 2;
+const STEEL = '#e3e9f2';
+const STEEL_SH = '#b7c3d6';
+const STEEL_DK = '#8796b2';
+const INK = '#2e3850';
+const ICE = '#8fe6ff';
+const ICE_DK = '#3c9cd0';
+const GOLD = '#f2c94c';
+const GOLD_DK = '#b8862a';
+const SILVER = '#eef2f8';
+const SILVER_SH = '#bcc7da';
+// The Queen of Wolves' greatsword. Drawn with +y toward the sky once she holds it (the sword
+// is turned about half a circle as it trails behind her).
+const sword = document.createElement('canvas');
+sword.width = (LEN + 24) * RES;
+sword.height = 32 * RES;
+{
+  const c = sword.getContext('2d');
+  c.scale(RES, RES);
+  c.translate(18, 16);
+  const path = (pts) => {
+    c.beginPath();
+    pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+    c.closePath();
+  };
+  const poly = (pts, fill, line = INK, w = 1) => {
+    path(pts);
+    c.fillStyle = fill;
+    c.fill();
+    if (line) { c.lineWidth = w; c.strokeStyle = line; c.stroke(); }
+  };
+  const dot = (x, y, r, fill, line = null) => {
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fillStyle = fill;
+    c.fill();
+    if (line) { c.lineWidth = 0.8; c.strokeStyle = line; c.stroke(); }
+  };
+  // The blade: broad and pale, two wolf fangs cut into its back edge, frosted ice
+  // along both edges, a gold-inlaid fuller with runes, a crescent moon pierced through it.
+  const back = [[-3, 4.8], [26, 4.6], [27.4, 2.8], [28.8, 4.6], [31.4, 4.5], [32.8, 2.7], [34.2, 4.4], [LEN - 10, 4], [LEN, 0]];
+  const edge = [[LEN - 10, -4], [-3, -4.8]];
+  poly([...back, ...edge], STEEL);
+  poly([[-3, -0.4], [LEN - 10, -0.3], [LEN - 1, -0.1], [LEN - 10, -3.8], [-3, -4.6]], STEEL_SH, null);
+  poly([[12, -4.6], [LEN - 10, -3.9], [LEN - 1.2, -0.2], [LEN - 10, -3.1], [12, -3.7]], '#c6f1ff', null);
+  poly([[35, 4.3], [LEN - 10, 3.9], [LEN - 1.2, 0.2], [LEN - 10, 3.1], [35, 3.4]], '#c6f1ff', null);
+  poly([[12, -0.7], [LEN - 16, -0.5], [LEN - 16, 0.5], [12, 0.7]], STEEL_DK, null);
+  poly([[12, -0.25], [LEN - 16, -0.15], [LEN - 16, 0.15], [12, 0.25]], GOLD, null);
+  for (const x of [38, 43, 48]) poly([[x, -1.4], [x + 1.2, 0], [x, 1.4], [x - 1.2, 0]], ICE, ICE_DK, 0.5);
+  // The crescent moon, cut clean through.
+  c.save();
+  c.globalCompositeOperation = 'destination-out';
+  c.beginPath(); c.arc(19, 0, 2.6, 0, Math.PI * 2); c.fill();
+  c.restore();
+  c.save();
+  c.beginPath(); c.arc(19, 0, 2.6, 0, Math.PI * 2); c.lineWidth = 0.8; c.strokeStyle = GOLD_DK; c.stroke();
+  c.beginPath(); c.arc(20.2, 0.6, 2.2, 0, Math.PI * 2); c.fillStyle = STEEL; c.fill();
+  c.restore();
+  // Re-ink the blade's outline over the cut.
+  path([...back, ...edge]); c.lineWidth = 1; c.strokeStyle = INK; c.stroke();
+  // The guard: a wolf's head in silver with the blade held in its jaws: a ruff of fur flaring
+  // back, ears up, an ice-blue eye, fangs bared over and under the steel, a gold crown on its brow.
+  poly([[-3, 8], [-8.4, 12], [-6, 8], [-10, 7.6], [-5.6, 5.4], [-9.6, 3.6], [-4, 3]], SILVER);
+  poly([[-3, -5], [-8.4, -9.6], [-6, -6.2], [-10, -5.4], [-5.6, -3.4], [-9.4, -1.4], [-4, -1]], SILVER);
+  poly([[-1, 9.6], [-3.4, 14.6], [2.6, 10.4]], SILVER);
+  poly([[-0.6, 10], [-2.4, 13], [1.4, 10.4]], '#d9b8c8', null);
+  poly([[2, 10.4], [1, 15], [5, 10]], SILVER);
+  poly([[-4.4, 3], [-3.4, 8], [0, 10.4], [3.4, 10.6], [6.4, 9.2], [10.6, 7.8], [12.6, 6.4], [12, 5], [4, 5.2], [-1, 4.6], [-4.4, 4]], SILVER);
+  poly([[-4.4, 4], [-1, 4.6], [4, 5.2], [12, 5], [11, 5.8], [4, 6.4], [-3.6, 6.2]], SILVER_SH, null);
+  poly([[-4.6, -4.6], [4, -5], [10.6, -5.2], [11.4, -6.4], [6, -7.6], [0, -7.8], [-3.4, -6.4]], SILVER);
+  poly([[-4.6, 4], [-4.6, -4.6], [-2.6, -4.6], [-2.6, 4]], SILVER);
+  for (const x of [7.6, 10]) poly([[x - 0.8, 5.1], [x + 0.8, 5.1], [x, 3.2]], '#ffffff', INK, 0.5);
+  for (const x of [6.4, 9]) poly([[x - 0.8, -5.1], [x + 0.8, -5.1], [x, -3.3]], '#ffffff', INK, 0.5);
+  dot(12.6, 6.2, 0.9, '#2a3048');
+  poly([[4.6, 7.4], [7.6, 8], [6.2, 6.8]], ICE, ICE_DK, 0.4);
+  c.lineWidth = 0.6; c.strokeStyle = INK;
+  c.beginPath(); c.moveTo(3.4, 8.8); c.lineTo(7.8, 8.6); c.stroke();
+  poly([[0, 10.2], [0.4, 12.8], [1.4, 11.4], [2.2, 13.4], [3, 11.4], [4, 12.8], [4.4, 10.2]], GOLD, GOLD_DK, 0.6);
+  dot(2.2, 11, 0.55, ICE);
+  // The grip in white leather bound with gold, and a gold crown pommel set with a great ice stone
+  // and a white fur tassel hanging from it.
+  poly([[-3.4, 1.7], [-9, 1.5], [-9, -1.5], [-3.4, -1.7]], '#f4f1ea');
+  c.strokeStyle = GOLD_DK; c.lineWidth = 0.6;
+  for (let x = -4.2; x > -9; x -= 1.5) { c.beginPath(); c.moveTo(x, 1.5); c.lineTo(x - 0.9, -1.5); c.stroke(); }
+  poly([[-9, 2.6], [-9.8, 3.8], [-10.6, 2.6], [-11.6, 3.8], [-12.4, 2.6], [-13.2, 3.8], [-13.2, -2.6], [-9, -2.6]], GOLD, GOLD_DK, 0.7);
+  dot(-11.1, 0, 1.5, ICE, ICE_DK);
+  dot(-11.5, 0.5, 0.5, '#ffffff');
+  poly([[-12, -2.6], [-13.4, -6.2], [-12.6, -8.8], [-11, -9.6], [-10.2, -7.6], [-11, -5.4], [-11, -2.6]], '#ffffff', SILVER_SH, 0.6);
+  dot(-11.4, -3, 0.7, ICE);
+}
+
+// Where her hands hold the hilt, from her feet (facing right), in body px.
+const HILT = [-9.6, 6.6];
+
+// Draws the sword held at the hilt by a figure standing at (x, y), the tip resting on the ground
+// behind her. Returns the tip's x.
+function drawSword(x, y, facing, bob) {
+  const hx = x + HILT[0] * S * facing;
+  const hy = y - (HILT[1] - bob) * S;
+  const reach = LEN * S;
+  const drop = y - 2 - hy;
+  const along = Math.sqrt(Math.max(0, reach * reach - drop * drop));
+  const ang = Math.atan2(drop, -along * facing);
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.rotate(ang);
+  ctx.drawImage(sword, -18 * S, -16 * S, (sword.width * S) / RES, (sword.height * S) / RES);
+  ctx.restore();
+  return { hx, hy, ang };
+}
+
+// Her sleeve wrapped round the grip (her hand is lost inside it), drawn over the hero; the sword
+// itself stays behind her, tail and all.
+function drawGrip({ hx, hy, ang }) {
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.rotate(ang);
+  for (const a of [-6.2]) {
+    ctx.beginPath();
+    ctx.ellipse(a * S, 0.4 * S, 1.9 * S, 2.6 * S, 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = '#f6f8fc';
+    ctx.fill();
+    ctx.lineWidth = S * 0.7;
+    ctx.strokeStyle = INK;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse((a + 0.5) * S, 1.4 * S, 1 * S, 0.8 * S, 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = '#c8d0e0';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+const walker = { x: 900, anim: createAnim(), dust: [], from: 900 };
+const stander = { anim: createAnim() };
+let t = 0;
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+function step(dt) {
+  t += dt;
+  walker.x += SPEED * S * dt;
+  if (walker.x > 1580) { walker.x = 860; walker.from = 860; }
+  stepAnim(walker.anim, { vx: SPEED, vy: 0, onGround: true, rope: false, facing: 1, y: 0 }, dt);
+  stepAnim(stander.anim, { vx: 0, vy: 0, onGround: true, rope: false, facing: 1, y: 0 }, dt);
+  for (const d of walker.dust) { d.x += d.vx * dt; d.y += d.vy * dt; d.vy += 140 * dt; d.a -= dt * (d.spark ? 2.6 : 1.3); }
+  walker.dust = walker.dust.filter((d) => d.a > 0 && d.y < GROUND + 2);
+  draw(dt);
+}
+function draw(dt) {
+  ctx.fillStyle = '#6d8a6a'; ctx.fillRect(0, 0, 1500, 560);
+  ctx.fillStyle = '#4e6b4c'; ctx.fillRect(0, GROUND, 1500, 90);
+  ctx.save();
+  ctx.translate(40 + (sword.width * 6) / RES, 40 + (sword.height * 6) / RES);
+  ctx.rotate(Math.PI);
+  ctx.drawImage(sword, 0, 0, (sword.width * 6) / RES, (sword.height * 6) / RES);
+  ctx.restore();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 24px sans-serif';
+  ctx.fillText('Fang of the Wolf Queen', 60, 40 + (sword.height * 6) / RES + 26);
+  // Standing: the tip rests on the ground behind her.
+  const held = drawSword(380, GROUND, 1, 0);
+  drawHero(ctx, LOOK, null, 380, GROUND, { pose: 'idle', time: t, facing: 1, seed: 0, scale: S, urgent: true }, stander.anim);
+  drawGrip(held);
+  // Walking: a gouge left in the ground behind the tip, dust and the odd spark kicked up.
+  const bob = ((walker.anim.phase * 2) % 1) < 0.3 ? -0.6 : 0;
+  const tip = walker.x + HILT[0] * S - Math.sqrt((LEN * S) ** 2 - (HILT[1] * S) ** 2);
+  const from = walker.from + HILT[0] * S - Math.sqrt((LEN * S) ** 2 - (HILT[1] * S) ** 2);
+  ctx.fillStyle = '#3f5a3d';
+  ctx.fillRect(Math.max(from, 0), GROUND, tip - Math.max(from, 0), 3);
+  if (dt > 0 && rand() < 0.6) walker.dust.push({ x: tip + rand() * 8, y: GROUND - 2, vx: -30 - rand() * 40, vy: -30 - rand() * 50, r: 4 + rand() * 6, a: 0.75, spark: rand() < 0.18 });
+  for (const d of walker.dust) {
+    ctx.globalAlpha = Math.max(0, d.a);
+    ctx.fillStyle = d.spark ? '#fff1b8' : '#cfc8ad';
+    const r = d.spark ? 3 : Math.round(d.r);
+    ctx.fillRect(Math.round(d.x - r / 2), Math.round(d.y - r / 2), r, r);
+  }
+  ctx.globalAlpha = 1;
+  const hauled = drawSword(walker.x, GROUND, 1, bob);
+  drawHero(ctx, LOOK, null, walker.x, GROUND, { pose: 'walk', time: t, facing: 1, seed: 1, scale: S, urgent: true }, walker.anim);
+  drawGrip(hauled);
+}
+window.step = step;
+if (!location.search.includes('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else step(0);
+</script></body></html>

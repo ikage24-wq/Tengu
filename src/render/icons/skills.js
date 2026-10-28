@@ -817,7 +817,7 @@ function cometarrow() {
   return out;
 }
 
-// ---------- Ranger ----------
+// ---------- Archer paths ----------
 
 // A longbow from the lower tip to the upper, bowed toward `side`, with its string.
 function longbow(lo, hi0, bow = 3, o = {}) {
@@ -830,66 +830,9 @@ function longbow(lo, hi0, bow = 3, o = {}) {
   const g = tube([add(add(m, n, bow), u, -0.9), add(add(m, n, bow), u, 0.9)], 0.95);
   return [drop(limb), line([lo, hi0], 0.28, string), ...edge(limb, ink(wood), 0.45), S(limb, wood), S(tube(pts.slice(2, 10), 0.22), lt(wood)), ...edge(g, ink(grip), 0.35), S(g, grip)];
 }
+
 // A curl of wind: a swoosh with a hooked end.
 const curl = (cx, cy, r, a0, c = '#e8fff4') => swoosh(cx, cy, r, r * 0.7, a0, a0 + 250, 1.1, c, { ink: '#1a6a5a' });
-
-function rangermastery() {
-  const out = [...tile('wind', 'passive'), ...aura(8, 8, 6.6, '#f0fff8')];
-  out.push(...curl(8.6, 9, 5, 120, '#c4f5d4'));
-  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2));
-  out.push(...arrow([3.4, 8.2], [14.4, 7.8], { hw: 1.25, hl: 2, fl: '#ffd25a' }));
-  out.push(...leaf([10.4, 13.6], [14, 10.4], 2.6, '#7fd86a', { bend: 0.6, veins: 1 }).shapes);
-  out.push(...glint(6.2, 4.4, 0.5), ...spark(13.6, 2.8, 1.1));
-  return out;
-}
-
-function galevolley() {
-  const out = [...tile('wind', 'active'), ...aura(9, 8, 6.4, '#f0fff8', 1.1)];
-  // Three arrows flying out of one curl of wind, fanned.
-  out.push(...swoosh(6.6, 9, 5.4, 4.4, 60, 320, 1.6, '#e8fff4', { ink: '#1a6a5a' }));
-  for (const [a, fl] of [[-30, '#ff8fb0'], [0, '#ffd25a'], [30, '#ff8fb0']]) {
-    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
-    out.push(...arrow(add([5, 8.6], u, 3.4), add([5, 8.6], u, 10.2), { hw: 1.2, hl: 1.9, sw: 0.5, fl }));
-  }
-  out.push(...spark(14, 13.4, 1.1), ...spark(2.2, 2.6, 1));
-  return out;
-}
-
-function cyclone() {
-  const out = [...tile('sky', 'active')];
-  // A funnel of wind, wide at the top, with an arrow driving through its heart.
-  for (const [cy, rx, c] of [[3.4, 6, '#f0fff8'], [6.2, 4.8, '#c8ecff'], [9, 3.6, '#f0fff8'], [11.6, 2.5, '#c8ecff'], [13.8, 1.5, '#f0fff8']]) {
-    out.push(...swoosh(8, cy, rx, rx * 0.34, -200, 120, 1.15, c, { ink: '#1f5a6a' }));
-  }
-  out.push(...arrow([1.2, 9.6], [15, 7.2], { hw: 1.3, hl: 2.1, fl: '#ffd25a', head: '#ffffff' }));
-  out.push(...leaf([2.4, 4], [4.6, 2.2], 1.8, '#7fd86a', {}).shapes, ...leaf([12, 13.6], [14.6, 12.4], 1.8, '#7fd86a', {}).shapes);
-  return out;
-}
-
-function tailwind() {
-  const out = [...tile('mint', 'buff'), ...aura(9, 7, 6.6, '#f4fff0', 1.1)];
-  // A white feather swept forward on three streams of wind.
-  for (const [y, len] of [[4.6, 9], [8.4, 11], [12.2, 8]]) out.push(streak([14.2 - len, y + 1], [14.2, y], 1.4, '#e8fff4'));
-  out.push(...leaf([3, 13.6], [13.6, 2.6], 4.6, '#fffaf2', { bend: 0.9, rib: '#c4e8d4', veins: 3, veinC: '#c4e8d4' }).shapes);
-  out.push(line([[2.2, 14.6], [4.4, 12.2]], 0.5, '#9a6a48'));
-  out.push(...curl(10.6, 11.2, 2.6, 200, '#c4f5b4'));
-  out.push(...spark(13.6, 13.6, 1.1, '#fff3a6'), ...spark(2.4, 3, 1));
-  return out;
-}
-
-function stormvolley() {
-  const out = [...tile('storm', 'active'), ...aura(8, 9, 6.6, '#e8fff4', 1.1)];
-  // A ring of wind on the ground with arrows pouring down into it from every side.
-  out.push(...swoosh(8, 11.6, 6, 2.2, -190, 150, 1.4, '#8fe8c0', { ink: '#1a4a5a' }));
-  for (const [x, y] of [[3.4, 10.6], [6.6, 12.8], [9.6, 9.4], [12.6, 11.6]]) {
-    out.push(streak([x - 1.4, y - 9.6], [x - 0.9, y - 6.6], 0.9, '#e8fff4'));
-    out.push(...arrow([x - 1.2, y - 6.4], [x, y], { hw: 1.2, hl: 1.9, sw: 0.5, fl: '#ffd25a', head: '#ffffff' }));
-  }
-  out.push(...spark(8, 2, 1.3, '#e8fff4'), ...spark(14, 3.4, 0.9));
-  return out;
-}
-
-// ---------- Sniper ----------
 
 // A crossbow seen side-on, pointing along base -> tip: the stock, the prod across its front, the
 // string drawn back, and a bolt laid in it.
@@ -904,6 +847,7 @@ function crossbowArt(base, tip, o = {}) {
   const bolt1 = arrow(p(len * 0.35, 0), p(len + 2.6, 0), { hw: 1.1, hl: 1.7, sw: 0.45, fl: bolt0, head: '#ffffff', shadow: false });
   return [drop(stock), drop(pr), line([p(len - 1.6, -4.6), p(len * 0.42, 0), p(len - 1.6, 4.6)], 0.25, '#fff6e0'), ...edge(stock, ink(wood), 0.45), S(stock, wood), S(tube([p(0.5, -0.3), p(len - 1, -0.3)], 0.3), lt(wood)), ...edge(pr, ink(prod), 0.45), S(pr, prod), ...bolt1];
 }
+
 // A sight: a ring with four ticks, in the Sniper's rose.
 function sightArt(cx, cy, r, c = '#ff5a7a', w = 0.6) {
   const ring = tube([...oval(cx, cy, r, r, 0, 32), oval(cx, cy, r, r, 0, 32)[0]], w);
@@ -914,56 +858,117 @@ function sightArt(cx, cy, r, c = '#ff5a7a', w = 0.6) {
   return [...edge(ring, ink(c), 0.35), S(ring, c), ...ticks.flatMap((t) => [...edge(t, ink(c), 0.3), S(t, c)])];
 }
 
-function snipermastery() {
-  const out = [...tile('steel', 'passive'), ...aura(8, 8, 6.6, '#e8f2ff')];
-  out.push(...sightArt(8.4, 8, 5.4, '#eef8ff', 0.5));
-  out.push(...crossbowArt([2, 11.4], [12.4, 6.4]));
-  out.push(...glint(5, 9.6, 0.5), ...spark(13.6, 13.6, 1.1));
-  return out;
+// A crescent moon bulging toward +x (turned by `rot` degrees), silver-blue moonlight.
+function moonCrescent(cx, cy, r, rot = 0) {
+  const outer = arcPts(cx, cy, r, r, -100, 100, 16);
+  const inner = arcPts(cx - r * 0.45, cy, r * 0.85, r * 0.85, 72, -72, 16);
+  return turn([...outer, ...inner], rot, cx, cy);
 }
-
-function marksman() {
-  const out = [...tile('steel', 'active'), ...aura(5, 8, 5.6, '#e8f2ff', 1.1)];
-  // Three bolts in a line, one after another, on hard streaks.
-  for (const [y, x] of [[4.2, 0], [8, 2], [11.8, 0]]) {
-    out.push(streak([x + 1, y + 0.6], [x + 7, y], 1.6, '#eef8ff'));
-    out.push(...arrow([x + 4.2, y], [x + 13.4, y], { hw: 1.35, hl: 2, sw: 0.65, fl: '#ff5a7a', head: '#ffffff', shaft: '#d4cde8' }));
+const MOON = '#e4eeff';
+const MOON_INK = '#3f4f9e';
+// Snow wolf's head, facing the viewer: a white wolf cut with ice-blue tips, wolf ears, half-shut
+// blue eyes and a bored mouth. `tilt` turns it (degrees), for the howl.
+function snowHead(cx, cy, k = 1, tilt = 0, howling = false) {
+  const P = (pts) => turn(pts.map(([x, y]) => [cx + x * k, cy + y * k]), tilt, cx, cy);
+  const out = [];
+  for (const s of [-1, 1]) {
+    out.push(...solid(P([[s * 1.4, -2.6], [s * 3.4, -6], [s * 3.8, -2]]), '#f4f6fc', { shadow: false, d: 0.35, ink: '#3a4664' }));
+    out.push(S(P([[s * 2.2, -2.8], [s * 3.3, -4.8], [s * 3.4, -2.6]]), '#c8d4ea'));
   }
-  out.push(...spark(14.2, 2.2, 1.1), ...spark(14, 14, 0.9));
+  out.push(...solid(P(oval(0, 0, 4.2, 3.8, 0, 24)), '#f4f6fc', { d: 0.4, ink: '#3a4664' }));
+  out.push(S(P([[-3.6, 1.2], [-4.2, 3.6], [-3, 2.6], [-2.6, 3.8], [-2, 2]]), '#9fd8ff'), S(P([[3.6, 1.2], [4.2, 3.6], [3, 2.6], [2.6, 3.8], [2, 2]]), '#9fd8ff'));
+  out.push(S(P(oval(0, 1.2, 2.6, 2.2, 0, 18)), '#fff0e6'));
+  for (const s of [-1, 1]) {
+    out.push(S(P([[s * 0.6, 0.6], [s * 2, 0.4], [s * 2, 1], [s * 0.6, 1.1]]), '#1e2a48'));
+    out.push(S(P([[s * 1, 1], [s * 1.8, 1], [s * 1.6, 1.5], [s * 1.1, 1.5]]), '#4fc8ff'));
+    out.push(S(P([[s * 0.7, -0.6], [s * 1.9, -0.7], [s * 1.9, -0.2], [s * 0.7, -0.1]]), '#3a4664'));
+  }
+  out.push(howling ? S(P(oval(0, 2.7, 0.7, 0.8, 0, 10)), '#7a2a3a') : S(P([[-0.8, 2.6], [0.8, 2.6], [0.8, 2.9], [-0.8, 2.9]]), '#b04a5a'));
+  return out;
+}
+// The Fang of the Wolf Queen in small: a broad pale blade with a crescent cut through it, a silver
+// guard and a gold pommel with an ice stone.
+const fang = (base, tip, o = {}) => sword(base, tip, { w: 2.6, metal: '#eef3fb', guard: '#dfe6f2', grip: '#f4f1ea', gem: '#8fe6ff', ...o });
+
+function beastmastery() {
+  const out = [...tile('mint', 'passive'), ...aura(8, 8, 6.6, '#f4fff0')];
+  // A bow with a crescent moon tied to the grip.
+  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2, { grip: '#3aa060' }));
+  out.push(...arrow([3.4, 8.2], [14.4, 7.8], { hw: 1.25, hl: 2, fl: '#9cf0b8' }));
+  out.push(...solid(moonCrescent(10.8, 11.8, 2.4, 200), MOON, { d: 0.35, ink: MOON_INK }));
+  out.push(...spark(13.6, 2.6, 1.1, '#ffffff'));
   return out;
 }
 
-function glacier() {
-  const out = [...tile('ice', 'active'), ...aura(11, 7, 6, '#ffffff', 1.1)];
-  // A bolt with an ice crystal for a head, and frost shards bursting off it.
-  out.push(streak([1, 13.6], [6, 9.4], 1.6, '#e8fbff'));
-  out.push(...arrow([2.4, 13.4], [9.6, 6.8], { hw: 1.2, hl: 1.8, sw: 0.6, fl: '#8fe3ff', head: '#e8fbff', shaft: '#d4cde8' }));
-  const crystal = [[11.6, 2], [13.8, 4.6], [12.6, 7.6], [9.8, 8.6], [8.6, 6.4], [9.4, 3.6]];
-  out.push(...facet(crystal, [11.6, 2], [9.8, 8.6], '#bff0ff', { ink: '#1c4a9a', dark: '#7fc8f0' }));
-  for (const [x, y, a] of [[14, 9.6, 30], [6.4, 3, -150], [12, 11.2, 70], [14.4, 1.6, -40]]) out.push(...solid(polyPts(x, y, 1.1, 4, a, 1.6), '#e8fbff', { shadow: false, d: 0.35, ink: '#1c4a9a' }));
-  out.push(...glint(11, 3.6, 0.5));
+function wolfpounce() {
+  const out = [...tile('indigo', 'passive'), ...aura(8, 8, 6.8, '#dce8ff', 1.2)];
+  // Fine, I'll Go: the greatsword swung round in a full ring of moonlight.
+  out.push(...swoosh(8, 8.4, 6, 5.6, -200, 20, 1.6, '#cfe0ff', { ink: MOON_INK }));
+  out.push(...fang([4.6, 11.4], [14, 3.2]));
+  out.push(...swoosh(8, 8.4, 6, 5.6, 40, 150, 1.2, '#cfe0ff', { ink: MOON_INK }));
+  out.push(...spark(2.4, 2.8, 1.1, '#ffffff'));
   return out;
 }
 
-function steadyaim() {
-  const out = [...tile('glacier', 'buff'), ...aura(8, 8, 6.8, '#e8f6ff', 1.1)];
-  out.push(...sightArt(8, 8, 5.4, '#ff8aa8', 0.7));
-  out.push(...sightArt(8, 8, 2.6, '#eef8ff', 0.45));
-  out.push(...solid(polyPts(8, 8, 1.3, 4, -90, 1.2), '#ff5a7a', { shadow: false, d: 0.35, ink: '#6a1030' }));
-  out.push(...spark(13.6, 2.6, 1.2), ...spark(2.6, 13.4, 1, '#fff3a6'));
+function hawkstrike() {
+  const out = [...tile('royal', 'passive'), ...aura(8, 9, 6.6, '#dce8ff', 1.2)];
+  // Moonfall: a crescent moon high up, a beam of moonlight crashing down from it.
+  out.push(...solid(moonCrescent(8.4, 3.4, 2.4, 160), MOON, { d: 0.35, ink: MOON_INK }));
+  const beam = [[6.4, 5.4], [9.6, 5.4], [11, 14], [5, 14]];
+  out.push(S(beam, '#9cb8f4'), S([[7.4, 5.4], [8.6, 5.4], [9.4, 14], [6.6, 14]], '#eef4ff'));
+  out.push(...solid(starPts(8, 13.2, 3, 1.1, 4, -90), '#ffffff', { shadow: false, d: 0.3, ink: MOON_INK }));
+  out.push(...spark(13.4, 9, 1, '#ffffff'), ...spark(2.6, 10.4, 0.8, '#ffffff'));
   return out;
 }
 
-function heartseeker() {
-  const out = [...tile('royal', 'active'), ...aura(10, 6, 6.4, '#ffd0dc', 1.2)];
-  // A sight locked on a rose heart, and a giant bolt of light driven through both.
-  out.push(...sightArt(10, 6, 4.6, '#ff8aa8', 0.6));
-  out.push(...solid(heartPts(10, 6.4, 3.2), '#ff5a7a', { glow: 1.15 }));
-  out.push(streak([0.6, 15.6], [6, 10.2], 2.4, '#eef8ff'));
-  out.push(...arrow([2, 14.2], [14.6, 1.6], { hw: 1.7, hl: 2.6, sw: 0.75, fl: '#7fc4ff', head: '#ffffff', shaft: '#eef8ff' }));
-  out.push(...spark(14, 13.4, 1.2, '#ffd0dc'), ...spark(2.6, 2.6, 1));
+function packhowl() {
+  const out = [...tile('indigo', 'passive'), ...aura(8, 9, 6.6, '#dce8ff', 1.2)];
+  // Lunar Howl: Snow wolf howling (grudgingly) under a pale full moon, rings racing out.
+  out.push(...solid(oval(12.4, 3.6, 2.4, 2.4, 0, 18), MOON, { shadow: false, d: 0.35, ink: MOON_INK }));
+  out.push(S(oval(11.8, 3, 0.6, 0.6, 0, 8), '#c4d2f0'), S(oval(13, 4.4, 0.5, 0.5, 0, 8), '#c4d2f0'));
+  for (const r of [3.4, 5.2]) out.push(...swoosh(4.4, 7.6, r, r, -160, -40, 0.7, '#dce8ff', { ink: MOON_INK }));
+  out.push(...snowHead(7.4, 10.4, 0.95, -18, true));
   return out;
 }
+
+function loyalguard() {
+  const out = [...tile('glacier', 'passive'), ...aura(8, 9, 6.8, '#dce8ff', 1.1)];
+  // Moon Ward: the greatsword planted point-down, a crescent shield of moonlight round it, a hit
+  // glancing off.
+  out.push(...swoosh(7.4, 8.6, 5, 6.4, -70, 70, 1.6, '#cfe0ff', { ink: MOON_INK }));
+  out.push(...fang([7.4, 3.4], [7.4, 14.6], { w: 2.8 }));
+  out.push(streak([14.6, 2.4], [12.2, 4.6], 0.9, '#ffffff'), streak([15, 5], [12.8, 6], 0.7, '#ffffff'));
+  out.push(...spark(2.4, 13, 1, '#ffffff'));
+  return out;
+}
+
+function alpha() {
+  const out = [...tile('royal', 'passive'), ...aura(7, 7.4, 7, '#e8f0ff', 1.3)];
+  // Queen's Awakening: the silver wolf's head on the greatsword's guard, the blade in its jaws,
+  // crowned, its ice-blue eye open and burning.
+  out.push(...fang([7.6, 9.6], [15, 13.6], { w: 2.6 }));
+  const P = (pts) => pts.map(([x, y]) => [1 + x * 0.78, 1.4 + y * 0.78]);
+  out.push(...solid(P([[3, 6], [3.6, 1.6], [6, 4.6]]), '#eef3fb', { shadow: false, d: 0.35, ink: '#2e3850' }));
+  out.push(...solid(P([[5.6, 5], [6.6, 1], [8.4, 4.4]]), '#eef3fb', { shadow: false, d: 0.35, ink: '#2e3850' }));
+  const head = P([[2.4, 7], [4.4, 4.4], [8.6, 4.2], [12.4, 6.4], [14.4, 8.4], [13.6, 10], [9.6, 10], [11, 12.6], [5.6, 13.6], [2.4, 11]]);
+  out.push(...solid(head, '#eef3fb', { d: 0.45, ink: '#2e3850', light: '#ffffff' }));
+  out.push(S(oval(12.2, 8.1, 0.7, 0.6, 0, 10), '#2a3048'));
+  out.push(...solid(P([[7.4, 6.6], [10, 6.8], [9, 7.8]]), '#8fe6ff', { shadow: false, d: 0.3, ink: '#1c6a96' }));
+  out.push(...spark(8.4, 6.8, 1.5, '#e8fbff'));
+  out.push(...solid(P([[4.6, 4.4], [5, 2], [6, 3.2], [7, 1.4], [8, 3.2], [9, 2], [9.4, 4.4]]), '#f2c94c', { shadow: false, d: 0.3, ink: '#8a5a10' }));
+  return out;
+}
+
+function stampede() {
+  const out = [...tile('indigo', 'active'), ...aura(8, 7, 7, '#e8f0ff', 1.4)];
+  // Wrath of the Wolf Queen: a great full moon, crescents of moonlight sweeping out under it.
+  out.push(...solid(oval(8, 6, 4.6, 4.6, 0, 28), MOON, { d: 0.45, ink: MOON_INK, light: '#ffffff' }));
+  for (const [x, y, r] of [[6.4, 4.6, 0.9], [9.6, 7.4, 1.2], [9.2, 3.8, 0.6]]) out.push(S(oval(x, y, r, r, 0, 10), '#c4d2f0'));
+  for (const [y, rx] of [[12.2, 7], [14.2, 6]]) out.push(...swoosh(8, y - 4, rx, 4, 40, 140, 1.3, '#cfe0ff', { ink: MOON_INK }));
+  out.push(...spark(14, 2.4, 1.1, '#ffffff'), ...spark(2, 3, 0.8, '#ffffff'));
+  return out;
+}
+
 
 // ---------- Thief ----------
 
@@ -1301,8 +1306,7 @@ const ART = {
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
   blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
-  rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,
-  snipermastery, marksman, glacierbolt: glacier, steadyaim, heartseeker,
+  beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, stampede,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   assassinmastery, crowcombo, markdeath, vanish, poisonblade, bloodmoonrequiem,
   nightlordmastery, starstorm, giantshuriken, starmark, shadowshuriken, galaxyfall,

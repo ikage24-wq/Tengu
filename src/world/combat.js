@@ -8,6 +8,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
+import { guard } from './pets.js';
 import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
@@ -160,9 +161,10 @@ export function rallyOnHit(world) {
   world.fx.push({ kind: 'powerup', school: 'holy', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
 }
 
-// Sacred Bulwark (Paladin): before a hit lands, a shield of light may flash up and block it
-// outright, then a holy shockwave answers it. True if it blocked. `rng` for tests.
-export function blockOnHit(world, rng = Math.random) {
+// Before a hit lands, it may not land at all. Sacred Bulwark (Paladin): a shield of light flashes
+// up and blocks it, then a holy shockwave answers it. Moon Ward (Beastmaster): Snow wolf plants her
+// greatsword in front of it (from `fromX`) behind a crescent of moonlight, and flicks one back. True if the hit is gone. `rng` for tests.
+export function blockOnHit(world, fromX = null, rng = Math.random) {
   const { body } = world;
   if (world.dead) return false;
   const p = procOf(world.char, 'sacredbulwark');
@@ -173,6 +175,12 @@ export function blockOnHit(world, rng = Math.random) {
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
     world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
     bulwarkWave(world, p);
+    return true;
+  }
+  const lg = procOf(world.char, 'loyalguard');
+  if (lg && rng() < lg.chance && guard(world, fromX, lg)) {
+    world.invuln = Math.max(world.invuln, 0.5);
+    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'WARD', color: '#bcd6ff', t: 0 });
     return true;
   }
   return false;

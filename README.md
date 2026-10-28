@@ -139,8 +139,8 @@ to clear it.
   **Comet Arrow**, which needs full Momentum and spends it: she leaps high into the air, hangs
   there aiming straight down while the arrow catches fire, and fires a giant flaming arrow that
   crashes into the ground ahead like a meteor: the ground cracks open in gold, a shockwave races
-  out both ways, and everything nearby is thrown into the air. A Ranger or Sniper who learned Vault
-  looses its shot as her own wind arrow or bolt.
+  out both ways, and everything nearby is thrown into the air. A Beastmaster who learned Vault
+  looses its shot as her own green arrow.
 - **Mage** (rose pink and mint: flowers, petals and light) — damage and support at once, and the
   healer of any dungeon group. With a wand or staff she has her own spell combo (a petal bolt, a
   second, then a blossom bolt that bursts through the line) and her own command spells (a bolt up
@@ -314,7 +314,7 @@ to clear it.
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
   dagger toss, gauntlet flick). The level 30 paths get a quiet aura that fades in while idle in the
   path's own art (diamonds of light for the Paladin, a rose ring for the Berserker, a curl of wind
-  for the Ranger, a rose ring for the Sniper).
+  and leaves for the Beastmaster).
 - **Interface** — a candy-pastel UI. Each window has its own color and icon badge (peach Bag,
   pink Stats, lavender Skills, mint Quests, sky-blue World Map) on a scalloped title ribbon, and
   pops open with a little bounce. The HUD has a portrait medallion with your hero's face and
@@ -439,37 +439,49 @@ to clear it.
     diamonds of light pulled in) until the blow lands, and a spark of their own on every hit.
 - **Archer paths (level 30)** — at 30, Kestrel in Sprout Village sets **The Archer's Trial**
   (shoot down 15 Wraiths in the Crystal Cave); pass it and pick a path. Both deal damage in a group.
-  - **Ranger** (bow), light and quick on the wind: every arrow that lands builds **Gale** (a curl of
-    wind over the hotkeys) that blows out once the fighting stops; the fuller it is the faster she
-    shoots (up to a quarter quicker), and full (**Tailwind**) every basic shot looses a twin arrow
-    and two wind spirits that swoop out on curves and home in.
-    **Gale Volley** is a three-press combo (a twirl that looses two wind arrows, a leap that fans
-    three down on them, then a gale arrow through the whole line that blows them away);
-    **Cyclone Arrow** sends a slow whirlwind down the line that cuts everything it passes three
-    more times and lifts it (a real tornado, twice her height); **Tailwind** speeds up running,
-    shooting and dodging, leaves streaks of wind at her heels, and gives half a Gale; **Ranger Mastery** adds mastery, attack and accuracy. Bands of green wind circle her as
-    Gale fills, then leaves; full, a ring of wind blows out from her feet.
-  - **Sniper** (crossbow), planted and patient: bolts that land and standing still mid-fight build
-    **Focus** (a sight over the hotkeys); running bleeds it away. The fuller it is the likelier a
-    critical (up to 30% more), and while it's full every bolt is a **Deadeye**: it always crits
-    and tears through the whole line (Heartseeker spends it). **Marksman's Chain** is a three-press combo (a
-    kneeling heavy bolt through the line, a crank and two more, then a ballista bolt that kicks her
-    back and blasts through everything); **Glacier Bolt** shatters on its mark in a burst of frost
-    that freezes everything close around it; **Steady Aim** sharpens crits and aim and gives half a
-    Focus; **Sniper Mastery** adds mastery, critical damage and accuracy. A sight ring turns
-    round her as Focus fills, tightening; full, it locks rose-red and pulses.
-  - Each has its own basic combo (the Ranger: a snap shot, a twirl and two arrows, a leaping fan of
-    gale arrows; the Sniper: a kneeling heavy bolt, a crank-and-fire, a blast bolt that bursts on
-    its mark) and command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
-    **Down + attack** leans out and shoots down at whatever is below,
-    **attacking in the air** shoots down at them and holds you up (a Sniper's bolt kicks her back
-    up), and **attacking out of a run** is a Ranger's slide shot or a Sniper's roll into a kneeling
-    bolt. Her leaping shot is a backflip. Their finishers (at a full gauge, spending it): the Ranger's **Storm Volley**
-    (a gust throws her spinning high, the sky turns stormy and arrows pour down all around, then
-    she dives in a burst of storm wind) at full Gale and the
-    Sniper's **Heartseeker** (a long aim as a sight locks onto every monster in the line, then one
-    enormous bolt that always crits, and its shockwave). A finisher shot that connects opens a
-    Link, for every archer.
+  (The old Ranger and Sniper were remade as these two: their characters move over, with their skill
+  points back.)
+  - **Beastmaster** (bow), hunting with **Snow wolf**: a small wolf girl (a short white wolf cut
+    with ice-blue tips, wolf ears and tail, half-shut eyes, a bored mouth, an oversized white
+    kimono, barefoot) who very much doesn't want to be here. She drags the **Fang of the Wolf
+    Queen** behind her, a greatsword far too big for her to lift (a silver wolf's head for a guard
+    with the blade in its jaws, a gold crown, a crescent moon cut through the blade) that casts
+    moonlight. She doesn't follow the Beastmaster about: she has a body of her own and finds her
+    own way round the map (walking, jumping up to ledges, dropping through them, climbing ropes),
+    picks her own fights (whatever's closing in on the Beastmaster first, then the nearest by the
+    way there, finishing off what's hurt), cuts them close in or flicks crescents of moonlight up
+    and down ledges, and only comes back to wait beside the Beastmaster when there's nothing left
+    (in a flash of moonlight if she's hopelessly far). The tip scrapes the ground as she goes; she
+    has her own rig (sighs with a huff of steam, an anger vein, a
+    grudging tug at the sword, ears that flop and flatten, a tail that wags and thumps, bouncing
+    hair and kimono). The Beastmaster's shots that land, and Snow wolf's hits, wear down Snow
+    wolf's **Patience** (the Bond gauge, a moon over the hotkeys), which recovers once the fighting
+    stops; gone (**Fed Up**), the crescent on her sword burns and she hits harder and quicker
+    (spinning the sword round, heaving it overhead and dropping it, flicking crescents). The
+    Beastmaster's skills are orders she drops what she's doing for. Like
+    the Archer the Beastmaster fights with her basic shots (green wild arrows, from her own pool: a
+    snap shot, a twirl, a leaping fan, a point-blank kick, a slide shot, a burst of three, a hop
+    back, an overdraw, a volley that rains back down) and her skills go off on their own: **Fine,
+    I'll Go** (a shot sometimes makes Snow wolf drag herself over to the nearest monster and spin
+    the sword round in a full circle of moonlight), **Moonfall** (a shot sometimes makes her plant
+    the sword with a sigh and call a beam of moonlight down on the farthest), **Lunar Howl** (the
+    combo's last shot sometimes sets her howling under a pale moon, knocking away and stunning
+    everything close round her; always with three or more in front); **Beast Mastery** adds
+    mastery, attack and accuracy. Late skills: **Moon Ward** (level 50: a hit sometimes never
+    reaches the Beastmaster: Snow wolf plants the sword in front of it behind a crescent shield of
+    moonlight and flicks a crescent back) and **Queen's Awakening** (level 70: while Snow wolf is
+    Fed Up, the wolf head on her sword wakes and her eyes open; she attacks faster and harder, and
+    every swing also throws a crescent at the farthest monster). The finisher, **Wrath of the Wolf
+    Queen**, needs full Bond and spends it: a great full moon rises and crescents of moonlight
+    sweep out across the whole screen, throwing everything into the air. Her buttons are the
+    Archer's Vault and Wrath of the Wolf Queen.
+  - **Stormcaller** (crossbow): lightning that chains between monsters, charged ground and a
+    thunderstorm from a darkened sky. Her own skills are still being made; until then she fights
+    with the Archer's shots and skills.
+  - Both have command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
+    **Down + attack** leans out and shoots down at whatever is below, **attacking in the air**
+    shoots down at them and holds you up, and **attacking out of a run** is a slide shot. A
+    finisher shot that connects opens a Link, for every archer.
 - **Thief paths (level 30)** — at 30, Vex in Pastel Harbor sets **The Thief's Trial** (put 20
   Dullahans down in the Twilight Ruins); pass it and pick a path. Each keeps to one of the Thief's
   two weapons, and keeps her first-job skills for that weapon.

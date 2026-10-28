@@ -31,6 +31,7 @@ import { SKILLS } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
+import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { provoke, healMembers } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
@@ -61,7 +62,7 @@ const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
 // the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
 // War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
 export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : 'steel');
-// The Archer's gold hawk skills the same way: the Ranger's wind, the Sniper's focus.
+// The Archer's gold hawk skills the same way: the Beastmaster's green.
 export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
@@ -179,48 +180,46 @@ export const PATH_COMBOS = {
     { move: 'cleave2', dur: 0.52, step: 8, strikes: [{ at: 0.42, pct: 120, reach: 80, h: 66, targets: 2, knock: 60, launch: 160, arc: [110, -240], thick: 11 }] },
     { move: 'reaver', dur: 0.8, step: 16, finisher: true, strikes: [{ at: 0.47, pct: 270, reach: 96, h: 76, targets: 3, knock: 250, arc: [-110, 200], thick: 15, big: true, crack: true, stop: 0.1, shake: 4 }] },
   ],
-  // The archer paths. The Ranger: a snap shot, a twirl that looses two arrows, then a hop that
-  // fans three gale arrows down on them; light and quick. The Sniper: a kneeling heavy bolt through
-  // two in a line, a crank-and-fire, then a blast bolt that bursts on the first monster; slower,
-  // and every bolt heavy.
-  ranger: [
+  // The archer paths. The Beastmaster: a snap shot, a twirl that looses two arrows, then a hop
+  // that fans three wild arrows down on them; light and quick, her animals at her side.
+  beastmaster: [
     { move: 'quickshot', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
     { move: 'spinshot', dur: 0.48, step: 6, strikes: [{ at: 0.32, shot: 'windarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 860 }, { at: 0.72, shot: 'windarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 860 }] },
     { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'galearrow', fan: 3, pct: 95, range: 310, h: 110, knock: 130, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
   ],
-  sniper: [
-    { move: 'kneelshot', dur: 0.56, step: -2, strikes: [{ at: 0.56, shot: 'heavybolt', pct: 120, range: 330, h: 56, knock: 80, speed: 760, pierce: true, targets: 2 }] },
-    { move: 'crankshot', dur: 0.62, step: -3, charge: true, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 130, range: 330, h: 56, knock: 90, speed: 760, pierce: true, targets: 2 }] },
-    { move: 'ballista', dur: 0.82, step: -12, finisher: true, strikes: [{ at: 0.64, shot: 'blastbolt', pct: 210, range: 350, h: 56, blast: 56, targets: 4, speed: 720, knock: 220, launch: 140, big: true, stop: 0.08, shake: 3, burst: 'blast' }] },
-  ],
 };
 
-// The arrows each archer path looses when it uses the Archer's skills (Vault): the
-// Archer's gold hawk arrows, the Ranger's wind arrows, the Sniper's heavy bolts.
+// The arrows each archer path looses, its pool of shots and the Archer's skills (Vault) alike:
+// the Archer's gold hawk arrows, the Beastmaster's green wild arrows.
 const ARCHER_LOOK = {
   archer: { arrow: 'hawkarrow', big: 'hawkbig', rain: 'hawkarrow', muzzle: 'feathers', school: 'hawk' },
-  ranger: { arrow: 'windarrow', big: 'galearrow', rain: 'windarrow', muzzle: 'gust', school: 'wind' },
-  sniper: { arrow: 'heavybolt', big: 'heavybolt', rain: 'arrow', muzzle: 'boltshock', school: 'focus' },
+  beastmaster: { arrow: 'windarrow', big: 'galearrow', rain: 'windarrow', muzzle: 'gust', school: 'wind' },
 };
-export const archerLook = (char) => ARCHER_LOOK[hasGale(char) ? 'ranger' : hasFocus(char) ? 'sniper' : 'archer'];
+export const archerLook = (char) => ARCHER_LOOK[hasBond(char) ? 'beastmaster' : 'archer'];
 // One of the Archer's gold shots as the path's own.
 const pathShot = (char, shot) => {
   const L = archerLook(char);
   return shot === 'hawkarrow' ? L.arrow : shot === 'hawkbig' ? L.big : shot === 'feathers' ? L.muzzle : shot;
 };
-// The Archer's shots besides her own combo's (her pool, PATH_VARIANTS).
-const arrowAt = (at, pct, f = {}) => ({ at, shot: 'hawkarrow', pct, range: 300, h: 60, knock: 25, speed: 840, ...f });
-const ARCHER_SHOTS = {
-  kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
-    { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
-    arrowAt(0.62, 110, { knock: 180, speed: 900, big: true, stop: 0.05 }),
-  ] },
-  twirl: { move: 'spinshot', dur: 0.48, step: 6, strikes: [arrowAt(0.32, 55, { knock: 20 }), arrowAt(0.72, 60, { knock: 30 })] },
-  burst: { move: 'rapid', dur: 0.5, step: -4, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
-  hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [arrowAt(0.5, 70, { fan: 2, range: 290, h: 150, drop: 30, knock: 60 })] },
-  overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: 'feathers' }] },
-  flipfan: { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'hawkbig', fan: 3, pct: 100, range: 310, h: 120, knock: 140, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
-};
+// An archer path's shots besides its own combo's (its pool, PATH_VARIANTS), loosed as its arrows.
+function shotsOf(L) {
+  const arrowAt = (at, pct, f = {}) => ({ at, shot: L.arrow, pct, range: 300, h: 60, knock: 25, speed: 840, ...f });
+  return {
+    kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
+      { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
+      arrowAt(0.62, 110, { knock: 180, speed: 900, big: true, stop: 0.05 }),
+    ] },
+    twirl: { move: 'spinshot', dur: 0.48, step: 6, strikes: [arrowAt(0.32, 55, { knock: 20 }), arrowAt(0.72, 60, { knock: 30 })] },
+    slide: { move: 'slideshot', dur: 0.5, step: 30, carry: 0.6, strikes: [arrowAt(0.35, 55), arrowAt(0.62, 60, { knock: 60 })] },
+    burst: { move: 'rapid', dur: 0.5, step: -4, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
+    hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [arrowAt(0.5, 70, { fan: 2, range: 290, h: 150, drop: 30, knock: 60 })] },
+    overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: L.big, pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: L.muzzle }] },
+    flipfan: { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: L.big, fan: 3, pct: 100, range: 310, h: 120, knock: 140, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+    skyrain: { move: 'skyshot', dur: 0.7, step: -4, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
+  };
+}
+const ARCHER_SHOTS = shotsOf(ARCHER_LOOK.archer);
+const BEAST_SHOTS = shotsOf(ARCHER_LOOK.beastmaster);
 
 // A path's combo with a choice of swings at each step, so holding attack doesn't play the same
 // string over and over: each time the combo starts, one swing is drawn for every step, and never
@@ -295,6 +294,15 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop],
     [PATH_COMBOS.archer[2], ARCHER_SHOTS.overdraw, ARCHER_SHOTS.flipfan],
   ],
+  // The Beastmaster, quick and wild, her green arrows flying beside her animals. Openers: her snap
+  // shot, the point-blank kick, or a slide in loosing two. Second: her twirl, a burst of three, or
+  // a hop back loosing two down. Finisher: her leaping fan, an overdraw through the line, or a
+  // volley up that rains back down on them.
+  beastmaster: [
+    [PATH_COMBOS.beastmaster[0], BEAST_SHOTS.kick, BEAST_SHOTS.slide],
+    [PATH_COMBOS.beastmaster[1], BEAST_SHOTS.burst, BEAST_SHOTS.hop],
+    [PATH_COMBOS.beastmaster[2], BEAST_SHOTS.overdraw, BEAST_SHOTS.skyrain],
+  ],
 };
 
 // Picks one swing for each step of a combo with choices, never the same string as `last`. The
@@ -313,9 +321,8 @@ export function planCombo(variants, last = null, rng = Math.random) {
 }
 
 // The archer paths' command shots. Up + attack: a shot up at whatever flies, knocking it higher.
-// In the air: shots that hold you up (`hang`) and loose down at them; a Sniper's bolt kicks her
-// back up (`recoil`). Running: the Ranger slides in under them loosing two arrows, the Sniper rolls
-// and comes up on one knee with a bolt.
+// In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
+// slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
   // The Mage: a bolt cast up at whatever flies, petal bolts cast down from a float in the air,
   // and a bolt cast out of a glide.
@@ -359,7 +366,9 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'hawkarrow', pct: 95, range: 300, h: 60, knock: 80, speed: 880 }] },
   },
-  ranger: {
+  // The Beastmaster: a wild arrow shot up at fliers, two down from a hang, a slide shot out of a
+  // run, and down at whatever is below.
+  beastmaster: {
     down: { move: 'downshot', dur: 0.48, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 900 }] },
     up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'galearrow', fan: 2, pct: 110, range: 280, h: 190, lift: 50, knock: 20, launch: 380, speed: 900, big: true, stop: 0.05 }] },
     air: [
@@ -367,14 +376,6 @@ const ARCHER_COMMANDS = {
       { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'galearrow', fan: 3, pct: 90, range: 280, h: 190, drop: 60, knock: 120, speed: 950, big: true, stop: 0.05, shake: 1 }] },
     ],
     dash: { move: 'slideshot', dur: 0.5, step: 46, carry: 0.6, strikes: [{ at: 0.35, shot: 'windarrow', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }, { at: 0.62, shot: 'windarrow', pct: 90, range: 300, h: 60, knock: 90, speed: 900 }] },
-  },
-  sniper: {
-    down: { move: 'downshot', dur: 0.56, step: -2, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 130, range: 280, h: 220, drop: 120, targets: 2, pierce: true, knock: 90, speed: 780 }] },
-    up: { move: 'skyshot', dur: 0.56, step: -4, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 140, range: 300, h: 190, lift: 50, knock: 30, launch: 420, speed: 760, big: true, stop: 0.06, shake: 1 }] },
-    air: [
-      { move: 'airshot', dur: 0.5, hang: true, strikes: [{ at: 0.5, shot: 'heavybolt', pct: 120, range: 300, h: 170, drop: 50, knock: 80, recoil: 260, speed: 760, pierce: true, targets: 2 }] },
-    ],
-    dash: { move: 'rollshot', dur: 0.66, step: 40, carry: 0.45, guard: 0.3, strikes: [{ at: 0.66, shot: 'heavybolt', pct: 150, range: 330, h: 56, knock: 160, speed: 760, pierce: true, targets: 3, big: true, stop: 0.05, shake: 1 }] },
   },
 };
 
@@ -457,35 +458,19 @@ export function faithGuard(world) {
   addFaith(world, FAITH_ON_HURT);
   return cut;
 }
-// Gale: the Ranger's gauge. Every arrow that lands builds it, and it blows itself out once the
-// fighting stops. The fuller it is the quicker she shoots (up to GALE_SPEED quicker at full); full
-// (Tailwind), every basic shot looses a twin arrow beside it.
-export const GALE_MAX = 100;
-const GALE_HOLD = 4;
-const GALE_DRAIN = 14;
-export const GALE_SPEED = 0.25;
-export const hasGale = (char) => jobChain(char.job).includes('ranger');
-export function addGale(world, n) {
-  if (!hasGale(world.char) || n <= 0) return;
-  world.gale = Math.min(GALE_MAX, (world.gale ?? 0) + n);
-  world.galeAt = world.now;
+// Bond: the Beastmaster's gauge, shown as her companion Snow wolf's Patience running out. Her
+// shots that land build it, and Snow wolf's hits build it faster (world/pets.js); it fades once
+// the fighting stops. Full (Fed Up), Snow wolf fights on her own, and the finisher spends it.
+export const BOND_MAX = 100;
+const BOND_HOLD = 5;
+const BOND_DRAIN = 10;
+export const hasBond = (char) => jobChain(char.job).includes('beastmaster');
+export function addBond(world, n) {
+  if (!hasBond(world.char) || n <= 0) return;
+  world.bond = Math.min(BOND_MAX, (world.bond ?? 0) + n);
+  world.bondAt = world.now;
 }
-// Focus: the Sniper's gauge. Bolts that land build it, and so does standing still mid-fight;
-// running bleeds it away, and it fades once the fighting stops. The fuller it is the likelier a
-// critical (up to FOCUS_CRIT more at full); while full, every bolt is a Deadeye: it always crits
-// and tears through the whole line. Her finisher spends it.
-export const FOCUS_MAX = 100;
-const FOCUS_HOLD = 5;
-const FOCUS_DRAIN = 10;
-const FOCUS_STILL = 9; // per second, standing still with a fight on
-const FOCUS_RUN = 18; // per second lost while running
-export const FOCUS_CRIT = 0.3;
-export const hasFocus = (char) => jobChain(char.job).includes('sniper');
-export function addFocus(world, n) {
-  if (!hasFocus(world.char) || n <= 0) return;
-  world.focus = Math.min(FOCUS_MAX, (world.focus ?? 0) + n);
-  world.focusAt = world.now;
-}
+export const wild = (world) => hasBond(world.char) && (world.bond ?? 0) >= BOND_MAX;
 // Valor: the Warrior's gauge (first job; the paths have their own). Every blow that lands builds
 // it, and faster the more monsters one blow catches at once; it fades once the fighting stops.
 // Full (Unbroken), his blows land heavier and knock harder, and nothing knocks him back.
@@ -608,10 +593,10 @@ export function healAround(world, x, y, pct, r) {
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'nightstar', 'giantstar']);
 // A job's own gauge: which one the character has ('bloom', 'killintent', 'starlight', 'valor', 'momentum',
-// 'shadow', 'rage', 'faith', 'gale' or 'focus'), and how full it is (0-1). Finishers need it full
+// 'shadow', 'rage', 'faith' or 'bond'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasBloom(char) ? 'bloom' : hasIntent(char) ? 'killintent' : hasStarlight(char) ? 'starlight' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasGale(char) ? 'gale' : hasFocus(char) ? 'focus' : null;
+  return hasBloom(char) ? 'bloom' : hasIntent(char) ? 'killintent' : hasStarlight(char) ? 'starlight' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -624,8 +609,7 @@ export function addAim(world, n, mob = null) {
   addStarlight(world, n, mob);
   addMomentum(world, n);
   addShadow(world, n);
-  addGale(world, n);
-  addFocus(world, n);
+  addBond(world, n);
 }
 // The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
 function pathOf(world) {
@@ -637,8 +621,9 @@ function pathOf(world) {
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
   if (MELEE.has(w) && w !== 'none') return hasValor(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
   if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
-  if (w === 'bow' && hasGale(char)) return 'ranger';
-  if (w === 'crossbow' && hasFocus(char)) return 'sniper';
+  if (w === 'bow' && hasBond(char)) return 'beastmaster';
+  // The Stormcaller fights with the Archer's shots until her own are made.
+  if (w === 'crossbow' && char.job === 'stormcaller') return 'archer';
   return null;
 }
 
@@ -746,11 +731,9 @@ export function skillCombo(world, skillId, params, scale = 100) {
 function playStep(world, step, scale, key, school = null, after = 0) {
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
-  // Shots need the whole draw and loose, so they hold you a little longer than a cut; a Ranger's
-  // Gale quickens them.
+  // Shots need the whole draw and loose, so they hold you a little longer than a cut.
   const ranged = step.strikes.some((s) => s.shot || s.rain);
-  const gale = ranged && hasGale(world.char) && !step.finisher ? 1 - (GALE_SPEED * (world.gale ?? 0)) / GALE_MAX : 1;
-  const dur = step.dur * gale * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
+  const dur = step.dur * (key.startsWith('basic') ? 0.9 : 1) * (1 - Math.min(0.4, stats.attackSpeed ?? 0) * 0.5);
   const busy = dur * (step.finisher ? 0.92 : ranged ? 0.86 : CANCEL);
   world.attackTimer = busy;
   world.lockTimer = Math.max(world.lockTimer ?? 0, busy);
@@ -778,12 +761,11 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
-  // A Sniper plants her feet the same way, and gathers her aim at the bow.
-  const heavy = hasValor(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char) || hasFocus(world.char);
+  const heavy = hasValor(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
-    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : hasFocus(world.char) ? 'focus' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
+    if (!key.startsWith('basic') && lead > 0.18) world.fx.push({ kind: 'gather', school: school ?? (hasRage(world.char) ? 'rage' : 'holy'), x: body.x, y: body.y, dir: body.facing, t: 0, dur: lead, big: lead > 0.5 });
   }
   // A marked shot locks on first: the world dims, and a sight pops onto each monster in its line,
   // nearest first, one after another (Rez, Red Dead's Dead Eye; research/archery.md 26-27), each
@@ -829,7 +811,7 @@ export function tickMelee(world, dt) {
   const b = world.body;
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
-  if (world.gale > 0 && world.now - (world.galeAt ?? 0) > GALE_HOLD) world.gale = Math.max(0, world.gale - GALE_DRAIN * dt);
+  if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.bloom > 0 && world.now - (world.bloomAt ?? 0) > BLOOM_HOLD) world.bloom = Math.max(0, world.bloom - BLOOM_DRAIN * dt);
   if (world.killintent > 0 && world.now - (world.killintentAt ?? 0) > INTENT_HOLD) world.killintent = Math.max(0, world.killintent - INTENT_DRAIN * dt);
@@ -838,19 +820,8 @@ export function tickMelee(world, dt) {
   if (!execution(world)) world.executed = null;
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
-  // Tailwind at a Ranger's heels: streaks of wind peel off behind her as she runs.
-  if (world.char.buffs.tailwind && (world.runFor ?? 0) > 0 && b.onGround && world.now - (world.windStepAt ?? -9) > 0.12) {
-    world.windStepAt = world.now;
-    world.fx.push({ kind: 'windstep', x: b.x, y: b.y, dir: b.facing, t: 0, dur: 0.4 });
-  }
-  if (hasFocus(world.char)) {
-    // Standing still with a fight on (a bolt landed lately) steadies the aim; running loses it.
-    const fighting = world.now - (world.focusAt ?? -9) < FOCUS_HOLD;
-    if (fighting && world.stillTime > 0.25 && world.focus < FOCUS_MAX) world.focus = Math.min(FOCUS_MAX, world.focus + FOCUS_STILL * dt);
-    else if ((world.runFor ?? 0) > 0.1 && world.focus > 0) world.focus = Math.max(0, world.focus - FOCUS_RUN * dt);
-    else if (!fighting && world.focus > 0) world.focus = Math.max(0, world.focus - FOCUS_DRAIN * dt);
-  }
   tickTraps(world);
+  tickPets(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -933,7 +904,7 @@ function land(world, s) {
     world.fx.push({ kind: 'rain', variant: 'windarrow', school: 'wind', box: { x: body.x - 320, y: body.y - 330, w: 640, h: 330 }, x: body.x, y: body.y, t: 0, dur: s.sky });
   }
   if (s.burst) {
-    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: 0.7, seed: Math.random() });
+    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
   }
   let crits = 0;
   targets.forEach((m, i) => {
@@ -1135,7 +1106,10 @@ function bladeProcs(world, s, count, rng = Math.random) {
 // ---------- Archer procs ----------
 // The Archer's tricks set themselves off from her basic shots, hit or miss (see data/skills.js):
 // any shot may become a Blast Arrow (it bursts on impact) or a Snare Arrow (a net holds its target);
-// the combo's last shot may drop a Spring Trap ahead. Returns the shot to loose. `rng` for tests.
+// the combo's last shot may drop a Spring Trap ahead. A Beastmaster's shots may also make Snow
+// wolf fight (world/pets.js): dragging herself over to the nearest monster to cut it, or calling
+// a beam of moonlight down on the farthest, and the combo's last shot may set her howling.
+// Returns the shot to loose. `rng` for tests.
 function shotProcs(world, s, rng = Math.random) {
   const { char, body } = world;
   const blast = procOf(char, 'blastarrow');
@@ -1144,7 +1118,23 @@ function shotProcs(world, s, rng = Math.random) {
   if (snare && s.shot && rng() < snare.chance) s = { ...s, snare: snare.secs };
   const trap = procOf(char, 'springtrap');
   if (trap && s.finisher && /^basic\d$/.test(s.key) && rng() < trap.chance) setTrap(world, body.x + s.dir * 90, trap);
+  const wolf = procOf(char, 'wolfpounce');
+  if (wolf && rng() < wolf.chance) sendSnow(world, pickTargets(world.mobs, body, { w: 300, h: 120 }, 1)[0], wolf.pct);
+  const moon = procOf(char, 'hawkstrike');
+  if (moon && rng() < moon.chance) moonfall(world, pickTargets(world.mobs, body, { w: 340, h: 160 }, 9).at(-1), moon.pct);
+  const howlP = procOf(char, 'packhowl');
+  if (howlP && s.finisher && /^basic\d$/.test(s.key)) {
+    const crowd = pickTargets(world.mobs, body, { w: 320, h: 150 }, 9).length;
+    if (crowd >= howlP.crowd || rng() < howlP.chance) howl(world, howlP);
+  }
   return s;
+}
+
+// Snow wolf's hit (world/pets.js): it lands like one of her shots, knocks monsters away from where
+// she is (`x`), and builds Bond faster (`gauge`, 5 unless she says otherwise: less for the fights she
+// picks herself).
+export function beastHit(world, m, f) {
+  shotHit(world, { pct: f.pct, scale: 100, key: 'procbeast', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 120, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst, stun: f.stun, gauge: f.gauge ?? 5 }, m, 0);
 }
 
 // Spring Trap: a trap set on the ground ahead, armed until a monster steps on it or it rusts away
@@ -1189,21 +1179,21 @@ function playQueued(world) {
 }
 
 // How a shot would hit a monster: rolled now, landing when it arrives.
-// A Sniper's Focus sharpens her crits; a Deadeye (or a strike marked `crit`) always crits. Each
-// archer path's own spark lands with every shot (a swirl of wind, a sight's glint), unless the shot
+// A strike marked `crit` always crits. Each archer path's own spark lands with every shot (a
+// burst of gold, a swirl of leaves), unless the shot
 // bursts with its own (`burst`). Shots that land build the path's gauge (`gauge`, or 3 for a basic
 // shot and 5 for a skill's).
 function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const { char, stats, body } = world;
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
-  const sure = s.crit || s.deadeye;
+  const sure = s.crit;
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
-  const extraCrit = sure ? 1 : hasFocus(char) ? (FOCUS_CRIT * (world.focus ?? 0)) / FOCUS_MAX : 0;
+  const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasBloom(char) ? 'bloomhit' : hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
+  const spark = hasBloom(char) ? 'bloomhit' : hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : undefined;
   world.pending.push({
-    at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
+    at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank,
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
@@ -1237,22 +1227,12 @@ function fire(world, strike) {
       return;
     }
   }
-  // While Focus is full, every shot is a Deadeye: it always crits and tears through the whole line.
-  if (hasFocus(world.char) && (world.focus ?? 0) >= FOCUS_MAX && !s.deadeye) {
-    s = { ...s, deadeye: true, pierce: true, targets: Math.max(s.targets ?? 1, 3) + 3, range: s.range + 60, big: true, stop: Math.max(s.stop ?? 0, 0.07), shake: Math.max(s.shake ?? 0, 2), knock: Math.max(s.knock, 200) };
-    world.fx.push({ kind: 'deadeye', school: 'focus', x: body.x + s.dir * 14, y: body.y - HAND_Y, dir: s.dir, t: 0, dur: 0.5 });
-    world.numbers.push({ x: body.x, y: body.y - body.h - 18, text: 'DEADEYE!', color: '#ff5a7a', t: 0, link: true });
-    world.juice.push({ type: 'deadeye' });
-  }
   // Hawkeye (full Momentum): arrows fly faster and reach further, and curve to find monsters above
   // and below (a taller search box, and a bend in their flight as they home in).
   if (hawkeye(world) && !s.hawkeye) {
     world.volley = ((world.volley ?? 0) + 1) % 2;
     s = { ...s, hawkeye: true, speed: (s.speed ?? 680) * 1.4, range: s.range + 70, h: Math.max(140, (s.h ?? 60) * 2), bend: s.bend ?? (world.volley ? 22 : -22) };
   }
-  // Every Sniper bolt pierces: it flies on through the whole line, hitting each monster it passes
-  // (at least three), out to its full range.
-  if (hasFocus(world.char) && s.shot !== 'star') s = { ...s, pierce: true, targets: Math.max(s.targets ?? 1, 3) };
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
   const ox = body.x + s.dir * 10;
   const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
@@ -1266,7 +1246,6 @@ function fire(world, strike) {
   const element = star?.star.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
   // A twin arrow trails its first a beat behind (`lag`).
   const lag = s.lag ?? 0;
-  const sniper = hasFocus(world.char);
   // A shot aimed at a monster follows it in flight (`mob`; see world.js): it homes in on where the
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
@@ -1278,19 +1257,11 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
-  if (hasFocus(world.char)) world.fx.push({ kind: 'boltshock', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.35, small: true });
-  else if (!hasGale(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
-  // Heavy shots kick the view back; every Sniper bolt does a little (research/archery.md 37).
+  if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
-  else if (sniper) world.juice.push({ type: 'kick', x: -s.dir * 1, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
-  // A full Gale looses a twin arrow beside every basic shot, a little lighter.
-  // ...and two wind spirits that swoop out on curves and home in (Wind Archer's Trifling Wind).
-  if (hasGale(world.char) && (world.gale ?? 0) >= GALE_MAX && s.key.startsWith('basic') && !s.twin) {
-    fire(world, { ...s, twin: true, fan: 1, pierce: false, pct: s.pct * 0.6, oy: -5, lag: 0.04, big: false, stop: 0, shake: 0, gauge: 1 });
-    for (const bend of [-38, 38]) fire(world, { ...s, shot: 'wisp', twin: true, fan: 1, pierce: false, pct: s.pct * 0.4, speed: 480, bend, lag: 0.08, burst: 'galehit', big: false, stop: 0, shake: 0, gauge: 1 });
-  }
   // Constellation (full Starlight): every star splits into three as it flies, the two extra ones
   // lighter and free. Shadow Shuriken: a free shadow star flies beside every star thrown.
   if (STAR_SHOTS.has(s.shot) && !s.split && !s.boomerang && hasStarlight(world.char)) {

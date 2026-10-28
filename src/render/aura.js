@@ -95,13 +95,13 @@ const JOBS = {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringrage', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
     front: () => {},
   },
-  // Ranger: a slow, faint curl of wind at her feet.
-  ranger: {
+  // Beastmaster: a slow, faint curl of wind and leaves at her feet.
+  beastmaster: {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * 0.6, scale: s * 0.5, sy: 0.3, alpha: k * 0.6 }),
     front: () => {},
   },
-  // Sniper: a faint rose ring at her feet.
-  sniper: {
+  // Stormcaller: a faint ring at her feet (until her own storm is made).
+  stormcaller: {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringsight', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
     front: () => {},
   },
@@ -183,25 +183,16 @@ function faithAura(ctx, x, y, t, s, k, layer) {
   if (k > 0.4) fxSprite(ctx, 'celmotes', x, y, { t, scale: s * 0.6, alpha: Math.min(1, (k - 0.4) * 2.5) });
 }
 
-// Gale, in Tengu's own effect art: a curl of wind spinning at her feet that widens and quickens
-// as it fills, leaves blowing past from halfway, and full (Tailwind), rings of wind racing out
-// from her feet.
-function galeAura(ctx, x, y, t, s, k, layer) {
+// Bond, in Tengu's own effect art: a curl of wind spinning at her feet that widens and quickens
+// as it fills, leaves blowing past from halfway, and full (Wild), rings of wind racing out from
+// her feet.
+function bondAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
     if (k > 0.15) fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * (1 + k), scale: s * (0.5 + 0.4 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2) });
     if (k >= 1) fxSprite(ctx, 'celringwind', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
     return;
   }
   if (k > 0.5) fxSprite(ctx, 'celleaves', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.45, flip: Math.floor((t * 0.9) / 0.45) % 2 === 1, scale: s * (0.4 + 0.2 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
-}
-
-// Focus: lines of light gathering at her chest, growing as it fills; full (Deadeye), the rose
-// sight snaps shut over it on a slow beat.
-function focusAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back' || k <= 0.25) return;
-  const cy = y - 22 * s;
-  fxSprite(ctx, 'celcharge', x, cy, { t, scale: s * (0.35 + 0.25 * k), alpha: Math.min(1, (k - 0.25) * 2) * 0.85 });
-  if (k >= 1) fxSprite(ctx, 'celdeadeye', x, cy, { t: (t % 1.2) * 0.8, scale: s * 0.5, alpha: 0.9 });
 }
 
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
@@ -279,9 +270,9 @@ function starlightAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembstar', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Draws a combat aura: `kind` a job's gauge ('bloom', 'killintent', 'starlight', 'valor', 'momentum', 'shadow', 'rage', 'faith', 'gale' or
-// 'focus'), `k` how full (0-1).
-const COMBAT = { bloom: bloomAura, killintent: intentAura, starlight: starlightAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, gale: galeAura, focus: focusAura };
+// Draws a combat aura: `kind` a job's gauge ('bloom', 'killintent', 'starlight', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
+// 'bond'), `k` how full (0-1).
+const COMBAT = { bloom: bloomAura, killintent: intentAura, starlight: starlightAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

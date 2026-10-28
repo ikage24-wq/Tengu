@@ -143,10 +143,10 @@ function weaponStyle(bot) {
   const type = bot.stats.weaponType;
   const mage = JOBS[bot.char.job].family === 'mage';
   if (mage) return { reach: 170, lift: 100, pose: 'castforward', shot: 'petalbolt', magic: true, ranged: true };
-  // Archers shoot their own way: an Archer's gold arrows, a Ranger's wind arrows, a Sniper's
+  // Archers shoot their own way: an Archer's gold arrows, a Beastmaster's wild arrows, a Stormcaller's
   // heavy bolts.
-  if (bot.char.job === 'ranger') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
-  if (bot.char.job === 'sniper') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
+  if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
+  if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
   if (bot.char.job === 'nightlord') return { reach: 190, lift: 100, pose: pick2(['throw', 'barrage']), shot: 'nightstar', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
@@ -162,7 +162,7 @@ export function makeAI(bot, rng, kind = null) {
   kind ??= bot.level < 12 && rng() < 0.6 ? 'rookie'
     : bot.pro && rng() < 0.6 ? 'showoff'
     : family === 'mage' && rng() < 0.5 ? 'healer'
-    : bot.char.job === 'ranger' ? (rng() < 0.6 ? 'showoff' : 'sniper')
+    : bot.char.job === 'beastmaster' ? (rng() < 0.6 ? 'showoff' : 'sniper')
     : st.ranged ? (rng() < 0.75 ? 'sniper' : 'showoff')
     : bot.char.job === 'paladin' ? (rng() < 0.8 ? 'guardian' : 'rusher')
     : bot.char.job === 'berserker' ? (rng() < 0.8 ? 'rusher' : 'showoff')

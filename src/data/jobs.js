@@ -53,15 +53,16 @@ export const JOBS = {
   },
 
   // Archer branches. Both ask for Kestrel's trial first.
-  ranger: {
-    id: 'ranger', name: 'Ranger', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
-    hp: 24, mp: 18, advanceHp: 320, advanceMp: 280, weapons: ['bow'],
-    blurb: 'Rides the wind with a bow. Every arrow that lands builds Gale; the fuller it is the faster you shoot, and full, every shot looses a twin. Leaps, spins, and storms of arrows.',
+  beastmaster: {
+    id: 'beastmaster', name: 'Beastmaster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    hp: 26, mp: 17, advanceHp: 340, advanceMp: 260, weapons: ['bow'],
+    blurb: 'Hunts with a bow beside her wolf and hawk. Her shots and her animals\' hits build Bond; full, the animals grow bigger and hunt on their own. Pounces, dives, howls and a stampede of spirit beasts.',
   },
-  sniper: {
-    id: 'sniper', name: 'Sniper', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
-    hp: 24, mp: 17, advanceHp: 300, advanceMp: 260, weapons: ['crossbow'],
-    blurb: 'One bolt, one kill. Holding still and landing bolts builds Focus for sharper criticals; full, the next bolt is a Deadeye that always crits and tears through the line. Heavy, frost, and blast bolts.',
+  stormcaller: {
+    // `unfinished`: her skills are still being made; until then she fights with the Archer's.
+    id: 'stormcaller', name: 'Stormcaller', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial', unfinished: true,
+    hp: 24, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['crossbow'],
+    blurb: 'Calls the storm down with a crossbow. Lightning that chains between monsters, charged ground, and thunder from a darkened sky. (Her skills are still being made.)',
   },
 
   // Thief branches. Both ask for Vex's trial first; each keeps to one of the Thief's two weapons.
@@ -87,11 +88,12 @@ export const JOBS = {
 
 // Jobs renamed or retired since older saves were made, and what they became.
 // Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
+// The archer's Ranger and Sniper were remade as the Beastmaster and the Stormcaller.
 export const RETIRED_JOBS = {
   // The mage paths are retired for now (to be remade like the warrior's and archer's): those
   // characters return to the first-job Mage.
   pyromancer: 'mage', infernosage: 'mage', seraph: 'mage', ilwizard: 'mage', fpwizard: 'mage', cleric: 'mage', ilarchmage: 'mage', fparchmage: 'mage', bishop: 'mage',
-  blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'archer', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', beastmaster: 'archer', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
+  blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 
 // Jobs a character can advance into right now, given their current job and level. Some ask for a

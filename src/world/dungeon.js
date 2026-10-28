@@ -451,7 +451,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
     }
     return dmg;
   }
-  if (world.god || blockOnHit(world)) return 0;
+  if (world.god || blockOnHit(world, fromX)) return 0;
   const char = world.char;
   const s = world.stats;
   let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));

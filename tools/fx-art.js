@@ -2377,6 +2377,99 @@
       inked(ctx, Array.from({ length: 12 }, (_, k) => [c + Math.cos((k / 12) * TAU) * 14, g - 2 + Math.sin((k / 12) * TAU) * 4]), steel[3], steel[4], 2);
     },
   };
+
+  // ---------- Snow wolf's moon magic (the Beastmaster's companion, render/snowwolf.js) ----------
+  // Her greatsword, the Fang of the Wolf Queen, casts moonlight: silver-blue, cold, with ice in its
+  // shadows (her ice-blue eyes and the sword's frost), set apart from the Thief's violet moon.
+  const LUNAR = ['#ffffff', '#eef6ff', '#bcd6ff', '#86a8ee', '#3f4f9e'];
+  E.lunarcrescent = crescentOf(LUNAR, PAL.ice);
+  E.lunarmoon = moonOf(LUNAR, PAL.ice);
+  // A crescent of moonlight flying, looping (Crescent Flick, Moon Ward's answer, her Fed Up
+  // swings): a thick bright crescent, horns trailing, motes peeling off behind. Drawn flying right;
+  // its middle is its anchor.
+  E.moonbolt = {
+    w: 120, h: 90, n: 3, fps: 18, px: 72, py: 45, loop: true,
+    draw(ctx, i) {
+      const R = rng(810 + i);
+      const c = [72, 45];
+      const arc = (r, th, col) => {
+        const pts = [];
+        for (let j = 0; j <= 20; j++) { const t = -1.25 + (j / 20) * 2.5; pts.push([c[0] + Math.cos(t) * r, c[1] + Math.sin(t) * r * 1.1]); }
+        for (let j = 20; j >= 0; j--) { const t = -1.25 + (j / 20) * 2.5; const w = th * Math.pow(Math.cos((t / 1.25) * (Math.PI / 2)), 0.8); pts.push([c[0] + Math.cos(t) * (r - w), c[1] + Math.sin(t) * (r - w) * 1.1]); }
+        return pts;
+      };
+      inked(ctx, arc(30, 16, LUNAR[3]), LUNAR[3], LUNAR[4], 3);
+      fill(ctx, arc(28, 11, LUNAR[2]), LUNAR[2]);
+      fill(ctx, arc(26, 6, LUNAR[0]), LUNAR[0]);
+      for (let j = 0; j < 5; j++) sparkle(ctx, LUNAR, 20 + R() * 30, 20 + R() * 50, 4 + R() * 4, R());
+      for (let j = 0; j < 3; j++) fill(ctx, tube([[34 - j * 6, 30 + j * 15], [6 - j * 4 - (i % 2) * 4, 32 + j * 13]], 2, 0.5), LUNAR[2]);
+    },
+  };
+  // Moonfall: a beam of moonlight crashing down from the sky onto one monster, a crescent moon
+  // glowing at its top, then a cold flash and a ring of light where it struck. Its foot is its anchor.
+  E.moonbeam = {
+    w: 160, h: 440, n: 9, fps: 18, px: 80, py: 420, loop: false,
+    draw(ctx, i) {
+      const c = 80;
+      const g = 420;
+      const R = rng(830 + i);
+      const w = [3, 8, 34, 40, 36, 26, 16, 8, 0][i];
+      const top = [380, 120, 20, 20, 20, 20, 20, 20, 20][i];
+      // The crescent moon high above.
+      if (i < 8) {
+        ctx.globalAlpha = i < 6 ? 1 : 0.5;
+        const mc = [c + 6, 40];
+        inked(ctx, Array.from({ length: 24 }, (_, j) => { const t = (j / 23) * TAU; return [mc[0] + Math.cos(t) * 22, mc[1] + Math.sin(t) * 22]; }), LUNAR[1], LUNAR[3], 3);
+        fill(ctx, Array.from({ length: 24 }, (_, j) => { const t = (j / 23) * TAU; return [mc[0] + 9 + Math.cos(t) * 19, mc[1] - 6 + Math.sin(t) * 19]; }), 'rgba(0,0,0,0)');
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath(); ctx.arc(mc[0] + 10, mc[1] - 7, 18, 0, TAU); ctx.fill();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+      // The beam: wide and soft outside, a white core.
+      if (w) {
+        for (const [k, col] of [[1, LUNAR[3]], [0.7, LUNAR[2]], [0.42, LUNAR[1]], [0.16, '#ffffff']]) {
+          const hw = (w * k) / 2;
+          fill(ctx, [[c - hw * 0.6, top], [c + hw * 0.6, top], [c + hw, g], [c - hw, g]], col);
+        }
+        for (let j = 0; j < 6; j++) sparkle(ctx, LUNAR, c + (R() - 0.5) * w * 1.6, top + R() * (g - top), 5 + R() * 5, R());
+      }
+      // The strike: a flash and a ring along the ground, shards of light thrown up.
+      if (i >= 2) {
+        const q = (i - 2) / 6;
+        starburst(ctx, LUNAR, c, g - 10, 46 * (1 - q * 0.5), 8, 840 + i, { inner: 0.35 });
+        ctx.globalAlpha = 1 - q;
+        inked(ctx, Array.from({ length: 24 }, (_, j) => { const t = (j / 23) * TAU; return [c + Math.cos(t) * (20 + q * 60), g - 4 + Math.sin(t) * (5 + q * 12)]; }), 'rgba(0,0,0,0)', LUNAR[2], 4 * (1 - q) + 1);
+        ctx.globalAlpha = 1;
+        for (let j = 0; j < 5; j++) shard(ctx, LUNAR, c + (R() - 0.5) * 80, g - 20 - R() * 60 * q, -Math.PI / 2 + (R() - 0.5), 14 * (1 - q * 0.6), 4);
+      }
+    },
+  };
+  // A moonlight hit: a crescent flash cut across the target, sparkles and shards of light.
+  E.moonhit = {
+    w: 150, h: 150, n: 6, fps: 24, px: 75, py: 75, loop: false,
+    draw(ctx, i) {
+      const c = 75;
+      const q = i / 5;
+      const R = rng(850 + i);
+      starburst(ctx, LUNAR, c, c, 40 * (1 - q * 0.6), 7, 851, { inner: 0.4 });
+      if (i < 4) {
+        const r = 30 + i * 8;
+        const pts = [];
+        for (let j = 0; j <= 16; j++) { const t = -1 + (j / 16) * 2; pts.push([c + Math.cos(t) * r, c + Math.sin(t) * r]); }
+        for (let j = 16; j >= 0; j--) { const t = -1 + (j / 16) * 2; const w = (10 - i * 2) * Math.cos((t * Math.PI) / 2); pts.push([c + Math.cos(t) * (r - w), c + Math.sin(t) * (r - w)]); }
+        inked(ctx, pts, LUNAR[1], LUNAR[3], 2);
+      }
+      for (let j = 0; j < 7; j++) {
+        const a = R() * TAU;
+        const d = 20 + q * 50;
+        if (j % 2) sparkle(ctx, LUNAR, c + Math.cos(a) * d, c + Math.sin(a) * d, 8 * (1 - q * 0.5), j);
+        else shard(ctx, LUNAR, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 12 * (1 - q * 0.6), 3);
+      }
+    },
+  };
+
   // Comet Arrow in flight, looping: a giant gold arrowhead plunging point-first, a great tail of
   // fire streaming up behind it (deep orange outside, gold, a white-hot core), sparks peeling off
   // and flickering. Drawn pointing down; the game turns it along its fall. Its point is its anchor.
@@ -2747,6 +2840,8 @@
     ax.translate(pad, pad);
     ax.scale(K, K);
     e.draw(ax, i);
+    // Some art takes no glow (`glow: false`): a white-furred animal would turn to a blur in one.
+    if (e.glow === false) return { canvas: art, px: e.px * K + pad, py: e.py * K + pad, r: null };
     // The glow comes from the bright parts only: alpha faded out over dark colours.
     const mask = canvas(W, H);
     const mx = mask.getContext('2d');
