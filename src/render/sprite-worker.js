@@ -5,7 +5,6 @@
 import { rasterOf, pixelsOf } from './pixel.js';
 import { mobBuild } from './mobs/index.js';
 
-
 self.onmessage = ({ data: { key, job, scale } }) => {
   try {
     const { w, h, res, crisp, pad, raster } = rasterOf(mobBuild(job.art, job.pose, job.frame, job.mood), scale);
