@@ -1253,7 +1253,7 @@ test('the archer paths have command shots: up at flyers, from the air, and on th
 });
 
 test("the Archer's skills go on as each path's arrows: gold for her, green for the Beastmaster", () => {
-  for (const [job, shot] of [['archer', 'hawkarrow'], ['beastmaster', 'windarrow'], ['stormcaller', 'hawkarrow']]) {
+  for (const [job, shot] of [['archer', 'hawkarrow'], ['beastmaster', 'windarrow'], ['stormcaller', 'stormbolt']]) {
     const w = job === 'archer' ? range() : archer(job);
     w.char.skills.vault = 10;
     w.char.mp = 9999;
@@ -2148,4 +2148,197 @@ test("the Paladin's and the Berserker's combos mix their own swing pools too", (
     });
     for (const s of steps.flat()) assert.ok(seen.has(s.move), `${job}: ${s.move} came up`);
   }
+});
+
+// ---------- The Stormcaller (crossbow, Charge) ----------
+
+test('the Stormcaller fights with her own violet bolts and her own pool of shots, and they build Charge', () => {
+  const pool = PATH_VARIANTS.stormcaller;
+  assert.equal(pool.length, PATH_COMBOS.stormcaller.length, 'one choice per combo step');
+  pool.forEach((step, i) => {
+    assert.equal(step[0], PATH_COMBOS.stormcaller[i], `step ${i + 1} opens with her own`);
+    assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
+    for (const v of step) assert.ok(MOVES[v.move], `${v.move} is a move`);
+  });
+  assert.ok(pool.at(-1).every((v) => v.finisher), 'every last shot is a finisher');
+  const w = archer('stormcaller');
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  let shot = null;
+  for (let i = 0; i < 160; i++) {
+    updateWorld(w, DT, hold);
+    if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
+    shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
+  }
+  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.stormcaller.map((s) => s.move), 'her combo');
+  assert.equal(shot, 'stormbolt', 'violet storm bolts');
+  assert.ok(w.charge > 0, `her bolts build Charge (${w.charge})`);
+  // It fades once the fighting stops.
+  const before = w.charge;
+  run(w, 8);
+  assert.ok(w.charge < before, 'and fades');
+});
+
+test('Arc Bolt: a bolt that lands jumps on to the monsters near it, one after another', () => {
+  const w = archer('stormcaller');
+  // Mastered, it jumps twice: one bolt, all three hit.
+  w.char.skills.arcbolt = 20;
+  let arcs = 0;
+  dice(0.01, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 60; i++) {
+      updateWorld(w, DT, idle);
+      arcs = Math.max(arcs, w.fx.filter((f) => f.kind === 'chainarc').length);
+    }
+  });
+  assert.equal(arcs, 2, 'lightning jumps twice');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'one bolt, all three hit');
+});
+
+test('Supercharged (full Charge): every bolt jumps to one more monster, even without Arc Bolt', () => {
+  const plain = archer('stormcaller');
+  dice(0.5, () => {
+    updateWorld(plain, DT, press('KeyZ'));
+    run(plain, 1);
+  });
+  assert.equal(plain.mobs.filter((m) => m.hp < 1e9).length, 1, 'a plain bolt hits one');
+  const w = archer('stormcaller');
+  w.charge = 100;
+  w.chargeAt = 1e9;
+  dice(0.5, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 1);
+  });
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 2, 'Supercharged, it jumps to one more');
+});
+
+test('Static Field: a bolt charges the ground where it lands, zapping whatever stands there', () => {
+  const w = archer('stormcaller');
+  w.char.skills.staticfield = 10;
+  dice(0.01, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    run(w, 0.6);
+  });
+  assert.equal(w.fields.length, 1, 'the ground is charged');
+  assert.ok(w.fx.some((f) => f.kind === 'staticfield'), 'and crackles');
+  const m = w.mobs[0];
+  const hp = m.hp;
+  dice(0.5, () => run(w, 1.2));
+  assert.ok(m.hp < hp, 'it zaps the monster standing on it');
+  run(w, 4);
+  assert.equal(w.fields.length, 0, 'then runs out');
+});
+
+test("Thunderclap: the combo's last bolt calls lightning down on the farthest monster, always with three in front", () => {
+  const w = archer('stormcaller');
+  w.char.skills.thunderclap = 10;
+  const far = w.mobs.at(-1);
+  let strike = null;
+  let held = false;
+  let air = 0;
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  for (let i = 0; i < 160 && !held; i++) {
+    updateWorld(w, DT, hold);
+    strike ??= w.fx.find((f) => f.kind === 'zapstrike');
+    air = Math.max(air, far.air ?? 0);
+    held ||= far.hold === 'stun';
+  }
+  assert.ok(strike, 'lightning strikes');
+  assert.ok(Math.abs(strike.x - far.x) < 30, 'on the farthest');
+  run(w, 0.3);
+  assert.ok(held || far.hold === 'stun', 'stunning it');
+});
+
+test('Lightning Rod: a hit she takes is softened, and the shock arcs back into the monster', async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const taken = (rod) => {
+    const w = archer('stormcaller');
+    w.god = false;
+    if (rod) w.char.skills.lightningrod = 10;
+    const m = w.mobs[0];
+    m.x = w.body.x + 30;
+    const hp = w.char.hp;
+    let lost = 0;
+    dice(0.5, () => {
+      hurtPlayer(w, 300, m.x);
+      lost = hp - w.char.hp;
+      run(w, 0.3);
+    });
+    return { lost, struck: m.hp < 1e9, arc: w.fx.some((f) => f.kind === 'chainarc') };
+  };
+  const plain = taken(false);
+  const rod = taken(true);
+  assert.ok(rod.lost < plain.lost, `softened (${rod.lost} < ${plain.lost})`);
+  assert.ok(rod.struck && !plain.struck, 'the shock hits the monster that hit her');
+});
+
+test('Eye of the Storm: while Supercharged, a cloud over her drops lightning on the monsters near her', () => {
+  const w = archer('stormcaller');
+  w.char.skills.eyeofstorm = 10;
+  run(w, 0.5);
+  assert.ok(!w.fx.some((f) => f.kind === 'stormcloud'), 'no cloud before she is Supercharged');
+  const struck = new Set();
+  for (let i = 0; i < 60 * 3; i++) {
+    w.charge = 100;
+    w.chargeAt = w.now;
+    updateWorld(w, DT, idle);
+    for (const f of w.fx) if (f.kind === 'zapstrike') struck.add(f);
+  }
+  const strikes = struck.size;
+  assert.ok(w.fx.some((f) => f.kind === 'stormcloud'), 'a cloud gathers over her');
+  assert.ok(strikes >= 2, `lightning drops out of it (${strikes})`);
+  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'onto the monsters');
+  w.charge = 0;
+  run(w, 1);
+  assert.ok(!w.fx.some((f) => f.kind === 'stormcloud'), 'and it clears when the Charge is gone');
+});
+
+test('Overcharge: her next few bolts go out as massive piercing bolts of lightning, then it ends', () => {
+  const w = archer('stormcaller');
+  w.char.skills.overcharge = 10;
+  assert.ok(cast(w, 'overcharge').ok);
+  run(w, 1.2);
+  const shots = w.char.buffs.overcharge.values.shots;
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  dice(0.5, () => {
+    for (let i = 0; i < 60 * 8; i++) {
+      updateWorld(w, DT, hold);
+      for (const f of w.fx) if (f.kind === 'projectile' && !f.counted) {
+        f.counted = true;
+        seen.push(f.shot);
+      }
+    }
+  });
+  assert.equal(seen.slice(0, shots).filter((s) => s === 'megabolt').length, shots, `the first ${shots} are massive`);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'tearing through the whole line');
+  assert.ok(seen.slice(shots).every((s) => s !== 'megabolt'), 'then her bolts are back to normal');
+});
+
+test('Thunderhead needs full Charge, spends it, and the storm hits everything on the screen', () => {
+  const w = archer('stormcaller');
+  w.char.skills.thunderhead = 10;
+  w.charge = 60;
+  assert.equal(cast(w, 'thunderhead').reason, 'gauge:charge', 'waits for full Charge');
+  w.charge = 100;
+  w.chargeAt = w.now;
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-260, 150, 300][i] }));
+  assert.ok(cast(w, 'thunderhead').ok);
+  assert.equal(w.charge, 0, 'spends all of it');
+  let sky = false;
+  let giant = false;
+  const struck = new Set();
+  dice(0.5, () => {
+    for (let i = 0; i < 60 * 5; i++) {
+      updateWorld(w, DT, idle);
+      sky ||= w.fx.some((f) => f.kind === 'stormsky');
+      giant ||= w.fx.some((f) => f.kind === 'gigabolt');
+      for (const f of w.fx) if (f.kind === 'zapstrike') struck.add(f);
+    }
+  });
+  const strikes = struck.size;
+  assert.ok(sky, 'the storm breaks over the screen');
+  assert.ok(strikes >= 8, `lightning again and again (${strikes})`);
+  assert.ok(giant, 'then one giant bolt');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster both ways is hit');
 });

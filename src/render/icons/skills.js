@@ -35,6 +35,7 @@ const BG = {
   skyblue: ['#cdeeff', '#3a74d0'],
   blood: ['#ffa0b4', '#5a0e24'],
   indigo: ['#b8bcff', '#1e1a5e'],
+  tempest: ['#cdb4ff', '#262a7e'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -1033,6 +1034,97 @@ function quickhaste() {
   return out;
 }
 
+// ---------- Stormcaller (electric violet and storm blue) ----------
+const VOLT = '#b48cff';
+const VOLT_LT = '#efe4ff';
+const VOLT_INK = '#2a3394';
+// A small round monster seen far off: a dark blob with two white eyes.
+const blob = (x, y, r = 1.6) => [...solid(oval(x, y, r, r * 0.9, 0, 16), '#4a3a7a', { d: 0.3, ink: '#1a1440' }), S(oval(x - r * 0.35, y - 0.2, 0.3, 0.38, 0, 8), W), S(oval(x + r * 0.35, y - 0.2, 0.3, 0.38, 0, 8), W)];
+
+function stormmastery() {
+  const out = [...tile('tempest', 'passive'), ...aura(8, 8, 6.6, '#efe4ff')];
+  // A crossbow with a violet bolt laid in it and lightning crackling off the prod.
+  out.push(...crossbowArt([2.6, 13], [12.2, 4.6], { wood: '#5a4a8a', prod: VOLT_LT, bolt0: VOLT }));
+  out.push(...bolt([[13.4, 6.6], [12.2, 9], [13.8, 9.2], [12.8, 12.6]], 1.1, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...spark(4.2, 3.4, 1.1, '#ffffff'));
+  return out;
+}
+
+function arcbolt() {
+  const out = [...tile('tempest', 'passive'), ...aura(8, 8, 6.8, '#efe4ff', 1.2)];
+  // A bolt hits one monster and lightning jumps on to two more.
+  out.push(...blob(4, 10.6), ...blob(9, 4.6, 1.4), ...blob(13, 11.4, 1.4));
+  out.push(...bolt([[5.2, 9.2], [6.6, 8], [6.2, 6.8], [8, 5.6]], 0.9, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...bolt([[10, 5.8], [11.6, 7.4], [10.8, 8.4], [12.4, 10.2]], 0.9, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...arrow([0.6, 15.2], [3.4, 11.6], { hw: 1, hl: 1.6, sw: 0.45, fl: VOLT, head: '#ffffff' }));
+  out.push(...spark(4, 10.4, 1.2, '#ffffff'), ...spark(9, 4.4, 0.9, '#ffffff'));
+  return out;
+}
+
+function staticfield() {
+  const out = [...tile('tempest', 'passive'), ...aura(8, 11, 6.6, '#efe4ff', 1.2)];
+  // Charged ground: a glowing violet pool with little arcs jumping up out of it.
+  out.push(...solid(oval(8, 12, 6.6, 2.2, 0, 28), VOLT, { d: 0.4, ink: VOLT_INK, light: VOLT_LT }));
+  out.push(S(oval(8, 11.8, 3.6, 1, 0, 20), '#ffffff'));
+  for (const [x, h, k] of [[4.2, 5.6, 1], [8, 8.4, -1], [11.8, 6, 1]]) out.push(...bolt([[x, 11.6], [x + k * 1.2, 11.6 - h * 0.4], [x - k * 0.4, 11.6 - h * 0.6], [x + k * 0.8, 11.6 - h]], 0.8, VOLT_LT, { ink: VOLT_INK, shadow: false }));
+  out.push(...spark(13.4, 3.4, 1, '#ffffff'));
+  return out;
+}
+
+function thunderclap() {
+  const out = [...tile('tempest', 'passive'), ...aura(8, 9, 6.8, '#efe4ff', 1.3)];
+  // A storm cloud with a great bolt striking down out of it onto the ground.
+  out.push(...bolt([[8.6, 5.4], [6.4, 9], [8.6, 9.2], [6.8, 14]], 1.7, VOLT_LT, { ink: VOLT_INK }));
+  out.push(...solid(starPts(6.8, 13.4, 3, 1.3, 8, -90), VOLT, { shadow: false, d: 0.35, ink: VOLT_INK }));
+  out.push(...puffs([[5, 4.2, 2.4], [8.4, 3.2, 2.8], [11.6, 4.4, 2.3], [8, 5.4, 2]], '#8a86c8', { shadow: false, dark: '#5a5296', ink: '#1a1a5a' }));
+  out.push(...spark(13.2, 10.4, 1.1, '#ffffff'));
+  return out;
+}
+
+function lightningrod() {
+  const out = [...tile('tempest', 'passive'), ...aura(6, 8, 6.6, '#efe4ff', 1.2)];
+  // A rod standing tall, crackling, and the shock arcing back into a monster.
+  out.push(...solid(rect(4.4, 3, 1.6, 11.4), '#cfd6ff', { d: 0.35, ink: VOLT_INK }));
+  out.push(...solid(polyPts(5.2, 2.6, 1.8, 4), VOLT_LT, { d: 0.35, ink: VOLT_INK }));
+  out.push(...blob(12.4, 11.4, 1.8));
+  out.push(...bolt([[6.4, 3.6], [9.6, 5.4], [8.6, 7], [11.6, 9.6]], 1.1, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...spark(5.2, 2.4, 1.3, '#ffffff'), ...spark(13.6, 3.2, 0.9, '#ffffff'));
+  return out;
+}
+
+function eyeofstorm() {
+  const out = [...tile('tempest', 'passive'), ...aura(8, 8, 6.8, '#efe4ff', 1.2)];
+  // A storm cloud with a glowing eye of lightning at its heart, bolts dropping out of it.
+  out.push(...bolt([[5.4, 7], [4.2, 10], [5.6, 10.2], [4.4, 14]], 1, VOLT_LT, { ink: VOLT_INK, shadow: false }));
+  out.push(...bolt([[11, 7], [12.2, 10.4], [10.8, 10.6], [12, 14.4]], 1, VOLT_LT, { ink: VOLT_INK, shadow: false }));
+  out.push(...puffs([[4.4, 5.6, 2.6], [8, 4.4, 3.2], [11.8, 5.6, 2.6], [8, 7, 2.4]], '#6c66ae', { shadow: false, dark: '#4c478a', ink: '#14122c' }));
+  out.push(...solid(oval(8, 5.6, 2, 1.3, 0, 20), VOLT_LT, { shadow: false, d: 0.3, ink: VOLT_INK }));
+  out.push(S(oval(8, 5.6, 0.8, 0.9, 0, 12), VOLT));
+  return out;
+}
+
+function overcharge() {
+  const out = [...tile('tempest', 'buff'), ...aura(8, 8, 7, '#efe4ff', 1.4)];
+  // The crossbow loaded with a huge bolt of lightning, crackling all over.
+  out.push(...crossbowArt([2.2, 13.6], [11, 5.4], { wood: '#5a4a8a', prod: VOLT_LT, bolt0: VOLT }));
+  out.push(...bolt([[9.6, 2.2], [12, 4.6], [11, 5.4], [14.4, 7.8]], 1.6, VOLT_LT, { ink: VOLT_INK, shadow: false }));
+  out.push(...bolt([[1.6, 8], [3.6, 9], [2.8, 10.2], [4.8, 11]], 0.8, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...spark(13.2, 12.4, 1.2, '#ffffff'));
+  return out;
+}
+
+function thunderhead() {
+  const out = [...tile('royal', 'active'), ...aura(8, 9, 7, '#d8c8ff', 1.4)];
+  // The storm over the whole screen: black clouds across the top and one giant bolt striking down
+  // between smaller ones.
+  out.push(...bolt([[3.2, 5], [2.4, 8], [3.6, 8.2], [2.6, 11]], 0.8, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...bolt([[13, 5], [13.8, 8], [12.6, 8.2], [13.6, 11]], 0.8, VOLT, { ink: VOLT_INK, shadow: false }));
+  out.push(...bolt([[8.8, 4], [6.4, 8.4], [9, 8.6], [7, 14.6]], 2.2, '#ffffff', { ink: VOLT_INK, core: VOLT_LT }));
+  out.push(...solid(starPts(7, 14, 3.4, 1.4, 8, -90), VOLT, { shadow: false, d: 0.35, ink: VOLT_INK }));
+  out.push(...puffs([[2.6, 3, 2.4], [6, 2.2, 2.8], [10, 2.2, 2.8], [13.6, 3, 2.4]], '#4c478a', { shadow: false, dark: '#332f66', ink: '#14122c' }));
+  return out;
+}
+
 function shadowdash() {
   const navy = '#2e2466';
   const out = [...tile('dusk', 'active')];
@@ -1318,6 +1410,7 @@ const ART = {
   petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
   blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
   beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
+  stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   assassinmastery, crowcombo, markdeath, vanish, poisonblade, bloodmoonrequiem,
   nightlordmastery, starstorm, giantshuriken, starmark, shadowshuriken, galaxyfall,

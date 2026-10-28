@@ -10,6 +10,7 @@
 //     the group regroups at its entrance.
 
 import { faithGuard } from './melee.js';
+import { rodGuard } from './storm.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
@@ -454,7 +455,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   if (world.god || blockOnHit(world, fromX)) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));
+  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

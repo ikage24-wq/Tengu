@@ -34,7 +34,7 @@ const PATHS = {
   berserker: { name: 'TestBerserker', title: 'Berserker', weapon: 'axe', skills: { berserkermastery: 20, ravage: 20, bloodfrenzy: 20, rampage: 20, bloodlust: 10, demonform: 10, crimsoneclipse: 10 }, finisher: 'crimsoneclipse' },
   archer: { name: 'TestArcher', title: 'Archer', family: 'archer', weapon: 'bow', skills: {}, finisher: 'cometarrow' },
   beastmaster: { name: 'TestBeastmaster', title: 'Beastmaster', family: 'archer', weapon: 'bow', skills: { beastmastery: 20, wolfpounce: 20, hawkstrike: 20, packhowl: 20, loyalguard: 10, alpha: 10, snacktime: 10, stampede: 10 }, finisher: 'stampede', buff: 'snacktime' },
-  stormcaller: { name: 'TestStormcaller', title: 'Stormcaller', family: 'archer', weapon: 'crossbow', skills: {}, finisher: 'cometarrow' },
+  stormcaller: { name: 'TestStormcaller', title: 'Stormcaller', family: 'archer', weapon: 'crossbow', skills: { stormmastery: 20, arcbolt: 20, staticfield: 20, thunderclap: 20, lightningrod: 10, eyeofstorm: 10, overcharge: 10, thunderhead: 10 }, finisher: 'thunderhead', buff: 'overcharge' },
 };
 const q = new URLSearchParams(location.search);
 const path = PATHS[q.get('job')] ?? PATHS.warrior;

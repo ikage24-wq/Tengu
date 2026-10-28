@@ -505,6 +505,18 @@ const ICONS = {
     ctx.arc(s * 0.2, -s * 0.12, s * 0.34, 0, Math.PI * 2, true);
     ctx.fill('evenodd');
   },
+  // A lightning bolt (the Stormcaller's Charge).
+  bolt(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(s * 0.12, -s * 0.5);
+    ctx.lineTo(-s * 0.26, s * 0.06);
+    ctx.lineTo(-s * 0.02, s * 0.06);
+    ctx.lineTo(-s * 0.14, s * 0.5);
+    ctx.lineTo(s * 0.28, -s * 0.08);
+    ctx.lineTo(s * 0.03, -s * 0.08);
+    ctx.closePath();
+    ctx.fill();
+  },
   // A feather (the Archer's Momentum).
   feather(ctx, s) {
     ctx.save();

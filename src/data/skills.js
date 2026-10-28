@@ -460,6 +460,66 @@ export const SKILLS = {
     },
   }),
 
+  // ---------- Stormcaller (the archer's crossbow path: electric violet and storm blue) ----------
+  // Her bolts that land build Charge (0-100, see world/melee.js), and every monster her lightning
+  // jumps to builds it too; it fades once the fighting stops. Full (Supercharged), every bolt
+  // chains to one more monster. Like the Archer, she fights with her basic shots and her skills
+  // set themselves off (world/storm.js): Arc Bolt and Static Field from any bolt, Thunderclap from
+  // her combo's last bolt. Storm Mastery is her passive. Her late skills (`minLevel`): Lightning
+  // Rod and Eye of the Storm. Her buttons are the Archer's Vault, Overcharge and the finisher,
+  // Thunderhead.
+  stormmastery: skill({
+    id: 'stormmastery', name: 'Storm Mastery', job: 'stormcaller', type: 'passive', fx: null,
+    desc: 'Steadier bolts, more attack, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  arcbolt: skill({
+    id: 'arcbolt', name: 'Arc Bolt', job: 'stormcaller', type: 'passive', fx: null, school: 'storm',
+    desc: 'Your bolts sometimes crackle with lightning when they hit: it jumps on to the nearest monsters, one after another. While Supercharged, every bolt jumps to one more.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.45, lv, m), jumps: lerp(1, 2, lv, m), pct: lerp(50, 80, lv, m) } }),
+  }),
+  staticfield: skill({
+    id: 'staticfield', name: 'Static Field', job: 'stormcaller', type: 'passive', fx: null, school: 'storm',
+    desc: 'Your bolts sometimes charge the ground where they hit: for a few seconds it crackles, zapping every monster standing on it twice a second.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m), secs: lerpf(2, 3.5, lv, m), r: lerp(50, 70, lv, m), pct: lerp(25, 45, lv, m) } }),
+  }),
+  thunderclap: skill({
+    id: 'thunderclap', name: 'Thunderclap', job: 'stormcaller', type: 'passive', fx: null, school: 'storm',
+    desc: 'The last bolt of your combo sometimes calls lightning down from the sky on the farthest monster in front of you, throwing everything close to it into the air and stunning it for a moment. Always, if three or more monsters are in front of you.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), crowd: 3, pct: lerp(120, 200, lv, m), stun: lerpf(0.5, 1, lv, m), r: lerp(50, 70, lv, m) } }),
+  }),
+  lightningrod: skill({
+    id: 'lightningrod', name: 'Lightning Rod', job: 'stormcaller', type: 'passive', fx: null, school: 'storm', maxLevel: 10, minLevel: 50,
+    desc: 'You are charged with the storm: every hit you take is softened, and its shock arcs straight back into the monster that hit you.',
+    at: (lv, m) => ({ passive: {}, proc: { cut: lerpf(0.1, 0.25, lv, m), pct: lerp(120, 220, lv, m) } }),
+  }),
+  eyeofstorm: skill({
+    id: 'eyeofstorm', name: 'Eye of the Storm', job: 'stormcaller', type: 'passive', fx: null, school: 'storm', maxLevel: 10, minLevel: 70,
+    desc: 'While you are Supercharged, a storm cloud gathers over your head and keeps dropping lightning on the monsters around you.',
+    at: (lv, m) => ({ passive: {}, proc: { every: lerpf(1.1, 0.6, lv, m), pct: lerp(100, 180, lv, m), r: 280 } }),
+  }),
+  overcharge: skill({
+    id: 'overcharge', name: 'Overcharge', job: 'stormcaller', type: 'buff', fx: 'buff', school: 'storm', maxLevel: 10,
+    desc: 'Pour the storm into your crossbow: your next few bolts are massive bolts of lightning that tear through every monster in their line, hitting far harder.',
+    at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: 20, buff: { shots: lerp(3, 6, lv, m), power: lerpf(1.6, 2.2, lv, m) } }),
+  }),
+  thunderhead: skill({
+    id: 'thunderhead', name: 'Thunderhead', job: 'stormcaller', type: 'attack', fx: null, school: 'storm', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Charge, and spends it. Fire a bolt straight up into the sky: the storm breaks over the whole screen, lightning crashes down on the monsters again and again, and then one giant bolt strikes, hitting everything on the screen and throwing it into the air.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      // She fires the bolt up; the storm itself (world/storm.js) lands the blows, with the skill's
+      // `pct` for each strike and `big` for the giant bolt.
+      return {
+        mp: k(30, 50), pct: k(130, 220), big: k(700, 1200), strikes: k(8, 12), hits: 2, targets: 12,
+        combo: [{ move: 'skyshot', dur: 0.9, step: 0, finisher: true, guard: 0.9, strikes: [
+          { at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, burst: 'thunderhead', burstAt: 0, burstDur: 0.1, quiet: true, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Thief (violet and midnight with moonlight silver: crescent moons and smoke) ----------
   // Every Thief shares Shadow (0-100, see world/melee.js): hits landing in quick chains build it,
   // and full (Phantom) a shadow copy repeats every attack. The rest of the book is a choice: dagger
@@ -767,7 +827,7 @@ export const SKILLS = {
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
   vault: 'vault', cometarrow: 'comet',
-  stampede: 'skyshot', snacktime: 'throw',
+  stampede: 'skyshot', snacktime: 'throw', overcharge: 'steadyaim', thunderhead: 'skyshot',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',

@@ -59,10 +59,9 @@ export const JOBS = {
     blurb: 'Hunts with a bow beside her wolf and hawk. Her shots and her animals\' hits build Bond; full, the animals grow bigger and hunt on their own. Pounces, dives, howls and a stampede of spirit beasts.',
   },
   stormcaller: {
-    // `unfinished`: her skills are still being made; until then she fights with the Archer's.
-    id: 'stormcaller', name: 'Stormcaller', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial', unfinished: true,
+    id: 'stormcaller', name: 'Stormcaller', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 24, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['crossbow'],
-    blurb: 'Calls the storm down with a crossbow. Lightning that chains between monsters, charged ground, and thunder from a darkened sky. (Her skills are still being made.)',
+    blurb: 'Calls the storm down with a crossbow. Her bolts build Charge; full, every bolt chains on to one more monster. Lightning that jumps between monsters, charged ground, a storm cloud overhead, and Thunderhead: a storm over the whole screen.',
   },
 
   // Thief branches. Both ask for Vex's trial first; each keeps to one of the Thief's two weapons.

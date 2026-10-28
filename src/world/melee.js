@@ -32,6 +32,7 @@ import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform } f
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
+import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
@@ -182,6 +183,13 @@ export const PATH_COMBOS = {
   ],
   // The archer paths. The Beastmaster: a snap shot, a twirl that looses two arrows, then a hop
   // that fans three wild arrows down on them; light and quick, her animals at her side.
+  // The Stormcaller: a bolt snapped off from the hip, a double tap, then a kneeling thunderbolt
+  // that tears through the line. Violet lightning crackles off every bolt.
+  stormcaller: [
+    { move: 'hipfire', dur: 0.4, step: -3, strikes: [{ at: 0.4, shot: 'stormbolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
+    { move: 'quickshot', dur: 0.46, step: -3, strikes: [{ at: 0.3, shot: 'stormbolt', pct: 55, range: 320, h: 60, knock: 20, speed: 1000 }, { at: 0.6, shot: 'stormbolt', pct: 60, range: 320, h: 60, knock: 40, speed: 1000, oy: 3 }] },
+    { move: 'kneelshot', dur: 0.66, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'thunderbolt', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1100, knock: 230, big: true, stop: 0.07, shake: 3, muzzle: 'stormspark' }] },
+  ],
   beastmaster: [
     { move: 'quickshot', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
     { move: 'spinshot', dur: 0.48, step: 6, strikes: [{ at: 0.32, shot: 'windarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 860 }, { at: 0.72, shot: 'windarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 860 }] },
@@ -194,8 +202,9 @@ export const PATH_COMBOS = {
 const ARCHER_LOOK = {
   archer: { arrow: 'hawkarrow', big: 'hawkbig', rain: 'hawkarrow', muzzle: 'feathers', school: 'hawk' },
   beastmaster: { arrow: 'windarrow', big: 'galearrow', rain: 'windarrow', muzzle: 'gust', school: 'wind' },
+  stormcaller: { arrow: 'stormbolt', big: 'thunderbolt', rain: 'stormbolt', muzzle: 'stormspark', school: 'storm' },
 };
-export const archerLook = (char) => ARCHER_LOOK[hasBond(char) ? 'beastmaster' : 'archer'];
+export const archerLook = (char) => ARCHER_LOOK[hasBond(char) ? 'beastmaster' : hasCharge(char) ? 'stormcaller' : 'archer'];
 // One of the Archer's gold shots as the path's own.
 const pathShot = (char, shot) => {
   const L = archerLook(char);
@@ -220,6 +229,19 @@ function shotsOf(L) {
 }
 const ARCHER_SHOTS = shotsOf(ARCHER_LOOK.archer);
 const BEAST_SHOTS = shotsOf(ARCHER_LOOK.beastmaster);
+// The Stormcaller's own pool, crossbow work: crank and fire (two bolts), a roll up onto one knee
+// for a bolt, the point-blank kick, a hop back loosing two down at them, and a braced spray of three.
+const boltAt = (at, pct, f = {}) => ({ at, shot: 'stormbolt', pct, range: 320, h: 60, knock: 30, speed: 1000, ...f });
+const STORM_SHOTS = {
+  crank: { move: 'crankshot', dur: 0.62, step: -2, strikes: [boltAt(0.5, 55), boltAt(0.8, 65, { knock: 60, oy: -3 })] },
+  roll: { move: 'rollshot', dur: 0.56, step: 40, carry: 0.55, strikes: [boltAt(0.66, 105, { knock: 90, stop: 0.04 })] },
+  kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
+    { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
+    boltAt(0.62, 110, { knock: 180, big: true, stop: 0.05 }),
+  ] },
+  hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [boltAt(0.5, 70, { fan: 2, range: 300, h: 150, drop: 30, knock: 60 })] },
+  spray: { move: 'ballista', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'thunderbolt', fan: 3, pct: 100, range: 330, h: 120, knock: 160, launch: 100, speed: 1050, big: true, stop: 0.05, shake: 2, muzzle: 'stormspark' }] },
+};
 
 // A path's combo with a choice of swings at each step, so holding attack doesn't play the same
 // string over and over: each time the combo starts, one swing is drawn for every step, and never
@@ -303,6 +325,14 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.beastmaster[1], BEAST_SHOTS.burst, BEAST_SHOTS.hop],
     [PATH_COMBOS.beastmaster[2], BEAST_SHOTS.overdraw, BEAST_SHOTS.skyrain],
   ],
+  // The Stormcaller. Openers: her hip shot, crank and fire, or a roll up onto one knee. Second: her
+  // double tap, the point-blank kick, or a hop back loosing two down. Finisher: the kneeling
+  // thunderbolt through the line, or a braced spray of three.
+  stormcaller: [
+    [PATH_COMBOS.stormcaller[0], STORM_SHOTS.crank, STORM_SHOTS.roll],
+    [PATH_COMBOS.stormcaller[1], STORM_SHOTS.kick, STORM_SHOTS.hop],
+    [PATH_COMBOS.stormcaller[2], STORM_SHOTS.spray],
+  ],
 };
 
 // Picks one swing for each step of a combo with choices, never the same string as `last`. The
@@ -376,6 +406,17 @@ const ARCHER_COMMANDS = {
       { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'galearrow', fan: 3, pct: 90, range: 280, h: 190, drop: 60, knock: 120, speed: 950, big: true, stop: 0.05, shake: 1 }] },
     ],
     dash: { move: 'slideshot', dur: 0.5, step: 46, carry: 0.6, strikes: [{ at: 0.35, shot: 'windarrow', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }, { at: 0.62, shot: 'windarrow', pct: 90, range: 300, h: 60, knock: 90, speed: 900 }] },
+  },
+  // The Stormcaller: a thunderbolt up at fliers, two bolts down from a hang, a slide shot out of a
+  // run, and down at whatever is below.
+  stormcaller: {
+    down: { move: 'downshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'stormbolt', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 1000 }] },
+    up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 1000, big: true, stop: 0.05 }] },
+    air: [
+      { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'stormbolt', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 1000 }] },
+      { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 1050, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'stormbolt', pct: 95, range: 300, h: 60, knock: 80, speed: 1000 }] },
   },
 };
 
@@ -471,6 +512,19 @@ export function addBond(world, n) {
   world.bondAt = world.now;
 }
 export const wild = (world) => hasBond(world.char) && (world.bond ?? 0) >= BOND_MAX;
+// Charge: the Stormcaller's gauge. Her bolts that land build it, and so does every monster her
+// lightning jumps to; it fades once the fighting stops. Full (Supercharged), every bolt chains to
+// one more monster, and the finisher spends it.
+export const CHARGE_MAX = 100;
+const CHARGE_HOLD = 5;
+const CHARGE_DRAIN = 12;
+export const hasCharge = (char) => jobChain(char.job).includes('stormcaller');
+export function addCharge(world, n) {
+  if (!hasCharge(world.char) || n <= 0) return;
+  world.charge = Math.min(CHARGE_MAX, (world.charge ?? 0) + n);
+  world.chargeAt = world.now;
+}
+export const supercharged = (world) => hasCharge(world.char) && (world.charge ?? 0) >= CHARGE_MAX;
 // Valor: the Warrior's gauge (first job; the paths have their own). Every blow that lands builds
 // it, and faster the more monsters one blow catches at once; it fades once the fighting stops.
 // Full (Unbroken), his blows land heavier and knock harder, and nothing knocks him back.
@@ -593,10 +647,10 @@ export function healAround(world, x, y, pct, r) {
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'nightstar', 'giantstar']);
 // A job's own gauge: which one the character has ('bloom', 'killintent', 'starlight', 'valor', 'momentum',
-// 'shadow', 'rage', 'faith' or 'bond'), and how full it is (0-1). Finishers need it full
+// 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasBloom(char) ? 'bloom' : hasIntent(char) ? 'killintent' : hasStarlight(char) ? 'starlight' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : null;
+  return hasBloom(char) ? 'bloom' : hasIntent(char) ? 'killintent' : hasStarlight(char) ? 'starlight' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -610,6 +664,7 @@ export function addAim(world, n, mob = null) {
   addMomentum(world, n);
   addShadow(world, n);
   addBond(world, n);
+  addCharge(world, n);
 }
 // The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
 function pathOf(world) {
@@ -622,8 +677,7 @@ function pathOf(world) {
   if (MELEE.has(w) && w !== 'none') return hasValor(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
   if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
   if (w === 'bow' && hasBond(char)) return 'beastmaster';
-  // The Stormcaller fights with the Archer's shots until her own are made.
-  if (w === 'crossbow' && char.job === 'stormcaller') return 'archer';
+  if (w === 'crossbow' && hasCharge(char)) return 'stormcaller';
   return null;
 }
 
@@ -812,6 +866,7 @@ export function tickMelee(world, dt) {
   if (world.rage > 0 && world.now - (world.rageAt ?? 0) > RAGE_HOLD && !inForm(world)) world.rage = Math.max(0, world.rage - RAGE_DRAIN * dt);
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
+  if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.bloom > 0 && world.now - (world.bloomAt ?? 0) > BLOOM_HOLD) world.bloom = Math.max(0, world.bloom - BLOOM_DRAIN * dt);
   if (world.killintent > 0 && world.now - (world.killintentAt ?? 0) > INTENT_HOLD) world.killintent = Math.max(0, world.killintent - INTENT_DRAIN * dt);
@@ -821,6 +876,7 @@ export function tickMelee(world, dt) {
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
   tickTraps(world);
+  tickStorm(world);
   tickPets(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
@@ -1127,6 +1183,18 @@ function shotProcs(world, s, rng = Math.random) {
     const crowd = pickTargets(world.mobs, body, { w: 320, h: 150 }, 9).length;
     if (crowd >= howlP.crowd || rng() < howlP.chance) howl(world, howlP);
   }
+  // The Stormcaller's: a bolt may jump on from what it hits (Arc Bolt) or charge the ground there
+  // (Static Field), and the combo's last bolt may call lightning down on the farthest monster in
+  // front of her (Thunderclap).
+  const arc = procOf(char, 'arcbolt');
+  if (arc && s.shot && rng() < arc.chance) s = { ...s, arc: { n: arc.jumps, pct: arc.pct } };
+  const field = procOf(char, 'staticfield');
+  if (field && s.shot && rng() < field.chance) s = { ...s, field };
+  const clap = procOf(char, 'thunderclap');
+  if (clap && s.finisher && /^basic\d$/.test(s.key)) {
+    const crowd = pickTargets(world.mobs, body, { w: 340, h: 160 }, 9);
+    if (crowd.length && (crowd.length >= clap.crowd || rng() < clap.chance)) thunderclap(world, crowd.at(-1), clap);
+  }
   return s;
 }
 
@@ -1135,6 +1203,12 @@ function shotProcs(world, s, rng = Math.random) {
 // picks herself).
 export function beastHit(world, m, f) {
   shotHit(world, { pct: f.pct, scale: 100, key: 'procbeast', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 120, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst, stun: f.stun, gauge: f.gauge ?? 5 }, m, 0);
+}
+
+// A hit of the Stormcaller's lightning (world/storm.js): it lands like one of her shots, `at`
+// seconds from now, from `x` (knocking monsters away from there), and never chains on.
+export function stormHit(world, m, f, at = 0, element = null) {
+  shotHit(world, { pct: f.pct, scale: 100, key: f.key ?? 'procstorm', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'zap', stun: f.stun, gauge: f.gauge ?? 3, chained: true }, m, at, f.stack ?? 0, element);
 }
 
 // Spring Trap: a trap set on the ground ahead, armed until a monster steps on it or it rusts away
@@ -1191,7 +1265,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasBloom(char) ? 'bloomhit' : hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : undefined;
+  const spark = hasBloom(char) ? 'bloomhit' : hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1199,6 +1273,14 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),
   });
+  // The Stormcaller's lightning: a bolt that lands may jump on to the monsters near it (Arc Bolt,
+  // and one more while Supercharged), or leave the ground under it charged (Static Field). Only
+  // the first monster a piercing bolt reaches sets these off.
+  if (!miss && rank === 0 && s.shot && !s.chained && hasCharge(char)) {
+    const jumps = (s.arc?.n ?? 0) + (supercharged(world) ? 1 : 0);
+    if (jumps) chainArc(world, s, m, delay, jumps, element);
+    if (s.field) staticField(world, m, delay, s.field);
+  }
   // Full Bloom: a damage spell scatters healing petals over the allies near where it lands.
   if (fullBloom(world) && !miss && s.magic && s.pct > 0) {
     world.strikes.push({ healAt: true, x: m.x, y: m.y, amount: BLOOM_HEAL, due: world.now + delay });
@@ -1215,7 +1297,8 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, strike) {
-  let s = strike;
+  // Overcharge: her next few bolts go out as massive bolts of lightning.
+  let s = hasCharge(world.char) ? overcharged(world, strike) : strike;
   const { body } = world;
   // A gauntlet throws real stars: one each, from the set in your bag.
   let star = null;
@@ -1257,7 +1340,8 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
-  if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  if (hasCharge(world.char)) world.fx.push({ kind: 'stormspark', small: true, x: ox, y: oy, dir: s.dir, t: 0, dur: 0.3 });
+  else if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.

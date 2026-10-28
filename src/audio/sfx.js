@@ -83,7 +83,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { petalbolt: 'zap', bloombolt: 'zap', nightstar: 'star', giantstar: 'star', moonstar: 'star', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
+const SHOTS = { petalbolt: 'zap', bloombolt: 'zap', nightstar: 'star', giantstar: 'star', moonstar: 'star', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   burst: 'zapHit', beam: 'zapHit',
@@ -94,10 +94,12 @@ const SPELLS = {
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
   feathers: 'gust', titanwave: 'quake', moonslash: 'bladestorm', smokepuff: 'gust', petalstorm: 'gust', healbloom: 'holyBurst', crowburst: 'gust', crowcut: 'bladestorm', execute: 'bladestorm', starpop: 'zapHit',
+  zapstrike: 'lightning', chainarc: 'zap', staticfield: 'zap', supercharged: 'castZap',
+  skybolt: 'zap', stormsky: 'castZap', gigabolt: 'meteor',
 };
-const ARROWS = new Set(['hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt']);
+const ARROWS = new Set(['hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt', 'stormbolt', 'thunderbolt', 'megabolt']);
 // Crossbow shots that kick harder than a plain bolt (the archer paths' own have their own sound).
-const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt']);
+const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt', 'thunderbolt', 'megabolt']);
 // Heavy bolts that land with a thud of their own.
 const HEAVY_HITS = new Set(['ballista', 'heartbolt', 'galearrow', 'blastbolt']);
 // Each melee weapon's swing [light, heavy], and the cut its blows land with.

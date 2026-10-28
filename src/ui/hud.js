@@ -339,7 +339,7 @@ function drawStars(ui, world) {
 }
 
 // A job's gauge over the hotkeys: a Warrior's Valor (a shield), an Archer's Momentum (a feather), a
-// Berserker's Rage (a flame), a Paladin's Faith (a star) or a Beastmaster's Bond (Snow wolf's Patience, a moon). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
+// Berserker's Rage (a flame), a Paladin's Faith (a star) a Beastmaster's Bond (Snow wolf's Patience, a moon) or a Stormcaller's Charge (a bolt). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
 // names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
 const GAUGES = {
   valor: { color: '#4f7fe0', hot: '#9fd2ff', icon: 'shield', name: 'Valor', full: 'UNBROKEN', notch: () => null, edge: 'rgba(110,160,255,', ink: '#24307a',
@@ -359,7 +359,9 @@ const GAUGES = {
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
     tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
   bond: { color: '#6f8fe0', hot: '#d6e8ff', icon: 'moon', name: 'Patience', full: 'FED UP', notch: () => null, edge: 'rgba(170,200,255,', ink: '#2a3a7a',
-    tip: 'Snow wolf\'s patience running out: your shots and her hits wear it down, and it recovers once the fighting stops. Gone, she\'s Fed Up and fights on her own, and Wrath of the Wolf Queen is ready.' },
+    tip: 'Snow wolf\'s patience running out: your shots and her hits wear it down, and it recovers once the fighting stops. Gone, she\'s Fed Up and fights on her own, and Last Straw is ready.' },
+  charge: { color: '#7a5ce8', hot: '#e2d2ff', icon: 'bolt', name: 'Charge', full: 'SUPERCHARGED', notch: () => null, edge: 'rgba(160,120,255,', ink: '#2a3394',
+    tip: 'Your bolts that land build it, and so does every monster your lightning jumps to; it fades once the fighting stops. Full, every bolt jumps on to one more monster, and Thunderhead is ready.' },
 };
 function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;

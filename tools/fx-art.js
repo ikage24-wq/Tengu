@@ -43,6 +43,8 @@
     // The Mage: rose pink, and mint.
     bloom: ['#ffffff', '#ffe2ef', '#ffa6cc', '#f26aa4', '#a0386e'],
     mint: ['#ffffff', '#dcfff2', '#8ef0c8', '#40c898', '#1f7a6a'],
+    // The Stormcaller: electric violet, inked in storm blue.
+    storm: ['#ffffff', '#efe4ff', '#b48cff', '#7a5ce8', '#2a3394'],
   };
   const DUST = ['#ffffff', '#fff6ee', '#f2e2d6', '#d9bdc4', '#9a7a9a'];
   const ROCK = ['#ffffff', '#ece4ff', '#c8b8ec', '#9a88cc', '#6a5aa0'];
@@ -721,7 +723,7 @@
   // Pillars and rings come in the colours the game asks for (warrior-fx.js `tint`): each path's
   // school, plus the rings for the Sniper's sight, the Mage's mint, the Ranger's sky and the
   // Night Lord's starlight.
-  const PILLARS = ['steel', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'crimson'];
+  const PILLARS = ['steel', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'crimson', 'storm'];
   for (const s of PILLARS) E[s === 'steel' ? 'pillar' : `pillar${s}`] = pillar(PAL[s]);
 
   // A ring of force bursting out (the game squashes it flat on the ground): it snaps out thick,
@@ -1490,10 +1492,9 @@
   // ---------- The Sniper's bolts, frost and blasts ----------
   // A bolt tearing through: a long lens of light along the shot, a ring, beads thrown forward
   // (drawn flying to the right).
-  E.boltburst = {
+  const boltBurst = (pal) => ({
     w: 240, h: 160, n: 6, fps: 26, px: 110, py: 80,
     draw(ctx, i) {
-      const pal = PAL.ice;
       const c = 80;
       if (i === 0) return starburst(ctx, pal, 110, c, 26, 8, 81, { inner: 0.5, tones: 3 });
       const len = [0, 110, 116, 90, 50, 0][i];
@@ -1516,15 +1517,185 @@
         for (let j = 0; j < 6; j++) shard(ctx, pal, 130 + k * 80 + R() * 30, c + (R() - 0.5) * 60 * (0.4 + k), 0, 10 * (1.1 - k * 0.5), 3 * (1.1 - k * 0.5));
       }
     },
-  };
+  });
+  E.boltburst = boltBurst(PAL.ice);
   // A bolt leaving the crossbow: a small forward burst and speed lines.
-  E.boltspark = {
+  const boltSpark = (pal) => ({
     w: 140, h: 100, n: 4, fps: 24, px: 30, py: 50,
     draw(ctx, i) {
-      const pal = PAL.ice;
       const k = i / 3;
       if (i < 2) starburst(ctx, pal, 40, 50, i ? 30 : 20, 7, 84, { inner: 0.45, tones: 3 });
       for (const dy of [-16, 0, 16]) speedLine(ctx, pal, 40 + k * 30, 50 + dy * (1 + k * 0.4), 100 + k * 34, 50 + dy * (1 + k * 0.6), 3 * (1 - k * 0.5));
+    },
+  });
+  E.boltspark = boltSpark(PAL.ice);
+
+  // ---------- The Stormcaller's lightning ----------
+  // A jagged lightning line from (x0, y0) to (x1, y1), `w` thick, in cel bands: ink, deep, the
+  // colour, light, and a white-hot core. `kink` is how far it zigzags off the straight line.
+  function zig(x0, y0, x1, y1, n, kink, seed) {
+    const R = rng(seed);
+    const pts = [[x0, y0]];
+    const nx = -(y1 - y0);
+    const ny = x1 - x0;
+    const l = Math.hypot(nx, ny) || 1;
+    for (let i = 1; i < n; i++) {
+      const u = i / n;
+      const off = (R() - 0.5) * 2 * kink * (i % 2 ? 1 : -0.6);
+      pts.push([lerp(x0, x1, u) + (nx / l) * off, lerp(y0, y1, u) + (ny / l) * off]);
+    }
+    pts.push([x1, y1]);
+    return pts;
+  }
+  function bolt(ctx, pal, pts, w) {
+    const [core, light, mid, deep, ink] = pal;
+    const line = (width, colour) => {
+      ctx.beginPath();
+      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.lineJoin = 'miter';
+      ctx.miterLimit = 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    };
+    line(w + 5, ink);
+    line(w, deep);
+    line(w * 0.72, mid);
+    line(w * 0.45, light);
+    if (w > 3) line(Math.max(1.5, w * 0.2), core);
+  }
+  // A forked bolt: the trunk, and branches split off it at a few kinks.
+  function forked(ctx, pal, x0, y0, x1, y1, w, seed, branches = 3) {
+    const trunk = zig(x0, y0, x1, y1, 9, 22, seed);
+    const R = rng(seed + 7);
+    for (let b = 0; b < branches; b++) {
+      const [bx, by] = trunk[2 + Math.floor(R() * (trunk.length - 4))];
+      const side = R() < 0.5 ? -1 : 1;
+      const len = 40 + R() * 60;
+      bolt(ctx, pal, zig(bx, by, bx + side * len * 0.8, by + len * 0.7, 4, 9, seed + b * 3), w * 0.45);
+    }
+    bolt(ctx, pal, trunk, w);
+  }
+  // A bolt of lightning striking down from the sky: a thin leader flicks down, the full bolt
+  // slams into the ground with a burst and a ring of sparks, then it breaks up and flickers out.
+  E.zapstrike = {
+    w: 220, h: 460, n: 7, fps: 22, px: 110, py: 430,
+    draw(ctx, i) {
+      const pal = PAL.storm;
+      const gx = 110;
+      const gy = 430;
+      const w = [4, 16, 13, 9, 5, 0, 0][i];
+      if (i === 0) bolt(ctx, pal, zig(gx + 20, 0, gx, gy, 10, 18, 91), 4);
+      else if (w) {
+        if (i < 4) forked(ctx, pal, gx + 20, 0, gx, gy, w, 91 + (i > 2 ? 1 : 0), i < 3 ? 3 : 2);
+        else bolt(ctx, pal, zig(gx + 20, 120, gx, gy - 40, 7, 16, 93), w);
+      }
+      if (i >= 1 && i <= 3) starburst(ctx, pal, gx, gy - 10, [0, 46, 40, 28][i], 8, 94, { inner: 0.45, tones: 4 });
+      if (i >= 2) {
+        const k = (i - 2) / 4;
+        const R = rng(95);
+        for (let j = 0; j < 8; j++) {
+          const a = -Math.PI * (0.1 + R() * 0.8);
+          const d = 30 + k * 80 + R() * 20;
+          shard(ctx, pal, gx + Math.cos(a) * d, gy - 10 + Math.sin(a) * d * 0.8 + k * k * 40, a, 12 * (1 - k * 0.6), 3 * (1 - k * 0.5));
+        }
+      }
+      if (i >= 4) {
+        const R = rng(96 + i);
+        for (let j = 0; j < 3; j++) {
+          const x = gx + (R() - 0.5) * 120;
+          const y = gy - 10 - R() * 40;
+          bolt(ctx, pal, zig(x, y, x + (R() - 0.5) * 40, y - 20 - R() * 20, 3, 6, 97 + j), 3);
+        }
+      }
+    },
+  };
+  // A bolt crackling into a monster: lightning in every direction off a burst, then sparks.
+  E.stormhit = {
+    w: 200, h: 200, n: 6, fps: 26, px: 100, py: 100,
+    draw(ctx, i) {
+      const pal = PAL.storm;
+      const c = 100;
+      if (i < 3) starburst(ctx, pal, c, c, [30, 42, 32][i], 8, 101, { inner: 0.42, tones: 4, rot: i * 0.3 });
+      const R = rng(102);
+      const n = 5;
+      for (let j = 0; j < n; j++) {
+        const a = (j / n) * TAU + R() * 0.6;
+        const r0 = [14, 20, 36, 50, 62, 70][i];
+        const r1 = r0 + [40, 52, 40, 26, 14, 0][i];
+        if (r1 > r0) bolt(ctx, pal, zig(c + Math.cos(a) * r0, c + Math.sin(a) * r0, c + Math.cos(a) * r1, c + Math.sin(a) * r1, 3, 7, 103 + j + i * 5), [6, 6, 5, 4, 3, 0][i]);
+      }
+      if (i >= 3) {
+        const k = (i - 3) / 2;
+        for (let j = 0; j < 6; j++) {
+          const a = R() * TAU;
+          shard(ctx, pal, c + Math.cos(a) * (40 + k * 40), c + Math.sin(a) * (40 + k * 40), a, 9 * (1 - k * 0.6), 2.5);
+        }
+      }
+    },
+  };
+  // A bolt leaving the crossbow, crackling: the bolt spark in storm colours.
+  E.stormspark = boltSpark(PAL.storm);
+  // A bolt tearing through in storm colours (the big piercing bolts).
+  E.stormpierce = boltBurst(PAL.storm);
+  // A storm cloud, looping: heavy indigo puffs churning slowly, lightning flickering in its belly
+  // now and then (Eye of the Storm, and Thunderhead's sky).
+  const THUNDERCLOUD = ['#a8a2dc', '#6c66ae', '#4c478a', '#332f66', '#14122c'];
+  E.stormcloud = {
+    w: 320, h: 170, n: 8, fps: 8, px: 160, py: 90, loop: true,
+    draw(ctx, i) {
+      const t = (i / 8) * TAU;
+      const lobes = [[70, 100, 34], [112, 78, 44], [160, 70, 52], [210, 80, 44], [250, 102, 32], [130, 112, 36], [190, 114, 38]];
+      if (i === 2 || i === 5) {
+        const R = rng(130 + i);
+        for (let j = 0; j < 2; j++) {
+          const x = 110 + R() * 100;
+          bolt(ctx, PAL.storm, zig(x, 110, x + (R() - 0.5) * 50, 160, 4, 10, 131 + i * 3 + j), 5);
+        }
+      }
+      lobes.forEach(([x, y, r], j) => puff(ctx, THUNDERCLOUD, x + Math.sin(t + j * 1.7) * 4, y + Math.cos(t + j * 1.3) * 3, r, 120 + j, { lobes: 3 }));
+      if (i === 2 || i === 5) {
+        ctx.globalAlpha = 0.55;
+        starburst(ctx, PAL.storm, 150 + (i === 5 ? 40 : -20), 92, 26, 8, 132, { inner: 0.45, tones: 3 });
+        ctx.globalAlpha = 1;
+      }
+    },
+  };
+  // Thunderhead's last word: one giant bolt slamming down from the sky, forked many ways, a huge
+  // burst of storm light where it lands, beads thrown everywhere, then it breaks up.
+  E.gigabolt = {
+    w: 440, h: 760, n: 8, fps: 16, px: 220, py: 720,
+    draw(ctx, i) {
+      const pal = PAL.storm;
+      const gx = 220;
+      const gy = 720;
+      const w = [10, 42, 36, 28, 18, 9, 0, 0][i];
+      if (i === 0) bolt(ctx, pal, zig(gx + 30, 0, gx, gy, 12, 30, 141), 10);
+      else if (w) {
+        if (i < 5) {
+          forked(ctx, pal, gx + 30, 0, gx, gy, w, 141, 6);
+          if (i < 4) bolt(ctx, pal, zig(gx - 60, 0, gx - 10, gy - 40, 10, 26, 142), w * 0.4);
+        } else bolt(ctx, pal, zig(gx + 30, 200, gx, gy - 60, 8, 24, 143), w);
+      }
+      if (i >= 1 && i <= 4) starburst(ctx, pal, gx, gy - 20, [0, 120, 110, 84, 50][i], 10, 144, { inner: 0.42, tones: 4 });
+      if (i >= 2) {
+        const k = (i - 2) / 5;
+        const R = rng(145);
+        for (let j = 0; j < 16; j++) {
+          const a = -Math.PI * (0.05 + R() * 0.9);
+          const d = 80 + k * 150 + R() * 40;
+          shard(ctx, pal, gx + Math.cos(a) * d, gy - 20 + Math.sin(a) * d * 0.7 + k * k * 80, a, 22 * (1 - k * 0.6), 6 * (1 - k * 0.5));
+        }
+      }
+      if (i >= 5) {
+        const R = rng(146 + i);
+        for (let j = 0; j < 5; j++) {
+          const x = gx + (R() - 0.5) * 300;
+          const y = gy - 20 - R() * 60;
+          bolt(ctx, pal, zig(x, y, x + (R() - 0.5) * 60, y - 30 - R() * 40, 3, 8, 147 + j), 5);
+        }
+      }
     },
   };
   // A snowflake: six arms with side branches.

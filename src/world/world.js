@@ -15,6 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
+import { rodGuard } from './storm.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, hasMomentum, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -91,6 +92,9 @@ export function loadMap(world, mapId, portalId) {
   world.strikes = [];
   world.lunge = null;
   world.fx = [];
+  world.fields = [];
+  world.thunder = null;
+  world.cloud = null;
   world.numbers = [];
   world.channel = null;
   world.events.push({ type: 'map', mapId: map.id });
@@ -291,6 +295,7 @@ const BLOCKER_TEXT = {
   'gauge:rage': 'A finisher needs full Rage. Keep swinging!',
   'gauge:faith': 'A finisher needs full Faith. Keep fighting!',
   'gauge:bond': "Snow wolf isn't fed up enough yet. Keep fighting!",
+  'gauge:charge': 'Not Supercharged yet: land more bolts!',
   unlearned: null,
   passive: null,
 };
@@ -356,7 +361,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god || blockOnHit(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

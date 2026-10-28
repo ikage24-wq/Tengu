@@ -100,9 +100,9 @@ const JOBS = {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * 0.6, scale: s * 0.5, sy: 0.3, alpha: k * 0.6 }),
     front: () => {},
   },
-  // Stormcaller: a faint ring at her feet (until her own storm is made).
+  // Stormcaller: a faint violet ring of storm light at her feet.
   stormcaller: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringsight', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringstorm', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
     front: () => {},
   },
   // The Game Master: a faint ring and a few stars in every color.
@@ -195,6 +195,22 @@ function bondAura(ctx, x, y, t, s, k, layer) {
   if (k > 0.5) fxSprite(ctx, 'celleaves', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.45, flip: Math.floor((t * 0.9) / 0.45) % 2 === 1, scale: s * (0.4 + 0.2 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
 }
 
+// Charge: violet sparks crackling at her feet that quicken as it fills, little arcs of lightning
+// jumping round her from halfway, and full (Supercharged), rings of storm light racing out from
+// her feet.
+function chargeAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'celringstorm', x, y, { frame: 2 + (Math.floor(t * (6 + 6 * k)) % 3), scale: s * (0.3 + 0.2 * k), sy: 0.3, alpha: Math.min(0.8, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celringstorm', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    return;
+  }
+  if (k > 0.5) {
+    const beat = Math.floor(t * 5);
+    const a = beat * 2.4;
+    fxSprite(ctx, 'celstormhit', x + Math.cos(a) * 14 * s, y - 22 * s + Math.sin(a) * 14 * s, { t: (t * 5) % 1 / 5, scale: s * (0.18 + 0.12 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
+  }
+}
+
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
 // him from halfway, and full (Unbroken), the steel emblem over his head and rings racing out
 // again and again.
@@ -271,8 +287,8 @@ function starlightAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Draws a combat aura: `kind` a job's gauge ('bloom', 'killintent', 'starlight', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
-// 'bond'), `k` how full (0-1).
-const COMBAT = { bloom: bloomAura, killintent: intentAura, starlight: starlightAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura };
+// 'bond' or 'charge'), `k` how full (0-1).
+const COMBAT = { bloom: bloomAura, killintent: intentAura, starlight: starlightAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

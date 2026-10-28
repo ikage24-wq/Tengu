@@ -483,9 +483,22 @@ to clear it.
     as if it weighed nothing, twirls it, leaps, and brings it down under a great full moon on
     everything across the whole screen around her, then keels over asleep. Her buttons are the
     Archer's Vault, Snack Time and Last Straw.
-  - **Stormcaller** (crossbow): lightning that chains between monsters, charged ground and a
-    thunderstorm from a darkened sky. Her own skills are still being made; until then she fights
-    with the Archer's shots and skills.
+  - **Stormcaller** (crossbow): violet lightning. Her bolts mix their own pool: a hip shot,
+    crank and fire, or a roll onto one knee; a double tap, the point-blank kick, or a hop back
+    loosing two down; then a kneeling thunderbolt through the line or a braced spray of three.
+    Bolts that land build **Charge**, and every monster her lightning jumps to builds it too; it
+    fades once the fighting stops. Full (**Supercharged**), every bolt jumps on to one more
+    monster. Her skills set themselves off: **Arc Bolt** (a bolt's lightning jumps on to the
+    nearest monsters), **Static Field** (the ground where a bolt lands crackles and zaps whatever
+    stands on it), and **Thunderclap** from her combo's last bolt (lightning from the sky on the
+    farthest monster, throwing it up and stunning it; always with three or more in front). Storm
+    Mastery is her passive. Late on, **Lightning Rod** (level 50) softens every hit she takes and
+    arcs its shock back into the attacker, and **Eye of the Storm** (level 70) gathers a storm
+    cloud over her while she's Supercharged that keeps dropping lightning on the monsters near
+    her. Her buttons are the Archer's Vault, **Overcharge** (her next few bolts go out as massive
+    bolts of lightning through the whole line) and her finisher, **Thunderhead**: a bolt fired
+    into the sky, the storm breaking over the whole screen, lightning crashing down again and
+    again, then one giant bolt that hits everything on the screen.
   - Both have command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
     **Down + attack** leans out and shoots down at whatever is below, **attacking in the air**
     shoots down at them and holds you up, and **attacking out of a run** is a slide shot. A

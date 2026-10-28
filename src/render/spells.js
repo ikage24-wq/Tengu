@@ -11,6 +11,8 @@ export const SCHOOL_COLORS = {
   arcane: { main: '#c9a6ff', light: '#efe4ff', deep: '#8f5cc4' },
   ice: { main: '#8fe3ff', light: '#e8fbff', deep: '#3f9fd8' },
   lightning: { main: '#ffe86b', light: '#fffbe0', deep: '#5fb8ff' },
+  // The Stormcaller's lightning: electric violet, deep storm blue.
+  storm: { main: '#b48cff', light: '#efe4ff', deep: '#2a3394' },
   fire: { main: '#ff8a3c', light: '#ffe9a8', deep: '#e0442b' },
   poison: { main: '#9be86b', light: '#e6ffd0', deep: '#9b4fe0' },
   holy: { main: '#ffe36b', light: '#fffbe0', deep: '#f0b33b' },
