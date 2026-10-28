@@ -9,7 +9,7 @@
 // Built like bosses.js: polygons pushed through a small transform stack (`within`) so a head or a
 // torso tilts as one piece, with two-bone limbs. All face right, feet (or hem) at the bottom.
 
-import { E, T, F, shade, mix } from './kit.js';
+import { E, T, F, shade, mix, keyAt } from './kit.js';
 import { heroineHead, heroineBrows, heroineTop } from './heroine.js';
 
 const TAU = Math.PI * 2;
@@ -231,7 +231,7 @@ function fade(P, mood) {
 // (one sprite cell) so each frame moves cleanly; hair and tails keep their own even wave on top,
 // so on the held frame the body rests while the hair still travels.
 const BREATH = [0.5, 0.17, -0.17, -0.5, -0.5, 0.17];
-const breath = (pose, f) => (pose === 'idle' ? BREATH[f % BREATH.length] : 0);
+const breath = (pose, f) => (pose === 'idle' ? keyAt(BREATH, f) : 0);
 
 // ---------- Heads, faces and hair ----------
 
@@ -611,7 +611,7 @@ function kitsune(pose, f, mood) {
   // Neck and head.
   out.push(...oband([[neck[0], neck[1] + 1.4], [hc[0] + 0.2, hc[1] + 6]], 2.8, P.skin, 1), fband([[hc[0] - 0.6, hc[1] + 6.8], [hc[0] + 1.2, hc[1] + 6.4]], 1.2, P.skinDk, 1));
   within(at(hc[0], hc[1], tilt), () => {
-    const earT = walk ? Math.sin(ph * 2 - 1) * 0.06 : pose === 'idle' ? [0, 0, 0.05, 0.3, 0.12, 0][f] : 0;
+    const earT = walk ? Math.sin(ph * 2 - 1) * 0.06 : pose === 'idle' ? keyAt([0, 0, 0.05, 0.3, 0.12, 0], f) : 0;
     const earFlat = angry ? -0.25 : hurt || dead ? 0.55 : 0;
     // Back ear.
     within(at(-3.6, -5.4, -0.5 - earFlat - earT), () => out.push(...opoly([[-2.6, 0.6], [0.2, -7.2], [2.6, 0.8]], P.hairDk), fpoly([[-1.3, 0], [0.1, -5], [1.4, 0]], shade(P.earIn, -6))));
@@ -888,7 +888,7 @@ function sylph(pose, f, mood) {
   else if (A) handF = [[shF[0] - 7, shF[1] + 4], [shF[0] + 11.5, shF[1]], [shF[0] + 10.5, shF[1] + 3.5], [shF[0] + 6.5, shF[1] + 6]][f];
   else if (hurt) handF = [shF[0] + 3, shF[1] + 1];
   else if (walk) handF = [shF[0] - 1 + Math.sin(ph) * 0.8, shF[1] + 8];
-  else if (twirl) handF = [[shF[0] + 6.4, shF[1] + 5], [shF[0] + 6, shF[1] - 1], [shF[0] + 2.4, shF[1] - 7], [shF[0] - 2.6, shF[1] - 7.4], [shF[0] + 1.6, shF[1] - 2.6], [shF[0] + 5.4, shF[1] + 2.8]][f];
+  else if (twirl) handF = keyAt([[shF[0] + 6.4, shF[1] + 5], [shF[0] + 6, shF[1] - 1], [shF[0] + 2.4, shF[1] - 7], [shF[0] - 2.6, shF[1] - 7.4], [shF[0] + 1.6, shF[1] - 2.6], [shF[0] + 5.4, shF[1] + 2.8]], f);
   else handF = [shF[0] + 6.4 + Math.sin(ph) * 0.4, shF[1] + 5.4 - Math.sin(ph - 0.5) * 0.6];
   const elF = joint(shF, handF, 6, 6, A && f === 0 ? 1 : -1);
   out.push(...limb(shF, elF.k, elF.f, 2.3, 2, 1.6, P.skin), ...ooval(elF.f[0] + 0.3, elF.f[1], 1.15, 1, P.skin));
@@ -1285,7 +1285,7 @@ function nekomata(pose, f, mood) {
   else if (A) handF = [[shF[0] - 6, shF[1] - 2.5], [shF[0] + 10.5, shF[1] + 4], [shF[0] + 11, shF[1] + 0], [shF[0] + 7.5, shF[1] + 4]][f];
   else if (hurt) handF = [shF[0] + 3.4, shF[1] + 2];
   else if (walk) handF = [shF[0] + 3 + sw * 3, shF[1] + 7.6];
-  else if (pose === 'idle' && !angry) handF = [[shF[0] + 2.2, shF[1] + 9.4], [shF[0] + 2.6, shF[1] + 8], [hc[0] + 6.4, hc[1] + 6.6], [hc[0] + 6.6, hc[1] + 6], [shF[0] + 7.4, shF[1] + 3.4], [shF[0] + 3.4, shF[1] + 7.6]][f];
+  else if (pose === 'idle' && !angry) handF = keyAt([[shF[0] + 2.2, shF[1] + 9.4], [shF[0] + 2.6, shF[1] + 8], [hc[0] + 6.4, hc[1] + 6.6], [hc[0] + 6.6, hc[1] + 6], [shF[0] + 7.4, shF[1] + 3.4], [shF[0] + 3.4, shF[1] + 7.6]], f);
   else handF = [shF[0] + 6, shF[1] + 5.2 + Math.sin(ph - 0.4) * 0.4 - (angry ? 1.6 : 0)];
   const elF = joint(shF, handF, 5.8, 5.8, pose === 'idle' && f < 2 && !angry ? 1 : -1);
   out.push(...limb(shF, elF.k, elF.f, 2.4, 2.8, 2.8, P.skin, P.fur), ...pawHand(elF.f, P, false));

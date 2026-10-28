@@ -12,7 +12,7 @@
 //   pops in when cast, winds up before each shot, strikes as it fires and holds the blow, and
 //   fades away in a burst of sparkles as the buff runs out. Without it the summon just flies.
 
-import { T, E, F, sprite, blit, shade, mix } from './pixel.js';
+import { T, E, F, sprite, spriteLater, blit, shade, mix } from './pixel.js';
 import { heroineHead, heroineBrows, heroineTop } from './mobs/heroine.js';
 import { eye as creatureEye, mouth as creatureMouth, blush as creatureBlush } from './mobs/faces.js';
 
@@ -766,6 +766,7 @@ function salamander(fp, cast, mood) {
 }
 
 const ART = { angel, sprite: frostSprite, salamander };
+export const summonBuild = (art, frame, cast, mood) => ({ soft: 'cel', crisp: true, selout: true, ...ART[art](frame / CYCLE[art][0], cast, mood) });
 // Frames per flying cycle and the cycle's length (s): wings beat on their own rhythm.
 const CYCLE = { angel: [8, 0.9], sprite: [8, 0.8], salamander: [8, 1] };
 // When each summon blinks: every few seconds, at its own offset.
@@ -807,14 +808,17 @@ function castStage(state) {
 // (x, y) is the summon's center in screen space.
 export function drawSummon(ctx, art, x, y, time, facing, state = null) {
   const [n, len] = CYCLE[art];
-  const frame = Math.floor(((time / len) % 1) * n);
+  // Four in-between poses per drawing, so wingbeats and sways flow.
+  const frame = Math.floor(((time / len) % 1) * n * 4) / 4;
   const [every, off] = BLINK[art];
   const cast = castStage(state);
   const blink = !cast && (time + off) % every < 0.14;
   const age = state ? state.now - state.since : 9;
   const left = state ? state.until - state.now : 9;
   const mood = cast === 1 || cast === 2 || cast === 3 ? 'angry' : age < APPEAR + 0.4 ? 'happy' : blink ? 'blink' : 'idle';
-  const s = sprite(`summon|${art}|${frame}|${cast}|${mood}`, () => ({ soft: 'cel', crisp: true, selout: true, ...ART[art](frame / n, cast, mood) }));
+  // In-between poses are drawn in the background; until one is ready, its whole drawing stands in.
+  const key = (f) => `summon|${art}|${f}|${cast}|${mood}`;
+  const s = (frame % 1 && spriteLater(key(frame), { kind: 'summon', art, frame, cast, mood })) || sprite(key(Math.floor(frame)), () => summonBuild(art, Math.floor(frame), cast, mood));
 
   // Appearing: a flash of light, then the summon pops out of it with an overshoot and settles.
   // Dismissed: it rises, shrinks into its glow and fades.

@@ -303,23 +303,11 @@ function rgb(c) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255, a];
 }
 
-function bake({ gw, gh, cells, colors }) {
+function bake(raster) {
   const canvas = document.createElement('canvas');
-  canvas.width = gw;
-  canvas.height = gh;
-  const g = canvas.getContext('2d');
-  const img = g.createImageData(gw, gh);
-  const rgbs = colors.map(rgb);
-  for (let i = 0; i < cells.length; i++) {
-    const c = cells[i];
-    if (c < 0) continue;
-    const [r, gr, b, a] = rgbs[c];
-    img.data[i * 4] = r;
-    img.data[i * 4 + 1] = gr;
-    img.data[i * 4 + 2] = b;
-    img.data[i * 4 + 3] = a;
-  }
-  g.putImageData(img, 0, 0);
+  canvas.width = raster.gw;
+  canvas.height = raster.gh;
+  canvas.getContext('2d').putImageData(new ImageData(pixelsOf(raster), raster.gw, raster.gh), 0, 0);
   return canvas;
 }
 
@@ -358,35 +346,101 @@ export function tinted(s, color) {
 
 // Smooth sprites are big and the hero makes many of them, so the cache forgets the least
 // recently used ones past this many, or past this much memory.
-const CACHE_MAX = 1600;
+const CACHE_MAX = 4000;
 const CACHE_BYTES = 160e6;
 let cacheBytes = 0;
 const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
+
+// A sprite's raster, ready to bake: the build's shapes drawn at the screen's density. Detailed
+// sprites (characters, monsters, scenery) are drawn at the screen's own pixel density, so every
+// cell is exactly one screen pixel: sharp and even at any window size. `pad` is the margin left
+// of, right of and above the w x h box that parts may reach into (wings, tails, smears): the
+// sprite keeps its feet and centre where w x h puts them.
+export function rasterOf(b, scale = gfx.scale) {
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD } = b;
+  if (res > 1) res = Math.max(res, Math.round(scale));
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad) };
+}
+
+// A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.
+export function pixelsOf({ gw, gh, cells, colors }) {
+  const data = new Uint8ClampedArray(gw * gh * 4);
+  const rgbs = colors.map(rgb);
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i];
+    if (c < 0) continue;
+    data.set(rgbs[c], i * 4);
+  }
+  return data;
+}
+
+function remember(key, s) {
+  cacheBytes += bytesOf(s);
+  while (cache.size && (cache.size >= CACHE_MAX || cacheBytes > CACHE_BYTES)) {
+    const old = cache.keys().next().value;
+    cacheBytes -= bytesOf(cache.get(old));
+    cache.delete(old);
+  }
+  cache.set(key, s);
+  return s;
+}
 
 // Returns a cached sprite { canvas, white, w, h, res } built by `build()` -> { w, h, shapes, palette, res, soft }.
 export function sprite(key, build) {
   let s = cache.get(key);
   if (s) {
     cache.delete(key);
-  } else {
-    // `pad` is the margin left of, right of and above the w x h box that parts may reach into
-    // (wings, tails, smears): the sprite keeps its feet and centre where w x h puts them.
-    let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD } = build();
-    // Detailed sprites (characters, monsters, scenery) are drawn at the screen's own pixel
-    // density, so every cell is exactly one screen pixel: sharp and even at any window size.
-    if (res > 1) res = Math.max(res, Math.round(gfx.scale));
-    const raster = rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad);
-    const canvas = bake(raster);
-    s = { canvas, w, h, res, crisp, pad, white: null };
-    cacheBytes += bytesOf(s);
-    while (cache.size && (cache.size >= CACHE_MAX || cacheBytes > CACHE_BYTES)) {
-      const old = cache.keys().next().value;
-      cacheBytes -= bytesOf(cache.get(old));
-      cache.delete(old);
+    cache.set(key, s);
+    return s;
+  }
+  const { w, h, res, crisp, pad, raster } = rasterOf(build());
+  return remember(key, { canvas: bake(raster), w, h, res, crisp, pad, white: null });
+}
+
+// Sprites drawn in the background: a worker rasterizes them (`sprite-worker.js`, given `job`, a
+// plain description it knows how to build), and until one arrives `spriteLater` returns null so
+// the caller draws something it already has. Used for the many in-between poses that make
+// motion smooth, which would cost a hitch each if drawn on the spot.
+let worker = null;
+const pending = new Map();
+function workerOf() {
+  if (worker === null) {
+    worker = false;
+    if (typeof Worker !== 'undefined') {
+      try {
+        worker = new Worker(new URL('./sprite-worker.js', import.meta.url), { type: 'module' });
+        worker.onmessage = ({ data: d }) => {
+          pending.delete(d.key);
+          if (d.scale !== gfx.scale || !d.data) return;
+          const canvas = document.createElement('canvas');
+          canvas.width = d.gw;
+          canvas.height = d.gh;
+          canvas.getContext('2d').putImageData(new ImageData(d.data, d.gw, d.gh), 0, 0);
+          remember(d.key, { canvas, w: d.w, h: d.h, res: d.res, crisp: d.crisp, pad: d.pad, white: null });
+        };
+        worker.onerror = () => {
+          worker = false;
+        };
+      } catch {
+        worker = false;
+      }
     }
   }
-  cache.set(key, s);
-  return s;
+  return worker;
+}
+export function spriteLater(key, job) {
+  const s = cache.get(key);
+  if (s) {
+    cache.delete(key);
+    cache.set(key, s);
+    return s;
+  }
+  const w = workerOf();
+  if (w && !pending.has(key) && pending.size < 24) {
+    pending.set(key, true);
+    w.postMessage({ key, job, scale: gfx.scale });
+  }
+  return null;
 }
 
 // Draws a sprite with its local (0, 0) at screen (x, y). Optionally mirrored or flashed white.

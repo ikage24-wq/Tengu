@@ -8,18 +8,11 @@
 // marks, sweat, music notes, z's) float over their heads.
 
 import { drawDiscoBoss } from './discoboss.js';
-import { sprite, blit, snap, footShadow } from './pixel.js';
+import { sprite, spriteLater, blit, snap, footShadow } from './pixel.js';
 import { springStep } from './animator.js';
-import { ART as MEADOW } from './mobs/meadow.js';
-import { ART as WILDS } from './mobs/wilds.js';
-import { ART as RUINS } from './mobs/ruins.js';
-import { ART as SKY } from './mobs/sky.js';
-import { ART as HOLLOW } from './mobs/hollow.js';
-import { ART as BOSSES } from './mobs/bosses.js';
-import { ART as MAIDENS } from './mobs/maidens.js';
-import { ART as QUEENS } from './mobs/queens.js';
+import { ARTS, mobBuild } from './mobs/index.js';
 
-const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS };
+export { ARTS };
 
 // How many frames an art has for walking (or flying), idling, and attacking (0: no attack pose),
 // and how its walk keeps time: `stride` is how far it travels in one walk cycle, `cycle` (seconds)
@@ -64,13 +57,22 @@ export function attackFrame(ms, wind, since, led) {
   return -1;
 }
 
+// Walk and idle play through in-between poses: each art frame is drawn SUB times, a step of the
+// way toward the next (the arts are posed from the frame's phase), so motion flows instead of
+// stepping. Attack frames stay whole: their timing is the point.
+const SUB = 4;
+const fine = (x, n) => {
+  const v = Math.floor(x * SUB) / SUB;
+  return ((v % n) + n) % n;
+};
+
 // Walkers step with the ground they cover, so their feet never slide and a fast monster's legs
 // move faster than a slow one's. Flyers beat their wings at the rate that stride and speed set.
 function walkFrame(m, fr, t, fast) {
   const stride = fr.stride ?? m.def.w * 1.2;
-  if (fr.cycle || !m.def.speed) return Math.floor((t / (fr.cycle ?? 0.8)) * fr.walk) % fr.walk;
-  if (m.def.fly) return Math.floor(((t * fast * m.def.speed) / stride) * fr.walk) % fr.walk;
-  return Math.floor(((m.odo ?? 0) / stride) * fr.walk) % fr.walk;
+  if (fr.cycle || !m.def.speed) return fine((t / (fr.cycle ?? 0.8)) * fr.walk, fr.walk);
+  if (m.def.fly) return fine(((t * fast * m.def.speed) / stride) * fr.walk, fr.walk);
+  return fine(((m.odo ?? 0) / stride) * fr.walk, fr.walk);
 }
 
 function poseOf(m, fr, moving, t, now, mo) {
@@ -82,15 +84,15 @@ function poseOf(m, fr, moving, t, now, mo) {
     if (f >= 0) return ['attack', f];
   }
   if (moving) return ['walk', walkFrame(m, fr, t, mo.fast)];
-  // Idles linger on their two extremes and pass quickly between them (uneven holds, like
+  // Idles ease: they linger near their two extremes and pass quickly between them (like
   // MapleStory's stand frames), so the breath reads as poses rather than a steady drift.
   const u = (t / IDLE_CYCLE) % 1;
-  return ['idle', Math.floor((u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle + fr.idle) % fr.idle];
+  return ['idle', fine((u + 0.07 * Math.sin(4 * Math.PI * u)) * fr.idle, fr.idle)];
 }
 
+const mobKey = (art, frame, mood, pose) => `mob|${art}|${pose}${frame}|${mood}`;
 export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
-  const a = ARTS[art];
-  return sprite(`mob|${art}|${pose}${frame}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, pad: a.pad ?? 4, ...a.draw(pose, frame, mood) }));
+  return sprite(mobKey(art, frame, mood, pose), () => mobBuild(art, pose, frame, mood));
 }
 
 // How a monster feels right now.
@@ -318,7 +320,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   m.seenX = m.x;
   if (step < 40) m.odo = (m.odo ?? 0) + step;
   const [pose, frame] = poseOf(m, fr, moving, t, now, mo);
-  const s = monsterSprite(m.def.art, frame, mood, pose);
+  // In-between poses are drawn in the background; until one is ready, its whole frame stands in.
+  const s = (frame % 1 && spriteLater(mobKey(m.def.art, frame, mood, pose), { kind: 'mob', art: m.def.art, pose, frame, mood })) || monsterSprite(m.def.art, Math.floor(frame), mood, pose);
 
   // Squash (+ wide and short, - tall and thin) follows its pose on a jelly spring.
   let sqGoal = 0;

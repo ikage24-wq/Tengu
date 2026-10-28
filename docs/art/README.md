@@ -159,6 +159,14 @@ carry an improvement across every part of the game it applies to.
   on our pastel skies; give red effects their own near-black crimson or a hand-picked red ramp.
 - A move's own untouchable stretch (dashes, dodges, finishers) must not use the hurt blink: it
   reads as weakness and made finishers flicker. Only blink while recovering from a hit.
+- Motion is smooth (the player's ask): monsters and summons walk and idle through four
+  in-between poses per drawn frame, so a stride or a breath flows instead of stepping; attack
+  frames stay whole, since their uneven timing is the point. The in-betweens are drawn in the
+  background (`sprite-worker.js`, `spriteLater` in pixel.js) and the whole frame stands in until
+  one is ready, so no hitch. A new monster design must pose its walk and idle from the frame's
+  phase (`f / n`), and read any per-frame table with `keyAt` (mobs/kit.js), which blends between
+  entries; `tests/anim.test.js` draws every design at every in-between. The hero's idle acting
+  runs at 30 steps a second.
 - Moves cut into each other ease out of the previous pose over about 70 ms (`hero.js`
   `blendMove`, `scene.js` BLEND): angles take the short way round, rig tweaks switch halfway.
 - Each path's effects keep one shape language (fx.md C14), so a hit says whose it is: the

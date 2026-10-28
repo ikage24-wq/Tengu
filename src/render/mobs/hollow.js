@@ -10,7 +10,7 @@
 // follows). Materials use hue-shifted four-tone ramps lit from the upper front; faces come from
 // the creature face kit (faces.js) and hold the sprite's strongest contrast.
 
-import { E, T, F, C, shade, mix, sparkLine } from './kit.js';
+import { E, T, F, C, shade, mix, sparkLine, keyAt } from './kit.js';
 import { eye, glowEye, brow, mouth, blush, sweat, tear, vein, deadEye, band, ovalPts } from './faces.js';
 
 const TAU = Math.PI * 2;
@@ -1091,7 +1091,7 @@ function sapling(pose, f, mood) {
   const leaf = grey(P.leaf);
   const vio = grey(P.vio);
   // Heartbeat: lub-dub, rest (walk); a slow breath (idle); flaring in the wind-up.
-  const beat = dead ? 0 : att >= 0 ? [1, 0.55, 0.8, 0.3][att] : walk ? [0.15, 1, 0.45, 0.75, 0.25, 0.08, 0, 0.05][f] : 0.2 + 0.3 * br;
+  const beat = dead ? 0 : att >= 0 ? [1, 0.55, 0.8, 0.3][att] : walk ? keyAt([0.15, 1, 0.45, 0.75, 0.25, 0.08, 0, 0.05], f) : 0.2 + 0.3 * br;
   const ph = walk ? (f / 8) * TAU : it;
   // Trunk lean at the root and the lag that rides up the chain (overlap: the crown arrives late).
   const lean = (walk ? 0.05 * Math.sin(ph) : att >= 0 ? [-0.08, 0.05, 0.07, 0.02][att] : 0.02 * Math.sin(it - 0.4)) + (hurt ? -0.06 : 0) + (dead ? 0.05 : 0);

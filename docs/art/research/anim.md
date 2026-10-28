@@ -22,6 +22,11 @@ Raw page dumps are in `scratchpad/ranim/p/` and contact sheets of our GIFs are i
 - **Hero**: a 24-frame distance-driven walk with a sine head bob. Moves are evaluated every 60 Hz frame with `snap()` time remapping (wind-up hold, then a 0.1 cut, then an eased settle), which is good. Hair and cape use `spring()` in `animator.js` with semi-implicit Euler at variable `dt` (clamped ≤ 0.1). With `k = 140, damp = 11`, `damp·dt` reaches 1.1 at 10 fps, so the hair flips sign and jitters. The behaviour differs between 30, 60 and 144 Hz.
 - **Hitstop**: 35–100 ms for players, 300 ms for a boss kill. That is light next to the references below.
 
+- **Update (smoothing pass):** monster and summon walks and idles now play 4 in-betweens per
+  frame (32 poses per walk cycle), drawn off the main thread so a crowd arriving costs no hitch;
+  the hero's idle acting moved from 8 to 30 steps a second. The player asked for "smooth and
+  fluid" over the stepped, MapleStory-style holds, after liking in-between blending on effects.
+
 ## 3. Top findings (technique, numbers, source, how it applies, effort)
 
 ### Timing data from shipped games

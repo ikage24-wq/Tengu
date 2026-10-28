@@ -60,3 +60,22 @@ test('the walk bob bottoms out just after each foot lands and peaks at the pass'
   assert.ok(walkBob(0.04) < 0.01 && walkBob(0.54) < 0.01);
   assert.ok(walkBob(0.29) > 0.99 && walkBob(0.79) > 0.99);
 });
+
+test('every monster walks and idles through clean in-between poses', async () => {
+  const { ARTS } = await import('../src/render/mobs/index.js');
+  const nums = (o, out = []) => {
+    if (typeof o === 'number') out.push(o);
+    else if (Array.isArray(o)) o.forEach((x) => nums(x, out));
+    else if (o && typeof o === 'object') Object.values(o).forEach((x) => nums(x, out));
+    return out;
+  };
+  for (const [art, a] of Object.entries(ARTS)) {
+    for (const pose of ['walk', 'idle']) {
+      const n = a[pose] ?? (pose === 'walk' ? 4 : 2);
+      for (let f = 0; f < n; f += 0.25) {
+        const { shapes } = a.draw(pose, f, 'idle');
+        assert.ok(nums(shapes).every(Number.isFinite), `${art} ${pose} ${f}`);
+      }
+    }
+  }
+});

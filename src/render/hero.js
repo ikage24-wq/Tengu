@@ -1154,7 +1154,8 @@ export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015,
 export const walkStyleOf = (mood) => WALK_STYLE[mood] ?? 'bouncy';
 
 function idleActing(r, mood, t, armed) {
-  const T = Math.floor(t * 8) / 8;
+  // Acting runs on 30 steps a second, so its sways and gestures flow.
+  const T = Math.floor(t * 30) / 30;
   const at = (period) => (T % period) / period;
   const win = (p, a, b) => p >= a && p < b;
   const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));

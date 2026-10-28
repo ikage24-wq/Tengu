@@ -2,7 +2,7 @@
 // a crystal golem, a wraith). Every design faces right with its feet (or its floating hem) on the
 // bottom edge, and is built back to front from layered shapes with hand-placed shading.
 
-import { E, T, F, mix, arc, stroke } from './kit.js';
+import { E, T, F, mix, arc, stroke, keyAt } from './kit.js';
 import { walkBob } from '../animator.js';
 import { eye, glowEye, brow, mouth, blush, sweat, tear, deadEye, vein, starPts, ovalPts } from './faces.js';
 
@@ -839,7 +839,7 @@ function gemEye(x, y, mood, look) {
 function mimic(pose, frame, mood) {
   const walk = pose === 'walk';
   const ak = pose === 'attack';
-  const st = (walk ? HOP : ak ? MIMIC_ATK : MIMIC_IDLE)[frame];
+  const st = keyAt(walk ? HOP : ak ? MIMIC_ATK : MIMIC_IDLE, frame);
   const u = frame / (walk ? 8 : 6);
   const ph = u * TAU;
   const dead = mood === 'dead';
@@ -858,7 +858,7 @@ function mimic(pose, frame, mood) {
   const box = pivot(move(ID, dx, -lift), 20, 31, tilt, 1, 1);
   const B = mul(box, [sx, 0, 0, sy, 20 - 20 * sx, 31 - 31 * sy]);
   const out = [];
-  const look = walk ? 0.6 : ak ? 0.8 : [0, 0.8, 0.8, 0, -0.8, -0.8][frame];
+  const look = walk ? 0.6 : ak ? 0.8 : keyAt([0, 0.8, 0.8, 0, -0.8, -0.8], frame);
 
   // Legs: two-bone IK from the hips under the box to the feet, planted while it's down (they
   // slide back as the box moves on), tucked and dangling in the air.
@@ -1076,7 +1076,7 @@ function golem(pose, frame, mood) {
   if (raised) up.push(...farm);
   // A glint travelling over the crystals.
   if (!dead) {
-    const gl = [[18.6, 11], [24.4, 4.6], [30.6, 9.4], [57.6, 13.6], [51.8, 17.4], [44.6, 12.2], [24.4, 4.6], [57.6, 13.6]][frame % 8];
+    const gl = [[18.6, 11], [24.4, 4.6], [30.6, 9.4], [57.6, 13.6], [51.8, 17.4], [44.6, 12.2], [24.4, 4.6], [57.6, 13.6]][Math.floor(frame) % 8];
     up.push(...put(torso, [F(T(starPts(gl[0], gl[1], 1.8, 4, 0.25), '#ffffff'))]));
   }
   if (hurt) up.push(...oT([[8, 14], [10, 12.6], [11, 14.6], [9, 15.6]], P.s1, 0.5), ...gem(5, 23, 1.6, 2.6, -0.6, GEM_C[0]));

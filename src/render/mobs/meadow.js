@@ -10,7 +10,7 @@
 // big round eyes, a goblin's shifty squint, a hare's glossy eye), an idle fidget loop, and a
 // four-frame attack (wind-up, strike, impact, recover).
 
-import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix, sparkLine } from './kit.js';
+import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix, sparkLine, keyAt } from './kit.js';
 import { eye, brow, mouth, nose, blush as cheek, sweat, tear, vein, deadEye, band } from './faces.js';
 
 const TAU = Math.PI * 2;
@@ -1255,7 +1255,7 @@ function jackalope(pose, f, mood) {
   // Dead, it lies stretched out on the floor: body flattened, hind legs kicked back, forepaws
   // reaching forward, chin on the ground.
   const hop = dead ? { lift: 0, squash: -1.5, hind: 1.2, reach: 1, ear: 0, tilt: 0 }
-    : walk ? HOP[f] : A ?? { lift: 0, squash: hurt ? 0.6 : 0.35 - br * 0.6, hind: 0, reach: hurt ? -0.4 : 0, ear: 0, tilt: 0 };
+    : walk ? keyAt(HOP, f) : A ?? { lift: 0, squash: hurt ? 0.6 : 0.35 - br * 0.6, hind: 0, reach: hurt ? -0.4 : 0, ear: 0, tilt: 0 };
   const out = [];
   // The world lifts a bounder through the air, so the sprite keeps only a little of the arc.
   const L = dead ? -2.9 : hop.lift * 0.7;
@@ -1322,7 +1322,7 @@ function jackalope(pose, f, mood) {
   const flat = angry ? 1 : hurt ? 0.8 : happy ? -0.3 : 0;
   // Each ear is a chain of three links: on the bound each link takes the angle the one before
   // it had a frame earlier, so the flop runs from root to tip; idle, a slow wave.
-  const earAt = (k) => (walk ? HOP[(f - k + 8) % 8].ear : eb);
+  const earAt = (k) => (walk ? keyAt(HOP, (f - k + 8) % 8).ear : eb);
   const longEar = (b, len, a0, w, c, inner) => {
     const abs = [0, 1, 2].map((i) => (dead ? a0 - 34 + i * 16 : a0 - earAt(i) * 12 - flat * 32 + i * (4 + flat * 4) + (idle ? wave(TAU * q - 0.5, 4, 0.8)(i) : 0)));
     const pts = chain(b[0], b[1], abs[0], [len * 0.36, len * 0.34, len * 0.3], (i) => (i ? abs[i] - abs[i - 1] : 0)).map((p) => p.slice(0, 2));

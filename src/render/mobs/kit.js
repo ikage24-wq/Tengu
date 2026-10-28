@@ -13,6 +13,27 @@ export const MOUTH = '#b2506c';
 
 // ---------- Shape helpers ----------
 
+// A key pose from a table at a frame that may fall between two (monsters walk and idle through
+// in-between frames, so their motion is smooth): numbers, and arrays and objects of them, blend
+// toward the next entry (wrapping round); anything else takes the nearer one.
+export function keyAt(table, f) {
+  const i = Math.floor(f);
+  const t = f - i;
+  const a = table[((i % table.length) + table.length) % table.length];
+  if (!t) return a;
+  return blend(a, table[(i + 1) % table.length], t);
+}
+function blend(a, b, t) {
+  if (typeof a === 'number' && typeof b === 'number') return a + (b - a) * t;
+  if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) return a.map((v, k) => blend(v, b[k], t));
+  if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a)) {
+    const o = {};
+    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) o[k] = k in a && k in b ? blend(a[k], b[k], t) : t < 0.5 ? a[k] : b[k];
+    return o;
+  }
+  return t < 0.5 ? a : b;
+}
+
 export function arc(cx, cy, rx, ry, a0, a1, th, c) {
   const outer = [];
   const inner = [];

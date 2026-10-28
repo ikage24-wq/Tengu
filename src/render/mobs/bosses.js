@@ -6,7 +6,7 @@
 // All four are rigs built on the hollow module's joint transforms, chains, ramps and shape helpers:
 // parts turn about real joints and chains trail their roots. All face right, feet at the bottom.
 
-import { F, C, shade, mix } from './kit.js';
+import { F, C, shade, mix, keyAt } from './kit.js';
 import { heroineHead, heroineBrows, heroineTop } from './heroine.js';
 import { glowEye, brow, deadEye, eye, grow } from './faces.js';
 import * as H from './hollow.js';
@@ -500,7 +500,7 @@ function behemoth(pose, f, mood) {
       ft = att < 2 ? [Hp[0] + 7 + L.far * -2, Hp[1] + 17 - att * 2] : [L.home + 4 - L.far * 3, floor - 1.4];
     } else {
       // Idle: the near forehoof paws the floor (scrapes back, lifts, comes down).
-      const paw = !fore || L.far || angry ? [0, 0] : [[0, 0], [0, 0], [-2, 0], [-4, 3], [1, 4], [0, 0]][f] ?? [0, 0];
+      const paw = !fore || L.far || angry ? [0, 0] : keyAt([[0, 0], [0, 0], [-2, 0], [-4, 3], [1, 4], [0, 0]], f);
       ft = [L.home + paw[0] + (hurt ? -2 : 0), floor - 1.4 - paw[1]];
     }
     const [K, Ft] = ik(Hp, ft, 17, 16, L.dir);
@@ -758,7 +758,7 @@ function treant(pose, f, mood) {
     return [q[0], Math.min(q[1], floor)];
   });
   // The heart's beat (a lub-dub with a held rest) and how hot the corruption burns.
-  const beat = dead ? 0 : walk ? [1, 0.3, 0.8, 0.1][f % 4] : att >= 0 ? [0.8, 1, 1, 0.7, 0.4][att] : [1, 0.35, 0.85, 0.15, 0, 0][f];
+  const beat = dead ? 0 : walk ? keyAt([1, 0.3, 0.8, 0.1], f % 4) : att >= 0 ? [0.8, 1, 1, 0.7, 0.4][att] : keyAt([1, 0.35, 0.85, 0.15, 0, 0], f);
   const glow = dead ? 0 : angry || att >= 0 ? 1 : 0.55 + 0.45 * beat;
   const out = [];
 
