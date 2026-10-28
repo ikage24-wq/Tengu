@@ -1,0 +1,82 @@
+<!doctype html>
+<html><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a real game world (the same code the game runs) with a Beastmaster, Snow wolf and a
+// row of training dummies, her gauge full, and Last Straw cast, drawn with the game's own scene
+// renderer. Open /tools/snowwolf-finisher.html (served with the game); ?snack also casts Snack
+// Time first; ?manual steps frames from outside (window.step) for recording.
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
+import { makeEquip } from '../src/core/items.js';
+import { spawnMob } from '../src/world/mobs.js';
+import { cast } from '../src/world/combat.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+
+const c = createCharacter('Tester', {});
+gainExp(c, 1e6);
+advanceJob(c, 'archer');
+c.quests.archer_trial = { state: 'done', kills: {} };
+advanceJob(c, 'beastmaster');
+c.equipment.weapon = makeEquip('bow_20', {});
+Object.assign(c.skills, { stampede: 10, snacktime: 10 });
+c.mp = 9999;
+c.baseMp = 99999;
+const w = createWorld(c);
+loadMap(w, 'woods', 'west');
+w.god = true;
+w.spawner.slots = [];
+w.mobs = [];
+const x0 = 520;
+Object.assign(w.body, { x: x0, y: w.map.groundY, facing: 1, onGround: true });
+for (const dx of [-300, -180, -90, 110, 220, 340]) {
+  const m = spawnMob(w.map, { mob: 'boarlet', x: x0 + dx, y: w.map.groundY });
+  m.def = { ...m.def, hp: 1e9, eva: 0, aggro: false, speed: 0 };
+  m.hp = 1e9;
+  w.mobs.push(m);
+}
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+const cam = createCamera();
+let t = 0;
+for (let i = 0; i < 30; i++) updateWorld(w, 1 / 60, idle);
+if (q.has('snack')) {
+  cast(w, 'snacktime');
+  for (let i = 0; i < 70; i++) updateWorld(w, 1 / 60, idle);
+}
+w.pets.snow.body.x = x0 - 200;
+w.bond = 100;
+w.bondAt = 1e9;
+let cast0 = false;
+function step(dt) {
+  t += dt;
+  if (!cast0 && t > 0.6) {
+    cast0 = true;
+    w.bond = 100;
+    console.log('cast', JSON.stringify(cast(w, 'stampede')));
+  }
+  for (let k = 0; k < Math.round(dt * 60); k++) updateWorld(w, 1 / 60, idle);
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, dt);
+  drawWorld(ctx, w, cam, t);
+}
+window.step = step;
+if (!q.has('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script></body></html>

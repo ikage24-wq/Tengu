@@ -2383,7 +2383,8 @@
   // shadows (her ice-blue eyes and the sword's frost), set apart from the Thief's violet moon.
   const LUNAR = ['#ffffff', '#eef6ff', '#bcd6ff', '#86a8ee', '#3f4f9e'];
   E.lunarcrescent = crescentOf(LUNAR, PAL.ice);
-  E.lunarmoon = moonOf(LUNAR, PAL.ice);
+  // Her full moon: pale silver-white with soft grey craters, a cold blue rim.
+  E.lunarmoon = moonOf(['#ffffff', '#fbfcff', '#eef2f8', '#d6deea', '#8fa0c0'], ['#ffffff', '#e8f0fa', '#c4d0e2', '#a6b4cc', '#6f7fa8']);
   // A crescent of moonlight flying, looping (Crescent Flick, Moon Ward's answer, her Fed Up
   // swings): a thick bright crescent, horns trailing, motes peeling off behind. Drawn flying right;
   // its middle is its anchor.
