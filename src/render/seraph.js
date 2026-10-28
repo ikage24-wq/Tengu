@@ -9,7 +9,6 @@ import { R, E, T, F } from './pixel.js';
 const GOLD = '#ffd25a';
 const GOLD_LT = '#fff3b0';
 const GOLD_SH = '#e39a3a';
-const GOLD_DK = '#a8602e';
 const GEM = '#ff7fae';
 const GEM_DK = '#c8467e';
 const GEM_LT = '#ffd0e2';

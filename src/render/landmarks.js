@@ -210,7 +210,6 @@ function smoke(ctx, x, y, time, seed = 0, wx = x) {
 
 const BARK = '#b8896a';
 const BARK_LIGHT = '#d6aa86';
-const BARK_DEEP = '#8a6450';
 
 // The great tree is rigged in layers: roots and trunk (still), then three canopy layers that
 // ride the wind one after another, the back boughs least and the front leaves most.

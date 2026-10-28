@@ -318,7 +318,6 @@ OUTFITS.disco = {
 // Dancing Green's toad form: a cropped purple jacket open over a silver ribbed chest,
 // a white belt with a round buckle, chrome bell-bottoms in sculpted panels, and frog feet.
 const CHROME = '#dfe3ee';
-const CHROME_DK = '#a9b0c6';
 OUTFITS.toad = {
   // His toad-form glasses: two big wing-shaped pink lenses flaring up at the outer corners, thin
   // gold rims and bridge, the pink lighter toward the bottom, and gold arms that curve up from the

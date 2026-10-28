@@ -38,14 +38,9 @@ const rot = (cx, cy, a) => (x, y) => {
 };
 const shift = (dx, dy) => (x, y) => [x + dx, y + dy];
 const chain = (...fs) => (x, y) => fs.reduceRight((p, f) => f(...p), [x, y]);
-const ID = (x, y) => [x, y];
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
-const rnd = (i) => {
-  const v = Math.sin(i * 127.1 + 311.7) * 43758.5453;
-  return v - Math.floor(v);
-};
 // Picks a value from a per-frame list (attack keys).
 const key = (list, a) => list[clamp(a, 0, list.length - 1)];
 

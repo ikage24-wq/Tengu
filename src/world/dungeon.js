@@ -20,7 +20,7 @@ import { makeEquip, itemName } from '../core/items.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { knockBack } from './physics.js';
 import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
-import { navOf, surfaceBelow, surfaceOf } from './nav.js';
+import { navOf, surfaceBelow } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { recruitBot } from './bots.js';
 import { loadMap } from './world.js';

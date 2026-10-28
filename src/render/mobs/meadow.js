@@ -243,12 +243,6 @@ function O(cx, cy, rx, ry, deg, c, n = 18) {
   return T(pts, c);
 }
 
-// An ellipse stretched between two points, w its half width (ears, limbs, feet).
-function seg(a, b, w, c) {
-  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-  return O((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, len / 2, w, Math.atan2(b[1] - a[1], b[0] - a[0]) / D2R, c);
-}
-
 // A tapered limb from a (width wa) to b (width wb) with rounded ends.
 function limb(a, b, wa, wb, c) {
   const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;

@@ -8,7 +8,7 @@ import { R, E, T, F, sprite, blit, shade, mix, snap, tinted, gfx } from './pixel
 import { groundAt, surfacesOf } from '../world/physics.js';
 import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
-import { ramp, foliage, lightUL, flagShapes, lean, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
+import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 
 const hash = (n) => {

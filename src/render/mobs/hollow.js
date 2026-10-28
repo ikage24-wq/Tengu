@@ -10,7 +10,7 @@
 // follows). Materials use hue-shifted four-tone ramps lit from the upper front; faces come from
 // the creature face kit (faces.js) and hold the sprite's strongest contrast.
 
-import { E, T, F, C, shade, mix, sparkLine, keyAt } from './kit.js';
+import { T, F, C, shade, mix, sparkLine, keyAt } from './kit.js';
 import { eye, glowEye, brow, mouth, blush, sweat, tear, vein, deadEye, band, ovalPts } from './faces.js';
 
 const TAU = Math.PI * 2;
@@ -22,7 +22,6 @@ const PURP_HI = '#f1ddff';
 const PURP_DK = '#6a2fa8';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const mixN = (a, b, t) => a + (b - a) * t;
 const smooth = (k) => k * k * (3 - 2 * k);
 const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 // Picks the attack frame's value from a list (or the fallback outside an attack).
@@ -1052,7 +1051,6 @@ function myconid(pose, f, mood) {
   const shapes = squash(out, 17, floor + 0.4, 1 - sq * 0.8, 1 + sq);
   return { w: 46, h: 46, res: 3, shapes: place([1, 0, 0, 1, 6, 2], shapes) };
 }
-
 
 // ---------- Corrupted Sapling (sapling) ----------
 // A twisted young tree rooted to the floor, its trunk spiraling around a hollow where a corrupted

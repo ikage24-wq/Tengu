@@ -9,8 +9,8 @@
 // right. Light comes from the top-left, so catchlights and highlights never flip.
 //
 // Moods are acted with parameters, not glyphs: lid closure and slant narrow an eye, `raise` pushes
-// the lower lid up, brows turn by `angle`, mouths open by `open`. ACT holds a starting point for
-// each mood that a species then bends to its own personality.
+// the lower lid up, brows turn by `angle`, mouths open by `open`; each species acts its moods its
+// own way.
 
 import { T, F, BLUSH, shade, mix } from './kit.js';
 
@@ -637,13 +637,3 @@ export function vein(x, y, k = 1, c = '#ff4d6d') {
   return out;
 }
 
-// Starting points for each mood: eyes (lid, slant, raise, pupilK, closed), brow angle and lift
-// (px, + up), and a mouth type. Species bend these to their own personality.
-export const ACT = {
-  idle: { lid: 0, slant: 0, raise: 0, pupilK: 1, brow: 0, browUp: 0, mouth: 'smile' },
-  angry: { lid: 0.3, slant: 0.75, raise: 0.25, pupilK: 0.6, brow: 24, browUp: -0.5, mouth: 'snarl' },
-  hurt: { closed: 'squeeze', brow: -20, browUp: 0.4, mouth: 'pained' },
-  happy: { closed: 'happy', brow: -8, browUp: 0.5, mouth: 'grin' },
-  blink: { closed: 'blink', brow: 0, browUp: -0.1, mouth: 'smile' },
-  dead: { dead: true, brow: -10, browUp: 0, mouth: 'flat' },
-};

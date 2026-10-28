@@ -18,10 +18,9 @@ import { STARTER_OUTFITS, starterHasBack, starterHasHat } from './jobgear/starte
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { R, E, T, F, C, L, sprite, blit, shade, mix, shadowTone, tinted, snap, sparkLine } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
-  topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes,
-  hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
+  topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
@@ -32,7 +31,6 @@ import { heroineEye } from './mobs/heroine.js';
 import { HAIR_STYLES, BANG_STYLES, hairStyleOf, coversEye, hairParts, hairNape } from './hair.js';
 
 export { HAIR_STYLES, BANG_STYLES, hairStyleOf };
-export const EYE_STYLES = ['sparkle', 'round', 'happy', 'sleepy', 'cat', 'droopy', 'star', 'wink', 'big'];
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
 export const PICKABLE_EYE_STYLES = ['sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
@@ -233,7 +231,6 @@ function gearKey(gear) {
 // rounded bangs and side locks in front, and longer styles that hang behind the body.
 
 const HEAD_X = 15.5;
-const HEAD_Y = 14.6;
 // The face sits a little forward on the skull, toward the facing side.
 const FACE_X = HEAD_X;
 
@@ -1118,8 +1115,6 @@ function hipDrop(r) {
   }
   return q(drop);
 }
-
-const ease = (t) => 1 - (1 - t) ** 3;
 
 function baseRig() {
   return {

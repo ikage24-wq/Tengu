@@ -138,8 +138,8 @@ carry an improvement across every part of the game it applies to.
   their elbows bend mostly in depth (`arm()` `side`), never out like wings.
 - Wing beats are keyed, not a sine: hold at the top, a fast downstroke, a slow recovery; each wing
   bone takes the beat a little later than the one before it, and the body rises a beat after the
-  push (`summons.js` `beat`). Summons and companions that shoot on a timer wind up while the next
-  shot is due, strike on the shot, hold about 0.2 s, then settle.
+  push (the retired summons did this; they are in git history). Companions that shoot on a timer
+  wind up while the next shot is due, strike on the shot, hold about 0.2 s, then settle.
 - Face-kit shapes (`mobs/faces.js`) come out in plain coordinates: carry them through your part
   transform, or the face stays put while the head moves.
 
@@ -159,7 +159,7 @@ carry an improvement across every part of the game it applies to.
   on our pastel skies; give red effects their own near-black crimson or a hand-picked red ramp.
 - A move's own untouchable stretch (dashes, dodges, finishers) must not use the hurt blink: it
   reads as weakness and made finishers flicker. Only blink while recovering from a hit.
-- Motion is smooth (the player's ask): monsters and summons walk and idle through four
+- Motion is smooth (the player's ask): monsters walk and idle through four
   in-between poses per drawn frame, so a stride or a breath flows instead of stepping; attack
   frames stay whole, since their uneven timing is the point. The in-betweens are drawn in the
   background (`sprite-worker.js`, `spriteLater` in pixel.js) and the whole frame stands in until

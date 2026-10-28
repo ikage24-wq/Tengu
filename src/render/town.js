@@ -6,7 +6,7 @@
 import { drawArenaBooth } from './arena.js';
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
-import { R, E, T, F, mix, shade, snap, footShadow, slopeAt } from './pixel.js';
+import { R, E, T, F, mix, snap, footShadow, slopeAt } from './pixel.js';
 import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted, wallShade, beam, gable } from './propkit.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt, hitsLedge } from './scenery.js';
 import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, BROW_STYLES } from './hero.js';

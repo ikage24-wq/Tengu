@@ -6,7 +6,7 @@
 // shapes; icons.js draws them at res 3.
 
 import { shade, mix } from '../pixel.js';
-import { hi, lt, sh, dk, ink, S, oval, arcPts, bez, bez3, rect, clip, cut, bbox, ball, tube, line, bevel, twinkle, glint, leaf, turn, W, GOLD, D2R } from './items.js';
+import { hi, lt, sh, dk, ink, S, oval, arcPts, bez, bez3, rect, clip, cut, ball, tube, line, bevel, twinkle, glint, leaf, turn, W, GOLD, D2R } from './items.js';
 
 // ---------- The tile ----------
 
@@ -96,12 +96,6 @@ const along = (o, u, n) => (a, b = 0) => [o[0] + u[0] * a + n[0] * b, o[1] + u[1
 // Rotates finished shapes about (cx, cy), for tilting a whole motif.
 const spin = (shapes, deg, cx = 8, cy = 8) => shapes.map((s) => (s ? { ...s, pts: turn(s.pts, deg, cx, cy) } : s));
 const move = (pts, dx, dy) => pts.map(([x, y]) => [x + dx, y + dy]);
-const grow = (pts, k, cx, cy) => {
-  const b = bbox(pts);
-  const ox = cx ?? b.cx;
-  const oy = cy ?? b.cy;
-  return pts.map(([x, y]) => [ox + (x - ox) * k, oy + (y - oy) * k]);
-};
 
 // Inked edge: the silhouette stamped around itself in the outline color.
 const RING = Array.from({ length: 8 }, (_, i) => [Math.cos((i * Math.PI) / 4), Math.sin((i * Math.PI) / 4)]);
@@ -232,61 +226,8 @@ function flame(cx, by, w, h, cols = ['#ff5a3a', '#ffa23c', '#ffe9a0'], o = {}) {
   return out;
 }
 
-// A closed tome seen from the front, its cover in `c`, with a medallion that holds the emblem.
-function tome(c, medal, emblem) {
-  const cover = [[3.4, 3.1], [11.6, 2.1], [12.4, 13.4], [4.1, 14.4]];
-  const pages = [[11.6, 2.1], [13.3, 3.1], [14.1, 13.9], [12.4, 13.4]];
-  const out = [drop([...cover, ...pages]), ...edge([...cover.slice(0, 1), ...pages.slice(0, 3), ...cover.slice(3)], ink(c), 0.5)];
-  out.push(S(pages, '#fff6e4'));
-  for (let i = 1; i < 5; i++) out.push(line([[11.9 + i * 0.3, 2.3 + i * 0.2], [12.6 + i * 0.3, 13.5 + i * 0.07]], 0.18, '#e2cfae'));
-  out.push(...ball(cover, c, { k: 0.85 }));
-  out.push(S(tube([[4.1, 3.1], [4.8, 14.2]], 1.3), sh(c)), S(tube([[4.9, 3], [5.5, 14.1]], 0.35), lt(c)));
-  // Gold corner caps and a gilt border line.
-  for (const [a, b, d] of [[cover[1], [-2, 0.2], [0, 2]], [cover[2], [-2, 0.2], [0, -2]]]) out.push(S([a, add(a, b), add(a, d)], GOLD));
-  out.push(...[[6.2, 3.6], [11, 3], [11.6, 12.8], [6.8, 13.6]].map((q, i, a) => line([q, a[(i + 1) % 4]], 0.3, shade(GOLD, -6))));
-  const m = oval(8.8, 8.3, 2.9, 2.9, 0, 26);
-  out.push(...edge(m, ink(medal), 0.4), ...ball(m, medal), ...emblem(8.8, 8.3));
-  // A ribbon bookmark hanging out of the pages.
-  out.push(...solid([[9.6, 13.6], [10.6, 13.5], [10.8, 15.6], [10.15, 15], [9.6, 15.7]], '#ff6b8a', { shadow: false, d: 0.35 }));
-  out.push(...glint(5.8, 4.6, 0.55));
-  return out;
-}
-
-// An archmage's staff head: a gilt crescent claw cradling an orb, the pole running off below.
-function staffHead(orb, emblem, o = {}) {
-  const metal = o.metal ?? GOLD;
-  const wood = o.wood ?? '#9a6ad0';
-  const out = [];
-  const pole = tube([[2.6, 15.6], [7.6, 10]], 1.6);
-  out.push(drop(pole), ...edge(pole, ink(wood), 0.45), S(pole, wood), S(tube([[2.4, 15.1], [7.2, 9.8]], 0.45), lt(wood)));
-  out.push(...solid(tube([[4.4, 13.2], [5.4, 14.2]], 1.2), metal, { shadow: false }));
-  if (o.behind) out.push(...o.behind);
-  // A gilt crescent cupping the orb from below, its two horns rising to points.
-  const claw = tube(arcPts(9.4, 7, 4.6, 4.4, -40, 220, 28), (t) => 0.3 + 1.5 * Math.pow(Math.sin(Math.PI * t), 0.7));
-  out.push(drop(claw), ...edge(claw, ink(metal), 0.45), S(claw, metal), S(tube(arcPts(9.3, 6.8, 4.5, 4.3, 140, 200, 10), (t) => 0.7 * Math.sin(Math.PI * t)), hi(metal)));
-  out.push(S(tube(arcPts(9.4, 7, 4.9, 4.7, 40, 130, 10), (t) => 0.5 * Math.sin(Math.PI * t)), sh(metal)));
-  const orbPts = oval(9.4, 6.4, 3.2, 3.2, 0, 28);
-  out.push(drop(orbPts), ...edge(orbPts, ink(orb), 0.45), ...ball(orbPts, orb, { glow: 1.1 }), ...emblem(9.4, 6.4));
-  for (const a of [-40, 220]) out.push(...solid(oval(9.4 + Math.cos(a * D2R) * 4.6, 7 + Math.sin(a * D2R) * 4.4, 0.75, 0.75, 0, 12), o.tip ?? '#ff6b8a', { shadow: false, d: 0.35 }));
-  out.push(...glint(8.2, 4.8, 0.6));
-  return out;
-}
-
 // A soft white star sparkle with a tiny edge so it reads on light tiles too.
 const spark = (x, y, r, c = W) => [twinkle(x + 0.25, y + 0.3, r, mix(cur.mid, cur.deep, 0.5)), twinkle(x, y, r, c)];
-
-// A snowflake: six spokes with little forks.
-function snowflake(cx, cy, r, c = W, th = 0.55) {
-  const out = [];
-  for (let i = 0; i < 6; i++) {
-    const a = (i * 60 - 90) * D2R;
-    const u = [Math.cos(a), Math.sin(a)];
-    const n = [-u[1], u[0]];
-    const p = along([cx, cy], u, n);
-    out.push(line([p(0), p(r)], th, c), line([p(r * 0.55), p(r * 0.85, r * 0.3)], th * 0.7, c), line([p(r * 0.55), p(r * 0.85, -r * 0.3)], th * 0.7, c));
-  }
-  return out;
-}
 
 // ---------- Novice ----------
 

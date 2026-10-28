@@ -902,6 +902,3 @@ export function skillAt(skillId, level) {
   return { ...s.at(level, s.maxLevel), lock: s.lock };
 }
 
-export function skillsForJob(jobId) {
-  return Object.values(SKILLS).filter((s) => s.job === jobId);
-}

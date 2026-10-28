@@ -123,12 +123,6 @@ export function autoAssignAp(char) {
   }
 }
 
-// Skills the character can see in their skill book (every job in their chain).
-export function availableSkills(char) {
-  const chain = jobChain(char.job);
-  return Object.values(SKILLS).filter((s) => chain.includes(s.job));
-}
-
 export function canLearn(char, skillId) {
   const s = SKILLS[skillId];
   if (!s || char.sp <= 0) return false;

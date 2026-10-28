@@ -4,14 +4,14 @@
 import { drawItemIcon } from './icons.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
-import { drawSpell, drawSpellShot, SCHOOL_COLORS } from './spells.js';
+import { drawSpell, SCHOOL_COLORS } from './spells.js';
 import { drawStrike, drawStrikeShot } from './strikes.js';
 import { fxSprite } from './fx-sprites.js';
 import { shuriken } from './thief-fx.js';
 import { FX_SHEETS } from './fx-sheets.js';
 import { debris, groundRing, hitMark } from './warrior-fx.js';
 import { drawBuffCast } from './buffs.js';
-import { crescent, starFlash, needle, shock, puff, crown, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
+import { crescent, starFlash, needle, shock, bloom, stepped, haloStroke, inked, wash, easeOut, easeIn } from './fxkit.js';
 import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
 import { strikePose } from './hero.js';
@@ -82,7 +82,7 @@ function drawShot(ctx, f, cam) {
   const dir = Math.sign(f.tx - f.x) || 1;
   const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
-  if (drawSpellShot(ctx, f, x, y, dir, f.t) || drawStrikeShot(ctx, f, x, y, dir, f.t)) {
+  if (drawStrikeShot(ctx, f, x, y, dir, f.t)) {
     ctx.restore();
     return;
   }

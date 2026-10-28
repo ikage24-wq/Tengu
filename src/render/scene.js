@@ -17,8 +17,6 @@ import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js'
 import { questMarker } from '../ui/npc.js';
 import { nearbyNpc } from '../world/world.js';
 import { groundAt } from '../world/physics.js';
-import { summonPosition } from '../world/combat.js';
-import { drawSummon } from './summons.js';
 import { text, box, COLORS } from '../ui/kit.js';
 import { createAnim, stepAnim } from './animator.js';
 import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura, landing } from './particles.js';
@@ -267,13 +265,6 @@ export function drawWorld(ctx, world, viewCam, time) {
     const hot = world.hoverSelf;
     box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
     text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
-  }
-
-  let summonIndex = 0;
-  for (const buff of Object.values(world.char.buffs)) {
-    if (!buff.summon) continue;
-    const pos = summonPosition(world, summonIndex++);
-    drawSummon(ctx, buff.summon.art, pos.x - cam.x, pos.y - cam.y, time, b.facing, { now: world.now, since: buff.since, until: buff.until, summon: buff.summon });
   }
 
   // HD: light and color over the world, then effects on a glowing layer.

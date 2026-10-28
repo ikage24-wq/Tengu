@@ -39,12 +39,6 @@ function framePos(s, { p, t } = {}) {
   return Math.min(s.n - 1, Math.max(0, (p ?? 0) * s.n));
 }
 
-// The frame a strip is on at progress `p` or time `t`.
-export function fxFrame(name, at = {}) {
-  const { s } = sheetOf(name);
-  return s ? Math.floor(framePos(s, at)) : -1;
-}
-
 // Draws a strip's frame with its pivot at (x, y). `scale` (1 = the effect's own size), `flip`
 // mirrors it (face the other way), `rot` turns it (radians), `alpha` fades it, `sx`/`sy` stretch
 // it. A `frame` picks one drawing and holds it; otherwise the next drawing blends in as the

@@ -341,7 +341,6 @@
   }
 
   const E = {};
-  const SCHOOLS = Object.keys(PAL);
 
   // ---------- Blade swipes ----------
   // A swipe over the top of its circle, sweeping clockwise from the left to the right. The game
@@ -469,7 +468,6 @@
     };
   }
   E.hit = hit(PAL.steel, 21);
-  E.hitgold = hit(PAL.holy, 22);
   E.hitred = hit(PAL.rage, 23);
 
   // The Warrior's mark: two blades of light struck across the monster one after the other (an X),
@@ -715,7 +713,11 @@
       },
     };
   }
-  for (const s of SCHOOLS) E[s === 'steel' ? 'pillar' : `pillar${s}`] = pillar(PAL[s]);
+  // Pillars and rings come in the colours the game asks for (warrior-fx.js `tint`): each path's
+  // school, plus the rings for the Sniper's sight, the Mage's mint, the Ranger's sky and the
+  // Night Lord's starlight.
+  const PILLARS = ['steel', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'crimson'];
+  for (const s of PILLARS) E[s === 'steel' ? 'pillar' : `pillar${s}`] = pillar(PAL[s]);
 
   // A ring of force bursting out (the game squashes it flat on the ground): it snaps out thick,
   // thins as it widens, then breaks into dashes.
@@ -730,7 +732,7 @@
       },
     };
   }
-  for (const s of SCHOOLS) E[s === 'steel' ? 'ring' : `ring${s}`] = ringBurst(PAL[s]);
+  for (const s of [...PILLARS, 'sight', 'mint', 'sky', 'starlight']) E[s === 'steel' ? 'ring' : `ring${s}`] = ringBurst(PAL[s]);
 
   // ---------- The ground ----------
   // A heavy blow cracks the ground: a glowing fissure, then shards of rock burst up in a fan,
@@ -2255,7 +2257,6 @@
     ctx.fillStyle = '#ffffff';
     ctx.fill();
   }
-  E.slashbloom = swipe(PAL.bloom, { seed: 23 });
   E.streakbloom = streaks(PAL.bloom);
   // A petal bolt in flight, looping: a pink orb with petals turning round it.
   E.petalorb = {
@@ -2451,7 +2452,7 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringsight', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight', 'ringbloom', 'ringmint']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight', 'ringbloom', 'ringmint']) E[`${s}big`] = big(E[s], 2.6);
   E.gardenbig = big(E.garden, 1.3);
   E.petalstormbig = big(E.petalstorm, 1.2);
   E.redcrescentbig = big(E.redcrescent, 1.6);

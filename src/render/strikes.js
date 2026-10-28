@@ -12,7 +12,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
 import { drawThiefFx, moonRainPiece } from './thief-fx.js';
 import { drawMageFx, drawMageShot } from './mage-fx.js';
-import { ghost, wash, needle, bloom, shardRing, shock, starFlash, crescent, stepped, easeOut, easeIn, deep, inked } from './fxkit.js';
+import { wash, deep } from './fxkit.js';
 
 const TAU = Math.PI * 2;
 const ease = (p) => 1 - (1 - p) * (1 - p);
@@ -713,8 +713,6 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   }
 }
 
-const x0Center = (box) => box.x + box.w / 2;
-
 // A scratch canvas the size of the game canvas, for effects that need to fade as a single layer.
 let scratchCanvas = null;
 function scratch(main) {
@@ -761,26 +759,6 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
   }
 }
 
-// A small diamond of light on an inked rim (the holy school's spark: no spikes).
-function diamond(ctx, x, y, r, color) {
-  if (r <= 0.3) return;
-  const shape = (R) => {
-    ctx.beginPath();
-    ctx.moveTo(x, y - R * 1.3);
-    ctx.lineTo(x + R, y);
-    ctx.lineTo(x, y + R * 1.3);
-    ctx.lineTo(x - R, y);
-    ctx.closePath();
-    ctx.fill();
-  };
-  if (r > 1.2 && inked(ctx)) {
-    ctx.fillStyle = deep(color);
-    shape(r + 0.9);
-  }
-  ctx.fillStyle = color;
-  shape(r);
-}
-
 function petal(ctx, x, y, rot, c) {
   ctx.save();
   ctx.translate(x, y);
@@ -792,21 +770,6 @@ function petal(ctx, x, y, rot, c) {
   ctx.fillStyle = c.light;
   ctx.fillRect(-1, -0.5, 2, 1);
   ctx.restore();
-}
-
-function thorn(ctx, x, y, w, h, c) {
-  ctx.fillStyle = c.deep;
-  ctx.beginPath();
-  ctx.moveTo(x - w, y);
-  ctx.lineTo(x, y - h);
-  ctx.lineTo(x + w, y);
-  ctx.fill();
-  ctx.fillStyle = c.main;
-  ctx.beginPath();
-  ctx.moveTo(x - w * 0.4, y);
-  ctx.lineTo(x, y - h * 0.8);
-  ctx.lineTo(x + w * 0.2, y);
-  ctx.fill();
 }
 
 // The hammer of heaven: a beveled warhammer head with gold caps and a glowing cross, on a

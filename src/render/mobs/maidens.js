@@ -99,8 +99,6 @@ function ovalPts(cx, cy, rx, ry, n = 24, a = 0) {
   }
   return out;
 }
-const oval = (cx, cy, rx, ry, c, a = 0, n = 24) => poly(ovalPts(cx, cy, rx, ry, n, a), c);
-const foval = (cx, cy, rx, ry, c, a = 0, n = 20) => F(oval(cx, cy, rx, ry, c, a, n));
 const ooval = (cx, cy, rx, ry, c, a = 0, d = INK_W) => opoly(ovalPts(cx, cy, rx, ry, 22, a), c, d);
 const dot = (x, y, rx, c, ry = rx) => {
   const [px, py] = X(x, y);

@@ -14,7 +14,7 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, summonStrike, summonPosition, weaponElement } from './combat.js';
+import { cast, weaponElement } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -429,17 +429,6 @@ export function updateWorld(world, dt, input) {
   world.stats = computeStats(char, world.now);
   char.hp = Math.min(char.hp, world.stats.maxHp);
   char.mp = Math.min(char.mp, world.stats.maxMp);
-
-  // Summons attack on their own timers; with nothing in range they check again shortly.
-  let summonIndex = 0;
-  for (const b of Object.values(char.buffs)) {
-    if (!b.summon) continue;
-    const from = summonPosition(world, summonIndex++);
-    b.summon.timer -= dt;
-    if (b.summon.timer <= 0 && !world.dead) {
-      b.summon.timer = summonStrike(world, b.summon, from) ? b.summon.every : 0.25;
-    }
-  }
 
   // ----- Player control -----
   // A boss cutscene takes the controls; Space, Enter or Escape skips it.

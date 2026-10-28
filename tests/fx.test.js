@@ -40,9 +40,15 @@ test('every effect strip the code uses is listed', () => {
 });
 
 test("every school has its ring and pillar of light in Tengu's own art", () => {
-  for (const school of ['', 'holy', 'rage', 'arcane', 'ice', 'fire', 'wind', 'poison', 'lightning', 'shadow']) {
+  for (const school of ['', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'crimson']) {
     assert.ok(FX_SHEETS[`celring${school}`], `ring ${school || 'steel'}`);
     assert.ok(FX_SHEETS[`celpillar${school}`], `pillar ${school || 'steel'}`);
   }
   for (const name of ['celslash', 'celslashgold', 'celslashred']) assert.ok(FX_SHEETS[name].r > 0, `${name} can follow a swing`);
+});
+
+test('every skill has its own drawn icon', async () => {
+  const { SKILLS } = await import('../src/data/skills.js');
+  const { SKILL_ART } = await import('../src/render/icons/skills.js');
+  for (const id of Object.keys(SKILLS)) assert.ok(SKILL_ART[id], `${id} has its icon`);
 });

@@ -83,14 +83,14 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { petalbolt: 'zap', bloombolt: 'zap', nightstar: 'star', giantstar: 'star', moonstar: 'star', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', venomfire: 'poison', bomb: 'fire', icebeam: 'ice', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
+const SHOTS = { petalbolt: 'zap', bloombolt: 'zap', nightstar: 'star', giantstar: 'star', moonstar: 'star', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
-  thunder: 'lightning', chain: 'lightning', chainbolt: 'lightning', burst: 'zapHit', beam: 'zapHit',
-  icespire: 'iceBurst', tempest: 'iceBurst', freeze: 'iceBurst',
-  meteor: 'meteor', fire: 'fireBurst', toxicblaze: 'fireBurst', dragon: 'fireBurst',
-  mist: 'mist', poisonmist: 'mist', smoke: 'gust',
-  judgment: 'holyBurst', shiningray: 'holyBurst', holy: 'holyBurst',
+  burst: 'zapHit', beam: 'zapHit',
+  freeze: 'iceBurst',
+  meteor: 'meteor', fire: 'fireBurst', dragon: 'fireBurst',
+  smoke: 'gust',
+  judgment: 'holyBurst', holy: 'holyBurst',
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
   feathers: 'gust', titanwave: 'quake', moonslash: 'bladestorm', smokepuff: 'gust', petalstorm: 'gust', healbloom: 'holyBurst', crowburst: 'gust', crowcut: 'bladestorm', execute: 'bladestorm', starpop: 'zapHit',
@@ -196,4 +196,3 @@ export function sfx(name, o = {}) {
   else voice(name, o);
 }
 
-export const SOUND_NAMES = Object.keys(RECIPES);

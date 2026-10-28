@@ -35,7 +35,7 @@ export function songFor(map, world = null) {
   return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove' }[map.theme] ?? 'meadow';
 }
 
-const SPELLS = new Set(['petalstorm', 'healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'crowburst', 'crowcut', 'execute', 'starpop', 'thunder', 'icespire', 'meteor', 'tempest', 'judgment', 'shiningray', 'mist', 'toxicblaze', 'chainbolt', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock']);
+const SPELLS = new Set(['petalstorm', 'healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'crowburst', 'crowcut', 'execute', 'starpop', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock']);
 const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut', 'bloodmoonrise', 'redcrescent', 'constellation', 'galaxyburst', 'gardenbud', 'gardenbloom']);
 
 export function hearWorld(world, cam) {

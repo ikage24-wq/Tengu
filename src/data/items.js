@@ -115,8 +115,6 @@ for (const type of Object.keys(WEAPON_LINES)) for (const t of [1, 2, 3, 4]) RENA
 for (const id of Object.keys(ITEMS)) if (id.startsWith('gauntlet_')) RENAMED_ITEMS[id.replace('gauntlet_', 'claw_')] = id;
 for (const t of [1, 2, 3, 4]) RENAMED_ITEMS[`claw_${t}`] = `gauntlet_${t * 10}`;
 
-export const WEAPON_IDS = Object.values(ITEMS).filter((d) => d.slot === 'weapon').map((d) => d.id);
-
 // ---------- Armor ----------
 
 const ARMOR_TIERS = [
@@ -170,7 +168,6 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
 for (const [slot, name, color] of [['top', 'Starting Top', '#ffc2d6'], ['bottom', 'Starting Bottoms', '#b4c8f2'], ['shoes', 'Starting Shoes', '#ffd6a8']]) {
   add({ id: `outfit_${slot}`, name, type: 'equip', slot, design: 'starter', tier: 0, reqLevel: 1, family: null, stats: {}, price: 0, color, legacy: true, starterOutfit: true });
 }
-export const STARTING_OUTFIT = ['top', 'bottom', 'shoes'];
 
 // ---------- Job gear ----------
 // Every job has its own set every 5 levels, from 5 to 100, in each armor slot: warriors in heavy
@@ -475,6 +472,3 @@ for (const [id, name, price, color] of ETC) {
   add({ id, name, type: 'etc', price, color, desc: 'A monster drop. Some quests need these; shops buy them.' });
 }
 
-export function itemDef(id) {
-  return ITEMS[id];
-}

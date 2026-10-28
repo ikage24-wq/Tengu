@@ -4,7 +4,7 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
 import { countItem, activeStar } from '../core/inventory.js';
-import { HOTKEYS, wornGear } from '../core/character.js';
+import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
 import { drawHero } from '../render/hero.js';
