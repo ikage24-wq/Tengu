@@ -70,6 +70,12 @@ export function describeSkill(skillId, lv) {
 }
 
 function describe(params) {
+  // A proc (a skill that sets itself off): how often, then what it does when it does.
+  if (params.proc) {
+    const p = params.proc;
+    const when = [p.chance != null && `${Math.round(p.chance * 100)}% chance`, p.hard && `on a hit of ${Math.round(p.hard * 100)}%+ HP`, p.crowd && `always on ${p.crowd}+ foes`].filter(Boolean);
+    return [...when, describe({ ...p, chance: undefined, proc: undefined })].filter(Boolean).join(', ');
+  }
   const parts = [];
   if (params.pct) parts.push(`${params.pct}% damage`);
   if (params.power) parts.push(`${params.power}% magic`);

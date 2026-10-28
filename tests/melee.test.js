@@ -52,11 +52,11 @@ test("holding attack with a sword chains the Warrior's own combo, ending in the 
   const w = arena();
   const seen = [];
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 160; i++) {
     updateWorld(w, DT, hold);
     if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
   }
-  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.warrior.map((s) => s.move));
+  assert.deepEqual(seen.slice(0, PATH_COMBOS.warrior.length), PATH_COMBOS.warrior.map((s) => s.move));
 });
 
 test('a blow lands when the blade cuts, and you step into it', () => {
@@ -83,28 +83,23 @@ test('pauses reset the combo, and taps mid-swing are remembered', () => {
   assert.equal(w.combo, 0, 'a long pause starts over');
 });
 
-test('finishers and launchers knock monsters up into the air', () => {
+test('up + attack launches monsters into the air, and down + attack slams the ground', () => {
   const w = arena();
-  w.char.skills.bladerush = 10;
-  w.char.mp = 999;
-  const hits = (id) => {
-    w.attackTimer = 0;
-    w.lockTimer = 0;
-    w.skillReadyAt = 0;
-    assert.ok(cast(w, id).ok);
-  };
-  hits('bladerush'); // cross-cut
-  run(w, 0.5);
-  hits('bladerush'); // launcher
+  updateWorld(w, DT, { held: new Set(['ArrowUp', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+  assert.equal(w.pose.kind, 'rising', 'the launcher');
   let air = 0;
   for (let i = 0; i < 40; i++) {
     updateWorld(w, DT, idle);
     air = Math.max(air, ...w.mobs.map((m) => m.air ?? 0));
   }
   assert.ok(air > 30, `launched (${Math.round(air)}px)`);
-  assert.equal(w.chains.bladerush.i, 1);
-  hits('bladerush'); // the dive
-  assert.equal(w.pose.kind, 'plunge');
+  run(w, 2);
+  const m = w.mobs[0];
+  const before = m.hp;
+  updateWorld(w, DT, { held: new Set(['ArrowDown', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+  assert.equal(w.pose.kind, 'plunge', 'the slam');
+  run(w, 0.7);
+  assert.ok(m.hp < before, 'it lands');
 });
 
 test('Titan Breaker needs full Valor, spends it, and lands its crash and its aftershock', () => {
@@ -151,14 +146,17 @@ function stops(w, frames) {
 }
 
 test('only the first and last blows of a flurry stop the world', () => {
-  const w = arena('axe_20');
+  // Whirlwind: the combo's finisher catches all three boars, so it always spins on.
+  const w = arena();
   w.char.skills.whirlwind = 10;
-  w.char.mp = 999;
-  assert.ok(cast(w, 'whirlwind').ok);
-  const s = stops(w, 80);
-  assert.equal(s.length, 5, 'five blows');
-  assert.ok(s[0].stop > 0 && s[4].stop > 0, 'first and last stop');
-  for (const mid of s.slice(1, 4)) assert.equal(mid.stop, 0, 'the middle blows flow');
+  w.combo = PATH_COMBOS.warrior.length - 2;
+  w.comboUntil = w.now + 1;
+  updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
+  const s = stops(w, 120);
+  const spin = s.slice(1);
+  assert.equal(spin.length, 5, `five blows after the cleave (${s.length} in all)`);
+  assert.ok(spin[0].stop > 0 && spin[4].stop > 0, 'first and last stop');
+  for (const mid of spin.slice(1, 4)) assert.equal(mid.stop, 0, 'the middle blows flow');
 });
 
 test('no freeze runs past MAX_STOP: the heaviest blows add slow motion instead', () => {
@@ -189,7 +187,7 @@ test('a blow that hits many monsters stops once, not once per monster', () => {
 
 test('once a blow lands, moving cuts the follow-through short and skills can cut in', () => {
   const w = arena();
-  w.char.skills.bladerush = 5;
+  w.char.skills.shouldercharge = 5;
   w.char.mp = 999;
   updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
   run(w, 0.05);
@@ -197,10 +195,13 @@ test('once a blow lands, moving cuts the follow-through short and skills can cut
   updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
   assert.ok(w.attackTimer > 0, 'still winding up: no cancel before the blow');
   run(w, 0.2);
-  assert.equal(cast(w, 'bladerush').ok, true, 'a skill cuts into the recovery');
+  assert.equal(cast(w, 'shouldercharge').ok, true, 'a skill cuts into the recovery');
   run(w, 0.6);
+  // The charge carried you on past where you started; from there, you walk back.
+  const after = w.body.x;
+  assert.ok(after > x, 'the charge carried you forward');
   for (let i = 0; i < 20; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
-  assert.ok(w.body.x < x, 'walking away after the blows');
+  assert.ok(w.body.x < after, 'walking away after the blows');
 });
 
 // A level 25 archer in Mossy Woods with sturdy boars a little way off.
@@ -289,7 +290,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['mage', 'wand_20', 'petalbolt'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'bladerush']]) {
+  for (const [job, weapon, skill] of [['mage', 'wand_20', 'petalbolt'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'shouldercharge']]) {
     const w = arena(weapon);
     w.char.job = job;
     if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
@@ -307,8 +308,8 @@ test('the same no-spam rule holds for every job, spells and thief skills include
 test('one press of a skill key casts it once, even held a moment or pressed mid-swing', () => {
   for (const midSwing of [false, true]) {
     const w = arena();
-    w.char.skills.bladerush = 10;
-    w.char.hotkeys.KeyA = { skill: 'bladerush' };
+    w.char.skills.shouldercharge = 10;
+    w.char.hotkeys.KeyA = { skill: 'shouldercharge' };
     w.char.baseMp = 99999;
     w.char.mp = 99999;
     let casts = 0;
@@ -910,7 +911,8 @@ test("a Warrior's blows build Valor, faster the more monsters one blow catches, 
     const random = Math.random;
     Math.random = () => 0.5;
     try {
-      w.combo = 1;
+      // The combo's finisher, which catches up to three.
+      w.combo = PATH_COMBOS.warrior.length - 2;
       w.comboUntil = w.now + 1;
       updateWorld(w, DT, press('KeyZ'));
       run(w, 0.6);
@@ -1036,14 +1038,92 @@ test('the Archer has command shots too: up at fliers, from the air, and on the r
   assert.equal(w.pose.kind, 'airshot', 'shooting from the air');
 });
 
-test('War Cry turns the monsters around on you and guards you and the party', () => {
+test('War Cry goes off as Valor fills: the monsters turn on you and you take less damage', () => {
   const w = arena();
   w.char.skills.warcry = 10;
-  w.char.mp = 999;
   w.mobs.forEach((m) => (m.aggroUntil = 0));
-  assert.ok(cast(w, 'warcry').ok);
+  assert.equal(cast(w, 'warcry').reason, 'passive', 'not a key to press any more');
+  w.valor = 97;
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 0.5);
+  assert.equal(w.valor, 100, 'the blow filled Valor');
   assert.ok(w.mobs.every((m) => m.aggroUntil > w.now), 'every monster around turns on you');
   assert.ok(w.char.buffs.warcry?.values.dmgCut > 0, 'and you take less damage');
+  // Only on the fill: staying full doesn't shout again.
+  const since = w.char.buffs.warcry.since;
+  run(w, 1, press('KeyZ'));
+  assert.equal(w.char.buffs.warcry.since, since);
+});
+
+test('Blade Rush sometimes rushes a blow on into an extra cross-cut, and proc cuts never chain', () => {
+  const blows = (chance) => {
+    const w = arena();
+    w.char.skills.bladerush = 20;
+    const m = w.mobs[0];
+    let hits = 0;
+    let last = m.hp;
+    const random = Math.random;
+    Math.random = () => (chance ? 0.01 : 0.99);
+    try {
+      updateWorld(w, DT, press('KeyZ'));
+      for (let i = 0; i < 40; i++) {
+        updateWorld(w, DT, idle);
+        if (m.hp < last) hits++;
+        last = m.hp;
+      }
+    } finally {
+      Math.random = random;
+    }
+    return hits;
+  };
+  assert.equal(blows(false), 1, 'a plain blow');
+  assert.equal(blows(true), 3, 'the blow, then the two cuts of the cross (and no more)');
+});
+
+test('Blade Rush and Whirlwind go off from the swing itself, even with nothing in reach', () => {
+  const w = arena();
+  w.mobs = [];
+  w.char.skills.bladerush = 20;
+  w.char.skills.whirlwind = 20;
+  const said = new Set();
+  const random = Math.random;
+  Math.random = () => 0.01;
+  try {
+    // Swing through the whole combo at thin air.
+    for (let i = 0; i < 240; i++) {
+      updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+      for (const n of w.numbers) if (n.link) said.add(n.text);
+    }
+  } finally {
+    Math.random = random;
+  }
+  assert.ok(said.has('BLADE RUSH!'), 'a swing at nothing still rushes on');
+  assert.ok(said.has('WHIRLWIND!'), 'and the combo still spins into a Whirlwind');
+});
+
+test('Iron Guard braces against a hard hit, and the proc skills free their old hotkeys', async () => {
+  const { hurtPlayer } = await import('../src/world/world.js');
+  const { updateRetiredJobs } = await import('../src/core/save.js');
+  const w = arena();
+  w.god = false;
+  w.char.skills.ironguard = 20;
+  w.char.hp = w.stats.maxHp;
+  const random = Math.random;
+  Math.random = () => 0.01;
+  try {
+    hurtPlayer(w, 1, w.body.x - 10);
+    assert.ok(!w.char.buffs.ironguard, 'a scratch is no reason to brace');
+    w.char.hp = 1e7;
+    hurtPlayer(w, 9999, w.body.x - 10);
+    assert.ok(w.char.buffs.ironguard?.values.dmgCut > 0, 'a hard hit is');
+  } finally {
+    Math.random = random;
+  }
+  w.char.hotkeys.KeyA = { skill: 'ironguard' };
+  w.char.hotkeys.KeyS = { skill: 'shouldercharge' };
+  updateRetiredJobs(w.char);
+  assert.equal(w.char.hotkeys.KeyA, null, 'a proc has no key');
+  assert.deepEqual(w.char.hotkeys.KeyS, { skill: 'shouldercharge' }, 'a real skill keeps its key');
 });
 
 // ---------- The Thief: Shadow, Phantom, and a dagger or a gauntlet ----------

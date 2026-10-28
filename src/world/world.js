@@ -14,7 +14,7 @@ import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, weaponElement } from './combat.js';
+import { cast, weaponElement, braceOnHit } from './combat.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -375,6 +375,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
     world.events.push({ type: 'death' });
     world.log('You fainted...', '#ff6b8a');
   }
+  braceOnHit(world, dmg);
 }
 
 function playerBox(b) {

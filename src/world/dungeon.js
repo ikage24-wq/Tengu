@@ -10,6 +10,7 @@
 //     the group regroups at its entrance.
 
 import { faithGuard } from './melee.js';
+import { braceOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
 import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
@@ -470,6 +471,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
     world.events.push({ type: 'death' });
     world.log('You fainted! Your group can get you back up after the fight.', '#ff6b8a');
   }
+  braceOnHit(world, dmg);
   return dmg;
 }
 

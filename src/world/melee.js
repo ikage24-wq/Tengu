@@ -27,7 +27,7 @@
 
 import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS, jobChain } from '../data/jobs.js';
-import { pickTargets, weaponElement } from './combat.js';
+import { pickTargets, weaponElement, procOf, announce, cryOut } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { provoke, healMembers } from './dungeon.js';
@@ -108,13 +108,19 @@ export const hasPathCombo = (world) => Boolean(PATH_COMBOS[pathOf(world)]);
 // The warrior paths' own basic combos. The Paladin: a measured cut behind the shield arm, a shield
 // shove that dazes, a lunging thrust, and a two-handed smite. The Berserker: a huge wound-up
 // cleave, the return cleave, and a leaping skull-splitter; slower, and every one heavy.
-// The first jobs fight their own way too. The Warrior: a quick cut, the return cut, then a
-// heavy two-handed cleave that knocks them flying. The Archer: a snap shot, a double shot (two
-// gold arrows a beat apart), then a full draw whose hawk arrow tears through the line.
+// The first jobs fight their own way too. The Warrior (who fights with his basic attacks, his
+// skills going off on their own from them): a quick cut, the return cut, a stepping cross-cut
+// that catches a few, then a heavy two-handed cleave that knocks them flying. The Archer: a snap
+// shot, a double shot (two gold arrows a beat apart), then a full draw whose hawk arrow tears
+// through the line.
 export const PATH_COMBOS = {
   warrior: [
     { move: 'slash', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
     { move: 'slash2', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
+    { move: 'cross', dur: 0.5, step: 10, strikes: [
+      { at: 0.22, pct: 65, reach: 74, h: 60, targets: 2, knock: 30, arc: [-115, 205], thick: 9 },
+      { at: 0.72, pct: 75, reach: 74, h: 62, targets: 2, knock: 60, arc: [100, -215], thick: 9 },
+    ] },
     { move: 'cleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
   ],
   archer: [
@@ -254,6 +260,10 @@ const AIR = [
 ];
 // Running into an attack: a lunging thrust through the line.
 const DASH = { move: 'dashstab', dur: 0.46, step: 44, carry: 0.55, strikes: [{ at: 0.38, pct: 140, reach: 84, h: 52, targets: 3, pierce: true, knock: 200, big: true, stop: 0.05, shake: 1 }] };
+// Down + attack (the warrior paths): a leaping two-handed slam that cracks the ground all around.
+const SLAM = { move: 'plunge', dur: 0.62, step: 18, strikes: [{ at: 0.56, pct: 170, reach: 88, h: 80, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] };
+// The warrior paths fight in a blade's reach and put their weight into it.
+const warriorPath = (char) => hasValor(char) || hasRage(char) || hasFaith(char);
 // The Thief's own dagger commands: a quick flipping launcher, three fast air stabs then a diving
 // stab, and a dash that slips through the line stabbing as it goes.
 const DAGGER_COMMANDS = {
@@ -301,8 +311,10 @@ const FAITH_ON_HURT = 7;
 export const hasFaith = (char) => jobChain(char.job).includes('paladin');
 export function addFaith(world, n) {
   if (!hasFaith(world.char) || n <= 0) return;
-  world.faith = Math.min(FAITH_MAX, (world.faith ?? 0) + n);
+  const before = world.faith ?? 0;
+  world.faith = Math.min(FAITH_MAX, before + n);
   world.faithAt = world.now;
+  if (before < FAITH_MAX && world.faith >= FAITH_MAX) cryOut(world);
 }
 // The share Faith takes off a hit; a hit taken also builds it.
 export function faithGuard(world) {
@@ -349,8 +361,11 @@ const VALOR_DRAIN = 12;
 export const hasValor = (char) => char.job === 'warrior';
 export function addValor(world, n) {
   if (!hasValor(world.char) || n <= 0) return;
-  world.valor = Math.min(VALOR_MAX, (world.valor ?? 0) + n);
+  const before = world.valor ?? 0;
+  world.valor = Math.min(VALOR_MAX, before + n);
   world.valorAt = world.now;
+  // War Cry goes off as a warrior path's gauge fills (Valor here, Faith and Rage on the paths).
+  if (before < VALOR_MAX && world.valor >= VALOR_MAX) cryOut(world);
 }
 export const unbroken = (world) => hasValor(world.char) && (world.valor ?? 0) >= VALOR_MAX;
 // Momentum: the Archer's gauge (first job). Shots that land build it, more for each one landed in
@@ -501,8 +516,10 @@ const WEIGHT = { berserker: 1.4, paladin: 1.2, unbroken: 1.35 };
 const weightOf = (world) => (hasRage(world.char) ? WEIGHT.berserker : hasFaith(world.char) ? WEIGHT.paladin : unbroken(world) ? WEIGHT.unbroken : 1);
 export function addRage(world, n) {
   if (!hasRage(world.char) || n <= 0) return;
-  world.rage = Math.min(RAGE_MAX, (world.rage ?? 0) + n);
+  const before = world.rage ?? 0;
+  world.rage = Math.min(RAGE_MAX, before + n);
   world.rageAt = world.now;
+  if (before < RAGE_MAX && world.rage >= RAGE_MAX) cryOut(world);
 }
 
 // Basic attack with a melee weapon: the next step of its combo.
@@ -521,6 +538,11 @@ export function basicCombo(world) {
     }
     if (world.intent?.up) {
       playStep(world, own?.up ?? LAUNCHER, 100, 'basiclaunch');
+      world.combo = -1;
+      return;
+    }
+    if (world.intent?.down && warriorPath(world.char) && world.stats.weaponType !== 'none') {
+      playStep(world, SLAM, 100, 'basicslam');
       world.combo = -1;
       return;
     }
@@ -699,6 +721,7 @@ export function tickMelee(world, dt) {
     } else if (world.now > world.dive.until || b.rope) world.dive = null;
     else b.vy = Math.max(b.vy, 600);
   }
+  playQueued(world);
   if (!world.strikes.length) return;
   const due = world.strikes.filter((s) => s.due <= world.now);
   if (!due.length) return;
@@ -792,6 +815,8 @@ function land(world, s) {
       m.dir = Math.sign(body.x - m.x) || m.dir;
     }
   }
+  // Procs go off from the swing itself, hit or miss (Whirlwind's crowd rule needs a hit, though).
+  if (s.key.startsWith('basic')) bladeProcs(world, s, targets.length);
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing spell mends you and the party around you as it blooms.
@@ -828,6 +853,55 @@ function land(world, s) {
       world.juice.push({ type: 'kick', x: s.dir * Math.min(4, 1 + shakeMag * 0.6), y: s.crack ? 2 : 0 });
     }
   } else if (s.shake && s.crack) world.juice.push({ type: 'shake', mag: s.shake * 0.6, dur: 0.2 });
+}
+
+// ---------- Blade procs ----------
+// A warrior's skills set themselves off from his basic swings, hit or miss (see data/skills.js):
+// a swing may rush on into Blade Rush's extra cross-cut, and a combo's last swing may spin on
+// into a Whirlwind (always, when it catches a crowd). Proc strikes aren't basic swings, so they
+// never set off procs.
+
+// Blade Rush's cross-cut: two cuts of steel a beat after the blow, slashing what's in front.
+function rushStrikes(world, s, p) {
+  const cut = (delay, arc, knock) => ({
+    at: s.at, due: world.now + delay, pct: p.pct, reach: 76, h: 62, targets: p.targets, knock, arc, thick: 9, school: 'steel',
+    n: 0, of: 1, dir: s.dir, scale: 100, key: 'procbladerush', move: s.move, dur: s.dur, finisher: false, quiet: true,
+  });
+  world.strikes.push(cut(0.1, [-115, 205], 30), cut(0.22, [100, -215], 70));
+}
+
+// Whirlwind's spin: carried forward, four pulling hits all around, then a fling.
+function whirlStep(p) {
+  const hit = (at, i) => ({ at, pct: p.pct, reach: 80, h: 76, around: true, targets: p.targets, pull: 70, arc: [i % 2 ? 180 : 0, 300], thick: 10, stop: 0.02, gauge: 2 });
+  return { move: 'spin', dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
+    ...[0.15, 0.3, 0.45, 0.6].map(hit),
+    { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4 },
+  ] };
+}
+
+// After a basic swing lands (on `count` monsters, maybe none). `rng` for tests.
+function bladeProcs(world, s, count, rng = Math.random) {
+  const { char } = world;
+  const rush = procOf(char, 'bladerush');
+  if (rush && rng() < rush.chance) {
+    rushStrikes(world, s, rush);
+    announce(world, 'BLADE RUSH!');
+  }
+  // Only the ground combo's own finisher spins (not a dive, a slam, or a dash).
+  const whirl = procOf(char, 'whirlwind');
+  if (whirl && s.finisher && /^basic\d$/.test(s.key) && !world.queuedStep && (count >= whirl.crowd || rng() < whirl.chance)) {
+    world.queuedStep = { at: world.now + 0.12, step: whirlStep(whirl), key: 'procwhirlwind', name: 'WHIRLWIND!' };
+  }
+}
+
+// A proc's own move, a beat after the blow that set it off (on the ground, and still standing).
+function playQueued(world) {
+  const q = world.queuedStep;
+  if (!q || world.now < q.at) return;
+  world.queuedStep = null;
+  if (world.dead || !world.body.onGround) return;
+  playStep(world, q.step, 100, q.key, 'steel', AFTER.finisher);
+  announce(world, q.name);
 }
 
 // How a shot would hit a monster: rolled now, landing when it arrives.

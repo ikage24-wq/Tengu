@@ -228,7 +228,9 @@ function details(ui, state, world, s, x, y, w, h, win) {
   const fy = y + h - 21;
   const key = hotkeyOf(char, s.id);
   let hint;
-  if (s.type === 'passive') hint = lv ? 'Always on' : 'Always on once learned';
+  // A proc sets itself off in a fight; other passives are simply always on.
+  if (s.type === 'passive' && s.at(1, s.maxLevel).proc) hint = lv ? 'Goes off on its own' : 'Goes off on its own once learned';
+  else if (s.type === 'passive') hint = lv ? 'Always on' : 'Always on once learned';
   else if (!lv) hint = 'Learn it to use it';
   else if (state.selectedSkill === s.id) hint = 'Press a hotkey to bind it';
   else if (key) hint = `On hotkey ${key}`;

@@ -211,39 +211,35 @@ test("a mage's support skills heal, shield, and revive the group", async () => {
   assert.ok(!tank.bot.down && tank.bot.hp > 0);
 });
 
-test("a warrior's tank skills: War Cry taunts and guards, Iron Guard braces", async () => {
-  const { cast } = await import('../src/world/combat.js');
+test("a warrior's tank procs: War Cry taunts and guards as Valor fills, Iron Guard braces", async () => {
+  const { braceOnHit } = await import('../src/world/combat.js');
+  const { addValor } = await import('../src/world/melee.js');
   const { loadMap } = await import('../src/world/world.js');
   const { hurtMember } = await import('../src/world/dungeon.js');
   const rng = seeded(31);
   const world = heroAt(rng, 12, ['warrior']);
-  Object.assign(world.char.skills, { warcry: 5, ironguard: 10 });
-  world.char.mp = 999;
-  const ready = () => {
-    world.attackTimer = 0;
-    world.lockTimer = 0;
-    world.skillReadyAt = 0;
-  };
+  world.char.skills.warcry = 5;
   // In a dungeon, War Cry turns a pack on you and guards the party around you.
   loadMap(world, 'hollow_gate', 'start');
   assert.equal(startRun(world), null);
   const pack = world.mobs.filter((x) => x.spawn.pack === 'a');
   Object.assign(world.body, { x: pack[0].x - 120, y: world.map.groundY, onGround: true });
-  ready();
-  assert.ok(cast(world, 'warcry').ok);
+  world.valor = 95;
+  addValor(world, 10);
   for (const x of pack) {
     assert.ok(x.engaged);
     assert.equal(x.taunt.id, 'you');
   }
   assert.ok(world.char.buffs.warcry?.values.dmgCut > 0, 'the cry guards you');
   delete world.char.buffs.warcry;
-  // Iron Guard takes a share off every hit.
+  // Iron Guard takes a share off every hit once it's up.
   const me = groupOf(world).find((g) => !g.bot);
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
   const plain = world.stats.maxHp - world.char.hp;
-  ready();
-  assert.ok(cast(world, 'ironguard').ok);
+  world.char.skills.ironguard = 10;
+  braceOnHit(world, world.stats.maxHp, () => 0);
+  assert.ok(world.char.buffs.ironguard, 'braced');
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
   assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the guard');

@@ -92,21 +92,24 @@ to clear it.
   first set in your bag is the one thrown (double-click a set to throw it), the HUD shows how
   many are left, and any shop recharges a part-thrown set for what its missing stars are worth.
   Out of stars, a gauntlet can't attack.
-- **Warrior** (steel blue and white: the blue cross, swords, a shield) — his own basic combo (a
-  cut, the return cut, a two-handed cleave that knocks them flying) and the sword's command moves
-  below. **Valor** is his gauge (a shield on the HUD): every blow that lands builds it, faster the
-  more monsters one blow catches at once, and it drains once the fighting stops. Full, he is
-  **Unbroken**: his blows land heavier and knock harder, and nothing knocks him back. Skills:
-  **Blade Rush**, a three-press combo (a quick cross-cut, a rising launcher that throws them into
-  the air, a leaping slam that cracks the ground); **Whirlwind** spins you forward hitting
-  everything around you five times, sucking monsters in, then flinging them away;
-  **Shoulder Charge** barrels through everything in your path (untouchable on the way); **War
-  Cry** turns every monster around on you and guards you and the party around you; **Iron Guard**
-  braces you behind your guard (much less damage, harder armor); **Weapon Mastery** and
-  **Toughness** are passives. His finisher, **Titan Breaker**, needs full Valor and spends it: he
-  leaps high as a giant sword of steel forms over him, then crashes down and drives it into the
-  ground, splitting it open with blades of steel light and throwing everything around into the
-  air.
+- **Warrior** (steel blue and white: the blue cross, swords, a shield) — he fights with his basic
+  attacks, and his skills go off on their own from them. His own basic combo: a cut, the return
+  cut, a stepping cross-cut, then a two-handed cleave that knocks them flying; plus the sword's
+  command moves below, and down + attack for a leaping slam that cracks the ground all around.
+  **Valor** is his gauge (a shield on the HUD): every blow that lands builds it, faster the more
+  monsters one blow catches at once, and it drains once the fighting stops. Full, he is
+  **Unbroken**: his blows land heavier and knock harder, and nothing knocks him back. Skills that
+  go off on their own (spend points to make them go off more and hit harder): **Blade Rush**
+  (a swing, hit or miss, sometimes rushes on into an extra cross-cut of steel), **Whirlwind** (the combo's
+  cleave sometimes spins on into a whirlwind that sucks monsters in and flings them away; always
+  when it catches three or more), **War Cry** (as Valor fills he shouts: every monster around
+  turns on him, and he and the party around him take less damage), **Iron Guard** (a hard hit
+  sometimes makes him brace: much less damage and harder armor for a few seconds); **Weapon
+  Mastery** and **Toughness** are passives. Only two buttons besides attack: **Shoulder Charge**
+  barrels through everything in your path (untouchable on the way), and his finisher, **Titan
+  Breaker**, needs full Valor and spends it: he leaps high as a giant sword of steel forms over
+  him, then crashes down and drives it into the ground, splitting it open with blades of steel
+  light and throwing everything around into the air.
 - **Archer** (warm gold and sky blue: a hawk, its feathers, gold arrows) — her own basic combo
   with a bow or crossbow (a snap shot, two gold arrows a beat apart, a full draw that tears through
   the line) and her own command shots (up + attack shoots fliers higher, two shots from a hang in
@@ -171,7 +174,7 @@ to clear it.
   spends the whole gauge.
 - **Smooth controls** — once a move's blows have landed (or its arrows are away), walking or
   jumping cuts its follow-through short, and a basic attack can flow straight into a skill (so you
-  can weave Blade Rush into a sword combo). Each skill plays out its own motion before another
+  can weave Shoulder Charge into a sword combo). Each skill plays out its own motion before another
   skill can start, though, and moving doesn't skip that, so skills can't be spammed back to back.
   Skills pressed mid-swing go off the moment they can.
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings). Everything you
@@ -357,9 +360,9 @@ to clear it.
   - The chest at the end holds EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
     Hollow Acorns, and Elixirs. Bramble's quest, Heart of the Hollow, pays out for calming Old
     Gnarlroot. Run it as often as you like.
-- **Warrior tanking** — warriors are the tanks: **War Cry** turns every monster around you on you
+- **Warrior tanking** — warriors are the tanks: **War Cry** (as the gauge fills) turns every monster around you on you
   (in a dungeon they stick to you for a few seconds) and guards you and the party around you,
-  **Iron Guard** takes a big share off every hit for a while, **Toughness** adds max HP and
+  **Iron Guard** (on a hard hit) takes a big share off every hit for a while, **Toughness** adds max HP and
   defense, and Unbroken (full Valor) keeps you from being knocked back. They all work outside
   dungeons too.
 - **Warrior paths (level 30)** — at 30, Brann in Ember Crag sets **The Warrior's Trial** (break 20

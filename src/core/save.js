@@ -69,7 +69,8 @@ export function updateRetiredJobs(char) {
     char.sp += lv;
     delete char.skills[id];
   }
-  for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.skill && !SKILLS[b.skill]) char.hotkeys[code] = null;
+  // A key bound to a skill that's gone, or that now sets itself off (a Warrior's procs), is freed.
+  for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.skill && (!SKILLS[b.skill] || SKILLS[b.skill].type === 'passive')) char.hotkeys[code] = null;
   return char;
 }
 

@@ -97,6 +97,66 @@ export function castBlocker(world, skillId) {
   return null;
 }
 
+// Puts a buff skill's bonuses on you for its `duration` (from a cast, or set off by a proc): a
+// war cry also turns the monsters in range on you, and party buffs land on the party around you.
+export function applyBuff(world, skillId, params) {
+  const { char, stats, body, now } = world;
+  const s = SKILLS[skillId];
+  char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name };
+  if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
+  world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, dir: body.facing, t: 0, dur: 1.1 });
+  if (params.taunt) {
+    if (world.dungeon) provoke(world, 'you', body, params.range.w / 2, params.taunt);
+    else {
+      const box = hitBox(body, params.range);
+      for (const m of world.mobs) {
+        if (m.hp <= 0 || !overlaps(box, mobBox(m))) continue;
+        m.aggroUntil = now + 6;
+        m.dir = Math.sign(body.x - m.x) || m.dir;
+      }
+    }
+    world.juice?.push({ type: 'shake', mag: 1.5, dur: 0.2 });
+  }
+  if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));
+  world.log(`${s.name} is active.`, '#ffe36b');
+}
+
+// ---------- Procs: skills that set themselves off ----------
+// A proc skill (`proc` in data/skills.js) goes off on its own from what happens in a fight. The
+// blade ones (Blade Rush, Whirlwind) live with the combos in world/melee.js; these two answer to
+// the fight itself.
+
+// The proc values of a learned proc skill, or null.
+export function procOf(char, skillId) {
+  const lv = char.skills?.[skillId] ?? 0;
+  return lv > 0 ? skillAt(skillId, lv).proc ?? null : null;
+}
+
+// A proc going off says so over your head, like a Link.
+export function announce(world, text, color = '#bfe0ff') {
+  const { body } = world;
+  world.numbers.push({ x: body.x, y: body.y - body.h - 18, text, color, t: 0, link: true });
+}
+
+// War Cry: your gauge just filled, so you shout.
+export function cryOut(world) {
+  const p = procOf(world.char, 'warcry');
+  if (!p || world.dead) return;
+  applyBuff(world, 'warcry', p);
+  world.fx.push({ kind: 'powerup', school: 'steel', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
+  announce(world, 'WAR CRY!');
+}
+
+// Iron Guard: a hit that took at least `hard` of your max HP may make you brace (not while
+// already braced). `rng` for tests.
+export function braceOnHit(world, dmg, rng = Math.random) {
+  const p = procOf(world.char, 'ironguard');
+  if (!p || world.dead || dmg < world.stats.maxHp * p.hard) return;
+  if ((world.char.buffs.ironguard?.until ?? 0) > world.now || rng() >= p.chance) return;
+  applyBuff(world, 'ironguard', p);
+  announce(world, 'IRON GUARD!');
+}
+
 // Uses a skill (or a basic attack when skillId is null). Returns { ok, reason }.
 export function cast(world, skillId, rng = Math.random) {
   const blocker = castBlocker(world, skillId);
@@ -194,27 +254,9 @@ export function cast(world, skillId, rng = Math.random) {
   }
 
   if (type === 'buff') {
-    char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name };
-    if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
+    applyBuff(world, skillId, params);
     if (params.rageGain) addRage(world, params.rageGain);
     if (params.aimGain) addAim(world, params.aimGain);
-    world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, x: body.x, y: body.y, dir: body.facing, t: 0, dur: 1.1 });
-    // A war cry taunts as it rallies: every monster in range turns on you.
-    if (params.taunt) {
-      if (world.dungeon) provoke(world, 'you', body, params.range.w / 2, params.taunt);
-      else {
-        const box = hitBox(body, params.range);
-        for (const m of world.mobs) {
-          if (m.hp <= 0 || !overlaps(box, mobBox(m))) continue;
-          m.aggroUntil = now + 6;
-          m.dir = Math.sign(body.x - m.x) || m.dir;
-        }
-      }
-      world.juice?.push({ type: 'shake', mag: 1.5, dur: 0.2 });
-    }
-    // Support buffs land on the party around you too.
-    if (s.party && world.dungeon) buffMembers(world, skillId, s.name, params, hitBox(body, params.range));
-    world.log(`${s.name} is active.`, '#ffe36b');
     return { ok: true };
   }
 

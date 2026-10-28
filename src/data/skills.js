@@ -55,40 +55,21 @@ export const SKILLS = {
   // Every blow a Warrior lands builds Valor (0-100, see world/melee.js), faster the more monsters
   // one blow catches; full (Unbroken), his blows land heavier and nothing knocks him back. Titan
   // Breaker needs it full and spends it. He is the dungeon tank: War Cry taunts, Iron Guard braces.
+  //
+  // A Warrior fights with his basic attacks; his skills are procs (`proc`, see world/melee.js and
+  // world/combat.js) that set off on their own from what he does: Blade Rush and Whirlwind from
+  // his blows, War Cry when his gauge fills, Iron Guard when a hard hit lands. His only buttons
+  // besides attack are Shoulder Charge (getting about) and Titan Breaker (the big one, on a full
+  // gauge). Proc skills are passives with an empty `passive` (they add no stats of their own).
   bladerush: skill({
-    id: 'bladerush', name: 'Blade Rush', job: 'warrior', type: 'attack', fx: 'slash', school: 'steel',
-    desc: 'A three-part combo, one part per press: a quick cross-cut, a rising launcher that throws them into the air, and a leaping slam that cracks the ground.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(3, 5);
-      return {
-        mp: k(4, 10), pct: k(90, 150), hits: 4, targets,
-        combo: [
-          { move: 'cross', dur: 0.5, step: 10, strikes: [
-            { at: 0.22, pct: k(90, 150), reach: 76, h: 60, targets, knock: 40, arc: [-115, 205], thick: 9 },
-            { at: 0.72, pct: k(90, 150), reach: 76, h: 62, targets, knock: 60, arc: [100, -215], thick: 9 },
-          ] },
-          { move: 'rising', dur: 0.46, step: 8, strikes: [{ at: 0.4, pct: k(130, 220), reach: 80, h: 84, targets, knock: 50, launch: 430, arc: [80, -175], thick: 11, big: true, stop: 0.06 }] },
-          { move: 'plunge', dur: 0.62, step: 18, finisher: true, strikes: [{ at: 0.56, pct: k(200, 340), reach: 92, h: 84, around: true, targets: targets + 2, knock: 230, crack: true, big: true, stop: 0.11, shake: 5 }] },
-        ],
-      };
-    },
+    id: 'bladerush', name: 'Blade Rush', job: 'warrior', type: 'passive', fx: null, school: 'steel',
+    desc: 'Your swings sometimes rush on into an extra cross-cut of steel that slashes everything in front of you twice, whether they hit or not.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.08, 0.25, lv, m), pct: lerp(60, 110, lv, m), targets: lerp(2, 4, lv, m) } }),
   }),
   whirlwind: skill({
-    id: 'whirlwind', name: 'Whirlwind', job: 'warrior', type: 'attack', fx: 'spin', school: 'steel',
-    desc: 'Spin into a whirlwind that carries you forward, hitting everything around you five times and sucking monsters in, then flinging them away. Builds Valor fast in a crowd.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(4, 8);
-      const hit = (at, i) => ({ at, pct: k(40, 72), reach: 80, h: 76, around: true, targets, pull: 70, arc: [i % 2 ? 180 : 0, 300], thick: 10, stop: 0.02, gauge: 2 });
-      return {
-        mp: k(10, 24), pct: k(40, 72), hits: 5, targets,
-        combo: [{ move: 'spin', dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
-          ...[0.15, 0.3, 0.45, 0.6].map(hit),
-          { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4 },
-        ] }],
-      };
-    },
+    id: 'whirlwind', name: 'Whirlwind', job: 'warrior', type: 'passive', fx: null, school: 'steel',
+    desc: 'The last swing of your combo sometimes spins on into a whirlwind that sucks monsters in, hits everything around you five times, then flings them away, hit or miss. Always, if the swing catches three or more.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.6, lv, m), crowd: 3, pct: lerp(40, 72, lv, m), targets: lerp(4, 8, lv, m) } }),
   }),
   shouldercharge: skill({
     id: 'shouldercharge', name: 'Shoulder Charge', job: 'warrior', type: 'attack', fx: 'charge', icon: 'charge', maxLevel: 10, school: 'steel', movement: true,
@@ -103,14 +84,14 @@ export const SKILLS = {
     },
   }),
   warcry: skill({
-    id: 'warcry', name: 'War Cry', job: 'warrior', type: 'buff', fx: 'buff', icon: 'warcry', school: 'steel', party: true,
-    desc: 'A great shout: every monster around you turns on you, and you and the party around you take less damage for a while.',
-    at: (lv, m) => ({ mp: lerp(10, 22, lv, m), duration: lerp(20, 45, lv, m), taunt: lerpf(2, 4, lv, m), buff: { dmgCut: lerpf(0.06, 0.18, lv, m) }, range: { w: lerp(320, 480, lv, m), h: 160, around: true } }),
+    id: 'warcry', name: 'War Cry', job: 'warrior', type: 'passive', fx: null, icon: 'warcry', school: 'steel', party: true,
+    desc: 'Whenever your gauge fills, you let out a great shout: every monster around you turns on you, and you and the party around you take less damage for a while.',
+    at: (lv, m) => ({ passive: {}, proc: { duration: lerp(20, 45, lv, m), taunt: lerpf(2, 4, lv, m), buff: { dmgCut: lerpf(0.06, 0.18, lv, m) }, range: { w: lerp(320, 480, lv, m), h: 160, around: true } } }),
   }),
   ironguard: skill({
-    id: 'ironguard', name: 'Iron Guard', job: 'warrior', type: 'buff', fx: 'shield', icon: 'ironguard', school: 'steel',
-    desc: 'Plant your feet behind your guard: much less damage from every hit and harder armor for a while.',
-    at: (lv, m) => ({ mp: lerp(14, 28, lv, m), duration: lerp(12, 30, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m), wdef: lerp(10, 50, lv, m) } }),
+    id: 'ironguard', name: 'Iron Guard', job: 'warrior', type: 'passive', fx: null, icon: 'ironguard', school: 'steel',
+    desc: 'A hard hit sometimes makes you plant your feet behind your guard: much less damage from every hit and harder armor for a few seconds.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), hard: 0.06, duration: lerp(4, 10, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m), wdef: lerp(10, 50, lv, m) } } }),
   }),
   swordmastery: skill({
     id: 'swordmastery', name: 'Weapon Mastery', job: 'warrior', type: 'passive', fx: null, icon: 'swordmastery',
