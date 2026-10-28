@@ -235,6 +235,19 @@ carry an improvement across every part of the game it applies to.
     ellipses torn soft at the edge by more noise, lit from above, billows given relief by ridged
     noise, lit from inside by lightning; `cloud` in fx-art.js). Only her emblem keeps an outline,
     being a badge.
+  - The Paladin and the Berserker followed (the player asked them to match, free to change
+    anything until they did): light and fire have no outline. Her pillar is a shaft of sunlight
+    with shimmering rays and drifting motes, her ring a soft wave of light, her hit a lens flare's
+    long thin rays, a heavy blow bursts light up out of the ground through soft dust; his fire is
+    real flame shaped by rising noise (white-hot base to deep red tongues), his gashes molten with
+    charred lips, his claws red-hot rakes cooling to dull red, embers that cool as they climb,
+    soft black smoke, molten cracks, a shockwave of torn flame, and a black sun with a corona of
+    real fire. Everything else of theirs (swipes, whirls, dashes, war cry, shields, plates, the
+    sword of light, the magic circle, blood) goes through `asLight` in fx-art.js: the same drawing
+    with its ink line dropped and its tones graded from a white-hot core to a faint halo. Their
+    hits throw only sparks of their own colour (no cartoon star or ring), their crits are their own
+    (a bigger flare; a white-hot burst with claws; for the Stormcaller a bigger crackle), a bleed
+    drips real blood, and their stomps kick up earthy dust. Emblems keep their outline.
   - The Archer (first job) is warm gold with sky blue: gold arrows trailing sky-blue streaks,
     hits that pop a gold star with a sky swoosh and burst into feathers, gusts of gold feathers
     off the bow, a feather emblem, gold feathers circling her as Momentum builds, and for Falcon

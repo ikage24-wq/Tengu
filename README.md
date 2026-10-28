@@ -438,6 +438,9 @@ to clear it.
     crashes down shoulder first, or the axe dragged sparking along the ground in a charge and
     ripped up in a huge uppercut, every one tearing the ground open. Rampage chains the cleaves
     into the skull-splitter.
+  - Both are drawn as real light and real fire, no outlines: her shafts of sunlight, waves of
+    light and lens flares; his flickering flames, molten gashes, red-hot claws, embers and black
+    smoke.
   - Their shapes never cross: the Paladin's power is pillars of light, smooth golden rings and
     stars; the Berserker's is torn, never lit: claw gashes ripped into the ground, fire and
     embers climbing, and jagged shockwaves of teeth (his buffs, Rampage and Demon Form flare up

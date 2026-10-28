@@ -3351,6 +3351,377 @@
   // area, the ground rupturing under a finisher) are listed under their own names. Drawn smooth in
   // HD, a big version is just its effect played at `bigK` (the game scales the one strip), so it
   // costs no extra art: `base` names the effect it plays.
+  // ---------- Real light and fire (the Paladin and the Berserker) ----------
+  // The player asked for the warrior paths to match the Stormcaller's realistic lightning and soft
+  // cloud: light and fire have no outline; they glow, flicker and are shaped by noise. The Paladin
+  // keeps her shapes (pillars, rings, stars, a shield, a sword of light) and the Berserker his
+  // (fire, claws, torn ground, a black sun), drawn as real light and real fire.
+  // `asLight` turns any drawing of `pal` into light: its ink line drops away and its tones grade
+  // from a solid white-hot core out to a faint halo (the HD glow blooms it).
+  function asLight(e, pal, { deep = 0.32, mid = 0.7, light = 0.95 } = {}) {
+    const A = new Map([[pal[4], 0], [pal[3], deep], [pal[2], mid], [pal[1], light]]);
+    const tint = (c) => {
+      if (typeof c !== 'string' || !A.has(c)) return c;
+      const [r, g, b] = rgb(c);
+      return `rgba(${r}, ${g}, ${b}, ${A.get(c)})`;
+    };
+    return {
+      ...e,
+      draw(ctx, i) {
+        const p = new Proxy(ctx, {
+          get: (t, k) => (typeof t[k] === 'function' ? t[k].bind(t) : t[k]),
+          set: (t, k, v) => {
+            t[k] = k === 'fillStyle' || k === 'strokeStyle' ? tint(v) : v;
+            return true;
+          },
+        });
+        e.draw(p, i);
+      },
+    };
+  }
+  // A colour ramp from stops [value, '#hex'].
+  const ramp = (stops) => {
+    const S = stops.map(([v, h]) => [v, rgb(h)]);
+    return (v) => {
+      if (v <= S[0][0]) return S[0][1];
+      for (let k = 1; k < S.length; k++) if (v <= S[k][0]) return mixc(S[k - 1][1], S[k][1], (v - S[k - 1][0]) / (S[k][0] - S[k - 1][0]));
+      return S[S.length - 1][1];
+    };
+  };
+  // Paints a field over (x0, y0, w, h): `f(x, y)` gives [value, alpha], `col(value)` its colour.
+  function painted(ctx, x0, y0, w, h, f, col, S = 2) {
+    const cw = Math.ceil(w / S);
+    const ch = Math.ceil(h / S);
+    const cv = document.createElement('canvas');
+    cv.width = cw;
+    cv.height = ch;
+    const g = cv.getContext('2d');
+    const img = g.createImageData(cw, ch);
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        const [v, a] = f(x0 + x * S, y0 + y * S);
+        if (a <= 0.01) continue;
+        const c = col(v);
+        const o = (y * cw + x) * 4;
+        img.data[o] = c[0];
+        img.data[o + 1] = c[1];
+        img.data[o + 2] = c[2];
+        img.data[o + 3] = Math.min(1, a) * 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(cv, x0, y0, cw * S, ch * S);
+    ctx.restore();
+  }
+  // A glowing stroke (halo, body, white-hot core) in a 4-tone light ramp [core, light, mid, deep].
+  function glow(ctx, pts, w, L, a = 1) {
+    strokePts(ctx, pts, w * 6, L[3], 0.18 * a);
+    strokePts(ctx, pts, w * 3, L[2], 0.55 * a);
+    strokePts(ctx, pts, w * 1.6, L[1], 0.95 * a);
+    strokePts(ctx, pts, Math.max(1, w * 0.7), L[0], a);
+  }
+  // A soft glowing disc (an ellipse of light).
+  function bloomDisc(ctx, x, y, rx, ry, L, a) {
+    for (const [k, c, al] of [[1, L[3], 0.16], [0.6, L[2], 0.4], [0.32, L[1], 0.85], [0.14, L[0], 1]]) {
+      ctx.save();
+      ctx.globalAlpha *= al * a;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.ellipse(x, y, rx * k, ry * k, 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  const SUN = ['#ffffff', '#fff3c4', '#ffd36a', '#f0a040'];
+  const FLAME = ['#fff6e0', '#ffd27a', '#ff7a3a', '#c8102e'];
+  const sunRamp = ramp([[0, '#f0a040'], [0.4, '#ffd36a'], [0.75, '#fff3c4'], [1, '#ffffff']]);
+  const fireRamp = ramp([[0, '#2a040c'], [0.22, '#8a0c1e'], [0.42, '#d8281c'], [0.62, '#ff7028'], [0.82, '#ffc458'], [1, '#fff4dc']]);
+  // Cooling: white-hot, then yellow, orange, red, dull red.
+  const COOL = [FLAME, FLAME, ['#ffd27a', '#ff7a3a', '#e0301c', '#8a0a20'], ['#ff7a3a', '#e0301c', '#c8102e', '#5a0616'], ['#e0301c', '#c8102e', '#8a0a20', '#3a0410'], ['#c8102e', '#8a0a20', '#5a0616', '#2a0208']];
+  const cooled = (k) => COOL[Math.max(0, Math.min(COOL.length - 1, Math.floor(k * COOL.length)))];
+
+  // The Paladin's swipes, whirls, dashes, gathering, war cry, plates, shield, sword of light, cross
+  // and magic circle as light; the Berserker's as burning light.
+  E.slashgold = asLight(E.slashgold, PAL.holy);
+  E.spingold = asLight(E.spingold, PAL.holy);
+  E.streakgold = asLight(E.streakgold, PAL.holy);
+  E.chargegold = asLight(E.chargegold, PAL.holy);
+  E.shoutgold = asLight(E.shoutgold, PAL.holy);
+  E.platesgold = asLight(E.platesgold, PAL.holy);
+  E.shield = asLight(E.shield, PAL.holy, { deep: 0.4, mid: 0.62 });
+  E.sword = asLight(E.sword, PAL.holy);
+  E.lightcross = asLight(E.lightcross, PAL.holy);
+  E.circle = asLight(E.circle, PAL.holy, { deep: 0.5, mid: 0.8 });
+  E.motes = asLight(E.motes, PAL.holy);
+  E.slashred = asLight(E.slashred, PAL.rage, { deep: 0.28 });
+  E.spinred = asLight(E.spinred, PAL.rage, { deep: 0.28 });
+  E.streakred = asLight(E.streakred, PAL.rage, { deep: 0.45 });
+  E.chargered = asLight(E.chargered, PAL.rage, { deep: 0.45 });
+  E.shoutred = asLight(E.shoutred, PAL.rage, { deep: 0.45 });
+  E.platesred = asLight(E.platesred, PAL.rage, { deep: 0.45 });
+  E.shieldred = asLight(E.shieldred, PAL.rage, { deep: 0.5 });
+  // His blow landing: a white-hot flash, short hot rays bursting out of it and sparks flying,
+  // cooling as they go.
+  E.hitred = {
+    w: 200, h: 200, n: 6, fps: 30, px: 100, py: 100,
+    draw(ctx, i) {
+      const a = [1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      bloomDisc(ctx, 100, 100, [30, 48, 40, 28, 16, 8][i], [30, 48, 40, 28, 16, 8][i], FLAME, a);
+      const R = rng(23);
+      for (let j = 0; j < 9; j++) {
+        const ang = (j / 9) * TAU + R() * 0.5;
+        const r0 = [6, 14, 30, 46, 58, 66][i];
+        const r1 = r0 + [30, 46, 34, 22, 14, 8][i] * (0.7 + R() * 0.6);
+        glow(ctx, [[100 + Math.cos(ang) * r0, 100 + Math.sin(ang) * r0], [100 + Math.cos(ang) * r1, 100 + Math.sin(ang) * r1 + i * i]], 2 - i * 0.25, cooled(i / 6), a);
+      }
+    },
+  };
+
+  // Pillar of light (her buffs, Judgment, the pillars on her hits): a shaft of sunlight falling
+  // from above, brightest at its heart, rays shimmering down it, motes drifting in it, a pool of
+  // light on the ground.
+  E.pillarholy = {
+    w: 150, h: 330, n: 8, fps: 20, px: 75, py: 318,
+    draw(ctx, i) {
+      const a = [0.4, 1, 1, 0.95, 0.85, 0.6, 0.35, 0.15][i];
+      const wid = [14, 56, 52, 48, 42, 30, 18, 9][i];
+      const t = i / 8;
+      painted(ctx, 0, 0, 150, 330, (x, y) => {
+        const core = Math.max(0, 1 - Math.abs(x - 75) / (wid * (0.75 + 0.35 * (1 - y / 330))));
+        const rays = 0.75 + 0.5 * (fbm(x / 7, y / 120 - t * 2, 3) - 0.5);
+        const v = Math.pow(core, 1.3) * rays * sstep(0, 70, y) * sstep(330, 300, y) * a;
+        return [v * 1.4, v * 1.3];
+      }, sunRamp);
+      bloomDisc(ctx, 75, 318, wid * 1.6, wid * 0.4, SUN, a);
+      const R = rng(700);
+      for (let j = 0; j < 12; j++) {
+        const life = (t + j / 12) % 1;
+        bloomDisc(ctx, 75 + (R() - 0.5) * wid * 2, 300 - life * 260, 3.2, 3.2, SUN, a * Math.sin(life * Math.PI));
+      }
+    },
+  };
+  // Her ring: a wave of light washing out over the ground, its rim brightest, fading as it spreads.
+  E.ringholy = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const r = [40, 70, 92, 106, 116, 122][i];
+      const a = [1, 1, 0.8, 0.55, 0.3, 0.12][i];
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.hypot(x - 130, y - 130);
+        const rim = Math.exp(-(((d - r) / (6 + i * 2)) ** 2));
+        const v = (rim + (d < r ? 0.25 * (d / r) ** 2 : 0)) * a * (0.85 + 0.3 * (fbm(Math.atan2(y - 130, x - 130) * 3, i, 2) - 0.5));
+        return [v, v * 1.2];
+      }, sunRamp);
+    },
+  };
+  // Her hit: a flare of light on the monster, a blazing core with long thin rays (sun catching a
+  // lens, not a cartoon star), a soft halo, dimming away.
+  E.holyhit = {
+    w: 220, h: 220, n: 7, fps: 24, px: 110, py: 110,
+    draw(ctx, i) {
+      const c = 110;
+      const a = [0.7, 1, 1, 0.8, 0.55, 0.3, 0.12][i];
+      const len = [40, 70, 100, 110, 96, 74, 50][i];
+      bloomDisc(ctx, c, c, 56 * a + 16, 56 * a + 16, SUN, a);
+      for (const [ang, k] of [[0, 1], [Math.PI / 2, 1], [Math.PI / 4, 0.45], [-Math.PI / 4, 0.45]]) {
+        const dx = Math.cos(ang) * len * k;
+        const dy = Math.sin(ang) * len * k;
+        glow(ctx, [[c - dx, c - dy], [c, c], [c + dx, c + dy]], 2.6 * k + 0.6, SUN, a);
+      }
+      bloomDisc(ctx, c, c, 18 * a + 6, 18 * a + 6, SUN, 1);
+    },
+  };
+  // A heavy blow of hers bursting light up out of the ground (where a Warrior's throws up rock):
+  // a flash, rays fanning up, dust billowing soft out either side.
+  E.quakegold = {
+    w: 280, h: 220, n: 9, fps: 22, px: 140, py: 200,
+    draw(ctx, i) {
+      const g = 200;
+      const a = [0.8, 1, 1, 0.85, 0.7, 0.5, 0.35, 0.2, 0.08][i];
+      const k = i / 8;
+      painted(ctx, 0, 60, 280, 160, (x, y) => {
+        const d = Math.hypot((x - 140) / (60 + k * 90), (y - g) / (24 + k * 30));
+        const v = Math.max(0, 1 - d) * (0.6 + 0.8 * (fbm(x / 20 + i * 0.3, y / 20, 4) - 0.5)) * Math.min(1, a * 1.5);
+        return [0.5, sstep(0, 0.3, v) * 0.8];
+      }, () => rgb('#efe2d2'));
+      for (let j = -2; j <= 2; j++) glow(ctx, [[140, g], [140 + j * 30 * (0.6 + k), g - 100 * (0.5 + k)]], 2.2 - Math.abs(j) * 0.5, SUN, a * (1 - Math.abs(j) * 0.25));
+      bloomDisc(ctx, 140, g - 6, 70 * a, 24 * a, SUN, a);
+    },
+  };
+
+  // The Berserker's fire: real flame shaped by rising noise, white-hot at the base, yellow, orange,
+  // then deep red tongues tearing off at the top, embers rising. Loops.
+  E.ragefire = {
+    w: 140, h: 170, n: 8, fps: 16, px: 70, py: 150, loop: true,
+    draw(ctx, i) {
+      const T = i / 8;
+      painted(ctx, 0, 0, 140, 170, (x, y) => {
+        const up = (150 - y) / 130;
+        if (up < -0.1) return [0, 0];
+        const n = (k) => fbm(x / 22, y / 22 + (T + k) * 4, 5);
+        const flick = n(0) * (1 - T) + n(-1) * T;
+        const body = 1 - Math.abs(x - 70 + (flick - 0.5) * 44 * up) / Math.max(4, 60 * (1 - up * 0.6));
+        const v = (body * 1.05 + (flick - 0.5) * 1.8 - up * 0.85) * sstep(-0.1, 0.08, up) * sstep(170, 140, y + 20) * sstep(0, 40, y);
+        return [v * 1.3, sstep(0.03, 0.45, v)];
+      }, fireRamp);
+      const R = rng(720);
+      for (let j = 0; j < 7; j++) {
+        const life = (T * 2 + j / 7) % 1;
+        const x = 50 + R() * 40 + Math.sin(life * 9 + j) * 8;
+        const y = 70 - life * 70;
+        glow(ctx, [[x, y], [x + 1, y - 5]], 1.1 * (1 - life) + 0.3, FLAME, 1 - life);
+      }
+    },
+  };
+  // Torn ground: three claw gashes molten deep inside, their lips charred black, embers rising out,
+  // cooling to glowing seams.
+  E.gash = {
+    w: 300, h: 150, n: 8, fps: 20, px: 150, py: 110,
+    draw(ctx, i) {
+      const heat = [1, 1, 0.95, 0.85, 0.7, 0.5, 0.3, 0.15][i];
+      const open = [0.4, 1, 1, 0.95, 0.85, 0.7, 0.5, 0.35][i];
+      const tears = [-1, 0, 1].map((j) => ({ x: 150 + j * 30, y: 110 + j * 17, len: 190 - Math.abs(j) * 36 }));
+      painted(ctx, 0, 40, 300, 110, (x, y) => {
+        let best = 0;
+        for (const t of tears) {
+          const u = (x - (t.x - t.len / 2)) / t.len;
+          if (u < 0 || u > 1) continue;
+          const cy = t.y + (u - 0.5) * t.len * 0.16;
+          const w = Math.pow(Math.sin(Math.PI * u), 0.8) * 9 * open * (0.75 + 0.5 * fbm(x / 12, t.x, 2));
+          best = Math.max(best, 1 - Math.abs(y - cy) / Math.max(0.5, w));
+        }
+        if (best <= 0) return [0, 0];
+        return [best < 0.35 ? 0.02 : ((best - 0.35) / 0.65) * heat * (0.85 + 0.3 * fbm(x / 9, y / 9 + i, 2)) * 1.2, sstep(0, 0.2, best)];
+      }, fireRamp);
+      const R = rng(730);
+      for (let j = 0; j < 10; j++) {
+        const t = tears[j % 3];
+        const u = 0.2 + R() * 0.6;
+        const life = Math.min(1, (i + R() * 2) / 8);
+        const x = t.x - t.len / 2 + t.len * u;
+        const y = t.y + (u - 0.5) * t.len * 0.16 - life * 70;
+        glow(ctx, [[x, y], [x, y - 6]], 1.3 * (1 - life) + 0.3, FLAME, (1 - life) * heat * 1.2);
+      }
+    },
+  };
+  // His claw hit: three red-hot rakes torn across the monster, white-hot at their heart, cooling
+  // from yellow to deep red as they fade, sparks flying off.
+  E.claw = {
+    w: 200, h: 200, n: 7, fps: 26, px: 100, py: 100,
+    draw(ctx, i) {
+      const a = [0.7, 1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      const L = cooled(i / 7);
+      for (let j = 0; j < Math.min(3, i + 1); j++) {
+        const pts = [];
+        for (let k = 0; k <= 12; k++) {
+          const t = k / 12;
+          pts.push([100 + (j - 1) * 30 - 70 + 140 * t + Math.sin(t * Math.PI) * 10, 30 + 140 * t]);
+        }
+        glow(ctx, pts, i < 3 ? 5.5 : 4.4, L, a);
+      }
+      if (i >= 2) {
+        const R = rng(740);
+        for (let j = 0; j < 9; j++) {
+          const ang = -0.3 + R() * 2.4;
+          const d = 20 + (i - 1) * 16 * (0.6 + R() * 0.8);
+          const x = 100 + Math.cos(ang) * d;
+          const y = 100 + Math.sin(ang) * d * 0.6 + (i - 2) ** 2 * 3;
+          glow(ctx, [[x, y], [x - Math.cos(ang) * 6, y - Math.sin(ang) * 6]], 1.4, FLAME, a);
+        }
+      }
+    },
+  };
+  // Embers climbing on a hot wind (his power, in place of a pillar): sparks of fire flicking side
+  // to side, cooling from white-hot to red as they rise. Loops.
+  E.embers = {
+    w: 140, h: 240, n: 8, fps: 14, px: 70, py: 225, loop: true,
+    draw(ctx, i) {
+      const R = rng(97);
+      const sparks = Array.from({ length: 18 }, (_, j) => ({ x: 70 + (R() - 0.5) * 80, phase: j / 18 + R() * 0.05, len: 6 + R() * 8, sway: 6 + R() * 10, rate: 1 + Math.round(R()) }));
+      for (const sp of sparks) {
+        const life = ((i / 8) * sp.rate + sp.phase) % 1;
+        const x = sp.x + Math.sin(life * 7 + sp.phase * 9) * sp.sway * (0.3 + life);
+        const y = 220 - life * 200;
+        const dx = Math.cos(life * 7 + sp.phase * 9) * 3;
+        glow(ctx, [[x, y], [x - dx, y + sp.len * 1.5 * (1 - life * 0.5)]], 2.6 * (1 - life * 0.55), cooled(life), 1 - life * 0.6);
+      }
+    },
+  };
+  // Black smoke curling up round his feet as Rage builds: soft, churning, dark crimson-black,
+  // thinning as it rises (soft like the Stormcaller's cloud). Loops.
+  const smokeRamp = ramp([[0, '#0e0408'], [0.5, '#2a0c1a'], [1, '#5a2234']]);
+  E.blacksmoke = {
+    w: 170, h: 120, n: 6, fps: 10, px: 85, py: 112, loop: true,
+    draw(ctx, i) {
+      const T = i / 6;
+      painted(ctx, 0, 0, 170, 120, (x, y) => {
+        const up = (112 - y) / 100;
+        const n = (k) => fbm(x / 24 + k * 0.6, y / 24 + (T + k) * 2.2, 5);
+        const flow = n(0) * (1 - T) + n(-1) * T;
+        const body = 1 - Math.abs(x - 85 + (flow - 0.5) * 36 * up) / (62 - up * 18);
+        const edge = Math.min(sstep(0, 30, x), sstep(170, 140, x), sstep(0, 34, y));
+        const v = (body * 0.9 + (flow - 0.5) * 1.4 - up * 0.8) * sstep(-0.05, 0.1, up) * edge;
+        return [Math.max(0, flow - 0.35) * 1.6, sstep(0, 0.6, v) * 0.8];
+      }, smokeRamp);
+    },
+  };
+  // Molten cracks splitting the ground round him at full Rage, glowing and pulsing (fire's light,
+  // no outline). Loops.
+  E.ragecracks = {
+    w: 300, h: 70, n: 4, fps: 8, px: 150, py: 35, loop: true,
+    draw(ctx, i) {
+      const pulse = [0.7, 1, 0.85, 0.6][i];
+      const R = rng(77);
+      for (let j = 0; j < 9; j++) {
+        const ang = (j / 9) * TAU + R() * 0.3;
+        const pts = [[150, 35]];
+        const len = 70 + R() * 70;
+        for (let k = 1; k <= 5; k++) pts.push([150 + (Math.cos(ang) * (len * k)) / 5 + (R() - 0.5) * 14, 35 + ((Math.sin(ang) * (len * k)) / 5) * 0.28 + (R() - 0.5) * 6]);
+        glow(ctx, pts, 2.2 * pulse, FLAME, pulse);
+      }
+    },
+  };
+  // His jagged shockwave as fire: a ring of flame and torn dust ripping out from the blow, ragged
+  // at its leading edge, burning out as it spreads. Drawn round; laid flat in the game.
+  E.shockred = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const r = [36, 66, 90, 104, 114, 120][i];
+      const heat = [1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.hypot(x - 130, y - 130);
+        const ang = Math.atan2(y - 130, x - 130);
+        const rag = (fbm(ang * 4 + 7, i * 0.7, 4) - 0.5) * 26;
+        const band = 1 - Math.abs(d - r - rag * 0.5) / (9 + i * 1.5);
+        if (band <= 0) return [0, 0];
+        return [0.3 + band * heat * (0.8 + 0.5 * fbm(ang * 9, d / 10, 3)), sstep(0, 0.5, band) * heat * (0.6 + 0.8 * fbm(ang * 5 + 3, i, 3))];
+      }, fireRamp);
+    },
+  };
+  // Blood bursting from a heavy blow: dark glossy drops flung out and arcing down (no outline).
+  E.blood = asLight(E.blood, PAL.rage, { deep: 0.9, mid: 0.95 });
+  // The black sun of his Crimson Eclipse: a disc of pure black with a thin white-hot rim and a
+  // corona of real fire licking off it, churning. Loops.
+  E.eclipse = {
+    w: 260, h: 260, n: 6, fps: 12, px: 130, py: 130, loop: true,
+    draw(ctx, i) {
+      const T = i / 6;
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.hypot(x - 130, y - 130);
+        if (d < 60) return [0, 1];
+        const ang = Math.atan2(y - 130, x - 130);
+        const n = (k) => fbm(Math.cos(ang) * 3 + 5, Math.sin(ang) * 3 + (d / 30) - (T + k) * 3, 5);
+        const flick = n(0) * (1 - T) + n(-1) * T;
+        const v = 1 - (d - 60) / (14 + flick * 70);
+        if (v <= 0) return [0, 0];
+        return [v * 1.2 + (flick - 0.5) * 0.4, sstep(0, 0.3, v)];
+      }, (v) => (v <= 0.01 ? rgb('#060104') : fireRamp(v)));
+      strokePts(ctx, Array.from({ length: 49 }, (_, k) => [130 + Math.cos((k / 48) * TAU) * 60, 130 + Math.sin((k / 48) * TAU) * 60]), 3, '#fff4dc', 1);
+    },
+  };
+
   function big(e, k) {
     return {
       ...e,

@@ -67,9 +67,9 @@ export function dust(fx, x, y, count, dir = 0, color = '#f6ece2', shade = '#e2d2
 // A slam's colours for each path: [rock spikes, dust, dust shade, shockwave].
 const SLAM_TINTS = {
   steel: ['#c9b6ff', '#efe8fb', '#cdbfe6', '#ffffff'],
-  holy: ['#ffdc78', '#fff6d0', '#ffd9a0', '#fff6d0'],
+  holy: ['#ffdc78', '#f4ead8', '#cdb9a0', '#fff6d0'],
   hawk: ['#ffc94a', '#fff6d0', '#ffd9a0', '#fff1bc'],
-  rage: ['#e01c3c', '#ffd0c8', '#c0102e', '#ff7a4e'],
+  rage: ['#e01c3c', '#8a7470', '#4a3438', '#ff7a4e'],
 };
 
 // Embers spitting up out of the ground (a Berserker's blows), `n` of them across `w`.
@@ -87,11 +87,14 @@ export function landing(fx, x, y, hard) {
 // flash snapping open over it (a different spike count each time), teardrop sparks flying off
 // the way the blow went (falling as they go), and a little shockwave. Crits flash bigger and
 // burst a ring of shards.
-export function sparks(fx, x, y, crit, dir, palette = null) {
+export function sparks(fx, x, y, crit, dir, palette = null, real = false) {
   const hot = palette ? palette[0] : crit ? '#ffb347' : '#ffd66b';
   const lag = 1 / 60;
-  add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.05 : 0.034, size: crit ? 10 : 6, shape: 'contrast', color: hot });
-  add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: crit ? 0.2 : 0.14, size: crit ? 17 : 10, shape: 'flash', rot: Math.random() * Math.PI, spikes: crit ? 6 : 4 + Math.floor(Math.random() * 2), color: hot });
+  // The realistic paths (`real`) only throw sparks: their own hit art is the flash.
+  if (!real) {
+    add(fx, { x, y, vx: 0, vy: 0, life: crit ? 0.05 : 0.034, size: crit ? 10 : 6, shape: 'contrast', color: hot });
+    add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: crit ? 0.2 : 0.14, size: crit ? 17 : 10, shape: 'flash', rot: Math.random() * Math.PI, spikes: crit ? 6 : 4 + Math.floor(Math.random() * 2), color: hot });
+  }
   const n = crit ? 12 : 7;
   for (let i = 0; i < n; i++) {
     const a = (Math.random() - 0.5) * Math.PI * 1.3 + (dir > 0 ? 0 : Math.PI);
@@ -102,6 +105,7 @@ export function sparks(fx, x, y, crit, dir, palette = null) {
       color: palette ? palette[i % palette.length] : i % 3 ? hot : '#ffffff',
     });
   }
+  if (real) return;
   add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: crit ? 0.2 : 0.13, size: 4, r1: crit ? 24 : 12, thick: crit ? 2.5 : 1.6, flat: 1, shape: 'shock', color: '#ffffff' });
   if (crit) add(fx, { x, y, vx: 0, vy: 0, delay: lag, life: 0.3, size: 6, r1: 30, thick: 4, shape: 'shards', n: 9, seed: Math.random(), rot: Math.random() * 6, color: hot });
 }
@@ -232,10 +236,14 @@ function elementOf(world) {
   return el ? ELEMENTS[el] : null;
 }
 
+// The paths drawn as real light, fire and lightning (the Paladin, the Berserker, the Stormcaller):
+// their hits throw only sparks of their own colour, no cartoon star or ring.
+const REAL_SPARKS = { holy: ['#fff3c4', '#ffd36a', '#ffffff'], rage: ['#ffd27a', '#ff7a3a', '#e0301c'], storm: ['#efe4ff', '#b48cff', '#ffffff'] };
+
 // Handles the world's game-feel cues.
 export function absorbJuice(fx, world) {
   for (const j of world.juice) {
-    if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, elementOf(world)?.sparks);
+    if (j.type === 'hit') sparks(fx, j.x, j.y, j.crit, j.dir, REAL_SPARKS[j.school] ?? elementOf(world)?.sparks, Boolean(REAL_SPARKS[j.school]));
     else if (j.type === 'kill') {
       poof(fx, j.x, j.y, j.w, j.h, j.boss);
       if (j.boss) {
@@ -277,16 +285,19 @@ export function absorbJuice(fx, world) {
       else if (j.big) add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 6, r1: 34, thick: 3, flat: 0.22, shape: 'shock', color: '#ffffff' });
     } else if (j.type === 'slam') {
       // A heavy stomp: rock spikes burst up, dust billows along the ground, and a shockwave rolls out
-      // (lavender rock, or a Paladin's gold or a Berserker's blood red).
+      // in lavender rock; the paths' are real light and fire (render/warrior-fx.js draws their
+      // burst), so a Paladin's throws up specks of light and a Berserker's embers instead.
       const [spike, puff, puffShade, ring] = SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
-      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: spike });
+      if (j.school === 'holy') {
+        for (let i = 0; i < 12; i++) add(fx, { x: j.x + (Math.random() - 0.5) * j.range, y: j.y, vx: (Math.random() - 0.5) * 40, vy: -90 - Math.random() * 110, drag: 1.6, life: 0.6 + Math.random() * 0.3, size: 1.8, shape: 'needle', color: i % 3 ? '#ffe9a0' : '#ffffff' });
+      } else if (j.school !== 'rage') add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.3, size: 30, w: 26, n: 5, shape: 'crown', color: spike });
       for (let i = 0; i < 14; i++) dust(fx, j.x + (Math.random() - 0.5) * j.range * 1.6, j.y, 1, 0, puff, puffShade);
       landing(fx, j.x, j.y, true);
       kick(fx, 0, 3);
       // A Berserker's has no smooth ring (his shockwaves are jagged; render/warrior-fx.js): embers
       // spit up out of the torn ground instead.
       if (j.school === 'rage') embers(fx, j.x, j.y, 14, j.range);
-      else add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
+      else if (j.school !== 'holy') add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: 0.45, size: 16, r1: j.range * 1.3, thick: 5, flat: 0.22, shape: 'shock', color: ring });
     }
   }
   world.juice.length = 0;

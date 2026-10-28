@@ -823,7 +823,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
-  if (step.trail) world.fx.push({ kind: 'chargetrail', school, x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
+  if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
   const heavy = hasValor(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char);

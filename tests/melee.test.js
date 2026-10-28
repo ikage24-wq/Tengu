@@ -2397,3 +2397,23 @@ test("the archer paths' buffs rise in their own colours with their own emblems",
   assert.equal(pillarSprite('wind'), 'celpillarwind');
   for (const name of ['celpillarstorm', 'celringstorm', 'celembstorm', 'celembwind', 'celgaleblast', 'celthunderblast']) assert.ok(FX_SHEETS[name], name);
 });
+
+// A basic swing that dashes (the Berserker's drag-and-rip) leaves its trail in the path's colour,
+// never the Warrior's steel blue.
+test("a dashing basic swing leaves its trail in the path's own colour", () => {
+  const w = advanced('berserker');
+  const steps = PATH_VARIANTS.berserker;
+  // Its finisher is played next, as the drag-and-rip.
+  w.comboPlan = steps.map((choices, i) => (i === steps.length - 1 ? choices.findIndex((s) => s.move === 'dragrise') : 0));
+  w.combo = steps.length - 2;
+  w.comboUntil = w.now + 1;
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose?.kind, 'dragrise');
+  const trails = [];
+  for (let i = 0; i < 60; i++) {
+    updateWorld(w, DT, idle);
+    for (const f of w.fx) if (f.kind === 'chargetrail' && !trails.includes(f)) trails.push(f);
+  }
+  assert.ok(trails.length, 'the drag-and-rip dashed');
+  assert.ok(trails.every((f) => f.school === 'rage'), trails.map((f) => f.school).join());
+});

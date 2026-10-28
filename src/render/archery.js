@@ -493,8 +493,9 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // A bolt crackling into a monster: lightning bursting off it every way; heavy shots add a
       // ring of storm light racing out along the ground.
       const cy = y - (f.h ?? 24) / 2;
-      fxSprite(ctx, 'celstormhit', x, cy, { p, flip, scale: f.big || f.crit ? 0.8 : 0.6 });
-      if (f.crit) fxSprite(ctx, 'celcrit', x, cy, { p, scale: 0.5 });
+      fxSprite(ctx, 'celstormhit', x, cy, { p, flip, scale: f.crit ? 1.05 : f.big ? 0.8 : 0.6 });
+      // A crit crackles bigger, lightning racing out round it (her own, not the shared burst).
+      if (f.crit) fxSprite(ctx, 'celringstorm', x, cy, { p, scale: 0.5, sy: 0.5 });
       if (f.big) groundRing(ctx, 'celringstorm', x, y, p, 50);
       return true;
     }

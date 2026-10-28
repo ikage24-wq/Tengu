@@ -4,6 +4,7 @@
 // effects, the caster's feet otherwise; `f.box` (world space) is the spell's area when it has one.
 
 import { deep, ghost } from './fxkit.js';
+import { fxSprite } from './fx-sprites.js';
 
 const TAU = Math.PI * 2;
 
@@ -245,6 +246,11 @@ export function drawSpell(ctx, f, x, y, p, cam, time) {
     }
     case 'poisonpuff': {
       const cy = y - (f.h ?? 24) * 0.6;
+      // A bleed ticking: a few drops of blood (the Berserker's wounds are real, not bubbles).
+      if (f.bleed) {
+        fxSprite(ctx, 'celblood', x + (rand(f.seed * 9) - 0.5) * 10, cy, { p, scale: 0.32, flip: rand(f.seed * 5) < 0.5 });
+        return true;
+      }
       ctx.globalAlpha = (1 - p) * 0.7;
       for (let i = 0; i < 3; i++) {
         ctx.fillStyle = f.bleed ? (i % 2 ? '#e8364f' : '#ff8a9a') : i % 2 ? '#9be86b' : '#9b4fe0';
