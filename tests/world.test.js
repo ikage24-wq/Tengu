@@ -253,7 +253,7 @@ test('the Game Master stays locked without the passphrase, and its tools work on
   assert.ok(w.mobs.every((m) => m.hp === 0));
 });
 
-test('skills never go on cooldown: a spell is free again as soon as its motion ends', async () => {
+test('skills never go on cooldown: a spell is free again a beat after its motion ends', async () => {
   const { setJob, setLevel, gmCommand } = await import('../src/world/gm.js');
   const w = newWorld();
   setJob(w.char, 'mage');
@@ -266,7 +266,9 @@ test('skills never go on cooldown: a spell is free again as soon as its motion e
   assert.equal(cast(w, 'petalstorm').ok, true);
   assert.equal(cast(w, 'petalstorm').reason, 'busy', 'not while the storm is being raised');
   for (let i = 0; i < 70; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'petalstorm').ok, true, 'usable again as soon as the motion ends');
+  assert.equal(cast(w, 'petalstorm').reason, 'busy', 'a beat of recovery after the motion, so it cannot be mashed');
+  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
+  assert.equal(cast(w, 'petalstorm').ok, true, 'usable again right after that beat: no cooldown');
 });
 
 test('the warrior, the archer and the thief branch two ways at 30; the mage paths are being remade', async () => {

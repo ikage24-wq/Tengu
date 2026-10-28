@@ -173,9 +173,14 @@ export function dropItem(world, tab, index, qty = Infinity) {
   return true;
 }
 
+// A potion takes a moment to drink: another can't follow straight away, so they can't be chugged
+// by mashing the key.
+export const ITEM_DELAY = 0.4;
+
 export function useItem(world, id) {
   const def = ITEMS[id];
   if (!def) return false;
+  if (def.effect && !def.effect.returnTown && world.now < (world.itemReadyAt ?? 0)) return false;
   if (def.effect?.returnTown) {
     if (removeItem(world.char.inventory, id, 1) < 1) return false;
     world.log(`Returning to ${getMap(townOf(world)).name}.`, '#bff0dc');
@@ -186,6 +191,7 @@ export function useItem(world, id) {
     world.log(`No ${def.name} left.`, '#ffb3c6');
     return false;
   }
+  world.itemReadyAt = world.now + ITEM_DELAY;
   world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
   return true;
 }

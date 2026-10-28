@@ -48,7 +48,8 @@ blow).
   - the gauge builds and drains;
   - the full-gauge effect works;
   - the finisher waits for a full gauge and spends it;
-  - the no-spam rule holds;
+  - the no-spam rule holds: every skill plays its motion plus its beat of recovery (`AFTER`, by
+    weight), and the pace test ("no job can mash out its attacks") passes for it;
   - any special behaviour is tested (e.g. Sniper bolts pierce the line).
 
 - **A first job with two weapons** (like the Thief's dagger and gauntlet) is the base for both

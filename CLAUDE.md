@@ -13,9 +13,17 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
   skill-after-skill (set in `world/combat.js` for normal skills and `world/melee.js` for combo
   steps). Walking or jumping may cut a move's follow-through short (`world.recoverAt`), but must
   never skip that wait, so skills can't be spammed back to back.
-- **Basic attacks and skills weave.** Once a basic attack's blow lands (or its shot is away), a
-  skill may start right away, and a basic attack may follow a skill; basic attacks keep their own
-  rhythm (`world.basicReadyAt`).
+- **Nothing can be spammed; it should feel like a real game (the player's standing ask: apply it
+  to every skill, attack and item, now and in future).** Every skill plays out its whole motion and
+  then a beat of recovery before the next skill (`AFTER` in `world/melee.js`: a quick move ~0.1 s,
+  a skill ~0.2 s, a heavy one ~0.3 s, a finisher ~0.45 s); steps inside one skill's own chain flow
+  on with only a tiny beat. Mashing one skill gives at most about 2 casts a second, most land
+  1.25-1.75. Basic combos keep their rhythm, but the finisher and the command moves end with a
+  beat. Potions take a moment to drink (`ITEM_DELAY`). When adding a skill, give it its weight and
+  check it against the pace test in `tests/melee.test.js` ("no job can mash out its attacks").
+- **Basic attacks and skills weave, within that pace.** Once a basic attack's blow lands (or its
+  shot is away), a skill may start right away; a basic attack may follow a skill once the skill's
+  motion is nearly over; basic attacks keep their own rhythm (`world.basicReadyAt`).
 - **Hits land on the animation, not on the key press.** Melee blows land when the blade cuts;
   shots leave on the release frame and hit when the projectile arrives. Build attack skills as
   combo steps in `world/melee.js` style (`combo` in `data/skills.js`: a move, a duration, and

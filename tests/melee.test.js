@@ -41,6 +41,13 @@ const run = (w, seconds, input = idle) => {
   for (let i = 0; i < seconds * 60; i++) updateWorld(w, DT, input);
 };
 
+// Waits out the move in play and its beat of recovery (no cooldowns: never more than a moment).
+const settle = (w) => {
+  let i = 0;
+  for (; i < 300 && w.now < Math.max(w.skillReadyAt ?? 0, w.basicReadyAt ?? 0); i++) updateWorld(w, DT, idle);
+  assert.ok(i < 300, 'free again within five seconds');
+};
+
 test("holding attack with a sword chains the Warrior's own combo, ending in the finisher", () => {
   const w = arena();
   const seen = [];
@@ -362,9 +369,9 @@ test("Aegis Smite's shove stuns, and its smite calls pillars of light", () => {
     run(w, 0.4);
     assert.ok(w.mobs.some((m) => m.hold === 'stun' && m.frozenUntil > w.now), 'the shove stunned');
     assert.ok(w.fx.some((f) => f.kind === 'aegis'), 'a shield of light flared');
-    run(w, 0.2);
+    settle(w);
     assert.ok(cast(w, 'aegissmite').ok);
-    run(w, 0.55);
+    settle(w);
     assert.ok(cast(w, 'aegissmite').ok);
     assert.equal(w.pose.kind, 'smite');
     let pillars = 0;
@@ -464,7 +471,7 @@ test('the no-spam rule holds for the Paladin and the Berserker too', () => {
     if (rage) w.rage = 100;
     for (let i = 0; i < 3; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
     assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion, even after moving`);
-    run(w, 1.4);
+    settle(w);
     if (rage) w.rage = 100;
     assert.ok(cast(w, skill).ok, `${skill} is free again once its motion is done`);
   }
@@ -571,6 +578,7 @@ test("each warrior path's finisher needs its gauge full, spends it, and lands it
     run(w, 1.8);
     assert.ok(before - m.hp > 0, 'it hits');
     // The no-spam rule holds for finishers too.
+    settle(w);
     w[gauge] = 100;
     assert.ok(cast(w, skill).ok);
     run(w, 0.3);
@@ -828,6 +836,7 @@ test("each archer path's finisher needs its gauge full, spends it, and lands its
     }
     assert.ok(m.hp < 1e9, 'it hits');
     if (skill === 'heartseeker') assert.ok([...seen].filter((h) => h.via === 'heartbolt').every((h) => h.crit), 'the bolt always crits');
+    settle(w);
     w[gauge] = 100;
     w[`${gauge}At`] = w.now;
     assert.ok(cast(w, skill).ok);
@@ -1167,6 +1176,7 @@ test("each of the Thief's finishers needs full Shadow, spends it, and lands its 
     run(w, 2);
     assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, `${skill} hits the whole line`);
     assert.ok((w.shadow ?? 0) < 100, 'and does not refill it');
+    settle(w);
     w.shadow = 100;
     assert.ok(cast(w, skill).ok);
     run(w, 0.3);
@@ -1297,6 +1307,7 @@ test("Mark for Death, Vanish and Poisoned Blade", () => {
   ready();
   run(w, 1.2);
   assert.ok(cast(w, 'poisonblade').ok);
+  settle(w);
   updateWorld(w, DT, press('KeyZ'));
   run(w, 0.5);
   assert.ok(w.mobs.some((x) => x.poison?.kind === 'bleed'), 'cuts make them bleed');
@@ -1309,7 +1320,7 @@ test("a Night Lord's stars build Starlight, more when they pile onto one monster
   run(w, 1.4, hold);
   assert.ok(w.starlight > 0, 'stars build it');
   assert.ok(w.mobs[0].starHits > 2, 'they piled onto the one monster');
-  run(w, 9);
+  run(w, 10);
   assert.equal(w.starlight, 0, 'it fades once the fighting stops');
 });
 
@@ -1367,6 +1378,7 @@ test("each thief path's finisher needs its gauge full, spends it, and lands its 
     assert.equal(w[gauge], 0, 'spends all of it');
     run(w, 2);
     assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, `${skill} hits the whole line`);
+    settle(w);
     w[gauge] = 100;
     assert.ok(cast(w, skill).ok);
     run(w, 0.3);
@@ -1462,9 +1474,66 @@ test('Garden of Light needs full Bloom, spends it, hits the whole line and heals
   run(w, 2);
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'hits the whole line');
   assert.ok(w.char.hp > 10, 'and heals');
+  settle(w);
   w.bloom = 100;
   assert.ok(cast(w, 'gardenoflight').ok);
   run(w, 0.3);
   w.bloom = 100;
   assert.equal(cast(w, 'gardenoflight').reason, 'busy');
+});
+
+// ---------- Pace: nothing can be mashed ----------
+
+test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
+  const { SKILLS } = await import('../src/data/skills.js');
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], ranger: ['archer', 'ranger'], sniper: ['archer', 'sniper'], thief: ['thief'], assassin: ['thief', 'assassin'], nightlord: ['thief', 'nightlord'], mage: ['mage'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', ranger: 'bow_20', sniper: 'crossbow_20', thief: 'dagger_20', assassin: 'dagger_20', nightlord: 'gauntlet_20', mage: 'wand_20' };
+  for (const [job, fam] of Object.entries(families)) {
+    const weapon = weapons[job];
+    const type = weapon.split('_')[0];
+    const skills = Object.entries(SKILLS).filter(([, s]) => fam.includes(s.job) && ['attack', 'magic'].includes(s.type) && !s.fullGauge && !s.rageCost && (!s.weapons || s.weapons.includes(type)));
+    for (const [id] of skills) {
+      const w = arena(weapon);
+      w.char.job = job;
+      if (type === 'gauntlet') addItem(w.char.inventory, 'star_pebble', 5000);
+      w.char.skills[id] = 20;
+      w.char.hotkeys.KeyA = { skill: id };
+      w.char.baseMp = 1e7;
+      let casts = 0;
+      let last = null;
+      for (let i = 0; i < 6 * 60; i++) {
+        w.char.mp = 1e7;
+        updateWorld(w, DT, press('KeyA'));
+        if (w.pose && w.pose.since !== last) {
+          casts++;
+          last = w.pose.since;
+        }
+      }
+      assert.ok(casts / 6 <= 2, `${job} ${id}: ${(casts / 6).toFixed(2)} casts a second when mashed`);
+    }
+    const w = arena(weapon);
+    w.char.job = job;
+    if (type === 'gauntlet') addItem(w.char.inventory, 'star_pebble', 5000);
+    let moves = 0;
+    let last = null;
+    for (let i = 0; i < 6 * 60; i++) {
+      updateWorld(w, DT, press('KeyZ'));
+      if (w.pose && w.pose.since !== last) {
+        moves++;
+        last = w.pose.since;
+      }
+    }
+    assert.ok(moves / 6 <= 3.5, `${job}: ${(moves / 6).toFixed(2)} basic attacks a second when mashed`);
+  }
+});
+
+test("potions can't be chugged by mashing their key", () => {
+  const w = arena();
+  addItem(w.char.inventory, 'red_potion', 50);
+  w.char.hotkeys.Digit1 = { item: 'red_potion' };
+  const count = () => w.char.inventory.use.filter((s) => s.id === 'red_potion').reduce((a, s) => a + s.qty, 0);
+  const before = count();
+  for (let i = 0; i < 60; i++) updateWorld(w, DT, press('Digit1'));
+  assert.ok(before - count() <= 3, `${before - count()} potions in one second`);
+  assert.ok(before - count() >= 2, 'but they still go down quickly');
 });

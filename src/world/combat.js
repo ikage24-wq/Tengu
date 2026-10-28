@@ -8,7 +8,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -153,7 +153,7 @@ export function cast(world, skillId, rng = Math.random) {
       if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
       world.rage = 0;
     }
-    skillCombo(world, skillId, { ...params, school: s.school }, scale);
+    skillCombo(world, skillId, { ...params, school: s.school, fullGauge: s.fullGauge }, scale);
     return { ok: true };
   }
 
@@ -178,7 +178,13 @@ export function cast(world, skillId, rng = Math.random) {
   world.recoverAt = now + (lock || (s ? poseDur * 0.55 : Math.min(0.2, world.attackTimer)));
   world.recoverKind = s ? 'skill' : 'basic';
   if (!s) world.basicReadyAt = now + world.attackTimer;
-  else world.skillReadyAt = now + Math.max(world.attackTimer, world.lockTimer, poseDur * 0.8);
+  else {
+    // A skill plays out its whole motion, then a beat of recovery (AFTER, melee.js): a quick
+    // buff or dash a short one, a big wind-up a long one.
+    const after = type === 'buff' || type === 'blink' ? AFTER.command : lock >= 1 ? AFTER.finisher : AFTER.skill;
+    world.skillReadyAt = now + Math.max(world.attackTimer, world.lockTimer, poseDur) + after;
+    world.basicReadyAt = Math.max(world.basicReadyAt ?? 0, now + poseDur * 0.9);
+  }
   // Spells glow with a magic circle at your feet in their school's color; big weapon skills
   // flare with a burst of power instead.
   const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';

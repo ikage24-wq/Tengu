@@ -40,6 +40,13 @@ const WINDOW = 0.45;
 // A step can be cut short into the next one this far through (heavy finishers play out longer).
 const CANCEL = 0.76;
 
+// The beat of recovery after a move before the next one can start (a real game's action delay),
+// by its weight: a skill plays out its whole motion and then this; steps inside one skill's own
+// chain flow on almost at once; a basic combo's finisher and the command moves end with a beat
+// too. So nothing can be mashed out faster than it can be seen (CLAUDE.md, combat rules).
+export const AFTER = { chain: 0.06, skill: 0.2, heavy: 0.3, finisher: 0.45, basicFinisher: 0.22, command: 0.12 };
+const heavyStep = (step) => step.dur >= 0.7 || step.strikes.some((st) => st.big || st.launch);
+
 // How high the hands are above the feet (where bows are held and stars thrown from).
 const HAND_Y = 15;
 
@@ -557,10 +564,12 @@ export function skillCombo(world, skillId, params, scale = 100) {
   const i = c && world.now <= c.until ? (c.i + 1) % params.combo.length : 0;
   const step = params.combo[i];
   chain[skillId] = { i, until: world.now + step.dur + WINDOW };
-  playStep(world, step, scale, skillId, params.school);
+  const last = i === params.combo.length - 1;
+  const after = !last ? AFTER.chain : params.fullGauge || step.finisher ? AFTER.finisher : heavyStep(step) ? AFTER.heavy : AFTER.skill;
+  playStep(world, step, scale, skillId, params.school, after);
 }
 
-function playStep(world, step, scale, key, school = null) {
+function playStep(world, step, scale, key, school = null, after = 0) {
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
   // Shots need the whole draw and loose, so they hold you a little longer than a cut; a Ranger's
@@ -577,8 +586,16 @@ function playStep(world, step, scale, key, school = null) {
   const timed = step.strikes.filter((st) => !st.onLand);
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
   world.recoverKind = key.startsWith('basic') ? 'basic' : 'skill';
-  if (key.startsWith('basic')) world.basicReadyAt = now + busy;
-  else world.skillReadyAt = now + busy;
+  if (key.startsWith('basic')) {
+    // Basic attacks keep their rhythm; a finisher or a command move ends with a beat.
+    const own = /^basic(air)?\d$/.test(key);
+    world.basicReadyAt = now + busy + (step.finisher ? AFTER.basicFinisher : own ? 0 : AFTER.command);
+  } else {
+    // A skill plays out its whole motion, then its beat; a basic attack can follow once the
+    // motion is nearly over.
+    world.skillReadyAt = now + dur + after;
+    world.basicReadyAt = Math.max(world.basicReadyAt ?? 0, now + dur * 0.9);
+  }
   // Step into it (or hop back from it): carried until the first strike lands (or through `carry`).
   const first = (step.carry ?? step.strikes[0].at) * dur;
   if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
