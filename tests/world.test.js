@@ -78,7 +78,7 @@ test('a new world starts in Sprout Village and portals travel with Up', () => {
 
 test('Up next to an NPC raises a talk event', () => {
   const w = newWorld();
-  w.body.x = 360;
+  w.body.x = w.map.npcs.find((n) => n.id === 'mira').x;
   updateWorld(w, DT, keys([], ['ArrowUp']));
   assert.ok(w.events.some((e) => e.type === 'talk' && e.npc === 'mira'));
 });
