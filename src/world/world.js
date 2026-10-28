@@ -15,7 +15,7 @@ import { createBody, stepBody, knockBack, groundAt } from './physics.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, unbroken, loseMomentum } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasIntent, hasMomentum, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
@@ -531,7 +531,7 @@ export function updateWorld(world, dt, input) {
       if (h.gauge) addAim(world, h.gauge, m);
       drinkBlood(world, h.damage);
     }
-    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasIntent(world.char) ? 'crow' : hasShadow(world.char) ? 'shadow' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasIntent(world.char) ? 'crow' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);
@@ -549,12 +549,12 @@ export function updateWorld(world, dt, input) {
     }
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
-    const hold = h.freeze || h.stun;
+    const hold = h.freeze || h.stun || h.snare;
     if (hold) {
       const secs = m.def.boss ? hold / 2 : hold;
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
       if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
-      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : 'stun';
+      if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : h.stun ? 'stun' : 'snare';
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
     const dot = h.poison ?? h.bleed;

@@ -337,20 +337,58 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
 }
 
+// Copies of the hero (Phantom, Shadow Partner, Mirage, Demon Form's shadow) are drawn tinted: onto
+// a scratch canvas, washed with a colour over their own pixels (`k` of it), then stamped in. A CSS
+// filter would be one line, but costs the browser a whole extra pass every frame (Demon Form fell
+// from 60 frames a second to 25 with one).
+let scratch = null;
+function drawTinted(ctx, x, y, tint, k, draw) {
+  if (typeof document === 'undefined') return;
+  scratch ??= document.createElement('canvas');
+  const { width, height } = ctx.canvas;
+  if (scratch.width !== width || scratch.height !== height) {
+    scratch.width = width;
+    scratch.height = height;
+  }
+  // Only the patch round the hero is touched.
+  const m = ctx.getTransform();
+  const a = m.transformPoint({ x: x - 80, y: y - 110 });
+  const b = m.transformPoint({ x: x + 80, y: y + 24 });
+  const rx = Math.max(0, Math.floor(Math.min(a.x, b.x)));
+  const ry = Math.max(0, Math.floor(Math.min(a.y, b.y)));
+  const rw = Math.min(width, Math.ceil(Math.max(a.x, b.x))) - rx;
+  const rh = Math.min(height, Math.ceil(Math.max(a.y, b.y))) - ry;
+  if (rw <= 0 || rh <= 0) return;
+  const sx = scratch.getContext('2d');
+  sx.setTransform(1, 0, 0, 1, 0, 0);
+  sx.clearRect(rx, ry, rw, rh);
+  sx.setTransform(m);
+  draw(sx);
+  sx.setTransform(1, 0, 0, 1, 0, 0);
+  sx.globalCompositeOperation = 'source-atop';
+  sx.globalAlpha = k;
+  sx.fillStyle = tint;
+  sx.fillRect(rx, ry, rw, rh);
+  sx.globalCompositeOperation = 'source-over';
+  sx.globalAlpha = 1;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(scratch, rx, ry, rw, rh, rx, ry, rw, rh);
+  ctx.restore();
+}
+
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
 function drawPhantom(ctx, world, look, gear, x, y, state) {
   const ph = world.phantom;
   const live = ph && world.now >= ph.since && world.now < ph.until;
   const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
-  ctx.save();
-  ctx.filter = 'brightness(0.35) sepia(1) hue-rotate(215deg) saturate(3.5)';
-  drawHero(ctx, look, gear, x - state.facing * (live ? 10 : 16), y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 });
-  ctx.restore();
+  const px = x - state.facing * (live ? 10 : 16);
+  drawTinted(ctx, px, y, '#241a5c', 0.82, (c) => drawHero(c, look, gear, px, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 }));
 }
 
 // The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).
 const FORM_LOOKS = {
-  rage: { glow: 'celdemonglow', shadow: 'brightness(0.38) sepia(1) hue-rotate(-52deg) saturate(8)' },
+  rage: { glow: 'celdemonglow', shadow: '#8a0a24' },
   holy: { glow: 'celholyglow', shadow: null },
 };
 
@@ -365,26 +403,19 @@ function drawForm(ctx, world, look, gear, x, y, state, time) {
   const blink = beat < 1 ? 1 - beat : 0;
   fxSprite(ctx, form.glow, x, y + 10, { t: time, scale: 1.6 + 0.25 * breath + 0.15 * blink, alpha: Math.min(1, 0.45 + 0.3 * breath + 0.4 * blink) });
   if (!form.shadow) return;
-  ctx.save();
-  ctx.filter = form.shadow;
-  drawHero(ctx, look, gear, x - state.facing * (live ? 8 : 12), y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) });
-  ctx.restore();
+  const sx = x - state.facing * (live ? 8 : 12);
+  drawTinted(ctx, sx, y, form.shadow, 0.85, (c) => drawHero(c, look, gear, sx, y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) }));
 }
 
 function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
-  const clone = (dx, alpha, filter) => {
-    ctx.save();
-    ctx.filter = filter;
-    drawHero(ctx, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha });
-    ctx.restore();
-  };
+  const clone = (dx, alpha, tint, k) => drawTinted(ctx, x + dx, y, tint, k, (c) => drawHero(c, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha }));
   if (buffs.shadowpartner) {
-    clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, 'brightness(0.3) sepia(1) hue-rotate(220deg) saturate(3)');
+    clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, '#1e1650', 0.85);
   }
   if (buffs.mirage) {
     for (const side of [-1, 1]) {
       const flicker = 0.25 + 0.2 * Math.sin(time * 6 + side * 2);
-      clone(side * (20 + Math.sin(time * 1.5 + side) * 4), flicker, 'sepia(1) saturate(2.5) brightness(1.25)');
+      clone(side * (20 + Math.sin(time * 1.5 + side) * 4), flicker, '#ffd66b', 0.55);
     }
   }
 }

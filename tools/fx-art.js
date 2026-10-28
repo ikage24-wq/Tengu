@@ -2270,6 +2270,137 @@
       }
     },
   };
+  // ---------- The Archer's tricks (a huntress: rope, steel and gold) ----------
+  // Snare Arrow's net over a monster, looping: a rope mesh draped over it, knotted, weighted at the
+  // corners, swaying a little as it struggles. Centred on the monster.
+  E.net = {
+    w: 100, h: 100, n: 4, fps: 6, px: 50, py: 50, loop: true,
+    draw(ctx, i) {
+      const rope = ['#fff6e0', '#f0d6a0', '#d8a868', '#a8743e', '#5a3a20'];
+      const sway = [0, 1.5, 0, -1.5][i];
+      const c = 50;
+      // The outline the net drapes to: wider at the bottom where it hangs.
+      const edge = (u) => [c + Math.cos(u) * (30 + 6 * Math.max(0, Math.sin(u))) + sway * Math.sin(u), c + Math.sin(u) * 30];
+      ctx.save();
+      path(ctx, Array.from({ length: 24 }, (_, k) => edge((k / 24) * TAU)));
+      ctx.clip();
+      ctx.lineCap = 'round';
+      for (const [w, col] of [[5, rope[4]], [3, rope[2]], [1.2, rope[1]]]) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = w;
+        for (let k = -6; k <= 6; k++) {
+          ctx.beginPath();
+          ctx.moveTo(c + k * 11 - 40 + sway, c - 40);
+          ctx.lineTo(c + k * 11 + 40 + sway, c + 40);
+          ctx.moveTo(c + k * 11 + 40 + sway, c - 40);
+          ctx.lineTo(c + k * 11 - 40 + sway, c + 40);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      // Knots where the cords cross, and the rope rim.
+      for (let a = -3; a <= 3; a++) {
+        for (let b = -3; b <= 3; b++) {
+          const x = c + (a + b) * 5.5 + sway * 0.5;
+          const y = c + (b - a) * 5.5;
+          if (Math.hypot(x - c, y - c) < 27) inked(ctx, Array.from({ length: 6 }, (_, k) => [x + Math.cos((k / 6) * TAU) * 2.2, y + Math.sin((k / 6) * TAU) * 2.2]), rope[1], rope[4], 1.2);
+        }
+      }
+      ctx.strokeStyle = rope[4];
+      ctx.lineWidth = 4;
+      path(ctx, Array.from({ length: 24 }, (_, k) => edge((k / 24) * TAU)));
+      ctx.stroke();
+      ctx.strokeStyle = rope[2];
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Lead weights hanging off the bottom corners.
+      for (const s of [-1, 1]) {
+        const [x, y] = edge(Math.PI / 2 + s * 0.7);
+        inked(ctx, Array.from({ length: 8 }, (_, k) => [x + Math.cos((k / 8) * TAU) * 5, y + 4 + Math.sin((k / 8) * TAU) * 5]), '#8a92a8', '#3a3a50', 2);
+        fill(ctx, [[x - 2, y + 1], [x + 1, y], [x, y + 3]], '#e4ecff');
+      }
+    },
+  };
+  // Spring Trap, armed on the ground, looping: an open steel trap lying flat, its toothed jaws
+  // spread, a gold trigger plate in the middle that glints. Its middle sits on the ground.
+  E.trap = {
+    w: 100, h: 50, n: 4, fps: 4, px: 50, py: 32, loop: true,
+    draw(ctx, i) {
+      const steel = PAL.steel;
+      const c = 50;
+      const g = 32;
+      // The jaws, opened flat: two toothed half rings either side of the plate.
+      for (const s of [-1, 1]) {
+        const arc = Array.from({ length: 11 }, (_, k) => {
+          const u = (k / 10) * Math.PI;
+          return [c + s * (10 + Math.sin(u) * 24), g - 6 + Math.cos(u) * 9];
+        });
+        inked(ctx, [...arc, ...arc.slice().reverse().map(([x, y]) => [c + (x - c) * 0.72, y])], steel[2], steel[4], 2.5);
+        for (let k = 1; k < 10; k += 2) {
+          const [x, y] = arc[k];
+          inked(ctx, [[x, y], [x - s * 5, y - 1], [x, y + 2]], steel[0], steel[4], 1.2);
+        }
+      }
+      // The trigger plate, gold, and the spring hinges.
+      inked(ctx, Array.from({ length: 14 }, (_, k) => [c + Math.cos((k / 14) * TAU) * 10, g - 6 + Math.sin((k / 14) * TAU) * 5]), PAL.hawk[2], PAL.hawk[4], 2);
+      fill(ctx, Array.from({ length: 10 }, (_, k) => [c - 2 + Math.cos((k / 10) * TAU) * 5, g - 7 + Math.sin((k / 10) * TAU) * 2]), PAL.hawk[1]);
+      for (const s of [-1, 1]) inked(ctx, Array.from({ length: 8 }, (_, k) => [c + s * 34 + Math.cos((k / 8) * TAU) * 4, g - 6 + Math.sin((k / 8) * TAU) * 4]), steel[3], steel[4], 1.5);
+      if (i === 1) sparkle(ctx, PAL.hawk, c + 4, g - 9, 6, 0.3);
+    },
+  };
+  // Spring Trap snapping: the jaws spring up and clamp shut, a burst of sparks and dust, then the
+  // shut trap. Its middle on the ground.
+  E.trapsnap = {
+    w: 140, h: 120, n: 6, fps: 18, px: 70, py: 92,
+    draw(ctx, i) {
+      const steel = PAL.steel;
+      const c = 70;
+      const g = 92;
+      const shut = [0.5, 1, 1, 1, 1, 1][i];
+      const R = rng(510);
+      if (i >= 1) {
+        const k = (i - 1) / 4;
+        starburst(ctx, PAL.hawk, c, g - 22, 26 + k * 22, 8, 510, { inner: 0.35 });
+        for (let j = 0; j < 6; j++) shard(ctx, PAL.hawk, c + (R() - 0.5) * 70, g - 20 - k * 40 - R() * 20, -Math.PI / 2 + (R() - 0.5), 12 * (1 - k * 0.6), 3);
+        for (const s of [-1, 1]) puff(ctx, DUST, c + s * (24 + k * 24), g - 4 - k * 6, 12 + k * 8, 52 + s, { holes: Math.max(0, (i - 3) / 2) });
+      }
+      // The jaws rising to meet over the plate.
+      for (const s of [-1, 1]) {
+        const a0 = -Math.PI / 2 + s * (Math.PI / 2) * (1 - shut);
+        const arc = Array.from({ length: 9 }, (_, k) => {
+          const u = (k / 8) * Math.PI;
+          const r = 24 * Math.sin(u);
+          return [c + s * 4 + Math.cos(a0) * r * 0.2 * s, g - 4 - r * (0.3 + 0.7 * shut)];
+        });
+        inked(ctx, tube(arc.map(([x, y], k) => [x + s * (k - 4) * 2.5, y]), 7, 7), steel[2], steel[4], 2.5);
+      }
+      inked(ctx, Array.from({ length: 12 }, (_, k) => [c + Math.cos((k / 12) * TAU) * 14, g - 2 + Math.sin((k / 12) * TAU) * 4]), steel[3], steel[4], 2);
+    },
+  };
+  // Comet Arrow in flight, looping: a giant gold arrowhead plunging point-first, a great tail of
+  // fire streaming up behind it (deep orange outside, gold, a white-hot core), sparks peeling off
+  // and flickering. Drawn pointing down; the game turns it along its fall. Its point is its anchor.
+  E.comet = {
+    w: 130, h: 290, n: 4, fps: 14, px: 65, py: 268, loop: true,
+    draw(ctx, i) {
+      const pal = PAL.hawk;
+      const R = rng(620 + i);
+      const c = 65;
+      const tip = 268;
+      const wob = (k) => Math.sin(k * 0.9 + i * 1.7) * 5;
+      // The fire tail: three layers, widest at the head, licking off to the sides.
+      for (const [w, col] of [[52, pal[4]], [42, pal[3]], [30, pal[2]], [17, pal[1]], [8, pal[0]]]) {
+        const pts = Array.from({ length: 12 }, (_, k) => [c + wob(k) * (k / 11), 30 + k * 19]);
+        fill(ctx, tube(pts, 2 + w * 0.15, w), col);
+      }
+      for (let j = 0; j < 7; j++) shard(ctx, pal, c + (R() - 0.5) * 70, 40 + R() * 170, -Math.PI / 2 + (R() - 0.5) * 0.8, 12 + R() * 10, 3);
+      // The arrowhead, broad and steel-gold, ringed with a burst of light.
+      starburst(ctx, pal, c, tip - 26, 34 + (i % 2) * 6, 8, 630 + i, { inner: 0.4 });
+      inked(ctx, [[c, tip], [c - 20, tip - 40], [c - 6, tip - 34], [c, tip - 48], [c + 6, tip - 34], [c + 20, tip - 40]], pal[1], pal[4], 3.5);
+      fill(ctx, [[c, tip - 6], [c - 9, tip - 34], [c, tip - 30]], pal[0]);
+    },
+  };
+
   // A star stuck in a monster, looping: a small gold star pulsing brighter and brighter.
   E.stuckstar = {
     w: 90, h: 90, n: 4, fps: 12, px: 45, py: 45, loop: true,

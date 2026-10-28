@@ -334,90 +334,65 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Archer (warm gold and sky blue: a hawk, its feathers, gold arrows) ----------
+  // ---------- Archer (warm gold and sky blue: gold arrows, a huntress with tricks) ----------
   // Every shot an Archer lands builds Momentum (0-100, see world/melee.js), more for each one in a
   // row; a hit taken knocks half of it away. Full (Hawkeye), arrows fly faster and curve to find
-  // monsters. Falcon Dive needs it full and spends it.
-  twinshot: skill({
-    id: 'twinshot', name: 'Double Shot', job: 'archer', type: 'attack', fx: 'arrow', icon: 'twinshot', school: 'hawk',
-    desc: 'A two-part combo, one part per press: two gold arrows loosed a beat apart, then a hop back and a full draw that sends a heavy pair tearing through the line.',
-    weapons: ['bow', 'crossbow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const quick = (at, oy = 0) => ({ at, shot: 'hawkarrow', pct: k(70, 120), range: 310, h: 60, knock: 30, speed: 840, oy });
-      const heavy = (at, oy) => ({ at, shot: 'hawkbig', pct: k(110, 190), range: 340, h: 64, targets: k(2, 4), pierce: true, speed: 920, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2, oy });
-      return {
-        mp: k(5, 11), pct: k(70, 120), hits: 4, targets: 1,
-        combo: [
-          { move: 'rapid', dur: 0.46, step: -3, strikes: [quick(0.17, -3), quick(0.5, 3)] },
-          { move: 'aimshot', dur: 0.66, step: -14, finisher: true, strikes: [heavy(0.68, -4), heavy(0.74, 4)] },
-        ],
-      };
-    },
+  // monsters. Comet Arrow needs it full and spends it.
+  //
+  // A simple first job: she fights with her basic shots, and three tricks set themselves off from
+  // them (procs, see world/melee.js): Blast Arrow and Snare Arrow from any shot, Spring Trap from
+  // her combo's last shot. Her buttons are Vault (getting past them) and Comet Arrow (the big one,
+  // on a full gauge). Steady Hands and Light Feet are passives.
+  blastarrow: skill({
+    id: 'blastarrow', name: 'Blast Arrow', job: 'archer', type: 'passive', fx: null, school: 'hawk',
+    desc: 'Your shots sometimes burst on impact, hitting everything close around their target, hit or miss.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), r: lerp(50, 80, lv, m), pct: lerp(110, 160, lv, m) } }),
   }),
-  arrowfan: skill({
-    id: 'arrowfan', name: 'Arrow Fan', job: 'archer', type: 'attack', fx: 'arrow', icon: 'arrowfan', school: 'hawk',
-    desc: 'Loose a fan of five gold arrows at once; each one finds its own monster, and a gust of feathers bursts off the bow.',
-    weapons: ['bow', 'crossbow'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(10, 22), pct: k(100, 170), hits: 1, targets: 5,
-        combo: [{ move: 'draw', dur: 0.62, step: -6, strikes: [{ at: 0.6, shot: 'hawkarrow', fan: 5, pct: k(100, 170), range: 300, h: 150, knock: 90, speed: 800, muzzle: 'feathers' }] }],
-      };
-    },
+  snarearrow: skill({
+    id: 'snarearrow', name: 'Snare Arrow', job: 'archer', type: 'passive', fx: null, school: 'hawk',
+    desc: 'Your shots sometimes tangle their target in a net, holding it in place for a moment.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), secs: lerpf(1, 2.2, lv, m) } }),
   }),
-  arrowshower: skill({
-    id: 'arrowshower', name: 'Arrow Rain', job: 'archer', type: 'attack', fx: 'rain', icon: 'arrowshower', school: 'hawk',
-    desc: 'Shoot a volley into the sky; gold arrows pour down on everything in the area ahead.',
+  springtrap: skill({
+    id: 'springtrap', name: 'Spring Trap', job: 'archer', type: 'passive', fx: null, school: 'hawk',
+    desc: 'The last shot of your combo sometimes drops a spring trap on the ground ahead. The first monster to step on it is snapped and flung into the air. Up to two traps at once.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), pct: lerp(150, 260, lv, m), life: lerp(8, 14, lv, m) } }),
+  }),
+  vault: skill({
+    id: 'vault', name: 'Vault', job: 'archer', type: 'attack', fx: null, icon: 'vault', maxLevel: 10, school: 'hawk', movement: true,
+    desc: 'Spring up and over the monster in front of you, land behind it, and turn to shoot it. Nothing touches you mid-vault.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(16, 32), pct: k(60, 100), hits: k(8, 14), targets: 6,
-        combo: [{ move: 'skyshot', dur: 0.75, step: -4, finisher: true, strikes: [{ at: 0.58, rain: k(8, 14), pct: k(60, 100), rainFrom: 60, rainW: 280, span: 0.7, knock: 20, variant: 'hawkarrow', gauge: 2 }] }],
+        mp: k(10, 6), pct: k(110, 180), hits: 1, targets: 1,
+        combo: [{ move: 'vault', dur: 0.62, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [{ at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
       };
     },
   }),
-  flipshot: skill({
-    id: 'flipshot', name: 'Backflip Shot', job: 'archer', type: 'attack', fx: 'blink', icon: 'flipshot', maxLevel: 10, school: 'hawk', movement: true,
-    desc: 'Flip backward out of danger in a flurry of feathers, firing a spread of arrows at whatever was on you. Nothing touches you mid-flip.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(10, 6), pct: k(70, 120), hits: 3, targets: 3,
-        combo: [{ move: 'flip', dur: 0.5, step: -k(80, 140), carry: 0.75, guard: 0.5, strikes: [{ at: 0.42, shot: 'hawkarrow', fan: 3, pct: k(70, 120), range: 300, h: 130, knock: 80, speed: 820, muzzle: 'feathers' }] }],
-      };
-    },
+  steadyhands: skill({
+    id: 'steadyhands', name: 'Steady Hands', job: 'archer', type: 'passive', fx: null,
+    desc: 'Quicker on the draw: you shoot faster and aim truer.',
+    at: (lv, m) => ({ passive: { attackSpeed: lerpf(0.03, 0.15, lv, m), acc: lerp(3, 25, lv, m), mastery: lerpf(0.1, 0.35, lv, m) } }),
   }),
-  huntersfocus: skill({
-    id: 'huntersfocus', name: "Hunter's Focus", job: 'archer', type: 'buff', fx: 'buff', icon: 'huntersfocus', school: 'hawk',
-    desc: 'Sharpen your eye like a hunting hawk: more accuracy and critical hits for a while.',
-    at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { acc: lerp(5, 30, lv, m), critRate: lerpf(0.03, 0.15, lv, m) } }),
+  lightfeet: skill({
+    id: 'lightfeet', name: 'Light Feet', job: 'archer', type: 'passive', fx: null,
+    desc: 'Light on your feet: you run faster and dodge more.',
+    at: (lv, m) => ({ passive: { speed: lerp(3, 18, lv, m), eva: lerp(3, 25, lv, m) } }),
   }),
-  bowmastery: skill({
-    id: 'bowmastery', name: 'Archery Mastery', job: 'archer', type: 'passive', fx: null, icon: 'bowmastery',
-    desc: 'Steadier shots and sharper aim with bows and crossbows.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), acc: lerp(3, 25, lv, m) } }),
-  }),
-  eagleeye: skill({
-    id: 'eagleeye', name: 'Eagle Eye', job: 'archer', type: 'passive', fx: null, icon: 'eagleeye',
-    desc: 'Permanently raises critical rate and critical damage.',
-    at: (lv, m) => ({ passive: { critRate: lerpf(0.01, 0.15, lv, m), critDamage: lerpf(0.05, 0.3, lv, m) } }),
-  }),
-  falcondive: skill({
-    id: 'falcondive', name: 'Falcon Dive', job: 'archer', type: 'attack', fx: 'arrow', icon: 'falcondive', school: 'hawk', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Momentum, and spends it. Raise your bow to the sky and call down a great golden falcon of light, then loose it: it dives through the whole line, and a storm of feathers follows in its wake.',
+  cometarrow: skill({
+    id: 'cometarrow', name: 'Comet Arrow', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Momentum, and spends it. Leap high into the air and hang there aiming straight down, then fire a giant flaming arrow that crashes into the ground ahead like a meteor: the ground cracks open, a shockwave races out both ways, and everything nearby is thrown into the air.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 2, targets,
-        combo: [{ move: 'falcondive', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
-          { at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, burst: 'falconcall', burstAt: 0, quiet: true, gauge: 0 },
-          { at: 0.63, shot: 'falcon', pct: k(420, 720), range: 600, h: 150, targets, pierce: true, speed: 1000, oy: -60, knock: 320, launch: 260, big: true, stop: 0.16, shake: 7, muzzle: 'falconloose', burst: 'falconhit', gauge: 0 },
-          { at: 0.74, shot: 'featherwake', pct: k(150, 260), range: 600, h: 150, targets, pierce: true, speed: 900, knock: 180, big: true, stop: 0.05, shake: 3, burst: 'hawkhit', gauge: 0 },
+        combo: [{ move: 'comet', dur: 1.5, step: -10, finisher: true, guard: 1.3, strikes: [
+          { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, burst: 'cometfall', burstAt: 0, quiet: true, gauge: 0 },
+          { at: 0.62, pct: k(420, 720), reach: 230, h: 170, targets, knock: 220, launch: 460, crack: true, burst: 'cometimpact', burstAt: 0.55, fx: 'hawkhit', big: true, stop: 0.16, shake: 8, gauge: 0 },
+          { at: 0.76, pct: k(150, 260), reach: 270, h: 170, targets, knock: 300, burst: 'cometwave', burstAt: 0.55, big: true, stop: 0.05, shake: 3, gauge: 0 },
         ] }],
       };
     },
@@ -851,10 +826,10 @@ export const SKILLS = {
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
+  vault: 'vault', cometarrow: 'comet',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',
-  twinshot: 'rapid', arrowfan: 'draw', huntersfocus: 'cheer', flipshot: 'flip', arrowshower: 'skyshot', falcondive: 'falcondive',
   galevolley: 'spinshot', cyclonearrow: 'galeshot', tailwind: 'tailwind', stormvolley: 'stormvolley', marksman: 'kneelshot', glacierbolt: 'kneelshot', steadyaim: 'steadyaim', heartseeker: 'heartseeker',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   crowcombo: 'thrust', markdeath: 'throw', vanish: 'vanish', poisonblade: 'cheer', bloodmoonrequiem: 'assassinate',

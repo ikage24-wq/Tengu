@@ -93,30 +93,6 @@ function sheen(ctx, x, y, t, color, a, period = 2.2) {
   ctx.fill();
   ctx.restore();
 }
-
-function eyeSigil(ctx, x, y, r, color, a, t) {
-  ctx.save();
-  ctx.globalAlpha = a;
-  ctx.fillStyle = 'rgba(255,251,224,0.8)';
-  ctx.beginPath();
-  ctx.moveTo(x - r, y);
-  ctx.quadraticCurveTo(x, y - r * 0.8, x + r, y);
-  ctx.quadraticCurveTo(x, y + r * 0.8, x - r, y);
-  ctx.fill();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.moveTo(x - r, y);
-  ctx.quadraticCurveTo(x, y - r * 0.8, x + r, y);
-  ctx.quadraticCurveTo(x, y + r * 0.8, x - r, y);
-  ctx.stroke();
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(x + Math.sin(t * 1.3) * r * 0.2, y, r * 0.3, 0, TAU);
-  ctx.fill();
-  ctx.restore();
-}
-
 // Each buff: its color, how it bursts when cast, and what it draws while active.
 // back/front(ctx, x, y, t, dir, a) — (x, y) the hero's feet on screen, a the strength (0-1).
 export const BUFF_LOOKS = {
@@ -161,17 +137,6 @@ export const BUFF_LOOKS = {
       sheen(ctx, x, y, t, '#ffffff', a);
     },
   },
-  huntersfocus: {
-    color: '#ffc94a', cast: 'shine',
-    front: (ctx, x, y, t, dir, a) => {
-      // A golden hawk's eye watching from over your head, blinking now and then.
-      const blink = (t % 3.5) < 0.12 ? 0.2 : 1;
-      glow(ctx, x, y - 62, 16, '#ffe36b', a * 0.8);
-      eyeSigil(ctx, x, y - 62, 10, '#ffb020', a, t);
-      if (blink < 1) ring(ctx, x, y - 62, 10, 1, '#ffb020', 2, a);
-      if ((t % 1.6) < 0.2) star(ctx, x + dir * 8, y - 42, 3, '#ffffff', a);
-    },
-  },
   // The Mage's Bloom Barrier: a bud of petals curled round her, faint, until it bursts.
   bloombarrier: {
     color: '#ffa6cc', cast: 'converge',
@@ -193,14 +158,6 @@ export const BUFF_LOOKS = {
     // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).
     back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celringshadow', x, y, { frame: 2, scale: 0.32, sy: 0.32, alpha: a * 0.6 }),
     front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celstreakshadow', x - dir * 22, y - 10, { frame: Math.floor(t * 10) % 2, flip: dir < 0, scale: 0.3, alpha: a * 0.75 }),
-  },
-  eagleeye: {
-    color: '#ff5a5a', cast: 'lock',
-    front: (ctx, x, y, t, dir, a) => {
-      // A golden eagle emblem over your head, wings spread, with a red critical glint.
-      eagle(ctx, x, y - 64, a, t);
-      if ((t % 1.2) < 0.15) star(ctx, x + dir * 10, y - 38, 4, '#ff5a5a', a);
-    },
   },
   gmhaste: {
     color: '#ff9ec0', cast: 'gust',
@@ -226,38 +183,6 @@ function windSwirl(ctx, x, y, t, a, color, front) {
   }
   ctx.restore();
 }
-
-function eagle(ctx, x, y, a, t) {
-  const flap = Math.sin(t * 2) * 0.15;
-  glow(ctx, x, y, 12, '#ffd66b', a * 0.5);
-  ctx.save();
-  ctx.globalAlpha = a;
-  ctx.fillStyle = '#ffd66b';
-  for (const side of [-1, 1]) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(side, 1);
-    ctx.rotate(-flap);
-    ctx.beginPath();
-    ctx.moveTo(1, 0);
-    ctx.lineTo(10, -5);
-    ctx.lineTo(9, -2);
-    ctx.lineTo(11, -2);
-    ctx.lineTo(8, 1);
-    ctx.lineTo(9, 2);
-    ctx.lineTo(1, 3);
-    ctx.fill();
-    ctx.restore();
-  }
-  ctx.fillStyle = '#fff6c9';
-  ctx.beginPath();
-  ctx.ellipse(x, y + 1, 2.2, 3.5, 0, 0, TAU);
-  ctx.fill();
-  ctx.fillStyle = '#c98a2b';
-  ctx.fillRect(x - 0.5, y - 3, 1, 1.5);
-  ctx.restore();
-}
-
 // Draws every active buff's effect for one layer. Buffs fade in over their first moment and
 // flicker in their last three seconds so you can see them about to wear off.
 export function drawBuffEffects(ctx, buffs, layer, x, y, time, now, dir) {

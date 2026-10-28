@@ -285,57 +285,76 @@ test('the finishing arrow pierces the whole line', () => {
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'all three in the line got hit');
 });
 
-test("the archer's skills: Double Shot, Arrow Fan, Arrow Rain, Backflip Shot", () => {
+test("the archer's tricks go off on their own: Blast Arrow bursts, Snare Arrow nets, Spring Trap snaps", () => {
   const w = range();
-  Object.assign(w.char.skills, { twinshot: 10, arrowfan: 10, arrowshower: 10, flipshot: 5 });
+  Object.assign(w.char.skills, { blastarrow: 20, snarearrow: 20, springtrap: 20 });
+  for (const id of ['blastarrow', 'snarearrow', 'springtrap']) assert.equal(cast(w, id).reason, 'passive', `${id} is not a key to press`);
+  // A lucky shot bursts on its target (catching the ones beside it) and nets it in place.
+  let burst = false;
+  dice(0.01, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 40; i++) {
+      updateWorld(w, DT, idle);
+      burst ||= w.fx.some((f) => f.kind === 'blast');
+    }
+  });
+  assert.ok(burst, 'the arrow burst on impact');
+  assert.ok(w.mobs.filter((m) => m.hp < 1e9).length >= 2, 'catching the monsters beside its target');
+  assert.ok(w.mobs.some((m) => m.hold === 'snare' && m.frozenUntil > w.now), 'a net holds its target');
+  // Spring Trap: the combo's last shot drops a trap ahead; a monster walking onto it is flung up.
+  const v = range();
+  v.char.skills.springtrap = 20;
+  dice(0.01, () => {
+    finisher(v);
+    run(v, 0.8);
+  });
+  assert.equal(v.traps?.length, 1, 'a trap is set');
+  const trap = v.traps[0];
+  const m = v.mobs[2];
+  m.x = trap.x + 60;
+  m.hp = 1e9;
+  for (let i = 0; i < 60 && v.traps.length; i++) {
+    m.x -= 2;
+    updateWorld(v, DT, idle);
+  }
+  assert.equal(v.traps.length, 0, 'it sprang');
+  run(v, 0.3);
+  assert.ok(m.hp < 1e9 && (m.air ?? 0) > 0, 'snapped and flung into the air');
+});
+
+test('Vault springs over the monster in front, lands behind it, and turns to shoot it', () => {
+  const w = range();
+  w.char.skills.vault = 10;
   w.char.mp = 9999;
-  const go = (id) => {
-    w.attackTimer = 0;
-    w.lockTimer = 0;
-    w.skillReadyAt = 0;
-    w.recoverAt = null;
-    assert.ok(cast(w, id).ok, id);
-  };
-  const hurt = () => w.mobs.filter((m) => m.hp < 1e9).length;
-  go('arrowfan');
-  assert.equal(w.fx.filter((f) => f.kind === 'projectile').length, 0, 'the fan leaves on the release, not the press');
-  run(w, 0.8);
-  assert.equal(hurt(), 3, 'one arrow for each monster');
-  w.mobs.forEach((m) => (m.hp = 1e9));
-  go('arrowshower');
-  run(w, 1.3);
-  assert.equal(hurt(), 3, 'the rain fell on all of them');
-  w.mobs.forEach((m) => (m.hp = 1e9));
-  go('twinshot');
-  run(w, 0.5);
-  go('twinshot');
-  assert.equal(w.chains.twinshot.i, 1, 'two presses, two parts');
-  run(w, 1);
-  assert.equal(hurt(), 3, 'the heavy pair tore through the line');
+  const m = w.mobs[0];
+  w.body.x = m.x - 50;
   const x = w.body.x;
-  go('flipshot');
-  assert.ok(w.invuln > 0, 'untouchable mid-flip');
+  assert.ok(cast(w, 'vault').ok);
+  assert.ok(w.invuln > 0, 'untouchable mid-vault');
+  run(w, 0.75);
+  assert.ok(w.body.x > m.x, `landed past it (${Math.round(x)} -> ${Math.round(w.body.x)}, monster at ${Math.round(m.x)})`);
+  assert.equal(w.body.facing, -1, 'turned round');
   run(w, 0.5);
-  assert.ok(w.body.x < x - 60, 'flipped back');
+  assert.ok(w.mobs.some((o) => o.hp < 1e9 && o.x < w.body.x), 'and shot back at them');
 });
 
 test("skills can't be spammed back to back, even by moving, but basic attacks still flow into them", () => {
   const w = range();
-  Object.assign(w.char.skills, { arrowfan: 10, arrowshower: 10 });
+  w.char.skills.vault = 10;
   w.char.mp = 9999;
-  assert.ok(cast(w, 'arrowfan').ok);
-  run(w, 0.4);
-  assert.equal(cast(w, 'arrowshower').reason, 'busy', 'the fan is still being loosed');
+  assert.ok(cast(w, 'vault').ok);
+  run(w, 0.2);
+  assert.equal(cast(w, 'vault').reason, 'busy', 'still vaulting');
   const left = { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false };
   for (let i = 0; i < 3; i++) updateWorld(w, DT, left);
-  assert.equal(cast(w, 'arrowshower').reason, 'busy', 'walking cuts the follow-through, not the wait');
-  run(w, 0.4);
-  assert.ok(cast(w, 'arrowshower').ok, 'free once the motion is done');
+  assert.equal(cast(w, 'vault').reason, 'busy', 'walking cuts the follow-through, not the wait');
+  run(w, 0.8);
+  assert.ok(cast(w, 'vault').ok, 'free once the motion is done');
   // A basic shot flows straight into a skill once its arrow is away.
   run(w, 1.5);
   updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
   run(w, 0.25);
-  assert.ok(cast(w, 'arrowfan').ok, 'weaved in after the arrow left');
+  assert.ok(cast(w, 'vault').ok, 'weaved in after the arrow left');
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
@@ -891,6 +910,11 @@ function archer(job, weapon = job === 'sniper' ? 'crossbow_20' : 'bow_20') {
   for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
   return w;
 }
+// Adds to an archer's gauge the way a landed arrow does.
+const addAimFor = (w, n) => {
+  w.momentum = Math.min(100, (w.momentum ?? 0) + n);
+  w.momentumAt = w.now;
+};
 const shots = (w) => w.fx.filter((f) => f.kind === 'projectile' && f.t < 0.02).length;
 
 test("both archer paths wait on Kestrel's trial, and each keeps to its own weapon", async () => {
@@ -945,6 +969,8 @@ test("a Ranger's Gale builds as arrows land, quickens her shots, and full looses
   w.galeAt = w.now;
   w.combo = -1;
   w.comboUntil = -9;
+  // The same opening shot as before (a fresh combo would draw another from the pool).
+  w.comboPlan = null;
   updateWorld(w, DT, press('KeyZ'));
   assert.ok(w.pose.dur < slow * 0.85, `faster at full Gale: ${slow} -> ${w.pose.dur}`);
   let most = 0;
@@ -1045,6 +1071,34 @@ test("Tailwind and Steady Aim fill half the gauge at once", () => {
     assert.ok(cast(w, skill).ok);
     assert.equal(w[gauge], 50, `${skill} fills ${gauge}`);
     assert.ok(w.char.buffs[skill], `${skill} is on`);
+  }
+});
+
+test("the Archer's skills go on as each path's arrows: gold for her, wind for the Ranger, bolts for the Sniper", () => {
+  for (const [job, shot] of [['archer', 'hawkarrow'], ['ranger', 'windarrow'], ['sniper', 'heavybolt']]) {
+    const w = job === 'archer' ? range() : archer(job);
+    w.char.skills.vault = 10;
+    w.char.mp = 9999;
+    assert.ok(cast(w, 'vault').ok, `${job} vaults`);
+    let loosed = null;
+    for (let i = 0; i < 70 && !loosed; i++) {
+      updateWorld(w, DT, idle);
+      loosed = w.fx.find((f) => f.kind === 'projectile')?.shot ?? null;
+    }
+    assert.equal(loosed, shot, `${job} looses ${shot}`);
+  }
+});
+
+test('the Archer mixes her own pool of shots, opening with her own combo', () => {
+  for (const path of ['archer']) {
+    const pool = PATH_VARIANTS[path];
+    assert.equal(pool.length, PATH_COMBOS[path].length, `${path}: one choice per combo step`);
+    pool.forEach((step, i) => {
+      assert.equal(step[0], PATH_COMBOS[path][i], `${path} step ${i + 1} opens with the path's own`);
+      assert.ok(step.length >= 2, `${path} step ${i + 1} has a choice`);
+      for (const v of step) assert.ok(MOVES[v.move], `${path}: ${v.move} is a move`);
+    });
+    assert.ok(pool.at(-1).every((v) => v.finisher), `${path}: every last shot is a finisher`);
   }
 });
 
@@ -1233,26 +1287,58 @@ test('full Momentum (Hawkeye): arrows fly faster and reach monsters above and be
   assert.equal(above(100), true, 'a Hawkeye shot finds it');
 });
 
-test('Falcon Dive needs full Momentum, spends it, and its falcon dives through the whole line', () => {
+test('Comet Arrow needs full Momentum, spends it, and crashes down ahead, throwing everything into the air', () => {
   const w = range();
-  w.char.skills.falcondive = 10;
+  w.char.skills.cometarrow = 10;
   w.char.mp = 9999;
   w.momentum = 70;
-  assert.equal(cast(w, 'falcondive').reason, 'gauge:momentum', 'waits for full Momentum');
+  assert.equal(cast(w, 'cometarrow').reason, 'gauge:momentum', 'waits for full Momentum');
   w.momentum = 100;
-  assert.ok(cast(w, 'falcondive').ok);
+  assert.ok(cast(w, 'cometarrow').ok);
   assert.equal(w.momentum, 0, 'spends all of it');
-  run(w, 0.8);
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 0, 'nothing lands before the falcon is loosed');
-  run(w, 1.4);
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'the falcon tore through all of them');
-  assert.ok((w.momentum ?? 0) < 100, 'it does not refill Momentum');
+  let high = 0;
+  let fell = false;
+  for (let i = 0; i < 60 * 0.8; i++) {
+    updateWorld(w, DT, idle);
+    high = Math.max(high, w.pose?.kind === 'comet' ? MOVES.comet((w.now - w.pose.since) / w.pose.dur).lift : 0);
+    fell ||= w.fx.some((f) => f.kind === 'cometfall');
+  }
+  assert.ok(high > 50, `she leaps high (${Math.round(high)})`);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 0, 'nothing lands before the comet does');
+  let air = 0;
+  for (let i = 0; i < 60 * 1.2; i++) {
+    updateWorld(w, DT, idle);
+    fell ||= w.fx.some((f) => f.kind === 'cometfall');
+    air = Math.max(air, ...w.mobs.map((m) => m.air ?? 0));
+  }
+  assert.ok(fell, 'the comet falls');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'it caught all of them');
+  assert.ok(air > 30, 'and threw them into the air');
   // The no-spam rule holds.
   w.momentum = 100;
-  assert.ok(cast(w, 'falcondive').ok);
+  assert.ok(cast(w, 'cometarrow').ok);
   run(w, 0.3);
   w.momentum = 100;
-  assert.equal(cast(w, 'falcondive').reason, 'busy');
+  assert.equal(cast(w, 'cometarrow').reason, 'busy');
+});
+
+test('Down + attack shoots down at whatever is below, for every archer path', () => {
+  for (const job of ['archer', 'ranger', 'sniper']) {
+    const w = job === 'archer' ? range() : archer(job);
+    // One monster on a ledge below, nothing in front.
+    w.mobs = w.mobs.slice(0, 1);
+    const m = w.mobs[0];
+    m.x = w.body.x + 90;
+    m.y = w.body.y + 100;
+    updateWorld(w, DT, { held: new Set(['ArrowDown', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
+    assert.equal(w.pose.kind, 'downshot', `${job}: leans out and aims down`);
+    let hit = false;
+    for (let i = 0; i < 60; i++) {
+      updateWorld(w, DT, idle);
+      hit ||= w.pending.some((h) => h.mob === m) || m.hp < 1e9;
+    }
+    assert.ok(hit, `${job}: the shot finds the monster below`);
+  }
 });
 
 test('the Archer has command shots too: up at fliers, from the air, and on the run', () => {
@@ -1887,7 +1973,7 @@ test('attacking out of a run is still a dash attack', () => {
 // The same for a held attack skill, every kind of job: you stay planted and keep casting it (the
 // key repeats once held), turning with the direction, never walking off between casts.
 test('holding an attack skill and a direction keeps casting it, planted, for every job', () => {
-  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'twinshot'], ['thief', 'gauntlet_20', 'luckyseven'], ['mage', 'wand_20', 'petalbolt']]) {
+  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['mage', 'wand_20', 'petalbolt']]) {
     const casts = (dir) => {
       const w = arena(weapon);
       w.char.job = job;

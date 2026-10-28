@@ -32,6 +32,12 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 - **Presses are buffered.** A tap or skill pressed mid-motion goes off the moment it's allowed.
 - **Weight matches the blow.** Light hits barely push; finishers knock back or launch; heavy blows
   get hit-stop, screen shake, and bigger effects.
+- **Basic attacks never feel stale (the player's standing rule, for every job and path).** Holding
+  attack must never play the same string over and over: every job's basic combo has a pool of
+  different swings or shots at each step (`PATH_VARIANTS` in `world/melee.js`, drawn by
+  `planCombo`): the first combo is the job's own, then a fresh string each time, never the same
+  twice in a row. Mix the kinds (quick, heavy, stabs, overheads, spins, kicks, leaps, bursts) and
+  make them exaggerated and fun. A new job or a reworked one isn't done without its pool.
 - `tests/melee.test.js` checks these rules (including the no-spam rule for several jobs); extend it
   when adding skills.
 

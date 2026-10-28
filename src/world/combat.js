@@ -163,16 +163,19 @@ export function rallyOnHit(world) {
 // Sacred Bulwark (Paladin): before a hit lands, a shield of light may flash up and block it
 // outright, then a holy shockwave answers it. True if it blocked. `rng` for tests.
 export function blockOnHit(world, rng = Math.random) {
-  const p = procOf(world.char, 'sacredbulwark');
-  if (!p || world.dead || rng() >= p.chance) return false;
   const { body } = world;
-  world.invuln = Math.max(world.invuln, 0.5);
-  world.fx.push({ kind: 'aegis', school: 'holy', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.6 });
-  world.fx.push({ kind: 'powerup', school: 'holy', x: body.x, y: body.y, t: 0, dur: 0.5 });
-  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
-  world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
-  bulwarkWave(world, p);
-  return true;
+  if (world.dead) return false;
+  const p = procOf(world.char, 'sacredbulwark');
+  if (p && rng() < p.chance) {
+    world.invuln = Math.max(world.invuln, 0.5);
+    world.fx.push({ kind: 'aegis', school: 'holy', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.6 });
+    world.fx.push({ kind: 'powerup', school: 'holy', x: body.x, y: body.y, t: 0, dur: 0.5 });
+    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
+    world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
+    bulwarkWave(world, p);
+    return true;
+  }
+  return false;
 }
 
 // A warrior path's form: his Rage (Demon Form) or her Faith (Judgment) just filled, so the form

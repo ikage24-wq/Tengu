@@ -870,6 +870,98 @@ export const MOVES = {
     };
   },
 
+  // A hop-back shot: spring up and back off both feet, draw at the top of the hop, loose down at
+  // them, and drop into a crouch. Shot at 0.5.
+  hopshot(p) {
+    const crouch = bump(p, 0, 0.18);
+    const hop = Math.sin(seg(p, 0.12, 0.82) * Math.PI);
+    const pull = ease(seg(p, 0.18, 0.46));
+    const snap = seg(p, 0.5, 0.6);
+    const land = bump(p, 0.8, 1);
+    return {
+      weapon: 18 * hop - 10 * snap * (1 - seg(p, 0.65, 1)), arm: 88 - 10 * hop, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.5), lift: 22 * hop, tilt: 0.1 * hop - 0.1 * snap * (1 - seg(p, 0.65, 1)), lunge: -2 * snap,
+      rig: (r) => { if (hop > 0.25) tuck(r); else if (crouch > 0.3 || land > 0.3) r.squat = 2; r.backArm = snap > 0 ? [-7, -2] : [q(2 - 6 * pull), -2]; r.hairLift = hop > 0.3 ? -1 : 0; if (snap > 0 && snap < 1) strikeFace(r); },
+    };
+  },
+
+  // Point blank: a stomping front kick into them, then the bow brought up close and a shot loosed
+  // right into them that rocks her back. Kick at 0.3, shot at 0.62.
+  pointblank(p) {
+    const kick = bump(p, 0.12, 0.42);
+    const raise = ease(seg(p, 0.38, 0.5));
+    const pull = ease(seg(p, 0.42, 0.6));
+    const snap = seg(p, 0.62, 0.7);
+    const back = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-50, 0, raise) - 14 * snap * (1 - back), arm: lerp(60, 95, raise) + 8 * snap * (1 - back), pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.62),
+      lunge: 6 * kick - 6 * snap * (1 - back * 0.6), tilt: -0.12 * kick - 0.14 * snap * (1 - back),
+      rig: (r) => { r.frontLeg = kick > 0.2 ? [q(3 + 4 * kick), q(-3 * kick), 70 * kick] : [2.6, 0, 0]; r.backLeg = [-2.8, 0, -4]; r.backArm = snap > 0 ? [q(-8 + 5 * back), -3] : [q(2 - 6 * pull), -3]; if ((kick > 0.6) || (snap > 0 && back < 0.5)) strikeFace(r); },
+    };
+  },
+
+  // Hip fire: no kneel, no aim; the crossbow snapped up at the hip and fired fast, a jolt of recoil.
+  // Shot at 0.4.
+  hipfire(p) {
+    const up = ease(seg(p, 0, 0.25));
+    const kick = seg(p, 0.4, 0.48);
+    const back = ease(seg(p, 0.5, 1));
+    return {
+      weapon: lerp(-30, -8, up) - 16 * kick * (1 - back), arm: lerp(70, 84, up) + 10 * kick * (1 - back), lunge: -4 * kick * (1 - back), tilt: -0.1 * kick * (1 - back),
+      rig: (r) => { r.frontLeg = [2.8, 0, 2]; r.backLeg = [-3, 0, -4]; r.backArm = [-1, -2]; if (kick > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+
+  // Down shot: lean out over the edge, the bow tipped down at whatever is below, a full pull, and a
+  // loose that rocks her back up. Shot at 0.5.
+  downshot(p) {
+    const lean = ease(seg(p, 0, 0.25));
+    const pull = ease(seg(p, 0.12, 0.46));
+    const snap = seg(p, 0.5, 0.6);
+    const back = ease(seg(p, 0.65, 1));
+    return {
+      weapon: lerp(0, 38, lean) * (1 - back) - 6 * snap * (1 - back), arm: lerp(95, 55, lean * (1 - back)), pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.5),
+      tilt: 0.3 * lean * (1 - back) - 0.08 * snap * (1 - back), lunge: 2 * lean * (1 - back),
+      rig: (r) => { r.squat = lean > 0.4 && back < 0.6 ? 1 : 0; r.frontLeg = [3, 0, 4]; r.backLeg = [-3, 0, -6]; r.backArm = snap > 0 ? [q(-5 + 3 * back), 0] : [q(2 - 6 * pull), -1]; if (snap > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
+  // Comet Arrow (the Archer's finisher): a deep crouch, a leap high into the air, a hang at the top
+  // with the bow aimed straight down and a long pull (the arrow catching fire), the loose at 0.5
+  // that kicks her a little higher, then the drop back down into a crouch as the comet lands.
+  comet(p) {
+    const crouch = bump(p, 0, 0.14);
+    const up = ease(seg(p, 0.1, 0.3));
+    const down = ease(seg(p, 0.56, 0.74));
+    const pull = ease(seg(p, 0.24, 0.48));
+    const snap = seg(p, 0.5, 0.58);
+    const kick = bump(p, 0.5, 0.62);
+    const land = bump(p, 0.72, 0.9);
+    const high = up * (1 - down);
+    return {
+      weapon: lerp(0, 50, high) - 8 * snap * (1 - down), arm: lerp(95, 45, high), pull: snap > 0 ? 0 : pull, nock: snap === 0 && pull > 0.05, twang: twang(p, 0.5),
+      lift: 72 * high + 8 * kick, tilt: 0.5 * high - 0.12 * snap * (1 - down),
+      rig: (r) => { if (high > 0.3) tuck(r); else if (crouch > 0.3 || land > 0.3) r.squat = 2; r.backArm = snap > 0 ? [-4, 0] : [q(2 - 6 * pull), -1]; r.hairLift = high > 0.3 ? -1 : 0; r.cape -= high > 0.3 ? 3 : 0; r.eyes = pull > 0.5 && snap === 0 ? 'half' : undefined; if (snap > 0 && down < 0.5) strikeFace(r); },
+    };
+  },
+
+  // Vault: a quick crouch, a spring up and over them in a front flip (the whole body turning, never
+  // stretched), a light landing behind them, then the bow up and a shot back the way she came (the
+  // strike turns her round). Shot at 0.8.
+  vault(p) {
+    const crouch = bump(p, 0, 0.16);
+    const hop = Math.sin(seg(p, 0.12, 0.66) * Math.PI);
+    const flip = ease(seg(p, 0.16, 0.6));
+    const land = bump(p, 0.62, 0.78);
+    const raise = ease(seg(p, 0.66, 0.78));
+    const snap = seg(p, 0.8, 0.88);
+    const back = ease(seg(p, 0.9, 1));
+    return {
+      weapon: lerp(30, 0, raise) - 10 * snap * (1 - back), arm: lerp(60, 95, raise), pull: snap > 0 ? 0 : raise, nock: snap === 0 && raise > 0.2, twang: twang(p, 0.8),
+      lift: 40 * hop, tilt: flip * Math.PI * 2 + 0.1 * crouch, lunge: -3 * snap * (1 - back),
+      rig: (r) => { if (hop > 0.2) tuck(r); else if (crouch > 0.3 || land > 0.3) r.squat = 2; r.backArm = snap > 0 ? [q(-7 + 4 * back), -3] : [q(2 - 6 * raise), -3]; r.hairLift = hop > 0.3 ? -1 : 0; r.cape -= hop > 0.3 ? 3 : 0; if (snap > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
   // A slide shot: drop into a low skid along the ground, loosing an arrow, then another as she
   // comes up out of it. Shots at 0.35 and 0.62.
   slideshot(p) {
@@ -987,15 +1079,6 @@ export const MOVES = {
     };
   },
 
-  // Falcon Dive (the Archer's finisher): raise the bow to the sky and call the falcon down, then
-  // bring it level, draw full and loose it (at about 0.63), and a big kick of recoil.
-  falcondive(p) {
-    if (p < 0.34) {
-      const call = MOVES.skyshot(seg(p, 0, 0.34) * 0.48);
-      return { ...call, lift: 2 * bump(p, 0.05, 0.34), rig: (r) => { call.rig(r); r.hairLift = -1; r.eyes = 'half'; } };
-    }
-    return MOVES.draw(0.2 + seg(p, 0.34, 1) * 0.8);
-  },
 
   // Backstab: crouch and dart forward low through the monster (squashed thin as if into smoke),
   // then turn and stab. The game turns the hero round as the stab lands (about 0.62).
@@ -1088,7 +1171,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6,
-  spinshot: 0.4, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, falcondive: 1.5, backstab: 0.5, assassinate: 1.5, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
+  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
 };
 
 // Basic attacks chain into a combo per weapon type.

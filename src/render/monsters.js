@@ -10,6 +10,7 @@
 import { drawDiscoBoss } from './discoboss.js';
 import { sprite, spriteLater, blit, snap, footShadow } from './pixel.js';
 import { springStep } from './animator.js';
+import { fxSprite } from './fx-sprites.js';
 import { ARTS, mobBuild } from './mobs/index.js';
 
 export { ARTS };
@@ -411,6 +412,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);
   if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
+  // A Snare Arrow's net over it (Tengu's own art), slipping off as the hold runs out.
+  else if (frozen && m.hold === 'snare') fxSprite(ctx, 'celnet', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.7, s.w / 30), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   else if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
   if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - s.h * sy, t, now);
 }

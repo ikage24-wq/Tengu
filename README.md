@@ -117,20 +117,30 @@ to clear it.
   Breaker**, needs full Valor and spends it: he leaps high as a giant sword of steel forms over
   him, then crashes down and drives it into the ground, splitting it open with blades of steel
   light and throwing everything around into the air.
-- **Archer** (warm gold and sky blue: a hawk, its feathers, gold arrows) — her own basic combo
-  with a bow or crossbow (a snap shot, two gold arrows a beat apart, a full draw that tears through
-  the line) and her own command shots (up + attack shoots fliers higher, two shots from a hang in
-  the air, a sliding shot out of a run). **Momentum** is her gauge (a feather): every shot that
-  lands builds it, more for each one landed in a row, and taking a hit knocks half of it away.
-  Full, she has **Hawkeye**: her arrows fly faster and reach further, and curve to find monsters
-  above and below. Skills: **Double Shot**, a two-press combo (two gold arrows, then a hop back and
-  a heavy pair that tears through the line); **Arrow Fan** looses five gold arrows at once, one per
-  monster, in a gust of feathers; **Arrow Rain** pours gold arrows down on everything ahead;
-  **Backflip Shot** flips you back out of danger (untouchable mid-flip) while firing a spread of
-  arrows; **Hunter's Focus** sharpens your aim and critical hits; **Archery Mastery** and **Eagle
-  Eye** are passives. Her finisher, **Falcon Dive**, needs full Momentum and spends it: she raises
-  her bow to the sky, a great golden falcon of light wheels down, and she looses it through the
-  whole line with a storm of feathers in its wake.
+- **Archer** (warm gold and sky blue: gold arrows, a huntress with tricks) — like the Warrior, she
+  fights with her basic shots and her skills go off on their own. Her basic combo with a bow or
+  crossbow mixes its shots so it never repeats (the first combo is her own: a snap shot, two gold
+  arrows a beat apart, a full draw that tears through the line; after that each shot is drawn from
+  a pool: a stomping kick then a shot point-blank, a twirl that looses two, three arrows in a
+  burst, a hop back loosing two down at them, an overdraw through the line, a backflip fan of
+  three), and she has her own command shots (up + attack shoots fliers higher, down + attack leans
+  out and looses two arrows down at whatever is below, two shots from a hang in the air, a sliding
+  shot out of a run). **Momentum** is her gauge (a feather): every shot
+  that lands builds it, more for each one landed in a row, and taking a hit knocks half of it
+  away. Full, she has **Hawkeye**: her arrows fly faster and reach further, and curve to find
+  monsters above and below. A simple first job (the paths add the flair): three tricks go off on
+  their own, hit or miss: **Blast Arrow** (a shot sometimes bursts on impact, hitting everything
+  close round its target), **Snare Arrow** (a shot sometimes tangles its target in a rope net that
+  holds it in place for a moment), **Spring Trap** (her combo's last shot sometimes drops a steel
+  trap on the ground ahead; the first monster to step on it is snapped and flung into the air; up
+  to two at once). **Steady Hands** (faster, truer shots) and **Light Feet** (faster running, more
+  dodging) are passives. Her buttons are **Vault** (she springs up and over the monster in front
+  in a front flip, untouchable, lands behind it and turns to shoot it) and her finisher,
+  **Comet Arrow**, which needs full Momentum and spends it: she leaps high into the air, hangs
+  there aiming straight down while the arrow catches fire, and fires a giant flaming arrow that
+  crashes into the ground ahead like a meteor: the ground cracks open in gold, a shockwave races
+  out both ways, and everything nearby is thrown into the air. A Ranger or Sniper who learned Vault
+  looses its shot as her own wind arrow or bolt.
 - **Mage** (rose pink and mint: flowers, petals and light) — damage and support at once, and the
   healer of any dungeon group. With a wand or staff she has her own spell combo (a petal bolt, a
   second, then a blossom bolt that bursts through the line) and her own command spells (a bolt up
@@ -451,6 +461,7 @@ to clear it.
   - Each has its own basic combo (the Ranger: a snap shot, a twirl and two arrows, a leaping fan of
     gale arrows; the Sniper: a kneeling heavy bolt, a crank-and-fire, a blast bolt that bursts on
     its mark) and command shots: **Up + attack** shoots up at whatever flies and knocks it higher,
+    **Down + attack** leans out and shoots down at whatever is below,
     **attacking in the air** shoots down at them and holds you up (a Sniper's bolt kicks her back
     up), and **attacking out of a run** is a Ranger's slide shot or a Sniper's roll into a kneeling
     bolt. Her leaping shot is a backflip. Their finishers (at a full gauge, spending it): the Ranger's **Storm Volley**

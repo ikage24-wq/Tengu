@@ -68,6 +68,7 @@ export function dust(fx, x, y, count, dir = 0, color = '#f6ece2', shade = '#e2d2
 const SLAM_TINTS = {
   steel: ['#c9b6ff', '#efe8fb', '#cdbfe6', '#ffffff'],
   holy: ['#ffdc78', '#fff6d0', '#ffd9a0', '#fff6d0'],
+  hawk: ['#ffc94a', '#fff6d0', '#ffd9a0', '#fff1bc'],
   rage: ['#e01c3c', '#ffd0c8', '#c0102e', '#ff7a4e'],
 };
 

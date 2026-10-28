@@ -16,7 +16,7 @@ export const ringOf = (school) => `celring${tint(school)}`;
 export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // A Warrior effect in a path's own colour: steel for the Warrior, gold for the Paladin, blood red
 // for the Berserker (they share the Warrior's skills).
-export const pathTint = (school, steel, gold, red) => (school === 'holy' ? gold : school === 'rage' ? red : steel);
+export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
 const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar', bloom: 'celembbloom' };
 

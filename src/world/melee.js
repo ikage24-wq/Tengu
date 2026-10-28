@@ -61,8 +61,9 @@ const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
 // the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
 // War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
 export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : 'steel');
-export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school);
-// The colour a proc's name pops up in, by its school.
+// The Archer's gold hawk skills the same way: the Ranger's wind, the Sniper's focus.
+export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school);
+// The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
 
 export const COMBOS = {
@@ -194,6 +195,33 @@ export const PATH_COMBOS = {
   ],
 };
 
+// The arrows each archer path looses when it uses the Archer's skills (Vault): the
+// Archer's gold hawk arrows, the Ranger's wind arrows, the Sniper's heavy bolts.
+const ARCHER_LOOK = {
+  archer: { arrow: 'hawkarrow', big: 'hawkbig', rain: 'hawkarrow', muzzle: 'feathers', school: 'hawk' },
+  ranger: { arrow: 'windarrow', big: 'galearrow', rain: 'windarrow', muzzle: 'gust', school: 'wind' },
+  sniper: { arrow: 'heavybolt', big: 'heavybolt', rain: 'arrow', muzzle: 'boltshock', school: 'focus' },
+};
+export const archerLook = (char) => ARCHER_LOOK[hasGale(char) ? 'ranger' : hasFocus(char) ? 'sniper' : 'archer'];
+// One of the Archer's gold shots as the path's own.
+const pathShot = (char, shot) => {
+  const L = archerLook(char);
+  return shot === 'hawkarrow' ? L.arrow : shot === 'hawkbig' ? L.big : shot === 'feathers' ? L.muzzle : shot;
+};
+// The Archer's shots besides her own combo's (her pool, PATH_VARIANTS).
+const arrowAt = (at, pct, f = {}) => ({ at, shot: 'hawkarrow', pct, range: 300, h: 60, knock: 25, speed: 840, ...f });
+const ARCHER_SHOTS = {
+  kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
+    { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
+    arrowAt(0.62, 110, { knock: 180, speed: 900, big: true, stop: 0.05 }),
+  ] },
+  twirl: { move: 'spinshot', dur: 0.48, step: 6, strikes: [arrowAt(0.32, 55, { knock: 20 }), arrowAt(0.72, 60, { knock: 30 })] },
+  burst: { move: 'rapid', dur: 0.5, step: -4, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
+  hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [arrowAt(0.5, 70, { fan: 2, range: 290, h: 150, drop: 30, knock: 60 })] },
+  overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: 'feathers' }] },
+  flipfan: { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'hawkbig', fan: 3, pct: 100, range: 310, h: 120, knock: 140, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+};
+
 // A path's combo with a choice of swings at each step, so holding attack doesn't play the same
 // string over and over: each time the combo starts, one swing is drawn for every step, and never
 // the same whole string twice in a row (see planCombo). The first choice at each step is the
@@ -258,6 +286,15 @@ export const PATH_VARIANTS = {
       { move: 'gyre', dur: 0.55, step: 16, strikes: [{ at: 0.5, pct: 120, reach: 80, h: 56, around: true, targets: 4, knock: 90, bleed: WOUND, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] }],
     [PATH_COMBOS.berserker[2], dressed(SWINGS.skysplit, { burst: 'rageburst' }), dressed(SWINGS.leapchop, { burst: 'rageburst' })],
   ],
+  // The Archer, nimble and showy, her gold hawk arrows in every shot. Openers: her snap shot, a
+  // stomping kick then a shot point-blank, or a twirl that looses two. Second: her double shot,
+  // three arrows in a burst, or a hop back loosing two down at them. Finisher: her full draw, an
+  // overdraw that tears through the line, or a backflip fan of three.
+  archer: [
+    [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl],
+    [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop],
+    [PATH_COMBOS.archer[2], ARCHER_SHOTS.overdraw, ARCHER_SHOTS.flipfan],
+  ],
 };
 
 // Picks one swing for each step of a combo with choices, never the same string as `last`. The
@@ -310,9 +347,11 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'dashstab', dur: 0.44, step: 40, carry: 0.5, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 800 }] },
   },
-  // The Archer: a shot up that pops fliers higher, two shots loosed down from a hang in the air, and
-  // a sliding shot out of a run.
+  // The Archer: a shot up that pops fliers higher, two shots loosed down from a hang in the air, a
+  // sliding shot out of a run, and Down + attack: leaning out to loose two arrows down at whatever
+  // is below.
   archer: {
+    down: { move: 'downshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'hawkarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 880 }] },
     up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 880, big: true, stop: 0.05 }] },
     air: [
       { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'hawkarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 880 }] },
@@ -321,6 +360,7 @@ const ARCHER_COMMANDS = {
     dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'hawkarrow', pct: 95, range: 300, h: 60, knock: 80, speed: 880 }] },
   },
   ranger: {
+    down: { move: 'downshot', dur: 0.48, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 900 }] },
     up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'galearrow', fan: 2, pct: 110, range: 280, h: 190, lift: 50, knock: 20, launch: 380, speed: 900, big: true, stop: 0.05 }] },
     air: [
       { move: 'airshot', dur: 0.36, hang: true, strikes: [{ at: 0.45, shot: 'windarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 900 }] },
@@ -329,6 +369,7 @@ const ARCHER_COMMANDS = {
     dash: { move: 'slideshot', dur: 0.5, step: 46, carry: 0.6, strikes: [{ at: 0.35, shot: 'windarrow', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }, { at: 0.62, shot: 'windarrow', pct: 90, range: 300, h: 60, knock: 90, speed: 900 }] },
   },
   sniper: {
+    down: { move: 'downshot', dur: 0.56, step: -2, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 130, range: 280, h: 220, drop: 120, targets: 2, pierce: true, knock: 90, speed: 780 }] },
     up: { move: 'skyshot', dur: 0.56, step: -4, strikes: [{ at: 0.52, shot: 'heavybolt', pct: 140, range: 300, h: 190, lift: 50, knock: 30, launch: 420, speed: 760, big: true, stop: 0.06, shake: 1 }] },
     air: [
       { move: 'airshot', dur: 0.5, hang: true, strikes: [{ at: 0.5, shot: 'heavybolt', pct: 120, range: 300, h: 170, drop: 50, knock: 80, recoil: 260, speed: 760, pierce: true, targets: 2 }] },
@@ -671,6 +712,11 @@ export function basicCombo(world) {
       world.combo = -1;
       return;
     }
+    if (world.intent?.down && cmd.down) {
+      playStep(world, cmd.down, 100, 'basicdown');
+      world.combo = -1;
+      return;
+    }
     if ((world.runFor ?? 0) >= DASH_AFTER) {
       playStep(world, cmd.dash, 100, 'basicdash');
       world.combo = -1;
@@ -804,6 +850,7 @@ export function tickMelee(world, dt) {
     else if ((world.runFor ?? 0) > 0.1 && world.focus > 0) world.focus = Math.max(0, world.focus - FOCUS_RUN * dt);
     else if (!fighting && world.focus > 0) world.focus = Math.max(0, world.focus - FOCUS_DRAIN * dt);
   }
+  tickTraps(world);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -845,6 +892,10 @@ function land(world, s) {
   // A proc's extra cuts land where they were aimed, but never turn you round: you may already be
   // swinging the other way.
   if (!s.keepFacing) body.facing = s.dir;
+  // The Archer's gold shots go as the path's own arrows, and her basic shots set off her procs as
+  // they leave the bow, hit or miss (Blast and Snare Arrow change the shot itself).
+  if (s.shot && !s.key.startsWith('basic')) s = { ...s, shot: pathShot(char, s.shot), muzzle: s.muzzle && pathShot(char, s.muzzle) };
+  if ((s.rain || s.shot) && s.key.startsWith('basic') && !s.phantom) s = shotProcs(world, s);
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
   // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
@@ -1081,6 +1132,46 @@ function bladeProcs(world, s, count, rng = Math.random) {
   if (whirl && (count >= whirl.crowd || rng() < whirl.chance)) queue(whirlStep(whirl), 'procwhirlwind', pathSchool(char));
 }
 
+// ---------- Archer procs ----------
+// The Archer's tricks set themselves off from her basic shots, hit or miss (see data/skills.js):
+// any shot may become a Blast Arrow (it bursts on impact) or a Snare Arrow (a net holds its target);
+// the combo's last shot may drop a Spring Trap ahead. Returns the shot to loose. `rng` for tests.
+function shotProcs(world, s, rng = Math.random) {
+  const { char, body } = world;
+  const blast = procOf(char, 'blastarrow');
+  if (blast && s.shot && rng() < blast.chance) s = { ...s, blast: blast.r, blastFx: 'blast', burst: 'blast', pct: (s.pct * blast.pct) / 100, big: true, stop: Math.max(s.stop ?? 0, 0.05), shake: Math.max(s.shake ?? 0, 1) };
+  const snare = procOf(char, 'snarearrow');
+  if (snare && s.shot && rng() < snare.chance) s = { ...s, snare: snare.secs };
+  const trap = procOf(char, 'springtrap');
+  if (trap && s.finisher && /^basic\d$/.test(s.key) && rng() < trap.chance) setTrap(world, body.x + s.dir * 90, trap);
+  return s;
+}
+
+// Spring Trap: a trap set on the ground ahead, armed until a monster steps on it or it rusts away
+// (`life`), at most TRAPS at once (the oldest goes).
+const TRAPS = 2;
+function setTrap(world, x, p) {
+  const traps = (world.traps ??= []);
+  const y = world.body.y;
+  if (traps.length >= TRAPS) traps.shift().fx.dur = 0;
+  const fx = { kind: 'trap', x, y, t: 0, dur: p.life };
+  world.fx.push(fx);
+  traps.push({ x, y, until: world.now + p.life, pct: p.pct, fx });
+}
+// Every tick: a monster that steps on an armed trap is snapped and flung up.
+function tickTraps(world) {
+  if (!world.traps?.length) return;
+  world.traps = world.traps.filter((t) => {
+    if (world.now >= t.until) return false;
+    const m = world.mobs.find((o) => o.hp > 0 && !(o.air > 4) && Math.abs(o.x - t.x) < 18 + o.def.w / 3 && Math.abs(o.y - t.y) < 30);
+    if (!m) return true;
+    t.fx.dur = t.fx.t;
+    world.fx.push({ kind: 'trapsnap', x: t.x, y: t.y, t: 0, dur: 0.5 });
+    shotHit(world, { pct: t.pct, scale: 100, key: 'proctrap', dir: Math.sign(m.x - world.body.x) || 1, knock: 30, launch: 460, big: true, stop: 0.07, shake: 2, burst: 'blast', gauge: 3 }, m, 0);
+    return false;
+  });
+}
+
 // A proc's own move, a beat after the blow that set it off (on the ground, and still standing).
 // Rampage feeds on your Rage without spending it: the more you have, the harder it hits (double
 // at full Rage).
@@ -1113,7 +1204,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const spark = hasBloom(char) ? 'bloomhit' : hasStarlight(char) ? 'starhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasGale(char) ? 'galehit' : hasFocus(char) ? 'focushit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
-    via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, burst: s.burst ?? spark, dir: s.dir,
+    via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank,
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),

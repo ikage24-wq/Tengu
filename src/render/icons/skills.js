@@ -735,131 +735,85 @@ function gardenoflight() {
 
 // ---------- Archer ----------
 
-function twinshot() {
-  const out = [...tile('hawk', 'active'), ...aura(9, 7, 6.4, '#fff8e0')];
-  for (const k of [0.75, -0.75]) {
-    const c = [8 + k * 2.6 + (k ? 0 : 0.6), 8 + k * 2.6 - (k ? 0 : 0.6)];
-    out.push(streak(add(c, [-1, 1], 6.4), add(c, [-1, 1], 3.6), 0.9, '#fff8e0'));
-    out.push(...arrow(add(c, [-1, 1], 3.2), add(c, [1, -1], 3.6), { hw: 1.25, hl: 1.9, fl: k > 0 ? '#6fc8ff' : '#ffffff' }));
+function blastarrow() {
+  const out = [...tile('fire', 'passive'), ...aura(10, 6, 6.4, '#fff3c0', 1.2)];
+  // An arrow striking home in a burst of fire and cloud.
+  out.push(...solid(starPts(10.4, 5.8, 5.6, 2.4, 8, -90), '#ffb347', { shadow: false, d: 0.45, ink: '#8a3a10' }));
+  out.push(S(starPts(10.4, 5.8, 3.2, 1.4, 8, -70), '#fff3c0'));
+  out.push(...puffs([[13.6, 9.4, 1.6], [6.6, 2.6, 1.4], [14, 2.6, 1.2]], '#fff6ee', { shadow: false, dark: '#e8c8b8', ink: '#8a4a3a' }));
+  out.push(...arrow([1.4, 14.6], [9, 7.2], { hw: 1.3, hl: 2, fl: '#6fc8ff' }));
+  out.push(...spark(2.6, 3, 1.1, '#fff3a6'));
+  return out;
+}
+
+function snarearrow() {
+  const out = [...tile('hawk', 'passive'), ...aura(9, 8, 6.6, '#fff8e0')];
+  // A rope net spread over the tile, knotted, an arrow pinning it.
+  const rope = '#a8743e';
+  for (let k = -3; k <= 3; k++) {
+    out.push(S(tube([[3 + k * 2.6, 2.4], [9 + k * 2.6, 14.4]], 0.32), rope), S(tube([[9 + k * 2.6, 2.4], [3 + k * 2.6, 14.4]], 0.32), rope));
   }
-  out.push(...spark(13.6, 13.4, 1.2), ...spark(2.6, 2.6, 1));
+  for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) out.push(S(oval(8 + (a + b) * 1.3, 8.4 + (b - a) * 2.6, 0.5, 0.5, 0, 8), '#f0d6a0'));
+  out.push(...arrow([1.2, 3], [12.6, 12.4], { hw: 1.2, hl: 1.9, fl: '#6fc8ff' }));
+  out.push(...spark(13.6, 2.6, 1.1));
   return out;
 }
 
-function arrowfan() {
-  const out = [...tile('hawk', 'active'), ...aura(3, 13, 5, '#ffffff', 1.1)];
-  const o = [2.2, 13.8];
-  for (const a of [-84, -64, -45, -26, -6]) {
-    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
-    out.push(...arrow(add(o, u, 4), add(o, u, 12), { hw: 1.2, hl: 1.9, sw: 0.5, fl: a === -45 ? '#ffffff' : '#6fc8ff' }));
+function springtrap() {
+  const out = [...tile('steel', 'passive'), ...aura(8, 10, 6.4, '#e4f2ff')];
+  // A steel trap snapping shut, its teeth meeting, sparks flying off it.
+  for (const sd of [-1, 1]) {
+    const jaw = arcPts(8, 11.4, 5.6, 5.6 * 0.9, sd > 0 ? -90 : 90, sd > 0 ? 0 : 180, 10);
+    out.push(...solid(tube(jaw, 0.9), '#c8d8f4', { shadow: false, d: 0.35, ink: '#2a3a6a' }));
   }
-  out.push(...solid(starPts(2.6, 13.4, 2.4, 0.8, 4, -45), '#fffbe0', { d: 0.35, ink: '#7a4a10' }));
-  out.push(...spark(13.6, 2.6, 1.2));
+  for (let k = 0; k < 5; k++) out.push(...solid([[4 + k * 2, 7.8], [5 + k * 2, 10.2], [3 + k * 2 + 0.6, 10]], '#ffffff', { shadow: false, d: 0.25, ink: '#2a3a6a' }));
+  out.push(...solid(oval(8, 13.4, 5.2, 1.4, 0, 20), '#ffc94a', { shadow: false, d: 0.35, ink: '#7a4a10' }));
+  out.push(...spark(2.6, 3, 1.1, '#ffffff'), ...spark(13.4, 2.4, 1.2, '#fff3a6'));
   return out;
 }
 
-function arrowshower() {
-  const out = [...tile('skyblue', 'active')];
-  for (const [x, y] of [[4.2, 10.6], [8.4, 13], [12.4, 10], [6.4, 15.6]]) {
-    out.push(streak([x + 2.2, y - 9], [x + 1.4, y - 6], 1, '#eef8ff'));
-    out.push(...arrow([x + 1.6, y - 7], [x, y], { hw: 1.4, hl: 2.1, sw: 0.6, fl: '#ffd25a', head: '#ffffff' }));
-  }
-  out.push(...puffs([[3.4, 2.6, 2.2], [7, 2, 2.8], [10.8, 2.4, 2.4], [13.6, 3.2, 1.7]], '#f4fbff', { shadow: false, dark: '#c4dcec', ink: '#2a3a8a' }));
-  out.push(...spark(14, 13.8, 1));
+function vault() {
+  const out = [...tile('skyblue', 'active'), ...aura(8, 6, 6.6, '#eef8ff')];
+  // A leap arcing up and over, an arrow loosed back down from the far side.
+  const arc = arcPts(8, 11, 6, 7.4, 180, 360, 20);
+  out.push(...solid(tube(arc, 0.7), '#fff6dc', { shadow: false, d: 0.3, ink: '#2a3a8a' }));
+  out.push(...solid(polyPts(14, 11, 1.6, 3, 90, 1), '#fff6dc', { shadow: false, d: 0.3, ink: '#2a3a8a' }));
+  out.push(...solid(oval(8, 14.4, 2.4, 1.1, 0, 14), '#8a6a9a', { shadow: false, d: 0.3, ink: '#3a2a4a' }));
+  out.push(...arrow([14.6, 3.2], [3.4, 9.4], { hw: 1.2, hl: 1.9, fl: '#ffd25a' }));
+  out.push(...spark(2.4, 2.6, 1.1));
   return out;
 }
 
-function huntersfocus() {
-  const white = '#fffaf2';
-  const brown = '#9a6a48';
-  const out = [...tile('skyblue', 'buff'), ...aura(7, 8, 6.6, '#eef8ff')];
-  // A crosshair behind.
-  const ring = tube([...oval(8.4, 8, 6, 6, 0, 36), oval(8.4, 8, 6, 6, 0, 36)[0]], 0.5);
-  out.push(S(ring, '#eef8ff'));
-  out.push(S(tube([[8.4, 1.2], [8.4, 3.6]], 0.5), '#eef8ff'), S(tube([[8.4, 12.4], [8.4, 14.8]], 0.5), '#eef8ff'), S(tube([[1.6, 8], [3.8, 8]], 0.5), '#eef8ff'), S(tube([[13, 8], [15, 8]], 0.5), '#eef8ff'));
-  // The eagle's head in profile, facing right.
-  const neck = [[2.4, 15], [3, 10.4], [4.6, 7.2], [7.4, 5.4], [10.4, 5.2], [12.2, 6.4], [11.4, 9.2], [9, 10.4], [8, 15]];
-  out.push(...solid(neck, white, { k: 0.85 }));
-  out.push(S(clip(neck, rect(0, 12.6, 16, 4)), brown), S(clip(neck, rect(0, 12.6, 16, 0.8)), lt(brown)));
-  for (const x of [3.4, 5.4, 7.2]) out.push(S([[x, 12.6], [x + 1, 12.6], [x + 0.5, 13.8]], lt(brown)));
-  const beak = [[10.6, 5.4], [13.4, 5.6], [14.8, 7.4], [14.4, 9.6], [13.2, 8.2], [11.4, 8.8]];
-  out.push(...solid(beak, '#ffc23a', { shadow: false, d: 0.4 }));
-  out.push(S([[13.2, 8.2], [14.4, 9.6], [14.8, 7.4], [14, 7.8]], '#e0902a'));
-  // A fierce eye with a brow.
-  out.push(S(oval(9.2, 7, 1.15, 0.95, 0, 16), '#2a2035'), S(oval(9.35, 7, 0.75, 0.65, 0, 14), '#ffb02a'), S(oval(9.5, 7, 0.38, 0.45, 0, 10), '#2a2035'), S(oval(9.1, 6.7, 0.25, 0.25, 0, 8), W));
-  out.push(S([[7.2, 6.2], [10.6, 5.6], [10.4, 6.4]], '#c9b8a8'));
-  out.push(...spark(13.6, 13, 1.2), ...spark(2.4, 3, 1, '#fff3a6'));
-  return out;
-}
-
-function falcondive() {
-  // The finisher: a golden falcon of light diving with its wings raised in a V, the primaries
-  // along each wing's back edge tipped white, a white head and beak, and speed lines streaming
-  // off it. Gold on a sky tile, tipped into the dive.
-  const HW = { wing: '#ffc94a', wingDk: '#d8802a', ink: '#7a3a10', gold: '#fff6c0', head: '#fffaf2', beak: '#ffffff' };
-  const out = [...tile('skyblue', 'active'), ...aura(8, 7.4, 6.8, '#fffbe0', 1.1)];
-  const TILE_N = out.length;
-  // Each wing: a broad arm whose back edge breaks into three primaries, lit and shaded facets, a
-  // pale leading edge, and gold over the feather tips.
-  const wing = (root, tip, side) => {
-    const u = N(root, tip);
-    const nn = [-u[1] * side, u[0] * side];
-    const m = [(root[0] + tip[0]) / 2, (root[1] + tip[1]) / 2];
-    const back = [0, 1, 2].flatMap((i) => [add(add(tip, u, -1.5 * i - 0.2), nn, -1.2 - 0.9 * i), add(add(tip, u, -1.5 * i - 1.3), nn, -0.6 - 0.9 * i)]);
-    const arm = [root, add(m, nn, 1.9), add(tip, nn, 0.3), tip, ...back, add(root, nn, -1.9)];
-    return [...facet(arm, root, tip, HW.wing, { ink: HW.ink, d: 0.5, dark: HW.wingDk }),
-      S(clip(arm, oval(tip[0] - u[0] * 1.4, tip[1] - u[1] * 1.4, 2.4, 2.4, 0, 16)), HW.gold), S(tube([add(root, nn, 1.1), add(m, nn, 1.7), add(tip, u, -0.7)], 0.5), '#fff0b0')];
-  };
-  out.push(...wing([6.4, 8.6], [1.6, 1.6], -1), ...wing([9.8, 8.6], [14.4, 1.8], 1));
-  // The body tapering to a fanned tail, the white head on top, turned to the right.
-  const body = [[6, 8], [10.2, 8], [9.8, 11.2], [10.6, 14.4], [8.2, 13.4], [5.8, 14.4], [6.4, 11.2]];
-  out.push(...solid(body, HW.wing, { ink: HW.ink, d: 0.5, light: '#fff0b0' }));
-  // Lightning crackling down on either side of it.
-  out.push(streak([2.4, 10.4], [4.6, 13.4], 1, '#eef8ff'), streak([13.6, 10.4], [11.6, 13.6], 1, '#eef8ff'), streak([8.2, 15.4], [8.2, 14.4], 0.9, '#eef8ff'));
-  const head = oval(8.4, 6.4, 2.6, 2.3, 0, 22);
-  out.push(...solid(head, HW.head, { ink: '#7a3a10', d: 0.45, light: W }));
-  const beak = [[10.6, 5.6], [12.8, 6], [12.4, 7.8], [11, 7.4]];
-  out.push(...solid(beak, HW.beak, { shadow: false, ink: '#7a4a10', d: 0.4 }), S([[12.4, 7.8], [12.8, 6], [11.8, 6.8]], '#e0902a'));
-  out.push(S(oval(9.4, 6.1, 0.75, 0.75, 0, 12), '#2a2035'), S(oval(9.55, 6.15, 0.42, 0.42, 0, 10), '#ffc23a'), S(oval(9.15, 5.8, 0.24, 0.24, 0, 8), W));
-  out.push(S([[7.4, 5.1], [10.6, 4.7], [10.4, 5.4]], '#7a3a10'));
-  out.push(...spark(8, 1.6, 1.1, W));
-  return [...out.slice(0, TILE_N), ...spin(out.slice(TILE_N), 40)];
-}
-
-function flipshot() {
-  const out = [...tile('hawk', 'active'), ...aura(8, 7.6, 6.6, '#fff8e0')];
-  // A gust looping back over the top: a curled arrow.
-  const path = arcPts(8.4, 8, 5, 4.8, 25, -185, 26);
-  const body = tube(path, (t) => 0.5 + 1.7 * Math.sin(Math.PI * Math.min(0.92, t)));
-  out.push(drop(body), ...edge(body, '#7a4a10', 0.45), S(body, '#fff6dc'), S(tube(arcPts(8.4, 8, 5.5, 5.3, -20, -150, 16), (t) => 0.6 * Math.sin(Math.PI * t)), W));
-  const end = path[path.length - 1];
-  const u = N(path[path.length - 4], end);
-  const n = [-u[1], u[0]];
-  const p = along(end, u, n);
-  out.push(...solid([p(3.2, 0), p(-0.4, 2.6), p(0.4, 0), p(-0.4, -2.6)], '#ffe36b', { ink: '#6a4a10', d: 0.45 }));
-  out.push(S(tube(bez([12.6, 4.4], [15, 6.6], [13.6, 9.4], 8), (t) => 0.7 * Math.sin(Math.PI * t)), '#b4e0ff'));
-  out.push(...arrow([5.4, 10.4], [14.4, 10.6], { hw: 1.1, hl: 1.7, sw: 0.5 }));
-  out.push(...arrow([6.4, 13.4], [14.6, 13.8], { hw: 1.1, hl: 1.7, sw: 0.5, fl: '#6fc8ff' }));
-  out.push(...spark(2.4, 2.6, 1));
-  return out;
-}
-
-function eagleeye() {
-  const out = [...tile('hawk', 'passive')];
-  const rings = [[6.4, '#ff5a6e'], [5, '#fff6ee'], [3.6, '#ff5a6e'], [2.2, '#fff6ee'], [1, '#ffd25a']];
-  out.push(drop(oval(7.4, 8.6, 6.4, 6.4, 0, 36)), ...edge(oval(7.4, 8.6, 6.4, 6.4, 0, 36), '#7a2a3a', 0.5));
-  for (const [r, c] of rings) out.push(S(oval(7.4, 8.6, r, r, 0, 36), c), S(cut(oval(7.4, 8.6, r, r, 0, 36), [12, 2], [2, 15]), sh(c)));
-  out.push(...arrow([15.4, 1.4], [7.6, 8.4], { hw: 1.2, hl: 1.9, sw: 0.55, fl: '#6fc8ff' }));
-  out.push(...[-50, 0, 50, 140, 200].map((a) => streak(add([7.4, 8.6], [Math.cos(a * D2R), Math.sin(a * D2R)], 2.2), add([7.4, 8.6], [Math.cos(a * D2R), Math.sin(a * D2R)], 0.8), 0.4, W)));
-  out.push(...glint(4, 5.4, 0.6), ...spark(2.4, 2.6, 1.2, '#fff3a6'));
-  return out;
-}
-
-function bowmastery() {
+function steadyhands() {
   const out = [...tile('hawk', 'passive'), ...aura(8, 8, 6.6, '#fff8e0')];
+  // A drawn bow held dead still on a sight.
+  out.push(...sightArt(10, 8, 4.4, '#ff8aa8', 0.5));
   out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2, { grip: '#3a74d0' }));
-  out.push(...arrow([3.4, 8.2], [14.4, 7.8], { hw: 1.25, hl: 2, fl: '#6fc8ff' }));
-  out.push(...glint(6.2, 4.4, 0.5), ...spark(13.6, 2.8, 1.1), ...spark(12.4, 13, 1, '#eef8ff'));
+  out.push(...arrow([3.4, 8.2], [12.6, 8], { hw: 1.2, hl: 1.9, fl: '#6fc8ff' }));
+  out.push(...glint(6.2, 4.4, 0.5), ...spark(13.6, 13.4, 1.1));
+  return out;
+}
+
+function lightfeet() {
+  const out = [...tile('mint', 'passive'), ...aura(9, 8, 6.6, '#f4fff0')];
+  // A boot with a little feathered wing, speed lines trailing behind it.
+  for (const [y, len] of [[5.4, 5], [8.2, 6.4], [11, 4.6]]) out.push(streak([1.2, y], [1.2 + len, y], 1, '#e8fff4'));
+  const boot = [[6.4, 3.4], [10.4, 3.4], [10.6, 10.4], [14.6, 11.4], [14.6, 14], [6.2, 14]];
+  out.push(...solid(boot, '#c8945a', { ink: '#5a3a20', d: 0.45, light: '#f0c890' }));
+  out.push(S(tube([[6.4, 12.6], [14.4, 12.6]], 0.5), '#5a3a20'));
+  out.push(...leaf([10.6, 6.4], [15, 2.4], 2.6, '#ffffff', { bend: 0.6, rib: '#c4e8d4' }).shapes);
+  out.push(...spark(13.8, 13.8, 0.9, '#fff3a6'));
+  return out;
+}
+
+function cometarrow() {
+  const out = [...tile('fire', 'active'), ...aura(10, 11, 6.6, '#fff3c0', 1.3)];
+  // A flaming arrow plunging into the ground in a burst, its fire tail streaming back up the tile.
+  out.push(...flame(4.8, 7.6, 4.4, 9, ['#c8452e', '#ffa23c', '#fff3c0'], { shadow: false, lean: -0.9 }));
+  out.push(...solid(starPts(10.6, 12.2, 5, 2, 8, -90), '#ffc94a', { shadow: false, d: 0.45, ink: '#8a3a10' }));
+  out.push(S(starPts(10.6, 12.2, 2.8, 1.1, 8, -70), '#fffbe0'));
+  out.push(...arrow([2.4, 2.6], [10.2, 11.6], { hw: 1.7, hl: 2.6, sw: 0.7, fl: '#ff8a3c', head: '#fff6c0' }));
+  out.push(...spark(13.6, 3, 1.2, '#fff3a6'), ...spark(14.4, 8, 0.8));
   return out;
 }
 
@@ -1346,7 +1300,7 @@ const ART = {
   paladinmastery, aegissmite, hallowedground, divineaegis, sacredbulwark, judgment, grandverdict,
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
-  twinshot, arrowfan, arrowshower, flipshot, huntersfocus, bowmastery, eagleeye, falcondive,
+  blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
   rangermastery, galevolley, cyclonearrow: cyclone, tailwind, stormvolley,
   snipermastery, marksman, glacierbolt: glacier, steadyaim, heartseeker,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,

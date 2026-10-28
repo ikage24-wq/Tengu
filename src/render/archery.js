@@ -13,7 +13,7 @@
 import { SCHOOL_COLORS } from './spells.js';
 import { shock, wash, easeOut, deep, inked } from './fxkit.js';
 import { fxSprite } from './fx-sprites.js';
-import { groundRing, lightPillar } from './warrior-fx.js';
+import { groundRing, lightPillar, debris } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const FOCUS = SCHOOL_COLORS.focus;
@@ -322,6 +322,45 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       const grow = 1 + 0.1 * Math.min(6, f.rank ?? 0);
       fxSprite(ctx, 'celboltburst', x, cy, { p, flip, scale: 0.65 * grow });
       if (f.big || f.crit) fxSprite(ctx, 'celcrit', x, cy, { p, scale: 0.5 * grow });
+      return true;
+    }
+    case 'trap': {
+      // Spring Trap, armed on the ground (it fades in as it's set, and out as it rusts away).
+      const a = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
+      fxSprite(ctx, 'celtrap', x, y, { t: time, scale: 0.6, alpha: a });
+      return true;
+    }
+    case 'trapsnap': {
+      // The trap snapping shut on a monster, sparks and dust flying.
+      fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
+      return true;
+    }
+    case 'cometfall': {
+      // Comet Arrow falling: the flaming arrow streaks from high over her down into the ground ahead
+      // (the first quarter of its life), its fire trail pointing back up the way it came.
+      const k = Math.min(1, p / 0.26);
+      if (k >= 1) return true;
+      const dir = f.dir || 1;
+      const x0 = x - dir * 6;
+      const y0 = y - 88;
+      const x1 = x + dir * 126;
+      const e = k * k;
+      const ang = Math.atan2(y - y0, x1 - x0);
+      fxSprite(ctx, 'celcomet', x0 + (x1 - x0) * e, y0 + (y - y0) * e, { t: time, scale: 0.75, rot: ang - Math.PI / 2 });
+      return true;
+    }
+    case 'cometimpact': {
+      // Where the comet hits: a huge burst of fire and cloud, gold rock thrust up, a gold ring.
+      fxSprite(ctx, 'celblast', x, y, { p, scale: 1.8 });
+      debris(ctx, x, y, p, 170, 'hawk');
+      groundRing(ctx, 'celringhawk', x, y, p, 150);
+      return true;
+    }
+    case 'cometwave': {
+      // The shockwave racing out both ways along the ground, dust thrown up behind it.
+      groundRing(ctx, 'celringhawk', x, y, p, 250);
+      groundRing(ctx, 'celringhawk', x, y, Math.min(1, p * 1.4), 150);
+      for (const sd of [-1, 1]) fxSprite(ctx, 'celdust', x + sd * 160 * Math.min(1, p * 1.6), y + 2, { p, flip: sd < 0, scale: 1 });
       return true;
     }
     case 'blast': {
