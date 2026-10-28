@@ -200,7 +200,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const cam = { x: camX + ox, y: viewCam.y + oy };
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time));
-  drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot);
+  drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);

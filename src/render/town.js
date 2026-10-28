@@ -9,7 +9,8 @@ import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, snap, footShadow, slopeAt } from './pixel.js';
 import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted, wallShade, beam, gable } from './propkit.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt, hitsLedge } from './scenery.js';
-import { drawHero, HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, BROW_STYLES } from './hero.js';
+import { drawHero } from './hero.js';
+import { lookFor, drawTownLife } from './townlife.js';
 import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
@@ -735,40 +736,11 @@ function sparkle(ctx, x, y, r, color) {
 }
 
 // ---------- Townsfolk and other players ----------
-// Villagers stroll up and down the street (drawn from time alone). Other players come from the
-// bot population (world/bots.js): they walk, chat, run shops, wave, and come and go.
+// Each town's own residents go about their day (render/townlife.js), and a couple of passers-by
+// stroll up and down the street (both drawn from time alone). Other players come from the bot
+// population (world/bots.js): they walk, chat, run shops, wave, and come and go.
 
-const VILLAGERS = 3;
-const HAIR = ['#e9ebfa', '#ff9ec0', '#f5c95c', '#b9a7ff', '#7a5238', '#3b3650', '#9be08f', '#ffb38a', '#8fd3ff'];
-const SKIN = ['#fff0e6', '#fbd9bf', '#e7b48f', '#c98e66', '#8a5a3c'];
-const CLOTHES = ['#ffc2d6', '#bfe0ff', '#bff0dc', '#fff3a6', '#e0cfff', '#ffd0a8', '#ffffff'];
-
-// Eye colours that stand out against each hair colour (never green on green or pink on pink):
-// the iris is the face's accent, so it sits well away from the hair's hue.
-const EYES_FOR = {
-  '#e9ebfa': ['#5aa8ff', '#9b6cff', '#ff6b8a', '#3f9f5f'],
-  '#ff9ec0': ['#4fcfb8', '#5aa8ff', '#3f9f5f'],
-  '#f5c95c': ['#4fcfb8', '#5aa8ff', '#9b6cff'],
-  '#b9a7ff': ['#e8a23c', '#4fcfb8', '#ff6b8a'],
-  '#7a5238': ['#4fcfb8', '#5aa8ff', '#3f9f5f'],
-  '#3b3650': ['#e8a23c', '#ff6b8a', '#4fcfb8'],
-  '#9be08f': ['#ff6b8a', '#9b6cff', '#e8a23c'],
-  '#ffb38a': ['#4fcfb8', '#5aa8ff', '#9b6cff'],
-  '#8fd3ff': ['#ff6b8a', '#e8a23c', '#9b6cff'],
-};
-// Each villager wears their own calm resting face (they grin when they stop to look around).
-const CALM_FACES = ['smile', 'smile', 'smug', 'shy', 'cool', 'cat'];
-
-function lookFor(seed) {
-  const hairColor = pick(HAIR, hash(seed + 2));
-  return {
-    hairStyle: pick(HAIR_STYLES, hash(seed + 1)), hairColor, skinTone: pick(SKIN, hash(seed + 3)),
-    eyeColor: pick(EYES_FOR[hairColor], hash(seed + 4)), eyeStyle: pick(PICKABLE_EYE_STYLES, hash(seed + 5)),
-    outfit: pick(OUTFIT_STYLES, hash(seed + 6)), outfitColor: pick(CLOTHES, hash(seed + 7)), face: pick(CALM_FACES, hash(seed + 8)),
-    // Villagers wear every brow, and now and then an elf passes through.
-    browStyle: pick(BROW_STYLES, hash(seed + 9)), earStyle: hash(seed + 10) < 0.15 ? 'elf' : 'round',
-  };
-}
+const VILLAGERS = 2;
 
 const villagerCache = new Map();
 function villagersOf(map) {
@@ -907,8 +879,9 @@ function shopBooth(ctx, x, gy, bot, time, hovered) {
 
 const ITEM_COLORS = (id) => ITEMS[id]?.color ?? '#ffffff';
 
-export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = null) {
+export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = null, player = null) {
   if (!map.isTown || !settings.showCrowd) return;
+  drawTownLife(ctx, map, cam, width, time, player);
   for (const p of villagersOf(map)) {
     const at = stroll(p, time);
     const x = snap(at.x - cam.x);
