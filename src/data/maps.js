@@ -12,68 +12,79 @@
 //   plaza      in towns, where the fountain stands
 
 export const MAPS = {
+  // The archers' home town, among treehouses under green pennants. Arrival and shops on the west;
+  // a raised plaza with the Archer Lodge, the fountain, and the watchtower (its deck a ledge you
+  // can climb to); the archery range; then the salon and Boss Rush by the exit. Nothing you need
+  // is up a ladder.
   sprout: {
-    id: 'sprout', plaza: 1040, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
-    width: 1800, height: 520, groundY: 480,
-    look: { edges: 'flowers', front: 'blossoms' },
-    terrain: [[0, 480], [440, 480], [540, 440], [1090, 440], [1140, 480], [1400, 480], [1500, 430], [1800, 430]],
+    id: 'sprout', plaza: 1020, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    width: 2200, height: 560, groundY: 480,
+    look: { edges: 'flowers', front: 'blossoms', islands: 'planks' },
+    terrain: [[0, 480], [760, 480], [800, 456], [1240, 456], [1280, 480], [2200, 480]],
     platforms: [
-      { x: 90, y: 400, w: 180 },
-      { x: 120, y: 320, w: 160, thick: 44 },
-      { x: 450, y: 380, w: 180 },
-      { x: 460, y: 300, w: 180, thick: 44 },
-      { x: 950, y: 360, w: 170 },
-      { x: 960, y: 280, w: 160, thick: 44 },
-      { x: 1290, y: 400, w: 180 },
-      { x: 1300, y: 320, w: 260, thick: 44 },
+      // The watchtower's deck (TOWER_DECK above the plaza).
+      { x: 1118, y: 296, w: 84 },
     ],
     ropes: [
-      { x: 200, top: 320, bottom: 400, ladder: true },
-      { x: 1000, top: 280, bottom: 360, ladder: true },
-      { x: 1380, top: 320, bottom: 400, ladder: true },
+      { x: 1134, top: 296, bottom: 456, ladder: true },
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
       // Where you come back from a Boss Rush stage, in front of Roxy's booth.
-      { id: 'arena', x: 1640, y: 430, hidden: true },
-      { id: 'east', x: 1740, y: 430, to: 'meadow1', toPortal: 'west' },
+      { id: 'arena', x: 1980, y: 480, hidden: true },
+      { id: 'east', x: 2140, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 360 }, { id: 'kestrel', x: 720 }, { id: 'pip', x: 860 }, { id: 'lulu', x: 1200 }, { id: 'roxy', x: 1640 }],
-    deco: [['house', 240, 0.2, 320], ['windmill', 560, 0, 300], ['mushhouse', 1070, 0.5, 280], ['house', 1470, 0.6, 320], ['well', 298], ['flowerarch', 1540]],
+    npcs: [{ id: 'mira', x: 300 }, { id: 'pip', x: 500 }, { id: 'kestrel', x: 880 }, { id: 'lulu', x: 1800 }, { id: 'roxy', x: 1980 }],
+    deco: [
+      ['flowerarch', 60], ['archerbanner', 180], ['well', 650], ['archerbanner', 730],
+      ['watchtower', 1160], ['archerbanner', 1310],
+      // The archery range: a rack of practice bows at the shooting line, targets down the lane.
+      ['bowrack', 1380], ['fence', 1440], ['archtarget', 1510, 0], ['archtarget', 1580, 1], ['archtarget', 1650, 2], ['haystack', 1710, 1],
+      ['signpost', 2080],
+    ],
     spawns: [],
   },
 
+  // Three long floors 90px apart, joined by ropes at alternating ends so you hunt in a zig-zag
+  // loop; a lookout on top, and the canyon portal at the top right as the reward for the climb.
+  // No monsters near the side portals.
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
-    width: 2200, height: 520, groundY: 480,
+    width: 2400, height: 760, groundY: 720,
     look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', front: 'blossoms', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
-    terrain: [[0, 480], [460, 480], [560, 430], [820, 430], [900, 470], [1180, 470], [1180, 400], [1500, 400], [1500, 440], [1560, 440], [1620, 480], [2200, 480]],
+    terrain: [[0, 720], [620, 720], [700, 690], [1500, 690], [1580, 720], [2400, 720]],
     platforms: [
-      { x: 120, y: 400, w: 200 },
-      { x: 260, y: 320, w: 170 },
-      { x: 600, y: 350, w: 200 },
-      { x: 660, y: 270, w: 150 },
-      { x: 930, y: 390, w: 200 },
-      { x: 1220, y: 320, w: 220 },
-      { x: 1300, y: 240, w: 170 },
-      { x: 1760, y: 400, w: 220 },
-      { x: 1880, y: 320, w: 200 },
-      { x: 1980, y: 240, w: 160 },
+      { x: 160, y: 630, w: 820 },
+      { x: 1240, y: 630, w: 900 },
+      { x: 80, y: 550, w: 640 },
+      { x: 900, y: 550, w: 600 },
+      { x: 1700, y: 550, w: 620 },
+      { x: 300, y: 470, w: 760 },
+      { x: 1340, y: 470, w: 760 },
+      { x: 900, y: 390, w: 320, thick: 44 },
     ],
-    ropes: [{ x: 1360, top: 240, bottom: 320, ladder: true }],
+    ropes: [
+      { x: 940, top: 630, bottom: 690, ladder: true },
+      { x: 1280, top: 630, bottom: 690, ladder: true },
+      { x: 130, top: 550, bottom: 720 },
+      { x: 2270, top: 550, bottom: 720 },
+      { x: 960, top: 470, bottom: 550 },
+      { x: 1420, top: 470, bottom: 550 },
+      { x: 1040, top: 390, bottom: 470, ladder: true },
+    ],
     portals: [
-      { id: 'west', x: 40, y: 480, to: 'sprout', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 480, to: 'meadow2', toPortal: 'west' },
-      { id: 'north', x: 1700, y: 480, to: 'canyon', toPortal: 'south' },
+      { id: 'west', x: 40, y: 720, to: 'sprout', toPortal: 'east' },
+      { id: 'east', x: 2340, y: 720, to: 'meadow2', toPortal: 'west' },
+      { id: 'north', x: 2040, y: 470, to: 'canyon', toPortal: 'south' },
     ],
     npcs: [],
-    deco: [['giantflower', 342, 0], ['beehive', 570], ['giantflower', 908, 2], ['picnic', 986], ['flowerarch', 1136], ['giantflower', 1520, 1], ['signpost', 1640], ['bigtree', 2060, 1]],
+    deco: [['flowerarch', 200], ['beehive', 560], ['giantflower', 1110, 0], ['bigtree', 1160, 1, 390], ['picnic', 1640], ['signpost', 2200]],
     spawns: [
-      { mob: 'puffle', x: 300, y: 480 }, { mob: 'puffle', x: 700, y: 430 }, { mob: 'snailbun', x: 1000, y: 470 },
-      { mob: 'puffle', x: 1350, y: 400 }, { mob: 'puffle', x: 1850, y: 480 }, { mob: 'snailbun', x: 220, y: 400 },
-      { mob: 'puffle', x: 340, y: 320 }, { mob: 'snailbun', x: 700, y: 350 }, { mob: 'puffle', x: 730, y: 270 },
-      { mob: 'snailbun', x: 1030, y: 390 }, { mob: 'puffle', x: 1330, y: 320 }, { mob: 'snailbun', x: 1380, y: 240 },
-      { mob: 'snailbun', x: 1980, y: 320 }, { mob: 'puffle', x: 2060, y: 240 },
+      { mob: 'puffle', x: 400, y: 720 }, { mob: 'snailbun', x: 1000, y: 690 }, { mob: 'puffle', x: 1300, y: 690 }, { mob: 'snailbun', x: 1900, y: 720 },
+      { mob: 'puffle', x: 360, y: 630 }, { mob: 'snailbun', x: 760, y: 630 }, { mob: 'puffle', x: 1440, y: 630 }, { mob: 'snailbun', x: 1840, y: 630 },
+      { mob: 'snailbun', x: 260, y: 550 }, { mob: 'puffle', x: 560, y: 550 }, { mob: 'puffle', x: 1050, y: 550 }, { mob: 'snailbun', x: 1350, y: 550 },
+      { mob: 'puffle', x: 1850, y: 550 }, { mob: 'snailbun', x: 2150, y: 550 },
+      { mob: 'puffle', x: 480, y: 470 }, { mob: 'snailbun', x: 860, y: 470 }, { mob: 'snailbun', x: 1520, y: 470 }, { mob: 'puffle', x: 1880, y: 470 },
     ],
   },
 

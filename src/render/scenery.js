@@ -1341,8 +1341,8 @@ const BUILDINGS = {
 // A landmark or house standing under a ledge must not run up into it: it reads as poking
 // through. Where one would, it's set back a plane instead (`behind`): drawn before the ground,
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
-// Waterfalls pour off a ledge and cloud pillars hold one up, on purpose.
-const MEETS_LEDGE = new Set(['waterfall', 'cloudpillar']);
+// Waterfalls pour off a ledge, and cloud pillars and the watchtower hold one up, on purpose.
+const MEETS_LEDGE = new Set(['waterfall', 'cloudpillar', 'watchtower']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {

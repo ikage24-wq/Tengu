@@ -2031,6 +2031,134 @@ function rootgateArt() {
   });
 }
 
+// ---------- Archer town: the watchtower, archery range, bow racks, and banners ----------
+
+const ARCHER_GREEN = '#7fcf8a';
+const TARGET_RED = '#ff6b8a';
+
+// An arrow from its tail (x0, y0) to its tip (x1, y1): a thin shaft, a steel head, and pink
+// fletching at the tail.
+function arrowShapes(x0, y0, x1, y1, head = true) {
+  const l = Math.hypot(x1 - x0, y1 - y0) || 1;
+  const ux = (x1 - x0) / l;
+  const uy = (y1 - y0) / l;
+  const nx = -uy * 0.5;
+  const ny = ux * 0.5;
+  const out = [F(T([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]], '#a0703f'))];
+  if (head) out.push(F(T([[x1 + ux * 3, y1 + uy * 3], [x1 + nx * 3, y1 + ny * 3], [x1 - nx * 3, y1 - ny * 3]], '#dfe6f2')));
+  for (const s of [1, -1]) {
+    out.push(F(T([[x0 + ux * 4, y0 + uy * 4], [x0 + s * nx * 5 + ux, y0 + s * ny * 5 + uy], [x0 + s * nx * 4 - ux, y0 + s * ny * 4 - uy], [x0, y0]], s > 0 ? '#ff9ec0' : '#ffffff')));
+  }
+  return out;
+}
+
+// A straw archery target on a three-legged easel, with a few arrows stuck in it.
+function archtargetArt(v) {
+  return art(`archtarget|${v}`, 44, 56, () => {
+    const wood = ramp('#b88a5c', 0.8);
+    const cx = 22;
+    const cy = 24;
+    const out = [
+      // Easel legs: one behind, two in front.
+      T([[cx - 1, 30], [cx + 1, 30], [cx + 13, 56], [cx + 10, 56]], wood.sh),
+      T([[cx - 2, 20], [cx, 20], [cx - 14, 56], [cx - 17, 56]], wood.base), F(T([[cx - 1.2, 20], [cx, 20], [cx - 14.6, 56], [cx - 15.4, 56]], wood.hi)),
+      T([[cx, 20], [cx + 2, 20], [cx + 17, 56], [cx + 14, 56]], wood.base), F(T([[cx + 1.2, 20], [cx + 2, 20], [cx + 16.6, 56], [cx + 15.6, 56]], wood.sh)),
+      // The straw boss: woven rim, then the painted rings.
+      E(cx, cy, 18, 18, '#f3d27a'), F(E(cx + 3, cy + 3, 15, 15, '#e6bc5c')), F(E(cx, cy, 15.4, 15.4, '#f3d27a')),
+      F(E(cx, cy, 13.6, 13.6, '#ffffff')), F(E(cx, cy, 10.6, 10.6, TARGET_RED)), F(E(cx, cy, 7.6, 7.6, '#ffffff')), F(E(cx, cy, 4.6, 4.6, TARGET_RED)), F(E(cx, cy, 2.2, 2.2, '#ffd66b')),
+      F(E(cx - 6, cy - 7, 3.4, 1.8, '#ffffff')),
+    ];
+    // Straw stitches around the rim.
+    for (let k = 0; k < 14; k++) {
+      const a = (k / 14) * Math.PI * 2;
+      out.push(F(R(cx + Math.cos(a) * 16.6 - 0.4, cy + Math.sin(a) * 16.6 - 0.4, 0.8, 0.8, '#c9984a')));
+    }
+    // Arrows in different spots, so a row of targets doesn't repeat.
+    const hits = [[[-3, -2], [5, 6]], [[1, 1], [-8, 3], [4, -9]], [[-1, 4], [7, -4]]][v];
+    for (const [hx, hy] of hits) out.push(...arrowShapes(cx + hx - 9, cy + hy - 4, cx + hx, cy + hy, false));
+    out.push(tuft(cx - 15, 56), tuft(cx + 15, 56, '#7fcf86'));
+    return out;
+  });
+}
+
+// A wooden rack of practice bows with a quiver barrel beside it.
+function bowrackArt() {
+  return art('bowrack', 60, 44, () => {
+    const wood = ramp('#c99a68', 0.8);
+    const out = [
+      R(4, 8, 4, 36, wood.base), F(R(6.4, 8, 1.6, 36, wood.sh)), R(36, 8, 4, 36, wood.base), F(R(38.4, 8, 1.6, 36, wood.sh)),
+      R(2, 10, 40, 3.4, wood.base), F(R(2, 10, 40, 0.8, wood.hi)), F(R(2, 12.6, 40, 0.8, wood.deep)),
+      R(2, 34, 40, 3, wood.base), F(R(2, 34, 40, 0.8, wood.hi)),
+    ];
+    // Three bows hanging from the top bar, each with its string.
+    [[12, '#8a5a3c'], [22, '#b0703f'], [32, ARCHER_GREEN]].forEach(([x, c]) => {
+      out.push(arc(x, 24, 5, 11, -90, 90, 1.8, c), F(R(x - 0.3, 13, 0.6, 22, '#fff4e6')), F(R(x + 3.6, 22.4, 1.6, 3.4, '#ffd66b')));
+    });
+    // The quiver barrel, stuffed with arrows.
+    out.push(R(44, 24, 14, 20, '#a0703f'), F(R(52, 24, 6, 20, '#8a5a3c')), F(R(44, 28, 14, 1.4, '#ffd66b')), F(R(44, 38, 14, 1.4, '#ffd66b')), E(51, 24, 7, 2, '#7a4a2b'));
+    [[46, 6], [49.4, 3], [52.6, 5], [55.4, 8]].forEach(([x, tip], i) => {
+      out.push(F(R(x - 0.4, tip + 4, 0.8, 22 - tip - 4, '#a0703f')), F(T([[x - 1.8, tip + 3], [x, tip + 7], [x + 1.8, tip + 3], [x, tip]], i % 2 ? '#ff9ec0' : '#ffffff')));
+    });
+    out.push(tuft(10, 44), tuft(56, 44, '#7fcf86'));
+    return out;
+  });
+}
+
+// A tall pole flying the archers' pennant, with a target worked into a shield halfway up.
+function archerbannerArt(f, ph) {
+  return art(`archerbanner|${f}|${ph}`, 40, 112, () => {
+    const pole = ramp('#b88a5c', 0.8);
+    return [
+      R(8, 6, 3.4, 106, pole.base), F(R(10.2, 6, 1.2, 106, pole.sh)), F(R(8.4, 6, 0.8, 106, pole.hi)), E(9.7, 5, 2.6, 2.6, '#ffd66b'), F(E(9, 4.4, 0.9, 0.9, '#ffffff')),
+      ...flagShapes(11.4, 8, 26, 13, f / 4, ph / 3, ARCHER_GREEN, '#fff4e6'),
+      T([[2, 46], [18, 46], [18, 58], [10, 66], [2, 58]], '#fff4e6'), F(T([[10, 46], [18, 46], [18, 58], [10, 66]], ramp('#fff4e6', 0.8).sh)),
+      F(E(10, 54, 5, 5, TARGET_RED)), F(E(10, 54, 3.2, 3.2, '#ffffff')), F(E(10, 54, 1.6, 1.6, TARGET_RED)),
+      ...arrowShapes(3, 48, 9.6, 53.6, false),
+      R(4, 108, 12, 4, '#d6cfe6'), F(R(4, 108, 12, 1, '#efeaf6')), tuft(4, 112), tuft(17, 112, '#7fcf86'),
+    ];
+  });
+}
+
+// The archers' watchtower: timber legs braced with crosses, a railing, a shingled green roof, and
+// a pennant on top. Its deck is a planked ledge on the map TOWER_DECK px up, which this frames.
+export const TOWER_DECK = 160;
+function watchtowerArt(f, ph) {
+  return art(`watchtower|${f}|${ph}`, 84, 270, () => {
+    const wood = ramp('#b88a5c', 0.8);
+    const roof = ramp('#6fc47c', 0.8);
+    const base = 270;
+    const deck = base - TOWER_DECK;
+    const out = [];
+    // Back legs, then the cross braces between them.
+    out.push(T([[20, deck], [25, deck], [21, base], [14, base]], wood.sh), T([[59, deck], [64, deck], [70, base], [63, base]], wood.sh));
+    for (let y = deck + 10; y < base - 30; y += 50) {
+      out.push(F(T([[22, y], [25, y], [66, y + 46], [63, y + 46]], wood.deep)), F(T([[62, y], [65, y], [22, y + 46], [19, y + 46]], wood.deep)), F(R(18, y + 46, 50, 3, wood.sh)));
+    }
+    // Front legs, lit on the left.
+    out.push(T([[12, deck], [18, deck], [12, base], [4, base]], wood.base), F(T([[12, deck], [13.6, deck], [5.6, base], [4, base]], wood.hi)),
+      T([[66, deck], [72, deck], [80, base], [72, base]], wood.base), F(T([[70.4, deck], [72, deck], [80, base], [78.4, base]], wood.sh)));
+    // Railing and roof posts above the deck.
+    out.push(R(12, deck - 60, 3.4, 60, wood.base), R(69, deck - 60, 3.4, 60, wood.sh), F(R(12, deck - 60, 0.8, 60, wood.hi)));
+    out.push(R(10, deck - 18, 64, 3, wood.base), F(R(10, deck - 18, 64, 0.8, wood.hi)), R(10, deck - 9, 64, 2.4, wood.sh));
+    for (let x = 18; x < 68; x += 7) out.push(F(R(x, deck - 16, 1.6, 8, wood.sh)));
+    // Roof: shingle rows, lit on the left.
+    const eave = deck - 60;
+    out.push(T([[42, 14], [0, eave], [84, eave]], roof.base), F(T([[42, 14], [84, eave], [62, eave]], roof.sh)), F(T([[42, 14], [0, eave], [9, eave]], roof.hi)));
+    for (let y = 21; y < eave - 2; y += 6) {
+      const half = ((y - 14) / (eave - 14)) * 42;
+      out.push(F(R(42 - half, y, half * 2, 0.8, roof.deep)));
+    }
+    out.push(R(0, eave - 2, 84, 4, '#fff4e6'), F(R(0, eave + 1, 84, 1, ramp('#fff4e6', 0.8).sh)));
+    // The pennant on the peak.
+    out.push(R(41, 0, 2, 16, '#8a5a3c'), E(42, 1, 1.6, 1.6, '#ffd66b'), ...flagShapes(43, 2, 16, 8, f / 4, ph / 3, TARGET_RED, '#fff4e6'));
+    // A target emblem on the gable.
+    const ey = eave - 13;
+    out.push(F(E(42, ey, 7, 7, '#ffffff')), F(E(42, ey, 5, 5, TARGET_RED)), F(E(42, ey, 3, 3, '#ffffff')), F(E(42, ey, 1.4, 1.4, TARGET_RED)));
+    out.push(tuft(6, base), tuft(78, base, '#7fcf86'), ...bloom(26, base - 3, 1.3, '#ff9ec0'), ...bloom(60, base - 2, 1.2, '#ffe36b'));
+    return out;
+  });
+}
+
 // ---------- Drawing ----------
 
 const KINDS = {
@@ -2060,6 +2188,22 @@ const KINDS = {
     },
   },
   totem: { w: 38, h: 124, draw: (ctx, x, y) => place(ctx, totemArt(), x, y) },
+  // Archer town.
+  watchtower: {
+    w: 84, h: 270,
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, watchtowerArt(leanFrame(time, wx, 5, 0.2, seed), Math.floor(time * 3 + seed * 3) % 3), x, y);
+    },
+  },
+  archerbanner: {
+    w: 40, h: 112,
+    draw(ctx, x, y, time, seed, wx) {
+      // The pole sits left of the sprite's middle, so shift it to stand on x.
+      place(ctx, archerbannerArt(leanFrame(time, wx, 5, 0.2, seed), Math.floor(time * 3 + seed * 3) % 3), x + 10, y);
+    },
+  },
+  archtarget: { w: 44, h: 56, draw: (ctx, x, y, time, seed) => place(ctx, archtargetArt(variant(seed, 3)), x, y) },
+  bowrack: { w: 60, h: 44, draw: (ctx, x, y) => place(ctx, bowrackArt(), x, y) },
   mesa: { w: 74, h: 152, draw: (ctx, x, y) => place(ctx, mesaArt(), x, y) },
   tent: {
     w: 72, h: 64,

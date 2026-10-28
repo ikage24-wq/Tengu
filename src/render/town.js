@@ -323,7 +323,7 @@ function fountainArt(f) {
 // ---------- The street ----------
 
 const STREET = {
-  town: [],
+  town: ['treehouse', 'house', 'treehouse'],
   harbor: ['house', 'house'],
   crag: ['adobe', 'tent', 'adobe'],
   grove: ['treehouse', 'mushhouse'],
