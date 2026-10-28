@@ -1712,68 +1712,135 @@
     }
     bolt(ctx, pal, trunk, w);
   }
-  // A bolt of lightning striking down from the sky: a thin leader flicks down, the full bolt
-  // slams into the ground with a burst and a ring of sparks, then it breaks up and flickers out.
+  // ---------- Crackle (the Stormcaller's lightning, the player's pick of three styles) ----------
+  // Real lightning is a thin, fractal, glowing thread that flickers: every drawing is a fresh
+  // channel (midpoint displacement: kinks at every scale), drawn as plasma, a wide faint violet
+  // halo, a violet body and a thin white-hot core, with no ink line (light has no outline). Two or
+  // three strands twist round each other, so it crackles instead of standing still.
+  function fractal(x0, y0, x1, y1, R, rough = 0.3, depth = 6) {
+    let pts = [[x0, y0], [x1, y1]];
+    for (let d = 0; d < depth; d++) {
+      const out = [pts[0]];
+      for (let k = 1; k < pts.length; k++) {
+        const [ax, ay] = pts[k - 1];
+        const [bx, by] = pts[k];
+        const len = Math.hypot(bx - ax, by - ay) || 1;
+        const off = (R() - 0.5) * len * rough;
+        out.push([(ax + bx) / 2 - ((by - ay) / len) * off, (ay + by) / 2 + ((bx - ax) / len) * off], [bx, by]);
+      }
+      pts = out;
+    }
+    return pts;
+  }
+  function strokePts(ctx, pts, width, colour, alpha) {
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.beginPath();
+    pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = width;
+    ctx.stroke();
+    ctx.restore();
+  }
+  function plasma(ctx, pts, w, a = 1, pal = PAL.storm) {
+    const [core, light, mid, deep] = pal;
+    strokePts(ctx, pts, w * 7, deep, 0.2 * a);
+    strokePts(ctx, pts, w * 3.4, mid, 0.6 * a);
+    strokePts(ctx, pts, w * 1.6, light, 0.95 * a);
+    strokePts(ctx, pts, Math.max(1, w * 0.7), core, a);
+  }
+  // A crackle of `strands` twisting from (x0, y0) to (x1, y1); `seed` picks the drawing's channel.
+  function crackle(ctx, x0, y0, x1, y1, seed, { w = 2.4, strands = 3, a = 1, rough = 0.28, depth, wander = 20 } = {}) {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const dep = depth ?? Math.max(3, Math.min(7, Math.round(Math.log2(len / 4))));
+    for (let k = 0; k < strands; k++) {
+      const R = rng(seed * 7 + k);
+      const jx = k ? (R() - 0.5) * wander : 0;
+      plasma(ctx, fractal(x0 + jx, y0, x1 + (k ? (R() - 0.5) * wander * 0.3 : 0), y1, R, rough, dep), k ? w * 0.5 : w, a * (k ? 0.7 : 1));
+    }
+  }
+  // A soft flash of storm light flat on the ground (or round a hit when `round`).
+  function flash(ctx, x, y, r, a, round = false) {
+    const [core, light, mid, deep] = PAL.storm;
+    for (const [k, c, al] of [[1, deep, 0.2], [0.6, mid, 0.45], [0.3, light, 0.9], [0.12, core, 1]]) {
+      ctx.save();
+      ctx.globalAlpha *= al * a;
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * k * (round ? 1 : 1.6), r * k * (round ? 1 : 0.45), 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  // Arcs crawling out over the ground from (x, y), `n` of them up to `r` out.
+  function groundArcs(ctx, x, y, r, n, seed, a) {
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const side = j % 2 ? 1 : -1;
+      plasma(ctx, fractal(x, y - 2, x + side * (r * 0.4 + R() * r * 0.6), y - 4 + (R() - 0.5) * 16, R, 0.5, 4), 1, a * 0.8);
+    }
+  }
+  // A bolt of lightning striking down from the sky: a strand feels its way down, then the bolt
+  // strikes in twisting strands, flickering out and striking again with arcs crawling over the
+  // ground, then dies away.
   E.zapstrike = {
-    w: 220, h: 460, n: 7, fps: 22, px: 110, py: 430,
+    w: 220, h: 460, n: 8, fps: 24, px: 110, py: 430,
     draw(ctx, i) {
-      const pal = PAL.storm;
       const gx = 110;
       const gy = 430;
-      const w = [4, 16, 13, 9, 5, 0, 0][i];
-      if (i === 0) bolt(ctx, pal, zig(gx + 20, 0, gx, gy, 10, 18, 91), 4);
-      else if (w) {
-        if (i < 4) forked(ctx, pal, gx + 20, 0, gx, gy, w, 91 + (i > 2 ? 1 : 0), i < 3 ? 3 : 2);
-        else bolt(ctx, pal, zig(gx + 20, 120, gx, gy - 40, 7, 16, 93), w);
-      }
-      if (i >= 1 && i <= 3) starburst(ctx, pal, gx, gy - 10, [0, 46, 40, 28][i], 8, 94, { inner: 0.45, tones: 4 });
-      if (i >= 2) {
-        const k = (i - 2) / 4;
-        const R = rng(95);
-        for (let j = 0; j < 8; j++) {
-          const a = -Math.PI * (0.1 + R() * 0.8);
-          const d = 30 + k * 80 + R() * 20;
-          shard(ctx, pal, gx + Math.cos(a) * d, gy - 10 + Math.sin(a) * d * 0.8 + k * k * 40, a, 12 * (1 - k * 0.6), 3 * (1 - k * 0.5));
-        }
-      }
-      if (i >= 4) {
-        const R = rng(96 + i);
-        for (let j = 0; j < 3; j++) {
-          const x = gx + (R() - 0.5) * 120;
-          const y = gy - 10 - R() * 40;
-          bolt(ctx, pal, zig(x, y, x + (R() - 0.5) * 40, y - 20 - R() * 20, 3, 6, 97 + j), 3);
-        }
+      const a = [0.5, 1, 0.9, 0.4, 1, 0.7, 0.35, 0.15][i];
+      crackle(ctx, gx + 26, 0, gx, gy, 320 + i * 7, { strands: i === 0 ? 1 : 3, a, w: 2.4 });
+      if (i >= 1) {
+        groundArcs(ctx, gx, gy, 80, 4, 330 + i, a);
+        flash(ctx, gx, gy, 28 * a, a);
       }
     },
   };
-  // A bolt crackling into a monster: lightning in every direction off a burst, then sparks.
+  // A bolt crackling into a monster: a flash of storm light, and arcs of lightning crackling off
+  // it every way, a fresh set each drawing, shrinking away to sparks.
   E.stormhit = {
     w: 200, h: 200, n: 6, fps: 26, px: 100, py: 100,
     draw(ctx, i) {
-      const pal = PAL.storm;
       const c = 100;
-      if (i < 3) starburst(ctx, pal, c, c, [30, 42, 32][i], 8, 101, { inner: 0.42, tones: 4, rot: i * 0.3 });
-      const R = rng(102);
-      const n = 5;
-      for (let j = 0; j < n; j++) {
-        const a = (j / n) * TAU + R() * 0.6;
-        const r0 = [14, 20, 36, 50, 62, 70][i];
-        const r1 = r0 + [40, 52, 40, 26, 14, 0][i];
-        if (r1 > r0) bolt(ctx, pal, zig(c + Math.cos(a) * r0, c + Math.sin(a) * r0, c + Math.cos(a) * r1, c + Math.sin(a) * r1, 3, 7, 103 + j + i * 5), [6, 6, 5, 4, 3, 0][i]);
-      }
-      if (i >= 3) {
-        const k = (i - 3) / 2;
-        for (let j = 0; j < 6; j++) {
-          const a = R() * TAU;
-          shard(ctx, pal, c + Math.cos(a) * (40 + k * 40), c + Math.sin(a) * (40 + k * 40), a, 9 * (1 - k * 0.6), 2.5);
-        }
+      const a = [1, 1, 0.85, 0.6, 0.4, 0.2][i];
+      flash(ctx, c, c, [26, 34, 24, 14, 8, 4][i], a, true);
+      const R = rng(400 + i);
+      for (let j = 0; j < 6; j++) {
+        const ang = (j / 6) * TAU + R() * 0.8;
+        const r1 = [44, 62, 66, 56, 44, 30][i] * (0.7 + R() * 0.4);
+        const r0 = [0, 4, 14, 24, 30, 26][i];
+        if ((j + i) % 4 !== 3) crackle(ctx, c + Math.cos(ang) * r0, c + Math.sin(ang) * r0, c + Math.cos(ang) * r1, c + Math.sin(ang) * r1, 401 + i * 9 + j, { strands: 1, w: 1.8 - i * 0.2, a, rough: 0.45 });
       }
     },
   };
-  // A bolt leaving the crossbow, crackling: the bolt spark in storm colours.
-  E.stormspark = boltSpark(PAL.storm);
-  // A bolt tearing through in storm colours (the big piercing bolts).
-  E.stormpierce = boltBurst(PAL.storm);
+  // A bolt leaving the crossbow, crackling: a flash at the string and short arcs of lightning
+  // snapping out ahead of it (drawn flying to the right).
+  E.stormspark = {
+    w: 140, h: 100, n: 4, fps: 24, px: 30, py: 50,
+    draw(ctx, i) {
+      const a = [1, 0.9, 0.55, 0.25][i];
+      flash(ctx, 40, 50, [16, 20, 12, 6][i], a, true);
+      for (let j = 0; j < 3; j++) crackle(ctx, 40, 50, 92 + i * 10 + j * 6, 50 + (j - 1) * (16 + i * 6), 420 + i * 5 + j, { strands: 1, w: 1.4, a, rough: 0.5 });
+    },
+  };
+  // A thunderbolt tearing through: strands of lightning wrapped round the line of the shot, a
+  // flash where it passes and arcs flung out ahead (drawn flying to the right).
+  E.stormpierce = {
+    w: 240, h: 160, n: 6, fps: 26, px: 110, py: 80,
+    draw(ctx, i) {
+      const c = 80;
+      const a = [0.8, 1, 0.9, 0.6, 0.35, 0.15][i];
+      const len = [40, 110, 118, 96, 70, 50][i];
+      flash(ctx, 110, c, [18, 26, 20, 12, 8, 4][i], a, true);
+      crackle(ctx, 110 - len * 0.5, c, 110 + len, c, 430 + i * 6, { strands: 3, w: 2, a, wander: 14 });
+      if (i >= 1) {
+        const R = rng(440 + i);
+        for (let j = 0; j < 3; j++) crackle(ctx, 110 + len * 0.4, c, 110 + len * 0.7 + R() * 30, c + (R() - 0.5) * 60, 441 + i * 4 + j, { strands: 1, w: 1, a: a * 0.8, rough: 0.5 });
+      }
+    },
+  };
   // A storm cloud, looping: heavy indigo puffs churning slowly, lightning flickering in its belly
   // now and then (Eye of the Storm, and Thunderhead's sky).
   const THUNDERCLOUD = ['#a8a2dc', '#6c66ae', '#4c478a', '#332f66', '#14122c'];
@@ -1782,18 +1849,19 @@
     draw(ctx, i) {
       const t = (i / 8) * TAU;
       const lobes = [[70, 100, 34], [112, 78, 44], [160, 70, 52], [210, 80, 44], [250, 102, 32], [130, 112, 36], [190, 114, 38]];
+      lobes.forEach(([x, y, r], j) => puff(ctx, THUNDERCLOUD, x + Math.sin(t + j * 1.7) * 4, y + Math.cos(t + j * 1.3) * 3, r, 120 + j, { lobes: 3 }));
       if (i === 2 || i === 5) {
+        // Lightning flickering in its belly: a flash inside, strands crackling out underneath and
+        // across its face.
+        ctx.globalAlpha = 0.6;
+        flash(ctx, 150 + (i === 5 ? 40 : -20), 92, 30, 1, true);
+        ctx.globalAlpha = 1;
         const R = rng(130 + i);
         for (let j = 0; j < 2; j++) {
           const x = 110 + R() * 100;
-          bolt(ctx, PAL.storm, zig(x, 110, x + (R() - 0.5) * 50, 160, 4, 10, 131 + i * 3 + j), 5);
+          crackle(ctx, x, 104, x + (R() - 0.5) * 50, 168, 131 + i * 3 + j, { strands: 2, w: 1.8, wander: 10 });
         }
-      }
-      lobes.forEach(([x, y, r], j) => puff(ctx, THUNDERCLOUD, x + Math.sin(t + j * 1.7) * 4, y + Math.cos(t + j * 1.3) * 3, r, 120 + j, { lobes: 3 }));
-      if (i === 2 || i === 5) {
-        ctx.globalAlpha = 0.55;
-        starburst(ctx, PAL.storm, 150 + (i === 5 ? 40 : -20), 92, 26, 8, 132, { inner: 0.45, tones: 3 });
-        ctx.globalAlpha = 1;
+        crackle(ctx, 90, 96, 230, 88, 136 + i, { strands: 1, w: 1.2, rough: 0.45 });
       }
     },
   };
@@ -1822,13 +1890,13 @@
     },
   };
 
-  // The Stormcaller's blast bolt: a thunderclap. A violet flash, a swell of thundercloud, bolts of
-  // lightning forking out every way from it, then the cloud tears apart into sparks.
+  // The Stormcaller's blast bolt: a thunderclap. A violet flash, a swell of thundercloud, strands
+  // of lightning crackling out every way from it, then the cloud tears apart into sparks.
   E.thunderblast = {
     w: 300, h: 280, n: 7, fps: 22, px: 150, py: 150,
     draw(ctx, i) {
       const c = 150;
-      if (i === 0) return starburst(ctx, PAL.storm, c, c, 40, 10, 151, { inner: 0.45, tones: 3 });
+      if (i === 0) return flash(ctx, c, c, 34, 1, true);
       const k = (i - 1) / 5;
       const R = rng(152);
       if (i < 6) for (let j = 0; j < 5; j++) {
@@ -1839,10 +1907,10 @@
         for (let j = 0; j < 6; j++) {
           const a = (j / 6) * TAU + R() * 0.5;
           const len = 80 + R() * 40;
-          if ((j + i) % 3 !== 0) bolt(ctx, PAL.storm, zig(c, c, c + Math.cos(a) * len, c + Math.sin(a) * len * 0.85, 5, 12, 153 + j * 5 + i), 11 - i * 2);
+          if ((j + i) % 3 !== 0) crackle(ctx, c, c, c + Math.cos(a) * len, c + Math.sin(a) * len * 0.85, 153 + j * 5 + i, { strands: 2, w: 2.6 - i * 0.4, wander: 12 });
         }
       }
-      if (i < 4) starburst(ctx, PAL.storm, c, c, 44 - i * 6, 8, 155, { inner: 0.4 });
+      if (i < 4) flash(ctx, c, c, 36 - i * 7, 1, true);
       if (i >= 3) for (let j = 0; j < 8; j++) {
         const a = (j / 8) * TAU;
         sparkle(ctx, PAL.storm, c + Math.cos(a) * (50 + k * 50), c + Math.sin(a) * (40 + k * 40), 10 - (i - 3) * 2, j);
@@ -1871,39 +1939,28 @@
     for (const [x, y, r] of [[-22, -22, 18], [0, -32, 22], [22, -22, 18], [0, -14, 16]]) puff(ctx, THUNDERCLOUD, x, y, r, 160 + x, { lobes: 3 });
   });
 
-  // Thunderhead's last word: one giant bolt slamming down from the sky, forked many ways, a huge
-  // burst of storm light where it lands, beads thrown everywhere, then it breaks up.
+  // Thunderhead's last word: one giant bolt slamming down from the sky in five twisting strands,
+  // splitting off side bolts as it strikes, arcs crawling far over the ground and a flash where it
+  // lands, flickering out.
   E.gigabolt = {
     w: 440, h: 760, n: 8, fps: 16, px: 220, py: 720,
     draw(ctx, i) {
-      const pal = PAL.storm;
       const gx = 220;
       const gy = 720;
-      const w = [10, 42, 36, 28, 18, 9, 0, 0][i];
-      if (i === 0) bolt(ctx, pal, zig(gx + 30, 0, gx, gy, 12, 30, 141), 10);
-      else if (w) {
-        if (i < 5) {
-          forked(ctx, pal, gx + 30, 0, gx, gy, w, 141, 6);
-          if (i < 4) bolt(ctx, pal, zig(gx - 60, 0, gx - 10, gy - 40, 10, 26, 142), w * 0.4);
-        } else bolt(ctx, pal, zig(gx + 30, 200, gx, gy - 60, 8, 24, 143), w);
-      }
-      if (i >= 1 && i <= 4) starburst(ctx, pal, gx, gy - 20, [0, 120, 110, 84, 50][i], 10, 144, { inner: 0.42, tones: 4 });
-      if (i >= 2) {
-        const k = (i - 2) / 5;
-        const R = rng(145);
-        for (let j = 0; j < 16; j++) {
-          const a = -Math.PI * (0.05 + R() * 0.9);
-          const d = 80 + k * 150 + R() * 40;
-          shard(ctx, pal, gx + Math.cos(a) * d, gy - 20 + Math.sin(a) * d * 0.7 + k * k * 80, a, 22 * (1 - k * 0.6), 6 * (1 - k * 0.5));
+      const a = [0.6, 1, 1, 0.7, 1, 0.7, 0.4, 0.15][i];
+      crackle(ctx, gx + 30, 0, gx, gy, 460 + i * 11, { strands: i === 0 ? 1 : 5, w: i === 0 ? 3 : 6.5, a, wander: 60 });
+      if (i >= 1 && i < 6) {
+        // Side bolts splitting off the trunk as it strikes.
+        const R = rng(470 + i);
+        for (let j = 0; j < 4; j++) {
+          const y = 120 + R() * 380;
+          const side = j % 2 ? 1 : -1;
+          crackle(ctx, gx + 10, y, gx + side * (90 + R() * 110), y + 80 + R() * 120, 471 + i * 5 + j, { strands: 1, w: 2.4, a: a * 0.8, rough: 0.4 });
         }
       }
-      if (i >= 5) {
-        const R = rng(146 + i);
-        for (let j = 0; j < 5; j++) {
-          const x = gx + (R() - 0.5) * 300;
-          const y = gy - 20 - R() * 60;
-          bolt(ctx, pal, zig(x, y, x + (R() - 0.5) * 60, y - 30 - R() * 40, 3, 8, 147 + j), 5);
-        }
+      if (i >= 1) {
+        groundArcs(ctx, gx, gy, 220, 8, 480 + i, a);
+        flash(ctx, gx, gy, 90 * a, a);
       }
     },
   };

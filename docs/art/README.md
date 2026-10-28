@@ -221,6 +221,13 @@ carry an improvement across every part of the game it applies to.
     Beastmaster's wolf head on a crescent moon (`celembwind`), the Stormcaller's bolt out of a
     thundercloud (`celembstorm`). A new school needs adding to `tint` in warrior-fx.js, or its
     pillar and ring quietly fall back to the Warrior's steel blue (the Stormcaller's once did).
+  - The Stormcaller's lightning is "Crackle" (the player picked it from three styles shown side by
+    side; the old thick inked zigzags with a star at the end read as cartoony): fractal channels
+    (midpoint displacement, so kinks at every scale) drawn as plasma with no outline (a faint
+    violet halo, a violet body, a thin white-hot core), two to five strands twisting round each
+    other, a fresh channel every drawing so it flickers, a soft flash and arcs crawling over the
+    ground where it lands (`crackle` in fx-art.js; `zigzag` in archery.js draws the live arcs the
+    same way). Light itself has no ink line; the cloud and emblem around it keep theirs.
   - The Archer (first job) is warm gold with sky blue: gold arrows trailing sky-blue streaks,
     hits that pop a gold star with a sky swoosh and burst into feathers, gusts of gold feathers
     off the bow, a feather emblem, gold feathers circling her as Momentum builds, and for Falcon

@@ -72,21 +72,34 @@ function shaft(ctx, len, w, head, fletch, bolt = false) {
 }
 
 
-// A jagged line of lightning from (x0, y0) to (x1, y1), its kinks jumping to new places a few
-// times a second (`seed` and `time`): a soft violet glow, the bolt, and a white-hot core.
+// A crackle of lightning from (x0, y0) to (x1, y1) (the Stormcaller's Crackle style): two thin
+// fractal strands of plasma twisting round each other, struck afresh many times a second (`seed`
+// and `time`); `kink` is how far it wanders.
 export function zigzag(ctx, x0, y0, x1, y1, time, seed = 0, w = 2, kink = 7) {
-  const n = Math.max(3, Math.round(Math.hypot(x1 - x0, y1 - y0) / 16));
+  // Re-struck 18 times a second: each beat is a fresh channel, so it crackles.
   const beat = Math.floor(time * 18);
-  const nx = -(y1 - y0);
-  const ny = x1 - x0;
-  const l = Math.hypot(nx, ny) || 1;
-  const pts = [[x0, y0]];
-  for (let i = 1; i < n; i++) {
-    const off = (rand(seed * 97 + beat * 13 + i) - 0.5) * 2 * kink;
-    pts.push([x0 + ((x1 - x0) * i) / n + (nx / l) * off, y0 + ((y1 - y0) * i) / n + (ny / l) * off]);
-  }
-  pts.push([x1, y1]);
-  const line = (width, colour) => {
+  const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+  const depth = Math.max(2, Math.min(6, Math.round(Math.log2(len / 5))));
+  const rough = Math.min(0.55, (kink * 2.4) / len);
+  // A jagged channel by midpoint displacement: kinks at every scale, like real lightning.
+  const channel = (k) => {
+    let pts = [[x0, y0], [x1, y1]];
+    let n = 0;
+    for (let d = 0; d < depth; d++) {
+      const out = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, ay] = pts[i - 1];
+        const [bx, by] = pts[i];
+        const l = Math.hypot(bx - ax, by - ay) || 1;
+        const off = (rand(seed * 97 + beat * 13 + k * 389 + n++) - 0.5) * l * rough;
+        out.push([(ax + bx) / 2 - ((by - ay) / l) * off, (ay + by) / 2 + ((bx - ax) / l) * off], [bx, by]);
+      }
+      pts = out;
+    }
+    return pts;
+  };
+  const line = (pts, width, colour, alpha) => {
+    ctx.globalAlpha = a0 * alpha;
     ctx.strokeStyle = colour;
     ctx.lineWidth = width;
     ctx.beginPath();
@@ -94,14 +107,18 @@ export function zigzag(ctx, x0, y0, x1, y1, time, seed = 0, w = 2, kink = 7) {
     ctx.stroke();
   };
   ctx.save();
-  ctx.lineJoin = 'miter';
+  const a0 = ctx.globalAlpha;
+  ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.globalAlpha *= 0.35;
-  line(w * 3.2, STORM.main);
-  ctx.globalAlpha /= 0.35;
-  line(w + 1.6, STORM.deep);
-  line(w, STORM.main);
-  line(Math.max(0.6, w * 0.4), '#ffffff');
+  // Plasma, the way the strips draw it (tools/fx-art.js crackle): a faint halo, a violet body and a
+  // white-hot core, no outline; a fainter second strand twisting round the first.
+  for (const [k, ww, a] of [[1, w * 0.5, 0.7], [0, w, 1]]) {
+    const pts = channel(k);
+    line(pts, ww * 3.6, STORM.deep, 0.18 * a);
+    line(pts, ww * 2, STORM.main, 0.6 * a);
+    line(pts, ww * 1, STORM.light, 0.95 * a);
+    line(pts, Math.max(0.6, ww * 0.45), '#ffffff', a);
+  }
   ctx.restore();
 }
 
