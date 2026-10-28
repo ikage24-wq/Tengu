@@ -2159,6 +2159,213 @@ function watchtowerArt(f, ph) {
   });
 }
 
+// ---------- Thief harbor: barrels, alley lamps, laundry lines, and a moored ship ----------
+
+// One wooden barrel, w wide and h tall, standing with its base at (x, y): bulging staves, two
+// iron hoops, lit on the left.
+function barrel(x, y, w, h, wood) {
+  const cx = x + w / 2;
+  return [
+    E(cx, y - h / 2, w / 2, h / 2, wood.base), R(x + 1, y - h + 2, w - 2, h - 4, wood.base),
+    F(E(cx + w * 0.22, y - h / 2, w * 0.24, h / 2 - 1, wood.sh)), F(R(x + 3, y - h + 3, 1.2, h - 6, wood.hi)),
+    F(R(cx - 0.4, y - h + 3, 0.8, h - 6, wood.deep)), F(R(cx + w * 0.22, y - h + 3, 0.8, h - 6, wood.deep)),
+    F(R(x + 0.6, y - h * 0.78, w - 1.2, 2, '#8a8fa8')), F(R(x + 0.6, y - h * 0.28, w - 1.2, 2, '#8a8fa8')),
+    E(cx, y - h + 2, w / 2 - 1, 2.2, wood.sh), F(E(cx, y - h + 2, w / 2 - 3, 1.2, wood.deep)),
+  ];
+}
+
+function barrelsArt() {
+  return art('barrels', 46, 40, () => {
+    const a = ramp('#c9925a', 0.8);
+    const b = ramp('#b8814e', 0.8);
+    return [...barrel(2, 40, 20, 24, a), ...barrel(23, 40, 20, 24, b), ...barrel(12, 18, 18, 18, a), tuft(3, 40), tuft(43, 40, '#7fcf86')];
+  });
+}
+
+// An iron lamp post with a hanging lantern; the lantern's glow is drawn live.
+function alleylampArt() {
+  return art('alleylamp', 26, 76, () => {
+    const iron = ramp('#5a5878', 0.8);
+    return [
+      R(5, 8, 3, 68, iron.base), F(R(7, 8, 1, 68, iron.sh)), R(3, 72, 7, 4, iron.sh), E(6.5, 7, 2.4, 2.4, iron.base),
+      R(6, 8, 14, 2.2, iron.base), F(R(6, 8, 14, 0.7, iron.hi)), F(R(18, 10, 1, 4, iron.sh)),
+      T([[13, 14], [23, 14], [21, 16], [15, 16]], iron.base), R(14, 16, 8, 11, '#ffe6a0'), F(R(17.6, 16, 0.8, 11, iron.sh)), F(R(14, 16, 8, 1, '#fff6d6')),
+      T([[13, 27], [23, 27], [21, 29], [15, 29]], iron.base),
+    ];
+  });
+}
+
+// Two poles with a sagging line of washing between them; `f` sways the clothes with the wind.
+function laundrylineArt(f) {
+  return art(`laundryline|${f}`, 124, 74, () => {
+    const pole = ramp('#a07850', 0.8);
+    const sag = (u) => 10 + 10 * Math.sin(u * Math.PI);
+    const out = [R(4, 6, 4, 68, pole.base), F(R(6.4, 6, 1.6, 68, pole.sh)), R(116, 6, 4, 68, pole.base), F(R(118.4, 6, 1.6, 68, pole.sh))];
+    for (let i = 0; i < 12; i++) {
+      const u0 = i / 12;
+      const u1 = (i + 1) / 12;
+      out.push(F(T([[6 + 112 * u0, sag(u0)], [6 + 112 * u1, sag(u1)], [6 + 112 * u1, sag(u1) + 0.7], [6 + 112 * u0, sag(u0) + 0.7]], '#efe6d8')));
+    }
+    const lean = (f - 2) * 1.4;
+    const shirt = (u, c) => {
+      const x = 6 + 112 * u;
+      const y = sag(u);
+      return [T([[x - 8, y], [x + 8, y], [x + 12 + lean, y + 6], [x + 9 + lean, y + 9], [x + 7 + lean, y + 7], [x + 7 + lean, y + 22], [x - 7 + lean, y + 22], [x - 7 + lean, y + 7], [x - 9 + lean, y + 9], [x - 12 + lean, y + 6]], c),
+        F(T([[x + lean * 0.5, y + 8], [x + 7 + lean, y + 7], [x + 7 + lean, y + 22], [x + lean, y + 22]], ramp(c, 0.8).sh)), F(R(x - 1, y - 1, 2, 2, '#c9a07a'))];
+    };
+    const sock = (u, c) => {
+      const x = 6 + 112 * u;
+      const y = sag(u);
+      return [T([[x - 2, y], [x + 2, y], [x + 2 + lean, y + 12], [x + 6 + lean, y + 14], [x + 5 + lean, y + 17], [x - 2 + lean, y + 15]], c)];
+    };
+    const sheet = (u, c) => {
+      const x = 6 + 112 * u;
+      const y = sag(u);
+      return [T([[x - 10, y], [x + 10, y], [x + 10 + lean * 1.4, y + 26], [x - 10 + lean * 1.4, y + 28]], c), F(T([[x + 3, y], [x + 10, y], [x + 10 + lean * 1.4, y + 26], [x + 3 + lean * 1.4, y + 27]], ramp(c, 0.8).sh)),
+        F(R(x - 8 + lean, y + 18, 16, 1.4, '#ff9ec0'))];
+    };
+    out.push(...shirt(0.18, '#9fd8ff'), ...sock(0.34, '#ffd66b'), ...sheet(0.5, '#fff4e6'), ...shirt(0.68, '#ffb3c8'), ...sock(0.82, '#c9a6ff'));
+    out.push(tuft(6, 74), tuft(118, 74, '#7fcf86'));
+    return out;
+  });
+}
+
+// A little sailing ship tied up at the pier: a striped hull with portholes, a furled sail, and a
+// pennant on the mast.
+function shipArt(f, ph) {
+  return art(`ship|${f}|${ph}`, 200, 156, () => {
+    const hull = ramp('#7a5a8a', 0.8);
+    const trim = ramp('#ffd66b', 0.8);
+    const wood = ramp('#b88a5c', 0.8);
+    const sail = ramp('#fff4e6', 0.8);
+    const out = [];
+    // Mast, yard, and the furled sail.
+    out.push(R(98, 10, 5, 110, wood.base), F(R(101, 10, 2, 110, wood.sh)), R(62, 34, 78, 4, wood.base), F(R(62, 34, 78, 1, wood.hi)));
+    out.push(E(101, 40, 38, 6, sail.base), F(E(106, 42, 30, 3.4, sail.sh)), F(R(78, 38, 1.4, 8, '#c9a07a')), F(R(100, 38, 1.4, 8, '#c9a07a')), F(R(122, 38, 1.4, 8, '#c9a07a')));
+    // The thieves' pennant: dark, with a little crescent moon.
+    out.push(...flagShapes(103, 12, 22, 10, f / 4, ph / 3, '#3a2d4f', '#ff9ec0'));
+    out.push(F(E(110, 17, 2.4, 2.4, '#ffd66b')), F(E(111.2, 16.4, 2, 2, '#3a2d4f')));
+    // Rigging down to the rails.
+    for (const [x0, x1] of [[100, 24], [100, 176]]) {
+      const n = 10;
+      for (let i = 0; i < n; i++) {
+        const u = i / n;
+        const v = (i + 1) / n;
+        const p = (t) => [x0 + (x1 - x0) * t, 14 + 92 * t];
+        out.push(F(T([p(u), p(v), [p(v)[0], p(v)[1] + 0.7], [p(u)[0], p(u)[1] + 0.7]], '#8a6a4a')));
+      }
+    }
+    // Hull: a curved bow and stern, lit along the top, with a stripe and portholes.
+    out.push(T([[6, 106], [194, 106], [184, 132], [170, 150], [30, 150], [16, 132]], hull.base), F(T([[100, 128], [184, 132], [170, 150], [100, 150]], hull.sh)),
+      R(4, 100, 192, 8, wood.base), F(R(4, 100, 192, 1.6, wood.hi)), F(R(4, 106, 192, 1.6, wood.deep)),
+      F(T([[14, 116], [188, 116], [186, 121], [16, 121]], trim.base)), F(T([[100, 116], [188, 116], [186, 121], [100, 121]], trim.sh)));
+    for (const x of [44, 72, 128, 156]) out.push(F(E(x, 134, 5, 5, trim.base)), F(E(x, 134, 3.4, 3.4, '#9fd8ff')), F(E(x - 1, 133, 1.2, 1.2, '#ffffff')));
+    // A lifebuoy and a coil of rope on the rail.
+    out.push(F(E(30, 92, 7, 7, '#ffffff')), F(E(30, 92, 4, 4, hull.base)), F(R(23, 91, 3, 2, '#ff6b8a')), F(R(34, 91, 3, 2, '#ff6b8a')), E(170, 96, 8, 4, '#d9b88a'), F(E(170, 95, 4, 1.6, '#b8956a')));
+    // Water lapping at the waterline.
+    for (let x = 20; x < 186; x += 14) out.push(F(E(x, 151, 6, 2, '#bfe6ff')));
+    return out;
+  });
+}
+
+// ---------- Warrior crag: training dummies, a weapon rack, and fire braziers ----------
+
+// A straw training dummy on a post: sack body with a target patch, crossbar arms, and a stitched
+// face that winces (`hit`) now and then.
+function dummyArt(v, hit) {
+  return art(`dummy|${v}|${hit}`, 36, 62, () => {
+    const wood = ramp('#a07850', 0.8);
+    const straw = ramp(['#f0d38a', '#e8c27a', '#f3dc9c'][v], 0.8);
+    const out = [
+      R(16, 30, 4, 32, wood.base), F(R(18.4, 30, 1.6, 32, wood.sh)), R(10, 58, 16, 4, wood.sh),
+      R(1, 28, 34, 3.6, wood.base), F(R(1, 28, 34, 1, wood.hi)),
+      E(18, 34, 11, 14, straw.base), F(E(22, 36, 6, 11, straw.sh)), F(E(13, 29, 3, 3, straw.hi)),
+      F(R(7, 30, 22, 1.2, '#c9984a')), F(R(7.6, 38, 21, 1.2, '#c9984a')),
+      F(E(18, 36, 4.4, 4.4, '#ff6b8a')), F(E(18, 36, 2.6, 2.6, '#ffffff')), F(E(18, 36, 1.1, 1.1, '#ff6b8a')),
+      E(18, 13, 9, 9, straw.base), F(E(21, 15, 5, 6, straw.sh)), F(R(9, 8, 18, 1.4, '#c9984a')),
+      T([[8, 6], [12, 0], [15, 5]], straw.hi), T([[20, 4], [25, 0], [27, 6]], straw.base),
+    ];
+    if (hit) out.push(F(T([[13, 12], [16, 14], [13, 16]], INK)), F(T([[23, 12], [20, 14], [23, 16]], INK)), F(E(18, 18.6, 1.6, 1, INK)));
+    else out.push(F(R(13, 13, 3, 0.8, INK)), F(R(20, 13, 3, 0.8, INK)), F(R(16.4, 11.6, 0.6, 3.4, INK)), F(R(21.4, 11.6, 0.6, 3.4, INK)), arc(18, 17, 2.4, 1.6, 20, 160, 0.6, INK));
+    out.push(tuft(8, 62), tuft(28, 62, '#7fcf86'));
+    return out;
+  });
+}
+
+// A rack of practice weapons: sword, axe, and spear, with a round shield leaning on the end.
+function weaponrackArt() {
+  return art('weaponrack', 66, 56, () => {
+    const wood = ramp('#a07850', 0.8);
+    const steel = ramp('#dfe6f2', 0.8);
+    const out = [
+      R(4, 14, 4, 42, wood.base), F(R(6.4, 14, 1.6, 42, wood.sh)), R(46, 14, 4, 42, wood.base), F(R(48.4, 14, 1.6, 42, wood.sh)),
+      R(2, 16, 50, 3.4, wood.base), F(R(2, 16, 50, 0.8, wood.hi)), R(2, 44, 50, 3, wood.base), F(R(2, 44, 50, 0.8, wood.hi)),
+    ];
+    // Sword, point down.
+    out.push(T([[15, 6], [19, 6], [19, 40], [17, 46], [15, 40]], steel.base), F(R(18, 8, 1, 32, steel.sh)), R(11, 8, 12, 3, '#ffd66b'), R(15.6, 0, 2.8, 8, '#8a5a3c'), E(17, 0.6, 2, 2, '#ffd66b'));
+    // Axe.
+    out.push(R(27, 2, 3, 46, wood.base), F(R(29, 2, 1, 46, wood.sh)), T([[30, 6], [38, 2], [40, 10], [38, 18], [30, 14]], steel.base), F(T([[34, 10], [40, 10], [38, 18], [34, 15]], steel.sh)));
+    // Spear.
+    out.push(R(39.6, 6, 2.4, 44, wood.base), T([[38.4, 8], [40.8, 0], [43.2, 8], [40.8, 11]], steel.base));
+    // Round shield leaning on the end.
+    out.push(E(58, 42, 8, 13, '#e0504d'), F(E(60, 43, 5, 10, ramp('#e0504d', 0.8).sh)), F(E(58, 42, 2.6, 2.6, '#ffd66b')), F(R(57, 30, 2, 24, '#ffd66b')));
+    out.push(tuft(3, 56), tuft(52, 56, '#7fcf86'));
+    return out;
+  });
+}
+
+// A stone fire bowl on three iron legs; the flame is drawn live over it.
+function brazierArt() {
+  return art('brazier', 34, 54, () => {
+    const iron = ramp('#5a5878', 0.8);
+    const stone = ramp('#d6cfe6', 0.7);
+    return [
+      T([[15, 26], [17, 26], [6, 54], [3, 54]], iron.base), T([[17, 26], [19, 26], [31, 54], [28, 54]], iron.sh), R(16, 26, 2, 28, iron.sh),
+      R(9, 42, 16, 2, iron.base),
+      T([[2, 16], [32, 16], [28, 28], [6, 28]], stone.base), F(T([[17, 16], [32, 16], [28, 28], [17, 28]], stone.sh)), R(1, 14, 32, 3, stone.hi), F(R(1, 14, 32, 0.8, '#ffffff')),
+      F(R(6, 21, 22, 1, stone.deep)), E(17, 15, 13, 2.6, '#5a3a3a'), F(E(17, 15, 10, 1.6, '#ff8a5c')),
+    ];
+  });
+}
+
+// One frame of a flame (k 0 ... 3), w wide at the base, rising from (x, y).
+function flameShapes(x, y, w, k) {
+  const sway = [0, 1.4, 0, -1.4][k];
+  const tall = [1, 1.12, 0.94, 1.06][k];
+  const h = w * 1.5 * tall;
+  return [
+    T([[x - w / 2, y], [x - w * 0.36, y - h * 0.5], [x + sway, y - h], [x + w * 0.36, y - h * 0.55], [x + w / 2, y]], '#ff8a5c'),
+    F(T([[x - w * 0.32, y], [x - w * 0.2, y - h * 0.42], [x + sway * 0.7, y - h * 0.74], [x + w * 0.24, y - h * 0.4], [x + w * 0.32, y]], '#ffc34d')),
+    F(T([[x - w * 0.14, y], [x + sway * 0.4, y - h * 0.42], [x + w * 0.14, y]], '#fff2b0')),
+  ];
+}
+function flameArt(k) {
+  return art(`flame|${k}`, 26, 34, () => flameShapes(13, 34, 22, k));
+}
+
+// ---------- Mage grove: the rune circle ----------
+
+// A ring of flat paving with carved runes and small standing stones, set into the ground; the
+// runes' glow and the motes rising from the middle are drawn live.
+const RUNE_STONES = [[8, 4.4], [34, 5], [106, 5], [132, 4.4]];
+function runecircleArt() {
+  return art('runecircle', 140, 34, () => {
+    const stone = ramp('#c9c1dc', 0.7);
+    const out = [E(70, 28, 66, 6, stone.sh), F(E(70, 27, 62, 4.6, stone.base)), F(E(70, 27, 46, 3.2, '#8a7fb0')), F(E(70, 27, 42, 2.6, stone.base)), F(E(70, 27, 14, 1.4, '#8a7fb0'))];
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      out.push(F(diamond(70 + Math.cos(a) * 54, 27 + Math.sin(a) * 3.8, 1.6, 1, RUNE)));
+    }
+    for (const [x, rx] of RUNE_STONES) {
+      const tall = x === 34 || x === 106 ? 22 : 16;
+      out.push(T([[x - rx, 30], [x - rx + 1, 30 - tall], [x, 28 - tall - 2], [x + rx - 1, 30 - tall], [x + rx, 30]], stone.base), F(T([[x, 28 - tall - 2], [x + rx - 1, 30 - tall], [x + rx, 30], [x, 30]], stone.sh)),
+        F(diamond(x, 30 - tall * 0.55, 1.4, 2.4, RUNE)));
+    }
+    out.push(tuft(2, 34, '#7fc9a0'), tuft(138, 34, '#8fd6aa'));
+    return out;
+  });
+}
+
 // ---------- Drawing ----------
 
 const KINDS = {
@@ -2204,6 +2411,66 @@ const KINDS = {
   },
   archtarget: { w: 44, h: 56, draw: (ctx, x, y, time, seed) => place(ctx, archtargetArt(variant(seed, 3)), x, y) },
   bowrack: { w: 60, h: 44, draw: (ctx, x, y) => place(ctx, bowrackArt(), x, y) },
+  // Thief harbor.
+  barrels: { w: 46, h: 40, draw: (ctx, x, y) => place(ctx, barrelsArt(), x, y) },
+  alleylamp: {
+    w: 26, h: 76,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, alleylampArt(), x, y);
+      glow(ctx, x + 5, y - 76 + 21, 22, '#ffe6a0', 0.45 * flicker(time, seed), true);
+    },
+  },
+  laundryline: { w: 124, h: 74, draw: (ctx, x, y, time, seed, wx) => place(ctx, laundrylineArt(leanFrame(time, wx, 5, 0.2, seed)), x, y) },
+  ship: {
+    w: 200, h: 156,
+    draw(ctx, x, y, time, seed, wx) {
+      // Bobbing gently at its mooring.
+      const bob = Math.round(Math.sin(time * 1.3 + seed) * 1.5);
+      place(ctx, shipArt(leanFrame(time, wx, 5, 0.2, seed), Math.floor(time * 3 + seed * 3) % 3), x, y + bob);
+    },
+  },
+  // Warrior crag.
+  dummy: {
+    w: 36, h: 62,
+    draw(ctx, x, y, time, seed) {
+      // Every few seconds it takes a whack: a wince and a shake.
+      const p = (time * 0.25 + seed * 0.37) % 1;
+      const hit = p < 0.06;
+      place(ctx, dummyArt(variant(seed, 3), hit ? 1 : 0), x + (hit ? Math.round(Math.sin(time * 60)) : 0), y);
+    },
+  },
+  weaponrack: { w: 66, h: 56, draw: (ctx, x, y) => place(ctx, weaponrackArt(), x, y) },
+  brazier: {
+    w: 34, h: 54,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, brazierArt(), x, y);
+      place(ctx, flameArt(Math.floor(time * 8 + seed * 3) % 4), x, y - 54 + 16);
+      glow(ctx, x, y - 54 + 4, 40, '#ffb36b', 0.5 * flicker(time, seed), true);
+    },
+  },
+  // Mage grove.
+  runecircle: {
+    w: 140, h: 34,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, runecircleArt(), x, y);
+      // The runes light up one after another around the ring.
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        const q = 0.5 + 0.5 * Math.sin(time * 2 - i * 0.63 + seed);
+        glow(ctx, x + Math.cos(a) * 54, y - 7 + Math.sin(a) * 3.8, 7, RUNE, 0.15 + 0.5 * q, true);
+      }
+      for (const [sx] of RUNE_STONES) glow(ctx, x - 70 + sx, y - 34 + 18, 8, RUNE, 0.3 + 0.2 * Math.sin(time * 1.5 + sx), true);
+      // Motes drifting up from the middle.
+      ctx.save();
+      ctx.fillStyle = '#d6fff6';
+      for (let k = 0; k < 5; k++) {
+        const p = (time * 0.35 + k / 5 + seed * 0.1) % 1;
+        ctx.globalAlpha = 0.8 * (1 - p);
+        ctx.fillRect(Math.round(x + Math.sin(k * 2.1 + time) * 30), Math.round(y - 8 - p * 60), 1.5, 1.5);
+      }
+      ctx.restore();
+    },
+  },
   mesa: { w: 74, h: 152, draw: (ctx, x, y) => place(ctx, mesaArt(), x, y) },
   tent: {
     w: 72, h: 64,

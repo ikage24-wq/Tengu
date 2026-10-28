@@ -15,6 +15,7 @@ import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
+import { LANDMARKS } from './landmarks.js';
 import { ITEMS } from '../data/items.js';
 
 const hash = (n) => {
@@ -426,7 +427,8 @@ export function drawStreet(ctx, map, cam, width, time) {
       if (map.npcs.some((n) => Math.abs(n.x - wx) < 110) || map.portals.some((p) => Math.abs(p.x - wx) < 70) || Math.abs((map.plaza ?? -999) - wx) < 90) continue;
       // Houses stand on level ground, clear of the town's landmarks.
       if (Math.abs(groundAt(map, wx - 36) - groundAt(map, wx + 36)) > 2) continue;
-      if ((map.deco ?? []).some(([, dx, , dy]) => dy == null && Math.abs(dx - wx) < 90)) continue;
+      // Wide landmarks (a ship, a rune circle) keep them back by their own half-width.
+      if ((map.deco ?? []).some(([kind, dx, , dy]) => dy == null && Math.abs(dx - wx) < Math.max(90, (LANDMARKS[kind]?.w ?? 0) / 2 + 40))) continue;
       const x = wx - cam.x;
       if (x < -60 || x > width + 60) continue;
       const seed = hash(wx * 0.13 + map.width);
