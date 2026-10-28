@@ -214,6 +214,13 @@ carry an improvement across every part of the game it applies to.
     tornado, rings of wind); the Sniper's ice-blue lens of light tearing through each monster a
     bolt pierces (every Sniper bolt pierces the line), snowflakes and a frost burst, a puffy blast,
     a rose sight for the Deadeye.
+  - Skills a path inherits from its first job take the path's look, not the first job's: the
+    Archer's Blast Arrow bursts in fire for her, a gale of wind and leaves for the Beastmaster
+    (`celgaleblast`) and a thunderclap for the Stormcaller (`celthunderblast`), and a sprung trap
+    flings its monster up in the same burst. Every path's buff pillar has its own emblem: the
+    Beastmaster's wolf head on a crescent moon (`celembwind`), the Stormcaller's bolt out of a
+    thundercloud (`celembstorm`). A new school needs adding to `tint` in warrior-fx.js, or its
+    pillar and ring quietly fall back to the Warrior's steel blue (the Stormcaller's once did).
   - The Archer (first job) is warm gold with sky blue: gold arrows trailing sky-blue streaks,
     hits that pop a gold star with a sky swoosh and burst into feathers, gusts of gold feathers
     off the bow, a feather emblem, gold feathers circling her as Momentum builds, and for Falcon

@@ -9,7 +9,7 @@
 
 import { fxSprite } from './fx-sprites.js';
 
-const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom']);
+const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'storm']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : school === 'crow' ? 'crimson' : '');
 // A ring of force and a pillar of light in a school's colour (steel is the plain one).
 export const ringOf = (school) => `celring${tint(school)}`;
@@ -18,7 +18,7 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar', bloom: 'celembbloom' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar', bloom: 'celembbloom' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.

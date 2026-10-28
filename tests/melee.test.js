@@ -2367,3 +2367,33 @@ test("a provoke takes the colour of the path that cried it", async () => {
     assert.equal(w.fx.find((f) => f.kind === 'roar').school, school, job);
   }
 });
+
+// Blast Arrow is the Archer's, but each path's burst is its own: the Archer's fire, the
+// Beastmaster's gale of wind and leaves, the Stormcaller's thunderclap.
+test("each archer path's Blast Arrow bursts in its own look", () => {
+  for (const [job, kind] of [['beastmaster', 'galeblast'], ['stormcaller', 'thunderblast']]) {
+    const w = archer(job);
+    w.char.skills.blastarrow = 20;
+    const seen = new Set();
+    dice(0.01, () => {
+      updateWorld(w, DT, press('KeyZ'));
+      for (let i = 0; i < 60; i++) {
+        updateWorld(w, DT, idle);
+        for (const f of w.fx) seen.add(f.kind);
+      }
+    });
+    assert.ok(seen.has(kind), `${job}'s arrow bursts as ${kind}`);
+    assert.ok(!seen.has('blast'), `${job}'s arrow isn't the Archer's fire`);
+  }
+});
+
+// Every path's buff rises in its own pillar, ring and emblem (the Stormcaller's once came up in the
+// Warrior's steel blue, and neither archer path had an emblem).
+test("the archer paths' buffs rise in their own colours with their own emblems", async () => {
+  const { pillarSprite, ringOf } = await import('../src/render/warrior-fx.js');
+  const { FX_SHEETS } = await import('../src/render/fx-sheets.js');
+  assert.equal(pillarSprite('storm'), 'celpillarstorm');
+  assert.equal(ringOf('storm'), 'celringstorm');
+  assert.equal(pillarSprite('wind'), 'celpillarwind');
+  for (const name of ['celpillarstorm', 'celringstorm', 'celembstorm', 'celembwind', 'celgaleblast', 'celthunderblast']) assert.ok(FX_SHEETS[name], name);
+});

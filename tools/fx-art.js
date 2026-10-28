@@ -1797,6 +1797,80 @@
       }
     },
   };
+  // ---------- The archer paths' blast arrows and buff emblems ----------
+  // The Beastmaster's blast arrow: a gale bursting out of the arrow, a star of green wind with
+  // curls of wind flung out every way and a spray of leaves, which whirl off and break into beads.
+  // (The Archer's own is a burst of fire; each path's says whose shot it was.)
+  E.galeblast = {
+    w: 260, h: 240, n: 7, fps: 20, px: 130, py: 130,
+    draw(ctx, i) {
+      const c = 130;
+      const R = rng(141);
+      if (i === 0) return starburst(ctx, PAL.wind, c, c, 34, 8, 142, { inner: 0.5, tones: 3 });
+      const k = (i - 1) / 5;
+      for (let j = 0; j < 4; j++) {
+        const a = (j / 4) * TAU + 0.5 + k * 1.2;
+        if (i < 6) curl(ctx, PAL.wind, c + Math.cos(a) * (24 + k * 50), c + Math.sin(a) * (20 + k * 40), 30 + k * 16, a + 1.2, 2.2, 16 * (1.1 - k * 0.7));
+      }
+      if (i < 4) starburst(ctx, PAL.wind, c, c, 50 - i * 8, 8, 142, { inner: 0.42, rot: i * 0.2 });
+      for (let j = 0; j < 10; j++) {
+        const a = R() * TAU;
+        const d = 30 + (i - 0.5) * (14 + R() * 12);
+        leaf(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d * 0.8 + k * k * 30, 15 * (1.1 - k * 0.5), a + i * 0.9);
+      }
+      if (i >= 5) for (let j = 0; j < 6; j++) sparkle(ctx, PAL.wind, c + Math.cos(j) * 70, c + Math.sin(j * 1.7) * 50, 8 - (i - 5) * 3, j);
+    },
+  };
+
+  // The Stormcaller's blast bolt: a thunderclap. A violet flash, a swell of thundercloud, bolts of
+  // lightning forking out every way from it, then the cloud tears apart into sparks.
+  E.thunderblast = {
+    w: 300, h: 280, n: 7, fps: 22, px: 150, py: 150,
+    draw(ctx, i) {
+      const c = 150;
+      if (i === 0) return starburst(ctx, PAL.storm, c, c, 40, 10, 151, { inner: 0.45, tones: 3 });
+      const k = (i - 1) / 5;
+      const R = rng(152);
+      if (i < 6) for (let j = 0; j < 5; j++) {
+        const a = (j / 5) * TAU + 0.3;
+        puff(ctx, THUNDERCLOUD, c + Math.cos(a) * (18 + k * 40), c + Math.sin(a) * (14 + k * 30), (20 - k * 10) * (j % 2 ? 0.8 : 1), 154 + j, { holes: Math.max(0, (i - 3) / 3), lobes: 3 });
+      }
+      if (i < 5) {
+        for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU + R() * 0.5;
+          const len = 80 + R() * 40;
+          if ((j + i) % 3 !== 0) bolt(ctx, PAL.storm, zig(c, c, c + Math.cos(a) * len, c + Math.sin(a) * len * 0.85, 5, 12, 153 + j * 5 + i), 11 - i * 2);
+        }
+      }
+      if (i < 4) starburst(ctx, PAL.storm, c, c, 44 - i * 6, 8, 155, { inner: 0.4 });
+      if (i >= 3) for (let j = 0; j < 8; j++) {
+        const a = (j / 8) * TAU;
+        sparkle(ctx, PAL.storm, c + Math.cos(a) * (50 + k * 50), c + Math.sin(a) * (40 + k * 40), 10 - (i - 3) * 2, j);
+      }
+    },
+  };
+
+  // The Beastmaster's emblem: a wolf's head in moon silver over a crescent moon, on a badge of her
+  // green wind.
+  E.embwind = emblem(PAL.wind, (ctx, pal) => {
+    badge(ctx, pal, [[0, -62], [48, -8], [0, 60], [-48, -8]]);
+    const M = PAL.moon;
+    celCrescent(ctx, M, 0, 2, 46, 1.9, 4.6, 16);
+    ctx.scale(1.25, 1.25);
+    const head = [[-30, -34], [-20, -10], [-24, 8], [-10, 30], [0, 40], [10, 30], [24, 8], [20, -10], [30, -34], [10, -16], [-10, -16]];
+    inked(ctx, head, M[2], pal[4], 5);
+    fill(ctx, [[-22, -24], [-14, -8], [-16, 6], [-6, 24], [0, 30], [6, 24], [16, 6], [14, -8], [22, -24], [8, -10], [-8, -10]], M[1]);
+    fill(ctx, [[-6, 14], [6, 14], [0, 24]], M[4]);
+    for (const s of [-1, 1]) fill(ctx, [[s * 6, -2], [s * 16, -6], [s * 14, 2]], pal[3]);
+  });
+  // The Stormcaller's emblem: a bolt of lightning striking out of a thundercloud, on a badge of
+  // her violet.
+  E.embstorm = emblem(PAL.storm, (ctx, pal) => {
+    badge(ctx, pal, [[-46, -50], [46, -50], [46, 10], [0, 60], [-46, 10]]);
+    bolt(ctx, pal, [[6, -14], [-12, 14], [6, 12], [-8, 50]], 12);
+    for (const [x, y, r] of [[-22, -22, 18], [0, -32, 22], [22, -22, 18], [0, -14, 16]]) puff(ctx, THUNDERCLOUD, x, y, r, 160 + x, { lobes: 3 });
+  });
+
   // Thunderhead's last word: one giant bolt slamming down from the sky, forked many ways, a huge
   // burst of storm light where it lands, beads thrown everywhere, then it breaks up.
   E.gigabolt = {

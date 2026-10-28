@@ -96,6 +96,7 @@ const SPELLS = {
   feathers: 'gust', titanwave: 'quake', moonslash: 'bladestorm', smokepuff: 'gust', petalstorm: 'gust', healbloom: 'holyBurst', crowburst: 'gust', crowcut: 'bladestorm', execute: 'bladestorm', starpop: 'zapHit',
   zapstrike: 'lightning', chainarc: 'zap', staticfield: 'zap', supercharged: 'castZap',
   skybolt: 'zap', stormsky: 'castZap', gigabolt: 'meteor',
+  galeblast: 'stormburst', thunderblast: 'lightning',
 };
 const ARROWS = new Set(['hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt', 'stormbolt', 'thunderbolt', 'megabolt']);
 // Crossbow shots that kick harder than a plain bolt (the archer paths' own have their own sound).

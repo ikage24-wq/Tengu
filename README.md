@@ -130,7 +130,8 @@ to clear it.
   away. Full, she has **Hawkeye**: her arrows fly faster and reach further, and curve to find
   monsters above and below. A simple first job (the paths add the flair): three tricks go off on
   their own, hit or miss: **Blast Arrow** (a shot sometimes bursts on impact, hitting everything
-  close round its target), **Snare Arrow** (a shot sometimes tangles its target in a rope net that
+  close round its target; a burst of fire, or on the paths a gale of wind and leaves for the
+  Beastmaster and a thunderclap for the Stormcaller), **Snare Arrow** (a shot sometimes tangles its target in a rope net that
   holds it in place for a moment), **Spring Trap** (her combo's last shot sometimes drops a steel
   trap on the ground ahead; the first monster to step on it is snapped and flung into the air; up
   to two at once). **Steady Hands** (faster, truer shots) and **Light Feet** (faster running, more

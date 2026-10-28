@@ -831,6 +831,20 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       for (const sd of [-1, 1]) fxSprite(ctx, 'celdust', x + sd * 160 * Math.min(1, p * 1.6), y + 2, { p, flip: sd < 0, scale: 1 });
       return true;
     }
+    case 'galeblast': {
+      // The Beastmaster's blast arrow: a gale bursting out of it, curls of wind and leaves flung
+      // every way, and a ring of wind racing out.
+      fxSprite(ctx, 'celgaleblast', x, y, { p, scale: 0.8 });
+      groundRing(ctx, 'celringwind', x, y + 14, p, 60);
+      return true;
+    }
+    case 'thunderblast': {
+      // The Stormcaller's blast bolt: a thunderclap, lightning forking out of a swell of
+      // thundercloud, and a ring of storm light racing out.
+      fxSprite(ctx, 'celthunderblast', x, y, { p, scale: 0.85 });
+      groundRing(ctx, 'celringstorm', x, y + 14, p, 60);
+      return true;
+    }
     case 'blast': {
       // A blast bolt bursting: a soft star of fire, puffs of cloud billowing out and breaking up.
       fxSprite(ctx, 'celblast', x, y, { p, scale: 0.85 });

@@ -1177,10 +1177,13 @@ function bladeProcs(world, s, count, rng = Math.random) {
 // wolf fight (world/pets.js): dragging herself over to the nearest monster to cut it, or calling
 // a beam of moonlight down on the farthest, and the combo's last shot may set her howling.
 // Returns the shot to loose. `rng` for tests.
+// Blast Arrow's burst (and a sprung trap's) in each archer path's own look: the Archer's fire, the
+// Beastmaster's gale of wind and leaves, the Stormcaller's thunderclap.
+const BLASTS = { beastmaster: 'galeblast', stormcaller: 'thunderblast' };
 function shotProcs(world, s, rng = Math.random) {
   const { char, body } = world;
   const blast = procOf(char, 'blastarrow');
-  if (blast && s.shot && rng() < blast.chance) s = { ...s, blast: blast.r, blastFx: 'blast', burst: 'blast', pct: (s.pct * blast.pct) / 100, big: true, stop: Math.max(s.stop ?? 0, 0.05), shake: Math.max(s.shake ?? 0, 1) };
+  if (blast && s.shot && rng() < blast.chance) s = { ...s, blast: blast.r, blastFx: BLASTS[pathOf(world)] ?? 'blast', burst: BLASTS[pathOf(world)] ?? 'blast', pct: (s.pct * blast.pct) / 100, big: true, stop: Math.max(s.stop ?? 0, 0.05), shake: Math.max(s.shake ?? 0, 1) };
   const snare = procOf(char, 'snarearrow');
   if (snare && s.shot && rng() < snare.chance) s = { ...s, snare: snare.secs };
   const trap = procOf(char, 'springtrap');
@@ -1242,7 +1245,7 @@ function tickTraps(world) {
     if (!m) return true;
     t.fx.dur = t.fx.t;
     world.fx.push({ kind: 'trapsnap', x: t.x, y: t.y, t: 0, dur: 0.5 });
-    shotHit(world, { pct: t.pct, scale: 100, key: 'proctrap', dir: Math.sign(m.x - world.body.x) || 1, knock: 30, launch: 460, big: true, stop: 0.07, shake: 2, burst: 'blast', gauge: 3 }, m, 0);
+    shotHit(world, { pct: t.pct, scale: 100, key: 'proctrap', dir: Math.sign(m.x - world.body.x) || 1, knock: 30, launch: 460, big: true, stop: 0.07, shake: 2, burst: BLASTS[pathOf(world)] ?? 'blast', gauge: 3 }, m, 0);
     return false;
   });
 }
