@@ -100,7 +100,7 @@ const JOBS = {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * 0.6, scale: s * 0.5, sy: 0.3, alpha: k * 0.6 }),
     front: () => {},
   },
-  // Stormcaller: a faint violet ring of storm light at her feet.
+  // Stormcaller: faint arcs of lightning crackling round her feet.
   stormcaller: {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celringstorm', x, y, { frame: 2, scale: s * 0.4, sy: 0.32, alpha: k * 0.5 }),
     front: () => {},
@@ -196,8 +196,8 @@ function bondAura(ctx, x, y, t, s, k, layer) {
 }
 
 // Charge: violet sparks crackling at her feet that quicken as it fills, little arcs of lightning
-// jumping round her from halfway, and full (Supercharged), rings of storm light racing out from
-// her feet.
+// jumping round her from halfway, and full (Supercharged), lightning racing out over the ground
+// from her feet again and again.
 function chargeAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
     if (k > 0.15) fxSprite(ctx, 'celringstorm', x, y, { frame: 2 + (Math.floor(t * (6 + 6 * k)) % 3), scale: s * (0.3 + 0.2 * k), sy: 0.3, alpha: Math.min(0.8, (k - 0.15) * 2) });

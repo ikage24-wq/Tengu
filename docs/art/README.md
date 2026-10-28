@@ -227,7 +227,14 @@ carry an improvement across every part of the game it applies to.
     violet halo, a violet body, a thin white-hot core), two to five strands twisting round each
     other, a fresh channel every drawing so it flickers, a soft flash and arcs crawling over the
     ground where it lands (`crackle` in fx-art.js; `zigzag` in archery.js draws the live arcs the
-    same way). Light itself has no ink line; the cloud and emblem around it keep theirs.
+    same way). Light itself has no ink line. Everything else of hers was then brought in line (a
+    bold inked ring or crystal pillar beside the soft lightning looked cartoony): her ring is
+    lightning racing out over the ground, her buff pillar a column of crackling strands, her
+    bolts in flight streaks of glowing plasma, charged ground arcs crawling over it, and her storm
+    cloud is soft (the player picked "Billowing" of four: a density field of noise-warped
+    ellipses torn soft at the edge by more noise, lit from above, billows given relief by ridged
+    noise, lit from inside by lightning; `cloud` in fx-art.js). Only her emblem keeps an outline,
+    being a badge.
   - The Archer (first job) is warm gold with sky blue: gold arrows trailing sky-blue streaks,
     hits that pop a gold star with a sky swoosh and burst into feathers, gusts of gold feathers
     off the bow, a feather emblem, gold feathers circling her as Momentum builds, and for Falcon

@@ -1782,6 +1782,55 @@
       plasma(ctx, fractal(x, y - 2, x + side * (r * 0.4 + R() * r * 0.6), y - 4 + (R() - 0.5) * 16, R, 0.5, 4), 1, a * 0.8);
     }
   }
+  // Her ring and her pillar in Crackle too (they replace the smooth inked ones every other school
+  // keeps, so a buff, a heavy hit and her gauge all crackle). The ring: lightning racing out over
+  // the ground in short crackling arcs round a soft flash, a fresh set each drawing, thinning and
+  // breaking up as it spreads. Drawn round; the game lays it flat.
+  E.ringstorm = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const c = 130;
+      const r = [40, 70, 92, 106, 116, 122][i];
+      const a = [1, 1, 0.85, 0.6, 0.4, 0.2][i];
+      flash(ctx, c, c, [40, 50, 40, 26, 14, 6][i], a, true);
+      const R = rng(500 + i);
+      const n = 14;
+      for (let j = 0; j < n; j++) {
+        if ((j * 5 + i) % 7 < i - 1) continue;
+        const a0 = (j / n) * TAU + R() * 0.2;
+        const a1 = a0 + (TAU / n) * (0.8 + R() * 0.5);
+        plasma(ctx, fractal(c + Math.cos(a0) * r, c + Math.sin(a0) * r, c + Math.cos(a1) * r, c + Math.sin(a1) * r, R, 0.5, 4), 2.2 - i * 0.25, a);
+        if (j % 3 === 0 && i < 4) plasma(ctx, fractal(c + Math.cos(a0) * r * 0.4, c + Math.sin(a0) * r * 0.4, c + Math.cos(a0) * r, c + Math.sin(a0) * r, R, 0.5, 3), 1.2, a * 0.7);
+      }
+    },
+  };
+  // The pillar (her buff going up): strands of lightning crackling up from her feet in a column, a
+  // flash on the ground, arcs snapping off its sides, fizzling out from the top down.
+  E.pillarstorm = {
+    w: 150, h: 330, n: 8, fps: 20, px: 75, py: 318,
+    draw(ctx, i) {
+      const g = 318;
+      const top = [250, 30, 12, 12, 24, 60, 110, 170][i];
+      const a = [0.7, 1, 1, 0.9, 0.8, 0.6, 0.4, 0.2][i];
+      ctx.save();
+      ctx.translate(75, g);
+      ctx.scale(1, 0.35);
+      flash(ctx, 0, 0, [20, 42, 36, 30, 24, 18, 12, 6][i], a, true);
+      ctx.restore();
+      for (let k = 0; k < 4; k++) {
+        const R = rng(520 + i * 7 + k);
+        plasma(ctx, fractal(75 + (k - 1.5) * 12 + (R() - 0.5) * 8, g, 75 + (R() - 0.5) * 30, top + R() * 20, R, 0.22, 6), k === 1 ? 2.4 : 1.3, a * (k === 1 ? 1 : 0.75));
+      }
+      if (i >= 2) {
+        const R = rng(540 + i);
+        for (let j = 0; j < 3; j++) {
+          const y = top + 40 + R() * (260 - top);
+          const side = j % 2 ? 1 : -1;
+          plasma(ctx, fractal(75, y, 75 + side * (24 + R() * 30), y - 10 - R() * 30, R, 0.5, 3), 1.1, a * 0.8);
+        }
+      }
+    },
+  };
   // A bolt of lightning striking down from the sky: a strand feels its way down, then the bolt
   // strikes in twisting strands, flickering out and striking again with arcs crawling over the
   // ground, then dies away.
@@ -1841,27 +1890,106 @@
       }
     },
   };
-  // A storm cloud, looping: heavy indigo puffs churning slowly, lightning flickering in its belly
-  // now and then (Eye of the Storm, and Thunderhead's sky).
-  const THUNDERCLOUD = ['#a8a2dc', '#6c66ae', '#4c478a', '#332f66', '#14122c'];
-  E.stormcloud = {
-    w: 320, h: 170, n: 8, fps: 8, px: 160, py: 90, loop: true,
-    draw(ctx, i) {
-      const t = (i / 8) * TAU;
-      const lobes = [[70, 100, 34], [112, 78, 44], [160, 70, 52], [210, 80, 44], [250, 102, 32], [130, 112, 36], [190, 114, 38]];
-      lobes.forEach(([x, y, r], j) => puff(ctx, THUNDERCLOUD, x + Math.sin(t + j * 1.7) * 4, y + Math.cos(t + j * 1.3) * 3, r, 120 + j, { lobes: 3 }));
-      if (i === 2 || i === 5) {
-        // Lightning flickering in its belly: a flash inside, strands crackling out underneath and
-        // across its face.
-        ctx.globalAlpha = 0.6;
-        flash(ctx, 150 + (i === 5 ? 40 : -20), 92, 30, 1, true);
-        ctx.globalAlpha = 1;
-        const R = rng(130 + i);
-        for (let j = 0; j < 2; j++) {
-          const x = 110 + R() * 100;
-          crackle(ctx, x, 104, x + (R() - 0.5) * 50, 168, 131 + i * 3 + j, { strands: 2, w: 1.8, wander: 10 });
+  // A storm cloud, looping (the player's pick of four: "Billowing"): a heavy cloud of churning
+  // billows with detail at every scale (cauliflower, not round balls), soft and smoky where it
+  // thins out, no outline. It is a density field: unions of ellipses for its mass, warped by
+  // noise so the outline is organic, its edge torn soft by more noise; lit from above (the top
+  // catches the light, the belly is dark, ridged noise gives the billows relief), it churns slowly
+  // and loops, and lightning lights it up from inside now and then (Eye of the Storm, Thunderhead's
+  // sky).
+  const NR = rng(77);
+  const PERM = Array.from({ length: 512 }, () => NR());
+  const hash = (x, y) => PERM[((x * 73856093) ^ (y * 19349663)) & 511];
+  function noise(x, y) {
+    const xi = Math.floor(x);
+    const yi = Math.floor(y);
+    const u = (x - xi) * (x - xi) * (3 - 2 * (x - xi));
+    const v = (y - yi) * (y - yi) * (3 - 2 * (y - yi));
+    const a = hash(xi, yi);
+    const b = hash(xi + 1, yi);
+    const c = hash(xi, yi + 1);
+    const d = hash(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  function fbm(x, y, oct = 5, ridged = false) {
+    let sum = 0;
+    let amp = 0.5;
+    let f = 1;
+    for (let o = 0; o < oct; o++) {
+      let n = noise(x * f, y * f);
+      if (ridged) n = 1 - Math.abs(n * 2 - 1);
+      sum += n * amp;
+      amp *= 0.5;
+      f *= 2.03;
+    }
+    return sum;
+  }
+  const sstep = (a, b, x) => {
+    const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  const rgb = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
+  const mixc = (a, b, t) => a.map((v, k) => v + (b[k] - v) * t);
+  const CLOUD = { under: rgb('#1c183c'), mid: rgb('#46417c'), top: rgb('#a29ed6'), lit: rgb('#f4ecff') };
+  // Paints a cloud over (x0, y0, w, h) from `field(x, y)` (about 1 deep inside, 0 at its edge, below
+  // 0 outside), churned by `turn` (radians, round a loop); `flash` is [x, y, r, strength] of
+  // lightning lighting it from inside.
+  function cloud(ctx, x0, y0, w, h, field, turn, { scale = 26, tear = 0.6, flash = null } = {}) {
+    const S = 2;
+    const cw = Math.ceil(w / S);
+    const ch = Math.ceil(h / S);
+    const cv = document.createElement('canvas');
+    cv.width = cw;
+    cv.height = ch;
+    const g = cv.getContext('2d');
+    const img = g.createImageData(cw, ch);
+    const ox = Math.cos(turn) * 0.35;
+    const oy = Math.sin(turn) * 0.35;
+    const val = (X, Y) => {
+      const wx = (fbm(X / 60 + 3 + ox, Y / 60 + oy, 3) - 0.5) * 40;
+      const wy = (fbm(X / 60 + 11 - oy, Y / 60 + 7 + ox, 3) - 0.5) * 30;
+      const edge = Math.min(sstep(0, 46, X), sstep(w, w - 46, X), sstep(0, 26, Y), sstep(h, h - 30, Y));
+      return (field(X + wx, Y + wy) + (fbm((X + wx) / scale + ox, (Y + wy) / scale + oy, 5) - 0.5) * tear * 2) * edge - (1 - edge) * 0.3;
+    };
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        const X = x * S;
+        const Y = y * S;
+        const v = val(X, Y);
+        if (v <= 0) continue;
+        // The more cloud above a point, the deeper in its shade.
+        const shade = Math.max(0, Math.min(1, (val(X, Y - 14) + val(X - 6, Y - 28)) * 0.5));
+        const relief = (fbm(X / 18 + ox, Y / 18 + oy, 3, true) - 0.5) * 0.35;
+        const k = Math.max(0, Math.min(1, 0.9 - shade * 0.8 + relief - Math.max(0, v - 0.6) * 0.3));
+        let c = k < 0.5 ? mixc(CLOUD.under, CLOUD.mid, k * 2) : mixc(CLOUD.mid, CLOUD.top, (k - 0.5) * 2);
+        if (flash) {
+          const fd = Math.hypot(X - flash[0], (Y - flash[1]) * 1.4);
+          c = mixc(c, CLOUD.lit, Math.min(0.95, Math.max(0, 1 - fd / flash[2]) ** 1.5 * flash[3] * Math.min(1, v * 2) * 1.3));
         }
-        crackle(ctx, 90, 96, 230, 88, 136 + i, { strands: 1, w: 1.2, rough: 0.45 });
+        const o = (y * cw + x) * 4;
+        img.data[o] = c[0];
+        img.data[o + 1] = c[1];
+        img.data[o + 2] = c[2];
+        img.data[o + 3] = sstep(0, 0.45, v) * 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(cv, x0, y0, cw * S, ch * S);
+    ctx.restore();
+  }
+  const ell = (x, y, cx, cy, rx, ry) => 1 - Math.hypot((x - cx) / rx, (y - cy) / ry);
+  E.stormcloud = {
+    w: 320, h: 200, n: 8, fps: 8, px: 160, py: 100, loop: true,
+    draw(ctx, i) {
+      const lit = i === 2 || i === 5;
+      const fx = i === 2 ? 130 : 200;
+      cloud(ctx, 0, 0, 320, 200, (x, y) => Math.max(ell(x, y, 160, 104, 140, 44), ell(x, y, 115, 78, 62, 46), ell(x, y, 185, 70, 70, 52), ell(x, y, 240, 96, 50, 34)) * sstep(146, 128, y), (i / 8) * TAU, { flash: lit ? [fx, 100, 100, 1] : null });
+      if (lit) {
+        const R = rng(640 + i);
+        plasma(ctx, fractal(fx, 128, fx + (R() - 0.5) * 60, 200, R, 0.3, 6), 1.8, 1);
+        plasma(ctx, fractal(fx - 70, 122, fx + 60, 132, R, 0.4, 5), 1, 0.7);
       }
     },
   };
@@ -1899,9 +2027,10 @@
       if (i === 0) return flash(ctx, c, c, 34, 1, true);
       const k = (i - 1) / 5;
       const R = rng(152);
-      if (i < 6) for (let j = 0; j < 5; j++) {
-        const a = (j / 5) * TAU + 0.3;
-        puff(ctx, THUNDERCLOUD, c + Math.cos(a) * (18 + k * 40), c + Math.sin(a) * (14 + k * 30), (20 - k * 10) * (j % 2 ? 0.8 : 1), 154 + j, { holes: Math.max(0, (i - 3) / 3), lobes: 3 });
+      // A swell of storm cloud (soft, like her storm cloud) bursting out and tearing apart.
+      if (i < 6) {
+        const r = 34 + k * 46;
+        cloud(ctx, c - 120, c - 100, 240, 200, (x, y) => (ell(x, y, 120, 100, r, r * 0.8) - k * 0.35) * 1.3, i * 0.5, { scale: 18, tear: 0.5 + k * 0.4, flash: i < 3 ? [120, 100, 60, 1 - i * 0.3] : null });
       }
       if (i < 5) {
         for (let j = 0; j < 6; j++) {
@@ -1931,6 +2060,8 @@
     fill(ctx, [[-6, 14], [6, 14], [0, 24]], M[4]);
     for (const s of [-1, 1]) fill(ctx, [[s * 6, -2], [s * 16, -6], [s * 14, 2]], pal[3]);
   });
+  // An emblem's thundercloud colours (a badge keeps outlined puffs; the sky's clouds are soft).
+  const THUNDERCLOUD = ['#a8a2dc', '#6c66ae', '#4c478a', '#332f66', '#14122c'];
   // The Stormcaller's emblem: a bolt of lightning striking out of a thundercloud, on a badge of
   // her violet.
   E.embstorm = emblem(PAL.storm, (ctx, pal) => {
@@ -3238,7 +3369,7 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight', 'ringbloom', 'ringmint']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight', 'ringbloom', 'ringmint', 'ringstorm']) E[`${s}big`] = big(E[s], 2.6);
   E.gardenbig = big(E.garden, 1.3);
   E.petalstormbig = big(E.petalstorm, 1.2);
   E.redcrescentbig = big(E.redcrescent, 1.6);

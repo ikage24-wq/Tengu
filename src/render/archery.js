@@ -72,6 +72,24 @@ function shaft(ctx, len, w, head, fletch, bolt = false) {
 }
 
 
+// A straight streak of glowing plasma from (x0, y0) to (x1, y1), `w` wide: the body of one of the
+// Stormcaller's bolts in flight (no outline, the way her lightning is drawn).
+function plasmaStreak(ctx, x0, y0, x1, y1, w) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  const a0 = ctx.globalAlpha;
+  for (const [k, colour, a] of [[6, STORM.deep, 0.18], [3.2, STORM.main, 0.6], [1.7, STORM.light, 0.95], [0.8, '#ffffff', 1]]) {
+    ctx.globalAlpha = a0 * a;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = Math.max(0.8, w * k);
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // A crackle of lightning from (x0, y0) to (x1, y1) (the Stormcaller's Crackle style): two thin
 // fractal strands of plasma twisting round each other, struck afresh many times a second (`seed`
 // and `time`); `kink` is how far it wanders.
@@ -275,9 +293,10 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
     case 'stormbolt':
     case 'thunderbolt':
     case 'megabolt': {
-      // The Stormcaller's bolt: violet lightning crackling off its head and a short jagged tail of
-      // it behind; a thunderbolt is bigger and wrapped in more of it, and an Overcharged bolt is
-      // huge, three lashes of lightning trailing it and a lens of storm light round its head.
+      // The Stormcaller's bolt: a streak of glowing plasma (no outline, like her lightning) with
+      // lightning crackling off its head and a jagged tail of it behind; a thunderbolt is bigger
+      // and wrapped in more of it, and an Overcharged bolt is huge, three lashes of lightning
+      // trailing it and a lens of storm light round its head.
       const k = { stormbolt: 1, thunderbolt: 1.4, megabolt: 2.2 }[f.shot];
       const [bx, by] = along(24 * k);
       const [tx, ty] = along(44 * k + (k > 2 ? 30 : 0));
@@ -287,11 +306,7 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
         fxSprite(ctx, 'celstormpierce', x, y, { frame: 2, rot: ang, scale: 0.6 });
       }
       fxSprite(ctx, 'celstormhit', x + Math.cos(ang) * 4, y + Math.sin(ang) * 4, { t: (time * 3) % 0.2, scale: 0.2 * k, alpha: 0.9 });
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(ang);
-      shaft(ctx, 24 * k, 2.6 * k, STORM.light, STORM.main, true);
-      ctx.restore();
+      plasmaStreak(ctx, ...along(22 * k), x, y, 1.1 * k);
       return true;
     }
     case 'heartbolt': {
@@ -516,22 +531,20 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'staticfield': {
-      // Charged ground: a flat violet glow on the ground with sparks jumping up out of it, popping
-      // on and fading off.
+      // Charged ground: arcs of lightning crawling over it and sparks jumping up out of it,
+      // popping on and fading off (no flat glow: her lightning is the light).
       const r = f.r ?? 60;
       const a = Math.min(1, p * f.dur / 0.15) * Math.min(1, (1 - p) * f.dur / 0.3);
       ctx.save();
-      ctx.globalAlpha = a * 0.28;
-      const g = ctx.createRadialGradient(x, y, 2, x, y, r);
-      g.addColorStop(0, STORM.light);
-      g.addColorStop(0.5, STORM.main);
-      g.addColorStop(1, 'rgba(122,92,232,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.ellipse(x, y, r, r * 0.24, 0, 0, Math.PI * 2);
-      ctx.fill();
       ctx.globalAlpha = a;
-      fxSprite(ctx, 'celringstorm', x, y, { frame: 5, scale: r / 40, sy: 0.24, alpha: a * (0.25 + 0.15 * (Math.floor(time * 8) % 2)) });
+      // Arcs crawling over the charged ground, flickering from place to place.
+      const crawl = Math.floor(time * 7);
+      for (let i = 0; i < 3; i++) {
+        const k = rand((f.seed ?? 0) * 7 + crawl * 5 + i);
+        const sx = x + (k - 0.5) * r * 1.4;
+        const len = (0.4 + rand(crawl + i * 3) * 0.5) * r;
+        zigzag(ctx, sx - len / 2, y - 1, sx + len / 2, y - 1 + (rand(crawl * 3 + i) - 0.5) * 6, time, crawl + i * 11, 0.9, 5);
+      }
       // Little arcs jumping up off it, a few at a time.
       const beat = Math.floor(time * 9);
       for (let i = 0; i < 3; i++) {
@@ -724,11 +737,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       ctx.globalAlpha = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4;
       zigzag(ctx, x, y, x, y + (top - y) * reach, time, f.seed ?? 3, 3, 10);
       ctx.restore();
-      ctx.save();
-      ctx.translate(x, y + (top - y) * reach);
-      ctx.rotate(-Math.PI / 2);
-      shaft(ctx, 34, 3.6, STORM.light, STORM.main, true);
-      ctx.restore();
+      plasmaStreak(ctx, x, y + (top - y) * reach + 34, x, y + (top - y) * reach, 1.6);
       if (p < 0.3) fxSprite(ctx, 'celstormspark', x, y, { p: p / 0.3, rot: -Math.PI / 2, scale: 0.8 });
       return true;
     }

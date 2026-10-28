@@ -493,7 +493,8 @@ to clear it.
     Archer's Vault, Snack Time and Last Straw.
   - **Stormcaller** (crossbow): violet lightning, drawn the way real lightning looks: thin, jagged
     strands of glowing plasma twisting round each other and flickering, with arcs crawling over the
-    ground where it strikes. Her bolts mix their own pool: a hip shot,
+    ground where it strikes. Everything of hers matches it: soft, smoky storm clouds lit from
+    inside, a column of crackling lightning when she powers up, glowing bolts. Her bolts mix their own pool: a hip shot,
     crank and fire, or a roll onto one knee; a double tap, the point-blank kick, or a hop back
     loosing two down; then a kneeling thunderbolt through the line or a braced spray of three.
     Bolts that land build **Charge**, and every monster her lightning jumps to builds it too; it
