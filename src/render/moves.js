@@ -1300,9 +1300,38 @@ function snap(p) {
   return 0.71 + 0.29 * ease((p - 0.56) / 0.44); // and settle
 }
 
-export function moveAt(kind, progress, dur = 0.35) {
-  const fn = MOVES[kind];
-  if (!fn) return null;
+function rawMoveAt(kind, progress, dur) {
   const p = SNAPPY.has(kind) ? snap(clamp01(progress)) : clamp01(progress);
-  return { lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false, ...fn(p, dur) };
+  return { lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false, ...MOVES[kind](p, dur) };
+}
+
+// The body throws its weight behind the weapon (the player asked for combat to feel smooth, snappy
+// and fun, not stiff): from how far the weapon has swung over the last part of the move, the body
+// leans and steps into the blow and crouches under the hardest ones, rocking back on a backswing,
+// and settles as the swing dies (power chains from the hips; research/anim.md 16, 19). A spin's
+// sweep (`orbit`) and a still weapon (bows, casting) add nothing; a move's own lean and lunge stay.
+const SWAY = { window: 0.18, lean: 0.3, step: 7, at: 100 };
+function sway(kind, progress, dur, mv) {
+  if (mv.weapon == null || mv.orbit || mv.pull != null || mv.nock) return mv;
+  const back = rawMoveAt(kind, Math.max(0, progress - SWAY.window), dur);
+  if (back.weapon == null || back.orbit) return mv;
+  const k = Math.tanh((mv.weapon - back.weapon) / SWAY.at);
+  if (Math.abs(k) < 0.02) return mv;
+  const rig = mv.rig;
+  return {
+    ...mv,
+    tilt: mv.tilt + SWAY.lean * k,
+    lunge: mv.lunge + SWAY.step * k,
+    rig: (r) => {
+      rig?.(r);
+      if (k > 0.55 && !r.air) r.squat = Math.max(r.squat ?? 0, k > 0.85 ? 2 : 1);
+      // The free arm flies back against the swing, to balance it.
+      if (r.backArm && !r.air) r.backArm = [q(r.backArm[0] - 2 * k), q(r.backArm[1] - 1.5 * Math.abs(k))];
+    },
+  };
+}
+
+export function moveAt(kind, progress, dur = 0.35) {
+  if (!MOVES[kind]) return null;
+  return sway(kind, progress, dur, rawMoveAt(kind, progress, dur));
 }

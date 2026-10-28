@@ -1912,6 +1912,9 @@ function blendMove(a, b, w) {
   };
 }
 
+// The standing guard a finished move eases back into (the arm low and forward, the blade up).
+const SETTLE_POSE = { weapon: 62, arm: 30, lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false };
+
 // Older pose names still used by callers map onto moves.
 const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
 
@@ -1924,6 +1927,8 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur);
     moved = blendMove(from, moved, Math.max(0, state.blend));
   }
+  // A move that just ended eases back to the standing guard (`settle`, 0-1) instead of snapping.
+  if (moved && state.settle != null) moved = blendMove(moved, SETTLE_POSE, Math.min(1, state.settle));
   // The pose the arm and weapon are drawn from follows the same rule as the body (see `rigid`).
   moved = rigid(moved);
   // Walking, the whole body leans into the run and rises a little at each passing step.
