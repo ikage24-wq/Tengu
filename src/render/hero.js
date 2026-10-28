@@ -738,16 +738,7 @@ function liveFace(look, state, mv) {
   if (pose === 'jump') {
     return (state.vy ?? -1) < 0 ? { mouth: 'D', brows: [[0.9, -0.3], [0.9, -0.3]] } : { mouth: 'o', brows: [[1.1, -0.4], [1.1, -0.4]], look: 'down' };
   }
-  let base = faceFrame(look.face ?? 'smile', time);
-  if (look.act === 'drag') {
-    // Fed up: a huff of steam with each sigh, a vein throbbing after it, and a long "..." now and then.
-    const p = (time % 5.2) / 5.2;
-    const extra = [...(base.extra ?? [])];
-    if (p > 0.12 && p < 0.42) extra.push(`steam${Math.min(2, Math.floor((p - 0.12) * 10))}`);
-    if (p > 0.45 && p < 0.75) extra.push(Math.floor(time * 4) % 2 ? 'veinbig' : 'vein');
-    if (p > 0.8) extra.push(`dots${Math.min(3, 1 + Math.floor((p - 0.8) * 15))}`);
-    base = { ...base, extra };
-  }
+  const base = faceFrame(look.face ?? 'smile', time);
   if (state.low) {
     // Frets: worried brows, a wobbly mouth, sweat sliding and a nervous glance back and forth.
     const p = (time % 2.4) / 2.4;
@@ -1192,10 +1183,10 @@ function breath(u) {
 const WALK_STYLE = {
   smile: 'bouncy', grin: 'bouncy', cat: 'bouncy', playful: 'bouncy', giggle: 'bouncy', excited: 'skip', love: 'skip',
   smug: 'strut', proud: 'strut', cool: 'cool', sassy: 'sassy', angry: 'stomp', determined: 'stomp', pout: 'stomp',
-  sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic', drag: 'drag',
+  sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic',
 };
 // Lean added to the walk (radians): stomps and droops bend forward, struts stand tall.
-export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02, drag: 0.07 };
+export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02 };
 export const walkStyleOf = (mood) => WALK_STYLE[mood] ?? 'bouncy';
 
 function idleActing(r, mood, t, armed) {
@@ -1261,19 +1252,6 @@ function idleActing(r, mood, t, armed) {
       r.tilt = Math.sin(T * 2.4 - 0.6) > 0 ? -4 : -2;
       r.hipIn = 0.25;
       if (win(p, 0.85, 1)) hands(CLASP[0], CLASP[1]);
-      break;
-    }
-    case 'drag': {
-      // Dragging a sword far too big for her: one hand (her right, on the back side) holding the
-      // hilt down behind her, the other arm hanging limp, the shoulders slumped, the head hanging.
-      // Every few seconds a big put-upon sigh (the shoulders rise and drop) and a grudging tug.
-      const p = at(5.2);
-      hands(-4.6, 0.6, 0.4, 0.2);
-      r.hy = q(r.hy + 1);
-      r.tilt = -3;
-      const sigh = bump(p, 0.1, 0.42);
-      r.by = q(r.by - sigh * 1 + (win(p, 0.42, 0.52) ? 1 : 0));
-      if (win(p, 0.7, 0.8)) { hands(-5.6, 0.8, 0.8, 0); r.tx = q(-1); r.tilt = -6; }
       break;
     }
     case 'cool': {
@@ -1472,17 +1450,6 @@ function walkActing(r, mood, p, gait, armed) {
       r.tilt = step * -4;
       r.backArm = [0.5, -4];
       r.armSide = -1;
-      break;
-    case 'drag':
-      // Hauling the sword one-handed: slow, heavy steps leaning into the pull, the back hand kept
-      // down behind her on the hilt, the free arm swinging limply, a tug and a sag on every step.
-      r.backArm = [q(-4.8 - step * 0.3), q(0.6 + (u < 0.3 ? 0.5 : 0))];
-      if (!armed) r.frontArm = [q(step * 1), 0];
-      r.hy = q(r.hy + 1);
-      r.by = q(r.by + (u < 0.3 ? 1 : 0));
-      r.tx = q(r.tx + 1 - (u < 0.3 ? 0.5 : 0));
-      r.tilt = step * 2 - 2;
-      r.lift = 0;
       break;
     case 'cool':
       // Hands in the pockets, an easy lope.
@@ -1687,66 +1654,9 @@ function solveRig(state, anim, mv = null) {
     r.tilt = 8;
   }
 
-  if (state.mood === 'drag') wolfGirlBounce(r, t, pose, anim);
   // Attack and skill moves shape the body on top of everything else.
   if (mv) mv.rig?.(r);
   return r;
-}
-
-// Snow wolf's own rig (no player uses it): ears, tail and hair that bounce and say how she feels.
-// Walking, every step lands with a flop of the ears, a bob of the tail and a bounce of the hair.
-// Standing, the ears twitch now and then and the tail wags lazily; with each put-upon sigh (see
-// the drag act) the ears flatten back, then pin while the vein throbs, and the tail thumps.
-function wolfGirlBounce(r, t, pose, anim) {
-  const deg = (v) => Math.round(v / 3) * 3;
-  if (pose === 'walk' && anim) {
-    const p = walkPhase(anim);
-    const u = (p * 2) % 1;
-    const side = p < 0.5 ? 1 : -1;
-    // A damped flop after each footfall.
-    const flop = Math.exp(-u * 5) * Math.cos(u * 14);
-    r.ears = [deg(10 + 22 * flop), deg(10 + 22 * Math.exp(-u * 5) * Math.cos(u * 14 - 0.9))];
-    r.tail = deg(side * 14 * Math.sin(u * Math.PI) - 8 * flop);
-    r.hairLift = q(-1.6 * flop);
-    r.hair = q(r.hair + side * 1.2 * Math.sin(u * Math.PI));
-    r.hairTip = q(r.hairTip + side * 1.8 * Math.sin(u * Math.PI - 0.6));
-    // The big kimono trails behind her, its hem swishing with each step, the sash ends flapping.
-    r.cape = q(-1.5 - 1.5 * Math.sin(u * Math.PI) + side * 0.5);
-    r.capeRoot = q(-0.5 - side * 0.8 * Math.sin(u * Math.PI));
-    return;
-  }
-  if (pose !== 'idle') return;
-  const p = (t % 5.2) / 5.2;
-  const ease = (a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
-  // Lazy wag, the tips of the ears drifting with the breath.
-  let near = 4 + 3 * Math.sin(t * 1.3);
-  let far = 4 + 3 * Math.sin(t * 1.3 - 0.8);
-  let tail = 9 * Math.sin(t * 1.7);
-  // Twitches: one ear flicks, then the other.
-  const tw = t % 3.3;
-  if (tw < 0.12) near -= 18;
-  if (tw > 1.9 && tw < 2.02) far -= 18;
-  // The sigh: ears go flat back, the hair lifts as she draws breath and falls as she lets it out.
-  const sigh = ease(0.08, 0.44);
-  near += 34 * sigh;
-  far += 34 * sigh;
-  r.hairLift = q(-1.2 * ease(0.08, 0.26) + 1 * ease(0.26, 0.44));
-  // Fuming: ears pinned, the tail thumping hard.
-  if (p > 0.44 && p < 0.76) {
-    near += 22;
-    far += 22;
-    tail = Math.floor(t * 5) % 2 ? -26 : 8;
-  }
-  // The tug: everything jolts.
-  if (p > 0.7 && p < 0.8) { near -= 10; far -= 10; tail = 20; r.hair = q(r.hair - 1.5); r.hairTip = q(r.hairTip - 2); }
-  r.ears = [deg(near), deg(far)];
-  r.tail = deg(tail);
-  // The kimono drifts in the air; the sigh ruffles it, the tug yanks it.
-  let cloth = Math.sin(t * 1.4) * 0.8 + Math.sin(t * 2.3 + 1) * 0.4;
-  cloth += 1.2 * sigh * Math.sin(t * 9);
-  if (p > 0.7 && p < 0.8) cloth = -2.5;
-  r.cape = q(cloth);
-  r.capeRoot = q(cloth * 0.5);
 }
 
 function rigKey(r) {
@@ -1942,6 +1852,30 @@ function weaponIdle(type, t) {
   }
 }
 
+// Draws a figure in a pose it was handed whole: a character with a skeleton of its own (Snow wolf,
+// render/snowwolf.js) that never goes through the hero's pose solving, moves or acting. `pose` is
+// laid over the rest rig (legs, lean and bob, head, both arms' hands, hair and cloth springs, ears,
+// tail, face, eyes). `under(ctx, hand)` draws beneath the body, given where the back hand (her right
+// hand, on the far side) really is on screen once the arm has reached for its spot, so whatever it
+// holds is always in it; `over(ctx, hand)` draws on top (seen from behind, on a rope).
+export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null } = {}) {
+  const rig = { ...baseRig(), ...pose, armIn: true };
+  const g = resolveGear(look, null);
+  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
+  const flip = facing < 0;
+  const left = x - (W / 2) * scale;
+  const top = y - H * scale - (rig.lift ?? 0) * scale;
+  const sx = (px) => (flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale);
+  const sy = (py) => top + (py + OY) * scale;
+  // The back hand, as bodyShapes places it: reached for from the shoulder (as far as the arm
+  // goes), carried with the upper body, then into the chibi's proportions.
+  const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
+  const hand = rig.view === 'back' ? [sx(15.5), sy(squashY(30))] : [sx(squashX(wx + rig.tx)), sy(squashY(wy + rig.by + hipDrop(rig)))];
+  under?.(ctx, hand, flip);
+  blit(ctx, body, left, top, { flip, scale });
+  over?.(ctx, hand, flip);
+}
+
 // Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,
 // layered behind and in front of the sprite.
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
@@ -2002,7 +1936,7 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     const p = (Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / WALK_FRAMES;
     const gait = Math.round(anim.gait * 4) / 4;
     const fly = flightAt(p, gaitShape(gait)) * gait;
-    const lean = WALK_LEAN[walkStyleOf(state.low ? 'tired' : look.act ?? look.face ?? 'smile')] ?? 0;
+    const lean = WALK_LEAN[walkStyleOf(state.low ? 'tired' : look.face ?? 'smile')] ?? 0;
     mv = { lift: 2.2 * fly, lunge: 0, tilt: 0.03 + 0.05 * gait + lean, turn: 1, stretch: 1, bodyOnly: true };
   }
   // Hurt timing: hold the hit pose for a beat, then a decaying wobble back (in the pose).
@@ -2088,7 +2022,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
   // The body acts out the mood: the expression, or worn out at low health.
-  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.act ?? look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
+  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
   // A choreographed pose overrides the rig (boss dances).
   if (state.rig) Object.assign(rig, state.rig);
   // A dance pose can lift the front arm over the head (drawn on top, like an attack arm).

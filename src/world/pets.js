@@ -18,6 +18,9 @@ import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 
 const HOME = 40; // where she waits beside the Beastmaster when there's nothing to fight
+// How fast she goes (% of a walk): a heavy plod dragging the sword, a run to catch up.
+const DRAG = 62;
+const HURRY = 140;
 const BOLT = 700; // px/s, a crescent of moonlight in flight
 const MELEE = 64; // how close she gets before she swings or slams
 // Her cleaves hit everything in reach of the greatsword: a spin cuts all round her (CLEAVE), a
@@ -33,6 +36,13 @@ const FED_EVERY = 1.0;
 const PCT = 70;
 const FED_PCT = 130;
 export const WILD_POWER = 1.4;
+// Her moves' timings, in seconds (render/snowwolf.js spinning, slamming, flicking, casting): how long
+// each lasts, end lag and all (the sword is heavy: she's stuck in it until it's done with her), and
+// when the blow lands.
+const SPIN = { dur: 1.2, hit: 0.46 };
+const SLAM_T = { dur: 1.3, hit: 0.6 };
+const FLICK_T = { dur: 0.55, at: 0.25 };
+const CAST_T = { dur: 1.0, fx: 0.42, hit: 0.55 };
 
 const NONE = { left: false, right: false, up: false, down: false, jump: false };
 const ease = (p) => p * p * (3 - 2 * p);
@@ -95,7 +105,7 @@ export function sendSnow(world, m, pct) {
   if (sameLedge(s, m) && Math.abs(m.x - s.x) < 320) {
     s.act = { kind: 'go', phase: 'dash', mob: m, from: s.x, t0: world.now, dur: 0.22 + Math.min(0.28, Math.abs(m.x - s.x) / 1000), pct };
   } else {
-    s.act = { kind: 'flick', t0: world.now, dur: 0.35, mob: m, pct, gauge: 5 };
+    s.act = { kind: 'flick', t0: world.now, dur: FLICK_T.dur, mob: m, pct, gauge: 5 };
   }
   return true;
 }
@@ -106,7 +116,7 @@ export function moonfall(world, m, pct) {
   const s = snowOf(world);
   if (!s || busy(s) || !alive(m)) return false;
   s.body.facing = Math.sign(m.x - s.x) || s.body.facing;
-  s.act = { kind: 'cast', mob: m, at: [m.x, m.y], t0: world.now, dur: 0.6, pct };
+  s.act = { kind: 'cast', mob: m, at: [m.x, m.y], t0: world.now, dur: CAST_T.dur, pct };
   return true;
 }
 
@@ -166,12 +176,13 @@ export function tickPets(world, dt) {
       think(world, s);
     }
     const intent = steer(world, s);
-    stepBody(s.body, world.map, intent, dt, { speed: br.hurry ? 150 : 100, jump: 100 });
+    stepBody(s.body, world.map, intent, dt, { speed: br.hurry ? HURRY : DRAG, jump: 100 });
     stuck(world, s, intent, dt);
     sync(s);
     if (!world.dead) attack(world, s, fed, awake);
   }
   s.vx = s.body.vx;
+  s.hurry = Boolean(br.hurry) && !s.act;
   s.moving = s.body.onGround && Math.abs(s.body.vx) > 8;
 }
 
@@ -195,25 +206,25 @@ function act(world, s, dt, power) {
       a.phase = 'spin';
       a.t0 = world.now;
       s.body.vx = 0;
-      world.fx.push({ kind: 'moonslash', x: s.x, y: s.y, dir: s.dir, t: 0, dur: 0.4 });
     }
     return;
   }
   stepBody(s.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   sync(s);
   if (a.kind === 'go') {
-    if (!a.hit && t >= 0.14) {
+    if (!a.hit && t >= SPIN.hit) {
       a.hit = true;
-      hitAround(world, s, s.x, CLEAVE, { pct: a.pct * power, knock: 200, launch: 160, stop: 0.05, shake: 2, big: true });
+      world.fx.push({ kind: 'moonslash', x: s.x, y: s.y, dir: s.dir, t: 0, dur: 0.45 });
+      hitAround(world, s, s.x, CLEAVE, { pct: a.pct * power, knock: 200, launch: 160, stop: 0.06, shake: 2, big: true });
     }
-    if (t >= 0.4) s.act = null;
+    if (t >= SPIN.dur) s.act = null;
   } else if (a.kind === 'cast') {
-    if (!a.fx && t >= 0.15) {
+    if (!a.fx && t >= CAST_T.fx) {
       a.fx = true;
       if (alive(a.mob)) a.at = [a.mob.x, a.mob.y];
       world.fx.push({ kind: 'moonfall', x: a.at[0], y: a.at[1], t: 0, dur: 0.5 });
     }
-    if (!a.hit && t >= 0.36) {
+    if (!a.hit && t >= CAST_T.hit) {
       a.hit = true;
       for (const m of world.mobs) {
         if (!alive(m) || Math.abs(m.x - a.at[0]) > 34 || Math.abs(m.y - a.at[1]) > 60) continue;
@@ -235,7 +246,7 @@ function act(world, s, dt, power) {
       a.hit = true;
       const slam = a.kind === 'slam';
       world.fx.push({ kind: slam ? 'moonslam' : 'moonslash', x: slam ? s.x + s.dir * SLAM_AT : s.x, y: s.y, dir: s.dir, t: 0, dur: 0.45 });
-      hitAround(world, s, slam ? s.x + s.dir * SLAM_AT : s.x, slam ? SLAM : CLEAVE, { pct: a.pct, knock: slam ? 90 : 200, launch: slam ? 300 : 120, stop: slam ? 0.07 : 0.04, shake: slam ? 3 : 1, big: slam, gauge: a.gauge }, slam);
+      hitAround(world, s, slam ? s.x + s.dir * SLAM_AT : s.x, slam ? SLAM : CLEAVE, { pct: a.pct, knock: slam ? 90 : 200, launch: slam ? 300 : 120, stop: slam ? 0.12 : 0.05, shake: slam ? 4 : 1, big: slam, gauge: a.gauge }, slam);
       // Queen's Awakening: every swing throws a crescent at the farthest monster in reach too.
       if (a.awake) {
         const far = world.mobs.filter((m) => alive(m) && Math.sign(m.x - s.x) === s.dir && Math.abs(m.x - s.x) < FLICK && Math.abs(m.y - s.y) < 120).sort((m, o) => Math.abs(o.x - s.x) - Math.abs(m.x - s.x))[0];
@@ -244,7 +255,7 @@ function act(world, s, dt, power) {
     }
     if (t >= a.dur) s.act = null;
   } else if (a.kind === 'flick') {
-    if (!a.hit && t >= 0.1) {
+    if (!a.hit && t >= FLICK_T.at) {
       a.hit = true;
       if (alive(a.mob)) bolt(world, s, a.mob, a.pct * (a.gauge === 5 ? power : 1), a.gauge);
     }
@@ -389,9 +400,10 @@ function attack(world, s, fed, awake) {
   sync(s);
   if (dx < MELEE + m.def.w / 2 && dy < 40) {
     const slam = Math.random() < 0.45;
-    s.act = { kind: slam ? 'slam' : 'swing', own: true, t0: world.now, dur: slam ? 0.62 : 0.5, hitAt: slam ? 0.42 : 0.22, pct, gauge, awake: Boolean(awake) };
+    const T = slam ? SLAM_T : SPIN;
+    s.act = { kind: slam ? 'slam' : 'swing', own: true, t0: world.now, dur: T.dur, hitAt: T.hit, pct, gauge, awake: Boolean(awake) };
   } else if (dx < FLICK && dy < 160) {
-    s.act = { kind: 'flick', own: true, t0: world.now, dur: 0.35, mob: m, pct: pct * 0.8, gauge };
+    s.act = { kind: 'flick', own: true, t0: world.now, dur: FLICK_T.dur, mob: m, pct: pct * 0.8, gauge };
   } else return;
   s.body.vx = 0;
   s.next = world.now + every;

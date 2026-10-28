@@ -66,7 +66,8 @@ export function stepAnim(a, body, dt) {
 
   if (body.onGround && !body.rope) {
     const speed = Math.abs(body.vx);
-    a.gait += (gaitOf(speed) - a.gait) * (1 - Math.exp(-8 * dt));
+    // `maxGait` holds a body to a walk however fast it goes (one drawn small covers its stride faster).
+    a.gait += (Math.min(gaitOf(speed), body.maxGait ?? 1) - a.gait) * (1 - Math.exp(-8 * dt));
     const before = Math.floor(a.phase * 2);
     a.dist += speed * dt;
     a.phase += (speed * dt) / strideAt(a.gait);
