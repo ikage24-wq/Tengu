@@ -3,10 +3,18 @@
 import { MOBS } from '../data/mobs.js';
 import { surfacesOf, groundPieceAt } from './physics.js';
 
-const RESPAWN = 4;
+// A monster comes back somewhere between these many seconds after it falls (a map's own
+// `respawn` sets the shortest wait instead), so a cleared ledge fills up again bit by bit.
+const RESPAWN = [6, 10];
 // Each spawn point holds this many monsters (bosses stay single), spread a little apart.
 const PER_SPAWN = 2;
 const SPREAD = 50;
+// A respawn lands somewhere within ROAM of its spot on the same ledge (or further along it when
+// that's crowded), never closer than CLEAR to you or a partymate; with nowhere clear on the
+// whole ledge, it waits a moment and tries again.
+const ROAM = 90;
+const CLEAR = 110;
+const RETRY = 1;
 const AGGRO_TIME = 6;
 const HOVER = 46;
 
@@ -69,14 +77,45 @@ export function createSpawner(map) {
   return { slots };
 }
 
-// Fills empty spawn slots whose timers are up. Returns newly spawned mobs.
-export function tickSpawner(spawner, map, now) {
+// Where a respawn appears: a random spot near its own on the same ledge, clear of everyone in
+// `near` (bodies), or null when there's no such spot right now. Flyers keep their spot.
+function respawnSpot(map, spawn, near) {
+  const crowded = (x, y) => near.some((b) => Math.abs(b.x - x) < CLEAR && Math.abs(b.y - y) < 70);
+  if (MOBS[spawn.mob].fly) return crowded(spawn.x, spawn.y) ? null : spawn;
+  const s = surfaceFor(map, spawn.x, spawn.y);
+  // Near its own spot first; failing that, anywhere along the ledge.
+  for (const reach of [ROAM, Infinity]) {
+    const lo = Math.max(s.x1 + 12, spawn.x - reach);
+    const hi = Math.min(s.x2 - 12, spawn.x + reach);
+    for (let i = 0; i < 6; i++) {
+      const x = hi > lo ? lo + Math.random() * (hi - lo) : spawn.x;
+      const y = s.yAt(x);
+      if (!crowded(x, y)) return { ...spawn, x, y };
+    }
+  }
+  return null;
+}
+
+// Fills empty spawn slots whose timers are up. Returns newly spawned mobs. `near` are the bodies
+// a respawn keeps clear of (you and your party); the first fill of a map ignores them.
+export function tickSpawner(spawner, map, now, near = []) {
   const born = [];
   for (const slot of spawner.slots) {
     if (slot.mob && slot.mob.hp > 0) continue;
-    if (slot.mob && slot.mob.hp <= 0 && !slot.respawnAt) slot.respawnAt = now + (slot.spawn.respawn ?? RESPAWN);
-    if (!slot.mob || (slot.respawnAt && now >= slot.respawnAt)) {
+    if (slot.mob && slot.mob.hp <= 0 && !slot.respawnAt) {
+      const [lo, hi] = slot.spawn.respawn != null ? [slot.spawn.respawn, slot.spawn.respawn * 1.6] : RESPAWN;
+      slot.respawnAt = now + lo + Math.random() * (hi - lo);
+    }
+    if (!slot.mob) {
       slot.mob = spawnMob(map, slot.spawn);
+      born.push(slot.mob);
+    } else if (slot.respawnAt && now >= slot.respawnAt) {
+      const at = respawnSpot(map, slot.spawn, near);
+      if (!at) {
+        slot.respawnAt = now + RETRY;
+        continue;
+      }
+      slot.mob = spawnMob(map, at);
       slot.respawnAt = 0;
       born.push(slot.mob);
     }

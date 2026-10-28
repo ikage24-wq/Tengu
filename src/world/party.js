@@ -254,7 +254,10 @@ function hunt(bot, world, members, rng) {
       br.fightSide = -br.fightSide;
       x = target.x + br.fightSide * off;
     }
-    br.goal = { x: Math.max(surf.x1 + 8, Math.min(surf.x2 - 8, x)), y: surf.y, mode: 'fight', surface: s };
+    // The goal's height is the ground's height right there: on a slope, a piece's `y` is only its
+    // highest point, and a goal that looks higher than it is sends them jumping onto ledges.
+    const gx = Math.max(surf.x1 + 8, Math.min(surf.x2 - 8, x));
+    br.goal = { x: gx, y: surf.yAt(gx), mode: 'fight', surface: s };
     return;
   }
   br.fightOn = null;
@@ -269,7 +272,8 @@ function wander(bot, world, nav, rng) {
   const br = bot.brain;
   const s = Math.floor(rng() * nav.surfaces.length);
   const surf = nav.surfaces[s];
-  br.goal = { x: between(Math.max(24, surf.x1 + 12), Math.min(world.map.width - 24, surf.x2 - 12), rng), y: surf.y, mode: 'wander', surface: s };
+  const x = between(Math.max(24, surf.x1 + 12), Math.min(world.map.width - 24, surf.x2 - 12), rng);
+  br.goal = { x, y: surf.yAt(x), mode: 'wander', surface: s };
   br.wanderUntil = world.now + between(4, 9, rng) * bot.ai.patience;
 }
 
@@ -296,8 +300,10 @@ function fieldSteer(bot, world, members) {
     }
   }
   if (!br.path) return none;
-  // On the goal's ledge: the usual calm approach (stop near it, keep apart from partymates).
-  if (!br.path.length && here === g.surface) return steerTo(bot, world, members);
+  // On the goal's ledge: the usual calm approach (stop near it, keep apart from partymates),
+  // walking only: the path finder already brought them to the right surface, so a goal that
+  // looks a little higher (a slope) is no reason to jump or drop.
+  if (!br.path.length && here === g.surface) return steerTo(bot, world, members, true);
   br.settled = false;
   const { intent, lost } = followPath(nav, body, br.path, g.x);
   if (lost) br.path = null;
@@ -375,8 +381,9 @@ function steer(bot, map, tx, ty) {
 }
 
 // Gentle steering toward the goal: they stop inside a small radius and only start again once the
-// goal has moved well away (no jitter), and keep a little space from each other.
-function steerTo(bot, world, members) {
+// goal has moved well away (no jitter), and keep a little space from each other. `level`: they're
+// on the goal's surface already, so only walk along it.
+function steerTo(bot, world, members, level = false) {
   const body = bot.body;
   const br = bot.brain;
   const g = br.goal;
@@ -389,12 +396,12 @@ function steerTo(bot, world, members) {
   }
   tx = clampX(world.map, tx);
   const dx = tx - body.x;
-  const dy = g.y - body.y;
+  const dy = level ? 0 : g.y - body.y;
   const startAt = g.mode === 'fight' ? 10 : 22;
   if (br.settled && Math.abs(dx) < startAt && Math.abs(dy) < 12) return { left: false, right: false, up: false, down: false, jump: false };
   br.settled = Math.abs(dx) < 6 && Math.abs(dy) < 12;
   if (br.settled) return { left: false, right: false, up: false, down: false, jump: false };
-  const intent = steer(bot, world.map, tx, g.y);
+  const intent = steer(bot, world.map, tx, level ? body.y : g.y);
   // No twitchy turnarounds: a small correction the other way (or any in mid-air) waits until
   // they've come to a stop.
   const back = (intent.left && body.vx > 20) || (intent.right && body.vx < -20);

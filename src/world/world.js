@@ -588,7 +588,9 @@ export function updateWorld(world, dt, input) {
       world.invuln = 0.5;
     }
   }
-  world.mobs.push(...tickSpawner(world.spawner, world.map, world.now));
+  // Monsters don't pop up right on top of you or your party.
+  const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
+  world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near));
   world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < (m.def.disco ? 4 : 0.5));
 
   world.drops = updateDrops(world.drops, world.map, dt);

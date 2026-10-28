@@ -104,14 +104,37 @@ test('attacking a monster kills it, gives EXP, and drops gold you can pick up', 
   assert.ok(w.char.gold > before, 'picked up the gold');
 });
 
-test('monsters respawn at their spawn point', () => {
+test('monsters respawn near their spawn point after a few seconds', () => {
   const w = newWorld();
   loadMap(w, 'meadow1', 'west');
   const count = w.mobs.length;
   assert.equal(count, MAPS.meadow1.spawns.length * 2, 'two monsters per spawn point');
-  w.mobs[0].hp = 0;
+  const fallen = w.mobs[0];
+  fallen.hp = 0;
   for (let i = 0; i < 60 * 5; i++) updateWorld(w, DT, idle);
+  assert.equal(w.mobs.filter((m) => m.hp > 0).length, count - 1, 'not back yet');
+  for (let i = 0; i < 60 * 6; i++) updateWorld(w, DT, idle);
   assert.equal(w.mobs.filter((m) => m.hp > 0).length, count);
+  const back = w.mobs.find((m) => m.hp > 0 && m.uid > fallen.uid && m.def === fallen.def);
+  assert.ok(back && Math.abs(back.spawn.x - fallen.spawn.x) <= 90 && back.spawn.y === fallen.spawn.y, 'back on the same ledge, near its spot');
+});
+
+test("a monster doesn't respawn on top of you", () => {
+  const w = newWorld();
+  loadMap(w, 'meadow1', 'west');
+  const m = w.mobs.find((o) => !o.def.fly);
+  const last = Math.max(...w.mobs.map((o) => o.uid));
+  m.hp = 0;
+  // Stand right where it fell the whole time.
+  for (let i = 0; i < 60 * 12; i++) {
+    w.body.x = m.spawn.x;
+    w.body.y = m.spawn.y;
+    updateWorld(w, DT, idle);
+  }
+  for (const o of w.mobs) {
+    if (o.uid <= last) continue;
+    assert.ok(Math.abs(o.spawn.x - w.body.x) >= 100 || Math.abs(o.spawn.y - w.body.y) >= 70, `respawned at ${Math.round(o.spawn.x)} with you at ${Math.round(w.body.x)}`);
+  }
 });
 
 test('skills spend MP and buffs raise stats', () => {
