@@ -159,6 +159,11 @@ carry an improvement across every part of the game it applies to.
   on our pastel skies; give red effects their own near-black crimson or a hand-picked red ramp.
 - A move's own untouchable stretch (dashes, dodges, finishers) must not use the hurt blink: it
   reads as weakness and made finishers flicker. Only blink while recovering from a hit.
+- Speed (the player asked for no lag): characters are one picture per pose, redrawn whenever any
+  part moves, so drawing a sprite must stay fast (the rasterizer grows outlines from edge cells
+  only and fills polygons without allocating). Anyone but the player and a boss draws through a
+  per-frame budget (`spriteBudgeted` in pixel.js): past it they keep last frame's picture for a
+  frame. The effects' glow is skipped when nothing bright is on screen.
 - Motion is smooth (the player's ask): monsters walk and idle through four
   in-between poses per drawn frame, so a stride or a breath flows instead of stepping; attack
   frames stay whole, since their uneven timing is the point. The in-betweens are drawn in the

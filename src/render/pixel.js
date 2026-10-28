@@ -121,6 +121,10 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   // A shape may name its own outline colour (`line`), for bright marks such as sparkles and
   // glints, whose automatic darkened line would turn grey; it applies to every cell of that colour.
   const lineOf = new Map();
+  // Scratch for polygon fills, grown as needed.
+  let px = new Float64Array(64);
+  let py = new Float64Array(64);
+  let xs = new Float64Array(64);
   for (const s of shapes) {
     if (!s) continue;
     const id = s.c === 'none' ? NONE : idOf(s.c.startsWith('#') ? s.c : palette[s.c] ?? '#ff00ff');
@@ -143,18 +147,38 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
       for (let y = at(s.y); y < at(s.y + s.h); y++) span(y, at(s.x), at(s.x + s.w) - 1);
     } else if (s.t === 'p') {
       // Scanline fill: cells whose centers fall between pairs of edge crossings.
-      const pts = s.pts.map(([px, py]) => [(s.x + px + pad) * res, (s.y + py + pad) * res]);
-      const ys = pts.map((q) => q[1]);
-      for (let y = Math.max(0, Math.floor(Math.min(...ys))); y < Math.min(gh, Math.ceil(Math.max(...ys))); y++) {
+      const n = s.pts.length;
+      if (px.length < n) {
+        px = new Float64Array(n * 2);
+        py = new Float64Array(n * 2);
+        xs = new Float64Array(n * 2);
+      }
+      let y0 = Infinity;
+      let y1 = -Infinity;
+      for (let i = 0; i < n; i++) {
+        px[i] = (s.x + s.pts[i][0] + pad) * res;
+        py[i] = (s.y + s.pts[i][1] + pad) * res;
+        if (py[i] < y0) y0 = py[i];
+        if (py[i] > y1) y1 = py[i];
+      }
+      for (let y = Math.max(0, Math.floor(y0)); y < Math.min(gh, Math.ceil(y1)); y++) {
         const cy = y + 0.5;
-        const xs = [];
-        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-          const [xi, yi] = pts[i];
-          const [xj, yj] = pts[j];
-          if ((yi > cy) !== (yj > cy)) xs.push(xi + ((cy - yi) * (xj - xi)) / (yj - yi));
+        let m = 0;
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+          const yi = py[i];
+          const yj = py[j];
+          if ((yi > cy) !== (yj > cy)) {
+            // Insertion sort as the crossings come (there are only ever a few).
+            const v = px[i] + ((cy - yi) * (px[j] - px[i])) / (yj - yi);
+            let k = m++;
+            while (k > 0 && xs[k - 1] > v) {
+              xs[k] = xs[k - 1];
+              k--;
+            }
+            xs[k] = v;
+          }
         }
-        xs.sort((a, b) => a - b);
-        for (let k = 0; k + 1 < xs.length; k += 2) span(y, Math.ceil(xs[k] - 0.5), Math.ceil(xs[k + 1] - 0.5) - 1);
+        for (let k = 0; k + 1 < m; k += 2) span(y, Math.ceil(xs[k] - 0.5), Math.ceil(xs[k + 1] - 0.5) - 1);
       }
     } else {
       const cx = (s.x + pad) * res;
@@ -248,21 +272,31 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
   // Which way each outline cell faces (for sel-out): its offset from the cell it grew from.
   const faceX = selout ? new Int8Array(gw * gh) : null;
   const faceY = selout ? new Int8Array(gw * gh) : null;
+  // Only edge cells (a filled cell with an unfilled cell around it) can be the nearest to an
+  // empty one: from any other, the neighbour toward it is nearer still. So the inside is skipped,
+  // and the result is the same as growing from every cell.
+  const ringX = Int8Array.from(ring, (r) => r[0]);
+  const ringY = Int8Array.from(ring, (r) => r[1]);
+  const ringD = Float32Array.from(ring, (r) => r[2]);
+  const ringN = ring.length;
   for (let y = 0; y < gh; y++) {
     for (let x = 0; x < gw; x++) {
       const i = y * gw + x;
       if (grid[i] < 0) continue;
-      for (const [dx, dy, d] of ring) {
-        const tx = x + dx;
-        const ty = y + dy;
+      if (y > 0 && y < gh - 1 && x > 0 && x < gw - 1 && grid[i - 1] >= 0 && grid[i + 1] >= 0 && grid[i - gw] >= 0 && grid[i + gw] >= 0 && grid[i - gw - 1] >= 0 && grid[i - gw + 1] >= 0 && grid[i + gw - 1] >= 0 && grid[i + gw + 1] >= 0) continue;
+      const id = grid[i];
+      for (let r = 0; r < ringN; r++) {
+        const tx = x + ringX[r];
+        const ty = y + ringY[r];
         if (tx < 0 || ty < 0 || tx >= gw || ty >= gh) continue;
         const t = ty * gw + tx;
+        const d = ringD[r];
         if (grid[t] === EMPTY && d < best[t]) {
           best[t] = d;
-          from[t] = grid[i];
+          from[t] = id;
           if (selout) {
-            faceX[t] = dx;
-            faceY[t] = dy;
+            faceX[t] = ringX[r];
+            faceY[t] = ringY[r];
           }
         }
       }
@@ -365,11 +399,15 @@ export function rasterOf(b, scale = gfx.scale) {
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.
 export function pixelsOf({ gw, gh, cells, colors }) {
   const data = new Uint8ClampedArray(gw * gh * 4);
-  const rgbs = colors.map(rgb);
+  // Written a whole pixel at a time (little-endian: alpha in the top byte).
+  const px = new Uint32Array(data.buffer);
+  const packed = Uint32Array.from(colors, (c) => {
+    const [r, g, b, a] = rgb(c);
+    return ((a << 24) | (b << 16) | (g << 8) | r) >>> 0;
+  });
   for (let i = 0; i < cells.length; i++) {
     const c = cells[i];
-    if (c < 0) continue;
-    data.set(rgbs[c], i * 4);
+    if (c >= 0) px[i] = packed[c];
   }
   return data;
 }
@@ -395,6 +433,32 @@ export function sprite(key, build) {
   }
   const { w, h, res, crisp, pad, raster } = rasterOf(build());
   return remember(key, { canvas: bake(raster), w, h, res, crisp, pad, white: null });
+}
+
+// Sprites that can wait a frame (other people, portraits): within one frame, new ones are drawn
+// only while the frame's budget lasts; past it, the last one drawn for the same `slot` (that
+// character) stands in until a later frame. On a fast computer everyone still updates every
+// frame; on a slow one the crowd waits a beat instead of the whole game lagging.
+const BUDGET_MS = 4;
+const budget = { frame: 0, at: -1, ms: 0 };
+const lastOf = new Map();
+export function nextFrame() {
+  budget.frame++;
+}
+export function spriteBudgeted(key, build, slot) {
+  if (budget.at !== budget.frame) {
+    budget.at = budget.frame;
+    budget.ms = 0;
+  }
+  const prev = lastOf.get(slot);
+  if (prev && !cache.has(key) && budget.ms >= BUDGET_MS) return prev;
+  const t = performance.now();
+  const s = sprite(key, build);
+  budget.ms += performance.now() - t;
+  lastOf.delete(slot);
+  lastOf.set(slot, s);
+  if (lastOf.size > 400) lastOf.delete(lastOf.keys().next().value);
+  return s;
 }
 
 // Sprites drawn in the background: a worker rasterizes them (`sprite-worker.js`, given `job`, a

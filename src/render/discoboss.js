@@ -191,7 +191,7 @@ export function drawDiscoBoss(ctx, m, x, y, time) {
       ? { pose: 'walk', time, facing: dir, seed: 0, scale: SCALE, body: { tilt: -0.03 }, flash: m.flash > 0 ? 0.12 : 0 }
       : { pose: 'idle', time, facing: dir, seed: 0, scale: SCALE, body: pz.body, rig: pz.rig, flash: m.flash > 0 ? 0.12 : 0, alpha: m.hp <= 0 ? Math.max(0, 1 - Math.max(0, (m.dying ?? 0) - 3.4) * 2) : 1 };
   if (b.walking) look.dance = 'proud';
-  drawHero(ctx, look, null, x, y, state);
+  drawHero(ctx, look, null, x, y, { ...state, urgent: true });
 }
 
 // ---------- Telegraphs and hits ----------

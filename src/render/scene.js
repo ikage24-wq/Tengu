@@ -226,7 +226,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const low = !world.map.isTown && world.char.hp < (world.stats?.maxHp ?? 1) * 0.3;
   // Vanish (an Assassin's buff) leaves her a faint shadow until she strikes out of it.
   const vanished = (world.char.buffs.vanish?.until ?? 0) > world.now;
-  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : vanished ? 0.3 : blink ? 0.45 : 1, job: world.char.job, ready, low };
+  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : vanished ? 0.3 : blink ? 0.45 : 1, job: world.char.job, ready, low, urgent: true };
   const buffs = world.dead ? {} : world.char.buffs;
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);

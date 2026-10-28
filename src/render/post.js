@@ -32,10 +32,11 @@ const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 // ---------- Glow ----------
 
 // The soft glow (the player's pick, the same as the effect strips' own, `FXHD` in tools/fx-art.js):
-// effects are drawn into a layer of their own, and once more into a small one (a quarter of the
-// screen's size). Only the bright parts of that copy are kept, so dark outlines never smudge; it
-// is blurred, laid down first, and the effects go on top of their glow. The effect strips carry
-// their glow already, so they sit the small copy out (`gfx.glowPass`).
+// effects are drawn once more into a small layer (a quarter of the screen's size). Only the bright
+// parts of that copy are kept, so dark outlines never smudge; it is blurred and stacked up small,
+// laid down in one stretch, and the effects are drawn over their glow. When nothing bright is on
+// screen the glow is skipped. The effect strips carry their glow already, so they sit the small
+// copy out (`gfx.glowPass`).
 const GLOW_SHRINK = 4;
 const GLOW = 3.5;
 const layers = new Map();
@@ -49,29 +50,26 @@ function layer(key, w, h) {
   return c;
 }
 
+// Keeps only the bright parts of the layer; says whether anything is left.
 function brightOnly(c) {
   const g = c.getContext('2d', { willReadFrequently: true });
   const img = g.getImageData(0, 0, c.width, c.height);
   const d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    if (!d[i + 3]) continue;
-    const k = (Math.max(d[i], d[i + 1], d[i + 2]) - 100) / 90;
-    d[i + 3] = k <= 0 ? 0 : k >= 1 ? d[i + 3] : d[i + 3] * k;
+  let any = false;
+  for (let i = 3; i < d.length; i += 4) {
+    if (!d[i]) continue;
+    const k = (Math.max(d[i - 3], d[i - 2], d[i - 1]) - 100) / 90;
+    d[i] = k <= 0 ? 0 : k >= 1 ? d[i] : d[i] * k;
+    if (d[i]) any = true;
   }
-  g.putImageData(img, 0, 0);
+  if (any) g.putImageData(img, 0, 0);
+  return any;
 }
 
 export function drawGlowing(ctx, draw) {
   const W = ctx.canvas.width;
   const H = ctx.canvas.height;
   const m = ctx.getTransform();
-  const art = layer('fxart', W, H);
-  const a = art.getContext('2d');
-  a.setTransform(1, 0, 0, 1, 0, 0);
-  a.clearRect(0, 0, W, H);
-  a.setTransform(m);
-  a.imageSmoothingEnabled = ctx.imageSmoothingEnabled;
-  draw(a);
   const c = layer('glow', Math.ceil(W / GLOW_SHRINK), Math.ceil(H / GLOW_SHRINK));
   const g = c.getContext('2d', { willReadFrequently: true });
   g.setTransform(1, 0, 0, 1, 0, 0);
@@ -84,21 +82,27 @@ export function drawGlowing(ctx, draw) {
   } finally {
     gfx.glowPass = false;
   }
-  brightOnly(c);
-  const soft = layer('glowsoft', c.width, c.height);
-  const s = soft.getContext('2d');
-  s.clearRect(0, 0, soft.width, soft.height);
-  s.filter = `blur(${(GLOW * m.a) / GLOW_SHRINK}px) brightness(1.18)`;
-  s.drawImage(c, 0, 0);
-  s.filter = 'none';
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.globalAlpha = 0.9;
-  for (let i = 0; i < 3; i++) ctx.drawImage(soft, 0, 0, W, H);
-  ctx.globalAlpha = 1;
-  ctx.drawImage(art, 0, 0);
-  ctx.restore();
+  if (brightOnly(c)) {
+    const soft = layer('glowsoft', c.width, c.height);
+    const s = soft.getContext('2d');
+    s.clearRect(0, 0, soft.width, soft.height);
+    s.filter = `blur(${(GLOW * m.a) / GLOW_SHRINK}px) brightness(1.18)`;
+    s.drawImage(c, 0, 0);
+    s.filter = 'none';
+    // Three soft passes, stacked while small, then stretched over the screen once.
+    const sum = layer('glowsum', c.width, c.height);
+    const u = sum.getContext('2d');
+    u.clearRect(0, 0, sum.width, sum.height);
+    u.globalAlpha = 0.9;
+    for (let i = 0; i < 3; i++) u.drawImage(soft, 0, 0);
+    u.globalAlpha = 1;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(sum, 0, 0, W, H);
+    ctx.restore();
+  }
+  draw(ctx);
 }
 
 // ---------- Light ----------

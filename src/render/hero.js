@@ -18,7 +18,7 @@ import { STARTER_OUTFITS, starterHasBack, starterHasHat } from './jobgear/starte
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { R, E, T, F, sprite, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
+import { R, E, T, F, sprite, spriteBudgeted, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
@@ -1969,7 +1969,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   const lookKey = JSON.stringify(look);
   const gk = gearKey(gear);
-  const body = sprite(`hero|${lookKey}|${gk}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
+  // The player (and a boss) is always drawn as they are now; anyone else may wait a frame when
+  // the frame's drawing budget is spent (see spriteBudgeted).
+  const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}`;
+  const buildBody = () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true });
+  const body = state.urgent ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;

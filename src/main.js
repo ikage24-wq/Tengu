@@ -11,7 +11,7 @@ import { createWorld, updateWorld } from './world/world.js';
 import { groundAt } from './world/physics.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
-import { setHd, gfx } from './render/pixel.js';
+import { setHd, gfx, nextFrame } from './render/pixel.js';
 import { FILTERS, drawRetro } from './render/post.js';
 import { createBots, updateBots, botsIn } from './world/bots.js';
 import { partyMembers, shareKill } from './world/party.js';
@@ -141,6 +141,7 @@ function frame(now) {
   const dt = Math.min(0.1, raw);
   last = now;
   watchSpeed(raw);
+  nextFrame();
   const time = now / 1000;
   ctx.setTransform(pixelScale, 0, 0, pixelScale, 0, 0);
   ctx.imageSmoothingEnabled = false;
