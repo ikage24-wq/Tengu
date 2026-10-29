@@ -110,6 +110,19 @@ generic, stiff or clunky:
 
 If something reads as plain, rigid or "default", it isn't done: rework it before showing it.
 
+**Summons are built on a player character, with a new rig (the player's standing rule, for every
+summon and companion).** Every summon (a companion, a shikigami, a guardian, anything a job calls
+to fight beside it) starts from the player character (the hero's body, parts and drawing, so it
+belongs in the game's look), and then gets:
+- a new rig of its own: its own skeleton, poses and joints on top of that base, never the
+  player's moves and never another summon's (not Snow wolf's, not the Spirit Doll's);
+- new animations of its own: very, very smooth and expressive, with anticipation, overshoot,
+  follow-through and overlap, idle life and personality in every move, unique to it;
+- a unique look: its own outfit, hair, ears, tail, face and props (draw new parts freely), and its
+  own size and silhouette where the design calls for it (bigger or smaller, never stretched).
+Never take a shortcut by reusing another character's rig or animations, and never draw a summon
+from scratch outside the player-character base.
+
 **Freedom to make it better (the player's standing rule).** The player always wants things better,
 so you have broad freedom to improve whatever you're working on: redraw, rework, add, or replace
 art, effects, animation, moves and feel when it raises the quality, without asking first. That
