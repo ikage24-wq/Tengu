@@ -15,6 +15,7 @@ import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
 import { STARTER_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
+import { GUARDIAN_OUTFIT_KEYS } from './jobgear/guardian.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
@@ -178,7 +179,7 @@ function popOf(c) {
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
-  const style = OUTFIT_STYLES.includes(look.outfit) ? look.outfit : 'casual';
+  const style = OUTFIT_STYLES.includes(look.outfit) || GUARDIAN_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
   // Where nothing is equipped, the outfit picked in the creator.
   const starter = { family: 'starter', design: style, tier: style, color: outfit, pal: starterPalette(outfit, look.skinTone ?? '#fff0e6') };
   // A real hero's gear (not a preview or a townsperson, who pass none): where the top, bottoms or

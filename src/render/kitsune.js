@@ -3,18 +3,20 @@
 // with a rig and animations of her own on top:
 //   - her look, "Silver Moon" (the player's pick), in new parts drawn for her: a long silver-white
 //     hime cut, tall fox ears and a great fox tail both tipped vermilion, amber eyes with kitsune
-//     shrine make-up, and a shrine maiden's dress; drawn a good deal bigger than the Maiden (the
-//     whole figure scaled, never stretched);
+//     shrine make-up, and a shrine queen's layered crimson robes with a gold obi and gold hair
+//     ornaments (jobgear/guardian.js); drawn a good deal bigger than the Maiden (the whole figure
+//     scaled, never stretched);
 //   - her bearing: a very strong woman, proud, cold and not friendly at all. She stands like a
-//     warlord: feet planted wide, chin up, a heavy-lidded stare, the naginata gripped out at her
+//     warlord: feet planted wide, chin up, a narrow-eyed, bored stare (nothing here is worth her
+//     frown: her brows only draw down when she strikes), the naginata gripped out at her
 //     side with its butt on the ground and her other arm hanging; she walks slow and unbothered,
 //     the naginata striking the ground like a staff, a faint aura of spirit light about her feet,
 //     and never hurries: left behind, she dissolves into fox fire and steps out of it again at the
 //     Maiden's side; she never smiles, never hurries a strike;
-//   - her naginata: a huge, ornate glaive taller than she is (a lacquered vermilion haft bound in
-//     gold, a long curved blade with a groove down it, a gold collar, a great red tassel with a
-//     bell), which she handles with ease: it twirls in her hand, sweeps in great arcs, and is
-//     planted with a stamp;
+//   - her naginata, a god's weapon: a huge glaive taller than she is (an ivory haft wound with
+//     gold, a gold sun-disc halo behind a long glowing blade engraved down its groove, shide paper
+//     streamers and a red tassel with a bell, motes of light drifting round it), which she handles
+//     with ease: it twirls in her hand, sweeps in great arcs, and is planted with a stamp;
 //   - her rig: the whole figure leans from the hips and lunges and rises (drawPosed's `lean`), every
 //     number of a pose rides a spring to the next (the body slower and fluid, the hands and blade
 //     quicker), and over it all a layer of life that never stops: breath, a slow shift of weight,
@@ -27,7 +29,7 @@ import { KMOVES, CALL, MOONFALL } from '../world/kitsune.js';
 
 export const KITSUNE_LOOK = {
   hairStyle: 'hime', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
-  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'sharp', face: 'cool', lid: 0.4, outfit: 'miko', outfitColor: '#ffffff', marks: ['kitsune'],
+  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'sharp', face: 'cool', lid: 0.62, outfit: 'shrinequeen', outfitColor: '#ffffff', marks: ['kitsune'],
 };
 // She's big: the whole figure scaled up (never stretched).
 const SCALE = 1.6;
@@ -493,8 +495,9 @@ export function drawKitsune(ctx, world, k, cam, time) {
 
   const x = k.x - cam.x;
   const y = k.y - cam.y;
-  // Her brows: always stern, drawn down hard when she strikes or is crossed.
-  const brows = P.brows === 'knit' ? [[-0.4, 0.95], [-0.4, 0.95]] : [[-0.15, 0.55], [-0.15, 0.55]];
+  // Her brows: level and unbothered (she's bored), drawn down hard only when she strikes or is
+  // crossed.
+  const brows = P.brows === 'knit' ? [[-0.4, 0.95], [-0.4, 0.95]] : [[0, 0.2], [0, 0.2]];
   const rig = {
     tx: q(P.tx + 0.35 * shift * calm), by: q(P.by + 0.3 * breath * calm), hx: q(P.hx + Math.max(-1.6, Math.min(1.6, head)) + 0.2 * shift * calm), hy: q(P.hy + 0.22 * breath * calm),
     tilt: deg(P.tilt + 1.2 * shift * calm), frontArm: [q(P.hand[0]), q(P.hand[1] + 0.25 * breath * calm)], backArm: [q(P.free[0]), q(P.free[1] + 0.3 * breath * calm)], armSide: 1,
@@ -505,7 +508,8 @@ export function drawKitsune(ctx, world, k, cam, time) {
     hair: q(Math.max(-3, Math.min(3, hair))), hairTip: q(Math.max(-4, Math.min(4, tip))), hairLift: Math.abs(hair) > 1.6 ? -1 : 0, hairWave: Math.floor((((time / 1.7) % 1) + 1) % 1 * 8),
     eyes: P.eyes ?? blinkOf(time), face: { brows },
   };
-  const look = { ...KITSUNE_LOOK, mouth: P.mouth ?? undefined };
+  // (`k.look` can dress her differently: tools/kitsune-outfits.html.)
+  const look = { ...KITSUNE_LOOK, ...k.look, mouth: P.mouth ?? undefined };
   // The naginata goes behind her while it's upright or slung back, in front when it's out at them.
   const ang = ((P.pole % TAU) + TAU) % TAU;
   const out = (ang > 0.9 && ang < 2.8) || P.hand[0] > 5;
@@ -538,27 +542,43 @@ function blinkOf(t) {
 }
 
 // ---------- The naginata ----------
-// A huge, ornate glaive, taller than she is: a lacquered vermilion haft bound with gold rings and a
-// gold butt cap, a gold collar, a long curved blade with a groove down it and a bright edge, and a
-// great red tassel with a gold bell that swings from the collar on its own spring. Drawn from her
-// hand along `ang` (0 up, + forward), held at `grip` along it, in her body px.
+// A god's weapon, a huge glaive taller than she is: an ivory haft wound with a gold spiral and gold
+// bands, a vermilion grip, an ornate gold pommel ring; at its head a gold sun-disc halo with its
+// rays behind a gold collar, and a long, curved blade of white light with a gold edge and a
+// vermilion line engraved down its groove, glowing softly. Shide (zigzag paper streamers) and a
+// red tassel with a gold bell hang from the collar and swing on their own springs, and motes of
+// light drift slowly round the blade. Drawn from her hand along `ang` (0 up, + forward), held at
+// `grip` along it, in her body px.
 const HAFT = 70;
-const BLADE = 26;
+const BLADE = 30;
+const IVORY = '#f8f2e6';
+const IVORY_DK = '#b8a88e';
+const GOLD = '#f2c94c';
+const GOLD_DK = '#8a6a1a';
+const VER = '#d8352c';
+function path(c, pts, close = true) {
+  c.beginPath();
+  c.moveTo(...pts[0]);
+  for (const pt of pts.slice(1)) c.lineTo(...pt);
+  if (close) c.closePath();
+}
 function paintNaginata(c, hand, flip, ang, grip, st, dt, time) {
-  // The tassel swings after the blade's motion.
+  // The tassel and the streamers swing after the blade's motion.
   const swing = st.poleLast == null ? 0 : (ang - st.poleLast) / Math.max(dt, 1e-3);
   st.poleLast = ang;
   [st.tassel, st.tasselV] = spring(st.tassel ?? 0, st.tasselV ?? 0, -ang - swing * 0.06, 34, 3.6, dt);
+  [st.shide, st.shideV] = spring(st.shide ?? 0, st.shideV ?? 0, -ang - swing * 0.09, 26, 3, dt);
   c.save();
   c.translate(hand[0], hand[1]);
   if (flip) c.scale(-1, 1);
   c.rotate(ang);
   c.scale(SCALE, SCALE);
   c.lineCap = 'round';
+  c.lineJoin = 'round';
   const top = -HAFT * (1 - grip);
   const bot = HAFT * grip;
-  // The haft.
-  for (const [w, col] of [[3, '#3a1212'], [2, '#c8302a']]) {
+  // The haft: ivory, outlined, with a gold spiral wound down it.
+  for (const [w, col] of [[3.2, '#3a2a1a'], [2.2, IVORY]]) {
     c.strokeStyle = col;
     c.lineWidth = w;
     c.beginPath();
@@ -566,95 +586,161 @@ function paintNaginata(c, hand, flip, ang, grip, st, dt, time) {
     c.lineTo(0, top);
     c.stroke();
   }
-  c.strokeStyle = '#ff8a7a';
-  c.lineWidth = 0.6;
+  c.strokeStyle = IVORY_DK;
+  c.lineWidth = 0.5;
   c.beginPath();
-  c.moveTo(-0.5, bot - 2);
-  c.lineTo(-0.5, top + 2);
+  c.moveTo(0.6, bot - 2);
+  c.lineTo(0.6, top + 2);
   c.stroke();
-  // Gold rings, and the gold butt cap.
-  c.fillStyle = '#e8c45a';
-  c.strokeStyle = '#8a6a1a';
-  c.lineWidth = 0.35;
-  for (const u of [0.08, 0.36, 0.64, 0.9]) {
-    c.fillRect(-1.7, lerp(top, bot, u) - 0.8, 3.4, 1.6);
-    c.strokeRect(-1.7, lerp(top, bot, u) - 0.8, 3.4, 1.6);
-  }
-  c.beginPath();
-  c.moveTo(-1.6, bot - 2);
-  c.lineTo(1.6, bot - 2);
-  c.lineTo(1, bot + 1.4);
-  c.lineTo(-1, bot + 1.4);
-  c.closePath();
-  c.fill();
-  c.stroke();
-  // The tassel and its bell, hanging from the collar and swinging.
-  c.save();
-  c.translate(-1, top + 1);
-  c.rotate((st.tassel ?? 0) + Math.sin(time * 2.1) * 0.08);
-  c.strokeStyle = '#e0453a';
-  c.lineWidth = 1.3;
-  c.beginPath();
-  c.moveTo(0, 0);
-  c.quadraticCurveTo(-1, 4, 0, 8);
-  c.stroke();
-  c.fillStyle = '#e8c45a';
-  c.beginPath();
-  c.arc(0, 8.6, 1.3, 0, TAU);
-  c.fill();
-  c.fillStyle = '#e0453a';
-  c.beginPath();
-  c.moveTo(-1.8, 9.6);
-  c.lineTo(1.8, 9.6);
-  c.lineTo(1.4 + Math.sin(time * 3) * 0.3, 15);
-  c.lineTo(-1.4 + Math.sin(time * 3 + 1) * 0.3, 15);
-  c.closePath();
-  c.fill();
-  c.strokeStyle = '#b02828';
-  c.lineWidth = 0.3;
-  for (const dx of [-0.8, 0, 0.8]) {
+  c.strokeStyle = GOLD;
+  c.lineWidth = 0.55;
+  for (let y = top + 6; y < bot - 6; y += 3.2) {
     c.beginPath();
-    c.moveTo(dx, 10);
-    c.lineTo(dx * 1.1, 14.6);
+    c.moveTo(-1.1, y);
+    c.lineTo(1.1, y + 1.6);
     c.stroke();
   }
-  c.restore();
-  // The collar.
-  c.fillStyle = '#e8c45a';
-  c.strokeStyle = '#8a6a1a';
+  // The vermilion grip where her hand holds it, and gold bands.
+  c.fillStyle = VER;
+  c.fillRect(-1.25, -4, 2.5, 8);
+  c.fillStyle = GOLD;
+  c.strokeStyle = GOLD_DK;
+  c.lineWidth = 0.35;
+  for (const y of [-4.6, 4, lerp(top, bot, 0.12), lerp(top, bot, 0.88)]) {
+    c.fillRect(-1.8, y - 0.7, 3.6, 1.4);
+    c.strokeRect(-1.8, y - 0.7, 3.6, 1.4);
+  }
+  // The pommel: a gold cap ending in a ring.
+  path(c, [[-1.8, bot - 2], [1.8, bot - 2], [1.2, bot + 1], [-1.2, bot + 1]]);
+  c.fill();
+  c.stroke();
+  c.beginPath();
+  c.arc(0, bot + 2.6, 1.6, 0, TAU);
+  c.lineWidth = 0.8;
+  c.strokeStyle = GOLD;
+  c.stroke();
+  // The sun-disc halo behind the head of the weapon, its rays turning slowly.
+  const hy = top - 1;
+  c.save();
+  c.translate(0, hy);
+  c.globalAlpha *= 0.95;
+  c.fillStyle = GOLD;
+  c.strokeStyle = GOLD_DK;
+  c.lineWidth = 0.3;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * TAU + time * 0.25;
+    const r1 = 6.4;
+    const r2 = i % 2 ? 8.4 : 9.6;
+    path(c, [[Math.cos(a - 0.12) * r1, Math.sin(a - 0.12) * r1], [Math.cos(a) * r2, Math.sin(a) * r2], [Math.cos(a + 0.12) * r1, Math.sin(a + 0.12) * r1]]);
+    c.fill();
+  }
+  c.beginPath();
+  c.arc(0, 0, 6.6, 0, TAU);
+  c.lineWidth = 1.3;
+  c.strokeStyle = GOLD;
+  c.stroke();
+  c.beginPath();
+  c.arc(0, 0, 5.4, 0, TAU);
   c.lineWidth = 0.4;
+  c.strokeStyle = VER;
+  c.stroke();
+  c.restore();
+  // Shide: two zigzag paper streamers, and the tassel with its bell, swinging.
+  for (const [dx, k] of [[1.4, 1], [-1.6, 0.8]]) {
+    c.save();
+    c.translate(dx, top + 1.4);
+    c.rotate((st.shide ?? 0) * k + Math.sin(time * 1.7 + dx) * 0.1);
+    c.fillStyle = '#ffffff';
+    c.strokeStyle = '#c9c2d8';
+    c.lineWidth = 0.25;
+    path(c, [[0, 0], [1.6, 0], [1.6, 2.6], [3, 2.6], [3, 5.4], [1.6, 5.4], [1.6, 8.4], [0.2, 8.4], [0.2, 5.4], [-1.2, 5.4], [-1.2, 2.6], [0, 2.6]]);
+    c.fill();
+    c.stroke();
+    c.restore();
+  }
+  c.save();
+  c.translate(-0.6, top + 1);
+  c.rotate((st.tassel ?? 0) + Math.sin(time * 2.1) * 0.08);
+  c.strokeStyle = '#e0453a';
+  c.lineWidth = 1.2;
   c.beginPath();
-  c.moveTo(-2.2, top + 1);
-  c.lineTo(2.2, top + 1);
-  c.lineTo(2.6, top - 2.6);
-  c.lineTo(-2.6, top - 2.6);
-  c.closePath();
+  c.moveTo(0, 0);
+  c.quadraticCurveTo(-1, 4, 0, 9);
+  c.stroke();
+  c.fillStyle = GOLD;
+  c.beginPath();
+  c.arc(0, 9.6, 1.3, 0, TAU);
+  c.fill();
+  c.fillStyle = '#e0453a';
+  path(c, [[-1.6, 10.6], [1.6, 10.6], [1.3 + Math.sin(time * 3) * 0.3, 15.6], [-1.3 + Math.sin(time * 3 + 1) * 0.3, 15.6]]);
+  c.fill();
+  c.restore();
+  // The collar: an ornate gold cup with flaring cloud-curl guards.
+  c.fillStyle = GOLD;
+  c.strokeStyle = GOLD_DK;
+  c.lineWidth = 0.4;
+  path(c, [[-1.8, top + 1.6], [1.8, top + 1.6], [2.6, top - 1], [4.6, top - 2.2], [3, top - 3.4], [-3, top - 3.4], [-4.6, top - 2.2], [-2.6, top - 1]]);
   c.fill();
   c.stroke();
-  // The blade: long and curving forward, silver, with a groove down it and a bright cutting edge.
-  const b0 = top - 2.6;
+  c.fillStyle = VER;
   c.beginPath();
-  c.moveTo(-2, b0);
-  c.bezierCurveTo(-2.6, b0 - BLADE * 0.45, -1, b0 - BLADE * 0.85, 3.4, b0 - BLADE);
-  c.bezierCurveTo(4.4, b0 - BLADE * 0.62, 3.8, b0 - BLADE * 0.3, 2, b0);
-  c.closePath();
-  c.fillStyle = '#e6ecf6';
+  c.arc(0, top - 1, 0.9, 0, TAU);
   c.fill();
-  c.strokeStyle = '#6f7d9a';
-  c.lineWidth = 0.5;
+  // The blade: long and curving forward, white light with a gold back and edge, a vermilion line
+  // engraved down its groove; it glows.
+  const b0 = top - 3.4;
+  const blade = () => {
+    c.beginPath();
+    c.moveTo(-2.2, b0);
+    c.bezierCurveTo(-2.8, b0 - BLADE * 0.45, -1, b0 - BLADE * 0.85, 3.8, b0 - BLADE);
+    c.bezierCurveTo(4.8, b0 - BLADE * 0.62, 4.2, b0 - BLADE * 0.3, 2.2, b0);
+    c.closePath();
+  };
+  c.save();
+  c.shadowColor = 'rgba(255, 236, 170, 0.9)';
+  c.shadowBlur = 10;
+  blade();
+  c.fillStyle = '#fbfaf2';
+  c.fill();
+  c.restore();
+  blade();
+  c.strokeStyle = GOLD_DK;
+  c.lineWidth = 0.55;
   c.stroke();
-  c.strokeStyle = '#a9b6cc';
-  c.lineWidth = 0.6;
+  c.strokeStyle = GOLD;
+  c.lineWidth = 0.7;
   c.beginPath();
-  c.moveTo(-0.6, b0 - 1);
-  c.bezierCurveTo(-0.9, b0 - BLADE * 0.42, 0, b0 - BLADE * 0.72, 1.6, b0 - BLADE * 0.86);
+  c.moveTo(-2.2, b0 - 0.6);
+  c.bezierCurveTo(-2.8, b0 - BLADE * 0.45, -1, b0 - BLADE * 0.85, 3.6, b0 - BLADE + 0.4);
   c.stroke();
+  c.strokeStyle = VER;
+  c.lineWidth = 0.55;
+  c.beginPath();
+  c.moveTo(-0.5, b0 - 1.6);
+  c.bezierCurveTo(-0.8, b0 - BLADE * 0.42, 0.2, b0 - BLADE * 0.7, 1.8, b0 - BLADE * 0.84);
+  c.stroke();
+  // Engraved marks down the groove, in gold.
+  c.fillStyle = GOLD;
+  for (const u of [0.2, 0.36, 0.52]) c.fillRect(-0.9 + u * 1.2, b0 - BLADE * u - 0.5, 1, 1);
   c.strokeStyle = '#ffffff';
-  c.lineWidth = 0.75;
+  c.lineWidth = 0.8;
   c.beginPath();
-  c.moveTo(1.8, b0 - 1.2);
-  c.bezierCurveTo(3.4, b0 - BLADE * 0.3, 4, b0 - BLADE * 0.6, 3.4, b0 - BLADE + 1.2);
+  c.moveTo(2, b0 - 1.2);
+  c.bezierCurveTo(3.8, b0 - BLADE * 0.3, 4.4, b0 - BLADE * 0.6, 3.8, b0 - BLADE + 1.2);
   c.stroke();
+  // Motes of light drifting slowly round the blade.
+  for (let i = 0; i < 4; i++) {
+    const a = time * (0.7 + i * 0.13) + i * 1.7;
+    const mx = Math.sin(a) * (4 + i);
+    const my = b0 - BLADE * (0.25 + 0.2 * i) + Math.cos(a * 0.8) * 2;
+    const tw = 0.5 + 0.5 * Math.sin(time * 3 + i * 2);
+    c.globalAlpha = 0.5 + 0.5 * tw;
+    c.fillStyle = i % 2 ? '#fff6c8' : '#ffffff';
+    c.beginPath();
+    c.arc(mx, my, 0.45 + 0.35 * tw, 0, TAU);
+    c.fill();
+  }
+  c.globalAlpha = 1;
   // Moonfall's charge: a gathering ball of light on the blade.
   if ((st.glow ?? 0) > 0.03) {
     c.save();

@@ -12,6 +12,7 @@ import { R, E, T, F, shade } from '../pixel.js';
 import { torsoPts, band, MID, button, limb } from '../figure.js';
 import { frill, heart, flower, hoop, dome } from './casual.js';
 import { fur } from './kit.js';
+import { GUARDIAN_OUTFITS } from './guardian.js';
 
 const WHITE = '#ffffff';
 const CREAM = '#fff6ec';
@@ -576,7 +577,8 @@ const BASICS = {
 };
 
 export const STARTER_OUTFITS = Object.keys(OUTFITS);
-const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? OUTFITS.casual);
+// (The kitsune guardian's outfits are drawn the same way, but never offered in the creator.)
+const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? GUARDIAN_OUTFITS[t] ?? OUTFITS.casual);
 
 export default {
   hat: (t, p, m) => of(t).hat?.(p, m) ?? [],
