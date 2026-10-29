@@ -870,7 +870,7 @@ Object.assign(FRINGES, {
   // A few big, blunt-tipped spikes falling over the brow, the longest between the eyes.
   onispike: { pts: [[24.2, 13.6], [22, 9.8], [20.2, 15], [17.8, 10.2], [15.6, 16.6], [13.2, 10.2], [11, 15], [9.2, 9.8], [6.8, 13.6]], lean: 0.3 },
   // Messy and swept to the far side, long ragged points falling past the far eye.
-  onimessy: { pts: [[24.4, 12], [23.2, 9.6], [21.8, 12.6], [20.4, 9.6], [18.6, 13.6], [17.2, 10.2], [15.2, 14.4], [14, 10.6], [11.8, 15], [10.8, 11.8], [8.2, 14.6]], lean: -0.8 },
+  onimessy: { pts: [[24.4, 12.6], [23.2, 11.2], [21.8, 13.2], [20.4, 11.4], [18.6, 14], [17.2, 11.8], [15.2, 14.6], [14, 12.2], [11.8, 15], [10.8, 12.8], [8.2, 14.6]], lean: -0.8 },
   // Short and choppy, pushed up off the brow (the hair all dragged up into the topknot).
   onishort: { pts: [[24.4, 11.6], [22.8, 9.2], [21, 11], [19, 8.4], [16.8, 10], [14.6, 8.2], [12.4, 10], [10.2, 8.6], [8.4, 10.6], [6.6, 11.6]], lean: 0.4 },
 });

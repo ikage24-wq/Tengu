@@ -573,8 +573,10 @@ function faceExtras(extra) {
       continue;
     }
     if (e === 'foremark') {
-      // A crimson diamond on her brow with a dot either side.
-      out.push(F(T([[FACE_X, 11.4], [FACE_X + 0.9, 12.8], [FACE_X, 14.2], [FACE_X - 0.9, 12.8]], '#d8303a')), F(E(FACE_X - 1.8, 13.4, 0.3, 0.3, '#d8303a')), F(E(FACE_X + 1.8, 13.4, 0.3, 0.3, '#d8303a')));
+      // A dark diamond on her brow with a gold heart and a gold dot either side (it reads on any
+      // skin, red included).
+      out.push(F(T([[FACE_X, 11.2], [FACE_X + 1, 12.8], [FACE_X, 14.4], [FACE_X - 1, 12.8]], '#3a0a14')), F(T([[FACE_X, 12.1], [FACE_X + 0.45, 12.8], [FACE_X, 13.5], [FACE_X - 0.45, 12.8]], '#f2c94c')),
+        F(E(FACE_X - 1.9, 13.4, 0.32, 0.32, '#f2c94c')), F(E(FACE_X + 1.9, 13.4, 0.32, 0.32, '#f2c94c')));
       continue;
     }
     if (e === 'scar') {
