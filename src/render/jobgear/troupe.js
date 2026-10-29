@@ -226,4 +226,15 @@ export const TROUPE_OUTFITS = {
     hat: () => [...horn(9.6, 5.6, 11, 2, -4.6), ...horn(21.4, 5.6, 11, 2, 4.6)],
   },
 };
+// Her battle kimono with other horns: one snapped off short (a jagged break), a single big horn
+// in the middle of her brow, or two long horns swept straight back.
+function brokenHorn(x, y) {
+  return [T([[x - 2.3, y], [x + 2.3, y], [x + 1.6, y - 4.2], [x + 0.4, y - 3.2], [x - 0.6, y - 4.8], [x - 1.8, y - 3.6]], CRIMSON),
+    F(T([[x - 1.4, y - 3.6], [x - 0.6, y - 4.6], [x + 0.4, y - 3.1], [x + 1.4, y - 4]], '#3a0a10')), F(limb(x - 1.2, y - 0.6, x + 1.2, y - 0.8, 0.35, 0.35, CRIMSON_DK))];
+}
+Object.assign(TROUPE_OUTFITS, {
+  onibattle_broken: { ...TROUPE_OUTFITS.onibattle, hat: () => [...brokenHorn(10, 5.2), ...crimsonHorn(21, 5.2, 10.6, 2.3, 4.6)] },
+  onibattle_one: { ...TROUPE_OUTFITS.onibattle, hat: () => [...crimsonHorn(15.5, 4.6, 13, 2.9, 1.2)] },
+  onibattle_swept: { ...TROUPE_OUTFITS.onibattle, hat: () => [...crimsonHorn(9.6, 5.4, 13, 2.1, -9), ...crimsonHorn(21.4, 5.4, 13, 2.1, 9)] },
+});
 export const TROUPE_OUTFIT_KEYS = Object.keys(TROUPE_OUTFITS);

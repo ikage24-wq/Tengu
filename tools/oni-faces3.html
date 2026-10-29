@@ -1,0 +1,57 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: more of the oni's "sleepy menace" look (the player's pick, oni-faces.html no. 3):
+// other horns, colours, skin and her expressions, close up.
+import { drawPosed } from '../src/render/hero.js';
+import { paintKanabo } from '../src/render/oni.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const BASE = { hairStyle: 'onibob', hairColor: '#eceaf2', skinTone: '#ffe6da', eyeColor: '#ffb02a', eyeStyle: 'onitare', browStyle: 'sharp', earStyle: 'pointed', outfit: 'onibattle', outfitColor: '#ffffff', mouth: 'onismirk', marks: ['foremark'], lid: 0.25 };
+const SLEEPY = { brows: [[0, 0.3], [0, 0.3]] };
+const SAMPLES = [
+  ['A. As she was', {}, SLEEPY],
+  ['B. Broken horn, red eyes', { outfit: 'onibattle_broken', eyeColor: '#ff3a3a', marks: ['foremark', 'warpaint'] }, SLEEPY],
+  ['C. One horn, crimson tips', { outfit: 'onibattle_one', hairTip: '#d8303a', marks: ['bandaid'] }, SLEEPY],
+  ['D. Black hair, swept horns', { outfit: 'onibattle_swept', hairColor: '#2a2230', hairTip: '#c8c8dc', eyeColor: '#c98aff' }, SLEEPY],
+  ['E. Red skin', { skinTone: '#e4604e', eyeColor: '#ffd23a' }, SLEEPY],
+  ['F. Bored', { mouth: 'bored', marks: ['foremark', 'onifang'], lid: 0.45 }, { brows: [[0.05, 0.15], [0.05, 0.15]] }],
+  ['G. Annoyed', { mouth: 'frown', marks: ['foremark', 'onifang'], lid: 0.35 }, { brows: [[-0.4, 0.95], [-0.4, 0.95]] }],
+  ['H. Yawning', { mouth: 'yawn' }, { brows: [[0.1, -0.1], [0.1, -0.1]], eyes: 'blink' }],
+];
+const S = 5;
+const CW = 300;
+const CH = 330;
+const COLS = 4;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * COLS;
+canvas.height = CH * Math.ceil(SAMPLES.length / COLS);
+nextFrame();
+ctx.fillStyle = '#bfe6d2';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+SAMPLES.forEach(([name, look, face], i) => {
+  const col = i % COLS;
+  const row = Math.floor(i / COLS);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(col * CW, row * CH, CW, CH);
+  ctx.clip();
+  // Drawn big and cropped to her head and shoulders.
+  const cx = col * CW + CW / 2 + 6;
+  const gy = row * CH + 420;
+  setHd(true, S * 1.6);
+  const { eyes, ...rest } = face;
+  drawPosed(ctx, { ...BASE, ...look }, cx, gy, { frontArm: [1.5, -8], backArm: [-1, -2.4], hx: 0.4, hy: -0.4, tilt: -2, face: rest, ...(eyes ? { eyes } : {}) }, {
+    scale: S * 1.6, facing: 1, hold: 'front',
+    under: (c, hand, flip) => paintKanabo(c, hand, flip, -0.55, S * 1.6, 'crimson', 1),
+  });
+  ctx.restore();
+  ctx.fillStyle = '#2a2440';
+  ctx.font = 'bold 17px Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(name, col * CW + 10, row * CH + 24);
+});
+window.done = true;
+</script></body></html>
