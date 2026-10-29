@@ -18,6 +18,7 @@ import { STARTER_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from 
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
+import { paintFan } from './props.js';
 import { R, E, T, F, sprite, spriteBudgeted, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
@@ -2188,6 +2189,23 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   // (A swing's smear is the effect pack's slash, drawn with the blow; see effects.js bladeCut.)
 
+  // A folding fan in the free (back) hand, for moves that dance with one (`mv.fan`, how far it's
+  // open, 0-1; `mv.fanA` its angle, degrees, 0 = straight up, + tipping forward): drawn from where
+  // that hand really is, over the body so it always reads (a back hand reaching behind her is
+  // out past her silhouette anyway); `mv.fanBack: true` tucks it behind instead.
+  const drawFan = () => {
+    if (mv?.fan == null || rig.view === 'back') return;
+    const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(sx(squashX(wx + rig.tx)), sy(squashY(wy + bodyY)));
+    if (flip) ctx.scale(-1, 1);
+    ctx.rotate((((mv.fanA ?? 0) - 90) * Math.PI) / 180);
+    paintFan(ctx, scale * 1.3, mv.fan);
+    ctx.restore();
+  };
+  if (mv?.fanBack) drawFan();
+
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
@@ -2215,6 +2233,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // the heavy ink of a swinging weapon arm.
   const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+  if (mv && !mv.fanBack) drawFan();
 }
 
 // A bow's string drawn back to the hand, in the bow's own frame (grip at the origin, tips up and

@@ -7,13 +7,14 @@
 // gems appear from Silver and multiply, spikes, fins and engraved runes come at Runic, and from
 // Starsteel each material crowns the weapon with its own motif (see `motif`).
 
-import { R, E, P, T, F } from './pixel.js';
+import { R, E, P, T, F, mix } from './pixel.js';
 import { WHITE, GOLD, STRING, STONE, PRISM, horns, demonEye, skull, wings, halo, hazard, chain, sawDisc, neon, vertebrae, runes, star, crescent, sunburst, crown, tendril } from './weapon-kit.js';
 
 const FLAP = [0, -1, -2, -1.5, 0, 1];
 const flapAt = (f) => FLAP[f % 6];
 const SOUL = '#6bff9a';
 const HORN = '#4a2a35';
+const IVORY_HANDLE = '#f6efe0';
 
 // Common heads use stone instead of wood for axes, spears, and gauntlet stars.
 const headLook = (m) => (m.rank === 0 ? { ...m, ...STONE } : m);
@@ -741,109 +742,129 @@ function spear(m0, f) {
   return { shapes: s, blade: [top, sock], reach, a };
 }
 
-// ---------- Wands and staves ----------
+// ---------- Wands and staves: the Spirit Mage's shrine tools ----------
+// Remade for the Spirit Mage (the old orb-topped wands and staves are retired). A wand is a kagura
+// suzu, the bell staff a shrine maiden dances with: a lacquered handle, tiers of little gold bells
+// on a slender stem (more tiers as it ranks up), and five-colour ribbons trailing from its end. A
+// staff is a gohei on a tall pole: zigzag paper streamers hanging from a crossbar at the top, a
+// ring of rattling bells round the head (a shakujo's), and a crowning ornament. Endgame themes keep
+// the shrine shape in their own materials. Ribbons and streamers sway frame to frame.
 
-// The head of a wand or staff for a look, centered on (0, y). `big` is 1 for wands and ~1.6 for
-// staves.
-function focus(m, f, y, big, s, a, reach) {
-  const r = m.rank;
-  const th = m.theme;
-  const z = big;
-  a.head = [0, y];
-  a.tip = [0, y - 5 * z];
-  if (th === 'holy') {
-    s.push(...wings(0, y + 1, 7 * z, flapAt(f), [-1, 1], 2.5 * z));
-    s.push(T([[0, y - 5 * z], [3 * z, y], [0, y + 4 * z], [-3 * z, y]], '#fff6dc'), T([[0, y - 4 * z], [2 * z, y], [0, y + 3 * z], [0, y]], WHITE));
-    s.push(...gem(0, y + 0.5, 1.4 * z, m.gem, f));
-    s.push(T([[-4 * z, y - 3 * z], [-2.5 * z, y + 3 * z], [0, y + 5 * z], [2.5 * z, y + 3 * z], [4 * z, y - 3 * z], [3 * z, y - 2.5 * z], [1.8 * z, y + 2.2 * z], [0, y + 3.6 * z], [-1.8 * z, y + 2.2 * z], [-3 * z, y - 2.5 * z]], m.trim));
-    s.push(...halo(0, y - 8 * z, 4.5 * z, 1.6 * z));
-    a.halo = [0, y - 8 * z, 4.5 * z, 1.6 * z];
-    a.wings = [[-6 * z, y], [6 * z, y]];
-    a.tip = [0, y - 8 * z];
-  } else if (th === 'demonic') {
-    s.push(...horns(0, y + 2.5 * z, 4.5 * z, m.trimDark));
-    s.push(E(0, y, 4 * z, 4 * z, m.blade), ...demonEye(0, y, 2 * z));
-    for (const sd of [-1, 1]) s.push(T([[sd * 3 * z, y + 2.5 * z], [sd * 5.5 * z, y + 5 * z], [sd * 2 * z, y + 4 * z]], m.trim));
-    a.eye = [0, y, 2 * z];
-    a.flames = [[-3 * z, y - 3 * z], [3 * z, y - 3 * z], [0, y - 4.5 * z]];
-  } else if (th === 'bone') {
-    const sk = skull(0, y, 3.4 * z, SOUL, m.blade, m.trimDark);
-    if (z > 1.2) s.push(...[-3, -1, 1, 3].map((x) => T([[x * z - 0.8, y - 2.6 * z], [x * z, y - 5.5 * z + Math.abs(x) * 0.6], [x * z + 0.8, y - 2.6 * z]], m.trim)));
-    s.push(...sk.shapes);
-    for (const sd of [-1, 1]) s.push(T([[sd * 2 * z, y + 3 * z], [sd * 5 * z, y + 4 * z], [sd * 5.6 * z, y + 7 * z], [sd * 4.4 * z, y + 5 * z], [sd * 2 * z, y + 4.4 * z]], m.handle));
-    a.eyes = sk.eyes;
-  } else if (th === 'laser') {
-    for (const sd of [-1, 1]) s.push(T([[sd * 1, y + 4 * z], [sd * 4 * z, y + 1 * z], [sd * 4 * z, y - 3 * z], [sd * 3 * z, y - 3 * z], [sd * 3 * z, y + 0.5 * z], [sd * 1, y + 2.5 * z]], m.trim));
-    s.push(F(P(-4 * z, y - 3.5 * z, m.beam)), F(P(4 * z - 1, y - 3.5 * z, m.beam)));
-    a.orbs = [[0, y - 1, 2 * z]];
-    a.beams = [{ pts: [[-3.5 * z, y - 3 * z], [0, y - 1], [3.5 * z, y - 3 * z]], w: 0.6 }];
-    a.emit = [0, y + 3 * z];
-    reach.push([0, y - 6 * z]);
-  } else if (th === 'chainsaw') {
-    s.push(...sawDisc(0, y - 1, 4.5 * z, f, 6, m));
-    s.push(R(-2.5 * z, y + 3 * z, 5 * z, 3 * z, m.trim), ...hazard(-2.5 * z, y + 5 * z, 5 * z, 1.2), R(2.5 * z, y + 3.5 * z, 1.4, 2, m.handleDark));
-    a.exhaust = [3 * z, y + 3.5 * z];
-    a.sparks = [[0, y - 6 * z], [4.5 * z, y - 3 * z]];
-    a.tip = [0, y - 6 * z];
-  } else if (th === 'cyber') {
-    for (const sd of [-1, 1]) s.push(T([[sd * 1, y + 4 * z], [sd * 3.5 * z, y - 1 * z], [sd * 2.5 * z, y - 5 * z], [sd * 2 * z, y - 4.6 * z], [sd * 2.6 * z, y - 1 * z], [sd * 0.6, y + 2.5 * z]], m.blade));
-    const c = m.neon[f % 2];
-    s.push(F(T([[0, y - 3.5 * z], [2 * z, y - 1], [0, y + 1.6 * z], [-2 * z, y - 1]], c)), F(T([[0, y - 2 * z], [1 * z, y - 1], [0, y + 0.2 * z], [-1 * z, y - 1]], m.blade)));
-    s.push(neon(-2.5 * z, y - 4.8 * z, 1, 1, m.neon[1]), neon(2.5 * z - 1, y - 4.8 * z, 1, 1, m.neon[0]));
-    a.ring = [0, y - 1, 5 * z, 1.6 * z];
-    a.neon = [[[0, y - 3.5 * z], [2 * z, y - 1], [0, y + 1.6 * z], [-2 * z, y - 1], [0, y - 3.5 * z]]];
-  } else if (r === 0) {
-    s.push(T([[0, y + 2], [-2 * z, y - 2 * z], [-1 * z, y - 4 * z], [0.5, y - 1]], m.handle), E(1.5 * z, y - 2 * z, 1.8 * z, 1.2 * z, '#8fd36b'), F(P(1.5 * z, y - 2.4 * z, '#c9f2a0')));
-  } else if (r === 1) {
-    s.push(E(0, y, 2.6 * z, 2.6 * z, m.trim), R(-2.6 * z, y - 0.4, 5.2 * z, 0.8, m.trimDark), E(-0.8 * z, y - 0.9 * z, 0.7 * z, 0.7 * z, m.edge));
-  } else {
-    // Progression: a star-shaped mount (rank 2), a ring around a floating crystal (3), prongs
-    // cradling an orb (4), and the ring around the cradle (5). Motifs fill the heart of it.
-    const orn = motif(m, f, { emblem: [0, y], crown: [0, y - 3 * z], top: [0, y - 9 * z], orbit: [0, y], guard: [0, y + 1, 2.5 * z, [-1, 1]] }, 7 * z, a);
-    const bob = [0, -0.6, -1, -0.6, -0.3, 0.2][f % 6];
-    s.push(...orn.back);
-    if (r === 2) {
-      s.push(T([[0, y - 6 * z], [1.8 * z, y - 1.4 * z], [6.6 * z, y - 1.2 * z], [2.8 * z, y + 1.8 * z], [4.2 * z, y + 6.4 * z], [0, y + 3.8 * z], [-4.2 * z, y + 6.4 * z], [-2.8 * z, y + 1.8 * z], [-6.6 * z, y - 1.2 * z], [-1.8 * z, y - 1.4 * z]], m.trim));
-      s.push(...inlay(m, f, -1.5 * z, 1.5 * z, y - 3 * z, y + 3 * z));
-      s.push(...gem(0, y + 0.8, 1.8 * z, gemOf(m, f), f));
-    }
-    if (r === 3 || r === 5) {
-      const R5 = r === 5 ? 6 : 5;
-      if (m.spikes) for (const sd of [-1, 1]) s.push(T([[sd * (R5 - 1) * z, y - 1.5 * z], [sd * (R5 + 2.2) * z, y - 0.5 * z], [sd * (R5 - 1) * z, y + 1.5 * z]], m.trim), T([[-1.2 * z, y - (R5 - 1) * z], [0, y - (R5 + 2.4) * z], [1.2 * z, y - (R5 - 1) * z]], m.trim));
-      s.push(E(0, y, R5 * z, R5 * z, m.trim), E(0, y, (R5 - 1) * z, (R5 - 1) * z, 'none'));
-    }
-    if (r === 3) s.push(T([[0, y - 3 * z + bob], [1.6 * z, y + bob], [0, y + 3 * z + bob], [-1.6 * z, y + bob]], gemOf(m, f)), F(P(-0.5, y - 1.5 + bob, WHITE)));
-    if (r >= 4) {
-      for (const sd of [-1, 1]) s.push(T([[sd * 1, y + 4 * z], [sd * 4 * z, y + 1 * z], [sd * 3 * z, y - 4 * z], [sd * 2.2 * z, y - 1 * z], [sd * 0.6, y + 2.4 * z]], m.trim));
-      s.push(E(0, y - 0.5, 2.6 * z, 2.6 * z, gemOf(m, f)), F(E(-0.8 * z, y - 1.4 * z, 0.7 * z, 0.7 * z, WHITE)));
-    }
-    if (m.rune && r >= 4) s.push(...runes(0, y - 2, y + 1, f, WHITE, m.rune, 4));
-    if (m.rune) a.runes = [0, y - 2, y + 6];
-    a.gem = [0, y - 0.5];
-    s.push(...orn.front);
+// The handle's lacquer by rank: green bamboo, pale wood, then vermilion, then black and gold.
+const LACQUER = ['#cfc070', '#ead2a2', '#d23a34', '#d23a34', '#2a2230', '#2a2230'];
+const LACQUER_DK = ['#a8984c', '#c8aa78', '#9a1e22', '#9a1e22', '#141018', '#141018'];
+const PAPER = '#ffffff';
+const PAPER_SH = '#ddd6ee';
+const RIBBONS = ['#e0303e', '#ffffff', '#ffd36a', '#4f8cd8', '#5fb86a'];
+// Bells: brass on the plainest, then the weapon's own metal, a theme's colour on endgame ones.
+function bellTone(m) {
+  if (m.theme === 'holy') return ['#fff3c4', '#e0b040'];
+  if (m.theme === 'demonic') return ['#4a2434', '#24141f'];
+  if (m.theme === 'bone') return [m.blade, m.bladeDark];
+  if (m.theme === 'laser') return [m.beam ?? m.gem, WHITE];
+  if (m.theme === 'chainsaw') return [m.trim, m.trimDark];
+  if (m.theme === 'cyber') return [m.blade, m.bladeDark];
+  return m.rank <= 1 ? ['#f2c94c', '#b8862a'] : [m.trim, m.trimDark];
+}
+// One little bell: round, its slot, and a glint that hops with the frame.
+function bell(x, y, r, tone, f, slot = '#3a2414') {
+  const g = [[-0.4, -0.45], [-0.2, -0.5], [0, -0.4]][f % 3];
+  return [E(x, y, r, r, tone[0]), F(R(x - r * 0.7, y + r * 0.15, r * 1.4, Math.max(0.35, r * 0.28), slot)), F(P(x + g[0] * r - 0.3, y + g[1] * r - 0.3, WHITE))];
+}
+// Ribbons hanging from (x, y) down `len`, fluttering with the frame.
+function ribbons(x, y, len, n, f) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const sw = flapAt(f + i) * 0.5 + (i - (n - 1) / 2) * 0.9;
+    const w = 0.7;
+    out.push(T([[x - w / 2 + (i - (n - 1) / 2) * 0.5, y], [x + w / 2 + (i - (n - 1) / 2) * 0.5, y], [x + sw + w / 2, y + len * (0.8 + 0.1 * (i % 2))], [x + sw - w / 2, y + len * (0.8 + 0.1 * (i % 2)) + 0.6]], RIBBONS[i % RIBBONS.length]));
   }
+  return out;
+}
+// A zigzag paper streamer (shide) hanging from (x, y): `n` folds `w` wide and `h` tall, swaying.
+function shideOf(x, y, n, w, h, sway, side) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const k = i % 2 ? 1 : -1;
+    const x0 = x + side * i * 0.35 + sway * (i / n);
+    const y0 = y + i * h;
+    out.push(T([[x0 - w / 2, y0], [x0 + w / 2, y0], [x0 + w / 2 - k * w * 0.55, y0 + h], [x0 - w / 2 - k * w * 0.55, y0 + h]], i % 2 ? PAPER_SH : PAPER));
+  }
+  return out;
 }
 
 function wand(m, f) {
   const r = m.rank;
   const th = m.theme;
-  const L = [14, 15, 16, 17, 18, 20][r] + (m.step ?? 0) * 0.4;
-  const y = -L - 3;
+  const H = [7, 7.5, 8, 8.5, 9, 9.5][r] + (m.step ?? 0) * 0.2; // the handle, above the hand
+  const tiers = th ? 3 : [2, 2, 3, 3, 4, 4][r];
+  const tone = bellTone(m);
+  const lac = th === 'holy' ? IVORY_HANDLE : th ? m.handle : mix(LACQUER[r], m.blade, 0.3);
+  const lacDk = th === 'holy' ? '#eadfc8' : th ? m.handleDark : mix(LACQUER_DK[r], m.bladeDark, 0.3);
   const s = [];
-  const a = { blade: [y - 6, -L + 4] };
+  const a = {};
   const reach = [];
-  if (th === 'bone') s.push(...vertebrae(0, -L, 6, 2.4, m));
-  else if (r === 0) s.push(T([[-1, 6], [1, 6], [1.2, -L * 0.5], [0.4, -L], [-0.8, -L], [-0.4, -L * 0.5]], m.handle));
-  else s.push(R(-1, -L, 2, L + 6, th === 'cyber' ? m.blade : m.handle));
-  if (r >= 1 && th !== 'bone') {
-    s.push(R(-1.4, -L * 0.25, 2.8, 1.4, m.trim), R(-1.4, 2, 2.8, 1.4, m.trim));
-    if (!th && r >= 3) s.push(R(-1.4, -L + 0.5, 2.8, 1.4, m.trim), E(0, 7, 1.6, 1.3, m.trim));
-    if (m.gems >= 2) s.push(...gem(0, -L * 0.25 + 0.7, 0.9, gemOf(m, f, 1), f));
-    if (th === 'cyber') s.push(neon(-1, -L * 0.6, 2, 0.8, m.neon[f % 2]), neon(-1, -L * 0.45, 2, 0.8, m.neon[(f + 1) % 2]));
-    if (m.rune) s.push(...runes(0, -L + 2.5, -L * 0.35, f, m.rune, m.runeDim, 4));
-    if (th === 'demonic') s.push(T([[-1, -L * 0.6], [-3, -L * 0.7], [-1, -L * 0.5]], m.trimDark), T([[1, -L * 0.4], [3, -L * 0.5], [1, -L * 0.3]], m.trimDark));
+  // The five-colour ribbons trailing from the end of the handle.
+  s.push(...ribbons(0, 5.5, 8 + r * 0.6, Math.min(5, 2 + Math.ceil(r / 2)), f));
+  // The handle: lacquered, a shadow down one side, a metal cap at the end and a collar at the top.
+  s.push(R(-1, -H, 2, H + 6, lac), F(R(0.3, -H, 0.7, H + 6, lacDk)));
+  if (r >= 2 || th) for (let y = -H + 2; y < 4; y += 3) s.push(F(R(-1, y, 2, 0.5, m.trim)));
+  s.push(E(0, 6, 1.5, 1.1, m.trim), R(-1.6, -H - 1, 3.2, 1.4, m.trim));
+  // The stem and the tiers of bells, widest at the bottom.
+  const top = -H - 2 - tiers * 3.4;
+  s.push(R(-0.4, top, 0.8, -H - 1 - top, m.trimDark));
+  for (let i = 0; i < tiers; i++) {
+    const y = -H - 3 - i * 3.4;
+    const n = Math.max(2, tiers + 2 - i);
+    const span = (n - 1) * 1.15;
+    s.push(R(-span - 0.6, y - 1.6, span * 2 + 1.2, 0.6, m.trim));
+    for (let k = 0; k < n; k++) s.push(...bell(-span + k * 2.3, y, th === 'laser' ? 0.9 : 1.05, tone, f + k, th === 'demonic' ? m.hot : th === 'laser' ? m.beam ?? m.gem : '#3a2414'));
   }
-  focus(m, f, y, 1, s, a, reach);
+  const y = top - 1.6;
+  a.blade = [y - 2, -H];
+  a.head = [0, (top + -H) / 2];
+  a.tip = [0, y - 2];
+  // The finial, by rank and theme.
+  if (th === 'holy') {
+    s.push(...wings(0, y + 1, 6, flapAt(f), [-1, 1], 2));
+    s.push(...gem(0, y, 1.3, m.gem, f), ...halo(0, y - 5, 3.6, 1.3));
+    a.halo = [0, y - 5, 3.6, 1.3];
+    a.wings = [[-5, y], [5, y]];
+  } else if (th === 'demonic') {
+    s.push(...horns(0, y + 1.5, 3.6, m.trimDark), E(0, y, 1.8, 1.8, m.blade), ...demonEye(0, y, 1.2));
+    a.eye = [0, y, 1.2];
+    a.flames = [[-2, y - 2], [2, y - 2], [0, y - 3]];
+  } else if (th === 'bone') {
+    const sk = skull(0, y - 0.5, 2.4, SOUL, m.blade, m.trimDark);
+    s.push(...sk.shapes);
+    a.eyes = sk.eyes;
+  } else if (th === 'laser') {
+    s.push(F(E(0, y, 1.6, 1.6, m.beam ?? m.gem)), F(P(-0.5, y - 0.5, WHITE)));
+    a.orbs = [[0, y, 1.6]];
+    a.beams = [{ pts: [[-2.5, top + 2], [0, y], [2.5, top + 2]], w: 0.5 }];
+    a.emit = [0, -H];
+    reach.push([0, y - 4]);
+  } else if (th === 'chainsaw') {
+    s.push(...sawDisc(0, y - 1, 3, f, 6, m));
+    a.exhaust = [1.6, -H + 1];
+    a.sparks = [[0, y - 4], [3, y - 1]];
+  } else if (th === 'cyber') {
+    s.push(neon(-0.6, y - 2, 1.2, 2.4, m.neon[f % 2]));
+    a.ring = [0, (top + -H) / 2, 3.4, 1.2];
+    a.neon = [[[0, top], [0, -H - 1]]];
+  } else if (r >= 2) {
+    // A jewel atop the stem from rank 2; a gold flame-shaped jewel mount (hoju) from rank 4, and
+    // the material's crowning motif past that.
+    if (r >= 4) s.push(T([[0, y - 4.2], [1.8, y - 1.2], [1.2, y + 0.8], [-1.2, y + 0.8], [-1.8, y - 1.2]], m.trim));
+    s.push(...gem(0, y - 0.6, r >= 4 ? 1.3 : 1, gemOf(m, f), f));
+    a.gem = [0, y - 0.6];
+    const orn = motif(m, f, { emblem: [0, y - 0.6], crown: [0, y - 3], top: [0, y - 8], orbit: [0, y], guard: [0, top + 3, 3, [-1, 1]] }, 6, a);
+    s.unshift(...orn.back);
+    s.push(...orn.front);
+  } else {
+    s.push(E(0, y + 0.4, 0.9, 0.9, tone[0]));
+  }
+  if (m.rune) a.runes = [0, -H + 1, 3];
   return { shapes: s, blade: a.blade, reach, a };
 }
 
@@ -851,43 +872,81 @@ function staff(m, f) {
   const r = m.rank;
   const th = m.theme;
   const S = [30, 32, 34, 36, 38, 40][r] + (m.step ?? 0) * 0.6;
-  const y = -S - 6;
+  const tone = bellTone(m);
+  const lac = th === 'holy' ? IVORY_HANDLE : th ? m.handle : mix(LACQUER[r], m.blade, 0.3);
+  const lacDk = th === 'holy' ? '#eadfc8' : th ? m.handleDark : mix(LACQUER_DK[r], m.bladeDark, 0.3);
   const s = [];
-  const a = { blade: [y - 10, -S + 4] };
+  const a = {};
   const reach = [];
-  if (th === 'bone') s.push(...vertebrae(0, -S, 13, 3, m));
-  else if (r === 0) {
-    s.push(T([[-1.4, 13], [1.4, 13], [1.6, -S * 0.3], [1.0, -S * 0.7], [1.6, -S], [-1.2, -S], [-1.6, -S * 0.6], [-1.0, -S * 0.3]], m.handle));
-    s.push(E(1.4, -S * 0.45, 1, 1.4, m.handleDark), E(-1.2, -S * 0.15, 0.9, 1.2, m.handleDark));
+  // The pole: lacquered, shadowed, banded with metal, a metal shoe at the foot.
+  s.push(R(-1.1, -S, 2.2, S + 13, lac), F(R(0.3, -S, 0.8, S + 13, lacDk)));
+  for (let y = -S + 6; y < 10; y += r >= 2 || th ? 8 : 14) s.push(F(R(-1.1, y, 2.2, 0.8, m.trim)));
+  s.push(R(-1.4, 11, 2.8, 2.6, m.trim), T([[-1.4, 13.6], [0, 15.5], [1.4, 13.6]], m.trimDark));
+  // The head: a crossbar with the paper streamers, then (from rank 1) a ring of bells round a
+  // pointed finial, a shakujo's.
+  const yb = -S - 1;
+  s.push(R(-4.6, yb - 0.8, 9.2, 1.4, m.trim));
+  const sway = flapAt(f) * 0.6;
+  const folds = 3 + Math.min(2, Math.floor(r / 2));
+  s.push(...shideOf(-3.4, yb + 0.6, folds, 2.2, 2.2, sway - 0.6, -1), ...shideOf(3.4, yb + 0.6, folds, 2.2, 2.2, sway + 0.6, 1));
+  if (th === 'demonic') s.push(F(R(-3.6, yb + 0.6, 0.4, folds * 2.2, m.hot)));
+  // The finial's ring of bells.
+  const rr = 3.6 + (r >= 3 ? 0.6 : 0);
+  const cy = yb - rr - 1.2;
+  a.head = [0, cy];
+  a.tip = [0, cy - rr - 2];
+  a.blade = [cy - rr - 2, -S];
+  if (r >= 1 || th) {
+    s.push(E(0, cy, rr, rr * 1.15, m.trim), E(0, cy, rr - 0.9, rr * 1.15 - 0.9, 'none'));
+    for (let k = 0; k < (r >= 3 || th ? 4 : 2); k++) {
+      const ang = Math.PI * (0.25 + (k / 3) * 0.5) * (k % 2 ? -1 : 1) + (k % 2 ? Math.PI : 0);
+      s.push(...bell(Math.cos(ang) * rr, cy + Math.sin(ang) * rr * 1.15 + 1.4, 0.9, tone, f + k));
+    }
   } else {
-    s.push(R(-1.25, -S, 2.5, S + 13, m.handle));
-    if (th === 'cyber') for (let yy = -S + 4, i = 0; yy < 8; yy += 7, i++) s.push(neon(-1.25, yy, 2.5, 0.8, m.neon[(i + f) % 2]));
-    if (th === 'demonic') for (let yy = -S + 6; yy < 0; yy += 9) s.push(T([[1.2, yy], [3.5, yy - 2], [1.2, yy + 2]], m.trimDark), T([[-1.2, yy + 4], [-3.5, yy + 2], [-1.2, yy + 6]], m.trimDark));
-    if (th === 'laser') s.push(R(-1.6, -S * 0.3, 3.2, 1, m.trimDark), R(-1.6, -S * 0.6, 3.2, 1, m.trimDark), F(R(-1.25, -S * 0.45, 2.5, 0.6, m.beam)));
-    if (r === 1) for (let yy = -S + 2; yy < 10; yy += 10) s.push(R(-1.5, yy, 3, 1.2, m.trim));
-    if (m.rune) s.push(...runes(0, -S + 4, -S * 0.35, f, m.rune, m.runeDim, 5));
-    if (!th && r >= 2) s.push(R(-1.5, -S * 0.3, 3, 1.4, m.trim));
-    if (m.gems >= 2) s.push(...gem(0, -S * 0.3 + 0.7, 1, gemOf(m, f, 1), f));
-    if (!th && r >= 4) s.push(T([[-1.4, 13], [0, 17], [1.4, 13]], m.trim));
-    s.push(R(-1.5, 11, 3, 2.5, m.trim));
-    if (!th || th === 'holy' || th === 'cyber') s.push(R(-1.6, -S, 3.2, 2.5, m.trim));
+    // The plainest: a bamboo pole with a little bell tied under the crossbar.
+    s.push(...bell(0, yb + 2.6, 1, tone, f));
   }
-  if (r === 1) {
-    // An iron cage around a stone.
-    s.push(E(0, y + 1, 3.6, 4, '#9aa0aa'), R(-4, y - 3, 1.2, 8, m.trim), R(2.8, y - 3, 1.2, 8, m.trim), R(-0.6, y - 4, 1.2, 9, m.trim), R(-4, y - 4, 8, 1.4, m.trim));
-    a.head = [0, y];
-    a.tip = [0, y - 4];
-    return { shapes: s, blade: a.blade, reach, a };
+  if (th === 'holy') {
+    s.push(...wings(0, cy, 8, flapAt(f), [-1, 1], 2.5), ...gem(0, cy, 1.6, m.gem, f), ...halo(0, cy - rr - 4, 4.5, 1.6));
+    a.halo = [0, cy - rr - 4, 4.5, 1.6];
+    a.wings = [[-7, cy], [7, cy]];
+  } else if (th === 'demonic') {
+    s.push(...horns(0, cy + 2, 4.5, m.trimDark), E(0, cy, 2.2, 2.2, m.blade), ...demonEye(0, cy, 1.5));
+    a.eye = [0, cy, 1.5];
+    a.flames = [[-3, cy - 3], [3, cy - 3], [0, cy - 4.5]];
+  } else if (th === 'bone') {
+    const sk = skull(0, cy, 3, SOUL, m.blade, m.trimDark);
+    s.push(...sk.shapes);
+    a.eyes = sk.eyes;
+  } else if (th === 'laser') {
+    s.push(F(E(0, cy, 2.2, 2.2, m.beam ?? m.gem)), F(P(-0.6, cy - 0.6, WHITE)));
+    a.orbs = [[0, cy, 2.2]];
+    a.beams = [{ pts: [[-rr, cy], [0, cy - rr], [rr, cy]], w: 0.6 }];
+    a.emit = [0, yb];
+    reach.push([0, cy - rr - 5]);
+  } else if (th === 'chainsaw') {
+    s.push(...sawDisc(0, cy, rr - 0.6, f, 6, m));
+    a.exhaust = [2, -S + 2];
+    a.sparks = [[0, cy - rr], [rr, cy]];
+  } else if (th === 'cyber') {
+    s.push(neon(-0.6, cy - 1.6, 1.2, 3.2, m.neon[f % 2]));
+    a.ring = [0, cy, rr + 1, 1.4];
+    a.neon = [[[0, -S], [0, yb]]];
+  } else {
+    // A pointed jewel finial (a flame-shaped hoju from rank 3), and the material's motif.
+    s.push(T([[0, cy - rr - 2.4], [1.2, cy - 0.6], [0, cy + 0.6], [-1.2, cy - 0.6]], m.trim));
+    if (r >= 2) {
+      s.push(...gem(0, cy - 0.2, r >= 3 ? 1.4 : 1.1, gemOf(m, f), f));
+      a.gem = [0, cy - 0.2];
+    }
+    const orn = motif(m, f, { emblem: [0, cy], crown: [0, cy - rr], top: [0, cy - rr - 6], orbit: [0, cy], guard: [0, yb, 5, [-1, 1]] }, 8, a);
+    s.unshift(...orn.back);
+    s.push(...orn.front);
   }
-  if (r === 0) {
-    // A curled crook with a sprouting leaf.
-    s.push(T([[-1.6, -S], [-4, -S - 4], [-3.6, -S - 9], [0, -S - 11], [3.6, -S - 9], [3.8, -S - 5], [1.4, -S - 4], [1, -S - 6.5], [2, -S - 8], [0, -S - 9], [-1.8, -S - 7.5], [-1.8, -S - 4], [1.6, -S]], m.handle));
-    s.push(E(4, -S - 4, 2, 1.2, '#8fd36b'), F(P(4, -S - 4.4, '#c9f2a0')));
-    a.head = [0, -S - 6];
-    a.tip = [0, -S - 11];
-    return { shapes: s, blade: a.blade, reach, a };
+  if (m.rune) {
+    s.push(...runes(0, -S + 4, -S * 0.35, f, m.rune, m.runeDim, 5));
+    a.runes = [0, -S + 4, -S * 0.35];
   }
-  focus(m, f, th ? y - 2 : y, th ? 2 : 1.6, s, a, reach);
   return { shapes: s, blade: a.blade, reach, a };
 }
 

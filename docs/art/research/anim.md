@@ -331,3 +331,22 @@ player wants hero bodies in this style; see `avatar.md` for the proportions.
 - 21 принцип анимации (захлёст 8 frames, broken joints, фазовка): https://vk.ru/@animationclubvk-21-princip-animacii
 - Виды кадров (ключи, экстримы, брейкдауны, фазовка, спейсинг): https://vk.ru/@animationclubvk-vidy-kadrov
 - Dead Cells pipeline, Russian translation: https://habr.com/ru/articles/416589/
+
+## 6. Kagura (shrine maiden dance), for the Spirit Mage's casting
+
+- Mai (the shrine dance) is rotation and circular movement, slow and elegant; odori is the leaping
+  kind. The miko circles and sways left and right. Applied: her casts are turns, sways and held
+  poses, never jabs; leaps only for the command casts.
+  https://japanese-wiki-corpus.github.io/culture/Urayasu%20no%20Mai%20Dance.html,
+  https://en.wikipedia.org/wiki/Kagura
+- The dancer holds a torimono: a kagura suzu (a staff hung with 12-15 bells) in the right hand,
+  and in many dances a fan as well; dances come in a fan half and a bell half. Applied: the wand is
+  held upright like a suzu and rung with the wrist, and a folding fan opens in her free hand.
+  https://en.wikipedia.org/wiki/Kagura_suzu
+- Torimono dances move round the space, change direction, turn ninety degrees, and shake the bell
+  a set number of times (five at Kotohira). Applied: Bell Shake rings the wand in counted shakes,
+  and turns end on a held facing pose. https://www.journals.uchicago.edu/doi/reader/10.1086/203584,
+  https://yamanashi.repo.nii.ac.jp/record/1563/files/KJ00004947034.pdf
+- Readability (the player's note on the first pass): at game size the dance must be big. Wide
+  arm spreads, real lifts onto the toes, deep bows, long sliding steps, and a clear held pose at
+  each cast, with the wand waved delicately rather than swung like a club.

@@ -1439,135 +1439,217 @@ export const MOVES = {
   },
 
   // ---------- The Spirit Mage's shrine dance (her pool, PATH_VARIANTS in world/melee.js) ----------
-  // She casts the way a shrine maiden dances kagura: every spell is a turn, a sweep or a step, the
-  // wand waved like a gohei through wide flowing arcs, the free hand opening as a counterweight,
-  // sleeves and hair trailing behind each turn. Nothing jabs or snaps: it flows, then flicks.
+  // She casts the way a shrine maiden dances kagura (research/anim.md 6): mai is turning and
+  // circling, slow and elegant, swaying side to side, with a bell staff in one hand and a folding
+  // fan in the other. So every spell is a sway, a turn, a sliding step or a bow that settles into a
+  // clear held pose; the wand is held upright like a kagura suzu and only tipped and rung with the
+  // wrist (never swung like a club), and the fan opens and sweeps in her free hand (`fan`, `fanA`,
+  // drawn by hero.js). Poses are big (wide spreads, rising onto her toes, deep bows, long glides)
+  // so they read at game size, and they flow: each phase eases into the next and holds a beat.
 
-  // The opening sweep: draw the wand down and back behind her as she turns her shoulder, then
-  // carry it up over her head in one long arc and flick it forward to send the bolt (~0.55).
+  // The opening sweep (~0.55): she gathers in, knees soft, wand upright at her breast and the fan
+  // folded to it, sways back; then glides a long step forward, rising, the wand tipping out to send
+  // the bolt while the fan opens and sweeps wide behind her; and holds the pose.
   kagura(p) {
-    const back = ease(seg(p, 0, 0.32));
-    const over = ease(seg(p, 0.32, 0.58));
-    const settle = ease(seg(p, 0.7, 1));
-    const weapon = p < 0.32 ? lerp(30, 150, back) : lerp(150, 400, over) - 30 * settle;
-    const arm = p < 0.32 ? lerp(70, 35, back) : lerp(35, 200, Math.min(1, over * 1.4)) - 105 * over;
+    const gather = ease(seg(p, 0, 0.3));
+    const open = ease(seg(p, 0.3, 0.56));
+    const settle = ease(seg(p, 0.8, 1));
+    const hold = 1 - settle;
     return {
-      weapon, arm, tilt: -0.1 * back * (1 - over) + 0.1 * over * (1 - settle), lunge: 4 * over * (1 - settle) - 2 * back * (1 - over), trail: over > 0 && over < 1,
-      rig: (r) => { r.backArm = [q(-4 * back + 6 * over), q(-3 - 2 * over)]; r.hairLift = over > 0.2 ? -1 : 0; r.cape -= q(3 * over); if (over > 0.3) { lungeLegs(r, 0.7); strikeFace(r); } else r.eyes = back > 0.5 ? 'half' : r.eyes; },
+      weapon: lerp(10, -15, gather) + 70 * open * hold + 20 * settle, arm: lerp(70, 105, gather) + 25 * open - 30 * settle,
+      tilt: -0.14 * gather * (1 - open) + 0.16 * open * hold, lunge: -3 * gather * (1 - open) + 10 * open * hold, lift: 3 * open * hold,
+      fan: lerp(0.1, 0, gather) + open * hold, fanA: lerp(20, 0, gather) - 70 * open * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 3, gather) - 11 * open * hold), q(lerp(0, -3, gather) - 6 * open * hold)];
+        r.cape -= q(2 * gather * (1 - open) + 5 * open * hold);
+        r.hairLift = open > 0.2 && hold > 0.5 ? -1 : 0;
+        if (open > 0.2 && hold > 0.3) { r.frontLeg = [q(4.6 * open), -1, 8]; r.backLeg = [-4, 0, -14]; strikeFace(r); } else if (gather > 0.3) { r.squat = 1; r.eyes = 'half'; }
+      },
     };
   },
-  // The turning step: she spins right round on the spot with the wand held high and out, her
-  // sleeves fanning, and as she comes round to face them again flicks it forward (~0.6).
+  // The turning step (~0.6): a slow full turn on her toes with both arms spread wide at shoulder
+  // height, wand upright and fan open, sleeves swinging out; she comes round to face them, the fan
+  // sweeping up over her head as the wand tips forward to send the bolt; holds.
   kaguraturn(p) {
-    const t = ease(seg(p, 0, 0.55));
-    const flick = ease(seg(p, 0.5, 0.66));
+    const t = ease(seg(p, 0, 0.56));
+    const face = ease(seg(p, 0.5, 0.64));
+    const settle = ease(seg(p, 0.82, 1));
+    const hold = 1 - settle;
     return {
-      weapon: lerp(-30, 85, flick), arm: lerp(165, 95, flick), turn: Math.cos(t * Math.PI * 2), lift: 4 * bump(p, 0.05, 0.55), tilt: 0.08 * flick * (1 - seg(p, 0.8, 1)), lunge: 4 * flick * (1 - seg(p, 0.75, 1)), trail: flick > 0 && flick < 1,
-      rig: (r) => { r.backArm = [q(-5 + 3 * flick), q(-4)]; r.hairLift = -1; r.cape -= 3; if (t < 1 && t > 0) { r.frontLeg = [1.4, -1.6, 12]; r.backLeg = [-0.6, 0, -4]; } else if (flick > 0) { lungeLegs(r, 0.7); strikeFace(r); } },
+      weapon: -10 + 65 * face * hold + 30 * settle, arm: lerp(95, 120, face) - 30 * settle, turn: Math.cos(t * Math.PI * 2), lift: 6 * bump(p, 0.04, 0.6),
+      tilt: 0.1 * Math.sin(t * Math.PI * 2) + 0.14 * face * hold, lunge: 6 * face * hold,
+      fan: 1 * hold + 0.1, fanA: lerp(-80, 30, face),
+      rig: (r) => {
+        r.backArm = face > 0 ? [q(lerp(-11, -1, face)), q(lerp(-4, -13, face))] : [-11, -4];
+        r.cape -= q(5 * Math.sin(Math.min(1, t) * Math.PI) + 2);
+        r.hairLift = -1;
+        if (t < 1 && t > 0) { r.frontLeg = [1.4, -2.4, 16]; r.backLeg = [-0.6, 0, -4]; } else if (face > 0 && hold > 0.3) { lungeLegs(r, 0.9); strikeFace(r); }
+      },
     };
   },
-  // The dance's last figure: two quick turns rising onto her toes with the wand circling overhead,
-  // then a deep sweep down and out, dipping low, that looses the great bolt (~0.6).
-  kagurafin(p, dur) {
+  // The dance's last figure (~0.6): two turns rising high onto her toes, the wand held straight up
+  // and ringing, the fan spread over her head; then she sinks into a deep sweeping bow-lunge, the
+  // wand tipping down at them as the great bolt goes, the fan swept wide behind; holds low.
+  kagurafin(p) {
     const spin = ease(seg(p, 0, 0.5));
     const down = ease(seg(p, 0.48, 0.62));
-    const rise = 1 - ease(seg(p, 0.75, 1));
+    const settle = ease(seg(p, 0.82, 1));
+    const hold = 1 - settle;
+    const ring = Math.sin(p * 60) * 12 * (1 - down) * bump(p, 0.05, 0.5);
     return {
-      weapon: spin * 720 * (1 - down) + lerp(-20, 110, down), arm: lerp(175, 80, down), turn: Math.cos(spin * Math.PI * 4), lift: 6 * bump(p, 0, 0.55),
-      tilt: 0.22 * down * rise, lunge: 6 * down * rise, trail: down > 0 && down < 1,
-      rig: (r) => { r.backArm = [q(-6 * down + 2 * (1 - down)), q(-5 + 3 * down)]; r.hairLift = -1; r.cape -= 4; if (down > 0) { r.squat = down * rise > 0.5 ? 2 : 1; lungeLegs(r, 0.9); strikeFace(r); } else if (spin > 0) { r.frontLeg = [1.2, -2, 14]; r.backLeg = [-0.8, -0.6, -6]; } },
+      weapon: -8 + ring + 85 * down * hold + 30 * settle, arm: lerp(175, 85, down) - 25 * settle, turn: Math.cos(spin * Math.PI * 4), lift: 10 * bump(p, 0, 0.52),
+      tilt: 0.36 * down * hold, lunge: 12 * down * hold, fan: 1, fanA: down > 0 ? lerp(0, -110, down) : 0,
+      rig: (r) => {
+        r.backArm = down > 0 ? [q(lerp(-1, -12, down)), q(lerp(-13, -2, down))] : [-1, -13];
+        r.cape -= q(5 + 2 * down);
+        r.hairLift = -1;
+        if (down > 0 && hold > 0.2) { r.squat = 2; r.frontLeg = [5, -1, 10]; r.backLeg = [-5, 0, -20]; strikeFace(r); } else if (spin > 0 && spin < 1) { r.frontLeg = [1.2, -3, 18]; r.backLeg = [-0.8, -1, -6]; }
+      },
     };
   },
-  // Shaking the bells: the wand held up and rung three times like a suzu, a little hop on each
-  // ring, a bolt shaken off each (~0.3, 0.5, 0.7).
+  // Ringing the bells (~0.3, 0.5, 0.7): the wand raised high and rung like a suzu, three counted
+  // shakes of the wrist, a little rise onto her toes and a sway from hip to hip on each, the fan
+  // open at her hip swaying the other way.
   bellshake(p) {
     const up = ease(seg(p, 0, 0.18));
-    const ring = Math.sin(seg(p, 0.18, 0.82) * Math.PI * 6);
-    const down = ease(seg(p, 0.82, 1));
+    const down = ease(seg(p, 0.84, 1));
+    const beat = seg(p, 0.18, 0.84) * 3;
+    const ring = Math.sin(beat * Math.PI * 2);
+    const side = Math.sin(beat * Math.PI);
+    const k = up * (1 - down);
     return {
-      weapon: lerp(40, 10, up) + 28 * ring * (1 - down) + 50 * down, arm: lerp(80, 165, up) - 60 * down, lift: 2.5 * Math.abs(ring) * up * (1 - down),
-      rig: (r) => { r.backArm = [q(-2 + Math.abs(ring)), -4]; r.hairLift = Math.abs(ring) > 0.6 ? -1 : 0; r.cape -= q(Math.abs(ring) * 2); if (up > 0.5 && down < 1) r.mouth = 'open'; },
+      weapon: -5 + 18 * ring * k + 40 * down, arm: lerp(80, 170, up) - 80 * down, lift: 4 * Math.abs(side) * k, tilt: 0.14 * side * k,
+      fan: 0.9 * k + 0.1, fanA: -40 - 30 * side * k,
+      rig: (r) => {
+        r.tx = q(1.6 * side * k);
+        r.backArm = [q(-6 * k), q(1 - 3 * k)];
+        r.cape -= q(Math.abs(side) * 4 * k);
+        r.hairLift = Math.abs(side) > 0.5 ? -1 : 0;
+        if (k > 0.5) { r.frontLeg = side > 0 ? [2.4, -1.6, 14] : [1.4, 0, 4]; r.backLeg = side < 0 ? [-2.4, -1.6, -14] : [-1.4, 0, -4]; r.mouth = 'open'; }
+      },
     };
   },
-  // The sleeve fan: a gliding side step with the wand swept flat across in front of her while her
-  // free hand sweeps the other way, opening the sleeves like a fan (~0.55).
+  // The fan sweep (~0.52): a long gliding side step, low, the fan sweeping in a wide arc from
+  // behind her right round in front (over her body), opening as it goes, the wand held upright at
+  // her shoulder and tipping out as the fan passes.
   sleevefan(p) {
-    const gather = ease(seg(p, 0, 0.35));
-    const sweep = ease(seg(p, 0.35, 0.6));
-    const settle = ease(seg(p, 0.75, 1));
+    const gather = ease(seg(p, 0, 0.3));
+    const sweep = ease(seg(p, 0.3, 0.56));
+    const settle = ease(seg(p, 0.8, 1));
+    const hold = 1 - settle;
     return {
-      weapon: lerp(40, -10, gather) + 120 * sweep - 40 * settle, arm: lerp(70, 50, gather) + 50 * sweep - 30 * settle, tilt: -0.08 * gather * (1 - sweep) + 0.1 * sweep * (1 - settle), lunge: -3 * gather * (1 - sweep) + 5 * sweep * (1 - settle), trail: sweep > 0 && sweep < 1,
-      rig: (r) => { r.backArm = [q(3 * gather - 9 * sweep), q(-2 - 3 * sweep)]; r.cape -= q(4 * sweep); r.hairLift = sweep > 0.3 ? -1 : 0; wideLegs(r); if (sweep > 0.3) strikeFace(r); },
+      weapon: lerp(5, -10, gather) + 60 * sweep * hold + 15 * settle, arm: lerp(70, 130, gather) - 20 * sweep - 30 * settle,
+      tilt: -0.16 * gather * (1 - sweep) + 0.2 * sweep * hold, lunge: -5 * gather * (1 - sweep) + 12 * sweep * hold,
+      fan: lerp(0.2, 0.6, gather) + 0.4 * sweep, fanA: lerp(-100, -120, gather) + 200 * sweep * hold - 40 * settle, fanFront: sweep > 0.45 && hold > 0.3,
+      rig: (r) => {
+        r.backArm = [q(lerp(-10, -11, gather) + 18 * sweep * hold), q(-3 - 4 * sweep * hold)];
+        r.cape -= q(6 * sweep * hold);
+        r.hairLift = sweep > 0.3 ? -1 : 0;
+        r.squat = gather > 0.3 ? 1 : 0;
+        r.frontLeg = [q(1 + 4 * sweep * hold), 0, 6];
+        r.backLeg = [q(-2 - 3 * gather), 0, -14];
+        if (sweep > 0.3) strikeFace(r);
+      },
     };
   },
-  // The bow and rise: she dips into a deep bow, wand low, then rises onto her toes sweeping it up
-  // overhead and throws the spell up and out (~0.62).
+  // The bow and rise (~0.6): a deep, slow bow, both hands brought together low before her, eyes
+  // closed; then she rises right up onto her toes, both arms sweeping up overhead (wand and open
+  // fan high), and throws the spell up and out; holds high.
   bowrise(p) {
-    const bow = ease(seg(p, 0, 0.35)) * (1 - ease(seg(p, 0.42, 0.6)));
-    const rise = ease(seg(p, 0.42, 0.62));
-    const settle = ease(seg(p, 0.78, 1));
+    const bow = ease(seg(p, 0, 0.36)) * (1 - ease(seg(p, 0.42, 0.6)));
+    const rise = ease(seg(p, 0.42, 0.6));
+    const settle = ease(seg(p, 0.82, 1));
+    const hold = 1 - settle;
     return {
-      weapon: lerp(40, 165, bow) - 190 * rise + 60 * settle, arm: lerp(70, 30, bow) + 150 * rise - 70 * settle, tilt: 0.3 * bow - 0.12 * rise * (1 - settle), lift: 5 * rise * (1 - settle), trail: rise > 0 && rise < 1,
-      rig: (r) => { if (bow > 0.3) { r.squat = 2; r.eyes = 'blink'; } r.backArm = [q(2 * bow - 5 * rise), q(-1 - 4 * rise)]; r.hairLift = rise > 0.3 ? -1 : 0; r.cape -= q(3 * rise); if (rise > 0.3) { r.frontLeg = [1.4, -1.4, 10]; strikeFace(r); } },
+      weapon: lerp(10, 40, bow) - 30 * rise * hold + 25 * settle, arm: lerp(70, 40, bow) + 140 * rise * hold - 20 * settle,
+      tilt: 0.45 * bow - 0.14 * rise * hold, lift: 8 * rise * hold,
+      fan: 0.15 + 0.85 * rise * hold, fanA: lerp(60, 120, bow) - 130 * rise,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 4, bow) - 2 * rise), q(lerp(0, 1, bow) - 13 * rise * hold)];
+        if (bow > 0.3) { r.squat = 2; r.eyes = 'blink'; wideLegs(r); }
+        r.hairLift = rise > 0.3 ? -1 : 0;
+        r.cape -= q(4 * rise * hold);
+        if (rise > 0.3 && hold > 0.3) { r.frontLeg = [1.4, -2.2, 14]; r.backLeg = [-1.4, -1.4, -10]; strikeFace(r); }
+      },
     };
   },
-  // A twirl on one foot: a hop round with the other foot tucked up behind, the wand trailing, then
-  // a point forward as she lands (~0.58).
+  // A twirl on one foot (~0.58): a hop round with the other leg lifted high behind her, arms spread
+  // wide, fan open, sleeves flying; she lands soft with the wand tipping out to them.
   twirlstep(p) {
     const t = ease(seg(p, 0.05, 0.5));
-    const point = ease(seg(p, 0.48, 0.6));
+    const point = ease(seg(p, 0.48, 0.62));
+    const settle = ease(seg(p, 0.82, 1));
+    const hold = 1 - settle;
     return {
-      weapon: lerp(120, 80, t) - 10 * point, arm: lerp(60, 120, t) - 25 * point, turn: Math.cos(t * Math.PI * 2), lift: 7 * bump(p, 0.05, 0.55), tilt: 0.06 * point * (1 - seg(p, 0.8, 1)), lunge: 3 * point * (1 - seg(p, 0.8, 1)), trail: t > 0 && t < 1,
-      rig: (r) => { r.backArm = [-5, -4]; r.hairLift = -1; r.cape -= 3; if (t > 0 && t < 1) { r.air = true; r.frontLeg = [1.6, 0, 6]; r.backLeg = [-3, -4, -30]; } else if (point > 0) { lungeLegs(r, 0.6); strikeFace(r); } },
+      weapon: -10 + 70 * point * hold + 25 * settle, arm: lerp(100, 115, t) - 15 * point - 20 * settle, turn: Math.cos(t * Math.PI * 2), lift: 10 * bump(p, 0.05, 0.55),
+      tilt: 0.1 * point * hold, lunge: 6 * point * hold, fan: 1, fanA: -90 + 40 * point,
+      rig: (r) => {
+        r.backArm = [-11, q(-5 + 2 * point)];
+        r.hairLift = -1;
+        r.cape -= 5;
+        if (t > 0 && t < 1) { r.air = true; r.frontLeg = [1.4, -1, 8]; r.backLeg = [-4, -7, -60]; } else if (point > 0 && hold > 0.3) { lungeLegs(r, 0.8); strikeFace(r); }
+      },
     };
   },
-  // Up + attack: the wand swept from low behind her up over her head in a rising arc, flung at
-  // whatever flies (~0.5).
+  // Up + attack (~0.5): both arms sweep up from low together, rising onto her toes, the wand
+  // tipping up at whatever flies and the fan opening overhead.
   kaguraup(p) {
-    const back = ease(seg(p, 0, 0.3));
-    const up = ease(seg(p, 0.3, 0.52));
+    const low = ease(seg(p, 0, 0.28));
+    const up = ease(seg(p, 0.28, 0.5));
+    const settle = ease(seg(p, 0.8, 1));
+    const hold = 1 - settle;
     return {
-      weapon: lerp(40, 150, back) - 190 * up, arm: lerp(70, 30, back) + 160 * up, tilt: 0.1 * back * (1 - up) - 0.14 * up, lift: 3 * up * (1 - seg(p, 0.8, 1)), trail: up > 0 && up < 1,
-      rig: (r) => { r.backArm = [q(-3 * up), q(-2 - 3 * up)]; r.hairLift = -1; r.cape -= q(2 * up); if (up > 0.3) { r.frontLeg = [1.4, -1.2, 10]; strikeFace(r); } },
+      weapon: lerp(10, 50, low) - 60 * up * hold + 30 * settle, arm: lerp(70, 30, low) + 150 * up * hold - 30 * settle, tilt: 0.16 * low * (1 - up) - 0.18 * up * hold, lift: 7 * up * hold,
+      fan: 0.2 + 0.8 * up * hold, fanA: lerp(90, 140, low) - 160 * up,
+      rig: (r) => {
+        r.backArm = [q(3 * low - 3 * up), q(-13 * up * hold)];
+        if (low > 0.3 && up < 0.3) r.squat = 1;
+        r.hairLift = -1;
+        r.cape -= q(4 * up);
+        if (up > 0.3 && hold > 0.3) { r.frontLeg = [1.4, -2, 14]; r.backLeg = [-1, -1.4, -10]; strikeFace(r); }
+      },
     };
   },
-  // In the air: she floats, sleeves spread, and sweeps the wand down at them.
+  // In the air: she floats, arms and sleeves spread like wings, fan open, and sweeps the wand
+  // down at them.
   floatcast(p) {
     const sweep = ease(seg(p, 0.15, 0.5));
     return {
-      weapon: lerp(-20, 130, sweep), arm: lerp(160, 70, sweep), tilt: 0.1 * sweep, trail: sweep > 0 && sweep < 1,
-      rig: (r) => { tuck(r); r.backArm = [q(-6 + 2 * sweep), -5]; r.hairLift = -1; r.cape -= 3; if (sweep > 0.3) strikeFace(r); },
+      weapon: lerp(-20, 70, sweep), arm: lerp(150, 80, sweep), tilt: 0.14 * sweep, fan: 1, fanA: lerp(-60, -110, sweep),
+      rig: (r) => { tuck(r); r.backArm = [-11, q(-6 + 3 * sweep)]; r.hairLift = -1; r.cape -= 5; if (sweep > 0.3) strikeFace(r); },
     };
   },
+  // A turn in the air with everything spread, then the wand and fan sweep down together.
   floatcast2(p) {
     const t = ease(seg(p, 0, 0.45));
     const down = ease(seg(p, 0.42, 0.56));
     return {
-      weapon: t * 360 * (1 - down) + lerp(0, 140, down), arm: lerp(170, 60, down), turn: Math.cos(t * Math.PI * 2), tilt: 0.14 * down, trail: down > 0 && down < 1,
-      rig: (r) => { tuck(r); r.backArm = [-6, -5]; r.hairLift = -1; r.cape -= 4; if (down > 0.3) strikeFace(r); },
+      weapon: -10 + 85 * down, arm: lerp(160, 70, down), turn: Math.cos(t * Math.PI * 2), tilt: 0.2 * down, fan: 1, fanA: lerp(-90, 20, down), fanFront: down > 0.5,
+      rig: (r) => { tuck(r); r.backArm = [q(-11 + 14 * down), q(-6 + 2 * down)]; r.hairLift = -1; r.cape -= 6; if (down > 0.3) strikeFace(r); },
     };
   },
-  // Out of a run: she glides on, leaning low with the wand trailing behind, and whips it round
-  // forward (~0.5).
+  // Out of a run (~0.5): a long low glide on sliding feet, leaning in, the fan trailing open behind
+  // her and the wand held back; then the wand tips forward to send the bolt as she rises.
   glidecast(p) {
-    const glide = 1 - ease(seg(p, 0.4, 0.55));
-    const whip = ease(seg(p, 0.38, 0.55));
+    const glide = 1 - ease(seg(p, 0.38, 0.56));
+    const tip = ease(seg(p, 0.38, 0.56));
+    const settle = ease(seg(p, 0.82, 1));
     return {
-      weapon: lerp(150, 80, whip), arm: lerp(20, 100, whip), tilt: 0.18 * glide, lunge: 4 * whip * (1 - seg(p, 0.75, 1)), trail: whip > 0 && whip < 1,
-      rig: (r) => { r.backArm = [q(-5 * glide), -4]; r.hairLift = -1; r.cape -= q(4 * glide); r.frontLeg = [3, 0, 6]; r.backLeg = [-4, -1, -20]; if (whip > 0.3) strikeFace(r); },
+      weapon: lerp(-20, 60, tip) * (1 - settle) + 20 * settle, arm: lerp(60, 115, tip) - 25 * settle, tilt: 0.24 * glide, lunge: 6 * tip * (1 - settle), fan: 1, fanA: -100 - 20 * glide,
+      rig: (r) => { r.backArm = [-11, q(-3 - 2 * glide)]; r.hairLift = -1; r.cape -= q(6 * glide); r.squat = glide > 0.5 ? 1 : 0; r.frontLeg = [4.6, 0, 6]; r.backLeg = [-5, -1, -24]; if (tip > 0.3) strikeFace(r); },
     };
   },
-
-  // Spirit Step: a quick turn on her toes with the sleeves sweeping round, and she's gone into
-  // streamers and light (faded out while she crosses), gathering again ahead with a little
-  // curtsy of a landing.
+  // Spirit Step: the fan opens and lifts to hide her face as she turns on her toes, sleeves
+  // sweeping round, and she's gone into streamers and light (faded out while she crosses),
+  // gathering again ahead with a curtsy, the fan closing.
   spiritstep(p) {
     const t = ease(seg(p, 0, 0.3));
     const gone = clamp01(seg(p, 0.18, 0.32) * (1 - seg(p, 0.7, 0.86)));
     const land = bump(p, 0.78, 1);
     return {
-      weapon: lerp(40, -20, t), arm: lerp(70, 150, t) - 80 * land, turn: p < 0.32 ? Math.cos(t * Math.PI) : 1, lift: 4 * bump(p, 0, 0.35), fade: gone,
-      rig: (r) => { r.backArm = [-5, -4]; r.hairLift = -1; r.cape -= 3; if (land > 0.2) { r.squat = 1; r.eyes = 'happy'; } },
+      weapon: lerp(10, -10, t), arm: lerp(70, 120, t) - 50 * land, turn: p < 0.32 ? Math.cos(t * Math.PI) : 1, lift: 5 * bump(p, 0, 0.35), fade: gone,
+      fan: 1 - 0.8 * seg(p, 0.85, 1), fanA: lerp(-20, 40, t), fanFront: true,
+      rig: (r) => { r.backArm = [q(lerp(0, 5, t)), q(lerp(0, -9, t))]; r.hairLift = -1; r.cape -= 4; if (land > 0.2) { r.squat = 1; r.eyes = 'happy'; wideLegs(r); } },
     };
   },
 
@@ -1667,7 +1749,7 @@ const SWAY = { window: 0.18, lean: 0.3, step: 7, at: 100, lead: 0.07, overshoot:
 //   dagger: quick flicks, the blade whipping past and back, straight back on guard.
 //   gauntlet: the whole arm whipping each star out.
 //   bow: a kick back as the arrow leaves; crossbow a harder one.
-//   wand and staff: a flourish of the weapon round in the hand after each cast.
+//   wand and staff: held like a kagura bell staff, only tipped with the wrist (no club twirls).
 export const FEEL = {
   sword: {},
   none: {},
@@ -1677,8 +1759,8 @@ export const FEEL = {
   gauntlet: { pre: 1.5, post: 0.6, lean: 1.1, over: 1.6, armOver: 2 },
   bow: { recoil: 1.4 },
   crossbow: { recoil: 2.2 },
-  wand: { twirl: 1, lean: 0.8 },
-  staff: { twirl: 1, lean: 0.9 },
+  wand: { lean: 0.8 },
+  staff: { lean: 0.9 },
 };
 const bend = (p, hit, pre = 1, post = 1) => {
   if (hit == null || hit <= 0.04 || hit >= 0.96) return p;

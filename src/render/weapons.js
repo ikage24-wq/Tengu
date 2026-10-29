@@ -16,7 +16,6 @@ import { lookFor, pack, GOLD, WHITE } from './weapon-kit.js';
 import { FORMS } from './weapon-forms.js';
 import { liveFor } from './weapon-fx.js';
 import { finish } from './jobgear/kit.js';
-import { seraphShapes, SERAPH_ICON } from './seraph.js';
 
 export function weaponFrames(type, tier = 0, theme = null) {
   if (!FORMS[type]) return 1;
@@ -31,7 +30,6 @@ const built = new Map();
 export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = null, unstrung = false) {
   const form = FORMS[type];
   if (!form) return null;
-  if (type === 'staff' && theme === 'holy') return seraphShapes(frame);
   const key = `${type}|${tier}|${theme}|${variant}|${frame}|${unstrung}`;
   let def = built.get(key);
   if (!def) {
@@ -172,21 +170,40 @@ function iconSpear(c) {
   return out;
 }
 
-// Wands and staves: a shaft with a ring and gem at the top, growing prongs and crowns by rank.
+// Wands and staves (the Spirit Mage's shrine tools): a wand is a bell staff, a lacquered handle
+// with tiers of gold bells and ribbons trailing from its end; a staff is a gohei, a pole with a
+// crossbar of white zigzag paper streamers and a ring of bells at the top.
 function iconFocus(c, staff) {
   const r = c.rank;
-  const end = staff ? 6 : 4;
-  const [ox, oy] = at(16, end + 4);
-  const R0 = (staff ? 3.6 : 2.8) + (r >= 3 ? 0.4 : 0);
-  const out = [dg(15, 17, staff ? -14 : -10, end, c.handle), F(dg(16, 17, staff ? -14 : -10, end, c.handleDark))];
-  if (r >= 1) out.push(dg(14.5, 17.5, end - 1.5, end, c.trim));
-  if (staff && r >= 2) {
-    // Prongs cradling the orb.
-    out.push(T([at(14, end), at(12, end + 4), at(13.4, end + 7), at(14.6, end + 3)], c.trim), T([at(18, end), at(20, end + 4), at(18.6, end + 7), at(17.4, end + 3)], c.trim));
+  // The lacquer takes a little of the weapon's own colour, so a recoloured one shows it.
+  const LAC = mix(['#cfc070', '#ead2a2', '#d23a34', '#d23a34', '#2a2230', '#2a2230'][r] ?? '#d23a34', c.main, 0.3);
+  const BELL = r <= 1 ? '#f2c94c' : c.trim;
+  const out = [];
+  const dot = (cc, u, rr, col) => {
+    const [x, y] = at(cc, u);
+    return E(x, y, rr, rr, col);
+  };
+  if (staff) {
+    out.push(dg(15.2, 16.8, -14, 9, LAC), F(dg(16, 16.8, -14, 9, shadeOf(LAC))));
+    out.push(dg(12, 20, 9, 10.2, c.trim));
+    // Paper streamers either side of the crossbar.
+    for (const side of [-1, 1]) for (let i = 0; i < 3; i++) out.push(dg(16 + side * (2.6 + (i % 2) * 0.6) - 0.9, 16 + side * (2.6 + (i % 2) * 0.6) + 0.9, 8.6 - i * 2.2, 10 - i * 2.2 - 0.6, i % 2 ? '#ddd6ee' : WHITE));
+    if (r >= 1) out.push(dot(16, 13.6, 2.6, c.trim), F(dot(16, 13.6, 1.6, '#3a2e50')));
+    out.push(dot(14.2, 13, 0.9, BELL), dot(17.8, 13, 0.9, BELL));
+    if (c.gem && r >= 2) out.push(F(dot(16, 13.6, 0.9, c.gem)));
+    return out;
   }
-  if (!staff && r >= 3) out.push(T([[ox, oy - R0 - 2.5], [ox + 1, oy - R0], [ox - 1, oy - R0]], c.trim), T([[ox + R0 + 2.5, oy], [ox + R0, oy + 1], [ox + R0, oy - 1]], c.trim));
-  out.push(E(ox, oy, R0, R0, c.trim), E(ox, oy, R0 - 1, R0 - 1, c.main), F(E(ox + 0.6, oy + 0.6, R0 - 1.6, R0 - 1.6, c.dark)), F(P(Math.floor(ox - 1), Math.floor(oy - 1), WHITE)));
-  if (c.gem) out.push(F(P(Math.floor(ox), Math.floor(oy), c.gem)));
+  out.push(dg(15.2, 16.8, -10, 2, LAC), F(dg(16, 16.8, -10, 2, shadeOf(LAC))));
+  // Ribbons trailing from the end.
+  out.push(dg(13.6, 14.4, -14, -9, '#e0303e'), dg(17.6, 18.4, -14, -9, '#4f8cd8'));
+  out.push(dg(14.6, 17.4, 2, 3, c.trim), dg(15.6, 16.4, 3, 12, c.trimDark));
+  const tiers = r >= 4 ? 4 : r >= 2 ? 3 : 2;
+  for (let i = 0; i < tiers; i++) {
+    const u = 4.4 + i * 2.4;
+    const n = tiers + 1 - i;
+    for (let k = 0; k < n; k++) out.push(dot(16 - (n - 1) * 1 + k * 2, u, 0.95, BELL));
+  }
+  if (c.gem && r >= 2) out.push(dot(16, 4.4 + tiers * 2.4, 1, c.gem));
   return out;
 }
 
@@ -258,7 +275,6 @@ function tierMark(type, look) {
 
 export function weaponIcon(type, tier = 0, theme = null, variant = null) {
   if (!ICONS[type]) return null;
-  if (type === 'staff' && theme === 'holy') return SERAPH_ICON;
   const look = lookFor(type, tier, theme, variant);
   return [...ICONS[type](iconColors(look)), ...(theme ? ICON_MARKS[theme]() : tierMark(type, look))];
 }

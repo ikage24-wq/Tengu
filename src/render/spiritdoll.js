@@ -6,6 +6,7 @@
 // is a bone in her right hand, drawn from where the hand really is.
 import { drawPosed } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
+import { paintFan } from './props.js';
 import { BITS } from '../world/spiritdoll.js';
 
 // Her look: a black kokeshi bob tied with scarlet cords and bells, big violet doll's eyes, rose
@@ -20,45 +21,7 @@ const SCALE = 0.5;
 const MID = 28;
 
 // ---------- Her paper fan ----------
-// A folded fan (sensu): white paper pleats fanning out from a gold rivet, a scarlet edge band, the
-// ribs showing between the pleats. Drawn along +x from the rivet, `k` px per unit; `open` 0-1.
-const FAN_R = 10;
-function paintFan(ctx, k, open) {
-  const half = 0.15 + 0.6 * open;
-  const n = 6;
-  ctx.save();
-  ctx.scale(k, k);
-  for (let i = 0; i < n; i++) {
-    const a0 = -half + (2 * half * i) / n;
-    const a1 = -half + (2 * half * (i + 1)) / n;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(Math.cos(a0) * FAN_R, Math.sin(a0) * FAN_R);
-    ctx.lineTo(Math.cos(a1) * FAN_R, Math.sin(a1) * FAN_R);
-    ctx.closePath();
-    ctx.fillStyle = i % 2 ? '#e6e0f2' : '#ffffff';
-    ctx.fill();
-  }
-  // The scarlet band along the edge, and the outline in a darker shade of the paper.
-  ctx.beginPath();
-  ctx.arc(0, 0, FAN_R, -half, half);
-  ctx.arc(0, 0, FAN_R * 0.78, half, -half, true);
-  ctx.closePath();
-  ctx.fillStyle = '#e0303e';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.arc(0, 0, FAN_R, -half, half);
-  ctx.closePath();
-  ctx.lineWidth = 0.6;
-  ctx.strokeStyle = '#8a7aa8';
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 0, 1.1, 0, Math.PI * 2);
-  ctx.fillStyle = '#ffd36a';
-  ctx.fill();
-  ctx.restore();
-}
+// The little folding fan in her right hand (render/props.js), drawn from where the hand really is.
 
 // ---------- Her skeleton ----------
 // A pose, in her own terms (facing right; body px of the hero's rig):
