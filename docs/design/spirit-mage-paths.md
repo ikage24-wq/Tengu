@@ -64,7 +64,7 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     animations, new clothes and new hair of their own (nothing reused from the creator, the
     guardian, the doll or Snow wolf).
   - **Sizes (chosen): each its own, by what it is:** the oni big and broad (bigger than the
-    guardian), the yuki-onna tall and willowy, the kappa short and stocky, the karakasa small and
+    guardian), the yuki-onna about the Onmyoji's own size (a touch taller; the player didn't want her big), the kappa short and stocky, the karakasa small and
     bouncy.
   - **Order:** the oni first (designs on her real body to pick from, then her rig and moves).
   - **The oni is built and approved** (world/oni.js, render/oni.js): a lazy slouch and stroll, ten
