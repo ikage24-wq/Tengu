@@ -67,6 +67,11 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     guardian), the yuki-onna tall and willowy, the kappa short and stocky, the karakasa small and
     bouncy.
   - **Order:** the oni first (designs on her real body to pick from, then her rig and moves).
+  - **The oni is built and approved** (world/oni.js, render/oni.js): a lazy slouch and stroll, ten
+    bored idle moods, and six moves from how oni fight: Kesagiri (a chain of heavy swings that
+    catch behind her, then an overhead finisher), Grab & Slam, Stomp, Charge, Whirl and Roar (her
+    fury: faster, burning). Heavy timing, impact bursts, a rebound, a club trail; a sulk when she
+    whiffs and a smirk when her target drops.
   - **The oni's look (chosen 2026-10-29):** a cute-and-badass oni girl on the player character, red
     skin, a jagged silver bob, droopy heavy-lidded gold eyes, a bored face (a flat mouth with one
     fang), a dark-and-gold diamond on her brow, crimson horns, a black battle kimono lined crimson
