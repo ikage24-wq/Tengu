@@ -1,18 +1,27 @@
 // The Onmyoji's oni (see data/jobs.js and docs/design/spirit-mage-paths.md): the first of her yokai
 // troupe, a cute and badass oni girl with red skin, crimson horns and a huge spiked club, bored by
 // everything. Always out, she fights on her own: she strolls after the Onmyoji with the club on her
-// shoulder, lazily, and wades into whatever comes near, swinging it with all its weight. She has a
-// body of her own (physics.js) and walks the map (nav.js) on her own feet.
-// Her moves (render/oni.js draws them):
-//   Lazy Jab      a bored one-handed shove of the club's head into a face
-//   Swat          a huge two-handed swing that bats monsters away across the ground
-//   Smash         the club hauled up overhead and brought straight down, cracking the ground
-//   Upswing       from low, the club ripped up over her head, throwing them into the air
-//   Ground Pound  the club raised high in both hands and driven into the ground beside her: a
-//                 shock both ways that throws everything round her
-// Each plays on a heavy clock (it hangs at the top of the wind-up, freezes on the impact, drags
-// through the follow-through). When a blow hits nothing she sulks a moment; when what she was
-// hitting goes down, a smug smirk.
+// shoulder, lazily, and wades into whatever comes near. She has a body of her own (physics.js) and
+// walks the map (nav.js) on her own feet.
+// Her moves, built from how oni fight (folklore's kanabo-swinging brutes, and the games that do
+// oni well: heavy swing chains that hit behind them too and end in a finisher, grabs and throws,
+// charges, stomps, whirling clubs, roars; render/oni.js draws them):
+//   Kesagiri      a chain of three heavy diagonal swings, stepping in with each (down, back up,
+//                 down again), wide enough to catch what's behind her too, and then a huge
+//                 overhead finisher that cracks the ground
+//   Grab & Slam   she plants the club, grabs a monster in her fist, hoists it over her head and
+//                 slams it into the ground in front of her
+//   Stomp         her knee up high and a stomp that sends a shock out both ways, throwing
+//                 everything round her into the air
+//   Charge        a burst of red aura, then she barrels forward shoulder-first, trampling
+//                 everything in her way (how she closes in on a monster out of reach)
+//   Whirl         the club whirled round and round over her head, battering everything round her,
+//                 then brought down
+//   Roar          she throws her head back and roars: everything round her is blasted back and
+//                 dazed, and for a while she fights faster (her fury)
+// Each plays on a heavy clock (it hangs before its big blow, freezes on the impact, drags through
+// the follow-through). When a move hits nothing at all she sulks a moment; when what she was hitting
+// goes down, a smug smirk.
 // Her hits are spells of the Onmyoji's own magic attack (melee.js dollHit).
 
 import { dollHit, hasSpirit } from './melee.js';
@@ -29,30 +38,29 @@ const WALK = 58;
 const RUN = 150;
 const RUN_AT = 170;
 const THINK = 0.25;
-// Her moves: how long each lasts (s), when its blows land (0-1), reach, how hard (% of a spell),
-// knockback, launch, stun, how many it can catch, the shake, a crack in the ground, and whether it
-// hits all round her (`around`).
+// Her moves. For a chain, `pct`, `knock`, `launch`, `shake` and `around` can be lists, one per blow.
 export const ONI_MOVES = {
-  jab: { dur: 0.9, hits: [0.42], reach: 95, pct: 70, knock: 140, targets: 2, shake: 1.2 },
-  swat: { dur: 1.2, hits: [0.5], reach: 115, pct: 115, knock: 300, targets: 4, shake: 3 },
-  smash: { dur: 1.35, hits: [0.52], reach: 95, pct: 165, knock: 90, stun: 0.5, targets: 3, shake: 5, crack: true },
-  upper: { dur: 1.2, hits: [0.48], reach: 90, pct: 120, knock: 60, launch: 380, targets: 3, shake: 3 },
-  pound: { dur: 1.5, hits: [0.56], reach: 120, pct: 130, knock: 220, launch: 160, stun: 0.4, targets: 6, shake: 6, crack: true, around: true },
+  kesa: { dur: 2.3, hits: [0.17, 0.34, 0.51, 0.78], reach: 112, pct: [70, 70, 80, 175], knock: [60, 60, 80, 260], launch: [0, 0, 0, 160], stun: [0, 0, 0, 0.4], targets: 4, around: [true, true, true, false], shake: [1.5, 1.5, 2, 5], crack: [false, false, false, true], step: 7 },
+  grab: { dur: 1.9, catch: 0.2, lift: [0.2, 0.55], slam: 0.64, reach: 82, pct: 190, stun: 0.8, shake: 6 },
+  stomp: { dur: 1.25, hits: [0.5], reach: 135, pct: 80, knock: 120, launch: 230, stun: 0.6, targets: 8, around: true, shake: 6, crack: true },
+  charge: { dur: 1.35, run: [0.3, 0.66], dist: 210, pct: 110, knock: 280, launch: 220, shake: 3, every: 5, min: 130, far: 260 },
+  whirl: { dur: 1.7, hits: [0.3, 0.42, 0.54, 0.72], reach: 105, pct: [55, 55, 55, 125], knock: [40, 40, 40, 240], launch: [0, 0, 0, 140], targets: 6, around: true, shake: [1, 1, 1, 4], crack: [false, false, false, true] },
+  roar: { dur: 1.5, hits: [0.42], reach: 170, pct: 40, knock: 220, stun: 0.6, targets: 10, around: true, shake: 4, every: 12, fury: 6 },
 };
-// The heavy clock: how her blows run (see world/kitsune.js for the same idea in the guardian's).
-const HEAVY = { hang: [0.16, 0.035], hangRate: 0.35, snap: 1.8, drag: 0.16, dragRate: 0.5, freeze: 0.09, lastFreeze: 0.2, recover: 0.8 };
+const at = (v, i) => (Array.isArray(v) ? v[i] : v);
+// The heavy clock (see world/kitsune.js for the same idea in the guardian's): it hangs before the
+// last (biggest) blow of a move; in her fury it all runs faster.
+const HEAVY = { hang: [0.16, 0.035], hangRate: 0.35, snap: 1.8, drag: 0.16, dragRate: 0.5, freeze: 0.05, lastFreeze: 0.2, recover: 0.8 };
 function heavyRate(M, u) {
-  const h = M.hits[M.hits.length - 1];
+  const h = M.hits ? M.hits[M.hits.length - 1] : M.slam ?? 0.5;
   if (u >= h - HEAVY.hang[0] && u < h - HEAVY.hang[1]) return HEAVY.hangRate;
   if (u >= h - HEAVY.hang[1] && u < h) return HEAVY.snap;
   if (u >= h && u < h + HEAVY.drag) return HEAVY.dragRate;
   return u > h ? HEAVY.recover : 1;
 }
-// The rest she takes between blows (s): she's in no hurry.
+// The rest she takes between moves (s); half that in her fury.
 const REST = [0.45, 0.9];
-// Her moods: how long a sulk (a blow that hit nothing) and a smirk (her target went down) last.
 const MOOD = { sulk: 1.6, smug: 1.3 };
-const SMEAR = { jab: [80, 30, 5], swat: [-110, 230, 11], smash: [-30, 170, 12], upper: [130, -220, 10], pound: [-20, 200, 12] };
 const NONE = { left: false, right: false, up: false, down: false, jump: false };
 const alive = (m) => m && m.hp > 0;
 
@@ -63,7 +71,7 @@ export const hasOni = (char) => jobChain(char.job).includes('onmyoji');
 export function oniOf(world) {
   if (!hasOni(world.char) || !hasSpirit(world.char)) return (world.oni = null);
   const b = world.body;
-  world.oni ??= { act: null, next: 0, last: null, map: null, mood: null };
+  world.oni ??= { act: null, next: 0, last: null, map: null, mood: null, chargeAt: 0, roarAt: 4, furyUntil: 0 };
   const k = world.oni;
   if (k.map !== world.map.id || !k.body) {
     k.map = world.map.id;
@@ -89,6 +97,7 @@ export function tickOni(world, dt) {
   const had = k.brain.target;
   if (had && had.hp <= 0 && k.mood?.kind !== 'sulk') k.mood = { kind: 'smug', until: now + MOOD.smug };
   if (k.mood && now >= k.mood.until) k.mood = null;
+  k.fury = now < k.furyUntil;
   if (k.act) act(world, k, dt);
   else {
     const br = k.brain;
@@ -108,61 +117,139 @@ export function tickOni(world, dt) {
   k.running = k.moving && k.brain.run;
 }
 
-// Plays out a blow on its heavy clock, rooted where she stands.
+// Plays out a move on its heavy clock.
 function act(world, k, dt) {
   const a = k.act;
   const M = ONI_MOVES[a.kind];
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
-  sync(k);
-  if (!M) {
-    if (world.now - a.t0 >= a.dur) k.act = null;
-    return;
-  }
   a.clock ??= 0;
   if (a.freeze > 0) a.freeze -= dt;
-  else a.clock += dt * heavyRate(M, a.clock / a.dur);
-  const t = a.clock;
-  if (!a.dust && t >= M.hits[0] * M.dur - 0.05) {
-    a.dust = true;
-    world.juice.push({ type: 'dust', x: k.x + k.dir * 14, y: k.y, count: 4, dir: -k.dir });
-  }
-  while (a.done < M.hits.length && t >= M.hits[a.done] * M.dur) {
-    const last = a.done === M.hits.length - 1;
-    a.done += 1;
-    const n = strike(world, k, a.kind, M, last);
-    a.freeze = last ? HEAVY.lastFreeze : HEAVY.freeze;
-    // A blow that hit nothing at all: she sulks.
-    if (last && !n) {
-      a.whiffed = true;
-      k.mood = { kind: 'sulk', until: world.now + MOOD.sulk };
+  else a.clock += dt * heavyRate(M, a.clock / a.dur) * (k.fury ? 1.3 : 1);
+  const u = a.clock / a.dur;
+  if (a.kind === 'grab') grabbing(world, k, a, M, u);
+  else if (a.kind === 'charge') charging(world, k, a, M, u, dt);
+  else {
+    while (a.done < M.hits.length && u >= M.hits[a.done]) {
+      const i = a.done++;
+      const last = a.done === M.hits.length;
+      // A chain steps her in with every blow.
+      if (M.step) stepIn(world, k, M.step);
+      a.landed = (a.landed ?? 0) + strike(world, k, a.kind, M, i, last);
+      a.freeze = last ? HEAVY.lastFreeze : HEAVY.freeze;
+      if (a.kind === 'roar') {
+        k.furyUntil = world.now + M.fury;
+        world.fx.push({ kind: 'oniroar', x: k.x, y: k.y, dir: k.dir, t: 0, dur: 0.9 });
+      }
     }
   }
-  if (t >= a.dur) {
+  sync(k);
+  if (u >= 1) {
     k.act = null;
-    k.next = world.now + REST[0] + Math.random() * (REST[1] - REST[0]) + (a.whiffed ? 0.8 : 0);
+    // A move that hit nothing at all: she sulks.
+    if (!a.landed && a.kind !== 'roar') k.mood = { kind: 'sulk', until: world.now + MOOD.sulk };
+    k.next = world.now + (REST[0] + Math.random() * (REST[1] - REST[0])) * (k.fury ? 0.5 : 1) + (a.landed || a.kind === 'roar' ? 0 : 0.8);
   }
 }
+// A step forward along her ledge.
+function stepIn(world, k, d) {
+  const nav = navOf(world.map);
+  const surf = nav.surfaces[surfaceOf(nav, k.body)];
+  let x = k.body.x + k.dir * d;
+  if (surf) x = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, x));
+  k.body.x = x;
+  if (surf) k.body.y = surf.yAt(x);
+}
 
-// One of her blows: everything in the club's reach in front of her (or all round her). Returns how
-// many it hit.
-function strike(world, k, kind, M, last) {
+// One blow (`i` of the move's): everything in the club's reach in front of her (or all round
+// her). Returns how many it hit.
+function strike(world, k, kind, M, i, last) {
   const dir = k.dir;
-  const [start, sweep, thick] = SMEAR[kind];
-  world.fx.push({ kind: 'arc', x: k.x + dir * 14, y: k.y - 34, dir, r: M.reach * 0.66, start, sweep, thick, big: last, color: '#ff6a4a', t: 0, dur: 0.32 });
+  const around = at(M.around, i);
+  const reach = M.reach;
+  if (kind !== 'roar') world.fx.push({ kind: 'arc', x: k.x + dir * 14, y: k.y - 36, dir, r: reach * 0.66, start: around ? -100 : -30, sweep: around ? 300 : 180, thick: last ? 12 : 8, big: last, color: '#ff5a3a', t: 0, dur: 0.3 });
   const hit = world.mobs
-    .filter((m) => alive(m) && Math.abs(m.y - k.y) < 80 && (M.around || (m.x - k.x) * dir > -14) && Math.abs(m.x - k.x) < M.reach + m.def.w / 2)
+    .filter((m) => alive(m) && Math.abs(m.y - k.y) < 90 && (around || (m.x - k.x) * dir > -14) && Math.abs(m.x - k.x) < reach + m.def.w / 2)
     .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))
     .slice(0, M.targets);
-  hit.forEach((m, i) => dollHit(world, m, { pct: M.pct, x: k.x, knock: M.knock, launch: M.launch ?? 0, stun: M.stun, stop: i ? 0 : 0.06, shake: !i ? M.shake : 0, big: !i, burst: 'onihit', gauge: 2, key: 'oni' }));
-  world.juice.push({ type: 'shake', mag: M.shake * (hit.length ? 1 : 0.4), dur: 0.2 });
-  world.juice.push({ type: 'dust', x: k.x + dir * M.reach * 0.6, y: k.y, count: 5 });
-  if (M.crack) world.fx.push({ kind: 'crack', school: 'rage', x: k.x + (M.around ? 0 : dir * M.reach * 0.6), y: k.y, w: M.around ? M.reach * 2 : 110, t: 0, dur: 0.8, seed: Math.random() });
-  if (M.around) world.fx.push({ kind: 'onipound', x: k.x, y: k.y, r: M.reach, t: 0, dur: 0.7 });
+  hit.forEach((m, j) => dollHit(world, m, { pct: at(M.pct, i), x: k.x, knock: at(M.knock, i), launch: at(M.launch, i) ?? 0, stun: at(M.stun, i), stop: j ? 0 : last ? 0.07 : 0.03, shake: !j ? at(M.shake, i) : 0, big: last && !j, burst: 'onihit', gauge: 2, key: 'oni' }));
+  world.juice.push({ type: 'shake', mag: at(M.shake, i) * (hit.length ? 1 : 0.4), dur: 0.2 });
+  world.juice.push({ type: 'dust', x: k.x + dir * reach * 0.5, y: k.y, count: last ? 7 : 3 });
+  if (at(M.crack, i) || (kind === 'stomp')) world.fx.push({ kind: 'crack', school: 'rage', x: k.x + (around ? 0 : dir * reach * 0.6), y: k.y, w: around ? reach * 2 : 120, t: 0, dur: 0.8, seed: Math.random() });
+  if (kind === 'stomp') world.fx.push({ kind: 'onipound', x: k.x, y: k.y, r: reach, t: 0, dur: 0.7 });
   return hit.length;
 }
 
-// Her brain: the monster nearest the Onmyoji, and a spot just short of it; with nothing to fight,
-// a stride ahead of the Onmyoji.
+// Grab & Slam: she catches the nearest monster in front in her fist (never a boss), hoists it up
+// over her head, and slams it down into the ground in front of her (and whatever's under it).
+function grabbing(world, k, a, M, u) {
+  const dir = k.dir;
+  if (!a.caught && u >= M.catch) {
+    a.caught = true;
+    a.held = world.mobs
+      .filter((m) => alive(m) && !m.def.boss && Math.abs(m.y - k.y) < 50 && (m.x - k.x) * dir > -10 && Math.abs(m.x - k.x) < M.reach + m.def.w / 2)
+      .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))[0] ?? null;
+    if (a.held) world.juice.push({ type: 'shake', mag: 1.5, dur: 0.12 });
+  }
+  const m = a.held;
+  if (m && alive(m) && !a.slammed) {
+    // Held in her fist: carried up from in front of her to over her head.
+    const l = Math.max(0, Math.min(1, (u - M.lift[0]) / (M.lift[1] - M.lift[0])));
+    const e = l * l * (3 - 2 * l);
+    // (Held up and forward, clear of her head.)
+    m.x = Math.max(m.x1 ?? -Infinity, Math.min(m.x2 ?? Infinity, k.x + dir * (30 + 4 * e)));
+    m.air = 10 + 62 * e;
+    m.airV = 0;
+    m.knockVx = 0;
+    m.stagger = Math.max(m.stagger ?? 0, 0.3);
+  }
+  if (!a.slammed && u >= M.slam) {
+    a.slammed = true;
+    const x = k.x + dir * 36;
+    world.fx.push({ kind: 'crack', school: 'rage', x, y: k.y, w: 110, t: 0, dur: 0.8, seed: Math.random() });
+    world.fx.push({ kind: 'onipound', x, y: k.y, r: 70, t: 0, dur: 0.6 });
+    world.juice.push({ type: 'shake', mag: M.shake, dur: 0.3 });
+    world.juice.push({ type: 'dust', x, y: k.y, count: 8 });
+    if (m && alive(m)) {
+      m.x = Math.max(m.x1 ?? -Infinity, Math.min(m.x2 ?? Infinity, x));
+      m.air = 26;
+      m.airV = -760;
+      dollHit(world, m, { pct: M.pct, x: k.x, knock: 60, stun: M.stun, stop: 0.12, shake: M.shake, big: true, burst: 'onihit', gauge: 3, key: 'oni' });
+      a.landed = 1;
+      // What it lands on gets hit too.
+      for (const o of world.mobs) if (o !== m && alive(o) && Math.abs(o.x - x) < 50 && Math.abs(o.y - k.y) < 50) dollHit(world, o, { pct: M.pct * 0.5, x, knock: 160, launch: 140, burst: 'onihit', gauge: 1, key: 'oni' });
+    }
+    a.freeze = HEAVY.lastFreeze;
+  }
+}
+
+// Charge: red aura, then she barrels forward shoulder-first along her ledge, trampling every
+// monster in her way (each once), and skids to a stop.
+function charging(world, k, a, M, u, dt) {
+  const dir = k.dir;
+  if (!a.aura && u >= 0.05) {
+    a.aura = true;
+    world.fx.push({ kind: 'oniaura', x: k.x, y: k.y, dir, t: 0, dur: 0.6 });
+  }
+  if (u < M.run[0] || u > M.run[1]) return;
+  a.hitSet ??= new Set();
+  const speed = M.dist / ((M.run[1] - M.run[0]) * M.dur);
+  const nav = navOf(world.map);
+  const surf = nav.surfaces[surfaceOf(nav, k.body)];
+  let x = k.body.x + dir * speed * dt * (k.fury ? 1.3 : 1);
+  if (surf) x = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, x));
+  k.body.x = x;
+  if (surf) k.body.y = surf.yAt(x);
+  if (Math.random() < dt * 14) world.juice.push({ type: 'dust', x: x - dir * 10, y: k.body.y, count: 2, dir: -dir });
+  for (const m of world.mobs) {
+    if (!alive(m) || a.hitSet.has(m) || Math.abs(m.y - k.body.y) > 60 || Math.abs(m.x - x) > 22 + m.def.w / 2) continue;
+    a.hitSet.add(m);
+    a.landed = (a.landed ?? 0) + 1;
+    dollHit(world, m, { pct: M.pct, x: x - dir * 30, knock: M.knock, launch: M.launch, stop: 0.04, shake: M.shake, big: true, burst: 'onihit', gauge: 2, key: 'oni' });
+  }
+}
+
+// Her brain: the monster nearest her within the Onmyoji's reach, and a spot just short of it; with
+// nothing to fight, a stride ahead of the Onmyoji.
 function think(world, k) {
   const br = k.brain;
   const nav = navOf(world.map);
@@ -175,7 +262,7 @@ function think(world, k) {
     const surf = nav.surfaces[ms];
     if (!surf) return;
     const side = Math.sign(k.x - m.x) || 1;
-    const x = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, m.x + side * 64));
+    const x = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, m.x + side * 60));
     br.goal = { x, surface: ms };
     br.run = Math.abs(k.x - x) > RUN_AT;
     return;
@@ -246,20 +333,38 @@ function stuck(world, k, intent, dt) {
   }
 }
 
-// A blow at her target once she's rested and in reach: never the same twice running, Ground Pound
-// and Swat when they crowd her, a lazy jab now and then.
+// What she does next: a Charge at a monster out of reach on her ledge; a Roar when they crowd her
+// (now and then); otherwise one of her blows, never the same twice running, Whirl and Stomp more
+// often when they crowd her.
 function fight(world, k) {
   const m = k.brain.target;
   if (!alive(m) || !k.body.onGround || k.act || world.now < k.next) return;
   if (Math.abs(m.y - k.y) > 40) return;
   const dx = Math.abs(m.x - k.x);
-  if (dx > ONI_MOVES.swat.reach + m.def.w / 2 - 8) return;
-  const crowd = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < 110 && Math.abs(o.y - k.y) < 50).length;
-  const pool = (crowd >= 3 ? ['pound', 'pound', 'swat', 'swat', 'smash', 'upper'] : ['smash', 'swat', 'upper', 'jab', 'pound']).filter((n) => n !== k.last);
-  const kind = pool[Math.floor(Math.random() * pool.length)];
-  k.last = kind;
-  k.body.facing = Math.sign(m.x - k.x) || k.body.facing;
-  k.body.vx = 0;
-  sync(k);
-  k.act = { kind, t0: world.now, dur: ONI_MOVES[kind].dur, done: 0 };
+  const C = ONI_MOVES.charge;
+  const face = () => {
+    k.body.facing = Math.sign(m.x - k.x) || k.body.facing;
+    k.body.vx = 0;
+    sync(k);
+  };
+  const start = (kind) => {
+    k.last = kind;
+    face();
+    k.act = { kind, t0: world.now, dur: ONI_MOVES[kind].dur, done: 0 };
+  };
+  if (dx > C.min && dx < C.far && world.now >= k.chargeAt) {
+    const nav = navOf(world.map);
+    if (surfaceOf(nav, k.body) === surfaceBelow(nav, m.x, m.y)) {
+      k.chargeAt = world.now + C.every;
+      return start('charge');
+    }
+  }
+  if (dx > ONI_MOVES.kesa.reach + m.def.w / 2 - 10) return;
+  const crowd = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < 120 && Math.abs(o.y - k.y) < 50).length;
+  if (crowd >= 3 && world.now >= k.roarAt && !k.fury) {
+    k.roarAt = world.now + ONI_MOVES.roar.every;
+    return start('roar');
+  }
+  const pool = (crowd >= 3 ? ['whirl', 'whirl', 'stomp', 'stomp', 'kesa', 'grab'] : ['kesa', 'kesa', 'grab', 'stomp', 'whirl']).filter((n) => n !== k.last);
+  start(pool[Math.floor(Math.random() * pool.length)]);
 }

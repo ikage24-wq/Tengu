@@ -2690,11 +2690,11 @@ test('the Onmyoji has an oni who fights on her own with her heavy club, and sulk
     updateWorld(w, DT, idle);
     if (w.oni.act) seen.add(w.oni.act.kind);
   }
-  assert.ok(['jab', 'swat', 'smash', 'upper', 'pound'].filter((k) => seen.has(k)).length >= 2, `a mix of her blows (${[...seen]})`);
+  assert.ok(['kesa', 'grab', 'stomp', 'charge', 'whirl', 'roar'].filter((k) => seen.has(k)).length >= 2, `a mix of her moves (${[...seen]})`);
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her club lands');
   // A blow at nothing: she sulks.
   w.mobs.forEach((m) => { m.x += 3000; });
-  w.oni.act = { kind: 'smash', t0: w.now, dur: 1.35, done: 0 };
+  w.oni.act = { kind: 'stomp', t0: w.now, dur: 1.25, done: 0 };
   w.oni.mood = null;
   let sulked = false;
   for (let i = 0; i < 60 * 3; i++) {
@@ -2702,6 +2702,32 @@ test('the Onmyoji has an oni who fights on her own with her heavy club, and sulk
     sulked ||= w.oni.mood?.kind === 'sulk';
   }
   assert.ok(sulked, 'she sulks when she hits nothing');
+});
+
+test("the oni grabs a monster, hoists it over her head and slams it; and charges through them", () => {
+  const w = onmyoji();
+  const k = w.oni;
+  const m = w.mobs[0];
+  w.mobs.slice(1).forEach((o) => { o.x += 3000; });
+  Object.assign(m, { x: k.x + k.dir * 50, y: k.y });
+  const hp0 = m.hp;
+  k.next = Infinity;
+  k.act = { kind: 'grab', t0: w.now, dur: 1.9, done: 0 };
+  let high = 0;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    high = Math.max(high, m.air ?? 0);
+  }
+  assert.ok(high > 30, `she hoists it up (${Math.round(high)})`);
+  assert.ok(m.hp < hp0, 'and slams it');
+  // The charge: she barrels forward through a monster in her way.
+  Object.assign(m, { x: k.x + k.dir * 120, y: k.y, air: 0, airV: 0 });
+  const x0 = k.x;
+  const hp1 = m.hp;
+  k.act = { kind: 'charge', t0: w.now, dur: 1.35, done: 0 };
+  for (let i = 0; i < 60 * 2.5; i++) updateWorld(w, DT, idle);
+  assert.ok(Math.abs(k.x - x0) > 100, `she charges forward (${Math.round(k.x - x0)})`);
+  assert.ok(m.hp < hp1, 'trampling what is in her way');
 });
 
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {

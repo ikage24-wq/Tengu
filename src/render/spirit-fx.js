@@ -316,6 +316,17 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       groundRing(ctx, 'celshockred', x, y, Math.min(1, p * 1.3), f.r ?? 120);
       return true;
     }
+    case 'oniaura': {
+      // Her charge winding up: red fire flaring up round her.
+      fxSprite(ctx, 'celragefire', x, y + 2, { t: f.t, scale: 1.2, alpha: 1 - p });
+      return true;
+    }
+    case 'oniroar': {
+      // Her roar: a red shout bursting from her and a shockwave racing out round her.
+      fxSprite(ctx, 'celshoutred', x + (f.dir || 1) * 10, y - 70, { p, flip, scale: 1.1 });
+      groundRing(ctx, 'celshockred', x, y, Math.min(1, p * 1.3), 170);
+      return true;
+    }
     case 'onipuff': {
       fxSprite(ctx, 'celsmokebomb', x, y, { p, scale: 0.7 });
       return true;

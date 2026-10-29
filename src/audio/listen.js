@@ -44,7 +44,7 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   // The Shrine Maiden.
   'grandblessing', 'purifycircle', 'purifyburn', 'reviveflash', 'resurrection', 'thousandtorii',
   // The Onmyoji's oni.
-  'onihit', 'onipound', 'onipuff']);
+  'onihit', 'onipound', 'onipuff', 'oniaura', 'oniroar']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);

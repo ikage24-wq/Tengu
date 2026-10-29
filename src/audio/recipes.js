@@ -277,6 +277,8 @@ const R = {
   // rocks), and her smoke puff.
   onihit: { db: -10, vary: 6, max: 3, gap: 60, layers: [{ rec: 'punchHeavy', rate: 0.8 }, { rec: 'metalHeavy', rate: 0.7, db: -6 }] },
   onipound: { db: -8, max: 1, room: true, layers: [thump(60, 500, { slide: -1.2 }), { rec: 'rockHit', rate: 0.7 }, { rec: 'punchHeavy', rate: 0.6, db: -4 }] },
+  oniaura: { db: -11, max: 1, layers: [{ rec: 'fireCharge', rate: 0.8 }, whoosh(600, 200, 1200, { db: -6 })] },
+  oniroar: { db: -7, max: 1, room: true, layers: [{ rec: 'ogre', rate: 1.25 }, { rec: 'darkImpact', rate: 0.9, db: -4 }, thump(70, 400, { slide: -1 })] },
   onipuff: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.3, len: 500 }, whoosh(300, 300, 1400, { db: -6 })] },
   grandblessing: { db: -9, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1800 }, { seq: 'D5:80 E5:80 G5:80 A5:80 D6:80 E6:900', inst: 'celesta', db: -4 }, { seq: 'r:200 D4+A4+D5+A5:1500', inst: 'choir_aahs', attack: 0.25, db: -6 }] },
   purifycircle: { db: -11, max: 1, room: true, layers: [{ rec: 'bell', len: 1400, rate: 0.7 }, { rec: 'holyProtect', len: 1200, db: -4 }, sparkle('D6:60 A6:60 D7:400', { db: -10 })] },

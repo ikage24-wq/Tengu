@@ -7,6 +7,7 @@
 // at the end of this file (world/oni.js runs her).
 
 import { drawPosed } from './hero.js';
+import { fxSprite } from './fx-sprites.js';
 import { ONI_MOVES } from '../world/oni.js';
 
 export const ONI_SCALE = 2;
@@ -249,9 +250,11 @@ function paintCrimsonKanabo(c, hand, flip, ang, k, time) {
 //   - her bearing: bored by everything. She slouches with the club resting on her shoulder and
 //     a fist on her hip, heavy-lidded, and strolls along lazily; when she's left behind she
 //     stomps after the Onmyoji at a run with the club trailing;
-//   - her blows: each a big, committed swing of a very heavy club (on world/oni.js's heavy clock),
-//     her whole body thrown into it, her face waking up for it (a grin, shark teeth) and going
-//     straight back to bored;
+//   - her moves, from how oni fight (world/oni.js): a kesagiri chain of heavy diagonal swings and a
+//     finisher, a grab and slam (the club left standing in the ground), a knee-high stomp, a
+//     shoulder-first charge, the club whirled overhead, a roar; each a big, committed effort on a
+//     heavy clock, her face waking up for it (a grin, shark teeth, a yell) and going straight back
+//     to bored; in her fury (after a roar) a red aura burns round her;
 //   - her moods: a sulk when she hits nothing (the club dropped, a pout, a kick at the ground), a
 //     smug smirk when what she was hitting goes down;
 //   - her idle moods, every few seconds standing about: blowing a gum bubble, chewing a toothpick,
@@ -275,12 +278,13 @@ export { ONI_MOVES };
 // ---------- Her poses ----------
 // lean, lunge, lift (her body); club (its angle, 0 up, + forward); hand (her club hand), free (the
 // other) from rest; legF / legB [ahead, up, tilt]; squat; tx, by (hips, bob); hx, hy, tilt (head);
-// cloth; and her face: mouth, eyes, brows, lid, glance, props (bored props on her face).
+// cloth; planted (0-1: she's let go of the club, standing in the ground where she left it); and her
+// face: mouth, eyes, brows, lid, glance, props (bored props on her face).
 const HAND = [1.5, -8];
 const FREE = [-1, -2.4];
 const REST = {
   lean: -0.02, lunge: 0, lift: 0, club: -0.55, hand: HAND, free: FREE, legF: [3.6, 0, 8], legB: [-3.8, 0, -8], squat: 0,
-  tx: 0, by: 0, hx: 0.4, hy: 0.2, tilt: 4, cloth: 0, mouth: 'bored', eyes: null, brows: 'bored', lid: 0.45, glance: 0, props: [],
+  tx: 0, by: 0, hx: 0.4, hy: 0.2, tilt: 4, cloth: 0, planted: 0, mouth: 'bored', eyes: null, brows: 'bored', lid: 0.45, glance: 0, props: [],
 };
 const pose = (o) => ({ ...REST, ...o });
 const BROWS = { bored: [[0.05, 0.15], [0.05, 0.15]], angry: [[-0.4, 0.95], [-0.4, 0.95]], smug: [[0.1, -0.1], [0.35, -0.35]], sad: [[0.4, -0.45], [0.4, -0.45]], raised: [[0.4, -0.45], [-0.15, 0.35]], flat: [[0, 0], [0, 0]] };
@@ -307,87 +311,131 @@ function running(ph) {
   });
 }
 
-// ---------- Her blows (ONI_MOVES in world/oni.js; `u` runs on her heavy clock) ----------
-// Lazy Jab (0.42): she lets the club down off her shoulder to level, and shoves its head forward
-// one-handed with a bored little lean, then hauls it back up.
-function jab(u) {
-  const set = soft(seg(u, 0, 0.26));
-  const shove = overshoot(seg(u, 0.34, 0.44)) * (1 - soft(seg(u, 0.56, 0.84)));
-  const back = soft(seg(u, 0.72, 1));
-  const k = set * (1 - back);
+// ---------- Her moves (ONI_MOVES in world/oni.js; `u` runs on her heavy clock) ----------
+// Keyframes: [[u, value, ease], ...], each value a number or [x, y], eased into from the key
+// before: soft (a sine) by default, 'snap' committing into a blow (fast, a little past, settling).
+function keys(u, ks) {
+  if (u <= ks[0][0]) return ks[0][1];
+  for (let i = 1; i < ks.length; i++) {
+    const [b, vb, how] = ks[i];
+    if (u > b) continue;
+    const [a, va] = ks[i - 1];
+    const t = seg(u, a, b);
+    const e = how === 'snap' ? overshoot(t) : soft(t);
+    return Array.isArray(va) ? lerp2(va, vb, e) : lerp(va, vb, e);
+  }
+  return ks[ks.length - 1][1];
+}
+// While the club swings, where her hands are follows it: low and forward when it's down in front,
+// up over her head when it's back.
+const swingHand = (a) => {
+  const s = clamp01((a + 1.1) / 3.5);
+  return { s, hand: [lerp(0.5, 9, s), lerp(-14, 3.5, s)], free: [lerp(2.5, 7, s), lerp(-12, 2.5, s)] };
+};
+// Kesagiri (blows at 0.17, 0.34, 0.51; the finisher at 0.78): from her shoulder she cuts down
+// across her body, rips it back up the other way, cuts down again, stepping in with each, then
+// hauls it overhead (a breath held) and brings it down with everything.
+function kesa(u) {
+  const club = keys(u, [[0, -0.55], [0.09, -1.25], [0.17, 2.3, 'snap'], [0.24, 2.05], [0.34, -0.95, 'snap'], [0.41, -0.8], [0.51, 2.4, 'snap'], [0.58, 2.2], [0.7, -1.05], [0.78, 1.95, 'snap'], [0.9, 1.9], [1, -0.55]]);
+  const { s, hand, free } = swingHand(club);
+  const rest = 1 - soft(seg(u, 0, 0.08)) + soft(seg(u, 0.9, 1));
+  const fin = soft(seg(u, 0.6, 0.72)) * (1 - soft(seg(u, 0.78, 0.82)));
   return pose({
-    club: lerp(-0.55, 1.45, k), hand: add2(lerp2(HAND, [3, -2], k), [6 * shove, 0]), free: lerp2(FREE, [-1.4, -2.8], k),
-    lean: 0.2 * shove, lunge: 5 * shove, legF: [3.6 + 2 * shove, 0, 8], eyes: 'half', mouth: shove > 0.5 ? 'onismirk' : 'bored',
+    club, hand: lerp2(hand, HAND, rest), free: lerp2(free, FREE, rest),
+    lean: lerp(-0.14, 0.42, s) * (1 - rest) - 0.08 * fin, squat: 3.4 * s * (1 - rest), lunge: (2 + 4 * s) * (1 - rest), lift: 1.6 * fin,
+    legF: [3.6 + 3 * s, -1.2 * fin, 8 + 6 * s], legB: [-4 - 1.5 * s, 0, -10 - 6 * s], cloth: 5 * s - 2, tilt: 4 - 8 * (1 - s) + 6 * s,
+    mouth: u > 0.74 && u < 0.92 ? 'onishark' : 'onigrin', brows: 'angry', lid: 0.1,
   });
 }
-// The blend every big blow uses: from rest into its wind-up `w`, through its strike `s`, back to
-// rest as `back` comes.
-const blow = (rest, wound, struck, w, s, back) => add2(mul2(add2(mul2(lerp2(rest, wound, w), 1 - s), mul2(struck, s)), 1 - back), mul2(rest, back));
-// Swat (0.5): she swings the club back and low behind her, both hands on it, coiling; then lets
-// fly in one huge swing up and over and down through everything in front, her whole body after it,
-// and follows through before she rests it back on her shoulder.
-function swat(u) {
-  const wind = soft(seg(u, 0, 0.36));
-  const cut = overshoot(seg(u, 0.38, 0.52));
-  const back = soft(seg(u, 0.72, 1));
-  const on = 1 - back;
+// Grab & Slam (caught at 0.2, the slam at 0.64): she drives the club into the ground beside her
+// and leaves it standing, lunges and grabs the monster in her fist, hoists it right up over her
+// head, slams it down in front of her, and takes the club back.
+function grab(u) {
   return pose({
-    club: (lerp(-0.55, -2, wind) * (1 - cut) + 2.15 * cut) * on - 0.55 * back,
-    hand: blow(HAND, [-4, -3], [9, -1], wind, cut, back), free: blow(FREE, [-2, -6], [7, -1], wind, cut, back),
-    lean: -0.16 * wind * (1 - cut) + 0.36 * cut * on, lunge: -2 * wind * (1 - cut) + 7 * cut * on, squat: 1.5 * wind * (1 - cut) + 2.2 * cut * on,
-    legF: [3.6 + 3 * cut * on, 0, 8 + 4 * cut * on], legB: [-4 - 1.6 * cut * on, 0, -10 - 8 * cut * on], cloth: 3 * wind - 5 * cut * on, tilt: 4 - 6 * cut * on,
-    mouth: cut > 0.3 && on > 0.5 ? 'onigrin' : wind > 0.3 ? 'onismirk' : 'bored', brows: cut > 0.2 && on > 0.5 ? 'angry' : 'bored', lid: wind > 0.3 ? 0.15 : 0.45,
+    planted: soft(seg(u, 0, 0.1)) * (1 - soft(seg(u, 0.86, 0.98))), club: keys(u, [[0, -0.55], [0.1, 0.05], [0.88, 0.05], [1, -0.55]]),
+    hand: keys(u, [[0, HAND], [0.1, [0.5, 1.5]], [0.2, [10, -1], 'snap'], [0.55, [8, -16]], [0.64, [11, 3], 'snap'], [0.8, [9, 2.5]], [0.9, [0.5, 1.5]], [1, HAND]]),
+    free: keys(u, [[0, FREE], [0.2, [-2, -3]], [0.55, [1, -12]], [0.64, [6, 2], 'snap'], [0.86, FREE]]),
+    lean: keys(u, [[0, -0.02], [0.2, 0.3, 'snap'], [0.55, -0.18], [0.64, 0.45, 'snap'], [0.85, 0.1], [1, -0.02]]),
+    squat: keys(u, [[0, 0], [0.2, 1.5], [0.55, 0], [0.64, 4, 'snap'], [0.85, 1], [1, 0]]), lunge: keys(u, [[0, 0], [0.2, 5, 'snap'], [0.55, 1], [0.64, 6, 'snap'], [1, 0]]),
+    lift: keys(u, [[0, 0], [0.5, 0], [0.56, 2.4], [0.62, 0], [1, 0]]), legF: [3.6 + 2.4 * bump(u, 0.12, 0.9), 0, 10], legB: [-4.4, 0, -12],
+    mouth: u < 0.2 ? 'onismirk' : u < 0.56 ? 'onigrin' : u < 0.85 ? 'onishark' : 'bored', brows: 'angry', lid: 0.15, tilt: keys(u, [[0, 4], [0.55, -6], [0.64, 8, 'snap'], [1, 4]]),
   });
 }
-// Smash (0.52): she hauls the club up overhead in both hands, rising onto her toes, holds it there
-// a breath; then brings it straight down in front of her with everything she has, sinking with it.
-function smash(u) {
-  const up = soft(seg(u, 0, 0.38));
-  const chop = overshoot(seg(u, 0.4, 0.53));
+// Stomp (0.5): the club resting on her shoulder, she brings her knee right up high (well clear of
+// her kimono), leaning back,
+// a fist pumped; then stamps down with everything, sinking into it as the shock goes out.
+function stomp(u) {
+  const knee = soft(seg(u, 0.05, 0.42));
+  const down = overshoot(seg(u, 0.44, 0.5));
   const back = soft(seg(u, 0.75, 1));
-  const on = 1 - back;
-  const high = up * (1 - chop);
+  const up = knee * (1 - down);
+  const on = down * (1 - back);
   return pose({
-    club: (lerp(-0.55, -0.9, up) * (1 - chop) + 1.95 * chop) * on - 0.55 * back,
-    hand: blow(HAND, [0, -14], [8.5, 3.5], up, chop, back), free: blow(FREE, [2.5, -12], [6.5, 2.5], up, chop, back),
-    lean: -0.12 * high + 0.45 * chop * on, lift: 2 * high, squat: 3.6 * chop * on, lunge: 7 * chop * on,
-    legF: [3.6 + 2.6 * chop * on, -1.2 * high, 8 + 6 * chop * on], legB: [-4 - 1.6 * chop * on, 0, -10], cloth: -2 * high + 5 * chop * on, tilt: 4 - 8 * high + 6 * chop * on,
-    mouth: chop > 0.3 && on > 0.5 ? 'onishark' : up > 0.5 ? 'onigrin' : 'bored', brows: up > 0.4 ? 'angry' : 'bored', lid: up > 0.4 ? 0.1 : 0.45,
+    legF: [3.6 + 3.4 * up + 1.6 * on, -12 * up, 8 + 70 * up], legB: [-4 - 0.6 * on, 0, -10], lean: -0.18 * up + 0.18 * on, squat: 3 * on, by: 1 * on, lift: 1.4 * up,
+    club: -0.55 - 0.4 * up, hand: [1.5, -8 - 2 * up], free: [FREE[0] + 3 * up, FREE[1] - 4 * up], cloth: -3 * up + 4 * on, tilt: 4 - 6 * up + 6 * on,
+    mouth: on > 0.3 ? 'onishark' : up > 0.4 ? 'onigrin' : 'bored', brows: up > 0.3 || on > 0.3 ? 'angry' : 'bored', lid: 0.15,
   });
 }
-// Upswing (0.48): she sinks low with the club's head down in front of her, then rips it up and over
-// her head, coming right up onto her toes after it.
-function upper(u) {
-  const low = soft(seg(u, 0, 0.34));
-  const rip = overshoot(seg(u, 0.36, 0.5));
-  const back = soft(seg(u, 0.74, 1));
-  const on = 1 - back;
+// Charge (running 0.3 to 0.66): she crouches, the club dragged low behind her, red aura flaring;
+// then barrels forward shoulder-first in long pounding strides, and skids to a stop.
+function charge(u) {
+  if (u < 0.3) {
+    const w = soft(seg(u, 0, 0.3));
+    return pose({ squat: 2.6 * w, lean: 0.2 * w, club: lerp(-0.55, -2.2, w), hand: lerp2(HAND, [-3, 2], w), free: lerp2(FREE, [4, -2], w), legF: [4, 0, 10], legB: [-4.4, 0, -14], mouth: 'onigrin', brows: 'angry', lid: 0.1 });
+  }
+  if (u < 0.66) {
+    const ph = u * 46;
+    const s = Math.sin(ph);
+    const c = Math.cos(ph);
+    return pose({
+      lean: 0.45, lunge: 3, lift: 1.4 * Math.abs(c), legF: [2.4 + 5.4 * s, -3 * Math.max(0, c), 28 * s], legB: [-2.4 - 5.4 * s, -3 * Math.max(0, -c), -28 * s], by: -0.9 * Math.abs(c),
+      club: -2.2, hand: [-3, 2], free: [4, -2], cloth: -5, mouth: 'onishark', brows: 'angry', lid: 0.05, tilt: 2,
+    });
+  }
+  const skid = soft(seg(u, 0.66, 0.8));
+  const back = soft(seg(u, 0.82, 1));
   return pose({
-    club: (lerp(-0.55, 2.4, low) * (1 - rip) - 0.7 * rip) * on - 0.55 * back,
-    hand: blow(HAND, [7, 4.5], [1.5, -14], low, rip, back), free: blow(FREE, [5, 3.5], [3, -12], low, rip, back),
-    lean: 0.3 * low * (1 - rip) - 0.18 * rip * on, lunge: 3 * low * (1 - rip), lift: 7 * rip * on, squat: 3.4 * low * (1 - rip),
-    legF: [3 + 1.4 * low, -2 * rip * on, 12], legB: [-3.4, -1.4 * rip * on, -12], cloth: 4 * rip * on, tilt: 4 - 10 * rip * on,
-    mouth: rip > 0.3 && on > 0.5 ? 'onigrin' : 'bored', brows: low > 0.3 ? 'angry' : 'bored', lid: low > 0.3 ? 0.15 : 0.45,
+    lean: lerp(0.45, -0.15, skid) * (1 - back) - 0.02 * back, squat: 2 * (1 - back), legF: [6 * (1 - back) + 3.6 * back, 0, -10 * (1 - back) + 8 * back], legB: [-4.4, 0, -14],
+    club: lerp(-2.2, -0.55, back), hand: lerp2([-3, 2], HAND, back), free: lerp2([4, -2], FREE, back), mouth: back > 0.5 ? 'onismirk' : 'onigrin', brows: 'angry', lid: 0.2,
   });
 }
-// Ground Pound (0.56): she raises the club high in both hands with a little hop, and drives it
-// straight down into the ground right before her feet, sinking into a deep crouch as the shock
-// goes out both ways; then wrenches it free.
-function pound(u) {
-  const raise = soft(seg(u, 0, 0.36));
-  const hop = bump(u, 0.3, 0.52);
-  const drive = overshoot(seg(u, 0.5, 0.58));
+// Whirl (blows at 0.3, 0.42, 0.54; brought down at 0.72): she hoists the club up overhead in both
+// hands and whirls it round and round over her head, faster and faster, then brings it down in
+// front of her.
+function whirl(u) {
+  const raise = soft(seg(u, 0, 0.2));
+  const spin = seg(u, 0.2, 0.62) ** 1.3;
+  const down = overshoot(seg(u, 0.64, 0.72));
+  const back = soft(seg(u, 0.84, 1));
+  const on = 1 - back;
+  const turn = -0.3 + TAU * 2 * spin;
+  const a = lerp(lerp(-0.55, -0.3, raise), turn, seg(u, 0.2, 0.25));
+  const club = (a * (1 - down) + 1.95 * down) * on - 0.55 * back;
+  const circ = [1.4 * Math.sin(turn), 1.1 * Math.cos(turn)];
+  return pose({
+    club, hand: blendTo(add2(lerp2(HAND, [1, -15], raise), mul2(circ, raise * (1 - down))), [8.5, 3.5], down, back), free: blendTo(lerp2(FREE, [2.5, -13], raise), [6.5, 2.5], down, back),
+    lean: (-0.08 + 0.05 * Math.sin(turn)) * raise * (1 - down) + 0.42 * down * on, squat: 1 * raise * (1 - down) + 3.6 * down * on, lunge: 6 * down * on, tx: 0.6 * Math.sin(turn) * (1 - down),
+    legF: [4.4, 0, 10], legB: [-4.6, 0, -12], cloth: 3 * Math.sin(turn) * (1 - down) + 5 * down * on, tilt: 4 - 6 * raise * (1 - down) + 6 * down * on,
+    mouth: down > 0.3 && on > 0.5 ? 'onishark' : raise > 0.4 ? 'onigrin' : 'bored', brows: 'angry', lid: 0.1,
+  });
+}
+const blendTo = (p, struck, s, back) => add2(mul2(add2(mul2(p, 1 - s), mul2(struck, s)), 1 - back), mul2(HAND, back));
+// Roar (0.42): she sucks in a breath hunched forward, then throws her head back and roars with the
+// club thrust one-handed at the sky and her other fist clenched, trembling with it.
+function roar(u) {
+  const draw = soft(seg(u, 0, 0.3));
+  const r = overshoot(seg(u, 0.36, 0.45));
   const back = soft(seg(u, 0.78, 1));
   const on = 1 - back;
+  const shake = 0.3 * Math.sin(u * 90) * r * on;
   return pose({
-    club: (lerp(-0.55, -0.1, raise) * (1 - drive) + 2.75 * drive) * on - 0.55 * back,
-    hand: blow(HAND, [1, -15], [5, 4], raise, drive, back), free: blow(FREE, [2.5, -14], [4, 4], raise, drive, back),
-    lift: 6 * hop, squat: 4.6 * drive * on, lean: -0.1 * raise * (1 - drive) + 0.25 * drive * on,
-    legF: [3.8 + 1.4 * drive * on, -1.6 * hop, 8 + 8 * drive * on], legB: [-4.2 - 1.4 * drive * on, -1.6 * hop, -10 - 8 * drive * on], cloth: -3 * hop + 5 * drive * on, tilt: 4 - 8 * raise * (1 - drive) + 6 * drive * on,
-    mouth: drive > 0.3 && on > 0.5 ? 'onishark' : raise > 0.4 ? 'onigrin' : 'bored', brows: 'angry', lid: 0.1,
+    lean: 0.2 * draw * (1 - r) - 0.28 * r * on, squat: 2 * draw * (1 - r) + 1 * r * on, club: lerp(-0.55, -0.15, r * on),
+    hand: add2(lerp2(lerp2(HAND, [3, -5], draw * (1 - r)), [3, -15], r * on), [shake, 0]), free: lerp2(lerp2(FREE, [2, 0], draw * (1 - r)), [5, 1], r * on),
+    hy: -0.4 * draw * (1 - r) - 1.4 * r * on, hx: 0.4 + shake, tilt: 4 + 6 * draw * (1 - r) - 12 * r * on, legF: [4.2, 0, 10], legB: [-4.6, 0, -12], cloth: 4 * r * on,
+    mouth: r > 0.3 && on > 0.4 ? 'yell' : 'onigrin', brows: 'angry', lid: r > 0.3 ? 0 : 0.2,
   });
 }
-const MOVES = { jab, swat, smash, upper, pound };
+const MOVES = { kesa, grab, stomp, charge, whirl, roar };
 
 // ---------- Her moods and idle moods ----------
 // Sulking (a blow hit nothing): the club dropped point-down, leaning on it, shoulders slumped, a
@@ -501,6 +549,8 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   else if (st.idle) p = ONI_IDLES[st.idle.kind][1](clamp01((time - st.idle.t0) / ONI_IDLES[st.idle.kind][0]));
   else p = standing();
   if (k.mood?.kind === 'smug' && !a) p = { ...p, mouth: 'onismirk', brows: 'smug', lid: 0.35 };
+  // In her fury her eye burns.
+  if (k.fury) p = { ...p, props: [...p.props, 'oniglow'] };
   // On an impact she's stopped dead (her hair and clothes swing on).
   const P = follow(st, p, a?.freeze > 0 ? 0 : dt);
 
@@ -538,8 +588,18 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   const look = { ...ONI_LOOK, mouth: P.mouth, lid: q(P.lid), marks: [...ONI_LOOK.marks.filter((m) => m !== 'onifang' || P.mouth === 'bored' || P.mouth === 'flat'), ...P.props] };
   // The club goes behind her while it's resting back over her shoulder, in front when it swings.
   const ang = Math.atan2(Math.sin(P.club), Math.cos(P.club));
-  const behind = ang < -0.3 && ang > -2.9;
-  const club = (c, hand, flip) => paintKanabo(c, hand, flip, P.club, ONI_SCALE, 'crimson', time);
+  // (Planted, it stands just behind her.)
+  const behind = (ang < -0.3 && ang > -2.9) || P.planted > 0.02;
+  // Planted, the club stays standing where her hand let go of it (she takes it back from there).
+  const club = (c, hand, flip) => {
+    if (P.planted <= 0.02) st.plantAt = null;
+    else st.plantAt ??= [...hand];
+    const pk = clamp01(P.planted * 1.5);
+    const at = st.plantAt ? [lerp(hand[0], st.plantAt[0], pk), lerp(hand[1], st.plantAt[1], pk)] : hand;
+    paintKanabo(c, at, flip, P.club * (1 - pk), ONI_SCALE, 'crimson', time);
+  };
+  // Her fury: red fire burning round her.
+  if (k.fury) fxSprite(ctx, 'celragefire', x, y + 2, { t: time, scale: 0.85, alpha: 0.75 });
   drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, {
     scale: ONI_SCALE, facing: dir, under: behind ? club : null, over: behind ? null : club, hold: 'front',
     lean: { tilt: P.lean + lean + 0.012 * shift * calm, lunge: P.lunge, lift: P.lift },
