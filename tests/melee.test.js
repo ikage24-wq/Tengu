@@ -2551,7 +2551,7 @@ test('the Shrine Maiden has a kitsune guardian who fights in front of her and bo
     updateWorld(w, DT, idle);
     if (w.guardian.act) seen.add(w.guardian.act.kind);
   }
-  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft', 'crescent', 'flurry', 'moonfall'].filter((k) => seen.has(k)).length >= 2, `a mix of her own moves (${[...seen]})`);
+  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft', 'spin', 'crescent', 'flurry', 'moonfall'].filter((k) => seen.has(k)).length >= 2, `a mix of her own moves (${[...seen]})`);
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her naginata lands');
   w.mobs.forEach((m) => { m.hp = 0; });
   let bowed = false;

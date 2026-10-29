@@ -57,6 +57,8 @@ export const KMOVES = {
   cleave: { dur: 1.25, hits: [0.5], reach: 100, pct: 145, knock: 70, stun: 0.35, targets: 3, shake: 4, crack: true },
   reap: { dur: 1.15, hits: [0.47], reach: 130, pct: 90, knock: 50, launch: 200, targets: 5, shake: 2 },
   haft: { dur: 1.2, hits: [0.28, 0.6], reach: 105, pct: 70, knock: 110, stun: 0.4, targets: 2, shake: 2 },
+  // (Spin Sweep: the naginata swung round her once in a full circle, catching everything round her.)
+  spin: { dur: 1.35, hits: [0.5], reach: 100, pct: 105, knock: 170, targets: 6, shake: 3, around: true },
 };
 // Her skills: how long each takes (s), its cooldown (`every`), how far it reaches, how hard.
 //   Moonfall: the charge (from `charge[0]` of the move to `hit`) drags monsters within `r` in at up
@@ -76,7 +78,8 @@ export const CALL = { every: 7, range: 160, dur: 1.0, hit: 0.5, push: 170, daze:
 export const GUARD = { chance: 0.3, every: 2.5, near: 110 };
 const BOW = 1.5; // how long her bow after a fight lasts
 // Each move's smear: where its arc starts and how far it sweeps (degrees), and how thick it is.
-const SMEAR = { crescent: [-40, 200, 12], flurry: [80, 24, 4], thrust: [72, 36, 5], sweep: [-70, 190, 9], rising: [120, -210, 8], twin: [70, 40, 4], cleave: [-20, 160, 10], reap: [150, -70, 7], haft: [-10, 150, 7] };
+const SMEAR = {
+  spin: [-120, 340, 10], crescent: [-40, 200, 12], flurry: [80, 24, 4], thrust: [72, 36, 5], sweep: [-70, 190, 9], rising: [120, -210, 8], twin: [70, 40, 4], cleave: [-20, 160, 10], reap: [150, -70, 7], haft: [-10, 150, 7] };
 const NONE = { left: false, right: false, up: false, down: false, jump: false };
 const alive = (m) => m && m.hp > 0;
 
@@ -285,7 +288,7 @@ function strike(world, k, kind, M, last) {
   if (kind === 'flurry' && !last) world.fx.push({ kind: 'kitsunejab', x: k.x + dir * 70, y: k.y - 30 + (Math.random() - 0.5) * 10, dir, t: 0, dur: 0.22 });
   else world.fx.push({ kind: 'arc', x: k.x + dir * 12, y: k.y - 28, dir, r: M.reach * 0.62, start, sweep, thick, big: last && kind !== 'twin', color: last ? '#ff8a7a' : '#fff4ec', t: 0, dur: 0.3 });
   const hit = world.mobs
-    .filter((m) => alive(m) && Math.abs(m.y - k.y) < 70 && (m.x - k.x) * dir > -12 && Math.abs(m.x - k.x) < M.reach + m.def.w / 2)
+    .filter((m) => alive(m) && Math.abs(m.y - k.y) < 70 && (M.around || (m.x - k.x) * dir > -12) && Math.abs(m.x - k.x) < M.reach + m.def.w / 2)
     .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))
     .slice(0, M.targets);
   // The naginata is very heavy: every blow lands with a jolt, a long hit-stop and the ground shaking.
@@ -491,7 +494,7 @@ function fight(world, k) {
   if (kind) k.skillAt[kind] = world.now + SKILLS[kind].every;
   else {
     const crowd = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < 80 && Math.abs(o.y - k.y) < 40).length;
-    const pool = (crowd >= 2 ? ['sweep', 'sweep', 'reap', 'reap', 'cleave', 'thrust', 'rising', 'twin', 'haft'] : ['thrust', 'rising', 'twin', 'sweep', 'cleave', 'reap', 'haft']).filter((n) => n !== k.last);
+    const pool = (crowd >= 2 ? ['sweep', 'sweep', 'spin', 'spin', 'reap', 'reap', 'cleave', 'thrust', 'rising', 'twin', 'haft'] : ['thrust', 'rising', 'twin', 'sweep', 'cleave', 'reap', 'haft', 'spin']).filter((n) => n !== k.last);
     kind = pool[Math.floor(Math.random() * pool.length)];
   }
   k.last = kind;

@@ -4,7 +4,7 @@
 // everything she does with it) come from here, blend into each other, and go to the hero's drawing
 // whole (hero.js drawPosed). The Fang of the Wolf Queen is one of her bones: drawn from where her
 // right hand really is, along its own angle, so it never leaves her hand.
-import { drawPosed } from './hero.js';
+import { drawPosed, posedMouth } from './hero.js';
 import { footShadow } from './pixel.js';
 import { wild } from '../world/melee.js';
 import { procOf } from '../world/combat.js';
@@ -181,6 +181,7 @@ const REST = {
   tx: 0, by: 0, squat: 0, lift: 0, hx: 0, hy: 1, tilt: -3, hand: [-4.6, 0.6], free: [0.4, 0.2], sword: 'trail', skip: 0, abs: false,
   legF: [0.8, 0, 0], legB: [-0.8, 0, 0], hipIn: 0, ears: [4, 4], tail: 0, cloth: 0, clothRoot: 0, kick: 0,
   mouth: 'bored', lid: null, brows: [[-0.2, 0.2], [-0.2, 0.2]], extras: [], blush: 1, puff: false, turned: false, air: false, view: 'side', climb: 0, glow: 0, front: false, frontK: 0,
+  flake: -1, snow: -1,
 };
 const pose = (o) => ({ ...REST, ...o });
 
@@ -191,13 +192,14 @@ const easeIn = (t) => t * t;
 const lerp = (a, b, t) => a + (b - a) * t;
 const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
 const TAU = Math.PI * 2;
+const lerp2 = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
 // The sword trailing behind her, low.
 const TRAIL = 2.9;
 // Her right hand reaching along the sword's direction `a`, `r` out from the shoulder (the arm is in
 // the rig's tall proportions, so its height is drawn shorter: hence the 0.6).
 const handAlong = (a, r = 8) => [1.4 + Math.cos(a) * r, -9.4 + (Math.sin(a) * r) / 0.6];
 
-// Standing about (a 12 s routine).
+// Standing about (a 21 s routine).
 //   0-5.2 s    fed up: breathing; a big sigh (steam, ears flat back, the hair lifting as she breathes
 //              in and dropping as she lets it out); fuming (a vein, ears pinned, the tail thumping);
 //              a grudging tug at the sword; a long "..."
@@ -205,11 +207,54 @@ const handAlong = (a, r = 8) => [1.4 + Math.cos(a) * r, -9.4 + (Math.sin(a) * r)
 //              drooping, until it drops with a jerk and she snaps awake with a "!", wide-eyed, and
 //              looks round as if nothing happened, a bead of sweat
 //   9.6-12     a huge yawn, a hand to her mouth, ears back, a stretch of the tail
+//   12-16.4    a snowflake: she watches one drift down onto her nose, "ah... ah..." and sneezes
+//              it off (a puff of snow, ears and tail flung about), rubs her nose, "..."
+//   16.4-21    a snowball: she squats, scoops up snow in her free hand and rolls it into a ball,
+//              looks at it, lobs it straight up and watches it come down plop on her own head; a
+//              deadpan "...", and she shakes it off
 // Ears twitch now and then all through it.
 function standing(t) {
-  const c = t % 12;
+  const c = t % 21;
   const tw = t % 3.3;
   const twitch = [-(tw < 0.12 ? 18 : 0), -(tw > 1.9 && tw < 2.02 ? 18 : 0)];
+  // The fed-up breathing she comes out of and goes back into, for the routines below.
+  const base = () => pose({
+    by: 0.4 * Math.sin(t * 2.2), tilt: -3 + Math.sin(t * 1.1), ears: [4 + 3 * Math.sin(t * 1.3) + twitch[0], 4 + 3 * Math.sin(t * 1.3 - 0.8) + twitch[1]],
+    tail: 9 * Math.sin(t * 1.7), cloth: Math.sin(t * 1.4) * 0.8 + Math.sin(t * 2.3 + 1) * 0.4,
+  });
+  if (c >= 16.4) {
+    const e = c - 16.4;
+    const k = ease(seg(e, 0, 0.35)) * (1 - ease(seg(e, 4.2, 4.6)));
+    const down = ease(seg(e, 0, 0.4)) * (1 - ease(seg(e, 1.4, 1.8)));
+    const roll = seg(e, 0.6, 1.4);
+    const toss = seg(e, 2, 2.2);
+    const watch = ease(seg(e, 2.15, 2.5)) * (1 - ease(seg(e, 2.9, 3)));
+    const plop = bump(e, 2.98, 3.3);
+    const hit = e > 2.98;
+    const shake = e > 3.9 && e < 4.3 ? Math.sin(e * 46) * bump(e, 3.9, 4.3) : 0;
+    const free = e < 0.6 ? lerp2([0.4, 0.2], [3.4, 14], down) : e < 1.6 ? [lerp(3.4, 2.6, ease(roll)) + 0.6 * Math.sin(e * 22) * (roll > 0 && roll < 1 ? 1 : 0), lerp(14, -3.4, ease(seg(e, 0.6, 1)))]
+      : e < 2.2 ? lerp2([2.6, -3.4], [2, -13], ease(toss)) : lerp2([2, -13], [0.4, 0.2], ease(seg(e, 2.25, 2.8)));
+    return { ...blend(base(), pose({
+      squat: down, by: 2.4 * down, tilt: 16 * down + 5 * (e > 1.4 && e < 2) - 12 * watch + 10 * plop + 4 * shake, hy: 1 + 1.5 * down + 2.2 * plop, hx: 1.4 * shake, free, kick: 1.2 * plop + 0.6 * shake,
+      mouth: hit ? 'flat' : watch > 0.3 ? 'o' : 'bored', lid: hit ? (plop > 0.2 ? 1 : 0.9) : watch > 0.3 ? 0.3 : 0.75, ears: [8 + 30 * plop + 10 * (hit ? 1 : 0), 10 + 30 * plop + 10 * (hit ? 1 : 0)],
+      tail: hit ? 0 : 9 * Math.sin(t * 1.7), extras: e > 3.3 && e < 3.95 ? [`dots${Math.min(3, 1 + Math.floor((e - 3.3) * 5))}`] : [], snow: e,
+    }), k), snow: e };
+  }
+  if (c >= 12) {
+    const d = c - 12;
+    const k = ease(seg(d, 0, 0.3)) * (1 - ease(seg(d, 4, 4.4)));
+    const look = ease(seg(d, 0.1, 0.9)) * (1 - ease(seg(d, 2.3, 2.4)));
+    const ah = seg(d, 1.4, 2.3) * (d < 2.3 ? 1 : 0);
+    const choo = bump(d, 2.3, 2.8);
+    const rub = bump(d, 2.85, 3.7);
+    return { ...blend(base(), pose({
+      tilt: -3 - 9 * look - 6 * ah + 16 * choo + 3 * rub, hy: 1 - 0.6 * look + 2.6 * choo, by: -0.8 * ah + 1.2 * choo, tx: -0.4 * ah + 0.8 * choo,
+      free: lerp2([0.4, 0.2], [3.4, -7.4 + 0.5 * Math.sin(d * 34)], rub), kick: 2 * choo, cloth: 1.6 * choo,
+      mouth: choo > 0.15 ? 'o' : ah > 0.3 ? 'ah' : d > 2.8 ? 'flat' : look > 0.5 ? 'tiny' : 'bored', lid: choo > 0.1 || ah > 0.6 ? 1 : look > 0.5 ? 0.2 : 0.8,
+      brows: look > 0.5 && ah < 0.4 ? [[0.8, -0.3], [0.8, -0.3]] : REST.brows, ears: [4 - 12 * look + 26 * ah - 20 * choo + 20 * rub + twitch[0], 4 - 12 * look + 28 * ah - 22 * choo + 22 * rub + twitch[1]],
+      tail: 9 * Math.sin(t * 1.7) * (1 - choo) + 40 * choo, extras: choo > 0.3 ? ['shock'] : d > 3.6 ? [`dots${Math.min(3, 1 + Math.floor((d - 3.6) * 6))}`] : [], flake: d,
+    }), k), flake: d };
+  }
   if (c >= 5.2 && c < 9.6) {
     const d = c - 5.2;
     const sleep = ease(seg(d, 0, 1.6));
@@ -743,7 +788,118 @@ export function drawSnowWolf(ctx, world, s, cam, time) {
     }
   };
   const over = P.view === 'back' || P.front;
-  drawPosed(ctx, look, x, y, rig, { scale: SCALE, facing, under: over ? null : drawBlade, over: over ? drawBlade : null });
+  const mouth = doing === 'stand' && (P.flake >= 0 || P.snow >= 0) ? posedMouth(x, y, rig, { scale: SCALE, facing }) : null;
+  drawPosed(ctx, look, x, y, rig, {
+    scale: SCALE, facing, under: over ? null : drawBlade,
+    over: (c, hand, flip, other) => {
+      if (over) drawBlade(c, hand, flip);
+      if (mouth) drawIdleProps(c, P, st, other, mouth, dir);
+    },
+  });
+}
+
+// What she plays with standing about, drawn from where her hand and face really are: the
+// snowflake that lands on her nose (and the puff of snow she sneezes it away in), and the snowball
+// scooped up in her free hand, lobbed up and come down on her head (a cap of snow, shaken off).
+function drawIdleProps(c, P, st, free, mouth, dir) {
+  const nose = [mouth[0] - dir * 2.3, mouth[1] + 2.4];
+  const head = [mouth[0] - dir * 2.6, mouth[1] - 13.5];
+  c.save();
+  const d = P.flake;
+  if (d >= 0 && d < 2.34) {
+    const f = Math.min(1, d / 1);
+    const fx = nose[0] + dir * (16 * (1 - f) + 5 * Math.sin(f * 9) * (1 - f));
+    const fy = nose[1] - 46 * (1 - f) - 0.6;
+    flake(c, fx, fy, 1.8, d * 2);
+  }
+  if (d >= 2.3 && d < 2.9) {
+    // The sneeze: a puff of snow blown off ahead of her nose.
+    const u = (d - 2.3) / 0.6;
+    c.globalAlpha = 1 - u;
+    c.fillStyle = '#f6fbff';
+    for (let i = 0; i < 7; i++) {
+      const a = -0.5 + (i / 6) * 1;
+      const r = 3 + 14 * ease(u) * (0.6 + 0.4 * ((i * 37) % 7) / 7);
+      c.beginPath();
+      c.arc(nose[0] + dir * Math.cos(a) * r, nose[1] + Math.sin(a) * r * 0.7, 1.4 * (1 - 0.5 * u), 0, TAU);
+      c.fill();
+    }
+    c.globalAlpha = 1;
+  }
+  const e = P.snow;
+  if (e >= 0.35 && e < 0.75) {
+    // Scooping: snow kicked up off the ground under her hand.
+    const u = (e - 0.35) / 0.4;
+    c.fillStyle = '#f6fbff';
+    c.globalAlpha = 1 - u;
+    for (let i = 0; i < 5; i++) {
+      c.beginPath();
+      c.arc(free[0] + dir * (i - 2) * 1.6 * (0.5 + u), free[1] + 1 - 5 * Math.sin(u * Math.PI) * (0.5 + (i % 2) * 0.5), 0.7, 0, TAU);
+      c.fill();
+    }
+    c.globalAlpha = 1;
+  }
+  if (e >= 0.5 && e < 2.2) {
+    st.ballAt = [free[0], free[1] - 1.8];
+    snowball(c, st.ballAt[0], st.ballAt[1], 2.6 * ease(seg(e, 0.5, 1.4)) + 0.4);
+  } else if (e >= 2.2 && e < 2.98 && st.ballAt) {
+    const f = (e - 2.2) / 0.78;
+    snowball(c, lerp(st.ballAt[0], head[0], f), lerp(st.ballAt[1], head[1], f) - 34 * 4 * f * (1 - f), 3);
+  } else if (e >= 2.98 && e < 4.25) {
+    // A cap of snow on her head (flattened by the plop, so it's drawn as a heap, not a squashed
+    // ball), crumbling off as she shakes it.
+    const gone = seg(e, 3.95, 4.25);
+    c.globalAlpha = 1 - gone;
+    c.fillStyle = '#f8fbff';
+    c.strokeStyle = '#a9c4de';
+    c.lineWidth = 0.5;
+    // A lumpy heap: three mounds.
+    for (const [ox, rx, ry] of [[-2.2, 2.2, 1.8], [2.6, 2, 1.6], [0.4, 2.6, 2.8]]) {
+      c.beginPath();
+      c.ellipse(head[0] + ox, head[1] + 1.6 + 6 * gone, rx, ry, 0, Math.PI, 0);
+      c.closePath();
+      c.fill();
+      c.stroke();
+    }
+    for (let i = 0; i < 5; i++) {
+      const s = seg(e, 2.98, 3.3) + gone;
+      c.beginPath();
+      c.arc(head[0] + (i - 2) * 2.4 * (0.6 + s), head[1] + 1 + 9 * s * s * (0.5 + (i % 2)), 0.8, 0, TAU);
+      c.fill();
+    }
+  }
+  c.restore();
+}
+function snowball(c, x, y, r) {
+  c.fillStyle = '#f8fbff';
+  c.strokeStyle = '#9fbcd8';
+  c.lineWidth = 0.5;
+  c.beginPath();
+  c.arc(x, y, r, 0, TAU);
+  c.fill();
+  c.stroke();
+  c.fillStyle = '#dbe8f6';
+  c.beginPath();
+  c.arc(x + r * 0.25, y + r * 0.25, r * 0.55, 0, TAU);
+  c.fill();
+}
+function flake(c, x, y, r, spin) {
+  c.save();
+  c.translate(x, y);
+  c.rotate(spin);
+  c.strokeStyle = '#ffffff';
+  c.lineWidth = 0.7;
+  c.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const a = (i * Math.PI) / 3;
+    c.moveTo(-Math.cos(a) * r, -Math.sin(a) * r);
+    c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  c.stroke();
+  c.strokeStyle = '#8fd8ff';
+  c.lineWidth = 0.35;
+  c.stroke();
+  c.restore();
 }
 
 // A damped spring toward `to` (stiffness k, damping c).

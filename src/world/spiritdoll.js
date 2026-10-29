@@ -59,7 +59,7 @@ const REST = [0.45, 0.85];
 const MOOD = { peace: 1.2, mad: 1.1, giggle: 0.9 };
 // Her idle bits when there's nothing to fight: how long each lasts. Every few seconds she picks
 // another, never the same twice in a row.
-export const BITS = { orbit: 2.2, peek: 2.4, poke: 1.6, blep: 1.4, loop: 1.2, hum: 2.6 };
+export const BITS = { orbit: 2.2, peek: 2.4, poke: 1.6, blep: 1.4, loop: 1.2, hum: 2.6, juggle: 3.6, nap: 4.6 };
 const BIT_GAP = [1.2, 2.6];
 
 const alive = (m) => m && m.hp > 0;
@@ -213,6 +213,12 @@ function goal(world, d) {
       return [b.x + b.facing * 16, b.y - 30];
     case 'loop':
       return [hx, hy - 10];
+    case 'juggle':
+      // Out in front of her shoulder where the Spirit Mage can watch.
+      return [b.x + b.facing * 14, b.y - 40 + Math.sin(world.now * 2.4) * 1.5];
+    case 'nap':
+      // Sat on top of the Spirit Mage's head; she slips off it at the end.
+      return t < 0.8 ? [b.x - b.facing * 1, b.y - 37] : [b.x + b.facing * 10, b.y - 33];
     default:
       return [hx, hy];
   }
@@ -310,7 +316,7 @@ export function tickDoll(world, dt) {
   // In front of the Spirit Mage or behind her: behind while at her shoulder, in front when she
   // swings round in an orbit or comes up to poke her, and out in a fight.
   if (d.bit?.kind === 'orbit') d.layer = Math.sin(-Math.PI / 2 + ((now - d.bit.t0) / BITS.orbit) * Math.PI * 2) > 0 ? 'front' : 'back';
-  else d.layer = alive(m) || d.bit?.kind === 'poke' || d.bit?.kind === 'peek' ? 'front' : 'back';
+  else d.layer = alive(m) || d.bit?.kind === 'poke' || d.bit?.kind === 'peek' || d.bit?.kind === 'juggle' || d.bit?.kind === 'nap' ? 'front' : 'back';
 }
 
 // ---------- Rodeo: riding a monster ----------

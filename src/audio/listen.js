@@ -47,7 +47,7 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   'onihit', 'onipound', 'onipuff', 'oniaura', 'oniroar',
   // The Onmyoji's yuki-onna (her frost prints, her frost on a monster and the snowball's burst are
   // silent: its hit is heard).
-  'yukistream', 'yukiask', 'yukisoul', 'yukisoulfly', 'yukispike', 'yukisnowball', 'yukimist', 'yukiwhiteout', 'yukishatter',
+  'yukistream', 'yukiask', 'yukisoul', 'yukisoulfly', 'yukispike', 'yukisnowball', 'yukimist', 'yukiwhiteout', 'yukishatter', 'yukifrostfan',
   'yukineedle', 'yukiicicle', 'yukistep', 'yukihit',
   // The Onmyoji's tengu.
   // The Onmyoji's.

@@ -88,6 +88,16 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     moves, from the tengu of the stories: Iai, the Kurama Blade (Yoshitsune's teacher), Fan Gust,
     Tengu Wind, Feather Storm, Tengu Stones (tengu-tsubute) and Spirited Away (kamikakushi). Six
     smug idles; a grin when he wins, a 'tch' when he misses.
+  - **Every summon reanimated (2026-10-29, the player's ask):** no prop appears out of nowhere any
+    more (pipes come from the obi, fans fold into sleeves, flakes and feathers are caught or
+    plucked), and the summons with few idles or attacks got more, all picked by the player:
+    - the yuki-onna: Snow Bunny, Frost Flower, Combing Hair, Spirit Flame idles; a Frost Fan attack;
+    - the tengu: Fan Flourish, Geta Balance, Feather Blow, Nap in the Air idles; a Fan Strike attack
+      (the closed fan as a weapon);
+    - the oni: Club Toss (her kanabo thrown spinning and caught on the way back);
+    - the guardian (kitsune): Spin Sweep (the naginata windmilled right round her);
+    - the Spirit Doll: juggling temari balls, and a nap on the Spirit Mage's head;
+    - Snow wolf: a snowflake sneeze, and a snowball lobbed up that lands on her own head.
   - **The tengu leads the troupe** (the player's ask): a leader's aura (a crimson sigil turning on
     the ground under him, black feathers circling him, crimson embers rising; brighter in a fight)
     and Leader's Mark: a snap of his fan puts a crimson seal over the toughest monster, and the oni

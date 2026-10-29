@@ -8,7 +8,7 @@
 
 import { drawPosed, posedMouth } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
-import { ONI_MOVES } from '../world/oni.js';
+import { ONI_MOVES, tossAt } from '../world/oni.js';
 import { COMBO } from '../world/onmyoji.js';
 
 export const ONI_SCALE = 2;
@@ -285,7 +285,7 @@ const HAND = [1.5, -8];
 const FREE = [-1, -2.4];
 const REST = {
   lean: -0.02, lunge: 0, lift: 0, club: -0.55, hand: HAND, free: FREE, legF: [3.6, 0, 8], legB: [-3.8, 0, -8], squat: 0,
-  tx: 0, by: 0, hx: 0.4, hy: 0.2, tilt: 4, cloth: 0, planted: 0, mouth: 'bored', eyes: null, brows: 'bored', lid: 0.45, glance: 0, props: [],
+  tx: 0, by: 0, hx: 0.4, hy: 0.2, tilt: 4, cloth: 0, planted: 0, thrown: 0, mouth: 'bored', eyes: null, brows: 'bored', lid: 0.45, glance: 0, props: [],
 };
 const pose = (o) => ({ ...REST, ...o });
 const BROWS = { bored: [[0.05, 0.15], [0.05, 0.15]], angry: [[-0.4, 0.95], [-0.4, 0.95]], smug: [[0.1, -0.1], [0.35, -0.35]], sad: [[0.4, -0.45], [0.4, -0.45]], raised: [[0.4, -0.45], [-0.15, 0.35]], flat: [[0, 0], [0, 0]] };
@@ -473,7 +473,26 @@ function comboSlam(u) {
     mouth: land > 0.3 ? 'onishark' : air > 0.3 || crouch > 0.3 ? 'onigrin' : t > COMBO.slam + 0.5 ? 'onismirk' : 'bored', brows: crouch > 0.2 || air > 0.2 || land > 0.2 ? 'angry' : 'bored', lid: crouch + air + land > 0.2 ? 0.05 : 0.45,
   });
 }
-const MOVES = { kesa, grab, stomp, charge, whirl, roar, combo: comboSlam };
+// Club Toss (thrown at 0.26, caught at 0.74): she draws the club back low behind her, twisting into
+// it, and slings it out with her whole body; her hand stays out after it, open, as it spins away and
+// round; she braces, catches it with a jolt that rocks her back, and swings it up onto her shoulder.
+function tossPose(u) {
+  const M = ONI_MOVES.toss;
+  const wind = soft(seg(u, 0, 0.22));
+  const fling = overshoot(seg(u, 0.22, 0.3));
+  const wait = soft(seg(u, 0.3, 0.42)) * (1 - soft(seg(u, 0.66, 0.74)));
+  const catchK = overshoot(seg(u, 0.72, 0.78)) * (1 - soft(seg(u, 0.84, 1)));
+  return pose({
+    thrown: u >= M.out && u < M.back ? 1 : 0,
+    club: keys(u, [[0, -0.55], [0.22, -2.4], [0.26, 1.4, 'snap'], [0.72, 1.4], [0.76, 1.0], [0.86, 0.6], [1, -0.55]]),
+    hand: keys(u, [[0, HAND], [0.22, [-4, 1]], [0.28, [10, -6], 'snap'], [0.42, [7, -4]], [0.68, [9, -5]], [0.74, [9, -5]], [0.8, [5, -3]], [1, HAND]]),
+    free: lerp2(lerp2(FREE, [3, -2], wind * (1 - fling)), [-3, -4], fling * (1 - catchK)),
+    lean: -0.12 * wind * (1 - fling) + 0.3 * fling * (1 - wait * 0.5) * (1 - soft(seg(u, 0.4, 0.6))) - 0.18 * catchK, squat: 2 * wind * (1 - fling) + 1.5 * catchK, lunge: 4 * fling * (1 - soft(seg(u, 0.4, 0.6))),
+    legF: [3.6 + 2.6 * fling * (1 - soft(seg(u, 0.4, 0.6))), 0, 10], legB: [-4.4, 0, -12], cloth: -3 * wind + 4 * fling - 3 * catchK, tilt: 4 - 4 * wind + 6 * fling - 4 * catchK,
+    mouth: fling > 0.3 && u < 0.4 ? 'onishark' : wait > 0.5 ? 'onigrin' : catchK > 0.3 ? 'onismirk' : 'bored', brows: u < 0.8 ? 'angry' : 'bored', lid: 0.15,
+  });
+}
+const MOVES = { kesa, grab, stomp, charge, whirl, roar, combo: comboSlam, toss: tossPose };
 
 // ---------- Her moods and idle moods ----------
 // Sulking (a blow hit nothing): the club dropped point-down, leaning on it, shoulders slumped, a
@@ -688,6 +707,22 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   const behind = (ang < -0.3 && ang > -2.9) || P.planted > 0.02;
   // Planted, the club stays standing where her hand let go of it (she takes it back from there).
   const club = (c, hand, flip) => {
+    // Thrown (Club Toss): out of her hand, spinning out along her ledge and round back to it.
+    const tu = a?.kind === 'toss' ? clamp01((a.clock ?? world.now - a.t0) / a.dur) : -1;
+    if (tu >= ONI_MOVES.toss.out && tu <= ONI_MOVES.toss.back) {
+      const u = tu;
+      const M = ONI_MOVES.toss;
+      const s = (u - M.out) / (M.back - M.out);
+      for (let i = 3; i >= 0; i--) {
+        const sv = Math.max(0, s - i * 0.02);
+        const d = dir * M.dist * Math.sin(Math.PI * sv);
+        c.save();
+        c.globalAlpha = i ? 0.25 * (1 - i / 4) : 1;
+        paintKanabo(c, [hand[0] + d, hand[1] - 6 * Math.sin(Math.PI * sv)], flip, sv * TAU * 5, ONI_SCALE * 0.85, 'crimson', time);
+        c.restore();
+      }
+      return;
+    }
     if (P.planted <= 0.02) st.plantAt = null;
     else st.plantAt ??= [...hand];
     const pl = clamp01(P.planted * 1.5);

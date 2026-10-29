@@ -19,6 +19,8 @@
 //                 then brought down
 //   Roar          she throws her head back and roars: everything round her is blasted back and
 //                 dazed, and for a while she fights faster (her fury)
+//   Club Toss     she hurls the club like a boomerang: it spins out low, battering everything it
+//                 passes, and comes back round to her hand (how she reaches a monster further off)
 // Each plays on a heavy clock (it hangs before its big blow, freezes on the impact, drags through
 // the follow-through). When a move hits nothing at all she sulks a moment; when what she was hitting
 // goes down, a smug smirk.
@@ -46,6 +48,7 @@ export const ONI_MOVES = {
   stomp: { dur: 1.25, hits: [0.5], reach: 135, pct: 80, knock: 120, launch: 230, stun: 0.6, targets: 8, around: true, shake: 6, crack: true },
   charge: { dur: 1.35, run: [0.3, 0.66], dist: 210, pct: 110, knock: 280, launch: 220, shake: 3, every: 5, min: 130, far: 260 },
   whirl: { dur: 1.7, hits: [0.3, 0.42, 0.54, 0.72], reach: 105, pct: [55, 55, 55, 125], knock: [40, 40, 40, 240], launch: [0, 0, 0, 140], targets: 6, around: true, shake: [1, 1, 1, 4], crack: [false, false, false, true] },
+  toss: { dur: 1.9, light: true, out: 0.26, back: 0.74, dist: 170, pct: 80, knock: 90, min: 70, far: 200 },
   roar: { dur: 1.5, hits: [0.42], reach: 170, pct: 40, knock: 220, stun: 0.6, targets: 10, around: true, shake: 4, every: 12, fury: 6 },
 };
 const at = (v, i) => (Array.isArray(v) ? v[i] : v);
@@ -53,6 +56,8 @@ const at = (v, i) => (Array.isArray(v) ? v[i] : v);
 // last (biggest) blow of a move; in her fury it all runs faster.
 const HEAVY = { hang: [0.16, 0.035], hangRate: 0.35, snap: 1.8, drag: 0.16, dragRate: 0.5, freeze: 0.07, lastFreeze: 0.24, recover: 0.8 };
 function heavyRate(M, u) {
+  // (A throw has no big blow to hang on.)
+  if (M.light) return 1;
   const h = M.hits ? M.hits[M.hits.length - 1] : M.slam ?? 0.5;
   if (u >= h - HEAVY.hang[0] && u < h - HEAVY.hang[1]) return HEAVY.hangRate;
   if (u >= h - HEAVY.hang[1] && u < h) return HEAVY.snap;
@@ -136,6 +141,7 @@ function act(world, k, dt) {
   else a.clock += dt * a.rate;
   const u = a.clock / a.dur;
   if (a.kind === 'grab') grabbing(world, k, a, M, u);
+  else if (a.kind === 'toss') tossing(world, k, a, M, u);
   else if (a.kind === 'charge') charging(world, k, a, M, u, dt);
   else {
     while (a.done < M.hits.length && u >= M.hits[a.done]) {
@@ -239,6 +245,29 @@ function grabbing(world, k, a, M, u) {
       for (const o of world.mobs) if (o !== m && alive(o) && Math.abs(o.x - x) < 50 && Math.abs(o.y - k.y) < 50) dollHit(world, o, { pct: M.pct * 0.5, x, knock: 160, launch: 140, burst: 'onihit', gauge: 1, key: 'oni' });
     }
     a.freeze = HEAVY.lastFreeze;
+  }
+}
+
+// Club Toss: the club out and back along her ledge, spinning (render/oni.js draws it there), hitting
+// each monster it passes once on the way out and once on the way back; she catches it.
+export const tossAt = (M, u) => (u < M.out || u > M.back ? 0 : Math.sin(Math.PI * ((u - M.out) / (M.back - M.out))));
+function tossing(world, k, a, M, u) {
+  if (u < M.out || u > M.back) return;
+  if (!a.thrown) {
+    a.thrown = true;
+    world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
+    world.fx.push({ kind: 'arc', snd: 'rage', x: k.x + k.dir * 14, y: k.y - 36, dir: k.dir, r: 40, start: -80, sweep: 150, thick: 7, color: '#ff5a3a', t: 0, dur: 0.25 });
+  }
+  const s = (u - M.out) / (M.back - M.out);
+  const x = k.x + k.dir * M.dist * tossAt(M, u);
+  const way = s < 0.5 ? 'out' : 'back';
+  a.hitSet ??= { out: new Set(), back: new Set() };
+  for (const m of world.mobs) {
+    if (!alive(m) || a.hitSet[way].has(m) || Math.abs(m.y - k.y) > 60 || Math.abs(m.x - x) > 18 + m.def.w / 2) continue;
+    a.hitSet[way].add(m);
+    a.landed = (a.landed ?? 0) + 1;
+    dollHit(world, m, { pct: M.pct, x: x - k.dir * (way === 'out' ? 20 : -20), knock: M.knock, stop: 0.04, shake: 2, burst: 'onihit', gauge: 2, key: 'oni' });
+    impact(world, m.x, k.y, k.dir, false);
   }
 }
 
@@ -382,6 +411,9 @@ function fight(world, k) {
       return start('charge');
     }
   }
+  // A monster out of her reach: now and then she throws the club at it.
+  const T = ONI_MOVES.toss;
+  if (dx > T.min && dx < T.far && k.last !== 'toss' && Math.random() < 0.35) return start('toss');
   if (dx > ONI_MOVES.kesa.reach + m.def.w / 2 - 10) return;
   const crowd = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < 120 && Math.abs(o.y - k.y) < 50).length;
   if (crowd >= 3 && world.now >= k.roarAt && !k.fury) {

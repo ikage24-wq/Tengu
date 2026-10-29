@@ -42,6 +42,7 @@ const seg = (t, a, b) => clamp01((t - a) / (b - a));
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerp2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4 * (t - 1) ** 2);
 const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
 const TAU = Math.PI * 2;
 
@@ -144,6 +145,18 @@ function needling(u) {
     cloth: 2 * back - 4 * flick * (1 - rest), brows: 'cold', eyes: flick > 0.3 && rest < 0.5 ? null : 'half', tilt: 3 - 3 * flick * (1 - rest),
   });
 }
+// Frost Fan (0.42): her long sleeve drawn back across her body, then swept out wide in one stroke
+// as snow flies off it, her head turning with it; held, and drawn in.
+function frostfanning(u) {
+  const back = soft(seg(u, 0, 0.32));
+  const sweep = overshoot(seg(u, 0.34, 0.46));
+  const rest = soft(seg(u, 0.7, 1));
+  return pose({
+    hand: lerp2(lerp2(FOLD_F, [-4.6, -8.6], back), [9.4, -3.4], sweep * (1 - rest)), free: lerp2(FOLD_B, [-2, -4], back * (1 - rest)),
+    lean: -0.06 * back * (1 - sweep) + 0.14 * sweep * (1 - rest), cloth: 3 * back - 6 * sweep * (1 - rest), tilt: 3 - 5 * back * (1 - sweep) + 4 * sweep * (1 - rest),
+    hx: -0.2 - 0.6 * back * (1 - sweep) + 0.6 * sweep * (1 - rest), brows: 'cold', eyes: sweep > 0.3 && rest < 0.5 ? null : 'half', mouth: sweep > 0.3 && rest < 0.5 ? 'yukibreath' : 'yukilips',
+  });
+}
 // Into the Mist: she lifts, her sleeves rising round her, as she melts away (the fade is drawn
 // below), and settles again as she gathers.
 function misting(u) {
@@ -166,7 +179,7 @@ function comboFreeze(u) {
     eyes: draw > 0.4 ? 'blink' : fling > 0.5 ? 'half' : null, mouth: fling > 0.3 ? 'yukibreath' : 'yukilips', brows: k > 0.3 ? 'calm' : 'sad',
   });
 }
-const MOVES = { combo: comboFreeze, breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
+const MOVES = { combo: comboFreeze, frostfan: frostfanning, breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
 
 // Her idle moods: how long each lasts and the pose `u` through it.
 export const YUKI_IDLES = {
@@ -201,6 +214,52 @@ export const YUKI_IDLES = {
     return pose({ glance: -k, hx: -0.2 - 1 * k, tilt: 3 - 3 * k, brows: 'calm' });
   }],
   hum: [3.4, (u) => pose({ eyes: 'blink', tilt: 3 + 3 * Math.sin(u * TAU * 1.5), hx: -0.2 + 0.5 * Math.sin(u * TAU * 1.5), brows: 'calm' })],
+  // A snow bunny (yukiusagi): she sinks down and gathers snow between her hands, shaping a little
+  // mound; leaf ears and berry eyes go on it; she straightens and watches it, head tipped, as it
+  // comes alive and hops away and is gone.
+  bunny: [5.4, (u) => {
+    const bend = soft(seg(u, 0.04, 0.16)) * (1 - soft(seg(u, 0.5, 0.62)));
+    const watch = soft(seg(u, 0.5, 0.62)) * (1 - soft(seg(u, 0.9, 1)));
+    const pat = Math.sin(u * TAU * 9) * bend * (u < 0.46 ? 1 : 0);
+    return pose({
+      lean: 0.02 + 0.28 * bend, lift: -3 * bend, hand: lerp2(FOLD_F, [6.4, 2.6 + 0.6 * pat], bend), free: lerp2(FOLD_B, [5.2, 3 - 0.6 * pat], bend),
+      hy: 0.4 + 1.1 * bend + 0.4 * watch, tilt: 3 + 9 * bend + 7 * watch, eyes: bend > 0.5 ? 'half' : null, brows: 'calm', glance: 0,
+      prop: { kind: 'bunny', make: seg(u, 0.12, 0.46), hop: seg(u, 0.64, 0.97) },
+    });
+  }],
+  // A frost flower: a fingertip raised before her lips; she breathes on it, and an ice flower grows
+  // there, petal by petal; she turns it to the light, and it shatters into glitter.
+  flower: [4.6, (u) => {
+    const up = soft(seg(u, 0, 0.18)) * (1 - soft(seg(u, 0.88, 1)));
+    const blow = bump(u, 0.18, 0.34);
+    return pose({
+      hand: lerp2(FOLD_F, [3.4, -9.6 + 0.6 * Math.sin(u * 7) * soft(seg(u, 0.56, 0.8))], up), hy: 0.4 + 0.2 * up, tilt: 3 - 2 * up + 3 * Math.sin(u * 5) * soft(seg(u, 0.56, 0.8)),
+      mouth: blow > 0.3 ? 'yukibreath' : 'yukilips', eyes: u > 0.4 && u < 0.8 ? 'half' : null, brows: 'calm',
+      prop: { kind: 'flower', grow: soft(seg(u, 0.26, 0.58)), shatter: seg(u, 0.8, 0.92), breath: seg(u, 0.18, 0.38) },
+    });
+  }],
+  // Combing her hair: her hand up to the crown of her head and down through her long white hair,
+  // slowly, twice, head tipped to it, frost sifting out of it as she goes.
+  comb: [4.4, (u) => {
+    const k = soft(seg(u, 0, 0.12)) * (1 - soft(seg(u, 0.84, 0.97)));
+    const s = u < 0.47 ? seg(u, 0.12, 0.44) : seg(u, 0.5, 0.82);
+    const stroke = lerp2([3, -17.4], [5.4, -1.6], soft(s));
+    return pose({
+      free: lerp2(FOLD_B, stroke, k), tilt: 3 + 9 * k, hx: -0.2 + 0.6 * k, eyes: k > 0.5 ? 'half' : null, brows: 'calm',
+      prop: { kind: 'comb', on: k > 0.5 && s > 0.02 && s < 0.98 },
+    });
+  }],
+  // A spirit flame (hitodama) drifts up off the hem of her kimono; she lifts a hand and it circles
+  // her palm twice, flickering, her eyes following it; then it sinks back down into the hem.
+  flame: [4.8, (u) => {
+    const up = soft(seg(u, 0.12, 0.26)) * (1 - soft(seg(u, 0.78, 0.92)));
+    const s = seg(u, 0.06, 0.94);
+    const ring = s > 0.25 && s < 0.75 ? ((s - 0.25) / 0.5) * TAU * 2 : 0;
+    return pose({
+      hand: lerp2(FOLD_F, [4.4, -7], up), hy: 0.4 + 0.6 * up - 0.4 * Math.sin(ring) * up, hx: -0.2 + 0.4 * Math.cos(ring) * up, tilt: 3 + 4 * up, brows: 'calm',
+      eyes: up > 0.5 ? null : 'half', prop: { kind: 'flame', s },
+    });
+  }],
 };
 const IDLE_KEYS = Object.keys(YUKI_IDLES);
 
@@ -327,8 +386,10 @@ export function drawYukiCompanion(ctx, world, k, cam, time, layer = 'back') {
   const opts = { scale: YUKI_SCALE, facing: dir, hold: 'front', lean: { tilt: P.lean + 0.01 * sway, lunge: 0, lift: hover + P.lift } };
   // Her little things in her hand or at her lips: a snowflake caught, her breath, a snowball.
   const lips = posedMouth(Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, { scale: YUKI_SCALE, facing: dir });
-  opts.over = (c, hand) => paintYukiProp(c, P.prop, hand, lips, dir, time);
+  opts.over = (c, hand, flip, other) => paintYukiProp(c, P.prop, hand, lips, dir, time, other, [Math.round(x * 4) / 4, Math.round(y * 4) / 4]);
   drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, opts);
+  // (Her snow bunny sits on the ground in front of her, not in her hands.)
+  if (P.prop?.kind === 'bunny') paintBunny(ctx, P.prop, Math.round(x * 4) / 4, k.y - cam.y, dir, time);
   // Where her lips are (in the world), for her breath and her question to come from.
   const [mx, my] = posedMouth(Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, opts);
   k.mouth = [mx + cam.x, my + cam.y];
@@ -341,9 +402,114 @@ function yukiBlink(t) {
 }
 
 // Her little things (`p` from her pose), drawn at her hand or her lips in the body's frame.
-function paintYukiProp(c, p, hand, lips, dir, time) {
+function paintYukiProp(c, p, hand, lips, dir, time, other, feet) {
   if (!p) return;
   const K = YUKI_SCALE;
+  if (p.kind === 'flower') {
+    // The breath on her fingertip, then the ice flower growing there, turning, and shattering.
+    if (p.breath > 0 && p.breath < 1) {
+      for (let i = 0; i < 3; i++) {
+        const v = p.breath * 1.3 - i * 0.15;
+        if (v <= 0 || v >= 1) continue;
+        c.save();
+        c.globalAlpha = 0.8 * Math.sin(v * Math.PI);
+        c.fillStyle = '#e4f0ff';
+        c.beginPath();
+        c.arc(lips[0] + (hand[0] - lips[0]) * v, lips[1] + (hand[1] - 3 * K - lips[1]) * v, (0.7 + 1.2 * v) * K, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+    if (p.grow > 0.02 && p.shatter < 1) {
+      const fx0 = hand[0] + dir * 0.6 * K;
+      const fy = hand[1] - 4.4 * K;
+      c.save();
+      c.translate(fx0, fy);
+      c.rotate(Math.sin(time * 1.5) * 0.3);
+      c.globalAlpha = 1 - p.shatter;
+      for (let i = 0; i < 6; i++) {
+        const g = Math.max(0, Math.min(1, p.grow * 6 - i));
+        if (g <= 0) continue;
+        c.save();
+        c.rotate((i / 6) * TAU);
+        c.fillStyle = i % 2 ? '#cfe4fb' : '#e8f4ff';
+        c.beginPath();
+        c.moveTo(0, 0);
+        c.quadraticCurveTo(-1.8 * K * g, -2.4 * K * g, 0, -4.6 * K * g);
+        c.quadraticCurveTo(1.8 * K * g, -2.4 * K * g, 0, 0);
+        c.fill();
+        c.strokeStyle = '#9cc8f0';
+        c.lineWidth = 0.25 * K;
+        c.stroke();
+        c.restore();
+      }
+      c.fillStyle = '#ffffff';
+      c.beginPath();
+      c.arc(0, 0, 0.7 * K * p.grow, 0, TAU);
+      c.fill();
+      c.restore();
+      if (p.shatter > 0) {
+        c.save();
+        c.globalAlpha = 1 - p.shatter;
+        c.fillStyle = '#ffffff';
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * TAU + i;
+          const d = (2 + 9 * p.shatter) * K;
+          c.fillRect(fx0 + Math.cos(a) * d, fy + Math.sin(a) * d + 6 * K * p.shatter * p.shatter, 0.6 * K, 0.6 * K);
+        }
+        c.restore();
+      }
+    }
+    return;
+  }
+  if (p.kind === 'comb' && p.on && other) {
+    // Frost sifting out of her hair as her fingers go through it.
+    c.save();
+    c.fillStyle = '#ffffff';
+    for (let i = 0; i < 6; i++) {
+      const v = (time * 1.6 + i / 6) % 1;
+      c.globalAlpha = 0.9 * (1 - v);
+      c.fillRect(other[0] + Math.sin(i * 3.1 + time * 2) * 2 * K, other[1] + v * 9 * K, 0.6 * K, 0.6 * K);
+    }
+    c.restore();
+    return;
+  }
+  if (p.kind === 'flame' && p.s > 0 && p.s < 1) {
+    // The hitodama: from the hem of her kimono up to her palm, twice round it, and back down.
+    const hem = [feet[0] + dir * 2.4 * K, feet[1] - 7 * K];
+    const palm = [hand[0], hand[1] - 5 * K];
+    const s = p.s;
+    let fx0;
+    let fy;
+    if (s < 0.25) {
+      const v = soft(s / 0.25);
+      [fx0, fy] = [hem[0] + (palm[0] - hem[0]) * v + dir * Math.sin(v * Math.PI) * 6 * K, hem[1] + (palm[1] - hem[1]) * v];
+    } else if (s < 0.75) {
+      const a = ((s - 0.25) / 0.5) * TAU * 2;
+      [fx0, fy] = [palm[0] + Math.cos(a) * 5 * K, palm[1] - 1.5 * K + Math.sin(a) * 2.4 * K];
+    } else {
+      const v = soft((s - 0.75) / 0.25);
+      [fx0, fy] = [palm[0] + (hem[0] - palm[0]) * v + dir * Math.sin(v * Math.PI) * 6 * K, palm[1] + (hem[1] - palm[1]) * v];
+    }
+    const size = Math.min(1, s * 12, (1 - s) * 12) * (1 + 0.12 * Math.sin(time * 14));
+    c.save();
+    const g = c.createRadialGradient(fx0, fy, 0, fx0, fy, 5 * K * size);
+    g.addColorStop(0, 'rgba(230, 245, 255, 0.95)');
+    g.addColorStop(0.4, 'rgba(140, 196, 244, 0.6)');
+    g.addColorStop(1, 'rgba(140, 196, 244, 0)');
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(fx0, fy, 5 * K * size, 0, TAU);
+    c.fill();
+    c.fillStyle = '#cfe4ff';
+    c.beginPath();
+    c.moveTo(fx0, fy - 3.4 * K * size);
+    c.quadraticCurveTo(fx0 + 1.6 * K * size, fy, fx0, fy + 1.6 * K * size);
+    c.quadraticCurveTo(fx0 - 1.6 * K * size, fy, fx0, fy - 3.4 * K * size);
+    c.fill();
+    c.restore();
+    return;
+  }
   if (p.kind === 'flake' && p.k > 0.2 && p.melt < 1) {
     // Drifting down from above into her palm, rocking side to side; then melting there.
     const f = 1 - (1 - p.fall) ** 2;
@@ -384,4 +550,49 @@ function paintYukiProp(c, p, hand, lips, dir, time) {
     c.fill();
     c.restore();
   }
+}
+
+// Her snow bunny (yukiusagi) on the ground in front of her: a mound of snow gathered up between her
+// hands and smoothed, two green leaf ears and two red berry eyes put on it; then it comes alive and
+// hops away, smaller and smaller, and is gone.
+function paintBunny(c, p, x, y, dir, time) {
+  const K = YUKI_SCALE;
+  if (p.make <= 0 || p.hop >= 1) return;
+  const m = soft(p.make);
+  let bx = x + dir * 16 * K;
+  let by = y;
+  if (p.hop > 0) {
+    bx += dir * 44 * K * p.hop;
+    by -= Math.abs(Math.sin(p.hop * Math.PI * 4)) * 6 * K;
+  }
+  c.save();
+  c.globalAlpha = 1 - Math.max(0, (p.hop - 0.7) / 0.3);
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.ellipse(bx, by - 2.2 * K * m, 4 * K * m, 2.6 * K * m, 0, 0, TAU);
+  c.fill();
+  c.fillStyle = '#d8e6f6';
+  c.beginPath();
+  c.ellipse(bx, by - 0.6 * K * m, 3.6 * K * m, 1 * K * m, 0, 0, TAU);
+  c.fill();
+  // Leaf ears and berry eyes, put on once it's shaped.
+  const ears = Math.min(1, Math.max(0, (p.make - 0.6) / 0.25));
+  const eyes = Math.min(1, Math.max(0, (p.make - 0.85) / 0.15));
+  if (ears > 0) {
+    c.fillStyle = '#4caf6a';
+    for (const s of [-1, 1]) {
+      c.beginPath();
+      c.ellipse(bx + s * 1.2 * K - dir * 0.6 * K, by - 4.6 * K - 1.6 * K * ears, 0.7 * K, 2 * K * ears, s * 0.3, 0, TAU);
+      c.fill();
+    }
+  }
+  if (eyes > 0) {
+    c.fillStyle = '#e8343a';
+    for (const s of [-0.6, 1]) {
+      c.beginPath();
+      c.arc(bx + dir * (1 + s) * K, by - 2.8 * K, 0.55 * K * eyes, 0, TAU);
+      c.fill();
+    }
+  }
+  c.restore();
 }

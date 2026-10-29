@@ -348,6 +348,25 @@ function haftStrike(p) {
   });
 }
 
+// Spin Sweep (at 0.5): she sinks into a wide stance with the naginata drawn back, then swings it
+// right round her in one full circle (a great wheel of steel, her body turning into it, her tail
+// flung out after it), and plants it again with a stamp.
+function spinSweep(p) {
+  const coil = soft(seg(p, 0, 0.26));
+  const spin = soft(seg(p, 0.28, 0.68));
+  const stamp = bump(p, 0.66, 0.84);
+  const back = soft(seg(p, 0.78, 1));
+  const a = -0.6 + TAU * spin;
+  return pose({
+    pole: lerp(-0.6 * coil, a, seg(p, 0.26, 0.3)) * (1 - back) + 0 * back, grip: 0.5,
+    hand: lerp2([8 - 4 * coil + 4 * Math.sin(a) * spin * (1 - back), -1.2 - 3 * coil - 5 * Math.cos(a) * spin * (1 - back)], [8, -1.2], back),
+    squat: 3 * coil + 1.4 * stamp, lean: -0.08 * coil + 0.12 * Math.sin(a) * spin * (1 - back), tx: 1.2 * Math.sin(a) * spin * (1 - back), by: 0.6 * stamp,
+    legF: [4.4 + 1 * stamp, -1.4 * bump(p, 0.6, 0.72), 10], legB: [-4.8, 0, -14], tail: 8 + 30 * Math.sin(a) * spin * (1 - back), curl: -10 + 20 * spin * (1 - back),
+    cloth: 4 * Math.sin(a) * spin * (1 - back), toss: 1.6 * Math.abs(Math.sin(a)) * spin * (1 - back), ears: [-10 * coil, -10 * coil], tilt: -3 + 3 * Math.sin(a) * spin * (1 - back),
+    mouth: spin > 0.2 && spin < 0.9 ? 'grit' : null, brows: 'stern', eyes: coil > 0.5 && spin < 0.1 ? 'half' : null,
+  });
+}
+
 // ---------- Her skills (world/kitsune.js MOONFALL, CRESCENT, FLURRY) ----------
 // Moonfall: she hoists the naginata up over her head in both hands, held level with the blade out
 // behind her, legs planted wide, leaning back, chin up and eyes shut as it charges (the vortex drags
@@ -510,7 +529,7 @@ const q = (v) => Math.round(v * 8) / 8;
 const deg = (v) => Math.round(v);
 const STATE = new WeakMap();
 const POSES = {
-  thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, cleave: cleaving, reap: reaping, haft: haftStrike,
+  thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, cleave: cleaving, reap: reaping, haft: haftStrike, spin: spinSweep,
   moonfall: moonfallPose, crescent: crescentPose, flurry: flurryPose, call: calling, block: blocking, bow: bowing, vanish: vanishing, arrive: arriving,
 };
 

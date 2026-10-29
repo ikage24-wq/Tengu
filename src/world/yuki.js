@@ -53,6 +53,7 @@ export const YUKI_MOVES = {
   icicle: { dur: 1.35, hit: 0.5, range: 300, n: 3, fall: 0.32, pct: 100, shatter: 2.5, chill: 2 },
   whiteout: { dur: 3.8, from: 0.2, to: 0.88, every: 0.3, r: 170, pull: 38, pct: 20, chill: 1, cool: 12 },
   snowball: { dur: 0.9, hit: 0.42, range: 250, speed: 260, pct: 45, chill: 1 },
+  frostfan: { dur: 0.95, hit: 0.42, reach: 120, h: 50, pct: 40, chill: 1 },
   needles: { dur: 1.0, hit: 0.42, range: 290, n: 4, speed: 520, pct: 36, chill: 1 },
   mist: { dur: 1.2, out: 0.3, back: 0.7, dist: 130, cool: 3 },
 };
@@ -148,6 +149,7 @@ function act(world, k, dt) {
   else if (a.kind === 'icicle' && !a.done && u >= M.hit) icicles(world, k, a, M);
   else if (a.kind === 'whiteout') whiteout(world, k, a, M, u, dt);
   else if (a.kind === 'snowball' && !a.done && u >= M.hit) snowball(world, k, a, M);
+  else if (a.kind === 'frostfan' && !a.done && u >= M.hit) frostFan(world, k, a, M);
   else if (a.kind === 'needles' && !a.done && u >= M.hit) needles(world, k, a, M);
   else if (a.kind === 'mist') mist(world, k, a, M, u);
   if (u >= 1) {
@@ -288,6 +290,13 @@ function whiteout(world, k, a, M, u, dt) {
   if (last) a.ended = true;
   for (const m of near) coldHit(world, m, { pct: last ? M.pct * 3 : M.pct, x: k.x, knock: last ? 40 : 0, stop: last ? 0.06 : 0 }, last ? CHILL.max : M.chill);
   if (last) world.juice.push({ type: 'shake', mag: 2.5, dur: 0.25 });
+}
+// Frost Fan: a sweep of her long sleeve throws a short cone of whirling snow at what's in front of
+// her, chilling it.
+function frostFan(world, k, a, M) {
+  a.done = true;
+  world.fx.push({ kind: 'yukifrostfan', x: k.x + k.dir * 12, y: k.y - 28, dir: k.dir, r: M.reach, t: 0, dur: 0.7 });
+  for (const m of ahead(world, k, M.reach, M.h)) coldHit(world, m, { pct: M.pct, x: k.x, knock: 50, stop: 0.03 }, M.chill);
 }
 // Snowball: a lazy underhand toss at the monster.
 function snowball(world, k, a, M) {
@@ -454,6 +463,6 @@ function fight(world, k) {
   }
   if (m.frozenUntil > world.now + 0.6 && k.last !== 'icicle') return start('icicle');
   const close = level && dx < 200;
-  const pool = (close ? ['breath', 'breath', 'spikes', 'spikes', 'snowball', 'needles', 'icicle'] : ['snowball', 'needles', 'icicle', ...(level && dx < 230 ? ['spikes'] : [])]).filter((n) => n !== k.last);
+  const pool = (close ? ['breath', 'breath', 'spikes', 'spikes', 'frostfan', 'frostfan', 'snowball', 'needles', 'icicle'] : ['snowball', 'needles', 'icicle', ...(level && dx < 230 ? ['spikes'] : [])]).filter((n) => n !== k.last);
   start(pool[Math.floor(Math.random() * pool.length)] ?? 'snowball');
 }

@@ -32,6 +32,8 @@ const MID = 28;
 //   hand, free                where her right hand (the fan) and left hand reach, from rest
 //   fan, open                 the fan's direction from her hand (radians, 0 = ahead, -PI/2 = up)
 //                             and how far it's opened (0 closed, 1 wide), or null to hide it
+//   balls, toy                three temari balls, how far out of her sleeve (0-1) and where in her
+//                             juggle they are (toy.u, unsprung)
 //   fanK, straw, bell         how far the fan is out of her sleeve (it folds and shrinks away into
 //                             it), and how far her spitball straw and her gold bell are drawn out
 //                             (0-1: each slides out of her sleeve, so nothing pops into her hand)
@@ -41,7 +43,7 @@ const MID = 28;
 //   mouth, eyes, brows, extras, blush, puff   the face
 //   cloth, kick               the kimono's sway and the hair thrown up
 const REST = {
-  tx: 0, by: 0, hx: 0, hy: 0, tilt: 0, hand: [0, 0], free: [0, 0], fan: 0.9, open: 0, fanK: 1, straw: 0, bell: 0, legF: [0.8, -1, 12], legB: [-0.6, -0.2, -6],
+  tx: 0, by: 0, hx: 0, hy: 0, tilt: 0, hand: [0, 0], free: [0, 0], fan: 0.9, open: 0, fanK: 1, straw: 0, bell: 0, balls: 0, toy: null, legF: [0.8, -1, 12], legB: [-0.6, -0.2, -6],
   spin: 0, turned: false, mouth: 'cat', eyes: null, brows: [[0.3, 0], [0.3, 0]], extras: [], blush: 1.2, puff: false, cloth: 0, kick: 0,
 };
 const pose = (o) => ({ ...REST, ...o });
@@ -225,6 +227,41 @@ function humming(u, t) {
     legF: [2.6, -3.2, 70], legB: [1.2, -2.6, 50], mouth: 'tiny', eyes: 'happy', extras: [`spark${Math.floor(t * 2) % 2}`],
   });
 }
+// Juggling: the fan tucked away, three temari balls rolled out of her sleeve one after another
+// and thrown in a cascade, hand to hand, faster as she gets the hang of it; caught, tucked away
+// again, and a bow with the fan snapped open: ta-da.
+function juggling(u, t) {
+  const out = ease(seg(u, 0.04, 0.2)) * (1 - ease(seg(u, 0.74, 0.84)));
+  const fan = 1 - ease(seg(u, 0, 0.1)) + ease(seg(u, 0.82, 0.9));
+  const toss = u * (5 + 4 * u);
+  const ta = bump(u, 0.84, 1);
+  return pose({
+    hand: [3.6 + 0.6 * Math.sin(toss * TAU) - 1.6 * ta, 1 - 1.4 * Math.max(0, Math.sin(toss * TAU)) * out - 5 * ta], free: [4 - 0.6 * Math.sin(toss * TAU), 1 - 1.4 * Math.max(0, -Math.sin(toss * TAU)) * out + 1 * ta],
+    fanK: Math.min(1, fan), fan: ta > 0 ? -0.2 : 0.9, open: ta, balls: out, toy: { u: toss },
+    hy: -0.4 * out + 1.2 * ta, tilt: -6 * out + 18 * ta, tx: 0.6 * ta, by: 0.4 * Math.sin(t * 2.4),
+    mouth: ta > 0.3 ? 'grin' : out > 0.5 ? 'o' : 'cat', eyes: ta > 0.3 ? 'happy' : null, brows: out > 0.5 && ta < 0.3 ? [[0.8, -0.2], [0.8, -0.2]] : REST.brows,
+    extras: ta > 0.5 ? ['spark1'] : [], ...kickLegs(t, 0.5 + 0.5 * out),
+  });
+}
+// A nap on the Spirit Mage's head: she settles on top of it, legs dangling either side of her
+// fringe, chin in her hands, nodding off (zzz), slumped forward; then she slips off it, startles
+// awake and giggles.
+function napping(u, t) {
+  const sit = ease(seg(u, 0, 0.12));
+  const doze = ease(seg(u, 0.2, 0.34)) * (1 - seg(u, 0.78, 0.8));
+  const nod = doze * (0.6 + 0.4 * Math.sin(t * 2.2));
+  const slip = ease(seg(u, 0.78, 0.84));
+  const wake = bump(u, 0.8, 0.92);
+  const giggle = u > 0.9;
+  return pose({
+    legF: [2.4, -2.8, 66 * sit - 30 * slip + 8 * Math.sin(t * 2) * (1 - doze)], legB: [1.2, -2.4, 54 * sit - 30 * slip + 8 * Math.sin(t * 2 + 2) * (1 - doze)],
+    hand: lerp2([0, 0], [2.6, -6.6 + 1.6 * nod], sit * (1 - slip)), free: lerp2([0, 0], [2.2, -6.4 + 1.6 * nod], sit * (1 - slip)), fanK: 1 - sit * (1 - slip), fan: 1.6,
+    tilt: 6 * sit + 12 * nod - 14 * wake, hy: 0.6 * nod, hx: 0.4 * nod, by: 0.8 * nod - 2 * wake, kick: 1.2 * wake,
+    eyes: wake > 0.2 ? null : giggle ? 'happy' : doze > 0.3 ? 'blink' : sit > 0.5 ? 'half' : null, mouth: wake > 0.2 ? 'open' : giggle ? 'grin' : doze > 0.3 ? 'o' : 'cat',
+    brows: wake > 0.2 ? [[0.9, -0.3], [0.9, -0.3]] : REST.brows, extras: wake > 0.3 ? ['bang1'] : giggle ? ['spark0'] : doze > 0.3 ? [`zzz${Math.floor(t * 2.5) % 4}`] : [], blush: 1.4,
+  });
+}
+const lerp2 = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
 
 // ---------- Rodeo ----------
 
@@ -344,7 +381,7 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   else if (d.mood === 'mad') p = fuming(0, time);
   else if (d.bit) {
     const u = clamp01((world.now - d.bit.t0) / BITS[d.bit.kind]);
-    p = { orbit: () => orbiting(time, u), peek: () => peeking(u), poke: () => poking(u, time), blep: () => blepping(u, time), loop: () => looping(u), hum: () => humming(u, time) }[d.bit.kind]();
+    p = { orbit: () => orbiting(time, u), peek: () => peeking(u), poke: () => poking(u, time), blep: () => blepping(u, time), loop: () => looping(u), hum: () => humming(u, time), juggle: () => juggling(u, time), nap: () => napping(u, time) }[d.bit.kind]();
   } else if (sp > 90) p = flying(time, sp);
   else p = hovering(time);
   const P = follow(st, p, dt);
@@ -383,7 +420,39 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   ctx.fillStyle = g;
   ctx.fillRect(x - 10, y - 6, 20, 16);
   ctx.restore();
-  const fanOn = (c, hand, flip) => {
+  const fanOn = (c, hand, flip, other) => {
+    // Her temari balls, rolled out of her sleeve and juggled hand to hand in a cascade: each one
+    // thrown from one hand in an arc to the other, the hands taking turns.
+    if (P.balls > 0.03 && P.toy) {
+      for (let i = 0; i < 3; i++) {
+        const ph = (((P.toy.u + i * (2 / 3)) / 2) % 1 + 1) % 1;
+        const s = (ph * 2) % 1;
+        const [a, b] = ph < 0.5 ? [hand, other] : [other, hand];
+        const ahead = (flip ? -1 : 1) * 6;
+        const bx = lerp(a[0], b[0], s) + ahead;
+        const by = lerp(a[1], b[1], s) - 10 * Math.sin(s * Math.PI) - 1;
+        const k = Math.min(1, P.balls * 1.4 - i * 0.2);
+        if (k <= 0) continue;
+        const x0 = lerp(hand[0], bx, k);
+        const y0 = lerp(hand[1], by, k);
+        const r = 1.6 * k;
+        c.fillStyle = ['#d8323e', '#fbf8ff', '#4a6fd8'][i];
+        c.strokeStyle = '#2a2440';
+        c.lineWidth = 0.35;
+        c.beginPath();
+        c.arc(x0, y0, r, 0, TAU);
+        c.fill();
+        c.stroke();
+        c.strokeStyle = i === 1 ? '#d8323e' : '#f2c84a';
+        c.lineWidth = 0.45;
+        c.beginPath();
+        c.moveTo(x0 - r * 0.9, y0 - r * 0.3);
+        c.lineTo(x0 + r * 0.9, y0 + r * 0.3);
+        c.moveTo(x0 - r * 0.3, y0 + r * 0.9);
+        c.lineTo(x0 + r * 0.3, y0 - r * 0.9);
+        c.stroke();
+      }
+    }
     // Riding, she swings a gold bell instead of her fan (drawn out of her sleeve, growing into her
     // hand as the fan folds away).
     if (P.bell > 0.03) fxSprite(c, 'celdollbell', hand[0], hand[1] - 2 * P.bell, { frame: 0, scale: 0.22 * P.bell, rot: (flip ? 1 : -1) * 0.3 });

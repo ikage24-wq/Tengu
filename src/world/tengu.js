@@ -49,6 +49,7 @@ const CLOSE = 46;
 export const TENGU_MOVES = {
   iai: { dur: 1.15, hits: [0.36], dash: [0.28, 0.34], dist: 74, reach: 40, pct: 120, knock: 50, targets: 4 },
   kurama: { dur: 1.75, hits: [0.18, 0.34, 0.5, 0.74], dash: [0.66, 0.74], dist: 84, step: 8, reach: 58, pct: [55, 55, 60, 110], knock: [20, 20, 30, 150], launch: [0, 0, 0, 120], targets: 4 },
+  fanstrike: { dur: 0.95, hits: [0.32, 0.58], reach: 50, pct: [45, 65], knock: [30, 110], targets: 3 },
   gust: { dur: 1.2, hits: [0.38], range: 190, h: 60, pct: 60, knock: 260, n: 3, every: 0.08 },
   whirlwind: { dur: 1.5, hits: [0.5], range: 240, r: 34, last: 1.6, every: 0.25, pct: 28, lift: 70, cool: 9 },
   feathers: { dur: 1.2, hits: [0.42], range: 270, n: 8, speed: 640, pct: 30 },
@@ -251,6 +252,13 @@ function strike(world, k, a, M, i, last) {
     world.fx.push({ kind: 'tengucut', cut, x: through ? (x0 + x1) / 2 : k.x + dir * M.reach * 0.55, y: k.y - 22, dir, big: last, w: Math.abs(x1 - x0), t: through ? -0.04 : 0, dur: 0.4 });
     hit.forEach((m, j) => dollHit(world, m, { pct: at(M.pct, i), x: x0, knock: at(M.knock, i), launch: at(M.launch, i) ?? 0, stop: j ? 0 : last ? 0.08 : 0.03, shake: !j && last ? 2.5 : 0, big: last && !j, burst: 'tenguhit', gauge: 2, key: 'tengu' }, through ? 0.06 : 0));
     if (through) a.sheathe = true;
+    return hit.length;
+  }
+  if (a.kind === 'fanstrike') {
+    // The closed fan as a weapon: a smack across, then a jab.
+    const hit = world.mobs.filter((m) => alive(m) && (m.x - k.x) * dir > -10 && Math.abs(m.x - k.x) < M.reach + m.def.w / 2 && Math.abs(m.y - k.y) < 60).slice(0, M.targets);
+    world.fx.push({ kind: 'arc', x: k.x + dir * 12, y: k.y - 30, dir, r: M.reach * 0.6, start: i ? -10 : -70, sweep: i ? 40 : 150, thick: i ? 5 : 6, big: last, color: '#f4f2ee', t: 0, dur: 0.22 });
+    hit.forEach((m, j) => dollHit(world, m, { pct: at(M.pct, i), x: k.x, knock: at(M.knock, i), stop: j ? 0 : last ? 0.06 : 0.03, burst: 'tenguhit', gauge: 2, key: 'tengu' }));
     return hit.length;
   }
   if (a.kind === 'gust') {
@@ -510,6 +518,6 @@ function fight(world, k) {
     return start('stones');
   }
   const close = level && dx < 70;
-  const pool = (close ? ['iai', 'kurama', 'kurama', 'gust', 'feathers'] : level && dx < 190 ? ['gust', 'feathers', 'iai'] : ['feathers']).filter((n) => n !== k.last);
+  const pool = (close ? ['iai', 'kurama', 'kurama', 'fanstrike', 'fanstrike', 'gust', 'feathers'] : level && dx < 190 ? ['gust', 'feathers', 'iai'] : ['feathers']).filter((n) => n !== k.last);
   start(pool[Math.floor(Math.random() * pool.length)] ?? 'feathers');
 }

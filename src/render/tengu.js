@@ -363,6 +363,18 @@ function whirlwind(u) {
     tilt: -6 * up * (1 - down) + 4 * down * (1 - back) - 3 * back, mouth: down > 0.3 && back < 0.5 ? 'tengugrin' : 'tengusmirk', brows: 'focus', lid: 0.15, eyes: up > 0.5 && down < 0.3 ? 'half' : null,
   });
 }
+// Fan Strike (0.32, 0.58): the fan snapped shut and used as a weapon: a backhand smack across, then
+// a straight jab of its closed tip, stepping in with each; and a flick open again.
+function fanstrike(u) {
+  const shut = soft(seg(u, 0, 0.1)) * (1 - soft(seg(u, 0.84, 0.96)));
+  return pose({
+    fan: keys(u, [[0, -0.35], [0.2, -1.8], [0.32, 1.6, 'snap'], [0.44, 1.2], [0.5, 0.9], [0.58, 1.55, 'snap'], [0.8, 1.5], [1, -0.35]]), twirl: 1.35 * shut,
+    hand: keys(u, [[0, HAND], [0.2, [-3, -10]], [0.32, [8, -6], 'snap'], [0.46, [3, -7]], [0.58, [11, -6], 'snap'], [0.8, [10, -6]], [1, HAND]]),
+    lean: keys(u, [[0, -0.03], [0.2, -0.1], [0.32, 0.25, 'snap'], [0.46, 0.05], [0.58, 0.32, 'snap'], [0.8, 0.2], [1, -0.03]]), lunge: 3 * bump(u, 0.26, 0.9),
+    legF: [3.4 + 2 * bump(u, 0.26, 0.9), 0, 8], legB: [-4, 0, -10], cloth: 3 * Math.sin(u * 12) * bump(u, 0.2, 0.7), tilt: -3 + 4 * bump(u, 0.28, 0.7),
+    mouth: u > 0.3 && u < 0.7 ? 'tengugrin' : 'tengusmirk', brows: u > 0.2 && u < 0.7 ? 'focus' : 'smug', lid: 0.15,
+  });
+}
 // Feather Storm (0.42): a crouch, then a spring up with his wings thrown wide and arms flung out,
 // the feathers flying; he floats down folding his wings.
 function feathers(u) {
@@ -436,7 +448,7 @@ function comboLift(u, time) {
     mouth: held > 0.4 ? 'tengugrin' : 'tengusmirk', brows: low > 0.4 || held > 0.4 ? 'focus' : 'smug', lid: 0.15, eyes: low > 0.5 ? 'half' : null,
   });
 }
-const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command, combo: comboLift };
+const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command, combo: comboLift, fanstrike };
 
 // ---------- His leader's aura ----------
 // A small black feather (for the ones circling him).
@@ -551,6 +563,52 @@ export const TENGU_IDLES = {
     const k = soft(seg(u, 0.1, 0.3)) * (1 - soft(seg(u, 0.75, 0.9)));
     const on = u > 0.18 && u < 0.86;
     return pose({ sword: on ? 1 : 0, blade: 0.25, hand: on ? lerp2([-1.6, 1], [3, -11], k) : lerp2(HAND, [-1.6, 1], soft(seg(u, 0, 0.18)) * (1 - soft(seg(u, 0.86, 1)))), free: [-1, -5], fan: 0.4, eyes: k > 0.5 ? 'half' : null, lid: 0.35, mouth: k > 0.5 ? 'tengugrin' : 'tengusmirk', brows: 'raised', tilt: -2 + 3 * k });
+  }],
+  // A flourish: the fan spun round and round across his fingers, faster and faster, caught and
+  // snapped open out to the side with a pose, wings flicking open, a grin.
+  flourish: [3.2, (u) => {
+    const spin = soft(seg(u, 0.12, 0.56)) ** 1.4;
+    const snap = overshoot(seg(u, 0.56, 0.64));
+    const back = soft(seg(u, 0.84, 1));
+    return pose({
+      hand: lerp2(lerp2(HAND, [3.4, -9], soft(seg(u, 0, 0.12))), [8.4, -9.6], snap * (1 - back)), fan: lerp(-0.35 + spin * TAU * 3, 1.1, snap) * (1 - back) - 0.35 * back, twirl: (1 - snap) * spin * 6,
+      lean: 0.08 * snap * (1 - back), wing: 0.35 * bump(u, 0.56, 0.84), tilt: -3 - 6 * snap * (1 - back), hy: -0.2 - 0.5 * snap * (1 - back),
+      mouth: snap > 0.4 && back < 0.5 ? 'tengugrin' : 'tengusmirk', brows: snap > 0.4 ? 'raised' : 'smug', eyes: spin > 0.2 && snap < 0.3 ? 'half' : null,
+    });
+  }],
+  // Balancing on one tooth of his geta: one foot drawn up, arms out, the fan held out to one side,
+  // wings half open to steady him, a little wobble, utterly pleased with himself; and down again.
+  balance: [4, (u) => {
+    const k = soft(seg(u, 0.05, 0.2)) * (1 - soft(seg(u, 0.82, 0.96)));
+    const wob = Math.sin(u * TAU * 3) * k;
+    return pose({
+      legF: [2 + 1 * k, -7 * k, 6 + 50 * k], legB: [-1.4 * k - 3.6 * (1 - k), 0, -7 + 7 * k], hand: lerp2(HAND, [9, -7 + wob], k), free: lerp2(FREE, [-7, -7 - wob], k), fan: lerp(-0.35, 1.4, k),
+      wing: 0.4 * k, flap: 0.12 * wob, lean: 0.06 * wob, tx: 0.5 * wob, tilt: -3 - 4 * k + 3 * wob, mouth: 'tengugrin', brows: 'raised', lid: 0.3,
+    });
+  }],
+  // A loose feather: he reaches back to his wing (it opens a little), plucks one, looks at it,
+  // holds it up to his lips and blows it away; watches it drift off.
+  feather: [3.8, (u) => {
+    const reach = soft(seg(u, 0.05, 0.22)) * (1 - soft(seg(u, 0.26, 0.42)));
+    const hold = soft(seg(u, 0.26, 0.42)) * (1 - soft(seg(u, 0.82, 0.96)));
+    const blow = bump(u, 0.5, 0.62);
+    return pose({
+      hand: lerp2(HAND, [3.4, -3], soft(seg(u, 0, 0.12)) * (1 - soft(seg(u, 0.86, 1)))), fan: lerp(-0.35, 1.9, soft(seg(u, 0, 0.12)) * (1 - soft(seg(u, 0.86, 1)))),
+      free: lerp2(lerp2(FREE, [-6, -6], reach), [3, -11.4], hold), wing: 0.35 * bump(u, 0.04, 0.3), glance: reach > 0.4 ? 1 : 0, hx: 0.3 + 0.6 * reach,
+      mouth: blow > 0.3 ? 'tenguhah' : 'tengusmirk', eyes: hold > 0.5 && u < 0.5 ? 'half' : null, tilt: -3 + 3 * reach - 3 * hold,
+      prop: { kind: 'feather', held: u > 0.2 && u < 0.56, fly: seg(u, 0.56, 1) },
+    });
+  }],
+  // A nap in the air: he rises on slow wingbeats and sits on nothing, legs crossed, the fan laid
+  // on his chest, head nodding, eyes shut; and drops back down onto his feet.
+  nap: [5.2, (u) => {
+    const k = soft(seg(u, 0.04, 0.2)) * (1 - soft(seg(u, 0.84, 0.98)));
+    const nod = Math.max(0, Math.sin(u * TAU * 2.5)) * k;
+    return pose({
+      lift: 12 * k + 1.5 * Math.sin(u * TAU * 3) * k, wing: k, flap: 0.3 * Math.sin(u * TAU * 7) * k, legF: lerp2(lerp2([3.4, 0], [2.6, -3.4], k), [2.6, -3.4], 0).concat([6 + 64 * k]),
+      legB: lerp2([-3.6, 0], [1.2, -2.8], k).concat([-7 + 57 * k]), hand: lerp2(HAND, [2, -6], k), fan: lerp(-0.35, 1.7, k), free: lerp2(FREE, [1.2, -4], k),
+      hy: -0.2 + 0.7 * nod, tilt: -3 + 8 * nod, eyes: k > 0.4 ? 'blink' : null, mouth: k > 0.5 ? 'tengucool' : 'tengusmirk', brows: 'cool',
+    });
   }],
 };
 const IDLE_KEYS = Object.keys(TENGU_IDLES);
@@ -685,7 +743,7 @@ export function drawTenguCompanion(ctx, world, k, cam, time, layer = 'back') {
   // it back on the way to and from the hilt), never jumping between his hands.
   const obi = posedPoint(X, Y, rig, opts, [17.4, 32.4]);
   const under = null;
-  const over = (c, hand, flip) => {
+  const over = (c, hand, flip, other) => {
     if (drawn) {
       // A fast blade leaves a pale arc behind it.
       st.trail = [P.blade, ...(st.trail ?? [])].slice(0, 5);
@@ -702,6 +760,16 @@ export function drawTenguCompanion(ctx, world, k, cam, time, layer = 'back') {
     } else {
       st.trail = null;
       paintFan(c, hand, flip, P.fan, TENGU_SCALE, P.twirl);
+    }
+    // A loose feather from his wing: in his fingers, then blown away, drifting and turning.
+    if (P.prop?.kind === 'feather') {
+      if (P.prop.held) st.featherAt = [other[0] + dir * 1.4 * TENGU_SCALE, other[1] - 2 * TENGU_SCALE];
+      const f = P.prop.fly;
+      if ((P.prop.held || (f > 0 && f < 1)) && st.featherAt) {
+        const fx0 = st.featherAt[0] + dir * 40 * f * TENGU_SCALE + Math.sin(f * 9) * 4 * TENGU_SCALE;
+        const fy = st.featherAt[1] - 18 * f * TENGU_SCALE + 6 * f * f * TENGU_SCALE;
+        auraFeather(c, fx0, fy, -dir * 0.8 + (P.prop.held ? 0 : f * 7), 4.6 * TENGU_SCALE * 0.6, 1 - Math.max(0, (f - 0.7) / 0.3));
+      }
     }
   };
   drawPosed(ctx, look, X, Y, rig, { ...opts, under, over });

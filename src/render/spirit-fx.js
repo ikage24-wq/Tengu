@@ -765,6 +765,31 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       ctx.restore();
       return true;
     }
+    case 'yukifrostfan': {
+      // Frost Fan: a short cone of whirling snow thrown off her sleeve, flakes tumbling out and a
+      // white swirl through them.
+      const dir = f.dir || 1;
+      const r = f.r ?? 120;
+      const k = 1 - Math.max(0, (p - 0.6) / 0.4);
+      ctx.save();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        const d = r * Math.min(1, p * 1.6) * (0.5 + 0.2 * i);
+        ctx.globalAlpha = 0.7 * k;
+        ctx.lineWidth = 2 - 0.5 * i;
+        ctx.beginPath();
+        ctx.ellipse(x + dir * d * 0.5, y + 4, d * 0.5, 10 + 6 * i, 0, dir > 0 ? -1.2 : Math.PI - 0.4, dir > 0 ? 0.4 : Math.PI + 1.2);
+        ctx.stroke();
+      }
+      ctx.restore();
+      for (let i = 0; i < 12; i++) {
+        const a = -0.5 + (i / 11) * 0.8;
+        const d = r * Math.min(1, p * 1.5) * (0.4 + 0.6 * ((i * 37) % 10) / 10);
+        fxSprite(ctx, 'celsnowflake', x + dir * Math.cos(a) * d, y + Math.sin(a) * d * 0.6 + 6, { t: f.t * 2 + i, scale: 0.06 + 0.04 * (i % 3), alpha: k });
+      }
+      return true;
+    }
     case 'yukistep': {
       // Snow Step: she comes apart into a flurry of snow (or gathers out of one).
       fxSprite(ctx, 'celfrostburst', x, y - 26, { p, scale: 0.55 });

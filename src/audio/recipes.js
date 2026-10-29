@@ -291,6 +291,7 @@ const R = {
   yukisnowball: { db: -16, max: 2, layers: [{ rec: 'swish', rate: 1.2, len: 250 }] },
   yukimist: { db: -14, max: 1, layers: [whoosh(900, 400, 1400, { focus: 0.4, db: -4 }), sparkle('B6:0 E7:90', { db: -12 })] },
   yukiwhiteout: { db: -9, max: 1, room: true, layers: [{ rec: 'windWhoosh', rate: 0.65, len: 3000 }, { rec: 'iceCharge', rate: 0.6, db: -6 }, whoosh(3000, 300, 1800, { focus: 0.8, db: -3 })] },
+  yukifrostfan: { db: -12, max: 1, layers: [whoosh(500, 200, 2200, { focus: 0.6, db: -2 }), sparkle('B6:0 E7:60', { db: -10 })] },
   yukishatter: { db: -9, max: 2, gap: 80, layers: [{ rec: 'glass', rate: 0.9 }, { rec: 'iceBig', rate: 1.1, len: 800, db: -3 }] },
   yukineedle: { db: -16, vary: 10, max: 4, gap: 40, layers: [{ rec: 'iceLaunch', rate: 1.6, len: 300 }, sparkle('E7:0 B7:40', { db: -12 })] },
   yukiicicle: { db: -11, max: 3, gap: 90, layers: [{ rec: 'iceBig', rate: 1.2, len: 900 }, { rec: 'glass', rate: 0.8, db: -4 }] },
