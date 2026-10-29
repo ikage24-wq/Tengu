@@ -178,7 +178,7 @@ const ahead = (world, k, reach, h) => world.mobs.filter((m) => alive(m) && (m.x 
 function breath(world, k, a, M, u) {
   if (!a.fx && u >= M.from) {
     a.fx = true;
-    world.fx.push({ kind: 'yukistream', x: k.x + k.dir * 14, y: k.y - 34, dir: k.dir, r: M.reach, t: 0, dur: (M.to - M.from) * M.dur + 0.5 });
+    world.fx.push({ kind: 'yukistream', x: k.x + k.dir * 14, y: k.y - 34, yuki: k, dir: k.dir, r: M.reach, t: 0, dur: (M.to - M.from) * M.dur + 0.5 });
   }
   if (u < M.from || a.ended) return;
   const last = u >= M.to;
@@ -193,7 +193,7 @@ function ask(world, k, a, M, u) {
   const m = a.mob;
   if (!a.asked && u >= M.ask) {
     a.asked = true;
-    world.fx.push({ kind: 'yukiask', x: k.x + k.dir * 6, y: k.y - 52, dir: k.dir, t: 0, dur: 1 });
+    world.fx.push({ kind: 'yukiask', x: k.x + k.dir * 6, y: k.y - 52, yuki: k, dir: k.dir, t: 0, dur: 1 });
   }
   if (u >= M.from && !a.drawn && alive(m)) {
     a.drawn = true;

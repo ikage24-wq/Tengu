@@ -2126,6 +2126,38 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   ctx.restore();
 }
 
+// Where the mouth of a figure drawn with drawPosed (same x, y, pose and options) is on screen: the
+// head's offset and roll, the sprite's placement, and the lean (for breath and words that must
+// come from the lips).
+export function posedMouth(x, y, pose, { scale = 1, facing = 1, lean = null } = {}) {
+  const rig = { ...baseRig(), ...pose };
+  const ux = rig.tx;
+  const uy = rig.by + hipDrop(rig);
+  const nx = squashX(15.5 + ux) + rig.hx;
+  const ny = 25 + uy * KY + rig.hy + NECK_LIFT;
+  const r0 = FACE_X + squashX(15.5 + ux) - 15.5 + rig.hx;
+  const r1 = MY + uy * KY + rig.hy + NECK_LIFT;
+  const a = ((rig.tilt ?? 0) * Math.PI) / 180;
+  const px = nx + (r0 - nx) * Math.cos(a) - (r1 - ny) * Math.sin(a);
+  const py = ny + (r0 - nx) * Math.sin(a) + (r1 - ny) * Math.cos(a);
+  const flip = facing < 0;
+  const dir = flip ? -1 : 1;
+  const left = x - (W / 2) * scale;
+  const top = y - H * scale - (rig.lift ?? 0) * scale;
+  let mx = flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale;
+  let my = top + (py + OY) * scale;
+  if (lean && (lean.tilt || lean.lunge || lean.lift)) {
+    const mv = { tilt: lean.tilt ?? 0, lift: lean.lift ?? 0, lunge: lean.lunge ?? 0 };
+    const { pivot: pk, tilt } = leanOf(mv);
+    const pivot = y - H * scale * pk;
+    const t = tilt * dir;
+    const [dx, dy] = [mx - x, my - pivot];
+    mx = x + dir * mv.lunge * scale + dx * Math.cos(t) - dy * Math.sin(t);
+    my = pivot - mv.lift * scale + dx * Math.sin(t) + dy * Math.cos(t);
+  }
+  return [mx, my];
+}
+
 // Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,
 // layered behind and in front of the sprite.
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {

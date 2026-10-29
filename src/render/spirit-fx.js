@@ -391,6 +391,8 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       // White Breath: a long stream of bright white smoke from her lips, sloping down onto what she
       // bends over, billowing as it goes, snowflakes tumbling in it.
       const dir = f.dir || 1;
+      // (From her lips, wherever her bending and swaying put them.)
+      if (f.yuki?.mouth) [x, y] = [f.yuki.mouth[0] - f.x + x, f.yuki.mouth[1] - f.y + y];
       const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.8) / 0.2));
       const r = f.r ?? 118;
       ctx.save();
@@ -398,8 +400,8 @@ export function drawSpiritFx(ctx, f, x, y, p) {
         const u = (f.t * 1.4 + i / 20) % 1;
         const d = u * r;
         const wob = Math.sin(f.t * 7 + i * 1.9) * (1 + u * 4);
-        const cy = y + d * 0.26 + wob;
-        const rr = 3.4 + u * 12;
+        const cy = y + d * 0.2 + wob * Math.min(1, u * 4);
+        const rr = 1.2 + u * 13;
         ctx.globalAlpha = k * (1 - 0.45 * u);
         const g = ctx.createRadialGradient(x + dir * d, cy, 0, x + dir * d, cy, rr);
         g.addColorStop(0, 'rgba(255, 255, 255, 1)');
@@ -411,10 +413,10 @@ export function drawSpiritFx(ctx, f, x, y, p) {
         ctx.fill();
       }
       ctx.restore();
-      fxSprite(ctx, 'celsmoke', x + dir * r * 0.85, y + r * 0.26 + 8, { t: f.t, scale: 0.3, flip: dir < 0, alpha: 0.45 * k });
+      fxSprite(ctx, 'celsmoke', x + dir * r * 0.85, y + r * 0.2 + 8, { t: f.t, scale: 0.3, flip: dir < 0, alpha: 0.45 * k });
       for (let i = 0; i < 5; i++) {
         const u = (f.t * 1.1 + i / 5) % 1;
-        fxSprite(ctx, 'celsnowflake', x + dir * u * r, y + u * r * 0.26 + Math.sin(f.t * 5 + i) * u * 10, { t: f.t + i, scale: 0.07 + 0.05 * u, alpha: k });
+        fxSprite(ctx, 'celsnowflake', x + dir * u * r, y + u * r * 0.2 + Math.sin(f.t * 5 + i) * u * 10, { t: f.t + i, scale: 0.07 + 0.05 * u, alpha: k });
       }
       return true;
     }
@@ -540,6 +542,7 @@ export function drawSpiritFx(ctx, f, x, y, p) {
     case 'yukiask': {
       // Answer Me: her question, a whisper hanging cold in the air by her lips.
       const k = Math.min(1, p * 6) * (1 - Math.max(0, (p - 0.7) / 0.3));
+      if (f.yuki?.mouth) [x, y] = [f.yuki.mouth[0] - f.x + x, f.yuki.mouth[1] - f.y + y - 12];
       ctx.save();
       ctx.globalAlpha *= k;
       ctx.font = 'bold 10px sans-serif';

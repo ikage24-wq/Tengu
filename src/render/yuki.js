@@ -6,7 +6,7 @@
 // and a snowflake) with blunt bangs, white-lashed veiled eyes, small pale blue lips, pale skin, and
 // the spirit-flames kimono (white, pale blue hitodama drifting up from a hem that fades into mist,
 // no feet). Her rig and animations are below (world/yuki.js runs her).
-import { drawPosed } from './hero.js';
+import { drawPosed, posedMouth } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
 import { YUKI_MOVES } from '../world/yuki.js';
 
@@ -66,8 +66,8 @@ function breathing(u) {
   const bend = soft(seg(u, 0.2, 0.36)) * (1 - soft(seg(u, 0.86, 1)));
   const out = soft(seg(u, 0.32, 0.4)) * (1 - soft(seg(u, 0.82, 0.9)));
   return pose({
-    lean: 0.02 + 0.12 * glide + 0.3 * bend, lift: -1.5 * bend, hand: lerp2(lerp2(FOLD_F, [-1.4, -1.6], glide), [0.6, -10.4], bend), free: lerp2(lerp2(FOLD_B, [0.6, -1.2], glide), [6.4, -1], bend),
-    hy: 0.4 + 1.2 * bend, tilt: 3 + 9 * bend, cloth: -3 * glide + 1.5 * bend, mouth: out > 0.3 ? 'yukibreath' : 'yukilips', eyes: bend > 0.4 ? 'half' : null, brows: bend > 0.4 ? 'calm' : 'sad',
+    lean: 0.02 + 0.12 * glide + 0.17 * bend, lift: -1 * bend, hand: lerp2(lerp2(FOLD_F, [-1.4, -1.6], glide), [0.6, -10.4], bend), free: lerp2(lerp2(FOLD_B, [0.6, -1.2], glide), [6.4, -1], bend),
+    hy: 0.4 + 0.6 * bend, tilt: 3 + 4 * bend, cloth: -3 * glide + 1.5 * bend, mouth: out > 0.3 ? 'yukibreath' : 'yukilips', eyes: bend > 0.4 ? 'half' : null, brows: bend > 0.4 ? 'calm' : 'sad',
   });
 }
 // Answer Me: she glides in and leans close, face to face, her head tipping to one side as she asks
@@ -289,9 +289,11 @@ export function drawYukiCompanion(ctx, world, k, cam, time, layer = 'back') {
     eyes: P.eyes ?? yukiBlink(time), face: { brows: BROWS[P.brows] ?? BROWS.sad, glance: q(P.glance) },
   };
   const look = { ...YUKI_LOOK, mouth: P.mouth, lid: q(P.lid) };
-  drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, {
-    scale: YUKI_SCALE, facing: dir, hold: 'front', lean: { tilt: P.lean + 0.01 * sway, lunge: 0, lift: hover + P.lift },
-  });
+  const opts = { scale: YUKI_SCALE, facing: dir, hold: 'front', lean: { tilt: P.lean + 0.01 * sway, lunge: 0, lift: hover + P.lift } };
+  drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, opts);
+  // Where her lips are (in the world), for her breath and her question to come from.
+  const [mx, my] = posedMouth(Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, opts);
+  k.mouth = [mx + cam.x, my + cam.y];
   ctx.restore();
 }
 // Slow, sorrowful blinks.
