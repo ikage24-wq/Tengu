@@ -1,17 +1,21 @@
 // The world map (M): Tengu Island as a round island with one ring road running round it. The
 // towns sit on the ring like stops on a roundabout, the fields between them; Ember Crag is the
-// mountain in the middle, up the canyon road; the Sky Garden floats off the north shore. Kept
-// sparse on purpose: soft colour under each stop says what kind of place it is, and the names of
-// the fields show on hover. Click a town to fly there.
+// mountain in the middle, up the canyon road; the far regions branch off the places they lead
+// from, and the Sky Garden floats off the north shore. Every place shows its name and level range.
+// Tap any place for its monsters and how far it is, then "Show the way" to have the guide arrow
+// lead you there (world/routes.js), or fly to a town from any town.
 
 import { MAPS, TOWNS, getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS } from '../data/jobs.js';
 import { travelTo, travelCost } from '../world/world.js';
-import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, roundRect, font } from './kit.js';
+import { levelRange, routeBetween, setRoute } from '../world/routes.js';
+import { COLORS, windowFrame, text, box, button, roundRect, font } from './kit.js';
 
-const W = 420;
-const H = 290;
+// The map is drawn in its own 400x240 frame, shown K times larger.
+const K = 1.2;
+const W = 500;
+const H = 340;
 const MAP_W = 400;
 const MAP_H = 240;
 const INK = '#5a3f7a';
@@ -29,13 +33,20 @@ const onRing = (a, k = 1) => ({ x: CX + Math.cos(deg(a)) * RX * k, y: CY + Math.
 // throne room is a spur off the cave, and the Sky Garden floats above it.
 const SPOT = {
   sprout: onRing(180), meadow1: onRing(142), meadow2: onRing(108), harbor: onRing(75), woods: onRing(35), grove: onRing(355),
-  ruins: onRing(315), cave: onRing(272),
-  canyon: { x: CX - 62, y: CY + 8 }, crag: { x: CX + 2, y: CY - 6 }, hollow_gate: { x: CX - 78, y: CY - 30 },
-  bossroom: onRing(235, 0.72), sky: { x: 352, y: 26 },
-  // The far regions, off the ring: the glade inside the woods, the shrine path past the ruins, the
-  // ridge above the crag, and the climb from the cave through the springs and the peak to the sky.
-  glade: { x: 280, y: 160 }, shrine: { x: 372, y: 86 }, ridge: { x: 244, y: 104 },
-  springs: { x: 258, y: 42 }, peak: { x: 306, y: 18 }, starfall: { x: 384, y: 12 },
+  ruins: onRing(315), cave: onRing(262),
+  canyon: { x: CX - 70, y: CY + 6 }, crag: { x: CX + 4, y: CY - 4 }, hollow_gate: { x: CX - 86, y: CY - 30 },
+  bossroom: onRing(238, 0.74),
+  // The far regions, each just off the place it leads from: the glade inside the woods, the shrine
+  // path out past the ruins, the ridge up the mountain from the crag, and the climb from the cave
+  // through the springs and the peak to the Sky Garden, with Starfall above it.
+  glade: { x: 282, y: 170 }, shrine: { x: 372, y: 64 }, ridge: { x: 258, y: 112 },
+  springs: { x: 150, y: 34 }, peak: { x: 196, y: 14 }, sky: { x: 262, y: 20 }, starfall: { x: 322, y: 14 },
+};
+// Where each place's name sits from its stop (the default is just under it).
+const LABEL = {
+  sprout: [0, 13], meadow1: [-6, 9], meadow2: [0, 9], harbor: [0, 13], woods: [6, 9], grove: [0, 13], ruins: [18, -12], cave: [26, 6],
+  canyon: [0, 9], crag: [0, 13], hollow_gate: [-28, -2], bossroom: [0, 9], glade: [0, 9], shrine: [-4, 9], ridge: [0, 9],
+  springs: [-14, 9], peak: [0, -10], sky: [0, 10], starfall: [0, 9],
 };
 const spot = (m) => SPOT[m.id] ?? m.world;
 // The roads round the ring (each a real portal link between neighbours on it; the last stop joins
@@ -47,6 +58,13 @@ const TINT = {
   ruins: '#dccff7', cave: '#beb0ea', crag: '#f7c996', sky: '#ffffff',
   shrine: '#ffd0e0', ridge: '#b8c0ec', springs: '#bfeae0', snow: '#eef4ff',
 };
+// Each region's colour for its name pill's edge.
+const EDGE = {
+  meadow: '#7fc98a', forest: '#5fae7a', ruins: '#9a82d8', cave: '#7a6ad0', crag: '#e88a4c', sky: '#8fb8ff',
+  shrine: '#e8708a', ridge: '#6a7ad0', springs: '#4fb8a4', snow: '#8fb8e8', harbor: '#d9a060', grove: '#8a72d8',
+};
+// The places on the map (not the queens' trial arenas, which belong to their regions).
+const onMap = (m) => m.world && !m.trial;
 // Each job town's colour.
 const JOB_COLORS = { archer: '#6fcf8a', thief: '#9b7cd6', warrior: '#ff8a5c', mage: '#7fa8ff' };
 
@@ -60,8 +78,9 @@ const ROADS = (() => {
   const seen = new Set();
   const out = [];
   for (const m of Object.values(MAPS)) {
+    if (!onMap(m)) continue;
     for (const p of m.portals) {
-      if (!p.to || !MAPS[p.to]) continue;
+      if (!p.to || !MAPS[p.to] || !onMap(MAPS[p.to])) continue;
       const key = [m.id, p.to].sort().join('|');
       if (seen.has(key)) continue;
       seen.add(key);
@@ -71,13 +90,6 @@ const ROADS = (() => {
   return out;
 })();
 
-function levelRange(map) {
-  const levels = map.spawns.map((s) => MOBS[s.mob].level);
-  if (!levels.length) return null;
-  const lo = Math.min(...levels);
-  const hi = Math.max(...levels);
-  return lo === hi ? `Lv ${lo}` : `Lv ${lo}-${hi}`;
-}
 
 function circle(ctx, x, y, r) {
   ctx.beginPath();
@@ -142,8 +154,8 @@ function drawIsland(ctx, ox, oy) {
   ctx.ellipse(x, y, RX + 24, RY + 24, 0, 0, Math.PI * 2);
   ctx.clip();
   for (const m of Object.values(MAPS)) {
-    const p = m.world && spot(m);
-    if (!p || m.id === 'sky') continue;
+    const p = onMap(m) && spot(m);
+    if (!p || ['sky', 'starfall', 'peak', 'springs', 'shrine'].includes(m.id)) continue;
     const tint = TINT[m.isTown ? 'town' : m.theme] ?? TINT.meadow;
     const rg = ctx.createRadialGradient(ox + p.x, oy + p.y, 2, ox + p.x, oy + p.y, m.isTown ? 34 : 28);
     rg.addColorStop(0, tint);
@@ -187,7 +199,7 @@ function stroke(ctx, path) {
 }
 
 // The ring road between neighbours on it, then the spurs (straight), then the sky's dotted line.
-function drawRoads(ctx, ox, oy, time) {
+function drawRoads(ctx, ox, oy, time, lit = new Set()) {
   const linked = new Set(ROADS.map(([a, b]) => [a, b].sort().join('|')));
   for (let i = 0; i < RING.length; i++) {
     const next = RING[(i + 1) % RING.length];
@@ -212,7 +224,8 @@ function drawRoads(ctx, ox, oy, time) {
     if (!ma.world || !mb.world) continue;
     const a = spot(ma);
     const b = spot(mb);
-    if (ida === 'sky' || idb === 'sky') {
+    // Roads up into the air (the Sky Garden and Starfall) are dotted.
+    if (['sky', 'starfall'].includes(ida) || ['sky', 'starfall'].includes(idb)) {
       ctx.save();
       ctx.setLineDash([3, 4]);
       ctx.lineDashOffset = -time * 8;
@@ -231,6 +244,44 @@ function drawRoads(ctx, ox, oy, time) {
       ctx.lineTo(ox + b.x, oy + b.y);
     });
   }
+}
+
+// The planned route over the roads: a pink band that shimmers along toward where you're going.
+function drawRoute(ctx, ox, oy, time, path) {
+  if (!path || path.length < 2) return;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#ff6b9a';
+  ctx.lineWidth = 4;
+  ctx.globalAlpha = 0.85;
+  // Neighbours on the ring follow its curve; every other step is straight, like its road.
+  ctx.beginPath();
+  path.forEach((id, i) => {
+    const p = spot(MAPS[id]);
+    if (!i) {
+      ctx.moveTo(ox + p.x, oy + p.y);
+      return;
+    }
+    const prev = path[i - 1];
+    const ra = RING.indexOf(prev);
+    const rb = RING.indexOf(id);
+    const n = RING.length;
+    if (ra >= 0 && rb >= 0 && ((ra + 1) % n === rb || (rb + 1) % n === ra)) {
+      const a0 = deg(SPOT[prev].a);
+      let a1 = deg(SPOT[id].a);
+      const cw = (ra + 1) % n === rb;
+      if (cw && a1 > a0) a1 -= Math.PI * 2;
+      if (!cw && a1 < a0) a1 += Math.PI * 2;
+      ctx.ellipse(ox + CX, oy + CY, RX, RY, 0, a0, a1, cw);
+    } else ctx.lineTo(ox + p.x, oy + p.y);
+  });
+  ctx.stroke();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([3, 5]);
+  ctx.lineDashOffset = -time * 14;
+  ctx.stroke();
+  ctx.restore();
 }
 
 // The Sky Garden: a little floating island on a cloud.
@@ -276,6 +327,24 @@ function drawTown(ctx, x, y, m, picked, time) {
   text(ctx, m.name, x, y + r + 10.5, { size: 7.5, bold: true, align: 'center', color: INK });
 }
 
+// A place's name and level range on a little pill, in its region's colour.
+function drawLabel(ctx, x, y, m, picked) {
+  const [dx, dy] = LABEL[m.id] ?? [0, 9];
+  const lv = levelRange(m);
+  const name = m.id === 'bossroom' ? 'Throne' : m.id === 'hollow_gate' ? 'Hollow Gate' : m.name;
+  ctx.font = font(5.6, true);
+  const nw = ctx.measureText(name).width;
+  ctx.font = font(5, false);
+  const lw = lv ? ctx.measureText(lv.replace('Lv ', '')).width + 4 : 0;
+  const w = nw + lw + 7;
+  const lx = x + dx - w / 2;
+  const ly = y + dy - (dy < 0 ? 8 : 0);
+  const edge = EDGE[m.theme] ?? '#8c76b8';
+  box(ctx, lx, ly, w, 8, { fill: picked ? '#ff6b9a' : 'rgba(255,255,255,0.94)', edge: picked ? '#ffffff' : edge, r: 4, width: 1 });
+  text(ctx, name, lx + 3.5, ly + 6, { size: 5.6, bold: true, color: picked ? '#ffffff' : INK });
+  if (lv) text(ctx, lv.replace('Lv ', ''), lx + 3.5 + nw + 3, ly + 6, { size: 5, color: picked ? '#ffe9f2' : COLORS.muted });
+}
+
 // A field's stop: a small white dot ringed in its region's colour (the throne room's in red).
 function drawField(ctx, x, y, m, hot) {
   const edge = m.id === 'bossroom' ? '#ff6b8a' : m.id === 'crag' ? '#e88a4c' : '#8c76b8';
@@ -297,45 +366,56 @@ export function worldMapWindow(ui, state, world) {
   if (!windowFrame(ui, win, W, H, 'World Map')) return;
   const { ctx } = ui;
   const time = world.now;
-  const ox = win.x + 10;
-  const oy = win.y + 22;
-  ctx.save();
-  drawSea(ctx, ox, oy, time);
-  ctx.save();
-  roundRect(ctx, ox, oy, MAP_W, MAP_H, 10);
-  ctx.clip();
-  drawIsland(ctx, ox, oy);
-  drawRoads(ctx, ox, oy, time);
-  drawSky(ctx, ox, oy, time);
-  ctx.restore();
-
-  // The island's name, on a pill.
-  box(ctx, ox + 8, oy + 8, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
-  text(ctx, 'Tengu Island', ox + 45, oy + 18.5, { size: 8.5, bold: true, align: 'center', color: INK });
-
-  // The stops: fields first, then the towns over them. Hover for details.
   const here = world.map.id;
+  const pick = state.travelPick && MAPS[state.travelPick] && onMap(MAPS[state.travelPick]) ? MAPS[state.travelPick] : null;
+  const path = pick ? routeBetween(here, pick.id) : null;
+  const pathIds = path ? [here, ...path.map((p) => p.to)] : null;
+  // The map, drawn in its 400x240 frame, K times larger; the mouse is brought into that frame.
+  const fx = win.x + 10;
+  const fy = win.y + 22;
+  const m = { x: (ui.mouse.x - fx) / K, y: (ui.mouse.y - fy) / K };
+  const over = (x, y, r) => Math.abs(m.x - x) <= r && Math.abs(m.y - y) <= r;
+  ctx.save();
+  ctx.translate(fx, fy);
+  ctx.scale(K, K);
+  drawSea(ctx, 0, 0, time);
+  ctx.save();
+  roundRect(ctx, 0, 0, MAP_W, MAP_H, 10);
+  ctx.clip();
+  drawIsland(ctx, 0, 0);
+  drawRoads(ctx, 0, 0, time);
+  drawRoute(ctx, 0, 0, time, pathIds?.filter((id) => onMap(MAPS[id])));
+  drawSky(ctx, 0, 0, time);
+  ctx.restore();
+  box(ctx, 8, 8, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
+  text(ctx, 'Tengu Island', 45, 18.5, { size: 8.5, bold: true, align: 'center', color: INK });
+
+  // The stops (fields first, then towns over them), then every name on top.
   let hovered = null;
-  const stops = Object.values(MAPS).filter((m) => m.world).sort((a, b) => Number(Boolean(a.isTown)) - Number(Boolean(b.isTown)));
-  for (const m of stops) {
-    const p = spot(m);
-    const x = ox + p.x;
-    const y = oy + p.y;
-    const r = m.isTown ? 12 : 7;
-    const hot = hover(ui, x - r, y - r, r * 2, r * 2 + (m.isTown ? 12 : 0));
-    if (hot) hovered = m;
-    if (m.isTown) drawTown(ctx, x, y, m, state.travelPick === m.id, time);
-    else drawField(ctx, x, y, m, hot);
-    if (m.isTown && clicked(ui, x - r, y - r, r * 2, r * 2 + 12)) state.travelPick = m.id;
+  let tapped = null;
+  const stops = Object.values(MAPS).filter(onMap).sort((a, b) => Number(Boolean(a.isTown)) - Number(Boolean(b.isTown)));
+  for (const mp of stops) {
+    const p = spot(mp);
+    const r = mp.isTown ? 12 : 8;
+    if (over(p.x, p.y, r)) hovered = mp;
+    if (mp.isTown) drawTown(ctx, p.x, p.y, mp, pick?.id === mp.id, time);
+    else drawField(ctx, p.x, p.y, mp, hovered === mp || pick?.id === mp.id);
+  }
+  for (const mp of stops) if (!mp.isTown) drawLabel(ctx, spot(mp).x, spot(mp).y, mp, pick?.id === mp.id);
+  if (hovered && ui.mouse.clicked && !ui.used) {
+    tapped = hovered;
+    ui.mouse.clicked = false;
+    ui.used = true;
   }
 
-  // You are here: a pin bouncing over your stop, with the place's name if it's a field.
-  const curMap = getMap(here);
-  if (curMap.world) {
-    const p = spot(curMap);
+  // You are here: a pin bouncing over your stop.
+  const cur = getMap(here);
+  const curOn = onMap(cur) ? cur : cur.trial ? MAPS[cur.portals[0]?.to] : null;
+  if (curOn) {
+    const p = spot(curOn);
     const bob = Math.abs(Math.sin(time * 4)) * 3;
-    const px = ox + p.x;
-    const py = oy + p.y - (curMap.isTown ? 14 : 6) - bob;
+    const px = p.x;
+    const py = p.y - (curOn.isTown ? 14 : 7) - bob;
     ctx.fillStyle = '#ff6b9a';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
@@ -347,45 +427,46 @@ export function worldMapWindow(ui, state, world) {
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     circle(ctx, px, py - 6, 2);
-    if (!curMap.isTown) {
-      ctx.font = font(7, true);
-      const w = ctx.measureText(curMap.name).width + 10;
-      // Under the dot, out of the way of the town names above the ring.
-      const ly = oy + p.y + 8;
-      box(ctx, px - w / 2, ly, w, 10, { fill: '#ff6b9a', edge: '#ffffff', r: 5, width: 1.2 });
-      text(ctx, curMap.name, px, ly + 7.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
-    }
   }
   ctx.restore();
+  if (tapped) state.travelPick = tapped.id === state.travelPick ? null : tapped.id;
 
-  if (hovered) {
-    const lines = [{ text: hovered.name, bold: true }];
-    if (hovered.isTown) lines.push({ text: `${JOBS[hovered.job]?.name ?? ''} town`, color: COLORS.accent, size: 8 });
-    const lv = levelRange(hovered);
-    if (lv) lines.push({ text: lv, color: COLORS.muted, size: 8 });
-    if (hovered.id === here) lines.push({ text: 'You are here', color: '#ff6b9a', size: 8 });
-    else if (hovered.isTown) lines.push({ text: 'Click to plan a trip', color: COLORS.muted, size: 8 });
-    tooltip(ui, lines);
-  }
-
-  // Fast travel bar.
-  const by = win.y + H - 26;
-  const pick = state.travelPick && TOWNS.includes(state.travelPick) ? getMap(state.travelPick) : null;
+  // The bar under the map: the picked place (its level, monsters, how far), the way there, and a
+  // flight if it's a town.
+  const by = win.y + 22 + MAP_H * K + 4;
   if (!pick) {
-    text(ctx, 'Click a town to fly there. Flights leave from any town.', win.x + 12, by + 12, { size: 8, color: COLORS.muted });
+    text(ctx, 'Tap any place to see what lives there and how to get there.', win.x + 12, by + 13, { size: 8, color: COLORS.muted });
+    if (world.route) {
+      text(ctx, `Guiding you to ${MAPS[world.route.to].name}.`, win.x + 12, by + 24, { size: 7, bold: true, color: '#ff6b9a' });
+      if (button(ui, win.x + W - 92, by + 4, 80, 16, 'Stop guide', { size: 8 })) setRoute(world, null);
+    }
     return;
   }
-  const cost = travelCost(here, pick.id);
-  const label = pick.id === here ? `You are in ${pick.name}.` : `Fly to ${pick.name} for ${cost}g`;
-  text(ctx, label, win.x + 12, by + 12, { size: 9, bold: true });
-  if (!world.map.isTown && pick.id !== here) text(ctx, 'Head to a town to take a flight.', win.x + 12, by + 22, { size: 7, color: COLORS.muted });
-  const can = world.map.isTown && pick.id !== here && world.char.gold >= cost;
-  if (button(ui, win.x + W - 92, by + 2, 80, 16, 'Fly!', { primary: true, enabled: can })) {
-    const reason = travelTo(world, pick.id);
-    if (reason) world.log(reason, '#ffb3c6');
-    else {
-      state.travelPick = null;
-      win.open = false;
+  const mobs = [...new Set((pick.spawns ?? []).filter((s) => !s.after && !MOBS[s.mob].boss).map((s) => MOBS[s.mob].name))];
+  const lv = levelRange(pick);
+  const far = pick.id === here ? 'You are here' : path ? `${path.length} map${path.length === 1 ? '' : 's'} away` : 'No road from here yet';
+  text(ctx, `${pick.name}${lv ? `  ·  ${lv}` : ''}${pick.isTown ? `  ·  ${JOBS[pick.job]?.name ?? ''} town` : ''}`, win.x + 12, by + 10, { size: 8.5, bold: true });
+  text(ctx, mobs.length ? `${mobs.join(', ')}  ·  ${far}` : far, win.x + 12, by + 21, { size: 7, color: COLORS.muted });
+  let bx = win.x + W - 12;
+  if (pick.isTown && TOWNS.includes(pick.id) && pick.id !== here) {
+    const cost = travelCost(here, pick.id);
+    const can = world.map.isTown && world.char.gold >= cost;
+    bx -= 76;
+    if (button(ui, bx, by + 4, 74, 16, world.map.isTown ? `Fly ${cost}g` : 'Fly (from town)', { primary: true, enabled: can, size: 7.5 })) {
+      const reason = travelTo(world, pick.id);
+      if (reason) world.log(reason, '#ffb3c6');
+      else {
+        state.travelPick = null;
+        win.open = false;
+      }
+    }
+  }
+  if (pick.id !== here && path) {
+    bx -= 82;
+    const guiding = world.route?.to === pick.id;
+    if (button(ui, bx, by + 4, 80, 16, guiding ? 'Stop guide' : 'Show the way', { primary: !guiding, theme: 'pink', size: 7.5 })) {
+      setRoute(world, guiding ? null : pick.id);
+      if (!guiding) win.open = false;
     }
   }
 }

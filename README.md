@@ -675,8 +675,14 @@ to clear it.
   houses whose roofs you reach by ladder, the training yard, and a sparring arena at its heart), and
   Moonleaf Grove (mages: homes grown into giant tree trunks, a great moon-lantern tree over the
   plaza, the Mage Tower, and the study circle). Props are kept few, NPCs stand apart, and other
-  players' name tags fade unless they're near you. The world map (M) shows Tengu Island with every road between maps and a
-  "you are here" pin; click a town to fly there from any town for a little gold.
+  players' name tags fade unless they're near you. The world map (M) shows Tengu Island with every road between maps, each
+  place's name and level range, and a "you are here" pin; the far regions sit just off the places
+  they lead from. Tap any place to see its monsters and how many maps away it is, then **Show the
+  way**: the route lights up on the map, and in the game a pink arrow points to the next portal
+  (over it when it's on screen, at the screen's edge when not) with a "maps to go" pill (tap it to
+  stop). Each quest has a **Go** button that does the same for wherever it wants you next.
+  Portal signs name where they lead with its level range (or "Town") and an arrow pointing the
+  way out; the one on your route glows pink. Fly from any town to any other for a little gold.
 - **Living towns** — every NPC works from their own place: striped market stalls for Pip's Goods,
   Tora's Forge, Nim's Spells, Marlo's Wares, and Lulu's Salon; guild halls for the Archer Lodge,
   Warrior Hall, Mage Tower, and Thieves' Den; an info kiosk for Mira and a harbor office for Captain

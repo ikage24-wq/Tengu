@@ -26,6 +26,7 @@ import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
+import { nextStep } from '../world/routes.js';
 import { titleOf } from '../core/collection.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
@@ -212,7 +213,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   const [ox, oy] = shakeOffset(feel.fx, time);
   const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
-  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time));
+  // The portal on your guided route, if you're following one.
+  const routePortal = world.route ? nextStep(world.map.id, world.route.to)?.portal : null;
+  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time), routePortal?.id);
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);

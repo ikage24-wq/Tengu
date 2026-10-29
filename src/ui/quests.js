@@ -16,6 +16,7 @@ import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
+import { questTarget, setRoute } from '../world/routes.js';
 import { questState, objectiveText, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
 import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
@@ -153,7 +154,7 @@ export function questsWindow(ui, state, world) {
   }
 
   const dx = lx + LIST_W + 6;
-  details(ui, char, win.sel, dx, ly, win.x + W - 8 - dx, lh, th);
+  details(ui, char, win.sel, dx, ly, win.x + W - 8 - dx, lh, th, world);
 }
 
 // One quest in the list: its badge, name, and a line on where it stands. Returns true when clicked.
@@ -190,7 +191,7 @@ function section(ctx, label, x, y, w, th) {
 }
 
 // The chosen quest in full.
-function details(ui, char, id, x0, y0, w0, h0, th) {
+function details(ui, char, id, x0, y0, w0, h0, th, world = null) {
   const { ctx } = ui;
   well(ctx, x0, y0, w0, h0, th);
   if (!id) {
@@ -283,7 +284,11 @@ function details(ui, char, id, x0, y0, w0, h0, th) {
     note = 'Completed!';
     color = GREEN;
   }
-  wrap(ctx, note, x, fy + 7, w - pinW - 4, { size: 6.8, bold: true, color, lineHeight: 8 });
+  // "Go": the guide leads you to wherever the quest wants you next.
+  const target = world && (live || st === 'available') ? questTarget(char, id) : null;
+  const goW = target && target !== world.map.id ? 26 : 0;
+  wrap(ctx, note, x, fy + 7, w - pinW - goW - 6, { size: 6.8, bold: true, color, lineHeight: 8 });
+  if (goW && button(ui, x + w - pinW - goW - 2, fy, goW, 16, 'Go', { primary: true, theme: 'pink', size: 7.5 })) setRoute(world, target);
   if (live) {
     const on = isTracked(char, id);
     if (button(ui, x + w - pinW, fy, pinW, 16, on ? 'Pinned' : 'Pin', { primary: on, size: 7.5, iconName: 'pin' })) toggleTracked(char, id);

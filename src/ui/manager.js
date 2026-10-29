@@ -24,7 +24,9 @@ import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
 import { noteTalk, noteVisit, questState } from '../core/quests.js';
 import { say } from './chat.js';
+import { checkArrival } from '../world/routes.js';
 import { sceneInput, drawScene, drawRadio } from './cutscene.js';
+import { drawGuide } from './guide.js';
 
 // Places quests send you: marked off on arrival (and, for a spot up high, once you climb there).
 function noteVisits(world) {
@@ -42,7 +44,7 @@ export function createUiState() {
       skills: { x: 180, y: 52, open: false, theme: 'lavender', icon: 'book' },
       quests: { x: 300, y: 52, open: false, theme: 'mint', icon: 'scroll' },
       npc: { x: 170, y: 84, open: false, theme: 'pink', icon: 'chat' },
-      worldmap: { x: 110, y: 26, open: false, theme: 'sky', icon: 'map' },
+      worldmap: { x: 70, y: 6, open: false, theme: 'sky', icon: 'map' },
       admin: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       options: { x: 170, y: 40, open: false, tab: 0, theme: 'lavender', icon: 'gear' },
       profile: { x: 160, y: 46, open: false, tab: 0, theme: 'sky', icon: 'user' },
@@ -99,6 +101,7 @@ export function routeInput(state, world, input, dt) {
       state.windows.admin.open = isGm(world.char);
     } else if (e.type === 'map') {
       noteVisits(world);
+      checkArrival(world);
       state.banner = 2.5;
       state.npc = null;
       state.windows.npc.open = false;
@@ -204,6 +207,8 @@ const CLOSE = 0.14;
 export function drawUi(ui, state, world) {
   dimWorld(ui.ctx, state);
   drawHud(ui, state, world);
+  // The guide arrow and pill, while a route is set.
+  drawGuide(ui, state, world);
   drawPartyPanel(ui, state, world);
   drawChatBar(ui, state.chat, world);
   const m = ui.mouse;

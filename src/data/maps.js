@@ -596,7 +596,6 @@ const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ 
 
 MAPS.woods.portals.push({ id: 'glade', x: 1650, y: 920, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
 MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 760, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
-MAPS.crag.portals.push({ id: 'ridge', x: 1580, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' });
 MAPS.cave.portals.push({ id: 'springs', x: 1660, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east', label: 'Frozen Peak' });
 MAPS.sky.portals.push({ id: 'starfall', x: 1420, y: 560, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' });

@@ -11,6 +11,7 @@ import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 import { drawPortalGate } from './portals.js';
+import { levelRange } from '../world/routes.js';
 import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
 
 const hash = (n) => {
@@ -1760,28 +1761,66 @@ function drawRopes(ctx, map, cam) {
   }
 }
 
-function drawPortals(ctx, map, cam, time, nearId) {
+// Each portal's sign: where it goes, that place's level range (or that it's a town), and an
+// arrow pointing the way out. The portal on your guided route glows pink with a star.
+function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
   for (const p of map.portals) {
     if (p.hidden) continue;
     const x = p.x - cam.x;
     const y = p.y - cam.y;
     // A gateway in the region's own style, its swirl turning inside.
     drawPortalGate(ctx, map, x, y, time, p.x);
-    // A little sign naming where the portal goes.
-    const dest = p.label ?? MAPS[p.to]?.name;
-    if (dest) {
+    const dest = MAPS[p.to];
+    const name = p.label ?? dest?.name;
+    if (name) {
+      const onRoute = p.id === routeId;
+      const lv = dest && !dest.dungeon ? (dest.isTown ? 'Town' : levelRange(dest)?.replace('Lv ', 'Lv')) : null;
+      const out = p.x < 200 ? -1 : p.x > map.width - 200 ? 1 : 0;
       ctx.font = 'bold 7px sans-serif';
-      const w = ctx.measureText(dest).width + 10;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      roundRect(ctx, Math.round(x - w / 2), Math.round(y - 94), w, 11, 5);
+      const nw = ctx.measureText(name).width;
+      ctx.font = '6px sans-serif';
+      const lw = lv ? ctx.measureText(lv).width + 5 : 0;
+      const w = nw + lw + 10 + (out ? 7 : 0) + (onRoute ? 8 : 0);
+      const bx = Math.round(x - w / 2);
+      const by = Math.round(y - 94 - (onRoute ? Math.abs(Math.sin(time * 4)) * 2 : 0));
+      ctx.fillStyle = onRoute ? '#ff6b9a' : 'rgba(255,255,255,0.92)';
+      roundRect(ctx, bx, by, w, 12, 6);
       ctx.fill();
-      ctx.strokeStyle = '#b9a7ff';
+      ctx.strokeStyle = onRoute ? '#ffffff' : '#b9a7ff';
       ctx.lineWidth = 1;
       ctx.stroke();
-      ctx.fillStyle = '#5a3f7a';
-      ctx.textAlign = 'center';
-      ctx.fillText(dest, Math.round(x), Math.round(y - 86));
-      ctx.textAlign = 'left';
+      let tx = bx + 5;
+      // The arrow toward the edge it leads off.
+      if (out < 0) {
+        ctx.fillStyle = onRoute ? '#ffffff' : '#9a82d8';
+        ctx.beginPath();
+        ctx.moveTo(tx, by + 6);
+        ctx.lineTo(tx + 4, by + 3);
+        ctx.lineTo(tx + 4, by + 9);
+        ctx.fill();
+        tx += 7;
+      }
+      if (onRoute) {
+        sparkle(ctx, tx + 3, by + 6, 2.6, '#ffffff');
+        tx += 8;
+      }
+      ctx.fillStyle = onRoute ? '#ffffff' : '#5a3f7a';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.fillText(name, tx, by + 8.6);
+      if (lv) {
+        ctx.font = '6px sans-serif';
+        ctx.fillStyle = onRoute ? '#ffe9f2' : '#9c86b8';
+        ctx.fillText(lv, tx + nw + 5, by + 8.4);
+      }
+      if (out > 0) {
+        const ax = bx + w - 9;
+        ctx.fillStyle = onRoute ? '#ffffff' : '#9a82d8';
+        ctx.beginPath();
+        ctx.moveTo(ax + 4, by + 6);
+        ctx.lineTo(ax, by + 3);
+        ctx.lineTo(ax, by + 9);
+        ctx.fill();
+      }
     }
     if (p.id === nearId) {
       const bob = Math.sin(time * 6) * 2;
@@ -2334,7 +2373,7 @@ export function drawSceneFront(ctx, map, cam, width, height, time, actors = []) 
 }
 
 // Everything behind the characters.
-export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null) {
+export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null, routePortalId = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike.
   const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
@@ -2375,7 +2414,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   drawDeco(ctx, map, cam, width, time, 'ledges');
   drawProps(ctx, t, map, cam, width, time);
   drawRopes(ctx, map, cam);
-  drawPortals(ctx, map, cam, time, nearPortalId);
+  drawPortals(ctx, map, cam, time, nearPortalId, routePortalId);
   drawCritters(ctx, t, map, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time);
 }
