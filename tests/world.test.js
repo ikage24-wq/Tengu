@@ -294,12 +294,12 @@ test('skills never go on cooldown: a spell is free again a beat after its motion
   assert.equal(cast(w, 'backstab').ok, true, 'usable again right after that beat: no cooldown');
 });
 
-test('the warrior, the archer and the thief branch two ways at 30; the mage is being remade', async () => {
+test('the warrior, the archer and the thief branch two ways at 30; the Spirit Mage is the magic class', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.ok(!JOBS.mage, 'no mage for now (a new magic class is being built)');
-  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'warrior']);
-  for (const first of ['warrior', 'archer', 'thief']) {
+  assert.ok(!JOBS.mage, 'the old Mage is retired (the Spirit Mage replaced her)');
+  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'spiritmage', 'thief', 'warrior']);
+  for (const first of ['warrior', 'archer', 'thief', 'spiritmage']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');

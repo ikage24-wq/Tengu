@@ -38,6 +38,7 @@ const BG = {
   tempest: ['#cdb4ff', '#262a7e'],
   inkwash: ['#e8dfe0', '#241c2a'],
   foxfire: ['#a8d8ff', '#14308a'],
+  shrine: ['#f6f0ff', '#5a46a8'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -1257,6 +1258,44 @@ function ninetailblaze() {
   return out;
 }
 
+// ---------- Spirit Mage (white spirit light, paper streamers, scarlet cords, gold bells) ----------
+const SCARLET = '#e0303e';
+// A zigzag paper streamer (shide) hanging from (x, y), `n` folds of `w` wide and `h` tall each.
+function shideIcon(x, y, n = 3, w = 1.6, h = 1.7, lean = 0.3) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const side = i % 2 ? 1 : -1;
+    const y0 = y + i * h;
+    const x0 = x + side * w * 0.35 + lean * i;
+    out.push(...solid([[x0 - w / 2, y0], [x0 + w / 2, y0], [x0 + w / 2 - side * w * 0.6, y0 + h], [x0 - w / 2 - side * w * 0.6, y0 + h]], i % 2 ? '#ddd6ee' : W, { shadow: false, d: 0.3, ink: '#6a5aa8' }));
+  }
+  return out;
+}
+// A wisp of spirit light: a bright round head, a soft tail behind it.
+function wisp(x, y, r, ang = 0) {
+  const c = Math.cos(ang * D2R);
+  const sn = Math.sin(ang * D2R);
+  const tail = [[x - c * r * 2.6, y - sn * r * 2.6], [x - c * r * 1.2, y - sn * r * 1.2], [x, y]];
+  return [S(tube(tail, 0.2, r * 1.4), '#e6dcff'), S(tube(tail.slice(1), 0.2, r * 0.9), W), ...solid(oval(x, y, r, r, 0, 16), W, { d: 0.35, ink: '#7a6cb8' }), S(oval(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.4, 0, 10), '#fff3c4')];
+}
+function spiritbolt() {
+  const out = [...tile('shrine', 'active'), ...aura(9, 7, 6.4, '#fff3dc')];
+  out.push(...wisp(10.6, 6, 2.6, -25));
+  out.push(...shideIcon(4.4, 9, 3, 1.5, 1.5, -0.2), ...shideIcon(7.2, 10.6, 2, 1.4, 1.4, -0.3));
+  out.push(S(tube([[9, 7.4], [6, 9.6], [3.4, 13.4]], 0.25, 0.5), SCARLET));
+  out.push(...spark(13.8, 2.6, 1, '#ffd36a'));
+  return out;
+}
+function spiritstep() {
+  const out = [...tile('shrine', 'active')];
+  const arc = arcPts(8, 12, 5.6, 7, 200, 340, 14);
+  out.push(S(tube(arc, 0.3, 1.2), '#fff3dc'));
+  out.push(...shideIcon(2.4, 7, 3, 1.4, 1.5, 0.3), ...shideIcon(13, 7.4, 3, 1.4, 1.5, -0.3));
+  out.push(...solid(oval(8, 5, 1.8, 1.8, 0, 14), W, { d: 0.35, ink: '#7a6cb8' }));
+  out.push(...spark(5.6, 2.4, 0.9, '#ffd36a'), ...spark(11, 12.6, 0.8, '#ffd36a'));
+  return out;
+}
+
 // ---------- Game master ----------
 
 function gmsmite() {
@@ -1319,6 +1358,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
+  spiritbolt, spiritstep,
   gmsmite, gmhaste, gmblessing,
 };
 

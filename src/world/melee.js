@@ -32,6 +32,7 @@ import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform } f
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
+import { tickDoll } from './spiritdoll.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers } from './dungeon.js';
 
@@ -166,6 +167,13 @@ export const PATH_COMBOS = {
     { move: 'throw', dur: 0.36, step: -2, strikes: [{ at: 0.5, shot: 'foxstar', pct: 90, range: 290, h: 60, knock: 25, speed: 780 }] },
     { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
     { move: 'flipthrow', dur: 0.66, step: -30, carry: 0.46, finisher: true, strikes: [{ at: 0.46, shot: 'foxmoon', pct: 160, range: 320, h: 80, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] },
+  ],
+  // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the turning step a second,
+  // and the dance's last figure looses a great bolt of spirit light that bursts through the line.
+  spiritmage: [
+    { move: 'kagura', dur: 0.46, step: 2, strikes: [{ at: 0.55, shot: 'spiritorb', magic: true, pct: 90, range: 290, h: 60, knock: 25, speed: 600 }] },
+    { move: 'kaguraturn', dur: 0.5, step: 2, strikes: [{ at: 0.6, shot: 'spiritorb', magic: true, pct: 95, range: 290, h: 60, knock: 30, speed: 600 }] },
+    { move: 'kagurafin', dur: 0.68, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 170, range: 310, h: 66, targets: 3, pierce: true, speed: 660, knock: 190, big: true, stop: 0.06, shake: 2 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -359,6 +367,19 @@ export const PATH_VARIANTS = {
       { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 155, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, burst: 'inkhit', burstAt: 0.5, stop: 0.06, shake: 2 }] },
       { move: 'whirlflip', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 75, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 115, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05, flipback: 40 }] }],
   ],
+  // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a twirl on one
+  // foot. Second: the turning step, the sleeve fan (three bolts fanning out), or the bells.
+  // Finisher: the dance's last figure, or the bow and rise that throws the great bolt up and out.
+  spiritmage: [
+    [PATH_COMBOS.spiritmage[0],
+      { move: 'bellshake', dur: 0.56, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 40, range: 280, h: 70, knock: 15, speed: 620, oy: [-6, 0, 6][i] })) },
+      { move: 'twirlstep', dur: 0.52, step: 6, strikes: [{ at: 0.58, shot: 'spiritorb', magic: true, pct: 95, range: 290, h: 60, knock: 35, speed: 620 }] }],
+    [PATH_COMBOS.spiritmage[1],
+      { move: 'sleevefan', dur: 0.5, step: -6, strikes: [{ at: 0.52, shot: 'spiritorb', magic: true, fan: 3, pct: 45, range: 280, h: 120, knock: 30, speed: 600 }] },
+      { move: 'bellshake', dur: 0.56, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 42, range: 280, h: 70, knock: 15, speed: 620, oy: [6, 0, -6][i] })) }],
+    [PATH_COMBOS.spiritmage[2],
+      { move: 'bowrise', dur: 0.7, step: 2, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 165, range: 300, h: 110, lift: 40, targets: 3, pierce: true, speed: 640, knock: 120, launch: 300, big: true, stop: 0.06, shake: 2 }] }],
+  ],
   // The Kitsune. Openers: her fox-fire star or a twirling throw. Second: two stars, or a fan of
   // three. Finisher: the flipping throw, a pounce that throws down at them as she lands, or the
   // great star then a backflip.
@@ -414,6 +435,16 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
+  // The Spirit Mage: a bolt swept up at whatever flies, spirit bolts swept down from a float in the
+  // air, and a bolt whipped out of a glide.
+  spiritmage: {
+    up: { move: 'kaguraup', dur: 0.5, step: 0, strikes: [{ at: 0.5, shot: 'spiritbig', magic: true, pct: 110, range: 260, h: 190, lift: 50, targets: 2, pierce: true, knock: 20, launch: 380, speed: 640, big: true, stop: 0.05 }] },
+    air: [
+      { move: 'floatcast', dur: 0.4, hang: true, strikes: [{ at: 0.48, shot: 'spiritorb', magic: true, fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 620 }] },
+      { move: 'floatcast2', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.55, shot: 'spiritbig', magic: true, fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 660, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'glidecast', dur: 0.48, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'spiritorb', magic: true, fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 640 }] },
+  },
   // The Kitsune: two fox-fire stars flung up at whatever flies, fans of them thrown down from a
   // hang in the air, and a pounce out of a run that throws two as she lands.
   kitsune: {
@@ -674,8 +705,25 @@ export function addTails(world, n, mob = null) {
 }
 export const tailCount = (world) => (hasTails(world.char) ? Math.min(9, Math.floor(((world.tails ?? 0) / TAILS_MAX) * 9 + 1e-9)) : 0);
 export const nineTails = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
+// Spirit: the Spirit Mage's gauge. Her spells that land build it, and so do her heals; turning
+// from one to the other (a heal after harm, harm after a heal) builds it half again, so she plays
+// best weaving the two. It fades once the fighting stops. Full (Kami's Favour), her damage spells
+// also mend allies near where they land (SPIRIT_HEAL of their max HP), and Heaven's Lantern is ready.
+export const SPIRIT_MAX = 100;
+const SPIRIT_HOLD = 5;
+const SPIRIT_DRAIN = 10;
+export const SPIRIT_HEAL = 0.03;
+export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
+export function addSpirit(world, n, kind = 'harm') {
+  if (!hasSpirit(world.char) || n <= 0) return;
+  const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
+  world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (turn ? 1.5 : 1));
+  world.spiritAt = world.now;
+  world.spiritKind = kind;
+}
+export const kamiFavour = (world) => hasSpirit(world.char) && (world.spirit ?? 0) >= SPIRIT_MAX;
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
-// Paladin's Judgment).
+// Paladin's Judgment); a Spirit Mage's healing builds her Spirit.
 export function healAround(world, x, y, pct, r) {
   const { char, body, stats } = world;
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
@@ -685,14 +733,15 @@ export function healAround(world, x, y, pct, r) {
     world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
+  addSpirit(world, 40 * pct, 'mend');
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'foxstar', 'foxmoon']);
-// A job's own gauge: which one the character has ('ki', 'tails', 'valor', 'momentum',
+// A job's own gauge: which one the character has ('spirit', 'ki', 'tails', 'valor', 'momentum',
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
+  return hasSpirit(char) ? 'spirit' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -701,6 +750,7 @@ export function gaugeFull(world) {
 
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n, mob = null) {
+  addSpirit(world, n);
   addTails(world, n, mob);
   addMomentum(world, n);
   addShadow(world, n);
@@ -711,6 +761,7 @@ export function addAim(world, n, mob = null) {
 function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
+  if ((w === 'wand' || w === 'staff') && hasSpirit(char)) return 'spiritmage';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
@@ -920,6 +971,7 @@ export function tickMelee(world, dt) {
   if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
+  if (world.spirit > 0 && world.now - (world.spiritAt ?? 0) > SPIRIT_HOLD) world.spirit = Math.max(0, world.spirit - SPIRIT_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
@@ -927,6 +979,7 @@ export function tickMelee(world, dt) {
   tickTraps(world);
   tickStorm(world);
   tickPets(world, dt);
+  tickDoll(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -960,6 +1013,8 @@ export function tickMelee(world, dt) {
 
 function land(world, s) {
   const { char, stats, body, now } = world;
+  // Kami's Favour mending allies where a spell landed (queued for the moment it lands).
+  if (s.healAt) return healAround(world, s.x, s.y, s.amount, 150);
   // Strikes follow the way you were facing when the step began; a `turn` strike (Backstab) turns
   // round to hit what you just passed.
   if (s.turn) s = { ...s, dir: -s.dir, turn: false };
@@ -1040,6 +1095,7 @@ function land(world, s) {
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
   if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220);
+  if (s.magic && targets.length && !s.phantom) addSpirit(world, s.gauge ?? 4);
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
@@ -1291,7 +1347,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
+  const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1307,6 +1363,17 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     if (jumps) chainArc(world, s, m, delay, jumps, element);
     if (s.field) staticField(world, m, delay, s.field);
   }
+  // Kami's Favour: a damage spell scatters mending light over the allies near where it lands.
+  if (kamiFavour(world) && !miss && s.magic && s.pct > 0 && !s.doll) {
+    world.strikes.push({ healAt: true, x: m.x, y: m.y, amount: SPIRIT_HEAL, due: world.now + delay });
+    world.fx.push({ kind: 'spiritmend', x: m.x, y: m.y, t: -delay, dur: 0.6 });
+  }
+}
+
+// A hit of the Spirit Doll's (world/spiritdoll.js): a spell of the Spirit Mage's own magic attack,
+// landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
+export function dollHit(world, m, f, at = 0) {
+  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, gauge: f.gauge ?? 2 }, m, at);
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.

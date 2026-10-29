@@ -4512,6 +4512,107 @@
       }
     },
   };
+  // ---------- The Spirit Doll's tricks (the Spirit Mage's imp of a companion) ----------
+  // A temple bell (suzu) she drops on heads: a round gold bell with a slot across its belly, a
+  // little loop on top with a scarlet cord and tassel, lit from the upper left. Two frames: still,
+  // and tipped as it swings.
+  function suzu(ctx, x, y, r, tip = 0, a = 1) {
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.translate(x, y);
+    ctx.rotate(tip);
+    painted(ctx, -r * 1.2, -r * 1.2, r * 2.4, r * 2.4, (px, py) => {
+      const d = Math.hypot(px / r, py / r);
+      if (d > 1) return [0, 0];
+      const lit = 0.55 + 0.45 * Math.max(0, (-px - py) / (r * 1.3)) * (1 - d * 0.4) - 0.25 * Math.max(0, (px + py) / (r * 1.4));
+      return [Math.max(0.05, Math.min(1, lit + (1 - d) * 0.2)), sstep(1, 0.93, d)];
+    }, ramp([[0, '#8a5a1a'], [0.35, '#c8902a'], [0.7, '#ffd36a'], [1, '#fff6d0']]), 1);
+    // The slot, and a tiny shine.
+    strokePts(ctx, [[-r * 0.62, r * 0.32], [r * 0.62, r * 0.32]], r * 0.16, '#5a3810', 0.9);
+    bloomDisc(ctx, -r * 0.36, -r * 0.4, r * 0.18, r * 0.14, ['#ffffff', '#fffbe8', '#fff3c4', '#ffd36a'], 0.9);
+    // The loop on top, the cord and its tassel.
+    strokePts(ctx, [[-r * 0.2, -r * 0.95], [0, -r * 1.25], [r * 0.2, -r * 0.95]], r * 0.14, '#c8902a', 1);
+    strokePts(ctx, [[0, -r * 1.2], [r * 0.1, -r * 1.7], [-r * 0.05, -r * 2.2]], r * 0.16, SCARLET[2], 1);
+    ctx.restore();
+  }
+  E.dollbell = {
+    w: 80, h: 100, n: 2, fps: 8, px: 40, py: 60,
+    draw(ctx, i) {
+      suzu(ctx, 40, 60, 24, i ? 0.25 : 0);
+    },
+  };
+  // The bonk: the bell bounces back up off the head, ringing (round sound waves going out, gold
+  // sparks), and comic stars for a dazed head; it fades as it flies off.
+  E.bellbonk = {
+    w: 220, h: 200, n: 8, fps: 16, px: 110, py: 150,
+    draw(ctx, i) {
+      const a = [1, 1, 1, 0.9, 0.8, 0.6, 0.4, 0.2][i];
+      // The ring: arcs of light rippling out from where it struck.
+      for (let k = 0; k < 3; k++) {
+        const r = 16 + i * 12 - k * 14;
+        if (r <= 6) continue;
+        const pts = [];
+        for (let j = 0; j <= 16; j++) {
+          const ang = Math.PI + (j / 16) * Math.PI;
+          pts.push([110 + Math.cos(ang) * r * 1.3, 150 + Math.sin(ang) * r * 0.8]);
+        }
+        glow(ctx, pts, 1.2, BELL, a * (1 - k * 0.25) * (1 - i / 9));
+      }
+      // A flash on the head at the strike.
+      if (i < 3) bloomDisc(ctx, 110, 150, 26 - i * 6, 18 - i * 4, BELL, 1 - i * 0.3);
+      // The bell bouncing up and off, spinning.
+      const t = i / 7;
+      suzu(ctx, 110 + 40 * t, 130 - 90 * t + 120 * t * t, 22, t * 3.2, a);
+      // Little gold stars circling.
+      for (let k = 0; k < 3; k++) {
+        const ang = (k / 3) * TAU + i * 0.6;
+        const [sx, sy] = [110 + Math.cos(ang) * 30, 150 - 10 + Math.sin(ang) * 8];
+        bloomDisc(ctx, sx, sy, 3, 3, BELL, a);
+        glow(ctx, [[sx - 6, sy], [sx + 6, sy]], 0.7, BELL, a);
+        glow(ctx, [[sx, sy - 6], [sx, sy + 6]], 0.7, BELL, a);
+      }
+    },
+  };
+  // The fan smack: a burst of white with comic impact lines, and scraps of paper flying.
+  E.fanslap = {
+    w: 160, h: 160, n: 6, fps: 24, px: 80, py: 80,
+    draw(ctx, i) {
+      const a = [1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      const r = [14, 26, 34, 40, 44, 46][i];
+      bloomDisc(ctx, 80, 80, r * 0.8, r * 0.7, ['#ffffff', '#fff6f4', '#ffd2cc', '#e07a8c'], a);
+      // The impact lines: short thick dashes standing out from the centre, in scarlet and white.
+      for (let k = 0; k < 7; k++) {
+        const ang = (k / 7) * TAU + 0.3;
+        const r0 = r * 0.7;
+        const r1 = r * 1.3;
+        strokePts(ctx, [[80 + Math.cos(ang) * r0, 80 + Math.sin(ang) * r0], [80 + Math.cos(ang) * r1, 80 + Math.sin(ang) * r1]], 3.2 - i * 0.4, k % 2 ? '#ffffff' : SCARLET[2], a);
+      }
+      const R = rng(1800 + i);
+      for (let k = 0; k < 4; k++) {
+        const ang = R() * TAU;
+        const d = r * (0.9 + R() * 0.4);
+        shide(ctx, 80 + Math.cos(ang) * d, 80 + Math.sin(ang) * d, 9, 3, (R() - 0.5) * 4, a, ang);
+      }
+    },
+  };
+  // The streamer twirl: a ring of paper streamers whipping round her, seen from the side as a flat
+  // whirl, a soft white wake behind them.
+  E.dolltwirl = {
+    w: 200, h: 120, n: 6, fps: 20, px: 100, py: 60,
+    draw(ctx, i) {
+      const a = [0.7, 1, 1, 0.85, 0.55, 0.25][i];
+      painted(ctx, 0, 0, 200, 120, (x, y) => {
+        const d = Math.abs(Math.hypot((x - 100) / 70, (y - 60) / 22) - 1) / 0.28;
+        if (d > 1.4) return [0, 0];
+        return [0.6 + sstep(1, 0, d) * 0.4, sstep(1.4, 0.2, d) * a * 0.7];
+      }, SPIRITR, 2);
+      for (let k = 0; k < 6; k++) {
+        const ang = (k / 6) * TAU + i * 0.55;
+        const front = Math.sin(ang) > 0;
+        shide(ctx, 100 + Math.cos(ang) * 70, 60 + Math.sin(ang) * 22 - 8, 14, 5, -Math.sin(ang) * 6, a * (front ? 1 : 0.6), Math.PI / 2 * (Math.cos(ang) > 0 ? -1 : 1));
+      }
+    },
+  };
   E.ringspiritbig = big(E.ringspirit, 2.6);
   E.lanternbig = big(E.lantern, 1.5);
 

@@ -23,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (steel, hawk, shadow, ink, fox, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, shadow, spirit, ink, fox, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -249,6 +249,42 @@ export const SKILLS = {
           { at: 0.68, pct: k(440, 760), reach: 175, h: 150, around: true, targets, knock: 300, launch: 380, crack: true, burst: 'eclipse', burstAt: 0, big: true, stop: 0.16, shake: 8, rage: 0 },
           { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 200, burst: 'rageburst', burstAt: 0.3, big: true, stop: 0.05, shake: 3, rage: 0 },
         ] }],
+      };
+    },
+  }),
+
+  // ---------- Spirit Mage (white spirit light, paper streamers, scarlet cords, gold bells) ----------
+  // Damage and support at once, cast as a shrine dance. Spells that land and heals build Spirit
+  // (0-100, see world/melee.js), half again when she turns from one to the other; full (Kami's
+  // Favour), every damage spell also mends allies near where it lands. Her Spirit Doll floats at
+  // her side and fights with her own tricks (world/spiritdoll.js). Spells are timed combo steps
+  // like every other attack: `magic` strikes hit with magic attack.
+  spiritbolt: skill({
+    id: 'spiritbolt', name: 'Spirit Bolt', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'spirit',
+    desc: 'A three-part dance, one figure per press: a sweep that sends a spirit bolt, a turning step that sends two, then a deep sweeping bow that looses a great bolt through the whole line.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const bolt = (at, pct, oy = 0) => ({ at, shot: 'spiritorb', magic: true, pct, range: 300, h: 60, knock: 25, speed: 620, oy });
+      return {
+        mp: k(6, 14), pct: k(150, 260), hits: 4, targets: 1,
+        combo: [
+          { move: 'kagura', dur: 0.46, step: 2, strikes: [bolt(0.55, k(150, 260))] },
+          { move: 'kaguraturn', dur: 0.52, step: 2, strikes: [bolt(0.58, k(100, 170), -5), bolt(0.68, k(100, 170), 5)] },
+          { move: 'kagurafin', dur: 0.7, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: k(220, 360), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 680, knock: 180, launch: 120, big: true, stop: 0.06, shake: 2 }] },
+        ],
+      };
+    },
+  }),
+
+  spiritstep: skill({
+    id: 'spiritstep', name: 'Spirit Step', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'spirit', movement: true,
+    desc: 'Turn on your toes and come apart into paper streamers and light, then gather again a long way ahead. Nothing touches you on the way.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: 0, hits: 0, targets: 0,
+        combo: [{ move: 'spiritstep', dur: 0.4, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.35, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
       };
     },
   }),
@@ -751,6 +787,7 @@ const MOVES_BY_SKILL = {
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
+  spiritbolt: 'kagura', spiritstep: 'spiritstep',
   shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',

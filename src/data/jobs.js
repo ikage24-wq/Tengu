@@ -24,6 +24,13 @@ export const JOBS = {
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
+  // The Spirit Mage: a young shrine mage whose spirits strike and heal (remade from scratch; the
+  // old Mage is retired). Damage and support at once, with the Spirit Doll at her side.
+  spiritmage: {
+    id: 'spiritmage', name: 'Spirit Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
+    hp: 14, mp: 24, advanceHp: 120, advanceMp: 380, weapons: ['wand', 'staff'],
+    blurb: 'Dances her spells with a wand or staff: bolts of white spirit light for damage with INT, and blessings that heal the party. Spirit builds from both, faster when she weaves them; full, her damage spells heal too. A mischievous Spirit Doll floats at her side and fights with her own little tricks.',
+  },
   archer: {
     id: 'archer', name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],

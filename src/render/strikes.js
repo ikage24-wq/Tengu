@@ -12,6 +12,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
 import { drawThiefFx, moonRainPiece, foxRainPiece } from './thief-fx.js';
 import { drawHealFx } from './heal-fx.js';
+import { drawSpiritFx, drawSpiritShot } from './spirit-fx.js';
 import { wash, deep } from './fxkit.js';
 
 const TAU = Math.PI * 2;
@@ -143,6 +144,7 @@ function arrow(ctx, x, y, a, len, c) {
 // ---------- Projectiles ----------
 
 export function drawStrikeShot(ctx, f, x, y, dir, time) {
+  if (drawSpiritShot(ctx, f, x, y, dir, time)) return true;
   const c = colors(f);
   switch (f.shot) {
     case 'wave': {
@@ -252,6 +254,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   if (drawWarriorFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawThiefFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawHealFx(ctx, f, x, y, p)) return true;
+  if (drawSpiritFx(ctx, f, x, y, p)) return true;
   const c = colors(f);
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   switch (f.kind) {

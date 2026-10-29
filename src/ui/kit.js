@@ -462,6 +462,21 @@ const ICONS = {
     ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
   },
   // A seal tag, a strip of paper with a brush mark (the Shinobi's Ki).
+  // A zigzag paper streamer (the Spirit Mage's Spirit).
+  shide(ctx, s) {
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 ? 1 : -1;
+      const y0 = -s * 0.46 + i * s * 0.23;
+      const x0 = side * s * 0.08;
+      ctx.beginPath();
+      ctx.moveTo(x0 - s * 0.16, y0);
+      ctx.lineTo(x0 + s * 0.16, y0);
+      ctx.lineTo(x0 + s * 0.16 - side * s * 0.18, y0 + s * 0.23);
+      ctx.lineTo(x0 - s * 0.16 - side * s * 0.18, y0 + s * 0.23);
+      ctx.closePath();
+      ctx.fill();
+    }
+  },
   seal(ctx, s) {
     ctx.fillRect(-s * 0.2, -s * 0.44, s * 0.4, s * 0.88);
     ctx.save();
