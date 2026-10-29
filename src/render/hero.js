@@ -1932,7 +1932,11 @@ function weaponIdle(type, t) {
 // tail, face, eyes). `under(ctx, hand)` draws beneath the body, given where the back hand (her right
 // hand, on the far side) really is on screen once the arm has reached for its spot, so whatever it
 // holds is always in it; `over(ctx, hand)` draws on top (seen from behind, on a rope).
-export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null } = {}) {
+// `lean` ({ tilt (radians, + forward), lunge (px, forward), lift (px) }) leans the whole figure the
+// way the player's moves do: on the ground the legs stay planted upright on their feet and
+// everything from the waist up leans from the hips; off the ground (lift) it turns as one about
+// its middle. Whatever the hand holds goes with the upper body.
+export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null } = {}) {
   const rig = { ...baseRig(), ...pose, armIn: true };
   const g = resolveGear(look, null);
   const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
@@ -1945,9 +1949,52 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   // goes), carried with the upper body, then into the chibi's proportions.
   const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
   const hand = rig.view === 'back' ? [sx(15.5), sy(squashY(30))] : [sx(squashX(wx + rig.tx)), sy(squashY(wy + rig.by + hipDrop(rig)))];
+  if (!lean || (!lean.tilt && !lean.lunge && !lean.lift)) {
+    under?.(ctx, hand, flip);
+    blit(ctx, body, left, top, { flip, scale });
+    over?.(ctx, hand, flip);
+    return;
+  }
+  const dir = flip ? -1 : 1;
+  const mv = { tilt: lean.tilt ?? 0, lift: lean.lift ?? 0, lunge: lean.lunge ?? 0 };
+  const { pivot: pk, tilt } = leanOf(mv);
+  const pivot = y - H * scale * pk;
+  const whole = (c, t) => {
+    c.translate(x + dir * mv.lunge * scale, pivot - mv.lift * scale);
+    c.rotate(t * dir);
+    c.translate(-x, -pivot);
+  };
+  const span = W * scale * 2;
+  ctx.save();
+  whole(ctx, tilt);
   under?.(ctx, hand, flip);
-  blit(ctx, body, left, top, { flip, scale });
+  ctx.restore();
+  if (pk < 0.2 && Math.abs(tilt) > 0.01) {
+    const cut = pivot + WAIST_OVERLAP * scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x - span, cut - 2 * WAIST_OVERLAP * scale, span * 2, H * scale);
+    ctx.clip();
+    whole(ctx, 0);
+    blit(ctx, body, left, top, { flip, scale });
+    ctx.restore();
+    ctx.save();
+    whole(ctx, tilt);
+    ctx.beginPath();
+    ctx.rect(x - span, pivot - H * scale * 2, span * 2, H * scale * 2 + WAIST_OVERLAP * scale);
+    ctx.clip();
+    blit(ctx, body, left, top, { flip, scale });
+    ctx.restore();
+  } else {
+    ctx.save();
+    whole(ctx, tilt);
+    blit(ctx, body, left, top, { flip, scale });
+    ctx.restore();
+  }
+  ctx.save();
+  whole(ctx, tilt);
   over?.(ctx, hand, flip);
+  ctx.restore();
 }
 
 // Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,

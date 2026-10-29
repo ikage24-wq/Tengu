@@ -32,10 +32,10 @@ const THINK = 0.25; // seconds between decisions
 // Her moves: how long each lasts (s), when its blows land (0-1), how far the blade reaches past
 // her, how hard (% of a spell), knockback, launch, and how many it can catch.
 export const KMOVES = {
-  thrust: { dur: 0.8, hits: [0.42], reach: 74, pct: 95, knock: 90, targets: 2 },
-  sweep: { dur: 1.0, hits: [0.5], reach: 66, pct: 80, knock: 140, targets: 4 },
-  rising: { dur: 0.95, hits: [0.46], reach: 60, pct: 85, knock: 40, launch: 280, targets: 2 },
-  twin: { dur: 1.0, hits: [0.3, 0.62], reach: 70, pct: 55, knock: 50, targets: 1 },
+  thrust: { dur: 0.85, hits: [0.42], reach: 120, pct: 95, knock: 90, targets: 3 },
+  sweep: { dur: 1.05, hits: [0.5], reach: 105, pct: 80, knock: 140, targets: 5 },
+  rising: { dur: 0.95, hits: [0.46], reach: 90, pct: 85, knock: 40, launch: 280, targets: 3 },
+  twin: { dur: 1.0, hits: [0.3, 0.62], reach: 115, pct: 55, knock: 50, targets: 1 },
 };
 // The rest she takes between moves (seconds, a random span): steady, never frantic.
 const REST = [0.3, 0.55];
@@ -199,7 +199,8 @@ function think(world, k) {
     if (!surf) return;
     // On the Maiden's side of it, just inside the naginata's reach.
     const side = Math.sign(b.x - m.x) || -m.facing || 1;
-    const x = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, m.x + side * 46));
+    // (Her naginata is huge, so she keeps a good way back from it.)
+    const x = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, m.x + side * 70));
     br.goal = { x, surface: ms };
     br.hurry = Math.abs(k.x - x) > 90;
     // The monsters crowding the Maiden: time for a Fox-Fire Call.
