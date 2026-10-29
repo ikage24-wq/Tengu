@@ -19,6 +19,18 @@ import { petWindow } from './pet.js';
 import { onlineWindow } from './online.js';
 import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
+import { QUESTS } from '../data/quests.js';
+import { NPCS } from '../data/npcs.js';
+import { noteTalk, noteVisit, questState } from '../core/quests.js';
+import { say } from './chat.js';
+
+// Places quests send you: marked off on arrival (and, for a spot up high, once you climb there).
+function noteVisits(world) {
+  for (const id of noteVisit(world.char, world.map.id, world.body)) {
+    const q = QUESTS[id];
+    world.log(questState(world.char, id) === 'ready' ? `${q.name}: done! Report to ${NPCS[q.giver].name}.` : `${q.name}: you made it to ${world.map.name}.`, '#bff0dc');
+  }
+}
 
 export function createUiState() {
   return {
@@ -60,15 +72,30 @@ const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', Ke
 // ignore player controls this frame.
 export function routeInput(state, world, input, dt) {
   state.banner = Math.max(0, state.banner - dt);
+  state.visitIn = (state.visitIn ?? 0) - dt;
+  if (state.visitIn <= 0) {
+    state.visitIn = 0.25;
+    noteVisits(world);
+  }
   for (const e of world.events) {
     if (e.type === 'talk') {
       state.npc = { id: e.npc };
       state.windows.npc.open = true;
+      // Errands: someone you were sent to talk to, or to bring something to.
+      for (const done of noteTalk(world.char, e.npc)) {
+        const q = QUESTS[done.id];
+        if (done.say) {
+          say(world, e.npc, done.say);
+          world.log(`${NPCS[e.npc].name}: ${done.say}`, '#ffffff');
+        }
+        world.log(questState(world.char, done.id) === 'ready' ? `${q.name}: done! Report to ${NPCS[q.giver].name}.` : `${q.name}: talked to ${NPCS[e.npc].name}.`, '#bff0dc');
+      }
     } else if (e.type === 'death') {
       state.death = true;
     } else if (e.type === 'admin') {
       state.windows.admin.open = isGm(world.char);
     } else if (e.type === 'map') {
+      noteVisits(world);
       state.banner = 2.5;
       state.npc = null;
       state.windows.npc.open = false;

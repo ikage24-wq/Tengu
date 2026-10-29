@@ -939,6 +939,37 @@ function return_scroll() {
   return out;
 }
 
+// ---------- Quest items ----------
+
+// A letter in a cream envelope: the flap folded down, a pink heart seal on it, and a little
+// sparkle (it's important).
+function letter() {
+  const paper = '#fff6e4';
+  const out = [];
+  out.push(...bevel(rect(1.4, 4, 13.2, 9.4), rect(2, 4.6, 12, 8.2), sh(paper), paper));
+  // The fold lines of the back, then the flap.
+  out.push(S(tube([[2, 12.6], [7, 8.6]], 0.45), sh(paper)), S(tube([[14, 12.6], [9, 8.6]], 0.45), sh(paper)));
+  out.push(S([[1.6, 4.4], [8, 9.6], [14.4, 4.4]], '#f4e2bd'), S(tube([[2.2, 4.6], [8, 9.2], [13.8, 4.6]], 0.5), W));
+  const heart = [...bez3([8, 11.4], [5.2, 9.6], [5.6, 6.8], [8, 8.2], 8), ...bez3([8, 8.2], [10.4, 6.8], [10.8, 9.6], [8, 11.4], 8).slice(1)];
+  out.push(...ball(heart, '#ff7aa2', { glow: 0.9 }));
+  out.push(twinkle(14.4, 2.6, 1.3), ...glint(3.6, 6, 0.5));
+  return out;
+}
+
+// A parcel in brown paper tied with a mint ribbon and a bow on top.
+function parcel() {
+  const kraft = '#e8b97a';
+  const mint = '#5fcf9e';
+  const out = [];
+  out.push(...bevel(rect(1.6, 5.4, 12.8, 9.4), rect(2.2, 6, 11.6, 8.2), sh(kraft), kraft));
+  out.push(S(rect(1.6, 5.4, 12.8, 2), lt(kraft)), S(rect(9.6, 6, 4.2, 8.2), sh(kraft)));
+  out.push(S(rect(7, 5.4, 2, 9.4), mint), S(rect(1.6, 9.2, 12.8, 1.8), mint), S(rect(7.2, 5.6, 0.6, 9), lt(mint)));
+  // The bow: two loops and a knot.
+  out.push(...ball(oval(5.6, 4.2, 2.4, 1.5, -20, 18), mint), ...ball(oval(10.4, 4.2, 2.4, 1.5, 20, 18), mint), ...ball(oval(8, 4.8, 1.2, 1.1, 0, 12), sh(mint)));
+  out.push(...glint(3.6, 7.4, 0.5));
+  return out;
+}
+
 // Keeps a drawing inside the 16x16 cell (shifted, or shrunk a touch if it must), so the outline
 // around it never gets clipped.
 function framed(draw) {
@@ -960,7 +991,7 @@ function framed(draw) {
 
 const ART = {
   fluff, shell, sprout_leaf, mushcap, ribbon, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
-  bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn,
+  bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel,
   red_potion, orange_potion, white_potion, blue_potion, mana_elixir, elixir, return_scroll,
 };
 

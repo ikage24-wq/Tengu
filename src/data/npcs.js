@@ -18,7 +18,7 @@ export const NPCS = {
     building: 'kiosk', sign: 'Info',
     look: { hairStyle: 'candy', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
-    quests: ['first_steps', 'fluffy', 'sprout_sweep'],
+    quests: ['first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
   },
   // Kuro, a young tengu who keeps Dawnlight Isle, the tutorial island: he shows new adventurers
   // the ropes and sees them onto the boat to Sprout Village.
@@ -36,10 +36,11 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'blue_potion', 'return_scroll', 'star_pebble', 'mochi_snack', 'mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
     // Job gear for your own job (a Novice sees every job's starter set), by level.
     stockLevels: [5, 10],
-    quests: ['snail_trouble'],
+    quests: ['snail_trouble', 'pip_parcel'],
   },
   lulu: {
     id: 'lulu', name: 'Lulu', title: 'Stylist', role: 'stylist',
+    quests: ['lulu_gossip', 'lulu_runway'],
     building: 'salon', sign: "Lulu's Salon",
     look: { hairStyle: 'odango', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
     greeting: 'New hair? New clothes? A fresh look is 500 gold, and my boutique has the cutest outfits!',
@@ -49,7 +50,7 @@ export const NPCS = {
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson' }, ...outfit('warrior', 50) },
-    quests: ['warrior_trial'], showJob: 'paladin',
+    quests: ['brann_stand', 'warrior_trial', 'daily_crag'], showJob: 'paladin',
     look: { hairStyle: 'cloud', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
@@ -57,25 +58,26 @@ export const NPCS = {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
-    quests: ['spiritmage_trial'], showJob: 'spiritmage',
+    quests: ['elowen_dance', 'spiritmage_trial'], showJob: 'spiritmage',
     greeting: 'Moonleaf Grove welcomes you. Magic here is a dance with the spirits: they strike for you and they mend for you. Shall we begin?',
   },
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',
     building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, ...outfit('archer', 50) },
-    quests: ['archer_trial'], showJob: 'beastmaster',
+    quests: ['kestrel_targets', 'kestrel_wings', 'archer_trial'], showJob: 'beastmaster',
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
-    quests: ['thief_trial'], showJob: 'shinobi',
+    quests: ['vex_rumor', 'vex_shadows', 'thief_trial'], showJob: 'shinobi',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
   },
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
+    quests: ['tora_handles', 'tora_cores'],
     building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
     greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',
@@ -84,6 +86,7 @@ export const NPCS = {
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
+    quests: ['nim_candles', 'nim_stardust'],
     building: 'magic', sign: "Nim's Spells",
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
     greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
@@ -95,7 +98,7 @@ export const NPCS = {
     building: 'office', sign: 'Harbor Office',
     look: { hairStyle: 'spiky', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
-    quests: ['mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart'],
+    quests: ['canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'daily_harbor'],
   },
   bramble: {
     id: 'bramble', name: 'Bramble', title: 'Hollow Warden', role: 'dungeon', dungeon: 'hollow',
@@ -116,7 +119,7 @@ export const NPCS = {
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
     stockLevels: [15, 40],
-    quests: ['tusk_trader'],
+    quests: ['marlo_scales', 'tusk_trader'],
   },
 };
 

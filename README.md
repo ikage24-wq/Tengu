@@ -676,7 +676,12 @@ to clear it.
   fewer than 20; someone logging out is soon replaced), spread over the towns by level: beginners
   in Sprout Village, mid levels in Ember Crag and Pastel Harbor, veterans and pros in Moonleaf Grove,
   with a few wandering anywhere. The busier a town, the less each person chats.
-- **Quests and NPCs** — 9 quests (defeat or collect), shops that buy and sell (including a
+- **Quests and NPCs** — 39 quests from every town's people, covering every field from level 1 to
+  48: hunts and fetches, errands (talk to someone, deliver a letter or a parcel, climb to the top
+  of a map), short chains (Captain Rook's Windy Canyon trouble leads to Bramble), a task from each
+  instructor between the first job and the trial, and daily quests (Mira, Rook, Brann) that come
+  back every day. Rewards include job gear, outfit pieces and Cash. People you're sent to talk to
+  wear a "?" until you do. Shops that buy and sell (including a
   blacksmith in Ember Crag, a spell shop in Moonleaf Grove, and Lulu's clothing boutique), a salon
   to restyle your hero, and job instructors.
 - **Death** — you wake up in town and lose a little EXP (less with more LUK), never a level.

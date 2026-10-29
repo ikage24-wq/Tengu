@@ -1,4 +1,6 @@
-// Quest progress. Kill counts are tracked per quest; collect objectives read the bag directly.
+// Quest progress. Kill counts are tracked per quest; collect objectives read the bag directly;
+// talk, deliver and visit objectives are marked off as they happen (`rec.marks`). A daily quest
+// can be done again each new day.
 
 import { QUESTS } from '../data/quests.js';
 import { MAPS } from '../data/maps.js';
@@ -7,8 +9,9 @@ import { DUNGEONS } from '../data/dungeons.js';
 import { ITEMS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
 import { CASH_PER_QUEST } from '../data/cash.js';
+import { NPCS } from '../data/npcs.js';
 import { addItem, countItem, removeItem, TAB_SIZE } from './inventory.js';
-import { makeEquip } from './items.js';
+import { makeEquip, makeCash } from './items.js';
 import { gainExp } from './character.js';
 
 // The HUD tracker shows up to TRACK_MAX quests. Until the player pins or unpins one, every quest
@@ -16,11 +19,16 @@ import { gainExp } from './character.js';
 // accepted quests join it.
 export const TRACK_MAX = 4;
 
+// Today, as the player's calendar has it (daily quests reset at midnight).
+export function today(date = new Date()) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
 // 'locked' | 'available' | 'active' | 'ready' | 'done'
 export function questState(char, id) {
   const q = QUESTS[id];
   const rec = char.quests[id];
-  if (rec?.state === 'done') return 'done';
+  if (rec?.state === 'done' && !(q.daily && rec.day !== today())) return 'done';
   if (rec?.state === 'active') return objectivesMet(char, id) ? 'ready' : 'active';
   if (char.level < q.minLevel) return 'locked';
   if (q.family && JOBS[char.job]?.family !== q.family) return 'locked';
@@ -31,7 +39,8 @@ export function questState(char, id) {
 export function objectiveProgress(char, id) {
   const q = QUESTS[id];
   const rec = char.quests[id] ?? { kills: {} };
-  return q.objectives.map((o) => {
+  return q.objectives.map((o, i) => {
+    if (MARKED.has(o.type)) return { ...o, count: 1, have: rec.marks?.[i] ? 1 : 0 };
     const have = o.type === 'kill' ? rec.kills?.[o.mob] ?? 0 : countItem(char.inventory, o.item);
     return { ...o, have: Math.min(have, o.count) };
   });
@@ -41,9 +50,23 @@ export function objectivesMet(char, id) {
   return objectiveProgress(char, id).every((o) => o.have >= o.count);
 }
 
+// Objectives done once, by going somewhere or talking to someone.
+const MARKED = new Set(['talk', 'deliver', 'visit']);
+
+// What an objective asks, in words: { verb, name }.
+export function objectiveText(o) {
+  if (o.type === 'kill') return { verb: 'Defeat', name: MOBS[o.mob].name };
+  if (o.type === 'collect') return { verb: 'Bring', name: ITEMS[o.item].name };
+  if (o.type === 'talk') return { verb: 'Talk to', name: NPCS[o.npc].name };
+  if (o.type === 'deliver') return { verb: `Give ${ITEMS[o.item].name} to`, name: NPCS[o.npc].name };
+  return { verb: 'Go to', name: o.place ?? MAPS[o.map].name };
+}
+
 export function acceptQuest(char, id) {
   if (questState(char, id) !== 'available') return false;
-  char.quests[id] = { state: 'active', kills: {} };
+  char.quests[id] = { state: 'active', kills: {}, marks: {} };
+  // Things to carry for the quest (a letter to deliver).
+  for (const g of QUESTS[id].gives ?? []) addItem(char.inventory, g.id, g.qty ?? 1);
   // A new quest goes on the tracker (once the player has picked what to track).
   if (char.tracked) {
     char.tracked = trackedQuests(char).filter((q) => q !== id);
@@ -68,6 +91,53 @@ export function recordKill(char, mobId) {
   return moved;
 }
 
+// Talking to an NPC: marks off talk and deliver objectives that want them (a delivery hands the
+// item over). Returns [{ id, say }] for each objective done, `say` being what the NPC says back.
+export function noteTalk(char, npcId) {
+  const out = [];
+  for (const [id, rec] of Object.entries(char.quests)) {
+    if (rec.state !== 'active' || !QUESTS[id]) continue;
+    QUESTS[id].objectives.forEach((o, i) => {
+      if ((o.type !== 'talk' && o.type !== 'deliver') || o.npc !== npcId || rec.marks?.[i]) return;
+      // Earlier steps first: a quest's talks go in order.
+      if (QUESTS[id].objectives.slice(0, i).some((p, j) => MARKED.has(p.type) && p.type !== 'visit' && !rec.marks?.[j])) return;
+      if (o.type === 'deliver') {
+        if (countItem(char.inventory, o.item) < 1) return;
+        removeItem(char.inventory, o.item, 1);
+      }
+      (rec.marks ??= {})[i] = true;
+      out.push({ id, say: o.say ?? null });
+    });
+  }
+  return out;
+}
+
+// Being somewhere: marks off visit objectives for this map (and, with `above`, only once the hero
+// has climbed above that height). Returns the quest ids that moved.
+export function noteVisit(char, mapId, body = null) {
+  const out = [];
+  for (const [id, rec] of Object.entries(char.quests)) {
+    if (rec.state !== 'active' || !QUESTS[id]) continue;
+    QUESTS[id].objectives.forEach((o, i) => {
+      if (o.type !== 'visit' || o.map !== mapId || rec.marks?.[i]) return;
+      if (o.above != null && !(body && body.y <= o.above)) return;
+      (rec.marks ??= {})[i] = true;
+      out.push(id);
+    });
+  }
+  return out;
+}
+
+// Whether someone is the next one a quest sends you to talk to, or bring something to (they get
+// a marker).
+export function waitingToTalk(char, npcId) {
+  return Object.entries(char.quests).some(([id, rec]) => {
+    if (rec.state !== 'active' || !QUESTS[id]) return false;
+    const next = QUESTS[id].objectives.find((o, i) => (o.type === 'talk' || o.type === 'deliver') && !rec.marks?.[i]);
+    return next?.npc === npcId;
+  });
+}
+
 // Hands in collected items and pays out rewards. Returns the rewards, or null if not ready.
 // Fails without changing anything if the bag can't hold the reward items.
 // A quest with a choice of reward (`rewards.pick`) needs `pick`, one of them.
@@ -82,13 +152,16 @@ export function completeQuest(char, id, pick = null) {
   for (const o of q.objectives) if (o.type === 'collect') removeItem(char.inventory, o.item, o.count);
   const items = [...(pick ? [{ id: pick, qty: 1 }] : []), ...q.rewards.items].map((r) => ({ ...r, id: rewardId(char, r) }));
   for (const r of items) {
-    if (ITEMS[r.id].type === 'equip') for (let i = 0; i < r.qty; i++) addItem(char.inventory, makeEquip(r.id, { variant: r.variant ?? null }));
+    if (ITEMS[r.id].type === 'cash') addItem(char.inventory, makeCash(r.id, r.variant ?? null));
+    else if (ITEMS[r.id].type === 'equip') for (let i = 0; i < r.qty; i++) addItem(char.inventory, makeEquip(r.id, { variant: r.variant ?? null }));
     else addItem(char.inventory, r.id, r.qty);
   }
   char.gold += q.rewards.gold;
-  char.cash = (char.cash ?? 0) + CASH_PER_QUEST;
+  char.cash = (char.cash ?? 0) + CASH_PER_QUEST + (q.rewards.cash ?? 0);
   const levels = gainExp(char, q.rewards.exp);
-  char.quests[id] = { state: 'done' };
+  char.quests[id] = q.daily ? { state: 'done', day: today() } : { state: 'done' };
+  // Anything left over from carrying it (a quest item never delivered) goes.
+  for (const g of q.gives ?? []) removeItem(char.inventory, g.id, countItem(char.inventory, g.id));
   return { ...q.rewards, items, levels };
 }
 
@@ -146,6 +219,8 @@ export function itemSources(itemId) {
 // Petal Meadow".
 export function objectiveHint(o) {
   if (o.type === 'kill') return mobPlaces(o.mob).slice(0, 2).join(', ');
+  if (o.type === 'talk' || o.type === 'deliver') return MAPS[npcMap(o.npc)]?.name ?? '';
+  if (o.type === 'visit') return o.above != null ? `${MAPS[o.map].name}, up high` : '';
   const from = itemSources(o.item)[0];
   if (!from) return '';
   const where = mobPlaces(from)[0];

@@ -1,5 +1,9 @@
-// Quests. Objectives: kill a monster N times, or collect N of an item (handed in on completion).
-// A quest with no objectives completes as soon as you accept it.
+// Quests. Objectives: kill a monster N times; collect N of an item (handed in on completion);
+// talk to an NPC (`say` is what they answer); deliver an item to an NPC (`gives` hands it to you
+// on accepting); or visit a map (`above`: climb above that height there). Talks and deliveries
+// in one quest go in order. A quest with no objectives completes as soon as you accept it.
+// `daily` quests can be done again every new day. Rewards may add `cash`, and cash outfit pieces
+// go in `items` like anything else.
 
 // A reward marked `forJob` is job gear: the hero gets their own job's piece instead (the id names
 // the slot and level). `variant` gives it a color ('roll' picks one).
@@ -112,5 +116,167 @@ export const QUESTS = {
     text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
     rewards: { exp: 150000, gold: 50000, items: [{ id: 'warrior_cape_40', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 10 }] },
+  },
+
+  // ---------- Side quests: every town's people, every field ----------
+
+  // Sprout Village.
+  pip_parcel: {
+    id: 'pip_parcel', name: 'Special Delivery', giver: 'pip', minLevel: 3,
+    text: "This parcel came in for Captain Rook, but I can't leave the shop! Pastel Harbor is just past Petal Meadow, the other way from the hills. Would you take it to him?",
+    gives: [{ id: 'parcel' }],
+    objectives: [{ type: 'deliver', npc: 'rook', item: 'parcel', say: "A parcel from Pip? Ha! My new compass, finally. Tell her thanks!" }],
+    rewards: { exp: 180, gold: 300, items: [{ id: 'return_scroll', qty: 3 }, { id: 'red_potion', qty: 10 }] },
+  },
+  lulu_gossip: {
+    id: 'lulu_gossip', name: 'Town Gossip', giver: 'lulu', minLevel: 3,
+    text: "Be a dear and ask around: what does everyone think of my new window display? Mira, Pip and Kestrel. Don't tell them I sent you!",
+    objectives: [
+      { type: 'talk', npc: 'mira', say: "Lulu's window? Those little hats with ears are adorable!" },
+      { type: 'talk', npc: 'pip', say: "It's lovely. The pink is very... pink." },
+      { type: 'talk', npc: 'kestrel', say: "Tell her the feathered cap is perfect. Don't tell her I said so." },
+    ],
+    rewards: { exp: 220, gold: 400, cash: 300, items: [{ id: 'cash_casual_bow', qty: 1 }] },
+  },
+  lulu_runway: {
+    id: 'lulu_runway', name: 'Runway Ready', giver: 'lulu', minLevel: 8, prereq: 'lulu_gossip',
+    text: "Inspiration struck! A spring line with fluffy trim and antler buttons. I need 10 Fox Fluff from the Kitsune Kits and 8 Jackalope Antlers from Clover Hills. The first piece is yours!",
+    objectives: [{ type: 'collect', item: 'fluff', count: 10 }, { type: 'collect', item: 'ribbon', count: 8 }],
+    rewards: { exp: 1300, gold: 800, items: [{ id: 'cash_casual_cardigan', qty: 1 }] },
+  },
+  kestrel_targets: {
+    id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
+    text: "Standing targets teach you nothing. The Jackalopes in Clover Hills never stop hopping: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
+    objectives: [{ type: 'kill', mob: 'piglet', count: 15 }],
+    rewards: { exp: 1000, gold: 600, items: [{ id: 'orange_potion', qty: 15 }, { id: 'scroll_glove_60', qty: 1 }] },
+  },
+  mira_letter: {
+    id: 'mira_letter', name: 'A Letter for Elowen', giver: 'mira', minLevel: 10, prereq: 'sprout_sweep',
+    text: "Elowen and I were apprentices together, long ago. She keeps the spirits' grove now, in Moonleaf Grove past Mossy Woods. Would you take her this letter? It's been far too long.",
+    gives: [{ id: 'letter' }],
+    objectives: [{ type: 'deliver', npc: 'elowen', item: 'letter', say: "From Mira? Oh, she still dots her i's with hearts. Thank you, traveler." }],
+    rewards: { exp: 2000, gold: 1000, items: [{ id: 'blue_potion', qty: 20 }] },
+  },
+  daily_meadow: {
+    id: 'daily_meadow', name: 'Daily: Hill Patrol', giver: 'mira', minLevel: 6, daily: true,
+    text: "The Toadstool Goblins sneak back into Clover Hills every night. Help me keep them in check: 15 will do for today.",
+    objectives: [{ type: 'kill', mob: 'mushkin', count: 15 }],
+    rewards: { exp: 700, gold: 500, items: [{ id: 'orange_potion', qty: 5 }] },
+  },
+
+  // Pastel Harbor.
+  canyon_eggs: {
+    id: 'canyon_eggs', name: 'Scaly Situation', giver: 'rook', minLevel: 9,
+    text: "Basilisks are nesting in Windy Canyon, north of Petal Meadow, and the hatchlings are biting my sailors' boots. Defeat 15 of the little biters.",
+    objectives: [{ type: 'kill', mob: 'pebblet', count: 15 }],
+    rewards: { exp: 1500, gold: 900, items: [{ id: 'red_potion', qty: 20 }] },
+  },
+  canyon_stingers: {
+    id: 'canyon_stingers', name: 'Stinging Remarks', giver: 'rook', minLevel: 11, prereq: 'canyon_eggs',
+    text: "The Manticore Cubs up there are worse. Bring me 12 of their stingers so the herbalist can brew an antidote for the crew.",
+    objectives: [{ type: 'collect', item: 'stinger', count: 12 }],
+    rewards: { exp: 2600, gold: 1200, items: [{ id: 'warrior_shoes_10', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  canyon_lookout: {
+    id: 'canyon_lookout', name: 'The Lookout', giver: 'rook', minLevel: 12, prereq: 'canyon_stingers',
+    text: "Something's stirring under that canyon. Climb to the very top ledge of Windy Canyon and take a good look, then tell Bramble at the Hollow Gate what you saw. He'll want to know.",
+    objectives: [
+      { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
+      { type: 'talk', npc: 'bramble', say: "Roots moving under the rock? Then Gnarlroot's waking. Thank you: I'll need brave folk soon." },
+    ],
+    rewards: { exp: 3200, gold: 1500, items: [{ id: 'hollow_acorn', qty: 3 }, { id: 'orange_potion', qty: 20 }] },
+  },
+  marlo_scales: {
+    id: 'marlo_scales', name: 'Shiny Scales', giver: 'marlo', minLevel: 9,
+    text: "Basilisk scales! Ladies in the capital sew them on their gloves. Bring me 15 and I'll make it worth your while.",
+    objectives: [{ type: 'collect', item: 'pebble', count: 15 }],
+    rewards: { exp: 1400, gold: 2000, items: [] },
+  },
+  vex_rumor: {
+    id: 'vex_rumor', name: 'A Quiet Word', giver: 'vex', minLevel: 14,
+    text: "Word is someone's buying up Wisp Flames on the quiet. Ask Marlo who's been selling, then ask Tora in Ember Crag who's been buying. Keep it casual.",
+    objectives: [
+      { type: 'talk', npc: 'marlo', say: "Wisp Flames? Some kid from the Grove sold me a whole jar. Said they were 'escapees'." },
+      { type: 'talk', npc: 'tora', say: "Buying? Not me. Nim from the Grove lost a box of candles, though. Poor thing hasn't slept." },
+    ],
+    rewards: { exp: 4000, gold: 2500, items: [{ id: 'scroll_luck_60', qty: 1 }] },
+  },
+  rook_harpies: {
+    id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'crystal_heart',
+    text: "The Sky Harpies have started raiding our gulls' nests, all the way from the Sky Garden! Ground 30 of them.",
+    objectives: [{ type: 'kill', mob: 'windbird', count: 30 }],
+    rewards: { exp: 120000, gold: 30000, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  daily_harbor: {
+    id: 'daily_harbor', name: 'Daily: Warg Watch', giver: 'rook', minLevel: 14, daily: true,
+    text: "Wargs keep circling the woods road where our carts go. Thin the pack: 20 Wargs today.",
+    objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
+    rewards: { exp: 4500, gold: 1500, items: [{ id: 'orange_potion', qty: 10 }] },
+  },
+
+  // Ember Crag.
+  tora_handles: {
+    id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
+    text: "The best hilts are Heartwood, straight from a Treant in Mossy Woods. Bring me 12 and I'll put an edge on your gear.",
+    objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
+    rewards: { exp: 7000, gold: 2500, items: [{ id: 'scroll_watk_60', qty: 1 }, { id: 'scroll_matk_60', qty: 1 }] },
+  },
+  tora_cores: {
+    id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_handles',
+    text: "Geode Cores burn hotter than any coal. 10 from the Crystal Golems and I'll forge you a proper pair of gloves, made for your trade.",
+    objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
+    rewards: { exp: 45000, gold: 9000, items: [{ id: 'warrior_gloves_30', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  daily_crag: {
+    id: 'daily_crag', name: 'Daily: Restless Bones', giver: 'brann', minLevel: 24, daily: true,
+    text: "The Dullahans never stay down for long. Put 20 of them back to rest today, and keep your guard up.",
+    objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
+    rewards: { exp: 14000, gold: 3500, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+
+  // Moonleaf Grove.
+  nim_candles: {
+    id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'vex_rumor',
+    text: "Y-you heard? My floating candles got loose and turned into Will-o'-Wisps... they're haunting the Twilight Ruins now. Could you bring back 12 Wisp Flames? Gently, please.",
+    objectives: [{ type: 'collect', item: 'wisp_flame', count: 12 }],
+    rewards: { exp: 15000, gold: 4000, items: [{ id: 'mana_elixir', qty: 10 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
+  },
+  nim_stardust: {
+    id: 'nim_stardust', name: 'Stardust Wishes', giver: 'nim', minLevel: 38,
+    text: "There's a ledge at the very top of the Sky Garden where the Star Seraphs sing. Go up and see it, then bring me 10 Stardust? I want to make a wish candle.",
+    objectives: [
+      { type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' },
+      { type: 'collect', item: 'stardust', count: 10 },
+    ],
+    rewards: { exp: 140000, gold: 25000, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
+  },
+
+  // The instructors: one task each, between your first job and the trial at 30.
+  brann_stand: {
+    id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
+    text: "A warrior holds the line. The Wargs in Mossy Woods hunt in packs: face 25 of them and don't take a step back.",
+    objectives: [{ type: 'kill', mob: 'boarlet', count: 25 }],
+    rewards: { exp: 8000, gold: 2500, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  kestrel_wings: {
+    id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 20, family: 'archer',
+    text: "Imps flit about the Twilight Ruins faster than any Jackalope. Shoot down 20, and bring me 10 Imp Wings for my fletching.",
+    objectives: [{ type: 'kill', mob: 'gloombat', count: 20 }, { type: 'collect', item: 'bat_wing', count: 10 }],
+    rewards: { exp: 16000, gold: 4000, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  elowen_dance: {
+    id: 'elowen_dance', name: 'Dance of the Dryads', giver: 'elowen', minLevel: 15, family: 'mage',
+    text: "The Dryads of Mossy Woods dance with the wind, but they've forgotten the steps. Calm 25 of them, and bring me 10 of their leaves to press into charms.",
+    objectives: [{ type: 'kill', mob: 'leafling', count: 25 }, { type: 'collect', item: 'leaf_fragment', count: 10 }],
+    rewards: { exp: 8000, gold: 2500, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  vex_shadows: {
+    id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15, family: 'thief',
+    text: "A thief learns the roads by night. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
+    objectives: [
+      { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
+      { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back." },
+    ],
+    rewards: { exp: 8000, gold: 3000, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
 };

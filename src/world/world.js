@@ -170,6 +170,10 @@ export function dropItem(world, tab, index, qty = Infinity) {
     world.log("Cash items are yours to keep: they can't be dropped.", '#ffb3c6');
     return false;
   }
+  if (ITEMS[entry.id]?.quest) {
+    world.log('You need that for a quest.', '#ffb3c6');
+    return false;
+  }
   let item;
   if (entry.uid != null) {
     list.splice(index, 1);

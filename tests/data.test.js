@@ -10,7 +10,8 @@ import { QUESTS } from '../src/data/quests.js';
 import { JOBS } from '../src/data/jobs.js';
 import { SKILLS, skillAt } from '../src/data/skills.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
-import { acceptQuest, questState, recordKill, completeQuest, trackedQuests, toggleTracked, TRACK_MAX, npcMap, objectiveHint } from '../src/core/quests.js';
+import { acceptQuest, questState, recordKill, completeQuest, trackedQuests, toggleTracked, TRACK_MAX, npcMap, objectiveHint, noteTalk, noteVisit, waitingToTalk } from '../src/core/quests.js';
+import { countItem } from '../src/core/inventory.js';
 import { addItem } from '../src/core/inventory.js';
 import { surfacesOf, groundAt, ropeTop } from '../src/world/physics.js';
 import { navOf } from '../src/world/nav.js';
@@ -109,7 +110,14 @@ test('mob drops, NPC shops, and quest rewards are real items', () => {
   for (const q of Object.values(QUESTS)) {
     assert.ok(NPCS[q.giver], `${q.id} giver`);
     for (const r of q.rewards.items) assert.ok(ITEMS[r.id], `${q.id} reward ${r.id}`);
-    for (const o of q.objectives) assert.ok(o.type === 'kill' ? MOBS[o.mob] : ITEMS[o.item], `${q.id} objective`);
+    for (const o of q.objectives) {
+      const real = { kill: () => MOBS[o.mob], collect: () => ITEMS[o.item], talk: () => NPCS[o.npc], deliver: () => NPCS[o.npc] && ITEMS[o.item], visit: () => MAPS[o.map] }[o.type];
+      assert.ok(real?.(), `${q.id} objective`);
+      // Whatever has to be delivered is handed over on accepting.
+      if (o.type === 'deliver') assert.ok(q.gives?.some((g) => g.id === o.item), `${q.id} gives ${o.item}`);
+    }
+    if (q.prereq) assert.ok(QUESTS[q.prereq], `${q.id} prereq`);
+    assert.ok(NPCS[q.giver].quests?.includes(q.id), `${q.giver} offers ${q.id}`);
   }
 });
 
@@ -189,4 +197,48 @@ test('the tracker follows every quest until you pin your own, and new quests joi
   assert.deepEqual(trackedQuests(char), ['mush_menace', 'tusk_trader']);
   toggleTracked(char, 'snail_trouble');
   assert.ok(trackedQuests(char).length <= TRACK_MAX);
+});
+
+test('errands: talks go in order, a delivery hands the item over, a visit can need a climb', () => {
+  const c = createCharacter('Hana', {});
+  gainExp(c, 1e6);
+  // Lulu's gossip: Mira, then Pip, then Kestrel.
+  acceptQuest(c, 'lulu_gossip');
+  assert.ok(waitingToTalk(c, 'mira'));
+  assert.ok(!waitingToTalk(c, 'pip'), 'Pip comes after Mira');
+  assert.equal(noteTalk(c, 'pip').length, 0, 'not before Mira');
+  assert.equal(noteTalk(c, 'mira')[0].say.length > 0, true);
+  noteTalk(c, 'pip');
+  assert.equal(questState(c, 'lulu_gossip'), 'active');
+  noteTalk(c, 'kestrel');
+  assert.equal(questState(c, 'lulu_gossip'), 'ready');
+  const cashBefore = c.cash;
+  assert.ok(completeQuest(c, 'lulu_gossip'));
+  assert.ok(c.inventory.cash.some((e) => e.id === 'cash_casual_bow'), 'an outfit piece as a reward');
+  assert.ok(c.cash > cashBefore);
+  // Pip's parcel: carried from the start, gone once Rook has it.
+  acceptQuest(c, 'pip_parcel');
+  assert.equal(countItem(c.inventory, 'parcel'), 1);
+  noteTalk(c, 'rook');
+  assert.equal(countItem(c.inventory, 'parcel'), 0);
+  assert.equal(questState(c, 'pip_parcel'), 'ready');
+  // The lookout: being in the canyon isn't enough, you have to climb to the top.
+  c.quests.canyon_eggs = { state: 'done' };
+  c.quests.canyon_stingers = { state: 'done' };
+  acceptQuest(c, 'canyon_lookout');
+  assert.equal(noteVisit(c, 'canyon', { y: 720 }).length, 0);
+  assert.equal(noteVisit(c, 'canyon', { y: 320 }).length, 1);
+  assert.equal(noteTalk(c, 'bramble').length, 1);
+  assert.equal(questState(c, 'canyon_lookout'), 'ready');
+});
+
+test('a daily quest comes back the next day', () => {
+  const c = createCharacter('Hana', {});
+  gainExp(c, 1e6);
+  acceptQuest(c, 'daily_meadow');
+  for (let i = 0; i < 15; i++) recordKill(c, 'mushkin');
+  assert.ok(completeQuest(c, 'daily_meadow'));
+  assert.equal(questState(c, 'daily_meadow'), 'done', 'done for today');
+  c.quests.daily_meadow.day = '2020-1-1';
+  assert.equal(questState(c, 'daily_meadow'), 'available', 'open again tomorrow');
 });

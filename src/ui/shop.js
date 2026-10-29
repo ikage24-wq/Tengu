@@ -67,6 +67,8 @@ function entriesOf(npc, char, dlg) {
   const tab = ['equip', 'use', 'etc'][dlg.sellTab ?? 0];
   const out = [];
   char.inventory[tab].forEach((e, index) => {
+    // Quest items stay with you.
+    if (ITEMS[e.id].quest) return;
     if (tab === 'equip') out.push({ id: e.id, inst: e, index, tab, key: `u${e.uid}` });
     else if (ITEMS[e.id].star) out.push({ id: e.id, qty: e.qty, index, tab, star: true, key: `s${index}:${e.id}` });
     else {

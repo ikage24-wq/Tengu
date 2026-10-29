@@ -16,7 +16,7 @@ import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
-import { questState, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
+import { questState, objectiveText, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
 import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { settings, saveSettings } from '../core/settings.js';
@@ -24,7 +24,12 @@ import { settings, saveSettings } from '../core/settings.js';
 const GREEN = '#2f8f52';
 const READY_FILL = '#effcf3';
 
-const objName = (o) => (o.type === 'kill' ? MOBS[o.mob].name : ITEMS[o.item].name);
+// A hunt or a fetch names what it wants ("Mandrake"); an errand says the whole thing ("Talk to Pip").
+const errand = (o) => o.type !== 'kill' && o.type !== 'collect';
+const objName = (o) => {
+  const { verb, name } = objectiveText(o);
+  return errand(o) ? `${verb} ${name}` : name;
+};
 const giverName = (q) => NPCS[q.giver]?.name ?? '';
 const giverPlace = (q) => MAPS[npcMap(q.giver)]?.name ?? '';
 
@@ -165,7 +170,7 @@ function listRow(ui, char, id, x, y, w, on, th) {
   if (ready) sub = `Report to ${giverName(q)}`;
   else if (st === 'active') {
     const o = objectiveProgress(char, id).find((x) => x.have < x.count);
-    sub = o ? `${objName(o)} ${o.have}/${o.count}` : `${Math.round(progressOf(char, id) * 100)}%`;
+    sub = o ? (errand(o) ? objName(o) : `${objName(o)} ${o.have}/${o.count}`) : `${Math.round(progressOf(char, id) * 100)}%`;
   } else if (st === 'available') sub = `${giverName(q)}, ${giverPlace(q)}`;
   else if (st === 'locked') sub = `Opens at Lv ${q.minLevel}`;
   else sub = giverName(q);
@@ -226,8 +231,8 @@ function details(ui, char, id, x0, y0, w0, h0, th) {
   }
   for (const o of objs) {
     const done = live && o.have >= o.count;
-    const verb = o.type === 'kill' ? 'Defeat' : 'Bring';
-    const label = live ? `${verb} ${objName(o)}` : `${verb} ${o.count} ${objName(o)}`;
+    const { verb } = objectiveText(o);
+    const label = errand(o) ? objName(o) : live ? `${verb} ${objName(o)}` : `${verb} ${o.count} ${objName(o)}`;
     text(ctx, fit(ctx, label, w - 30, 7), x + 2, y + 8, { size: 7, bold: true, color: done ? GREEN : COLORS.ink });
     if (live) {
       text(ctx, `${o.have}/${o.count}`, x + w - 1, y + 8, { size: 7, bold: true, align: 'right', color: done ? GREEN : th.dark });

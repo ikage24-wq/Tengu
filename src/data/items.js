@@ -479,3 +479,7 @@ for (const [id, name, price, color] of ETC) {
   add({ id, name, type: 'etc', price, color, desc: 'A monster drop. Some quests need these; shops buy them.' });
 }
 
+// Quest items: carried for a quest (a delivery), never sold or dropped.
+add({ id: 'letter', name: 'Sealed Letter', type: 'etc', quest: true, price: 0, color: '#ff9ec0', desc: 'For someone special. Deliver it by talking to them.' });
+add({ id: 'parcel', name: 'Parcel', type: 'etc', quest: true, price: 0, color: '#e8b97a', desc: 'A parcel tied with a mint ribbon. Deliver it by talking to whoever it is for.' });
+
