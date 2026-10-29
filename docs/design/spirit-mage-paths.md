@@ -72,6 +72,10 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     catch behind her, then an overhead finisher), Grab & Slam, Stomp, Charge, Whirl and Roar (her
     fury: faster, burning). Heavy timing, impact bursts, a rebound, a club trail; a sulk when she
     whiffs and a smirk when her target drops.
+  - **The yuki-onna's look (chosen 2026-10-29, render/yuki.js YUKI_LOOK):** about the Onmyoji's size;
+    white hair in an icicle bun with blunt bangs (no forehead shade or shine: they read badly on
+    white), white-lashed veiled eyes, pale blue lips, and the spirit-flames kimono (white, pale blue
+    hitodama rising from a hem that fades into mist, no feet). Rig and moves next.
   - **The oni's look (chosen 2026-10-29):** a cute-and-badass oni girl on the player character, red
     skin, a jagged silver bob, droopy heavy-lidded gold eyes, a bored face (a flat mouth with one
     fang), a dark-and-gold diamond on her brow, crimson horns, a black battle kimono lined crimson
