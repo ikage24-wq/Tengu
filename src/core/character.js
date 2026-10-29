@@ -13,6 +13,7 @@ import { deathExpLoss } from './formulas.js';
 
 export const STAT_KEYS = ['str', 'dex', 'int', 'luk'];
 const NOVICE_SP_LEVEL_CAP = 10;
+const START_STAT = 4;
 
 export function createCharacter(name, appearance) {
   return {
@@ -21,7 +22,7 @@ export function createCharacter(name, appearance) {
     job: 'novice',
     level: 1,
     exp: 0,
-    base: { str: 4, dex: 4, int: 4, luk: 4 },
+    base: { str: START_STAT, dex: START_STAT, int: START_STAT, luk: START_STAT },
     ap: 9,
     sp: 0,
     baseHp: 50,
@@ -91,6 +92,9 @@ export function canAdvance(char, jobId) {
 export function advanceJob(char, jobId) {
   if (!canAdvance(char, jobId)) return false;
   const job = JOBS[jobId];
+  // A Novice's first job gives back every stat point spent so far, to put into the new job's own
+  // stat: practicing with any weapon costs nothing.
+  if (JOBS[char.job].family === 'beginner') char.refunded = refundAp(char);
   char.job = jobId;
   char.baseHp += job.advanceHp;
   char.baseMp += job.advanceMp;
@@ -114,9 +118,30 @@ export function spendAp(char, stat, amount = 1) {
   return n;
 }
 
+// Every point spent comes back as AP (each stat back to where a new hero starts). Returns how many.
+export function refundAp(char) {
+  let n = 0;
+  for (const k of STAT_KEYS) {
+    const extra = Math.max(0, char.base[k] - START_STAT);
+    char.base[k] -= extra;
+    n += extra;
+  }
+  char.ap += n;
+  return n;
+}
+
+// The stats Auto grows: the job family's; a Novice grows the stat of the weapon in hand (a sword
+// STR, a wand INT, a bow DEX, a dagger LUK), as the family that fights with it would.
+export function apPlan(char) {
+  const family = JOBS[char.job].family;
+  if (family !== 'beginner') return FAMILY_STATS[family];
+  const main = ITEMS[char.equipment.weapon?.id]?.main ?? 'str';
+  return Object.values(FAMILY_STATS).find((f) => f.primary === main) ?? FAMILY_STATS.beginner;
+}
+
 // Spends all AP: mostly into the family's primary stat, enough into the secondary to keep accuracy up.
 export function autoAssignAp(char) {
-  const { primary, secondary } = FAMILY_STATS[JOBS[char.job].family];
+  const { primary, secondary } = apPlan(char);
   while (char.ap > 0) {
     const wantSecondary = char.base[secondary] < 4 + Math.floor(char.level * 0.8);
     spendAp(char, wantSecondary ? secondary : primary);

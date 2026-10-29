@@ -40,14 +40,16 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   run(w, keys('ArrowUp'), 0.5);
   assert.ok(step(w) >= 3, 'climbing done');
   w.body.rope = null;
-  // Kuro's first quest, the sword, the stats.
+  // Kuro's first quest: a practice weapon of your choice (here a wand), then the stats.
   acceptQuest(c, 'tut_hello');
-  completeQuest(c, 'tut_hello');
+  assert.equal(completeQuest(c, 'tut_hello'), null, 'a weapon has to be picked');
+  assert.ok(completeQuest(c, 'tut_hello', 'wand_0'));
   run(w, idle, 0.1);
   assert.ok(step(w) >= 4, 'talked to Kuro');
   const bag = c.inventory.equip;
-  equipFromBag(c, bag.findIndex((e) => e?.id === 'sword_0'));
+  equipFromBag(c, bag.findIndex((e) => e?.id === 'wand_0'));
   autoAssignAp(c);
+  assert.ok(c.base.int > c.base.str, 'Auto grows the stat of the weapon in hand');
   run(w, idle, 0.1);
   assert.ok(step(w) >= 6, 'equipped and spent stats');
   // On to the practice field.

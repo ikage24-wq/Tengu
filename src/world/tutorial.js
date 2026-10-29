@@ -14,7 +14,7 @@ export const LESSONS = [
   { hint: 'Jump with [Space]. Hop up onto the ledge!', done: (w, t) => (t.jumped ||= !w.body.onGround && w.body.vy < 0) && w.body.onGround && w.body.y < w.map.groundY - 20 },
   { hint: 'Stand by the rope and hold [↑] to climb it.', done: (w) => Boolean(w.body.rope) },
   { hint: 'Walk up to Kuro and press [↑] to talk. Accept his quest.', done: (w) => Boolean(w.char.quests.tut_hello) },
-  { hint: 'Open your bag with [I] and double-click the sword to hold it.', done: (w) => Boolean(w.char.equipment.weapon) },
+  { hint: 'Open your bag with [I] and double-click your weapon to hold it.', done: (w) => Boolean(w.char.equipment.weapon) },
   { hint: 'You have stat points! Open Stats with [C] and press Auto (or the + buttons).', done: (w) => w.char.ap === 0 },
   { hint: 'Head east to the Practice Field: stand in the glowing portal and press [↑].', done: (w) => w.map.id !== 'dawnbeach' },
   { hint: 'Talk to Kuro with [↑] and take his practice quest.', done: (w) => Boolean(w.char.quests.tut_practice) },

@@ -70,15 +70,17 @@ export function recordKill(char, mobId) {
 
 // Hands in collected items and pays out rewards. Returns the rewards, or null if not ready.
 // Fails without changing anything if the bag can't hold the reward items.
-export function completeQuest(char, id) {
+// A quest with a choice of reward (`rewards.pick`) needs `pick`, one of them.
+export function completeQuest(char, id, pick = null) {
   if (questState(char, id) !== 'ready') return null;
   const q = QUESTS[id];
+  if (q.rewards.pick && !q.rewards.pick.includes(pick)) return null;
   const spareEquip = TAB_SIZE - char.inventory.equip.length;
-  const equipRewards = q.rewards.items.filter((r) => ITEMS[r.id].type === 'equip').reduce((n, r) => n + r.qty, 0);
+  const equipRewards = q.rewards.items.filter((r) => ITEMS[r.id].type === 'equip').reduce((n, r) => n + r.qty, 0) + (pick && ITEMS[pick].type === 'equip' ? 1 : 0);
   if (equipRewards > spareEquip) return null;
 
   for (const o of q.objectives) if (o.type === 'collect') removeItem(char.inventory, o.item, o.count);
-  const items = q.rewards.items.map((r) => ({ ...r, id: rewardId(char, r) }));
+  const items = [...(pick ? [{ id: pick, qty: 1 }] : []), ...q.rewards.items].map((r) => ({ ...r, id: rewardId(char, r) }));
   for (const r of items) {
     if (ITEMS[r.id].type === 'equip') for (let i = 0; i < r.qty; i++) addItem(char.inventory, makeEquip(r.id, { variant: r.variant ?? null }));
     else addItem(char.inventory, r.id, r.qty);

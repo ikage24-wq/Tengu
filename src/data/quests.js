@@ -7,9 +7,10 @@ export const QUESTS = {
   // Dawnlight Isle, the tutorial (Kuro; world/tutorial.js).
   tut_hello: {
     id: 'tut_hello', name: 'Washed Ashore', giver: 'kuro', minLevel: 1,
-    text: "Here, take this practice sword and some tonics. Open your bag with I and double-click the sword to hold it. Then let's see what you can do!",
+    text: "Here, some tonics, and pick a practice weapon: a sword (STR, the Warrior's way), a wand (INT, the Spirit Mage's), a bow (DEX, the Archer's) or a dagger (LUK, the Thief's). Not sure yet? No harm: your first job gives your stat points back.",
     objectives: [],
-    rewards: { exp: 5, gold: 20, items: [{ id: 'sword_0', qty: 1 }, { id: 'red_potion', qty: 5 }] },
+    // `pick`: the player chooses one of these, as well as the items.
+    rewards: { exp: 5, gold: 20, items: [{ id: 'red_potion', qty: 5 }], pick: ['sword_0', 'wand_0', 'bow_0', 'dagger_0'] },
   },
   tut_practice: {
     id: 'tut_practice', name: 'Practice Makes Perfect', giver: 'kuro', minLevel: 1, prereq: 'tut_hello',

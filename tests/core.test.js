@@ -85,6 +85,27 @@ test('job advancement needs the level and adds HP, MP, and SP', () => {
   assert.equal(c.sp, spBefore + 1 + 3 * (c.level - lv), 'three SP per level after advancing');
 });
 
+test('a Novice\'s first job gives back every stat point spent', () => {
+  const c = fresh();
+  gainExp(c, 20000);
+  autoAssignAp(c);
+  assert.ok(c.base.str > 4, 'a Novice with a sword (or nothing) grows STR');
+  const spent = c.ap;
+  assert.equal(spent, 0);
+  const total = Object.values(c.base).reduce((a, b) => a + b, 0);
+  advanceJob(c, 'spiritmage');
+  assert.deepEqual(c.base, { str: 4, dex: 4, int: 4, luk: 4 });
+  assert.equal(c.ap, total - 16, 'all of it back to spend');
+  autoAssignAp(c);
+  assert.ok(c.base.int > c.base.str);
+  // Later jobs keep what's spent.
+  const before = { ...c.base };
+  gainExp(c, 10000000);
+  c.quests = {};
+  for (const j of ['shrinemaiden', 'onmyoji']) if (advanceJob(c, j)) break;
+  for (const k of Object.keys(before)) assert.ok(c.base[k] >= before[k]);
+});
+
 test('auto-assign spends every AP into the family stats', () => {
   const c = fresh();
   gainExp(c, 20000);

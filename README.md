@@ -74,7 +74,8 @@ to clear it.
 
 - **Jobs** — Novice → Warrior, Archer, Thief, or Spirit Mage at level 10 (each instructor lives
   in their job's home town). Every first job has a movement skill (Shoulder Charge, Backflip Shot,
-  Shadow Step, Spirit Step). The Warrior, Archer and Thief each pick one of two paths at level 30
+  Shadow Step, Spirit Step). Taking a first job gives back every stat point spent as a Novice, to
+  put into the new job's stat. The Warrior, Archer and Thief each pick one of two paths at level 30
   (below), after their instructor's trial; the Spirit Mage's paths (the Shrine Maiden and the
   Onmyoji) are still to come. The old Mage was retired for her: characters who were Mages are
   Novices again, with their skill points given back.
@@ -328,6 +329,8 @@ to clear it.
   across three maps: walking, jumping and climbing on the beach, the bag, gear and stats, fighting
   and looting Kitsune Kits on the practice field, potions, skills and hotkeys, then a boat from
   the dock to Sprout Village. A hint card at the top of the screen shows the current lesson.
+  Kuro's first quest offers a practice weapon of your choice (sword, wand, bow or dagger); a
+  Novice's Auto stats follow the weapon in hand (STR, INT, DEX or LUK).
 - **Mochi pets** — adopt a Mochi egg for 3,000 Cash in the Mochi window (P, or from the Cash
   Shop). It follows you, fetches loot in range, drinks your best tonic when HP or MP drops below
   the marks you set, and recasts your buffs when they wear off. Treats from Pip and Marlo fill its

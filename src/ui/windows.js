@@ -3,7 +3,7 @@
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
 import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js';
-import { spendAp, autoAssignAp, STAT_KEYS, stats, wornGear } from '../core/character.js';
+import { spendAp, autoAssignAp, apPlan, STAT_KEYS, stats, wornGear } from '../core/character.js';
 import { drawHero } from '../render/hero.js';
 import { COLORS, windowFrame, button, text, box, bar, hover, tooltip, well, sparkle, roundRect, fit, font, darken } from './kit.js';
 
@@ -49,7 +49,8 @@ export function statsWindow(ui, state, world) {
   const char = world.char;
   const s = world.stats;
   const job = JOBS[char.job];
-  const { primary, secondary } = FAMILY_STATS[job.family] ?? FAMILY_STATS.beginner;
+  // A Novice's main stat follows the weapon in hand.
+  const { primary, secondary } = apPlan(char);
   const x = win.x + 8;
   const lw = 132;
 
