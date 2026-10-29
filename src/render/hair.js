@@ -389,9 +389,9 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   }
   // A shadowless cut is edged with a thin line in the hair's own shade, so it still reads on pale skin.
   if (f.noShade) {
-    // A soft shade along the bottom of the cut (narrowing into the sides), and a fine edge line.
+    // A fine line along the cut.
     const [x0, x1, y] = [f.pts[f.pts.length - 1][0] + 0.9, f.pts[0][0] - 0.9, f.pts[0][1]];
-    shapes.push(F(T([[x0 + 0.6, y - 1.6], [x1 - 0.6, y - 1.6], [x1, y - 0.5], [x0, y - 0.5]], r.sh1)), F(R(x0, y - 0.55, x1 - x0, 0.55, r.sh2)));
+    shapes.push(F(R(x0, y - 0.55, x1 - x0, 0.55, r.sh2)));
   }
   // Where the hair parts, a dark line runs back over the crown.
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
