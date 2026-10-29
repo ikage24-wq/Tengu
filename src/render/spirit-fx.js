@@ -53,6 +53,22 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       fxSprite(ctx, 'celspiritstep', x, y + 22, { p, scale: 0.3 });
       return true;
     }
+    case 'spitball': {
+      // The doll's spitball, flying straight down its line with a little drop at the end.
+      const ox = x - f.x;
+      const oy = y - f.y;
+      const m = f.mob;
+      const tx = (m && m.hp > 0 ? m.x : f.tx) + ox;
+      const ty = (m && m.hp > 0 ? m.y - m.def.h * 0.7 : f.ty) + oy;
+      const u = Math.min(1, f.t / f.fly);
+      fxSprite(ctx, 'celspitball', x + (tx - x) * u, y + (ty - y) * u + 6 * u * u, { t: f.t, flip: tx < x, rot: (tx < x ? -1 : 1) * 0.15 * u, scale: f.big ? 0.32 : 0.22 });
+      return true;
+    }
+    case 'spitsplat': {
+      // A spitball landing on a face: the wet paper splats flat and drips.
+      fxSprite(ctx, 'celspitsplat', x, y - (f.h ?? 24) * 0.7, { p, flip, scale: f.big ? 0.36 : 0.22 });
+      return true;
+    }
     case 'dollcharm': {
       // The doll's Paper Charm: a little wisp of light flicked in an arc to the monster, then stuck
       // on it, pulsing faster and faster until it pops (the pop is the hit's own burst).

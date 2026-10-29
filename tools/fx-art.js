@@ -4613,6 +4613,73 @@
       }
     },
   };
+  // The doll's spitball in flight, looping: a lumpy wad of chewed white paper, lit on top, with a
+  // soft speed streak behind it and a wobble as it tumbles.
+  E.spitball = {
+    w: 72, h: 44, n: 2, fps: 14, px: 50, py: 22, loop: true,
+    draw(ctx, i) {
+      painted(ctx, 4, 14, 40, 16, (x, y) => {
+        const u = (x - 4) / 40;
+        const half = 6 * u;
+        const d = Math.abs(y - 22) / Math.max(0.5, half);
+        return d > 1 ? [0, 0] : [0.75, u * u * 0.45 * (1 - d)];
+      }, SPIRITR, 1.5);
+      painted(ctx, 36, 8, 30, 28, (x, y) => {
+        const dx = x - 50;
+        const dy = y - 22;
+        const ang = Math.atan2(dy, dx);
+        const r = 9.5 + 1.4 * Math.sin(ang * 5 + i * 1.7) + 0.9 * Math.sin(ang * 3 - i);
+        const d = Math.hypot(dx, dy) / r;
+        if (d > 1.05) return [0, 0];
+        const lit = 0.5 + 0.5 * (-dx * 0.4 - dy * 0.9) / r;
+        const crease = Math.abs(Math.sin(dx * 0.8 + dy * 0.55 + i * 2)) < 0.18 ? -0.25 : 0;
+        return [Math.max(0, Math.min(1, 0.35 + 0.55 * lit + crease)), sstep(1.05, 0.92, d)];
+      }, PAPERW, 1.5);
+      strokePts(ctx, [[46 - (i ? 2 : 0), 17], [52, 15 + (i ? 1 : 0)]], 1.4, '#ffffff', 0.9);
+    },
+  };
+  // A spitball landing: the wet paper flattens with a splat into a lumpy star, droplets and paper
+  // scraps flying off, little wobble lines for the comedy of it, and it all drips and fades.
+  E.spitsplat = {
+    w: 180, h: 150, n: 8, fps: 20, px: 90, py: 75,
+    draw(ctx, i) {
+      const a = [1, 1, 1, 0.95, 0.85, 0.65, 0.4, 0.2][i];
+      const spread = [0.5, 1, 1.15, 1.2, 1.22, 1.24, 1.25, 1.25][i];
+      const drip = [0, 0, 2, 5, 9, 13, 17, 20][i];
+      painted(ctx, 30, 25, 120, 110, (x, y) => {
+        const dx = x - 90;
+        const dy = y - 75;
+        const ang = Math.atan2(dy, dx);
+        const r = (20 + 7 * Math.sin(ang * 7 + 0.4) + 4 * Math.sin(ang * 3 + 1.1)) * spread;
+        let d = Math.hypot(dx * 0.9, dy * 1.15) / r;
+        // Drips running down from its bottom edge.
+        for (const [cx, w] of [[80, 3.2], [96, 2.6], [104, 2]]) if (Math.abs(x - cx) < w && y > 75 && y < 75 + r * 0.7 + drip * (w / 3)) d = Math.min(d, 0.8);
+        if (d > 1) return [0, 0];
+        const lit = 0.5 + 0.5 * (-dx * 0.3 - dy * 0.7) / r;
+        return [0.3 + 0.6 * lit, sstep(1, 0.88, d) * a];
+      }, PAPERW, 1.5);
+      const R = rng(2400);
+      for (let k = 0; k < 9; k++) {
+        const ang = R() * TAU;
+        const sp = 26 + R() * 22;
+        const dd = sp * Math.min(1.6, i * 0.32) * spread;
+        const fall = i * i * 0.6;
+        bloomDisc(ctx, 90 + Math.cos(ang) * dd, 75 + Math.sin(ang) * dd + fall, 2.6 - k * 0.12, 2.4, SPIRIT, a * (k % 3 ? 0.9 : 0.6));
+      }
+      for (let k = 0; k < 3; k++) {
+        const ang = -Math.PI / 2 + (k - 1) * 0.9 + R() * 0.3;
+        const dd = 30 + i * 6;
+        shide(ctx, 90 + Math.cos(ang) * dd, 75 + Math.sin(ang) * dd + i * 2, 8, 3, (R() - 0.5) * 4, a, ang + Math.PI / 2);
+      }
+      // The comedy wobble lines over it (only while it's fresh).
+      if (i < 5) {
+        for (const s of [-1, 1]) {
+          const x = 90 + s * (34 + i * 3);
+          strokePts(ctx, [[x, 48], [x + s * 4, 54], [x, 60], [x + s * 4, 66]], 2, '#ffffff', a * 0.9);
+        }
+      }
+    },
+  };
   E.ringspiritbig = big(E.ringspirit, 2.6);
   E.lanternbig = big(E.lantern, 1.5);
 

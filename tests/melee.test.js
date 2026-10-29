@@ -2487,6 +2487,7 @@ test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, 
   let lantern = false;
   let perched = false;
   let blaze = false;
+  let spiritAtEnd = null;
   const seen = new Set();
   dice(0.5, () => {
     for (let i = 0; i < 60 * 6; i++) {
@@ -2494,7 +2495,7 @@ test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, 
       lantern ||= Boolean(w.lantern);
       if (w.lantern) perched ||= Math.abs(w.doll.x - w.lantern.x) < 12;
       for (const f of w.fx) if (f.kind === 'lanternray') seen.add(f);
-      blaze ||= w.fx.some((f) => f.kind === 'lanternblaze');
+      if (!blaze && w.fx.some((f) => f.kind === 'lanternblaze')) [blaze, spiritAtEnd] = [true, w.spirit];
     }
   });
   const rays = seen.size;
@@ -2503,15 +2504,16 @@ test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, 
   assert.ok(blaze, 'then it blazes');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster on the screen is hit');
   assert.ok(w.char.hp > hp0, 'its light heals her');
-  assert.ok(w.spirit < 10, `and it never refills Spirit (${w.spirit})`);
+  // (Checked as it blazes: once it's gone the doll's own hits build Spirit again, as they should.)
+  assert.ok(spiritAtEnd < 10, `and it never refills Spirit (${spiritAtEnd})`);
 });
 
-test('the Spirit Doll has a pool of seven tricks of her own, and each one lands', async () => {
+test('the Spirit Doll has a pool of eight tricks of her own, and each one lands', async () => {
   const w = shrineMage();
   run(w, 0.5);
   const d = w.doll;
   const seen = new Set();
-  for (const kind of ['slap', 'twirl', 'bonk', 'kick', 'charm', 'akanbe', 'ride']) {
+  for (const kind of ['slap', 'twirl', 'bonk', 'kick', 'charm', 'akanbe', 'ride', 'spit']) {
     const m = w.mobs[0];
     const before = m.hp;
     d.act = null;
@@ -2523,7 +2525,7 @@ test('the Spirit Doll has a pool of seven tricks of her own, and each one lands'
     run(w, (TRICKS[kind].dur ?? 2) + 1);
     if (m.hp < before) seen.add(kind);
   }
-  assert.deepEqual([...seen].sort(), ['akanbe', 'bonk', 'charm', 'kick', 'ride', 'slap', 'twirl']);
+  assert.deepEqual([...seen].sort(), ['akanbe', 'bonk', 'charm', 'kick', 'ride', 'slap', 'spit', 'twirl']);
   const { SKILLS } = await import('../src/data/skills.js');
   assert.ok(!Object.values(SKILLS).some((sk) => sk.job === 'spiritmage' && /doll/i.test(sk.name)), 'the Spirit Mage never orders the doll about');
 });

@@ -171,6 +171,8 @@ export const FX_SHEETS = {
   celbellbonk: { w: 245, h: 154, n: 8, fps: 16, px: 122, py: 88, d: 3, loop: false },
   celfanslap: { w: 131, h: 132, n: 6, fps: 24, px: 65, py: 64, d: 3, loop: false },
   celdolltwirl: { w: 201, h: 94, n: 6, fps: 20, px: 100, py: 49, d: 3, loop: false },
+  celspitball: { w: 65, h: 56, n: 2, fps: 14, px: 37, py: 28, d: 3, loop: true },
+  celspitsplat: { w: 156, h: 157, n: 8, fps: 20, px: 71, py: 67, d: 3, loop: false },
   celringspiritbig: { of: 'celringspirit', k: 2.6 },
   cellanternbig: { of: 'cellantern', k: 1.5 },
   celringbig: { of: 'celring', k: 2.6 },

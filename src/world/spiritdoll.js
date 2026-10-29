@@ -8,6 +8,8 @@
 //   Bell Bonk      a big gold bell dropped on a monster's head from above (it dazes)
 //   Dropkick       up high behind it, then a dive feet first straight into it (it goes flying)
 //   Paper Charm    a charm of spirit light flicked at it from a way off: it sticks, then pops
+//   Spitball Volley from a way off, a paper straw to her puffed-out cheeks: pff, pff, and one
+//                  big soggy one that splats on its face and leaves it dazed; then she coughs
 //   Akanbe         right up in its face, pulling an eyelid down and sticking her tongue out:
 //                  it's so cross it can't move for a moment (a little hit, a long daze)
 //   Rodeo          a hop up onto its head, and she rides it, bonking it with her bell on the
@@ -46,6 +48,7 @@ export const TRICKS = {
   charm: { dur: 0.8, hits: [0.42], pct: 40, reach: 220, fly: 0.25, stick: 0.45, knock: [60] },
   akanbe: { dur: 1.1, hits: [0.5], pct: 12, reach: 50, stun: 1.4, knock: [10] },
   ride: { bonks: 4, pct: 22, last: 60 },
+  spit: { dur: 1.5, hits: [0.3, 0.42, 0.6], pct: 14, last: 44, reach: 240, speed: 380, stun: 1, knock: [10, 10, 70] },
 };
 // How fast she dives in a dropkick (px/s), past her usual flying speed.
 const DIVE = 720;
@@ -111,6 +114,15 @@ function strike(world, d) {
         world.fx.push({ kind: 'dollcharm', x: d.x + d.dir * 6, y: d.y - 18, tx, ty, mob: a.mob, fly: T.fly, t: 0, dur: T.fly + T.stick });
         dollHit(world, a.mob, { pct: T.pct, x: d.x, knock: T.knock[i], launch: 90, stop: 0.04, shake: 1, burst: 'spirithit', big: true }, T.fly + T.stick);
       }
+    } else if (a.kind === 'spit') {
+      // A spitball off down the straw; it splats when it gets there (the last a big soggy one).
+      if (alive(a.mob)) {
+        const tx = a.mob.x;
+        const ty = a.mob.y - a.mob.def.h * 0.7;
+        const fly = Math.max(0.12, Math.hypot(tx - d.x, ty - d.y) / T.speed);
+        world.fx.push({ kind: 'spitball', x: d.x + d.dir * 8, y: d.y - 20, tx, ty, mob: a.mob, fly, big: last, t: 0, dur: fly });
+        dollHit(world, a.mob, { pct: last ? T.last : T.pct, x: d.x, knock: T.knock[i], launch: last ? 60 : 0, stun: last ? T.stun : 0, stop: last ? 0.05 : 0.02, shake: last ? 1 : 0, burst: 'spitsplat', big: last }, fly);
+      }
     } else if (a.kind === 'akanbe') {
       if (alive(a.mob) && Math.abs(a.mob.x - d.x) < T.reach + a.mob.def.w / 2 + 10) {
         dollHit(world, a.mob, { pct: T.pct, x: d.x, knock: T.knock[i], stun: T.stun, stop: 0.02, burst: 'spirithit' });
@@ -162,7 +174,7 @@ function goal(world, d) {
   const b = world.body;
   const a = d.act;
   const m = a?.mob ?? d.target;
-  if (a?.kind === 'bonk' || a?.kind === 'charm') return [d.x, d.y];
+  if (a?.kind === 'bonk' || a?.kind === 'charm' || a?.kind === 'spit') return [d.x, d.y];
   if (a?.kind === 'kick' && alive(m)) {
     // Up high behind it, then the dive: feet first, straight through where it stands.
     const side = Math.sign(a.x0 - m.x) || -1;
@@ -236,7 +248,10 @@ export function tickDoll(world, dt) {
     if (dx < 40 + m.def.w / 2 && Math.abs(m.y - 18 - d.y) < 40) {
       const r = Math.random();
       kind = crowd >= 2 && r < 0.28 ? 'twirl' : r < 0.48 ? 'slap' : r < 0.64 ? 'kick' : r < 0.76 ? 'akanbe' : r < 0.88 ? 'ride' : 'bonk';
-    } else if (dx < TRICKS.charm.reach && Math.random() < 0.03) kind = Math.random() < 0.55 ? 'charm' : 'bonk';
+    } else if (dx < TRICKS.spit.reach && Math.random() < 0.03) {
+      const r = Math.random();
+      kind = r < 0.4 ? 'spit' : r < 0.75 ? 'charm' : 'bonk';
+    }
     if (kind === 'ride') {
       rodeo(world, d, m);
       d.next = now + d.act.dur + REST[0] + Math.random() * (REST[1] - REST[0]);

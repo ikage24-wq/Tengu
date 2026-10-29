@@ -156,6 +156,23 @@ function akanbe(p, t) {
   });
 }
 
+// Spitball Volley: a paper straw whipped up to her lips, cheeks puffed right out; pff, pff (her head
+// jerks back with each), then a huge breath and one big soggy one (at 0.3, 0.42, 0.6); then a
+// coughing fit, doubled over, and a wipe of her mouth with her sleeve.
+function spitting(p, t) {
+  const up = ease(seg(p, 0, 0.18)) * (1 - ease(seg(p, 0.66, 0.74)));
+  const shot = Math.max(bump(p, 0.3, 0.37), bump(p, 0.42, 0.49), 1.4 * bump(p, 0.6, 0.7));
+  const gulp = bump(p, 0.47, 0.6);
+  const cough = seg(p, 0.72, 1);
+  const hack = cough > 0 && cough < 0.75 ? Math.abs(Math.sin(t * 22)) : 0;
+  return pose({
+    hand: [lerp(1.2, 2, up), lerp(-4, -8.4, up) + 4 * cough], free: [lerp(0, 3.4, up) + 1.4 * cough, lerp(0, -8, up) - 1.6 * cough], fan: up > 0.2 ? null : -1.9, straw: up > 0.2,
+    tilt: -9 * shot - 4 * gulp + cough * (14 + 6 * hack), hx: -0.6 * shot + 0.4 * cough, hy: 0.5 * cough * hack, by: 0.6 * hack,
+    puff: up > 0.3 && shot < 0.4, mouth: shot > 0.4 ? 'o' : cough > 0 ? 'wavy' : 'cat', eyes: shot > 0.4 ? 'half' : cough > 0 ? 'blink' : null,
+    brows: cough > 0 ? [[0.8, -0.3], [0.8, -0.3]] : [[-0.1, 0.5], [-0.1, 0.5]], blush: 1.4 + 0.6 * gulp, kick: 0.8 * shot, extras: cough > 0.2 && cough < 0.8 ? ['steam0'] : [], ...kickLegs(t * 2, 0.6 + cough),
+  });
+}
+
 // ---------- Her idle bits ----------
 
 // A lap round the Spirit Mage's head, giggling, arms out like a plane.
@@ -319,7 +336,7 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
       const t = world.now - a.t0;
       const last = a.hits.filter((h) => h <= t).at(-1);
       p = t < a.hits[0] - 0.2 ? hopping(clamp01(t / (a.hits[0] - 0.2))) : riding(last == null ? 0.25 : t - last, a.hits[1] - a.hits[0] || 0.34, time);
-    } else p = { slap: slapping, twirl: twirling, bonk: bonking, kick: dropkicking, charm: charming, akanbe: (v) => akanbe(v, time) }[a.kind](u);
+    } else p = { slap: slapping, twirl: twirling, bonk: bonking, kick: dropkicking, charm: charming, akanbe: (v) => akanbe(v, time), spit: (v) => spitting(v, time) }[a.kind](u);
   } else if (d.mood === 'peace') p = cheering(0, time);
   else if (d.mood === 'mad') p = fuming(0, time);
   else if (d.bit) {
@@ -368,6 +385,21 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
     if (P.bell) {
       fxSprite(c, 'celdollbell', hand[0], hand[1] - 2, { frame: 0, scale: 0.22, rot: (flip ? 1 : -1) * 0.3 });
       return;
+    }
+    // Her spitball straw: a rolled tube of white paper with scarlet bands, held to her lips.
+    if (P.straw) {
+      c.save();
+      c.translate(hand[0], hand[1]);
+      if (flip) c.scale(-1, 1);
+      c.rotate(-0.2);
+      c.fillStyle = '#fbf8ff';
+      c.strokeStyle = '#8a7cc0';
+      c.lineWidth = 0.4;
+      c.fillRect(1.5, -1.2, 8.5, 1.4);
+      c.strokeRect(1.5, -1.2, 8.5, 1.4);
+      c.fillStyle = '#d8323e';
+      for (const bx of [4, 7.5]) c.fillRect(bx, -1.2, 0.7, 1.4);
+      c.restore();
     }
     if (P.fan == null) return;
     c.save();
