@@ -2590,6 +2590,8 @@ test("a Shrine Maiden's doll has grown up into her guardian: no doll, and Heaven
 function shrineFull() {
   const w = shrineMaiden();
   Object.assign(w.char.skills, { grandblessing: 15, purification: 15, resurrection: 8, thousandtorii: 8, shrinemastery: 10 });
+  // (Built as a Spirit Mage first: whatever Spirit her doll built before she advanced is gone.)
+  w.spirit = 0;
   return w;
 }
 const settleCast = (w, s = 3) => run(w, s);
@@ -2637,6 +2639,8 @@ test("Resurrection Dance's Last Rite keeps her standing through a blow that woul
   settleCast(w, 3);
   assert.ok(w.char.buffs.resurrection, 'Last Rite is on her');
   w.invuln = 0;
+  // (Her guardian mustn't take the blow for her.)
+  w.guardian.guardAt = Infinity;
   hurtPlayer(w, 1e7, w.body.x + 30);
   assert.equal(w.dead, false, 'she is still standing');
   assert.ok(w.char.hp > 0);
