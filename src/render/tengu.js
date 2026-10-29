@@ -5,7 +5,7 @@
 // of his own drawn here.
 //
 // His look, from how tengu are drawn (the yamabushi's tokin cap and pompom yuigesa, the feather
-// fan, one-toothed geta, crow wings, the red long-nosed mask) and the player's brief (smug, parted
+// fan, one-toothed geta, crow wings) and the player's brief (smug, parted
 // black hair, very handsome).
 // From the options (tools/tengu-faces.html) the player picked the side-swept hair (cut short and
 // tapered at the back, a man's cut) and crimson eyes (2026-10-29).
@@ -224,7 +224,7 @@ function paintSaya(c, hip, flip, k, sheathed) {
 //     feathers; a careless flick of the fan at the sky for the stones; a swoop, a carry and a
 //     hurl for Spirited Away. Quick and sharp: snapping blows, then a held, showy pose;
 //   - his moods: a grin and a snap of the fan when he wins, a 'tch' when he misses;
-//   - his idle moods: fanning himself, flicking his hair back, setting his mask straight,
+//   - his idle moods: fanning himself, flicking his hair back, setting his tokin straight,
 //     preening a wing, a scoff at the Onmyoji, admiring himself in his half-drawn blade;
 //   - and a layer of life: breath, a slow sway, hair and robe on springs, his wings settling.
 
@@ -390,9 +390,9 @@ export const TENGU_IDLES = {
     const flick = soft(seg(u, 0.3, 0.45)) * (1 - soft(seg(u, 0.7, 1)));
     return pose({ free: lerp2(lerp2(FREE, [3.4, -15.6], k), [6.4, -15], flick), tilt: -3 - 6 * flick, hy: -0.2 - 0.3 * flick, eyes: flick > 0.4 && flick < 0.9 ? 'blink' : null, mouth: 'tengusmirk', brows: 'smug' });
   }],
-  mask: [2.6, (u) => {
+  tokin: [2.6, (u) => {
     const k = soft(seg(u, 0, 0.25)) * (1 - soft(seg(u, 0.75, 1)));
-    return pose({ free: lerp2(FREE, [-3.4 + 0.5 * Math.sin(u * 30) * k, -17], k), tilt: -3 + 6 * k, glance: 0.6 * k, lid: 0.3 });
+    return pose({ free: lerp2(FREE, [1.6 + 0.5 * Math.sin(u * 30) * k, -18.6], k), tilt: -3 + 3 * k, hy: -0.2 + 0.3 * k, eyes: k > 0.5 ? 'half' : null, lid: 0.3 });
   }],
   preen: [3, (u) => {
     const k = bump(u, 0.05, 0.95);

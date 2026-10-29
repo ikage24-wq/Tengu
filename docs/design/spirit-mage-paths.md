@@ -80,10 +80,10 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     games: White Breath (Hearn's "bright white smoke", from her lips), Answer Me (a soul drawn out
     that heals the Onmyoji), Ice Spikes, Icicle Fall (shatters the frozen), Whiteout (leads them
     astray), a snowball, needles and Into the Mist. Her cold builds on a monster till it freezes.
-  - **The tengu is built** (world/tengu.js, render/tengu.js): his look (TENGU_LOOK) is center-parted
-    black hair with a crow's blue sheen, sharp smug gold eyes, a man's brow, a smirk, the black
+  - **The tengu is built** (world/tengu.js, render/tengu.js): his look (TENGU_LOOK) is side-swept
+    black hair with a crow's blue sheen, cut short and tapered at the back, sharp smug crimson eyes, a man's brow, a smirk, the black
     yamabushi kimono with white pompoms, a crimson obi, slate hakama, one-toothed geta, the tokin
-    cap and a red tengu mask pushed to the side of his head; crow wings, a feather fan and a tachi
+    cap (the player had the tengu mask taken off); crow wings, a feather fan and a tachi
     drawn in hand. He strolls fanning himself and flies when the way is long or up a ledge. His
     moves, from the tengu of the stories: Iai, the Kurama Blade (Yoshitsune's teacher), Fan Gust,
     Tengu Wind, Feather Storm, Tengu Stones (tengu-tsubute) and Spirited Away (kamikakushi). Six

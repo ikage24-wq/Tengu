@@ -376,7 +376,7 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   // Side hair over the ears and the sides of the head, so no skin or skull ever shows between
   // the bangs and the hair behind (elf ears are long enough to poke out past it).
   // (`shortSides`: cut short over the ears, tapering to a sideburn, for a man's cut.)
-  const side = f.shortSides ? [[24.6, 10.6], [27, 12.2], [27.2, 16], [25.8, 19.6], [24.8, 20.6], [24.4, 17.4], [24.2, 14]] : [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
+  const side = f.shortSides ? [[22.4, 5.8], [27.6, 7.4], [29.2, 11], [29, 15.6], [26, 19.8], [24.8, 20.6], [24.2, 17.4], [23.4, 11.6]] : [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
   const sideHair = [poly(smooth(side), r.base), poly(smooth(side.map(([x, y]) => [31 - x, y])), r.base)];
   const shapes = [...sideHair, poly(pts, r.base)];
   // Creases rise from the notches.
@@ -1168,6 +1168,8 @@ export function hairNape(style, r) {
 }
 
 // ---------- The tengu's ----------
+// (A crow's blue sheen on his black hair: the warm shine reads as bare scalp on black.)
+const TENGU_SHEEN = '#4a5a8a';
 Object.assign(FRINGES, {
   // Parted in the middle: two long curtains of bangs swept apart off his brow to frame his face,
   // a few sharp strands falling between, the forehead open in a narrow triangle.
@@ -1183,7 +1185,7 @@ Object.assign(STYLES, {
       head: [crown(r, 0.5), streak(HX - 0.6, 2, 9, 7, 0.7, 0.4, r.sh1), streak(HX + 0.6, 2, 22, 7, 0.7, -0.4, r.sh1)],
       hang: [napeShadow(r), ...sheet({ len: 23, flare: 12.4, ends: 'points', n: 7, w0: 12, wave: 0.2 }, r, m, 0.7)],
       front: bangs('tengupart', r, m, [lock(side, 3.2, r.base, m, 1.1, 0.25), lock(fx(side), 3.2, r.sh1, m, 1.1, 0.25),
-        streak(24.6, 13, 25.6, 22, 0.6, -0.2, r.hi, m, 1.1)]),
+        streak(24.6, 13, 25.6, 22, 0.6, -0.2, TENGU_SHEEN, m, 1.1)]),
       tips: [99, 99],
     };
   },
@@ -1204,12 +1206,12 @@ Object.assign(STYLES, {
   tengusweep(r, m) {
     const side = [[24.4, 11.6], [25.6, 15.4], [25, 19.4]];
     return {
-      head: [crown(r, 0), streak(21, 2, 25, 8, 0.7, -0.3, r.sh1), streak(20, 2, 10, 6, 0.8, 0.5, r.sh1)],
+      head: [crown(r, 0.6), streak(21, 2, 25, 8, 0.7, -0.3, r.sh1), streak(20, 2, 10, 6, 0.8, 0.5, r.sh1)],
       // Short and tapered at the back (a man's cut): separate sharp, feathered locks that close in
       // toward the nape, the longest just below his jaw, flicking out a little at the tips.
       hang: [napeShadow(r, 18), ...[[[6.8, 11], [6.2, 16.6], [7.6, 21], [6.6, 23]], [[9.6, 12], [9.4, 18], [10.6, 22.6], [10, 24.4]], [[12.8, 12], [13, 18.4], [13.8, 23]]].flatMap((spine, i) => [
         lock(spine, 5.6 - i * 0.4, r.sh1, m, 0.8), lock(fx(spine), 5.6 - i * 0.4, r.sh1, m, 0.8)]), F(E(HX, 16, 6.4, 5.6, r.sh1))],
-      front: bangs('tenguside', r, m, [lock(side, 2.4, r.base, m, 1.1), lock(fx(side), 2.4, r.sh1, m, 1.1), streak(12, 9, 8.4, 16, 0.6, 0.3, r.hi, m, 1)]),
+      front: bangs('tenguside', r, m, [lock(side, 2.4, r.base, m, 1.1), lock(fx(side), 2.4, r.sh1, m, 1.1), streak(12, 9, 8.4, 16, 0.6, 0.3, TENGU_SHEEN, m, 1)]),
       tips: [99, 99],
     };
   },
@@ -1222,7 +1224,7 @@ Object.assign(STYLES, {
       head: [crown(r, 0.4), streak(HX - 0.6, 2, 9, 7, 0.7, 0.4, r.sh1), streak(HX + 0.6, 2, 22, 7, 0.7, -0.4, r.sh1)],
       hang: [napeShadow(r), ...sheet({ len: 21, flare: 12, ends: 'level', n: 4, w0: 11.8 }, r, m, 0.6)],
       front: bangs('tengupart', r, m, [lock(strand, 2, r.base, m, 1.2, 0.3), lock(fx(strand), 2, r.sh1, m, 1.2, 0.3), lock(tail, 4.4, r.base, m, 1.1, 0.35),
-        streak(25, 23, 26, 34, 0.6, -0.2, r.hi, m, 1.1), F(E(24.8, 22.4, 1.8, 0.9, '#c4242a')), F(E(24.8, 22.4, 0.8, 0.5, '#f2c94c'))]),
+        streak(25, 23, 26, 34, 0.6, -0.2, TENGU_SHEEN, m, 1.1), F(E(24.8, 22.4, 1.8, 0.9, '#c4242a')), F(E(24.8, 22.4, 0.8, 0.5, '#f2c94c'))]),
       tips: [99, 99],
     };
   },
@@ -1233,7 +1235,7 @@ Object.assign(STYLES, {
     return {
       head: [crown(r, 1), streak(HX - 0.6, 2, 8, 8, 0.8, 0.5, r.sh1), streak(HX + 0.6, 2, 23, 8, 0.8, -0.5, r.sh1)],
       hang: [napeShadow(r), ...sheet({ len: 25, flare: 14, ends: 'points', n: 8, w0: 12.6, wave: 0.6 }, r, m, 0.85), ...flick([[5, 20], [2.4, 24.6], [0.6, 26.4]], 3.4, r.sh1)],
-      front: bangs('tenguwolf', r, m, [...flick([[24.6, 12], [26.6, 17], [26.2, 21.4], [28, 23.6]], 3.2), streak(23, 10, 25, 20, 0.6, -0.2, r.hi, m, 1.1)]),
+      front: bangs('tenguwolf', r, m, [...flick([[24.6, 12], [26.6, 17], [26.2, 21.4], [28, 23.6]], 3.2), streak(23, 10, 25, 20, 0.6, -0.2, TENGU_SHEEN, m, 1.1)]),
       tips: [99, 99],
     };
   },
