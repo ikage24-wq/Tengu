@@ -306,6 +306,20 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       }
       return true;
     }
+    // The Onmyoji's oni: her club landing (a red impact flash), her Ground Pound's shock racing out
+    // both ways, and the puff of red smoke she stomps out of when she catches up.
+    case 'onihit': {
+      fxSprite(ctx, 'celhitred', x, y - (f.h ?? 24) * 0.5, { p, flip, scale: f.big ? 0.8 : 0.6 });
+      return true;
+    }
+    case 'onipound': {
+      groundRing(ctx, 'celshockred', x, y, Math.min(1, p * 1.3), f.r ?? 120);
+      return true;
+    }
+    case 'onipuff': {
+      fxSprite(ctx, 'celsmokebomb', x, y, { p, scale: 0.7 });
+      return true;
+    }
     case 'kitsuneblock': {
       // The guardian taking a blow on the haft: a flash of light and paper scraps.
       fxSprite(ctx, 'celspirithit', x, y - 30, { p, flip, scale: 0.55 });

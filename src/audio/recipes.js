@@ -273,6 +273,11 @@ const R = {
   // Purification circle opening (a deep bell and a rising chime) and a monster burning in it,
   // someone raised from the fallen (a harp run and a choir), and each torii gate of Thousand Torii
   // going up (a taiko hit and a bell, the notes rising gate by gate).
+  // The Onmyoji's oni: her club landing (a heavy iron thud), the Ground Pound (a deep crash and
+  // rocks), and her smoke puff.
+  onihit: { db: -10, vary: 6, max: 3, gap: 60, layers: [{ rec: 'punchHeavy', rate: 0.8 }, { rec: 'metalHeavy', rate: 0.7, db: -6 }] },
+  onipound: { db: -8, max: 1, room: true, layers: [thump(60, 500, { slide: -1.2 }), { rec: 'rockHit', rate: 0.7 }, { rec: 'punchHeavy', rate: 0.6, db: -4 }] },
+  onipuff: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.3, len: 500 }, whoosh(300, 300, 1400, { db: -6 })] },
   grandblessing: { db: -9, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1800 }, { seq: 'D5:80 E5:80 G5:80 A5:80 D6:80 E6:900', inst: 'celesta', db: -4 }, { seq: 'r:200 D4+A4+D5+A5:1500', inst: 'choir_aahs', attack: 0.25, db: -6 }] },
   purifycircle: { db: -11, max: 1, room: true, layers: [{ rec: 'bell', len: 1400, rate: 0.7 }, { rec: 'holyProtect', len: 1200, db: -4 }, sparkle('D6:60 A6:60 D7:400', { db: -10 })] },
   purifyburn: { db: -18, vary: 8, max: 3, gap: 90, layers: [{ rec: 'fireImpact', rate: 1.4, len: 300, db: -6 }, sparkle('A6:150', { db: -12 })] },

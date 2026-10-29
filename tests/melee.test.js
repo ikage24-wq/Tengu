@@ -2670,6 +2670,40 @@ test('Thousand Torii: a corridor of gates rises, the guardian cuts at each one, 
   assert.ok(w.char.buffs.thousandtorii?.shield > 0, 'and the last gate wards the party');
 });
 
+// An Onmyoji (past Elowen's trial) with the first of her yokai troupe, the oni.
+function onmyoji() {
+  const w = shrineMage();
+  w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
+  w.char.job = 'onmyoji';
+  run(w, 0.2);
+  return w;
+}
+
+test('the Onmyoji has an oni who fights on her own with her heavy club, and sulks when she whiffs', () => {
+  const w = onmyoji();
+  assert.ok(w.oni, 'the oni is there');
+  assert.equal(shrineMage().oni ?? null, null, 'a Spirit Mage has none');
+  assert.equal(w.guardian ?? null, null, 'and an Onmyoji has no guardian');
+  const seen = new Set();
+  const hp0 = w.mobs.map((m) => m.hp);
+  for (let i = 0; i < 60 * 8; i++) {
+    updateWorld(w, DT, idle);
+    if (w.oni.act) seen.add(w.oni.act.kind);
+  }
+  assert.ok(['jab', 'swat', 'smash', 'upper', 'pound'].filter((k) => seen.has(k)).length >= 2, `a mix of her blows (${[...seen]})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her club lands');
+  // A blow at nothing: she sulks.
+  w.mobs.forEach((m) => { m.x += 3000; });
+  w.oni.act = { kind: 'smash', t0: w.now, dur: 1.35, done: 0 };
+  w.oni.mood = null;
+  let sulked = false;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    sulked ||= w.oni.mood?.kind === 'sulk';
+  }
+  assert.ok(sulked, 'she sulks when she hits nothing');
+});
+
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
   const { blockOnHit } = await import('../src/world/combat.js');
   const w = shrineMaiden();

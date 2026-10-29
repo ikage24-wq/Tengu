@@ -35,6 +35,7 @@ import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickGuardian } from './kitsune.js';
+import { tickOni } from './oni.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 
@@ -1018,6 +1019,7 @@ export function tickMelee(world, dt) {
   tickDoll(world, dt);
   tickShrine(world);
   tickGuardian(world, dt);
+  tickOni(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
