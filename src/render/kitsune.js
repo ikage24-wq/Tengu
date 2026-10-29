@@ -266,10 +266,11 @@ function haftStrike(p) {
 }
 
 // ---------- Her skills (world/kitsune.js MOONFALL, CRESCENT, FLURRY) ----------
-// Moonfall: she raises the naginata straight up over her head in both hands, legs planted wide,
-// leaning back, chin up and eyes shut as it charges (the vortex drags them in: the blade trembles,
-// her robes and tail whip in its wind); then she brings it down (at 0.75) in one crushing blow in
-// front of her, her body following it down; and hauls it back up.
+// Moonfall: she hoists the naginata up over her head in both hands, held level with the blade out
+// behind her, legs planted wide, leaning back, chin up and eyes shut as it charges (the vortex drags
+// them in: the blade trembles, her robes and tail whip in its wind); then she brings it up and over
+// the top and down (at 0.75) in one crushing blow in front of her, her body following it down; and
+// hauls it back up.
 function moonfallPose(u) {
   const lift = soft(seg(u, 0, 0.16));
   const charge = seg(u, MOONFALL.charge, MOONFALL.hit);
@@ -281,9 +282,9 @@ function moonfallPose(u) {
   const tremble = 0.4 * Math.sin(u * 140) * charge * up;
   return pose({
     lean: -0.05 - 0.12 * up + 0.52 * hold, lunge: 8 * hold, squat: 1.8 * up + 4.6 * hold,
-    pole: -0.12 * up + 2.06 * hold + 0.04 * Math.sin(u * 90) * charge * up, grip: 0.24 * rest + 0.3 * up + 0.32 * hold,
-    hand: [8 * rest + 1.4 * up + 8.6 * hold + tremble, -1.2 * rest - 12.5 * up + 4.6 * hold],
-    free: [0.2 * rest + 2.8 * up + 6.4 * hold + tremble, 2.6 * rest - 11.4 * up + 3.4 * hold],
+    pole: -1.45 * up + 2.06 * hold + 0.04 * Math.sin(u * 90) * charge * up, grip: 0.24 * rest + 0.42 * up + 0.32 * hold,
+    hand: [8 * rest + 3.4 * up + 8.6 * hold + tremble, -1.2 * rest - 9.4 * up + 4.6 * hold],
+    free: [0.2 * rest + 4.4 * up + 6.4 * hold + tremble, 2.6 * rest - 9 * up + 3.4 * hold],
     legF: [3.4 + 1.2 * up + 2.8 * hold, 0, 6 + 4 * up + 6 * hold], legB: [-3.6 - 1.2 * up - 1.6 * hold, 0, -6 - 6 * up - 10 * hold],
     tail: 8 - 44 * up - 8 * Math.sin(u * 30) * charge + 24 * hold, curl: -10 - 20 * up + 22 * hold, ears: [-6 + 22 * up + 26 * hold, -6 + 18 * up + 22 * hold],
     cloth: 2.4 * Math.sin(u * 46) * charge * up - 2 * charge * up + 6 * hold,

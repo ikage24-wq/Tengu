@@ -221,7 +221,9 @@ function strike(world, k, kind, M, last) {
   // The naginata's smear in the shrine's white and vermilion: a long low arc for the sweep, a cut
   // from low up over her for the rising cut, a short sharp line ahead for a thrust.
   const [start, sweep, thick] = SMEAR[kind];
-  world.fx.push({ kind: 'arc', x: k.x + dir * 12, y: k.y - 28, dir, r: M.reach * 0.62, start, sweep, thick, big: last && kind !== 'twin', color: last ? '#ff8a7a' : '#fff4ec', t: 0, dur: 0.3 });
+  // (Hundred Thrusts' jabs are straight streaks of light down the blade's line, not arcs.)
+  if (kind === 'flurry' && !last) world.fx.push({ kind: 'kitsunejab', x: k.x + dir * 70, y: k.y - 30 + (Math.random() - 0.5) * 10, dir, t: 0, dur: 0.22 });
+  else world.fx.push({ kind: 'arc', x: k.x + dir * 12, y: k.y - 28, dir, r: M.reach * 0.62, start, sweep, thick, big: last && kind !== 'twin', color: last ? '#ff8a7a' : '#fff4ec', t: 0, dur: 0.3 });
   const hit = world.mobs
     .filter((m) => alive(m) && Math.abs(m.y - k.y) < 70 && (m.x - k.x) * dir > -12 && Math.abs(m.x - k.x) < M.reach + m.def.w / 2)
     .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))

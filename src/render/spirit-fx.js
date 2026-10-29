@@ -193,6 +193,11 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       fxSprite(ctx, 'celmotes', x, y + 40, { t: f.t, scale: 0.6, alpha: 0.7 * fade });
       return true;
     }
+    case 'kitsunejab': {
+      // One of Hundred Thrusts' jabs: a quick straight streak of light along the blade's line.
+      fxSprite(ctx, 'celstreak', x, y, { p, flip, scale: 0.42 });
+      return true;
+    }
     case 'kitsuneblock': {
       // The guardian taking a blow on the haft: a flash of light and paper scraps.
       fxSprite(ctx, 'celspirithit', x, y - 30, { p, flip, scale: 0.55 });
