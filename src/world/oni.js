@@ -81,6 +81,8 @@ export function oniOf(world) {
     k.body.facing = b.facing;
     k.brain = { think: 0, target: null, goal: null, path: null, pathTo: -1, replanAt: 0, stall: 0, lastX: k.body.x, run: false };
     k.act = null;
+    // (Whatever she was in the middle of stays on the last map.)
+    k.air = 0;
     sync(k);
   }
   return k;

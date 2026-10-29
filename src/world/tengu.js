@@ -35,8 +35,9 @@ import { jobChain } from '../data/jobs.js';
 import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 
-// Where he stands when there's nothing to fight: just behind the Onmyoji's shoulder (px).
-const HOME = 40;
+// Where he stands when there's nothing to fight: a little behind the Onmyoji, clear of the
+// yuki-onna at her shoulder (px).
+const HOME = 72;
 const LEASH = { x: 320, y: 170 };
 // How fast he strolls (% of a walk), and when he'd rather fly: further than this from where he's
 // going, or up or down to another ledge.
@@ -90,6 +91,10 @@ export function tenguOf(world) {
     k.act = null;
     k.flight = null;
     k.air = 0;
+    // (Whatever he was in the middle of stays on the last map: his whirlwinds, his mark.)
+    k.hidden = false;
+    k.whirls = [];
+    k.mark = null;
     sync(k);
     if (fresh) world.fx.push({ kind: 'dollfusion', who: k, x: b.x, y: b.y, t: 0, dur: 1.4 });
   }
@@ -389,8 +394,8 @@ function spirited(world, k, a, M, u) {
 }
 
 // ---------- His brain ----------
-// The monster nearest the Onmyoji, and a spot just short of it; with nothing to fight, at the
-// Onmyoji's shoulder.
+// The monster nearest the Onmyoji, and a spot on its far side (he flanks it, clear of the oni in
+// front of it; he flies over when he has to); with nothing to fight, behind the Onmyoji.
 function think(world, k) {
   const br = k.brain;
   const nav = navOf(world.map);
@@ -402,8 +407,11 @@ function think(world, k) {
     const ms = surfaceBelow(nav, m.x, m.y);
     const surf = nav.surfaces[ms];
     if (!surf) return;
-    const side = Math.sign(k.x - m.x) || 1;
-    br.goal = { x: Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, m.x + side * CLOSE)), surface: ms };
+    const side = Math.sign(m.x - b.x) || 1;
+    let x = m.x + side * CLOSE;
+    // (Against a wall there's no far side: then this side.)
+    if (x < surf.x1 + 6 || x > surf.x2 - 6) x = m.x - side * CLOSE;
+    br.goal = { x: Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, x)), surface: ms };
     return;
   }
   br.target = null;

@@ -136,6 +136,13 @@ const easeIn = (v) => Math.max(0, Math.min(1, v)) ** 2.4;
 export function comboStep(world, k) {
   const a = k.act;
   const C = world.troupeCombo;
+  // (The combo's gone, a new map: back to themselves at once, seen and on the ground.)
+  if (!C) {
+    k.act = null;
+    k.air = 0;
+    k.hidden = false;
+    return true;
+  }
   const t = world.now - a.t0;
   const place = (x) => {
     const [gx, gy] = groundAt(world, x, a.y0);

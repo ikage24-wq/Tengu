@@ -536,14 +536,14 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.82) / 0.18));
       const r = f.r ?? 170;
       ctx.save();
-      ctx.globalAlpha *= 0.38 * k;
-      const g = ctx.createRadialGradient(x, y - 30, 10, x, y - 30, r * 1.2);
+      ctx.globalAlpha *= 0.24 * k;
+      const g = ctx.createRadialGradient(x, y - 30, 10, x, y - 30, r);
       g.addColorStop(0, 'rgba(250, 252, 255, 0.95)');
       g.addColorStop(0.6, 'rgba(232, 242, 255, 0.6)');
       g.addColorStop(1, 'rgba(220, 235, 252, 0)');
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.ellipse(x, y - 30, r * 1.2, r * 0.55, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y - 30, r, r * 0.42, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
       groundRing(ctx, 'celringice', x, y, 0.5, r * 0.8, { alpha: 0.3 * k });
@@ -737,7 +737,7 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       const w = m.def.w;
       const h = m.def.h;
       ctx.save();
-      ctx.globalAlpha *= k * Math.min(0.42, 0.09 * n);
+      ctx.globalAlpha *= k * Math.min(0.26, 0.055 * n);
       ctx.fillStyle = '#dcecff';
       ctx.beginPath();
       ctx.ellipse(mx, my - h * 0.5, w * 0.55, h * 0.55, 0, 0, Math.PI * 2);

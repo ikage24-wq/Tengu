@@ -2968,6 +2968,26 @@ test('Troupe Combo: needs full Binding; the yuki-onna freezes them, the tengu li
   assert.ok([w.oni, w.yuki, w.tengu].every((k) => k.act?.kind !== 'combo'), 'and the troupe go back to fighting');
 });
 
+test('a map change mid-finisher leaves nothing behind: no seal, no combo, no one floating or hidden', async () => {
+  const { loadMap } = await import('../src/world/world.js');
+  const w = onmyojiFull();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 100 + i * 40, y: w.body.y, hp: 99999 }));
+  assert.ok(cast(w, 'seimanseal').ok);
+  run(w, 2.6);
+  w.binding = 100;
+  w.bindingAt = w.now;
+  const r = cast(w, 'troupecombo');
+  assert.ok(r.ok, JSON.stringify(r));
+  // (Mid-combo: the tengu hovering, the oni about to leap.)
+  run(w, 2.4);
+  assert.ok(w.troupeCombo, 'the combo is going');
+  loadMap(w, w.map.id, w.char.portal);
+  run(w, 0.5);
+  assert.equal(w.troupeCombo, null, 'the combo is gone');
+  assert.equal(w.seiman, null, 'and the seal');
+  assert.ok([w.oni, w.yuki, w.tengu].every((k) => !k.hidden && !(k.air > 0) && k.act?.kind !== 'combo'), 'the troupe are back on their feet, all of them seen');
+});
+
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
   const { blockOnHit } = await import('../src/world/combat.js');
   const w = shrineMaiden();

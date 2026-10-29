@@ -98,6 +98,13 @@ export function loadMap(world, mapId, portalId) {
   world.cloud = null;
   world.numbers = [];
   world.channel = null;
+  // Spells laid on the last map stay there (Heaven's Lantern, the Shrine Maiden's circle and gates,
+  // the Onmyoji's seal and her troupe's combo).
+  world.lantern = null;
+  world.purify = null;
+  world.torii = null;
+  world.seiman = null;
+  world.troupeCombo = null;
   world.events.push({ type: 'map', mapId: map.id });
   onMapLoaded(world);
 }
