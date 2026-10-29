@@ -8,6 +8,17 @@
 
 export const ONI_SCALE = 2;
 
+// Her look, as the player picked it (2026-10-29): the "sleepy menace" with red skin and her bored
+// face (tools/oni-bored.html no. 1): a jagged silver bob, droopy heavy-lidded gold eyes, a flat
+// bored mouth with one fang poking out, a dark-and-gold diamond on her brow, crimson horns, her
+// black battle kimono and the crimson club. Her other bored faces (side-eye, gum, toothpick, kiseru,
+// deadpan, sigh, unimpressed) are her idle moods.
+export const ONI_LOOK = {
+  hairStyle: 'onibob', hairColor: '#eceaf2', skinTone: '#e4604e', eyeColor: '#ffd23a', eyeStyle: 'onitare', browStyle: 'sharp', earStyle: 'pointed',
+  outfit: 'onibattle', outfitColor: '#ffffff', mouth: 'bored', marks: ['foremark', 'onifang'], lid: 0.45,
+};
+export const ONI_BROWS = [[0.05, 0.15], [0.05, 0.15]];
+
 // His designs: each a look on the hero's body.
 export const ONI_DESIGNS = {
   battle: {

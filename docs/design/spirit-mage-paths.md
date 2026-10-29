@@ -66,7 +66,14 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   - **Sizes (chosen): each its own, by what it is:** the oni big and broad (bigger than the
     guardian), the yuki-onna tall and willowy, the kappa short and stocky, the karakasa small and
     bouncy.
-  - **Order:** the oni first (three designs on his real body to pick from, then his rig and moves).
+  - **Order:** the oni first (designs on her real body to pick from, then her rig and moves).
+  - **The oni's look (chosen 2026-10-29):** a cute-and-badass oni girl on the player character, red
+    skin, a jagged silver bob, droopy heavy-lidded gold eyes, a bored face (a flat mouth with one
+    fang), a dark-and-gold diamond on her brow, crimson horns, a black battle kimono lined crimson
+    (spiked pauldron, bandaged forearms, crimson obi and chain, a big bow, a gold bell, tall geta)
+    and a huge spiked crimson club with glowing engravings (render/oni.js ONI_LOOK). Her other bored
+    faces become idle moods (side-eye, gum bubble, toothpick, kiseru pipe, deadpan, sigh,
+    unimpressed).
 - **Her skills command them all at once (chosen):** e.g. Talisman Storm (her own big attack),
   Rally (they all charge one target together), Night Parade (they rampage across the screen in a
   line), Seal (she pins a monster with a star seal for them to pile on), a mastery; the finisher
