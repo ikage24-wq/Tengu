@@ -25,9 +25,14 @@ import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 const HOME = 34;
 // How far from the Maiden she'll go after a fight (across, and up or down): she never strays.
 const LEASH = { x: 240, y: 150 };
-// How fast she goes (% of a walk): a measured stride, a run to get in front of a threat.
-const WALK = 85;
-const HURRY = 150;
+// How fast she goes (% of a walk): she's big and in no hurry, so she walks slow and unbothered;
+// when she must get somewhere fast she leaps (LEAP), and only runs where a leap won't do (up a
+// rope, over a ledge).
+const WALK = 52;
+const HURRY = 135;
+// Her leap: how far she must have to go before she leaps rather than walks, the furthest one leap
+// carries her, how high it arcs, how long it takes (crouch to landing), and the breath between leaps.
+export const LEAP = { min: 110, far: 170, high: 46, dur: 0.8, every: 0.35 };
 const THINK = 0.25; // seconds between decisions
 // Her moves: how long each lasts (s), when its blows land (0-1), how far the blade reaches past
 // her, how hard (% of a spell), knockback, launch, and how many it can catch.
@@ -99,6 +104,13 @@ export function tickGuardian(world, dt) {
       br.think = THINK;
       think(world, k);
     }
+    if (br.hurry && leap(world, k)) {
+      act(world, k, dt);
+      k.vx = k.body.vx;
+      k.moving = false;
+      k.hurry = false;
+      return;
+    }
     const intent = steer(world, k);
     stepBody(k.body, world.map, intent, dt, { speed: br.hurry ? HURRY : WALK, jump: 100 });
     stuck(world, k, intent, dt);
@@ -110,10 +122,65 @@ export function tickGuardian(world, dt) {
   k.hurry = Boolean(k.brain.hurry) && !k.act;
 }
 
-// Plays out what she's in the middle of, rooted where she stands.
+// A leap, when she has a long way to go along the ledge she's on: a crouch, one great bound in an
+// arc toward where she's going, and a heavy landing. False if a leap won't do.
+function leap(world, k) {
+  const br = k.brain;
+  const g = br.goal;
+  const body = k.body;
+  if (!g || !body.onGround || world.now < (k.leapAt ?? 0)) return false;
+  const nav = navOf(world.map);
+  const here = surfaceOf(nav, body);
+  const dx = g.x - body.x;
+  if (here < 0 || here !== g.surface || Math.abs(dx) < LEAP.min) return false;
+  const surf = nav.surfaces[here];
+  const tx = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, body.x + Math.sign(dx) * Math.min(Math.abs(dx) - 30, LEAP.far)));
+  body.facing = Math.sign(dx);
+  sync(k);
+  k.act = { kind: 'leap', t0: world.now, dur: LEAP.dur, done: 0, from: [body.x, body.y], to: [tx, surf.yAt(tx)] };
+  k.leapAt = world.now + LEAP.dur + LEAP.every;
+  return true;
+}
+// Where a leap carries her at `t` seconds in: a crouch where she stands, the bound (an arc, fast
+// off the ground and hanging at the top), then the landing where she comes down.
+const CROUCH = 0.16;
+const LAND = 0.12;
+function leaping(world, k, a, t) {
+  const body = k.body;
+  const air = LEAP.dur - CROUCH - LAND;
+  const u = Math.max(0, Math.min(1, (t - CROUCH) / air));
+  const e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) ** 2;
+  if (t >= CROUCH && !a.launched) {
+    a.launched = true;
+    world.juice.push({ type: 'dust', x: body.x, y: body.y, count: 4, dir: -k.dir });
+  }
+  body.x = a.from[0] + (a.to[0] - a.from[0]) * e;
+  body.y = a.from[1] + (a.to[1] - a.from[1]) * e - LEAP.high * Math.sin(Math.PI * u);
+  body.vx = t >= CROUCH && u < 1 ? (a.to[0] - a.from[0]) / air : 0;
+  body.vy = 0;
+  body.onGround = u <= 0 || u >= 1;
+  if (u >= 1 && !a.landed) {
+    a.landed = true;
+    Object.assign(body, { x: a.to[0], y: a.to[1], onGround: true });
+    // She's big: the ground feels it.
+    world.juice.push({ type: 'dust', x: body.x, y: body.y, count: 6 });
+    world.juice.push({ type: 'shake', mag: 1.2, dur: 0.15 });
+  }
+  sync(k);
+}
+
+// Plays out what she's in the middle of, rooted where she stands (or carried by a leap).
 function act(world, k, dt) {
   const a = k.act;
   const t = world.now - a.t0;
+  if (a.kind === 'leap') {
+    leaping(world, k, a, t);
+    if (t >= a.dur) {
+      k.act = null;
+      k.brain.path = null;
+    }
+    return;
+  }
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   sync(k);
   const M = KMOVES[a.kind];
@@ -277,7 +344,8 @@ function stuck(world, k, intent, dt) {
   }
   const b = world.body;
   const off = body.y > world.map.height + 200 || body.x < -100 || body.x > world.map.width + 100;
-  if (off || Math.hypot(b.x - body.x, b.y - body.y) > 420) {
+  // (She leaps to catch up from far off; only very far, or lost, does she reappear.)
+  if (off || Math.hypot(b.x - body.x, b.y - body.y) > 640) {
     world.fx.push({ kind: 'dollpop', x: b.x + b.facing * HOME, y: b.y - 24, t: 0, dur: 0.4 });
     Object.assign(body, { x: b.x + b.facing * HOME, y: b.y, vx: 0, vy: 0, rope: null, onGround: b.onGround, surface: b.surface, facing: b.facing });
     br.path = null;

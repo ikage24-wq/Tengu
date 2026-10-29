@@ -2573,3 +2573,22 @@ test("the kitsune guardian steps in front of a hit meant for the Maiden", async 
   assert.ok(w.numbers.some((n) => n.text === 'GUARD'));
   assert.equal(blockOnHit(w, w.body.x + 60, () => 0), false, 'and not again straight away');
 });
+
+test('the kitsune guardian walks slow, and leaps when she has far to go', () => {
+  const w = shrineMaiden();
+  for (const m of w.mobs) m.hp = 0;
+  run(w, 2);
+  Object.assign(w.guardian.body, { x: w.body.x - 220 });
+  w.guardian.act = null;
+  let leapt = false;
+  let landed = false;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    if (w.guardian.act?.kind === 'leap') {
+      leapt = true;
+      landed ||= w.guardian.act.landed === true;
+    }
+  }
+  assert.ok(leapt && landed, 'she covers the ground in a leap');
+  assert.ok(Math.abs(w.guardian.x - w.body.x) < 120, 'and is back by the Maiden');
+});

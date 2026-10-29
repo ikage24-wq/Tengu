@@ -575,50 +575,6 @@ const BASICS = {
   shoe: (p, k, c) => [k.sole(c('#f4eefa')), k.poly([[-3, 2], [3, 2], [2.8, 3], [-2.8, 3]], c('#c9bde0')), k.dot(0.8, -0.2, 0.55, c(BASIC_TRIM))],
 };
 
-// The shrine guardian's war coat over the miko's dress: a long white coat thrown over the
-// shoulders like a cloak (the arms out of it), lined in vermilion, edged in gold, with a high
-// stiff collar standing up behind the head, gold-fringed shoulder boards, and gold-corded
-// fastenings down its edges; it falls to the ankles and swings as she moves.
-const COAT = '#fbfaff';
-const COAT_SH = '#dcd8ec';
-const LINING = '#c8302a';
-const LINING_DK = '#8e1c1c';
-const FRINGE = '#f0d070';
-const FRINGE_DK = '#b8902c';
-OUTFITS.mikocoat = {
-  ...OUTFITS.miko,
-  back: () => {
-    const out = [
-      // The coat behind her, broad across the shoulders and sweeping out wide to the ankles, its
-      // vermilion lining showing between white edges.
-      T([[3, 23.4], [28, 23.4], [34.4, 54.6], [-3.4, 54.6]], LINING), T([[3, 23.4], [7.4, 23.4], [1.6, 54.6], [-3.4, 54.6]], COAT), T([[23.6, 23.4], [28, 23.4], [34.4, 54.6], [29.4, 54.6]], COAT),
-      F(T([[5.6, 24], [7.2, 24], [1.8, 54.2], [0.2, 54.2]], COAT_SH)), F(T([[23.8, 24], [25.4, 24], [31, 54.2], [29.6, 54.2]], COAT_SH)),
-      F(R(-3.4, 53.6, 37.8, 1, FRINGE_DK)), F(limb(7.4, 23.6, 1.6, 54.2, 0.5, 0.5, FRINGE)), F(limb(23.6, 23.6, 29.4, 54.2, 0.5, 0.5, FRINGE)),
-      // A scale pattern in the lining (darker arcs in rows).
-      ...[30, 35, 40, 45, 50].flatMap((y, r) => [6.4, 10.4, 14.4, 18.4, 22.4].map((x) => F(E(x + (r % 2) * 2, y, 1.6, 0.8, LINING_DK)))),
-      // The high collar standing up behind her head, vermilion with a dark inner face and gold edge.
-      T([[5.6, 24.6], [1.6, 11.6], [8.6, 16.6], [15.5, 18.6], [22.4, 16.6], [29.4, 11.6], [25.4, 24.6]], LINING),
-      F(T([[7, 24.2], [3.8, 14.2], [9, 17.8], [15.5, 19.8], [22, 17.8], [27.2, 14.2], [24, 24.2]], LINING_DK)),
-      F(limb(1.6, 11.6, 8.6, 16.6, 0.6, 0.6, FRINGE)), F(limb(29.4, 11.6, 22.4, 16.6, 0.6, 0.6, FRINGE)),
-    ];
-    return out;
-  },
-  front: () => {
-    const out = [];
-    // The coat's front edges hanging either side of her body, gold-edged, with corded fastenings.
-    for (const [x0, x1, s] of [[5.4, 8.6, -1], [22.4, 25.6, 1]]) {
-      out.push(T([[x0, 24.8], [x1, 24.8], [x1 + s * 1.2, 46], [x0 + s * 1.2, 46]], COAT), F(limb(s < 0 ? x1 : x0, 25, (s < 0 ? x1 : x0) + s * 1.2, 45.8, 0.5, 0.5, FRINGE)));
-      for (const y of [30, 34.4, 38.8, 43.2]) out.push(F(R(s < 0 ? x1 - 1.6 : x0 + 0.3, y, 1.4, 0.7, FRINGE_DK)));
-    }
-    // Gold-fringed shoulder boards, broad, set out past her shoulders.
-    for (const cx of [6.4, 24.6]) {
-      out.push(F(E(cx, 25.2, 3.8, 1.6, FRINGE)), F(E(cx, 24.8, 3, 0.8, '#fff2b8')));
-      for (let i = -3; i <= 3; i++) out.push(F(limb(cx + i * 1.05, 26.2, cx + i * 1.3, 29.8, 0.5, 0.35, i % 2 ? FRINGE_DK : FRINGE)));
-    }
-    return out;
-  },
-};
-
 export const STARTER_OUTFITS = Object.keys(OUTFITS);
 const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? OUTFITS.casual);
 

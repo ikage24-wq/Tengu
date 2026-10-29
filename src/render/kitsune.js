@@ -7,9 +7,9 @@
 //     whole figure scaled, never stretched);
 //   - her bearing: a very strong woman, proud, cold and not friendly at all. She stands like a
 //     warlord: feet planted wide, chin up, a heavy-lidded stare, the naginata gripped out at her
-//     side with its butt on the ground and her other arm hanging with the fist clenched, a long war
-//     coat thrown over her shoulders; she walks slow and measured; she never smiles, never hurries
-//     a strike or wastes a motion;
+//     side with its butt on the ground and her other arm hanging; she walks slow and unbothered,
+//     the naginata striking the ground like a staff, a faint aura of spirit light about her feet,
+//     and covers ground in great leaps when she must; she never smiles, never hurries a strike;
 //   - her naginata: a huge, ornate glaive taller than she is (a lacquered vermilion haft bound in
 //     gold, a long curved blade with a groove down it, a gold collar, a great red tassel with a
 //     bell), which she handles with ease: it twirls in her hand, sweeps in great arcs, and is
@@ -21,11 +21,12 @@
 //     robes that sway, the blade's tip drifting, the tassel swinging, slow blinks and glances;
 //   - her moods (cross, pleased, attentive) colour whatever she's doing.
 import { drawPosed } from './hero.js';
+import { fxSprite } from './fx-sprites.js';
 import { KMOVES, CALL } from '../world/kitsune.js';
 
 export const KITSUNE_LOOK = {
   hairStyle: 'hime', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
-  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'sharp', face: 'cool', lid: 0.4, outfit: 'mikocoat', outfitColor: '#ffffff', marks: ['kitsune'],
+  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'sharp', face: 'cool', lid: 0.4, outfit: 'miko', outfitColor: '#ffffff', marks: ['kitsune'],
 };
 // She's big: the whole figure scaled up (never stretched).
 const SCALE = 1.6;
@@ -92,24 +93,46 @@ function standing(bit, u) {
 const BITS = ['glance', 'stamp', 'twirl', 'tail'];
 const BIT_LEN = { glance: 2.4, stamp: 1.8, twirl: 2.2, tail: 2.6 };
 
-// Walking: slow and measured, upright, the naginata carried upright at her side, her free hand
-// still, her robes swaying.
+// Walking: slow and unbothered (she's big, and nothing here worries her). Chin up, eyes half
+// lidded, a heavy, even stride with her hips rolling; the naginata used as a staff, its butt
+// set down beside her with each step of the near foot and swung forward again, her other arm
+// hanging loose, her tail swaying behind. `ph` runs one full stride (both feet) per 2 PI.
 function walking(ph) {
   const s = Math.sin(ph);
   const c = Math.cos(ph);
+  // The staff: planted while the near foot carries her (s < 0), swung on with the next step.
+  const swingOn = Math.max(0, s);
   return pose({
-    legF: [2 + 3.6 * s, -1.6 * Math.max(0, c), 14 * s], legB: [-2 - 3.6 * s, -1.6 * Math.max(0, -c), -14 * s], by: -0.6 * Math.abs(c), tx: 0.6 * s, lean: 0.02,
-    pole: 0.06 + 0.03 * c, grip: 0.28, hand: [4, 0.4 - 0.4 * Math.abs(c)], free: [0.2 - 1 * s, 2.4], tail: 8 - 6 * s, curl: -10 + 8 * c, ears: [-6, -6], cloth: -1 - 1.4 * s,
+    legF: [2.4 + 3.4 * s, -1.4 * Math.max(0, c), 12 * s], legB: [-2.4 - 3.4 * s, -1.4 * Math.max(0, -c), -12 * s], by: -0.5 * Math.abs(c), tx: 0.7 * s, lean: -0.04 + 0.015 * c,
+    pole: -0.06 + 0.16 * swingOn, grip: 0.24, hand: [4 + 1.6 * s, 1.2 - 1.6 * swingOn], free: [0.4 - 0.8 * s, 2.6], tail: 8 - 7 * s, curl: -10 + 8 * c,
+    ears: [-6, -6], cloth: -0.8 - 1.4 * s, hx: 0.4 + 0.25 * s, hy: -0.6, tilt: -3 + 1.2 * s, eyes: 'half',
   });
 }
-// Running (hurrying into place): long low bounding strides, leaning hard, the naginata held low
-// and trailing, ears laid back, her tail streaming behind.
+// Running (only where a leap won't do: hurrying up to a ledge or a rope): long low strides,
+// leaning hard, the naginata held low and trailing, ears laid back, her tail streaming behind.
 function running(ph) {
   const s = Math.sin(ph);
   const c = Math.cos(ph);
   return pose({
     legF: [2.4 + 5 * s, -3 * Math.max(0, c), 26 * s], legB: [-2.4 - 5 * s, -3 * Math.max(0, -c), -26 * s], by: -1 * Math.abs(c), lift: 1.6 * Math.abs(c), lean: 0.26, tx: 1,
     pole: -1.25, grip: 0.42, hand: [-1, 3], free: [2.6 * -s, -0.4], tail: -30 + 4 * s, curl: -10, ears: [22, 18], cloth: -4 - s, mouth: null, hy: 0.2, tilt: 2,
+  });
+}
+
+// A leap (world/kitsune.js LEAP): she sinks into a deep crouch with the naginata swung back, then
+// springs, leaning out over the bound with her knees drawn up, the naginata trailing behind her
+// and her tail and hair streaming; she comes down hard into a crouch (the ground shakes) and rises.
+function leapingPose(u) {
+  const crouch = soft(seg(u, 0, 0.2)) * (1 - ease(seg(u, 0.2, 0.3)));
+  const air = seg(u, 0.2, 0.85);
+  const up = Math.sin(Math.PI * air);
+  const land = bump(u, 0.82, 1);
+  return pose({
+    lean: 0.08 * crouch + (0.22 - 0.3 * air) * (air > 0 && air < 1 ? 1 : 0) + 0.12 * land, squat: 3 * crouch + 3 * land,
+    legF: air > 0 && air < 1 ? [3.6, -4.6 * up, 40 * up] : [3.4, 0, 8], legB: air > 0 && air < 1 ? [-1.2, -3.8 * up, -10 + 30 * up] : [-3.6, 0, -10],
+    pole: lerp(0, -0.9, crouch) + (air > 0 && air < 1 ? -1.25 : 0) * (1 - land), grip: 0.4, hand: [lerp(4.6, 1, Math.max(crouch, up)), 1.6 + 2 * crouch],
+    free: [0.2 - 2.6 * up, 2.6 - 4 * up], tail: 8 - 34 * up, curl: -10 - 10 * up, ears: [10 * up + 6 * crouch, 8 * up + 6 * crouch], cloth: -5 * up,
+    hy: -0.6 + 0.6 * crouch, eyes: 'half', brows: crouch > 0.3 || land > 0.3 ? 'knit' : null,
   });
 }
 
@@ -296,9 +319,9 @@ export function drawKitsune(ctx, world, k, cam, time) {
   let p;
   if (a) {
     const u = clamp01((world.now - a.t0) / a.dur);
-    p = { thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, call: calling, block: blocking, bow: bowing }[a.kind]?.(u) ?? standing(null, 0);
+    p = { thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, call: calling, block: blocking, bow: bowing, leap: leapingPose }[a.kind]?.(u) ?? standing(null, 0);
   } else if (k.moving) {
-    st.walk += dt * Math.min(1.8, Math.abs(k.vx) / 80) * (k.hurry ? 10 : 5.6);
+    st.walk += dt * Math.min(1.8, Math.abs(k.vx) / 52) * (k.hurry ? 10 : 3.6);
     p = k.hurry ? running(st.walk) : walking(st.walk);
   } else p = st.bit ? standing(st.bit.kind, (time - st.bit.t0) / BIT_LEN[st.bit.kind]) : standing(null, 0);
   if (k.mood) p = moodOver(p, k.mood.kind, time, a ? 0.5 : 1);
@@ -352,6 +375,10 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const out = ang > 0.9 && ang < 2.8;
   const drift = 0.025 * Math.sin(time * 0.8) * calm;
   const naginata = (c, hand, flip) => paintNaginata(c, hand, flip, P.pole + drift, P.grip, st, dt, time);
+  // A faint aura of spirit light about her feet, rising as she walks (fainter standing, gone in a
+  // fight or in the air).
+  st.aura = lerp(st.aura ?? 0, a ? 0 : k.moving ? 1 : 0.45, Math.min(1, dt * 3));
+  if (st.aura > 0.05) fxSprite(ctx, 'celspiritaura', x, y + 2, { t: time * 0.9, scale: 0.62, alpha: 0.55 * st.aura });
   drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, {
     scale: SCALE, facing: dir, under: out ? null : naginata, over: out ? naginata : null,
     lean: { tilt: P.lean + lean + 0.012 * shift * calm, lunge: P.lunge, lift: P.lift },
