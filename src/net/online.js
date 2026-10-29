@@ -13,6 +13,7 @@ import { gaugeOf, inForm } from '../world/melee.js';
 import { killMob, hurtPlayer } from '../world/world.js';
 import { playerPose } from '../render/scene.js';
 import { createAnim } from '../render/animator.js';
+import { titleOf } from '../core/collection.js';
 
 export const ROOM_MAX = 4;
 const SEND_EVERY = 1 / 20;
@@ -102,6 +103,7 @@ function handlers(first) {
       online.status = 'on';
       online.order = online.host ? [online.id] : [];
       world.net = api;
+      world.char.playedOnline = true;
       if (online.host) world.log(`Room ${online.code} is open! Friends join with this code.`, '#bff0dc');
       else send({ t: 'hi', name: world.char.name });
       sendProfile(world);
@@ -284,7 +286,7 @@ function adopt(world) {
 function sendProfile(world) {
   online.profileIn = PROFILE_EVERY;
   const c = world.char;
-  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level });
+  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, title: titleOf(c) });
 }
 
 function sendMe(world) {
@@ -406,7 +408,7 @@ function receive(world, msg) {
     case 'prof': {
       const g = ghostOf(msg.id);
       const fresh = g.name === '...';
-      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level });
+      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, title: msg.title ?? null });
       if (fresh && !online.host) world.log(`${msg.name} is in the room.`, '#bff0dc');
       return;
     }

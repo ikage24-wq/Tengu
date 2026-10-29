@@ -134,7 +134,8 @@ jobs.)
   Later: trials for the other classes' advancements, and the Mage's 30 advancement as a trial too.
   Combat additions: command combos (launcher, air combo and slam, dash attack), a hit counter,
   Links, and a finisher per warrior path (more finishers to come for other jobs).
-- [ ] **Phase 3: Collecting.** Monster book, achievements, and titles under the name.
+- [x] **Phase 3: Collecting.** Done: Monster Book (cards and mastery with stat bonuses), 23
+  achievements, and titles under the name (the Collection window, B). Was: Monster book, achievements, and titles under the name.
 - [x] **Phase 4: Chapters 4–7.** Story done with Phase 1 (the crystal mines dungeon is left to the
   dungeon redesign). Was: Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.

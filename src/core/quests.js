@@ -162,6 +162,7 @@ export function completeQuest(char, id, pick = null) {
   char.cash = (char.cash ?? 0) + CASH_PER_QUEST + (q.rewards.cash ?? 0);
   const levels = gainExp(char, q.rewards.exp);
   char.quests[id] = q.daily ? { state: 'done', day: today() } : { state: 'done' };
+  if (q.daily) char.dailiesDone = (char.dailiesDone ?? 0) + 1;
   // Anything left over from carrying it (a quest item never delivered) goes.
   for (const g of q.gives ?? []) removeItem(char.inventory, g.id, countItem(char.inventory, g.id));
   return { ...q.rewards, items, levels };

@@ -1,0 +1,123 @@
+// The Collection window (B): the Monster Book (a card for every monster: shown once you've
+// defeated one, a silhouette until then, with a star once mastered), achievements with their
+// progress, and the titles they unlock (pick one to wear under your name).
+
+import { MOBS } from '../data/mobs.js';
+import { ACHIEVEMENTS, BOOK_MOBS } from '../data/achievements.js';
+import { masteryAt, bookBonus, CARD_HP } from '../core/collection.js';
+import { drawMonster } from '../render/monsters.js';
+import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, sparkle, icon, wrap, bar, fit } from './kit.js';
+
+const W = 340;
+const H = 250;
+const TABS = ['Monster Book', 'Achievements', 'Titles'];
+
+// Monsters by level, the bosses after.
+const ORDER = [...BOOK_MOBS].sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
+
+export function collectionWindow(ui, state, world) {
+  const win = state.windows.collection;
+  if (!windowFrame(ui, win, W, H, 'Collection')) return;
+  const { ctx } = ui;
+  const th = ui.theme;
+  const char = world.char;
+  const tab = tabs(ui, win.x + 10, win.y + 26, TABS, win.tab ?? 0, { w: 100, h: 15 });
+  if (tab !== win.tab) Object.assign(win, { tab, scroll: 0 });
+  const x = win.x + 10;
+  const y = win.y + 48;
+  if (win.tab === 0) book(ui, win, char, world, x, y, th);
+  else if (win.tab === 1) achievements(ui, win, char, x, y, th);
+  else titles(ui, win, char, x, y, th);
+}
+
+// The book: a grid of cards, scrolled by the wheel, with what it's all worth along the bottom.
+function book(ui, win, char, world, x, y, th) {
+  const { ctx } = ui;
+  const cols = 6;
+  const cw = 52;
+  const ch = 58;
+  const rows = 3;
+  const lines = Math.ceil(ORDER.length / cols);
+  if (hover(ui, x, y, cols * cw, rows * ch)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
+  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, lines - rows));
+  ORDER.slice(win.scroll * cols, (win.scroll + rows) * cols).forEach((id, i) => {
+    const def = MOBS[id];
+    const n = char.book?.[id] ?? 0;
+    const seen = n > 0;
+    const master = n >= masteryAt(id);
+    const cx = x + (i % cols) * cw;
+    const cy = y + Math.floor(i / cols) * ch;
+    box(ctx, cx, cy, cw - 4, ch - 4, { fill: master ? '#fff6d6' : seen ? '#ffffff' : '#f2ecf8', edge: master ? '#f0c64a' : seen ? th.light : '#e2d8ee', r: 8, width: master ? 2 : 1.2 });
+    // The monster itself, fitted into the card (a dark silhouette until you've met it).
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(cx + 2, cy + 2, cw - 8, ch - 20);
+    ctx.clip();
+    const k = Math.min(0.55, 34 / def.h, 40 / def.w);
+    ctx.translate(cx + (cw - 4) / 2, cy + ch - 20);
+    ctx.scale(k, k);
+    if (!seen) {
+      ctx.filter = 'brightness(0) opacity(0.25)';
+    }
+    drawMonster(ctx, { def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', flash: 0, stagger: 0, phase: 0, age: 9, dying: 0, uid: 7000 + i, aggroUntil: 0, attackAt: -9, gloatAt: -9 }, 0, 0, world.now, world.now);
+    ctx.restore();
+    text(ctx, seen ? fit(ctx, def.name.split(',')[0], cw - 8, 6, true) : '???', cx + (cw - 4) / 2, cy + ch - 12, { size: 6, bold: true, align: 'center', color: seen ? COLORS.ink : COLORS.muted });
+    if (master) sparkle(ctx, cx + cw - 11, cy + 7, 3, '#f0b53a');
+    if (hover(ui, cx, cy, cw - 4, ch - 4)) {
+      tooltip(ui, seen ? [
+        { text: def.name, bold: true },
+        { text: `Lv ${def.level}${def.boss ? ' boss' : ''}`, size: 8, color: COLORS.muted },
+        { text: `Defeated ${n.toLocaleString()} / ${masteryAt(id)} to master`, size: 8, color: master ? '#3f9f5f' : COLORS.ink },
+        { text: master ? 'Mastered: +1 to every stat' : `Card: +${CARD_HP} max HP`, size: 8, color: '#3f9f5f' },
+      ] : [{ text: 'Not met yet', bold: true }, { text: `Lv ${def.level}`, size: 8, color: COLORS.muted }]);
+    }
+  });
+  const b = bookBonus(char);
+  const cards = Object.keys(char.book ?? {}).filter((id) => MOBS[id]).length;
+  text(ctx, `${cards} / ${ORDER.length} cards`, x, y + rows * ch + 10, { size: 8, bold: true, color: th.dark });
+  text(ctx, `Book bonus: Max HP +${b.hp}${b.str ? `, all stats +${b.str}` : ''}`, x + 90, y + rows * ch + 10, { size: 7.5, color: '#3f9f5f', bold: true });
+  if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 10, { size: 6.5, align: 'right', color: COLORS.muted });
+}
+
+function achievements(ui, win, char, x, y, th) {
+  const { ctx } = ui;
+  const rowH = 28;
+  const rows = 6;
+  if (hover(ui, x, y, W - 20, rows * rowH)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
+  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, ACHIEVEMENTS.length - rows));
+  const got = Object.keys(char.achievements ?? {}).length;
+  text(ctx, `${got} / ${ACHIEVEMENTS.length} earned`, x, y + rows * rowH + 10, { size: 8, bold: true, color: th.dark });
+  ACHIEVEMENTS.slice(win.scroll, win.scroll + rows).forEach((a, i) => {
+    const ry = y + i * rowH;
+    const have = Boolean(char.achievements?.[a.id]);
+    box(ctx, x, ry, W - 20, rowH - 3, { fill: have ? '#effcf3' : '#ffffff', edge: have ? COLORS.good : th.light, r: 8, width: 1 });
+    ctx.fillStyle = have ? COLORS.good : '#ddd2e8';
+    ctx.beginPath();
+    ctx.arc(x + 12, ry + 12, 7, 0, Math.PI * 2);
+    ctx.fill();
+    icon(ctx, have ? 'check' : 'lock', x + 12, ry + 12, 8, '#ffffff');
+    text(ctx, a.name, x + 24, ry + 10, { size: 8, bold: true, color: have ? '#2f8f52' : COLORS.ink });
+    text(ctx, fit(ctx, a.desc, 160, 6.5, false), x + 24, ry + 19.5, { size: 6.5, color: COLORS.muted });
+    text(ctx, `"${a.title}"`, x + W - 26, ry + 10, { size: 7, bold: true, align: 'right', color: have ? '#c99a1f' : COLORS.muted });
+    const p = !have && a.progress?.(char);
+    if (p) {
+      bar(ctx, x + W - 96, ry + 14, 70, 5, p[0] / p[1], th.main, null);
+      text(ctx, `${p[0].toLocaleString()}/${p[1].toLocaleString()}`, x + W - 26, ry + 23, { size: 5.5, align: 'right', color: COLORS.muted });
+    }
+  });
+}
+
+function titles(ui, win, char, x, y, th) {
+  const { ctx } = ui;
+  const earned = ACHIEVEMENTS.filter((a) => char.achievements?.[a.id]);
+  wrap(ctx, 'Wear a title under your name. Earn more from achievements.', x, y + 2, W - 20, { size: 7.5, color: COLORS.muted });
+  const list = [{ id: null, title: 'No title' }, ...earned];
+  list.forEach((a, i) => {
+    const cx = x + (i % 2) * 160;
+    const cy = y + 14 + Math.floor(i / 2) * 22;
+    if (cy > win.y + H - 26) return;
+    const on = (char.title ?? null) === a.id;
+    if (button(ui, cx, cy, 154, 19, a.title, { primary: on, size: 8 })) char.title = a.id;
+  });
+  if (!earned.length) wrap(ctx, 'No titles yet. Your first comes from saying hello in Sprout Village!', x, y + 44, W - 20, { size: 8 });
+}

@@ -3,6 +3,7 @@
 
 import { ITEMS } from '../data/items.js';
 import { SETS } from '../data/sets.js';
+import { bookBonus } from './collection.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { jobChain } from '../data/jobs.js';
 import { activeStar } from './inventory.js';
@@ -83,7 +84,8 @@ export function computeStats(char, now = 0) {
   const pas = passiveBonus(char);
   const buf = buffBonus(char, now);
   const set = setBonus(char.equipment);
-  const get = (k) => (eq[k] ?? 0) + (pas[k] ?? 0) + (buf[k] ?? 0) + (set[k] ?? 0);
+  const book = bookBonus(char);
+  const get = (k) => (eq[k] ?? 0) + (pas[k] ?? 0) + (buf[k] ?? 0) + (set[k] ?? 0) + (book[k] ?? 0);
 
   const str = char.base.str + get('str');
   const dex = char.base.dex + get('dex');

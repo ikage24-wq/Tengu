@@ -14,6 +14,7 @@ import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
+import { titleOf } from '../core/collection.js';
 
 const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings' };
 const STAT_COLORS = { str: '#ff7a6b', dex: '#3fc48a', int: '#5aa8ff', luk: '#f0b53a' };
@@ -65,8 +66,18 @@ export function profileWindow(ui, state, world) {
   };
   tag(buildLabel(char), ly + 154, th.main);
   if (pro) tag('★ Top player', ly + 169, '#e0a52f');
-  if (who.kind === 'self') tag("That's you!", ly + 169, COLORS.accent);
+  if (who.kind === 'self') {
+    tag("That's you!", ly + 169, COLORS.accent);
+    // Your Monster Book, achievements and titles (also B).
+    if (button(ui, lx + 12, ly + 183, 80, 16, 'Collection', { size: 7.5, iconName: 'crown', theme: 'gold' })) {
+      state.windows.collection.open = true;
+      state.order = [...state.order.filter((k) => k !== 'collection'), 'collection'];
+    }
+  }
   else if (bot?.shop) tag('Shop open', ly + 184, '#ff8fc1');
+  // The title they wear.
+  const title = who.kind === 'self' ? titleOf(char) : null;
+  if (title) text(ctx, title, lx + 52, ly + 146, { size: 6.5, bold: true, align: 'center', color: '#c99a1f' });
   if (bot?.party && bot.ai) tag(`Party · ${PLAYSTYLES[bot.ai.kind].label}`, ly + (pro ? 184 : 169), PLAYSTYLES[bot.ai.kind].color);
 
   // Tabs: gear, stats, and their shop if one is open.

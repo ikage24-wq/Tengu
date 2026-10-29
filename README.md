@@ -695,6 +695,11 @@ to clear it.
   rematch. Wearing two, three or four pieces adds the set's bonuses (shown on every piece). Tora
   in Ember Crag polishes any worn piece up to +10 for gold: each step adds attack, magic, or
   defense and HP, gets less likely to take as it climbs, and a miss only costs the gold.
+- **Collection (B)** — the Monster Book fills a card for every monster you defeat (or help defeat):
+  each card adds max HP, and a card mastered (100 defeats, 5 for a boss) adds a point to every
+  stat. 23 achievements (levels, hunting, the book, each queen, the story, a full set, a +10
+  polish, quests and dailies, playing online, adopting a Mochi, a fortune) each unlock a title to
+  wear in gold under your name, which friends online see too.
 - **Quests and NPCs** — 39 quests from every town's people, covering every field from level 1 to
   48: hunts and fetches, errands (talk to someone, deliver a letter or a parcel, climb to the top
   of a map), short chains (Captain Rook's Windy Canyon trouble leads to Bramble), a task from each

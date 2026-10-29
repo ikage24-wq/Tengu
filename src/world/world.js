@@ -25,6 +25,7 @@ import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portal
 import { lastRite } from './shrine.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { makeEquip } from '../core/items.js';
+import { recordBook, newAchievements } from '../core/collection.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
@@ -375,6 +376,10 @@ export function killMob(world, m, byParty = false) {
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
   onMobKilled(world, m);
+  // The Monster Book.
+  const card = recordBook(char, m.def.id);
+  if (card === 'card') world.log(`New Monster Book card: ${m.def.name}!`, '#c9a6ff');
+  if (card === 'master') world.log(`${m.def.name} card mastered! +1 to every stat.`, '#ffe36b');
   for (const qid of recordKill(char, m.def.id)) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
@@ -705,6 +710,17 @@ export function updateWorld(world, dt, input) {
   world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < 0.5);
 
   world.drops = updateDrops(world.drops, world.map, dt);
+
+  // ----- Achievements (checked a few times a second) -----
+  world.achieveIn = (world.achieveIn ?? 0) - dt;
+  if (world.achieveIn <= 0) {
+    world.achieveIn = 0.5;
+    const earned = newAchievements(char);
+    // Several at once (an old save catching up) make one note instead of a flood.
+    if (earned.length > 2) world.log(`${earned.length} achievements earned! See them with B.`, '#ffe36b');
+    else for (const a of earned) world.log(`Achievement: ${a.name}! New title: "${a.title}" (B to wear it).`, '#ffe36b');
+    if (earned.length) world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
+  }
 
   // ----- Regeneration -----
   world.regenTimer -= dt;
