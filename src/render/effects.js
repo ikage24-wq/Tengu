@@ -1006,6 +1006,11 @@ function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
   const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  if (f.flat && (school === 'ink' || school === 'shadow')) {
+    // A thief's whirl: a ring of her own cut (brushed ink, or violet moonlight) swept round her.
+    fxSprite(ctx, school === 'ink' ? 'celringink' : 'celringshadow', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 34, sy: 0.42 });
+    return;
+  }
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
     fxSprite(ctx, school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });

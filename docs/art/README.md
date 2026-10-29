@@ -279,6 +279,19 @@ carry an improvement across every part of the game it applies to.
     and showed hard rings (a painted fall-off fixed it), and the crescent drawn from many short
     strokes banded where they overlapped (painted as one field instead). The first realistic cuts
     were also too faint to read over a bright map; they need a solid violet body under the glow.
+  - The Thief's paths, a pair from the same shrine, both realistic (no outlines). The Shinobi is
+    ink: her cuts are wet brush strokes that dry out into bristle streaks at the tail, with a thin
+    red sheen and drops flying off; a hit is a splash of ink with a thin red cut; seal tags are
+    paper with a red brush glyph that burst in a red circle of light; her smoke is white; her
+    emblem a red seal stamp; Ki is ink rising round her; her finisher a giant fox painted in ink
+    in one sweep of the brush. Ink alone vanished on dark maps, so every ink shape keeps a little
+    red light (an edge, a ring, a seal). The Kitsune is blue fox fire: every flame is a shape's
+    distance field burned by turbulence scrolling up through it, so the edge breaks into tongues
+    that lick up and tear off; it's deep blue through the body and white only at the hottest core
+    (all-white flames read as torn paper with a blue outline), with gold sparks; her tails are
+    plumes of it fanned behind her, her emblem a fox's face in flame, her finisher a fox of fire
+    with nine tails. Smooth teardrop flames first came out looking like water drops: real fire
+    needs the turbulence.
   - The Mage (first job) is rose pink and mint: pink orbs wrapped in turning petals with petal
     trails, a flower that pops open and scatters on every hit, a whirling storm of petals on mint
     wind, a mint flower of light with a rising column for every heal (this replaced the old

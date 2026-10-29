@@ -269,7 +269,7 @@ function tailsAura(ctx, x, y, t, s, k, layer, dir = 1) {
     for (let i = 0; i < n; i++) {
       const spread = n === 1 ? 0 : i / (n - 1) - 0.5;
       const sway = Math.sin(t * 2.2 + i * 0.9) * 0.08;
-      fxSprite(ctx, 'celfoxtail', x - dir * 4, y - 14 * s, { t: t + i * 0.13, flip: dir < 0, rot: dir * (spread * 1.3 + sway), scale: s * (0.3 + 0.03 * (4 - Math.abs(i - (n - 1) / 2))), alpha: 0.9 });
+      fxSprite(ctx, 'celfoxtail', x - dir * 8, y - 12 * s, { t: t + i * 0.13, flip: dir < 0, rot: dir * (spread * 1.5 + sway - 0.15), scale: s * (0.48 + 0.04 * (4 - Math.abs(i - (n - 1) / 2))), alpha: 0.95 });
     }
     if (k >= 1) fxSprite(ctx, 'celringfox', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
     return;

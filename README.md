@@ -530,9 +530,36 @@ to clear it.
     **Down + attack** leans out and shoots down at whatever is below, **attacking in the air**
     shoots down at them and holds you up, and **attacking out of a run** is a slide shot. A
     finisher shot that connects opens a Link, for every archer.
-- **Thief paths** — none for now: the Assassin and the Night Lord were removed, and new paths
-  are to come. A character who had picked one is a Thief again, with the points from that path's
-  skills given back.
+- **Thief paths (level 30)** — at 30, Vex in Pastel Harbor sets **The Thief's Trial** (put 20
+  Dullahans down in the Twilight Ruins); pass it and pick a path, a pair from the same mountain
+  shrine. Each keeps to one of the Thief's two weapons, and keeps her first-job skills for it.
+  (The old Assassin and Night Lord were removed: those characters became the Shinobi and the
+  Kitsune, with their old skills' points given back.)
+  - **Shinobi** (dagger; ink black, red seals, white smoke): her own combo (a kunai stab, a quick
+    slash, then an X-cut and a backflip that throws two kunai down) and a pool it mixes in (a blur
+    of stabs, a dash cut, a palm strike that slaps on a seal that bursts a beat later, a spinning
+    throw of three kunai, a vaulting cut, a whirl); her command moves are a launcher that throws a
+    kunai up after them, air cuts then a fan of kunai thrown down, and a dash in a burst of smoke.
+    **Ki** builds from every hit and every blow she dodges. Full, **Shadow Clones**: two ink clones
+    of her repeat every attack. Skills: **Kunai Barrage** (three presses: two kunai, two more, a
+    spinning throw of five), **Exploding Seal** (a seal slapped on, bursting a moment later on
+    everything close), **Smoke Bomb** (untouchable a moment in white smoke, the monsters lose
+    her, she dodges far more, and Ki rises), **Log Swap** (the next blow hits a log and she
+    reappears behind whoever struck), **Shinobi Mastery**, and the finisher **Thousand Cuts**
+    (needs full Ki: ink spills over the world, she flickers from monster to monster cutting each,
+    then a giant fox of ink sweeps the line).
+  - **Kitsune** (gauntlet; gold and blue fox fire): her own combo (a fox-fire star, two more, then
+    a backflip that whips a great fox-fire star through the line) and a pool (a twirling throw, a
+    fan of three, a pounce that throws down as she lands); her command throws go up at fliers,
+    down from a hang in the air, and out of a pounce on the run. Her stars set monsters burning.
+    **Tails** grows from one fox-fire tail to nine (drawn behind her) as her stars land, faster on
+    burning monsters; every three tails a fox-fire illusion throws a star beside each of hers, and
+    with all nine, **Nine Tails**, three of them. Skills: **Fox-Fire Fan** (three presses: two fans
+    of stars, then a great star through the line), **Fox Illusion** (two illusions at her side
+    each throw a free star with hers), **Fox-Fire Trap** (a ring of fox fire on the ground that
+    burns them, then bursts), **Fox Hop** (springs back out of reach, leaving a decoy of fox fire
+    that bursts), **Kitsune Mastery**, and the finisher **Nine-Tail Blaze** (needs all nine
+    tails: nine stars rain down burning, then a giant fox of blue fire pounces through the line).
 - **Mage support** — mages are the healers: **Healing Bloom** heals you and every party member
   around you; **Bloom Barrier** wraps you and the party around you in a bud of petals that soaks up
   damage until it bursts; **Rebloom** gets a fallen party member nearby back up, even mid-fight;

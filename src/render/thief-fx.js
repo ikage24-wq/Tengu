@@ -143,7 +143,7 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
     }
     case 'logpoof': {
       // Log Swap: a log drops where she stood, in a burst of smoke.
-      fxSprite(ctx, 'cellog', x, y + 2, { p: Math.min(1, p * 1.6), flip, scale: 0.42, alpha: p > 0.8 ? (1 - p) / 0.2 : 1 });
+      fxSprite(ctx, 'cellog', x, y + 2, { p: Math.min(1, p * 1.6), flip, scale: 0.62, alpha: p > 0.8 ? (1 - p) / 0.2 : 1 });
       fxSprite(ctx, 'celsmokebomb', x, y + 6, { p, scale: 0.65 });
       return true;
     }
@@ -177,7 +177,7 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
     // ---------- The Kitsune (gold and blue fox fire) ----------
     case 'foxhit': {
       // A fox-fire star landing: blue flame bursting up off the monster with gold sparks.
-      fxSprite(ctx, 'celfoxhit', x, y - (f.h ?? 24) / 2 + 10, { p, scale: f.big || f.crit ? 0.85 : 0.6 });
+      fxSprite(ctx, 'celfoxhit', x, y - (f.h ?? 24) / 2 + 12, { p, scale: f.big || f.crit ? 1.1 : 0.85 });
       if (f.crit) fxSprite(ctx, 'celcrit', x, y - (f.h ?? 24) / 2, { p, scale: 0.45 });
       if (f.big) groundRing(ctx, 'celringfox', x, y, p, 46);
       return true;
