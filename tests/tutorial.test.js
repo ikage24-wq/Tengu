@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { createWorld, updateWorld, loadMap, useItem } from '../src/world/world.js';
 import { createCharacter, autoAssignAp, learnSkill, equipFromBag } from '../src/core/character.js';
 import { acceptQuest, completeQuest } from '../src/core/quests.js';
-import { addItem } from '../src/core/inventory.js';
+import { addItem, countItem } from '../src/core/inventory.js';
 import { LESSONS, currentLesson } from '../src/world/tutorial.js';
 import { MAPS } from '../src/data/maps.js';
 
@@ -71,9 +71,10 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
     run(w, idle, 0.1);
   }
   assert.ok(step(w) >= 10, `fought and looted (lesson ${step(w)})`);
-  useItem(w, 'red_potion');
+  const before = { step: step(w), n: countItem(c.inventory, 'red_potion'), ready: w.itemReadyAt, now: w.now, scratch: JSON.stringify(c.tutorial.scratch) };
+  const drank = useItem(w, 'red_potion');
   run(w, idle, 0.1);
-  assert.ok(step(w) >= 11, 'drank a potion');
+  assert.ok(step(w) >= 11, `drank a potion (${JSON.stringify({ ...before, drank, after: countItem(c.inventory, 'red_potion'), stepAfter: step(w) })})`);
   completeQuest(c, 'tut_practice');
   run(w, idle, 0.1);
   assert.ok(c.level >= 2 && c.sp > 0, `levelled up with a skill point (Lv ${c.level}, ${c.sp} SP)`);

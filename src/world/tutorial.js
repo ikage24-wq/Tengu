@@ -20,7 +20,12 @@ export const LESSONS = [
   { hint: 'Talk to Kuro with [↑] and take his practice quest.', done: (w) => Boolean(w.char.quests.tut_practice) },
   { hint: 'Attack the Kitsune Kits with [Z]. Defeat 3 of them.', done: (w) => (w.char.quests.tut_practice?.kills?.puffle ?? 0) >= 3 || questState(w.char, 'tut_practice') !== 'active' },
   { hint: 'Walk over what they dropped and press [X] to pick it up. Get 3 Fox Fluff.', done: (w) => countItem(w.char.inventory, 'fluff') >= 3 || questState(w.char, 'tut_practice') === 'done' },
-  { hint: 'Hurt? Press [1] to drink a red potion (it sits on that hotkey).', start: (w, t) => { t.n = countItem(w.char.inventory, 'red_potion'); }, done: (w, t) => countItem(w.char.inventory, 'red_potion') < t.n },
+  // (Potions picked up meanwhile raise the count it watches, so only drinking one counts.)
+  { hint: 'Hurt? Press [1] to drink a red potion (it sits on that hotkey).', start: (w, t) => { t.n = countItem(w.char.inventory, 'red_potion'); }, done: (w, t) => {
+    const n = countItem(w.char.inventory, 'red_potion');
+    if (n > t.n) t.n = n;
+    return n < t.n;
+  } },
   { hint: 'Hand the quest in to Kuro: walk up and press [↑].', done: (w) => questState(w.char, 'tut_practice') === 'done' },
   { hint: 'You learned a skill point! Open Skills with [K] and learn Quick Step.', done: (w) => (w.char.skills.quickstep ?? 0) > 0 },
   { hint: 'Drag Quick Step from the Skills window onto an empty hotkey, then press that key.', done: (w) => Object.values(w.char.hotkeys).some((h) => h?.skill === 'quickstep') },
