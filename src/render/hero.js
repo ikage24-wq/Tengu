@@ -296,6 +296,12 @@ const EYE_LOOK = {
   wink: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
   // A doll's: big and perfectly round, almost all iris, a glass ring for a pupil, barely a lash.
   doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
+  // The oni's own (render/oni.js; never offered in the creator): sharp and upswept with slit
+  // pupils; huge and round with star pupils; droopy and heavy-lidded; wide with a small fierce iris.
+  onisharp: { rx: 2.4, ry: 2.2, tilt: 0.6, wing: 2, flicks: 2, iris: 1.05, pupil: 'slit' },
+  oniround: { rx: 2.35, ry: 2.95, tilt: 0.05, wing: 0.7, flicks: 2, iris: 1.45, pupil: 'star', sparkle: true },
+  onitare: { rx: 2.3, ry: 2.3, tilt: -0.28, wing: 1.2, flicks: 1, iris: 1.25, open: 0.6 },
+  onisanpaku: { rx: 2.35, ry: 2.6, tilt: 0.3, wing: 1.4, flicks: 2, iris: 0.8 },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -495,6 +501,17 @@ function mouthShapes(kind, sk) {
       const w = kind === 'sob2' ? 0.35 : 0;
       return [F(T([[x - 0.9 - w, MY + 0.1], [x + 0.9 + w, MY + 0.1], [x + 1.7 + w, MY + 1.8], [x - 1.7 - w, MY + 1.8]], MOUTH)), F(E(x, MY + 1.5, 0.9, 0.35, TONGUE))];
     }
+    // The oni's own: a wide cocky grin with a fang at each corner; tongue stuck out with a fang; a
+    // grin of jagged shark teeth; a smug ":3" with a fang; a lopsided smirk showing a fang.
+    case 'onigrin': return [F(T([[x - 2.4, MY - 0.6], [x + 2.6, MY - 0.9], [x + 1.6, MY + 1.4], [x, MY + 1.9], [x - 1.6, MY + 1.3]], MOUTH)), F(T([[x - 2.1, MY - 0.5], [x + 2.3, MY - 0.8], [x + 2.1, MY - 0.1], [x - 1.9, MY + 0.1]], '#ffffff')),
+      F(T([[x - 1.9, MY - 0.2], [x - 1.1, MY - 0.2], [x - 1.5, MY + 1.1]], '#ffffff')), F(T([[x + 1.2, MY - 0.4], [x + 2, MY - 0.5], [x + 1.6, MY + 0.9]], '#ffffff')), F(E(x, MY + 1.3, 0.9, 0.4, '#ff9fb8'))];
+    case 'onibleh': return [stroke([[x - 1.8, MY + 0.2], [x, MY + 0.6], [x + 1.8, MY - 0.4]], 0.62, LIP), F(E(x - 0.4, MY + 1.4, 0.85, 1.05, TONGUE)), F(R(x - 0.45, MY + 0.9, 0.15, 1.1, '#e86d8c')),
+      F(T([[x + 0.7, MY + 0.3], [x + 1.6, MY + 0.1], [x + 1.2, MY + 1.5]], '#ffffff'))];
+    case 'onishark': return [F(T([[x - 2.2, MY - 0.4], [x + 2.4, MY - 0.6], [x + 1.6, MY + 1.6], [x - 1.6, MY + 1.6]], MOUTH)),
+      F(T([[x - 2, MY - 0.3], [x - 1.4, MY + 0.7], [x - 0.8, MY - 0.3], [x - 0.2, MY + 0.7], [x + 0.4, MY - 0.4], [x + 1, MY + 0.6], [x + 1.6, MY - 0.5], [x + 2.2, MY + 0.4], [x + 2.3, MY - 0.6]], '#ffffff')),
+      F(T([[x - 1.4, MY + 1.6], [x - 0.9, MY + 0.9], [x - 0.3, MY + 1.6], [x + 0.3, MY + 0.9], [x + 0.9, MY + 1.6], [x + 1.4, MY + 1]], '#ffffff'))];
+    case 'onicat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), F(T([[x + 0.9, MY + 0.8], [x + 1.7, MY + 0.7], [x + 1.3, MY + 1.9]], '#ffffff'))];
+    case 'onismirk': return [stroke([[x - 1.6, MY + 0.7], [x + 0.2, MY + 0.6], [x + 1.6, MY - 0.6], [x + 2, MY - 0.9]], 0.62, LIP), F(T([[x + 0.8, MY + 0.4], [x + 1.6, MY - 0.1], [x + 1.4, MY + 1.3]], '#ffffff'))];
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
 }
@@ -519,6 +536,35 @@ function faceExtras(extra) {
       const ox = FACE_X + EYE_DX + 1.6;
       out.push(F(T([[ox - 0.6, EYE_Y - 0.5], [ox + 4.6, EYE_Y - 1.6], [ox + 4.2, EYE_Y - 0.9], [ox - 0.2, EYE_Y + 0.5]], '#ffd36a')));
       out.push(F(T([[ox, EYE_Y - 1.8], [ox + 0.5, EYE_Y - 0.2], [ox, EYE_Y + 1.4], [ox - 0.5, EYE_Y - 0.2]], '#fff6d0')), F(T([[ox - 1.4, EYE_Y - 0.2], [ox, EYE_Y - 0.6], [ox + 1.4, EYE_Y - 0.2], [ox, EYE_Y + 0.2]], '#fff6d0')));
+      continue;
+    }
+    if (e === 'bandaid') {
+      // A pink sticking plaster across her near cheek, its pad and a few dots.
+      out.push(F(T([[FACE_X + 4.4, 18.6], [FACE_X + 8.4, 17.2], [FACE_X + 8.9, 18.6], [FACE_X + 4.9, 20]], '#ffd2c8')), F(T([[FACE_X + 5.9, 18.1], [FACE_X + 7.3, 17.6], [FACE_X + 7.8, 19], [FACE_X + 6.4, 19.5]], '#ffb4a6')));
+      for (const [dx, dy] of [[5.1, 19.2], [8.1, 18.2]]) out.push(F(E(FACE_X + dx, dy, 0.18, 0.18, '#e08a7a')));
+      continue;
+    }
+    if (e === 'warpaint') {
+      // Crimson war paint: two stripes under each eye.
+      for (const side of [-1, 1]) {
+        const ox = FACE_X + EYE_DX * side;
+        for (const dy of [3.4, 4.6]) out.push(F(T([[ox - 1.6, EYE_Y + dy], [ox + 1.6, EYE_Y + dy - 0.5], [ox + 1.6, EYE_Y + dy + 0.1], [ox - 1.6, EYE_Y + dy + 0.6]], '#d8303a')));
+      }
+      continue;
+    }
+    if (e === 'foremark') {
+      // A crimson diamond on her brow with a dot either side.
+      out.push(F(T([[FACE_X, 11.4], [FACE_X + 0.9, 12.8], [FACE_X, 14.2], [FACE_X - 0.9, 12.8]], '#d8303a')), F(E(FACE_X - 1.8, 13.4, 0.3, 0.3, '#d8303a')), F(E(FACE_X + 1.8, 13.4, 0.3, 0.3, '#d8303a')));
+      continue;
+    }
+    if (e === 'scar') {
+      // An old scar down through her far eyebrow, with its stitch marks.
+      const sx = FACE_X - EYE_DX - 0.4;
+      out.push(stroke([[sx - 0.8, EYE_Y - 4.6], [sx + 0.2, EYE_Y - 1.8]], 0.5, '#c8645a'), stroke([[sx + 0.1, EYE_Y + 1.6], [sx + 0.9, EYE_Y + 3.4]], 0.5, '#c8645a'));
+      for (const t of [0.25, 0.75]) {
+        const [px, py] = [sx - 0.8 + 1 * t, EYE_Y - 4.6 + 2.8 * t];
+        out.push(stroke([[px - 0.6, py + 0.2], [px + 0.6, py - 0.2]], 0.35, '#c8645a'));
+      }
       continue;
     }
     if (e === 'onifang') {

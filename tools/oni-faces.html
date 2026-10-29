@@ -1,0 +1,46 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: samples of the oni's face and hair (all on the player character, all her own parts:
+// hair.js TROUPE_HAIR, hero.js's oni eyes, mouths and marks), each a different character and
+// expression, to pick from.
+import { drawPosed } from '../src/render/hero.js';
+import { paintKanabo } from '../src/render/oni.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const BASE = { hairColor: '#eceaf2', skinTone: '#ffe6da', eyeColor: '#ffb02a', browStyle: 'sharp', earStyle: 'pointed', outfit: 'onibattle', outfitColor: '#ffffff' };
+const SAMPLES = [
+  ['1. Bratty', { hairStyle: 'onitwin', eyeStyle: 'oniround', mouth: 'onibleh', marks: ['bandaid'] }, { brows: [[0.25, -0.35], [0.25, -0.35]] }],
+  ['2. Cocky', { hairStyle: 'onisilver', eyeStyle: 'onisharp', mouth: 'onigrin', marks: ['warpaint'] }, { brows: [[-0.35, 0.65], [-0.05, 0.1]] }],
+  ['3. Sleepy menace', { hairStyle: 'onibob', eyeStyle: 'onitare', mouth: 'onismirk', marks: ['foremark'], lid: 0.25 }, { brows: [[0, 0.3], [0, 0.3]] }],
+  ['4. Feral', { hairStyle: 'onipony', eyeStyle: 'onisanpaku', mouth: 'onishark', marks: ['scar'] }, { brows: [[-0.45, 1], [-0.45, 1]] }],
+  ['5. Cat smug', { hairStyle: 'onitwin', eyeStyle: 'onisharp', mouth: 'onicat', marks: ['foremark'] }, { brows: [[0.1, -0.1], [0.35, -0.35]] }],
+  ['6. Cool', { hairStyle: 'onipony', eyeStyle: 'onisharp', mouth: 'bored', marks: ['onifang', 'warpaint'], lid: 0.35 }, { brows: [[-0.15, 0.5], [-0.15, 0.5]] }],
+];
+const S = 5;
+const CW = 420;
+const CH = 420;
+const COLS = 3;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * COLS;
+canvas.height = CH * Math.ceil(SAMPLES.length / COLS);
+nextFrame();
+ctx.fillStyle = '#bfe6d2';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+SAMPLES.forEach(([name, look, face], i) => {
+  const cx = (i % COLS) * CW + CW / 2 + 20;
+  const gy = Math.floor(i / COLS) * CH + CH - 34;
+  setHd(true, S);
+  drawPosed(ctx, { ...BASE, ...look }, cx, gy, { frontArm: [1.5, -8], backArm: [-1, -2.4], frontLeg: [3.6, 0, 8], backLeg: [-3.8, 0, -8], hx: 0.4, hy: -0.4, tilt: -2, face }, {
+    scale: S, facing: 1, hold: 'front',
+    under: (c, hand, flip) => paintKanabo(c, hand, flip, -0.55, S, 'crimson', 1),
+  });
+  ctx.fillStyle = '#2a2440';
+  ctx.font = 'bold 20px Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(name, (i % COLS) * CW + 14, Math.floor(i / COLS) * CH + 30);
+});
+window.done = true;
+</script></body></html>

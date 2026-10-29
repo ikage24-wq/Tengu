@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onisilver', 'onimane', 'onitopknot', 'oniwhite'];
+export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -884,6 +884,50 @@ Object.assign(STYLES, {
       hang: [napeShadow(r), ...sheet({ len: 40, flare: 15.4, ends: 'points', n: 6, w0: 12.8, wave: 1.2 }, r, m, 1), ...flick([[4.2, 18], [0.6, 24], [-2.2, 28]], 4.4, r.sh1), ...flick([[4.6, 28], [1.6, 34], [0, 38]], 3.8, r.sh1)],
       front: bangs('onimessy', r, m, [...sideLocks(r, m, [[25.2, 11], [27, 17.6], [26.6, 24], [28, 28.6]], undefined, 3.6), ...flick([[25, 15], [28.4, 20], [30.4, 22]], 3)]),
       tips: [30, 38],
+    };
+  },
+  // Messy high twintails (the oni's bratty look): two thick, spiky tails tied high behind her horns
+  // with crimson cord, bouncing out and down to her waist in jagged points; messy bangs.
+  onitwin(r, m) {
+    const tail = [[5.6, 6], [1.4, 8.4], [-2, 14], [-3, 21], [-1.6, 27], [-3, 32]];
+    const tufts = (flip) => [lock(flip(tail), 7.4, r.sh1, m, 1.1, 0.12), lock(flip([[5, 8], [1.6, 12], [0.4, 19], [1, 25]]), 3.2, r.base, m, 1.2),
+      lock(flip([[4, 10], [-1.4, 15], [-4.6, 17]]), 3, r.sh1, m, 1.15), lock(flip([[3.4, 16], [-1.8, 22], [-4, 24]]), 2.8, r.sh1, m, 1.15)];
+    const ties = [F(E(5.4, 6.4, 1.6, 1.9, '#d8303a')), F(E(25.6, 6.4, 1.6, 1.9, '#d8303a'))];
+    return {
+      head: [crown(r, 0.6)],
+      hang: [napeShadow(r), ...tufts((p) => p), ...tufts(fx), ...ties],
+      front: bangs('onimessy', r, m, sideLocks(r, m, [[25, 11], [26.4, 16.4], [26, 20.4]], undefined, 3)),
+      top: ties,
+      tips: [99, 99],
+    };
+  },
+  // A jagged bob (the oni's sleepy-menace look): cut in rough points just below the jaw, with two
+  // long front locks falling to her chest; heavy messy bangs.
+  onibob(r, m) {
+    const side = (dir) => {
+      const pts = [[24, 9.6], [27.6, 11], [28.6, 18], [27.4, 23.4, 1], [25.6, 20.6], [24.6, 24.4, 1], [23, 19.4], [22.2, 14]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.7);
+    };
+    return {
+      head: [crown(r, 0.8)],
+      hang: sheet({ len: 26, flare: 14, ends: 'points', n: 6, w0: 12.6, wave: 0.6 }, r, m, 0.8),
+      front: bangs('onimessy', r, m, [side(1), side(-1), ...sideLocks(r, m, [[23.4, 12], [24.6, 20], [24.2, 28], [25.2, 33]], undefined, 2.8)]),
+      tips: [99, 99],
+    };
+  },
+  // A long high ponytail (the oni's cool look): everything swept up and back into one long, thick
+  // tail tied with crimson cord at the crown, falling to the backs of her knees in a jagged brush;
+  // spiky bangs and short side locks.
+  onipony(r, m) {
+    const tail = [[7.4, 3.6], [2.4, 3.4], [-2, 8], [-3.6, 16], [-3.4, 25], [-4.6, 34], [-3.4, 42]];
+    const tie = [F(E(7.6, 4, 1.8, 2.2, '#d8303a')), F(E(7.6, 4, 1, 1.3, '#8e1c16'))];
+    return {
+      head: [crown(r, 0.4), streak(20, 5, 10, 4, 1, 0.5, r.sh1), streak(22, 9, 11, 7, 0.9, 0.5, r.sh1)],
+      hang: [napeShadow(r), lock(tail, 8.4, r.sh1, m, 1.1, 0.14), lock([[7, 4.6], [2.6, 6], [-0.4, 13], [-0.6, 22], [-1.6, 30]], 3.6, r.base, m, 1.2),
+        lock([[-3, 38], [-6.4, 44], [-6, 41]], 3, r.sh1, m, 1.1), lock([[-3, 38], [-1, 45.4], [-2, 42]], 3, r.sh1, m, 1.1), ...tie],
+      front: bangs('onispike', r, m, sideLocks(r, m, [[25, 11], [26.2, 16], [25.8, 20]], undefined, 2.8)),
+      top: tie,
+      tips: [99, 99],
     };
   },
   // A wild mane: thick spikes standing up off the crown and flaring out round his head and nape,
