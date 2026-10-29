@@ -261,17 +261,17 @@ export const SKILLS = {
   // like every other attack: `magic` strikes hit with magic attack.
   spiritbolt: skill({
     id: 'spiritbolt', name: 'Spirit Bolt', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'spirit',
-    desc: 'A three-part dance, one figure per press: a sweep that sends a spirit bolt, a turning step that sends two, then a deep sweeping bow that looses a great bolt through the whole line.',
+    desc: 'A three-part dance, one figure per press: a sweep that sends a spirit bolt, a swaying step that sends two, then a deep sweeping bow that looses a great bolt through the whole line.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const bolt = (at, pct, oy = 0) => ({ at, shot: 'spiritorb', magic: true, pct, range: 300, h: 60, knock: 25, speed: 620, oy });
       return {
-        mp: k(6, 14), pct: k(150, 260), hits: 4, targets: 1,
+        mp: k(13, 30), pct: k(330, 570), hits: 4, targets: 1,
         combo: [
-          { move: 'kagura', dur: 0.46, step: 2, strikes: [bolt(0.55, k(150, 260))] },
-          { move: 'kaguraturn', dur: 0.52, step: 2, strikes: [bolt(0.58, k(100, 170), -5), bolt(0.68, k(100, 170), 5)] },
-          { move: 'kagurafin', dur: 0.7, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: k(220, 360), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 680, knock: 180, launch: 120, big: true, stop: 0.06, shake: 2 }] },
+          { move: 'kagura', dur: 1.01, step: 2, strikes: [bolt(0.55, k(330, 570))] },
+          { move: 'kaguraturn', dur: 1.14, step: 2, strikes: [bolt(0.58, k(220, 375), -5), bolt(0.68, k(220, 375), 5)] },
+          { move: 'kagurafin', dur: 1.54, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: k(485, 790), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 680, knock: 180, launch: 120, big: true, stop: 0.06, shake: 2 }] },
         ],
       };
     },
@@ -284,7 +284,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'spiritstep', dur: 0.4, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.35, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
+        combo: [{ move: 'spiritstep', dur: 0.55, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.35, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
       };
     },
   }),

@@ -1924,7 +1924,8 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
 }
 
 // Eases from one move's pose (`a`) into another's (`b`) by `w` (0-1, eased here): angles take the
-// short way round, the body's lift, lean and lunge glide, and the rig tweaks switch halfway.
+// short way round, the body's lift, lean and lunge glide, and so do the legs, the free arm, the
+// crouch and the hips (`blendRig`); the face and other switches change halfway.
 function blendMove(a, b, w) {
   if (!a || !b) return b;
   const k = w * w * (3 - 2 * w);
@@ -1934,8 +1935,21 @@ function blendMove(a, b, w) {
     ...b,
     weapon: angle(a.weapon, b.weapon), arm: angle(a.arm, b.arm),
     lift: mix(a.lift, b.lift), lunge: mix(a.lunge, b.lunge), tilt: mix(a.tilt, b.tilt), turn: mix(a.turn, b.turn), stretch: mix(a.stretch, b.stretch),
-    rig: k < 0.5 ? a.rig ?? b.rig : b.rig,
+    rig: a.rig || b.rig ? (r) => blendRig(r, a.rig, b.rig, k) : undefined,
   };
+}
+
+// Poses the rig both ways and glides its limbs from the first pose to the second by `k` (kept on
+// the rig's half-pixel grid, leg angles to 2 degrees).
+function blendRig(r, ra, rb, k) {
+  const from = { ...r, frontLeg: [...r.frontLeg], backLeg: [...r.backLeg], backArm: [...r.backArm] };
+  ra?.(from);
+  rb?.(r);
+  const mix = (x = 0, y = 0) => q(x + (y - x) * k);
+  for (const key of ['frontLeg', 'backLeg']) r[key] = [mix(from[key][0], r[key][0]), mix(from[key][1], r[key][1]), Math.round((from[key][2] + (r[key][2] - from[key][2]) * k) / 2) * 2];
+  r.backArm = [mix(from.backArm[0], r.backArm[0]), mix(from.backArm[1], r.backArm[1])];
+  for (const key of ['squat', 'tx', 'by', 'cape']) r[key] = mix(from[key], r[key]);
+  if (k < 0.5) for (const key of ['eyes', 'mouth', 'air', 'hairLift']) r[key] = from[key];
 }
 
 // The standing guard a finished move eases back into (the arm low and forward, the blade up).

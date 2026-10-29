@@ -42,6 +42,28 @@ function strikeFace(r) {
   r.mouth = 'open';
 }
 
+// The Spirit Mage's dance is slow and flowing, so it eases in and out of every phase (a sine
+// in-out, never the snap of a strike), and her legs glide between stances: `danceLegs` starts
+// from standing and blends toward each [weight, frontLeg, backLeg] in turn. Held poses breathe
+// (`breathe`, a small rise and fall over the figure) so a long hold never freezes.
+const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
+function danceLegs(r, ...stances) {
+  let f = [0.8, 0, 0];
+  let b = [-0.8, 0, 0];
+  for (const [w, front, back] of stances) {
+    const k = clamp01(w);
+    f = f.map((v, i) => lerp(v, front[i], k));
+    b = b.map((v, i) => lerp(v, back[i], k));
+  }
+  const grid = ([dx, dy, a]) => [q(dx), q(dy), Math.round(a / 2) * 2];
+  r.frontLeg = grid(f);
+  r.backLeg = grid(b);
+}
+const breathe = (p) => Math.sin(p * Math.PI * 3);
+
+// The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep']);
+
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
 function backflip(t, k = 1) {
@@ -1446,64 +1468,79 @@ export const MOVES = {
   // wrist (never swung like a club), and the fan opens and sweeps in her free hand (`fan`, `fanA`,
   // drawn by hero.js). Poses are big (wide spreads, rising onto her toes, deep bows, long glides)
   // so they read at game size, and they flow: each phase eases into the next and holds a beat.
+  // Each figure lasts about a second (the player asked for slow, elegant and smooth).
 
-  // The opening sweep (~0.55): she gathers in, knees soft, wand upright at her breast and the fan
-  // folded to it, sways back; then glides a long step forward, rising, the wand tipping out to send
-  // the bolt while the fan opens and sweeps wide behind her; and holds the pose.
+  // The opening sweep (bolt at ~0.55): she gathers in, knees soft, wand upright at her breast and
+  // the fan folded to it, sways back; then glides a long step forward, rising, the wand tipping out
+  // to send the bolt while the fan opens and sweeps wide behind her; and holds the pose.
   kagura(p) {
-    const gather = ease(seg(p, 0, 0.3));
-    const open = ease(seg(p, 0.3, 0.56));
-    const settle = ease(seg(p, 0.8, 1));
+    const gather = soft(seg(p, 0, 0.32));
+    const open = soft(seg(p, 0.3, 0.6));
+    const settle = soft(seg(p, 0.78, 1));
     const hold = 1 - settle;
+    const air = breathe(p) * open * hold;
     return {
       weapon: lerp(10, -15, gather) + 70 * open * hold + 20 * settle, arm: lerp(70, 105, gather) + 25 * open - 30 * settle,
-      tilt: -0.14 * gather * (1 - open) + 0.16 * open * hold, lunge: -3 * gather * (1 - open) + 10 * open * hold, lift: 3 * open * hold,
-      fan: lerp(0.1, 0, gather) + open * hold, fanA: lerp(20, 0, gather) - 70 * open * hold,
+      tilt: -0.14 * gather * (1 - open) + 0.16 * open * hold, lunge: -3 * gather * (1 - open) + 10 * open * hold, lift: 3 * open * hold + air,
+      fan: lerp(0.1, 0, gather) + open * hold, fanA: lerp(20, 0, gather) - 70 * open * hold + 8 * air,
       rig: (r) => {
         r.backArm = [q(lerp(0, 3, gather) - 11 * open * hold), q(lerp(0, -3, gather) - 6 * open * hold)];
         r.cape -= q(2 * gather * (1 - open) + 5 * open * hold);
-        r.hairLift = open > 0.2 && hold > 0.5 ? -1 : 0;
-        if (open > 0.2 && hold > 0.3) { r.frontLeg = [q(4.6 * open), -1, 8]; r.backLeg = [-4, 0, -14]; strikeFace(r); } else if (gather > 0.3) { r.squat = 1; r.eyes = 'half'; }
+        r.hairLift = open * hold > 0.4 ? -1 : 0;
+        r.squat = q(gather * (1 - open));
+        danceLegs(r, [gather * (1 - open), [0.8, 0, 2], [-1.6, 0, -4]], [open * hold, [4.6, -1, 8], [-4, 0, -14]]);
+        if (open * hold > 0.3) strikeFace(r);
+        else if (gather > 0.3 && open < 0.2) r.eyes = 'half';
       },
     };
   },
-  // The turning step (~0.6): a slow full turn on her toes with both arms spread wide at shoulder
-  // height, wand upright and fan open, sleeves swinging out; she comes round to face them, the fan
-  // sweeping up over her head as the wand tips forward to send the bolt; holds.
+  // The swaying step (bolt at ~0.6): on her toes with both arms spread wide at shoulder height,
+  // she sways back and then forward from the hips, sleeves swinging out, while the open fan circles
+  // once all the way round her; it comes up over her head as the wand tips forward to send the
+  // bolt; holds. (She never spins: a turn is a mirror flip, which jars in a slow dance.)
   kaguraturn(p) {
-    const t = ease(seg(p, 0, 0.56));
-    const face = ease(seg(p, 0.5, 0.64));
-    const settle = ease(seg(p, 0.82, 1));
+    const t = soft(seg(p, 0, 0.56));
+    const face = soft(seg(p, 0.48, 0.66));
+    const settle = soft(seg(p, 0.8, 1));
     const hold = 1 - settle;
+    const toe = soft(seg(p, 0, 0.12)) * (1 - face);
+    const sway = -Math.sin(t * Math.PI * 2);
     return {
-      weapon: -10 + 65 * face * hold + 30 * settle, arm: lerp(95, 120, face) - 30 * settle, turn: Math.cos(t * Math.PI * 2), lift: 6 * bump(p, 0.04, 0.6),
-      tilt: 0.1 * Math.sin(t * Math.PI * 2) + 0.14 * face * hold, lunge: 6 * face * hold,
-      fan: 1 * hold + 0.1, fanA: lerp(-80, 30, face),
+      weapon: -10 + 65 * face * hold + 30 * settle, arm: lerp(95, 120, face) - 30 * settle, lift: 6 * bump(p, 0.04, 0.6) + breathe(p) * face * hold,
+      tilt: 0.12 * sway + 0.14 * face * hold, lunge: 3 * sway + 6 * face * hold,
+      fan: 1 * hold + 0.1, fanA: -80 + 360 * t + 110 * face,
       rig: (r) => {
-        r.backArm = face > 0 ? [q(lerp(-11, -1, face)), q(lerp(-4, -13, face))] : [-11, -4];
-        r.cape -= q(5 * Math.sin(Math.min(1, t) * Math.PI) + 2);
+        r.tx = q(1.5 * sway);
+        r.backArm = [q(lerp(-11, -1, face)), q(lerp(-4, -13, face))];
+        r.cape -= q(5 * Math.sin(t * Math.PI) + 2);
         r.hairLift = -1;
-        if (t < 1 && t > 0) { r.frontLeg = [1.4, -2.4, 16]; r.backLeg = [-0.6, 0, -4]; } else if (face > 0 && hold > 0.3) { lungeLegs(r, 0.9); strikeFace(r); }
+        danceLegs(r, [toe, [1.4, -2.4, 16], [-0.6, 0, -4]], [face * hold, [3.2, 0, 4], [-2.7, 0, -10]]);
+        if (face * hold > 0.3) strikeFace(r);
       },
     };
   },
-  // The dance's last figure (~0.6): two turns rising high onto her toes, the wand held straight up
-  // and ringing, the fan spread over her head; then she sinks into a deep sweeping bow-lunge, the
-  // wand tipping down at them as the great bolt goes, the fan swept wide behind; holds low.
+  // The dance's last figure (great bolt at ~0.6): rising high onto her toes, swaying side to side
+  // twice, the wand held straight up and ringing while the open fan circles twice over her head;
+  // then she sinks into a deep sweeping bow-lunge, the wand tipping down at them as the great bolt
+  // goes, the fan swept wide behind; holds low.
   kagurafin(p) {
-    const spin = ease(seg(p, 0, 0.5));
-    const down = ease(seg(p, 0.48, 0.62));
-    const settle = ease(seg(p, 0.82, 1));
+    const spin = soft(seg(p, 0, 0.5));
+    const down = soft(seg(p, 0.46, 0.64));
+    const settle = soft(seg(p, 0.8, 1));
     const hold = 1 - settle;
-    const ring = Math.sin(p * 60) * 12 * (1 - down) * bump(p, 0.05, 0.5);
+    const ring = Math.sin(p * 40) * 10 * (1 - down) * bump(p, 0.05, 0.5);
+    const toe = soft(seg(p, 0, 0.1)) * (1 - down);
+    const sway = Math.sin(spin * Math.PI * 4) * (1 - down);
     return {
-      weapon: -8 + ring + 85 * down * hold + 30 * settle, arm: lerp(175, 85, down) - 25 * settle, turn: Math.cos(spin * Math.PI * 4), lift: 10 * bump(p, 0, 0.52),
-      tilt: 0.36 * down * hold, lunge: 12 * down * hold, fan: 1, fanA: down > 0 ? lerp(0, -110, down) : 0,
+      weapon: -8 + ring + 85 * down * hold + 30 * settle, arm: lerp(175, 85, down) - 25 * settle, lift: 10 * bump(p, 0, 0.56),
+      tilt: 0.1 * sway + 0.36 * down * hold, lunge: 2 * sway + 12 * down * hold, fan: 1, fanA: lerp(720 * spin, 610, down),
       rig: (r) => {
-        r.backArm = down > 0 ? [q(lerp(-1, -12, down)), q(lerp(-13, -2, down))] : [-1, -13];
+        r.backArm = [q(lerp(-1, -12, down)), q(lerp(-13, -2, down))];
         r.cape -= q(5 + 2 * down);
         r.hairLift = -1;
-        if (down > 0 && hold > 0.2) { r.squat = 2; r.frontLeg = [5, -1, 10]; r.backLeg = [-5, 0, -20]; strikeFace(r); } else if (spin > 0 && spin < 1) { r.frontLeg = [1.2, -3, 18]; r.backLeg = [-0.8, -1, -6]; }
+        r.squat = q(2 * down * hold);
+        danceLegs(r, [toe, [1.2, -3, 18], [-0.8, -1, -6]], [down * hold, [5, -1, 10], [-5, 0, -20]]);
+        if (down * hold > 0.3) strikeFace(r);
       },
     };
   },
@@ -1511,9 +1548,9 @@ export const MOVES = {
   // shakes of the wrist, a little rise onto her toes and a sway from hip to hip on each, the fan
   // open at her hip swaying the other way.
   bellshake(p) {
-    const up = ease(seg(p, 0, 0.18));
-    const down = ease(seg(p, 0.84, 1));
-    const beat = seg(p, 0.18, 0.84) * 3;
+    const up = soft(seg(p, 0, 0.2));
+    const down = soft(seg(p, 0.82, 1));
+    const beat = seg(p, 0.2, 0.82) * 3;
     const ring = Math.sin(beat * Math.PI * 2);
     const side = Math.sin(beat * Math.PI);
     const k = up * (1 - down);
@@ -1524,132 +1561,141 @@ export const MOVES = {
         r.tx = q(1.6 * side * k);
         r.backArm = [q(-6 * k), q(1 - 3 * k)];
         r.cape -= q(Math.abs(side) * 4 * k);
-        r.hairLift = Math.abs(side) > 0.5 ? -1 : 0;
-        if (k > 0.5) { r.frontLeg = side > 0 ? [2.4, -1.6, 14] : [1.4, 0, 4]; r.backLeg = side < 0 ? [-2.4, -1.6, -14] : [-1.4, 0, -4]; r.mouth = 'open'; }
+        r.hairLift = Math.abs(side) * k > 0.5 ? -1 : 0;
+        danceLegs(r, [k, [1.4, 0, 4], [-1.4, 0, -4]], [k * Math.max(0, side), [2.4, -1.6, 14], [-1.4, 0, -4]], [k * Math.max(0, -side), [1.4, 0, 4], [-2.4, -1.6, -14]]);
+        if (k > 0.5) r.mouth = 'open';
       },
     };
   },
-  // The fan sweep (~0.52): a long gliding side step, low, the fan sweeping in a wide arc from
-  // behind her right round in front (over her body), opening as it goes, the wand held upright at
-  // her shoulder and tipping out as the fan passes.
+  // The fan sweep (bolts at ~0.52): a long gliding side step, low, the fan sweeping in a wide arc
+  // from behind her right round in front (over her body), opening as it goes, the wand held upright
+  // at her shoulder and tipping out as the fan passes.
   sleevefan(p) {
-    const gather = ease(seg(p, 0, 0.3));
-    const sweep = ease(seg(p, 0.3, 0.56));
-    const settle = ease(seg(p, 0.8, 1));
+    const gather = soft(seg(p, 0, 0.3));
+    const sweep = soft(seg(p, 0.28, 0.58));
+    const settle = soft(seg(p, 0.78, 1));
     const hold = 1 - settle;
     return {
       weapon: lerp(5, -10, gather) + 60 * sweep * hold + 15 * settle, arm: lerp(70, 130, gather) - 20 * sweep - 30 * settle,
-      tilt: -0.16 * gather * (1 - sweep) + 0.2 * sweep * hold, lunge: -5 * gather * (1 - sweep) + 12 * sweep * hold,
+      tilt: -0.16 * gather * (1 - sweep) + 0.2 * sweep * hold, lunge: -5 * gather * (1 - sweep) + 12 * sweep * hold, lift: breathe(p) * sweep * hold,
       fan: lerp(0.2, 0.6, gather) + 0.4 * sweep, fanA: lerp(-100, -120, gather) + 200 * sweep * hold - 40 * settle, fanFront: sweep > 0.45 && hold > 0.3,
       rig: (r) => {
         r.backArm = [q(lerp(-10, -11, gather) + 18 * sweep * hold), q(-3 - 4 * sweep * hold)];
         r.cape -= q(6 * sweep * hold);
         r.hairLift = sweep > 0.3 ? -1 : 0;
-        r.squat = gather > 0.3 ? 1 : 0;
-        r.frontLeg = [q(1 + 4 * sweep * hold), 0, 6];
-        r.backLeg = [q(-2 - 3 * gather), 0, -14];
+        r.squat = q(gather * (1 - settle));
+        danceLegs(r, [1, [1 + 4 * sweep * hold, 0, 6], [-2 - 3 * gather, 0, -14]]);
         if (sweep > 0.3) strikeFace(r);
       },
     };
   },
-  // The bow and rise (~0.6): a deep, slow bow, both hands brought together low before her, eyes
-  // closed; then she rises right up onto her toes, both arms sweeping up overhead (wand and open
-  // fan high), and throws the spell up and out; holds high.
+  // The bow and rise (great bolt at ~0.6): a deep, slow bow, both hands brought together low
+  // before her, eyes closed; then she rises right up onto her toes, both arms sweeping up overhead
+  // (wand and open fan high), and throws the spell up and out; holds high.
   bowrise(p) {
-    const bow = ease(seg(p, 0, 0.36)) * (1 - ease(seg(p, 0.42, 0.6)));
-    const rise = ease(seg(p, 0.42, 0.6));
-    const settle = ease(seg(p, 0.82, 1));
+    const bow = soft(seg(p, 0, 0.38)) * (1 - soft(seg(p, 0.42, 0.62)));
+    const rise = soft(seg(p, 0.42, 0.62));
+    const settle = soft(seg(p, 0.8, 1));
     const hold = 1 - settle;
     return {
       weapon: lerp(10, 40, bow) - 30 * rise * hold + 25 * settle, arm: lerp(70, 40, bow) + 140 * rise * hold - 20 * settle,
-      tilt: 0.45 * bow - 0.14 * rise * hold, lift: 8 * rise * hold,
+      tilt: 0.45 * bow - 0.14 * rise * hold, lift: 8 * rise * hold + breathe(p) * rise * hold,
       fan: 0.15 + 0.85 * rise * hold, fanA: lerp(60, 120, bow) - 130 * rise,
       rig: (r) => {
         r.backArm = [q(lerp(0, 4, bow) - 2 * rise), q(lerp(0, 1, bow) - 13 * rise * hold)];
-        if (bow > 0.3) { r.squat = 2; r.eyes = 'blink'; wideLegs(r); }
+        r.squat = q(2 * bow);
+        if (bow > 0.4) r.eyes = 'blink';
         r.hairLift = rise > 0.3 ? -1 : 0;
         r.cape -= q(4 * rise * hold);
-        if (rise > 0.3 && hold > 0.3) { r.frontLeg = [1.4, -2.2, 14]; r.backLeg = [-1.4, -1.4, -10]; strikeFace(r); }
+        danceLegs(r, [bow, [3, 0, 2], [-3, 0, -2]], [rise * hold, [1.4, -2.2, 14], [-1.4, -1.4, -10]]);
+        if (rise * hold > 0.3) strikeFace(r);
       },
     };
   },
-  // A twirl on one foot (~0.58): a hop round with the other leg lifted high behind her, arms spread
-  // wide, fan open, sleeves flying; she lands soft with the wand tipping out to them.
+  // Rising on one foot (bolt at ~0.58): a soft hop up with the other leg lifted high behind her,
+  // leaning forward into it, arms spread wide, the open fan circling once round her, sleeves
+  // flying; she lands soft with the wand tipping out to them.
   twirlstep(p) {
-    const t = ease(seg(p, 0.05, 0.5));
-    const point = ease(seg(p, 0.48, 0.62));
-    const settle = ease(seg(p, 0.82, 1));
+    const t = soft(seg(p, 0.05, 0.5));
+    const point = soft(seg(p, 0.46, 0.64));
+    const settle = soft(seg(p, 0.8, 1));
     const hold = 1 - settle;
+    const up = soft(seg(p, 0.04, 0.16)) * (1 - soft(seg(p, 0.42, 0.54)));
     return {
-      weapon: -10 + 70 * point * hold + 25 * settle, arm: lerp(100, 115, t) - 15 * point - 20 * settle, turn: Math.cos(t * Math.PI * 2), lift: 10 * bump(p, 0.05, 0.55),
-      tilt: 0.1 * point * hold, lunge: 6 * point * hold, fan: 1, fanA: -90 + 40 * point,
+      weapon: -10 + 70 * point * hold + 25 * settle, arm: lerp(100, 115, t) - 15 * point - 20 * settle, lift: 10 * bump(p, 0.05, 0.55),
+      tilt: 0.16 * up + 0.1 * point * hold, lunge: 6 * point * hold, fan: 1, fanA: -90 + 360 * t + 40 * point,
       rig: (r) => {
         r.backArm = [-11, q(-5 + 2 * point)];
         r.hairLift = -1;
         r.cape -= 5;
-        if (t > 0 && t < 1) { r.air = true; r.frontLeg = [1.4, -1, 8]; r.backLeg = [-4, -7, -60]; } else if (point > 0 && hold > 0.3) { lungeLegs(r, 0.8); strikeFace(r); }
+        r.air = up > 0.5;
+        danceLegs(r, [up, [1.4, -1, 8], [-4, -7, -60]], [point * hold, [2.9, 0, 4], [-2.4, 0, -10]]);
+        if (point * hold > 0.3) strikeFace(r);
       },
     };
   },
-  // Up + attack (~0.5): both arms sweep up from low together, rising onto her toes, the wand
-  // tipping up at whatever flies and the fan opening overhead.
+  // Up + attack (bolt at ~0.5): both arms sweep up from low together, rising onto her toes, the
+  // wand tipping up at whatever flies and the fan opening overhead.
   kaguraup(p) {
-    const low = ease(seg(p, 0, 0.28));
-    const up = ease(seg(p, 0.28, 0.5));
-    const settle = ease(seg(p, 0.8, 1));
+    const low = soft(seg(p, 0, 0.3));
+    const up = soft(seg(p, 0.28, 0.52));
+    const settle = soft(seg(p, 0.78, 1));
     const hold = 1 - settle;
     return {
-      weapon: lerp(10, 50, low) - 60 * up * hold + 30 * settle, arm: lerp(70, 30, low) + 150 * up * hold - 30 * settle, tilt: 0.16 * low * (1 - up) - 0.18 * up * hold, lift: 7 * up * hold,
+      weapon: lerp(10, 50, low) - 60 * up * hold + 30 * settle, arm: lerp(70, 30, low) + 150 * up * hold - 30 * settle, tilt: 0.16 * low * (1 - up) - 0.18 * up * hold, lift: 7 * up * hold + breathe(p) * up * hold,
       fan: 0.2 + 0.8 * up * hold, fanA: lerp(90, 140, low) - 160 * up,
       rig: (r) => {
         r.backArm = [q(3 * low - 3 * up), q(-13 * up * hold)];
-        if (low > 0.3 && up < 0.3) r.squat = 1;
+        r.squat = q(low * (1 - up));
         r.hairLift = -1;
         r.cape -= q(4 * up);
-        if (up > 0.3 && hold > 0.3) { r.frontLeg = [1.4, -2, 14]; r.backLeg = [-1, -1.4, -10]; strikeFace(r); }
+        danceLegs(r, [up * hold, [1.4, -2, 14], [-1, -1.4, -10]]);
+        if (up * hold > 0.3) strikeFace(r);
       },
     };
   },
   // In the air: she floats, arms and sleeves spread like wings, fan open, and sweeps the wand
   // down at them.
   floatcast(p) {
-    const sweep = ease(seg(p, 0.15, 0.5));
+    const sweep = soft(seg(p, 0.15, 0.52));
     return {
-      weapon: lerp(-20, 70, sweep), arm: lerp(150, 80, sweep), tilt: 0.14 * sweep, fan: 1, fanA: lerp(-60, -110, sweep),
+      weapon: lerp(-20, 70, sweep), arm: lerp(150, 80, sweep), tilt: 0.14 * sweep, fan: 1, fanA: lerp(-60, -110, sweep) + 8 * breathe(p),
       rig: (r) => { tuck(r); r.backArm = [-11, q(-6 + 3 * sweep)]; r.hairLift = -1; r.cape -= 5; if (sweep > 0.3) strikeFace(r); },
     };
   },
-  // A turn in the air with everything spread, then the wand and fan sweep down together.
+  // Floating with everything spread while the open fan circles once round her, then the wand and
+  // fan sweep down together.
   floatcast2(p) {
-    const t = ease(seg(p, 0, 0.45));
-    const down = ease(seg(p, 0.42, 0.56));
+    const t = soft(seg(p, 0, 0.45));
+    const down = soft(seg(p, 0.4, 0.58));
     return {
-      weapon: -10 + 85 * down, arm: lerp(160, 70, down), turn: Math.cos(t * Math.PI * 2), tilt: 0.2 * down, fan: 1, fanA: lerp(-90, 20, down), fanFront: down > 0.5,
+      weapon: -10 + 85 * down, arm: lerp(160, 70, down), tilt: 0.2 * down, fan: 1, fanA: lerp(-90 + 360 * t, 380, down), fanFront: down > 0.5,
       rig: (r) => { tuck(r); r.backArm = [q(-11 + 14 * down), q(-6 + 2 * down)]; r.hairLift = -1; r.cape -= 6; if (down > 0.3) strikeFace(r); },
     };
   },
-  // Out of a run (~0.5): a long low glide on sliding feet, leaning in, the fan trailing open behind
-  // her and the wand held back; then the wand tips forward to send the bolt as she rises.
+  // Out of a run (bolt at ~0.5): a long low glide on sliding feet, leaning in, the fan trailing
+  // open behind her and the wand held back; then the wand tips forward to send the bolt as she
+  // rises.
   glidecast(p) {
-    const glide = 1 - ease(seg(p, 0.38, 0.56));
-    const tip = ease(seg(p, 0.38, 0.56));
-    const settle = ease(seg(p, 0.82, 1));
+    const tip = soft(seg(p, 0.36, 0.56));
+    const glide = 1 - tip;
+    const settle = soft(seg(p, 0.8, 1));
     return {
       weapon: lerp(-20, 60, tip) * (1 - settle) + 20 * settle, arm: lerp(60, 115, tip) - 25 * settle, tilt: 0.24 * glide, lunge: 6 * tip * (1 - settle), fan: 1, fanA: -100 - 20 * glide,
-      rig: (r) => { r.backArm = [-11, q(-3 - 2 * glide)]; r.hairLift = -1; r.cape -= q(6 * glide); r.squat = glide > 0.5 ? 1 : 0; r.frontLeg = [4.6, 0, 6]; r.backLeg = [-5, -1, -24]; if (tip > 0.3) strikeFace(r); },
+      rig: (r) => { r.backArm = [-11, q(-3 - 2 * glide)]; r.hairLift = -1; r.cape -= q(6 * glide); r.squat = q(glide); danceLegs(r, [1 - settle, [4.6, 0, 6], [-5, -1, -24]]); if (tip > 0.3) strikeFace(r); },
     };
   },
-  // Spirit Step: the fan opens and lifts to hide her face as she turns on her toes, sleeves
+  // Spirit Step: the fan opens and lifts to hide her face as she rises on her toes, sleeves
   // sweeping round, and she's gone into streamers and light (faded out while she crosses),
   // gathering again ahead with a curtsy, the fan closing.
   spiritstep(p) {
-    const t = ease(seg(p, 0, 0.3));
+    const t = soft(seg(p, 0, 0.3));
     const gone = clamp01(seg(p, 0.18, 0.32) * (1 - seg(p, 0.7, 0.86)));
-    const land = bump(p, 0.78, 1);
+    const land = bump(p, 0.76, 1);
     return {
-      weapon: lerp(10, -10, t), arm: lerp(70, 120, t) - 50 * land, turn: p < 0.32 ? Math.cos(t * Math.PI) : 1, lift: 5 * bump(p, 0, 0.35), fade: gone,
-      fan: 1 - 0.8 * seg(p, 0.85, 1), fanA: lerp(-20, 40, t), fanFront: true,
-      rig: (r) => { r.backArm = [q(lerp(0, 5, t)), q(lerp(0, -9, t))]; r.hairLift = -1; r.cape -= 4; if (land > 0.2) { r.squat = 1; r.eyes = 'happy'; wideLegs(r); } },
+      weapon: lerp(10, -10, t), arm: lerp(70, 120, t) - 50 * land, lift: 5 * bump(p, 0, 0.35), fade: gone,
+      fan: 1 - 0.8 * soft(seg(p, 0.85, 1)), fanA: lerp(-20, 40, t), fanFront: true,
+      rig: (r) => { r.backArm = [q(lerp(0, 5, t)), q(lerp(0, -9, t))]; r.hairLift = -1; r.cape -= 4; r.squat = q(land); danceLegs(r, [land, [3, 0, 2], [-3, 0, -2]]); if (land > 0.3) r.eyes = 'happy'; },
     };
   },
 
@@ -1678,7 +1724,7 @@ export const MOVE_MIN = {
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
-  kagura: 0.42, kaguraturn: 0.5, kagurafin: 0.6, bellshake: 0.5, sleevefan: 0.45, bowrise: 0.55, twirlstep: 0.5, kaguraup: 0.45, floatcast: 0.35, floatcast2: 0.4, glidecast: 0.45, spiritstep: 0.4,
+  kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -1829,5 +1875,85 @@ export function moveAt(kind, progress, dur = 0.35, feel = null) {
   if (!MOVES[kind]) return null;
   const f = FEEL[feel?.weapon] ?? {};
   const p = bend(clamp01(progress), feel?.hit, f.pre, f.post);
-  return after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
+  const mv = after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
+  return DANCE_MOVES.has(kind) && DANCE_STYLES[danceStyle] ? DANCE_STYLES[danceStyle](mv, (q2) => rawMoveAt(kind, clamp01(q2), dur), p, dur, kind) : mv;
 }
+
+// Styles for the Spirit Mage's dance. Each reworks the base figures above: `mv` is the figure's
+// pose, `at(p)` its raw pose at another moment (for parts that trail behind), `p` and `dur` where it
+// is, `kind` which figure. The player picked grounded kagura; the float and ribbon samples are kept
+// for the dev page (tools/spiritmage.html ?style=), and 'flow' is the base figures as drawn.
+let danceStyle = 'grounded';
+export const setDanceStyle = (name) => { danceStyle = name; };
+const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });
+// A bob that starts and ends at rest, so figures join without a jump.
+const bob = (p, dur, per = 1.1) => Math.sin(p * Math.PI * 2 * Math.max(1, Math.round(dur / per)));
+// The figures where a grounded dancer rises up off the floor: the finishers and the cast upward.
+const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup']);
+const DANCE_STYLES = {
+  // Grounded kagura (suriashi): her feet slide along the floor in long, slow gliding steps, knees
+  // only softly bent, eyes lowered in the holds; serene. Her poses are big and bold (the bell staff
+  // and fan sweep wide, the body leans into each figure) so they read at game size, and on the big
+  // casts (the finishers and the cast upward) she rises onto her toes and floats up for a moment.
+  // The bells shiver and ring all through the dance, hardest as the spell goes; the fan flutters,
+  // folds shut just before each cast and snaps open with it.
+  grounded(mv, at, p, dur, kind) {
+    const big = GROUNDED_RISE.has(kind);
+    const t = p * dur;
+    const ring = Math.sin(t * Math.PI * 2 * 6) * (2 + 6 * bump(p, 0.45, 0.8));
+    const snap = 1 - 0.65 * bump(p, 0.36, 0.52);
+    const flutter = 0.9 + 0.1 * Math.sin(t * 14);
+    return wrapRig({
+      ...mv, lift: (mv.lift ?? 0) * (big ? 0.8 : 0.12), tilt: (mv.tilt ?? 0) * 0.9, lunge: (mv.lunge ?? 0) * 2,
+      arm: mv.arm != null ? 90 + (mv.arm - 90) * 1.4 : mv.arm, weapon: mv.weapon != null ? mv.weapon * 1.2 + ring : mv.weapon,
+      fan: mv.fan != null ? Math.min(1, mv.fan * 1.2 + 0.15) * snap * flutter : mv.fan, fanA: mv.fanA != null ? mv.fanA * 1.3 + 6 * Math.sin(t * 9) : mv.fanA,
+    }, (r) => {
+      // Floating up, her toes point (the base figure's lifted feet); otherwise both feet slide flat,
+      // in a wide stride.
+      const up = big && (mv.lift ?? 0) > 2;
+      r.air = up && r.air;
+      if (!up) {
+        r.frontLeg = [q(r.frontLeg[0] * 1.4), 0, Math.round(r.frontLeg[2] * 0.3 / 2) * 2];
+        r.backLeg = [q(r.backLeg[0] * 1.4), 0, Math.round(r.backLeg[2] * 0.3 / 2) * 2];
+      }
+      r.backArm = [q(r.backArm[0] * 1.3), q(r.backArm[1] * 1.3)];
+      r.squat = q(Math.max(0.5, r.squat * 0.5));
+      r.hairLift = up ? -1 : 0;
+      if (r.mouth !== 'open' && r.eyes === 'open') r.eyes = 'half';
+      if (!up) r.mouth = null;
+    });
+  },
+  // Spirit float: she hovers off the ground the whole dance, drifting up and down, legs together
+  // and toes pointed beneath her skirts, hair and sleeves lifting as if underwater. Ethereal.
+  float(mv, at, p, dur) {
+    const drift = bob(p, dur);
+    return wrapRig({ ...mv, lift: 7 + (mv.lift ?? 0) * 0.6 + 2 * drift, tilt: (mv.tilt ?? 0) * 0.9 + 0.04 * drift, lunge: (mv.lunge ?? 0) * 0.8 }, (r) => {
+      r.air = true;
+      r.frontLeg = [q(0.6 + r.frontLeg[0] * 0.25), q(-1.5 + 0.5 * drift), 12 + Math.round(r.frontLeg[2] * 0.2 / 2) * 2];
+      r.backLeg = [q(-0.4 + r.backLeg[0] * 0.2), -0.5, -4 + Math.round(r.backLeg[2] * 0.2 / 2) * 2];
+      r.squat = 0;
+      r.hairLift = -1;
+      r.hairWave = Math.floor(p * dur * 6) % 8;
+      r.cape -= q(3 + drift);
+    });
+  },
+  // Ribbon dancer: everything bigger and looser, with overlap: the body leans far into each
+  // figure and overshoots, the arm reaches wider, and the fan trails behind the arm like a ribbon
+  // on a stick, catching up a beat late. Expressive.
+  ribbon(mv, at, p, dur) {
+    const late = at(p - 0.09);
+    const lead = at(Math.min(1, p + 0.04));
+    return wrapRig({
+      ...mv,
+      arm: mv.arm != null ? 90 + (mv.arm - 90) * 1.3 : mv.arm, weapon: mv.weapon != null ? mv.weapon * 1.15 : mv.weapon,
+      tilt: (mv.tilt ?? 0) * 1.6 + ((lead.tilt ?? 0) - (mv.tilt ?? 0)) * 1.2, lunge: (mv.lunge ?? 0) * 1.5, lift: (mv.lift ?? 0) * 1.3,
+      fanA: late.fanA ?? mv.fanA, fan: Math.max(0.6, mv.fan ?? 0),
+    }, (r) => {
+      r.hairLift = -1;
+      r.hairWave = Math.floor(p * dur * 9) % 8;
+      r.cape -= 3;
+      r.frontLeg = [q(r.frontLeg[0] * 1.2), r.frontLeg[1], r.frontLeg[2]];
+      r.backLeg = [q(r.backLeg[0] * 1.25), r.backLeg[1], Math.round(r.backLeg[2] * 1.3 / 2) * 2];
+    });
+  },
+};

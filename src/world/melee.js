@@ -168,12 +168,12 @@ export const PATH_COMBOS = {
     { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
     { move: 'flipthrow', dur: 0.66, step: -30, carry: 0.46, finisher: true, strikes: [{ at: 0.46, shot: 'foxmoon', pct: 160, range: 320, h: 80, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] },
   ],
-  // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the turning step a second,
+  // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the swaying step a second,
   // and the dance's last figure looses a great bolt of spirit light that bursts through the line.
   spiritmage: [
-    { move: 'kagura', dur: 0.46, step: 2, strikes: [{ at: 0.55, shot: 'spiritorb', magic: true, pct: 90, range: 290, h: 60, knock: 25, speed: 600 }] },
-    { move: 'kaguraturn', dur: 0.5, step: 2, strikes: [{ at: 0.6, shot: 'spiritorb', magic: true, pct: 95, range: 290, h: 60, knock: 30, speed: 600 }] },
-    { move: 'kagurafin', dur: 0.68, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 170, range: 310, h: 66, targets: 3, pierce: true, speed: 660, knock: 190, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'kagura', dur: 1.01, step: 2, strikes: [{ at: 0.55, shot: 'spiritorb', magic: true, pct: 200, range: 290, h: 60, knock: 25, speed: 600 }] },
+    { move: 'kaguraturn', dur: 1.1, step: 2, strikes: [{ at: 0.6, shot: 'spiritorb', magic: true, pct: 210, range: 290, h: 60, knock: 30, speed: 600 }] },
+    { move: 'kagurafin', dur: 1.5, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 375, range: 310, h: 66, targets: 3, pierce: true, speed: 660, knock: 190, big: true, stop: 0.06, shake: 2 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -367,18 +367,18 @@ export const PATH_VARIANTS = {
       { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 155, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, burst: 'inkhit', burstAt: 0.5, stop: 0.06, shake: 2 }] },
       { move: 'whirlflip', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 75, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 115, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05, flipback: 40 }] }],
   ],
-  // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a twirl on one
-  // foot. Second: the turning step, the sleeve fan (three bolts fanning out), or the bells.
+  // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a rise onto one
+  // foot. Second: the swaying step, the sleeve fan (three bolts fanning out), or the bells.
   // Finisher: the dance's last figure, or the bow and rise that throws the great bolt up and out.
   spiritmage: [
     [PATH_COMBOS.spiritmage[0],
-      { move: 'bellshake', dur: 0.56, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 40, range: 280, h: 70, knock: 15, speed: 620, oy: [-6, 0, 6][i] })) },
-      { move: 'twirlstep', dur: 0.52, step: 6, strikes: [{ at: 0.58, shot: 'spiritorb', magic: true, pct: 95, range: 290, h: 60, knock: 35, speed: 620 }] }],
+      { move: 'bellshake', dur: 1.23, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 90, range: 280, h: 70, knock: 15, speed: 620, oy: [-6, 0, 6][i] })) },
+      { move: 'twirlstep', dur: 1.14, step: 6, strikes: [{ at: 0.58, shot: 'spiritorb', magic: true, pct: 210, range: 290, h: 60, knock: 35, speed: 620 }] }],
     [PATH_COMBOS.spiritmage[1],
-      { move: 'sleevefan', dur: 0.5, step: -6, strikes: [{ at: 0.52, shot: 'spiritorb', magic: true, fan: 3, pct: 45, range: 280, h: 120, knock: 30, speed: 600 }] },
-      { move: 'bellshake', dur: 0.56, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 42, range: 280, h: 70, knock: 15, speed: 620, oy: [6, 0, -6][i] })) }],
+      { move: 'sleevefan', dur: 1.1, step: -6, strikes: [{ at: 0.52, shot: 'spiritorb', magic: true, fan: 3, pct: 100, range: 280, h: 120, knock: 30, speed: 600 }] },
+      { move: 'bellshake', dur: 1.23, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 90, range: 280, h: 70, knock: 15, speed: 620, oy: [6, 0, -6][i] })) }],
     [PATH_COMBOS.spiritmage[2],
-      { move: 'bowrise', dur: 0.7, step: 2, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 165, range: 300, h: 110, lift: 40, targets: 3, pierce: true, speed: 640, knock: 120, launch: 300, big: true, stop: 0.06, shake: 2 }] }],
+      { move: 'bowrise', dur: 1.54, step: 2, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 365, range: 300, h: 110, lift: 40, targets: 3, pierce: true, speed: 640, knock: 120, launch: 300, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Kitsune. Openers: her fox-fire star or a twirling throw. Second: two stars, or a fan of
   // three. Finisher: the flipping throw, a pounce that throws down at them as she lands, or the
@@ -438,12 +438,12 @@ const ARCHER_COMMANDS = {
   // The Spirit Mage: a bolt swept up at whatever flies, spirit bolts swept down from a float in the
   // air, and a bolt whipped out of a glide.
   spiritmage: {
-    up: { move: 'kaguraup', dur: 0.5, step: 0, strikes: [{ at: 0.5, shot: 'spiritbig', magic: true, pct: 110, range: 260, h: 190, lift: 50, targets: 2, pierce: true, knock: 20, launch: 380, speed: 640, big: true, stop: 0.05 }] },
+    up: { move: 'kaguraup', dur: 1.1, step: 0, strikes: [{ at: 0.5, shot: 'spiritbig', magic: true, pct: 240, range: 260, h: 190, lift: 50, targets: 2, pierce: true, knock: 20, launch: 380, speed: 640, big: true, stop: 0.05 }] },
     air: [
-      { move: 'floatcast', dur: 0.4, hang: true, strikes: [{ at: 0.48, shot: 'spiritorb', magic: true, fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 620 }] },
-      { move: 'floatcast2', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.55, shot: 'spiritbig', magic: true, fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 660, big: true, stop: 0.05, shake: 1 }] },
+      { move: 'floatcast', dur: 0.88, hang: true, strikes: [{ at: 0.48, shot: 'spiritorb', magic: true, fan: 2, pct: 165, range: 260, h: 170, drop: 50, knock: 30, speed: 620 }] },
+      { move: 'floatcast2', dur: 1.01, hang: true, finisher: true, strikes: [{ at: 0.55, shot: 'spiritbig', magic: true, fan: 2, pct: 210, range: 260, h: 190, drop: 60, knock: 120, speed: 660, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'glidecast', dur: 0.48, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'spiritorb', magic: true, fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 640 }] },
+    dash: { move: 'glidecast', dur: 1.06, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'spiritorb', magic: true, fan: 2, pct: 185, range: 280, h: 80, knock: 80, speed: 640 }] },
   },
   // The Kitsune: two fox-fire stars flung up at whatever flies, fans of them thrown down from a
   // hang in the air, and a pounce out of a run that throws two as she lands.

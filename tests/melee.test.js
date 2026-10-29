@@ -1974,8 +1974,8 @@ function mage() {
 
 test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
   const { SKILLS } = await import('../src/data/skills.js');
-  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'] };
-  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20' };
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], spiritmage: ['spiritmage'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', spiritmage: 'wand_20' };
   for (const [label, fam] of Object.entries(families)) {
     // (A Thief fights with either weapon: `thiefstar` is her with a gauntlet.)
     const job = label === 'thiefstar' ? 'thief' : label;
@@ -2404,4 +2404,22 @@ test("the warrior paths charge their own way, and run into their own attack", ()
     updateWorld(w, DT, { held: new Set(['ArrowRight', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
     assert.equal(w.pose?.kind, dash, `${job} runs into ${dash}`);
   }
+});
+
+test("the Spirit Mage's dance is slow and elegant: about a second a figure, and each hits harder", async () => {
+  const w = arena('wand_20');
+  w.char.job = 'spiritmage';
+  let moves = 0;
+  let last = null;
+  for (let i = 0; i < 8 * 60; i++) {
+    updateWorld(w, DT, press('KeyZ'));
+    if (w.pose && w.pose.since !== last) {
+      moves++;
+      last = w.pose.since;
+    }
+  }
+  const each = 8 / moves;
+  assert.ok(each >= 0.85 && each <= 1.6, `${each.toFixed(2)} s a figure`);
+  const { PATH_COMBOS } = await import('../src/world/melee.js');
+  for (const f of PATH_COMBOS.spiritmage) assert.ok(f.dur >= 0.95, `${f.move} lasts ${f.dur} s`);
 });

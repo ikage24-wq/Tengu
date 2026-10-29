@@ -3,7 +3,7 @@
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, shadowClones, inForm, hasFaith } from '../world/melee.js';
-import { moveAt, MOVES } from './moves.js';
+import { moveAt, MOVES, DANCE_MOVES } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
@@ -93,13 +93,19 @@ const BLEND = 0.07;
 // that snaps straight to idle is where combat feels choppiest; 150-200 ms reads as recovering).
 const SETTLE = 0.17;
 
+// The Spirit Mage's dance flows from figure to figure and sinks back to standing slowly.
+const DANCE_BLEND = 0.18;
+const DANCE_SETTLE = 0.32;
+
 function playerPose(world) {
   const b = world.body;
   const last = world.lastPose;
-  if (!world.pose && last && b.onGround && !b.rope && Math.abs(b.vx) <= 8 && world.now - last.endedAt < SETTLE && MOVES[last.kind]) {
-    return { pose: last.kind, progress: 1, dur: last.dur, settle: (world.now - last.endedAt) / SETTLE, ready: true, hit: last.hit, fin: last.fin };
+  const settle = last && DANCE_MOVES.has(last.kind) ? DANCE_SETTLE : SETTLE;
+  if (!world.pose && last && b.onGround && !b.rope && Math.abs(b.vx) <= 8 && world.now - last.endedAt < settle && MOVES[last.kind]) {
+    return { pose: last.kind, progress: 1, dur: last.dur, settle: (world.now - last.endedAt) / settle, ready: true, hit: last.hit, fin: last.fin };
   }
-  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / BLEND, hit: world.pose.hit, fin: world.pose.fin };
+  const blend = world.pose && DANCE_MOVES.has(world.pose.kind) ? DANCE_BLEND : BLEND;
+  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / blend, hit: world.pose.hit, fin: world.pose.fin };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };
