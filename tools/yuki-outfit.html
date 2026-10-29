@@ -10,8 +10,14 @@ import { setHd, nextFrame } from '../src/render/pixel.js';
 const SCALE = 1.1;
 const PALE = '#f4f6ff';
 // ?set=ghost shows her new blizzard-ghost kimonos.
-const GHOST = new URLSearchParams(location.search).get('set') === 'ghost';
-const SAMPLES = GHOST ? [
+const SET = new URLSearchParams(location.search).get('set');
+const GHOST = SET === 'ghost' || SET === 'white';
+const SAMPLES = SET === 'white' ? [
+  ['1. Ghost furisode', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukifurisode' }],
+  ['2. Spirit flames', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukihitodama' }],
+  ['3. Trailing uchikake', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukiuchikake' }],
+  ['4. White spider lily', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukihigan' }],
+] : GHOST ? [
   ['A. Ghost shroud', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukishroud' }],
   ['B. Frostbitten', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukifrostbite' }],
   ['C. Whiteout', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukiwhiteout' }],
@@ -48,7 +54,9 @@ SAMPLES.forEach(([name, look], i) => {
   ctx.rect(i * CW, CH, CW, 300);
   ctx.clip();
   setHd(true, 2.6 * 3.2);
-  drawPosed(ctx, { outfitColor: '#ffffff', earStyle: 'round', ...look }, i * CW + CW / 2 + 6, CH + (GHOST ? 292 : 400), rig, { scale: 2.6 * 3.2, facing: 1 });
+  // (For comparing kimonos the close-up wears her hair short, so it doesn't hide them.)
+  const close = SET === 'white' ? { ...look, hairStyle: 'yukibob' } : look;
+  drawPosed(ctx, { outfitColor: '#ffffff', earStyle: 'round', ...close }, i * CW + CW / 2 + 6, CH + (SET === 'white' ? 292 : GHOST ? 292 : 400), rig, { scale: SET === 'white' ? 9.4 : 2.6 * 3.2, facing: 1 });
   ctx.restore();
   ctx.fillStyle = '#1e2a40';
   ctx.font = 'bold 16px Segoe UI, sans-serif';

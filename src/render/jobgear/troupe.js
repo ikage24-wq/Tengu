@@ -428,4 +428,95 @@ Object.assign(TROUPE_OUTFITS, {
     shoe: yukiFeet,
   },
 });
+// ---------- White ghost kimonos for the yuki-onna ----------
+//   yukifurisode   a ghost's furisode: pure white, its long sleeves hanging limp past her knees and
+//                  coming apart into mist, the skirt fading away below the knee (no feet)
+//   yukihitodama   white with pale blue spirit flames (hitodama) drifting up from the hem, which
+//                  fades through blue-grey into mist
+//   yukiuchikake   a white outer robe (uchikake) slipping off her shoulders over a white kimono,
+//                  its padded hem and long train trailing on the ground behind her
+//   yukihigan      white with white spider lilies (higanbana, the flower of the dead) in pale blue,
+//                  a white obi tied in front, the hem in long misty points
+const WHITE_G = '#fbfcff';
+const WHITE_SH = '#e4ebf8';
+const SPIRIT = '#9cc4f4';
+const SPIRIT_LT = '#cfe4ff';
+const LILY = '#7a9ed8';
+// A spirit flame: a teardrop of pale fire with a bright heart and a flickering tail.
+const hitodama = (x, y, r) => [F(T([[x, y - r * 2.4], [x + r * 0.9, y - r * 0.6], [x + r, y + r * 0.2], [x, y + r], [x - r, y + r * 0.2], [x - r * 0.9, y - r * 0.6]], SPIRIT)), F(E(x, y + r * 0.1, r * 0.55, r * 0.6, SPIRIT_LT))];
+// A spider lily: a burst of thin curling petals and long stamens from one point.
+const lily = (x, y, r) => {
+  const out = [];
+  for (let i = 0; i < 6; i++) {
+    const a = -Math.PI / 2 + (i - 2.5) * 0.5;
+    const [ex, ey] = [x + Math.cos(a) * r, y + Math.sin(a) * r];
+    out.push(F(limb(x, y, ex, ey, 0.35, 0.15, LILY)), F(limb(ex, ey, ex + Math.cos(a + 1.4) * r * 0.35, ey + Math.sin(a + 1.4) * r * 0.35, 0.15, 0.08, LILY)));
+    out.push(F(limb(x, y, x + Math.cos(a) * r * 1.5, y + Math.sin(a) * r * 1.5, 0.08, 0.06, SPIRIT)));
+  }
+  out.push(F(limb(x, y, x + 0.3, y + r * 2.4, 0.2, 0.15, '#b8d0c4')));
+  return out;
+};
+Object.assign(TROUPE_OUTFITS, {
+  yukifurisode: {
+    top: (p) => [...yukiTop(WHITE_G, WHITE_SH, WHITE_SH), T([[8.8, 31.6], [22.4, 31.4], [22.6, 34.8], [8.6, 35]], WHITE_SH), F(limb(8.8, 33.2, 22.4, 33, 0.35, 0.35, '#ffffff'))],
+    sleeve: () => WHITE_G,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? WHITE_G : WHITE_SH)],
+    // Sleeves hanging limp far below her hands, coming apart into mist.
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      return [T([[hx - ux * 3 - 2.6, hy - uy * 3], [hx - ux * 3 + 2.6, hy - uy * 3], [hx + 2.6, hy + 9], [hx - 3.2, hy + 10]], WHITE_G), F(limb(hx - 1.6, hy + 1, hx - 2, hy + 9.4, 0.4, 0.4, WHITE_SH)),
+        ...wisps(hx - 3.2, hx + 2.6, hy + 9.4, 3, 6, 3), E(hx + ux * 0.6, hy + uy * 0.6, 1.2, 1.3, p.skin)];
+    },
+    legs: () => ({ top: WHITE_G, low: WHITE_G, pad: null }),
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [23.4, 44.4], [7.8, 44.4]], WHITE_G), F(limb(MID + 1.6, 35, MID + 2.4, 44, 0.5, 0.5, WHITE_SH)), ...wisps(7.8, 23.4, 44, 6, 11, 4)],
+    shoe: () => [],
+  },
+  yukihitodama: {
+    top: (p) => [...yukiTop(WHITE_G, SPIRIT_LT, WHITE_SH), T([[8.8, 31.6], [22.4, 31.4], [22.6, 34.8], [8.6, 35]], SPIRIT_LT), F(limb(8.8, 33.2, 22.4, 33, 0.4, 0.4, SPIRIT)),
+      ...hitodama(11.6, 29.6, 0.8)],
+    sleeve: () => WHITE_G,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? WHITE_G : WHITE_SH)],
+    hand: (p, hx, hy, ex, ey) => wideSleeve(p, hx, hy, ex, ey, WHITE_G, SPIRIT_LT, SPIRIT),
+    legs: () => ({ top: WHITE_G, low: WHITE_G, pad: null }),
+    // Spirit flames drifting up from a hem that fades through pale blue into mist.
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [23.8, 47], [7.4, 47]], WHITE_G), F(T([[7.8, 43], [23.4, 43], [23.8, 47], [7.4, 47]], SPIRIT_LT)),
+      ...hitodama(10.4, 45, 1.2), ...hitodama(15.2, 42, 1), ...hitodama(20.4, 44.4, 1.3), ...hitodama(12.6, 38.4, 0.7), ...hitodama(19, 37.6, 0.6),
+      ...wisps(7.4, 23.8, 46.6, 6, 9, 5)],
+    shoe: () => [],
+  },
+  yukiuchikake: {
+    // The white kimono beneath, and the outer robe slipping off her shoulders, open down the front.
+    top: (p) => [...yukiTop(WHITE_G, '#ffffff', WHITE_SH), T([[8.8, 31.6], [22.4, 31.4], [22.6, 34.8], [8.6, 35]], SILVER_C),
+      T([[8.6, 27.4], [12.6, 28.4], [12, 36], [8.4, 36]], WHITE_SH), T([[18.8, 28.4], [22.8, 27.4], [23, 36], [19.4, 36]], WHITE_SH),
+      F(limb(12.6, 28.4, 12, 36, 0.6, 0.6, '#ffffff')), F(limb(18.8, 28.4, 19.4, 36, 0.6, 0.6, '#ffffff'))],
+    sleeve: () => WHITE_SH,
+    long: true,
+    shoulder: (p, side) => [E(0, 1.6, 3.6, 3, side > 0 ? WHITE_SH : '#d4dcef'), F(E(0, 3.2, 2.8, 0.6, '#ffffff'))],
+    hand: (p, hx, hy, ex, ey) => wideSleeve(p, hx, hy, ex, ey, WHITE_SH, '#ffffff', SILVER_C),
+    legs: () => ({ top: WHITE_G, low: WHITE_G, pad: null }),
+    // The robe's padded hem pooling on the ground, its train behind her.
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [24, 55.4], [7.2, 55.4]], WHITE_G),
+      T([[7.4, 34.6], [12, 34.6], [11.4, 55.6], [5.6, 55.6]], WHITE_SH), T([[19.2, 34.6], [23.8, 34.6], [25.8, 55.6], [19.8, 55.6]], WHITE_SH),
+      F(E(8.6, 55.4, 3.4, 1, '#ffffff')), F(E(22.8, 55.4, 3.4, 1, '#ffffff'))],
+    back: () => [T([[9, 30], [21, 30], [21.4, 55.6], [-8, 56], [-4, 52]], WHITE_SH), F(E(-4, 55.4, 5, 1.2, '#ffffff')), F(limb(14, 32, 4, 54, 0.6, 0.8, '#d4dcef'))],
+    shoe: yukiFeet,
+  },
+  yukihigan: {
+    top: (p) => [...yukiTop(WHITE_G, WHITE_SH, WHITE_SH), ...lily(19.6, 29.4, 1.6),
+      // A white obi tied in front (the way the dead's is), its bow hanging.
+      T([[8.8, 31.6], [22.4, 31.4], [22.6, 34.8], [8.6, 35]], '#ffffff'), F(limb(8.8, 31.8, 22.4, 31.6, 0.3, 0.3, WHITE_SH)),
+      T([[MID, 33], [MID - 2.4, 31.6], [MID - 2.6, 34.4]], WHITE_SH), T([[MID, 33], [MID + 2.4, 31.6], [MID + 2.6, 34.4]], WHITE_SH), F(limb(MID, 33.4, MID - 0.6, 38, 0.6, 0.4, WHITE_SH))],
+    sleeve: () => WHITE_G,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? WHITE_G : WHITE_SH)],
+    hand: (p, hx, hy, ex, ey) => wideSleeve(p, hx, hy, ex, ey, WHITE_G, WHITE_SH, LILY),
+    legs: () => ({ top: WHITE_G, low: WHITE_G, pad: null }),
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [23.6, 47.4], [7.6, 47.4]], WHITE_G), ...lily(11.4, 42, 2), ...lily(19.4, 39.4, 1.7), ...lily(15.6, 45.4, 1.4),
+      ...wisps(7.6, 23.6, 47, 7, 9, 6)],
+    shoe: () => [],
+  },
+});
 export const TROUPE_OUTFIT_KEYS = Object.keys(TROUPE_OUTFITS);
