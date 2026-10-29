@@ -41,11 +41,17 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
   into her flight, and her head and hair trail her body. She cheers at a Blessing or a Ward.
 - The dev page plays any skill: tools/spiritmage.html ?skill=<id> (and ?behind for a dummy behind).
 
+- Polish and wiring: ward spheres on party members and a burst when a ward breaks; Heaven's
+  Lantern hangs lower and smaller; sounds for her dance, skills and every doll trick (suzu bells,
+  celesta chimes, a choir for the lantern, a pff and a splat for spitballs; audio/recipes.js);
+  bots can be Spirit Mages and fight with her dance; she takes the healer's seat in dungeons
+  (roleOf: the mage family heals), and the finder recruits her there, healing with Blessing and
+  warding the tank with Spirit Ward; README and docs/art/README.md.
+
 ## Next
 
-1. Polish left from stage 2: ward spheres on party members and a burst when a ward breaks; the
-   lantern hangs a little high and the doll looks small on it.
-2. Wiring: sounds, bots and party play (healer seat), dungeon roles, tests, README and art docs,
-   demo videos of every skill.
-3. Then the 30 trial and the two paths (Shrine Maiden, Onmyoji): ask the player about the
-   companions first.
+1. Demo videos of every skill for the player (GIFs so far), and a look in a real dungeon run.
+2. The 30 trial and the two paths (Shrine Maiden, Onmyoji): ask the player about the companions
+   first.
+3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one
+   if the player wants.

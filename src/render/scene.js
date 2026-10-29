@@ -555,12 +555,14 @@ function drawDungeonFront(ctx, world, cam, time) {
 function drawSupport(ctx, buffs, x, y, time, now) {
   let barrier = null;
   let renew = false;
-  for (const b of Object.values(buffs)) {
+  for (const [id, b] of Object.entries(buffs)) {
     if (b.until <= now) continue;
-    if (b.shield > 0) barrier = b;
+    if (b.shield > 0) barrier = { ...b, id };
     if (b.values?.regenPct) renew = true;
   }
-  if (barrier) {
+  // A Spirit Mage's ward: the sphere of light and sacred rope, as on her.
+  if (barrier?.id === 'spiritward') fxSprite(ctx, 'celspiritward', x, y + 4, { t: time, scale: 0.78, alpha: 0.6 * Math.min(1, (now - barrier.since) * 3) });
+  else if (barrier) {
     const k = 1 + Math.sin(time * 4) * 0.03;
     ctx.save();
     ctx.globalAlpha = 0.16;

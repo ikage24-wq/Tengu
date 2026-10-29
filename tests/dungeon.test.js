@@ -10,7 +10,7 @@ import { partyMembers } from '../src/world/party.js';
 import { roleOf, DUNGEONS } from '../src/data/dungeons.js';
 import { MAPS } from '../src/data/maps.js';
 import { MOBS } from '../src/data/mobs.js';
-import { planGroup, startRun, groupOf, isUp, noteHit } from '../src/world/dungeon.js';
+import { planGroup, startRun, groupOf, isUp, noteHit, healerTurn } from '../src/world/dungeon.js';
 
 function seeded(n) {
   return () => {
@@ -28,9 +28,10 @@ function heroAt(rng, level, jobs) {
   return world;
 }
 
-test('warriors tank, everyone else deals damage', () => {
+test('warriors tank, Spirit Mages heal, everyone else deals damage', () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
   for (const [job, fam] of [['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
+  assert.equal(roleOf('spiritmage', 'mage'), 'healer', 'the Spirit Mage heals');
   assert.equal(roleOf('novice', 'beginner'), null);
 });
 
@@ -48,8 +49,8 @@ test('the group finder fills a 1 tank / 1 healer / 2 DPS group around you', () =
   const tank = members.find((b) => world.dungeon.roles[b.id] === 'tank');
   const healer = members.find((b) => world.dungeon.roles[b.id] === 'healer');
   assert.equal(tank.char.job, 'warrior');
-  // (No job of yours heals while the magic class is remade: an archer or thief takes the seat.)
-  assert.ok(['archer', 'thief'].includes(healer.char.job));
+  // The Spirit Mage takes the healer's seat.
+  assert.equal(healer.char.job, 'spiritmage');
   assert.equal(world.map.id, DUNGEONS.hollow.rooms[0]);
   for (const b of members) assert.equal(b.hp, b.stats.maxHp);
 });
@@ -198,4 +199,28 @@ test("a warrior's tank procs: War Cry taunts and guards as Valor fills, Iron Gua
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
   assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the guard');
+});
+
+test("a Spirit Mage in the healer's seat wards the tank and blesses the hurt, her own way", () => {
+  const rng = seeded(11);
+  const world = heroAt(rng, 12, ['archer']);
+  assert.equal(startRun(world), null);
+  const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
+  assert.equal(healer.char.job, 'spiritmage');
+  for (let i = 0; i < 30; i++) {
+    updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
+    updateBots(world.bots, world, 1 / 60);
+  }
+  world.dungeon.combat = true;
+  delete groupOf(world).find((g) => g.role === 'tank').bot.buffs?.spiritward;
+  healerTurn(healer, world, rng);
+  const tank = groupOf(world).find((g) => g.role === 'tank');
+  assert.ok(tank.bot.buffs.spiritward?.shield > 0, 'a Spirit Ward on the tank');
+  assert.equal(healer.attack.pose, 'kaguraward', 'cast with her fan sweep');
+  world.char.hp = Math.round(world.stats.maxHp * 0.3);
+  const before = world.char.hp;
+  healerTurn(healer, world, rng);
+  assert.ok(world.char.hp > before, 'and she heals you when you are hurt');
+  assert.equal(healer.attack.pose, 'kagurabless');
+  assert.ok(world.fx.some((f) => f.kind === 'blessing'), 'with her column of light');
 });

@@ -257,6 +257,29 @@ const R = {
       { seq: 'A3+E4+A4+C5:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
     ],
   },
+  // The Spirit Mage: her bolts leave the bell staff with a shake of the suzu bells and land with a
+  // celesta chime; Spirit Wave is a taiko-like thump and a struck bell; Blessing a celesta run and
+  // a soft choir; a ward breaks like glass; Heaven's Lantern rises on a harp run and choir, each ray
+  // a little chime, and it blazes with a great bell. All in the bright yo scale (D E G A B).
+  suzu: { db: -15, vary: 4, max: 3, room: true, layers: [{ rec: 'bell', len: 500, rate: 1.6, db: -4 }, sparkle('D7:25 A6:25 D7:25 E7:200', { db: -10 }), whoosh(260, 900, 2600, { db: -12 })] },
+  suzuBig: { db: -12, max: 2, room: true, layers: [{ rec: 'bell', len: 900, rate: 1.2 }, sparkle('D6:30 E6:30 G6:30 A6:30 D7:400', { db: -8 }), whoosh(380, 600, 2400, { db: -9 }), thump(140, 200, { db: -10 })] },
+  spiritHit: { db: -14, vary: 5, max: 4, layers: [{ rec: 'sparkle', len: 400, db: -6 }, { seq: 'A6:200', inst: 'celesta', db: -6 }, { rec: 'soft', db: -8 }] },
+  castSpirit: { db: -14, max: 1, room: true, layers: [{ rec: 'holyProtect', len: 900, db: -4 }, sparkle('D6:40 G6:40 A6:300', { db: -10 })] },
+  spiritwave: { db: -9, max: 1, room: true, duck: [-5, 700], layers: [thump(80, 380, { slide: -1.5 }), { drum: 'K' }, { rec: 'holyWave', len: 1200 }, { rec: 'bell', len: 1100, rate: 0.9, db: -4 }, whoosh(700, 500, 3000, { focus: 0.3, db: -6 })] },
+  blessing: { db: -11, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1500 }, { seq: 'D5:90 E5:90 G5:90 A5:90 D6:700', inst: 'celesta', db: -4 }, { seq: 'r:300 D5+A5:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },
+  wardbreak: { db: -11, max: 2, layers: [{ rec: 'glass', len: 700 }, sparkle('E7:30 B6:30 G6:200', { db: -8 }), thump(160, 160, { db: -8 })] },
+  heavenslantern: { db: -10, max: 1, room: true, duck: [-6, 1500], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:80 E4:80 G4:80 A4:80 B4:80 D5:80 E5:900', inst: 'orchestral_harp' }, { seq: 'r:400 D4+A4+D5:1400', inst: 'choir_aahs', attack: 0.3, db: -8 }] },
+  lanternray: { db: -15, vary: 6, max: 3, gap: 80, layers: [{ rec: 'holyBlast', len: 500, db: -6 }, sparkle('A6:30 D7:200', { db: -8 })] },
+  lanternblaze: { db: -8, max: 1, room: true, duck: [-8, 1200], layers: [thump(70, 600, { slide: -1 }), { rec: 'holyBlast', len: 1800 }, { rec: 'bell', len: 1500, rate: 0.8, db: -3 }, { seq: 'D5+A5+D6+E6:1200', inst: 'celesta', db: -5 }] },
+  // Her Spirit Doll, small and silly: a paper-fan smack, a bell bonked on a head, a twirl of
+  // streamers, a charm flicked off, popping in and out, and a spitball's pff and wet splat.
+  fanslap: { db: -14, vary: 8, max: 3, layers: [{ rec: 'swingFist', rate: 1.4, db: -4 }, { rec: 'punch', rate: 1.5 }, { rec: 'cloth', rate: 1.6, db: -8 }] },
+  bellbonk: { db: -11, vary: 5, max: 2, layers: [{ rec: 'metal', rate: 1.3, len: 300 }, { rec: 'bell', rate: 1.4, len: 1200 }, sparkle('E7:40 B6:40 E7:300', { db: -10 })] },
+  dollcharm: { db: -15, max: 2, layers: [whoosh(220, 1500, 4000, { db: -6 }), sparkle('A6:30 E7:120', { db: -12 })] },
+  dolltwirl: { db: -14, max: 2, layers: [whoosh(500, 700, 2800, { focus: 0.4 }), { rec: 'cloth', rate: 1.3, db: -6 }] },
+  dollpop: { db: -16, max: 2, layers: [{ rec: 'teleIn', rate: 1.6, len: 400 }, sparkle('C7:30 G7:100', { db: -12 })] },
+  spitball: { db: -13, vary: 10, max: 3, layers: [whoosh(120, 800, 2400, { focus: 0.15 }), thump(700, 60, { slide: 1, db: -10 })] },
+  spitsplat: { db: -12, vary: 8, max: 3, layers: [{ rec: 'slime', len: 500, rate: 1.2 }, { rec: 'splash', len: 400, rate: 1.5, db: -6 }] },
   // The Thief's paths. The Shinobi: Ki topping out (a blade drawn and a taiko hit: Shadow
   // Clones), a seal bursting, ink spilling over the world, and the ink fox's sweep. The Kitsune:
   // the ninth tail (a koto run and bells: Nine Tails), night falling with the fox fire, and the

@@ -214,6 +214,20 @@ carry an improvement across every part of the game it applies to.
     tornado, rings of wind); the Sniper's ice-blue lens of light tearing through each monster a
     bolt pierces (every Sniper bolt pierces the line), snowflakes and a frost burst, a puffy blast,
     a rose sight for the Deadeye.
+  - The Spirit Mage: white spirit light with a warm gold heart, no outline, and the shrine's own
+    shapes on everything: zigzag paper streamers (shide, drawn bolder than real so their folds
+    read at game size), scarlet cords and gold bells. Her bolts are wisps trailing streamers
+    (`celspiritorb`); hits flash and fling paper scraps (`celspirithit`); Spirit Wave is her ring
+    racing out both ways (`celringspirit`, twice, the second fainter); Blessing a column of warm
+    light (`celblessing`, also each of Heaven's Lantern's rays); Spirit Ward a see-through sphere
+    bound with a sacred rope (`celspiritward`, on party members too), bursting in light when it
+    breaks; Heaven's Lantern a giant ribbed paper lantern (`cellanternbig`, held on its glowing
+    drawings while the rays fall). The doll's tricks are comic, not grand: a fan smack, a bell
+    bonk with comic stars, a streamer whirl, and a chewed-paper spitball (`celspitball`) that
+    lands as a dripping splat with wobble lines (`celspitsplat`). Her dance and the doll are
+    animated, not effects: see render/moves.js (`DANCE_STYLES.grounded`) and render/spiritdoll.js.
+    tools/build-fx.py needs Playwright; without it, new strips can be drawn from fx-art.js in any
+    browser (`FXHD.render`) and stripped the same way (frames trimmed to the box they share).
   - Skills a path inherits from its first job take the path's look, not the first job's: the
     Archer's Blast Arrow bursts in fire for her, a gale of wind and leaves for the Beastmaster
     (`celgaleblast`) and a thunderclap for the Stormcaller (`celthunderblast`), and a sprung trap

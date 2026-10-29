@@ -53,12 +53,12 @@ to clear it.
 
 ## Systems
 
-- **Jobs** — Novice → Warrior, Archer, or Thief at level 10 (each instructor lives in their job's
-  home town). Every first job has a movement skill (Shoulder Charge, Backflip Shot, Shadow Step).
-  Each picks one of two paths at level 30 (below), after their instructor's trial. The Mage was
-  removed: a new magic class is being built from scratch. Characters who were Mages are Novices
-  again, with their skill points given back; Elowen still keeps the Mage Tower in Moonleaf Grove,
-  waiting for the new class, and wands and staves stay in the game for it.
+- **Jobs** — Novice → Warrior, Archer, Thief, or Spirit Mage at level 10 (each instructor lives
+  in their job's home town). Every first job has a movement skill (Shoulder Charge, Backflip Shot,
+  Shadow Step, Spirit Step). The Warrior, Archer and Thief each pick one of two paths at level 30
+  (below), after their instructor's trial; the Spirit Mage's paths (the Shrine Maiden and the
+  Onmyoji) are still to come. The old Mage was retired for her: characters who were Mages are
+  Novices again, with their skill points given back.
 
   Monsters can be **frozen** (in a block of ice) or **stunned** (seeing stars) so they can't move or
   hurt you, and **poisoned** (green) or **bleeding** (red) so they take damage every second. Spells
@@ -169,6 +169,34 @@ to clear it.
   Volley** (needs full Shadow: a storm of stars gathers into a full moon over the monsters, bursts
   into a rain of stars, and a giant crescent moon cuts the line). The masteries only count with
   their own weapon.
+- **Spirit Mage** (white spirit light, paper streamers, scarlet cords and gold bells) — the magic
+  class, taught by Elowen at the Mage Tower. Damage and support at once, with a wand or staff
+  redrawn as shrine tools (a kagura bell staff, a gohei). She casts the way a shrine maiden dances
+  kagura: slow, elegant and smooth, about a second a figure, her feet sliding flat along the floor
+  in long gliding steps, the bell staff and an open folding fan sweeping wide, the bells ringing,
+  the fan folding shut and snapping open with each spell; on her big casts she rises onto her
+  toes. She never spins: her turns are sways from the hips with the fan circling round her. Her
+  basic dance mixes a pool of figures (a sweep, a swaying step, ringing the bells, a fan sweep, a
+  rise onto one foot, the dance's last figure, a bow and rise), each sending bolts of white spirit
+  light, and she has her own command casts. **Spirit** is her gauge: her spells that land build
+  it, and so do her heals, half again when she turns from one to the other; full, she has
+  **Kami's Favour**: every damage spell also mends allies near where it lands. Her skills:
+  **Spirit Bolt** (a three-figure dance of bolts), **Spirit Step** (she comes apart into
+  streamers and light and gathers again ahead), **Spirit Wave** (the bell staff struck to the
+  floor: a ring of light races out both ways), **Blessing** (bells rung overhead, arms opened: a
+  column of warm light heals her and the party, then a little more every second), **Spirit Ward**
+  (the fan swept all the way round her: a sphere of light bound with a sacred rope soaks up damage
+  on her and the party, and bursts when it breaks), **Mana Mastery** (passive), and the finisher
+  **Heaven's Lantern** (needs full Spirit: she bows, lifts her arms, and a giant paper lantern
+  rises over the monsters with the doll riding on top cheering; its rays strike the monsters on
+  screen again and again, each one healing the party, then it blazes and bursts over everything).
+  **The Spirit Doll** floats at her shoulder: a tiny paper shrine doll and an imp, who fights on
+  her own with eight tricks of her own (a paper-fan slap, a streamer twirl, a bell dropped on a
+  head, a dropkick, a paper charm that sticks and pops, an akanbe that leaves a monster too cross
+  to move, a rodeo on a monster's head bonking it with her bell, and a spitball volley through a
+  paper straw), cheers when what she picked on goes down, fumes when the Spirit Mage is hurt, and
+  can't keep still between fights (laps round her head, peekaboo upside down, cheek pokes, loops).
+  In a dungeon group the Spirit Mage takes the healer's seat.
 - **Command combos** — with a sword, axe, spear, dagger or bare hands: **Up + attack** is a
   launcher that throws monsters up and hops you after them; **attacking in the air** plays an air
   combo (two cuts that keep you hanging, then a dive that slams into the ground on landing); and
@@ -343,8 +371,8 @@ to clear it.
 - **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
   Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
   form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank (Berserkers deal damage),
-  archers and thieves deal damage**; while the new magic class is being built, the group finder
-  brings in an archer or thief who heals in the healer's seat. Your party comes
+  archers and thieves deal damage, and the Spirit Mage heals**; the group finder brings in a
+  Spirit Mage for the healer's seat (her Blessings and Spirit Wards, danced). Your party comes
   with you if it fits the roles, and the group finder brings in players for any open spot. Inside:
   - Everyone in the group has HP (shown under their names and in the group panel), and monsters
     don't hurt on touch: they wind up and swing at whoever they're angriest at. Damage builds

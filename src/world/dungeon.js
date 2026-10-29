@@ -88,8 +88,7 @@ export function planGroup(world, id = 'hollow') {
 function recruit(world, def, role) {
   const rng = world.bots.rng;
   const [lo, hi] = def.recruit[role];
-  const jobs = role === 'tank' ? ['warrior'] : [pick(['archer', 'thief'], rng)];
-  // (The healer's seat is an archer or thief who heals, while the magic class is being remade.)
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? ['spiritmage'] : [pick(['archer', 'thief'], rng)];
   const bot = recruitBot(world.bots, world, { level: Math.floor(between(lo, hi + 1, rng)), jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -518,7 +517,10 @@ export function absorb(world, body, buffs, dmg) {
     b.shield -= take;
     dmg -= take;
     world.numbers.push({ x: body.x + 10, y: body.y - body.h - 2, text: `(${take})`, color: '#9fd8ff', t: 0, small: true });
-    if (b.shield <= 0) b.until = world.now;
+    if (b.shield <= 0) {
+      b.until = world.now;
+      if (b.values?.barrier && b.name === 'Spirit Ward') world.fx.push({ kind: 'wardbreak', x: body.x, y: body.y, t: 0, dur: 0.6 });
+    }
   }
   return dmg;
 }
@@ -1204,11 +1206,20 @@ export function healerTurn(bot, world, rng) {
   const me = group.find((g) => g.bot === bot);
   const hurt = up.map((g) => ({ g, f: hpOf(world, g) / maxHpOf(world, g) })).sort((a, b) => a.f - b.f);
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
+  // A Spirit Mage heals with her own spells and dance: Blessing's column of light, Spirit Ward.
+  const shrine = bot.char.job === 'spiritmage';
+  const bless = (g) => shrine && world.fx.push({ kind: 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
+  const barrier = shrine ? { id: 'spiritward', name: 'Spirit Ward', pose: 'kaguraward', dur: 1.1 } : { id: 'barrier', name: 'Arcane Barrier', pose: 'castup', dur: 0.6 };
+  const renew = shrine ? { id: 'blessing', name: 'Blessing', pose: 'kagurabless', dur: 1.2 } : { id: 'renew', name: 'Renew', pose: 'castup', dur: 0.6 };
   if (low.length >= 2 && low[1].f < 0.7) {
-    for (const h of hurt) if (h.f < 0.95) healMember(world, h.g, maxHpOf(world, h.g) * 0.16 + bot.stats.int * 0.5, bot.id);
+    for (const h of hurt) {
+      if (h.f >= 0.95) continue;
+      healMember(world, h.g, maxHpOf(world, h.g) * 0.16 + bot.stats.int * 0.5, bot.id);
+      bless(h.g);
+    }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
     cast();
     if (rng() < 0.2) bot.bubble = { text: pick(['group heal!', 'stay close!', 'healing!']), t: 2.5 };
@@ -1216,22 +1227,27 @@ export function healerTurn(bot, world, rng) {
   }
   if (low.length) {
     healMember(world, low[0].g, maxHpOf(world, low[0].g) * between(0.22, 0.3, rng) + bot.stats.int * 0.6, bot.id);
+    bless(low[0].g);
     cast();
     return between(1.1, 1.5, rng);
   }
   // In a fight: keep a barrier on the tank, and a Renew on the group when it's taking damage.
   const tank = up.find((g) => g.role === 'tank');
   const buffsOf = (g) => (g.bot ? g.bot.buffs : world.char.buffs) ?? {};
-  if (run.combat && tank && !(buffsOf(tank).barrier?.shield > 0)) {
-    giveBuff(world, tank, 'barrier', 'Arcane Barrier', { barrier: 0.22 }, 20);
-    world.fx.push({ kind: 'buffcast', skill: 'barrier', name: 'Arcane Barrier', x: tank.body.x, y: tank.body.y, t: 0, dur: 1.1 });
-    bot.attack = { pose: 'castup', t: 0, dur: 0.6 };
+  if (run.combat && tank && !(buffsOf(tank)[barrier.id]?.shield > 0)) {
+    giveBuff(world, tank, barrier.id, barrier.name, { barrier: 0.22 }, 20);
+    world.fx.push({ kind: 'buffcast', skill: barrier.id, name: barrier.name, school: shrine ? 'spirit' : undefined, x: tank.body.x, y: tank.body.y, t: 0, dur: 1.1 });
+    bot.attack = { pose: barrier.pose, t: 0, dur: barrier.dur };
     return between(1.2, 1.6, rng);
   }
-  if (run.combat && hurt.filter((h) => h.f < 0.92).length >= 2 && !up.some((g) => buffsOf(g).renew)) {
-    for (const g of up) if (Math.abs(g.body.x - me.body.x) < 320) giveBuff(world, g, 'renew', 'Renew', { regenPct: 0.025 }, 20);
+  if (run.combat && hurt.filter((h) => h.f < 0.92).length >= 2 && !up.some((g) => buffsOf(g)[renew.id])) {
+    for (const g of up) {
+      if (Math.abs(g.body.x - me.body.x) >= 320) continue;
+      giveBuff(world, g, renew.id, renew.name, { regenPct: 0.025 }, 20);
+      bless(g);
+    }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
-    bot.attack = { pose: 'castup', t: 0, dur: 0.6 };
+    bot.attack = { pose: renew.pose, t: 0, dur: renew.dur };
     return between(1.2, 1.6, rng);
   }
   if (!run.combat) {

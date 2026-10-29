@@ -78,12 +78,12 @@ const STEPS = { grass: 'stepGrass', stone: 'stepStone', wood: 'stepWood', sand: 
 // What each element or school adds to a blow (weapon themes, star elements, spell schools).
 const COLOUR = {
   holy: 'holyHit', rage: 'rageHit', fire: 'fireHit', demonic: 'fireHit', ice: 'iceHit', lightning: 'zapHit', storm: 'zapHit', laser: 'zapHit', cyber: 'zapHit',
-  poison: 'poisonHit', shadow: 'darkHit', bone: 'darkHit', chainsaw: 'rageHit', wind: 'windHit', water: 'waterHit', cosmic: 'arcaneHit', arcane: 'arcaneHit', steel: 'steelHit',
+  poison: 'poisonHit', spirit: 'spiritHit', shadow: 'darkHit', bone: 'darkHit', chainsaw: 'rageHit', wind: 'windHit', water: 'waterHit', cosmic: 'arcaneHit', arcane: 'arcaneHit', steel: 'steelHit',
 };
 // A spell's cast, by school: each element's own recorded charge-up.
-const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
+const CAST = { spirit: 'castSpirit', fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { moonstar: 'star', foxstar: 'star', foxmoon: 'star', kunai: 'arrow', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
+const SHOTS = { spiritorb: 'suzu', spiritbig: 'suzuBig', moonstar: 'star', foxstar: 'star', foxmoon: 'star', kunai: 'arrow', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   burst: 'zapHit', beam: 'zapHit',

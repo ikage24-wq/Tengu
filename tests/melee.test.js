@@ -2449,6 +2449,8 @@ test('Spirit Wave: the staff strikes the floor and the ring hits monsters on bot
 test('Blessing heals her when the light falls, then keeps healing, and builds Spirit', () => {
   const w = shrineMage();
   w.god = false;
+  // (The dummies out of reach, so nothing knocks her HP about while it's measured.)
+  for (const m of w.mobs) m.x += 900;
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   const hp0 = w.char.hp;
   assert.ok(cast(w, 'blessing').ok);

@@ -146,6 +146,9 @@ function weaponStyle(bot) {
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
+  // The Spirit Mage dances her bolts (a figure about a second long), and her big one is the
+  // dance's last figure.
+  if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'kagurafin' };
   // The Kitsune throws her fox-fire stars.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['throw', 'barrage', 'twirlthrow']), shot: 'foxstar', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
@@ -445,8 +448,8 @@ function strike(bot, m, world, rng) {
   if (cut?.arc) {
     world.fx.push({ kind: 'arc', x: body.x + body.facing * 10, y: body.y - 25, dir: body.facing, r: cut.reach * 0.52, start: cut.arc[0], sweep: cut.arc[1], thick: cut.thick ?? 7, big: cut.big, color: cut.big ? '#ffb347' : '#8fb8ff', t: -impact, dur: cut.big ? 0.32 : 0.24 });
   }
-  const pose = special ? (st.magic ? 'castspin' : st.ranged ? (st.shot === 'star' ? 'barrage' : 'rapid') : rng() < 0.5 ? 'spin' : 'flurry') : st.ranged ? st.pose : step.move;
-  bot.attack = { pose, t: 0, dur: special ? 0.6 : step?.dur ?? 0.42 };
+  const pose = special ? (st.special ?? (st.magic ? 'castspin' : st.ranged ? (st.shot === 'star' ? 'barrage' : 'rapid') : rng() < 0.5 ? 'spin' : 'flurry')) : st.ranged ? (st.poses ? pick2(st.poses) : st.pose) : step.move;
+  bot.attack = { pose, t: 0, dur: st.dur ? st.dur * (special ? 1.4 : 1) : special ? 0.6 : step?.dur ?? 0.42 };
 }
 
 // Healers keep an eye on your HP.
@@ -456,9 +459,11 @@ function heal(bot, world, bots) {
   if (char.hp >= max * 0.85 || world.dead) return false;
   const amount = Math.round(max * between(0.12, 0.2, bots.rng) + bot.stats.int * 2);
   char.hp = Math.min(max, char.hp + amount);
-  world.fx.push({ kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  // A Spirit Mage blesses you with her column of light, with the bells over her head.
+  const shrine = bot.char.job === 'spiritmage';
+  world.fx.push(shrine ? { kind: 'blessing', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

@@ -221,9 +221,10 @@ export function tickDoll(world, dt) {
   const { now } = world;
   tickBells(world, d);
   tickLantern(world, d);
-  // Riding a monster (her Rodeo) or the lantern: she's carried, not flying.
-  if (d.act?.kind === 'ride') return ride(world, d);
+  // Riding the lantern (she drops whatever she was doing for it) or a monster (her Rodeo): she's
+  // carried, not flying.
   if (world.lantern) return perch(world, d);
+  if (d.act?.kind === 'ride') return ride(world, d);
   // Her Spirit Mage's Blessing or Ward going up: she cheers.
   if (['blessing', 'spiritward'].some((id) => world.char.buffs?.[id]?.since === now)) [d.mood, d.moodUntil] = ['peace', now + MOOD.peace];
   // The Spirit Mage hurt: she puffs up furious.
@@ -359,7 +360,7 @@ function ride(world, d) {
 
 // When the lantern has risen, when its first ray falls, the beat between rays, and the held
 // breath before it blazes (seconds); how high it hangs over the ground (px).
-const LANTERN = { rise: 0.7, first: 0.9, gap: 0.24, pause: 0.45, high: 120 };
+const LANTERN = { rise: 0.7, first: 0.9, gap: 0.24, pause: 0.45, high: 96 };
 // The monsters on screen around her (about half a screen either way).
 const SCREEN = 340;
 const onScreen = (world) => world.mobs.filter((m) => alive(m) && Math.abs(m.x - world.body.x) <= SCREEN && Math.abs(m.y - world.body.y) < 260);
@@ -411,7 +412,7 @@ function perch(world, d) {
   d.act = null;
   d.bit = null;
   d.x = L.x;
-  d.y = L.y - 30;
+  d.y = L.y - 25;
   d.vx = 0;
   d.vy = 0;
   d.dir = world.body.facing;

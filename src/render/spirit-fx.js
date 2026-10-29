@@ -12,8 +12,8 @@
 import { fxSprite } from './fx-sprites.js';
 import { groundRing } from './warrior-fx.js';
 
-// Heaven's Lantern's size (its big strip, cellanternbig): about 100 px across, over the monsters.
-const LANTERN_SCALE = 0.75;
+// Heaven's Lantern's size (its big strip, cellanternbig): about 85 px across, over the monsters.
+const LANTERN_SCALE = 0.62;
 
 export function drawSpiritFx(ctx, f, x, y, p) {
   const flip = (f.dir || 1) < 0;
@@ -86,6 +86,12 @@ export function drawSpiritFx(ctx, f, x, y, p) {
         const k = (f.t - f.fly) / (f.dur - f.fly);
         fxSprite(ctx, 'celspiritorb', tx, ty, { t: f.t, scale: 0.13 + 0.05 * Math.abs(Math.sin(f.t * (10 + 30 * k))) });
       }
+      return true;
+    }
+    case 'wardbreak': {
+      // A Spirit Ward giving way: the sphere bursts in a flash of white light and paper scraps.
+      fxSprite(ctx, 'celspirithit', x, y - 24, { p, scale: 0.9 });
+      groundRing(ctx, 'celringspirit', x, y, p, 46);
       return true;
     }
     case 'spiritwave': {
