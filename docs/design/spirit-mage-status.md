@@ -51,7 +51,8 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
 ## Next
 
 1. Demo videos of every skill for the player (GIFs so far), and a look in a real dungeon run.
-2. The 30 trial and the two paths (Shrine Maiden, Onmyoji): ask the player about the companions
-   first.
+2. The 30 trial and the two paths: planned in docs/design/spirit-mage-paths.md (the player chose
+   a kitsune shrine guardian for the Shrine Maiden, a yokai troupe that's always out for the
+   Onmyoji, and the doll growing up on each path).
 3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one
    if the player wants.

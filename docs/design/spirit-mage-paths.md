@@ -1,0 +1,79 @@
+# Spirit Mage paths at level 30: the plan
+
+The Spirit Mage branches at 30, after Elowen's trial, like every other first job. Built the way
+`making-a-job.md` says (research, combat, animation, effects, everything else, show it), with
+the player checking in at each choice with options and GIFs. Everything is new art and new rigs:
+no companion reuses Snow wolf's or the player's skeleton, and nothing spins (a turn is a mirror
+flip). The player's choices so far are marked **(chosen)**.
+
+## The 30 trial (Elowen)
+
+A shrine at night in Moonleaf Grove: the lanterns have gone out and restless spirits gather. She
+dances to light the lanterns one by one while the doll keeps the spirits off her; the last lantern
+lit, the spirits settle, and the two paths are offered at the shrine gate.
+
+## Shrine Maiden: full support
+
+- **Fantasy:** the shrine's own priestess. Heals, wards and blessings that carry a party; her
+  damage is light, her dance even slower and grander (two fans, ribbons of light).
+- **Colour and shapes:** warm white and vermilion with gold: torii gates of light, sakaki leaves,
+  bell ropes. Her own, not the Paladin's gold star.
+- **Companion (chosen): a kitsune shrine guardian.** A tall, serene fox-eared woman in shrine
+  armour with a naginata and two (later more) tails of soft fox fire. She stands in front of the
+  party, guards, taunts and sweeps the naginata, while the Maiden heals from behind; she bows to
+  the Maiden after a fight. Her own skeleton (tall, long-limbed, tails as springs), her own AI.
+- **The doll grows up (chosen):** she becomes a little shrine fox kit, the guardian's mischievous
+  junior, who rides on the guardian's shoulder or tail and pulls her own pranks.
+- **Gauge:** a shrine's **Grace**: builds from heals and wards landing, faster the more allies
+  they reach; full, every heal also wards.
+- **Skills (to pick from with the player):** a great Blessing over the whole party, Torii Gate (a
+  gate of light the party walks through for a shield and a cleanse), Purification (clears
+  debuffs, burns monsters standing in it), the Guardian's Oath (the kitsune takes hits for an ally),
+  Resurrection Dance, a mastery; the finisher **Thousand Torii**: a corridor of torii gates of light
+  across the screen, healing and shielding everyone, the kitsune dashing through it striking
+  every monster.
+- **Party role:** the healer's seat, and better at it than the first job.
+
+## Onmyoji: damage
+
+- **Fantasy:** the spirit-binder who fights with a rowdy troupe of yokai she keeps in line with
+  talismans. She casts with ofuda and seal hand-signs; her dance turns sharp and commanding.
+- **Colour and shapes:** indigo night and talisman red with paper white: ofuda, the five-pointed
+  seiman star, ink brush strokes. (Not the Shinobi's ink seals: hers are star seals and paper.)
+- **Companions (chosen): a yokai troupe, always out and fighting on their own (chosen).**
+  - **Kappa:** a stocky river brawler with a dish of water on his head; grapples, belly-flops,
+    and panics when his dish spills (he stops to refill it from a little bucket).
+  - **Karakasa:** a one-eyed paper umbrella spirit hopping on one leg; spins into monsters, opens
+    to shade the Onmyoji, licks things with a long tongue.
+  - **Oni:** a big, cheerful red oni with an iron club; slow, huge swings, ground pounds, and he
+    sulks when he misses.
+  - **Yuki-onna:** a calm, aloof snow woman; ice breath and frozen needles from a distance, and
+    she freezes the others when they bicker.
+  Each has their own skeleton, look, moves, idle bits and personality, and they bicker and
+  cheer each other between fights.
+- **Her skills command them all at once (chosen):** e.g. Talisman Storm (her own big attack),
+  Rally (they all charge one target together), Night Parade (they rampage across the screen in a
+  line), Seal (she pins a monster with a star seal for them to pile on), a mastery; the finisher
+  **Hyakki Yagyo**, the Night Parade of a Hundred Demons: a procession of yokai lanterns and
+  spirits floods across the screen behind her troupe, trampling everything.
+- **The doll grows up (chosen):** into a little imp of the troupe, the yokai's ringleader in a
+  paper mask, who eggs them on and starts the fights.
+- **Gauge:** **Binding**: builds as the troupe's hits land; full, the troupe goes wild (faster,
+  bigger moves) until she spends it.
+- **Party role:** DPS.
+
+## Order of work
+
+1. The trial quest and the path choice (both paths stubbed so they can be picked).
+2. Shrine Maiden: the kitsune guardian first (rig, look, moves, AI; GIF check-ins on her design
+   and moves), then the fox kit doll, then her dance, gauge, skills and finisher.
+3. Onmyoji: one yokai at a time (rig, look, moves, personality; GIF check-ins), then the imp doll,
+   then her dance, gauge, skills and finisher.
+4. Wiring for both: sounds, bots, party roles, dungeon roles, tests, README and art notes, demo
+   videos.
+
+## Questions to ask the player along the way
+
+- Designs for the kitsune guardian and each yokai (a sheet of options each, before building).
+- Each path's skill list and finisher (options to pick from).
+- Colours, if the ones above don't land.
