@@ -96,6 +96,12 @@ function sheen(ctx, x, y, t, color, a, period = 2.2) {
 // Each buff: its color, how it bursts when cast, and what it draws while active.
 // back/front(ctx, x, y, t, dir, a) — (x, y) the hero's feet on screen, a the strength (0-1).
 export const BUFF_LOOKS = {
+  // Spirit Ward: a sphere of pale light round her with a sacred rope bound round its middle,
+  // streamers hanging off it (Tengu's own effect art), see-through so she shows inside it.
+  spiritward: {
+    color: '#fff3dc',
+    front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celspiritward', x, y + 4, { t, scale: 0.78, alpha: 0.6 * a }),
+  },
   quickstep: {
     color: '#9fe8c8', cast: 'gust',
     back: (ctx, x, y, t, dir, a) => windSwirl(ctx, x, y - 3, t, a, '#9fe8c8', false),

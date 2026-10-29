@@ -10,8 +10,18 @@
 // Spirit Mage is hurt. She flies (no ground under her, so she never needs a path), keeps within
 // LEASH of the Spirit Mage, and her hits are spells of the Spirit Mage's own magic attack
 // (melee.js dollHit). render/spiritdoll.js draws her.
+//
+// Two of the Spirit Mage's skills are hers too (data/skills.js):
+//   Doll's Mischief  ordered onto a monster, she pops up on its head and rides it, bonking it with
+//                    her bell again and again (each bonk dazes it, so it can't shake her off), then
+//                    a last big bonk throws it into the air and she hops off cheering
+//   Heaven's Lantern the finisher: a giant paper lantern rises over the monsters with the doll riding
+//                    on top, cheering; its rays strike monsters on the screen one after another,
+//                    each mending the Spirit Mage and the party, then it blazes and bursts
+// and she answers the others: a Blessing or a Ward going up makes her cheer.
 
-import { hasSpirit, dollHit } from './melee.js';
+import { hasSpirit, dollHit, healAround } from './melee.js';
+import { skillAt } from '../data/skills.js';
 
 // Where she floats when idle: behind the Spirit Mage's shoulder (px behind, px over her feet).
 const HOME = { x: 24, y: 34 };
@@ -158,6 +168,12 @@ export function tickDoll(world, dt) {
   const b = world.body;
   const { now } = world;
   tickBells(world, d);
+  tickLantern(world, d);
+  // Riding a monster (Doll's Mischief) or the lantern: she's carried, not flying.
+  if (d.act?.kind === 'ride') return ride(world, d);
+  if (world.lantern) return perch(world, d);
+  // Her Spirit Mage's Blessing or Ward going up: she cheers.
+  if (['blessing', 'spiritward'].some((id) => world.char.buffs?.[id]?.since === now)) [d.mood, d.moodUntil] = ['peace', now + MOOD.peace];
   // The Spirit Mage hurt: she puffs up furious.
   if (world.char.hp < d.hp && !world.dead) [d.mood, d.moodUntil] = ['mad', now + MOOD.mad];
   d.hp = world.char.hp;
@@ -225,4 +241,126 @@ export function tickDoll(world, dt) {
   // swings round in an orbit or comes up to poke her, and out in a fight.
   if (d.bit?.kind === 'orbit') d.layer = Math.sin(-Math.PI / 2 + ((now - d.bit.t0) / BITS.orbit) * Math.PI * 2) > 0 ? 'front' : 'back';
   else d.layer = alive(m) || d.bit?.kind === 'poke' || d.bit?.kind === 'peek' ? 'front' : 'back';
+}
+
+// ---------- Doll's Mischief: riding a monster ----------
+
+// How long she takes to pop up on its head, the beat between bonks, and the beat after the last
+// bonk before she hops off (seconds); how long each bonk dazes it.
+const RIDE = { hop: 0.25, beat: 0.32, off: 0.45, daze: 0.6 };
+
+// The Spirit Mage points her fan: the doll picks the monster nearest in front of her (or any near
+// one) and pops up on its head. Nothing in reach: she pouts.
+export function dollMischief(world, o) {
+  const d = dollOf(world);
+  if (!d || world.dead) return;
+  const b = world.body;
+  const near = world.mobs.filter((m) => alive(m) && Math.abs(m.x - b.x) <= o.range && Math.abs(m.y - b.y) < 120);
+  const ahead = near.filter((m) => Math.sign(m.x - b.x) === b.facing);
+  const m = (ahead.length ? ahead : near).sort((p, q) => Math.abs(p.x - b.x) - Math.abs(q.x - b.x))[0];
+  if (!m) {
+    [d.mood, d.moodUntil] = ['mad', world.now + MOOD.mad];
+    return;
+  }
+  const dur = RIDE.hop + o.bonks * RIDE.beat + RIDE.off;
+  d.act = { kind: 'ride', t0: world.now, dur, mob: m, done: 0, o, hits: Array.from({ length: o.bonks }, (_, i) => RIDE.hop + i * RIDE.beat + 0.2) };
+  d.bells = [];
+  d.bit = null;
+  world.fx.push({ kind: 'dollpop', x: d.x, y: d.y, t: 0, dur: 0.4 });
+  [d.x, d.y] = seat(m);
+  world.fx.push({ kind: 'dollpop', x: d.x, y: d.y, t: 0, dur: 0.4 });
+}
+
+// Where she sits on a monster: astride the top of its head.
+const seat = (m) => [m.x, m.y - (m.air ?? 0) - m.def.h + 4];
+
+// Riding: carried on its head, bonking on the beat. If it goes down early she hops off cheering.
+function ride(world, d) {
+  const a = d.act;
+  const m = a.mob;
+  const t = world.now - a.t0;
+  if (!alive(m)) a.done = a.hits.length;
+  else {
+    [d.x, d.y] = seat(m);
+    d.dir = m.dir || d.dir;
+  }
+  d.vx = 0;
+  d.vy = 0;
+  d.layer = 'front';
+  while (a.done < a.hits.length && t >= a.hits[a.done]) {
+    const last = a.done === a.hits.length - 1;
+    a.done += 1;
+    world.fx.push({ kind: 'bellbonk', x: m.x, y: m.y - m.def.h, t: 0, dur: 0.6, seed: Math.random(), small: !last });
+    dollHit(world, m, { pct: last ? a.o.last : a.o.pct, x: m.x - (m.dir || 1), knock: last ? 160 : 0, launch: last ? 260 : 0, stun: last ? 0.4 : RIDE.daze, stop: last ? 0.08 : 0.03, shake: last ? 3 : 0, big: last, burst: 'spirithit', gauge: 3, key: 'dollmischief' });
+  }
+  if (t >= a.dur || (!alive(m) && t >= RIDE.hop)) {
+    d.act = null;
+    d.next = world.now + 0.6;
+    [d.mood, d.moodUntil] = ['peace', world.now + MOOD.peace];
+    d.y -= 14;
+  }
+}
+
+// ---------- Heaven's Lantern ----------
+
+// When the lantern has risen, when its first ray falls, the beat between rays, and the held
+// breath before it blazes (seconds); how high it hangs over the ground (px).
+const LANTERN = { rise: 0.7, first: 0.9, gap: 0.24, pause: 0.45, high: 120 };
+// The monsters on screen around her (about half a screen either way).
+const SCREEN = 340;
+const onScreen = (world) => world.mobs.filter((m) => alive(m) && Math.abs(m.x - world.body.x) <= SCREEN && Math.abs(m.y - world.body.y) < 260);
+
+// She lifts it: it rises from over her head toward the middle of the monsters on screen.
+export function raiseLantern(world, key = 'heavenslantern') {
+  const b = world.body;
+  const p = skillAt('heavenslantern', world.char.skills.heavenslantern ?? 1);
+  const list = onScreen(world);
+  const tx = list.length ? list.reduce((sum, m) => sum + m.x, 0) / list.length : b.x + b.facing * 140;
+  const end = LANTERN.first + p.rays * LANTERN.gap + LANTERN.pause;
+  world.lantern = { t0: world.now, p, key, n: 0, x0: b.x, x: b.x, tx, y: b.y - LANTERN.high, end };
+  world.fx.push({ kind: 'heavenslantern', lantern: world.lantern, x: b.x, y: b.y, t: 0, dur: end + 0.7 });
+}
+
+function tickLantern(world, d) {
+  const L = world.lantern;
+  if (!L) return;
+  const t = world.now - L.t0;
+  const b = world.body;
+  const u = Math.min(1, t / LANTERN.rise);
+  const glide = u * u * (3 - 2 * u);
+  L.x = L.x0 + (L.tx - L.x0) * glide + Math.sin(t * 2.2) * 6;
+  L.y = b.y - LANTERN.high - 20 * glide + Math.sin(t * 1.7) * 3;
+  L.rise = glide;
+  while (L.n < L.p.rays && t >= LANTERN.first + L.n * LANTERN.gap) {
+    L.n += 1;
+    const list = onScreen(world);
+    const m = list[Math.floor(Math.random() * list.length)];
+    const x = m ? m.x : L.x + (Math.random() - 0.5) * 200;
+    world.fx.push({ kind: 'lanternray', x, y: m ? m.y : b.y, fromX: L.x, fromY: L.y, t: 0, dur: 0.55 });
+    if (m) dollHit(world, m, { pct: L.p.pct, x: L.x, knock: 30, launch: 140, stun: 0.3, stop: 0.03, shake: 1, burst: 'spirithit', gauge: 0, key: L.key });
+    healAround(world, b.x, b.y, L.p.heal, 400, false);
+  }
+  if (t >= L.end) {
+    world.fx.push({ kind: 'lanternblaze', x: L.x, y: L.y, t: 0, dur: 0.9 });
+    onScreen(world).forEach((m, k) => dollHit(world, m, { pct: L.p.big, x: L.x, knock: 200, launch: 360, stop: k ? 0 : 0.1, shake: k ? 0 : 6, big: !k, burst: 'spirithit', gauge: 0, key: L.key }, 0.1));
+    healAround(world, b.x, b.y, L.p.heal * 4, 400, false);
+    L.gone = true;
+    world.lantern = null;
+    [d.mood, d.moodUntil] = ['peace', world.now + MOOD.peace * 1.5];
+    d.y -= 10;
+  }
+}
+
+// On top of the lantern, cheering, for as long as it hangs there.
+function perch(world, d) {
+  const L = world.lantern;
+  d.act = null;
+  d.bit = null;
+  d.x = L.x;
+  d.y = L.y - 30;
+  d.vx = 0;
+  d.vy = 0;
+  d.dir = world.body.facing;
+  d.layer = 'front';
+  [d.mood, d.moodUntil] = ['peace', world.now + 0.3];
 }

@@ -28,11 +28,11 @@
 import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
-import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform } from './combat.js';
+import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
-import { tickDoll } from './spiritdoll.js';
+import { tickDoll, dollMischief, raiseLantern } from './spiritdoll.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers } from './dungeon.js';
 
@@ -723,8 +723,8 @@ export function addSpirit(world, n, kind = 'harm') {
 }
 export const kamiFavour = (world) => hasSpirit(world.char) && (world.spirit ?? 0) >= SPIRIT_MAX;
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
-// Paladin's Judgment); a Spirit Mage's healing builds her Spirit.
-export function healAround(world, x, y, pct, r) {
+// Paladin's Judgment); a Spirit Mage's healing builds her Spirit (not a finisher's: `gauge` false).
+export function healAround(world, x, y, pct, r, gauge = true) {
   const { char, body, stats } = world;
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
@@ -733,7 +733,7 @@ export function healAround(world, x, y, pct, r) {
     world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
-  addSpirit(world, 40 * pct, 'mend');
+  if (gauge) addSpirit(world, 40 * pct, 'mend');
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'foxstar', 'foxmoon']);
@@ -1056,6 +1056,12 @@ function land(world, s) {
   if (s.burst) {
     world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
   }
+  // The Spirit Mage's support spells and her doll's orders land with the dance (world/spiritdoll.js):
+  // a buff on her and the party round her (`grant`), the doll let loose on a monster (`mischief`),
+  // Heaven's Lantern raised (`lantern`).
+  if (s.grant) grantSpell(world, s.grant);
+  if (s.mischief) dollMischief(world, s.mischief);
+  if (s.lantern) raiseLantern(world, s.key);
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
@@ -1370,10 +1376,17 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   }
 }
 
+// A buff the Spirit Mage's dance gives as it lands (Blessing's regen, Spirit Ward's barrier): on her,
+// and on the party in `range` (applyBuff does both for a `party` skill).
+function grantSpell(world, g) {
+  if (world.dead) return;
+  applyBuff(world, g.id, { duration: g.duration, buff: g.buff, range: g.range });
+}
+
 // A hit of the Spirit Doll's (world/spiritdoll.js): a spell of the Spirit Mage's own magic attack,
 // landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
 export function dollHit(world, m, f, at = 0) {
-  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, gauge: f.gauge ?? 2 }, m, at);
+  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, gauge: f.gauge ?? 2 }, m, at);
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.

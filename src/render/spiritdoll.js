@@ -167,6 +167,24 @@ function humming(u, t) {
   });
 }
 
+// ---------- Doll's Mischief ----------
+
+// Riding a monster: sat astride its head, legs kicking at its sides, the gold bell swung up high
+// and brought down on the beat (`since`: seconds since the last bonk, `beat` between bonks), a
+// big grin on every bonk and her free hand waving like a rodeo rider.
+function riding(since, beat, t) {
+  const u = clamp01(since / beat);
+  const hit = 1 - ease(seg(u, 0, 0.18));
+  // Raised slowly after a bonk, held high, then whipped down so it lands on the next.
+  const up = ease(seg(u, 0.18, 0.7)) * (1 - seg(u, 0.86, 1) ** 2);
+  return pose({
+    hand: [lerp(1.4, 3.6, hit), lerp(-1.5, -11, up)], free: [2 + Math.sin(t * 10) * 0.8, -10 + Math.sin(t * 10) * 1.2], fan: null, bell: true,
+    tilt: -10 * up + 16 * hit, by: 1.4 * hit, hy: 0.6 * hit, cloth: 2, kick: 0.6 * up,
+    legF: [2.4 + 0.6 * Math.sin(t * 12), -2.6, 64 + 8 * Math.sin(t * 12)], legB: [1, -2.2, 52 + 8 * Math.sin(t * 12 + 2)],
+    mouth: hit > 0.3 ? 'grin' : 'cat', eyes: hit > 0.3 ? 'happy' : null, extras: hit > 0.4 ? ['spark1'] : [], blush: 1.5,
+  });
+}
+
 // ---------- Her moods ----------
 
 // A peace sign and a wink at what she just beat, bouncing.
@@ -220,7 +238,10 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   if (a) {
     doing = a.kind;
     const u = clamp01((world.now - a.t0) / a.dur);
-    p = a.kind === 'slap' ? slapping(u) : a.kind === 'twirl' ? twirling(u) : bonking(u);
+    if (a.kind === 'ride') {
+      const last = a.hits.filter((h) => h <= world.now - a.t0).at(-1);
+      p = riding(last == null ? 0.25 : world.now - a.t0 - last, 0.32, time);
+    } else p = a.kind === 'slap' ? slapping(u) : a.kind === 'twirl' ? twirling(u) : bonking(u);
   } else if (d.mood === 'peace') {
     doing = 'peace';
     p = cheering(0, time);
@@ -274,6 +295,11 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   ctx.fillRect(x - 10, y - 6, 20, 16);
   ctx.restore();
   const fanOn = (c, hand, flip) => {
+    // Riding, she swings a gold bell instead of her fan.
+    if (P.bell) {
+      fxSprite(c, 'celdollbell', hand[0], hand[1] - 2, { frame: 0, scale: 0.22, rot: (flip ? 1 : -1) * 0.3 });
+      return;
+    }
     if (P.fan == null) return;
     c.save();
     c.translate(hand[0], hand[1]);

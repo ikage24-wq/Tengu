@@ -6,7 +6,8 @@
 // of training dummies, holding attack (her shrine dance), drawn with the game's own scene renderer.
 // Open /tools/spiritmage.html (served with the game). ?slow=1.6 plays every dance figure that many
 // times longer (to try dance speeds); ?style=grounded|float|ribbon tries a dance style; ?full keeps Kami's Favour on; ?manual steps frames from
-// outside (window.step) for recording.
+// outside (window.step) for recording; ?skill=spiritwave (any of hers) casts it every ?every=2.2 s;
+// ?behind puts a dummy behind her too.
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
@@ -36,6 +37,7 @@ const c = createCharacter('Tester', {});
 gainExp(c, 1e6);
 advanceJob(c, 'spiritmage');
 c.equipment.weapon = makeEquip('wand_20', {});
+Object.assign(c.skills, { spiritbolt: 20, spiritstep: 10, spiritwave: 20, blessing: 20, spiritward: 15, dollmischief: 15, manamastery: 20, heavenslantern: 10 });
 c.mp = 9999;
 c.baseMp = 99999;
 const w = createWorld(c);
@@ -45,7 +47,7 @@ w.spawner.slots = [];
 w.mobs = [];
 const x0 = 360;
 Object.assign(w.body, { x: x0, y: w.map.groundY, facing: 1, onGround: true });
-for (const dx of [110, 170, 230, 300, 360]) {
+for (const dx of [...(q.has('behind') ? [-110] : []), 110, 170, 230, 300, 360]) {
   const m = spawnMob(w.map, { mob: 'boarlet', x: x0 + dx, y: w.map.groundY });
   m.def = { ...m.def, hp: 1e9, eva: 0, aggro: false, speed: 0 };
   m.hp = 1e9;
@@ -62,8 +64,16 @@ function step(dt) {
     w.spirit = 100;
     w.spiritAt = w.now;
   }
-  // Holding attack.
-  const fighting = t > 0.5;
+  // ?skill=id casts that skill now and again (Heaven's Lantern on a full gauge); otherwise she
+  // holds attack.
+  const skill = q.get('skill');
+  if (skill && t > 0.5 && !w.pose && !w.lantern && t >= (window.nextCast ?? 0)) {
+    if (skill === 'heavenslantern') [w.spirit, w.spiritAt] = [100, w.now];
+    if (skill === 'blessing') c.hp = Math.round(c.hp * 0.4);
+    console.log('cast', skill, JSON.stringify(cast(w, skill)));
+    window.nextCast = t + Number(q.get('every') ?? 2.2);
+  }
+  const fighting = t > 0.5 && !skill;
   for (let k = 0; k < Math.round(dt * 60); k++) updateWorld(w, 1 / 60, fighting ? hold : idle);
   nextFrame();
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);

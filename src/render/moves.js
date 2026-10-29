@@ -62,7 +62,7 @@ function danceLegs(r, ...stances) {
 const breathe = (p) => Math.sin(p * Math.PI * 3);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
-export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep']);
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguracall', 'kaguralantern']);
 
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
@@ -1699,6 +1699,120 @@ export const MOVES = {
     };
   },
 
+  // ---------- Her skills' figures ----------
+  // Spirit Wave (the ring goes at ~0.5): she lifts the bell staff high in both hands, rising, the
+  // fan folded to it; then brings it straight down and plants its foot on the floor before her,
+  // sinking low, the fan swept wide behind as the ring of light races out; holds, bells ringing.
+  kaguraslam(p) {
+    const lift = soft(seg(p, 0, 0.38));
+    const down = soft(seg(p, 0.4, 0.52));
+    const settle = soft(seg(p, 0.8, 1));
+    const hold = 1 - settle;
+    const ring = Math.sin(p * 50) * 6 * bump(p, 0.5, 0.8);
+    return {
+      weapon: lerp(10, -5, lift) + 175 * down * hold + 20 * settle + ring, arm: lerp(70, 172, lift) - 120 * down - 20 * settle,
+      tilt: -0.08 * lift * (1 - down) + 0.3 * down * hold, lunge: 8 * down * hold, lift: 5 * lift * (1 - down),
+      fan: lerp(0.2, 0.3, lift) + 0.7 * down * hold, fanA: lerp(20, 10, lift) - 130 * down * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 2, lift) - 11 * down * hold), q(lerp(0, -11, lift) + 7 * down)];
+        r.squat = q(2 * down * hold);
+        r.cape -= q(3 * lift + 4 * down * hold);
+        r.hairLift = lift * (1 - down) > 0.5 || down * hold > 0.5 ? -1 : 0;
+        danceLegs(r, [lift * (1 - down), [1.4, -2.2, 14], [-1.4, -1.4, -10]], [down * hold, [5, 0, 8], [-4.4, 0, -16]]);
+        if (down * hold > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Blessing (the light falls at ~0.55): eyes closed, she raises the bell staff over her head and
+  // rings it, slow, three times, the fan held to her heart; then opens both arms wide and lifts her
+  // face as the light comes down, and holds, smiling.
+  kagurabless(p) {
+    const up = soft(seg(p, 0, 0.22));
+    const open = soft(seg(p, 0.48, 0.62));
+    const settle = soft(seg(p, 0.82, 1));
+    const hold = 1 - settle;
+    const ring = Math.sin(seg(p, 0.18, 0.5) * Math.PI * 6) * 14 * up * (1 - open);
+    return {
+      weapon: -5 + ring + 25 * open * hold + 25 * settle, arm: lerp(70, 168, up) - 50 * open - 40 * settle,
+      tilt: -0.1 * open * hold, lift: 2 * up * (1 - open) + 4 * open * hold + breathe(p) * open * hold,
+      fan: lerp(0.3, 0.2, up) + 0.8 * open * hold, fanA: lerp(30, 70, up) * (1 - open) - 100 * open * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 4, up) * (1 - open) - 11 * open * hold), q(lerp(0, -5, up) * (1 - open) - 9 * open * hold)];
+        r.hairLift = open * hold > 0.4 ? -1 : 0;
+        r.cape -= q(4 * open * hold);
+        danceLegs(r, [open * hold, [1.4, -1.4, 10], [-1.4, -1.4, -10]]);
+        if (open * hold > 0.4) r.eyes = 'happy';
+        else if (up > 0.3) r.eyes = 'blink';
+      },
+    };
+  },
+  // Spirit Ward (the ward forms at ~0.62): the open fan sweeps once all the way round her at
+  // waist height, passing in front of her and behind, her hips turning with it, the bell staff
+  // held upright at the centre; it comes round and closes against her chest as the ward forms.
+  kaguraward(p) {
+    const t = soft(seg(p, 0.08, 0.6));
+    const close = soft(seg(p, 0.56, 0.7));
+    const settle = soft(seg(p, 0.82, 1));
+    const hold = 1 - settle;
+    const ang = t * Math.PI * 2;
+    return {
+      weapon: -8 + 15 * settle, arm: 95 - 25 * close - 20 * settle, tilt: 0.08 * Math.sin(ang), lunge: 2 * Math.sin(ang),
+      lift: 3 * bump(p, 0.08, 0.62) + breathe(p) * close * hold,
+      fan: lerp(1, 0.25, close), fanA: -100 + 360 * t + 30 * close, fanFront: Math.cos(ang) < 0 || close > 0.5,
+      rig: (r) => {
+        r.tx = q(1.5 * Math.sin(ang) * (1 - close));
+        r.backArm = [q(-10 * Math.cos(ang) * (1 - close) + 4 * close), q(-4 + 2 * close)];
+        r.cape -= q(3 * Math.abs(Math.sin(ang)) + 2);
+        r.hairLift = -1;
+        danceLegs(r, [1 - close * 0.6, [2.4, 0, 6], [-2.4, 0, -8]], [close * hold, [1.4, -1, 8], [-1, 0, -4]]);
+        if (close * hold > 0.4) r.eyes = 'half';
+      },
+    };
+  },
+  // Doll's Mischief (the doll goes at ~0.42): a sly little lean back with the fan hiding a grin,
+  // then a flick: the fan snaps open and points straight at the monster, up on one toe, a wink.
+  kaguracall(p) {
+    const sly = soft(seg(p, 0, 0.3));
+    const flick = soft(seg(p, 0.34, 0.44));
+    const settle = soft(seg(p, 0.75, 1));
+    const hold = 1 - settle;
+    return {
+      weapon: lerp(10, 0, sly) + 15 * settle, arm: lerp(70, 60, sly) + 10 * settle,
+      tilt: -0.12 * sly * (1 - flick) + 0.12 * flick * hold, lunge: -2 * sly * (1 - flick) + 5 * flick * hold, lift: 2 * flick * hold,
+      fan: lerp(0.6, 0.9, sly) * (1 - 0.5 * flick) + flick * 0.6, fanA: lerp(-20, 30, sly) * (1 - flick) + 80 * flick * hold, fanFront: true,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 5, sly) * (1 - flick) + 12 * flick * hold), q(lerp(0, -6, sly) * (1 - flick) - 6 * flick * hold)];
+        r.hairLift = flick * hold > 0.4 ? -1 : 0;
+        danceLegs(r, [flick * hold, [1.6, -1.6, 12], [-1.6, 0, -6]]);
+        if (flick * hold > 0.3) [r.eyes, r.mouth] = ['happy', 'open'];
+        else if (sly > 0.3) r.eyes = 'half';
+      },
+    };
+  },
+  // Heaven's Lantern (the lantern goes up at ~0.48): a deep, slow bow with both hands together
+  // low before her, eyes closed; then she straightens and lifts both arms high, slowly, as if
+  // raising the lantern into the sky herself, up on her toes, and holds there, looking up at it.
+  kaguralantern(p) {
+    const bow = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.32, 0.5)));
+    const lift = soft(seg(p, 0.32, 0.58));
+    const settle = soft(seg(p, 0.86, 1));
+    const hold = 1 - settle;
+    return {
+      weapon: lerp(10, 40, bow) - 35 * lift * hold + 25 * settle, arm: lerp(70, 40, bow) + 140 * lift * hold - 20 * settle,
+      tilt: 0.5 * bow - 0.16 * lift * hold, lift: 7 * lift * hold + breathe(p) * lift * hold,
+      fan: 0.2 + 0.8 * lift * hold, fanA: lerp(60, 120, bow) - 120 * lift,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 4, bow) - 3 * lift), q(lerp(0, 1, bow) - 14 * lift * hold)];
+        r.squat = q(2 * bow);
+        r.hairLift = lift > 0.3 ? -1 : 0;
+        r.cape -= q(4 * lift * hold);
+        danceLegs(r, [bow, [3, 0, 2], [-3, 0, -2]], [lift * hold, [1.4, -2.4, 14], [-1.4, -1.6, -10]]);
+        if (bow > 0.3) r.eyes = 'blink';
+        else if (lift * hold > 0.4) [r.eyes, r.mouth] = ['happy', 'open'];
+      },
+    };
+  },
+
   // A prayer: weapon held close, the other hand raised to it, eyes closed, floating a little.
   pray(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -1724,7 +1838,7 @@ export const MOVE_MIN = {
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
-  kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55,
+  kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguracall: 0.85, kaguralantern: 1.6,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -1888,8 +2002,9 @@ export const setDanceStyle = (name) => { danceStyle = name; };
 const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });
 // A bob that starts and ends at rest, so figures join without a jump.
 const bob = (p, dur, per = 1.1) => Math.sin(p * Math.PI * 2 * Math.max(1, Math.round(dur / per)));
-// The figures where a grounded dancer rises up off the floor: the finishers and the cast upward.
-const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup']);
+// The figures where a grounded dancer rises up off the floor: the finishers, the cast upward, and
+// her big skills.
+const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern']);
 const DANCE_STYLES = {
   // Grounded kagura (suriashi): her feet slide along the floor in long, slow gliding steps, knees
   // only softly bent, eyes lowered in the holds; serene. Her poses are big and bold (the bell staff

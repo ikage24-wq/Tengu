@@ -2423,3 +2423,105 @@ test("the Spirit Mage's dance is slow and elegant: about a second a figure, and 
   const { PATH_COMBOS } = await import('../src/world/melee.js');
   for (const f of PATH_COMBOS.spiritmage) assert.ok(f.dur >= 0.95, `${f.move} lasts ${f.dur} s`);
 });
+
+// A Spirit Mage with a wand, every skill of hers learned, and MP to spare.
+function shrineMage() {
+  const w = arena('wand_20');
+  w.char.job = 'spiritmage';
+  Object.assign(w.char.skills, { spiritbolt: 20, spiritwave: 20, blessing: 20, spiritward: 15, dollmischief: 15, manamastery: 20, heavenslantern: 10 });
+  w.char.baseMp = 1e6;
+  w.char.mp = 1e6;
+  run(w, 0.2);
+  return w;
+}
+
+test('Spirit Wave: the staff strikes the floor and the ring hits monsters on both sides', () => {
+  const w = shrineMage();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-90, 60, 120][i] }));
+  assert.ok(cast(w, 'spiritwave').ok);
+  assert.equal(w.pose.kind, 'kaguraslam');
+  run(w, 1.4);
+  assert.ok(w.fx.some((f) => f.kind === 'spiritwave') || w.mobs.every((m) => m.hp < 1e9), 'the ring goes out');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'behind her and in front');
+});
+
+test('Blessing heals her when the light falls, then keeps healing, and builds Spirit', () => {
+  const w = shrineMage();
+  w.god = false;
+  w.char.hp = Math.round(w.stats.maxHp * 0.3);
+  const hp0 = w.char.hp;
+  assert.ok(cast(w, 'blessing').ok);
+  run(w, 0.2);
+  assert.equal(w.char.hp, hp0, 'nothing on the press');
+  run(w, 0.8);
+  const healed = w.char.hp;
+  assert.ok(healed > hp0, 'mended as the light lands');
+  assert.ok(w.char.buffs.blessing?.values.regenPct > 0, 'and blessed for a while');
+  run(w, 2);
+  assert.ok(w.char.hp > healed, 'healing a little more every second');
+  assert.ok(w.spirit > 0, 'healing builds Spirit');
+});
+
+test('Spirit Ward puts a barrier on her that soaks up damage', () => {
+  const w = shrineMage();
+  assert.ok(cast(w, 'spiritward').ok);
+  run(w, 1.3);
+  const b = w.char.buffs.spiritward;
+  assert.ok(b && b.shield > 0, 'a ward of light');
+  assert.ok(Math.abs(b.shield - Math.round(w.stats.maxHp * b.values.barrier)) <= 1, 'as strong as its share of her max HP');
+});
+
+test("Doll's Mischief: the doll rides a monster, bonking it again and again, then hops off", () => {
+  const w = shrineMage();
+  const m = w.mobs[0];
+  assert.ok(cast(w, 'dollmischief').ok);
+  run(w, 0.5);
+  assert.equal(w.doll.act?.kind, 'ride', 'she pops up on its head');
+  assert.equal(w.doll.act.mob, m, 'the nearest monster in front');
+  let onHead = true;
+  let hits = 0;
+  let last = m.hp;
+  for (let i = 0; i < 60 * 4; i++) {
+    updateWorld(w, DT, idle);
+    if (w.doll.act?.kind === 'ride') onHead &&= Math.abs(w.doll.x - m.x) < 12;
+    if (m.hp < last) hits++;
+    last = m.hp;
+  }
+  assert.ok(onHead, 'carried on its head the whole ride');
+  assert.ok(hits >= 5, `bonked again and again (${hits})`);
+  assert.notEqual(w.doll.act?.kind, 'ride', 'and she hops off');
+});
+
+test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, and never refills it", () => {
+  const w = shrineMage();
+  w.god = false;
+  w.spirit = 60;
+  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for full Spirit');
+  w.spirit = 100;
+  w.spiritAt = w.now;
+  w.char.hp = Math.round(w.stats.maxHp * 0.3);
+  const hp0 = w.char.hp;
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-240, 150, 300][i] }));
+  assert.ok(cast(w, 'heavenslantern').ok);
+  assert.equal(w.spirit, 0, 'spends all of it');
+  let lantern = false;
+  let perched = false;
+  let blaze = false;
+  const seen = new Set();
+  dice(0.5, () => {
+    for (let i = 0; i < 60 * 6; i++) {
+      updateWorld(w, DT, idle);
+      lantern ||= Boolean(w.lantern);
+      if (w.lantern) perched ||= Math.abs(w.doll.x - w.lantern.x) < 12;
+      for (const f of w.fx) if (f.kind === 'lanternray') seen.add(f);
+      blaze ||= w.fx.some((f) => f.kind === 'lanternblaze');
+    }
+  });
+  const rays = seen.size;
+  assert.ok(lantern && perched, 'the lantern rises with the doll on top');
+  assert.ok(rays >= 8, `its rays fall again and again (${rays})`);
+  assert.ok(blaze, 'then it blazes');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster on the screen is hit');
+  assert.ok(w.char.hp > hp0, 'its light heals her');
+  assert.ok(w.spirit < 10, `and it never refills Spirit (${w.spirit})`);
+});

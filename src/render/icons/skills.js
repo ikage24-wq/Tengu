@@ -1295,6 +1295,63 @@ function spiritstep() {
   out.push(...spark(5.6, 2.4, 0.9, '#ffd36a'), ...spark(11, 12.6, 0.8, '#ffd36a'));
   return out;
 }
+// Spirit Wave: a flat ring of light racing out over the ground, streamers flying off both edges,
+// the bell staff's foot planted in the middle.
+function spiritwave() {
+  const out = [...tile('shrine', 'active'), ...aura(8, 11, 6, '#fff3dc')];
+  out.push(S(tube(arcPts(8, 11.4, 6.4, 2.2, 0, 360, 28), 0.9, 0.9), '#fff7e4'), S(tube(arcPts(8, 11.4, 6.4, 2.2, 180, 360, 16), 0.45, 0.45), W));
+  out.push(S(tube([[8, 2.6], [8, 11]], 0.7, 0.7), '#c8902a'), ...solid(oval(8, 2.6, 1.3, 1.1, 0, 12), '#ffd36a', { d: 0.3, ink: '#8a5a10' }));
+  out.push(...shideIcon(1.6, 8.4, 3, 1.3, 1.3, -0.4), ...shideIcon(14.2, 8.4, 3, 1.3, 1.3, 0.4));
+  out.push(...spark(4.4, 4.6, 0.9, '#ffd36a'), ...spark(12, 5, 0.8));
+  return out;
+}
+// Blessing: a column of warm light falling from above, with gold bells ringing at its top.
+function blessing() {
+  const out = [...tile('shrine', 'active'), ...aura(8, 8, 6.6, '#fff3dc', 1.1)];
+  out.push(S(rect(5.4, 1, 5.2, 13.6), '#fff3dc'), S(rect(6.6, 1, 2.8, 13.6), W));
+  out.push(...[[5.2, 3.4], [10.8, 3.4]].flatMap(([x, y]) => solid([[x - 1.3, y + 1.4], [x - 0.9, y - 1], [x + 0.9, y - 1], [x + 1.3, y + 1.4]], '#ffd36a', { d: 0.3, ink: '#8a5a10' })));
+  out.push(S(tube([[5.2, 2.2], [8, 1.4], [10.8, 2.2]], 0.35, 0.35), SCARLET));
+  out.push(...spark(3, 9.4, 1, '#ffd36a'), ...spark(13, 10.6, 0.9), ...spark(8, 12.4, 1.1));
+  return out;
+}
+// Spirit Ward: a sphere of pale light bound round its middle with a sacred rope, streamers hanging.
+function spiritward() {
+  const out = [...tile('shrine', 'buff')];
+  out.push(...solid(oval(8, 8, 6, 6.2, 0, 28), '#efe8ff', { d: 0.35, ink: '#7a6cb8' }), S(oval(6.4, 6, 2.4, 2, -30, 16), W));
+  out.push(S(tube(arcPts(8, 8.6, 6.1, 1.6, 0, 180, 14), 0.8, 0.8), '#f6f0f0'));
+  for (const x of [3.6, 6.6, 9.6, 12.4]) out.push(S(tube([[x, 9.4], [x + 0.9, 10.1]], 0.45, 0.45), SCARLET));
+  out.push(...shideIcon(5, 10.2, 2, 1.3, 1.3, 0.2), ...shideIcon(11, 10.2, 2, 1.3, 1.3, -0.2));
+  out.push(...spark(13.6, 2.6, 0.9, '#ffd36a'));
+  return out;
+}
+// Doll's Mischief: a gold bell swung down for a bonk, little stars of the impact flying off.
+function dollmischief() {
+  const out = [...tile('shrine', 'active')];
+  const bell = [[4.6, 11.2], [5.4, 5.6], [8, 3.6], [10.6, 5.6], [11.4, 11.2]];
+  out.push(...solid(bell, '#ffd36a', { d: 0.35, ink: '#8a5a10' }), S(rect(4, 10.6, 8, 1.4), '#c8902a'), ...solid(oval(8, 12.8, 1.1, 1.1, 0, 12), '#ffd36a', { d: 0.3, ink: '#8a5a10' }));
+  out.push(S(tube([[6.4, 6], [6, 9.6]], 0.5, 0.3), '#fff3c4'), S(tube([[8, 3.6], [8, 1.4]], 0.5, 0.5), SCARLET));
+  out.push(...spark(2.2, 4, 1, '#ffd36a'), ...spark(13.6, 4.6, 1.1, '#ffd36a'), ...spark(13.4, 13.4, 0.8));
+  return out;
+}
+// Mana Mastery: a wisp of spirit light curling round a gold heart of light.
+function manamastery() {
+  const out = [...tile('shrine', 'passive'), ...aura(8, 8, 6.4, '#fff3dc', 1.1)];
+  out.push(S(tube(arcPts(8, 8, 4.8, 4.8, 200, 520, 24), 0.4, 1.2), '#e6dcff'));
+  out.push(...solid(oval(8, 8, 2.2, 2.2, 0, 16), '#fff3c4', { d: 0.35, ink: '#c8902a' }), ...wisp(11.6, 4.4, 1.4, -40));
+  out.push(...spark(3.2, 12.6, 0.9, '#ffd36a'));
+  return out;
+}
+// Heaven's Lantern: a giant paper lantern glowing warm, ribbed, on a scarlet cord, streamers below.
+function heavenslantern() {
+  const out = [...tile('shrine', 'active'), ...aura(8, 8, 7, '#ffe2b0', 1.2)];
+  out.push(S(tube([[8, 0.6], [8, 3]], 0.5, 0.5), SCARLET));
+  out.push(...solid(oval(8, 7.8, 5, 4.8, 0, 28), '#ffd9a0', { d: 0.35, ink: '#a8642a' }), S(oval(8, 7.4, 3.2, 3.2, 0, 20), '#fff4e0'));
+  for (const dy of [-2.4, 0, 2.4]) out.push(S(tube(arcPts(8, 7.8 + dy, 4.6, 0.8, 0, 180, 10), 0.25, 0.25), '#c87a3a'));
+  out.push(S(rect(5.6, 2.6, 4.8, 1.2), '#4a2a2a'), S(rect(5.6, 12, 4.8, 1.2), '#4a2a2a'));
+  out.push(...shideIcon(6.4, 13, 2, 1.1, 1.1, -0.2), ...shideIcon(9.6, 13, 2, 1.1, 1.1, 0.2));
+  out.push(...spark(2, 3, 1, '#ffd36a'), ...spark(14, 4.4, 0.9));
+  return out;
+}
 
 // ---------- Game master ----------
 
@@ -1358,7 +1415,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
-  spiritbolt, spiritstep,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, dollmischief, manamastery, heavenslantern,
   gmsmite, gmhaste, gmblessing,
 };
 

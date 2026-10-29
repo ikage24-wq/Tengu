@@ -279,12 +279,90 @@ export const SKILLS = {
 
   spiritstep: skill({
     id: 'spiritstep', name: 'Spirit Step', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'spirit', movement: true,
-    desc: 'Turn on your toes and come apart into paper streamers and light, then gather again a long way ahead. Nothing touches you on the way.',
+    desc: 'Rise on your toes and come apart into paper streamers and light, then gather again a long way ahead. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: 0, hits: 0, targets: 0,
         combo: [{ move: 'spiritstep', dur: 0.55, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.35, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
+      };
+    },
+  }),
+
+  spiritwave: skill({
+    id: 'spiritwave', name: 'Spirit Wave', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'spirit',
+    desc: 'Raise the bell staff high and bring it down to the floor: a ring of white light races out along the ground both ways, paper streamers whipping off its edge, hitting every monster around you and throwing them back.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(16, 30), pct: k(220, 380), hits: 1, targets: k(5, 8),
+        combo: [{ move: 'kaguraslam', dur: 1.25, step: 0, strikes: [{ at: 0.5, magic: true, pct: k(220, 380), reach: 160, h: 90, around: true, targets: k(5, 8), knock: 170, launch: 150, burst: 'spiritwave', burstAt: 0, burstDur: 0.8, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+      };
+    },
+  }),
+
+  // Blessing and Spirit Ward land on the party round her in a dungeon (`grant`: a buff given when
+  // the strike lands, see world/melee.js).
+  blessing: skill({
+    id: 'blessing', name: 'Blessing', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'spirit', party: true,
+    desc: 'Ring the bells over your head and open your arms: a column of warm light falls on you and the party around you, healing at once, then a little more every second for a while.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 440, h: 160, around: true };
+      return {
+        mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
+        combo: [{ move: 'kagurabless', dur: 1.35, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.12, 0.3), healR: 220, burst: 'blessing', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(6, 10), buff: { regenPct: kf(0.01, 0.025) }, range } }] }],
+      };
+    },
+  }),
+
+  spiritward: skill({
+    id: 'spiritward', name: 'Spirit Ward', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'spirit', party: true, maxLevel: 15,
+    desc: 'Sweep the open fan once all the way round you: a sphere of light bound with a sacred rope forms round you, and round the party nearby, soaking up damage until it breaks.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 440, h: 160, around: true };
+      return {
+        mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
+        combo: [{ move: 'kaguraward', dur: 1.2, step: 0, strikes: [{ at: 0.62, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.15, 0.35) }, range } }] }],
+      };
+    },
+  }),
+
+  dollmischief: skill({
+    id: 'dollmischief', name: "Doll's Mischief", job: 'spiritmage', type: 'attack', fx: null, icon: 'dollmischief', school: 'spirit', maxLevel: 15,
+    desc: "Point your fan at a monster and let the Spirit Doll loose: she pops up on its head and rides it, bonking it with her bell again and again (it can't get her off), then a last big bonk throws it into the air.",
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 26), pct: k(70, 120), hits: k(5, 8), targets: 1,
+        combo: [{ move: 'kaguracall', dur: 0.95, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, mischief: { bonks: k(5, 8), pct: k(70, 120), last: k(200, 320), range: 320 } }] }],
+      };
+    },
+  }),
+
+  manamastery: skill({
+    id: 'manamastery', name: 'Mana Mastery', job: 'spiritmage', type: 'passive', fx: null, icon: 'manamastery',
+    desc: 'Steadier spells, more magic attack, and a deeper well of MP.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), matk: lerp(2, 25, lv, m), maxMpPct: lerpf(0.04, 0.2, lv, m) } }),
+  }),
+
+  heavenslantern: skill({
+    id: 'heavenslantern', name: "Heaven's Lantern", job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'spirit', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Spirit, and spends it. Bow low, then lift both arms to the sky: a giant paper lantern rises over the monsters with the Spirit Doll riding on top, cheering. Its rays strike the monsters on the screen again and again, healing you and the party with every one, then it blazes and bursts over everything.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      // She lifts the lantern; the lantern itself (world/spiritdoll.js) lands the rays, each with the
+      // skill's `pct` and `heal`, and `big` for the last blaze.
+      return {
+        mp: k(30, 50), pct: k(140, 230), big: k(700, 1200), rays: k(8, 12), heal: kf(0.02, 0.04), hits: 2, targets: 12,
+        combo: [{ move: 'kaguralantern', dur: 1.8, step: 0, finisher: true, guard: 1.8, strikes: [{ at: 0.48, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, lantern: true }] }],
       };
     },
   }),
@@ -787,7 +865,7 @@ const MOVES_BY_SKILL = {
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
-  spiritbolt: 'kagura', spiritstep: 'spiritstep',
+  spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', dollmischief: 'kaguracall', heavenslantern: 'kaguralantern',
   shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',
