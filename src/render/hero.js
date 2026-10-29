@@ -2448,6 +2448,13 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   };
   if (mv?.fanBack) drawFan();
 
+  // Where both hands are on screen, for whoever holds something in them (`state.onHands`: an NPC's
+  // props), called once the figure is drawn: (ctx, front hand, back hand, facing, scale).
+  const handsAt = () => {
+    if (!state.onHands) return;
+    const [, [bx, by]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
+    state.onHands(ctx, [sx(hand[0]), sy(hand[1])], [sx(squashX(bx + rig.tx)), sy(squashY(by + bodyY))], flip ? -1 : 1, scale);
+  };
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
@@ -2461,14 +2468,14 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
       feet: pt(15.5, squashY(55)), hands: pt(hand[0], hand[1]), back: pt(squashX(10.5 + rig.tx), squashY(32 + bodyY)), w: 4 * scale,
     }, scale, flip ? -1 : 1, (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   }
-  if (rig.view === 'back') return;
+  if (rig.view === 'back') return handsAt();
   if (!attack && over == null) {
-    if (!wpn) return;
+    if (!wpn) return handsAt();
     drawWeapon();
     const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
-    return;
+    return handsAt();
   }
   drawWeapon();
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
@@ -2476,6 +2483,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
   blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
   if (mv && !mv.fanBack) drawFan();
+  handsAt();
 }
 
 // A bow's string drawn back to the hand, in the bow's own frame (grip at the origin, tips up and

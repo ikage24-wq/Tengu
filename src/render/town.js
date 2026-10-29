@@ -490,229 +490,449 @@ function forgeGlow(ctx, x, gy, time) {
 }
 
 // ---------- NPC routines ----------
-// Each NPC has their own idle loop: a pose (a move and its progress), a face, sometimes a fixed
-// facing or a float, and extras drawn around them (juggled potions, sparks off the anvil, an
-// arrow, a floating book...). `t` is the time in seconds.
+// Each NPC has a few idle bits, played in turn with a breather between them: a rig (where their
+// hands are, a lean, the head), sometimes a move (a swing, a cheer) and a face, a fixed facing or
+// a float, and the props they handle drawn in their hands, wherever those really are (`hands`,
+// called from the hero's drawing with both hands on screen). Nothing appears out of nowhere: a
+// prop comes out of a pocket, a belt or a sleeve, or grows where the hand is. `t` is the time in
+// seconds; everything is drawn from it alone.
+
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const ease = (t) => 1 - (1 - t) ** 3;
+const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
+const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
+const lerp = (a, b, k) => a + (b - a) * k;
+// Rig offsets snap to half a body pixel (so a bit doesn't build a new sprite every frame).
+const h = (v) => Math.round(v * 2) / 2;
+const arm = (x, y) => [h(x), h(y)];
 
 function cycle(t, period, seed = 0) {
   return ((t + seed) % period + period) % period;
 }
+// The bit playing at `t` from a list of [name, seconds], each followed by a breather of `rest`
+// seconds: { kind, u (0-1 through it) }, or null while resting.
+function bitAt(t, list, rest = 2.4) {
+  const period = list.reduce((n, [, d]) => n + d + rest, 0);
+  let c = cycle(t, period);
+  for (const [kind, d] of list) {
+    if (c < d) return { kind, u: c / d, s: c };
+    c -= d + rest;
+    if (c < 0) return null;
+  }
+  return null;
+}
+// A bit's in and out: 0 at its ends, 1 through the middle (the hands ease there and back).
+const inOut = (u, a = 0.12, b = 0.88) => soft(seg(u, 0, a)) * (1 - soft(seg(u, b, 1)));
+
+// ---------- Little props, drawn at a hand ----------
+function heldPotion(ctx, x, y, color, k = 1) {
+  if (k <= 0.02) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(k, k);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(0, 0, 2.6, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#c99a6b';
+  ctx.fillRect(-1, -4, 2, 1.6);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-1.2, -1.2, 1, 1);
+  ctx.restore();
+}
+function coin(ctx, x, y, spin) {
+  const w = Math.abs(Math.cos(spin)) * 2.4 + 0.4;
+  ctx.fillStyle = '#ffc94f';
+  ctx.beginPath();
+  ctx.ellipse(x, y, w, 2.4, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - 0.4, y - 1.4, 0.8, 1.2);
+}
 
 const ROUTINES = {
+  // Mira, the guide: a wave hello, a little cheer, and pointing the way east.
   mira(t) {
-    const c = cycle(t, 5);
-    return c < 1.1 ? { pose: 'cheer', progress: c / 1.1, face: 'grin' } : { face: 'smile' };
+    const b = bitAt(t, [['wave', 1.8], ['cheer', 1.1], ['point', 1.8]], 2);
+    if (!b) return { face: 'smile' };
+    const k = inOut(b.u);
+    if (b.kind === 'wave') return { rig: { frontArm: arm(lerp(0, 2.4, k) + 1.6 * Math.sin(b.s * 14) * k, lerp(0, -11, k)), tilt: -3 * k, hy: h(-0.5 * k) }, face: 'grin' };
+    if (b.kind === 'cheer') return { pose: 'cheer', progress: b.u, face: 'grin' };
+    return { facing: 1, rig: { frontArm: arm(lerp(0, 7, k), lerp(0, -6, k)), tilt: 4 * k, tx: h(k) }, face: 'excited' };
   },
+  // Pip, the shopkeeper: juggling three potions (taken from her apron pocket and put back), counting
+  // coins from one hand into the other, and holding a potion up to the light.
   pip(t) {
+    const b = bitAt(t, [['juggle', 3.4], ['coins', 2.6], ['light', 2.4]], 2);
+    if (!b) return { face: 'grin' };
+    if (b.kind === 'juggle') {
+      const k = inOut(b.u, 0.14, 0.86);
+      const toss = b.s * 2.6;
+      const up = Math.sin(toss * TAU);
+      // Out of the pocket at the start (the back hand down at her hip), back in at the end.
+      const pocket = bump(b.u, 0, 0.16) + bump(b.u, 0.84, 1);
+      return {
+        rig: { frontArm: arm(2.6 * k, (-3 - 1.6 * Math.max(0, up)) * k), backArm: arm(2 * k - 2 * pocket, (-3 - 1.6 * Math.max(0, -up)) * k + 3 * pocket), hy: h(-0.5 * k) }, face: 'excited',
+        hands(ctx, front, back) {
+          const out = ease(seg(b.u, 0.08, 0.2)) * (1 - ease(seg(b.u, 0.8, 0.92)));
+          for (let i = 0; i < 3; i++) {
+            const ph = (((toss + i * (2 / 3)) / 2) % 1 + 1) % 1;
+            const s = (ph * 2) % 1;
+            const [a, c] = ph < 0.5 ? [front, back] : [back, front];
+            const px = lerp(a[0], c[0], s);
+            const py = lerp(a[1], c[1], s) - 14 * Math.sin(s * Math.PI) - 2;
+            const g = clamp01(out * 1.4 - i * 0.2);
+            heldPotion(ctx, lerp(back[0], px, g), lerp(back[1], py, g), ['#ff6b8a', '#6fb8ff', '#ffab5c'][i], g);
+          }
+        },
+      };
+    }
+    if (b.kind === 'coins') {
+      const k = inOut(b.u);
+      return {
+        rig: { frontArm: arm(3 * k, -4 * k), backArm: arm(2.4 * k, -1.5 * k), hx: h(0.6 * k), hy: h(0.8 * k) }, face: 'excited',
+        hands(ctx, front, back) {
+          if (k < 0.5) return;
+          // One coin at a time slips from the top hand into the cupped one below.
+          const u = (b.s * 2.2) % 1;
+          coin(ctx, lerp(front[0], back[0], u), lerp(front[1] - 1, back[1] - 1, u * u), u * 6);
+          coin(ctx, back[0], back[1] - 1.5, 0.3);
+          coin(ctx, front[0], front[1] - 2, 0.2);
+        },
+      };
+    }
+    const k = inOut(b.u, 0.2, 0.8);
     return {
-      face: cycle(t, 6) < 2 ? 'excited' : 'grin',
-      extra(ctx, x, y, tt) {
-        const colors = ['#ff6b8a', '#6fb8ff', '#ffab5c'];
-        for (let i = 0; i < 3; i++) {
-          const u = (tt * 0.9 + i / 3) % 1;
-          const px = x + Math.cos(u * TAU) * 8;
-          const py = y - 44 - Math.abs(Math.sin(u * Math.PI)) * 14;
-          ctx.fillStyle = colors[i];
-          ctx.beginPath();
-          ctx.arc(px, py, 2.6, 0, TAU);
-          ctx.fill();
-          ctx.fillStyle = '#c99a6b';
-          ctx.fillRect(px - 1, py - 4, 2, 1.6);
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(px - 1.2, py - 1.2, 1, 1);
-        }
+      rig: { frontArm: arm(2 * k, -11 * k), hx: h(0.4 * k), hy: h(-1 * k), tilt: -4 * k }, face: k > 0.5 ? 'excited' : 'grin',
+      hands(ctx, front) {
+        heldPotion(ctx, front[0], front[1] - 3, '#6fb8ff', 1);
+        if (k > 0.7) sparkle(ctx, front[0] + 3, front[1] - 6, 1.6, '#ffffff');
       },
     };
   },
+  // Lulu, the stylist: snipping the air with her scissors (out of her pocket), a twirl, and fixing
+  // her hair in a hand mirror.
   lulu(t) {
-    const c = cycle(t, 6);
-    const twirl = c < 1;
-    return {
-      pose: twirl ? 'castspin' : null, progress: c, face: twirl ? 'excited' : 'sassy',
-      extra(ctx, x, y, tt) {
-        if (twirl) {
+    const b = bitAt(t, [['snip', 2.6], ['twirl', 1], ['mirror', 3]], 1.8);
+    if (!b) return { face: 'sassy' };
+    if (b.kind === 'twirl') {
+      return {
+        pose: 'castspin', progress: b.u, face: 'excited',
+        extra(ctx, x, y) {
           for (let i = 0; i < 5; i++) {
-            const a = c * TAU * 2 + (i / 5) * TAU;
+            const a = b.u * TAU * 2 + (i / 5) * TAU;
             sparkle(ctx, x + Math.cos(a) * 14, y - 20 + Math.sin(a) * 5, 2, i % 2 ? '#ff9ec0' : '#ffffff');
           }
-          return;
-        }
-        // Little scissors snipping by her hand.
-        const snip = Math.abs(Math.sin(tt * 8)) * 0.5;
-        ctx.save();
-        ctx.translate(x + 9, y - 18);
-        ctx.strokeStyle = '#8d96a8';
-        ctx.lineWidth = 1.2;
-        for (const s of [-1, 1]) {
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(Math.cos(-1.2 + s * snip) * 7, Math.sin(-1.2 + s * snip) * 7);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(Math.cos(1.9 + s * 0.4) * 2.6, Math.sin(1.9 + s * 0.4) * 2.6, 1.4, 0, TAU);
-          ctx.stroke();
-        }
-        ctx.restore();
-      },
+        },
+      };
+    }
+    if (b.kind === 'snip') {
+      const k = inOut(b.u, 0.18, 0.82);
+      const pocket = bump(b.u, 0, 0.2) + bump(b.u, 0.8, 1);
+      return {
+        rig: { frontArm: arm(4 * k, -6 * k + 2 * pocket), tilt: 3 * k }, face: 'sassy',
+        hands(ctx, front, back, dir) {
+          const snip = k > 0.6 ? Math.abs(Math.sin(b.s * 9)) * 0.5 : 0;
+          scissors(ctx, front[0], front[1], dir, snip, clamp01(k * 2));
+        },
+      };
+    }
+    const k = inOut(b.u, 0.16, 0.84);
+    const pat = k > 0.7 ? Math.abs(Math.sin(b.s * 7)) : 0;
+    return {
+      rig: { backArm: arm(3.4 * k, -8 * k), frontArm: arm(1.6 * k, (-12 + 1.4 * pat) * k), hx: h(-0.4 * k), tilt: -3 * k }, face: k > 0.5 ? 'excited' : 'sassy',
+      hands(ctx, front, back, dir) { handMirror(ctx, back[0], back[1], dir, clamp01(k * 2)); },
     };
   },
+  // Kestrel, the archer: a shot at a target off down the range, shading her eyes to look after
+  // it, and checking an arrow's fletching (drawn from the quiver at her back).
   kestrel(t) {
-    const c = cycle(t, 3.6);
-    const drawing = c < 1;
+    const b = bitAt(t, [['shoot', 1.3], ['shade', 2.2], ['fletch', 2.4]], 1.6);
+    if (!b) return { face: 'smile', facing: 1 };
+    if (b.kind === 'shoot') {
+      const c = b.s;
+      return {
+        pose: c < 1 ? 'draw' : null, progress: Math.min(1, c), facing: 1, face: 'cool',
+        extra(ctx, x, y) {
+          if (c < 0.6 || c > 1.3) return;
+          const u = (c - 0.6) / 0.7;
+          const ax = x + 12 + u * 70;
+          ctx.globalAlpha = 1 - Math.max(0, u - 0.8) * 5;
+          ctx.strokeStyle = '#8a6040';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(ax - 8, y - 22);
+          ctx.lineTo(ax, y - 22);
+          ctx.stroke();
+          ctx.fillStyle = '#e6edf7';
+          ctx.beginPath();
+          ctx.moveTo(ax + 3, y - 22);
+          ctx.lineTo(ax, y - 24);
+          ctx.lineTo(ax, y - 20);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        },
+      };
+    }
+    if (b.kind === 'shade') {
+      const k = inOut(b.u);
+      return { facing: 1, rig: { backArm: arm(4 * k, -12 * k), hx: h(0.6 * k), hy: h(-0.6 * k), tilt: -2 * k }, face: 'cool' };
+    }
+    const k = inOut(b.u, 0.22, 0.8);
+    // The hand goes back over her shoulder to the quiver, comes round with an arrow, and puts it back.
+    const reach = bump(b.u, 0, 0.26) + bump(b.u, 0.74, 1);
     return {
-      pose: drawing ? 'draw' : null, progress: Math.min(1, c), facing: 1, face: drawing ? 'cool' : 'smile',
-      extra(ctx, x, y) {
-        if (c < 0.6 || c > 1.3) return;
-        const u = (c - 0.6) / 0.7;
-        const ax = x + 12 + u * 70;
-        ctx.globalAlpha = 1 - Math.max(0, u - 0.8) * 5;
+      facing: 1, rig: { backArm: arm(lerp(3 * k, -3, reach), lerp(-6 * k, -11, reach)), hx: h(0.5 * k), hy: h(0.8 * k) }, face: 'smile',
+      hands(ctx, front, back, dir) {
+        if (b.u < 0.16 || b.u > 0.84) return;
         ctx.strokeStyle = '#8a6040';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.1;
         ctx.beginPath();
-        ctx.moveTo(ax - 8, y - 22);
-        ctx.lineTo(ax, y - 22);
+        ctx.moveTo(back[0] - dir * 6, back[1] + 1);
+        ctx.lineTo(back[0] + dir * 6, back[1] - 1);
         ctx.stroke();
-        ctx.fillStyle = '#e6edf7';
-        ctx.beginPath();
-        ctx.moveTo(ax + 3, y - 22);
-        ctx.lineTo(ax, y - 24);
-        ctx.lineTo(ax, y - 20);
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#ff8fb0';
+        ctx.fillRect(back[0] - dir * 6 - 1, back[1] - 0.4, 2.4, 2);
       },
     };
   },
+  // Brann, the warrior: a drill of three cuts, flexing an arm, and resting the blade on his
+  // shoulder to wipe his brow.
   brann(t) {
-    const c = cycle(t, 3);
-    const moves = [['slash', 0, 0.5], ['slash2', 0.8, 1.3], ['thrust', 1.7, 2.2]];
-    const m = moves.find(([, a, b]) => c >= a && c < b);
-    return m ? { pose: m[0], progress: (c - m[1]) / (m[2] - m[1]), face: 'angry' } : { face: 'cool' };
+    const b = bitAt(t, [['drill', 2.2], ['flex', 1.8], ['wipe', 2]], 1.6);
+    if (!b) return { face: 'cool' };
+    if (b.kind === 'drill') {
+      const c = b.s;
+      const moves = [['slash', 0, 0.5], ['slash2', 0.8, 1.3], ['thrust', 1.7, 2.2]];
+      const m = moves.find(([, a, e]) => c >= a && c < e);
+      return m ? { pose: m[0], progress: (c - m[1]) / (m[2] - m[1]), face: 'angry' } : { face: 'angry' };
+    }
+    const k = inOut(b.u);
+    if (b.kind === 'flex') return { rig: { backArm: arm(-1 * k, -9 * k), tilt: -3 * k, hy: h(-0.4 * k) }, face: k > 0.5 ? 'grin' : 'cool' };
+    return { rig: { backArm: arm(3 * k + 1.2 * Math.sin(b.s * 8) * k, -12.5 * k), hy: h(0.6 * k) }, face: 'smile' };
   },
-  tora(t) {
-    const c = cycle(t, 1.2);
-    const swing = c < 0.6;
-    return {
-      pose: swing ? 'overhead' : null, progress: c / 0.6, facing: 1, face: 'grin',
-      extra(ctx, x, y) {
-        place(ctx, anvilArt(), x + 18, y);
-        const hit = c - 0.42;
-        if (hit < 0 || hit > 0.35) return;
-        const u = hit / 0.35;
-        for (let i = 0; i < 7; i++) {
-          const a = -Math.PI / 2 + (i - 3) * 0.45;
-          ctx.globalAlpha = 1 - u;
-          ctx.fillStyle = i % 2 ? '#ffe36b' : '#ff8a3c';
-          ctx.fillRect(x + 18 + Math.cos(a) * u * 14, y - 18 + Math.sin(a) * u * 14 + u * u * 8, 1.6, 1.6);
-        }
-        ctx.globalAlpha = 1;
-      },
-    };
-  },
+  // Elowen, the Mage Tower's: praying afloat, raising her staff to a light, and a slow nod as she
+  // listens to the spirits.
   elowen(t) {
-    return {
-      pose: 'pray', progress: 0.5, lift: 4 + Math.sin(t * 1.6) * 2, face: 'smile',
-      extra(ctx, x, y, tt) {
-        for (let i = 0; i < 4; i++) {
-          const a = tt * 1.2 + (i / 4) * TAU;
-          ctx.globalAlpha = 0.5 + 0.5 * Math.sin(a);
-          sparkle(ctx, x + Math.cos(a) * 15, y - 24 + Math.sin(a) * 4, 1.8, '#fff3a6');
-        }
-        ctx.globalAlpha = 1;
-      },
-    };
+    const b = bitAt(t, [['pray', 4], ['raise', 2.4], ['listen', 2.4]], 0.6);
+    const float = 4 + Math.sin(t * 1.6) * 2;
+    if (!b || b.kind === 'pray') {
+      return {
+        pose: 'pray', progress: 0.5, lift: float, face: 'smile',
+        extra(ctx, x, y, tt) {
+          for (let i = 0; i < 4; i++) {
+            const a = tt * 1.2 + (i / 4) * TAU;
+            ctx.globalAlpha = 0.5 + 0.5 * Math.sin(a);
+            sparkle(ctx, x + Math.cos(a) * 15, y - 24 + Math.sin(a) * 4, 1.8, '#fff3a6');
+          }
+          ctx.globalAlpha = 1;
+        },
+      };
+    }
+    const k = inOut(b.u);
+    if (b.kind === 'raise') {
+      return {
+        lift: float, rig: { frontArm: arm(1.4 * k, -10 * k), backArm: arm(1 * k, -4 * k), tilt: -3 * k, hy: h(-0.6 * k) }, face: k > 0.5 ? 'excited' : 'smile',
+        hands(ctx, front) {
+          if (k < 0.3) return;
+          const g = k * (0.7 + 0.3 * Math.sin(b.s * 6));
+          ctx.globalAlpha = g;
+          sparkle(ctx, front[0], front[1] - 18, 3.4, '#fff3a6');
+          for (let i = 0; i < 3; i++) sparkle(ctx, front[0] + Math.cos(b.s * 2 + i * 2) * 7, front[1] - 18 + Math.sin(b.s * 2 + i * 2) * 4, 1.4, '#ffffff');
+          ctx.globalAlpha = 1;
+        },
+      };
+    }
+    return { lift: float, rig: { hy: h(0.8 * Math.max(0, Math.sin(b.s * 3)) * k), hx: h(-0.5 * k), tilt: 3 * k }, face: 'smile' };
   },
+  // Nim, the scholar: reading her floating spellbook, casting a sparkle upward, and a big stretch
+  // and yawn. The book opens out of the air and folds away again round the other two.
   nim(t) {
-    const c = cycle(t, 7);
-    const cast = c < 1;
-    return {
-      pose: cast ? 'castup' : null, progress: c, face: cast ? 'excited' : 'shy',
-      extra(ctx, x, y, tt) {
-        if (cast) {
-          for (let i = 0; i < 6; i++) sparkle(ctx, x + Math.cos(i + c * 6) * 10, y - 40 - c * 20 + Math.sin(i * 2) * 6, 1.8, i % 2 ? '#c9a6ff' : '#ffffff');
-          return;
-        }
-        // A spellbook floating open in front of her, its pages turning.
-        const bx = x + 12;
-        const by = y - 24 + Math.sin(tt * 2) * 1.5;
-        ctx.fillStyle = '#7a5cc8';
-        ctx.fillRect(bx - 7, by - 1, 14, 6);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(bx - 6, by - 2, 5.6, 6);
-        ctx.fillRect(bx + 0.4, by - 2, 5.6, 6);
-        const flip = (tt * 0.8) % 1;
-        if (flip < 0.3) {
-          ctx.fillStyle = '#f3e8ff';
-          const w = Math.cos((flip / 0.3) * Math.PI) * 5.6;
-          ctx.fillRect(bx + 0.4 + Math.min(0, w), by - 2.6, Math.abs(w), 6);
-        }
-        ctx.fillStyle = '#c9a6ff';
-        ctx.fillRect(bx - 5, by, 3.6, 0.6);
-        ctx.fillRect(bx + 1.4, by + 1.4, 3.6, 0.6);
-      },
+    const b = bitAt(t, [['read', 4.4], ['cast', 1], ['stretch', 2]], 0.8);
+    const kind = b?.kind ?? 'read';
+    const u = b?.u ?? 0;
+    const bookK = kind === 'read' ? soft(seg(u, 0, 0.12)) * (1 - soft(seg(u, 0.9, 1))) : 0;
+    const book = (ctx, x, y, tt) => {
+      if (bookK <= 0.02) return;
+      const bx = x + 12;
+      const by = y - 24 + Math.sin(tt * 2) * 1.5;
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.scale(bookK, bookK);
+      ctx.fillStyle = '#7a5cc8';
+      ctx.fillRect(-7, -1, 14, 6);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, -2, 5.6, 6);
+      ctx.fillRect(0.4, -2, 5.6, 6);
+      const flip = (tt * 0.8) % 1;
+      if (flip < 0.3) {
+        ctx.fillStyle = '#f3e8ff';
+        const w = Math.cos((flip / 0.3) * Math.PI) * 5.6;
+        ctx.fillRect(0.4 + Math.min(0, w), -2.6, Math.abs(w), 6);
+      }
+      ctx.fillStyle = '#c9a6ff';
+      ctx.fillRect(-5, 0, 3.6, 0.6);
+      ctx.fillRect(1.4, 1.4, 3.6, 0.6);
+      ctx.restore();
     };
+    if (kind === 'cast') {
+      return {
+        pose: 'castup', progress: u, face: 'excited',
+        extra(ctx, x, y) { for (let i = 0; i < 6; i++) sparkle(ctx, x + Math.cos(i + u * 6) * 10, y - 40 - u * 20 + Math.sin(i * 2) * 6, 1.8, i % 2 ? '#c9a6ff' : '#ffffff'); },
+      };
+    }
+    if (kind === 'stretch') {
+      const k = inOut(u, 0.25, 0.75);
+      return { rig: { frontArm: arm(1 * k, -12 * k), backArm: arm(1 * k, -12 * k), hy: h(-0.8 * k), tilt: -4 * k, by: h(-0.6 * k) }, face: k > 0.6 ? 'sleepy' : 'shy' };
+    }
+    const k = inOut(u);
+    return { rig: { frontArm: arm(3 * k, -3 * k), hy: h(0.6 * k), hx: h(0.5 * k) }, face: 'shy', extra: book };
   },
+  // Vex, the thief: a smug look round, picking at a nail with the dagger's point, and tossing a
+  // coin up and catching it (from her belt and back).
   vex(t) {
-    const c = cycle(t, 3);
-    const flick = c < 0.4;
+    const b = bitAt(t, [['look', 2.6], ['nails', 2.4], ['coin', 2]], 1.6);
+    if (!b) return { face: 'smug' };
+    const k = inOut(b.u);
+    if (b.kind === 'look') return { facing: b.u < 0.5 ? 1 : -1, rig: { hx: h(0.8 * k), tilt: -2 * k }, face: 'smug' };
+    if (b.kind === 'nails') return { rig: { backArm: arm(3 * k, -5 * k), frontArm: arm(2 * k, -5 * k), hy: h(0.8 * k) }, face: 'smug' };
+    const flip = seg(b.u, 0.25, 0.75);
     return {
-      pose: flick ? 'throw' : null, progress: c / 0.4, face: 'smug',
-      extra(ctx, x, y) {
-        if (c < 0.4 || c > 1.4) return;
-        const u = (c - 0.4) / 1;
-        const px = x + 8;
-        const py = y - 26 - Math.sin(u * Math.PI) * 24;
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(u * TAU * 3);
-        ctx.fillStyle = '#e6edf7';
-        ctx.fillRect(-0.8, -6, 1.6, 7);
-        ctx.fillStyle = '#ffd66b';
-        ctx.fillRect(-2.4, 1, 4.8, 1.2);
-        ctx.fillStyle = '#7a5238';
-        ctx.fillRect(-0.8, 2.2, 1.6, 3);
-        ctx.restore();
+      rig: { backArm: arm(2.6 * k, (-4 - 2 * bump(b.u, 0.22, 0.3)) * k) }, face: flip > 0.9 ? 'grin' : 'smug',
+      hands(ctx, front, back) {
+        if (b.u < 0.12 || b.u > 0.9) return;
+        coin(ctx, back[0], back[1] - 2 - Math.sin(flip * Math.PI) * 24, flip * TAU * 3);
       },
     };
   },
+  // Tora, the smith: hammering at the anvil, wiping her brow, and holding a blade up to check its
+  // edge.
+  tora(t) {
+    const b = bitAt(t, [['hammer', 3.6], ['wipe', 1.8], ['check', 2.2]], 1.2);
+    const anvil = (ctx, x, y) => place(ctx, anvilArt(), x + 18, y);
+    if (!b || b.kind === 'hammer') {
+      const c = cycle(t, 1.2);
+      const swing = b && c < 0.6;
+      return {
+        pose: swing ? 'overhead' : null, progress: c / 0.6, facing: 1, face: 'grin',
+        extra(ctx, x, y) {
+          anvil(ctx, x, y);
+          const hit = c - 0.42;
+          if (!swing || hit < 0 || hit > 0.35) return;
+          const u = hit / 0.35;
+          for (let i = 0; i < 7; i++) {
+            const a = -Math.PI / 2 + (i - 3) * 0.45;
+            ctx.globalAlpha = 1 - u;
+            ctx.fillStyle = i % 2 ? '#ffe36b' : '#ff8a3c';
+            ctx.fillRect(x + 18 + Math.cos(a) * u * 14, y - 18 + Math.sin(a) * u * 14 + u * u * 8, 1.6, 1.6);
+          }
+          ctx.globalAlpha = 1;
+        },
+      };
+    }
+    const k = inOut(b.u);
+    if (b.kind === 'wipe') return { facing: 1, rig: { backArm: arm(3.4 * k + 1.4 * Math.sin(b.s * 9) * k, -12.5 * k), tilt: -3 * k }, face: 'grin', extra: anvil };
+    return { facing: 1, rig: { frontArm: arm(3 * k, -8 * k), hy: h(-0.8 * k), hx: h(0.6 * k) }, face: 'cool', extra: anvil };
+  },
+  // Captain Rook: his spyglass drawn from his belt and pulled out to its length to look out to sea
+  // one way and then the other, a salute, and a stretch of the back.
   rook(t) {
-    const c = cycle(t, 8);
-    const looking = c > 2 && c < 6;
+    const b = bitAt(t, [['spy', 4], ['salute', 1.4], ['stretch', 1.8]], 2.4);
+    if (!b) return { face: 'grin' };
+    const k = inOut(b.u);
+    if (b.kind === 'salute') return { rig: { frontArm: arm(1.4 * k, -12 * k), tilt: -2 * k, hy: h(-0.4 * k) }, face: 'grin' };
+    if (b.kind === 'stretch') return { rig: { backArm: arm(-2 * k, 1 * k), frontArm: arm(-2 * k, 1 * k), tilt: -6 * k, tx: h(-0.8 * k) }, face: 'smile' };
+    const raised = soft(seg(b.u, 0.06, 0.2)) * (1 - soft(seg(b.u, 0.84, 0.96)));
+    const ext = soft(seg(b.u, 0.18, 0.28)) * (1 - soft(seg(b.u, 0.78, 0.86)));
     return {
-      facing: looking ? (c < 4 ? 1 : -1) : null, face: looking ? 'cool' : 'grin',
-      extra(ctx, x, y, tt, dir) {
-        if (!looking) return;
-        // A spyglass raised to his eye.
+      facing: b.u < 0.52 ? 1 : -1, rig: { backArm: arm(lerp(-1, 4, raised), lerp(1, -13, raised)), hx: h(0.6 * raised), hy: h(-0.5 * raised) }, face: raised > 0.5 ? 'cool' : 'grin',
+      hands(ctx, front, back, dir) {
+        // Held in the hand at the belt, up at the eye; its draw-tube slides out to full length.
+        const len = 7 + 6 * ext;
         ctx.save();
-        ctx.translate(x + dir * 6, y - 31);
-        ctx.rotate(dir * -0.15);
+        ctx.translate(back[0], back[1] - 3 * raised);
+        ctx.rotate(dir * -0.12 * raised + (1 - raised) * dir * 1.2);
         ctx.fillStyle = '#c99a1f';
-        ctx.fillRect(dir > 0 ? 0 : -14, -1.6, 14, 3.2);
+        ctx.fillRect(dir > 0 ? -2 : 2 - 7, -1.6, 7, 3.2);
+        ctx.fillStyle = '#e0b53a';
+        ctx.fillRect(dir > 0 ? 4 : -4 - (len - 6), -1.2, len - 6, 2.4);
         ctx.fillStyle = '#ffd66b';
-        ctx.fillRect(dir > 0 ? 10 : -14, -2.2, 4, 4.4);
+        ctx.fillRect(dir > 0 ? len - 4 : -len, -2, 3, 4);
         ctx.fillStyle = '#bfe6ff';
-        ctx.fillRect(dir > 0 ? 13.4 : -14, -1.4, 0.8, 2.8);
+        ctx.fillRect(dir > 0 ? len - 1.6 : -len, -1.2, 0.8, 2.4);
         ctx.restore();
       },
     };
   },
+  // Bramble, the Hollow's warden: leaning on nothing with his arms folded, a look down the road for
+  // anyone coming, and counting the party on his fingers.
+  bramble(t) {
+    const b = bitAt(t, [['fold', 3], ['lookout', 2.4], ['count', 2.4]], 1.6);
+    if (!b) return { face: 'grin' };
+    const k = inOut(b.u);
+    if (b.kind === 'fold') return { rig: { frontArm: arm(-1.4 * k, -4 * k), backArm: arm(3.4 * k, -4 * k), tilt: -2 * k }, face: 'cool' };
+    if (b.kind === 'lookout') return { facing: 1, rig: { backArm: arm(4 * k, -12 * k), hx: h(0.6 * k) }, face: 'cool' };
+    const n = Math.min(4, 1 + Math.floor(seg(b.u, 0.15, 0.85) * 4));
+    return { rig: { frontArm: arm(3 * k, -6 * k), backArm: arm(2 * k, -6 * k + (n % 2) * 0.5), hy: h(0.6 * k) }, face: n === 4 ? 'grin' : 'smile' };
+  },
+  // Marlo, the merchant: flipping a coin from her thumb and catching it, a cheer for a sale, and a
+  // pitch with both arms spread over her wares.
   marlo(t) {
-    const c = cycle(t, 2.2);
+    const b = bitAt(t, [['flip', 2.2], ['cheer', 1.2], ['pitch', 2]], 1.6);
+    if (!b) return { face: 'smug' };
+    if (b.kind === 'cheer') return { pose: 'cheer', progress: b.u, face: 'excited' };
+    const k = inOut(b.u);
+    if (b.kind === 'pitch') return { rig: { frontArm: arm(5 * k, -5 * k), backArm: arm(-4 * k, -5 * k), tilt: -3 * k }, face: 'excited' };
+    const c = seg(b.u, 0.25, 0.7);
     return {
-      face: cycle(t, 8) < 1.2 ? 'excited' : 'smug', pose: cycle(t, 8) < 1.2 ? 'cheer' : null, progress: cycle(t, 8) / 1.2,
-      extra(ctx, x, y) {
-        if (c > 1) return;
-        const py = y - 26 - Math.sin(c * Math.PI) * 18;
-        const w = Math.abs(Math.cos(c * TAU * 3)) * 2.6 + 0.4;
-        ctx.fillStyle = '#ffc94f';
-        ctx.beginPath();
-        ctx.ellipse(x + 9, py, w, 2.6, 0, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x + 8.6, py - 1.4, 0.8, 1.4);
+      rig: { frontArm: arm(3 * k, (-4 - 2 * bump(b.u, 0.22, 0.3)) * k) }, face: c >= 1 ? 'grin' : 'smug',
+      hands(ctx, front) {
+        if (k < 0.4) return;
+        coin(ctx, front[0], front[1] - 2 - Math.sin(c * Math.PI) * 20, c * TAU * 3);
       },
     };
   },
 };
+
+// Lulu's scissors: two blades opening and closing about a pin, held at the hand.
+function scissors(ctx, x, y, dir, snip, k) {
+  if (k <= 0.02) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * k, k);
+  ctx.strokeStyle = '#8d96a8';
+  ctx.lineWidth = 1.2;
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(-0.6 + s * snip) * 7, Math.sin(-0.6 + s * snip) * 7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(Math.cos(2.5 + s * 0.4) * 2.6, Math.sin(2.5 + s * 0.4) * 2.6, 1.4, 0, TAU);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// Lulu's hand mirror: a pink oval with a glint, on a short handle.
+function handMirror(ctx, x, y, dir, k) {
+  if (k <= 0.02) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * k, k);
+  ctx.fillStyle = '#ff9ec0';
+  ctx.fillRect(-0.8, -3, 1.6, 4);
+  ctx.beginPath();
+  ctx.ellipse(0, -6.4, 3.4, 4, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#e6f4ff';
+  ctx.beginPath();
+  ctx.ellipse(0, -6.4, 2.4, 3, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-1.4, -8.4, 0.8, 2);
+  ctx.restore();
+}
 
 export function npcRoutine(id, t) {
   return ROUTINES[id]?.(t) ?? {};
