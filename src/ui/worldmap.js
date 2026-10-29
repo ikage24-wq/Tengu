@@ -34,7 +34,8 @@ const SPOT = {
   bossroom: onRing(235, 0.72), sky: { x: 352, y: 26 },
 };
 const spot = (m) => SPOT[m.id] ?? m.world;
-// The roads round the ring (each a real portal link between neighbours on it).
+// The roads round the ring (each a real portal link between neighbours on it; the last stop joins
+// back to the first, closing it).
 const RING = ['sprout', 'meadow1', 'meadow2', 'harbor', 'woods', 'grove', 'ruins', 'cave'];
 // Each region's colour, under its stop.
 const TINT = {
@@ -183,10 +184,11 @@ function stroke(ctx, path) {
 // The ring road between neighbours on it, then the spurs (straight), then the sky's dotted line.
 function drawRoads(ctx, ox, oy, time) {
   const linked = new Set(ROADS.map(([a, b]) => [a, b].sort().join('|')));
-  for (let i = 0; i < RING.length - 1; i++) {
+  for (let i = 0; i < RING.length; i++) {
+    const next = RING[(i + 1) % RING.length];
     const a = SPOT[RING[i]];
-    const b = SPOT[RING[i + 1]];
-    if (!linked.has([RING[i], RING[i + 1]].sort().join('|'))) continue;
+    const b = SPOT[next];
+    if (!linked.has([RING[i], next].sort().join('|'))) continue;
     // Clockwise along the ellipse, from one stop's angle to the next.
     let a0 = deg(a.a);
     let a1 = deg(b.a);
@@ -199,7 +201,7 @@ function drawRoads(ctx, ox, oy, time) {
   for (const [ida, idb] of ROADS) {
     const ra = RING.indexOf(ida);
     const rb = RING.indexOf(idb);
-    if (ra >= 0 && rb >= 0 && Math.abs(ra - rb) === 1) continue;
+    if (ra >= 0 && rb >= 0 && (Math.abs(ra - rb) === 1 || Math.abs(ra - rb) === RING.length - 1)) continue;
     const ma = MAPS[ida];
     const mb = MAPS[idb];
     if (!ma.world || !mb.world) continue;

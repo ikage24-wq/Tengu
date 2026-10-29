@@ -30,6 +30,8 @@ export const MAPS = {
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
+      // The old mine road west, closing the island's ring: it comes out in the Crystal Cave.
+      { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 2140, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
     npcs: [{ id: 'mira', x: 300 }, { id: 'pip', x: 500 }, { id: 'kestrel', x: 880 }, { id: 'lulu', x: 1800 }],
@@ -216,6 +218,8 @@ export const MAPS = {
       { id: 'west', x: 40, y: 640, to: 'ruins', toPortal: 'east' },
       { id: 'east', x: 2540, y: 640, to: 'sky', toPortal: 'west' },
       { id: 'boss', x: 1300, y: 400, to: 'bossroom', toPortal: 'west', label: 'Throne' },
+      // The mine road back down to Sprout Village (the ring round the island).
+      { id: 'sprout', x: 1000, y: 640, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
     ],
     npcs: [],
     deco: [['glowpool', 600], ['glowpool', 1430], ['glowpool', 2200], ['crystalspire', 380, 0], ['stalagmite', 1000], ['crystalspire', 1800, 1], ['stalagmite', 2450]],

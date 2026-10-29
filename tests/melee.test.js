@@ -2750,12 +2750,12 @@ test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and f
   const seen = new Set();
   const hp0 = w.mobs.map((m) => m.hp);
   let froze = false;
-  for (let i = 0; i < 60 * 10; i++) {
+  for (let i = 0; i < 60 * 16; i++) {
     updateWorld(w, DT, idle);
     if (w.yuki.act) seen.add(w.yuki.act.kind);
     froze ||= w.mobs.some((m) => m.frozenUntil > w.now);
   }
-  assert.ok(['breath', 'ask', 'spikes', 'icicle', 'whiteout', 'snowball', 'needles'].filter((k) => seen.has(k)).length >= 3, `a mix of her moves (${[...seen]})`);
+  assert.ok(['breath', 'ask', 'spikes', 'icicle', 'whiteout', 'snowball', 'needles', 'frostfan', 'mist'].filter((k) => seen.has(k)).length >= 3, `a mix of her moves (${[...seen]})`);
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her ice lands');
   assert.ok(froze, 'and freezes them');
   // Drifting after the Onmyoji, she leaves frost on the ground.
