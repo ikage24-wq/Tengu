@@ -1,0 +1,55 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the Onmyoji's oni (render/oni.js) in each of his designs, side by side on his real
+// body, with the Onmyoji beside him for size: standing with the iron club over his shoulder, and
+// bringing it down. To pick one.
+import { drawPosed } from '../src/render/hero.js';
+import { ONI_DESIGNS, ONI_SCALE, paintKanabo } from '../src/render/oni.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const S = 2.4;
+const CW = 380;
+const CH = 400;
+const designs = Object.values(ONI_DESIGNS);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * designs.length;
+canvas.height = CH * 2 + 10;
+nextFrame();
+ctx.fillStyle = '#bfe6d2';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Two poses: the club resting over his shoulder, feet planted wide, a fist on his hip; and the
+// club brought down in front of him, sunk low.
+const POSES = [
+  { rig: { frontArm: [1.5, -8], backArm: [-1, -2.4], frontLeg: [3.8, 0, 8], backLeg: [-4, 0, -8], squat: 0, tx: 0, hx: 0.4, hy: -0.4, tilt: -2 }, club: -0.55, lean: -0.04 },
+  { rig: { frontArm: [7.5, 3], backArm: [5, 2], frontLeg: [5, 0, 10], backLeg: [-4.6, 0, -16], squat: 2.4, tx: 0, hx: 0.6, hy: 0.6, tilt: 4, mouth: 'open' }, club: 1.75, lean: 0.36 },
+];
+const MAIDEN = { hairStyle: 'hime', hairColor: '#2a2440', skinTone: '#fff0e6', eyeColor: '#8a6ad8', outfit: 'miko', outfitColor: '#ffffff' };
+POSES.forEach((pz, r) => designs.forEach((d, i) => {
+  const cx = i * CW + CW / 2 + 30;
+  const gy = r * CH + CH - 40;
+  ctx.fillStyle = '#6aa874';
+  ctx.fillRect(i * CW, gy, CW, 3);
+  setHd(true, S * ONI_SCALE);
+  const look = { ...d.look, mouth: pz.rig.mouth };
+  drawPosed(ctx, look, cx, gy, pz.rig, {
+    scale: S * ONI_SCALE, facing: 1, hold: 'front', lean: { tilt: pz.lean, lunge: 0, lift: 0 },
+    // (Resting back over his shoulder, the club goes behind him; brought down, in front.)
+    [pz.club < 0 ? 'under' : 'over']: (c, hand, flip) => paintKanabo(c, hand, flip, pz.club, S * ONI_SCALE),
+  });
+  // The Onmyoji beside him, for size.
+  if (r === 0) {
+    setHd(true, S);
+    drawPosed(ctx, MAIDEN, cx - 120, gy, {}, { scale: S, facing: 1 });
+  }
+  if (r === 1) {
+    ctx.fillStyle = '#2a2440';
+    ctx.font = 'bold 18px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.name, i * CW + CW / 2, gy + 30);
+  }
+}));
+window.done = true;
+</script></body></html>

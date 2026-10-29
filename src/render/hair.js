@@ -28,11 +28,14 @@ const RETIRED = {
 };
 export const hairStyleOf = (look) => {
   const s = RETIRED[look.hairStyle] ?? look.hairStyle;
-  return HAIR_STYLES.includes(s) || GUARDIAN_HAIR.includes(s) ? s : HAIR_STYLES[0];
+  return HAIR_STYLES.includes(s) || GUARDIAN_HAIR.includes(s) || TROUPE_HAIR.includes(s) ? s : HAIR_STYLES[0];
 };
 // Styles made for the Shrine Maiden's kitsune guardian alone (render/kitsune.js), never offered in
 // the creator: see "The kitsune guardian's own styles" below.
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
+// Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
+// troupe's own styles" below.
+export const TROUPE_HAIR = ['onimane', 'onitopknot', 'oniwhite'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -857,6 +860,53 @@ Object.assign(STYLES, {
       hang: [napeShadow(r), ...sheet({ len: 57, flare: 17.6, ends: 'points', n: 6, wave: 2.2, w0: 12.4 }, r, m, 0.9)],
       front: bangs('queenpart', r, m, [lock(front, 4, r.base, m, 1.2, 0.2), streak(25.6, 15, 26.4, 30, 0.8, -0.3, r.hi, m, 1.2), lock(fx(front), 4, r.base, m, 1.2, 0.2)]),
       tips: [44, 52],
+    };
+  },
+});
+
+// ---------- The yokai troupe's own styles ----------
+// The oni's: big, wild and heavy, leaving room for his horns.
+Object.assign(FRINGES, {
+  // A few big, blunt-tipped spikes falling over the brow, the longest between the eyes.
+  onispike: { pts: [[24.2, 13.6], [22, 9.8], [20.2, 15], [17.8, 10.2], [15.6, 16.6], [13.2, 10.2], [11, 15], [9.2, 9.8], [6.8, 13.6]], lean: 0.3 },
+  // Short and choppy, pushed up off the brow (the hair all dragged up into the topknot).
+  onishort: { pts: [[24.4, 11.6], [22.8, 9.2], [21, 11], [19, 8.4], [16.8, 10], [14.6, 8.2], [12.4, 10], [10.2, 8.6], [8.4, 10.6], [6.6, 11.6]], lean: 0.4 },
+});
+Object.assign(STYLES, {
+  // A wild mane: thick spikes standing up off the crown and flaring out round his head and nape,
+  // shaggy at the back; big spiky bangs.
+  onimane(r, m) {
+    const spike = (pts, w, c = r.base, k = 1.05) => [lock(pts, w, c, m, k), lock(fx(pts), w, c, m, k)];
+    return {
+      head: [crown(r, 1.4), ...spike([[11, 4], [8.4, -0.6], [6.4, -3.4]], 4.6, r.sh1, 0.6), ...spike([[13.6, 3], [13, -1.6], [12.6, -4.6]], 4, r.sh1, 0.5)],
+      hang: [...sheet({ len: 27, flare: 15.6, ends: 'points', n: 6, w0: 13.2, wave: 0.8 }, r, m), ...spike([[4.4, 13], [0.4, 15.4], [-3.6, 16]], 4.8, r.sh1), ...spike([[4, 19], [0.6, 23], [-2.6, 25]], 4.4, r.sh1)],
+      front: bangs('onispike', r, m, spike([[25, 12], [28.4, 16], [31.4, 18.4]], 4.2)),
+      tips: [22, 27],
+    };
+  },
+  // A topknot: everything dragged up tight into one thick knot standing up off his crown, bound
+  // with a rope, the end flopping back; short and choppy at the brow.
+  onitopknot(r, m) {
+    const knot = [lock([[15.5, 3.6], [14.4, -1.6], [11.6, -4.2], [8.4, -3.6], [6.6, -1.4]], 5.4, r.base, m, 0.6, 0.35),
+      F(E(15.2, 2.6, 2.6, 1.8, r.sh1)), F(R(13, 0.8, 4.6, 1.4, '#e8d9b0')), F(R(13, 1.4, 4.6, 0.4, '#b8a272')),
+      streak(14.6, -1, 11.4, -3.6, 0.8, 0.3, r.hi, m, 0.6)];
+    return {
+      head: [crown(r, 0.2), streak(20, 5, 15.6, 2.4, 0.9, 0.4, r.sh1), streak(11, 5, 15.4, 2.4, 0.9, -0.4, r.sh1), ...knot],
+      hang: [napeShadow(r, 19)],
+      front: bangs('onishort', r, m),
+      top: knot,
+      tips: [99, 99],
+    };
+  },
+  // A war mane: long, shaggy and heavy, falling to the middle of his back in thick jagged locks,
+  // flicking out at the shoulders; big spiky bangs.
+  oniwhite(r, m) {
+    const flick = (pts, w, c = r.base, k = 1.1) => [lock(pts, w, c, m, k), lock(fx(pts), w, c, m, k)];
+    return {
+      head: [crown(r, 1.2), ...flick([[9, 4], [5.4, 1.4], [2.4, 1.8]], 4.4, r.sh1, 0.7)],
+      hang: [...sheet({ len: 44, flare: 17, ends: 'points', n: 7, w0: 13, wave: 1.6 }, r, m, 1), ...flick([[4, 16], [-0.6, 21], [-4, 24]], 5, r.sh1), ...flick([[4, 25], [0.4, 32], [-2.6, 37]], 4.6, r.sh1)],
+      front: bangs('onispike', r, m, [...flick([[25, 12.4], [28, 18.6], [30.6, 24]], 4.4), ...flick([[25, 17], [26.6, 24], [29, 30]], 3.8)]),
+      tips: [32, 40],
     };
   },
 });

@@ -60,6 +60,13 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     she freezes the others when they bicker.
   Each has their own skeleton, look, moves, idle bits and personality, and they bicker and
   cheer each other between fights.
+  - **How they're built (the player's rule):** each on the player character, with a new rig, new
+    animations, new clothes and new hair of their own (nothing reused from the creator, the
+    guardian, the doll or Snow wolf).
+  - **Sizes (chosen): each its own, by what it is:** the oni big and broad (bigger than the
+    guardian), the yuki-onna tall and willowy, the kappa short and stocky, the karakasa small and
+    bouncy.
+  - **Order:** the oni first (three designs on his real body to pick from, then his rig and moves).
 - **Her skills command them all at once (chosen):** e.g. Talisman Storm (her own big attack),
   Rally (they all charge one target together), Night Parade (they rampage across the screen in a
   line), Seal (she pins a monster with a star seal for them to pile on), a mastery; the finisher
