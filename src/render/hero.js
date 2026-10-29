@@ -19,7 +19,7 @@ import { GUARDIAN_OUTFIT_KEYS } from './jobgear/guardian.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { paintFan } from './props.js';
+import { paintFan, paintGohei } from './props.js';
 import { R, E, T, F, sprite, spriteBudgeted, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
@@ -2315,7 +2315,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.translate(sx(squashX(wx + rig.tx)), sy(squashY(wy + bodyY)));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((((mv.fanA ?? 0) - 90) * Math.PI) / 180);
-    paintFan(ctx, scale * 1.3, mv.fan);
+    // A Shrine Maiden dances with a gohei in place of the fan (the same motion, its streamers
+    // flying out where the fan would open).
+    if (state.job === 'shrinemaiden') paintGohei(ctx, scale * 1.3, mv.fan, state.time ?? 0);
+    else paintFan(ctx, scale * 1.3, mv.fan);
     ctx.restore();
   };
   if (mv?.fanBack) drawFan();

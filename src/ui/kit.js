@@ -462,6 +462,20 @@ const ICONS = {
     ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
   },
   // A seal tag, a strip of paper with a brush mark (the Shinobi's Ki).
+  // A torii gate: two posts, a crossbeam, and the top lintel curving up at the ends (the Shrine
+  // Maiden's Grace).
+  torii(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.48, -s * 0.4);
+    ctx.quadraticCurveTo(0, -s * 0.28, s * 0.48, -s * 0.4);
+    ctx.lineTo(s * 0.42, -s * 0.24);
+    ctx.quadraticCurveTo(0, -s * 0.16, -s * 0.42, -s * 0.24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(-s * 0.36, -s * 0.08, s * 0.72, s * 0.1);
+    ctx.fillRect(-s * 0.3, -s * 0.22, s * 0.11, s * 0.68);
+    ctx.fillRect(s * 0.19, -s * 0.22, s * 0.11, s * 0.68);
+  },
   // A zigzag paper streamer (the Spirit Mage's Spirit).
   shide(ctx, s) {
     for (let i = 0; i < 4; i++) {

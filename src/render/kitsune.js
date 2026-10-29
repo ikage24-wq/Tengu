@@ -538,7 +538,10 @@ export function drawKitsune(ctx, world, k, cam, time) {
   if (a) {
     // A blow plays on its own heavy clock (world/kitsune.js HEAVY).
     const u = clamp01((a.clock ?? world.now - a.t0) / a.dur);
-    p = POSES[a.kind]?.(u) ?? standing(null, 0);
+    // Thousand Torii: at each gate she steps out of the fox fire with the naginata already up and
+    // brings it down (a Cleave from its top), every gate.
+    if (a.kind === 'torii') p = cleaving(clamp01(0.36 + (world.now - a.cutAt) / 0.55));
+    else p = POSES[a.kind]?.(u) ?? standing(null, 0);
     if (BLOWS[a.kind]) p = weighted(p, BLOWS[a.kind], u);
   } else if (k.moving) {
     st.walk += dt * Math.min(1.8, Math.abs(k.vx) / 52) * 3.6;

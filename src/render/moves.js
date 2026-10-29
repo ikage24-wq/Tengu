@@ -62,7 +62,7 @@ function danceLegs(r, ...stances) {
 const breathe = (p) => Math.sin(p * Math.PI * 3);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
-export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern']);
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'shrinegrand', 'shrinepurify', 'shrinerevive', 'shrinetorii']);
 
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
@@ -1793,6 +1793,107 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Shrine Maiden's figures (her gohei is drawn where the fan would be) ----------
+  // Grand Blessing (the light falls at ~0.55): she lifts the bell staff high and rings it while the
+  // gohei sweeps over her head left, right and left again, the way a priestess purifies, her hips
+  // swaying with it; then both arms open wide and her face lifts as the great light falls.
+  shrinegrand(p) {
+    const up = soft(seg(p, 0, 0.18));
+    const open = soft(seg(p, 0.48, 0.62));
+    const settle = soft(seg(p, 0.84, 1));
+    const hold = 1 - settle;
+    const sw = Math.sin(seg(p, 0.14, 0.5) * Math.PI * 3) * up * (1 - open);
+    const ring = Math.sin(seg(p, 0.1, 0.5) * Math.PI * 8) * 10 * up * (1 - open);
+    return {
+      weapon: -5 + ring + 30 * open * hold + 25 * settle, arm: lerp(70, 160, up) - 40 * open - 40 * settle,
+      tilt: 0.06 * sw - 0.12 * open * hold, lift: 2 * up * (1 - open) + 5 * open * hold + breathe(p) * open * hold,
+      fan: 0.4 + 0.6 * Math.abs(sw) + 0.6 * open * hold, fanA: (-10 + 70 * sw) * (1 - open) - 110 * open * hold,
+      rig: (r) => {
+        r.backArm = [q((2 + 6 * sw) * up * (1 - open) - 11 * open * hold), q(-11 * up * (1 - open) - 9 * open * hold)];
+        r.tx = q(0.8 * sw);
+        r.hairLift = open * hold > 0.4 ? -1 : 0;
+        r.cape -= q(3 * Math.abs(sw) + 4 * open * hold);
+        danceLegs(r, [up * (1 - open), [2.4, 0, 6], [-2.4, 0, -6]], [open * hold, [1.4, -1.6, 12], [-1.4, -1.4, -10]]);
+        if (open * hold > 0.4) r.eyes = 'happy';
+        else if (up > 0.3) r.eyes = 'blink';
+      },
+    };
+  },
+  // Purification (the circle forms at ~0.5): she draws the gohei up behind her shoulder, then
+  // sweeps it down and round in one long low arc across the ground before her, sinking with it,
+  // and drives the bell staff's foot down as the circle of light opens; holds, kneeling a little.
+  shrinepurify(p) {
+    const draw = soft(seg(p, 0, 0.24));
+    const arc = soft(seg(p, 0.22, 0.5));
+    const plant = soft(seg(p, 0.44, 0.54));
+    const settle = soft(seg(p, 0.82, 1));
+    const hold = 1 - settle;
+    return {
+      weapon: lerp(10, -5, draw) + 165 * plant * hold + 20 * settle, arm: lerp(70, 120, draw) - 60 * plant - 10 * settle,
+      tilt: -0.08 * draw * (1 - arc) + 0.26 * arc * hold, lunge: 5 * arc * hold, lift: 2 * draw * (1 - arc),
+      fan: 0.5 + 0.5 * arc * hold, fanA: lerp(-40, 60, draw) * (1 - arc) + lerp(60, -150, arc) * arc * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, -4, draw) * (1 - arc) + lerp(-4, 8, arc) * hold), q(lerp(0, -10, draw) * (1 - arc) + 2 * arc * hold)];
+        r.squat = q(2.4 * arc * hold);
+        r.cape -= q(2 * draw + 4 * arc * hold);
+        r.hairLift = arc * hold > 0.4 ? -1 : 0;
+        danceLegs(r, [draw * (1 - arc), [1.4, -1.2, 8], [-1.4, 0, -6]], [arc * hold, [5, 0, 8], [-4.4, 0, -16]]);
+        if (plant * hold > 0.3) r.eyes = 'half';
+      },
+    };
+  },
+  // Resurrection Dance (the dead rise at ~0.7): a long, slow figure. She kneels with the bell
+  // staff and the gohei held together at her heart, eyes closed; rises slowly, turning the gohei
+  // three times in a circle over her head as the bells ring; then lifts both arms to the sky and
+  // holds there on her toes, looking up.
+  shrinerevive(p) {
+    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.22, 0.36)));
+    const rise = soft(seg(p, 0.22, 0.4));
+    const circle = seg(p, 0.3, 0.64);
+    const sky = soft(seg(p, 0.62, 0.74));
+    const settle = soft(seg(p, 0.88, 1));
+    const hold = 1 - settle;
+    const turn = circle * Math.PI * 6;
+    const twirl = rise * (1 - sky);
+    const ring = Math.sin(p * 40) * 8 * twirl;
+    return {
+      weapon: lerp(10, 40, kneel) + ring - 40 * sky * hold + 30 * settle, arm: lerp(70, 40, kneel) + 100 * twirl + 150 * sky * hold - 20 * settle,
+      tilt: 0.3 * kneel - 0.14 * sky * hold, lift: 6 * sky * hold + breathe(p) * sky * hold,
+      fan: 0.3 + 0.7 * twirl + 0.6 * sky * hold, fanA: lerp(60, 120, kneel) * (1 - rise) + (Math.cos(turn) * 60 - 20) * twirl - 120 * sky * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 4, kneel) * (1 - rise) + 3 * Math.sin(turn) * twirl - 3 * sky * hold), q(lerp(0, 1, kneel) * (1 - rise) - 10 * twirl - 14 * sky * hold)];
+        r.squat = q(3 * kneel);
+        r.hairLift = twirl > 0.3 || sky > 0.3 ? -1 : 0;
+        r.cape -= q(3 * twirl + 4 * sky * hold);
+        danceLegs(r, [kneel, [3.4, 0, 2], [-3.4, -0.4, -2]], [sky * hold, [1.4, -2.4, 14], [-1.4, -1.6, -10]]);
+        if (kneel > 0.3) r.eyes = 'blink';
+        else if (sky * hold > 0.4) [r.eyes, r.mouth] = ['happy', 'open'];
+      },
+    };
+  },
+  // Thousand Torii (the gates rise at ~0.45): she plants the bell staff before her and holds the
+  // gohei out level and straight ahead, pointing the way down the corridor, chin up; as the gates
+  // rise she sweeps it up overhead and holds it high while her guardian goes gate to gate.
+  shrinetorii(p) {
+    const point = soft(seg(p, 0, 0.24));
+    const raise = soft(seg(p, 0.42, 0.56));
+    const settle = soft(seg(p, 0.9, 1));
+    const hold = 1 - settle;
+    return {
+      weapon: lerp(10, 150, point) * (1 - settle) + 20 * settle, arm: lerp(70, 30, point) * (1 - settle) + 70 * settle,
+      tilt: -0.1 * point * hold, lunge: 3 * point * (1 - raise), lift: 3 * raise * hold + breathe(p) * raise * hold,
+      fan: 0.5 + 0.5 * raise * hold, fanA: lerp(0, 90, point) * (1 - raise) - 30 * raise * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 8, point) * (1 - raise) + 2 * raise * hold), q(lerp(0, -6, point) * (1 - raise) - 14 * raise * hold)];
+        r.hairLift = raise * hold > 0.3 ? -1 : 0;
+        r.cape -= q(2 * point + 4 * raise * hold);
+        danceLegs(r, [point * (1 - raise), [4, 0, 6], [-3.6, 0, -10]], [raise * hold, [1.4, -2, 12], [-1.4, -1.4, -8]]);
+        if (point * (1 - raise) > 0.5) r.eyes = 'half';
+        else if (raise * hold > 0.4) r.eyes = 'happy';
+      },
+    };
+  },
+
   // A prayer: weapon held close, the other hand raised to it, eyes closed, floating a little.
   pray(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -1819,6 +1920,7 @@ export const MOVE_MIN = {
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
+  shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -1984,7 +2086,7 @@ const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });
 const bob = (p, dur, per = 1.1) => Math.sin(p * Math.PI * 2 * Math.max(1, Math.round(dur / per)));
 // The figures where a grounded dancer rises up off the floor: the finishers, the cast upward, and
 // her big skills.
-const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern']);
+const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern', 'shrinegrand', 'shrinerevive', 'shrinetorii']);
 const DANCE_STYLES = {
   // Grounded kagura (suriashi): her feet slide along the floor in long, slow gliding steps, knees
   // only softly bent, eyes lowered in the holds; serene. Her poses are big and bold (the bell staff

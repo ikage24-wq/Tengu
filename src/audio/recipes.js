@@ -269,6 +269,16 @@ const R = {
   blessing: { db: -11, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1500 }, { seq: 'D5:90 E5:90 G5:90 A5:90 D6:700', inst: 'celesta', db: -4 }, { seq: 'r:300 D5+A5:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },
   wardbreak: { db: -11, max: 2, layers: [{ rec: 'glass', len: 700 }, sparkle('E7:30 B6:30 G6:200', { db: -8 }), thump(160, 160, { db: -8 })] },
   heavenslantern: { db: -10, max: 1, room: true, duck: [-6, 1500], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:80 E4:80 G4:80 A4:80 B4:80 D5:80 E5:900', inst: 'orchestral_harp' }, { seq: 'r:400 D4+A4+D5:1400', inst: 'choir_aahs', attack: 0.3, db: -8 }] },
+  // The Shrine Maiden: Grand Blessing (a bigger, brighter Blessing with a full choir), the
+  // Purification circle opening (a deep bell and a rising chime) and a monster burning in it,
+  // someone raised from the fallen (a harp run and a choir), and each torii gate of Thousand Torii
+  // going up (a taiko hit and a bell, the notes rising gate by gate).
+  grandblessing: { db: -9, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1800 }, { seq: 'D5:80 E5:80 G5:80 A5:80 D6:80 E6:900', inst: 'celesta', db: -4 }, { seq: 'r:200 D4+A4+D5+A5:1500', inst: 'choir_aahs', attack: 0.25, db: -6 }] },
+  purifycircle: { db: -11, max: 1, room: true, layers: [{ rec: 'bell', len: 1400, rate: 0.7 }, { rec: 'holyProtect', len: 1200, db: -4 }, sparkle('D6:60 A6:60 D7:400', { db: -10 })] },
+  purifyburn: { db: -18, vary: 8, max: 3, gap: 90, layers: [{ rec: 'fireImpact', rate: 1.4, len: 300, db: -6 }, sparkle('A6:150', { db: -12 })] },
+  reviveflash: { db: -10, max: 2, room: true, layers: [{ rec: 'holyHeal', len: 1400 }, { seq: 'G4:70 B4:70 D5:70 G5:70 B5:70 D6:700', inst: 'orchestral_harp', db: -2 }, { seq: 'r:300 G4+D5+G5:1000', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
+  resurrection: { db: -12, max: 1, room: true, layers: [{ rec: 'holyProtect', len: 1500 }, { rec: 'bell', len: 1600, rate: 0.85, db: -4 }] },
+  thousandtorii: { db: -9, max: 1, room: true, duck: [-6, 2000], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:340 E4:340 G4:340 A4:340 B4:340 D5:340 E5:340 G5:900', inst: 'orchestral_harp', db: -2 }, { seq: 'r:600 D4+A4+D5:2200', inst: 'choir_aahs', attack: 0.4, db: -8 }] },
   lanternray: { db: -15, vary: 6, max: 3, gap: 80, layers: [{ rec: 'holyBlast', len: 500, db: -6 }, sparkle('A6:30 D7:200', { db: -8 })] },
   lanternblaze: { db: -8, max: 1, room: true, duck: [-8, 1200], layers: [thump(70, 600, { slide: -1 }), { rec: 'holyBlast', len: 1800 }, { rec: 'bell', len: 1500, rate: 0.8, db: -3 }, { seq: 'D5+A5+D6+E6:1200', inst: 'celesta', db: -5 }] },
   // Her Spirit Doll, small and silly: a paper-fan smack, a bell bonked on a head, a twirl of

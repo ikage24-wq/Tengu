@@ -21,6 +21,7 @@ import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { tickDisco } from './discoboss.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
+import { lastRite } from './shrine.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -374,7 +375,8 @@ export function hurtPlayer(world, rawAtk, fromX) {
   // Unbroken (full Valor), nothing knocks a Warrior back; a hit breaks an Archer's Momentum.
   if (!unbroken(world)) knockBack(world.body, fromX);
   loseMomentum(world);
-  if (char.hp <= 0 && !world.dead) {
+  // (A Shrine Maiden's Last Rite keeps her standing, once.)
+  if (char.hp <= 0 && !world.dead && !lastRite(world)) {
     world.dead = true;
     world.events.push({ type: 'death' });
     world.log('You fainted...', '#ff6b8a');

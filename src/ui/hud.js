@@ -346,6 +346,8 @@ const GAUGES = {
     tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
   momentum: { color: '#e8962a', hot: '#7fcfff', icon: 'feather', name: 'Momentum', full: 'HAWKEYE', notch: () => null, edge: 'rgba(255,200,90,', ink: '#8a4a1a',
     tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
+  grace: { color: '#d8352c', hot: '#ffd36a', icon: 'torii', name: 'Grace', full: 'DIVINE GRACE', notch: () => null, edge: 'rgba(255,214,140,', ink: '#7a1a14',
+    tip: 'Your heals and wards build it, more for every ally they reach (your spells that land, a little); it fades once the fighting stops. Full, every heal you give also wards whoever it mends, and Thousand Torii is ready.' },
   spirit: { color: '#9a8cd0', hot: '#ffd36a', icon: 'shide', name: 'Spirit', full: "KAMI'S FAVOUR", notch: () => null, edge: 'rgba(230,220,255,', ink: '#3a2e70',
     tip: 'Your spells that land and your heals build it, half again when you turn from one to the other; it fades once the fighting stops. Full, every damage spell also mends allies near where it lands, and your finisher is ready.' },
   ki: { color: '#2a2230', hot: '#ff5a46', icon: 'seal', name: 'Ki', full: 'SHADOW CLONES', notch: () => null, edge: 'rgba(200,30,40,', ink: '#14101a',

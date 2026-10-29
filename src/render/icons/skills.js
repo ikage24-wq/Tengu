@@ -1353,6 +1353,51 @@ function shrinemastery() {
   out.push(...spark(8, 10.6, 1.2, '#ffd36a'), ...spark(13.6, 1.8, 0.8));
   return out;
 }
+// A little torii gate in the icon's frame: two vermilion posts, a black lintel curving up, a beam.
+function toriiIcon(x, y, w, h) {
+  const red = '#e0453a';
+  return [
+    ...solid(rect(x - w * 0.36, y - h * 0.8, w * 0.12, h * 0.8), red, { d: 0.3, ink: '#7a1c1c' }), ...solid(rect(x + w * 0.24, y - h * 0.8, w * 0.12, h * 0.8), red, { d: 0.3, ink: '#7a1c1c' }),
+    ...solid([[x - w * 0.56, y - h], [x + w * 0.56, y - h], [x + w * 0.5, y - h * 0.84], [x - w * 0.5, y - h * 0.84]], '#3a2a2a', { d: 0.3 }),
+    ...solid(rect(x - w * 0.46, y - h * 0.7, w * 0.92, h * 0.1), red, { d: 0.3, ink: '#7a1c1c' }),
+  ];
+}
+// Grand Blessing (the Shrine Maiden): a great column of gold light with a gohei's streamers
+// flying either side of it.
+function grandblessing() {
+  const out = [...tile('shrine', 'active'), ...aura(8, 8, 7.2, '#fff3dc', 1.25)];
+  out.push(S(rect(4.6, 0.6, 6.8, 14.8), '#ffe9b8'), S(rect(6, 0.6, 4, 14.8), '#fff8e4'), S(rect(7.2, 0.6, 1.6, 14.8), W));
+  out.push(...shideIcon(3, 3.4, 3, 1.5, 1.6, 0.3), ...shideIcon(13, 3.4, 3, 1.5, 1.6, -0.3));
+  out.push(...spark(2.6, 11.6, 1, '#ffd36a'), ...spark(13.4, 12, 1), ...spark(8, 13.6, 1.2, '#ffd36a'));
+  return out;
+}
+// Purification (the Shrine Maiden): a circle of sacred light on the ground, a gohei standing in it.
+function purification() {
+  const out = [...tile('shrine', 'active')];
+  out.push(...solid(oval(8, 11.6, 6.6, 2.6, 0, 28), '#ffe9b8', { d: 0.3, ink: '#b8862a' }), S(oval(8, 11.6, 4.6, 1.6, 0, 24), '#fff8e4'));
+  out.push(S(tube([[8, 11.4], [8, 2.4]], 0.6, 0.6), '#a07a4a'), S(rect(7.4, 2, 1.2, 0.8), '#ffd36a'));
+  out.push(...shideIcon(9, 3, 3, 1.4, 1.5, 0.25), ...shideIcon(7, 3, 3, 1.4, 1.5, -0.25));
+  out.push(...spark(3.4, 7, 0.9, '#ffd36a'), ...spark(12.8, 6.4, 0.9));
+  return out;
+}
+// Resurrection Dance (the Shrine Maiden): a pillar of gold light lifting a soul up out of the
+// ground, a ring at its foot.
+function resurrection() {
+  const out = [...tile('shrine', 'active'), ...aura(8, 7, 6.6, '#fff3dc', 1.1)];
+  out.push(S(rect(5.6, 1, 4.8, 12.6), '#ffe9b8'), S(rect(6.8, 1, 2.4, 12.6), W));
+  out.push(...solid(oval(8, 13.4, 5.4, 1.8, 0, 24), '#ffd36a', { d: 0.3, ink: '#8a5a10' }));
+  out.push(...solid(oval(8, 6, 1.8, 2.2, 0, 16), '#fff8e4', { d: 0.3, ink: '#c8a24a' }), S(tube([[8, 8], [7.4, 10.4], [8.4, 12]], 0.9, 0.3), '#fff8e4'));
+  out.push(...spark(3.2, 4, 1, '#ffd36a'), ...spark(12.8, 3.4, 0.9));
+  return out;
+}
+// Thousand Torii (the Shrine Maiden's finisher): torii gates of light one behind another, down a
+// corridor into the distance.
+function thousandtorii() {
+  const out = [...tile('shrine', 'active'), ...aura(8, 9, 7, '#fff3dc', 1.2)];
+  out.push(...toriiIcon(11.4, 9.4, 4.6, 5.4), ...toriiIcon(9.2, 11.6, 6.6, 7.6), ...toriiIcon(6.4, 15, 9.6, 11));
+  out.push(...spark(13.6, 2.4, 1, '#ffd36a'), ...spark(2.4, 4, 0.9));
+  return out;
+}
 // Onmyodo (the Onmyoji): a paper talisman with a red five-pointed star seal on it.
 function onmyodo() {
   const out = [...tile('indigo', 'passive'), ...aura(8, 8, 6.4, '#e6dcff')];
@@ -1430,7 +1475,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, onmyodo,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo,
   gmsmite, gmhaste, gmblessing,
 };
 

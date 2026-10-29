@@ -32,9 +32,11 @@ import { dollHit, hasSpirit } from './melee.js';
 import { jobChain } from '../data/jobs.js';
 import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
+import { toriiCut } from './shrine.js';
 
-// Where she stands when there's nothing to fight: a step in front of the Maiden (px).
-const HOME = 34;
+// Where she stands when there's nothing to fight: a step in front of the Maiden (px; far enough
+// that her big frame doesn't hide the Maiden's dance).
+const HOME = 58;
 // How far from the Maiden she'll go after a fight (across, and up or down): she never strays.
 const LEASH = { x: 300, y: 150 };
 // How fast she goes (% of a walk): she's big and in no hurry, so she only ever walks, slow and
@@ -198,9 +200,42 @@ export function heavyRate(M, u) {
   return u > M.hits[M.hits.length - 1] ? H.recover : 1;
 }
 
+// Thousand Torii (world/shrine.js): the Maiden's finisher sends her down the corridor of gates.
+// At each gate's moment she vanishes in fox fire and steps out of it just before the gate, facing
+// down the corridor, and cuts down everything there; after the last, she goes back to the Maiden
+// the same way. False if she isn't there to go.
+export function toriiRun(world, T) {
+  const k = guardianOf(world);
+  if (!k) return false;
+  const last = T.gates[T.gates.length - 1].at;
+  k.brain.path = null;
+  k.act = { kind: 'torii', t0: world.now, dur: last - world.now + 0.7, torii: T, i: 0, cutAt: world.now, done: 0 };
+  return true;
+}
+function toriiStep(world, k, a) {
+  const T = a.torii;
+  while (a.i < T.gates.length && world.now >= T.gates[a.i].at + 0.05) {
+    const g = T.gates[a.i++];
+    world.fx.push({ kind: 'kitsuneport', x: k.x, y: k.y, t: 0, dur: 0.6, out: true });
+    const x = g.x - T.dir * 26;
+    Object.assign(k.body, { x, y: g.y, vx: 0, vy: 0, rope: null, onGround: true, facing: T.dir });
+    sync(k);
+    world.fx.push({ kind: 'kitsuneport', x, y: g.y, t: 0, dur: 0.6, out: false });
+    world.fx.push({ kind: 'arc', x: x + T.dir * 12, y: g.y - 28, dir: T.dir, r: 62, start: -20, sweep: 160, thick: 10, big: true, color: '#ff8a7a', t: 0, dur: 0.3 });
+    a.cutAt = world.now;
+    toriiCut(world, T, g);
+  }
+  if (a.i >= T.gates.length && world.now - a.cutAt > 0.55) {
+    k.act = null;
+    k.next = world.now + 0.4;
+    vanish(world, k);
+  }
+}
+
 // Plays out what she's in the middle of, rooted where she stands.
 function act(world, k, dt) {
   const a = k.act;
+  if (a.kind === 'torii') return toriiStep(world, k, a);
   const M = KMOVES[a.kind] ?? BLOWS[a.kind];
   if (M) {
     a.clock ??= 0;

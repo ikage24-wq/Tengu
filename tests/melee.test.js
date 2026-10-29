@@ -2568,8 +2568,9 @@ test("a Shrine Maiden's doll has grown up into her guardian: no doll, and Heaven
   w.god = false;
   assert.ok(w.guardian, 'her guardian is there');
   assert.equal(w.doll, null, 'and no doll beside her');
-  w.spirit = 100;
-  w.spiritAt = w.now;
+  // (Her gauge is Grace now: the lantern spends it.)
+  w.grace = 100;
+  w.graceAt = w.now;
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-240, 150, 300][i] }));
   assert.ok(cast(w, 'heavenslantern').ok);
   const rays = new Set();
@@ -2583,6 +2584,86 @@ test("a Shrine Maiden's doll has grown up into her guardian: no doll, and Heaven
   });
   assert.ok(rays.size >= 8 && blaze, `the lantern shines and blazes without a doll (${rays.size} rays)`);
   assert.equal(w.doll, null);
+});
+
+// A Shrine Maiden with her own skills learned.
+function shrineFull() {
+  const w = shrineMaiden();
+  Object.assign(w.char.skills, { grandblessing: 15, purification: 15, resurrection: 8, thousandtorii: 8, shrinemastery: 10 });
+  return w;
+}
+const settleCast = (w, s = 3) => run(w, s);
+
+test('a Shrine Maiden builds Grace (not Spirit) from her heals and wards, and full, her heals ward', () => {
+  const w = shrineFull();
+  w.god = false;
+  w.char.hp = Math.round(w.stats.maxHp * 0.4);
+  assert.ok(cast(w, 'grandblessing').ok);
+  settleCast(w, 2);
+  assert.ok((w.grace ?? 0) > 5, `Grand Blessing builds Grace (${w.grace})`);
+  assert.equal(w.spirit ?? 0, 0, 'and no Spirit');
+  assert.ok(w.char.hp > w.stats.maxHp * 0.6, 'it heals her a lot');
+  assert.ok(w.char.buffs.grandblessing, 'and leaves its regen on her');
+  // Full Grace: a heal also wards her.
+  delete w.char.buffs.spiritward;
+  w.grace = 100;
+  w.graceAt = w.now;
+  w.char.hp = Math.round(w.stats.maxHp * 0.5);
+  assert.ok(cast(w, 'grandblessing').ok);
+  settleCast(w, 2);
+  assert.ok(w.char.buffs.spiritward?.shield > 0, 'Divine Grace wards whoever it heals');
+});
+
+test('Purification opens a circle of light that burns the monsters standing in it again and again', () => {
+  const w = shrineFull();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [40, 80, 400][i] }));
+  const hp0 = w.mobs.map((m) => m.hp);
+  assert.ok(cast(w, 'purification').ok);
+  const hits = w.mobs.map(() => 0);
+  let last = hp0.slice();
+  for (let i = 0; i < 60 * 5; i++) {
+    updateWorld(w, DT, idle);
+    w.mobs.forEach((m, j) => { if (m.hp < last[j]) hits[j]++; last[j] = m.hp; });
+  }
+  assert.ok(w.fx.some((f) => f.kind === 'purifycircle') || hits[0] > 0, 'the circle is there');
+  assert.ok(hits[0] >= 4 && hits[1] >= 4, `the monsters in it burn again and again (${hits})`);
+  assert.equal(hits[2], 0, 'and not the one outside it');
+});
+
+test("Resurrection Dance's Last Rite keeps her standing through a blow that would knock her out, once", () => {
+  const w = shrineFull();
+  w.god = false;
+  assert.ok(cast(w, 'resurrection').ok);
+  settleCast(w, 3);
+  assert.ok(w.char.buffs.resurrection, 'Last Rite is on her');
+  w.invuln = 0;
+  hurtPlayer(w, 1e7, w.body.x + 30);
+  assert.equal(w.dead, false, 'she is still standing');
+  assert.ok(w.char.hp > 0);
+  assert.ok(!w.char.buffs.resurrection, 'and it is spent');
+});
+
+test('Thousand Torii: a corridor of gates rises, the guardian cuts at each one, and the party is warded', () => {
+  const w = shrineFull();
+  w.god = false;
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [120, 260, 380][i] }));
+  const hp0 = w.mobs.map((m) => m.hp);
+  assert.equal(cast(w, 'thousandtorii').reason, 'gauge:grace', 'needs full Grace');
+  w.grace = 100;
+  w.graceAt = w.now;
+  assert.ok(cast(w, 'thousandtorii').ok);
+  assert.equal(w.grace, 0, 'spends it');
+  const seen = new Set();
+  let gates = 0;
+  for (let i = 0; i < 60 * 5; i++) {
+    updateWorld(w, DT, idle);
+    if (w.guardian.act) seen.add(w.guardian.act.kind);
+    gates = Math.max(gates, w.torii?.done ?? 0);
+  }
+  assert.ok(gates >= 5, `the gates rise (${gates})`);
+  assert.ok(seen.has('torii'), 'the guardian goes down the corridor');
+  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'every monster down the corridor is cut');
+  assert.ok(w.char.buffs.thousandtorii?.shield > 0, 'and the last gate wards the party');
 });
 
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {

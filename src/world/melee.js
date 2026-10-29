@@ -33,9 +33,10 @@ import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
+import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickGuardian } from './kitsune.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
-import { provoke, healMembers } from './dungeon.js';
+import { provoke, healMembers, groupOf } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -717,12 +718,41 @@ export const SPIRIT_HEAL = 0.03;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
 export function addSpirit(world, n, kind = 'harm') {
   if (!hasSpirit(world.char) || n <= 0) return;
+  // A Shrine Maiden builds Grace instead (her heals and wards count most).
+  if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.45));
   const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
   world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (turn ? 1.5 : 1));
   world.spiritAt = world.now;
   world.spiritKind = kind;
 }
 export const kamiFavour = (world) => hasSpirit(world.char) && (world.spirit ?? 0) >= SPIRIT_MAX;
+// Grace: the Shrine Maiden's gauge, in place of Spirit. Her heals and wards landing build it most,
+// more the more allies they reach (her spells that land, a little); it fades once the fighting
+// stops. Full (DIVINE GRACE), every heal she gives also wards whoever it mends (GRACE_WARD of their
+// max HP, a fresh Spirit Ward on her and the party, at most every GRACE_WARD_EVERY s), and her
+// finisher, Thousand Torii, is ready.
+export const GRACE_MAX = 100;
+const GRACE_HOLD = 6;
+const GRACE_DRAIN = 8;
+export const GRACE_WARD = 0.1;
+const GRACE_WARD_EVERY = 1.5;
+export const hasGrace = (char) => jobChain(char.job).includes('shrinemaiden');
+export function addGrace(world, n) {
+  if (!hasGrace(world.char) || n <= 0) return;
+  world.grace = Math.min(GRACE_MAX, (world.grace ?? 0) + n);
+  world.graceAt = world.now;
+}
+export const divineGrace = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
+// How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Grace.
+const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
+// Divine Grace: a heal she gives wards them too.
+function graceWard(world) {
+  if (!divineGrace(world) || world.now < (world.graceWardAt ?? 0)) return;
+  const ward = world.char.buffs?.spiritward;
+  if (ward && ward.until > world.now && ward.shield >= world.stats.maxHp * GRACE_WARD) return;
+  world.graceWardAt = world.now + GRACE_WARD_EVERY;
+  applyBuff(world, 'spiritward', { duration: 8, buff: { barrier: GRACE_WARD }, range: { w: 440, h: 160, around: true } });
+}
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
 // Paladin's Judgment); a Spirit Mage's healing builds her Spirit (not a finisher's: `gauge` false).
 export function healAround(world, x, y, pct, r, gauge = true) {
@@ -737,15 +767,16 @@ export function healAround(world, x, y, pct, r, gauge = true) {
     world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
-  if (gauge) addSpirit(world, 40 * pct, 'mend');
+  if (gauge) addSpirit(world, 40 * pct * (1 + 0.5 * alliesNear(world, x, r)), 'mend');
+  graceWard(world);
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'foxstar', 'foxmoon']);
-// A job's own gauge: which one the character has ('spirit', 'ki', 'tails', 'valor', 'momentum',
+// A job's own gauge: which one the character has ('grace', 'spirit', 'ki', 'tails', 'valor', 'momentum',
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasSpirit(char) ? 'spirit' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
+  return hasGrace(char) ? 'grace' : hasSpirit(char) ? 'spirit' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -976,6 +1007,7 @@ export function tickMelee(world, dt) {
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.spirit > 0 && world.now - (world.spiritAt ?? 0) > SPIRIT_HOLD) world.spirit = Math.max(0, world.spirit - SPIRIT_DRAIN * dt);
+  if (world.grace > 0 && world.now - (world.graceAt ?? 0) > GRACE_HOLD) world.grace = Math.max(0, world.grace - GRACE_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
@@ -984,6 +1016,7 @@ export function tickMelee(world, dt) {
   tickStorm(world);
   tickPets(world, dt);
   tickDoll(world, dt);
+  tickShrine(world);
   tickGuardian(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
@@ -1065,6 +1098,10 @@ function land(world, s) {
   // (`grant`), Heaven's Lantern raised (`lantern`, world/spiritdoll.js).
   if (s.grant) grantSpell(world, s.grant);
   if (s.lantern) raiseLantern(world, s.key);
+  // The Shrine Maiden's lasting spells (world/shrine.js).
+  if (s.purify) purify(world, s);
+  if (s.revive) resurrect(world, s);
+  if (s.torii) thousandTorii(world, s);
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
@@ -1384,6 +1421,8 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
 function grantSpell(world, g) {
   if (world.dead) return;
   applyBuff(world, g.id, { duration: g.duration, buff: g.buff, range: g.range });
+  // A ward (or a blessing) laid on the party builds a Shrine Maiden's Grace, more for each ally.
+  addGrace(world, 7 * (1 + alliesNear(world, world.body.x, (g.range?.w ?? 440) / 2)));
 }
 
 // A hit of the Spirit Doll's (world/spiritdoll.js): a spell of the Spirit Mage's own magic attack,

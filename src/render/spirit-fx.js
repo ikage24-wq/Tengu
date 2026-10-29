@@ -48,6 +48,44 @@ function crescent(ctx, x, y, dir, alpha, s) {
   ctx.restore();
 }
 
+// A torii gate of light, `h` tall, standing at (x, y) and risen `rise` (0-1) out of the ground:
+// two vermilion pillars, the black-capped lintel curving up at the ends, a crossbeam, all glowing
+// warm gold; see-through, so what's under it (the guardian, the monsters) still shows.
+function toriiGate(ctx, x, y, h, rise, alpha) {
+  if (alpha <= 0 || rise <= 0) return;
+  const w = h * 0.66;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.globalAlpha *= alpha * 0.8;
+  // Rising out of the ground: drawn only above the ground line, pushed up as it rises.
+  ctx.beginPath();
+  ctx.rect(-w, -h * 1.3, w * 2, h * 1.3);
+  ctx.clip();
+  ctx.translate(0, h * (1 - rise));
+  ctx.shadowColor = 'rgba(255, 214, 120, 0.9)';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#e8453a';
+  ctx.fillRect(-w * 0.36, -h * 0.82, w * 0.1, h * 0.82);
+  ctx.fillRect(w * 0.26, -h * 0.82, w * 0.1, h * 0.82);
+  ctx.fillRect(-w * 0.44, -h * 0.66, w * 0.88, h * 0.07);
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.56, -h * 0.98);
+  ctx.quadraticCurveTo(0, -h * 0.84, w * 0.56, -h * 0.98);
+  ctx.lineTo(w * 0.5, -h * 0.84);
+  ctx.quadraticCurveTo(0, -h * 0.76, -w * 0.5, -h * 0.84);
+  ctx.closePath();
+  ctx.fillStyle = '#2a1e22';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#e8453a';
+  ctx.fillRect(-w * 0.48, -h * 0.84, w * 0.96, h * 0.06);
+  // The light in the gate.
+  ctx.globalAlpha *= 0.22;
+  ctx.fillStyle = '#fff3c8';
+  ctx.fillRect(-w * 0.26, -h * 0.6, w * 0.52, h * 0.6);
+  ctx.restore();
+}
+
 export function drawSpiritFx(ctx, f, x, y, p) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
@@ -196,6 +234,76 @@ export function drawSpiritFx(ctx, f, x, y, p) {
     case 'kitsunejab': {
       // One of Hundred Thrusts' jabs: a quick straight streak of light along the blade's line.
       fxSprite(ctx, 'celstreak', x, y, { p, flip, scale: 0.42 });
+      return true;
+    }
+    case 'grandblessing': {
+      // Grand Blessing: a great pillar of warm light on her, a wide gold ring racing out over the
+      // whole party, and a glow lingering.
+      fxSprite(ctx, 'celpillarholy', x, y + 4, { p: Math.min(1, p * 1.15), scale: 1.2 });
+      fxSprite(ctx, 'celblessing', x, y + 2, { p, scale: 1.35 });
+      groundRing(ctx, 'celringholy', x, y, Math.min(1, p * 1.3), 300);
+      groundRing(ctx, 'celringspirit', x, y, Math.min(1, p * 1.8), 160);
+      return true;
+    }
+    case 'purifycircle': {
+      // Purification: a circle of sacred light on the ground where she struck it, its ring of gold
+      // turning slowly, a magic circle inside it, and motes of light rising from it; it fades as it
+      // runs out.
+      const Z = f.zone;
+      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 2.5);
+      if (fade <= 0) return true;
+      fxSprite(ctx, 'celcircle', x, y, { frame: 0, scale: f.r / 46, sy: 0.3, rot: 0, alpha: 0.65 * fade });
+      groundRing(ctx, 'celringholy', x, y, 0.62, f.r, { alpha: 0.42 * fade });
+      groundRing(ctx, 'celringholy', x, y, 0.3 + 0.5 * ((f.t * 0.8) % 1), f.r * 0.7, { alpha: 0.22 * fade });
+      for (let i = 0; i < 4; i++) fxSprite(ctx, 'celmotes', x + (i - 1.5) * f.r * 0.45, y, { t: f.t + i * 0.4, scale: 0.55, alpha: 0.7 * fade });
+      if (Z && Z.until <= f.t) return true;
+      return true;
+    }
+    case 'purifyburn': {
+      // A monster burning in the sacred light.
+      fxSprite(ctx, 'celholyhit', x, y - (f.h ?? 24) * 0.5, { p, scale: 0.42 });
+      return true;
+    }
+    case 'reviveflash': {
+      // Someone raised (or saved by Last Rite): a pillar of gold light on them and a flash.
+      fxSprite(ctx, 'celpillarholy', x, y + 4, { p, scale: 0.8 });
+      fxSprite(ctx, 'celholyhit', x, y - 26, { p: Math.min(1, p * 1.5), scale: 0.7 });
+      return true;
+    }
+    case 'resurrection': {
+      // Resurrection Dance: a ring of gold light going out over everyone nearby, and light falling
+      // on her.
+      groundRing(ctx, 'celringholy', x, y, Math.min(1, p * 1.2), 320);
+      fxSprite(ctx, 'celblessing', x, y + 2, { p, scale: 1.1 });
+      return true;
+    }
+    case 'thousandtorii': {
+      // Thousand Torii: the corridor of gates, each rising out of the ground at its moment with a
+      // flash and a ring, a band of light along the ground joining them, all fading together.
+      const T = f.torii;
+      if (!T) return true;
+      const ox = x - f.x;
+      const oy = y - f.y;
+      const end = T.n * T.gap + T.hold;
+      const fade = Math.min(1, Math.max(0, end + 0.6 - f.t) / 0.6);
+      const up = T.gates.filter((g) => f.t >= g.at - T.t0);
+      if (up.length > 1) {
+        const a = up[0];
+        const b = up[up.length - 1];
+        ctx.save();
+        ctx.globalAlpha *= 0.45 * fade;
+        ctx.fillStyle = '#fff1c0';
+        ctx.fillRect(Math.min(a.x, b.x) + ox - 20, Math.min(a.y, b.y) + oy - 3, Math.abs(b.x - a.x) + 40, 4);
+        ctx.restore();
+      }
+      for (const g of up) {
+        const age = f.t - (g.at - T.t0);
+        toriiGate(ctx, g.x + ox, g.y + oy, 84, Math.min(1, age / 0.2), fade);
+        if (age < 0.5) {
+          groundRing(ctx, 'celringholy', g.x + ox, g.y + oy, age / 0.5, 70);
+          fxSprite(ctx, 'celholyhit', g.x + ox, g.y + oy - 40, { p: age / 0.5, scale: 0.6 });
+        }
+      }
       return true;
     }
     case 'kitsuneblock': {

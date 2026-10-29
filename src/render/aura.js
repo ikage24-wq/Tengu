@@ -261,6 +261,19 @@ function spiritAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembspirit', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
+// Grace: a gold ring of shrine light at the Shrine Maiden's feet, warm light rising round her as
+// it builds, and full (Divine Grace), a torii emblem of light over her head and gold rings racing
+// out.
+function graceAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'celringholy', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celringholy', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    return;
+  }
+  if (k > 0.4) fxSprite(ctx, 'celholyglow', x, y, { t: t * (0.7 + 0.5 * k), scale: s * (0.45 + 0.25 * k), alpha: Math.min(0.85, (k - 0.4) * 2.2) });
+  if (k >= 1) fxSprite(ctx, 'celembholy', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+}
+
 // Ki: a ring of brushed ink at the shinobi's feet, ink rising round her in wisps as it builds,
 // and full (Shadow Clones), the red seal over her head and rings of ink racing out.
 function kiAura(ctx, x, y, t, s, k, layer) {
@@ -291,7 +304,7 @@ function tailsAura(ctx, x, y, t, s, k, layer, dir = 1) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { spirit: spiritAura, ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
+const COMBAT = { grace: graceAura, spirit: spiritAura, ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

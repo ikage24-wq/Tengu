@@ -11,6 +11,7 @@
 
 import { faithGuard, pathSchool } from './melee.js';
 import { rodGuard } from './storm.js';
+import { lastRite } from './shrine.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
@@ -468,7 +469,8 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   world.juice.push({ type: 'hurt', x: body.x, y: body.y - body.h / 2 });
   world.channel = null;
   if (knock) knockBack(body, fromX);
-  if (char.hp <= 0) {
+  // (A Shrine Maiden's Last Rite keeps her standing, once.)
+  if (char.hp <= 0 && !lastRite(world)) {
     world.dead = true;
     world.events.push({ type: 'death' });
     world.log('You fainted! Your group can get you back up after the fight.', '#ff6b8a');

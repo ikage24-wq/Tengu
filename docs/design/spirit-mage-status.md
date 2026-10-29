@@ -67,12 +67,26 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
   - Rules the player set: no leaps; no range attacks; never reuse the creator's hairstyles (or
     other parts) for her: make new ones.
 
+- **The Shrine Maiden's own kit is built** (the player's picks, 2026-10-29):
+  - Her doll has grown up into the guardian: a Shrine Maiden has no doll (spiritdoll.js).
+  - She dances with a **gohei** (a wand with paper streamers) in place of the fan, with her bell
+    staff (props.js paintGohei; hero.js swaps it in for a Shrine Maiden).
+  - **Grace** replaces Spirit (world/melee.js): heals and wards build it, more for each ally they
+    reach; full (DIVINE GRACE), every heal she gives also wards. HUD bar with a torii icon, a gold
+    aura.
+  - Skills (data/skills.js, world/shrine.js, dance figures in render/moves.js): **Grand Blessing**
+    (a great pillar of light, a big heal and regen on the party), **Purification** (a circle of
+    sacred light: monsters in it burn, allies are mended), **Resurrection Dance** (fallen allies
+    get up; Last Rite keeps her standing through a lethal blow once), Shrine Mastery, and the
+    finisher **Thousand Torii** (a corridor of torii gates rises; the guardian teleports gate to
+    gate cutting the monsters there; the party is warded).
+  - The guardian now stands a little further in front (HOME 58) so she doesn't hide the Maiden.
+
 ## Next
 
 1. Demo videos of every skill for the player (GIFs so far), and a look in a real dungeon run.
-2. The rest of the Shrine Maiden (docs/design/spirit-mage-paths.md): her dance, the Grace gauge,
-   her skills and the Thousand Torii finisher. (Her doll has grown up into the guardian: a Shrine
-   Maiden has no doll.)
+2. The Shrine Maiden in a real dungeon run (her bots and the healer seat still cast the Spirit
+   Mage's Blessing and Ward: give them Grand Blessing and Purification too).
 3. The Onmyoji: the yokai troupe, one yokai at a time (each built on the player character with
    its own rig and look), the imp doll, her skills and Hyakki Yagyo.
 3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one
