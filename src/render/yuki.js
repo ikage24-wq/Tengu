@@ -42,6 +42,7 @@ const seg = (t, a, b) => clamp01((t - a) / (b - a));
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerp2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
+const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
 const TAU = Math.PI * 2;
 
 // ---------- Her poses ----------
@@ -127,6 +128,8 @@ function snowballing(u) {
   const toss = soft(seg(u, 0.32, 0.46));
   const rest = soft(seg(u, 0.66, 1));
   return pose({
+    // (The snowball gathering in her palm as she scoops, until it leaves her hand at 0.42.)
+    prop: { kind: 'snowball', r: u < 0.42 ? soft(seg(u, 0.08, 0.3)) : 0 },
     lean: 0.02 + 0.1 * scoop * (1 - toss) + 0.04 * toss * (1 - rest), lift: -1 * scoop * (1 - toss), hand: lerp2(lerp2(FOLD_F, [-2, 3], scoop), [8, -7.4], toss * (1 - rest)),
     hy: 0.4 + 0.6 * scoop * (1 - toss), tilt: 3 + 5 * scoop * (1 - toss) - 3 * toss * (1 - rest), cloth: 1.5 * scoop - 3 * toss * (1 - rest), eyes: 'half', brows: 'calm',
   });
@@ -167,13 +170,27 @@ const MOVES = { combo: comboFreeze, breath: breathing, ask: asking, spikes: spik
 
 // Her idle moods: how long each lasts and the pose `u` through it.
 export const YUKI_IDLES = {
-  catch: [3.2, (u) => {
-    const k = soft(seg(u, 0, 0.25)) * (1 - soft(seg(u, 0.8, 1)));
-    return pose({ hand: lerp2(FOLD_F, [4, -6], k), hy: 0.4 + 0.6 * k, tilt: 3 + 4 * k, eyes: k > 0.5 ? 'half' : null, brows: 'calm', glance: 0 });
+  // Catching a snowflake: her palm held out, a flake drifting down into it (she watches it come),
+  // settling there, and melting away.
+  catch: [3.6, (u) => {
+    const k = soft(seg(u, 0, 0.2)) * (1 - soft(seg(u, 0.84, 1)));
+    const fall = seg(u, 0.16, 0.5);
+    return pose({
+      hand: lerp2(FOLD_F, [4, -6], k), hy: 0.4 + 0.6 * k, tilt: 3 + 4 * k - 3 * (1 - fall) * k, eyes: k > 0.5 && fall >= 1 ? 'half' : null, brows: 'calm', glance: 0,
+      prop: { kind: 'flake', fall, melt: seg(u, 0.56, 0.84), k },
+    });
   }],
-  hands: [3, (u) => {
-    const k = soft(seg(u, 0, 0.25)) * (1 - soft(seg(u, 0.78, 1)));
-    return pose({ hand: lerp2(FOLD_F, [0.6, -10.4], k), free: lerp2(FOLD_B, [2.6, -10], k), mouth: k > 0.5 && Math.sin(u * 18) > 0 ? 'yukibreath' : 'yukilips', eyes: k > 0.5 ? 'blink' : null, brows: 'calm' });
+  // Breathing on her cold hands: cupped at her lips, two long slow breaths into them (her lips
+  // parting with each, a mist going into her hands), eyes closed.
+  hands: [3.4, (u) => {
+    const k = soft(seg(u, 0, 0.22)) * (1 - soft(seg(u, 0.8, 1)));
+    const b1 = bump(u, 0.24, 0.48);
+    const b2 = bump(u, 0.52, 0.76);
+    const out = Math.max(b1, b2) * k;
+    return pose({
+      hand: lerp2(FOLD_F, [0.6, -10.4], k), free: lerp2(FOLD_B, [2.6, -10], k), mouth: out > 0.3 ? 'yukibreath' : 'yukilips', eyes: k > 0.5 ? 'blink' : null, brows: 'calm', hy: 0.4 + 0.3 * out,
+      prop: { kind: 'breath', t: [seg(u, 0.24, 0.5), seg(u, 0.52, 0.78)] },
+    });
   }],
   sorrow: [3.4, (u) => {
     const k = soft(seg(u, 0, 0.25)) * (1 - soft(seg(u, 0.78, 1)));
@@ -308,6 +325,9 @@ export function drawYukiCompanion(ctx, world, k, cam, time, layer = 'back') {
   };
   const look = { ...YUKI_LOOK, mouth: P.mouth, lid: q(P.lid) };
   const opts = { scale: YUKI_SCALE, facing: dir, hold: 'front', lean: { tilt: P.lean + 0.01 * sway, lunge: 0, lift: hover + P.lift } };
+  // Her little things in her hand or at her lips: a snowflake caught, her breath, a snowball.
+  const lips = posedMouth(Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, { scale: YUKI_SCALE, facing: dir });
+  opts.over = (c, hand) => paintYukiProp(c, P.prop, hand, lips, dir, time);
   drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, opts);
   // Where her lips are (in the world), for her breath and her question to come from.
   const [mx, my] = posedMouth(Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, opts);
@@ -318,4 +338,50 @@ export function drawYukiCompanion(ctx, world, k, cam, time, layer = 'back') {
 function yukiBlink(t) {
   const b = (t * 0.2) % 1;
   return b < 0.016 ? 'blink' : b < 0.034 ? 'half' : 'open';
+}
+
+// Her little things (`p` from her pose), drawn at her hand or her lips in the body's frame.
+function paintYukiProp(c, p, hand, lips, dir, time) {
+  if (!p) return;
+  const K = YUKI_SCALE;
+  if (p.kind === 'flake' && p.k > 0.2 && p.melt < 1) {
+    // Drifting down from above into her palm, rocking side to side; then melting there.
+    const f = 1 - (1 - p.fall) ** 2;
+    const fx = hand[0] + dir * 1 * K + Math.sin(p.fall * 9) * 4 * (1 - f) * K;
+    const fy = hand[1] - 2 * K - (1 - f) * 34 * K;
+    fxSprite(c, 'celsnowflake', fx, fy, { t: time, scale: 0.13 * (1 - 0.7 * p.melt), alpha: 1 - p.melt });
+    return;
+  }
+  if (p.kind === 'breath') {
+    // Two long breaths into her cupped hands: soft mist leaving her lips and gathering there.
+    for (const t of p.t) {
+      if (t <= 0 || t >= 1) continue;
+      for (let i = 0; i < 3; i++) {
+        const v = t * 1.3 - i * 0.15;
+        if (v <= 0 || v >= 1) continue;
+        c.save();
+        c.globalAlpha = 0.85 * Math.sin(v * Math.PI);
+        c.fillStyle = '#e4f0ff';
+        c.beginPath();
+        c.arc(lips[0] + (hand[0] - lips[0]) * v + dir * 1.5 * K, lips[1] + (hand[1] - lips[1]) * v + 1 * K, (0.8 + 1.6 * v) * K, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+    return;
+  }
+  if (p.kind === 'snowball' && p.r > 0.05) {
+    // A snowball packed in her palm, growing as she scoops.
+    const r = 2.6 * p.r * K;
+    c.save();
+    c.fillStyle = '#b8d0ee';
+    c.beginPath();
+    c.arc(hand[0], hand[1] - r * 0.6, r, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.arc(hand[0] - r * 0.2, hand[1] - r * 0.8, r * 0.8, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
 }

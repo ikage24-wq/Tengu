@@ -681,10 +681,10 @@ export function drawTenguCompanion(ctx, world, k, cam, time, layer = 'back') {
   const hip = posedPoint(X, Y, rig, opts, [12.6, 33.6]);
   const drawn = P.sword >= 0.5;
   paintSaya(ctx, hip, dir < 0, TENGU_SCALE, !drawn);
-  // The fan goes to his other hand while the sword's out (behind him, in his far hand).
-  const under = (c, hand, flip, other) => {
-    if (drawn) paintFan(c, other, flip, P.fan * 0.6 - 0.2, TENGU_SCALE, P.twirl);
-  };
+  // While the sword's out, the fan is tucked shut into his obi (his hand puts it there and takes
+  // it back on the way to and from the hilt), never jumping between his hands.
+  const obi = posedPoint(X, Y, rig, opts, [17.4, 32.4]);
+  const under = null;
   const over = (c, hand, flip) => {
     if (drawn) {
       // A fast blade leaves a pale arc behind it.
@@ -705,6 +705,7 @@ export function drawTenguCompanion(ctx, world, k, cam, time, layer = 'back') {
     }
   };
   drawPosed(ctx, look, X, Y, rig, { ...opts, under, over });
+  if (drawn) paintFan(ctx, obi, dir < 0, 2.7, TENGU_SCALE * 0.8, 1.25);
 }
 // Unhurried blinks.
 function tenguBlink(t) {

@@ -32,13 +32,16 @@ const MID = 28;
 //   hand, free                where her right hand (the fan) and left hand reach, from rest
 //   fan, open                 the fan's direction from her hand (radians, 0 = ahead, -PI/2 = up)
 //                             and how far it's opened (0 closed, 1 wide), or null to hide it
+//   fanK, straw, bell         how far the fan is out of her sleeve (it folds and shrinks away into
+//                             it), and how far her spitball straw and her gold bell are drawn out
+//                             (0-1: each slides out of her sleeve, so nothing pops into her hand)
 //   legF, legB                each foot's [ahead, up (negative), tilt]
 //   spin                      the whole figure turned about her middle (radians: loops, hanging
 //                             upside down); `turned` faces her the other way (a twirl's half turn)
 //   mouth, eyes, brows, extras, blush, puff   the face
 //   cloth, kick               the kimono's sway and the hair thrown up
 const REST = {
-  tx: 0, by: 0, hx: 0, hy: 0, tilt: 0, hand: [0, 0], free: [0, 0], fan: 0.9, open: 0, legF: [0.8, -1, 12], legB: [-0.6, -0.2, -6],
+  tx: 0, by: 0, hx: 0, hy: 0, tilt: 0, hand: [0, 0], free: [0, 0], fan: 0.9, open: 0, fanK: 1, straw: 0, bell: 0, legF: [0.8, -1, 12], legB: [-0.6, -0.2, -6],
   spin: 0, turned: false, mouth: 'cat', eyes: null, brows: [[0.3, 0], [0.3, 0]], extras: [], blush: 1.2, puff: false, cloth: 0, kick: 0,
 };
 const pose = (o) => ({ ...REST, ...o });
@@ -166,7 +169,7 @@ function spitting(p, t) {
   const cough = seg(p, 0.72, 1);
   const hack = cough > 0 && cough < 0.75 ? Math.abs(Math.sin(t * 22)) : 0;
   return pose({
-    hand: [lerp(1.2, 2, up), lerp(-4, -8.4, up) + 4 * cough], free: [lerp(0, 3.4, up) + 1.4 * cough, lerp(0, -8, up) - 1.6 * cough], fan: up > 0.2 ? null : -1.9, straw: up > 0.2,
+    hand: [lerp(1.2, 2, up), lerp(-4, -8.4, up) + 4 * cough], free: [lerp(0, 3.4, up) + 1.4 * cough, lerp(0, -8, up) - 1.6 * cough], fan: -1.9, open: 0, fanK: 1 - up, straw: up,
     tilt: -9 * shot - 4 * gulp + cough * (14 + 6 * hack), hx: -0.6 * shot + 0.4 * cough, hy: 0.5 * cough * hack, by: 0.6 * hack,
     puff: up > 0.3 && shot < 0.4, mouth: shot > 0.4 ? 'o' : cough > 0 ? 'wavy' : 'cat', eyes: shot > 0.4 ? 'half' : cough > 0 ? 'blink' : null,
     brows: cough > 0 ? [[0.8, -0.3], [0.8, -0.3]] : [[-0.1, 0.5], [-0.1, 0.5]], blush: 1.4 + 0.6 * gulp, kick: 0.8 * shot, extras: cough > 0.2 && cough < 0.8 ? ['steam0'] : [], ...kickLegs(t * 2, 0.6 + cough),
@@ -229,7 +232,7 @@ function humming(u, t) {
 function hopping(u) {
   const k = Math.sin(u * Math.PI);
   return pose({
-    hand: [1.4, -11], free: [2, -10], fan: null, bell: true, tilt: -12 * k, by: -1 * k, kick: -1.2 * k, cloth: 2,
+    hand: [1.4, -11], free: [2, -10], fan: -1, open: 0, fanK: 0, bell: 1, tilt: -12 * k, by: -1 * k, kick: -1.2 * k, cloth: 2,
     legF: [2.4, -4.6, 70], legB: [1.2, -4, 60], mouth: 'open', eyes: 'happy', blush: 1.5,
   });
 }
@@ -243,7 +246,7 @@ function riding(since, beat, t) {
   // Raised slowly after a bonk, held high, then whipped down so it lands on the next.
   const up = ease(seg(u, 0.18, 0.7)) * (1 - seg(u, 0.86, 1) ** 2);
   return pose({
-    hand: [lerp(1.4, 3.6, hit), lerp(-1.5, -11, up)], free: [2 + Math.sin(t * 10) * 0.8, -10 + Math.sin(t * 10) * 1.2], fan: null, bell: true,
+    hand: [lerp(1.4, 3.6, hit), lerp(-1.5, -11, up)], free: [2 + Math.sin(t * 10) * 0.8, -10 + Math.sin(t * 10) * 1.2], fan: -1, open: 0, fanK: 0, bell: 1,
     tilt: -10 * up + 16 * hit, by: 1.4 * hit, hy: 0.6 * hit, cloth: 2, kick: 0.6 * up,
     legF: [2.4 + 0.6 * Math.sin(t * 12), -2.6, 64 + 8 * Math.sin(t * 12)], legB: [1, -2.2, 52 + 8 * Math.sin(t * 12 + 2)],
     mouth: hit > 0.3 ? 'grin' : 'cat', eyes: hit > 0.3 ? 'happy' : null, extras: hit > 0.4 ? ['spark1'] : [], blush: 1.5,
@@ -381,13 +384,13 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   ctx.fillRect(x - 10, y - 6, 20, 16);
   ctx.restore();
   const fanOn = (c, hand, flip) => {
-    // Riding, she swings a gold bell instead of her fan.
-    if (P.bell) {
-      fxSprite(c, 'celdollbell', hand[0], hand[1] - 2, { frame: 0, scale: 0.22, rot: (flip ? 1 : -1) * 0.3 });
-      return;
-    }
-    // Her spitball straw: a rolled tube of white paper with scarlet bands, held to her lips.
-    if (P.straw) {
+    // Riding, she swings a gold bell instead of her fan (drawn out of her sleeve, growing into her
+    // hand as the fan folds away).
+    if (P.bell > 0.03) fxSprite(c, 'celdollbell', hand[0], hand[1] - 2 * P.bell, { frame: 0, scale: 0.22 * P.bell, rot: (flip ? 1 : -1) * 0.3 });
+    // Her spitball straw: a rolled tube of white paper with scarlet bands, slid out of her sleeve
+    // to her lips.
+    if (P.straw > 0.03) {
+      const len = 8.5 * P.straw;
       c.save();
       c.translate(hand[0], hand[1]);
       if (flip) c.scale(-1, 1);
@@ -395,18 +398,19 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
       c.fillStyle = '#fbf8ff';
       c.strokeStyle = '#8a7cc0';
       c.lineWidth = 0.4;
-      c.fillRect(1.5, -1.2, 8.5, 1.4);
-      c.strokeRect(1.5, -1.2, 8.5, 1.4);
+      c.fillRect(1.5, -1.2, len, 1.4);
+      c.strokeRect(1.5, -1.2, len, 1.4);
       c.fillStyle = '#d8323e';
-      for (const bx of [4, 7.5]) c.fillRect(bx, -1.2, 0.7, 1.4);
+      for (const bx of [4, 7.5]) if (bx < 1.5 + len - 0.7) c.fillRect(bx, -1.2, 0.7, 1.4);
       c.restore();
     }
-    if (P.fan == null) return;
+    // The fan, folding and shrinking away into her sleeve when she puts it up.
+    if (P.fan == null || P.fanK < 0.05) return;
     c.save();
     c.translate(hand[0], hand[1]);
     if (flip) c.scale(-1, 1);
     c.rotate(P.fan);
-    paintFan(c, SCALE * 1.15, P.open);
+    paintFan(c, SCALE * 1.15 * Math.min(1, P.fanK), P.open * Math.min(1, P.fanK));
     c.restore();
   };
   ctx.save();
