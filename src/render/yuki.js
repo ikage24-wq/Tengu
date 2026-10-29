@@ -146,7 +146,8 @@ function misting(u) {
   const k = soft(seg(u, 0, 0.3)) * (1 - soft(seg(u, 0.7, 1)));
   return pose({ lift: 5 * k, hand: lerp2(FOLD_F, [-1, -8], k), free: lerp2(FOLD_B, [3, -8], k), eyes: 'blink', cloth: -4 * k, tilt: 3 - 4 * k });
 }
-const MOVES = { breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
+// (Her part in the Onmyoji's Troupe Combo: her whiteout, freezing them all.)
+const MOVES = { combo: whiteouting, breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
 
 // Her idle moods: how long each lasts and the pose `u` through it.
 export const YUKI_IDLES = {

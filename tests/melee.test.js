@@ -2865,7 +2865,7 @@ test("the tengu leads the troupe: he marks a monster and the oni and yuki-onna g
 // An Onmyoji with her own skills learned, her troupe standing back.
 function onmyojiFull() {
   const w = onmyoji();
-  Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, hyakkiyagyo: 8 });
+  Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, troupecombo: 8 });
   w.spirit = 0;
   w.binding = 0;
   for (const k of [w.oni, w.yuki, w.tengu]) {
@@ -2936,22 +2936,36 @@ test("the Onmyoji's spells: talismans burst, the star seal binds, the rally empo
   assert.ok(w.fx.some((f) => f.kind === 'rallied' && f.who === w.oni), 'each of them answers');
 });
 
-test('Hyakki Yagyo: needs full Binding, and the Night Parade tramples every monster on the screen', () => {
+test('Troupe Combo: needs full Binding; the yuki-onna freezes them, the tengu lifts them, the oni smashes them down, they shatter', () => {
   const w = onmyojiFull();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-150, 120, 260][i % 3], y: w.body.y, hp: 99999 }));
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 110, 220][i % 3], y: w.body.y, hp: 99999 }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'hyakkiyagyo').reason, 'gauge:binding', 'needs full Binding');
+  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs full Binding');
   w.binding = 100;
   w.bindingAt = w.now;
-  assert.ok(cast(w, 'hyakkiyagyo').ok);
+  assert.ok(cast(w, 'troupecombo').ok);
   assert.equal(w.binding, 0, 'spends it');
-  let burst = false;
-  for (let i = 0; i < 60 * 6; i++) {
+  const parts = new Set();
+  let frozen = false;
+  let high = 0;
+  let oniUp = 0;
+  let shattered = null;
+  for (let i = 0; i < 60 * 5; i++) {
     updateWorld(w, DT, idle);
-    burst ||= w.fx.some((f) => f.kind === 'paradeburst');
+    // (Right as her fan snaps: out of the ice.)
+    if (shattered === null && w.troupeCombo?.done?.shatter) shattered = w.mobs.every((m) => !(m.frozenUntil > w.now && m.hold === 'ice'));
+    for (const k of [w.oni, w.yuki, w.tengu]) if (k.act?.kind === 'combo') parts.add(k);
+    frozen ||= w.mobs.every((m) => m.frozenUntil > w.now);
+    high = Math.max(high, ...w.mobs.map((m) => m.air ?? 0));
+    oniUp = Math.max(oniUp, w.oni.air ?? 0);
   }
-  assert.ok(w.fx.length >= 0 && burst, 'it ends in a burst');
-  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'every monster on the screen is trampled, behind her too');
+  assert.equal(parts.size, 3, 'all three play their part');
+  assert.ok(frozen, 'every monster is frozen');
+  assert.ok(high > 50, `lifted high (${Math.round(high)})`);
+  assert.ok(oniUp > 60, `the oni leaps (${Math.round(oniUp)})`);
+  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'every monster on the screen is hit, behind her too');
+  assert.ok(shattered, 'and they shatter out of the ice');
+  assert.ok([w.oni, w.yuki, w.tengu].every((k) => k.act?.kind !== 'combo'), 'and the troupe go back to fighting');
 });
 
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {

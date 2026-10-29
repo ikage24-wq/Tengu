@@ -108,15 +108,16 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   stick and burst in red star seals), Seiman Seal (she traces the five-pointed star; the seal on
   the ground binds and burns what stands in it), Yokai Rally (two claps and a raised talisman:
   the troupe fights faster and harder a while, and the tengu marks a monster at once), Onmyodo
-  (the mastery) and the finisher **Hyakki Yagyo** (night falls, a red moon, and the parade of
-  lanterns, umbrellas, foxes, oni, skulls and sandals marches across the screen trampling every
-  monster, ending in a great star burst). Her dance figures: onmyoofuda, onmyoseal, onmyorally,
-  onmyoparade (render/moves.js).
+  (the mastery) and the finisher **Troupe Combo** (the player turned down a Night Parade and
+  picked this: her whole troupe in one chained attack on every monster on the screen: the
+  yuki-onna freezes them solid, the tengu's whirlwinds lift them high, the oni leaps up and
+  smashes them back down, and she snaps her fan shut and they shatter). Her dance figures:
+  onmyoofuda, onmyoseal, onmyorally, onmyocombo (render/moves.js).
 - **The doll (the player changed it, 2026-10-29): fused with the tengu.** An Onmyoji has no doll
   (world/spiritdoll.js); the first time the tengu appears her spirit flies into him in a spiral of
   light and red ribbon and bursts into black feathers, and he carries her red ribbon on his fan.
 - **Gauge (built):** **Binding**: builds from her spells and from every blow the troupe lands;
-  full (ALL BOUND), the troupe rests half as long between moves, and Hyakki Yagyo is ready. A red
+  full (ALL BOUND), the troupe rests half as long between moves, and Troupe Combo is ready. A red
   star seal turns at her feet as it fills.
 - **Party role:** DPS.
 

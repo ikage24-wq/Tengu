@@ -34,7 +34,7 @@ import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
-import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, hyakkiYagyo, TROUPE, rallyPower } from './onmyoji.js';
+import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
 import { tickGuardian } from './kitsune.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
@@ -751,7 +751,7 @@ export const divineGrace = (world) => hasGrace(world.char) && (world.grace ?? 0)
 // Binding: the Onmyoji's gauge, in place of Spirit: how tightly she holds her yokai troupe. Her
 // spells that land build it, and so does every blow her troupe lands (world/oni.js, yuki.js,
 // tengu.js); it fades once the fighting stops. Full (ALL BOUND), her troupe fights faster
-// (BOUND_REST of their rest between moves) and her finisher, Hyakki Yagyo, is ready.
+// (BOUND_REST of their rest between moves) and her finisher, Troupe Combo, is ready.
 export const BINDING_MAX = 100;
 const BINDING_HOLD = 6;
 const BINDING_DRAIN = 9;
@@ -1134,7 +1134,7 @@ function land(world, s) {
   if (s.ofuda) ofudaBarrage(world, s);
   if (s.seiman) seimanSeal(world, s);
   if (s.rally) yokaiRally(world, s);
-  if (s.parade) hyakkiYagyo(world, s);
+  if (s.troupe) troupeCombo(world, s);
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);

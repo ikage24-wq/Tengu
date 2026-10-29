@@ -349,7 +349,7 @@ const GAUGES = {
   grace: { color: '#d8352c', hot: '#ffd36a', icon: 'torii', name: 'Grace', full: 'DIVINE GRACE', notch: () => null, edge: 'rgba(255,214,140,', ink: '#7a1a14',
     tip: 'Your heals and wards build it, more for every ally they reach (your spells that land, a little); it fades once the fighting stops. Full, every heal you give also wards whoever it mends, and Thousand Torii is ready.' },
   binding: { color: '#3a2e8a', hot: '#ff3a46', icon: 'seiman', name: 'Binding', full: 'ALL BOUND', notch: () => null, edge: 'rgba(255,70,80,', ink: '#1a1440',
-    tip: 'How tightly you hold your yokai troupe. Your spells that land build it, and so does every blow your troupe lands; it fades once the fighting stops. Full, your troupe fights faster, and Hyakki Yagyo is ready.' },
+    tip: 'How tightly you hold your yokai troupe. Your spells that land build it, and so does every blow your troupe lands; it fades once the fighting stops. Full, your troupe fights faster, and Troupe Combo is ready.' },
   spirit: { color: '#9a8cd0', hot: '#ffd36a', icon: 'shide', name: 'Spirit', full: "KAMI'S FAVOUR", notch: () => null, edge: 'rgba(230,220,255,', ink: '#3a2e70',
     tip: 'Your spells that land and your heals build it, half again when you turn from one to the other; it fades once the fighting stops. Full, every damage spell also mends allies near where it lands, and your finisher is ready.' },
   ki: { color: '#2a2230', hot: '#ff5a46', icon: 'seal', name: 'Ki', full: 'SHADOW CLONES', notch: () => null, edge: 'rgba(200,30,40,', ink: '#14101a',

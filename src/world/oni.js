@@ -25,6 +25,7 @@
 // Her hits are spells of the Onmyoji's own magic attack (melee.js dollHit).
 
 import { dollHit, hasSpirit, troupeRest } from './melee.js';
+import { comboStep } from './onmyoji.js';
 import { jobChain } from '../data/jobs.js';
 import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
@@ -120,6 +121,8 @@ export function tickOni(world, dt) {
 // Plays out a move on its heavy clock.
 function act(world, k, dt) {
   const a = k.act;
+  // (Her part in the Onmyoji's Troupe Combo: world/onmyoji.js plays it.)
+  if (a.kind === 'combo') return comboStep(world, k);
   const M = ONI_MOVES[a.kind];
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   a.clock ??= 0;

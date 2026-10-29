@@ -62,7 +62,7 @@ function danceLegs(r, ...stances) {
 const breathe = (p) => Math.sin(p * Math.PI * 3);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
-export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'shrinegrand', 'shrinepurify', 'shrinerevive', 'shrinetorii', 'onmyoofuda', 'onmyoseal', 'onmyorally', 'onmyoparade']);
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'shrinegrand', 'shrinepurify', 'shrinerevive', 'shrinetorii', 'onmyoofuda', 'onmyoseal', 'onmyorally', 'onmyocombo']);
 
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
@@ -1967,27 +1967,25 @@ export const MOVES = {
       },
     };
   },
-  // Hyakki Yagyo (night falls at ~0.4): she kneels and slaps a talisman flat to the ground, head
-  // bowed; then rises with both arms flung wide and her head thrown back as the parade comes, and
-  // holds there, hair lifting.
-  onmyoparade(p) {
-    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.42, 0.56)));
-    const slap = soft(seg(p, 0.18, 0.26)) * (1 - soft(seg(p, 0.42, 0.56)));
-    const rise = soft(seg(p, 0.44, 0.6));
-    const settle = soft(seg(p, 0.88, 1));
+  // Troupe Combo (over ~3.7 s): she thrusts the fan out at them, commanding, and holds there,
+  // chin up, while her troupe goes to work, swaying as each of them strikes (freeze ~0.19, lift
+  // ~0.39, slam ~0.74); at ~0.9 she whips the fan shut with a flourish and they shatter.
+  onmyocombo(p) {
+    const point = soft(seg(p, 0, 0.08));
+    const sway = 0.5 * (bump(p, 0.17, 0.26) + bump(p, 0.37, 0.46) + 1.4 * bump(p, 0.72, 0.8));
+    const snap = soft(seg(p, 0.86, 0.91));
+    const settle = soft(seg(p, 0.96, 1));
     const hold = 1 - settle;
     return {
-      weapon: lerp(10, 80, slap) - 40 * rise * hold + 20 * settle, arm: lerp(70, 20, slap) + 140 * rise * hold - 20 * settle,
-      tilt: 0.36 * kneel - 0.18 * rise * hold, lift: 6 * rise * hold + breathe(p) * rise * hold,
-      fan: 0.2 + 0.8 * rise * hold, fanA: lerp(0, 120, slap) - 140 * rise * hold,
+      weapon: lerp(10, 120, point) * (1 - snap) + 60 * snap * hold + 10 * settle, arm: lerp(70, 40, point) * (1 - snap) + 150 * snap * hold - 20 * settle,
+      tilt: -0.08 * point * hold - 0.04 * sway, lunge: 3 * point * (1 - snap) + 2 * sway, lift: 2 * snap * hold,
+      fan: (1 - 0.9 * snap) * point + 0.1, fanA: lerp(0, 90, point) * (1 - snap) - 60 * snap * hold,
       rig: (r) => {
-        r.backArm = [q(lerp(0, 3, kneel) * (1 - rise) - 11 * rise * hold), q(lerp(0, 2, kneel) * (1 - rise) - 10 * rise * hold)];
-        r.squat = q(3.4 * kneel);
-        r.hairLift = rise * hold > 0.3 ? -1 : 0;
-        r.cape -= q(5 * rise * hold);
-        danceLegs(r, [kneel, [3.4, 0, 2], [-3.4, -0.4, -2]], [rise * hold, [1.4, -2.4, 14], [-1.4, -1.6, -10]]);
-        if (kneel > 0.3) r.eyes = 'blink';
-        else if (rise * hold > 0.4) r.eyes = 'half';
+        r.backArm = [q(-1.6 * point * hold), q(-0.4 * point * hold)];
+        r.cape -= q(2 * point + 2 * sway + 3 * snap * hold);
+        r.hairLift = snap * hold > 0.3 ? -1 : 0;
+        danceLegs(r, [point * (1 - snap), [4.2, 0, 8], [-4, 0, -12]], [snap * hold, [1.4, -1.6, 10], [-1.4, -1, -6]]);
+        if (snap * hold > 0.4) r.eyes = 'half';
       },
     };
   },
@@ -2019,7 +2017,7 @@ export const MOVE_MIN = {
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
   shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
-  onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyoparade: 1.9,
+  onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 3.5,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -2185,7 +2183,7 @@ const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });
 const bob = (p, dur, per = 1.1) => Math.sin(p * Math.PI * 2 * Math.max(1, Math.round(dur / per)));
 // The figures where a grounded dancer rises up off the floor: the finishers, the cast upward, and
 // her big skills.
-const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern', 'shrinegrand', 'shrinerevive', 'shrinetorii', 'onmyorally', 'onmyoparade']);
+const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern', 'shrinegrand', 'shrinerevive', 'shrinetorii', 'onmyorally', 'onmyocombo']);
 const DANCE_STYLES = {
   // Grounded kagura (suriashi): her feet slide along the floor in long, slow gliding steps, knees
   // only softly bent, eyes lowered in the holds; serene. Her poses are big and bold (the bell staff

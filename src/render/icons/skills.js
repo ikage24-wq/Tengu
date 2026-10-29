@@ -1448,13 +1448,15 @@ function yokairally() {
   out.push(...seimanStar(3.4, 3.8, 1.5, '#ff3a46', 0.35), ...seimanStar(8, 2.6, 1.7, '#ff3a46', 0.35), ...seimanStar(12.6, 3.8, 1.5, '#ff3a46', 0.35));
   return out;
 }
-// Hyakki Yagyo: a red moon over a dark night and the parade's silhouettes, a lantern glowing.
-function hyakkiyagyo() {
-  const out = [...tile('indigo', 'active'), ...aura(11, 4.4, 3.6, '#ff9a8a', 1.2)];
-  out.push(...solid(oval(11, 4.4, 2.6, 2.6, 0, 16), '#e8403a', { shadow: false, d: 0.3 }));
-  out.push(...solid([[0.8, 15.2], [1.6, 11], [3.4, 9.6], [4.8, 11.6], [6.4, 10.4], [7.6, 12.6], [9.6, 11.2], [11, 13], [13, 11.8], [15.2, 15.2]], '#1a1028', { shadow: false, d: 0.2 }));
-  out.push(...solid(oval(5.6, 9.8, 1.6, 2.2, 0, 14), '#ff9a3a', { shadow: false, d: 0.3, ink: '#7a3a10' }));
-  out.push(...spark(2.6, 3.2, 0.9, '#9ad0ff'), ...spark(6.4, 5, 0.7, '#9ad0ff'));
+// Troupe Combo: the three of them at once: a snowflake, a black feather and the oni's crimson
+// club crossed over a red star seal.
+function troupecombo() {
+  const out = [...tile('indigo', 'active'), ...aura(8, 8, 7, '#ffd0d4', 1.1)];
+  out.push(...seimanStar(8, 8.4, 5.2, '#ff3a46', 0.4));
+  out.push(...solid(tube([[3.2, 13.4], [12.2, 3.2]], 1.5), '#c4242a', { d: 0.35, ink: '#5a0a10' }));
+  out.push(...solid([[11.4, 2.4], [14, 3.4], [7, 12.6], [5.6, 11.6]], '#17151f', { shadow: false, d: 0.3, ink: '#3a4a7a' }));
+  for (const a of [0, 60, 120]) out.push(S(tube([[4.6 + Math.cos(a * D2R) * 2.6, 4.6 + Math.sin(a * D2R) * 2.6], [4.6 - Math.cos(a * D2R) * 2.6, 4.6 - Math.sin(a * D2R) * 2.6]], 0.45, 0.45), '#cfe4fb'));
+  out.push(...spark(13.4, 13, 1, '#ffd36a'));
   return out;
 }
 
@@ -1520,7 +1522,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, hyakkiyagyo,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
 

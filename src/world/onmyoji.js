@@ -8,9 +8,10 @@
 //                   and again
 //   Yokai Rally     a clap and a talisman raised high: her troupe answers, fighting faster and
 //                   harder for a while, and the tengu marks a monster for them at once
-//   Hyakki Yagyo    her finisher (the Night Parade of a Hundred Demons): night falls over the
-//                   screen and the parade marches across it, lanterns, umbrellas, foxes, oni and
-//                   all, trampling every monster again and again, and ends in a great burst
+//   Troupe Combo    her finisher: her whole troupe in one chained attack on every monster on the
+//                   screen: the yuki-onna freezes them all solid, the tengu's whirlwind lifts them
+//                   high, the oni leaps up and smashes them back into the ground, and she snaps
+//                   her fan shut and they shatter
 
 import { dollHit } from './melee.js';
 import { navOf, surfaceBelow } from './nav.js';
@@ -89,38 +90,118 @@ export function yokaiRally(world, s) {
   if (world.tengu) world.tengu.commandAt = 0;
 }
 
-// ---------- Hyakki Yagyo ----------
-export function hyakkiYagyo(world, s) {
-  const P = s.parade;
+// ---------- Troupe Combo ----------
+// When each part lands (s from the cast) and how hard: the freeze, the lift (rising, then held),
+// the oni's slam, and the shatter as she snaps her fan.
+export const COMBO = { freeze: 0.7, lift: [1.45, 1.9], slam: 2.75, shatter: 3.35, end: 3.9, high: 80, w: 330 };
+export function troupeCombo(world, s) {
+  const C = s.troupe;
   const b = world.body;
-  world.parade = { t0: world.now, until: world.now + P.dur, next: world.now + P.start, every: P.every, pct: P.pct, big: P.big, dir: b.facing, x: b.x, y: b.y, w: P.w, key: s.key, ended: false };
-  world.fx.push({ kind: 'hyakkiyagyo', parade: world.parade, x: b.x, y: b.y, dir: b.facing, t: 0, dur: P.dur + 0.8 });
-  world.juice.push({ type: 'shake', mag: 2, dur: 0.3 });
+  const dir = b.facing;
+  const marks = world.mobs.filter((m) => alive(m) && Math.abs(m.x - b.x) < COMBO.w && Math.abs(m.y - b.y) < 160);
+  // Where they gather: the middle of the monsters (or ahead of her).
+  const cx = marks.length ? marks.reduce((t, m) => t + m.x, 0) / marks.length : b.x + dir * 120;
+  const [x, y] = groundAt(world, cx, b.y);
+  world.troupeCombo = { t0: world.now, x, y, dir, marks, pct: C.pct, big: C.big, key: s.key, done: {} };
+  // Her troupe take their places and their parts (world/oni.js, yuki.js, tengu.js play `combo`).
+  const part = (k, at, dur, from, to) => {
+    if (!k?.body) return;
+    k.act = { kind: 'combo', t0: world.now + at, start: world.now, dur, from, to, x: k.body.x, y: k.body.y, done: 0 };
+    k.flight = null;
+  };
+  part(world.yuki, 0.1, 1.4, x - dir * 70, x - dir * 70);
+  part(world.tengu, 0.9, 1.8, x - dir * 30, x - dir * 30);
+  part(world.oni, 1.7, 1.9, x - dir * 110, x);
+  world.fx.push({ kind: 'troupecombo', combo: world.troupeCombo, x, y, dir, t: 0, dur: COMBO.end + 0.4 });
 }
-function tickParade(world) {
-  const P = world.parade;
-  if (!P) return;
-  const b = world.body;
-  const inView = (m) => alive(m) && Math.abs(m.x - b.x) < P.w && Math.abs(m.y - b.y) < 200;
-  if (!P.ended && world.now >= P.until - 0.4) {
-    // The parade's end: a great burst over everything.
-    P.ended = true;
-    world.fx.push({ kind: 'paradeburst', x: b.x, y: b.y, t: 0, dur: 1 });
-    world.juice.push({ type: 'shake', mag: 6, dur: 0.45 });
-    world.mobs.filter(inView).forEach((m, i) => dollHit(world, m, { pct: P.big, x: m.x - P.dir * 30, knock: 220, launch: 200, stun: 0.6, stop: i ? 0 : 0.14, shake: 0, big: !i, burst: 'paradehit', gauge: 0, key: P.key }));
+// One of the troupe playing its part in the combo (its brain hands over to this while its act is
+// `combo`): it hurries to its place, plays its part from `t0` (its renderer draws the pose), and
+// the oni leaps from `from` to `to`, high over the monsters, and comes down on them.
+export function comboStep(world, k) {
+  const a = k.act;
+  const C = world.troupeCombo;
+  const t = world.now - a.t0;
+  const u = Math.max(0, t / a.dur);
+  const soft = (v) => 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, v)));
+  let x;
+  if (world.now < a.t0) x = a.x + (a.from - a.x) * soft((world.now - a.start) / Math.max(0.05, a.t0 - a.start));
+  else x = a.from + (a.to - a.from) * soft(u / 0.55);
+  const [gx, gy] = groundAt(world, x, a.y);
+  Object.assign(k.body, { x: gx, y: gy, vx: 0, vy: 0 });
+  k.x = gx;
+  k.y = gy;
+  // Facing the monsters.
+  if (C) k.body.facing = k.dir = Math.sign(C.x - gx) || C.dir;
+  // The oni's leap: up high, a hang, and down hard at the slam.
+  k.air = a.from !== a.to && t >= 0 ? 120 * Math.sin(Math.PI * Math.min(1, u / 0.55)) ** 0.7 : 0;
+  if (u >= 1) {
+    k.act = null;
+    k.air = 0;
+    k.next = world.now + 0.4;
   }
-  if (world.now >= P.until) {
-    world.parade = null;
-    return;
+  return true;
+}
+function tickCombo(world) {
+  const C = world.troupeCombo;
+  if (!C) return;
+  const t = world.now - C.t0;
+  const live = C.marks.filter(alive);
+  const once = (name, at, fn) => {
+    if (!C.done[name] && t >= at) {
+      C.done[name] = true;
+      fn();
+    }
+  };
+  // The yuki-onna's breath: everything frozen solid.
+  once('freeze', COMBO.freeze, () => {
+    world.fx.push({ kind: 'yukiwhiteout', x: C.x, y: C.y, r: COMBO.w * 0.6, dir: C.dir, t: 0, dur: 1.1 });
+    world.juice.push({ type: 'shake', mag: 2, dur: 0.2 });
+    live.forEach((m) => dollHit(world, m, { pct: C.pct * 0.5, x: C.x, knock: 0, freeze: COMBO.end - COMBO.freeze + 0.4, stop: 0, burst: 'yukihit', gauge: 0, key: 'yuki' }));
+  });
+  // The tengu's whirlwind: they're lifted, frozen, and held up there.
+  once('lift', COMBO.lift[0], () => {
+    for (const m of live) world.fx.push({ kind: 'tenguwhirl', x: m.x, y: m.y, r: 30, t: 0, dur: COMBO.slam - COMBO.lift[0] + 0.1 });
+    world.juice.push({ type: 'shake', mag: 1.4, dur: 0.3 });
+    live.forEach((m) => dollHit(world, m, { pct: C.pct * 0.5, x: C.x, knock: 0, stop: 0, burst: 'tenguwind', gauge: 0, key: 'tengu' }));
+  });
+  if (t >= COMBO.lift[0] && t < COMBO.slam) {
+    const up = Math.min(1, (t - COMBO.lift[0]) / (COMBO.lift[1] - COMBO.lift[0]));
+    // (Still rising a touch, turning, as the oni comes down on them.)
+    const near = Math.max(0, (t - (COMBO.slam - 0.12)) / 0.12);
+    for (const m of live) {
+      if (m.def.boss) continue;
+      m.air = COMBO.high * (1 - (1 - up) ** 2) * (1 - near) + 3 * Math.sin(t * 6 + m.uid);
+      m.airV = 0;
+      m.knockVx = 0;
+    }
   }
-  if (P.ended || world.now < P.next) return;
-  P.next = world.now + P.every;
-  // Trampled as the parade goes by.
-  world.mobs.filter(inView).forEach((m) => dollHit(world, m, { pct: P.pct, x: m.x - P.dir * 30, knock: 40, launch: 40, stop: 0, burst: 'paradehit', gauge: 0, key: P.key }));
+  // The oni's slam: down they all come, into the ground.
+  once('slam', COMBO.slam, () => {
+    for (const m of live) m.air = 0;
+    world.fx.push({ kind: 'crack', school: 'rage', x: C.x, y: C.y, w: COMBO.w * 0.9, t: 0, dur: 1, seed: Math.random() });
+    world.fx.push({ kind: 'onipound', x: C.x, y: C.y, r: COMBO.w * 0.5, t: 0, dur: 0.8 });
+    world.fx.push({ kind: 'oniimpact', x: C.x, y: C.y, dir: C.dir, big: true, t: 0, dur: 0.6 });
+    world.juice.push({ type: 'oniimpact', x: C.x, y: C.y - 8, dir: C.dir, big: true });
+    world.juice.push({ type: 'slam', school: 'rage', x: C.x, y: C.y, range: 140 });
+    world.juice.push({ type: 'shake', mag: 7, dur: 0.45 });
+    world.juice.push({ type: 'dust', x: C.x, y: C.y, count: 14 });
+    world.hitstop = Math.max(world.hitstop ?? 0, 0.12);
+    live.forEach((m, i) => dollHit(world, m, { pct: C.pct * 1.5, x: C.x, knock: 0, stop: 0, shake: 0, big: !i, burst: 'onihit', gauge: 0, key: 'oni' }));
+  });
+  // Her fan snaps shut: they shatter.
+  once('shatter', COMBO.shatter, () => {
+    world.fx.push({ kind: 'combosnap', x: world.body.x, y: world.body.y, dir: world.body.facing, t: 0, dur: 0.6 });
+    world.juice.push({ type: 'shake', mag: 4, dur: 0.3 });
+    live.forEach((m, i) => {
+      m.frozenUntil = Math.min(m.frozenUntil ?? 0, world.now);
+      dollHit(world, m, { pct: C.big, x: m.x - C.dir * 20, knock: 160, launch: 180, stun: 0.6, stop: i ? 0 : 0.14, big: !i, burst: 'yukishatter', gauge: 0, key: C.key });
+    });
+  });
+  if (t >= COMBO.end) world.troupeCombo = null;
 }
 
 export function tickOnmyoji(world) {
   tickSeiman(world);
-  tickParade(world);
+  tickCombo(world);
   if (world.rally && world.now >= world.rally.until) world.rally = null;
 }

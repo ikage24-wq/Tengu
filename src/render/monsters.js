@@ -414,7 +414,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
   // A Snare Arrow's net over it (Tengu's own art), slipping off as the hold runs out.
   else if (frozen && m.hold === 'snare') fxSprite(ctx, 'celnet', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.7, s.w / 30), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
-  else if (frozen) iceBlock(ctx, x, y, s, m.frozenUntil - now, time + m.uid);
+  // (Up in the air with it, if it's been lifted frozen: the Onmyoji's Troupe Combo.)
+  else if (frozen) iceBlock(ctx, x, y - (m.air > 0 && m.hp > 0 ? m.air : 0), s, m.frozenUntil - now, time + m.uid);
   if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - s.h * sy, t, now);
 }
 

@@ -407,7 +407,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
   }),
   // The Onmyoji's spells (world/onmyoji.js): she builds Binding (world/melee.js) from her spells
-  // and her troupe's blows; full, her troupe fights faster and Hyakki Yagyo is ready.
+  // and her troupe's blows; full, her troupe fights faster and Troupe Combo is ready.
   ofudabarrage: skill({
     id: 'ofudabarrage', name: 'Ofuda Barrage', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'spirit',
     desc: 'Snap the fan shut and fling a fan of paper talismans from your fingers: each flies to a monster ahead, sticks fast, and a beat later bursts in a red star seal.',
@@ -445,15 +445,15 @@ export const SKILLS = {
       };
     },
   }),
-  hyakkiyagyo: skill({
-    id: 'hyakkiyagyo', name: 'Hyakki Yagyo', job: 'onmyoji', type: 'attack', fx: null, icon: 'hyakkiyagyo', school: 'spirit', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Binding, and spends it. Slap a talisman to the ground and rise with your arms flung wide: night falls, and the Night Parade of a Hundred Demons marches across the screen, lanterns and umbrellas, foxes and oni, trampling every monster again and again, and ends in a great burst.',
+  troupecombo: skill({
+    id: 'troupecombo', name: 'Troupe Combo', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'spirit', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Binding, and spends it. Point your fan and call your whole troupe into one chained attack on every monster on the screen: the yuki-onna freezes them all solid, a whirlwind from the tengu lifts them high, the oni leaps up and smashes them back into the ground, and you snap your fan shut and they shatter.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(120, 210), hits: 1, targets: 0, range: { w: 700, h: 200, around: true },
-        combo: [{ move: 'onmyoparade', dur: 2.1, step: 0, strikes: [{ at: 0.4, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, parade: { dur: 4.4, start: 0.8, every: 0.4, pct: k(120, 210), big: k(500, 900), w: 360 } }] }],
+        combo: [{ move: 'onmyocombo', dur: 3.7, step: 0, strikes: [{ at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, troupe: { pct: k(120, 210), big: k(600, 1000) } }] }],
       };
     },
   }),
@@ -974,7 +974,7 @@ const MOVES_BY_SKILL = {
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',
   grandblessing: 'shrinegrand', purification: 'shrinepurify', resurrection: 'shrinerevive', thousandtorii: 'shrinetorii',
-  ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', hyakkiyagyo: 'onmyoparade',
+  ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', troupecombo: 'onmyocombo',
   shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',

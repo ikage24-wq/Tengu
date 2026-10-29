@@ -414,7 +414,9 @@ function command(u) {
     tilt: -3 - 5 * on, hy: -0.2 - 0.4 * on, mouth: u > 0.36 && u < 0.62 ? 'tenguhah' : 'tengusmirk', brows: on > 0.3 ? 'raised' : 'smug', lid: 0.3, cloth: -2 * on,
   });
 }
-const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command };
+// His part in the Onmyoji's Troupe Combo: his whirlwind, the fan thrust down at 0.3 (when they lift).
+const comboWind = (u, t) => whirlwind(u < 0.3 ? (u / 0.3) * 0.5 : 0.5 + ((u - 0.3) / 0.7) * 0.5, t);
+const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command, combo: comboWind };
 
 // ---------- His leader's aura ----------
 // A small black feather (for the ones circling him).

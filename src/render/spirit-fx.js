@@ -127,140 +127,6 @@ function shards(ctx, x, y, p, n, reach, seed = 0.5, c = '#d8ecff') {
 }
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, t)));
 
-// One of the Night Parade (Hyakki Yagyo): a dark silhouette marching along the ground at (x, y),
-// facing `dir`, with glowing eyes; lanterns glow too.
-function demon(ctx, kind, x, y, dir, t, a) {
-  const D = '#1a1028';
-  const eye = (ex, ey, r = 1.2, c = '#ffd23a') => {
-    ctx.fillStyle = c;
-    ctx.beginPath();
-    ctx.arc(x + ex * dir, y + ey, r, 0, Math.PI * 2);
-    ctx.fill();
-  };
-  ctx.save();
-  ctx.globalAlpha *= a;
-  ctx.fillStyle = D;
-  const step = Math.sin(t * 9) * 2;
-  if (kind === 'lantern') {
-    // A paper lantern with a face (chochin-obake): glowing orange, a split mouth, one eye.
-    const g = ctx.createRadialGradient(x, y - 22, 2, x, y - 22, 16);
-    g.addColorStop(0, 'rgba(255, 190, 90, 0.8)');
-    g.addColorStop(1, 'rgba(255, 120, 40, 0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x, y - 22, 16, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ff9a3a';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 22, 7, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#c8501a';
-    ctx.lineWidth = 0.7;
-    for (const yy of [-28, -22, -16]) {
-      ctx.beginPath();
-      ctx.moveTo(x - 6.6, y + yy);
-      ctx.lineTo(x + 6.6, y + yy);
-      ctx.stroke();
-    }
-    ctx.fillStyle = D;
-    ctx.fillRect(x - 4, y - 33, 8, 2);
-    ctx.fillRect(x - 4, y - 12, 8, 2);
-    eye(1.5, -24, 1.6, '#1a1028');
-    ctx.fillStyle = '#7a1018';
-    ctx.fillRect(x - 3 * dir - 1, y - 19, 4, 1.6);
-    ctx.fillStyle = D;
-    ctx.fillRect(x - 0.4, y - 11, 0.8, 11);
-  } else if (kind === 'umbrella') {
-    // A one-eyed paper umbrella hopping on one leg (kasa-obake), its tongue out.
-    ctx.beginPath();
-    ctx.moveTo(x - 12, y - 18);
-    ctx.quadraticCurveTo(x, y - 34, x + 12, y - 18);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillRect(x - 0.6, y - 18, 1.2, 18);
-    eye(0, -24, 2, '#ffffff');
-    eye(0.4, -24, 0.9, '#1a1028');
-    ctx.fillStyle = '#e84a6a';
-    ctx.fillRect(x + 2 * dir, y - 20, 2, 4);
-  } else if (kind === 'oni') {
-    // A horned oni with a club over his shoulder.
-    ctx.beginPath();
-    ctx.ellipse(x, y - 14, 7, 11, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x, y - 28, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x - 5, y - 32);
-    ctx.lineTo(x - 7, y - 39);
-    ctx.lineTo(x - 2.4, y - 33);
-    ctx.moveTo(x + 5, y - 32);
-    ctx.lineTo(x + 7, y - 39);
-    ctx.lineTo(x + 2.4, y - 33);
-    ctx.fill();
-    ctx.fillRect(x - 4 + step, y - 4, 2.6, 4);
-    ctx.fillRect(x + 1.4 - step, y - 4, 2.6, 4);
-    ctx.save();
-    ctx.translate(x - dir * 4, y - 22);
-    ctx.rotate(-dir * 0.7);
-    ctx.fillRect(-1.6, -16, 3.2, 16);
-    ctx.restore();
-    eye(2, -29, 1.2, '#ff3a3a');
-    eye(-1.2, -29, 1.2, '#ff3a3a');
-  } else if (kind === 'fox') {
-    // A fox walking on its hind legs in a kimono, a white fox mask.
-    ctx.beginPath();
-    ctx.moveTo(x - 6, y);
-    ctx.lineTo(x - 5, y - 20);
-    ctx.lineTo(x + 5, y - 20);
-    ctx.lineTo(x + 6, y);
-    ctx.fill();
-    ctx.fillStyle = '#f4f0e6';
-    ctx.beginPath();
-    ctx.moveTo(x - 4.6, y - 26);
-    ctx.lineTo(x + dir * 6, y - 24);
-    ctx.lineTo(x - 4.6, y - 20);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x - 4, y - 26);
-    ctx.lineTo(x - 3, y - 32);
-    ctx.lineTo(x - 1, y - 26);
-    ctx.moveTo(x + 1, y - 26);
-    ctx.lineTo(x + 2, y - 32);
-    ctx.lineTo(x + 3.6, y - 26);
-    ctx.fill();
-    ctx.fillStyle = '#e8343a';
-    ctx.fillRect(x + dir * 1 - 0.8, y - 25, 1.6, 0.8);
-    ctx.fillStyle = D;
-    ctx.beginPath();
-    ctx.moveTo(x - dir * 5, y - 10);
-    ctx.quadraticCurveTo(x - dir * 14, y - 16, x - dir * 12, y - 26);
-    ctx.lineTo(x - dir * 9, y - 14);
-    ctx.fill();
-  } else if (kind === 'skull') {
-    // A rolling skull, laughing.
-    ctx.fillStyle = '#e6e0d4';
-    ctx.beginPath();
-    ctx.arc(x, y - 7, 7, 0, Math.PI * 2);
-    ctx.fill();
-    eye(-2.2, -8, 1.6, '#1a1028');
-    eye(2.2, -8, 1.6, '#1a1028');
-    ctx.fillStyle = '#1a1028';
-    ctx.fillRect(x - 2.6, y - 3.4, 5.2, 1);
-  } else {
-    // An old straw sandal on legs (bake-zori), one eye.
-    ctx.fillStyle = '#8a7046';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 9, 5, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = D;
-    ctx.fillRect(x - 3 + step, y - 3, 1.4, 3);
-    ctx.fillRect(x + 1.6 - step, y - 3, 1.4, 3);
-    eye(0, -10, 1.6, '#ffffff');
-    eye(0.3, -10, 0.7, '#1a1028');
-  }
-  ctx.restore();
-}
 // A black crow feather at (x, y) turned to `ang`, `len` long (the tengu's), a blue sheen down it;
 // `sharp` makes it a flying blade of a feather with a pale streak behind.
 function feather(ctx, x, y, ang, len, a = 1, sharp = false) {
@@ -1113,7 +979,7 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       }
       return true;
     }
-    // The Onmyoji's: her talismans, the star seal, her rally, the Night Parade, and the doll fusing
+    // The Onmyoji's: her talismans, the star seal, her rally, her Troupe Combo, and the doll fusing
     // into the tengu.
     case 'ofuda': {
       // A paper talisman: flies spinning to its mark, sticks fast, glows red, and bursts.
@@ -1296,79 +1162,41 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       ctx.restore();
       return true;
     }
-    case 'hyakkiyagyo': {
-      // Hyakki Yagyo: night falls over the screen (a red moon high up), and the parade marches across
-      // it along the ground: paper lanterns with eyes, one-eyed umbrellas hopping, fox masks, horned
-      // oni, a skull, an old sandal on legs; fox fires drifting over them.
-      const P = f.parade;
-      const dir = f.dir || 1;
-      const k = Math.min(1, f.t / 0.6) * (1 - Math.max(0, (p - 0.86) / 0.14));
+    case 'troupecombo': {
+      // Troupe Combo: her seal under the monsters while her troupe works (a red ring and star
+      // turning on the ground), brightening as each part lands.
+      const k = Math.min(1, f.t / 0.3) * (1 - Math.max(0, (p - 0.88) / 0.12));
+      const r = 120;
       ctx.save();
-      ctx.globalAlpha *= 0.62 * k;
-      ctx.fillStyle = '#140c2a';
-      ctx.fillRect(x - 900, y - 600, 1800, 800);
-      ctx.restore();
-      ctx.save();
-      ctx.globalAlpha *= k;
-      const g = ctx.createRadialGradient(x + dir * 70, y - 150, 2, x + dir * 70, y - 150, 40);
-      g.addColorStop(0, '#ffb0a0');
-      g.addColorStop(0.4, '#e8403a');
-      g.addColorStop(1, 'rgba(120, 20, 40, 0)');
-      ctx.fillStyle = g;
+      ctx.translate(x, y + 1);
+      ctx.scale(1, 0.28);
+      ctx.globalAlpha *= 0.75 * k;
+      ctx.strokeStyle = '#ff3a46';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(x + dir * 70, y - 150, 40, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.rotate(f.t * 0.5);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 5; i++) {
+        const a = (-90 + i * 144) * (Math.PI / 180);
+        if (i) ctx.lineTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9);
+        else ctx.moveTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9);
+      }
+      ctx.stroke();
       ctx.restore();
-      if (f.t < 0.6) return true;
-      const t = f.t - 0.6;
-      const kinds = ['lantern', 'umbrella', 'oni', 'fox', 'lantern', 'skull', 'umbrella', 'sandal', 'oni', 'fox', 'lantern', 'umbrella', 'skull', 'fox', 'oni', 'lantern'];
-      for (let i = 0; i < kinds.length; i++) {
-        const px = x - dir * 420 + dir * (t * 230 - i * 60);
-        if (Math.abs(px - x) > 440) continue;
-        const hop = Math.abs(Math.sin(t * 7 + i * 1.3)) * (kinds[i] === 'umbrella' ? 8 : 3);
-        ctx.save();
-        ctx.translate(px, y - hop);
-        ctx.scale(1.5, 1.5);
-        demon(ctx, kinds[i], 0, 0, dir, t + i, k);
-        ctx.restore();
-      }
-      for (let i = 0; i < 8; i++) {
-        const fx0 = x + Math.sin(t * 0.7 + i * 1.9) * 300;
-        const fy = y - 60 - 50 * Math.abs(Math.sin(t * 0.9 + i));
-        ctx.save();
-        ctx.globalAlpha *= k * 0.8;
-        const fg = ctx.createRadialGradient(fx0, fy, 0, fx0, fy, 6);
-        fg.addColorStop(0, '#ffffff');
-        fg.addColorStop(0.4, '#9ad0ff');
-        fg.addColorStop(1, 'rgba(80, 120, 255, 0)');
-        ctx.fillStyle = fg;
-        ctx.beginPath();
-        ctx.arc(fx0, fy, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
       return true;
     }
-    case 'paradehit': {
-      // Trampled by the parade.
-      fxSprite(ctx, 'celhitred', x, y - (f.h ?? 24) * 0.5, { p, flip, scale: f.big ? 0.5 : 0.28 });
-      return true;
-    }
-    case 'paradeburst': {
-      // The parade's end: a great red star bursting over the whole screen.
+    case 'combosnap': {
+      // Her fan snapping shut: a sharp red flash and a ring going out from her.
+      fxSprite(ctx, 'celhitred', x + (f.dir || 1) * 12, y - 40, { p, scale: 0.45, flip });
       ctx.save();
       ctx.globalAlpha *= 1 - p;
       ctx.strokeStyle = '#ff3a46';
-      ctx.shadowColor = 'rgba(255, 60, 60, 0.9)';
-      ctx.shadowBlur = 14;
-      ctx.lineWidth = 4 * (1 - p) + 1;
-      const r = 40 + 260 * Math.sqrt(p);
+      ctx.lineWidth = 2 * (1 - p) + 0.5;
       ctx.beginPath();
-      for (let k = 0; k <= 5; k++) {
-        const a = (-90 + k * 144) * (Math.PI / 180);
-        if (k) ctx.lineTo(x + Math.cos(a) * r, y - 60 + Math.sin(a) * r * 0.6);
-        else ctx.moveTo(x + Math.cos(a) * r, y - 60 + Math.sin(a) * r * 0.6);
-      }
+      ctx.ellipse(x, y, 20 + 200 * p, (20 + 200 * p) * 0.28, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
       return true;

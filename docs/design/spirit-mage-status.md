@@ -88,7 +88,7 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
 2. The Shrine Maiden in a real dungeon run (her bots and the healer seat still cast the Spirit
    Mage's Blessing and Ward: give them Grand Blessing and Purification too).
 3. The Onmyoji is built: the troupe (the oni, the yuki-onna, and the tengu who leads them, the
-   doll fused into him), Binding, Ofuda Barrage, Seiman Seal, Yokai Rally and Hyakki Yagyo. Her
+   doll fused into him), Binding, Ofuda Barrage, Seiman Seal, Yokai Rally and Troupe Combo. Her
    dungeon bots still cast the Spirit Mage's kit.
 3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one
    if the player wants.

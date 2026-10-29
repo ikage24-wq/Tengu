@@ -44,7 +44,7 @@ export const JOBS = {
 
   // Spirit Mage branches. Both ask for Elowen's trial first (docs/design/spirit-mage-paths.md).
   // Both are built: the Shrine Maiden (her guardian, Grace, her skills and Thousand Torii) and the
-  // Onmyoji (her yokai troupe led by the tengu, Binding, her skills and Hyakki Yagyo).
+  // Onmyoji (her yokai troupe led by the tengu, Binding, her skills and Troupe Combo).
   shrinemaiden: {
     id: 'shrinemaiden', name: 'Shrine Maiden', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand', 'staff'],

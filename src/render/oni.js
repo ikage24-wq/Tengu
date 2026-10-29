@@ -448,7 +448,22 @@ function roar(u) {
     mouth: r > 0.3 && on > 0.4 ? 'yell' : 'onigrin', brows: 'angry', lid: r > 0.3 ? 0 : 0.2,
   });
 }
-const MOVES = { kesa, grab, stomp, charge, whirl, roar };
+// Her part in the Onmyoji's Troupe Combo (the slam at 0.55): a crouch, a huge leap with the club
+// swung right back over her head, a hang at the top, and down with everything onto them; she
+// lands in a deep crouch, the club buried, and rises with a grin.
+function comboSlam(u) {
+  const crouch = soft(seg(u, 0, 0.1)) * (1 - soft(seg(u, 0.1, 0.16)));
+  const air = soft(seg(u, 0.1, 0.2)) * (1 - soft(seg(u, 0.5, 0.55)));
+  const land = soft(seg(u, 0.53, 0.58)) * (1 - soft(seg(u, 0.82, 1)));
+  return pose({
+    club: keys(u, [[0, -0.55], [0.1, -1.2], [0.4, -2.6], [0.48, -2.9], [0.55, 2.3, 'snap'], [0.8, 2.2], [1, -0.55]]),
+    hand: keys(u, [[0, HAND], [0.1, [3, -9]], [0.4, [2, -16]], [0.55, [10, 3], 'snap'], [0.8, [9.5, 3]], [1, HAND]]),
+    free: keys(u, [[0, FREE], [0.4, [2, -14]], [0.55, [7, 2.5], 'snap'], [0.8, [6.5, 2.5]], [1, FREE]]),
+    squat: 3 * crouch + 4.4 * land, lean: -0.18 * air + 0.45 * land, legF: [3.6 + 2 * air, -6 * air, 8 + 40 * air], legB: [-4, -4 * air, -10 - 30 * air],
+    cloth: -4 * air + 5 * land, tilt: 4 - 8 * air + 8 * land, mouth: land > 0.3 ? 'onishark' : air > 0.3 ? 'onigrin' : 'bored', brows: 'angry', lid: 0.1,
+  });
+}
+const MOVES = { kesa, grab, stomp, charge, whirl, roar, combo: comboSlam };
 
 // ---------- Her moods and idle moods ----------
 // Sulking (a blow hit nothing): the club dropped point-down, leaning on it, shoulders slumped, a
@@ -597,7 +612,8 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   const lean = S('lean', 0.14 * surge + 0.04 * v + Math.max(-0.12, Math.min(0.12, clubVel * 0.012)), 110, 11);
 
   const x = k.x - cam.x;
-  const y = k.y - cam.y;
+  // (Up in the air on the Troupe Combo's leap.)
+  const y = k.y - cam.y - (k.air ?? 0);
   const rig = {
     tx: q(P.tx + 0.35 * shift * calm), by: q(P.by + 0.3 * breath * calm), hx: q(P.hx + 0.2 * shift * calm), hy: q(P.hy + 0.22 * breath * calm), tilt: deg(P.tilt + 1.2 * shift * calm),
     frontArm: [q(P.hand[0]), q(P.hand[1] + 0.25 * breath * calm)], backArm: [q(P.free[0]), q(P.free[1] + 0.3 * breath * calm)], armSide: 1,

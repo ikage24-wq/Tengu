@@ -45,7 +45,7 @@ c.equipment.weapon = makeEquip('wand_20', {});
 Object.assign(c.skills, { spiritbolt: 20, spiritstep: 10, spiritwave: 20, blessing: 20, spiritward: 15, manamastery: 20, heavenslantern: 10 });
 // The Shrine Maiden's own skills, when she is one.
 if (q.get('job') === 'shrinemaiden') Object.assign(c.skills, { shrinemastery: 10, grandblessing: 15, purification: 15, resurrection: 8, thousandtorii: 8 });
-if (q.get('job') === 'onmyoji') Object.assign(c.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, hyakkiyagyo: 8 });
+if (q.get('job') === 'onmyoji') Object.assign(c.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, troupecombo: 8 });
 c.mp = 9999;
 c.baseMp = 99999;
 const w = createWorld(c);
@@ -78,7 +78,7 @@ function step(dt) {
   if (skill && t > 0.5 && !w.pose && !w.lantern && t >= (window.nextCast ?? 0)) {
     if (skill === 'heavenslantern') [w.spirit, w.spiritAt] = [100, w.now];
     if (skill === 'thousandtorii') [w.grace, w.graceAt] = [100, w.now];
-    if (skill === 'hyakkiyagyo') [w.binding, w.bindingAt] = [100, w.now];
+    if (skill === 'troupecombo') [w.binding, w.bindingAt] = [100, w.now];
     if (skill === 'blessing') c.hp = Math.round(c.hp * 0.4);
     console.log('cast', skill, JSON.stringify(cast(w, skill)));
     window.nextCast = t + Number(q.get('every') ?? 2.2);
