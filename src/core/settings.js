@@ -31,6 +31,11 @@ export const DEFAULT_SETTINGS = {
   // Gameplay
   autoLoot: false,
   npcClick: true,
+  // Phone and tablet controls
+  touchSize: 'normal', // 'small' | 'normal' | 'big'
+  touchAlpha: 'soft', // 'clear' | 'soft' | 'solid'
+  touchLeft: false, // the stick on the right, the buttons on the left
+  touchVibrate: true,
 };
 
 export const settings = { ...DEFAULT_SETTINGS };

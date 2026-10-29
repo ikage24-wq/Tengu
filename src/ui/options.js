@@ -4,6 +4,7 @@
 
 import { settings, saveSettings, resetSettings } from '../core/settings.js';
 import { applyVolumes } from '../audio/engine.js';
+import { touchLayout } from './touch.js';
 import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap, font } from './kit.js';
 
 const PAGES = {
@@ -37,6 +38,12 @@ const PAGES = {
     ['showCrowd', 'Townsfolk and players', 'Villagers and other players wandering the towns.'],
     ['chatBubbles', 'Chat bubbles', 'Speech bubbles over people who talk.'],
   ],
+  Phone: [
+    ['touchSize', 'Button size', 'How big the stick and buttons are.', ['small', 'normal', 'big']],
+    ['touchAlpha', 'See-through', 'How much of the game shows through them.', ['clear', 'soft', 'solid']],
+    ['touchLeft', 'Left-handed', 'The stick on the right, the buttons on the left.'],
+    ['touchVibrate', 'Vibrate', 'A little buzz when you press a button.'],
+  ],
 };
 
 const CONTROLS = [
@@ -54,7 +61,7 @@ export function optionsWindow(ui, state, world) {
   if (!windowFrame(ui, win, W, H, 'Options')) return;
   const { ctx } = ui;
   const th = ui.theme;
-  win.tab = tabs(ui, win.x + 8, win.y + 24, TAB_NAMES, win.tab ?? 0, { w: 46 });
+  win.tab = tabs(ui, win.x + 8, win.y + 24, TAB_NAMES, win.tab ?? 0, { w: 40 });
   const page = TAB_NAMES[win.tab];
   const x = win.x + 10;
   let y = win.y + 46;
@@ -87,6 +94,8 @@ export function optionsWindow(ui, state, world) {
       }
       y += step;
     }
+    // The phone's screen in small, with the controls where they'll be.
+    if (page === 'Phone') drawTouchPreview(ctx, x + (W - 16) / 2 - 64, y + 2, 128, 72, th);
   } else if (page === 'Controls') {
     CONTROLS.forEach(([keys, what], i) => {
       const cx = x + (i % 2) * 142;
@@ -113,4 +122,24 @@ export function optionsWindow(ui, state, world) {
     }
   }
   if (button(ui, win.x + W - 78, win.y + H - 24, 68, 18, 'Resume', { primary: true, size: 8 })) win.open = false;
+}
+
+function drawTouchPreview(ctx, x, y, w, h, th) {
+  const k = w / 640;
+  box(ctx, x - 3, y - 3, w + 6, h + 6, { fill: '#5a4a72', edge: null, r: 8 });
+  box(ctx, x, y, w, h, { fill: '#cfe9ff', edge: null, r: 4 });
+  box(ctx, x, y + h * 0.72, w, h * 0.28, { fill: '#9fdc9f', edge: null, r: 0 });
+  const { fade, parts } = touchLayout();
+  ctx.globalAlpha = Math.min(1, 0.75 * fade);
+  for (const b of parts) {
+    ctx.fillStyle = b.color ?? (b.grab ? '#ffffff' : '#fffaf8');
+    ctx.strokeStyle = b.dark ?? '#9a7cc8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x + b.x * k, y + b.y * (h / 360), Math.max(1.5, b.r * k), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  text(ctx, 'Preview', x + w / 2, y + h + 12, { size: 6.5, bold: true, align: 'center', color: th.ink });
 }

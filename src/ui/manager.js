@@ -219,6 +219,8 @@ const CLOSE = 0.14;
 export function drawUi(ui, state, world) {
   // The trade window opens and closes with the trade itself.
   state.windows.trade.open = Boolean(online.trade);
+  // What you've opened, for the tutorial's town lessons.
+  for (const k of ['worldmap', 'collection', 'cook', 'online']) if (state.windows[k].open) (world.char.seen ??= {})[k] = true;
   // While trading, what you type goes to the trade's own chat (and its box is where a phone taps
   // to type).
   state.chat.sendTo = online.trade ? (words) => tradeSay(world, words) : null;

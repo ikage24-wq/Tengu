@@ -54,7 +54,9 @@ Things to do together:
 A thumb stick on the left walks and climbs (push up to talk to NPCs and take portals). On the
 right: Attack, Jump, Loot, and your first four hotkeys as skill buttons; the hotkey bar's bubbles
 can be tapped too. The speech button opens chat with the phone's keyboard. Everything else (menus,
-windows, NPCs) works by tapping.
+windows, NPCs) works by tapping. Options > Phone sets the button size (small, normal, big), how
+see-through they are, a left-handed layout (stick on the right), and a little vibration on each
+press, with a preview.
 
 ## Run it
 
@@ -350,7 +352,10 @@ to clear it.
   be switched off in the creator). Kuro, a young tengu, walks them through 16 short lessons
   across three maps: walking, jumping and climbing on the beach, the bag, gear and stats, fighting
   and looting Kitsune Kits on the practice field, potions, skills and hotkeys, then a boat from
-  the dock to Sprout Village. A hint card at the top of the screen shows the current lesson.
+  the dock to Sprout Village. A hint card at the top of the screen shows the current lesson (in
+  words for the stick and buttons when you play on a phone), with a Skip button. Six town lessons
+  follow in Sprout Village (also for characters who skip the island): the story's gold-star
+  quests, the World Map's guide trail, the Collection, fishing, cooking, and playing with friends.
   Kuro's first quest offers a practice weapon of your choice (sword, wand, bow or dagger); a
   Novice's Auto stats follow the weapon in hand (STR, INT, DEX or LUK).
 - **Mochi pets** — adopt a Mochi egg for 3,000 Cash in the Mochi window (P, or from the Cash

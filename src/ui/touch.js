@@ -9,19 +9,52 @@ import { HOTKEYS } from '../core/character.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { drawSkillIcon, drawItemIcon } from '../render/icons.js';
 import { text, icon } from './kit.js';
+import { settings } from '../core/settings.js';
 
-const STICK = { x: 66, y: 260, r: 34, grab: 70 };
+const BASE = {
+  STICK: { x: 66, y: 260, r: 34, grab: 70 },
+  ATTACK: { x: 594, y: 268, r: 23, code: 'KeyZ', label: null, color: '#ff8fc1', dark: '#c8467f' },
+  JUMP: { x: 551, y: 296, r: 16, code: 'Space', label: 'Jump', color: '#8fd3ff', dark: '#3f8fd0' },
+  LOOT: { x: 512, y: 304, r: 11, code: 'KeyX', label: 'Loot', color: '#ffe08a', dark: '#c99a1f' },
+  CHAT: { x: 622, y: 136, r: 11, code: null, label: 'Chat', color: '#c9b6ff', dark: '#7a5cc8' },
+  EMOTE: { x: 622, y: 164, r: 11, code: 'KeyT', label: 'Emote', color: '#ffc6e0', dark: '#e0659f' },
+};
 const DEAD = 11;
-const ATTACK = { x: 594, y: 268, r: 23, code: 'KeyZ', label: null, color: '#ff8fc1', dark: '#c8467f' };
-const JUMP = { x: 551, y: 296, r: 16, code: 'Space', label: 'Jump', color: '#8fd3ff', dark: '#3f8fd0' };
-const LOOT = { x: 512, y: 304, r: 11, code: 'KeyX', label: 'Loot', color: '#ffe08a', dark: '#c99a1f' };
-const CHAT = { x: 622, y: 136, r: 11, code: null, label: 'Chat', color: '#c9b6ff', dark: '#7a5cc8' };
-const EMOTE = { x: 622, y: 164, r: 11, code: 'KeyT', label: 'Emote', color: '#ffc6e0', dark: '#e0659f' };
-// Skill buttons in an arc above the Attack button.
-const ARC = [195, 230, 265, 300].map((deg) => {
-  const a = (deg * Math.PI) / 180;
-  return { x: ATTACK.x + Math.cos(a) * 52, y: ATTACK.y + Math.sin(a) * 52, r: 13.5 };
-});
+// The phone settings: how big the controls are, how see-through, and which side the stick is on.
+const SIZES = { small: 0.82, normal: 1, big: 1.22 };
+const ALPHAS = { clear: 0.55, soft: 1, solid: 1.3 };
+let STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, ARC;
+let FADE = 1;
+// Lays the controls out from the settings: each grows from its own corner of the screen (the
+// stick from the bottom left, the buttons from the bottom right, chat and emotes from the right
+// edge), and left-handed play mirrors the whole set.
+function relayout() {
+  const k = SIZES[settings.touchSize] ?? 1;
+  const flip = settings.touchLeft;
+  FADE = ALPHAS[settings.touchAlpha] ?? 1;
+  const place = (b, cx, cy) => {
+    const x = cx + (b.x - cx) * k;
+    return { ...b, x: flip ? VW - x : x, y: cy + (b.y - cy) * k, r: b.r * k, k, ...(b.grab ? { grab: b.grab * k } : {}) };
+  };
+  STICK = place(BASE.STICK, 0, VH);
+  ATTACK = place(BASE.ATTACK, VW, VH);
+  JUMP = place(BASE.JUMP, VW, VH);
+  LOOT = place(BASE.LOOT, VW, VH);
+  CHAT = place(BASE.CHAT, VW, 150);
+  EMOTE = place(BASE.EMOTE, VW, 150);
+  // Skill buttons in an arc above the Attack button (mirrored with it).
+  ARC = [195, 230, 265, 300].map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    return { x: ATTACK.x + (flip ? -1 : 1) * Math.cos(a) * 52 * k, y: ATTACK.y + Math.sin(a) * 52 * k, r: 13.5 * k, k };
+  });
+}
+relayout();
+
+// Where the controls sit now (for the preview in Options).
+export function touchLayout() {
+  relayout();
+  return { fade: FADE, parts: [STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, ...ARC] };
+}
 // The HUD's hotkey bubbles (see ui/hud.js).
 const HK = { x: 380, step: 21, y: 329.5, d: 19 };
 
@@ -37,6 +70,7 @@ export function createTouch(canvas, input) {
     // Phones play best full screen (where the browser allows it).
     if (!t.on) document.documentElement.requestFullscreen?.({ navigationUI: 'hide' }).catch(() => {});
     t.on = true;
+    input.touch = true;
     for (const touch of e.changedTouches) start(t, touch.identifier, toGame(touch), field);
   }, { passive: false });
   canvas.addEventListener('touchmove', (e) => {
@@ -124,8 +158,9 @@ function overWindow(t, p) {
 
 function start(t, id, p, field) {
   const { input } = t;
+  relayout();
   if (controlsUp(t) && !overWindow(t, p)) {
-    if (!t.stick && Math.hypot(p.x - STICK.x, p.y - STICK.y) < STICK.grab && p.y < 322) {
+    if (!t.stick && Math.hypot(p.x - STICK.x, p.y - STICK.y) < STICK.grab && p.y < 326) {
       t.stick = { id, x: p.x, y: p.y, dirs: new Set() };
       t.fingers.set(id, { kind: 'stick' });
       steer(t, p);
@@ -218,7 +253,11 @@ function finish(t, id) {
 }
 
 function press(input, code) {
-  if (!input.held.has(code)) input.pressed.add(code);
+  if (!input.held.has(code)) {
+    input.pressed.add(code);
+    // A little buzz under the thumb.
+    if (settings.touchVibrate) navigator.vibrate?.(9);
+  }
   input.held.add(code);
 }
 
@@ -261,6 +300,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
     return;
   }
   if (ui.chat?.typing == null) t.chatOpen = false;
+  relayout();
   const time = performance.now() / 1000;
   ctx.save();
   drawStick(ctx, t);
@@ -287,7 +327,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.beginPath();
-      ctx.arc(0, 0, b.r - 2, 0, Math.PI * 2);
+      ctx.arc(0, 0, 11.5, 0, Math.PI * 2);
       ctx.clip();
       ctx.scale(1.35, 1.35);
       if (k.binding.skill) drawSkillIcon(ctx, k.binding.skill, -8, -8);
@@ -298,7 +338,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
       if (lv && SKILLS[k.binding.skill].type !== 'passive' && world.char.mp < skillAt(k.binding.skill, lv).mp) {
         ctx.fillStyle = 'rgba(70,110,190,0.45)';
         ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r - 2, 0, Math.PI * 2);
+        ctx.arc(b.x, b.y, 11.5, 0, Math.PI * 2);
         ctx.fill();
       }
     });
@@ -308,7 +348,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
 
 function drawStick(ctx, t) {
   const s = t.stick;
-  ctx.globalAlpha = s ? 0.62 : 0.4;
+  ctx.globalAlpha = Math.min(1, (s ? 0.62 : 0.4) * FADE);
   ctx.fillStyle = '#fffaf8';
   ctx.beginPath();
   ctx.arc(STICK.x, STICK.y, STICK.r + 6, 0, Math.PI * 2);
@@ -320,11 +360,12 @@ function drawStick(ctx, t) {
   ctx.fillStyle = '#9a7cc8';
   for (let i = 0; i < 4; i++) {
     const a = (i * Math.PI) / 2;
-    const cx = STICK.x + Math.cos(a) * (STICK.r - 4);
-    const cy = STICK.y + Math.sin(a) * (STICK.r - 4);
+    const cx = STICK.x + Math.cos(a) * (STICK.r - 4 * STICK.k);
+    const cy = STICK.y + Math.sin(a) * (STICK.r - 4 * STICK.k);
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(a);
+    ctx.scale(STICK.k, STICK.k);
     ctx.beginPath();
     ctx.moveTo(4, 0);
     ctx.lineTo(-2.5, -4);
@@ -336,7 +377,11 @@ function drawStick(ctx, t) {
   // The knob, which leans with your thumb.
   const kx = STICK.x + (s?.dx ?? 0);
   const ky = STICK.y + (s?.dy ?? 0);
-  ctx.globalAlpha = s ? 0.92 : 0.6;
+  ctx.globalAlpha = Math.min(1, (s ? 0.92 : 0.6) * FADE);
+  ctx.save();
+  ctx.translate(kx, ky);
+  ctx.scale(STICK.k, STICK.k);
+  ctx.translate(-kx, -ky);
   ctx.fillStyle = '#c9b6ff';
   ctx.beginPath();
   ctx.arc(kx, ky + 2, 15, 0, Math.PI * 2);
@@ -352,6 +397,7 @@ function drawStick(ctx, t) {
   ctx.beginPath();
   ctx.ellipse(kx - 4, ky - 6, 6, 3, -0.3, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
   ctx.globalAlpha = 1;
 }
 
@@ -359,7 +405,7 @@ function drawStick(ctx, t) {
 function drawButton(ctx, t, b, time, face) {
   const held = b.code ? t.input.held.has(b.code) : false;
   const sink = held ? 2 : 0;
-  ctx.globalAlpha = held ? 0.95 : 0.72;
+  ctx.globalAlpha = Math.min(1, (held ? 0.95 : 0.72) * FADE);
   ctx.fillStyle = b.dark;
   ctx.beginPath();
   ctx.arc(b.x, b.y + 2, b.r, 0, Math.PI * 2);
@@ -380,6 +426,11 @@ function drawButton(ctx, t, b, time, face) {
   ctx.globalAlpha = 1;
   ctx.save();
   ctx.translate(0, sink);
+  // The face is drawn at the normal size, scaled with the button.
+  const k = b.k ?? 1;
+  ctx.translate(b.x, b.y);
+  ctx.scale(k, k);
+  ctx.translate(-b.x, -b.y);
   face();
   ctx.restore();
   if (b.label && b.r >= 16) text(ctx, b.label, b.x, b.y + b.r + 9 + sink, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: b.dark });

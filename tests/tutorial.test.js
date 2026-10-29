@@ -8,7 +8,7 @@ import { createWorld, updateWorld, loadMap, useItem } from '../src/world/world.j
 import { createCharacter, autoAssignAp, learnSkill, equipFromBag } from '../src/core/character.js';
 import { acceptQuest, completeQuest } from '../src/core/quests.js';
 import { addItem, countItem } from '../src/core/inventory.js';
-import { LESSONS, currentLesson } from '../src/world/tutorial.js';
+import { LESSONS, currentLesson, ISLAND_LESSONS, skipLesson } from '../src/world/tutorial.js';
 import { MAPS } from '../src/data/maps.js';
 
 const DT = 1 / 60;
@@ -94,14 +94,45 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   w.body.x = boat.x;
   run(w, keys('ArrowUp'), 0.3);
   assert.equal(w.map.id, 'sprout', 'sailed to Sprout Village');
+  assert.equal(step(w), ISLAND_LESSONS, 'island lessons over');
+  // The town lessons: the story, the map, the Collection, fishing, cooking, friends.
+  acceptQuest(c, 'story_1_1');
+  run(w, idle, 0.1);
+  assert.equal(step(w), ISLAND_LESSONS + 1, 'began the story');
+  c.seen = { worldmap: true, collection: true };
+  run(w, idle, 0.1);
+  assert.equal(step(w), ISLAND_LESSONS + 3, 'opened the map and the Collection');
+  c.fishBook = { fish_minnow: { n: 1, best: 10 } };
+  c.seen.cook = true;
+  c.seen.online = true;
+  run(w, idle, 0.1);
   assert.equal(step(w), LESSONS.length, 'tutorial over');
   assert.equal(currentLesson(c), null);
 });
 
-test('a character who skips the island has no tutorial', () => {
+test('any lesson can be skipped', () => {
+  const c = createCharacter('Skippy', {});
+  Object.assign(c, { mapId: 'dawnbeach', portal: 'start', tutorial: { step: 0 } });
+  const w = createWorld(c);
+  run(w, idle, 0.1);
+  assert.equal(step(w), 0);
+  skipLesson(w);
+  assert.equal(step(w), 1);
+  assert.equal(currentLesson(c).step, 1);
+});
+
+test('every lesson has a hint for the phone controls too', () => {
+  for (const l of LESSONS) assert.ok(l.phone, l.hint);
+});
+
+test('a character who skips the island has no island lessons', () => {
   const c = createCharacter('Skipper', {});
   const w = createWorld(c);
   assert.equal(w.map.id, 'sprout');
   run(w, idle, 0.2);
   assert.equal(currentLesson(c), null);
+  // (New characters who skip it start on the town lessons.)
+  c.tutorial = { step: ISLAND_LESSONS };
+  run(w, idle, 0.1);
+  assert.equal(currentLesson(c).step, ISLAND_LESSONS);
 });

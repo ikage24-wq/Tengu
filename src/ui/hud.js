@@ -21,7 +21,7 @@ import { groundAt } from '../world/physics.js';
 import { questMarker } from './npc.js';
 import { drawQuestTracker } from './quests.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
-import { currentLesson } from '../world/tutorial.js';
+import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
 import { inParty } from '../net/together.js';
 
@@ -836,11 +836,13 @@ function drawTutorial(ui, world) {
   const lesson = currentLesson(world.char);
   if (!lesson) return;
   const { ctx } = ui;
-  const parts = lesson.hint.split(/(\[[^\]]+\])/).filter(Boolean);
+  // On a phone, the hint for the touch controls.
+  const hint = ui.input?.touch && lesson.phone ? lesson.phone : lesson.hint;
+  const parts = hint.split(/(\[[^\]]+\])/).filter(Boolean);
   const size = 8.5;
   ctx.font = font(size, true);
   const widths = parts.map((p) => (p.startsWith('[') ? ctx.measureText(p.slice(1, -1)).width + 10 : ctx.measureText(p).width));
-  const w = Math.min(560, widths.reduce((a, b) => a + b, 0) + 62);
+  const w = Math.min(600, widths.reduce((a, b) => a + b, 0) + 92);
   const h = 24;
   const x = 320 - w / 2;
   const age = world.now - (world.char.tutorial.at ?? -9);
@@ -869,5 +871,11 @@ function drawTutorial(ui, world) {
     } else text(ctx, p, cx, y + 15.5, { size, bold: true, color: COLORS.ink });
     cx += widths[i];
   });
+  // Skip this lesson.
+  const sx = x + w - 34;
+  const hot = hover(ui, sx, y + 5, 28, 14);
+  box(ctx, sx, y + 5, 28, 14, { fill: hot ? '#ffffff' : '#fdeef6', edge: '#f4bcd8', r: 7, width: 1 });
+  text(ctx, 'Skip', sx + 14, y + 15, { size: 6.5, bold: true, align: 'center', color: hot ? COLORS.accent : COLORS.muted });
   ctx.restore();
+  if (clicked(ui, sx, y + 5, 28, 14)) skipLesson(world);
 }

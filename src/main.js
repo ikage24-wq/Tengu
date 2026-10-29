@@ -23,6 +23,7 @@ import { updateMusic } from './audio/music.js';
 import { stopAmbience } from './audio/ambience.js';
 import { preloadFxSprites } from './render/fx-sprites.js';
 import { tickNet, leaveRoom, othersHere } from './net/online.js';
+import { ISLAND_LESSONS } from './world/tutorial.js';
 import { createTouch, touchFrame } from './ui/touch.js';
 
 loadSettings();
@@ -71,7 +72,7 @@ function startGame(char) {
   screen = 'game';
   autosave = AUTOSAVE_EVERY;
   if (char.tutorial && char.tutorial.step === 0) world.log('Welcome to Dawnlight Isle!', '#ffe36b');
-  else if (!char.quests.first_steps && !char.tutorial) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
+  else if (!char.quests.first_steps && (!char.tutorial || char.tutorial.step === ISLAND_LESSONS)) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
 }
 
 function loadChars() {
@@ -86,7 +87,7 @@ function newCharacter(name, look, slot = 0, tutorial = true) {
     char.mapId = 'dawnbeach';
     char.portal = 'start';
     char.tutorial = { step: 0 };
-  }
+  } else char.tutorial = { step: ISLAND_LESSONS };
   addItem(char.inventory, 'red_potion', 3);
   char.hotkeys.Digit1 = { item: 'red_potion' };
   char.hotkeys.Digit2 = { item: 'blue_potion' };
