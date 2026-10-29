@@ -2752,6 +2752,8 @@ test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and f
   assert.ok(froze, 'and freezes them');
   // Drifting after the Onmyoji, she leaves frost on the ground.
   w.mobs.forEach((m) => { m.x += 3000; });
+  w.yuki.act = null;
+  w.yuki.body.x = w.body.x - 30;
   w.body.x += 200;
   let prints = 0;
   for (let i = 0; i < 60 * 3; i++) {
@@ -2764,6 +2766,9 @@ test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and f
 test("the yuki-onna's cold builds up on a monster until it freezes, and her question heals the Onmyoji", () => {
   const w = onmyoji();
   const k = w.yuki;
+  // (The rest of the troupe stand back.)
+  w.oni.next = w.tengu.next = Infinity;
+  w.oni.act = w.tengu.act = null;
   const m = w.mobs.find((o) => o.hp > 0);
   Object.assign(m, { x: k.x + 60, y: k.y });
   // White Breath: chilled again and again, it frosts over and freezes solid.
@@ -2828,6 +2833,33 @@ test('the tengu flies to the Onmyoji when she is far ahead, and carries a monste
   }
   assert.ok(high > 60, `the monster is carried high (${Math.round(high)})`);
   assert.ok(m.hp < 99999, 'and hurled down');
+});
+
+test("the tengu leads the troupe: he marks a monster and the oni and yuki-onna go for it", () => {
+  const w = onmyoji();
+  const k = w.tengu;
+  const live = w.mobs.filter((m) => m.hp > 0);
+  assert.ok(live.length >= 2, 'a fight on');
+  live.forEach((m, i) => Object.assign(m, { x: k.x + 60 + i * 30, y: k.y, hp: 9999 + i * 100 }));
+  k.next = 0;
+  k.commandAt = 0;
+  k.mark = null;
+  k.act = { kind: 'command', t0: w.now, dur: 1.05, done: 0 };
+  run(w, 1.2);
+  assert.ok(k.mark, 'he marks one');
+  assert.equal(k.mark.mob, live.reduce((a, b) => (b.hp > a.hp ? b : a)), 'the toughest');
+  assert.ok(w.fx.some((f) => f.kind === 'tengumark'), 'a seal over it');
+  // (Each turns to it at their next thought, once whatever they're in the middle of is done.)
+  const mark = k.mark.mob;
+  let oni = false;
+  let yuki = false;
+  for (let i = 0; i < 60 * 4 && !(oni && yuki); i++) {
+    updateWorld(w, DT, idle);
+    oni ||= w.oni.brain.target === mark;
+    yuki ||= w.yuki.brain.target === mark;
+  }
+  assert.ok(oni, 'the oni goes for it');
+  assert.ok(yuki, 'and the yuki-onna');
 });
 
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {

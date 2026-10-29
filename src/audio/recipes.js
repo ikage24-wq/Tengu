@@ -298,6 +298,8 @@ const R = {
   yukihit: { db: -15, vary: 8, max: 3, gap: 50, layers: [{ rec: 'iceImpact', rate: 1.1, len: 400 }] },
   // The Onmyoji's tengu: a sword cut (a clean ring of steel), the gust and whirlwind of his fan,
   // his feathers flying, stones out of the sky, a beat of his wings, his vanishing.
+  tengumark: { db: -11, max: 1, layers: [{ rec: 'darkImpact', rate: 1.5, len: 500 }, sparkle('E6:0 B6:60', { db: -8 })] },
+  tengucommand: { db: -13, max: 1, layers: [{ rec: 'cloth', rate: 1.5, len: 250 }, { rec: 'clangLight', rate: 1.4, db: -8 }] },
   tengucut: { db: -11, vary: 8, max: 3, gap: 40, layers: [{ rec: 'swingSword', rate: 1.15 }, { rec: 'bladeDraw', rate: 1.3, db: -8, len: 300 }] },
   tengudash: { db: -12, max: 1, layers: [whoosh(260, 120, 2600, { focus: 0.7, db: -2 }), { rec: 'unsheathe', rate: 1.2, db: -6 }] },
   tengugust: { db: -10, max: 1, layers: [{ rec: 'windWhoosh', rate: 1.1, len: 900 }, whoosh(700, 200, 1600, { focus: 0.6, db: -4 })] },

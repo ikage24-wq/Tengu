@@ -10,6 +10,7 @@
 // From the options (tools/tengu-faces.html) the player picked the side-swept hair (cut short and
 // tapered at the back, a man's cut) and crimson eyes (2026-10-29).
 import { drawPosed, posedPoint } from './hero.js';
+import { fxSprite } from './fx-sprites.js';
 import { keys, overshoot } from './oni.js';
 import { TENGU_MOVES } from '../world/tengu.js';
 
@@ -223,6 +224,9 @@ function paintSaya(c, hip, flip, k, sheathed) {
 //     a gust; the fan twirled overhead for a whirlwind; his wings thrown wide for a storm of
 //     feathers; a careless flick of the fan at the sky for the stones; a swoop, a carry and a
 //     hurl for Spirited Away. Quick and sharp: snapping blows, then a held, showy pose;
+//   - his Leader's Mark: the fan snapped shut and thrust out at the monster, chin up, a 'hah';
+//   - his leader's aura: a dark crimson glow behind him, mountain wind turning at his feet, black
+//     feathers circling him slowly (behind and in front), all burning brighter in a fight;
 //   - his moods: a grin and a snap of the fan when he wins, a 'tch' when he misses;
 //   - his idle moods: fanning himself, flicking his hair back, setting his tokin straight,
 //     preening a wing, a scoff at the Onmyoji, admiring himself in his half-drawn blade;
@@ -373,7 +377,102 @@ function spirited(u, t) {
     tilt: 2 + 6 * carry - 4 * hurl, mouth: carry > 0.3 ? 'tengugrin' : hurl > 0.3 ? 'tenguhah' : 'tengusmirk', brows: 'focus', lid: 0.15,
   });
 }
-const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited };
+// Leader's Mark (0.38): the fan swept up and then thrust out at the monster like a pointer, his
+// wings flaring a touch, chin high, a 'hah'; held, and lowered.
+function command(u) {
+  const point = overshoot(seg(u, 0.3, 0.4));
+  const up = soft(seg(u, 0, 0.28)) * (1 - point);
+  const back = soft(seg(u, 0.75, 1));
+  const on = point * (1 - back);
+  return pose({
+    hand: lerp2(lerp2(lerp2(HAND, [2.4, -14], up), [10, -9], on), HAND, back * (1 - on)), fan: lerp(lerp(-0.35, -1, up), 1.25, on), twirl: 1.2 * on,
+    free: lerp2(FREE, [-1.4, -0.4], on), lean: -0.06 * up + 0.12 * on, wing: 0.35 * on + 0.15 * up, flap: -0.1 * on, legF: [4, 0, 9], legB: [-4.2, 0, -10],
+    tilt: -3 - 5 * on, hy: -0.2 - 0.4 * on, mouth: u > 0.36 && u < 0.62 ? 'tenguhah' : 'tengusmirk', brows: on > 0.3 ? 'raised' : 'smug', lid: 0.3, cloth: -2 * on,
+  });
+}
+const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command };
+
+// ---------- His leader's aura ----------
+// A small black feather (for the ones circling him).
+function auraFeather(c, x, y, ang, len, a) {
+  c.save();
+  c.globalAlpha *= a;
+  c.translate(x, y);
+  c.rotate(ang);
+  c.fillStyle = FEATHER;
+  c.beginPath();
+  c.moveTo(len, 0);
+  c.quadraticCurveTo(len * 0.2, -len * 0.34, -len, -0.2);
+  c.lineTo(-len, 0.2);
+  c.quadraticCurveTo(len * 0.2, len * 0.34, len, 0);
+  c.fill();
+  c.strokeStyle = SHEEN;
+  c.lineWidth = 0.4;
+  c.beginPath();
+  c.moveTo(-len, 0);
+  c.lineTo(len * 0.8, 0);
+  c.stroke();
+  c.restore();
+}
+// Behind him ('back'): the crimson glow, the wind at his feet, the feathers circling behind;
+// in front ('front'): the feathers circling in front. `k` how strong (brighter in a fight).
+function leaderAura(c, x, y, time, layer, k) {
+  if (layer === 'back') {
+    const pulse = 0.85 + 0.15 * Math.sin(time * 1.8);
+    // His sigil on the ground under him: a crimson double ring turning slowly, crow feathers set
+    // round it like the marks of a compass, a dark wash inside.
+    c.save();
+    c.translate(x, y + 1);
+    c.scale(1, 0.28);
+    c.globalAlpha *= 0.85 * k * pulse;
+    c.fillStyle = 'rgba(90, 10, 30, 0.22)';
+    c.beginPath();
+    c.arc(0, 0, 27, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = '#e8343a';
+    c.lineWidth = 2.2;
+    c.beginPath();
+    c.arc(0, 0, 27, 0, Math.PI * 2);
+    c.stroke();
+    c.lineWidth = 1.2;
+    c.beginPath();
+    c.arc(0, 0, 21, 0, Math.PI * 2);
+    c.stroke();
+    c.rotate(time * 0.5);
+    for (let i = 0; i < 8; i++) {
+      c.rotate(Math.PI / 4);
+      c.fillStyle = i % 2 ? '#e8343a' : '#17151f';
+      c.beginPath();
+      c.moveTo(21.5, -1.6);
+      c.quadraticCurveTo(25, -1, 30, 0);
+      c.quadraticCurveTo(25, 1, 21.5, 1.6);
+      c.fill();
+    }
+    c.restore();
+    // (A ring of wind going out from his feet, over and over.)
+    const ring = (time * 0.4) % 1;
+    fxSprite(c, 'celringwind', x, y, { p: ring, scale: 0.55, sy: 0.32, alpha: 0.4 * k * (1 - ring) });
+    // Embers of crimson rising off him now and then.
+    for (let i = 0; i < 7; i++) {
+      const u = (time * 0.35 + i / 7) % 1;
+      c.save();
+      c.globalAlpha *= k * 0.7 * Math.sin(u * Math.PI);
+      c.fillStyle = i % 2 ? '#ff5a4a' : '#ffb0a0';
+      c.beginPath();
+      c.arc(x + Math.sin(i * 2.7 + time) * 16, y - 6 - u * 56, 1.2, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+  }
+  for (let i = 0; i < 6; i++) {
+    const a = time * 0.7 + (i / 6) * Math.PI * 2;
+    const front = Math.sin(a) > 0;
+    if ((layer === 'front') !== front) continue;
+    const fx0 = x + Math.cos(a) * 27;
+    const fy = y - 30 + Math.sin(a * 2 + i) * 10 + Math.sin(a) * 4;
+    auraFeather(c, fx0, fy, a + Math.PI / 2 + Math.sin(time * 2 + i) * 0.4, 5 + (i % 2) * 1.4, Math.min(1, (front ? 1.1 : 0.9) * k));
+  }
+}
 
 // ---------- His moods and idle moods ----------
 // Pleased with himself: the fan snapped open before his mouth, a grin behind it, brows up.
@@ -456,12 +555,17 @@ const deg = (v) => Math.round(v);
 const STATE = new WeakMap();
 
 // `k.idle` (with `k.idleT0`) forces one idle mood, for recording.
-export function drawTenguCompanion(ctx, world, k, cam, time) {
+export function drawTenguCompanion(ctx, world, k, cam, time, layer = 'back') {
   if (!k?.body) return;
   let st = STATE.get(k);
   if (!st) {
-    st = { last: time, P: null, V: {}, walk: 0, vx: 0, idle: null, idleAt: time + 2 };
+    st = { last: time, P: null, V: {}, walk: 0, vx: 0, idle: null, idleAt: time + 2, aura: 0.6 };
     STATE.set(k, st);
+  }
+  // (In front of him, only the feathers circling that side.)
+  if (layer === 'front') {
+    leaderAura(ctx, k.x - cam.x, k.y - cam.y - (k.air ?? 0), time, 'front', st.aura);
+    return;
   }
   const dt = Math.max(0, Math.min(0.05, time - st.last));
   st.last = time;
@@ -517,6 +621,9 @@ export function drawTenguCompanion(ctx, world, k, cam, time) {
   const look = { ...TENGU_LOOK, mouth: P.mouth, lid: q(P.lid) };
   const X = Math.round(x * 4) / 4;
   const Y = Math.round(y * 4) / 4;
+  // His aura, brighter while there's a fight on.
+  st.aura += ((k.brain?.target || a ? 1 : 0.6) - st.aura) * Math.min(1, dt * 3);
+  leaderAura(ctx, X, Y, time, 'back', st.aura);
   const opts = { scale: TENGU_SCALE, facing: dir, hold: 'front', lean: { tilt: P.lean + 0.012 * shift * calm, lunge: P.lunge, lift: P.lift } };
   // His wings, from between his shoulders, behind him: the far one first.
   const root = posedPoint(X, Y, rig, opts, [15.5, 27]);

@@ -979,6 +979,74 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       }
       return true;
     }
+    case 'tengumark': {
+      // Leader's Mark: a crimson seal turning over the marked monster's head (a ring of script, a
+      // crow feather across it) with a point aimed down at it, following it till it falls.
+      const m = f.mob;
+      if (!m || m.hp <= 0) return true;
+      const k = Math.min(1, p * 12) * (1 - Math.max(0, (p - 0.9) / 0.1));
+      const mx = m.x + (x - f.x);
+      const my = m.y + (y - f.y) - m.def.h - 14 - (m.air ?? 0) + Math.sin(f.t * 3) * 1.5;
+      const pop = 1 + 0.4 * Math.max(0, 1 - f.t * 5);
+      ctx.save();
+      ctx.globalAlpha *= k;
+      ctx.translate(mx, my);
+      ctx.scale(pop, pop);
+      ctx.shadowColor = 'rgba(255, 60, 60, 0.9)';
+      ctx.shadowBlur = 6;
+      ctx.strokeStyle = '#e8343a';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.arc(0, 0, 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 0.6;
+      ctx.save();
+      ctx.rotate(f.t * 1.4);
+      for (let i = 0; i < 8; i++) {
+        ctx.rotate(Math.PI / 4);
+        ctx.beginPath();
+        ctx.moveTo(4.6, -0.8);
+        ctx.lineTo(5.8, 0);
+        ctx.lineTo(4.6, 0.8);
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.shadowBlur = 0;
+      // The feather across it.
+      ctx.rotate(-0.7);
+      ctx.fillStyle = '#17151f';
+      ctx.beginPath();
+      ctx.moveTo(5, 0);
+      ctx.quadraticCurveTo(1, -2, -5, -0.2);
+      ctx.lineTo(-5, 0.2);
+      ctx.quadraticCurveTo(1, 2, 5, 0);
+      ctx.fill();
+      ctx.strokeStyle = '#e8343a';
+      ctx.lineWidth = 0.4;
+      ctx.beginPath();
+      ctx.moveTo(-5.4, 0);
+      ctx.lineTo(4.4, 0);
+      ctx.stroke();
+      ctx.restore();
+      // The point aimed down at it.
+      ctx.save();
+      ctx.globalAlpha *= k;
+      ctx.fillStyle = '#e8343a';
+      const by = my + 10 + Math.sin(f.t * 6) * 1.2;
+      ctx.beginPath();
+      ctx.moveTo(mx - 2.4, by);
+      ctx.lineTo(mx + 2.4, by);
+      ctx.lineTo(mx, by + 3);
+      ctx.fill();
+      ctx.restore();
+      return true;
+    }
+    case 'tengucommand': {
+      // The snap of his fan as he marks it: a crimson flash and a few feathers.
+      fxSprite(ctx, 'celhitred', x, y, { p, scale: 0.3, flip });
+      for (let i = 0; i < 4; i++) feather(ctx, x + (i - 1.5) * 6 * (1 + p), y - 4 - 12 * p + i * 2, i + p * 3, 3.6, 1 - p);
+      return true;
+    }
     case 'tenguhit': {
       // His blow landing: a sharp flash.
       fxSprite(ctx, 'celhit', x, y - (f.h ?? 24) * 0.55, { p, flip, scale: f.big ? 0.5 : 0.34 });

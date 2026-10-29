@@ -18,6 +18,9 @@
 //                 on the monsters round his mark (on a cooldown)
 //   Spirited Away (kamikakushi) he swoops on a monster, carries it high into the air, and hurls it
 //                 down into the ground (never a boss; on a cooldown)
+//   Leader's Mark he's the troupe's leader: a snap of his fan at the toughest monster about puts a
+//                 crimson seal over it, and the oni and the yuki-onna go for it (world/oni.js,
+//                 world/yuki.js), until it falls or the seal fades (on a cooldown)
 // He's quick and light where the oni is heavy: snapping blows on a swift clock, a hairline stop on
 // each hit. When what he was fighting goes down he's insufferably pleased with himself; when a
 // move misses, a 'tch'.
@@ -45,6 +48,7 @@ export const TENGU_MOVES = {
   whirlwind: { dur: 1.5, hits: [0.5], range: 240, r: 34, last: 1.6, every: 0.25, pct: 28, lift: 70, cool: 9 },
   feathers: { dur: 1.2, hits: [0.42], range: 270, n: 8, speed: 640, pct: 30 },
   stones: { dur: 1.1, hits: [0.4], range: 280, r: 60, n: 12, over: 0.9, pct: 26, cool: 7 },
+  command: { dur: 1.05, hits: [0.38], range: 300, last: 7, cool: 9 },
   spirited: { dur: 2.5, swoop: [0.08, 0.24], rise: [0.26, 0.6], hurl: 0.68, slam: 0.8, land: [0.82, 1], high: 110, reach: 160, pct: 210, cool: 12 },
 };
 // The swift clock: a breath before each blow, then fast through it, a hairline stop on the hit.
@@ -69,7 +73,7 @@ export const hasTengu = (char) => jobChain(char.job).includes('onmyoji');
 export function tenguOf(world) {
   if (!hasTengu(world.char) || !hasSpirit(world.char)) return (world.tengu = null);
   const b = world.body;
-  world.tengu ??= { act: null, next: 0, last: null, map: null, mood: null, windAt: 3, stonesAt: 5, spiritedAt: 6, flight: null, air: 0 };
+  world.tengu ??= { act: null, next: 0, last: null, map: null, mood: null, windAt: 3, stonesAt: 5, spiritedAt: 6, commandAt: 1.5, mark: null, flight: null, air: 0 };
   const k = world.tengu;
   if (k.map !== world.map.id || !k.body) {
     k.map = world.map.id;
@@ -94,8 +98,9 @@ export function tickTengu(world, dt) {
   const k = tenguOf(world);
   if (!k) return;
   const { now } = world;
-  // (His whirlwinds turn on whatever he's doing.)
+  // (His whirlwinds turn on whatever he's doing; his mark lasts till its monster falls.)
   whirls(world);
+  if (k.mark && (k.mark.mob.hp <= 0 || now >= k.mark.until)) k.mark = null;
   const had = k.brain.target;
   if (had && had.hp <= 0 && k.mood?.kind !== 'tch') k.mood = { kind: 'smug', until: now + MOOD.smug };
   if (k.mood && now >= k.mood.until) k.mood = null;
@@ -269,6 +274,15 @@ function strike(world, k, a, M, i, last) {
     }
     world.fx.push({ kind: 'tengufeatherburst', x: k.x, y: k.y - 30, dir, t: 0, dur: 0.8 });
     return list.length;
+  }
+  if (a.kind === 'command') {
+    // The toughest monster about (the most life left), marked for the troupe.
+    const m = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < M.range && Math.abs(o.y - k.y) < 120).sort((o, p) => p.hp - o.hp || Math.abs(o.x - k.x) - Math.abs(p.x - k.x))[0];
+    if (!m) return 0;
+    k.mark = { mob: m, until: world.now + M.last };
+    world.fx.push({ kind: 'tengumark', x: m.x, y: m.y, mob: m, t: 0, dur: M.last });
+    world.fx.push({ kind: 'tengucommand', x: k.x + dir * 22, y: k.y - 34, dir, t: 0, dur: 0.5 });
+    return 1;
   }
   if (a.kind === 'stones') {
     const list = world.mobs.filter((m) => alive(m) && Math.abs(m.x - k.x) < M.range && Math.abs(m.y - k.y) < 120)
@@ -460,6 +474,12 @@ function fight(world, k) {
     k.act = { kind, t0: world.now, dur: TENGU_MOVES[kind].dur, done: 0, mob: m };
   };
   const level = dy < 40;
+  // As leader: when there's a fight on and nothing marked, he marks one for the troupe.
+  const many = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < TENGU_MOVES.command.range && Math.abs(o.y - k.y) < 120).length;
+  if (!k.mark && many >= 2 && world.now >= k.commandAt) {
+    k.commandAt = world.now + TENGU_MOVES.command.cool;
+    return start('command');
+  }
   if (level && !m.def.boss && dx < TENGU_MOVES.spirited.reach && world.now >= k.spiritedAt && Math.random() < 0.35) {
     k.spiritedAt = world.now + TENGU_MOVES.spirited.cool;
     return start('spirited');

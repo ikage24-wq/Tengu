@@ -331,7 +331,9 @@ function think(world, k) {
   const nav = navOf(world.map);
   const b = world.body;
   const near = world.map.isTown ? [] : world.mobs.filter((m) => alive(m) && !(m.air > 60) && Math.abs(m.x - b.x) <= LEASH.x && Math.abs(m.y - b.y) <= LEASH.y);
-  const m = near.sort((p, o) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(o.x - b.x, o.y - b.y))[0];
+  // (The tengu leads the troupe: what he's marked comes first.)
+  const mark = world.tengu?.mark?.mob;
+  const m = mark && near.includes(mark) ? mark : near.sort((p, o) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(o.x - b.x, o.y - b.y))[0];
   if (m) {
     br.target = m;
     const ms = surfaceBelow(nav, m.x, m.y);

@@ -88,6 +88,10 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
     moves, from the tengu of the stories: Iai, the Kurama Blade (Yoshitsune's teacher), Fan Gust,
     Tengu Wind, Feather Storm, Tengu Stones (tengu-tsubute) and Spirited Away (kamikakushi). Six
     smug idles; a grin when he wins, a 'tch' when he misses.
+  - **The tengu leads the troupe** (the player's ask): a leader's aura (a crimson sigil turning on
+    the ground under him, black feathers circling him, crimson embers rising; brighter in a fight)
+    and Leader's Mark: a snap of his fan puts a crimson seal over the toughest monster, and the oni
+    and the yuki-onna go for it till it falls.
   - **The oni's look (chosen 2026-10-29):** a cute-and-badass oni girl on the player character, red
     skin, a jagged silver bob, droopy heavy-lidded gold eyes, a bored face (a flat mouth with one
     fang), a dark-and-gold diamond on her brow, crimson horns, a black battle kimono lined crimson
