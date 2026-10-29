@@ -9,6 +9,7 @@ import { paintFan } from '../render/props.js';
 import { lookFor } from '../render/townlife.js';
 import { drawSnowWolf } from '../render/snowwolf.js';
 import { groundAt } from '../world/physics.js';
+import { createAnim, stepAnim } from '../render/animator.js';
 import { stats, wornGear } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
 import { lookRows, randomLook, LOOK_TABS } from './looks.js';
@@ -226,6 +227,22 @@ function feather(ctx, len) {
   ctx.stroke();
 }
 
+// The title's own stage: Petal Meadow's look, but a long open field of gentle rolling hills
+// with no floating platforms or ladders, and a few garden pieces along the way. The camera drifts
+// slowly along it like an opening shot.
+const TITLE_W = 9000;
+const TITLE_G = 322;
+const TITLE_MAP = (() => {
+  const terrain = [[0, TITLE_G]];
+  for (let x = 400; x < TITLE_W; x += 400) terrain.push([x, TITLE_G - Math.round(10 + 10 * Math.sin(x * 0.0021) + 6 * Math.sin(x * 0.0057))]);
+  terrain.push([TITLE_W, TITLE_G]);
+  const kinds = ['flowerarch', 'beehive', 'picnic', 'signpost'];
+  const deco = [];
+  for (let x = 300, i = 0; x < TITLE_W; x += 520 + (i * 137) % 260, i++) deco.push([kinds[i % kinds.length], x]);
+  return { ...MAPS.meadow1, id: 'title', width: TITLE_W, height: 360, groundY: TITLE_G, terrain, platforms: [], ropes: [], portals: [], spawns: [], npcs: [], deco };
+})();
+const CAM_SPEED = 12;
+
 // Who's out in the meadow: a few heroes of different jobs strolling across, each doing their
 // weapon's idle bits when they stop for a breather, and Snow wolf dragging her sword after them.
 const CAST = [
@@ -235,23 +252,31 @@ const CAST = [
   { look: 5, weapon: 'dagger_30', speed: 30, start: 400, dir: -1 },
 ];
 const castLooks = CAST.map((c) => lookFor(c.look));
+// Each one's walk cycle runs on the ground they cover (render/animator.js), so their feet plant.
+const castAnims = CAST.map(() => createAnim());
+let castT = null;
 const wolf = { x: 0, y: 0, dir: 1, act: null, moving: true, vx: 20, happy: null, body: { onGround: true, rope: null, vy: 0, y: 0 } };
 const wolfWorld = { now: 0, char: { job: 'beastmaster', skills: {} }, bond: 0 };
 function cast(ctx, time, cam) {
-  const map = MAPS.meadow1;
+  const map = TITLE_MAP;
   const feet = (x) => groundAt(map, x + cam.x) - cam.y;
   const span = 760;
+  const dt = castT == null ? 0 : Math.max(0, Math.min(0.1, time - castT));
+  castT = time;
+  const onScreen = (wx) => ((((wx - cam.x) + 60) % span) + span) % span - 60;
   CAST.forEach((c, i) => {
     // Walk for a while, stop for a breather, walk on; wrapping round the screen.
     const cycle = 14;
     const ph = (time + i * 3.1) % cycle;
     const walking = ph < 9;
     const walked = Math.floor((time + i * 3.1) / cycle) * 9 + Math.min(ph, 9);
-    const x = ((c.start + c.dir * walked * c.speed) % span + span) % span - 60;
-    drawHero(ctx, castLooks[i], { weapon: { id: c.weapon } }, Math.round(x), Math.round(feet(x)), { pose: walking ? 'walk' : 'idle', time: time + i * 7, seed: i * 11, facing: c.dir, urgent: false });
+    const x = onScreen(c.start + c.dir * walked * c.speed);
+    const a = castAnims[i];
+    stepAnim(a, { vx: walking ? c.dir * c.speed : 0, vy: 0, onGround: true, rope: false, facing: c.dir, y: 0 }, dt);
+    drawHero(ctx, castLooks[i], { weapon: { id: c.weapon } }, Math.round(x), Math.round(feet(x)), { pose: walking ? 'walk' : 'idle', time: time + i * 7, seed: i * 11, facing: c.dir, urgent: false }, a);
   });
   wolfWorld.now = time;
-  wolf.x = ((time * 20) % span) - 80;
+  wolf.x = onScreen(time * 20 + 120);
   drawSnowWolf(ctx, wolfWorld, wolf, { x: 0, y: -Math.round(feet(wolf.x)) }, time);
 }
 
@@ -313,9 +338,9 @@ let awakeAt = 0;
 // MMO-style login: logo, world select, and a status bar. Returns true on Enter World.
 export function titleScreen(ui, time) {
   const { ctx } = ui;
-  const map = MAPS.meadow1;
+  const map = TITLE_MAP;
   const part = dayPart();
-  const cam = { x: 260 + time * 6, y: map.height - 360 };
+  const cam = { x: (time * CAM_SPEED) % (TITLE_W - 700), y: 0 };
   drawSceneBack(ctx, map, cam, 640, 360, time, null);
   cast(ctx, time, cam);
   petals(ctx, time);
