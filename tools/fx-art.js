@@ -4244,24 +4244,35 @@
   // A paper streamer (shide): a strip of white paper cut and folded into a zigzag, hanging from
   // (x, y) down `len`, swaying by `sway`; drawn soft, lit on one side.
   function shide(ctx, x, y, len, w, sway, a = 1, rot = 0) {
+    // Drawn bolder than its numbers say (x1.5 wide), so the folds read at game size: lit folds
+    // white, the turned-away folds a lavender shade, each fold edged a touch darker.
+    w *= 1.5;
+    len *= 1.15;
     const steps = 4;
     const pts = [];
     for (let k = 0; k <= steps; k++) {
       const u = k / steps;
       const side = k % 2 ? 1 : -1;
-      pts.push([x + Math.sin(rot) * len * u + side * w * 0.5 + sway * u * u, y + Math.cos(rot) * len * u]);
+      pts.push([x + Math.sin(rot) * len * u + side * w * 0.55 + sway * u * u, y + Math.cos(rot) * len * u]);
     }
     for (let k = 0; k < steps; k++) {
       const [x0, y0] = pts[k];
       const [x1, y1] = pts[k + 1];
-      const quad = [[x0 - w * 0.5, y0], [x0 + w * 0.5, y0], [x1 + w * 0.5, y1], [x1 - w * 0.5, y1]];
+      const cx = Math.cos(rot) * w * 0.5;
+      const cy = -Math.sin(rot) * w * 0.5;
+      const quad = [[x0 - cx, y0 - cy], [x0 + cx, y0 + cy], [x1 + cx, y1 + cy], [x1 - cx, y1 - cy]];
       ctx.save();
       ctx.globalAlpha *= a;
-      ctx.fillStyle = k % 2 ? '#e4e0ee' : '#ffffff';
+      ctx.fillStyle = k % 2 ? '#d2c9ee' : '#ffffff';
+      ctx.strokeStyle = '#a99cd8';
+      ctx.lineWidth = 0.8;
+      ctx.lineJoin = 'round';
       ctx.beginPath();
-      quad.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+      quad.forEach(([px, py], j) => (j ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
       ctx.closePath();
       ctx.fill();
+      ctx.globalAlpha *= 0.6;
+      ctx.stroke();
       ctx.restore();
     }
   }
@@ -4436,7 +4447,45 @@
   };
   // A pillar of her light (buffs going up), with her emblem: a gohei (the shrine wand of zigzag
   // paper streamers on a stick) rising in it; and Spirit building round her as wisps of light.
-  E.pillarspirit = asLight(E.pillar, SPIRIT);
+  E.pillarspirit = {
+    w: 170, h: 330, n: 8, fps: 16, px: 85, py: 318,
+    draw(ctx, i) {
+      const a = [0.5, 1, 1, 0.95, 0.85, 0.6, 0.35, 0.15][i];
+      const wid = [12, 34, 32, 30, 26, 20, 12, 6][i];
+      const top = [200, 40, 10, 10, 10, 30, 70, 130][i];
+      // A column of warm white light, soft-edged, rippling slowly upward, gold at its heart.
+      painted(ctx, 0, 0, 170, 330, (x, y) => {
+        if (y < top - 30) return [0, 0];
+        const sway = Math.sin(y / 46 - i * 0.7) * 3;
+        const d = Math.abs(x - 85 - sway) / wid;
+        if (d > 1.5) return [0, 0];
+        const shim = fbm(x / 12, y / 30 + i * 0.5, 3);
+        const fade = sstep(top - 30, top + 30, y);
+        const v = sstep(1.5, 0, d + (shim - 0.5) * 0.4) * fade;
+        return [0.5 + sstep(0.8, 0, d) * 0.5, v * a];
+      }, SPIRITR, 2);
+      // Light pooling on the ground.
+      ctx.save();
+      ctx.translate(85, 316);
+      ctx.scale(1, 0.3);
+      bloomDisc(ctx, 0, 0, 56, 56, SPIRIT, a);
+      ctx.restore();
+      // Paper streamers carried up the column on both sides, and gold bell motes.
+      const R = rng(1780);
+      for (let k = 0; k < 8; k++) {
+        const side = k % 2 ? 1 : -1;
+        const y = 300 - ((R() * 220 + i * 26) % 260);
+        if (y < top) continue;
+        shide(ctx, 85 + side * (wid + 6 + R() * 10), y, 18, 5, side * 4, a * 0.95, Math.PI + side * 0.25);
+      }
+      for (let k = 0; k < 10; k++) {
+        const x = 85 + (R() - 0.5) * wid * 2.6;
+        const y = 310 - ((R() * 280 + i * 30) % 290);
+        if (y < top) continue;
+        bloomDisc(ctx, x, y, 2.4, 2.4, k % 3 ? SPIRIT : BELL, a);
+      }
+    },
+  };
   E.embspirit = {
     w: 160, h: 160, n: 5, fps: 12, px: 80, py: 80,
     draw(ctx, i) {

@@ -23,7 +23,7 @@
 //                  bangLine: a colour for a fine line along that edge (pale hair on pale skin)
 //   eye            { y, nearX, farX, rx, ry, far (far eye width, ~0.7), tilt (outer corner lift),
 //                    iris, irisDk, irisLt, hot/hotDk/hotLt (angry iris), pupil 'round'|'slit'|
-//                    'heart'|'star', pupilC, white, lashSh, ink (lash colour), lashW (weight),
+//                    'heart'|'star'|'ring', pupilC, white, lashSh, ink (lash colour), lashW (weight),
 //                    wing (px past the corner), flicks (lash clumps), lashLen, leafLash (colour:
 //                    one leaf clump), liner (coloured wing), shadow (eyeshadow), smoky (0..1),
 //                    crease (colour, or false), lower (lower lid colour), lowerLash (colour),
@@ -353,6 +353,12 @@ function drawEye(pen, e, x, look) {
   if (E.pupil === 'slit') cl(ell(ix, iy - iry * 0.05, Math.max(0.36, irx * 0.17 * ps), iry * (0.6 + (1 - ps) * 0.25), 14), pc);
   else if (E.pupil === 'heart') cl(heartPts(ix, iy - iry * 0.08, Math.max(0.85, irx * 0.46 * ps)), hot ? mix(iris, '#ffffff', 0.75) : pc);
   else if (E.pupil === 'star') cl(starPts(ix, iy, irx * 0.48 * ps), pc);
+  else if (E.pupil === 'ring') {
+    // A doll's glass eye: a dark ring round a pale clear centre, like painted glass.
+    const pr = Math.max(0.62, irx * 0.4 * ps);
+    cl(ell(ix, iy - iry * 0.06, pr, pr * 1.15, 16), pc);
+    cl(ell(ix, iy - iry * 0.06, pr * 0.5, pr * 0.6, 12), mix(irisLt, '#ffffff', 0.4));
+  }
   else cl(ell(ix, iy - iry * 0.08, Math.max(0.5, irx * 0.3 * ps), Math.max(0.7, iry * 0.38 * ps), 14), pc);
   // Shines sit on the same side in both eyes (light from the upper left).
   const big = Math.max(0.62, irx * 0.3);

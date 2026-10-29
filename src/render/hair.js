@@ -19,8 +19,8 @@ import { R, E, T, F } from './pixel.js';
 const HX = 15.5;
 const CY = 13.2;
 
-// Twenty styles: anime, princess and fantasy, cool, punk and cute.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'spiky', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek'];
+// Twenty-two styles: anime, princess and fantasy, cool, punk and cute, and a doll's.
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'spiky', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek', 'kokeshi'];
 // Older styles draw as the closest current one; anything else unknown draws as the first.
 const RETIRED = {
   twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'spiky', hero: 'spiky',
@@ -346,6 +346,10 @@ const FRINGES = {
       [18, 18, 20.4, 22.4, 1, -0.4], [22.2, 18.2, 23.6, 22, 1, -0.3]],
     // One long lock on the open side, falling past the cheek over a little of the face.
     locks: [[[6.4, 10.2], [7.6, 14.6], [8.8, 19.4], [8.6, 23.6]]] },
+  // A doll's: one smooth blunt cut that curves gently round the brow like a painted bowl,
+  // combed lines running down into it.
+  doll: { pts: [[25, 17.2], [23.4, 15.8], [20.2, 15.1], [HX, 14.9], [10.8, 15.1], [7.6, 15.8], [6, 17.2]], lean: 0, plain: true,
+    strands: [[19.6, 5.2, 20.6, 14.4, 0.6, -0.4], [HX + 0.6, 3.8, HX + 0.8, 14.2, 0.6, 0], [11.4, 5.2, 10.4, 14.4, 0.6, 0.4]] },
   // Rounded scallops (for curly hair).
   curly: { pts: [[23.6, 13.8], [21.8, 14.8], [19.8, 13.8], [17.8, 15.2], [15.6, 14], [13.4, 15.2], [11.2, 13.8], [9.2, 14.8], [7.6, 13.8]], lean: 0, round: true },
 };
@@ -654,6 +658,50 @@ const STYLES = {
       head: [F(E(HX, 13.4, 13.4, 12.6, r.sh1)), ...puff(high)],
       hang: puff(low),
       front: bangs('curly', r, m, sideLocks(r, m, [[25.2, 11], [27.4, 15.6], [26.8, 19.6], [28.4, 22]], undefined, 4)),
+      tips: [22, 26],
+    };
+  },
+
+  // Kokeshi: a doll's bob, glossy and round as a lacquered bowl, its ends turned in under the
+  // jaw; a smooth blunt fringe; a thin lock before each ear bound in scarlet cord, ending in a
+  // tassel and a tiny gold bell; a hairpin of a scarlet bow, a gold bell and a paper streamer.
+  kokeshi(r, m) {
+    // The bob behind: wider than the skull, curving in to the nape at the jaw.
+    const bob = [[HX, 1.2], [24.6, 3.4], [29.2, 9.6], [30.2, 16.6], [29.4, 23.2], [27.2, 26.6], [24.2, 27.2], [22.6, 25.2], [HX, 23.6], [8.4, 25.2], [6.8, 27.2], [3.8, 26.6], [1.6, 23.2], [0.8, 16.6], [1.8, 9.6], [6.4, 3.4]];
+    // The bob's sides in front of the ears, turned in under the jaw.
+    const side = (dir) => {
+      const pts = [[24.2, 9.6], [27.6, 11.6], [28.8, 17.4], [28.2, 23.2], [26.6, 26.2], [24.4, 26.6], [23.4, 25], [24.8, 23.6], [24.6, 17.6], [23.4, 13.6]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.5);
+    };
+    const tuck = (dir) => {
+      const pts = [[24.4, 24.2], [26.8, 25.4], [25.4, 26.4], [23.8, 25.6]];
+      return poly(smooth(dir > 0 ? pts : fx(pts)), r.sh1);
+    };
+    // The bound lock: thin, falling to the chest, wrapped in scarlet near the top, a tassel and bell.
+    const cord = (dir) => {
+      const sp = [[25.6, 15.4], [26.4, 21], [26.2, 27], [26.6, 31.8]];
+      const spine = dir > 0 ? sp : fx(sp);
+      const mv = mover(m, 1.3);
+      const [wx, wy] = mv(spine[1]);
+      const [bx, by] = mv(spine[3]);
+      return [
+        lock(spine, 2.4, r.base, m, 1.3, 0.3),
+        F(R(wx - 1.3, wy - 0.4, 2.6, 1.1, '#e0303e')), F(R(wx - 1.3, wy + 1.1, 2.6, 0.7, '#e0303e')),
+        F(T([[bx - 0.9, by], [bx + 0.9, by], [bx + 1.2, by + 2.6], [bx - 1.2, by + 2.6]], '#e0303e')),
+        F(E(bx, by + 3.4, 0.95, 0.95, '#ffd36a')), F(E(bx - 0.3, by + 3.1, 0.35, 0.35, '#fff6d0')),
+      ];
+    };
+    // The hairpin, on the near side of the crown.
+    const pin = [
+      F(T([[21.6, 3.6], [19.4, 1.4], [19.2, 4.6]], '#e0303e')), F(T([[21.6, 3.6], [24.2, 1.2], [24.6, 4.4]], '#e0303e')), F(E(21.8, 3.6, 0.9, 0.9, '#c41e2c')),
+      F(T([[22.4, 4.2], [24, 4.6], [24.4, 6.4], [22.8, 6]], '#ffffff')), F(T([[23.4, 6.2], [25, 6.6], [25.4, 8.6], [23.8, 8.2]], '#ddd6ee')),
+      F(E(20.4, 5.8, 1.1, 1.1, '#ffd36a')), F(E(20.1, 5.5, 0.4, 0.4, '#fff6d0')), F(R(19.9, 6.4, 1, 0.3, '#c8902a')),
+    ];
+    return {
+      head: [crown(r, 0.6), mass(bob, r.sh1, m, 0.4), ...ring(r.hi, HX, 9.2, 11, 6, 206, 334, 4)],
+      hang: [],
+      front: bangs('doll', r, m, [side(1), side(-1), tuck(1), tuck(-1), ...cord(1), ...cord(-1), ...pin]),
+      top: pin,
       tips: [22, 26],
     };
   },

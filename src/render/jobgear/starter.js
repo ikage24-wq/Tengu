@@ -25,6 +25,9 @@ const KHAKI_DARK = '#a8916a';
 const BROWN = '#8a5a3c';
 const NAVY = '#3f3b63';
 const SHOE_DARK = '#4a3d5c';
+const SCARLET = '#e0303e';
+const SCARLET_DK = '#a8182a';
+const PAPER_SH = '#ddd6ee';
 
 const TORSO = torsoPts();
 const lum = (hex) => {
@@ -252,6 +255,56 @@ const OUTFITS = {
       F(limb(11, 37, 9.6, 50, 0.4, 0.3, p.dark)), F(limb(20.4, 37, 21.8, 50, 0.4, 0.3, p.dark))],
     shoe: (p, k, c) => [k.poly([[-1.8, -1.2], [1.8, -1.2], [2.6, 0.4], [3, 2.2], [2.4, 3], [-2.4, 3], [-2.8, 2.2], [-2.6, 0.4]], c(p.skin)),
       k.dot(-1.6, 2.4, 0.5, c(shade(p.skin, -7))), k.dot(-0.2, 2.6, 0.5, c(shade(p.skin, -7))), k.dot(1.2, 2.6, 0.5, c(shade(p.skin, -7)))],
+  },
+
+  // A paper doll's kimono: white as shrine paper, crossed at the collar over scarlet, bound with a
+  // scarlet cord tied in a bow with a gold bell; wide sleeves that end in hanging zigzag paper
+  // streamers (shide); a short skirt whose hem is cut and folded into shide all round; white tabi
+  // socks and little scarlet-thonged sandals.
+  paperdoll: {
+    top: (p) => [T(loose(35.4, 0.8), p.main),
+      // The crossed collar, the scarlet underlayer showing in the V.
+      T([[MID - 3.6, 25.6], [MID + 3.6, 25.6], [MID, 31]], SCARLET), T([[MID + 1.6, 25.6], [MID + 4.2, 25.6], [MID + 0.2, 31.4], [MID - 1.4, 31.4]], p.main),
+      F(limb(MID + 4, 25.7, MID, 31.2, 0.55, 0.55, p.light)), F(limb(MID - 3.6, 25.7, MID - 0.6, 30, 0.5, 0.5, p.dark)),
+      // The scarlet cord sash, wound twice, its bow and the gold bell hanging from the knot.
+      T([[9.4, 32.2], [21.8, 32], [21.8, 34.6], [9.4, 34.8]], p.dark), F(R(9.4, 32.5, 12.4, 0.8, SCARLET)), F(R(9.4, 33.6, 12.4, 0.8, SCARLET)),
+      ...bow(MID + 2.6, 33.2, 1.6, SCARLET, SCARLET_DK),
+      F(limb(MID + 2.6, 33.6, MID + 3, 36, 0.3, 0.3, SCARLET_DK)), F(E(MID + 3, 36.8, 1.1, 1.1, GOLD)), F(E(MID + 2.7, 36.5, 0.4, 0.4, '#fff6d0')), F(R(MID + 2.5, 37.5, 1, 0.3, '#c8902a')),
+      F(limb(11.6, 27.6, 12.4, 31.4, 0.4, 0.4, p.dark)), F(limb(19.8, 27.8, 19.2, 31.4, 0.4, 0.4, p.dark))],
+    sleeve: (p) => p.main,
+    long: true,
+    shoulder: (p) => [E(0, 1, 2.8, 2.4, p.main), F(E(0, 2.4, 2.2, 0.5, p.dark))],
+    hand: (p, hx, hy, ex, ey) => {
+      // The sleeve's wide mouth at the wrist, the little hand out of it, and the streamer
+      // hanging straight down from under it in zigzag folds, lit and shaded in turn.
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const at = (a, b) => [hx + ux * a - uy * b, hy + uy * a + ux * b];
+      const [mx, my] = at(-1.2, 0);
+      const out = [T([at(-2.6, -1.6), at(-2.6, 1.6), at(0.2, 2.6), at(0.6, -2.6)], p.main), F(T([at(-0.2, -2.2), at(0.5, -2.4), at(0.2, 2.4), at(-0.4, 2.2)], p.dark)),
+        F(E(...at(1.4, 0), 1.1, 1.1, p.skin))];
+      for (let k = 0; k < 4; k++) {
+        const side = k % 2 ? 1 : -1;
+        const y0 = my + 1.4 + k * 1.9;
+        const x0 = mx + side * 0.8;
+        out.push(F(T([[x0 - 1.2, y0], [x0 + 1.2, y0], [x0 + 1.2 - side * 1.6, y0 + 2], [x0 - 1.2 - side * 1.6, y0 + 2]], k % 2 ? PAPER_SH : '#ffffff')));
+      }
+      return out;
+    },
+    legs: () => ({ top: '#ffffff', low: '#ffffff', pad: null }),
+    skirt: (p) => {
+      // A short skirt to the knee, its hem cut into paper streamer folds, lit and shaded in turn.
+      const out = [T([[9.2, 34.2], [22, 34.2], [23.6, 42.6], [7.6, 42.6]], p.main), F(limb(MID - 0.6, 35, MID - 1.6, 42.4, 0.5, 0.5, p.dark)), F(limb(MID, 35, MID - 0.8, 42.4, 0.4, 0.4, p.light))];
+      for (let k = 0; k < 7; k++) {
+        const x = 7.8 + k * 2.3;
+        out.push(F(T([[x, 42.2], [x + 2.3, 42.2], [x + 2.6, 44.6], [x + 0.3, 44.6]], k % 2 ? PAPER_SH : '#ffffff')));
+        out.push(F(T([[x + 0.3, 44.4], [x + 2.6, 44.4], [x + 2.1, 46.4], [x - 0.2, 46.4]], k % 2 ? '#ffffff' : PAPER_SH)));
+      }
+      out.push(F(R(7.8, 41.6, 16, 0.6, SCARLET)));
+      return out;
+    },
+    shoe: (p, k, c) => [k.poly([[-2.2, 1.8], [2.6, 1.8], [3, 3], [-2.4, 3]], c('#d9b88a')), k.poly([[-1.8, -1.2], [1.8, -1.2], [2.4, 1.8], [-2, 1.8]], c('#ffffff')),
+      k.poly([[0.2, -0.6], [0.8, -0.6], [1.6, 1.8], [-0.6, 1.8]], c(SCARLET))],
   },
 
   // A summer sundress: thin straps and a sweetheart bodice, a ribbon at the waist, and a skirt in

@@ -291,6 +291,8 @@ const EYE_LOOK = {
   sleepy: { rx: 2.05, ry: 2.4, tilt: 0.06, wing: 0.7, flicks: 1, iris: 1.3, open: 0.56 },
   happy: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
   wink: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
+  // A doll's: big and perfectly round, almost all iris, a glass ring for a pupil, barely a lash.
+  doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -384,8 +386,9 @@ function earShapes(style, c, inner) {
 }
 
 // Eyebrow styles, each its own silhouette (art bible: brows taper at both ends, in the hair's
-// darkest shade, never ink). `round` is hikimayu: small soft ovals set high. `none` hides them.
-export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'stubby', 'none'];
+// darkest shade, never ink). `round` is hikimayu: small soft ovals set high; `dots` a doll's
+// painted brows, two tiny dots side by side set very high. `none` hides them.
+export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'stubby', 'dots', 'none'];
 
 // A tapered ribbon along `pts`, `ws` thick at each point.
 function ribbon(pts, ws, c) {
@@ -427,6 +430,15 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
       // Hikimayu: a small soft oval, set high over the inner half of the eye.
       const [cx, cy] = at(0.3, 0.9);
       return F(E(cx, cy, 0.95 + grow, 0.72 + grow, c));
+    }
+    case 'dots': {
+      // A doll's painted brows: two tiny dots side by side, high over the inner half of the eye.
+      // Painted on in a soft rose, with no skin edge (they sit on the fringe like paint on lacquer).
+      if (grow) return [];
+      const [ax, ay] = at(-0.1, 1.3);
+      const [bx, by] = at(0.62, 1.5);
+      const paint = mix(c, '#e07a8c', 0.6);
+      return [F(E(ax, ay, 0.5, 0.45, paint)), F(E(bx, by, 0.42, 0.38, paint))];
     }
     case 'thin':
       return ribbon([at(0), at(0.45, 0.35), at(1, 0.1)], g([0.35, 0.5, 0.3]), c);
@@ -840,7 +852,7 @@ function headShapes(look, g, rig) {
     [-1, 1].forEach((side, i) => {
       if (covered && side > 0) return;
       const args = [FACE_X + EYE_DX * side, side, brows[i][0], brows[i][1]];
-      out.push(brow(...args, mix(skin, sk.sh1, 0.25), browStyle, 0.42), brow(...args, hr.brow, browStyle));
+      out.push(...[brow(...args, mix(skin, sk.sh1, 0.25), browStyle, 0.42), brow(...args, hr.brow, browStyle)].flat());
     });
   }
   if (f.extra) out.push(...faceExtras(f.extra));
