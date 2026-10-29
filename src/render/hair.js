@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite'];
+export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -871,6 +871,9 @@ Object.assign(FRINGES, {
   onispike: { pts: [[24.2, 13.6], [22, 9.8], [20.2, 15], [17.8, 10.2], [15.6, 16.6], [13.2, 10.2], [11, 15], [9.2, 9.8], [6.8, 13.6]], lean: 0.3 },
   // Messy and swept to the far side, long ragged points falling past the far eye.
   onimessy: { pts: [[24.4, 12.6], [23.2, 11.2], [21.8, 13.2], [20.4, 11.4], [18.6, 14], [17.2, 11.8], [15.2, 14.6], [14, 12.2], [11.8, 15], [10.8, 12.8], [8.2, 14.6]], lean: -0.8 },
+  // The yuki-onna's: long, thin strands falling over her brow in an uneven curtain, parted a little
+  // off-centre, a few wisps longer than the rest.
+  yukicurtain: { pts: [[24.6, 17.4], [23.4, 13.8], [22, 16.4], [20.6, 12.6], [19.2, 15], [17.6, 11.2], [16, 13.6], [14.6, 10.8], [13, 14.6], [11.4, 12.4], [9.8, 16.2], [8.4, 13.4], [6.6, 17]], lean: 0, softTips: true },
   // Short and choppy, pushed up off the brow (the hair all dragged up into the topknot).
   onishort: { pts: [[24.4, 11.6], [22.8, 9.2], [21, 11], [19, 8.4], [16.8, 10], [14.6, 8.2], [12.4, 10], [10.2, 8.6], [8.4, 10.6], [6.6, 11.6]], lean: 0.4 },
 });
@@ -927,6 +930,40 @@ Object.assign(STYLES, {
         lock([[-3, 38], [-6.4, 44], [-6, 41]], 3, r.sh1, m, 1.1), lock([[-3, 38], [-1, 45.4], [-2, 42]], 3, r.sh1, m, 1.1), ...tie],
       front: bangs('onispike', r, m, sideLocks(r, m, [[25, 11], [26.2, 16], [25.8, 20]], undefined, 2.8)),
       top: tie,
+      tips: [99, 99],
+    };
+  },
+  // The yuki-onna's: straight and heavy, falling to the floor behind her like a black waterfall,
+  // two long locks in front of her shoulders to her waist; a thin uneven curtain of bangs.
+  yukistraight(r, m) {
+    const front = [[24.8, 12], [26, 20], [25.6, 28], [26.2, 36], [25.8, 42]];
+    return {
+      head: [crown(r, 0.3)],
+      hang: [napeShadow(r), ...sheet({ len: 58, flare: 14.6, ends: 'level', n: 4, wave: 0.4, w0: 12 }, r, m, 0.7)],
+      front: bangs('yukicurtain', r, m, [lock(front, 3.4, r.base, m, 1.1, 0.4), lock(fx(front), 3.4, r.sh1, m, 1.1, 0.4)]),
+      tips: [44, 54],
+    };
+  },
+  // The yuki-onna's: long soft waves of silver, loose to the backs of her knees, a wave over each
+  // cheek; curtain bangs.
+  yukiwave(r, m) {
+    const front = [[25, 12], [27.2, 18], [26, 24], [27.6, 30], [26.4, 36]];
+    return {
+      head: [crown(r, 0.8)],
+      hang: [napeShadow(r), ...sheet({ len: 50, flare: 16.4, ends: 'curls', n: 5, wave: 2.4, w0: 12.6 }, r, m, 0.85)],
+      front: bangs('yukicurtain', r, m, [lock(front, 3.8, r.base, m, 1.2, 0.3), lock(fx(front), 3.8, r.sh1, m, 1.2, 0.3)]),
+      tips: [38, 46],
+    };
+  },
+  // The yuki-onna's: white hair lifted and streaming out behind her as if in a blizzard wind, long
+  // strands flying back from the crown; wild uneven bangs.
+  yukistorm(r, m) {
+    const fly = (pts, w, c = r.base, k = 1.3) => lock(pts, w, c, m, k, 0.1);
+    return {
+      head: [crown(r, 0.6), fly([[10, 4], [2, 1], [-8, 2], [-16, 5]], 5, r.sh1, 0.6), fly([[9, 8], [0, 7], [-10, 10], [-18, 14]], 5.4, r.sh1, 0.6)],
+      hang: [napeShadow(r), fly([[6, 14], [-3, 16], [-12, 20], [-20, 25]], 6, r.sh1), fly([[6, 20], [-2, 25], [-9, 31], [-15, 38]], 5.6, r.sh1), fly([[8, 24], [3, 32], [-2, 40], [-6, 47]], 5, r.sh1),
+        fly([[7, 10], [-4, 10], [-14, 13], [-22, 18]], 3, r.base), fly([[7, 18], [-3, 21], [-11, 26], [-18, 32]], 3, r.base)],
+      front: bangs('yukicurtain', r, m, [fly([[25, 12], [27, 18], [25, 25], [22, 31]], 3, r.base, 1.4)]),
       tips: [99, 99],
     };
   },

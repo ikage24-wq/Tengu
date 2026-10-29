@@ -237,4 +237,89 @@ Object.assign(TROUPE_OUTFITS, {
   onibattle_one: { ...TROUPE_OUTFITS.onibattle, hat: () => [...crimsonHorn(15.5, 4.6, 13, 2.9, 1.2)] },
   onibattle_swept: { ...TROUPE_OUTFITS.onibattle, hat: () => [...crimsonHorn(9.6, 5.4, 13, 2.1, -9), ...crimsonHorn(21.4, 5.4, 13, 2.1, 9)] },
 });
+// ---------- The yuki-onna's (three designs to pick from) ----------
+//   yukiclassic  the snow woman of the stories: a long white kimono to the floor, pale blue snowflakes
+//                drifting across it, a pale blue obi with a silver cord, wide trailing sleeves
+//   yukiprincess a frost princess: layered furisode in ice blue over white with very long sleeves,
+//                a silver obi with an icicle clasp, crystal ornaments in her hair
+//   yukighost    a blizzard ghost: a white kimono torn to tatters at the hem and sleeve ends, fading
+//                to nothing, a thin grey-blue sash, her feet bare
+const SNOW = '#f6f8ff';
+const SNOW_SH = '#d6def2';
+const ICE = '#9cc8f0';
+const ICE_DK = '#5a8ac8';
+const ICE_LT = '#d8ecff';
+const SILVER_C = '#c8d4e8';
+const FROST = '#eaf4ff';
+// A little six-armed snowflake at (x, y).
+const flake = (x, y, r, c) => [0, 1, 2].map((i) => {
+  const a = (i / 3) * Math.PI;
+  return F(limb(x - Math.cos(a) * r, y - Math.sin(a) * r, x + Math.cos(a) * r, y + Math.sin(a) * r, 0.22, 0.22, c));
+});
+// The kimono's body to the waist, crossed at the collar (`collar` the under-collar's colour).
+const yukiTop = (main, collar, line) => [T([...TORSO.slice(0, 6), [22.4, 36], [8.8, 36], ...TORSO.slice(8)], main),
+  T([[MID - 3.4, 25.6], [MID + 3.4, 25.6], [MID, 31]], collar), T([[MID + 1.4, 25.6], [MID + 4.2, 25.6], [MID + 0.2, 32], [MID - 1.6, 32]], main),
+  F(limb(MID + 4, 25.7, MID, 31.8, 0.5, 0.5, line)), F(limb(MID - 3.6, 25.8, MID - 0.8, 30.4, 0.45, 0.45, line))];
+const yukiFeet = (p, k, c) => [k.poly([[-2.2, -1], [2.6, -1], [3, 2.6], [-2.4, 2.6]], c(p.skin))];
+Object.assign(TROUPE_OUTFITS, {
+  yukiclassic: {
+    top: (p) => [...yukiTop(SNOW, ICE_LT, SNOW_SH), ...flake(11.4, 29, 0.9, ICE), ...flake(19.6, 33.4, 0.7, ICE),
+      T([[8.8, 31.6], [22.4, 31.4], [22.6, 35], [8.6, 35.2]], ICE), F(limb(8.8, 33.3, 22.4, 33.1, 0.4, 0.4, SILVER_C)), F(E(MID + 2.4, 33.2, 0.9, 0.8, SILVER_C))],
+    sleeve: () => SNOW,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? SNOW : SNOW_SH), F(E(0, 2.8, 2.4, 0.5, SNOW_SH))],
+    hand: (p, hx, hy, ex, ey) => wideSleeve(p, hx, hy, ex, ey, SNOW, ICE_LT, ICE),
+    legs: () => ({ top: SNOW, low: SNOW, pad: null }),
+    // To the floor, a little flared, snowflakes drifting down it.
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [24.6, 55.4], [6.6, 55.4]], SNOW), F(limb(14.4, 35.4, 13.6, 55, 0.5, 0.6, SNOW_SH)), F(limb(MID + 2, 35, MID + 4, 55, 0.4, 0.5, SNOW_SH)),
+      ...flake(10.4, 40, 0.9, ICE), ...flake(20.4, 44, 0.8, ICE), ...flake(12.6, 49, 1, ICE), ...flake(19, 52.6, 0.7, ICE), F(R(6.6, 54.4, 18, 1, ICE_LT))],
+    shoe: yukiFeet,
+  },
+  yukiprincess: {
+    top: (p) => [...yukiTop(ICE, SNOW, ICE_DK), F(limb(10.6, 28, 11.4, 31, 0.4, 0.4, ICE_LT)),
+      T([[8.8, 31.2], [22.4, 31], [22.6, 35.2], [8.6, 35.4]], SILVER_C), F(R(8.8, 32.8, 13.8, 0.5, ICE_DK)),
+      T([[MID + 1, 31.6], [MID + 3.2, 31.6], [MID + 2.1, 35.6]], ICE_LT), F(T([[MID + 1.6, 32], [MID + 2.6, 32], [MID + 2.1, 34.4]], '#ffffff'))],
+    sleeve: () => ICE,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.4, 2.9, side > 0 ? ICE : ICE_DK), F(E(0, 2.8, 2.6, 0.6, SNOW))],
+    // Very long furisode sleeves, white inside, hanging well below her hands.
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      return [T([[hx - ux * 3 - 2.6, hy - uy * 3], [hx - ux * 3 + 2.6, hy - uy * 3], [hx + 2.4, hy + 9], [hx - 3, hy + 10]], ICE), F(T([[hx - 2, hy + 1], [hx + 2, hy + 1], [hx + 2, hy + 8.4], [hx - 2.4, hy + 9.2]], SNOW)),
+        F(limb(hx - 3, hy + 10, hx + 2.4, hy + 9, 0.4, 0.4, ICE_DK)), E(hx + ux * 0.6, hy + uy * 0.6, 1.2, 1.3, p.skin)];
+    },
+    legs: () => ({ top: SNOW, low: SNOW, pad: null }),
+    // Layered skirts: ice blue over white, both to the floor, the white showing at the front.
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [25.4, 55.4], [6, 55.4]], ICE), T([[13.6, 35], [18, 35], [19.8, 55.4], [12, 55.4]], SNOW),
+      F(limb(13.8, 35.4, 12.4, 55, 0.5, 0.5, ICE_LT)), F(R(6, 54.2, 19.4, 1.2, SILVER_C)), ...flake(9.6, 46, 1, '#ffffff'), ...flake(22.6, 50, 0.9, '#ffffff')],
+    shoe: yukiFeet,
+    // Crystal ornaments in her hair: icicles hanging at each side and a snowflake crown.
+    hat: () => [...flake(15.5, 3.4, 1.8, '#ffffff'), F(E(15.5, 3.4, 0.6, 0.6, ICE)),
+      ...[[5.4, 9], [25.6, 9]].flatMap(([x, y]) => [F(T([[x - 0.8, y], [x + 0.8, y], [x, y + 6.4]], ICE_LT)), F(T([[x - 0.3, y], [x + 0.5, y], [x, y + 4]], '#ffffff')), F(E(x, y, 1, 0.9, SILVER_C))])],
+  },
+  yukighost: {
+    top: (p) => [...yukiTop(FROST, ICE_LT, SNOW_SH), F(limb(12, 28, 12.6, 31.6, 0.4, 0.4, SNOW_SH)),
+      T([[8.8, 32.4], [22.4, 32.2], [22.6, 34.4], [8.6, 34.6]], '#8a98b8'), F(limb(19.4, 34, 20.2, 38.6, 0.5, 0.3, '#8a98b8'))],
+    sleeve: () => FROST,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? FROST : SNOW_SH)],
+    // Sleeves torn to ragged strips at the wrist.
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const at = (a, b) => [hx + ux * a - uy * b, hy + uy * a + ux * b];
+      return [T([at(-3.2, -2.6), at(-3.2, 2.6), at(-0.6, 3.2), at(0.2, 1.6), at(-0.4, 0.6), at(0.4, -0.6), at(-0.6, -1.8), at(0, -3.2)], FROST), E(...at(1.4, 0), 1.2, 1.3, p.skin)];
+    },
+    legs: (p, skin) => ({ top: skin, low: skin, pad: null }),
+    // Torn to tatters below the knee, the strips fading to nothing.
+    skirt: () => {
+      const out = [T([[8.8, 34.6], [22.4, 34.6], [23.6, 44], [21.4, 49.6], [19.6, 45], [18, 51.6], [16.2, 45.4], [14.4, 50.8], [12.6, 45.2], [10.6, 49.4], [7.6, 44]], FROST)];
+      for (const [x, len] of [[9.4, 52], [13.4, 54], [17, 55], [20.6, 53]]) out.push({ ...F(T([[x - 0.9, 46], [x + 0.9, 46], [x + 0.2, len]], SNOW_SH)), a: 0.55 });
+      out.push(F(limb(14.4, 35.4, 13.6, 47, 0.5, 0.6, SNOW_SH)));
+      return out;
+    },
+    shoe: yukiFeet,
+  },
+});
 export const TROUPE_OUTFIT_KEYS = Object.keys(TROUPE_OUTFITS);

@@ -302,6 +302,10 @@ const EYE_LOOK = {
   oniround: { rx: 2.35, ry: 2.95, tilt: 0.05, wing: 0.7, flicks: 2, iris: 1.45, pupil: 'star', sparkle: true },
   onitare: { rx: 2.3, ry: 2.3, tilt: -0.28, wing: 1.2, flicks: 1, iris: 1.25, open: 0.6 },
   onisanpaku: { rx: 2.35, ry: 2.6, tilt: 0.3, wing: 1.4, flicks: 2, iris: 0.8 },
+  // The yuki-onna's: calm and downcast, long and narrow with heavy lashes and a small pale iris;
+  // or wide and empty, a cold stare with a tiny pupil.
+  yukicalm: { rx: 2.5, ry: 2, tilt: 0.12, wing: 1.6, flicks: 3, iris: 1.05, open: 0.7 },
+  yukistare: { rx: 2.3, ry: 2.7, tilt: 0.05, wing: 1, flicks: 2, iris: 1.2, pupil: 'ring' },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -511,6 +515,9 @@ function mouthShapes(kind, sk) {
       F(T([[x - 2, MY - 0.3], [x - 1.4, MY + 0.7], [x - 0.8, MY - 0.3], [x - 0.2, MY + 0.7], [x + 0.4, MY - 0.4], [x + 1, MY + 0.6], [x + 1.6, MY - 0.5], [x + 2.2, MY + 0.4], [x + 2.3, MY - 0.6]], '#ffffff')),
       F(T([[x - 1.4, MY + 1.6], [x - 0.9, MY + 0.9], [x - 0.3, MY + 1.6], [x + 0.3, MY + 0.9], [x + 0.9, MY + 1.6], [x + 1.4, MY + 1]], '#ffffff'))];
     case 'onicat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), F(T([[x + 0.9, MY + 0.8], [x + 1.7, MY + 0.7], [x + 1.3, MY + 1.9]], '#ffffff'))];
+    // The yuki-onna's: small, pale blue lips, closed; or parted with a cold breath.
+    case 'yukilips': return [F(E(x, MY + 0.6, 1.1, 0.55, '#8ab4e8')), F(E(x, MY + 0.45, 0.7, 0.2, '#c8e0ff'))];
+    case 'yukibreath': return [F(E(x, MY + 0.9, 0.9, 0.8, '#5a7ab8')), F(E(x, MY + 0.9, 1.3, 1.1, '#8ab4e8')), F(E(x, MY + 0.9, 0.7, 0.6, '#3a4a78'))];
     case 'onismirk': return [stroke([[x - 1.6, MY + 0.7], [x + 0.2, MY + 0.6], [x + 1.6, MY - 0.6], [x + 2, MY - 0.9]], 0.62, LIP), F(T([[x + 0.8, MY + 0.4], [x + 1.6, MY - 0.1], [x + 1.4, MY + 1.3]], '#ffffff'))];
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
@@ -556,6 +563,17 @@ function faceExtras(extra) {
     }
     if (e === 'sighpuff') {
       for (const [dx, dy, r] of [[3.2, 0.4, 0.8], [4.8, -0.2, 1.1], [6.8, -0.8, 1.3]]) out.push(F(E(FACE_X + dx, MY + dy, r, r * 0.8, '#f4f2fa')), arc(FACE_X + dx, MY + dy, r, r * 0.8, 200, 340, 0.3, '#b8b4c8'));
+      continue;
+    }
+    if (e === 'frostmark') {
+      // A snowflake of frost under her near eye, and frost on her lashes.
+      const fx0 = FACE_X + EYE_DX + 1.6;
+      for (const a of [0, Math.PI / 3, (2 * Math.PI) / 3]) out.push(stroke([[fx0 - Math.cos(a) * 1, EYE_Y + 3.4 - Math.sin(a) * 1], [fx0 + Math.cos(a) * 1, EYE_Y + 3.4 + Math.sin(a) * 1]], 0.3, '#8ab4e8'));
+      continue;
+    }
+    if (e === 'icetear') {
+      // A frozen tear on her far cheek.
+      out.push(F(T([[FACE_X - EYE_DX + 0.4, EYE_Y + 2], [FACE_X - EYE_DX + 1.2, EYE_Y + 4.4], [FACE_X - EYE_DX - 0.4, EYE_Y + 4.4]], '#c8e8ff')), F(E(FACE_X - EYE_DX + 0.4, EYE_Y + 4.4, 0.8, 0.7, '#c8e8ff')), F(E(FACE_X - EYE_DX + 0.2, EYE_Y + 3.6, 0.25, 0.3, '#ffffff')));
       continue;
     }
     if (e === 'bandaid') {
