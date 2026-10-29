@@ -59,7 +59,7 @@ export const NPCS = {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
-    showJob: 'spiritmage',
+    quests: ['spiritmage_trial'], showJob: 'spiritmage',
     greeting: 'Moonleaf Grove welcomes you. Magic here is a dance with the spirits: they strike for you and they mend for you. Shall we begin?',
   },
   kestrel: {

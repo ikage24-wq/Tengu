@@ -338,6 +338,20 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), matk: lerp(2, 25, lv, m), maxMpPct: lerpf(0.04, 0.2, lv, m) } }),
   }),
 
+  // ---------- Spirit Mage paths (being built: docs/design/spirit-mage-paths.md) ----------
+  // The Shrine Maiden (full support, with a kitsune shrine guardian) and the Onmyoji (damage, with
+  // a yokai troupe). Each has her mastery so far; her companions, gauge and skills come next.
+  shrinemastery: skill({
+    id: 'shrinemastery', name: 'Shrine Mastery', job: 'shrinemaiden', type: 'passive', fx: null, icon: 'shrinemastery',
+    desc: 'The shrine answers you: more magic attack, a deeper well of MP, and every heal you give mends more.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(5, 35, lv, m), maxMpPct: lerpf(0.05, 0.25, lv, m), healPower: lerpf(0.05, 0.3, lv, m) } }),
+  }),
+  onmyodo: skill({
+    id: 'onmyodo', name: 'Onmyodo', job: 'onmyoji', type: 'passive', fx: null, icon: 'onmyodo',
+    desc: 'The way of yin and yang: steadier spells, much more magic attack, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
+  }),
+
   heavenslantern: skill({
     id: 'heavenslantern', name: "Heaven's Lantern", job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'spirit', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Spirit, and spends it. Bow low, then lift both arms to the sky: a giant paper lantern rises over the monsters with the Spirit Doll riding on top, cheering. Its rays strike the monsters on the screen again and again, healing you and the party with every one, then it blazes and bursts over everything.',

@@ -27,7 +27,7 @@
 
 import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS, jobChain } from '../data/jobs.js';
-import { SKILLS } from '../data/skills.js';
+import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
@@ -726,6 +726,9 @@ export const kamiFavour = (world) => hasSpirit(world.char) && (world.spirit ?? 0
 // Paladin's Judgment); a Spirit Mage's healing builds her Spirit (not a finisher's: `gauge` false).
 export function healAround(world, x, y, pct, r, gauge = true) {
   const { char, body, stats } = world;
+  // A Shrine Maiden's Shrine Mastery makes every heal she gives mend more.
+  const lv = char.skills?.shrinemastery ?? 0;
+  if (lv > 0) pct *= 1 + (skillAt('shrinemastery', lv).passive.healPower ?? 0);
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
     char.hp = Math.min(stats.maxHp, char.hp + amount);

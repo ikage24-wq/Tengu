@@ -42,6 +42,19 @@ export const JOBS = {
     blurb: 'Quick hits with LUK. Daggers up close, or a gauntlet that hurls throwing stars at range.',
   },
 
+  // Spirit Mage branches. Both ask for Elowen's trial first. (Being built: see
+  // docs/design/spirit-mage-paths.md. For now each keeps the Spirit Mage's kit.)
+  shrinemaiden: {
+    id: 'shrinemaiden', name: 'Shrine Maiden', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand', 'staff'],
+    blurb: 'The shrine\'s own priestess, the heart of any party. Heals, wards and blessings carry everyone, and a kitsune shrine guardian with a naginata stands in front of them. The healer of any dungeon group.',
+  },
+  onmyoji: {
+    id: 'onmyoji', name: 'Onmyoji', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
+    blurb: 'The spirit-binder. A rowdy troupe of yokai (a kappa, a karakasa, an oni and a yuki-onna) fights at her side, kept in line with talismans and star seals. Deals damage in a group.',
+  },
+
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   paladin: {
     id: 'paladin', name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',

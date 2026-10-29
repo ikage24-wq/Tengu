@@ -1343,6 +1343,30 @@ function heavenslantern() {
   out.push(...spark(2, 3, 1, '#ffd36a'), ...spark(14, 4.4, 0.9));
   return out;
 }
+// Shrine Mastery (the Shrine Maiden): a vermilion torii gate with light shining through it.
+function shrinemastery() {
+  const out = [...tile('shrine', 'passive'), ...aura(8, 9, 6.4, '#fff3dc', 1.1)];
+  const red = '#e0453a';
+  out.push(...solid(rect(3.6, 5.6, 1.6, 9), red, { d: 0.3, ink: '#7a1c1c' }), ...solid(rect(10.8, 5.6, 1.6, 9), red, { d: 0.3, ink: '#7a1c1c' }));
+  out.push(...solid([[1.4, 3.2], [14.6, 3.2], [13.8, 4.8], [2.2, 4.8]], '#3a2a2a', { d: 0.3 }), ...solid(rect(2.6, 6.2, 10.8, 1.2), red, { d: 0.3, ink: '#7a1c1c' }));
+  out.push(S(rect(6.4, 7.6, 3.2, 7), '#fff7e4'));
+  out.push(...spark(8, 10.6, 1.2, '#ffd36a'), ...spark(13.6, 1.8, 0.8));
+  return out;
+}
+// Onmyodo (the Onmyoji): a paper talisman with a red five-pointed star seal on it.
+function onmyodo() {
+  const out = [...tile('indigo', 'passive'), ...aura(8, 8, 6.4, '#e6dcff')];
+  out.push(...solid([[4.6, 1.4], [11.4, 1.4], [11.4, 14.6], [4.6, 14.6]], '#fbf8ff', { d: 0.35, ink: '#5a4a8a' }));
+  const star = [];
+  for (let k = 0; k <= 5; k++) {
+    const a = (-90 + k * 144) * D2R;
+    star.push([8 + Math.cos(a) * 2.6, 8 + Math.sin(a) * 2.6]);
+  }
+  out.push(S(tube(star, 0.45, 0.45), '#d8323e'), S(tube(arcPts(8, 8, 3.2, 3.2, 0, 360, 20), 0.3, 0.3), '#d8323e'));
+  out.push(S(tube([[6.2, 3], [9.8, 3]], 0.35, 0.35), '#2a2440'), S(tube([[6.6, 13], [9.4, 13]], 0.35, 0.35), '#2a2440'));
+  out.push(...spark(13.4, 3, 0.9, '#ffd36a'));
+  return out;
+}
 
 // ---------- Game master ----------
 
@@ -1406,7 +1430,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, onmyodo,
   gmsmite, gmhaste, gmblessing,
 };
 

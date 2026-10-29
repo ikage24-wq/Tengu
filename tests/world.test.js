@@ -294,6 +294,16 @@ test('skills never go on cooldown: a spell is free again a beat after its motion
   assert.equal(cast(w, 'backstab').ok, true, 'usable again right after that beat: no cooldown');
 });
 
+test("the Spirit Mage branches two ways at 30, the Shrine Maiden and the Onmyoji, after Elowen's trial", async () => {
+  const { nextJobs, jobChain } = await import('../src/data/jobs.js');
+  const { QUESTS } = await import('../src/data/quests.js');
+  assert.deepEqual(nextJobs('spiritmage', 30).map((j) => j.id).sort(), ['onmyoji', 'shrinemaiden']);
+  assert.deepEqual(nextJobs('spiritmage', 30, {}).map((j) => j.id), [], 'not before the trial');
+  assert.deepEqual(nextJobs('spiritmage', 30, { spiritmage_trial: { state: 'done' } }).map((j) => j.id).sort(), ['onmyoji', 'shrinemaiden']);
+  assert.equal(QUESTS.spiritmage_trial.giver, 'elowen');
+  for (const path of ['shrinemaiden', 'onmyoji']) assert.ok(jobChain(path).includes('spiritmage'), `${path} keeps the Spirit Mage's kit`);
+});
+
 test('the warrior, the archer and the thief branch two ways at 30; the Spirit Mage is the magic class', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
