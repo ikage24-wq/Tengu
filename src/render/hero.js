@@ -538,6 +538,26 @@ function faceExtras(extra) {
       out.push(F(T([[ox, EYE_Y - 1.8], [ox + 0.5, EYE_Y - 0.2], [ox, EYE_Y + 1.4], [ox - 0.5, EYE_Y - 0.2]], '#fff6d0')), F(T([[ox - 1.4, EYE_Y - 0.2], [ox, EYE_Y - 0.6], [ox + 1.4, EYE_Y - 0.2], [ox, EYE_Y + 0.2]], '#fff6d0')));
       continue;
     }
+    // The oni's bored props: a bubble of pink gum, a toothpick at the corner of her mouth, a long
+    // kiseru pipe with a curl of smoke, a puff of a sigh.
+    if (e === 'gumbubble') {
+      out.push(F(E(FACE_X + 0.8, MY + 1.8, 2.4, 2.2, '#ff9ac8')), F(E(FACE_X + 0.1, MY + 1, 0.7, 0.6, '#ffd6ea')), arc(FACE_X + 0.8, MY + 1.8, 2.4, 2.2, 0, 360, 0.35, '#e0609a'));
+      continue;
+    }
+    if (e === 'toothpick') {
+      out.push(stroke([[FACE_X + 1.2, MY + 0.5], [FACE_X + 6.2, MY - 1.6]], 0.5, '#d8b47a'), stroke([[FACE_X + 5.6, MY - 1.4], [FACE_X + 6.2, MY - 1.6]], 0.5, '#a8844a'));
+      continue;
+    }
+    if (e === 'kiseru') {
+      out.push(stroke([[FACE_X + 1.2, MY + 0.4], [FACE_X + 9.4, MY + 2.6]], 0.65, '#2a1e22'), stroke([[FACE_X + 1, MY + 0.35], [FACE_X + 2.4, MY + 0.7]], 0.75, '#f2c94c'),
+        F(T([[FACE_X + 8.8, MY + 1.6], [FACE_X + 10.4, MY + 1.6], [FACE_X + 10.2, MY + 3.2], [FACE_X + 9, MY + 3.2]], '#f2c94c')), F(E(FACE_X + 9.6, MY + 1.7, 0.7, 0.3, '#d8303a')));
+      for (const [dx, dy, r] of [[9.8, -0.4, 0.8], [10.8, -2.2, 1], [10.2, -4.2, 1.2]]) out.push(F(E(FACE_X + dx, MY + dy, r, r * 0.85, '#e6e2ee')));
+      continue;
+    }
+    if (e === 'sighpuff') {
+      for (const [dx, dy, r] of [[3.2, 0.4, 0.8], [4.8, -0.2, 1.1], [6.8, -0.8, 1.3]]) out.push(F(E(FACE_X + dx, MY + dy, r, r * 0.8, '#f4f2fa')), arc(FACE_X + dx, MY + dy, r, r * 0.8, 200, 340, 0.3, '#b8b4c8'));
+      continue;
+    }
     if (e === 'bandaid') {
       // A pink sticking plaster across her near cheek, its pad and a few dots.
       out.push(F(T([[FACE_X + 4.4, 18.6], [FACE_X + 8.4, 17.2], [FACE_X + 8.9, 18.6], [FACE_X + 4.9, 20]], '#ffd2c8')), F(T([[FACE_X + 5.9, 18.1], [FACE_X + 7.3, 17.6], [FACE_X + 7.8, 19], [FACE_X + 6.4, 19.5]], '#ffb4a6')));
