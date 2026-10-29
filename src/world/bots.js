@@ -96,6 +96,7 @@ function jobPath(level, rng) {
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];
+  if (first === 'spiritmage' && level >= 30) return [first, pick(['shrinemaiden', 'onmyoji'], rng)];
   return [first];
 }
 

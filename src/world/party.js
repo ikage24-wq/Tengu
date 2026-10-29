@@ -9,7 +9,7 @@ import { createBody, stepBody, groundAt } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, autoAssignAp } from '../core/character.js';
 import { physicalRange, magicRange, accuracy, hitChance, rollHit } from '../core/formulas.js';
-import { JOBS } from '../data/jobs.js';
+import { JOBS, jobChain } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
 import { speak } from './chatter.js';
@@ -149,6 +149,10 @@ function weaponStyle(bot) {
   // The Spirit Mage dances her bolts (a figure about a second long), and her big one is the
   // dance's last figure.
   if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'kagurafin' };
+  // Her paths dance too: a Shrine Maiden with her gohei (her big one, Purification's sweep), an
+  // Onmyoji with talismans (her big one, Ofuda Barrage: a fan of them bursting on the monster).
+  if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'shrinepurify' };
+  if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'onmyoofuda', ofuda: true };
   // The Kitsune throws her fox-fire stars.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['throw', 'barrage', 'twirlthrow']), shot: 'foxstar', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
@@ -442,7 +446,15 @@ function strike(bot, m, world, rng) {
   }
   const box = { x: body.x - 34, y: body.y - 50, w: 68, h: 50 };
   if (special) {
-    if (st.magic) world.fx.push({ kind: 'burst', x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.55, seed: rng() });
+    // (An Onmyoji's talismans fly with her spell, stick, and burst.)
+    if (st.ofuda) {
+      for (let i = 0; i < 4; i++) {
+        const fly = Math.hypot(m.x - from.x, m.y - from.y) / 420 + 0.06;
+        const dy = -m.def.h * (0.3 + 0.12 * i);
+        world.fx.push({ kind: 'ofuda', x: from.x, y: from.y, tx: m.x, ty: m.y + dy, mob: m, dx: (i - 1.5) * 3, dy, fly, stick: 0.36, arc: (i - 1.5) * 9, t: -i * 0.06, dur: fly + 0.42 + i * 0.06, seed: rng() });
+        world.fx.push({ kind: 'ofudaburst', x: m.x, y: m.y, h: m.def.h, t: -(fly + 0.36 + i * 0.06), dur: fly + 0.36 + i * 0.06 + 0.45 });
+      }
+    } else if (st.magic) world.fx.push({ kind: 'burst', x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.55, seed: rng() });
     else if (!st.ranged) world.fx.push({ kind: rng() < 0.5 ? 'spin' : 'flurry', x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: 0.4 });
   }
   if (cut?.arc) {
@@ -459,8 +471,9 @@ function heal(bot, world, bots) {
   if (char.hp >= max * 0.85 || world.dead) return false;
   const amount = Math.round(max * between(0.12, 0.2, bots.rng) + bot.stats.int * 2);
   char.hp = Math.min(max, char.hp + amount);
-  // A Spirit Mage blesses you with her column of light, with the bells over her head.
-  const shrine = bot.char.job === 'spiritmage';
+  // A Spirit Mage blesses you with her column of light, with the bells over her head (a Shrine
+  // Maiden or an Onmyoji too: they were Spirit Mages first).
+  const shrine = jobChain(bot.char.job).includes('spiritmage');
   world.fx.push(shrine ? { kind: 'blessing', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
   bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };

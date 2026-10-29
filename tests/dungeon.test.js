@@ -224,3 +224,56 @@ test("a Spirit Mage in the healer's seat wards the tank and blesses the hurt, he
   assert.equal(healer.attack.pose, 'kagurabless');
   assert.ok(world.fx.some((f) => f.kind === 'blessing'), 'with her column of light');
 });
+
+test("a Shrine Maiden in the healer's seat heals with Grand Blessing and raises the fallen with the Resurrection Dance", async () => {
+  assert.equal(roleOf('shrinemaiden', 'mage'), 'healer');
+  assert.equal(roleOf('onmyoji', 'mage'), 'dps', 'an Onmyoji deals damage');
+  const { computeStats } = await import('../src/core/stats.js');
+  const rng = seeded(11);
+  const world = heroAt(rng, 12, ['archer']);
+  assert.equal(startRun(world), null);
+  const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
+  // (The Hollow's healers are Spirit Mages; one past level 30 has taken her path.)
+  healer.char = makeBotCharacter(rng, { name: healer.name, pro: false, level: 34, jobs: ['spiritmage', 'shrinemaiden'] });
+  healer.stats = computeStats(healer.char);
+  assert.equal(healer.char.job, 'shrinemaiden');
+  for (let i = 0; i < 30; i++) {
+    updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
+    updateBots(world.bots, world, 1 / 60);
+  }
+  // Several hurt: Grand Blessing.
+  world.dungeon.combat = true;
+  for (const g of groupOf(world)) {
+    if (g.bot) g.bot.hp = Math.round(g.bot.stats.maxHp * 0.4);
+    else world.char.hp = Math.round(world.stats.maxHp * 0.4);
+  }
+  healerTurn(healer, world, rng);
+  assert.equal(healer.attack.pose, 'shrinegrand', 'her great sweep of the gohei');
+  assert.ok(world.fx.some((f) => f.kind === 'grandblessing'), 'and the great pillar of light');
+  // A fallen member, out of the fight: the Resurrection Dance.
+  world.dungeon.combat = false;
+  // (Everyone else whole again, so raising the fallen is what's left to do.)
+  for (const g of groupOf(world)) {
+    if (g.bot) g.bot.hp = g.bot.stats.maxHp;
+    else world.char.hp = world.stats.maxHp;
+  }
+  const down = groupOf(world).find((g) => g.bot && g.bot !== healer);
+  down.bot.down = true;
+  down.bot.hp = 0;
+  healerTurn(healer, world, rng);
+  assert.ok(isUp(world, down), 'they get up');
+  assert.equal(healer.attack.pose, 'shrinerevive');
+});
+
+test('an Onmyoji in the group dances her spells and flings talismans', async () => {
+  const { makeAI } = await import('../src/world/party.js');
+  const rng = seeded(4);
+  const char = makeBotCharacter(rng, { name: 'Omy', pro: false, level: 34, jobs: ['spiritmage', 'onmyoji'] });
+  assert.equal(char.job, 'onmyoji');
+  const bot = { char, stats: null, level: 34, pro: false, body: { x: 0, y: 0, facing: 1 } };
+  const { computeStats } = await import('../src/core/stats.js');
+  bot.stats = computeStats(char);
+  const ai = makeAI(bot, rng, 'sniper');
+  assert.equal(ai.weapon.special, 'onmyoofuda', 'her big one is Ofuda Barrage');
+  assert.ok(ai.weapon.ofuda && ai.weapon.magic, 'talismans and spells');
+});

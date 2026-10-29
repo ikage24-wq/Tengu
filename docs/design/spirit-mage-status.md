@@ -85,10 +85,12 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
 ## Next
 
 1. Demo videos of every skill for the player (GIFs so far), and a look in a real dungeon run.
-2. The Shrine Maiden in a real dungeon run (her bots and the healer seat still cast the Spirit
-   Mage's Blessing and Ward: give them Grand Blessing and Purification too).
+2. Bots (2026-10-29): town Spirit Mages past 30 take a path; a Shrine Maiden in the healer's seat
+   heals with Grand Blessing (and its regen), Blessing and Spirit Ward, and raises the fallen with
+   the Resurrection Dance; an Onmyoji takes the damage seat, dances her spells and flings Ofuda
+   Barrage. (Bot Onmyoji have no troupe of their own; the only dungeon recruits at 11-13, so path
+   bots show up there once a higher dungeon exists.)
 3. The Onmyoji is built: the troupe (the oni, the yuki-onna, and the tengu who leads them, the
-   doll fused into him), Binding, Ofuda Barrage, Seiman Seal, Yokai Rally and Troupe Combo. Her
-   dungeon bots still cast the Spirit Mage's kit.
+   doll fused into him), Binding, Ofuda Barrage, Seiman Seal, Yokai Rally and Troupe Combo.
 3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one
    if the player wants.

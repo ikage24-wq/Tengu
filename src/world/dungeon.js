@@ -14,7 +14,7 @@ import { rodGuard } from './storm.js';
 import { lastRite } from './shrine.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
-import { JOBS } from '../data/jobs.js';
+import { JOBS, jobChain } from '../data/jobs.js';
 import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp } from '../core/character.js';
@@ -89,8 +89,13 @@ export function planGroup(world, id = 'hollow') {
 function recruit(world, def, role) {
   const rng = world.bots.rng;
   const [lo, hi] = def.recruit[role];
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? ['spiritmage'] : [pick(['archer', 'thief'], rng)];
-  const bot = recruitBot(world.bots, world, { level: Math.floor(between(lo, hi + 1, rng)), jobs });
+  const level = Math.floor(between(lo, hi + 1, rng));
+  // Past level 30 the Spirit Mages have taken a path: a healer comes as a Shrine Maiden, and now and
+  // then a damage dealer is an Onmyoji.
+  const sage = level >= 30;
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (sage ? ['spiritmage', 'shrinemaiden'] : ['spiritmage'])
+    : sage && rng() < 0.3 ? ['spiritmage', 'onmyoji'] : [pick(['archer', 'thief'], rng)];
+  const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
   bot.ai = makeAI(bot, rng, role === 'tank' ? 'guardian' : role === 'healer' ? 'healer' : ranged ? 'sniper' : 'rusher');
@@ -1208,22 +1213,28 @@ export function healerTurn(bot, world, rng) {
   const me = group.find((g) => g.bot === bot);
   const hurt = up.map((g) => ({ g, f: hpOf(world, g) / maxHpOf(world, g) })).sort((a, b) => a.f - b.f);
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
-  // A Spirit Mage heals with her own spells and dance: Blessing's column of light, Spirit Ward.
-  const shrine = bot.char.job === 'spiritmage';
+  // A Spirit Mage heals with her own spells and dance: Blessing's column of light, Spirit Ward. A
+  // Shrine Maiden with hers: Grand Blessing's great pillar for the group and its long regen, and
+  // the Resurrection Dance for the fallen.
+  const shrine = jobChain(bot.char.job).includes('spiritmage');
+  const maiden = bot.char.job === 'shrinemaiden';
   const bless = (g) => shrine && world.fx.push({ kind: 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
     bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
   const barrier = shrine ? { id: 'spiritward', name: 'Spirit Ward', pose: 'kaguraward', dur: 1.1 } : { id: 'barrier', name: 'Arcane Barrier', pose: 'castup', dur: 0.6 };
-  const renew = shrine ? { id: 'blessing', name: 'Blessing', pose: 'kagurabless', dur: 1.2 } : { id: 'renew', name: 'Renew', pose: 'castup', dur: 0.6 };
+  const renew = maiden ? { id: 'grandblessing', name: 'Grand Blessing', pose: 'shrinegrand', dur: 1.55 } : shrine ? { id: 'blessing', name: 'Blessing', pose: 'kagurabless', dur: 1.2 } : { id: 'renew', name: 'Renew', pose: 'castup', dur: 0.6 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
-      healMember(world, h.g, maxHpOf(world, h.g) * 0.16 + bot.stats.int * 0.5, bot.id);
-      bless(h.g);
+      healMember(world, h.g, maxHpOf(world, h.g) * (maiden ? 0.24 : 0.16) + bot.stats.int * 0.5, bot.id);
+      if (!maiden) bless(h.g);
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
-    cast();
+    if (maiden) {
+      world.fx.push({ kind: 'grandblessing', x: bot.body.x, y: bot.body.y, r: 320, t: 0, dur: 1.3 });
+      bot.attack = { pose: 'shrinegrand', t: 0, dur: 1.55 };
+    } else cast();
     if (rng() < 0.2) bot.bubble = { text: pick(['group heal!', 'stay close!', 'healing!']), t: 2.5 };
     return between(1.5, 1.9, rng);
   }
@@ -1249,15 +1260,21 @@ export function healerTurn(bot, world, rng) {
       bless(g);
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
+    if (maiden) world.fx.push({ kind: 'grandblessing', x: bot.body.x, y: bot.body.y, r: 320, t: 0, dur: 1.3 });
     bot.attack = { pose: renew.pose, t: 0, dur: renew.dur };
     return between(1.2, 1.6, rng);
   }
   if (!run.combat) {
-    const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < 44);
+    // (A Shrine Maiden raises them with the Resurrection Dance, from further off.)
+    const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < (maiden ? 320 : 44));
     if (fallen) {
-      revive(world, fallen, 0.5);
-      bot.attack = { pose: 'pray', t: 0, dur: 1 };
-      return 1.2;
+      revive(world, fallen, maiden ? 0.6 : 0.5);
+      if (maiden) {
+        world.fx.push({ kind: 'reviveflash', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
+        world.fx.push({ kind: 'resurrection', x: bot.body.x, y: bot.body.y, t: 0, dur: 1.6 });
+      }
+      bot.attack = maiden ? { pose: 'shrinerevive', t: 0, dur: 2.4 } : { pose: 'pray', t: 0, dur: 1 };
+      return maiden ? 2.5 : 1.2;
     }
   }
   return 0.4;

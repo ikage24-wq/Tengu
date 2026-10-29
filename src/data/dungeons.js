@@ -30,7 +30,8 @@ export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
-  if (jobId === 'berserker') return 'dps';
+  // (The Berserker and the Onmyoji take the damage seat their families don't.)
+  if (jobId === 'berserker' || jobId === 'onmyoji') return 'dps';
   if (family === 'warrior') return 'tank';
   if (family === 'mage') return 'healer';
   return 'dps';
