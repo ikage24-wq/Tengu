@@ -1,6 +1,8 @@
-// The world map (M): Tengu Island drawn in the game's pastel style, with every map as a stop on
-// the roads its portals make, the four job towns, a bouncing "you are here" pin, and fast travel
-// between towns.
+// The world map (M): Tengu Island as a round island with one ring road running round it. The
+// towns sit on the ring like stops on a roundabout, the fields between them; Ember Crag is the
+// mountain in the middle, up the canyon road; the Sky Garden floats off the north shore. Kept
+// sparse on purpose: soft colour under each stop says what kind of place it is, and the names of
+// the fields show on hover. Click a town to fly there.
 
 import { MAPS, TOWNS, getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
@@ -14,12 +16,32 @@ const MAP_W = 400;
 const MAP_H = 240;
 const INK = '#5a3f7a';
 
-// Ground colors per region, by map theme.
-const LAND = {
-  town: '#c4eeb0', meadow: '#c4eeb0', harbor: '#ffe4b8', forest: '#9fd8a2', grove: '#cdb8f2',
-  ruins: '#d9cdf7', cave: '#b3a3df', crag: '#f6c793', sky: '#ffffff',
+// The island and its ring road: an ellipse round the middle of the map.
+const CX = 200;
+const CY = 132;
+const RX = 150;
+const RY = 82;
+const deg = (d) => (d * Math.PI) / 180;
+const onRing = (a, k = 1) => ({ x: CX + Math.cos(deg(a)) * RX * k, y: CY + Math.sin(deg(a)) * RY * k, a });
+// Where each map sits. The ring runs clockwise from Sprout Village in the west: the meadows, the
+// harbor in the south, the woods, the grove in the east, the ruins and the cave in the north. The
+// canyon road climbs from the meadow to the crag in the middle (the Hollow's gate off it); the
+// throne room is a spur off the cave, and the Sky Garden floats above it.
+const SPOT = {
+  sprout: onRing(180), meadow1: onRing(142), meadow2: onRing(108), harbor: onRing(75), woods: onRing(35), grove: onRing(355),
+  ruins: onRing(315), cave: onRing(272),
+  canyon: { x: CX - 62, y: CY + 8 }, crag: { x: CX + 2, y: CY - 6 }, hollow_gate: { x: CX - 78, y: CY - 30 },
+  bossroom: onRing(235, 0.72), sky: { x: 352, y: 26 },
 };
-// Each job town's banner color.
+const spot = (m) => SPOT[m.id] ?? m.world;
+// The roads round the ring (each a real portal link between neighbours on it).
+const RING = ['sprout', 'meadow1', 'meadow2', 'harbor', 'woods', 'grove', 'ruins', 'cave'];
+// Each region's colour, under its stop.
+const TINT = {
+  town: '#bfeaa8', meadow: '#c4eeb0', harbor: '#ffe0b0', forest: '#9fd8a2', grove: '#d3c0f6',
+  ruins: '#dccff7', cave: '#beb0ea', crag: '#f7c996', sky: '#ffffff',
+};
+// Each job town's colour.
 const JOB_COLORS = { archer: '#6fcf8a', thief: '#9b7cd6', warrior: '#ff8a5c', mage: '#7fa8ff' };
 
 const hash = (n) => {
@@ -57,20 +79,22 @@ function circle(ctx, x, y, r) {
   ctx.fill();
 }
 
+// The sea: a soft blue and a handful of slow ripples.
 function drawSea(ctx, ox, oy, time) {
   const g = ctx.createLinearGradient(0, oy, 0, oy + MAP_H);
   g.addColorStop(0, '#a9dcff');
   g.addColorStop(1, '#c9ecff');
   ctx.fillStyle = g;
-  roundRect(ctx, ox, oy, MAP_W, MAP_H, 6);
+  roundRect(ctx, ox, oy, MAP_W, MAP_H, 10);
   ctx.fill();
-  // Little waves that shimmer.
-  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
   ctx.lineWidth = 1;
-  for (let i = 0; i < 40; i++) {
-    const x = ox + 8 + hash(i) * (MAP_W - 24);
-    const y = oy + 8 + hash(i + 50) * (MAP_H - 16);
-    const s = Math.sin(time * 2 + i) * 1.5;
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2 + 0.3;
+    const x = ox + CX + Math.cos(a) * (RX + 26 + hash(i) * 10) - 6;
+    const y = oy + CY + Math.sin(a) * (RY + 20 + hash(i + 9) * 8);
+    if (y < oy + 6 || y > oy + MAP_H - 6) continue;
+    const s = Math.sin(time * 1.5 + i) * 1.2;
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.quadraticCurveTo(x + 3, y - 2 - s * 0.3, x + 6, y);
@@ -79,198 +103,186 @@ function drawSea(ctx, ox, oy, time) {
   }
 }
 
-// The island: overlapping blobs around every ground-level map, outlined as one shape, then each
-// region tinted by its theme.
+// The island: a cream shore round a green disc, a little lighter towards the middle, each stop's
+// region a soft pool of its colour, and the mountain in the middle.
 function drawIsland(ctx, ox, oy) {
-  const land = Object.values(MAPS).filter((m) => m.world && m.theme !== 'sky');
-  const blobs = land.flatMap((m) => [[m.world.x, m.world.y, m.isTown ? 40 : 34], [m.world.x + 14, m.world.y + 10, 26], [m.world.x - 12, m.world.y + 8, 24]]);
-  // Land along every road, so the regions join into one island.
-  for (const [a, b] of ROADS) {
-    const p = MAPS[a].world;
-    const q = MAPS[b].world;
-    if (!p || !q || MAPS[a].theme === 'sky' || MAPS[b].theme === 'sky') continue;
-    const steps = Math.ceil(Math.hypot(q.x - p.x, q.y - p.y) / 12);
-    for (let k = 1; k < steps; k++) blobs.push([p.x + ((q.x - p.x) * k) / steps, p.y + ((q.y - p.y) * k) / steps, 24]);
-  }
-  ctx.fillStyle = '#7fb8e8';
-  for (const [x, y, r] of blobs) circle(ctx, ox + x, oy + y + 3, r + 2);
-  ctx.fillStyle = '#ffeacc';
-  for (const [x, y, r] of blobs) circle(ctx, ox + x, oy + y, r + 2);
-  ctx.fillStyle = '#8a6fb0';
-  for (const [x, y, r] of blobs) circle(ctx, ox + x, oy + y, r - 2.5);
-  ctx.fillStyle = '#c4eeb0';
-  for (const [x, y, r] of blobs) circle(ctx, ox + x, oy + y, r - 3.5);
-  for (const m of land) {
-    const c = LAND[m.theme] ?? LAND.meadow;
-    const g = ctx.createRadialGradient(ox + m.world.x, oy + m.world.y, 4, ox + m.world.x, oy + m.world.y, 36);
-    g.addColorStop(0, c);
-    g.addColorStop(0.7, c);
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    circle(ctx, ox + m.world.x, oy + m.world.y, 30);
-  }
-}
-
-// Little landmarks around each region: mesas, trees, flowers, crystals, and pillars.
-function drawDecor(ctx, ox, oy, time) {
-  for (const m of Object.values(MAPS)) {
-    if (!m.world || m.theme === 'sky' || m.id === 'bossroom') continue;
-    for (let k = 0; k < 6; k++) {
-      const a = hash(k + m.world.x) * Math.PI * 2;
-      const d = 14 + hash(k * 3 + m.world.y) * 14;
-      const x = ox + m.world.x + Math.cos(a) * d;
-      const y = oy + m.world.y + Math.sin(a) * d * 0.7;
-      ctx.lineWidth = 1;
-      switch (m.theme) {
-        case 'crag':
-          ctx.fillStyle = '#e8a86b';
-          ctx.strokeStyle = '#a8673e';
-          roundRect(ctx, x - 5, y - 6, 10, 7, 2);
-          ctx.fill();
-          ctx.stroke();
-          ctx.fillStyle = '#f7d2a6';
-          ctx.fillRect(Math.round(x - 4), Math.round(y - 6), 8, 2);
-          break;
-        case 'forest':
-        case 'grove':
-          ctx.fillStyle = '#9f7a57';
-          ctx.fillRect(Math.round(x - 0.5), Math.round(y - 2), 1.5, 4);
-          ctx.fillStyle = m.theme === 'grove' ? '#a68be0' : '#5fb878';
-          ctx.strokeStyle = m.theme === 'grove' ? '#6a52a8' : '#3f8a58';
-          ctx.beginPath();
-          ctx.arc(x, y - 4, 4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-          break;
-        case 'ruins':
-          ctx.fillStyle = '#f3edff';
-          ctx.strokeStyle = '#8f7cd0';
-          ctx.fillRect(Math.round(x - 1.5), Math.round(y - 6), 3, 6);
-          ctx.strokeRect(Math.round(x - 1.5) + 0.5, Math.round(y - 6) + 0.5, 3, 6);
-          break;
-        case 'cave':
-          ctx.fillStyle = k % 2 ? '#a8e8ff' : '#e0b8ff';
-          ctx.beginPath();
-          ctx.moveTo(x - 2.5, y);
-          ctx.lineTo(x, y - 7);
-          ctx.lineTo(x + 2.5, y);
-          ctx.fill();
-          break;
-        case 'harbor':
-          if (k < 3) break;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(Math.round(x), Math.round(y - 5), 1, 5);
-          ctx.fillStyle = '#ff9ec0';
-          ctx.beginPath();
-          ctx.moveTo(x + 1, y - 5);
-          ctx.lineTo(x + 5, y - 1);
-          ctx.lineTo(x + 1, y - 1);
-          ctx.fill();
-          break;
-        default:
-          ctx.fillStyle = ['#ff9ec0', '#ffe36b', '#ffffff', '#c9a6ff'][k % 4];
-          circle(ctx, x, y, 1.4);
-      }
-    }
-  }
-  // A sailboat drifting around the coast.
-  const t = time * 0.05;
-  const bx = ox + 200 + Math.cos(t) * 190;
-  const by = oy + 120 + Math.sin(t) * 112;
-  ctx.fillStyle = '#ffffff';
+  const x = ox + CX;
+  const y = oy + CY;
+  ctx.fillStyle = 'rgba(90,63,122,0.12)';
   ctx.beginPath();
-  ctx.moveTo(bx - 5, by);
-  ctx.lineTo(bx + 5, by);
-  ctx.lineTo(bx + 3, by + 2.5);
-  ctx.lineTo(bx - 3, by + 2.5);
+  ctx.ellipse(x + 2, y + 5, RX + 30, RY + 30, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#ff9ec0';
+  ctx.fillStyle = '#fff3dc';
   ctx.beginPath();
-  ctx.moveTo(bx, by - 8);
-  ctx.lineTo(bx + 4, by - 1);
-  ctx.lineTo(bx, by - 1);
+  ctx.ellipse(x, y, RX + 30, RY + 30, 0, 0, Math.PI * 2);
   ctx.fill();
-}
-
-// The floating Sky Garden, with a cloud underneath it.
-function drawSkyIsland(ctx, ox, oy, time) {
-  const m = MAPS.sky;
-  const x = ox + m.world.x;
-  const y = oy + m.world.y + Math.sin(time * 1.2) * 1.5;
-  ctx.fillStyle = '#ffffff';
-  for (const [dx, dy, r] of [[-12, 8, 8], [0, 10, 10], [12, 8, 8]]) circle(ctx, x + dx, y + dy, r);
-  ctx.fillStyle = '#d9c6ff';
-  ctx.strokeStyle = '#8a6fb0';
-  ctx.lineWidth = 1;
+  const g = ctx.createRadialGradient(x, y, 10, x, y, RX + 24);
+  g.addColorStop(0, '#dff6cf');
+  g.addColorStop(1, '#bfe8ad');
+  ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.moveTo(x - 16, y);
-  ctx.lineTo(x + 16, y);
-  ctx.lineTo(x + 2, y + 12);
-  ctx.closePath();
+  ctx.ellipse(x, y, RX + 24, RY + 24, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#9fe0b0';
-  ctx.beginPath();
-  ctx.ellipse(x, y, 17, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-}
-
-function drawRoads(ctx, ox, oy) {
-  for (const [a, b] of ROADS) {
-    const p = MAPS[a].world;
-    const q = MAPS[b].world;
-    if (!p || !q) continue;
-    const sky = MAPS[a].theme === 'sky' || MAPS[b].theme === 'sky' || a === 'bossroom' || b === 'bossroom';
-    // A gentle curve between the two stops.
-    const mx = (p.x + q.x) / 2 + (q.y - p.y) * 0.12;
-    const my = (p.y + q.y) / 2 - (q.x - p.x) * 0.12;
-    const path = () => {
-      ctx.beginPath();
-      ctx.moveTo(ox + p.x, oy + p.y);
-      ctx.quadraticCurveTo(ox + mx, oy + my, ox + q.x, oy + q.y);
-    };
-    ctx.setLineDash(sky ? [3, 3] : []);
-    if (!sky) {
-      ctx.strokeStyle = '#b08a6a';
-      ctx.lineWidth = 5;
-      path();
-      ctx.stroke();
-    }
-    ctx.strokeStyle = sky ? '#ffffff' : '#fff4e0';
-    ctx.lineWidth = sky ? 1.5 : 3;
-    path();
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-}
-
-// A tiny cottage with a roof and a flag in the job's color.
-function drawTown(ctx, x, y, color, big) {
-  const s = big ? 1.25 : 1;
-  ctx.lineWidth = 1;
   ctx.strokeStyle = INK;
-  ctx.fillStyle = '#fff6ec';
-  ctx.fillRect(Math.round(x - 6 * s), Math.round(y - 6 * s), Math.round(12 * s), Math.round(8 * s));
-  ctx.strokeRect(Math.round(x - 6 * s) + 0.5, Math.round(y - 6 * s) + 0.5, Math.round(12 * s), Math.round(8 * s));
-  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(x - 8 * s, y - 5.5 * s);
-  ctx.lineTo(x, y - 12 * s);
-  ctx.lineTo(x + 8 * s, y - 5.5 * s);
+  ctx.ellipse(x, y, RX + 30, RY + 30, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  // Each region's pool of colour.
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y, RX + 24, RY + 24, 0, 0, Math.PI * 2);
+  ctx.clip();
+  for (const m of Object.values(MAPS)) {
+    const p = m.world && spot(m);
+    if (!p || m.id === 'sky') continue;
+    const tint = TINT[m.isTown ? 'town' : m.theme] ?? TINT.meadow;
+    const rg = ctx.createRadialGradient(ox + p.x, oy + p.y, 2, ox + p.x, oy + p.y, m.isTown ? 34 : 28);
+    rg.addColorStop(0, tint);
+    rg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(ox + p.x - 36, oy + p.y - 36, 72, 72);
+  }
+  ctx.restore();
+  // The mountain in the middle: a soft orange peak with a snowy cap, behind the crag's stop.
+  const mx = ox + SPOT.crag.x;
+  const my = oy + SPOT.crag.y + 6;
+  ctx.fillStyle = '#f2b27a';
+  ctx.beginPath();
+  ctx.moveTo(mx - 34, my);
+  ctx.quadraticCurveTo(mx - 10, my - 34, mx, my - 38);
+  ctx.quadraticCurveTo(mx + 10, my - 34, mx + 34, my);
   ctx.closePath();
   ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#d39a6a';
-  ctx.fillRect(Math.round(x - 1.5), Math.round(y - 3 * s), 3, Math.round(5 * s));
-  ctx.fillStyle = INK;
-  ctx.fillRect(Math.round(x + 6 * s), Math.round(y - 18 * s), 1, Math.round(10 * s));
-  ctx.fillStyle = color;
+  ctx.fillStyle = '#fff6ec';
   ctx.beginPath();
-  ctx.moveTo(x + 7 * s, y - 18 * s);
-  ctx.lineTo(x + 13 * s, y - 16 * s);
-  ctx.lineTo(x + 7 * s, y - 14 * s);
+  ctx.moveTo(mx - 9, my - 27);
+  ctx.quadraticCurveTo(mx, my - 40, mx + 9, my - 27);
+  ctx.lineTo(mx + 4, my - 24);
+  ctx.lineTo(mx, my - 28);
+  ctx.lineTo(mx - 4, my - 24);
+  ctx.closePath();
   ctx.fill();
+}
+
+// A road: a tan band with a cream centre.
+function stroke(ctx, path) {
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#c99a6b';
+  ctx.lineWidth = 5;
+  path();
+  ctx.stroke();
+  ctx.strokeStyle = '#fff6e6';
+  ctx.lineWidth = 2.5;
+  path();
+  ctx.stroke();
+}
+
+// The ring road between neighbours on it, then the spurs (straight), then the sky's dotted line.
+function drawRoads(ctx, ox, oy, time) {
+  const linked = new Set(ROADS.map(([a, b]) => [a, b].sort().join('|')));
+  for (let i = 0; i < RING.length - 1; i++) {
+    const a = SPOT[RING[i]];
+    const b = SPOT[RING[i + 1]];
+    if (!linked.has([RING[i], RING[i + 1]].sort().join('|'))) continue;
+    // Clockwise along the ellipse, from one stop's angle to the next.
+    let a0 = deg(a.a);
+    let a1 = deg(b.a);
+    if (a1 > a0) a1 -= Math.PI * 2;
+    stroke(ctx, () => {
+      ctx.beginPath();
+      ctx.ellipse(ox + CX, oy + CY, RX, RY, 0, a0, a1, true);
+    });
+  }
+  for (const [ida, idb] of ROADS) {
+    const ra = RING.indexOf(ida);
+    const rb = RING.indexOf(idb);
+    if (ra >= 0 && rb >= 0 && Math.abs(ra - rb) === 1) continue;
+    const ma = MAPS[ida];
+    const mb = MAPS[idb];
+    if (!ma.world || !mb.world) continue;
+    const a = spot(ma);
+    const b = spot(mb);
+    if (ida === 'sky' || idb === 'sky') {
+      ctx.save();
+      ctx.setLineDash([3, 4]);
+      ctx.lineDashOffset = -time * 8;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ox + a.x, oy + a.y);
+      ctx.lineTo(ox + b.x, oy + b.y);
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
+    stroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(ox + a.x, oy + a.y);
+      ctx.lineTo(ox + b.x, oy + b.y);
+    });
+  }
+}
+
+// The Sky Garden: a little floating island on a cloud.
+function drawSky(ctx, ox, oy, time) {
+  const p = SPOT.sky;
+  const x = ox + p.x;
+  const y = oy + p.y + Math.sin(time * 1.2) * 1.5;
+  ctx.fillStyle = '#ffffff';
+  for (const [dx, dy, r] of [[-12, 4, 7], [-4, 1, 9], [7, 3, 8], [14, 5, 6]]) circle(ctx, x + dx, y + dy, r);
+  ctx.fillStyle = '#c4eeb0';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 3, 13, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// A town's stop: a round badge in its colour with a little roof on it, and its name on a pill.
+function drawTown(ctx, x, y, m, picked, time) {
+  const color = JOB_COLORS[m.job] ?? COLORS.accent;
+  const r = picked ? 11.5 + Math.sin(time * 5) * 0.8 : 10;
+  ctx.fillStyle = 'rgba(90,63,122,0.2)';
+  circle(ctx, x + 1, y + 2, r);
+  ctx.fillStyle = color;
+  circle(ctx, x, y, r);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  // The roof and the door.
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(x - 5.5, y);
+  ctx.lineTo(x, y - 5);
+  ctx.lineTo(x + 5.5, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(x - 4, y, 8, 5);
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 1.2, y + 1.5, 2.4, 3.5);
+  ctx.font = font(7.5, true);
+  const w = ctx.measureText(m.name).width + 10;
+  box(ctx, x - w / 2, y + r + 2, w, 11, { fill: '#ffffff', edge: color, r: 5.5, width: 1.5 });
+  text(ctx, m.name, x, y + r + 10.5, { size: 7.5, bold: true, align: 'center', color: INK });
+}
+
+// A field's stop: a small white dot ringed in its region's colour (the throne room's in red).
+function drawField(ctx, x, y, m, hot) {
+  const edge = m.id === 'bossroom' ? '#ff6b8a' : m.id === 'crag' ? '#e88a4c' : '#8c76b8';
+  ctx.fillStyle = '#ffffff';
+  circle(ctx, x, y, hot ? 5 : 4);
+  ctx.strokeStyle = edge;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y, hot ? 5 : 4, 0, Math.PI * 2);
+  ctx.stroke();
+  if (m.id === 'bossroom') {
+    ctx.fillStyle = '#ff6b8a';
+    circle(ctx, x, y, 1.8);
+  }
 }
 
 export function worldMapWindow(ui, state, world) {
@@ -283,55 +295,40 @@ export function worldMapWindow(ui, state, world) {
   ctx.save();
   drawSea(ctx, ox, oy, time);
   ctx.save();
-  roundRect(ctx, ox, oy, MAP_W, MAP_H, 6);
+  roundRect(ctx, ox, oy, MAP_W, MAP_H, 10);
   ctx.clip();
   drawIsland(ctx, ox, oy);
-  drawDecor(ctx, ox, oy, time);
-  drawRoads(ctx, ox, oy);
-  drawSkyIsland(ctx, ox, oy, time);
+  drawRoads(ctx, ox, oy, time);
+  drawSky(ctx, ox, oy, time);
   ctx.restore();
 
-  // A ribbon with the island's name.
-  box(ctx, ox + 6, oy + 6, 78, 16, { fill: '#fff6ec', edge: '#c99a6b', r: 4 });
-  text(ctx, 'Tengu Island', ox + 45, oy + 17, { size: 9, bold: true, align: 'center', color: '#8a5a3c' });
+  // The island's name, on a pill.
+  box(ctx, ox + 8, oy + 8, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
+  text(ctx, 'Tengu Island', ox + 45, oy + 18.5, { size: 8.5, bold: true, align: 'center', color: INK });
 
-  // Stops: fields are dots, towns are cottages with name tags. Hovering shows details.
+  // The stops: fields first, then the towns over them. Hover for details.
   const here = world.map.id;
   let hovered = null;
-  for (const m of Object.values(MAPS)) {
-    if (!m.world) continue;
-    const x = ox + m.world.x;
-    const y = oy + m.world.y;
-    if (m.isTown) {
-      drawTown(ctx, x, y, JOB_COLORS[m.job] ?? COLORS.accent, state.travelPick === m.id);
-      ctx.font = font(7, true);
-      const w = ctx.measureText(m.name).width + 8;
-      box(ctx, x - w / 2, y + 4, w, 10, { fill: JOB_COLORS[m.job], edge: '#ffffff', r: 4, width: 1 });
-      text(ctx, m.name, x, y + 11.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: INK });
-    } else {
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(x, y, m.id === 'bossroom' ? 3.5 : 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      if (m.id === 'bossroom') {
-        ctx.fillStyle = '#ff6b8a';
-        circle(ctx, x, y, 1.6);
-      }
-    }
-    const r = m.isTown ? 12 : 6;
-    if (hover(ui, x - r, y - r - (m.isTown ? 6 : 0), r * 2, r * 2 + (m.isTown ? 10 : 0))) hovered = m;
-    if (m.isTown && clicked(ui, x - r, y - r - 6, r * 2, r * 2 + 10)) state.travelPick = m.id;
+  const stops = Object.values(MAPS).filter((m) => m.world).sort((a, b) => Number(Boolean(a.isTown)) - Number(Boolean(b.isTown)));
+  for (const m of stops) {
+    const p = spot(m);
+    const x = ox + p.x;
+    const y = oy + p.y;
+    const r = m.isTown ? 12 : 7;
+    const hot = hover(ui, x - r, y - r, r * 2, r * 2 + (m.isTown ? 12 : 0));
+    if (hot) hovered = m;
+    if (m.isTown) drawTown(ctx, x, y, m, state.travelPick === m.id, time);
+    else drawField(ctx, x, y, m, hot);
+    if (m.isTown && clicked(ui, x - r, y - r, r * 2, r * 2 + 12)) state.travelPick = m.id;
   }
 
-  // You are here: a pin that bounces over your map.
-  const cur = getMap(here).world;
-  if (cur) {
-    const bob = Math.abs(Math.sin(time * 4)) * 4;
-    const px = ox + cur.x;
-    const py = oy + cur.y - (getMap(here).isTown ? 20 : 6) - bob;
+  // You are here: a pin bouncing over your stop, with the place's name if it's a field.
+  const curMap = getMap(here);
+  if (curMap.world) {
+    const p = spot(curMap);
+    const bob = Math.abs(Math.sin(time * 4)) * 3;
+    const px = ox + p.x;
+    const py = oy + p.y - (curMap.isTown ? 14 : 6) - bob;
     ctx.fillStyle = '#ff6b9a';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
@@ -343,6 +340,14 @@ export function worldMapWindow(ui, state, world) {
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     circle(ctx, px, py - 6, 2);
+    if (!curMap.isTown) {
+      ctx.font = font(7, true);
+      const w = ctx.measureText(curMap.name).width + 10;
+      // Under the dot, out of the way of the town names above the ring.
+      const ly = oy + p.y + 8;
+      box(ctx, px - w / 2, ly, w, 10, { fill: '#ff6b9a', edge: '#ffffff', r: 5, width: 1.2 });
+      text(ctx, curMap.name, px, ly + 7.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    }
   }
   ctx.restore();
 
