@@ -7,7 +7,7 @@
 // Open /tools/spiritmage.html (served with the game). ?slow=1.6 plays every dance figure that many
 // times longer (to try dance speeds); ?style=grounded|float|ribbon tries a dance style; ?full keeps Kami's Favour on; ?manual steps frames from
 // outside (window.step) for recording; ?skill=spiritwave (any of hers) casts it every ?every=2.2 s;
-// ?behind puts a dummy behind her too.
+// ?behind puts a dummy behind her too; ?job=shrinemaiden (or onmyoji) makes her one of her paths.
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
@@ -36,6 +36,11 @@ if (q.has('style')) setDanceStyle(q.get('style'));
 const c = createCharacter('Tester', {});
 gainExp(c, 1e6);
 advanceJob(c, 'spiritmage');
+// ?job=shrinemaiden (or onmyoji): one of her level 30 paths, past Elowen's trial.
+if (q.get('job')) {
+  c.quests.spiritmage_trial = { state: 'done', kills: {} };
+  advanceJob(c, q.get('job'));
+}
 c.equipment.weapon = makeEquip('wand_20', {});
 Object.assign(c.skills, { spiritbolt: 20, spiritstep: 10, spiritwave: 20, blessing: 20, spiritward: 15, manamastery: 20, heavenslantern: 10 });
 c.mp = 9999;
@@ -74,7 +79,8 @@ function step(dt) {
     window.nextCast = t + Number(q.get('every') ?? 2.2);
   }
   const fighting = t > 0.5 && !skill;
-  for (let k = 0; k < Math.round(dt * 60); k++) updateWorld(w, 1 / 60, fighting ? hold : idle);
+  // (A recording can steer her: window.input, a held-keys input, overrides all of this.)
+  for (let k = 0; k < Math.round(dt * 60); k++) updateWorld(w, 1 / 60, window.input ?? (fighting ? hold : idle));
   nextFrame();
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   ctx.imageSmoothingEnabled = false;

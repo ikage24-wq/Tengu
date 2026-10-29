@@ -280,6 +280,10 @@ const R = {
   dollpop: { db: -16, max: 2, layers: [{ rec: 'teleIn', rate: 1.6, len: 400 }, sparkle('C7:30 G7:100', { db: -12 })] },
   spitball: { db: -13, vary: 10, max: 3, layers: [whoosh(120, 800, 2400, { focus: 0.15 }), thump(700, 60, { slide: 1, db: -10 })] },
   spitsplat: { db: -12, vary: 8, max: 3, layers: [{ rec: 'slime', len: 500, rate: 1.2 }, { rec: 'splash', len: 400, rate: 1.5, db: -6 }] },
+  // The Shrine Maiden's kitsune guardian: her naginata's butt struck on the ground with a bell, and
+  // a blow taken on the haft.
+  kitsunecall: { db: -10, max: 1, room: true, layers: [thump(90, 300, { slide: -1.5 }), { rec: 'clangHeavy', rate: 0.9, db: -6 }, { rec: 'bell', len: 1000, rate: 1.1, db: -4 }] },
+  kitsuneblock: { db: -11, vary: 4, max: 2, layers: [{ rec: 'clang', rate: 1.1 }, { rec: 'wood', db: -6 }] },
   // The Thief's paths. The Shinobi: Ki topping out (a blade drawn and a taiko hit: Shadow
   // Clones), a seal bursting, ink spilling over the world, and the ink fox's sweep. The Kitsune:
   // the ninth tail (a koto run and bells: Nine Tails), night falling with the fox fire, and the

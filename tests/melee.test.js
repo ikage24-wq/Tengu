@@ -2531,3 +2531,45 @@ test('the Spirit Doll has a pool of eight tricks of her own, and each one lands'
   const { SKILLS } = await import('../src/data/skills.js');
   assert.ok(!Object.values(SKILLS).some((sk) => sk.job === 'spiritmage' && /doll/i.test(sk.name)), 'the Spirit Mage never orders the doll about');
 });
+
+// A Shrine Maiden (past Elowen's trial) with her kitsune guardian.
+function shrineMaiden() {
+  const w = shrineMage();
+  w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
+  w.char.job = 'shrinemaiden';
+  run(w, 0.2);
+  return w;
+}
+
+test('the Shrine Maiden has a kitsune guardian who fights in front of her and bows when it is over', () => {
+  const w = shrineMaiden();
+  assert.ok(w.guardian, 'she is there');
+  assert.equal(shrineMage().guardian ?? null, null, 'a Spirit Mage has none');
+  const seen = new Set();
+  const hp0 = w.mobs.map((m) => m.hp);
+  for (let i = 0; i < 60 * 6; i++) {
+    updateWorld(w, DT, idle);
+    if (w.guardian.act) seen.add(w.guardian.act.kind);
+  }
+  assert.ok(['thrust', 'sweep', 'rising', 'twin'].filter((k) => seen.has(k)).length >= 2, `a mix of her own moves (${[...seen]})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her naginata lands');
+  w.mobs.forEach((m) => { m.hp = 0; });
+  let bowed = false;
+  for (let i = 0; i < 60 * 2; i++) {
+    updateWorld(w, DT, idle);
+    bowed ||= w.guardian.act?.kind === 'bow';
+  }
+  assert.ok(bowed, 'and bows to the Maiden once the fight is over');
+});
+
+test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
+  const { blockOnHit } = await import('../src/world/combat.js');
+  const w = shrineMaiden();
+  Object.assign(w.guardian.body, { x: w.body.x + 30 });
+  w.guardian.x = w.body.x + 30;
+  w.guardian.act = null;
+  assert.equal(blockOnHit(w, w.body.x + 60, () => 0), true, 'the hit never lands');
+  assert.equal(w.guardian.act.kind, 'block');
+  assert.ok(w.numbers.some((n) => n.text === 'GUARD'));
+  assert.equal(blockOnHit(w, w.body.x + 60, () => 0), false, 'and not again straight away');
+});

@@ -88,6 +88,18 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       }
       return true;
     }
+    case 'kitsunecall': {
+      // The kitsune guardian's Fox-Fire Call: a ring of light racing out from the naginata's butt
+      // and a flash where it struck the ground.
+      groundRing(ctx, 'celringspirit', x, y, p, 120);
+      fxSprite(ctx, 'celspirithit', x, y - 6, { p: Math.min(1, p * 1.5), scale: 0.7 });
+      return true;
+    }
+    case 'kitsuneblock': {
+      // The guardian taking a blow on the haft: a flash of light and paper scraps.
+      fxSprite(ctx, 'celspirithit', x, y - 30, { p, flip, scale: 0.55 });
+      return true;
+    }
     case 'wardbreak': {
       // A Spirit Ward giving way: the sphere bursts in a flash of white light and paper scraps.
       fxSprite(ctx, 'celspirithit', x, y - 24, { p, scale: 0.9 });

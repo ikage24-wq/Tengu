@@ -4,9 +4,11 @@
 
 import { drawSnowWolf } from './snowwolf.js';
 import { drawSpiritDoll } from './spiritdoll.js';
+import { drawKitsune } from './kitsune.js';
 
 export function drawPets(ctx, world, cam, time, layer) {
   if (world.doll) drawSpiritDoll(ctx, world, world.doll, cam, time, layer);
+  if (world.guardian && layer === 'back') drawKitsune(ctx, world, world.guardian, cam, time);
   const pets = world.pets;
   if (!pets || layer !== 'back') return;
   drawSnowWolf(ctx, world, pets.snow, cam, time);

@@ -33,6 +33,7 @@ import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
+import { tickGuardian } from './kitsune.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers } from './dungeon.js';
 
@@ -983,6 +984,7 @@ export function tickMelee(world, dt) {
   tickStorm(world);
   tickPets(world, dt);
   tickDoll(world, dt);
+  tickGuardian(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
