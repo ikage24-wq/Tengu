@@ -24,7 +24,10 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
 
 ## Next
 
-1. The player reviews the new weapons and the reworked dance (picture sent; awaiting the answer).
+1. Dance speed: the player found the casts too fast (about 0.5 s each). GIFs were sent at 1.6x
+   slower (~0.75 s per cast) and 2.2x slower (~1 s); ask which they want, then lengthen the dance
+   moves' durations to match (raising each cast's damage so her damage per second holds) and keep
+   the pace test in tests/melee.test.js passing. The weapons and fan were not objected to.
 2. Stage 2: the skills above and Heaven's Lantern, as timed dance steps; the doll reacts to them.
 3. Wiring: sounds, bots and party play (healer seat), dungeon roles, tests, README and art docs,
    demo videos of every skill.
