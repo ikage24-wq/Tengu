@@ -16,6 +16,7 @@ const ATTACK = { x: 594, y: 268, r: 23, code: 'KeyZ', label: null, color: '#ff8f
 const JUMP = { x: 551, y: 296, r: 16, code: 'Space', label: 'Jump', color: '#8fd3ff', dark: '#3f8fd0' };
 const LOOT = { x: 512, y: 304, r: 11, code: 'KeyX', label: 'Loot', color: '#ffe08a', dark: '#c99a1f' };
 const CHAT = { x: 622, y: 136, r: 11, code: null, label: 'Chat', color: '#c9b6ff', dark: '#7a5cc8' };
+const EMOTE = { x: 622, y: 164, r: 11, code: 'KeyT', label: 'Emote', color: '#ffc6e0', dark: '#e0659f' };
 // Skill buttons in an arc above the Attack button.
 const ARC = [195, 230, 265, 300].map((deg) => {
   const a = (deg * Math.PI) / 180;
@@ -130,7 +131,7 @@ function start(t, id, p, field) {
       steer(t, p);
       return;
     }
-    const buttons = [ATTACK, JUMP, LOOT, ...arcKeys(t.world).map((k, i) => ({ ...ARC[i], code: k.code }))];
+    const buttons = [ATTACK, JUMP, LOOT, EMOTE, ...arcKeys(t.world).map((k, i) => ({ ...ARC[i], code: k.code }))];
     const hit = buttons.find((b) => near(p, b));
     if (hit) {
       press(input, hit.code);
@@ -270,6 +271,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
   });
   drawButton(ctx, t, LOOT, time, () => icon(ctx, 'bag', LOOT.x, LOOT.y, 11, '#ffffff'));
   drawButton(ctx, t, CHAT, time, () => icon(ctx, 'chat', CHAT.x, CHAT.y, 11, '#ffffff'));
+  drawButton(ctx, t, EMOTE, time, () => icon(ctx, 'heart', EMOTE.x, EMOTE.y, 10, '#ffffff'));
   arcKeys(world).forEach((k, i) => {
     const b = { ...ARC[i], code: k.code, color: '#fffaf8', dark: '#9a7cc8' };
     drawButton(ctx, t, b, time, () => {

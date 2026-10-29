@@ -110,6 +110,8 @@ function catchFish(world, f, rng) {
   world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: `${fish.name} ${size}cm`, color: '#9fe8ff', t: 0, small: true });
   world.juice.push({ type: 'loot', x: f.spot.bx, y: f.spot.by - 10, color: fish.color });
   world.fishCaught = { fish, at: world.now };
+  // Friends in your online room hear about it.
+  world.net?.caught?.(world, fish, size);
   // A fish's own recipe comes with your first one.
   if (first) {
     const dish = DISHES.find((d) => d.learn === fish.id);

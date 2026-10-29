@@ -12,12 +12,17 @@ import { text, box, sparkle } from '../ui/kit.js';
 import { drawBubble } from '../ui/chat.js';
 import { settings } from '../core/settings.js';
 import { othersHere, ghostPose } from '../net/online.js';
+import { botsHere } from '../net/dungeonrun.js';
+import { drawFriendFishing } from './fishing.js';
 
 const TAG = 'rgba(58,128,214,0.86)';
 const TAG_EDGE = '#d6ecff';
 
 export function drawGhosts(ctx, world, cam, width, time) {
-  for (const g of othersHere(world)) {
+  // Friends here, and in a friend's dungeon run, the bots of their group.
+  const dt = time - (drawGhosts.at ?? time);
+  drawGhosts.at = time;
+  for (const g of [...othersHere(world), ...botsHere(world, dt)]) {
     if (!g.look) continue;
     const b = g.body;
     const x = snap(b.x - cam.x);
@@ -44,6 +49,7 @@ export function drawGhosts(ctx, world, cam, width, time) {
       drawHero(ctx, look, g.gear, x, y, state, g.anim);
       if (g.gauge) drawCombatAura(ctx, g.gauge, 'front', x, ay, time, scale, g.gk, b.facing);
       drawBuffEffects(ctx, g.buffs, 'front', x, y, time, world.now, b.facing);
+      if (g.fish) drawFriendFishing(ctx, g.fish, x, y, cam, time);
     }
     nameTag(ctx, g, x, y, time);
     if (g.bubble && settings.chatBubbles) drawBubble(ctx, x, y - 62, g.bubble.text, Math.min(1, g.bubble.t * 2));

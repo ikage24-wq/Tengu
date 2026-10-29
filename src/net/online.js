@@ -14,6 +14,9 @@ import { killMob, hurtPlayer } from '../world/world.js';
 import { playerPose } from '../render/scene.js';
 import { createAnim } from '../render/animator.js';
 import { titleOf } from '../core/collection.js';
+import { handleTogether, togetherApi } from './together.js';
+import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
+import { noteHit } from '../world/dungeon.js';
 
 export const ROOM_MAX = 4;
 const SEND_EVERY = 1 / 20;
@@ -60,7 +63,7 @@ function reset() {
   if (online.world) online.world.net = null;
 }
 
-function send(msg) {
+export function send(msg) {
   if (online.status !== 'on' && msg.t !== 'hi') return;
   online.link?.send({ ...msg, id: online.id });
 }
@@ -102,7 +105,7 @@ function handlers(first) {
       online.id = online.link.id;
       online.status = 'on';
       online.order = online.host ? [online.id] : [];
-      world.net = api;
+      world.net = fullApi();
       world.char.playedOnline = true;
       if (online.host) world.log(`Room ${online.code} is open! Friends join with this code.`, '#bff0dc');
       else send({ t: 'hi', name: world.char.name });
@@ -190,6 +193,16 @@ const api = {
     send({ t: 'chat', text: words });
   },
 };
+// The rest of what the world tells the room (net/together.js, net/dungeonrun.js), merged in on
+// first use (those modules load alongside this one).
+let merged = false;
+function fullApi() {
+  if (!merged) {
+    Object.assign(api, togetherApi, runApi, { friendsAtGate, startShared });
+    merged = true;
+  }
+  return api;
+}
 
 // Everyone else in the room on your map (no one shares a dungeon run).
 export function othersHere(world) {
@@ -209,7 +222,7 @@ export function tickNet(world, dt) {
     // A new character (or back from the title) while still in a room: the room follows them.
     if (online.status === 'off') return;
     online.world = world;
-    world.net = online.status === 'on' ? api : null;
+    world.net = online.status === 'on' ? fullApi() : null;
   }
   if (online.status !== 'on') return;
   updateClaim(world);
@@ -222,6 +235,7 @@ export function tickNet(world, dt) {
     online.sendIn = SEND_EVERY;
     sendMe(world);
   }
+  fullApi().runTick(world, dt);
   if (online.mobsIn <= 0 && online.claim === world.map.id && othersHere(world).length) {
     online.mobsIn = MOBS_EVERY;
     sendMobs(world);
@@ -237,6 +251,21 @@ export function tickNet(world, dt) {
 function updateClaim(world) {
   const map = world.map.id;
   const here = `@${map}`;
+  // A shared dungeon run: the leader runs every room.
+  if (world.dungeon?.shared) {
+    const leader = world.dungeon.shared.leader;
+    if (leader === online.id) {
+      online.claim = map;
+      world.mirror = null;
+    } else {
+      online.claim = null;
+      if (world.mirror !== leader + here) {
+        world.mobs = [];
+        world.mirror = leader + here;
+      }
+    }
+    return;
+  }
   if (solo(world)) {
     online.claim = null;
     return;
@@ -303,6 +332,8 @@ function sendMe(world) {
     hp: c.hp, mhp: world.stats.maxHp,
     gauge, gk: gauge ? (inForm(world) ? 1 : (world[gauge] ?? 0) / 100) : 0, form: inForm(world),
     buffs, emote: world.emote?.face ?? null,
+    // Fishing: where their bobber is and how it's going.
+    fish: world.fishing ? { bx: world.fishing.spot.bx, by: world.fishing.spot.by, face: world.fishing.spot.face, phase: world.fishing.phase } : null,
     fx: takeFx(world), nums: takeNumbers(world),
   });
 }
@@ -349,6 +380,8 @@ function sendMobs(world) {
     round(m.air ?? 0), round(m.flash), round(m.stagger), round(m.special?.warn ?? 0),
     round(Math.max(0, (m.frozenUntil ?? 0) - now)), m.hold ?? null, round(m.dying), round(Math.max(0, m.aggroUntil - now)),
     round(now - (m.attackAt ?? -99)), round(now - (m.gloatAt ?? -99)),
+    // In a dungeon: a wind-up, a shield, a charge, the open heart.
+    world.dungeon ? [round(m.windup ?? 0), m.shield ? 1 : 0, m.charging?.dir ?? 0, m.heartOpen ? 1 : 0, m.engaged ? 1 : 0] : null,
   ]);
   send({ t: 'mobs', map: world.map.id, list });
 }
@@ -427,6 +460,9 @@ function receive(world, msg) {
       world.log(`${g.name}: ${words}`, '#ffffff');
       return;
     }
+    default:
+      // Trading, catches, queens' moves, shared dungeon runs (net/together.js).
+      handleTogether(world, msg, ghostOf(msg.id));
   }
 }
 
@@ -452,6 +488,7 @@ function onMe(world, msg) {
   g.gk = msg.gk;
   g.form = msg.form;
   g.emote = msg.emote;
+  g.fish = msg.fish ?? null;
   g.buffs = {};
   for (const [id, b] of Object.entries(msg.buffs ?? {})) g.buffs[id] = { ...b, until: world.now + b.until };
   if (msg.map !== world.map.id || solo(world)) return;
@@ -495,7 +532,7 @@ function onMobs(world, msg) {
   const now = world.now;
   const next = [];
   for (const e of msg.list) {
-    const [id, mobId, sx, sy, x, y, hp, dir, state, air, flash, stagger, warn, frozen, hold, dying, aggro, attackAgo, gloatAgo] = e;
+    const [id, mobId, sx, sy, x, y, hp, dir, state, air, flash, stagger, warn, frozen, hold, dying, aggro, attackAgo, gloatAgo, dg] = e;
     let m = mine.get(id);
     if (!m) {
       if (!MOBS[mobId]) continue;
@@ -520,6 +557,7 @@ function onMobs(world, msg) {
     m.aggroUntil = now + aggro;
     m.attackAt = now - attackAgo;
     m.gloatAt = now - gloatAgo;
+    if (dg) [m.windup, m.shield, m.chargeDir, m.heartOpen, m.engaged] = [dg[0], Boolean(dg[1]), dg[2], Boolean(dg[3]), Boolean(dg[4])];
     // A monster you saw fall stays down, even if the word hasn't reached its owner yet.
     if (!(m.hp <= 0 && m.credited)) {
       const fell = m.hp > 0 && hp <= 0;
@@ -539,8 +577,10 @@ function onHit(world, msg) {
   if (msg.map !== world.map.id || online.claim !== world.map.id) return;
   const m = world.mobs.find((o) => netId(o) === msg.mob);
   if (!m || m.hp <= 0) return;
-  // The same hit the player saw land in their own game: knockback, launch, holds and burns.
-  if (hitMob(m, msg.d, msg.x, world.now, { knock: msg.k, launch: msg.l })) {
+  // The same hit the player saw land in their own game: knockback, launch, holds and burns. In a
+  // shared dungeon run it also stirs the monster's anger at them.
+  const dmg = world.dungeon ? noteHit(world, m, { damage: msg.d, party: msg.id, fromX: msg.x }) : msg.d;
+  if (hitMob(m, dmg, msg.x, world.now, { knock: msg.k, launch: msg.l })) {
     // Whoever struck the last blow tells everyone it fell (see 'dead'); this game only shares in
     // it, unless it hit the monster too.
     if (m.mine) killMob(world, m);

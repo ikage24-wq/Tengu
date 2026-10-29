@@ -427,8 +427,9 @@ function dungeonPage(ui, state, world, npc, area) {
       box(ctx, cx, cy, tw / 2 - 2, 19, { fill: '#ffffff', edge: th.light, r: 7, width: 1.2 });
       box(ctx, cx + 3, cy + 3, 36, 13, { fill: r.color, edge: null, r: 6 });
       text(ctx, r.label, cx + 21, cy + 12.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.5)' });
-      const who = s.who === 'you' ? `${world.char.name} (you)` : s.who ? `Lv${s.who.level} ${s.who.name}` : 'Group finder...';
-      const job = s.who === 'you' ? JOBS[world.char.job].name : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a healer' : s.role === 'tank' ? 'a Warrior' : 'any job';
+      const f = s.who?.friend;
+      const who = s.who === 'you' ? `${world.char.name} (you)` : f ? `Lv${f.level ?? 1} ${f.name} (friend)` : s.who ? `Lv${s.who.level} ${s.who.name}` : 'Group finder...';
+      const job = s.who === 'you' ? JOBS[world.char.job].name : f ? JOBS[f.job]?.name ?? '' : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a healer' : s.role === 'tank' ? 'a Warrior' : 'any job';
       text(ctx, who, cx + 44, cy + 9, { size: 7.5, bold: true, color: s.who ? COLORS.ink : COLORS.muted });
       text(ctx, job, cx + 44, cy + 16.5, { size: 6, color: COLORS.muted });
     });

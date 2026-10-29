@@ -114,3 +114,4 @@ test('when the player running a map leaves it, the next one takes its monsters o
   B.leaveRoom(b);
   assert.equal(a.mirror, null);
 });
+

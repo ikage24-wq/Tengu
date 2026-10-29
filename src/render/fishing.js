@@ -167,3 +167,37 @@ export function drawFishing(ctx, world, cam, time, hx, hy) {
   if (f.phase === 'wait') text(ctx, 'Wait for the bite... (Z to hook)', hx, hy - 66, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.7)' });
   ctx.restore();
 }
+
+// A friend fishing (online): their rod, line and bobber, and a "!" when they've got a bite.
+export function drawFriendFishing(ctx, f, hx, hy, cam, time) {
+  const dir = f.face;
+  const tip = [hx + dir * 34, hy - 50];
+  const bx = f.bx - cam.x;
+  const by = f.by - cam.y - 2 + (f.phase === 'bite' ? 4 : Math.sin(time * 2.4));
+  ctx.save();
+  ctx.strokeStyle = '#a07a54';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(hx + dir * 7, hy - 20);
+  ctx.quadraticCurveTo(hx + dir * 21, hy - 40, tip[0], tip[1]);
+  ctx.stroke();
+  if (f.phase !== 'cast' && f.phase !== 'catch') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(tip[0], tip[1]);
+    ctx.quadraticCurveTo((tip[0] + bx) / 2, Math.max(tip[1], by) + 14, bx, by - 3);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(bx, by, 3, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ff6b8a';
+    ctx.beginPath();
+    ctx.arc(bx, by, 3, Math.PI, TAU);
+    ctx.fill();
+  }
+  if (f.phase === 'bite') text(ctx, '!', hx, hy - 66, { size: 14, bold: true, align: 'center', color: '#ff6b8a', outline: '#ffffff' });
+  ctx.restore();
+}

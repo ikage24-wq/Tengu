@@ -23,9 +23,24 @@ Open **Play with Friends** (the two-people button on the menu bar, or N) and pre
 you get a six-digit code. Friends (up to 3) open the same window, type the code on the pad, and
 press **Join**. Everyone in the room sees each other on the same map, fights the same monsters,
 and chats; a monster's fall gives full EXP to everyone who hit it and a party share to the others
-on the map, and each player gets their own loot. Dungeons stay a run of your own. Players connect
+on the map, and each player gets their own loot. Players connect
 straight to each other (WebRTC through the free PeerJS broker), so there's no server to run.
 Adding `?net=local` to the address plays between tabs of one browser instead, for testing.
+
+Things to do together:
+
+- **Party dungeons.** Friends standing at a dungeon's gate with a job join the group the warden
+  forms (bots fill the seats left). The one who formed it leads: their game runs the rooms,
+  monsters, bosses and bots, and everyone's blows, taunts, heals, buffs and room tasks reach it.
+- **Trading.** Each friend's row has a Trade button: both sides put in up to six items and some
+  gold, press Ready, and the swap happens when both are ready (any change takes the marks off).
+- **Warp to a friend** for a little gold (more the farther they are), unless they're in a dungeon
+  or trial.
+- **Fishing together.** Friends see each other's lines and catches, and the room keeps a board of
+  its five best catches.
+- **Queen rematches.** A returning queen's moves (and their warnings) reach everyone on her map.
+- **Quests** count every kill on the map you share, so friends hunting together all progress.
+- **Emotes.** T (or the phone's EMOTE button) opens a wheel of eight: cheer, dance, flip, love, thanks and more.
 
 ### Phone controls
 

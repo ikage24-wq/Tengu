@@ -215,6 +215,13 @@ function queenTurn(world, m, style, dt) {
 }
 
 function addZones(world, m, zones, base) {
+  const before = world.zones.length;
+  addZonesHere(world, m, zones, base);
+  // Friends on her map see them coming too (and get hit by them in their own games).
+  if (!world.map.trial) world.net?.zones?.(world, world.zones.slice(before), world.callout);
+}
+
+function addZonesHere(world, m, zones, base) {
   for (const z of zones) {
     // Circles land on whatever the hero is standing on; everything else on the floor.
     const y = z.kind === 'circle' ? (z.high ? world.map.groundY : world.body.onGround ? world.body.y : world.map.groundY) : world.map.groundY;

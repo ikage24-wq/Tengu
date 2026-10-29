@@ -66,12 +66,17 @@ export function groupOf(world) {
   for (const bot of partyMembers(world.bots)) {
     if (bot.body && bot.map === world.map.id) out.push({ id: bot.id, name: bot.name, role: roles[bot.id] ?? 'dps', body: bot.body, bot });
   }
+  // Friends in a shared online run (net/dungeonrun.js).
+  if (world.net?.runMembers) out.push(...world.net.runMembers(world));
   return out;
 }
 
-export const isUp = (world, g) => (g.bot ? !g.bot.down : !world.dead);
-export const hpOf = (world, g) => (g.bot ? g.bot.hp ?? 0 : world.char.hp);
-export const maxHpOf = (world, g) => (g.bot ? g.bot.stats.maxHp : world.stats.maxHp);
+export const isUp = (world, g) => (g.remote ? !g.remote.dead : g.bot ? !g.bot.down : !world.dead);
+export const hpOf = (world, g) => (g.remote ? g.remote.hp ?? 0 : g.bot ? g.bot.hp ?? 0 : world.char.hp);
+export const maxHpOf = (world, g) => (g.remote ? g.remote.maxHp ?? 1 : g.bot ? g.bot.stats.maxHp : world.stats.maxHp);
+// Shared online runs: the leader runs the rooms, the others follow.
+const leading = (world) => Boolean(world.net?.isLeader?.(world));
+const following = (world) => Boolean(world.net?.isFollower?.(world));
 
 // Who would fill each role: you, then your party members, and the finder for any open spot.
 // Returns { slots: [{ role, who }] } (who is 'you', a party member, or null for a recruit), or
@@ -94,6 +99,11 @@ export function planGroup(world, id = 'hollow') {
     return true;
   };
   take(mine, 'you');
+  // Friends online at the gate come along first.
+  for (const g of world.net?.friendsAtGate?.(world) ?? []) {
+    const role = roleOf(g.job, JOBS[g.job].family);
+    if (take(role, { friend: g })) continue;
+  }
   for (const bot of party) {
     const role = roleOf(bot.char.job, JOBS[bot.char.job].family);
     if (!role) return { why: `${bot.name} needs a job before they can come.` };
@@ -140,11 +150,17 @@ export function startRun(world, id = 'hollow', { hard = false } = {}) {
   const def = DUNGEONS[id];
   const roles = {};
   for (const s of plan.slots) {
+    if (s.who?.friend) {
+      roles[s.who.friend.id] = s.role;
+      continue;
+    }
     const bot = s.who === 'you' ? null : s.who ?? recruit(world, def, s.role);
     roles[bot ? bot.id : 'you'] = s.role;
   }
   world.dungeon = { id, roles, rooms: {}, start: world.now, wipes: 0, downs: 0, cheer: 0, hard, zones: [], shots: [], vfx: [], callout: null, done: false };
   for (const bot of partyMembers(world.bots)) prep(bot);
+  // Friends in the group go in with you, your game leading the run.
+  if (plan.slots.some((s) => s.who?.friend)) world.net.startShared(world, roles, hard);
   loadMap(world, def.rooms[0], 'start');
   world.log(`Your group enters ${def.name}${hard ? ' (Hard)' : ''}! You are the ${ROLES[roles.you].label}.`, '#ffe36b');
   if (roles.you === 'tank') world.log('Tanks: Provoke pulls everything nearby onto you, and Chain Hook drags monsters over for the group.', '#bff0dc');
@@ -306,6 +322,7 @@ export function dungeonInteract(world) {
 function finish(world, o, who) {
   o.done = true;
   o.progress = 1;
+  if (following(world)) world.net.runLeader(world, { op: 'obj', map: world.map.id, i: o.id });
   const task = taskProgress(world);
   const count = task ? ` (${task.have}/${task.need})` : '';
   if (o.kind === 'glowcap') world.log(`${who} lit a glowcap${count}.`, '#ffe9a0');
@@ -489,7 +506,7 @@ export function noteHit(world, m, h) {
   if (m.vulnUntil > world.now) damage = Math.round(damage * 1.5);
   if (m.shield) damage = Math.round(damage * 0.5);
   // The Sprouts' cheering, and Gnarlroot's open heart (up high is where it's reached).
-  const body = who === 'you' ? world.body : partyMembers(world.bots).find((b) => b.id === who)?.body;
+  const body = groupOf(world).find((g) => g.id === who)?.body;
   damage = Math.round(damage * cheerOf(run) * heartMultiplier(world, m, body));
   engage(world, m, who);
   m.threat[who] = (m.threat[who] ?? 0) + Math.max(1, damage) * (run.roles[who] === 'tank' ? TANK_THREAT : 1);
@@ -512,6 +529,7 @@ function taunt(world, m, who, hold) {
 // Every monster within `range` turns on `who`: the warrior's Provoke, in the colour of the path
 // that cried it (`school`; yours by default).
 export function provoke(world, who, body, range = PROVOKE.range, hold = PROVOKE.hold, school = who === 'you' ? pathSchool(world.char) : 'steel') {
+  if (who === 'you' && following(world)) world.net.runLeader(world, { op: 'provoke', map: world.map.id, range, hold });
   let n = 0;
   for (const m of world.mobs) {
     if (m.hp <= 0 || m.def.fight?.mender || Math.abs(m.x - body.x) > range || Math.abs(m.y - body.y) > 120) continue;
@@ -525,6 +543,7 @@ export function provoke(world, who, body, range = PROVOKE.range, hold = PROVOKE.
 // The warrior's Chain Hook in a dungeon: the monsters it catches turn on `who` and get dragged
 // over, lined up in front of them for the group (bosses are too heavy to move).
 export function hookMobs(world, who, body, mobs, dir) {
+  if (who === 'you' && following(world)) world.net.runLeader(world, { op: 'hook', map: world.map.id, mobs: mobs.map((m) => m.net).filter(Boolean), dir });
   mobs.forEach((m, i) => {
     taunt(world, m, who, 2);
     if (!m.def.boss) yank(m, body.x + dir * (m.def.w / 2 + 14 + i * 14));
@@ -535,6 +554,11 @@ export function hookMobs(world, who, body, mobs, dir) {
 
 export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false } = {}) {
   if (!isUp(world, g)) return 0;
+  // A friend online takes the hit in their own game.
+  if (g.remote) {
+    world.net.runTo(world, g.id, { op: 'hurt', raw, fromX, knock, pierce });
+    return raw;
+  }
   if (world.dungeon?.hard) raw *= HARD.hurt;
   const body = g.body;
   if (g.bot) {
@@ -583,6 +607,11 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
 
 function healMember(world, g, amount, by) {
   if (!isUp(world, g)) return 0;
+  if (g.remote) {
+    world.net.runTo(world, g.id, { op: 'heal', amount: Math.round(amount) });
+    world.numbers.push({ x: g.body.x, y: g.body.y - g.body.h - 10, text: `+${Math.round(amount)}`, color: '#7ee081', t: 0, small: true });
+    return Math.round(amount);
+  }
   const max = maxHpOf(world, g);
   const before = hpOf(world, g);
   const after = Math.min(max, before + Math.round(amount));
@@ -596,8 +625,10 @@ function healMember(world, g, amount, by) {
 
 // Your heal spells also heal party members they reach.
 export function healMembers(world, pct, box) {
+  // Following a friend's run, the leader's game heals the bots there.
+  if (following(world)) world.net.runLeader(world, { op: 'groupheal', map: world.map.id, pct, box });
   for (const g of groupOf(world)) {
-    if (!g.bot || !isUp(world, g)) continue;
+    if (g.id === 'you' || !isUp(world, g)) continue;
     const b = g.body;
     if (b.x < box.x || b.x > box.x + box.w || b.y - b.h > box.y + box.h || b.y < box.y) continue;
     healMember(world, g, maxHpOf(world, g) * pct, 'you');
@@ -634,14 +665,16 @@ export function giveBuff(world, g, id, name, values, duration) {
   const max = maxHpOf(world, g);
   const b = { until: world.now + duration, since: world.now, values, name };
   if (values.barrier) b.shield = Math.round(max * values.barrier);
-  if (g.bot) (g.bot.buffs ??= {})[id] = b;
+  if (g.remote) world.net.runTo(world, g.id, { op: 'buff', id, name, values, duration, shield: b.shield });
+  else if (g.bot) (g.bot.buffs ??= {})[id] = b;
   else world.char.buffs[id] = b;
 }
 
 // A party buff spell reaching the members in `box` (you got yours already).
 export function buffMembers(world, id, name, params, box) {
+  if (following(world)) world.net.runLeader(world, { op: 'groupbuff', map: world.map.id, id, name, params, box });
   for (const g of groupOf(world)) {
-    if (!g.bot || !isUp(world, g) || !inBox(g.body, box)) continue;
+    if (g.id === 'you' || !isUp(world, g) || !inBox(g.body, box)) continue;
     giveBuff(world, g, id, name, params.buff, params.duration);
     world.fx.push({ kind: 'buffcast', skill: id, name, x: g.body.x, y: g.body.y, t: 0, dur: 1.1 });
   }
@@ -652,7 +685,7 @@ const inBox = (b, box) => b.x >= box.x && b.x <= box.x + box.w && b.y - b.h <= b
 // The fallen party member a Revive in `box` would reach.
 export function reviveTarget(world, box) {
   if (!world.dungeon) return null;
-  return groupOf(world).find((g) => g.bot && !isUp(world, g) && inBox(g.body, box)) ?? null;
+  return groupOf(world).find((g) => g.id !== 'you' && !isUp(world, g) && inBox(g.body, box)) ?? null;
 }
 
 export function reviveMember(world, g, pct) {
@@ -684,6 +717,10 @@ function tickBuffs(world, group, dt) {
 }
 
 function revive(world, g, pct) {
+  if (g.remote) {
+    world.net.runTo(world, g.id, { op: 'revive', pct });
+    return;
+  }
   if (g.bot) {
     g.bot.down = false;
     g.bot.hp = Math.round(g.bot.stats.maxHp * pct);
@@ -809,6 +846,7 @@ function land(world, g, raw, acc, fromX, heavy = false) {
 
 export function addZone(world, z) {
   world.dungeon.zones.push({ t: 0, hit: false, after: 0, y: world.map.groundY, ...z });
+  if (leading(world)) world.net.runAll(world, { op: 'zone', z: { ...z, from: z.from ? z.from.net ?? null : null } });
 }
 
 export function adds(world, boss, mob, xs, threatOn) {
@@ -1001,7 +1039,8 @@ function tickZones(world, up, dt) {
     run.vfx.push({ kind: 'zonehit', zone: z.kind, root: z.root, x: z.x, y: z.y, w: z.w, t: 0, dur: 0.5 });
     if (z.kind === 'circle') sporeSprout(world, z);
     if (z.kind === 'floor') world.juice.push({ type: 'shake', mag: 7, dur: 0.6 });
-    for (const g of up) if (inZone(world, z, g.body)) hurtMember(world, g, z.damage, z.from?.x ?? z.x, { knock: z.kind !== 'circle' });
+    // (Friends online step out of these in their own games.)
+    for (const g of up) if (!g.remote && inZone(world, z, g.body)) hurtMember(world, g, z.damage, z.from?.x ?? z.x, { knock: z.kind !== 'circle' });
   }
   run.zones = run.zones.filter((z) => !z.hit || z.after < 0.5);
   for (const s of run.shots) {
@@ -1036,6 +1075,8 @@ export function jumpNow(world, body) {
 
 export function tickDungeon(world, dt) {
   const run = world.dungeon;
+  // Following a friend's run: their game runs the room; yours keeps your own side of it.
+  if (following(world)) return followRoom(world, dt);
   const group = groupOf(world);
   const up = group.filter((g) => isUp(world, g));
   // Packs notice anyone who gets close.
@@ -1094,6 +1135,79 @@ export function tickDungeon(world, dt) {
   checkClear(world);
 }
 
+// A friend's run, in your game: the monsters are theirs (shown where they say), but the moves
+// heading for you, your room tasks, your buffs and the root radio are yours.
+function followRoom(world, dt) {
+  const run = world.dungeon;
+  const me = groupOf(world).filter((g) => g.id === 'you' && isUp(world, g));
+  for (const m of world.mobs) world.net.step(m, dt);
+  tickZones(world, me, dt);
+  tickRoom(world, dt, groupOf(world).filter((g) => g.id === 'you'), me);
+  tickChannels(world, dt, []);
+  tickBuffs(world, [], dt);
+  for (const v of run.vfx) v.t += dt;
+  run.vfx = run.vfx.filter((v) => v.t < v.dur);
+  if (run.callout) {
+    run.callout.t -= dt;
+    if (run.callout.t <= 0) run.callout = null;
+  }
+}
+
+// ---------- A shared run's messages, in the game they reach (net/dungeonrun.js) ----------
+
+// A monster in the leader's game hit you.
+export function followerHurt(world, msg) {
+  const me = groupOf(world).find((g) => g.id === 'you');
+  hurtMember(world, me, msg.raw, msg.fromX, { knock: msg.knock, pierce: msg.pierce });
+}
+
+// A friend's heal reaching you.
+export function runHeal(world, msg) {
+  const me = groupOf(world).find((g) => g.id === 'you');
+  healMember(world, me, msg.amount, 'you');
+}
+
+export function followerRevive(world, pct) {
+  if (world.dead) revive(world, groupOf(world).find((g) => g.id === 'you'), pct);
+}
+
+// The leader's group wiped: back to the room's entrance, up and full.
+export function followerWiped(world) {
+  const entry = world.map.portals.find((p) => p.id === 'start') ?? world.map.portals.find((p) => p.id === 'west') ?? world.map.portals[0];
+  Object.assign(world.body, { x: entry.x + 50, y: world.map.groundY, vx: 0, vy: 0, rope: null, onGround: true });
+  world.dead = false;
+  world.char.hp = world.stats.maxHp;
+  world.char.mp = world.stats.maxMp;
+  world.invuln = 2;
+  world.channel = null;
+  world.dungeon.zones = [];
+  callout(world, 'Your group wiped!', 'Regroup and try again');
+}
+
+// In the leader's game: a friend's taunt, hook, group heal or buff, or room task.
+export function leaderAct(world, msg, id) {
+  const me = groupOf(world).find((g) => g.id === id);
+  if (!me) return;
+  if (msg.op === 'provoke') provoke(world, id, me.body, msg.range, msg.hold);
+  else if (msg.op === 'hook') hookMobs(world, id, me.body, world.mobs.filter((m) => msg.mobs.includes(m.net)), msg.dir);
+  else if (msg.op === 'groupheal') {
+    for (const g of groupOf(world)) if (g.id !== id && isUp(world, g) && inBox(g.body, msg.box)) healMember(world, g, maxHpOf(world, g) * msg.pct, id);
+  } else if (msg.op === 'groupbuff') {
+    for (const g of groupOf(world)) if (g.id !== id && isUp(world, g) && inBox(g.body, msg.box)) giveBuff(world, g, msg.id, msg.name, msg.params.buff, msg.params.duration);
+  } else if (msg.op === 'obj') {
+    const o = world.dungeon.room.objects.find((x) => x.id === msg.i);
+    if (o && !o.done) finish(world, o, me.name);
+  }
+}
+
+// A friend formed a group with you in it: in you go, following their run.
+export function joinRun(world, msg) {
+  const def = DUNGEONS[msg.dungeon];
+  for (const bot of partyMembers(world.bots)) dismiss(world.bots, bot, world, { quiet: true });
+  world.dungeon = { id: def.id, roles: msg.roles, rooms: {}, start: world.now, wipes: 0, downs: 0, cheer: 0, hard: msg.hard, zones: [], shots: [], vfx: [], callout: null, done: false, shared: { leader: msg.leader } };
+  loadMap(world, def.rooms[0], 'start');
+}
+
 // Waiting about: a little patrol near home.
 function idle(m, dt, now) {
   m.flash = Math.max(0, m.flash - dt);
@@ -1147,6 +1261,7 @@ function wipe(world, group) {
   world.channel = null;
   callout(world, 'Your group wiped!', 'Regroup and try again');
   radio(world, 'wipe');
+  if (leading(world)) world.net.runAll(world, { op: 'wipe' });
   world.log('Your group wiped. Everyone regroups at the start of the room.', '#ffb3c6');
 }
 

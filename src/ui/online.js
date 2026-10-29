@@ -2,13 +2,14 @@
 // a friend's code on the number pad to join theirs. In a room it lists everyone, where they are,
 // and their level, with a way out.
 
-import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap } from './kit.js';
+import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip } from './kit.js';
+import { askTrade, answerTrade, warpTo, warpBlocker, warpCost } from '../net/together.js';
 import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.js';
 import { JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 
 const W = 236;
-const H = 262;
+const H = 300;
 
 export function onlineWindow(ui, state, world) {
   const win = state.windows.online;
@@ -46,12 +47,39 @@ export function onlineWindow(ui, state, world) {
     for (const r of rows) {
       box(ctx, x - 2, y, W - 20, 22, { fill: r.me ? '#fff3c4' : '#ffffff', edge: r.me ? COLORS.select : th.light, r: 8, width: 1 });
       icon(ctx, 'user', x + 9, y + 11, 11, r.me ? COLORS.gold : '#4f95e0');
-      text(ctx, `${r.name}${r.me ? ' (you)' : ''}`, x + 20, y + 10, { size: 8, bold: true });
+      text(ctx, fit(ctx, `${r.name}${r.me ? ' (you)' : ''}`, 70, 8, true), x + 20, y + 10, { size: 8, bold: true });
       text(ctx, `Lv${r.level ?? 1} ${JOBS[r.job]?.name ?? ''}`, x + 20, y + 18.5, { size: 6.5, color: COLORS.muted });
       const where = MAPS[r.map]?.name ?? '';
       const same = r.map === world.map.id;
-      text(ctx, where, x + W - 26, y + 14, { size: 6.5, bold: same, align: 'right', color: same ? COLORS.good : COLORS.muted });
+      text(ctx, fit(ctx, where, 60, 6.5, same), x + 96, y + 14, { size: 6.5, bold: same, color: same ? COLORS.good : COLORS.muted });
+      // A friend: warp to them, or trade with them.
+      if (!r.me) {
+        const why = warpBlocker(world, r);
+        if (!why || why === 'Not enough gold') {
+          if (button(ui, x + W - 92, y + 3, 36, 16, 'Warp', { size: 7, enabled: !why, primary: true, theme: 'sky' })) {
+            const no = warpTo(world, r);
+            if (no) world.log(no, '#ffb3c6');
+            else win.open = false;
+          }
+          if (hover(ui, x + W - 92, y + 3, 36, 16)) tooltip(ui, [{ text: `Warp to ${r.name}`, bold: true }, { text: `${warpCost(world, r)} gold`, size: 8, color: COLORS.gold }]);
+        }
+        if (!online.trade && button(ui, x + W - 54, y + 3, 34, 16, 'Trade', { size: 7, enabled: online.tradeAsked !== r.id })) askTrade(world, r.id);
+      }
       y += 25;
+    }
+    // Someone asked to trade.
+    if (online.tradeAsk && !online.trade) {
+      const name = online.ghosts.get(online.tradeAsk)?.name ?? 'Someone';
+      box(ctx, x - 2, y, W - 20, 22, { fill: '#fff3c4', edge: COLORS.select, r: 8, width: 1.5 });
+      text(ctx, `${name} wants to trade!`, x + 6, y + 14, { size: 8, bold: true });
+      if (button(ui, x + W - 92, y + 3, 36, 16, 'Yes', { size: 7.5, primary: true })) answerTrade(world, true);
+      if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerTrade(world, false);
+      y += 25;
+    }
+    // The room's best catches.
+    if (online.catches?.length) {
+      text(ctx, 'Catch board', x, y + 9, { size: 7.5, bold: true, color: th.dark });
+      online.catches.slice(0, 3).forEach((c, i) => text(ctx, fit(ctx, `${i + 1}. ${c.who}: ${c.name} ${c.size}cm`, W - 30, 6.5, false), x + 4, y + 19 + i * 8, { size: 6.5, color: COLORS.ink }));
     }
     const left = win.y + H - 30;
     if (button(ui, win.x + W / 2 - 46, left, 92, 19, 'Leave room', { size: 8.5, iconName: 'door' })) leaveRoom(world);
