@@ -325,6 +325,9 @@ const EYE_LOOK = {
   yukirings: { rx: 2.4, ry: 2.6, tilt: 0.06, wing: 1.2, flicks: 2, iris: 1.35, pupil: 'rings' },
   yukiwhiteveil: { rx: 2.55, ry: 2.1, tilt: -0.22, wing: 2, flicks: 3, iris: 1.1, open: 0.5, lash: '#e8f0ff' },
   yukiicelash: { rx: 2.45, ry: 2.3, tilt: 0.35, wing: 2.2, flicks: 3, iris: 1.15, pupil: 'diamond', lash: '#6a9ad8' },
+  // The tengu's: long, sharp and upswept under a heavy lid (a smug, unhurried look down his nose),
+  // a man's light lashes, a narrow gold iris.
+  tengusmug: { rx: 2.55, ry: 1.85, tilt: 0.34, wing: 1.1, flicks: 1, iris: 1.12, open: 0.64 },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -421,6 +424,7 @@ function earShapes(style, c, inner) {
 // darkest shade, never ink). `round` is hikimayu: small soft ovals set high; `dots` a doll's
 // painted brows, two tiny dots side by side set very high. `none` hides them.
 export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'stubby', 'dots', 'none'];
+// (Also 'tengu', the tengu's own: never offered in the creator.)
 
 // A tapered ribbon along `pts`, `ws` thick at each point.
 function ribbon(pts, ws, c) {
@@ -477,6 +481,9 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
     case 'arched':
       // A high curve that peaks past the middle.
       return ribbon([at(0), at(0.35, 0.6), at(0.65, 0.95), at(1, 0.2)], g([0.5, 0.75, 0.7, 0.35]), c);
+    case 'tengu':
+      // The tengu's: straight, strong and clean, a man's brow, tapering long past the eye.
+      return ribbon([at(-0.12), at(0.45, 0.18), at(1.18, 0.3)], g([1.05, 0.95, 0.3]), c);
     case 'sharp':
       // Full at the inner end, narrowing to a point that flicks up past the eye.
       return ribbon([at(0), at(0.5, 0.15), at(1.12, 0.75)], g([0.95, 0.7, 0.12]), c);
@@ -537,6 +544,13 @@ function mouthShapes(kind, sk) {
     // The yuki-onna's: small, pale blue lips, closed; or parted with a cold breath.
     case 'yukilips': return [F(E(x, MY + 0.6, 1.1, 0.55, '#8ab4e8')), F(E(x, MY + 0.45, 0.7, 0.2, '#c8e0ff'))];
     case 'yukibreath': return [F(E(x, MY + 0.9, 0.9, 0.8, '#5a7ab8')), F(E(x, MY + 0.9, 1.3, 1.1, '#8ab4e8')), F(E(x, MY + 0.9, 0.7, 0.6, '#3a4a78'))];
+    // The tengu's: a small closed smirk, one corner lifted; the same with a flash of teeth at that
+    // corner (pleased with himself); a short open 'hah'; and a flat, sideways 'tch'.
+    case 'tengusmirk': return [stroke([[x - 1.3, MY + 0.55], [x + 0.4, MY + 0.55], [x + 1.5, MY - 0.15], [x + 1.9, MY - 0.55]], 0.55, LIP)];
+    case 'tengugrin': return [F(T([[x - 1.2, MY + 0.3], [x + 1.9, MY - 0.5], [x + 1.4, MY + 1], [x - 0.6, MY + 0.9]], MOUTH)), F(T([[x - 0.9, MY + 0.35], [x + 1.8, MY - 0.4], [x + 1.6, MY + 0.2], [x - 0.6, MY + 0.55]], '#ffffff')),
+      stroke([[x - 1.4, MY + 0.35], [x + 0.6, MY + 0.05], [x + 2, MY - 0.6]], 0.45, LIP)];
+    case 'tenguhah': return [F(E(x + 0.3, MY + 0.7, 1.1, 0.75, MOUTH)), F(E(x + 0.3, MY + 0.35, 0.9, 0.25, '#ffffff'))];
+    case 'tengutch': return [stroke([[x - 1.2, MY + 0.7], [x + 0.6, MY + 0.5], [x + 1.6, MY + 0.8]], 0.55, LIP), F(E(x + 1.8, MY + 0.6, 0.3, 0.25, LIP))];
     case 'onismirk': return [stroke([[x - 1.6, MY + 0.7], [x + 0.2, MY + 0.6], [x + 1.6, MY - 0.6], [x + 2, MY - 0.9]], 0.62, LIP), F(T([[x + 0.8, MY + 0.4], [x + 1.6, MY - 0.1], [x + 1.4, MY + 1.3]], '#ffffff'))];
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
@@ -969,7 +983,7 @@ function headShapes(look, g, rig) {
   const front = hatHidesBangs(hat) ? null : hairNow.front;
   if (front) out.push(...front.shade.map((sh) => ({ ...sh, c: sk.sh1 })));
   // Blush: a soft two-tone patch on each cheek, clear of the eyes; flustered faces add hatching.
-  const blush = f.blush ?? 1;
+  const blush = look.blush ?? f.blush ?? 1;
   for (const side of [-1, 1]) {
     const bx = FACE_X + 6.1 * side;
     const k = side < 0 ? 0.8 : 1;
@@ -2078,10 +2092,13 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   const [, [fx, fy]] = reach(FRONT_SHOULDER, SHOULDER_Y, FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0], HAND_Y + rig.frontArm[1], UPPER_ARM, FOREARM, -1);
   const [hx, hy] = hold === 'front' ? [fx, fy] : [wx, wy];
   const hand = rig.view === 'back' ? [sx(15.5), sy(squashY(30))] : [sx(squashX(hx + rig.tx)), sy(squashY(hy + rig.by + hipDrop(rig)))];
+  // (And the other hand, for a figure with something in each.)
+  const [ox, oy] = hold === 'front' ? [wx, wy] : [fx, fy];
+  const other = rig.view === 'back' ? hand : [sx(squashX(ox + rig.tx)), sy(squashY(oy + rig.by + hipDrop(rig)))];
   if (!lean || (!lean.tilt && !lean.lunge && !lean.lift)) {
-    under?.(ctx, hand, flip);
+    under?.(ctx, hand, flip, other);
     blit(ctx, body, left, top, { flip, scale });
-    over?.(ctx, hand, flip);
+    over?.(ctx, hand, flip, other);
     return;
   }
   const dir = flip ? -1 : 1;
@@ -2096,7 +2113,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   const span = W * scale * 2;
   ctx.save();
   whole(ctx, tilt);
-  under?.(ctx, hand, flip);
+  under?.(ctx, hand, flip, other);
   ctx.restore();
   if (pk < 0.2 && Math.abs(tilt) > 0.01) {
     const cut = pivot + WAIST_OVERLAP * scale;
@@ -2122,7 +2139,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   }
   ctx.save();
   whole(ctx, tilt);
-  over?.(ctx, hand, flip);
+  over?.(ctx, hand, flip, other);
   ctx.restore();
 }
 
@@ -2140,6 +2157,16 @@ export function posedMouth(x, y, pose, { scale = 1, facing = 1, lean = null } = 
   const a = ((rig.tilt ?? 0) * Math.PI) / 180;
   const px = nx + (r0 - nx) * Math.cos(a) - (r1 - ny) * Math.sin(a);
   const py = ny + (r0 - nx) * Math.sin(a) + (r1 - ny) * Math.cos(a);
+  return placed(x, y, rig, { scale, facing, lean }, px, py);
+}
+// Where a point of the upper body (sprite px, at rest) is on screen for a figure drawn with
+// drawPosed: carried with the body's lean and bob (for things worn on the back, like wings).
+export function posedPoint(x, y, pose, opts, [bx, by]) {
+  const rig = { ...baseRig(), ...pose };
+  return placed(x, y, rig, opts, squashX(bx + rig.tx), squashY(by + rig.by + hipDrop(rig)));
+}
+// A sprite point (px, py) of a posed figure, placed and leaned as drawPosed draws it.
+function placed(x, y, rig, { scale = 1, facing = 1, lean = null } = {}, px, py) {
   const flip = facing < 0;
   const dir = flip ? -1 : 1;
   const left = x - (W / 2) * scale;

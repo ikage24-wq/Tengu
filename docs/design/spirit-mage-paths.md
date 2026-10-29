@@ -50,22 +50,21 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
 - **Colour and shapes:** indigo night and talisman red with paper white: ofuda, the five-pointed
   seiman star, ink brush strokes. (Not the Shinobi's ink seals: hers are star seals and paper.)
 - **Companions (chosen): a yokai troupe, always out and fighting on their own (chosen).**
-  - **Kappa:** a stocky river brawler with a dish of water on his head; grapples, belly-flops,
-    and panics when his dish spills (he stops to refill it from a little bucket).
-  - **Karakasa:** a one-eyed paper umbrella spirit hopping on one leg; spins into monsters, opens
-    to shade the Onmyoji, licks things with a long tongue.
   - **Oni:** a big, cheerful red oni with an iron club; slow, huge swings, ground pounds, and he
     sulks when he misses.
   - **Yuki-onna:** a calm, aloof snow woman; ice breath and frozen needles from a distance, and
     she freezes the others when they bicker.
+  - **Tengu (the last; the player swapped him in for the kappa and the karakasa, 2026-10-29):** a
+    handsome, smug mountain tengu a little taller than the Onmyoji, dressed as a yamabushi, with
+    crow wings, a feather fan and a sword.
   Each has their own skeleton, look, moves, idle bits and personality, and they bicker and
   cheer each other between fights.
   - **How they're built (the player's rule):** each on the player character, with a new rig, new
     animations, new clothes and new hair of their own (nothing reused from the creator, the
     guardian, the doll or Snow wolf).
   - **Sizes (chosen): each its own, by what it is:** the oni big and broad (bigger than the
-    guardian), the yuki-onna about the Onmyoji's own size (a touch taller; the player didn't want her big), the kappa short and stocky, the karakasa small and
-    bouncy.
+    guardian), the yuki-onna about the Onmyoji's own size (a touch taller; the player didn't want her big), the tengu a little taller than the
+    Onmyoji.
   - **Order:** the oni first (designs on her real body to pick from, then her rig and moves).
   - **The oni is built and approved** (world/oni.js, render/oni.js): a lazy slouch and stroll, ten
     bored idle moods, and six moves from how oni fight: Kesagiri (a chain of heavy swings that
@@ -75,7 +74,20 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   - **The yuki-onna's look (chosen 2026-10-29, render/yuki.js YUKI_LOOK):** about the Onmyoji's size;
     white hair in an icicle bun with blunt bangs (no forehead shade or shine: they read badly on
     white), white-lashed veiled eyes, pale blue lips, and the spirit-flames kimono (white, pale blue
-    hitodama rising from a hem that fades into mist, no feet). Rig and moves next.
+    hitodama rising from a hem that fades into mist, no feet).
+  - **The yuki-onna is built and approved** (world/yuki.js, render/yuki.js): she floats, a frost
+    aura round her and frost prints where she drifts; her moves come from the legends and the
+    games: White Breath (Hearn's "bright white smoke", from her lips), Answer Me (a soul drawn out
+    that heals the Onmyoji), Ice Spikes, Icicle Fall (shatters the frozen), Whiteout (leads them
+    astray), a snowball, needles and Into the Mist. Her cold builds on a monster till it freezes.
+  - **The tengu is built** (world/tengu.js, render/tengu.js): his look (TENGU_LOOK) is center-parted
+    black hair with a crow's blue sheen, sharp smug gold eyes, a man's brow, a smirk, the black
+    yamabushi kimono with white pompoms, a crimson obi, slate hakama, one-toothed geta, the tokin
+    cap and a red tengu mask pushed to the side of his head; crow wings, a feather fan and a tachi
+    drawn in hand. He strolls fanning himself and flies when the way is long or up a ledge. His
+    moves, from the tengu of the stories: Iai, the Kurama Blade (Yoshitsune's teacher), Fan Gust,
+    Tengu Wind, Feather Storm, Tengu Stones (tengu-tsubute) and Spirited Away (kamikakushi). Six
+    smug idles; a grin when he wins, a 'tch' when he misses.
   - **The oni's look (chosen 2026-10-29):** a cute-and-badass oni girl on the player character, red
     skin, a jagged silver bob, droopy heavy-lidded gold eyes, a bored face (a flat mouth with one
     fang), a dark-and-gold diamond on her brow, crimson horns, a black battle kimono lined crimson

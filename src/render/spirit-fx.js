@@ -127,6 +127,38 @@ function shards(ctx, x, y, p, n, reach, seed = 0.5, c = '#d8ecff') {
 }
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, t)));
 
+// A black crow feather at (x, y) turned to `ang`, `len` long (the tengu's), a blue sheen down it;
+// `sharp` makes it a flying blade of a feather with a pale streak behind.
+function feather(ctx, x, y, ang, len, a = 1, sharp = false) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= Math.min(1, a);
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  if (sharp) {
+    ctx.strokeStyle = 'rgba(200, 215, 255, 0.5)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-len, 0);
+    ctx.lineTo(-len * 2.6, 0);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#17151f';
+  ctx.beginPath();
+  ctx.moveTo(len, 0);
+  ctx.quadraticCurveTo(len * 0.2, -len * 0.32, -len, -0.2);
+  ctx.lineTo(-len, 0.2);
+  ctx.quadraticCurveTo(len * 0.2, len * 0.32, len, 0);
+  ctx.fill();
+  ctx.strokeStyle = '#4a5a8a';
+  ctx.lineWidth = 0.4;
+  ctx.beginPath();
+  ctx.moveTo(-len * 1.1, 0);
+  ctx.lineTo(len * 0.8, 0);
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawSpiritFx(ctx, f, x, y, p) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
@@ -748,6 +780,213 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       // A frozen monster shattering: a big burst of frost and shards of ice flying off it.
       fxSprite(ctx, 'celfrostburst', x, y - (f.h ?? 24) * 0.55, { p, flip, scale: 0.85 });
       shards(ctx, x, y - (f.h ?? 24) * 0.55, p, 12, 50);
+      return true;
+    }
+    // The Onmyoji's tengu: his sword cuts, the dash through, the fan's gust and whirlwind, his
+    // feathers, the stones out of the sky, his take-offs and his vanishing in feathers.
+    case 'tengucut': {
+      // A cut of his sword: a thin bright crescent (rising, across or down), or for a dash through
+      // a long slit of light along the way he went, opening and fading.
+      if (f.t < 0) return true;
+      const dir = f.dir || 1;
+      const k = 1 - p;
+      ctx.save();
+      ctx.lineCap = 'round';
+      if (f.cut === 'through') {
+        const w = Math.max(40, f.w ?? 70) * 0.6 + 20;
+        const open = Math.min(1, p * 5);
+        ctx.globalAlpha *= k;
+        ctx.shadowColor = 'rgba(190, 215, 255, 0.9)';
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = (f.big ? 2.6 : 1.8) * (1 - p * 0.6);
+        ctx.beginPath();
+        ctx.moveTo(x - w * open, y);
+        ctx.lineTo(x + w * open, y - 2);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(160, 190, 255, 0.6)';
+        ctx.lineWidth = 6 * (1 - p);
+        ctx.beginPath();
+        ctx.moveTo(x - w * open * 0.8, y);
+        ctx.lineTo(x + w * open * 0.8, y - 1.6);
+        ctx.stroke();
+      } else {
+        const [a0, a1] = { up: [2.2, 4.4], across: [3.6, 5.6], down: [4.2, 6.4] }[f.cut] ?? [3.6, 5.6];
+        const r = f.big ? 30 : 24;
+        const sweep = Math.min(1, p * 4);
+        ctx.translate(x, y);
+        if (dir < 0) ctx.scale(-1, 1);
+        ctx.globalAlpha *= k;
+        ctx.shadowColor = 'rgba(190, 215, 255, 0.9)';
+        ctx.shadowBlur = 8;
+        for (const [w, c] of [[5, 'rgba(160, 190, 255, 0.45)'], [1.8, '#ffffff']]) {
+          ctx.strokeStyle = c;
+          ctx.lineWidth = w * (1 - p * 0.5);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, r, r * 0.55, 0, a0, a0 + (a1 - a0) * sweep);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      return true;
+    }
+    case 'tengudash': {
+      // His dash: a streak of shadow along the way he went, black feathers left drifting in it.
+      const tx = f.tx + (x - f.x);
+      const k = 1 - p;
+      ctx.save();
+      const g = ctx.createLinearGradient(x, 0, tx, 0);
+      g.addColorStop(0, 'rgba(30, 26, 40, 0)');
+      g.addColorStop(1, `rgba(30, 26, 40, ${0.5 * k})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(Math.min(x, tx), y - 40, Math.abs(tx - x), 36);
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 * k})`;
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < 5; i++) {
+        const yy = y - 8 - i * 7;
+        ctx.beginPath();
+        ctx.moveTo(x + (tx - x) * (0.1 + 0.1 * i), yy);
+        ctx.lineTo(tx - (tx - x) * 0.1, yy);
+        ctx.stroke();
+      }
+      ctx.restore();
+      for (let i = 0; i < 4; i++) feather(ctx, x + (tx - x) * (0.2 + 0.2 * i), y - 30 + i * 4 + p * 14, 1 + i + p * 3, 5, k);
+      return true;
+    }
+    case 'tengugust': {
+      // Fan Gust: a wall of wind rolling out ahead of him, streaks curling through it and leaves
+      // tumbling along.
+      const dir = f.dir || 1;
+      const r = f.r ?? 190;
+      const k = 1 - Math.max(0, (p - 0.6) / 0.4);
+      const front = r * Math.min(1, p * 1.6);
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 11; i++) {
+        const lag = (i % 4) * 0.08;
+        const d = Math.max(0, front - lag * r);
+        const yy = y - 26 + i * 5.4;
+        const len = 26 + (i % 3) * 10;
+        ctx.globalAlpha = k * (0.4 + 0.5 * ((i * 7) % 5) / 5);
+        ctx.strokeStyle = i % 2 ? '#ffffff' : '#d4ecf0';
+        ctx.lineWidth = 1 + (i % 3) * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(x + dir * (d - len), yy + 2);
+        ctx.quadraticCurveTo(x + dir * (d - len * 0.4), yy - 3, x + dir * d, yy);
+        ctx.stroke();
+      }
+      ctx.restore();
+      fxSprite(ctx, 'celwindspin', x + dir * front * 0.9, y + 6, { t: f.t, scale: 0.4, alpha: 0.7 * k, flip: dir < 0 });
+      fxSprite(ctx, 'celleaves', x + dir * front * 0.8, y - 4, { t: f.t, scale: 0.4, alpha: k, flip: dir < 0 });
+      return true;
+    }
+    case 'tenguwhirl': {
+      // Tengu Wind: a whirlwind standing on the ground, leaves and black feathers whirling up it.
+      const k = Math.min(1, p * 6) * (1 - Math.max(0, (p - 0.82) / 0.18));
+      fxSprite(ctx, 'celtornado', x, y + 4, { t: f.t, scale: 0.7, alpha: 0.85 * k });
+      // Bands of wind spiralling up it, widening as they rise.
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 7; i++) {
+        const h = ((f.t * 90 + i * 14) % 96);
+        const rr = 8 + h * 0.32;
+        const a0 = f.t * 10 + i * 1.7;
+        ctx.globalAlpha = k * (0.85 - h / 140);
+        ctx.strokeStyle = i % 2 ? '#ffffff' : '#c8eef0';
+        ctx.lineWidth = 1.6 - h / 120;
+        ctx.beginPath();
+        ctx.ellipse(x, y - h, rr, rr * 0.28, 0, a0, a0 + 2.4);
+        ctx.stroke();
+      }
+      ctx.restore();
+      for (let i = 0; i < 8; i++) {
+        const a = f.t * 7 + (i / 8) * Math.PI * 2;
+        const h = ((f.t * 60 + i * 13) % 70);
+        const rr = 8 + h * 0.25;
+        if (i % 2) feather(ctx, x + Math.cos(a) * rr, y - h, a, 4, k);
+        else fxSprite(ctx, 'celleaves', x + Math.cos(a) * rr, y - h, { t: f.t + i, scale: 0.18, alpha: k });
+      }
+      return true;
+    }
+    case 'tengufeather': {
+      // One of his feathers, flying straight and fast at its mark like a thrown knife.
+      if (f.t < 0) return true;
+      const m = f.mob;
+      const tx = (m && m.hp > 0 ? m.x : f.tx) + (x - f.x);
+      const ty = (m && m.hp > 0 ? m.y - m.def.h * 0.55 : f.ty) + (y - f.y);
+      const u = Math.min(1, f.t / f.fly);
+      if (u >= 1) return true;
+      const ang = Math.atan2(ty - y, tx - x);
+      feather(ctx, x + (tx - x) * u, y + (ty - y) * u, ang, 7, 1, true);
+      return true;
+    }
+    case 'tengufeatherburst': {
+      // Black feathers bursting out and drifting down, turning as they fall.
+      const n = 12;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + (f.seed ?? 0.3) * 3;
+        const d = 28 * Math.sqrt(p) * (0.6 + 0.4 * ((i * 37) % 10) / 10);
+        feather(ctx, x + Math.cos(a) * d, y + Math.sin(a) * d * 0.6 + 26 * p * p, a + p * 6 * (i % 2 ? 1 : -1), 4.5, 1 - p);
+      }
+      return true;
+    }
+    case 'tengustone': {
+      // A stone out of a clear sky: dropping fast onto the spot, then a puff of dust and chips.
+      if (f.t < 0) return true;
+      const fall = 0.3;
+      const r = f.big ? 6 : 4.2;
+      if (f.t < fall) {
+        const u = f.t / fall;
+        const sy = y - 150 * (1 - u * u) - r;
+        ctx.save();
+        ctx.translate(x, sy);
+        ctx.rotate(f.t * 9 + (f.seed ?? 0) * 6);
+        ctx.fillStyle = '#7a7486';
+        ctx.beginPath();
+        ctx.moveTo(-r, -r * 0.4);
+        ctx.lineTo(-r * 0.3, -r);
+        ctx.lineTo(r * 0.8, -r * 0.7);
+        ctx.lineTo(r, r * 0.3);
+        ctx.lineTo(r * 0.2, r);
+        ctx.lineTo(-r * 0.8, r * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#3a3646';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.fillStyle = '#a8a2b4';
+        ctx.fillRect(-r * 0.4, -r * 0.6, r * 0.6, r * 0.4);
+        ctx.restore();
+        return true;
+      }
+      const q = (f.t - fall) / (f.dur - fall);
+      fxSprite(ctx, 'celdust', x, y, { p: q, scale: f.big ? 0.4 : 0.28 });
+      return true;
+    }
+    case 'tengutakeoff': {
+      // A beat of his wings: dust blown out along the ground both ways and a few feathers loose.
+      fxSprite(ctx, 'celdust', x, y, { p, scale: f.land ? 0.4 : 0.5 });
+      for (let i = 0; i < 3; i++) feather(ctx, x + (i - 1) * 10 * (1 + p), y - 10 - 18 * p + i * 3, i + p * 4, 4, 1 - p);
+      return true;
+    }
+    case 'tenguvanish': {
+      // Gone in a whirl of black feathers (or stepping out of one).
+      fxSprite(ctx, 'celsmoke', x, y, { p, scale: 0.4, alpha: 0.5 });
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2 + p * 4;
+        const d = 6 + 22 * p;
+        feather(ctx, x + Math.cos(a) * d, y - 24 + Math.sin(a) * d * 0.9, a + p * 5, 4.5, 1 - p);
+      }
+      return true;
+    }
+    case 'tenguhit': {
+      // His blow landing: a sharp flash.
+      fxSprite(ctx, 'celhit', x, y - (f.h ?? 24) * 0.55, { p, flip, scale: f.big ? 0.5 : 0.34 });
+      return true;
+    }
+    case 'tenguwind': {
+      // The wind catching a monster.
+      fxSprite(ctx, 'celwindspin', x, y - (f.h ?? 24) * 0.5, { p, flip, scale: 0.3 });
       return true;
     }
     case 'onipound': {

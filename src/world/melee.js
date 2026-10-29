@@ -37,6 +37,7 @@ import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickGuardian } from './kitsune.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
+import { tickTengu } from './tengu.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 
@@ -1022,6 +1023,7 @@ export function tickMelee(world, dt) {
   tickGuardian(world, dt);
   tickOni(world, dt);
   tickYuki(world, dt);
+  tickTengu(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;

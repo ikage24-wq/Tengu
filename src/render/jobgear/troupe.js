@@ -519,4 +519,54 @@ Object.assign(TROUPE_OUTFITS, {
     shoe: () => [],
   },
 });
+// ---------- The tengu's ----------
+//   tenguyamabushi  a handsome mountain ascetic (the tengu dress as yamabushi): a black kimono
+//                   over a white collar, the yuigesa sash of big white pompoms down his chest in two
+//                   rows, a crimson obi with gold cord, wide black sleeves lined white, slate
+//                   hakama, one-toothed tengu geta; the little black tokin cap on his brow and a red
+//                   long-nosed tengu mask pushed to the side of his head. (His wings, his feather fan
+//                   and his sword are drawn by render/tengu.js.)
+const KURO = '#1c1a24';
+const KURO_LT = '#3a3648';
+const HAKAMA_T = '#4a4a5c';
+const HAKAMA_TD = '#30303e';
+const BONTEN = '#f6f4ee';
+const BONTEN_SH = '#d6d0c4';
+const MASK = '#d8352c';
+const MASK_DK = '#8e1c16';
+// A yuigesa pompom (bonten): a big fluffy white ball, shaded underneath, a tuft on top (rimmed
+// dark, so it reads over his white collar).
+const bonten = (x, y, r = 1.25) => [F(E(x, y, r + 0.4, r + 0.4, KURO_LT)), F(E(x, y, r, r, BONTEN)), F(E(x + 0.2, y + 0.45, r * 0.75, r * 0.5, BONTEN_SH)), F(E(x - 0.35, y - 0.4, r * 0.4, r * 0.35, '#ffffff'))];
+Object.assign(TROUPE_OUTFITS, {
+  tenguyamabushi: {
+    top: (p) => [T([...TORSO.slice(0, 6), [22.4, 36], [8.8, 36], ...TORSO.slice(8)], KURO),
+      // Crossed over a white collar.
+      T([[MID - 3.4, 25.6], [MID + 3.4, 25.6], [MID, 31]], '#f4f2ee'), T([[MID + 1.4, 25.6], [MID + 4.2, 25.6], [MID + 0.2, 31.6], [MID - 1.6, 31.6]], KURO),
+      F(limb(MID + 4, 25.7, MID, 31.4, 0.5, 0.5, '#f4f2ee')), F(limb(MID - 3.6, 25.8, MID - 0.6, 30.2, 0.45, 0.45, '#f4f2ee')),
+      F(limb(11.4, 27.8, 12, 31, 0.4, 0.4, KURO_LT)),
+      // The crimson obi, bound with gold cord.
+      T([[8.8, 31.6], [22.4, 31.4], [22.6, 34.8], [8.6, 35]], MASK), F(limb(8.8, 33.2, 22.4, 33, 0.45, 0.45, GOLD)), F(E(MID - 2.4, 33.1, 0.9, 0.8, GOLD)),
+      // The yuigesa: two cords down his chest from the shoulders, three big white pompoms on each.
+      ...bonten(MID - 1.7, 28.4, 1.1), ...bonten(MID - 1.5, 30.6, 1), ...bonten(MID + 1.7, 28.4, 1.1), ...bonten(MID + 1.5, 30.6, 1)],
+    sleeve: () => KURO,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.4, 2.9, side > 0 ? KURO : '#14121a'), F(E(0, 2.8, 2.6, 0.5, KURO_LT))],
+    hand: (p, hx, hy, ex, ey) => wideSleeve(p, hx, hy, ex, ey, KURO, '#f4f2ee', MASK),
+    legs: () => ({ top: HAKAMA_T, low: HAKAMA_T, pad: null }),
+    // Slate hakama to the shin, pleated, the side slit showing.
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [24.4, 47.6], [6.8, 47.6]], HAKAMA_T),
+      F(limb(12.2, 35.4, 11, 47.2, 0.45, 0.6, HAKAMA_TD)), F(limb(MID, 35.4, MID, 47.2, 0.45, 0.6, HAKAMA_TD)), F(limb(19, 35.4, 20.2, 47.2, 0.45, 0.6, HAKAMA_TD)),
+      F(limb(22.2, 35, 23.2, 40, 0.5, 0.3, '#22222c')), F(R(6.8, 46.8, 17.6, 0.8, HAKAMA_TD))],
+    // One-toothed tengu geta: a black board on a single tall tooth, crimson thongs.
+    shoe: (p, k, c) => [k.poly([[-2.6, 1.2], [3, 1.2], [3, 2], [-2.6, 2]], c('#1e1418')), k.poly([[-0.2, 2], [1, 2], [1, 4.2], [-0.2, 4.2]], c('#1e1418')),
+      k.poly([[-2, -1.2], [2.4, -1.2], [2.8, 1.2], [-2.2, 1.2]], c('#f4f2ee')), k.poly([[0.2, -0.6], [0.8, -0.6], [1.6, 1.2], [-0.6, 1.2]], c(MASK))],
+    // The tokin on his brow (a little black pleated cap tied on with a cord), and a red tengu mask
+    // pushed to the side of his head, its long nose up.
+    hat: () => [T([[12.4, 4.8], [18.6, 4.8], [18, 1], [15.5, -0.6], [13, 1]], '#141218'), F(limb(14.2, 4, 14.6, 0.8, 0.25, 0.2, '#3a3648')), F(limb(16.8, 4, 16.4, 0.8, 0.25, 0.2, '#3a3648')),
+      F(limb(9, 6.6, 12.9, 4.2, 0.3, 0.3, '#141218')), F(limb(18.1, 4.2, 22, 6.6, 0.3, 0.3, '#141218')),
+      E(25.4, 8.6, 3.2, 3.6, MASK), F(E(25.8, 9.4, 2.4, 2.6, '#e8483a')), F(limb(25.8, 8.8, 30.6, 5.4, 1.2, 0.55, MASK)), F(limb(26.2, 8.4, 30, 5.6, 0.4, 0.2, '#ff7a6a')),
+      F(limb(23.2, 7.4, 24.8, 6.6, 0.45, 0.3, '#ffffff')), F(limb(26.2, 6.6, 27.8, 7.2, 0.45, 0.3, '#ffffff')), F(E(24.2, 8.4, 0.5, 0.35, GOLD)), F(E(27, 8.4, 0.5, 0.35, GOLD)),
+      F(limb(23.6, 11.2, 27.4, 11.4, 0.35, 0.3, MASK_DK))],
+  },
+});
 export const TROUPE_OUTFIT_KEYS = Object.keys(TROUPE_OUTFITS);

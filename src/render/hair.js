@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime', 'yukibob', 'yukibun', 'yukitails', 'yukifrost'];
+export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime', 'yukibob', 'yukibun', 'yukitails', 'yukifrost', 'tengupart'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -1165,3 +1165,25 @@ export function hairNape(style, r) {
   const big = style === 'cloud' || style === 'wavylong' ? 1 : 0;
   return [F(E(HX, 13.6 - big * 0.4, 12 + big, 11.2 + big, r.base)), F(E(HX, 20.4, 9.8, 4, r.sh1)), ...ring(r.hi, HX, 10, 9, 5.6, 210, 330)];
 }
+
+// ---------- The tengu's ----------
+Object.assign(FRINGES, {
+  // Parted in the middle: two long curtains of bangs swept apart off his brow to frame his face,
+  // a few sharp strands falling between, the forehead open in a narrow triangle.
+  tengupart: { pts: [[25, 17.8], [24, 15.6], [22.8, 16.6], [21.6, 14], [20.2, 15], [19, 12.4], [17.6, 11.4], [16.4, 9], [HX, 7.2], [14.6, 9], [13.4, 11.4], [12, 12.4], [10.8, 15], [9.4, 14], [8.2, 16.6], [7, 15.6], [6, 17.8]], lean: 0, part: [[HX, 1.4], [HX, 7]], noCrease: true },
+});
+Object.assign(STYLES, {
+  // The tengu's: black with a crow's blue sheen, parted in the middle, long curtain bangs framing
+  // his face, layered to the nape in sharp feathery points; a long lock in front of each ear to
+  // his jaw.
+  tengupart(r, m) {
+    const side = [[24.2, 11.6], [26, 16.4], [25.8, 21.4], [26.8, 25]];
+    return {
+      head: [crown(r, 0.5), streak(HX - 0.6, 2, 9, 7, 0.7, 0.4, r.sh1), streak(HX + 0.6, 2, 22, 7, 0.7, -0.4, r.sh1)],
+      hang: [napeShadow(r), ...sheet({ len: 23, flare: 12.4, ends: 'points', n: 7, w0: 12, wave: 0.2 }, r, m, 0.7)],
+      front: bangs('tengupart', r, m, [lock(side, 3.2, r.base, m, 1.1, 0.25), lock(fx(side), 3.2, r.sh1, m, 1.1, 0.25),
+        streak(24.6, 13, 25.6, 22, 0.6, -0.2, r.hi, m, 1.1)]),
+      tips: [99, 99],
+    };
+  },
+});

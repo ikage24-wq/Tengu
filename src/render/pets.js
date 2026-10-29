@@ -7,11 +7,13 @@ import { drawSpiritDoll } from './spiritdoll.js';
 import { drawKitsune } from './kitsune.js';
 import { drawOniCompanion } from './oni.js';
 import { drawYukiCompanion } from './yuki.js';
+import { drawTenguCompanion } from './tengu.js';
 
 export function drawPets(ctx, world, cam, time, layer) {
   if (world.doll) drawSpiritDoll(ctx, world, world.doll, cam, time, layer);
   if (world.guardian && layer === 'back') drawKitsune(ctx, world, world.guardian, cam, time);
   if (world.oni && layer === 'back') drawOniCompanion(ctx, world, world.oni, cam, time);
+  if (world.tengu && layer === 'back') drawTenguCompanion(ctx, world, world.tengu, cam, time);
   // (The yuki-onna's snowflakes drift round her: behind her, and in front.)
   if (world.yuki) drawYukiCompanion(ctx, world, world.yuki, cam, time, layer);
   const pets = world.pets;

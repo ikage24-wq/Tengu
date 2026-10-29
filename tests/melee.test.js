@@ -2684,6 +2684,8 @@ test('the Onmyoji has an oni who fights on her own with her heavy club, and sulk
   assert.ok(w.oni, 'the oni is there');
   assert.equal(shrineMage().oni ?? null, null, 'a Spirit Mage has none');
   assert.equal(w.guardian ?? null, null, 'and an Onmyoji has no guardian');
+  // (The rest of the troupe stand back.)
+  w.yuki.next = w.tengu.next = Infinity;
   const seen = new Set();
   const hp0 = w.mobs.map((m) => m.hp);
   for (let i = 0; i < 60 * 8; i++) {
@@ -2694,6 +2696,8 @@ test('the Onmyoji has an oni who fights on her own with her heavy club, and sulk
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her club lands');
   // A blow at nothing: she sulks.
   w.mobs.forEach((m) => { m.x += 3000; });
+  // (Nor anything the tengu is carrying off.)
+  if (w.tengu) w.tengu.act = null;
   w.oni.act = { kind: 'stomp', t0: w.now, dur: 1.25, done: 0 };
   w.oni.mood = null;
   let sulked = false;
@@ -2734,6 +2738,7 @@ test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and f
   const w = onmyoji();
   assert.ok(w.yuki, 'the yuki-onna is there');
   assert.equal(shrineMage().yuki ?? null, null, 'a Spirit Mage has none');
+  w.oni.next = w.tengu.next = Infinity;
   const seen = new Set();
   const hp0 = w.mobs.map((m) => m.hp);
   let froze = false;
@@ -2780,6 +2785,49 @@ test("the yuki-onna's cold builds up on a monster until it freezes, and her ques
   k.act = { kind: 'ask', t0: w.now, dur: 2.8, mob: m, x0: k.x };
   for (let i = 0; i < 60 * 3.6; i++) updateWorld(w, DT, idle);
   assert.ok(w.char.hp > hp, `she heals the Onmyoji (${hp} -> ${w.char.hp})`);
+});
+
+test('the Onmyoji has a tengu who fights with sword, fan and feathers', () => {
+  const w = onmyoji();
+  assert.ok(w.tengu, 'the tengu is there');
+  assert.equal(shrineMage().tengu ?? null, null, 'a Spirit Mage has none');
+  w.oni.next = w.yuki.next = Infinity;
+  const seen = new Set();
+  const hp0 = w.mobs.map((m) => m.hp);
+  for (let i = 0; i < 60 * 12; i++) {
+    updateWorld(w, DT, idle);
+    if (w.tengu.act) seen.add(w.tengu.act.kind);
+  }
+  assert.ok(['iai', 'kurama', 'gust', 'whirlwind', 'feathers', 'stones', 'spirited'].filter((k) => seen.has(k)).length >= 3, `a mix of his moves (${[...seen]})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'his blows land');
+});
+
+test('the tengu flies to the Onmyoji when she is far ahead, and carries a monster off into the air', () => {
+  const w = onmyoji();
+  const k = w.tengu;
+  for (const m of w.mobs) m.x += 4000;
+  run(w, 0.5);
+  k.act = null;
+  Object.assign(k.body, { x: w.body.x - 40 });
+  w.body.x += 300;
+  let flew = false;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    flew ||= k.flying;
+  }
+  assert.ok(flew, 'he flies');
+  assert.ok(Math.abs(k.x - w.body.x) < 120, `and lands by her (${Math.round(k.x - w.body.x)})`);
+  // Spirited Away.
+  const m = w.mobs[0];
+  Object.assign(m, { x: k.x + 60 * k.dir, y: k.y, hp: 99999, air: 0, frozenUntil: 0 });
+  k.act = { kind: 'spirited', t0: w.now, dur: 2.5, done: 0, mob: m };
+  let high = 0;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    high = Math.max(high, m.air ?? 0);
+  }
+  assert.ok(high > 60, `the monster is carried high (${Math.round(high)})`);
+  assert.ok(m.hp < 99999, 'and hurled down');
 });
 
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {

@@ -271,7 +271,7 @@ const lerp2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
 const add2 = (...ps) => ps.reduce((s, p) => [s[0] + p[0], s[1] + p[1]], [0, 0]);
 const mul2 = (p, k) => [p[0] * k, p[1] * k];
 const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
-const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4 * (t - 1) ** 2);
+export const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4 * (t - 1) ** 2);
 const TAU = Math.PI * 2;
 export { ONI_MOVES };
 
@@ -316,7 +316,7 @@ function running(ph) {
 // flows through them (a smooth curve whose speed carries on through each key, never stopping
 // dead at a pose), except 'snap', which commits into a blow (fast, a little past, settling) and
 // leaves the pose from a standstill.
-function keys(u, ks) {
+export function keys(u, ks) {
   if (u <= ks[0][0]) return ks[0][1];
   for (let i = 1; i < ks.length; i++) {
     const [b, vb, how] = ks[i];

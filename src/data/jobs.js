@@ -53,7 +53,7 @@ export const JOBS = {
   onmyoji: {
     id: 'onmyoji', name: 'Onmyoji', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
-    blurb: 'The spirit-binder. A rowdy troupe of yokai (a kappa, a karakasa, an oni and a yuki-onna) fights at her side, kept in line with talismans and star seals. Deals damage in a group.',
+    blurb: 'The spirit-binder. A rowdy troupe of yokai (an oni, a yuki-onna and a tengu) fights at her side, kept in line with talismans and star seals. Deals damage in a group.',
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).

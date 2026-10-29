@@ -48,7 +48,9 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   // The Onmyoji's yuki-onna (her frost prints, her frost on a monster and the snowball's burst are
   // silent: its hit is heard).
   'yukistream', 'yukiask', 'yukisoul', 'yukisoulfly', 'yukispike', 'yukisnowball', 'yukimist', 'yukiwhiteout', 'yukishatter',
-  'yukineedle', 'yukiicicle', 'yukistep', 'yukihit']);
+  'yukineedle', 'yukiicicle', 'yukistep', 'yukihit',
+  // The Onmyoji's tengu.
+  'tengucut', 'tengudash', 'tengugust', 'tenguwhirl', 'tengufeatherburst', 'tengufeather', 'tengustone', 'tengutakeoff', 'tenguvanish', 'tenguhit']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);

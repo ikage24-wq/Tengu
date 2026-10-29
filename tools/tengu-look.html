@@ -1,0 +1,36 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the Onmyoji's tengu (render/tengu.js TENGU_LOOK, on the player character in his own
+// parts) beside the Onmyoji for size, and close up.
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { TENGU_LOOK, TENGU_SCALE } from '../src/render/tengu.js';
+
+const S = 3;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = 900;
+canvas.height = 560;
+nextFrame();
+ctx.fillStyle = '#c8e0ec';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+const MAGE = { hairStyle: 'hime', hairColor: '#2a2440', skinTone: '#fff0e6', eyeColor: '#8a6ad8', outfit: 'miko', outfitColor: '#ffffff' };
+const rig = { frontArm: [-3, 4], backArm: [3, 4], frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2], hx: 0.2, hy: 0, tilt: 4, face: { brows: [[0.1, -0.1], [0.45, -0.4]], glance: 0 } };
+const gy = 500;
+ctx.fillStyle = '#9ec0d0';
+ctx.fillRect(0, gy, 360, 3);
+setHd(true, S);
+drawPosed(ctx, MAGE, 100, gy, {}, { scale: S, facing: 1 });
+setHd(true, S * TENGU_SCALE);
+drawPosed(ctx, TENGU_LOOK, 240, gy, rig, { scale: S * TENGU_SCALE, facing: 1 });
+ctx.save();
+ctx.beginPath();
+ctx.rect(380, 0, 520, 560);
+ctx.clip();
+setHd(true, S * 4);
+drawPosed(ctx, TENGU_LOOK, 640, 548, rig, { scale: S * 4, facing: 1 });
+ctx.restore();
+window.done = true;
+</script></body></html>
