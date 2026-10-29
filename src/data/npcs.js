@@ -40,7 +40,7 @@ export const NPCS = {
   },
   lulu: {
     id: 'lulu', name: 'Lulu', title: 'Stylist', role: 'stylist',
-    quests: ['lulu_gossip', 'lulu_runway'],
+    quests: ['lulu_gossip', 'lulu_runway', 'lulu_winter'],
     building: 'salon', sign: "Lulu's Salon",
     look: { hairStyle: 'odango', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
     greeting: 'New hair? New clothes? A fresh look is 500 gold, and my boutique has the cutest outfits!',
@@ -50,7 +50,7 @@ export const NPCS = {
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson' }, ...outfit('warrior', 50) },
-    quests: ['brann_stand', 'warrior_trial', 'daily_crag'], showJob: 'paladin',
+    quests: ['brann_stand', 'brann_howl', 'warrior_trial', 'daily_crag'], showJob: 'paladin',
     look: { hairStyle: 'cloud', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
@@ -58,7 +58,7 @@ export const NPCS = {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
-    quests: ['elowen_dance', 'spiritmage_trial'], showJob: 'spiritmage',
+    quests: ['elowen_dance', 'elowen_foxfire', 'spiritmage_trial'], showJob: 'spiritmage',
     greeting: 'Moonleaf Grove welcomes you. Magic here is a dance with the spirits: they strike for you and they mend for you. Shall we begin?',
   },
   kestrel: {
@@ -71,7 +71,7 @@ export const NPCS = {
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
-    quests: ['vex_rumor', 'vex_shadows', 'thief_trial'], showJob: 'shinobi',
+    quests: ['vex_rumor', 'vex_shadows', 'vex_miko', 'thief_trial'], showJob: 'shinobi',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
   },
@@ -86,7 +86,7 @@ export const NPCS = {
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
-    quests: ['nim_candles', 'nim_stardust'],
+    quests: ['nim_chimes', 'nim_candles', 'nim_stardust'],
     building: 'magic', sign: "Nim's Spells",
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
     greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
@@ -98,7 +98,7 @@ export const NPCS = {
     building: 'office', sign: 'Harbor Office',
     look: { hairStyle: 'spiky', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
-    quests: ['canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'daily_harbor'],
+    quests: ['canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
   },
   bramble: {
     id: 'bramble', name: 'Bramble', title: 'Hollow Warden', role: 'dungeon', dungeon: 'hollow',
@@ -119,7 +119,7 @@ export const NPCS = {
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
     stockLevels: [15, 40],
-    quests: ['marlo_scales', 'tusk_trader'],
+    quests: ['marlo_scales', 'tusk_trader', 'marlo_spa'],
   },
 };
 

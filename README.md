@@ -337,8 +337,12 @@ to clear it.
   tummy and grow it: a baby becomes a Sky (reaches ledges), Swift (wider range), Strong (faster
   pickup) or Spirit (reacts sooner) Mochi, each with its own outfit, idles and cheer. Left hungry
   it turns sulky (Moon) and stops helping until fed; it cheers when you level up.
-- **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
-  meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room). Field maps
+- **Monsters and maps** — 25 chibi monsters and the Crystal King boss across 18 maps (four towns, two
+  meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room, plus the far
+  regions for levels 19-50: the Whispering Glade of wind chimes past the woods, the Fox Shrine Path
+  of vermilion gates and cherry trees at sunset past the ruins, Moonlit Ridge under a huge moon
+  above Ember Crag, steaming Serpent Springs and snowy Frozen Peak on the climb from the cave to
+  the Sky Garden, and Starfall Heights over it, under shooting stars). Field maps
   are built like classic side-scroller maps: the ground rolls in hills and slopes, rises into
   plateaus, and drops away at cliff walls you jump up or climb by ladder; above it, floating
   islands of the same land stack four or five levels high, linked by jumps, ropes, and ladders.

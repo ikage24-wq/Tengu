@@ -530,3 +530,173 @@ Object.assign(MAPS, {
     spawns: [{ mob: 'gnarlroot', x: 860, y: G }],
   },
 });
+
+// ---------- The far regions (levels 19-50) ----------
+//
+// Off the ring road: the Whispering Glade past Mossy Woods, the Fox Shrine Path past the Twilight
+// Ruins, Moonlit Ridge above Ember Crag, and the climb from the Crystal Cave through Serpent
+// Springs and Frozen Peak to the Sky Garden, with Starfall Heights over its top.
+
+// `n` monsters evenly along a surface from x1 to x2 at height y, taking turns from `mobs`.
+const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ mob: mobs[i % mobs.length], x: Math.round(x1 + ((i + 0.5) / n) * (x2 - x1)), y }));
+
+MAPS.woods.portals.push({ id: 'glade', x: 1650, y: 920, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
+MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 760, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
+MAPS.crag.portals.push({ id: 'ridge', x: 1580, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' });
+MAPS.cave.portals.push({ id: 'springs', x: 1660, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
+MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east', label: 'Frozen Peak' });
+MAPS.sky.portals.push({ id: 'starfall', x: 1420, y: 560, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' });
+
+Object.assign(MAPS, {
+  // A sunny clearing deep in the woods where the wind never stops: wind chimes in every tree,
+  // giant flowers, a waterfall off the high ledge. Sylphs ride the breeze; Treants stand guard.
+  glade: {
+    id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 },
+    width: 2200, height: 760, groundY: 720,
+    look: { sky: ['#8fe0d0', '#d2f4e2', '#fffbe0'], far: '#8fd6b4', mid: '#6cc498', midTrim: '#4fae7f', light: 'morning', edges: 'flowers', props: ['flower', 'chime', 'tuft', 'bush', 'tulip', 'flower'], drift: 'leaf', rainbow: 0.3 },
+    terrain: [[0, 720], [2200, 720]],
+    platforms: [
+      { x: 160, y: 640, w: 700 }, { x: 1000, y: 640, w: 600 }, { x: 1720, y: 640, w: 360 },
+      { x: 320, y: 560, w: 480 }, { x: 1100, y: 560, w: 520 },
+      { x: 560, y: 480, w: 720 }, { x: 1500, y: 480, w: 420 },
+      { x: 900, y: 400, w: 380, thick: 44 },
+    ],
+    ropes: [{ x: 1880, top: 480, bottom: 720 }, { x: 1180, top: 400, bottom: 480, ladder: true }],
+    portals: [{ id: 'west', x: 40, y: 720, to: 'woods', toPortal: 'glade' }],
+    npcs: [],
+    deco: [['giantflower', 260, 0], ['bigtree', 940, 1], ['giantflower', 1450, 2], ['waterfall', 1000, 0, 400], ['pond', 1700], ['giantflower', 2120, 1]],
+    spawns: [
+      ...along(720, 140, 2160, 6, 'mossgolem', 'sylph'), ...along(640, 180, 840, 3, 'sylph', 'mossgolem'), ...along(640, 1020, 1580, 3, 'mossgolem', 'sylph'),
+      ...along(560, 340, 780, 2, 'sylph'), ...along(560, 1120, 1600, 2, 'sylph', 'mossgolem'), ...along(480, 580, 1260, 3, 'mossgolem', 'sylph', 'sylph'), ...along(480, 1520, 1900, 2, 'sylph'),
+    ],
+  },
+
+  // A stone path climbing through cherry trees at sunset under one vermilion gate after another,
+  // fox guardians at each, a little roadside shrine on the terrace. Nekomata prowl the lower
+  // path; Kitsune Miko keep the upper terraces.
+  shrine: {
+    id: 'shrine', name: 'Fox Shrine Path', theme: 'shrine', town: 'grove', world: { x: 378, y: 86 },
+    width: 2600, height: 840, groundY: 800,
+    terrain: [[0, 800], [700, 800], [780, 780], [1500, 780], [1580, 760], [2600, 760]],
+    // Each great gate stands in the open, with the terraces climbing between them.
+    platforms: [
+      { x: 520, y: 720, w: 500 }, { x: 1360, y: 700, w: 540 }, { x: 2200, y: 680, w: 340 },
+      { x: 140, y: 640, w: 440 }, { x: 860, y: 630, w: 560 }, { x: 1700, y: 610, w: 620 },
+      { x: 420, y: 560, w: 520 }, { x: 1300, y: 540, w: 520 },
+      { x: 2000, y: 520, w: 420, thick: 44 },
+    ],
+    ropes: [{ x: 2380, top: 520, bottom: 760 }, { x: 200, top: 640, bottom: 800 }],
+    portals: [{ id: 'west', x: 40, y: 800, to: 'ruins', toPortal: 'shrine' }],
+    npcs: [],
+    deco: [['torii', 380], ['foxstatue', 290, 0], ['foxstatue', 470, 1], ['torii', 1220], ['foxstatue', 1130, 0], ['foxstatue', 1300, 1], ['torii', 2070], ['foxstatue', 1990, 0], ['foxstatue', 2150, 1],
+      ['sakura', 690, 0, 560], ['sakura', 1560, 1, 540], ['hokora', 2210, 0, 520]],
+    spawns: [
+      ...along(800, 100, 690, 2, 'nekomata'), ...along(780, 800, 1480, 3, 'nekomata', 'kitsunemiko'), ...along(760, 1600, 2560, 3, 'nekomata', 'kitsunemiko'),
+      ...along(720, 540, 1000, 2, 'nekomata'), ...along(700, 1380, 1880, 2, 'kitsunemiko', 'nekomata'), ...along(680, 2220, 2520, 1, 'kitsunemiko'),
+      ...along(640, 160, 560, 1, 'nekomata'), ...along(630, 880, 1400, 2, 'kitsunemiko', 'nekomata'), ...along(610, 1720, 2300, 2, 'kitsunemiko'),
+      ...along(560, 440, 920, 2, 'kitsunemiko'), ...along(540, 1320, 1800, 2, 'kitsunemiko'),
+    ],
+  },
+
+  // High on the mountain above Ember Crag at night: blue rock and pines under a huge moon, the
+  // howling rock at the top where Lupina's pack sings. Crystal Golems wander down from the cave.
+  ridge: {
+    id: 'ridge', name: 'Moonlit Ridge', theme: 'ridge', town: 'crag', world: { x: 246, y: 104 },
+    width: 2400, height: 840, groundY: 800,
+    terrain: [[0, 800], [600, 800], [700, 770], [1300, 770], [1400, 740], [2400, 740]],
+    platforms: [
+      { x: 160, y: 720, w: 400 }, { x: 760, y: 690, w: 480 }, { x: 1460, y: 660, w: 820 },
+      { x: 320, y: 640, w: 560 }, { x: 1000, y: 610, w: 400 }, { x: 1600, y: 580, w: 560 },
+      { x: 640, y: 560, w: 440 }, { x: 1240, y: 530, w: 420 },
+      { x: 1880, y: 500, w: 380, thick: 44 },
+    ],
+    ropes: [{ x: 2220, top: 500, bottom: 740 }, { x: 340, top: 640, bottom: 800 }],
+    portals: [{ id: 'west', x: 40, y: 800, to: 'crag', toPortal: 'ridge' }],
+    npcs: [],
+    deco: [['howlrock', 2060, 0, 500], ['moonstone', 900], ['howlrock', 480], ['moonstone', 1700]],
+    spawns: [
+      ...along(800, 120, 580, 2, 'lupina'), ...along(770, 720, 1280, 3, 'lupina', 'rockgolem'), ...along(740, 1420, 2360, 4, 'lupina', 'rockgolem'),
+      ...along(720, 180, 540, 2, 'lupina'), ...along(690, 780, 1220, 2, 'rockgolem', 'lupina'), ...along(660, 1480, 2260, 3, 'lupina'),
+      ...along(640, 340, 860, 2, 'lupina', 'rockgolem'), ...along(610, 1020, 1380, 2, 'lupina'), ...along(580, 1620, 2140, 2, 'rockgolem', 'lupina'),
+      ...along(560, 660, 1060, 2, 'lupina'), ...along(530, 1260, 1640, 2, 'lupina'),
+    ],
+  },
+
+  // A misty gorge off the Crystal Cave full of steaming turquoise pools, bamboo and reeds. Lamia
+  // bask in the warm water; Wraiths drift in the steam.
+  springs: {
+    id: 'springs', name: 'Serpent Springs', theme: 'springs', town: 'grove', world: { x: 256, y: 40 },
+    width: 2400, height: 800, groundY: 760,
+    terrain: [[0, 760], [2400, 760]],
+    platforms: [
+      { x: 140, y: 680, w: 620 }, { x: 960, y: 680, w: 560 }, { x: 1700, y: 680, w: 560 },
+      { x: 360, y: 600, w: 500 }, { x: 1160, y: 600, w: 560 },
+      { x: 120, y: 520, w: 420 }, { x: 760, y: 520, w: 560 }, { x: 1600, y: 520, w: 520 },
+      { x: 1040, y: 440, w: 400, thick: 44 },
+    ],
+    ropes: [{ x: 160, top: 520, bottom: 760 }, { x: 2060, top: 520, bottom: 760 }, { x: 1080, top: 440, bottom: 520, ladder: true }],
+    portals: [
+      { id: 'west', x: 40, y: 760, to: 'cave', toPortal: 'springs' },
+      { id: 'east', x: 2340, y: 760, to: 'peak', toPortal: 'west' },
+    ],
+    npcs: [],
+    deco: [['hotspring', 860], ['hotspring', 1620], ['waterfall', 1240, 0, 440], ['hotspring', 2200]],
+    spawns: [
+      ...along(760, 120, 2280, 5, 'lamia', 'shade'), ...along(680, 160, 740, 1, 'lamia'), ...along(680, 980, 1500, 2, 'lamia', 'shade'), ...along(680, 1720, 2240, 1, 'lamia'),
+      ...along(600, 380, 840, 1, 'shade'), ...along(600, 1180, 1700, 2, 'lamia'), ...along(520, 140, 520, 1, 'shade'), ...along(520, 780, 1300, 1, 'lamia'),
+      ...along(520, 1620, 2100, 1, 'lamia'),
+    ],
+  },
+
+  // The mountain's snowy shoulder between the springs and the Sky Garden: snowfields, laden pines,
+  // a snowman someone built, icicles under every ledge. Yuki-onna glide over the snow; Pegasus
+  // Foals graze the high drifts.
+  peak: {
+    id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'grove', world: { x: 312, y: 18 },
+    width: 2200, height: 1000, groundY: 960,
+    terrain: [[0, 960], [2200, 960]],
+    platforms: [
+      { x: 120, y: 880, w: 640 }, { x: 900, y: 880, w: 520 }, { x: 1560, y: 880, w: 520 },
+      { x: 300, y: 800, w: 520 }, { x: 1100, y: 800, w: 600 },
+      { x: 140, y: 720, w: 480 }, { x: 760, y: 720, w: 520 }, { x: 1440, y: 720, w: 560 },
+      { x: 420, y: 640, w: 560 }, { x: 1160, y: 640, w: 560 },
+      { x: 760, y: 560, w: 520, thick: 44 },
+    ],
+    ropes: [{ x: 180, top: 720, bottom: 960 }, { x: 1960, top: 720, bottom: 960 }, { x: 800, top: 560, bottom: 640, ladder: true }],
+    portals: [
+      { id: 'west', x: 40, y: 960, to: 'springs', toPortal: 'east' },
+      { id: 'east', x: 2140, y: 960, to: 'sky', toPortal: 'peak' },
+    ],
+    npcs: [],
+    deco: [['snowpine', 280, 0], ['snowman', 640], ['snowpine', 1000, 1], ['snowpine', 1480, 0], ['snowman', 1020, 0, 560], ['snowpine', 1900, 1]],
+    spawns: [
+      ...along(960, 120, 2080, 6, 'yukionna', 'cloudsheep'), ...along(880, 140, 740, 2, 'yukionna'), ...along(880, 920, 1400, 2, 'cloudsheep', 'yukionna'), ...along(880, 1580, 2060, 2, 'yukionna'),
+      ...along(800, 320, 800, 2, 'cloudsheep'), ...along(800, 1120, 1680, 2, 'yukionna', 'cloudsheep'), ...along(720, 160, 600, 1, 'yukionna'), ...along(720, 780, 1260, 2, 'cloudsheep', 'yukionna'),
+      ...along(720, 1460, 1980, 2, 'yukionna'), ...along(640, 440, 960, 2, 'cloudsheep'), ...along(640, 1180, 1700, 2, 'yukionna', 'cloudsheep'),
+    ],
+  },
+
+  // Above the Sky Garden, where the night comes early: lavender cloud islands under a sky full of
+  // shooting stars, the moon close enough to touch. Star Seraphs and Sky Harpies.
+  starfall: {
+    id: 'starfall', name: 'Starfall Heights', theme: 'sky', town: 'grove', world: { x: 390, y: 34 },
+    width: 2400, height: 900, groundY: 860,
+    look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star', 'flower', 'cloudpuff'], drift: 'sparkle', ground: '#e6e0fa', groundDeep: '#c4b8ec', ledge: '#ece6ff', ledgeShade: '#c4b8ec' },
+    terrain: [[0, 860], [2400, 860]],
+    platforms: [
+      { x: 140, y: 780, w: 560 }, { x: 900, y: 780, w: 600 }, { x: 1700, y: 780, w: 560 },
+      { x: 400, y: 700, w: 600 }, { x: 1300, y: 700, w: 600 },
+      { x: 160, y: 620, w: 460 }, { x: 860, y: 620, w: 560 }, { x: 1660, y: 620, w: 560 },
+      { x: 1000, y: 540, w: 420, thick: 44 },
+    ],
+    ropes: [{ x: 200, top: 620, bottom: 860 }, { x: 2180, top: 620, bottom: 860 }, { x: 1040, top: 540, bottom: 620, ladder: true }],
+    portals: [{ id: 'west', x: 40, y: 860, to: 'sky', toPortal: 'starfall' }],
+    npcs: [],
+    deco: [['cloudpillar', 700], ['moonstone', 1200], ['cloudpillar', 1600], ['skygazebo', 1210, 0, 540], ['moonstone', 2100]],
+    spawns: [
+      ...along(860, 120, 2300, 6, 'starspirit', 'windbird'), ...along(780, 160, 680, 2, 'windbird'), ...along(780, 920, 1480, 2, 'starspirit', 'windbird'), ...along(780, 1720, 2240, 2, 'starspirit'),
+      ...along(700, 420, 980, 2, 'starspirit'), ...along(700, 1320, 1880, 2, 'windbird', 'starspirit'), ...along(620, 180, 600, 1, 'starspirit'), ...along(620, 880, 1400, 2, 'windbird', 'starspirit'),
+      ...along(620, 1680, 2200, 2, 'starspirit'),
+    ],
+  },
+});

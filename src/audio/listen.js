@@ -17,7 +17,7 @@ import { SKILLS } from '../data/skills.js';
 const memo = new WeakMap();
 
 // What each kind of map is underfoot.
-const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood' };
+const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood', shrine: 'stone', ridge: 'stone', springs: 'stone', snow: 'cloud' };
 const TOWN_SONG = { sprout: 'town', harbor: 'harbor', crag: 'crag', grove: 'grove' };
 
 export function songFor(map, world = null) {
@@ -25,7 +25,7 @@ export function songFor(map, world = null) {
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
   if (map.dungeon) return 'hollow';
   if (map.isTown) return `${TOWN_SONG[map.town] ?? 'town'}${dayPart() === 'night' ? '-night' : ''}`;
-  return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove' }[map.theme] ?? 'meadow';
+  return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove', shrine: 'grove', ridge: 'crag', springs: 'forest', snow: 'sky' }[map.theme] ?? 'meadow';
 }
 
 const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'smokeburst', 'logpoof', 'inkcut', 'foxtrapburst', 'foxdecoy', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);

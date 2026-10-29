@@ -32,6 +32,10 @@ const SPOT = {
   ruins: onRing(315), cave: onRing(272),
   canyon: { x: CX - 62, y: CY + 8 }, crag: { x: CX + 2, y: CY - 6 }, hollow_gate: { x: CX - 78, y: CY - 30 },
   bossroom: onRing(235, 0.72), sky: { x: 352, y: 26 },
+  // The far regions, off the ring: the glade inside the woods, the shrine path past the ruins, the
+  // ridge above the crag, and the climb from the cave through the springs and the peak to the sky.
+  glade: { x: 280, y: 160 }, shrine: { x: 372, y: 86 }, ridge: { x: 244, y: 104 },
+  springs: { x: 258, y: 42 }, peak: { x: 306, y: 18 }, starfall: { x: 384, y: 12 },
 };
 const spot = (m) => SPOT[m.id] ?? m.world;
 // The roads round the ring (each a real portal link between neighbours on it; the last stop joins
@@ -41,6 +45,7 @@ const RING = ['sprout', 'meadow1', 'meadow2', 'harbor', 'woods', 'grove', 'ruins
 const TINT = {
   town: '#bfeaa8', meadow: '#c4eeb0', harbor: '#ffe0b0', forest: '#9fd8a2', grove: '#d3c0f6',
   ruins: '#dccff7', cave: '#beb0ea', crag: '#f7c996', sky: '#ffffff',
+  shrine: '#ffd0e0', ridge: '#b8c0ec', springs: '#bfeae0', snow: '#eef4ff',
 };
 // Each job town's colour.
 const JOB_COLORS = { archer: '#6fcf8a', thief: '#9b7cd6', warrior: '#ff8a5c', mage: '#7fa8ff' };

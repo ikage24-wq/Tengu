@@ -29,7 +29,14 @@ export const MATERIALS = {
   cave: { lip: '#a8e8ff', body: '#7563b6', deep: '#4f3f8e', stone: '#9482d6', style: 'rock', blades: false, drip: 'crystal', glow: '#a8e8ff' },
   hollow: { lip: '#a6dca2', body: '#b48a74', deep: '#8a6656', stone: '#cda48c', style: 'loam', blades: true, drip: 'root' },
   sky: { lip: '#ffffff', body: '#f6f8ff', deep: '#d6e0ff', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
+  // The far regions: a petal-strewn stone path, blue night rock, warm spring stone, packed snow.
+  shrine: { lip: '#ffc6de', body: '#d8c4b6', deep: '#b49a8e', stone: '#efe2d8', style: 'slab', blades: true, drip: 'vine' },
+  ridge: { lip: '#a8d8c8', body: '#7a80b8', deep: '#545a96', stone: '#9aa0d6', style: 'rock', blades: true, drip: 'root' },
+  springs: { lip: '#9fe0c0', body: '#c4a6a0', deep: '#a08486', stone: '#e4cec6', style: 'slab', blades: true, drip: 'weed' },
+  snow: { lip: '#ffffff', body: '#dfe8fa', deep: '#b6c4e8', stone: '#f4f8ff', style: 'slab', blades: false, drip: 'crystal', glow: '#e6f4ff' },
   // Map-specific materials (a map's `look.material`).
+  // Starfall Heights: cloud tinted lavender by the night sky.
+  starcloud: { lip: '#f2ecff', body: '#d8d0f6', deep: '#b0a4e0', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
   // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.
   beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },

@@ -71,7 +71,7 @@ export function placeOf(map) {
   if (!map) return null;
   if (map.dungeon || map.theme === 'hollow') return 'hollow';
   if (map.isTown) return 'town';
-  if (map.theme === 'grove') return 'forest';
+  if (map.theme === 'grove' || map.theme === 'shrine' || map.theme === 'springs') return 'forest';
   return PLACES[map.theme] ? map.theme : 'meadow';
 }
 

@@ -22,6 +22,11 @@ const LOOKS = {
   morning: { light: '#ffe2ec', shade: '#9a7cc8', rays: 0.7, sun: 0.75, pool: 0.07 },
   noon: { light: '#fffbe0', shade: '#5c9a8a', rays: 0.35, sun: 0.85, pool: 0.05 },
   dusk: { light: '#ffc08a', shade: '#4a2f6a', rays: 0.6, sun: 0.2, pool: 0.15 },
+  shrine: { light: '#ffd6b8', shade: '#7a4a8a', rays: 0.6, sun: 0.45, pool: 0.12, warm: '#ffd8a8' },
+  ridge: { light: '#d4dcff', shade: '#262a6a', rays: 0.2, sun: 0.6, pool: 0.2, warm: '#ffe2b0' },
+  springs: { light: '#fff2dc', shade: '#3c6c78', rays: 0.7, sun: 0.75, pool: 0.08 },
+  snow: { light: '#ffffff', shade: '#7a8ad0', rays: 0.4, sun: 0.9, pool: 0.05 },
+  starfall: { light: '#e2d8ff', shade: '#2a2266', rays: 0.15, sun: 0.6, pool: 0.18, warm: '#fff0c8' },
   throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5, pool: 0.22, warm: '#e6dcff' },
 };
 

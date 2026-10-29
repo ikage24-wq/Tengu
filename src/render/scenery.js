@@ -10,6 +10,7 @@ import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from '.
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
+import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -77,6 +78,35 @@ export const THEMES = {
     skyline: 'roots', props: ['glowshroom', 'rootcurl', 'moss', 'hlantern', 'pebble', 'glowshroom', 'moss'],
     shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], ledgeProp: 'glowshroom',
     critters: ['firefly'], drift: 'spore', face: null,
+  },
+  // The Fox Shrine Path at sunset: a stone path through cherry trees, vermilion gates, stone
+  // lanterns, pagodas on the hills behind, petals on the wind.
+  shrine: {
+    sky: ['#ff9ec6', '#ffc8b4', '#fff0d6'], sun: '#fff1c9', far: '#e9a2bf', mid: '#f6c4d4', midTrim: '#e08aa8',
+    ground: '#ddc8ba', groundDeep: '#c4a898', trim: '#ffc6de', ledge: '#e6d2c4', ledgeTrim: '#ffd0e2', ledgeShade: '#c8aa9c',
+    skyline: 'pagodas', props: ['stonelamp', 'tuft', 'flower', 'tuft', 'bush', 'stonelamp'],
+    critters: ['butterfly', 'bird'], drift: 'petal', face: 'sun', front: 'blossoms',
+  },
+  // Moonlit Ridge: blue night on the mountain, a huge moon, pines on the slopes, wolves' country.
+  ridge: {
+    sky: ['#1f2658', '#46509c', '#9a8ad6'], sun: '#e6ecff', far: '#3c4688', mid: '#4f5aa2', midTrim: '#7a86d0',
+    ground: '#8a90c6', groundDeep: '#6e74ae', trim: '#a8d8c8', ledge: '#9aa0d2', ledgeTrim: '#b8e6d6', ledgeShade: '#6c72aa',
+    skyline: 'peaks', props: ['rock', 'pine', 'tuft', 'rock', 'tuft'],
+    critters: ['firefly'], drift: 'mote', face: 'moon', stars: true, bigMoon: true,
+  },
+  // Serpent Springs: steaming turquoise pools in a mossy gorge, bamboo, reeds, warm mist.
+  springs: {
+    sky: ['#7cc6d6', '#c4e6e6', '#fff0e2'], sun: '#fff6dc', far: '#8cbcc6', mid: '#a4d4cc', midTrim: '#7cbcb0',
+    ground: '#c8aaa2', groundDeep: '#ac8e8a', trim: '#9fe0c0', ledge: '#d4bcb2', ledgeTrim: '#aee8cc', ledgeShade: '#ae928c',
+    skyline: 'cliffs', props: ['reed', 'rock', 'tuft', 'stonelamp', 'reed'],
+    critters: ['butterfly', 'firefly'], drift: 'steam', face: 'sun',
+  },
+  // Frozen Peak: snowfields under a pale sky, snow-laden pines, icicles under every ledge.
+  snow: {
+    sky: ['#a6c6ff', '#dde9ff', '#f8fbff'], sun: '#ffffff', far: '#c4d4f4', mid: '#dce8ff', midTrim: '#b6c6ee',
+    ground: '#eef3ff', groundDeep: '#c8d4f0', trim: '#ffffff', ledge: '#f4f8ff', ledgeTrim: '#ffffff', ledgeShade: '#c4d0ee',
+    skyline: 'peaks', snowcaps: true, props: ['snowtuft', 'pine', 'snowtuft', 'rock'],
+    critters: ['bird'], drift: 'snow', face: 'sun',
   },
   sky: {
     sky: ['#ffc6e8', '#cddbff', '#eef8ff'], sun: '#fffbe6', far: '#ffffff', mid: '#f3f8ff', midTrim: '#d6e6ff',
@@ -862,6 +892,45 @@ function drawSky(ctx, t, theme, width, height, time) {
     ctx.globalAlpha = 1;
   }
   if (t.rainbow) drawRainbow(ctx, width, height, t.rainbow);
+  // Starfall: a shooting star now and then, a bright head trailing a fading tail.
+  if (t.shooting) {
+    for (let k = 0; k < 2; k++) {
+      const cyc = (time * 0.22 + k * 0.5) % 1;
+      if (cyc > 0.22) continue;
+      const u = cyc / 0.22;
+      const n = Math.floor(time * 0.22 + k * 0.5);
+      const sx = width * (0.15 + hash(n * 3 + k) * 0.7) - u * 160;
+      const sy = 20 + hash(n * 5 + k) * 60 + u * 70;
+      const g = ctx.createLinearGradient(sx, sy, sx + 50, sy - 22);
+      g.addColorStop(0, `rgba(255,246,214,${0.9 * (1 - u)})`);
+      g.addColorStop(1, 'rgba(255,246,214,0)');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + 50, sy - 22);
+      ctx.stroke();
+      ctx.globalAlpha = 1 - u;
+      sparkle(ctx, sx, sy, 2.6, '#ffffff');
+      ctx.globalAlpha = 1;
+    }
+  }
+  // Moonlit Ridge: a huge low moon behind the peaks, with a soft halo.
+  if (t.bigMoon) {
+    const mx = width * 0.34;
+    const my = height * 0.42;
+    glow(ctx, mx, my, 150, '#cdd6ff', 0.35);
+    ctx.fillStyle = '#f2f0ff';
+    ctx.beginPath();
+    ctx.arc(mx, my, 54, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(200,196,240,0.5)';
+    for (const [dx, dy, r] of [[-16, -10, 10], [12, 8, 14], [20, -20, 6], [-8, 22, 7]]) {
+      ctx.beginPath();
+      ctx.arc(mx + dx, my + dy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   // The sun (or moon) smiles down and bobs gently.
   if (t.face) {
     const sx = width * 0.8;
@@ -886,8 +955,11 @@ function drawRainbow(ctx, width, height, alpha) {
   ctx.restore();
 }
 
-function drawClouds(ctx, theme, cam, width, time, air) {
+function drawClouds(ctx, theme, cam, width, time, air, night = false) {
   if (theme === 'cave' || theme === 'hollow') return;
+  // Under a night sky the clouds are faint shapes against the stars.
+  ctx.save();
+  if (night) ctx.globalAlpha = 0.32;
   // A far bank of big, faint clouds near the horizon, almost the sky's own color, barely moving.
   veil = { color: air, k: 0.55 };
   repeat(cam.x + time * 2, 0.03, 210, width, (i, x) => {
@@ -903,6 +975,7 @@ function drawClouds(ctx, theme, cam, width, time, air) {
     const y = 34 + hash(i + 3) * 64 - cam.y * 0.04 + Math.sin(time * 0.7 + i) * 2;
     place(ctx, cloudArt(Math.round(size * 4) / 4, mood), x, y + 18 * size);
   });
+  ctx.restore();
 }
 
 // A far silhouette: one flat value and no outline (its edge is the sky's own colour), with a soft
@@ -1009,6 +1082,100 @@ function drawFar(ctx, t, cam, width, y0, time) {
       break;
     case 'roots':
       drawFarRoots(ctx, t, cam, width, y0, time);
+      break;
+    // Pointed mountains, two ranges deep; on the peak they wear snow caps.
+    case 'peaks':
+      backRidge(ctx, t, cam, width, y0 - 60, 40);
+      ctx.fillStyle = t.far;
+      ctx.fillRect(0, snap(y0 + 20), width, 400);
+      repeat(cam.x, 0.2, 150, width, (i, x) => {
+        const h = 80 + hash(i) * 80;
+        const w = 120 + hash(i + 4) * 70;
+        const px = x + w * (0.4 + hash(i + 2) * 0.2);
+        const p = new Path2D();
+        p.moveTo(x - 20, y0 + 40);
+        p.lineTo(px - 8, y0 - h + 10);
+        p.quadraticCurveTo(px, y0 - h - 4, px + 8, y0 - h + 10);
+        p.lineTo(x + w + 20, y0 + 40);
+        p.closePath();
+        litFill(ctx, t, p, 2.4, 1.6);
+        if (t.snowcaps) {
+          ctx.fillStyle = mix('#ffffff', t.far, 0.25);
+          ctx.beginPath();
+          ctx.moveTo(px - 8 - h * 0.12, y0 - h + 10 + h * 0.2);
+          ctx.lineTo(px - 8, y0 - h + 10);
+          ctx.quadraticCurveTo(px, y0 - h - 4, px + 8, y0 - h + 10);
+          ctx.lineTo(px + 8 + h * 0.14, y0 - h + 10 + h * 0.22);
+          ctx.lineTo(px + 4, y0 - h + 10 + h * 0.14);
+          ctx.lineTo(px - 2, y0 - h + 10 + h * 0.24);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = t.far;
+        }
+      });
+      break;
+    // The shrine's hills: soft hills with tiered pagoda silhouettes and a great gate on the skyline.
+    case 'pagodas':
+      backRidge(ctx, t, cam, width, y0 - 40, 36, true);
+      ctx.fillStyle = t.far;
+      ctx.fillRect(0, snap(y0 + 24), width, 400);
+      repeat(cam.x, 0.2, 200, width, (i, x) => {
+        const p = new Path2D();
+        p.ellipse(x + 100, y0 + 30, 120 + hash(i) * 30, 70 + hash(i + 1) * 30, 0, Math.PI, 0);
+        const s = hash(i + 7);
+        const cx = x + 70 + hash(i + 3) * 60;
+        const top = y0 - 30 - hash(i + 1) * 30;
+        if (s < 0.55) {
+          // A pagoda: three roofs narrowing to a spire.
+          for (let k = 0; k < 3; k++) {
+            const half = 26 - k * 7;
+            const y = top - k * 22;
+            p.moveTo(cx - half - 4, y);
+            p.quadraticCurveTo(cx - half * 0.4, y - 4, cx, y - 12);
+            p.quadraticCurveTo(cx + half * 0.4, y - 4, cx + half + 4, y);
+            p.closePath();
+            p.rect(cx - half * 0.55, y, half * 1.1, 22);
+          }
+          p.rect(cx - 1.5, top - 84, 3, 22);
+        } else if (s < 0.8) {
+          // A great torii on the hilltop.
+          p.rect(cx - 26, top - 46, 6, 50);
+          p.rect(cx + 20, top - 46, 6, 50);
+          p.rect(cx - 32, top - 38, 64, 4);
+          p.moveTo(cx - 40, top - 50);
+          p.quadraticCurveTo(cx, top - 44, cx + 40, top - 50);
+          p.lineTo(cx + 36, top - 44);
+          p.lineTo(cx - 36, top - 44);
+          p.closePath();
+        }
+        litFill(ctx, t, p, 2.2, 1.6);
+      });
+      break;
+    // The springs' gorge: tall rounded cliffs with thin waterfalls down their faces.
+    case 'cliffs':
+      backRidge(ctx, t, cam, width, y0 - 50, 40);
+      ctx.fillStyle = t.far;
+      ctx.fillRect(0, snap(y0 + 20), width, 400);
+      repeat(cam.x, 0.2, 120, width, (i, x) => {
+        const h = 90 + hash(i) * 70;
+        const w = 70 + hash(i + 4) * 40;
+        const p = new Path2D();
+        p.moveTo(x, y0 + 40);
+        p.lineTo(x + 6, y0 - h + 20);
+        p.quadraticCurveTo(x + w * 0.5, y0 - h - 16, x + w - 6, y0 - h + 24);
+        p.lineTo(x + w, y0 + 40);
+        p.closePath();
+        litFill(ctx, t, p, 2.4, 2);
+        if (hash(i + 9) > 0.5) {
+          const fx = x + w * (0.35 + hash(i + 3) * 0.3);
+          ctx.fillStyle = mix('#ffffff', t.far, 0.35);
+          ctx.fillRect(snap(fx), snap(y0 - h + 4), 3, h + 30);
+          ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 4 + i);
+          ctx.fillRect(snap(fx + 1), snap(y0 - h + 4 + ((time * 40) % 20)), 1, 8);
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = t.far;
+        }
+      });
       break;
     case 'mesas':
       backRidge(ctx, t, cam, width, y0 - 30, 34);
@@ -1267,6 +1434,49 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
       break;
     case 'roots':
       drawMidRoots(ctx, t, cam, width, y0, time);
+      break;
+    // The shrine path behind: cherry trees in bloom, little torii, a pagoda, stone lanterns aglow.
+    case 'pagodas':
+      repeat(cam.x, 0.45, 130, width, (i, x) => {
+        const s = hash(i + 5);
+        if (s < 0.16) place(ctx, pagodaArt(hash(i)), x + 65, y0 + 4);
+        else if (s < 0.36) place(ctx, smallToriiArt(), x + 65, y0 + 4);
+        else if (s < 0.85) place(ctx, treeArt(hash(i), true, undefined, leanFrame(time, x + cam.x, 5, 0.1, i)), x + 65, y0 + 4);
+        if (hash(i + 13) > 0.6) {
+          glow(ctx, x + 20, y0 - 16, 12, '#ffd27a', 0.35 * flicker(time, i));
+          place(ctx, stoneLampArt(true), x + 20, y0 + 4);
+        }
+      });
+      break;
+    case 'peaks':
+      repeat(cam.x, 0.45, 70, width, (i, x) => {
+        if (hash(i + 5) < 0.3) return;
+        place(ctx, pineArt(hash(i), Boolean(t.snowcaps), leanFrame(time, x + cam.x, 5, 0.1, i)), x + 35, y0 + 4 + Math.round(hash(i + 2) * 6));
+      });
+      break;
+    // The gorge floor: bamboo groves, with steam curling up from the hot pools between them.
+    case 'cliffs':
+      repeat(cam.x, 0.45, 110, width, (i, x) => {
+        const s = hash(i + 5);
+        if (s < 0.6) place(ctx, bambooArt(hash(i), leanFrame(time, x + cam.x, 5, 0.15, i)), x + 40, y0 + 4);
+        else {
+          ctx.globalAlpha = 0.7;
+          ctx.fillStyle = '#9fe6e0';
+          ctx.beginPath();
+          ctx.ellipse(x + 60, y0 + 2, 34, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 0.92;
+          for (let k = 0; k < 3; k++) {
+            const u = (time * 0.25 + k / 3 + hash(i)) % 1;
+            ctx.globalAlpha = 0.35 * Math.sin(Math.PI * u);
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x + 50 + k * 10 + Math.sin(u * 5 + k) * 5, y0 - u * 60, 6 + u * 10, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 0.92;
+        }
+      });
       break;
     case 'islands':
       repeat(cam.x, 0.45, 200, width, (i, x) => {
@@ -1698,6 +1908,16 @@ function prop(ctx, kind, x, y, seed, t, time, wx = x) {
       return;
     case 'cloudpuff': return place(ctx, cloudArt(0.5, null), x, y + 2);
     case 'target': return place(ctx, targetArt(), x, y);
+    case 'stonelamp': {
+      // Lit after dark; by day just a warm hint in the window.
+      const lit = Boolean(t.stars) || t.face === 'moon';
+      glow(ctx, x, y - 20, 14, '#ffd27a', (lit ? 0.45 : 0.18) * flicker(time, seed * 5));
+      return place(ctx, stoneLampArt(true), x, y);
+    }
+    case 'pine': return place(ctx, pineArt(seed, Boolean(t.snowcaps), leanFrame(time, wx, 5, 0.1, seed * 3)), x, y + 1);
+    case 'reed': return place(ctx, reedArt(sway), x, y + 1);
+    case 'snowtuft': return place(ctx, snowTuftArt(sway), x, y + 1);
+    case 'chime': return place(ctx, chimeArt(leanFrame(time, wx, 5, 0.2, seed * 5)), x, y);
     case 'torch':
       glow(ctx, x, y - 26, 18, '#ffb35a', 0.5 * flicker(time, seed * 5));
       return place(ctx, torchArt(Math.floor(time * 7 + seed * 5) % 3), x, y);
@@ -1749,8 +1969,8 @@ function zzz(ctx, x, y, time, seed) {
 
 // Props sit sparsely so monsters and NPCs stay easy to see: fewer on the ground (fewest in towns,
 // where buildings fill the street), and only a few small ones on ledges.
-const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal', 'candle', 'cloudpuff', 'moss', 'pebble', 'rootcurl'];
-const BIG_PROPS = ['lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus', 'hlantern'];
+const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal', 'candle', 'cloudpuff', 'moss', 'pebble', 'rootcurl', 'reed', 'snowtuft'];
+const BIG_PROPS = ['pine', 'stonelamp', 'chime', 'lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus', 'hlantern'];
 
 function drawProps(ctx, t, map, cam, width, time) {
   const surfaces = surfacesOf(map).map((s) => ({ x: s.x1, w: s.x2 - s.x1, ground: s.ground, yAt: s.yAt }));
@@ -1877,10 +2097,10 @@ const DRIFT_BANDS = {
 function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
   if (!t.drift) return;
   const band = DRIFT_BANDS[which];
-  const base = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms }[t.drift];
+  const base = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms, snow: ['#ffffff', '#f2f6ff', '#e6eeff'], steam: ['#ffffff', '#f2fbff'] }[t.drift];
   const colors = band.air ? base.map((c) => mix(c, t.sky[1], band.air)) : base;
   // Embers rise from the forges and spores float up from the mushrooms instead of falling.
-  const rise = t.drift === 'ember' || t.drift === 'spore' ? -1 : 1;
+  const rise = t.drift === 'ember' || t.drift === 'spore' || t.drift === 'steam' ? -1 : 1;
   const spore = t.drift === 'spore';
   const k = band.size;
   const blow = windTravel(time) * 1.3 * band.speed;
@@ -1909,6 +2129,23 @@ function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
       ctx.arc(x + wob * 1.5, y, (1.4 + (j % 3) * 0.3) * k, 0, Math.PI * 2);
       ctx.fill();
       rect(ctx, x + wob * 1.5 - 0.5, y - 0.5, 1, 1, '#ffffff');
+      continue;
+    }
+    // Snow falls in soft round flakes; steam rises in faint puffs that swell as they go.
+    if (t.drift === 'snow') {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x + wob * 1.4, y, (1.1 + (j % 3) * 0.45) * k, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
+    if (t.drift === 'steam') {
+      const u = ((y + 10) / (height + 20));
+      ctx.globalAlpha = 0.22 * band.alpha * Math.sin(Math.PI * u);
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x + wob * 2, y, (5 + (1 - u) * 9) * k, 0, Math.PI * 2);
+      ctx.fill();
       continue;
     }
     if (t.drift === 'sparkle' || t.drift === 'mote') {
@@ -2108,7 +2345,7 @@ function drawGarlands(ctx, cam, width, time, fade) {
   });
 }
 
-const FRONTS = { forest: 'leaves', grove: 'grove', hollow: 'roots', ruins: 'vines', cave: 'crystals', sky: 'clouds', harbor: 'garland' };
+const FRONTS = { forest: 'leaves', grove: 'grove', hollow: 'roots', ruins: 'vines', cave: 'crystals', sky: 'clouds', harbor: 'garland', shrine: 'blossoms', springs: 'leaves' };
 
 // Everything in front of the characters: the foreground framing pieces and the nearest band of
 // drifting petals or sparks. `actors` are the screen boxes ({ x, top }) of the player and the
@@ -2171,7 +2408,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const far = { ...t, far: farC, farLit: mix(farC, t.sun, 0.42), farBack: mix(t.far, air, 0.62 * aerial) };
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
-    drawClouds(g, theme, cam, width, time, air);
+    drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     const farY = layerY(50, 0.05);
     veil = { color: air, k: 0.5 * aerial };
     drawFar(g, far, cam, width, farY, time);

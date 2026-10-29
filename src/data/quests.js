@@ -279,4 +279,48 @@ export const QUESTS = {
     ],
     rewards: { exp: 8000, gold: 3000, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
+
+  // ---------- The far regions ----------
+  nim_chimes: {
+    id: 'nim_chimes', name: 'Stolen Chimes', giver: 'nim', minLevel: 19,
+    text: "The Sylphs in the Whispering Glade, past Mossy Woods, keep stealing my wind chimes to play with! Shoo 20 of them away and bring back 8 of the feathers they shed.",
+    objectives: [{ type: 'kill', mob: 'sylph', count: 20 }, { type: 'collect', item: 'feather', count: 8 }],
+    rewards: { exp: 12000, gold: 3500, items: [{ id: 'mana_elixir', qty: 5 }, { id: 'scroll_matk_60', qty: 1 }] },
+  },
+  elowen_foxfire: {
+    id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24,
+    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there are restless. Bring 10 Fox Fluff from the Nekomata, and leave a prayer at the shrine for me.",
+    objectives: [{ type: 'collect', item: 'fluff', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
+    rewards: { exp: 22000, gold: 5000, items: [{ id: 'white_potion', qty: 20 }, { id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  vex_miko: {
+    id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26,
+    text: "The Kitsune Miko on the Fox Shrine Path are 'borrowing' from every traveler. Teach 25 of them some manners. Quietly, if you can.",
+    objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
+    rewards: { exp: 30000, gold: 7000, items: [{ id: 'scroll_luck_60', qty: 1 }, { id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  brann_howl: {
+    id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28,
+    text: "Up past my camp, Moonlit Ridge. Lupina's pack howls all night and nobody sleeps! Climb the howling rock at the top so they know who's boss, and calm 25 of them.",
+    objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
+    rewards: { exp: 42000, gold: 8000, items: [{ id: 'scroll_watk_60', qty: 1 }, { id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  marlo_spa: {
+    id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31,
+    text: "Serpent Springs, off the Crystal Cave! Hot pools, steam, the works. I'm opening a spa... once someone clears the Lamia out. Bring me 15 of their scales as proof, they'll make lovely tiles.",
+    objectives: [{ type: 'collect', item: 'pebble', count: 15 }, { type: 'kill', mob: 'lamia', count: 20 }],
+    rewards: { exp: 60000, gold: 15000, cash: 500, items: [{ id: 'cash_casual_towel', qty: 1 }] },
+  },
+  lulu_winter: {
+    id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',
+    text: "Snow season! For my winter line I need 12 icy gems from the Yuki-onna on Frozen Peak and 10 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
+    objectives: [{ type: 'collect', item: 'crystal_gel', count: 12 }, { type: 'collect', item: 'wool', count: 10 }],
+    rewards: { exp: 80000, gold: 12000, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
+  },
+  rook_stars: {
+    id: 'rook_stars', name: 'Wishing on Stars', giver: 'rook', minLevel: 45,
+    text: "My old crew swears that at Starfall Heights, over the Sky Garden, you can catch a falling star. Calm 30 Star Seraphs up there and bring back 10 Stardust. A sailor never stops wishing!",
+    objectives: [{ type: 'kill', mob: 'starspirit', count: 30 }, { type: 'collect', item: 'stardust', count: 10 }],
+    rewards: { exp: 200000, gold: 40000, items: [{ id: 'warrior_top_45', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 15 }] },
+  },
 };

@@ -2366,9 +2366,198 @@ function runecircleArt() {
   });
 }
 
+
+// ---------- The far regions: Fox Shrine Path, Moonlit Ridge, Serpent Springs, Frozen Peak ----------
+
+const VERMILION = '#ff6f61';
+
+// A great vermilion torii the path runs under: thick posts on black stone feet, the tie beam with
+// its name plaque, and the swept black top beam curling up at both ends.
+function toriiArt() {
+  return art('torii', 132, 118, () => {
+    const r = ramp(VERMILION, 0.85);
+    const ink = ramp('#4a3a5c', 0.8);
+    const out = [];
+    for (const x of [22, 100]) {
+      out.push(T([[x, 112], [x + 2, 30], [x + 10, 30], [x + 12, 112]], r.base), F(T([[x + 8, 112], [x + 8.6, 30], [x + 10, 30], [x + 12, 112]], r.sh)), F(R(x + 2.6, 32, 1.4, 78, r.hi)));
+      out.push(R(x - 2, 104, 16, 12, ink.base), F(R(x + 9, 104, 5, 12, ink.sh)), F(R(x - 2, 104, 16, 1.4, ink.hi)));
+    }
+    // Tie beam (nuki) running through both posts.
+    out.push(R(10, 40, 112, 7, r.base), F(R(10, 45, 112, 2, r.sh)), F(R(10, 40, 112, 1.2, r.hi)));
+    // Top beams: the vermilion kasagi and the black cap sweeping up at the ends.
+    out.push(R(14, 22, 104, 7, r.base), F(R(14, 27, 104, 2, r.sh)));
+    out.push(T([[0, 6], [10, 13], [66, 15], [122, 13], [132, 6], [128, 20], [66, 22.4], [4, 20]], ink.base), F(T([[4, 20], [66, 22.4], [128, 20], [126, 17.6], [66, 19.6], [6, 17.6]], ink.deep)), F(T([[10, 13], [66, 15], [122, 13], [120, 14.6], [66, 16.6], [12, 14.6]], ink.hi)));
+    // The plaque between the beams, with a fox-ear crest.
+    out.push(R(58, 26, 16, 16, '#3a2d4f'), F(R(60, 28, 12, 12, '#ffe9a6')), F(T([[62, 37], [63.6, 31], [65.4, 35]], VERMILION)), F(T([[70, 37], [68.4, 31], [66.6, 35]], VERMILION)), F(E(66, 37, 3.2, 1.6, VERMILION)));
+    // Shimenawa rope and paper streamers hung from the tie beam.
+    out.push(F(R(30, 48, 72, 2.4, '#e8d29a')));
+    for (const x of [40, 56, 76, 92]) out.push(T([[x, 50], [x + 4, 50], [x + 2, 54], [x + 5, 58], [x + 1, 58]], '#ffffff'), F(T([[x + 2, 54], [x + 5, 58], [x + 3, 58]], '#e6e0f6')));
+    out.push(tuft(16, 118, '#9fd8a8'), tuft(116, 118, '#9fd8a8'), ...bloom(30, 116, 1.2, '#ffc6de'), ...bloom(104, 115, 1.2, '#ffffff'));
+    return out;
+  });
+}
+
+// A stone fox guardian (kitsune) sitting on a plinth with a red bib, a jewel held in its mouth,
+// its tail curled up behind. `v` 0 faces right, 1 faces left (they come in pairs).
+function foxstatueArt(v) {
+  return art(`foxstatue|${v}`, 50, 74, () => {
+    const st = ramp('#ece6f6', 0.8);
+    const out = [R(6, 56, 38, 18, st.base), F(R(34, 56, 10, 18, st.sh)), R(3, 52, 44, 5, STONE_LIGHT), F(R(36, 52, 11, 5, st.sh)), F(R(3, 52, 44, 1, '#ffffff'))];
+    // Tail curling up behind the back.
+    out.push(T([[16, 50], [6, 40], [6, 24], [12, 16], [16, 22], [12, 30], [14, 42], [22, 48]], st.base), F(T([[12, 16], [16, 22], [12, 30], [10, 26]], st.hi)), F(E(10, 18, 3, 3, '#ffffff')));
+    // Body, haunches and front legs.
+    out.push(E(28, 42, 13, 11, st.base), F(E(32, 44, 9, 8, st.sh)), R(28, 40, 5, 13, st.base), R(36, 40, 5, 13, st.base), F(R(39, 40, 2, 13, st.sh)));
+    // Head with tall ears, slit-smile eyes, and the jewel.
+    out.push(E(34, 24, 10, 9, st.base), F(E(37, 26, 6.4, 6, st.sh)), T([[27, 20], [27, 6], [33, 16]], st.base), T([[41, 20], [43, 6], [36, 16]], st.base), F(T([[28.4, 18], [28.4, 10], [31.6, 16]], '#ffc6de')), F(T([[40.6, 18], [41.6, 10], [37.6, 16]], '#ffc6de')),
+      T([[38, 26], [46, 28], [38, 31]], st.base), arc(31, 23, 2, 1.4, 200, 340, 0.6, '#8f80b8'), arc(39, 23, 2, 1.4, 200, 340, 0.6, '#8f80b8'), F(E(46, 28.6, 1, 1, '#8f80b8')),
+      E(42, 33, 3.4, 3.4, '#8fd3ff'), F(E(41, 32, 1.2, 1.2, '#ffffff')));
+    // The red bib, tied round the neck.
+    out.push(T([[26, 30], [42, 30], [38, 40], [30, 40]], VERMILION), F(T([[34, 30], [42, 30], [38, 40], [34, 40]], shade(VERMILION, -14))), F(R(26, 30, 16, 1.2, '#ffd0c8')));
+    out.push(...ringed(8, 72, 3, 2, MOSS, 0.6), ...ringed(42, 54, 2.6, 1.6, MOSS, 0.6), tuft(3, 74, '#9fd8a8'));
+    return out;
+  });
+}
+
+// A little roadside shrine (hokora): a tiny house on a stone base, a gabled roof with a fox crest,
+// offerings in front (rice cakes and a sake cup), and a paper lantern on each side.
+function hokoraArt() {
+  return art('hokora', 74, 76, () => {
+    const st = ramp('#e2dcf0', 0.8);
+    const wood = ramp('#d9a273', 0.8);
+    const roof = ramp('#5a4a78', 0.85);
+    const out = [...stones(14, 56, 46, 18, st, 5, { rowH: 4.6, blockW: 8 }), F(R(52, 58, 8, 16, st.sh))];
+    out.push(R(20, 30, 34, 26, wood.base), F(R(46, 30, 8, 26, wood.sh)), R(28, 36, 18, 20, '#4e3f70'), F(R(28, 36, 9, 20, '#ffe9a6')), F(R(36.4, 36, 1.2, 20, wood.deep)));
+    out.push(T([[8, 32], [37, 10], [66, 32], [62, 34], [37, 15], [12, 34]], roof.base), F(T([[37, 10], [66, 32], [62, 34], [37, 15]], roof.sh)), F(T([[14, 30], [37, 12.6], [30, 20]], roof.hi)));
+    out.push(R(16, 30, 42, 3, VERMILION), F(R(16, 32, 42, 1, shade(VERMILION, -14))), E(37, 22, 4, 4, '#ffe9a6'), F(T([[34.6, 22], [35.4, 18.6], [36.6, 21]], VERMILION)), F(T([[39.4, 22], [38.6, 18.6], [37.4, 21]], VERMILION)));
+    // Offerings: three rice cakes and a little cup.
+    out.push(E(31, 55, 3, 1.8, '#ffffff'), E(37, 55, 3, 1.8, '#ffd6e6'), E(34, 52.6, 2.8, 1.8, '#d6f2c4'), R(41, 52, 4, 4, '#ffffff'), F(R(41, 52, 4, 1, '#ff9ec0')));
+    for (const x of [6, 68]) out.push(R(x - 0.6, 34, 1.2, 4, '#7a6a8a'), E(x, 42, 4.4, 5.4, '#ffd6a0'), F(E(x + 1.4, 43, 2.6, 4.2, '#ffc07a')), F(R(x - 4, 36.6, 8, 1, VERMILION)), F(R(x - 4, 46.6, 8, 1, VERMILION)));
+    out.push(...ringed(12, 74, 3, 2, MOSS, 0.6), ...bloom(64, 72, 1.2, '#ffc6de'), tuft(68, 76, '#9fd8a8'));
+    return out;
+  });
+}
+
+// A great cherry tree in full bloom: a dark twisting trunk and arching boughs under a broad, lumpy
+// crown of pink, a few blossoms falling.
+function sakuraArt(v) {
+  return art(`sakura|${v}`, 132, 146, () => {
+    const b = ramp('#7a5a6a', 0.85);
+    const pink = ['#ffc6de', '#ffb3cf'][v];
+    const r = ramp(pink, 0.8);
+    const out = [
+      T([[56, 146], [58, 110], [52, 80], [60, 64], [68, 64], [72, 84], [70, 112], [78, 146]], b.base), F(T([[66, 146], [68, 112], [70, 84], [68, 64], [72, 84], [70, 112], [78, 146]], b.sh)),
+      ...bark([[60, 80], [40, 62], [22, 56]], (u) => 4 - u * 2.4, b, v * 3), ...bark([[68, 74], [92, 58], [112, 54]], (u) => 4 - u * 2.4, b, v * 3 + 1),
+    ];
+    for (const [cx, cy, rx, ry, k] of [[30, 50, 26, 20, 1], [104, 48, 28, 20, 2], [66, 36, 40, 30, 3], [46, 26, 22, 16, 4], [88, 24, 22, 16, 5]]) out.push(...foliage(cx, cy, rx, ry, r, v * 7 + k, { tips: 4 }));
+    for (let k = 0; k < 14; k++) out.push(...bloom(14 + ((k * 37 + v * 11) % 104), 14 + ((k * 23) % 50), 1.3, k % 3 ? '#ffffff' : '#ff9ec0'));
+    out.push(tuft(50, 146, '#9fd8a8'), tuft(84, 146, '#9fd8a8'), F(E(40, 144, 3, 1, '#ffc6de')), F(E(96, 143, 3, 1, '#ffc6de')));
+    return out;
+  });
+}
+
+// A hot spring pool set in rounded stones, its turquoise water lit by the sky; steam rises from it
+// (drawn live over it).
+function hotspringArt() {
+  return art('hotspring', 150, 40, () => {
+    const st = ramp('#d8ccd8', 0.8);
+    const out = [E(75, 30, 74, 10, st.sh), F(E(74, 28, 72, 9, st.base)), F(E(75, 28, 64, 7, '#4fb8c4')), F(E(73, 27, 60, 5.6, '#7fd8dc')), F(E(64, 26, 30, 2.4, '#bff4f2'))];
+    for (let k = 0; k < 13; k++) {
+      const a = (k / 13) * Math.PI * 2;
+      const x = 75 + Math.cos(a) * 70;
+      const y = 29 + Math.sin(a) * 9.4;
+      out.push(E(x, y, 7 + (k % 3), 5, st.base), F(E(x + 1.6, y + 1.2, 4.6, 3, st.sh)), F(E(x - 2, y - 1.6, 2.6, 1.4, st.hi)));
+    }
+    out.push(...ringed(10, 34, 4, 2.6, MOSS, 0.6), ...ringed(138, 33, 4, 2.6, MOSS, 0.6), tuft(4, 38, '#8fd6aa'), tuft(146, 38, '#8fd6aa'));
+    return out;
+  });
+}
+function drawHotspring(ctx, x, y, time) {
+  place(ctx, hotspringArt(), x, y);
+  // Steam: soft puffs rising and swelling from across the water.
+  for (let k = 0; k < 6; k++) {
+    const u = (time * 0.22 + k / 6) % 1;
+    const sx = x - 50 + k * 20 + Math.sin(u * 4 + k) * 6;
+    glow(ctx, sx, y - 14 - u * 70, 10 + u * 16, '#ffffff', 0.32 * Math.sin(Math.PI * u));
+  }
+}
+
+// The howling rock: a jutting crag with a flat lip where the wolves stand to sing to the moon.
+function howlrockArt() {
+  return art('howlrock', 140, 104, () => {
+    const st = ramp('#8a90c6', 0.85);
+    const out = [
+      T([[0, 104], [10, 70], [30, 50], [64, 40], [110, 32], [136, 28], [140, 36], [118, 46], [104, 66], [110, 104]], st.base),
+      F(T([[104, 66], [118, 46], [140, 36], [136, 44], [118, 60], [112, 104], [110, 104]], st.sh)),
+      F(T([[30, 50], [64, 40], [110, 32], [136, 28], [130, 32], [100, 38], [60, 46]], st.hi)),
+      F(T([[40, 104], [48, 78], [70, 66], [62, 84], [60, 104]], st.sh)),
+    ];
+    for (const [x, y] of [[24, 80], [56, 58], [84, 72], [96, 50]]) out.push(F(band([[x, y], [x + 6, y + 8], [x + 4, y + 16]], () => 0.6, st.deep)));
+    out.push(...ringed(20, 100, 6, 3, '#8fc8b0', 0.6), ...ringed(90, 100, 5, 3, '#8fc8b0', 0.6), tuft(6, 104, '#8fc8b0'), tuft(120, 104, '#8fc8b0'));
+    return out;
+  });
+}
+
+// A tall pine heavy with snow, for Frozen Peak.
+function snowpineArt(v) {
+  return art(`snowpine|${v}`, 84, 150, () => {
+    const g = ramp(['#5f9e98', '#6aa890'][v], 0.85);
+    const b = ramp('#9a7a62', 0.8);
+    const out = [R(38, 128, 8, 22, b.base), F(R(42.6, 128, 3.4, 22, b.sh))];
+    const tiers = [[132, 40, 30], [104, 32, 28], [78, 25, 26], [54, 18, 24], [32, 11, 22]];
+    tiers.forEach(([base, half, h], i) => {
+      const top = base - h;
+      const hem = [];
+      for (let k = 0; k <= 8; k++) hem.push([42 - half + (k / 8) * half * 2, base + (k % 2 ? 3 : 0)]);
+      out.push(T([[42, top], ...hem.reverse()], g.base), F(T([[42, top], [42 + half, base], [42 + 2, base]], g.sh)));
+      out.push(T([[42, top - 1.6], [42 - half * 0.8, base - h * 0.4], [42 - half * 0.45, base - h * 0.3], [42 + 2, base - h * 0.5], [42 + half * 0.5, base - h * 0.28], [42 + half * 0.82, base - h * 0.38]], '#fbfdff'));
+      out.push(F(T([[42 + 2, base - h * 0.5], [42 + half * 0.5, base - h * 0.28], [42 + half * 0.82, base - h * 0.38]], '#d6e4ff')));
+      if (i === 0) for (let k = 0; k < 5; k++) out.push(F(R(42 - half + 8 + k * 14, base + 2, 1.4, 3 + (k % 2) * 2, '#e6f2ff')));
+    });
+    out.push(E(42, 149, 30, 3, '#fbfdff'), F(E(50, 149.6, 18, 1.6, '#d6e4ff')));
+    return out;
+  });
+}
+
+// A snowman someone built by the path: three snowballs, a scarf, twig arms, a carrot nose, a
+// bucket hat, and a happy coal smile.
+function snowmanArt(blink) {
+  return art(`snowman|${blink}`, 44, 58, () => {
+    const s = ramp('#fbfdff', 0.7);
+    const out = [E(22, 47, 15, 11, s.base), F(E(26, 49, 10, 8, s.sh)), E(22, 30, 11, 9, s.base), F(E(25, 32, 7, 6, s.sh)), E(22, 16, 8.6, 7.6, s.base), F(E(24.6, 17.6, 5.4, 5, s.sh))];
+    out.push(T([[12, 28], [2, 20], [3, 18.6], [12, 26]], '#9a7a62'), T([[32, 28], [42, 21], [41, 19.6], [32, 26]], '#9a7a62'));
+    out.push(R(13, 22, 18, 4, '#ff8fb0'), F(R(13, 24.6, 18, 1.4, '#e06a92')), T([[24, 25], [30, 25], [29, 34], [25, 33]], '#ff8fb0'), F(T([[27, 25], [30, 25], [29, 34], [27, 33.4]], '#e06a92')));
+    out.push(T([[22, 16], [30, 17.4], [22, 18.6]], '#ffab5a'));
+    if (blink) out.push(arc(18.4, 13.6, 1.4, 1, 20, 160, 0.6, INK), arc(25.4, 13.6, 1.4, 1, 20, 160, 0.6, INK));
+    else out.push(F(E(18.4, 13.6, 1, 1.2, INK)), F(E(25.4, 13.6, 1, 1.2, INK)));
+    for (const [x, y] of [[17, 19.6], [19.6, 21], [22.6, 21.4], [25.6, 20.6]]) out.push(F(E(x, y, 0.6, 0.6, INK)));
+    out.push(F(E(15.6, 17, 1.2, 0.7, BLUSH)), F(E(28.4, 17, 1.2, 0.7, BLUSH)));
+    out.push(T([[14, 9], [16, 1], [28, 1], [30, 9]], '#8fb8ff'), F(T([[24, 1], [28, 1], [30, 9], [25, 9]], '#6f96e6')), R(12, 8, 20, 2.4, '#8fb8ff'));
+    for (const y of [30, 36, 44]) out.push(F(E(22, y, 1.2, 1.2, '#7a6a8a')));
+    out.push(E(22, 57, 18, 2, '#fbfdff'));
+    return out;
+  });
+}
+
 // ---------- Drawing ----------
 
 const KINDS = {
+  torii: { w: 132, h: 118, draw: (ctx, x, y) => place(ctx, toriiArt(), x, y) },
+  foxstatue: { w: 50, h: 74, draw: (ctx, x, y, time, seed) => place(ctx, foxstatueArt(variant(seed, 2)), x, y, { flip: variant(seed, 2) === 1 }) },
+  hokora: {
+    w: 74, h: 76,
+    draw: (ctx, x, y, time) => {
+      for (const dx of [-31, 31]) glow(ctx, x + dx, y - 34, 12, '#ffd27a', 0.4 * flicker(time, dx));
+      place(ctx, hokoraArt(), x, y);
+    },
+  },
+  sakura: { w: 132, h: 146, draw: (ctx, x, y, time, seed, wx) => {
+    const l = lean(time, wx, 0.1, seed);
+    place(ctx, sakuraArt(variant(seed, 2)), x + l * 0.8, y);
+  } },
+  hotspring: { w: 150, h: 40, draw: drawHotspring },
+  howlrock: { w: 140, h: 104, draw: (ctx, x, y) => place(ctx, howlrockArt(), x, y) },
+  snowpine: { w: 84, h: 150, draw: (ctx, x, y, time, seed) => place(ctx, snowpineArt(variant(seed, 2)), x, y) },
+  snowman: { w: 44, h: 58, draw: (ctx, x, y, time, seed) => place(ctx, snowmanArt(blinking(time, seed)), x, y) },
   bigtree: { w: 112, h: 172, draw: drawBigtree },
   giantshroom: {
     w: 72, h: 92,
