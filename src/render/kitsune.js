@@ -25,7 +25,7 @@
 //   - her moods (cross, pleased, attentive) colour whatever she's doing.
 import { drawPosed } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
-import { KMOVES, CALL, MOONFALL } from '../world/kitsune.js';
+import { KMOVES, CALL, MOONFALL, CRESCENT, FLURRY } from '../world/kitsune.js';
 
 export const KITSUNE_LOOK = {
   hairStyle: 'moonriver', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
@@ -55,10 +55,13 @@ const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4
 //   tx, by          the hips' sway and the body's bob; hx, hy, tilt the head's offset and roll
 //   ears            her ears' turn [near, far] (degrees: - pricked forward, + laid back)
 //   tail, curl      her tail's swing (+ down and back) and curl (+ tighter), degrees
-//   cloth           how the robes and sleeves swing; mouth, eyes, brows the face
+//   cloth           how the robes and sleeves swing; toss flings her hair back; planted (0-1)
+//                   lets go of the naginata, which stands on its own where she planted it (her
+//                   weapon hand free); handOver (0-1) brings that hand up over her face (the
+//                   head is drawn over the arms, so it's drawn again on top); mouth, eyes, brows
 const REST = {
   lean: -0.05, lunge: 0, lift: 0, pole: 0, grip: 0.24, hand: [8, -1.2], free: [0.2, 2.6], legF: [3.4, 0, 6], legB: [-3.6, 0, -6], squat: 0,
-  tx: 0, by: 0, hx: 0.4, hy: -0.6, tilt: -3, ears: [-6, -6], tail: 8, curl: -10, cloth: 0, mouth: 'flat', eyes: null, brows: 'stern',
+  tx: 0, by: 0, hx: 0.4, hy: -0.6, tilt: -3, ears: [-6, -6], tail: 8, curl: -10, cloth: 0, toss: 0, planted: 0, handOver: 0, mouth: 'flat', eyes: null, brows: 'stern',
 };
 const pose = (o) => ({ ...REST, ...o });
 
@@ -93,10 +96,88 @@ function standing(bit, u) {
     const lash = Math.sin(seg(u, 0.1, 0.9) * TAU);
     return pose({ tail: 8 - 26 * lash * k, curl: -10 + 30 * k, ears: [-6 + 10 * k, -6 + 10 * k] });
   }
+  if (bit === 'yawn') {
+    // Bored: she plants the naginata (it stands on its own), lifts the back of her hand to her
+    // mouth and yawns, slow and wide, eyes squeezed shut, head tipping back and ears drooping;
+    // then a flick of both ears, and she takes the naginata back up.
+    const free = soft(seg(u, 0.06, 0.16)) * (1 - soft(seg(u, 0.86, 0.96)));
+    const up = soft(seg(u, 0.12, 0.3)) * (1 - soft(seg(u, 0.66, 0.84)));
+    const gape = bump(u, 0.24, 0.66);
+    const flick = bump(u, 0.78, 0.9);
+    return pose({
+      planted: free, handOver: up, hand: [8 - 12 * up, -1.2 - 14 * up + 3 * free * (1 - up)], hy: -0.6 - 0.9 * gape, hx: 0.4 - 0.4 * gape, tilt: -3 - 6 * gape, lean: -0.05 - 0.05 * gape, by: -0.3 * gape,
+      ears: [-6 + 26 * gape - 14 * flick, -6 + 22 * gape - 12 * flick], tail: 8 + 10 * gape, curl: -10 + 16 * gape,
+      mouth: gape > 0.3 ? 'open' : null, eyes: gape > 0.25 ? 'blink' : up > 0.4 ? 'half' : null,
+    });
+  }
+  if (bit === 'lean') {
+    // She leans her weight on the naginata a while, hip cocked out and one foot crossed behind the
+    // other, the haft drawn in against her shoulder and her head tipped against it, eyes half
+    // shut; then straightens.
+    const on = soft(seg(u, 0, 0.18)) * (1 - soft(seg(u, 0.82, 1)));
+    return pose({
+      hand: [8 - 3.4 * on, -1.2 - 4.4 * on], pole: -0.3 * on, grip: 0.24 + 0.12 * on, lean: -0.05 + 0.1 * on, tx: 1.6 * on, hx: 0.4 + 1.6 * on, hy: -0.6 + 0.8 * on, tilt: -3 + 10 * on,
+      legB: [-3.6 + 6.4 * on, -0.4 * on, -6 + 20 * on], legF: [3.4 - 1 * on, 0, 6 - 4 * on], free: [0.2 + 1.6 * on, 2.6 - 1.8 * on], tail: 8 + 14 * on, curl: -10 + 26 * on, ears: [-6 + 10 * on, -6 + 16 * on],
+      eyes: on > 0.5 ? 'half' : null,
+    });
+  }
+  if (bit === 'inspect') {
+    // She lifts the naginata and turns the blade to the light, looking along its edge; runs two
+    // fingers down it, flicks away a speck, and sets it back down.
+    const lift = soft(seg(u, 0.05, 0.28)) * (1 - soft(seg(u, 0.78, 0.96)));
+    const wipe = soft(seg(u, 0.38, 0.62));
+    const flick = bump(u, 0.62, 0.72);
+    return pose({
+      hand: [8 - 3 * lift, -1.2 - 6.4 * lift], pole: -0.42 * lift, grip: 0.24 + 0.12 * lift, by: 0.6 * bump(u, 0.9, 1),
+      free: [0.2 + lift * (2.4 + 2.6 * wipe) + 2 * flick, 2.6 - lift * (10.6 - 4.6 * wipe) - 1.4 * flick], hy: -0.6 - 1.4 * lift, hx: 0.4 - 0.6 * lift, tilt: -3 - 6 * lift,
+      ears: [-6 - 8 * lift, -6 - 4 * lift], tail: 8 - 4 * lift, eyes: lift > 0.5 ? 'half' : null,
+    });
+  }
+  if (bit === 'toss') {
+    // She plants the naginata, sweeps her hair back off her shoulder with the back of her hand and
+    // lifts her chin; it swings out behind her and settles, and she takes the naginata back up.
+    const free = soft(seg(u, 0.04, 0.14)) * (1 - soft(seg(u, 0.84, 0.96)));
+    const sweep = soft(seg(u, 0.12, 0.34)) * (1 - soft(seg(u, 0.48, 0.74)));
+    const fling = bump(u, 0.26, 0.6);
+    return pose({
+      planted: free, handOver: sweep, hand: [8 - 10 * sweep - 4 * fling * sweep, -1.2 - 15.4 * sweep + 3 * free * (1 - sweep)], toss: 3.6 * fling, hy: -0.6 - 1.1 * fling, tilt: -3 - 7 * fling, hx: 0.4 - 0.6 * fling, lean: -0.05 - 0.04 * fling,
+      ears: [-6 + 10 * fling, -6 + 8 * fling], tail: 8 - 8 * fling, eyes: fling > 0.4 ? 'half' : null,
+    });
+  }
+  if (bit === 'sigh') {
+    // A long, bored sigh: her shoulders drop and her head sinks, eyes closing, ears drooping out
+    // to the sides and her tail sagging; she draws herself back up.
+    const out = soft(seg(u, 0.1, 0.45)) * (1 - soft(seg(u, 0.6, 0.92)));
+    return pose({
+      by: 0.7 * out, hy: -0.6 + 0.9 * out, tilt: -3 + 3 * out, lean: -0.05 + 0.05 * out, free: [0.2, 2.6 + 0.8 * out], hand: [8, -1.2 + 0.8 * out],
+      ears: [-6 + 26 * out, -6 + 24 * out], tail: 8 + 16 * out, curl: -10 + 12 * out, mouth: out > 0.5 ? 'tiny' : null, eyes: out > 0.4 ? 'blink' : null,
+    });
+  }
   return pose({});
 }
-const BITS = ['glance', 'stamp', 'twirl', 'tail'];
-const BIT_LEN = { glance: 2.4, stamp: 1.8, twirl: 3, tail: 2.6 };
+const BITS = ['glance', 'stamp', 'twirl', 'tail', 'yawn', 'lean', 'inspect', 'toss', 'sigh'];
+const BIT_LEN = { glance: 2.4, stamp: 1.8, twirl: 3, tail: 2.6, yawn: 3, lean: 5, inspect: 3.4, toss: 2.4, sigh: 2.8 };
+
+// ---------- Weight ----------
+// Every blow she lands carries her whole body (on top of each move's own pose, timed by its main
+// blow `h`): she coils back onto her rear foot in the wind-up, lifts her front foot, plants it a
+// step forward as the blade comes through, and sinks under the weight of the impact before she
+// rises out of it, her tail and robes swinging after.
+function weighted(p, M, u) {
+  const h = M.hits[M.hits.length - 1];
+  const coil = bump(u, h - 0.34, h - 0.01);
+  const lift = bump(u, h - 0.2, h - 0.03);
+  const plant = soft(seg(u, h - 0.05, h)) * (1 - soft(seg(u, h + 0.28, 0.98)));
+  const sink = bump(u, h - 0.01, h + 0.32);
+  return {
+    ...p,
+    lean: p.lean - 0.08 * coil + 0.08 * sink, lunge: p.lunge - 1.4 * coil + 2.6 * plant, squat: p.squat + 1.3 * coil + 1.8 * sink,
+    legF: [p.legF[0] - 1.2 * lift + 2.6 * plant, p.legF[1] - 2.6 * lift, p.legF[2] + 8 * lift],
+    legB: [p.legB[0] - 0.9 * coil - 1.4 * plant, p.legB[1], p.legB[2] - 6 * plant],
+    by: p.by + 0.6 * sink, hy: p.hy - 0.3 * coil + 0.6 * sink, tail: p.tail + 14 * coil - 18 * sink, cloth: p.cloth + 2 * coil - 3 * sink,
+  };
+}
+const BLOWS = { ...KMOVES, crescent: CRESCENT, flurry: FLURRY };
 
 // Walking: slow and unbothered (she's big, and nothing here worries her). Chin up, eyes half
 // lidded, a heavy, even stride with her hips rolling; the naginata used as a staff, its butt
@@ -451,16 +532,21 @@ export function drawKitsune(ctx, world, k, cam, time) {
     st.bitAt = time + BIT_LEN[st.bit.kind] + 2.5 + Math.random() * 2.5;
   }
   if (st.bit && (a || k.moving || time - st.bit.t0 > BIT_LEN[st.bit.kind])) st.bit = null;
+  // (`k.idle` forces one idle bit, for tools/kitsune.html.)
+  if (k.idle && !a) st.bit = { kind: k.idle, t0: k.idleT0 ?? 0 };
   let p;
   if (a) {
-    const u = clamp01((world.now - a.t0) / a.dur);
+    // A blow plays on its own heavy clock (world/kitsune.js HEAVY).
+    const u = clamp01((a.clock ?? world.now - a.t0) / a.dur);
     p = POSES[a.kind]?.(u) ?? standing(null, 0);
+    if (BLOWS[a.kind]) p = weighted(p, BLOWS[a.kind], u);
   } else if (k.moving) {
     st.walk += dt * Math.min(1.8, Math.abs(k.vx) / 52) * 3.6;
     p = walking(st.walk);
   } else p = st.bit ? standing(st.bit.kind, (time - st.bit.t0) / BIT_LEN[st.bit.kind]) : standing(null, 0);
   if (k.mood) p = moodOver(p, k.mood.kind, time, a ? 0.5 : 1);
-  const P = follow(st, p, dt);
+  // On an impact she's stopped dead: her body holds (her hair, tail and robes swing on).
+  const P = follow(st, p, a?.freeze > 0 ? 0 : dt);
 
   // ----- The life layer: always moving, whatever she's doing -----
   const calm = a ? 0.4 : 1;
@@ -484,7 +570,7 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const curl = S('curl', P.curl + 8 * Math.sin(time * 0.7 + 1.2) * calm + 10 * v, 40, 6);
   const earN = S('earN', P.ears[0] + twitch + 8 * v, 240, 12);
   const earF = S('earF', P.ears[1] + twitch * 0.6 + 8 * v + 3 * Math.sin(time * 0.7), 210, 12);
-  const hair = S('hair', -1.4 * v - 2 * surge + 0.5 * breeze + (P.lift > 2 ? -1 : 0), 55, 5.5);
+  const hair = S('hair', -1.4 * v - 2 * surge + 0.5 * breeze + (P.lift > 2 ? -1 : 0) - P.toss, 55, 5.5);
   const tip = S('tip', hair + 0.4 * Math.sin(time * 1.7), 38, 4.2);
   const sway = S('sway', P.cloth + 0.8 * breeze * calm - 2 * v, 80, 7.5);
   // The weight of the naginata pulls her body after it: as the blade swings, she leans with it.
@@ -512,14 +598,22 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const look = { ...KITSUNE_LOOK, ...k.look, mouth: P.mouth ?? undefined };
   // The naginata goes behind her while it's upright or slung back, in front when it's out at them.
   const ang = ((P.pole % TAU) + TAU) % TAU;
-  const out = (ang > 0.9 && ang < 2.8) || P.hand[0] > 5;
+  const out = (ang > 0.9 && ang < 2.8) || P.hand[0] > 5 || P.planted > 0.02;
   const drift = 0.025 * Math.sin(time * 0.8) * calm;
-  const naginata = (c, hand, flip) => paintNaginata(c, hand, flip, P.pole + drift, P.grip, st, dt, time);
+  // Planted, the naginata stays standing where her hand let go of it (she takes it back from there).
+  const naginata = (c, hand, flip) => {
+    if (P.planted <= 0.02) st.plantAt = null;
+    else st.plantAt ??= [...hand];
+    const k = clamp01(P.planted * 1.5);
+    const at = st.plantAt ? [lerp(hand[0], st.plantAt[0], k), lerp(hand[1], st.plantAt[1], k)] : hand;
+    paintNaginata(c, at, flip, (P.pole + drift) * (1 - k), P.grip, st, dt, time);
+    if (P.handOver > 0.35) paintRaisedHand(c, hand, flip);
+  };
   // A faint aura of spirit light about her feet, rising as she walks (fainter standing, gone in a
   // fight or in the air).
   st.aura = lerp(st.aura ?? 0, a ? 0 : k.moving ? 1 : 0.45, Math.min(1, dt * 3));
   // Teleporting: she fades out into her fox fire, and fades in out of it.
-  const au = a ? clamp01((world.now - a.t0) / a.dur) : 0;
+  const au = a ? clamp01((a.clock ?? world.now - a.t0) / a.dur) : 0;
   const fade = a?.kind === 'vanish' ? 1 - soft(seg(au, 0.25, 0.95)) : a?.kind === 'arrive' ? soft(seg(au, 0, 0.45)) : 1;
   // Moonfall's charge gathers in the blade as a glow.
   const charging = a?.kind === 'moonfall' && au >= MOONFALL.charge && au < MOONFALL.hit;
@@ -533,6 +627,36 @@ export function drawKitsune(ctx, world, k, cam, time) {
     lean: { tilt: P.lean + lean + 0.012 * shift * calm, lunge: P.lunge, lift: P.lift },
   });
   ctx.restore();
+}
+
+// Her weapon hand raised over her face (a yawn behind it, her hair swept back): the mouth of her
+// crimson sleeve, lined white with a gold edge, and her hand out of it, drawn again on top of her
+// head.
+function paintRaisedHand(c, hand, flip) {
+  c.save();
+  c.translate(hand[0], hand[1]);
+  if (flip) c.scale(-1, 1);
+  c.scale(SCALE, SCALE);
+  c.fillStyle = '#d8352c';
+  c.beginPath();
+  c.moveTo(-2.6, 4.2);
+  c.lineTo(2.2, 4.6);
+  c.lineTo(2.6, 1.4);
+  c.lineTo(-2.4, 0.6);
+  c.closePath();
+  c.fill();
+  c.fillStyle = '#ffffff';
+  c.fillRect(-2.4, 0.4, 5, 0.9);
+  c.fillStyle = '#f2c94c';
+  c.fillRect(-2.4, 1.2, 5, 0.4);
+  c.fillStyle = '#fff0e6';
+  c.strokeStyle = '#d9b6a2';
+  c.lineWidth = 0.35;
+  c.beginPath();
+  c.ellipse(0, -0.6, 1.5, 1.7, 0, 0, Math.PI * 2);
+  c.fill();
+  c.stroke();
+  c.restore();
 }
 
 // Slow, calm blinks, and now and then a slow double blink.

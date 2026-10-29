@@ -180,10 +180,34 @@ function arrive(world, k) {
   world.juice.push({ type: 'dust', x, y, count: 4 });
 }
 
+// Her blows are heavy, so they don't run at an even pace: each plays on its own clock (`a.clock`,
+// which render/kitsune.js follows too) that hangs at the top of the wind-up (the weight of the
+// naginata held there a breath), snaps through the strike, freezes on the impact (`a.freeze`,
+// longer for the last blow), and drags through the follow-through as she hauls it back. Only her
+// clock is slowed: the game runs on round her.
+export const HEAVY = { hang: [0.15, 0.035], hangRate: 0.38, snap: 1.7, drag: 0.14, dragRate: 0.55, freeze: 0.08, lastFreeze: 0.17, recover: 0.85 };
+export function heavyRate(M, u) {
+  const H = HEAVY;
+  // (A flurry's quick jabs run straight; only its last, big thrust is weighted.)
+  const hits = M.lastPct ? M.hits.slice(-1) : M.hits.length > 1 ? M.hits.slice(-1) : M.hits;
+  for (const h of hits) {
+    if (u >= h - H.hang[0] && u < h - H.hang[1]) return H.hangRate;
+    if (u >= h - H.hang[1] && u < h) return H.snap;
+    if (u >= h && u < h + H.drag) return H.dragRate;
+  }
+  return u > M.hits[M.hits.length - 1] ? H.recover : 1;
+}
+
 // Plays out what she's in the middle of, rooted where she stands.
 function act(world, k, dt) {
   const a = k.act;
-  const t = world.now - a.t0;
+  const M = KMOVES[a.kind] ?? BLOWS[a.kind];
+  if (M) {
+    a.clock ??= 0;
+    if (a.freeze > 0) a.freeze -= dt;
+    else a.clock += dt * heavyRate(M, a.clock / a.dur);
+  }
+  const t = M ? a.clock : world.now - a.t0;
   if (a.kind === 'vanish') {
     if (t >= a.dur) arrive(world, k);
     return;
@@ -191,7 +215,6 @@ function act(world, k, dt) {
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   sync(k);
   if (a.kind === 'moonfall') moonfall(world, k, a, t, dt);
-  const M = KMOVES[a.kind] ?? BLOWS[a.kind];
   // Her lunges kick up dust from the front foot as she drives in, and her planted heel when she
   // slams the naginata down.
   const stamp = M ? M.hits[0] * M.dur - 0.06 : a.kind === 'call' ? CALL.hit * CALL.dur : null;
@@ -204,6 +227,8 @@ function act(world, k, dt) {
       const last = a.done === M.hits.length - 1;
       a.done += 1;
       strike(world, k, a.kind, M, last);
+      // The impact: she's stopped dead a moment by what she hit.
+      a.freeze = last ? HEAVY.lastFreeze : a.kind === 'flurry' ? 0.03 : HEAVY.freeze;
     }
   } else if (a.kind === 'call' && !a.hit && t >= CALL.hit * CALL.dur) {
     a.hit = true;
@@ -237,7 +262,7 @@ function strike(world, k, kind, M, last) {
   const knock = final ? M.lastKnock : M.knock;
   const launch = M.lastPct && !last ? 0 : M.launch ?? 0;
   if (kind === 'crescent') world.fx.push({ kind: 'kitsunecrescent', x: k.x + dir * 58, y: k.y - 36, dir, t: 0, dur: 0.55 });
-  hit.forEach((m, i) => dollHit(world, m, { pct, x: k.x, knock, launch, stun, stop: i ? 0 : last ? 0.1 : 0.06, shake: !i && last ? M.shake : 0, big: last && !i, burst: 'spirithit', gauge: 2, key: 'kitsune' }));
+  hit.forEach((m, i) => dollHit(world, m, { pct, x: k.x, knock, launch, stun, stop: i ? 0 : last ? 0.06 : 0.03, shake: !i && last ? M.shake : 0, big: last && !i, burst: 'spirithit', gauge: 2, key: 'kitsune' }));
   world.juice.push({ type: 'shake', mag: last ? M.shake : M.shake * 0.5, dur: 0.18 });
   world.juice.push({ type: 'dust', x: k.x + dir * M.reach * 0.6, y: k.y, count: last ? 5 : 3 });
   // Cleave buries the blade in the ground ahead: it cracks.

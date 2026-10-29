@@ -2555,7 +2555,8 @@ test('the Shrine Maiden has a kitsune guardian who fights in front of her and bo
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her naginata lands');
   w.mobs.forEach((m) => { m.hp = 0; });
   let bowed = false;
-  for (let i = 0; i < 60 * 2; i++) {
+  // (Her blows are heavy and slow: she finishes the one she's in before she bows.)
+  for (let i = 0; i < 60 * 4; i++) {
     updateWorld(w, DT, idle);
     bowed ||= w.guardian.act?.kind === 'bow';
   }

@@ -89,6 +89,8 @@ function step(dt) {
   drawWorld(ctx, w, cam, t);
 }
 window.step = step;
+// (The page's clock, the one the renderer's idle acting runs on.)
+Object.defineProperty(window, 'pageTime', { get: () => t });
 window.world = w;
 window.cam = cam;
 if (!q.has('manual')) {
