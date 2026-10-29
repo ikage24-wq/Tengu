@@ -190,7 +190,7 @@ export function softShadow(ctx, x, y, w, h, r, dy = 4) {
 }
 
 // An inset well for grouping content inside a window.
-export function well(ctx, x, y, w, h, theme = THEMES.pink, r = 7) {
+export function well(ctx, x, y, w, h, theme = THEMES.pink, r = 10) {
   box(ctx, x, y, w, h, { fill: '#ffffff', edge: theme.light, r, width: 1.5 });
   ctx.save();
   roundRect(ctx, x, y, w, h, r);

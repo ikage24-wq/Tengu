@@ -185,7 +185,18 @@ function section(ctx, label, x, y, w, th) {
 function details(ui, char, id, x0, y0, w0, h0, th) {
   const { ctx } = ui;
   well(ctx, x0, y0, w0, h0, th);
-  if (!id) return;
+  if (!id) {
+    // Nothing chosen (an empty list): a little scroll and a line, so the panel isn't blank.
+    const cx = x0 + w0 / 2;
+    const cy = y0 + h0 / 2 - 8;
+    ctx.fillStyle = th.light;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    icon(ctx, 'scroll', cx, cy, 18, th.main);
+    text(ctx, 'No quests here yet', cx, cy + 32, { size: 7.5, bold: true, align: 'center', color: th.dark });
+    return;
+  }
   const q = QUESTS[id];
   const st = questState(char, id);
   const live = st === 'active' || st === 'ready';

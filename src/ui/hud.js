@@ -357,7 +357,7 @@ function drawStars(ui, world) {
   const x = 584;
   const y = TRAY_Y - 22;
   const low = !set || set.qty < 50;
-  box(ctx, x, y, 52, 16, { fill: 'rgba(255,253,251,0.92)', edge: low && Math.sin(world.now * 8) > 0 ? COLORS.bad : '#e2d3f0', r: 8, width: 1.2 });
+  box(ctx, x, y, 52, 16, { fill: 'rgba(255,250,248,0.94)', edge: low && Math.sin(world.now * 8) > 0 ? COLORS.bad : '#f4bcd8', r: 8, width: 1.5 });
   if (set) drawItemIcon(ctx, set.id, x + 2, y);
   text(ctx, set ? `${set.qty}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: low ? COLORS.bad : COLORS.ink });
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
@@ -410,7 +410,7 @@ function drawGauge(ui, world, kind, value) {
     const h = heartbeat(world.now);
     edgeTint(ctx, 'rgba(110,4,28,', 0.3 + 0.28 * (1 - h) * (h < 1 ? 1 : 0));
   } else if (full) edgeTint(ctx, G.edge ?? 'rgba(255,214,90,', 0.22 + 0.12 * beat);
-  box(ctx, x, y, 70, 16, { fill: 'rgba(255,253,251,0.92)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#e2d3f0', r: 8, width: full ? 1.6 : 1.2 });
+  box(ctx, x, y, 70, 16, { fill: 'rgba(255,250,248,0.94)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#f4bcd8', r: 8, width: full ? 1.8 : 1.5 });
   badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
   bar(ctx, x + 16, y + 5, 40, 6, k, gained ? '#ffffff' : (full && beat > 0.5) || (!full && k >= 0.8) ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
   const notch = G.notch();
@@ -563,14 +563,13 @@ function drawMinimap(ui, world) {
   const h = Math.max(24, Math.round(map.height * scale));
   const x = 8;
   const y = 20;
-  softShadow(ctx, x - 3, y - 15, w + 6, h + 18, 8, 2);
-  box(ctx, x - 3, y - 15, w + 6, h + 18, { fill: 'rgba(255,250,246,0.9)', edge: SKY.dark, r: 8, width: 1.5 });
+  softShadow(ctx, x - 4, y - 16, w + 8, h + 20, 12, 3);
+  box(ctx, x - 4, y - 16, w + 8, h + 20, { fill: 'rgba(255,250,248,0.94)', edge: '#f4bcd8', r: 12, width: 2 });
   box(ctx, x - 1, y - 13, w + 2, 11, { fill: SKY.main, edge: null, r: 5.5 });
   icon(ctx, 'map', x + 6, y - 7.5, 8, '#ffffff');
   text(ctx, map.name, x + 13, y - 4.5, { size: 7.5, bold: true, color: '#ffffff', outline: SKY.ink });
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
+  roundRect(ctx, x, y, w, h, 6);
   ctx.clip();
   // The map's own colors: its sky, and its hills for the ground, so each map's box has its own
   // tint and the ground reads as a solid shape.
@@ -748,7 +747,7 @@ function drawBanner(ctx, world, state) {
     ctx.lineTo(ex, y + 20);
     ctx.fill();
   }
-  box(ctx, x, y, w, 22, { fill: th.main, edge: '#ffffff', r: 6, width: 2 });
+  box(ctx, x, y, w, 22, { fill: th.main, edge: '#ffffff', r: 11, width: 2 });
   text(ctx, world.map.name, 320, y + 16, { size: 15, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
   sparkle(ctx, x + 10, y + 11, 3 + Math.sin(world.now * 4), '#ffffff');
   sparkle(ctx, x + w - 10, y + 11, 3 + Math.cos(world.now * 4), '#ffffff');

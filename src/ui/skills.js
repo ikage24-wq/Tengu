@@ -11,7 +11,7 @@ import { SKILLS } from '../data/skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { learnSkill, canLearn } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
-import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit } from './kit.js';
+import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon } from './kit.js';
 import { describeSkill } from './tooltips.js';
 import { hotkeyAt } from './hud.js';
 
@@ -156,7 +156,7 @@ function listRow(ui, state, world, s, x, y, w, win) {
   const hot = hover(ui, x, y, w - 20, ROW - 3);
   // A skill you could put a point into now breathes.
   const breathe = open && !on ? 0.5 + 0.5 * Math.sin(world.now * 4) : 0;
-  box(ctx, x, y, w, ROW - 3, { fill: binding ? '#fff3c4' : on ? th.light : hot ? '#ffffff' : 'rgba(255,255,255,0.7)', edge: binding ? COLORS.select : on ? th.main : lv || open ? th.main : th.light, r: 8, width: on || binding ? 1.6 : 1 + breathe });
+  box(ctx, x, y, w, ROW - 3, { fill: binding ? '#fff3c4' : on ? th.light : hot ? '#ffffff' : 'rgba(255,255,255,0.7)', edge: binding ? COLORS.select : on ? th.main : lv || open ? th.main : th.light, r: 11, width: on || binding ? 1.6 : 1 + breathe });
   const tone = skillBadge(ctx, s, x + 13, y + 13, 10, 1, lv, open, hot);
   const nameW = w - 54;
   ctx.globalAlpha = lv || open ? 1 : 0.6;
@@ -217,7 +217,7 @@ function details(ui, state, world, s, x, y, w, h, win) {
     ctx.font = '500 7px sans-serif';
     const lines = Math.max(1, Math.ceil(ctx.measureText(body).width / (w - 40)));
     const bh = 6 + lines * 9;
-    box(ctx, x + 6, ly - 7, w - 12, bh, { fill, edge: null, r: 5 });
+    box(ctx, x + 6, ly - 7, w - 12, bh, { fill, edge: null, r: 8 });
     text(ctx, label, x + 10, ly, { size: 6.5, bold: true, color });
     ly = wrap(ctx, body, x + 34, ly, w - 42, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 5;
   };
@@ -238,11 +238,18 @@ function details(ui, state, world, s, x, y, w, h, win) {
   else if (key) hint = `On hotkey ${key}`;
   else hint = 'Drag it onto a hotkey';
   if (key && s.type !== 'passive') {
-    box(ctx, x + 8, fy + 2, 11, 11, { fill: '#b48cff', edge: null, r: 3 });
+    box(ctx, x + 8, fy + 2, 11, 11, { fill: '#b48cff', edge: '#ffffff', r: 5.5, width: 1 });
     text(ctx, key, x + 13.5, fy + 10.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
   }
   text(ctx, fit(ctx, hint, w - 76 - (key ? 14 : 0), 7), x + 8 + (key ? 14 : 0), fy + 10.5, { size: 7, bold: true, color: state.selectedSkill === s.id ? COLORS.accent : COLORS.muted });
   const why = learnBlocker(char, s);
+  // Mastered: a gold pill instead of a dead button.
+  if (lv >= s.maxLevel) {
+    box(ctx, x + w - 62, fy, 56, 14, { fill: '#fff0c4', edge: '#f2c94c', r: 7, width: 1.2 });
+    icon(ctx, 'star', x + w - 52, fy + 7, 7, '#e0a52f');
+    text(ctx, 'Mastered', x + w - 30, fy + 10, { size: 7, bold: true, align: 'center', color: '#b07a12' });
+    return;
+  }
   if (button(ui, x + w - 62, fy, 56, 16, lv ? 'Level up' : 'Learn', { enabled: open, primary: open, size: 7.5 })) learnSkill(char, s.id);
   if (!open && why && hover(ui, x + w - 62, fy, 56, 16)) tooltip(ui, [{ text: why, bold: true }]);
 }

@@ -43,8 +43,10 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   Object.assign(win, { x, y, w: W, h: H });
   ui.theme = th;
   softShadow(ctx, x, y, W, H, 12, 4);
-  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.97)', edge: th.dark, r: 12, width: 2 });
-  roundRect(ctx, x + 3, y + 3, W - 6, H - 6, 9);
+  // The same soft rim as the windows: a light halo, the theme colour, a white inner line.
+  box(ctx, x - 2, y - 2, W + 4, H + 4, { fill: null, edge: th.light, r: 16, width: 3 });
+  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.97)', edge: th.main, r: 14, width: 2.5 });
+  roundRect(ctx, x + 3, y + 3, W - 6, H - 6, 11);
   ctx.strokeStyle = th.light;
   ctx.lineWidth = 1.5;
   ctx.stroke();
