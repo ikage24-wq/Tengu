@@ -104,7 +104,9 @@ art, effects, animation, moves and feel when it raises the quality, without aski
 includes re-rigging freely (the rig, poses, joints, how weapons are held, how a move is built) for
 any character, job, monster or move, to animate it, make it fit, or make it look better, and
 reanimating or redrawing anything (sprites, monsters, effects, maps, UI, icons) so it fits the
-game's theme and look. Keep the
+game's theme and look. You may also freely draw new character parts whenever they help a design:
+new clothes and outfits, hairstyles, faces, eyes, brows, ears, tails, horns, wings, accessories,
+props, and anything else (for heroes, summons, NPCs and monsters alike). Keep the
 other standing rules (no squash or stretch, hits on the animation, no spam), and show the result
 with pictures or videos. Still ask before changing what the game is (story, progression, removing
 features) or when the player's choice is genuinely needed.
