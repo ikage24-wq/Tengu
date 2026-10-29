@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { tickMochi, feedPet } from './mochi.js';
 import { tickTutorial } from './tutorial.js';
 import { getMap } from '../data/maps.js';
 import { ITEMS, RARITIES } from '../data/items.js';
@@ -199,6 +200,12 @@ export function useItem(world, id) {
     returnToTown(world);
     return true;
   }
+  // Mochi food: fed to your pet.
+  if (def.effect?.pet) {
+    const said = feedPet(world.char, id);
+    if (said) world.log(said, '#ffc2d8');
+    return Boolean(said);
+  }
   if (!usePotion(world.char, id, world.now)) {
     world.log(`No ${def.name} left.`, '#ffb3c6');
     return false;
@@ -219,6 +226,11 @@ export function respawn(world) {
 function pickUp(world, manual = true) {
   const d = dropInReach(world.drops, world.body, manual);
   if (!d) return false;
+  return collectDrop(world, d);
+}
+
+// Puts one drop in the bag (or the purse): yours, or one your Mochi fetched.
+export function collectDrop(world, d) {
   const char = world.char;
   if (d.kind === 'gold') {
     char.gold += d.amount;
@@ -614,6 +626,7 @@ export function updateWorld(world, dt, input) {
   // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
   tickTutorial(world);
+  tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id), cast: (id) => Boolean(cast(world, id)?.ok) });
   if (world.dungeon) tickDungeon(world, dt);
   if (!world.dungeon) for (const m of world.mobs) {
     const event = updateMob(m, world.body, dt, world.now);

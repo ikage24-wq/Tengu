@@ -30,8 +30,8 @@ const LAV = THEMES.lavender;
 // hotkeys on the right as round candy buttons.
 const TRAY_Y = 322;
 const TRAY_H = 34;
-const MENU_X = 226;
-const MENU_STEP = 19;
+const MENU_X = 222;
+const MENU_STEP = 17.5;
 const HK_X = 380;
 const HK_STEP = 21;
 const HK_D = 19;
@@ -154,7 +154,7 @@ export function drawHud(ui, state, world) {
   if (hover(ui, ex, TRAY_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
   // ----- Menu buttons: round candy buttons in their own tray, a dot when points are waiting -----
-  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Options', 'options', 'Esc', 'gear', 'gold']];
+  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Options', 'options', 'Esc', 'gear', 'gold']];
   tray(ctx, MENU_X, menus.length * MENU_STEP + 9);
   menus.forEach(([label, key, hotkey, ic, theme], i) => {
     const cx = MENU_X + 14 + i * MENU_STEP;

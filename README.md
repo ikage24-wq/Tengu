@@ -309,6 +309,12 @@ to clear it.
   across three maps: walking, jumping and climbing on the beach, the bag, gear and stats, fighting
   and looting Kitsune Kits on the practice field, potions, skills and hotkeys, then a boat from
   the dock to Sprout Village. A hint card at the top of the screen shows the current lesson.
+- **Mochi pets** — adopt a Mochi egg for 3,000 Cash in the Mochi window (P, or from the Cash
+  Shop). It follows you, fetches loot in range, drinks your best tonic when HP or MP drops below
+  the marks you set, and recasts your buffs when they wear off. Treats from Pip and Marlo fill its
+  tummy and grow it: a baby becomes a Sky (reaches ledges), Swift (wider range), Strong (faster
+  pickup) or Spirit (reacts sooner) Mochi, each with its own outfit, idles and cheer. Left hungry
+  it turns sulky (Moon) and stops helping until fed; it cheers when you level up.
 - **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room). Field maps
   are built like classic side-scroller maps: the ground rolls in hills and slopes, rises into

@@ -190,6 +190,13 @@ function follow(st, target, dt) {
   return P;
 }
 
+// Blends two #rrggbb colours (`k` of the way to b).
+function mixHex(a, b, k) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `#${pa.map((v, i) => Math.round(v + (pb[i] - v) * k).toString(16).padStart(2, '0')).join('')}`;
+}
+
 // ---------- Props ----------
 // A pom-pom: a burst of streamers in the form's colours.
 function pomPom(c, x, y, k, t, seed) {
@@ -274,6 +281,8 @@ export function drawMochi(ctx, m, x, y, time) {
     }
     p = st.bit ? F.bits[st.bit.kind][1]((time - st.bit.t0) / F.bits[st.bit.kind][0], time) : F.idle(time);
   }
+  // Moon mood (left hungry): sulky, half-lidded, a gloom cloud now and then.
+  if (m.mood === 'moon' && cheer == null) p = { ...p, mouth: p.mouth === 'open' ? 'pout' : p.mouth ?? 'pout', eyes: p.eyes ?? 'half', extras: Math.floor(time / 3) % 3 === 0 ? [...p.extras, 'gloom'] : p.extras };
   const P = follow(st, p, dt);
   const dir = m.dir || 1;
   const facing = P.turned ? -dir : dir;
@@ -287,7 +296,8 @@ export function drawMochi(ctx, m, x, y, time) {
     eyes: P.eyes ?? (blink < 0.012 || (blink > 0.03 && blink < 0.042) ? 'half' : blink < 0.03 ? 'blink' : 'open'),
     face: { brows: P.brows ?? REST.brows, extra: P.extras, blush: P.blush },
   };
-  const look = P.mouth ? { ...look0, mouth: P.mouth } : look0;
+  const dusk = m.mood === 'moon' ? { hairColor: mixHex(look0.hairColor, '#4a3a6a', 0.35) } : {};
+  const look = { ...look0, ...dusk, ...(P.mouth ? { mouth: P.mouth } : {}) };
   const opts = { scale: MOCHI_SCALE, facing };
   // A soft shadow under the feet (smaller as it rises).
   ctx.fillStyle = 'rgba(70,40,90,0.16)';

@@ -51,8 +51,9 @@ export function cashShopWindow(ui, state, world) {
   box(ctx, lx, ly + 156, 112, 16, { fill: '#ffe6f2', edge: '#ff8fc1', r: 8 });
   icon(ctx, 'star', lx + 10, ly + 164, 9, '#ff6fae');
   text(ctx, `${(char.cash ?? 0).toLocaleString()} Cash`, lx + 60, ly + 167.5, { size: 9, bold: true, align: 'center', color: PINK });
-  text(ctx, 'Earn Cash by leveling up', lx + 56, ly + 184, { size: 6.5, align: 'center', color: COLORS.muted });
-  text(ctx, 'and finishing quests.', lx + 56, ly + 193, { size: 6.5, align: 'center', color: COLORS.muted });
+  // Pets are adopted in the Mochi window (P).
+  if (button(ui, lx + 14, ly + 176, 84, 16, 'Mochi pets', { size: 8, primary: true, iconName: 'heart' })) state.windows.pet.open = true;
+  if (hover(ui, lx + 14, ly + 176, 84, 16)) tooltip(ui, [{ text: 'Adopt a Mochi egg', bold: true }, { text: 'A pet that loots, drinks tonics and buffs you. Earn Cash by leveling up and finishing quests.', size: 8, color: COLORS.muted }]);
 
   // Slots and catalog.
   const rx = win.x + 128;

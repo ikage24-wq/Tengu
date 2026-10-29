@@ -15,6 +15,7 @@ import { adminWindow } from './admin.js';
 import { optionsWindow } from './options.js';
 import { profileWindow } from './profile.js';
 import { cashShopWindow } from './cashshop.js';
+import { petWindow } from './pet.js';
 import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
 
@@ -31,9 +32,10 @@ export function createUiState() {
       options: { x: 170, y: 40, open: false, tab: 0, theme: 'lavender', icon: 'gear' },
       profile: { x: 160, y: 46, open: false, tab: 0, theme: 'sky', icon: 'user' },
       cashshop: { x: 140, y: 40, open: false, theme: 'pink', icon: 'gift' },
+      pet: { x: 150, y: 60, open: false, theme: 'pink', icon: 'heart' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -50,7 +52,7 @@ export function createUiState() {
   };
 }
 
-const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop' };
+const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop', KeyP: 'pet' };
 
 // Handles keys and world events before the world updates. Returns whether the world should
 // ignore player controls this frame.
@@ -118,7 +120,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.
@@ -140,7 +142,7 @@ function inside(win, m) {
 
 // How much the world dims behind what's open: most for dialogs that take over the controls,
 // a little for the big menus, a touch for the everyday windows you keep open while playing.
-const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06 };
+const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, pet: 0.1, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06 };
 
 // Darkens the world (not the HUD) toward a deep plum, easing in and out, so open windows stand
 // apart from busy scenes.
