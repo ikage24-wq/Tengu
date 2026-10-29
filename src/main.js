@@ -22,12 +22,16 @@ import { hearWorld, hearUi } from './audio/listen.js';
 import { updateMusic } from './audio/music.js';
 import { stopAmbience } from './audio/ambience.js';
 import { preloadFxSprites } from './render/fx-sprites.js';
+import { tickNet, leaveRoom } from './net/online.js';
+import { createTouch, touchFrame } from './ui/touch.js';
 
 loadSettings();
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const input = createInput(canvas);
+// Phones and tablets: on-screen controls (see ui/touch.js).
+const touch = createTouch(canvas, input);
 
 // Render at the display's pixel density so text stays sharp; the game itself is 640x360.
 let pixelScale = 1;
@@ -212,6 +216,8 @@ function frame(now) {
       queued = new Set();
     }
     updateBots(world.bots, world, dt);
+    // Online: tell friends what you're doing, and show what they're doing.
+    tickNet(world, dt);
     if (world.events.some((e) => e.type === 'map')) saveGame(world.char);
     autosave -= dt;
     if (autosave <= 0) {
@@ -233,6 +239,7 @@ function frame(now) {
     if (uiState.action) {
       const action = uiState.action;
       saveGame(world.char);
+      leaveRoom(world);
       lobby.slot = world.char.slot ?? 0;
       world = null;
       uiState = null;
@@ -247,6 +254,8 @@ function frame(now) {
     }
   }
 
+  // The touch controls over everything else while playing.
+  touchFrame(touch, ctx, screen, world, uiState);
   if (settings.filter === 'retro') drawRetro(ctx, pixelScale);
   const filter = FILTERS[settings.filter] ?? '';
   if (canvas.style.filter !== filter) canvas.style.filter = filter;

@@ -350,8 +350,11 @@ function fitsJob(char, def) {
   return def.slot !== 'weapon' || job.weapons.includes(def.weaponType);
 }
 
-function killMob(world, m, byParty = false) {
+export function killMob(world, m, byParty = false) {
   const char = world.char;
+  // Online, everyone else on the map gets their share too (see net/online.js).
+  m.credited = true;
+  world.net?.killed(world, m);
   const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)));
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
@@ -583,6 +586,8 @@ export function updateWorld(world, dt, input) {
     // Heavy shots land with their own weight.
     if (h.stop) world.hitstop = Math.max(world.hitstop, h.stop);
     if (h.shake) world.juice.push({ type: 'shake', mag: h.shake, dur: 0.2 });
+    // Online, a monster another player's game runs takes the real hit there.
+    world.net?.hit(world, m, h);
     if (hitMob(m, h.damage, h.fromX, world.now, { knock: h.knock ?? 90, launch: h.launch ?? 0 })) {
       killMob(world, m, Boolean(h.party));
       continue;
@@ -628,8 +633,11 @@ export function updateWorld(world, dt, input) {
   tickTutorial(world);
   tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id), cast: (id) => Boolean(cast(world, id)?.ok) });
   if (world.dungeon) tickDungeon(world, dt);
+  // Online, the monsters on a map another player got to first are run by their game; this one
+  // shows them where it says they are. Monsters chase whichever player is nearest.
+  const mirrored = Boolean(world.net?.mirrored(world));
   if (!world.dungeon) for (const m of world.mobs) {
-    const event = updateMob(m, world.body, dt, world.now);
+    const event = mirrored ? world.net.step(m, dt) : updateMob(m, world.net ? world.net.target(world, m) : world.body, dt, world.now);
     if (event === 'slam') {
       m.attackAt = world.now;
       world.fx.push({ kind: 'slam', x: m.x, y: m.y, t: 0, dur: 0.6, range: m.def.special.range });
@@ -655,7 +663,8 @@ export function updateWorld(world, dt, input) {
   }
   // Monsters don't pop up right on top of you or your party.
   const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
-  world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near));
+  if (world.net) near.push(...world.net.bodies(world));
+  if (!mirrored) world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near));
   world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < 0.5);
 
   world.drops = updateDrops(world.drops, world.map, dt);

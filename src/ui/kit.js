@@ -650,6 +650,17 @@ const ICONS = {
     ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
     ctx.fill();
   },
+  // Two friends side by side (the Online window).
+  friends(ctx, s) {
+    for (const [dx, k] of [[-0.2, 0.85], [0.2, 1]]) {
+      ctx.beginPath();
+      ctx.arc(s * dx, -s * 0.16 * k, s * 0.16 * k, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(s * dx, s * 0.3, s * 0.26 * k, s * 0.2 * k, 0, Math.PI, 0);
+      ctx.fill();
+    }
+  },
   user(ctx, s) {
     ctx.beginPath();
     ctx.arc(0, -s * 0.14, s * 0.2, 0, Math.PI * 2);

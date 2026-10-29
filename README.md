@@ -13,7 +13,26 @@ the world and items are pixel art. No build step and no dependencies.
 
 ## Play online
 
-**https://ikage24-wq.github.io/Twzt/** (served by GitHub Pages from this branch; keyboard needed).
+**https://ikage24-wq.github.io/Twzt/** (served by GitHub Pages from this branch). Plays with a
+keyboard, or on a phone or tablet with the on-screen controls (they appear on the first touch; hold
+the phone sideways).
+
+### With friends
+
+Open **Play with Friends** (the two-people button on the menu bar, or N) and press **Host a room**:
+you get a six-digit code. Friends (up to 3) open the same window, type the code on the pad, and
+press **Join**. Everyone in the room sees each other on the same map, fights the same monsters,
+and chats; a monster's fall gives full EXP to everyone who hit it and a party share to the others
+on the map, and each player gets their own loot. Dungeons stay a run of your own. Players connect
+straight to each other (WebRTC through the free PeerJS broker), so there's no server to run.
+Adding `?net=local` to the address plays between tabs of one browser instead, for testing.
+
+### Phone controls
+
+A thumb stick on the left walks and climbs (push up to talk to NPCs and take portals). On the
+right: Attack, Jump, Loot, and your first four hotkeys as skill buttons; the hotkey bar's bubbles
+can be tapped too. The speech button opens chat with the phone's keyboard. Everything else (menus,
+windows, NPCs) works by tapping.
 
 ## Run it
 
@@ -675,7 +694,8 @@ src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon f
                         and elements, animator,
                         particles,
                         monsters, scenery, terrain, landmarks, effects, icons, scene
-src/ui/                 HUD, windows, NPC dialogs, title and creator screens
+src/ui/                 HUD, windows, NPC dialogs, title and creator screens, phone touch controls
+src/net/                online rooms: the peer-to-peer link and keeping friends' games in step
 src/audio/              the studio and its songs, sound recipes, the sample bank, the render
                         worker, the mixer, and the listener that turns the world into sound
 assets/audio/           the recorded instruments and effects (built by tools/build-audio.mjs)

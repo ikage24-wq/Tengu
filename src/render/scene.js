@@ -25,6 +25,7 @@ import { drawPets } from './pets.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
+import { drawGhosts } from './ghosts.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
@@ -93,7 +94,7 @@ const SETTLE = 0.17;
 const DANCE_BLEND = 0.18;
 const DANCE_SETTLE = 0.32;
 
-function playerPose(world) {
+export function playerPose(world) {
   const b = world.body;
   const last = world.lastPose;
   const settle = last && DANCE_MOVES.has(last.kind) ? DANCE_SETTLE : SETTLE;
@@ -219,6 +220,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawPets(ctx, world, cam, time, 'back');
 
   drawParty(ctx, partyMembers(world.bots).filter((b) => b.map === world.map.id), cam, VIEW_W, time, world.hoverBot);
+  // Friends in your online room.
+  drawGhosts(ctx, world, cam, VIEW_W, time);
 
   const p = playerPose(world);
   // Blink while recovering from a hit, but not through a move's own untouchable stretch (dashes,

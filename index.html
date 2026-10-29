@@ -2,19 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Tengu</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;800&display=swap" rel="stylesheet" />
   <style>
-    html, body { margin: 0; height: 100%; background: #2b2140; overflow: hidden; }
+    html, body { margin: 0; height: 100%; background: #2b2140; overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
     body { display: flex; align-items: center; justify-content: center; }
     canvas { display: block; image-rendering: pixelated; outline: none; cursor: default; }
+    /* On a phone held upright, a note to turn it sideways. */
+    #turn { display: none; position: fixed; inset: 0; background: #2b2140; color: #fff6fb; font: 800 18px Nunito, sans-serif; text-align: center; align-items: center; justify-content: center; flex-direction: column; gap: 14px; z-index: 2; }
+    #turn .phone { width: 34px; height: 58px; border: 4px solid #ff8fc1; border-radius: 9px; animation: turn 2.2s ease-in-out infinite; }
+    @keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+    @media (orientation: portrait) and (pointer: coarse) { #turn { display: flex; } }
   </style>
 </head>
 <body>
   <canvas id="game" tabindex="0"></canvas>
+  <div id="turn"><div class="phone"></div>Turn your phone sideways to play</div>
   <script src="src/main.js" type="module"></script>
 </body>
 </html>
