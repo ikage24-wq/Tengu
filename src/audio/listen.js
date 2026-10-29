@@ -36,7 +36,7 @@ export function songFor(map, world = null) {
 }
 
 const SPELLS = new Set(['petalstorm', 'healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'crowburst', 'crowcut', 'execute', 'starpop', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);
-const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut', 'bloodmoonrise', 'redcrescent', 'constellation', 'galaxyburst', 'gardenbud', 'gardenbloom']);
+const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut', 'gardenbud', 'gardenbloom']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
@@ -130,8 +130,6 @@ export function hearWorld(world, cam) {
     if ((world.momentum ?? 0) >= 100 && !(m.momentum >= 100)) sfx('hawkeye');
     if ((world.shadow ?? 0) >= 100 && !(m.shadow >= 100)) sfx('phantom');
     if ((world.bloom ?? 0) >= 100 && !(m.bloom >= 100)) sfx('fullbloom');
-    if ((world.killintent ?? 0) >= 100 && !(m.killintent >= 100)) sfx('execution');
-    if ((world.starlight ?? 0) >= 100 && !(m.starlight >= 100)) sfx('constellation');
     if ((world.rage ?? 0) >= 100 && !(m.rage >= 100)) sfx('berserk');
     if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
     if ((world.bond ?? 0) >= 100 && !(m.bond >= 100)) sfx('galeFull');
@@ -159,7 +157,7 @@ export function hearWorld(world, cam) {
     [m.active, m.done] = questCounts(char);
   }
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
-  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, killintent: world.killintent, bloom: world.bloom, starlight: world.starlight, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
+  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, bloom: world.bloom, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
 
   updateMusic(songFor(world.map, world), world.disco?.cut ?? 0);
 }

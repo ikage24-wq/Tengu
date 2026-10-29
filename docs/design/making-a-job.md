@@ -30,7 +30,7 @@ blow).
 - **Basic combo** (`world/melee.js`): three steps with a finisher on the third, each a move, a
   duration and strikes timed with `at`.
 - **Command moves**: up + attack, attacking in the air, attacking out of a run.
-- **Its own gauge** (like Valor, Momentum, Bloom, Shadow, Killing Intent, Starlight, Rage, Faith, Gale, Focus in `world/melee.js`):
+- **Its own gauge** (like Valor, Momentum, Bloom, Shadow, Rage, Faith, Bond, Charge in `world/melee.js`):
   - It builds in a fight in the job's own way (Valor from blows, faster the more monsters one
     blow catches; Momentum from shots landing in a row, halved when hit; Shadow from hits landing in a quick chain; Rage from blows, Faith
     also from hits taken, Gale from arrows landing, Focus from standing still and aiming).
@@ -55,12 +55,12 @@ blow).
   - any special behaviour is tested (e.g. Sniper bolts pierce the line).
 
 - **A first job with two weapons** (like the Thief's dagger and gauntlet) is the base for both
-  2nd-job paths (the Assassin and the Night Lord grew from the Thief's dagger and gauntlet sets): one shared gauge and a few shared skills, then a set of skills for each weapon
+  2nd-job paths (one path grows from each weapon's set): one shared gauge and a few shared skills, then a set of skills for each weapon
   (each set with its own finisher and mastery, gated by `weapons`), so the player chooses where
   the points go, and its own basic combo and command moves for each weapon.
 
 - **Check names before using them on the world.** The world already keeps the player's key
-  presses as `intent`, so a gauge can't be called that (Killing Intent is `killintent`).
+  presses as `intent`, so a gauge can't be called that.
 
 - **A support job** (the Mage) builds its spells the same way: `magic` strikes hit with magic
   attack, `heal` strikes mend you and the party in range when the spell lands (never on the

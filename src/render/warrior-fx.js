@@ -9,8 +9,8 @@
 
 import { fxSprite } from './fx-sprites.js';
 
-const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'storm']);
-const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : school === 'crow' ? 'crimson' : '');
+const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'bloom', 'storm']);
+const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
 // The schools drawn as real light, fire and motion (no outlined cartoon dust): the Warrior's steel,
 // the Paladin's light, the Berserker's fire.
 const REAL = new Set(['steel', 'holy', 'rage']);
@@ -21,11 +21,11 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', crow: 'celembcrow', night: 'celembstar', bloom: 'celembbloom' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', bloom: 'celembbloom' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringcrimson', 'celringnight', 'celringbloom', 'celringmint']);
+const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringbloom', 'celringmint']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
@@ -87,7 +87,6 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   if (school === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: k });
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
-  else if (school === 'crow') fxSprite(ctx, 'celcrowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6, flip: dir < 0 });
   else fxSprite(ctx, 'celcross', x, y, { p, scale: k, rot: (seed - 0.5) * 0.8 });
 }
 
@@ -108,11 +107,11 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
-      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : f.school === 'shadow' || f.school === 'crow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
-      if (f.school === 'shadow' || f.school === 'crow') fxSprite(ctx, 'celsmoke', x, y, { p, flip: !flip, scale: 0.8 });
+      fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : f.school === 'shadow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
+      if (f.school === 'shadow') fxSprite(ctx, 'celsmoke', x, y, { p, flip: !flip, scale: 0.8 });
       else if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x, y + 8, { p, flip: !flip, scale: 0.4 });
       else fxSprite(ctx, 'celdust', x, y, { p, flip: !flip, scale: 0.8 });
-      if (f.school === 'shadow' || f.school === 'crow') {
+      if (f.school === 'shadow') {
         fxSprite(ctx, 'celsmoke', tx, y, { p: Math.min(1, p * 1.2), scale: 0.6 });
         return true;
       }

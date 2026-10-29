@@ -40,7 +40,7 @@ test('every effect strip the code uses is listed', () => {
 });
 
 test("every school has its ring and pillar of light in Tengu's own art", () => {
-  for (const school of ['', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'crimson']) {
+  for (const school of ['', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'bloom', 'storm']) {
     assert.ok(FX_SHEETS[`celring${school}`], `ring ${school || 'steel'}`);
     assert.ok(FX_SHEETS[`celpillar${school}`], `pillar ${school || 'steel'}`);
   }

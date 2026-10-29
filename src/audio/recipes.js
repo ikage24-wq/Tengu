@@ -257,28 +257,6 @@ const R = {
       { seq: 'A3+E4+A4+C5:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
     ],
   },
-  // The Thief's paths: Killing Intent topping out (a blade drawn, a crow's caw-like brass stab:
-  // Execution), Starlight topping out (a rising celesta sparkle: Constellation), the blood moon,
-  // the constellation, and their last blows.
-  execution: { db: -10, max: 1, duck: [-5, 800], layers: [{ rec: 'unsheathe', rate: 1.1 }, { rec: 'darkRiser', len: 900, db: -6 }, { seq: 'r:80 D3+Ab3:700', inst: 'string_ensemble_1', attack: 0.02, db: -8 }] },
-  constellation: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'E5:50 G#5:50 B5:50 E6:50 G#6:50 B6:700', inst: 'celesta' }, { seq: 'r:200 E4+B4+E5:900', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
-  bloodmoonrise: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', len: 1500 }, { rec: 'windWhoosh', rate: 0.8, db: -6 }, { seq: 'D2+A2:1300', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
-  redcrescent: {
-    db: -8, max: 1, duck: [-8, 1200], layers: [
-      { rec: 'bladeSwingHeavy', rate: 0.75 },
-      { rec: 'darkImpact', len: 1400, db: -3 },
-      thump(65, 480, { slide: -1.5 }),
-      { seq: 'D3+A3+D4+F4:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
-    ],
-  },
-  galaxyburst: {
-    db: -8, max: 1, duck: [-8, 1200], layers: [
-      { rec: 'holyBlast', len: 1200, db: -4 },
-      thump(70, 460, { slide: -1.5 }),
-      { seq: 'E5:40 B5:40 E6:40 G#6:40 B6:800', inst: 'celesta', db: -4 },
-      { seq: 'E3+B3+E4+G#4:1000', inst: 'brass_section', db: -8 },
-    ],
-  },
   // The Mage: Bloom topping out (a harp run and bells: Full Bloom), the garden rising, and the
   // giant flower bursting open.
   fullbloom: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'C5:60 E5:60 G5:60 C6:60 E6:700', inst: 'orchestral_harp' }, { seq: 'r:150 G6:700', inst: 'glockenspiel', db: -6 }, { seq: 'r:200 C4+E4+G4:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },

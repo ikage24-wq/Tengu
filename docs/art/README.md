@@ -279,12 +279,6 @@ carry an improvement across every part of the game it applies to.
     and showed hard rings (a painted fall-off fixed it), and the crescent drawn from many short
     strokes banded where they overlapped (painted as one field instead). The first realistic cuts
     were also too faint to read over a bright map; they need a solid violet body under the glow.
-  - The Thief's paths: the Assassin is crimson and raven black (crimson dagger swipes, a crimson X
-    with black feathers on every cut, flocks of crows, a crimson ring for a mark for death, a red
-    moon and a crimson crescent); the Night Lord is deep indigo and starlight gold (gold stars
-    trailing indigo streaks, a gold star in an indigo ring on every hit, stuck stars that glow and
-    burst, and a great five-pointed constellation that falls). Crows only read once they were big,
-    near-black with a gold beak; small violet ones were blobs.
   - The Mage (first job) is rose pink and mint: pink orbs wrapped in turning petals with petal
     trails, a flower that pops open and scatters on every hit, a whirling storm of petals on mint
     wind, a mint flower of light with a rising column for every heal (this replaced the old

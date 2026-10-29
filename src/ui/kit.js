@@ -474,30 +474,6 @@ const ICONS = {
     ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2);
     ctx.fill();
   },
-  // A dagger, point up (the Assassin's Killing Intent).
-  dagger(ctx, s) {
-    ctx.beginPath();
-    ctx.moveTo(0, -s * 0.48);
-    ctx.lineTo(s * 0.12, -s * 0.05);
-    ctx.lineTo(s * 0.12, s * 0.12);
-    ctx.lineTo(-s * 0.12, s * 0.12);
-    ctx.lineTo(-s * 0.12, -s * 0.05);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillRect(-s * 0.3, s * 0.12, s * 0.6, s * 0.1);
-    ctx.fillRect(-s * 0.06, s * 0.22, s * 0.12, s * 0.24);
-  },
-  // A four-point throwing star (the Night Lord's Starlight).
-  shuriken(ctx, s) {
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const a = (i * Math.PI) / 4 - Math.PI / 2;
-      const r = i % 2 ? s * 0.13 : s * 0.46;
-      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-    }
-    ctx.closePath();
-    ctx.fill();
-  },
   // A crescent moon (the Thief's Shadow).
   moon(ctx, s) {
     ctx.beginPath();

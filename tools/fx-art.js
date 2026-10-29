@@ -34,12 +34,6 @@
     sky: ['#ffffff', '#dcf4ff', '#7fcfff', '#3f9cf0', '#2f5cb8'],
     // The Thief's moonlight: silver with violet in its shadows.
     moon: ['#ffffff', '#f2f0ff', '#d2cff0', '#a6a0d8', '#5a5296'],
-    // The Assassin: crimson, and raven black.
-    crimson: ['#ffffff', '#ffd2dc', '#ff5c7e', '#d42a52', '#6a1430'],
-    raven: ['#ffffff', '#d8d8e0', '#5e5a6c', '#2e2a38', '#100c16'],
-    // The Night Lord: deep indigo, and starlight gold.
-    night: ['#ffffff', '#dfe2ff', '#8e96ff', '#5452d6', '#24206a'],
-    starlight: ['#ffffff', '#fff6cc', '#ffe17a', '#f2b544', '#8a5a2a'],
     // The Mage: rose pink, and mint.
     bloom: ['#ffffff', '#ffe2ef', '#ffa6cc', '#f26aa4', '#a0386e'],
     mint: ['#ffffff', '#dcfff2', '#8ef0c8', '#40c898', '#1f7a6a'],
@@ -721,9 +715,8 @@
     };
   }
   // Pillars and rings come in the colours the game asks for (warrior-fx.js `tint`): each path's
-  // school, plus the rings for the Sniper's sight, the Mage's mint, the Ranger's sky and the
-  // Night Lord's starlight.
-  const PILLARS = ['steel', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'night', 'bloom', 'crimson', 'storm'];
+  // school, plus the rings for the Sniper's sight, the Mage's mint and the Ranger's sky.
+  const PILLARS = ['steel', 'holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'bloom', 'storm'];
   for (const s of PILLARS) E[s === 'steel' ? 'pillar' : `pillar${s}`] = pillar(PAL[s]);
 
   // A ring of force bursting out (the game squashes it flat on the ground): it snaps out thick,
@@ -739,7 +732,7 @@
       },
     };
   }
-  for (const s of [...PILLARS, 'sight', 'mint', 'sky', 'starlight']) E[s === 'steel' ? 'ring' : `ring${s}`] = ringBurst(PAL[s]);
+  for (const s of [...PILLARS, 'sight', 'mint', 'sky']) E[s === 'steel' ? 'ring' : `ring${s}`] = ringBurst(PAL[s]);
 
   // ---------- The ground ----------
   // A heavy blow cracks the ground: a glowing fissure, then shards of rock burst up in a fan,
@@ -2685,159 +2678,6 @@
     ctx.restore();
   });
 
-  // ---------- The Assassin (crimson, black crows, a blood moon) ----------
-  E.slashcrimson = swipe(PAL.crimson, { seed: 19 });
-  E.redmoon = moonOf(PAL.crimson, PAL.raven);
-  E.redcrescent = crescentOf(PAL.crimson, PAL.raven);
-  E.crowx = xslashOf(PAL.crimson, PAL.raven);
-  // A crow in flight seen from the side, facing right: a round black body, a little head with a
-  // gold beak and a crimson eye, and wings (`flap` -1 up to 1 down).
-  function crow(ctx, x, y, k, flap) {
-    const P = PAL.raven;
-    const wing = (side) => {
-      const tipY = y - 22 * k * -flap * side - (side < 0 ? 4 * k : 0);
-      const pts = [[x - 4 * k, y - 2 * k], [x - 18 * k, tipY - 4 * k], [x - 30 * k, tipY + 2 * k], [x - 22 * k, tipY + 8 * k], [x - 12 * k, y + 4 * k]];
-      inked(ctx, pts, side < 0 ? P[4] : P[3], P[4], 2.5);
-      if (side > 0) fill(ctx, pts.slice(0, 3).concat([[x - 8 * k, y]]), P[2]);
-    };
-    wing(-1);
-    inked(ctx, [[x - 22 * k, y + 2 * k], [x - 14 * k, y - 8 * k], [x + 6 * k, y - 8 * k], [x + 12 * k, y], [x + 4 * k, y + 8 * k], [x - 14 * k, y + 8 * k]], P[3], P[4], 3);
-    fill(ctx, [[x - 10 * k, y - 4 * k], [x + 4 * k, y - 6 * k], [x + 8 * k, y - 1 * k], [x - 6 * k, y]], P[2]);
-    // tail
-    inked(ctx, [[x - 20 * k, y], [x - 32 * k, y - 4 * k], [x - 32 * k, y + 6 * k]], P[3], P[4], 2.5);
-    // head and beak
-    ctx.beginPath();
-    ctx.arc(x + 12 * k, y - 8 * k, 8 * k, 0, TAU);
-    ctx.fillStyle = P[4];
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + 12 * k, y - 8 * k, 6.5 * k, 0, TAU);
-    ctx.fillStyle = P[3];
-    ctx.fill();
-    inked(ctx, [[x + 17 * k, y - 10 * k], [x + 27 * k, y - 7 * k], [x + 17 * k, y - 5 * k]], '#ffd27a', '#8a5a2a', 2);
-    ctx.beginPath();
-    ctx.arc(x + 14 * k, y - 10 * k, 2.2 * k, 0, TAU);
-    ctx.fillStyle = PAL.crimson[2];
-    ctx.fill();
-    wing(1);
-  }
-  // A blade's hit for the Assassin: a crimson X with black feathers bursting off it.
-  E.crowhit = {
-    w: 200, h: 200, n: 6, fps: 26, px: 100, py: 100,
-    draw(ctx, i) {
-      const c = 100;
-      if (i === 0) return sparkle(ctx, PAL.crimson, c, c, 18, 0.3);
-      if (i <= 2) {
-        celCrescent(ctx, PAL.crimson, c - 30, c + 60, 90, -1.75, -0.55, i === 1 ? 16 : 20);
-        celCrescent(ctx, PAL.crimson, c + 30, c + 60, 90, -2.6, -1.4, i === 1 ? 16 : 20);
-        sparkle(ctx, PAL.moon, c, c - 6, i === 1 ? 20 : 15, 0.2);
-      }
-      const k = (i - 1) / 4;
-      const R = rng(301);
-      for (let j = 0; j < 5; j++) {
-        const a = (j / 5) * TAU + R();
-        const d = 24 + k * 56;
-        if (i < 5 || j % 2) feather(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d + k * k * 24, 28 * (1.1 - k * 0.4), a + k * 3, PAL.raven, PAL.crimson);
-      }
-    },
-  };
-  // A flock of crows bursting up and away from a blow.
-  E.crowburst = {
-    w: 300, h: 260, n: 7, fps: 16, px: 150, py: 200,
-    draw(ctx, i) {
-      const k = i / 6;
-      const R = rng(311);
-      for (let j = 0; j < 5; j++) {
-        const a = -Math.PI / 2 + (j - 2) * 0.5 + (R() - 0.5) * 0.2;
-        const d = 10 + k * (120 + R() * 40);
-        const flap = Math.sin(i * 2.2 + j * 1.3);
-        if (i < 6 || j % 2) crow(ctx, 150 + Math.cos(a) * d * 1.2, 200 + Math.sin(a) * d, 1.4 - k * 0.35, flap);
-      }
-      if (i <= 2) for (let j = 0; j < 4; j++) feather(ctx, 120 + j * 20, 190 - i * 14, 24, -1 + j * 0.6, PAL.raven, PAL.crimson);
-    },
-  };
-  // Crows streaming across the sky, looping (the blood moon's rising).
-  E.crows = {
-    w: 400, h: 180, n: 4, fps: 12, px: 200, py: 90, loop: true,
-    draw(ctx, i) {
-      for (let j = 0; j < 5; j++) crow(ctx, 50 + j * 66 + (j % 2) * 10, 60 + ((j * 37) % 60), 1.3 - (j % 3) * 0.12, Math.sin((i / 4) * TAU + j * 1.7));
-    },
-  };
-  // A mark for death on a monster, looping: a crimson ring of ticks turning round a crow feather.
-  E.deathmark = {
-    w: 120, h: 120, n: 4, fps: 10, px: 60, py: 60, loop: true,
-    draw(ctx, i) {
-      const c = 60;
-      celRing(ctx, PAL.crimson, c, c, 40 + (i % 2) * 3, 7, { broken: 0.35, seed: 320 + i });
-      for (let j = 0; j < 4; j++) {
-        const a = (j / 4) * TAU + i * 0.2;
-        speedLine(ctx, PAL.crimson, c + Math.cos(a) * 54, c + Math.sin(a) * 54, c + Math.cos(a) * 32, c + Math.sin(a) * 32, 4);
-      }
-      feather(ctx, c, c, 40, -1, PAL.raven, PAL.crimson);
-    },
-  };
-  // Killing Intent building, looping: black feathers drifting down round the assassin and crimson
-  // wisps curling up.
-  E.intentaura = {
-    w: 170, h: 220, n: 8, fps: 10, px: 85, py: 210, loop: true,
-    draw(ctx, i) {
-      const R = rng(331);
-      for (let j = 0; j < 6; j++) {
-        const life = (i / 8 + j / 6) % 1;
-        const side = j % 2 ? 1 : -1;
-        const x = 85 + side * (24 + R() * 26) + Math.sin(life * 6 + j) * 8;
-        const k = Math.sin(Math.PI * life);
-        if (k < 0.15) continue;
-        if (j % 2) feather(ctx, x, 30 + life * 170, 26 * k + 6, 0.8 + Math.sin(life * 8 + j) * 0.6, PAL.raven, PAL.crimson);
-        else celCrescent(ctx, PAL.crimson, x - side * 10, 200 - life * 160, 20 * k + 4, side > 0 ? -2.2 : -1.9, side > 0 ? -0.9 : -3.2, 9 * k + 2);
-      }
-    },
-  };
-  // The Assassin's emblem: a crow's head over a crimson dagger.
-  E.embcrow = emblem(PAL.crimson, (ctx, pal) => {
-    ctx.save();
-    ctx.rotate(-0.7);
-    inked(ctx, [[-8, -66], [0, -80], [8, -66], [8, 20], [-8, 20]], pal[2], pal[4], 5);
-    fill(ctx, [[-3, -64], [0, -70], [3, -64], [3, 16], [-3, 16]], pal[0]);
-    inked(ctx, [[-22, 20], [22, 20], [22, 30], [-22, 30]], PAL.raven[2], pal[4], 4);
-    ctx.restore();
-    crow(ctx, 6, 6, 1.6, -0.6);
-  });
-
-  // ---------- The Night Lord (deep indigo and starlight gold; constellations) ----------
-  E.nighttrail = trailOf(PAL.night, PAL.starlight);
-  // A star landing: a gold star pops in an indigo ring and little gold stars burst out.
-  E.starhit = {
-    w: 200, h: 200, n: 6, fps: 26, px: 100, py: 100,
-    draw(ctx, i) {
-      const c = 100;
-      if (i === 0) return sparkle(ctx, PAL.starlight, c, c, 20, 0);
-      if (i <= 2) {
-        celRing(ctx, PAL.night, c, c, i === 1 ? 34 : 48, i === 1 ? 10 : 7, { seed: 341 });
-        sparkle(ctx, PAL.starlight, c, c, i === 1 ? 34 : 26, 0.4);
-      }
-      const k = (i - 1) / 4;
-      for (let j = 0; j < 6; j++) {
-        const a = (j / 6) * TAU + 0.3;
-        const d = 30 + k * 52;
-        if (i < 5 || j % 2) sparkle(ctx, j % 2 ? PAL.night : PAL.starlight, c + Math.cos(a) * d, c + Math.sin(a) * d, 12 * (1.2 - k * 0.6), j);
-      }
-    },
-  };
-  // A stuck star bursting (Star Mark): a big gold star blooms, an indigo ring races out, sparkles.
-  E.starpop = {
-    w: 240, h: 240, n: 7, fps: 22, px: 120, py: 120,
-    draw(ctx, i) {
-      const c = 120;
-      if (i <= 3) starburst(ctx, PAL.starlight, c, c, [30, 62, 70, 56][i], 8, 351, { inner: 0.4 });
-      if (i >= 1 && i <= 5) celRing(ctx, PAL.night, c, c, 40 + i * 16, 12 - i * 1.6, { broken: i > 3 ? 0.4 : 0, seed: 352 });
-      if (i >= 3) for (let j = 0; j < 8; j++) {
-        const a = (j / 8) * TAU;
-        const d = 60 + (i - 3) * 22;
-        sparkle(ctx, j % 2 ? PAL.night : PAL.starlight, c + Math.cos(a) * d, c + Math.sin(a) * d, 12 * (1 - (i - 3) * 0.2), j);
-      }
-    },
-  };
   // ---------- The Archer's tricks (a huntress: rope, steel and gold) ----------
   // Snare Arrow's net over a monster, looping: a rope mesh draped over it, knotted, weighted at the
   // corners, swaying a little as it struggles. Centred on the monster.
@@ -3062,66 +2902,6 @@
       fill(ctx, [[c, tip - 6], [c - 9, tip - 34], [c, tip - 30]], pal[0]);
     },
   };
-
-  // A star stuck in a monster, looping: a small gold star pulsing brighter and brighter.
-  E.stuckstar = {
-    w: 90, h: 90, n: 4, fps: 12, px: 45, py: 45, loop: true,
-    draw(ctx, i) {
-      sparkle(ctx, PAL.starlight, 45, 45, 18 + (i % 2) * 6, i * 0.2);
-      if (i % 2) celRing(ctx, PAL.night, 45, 45, 30, 5, { broken: 0.5, seed: 360 + i });
-    },
-  };
-  // A constellation (Galaxy Fall): gold stars pop in one by one over the monsters, lines of
-  // indigo light join them into a great star, it holds blazing, then the stars streak down.
-  E.constellation = (() => {
-    const w = 420;
-    const h = 300;
-    const pts = [[210, 30], [262, 120], [380, 130], [290, 190], [330, 290], [210, 230], [90, 290], [130, 190], [40, 130], [158, 120]];
-    const order = [0, 4, 8, 2, 6, 0];
-    return {
-      w, h, n: 10, fps: 14, px: 210, py: 160,
-      draw(ctx, i) {
-        const shown = Math.min(pts.length, i * 3 + 2);
-        if (i >= 3 && i <= 6) {
-          const k = Math.min(1, (i - 2) / 2);
-          for (let j = 0; j < order.length - 1; j++) {
-            const [x0, y0] = pts[order[j]];
-            const [x1, y1] = pts[order[j + 1]];
-            speedLine(ctx, PAL.night, x0, y0, lerp(x0, x1, k), lerp(y0, y1, k), 5);
-          }
-        }
-        if (i <= 6) pts.slice(0, shown).forEach(([x, y], j) => sparkle(ctx, PAL.starlight, x, y, (j % 2 ? 12 : 18) * (i === 5 ? 1.25 : 1), j * 0.3));
-        if (i >= 7) {
-          const q = (i - 7) / 2;
-          pts.forEach(([x, y], j) => {
-            shard(ctx, j % 2 ? PAL.night : PAL.starlight, x, y + q * 60, Math.PI / 2, 26 * (1 - q * 0.4), 5);
-            if (j % 3 === 0) sparkle(ctx, PAL.starlight, x, y + q * 90, 12 * (1 - q * 0.5), j);
-          });
-        }
-      },
-    };
-  })();
-  // Starlight building, looping: gold stars circling the night lord on a ring of indigo.
-  E.starlightaura = {
-    w: 180, h: 200, n: 8, fps: 12, px: 90, py: 190, loop: true,
-    draw(ctx, i) {
-      const t = (i / 8) * TAU;
-      ctx.save();
-      ctx.translate(90, 110);
-      ctx.scale(1, 0.45);
-      celCrescent(ctx, PAL.night, 0, 0, 70, t, t + 2, 12);
-      ctx.restore();
-      for (let j = 0; j < 4; j++) {
-        const a = t + (j / 4) * TAU;
-        sparkle(ctx, PAL.starlight, 90 + Math.cos(a) * 62, 110 + Math.sin(a) * 26 - j * 20, 12, a);
-      }
-    },
-  };
-  // The Night Lord's emblem: a gold throwing star on an indigo diamond.
-  E.embstar = emblem(PAL.night, (ctx, pal) => {
-    badge(ctx, pal, [[0, -60], [46, 0], [0, 60], [-46, 0]]);
-    starburst(ctx, PAL.starlight, 0, 0, 40, 8, 371, { inner: 0.3 });
-  });
 
   // ---------- The Mage (rose pink and mint: flowers, petals and light) ----------
   // A petal: a soft rounded teardrop with a notch at its tip, pink with a lighter middle, turned
@@ -4125,11 +3905,9 @@
       },
     };
   }
-  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringhawk', 'ringshadow', 'ringcrimson', 'ringnight', 'ringbloom', 'ringmint', 'ringstorm']) E[`${s}big`] = big(E[s], 2.6);
+  for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringhawk', 'ringshadow', 'ringbloom', 'ringmint', 'ringstorm']) E[`${s}big`] = big(E[s], 2.6);
   E.gardenbig = big(E.garden, 1.3);
   E.petalstormbig = big(E.petalstorm, 1.2);
-  E.redcrescentbig = big(E.redcrescent, 1.6);
-  E.constellationbig = big(E.constellation, 1.3);
   E.crescentbig = big(E.crescent, 1.6);
   E.fissurebig = big(E.fissure, 1.5);
   E.fissuregoldbig = big(E.fissuregold, 1.5);

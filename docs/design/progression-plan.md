@@ -131,15 +131,14 @@ jobs.)
 - [ ] **Phase 3: Collecting.** Monster book, achievements, and titles under the name.
 - [ ] **Phase 4: Chapters 4–7.** Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.
-- [x] **Phase 5: Archer and Thief 2nd jobs.** Archer done: Kestrel's trial at 30 (shoot down 15
+- [ ] **Phase 5: Archer and Thief 2nd jobs.** Archer done: Kestrel's trial at 30 (shoot down 15
   Wraiths), then Ranger (bow, Gale gauge: Gale Volley, Cyclone Arrow, Tailwind, mastery, Storm
   Volley finisher) or Sniper (crossbow, Focus gauge and Deadeye: Marksman's Chain, Glacier Bolt,
   Steady Aim, mastery, Heartseeker finisher), each with its own basic combo, command shots (up,
   air, running), moves, effects, sounds, icons, auras, and generated players on both paths.
-  Thief done: Vex's trial at 30 (defeat 20 Bone Knights), then Assassin (dagger, Killing Intent:
-  Crow Combo, Mark for Death, Vanish, Poisoned Blade, Blood Moon Requiem finisher) or Night Lord
-  (gauntlet, Starlight: Star Storm, Giant Shuriken, Star Mark, Shadow Shuriken, Galaxy Fall
-  finisher), on a remade first-job Thief whose Shadow gauge and skills lead into both.
+  Thief: the first-job Thief is remade (Shadow gauge, dagger and gauntlet sets); its old paths
+  (Assassin, Night Lord) were removed, and new ones are to come (Vex's trial at 30 is kept for
+  them).
 - [ ] **Phase 6: Bosses and routines.** Normal/Hard, weekly clears, dungeon tokens, daily
   dungeon bonus, daily town tasks and town currencies, Boss Rush grades.
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).

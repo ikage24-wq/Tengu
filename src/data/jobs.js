@@ -64,18 +64,6 @@ export const JOBS = {
     blurb: 'Calls the storm down with a crossbow. Her bolts build Charge; full, every bolt chains on to one more monster. Lightning that jumps between monsters, charged ground, a storm cloud overhead, and Thunderhead: a storm over the whole screen.',
   },
 
-  // Thief branches. Both ask for Vex's trial first; each keeps to one of the Thief's two weapons.
-  assassin: {
-    id: 'assassin', name: 'Assassin', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
-    hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
-    blurb: 'Death from behind with a dagger. Hits from behind and critical hits build Killing Intent; full, every first cut on a monster is sure to crit and the weakened die in one blow. Marks, vanishing, poisoned blades and crows.',
-  },
-  nightlord: {
-    id: 'nightlord', name: 'Night Lord', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
-    hp: 23, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['gauntlet'],
-    blurb: 'A storm of stars from a gauntlet. Stars that land build Starlight, faster when they pile onto one target; full, every star splits into three. Giant shuriken, sticky exploding stars and falling constellations.',
-  },
-
   // Hidden: only unlocked with the Game Master passphrase, never offered by an instructor.
   gamemaster: {
     id: 'gamemaster', name: 'Game Master', family: 'gm', tier: 9, parent: null, hidden: true,
@@ -92,7 +80,7 @@ export const RETIRED_JOBS = {
   // The mage paths are retired for now (to be remade like the warrior's and archer's): those
   // characters return to the first-job Mage.
   pyromancer: 'mage', infernosage: 'mage', seraph: 'mage', ilwizard: 'mage', fpwizard: 'mage', cleric: 'mage', ilarchmage: 'mage', fparchmage: 'mage', bishop: 'mage',
-  blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
+  blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'thief', nightlord: 'thief', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 
 // Jobs a character can advance into right now, given their current job and level. Some ask for a
