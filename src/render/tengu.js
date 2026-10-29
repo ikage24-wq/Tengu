@@ -7,13 +7,15 @@
 // His look, from how tengu are drawn (the yamabushi's tokin cap and pompom yuigesa, the feather
 // fan, one-toothed geta, crow wings, the red long-nosed mask) and the player's brief (smug, parted
 // black hair, very handsome).
+// From the options (tools/tengu-faces.html) the player picked the side-swept hair (cut short and
+// tapered at the back, a man's cut) and crimson eyes (2026-10-29).
 import { drawPosed, posedPoint } from './hero.js';
 import { keys, overshoot } from './oni.js';
 import { TENGU_MOVES } from '../world/tengu.js';
 
 export const TENGU_SCALE = 1.2;
 export const TENGU_LOOK = {
-  hairStyle: 'tengupart', hairColor: '#1a1822', hairTip: '#3a4a7a', skinTone: '#fbeee4', eyeColor: '#e8a83a', eyeStyle: 'tengusmug', browStyle: 'tengu', earStyle: 'round',
+  hairStyle: 'tengusweep', hairColor: '#1a1822', hairTip: '#3a4a7a', skinTone: '#fbeee4', eyeColor: '#d8343a', eyeStyle: 'tengusmug', browStyle: 'tengu', earStyle: 'round',
   outfit: 'tenguyamabushi', outfitColor: '#ffffff', mouth: 'tengusmirk', marks: [], blush: 0, lid: 0.25,
 };
 export { TENGU_MOVES };

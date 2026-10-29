@@ -375,7 +375,8 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   const pts = dense(outline, 1.2).map(flutter);
   // Side hair over the ears and the sides of the head, so no skin or skull ever shows between
   // the bangs and the hair behind (elf ears are long enough to poke out past it).
-  const side = [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
+  // (`shortSides`: cut short over the ears, tapering to a sideburn, for a man's cut.)
+  const side = f.shortSides ? [[24.6, 10.6], [27, 12.2], [27.2, 16], [25.8, 19.6], [24.8, 20.6], [24.4, 17.4], [24.2, 14]] : [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
   const sideHair = [poly(smooth(side), r.base), poly(smooth(side.map(([x, y]) => [31 - x, y])), r.base)];
   const shapes = [...sideHair, poly(pts, r.base)];
   // Creases rise from the notches.
@@ -1191,7 +1192,7 @@ Object.assign(STYLES, {
 // More of the tengu's, to pick from:
 Object.assign(FRINGES, {
   // Parted far to the side: long bangs swept across his brow and down past the far eye.
-  tenguside: { pts: [[25, 13.6], [24, 11], [22.6, 12.6], [21.6, 10.4], [19.4, 13.6], [17.8, 12], [15, 15.6], [13.8, 13.8], [10.6, 17], [10, 15], [7, 18.2], [6, 16.6]], lean: -1.2, part: [[21.6, 2], [21.8, 9.6]] },
+  tenguside: { pts: [[25, 13.6], [24, 11], [22.6, 12.6], [21.6, 10.4], [19.4, 13.6], [17.8, 12], [15, 15.6], [13.8, 13.8], [10.6, 17], [10, 15], [7, 18.2], [6, 16.6]], lean: -1.2, part: [[21.6, 2], [21.8, 9.6]], shortSides: true },
   // A wolf cut's: choppy, sharp, uneven pieces, parted in the middle.
   tenguwolf: { pts: [[25.2, 15.8], [24, 12.2], [22.8, 15.6], [21.2, 11], [19.8, 14.4], [18, 10.4], [16.4, 12.6], [HX, 8.2], [14.6, 12.6], [13, 10.4], [11.2, 14.4], [9.8, 11], [8.2, 15.6], [7, 12.2], [5.8, 15.8]], lean: 0.2, part: [[HX, 1.4], [HX, 8]] },
   // Slicked back off his brow, parted in the middle, two loose locks falling forward over it.
@@ -1201,11 +1202,14 @@ Object.assign(STYLES, {
   // Side-swept: a deep side part, long bangs swept across past the far eye, sleek and layered to
   // the nape, a longer lock in front of each ear.
   tengusweep(r, m) {
-    const side = [[24.4, 11.6], [26, 16], [25.6, 21], [26.4, 24]];
+    const side = [[24.4, 11.6], [25.6, 15.4], [25, 19.4]];
     return {
-      head: [crown(r, 0.4), streak(21, 2, 25, 8, 0.7, -0.3, r.sh1), streak(20, 2, 10, 6, 0.8, 0.5, r.sh1)],
-      hang: [napeShadow(r), ...sheet({ len: 23, flare: 12.6, ends: 'points', n: 7, w0: 12, wave: 0.3 }, r, m, 0.7)],
-      front: bangs('tenguside', r, m, [lock(side, 3, r.base, m, 1.1, 0.25), lock(fx(side), 3, r.sh1, m, 1.1, 0.25), streak(12, 9, 8.4, 16, 0.6, 0.3, r.hi, m, 1)]),
+      head: [crown(r, 0), streak(21, 2, 25, 8, 0.7, -0.3, r.sh1), streak(20, 2, 10, 6, 0.8, 0.5, r.sh1)],
+      // Short and tapered at the back (a man's cut): separate sharp, feathered locks that close in
+      // toward the nape, the longest just below his jaw, flicking out a little at the tips.
+      hang: [napeShadow(r, 18), ...[[[6.8, 11], [6.2, 16.6], [7.6, 21], [6.6, 23]], [[9.6, 12], [9.4, 18], [10.6, 22.6], [10, 24.4]], [[12.8, 12], [13, 18.4], [13.8, 23]]].flatMap((spine, i) => [
+        lock(spine, 5.6 - i * 0.4, r.sh1, m, 0.8), lock(fx(spine), 5.6 - i * 0.4, r.sh1, m, 0.8)]), F(E(HX, 16, 6.4, 5.6, r.sh1))],
+      front: bangs('tenguside', r, m, [lock(side, 2.4, r.base, m, 1.1), lock(fx(side), 2.4, r.sh1, m, 1.1), streak(12, 9, 8.4, 16, 0.6, 0.3, r.hi, m, 1)]),
       tips: [99, 99],
     };
   },

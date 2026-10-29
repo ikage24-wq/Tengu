@@ -1,0 +1,47 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the tengu's hair close up (?hair= a style, ?n= how many variants of its back), facing
+// both ways and turned in a few poses, to judge how the back of it sits.
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { TENGU_LOOK } from '../src/render/tengu.js';
+
+const q = new URLSearchParams(location.search);
+const HAIRS = (q.get('hair') ?? 'tengusweep').split(',');
+const CW = 300;
+const CH = 330;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const POSES = [
+  ['Standing', { frontArm: [-3, 4], backArm: [3, 4], hx: 0.2, tilt: 4 }],
+  ['Head turned, tilted', { frontArm: [-3, 4], backArm: [3, 4], hx: 1.2, tilt: -8, face: { glance: 1 } }],
+  ['Leaning in', { frontArm: [6, -4], backArm: [-3, -3], hx: 0.6, tilt: 10, hair: -2, hairTip: -3 }],
+  ['Facing left', { frontArm: [-3, 4], backArm: [3, 4], hx: 0.2, tilt: 4, facing: -1 }],
+];
+canvas.width = CW * POSES.length;
+canvas.height = CH * HAIRS.length;
+nextFrame();
+ctx.fillStyle = '#c8e0ec';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+const S = 7;
+HAIRS.forEach((hair, r) => POSES.forEach(([name, p], i) => {
+  const x0 = i * CW;
+  const y0 = r * CH;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0 + 4, y0 + 4, CW - 8, CH - 36);
+  ctx.fillStyle = (i + r) % 2 ? '#d4e8f0' : '#c2dce8';
+  ctx.fill();
+  ctx.clip();
+  setHd(true, S);
+  const { facing = 1, ...rig } = p;
+  drawPosed(ctx, { ...TENGU_LOOK, hairStyle: hair, eyeColor: '#d8343a' }, x0 + CW / 2, y0 + 380, { frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2], face: { brows: [[0.1, -0.1], [0.5, -0.45]], glance: 0 }, ...rig }, { scale: S, facing });
+  ctx.restore();
+  ctx.fillStyle = '#1e2a40';
+  ctx.font = 'bold 14px Segoe UI, sans-serif';
+  ctx.fillText(`${hair}: ${name}`, x0 + 12, y0 + CH - 14);
+}));
+window.done = true;
+</script></body></html>
