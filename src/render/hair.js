@@ -387,6 +387,8 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   } else {
     for (let i = 1; i < f.pts.length; i += 2) shapes.push(poly(smooth([[f.pts[i][0] - 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.2], [f.pts[i][0] + 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.7]]), r.sh1));
   }
+  // A shadowless cut is edged with a thin line in the hair's own shade, so it still reads on pale skin.
+  if (f.noShade) shapes.push(F(R(f.pts[f.pts.length - 1][0] + 0.4, f.pts[0][1] - 0.75, f.pts[0][0] - f.pts[f.pts.length - 1][0] - 0.8, 0.75, r.sh2)));
   // Where the hair parts, a dark line runs back over the crown.
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
   for (const [x0, y0, x1, y1, w, bow] of f.strands ?? []) shapes.push(streak(x0, y0, x1, y1, w, bow, r.sh1));
@@ -406,7 +408,7 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
     } else flush();
   }
   flush();
-  return { shapes: [...shapes, ...extra, ...(shine ? ring(r.hi) : [])], shade, hairline: !f.plain };
+  return { shapes: [...shapes, ...extra, ...(shine ? ring(r.hi) : [])], shade: f.noShade ? [] : shade, hairline: !f.plain && !f.noShade };
 }
 // Locks that frame the face, one in front of each ear, swinging a beat behind.
 const sideLocks = (r, m, near, far = near ? fx(near) : null, w = 3.6, k = 1.2) => [
@@ -871,9 +873,9 @@ Object.assign(FRINGES, {
   onispike: { pts: [[24.2, 13.6], [22, 9.8], [20.2, 15], [17.8, 10.2], [15.6, 16.6], [13.2, 10.2], [11, 15], [9.2, 9.8], [6.8, 13.6]], lean: 0.3 },
   // Messy and swept to the far side, long ragged points falling past the far eye.
   onimessy: { pts: [[24.4, 12.6], [23.2, 11.2], [21.8, 13.2], [20.4, 11.4], [18.6, 14], [17.2, 11.8], [15.2, 14.6], [14, 12.2], [11.8, 15], [10.8, 12.8], [8.2, 14.6]], lean: -0.8 },
-  // The yuki-onna's blunt bangs: one heavy, straight cut low on her brow, a hair's breadth uneven,
-  // with three fine strands hanging a little past the line.
-  yukiblunt: { pts: [[24.6, 14.4], [21.2, 14.5], [20.6, 15.5], [20, 14.5], [16.2, 14.6], [15.6, 15.8], [15, 14.6], [11, 14.5], [10.4, 15.4], [9.8, 14.5], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true },
+  // The yuki-onna's blunt bangs: one heavy, perfectly straight cut just above her eyes, casting no
+  // shadow on her pale brow (`noShade`).
+  yukiblunt: { pts: [[24.6, 14.4], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true, noShade: true },
   // The yuki-onna's: long, thin strands falling over her brow in an uneven curtain, parted a little
   // off-centre, a few wisps longer than the rest.
   yukicurtain: { pts: [[24.6, 17.4], [23.4, 13.8], [22, 16.4], [20.6, 12.6], [19.2, 15], [17.6, 11.2], [16, 13.6], [14.6, 10.8], [13, 14.6], [11.4, 12.4], [9.8, 16.2], [8.4, 13.4], [6.6, 17]], lean: 0, softTips: true },
