@@ -6,7 +6,7 @@
 // Her designs (tools/troupe-designs.html) led to her look, ONI_LOOK; her rig and animations are
 // at the end of this file (world/oni.js runs her).
 
-import { drawPosed } from './hero.js';
+import { drawPosed, posedMouth } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
 import { ONI_MOVES } from '../world/oni.js';
 import { COMBO } from '../world/onmyoji.js';
@@ -484,22 +484,71 @@ function sulking(t) {
 }
 // Each idle mood: how long it lasts and the pose `u` (0-1) through it.
 export const ONI_IDLES = {
-  gum: [3, (u) => pose({ mouth: u > 0.25 && u < 0.78 ? 'pout' : u >= 0.78 && u < 0.86 ? 'open' : 'bored', props: u > 0.3 && u < 0.78 ? ['gumbubble'] : [], eyes: 'half', tilt: 6 })],
-  toothpick: [3.4, (u) => pose({ props: ['toothpick'], tilt: 4 + 3 * Math.sin(u * TAU * 2), hx: 0.4 + 0.4 * Math.sin(u * TAU), lid: 0.5 })],
-  kiseru: [4, (u) => pose({ props: ['kiseru'], mouth: 'flat', lid: 0.55, hy: -0.2, tilt: 2 + 2 * Math.sin(u * TAU) })],
+  // Gum: chewing, jaw working; a bubble swelling from her lips, wobbling as it gets big, and
+  // popping on her face (a blink, a startled mouth); then chewing on, a little put out.
+  gum: [3.8, (u) => {
+    const blow = seg(u, 0.28, 0.72);
+    const popped = u >= 0.76;
+    const chew = (u < 0.28 || u > 0.86) && Math.sin(u * 3.8 * TAU * 2.2) > 0;
+    return pose({
+      mouth: popped && u < 0.86 ? 'open' : u >= 0.28 && !popped ? 'pout' : chew ? 'tiny' : 'bored', eyes: popped && u < 0.84 ? 'blink' : 'half', tilt: 6 - 3 * blow * (popped ? 0 : 1),
+      hy: 0.2 - 0.3 * blow * (popped ? 0 : 1) + 0.4 * bump(u, 0.76, 0.86), brows: popped && u < 0.95 ? 'sad' : 'bored', lid: 0.5,
+      prop: { kind: 'gum', r: popped ? 0 : 7 * (1 - (1 - blow) ** 2) * (u < 0.28 ? 0 : 1), wob: blow, pop: popped ? Math.min(1, (u - 0.76) / 0.1) : 0 },
+    });
+  }],
+  // Toothpick: her free hand comes up from her hip with it between two fingers and sets it in the
+  // corner of her mouth; it rolls side to side as she stands there; then her hand takes it out
+  // again and flicks it away over her shoulder.
+  toothpick: [4.2, (u) => {
+    const MOUTH = [3.4, -11.2];
+    const free = keys(u, [[0, FREE], [0.18, MOUTH], [0.26, MOUTH], [0.4, FREE], [0.8, FREE], [0.88, MOUTH], [0.92, MOUTH], [0.97, [-3.6, -14]], [1, FREE]]);
+    const inMouth = u >= 0.22 && u < 0.9;
+    const flung = u >= 0.95;
+    return pose({
+      free, tilt: 4 + 3 * Math.sin(u * TAU * 2) * (inMouth ? 1 : 0), hx: 0.4 + 0.4 * Math.sin(u * TAU) * (inMouth ? 1 : 0), lid: 0.5, mouth: inMouth ? 'flat' : 'bored',
+      prop: { kind: 'pick', at: flung ? 'fly' : inMouth ? 'mouth' : 'hand', ang: inMouth ? 0.45 * Math.sin(u * TAU * 3) : -0.6, fly: flung ? (u - 0.95) / 0.05 : 0 },
+    });
+  }],
+  // Kiseru: she draws the long pipe out of her obi and brings it up to her lips, takes a long slow
+  // pull with her eyes closed (the bowl glowing), lowers it and lets the smoke out in a long curl
+  // that drifts up and away; taps the ash out against her palm, and tucks it back in her obi.
+  kiseru: [5, (u) => {
+    const OBI = [1.6, 0.4];
+    const LIPS = [3.2, -10.6];
+    const free = keys(u, [[0, FREE], [0.1, OBI], [0.16, OBI], [0.3, LIPS], [0.54, LIPS], [0.62, [4.6, -6]], [0.8, [4.6, -6]], [0.83, [4.6, -4.6]], [0.86, [4.6, -6]], [0.88, [4.6, -4.8]], [0.92, OBI], [0.97, OBI], [1, FREE]]);
+    const held = u >= 0.13 && u < 0.94;
+    const pull = soft(seg(u, 0.3, 0.38)) * (1 - soft(seg(u, 0.52, 0.56)));
+    return pose({
+      free, eyes: pull > 0.5 ? 'blink' : null, lid: 0.55 + 0.1 * soft(seg(u, 0.6, 0.66)), by: -0.6 * pull, hy: -0.2 - 0.3 * pull, tilt: 2 + 3 * pull - 2 * bump(u, 0.58, 0.8),
+      mouth: u > 0.58 && u < 0.78 ? 'tiny' : 'flat', brows: 'bored',
+      prop: { kind: 'pipe', held, ember: pull + 0.4 * soft(seg(u, 0.56, 0.62)) * (1 - soft(seg(u, 0.7, 0.8))), smoke: seg(u, 0.57, 1), ash: bump(u, 0.82, 0.9) },
+    });
+  }],
   sideeye: [2.4, (u) => {
     const k = soft(seg(u, 0, 0.2)) * (1 - soft(seg(u, 0.8, 1)));
     return pose({ glance: k, hx: 0.4 - 1.2 * k, tilt: 4 - 3 * k, lid: 0.5 });
   }],
-  sigh: [2.6, (u) => {
-    const k = bump(u, 0.15, 0.85);
-    return pose({ eyes: k > 0.3 ? 'blink' : null, props: u > 0.35 && u < 0.7 ? ['sighpuff'] : [], mouth: 'tiny', by: 0.7 * k, hy: 0.2 + 0.8 * k, free: [-0.6, -2 + 1.2 * k] });
+  // Sigh: a long breath in, shoulders rising; then out, the shoulders and head dropping, a puff of
+  // breath leaving her lips and drifting away.
+  sigh: [3, (u) => {
+    const inhale = soft(seg(u, 0.08, 0.38)) * (1 - soft(seg(u, 0.42, 0.56)));
+    const slump = soft(seg(u, 0.42, 0.6)) * (1 - soft(seg(u, 0.84, 1)));
+    return pose({
+      eyes: slump > 0.3 ? 'blink' : null, mouth: u > 0.42 && u < 0.66 ? 'tiny' : 'bored', by: -0.7 * inhale + 0.9 * slump, hy: 0.2 - 0.4 * inhale + 0.9 * slump,
+      free: [-0.6, -2 - 1 * inhale + 1.2 * slump], tilt: 4 - 3 * inhale + 5 * slump, prop: { kind: 'breath', t: seg(u, 0.44, 0.92) },
+    });
   }],
   deadpan: [2.4, () => pose({ mouth: 'flat', lid: 0.62, brows: 'flat', tilt: 0 })],
   unimpressed: [2.4, (u) => pose({ mouth: 'frown', brows: 'raised', lid: 0.4, props: ['onifang'], tilt: 6 + 2 * bump(u, 0.2, 0.6) })],
-  yawn: [2.6, (u) => {
-    const k = bump(u, 0.15, 0.8);
-    return pose({ mouth: k > 0.3 ? 'yawn' : 'bored', eyes: k > 0.3 ? 'blink' : null, hy: 0.2 - 0.8 * k, tilt: 4 - 6 * k, lean: -0.02 - 0.05 * k });
+  // Yawn: her mouth opening wider and wider as her head tips back and her eyes squeeze shut, her
+  // free hand coming up to cover it at the top; then down again, a smack of the lips.
+  yawn: [3, (u) => {
+    const k = soft(seg(u, 0.1, 0.36)) * (1 - soft(seg(u, 0.7, 0.84)));
+    const cover = soft(seg(u, 0.3, 0.42)) * (1 - soft(seg(u, 0.68, 0.8)));
+    return pose({
+      mouth: k > 0.7 ? 'yawn' : k > 0.25 ? 'open' : u > 0.84 && u < 0.92 ? 'tiny' : 'bored', eyes: k > 0.5 ? 'blink' : null,
+      hy: 0.2 - 0.9 * k, tilt: 4 - 7 * k, lean: -0.02 - 0.06 * k, by: -0.4 * k, free: lerp2(FREE, [3.4, -11], cover),
+    });
   }],
   shoulder: [2.4, (u) => {
     const tap = Math.max(0, Math.sin(u * TAU * 3)) * (1 - soft(seg(u, 0.8, 1)));
@@ -659,10 +708,152 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   };
   // Her fury: red fire burning round her.
   if (k.fury) fxSprite(ctx, 'celragefire', x, y + 2, { t: time, scale: 0.85, alpha: 0.75 });
-  drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, {
-    scale: ONI_SCALE, facing: dir, under: behind ? club : null, over: behind ? null : club, hold: 'front',
+  // Her bored props, in her free hand or at her lips (and the pipe tucked in her obi when it's not
+  // out). Drawn in the body's frame, with its lean, after the body.
+  const X = Math.round(x * 4) / 4;
+  const Y = Math.round(y * 4) / 4;
+  const mouth = posedMouth(X, Y, rig, { scale: ONI_SCALE, facing: dir });
+  const obi = [X + dir * 2.4 * ONI_SCALE, Y - 11.6 * ONI_SCALE];
+  const over = (c, hand, flip, other) => {
+    if (!behind) club(c, hand, flip);
+    paintProp(c, P.prop, other, mouth, obi, dir, time, st);
+  };
+  drawPosed(ctx, look, X, Y, rig, {
+    scale: ONI_SCALE, facing: dir, under: behind ? club : null, over, hold: 'front',
     lean: { tilt: P.lean + lean + 0.012 * shift * calm, lunge: P.lunge, lift: P.lift },
   });
+}
+// Draws one of her props (`p` from her idle's pose) at her free hand `hand`, her lips `mouth`, or
+// her obi, in body px scaled by ONI_SCALE.
+const K = ONI_SCALE;
+function paintProp(c, p, hand, mouth, obi, dir, time, st) {
+  // The pipe lives tucked in her obi when it isn't out.
+  if (p?.kind !== 'pipe' || !p.held) pipe(c, [obi[0] + dir * 3.4 * K, obi[1] - 1.4 * K], [obi[0] - dir * 4.6 * K, obi[1] + 2.8 * K], 0, true);
+  if (!p) return;
+  if (p.kind === 'gum') {
+    if (p.r > 0.2) {
+      // The bubble, swelling from her lips and wobbling as it grows.
+      const w = 1 + 0.06 * Math.sin(time * 20) * p.wob;
+      const cx = mouth[0] + dir * p.r * K * 0.6;
+      const cy = mouth[1] + p.r * K * 0.2;
+      c.save();
+      c.fillStyle = 'rgba(255, 154, 200, 0.92)';
+      c.beginPath();
+      c.ellipse(cx, cy, p.r * K * w, p.r * K / w, 0, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = '#e0609a';
+      c.lineWidth = 0.6 * K;
+      c.stroke();
+      c.fillStyle = 'rgba(255, 230, 242, 0.9)';
+      c.beginPath();
+      c.ellipse(cx - dir * p.r * K * 0.35, cy - p.r * K * 0.35, p.r * K * 0.25, p.r * K * 0.18, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    } else if (p.pop > 0 && p.pop < 1) {
+      // Popped: a burst of pink round her mouth.
+      c.save();
+      c.globalAlpha = 1 - p.pop;
+      c.fillStyle = '#ff9ac8';
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        const d = (3 + 6 * p.pop) * K;
+        c.beginPath();
+        c.ellipse(mouth[0] + dir * 3 * K + Math.cos(a) * d, mouth[1] + Math.sin(a) * d * 0.8, 1.4 * K, 0.9 * K, a, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.restore();
+    }
+    return;
+  }
+  if (p.kind === 'pick') {
+    // The toothpick: between her fingers, in the corner of her mouth rolling side to side, or flicked
+    // away spinning over her shoulder.
+    let at = p.at === 'mouth' ? [mouth[0] + dir * 1.2 * K, mouth[1] + 0.4 * K] : [hand[0], hand[1] - 1 * K];
+    let ang = p.at === 'mouth' ? -dir * (0.35 + p.ang) : -dir * 1.2;
+    if (p.at === 'fly') {
+      st.pickFrom ??= at;
+      at = [st.pickFrom[0] - dir * 30 * p.fly * K, st.pickFrom[1] - 18 * K * Math.sin(p.fly * Math.PI) + 8 * K * p.fly];
+      ang = p.fly * 14;
+    } else st.pickFrom = null;
+    c.save();
+    c.translate(at[0], at[1]);
+    c.rotate(ang);
+    if (p.at === 'fly') c.globalAlpha = 1 - p.fly;
+    c.fillStyle = '#d8b47a';
+    c.fillRect(0, -0.3 * K, dir * 6 * K, 0.6 * K);
+    c.fillStyle = '#a8844a';
+    c.fillRect(dir * 5.2 * K, -0.3 * K, dir * 0.8 * K, 0.6 * K);
+    c.restore();
+    return;
+  }
+  if (p.kind === 'pipe') {
+    // The kiseru in her hand (its mouthpiece at her lips when she's smoking), the bowl glowing on a
+    // pull; then the smoke curling out of her mouth and away, and ash knocked out of the bowl.
+    // (Held near its mouthpiece, the bowl out ahead and a little down.)
+    if (p.held) pipe(c, [hand[0] - dir * 1 * K, hand[1] - 0.4 * K], [hand[0] + dir * 11 * K, hand[1] + 2.4 * K], p.ember, false);
+    if (p.smoke > 0 && p.smoke < 1) {
+      for (let i = 0; i < 6; i++) {
+        const u = p.smoke * 1.4 - i * 0.08;
+        if (u <= 0 || u >= 1) continue;
+        c.save();
+        c.globalAlpha = 0.7 * Math.sin(u * Math.PI);
+        c.fillStyle = '#ece8f2';
+        c.beginPath();
+        c.arc(mouth[0] + dir * (3 + u * 18 + Math.sin(u * 7 + i) * 3) * K, mouth[1] - u * 24 * K, (1 + u * 3.4) * K, 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+      }
+    }
+    if (p.ash > 0.2) {
+      c.save();
+      c.fillStyle = '#8a8494';
+      for (let i = 0; i < 3; i++) c.fillRect(hand[0] + dir * (10 + i) * K, hand[1] + (2 + i * 2 * p.ash) * K, 0.8 * K, 0.8 * K);
+      c.restore();
+    }
+    return;
+  }
+  if (p.kind === 'breath' && p.t > 0 && p.t < 1) {
+    // A sigh's breath: three puffs leaving her lips and drifting off, fading.
+    for (let i = 0; i < 3; i++) {
+      const u = p.t * 1.3 - i * 0.15;
+      if (u <= 0 || u >= 1) continue;
+      c.save();
+      c.globalAlpha = 0.8 * Math.sin(u * Math.PI);
+      c.fillStyle = '#f4f2fa';
+      c.beginPath();
+      c.ellipse(mouth[0] + dir * (2 + u * 12) * K, mouth[1] - u * 4 * K, (0.8 + u * 1.6) * K, (0.6 + u * 1.2) * K, 0, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+  }
+}
+// The kiseru: a long dark stem from its gold mouthpiece at `a` to its gold bowl at `b` (screen
+// points), the bowl's opening turned up. `ember` lights the bowl.
+function pipe(c, a, b, ember, tucked) {
+  const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+  const L = Math.hypot(dx, dy) || 1;
+  const [ux, uy] = [dx / L, dy / L];
+  c.save();
+  c.lineCap = 'round';
+  c.strokeStyle = '#2a1e22';
+  c.lineWidth = 0.75 * K;
+  c.beginPath();
+  c.moveTo(a[0], a[1]);
+  c.lineTo(b[0], b[1]);
+  c.stroke();
+  c.strokeStyle = '#f2c94c';
+  c.lineWidth = 0.95 * K;
+  c.beginPath();
+  c.moveTo(a[0], a[1]);
+  c.lineTo(a[0] + ux * 1.6 * K, a[1] + uy * 1.6 * K);
+  c.stroke();
+  c.fillStyle = '#f2c94c';
+  c.fillRect(b[0] - 0.9 * K, b[1] - 1.6 * K, 1.8 * K, 1.8 * K);
+  if (ember > 0.05 && !tucked) {
+    c.fillStyle = `rgba(255, ${Math.round(120 + 80 * (1 - ember))}, 60, ${Math.min(1, ember)})`;
+    c.fillRect(b[0] - 0.7 * K, b[1] - 2.1 * K, 1.4 * K, 0.7 * K);
+  }
+  c.restore();
 }
 // Slow, lazy blinks.
 function oniBlink(t) {
