@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm'];
+export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -871,6 +871,9 @@ Object.assign(FRINGES, {
   onispike: { pts: [[24.2, 13.6], [22, 9.8], [20.2, 15], [17.8, 10.2], [15.6, 16.6], [13.2, 10.2], [11, 15], [9.2, 9.8], [6.8, 13.6]], lean: 0.3 },
   // Messy and swept to the far side, long ragged points falling past the far eye.
   onimessy: { pts: [[24.4, 12.6], [23.2, 11.2], [21.8, 13.2], [20.4, 11.4], [18.6, 14], [17.2, 11.8], [15.2, 14.6], [14, 12.2], [11.8, 15], [10.8, 12.8], [8.2, 14.6]], lean: -0.8 },
+  // The yuki-onna's blunt bangs: one heavy, straight cut low on her brow, a hair's breadth uneven,
+  // with three fine strands hanging a little past the line.
+  yukiblunt: { pts: [[24.6, 14.4], [21.2, 14.5], [20.6, 15.5], [20, 14.5], [16.2, 14.6], [15.6, 15.8], [15, 14.6], [11, 14.5], [10.4, 15.4], [9.8, 14.5], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true },
   // The yuki-onna's: long, thin strands falling over her brow in an uneven curtain, parted a little
   // off-centre, a few wisps longer than the rest.
   yukicurtain: { pts: [[24.6, 17.4], [23.4, 13.8], [22, 16.4], [20.6, 12.6], [19.2, 15], [17.6, 11.2], [16, 13.6], [14.6, 10.8], [13, 14.6], [11.4, 12.4], [9.8, 16.2], [8.4, 13.4], [6.6, 17]], lean: 0, softTips: true },
@@ -941,6 +944,20 @@ Object.assign(STYLES, {
       head: [crown(r, 0.3)],
       hang: [napeShadow(r), ...sheet({ len: 58, flare: 14.6, ends: 'level', n: 4, wave: 0.4, w0: 12 }, r, m, 0.7)],
       front: bangs('yukicurtain', r, m, [lock(front, 3.4, r.base, m, 1.1, 0.4), lock(fx(front), 3.4, r.sh1, m, 1.1, 0.4)]),
+      tips: [44, 54],
+    };
+  },
+  // The yuki-onna's, with blunt bangs: straight to the floor, heavy blunt bangs, and blunt side
+  // locks cut level at her jaw (a hime cut of her own).
+  yukihime(r, m) {
+    const side = (dir) => {
+      const pts = [[24, 10.4], [27.4, 11], [27.6, 24.4, 1], [22, 24.4, 1], [21.8, 16]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.6);
+    };
+    return {
+      head: [crown(r, 0.3)],
+      hang: [napeShadow(r), ...sheet({ len: 58, flare: 14.6, ends: 'level', n: 4, wave: 0.3, w0: 12 }, r, m, 0.7)],
+      front: bangs('yukiblunt', r, m, [side(1), side(-1), F(R(21.9, 15, 0.6, 9.2, r.sh2)), F(R(8.6, 15, 0.6, 9.2, r.sh2))]),
       tips: [44, 54],
     };
   },

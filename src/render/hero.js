@@ -306,6 +306,16 @@ const EYE_LOOK = {
   // or wide and empty, a cold stare with a tiny pupil.
   yukicalm: { rx: 2.5, ry: 2, tilt: 0.12, wing: 1.6, flicks: 3, iris: 1.05, open: 0.7 },
   yukistare: { rx: 2.3, ry: 2.7, tilt: 0.05, wing: 1, flicks: 2, iris: 1.2, pupil: 'ring' },
+  // More of hers, to pick from: snowflake pupils (round, or narrow and veiled); a long, sleepy,
+  // downturned veil of lashes; a thin cold bar of a pupil; diamond pupils, upswept; a huge glassy
+  // doll's eye; and a narrow, sharp, almost-closed glance.
+  yukiflake: { rx: 2.35, ry: 2.6, tilt: 0.08, wing: 1.2, flicks: 2, iris: 1.35, pupil: 'flake', sparkle: true },
+  yukiflakeveil: { rx: 2.5, ry: 2.2, tilt: 0.15, wing: 1.8, flicks: 3, iris: 1.2, pupil: 'flake', open: 0.62 },
+  yukiveil: { rx: 2.55, ry: 2.1, tilt: -0.22, wing: 2, flicks: 3, iris: 1.1, open: 0.5 },
+  yukibar: { rx: 2.4, ry: 2.4, tilt: 0.1, wing: 1.4, flicks: 2, iris: 1.3, pupil: 'bar' },
+  yukidiamond: { rx: 2.4, ry: 2.3, tilt: 0.45, wing: 1.8, flicks: 2, iris: 1.15, pupil: 'diamond' },
+  yukiglass: { rx: 2.4, ry: 2.9, tilt: 0, wing: 0.6, flicks: 1, iris: 1.5, pupil: 'ring', sparkle: true },
+  yukislit: { rx: 2.6, ry: 1.7, tilt: 0.3, wing: 2.2, flicks: 3, iris: 1, open: 0.55 },
 };
 const mirrorAt = (x, y) => [-x, y];
 

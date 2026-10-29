@@ -353,6 +353,21 @@ function drawEye(pen, e, x, look) {
   if (E.pupil === 'slit') cl(ell(ix, iy - iry * 0.05, Math.max(0.36, irx * 0.17 * ps), iry * (0.6 + (1 - ps) * 0.25), 14), pc);
   else if (E.pupil === 'heart') cl(heartPts(ix, iy - iry * 0.08, Math.max(0.85, irx * 0.46 * ps)), hot ? mix(iris, '#ffffff', 0.75) : pc);
   else if (E.pupil === 'star') cl(starPts(ix, iy, irx * 0.48 * ps), pc);
+  else if (E.pupil === 'flake') {
+    // A snowflake: three thin bars crossing, with a dot at the heart (the yuki-onna's).
+    const fr = Math.max(0.7, irx * 0.5 * ps);
+    for (const a of [0, Math.PI / 3, (2 * Math.PI) / 3]) {
+      const [c, s] = [Math.cos(a), Math.sin(a)];
+      const w = 0.16;
+      cl([[ix - c * fr - s * w, iy - s * fr + c * w], [ix + c * fr - s * w, iy + s * fr + c * w], [ix + c * fr + s * w, iy + s * fr - c * w], [ix - c * fr + s * w, iy - s * fr - c * w]], pc);
+    }
+    cl(ell(ix, iy, fr * 0.3, fr * 0.3, 8), pc);
+  }
+  else if (E.pupil === 'bar') cl(ell(ix, iy - iry * 0.04, Math.max(0.5, irx * 0.46 * ps), Math.max(0.22, iry * 0.1), 12), pc);
+  else if (E.pupil === 'diamond') {
+    const dr = Math.max(0.6, irx * 0.36 * ps);
+    cl([[ix, iy - dr * 1.4], [ix + dr, iy], [ix, iy + dr * 1.4], [ix - dr, iy]], pc);
+  }
   else if (E.pupil === 'ring') {
     // A doll's glass eye: a dark ring round a pale clear centre, like painted glass.
     const pr = Math.max(0.62, irx * 0.4 * ps);
