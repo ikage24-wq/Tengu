@@ -521,6 +521,11 @@ function faceExtras(extra) {
       out.push(F(T([[ox, EYE_Y - 1.8], [ox + 0.5, EYE_Y - 0.2], [ox, EYE_Y + 1.4], [ox - 0.5, EYE_Y - 0.2]], '#fff6d0')), F(T([[ox - 1.4, EYE_Y - 0.2], [ox, EYE_Y - 0.6], [ox + 1.4, EYE_Y - 0.2], [ox, EYE_Y + 0.2]], '#fff6d0')));
       continue;
     }
+    if (e === 'onifang') {
+      // One little fang peeking down from the lip at the near corner (cute).
+      out.push(F(T([[FACE_X + 0.8, MY + 0.3], [FACE_X + 2, MY + 0.3], [FACE_X + 1.4, MY + 1.9]], '#ffffff')));
+      continue;
+    }
     if (e === 'onifangs') {
       // An oni's fangs: two short white fangs standing up from the lower lip at the mouth's corners.
       for (const side of [-1, 1]) out.push(F(T([[FACE_X + side * 0.9, MY + 0.9], [FACE_X + side * 2, MY + 0.9], [FACE_X + side * 1.5, MY - 0.7]], '#ffffff')));

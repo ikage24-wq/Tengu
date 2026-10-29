@@ -3,13 +3,29 @@
 // new hair (hair.js TROUPE_HAIR), horns and fangs, drawn much bigger than the Onmyoji (the whole
 // figure scaled, never stretched), with a huge studded iron club (a kanabo).
 //
-// For now: his three designs to pick from (tools/troupe-designs.html). His rig, moves and brain
-// come once one is picked.
+// For now: her designs to pick from (tools/troupe-designs.html; `battle` is the player's cute and
+// badass one). Her rig, moves and brain come once one is picked.
 
 export const ONI_SCALE = 2;
 
 // His designs: each a look on the hero's body.
 export const ONI_DESIGNS = {
+  battle: {
+    name: 'Cute and badass',
+    club: 'crimson',
+    look: {
+      hairStyle: 'onisilver', hairColor: '#eceaf2', skinTone: '#ffe6da', eyeColor: '#ffb02a', eyeStyle: 'big', browStyle: 'sharp', face: 'smug',
+      earStyle: 'pointed', outfit: 'onibattle', outfitColor: '#ffffff', marks: ['onifang'],
+    },
+  },
+  battlered: {
+    name: 'Cute and badass (red skin)',
+    club: 'crimson',
+    look: {
+      hairStyle: 'onisilver', hairColor: '#eceaf2', skinTone: '#e4604e', eyeColor: '#ffc23a', eyeStyle: 'big', browStyle: 'sharp', face: 'smug',
+      earStyle: 'pointed', outfit: 'onibattle', outfitColor: '#ffffff', marks: ['onifang'],
+    },
+  },
   crimson: {
     name: 'Crimson oni',
     club: 'crimson',

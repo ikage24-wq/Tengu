@@ -12,7 +12,9 @@ import { setHd, nextFrame } from '../src/render/pixel.js';
 const S = 2.2;
 const CW = 350;
 const CH = 400;
-const designs = Object.values(ONI_DESIGNS);
+// ?only=battle,battlered shows just those designs.
+const only = new URLSearchParams(location.search).get('only');
+const designs = only ? only.split(',').map((k) => ONI_DESIGNS[k]) : Object.values(ONI_DESIGNS);
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 canvas.width = CW * designs.length;
