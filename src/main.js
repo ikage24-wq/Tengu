@@ -66,16 +66,23 @@ function startGame(char) {
   camera = createCamera();
   screen = 'game';
   autosave = AUTOSAVE_EVERY;
-  if (!char.quests.first_steps) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
+  if (char.tutorial && char.tutorial.step === 0) world.log('Welcome to Dawnlight Isle!', '#ffe36b');
+  else if (!char.quests.first_steps && !char.tutorial) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
 }
 
 function loadChars() {
   chars = Array.from({ length: SLOTS }, (_, i) => (hasSave(i) ? loadGame(i) : null));
 }
 
-function newCharacter(name, look, slot = 0) {
+function newCharacter(name, look, slot = 0, tutorial = true) {
   const char = createCharacter(name, look);
   char.slot = slot;
+  // On the tutorial island (Dawnlight Isle) unless they chose to skip it.
+  if (tutorial) {
+    char.mapId = 'dawnbeach';
+    char.portal = 'start';
+    char.tutorial = { step: 0 };
+  }
   addItem(char.inventory, 'red_potion', 3);
   char.hotkeys.Digit1 = { item: 'red_potion' };
   char.hotkeys.Digit2 = { item: 'blue_potion' };
@@ -176,7 +183,7 @@ function frame(now) {
     const pick = creatorScreen(ui, time, draft);
     if (pick === 'back') screen = 'select';
     if (pick === 'start') {
-      const char = newCharacter(draft.name.trim(), draft.look, lobby.slot);
+      const char = newCharacter(draft.name.trim(), draft.look, lobby.slot, draft.tutorial !== false);
       saveGame(char);
       startGame(char);
     }

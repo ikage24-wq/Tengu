@@ -4,7 +4,7 @@ import { MAPS } from '../data/maps.js';
 import { JOBS } from '../data/jobs.js';
 import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
-import { COLORS, THEMES, text, box, button, tabs, wrap, bar, hover, clicked, roundRect, font, softShadow, icon, tooltip, lighten, darken } from './kit.js';
+import { COLORS, THEMES, text, box, button, tabs, wrap, bar, hover, clicked, roundRect, font, softShadow, icon, tooltip, lighten, darken, toggle } from './kit.js';
 import { paintFan } from '../render/props.js';
 import { lookFor } from '../render/townlife.js';
 import { drawSnowWolf } from '../render/snowwolf.js';
@@ -954,6 +954,11 @@ export function creatorScreen(ui, time, draft) {
   if (button(ui, PX + 14, BY, 82, 22, 'Randomize', { size: 9, iconName: 'star' })) remember(randomLook());
   if (button(ui, PX + 102, BY, 56, 22, 'Undo', { size: 9, enabled: draft.history.length > 0 })) draft.look = draft.history.pop();
   const ok = draft.name.trim().length > 0;
+  // Start on Dawnlight Isle (the tutorial) or skip straight to Sprout Village.
+  draft.tutorial ??= true;
+  text(ctx, 'Tutorial', PX + 166, BY + 14.5, { size: 8, bold: true, color: draft.tutorial ? COLORS.ink : COLORS.muted });
+  draft.tutorial = toggle(ui, PX + 206, BY + 4.5, draft.tutorial);
+  if (hover(ui, PX + 162, BY, 72, 22)) tooltip(ui, [{ text: draft.tutorial ? 'Start on Dawnlight Isle' : 'Skip the tutorial', bold: true }, { text: draft.tutorial ? 'A short island that shows you the ropes, then a boat to Sprout Village.' : 'Start right in Sprout Village.', size: 8, color: COLORS.muted }]);
   if (button(ui, 8, 8, 86, 18, '< Characters', { size: 8 }) || ui.input.pressed.has('Escape')) return 'back';
-  return button(ui, PX + PW - 124, BY, 110, 22, 'Start!', { primary: true, enabled: ok, size: 11 }) || (ok && ui.input.pressed.has('Enter')) ? 'start' : null;
+  return button(ui, PX + PW - 94, BY, 80, 22, 'Start!', { primary: true, enabled: ok, size: 11 }) || (ok && ui.input.pressed.has('Enter')) ? 'start' : null;
 }

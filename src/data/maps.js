@@ -346,6 +346,59 @@ Object.assign(MAPS, {
 // Towns in world-map order, for fast travel.
 export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 
+// ---------- Dawnlight Isle: the tutorial island (world/tutorial.js walks you through it) ----------
+// Three small maps, west to east: the beach you wake up on (ledges to jump to and a rope to
+// climb), the practice field (a few harmless Kitsune Kits), and the dock with the boat to Sprout
+// Village. Kuro, a young tengu, waits on each to show you the next thing. None of it is on the
+// world map: the island is off the coast.
+Object.assign(MAPS, {
+  dawnbeach: {
+    id: 'dawnbeach', name: 'Dawnlight Beach', theme: 'harbor', town: 'sprout',
+    width: 1500, height: 560, groundY: 480,
+    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', islands: 'planks', material: 'beach' },
+    terrain: [[0, 480], [1500, 480]],
+    platforms: [{ x: 520, y: 432, w: 140 }, { x: 760, y: 360, w: 220 }],
+    ropes: [{ x: 800, top: 360, bottom: 480 }],
+    portals: [
+      { id: 'start', x: 140, y: 480, hidden: true },
+      { id: 'east', x: 1440, y: 480, to: 'trainfield', toPortal: 'west', label: 'Practice Field' },
+    ],
+    npcs: [{ id: 'kuro', x: 1120 }],
+    deco: [['crates', 260], ['barrels', 420], ['signpost', 1360]],
+    spawns: [],
+  },
+  trainfield: {
+    id: 'trainfield', name: 'Practice Field', theme: 'meadow', town: 'sprout',
+    width: 1600, height: 560, groundY: 480,
+    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'tuft'] },
+    terrain: [[0, 480], [1600, 480]],
+    platforms: [],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: 480, to: 'dawnbeach', toPortal: 'east' },
+      { id: 'east', x: 1540, y: 480, to: 'dock', toPortal: 'west', label: 'Sunny Dock' },
+    ],
+    npcs: [{ id: 'kuro', x: 260 }],
+    deco: [['scarecrow', 520], ['fence', 1100], ['signpost', 1460]],
+    spawns: [{ mob: 'puffle', x: 640, y: 480 }, { mob: 'puffle', x: 860, y: 480 }, { mob: 'puffle', x: 1060, y: 480 }, { mob: 'puffle', x: 1280, y: 480 }],
+  },
+  dock: {
+    id: 'dock', name: 'Sunny Dock', theme: 'harbor', town: 'sprout',
+    width: 1300, height: 560, groundY: 480,
+    look: { islands: 'planks' },
+    terrain: [[0, 480], [1300, 480]],
+    platforms: [],
+    ropes: [],
+    portals: [
+      { id: 'west', x: 40, y: 480, to: 'trainfield', toPortal: 'east' },
+      { id: 'boat', x: 1180, y: 480, to: 'sprout', toPortal: 'start', label: 'Boat to Sprout Village' },
+    ],
+    npcs: [{ id: 'kuro', x: 760 }],
+    deco: [['crates', 220], ['barrels', 420], ['ship', 1000], ['lighthouse', 1240]],
+    spawns: [],
+  },
+});
+
 export function getMap(id) {
   return MAPS[id] ?? MAPS.sprout;
 }

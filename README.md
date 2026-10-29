@@ -304,6 +304,11 @@ to clear it.
   two-tone smoke cloud that breaks into shrinking puffs; landings skid dust out to both sides; a
   boss stomp bursts rock spikes up from the ground. Plus screen shake, short hitstop on crits and
   kills, and ambient petals, fireflies, and glints in every map.
+- **Dawnlight Isle (tutorial)** — new characters wake up on a small island off the coast (it can
+  be switched off in the creator). Kuro, a young tengu, walks them through 16 short lessons
+  across three maps: walking, jumping and climbing on the beach, the bag, gear and stats, fighting
+  and looting Kitsune Kits on the practice field, potions, skills and hotkeys, then a boat from
+  the dock to Sprout Village. A hint card at the top of the screen shows the current lesson.
 - **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room). Field maps
   are built like classic side-scroller maps: the ground rolls in hills and slopes, rises into

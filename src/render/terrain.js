@@ -31,6 +31,8 @@ export const MATERIALS = {
   sky: { lip: '#ffffff', body: '#f6f8ff', deep: '#d6e0ff', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
   // Map-specific materials (a map's `look.material`).
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
+  // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.
+  beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
 };
 

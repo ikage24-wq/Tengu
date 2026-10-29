@@ -4,6 +4,25 @@
 // A reward marked `forJob` is job gear: the hero gets their own job's piece instead (the id names
 // the slot and level). `variant` gives it a color ('roll' picks one).
 export const QUESTS = {
+  // Dawnlight Isle, the tutorial (Kuro; world/tutorial.js).
+  tut_hello: {
+    id: 'tut_hello', name: 'Washed Ashore', giver: 'kuro', minLevel: 1,
+    text: "Here, take this practice sword and some tonics. Open your bag with I and double-click the sword to hold it. Then let's see what you can do!",
+    objectives: [],
+    rewards: { exp: 5, gold: 20, items: [{ id: 'sword_0', qty: 1 }, { id: 'red_potion', qty: 5 }] },
+  },
+  tut_practice: {
+    id: 'tut_practice', name: 'Practice Makes Perfect', giver: 'kuro', minLevel: 1, prereq: 'tut_hello',
+    text: 'Those Kitsune Kits are harmless, they just love a game of chase. Defeat 3 with Z and pick up 3 Fox Fluff with X.',
+    objectives: [{ type: 'kill', mob: 'puffle', count: 3 }, { type: 'collect', item: 'fluff', count: 3 }],
+    rewards: { exp: 40, gold: 60, items: [{ id: 'blue_potion', qty: 5 }] },
+  },
+  tut_farewell: {
+    id: 'tut_farewell', name: 'Set Sail', giver: 'kuro', minLevel: 1, prereq: 'tut_practice',
+    text: "You're ready! The boat at the end of the dock goes to Sprout Village. Find Mira there, she'll look after you. Good luck out there!",
+    objectives: [],
+    rewards: { exp: 20, gold: 100, items: [] },
+  },
   first_steps: {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,
     text: "Every adventurer needs a weapon! Take this sword and some tonics. Equip it from your bag (I), then head east to Petal Meadow.",

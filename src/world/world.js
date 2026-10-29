@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { tickTutorial } from './tutorial.js';
 import { getMap } from '../data/maps.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { itemName, itemColors } from '../core/items.js';
@@ -612,6 +613,7 @@ export function updateWorld(world, dt, input) {
   // ----- Monsters -----
   // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
+  tickTutorial(world);
   if (world.dungeon) tickDungeon(world, dt);
   if (!world.dungeon) for (const m of world.mobs) {
     const event = updateMob(m, world.body, dt, world.now);

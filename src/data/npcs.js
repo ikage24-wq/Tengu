@@ -20,6 +20,14 @@ export const NPCS = {
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
     quests: ['first_steps', 'fluffy', 'sprout_sweep'],
   },
+  // Kuro, a young tengu who keeps Dawnlight Isle, the tutorial island: he shows new adventurers
+  // the ropes and sees them onto the boat to Sprout Village.
+  kuro: {
+    id: 'kuro', name: 'Kuro', title: 'Island Keeper', role: 'guide',
+    look: { hairStyle: 'spiky', hairColor: '#2a2440', skinTone: '#fbd9bf', eyeColor: '#d8343a', eyeStyle: 'round', outfitColor: '#3a3550', face: 'grin' },
+    greeting: "Morning! You washed up on Dawnlight Isle. Don't worry, I'll show you the ropes, then the boat will take you to Sprout Village.",
+    quests: ['tut_hello', 'tut_practice', 'tut_farewell'],
+  },
   pip: {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',
     building: 'goods', sign: "Pip's Goods",

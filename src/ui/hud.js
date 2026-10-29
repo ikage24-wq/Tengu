@@ -21,6 +21,7 @@ import { groundAt } from '../world/physics.js';
 import { questMarker } from './npc.js';
 import { drawQuestTracker } from './quests.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
+import { currentLesson } from '../world/tutorial.js';
 
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
@@ -319,6 +320,7 @@ export function drawHud(ui, state, world) {
   } else if (settings.questTracker) drawQuestTracker(ui, state, world);
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
+  drawTutorial(ui, world);
   if (settings.showFps) drawFps(ctx, state);
 }
 
@@ -807,5 +809,49 @@ function drawCallout(ctx, world) {
   const size = 16 * (1 + (1 - k) * 0.4);
   text(ctx, c.title, 320, 112, { size, bold: true, align: 'center', color: '#ffffff', outline: '#8f3f6f' });
   if (c.sub) text(ctx, c.sub, 320, 126, { size: 8, bold: true, align: 'center', color: '#fff3c9', outline: '#5a3f7a' });
+  ctx.restore();
+}
+
+// ---------- Tutorial ----------
+
+// The tutorial's hint (world/tutorial.js): a pastel card at the top of the screen with the
+// lesson's number and what to do, keys drawn as little keycaps; it pops in fresh for each lesson.
+function drawTutorial(ui, world) {
+  const lesson = currentLesson(world.char);
+  if (!lesson) return;
+  const { ctx } = ui;
+  const parts = lesson.hint.split(/(\[[^\]]+\])/).filter(Boolean);
+  const size = 8.5;
+  ctx.font = font(size, true);
+  const widths = parts.map((p) => (p.startsWith('[') ? ctx.measureText(p.slice(1, -1)).width + 10 : ctx.measureText(p).width));
+  const w = Math.min(560, widths.reduce((a, b) => a + b, 0) + 62);
+  const h = 24;
+  const x = 320 - w / 2;
+  const age = world.now - (world.char.tutorial.at ?? -9);
+  const pop = age < 0.25 ? 1 + 0.12 * Math.sin((age / 0.25) * Math.PI) : 1;
+  const y = 54;
+  ctx.save();
+  ctx.translate(320, y + h / 2);
+  ctx.scale(pop, pop);
+  ctx.translate(-320, -(y + h / 2));
+  softShadow(ctx, x, y, w, h, h / 2, 3);
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,248,0.97)', edge: '#f4bcd8', r: h / 2, width: 2 });
+  // The lesson's number, in a pink bubble.
+  ctx.fillStyle = COLORS.accent;
+  ctx.beginPath();
+  ctx.arc(x + 14, y + h / 2, 9, 0, Math.PI * 2);
+  ctx.fill();
+  text(ctx, `${lesson.step + 1}`, x + 14, y + h / 2 + 3, { size: 8, bold: true, align: 'center', color: '#ffffff' });
+  text(ctx, `/${lesson.of}`, x + 26, y + h / 2 + 3, { size: 6.5, bold: true, color: COLORS.muted });
+  let cx = x + 44;
+  parts.forEach((p, i) => {
+    if (p.startsWith('[')) {
+      const k = p.slice(1, -1);
+      box(ctx, cx, y + 5, widths[i] - 2, 14, { fill: '#ffffff', edge: COLORS.panelEdge, r: 4, width: 1.2 });
+      box(ctx, cx, y + 16, widths[i] - 2, 3, { fill: 'rgba(180,140,255,0.25)', edge: null, r: 1.5 });
+      text(ctx, k, cx + (widths[i] - 2) / 2, y + 15, { size: 7.5, bold: true, align: 'center', color: COLORS.ink });
+    } else text(ctx, p, cx, y + 15.5, { size, bold: true, color: COLORS.ink });
+    cx += widths[i];
+  });
   ctx.restore();
 }
