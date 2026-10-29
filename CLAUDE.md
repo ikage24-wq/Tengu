@@ -134,6 +134,12 @@ there and update the status file as they get done.
 - When reporting to the user, describe what changed in the game in plain words: no code, file
   names, function names, or technical jargon. Show pictures instead.
 - Don't open pull requests unless asked.
+- Check in with the player as you go (the player's standing rule). On any job, character, feature
+  or big piece of art, stop at the real choice points: the look, the personality, how a move or
+  system should feel, what to build next. Give the player 2-4 concrete options there, with your
+  recommendation first, instead of deciding alone. Show samples (pictures or short videos) before
+  the full build and between stages, and fold the player's answers back into the work. Small
+  polish and fixes that are clearly better don't need asking; the freedom rule covers those.
 - Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
   maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
   monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece
