@@ -234,7 +234,9 @@ function shotsOf(L) {
     burst: { move: 'rapid', dur: 0.5, step: -4, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
     hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [arrowAt(0.5, 70, { fan: 2, range: 290, h: 150, drop: 30, knock: 60 })] },
     overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: L.big, pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: L.muzzle }] },
-    flipfan: { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: L.big, fan: 3, pct: 100, range: 310, h: 120, knock: 140, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+    triple: { move: 'tripleshot', dur: 0.56, step: -4, strikes: [arrowAt(0.55, 50, { fan: 3, h: 110, knock: 40 })] },
+    lob: { move: 'lobshot', dur: 0.5, step: -2, strikes: [arrowAt(0.5, 100, { speed: 380, lob: 70, knock: 60, stop: 0.04 })] },
+    flipfan: { move: 'leapshot', dur: 0.62, step: -34, carry: 0.6, finisher: true, strikes: [{ at: 0.56, shot: L.big, fan: 3, pct: 100, range: 310, h: 120, knock: 140, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
     skyrain: { move: 'skyshot', dur: 0.7, step: -4, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
   };
 }
@@ -269,12 +271,13 @@ const SWINGS = {
     { at: 0.7, pct: 55, reach: 90, h: 44, targets: 2, pierce: true, knock: 90, stop: 0.04 },
   ] },
   flashcut: { move: 'flashcut', dur: 0.4, step: 34, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] },
-  spinback: { move: 'spinback', dur: 0.46, step: 10, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, targets: 2, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
+  spinback: { move: 'spinback', dur: 0.46, step: 10, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, around: true, targets: 4, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
+  pommel: { move: 'pommel', dur: 0.4, step: 10, strikes: [{ at: 0.4, pct: 70, reach: 50, h: 56, knock: 70, stun: 0.6, stop: 0.06, shake: 1 }] },
   shove: { move: 'shove', dur: 0.38, step: 14, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
   drivestab: { move: 'drivestab', dur: 0.5, step: 22, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] },
   risecut: { move: 'risecut', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
   hammer: { move: 'hammer', dur: 0.8, step: 10, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] },
-  leapchop: { move: 'leapchop', dur: 0.66, step: 22, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
+  leapchop: { move: 'leapchop', dur: 0.66, step: 22, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, crack: true, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
   skysplit: { move: 'skysplit', dur: 0.95, step: 24, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] },
 };
 // A swing with something added to every blow of it (a path's own touch).
@@ -282,7 +285,22 @@ const dressed = (step, fields) => ({ ...step, strikes: step.strikes.map((st) => 
 // The Berserker's wounds: everything his wild swings catch bleeds a little.
 const WOUND = { pct: 0.15, secs: 3 };
 
+// Bare hands (a Novice, or anyone without a weapon): a jab, another, and an uppercut; or a
+// headbutt to open, a flying kick second, and a haymaker or a cartwheel kick to finish.
+PATH_COMBOS.fists = COMBOS.none;
+const FISTS = {
+  headbutt: { move: 'headbutt', dur: 0.5, step: 6, strikes: [{ at: 0.42, pct: 100, reach: 46, h: 50, knock: 90, stun: 0.4, stop: 0.06, shake: 1 }] },
+  flyingkick: { move: 'flyingkick', dur: 0.5, step: 18, carry: 0.45, strikes: [{ at: 0.45, pct: 105, reach: 58, h: 56, knock: 120, stop: 0.05 }] },
+  haymaker: { move: 'haymaker', dur: 0.62, step: 8, finisher: true, strikes: [{ at: 0.5, pct: 170, reach: 56, h: 56, knock: 260, launch: 120, big: true, stop: 0.09, shake: 3 }] },
+  cartwheel: { move: 'cartwheel', dur: 0.6, step: 16, carry: 0.5, finisher: true, strikes: [{ at: 0.48, pct: 150, reach: 60, h: 70, knock: 160, launch: 220, big: true, stop: 0.07, shake: 2 }] },
+};
+
 export const PATH_VARIANTS = {
+  fists: [
+    [COMBOS.none[0], FISTS.headbutt],
+    [COMBOS.none[1], FISTS.flyingkick],
+    [COMBOS.none[2], FISTS.haymaker, FISTS.cartwheel],
+  ],
   // The Warrior. Openers: a cut, a hip-height sweep, three lightning jabs, or a flash cut that
   // blurs through the line. Second: the return cut, a spinning backhand, a shoulder check, or a
   // driving stab through the line. Third: the cross-cut, a rising diagonal that pops them up, or
@@ -290,7 +308,7 @@ export const PATH_VARIANTS = {
   // sky-splitter that leaps high and splits the ground in slow motion.
   warrior: [
     [PATH_COMBOS.warrior[0], SWINGS.sweep, SWINGS.jabs, SWINGS.flashcut],
-    [PATH_COMBOS.warrior[1], SWINGS.spinback, SWINGS.shove, SWINGS.drivestab],
+    [PATH_COMBOS.warrior[1], SWINGS.spinback, SWINGS.shove, SWINGS.drivestab, SWINGS.pommel],
     [PATH_COMBOS.warrior[2], SWINGS.risecut, SWINGS.hammer],
     [PATH_COMBOS.warrior[3], SWINGS.leapchop, SWINGS.skysplit],
   ],
@@ -302,10 +320,13 @@ export const PATH_VARIANTS = {
   // down on everything they hit.
   paladin: [
     [PATH_COMBOS.paladin[0], SWINGS.sweep, SWINGS.flashcut],
-    [PATH_COMBOS.paladin[1], dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), SWINGS.spinback],
+    // (Her shoulder check is a shield rush: a few running steps behind a flare of light.)
+    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.5, step: 34, carry: 0.42 }, SWINGS.spinback,
+      { move: 'guardspin', dur: 0.56, step: 4, strikes: [{ at: 0.5, pct: 85, reach: 78, h: 60, around: true, targets: 4, knock: 100, arc: [0, 330], thick: 10, burst: 'aegis', stop: 0.04 }] }],
     [PATH_COMBOS.paladin[2],
-      { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
-      SWINGS.drivestab],
+      { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, burst: 'aegis', arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
+      SWINGS.drivestab,
+      { move: 'kneelstab', dur: 0.62, step: 12, strikes: [{ at: 0.45, pct: 140, reach: 100, h: 48, targets: 3, pierce: true, knock: 210, stun: 0.3, burst: 'aegis', big: true, stop: 0.07, shake: 2 }] }],
     [PATH_COMBOS.paladin[3],
       { move: 'shieldslam', dur: 0.72, step: 14, finisher: true, strikes: [{ at: 0.5, pct: 220, reach: 92, h: 80, targets: 4, knock: 220, stun: 0.8, arc: [-95, 185], thick: 14, burst: 'shieldslam', burstAt: 0.55, big: true, stop: 0.1, shake: 5 }] },
       dressed(SWINGS.leapchop, { fx: 'pillar' }), dressed(SWINGS.skysplit, { fx: 'pillar' })],
@@ -399,8 +420,8 @@ export const PATH_VARIANTS = {
       { move: 'throwflip', dur: 0.64, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'foxmoon', pct: 160, range: 320, h: 64, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2, kickback: 40 }] }],
   ],
   archer: [
-    [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl],
-    [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop],
+    [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl, ARCHER_SHOTS.lob],
+    [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop, ARCHER_SHOTS.triple],
     [PATH_COMBOS.archer[2], ARCHER_SHOTS.overdraw, ARCHER_SHOTS.flipfan],
   ],
   // The Beastmaster, quick and wild, her green arrows flying beside her animals. Openers: her snap
@@ -825,6 +846,7 @@ function pathOf(world) {
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
   if (MELEE.has(w) && w !== 'none') return hasValor(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
   if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
+  if (w === 'none') return 'fists';
   if (w === 'bow' && hasBond(char)) return 'beastmaster';
   if (w === 'crossbow' && hasCharge(char)) return 'stormcaller';
   return null;
@@ -1506,7 +1528,7 @@ function fire(world, strike) {
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     return travel + lag;

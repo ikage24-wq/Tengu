@@ -64,6 +64,14 @@ test("holding attack with a sword chains the Warrior's own combo, ending in the 
   assert.ok(steps.at(-1).every((s) => s.finisher), 'every last swing is a finisher');
 });
 
+test('bare hands mix their blows too, and every new swing and shot is drawn', () => {
+  const fists = PATH_VARIANTS.fists.flat().map((s) => s.move);
+  for (const m of ['headbutt', 'flyingkick', 'haymaker', 'cartwheel']) assert.ok(fists.includes(m), `${m} is a bare-handed blow`);
+  const all = Object.values(PATH_VARIANTS).flat(2).map((s) => s.move);
+  for (const m of ['pommel', 'guardspin', 'kneelstab', 'shieldrush', 'tripleshot', 'lobshot']) assert.ok(all.includes(m), `${m} is in a pool`);
+  for (const m of all) assert.ok(MOVES[m], `${m} is drawn`);
+});
+
 test("the Warrior's combo mixes its swings: a fresh string each time, never the same one twice", () => {
   const steps = PATH_VARIANTS.warrior;
   assert.equal(steps.length, PATH_COMBOS.warrior.length);
@@ -72,7 +80,7 @@ test("the Warrior's combo mixes its swings: a fresh string each time, never the 
     for (const s of choices) assert.ok(MOVES[s.move], `${s.move} is drawn`);
   }
   const fresh = steps.flat().map((s) => s.move).filter((m) => !PATH_COMBOS.warrior.some((s) => s.move === m));
-  assert.equal(new Set(fresh).size, 10, `ten new swings (${fresh})`);
+  assert.equal(new Set(fresh).size, 11, `eleven new swings (${fresh})`);
   // Heavier swings land harder: within each step, a longer swing deals more in all and pushes
   // further (the quick ones trade power for speed).
   for (const choices of steps) {

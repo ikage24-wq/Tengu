@@ -14,7 +14,7 @@ it, and tick it off here.
 - Quests: 9, loose, no story thread. Every map is open from the start.
 - Jobs: Warrior, Archer and Thief get a first job at 10 and two paths at 30 after a trial. The
   Mage was removed; a new magic class is being built from scratch.
-- Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses), the Crystal King,
+- Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses) and the Crystal King
   (Dancing Green and Roxy's Boss Rush were a test boss, removed 2026-10-29).
 - Drawn but unused: Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna, and four queens
   (Sylvana Lv 22, Tamamo Lv 30, Lilith Lv 38, Selene Lv 50). These make ready-made story bosses.

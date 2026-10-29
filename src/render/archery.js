@@ -155,11 +155,14 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       const bend = (f.bend ?? 0) * Math.sin(Math.PI * u);
       const hx = x - Math.sin(ang) * bend;
       const hy = y + Math.cos(ang) * bend;
-      const [tx, ty] = [hx - Math.cos(ang) * 22, hy - Math.sin(ang) * 22];
-      fxSprite(ctx, 'celhawktrail', tx, ty, { t: time + (f.seed ?? 0), rot: ang, scale: 0.45 });
+      // Bent into an arc (a lob), it points along its path: nose up as it climbs, down as it drops.
+      const along = Math.hypot(f.tx - f.x, f.ty - f.y) || 1;
+      const nose = ang + Math.atan(((f.bend ?? 0) * Math.PI * Math.cos(Math.PI * u)) / along);
+      const [tx, ty] = [hx - Math.cos(nose) * 22, hy - Math.sin(nose) * 22];
+      fxSprite(ctx, 'celhawktrail', tx, ty, { t: time + (f.seed ?? 0), rot: nose, scale: 0.45 });
       ctx.save();
       ctx.translate(hx, hy);
-      ctx.rotate(ang);
+      ctx.rotate(nose);
       if (u < 0.15) ctx.rotate(Math.sin(u * 120) * 0.08 * (1 - u / 0.15));
       shaft(ctx, 20, 1.7, HAWK.light, HAWK.main);
       ctx.restore();

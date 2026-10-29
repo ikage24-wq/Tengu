@@ -482,6 +482,166 @@ export const MOVES = {
     };
   },
 
+  // A pommel bash: the blade flipped back over the shoulder so the hilt leads, a short hop-step in
+  // and the pommel driven into their face, then the blade swung back down to guard. Lands at 0.4.
+  pommel(p) {
+    if (p < 0.28) {
+      const t = ease(p / 0.28);
+      return { weapon: lerp(25, -60, t), arm: lerp(60, 48, t), lunge: -2 * t, tilt: -0.08 * t, rig: (r) => { r.tx = -1; r.squat = 1; r.backArm = [1, -2]; } };
+    }
+    const t = ease(seg(p, 0.28, 0.4));
+    const back = ease(seg(p, 0.55, 1));
+    return {
+      weapon: -60 + 85 * back, arm: lerp(48, 104, t) - 44 * back, lunge: lerp(-2, 9, t) * (1 - back * 0.8), lift: 2 * bump(p, 0.26, 0.44), tilt: lerp(-0.08, 0.26, t) * (1 - back),
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.2); r.backArm = [-3, -2]; r.hairLift = t > 0.5 && back < 0.5 ? -1 : 0; strikeFace(r); },
+    };
+  },
+
+  // Guard spin (the Paladin): a low turn right round with the blade held out flat, light trailing
+  // the edge, coming out of it into her guard, blade upright before her. Lands at 0.5.
+  guardspin(p) {
+    const a = ease(seg(p, 0.12, 0.62));
+    const turn = Math.cos(a * Math.PI * 2);
+    const set = ease(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(95 + a * 360, 370, set), arm: lerp(lerp(60, 98, ease(seg(p, 0, 0.12))), 70, set), orbit: true, turn: Math.sign(turn || 1) * Math.max(0.35, Math.abs(turn)),
+      lift: 3 * bump(p, 0.12, 0.62), tilt: -0.06 * bump(p, 0.1, 0.62), trail: p > 0.12 && p < 0.66,
+      rig: (r) => { r.squat = p < 0.12 || set > 0.3 ? 1 : 2; wideLegs(r); r.backArm = set > 0.3 ? [2, -4] : [-3, -3]; r.cape -= 3 * bump(p, 0.12, 0.62); r.hairLift = p > 0.15 && p < 0.6 ? -1 : 0; if (p > 0.3 && p < 0.66) strikeFace(r); },
+    };
+  },
+
+  // A kneeling stab (the Paladin): she drops onto one knee, drawing the blade back level at her
+  // hip, then drives it straight out low through them as holy light flashes off the point; she
+  // holds the kneel a beat and rises. Lands at 0.45.
+  kneelstab(p) {
+    const kneel = ease(seg(p, 0, 0.26)) * (1 - ease(seg(p, 0.76, 1)));
+    const t = ease(seg(p, 0.3, 0.45));
+    const back = ease(seg(p, 0.62, 1));
+    return {
+      weapon: 90, arm: lerp(lerp(60, 40, kneel), 92, t) - 30 * back, lunge: lerp(-2 * kneel, 10, t) * (1 - back * 0.8), tilt: lerp(-0.04, 0.16, t) * (1 - back),
+      rig: (r) => {
+        r.squat = kneel > 0.4 ? 3 : kneel > 0.1 ? 1 : 0;
+        // One knee to the ground: the back leg folded under her, the front planted.
+        r.frontLeg = [q(lerp(0.8, 3.4, kneel)), 0, Math.round(lerp(0, 8, kneel))];
+        r.backLeg = [q(lerp(-0.8, -3.8, kneel)), q(lerp(0, 1.2, kneel)), Math.round(lerp(0, -60, kneel))];
+        r.tx = t > 0 ? 2 : -1; r.backArm = [-3, -2]; if (t > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Triple fan (the Archer): three arrows nocked at once, the bow canted flat, a full draw and all
+  // three loosed in a spread. Shot at 0.55.
+  tripleshot(p) {
+    const raise = ease(seg(p, 0, 0.2));
+    const pull = ease(seg(p, 0.2, 0.5));
+    const snap = seg(p, 0.55, 0.64);
+    const back = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-40, 38, raise) - 10 * snap * (1 - back) - 38 * back, arm: lerp(70, 92, raise) + 5 * snap * (1 - back), pull: snap > 0 ? 0 : pull, nock: snap === 0, spares: snap > 0 ? 0 : raise > 0.5 ? 2 : 0, twang: twang(p, 0.55),
+      lunge: -4 * snap * (1 - back), tilt: -0.05 * pull * (1 - snap) - 0.1 * snap * (1 - back),
+      rig: (r) => { r.backArm = snap > 0 ? [q(-7 + 5 * back), -3] : [q(2 - 6 * pull), -3]; wideLegs(r); r.squat = pull > 0.4 && snap < 1 ? 1 : 0; if (snap > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
+  // A lob shot (the Archer): leaning back, the bow raised high, an arrow arced up over them to
+  // drop on their head. Shot at 0.5.
+  lobshot(p) {
+    const raise = ease(seg(p, 0, 0.24));
+    const pull = ease(seg(p, 0.2, 0.46));
+    const snap = seg(p, 0.5, 0.6);
+    const back = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-40, -40, raise) - 6 * snap * (1 - back), arm: lerp(70, 132, raise) - 50 * back, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.5),
+      lunge: -2 * snap * (1 - back), tilt: -0.14 * raise * (1 - back),
+      rig: (r) => { r.backArm = snap > 0 ? [q(-6 + 4 * back), -5] : [q(1 - 5 * pull), -5]; r.frontLeg = [2.4, 0, 2]; r.backLeg = [-3, 0, -6]; r.hairLift = raise > 0.5 && back < 0.5 ? -1 : 0; if (snap > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
+  // ---------- Bare hands ----------
+
+  // A haymaker: the fist wound way back, the body twisting round behind it, a huge looping punch
+  // with a lunge, and a wobble on the follow-through. Lands at 0.5.
+  haymaker(p) {
+    if (p < 0.36) {
+      const t = ease(p / 0.36);
+      return { weapon: 0, arm: lerp(60, 150, t), lunge: -4 * t, tilt: -0.18 * t, rig: (r) => { r.tx = -1; r.squat = 1; wideLegs(r); r.backArm = [2, -3]; r.mouth = 'grit'; } };
+    }
+    const t = ease(seg(p, 0.36, 0.5));
+    const wob = Math.sin(seg(p, 0.6, 1) * Math.PI * 3) * (1 - seg(p, 0.6, 1));
+    const back = ease(seg(p, 0.7, 1));
+    return {
+      weapon: 0, arm: lerp(150, 92, t) - 30 * back, lunge: lerp(-4, 12, t) * (1 - back * 0.7), tilt: lerp(-0.18, 0.34, t) * (1 - back) + 0.08 * wob, trail: p < 0.6,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.4); r.backArm = [-4, -1]; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+  // A flying kick: a hop forward, one leg shot straight out, the other tucked, arms flung back.
+  // Lands at 0.45.
+  flyingkick(p) {
+    const hop = Math.sin(seg(p, 0.12, 0.78) * Math.PI);
+    const kick = bump(p, 0.3, 0.66);
+    const land = bump(p, 0.76, 1);
+    return {
+      weapon: 0, arm: 40, lift: 14 * hop, lunge: 14 * ease(seg(p, 0.12, 0.6)) * (1 - 0.6 * seg(p, 0.7, 1)), tilt: -0.14 * kick,
+      rig: (r) => {
+        if (hop > 0.15) {
+          r.air = true;
+          r.frontLeg = [q(2.6 + 4 * kick), q(-5 + 2 * kick), Math.round(10 + 72 * kick)];
+          r.backLeg = [-1.6, -3, -20];
+        } else if (land > 0.3) { r.squat = 2; wideLegs(r); }
+        r.backArm = [-5, -4]; r.hairLift = hop > 0.3 ? -1 : 0; r.cape -= 3 * hop; if (kick > 0.4) strikeFace(r);
+      },
+    };
+  },
+  // A headbutt: she leans way back, then snaps her forehead into them; a wobble, and she sees stars
+  // for a beat. Lands at 0.42.
+  headbutt(p) {
+    const lean = ease(seg(p, 0, 0.3));
+    const t = ease(seg(p, 0.3, 0.42));
+    const back = ease(seg(p, 0.55, 1));
+    const daze = p > 0.46 && p < 0.92;
+    return {
+      weapon: 0, arm: 30, lunge: (-3 * lean + 11 * t) * (1 - back * 0.8), tilt: (-0.26 * lean * (1 - t) + 0.42 * t) * (1 - back) + (daze ? 0.05 * Math.sin(p * 40) : 0),
+      rig: (r) => {
+        r.tx = t > 0 ? 2 : -1; lungeLegs(r, 1.1); r.backArm = t > 0 ? [-4, -2] : [2, -1]; r.hairLift = t > 0.5 && back < 0.5 ? -1 : 0;
+        if (daze) { r.mouth = 'wavy'; r.face = { ...(r.face ?? {}), extra: [`orbit${Math.floor(p * 40) % 8}`] }; } else if (t > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // A cartwheel kick: she throws her hands down and goes over forwards, legs scissoring over the
+  // top through them, and lands back on her feet. Kicks at 0.48.
+  cartwheel(p) {
+    const f = ease(seg(p, 0.12, 0.84));
+    const hop = Math.sin(seg(p, 0.1, 0.86) * Math.PI);
+    return {
+      weapon: 0, arm: 170, lift: 10 * hop, lunge: 10 * f, tilt: f * Math.PI * 2,
+      rig: (r) => {
+        if (hop > 0.15) {
+          r.air = true;
+          r.frontLeg = [3.4, -2.4, Math.round(40 + 40 * hop)];
+          r.backLeg = [-3.4, -1.4, Math.round(-40 - 30 * hop)];
+        } else { r.squat = p > 0.85 ? 1 : 0; wideLegs(r); }
+        r.backArm = [-1, -6]; r.hairLift = -1; r.cape -= 3 * hop; if (hop > 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // A shield rush (the Paladin): blade held low and flat across her like a shield, a few quick
+  // running steps, and her shoulder driven in behind a flare of light. Lands at 0.42.
+  shieldrush(p) {
+    const run = seg(p, 0.06, 0.4);
+    const step = Math.sin(run * Math.PI * 4);
+    const hit = ease(seg(p, 0.36, 0.44));
+    const back = ease(seg(p, 0.58, 1));
+    return {
+      weapon: 120 - 20 * back, arm: 40 + 10 * back, lunge: (4 * run + 8 * hit) * (1 - back * 0.85), lift: run < 1 ? 1.5 * Math.abs(step) : 0, tilt: (0.18 * Math.min(1, run * 3) + 0.2 * hit) * (1 - back),
+      rig: (r) => {
+        if (run > 0 && run < 1) { r.frontLeg = [q(2 + 2 * step), q(-Math.max(0, step) * 2), Math.round(20 * step)]; r.backLeg = [q(-2 + 2 * step), q(-Math.max(0, -step) * 2), Math.round(20 * step)]; }
+        else lungeLegs(r, 1.4);
+        r.tx = 2; r.backArm = [3, -3]; r.cape = -5; r.hairLift = -1; if (hit > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
   // A rising diagonal: drop low with the blade down and back, then rip up through them and on
   // past the shoulder, springing off the ground with it (it pops monsters up). Lands at 0.42.
   risecut(p) {
@@ -730,7 +890,7 @@ export const MOVES = {
     const t = ease(seg(p, 0.3, 0.5));
     const settle = ease(seg(p, 0.72, 1));
     return {
-      weapon: lerp(205, -10, t) + 35 * settle, arm: lerp(15, 172, t) - 100 * settle, lift: 3 * t * (1 - settle), stretch: 1 + 0.05 * t * (1 - settle), tilt: -0.1 * t * (1 - settle), trail: p < 0.6,
+      weapon: lerp(205, -10, t) + 35 * settle, arm: lerp(15, 172, t) - 100 * settle, lift: 11 * Math.sin(Math.PI * seg(p, 0.3, 0.8)), stretch: 1 + 0.05 * t * (1 - settle), tilt: -0.1 * t * (1 - settle), trail: p < 0.6,
       rig: (r) => { r.tx = 1; r.frontLeg = [2.6, 0, 2]; r.backLeg = [-2.4, 0, -4]; r.backArm = [-2, -3]; strikeFace(r); },
     };
   },
@@ -963,7 +1123,7 @@ export const MOVES = {
     const hop = Math.sin(seg(p, 0.15, 0.9) * Math.PI);
     const pull = ease(seg(p, 0.25, 0.52));
     const snap = seg(p, 0.55, 0.66);
-    const flip = ease(seg(p, 0.14, 0.5));
+    const flip = soft(seg(p, 0.14, 0.98));
     return {
       weapon: 25 * hop - 8 * snap * (1 - seg(p, 0.7, 1)), arm: 80 - 12 * hop, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.55), lift: 34 * hop, tilt: -flip * Math.PI * 2 + 0.14 * hop - 0.08 * snap, lunge: -2 * snap,
       rig: (r) => { if (hop > 0.15) tuck(r); else if (crouch > 0.3) r.squat = 2; r.backArm = snap > 0 ? [-7, -2] : [q(2 - 6 * pull), -2]; r.hairLift = hop > 0.3 ? -1 : 0; if (snap > 0 && snap < 1) strikeFace(r); },

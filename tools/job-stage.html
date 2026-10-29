@@ -1,0 +1,93 @@
+<!doctype html>
+<html><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: any job in a real game world (the same code the game runs), level 60, every skill of
+// its line maxed, a row of training dummies in Mossy Woods, drawn with the game's own renderer.
+// Open /tools/job-stage.html?job=paladin (served with the game). ?weapon=axe picks the weapon;
+// ?manual steps frames from outside (window.step) for recording. A recording can hold keys
+// (window.input), cast (window.cast('id')) and reach the world (window.world).
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCharacter, gainExp, advanceJob, autoAssignAp } from '../src/core/character.js';
+import { expToNext } from '../src/core/exp.js';
+import { makeEquip } from '../src/core/items.js';
+import { addItem } from '../src/core/inventory.js';
+import { spawnMob } from '../src/world/mobs.js';
+import { cast } from '../src/world/combat.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { JOBS } from '../src/data/jobs.js';
+import { SKILLS } from '../src/data/skills.js';
+import { lookFor } from '../src/render/townlife.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+
+// The job's line, novice first, and the weapon it fights with.
+const job = q.get('job') ?? 'warrior';
+const chain = [];
+for (let j = JOBS[job]; j; j = JOBS[j.parent]) chain.unshift(j.id);
+const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', archer: 'bow', beastmaster: 'bow', stormcaller: 'crossbow', thief: 'dagger', shinobi: 'dagger', kitsune: 'gauntlet', spiritmage: 'wand', shrinemaiden: 'wand', onmyoji: 'wand', novice: 'sword' };
+const c = createCharacter('Tester', lookFor(Number(q.get('look') ?? 7)));
+const up = () => gainExp(c, expToNext(c.level) - c.exp);
+for (const id of chain.slice(1)) {
+  const J = JOBS[id];
+  while (c.level < J.level) up();
+  if (J.trial) c.quests[J.trial] = { state: 'done', kills: {} };
+  advanceJob(c, id);
+}
+while (c.level < Number(q.get('level') ?? 60)) up();
+autoAssignAp(c);
+for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job)) c.skills[id] = s.maxLevel;
+// (?weapon=none fights bare-handed.)
+if (q.get('weapon') !== 'none') c.equipment.weapon = makeEquip(`${q.get('weapon') ?? WEAPON[job] ?? 'sword'}_60`, {});
+else delete c.equipment.weapon;
+addItem(c.inventory, 'star_pebble', 999);
+c.mp = 99999;
+c.baseMp = 99999;
+const w = createWorld(c);
+loadMap(w, 'woods', 'west');
+w.god = true;
+w.spawner.slots = [];
+w.mobs = [];
+const x0 = 360;
+Object.assign(w.body, { x: x0, y: w.map.groundY, facing: 1, onGround: true });
+for (const dx of [110, 170, 230, 300, 360]) {
+  const m = spawnMob(w.map, { mob: 'boarlet', x: x0 + dx, y: w.map.groundY });
+  m.def = { ...m.def, hp: 1e9, eva: 0, aggro: false, speed: 0 };
+  m.hp = 1e9;
+  w.mobs.push(m);
+}
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+const cam = createCamera();
+let t = 0;
+for (let i = 0; i < 30; i++) updateWorld(w, 1 / 60, idle);
+function step(dt) {
+  t += dt;
+  c.mp = 99999;
+  for (let k = 0; k < Math.round(dt * 60); k++) updateWorld(w, 1 / 60, window.input ?? idle);
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, dt);
+  drawWorld(ctx, w, cam, t);
+}
+window.step = step;
+window.cast = (id) => cast(w, id);
+window.world = w;
+window.cam = cam;
+window.skillsOf = () => Object.keys(c.skills).filter((id) => SKILLS[id] && SKILLS[id].type !== 'passive');
+if (!q.has('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script></body></html>
