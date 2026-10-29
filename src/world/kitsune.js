@@ -24,7 +24,7 @@ import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 // Where she stands when there's nothing to fight: a step in front of the Maiden (px).
 const HOME = 34;
 // How far from the Maiden she'll go after a fight (across, and up or down): she never strays.
-const LEASH = { x: 240, y: 150 };
+const LEASH = { x: 300, y: 150 };
 // How fast she goes (% of a walk): she's big and in no hurry, so she walks slow and unbothered;
 // when she must get somewhere fast she leaps (LEAP), and only runs where a leap won't do (up a
 // rope, over a ledge).
@@ -37,11 +37,16 @@ const THINK = 0.25; // seconds between decisions
 // Her moves: how long each lasts (s), when its blows land (0-1), how far the blade reaches past
 // her, how hard (% of a spell), knockback, launch, and how many it can catch.
 export const KMOVES = {
-  thrust: { dur: 0.85, hits: [0.42], reach: 120, pct: 95, knock: 90, targets: 3 },
-  sweep: { dur: 1.05, hits: [0.5], reach: 105, pct: 80, knock: 140, targets: 5 },
-  rising: { dur: 0.95, hits: [0.46], reach: 90, pct: 85, knock: 40, launch: 280, targets: 3 },
-  twin: { dur: 1.0, hits: [0.3, 0.62], reach: 115, pct: 55, knock: 50, targets: 1 },
+  thrust: { dur: 1.0, hits: [0.46], reach: 120, pct: 110, knock: 130, targets: 3, shake: 2 },
+  sweep: { dur: 1.25, hits: [0.52], reach: 105, pct: 95, knock: 190, targets: 5, shake: 3 },
+  rising: { dur: 1.1, hits: [0.48], reach: 90, pct: 100, knock: 60, launch: 320, targets: 3, shake: 2.5 },
+  twin: { dur: 1.15, hits: [0.32, 0.64], reach: 115, pct: 65, knock: 70, targets: 1, shake: 1.5 },
 };
+// Her Leap Slam: from out of the blade's reach (but within `far`), she leaps at a monster with the
+// naginata raised over her head and brings its full weight down as she lands, cracking the ground:
+// everything within `r` of the impact is hit and thrown. How long it takes and its numbers.
+// (`every`: the least time between slams.)
+export const SLAM = { every: 3, far: 260, dur: 1.05, r: 95, pct: 170, knock: 220, launch: 300, stun: 0.5 };
 // The rest she takes between moves (seconds, a random span): steady, never frantic.
 const REST = [0.3, 0.55];
 // Fox-Fire Call: how often (s), how close to the Maiden the monsters must be, how long it takes,
@@ -104,7 +109,9 @@ export function tickGuardian(world, dt) {
       br.think = THINK;
       think(world, k);
     }
-    if (br.hurry && leap(world, k)) {
+    // Hurrying at a monster: a Leap Slam if it's in range, before a plain leap.
+    if (br.hurry && br.target && !world.dead) fight(world, k);
+    if (k.act || (br.hurry && leap(world, k))) {
       act(world, k, dt);
       k.vx = k.body.vx;
       k.moving = false;
@@ -147,7 +154,7 @@ const CROUCH = 0.16;
 const LAND = 0.12;
 function leaping(world, k, a, t) {
   const body = k.body;
-  const air = LEAP.dur - CROUCH - LAND;
+  const air = a.dur - CROUCH - LAND - (a.slam ? 0.25 : 0);
   const u = Math.max(0, Math.min(1, (t - CROUCH) / air));
   const e = u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) ** 2;
   if (t >= CROUCH && !a.launched) {
@@ -165,6 +172,8 @@ function leaping(world, k, a, t) {
     // She's big: the ground feels it.
     world.juice.push({ type: 'dust', x: body.x, y: body.y, count: 6 });
     world.juice.push({ type: 'shake', mag: 1.2, dur: 0.15 });
+    sync(k);
+    if (a.slam) leapSlam(world, k);
   }
   sync(k);
 }
@@ -178,6 +187,8 @@ function act(world, k, dt) {
     if (t >= a.dur) {
       k.act = null;
       k.brain.path = null;
+      // (After a slam she hauls the naginata back up: a longer breath before her next blow.)
+      if (a.slam) k.next = world.now + REST[1] + 0.2;
     }
     return;
   }
@@ -218,7 +229,23 @@ function strike(world, k, kind, M, last) {
     .filter((m) => alive(m) && Math.abs(m.y - k.y) < 70 && (m.x - k.x) * dir > -12 && Math.abs(m.x - k.x) < M.reach + m.def.w / 2)
     .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))
     .slice(0, M.targets);
-  hit.forEach((m, i) => dollHit(world, m, { pct: M.pct, x: k.x, knock: M.knock, launch: M.launch ?? 0, stop: i ? 0 : last ? 0.06 : 0.03, shake: !i && last && kind !== 'twin' ? 2 : 0, big: last && !i, burst: 'spirithit', gauge: 2, key: 'kitsune' }));
+  // The naginata is very heavy: every blow lands with a jolt, a long hit-stop and the ground shaking.
+  hit.forEach((m, i) => dollHit(world, m, { pct: M.pct, x: k.x, knock: M.knock, launch: M.launch ?? 0, stop: i ? 0 : last ? 0.1 : 0.06, shake: !i && last ? M.shake : 0, big: last && !i, burst: 'spirithit', gauge: 2, key: 'kitsune' }));
+  world.juice.push({ type: 'shake', mag: last ? M.shake : M.shake * 0.5, dur: 0.18 });
+  world.juice.push({ type: 'dust', x: k.x + dir * M.reach * 0.6, y: k.y, count: last ? 5 : 3 });
+}
+
+// Her Leap Slam landing: the blade brought down with all its weight, the ground cracking open, a
+// ring of light, and everything round the impact hit and thrown into the air.
+function leapSlam(world, k) {
+  const x = k.x + k.dir * 30;
+  world.fx.push({ kind: 'crack', school: 'holy', x, y: k.y, w: SLAM.r * 2, t: 0, dur: 0.8, seed: Math.random() });
+  world.fx.push({ kind: 'kitsunecall', x, y: k.y, t: 0, dur: 0.7 });
+  world.juice.push({ type: 'shake', mag: 5, dur: 0.35 });
+  world.juice.push({ type: 'dust', x, y: k.y, count: 10 });
+  world.mobs
+    .filter((m) => alive(m) && Math.abs(m.x - x) < SLAM.r + m.def.w / 2 && Math.abs(m.y - k.y) < 80)
+    .forEach((m, i) => dollHit(world, m, { pct: SLAM.pct, x, knock: SLAM.knock, launch: SLAM.launch, stun: SLAM.stun, stop: i ? 0 : 0.14, shake: i ? 0 : 5, big: !i, burst: 'spirithit', gauge: 3, key: 'kitsune' }));
 }
 
 // Fox-Fire Call: the naginata's butt planted, and a ring of fox fire throws the monsters crowding
@@ -355,11 +382,29 @@ function stuck(world, k, intent, dt) {
 // Her own moves at her target, once she's rested: never the same twice running.
 function fight(world, k) {
   const m = k.brain.target;
-  if (!alive(m) || world.now < k.next || !k.body.onGround || k.act) return;
+  if (!alive(m) || !k.body.onGround || k.act) return;
   if (Math.abs(m.y - k.y) > 40) return;
   const dx = Math.abs(m.x - k.x);
   const crowd = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < 80 && Math.abs(o.y - k.y) < 40).length;
-  if (dx > KMOVES.thrust.reach + m.def.w / 2 - 6) return;
+  if (dx > KMOVES.thrust.reach + m.def.w / 2 - 6) {
+    // Out of her reach but not too far, on her own ledge: she leaps at it and slams.
+    const nav = navOf(world.map);
+    const here = surfaceOf(nav, k.body);
+    if (dx > SLAM.far || here < 0 || here !== surfaceBelow(nav, m.x, m.y) || world.now < (k.leapAt ?? 0) || world.now < (k.slamAt ?? 0)) return;
+    const surf = nav.surfaces[here];
+    const side = Math.sign(k.x - m.x) || -1;
+    const tx = Math.max(surf.x1 + 6, Math.min(surf.x2 - 6, m.x + side * (30 + m.def.w / 2)));
+    k.body.facing = Math.sign(m.x - k.x) || k.body.facing;
+    k.body.vx = 0;
+    sync(k);
+    k.act = { kind: 'leap', slam: true, t0: world.now, dur: SLAM.dur, done: 0, from: [k.x, k.y], to: [tx, surf.yAt(tx)] };
+    k.leapAt = world.now + SLAM.dur + LEAP.every;
+    k.slamAt = world.now + SLAM.every;
+    k.last = 'leap';
+    return;
+  }
+  // (The Leap Slam is how she closes in, so it doesn't wait on her rest; her blows do.)
+  if (world.now < k.next) return;
   const pool = (crowd >= 2 ? ['sweep', 'sweep', 'thrust', 'rising', 'twin'] : ['thrust', 'rising', 'twin', 'sweep']).filter((n) => n !== k.last);
   const kind = pool[Math.floor(Math.random() * pool.length)];
   k.last = kind;

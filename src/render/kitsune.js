@@ -46,14 +46,15 @@ const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4
 //                   lift (px up, off the ground)
 //   pole, grip      the naginata's angle (radians: 0 straight up, + tipping forward; whole turns
 //                   twirl it) and where along the haft her hand is (0 butt, 1 blade)
-//   hand, free      where her right (naginata) hand and left hand reach, from rest
+//   hand, free      where her naginata hand (the near arm, so it can reach out past her body) and
+//                   her other hand reach, from rest
 //   legF, legB      each foot's [ahead, up (negative), tilt]; squat how low she sinks
 //   tx, by          the hips' sway and the body's bob; hx, hy, tilt the head's offset and roll
 //   ears            her ears' turn [near, far] (degrees: - pricked forward, + laid back)
 //   tail, curl      her tail's swing (+ down and back) and curl (+ tighter), degrees
 //   cloth           how the robes and sleeves swing; mouth, eyes, brows the face
 const REST = {
-  lean: -0.05, lunge: 0, lift: 0, pole: 0, grip: 0.24, hand: [4.6, 1.6], free: [0.2, 2.6], legF: [3.4, 0, 6], legB: [-3.6, 0, -6], squat: 0,
+  lean: -0.05, lunge: 0, lift: 0, pole: 0, grip: 0.24, hand: [8, -1.2], free: [0.2, 2.6], legF: [3.4, 0, 6], legB: [-3.6, 0, -6], squat: 0,
   tx: 0, by: 0, hx: 0.4, hy: -0.6, tilt: -3, ears: [-6, -6], tail: 8, curl: -10, cloth: 0, mouth: 'flat', eyes: null, brows: 'stern',
 };
 const pose = (o) => ({ ...REST, ...o });
@@ -72,14 +73,15 @@ function standing(bit, u) {
     // She lifts the naginata a hand's width and drives its butt back into the ground: a warning.
     const up = soft(seg(u, 0.2, 0.42));
     const down = ease(seg(u, 0.44, 0.52));
-    return pose({ hand: [4.6, 1.6 - 3.4 * up * (1 - down) + 0.8 * bump(u, 0.5, 0.66)], by: 0.8 * bump(u, 0.5, 0.66), lean: -0.05 + 0.04 * bump(u, 0.48, 0.7), ears: [-10 * up, -10 * up], eyes: up > 0.5 && down < 0.5 ? 'half' : null });
+    return pose({ hand: [8, -1.2 - 3.4 * up * (1 - down) + 0.8 * bump(u, 0.5, 0.66)], by: 0.8 * bump(u, 0.5, 0.66), lean: -0.05 + 0.04 * bump(u, 0.48, 0.7), ears: [-10 * up, -10 * up], eyes: up > 0.5 && down < 0.5 ? 'half' : null });
   }
   if (bit === 'twirl') {
     // She lifts the naginata, twirls it once in a full circle beside her, and plants it with a stamp.
-    const spin = ease(seg(u, 0.18, 0.72));
+    // (It's very heavy: the twirl is slow to start and slow to stop, and her body swings with it.)
+    const spin = soft(seg(u, 0.16, 0.78));
     const stamp = bump(u, 0.7, 0.86);
     return pose({
-      pole: TAU * spin, grip: lerp(0.24, 0.5, k), hand: [4.6, 1.6 - 6 * k * (1 - stamp)], lean: -0.05 + 0.05 * k * Math.sin(spin * TAU), by: 0.8 * stamp,
+      pole: TAU * spin, grip: lerp(0.24, 0.5, k), hand: [8 - 2 * k, -1.2 - 5 * k * (1 - stamp)], lean: -0.05 + 0.05 * k * Math.sin(spin * TAU), by: 0.8 * stamp,
       legF: [3.4 + 0.6 * stamp, -1.4 * bump(u, 0.62, 0.74), 6], tail: 8 + 14 * Math.sin(spin * TAU), ears: [-8 * k, -8 * k], eyes: k > 0.5 && u < 0.7 ? 'half' : null,
     });
   }
@@ -91,7 +93,7 @@ function standing(bit, u) {
   return pose({});
 }
 const BITS = ['glance', 'stamp', 'twirl', 'tail'];
-const BIT_LEN = { glance: 2.4, stamp: 1.8, twirl: 2.2, tail: 2.6 };
+const BIT_LEN = { glance: 2.4, stamp: 1.8, twirl: 3, tail: 2.6 };
 
 // Walking: slow and unbothered (she's big, and nothing here worries her). Chin up, eyes half
 // lidded, a heavy, even stride with her hips rolling; the naginata used as a staff, its butt
@@ -104,7 +106,7 @@ function walking(ph) {
   const swingOn = Math.max(0, s);
   return pose({
     legF: [2.4 + 3.4 * s, -1.4 * Math.max(0, c), 12 * s], legB: [-2.4 - 3.4 * s, -1.4 * Math.max(0, -c), -12 * s], by: -0.5 * Math.abs(c), tx: 0.7 * s, lean: -0.04 + 0.015 * c,
-    pole: -0.06 + 0.16 * swingOn, grip: 0.24, hand: [4 + 1.6 * s, 1.2 - 1.6 * swingOn], free: [0.4 - 0.8 * s, 2.6], tail: 8 - 7 * s, curl: -10 + 8 * c,
+    pole: -0.06 + 0.16 * swingOn, grip: 0.24, hand: [7.2 + 1.4 * s, -0.6 - 1.6 * swingOn], free: [0.4 - 0.8 * s, 2.6], tail: 8 - 7 * s, curl: -10 + 8 * c,
     ears: [-6, -6], cloth: -0.8 - 1.4 * s, hx: 0.4 + 0.25 * s, hy: -0.6, tilt: -3 + 1.2 * s, eyes: 'half',
   });
 }
@@ -122,7 +124,8 @@ function running(ph) {
 // A leap (world/kitsune.js LEAP): she sinks into a deep crouch with the naginata swung back, then
 // springs, leaning out over the bound with her knees drawn up, the naginata trailing behind her
 // and her tail and hair streaming; she comes down hard into a crouch (the ground shakes) and rises.
-function leapingPose(u) {
+function leapingPose(u, slam) {
+  if (slam) return slamPose(u);
   const crouch = soft(seg(u, 0, 0.2)) * (1 - ease(seg(u, 0.2, 0.3)));
   const air = seg(u, 0.2, 0.85);
   const up = Math.sin(Math.PI * air);
@@ -133,6 +136,30 @@ function leapingPose(u) {
     pole: lerp(0, -0.9, crouch) + (air > 0 && air < 1 ? -1.25 : 0) * (1 - land), grip: 0.4, hand: [lerp(4.6, 1, Math.max(crouch, up)), 1.6 + 2 * crouch],
     free: [0.2 - 2.6 * up, 2.6 - 4 * up], tail: 8 - 34 * up, curl: -10 - 10 * up, ears: [10 * up + 6 * crouch, 8 * up + 6 * crouch], cloth: -5 * up,
     hy: -0.6 + 0.6 * crouch, eyes: 'half', brows: crouch > 0.3 || land > 0.3 ? 'knit' : null,
+  });
+}
+
+// Leap Slam (world/kitsune.js SLAM): a deep crouch, then the bound with the naginata hauled up
+// over her head in both hands (her whole body arched back under its weight); at the top she
+// pitches forward and, as she lands (at ~0.65), brings it straight down with all its weight, blade
+// into the ground ahead, her body following it down into a deep crouch; then she hauls it back up.
+function slamPose(u) {
+  const crouch = soft(seg(u, 0, 0.15)) * (1 - ease(seg(u, 0.15, 0.22)));
+  const air = seg(u, 0.15, 0.65);
+  const inAir = air > 0 && air < 1;
+  const up = Math.sin(Math.PI * air);
+  const raise = soft(seg(u, 0.12, 0.4));
+  const down = ease(seg(u, 0.56, 0.66));
+  const haul = soft(seg(u, 0.78, 1));
+  const hold = 1 - haul;
+  return pose({
+    lean: 0.1 * crouch - 0.22 * raise * (1 - down) + 0.42 * down * hold, lunge: 4 * down * hold, squat: 3 * crouch + 3.4 * down * hold,
+    legF: inAir ? [3.6, -4.4 * up, 36 * up] : [3.8, 0, 10], legB: inAir ? [-1.4, -3.6 * up, -14 + 28 * up] : [-4, 0, -14],
+    pole: lerp(lerp(0, -0.5, crouch), -1.25, raise) * (1 - down) + 1.95 * down * hold + 0.0 * haul, grip: lerp(0.3, 0.45, raise),
+    hand: [lerp(lerp(8, 3, crouch), 1.6, raise) * (1 - down) + 8.6 * down * hold + 8 * haul, lerp(-1.2, -11, raise) * (1 - down) + 5 * down * hold - 1.2 * haul],
+    free: [lerp(0.2, 3, raise) * (1 - down) + 6 * down * hold, lerp(2.6, -10, raise) * (1 - down) + 3.4 * down * hold + 2.6 * haul],
+    tail: 8 - 30 * up + 20 * down * hold, curl: -10 - 16 * up, ears: [12 * up + 22 * down * hold, 10 * up + 20 * down * hold], cloth: -4 * up + 5 * down * hold,
+    hy: -0.6 - 0.8 * raise * (1 - down) + 1 * down * hold, tilt: -3 - 6 * raise * (1 - down) + 6 * down * hold, mouth: down > 0.3 && hold > 0.4 ? 'open' : null, brows: 'knit', eyes: raise > 0.4 && down < 0.3 ? 'half' : null,
   });
 }
 
@@ -235,7 +262,7 @@ function blocking(p) {
 function bowing(p) {
   const k = soft(seg(p, 0.15, 0.35)) * (1 - soft(seg(p, 0.5, 0.7)));
   const plant = bump(p, 0.62, 0.8);
-  return pose({ lean: -0.05 + 0.1 * k, hy: -0.6 + 1.4 * k, hx: 0.4 + 0.4 * k, tilt: -3 + 6 * k, ears: [-6 + 6 * k, -6 + 6 * k], eyes: k > 0.4 ? 'blink' : null, by: 0.6 * plant, hand: [4.6, 1.6 + 0.8 * plant] });
+  return pose({ lean: -0.05 + 0.1 * k, hy: -0.6 + 1.4 * k, hx: 0.4 + 0.4 * k, tilt: -3 + 6 * k, ears: [-6 + 6 * k, -6 + 6 * k], eyes: k > 0.4 ? 'blink' : null, by: 0.6 * plant, hand: [8, -1.2 + 0.8 * plant] });
 }
 
 // ---------- Her moods ----------
@@ -252,16 +279,20 @@ function moodOver(p, mood, t, k) {
 // ---------- Her rig ----------
 // Every number of her pose rides a spring to its target: her body slower and fluid, her hands and
 // her blade quicker (so strikes snap but she never jerks), each a touch under-damped.
+// (The naginata is very heavy: her weapon hand and the blade ride a stiff, well-damped spring, so it
+// swings with weight and stops dead rather than bouncing; her free hand is light and quick.)
 const FAST = new Set(['hand', 'free', 'pole', 'grip']);
 const SLOW = { k: 150, damp: 0.8 };
 const QUICK = { k: 340, damp: 0.72 };
+const HEAVY = { k: 210, damp: 0.95 };
+const HEAVY_KEYS = new Set(['hand', 'pole', 'grip']);
 function follow(st, target, dt) {
   if (!st.P) return (st.P = structuredClone(target));
   const n = Math.max(1, Math.ceil(dt / (1 / 120)));
   const h = dt / n;
   const P = { ...target };
   for (const key of Object.keys(target)) {
-    const { k, damp } = FAST.has(key) ? QUICK : SLOW;
+    const { k, damp } = HEAVY_KEYS.has(key) ? HEAVY : FAST.has(key) ? QUICK : SLOW;
     const c = 2 * Math.sqrt(k) * damp;
     const step = (x, v, to) => {
       for (let i = 0; i < n; i++) {
@@ -319,7 +350,7 @@ export function drawKitsune(ctx, world, k, cam, time) {
   let p;
   if (a) {
     const u = clamp01((world.now - a.t0) / a.dur);
-    p = { thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, call: calling, block: blocking, bow: bowing, leap: leapingPose }[a.kind]?.(u) ?? standing(null, 0);
+    p = { thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, call: calling, block: blocking, bow: bowing, leap: (v) => leapingPose(v, a.slam) }[a.kind]?.(u) ?? standing(null, 0);
   } else if (k.moving) {
     st.walk += dt * Math.min(1.8, Math.abs(k.vx) / 52) * (k.hurry ? 10 : 3.6);
     p = k.hurry ? running(st.walk) : walking(st.walk);
@@ -352,7 +383,10 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const hair = S('hair', -1.4 * v - 2 * surge + 0.5 * breeze + (P.lift > 2 ? -1 : 0), 55, 5.5);
   const tip = S('tip', hair + 0.4 * Math.sin(time * 1.7), 38, 4.2);
   const sway = S('sway', P.cloth + 0.8 * breeze * calm - 2 * v, 80, 7.5);
-  const lean = S('lean', 0.16 * surge + 0.04 * v, 110, 11);
+  // The weight of the naginata pulls her body after it: as the blade swings, she leans with it.
+  const poleVel = st.poleWas == null ? 0 : (P.pole - st.poleWas) / Math.max(dt, 1e-3);
+  st.poleWas = P.pole;
+  const lean = S('lean', 0.16 * surge + 0.04 * v + Math.max(-0.12, Math.min(0.12, poleVel * 0.012)), 110, 11);
   const head = S('head', -1.2 * surge, 140, 12);
 
   const x = k.x - cam.x;
@@ -361,7 +395,7 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const brows = P.brows === 'knit' ? [[-0.4, 0.95], [-0.4, 0.95]] : [[-0.15, 0.55], [-0.15, 0.55]];
   const rig = {
     tx: q(P.tx + 0.35 * shift * calm), by: q(P.by + 0.3 * breath * calm), hx: q(P.hx + Math.max(-1.6, Math.min(1.6, head)) + 0.2 * shift * calm), hy: q(P.hy + 0.22 * breath * calm),
-    tilt: deg(P.tilt + 1.2 * shift * calm), backArm: [q(P.hand[0]), q(P.hand[1] + 0.25 * breath * calm)], frontArm: [q(P.free[0]), q(P.free[1] + 0.3 * breath * calm)], armSide: 1,
+    tilt: deg(P.tilt + 1.2 * shift * calm), frontArm: [q(P.hand[0]), q(P.hand[1] + 0.25 * breath * calm)], backArm: [q(P.free[0]), q(P.free[1] + 0.3 * breath * calm)], armSide: 1,
     frontLeg: [q(P.legF[0]), q(P.legF[1]), deg(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), deg(P.legB[2])], squat: q(P.squat),
     // (The drawing turns her tail the other way round from her poses' sense; it never swings down
     // into the ground however hard it lashes.)
@@ -372,7 +406,7 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const look = { ...KITSUNE_LOOK, mouth: P.mouth ?? undefined };
   // The naginata goes behind her while it's upright or slung back, in front when it's out at them.
   const ang = ((P.pole % TAU) + TAU) % TAU;
-  const out = ang > 0.9 && ang < 2.8;
+  const out = (ang > 0.9 && ang < 2.8) || P.hand[0] > 5;
   const drift = 0.025 * Math.sin(time * 0.8) * calm;
   const naginata = (c, hand, flip) => paintNaginata(c, hand, flip, P.pole + drift, P.grip, st, dt, time);
   // A faint aura of spirit light about her feet, rising as she walks (fainter standing, gone in a
@@ -380,7 +414,7 @@ export function drawKitsune(ctx, world, k, cam, time) {
   st.aura = lerp(st.aura ?? 0, a ? 0 : k.moving ? 1 : 0.45, Math.min(1, dt * 3));
   if (st.aura > 0.05) fxSprite(ctx, 'celspiritaura', x, y + 2, { t: time * 0.9, scale: 0.62, alpha: 0.55 * st.aura });
   drawPosed(ctx, look, Math.round(x * 4) / 4, Math.round(y * 4) / 4, rig, {
-    scale: SCALE, facing: dir, under: out ? null : naginata, over: out ? naginata : null,
+    scale: SCALE, facing: dir, under: out ? null : naginata, over: out ? naginata : null, hold: 'front',
     lean: { tilt: P.lean + lean + 0.012 * shift * calm, lunge: P.lunge, lift: P.lift },
   });
 }

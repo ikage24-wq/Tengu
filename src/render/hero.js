@@ -1936,7 +1936,9 @@ function weaponIdle(type, t) {
 // way the player's moves do: on the ground the legs stay planted upright on their feet and
 // everything from the waist up leans from the hips; off the ground (lift) it turns as one about
 // its middle. Whatever the hand holds goes with the upper body.
-export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null } = {}) {
+// `hold: 'front'` hands the callbacks the front (near) hand instead, the one on the facing side,
+// which can reach out well past the body (a weapon held out at arm's length).
+export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back' } = {}) {
   const rig = { ...baseRig(), ...pose, armIn: true };
   const g = resolveGear(look, null);
   const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
@@ -1948,7 +1950,9 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   // The back hand, as bodyShapes places it: reached for from the shoulder (as far as the arm
   // goes), carried with the upper body, then into the chibi's proportions.
   const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
-  const hand = rig.view === 'back' ? [sx(15.5), sy(squashY(30))] : [sx(squashX(wx + rig.tx)), sy(squashY(wy + rig.by + hipDrop(rig)))];
+  const [, [fx, fy]] = reach(FRONT_SHOULDER, SHOULDER_Y, FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0], HAND_Y + rig.frontArm[1], UPPER_ARM, FOREARM, -1);
+  const [hx, hy] = hold === 'front' ? [fx, fy] : [wx, wy];
+  const hand = rig.view === 'back' ? [sx(15.5), sy(squashY(30))] : [sx(squashX(hx + rig.tx)), sy(squashY(hy + rig.by + hipDrop(rig)))];
   if (!lean || (!lean.tilt && !lean.lunge && !lean.lift)) {
     under?.(ctx, hand, flip);
     blit(ctx, body, left, top, { flip, scale });
