@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime'];
+export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime', 'yukibob', 'yukibun', 'yukitails', 'yukifrost'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -959,6 +959,82 @@ Object.assign(STYLES, {
       hang: [napeShadow(r), ...sheet({ len: 58, flare: 14.6, ends: 'level', n: 4, wave: 0.3, w0: 12 }, r, m, 0.7)],
       front: bangs('yukiblunt', r, m, [side(1), side(-1), F(R(21.9, 15, 0.6, 9.2, r.sh2)), F(R(8.6, 15, 0.6, 9.2, r.sh2))]),
       tips: [44, 54],
+    };
+  },
+  // Four more of the yuki-onna's, all with her blunt bangs:
+  // A blunt bob: cut straight and level at her jaw all the way round, sleek and heavy, a thin
+  // longer lock falling in front of each ear to her collarbone.
+  yukibob(r, m) {
+    const side = (dir) => {
+      const pts = [[24, 10.4], [27.6, 11.4], [28.2, 23.8, 1], [21.8, 23.8, 1], [21.8, 15.4]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.5);
+    };
+    const thin = [[23.6, 14], [24.4, 22], [24, 29]];
+    return {
+      head: [crown(r, 0.6)],
+      hang: sheet({ len: 25, flare: 13.4, ends: 'level', n: 3, w0: 12.6 }, r, m, 0.6),
+      front: bangs('yukiblunt', r, m, [side(1), side(-1), lock(thin, 1.6, r.sh1, m, 1.1, 0.5), lock(fx(thin), 1.6, r.sh1, m, 1.1, 0.5)]),
+      tips: [99, 99],
+    };
+  },
+  // A high bun pinned with icicle hairpins, the rest falling long and straight behind her to her
+  // knees; blunt side locks at her cheeks.
+  yukibun(r, m) {
+    const side = (dir) => {
+      const pts = [[24, 10.4], [27.2, 11], [27.4, 21.4, 1], [22, 20.6, 1], [22, 15.4]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.5);
+    };
+    // Icicle pins: stout ice crystals pushed through the bun at an angle, a snowflake on the side.
+    const icicle = (x, y, dir) => [F(T([[x - dir * 0.4, y + 1.4], [x + dir * 2.4, y - 1.6], [x + dir * 6.4, y - 4.6], [x + dir * 1, y + 1.6]], '#cfe4fb')), F(T([[x + dir * 0.8, y + 0.2], [x + dir * 2.4, y - 1], [x + dir * 5.4, y - 3.6]], '#ffffff')),
+      F(T([[x - dir * 0.2, y + 1.2], [x + dir * 1.6, y + 1.2], [x + dir * 1, y + 5.2]], '#b8d4f2'))];
+    const flakeAt = (x, y, r0) => [0, 1, 2].map((i) => {
+      const a = (i / 3) * Math.PI;
+      return F(T([[x - Math.cos(a) * r0, y - Math.sin(a) * r0 - 0.25], [x + Math.cos(a) * r0, y + Math.sin(a) * r0 - 0.25], [x + Math.cos(a) * r0, y + Math.sin(a) * r0 + 0.25], [x - Math.cos(a) * r0, y - Math.sin(a) * r0 + 0.25]], '#9cc8f0'));
+    });
+    const pins = [...icicle(19.6, 0.4, 1), ...icicle(11.4, 0.8, -1), ...flakeAt(20.6, 3.4, 1.6), F(E(20.6, 3.4, 0.5, 0.5, '#ffffff'))];
+    const knot = [F(E(15.5, 1.2, 6, 4.6, r.sh1)), F(E(15.5, 0.6, 5, 3.8, r.base)), streak(12.6, -1, 18, -1.6, 0.9, 0.6, r.hi), streak(13, 2, 17.6, 1, 0.6, 0.4, r.sh1)];
+    return {
+      head: [crown(r, 0.2), ...knot],
+      hang: [napeShadow(r), ...sheet({ len: 46, flare: 13, ends: 'level', n: 4, w0: 11.6 }, r, m, 0.7)],
+      front: bangs('yukiblunt', r, m, [side(1), side(-1), ...pins]),
+      top: [...pins, ...knot],
+      tips: [99, 99],
+    };
+  },
+  // Two long low tails tied at her nape with white paper bands, hanging straight down her back to
+  // her ankles, swaying apart as she moves; blunt side locks.
+  yukitails(r, m) {
+    const side = (dir) => {
+      const pts = [[24, 10.4], [27.2, 11], [27.4, 22.4, 1], [22, 21.4, 1], [22, 15.4]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.5);
+    };
+    const tail = [[8.6, 20], [7, 28], [6.4, 38], [6.8, 48], [6.2, 54]];
+    const band = (x) => [F(R(x - 2.4, 21, 4.8, 2.4, '#ffffff')), F(R(x - 2.4, 22, 4.8, 0.5, '#d6def2')), lock([[x, 23.4], [x - 0.4, 25.4], [x - 0.6, 27]], 1, '#ffffff', null)];
+    return {
+      head: [crown(r, 0.3)],
+      hang: [napeShadow(r), lock(tail, 6, r.sh1, m, 1, 0.45), lock(fx(tail), 6, r.sh1, m, 1, 0.45), lock([[8.6, 22], [7.6, 34], [7.4, 46]], 2, r.base, m, 1.1), lock(fx([[8.6, 22], [7.6, 34], [7.4, 46]]), 2, r.base, m, 1.1),
+        ...band(8.4), ...band(22.6)],
+      front: bangs('yukiblunt', r, m, [side(1), side(-1)]),
+      tips: [99, 99],
+    };
+  },
+  // Long and straight, its ends turning to frost: past her knees the hair thins into icy points and
+  // drifting crystals; blunt bangs and jaw-length side locks.
+  yukifrost(r, m) {
+    const side = (dir) => {
+      const pts = [[24, 10.4], [27.4, 11], [27.6, 24, 1], [22, 23, 1], [22, 15.4]];
+      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.5);
+    };
+    const mv = mover(m, 0.8);
+    const crystals = [[4, 50], [9, 54], [15, 52.6], [21, 54.4], [26, 50.4]].map(([x, y]) => {
+      const [cx, cy] = mv([x, y]);
+      return F(T([[cx, cy - 1.4], [cx + 0.8, cy], [cx, cy + 1.4], [cx - 0.8, cy]], '#d8ecff'));
+    });
+    return {
+      head: [crown(r, 0.3)],
+      hang: [napeShadow(r), ...sheet({ len: 49, flare: 15, ends: 'points', n: 7, w0: 12 }, r, m, 0.7), ...crystals],
+      front: bangs('yukiblunt', r, m, [side(1), side(-1)]),
+      tips: [34, 42],
     };
   },
   // The yuki-onna's: long soft waves of silver, loose to the backs of her knees, a wave over each

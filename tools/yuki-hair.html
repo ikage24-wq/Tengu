@@ -1,0 +1,55 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the yuki-onna's white hairstyles (hair.js yuki*, all her own), with blunt bangs, on the
+// player character beside the Onmyoji for size and close up. To pick from.
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const SCALE = 1.1;
+const PALE = '#f4f6ff';
+const SAMPLES = [
+  ['1. Blunt hime', { hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#6ab0f0', eyeStyle: 'yukiflake', outfit: 'yukiclassic', mouth: 'yukilips', marks: [], browStyle: 'none', hairStyle: 'yukihime' }],
+  ['2. Blunt bob', { hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#6ab0f0', eyeStyle: 'yukiflake', outfit: 'yukiclassic', mouth: 'yukilips', marks: [], browStyle: 'none', hairStyle: 'yukibob' }],
+  ['3. Icicle bun', { hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#6ab0f0', eyeStyle: 'yukiflake', outfit: 'yukiclassic', mouth: 'yukilips', marks: [], browStyle: 'none', hairStyle: 'yukibun' }],
+  ['4. Low twin tails', { hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#6ab0f0', eyeStyle: 'yukiflake', outfit: 'yukiclassic', mouth: 'yukilips', marks: [], browStyle: 'none', hairStyle: 'yukitails' }],
+  ['5. Frost ends', { hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#6ab0f0', eyeStyle: 'yukiflake', outfit: 'yukiclassic', mouth: 'yukilips', marks: [], browStyle: 'none', hairStyle: 'yukifrost' }],
+];
+const BROWS = { brows: [[0.15, -0.1], [0.15, -0.1]] };
+const S = 4.4;
+const CW = 300;
+const CH = 560;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * SAMPLES.length;
+canvas.height = CH + 300;
+nextFrame();
+ctx.fillStyle = '#c8e0ec';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+const MAIDEN = { hairStyle: 'hime', hairColor: '#2a2440', skinTone: '#fff0e6', eyeColor: '#8a6ad8', outfit: 'miko', outfitColor: '#ffffff' };
+const rig = { frontArm: [0.4, -2], backArm: [0.6, -2.6], frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2], hx: -0.2, hy: 0.2, tilt: -2, face: BROWS };
+SAMPLES.forEach(([name, look], i) => {
+  const cx = i * CW + CW / 2 + 20;
+  const gy = CH - 40;
+  ctx.fillStyle = '#9ec0d0';
+  ctx.fillRect(i * CW, gy, CW, 3);
+  setHd(true, S * SCALE);
+  drawPosed(ctx, { outfitColor: '#ffffff', earStyle: 'round', ...look }, cx, gy, rig, { scale: S * SCALE, facing: 1 });
+  setHd(true, S);
+  drawPosed(ctx, MAIDEN, cx - 120, gy, {}, { scale: S, facing: 1 });
+  // Close up.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(i * CW, CH, CW, 300);
+  ctx.clip();
+  setHd(true, 2.6 * 3.2);
+  drawPosed(ctx, { outfitColor: '#ffffff', earStyle: 'round', ...look }, i * CW + CW / 2 + 6, CH + 400, rig, { scale: 2.6 * 3.2, facing: 1 });
+  ctx.restore();
+  ctx.fillStyle = '#1e2a40';
+  ctx.font = 'bold 16px Segoe UI, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(name, i * CW + 10, 24);
+});
+window.done = true;
+</script></body></html>
