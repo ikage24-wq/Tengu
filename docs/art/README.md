@@ -269,6 +269,16 @@ carry an improvement across every part of the game it applies to.
     moon for both finishers' last cut. Her Phantom is a violet shadow copy of the hero herself.
     The moon first came out a flat white disc (the match snaps pale tones to white), so it is
     drawn a step darker, lavender with violet shading.
+    Brought up to the realistic look (the player asked, to match the other jobs): no outlines,
+    light, motion and smoke. Her cuts are fine motion blurs of violet with a moonlight-silver edge;
+    a hit is two thin cuts crossing with a silver glint and violet sparks; her smoke is a soft
+    curling noise field (no balls); the moon is real moonlight, a pale disc with soft grey seas in
+    a soft halo; the finishers' crescent is a blade of moonlight with a violet haze; her stars are
+    steel blurred by their spin with a glint flicking off them; her Phantom is a see-through copy
+    trailing smoke. Two things went wrong on the way: the moon's halo was drawn as stacked discs
+    and showed hard rings (a painted fall-off fixed it), and the crescent drawn from many short
+    strokes banded where they overlapped (painted as one field instead). The first realistic cuts
+    were also too faint to read over a bright map; they need a solid violet body under the glow.
   - The Thief's paths: the Assassin is crimson and raven black (crimson dagger swipes, a crimson X
     with black feathers on every cut, flocks of crows, a crimson ring for a mark for death, a red
     moon and a crimson crescent); the Night Lord is deep indigo and starlight gold (gold stars

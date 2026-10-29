@@ -578,9 +578,9 @@ export const SKILLS = {
         combo: [
           { move: 'thrust', dur: 0.3, step: 8, strikes: [stab(0.42, k(80, 140))] },
           { move: 'flurry', dur: 0.36, step: 8, strikes: [stab(0.3, k(60, 100)), stab(0.7, k(60, 100))] },
-          { move: 'cross', dur: 0.48, step: 12, finisher: true, strikes: [
-            { at: 0.22, pct: k(90, 150), reach: 70, h: 58, targets: 3, knock: 50, arc: [-110, 200], thick: 7 },
-            { at: 0.72, pct: k(130, 210), reach: 72, h: 60, targets: 3, knock: 200, launch: 160, arc: [100, -210], thick: 8, big: true, stop: 0.07, shake: 2 },
+          { move: 'crossflip', dur: 0.64, step: 12, carry: 0.36, finisher: true, strikes: [
+            { at: 0.11, pct: k(90, 150), reach: 70, h: 58, targets: 3, knock: 50, arc: [-110, 200], thick: 7 },
+            { at: 0.36, pct: k(130, 210), reach: 72, h: 60, targets: 3, knock: 200, launch: 160, arc: [100, -210], thick: 8, big: true, stop: 0.07, shake: 2, flipback: 44 },
           ] },
         ],
       };
@@ -594,7 +594,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(8, 16), pct: k(180, 300), hits: 1, targets: 2,
-        combo: [{ move: 'backstab', dur: 0.56, step: 90, carry: 0.35, guard: 0.35, trail: true, strikes: [{ at: 0.62, pct: k(180, 300), reach: 70, h: 56, targets: 2, turn: true, backstab: 1.6, knock: 160, pierce: true, big: true, stop: 0.08, shake: 2 }] }],
+        combo: [{ move: 'backstab', dur: 0.56, step: 90, carry: 0.35, guard: 0.35, blink: true, strikes: [{ at: 0.62, pct: k(180, 300), reach: 70, h: 56, targets: 2, turn: true, backstab: 1.6, knock: 160, pierce: true, big: true, stop: 0.08, shake: 2 }] }],
       };
     },
   }),
@@ -635,7 +635,7 @@ export const SKILLS = {
         combo: [
           { move: 'barrage', dur: 0.4, step: -2, strikes: [star(0.17, -3), star(0.5, 3)] },
           { move: 'barrage', dur: 0.4, step: -3, strikes: [star(0.17, 3), star(0.5, -3)] },
-          { move: 'throw', dur: 0.5, step: -6, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', pct: k(160, 260), range: 330, h: 64, targets: k(2, 4), pierce: true, speed: 820, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2 }] },
+          { move: 'throwflip', dur: 0.64, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'moonstar', pct: k(160, 260), range: 330, h: 64, targets: k(2, 4), pierce: true, speed: 820, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2, kickback: 40 }] },
         ],
       };
     },

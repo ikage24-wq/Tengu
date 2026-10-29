@@ -1595,6 +1595,59 @@ test('the Thief has her own basic combo with each weapon', () => {
   }
 });
 
+test("the Thief's combos mix her own acrobatic pools, and every finisher springs her back in a backflip", () => {
+  for (const [weapon, path] of [['dagger_20', 'thiefdagger'], ['gauntlet_20', 'thiefstar']]) {
+    const steps = PATH_VARIANTS[path];
+    assert.equal(steps.length, PATH_COMBOS[path].length, `${path}: a choice for every step`);
+    steps.forEach((choices, i) => {
+      assert.equal(choices[0], PATH_COMBOS[path][i], `${path}: her own swing comes first`);
+      assert.ok(choices.length >= 2, `${path}: step ${i + 1} has a choice`);
+      for (const s of choices) assert.ok(MOVES[s.move], `${path}: ${s.move} is drawn`);
+    });
+    assert.ok(steps.at(-1).every((s) => s.finisher), `${path}: every last swing is a finisher`);
+    // Played out with fixed dice, every swing in the pool comes up, and each finisher ends with
+    // her sprung back from where she struck (the backflip).
+    const w = thief(weapon);
+    const seen = new Set();
+    const flips = [];
+    let seed = 11;
+    dice(0, () => {
+      Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      let fin = null;
+      for (let i = 0; i < 60 * 60; i++) {
+        w.char.mp = 9999;
+        // (Kept off the map's edge, so springing back always has room.)
+        if (!w.pose) w.body.x = Math.max(w.body.x, 300);
+        updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+        if (w.pose) seen.add(w.pose.kind);
+        if (w.pose?.fin && !fin) fin = { kind: w.pose.kind, x: w.body.x, low: w.body.x };
+        if (fin) fin.low = Math.min(fin.low, w.body.x);
+        if (fin && !w.pose?.fin) {
+          flips.push(fin);
+          fin = null;
+        }
+      }
+    });
+    for (const s of steps.flat()) assert.ok(seen.has(s.move), `${path}: ${s.move} came up`);
+    for (const f of flips.filter((f) => /flip/.test(f.kind))) assert.ok(f.low < f.x - 20, `${path}: ${f.kind} springs her back (${(f.x - f.low).toFixed(0)}px)`);
+    assert.ok(flips.some((f) => /flip/.test(f.kind)), `${path}: a backflip came up`);
+  }
+});
+
+test('Backstab melts her into smoke while she slips through, and she steps out of it behind them', async () => {
+  const { moveAt } = await import('../src/render/moves.js');
+  assert.ok((moveAt('backstab', 0.3, 0.56)?.fade ?? 0) >= 0.98, 'gone mid-blink');
+  assert.ok((moveAt('backstab', 0.05, 0.56)?.fade ?? 0) < 0.1, 'there as she dips');
+  assert.ok((moveAt('backstab', 0.7, 0.56)?.fade ?? 0) < 0.1, 'back for the stab');
+  const w = thief();
+  w.char.skills.backstab = 10;
+  const x0 = w.body.x;
+  cast(w, 'backstab');
+  assert.equal(w.fx.filter((f) => f.kind === 'blinksmoke').length, 2, 'a puff where she goes and one where she comes out');
+  for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
+  assert.ok(w.body.x > x0 + 40, 'slipped through');
+});
+
 test("a Thief's hits build Shadow, faster in a quick chain, and it fades once the fighting stops", () => {
   const w = thief();
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
@@ -1608,7 +1661,8 @@ test("a Thief's hits build Shadow, faster in a quick chain, and it fades once th
     updateWorld(slow, DT, press('KeyZ'));
     run(slow, 1.2);
   }
-  assert.ok(slow.chain === 0 || slow.chain === undefined, 'slow hits break the chain');
+  // (An opener can be a two-stab burst, a chain of its own, but nothing carries between presses.)
+  assert.ok((slow.chain ?? 0) <= 1, 'slow hits break the chain');
   assert.ok(slow.shadow < chained, `a broken chain builds less (${slow.shadow} vs ${chained})`);
   run(w, 10);
   assert.equal(w.shadow, 0, 'faded once the fighting stopped');

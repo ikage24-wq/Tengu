@@ -247,6 +247,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
   if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
+  // A Thief darting leaves violet afterimages of herself along the way, fading fast.
+  drawAfterimages(ctx, world, look, gear, cam, heroState, time);
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
   // a blood-red shadow of him just behind him that strikes again a beat after each swing.
   if (!world.dead && inForm(world)) drawForm(ctx, world, look, gear, hx, hy, heroState, time);
@@ -350,13 +352,38 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
 }
 
+// The Thief's darting moves (Shadow Step, her dashes and flash cuts, a blink, the finisher's
+// blinks) leave afterimages: a copy of her every few pixels she covers, tinted violet, fading out
+// over a quarter second (the speed reads as shadow, not as a smear).
+const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'vaultcut']);
+const GHOST_LIFE = 0.24;
+function drawAfterimages(ctx, world, look, gear, cam, state, time) {
+  const g = (feel.ghosts ??= []);
+  const b = world.body;
+  const w = world.stats?.weaponType;
+  const last = g.at(-1);
+  if ((w === 'dagger' || w === 'gauntlet') && GHOST_MOVES.has(world.pose?.kind) && (!last || Math.abs(last.x - b.x) > 7 || Math.abs(last.y - b.y) > 7)) g.push({ x: b.x, y: b.y, at: time, state });
+  while (g.length && (time - g[0].at > GHOST_LIFE || time < g[0].at)) g.shift();
+  for (const k of g) {
+    const age = (time - k.at) / GHOST_LIFE;
+    const gx = snap(k.x - cam.x);
+    const gy = snap(k.y - cam.y);
+    drawTinted(ctx, gx, gy, '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * 0.5 * (1 - age) ** 1.5 }));
+  }
+}
+
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
 function drawPhantom(ctx, world, look, gear, x, y, state) {
   const ph = world.phantom;
   const live = ph && world.now >= ph.since && world.now < ph.until;
   const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
   const px = x - state.facing * (live ? 10 : 16);
-  drawTinted(ctx, px, y, '#241a5c', 0.82, (c) => drawHero(c, look, gear, px, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 }));
+  // A smoky see-through copy (the Thief's realistic look): violet smoke curling up off it, the copy
+  // itself thin and flickering a little like smoke in a draught.
+  const t = state.time ?? 0;
+  const flicker = 0.9 + 0.1 * Math.sin(t * 9) * Math.sin(t * 3.7);
+  fxSprite(ctx, 'celshadowaura', px, y + 4, { t: t * 0.8, scale: 0.42, alpha: 0.75 * state.alpha });
+  drawTinted(ctx, px, y, '#2e2266', 0.78, (c) => drawHero(c, look, gear, px, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.5 * flicker }));
 }
 
 // The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).

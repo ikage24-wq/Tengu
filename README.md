@@ -159,21 +159,27 @@ to clear it.
   the first-job Mage, with their skill points returned.
 - **Thief** (violet and midnight with moonlight silver: crescent moons and smoke) — the first job
   builds the base for both of the Thief's later paths, so its book is a choice: put points into
-  the dagger skills, the gauntlet skills, or both. With a dagger she has her own basic combo (a
-  stab, a slash, an X-cut) and her own dagger command moves (a flipping launcher, fast air stabs
-  and a diving stab, a dash that slips through the line); with a gauntlet her own star combo (a
-  star, two stars, a big moon star through the line) and command throws (up at fliers, from the
-  air, out of a run). **Shadow** is her gauge (a crescent moon): every hit builds it, faster while
+  the dagger skills, the gauntlet skills, or both. She fights light and acrobatic, low and loose
+  on the balls of her feet. With a dagger she has her own basic combo (a stab, a slash, an X-cut)
+  and a pool of others it mixes in (a blur of stabs, a flash cut that darts through, a spinning
+  roundhouse kick, a spinning backhand, a vaulting front-flip cut, a whirl), and every finisher
+  springs her back out in a backflip; her own dagger command moves are a flipping launcher, fast
+  air stabs and a diving stab, and a dash that slips through the line. With a gauntlet her own
+  star combo (a star, two stars, a big moon star through the line, then a backflip) mixes in a
+  twirling throw, a fan of three, and a backflip that whips the moon star out from the top of it;
+  her command throws go up at fliers, from the air, and out of a run. Darting (Shadow Step, her
+  dashes and flash cuts, Backstab, the finisher's blinks) leaves violet afterimages of her behind. **Shadow** is her gauge (a crescent moon): every hit builds it, faster while
   hits land in a quick chain, and it fades fast once the fighting stops. Full, she has
-  **Phantom**: a violet shadow copy of her repeats every attack a beat later (its stars don't come
-  out of your bag). Shared skills: **Shadow Step** (dart through the monsters in smoke, untouchable),
+  **Phantom**: a smoky, see-through violet copy of her repeats every attack a beat later (its
+  stars don't come out of your bag). Shared skills: **Shadow Step** (dart through the monsters in smoke, untouchable),
   **Haste** (you and the party run and jump faster), **Nimble** (avoid and accuracy). Dagger:
-  **Twin Fang** (a three-press combo: stab, stab, cross-slash), **Backstab** (slip through a
-  monster, turn, and stab it in the back; much harder on one facing away), **Dagger Mastery**, and
+  **Twin Fang** (a three-press combo: stab, stab, cross-slash and a backflip out), **Backstab**
+  (melt into smoke, slip through a monster, step out of the smoke behind it and stab it in the
+  back; much harder on one facing away), **Dagger Mastery**, and
   the finisher **Moonlit Assassination** (needs full Shadow and spends it: night falls, she
   vanishes and blinks from monster to monster cutting each one, then a giant crescent moon cuts the
   line). Gauntlet: **Lucky Seven** (a three-press combo: two stars, two more, one big spinning moon
-  star), **Star Fan** (one star per monster), **Gauntlet Mastery**, and the finisher **Full Moon
+  star and a backflip out), **Star Fan** (one star per monster), **Gauntlet Mastery**, and the finisher **Full Moon
   Volley** (needs full Shadow: a storm of stars gathers into a full moon over the monsters, bursts
   into a rain of stars, and a giant crescent moon cuts the line). The masteries only count with
   their own weapon.

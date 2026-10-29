@@ -72,6 +72,11 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celsmoke', x + (f.dir || 1) * 6, y + 14, { p, flip, scale: 0.55 });
       return true;
     }
+    case 'blinksmoke': {
+      // A blink: a puff of violet smoke at the feet where she melts away or steps out.
+      fxSprite(ctx, 'celsmoke', x, y + 6, { p, flip, scale: 0.85 });
+      return true;
+    }
     case 'moonslash': {
       // Moonlit Assassination on each monster: a puff of smoke where the thief blinks in, and a big
       // violet X cut across it.

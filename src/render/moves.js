@@ -42,6 +42,18 @@ function strikeFace(r) {
   r.mouth = 'open';
 }
 
+// A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
+// and land low. `k` scales the height.
+function backflip(t, k = 1) {
+  const f = ease(t);
+  const hop = Math.sin(t * Math.PI);
+  const land = bump(t, 0.82, 1);
+  return {
+    weapon: 25, arm: 60, lift: 24 * k * hop, tilt: -f * Math.PI * 2,
+    rig: (r) => { if (hop > 0.25) tuck(r); else if (t > 0) { r.squat = land > 0.2 ? 2 : 1; wideLegs(r); } r.backArm = [-2, -3]; r.hairLift = hop > 0.3 ? -1 : 0; r.cape -= hop > 0.3 ? 3 : 0; },
+  };
+}
+
 export const MOVES = {
   // A forward slash: wind up behind the head, cut down and through.
   slash(p) {
@@ -1221,12 +1233,14 @@ export const MOVES = {
   // Backstab: crouch and dart forward low through the monster (squashed thin as if into smoke),
   // then turn and stab. The game turns the hero round as the stab lands (about 0.62).
   backstab(p) {
+    // She dips and melts into smoke, is gone while she slips through (the step carries her behind
+    // it), then steps out of the smoke already turned with the dagger drawn back, and stabs.
     if (p < 0.45) {
       const t = seg(p, 0, 0.45);
       const dart = MOVES.dashstab(t * 0.6);
-      return { ...dart, turn: 1 - 0.7 * bump(t, 0.25, 1), stretch: 1 + 0.25 * bump(t, 0.25, 1) };
+      return { ...dart, fade: clamp01(seg(t, 0.25, 0.42) * (1 - seg(t, 0.85, 1))) };
     }
-    return MOVES.thrust(seg(p, 0.45, 1));
+    return { ...MOVES.thrust(seg(p, 0.45, 1)), fade: 1 - seg(p, 0.45, 0.52) };
   },
 
   // Moonlit Assassination: crouch as night falls, vanish (squashed to a sliver as she blinks from
@@ -1276,6 +1290,89 @@ export const MOVES = {
     return { ...m, arm: m.arm - 25, rig: (r) => { m.rig?.(r); tuck(r); } };
   },
 
+  // ---------- The Thief's own swings and throws (her pool, PATH_VARIANTS in world/melee.js) ----------
+  // Light, quick and acrobatic: she flips, spins and kicks where a warrior plants and heaves, and
+  // springs back out of every finisher in a backflip (the hit kicks her back, `kickback`).
+
+  // The cross-cut, quicker, then a backflip out of it. Cuts at about 0.11 and 0.36.
+  crossflip(p) {
+    if (p < 0.5) return MOVES.cross(p / 0.5);
+    return backflip(seg(p, 0.52, 0.92), 0.6);
+  },
+
+  // A spinning roundhouse: turn on the front foot with the dagger tucked, the leg whipping round
+  // high into them, and come back down on guard. Lands at about 0.5.
+  spinkick(p) {
+    if (p < 0.28) {
+      const t = ease(p / 0.28);
+      return { weapon: lerp(25, 140, t), arm: lerp(60, 35, t), tilt: -0.1 * t, rig: (r) => { r.squat = 1; wideLegs(r); r.tx = -1; r.backArm = [2, -2]; } };
+    }
+    const a = ease(seg(p, 0.28, 0.5));
+    const back = ease(seg(p, 0.66, 1));
+    const kick = bump(p, 0.32, 0.72);
+    return {
+      weapon: 140 - 40 * back, arm: 35 + 20 * back, orbit: true, turn: a < 0.5 ? -1 : 1, lift: 5 * kick, tilt: -0.22 * kick, lunge: 6 * kick,
+      rig: (r) => {
+        r.frontLeg = kick > 0.3 ? [q(3 + 4 * kick), q(-6 * kick), q(60 + 30 * kick)] : [2, 0, 4];
+        r.backLeg = [-2, 0, -6];
+        r.backArm = [-4, -4];
+        r.hairLift = -1;
+        r.cape = -4;
+        if (kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+
+  // A vaulting cut: spring up into a forward flip over the blade, and come down out of it cutting
+  // straight down through them, landing low. Lands at about 0.58.
+  vaultcut(p) {
+    const crouch = bump(p, 0, 0.18);
+    const hop = Math.sin(seg(p, 0.12, 0.6) * Math.PI);
+    const flip = ease(seg(p, 0.16, 0.48));
+    const cut = ease(seg(p, 0.48, 0.6));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(25, -150, flip), 170, cut) - 40 * settle, arm: lerp(lerp(60, 175, flip), 35, cut) + 20 * settle, lift: 30 * hop, tilt: flip * Math.PI * 2 + 0.25 * cut * (1 - settle), lunge: 4 * cut * (1 - settle),
+      trail: cut > 0 && p < 0.7,
+      rig: (r) => { if (hop > 0.2) tuck(r); else { r.squat = crouch > 0.3 || settle < 0.6 ? 2 : 1; wideLegs(r); } r.backArm = [-3, -4]; r.hairLift = hop > 0.3 ? -1 : 0; if (cut > 0) strikeFace(r); },
+    };
+  },
+
+  // A whirl: two quick turns with the dagger out, cutting everything round her, then a backflip
+  // out of it. Cuts at about 0.22 and 0.46.
+  whirlflip(p) {
+    if (p < 0.6) return MOVES.spin(p / 0.6, 1);
+    return backflip(seg(p, 0.62, 0.95), 0.5);
+  },
+
+  // A twirling throw: spin once with the arm high, and fling the star out of the turn. The star
+  // leaves at about 0.62.
+  twirlthrow(p) {
+    if (p < 0.34) {
+      const a = ease(p / 0.34);
+      return { weapon: lerp(60, -30, a), arm: lerp(90, 185, a), turn: a < 0.5 ? -1 : 1, lift: 4 * bump(a, 0, 1), tilt: -0.1 * a, rig: (r) => { wideLegs(r); r.backArm = [-3, -4]; r.hairLift = -1; } };
+    }
+    return MOVES.throw(0.35 + 0.65 * seg(p, 0.34, 1));
+  },
+
+  // The finishing throw, then a backflip out of it. The star leaves at about 0.25.
+  throwflip(p) {
+    if (p < 0.48) return MOVES.throw(p / 0.48);
+    return backflip(seg(p, 0.5, 0.92), 0.5);
+  },
+
+  // A flipping throw: spring back into a backflip and, upside down at the top of it, whip a star
+  // out at them, landing low. The star leaves at about 0.46.
+  flipthrow(p) {
+    const fl = backflip(seg(p, 0.08, 0.84), 1.15);
+    const whip = ease(seg(p, 0.36, 0.48));
+    const crouch = bump(p, 0, 0.14);
+    return {
+      ...fl, weapon: lerp(-30, 130, whip), arm: lerp(185, 60, whip), tilt: fl.tilt - 0.1 * crouch,
+      rig: (r) => { fl.rig(r); if (crouch > 0.3) r.squat = 2; if (whip > 0 && whip < 1) strikeFace(r); },
+    };
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -1309,7 +1406,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
-  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
+  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
 };
 
 // Basic attacks chain into a combo per weapon type.

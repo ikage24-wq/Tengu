@@ -3891,6 +3891,222 @@
   E.fissure = asLight(E.fissure, PAL.steel);
   E.valor = asLight(E.valor, PAL.steel);
 
+  // ---------- Real moonlight and smoke (the Thief) ----------
+  // The Thief brought up to the realistic style the other jobs now have (the player asked): her
+  // violet and midnight with moonlight silver, as light, motion and smoke with no outline. Her cuts
+  // are thin, fast motion blurs (finer and quicker than the Warrior's), her hit a sharp silver glint
+  // where two cuts cross with violet sparks, her smoke soft and curling (a noise field like the
+  // Stormcaller's cloud), her moons real moonlight (a pale silver disc with soft grey seas and a
+  // halo), the finishers' crescent a great blade of moonlight, a star's wake a fading streak.
+  const VIOL = ['#ffffff', '#efe6ff', '#b39cff', '#5a3fb8'];
+  const SILV = ['#ffffff', '#f4f2ff', '#d6d2f2', '#8c86c0'];
+  const violSmoke = ramp([[0, '#4a3a7a'], [0.4, '#7a68b0'], [0.75, '#b4a6e0'], [1, '#ece6ff']]);
+  const crescentRamp = ramp([[0, '#4a3498'], [0.35, '#8a6ee0'], [0.7, '#d6ccff'], [1, '#ffffff']]);
+  const moonRamp = ramp([[0, '#9a96bc'], [0.5, '#d8d6ee'], [0.85, '#f4f2ff'], [1, '#ffffff']]);
+  // A motion-blur cut along the swipe's arc (the shape and swing every blade swipe has).
+  function blurCut(L, edge, thick) {
+    return {
+      w: 260, h: 200, n: 8, fps: 30, px: 130, py: 150, swing: [-Math.PI / 2, 1, 100],
+      draw(ctx, i) {
+        const cx = 130;
+        const cy = 150;
+        const R = 100;
+        const a0 = (-168 * Math.PI) / 180;
+        const a1 = (-12 * Math.PI) / 180;
+        const head = [0.5, 1, 1, 1, 1, 1, 1, 1][i];
+        const tail = [0.15, 0.05, 0.15, 0.35, 0.55, 0.72, 0.85, 0.94][i];
+        const a = [0.85, 1, 1, 0.8, 0.6, 0.4, 0.22, 0.1][i];
+        const N = 40;
+        for (let k = 0; k < N; k++) {
+          const u = k / N;
+          if (u < tail || u > head) continue;
+          const v = (u - tail) / Math.max(0.01, head - tail);
+          const th = 3 + thick * Math.pow(v, 1.6);
+          for (const [rr, w, c, al] of [[R - th * 0.5, th * 1.3, L[3], 0.5], [R - th * 0.4, th * 0.9, L[2], 0.85], [R - th * 0.2, th * 0.45, L[1], 0.9], [R - 2.5, 6, edge[1], 1], [R - 1.2, 3, edge[0], 1]]) {
+            ctx.save();
+            ctx.globalAlpha *= al * a * (0.45 + 0.55 * v);
+            ctx.strokeStyle = c;
+            ctx.lineWidth = w;
+            ctx.beginPath();
+            ctx.arc(cx, cy, rr, a0 + (a1 - a0) * u, a0 + (a1 - a0) * (u + 1 / N));
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+        if (i >= 1 && i <= 3) {
+          const gx = cx + Math.cos(a1) * R;
+          const gy = cy + Math.sin(a1) * R;
+          const g = 14 - (i - 1) * 4;
+          glow(ctx, [[gx - g, gy], [gx + g, gy]], 1, SILV, 1);
+          glow(ctx, [[gx, gy - g], [gx, gy + g]], 1, SILV, 1);
+        }
+      },
+    };
+  }
+  E.slashshadow = blurCut(VIOL, SILV, 30);
+  // Her hit: two thin bright cuts crossing on the monster, a silver glint where they meet, violet
+  // sparks flicked off, dimming fast.
+  E.shadowhit = {
+    w: 200, h: 200, n: 6, fps: 28, px: 100, py: 100,
+    draw(ctx, i) {
+      const a = [1, 1, 0.8, 0.5, 0.28, 0.1][i];
+      const len = [56, 84, 90, 86, 74, 60][i];
+      bloomDisc(ctx, 100, 100, 30 * a + 8, 30 * a + 8, VIOL, a);
+      for (const sd of [-1, 1]) glow(ctx, [[100 - len * 0.75, 100 - sd * len * 0.55], [100 + len * 0.75, 100 + sd * len * 0.55]], 2.6 * a + 0.5, VIOL, a);
+      if (i <= 2) {
+        glow(ctx, [[82, 100], [118, 100]], 1.2, SILV, 1);
+        glow(ctx, [[100, 82], [100, 118]], 1.2, SILV, 1);
+      }
+      const R = rng(910);
+      if (i >= 1) {
+        for (let j = 0; j < 8; j++) {
+          const ang = R() * TAU;
+          const d = (i - 0.4) * (14 + R() * 14);
+          const x = 100 + Math.cos(ang) * d;
+          const y = 100 + Math.sin(ang) * d + (i - 1) ** 2 * 2;
+          glow(ctx, [[x, y], [x - Math.cos(ang) * 6, y - Math.sin(ang) * 6]], 0.9, j % 3 ? VIOL : SILV, a);
+        }
+      }
+    },
+  };
+  // The X-cut (each blink of Moonlit Assassination): two long cuts of moonlight crossing, a flash
+  // where they meet, sparks scattering.
+  E.xslash = {
+    w: 260, h: 260, n: 6, fps: 22, px: 130, py: 130,
+    draw(ctx, i) {
+      const a = [0.9, 1, 1, 0.75, 0.45, 0.18][i];
+      const len = [60, 110, 118, 112, 100, 90][i];
+      bloomDisc(ctx, 130, 130, 36 * a + 8, 36 * a + 8, VIOL, a);
+      glow(ctx, [[130 - len * 0.7, 130 - len * 0.7], [130 + len * 0.7, 130 + len * 0.7]], 3.8 * a + 0.6, VIOL, a);
+      if (i > 0) glow(ctx, [[130 - len * 0.7, 130 + len * 0.7], [130 + len * 0.7, 130 - len * 0.7]], 3.8 * a + 0.6, VIOL, a);
+      if (i <= 2) bloomDisc(ctx, 130, 130, 14, 14, SILV, 1);
+      const R = rng(920);
+      if (i >= 2) for (let j = 0; j < 10; j++) {
+        const ang = R() * TAU;
+        const d = 30 + (i - 1) * 22 * (0.6 + R() * 0.6);
+        glow(ctx, [[130 + Math.cos(ang) * d, 130 + Math.sin(ang) * d], [130 + Math.cos(ang) * (d - 8), 130 + Math.sin(ang) * (d - 8)]], 1, j % 2 ? SILV : VIOL, a);
+      }
+    },
+  };
+  // Smoke: a soft violet cloud billowing out low from where she was, curling, thinning and
+  // drifting apart (no outline, no balls).
+  E.smoke = {
+    w: 240, h: 200, n: 7, fps: 18, px: 120, py: 170,
+    draw(ctx, i) {
+      const k = i / 6;
+      const T = i * 0.45;
+      painted(ctx, 0, 0, 240, 200, (x, y) => {
+        const d = Math.hypot((x - 120) / (58 + k * 56), (y - 140 + k * 26) / (38 + k * 34));
+        const n = fbm(x / 26 + T, y / 26 - T * 0.6, 5);
+        const edge = Math.min(sstep(0, 30, x), sstep(240, 210, x), sstep(0, 24, y));
+        const v = ((1 - d) * 1.1 + (n - 0.5) * 1.4 - k * 0.55) * edge;
+        return [Math.min(1, 0.25 + Math.max(0, n - 0.3) * 1.8 - (y - 100) / 300), sstep(0, 0.4, v) * (0.92 - k * 0.4)];
+      }, violSmoke);
+    },
+  };
+  // Shadow building, looping: wisps of violet smoke curling up round her, thin and soft.
+  E.shadowaura = {
+    w: 170, h: 220, n: 8, fps: 10, px: 85, py: 210, loop: true,
+    draw(ctx, i) {
+      const T = i / 8;
+      painted(ctx, 0, 0, 170, 220, (x, y) => {
+        const up = (210 - y) / 200;
+        const n = (q) => fbm(x / 20 + 3, y / 22 + (T + q) * 3, 5);
+        const flow = n(0) * (1 - T) + n(-1) * T;
+        const ring = 1 - Math.abs(Math.abs(x - 85 + (flow - 0.5) * 40) - 40 * (1 - up * 0.5)) / 22;
+        const edge = Math.min(sstep(0, 20, x), sstep(170, 150, x), sstep(0, 40, y));
+        const v = (ring * 0.8 + (flow - 0.5) * 1.3 - up * 1.1) * edge * sstep(-0.05, 0.1, up);
+        return [Math.min(1, 0.3 + Math.max(0, flow - 0.3) * 1.6 + up * 0.4), sstep(0, 0.5, v) * 0.55];
+      }, violSmoke);
+    },
+  };
+  // A moon (the finishers' night): real moonlight, a pale silver disc with soft grey seas, lit
+  // from one side, in a glowing halo. Frames: rising faint, growing, full and bright, then it
+  // flares and breaks into falling light (the gauntlet finisher bursts it).
+  E.moon = {
+    w: 320, h: 320, n: 6, fps: 12, px: 160, py: 160,
+    draw(ctx, i) {
+      const c = 160;
+      const r = [40, 70, 84, 88, 90, 70][i];
+      const a = [0.5, 0.8, 1, 1, 1, 0.5][i];
+      const hal = a * (i === 4 ? 0.95 : 0.6);
+      painted(ctx, 0, 0, 320, 320, (x, y) => {
+        const d = Math.hypot(x - c, y - c) / r;
+        if (d < 0.9) return [0, 0];
+        return [0.75 - (d - 1) * 0.3, Math.exp(-((d - 1) ** 2) * 5) * hal];
+      }, moonRamp, 3);
+      painted(ctx, c - r - 2, c - r - 2, r * 2 + 4, r * 2 + 4, (x, y) => {
+        const d = Math.hypot(x - c, y - c) / r;
+        if (d > 1) return [0, 0];
+        const seas = fbm(x / 24 + 4, y / 24 + 9, 4);
+        const lit = 0.55 + 0.45 * ((c - x) / r * 0.5 + (c - y) / r * 0.3);
+        return [Math.min(1, lit - (seas > 0.55 ? (seas - 0.55) * 1.4 : 0) - d * d * 0.15), sstep(1, 0.94, d) * a];
+      }, moonRamp, 1);
+      if (i === 5) {
+        const R = rng(930);
+        for (let j = 0; j < 14; j++) {
+          const ang = R() * TAU;
+          const d = r + 10 + R() * 40;
+          glow(ctx, [[c + Math.cos(ang) * d, c + Math.sin(ang) * d], [c + Math.cos(ang) * (d + 8), c + Math.sin(ang) * (d + 8) + 6]], 1.2, j % 2 ? SILV : VIOL, 1);
+        }
+      }
+    },
+  };
+  // The finishers' last blow: a great crescent of moonlight sweeping through the line, a thin
+  // silver line first, opening into a blazing crescent with a violet halo, then thinning away.
+  E.crescent = {
+    w: 420, h: 260, n: 8, fps: 18, px: 210, py: 150,
+    draw(ctx, i) {
+      const a = [0.7, 1, 1, 1, 0.8, 0.55, 0.3, 0.12][i];
+      const fat = [0.1, 0.6, 1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      const cx = 210;
+      const cy = 300;
+      const R = 230;
+      const a0 = -Math.PI * 0.78;
+      const a1 = -Math.PI * 0.22;
+      const span = a1 - a0;
+      painted(ctx, 0, 0, 420, 260, (x, y) => {
+        const u = (Math.atan2(y - cy, x - cx) - a0) / span;
+        if (u <= 0 || u >= 1) return [0, 0];
+        const th = 4 + 46 * fat * Math.pow(Math.sin(Math.PI * u), 1.3);
+        const d = (R - Math.hypot(x - cx, y - cy)) / th;
+        if (d < -0.25 || d > 1.6) return [0, 0];
+        const core = d < 0 ? 1 + d * 4 : Math.max(0, 1 - d);
+        const haze = d < 0 ? sstep(-0.25, 0, d) : sstep(1.6, 0.3, d);
+        const n = fbm(x / 30 + i, y / 30, 3);
+        return [Math.min(1, core * 0.85 + (n - 0.5) * 0.2 + 0.1), Math.min(1, core * 0.9 + haze * 0.45) * a];
+      }, crescentRamp);
+      const edge = Array.from({ length: 41 }, (_, k) => {
+        const ang = a0 + (span * k) / 40;
+        return [cx + Math.cos(ang) * (R - 2), cy + Math.sin(ang) * (R - 2)];
+      });
+      glow(ctx, edge, 1.2 + fat, SILV, a);
+      if (i >= 4) {
+        const R2 = rng(940 + i);
+        for (let j = 0; j < 10; j++) {
+          const u = R2();
+          const ang = a0 + (a1 - a0) * u;
+          const d = R - 10 + (i - 3) * 8;
+          glow(ctx, [[cx + Math.cos(ang) * d, cy + Math.sin(ang) * d], [cx + Math.cos(ang) * d + 6, cy + Math.sin(ang) * d + 4]], 1, j % 2 ? SILV : VIOL, a);
+        }
+      }
+    },
+  };
+  // A thrown star's wake, looping: a soft violet streak fading behind it, a silver glint flicking.
+  E.shadowtrail = {
+    w: 170, h: 60, n: 3, fps: 18, px: 160, py: 30,
+    draw(ctx, i) {
+      for (const [dy, w, L, a] of [[0, 3.4, VIOL, 1], [-7, 1.4, SILV, 0.7], [7, 1.4, VIOL, 0.7]]) {
+        const len = 110 + (i * 17) % 30;
+        const pts = Array.from({ length: 12 }, (_, k) => [156 - (len * k) / 11, 30 + dy * (k / 11)]);
+        for (let k = 0; k < 11; k++) glow(ctx, [pts[k], pts[k + 1]], w * (1 - k / 12), L, a * (1 - k / 11));
+      }
+    },
+  };
+  E.streakshadow = asLight(E.streakshadow, PAL.shadow);
+  E.ringshadow = asLight(E.ringshadow, PAL.shadow);
+  E.pillarshadow = asLight(E.pillarshadow, PAL.shadow);
+
   function big(e, k) {
     return {
       ...e,

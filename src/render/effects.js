@@ -128,7 +128,31 @@ function drawShot(ctx, f, cam) {
         if (f.phantom) ctx.globalAlpha = 0.65;
         // A Night Lord's own stars are gold; a giant star is drawn twice the size.
         const body = f.phantom ? '#8a6ae8' : f.shot === 'nightstar' || giant ? '#ffe17a' : big ? '#d2cff0' : f.starColor ?? '#b9c0cc';
-        shuriken(ctx, giant ? 20 : big ? 12 : 7, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.55), '#3a2d4f');
+        const r = giant ? 20 : big ? 12 : 7;
+        if (f.night || giant) {
+          shuriken(ctx, r, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.55), '#3a2d4f');
+          break;
+        }
+        // The Thief's own star is real steel (her realistic look): blurred by its spin (two faint
+        // copies trailing the turn), a fine dark edge instead of an outline, and a glint flicking
+        // off the blades as it turns.
+        const a0 = ctx.globalAlpha;
+        for (const [k, al] of [[0.26, 0.22], [0.13, 0.4]]) {
+          ctx.save();
+          ctx.rotate(-k);
+          ctx.globalAlpha = a0 * al;
+          shuriken(ctx, r, body, body, null);
+          ctx.restore();
+        }
+        shuriken(ctx, r, body, f.phantom ? '#c9b4ff' : mix(body, '#ffffff', 0.6), f.phantom ? '#5a44b0' : mix(body, '#2a2440', 0.55));
+        const glint = Math.max(0, Math.sin(f.t * 31));
+        if (glint > 0.6) {
+          ctx.rotate(-f.t * (big ? 16 : 20));
+          ctx.globalAlpha = a0 * (glint - 0.6) * 2.5;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-r * 0.9, -0.5, r * 1.8, 1);
+          ctx.fillRect(-0.5, -r * 0.9, 1, r * 1.8);
+        }
         break;
       }
       // A spinning shuriken with a faint trail of its own afterimage.

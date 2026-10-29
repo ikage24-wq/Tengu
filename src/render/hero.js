@@ -1587,6 +1587,19 @@ function solveRig(state, anim, mv = null) {
       r.backArm = [-3, -4];
       r.hairLift = -1;
     }
+  } else if (state.ready && (state.wtype === 'dagger' || state.wtype === 'gauntlet')) {
+    // The Thief's stance: light on her feet, low and loose, a quick small bounce on the balls of her
+    // feet with the back heel up, weight forward, the free hand up and ready.
+    const beat = t * 8.5;
+    const down = Math.sin(beat) > 0;
+    r.squat = down ? 2 : 1;
+    r.by = down ? 1 : 0;
+    r.frontLeg = [3, 0, 6];
+    r.backLeg = [-3.2, down ? 0 : -1, -12];
+    r.frontArm = [2, q(-1 + (down ? 0.5 : 0))];
+    r.backArm = [2.5, q(-3.5 + (down ? 0.5 : 0))];
+    r.hair = Math.round((r.hair + Math.sin(beat - 1.2) * 1) * 2) / 2;
+    r.tx = 2;
   } else if (state.ready) {
     // Fighting stance after a fight: feet wide, a springy bounce in the knees on a quick beat,
     // fists up, and the hair whipping a moment behind each bounce.
@@ -1956,6 +1969,11 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     }
     anim.hurtOn = Boolean(state.hurt);
   }
+  // A move can melt the figure into smoke for a moment (`fade`, 0-1: the Thief's blinks).
+  if (moved?.fade) {
+    if (moved.fade >= 0.98) return;
+    state = { ...state, alpha: (state.alpha ?? 1) * (1 - moved.fade) };
+  }
   drawMoved(ctx, look, gear, x, y, state, anim, rigid(mv), moved);
 }
 
@@ -2071,7 +2089,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
   // The body acts out the mood: the expression, or worn out at low health.
-  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon) }, anim, mv);
+  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon), wtype: g.weapon?.type }, anim, mv);
   // A choreographed pose overrides the rig (boss dances).
   if (state.rig) Object.assign(rig, state.rig);
   // A dance pose can lift the front arm over the head (drawn on top, like an attack arm).
@@ -2126,7 +2144,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
-  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 20 }[g.weapon?.type] ?? 62 : null;
+  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 20, dagger: 128 }[g.weapon?.type] ?? 62 : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.

@@ -151,19 +151,19 @@ export const PATH_COMBOS = {
   thiefdagger: [
     { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 58, h: 46, knock: 30, pierce: true }] },
     { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
-    { move: 'cross', dur: 0.46, step: 10, finisher: true, strikes: [{ at: 0.22, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.72, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
+    { move: 'crossflip', dur: 0.62, step: 10, carry: 0.36, finisher: true, strikes: [{ at: 0.11, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.36, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06, flipback: 44 }] },
   ],
   thiefstar: [
     { move: 'throw', dur: 0.38, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 280, h: 60, knock: 25, speed: 760 }] },
     { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
-    { move: 'throw', dur: 0.5, step: -8, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'throwflip', dur: 0.62, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2, kickback: 40 }] },
   ],
   // The Thief's paths. The Assassin: a stab, a slash, a slip through the line, then a turning
   // backstab. The Night Lord: three stars, three more, then a giant star through the line.
   assassin: [
     { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 95, reach: 62, h: 46, knock: 30, pierce: true }] },
     { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 100, reach: 62, h: 52, knock: 35, arc: [-100, 190], thick: 6 }] },
-    { move: 'backstab', dur: 0.5, step: 70, carry: 0.35, finisher: true, strikes: [{ at: 0.62, pct: 190, reach: 66, h: 54, targets: 2, turn: true, backstab: 1.5, pierce: true, knock: 180, big: true, stop: 0.07, shake: 2 }] },
+    { move: 'backstab', dur: 0.5, step: 70, carry: 0.35, blink: true, finisher: true, strikes: [{ at: 0.62, pct: 190, reach: 66, h: 54, targets: 2, turn: true, backstab: 1.5, pierce: true, knock: 180, big: true, stop: 0.07, shake: 2 }] },
   ],
   nightlord: [
     { move: 'barrage', dur: 0.4, step: -2, strikes: [0.17, 0.5, 0.83].map((at, i) => ({ at, shot: 'star', pct: 55, range: 290, h: 60, knock: 20, speed: 800, oy: (i - 1) * 4 })) },
@@ -322,6 +322,32 @@ export const PATH_VARIANTS = {
   // stomping kick then a shot point-blank, or a twirl that looses two. Second: her double shot,
   // three arrows in a burst, or a hop back loosing two down at them. Finisher: her full draw, an
   // overdraw that tears through the line, or a backflip fan of three.
+  // The Thief with a dagger, light and acrobatic. Openers: her stab, a blur of stabs, or a flash cut
+  // that darts through. Second: her slash, a spinning roundhouse kick, or a spinning backhand.
+  // Finisher: the X-cut, a vaulting front flip that cuts down out of the air, or a whirl that cuts
+  // all round her; each springs her back out in a backflip.
+  thiefdagger: [
+    [PATH_COMBOS.thiefdagger[0],
+      { move: 'flurry', dur: 0.32, step: 8, strikes: [{ at: 0.3, pct: 50, reach: 58, h: 46, knock: 15, pierce: true }, { at: 0.7, pct: 55, reach: 58, h: 46, knock: 30, pierce: true }] },
+      { move: 'flashcut', dur: 0.34, step: 30, carry: 0.42, strikes: [{ at: 0.4, pct: 90, reach: 62, h: 50, targets: 2, knock: 40, arc: [-80, 200], thick: 5, pierce: true }] }],
+    [PATH_COMBOS.thiefdagger[1],
+      { move: 'spinkick', dur: 0.4, step: 8, strikes: [{ at: 0.5, pct: 90, reach: 52, h: 52, knock: 110, stop: 0.04 }] },
+      { move: 'spinback', dur: 0.38, step: 8, strikes: [{ at: 0.58, pct: 95, reach: 60, h: 56, targets: 2, knock: 60, launch: 100, arc: [100, -215], thick: 5 }] }],
+    [PATH_COMBOS.thiefdagger[2],
+      { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 150, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, stop: 0.06, shake: 2 }] },
+      { move: 'whirlflip', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 70, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 110, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05, flipback: 40 }] }],
+  ],
+  // The Thief with a gauntlet. Openers: her star or a twirling throw. Second: two stars, or a fan of
+  // three at once. Finisher: the moon star then a backflip, or a backflip that whips the moon star
+  // out from the top of it.
+  thiefstar: [
+    [PATH_COMBOS.thiefstar[0],
+      { move: 'twirlthrow', dur: 0.44, step: -2, strikes: [{ at: 0.62, shot: 'star', pct: 90, range: 280, h: 60, knock: 30, speed: 800 }] }],
+    [PATH_COMBOS.thiefstar[1],
+      { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'star', fan: 3, pct: 45, range: 280, h: 110, knock: 30, speed: 760, muzzle: 'smokepuff' }] }],
+    [PATH_COMBOS.thiefstar[2],
+      { move: 'flipthrow', dur: 0.66, step: -30, carry: 0.46, finisher: true, strikes: [{ at: 0.46, shot: 'moonstar', pct: 150, range: 320, h: 80, targets: 2, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
+  ],
   archer: [
     [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl],
     [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop],
@@ -470,7 +496,7 @@ const DAGGER_COMMANDS = {
 const ASSASSIN_COMMANDS = {
   up: { ...DAGGER_COMMANDS.up, strikes: [{ ...DAGGER_COMMANDS.up.strikes[0], pct: 125, burst: 'crowburst', burstAt: 0.5 }] },
   air: DAGGER_COMMANDS.air.map((st, i) => ({ ...st, strikes: st.strikes.map((x) => ({ ...x, pct: x.pct * 1.15, ...(i === 2 ? { burst: 'crowburst', burstAt: 0 } : {}) })) })),
-  dash: { move: 'backstab', dur: 0.48, step: 80, carry: 0.35, strikes: [{ at: 0.62, pct: 170, reach: 66, h: 54, targets: 2, turn: true, backstab: 1.5, pierce: true, knock: 170, big: true, stop: 0.06 }] },
+  dash: { move: 'backstab', dur: 0.48, step: 80, carry: 0.35, blink: true, strikes: [{ at: 0.62, pct: 170, reach: 66, h: 54, targets: 2, turn: true, backstab: 1.5, pierce: true, knock: 170, big: true, stop: 0.06 }] },
 };
 // How long you must have been running for an attack to become a dash attack.
 const DASH_AFTER = 0.3;
@@ -833,6 +859,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // A dash leaves speed lines and a shock cone along its path.
   // Shield Rush's wall of light, carried before her as she marches.
   if (step.wall) world.fx.push({ kind: 'shieldwall', follow: true, ahead: 22, x: body.x + body.facing * 22, y: body.y, dir: body.facing, t: 0, dur: dur * 0.82 });
+  // A blink (Backstab) leaves a puff of smoke where she melts away and another where she steps out.
+  if (step.blink) for (const [at, dx] of [[0.11, 0], [0.4, step.step]]) world.fx.push({ kind: 'blinksmoke', x: body.x + body.facing * dx, y: body.y, dir: body.facing, t: -at * dur, dur: 0.7 });
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
@@ -1045,6 +1073,8 @@ function land(world, s) {
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
+  // A Thief's finisher springs her back out of the blow in a backflip (`flipback`, px), hit or miss.
+  if (s.flipback && body.onGround && !s.phantom) world.lunge = { v: (-s.dir * s.flipback) / 0.3, until: world.now + 0.3 };
   // A launcher hops you up after them, ready for an air combo.
   if (s.hop && body.onGround) {
     body.vy = -s.hop;
