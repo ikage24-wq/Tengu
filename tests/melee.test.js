@@ -3031,7 +3031,7 @@ test('the kitsune guardian has more weapon moves, and skills of her own', () => 
   const w = shrineMaiden();
   const seen = new Set();
   // (Her picks are random: a long fight, so she gets round to them.)
-  for (let r = 0; r < 7; r++) {
+  for (let r = 0; r < 20; r++) {
     w.mobs.forEach((m) => { m.hp = m.maxHp ?? 1e9; });
     for (let i = 0; i < 60 * 8; i++) {
       updateWorld(w, DT, idle);
@@ -3039,8 +3039,8 @@ test('the kitsune guardian has more weapon moves, and skills of her own', () => 
       w.mobs.forEach((m) => { m.hp = Math.max(m.hp, 1); });
     }
   }
-  // (Her picks are random, so this asks for some of her seven moves beyond the first four.)
-  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft'].filter((k) => seen.has(k)).length >= 3, `a spread of her weapon moves (${[...seen]})`);
+  // (Her picks are random, so this asks for some of her eight moves beyond the first four.)
+  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft', 'spin'].filter((k) => seen.has(k)).length >= 3, `a spread of her weapon moves (${[...seen]})`);
   assert.ok(['moonfall', 'crescent', 'flurry'].filter((k) => seen.has(k)).length >= 2, `her skills (${[...seen]})`);
   assert.ok(!w.fx.some((f) => f.kind === 'kitsunecrescent' && f.speed), 'nothing flies: she has no range');
 });
