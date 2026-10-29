@@ -300,11 +300,13 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   if (!d) return;
   let st = STATE.get(d);
   if (!st) STATE.set(d, (st = { last: time, P: null, V: {}, hair: 0, hairV: 0, tip: 0, tipV: 0, lean: 0, leanV: 0, head: 0, headV: 0, vx: 0, vy: 0, motes: [] }));
-  const dt = Math.max(0, Math.min(0.1, time - st.last));
-  st.last = time;
   // Her bells falling on heads (drawn on the front layer, over the monsters).
   if (layer === 'front') drawBells(ctx, world, d, cam);
+  // She's asked for on both layers each frame but drawn on one: her springs step once, there, by
+  // the time since she was last drawn.
   if (layer !== d.layer) return;
+  const dt = Math.max(0, Math.min(0.1, time - st.last));
+  st.last = time;
   const x = d.x - cam.x;
   const y = d.y - cam.y;
   const sp = Math.hypot(d.vx, d.vy);
