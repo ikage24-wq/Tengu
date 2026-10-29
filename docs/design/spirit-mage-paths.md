@@ -22,6 +22,13 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   armour with a naginata and two (later more) tails of soft fox fire. She stands in front of the
   party, guards, taunts and sweeps the naginata, while the Maiden heals from behind; she bows to
   the Maiden after a fight. Her own skeleton (tall, long-limbed, tails as springs), her own AI.
+  *Built:* "Silver Moon", on the player character scaled up, a cold warlord's stance with a huge
+  naginata held out at her side. She only ever walks, slowly; left far behind, she vanishes in
+  vermilion fox fire and steps out of it at the Maiden's side (no leaps). Seven weapon moves
+  (Thrust, Sweep, Rising Cut, Twin Strike, Cleave, Low Reap, Haft Strike) and three skills of her
+  own on cooldowns: Moonfall (raises and charges the naginata, a vortex drags monsters in, then
+  one crushing blow), Crescent Moon (a flying crescent of moonlight) and Fox-Fire Pillars; plus
+  Fox-Fire Call and Guard.
 - **The doll grows up (chosen):** she becomes a little shrine fox kit, the guardian's mischievous
   junior, who rides on the guardian's shoulder or tail and pulls her own pranks.
 - **Gauge:** a shrine's **Grace**: builds from heals and wards landing, faster the more allies
