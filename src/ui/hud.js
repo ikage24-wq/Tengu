@@ -22,9 +22,28 @@ import { questMarker } from './npc.js';
 import { drawQuestTracker } from './quests.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 
-const BAR_Y = 330;
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
+// The HUD floats over the world as three soft pastel trays instead of one strip across the
+// bottom: you (portrait, bars, EXP, gold) on the left, the menu buttons in the middle, and the
+// hotkeys on the right as round candy buttons.
+const TRAY_Y = 322;
+const TRAY_H = 34;
+const MENU_X = 226;
+const MENU_STEP = 19;
+const HK_X = 380;
+const HK_STEP = 21;
+const HK_D = 19;
+const HK_Y = TRAY_Y + (TRAY_H - HK_D) / 2;
+// A tray: a cream pill with a pink rim, a white inner line and a soft drop shadow.
+function tray(ctx, x, w, edge = '#f4bcd8') {
+  softShadow(ctx, x, TRAY_Y, w, TRAY_H, TRAY_H / 2, 3);
+  box(ctx, x, TRAY_Y, w, TRAY_H, { fill: '#fffaf8', edge, r: TRAY_H / 2, width: 2 });
+  roundRect(ctx, x + 2.5, TRAY_Y + 2.5, w - 5, TRAY_H - 5, TRAY_H / 2 - 2.5);
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
 
 // Bar feedback, from how a value changed since last frame: the chunk just lost holds for a
 // moment and then drains; a heal flashes the bar white and sweeps a shine across it; a blow
@@ -74,7 +93,7 @@ function lowHpVignette(ctx, k) {
   }
   ctx.globalAlpha = k;
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(vignette, 0, 0, 640, BAR_Y + 4);
+  ctx.drawImage(vignette, 0, 0, 640, 360);
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = 1;
 }
@@ -85,57 +104,36 @@ export function drawHud(ui, state, world) {
   const s = world.stats;
   const t = world.now;
 
-  // ----- Bottom bar: a cream ribbon with a scalloped top edge -----
-  ctx.save();
-  const g = ctx.createLinearGradient(0, BAR_Y, 0, 360);
-  g.addColorStop(0, '#fffaf6');
-  g.addColorStop(1, '#f3e8ff');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.moveTo(0, 360);
-  ctx.lineTo(0, BAR_Y + 2);
-  for (let x = 0; x < 640; x += 10) ctx.arc(x + 5, BAR_Y + 2, 5, Math.PI, 0);
-  ctx.lineTo(640, 360);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-
-  // EXP: a thin strip running along the whole top of the bar.
+  // ----- You: portrait, name, HP and MP pills, EXP, gold -----
   const need = expToNext(char.level);
   const pct = Number.isFinite(need) ? char.exp / need : 1;
-  ctx.fillStyle = 'rgba(74,53,96,0.18)';
-  ctx.fillRect(0, BAR_Y + 3, 640, 3);
-  const eg = ctx.createLinearGradient(0, 0, 640, 0);
-  eg.addColorStop(0, '#ffe98a');
-  eg.addColorStop(1, '#ffc94f');
-  ctx.fillStyle = eg;
-  ctx.fillRect(0, BAR_Y + 3, 640 * pct, 3);
-  if (pct > 0 && pct < 1) {
-    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5);
-    sparkle(ctx, 640 * pct, BAR_Y + 4.5, 3, '#ffffff');
-    ctx.globalAlpha = 1;
-  }
-  if (hover(ui, 0, BAR_Y, 640, 7)) tooltip(ui, [{ text: 'Experience', bold: true, color: COLORS.gold }, { text: Number.isFinite(need) ? `${char.exp.toLocaleString()} / ${need.toLocaleString()} (${(pct * 100).toFixed(1)}%)` : 'Max level', size: 8 }]);
-
-  // HP and MP capsules with a heart and a drop. Only HP shakes: MP drops whenever you cast.
   const hpR = char.hp / s.maxHp;
   const hp = meter(state, 'hp', hpR, t);
   const mp = meter(state, 'mp', char.mp / s.maxMp, t);
   const low = hpR < 0.2 && char.hp > 0;
   const beat = low ? 0.5 + 0.5 * Math.sin(t * 7) : 0;
   if (low) lowHpVignette(ctx, 0.25 + 0.3 * beat);
+  tray(ctx, 4, 216, low && beat > 0.5 ? '#ff9fb4' : '#f4bcd8');
 
   const hud = state.hud;
   if (hud.level != null && char.level > hud.level) hud.levelAt = t;
   hud.level = char.level;
   drawPortrait(ctx, char, world, { hurt: hp.hurt < 0.35, low, cheer: t - (hud.levelAt ?? -9) < 3 });
-  text(ctx, char.name, 44, BAR_Y + 17, { size: 9, bold: true });
-  text(ctx, JOBS[char.job].name, 44, BAR_Y + 27, { role: 'minor', size: 7 });
+  text(ctx, char.name, 46, TRAY_Y + 10, { size: 8, bold: true });
+  ctx.font = font(8, true);
+  text(ctx, JOBS[char.job].name, 46 + ctx.measureText(char.name).width + 4, TRAY_Y + 10, { size: 6.5, color: COLORS.muted });
 
-  bar(ctx, 106 + hp.shake, BAR_Y + 9, 110, 9, hpR, low ? (beat > 0.5 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { trail: hp.trail, trailColor: '#ffd3dc', flash: hp.flash, shine: hp.shine, pulse: low ? 0.25 + 0.5 * beat : 0 });
-  bar(ctx, 106, BAR_Y + 20, 110, 9, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine });
-  badge(ctx, 104 + hp.shake, BAR_Y + 13.5, 'heart', COLORS.hp, low ? 1 + beat * 0.25 : 1 + hp.flash * 0.2);
-  badge(ctx, 104, BAR_Y + 24.5, 'drop', COLORS.mp, 1 + mp.flash * 0.2);
+  bar(ctx, 56 + hp.shake, TRAY_Y + 13, 112, 8, hpR, low ? (beat > 0.5 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { size: 6, trail: hp.trail, trailColor: '#ffd3dc', flash: hp.flash, shine: hp.shine, pulse: low ? 0.25 + 0.5 * beat : 0 });
+  bar(ctx, 56, TRAY_Y + 23, 112, 8, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { size: 6, trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine });
+  badge(ctx, 52 + hp.shake, TRAY_Y + 17, 'heart', COLORS.hp, low ? 1 + beat * 0.25 : 1 + hp.flash * 0.2);
+  badge(ctx, 52, TRAY_Y + 27, 'drop', COLORS.mp, 1 + mp.flash * 0.2);
+
+  // EXP: a little pill of its own beside the bars, filling up in gold, with the percent.
+  const ex = 174;
+  box(ctx, ex, TRAY_Y + 7, 40, 9, { fill: '#fff4d6', edge: '#f2d17a', r: 4.5, width: 1 });
+  if (pct > 0) box(ctx, ex + 1, TRAY_Y + 8, Math.max(7, 38 * Math.min(1, pct)), 7, { fill: '#ffd66b', edge: null, r: 3.5 });
+  text(ctx, Number.isFinite(need) ? `${(pct * 100).toFixed(1)}%` : 'MAX', ex + 20, TRAY_Y + 14, { size: 5.5, bold: true, align: 'center', color: '#ffffff', outline: '#c99a1f' });
+  if (hover(ui, ex, TRAY_Y + 7, 40, 9)) tooltip(ui, [{ text: 'Experience', bold: true, color: COLORS.gold }, { text: Number.isFinite(need) ? `${char.exp.toLocaleString()} / ${need.toLocaleString()} (${(pct * 100).toFixed(1)}%)` : 'Max level', size: 8 }]);
 
   // Loot lands with a bump: the coin when gold comes in, the Bag button when an item does.
   const items = Object.values(char.inventory).reduce((n, tab) => n + tab.reduce((m, e) => m + (e ? e.qty ?? 1 : 0), 0), 0);
@@ -149,19 +147,17 @@ export function drawHud(ui, state, world) {
     const a = t - (at ?? -9);
     return a < 0.25 ? 1 + 0.22 * Math.sin((a / 0.25) * Math.PI) : 1;
   };
+  icon(ctx, 'coin', ex + 4, TRAY_Y + 25, 8 * bump(hud.goldAt), '#f0b53a');
+  // Big fortunes shorten (1.2m) so they always fit.
+  text(ctx, char.gold >= 10000 ? price(char.gold) : char.gold.toLocaleString(), ex + 10, TRAY_Y + 28, { size: 7, bold: true, color: COLORS.gold });
+  if (hover(ui, ex, TRAY_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
-  // EXP percent and gold.
-  text(ctx, Number.isFinite(need) ? `EXP ${(pct * 100).toFixed(1)}%` : 'MAX LEVEL', 226, BAR_Y + 17, { size: 7, bold: true, color: '#c99a1f' });
-  icon(ctx, 'coin', 230, BAR_Y + 24.5, 8 * bump(hud.goldAt), '#f0b53a');
-  // Big fortunes shorten (1.2m) so they never run into the menu buttons.
-  text(ctx, char.gold >= 100000 ? price(char.gold) : char.gold.toLocaleString(), 237, BAR_Y + 27.5, { size: 8, bold: true, color: COLORS.gold });
-  if (hover(ui, 226, BAR_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
-
-  // Menu buttons: round candy buttons with icons, a dot when there are points to spend.
+  // ----- Menu buttons: round candy buttons in their own tray, a dot when points are waiting -----
   const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Options', 'options', 'Esc', 'gear', 'gold']];
+  tray(ctx, MENU_X, menus.length * MENU_STEP + 9);
   menus.forEach(([label, key, hotkey, ic, theme], i) => {
-    const cx = 277 + i * 18.6;
-    const cy = BAR_Y + 18;
+    const cx = MENU_X + 14 + i * MENU_STEP;
+    const cy = TRAY_Y + TRAY_H / 2 - 1;
     const th = THEMES[theme];
     const hot = hover(ui, cx - 9, cy - 9, 18, 18);
     const open = state.windows[key].open;
@@ -170,23 +166,30 @@ export function drawHud(ui, state, world) {
     const k = key === 'bag' ? bump(hud.bagAt) : 1;
     ctx.fillStyle = th.dark;
     ctx.beginPath();
-    ctx.arc(cx, cy + 1.5, 8.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 1.5, 8.2 * k, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = open ? th.main : hot ? '#ffffff' : th.light;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 8.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, 8.2 * k, 0, Math.PI * 2);
+    ctx.fill();
+    // A gloss along the top of the bubble.
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(cx - 1.5, cy + lift - 4, 4, 2, -0.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = th.dark;
     ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(cx, cy + lift, 8.2 * k, 0, Math.PI * 2);
     ctx.stroke();
-    icon(ctx, ic, cx, cy + lift, 10 * k, open ? '#ffffff' : th.dark);
+    icon(ctx, ic, cx, cy + lift, 9.5 * k, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
     if (clicked(ui, cx - 9, cy - 9, 18, 18)) state.windows[key].open = !open;
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);
     if (alert) {
       ctx.fillStyle = COLORS.bad;
       ctx.beginPath();
-      ctx.arc(cx + 7, cy - 7 + lift, 3 + Math.sin(t * 6) * 0.6, 0, Math.PI * 2);
+      ctx.arc(cx + 6.5, cy - 6.5 + lift, 3 + Math.sin(t * 6) * 0.6, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1;
@@ -203,6 +206,7 @@ export function drawHud(ui, state, world) {
   const keys = (hud.keys ??= {});
   const typing = state.chat?.typing != null;
   const carrying = Boolean(state.windows.skills?.carry?.live || (state.windows.bag?.carry?.live && state.windows.bag.tab === 1));
+  tray(ctx, HK_X - 6, HOTKEYS.length * HK_STEP + 10, '#d9c4f4');
   HOTKEYS.forEach((code, i) => {
     const b = char.hotkeys[code];
     const k = (keys[code] ??= { at: -9, ok: true, readyAt: -9, short: false });
@@ -217,19 +221,33 @@ export function drawHud(ui, state, world) {
     const age = t - k.at;
     const sink = age < 0.09 ? 1.5 : 0;
     const shake = k.short && age < 0.2 ? Math.round(Math.sin(age * 90) * 1.5) : 0;
-    const x = 400 + i * 19.6 + shake;
-    const y = BAR_Y + 9;
-    const hot = hover(ui, x, y, 18, 18);
-    box(ctx, x, y + 1.5, 18, 18, { fill: '#dccbee', edge: null, r: 5 });
+    const x = HK_X + i * HK_STEP + shake;
+    const y = HK_Y;
+    const D = HK_D;
+    const hot = hover(ui, x, y, D, D);
+    box(ctx, x, y + 1.5, D, D, { fill: '#dccbee', edge: null, r: D / 2 });
     // While a skill or potion is being dragged from a window, every slot shows it can take it,
-    // and the one under the mouse lights up.
+    // and the one under the mouse lights up. An empty slot is a dimmer, dashed bubble.
     const target = carrying && hot;
-    box(ctx, x, y + sink, 18, 18, { fill: target ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: target ? COLORS.select : carrying ? LAV.dark : b ? LAV.main : '#e2d3f0', r: 5, width: target ? 2 : 1.2 });
+    box(ctx, x, y + sink, D, D, { fill: target ? '#fff3c4' : hot ? '#ffffff' : b ? '#fffdfb' : '#f7f0fc', edge: target ? COLORS.select : carrying ? LAV.dark : b ? LAV.main : null, r: D / 2, width: target ? 2 : 1.2 });
+    if (!b && !carrying) {
+      ctx.save();
+      ctx.setLineDash([2, 2]);
+      roundRect(ctx, x + 0.5, y + 0.5 + sink, D - 1, D - 1, D / 2);
+      ctx.strokeStyle = '#d6c4ec';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+    const c0 = D / 2;
     if (b?.skill) {
       const pop = !k.short && age < 0.16 ? 1 + 0.15 * Math.sin((age / 0.16) * Math.PI) : 1;
       ctx.save();
-      ctx.translate(x + 9, y + 9 + sink);
+      ctx.translate(x + c0, y + c0 + sink);
       ctx.scale(pop, pop);
+      ctx.beginPath();
+      ctx.arc(0, 0, D / 2 - 1, 0, Math.PI * 2);
+      ctx.clip();
       drawSkillIcon(ctx, b.skill, -8, -8);
       if (noMp) {
         roundRect(ctx, -8, -8, 16, 16, 3);
@@ -249,25 +267,32 @@ export function drawHud(ui, state, world) {
       const ready = t - k.readyAt;
       if (ready < 0.3) {
         ctx.globalAlpha = 1 - ready / 0.3;
-        box(ctx, x - 1, y - 1 + sink, 20, 20, { fill: null, edge: '#ffffff', r: 6, width: 2 });
+        box(ctx, x - 1, y - 1 + sink, D + 2, D + 2, { fill: null, edge: '#ffffff', r: D / 2 + 1, width: 2 });
         ctx.globalAlpha = 1;
       }
       if (hot) tooltip(ui, skillTooltip(char, b.skill));
     } else if (b?.item) {
       const n = countItem(char.inventory, b.item);
       ctx.globalAlpha = n ? 1 : 0.35;
-      drawItemIcon(ctx, b.item, x + 1, y + 1 + sink);
+      drawItemIcon(ctx, b.item, x + c0 - 8, y + c0 - 8 + sink);
       ctx.globalAlpha = 1;
-      text(ctx, `${n}`, x + 17, y + 17 + sink, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
+      text(ctx, `${n}`, x + D, y + D + sink, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
       if (hot) tooltip(ui, itemTooltip(char, b.item));
     }
-    box(ctx, x - 1, y - 2 + sink, 8, 7, { fill: LAV.main, edge: null, r: 3 });
-    text(ctx, KEY_LABEL(code), x + 3, y + 3.5 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
+    // The key, on a little round tag at the top-left of the bubble.
+    ctx.fillStyle = b ? LAV.main : '#cdb8ec';
+    ctx.beginPath();
+    ctx.arc(x + 2, y + 2 + sink, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    text(ctx, KEY_LABEL(code), x + 2, y + 4.2 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
     if (b && ui.mouse.right && hot) {
       delete char.hotkeys[code];
       ui.used = true;
     }
-    clicked(ui, x, y, 18, 18);
+    clicked(ui, x, y, D, D);
   });
 
   drawHits(ui, state, world);
@@ -303,8 +328,8 @@ function drawPickups(ctx, state, world, hud, t) {
     const e = k * k * (3 - 2 * k) * 0.4 + k * k * 0.6;
     const sx = f.x - cam.x;
     const sy = f.y - cam.y;
-    const ex = 277;
-    const ey = BAR_Y + 18;
+    const ex = MENU_X + 14;
+    const ey = TRAY_Y + TRAY_H / 2 - 1;
     const cx = (sx + ex) / 2;
     const cy = Math.min(sy, ey) - 70;
     const x = (1 - e) * (1 - e) * sx + 2 * (1 - e) * e * cx + e * e * ex;
@@ -319,9 +344,9 @@ function drawPickups(ctx, state, world, hud, t) {
 
 // The hotkey slot under a point on screen (for dragging items onto the bar), or null.
 export function hotkeyAt(x, y) {
-  const i = Math.floor((x - 400) / 19.6);
-  if (i < 0 || i >= HOTKEYS.length || x > 400 + i * 19.6 + 18) return null;
-  return y >= BAR_Y + 9 && y < BAR_Y + 27 ? HOTKEYS[i] : null;
+  const i = Math.floor((x - HK_X) / HK_STEP);
+  if (i < 0 || i >= HOTKEYS.length || x > HK_X + i * HK_STEP + HK_D) return null;
+  return y >= HK_Y && y < HK_Y + HK_D ? HOTKEYS[i] : null;
 }
 
 // The throwing stars a gauntlet is throwing, and how many are left in the set.
@@ -330,7 +355,7 @@ function drawStars(ui, world) {
   const char = world.char;
   const set = activeStar(char);
   const x = 584;
-  const y = BAR_Y - 20;
+  const y = TRAY_Y - 22;
   const low = !set || set.qty < 50;
   box(ctx, x, y, 52, 16, { fill: 'rgba(255,253,251,0.92)', edge: low && Math.sin(world.now * 8) > 0 ? COLORS.bad : '#e2d3f0', r: 8, width: 1.2 });
   if (set) drawItemIcon(ctx, set.id, x + 2, y);
@@ -371,7 +396,7 @@ function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;
   const G = GAUGES[kind];
   const x = 566;
-  const y = BAR_Y - 20;
+  const y = TRAY_Y - 22;
   const k = Math.min(1, value / 100);
   const full = k >= 1;
   // Full, a slow pulse (about a second); every gain flashes the bar white for a moment, and from
@@ -416,7 +441,7 @@ function edgeTint(ctx, rgba, a) {
   g.addColorStop(0, `${rgba}0)`);
   g.addColorStop(1, `${rgba}${a})`);
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 640, BAR_Y);
+  ctx.fillRect(0, 0, 640, 360);
   ctx.restore();
 }
 
@@ -492,9 +517,9 @@ function badge(ctx, x, y, name, color, k) {
 // The hero's face in a round medallion with a level ribbon. The face reacts: a wince when hit,
 // a worried pout while HP is low, and a cheer after a level up.
 function drawPortrait(ctx, char, world, { hurt = false, low = false, cheer = false } = {}) {
-  const cx = 22;
-  const cy = BAR_Y + 6;
-  const r = 15;
+  const cx = 24;
+  const cy = TRAY_Y + 12;
+  const r = 17;
   ctx.save();
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
@@ -515,12 +540,12 @@ function drawPortrait(ctx, char, world, { hurt = false, low = false, cheer = fal
   drawHero(ctx, look, null, cx, cy + 27, { pose: 'idle', time: world.now, scale: 1.25, facing: 1, hurt });
   ctx.restore();
   ctx.strokeStyle = low && Math.sin(world.now * 7) > 0 ? '#ff4f6b' : COLORS.accent;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.stroke();
-  box(ctx, cx - 14, cy + 12, 28, 11, { fill: COLORS.accent, edge: '#ffffff', r: 5.5, width: 1.5 });
-  text(ctx, `Lv ${char.level}`, cx, cy + 20.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: '#c95a8f' });
+  box(ctx, cx - 14, cy + 14, 28, 10, { fill: COLORS.accent, edge: '#ffffff', r: 5, width: 1.5 });
+  text(ctx, `Lv ${char.level}`, cx, cy + 21.6, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: '#c95a8f' });
 }
 
 const SKY = THEMES.sky;
@@ -687,7 +712,7 @@ function drawLog(ui, world, state) {
   const typing = state.chat?.typing != null;
   ctx.font = font(8, true);
   msgs.forEach((m, i) => {
-    const y = BAR_Y - (typing ? 26 : 8) - (msgs.length - 1 - i) * 12;
+    const y = TRAY_Y - (typing ? 24 : 6) - (msgs.length - 1 - i) * 12;
     const a = typing ? 1 : Math.min(1, m.t);
     if (a <= 0) return;
     ctx.globalAlpha = a;

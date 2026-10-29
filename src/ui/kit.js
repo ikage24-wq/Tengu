@@ -290,7 +290,7 @@ export function rarityCell(ctx, x, y, w, h, color, tier, r = 4) {
 // rarity as an inner ring in its color (Epic and up also glow from the corners, Legendary
 // shines), and the stack count and upgrade level in the corners. An empty cell can show a
 // greyed `ghost` of what goes there. `state`: null, 'hot', 'selected', or 'target' (a drop spot).
-export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', fill = '#fffdfb', ghost = null, r = 5, scale = 1, shadow = true, count = true } = {}) {
+export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', fill = '#fffdfb', ghost = null, r = 7, scale = 1, shadow = true, count = true } = {}) {
   const sel = state === 'selected' || state === 'target';
   box(ctx, x, y, s, s, { fill: state === 'target' ? '#fff6d0' : sel ? '#fff3c4' : state === 'hot' && item ? '#ffffff' : fill, edge: sel ? COLORS.select : edge, r, width: sel ? 2 : 1 });
   slotEdges(ctx, x, y, s, s, r);
@@ -775,9 +775,10 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   const { x, y } = win;
   const t = now();
 
-  // Soft shadow, then the cream body with a two-tone border.
-  softShadow(ctx, x, y, w, h, 10, 4);
-  roundRect(ctx, x, y, w, h, 10);
+  // Soft shadow, then the cream body with a two-tone border, all bubbly round corners.
+  const R = 14;
+  softShadow(ctx, x, y, w, h, R, 4);
+  roundRect(ctx, x, y, w, h, R);
   ctx.fillStyle = '#fffaf6';
   ctx.fill();
   // A faint wash of the theme color toward the bottom.
@@ -787,26 +788,24 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   ctx.globalAlpha = 0.35;
   ctx.fillRect(x, y + h - 14, w, 14);
   ctx.restore();
-  // A thin ink line outside the colored rim keeps the window's edge from melting into a scene of
-  // the same pastel.
-  roundRect(ctx, x - 1.5, y - 1.5, w + 3, h + 3, 11.5);
-  ctx.strokeStyle = theme.ink;
-  ctx.globalAlpha = 0.45;
-  ctx.lineWidth = 1;
+  // A soft halo of the theme's light tint round the rim keeps the edge from melting into a scene
+  // of the same pastel, without a hard dark line.
+  roundRect(ctx, x - 2, y - 2, w + 4, h + 4, R + 2);
+  ctx.strokeStyle = theme.light;
+  ctx.lineWidth = 3;
   ctx.stroke();
-  ctx.globalAlpha = 1;
-  roundRect(ctx, x, y, w, h, 10);
-  ctx.strokeStyle = theme.dark;
-  ctx.lineWidth = 2;
+  roundRect(ctx, x, y, w, h, R);
+  ctx.strokeStyle = theme.main;
+  ctx.lineWidth = 2.5;
   ctx.stroke();
-  roundRect(ctx, x + 2, y + 2, w - 4, h - 4, 8);
+  roundRect(ctx, x + 2.5, y + 2.5, w - 5, h - 5, R - 2.5);
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
   // The title ribbon with a scalloped lower edge.
   ctx.save();
-  roundRect(ctx, x, y, w, h, 10);
+  roundRect(ctx, x, y, w, h, R);
   ctx.clip();
   const g = ctx.createLinearGradient(x, y, x, y + HEADER);
   g.addColorStop(0, theme.light);
@@ -815,7 +814,7 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   ctx.fillStyle = g;
   ctx.fillRect(x, y, w, HEADER);
   ctx.beginPath();
-  for (let sx = x; sx < x + w; sx += 6) ctx.arc(sx + 3, y + HEADER, 3, 0, Math.PI);
+  for (let sx = x; sx < x + w; sx += 8) ctx.arc(sx + 4, y + HEADER, 4, 0, Math.PI);
   ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.fillRect(x, y + 2, w, 4);
@@ -893,7 +892,7 @@ export function button(ui, x, y, w, h, label, { enabled = true, primary = false,
   const th = theme ? THEMES[theme] : primary ? (ui.theme ?? THEMES.pink) : null;
   const hot = enabled && hover(ui, x, y, w, h);
   const down = hot && ui.mouse.down;
-  const r = Math.min(7, h / 2);
+  const r = (h - 2) / 2;
   const lip = 2;
   const face = !enabled ? '#efe8f4' : th ? th.main : '#ffffff';
   const lipColor = !enabled ? '#ddd2e8' : th ? th.dark : '#dccbee';
@@ -1079,17 +1078,17 @@ export function endUi(ui) {
   x = Math.max(4, Math.min(636 - w, x));
   y = Math.max(4, y);
   const accent = lines[0]?.color ?? COLORS.accent;
-  softShadow(ctx, x, y, w, h, 8, 3);
-  box(ctx, x, y, w, h, { fill: 'rgba(255,251,253,0.98)', edge: null, r: 8 });
+  softShadow(ctx, x, y, w, h, 12, 3);
+  box(ctx, x, y, w, h, { fill: 'rgba(255,251,253,0.98)', edge: null, r: 12 });
   ctx.save();
-  roundRect(ctx, x, y, w, h, 8);
+  roundRect(ctx, x, y, w, h, 12);
   ctx.clip();
   ctx.fillStyle = accent;
   ctx.fillRect(x, y, 4, h);
   ctx.restore();
-  roundRect(ctx, x, y, w, h, 8);
-  ctx.strokeStyle = COLORS.panelEdge;
-  ctx.lineWidth = 1.5;
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.strokeStyle = '#f4bcd8';
+  ctx.lineWidth = 2;
   ctx.stroke();
   let ty = y + 5;
   for (const l of lines) {
