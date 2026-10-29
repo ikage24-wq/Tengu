@@ -1,9 +1,9 @@
 // Draws the Shrine Maiden's kitsune shrine guardian (world/kitsune.js). She's built on the player
 // character (the hero's body and drawing, hero.js drawPosed), so she belongs in the game's look,
 // with a rig and animations of her own on top:
-//   - her look, "Silver Moon" (the player's pick), in new parts drawn for her: a long silver-white
-//     hime cut, tall fox ears and a great fox tail both tipped vermilion, amber eyes with kitsune
-//     shrine make-up, and a shrine queen's layered crimson robes with a gold obi and gold hair
+//   - her look, "Silver Moon" (the player's pick), in new parts drawn for her: silver-white hair
+//     falling to the floor in slow waves from a centre part ("moon river", hair.js), tall fox ears
+//     and a great fox tail both tipped vermilion, amber eyes with kitsune shrine make-up, and a shrine queen's layered crimson robes with a gold obi and gold hair
 //     ornaments (jobgear/guardian.js); drawn a good deal bigger than the Maiden (the whole figure
 //     scaled, never stretched);
 //   - her bearing: a very strong woman, proud, cold and not friendly at all. She stands like a
@@ -28,7 +28,7 @@ import { fxSprite } from './fx-sprites.js';
 import { KMOVES, CALL, MOONFALL } from '../world/kitsune.js';
 
 export const KITSUNE_LOOK = {
-  hairStyle: 'hime', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
+  hairStyle: 'moonriver', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
   skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'sharp', face: 'cool', lid: 0.62, outfit: 'shrinequeen', outfitColor: '#ffffff', marks: ['kitsune'],
 };
 // She's big: the whole figure scaled up (never stretched).

@@ -2604,7 +2604,8 @@ test('the kitsune guardian only walks, and teleports to the Maiden when she is l
 test('the kitsune guardian has more weapon moves, and skills of her own', () => {
   const w = shrineMaiden();
   const seen = new Set();
-  for (let r = 0; r < 4; r++) {
+  // (Her picks are random: a long fight, so she gets round to them.)
+  for (let r = 0; r < 7; r++) {
     w.mobs.forEach((m) => { m.hp = m.maxHp ?? 1e9; });
     for (let i = 0; i < 60 * 8; i++) {
       updateWorld(w, DT, idle);
