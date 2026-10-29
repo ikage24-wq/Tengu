@@ -6,6 +6,10 @@
 //   Fan Slap       two smacks with a paper fan (light, a little knock)
 //   Streamer Twirl a spin with her streamers whipping out, cutting everything round her
 //   Bell Bonk      a big gold bell dropped on a monster's head from above (it dazes)
+//   Dropkick       up high behind it, then a dive feet first straight into it (it goes flying)
+//   Paper Charm    a charm of spirit light flicked at it from a way off: it sticks, then pops
+//   Akanbe         right up in its face, pulling an eyelid down and sticking her tongue out:
+//                  it's so cross it can't move for a moment (a little hit, a long daze)
 // She cheers with a peace sign when what she was picking on goes down, and puffs up furious when the
 // Spirit Mage is hurt. She flies (no ground under her, so she never needs a path), keeps within
 // LEASH of the Spirit Mage, and her hits are spells of the Spirit Mage's own magic attack
@@ -35,7 +39,12 @@ export const TRICKS = {
   slap: { dur: 0.6, hits: [0.3, 0.55], pct: 26, reach: 46, knock: [40, 110] },
   twirl: { dur: 0.95, hits: [0.3, 0.48, 0.66], pct: 18, r: 64, knock: [15, 15, 120] },
   bonk: { dur: 0.95, hits: [0.6], pct: 50, reach: 200, stun: 0.9, knock: [30] },
+  kick: { dur: 0.9, hits: [0.62], pct: 46, reach: 40, knock: [190], launch: 150 },
+  charm: { dur: 0.8, hits: [0.42], pct: 40, reach: 220, fly: 0.25, stick: 0.45, knock: [60] },
+  akanbe: { dur: 1.1, hits: [0.5], pct: 12, reach: 50, stun: 1.4, knock: [10] },
 };
+// How fast she dives in a dropkick (px/s), past her usual flying speed.
+const DIVE = 720;
 // Rest between tricks (seconds, a random span): she's quick, but never nonstop.
 const REST = [0.45, 0.85];
 // How long her moods show (seconds).
@@ -68,7 +77,7 @@ export function dollOf(world) {
 
 // A trick starts: she faces the monster and the trick's hits are queued.
 function start(world, d, kind, m) {
-  d.act = { kind, t0: world.now, dur: TRICKS[kind].dur, mob: m, done: 0, x: m.x, y: m.y };
+  d.act = { kind, t0: world.now, dur: TRICKS[kind].dur, mob: m, done: 0, x: m.x, y: m.y, x0: d.x };
   d.dir = Math.sign(m.x - d.x) || d.dir;
   d.bit = null;
   if (kind === 'bonk') d.bells.push({ mob: m, t0: world.now, at: world.now + TRICKS.bonk.hits[0] * TRICKS.bonk.dur, x: m.x, y: m.y });
@@ -85,6 +94,22 @@ function strike(world, d) {
     if (a.kind === 'slap') {
       if (alive(a.mob) && Math.abs(a.mob.x - d.x) < T.reach + a.mob.def.w / 2 && Math.abs(a.mob.y - (d.y + 14)) < 70) {
         dollHit(world, a.mob, { pct: T.pct, x: d.x, knock: T.knock[i], launch: last ? 80 : 0, stop: last ? 0.04 : 0.02, burst: 'fanslap', big: last });
+      }
+    } else if (a.kind === 'kick') {
+      if (alive(a.mob) && Math.abs(a.mob.x - d.x) < T.reach + a.mob.def.w / 2 + 20 && Math.abs(a.mob.y - (d.y + 14)) < 80) {
+        dollHit(world, a.mob, { pct: T.pct, x: d.x - d.dir * 10, knock: T.knock[i], launch: T.launch, stop: 0.07, shake: 2, burst: 'spirithit', big: true });
+      }
+    } else if (a.kind === 'charm') {
+      // Flicked: it flies to the monster, sticks, and pops a moment later.
+      if (alive(a.mob)) {
+        const tx = a.mob.x;
+        const ty = a.mob.y - a.mob.def.h * 0.6;
+        world.fx.push({ kind: 'dollcharm', x: d.x + d.dir * 6, y: d.y - 18, tx, ty, mob: a.mob, fly: T.fly, t: 0, dur: T.fly + T.stick });
+        dollHit(world, a.mob, { pct: T.pct, x: d.x, knock: T.knock[i], launch: 90, stop: 0.04, shake: 1, burst: 'spirithit', big: true }, T.fly + T.stick);
+      }
+    } else if (a.kind === 'akanbe') {
+      if (alive(a.mob) && Math.abs(a.mob.x - d.x) < T.reach + a.mob.def.w / 2 + 10) {
+        dollHit(world, a.mob, { pct: T.pct, x: d.x, knock: T.knock[i], stun: T.stun, stop: 0.02, burst: 'spirithit' });
       }
     } else if (a.kind === 'twirl') {
       world.fx.push({ kind: 'dolltwirl', x: d.x, y: d.y, t: 0, dur: 0.35, big: last });
@@ -133,7 +158,18 @@ function goal(world, d) {
   const b = world.body;
   const a = d.act;
   const m = a?.mob ?? d.target;
-  if (a?.kind === 'bonk') return [d.x, d.y];
+  if (a?.kind === 'bonk' || a?.kind === 'charm') return [d.x, d.y];
+  if (a?.kind === 'kick' && alive(m)) {
+    // Up high behind it, then the dive: feet first, straight through where it stands.
+    const side = Math.sign(a.x0 - m.x) || -1;
+    const u = (world.now - a.t0) / a.dur;
+    return u < 0.45 ? [m.x + side * 46, m.y - 70] : [m.x - side * 6, m.y - 14];
+  }
+  if (a?.kind === 'akanbe' && alive(m)) {
+    // Nose to nose with it.
+    const side = Math.sign(a.x0 - m.x) || -1;
+    return [m.x + side * (m.def.w / 2 + 12), m.y - m.def.h * 0.75];
+  }
   if (alive(m)) {
     const side = Math.sign(d.x - m.x) || -b.facing;
     const reach = a?.kind === 'twirl' ? 20 : 30 + m.def.w / 2;
@@ -195,8 +231,8 @@ export function tickDoll(world, dt) {
     let kind = null;
     if (dx < 40 + m.def.w / 2 && Math.abs(m.y - 18 - d.y) < 40) {
       const r = Math.random();
-      kind = crowd >= 2 && r < 0.45 ? 'twirl' : r < 0.78 ? 'slap' : 'bonk';
-    } else if (dx < TRICKS.bonk.reach && Math.random() < 0.02) kind = 'bonk';
+      kind = crowd >= 2 && r < 0.3 ? 'twirl' : r < 0.52 ? 'slap' : r < 0.7 ? 'kick' : r < 0.84 ? 'akanbe' : 'bonk';
+    } else if (dx < TRICKS.charm.reach && Math.random() < 0.03) kind = Math.random() < 0.55 ? 'charm' : 'bonk';
     if (kind) {
       start(world, d, kind, m);
       d.next = now + TRICKS[kind].dur + REST[0] + Math.random() * (REST[1] - REST[0]);
@@ -217,11 +253,12 @@ export function tickDoll(world, dt) {
   // Flying there: she eases toward where she wants to be, quicker the further off, and turns to
   // face where she's going (or her target, or the way the Spirit Mage faces).
   const [gx, gy] = goal(world, d);
-  const k = 1 - Math.exp(-dt * (alive(m) ? 7 : 5));
+  const k = 1 - Math.exp(-dt * (d.act?.kind === 'kick' ? 14 : alive(m) ? 7 : 5));
   let vx = ((gx - d.x) * k) / Math.max(dt, 1e-3);
   let vy = ((gy - d.y) * k) / Math.max(dt, 1e-3);
   const sp = Math.hypot(vx, vy);
-  if (sp > SPEED) [vx, vy] = [(vx * SPEED) / sp, (vy * SPEED) / sp];
+  const top = d.act?.kind === 'kick' ? DIVE : SPEED;
+  if (sp > top) [vx, vy] = [(vx * top) / sp, (vy * top) / sp];
   // Too far behind (a fall, a blink): she zips back in a flash.
   if (Math.abs(b.x - d.x) > LEASH.x * 1.8 || Math.abs(b.y - d.y) > LEASH.y * 2) {
     world.fx.push({ kind: 'dollpop', x: d.x, y: d.y, t: 0, dur: 0.4 });

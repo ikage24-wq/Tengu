@@ -53,6 +53,25 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       fxSprite(ctx, 'celspiritstep', x, y + 22, { p, scale: 0.3 });
       return true;
     }
+    case 'dollcharm': {
+      // The doll's Paper Charm: a little wisp of light flicked in an arc to the monster, then stuck
+      // on it, pulsing faster and faster until it pops (the pop is the hit's own burst).
+      const ox = x - f.x;
+      const oy = y - f.y;
+      const m = f.mob;
+      const tx = (m && m.hp > 0 ? m.x : f.tx) + ox;
+      const ty = (m && m.hp > 0 ? m.y - m.def.h * 0.6 : f.ty) + oy;
+      const u = Math.min(1, f.t / f.fly);
+      if (u < 1) {
+        const cx = x + (tx - x) * u;
+        const cy = y + (ty - y) * u - 26 * Math.sin(u * Math.PI);
+        fxSprite(ctx, 'celspiritorb', cx, cy, { t: f.t, rot: Math.atan2(ty - y, tx - x), scale: 0.16 });
+      } else {
+        const k = (f.t - f.fly) / (f.dur - f.fly);
+        fxSprite(ctx, 'celspiritorb', tx, ty, { t: f.t, scale: 0.13 + 0.05 * Math.abs(Math.sin(f.t * (10 + 30 * k))) });
+      }
+      return true;
+    }
     case 'spiritwave': {
       // Spirit Wave: the staff's foot strikes the floor and a ring of white light races out along
       // the ground both ways, streamers whipping off its edge; a second, fainter ring follows it.

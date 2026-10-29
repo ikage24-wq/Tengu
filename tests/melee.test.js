@@ -12,6 +12,7 @@ import { PATH_COMBOS, PATH_VARIANTS, planCombo, MAX_STOP } from '../src/world/me
 import { MOVES } from '../src/render/moves.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
+import { TRICKS } from '../src/world/spiritdoll.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -2524,4 +2525,23 @@ test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, 
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster on the screen is hit');
   assert.ok(w.char.hp > hp0, 'its light heals her');
   assert.ok(w.spirit < 10, `and it never refills Spirit (${w.spirit})`);
+});
+
+test('the Spirit Doll has a pool of six tricks, and each one lands', () => {
+  const w = shrineMage();
+  run(w, 0.5);
+  const d = w.doll;
+  const seen = new Set();
+  for (const kind of ['slap', 'twirl', 'bonk', 'kick', 'charm', 'akanbe']) {
+    const m = w.mobs[0];
+    const before = m.hp;
+    d.act = null;
+    d.next = 1e9;
+    Object.assign(d, { x: m.x - 30, y: m.y - 18 });
+    d.act = { kind, t0: w.now, dur: TRICKS[kind].dur, mob: m, done: 0, x: m.x, y: m.y, x0: d.x };
+    if (kind === 'bonk') d.bells.push({ mob: m, t0: w.now, at: w.now + TRICKS.bonk.hits[0] * TRICKS.bonk.dur, x: m.x, y: m.y });
+    run(w, TRICKS[kind].dur + 1);
+    if (m.hp < before) seen.add(kind);
+  }
+  assert.deepEqual([...seen].sort(), ['akanbe', 'bonk', 'charm', 'kick', 'slap', 'twirl']);
 });

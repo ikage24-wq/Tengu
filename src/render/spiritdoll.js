@@ -116,6 +116,43 @@ function bonking(p) {
     tilt: -10 * up + 14 * point, by: -1 * up, mouth: point > 0.3 ? 'open' : 'o', brows: [[0.6, -0.2], [0.6, -0.2]], kick: -up, ...kickLegs(p * 4, 0.6),
   });
 }
+// Dropkick: tucked up high, knees to her chest and a wicked grin; then the dive, leaning right
+// over with both legs shot out straight ahead, fan flung back (it lands at 0.62); she bounces off
+// it in a little backflip, cheering.
+function dropkicking(p) {
+  const tuck = ease(seg(p, 0, 0.3)) * (1 - seg(p, 0.45, 0.52));
+  const dive = ease(seg(p, 0.45, 0.6)) * (1 - ease(seg(p, 0.72, 0.85)));
+  const flip = ease(seg(p, 0.7, 0.95));
+  return pose({
+    hand: [lerp(0, -3, dive), lerp(-3 * tuck, 1, dive)], free: [lerp(1, -3, dive), lerp(-4 * tuck, 1, dive)], fan: lerp(-1.8, 2.8, dive), open: 1,
+    tilt: -14 * tuck + 34 * dive, by: -1.2 * tuck, spin: -flip * TAU, cloth: 2 + 2 * dive, kick: -1.5 * dive,
+    legF: [lerp(2.4, 4.6, dive), lerp(-4.6, -3.2, dive), lerp(70, 92, dive)], legB: [lerp(1.2, 3.8, dive), lerp(-4, -2.4, dive), lerp(60, 86, dive)],
+    mouth: dive > 0.3 ? 'open' : tuck > 0.3 ? 'smirk' : 'grin', eyes: flip > 0.2 ? 'happy' : null, brows: [[-0.2, 0.6], [-0.2, 0.6]], extras: flip > 0.4 ? ['spark0'] : [],
+  });
+}
+// Paper Charm: a charm of light drawn from her sleeve, held up between two fingers with a sly look,
+// then flicked at the monster with a snap of the wrist (it leaves at 0.42); she blows on her
+// fingers after it, very pleased with herself.
+function charming(p) {
+  const draw = ease(seg(p, 0, 0.3));
+  const flick = ease(seg(p, 0.34, 0.44));
+  const smug = seg(p, 0.6, 1);
+  return pose({
+    hand: [1.2, -4], fan: -1.9, free: [lerp(0, -1.5, draw) + 5.5 * flick - 3 * smug, lerp(0, -7, draw) + 5 * flick - 3 * smug],
+    tilt: -8 * draw * (1 - flick) + 12 * flick * (1 - smug), tx: 1 * flick, hx: 0.4 * flick,
+    mouth: smug > 0 ? 'o' : draw > 0.4 ? 'smirk' : 'cat', eyes: smug > 0 ? 'half' : null, brows: [[-0.1, 0.4], [-0.1, 0.4]], extras: flick > 0.5 && smug === 0 ? ['spark1'] : [], ...kickLegs(p * 5, 0.5),
+  });
+}
+// Akanbe: nose to nose with it, one finger pulling her lower eyelid down and her tongue stuck right
+// out ("bleh!"), wagging her head (it lands at 0.5); then she spins off giggling.
+function akanbe(p, t) {
+  const pull = ease(seg(p, 0.12, 0.32)) * (1 - ease(seg(p, 0.78, 0.92)));
+  const wag = Math.sin(t * 16) * pull;
+  return pose({
+    hand: [1.2, -4], fan: -1.9, free: [lerp(0, 1.4, pull), lerp(0, -10.5, pull)], tilt: 6 * pull + 5 * wag, hx: 0.6 * pull, hy: 0.3 * pull,
+    mouth: pull > 0.3 ? 'tongue' : 'grin', eyes: pull > 0.3 ? 'half' : 'happy', brows: [[0.6, -0.3], [-0.2, 0.5]], blush: 1.6, extras: pull > 0.3 ? [] : ['spark0'], ...kickLegs(t * 3, 1.1),
+  });
+}
 
 // ---------- Her idle bits ----------
 
@@ -241,7 +278,7 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
     if (a.kind === 'ride') {
       const last = a.hits.filter((h) => h <= world.now - a.t0).at(-1);
       p = riding(last == null ? 0.25 : world.now - a.t0 - last, 0.32, time);
-    } else p = a.kind === 'slap' ? slapping(u) : a.kind === 'twirl' ? twirling(u) : bonking(u);
+    } else p = { slap: slapping, twirl: twirling, bonk: bonking, kick: dropkicking, charm: charming, akanbe: (v) => akanbe(v, time) }[a.kind](u);
   } else if (d.mood === 'peace') {
     doing = 'peace';
     p = cheering(0, time);
