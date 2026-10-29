@@ -7,7 +7,7 @@ import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
 import { SCENES } from '../data/story.js';
 import { wornGear } from '../core/character.js';
-import { sceneStep, advanceScene } from '../world/story.js';
+import { sceneStep, advanceScene, fillScene } from '../world/story.js';
 import { drawHero } from '../render/hero.js';
 import { drawMonster } from '../render/monsters.js';
 import { COLORS, THEMES, text, wrap, box, softShadow, roundRect, sparkle, font } from './kit.js';
@@ -32,7 +32,7 @@ export function sceneInput(world, input) {
     if ((go && sc.t > 0.6) || sc.t > CARD) advanceScene(world);
   } else if (go) {
     // A line still typing shows in full first.
-    if (sc.t * TYPE < (step?.text.length ?? 0)) sc.t = 99;
+    if (sc.t * TYPE < fillScene(world, step?.text).length) sc.t = 99;
     else advanceScene(world);
   }
   input.mouse.clicked = false;
@@ -53,8 +53,9 @@ export function drawScene(ui, world) {
   ctx.fillStyle = 'rgba(30,20,48,0.94)';
   ctx.fillRect(0, 0, 640, bar);
   ctx.fillRect(0, 360 - bar, 640, bar);
-  if (step.card) drawCard(ctx, step, sc.t);
-  else drawLine(ctx, world, step, sc.t);
+  const filled = { ...step, text: fillScene(world, step.text), sub: fillScene(world, step.sub) };
+  if (step.card) drawCard(ctx, filled, sc.t);
+  else drawLine(ctx, world, filled, sc.t);
   // Where you are in the scene, and how to skip it.
   const n = SCENES[sc.id].length;
   for (let k = 0; k < n; k++) {

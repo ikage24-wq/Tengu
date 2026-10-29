@@ -90,3 +90,22 @@ test('a scene holds the world still and steps through its lines', () => {
   assert.equal(w.scene, null);
   for (const t of Object.values(TRIALS)) assert.ok(MAPS[t.field] && QUESTS[t.quest]?.trial, `${t.boss} trial`);
 });
+
+test('important side quests and every job advancement have scenes, naming real speakers', async () => {
+  const { QUEST_SCENES, JOB_SCENES } = await import('../src/data/scenes.js');
+  const { MOBS } = await import('../src/data/mobs.js');
+  const { JOBS } = await import('../src/data/jobs.js');
+  for (const [id, sc] of Object.entries(QUEST_SCENES)) {
+    assert.ok(QUESTS[id], `${id} is a quest`);
+    for (const k of Object.values(sc)) assert.ok(SCENES[k], `${id}: scene ${k}`);
+  }
+  for (const j of Object.values(JOBS).filter((j) => j.tier === 1)) assert.ok(JOB_SCENES[j.id], `${j.id} has a scene`);
+  for (const [id, sc] of Object.entries(SCENES)) {
+    for (const st of sc) if (st.who && st.who !== 'player' && st.who !== 'hayate') assert.ok(NPCS[st.who] || MOBS[st.who], `${id}: who is ${st.who}?`);
+  }
+  // {name} and {job} fill in.
+  const w = createWorld(createCharacter('Hana', {}));
+  playScene(w, 'job_path', { job: 'Paladin' });
+  const { fillScene } = await import('../src/world/story.js');
+  assert.equal(fillScene(w, SCENES.job_path[2].text), 'I am a Paladin now.');
+});

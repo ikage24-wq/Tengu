@@ -11,6 +11,7 @@ import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
 import { playScene } from '../world/story.js';
+import { SCENES } from '../data/story.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero } from '../render/hero.js';
@@ -274,6 +275,8 @@ export function npcWindow(ui, state, world) {
         if (char.refunded) world.log(`Your ${char.refunded} stat points are back: put them into ${(FAMILY_STATS[j.family] ?? FAMILY_STATS.beginner).primary.toUpperCase()} in Stats (C), or press Auto.`, '#ffe36b');
         char.refunded = 0;
         world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
+        // The instructor sends you off with a scene of your own.
+        playScene(world, SCENES[`job_${j.id}`] ? `job_${j.id}` : 'job_path', { job: j.name });
         state.npc = null;
         win.open = false;
       }

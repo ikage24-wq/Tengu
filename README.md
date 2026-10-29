@@ -686,7 +686,8 @@ to clear it.
   of their own (Sylvana in her bower, Tamamo in her sanctum, Lilith in the Rose Grotto, Selene on
   the Moon Terrace), each with moves you read and dodge, until the Crystal King gives the light
   back and Hayate stirs. Story quests wear a ★ and have their own tab; each chapter opens with a
-  title card and plays out in cutscenes; new regions open as the story reaches them; and after
+  title card and plays out in cutscenes (so do the big side quests, the instructors' trials, the
+  end of the tutorial, and every job advancement); new regions open as the story reaches them; and after
   her trial each queen comes back to her region every ten minutes or so for a rematch anyone there
   can join.
 - **Gear sets and polishing** — Sylvana, Tamamo, Lilith, Selene and the Crystal King each drop

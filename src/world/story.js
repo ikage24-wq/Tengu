@@ -16,10 +16,14 @@ import { spawnMob } from './mobs.js';
 
 // ---------- Scenes ----------
 
-export function playScene(world, id) {
+// `vars` fill in a line's {job} (and {name} is always the hero).
+export function playScene(world, id, vars = {}) {
   if (!id || !SCENES[id]) return;
-  world.scene = { id, i: 0, t: 0 };
+  world.scene = { id, i: 0, t: 0, vars: { name: world.char.name, ...vars } };
 }
+
+// A line or card's words with its {name} and {job} filled in.
+export const fillScene = (world, words) => (words ?? '').replace(/\{(\w+)\}/g, (m, k) => world.scene?.vars?.[k] ?? m);
 
 export function sceneStep(world) {
   const sc = world.scene;

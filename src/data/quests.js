@@ -8,6 +8,7 @@
 // A reward marked `forJob` is job gear: the hero gets their own job's piece instead (the id names
 // the slot and level). `variant` gives it a color ('roll' picks one).
 import { STORY_QUESTS } from './story.js';
+import { QUEST_SCENES } from './scenes.js';
 
 export const QUESTS = {
   // Dawnlight Isle, the tutorial (Kuro; world/tutorial.js).
@@ -329,3 +330,5 @@ export const QUESTS = {
 
 // The main story's quests (data/story.js) live with the rest.
 Object.assign(QUESTS, STORY_QUESTS);
+// Cutscenes for the side quests that matter most (data/scenes.js).
+for (const [id, scenes] of Object.entries(QUEST_SCENES)) QUESTS[id].scenes = scenes;

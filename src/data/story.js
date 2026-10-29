@@ -13,6 +13,8 @@
 // being an NPC id, 'player', a monster id (the queens), or null for narration; `mood` a face for
 // whoever speaks ('happy', 'sad', 'surprised', 'angry').
 
+import { SIDE_SCENES, JOB_SCENES } from './scenes.js';
+
 export const CHAPTERS = [
   { n: 1, title: 'A New Breeze', levels: '1-10' },
   { n: 2, title: 'Roots Run Deep', levels: '10-15' },
@@ -359,3 +361,7 @@ export const SCENES = {
     { card: 'To be continued', sub: 'Hayate is waking' },
   ],
 };
+
+// The side quests' and job advancements' scenes (data/scenes.js) play the same way.
+Object.assign(SCENES, SIDE_SCENES);
+for (const [k, v] of Object.entries(JOB_SCENES)) SCENES[`job_${k}`] = v;
