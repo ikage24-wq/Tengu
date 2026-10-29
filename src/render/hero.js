@@ -501,6 +501,16 @@ function mouthShapes(kind, sk) {
 function faceExtras(extra) {
   const out = [];
   for (const e of extra) {
+    if (e === 'kitsune') {
+      // Kitsune shrine make-up: a sweep of vermilion flicking up from each eye's outer corner,
+      // and a small vermilion mark between the brows.
+      for (const side of [-1, 1]) {
+        const ox = FACE_X + (EYE_DX + 1.9) * side;
+        out.push(F(T([[ox - 0.5 * side, EYE_Y - 0.4], [ox + 1.5 * side, EYE_Y - 2.2], [ox + 0.9 * side, EYE_Y - 0.6], [ox, EYE_Y + 0.5]], '#e8463a')));
+      }
+      out.push(F(E(FACE_X, 13.2, 0.55, 0.85, '#e8463a')), F(E(FACE_X, 13.6, 0.3, 0.3, '#ff9a8a')));
+      continue;
+    }
     if (e === 'vein' || e === 'veinbig') {
       const k = e === 'veinbig' ? 1.3 : 1;
       const [vx, vy] = [23.4, 8.6];
@@ -820,6 +830,8 @@ function headShapes(look, g, rig) {
   // A look can keep the eyes half closed (heavy lids), or keep one mouth, whatever the expression.
   if (look.lid) f = { ...f, lid: Math.max(f.lid ?? 0, look.lid) };
   if (look.mouth) f = { ...f, mouth: look.mouth };
+  // A look can wear marks on its face always (a kitsune's shrine make-up), whatever the expression.
+  if (look.marks) f = { ...f, extra: [...(f.extra ?? []), ...look.marks] };
   if (rig.eyes === 'hurt') f = { brows: [[0.5, 0.7], [0.5, 0.7]], extra: ['sweat0'] };
   else if (rig.eyes === 'dead') f = { brows: [[0.2, -0.3], [0.2, -0.3]] };
   else if (rig.mouth && f.puff) f = { ...f, puff: false };

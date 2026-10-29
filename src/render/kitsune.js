@@ -19,7 +19,7 @@ import { KMOVES, CALL } from '../world/kitsune.js';
 
 export const KITSUNE_LOOK = {
   hairStyle: 'hime', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
-  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'thin', face: 'cool', outfit: 'miko', outfitColor: '#ffffff',
+  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'thin', face: 'cool', outfit: 'miko', outfitColor: '#ffffff', marks: ['kitsune'],
 };
 // She's big: the whole figure scaled up (never stretched).
 const SCALE = 1.45;
@@ -273,6 +273,8 @@ export function drawKitsune(ctx, world, k, cam, time) {
     st.walk += dt * Math.min(1.8, Math.abs(k.vx) / 80) * (k.hurry ? 11 : 6.6);
     p = k.hurry ? running(st.walk) : walking(st.walk);
   } else p = st.bit ? standing(time, st.bit.kind, (time - st.bit.t0) / BIT_LEN[st.bit.kind]) : standing(time, null, 0);
+  // Her moods colour whatever she's doing (stronger when she's free to show them).
+  if (k.mood) p = moodOver(p, k.mood.kind, time, a ? 0.5 : 1);
   const P = follow(st, p, dt);
 
   // ----- Her secondary motion, driven by how she moves -----
@@ -292,12 +294,15 @@ export function drawKitsune(ctx, world, k, cam, time) {
   [st.tip, st.tipV] = spring(st.tip, st.tipV, st.hair, 40, 4.5, dt);
   // Robes and sleeves sway after the hips.
   [st.sway, st.swayV] = spring(st.sway, st.swayV, P.cloth - 2 * v, 90, 8, dt);
+  // She leans into a start and rocks back on a stop, and her head trails a beat behind.
+  [st.lean, st.leanV] = spring(st.lean ?? 0, st.leanV ?? 0, 9 * surge + 3 * v, 110, 11, dt);
+  [st.head, st.headV] = spring(st.head ?? 0, st.headV ?? 0, -1.2 * surge, 140, 12, dt);
 
   const x = k.x - cam.x;
   const y = k.y - cam.y;
   const brows = P.brows === 'knit' ? [[-0.2, 0.7], [-0.2, 0.7]] : null;
   const rig = {
-    tx: q(P.tx), by: q(P.by), hx: q(P.hx), hy: q(P.hy), tilt: deg2(P.tilt), backArm: [q(P.hand[0]), q(P.hand[1])], frontArm: [q(P.free[0]), q(P.free[1])], armSide: 1,
+    tx: q(P.tx), by: q(P.by), hx: q(P.hx + Math.max(-1.6, Math.min(1.6, st.head))), hy: q(P.hy), tilt: deg2(P.tilt + Math.max(-12, Math.min(12, st.lean))), backArm: [q(P.hand[0]), q(P.hand[1])], frontArm: [q(P.free[0]), q(P.free[1])], armSide: 1,
     frontLeg: [q(P.legF[0]), q(P.legF[1]), deg2(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), deg2(P.legB[2])], squat: q(P.squat), lift: q(P.lift),
     // (The drawing turns her tail the other way round from her poses' sense; and it never swings
     // down into the ground, however hard it lashes.)
@@ -310,6 +315,18 @@ export function drawKitsune(ctx, world, k, cam, time) {
   const out = P.pole > 0.9 && P.pole < 2.8;
   const naginata = (c, hand, flip) => paintNaginata(c, hand, flip, P.pole, P.grip, st, dt, time);
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: SCALE, facing: dir, under: out ? null : naginata, over: out ? naginata : null });
+}
+
+// Her moods, over whatever pose she's in (`k` how strongly):
+//   cross    the Maiden was hurt: ears pinned flat, brows knit, eyes narrowed, tail bristling up
+//   pleased  what she was fighting went down: ears up, a quick happy swish of the tail, eyes
+//            smiling a moment
+//   attend   the Maiden's Blessing or Ward went up: ears pricked and turned to her, a glance back
+function moodOver(p, mood, t, k) {
+  if (mood === 'cross') return { ...p, ears: [p.ears[0] + 28 * k, p.ears[1] + 26 * k], brows: 'knit', eyes: p.eyes ?? 'half', tail: p.tail - 20 * k, curl: p.curl - 20 * k, mouth: p.mouth ?? 'flat' };
+  if (mood === 'pleased') return { ...p, ears: [p.ears[0] - 10 * k, p.ears[1] - 8 * k], tail: p.tail + 16 * Math.sin(t * 14) * k, curl: p.curl - 14 * k, eyes: p.eyes ?? 'happy' };
+  if (mood === 'attend') return { ...p, ears: [p.ears[0] + 16 * k, p.ears[1] - 10 * k], hx: p.hx - 1.4 * k, hy: p.hy + 0.3 * k };
+  return p;
 }
 
 // Slow, calm blinks.

@@ -76,9 +76,21 @@ const sync = (k) => {
   k.dir = k.body.facing;
 };
 
+// How long her moods show (seconds): cross when the Maiden is hurt, pleased when what she was
+// fighting goes down, attentive when the Maiden's Blessing or Ward goes up.
+const MOOD = { cross: 1.4, pleased: 1.2, attend: 1.1 };
+
 export function tickGuardian(world, dt) {
   const k = guardianOf(world);
   if (!k) return;
+  // Her moods (render/kitsune.js acts them out).
+  const { now } = world;
+  if (world.char.hp < (k.hp ?? world.char.hp) && !world.dead) k.mood = { kind: 'cross', until: now + MOOD.cross };
+  k.hp = world.char.hp;
+  const had = k.brain.target;
+  if (had && had.hp <= 0 && k.mood?.kind !== 'cross') k.mood = { kind: 'pleased', until: now + MOOD.pleased };
+  if (['blessing', 'spiritward'].some((id) => world.char.buffs?.[id]?.since === now)) k.mood = { kind: 'attend', until: now + MOOD.attend };
+  if (k.mood && now >= k.mood.until) k.mood = null;
   if (k.act) act(world, k, dt);
   else {
     const br = k.brain;
@@ -105,6 +117,13 @@ function act(world, k, dt) {
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   sync(k);
   const M = KMOVES[a.kind];
+  // Her lunges kick up dust from the front foot as she drives in, and her planted heel when she
+  // slams the naginata down.
+  const stamp = M ? M.hits[0] * M.dur - 0.06 : a.kind === 'call' ? CALL.hit * CALL.dur : null;
+  if (stamp != null && !a.dust && t >= stamp) {
+    a.dust = true;
+    world.juice.push({ type: 'dust', x: k.x + k.dir * (a.kind === 'call' ? 4 : 14), y: k.y, count: a.kind === 'sweep' || a.kind === 'call' ? 5 : 3, dir: a.kind === 'call' ? 0 : -k.dir });
+  }
   if (M) {
     while (a.done < M.hits.length && t >= M.hits[a.done] * M.dur) {
       const last = a.done === M.hits.length - 1;

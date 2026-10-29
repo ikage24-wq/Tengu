@@ -273,6 +273,9 @@ export function absorbJuice(fx, world) {
         const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
         add(fx, { x: j.x, y: j.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150, g: 380, drag: 3, delay: 1 / 60, life: 0.3, size: 2, shape: 'needle', color: i % 2 ? '#ff9ec0' : '#ffffff' });
       }
+    } else if (j.type === 'dust') {
+      // A companion's footwork (a lunge, a planted heel): dust kicked up from under a foot.
+      dust(fx, j.x, j.y, j.count ?? 3, j.dir ?? 0);
     } else if (j.type === 'kick') {
       kick(fx, j.x ?? 0, j.y ?? 0);
     } else if (j.type === 'shake') {
