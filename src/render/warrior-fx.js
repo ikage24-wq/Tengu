@@ -9,7 +9,7 @@
 
 import { fxSprite } from './fx-sprites.js';
 
-const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'bloom', 'storm']);
+const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'bloom', 'storm', 'ink', 'fox']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
 // The schools drawn as real light, fire and motion (no outlined cartoon dust): the Warrior's steel,
 // the Paladin's light, the Berserker's fire.
@@ -21,11 +21,11 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', bloom: 'celembbloom' };
+const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', bloom: 'celembbloom', ink: 'celembink', fox: 'celembfox' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringbloom', 'celringmint']);
+const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringbloom', 'celringmint', 'celringink', 'celringfox']);
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
@@ -87,6 +87,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   if (school === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: k });
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
+  else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
   else fxSprite(ctx, 'celcross', x, y, { p, scale: k, rot: (seed - 0.5) * 0.8 });
 }
 
@@ -107,6 +108,15 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
+      // The Shinobi darts off in a burst of white smoke and out of another; the Kitsune leaves a
+      // trail of fox fire.
+      if (f.school === 'ink' || f.school === 'fox') {
+        const ink = f.school === 'ink';
+        fxSprite(ctx, ink ? 'celstreakshadow' : 'celfoxtrail', (x + tx) / 2, y - 18, { p, t: p, flip, sx: ink ? len / 100 : undefined, scale: ink ? 1 : len / 160 });
+        fxSprite(ctx, ink ? 'celsmokebomb' : 'celfoxhit', x, y, { p, flip: !flip, scale: ink ? 0.5 : 0.5 });
+        fxSprite(ctx, ink ? 'celsmokebomb' : 'celfoxhit', tx, y, { p: Math.min(1, p * 1.2), scale: ink ? 0.4 : 0.45 });
+        return true;
+      }
       fxSprite(ctx, f.school === 'rage' ? 'celstreakred' : f.school === 'holy' ? 'celstreakgold' : f.school === 'shadow' ? 'celstreakshadow' : f.school === 'bloom' ? 'celstreakbloom' : 'celstreak', (x + tx) / 2, y - 18, { p, flip, sx: len / 100 });
       if (f.school === 'shadow') fxSprite(ctx, 'celsmoke', x, y, { p, flip: !flip, scale: 0.8 });
       else if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x, y + 8, { p, flip: !flip, scale: 0.4 });

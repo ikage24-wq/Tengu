@@ -73,11 +73,10 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Vex's trial for a thief before her level 30 paths (none yet: the old ones were removed, so
-  // Vex doesn't offer it until the new paths arrive).
+  // Vex's trial for a thief before either level 30 path (the Shinobi, the Kitsune).
   thief_trial: {
     id: 'thief_trial', name: "The Thief's Trial", giver: 'vex', minLevel: 30, family: 'thief',
-    text: "Fast hands are nothing if the dark doesn't trust you. The Dullahans in the Twilight Ruins ride at night. Put 20 of them down before they see you coming, then come back and I'll show you the next step.",
+    text: "Fast hands are nothing if the dark doesn't trust you. The Dullahans in the Twilight Ruins ride at night. Put 20 of them down before they see you coming, then come back and I'll show you the Shinobi's way and the Kitsune's way.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },

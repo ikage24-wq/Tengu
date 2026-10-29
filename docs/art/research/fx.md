@@ -500,6 +500,23 @@ leaves dark fringes, so fade each drawing's opacity instead (both at full streng
   Shadow Stars, Triple Throw, Showdown). Each finisher is again one big object: a red moon with
   crows, a giant constellation. (Both were later removed by the player, to be replaced by new
   paths.)
+- Their replacements, the Shinobi (dagger) and the Kitsune (gauntlet), as a pair from the same
+  mountain shrine:
+  - The Shinobi's look is ink: Okami built its whole look and its combat on a sumi-e ink brush
+    (cuts as brush strokes, slashing with the brush to finish), but unlike plain sumi-e it keeps
+    colour, so ink black with red seals and white smoke reads as one painting
+    (https://en.wikipedia.org/wiki/%C5%8Ckami, https://www.fanatical.com/en/blog/okami-hd-traditional-art-graphics-in-a-modern-game).
+    Its cuts are wet brush strokes with dry-brush streaks at the tail, a hit is a splash of ink,
+    and seals are red paper tags.
+  - The Kitsune's look is fox fire (kitsunebi): ghostly lights that trail a fox at night, used
+    by foxes to lead travellers astray, and a fox's power grows with age, one tail at a time up to
+    nine; fox fire is a standard part of how kitsune are pictured, above all white ones
+    (https://bokksu.com/blogs/news/kitsune-the-enigmatic-fox-of-japanese-folklore,
+    https://symbolsage.com/?p=5386). So her gauge is Tails (one to nine), her stars catch
+    blue fox fire, and her illusions throw stars of their own. MapleStory's Kanna fights beside
+    Haku, a spirit fox, with shikigami (https://ayumilove.net/maplestory-kanna-skill-build-guide/).
+  - The realistic look the player picked for every job: no outlines; light, motion, smoke and,
+    for these two, wet ink and real flame.
 - The Mage followed MapleStory's first-job Magician (Energy Bolt, Magic Claw, Magic Guard, Teleport)
   but as a damage-and-support hybrid like its later Bishop: every damage spell's look is a flower
   (bolt, hit, storm), every heal is a mint flower of light, so the two halves read as one job.

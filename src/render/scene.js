@@ -2,7 +2,7 @@
 
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, phantom, inForm, hasFaith } from '../world/melee.js';
+import { gaugeOf, phantom, shadowClones, inForm, hasFaith } from '../world/melee.js';
 import { moveAt, MOVES } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
@@ -244,7 +244,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
-  if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
+  if (!world.dead && (phantom(world) || shadowClones(world))) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
   // A Thief darting leaves violet afterimages of herself along the way, fading fast.
   drawAfterimages(ctx, world, look, gear, cam, heroState, time);
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
@@ -270,9 +270,9 @@ export function drawWorld(ctx, world, viewCam, time) {
     const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
     // A form draws the whole aura larger.
     const auraScale = inForm(world) ? 1.4 : 1;
-    if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1]);
+    if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
-    if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1]);
+    if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
     drawPets(ctx, world, cam, time, 'front');
   }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
@@ -375,6 +375,18 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
   const ph = world.phantom;
   const live = ph && world.now >= ph.since && world.now < ph.until;
   const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
+  // Shadow Clones (full Ki): two ink clones of the Shinobi, one each side of her, inked flat black
+  // with a brush-dry edge of smoke rising off them.
+  if (shadowClones(world)) {
+    const t = state.time ?? 0;
+    for (const [k, side] of [[0, -1], [1, 1]]) {
+      const cx = x + state.facing * side * (live ? 14 : 20);
+      const pose = live && world.now >= ph.since + k * 0.08 ? { pose: ph.kind, progress: Math.min(1, (world.now - ph.since - k * 0.08) / ph.dur), dur: ph.dur, from: null, blend: 1 } : {};
+      fxSprite(ctx, 'celinkaura', cx, y + 4, { t: t * 0.8 + k, scale: 0.36, alpha: 0.7 * state.alpha });
+      drawTinted(ctx, cx, y, '#14101a', 0.86, (c) => drawHero(c, look, gear, cx, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 }));
+    }
+    return;
+  }
   const px = x - state.facing * (live ? 10 : 16);
   // A smoky see-through copy (the Thief's realistic look): violet smoke curling up off it, the copy
   // itself thin and flickering a little like smoke in a draught.
@@ -409,6 +421,16 @@ function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
   const clone = (dx, alpha, tint, k) => drawTinted(ctx, x + dx, y, tint, k, (c) => drawHero(c, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha }));
   if (buffs.shadowpartner) {
     clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, '#1e1650', 0.85);
+  }
+  // Fox Illusion: two illusions of the Kitsune in blue fox fire at her sides, flickering, flames
+  // licking up off them.
+  if (buffs.foxillusion) {
+    for (const side of [-1, 1]) {
+      const dx = side * (24 + Math.sin(time * 1.3 + side) * 3);
+      const flicker = 0.4 + 0.12 * Math.sin(time * 7 + side * 2);
+      fxSprite(ctx, 'celfoxfire', x + dx, y + 4, { t: time + side, scale: 0.3, alpha: 0.6 });
+      clone(dx, flicker, '#2f6cf0', 0.7);
+    }
   }
   if (buffs.mirage) {
     for (const side of [-1, 1]) {

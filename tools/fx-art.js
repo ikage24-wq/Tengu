@@ -3887,6 +3887,490 @@
   E.ringshadow = asLight(E.ringshadow, PAL.shadow);
   E.pillarshadow = asLight(E.pillarshadow, PAL.shadow);
 
+  // ---------- The Thief's second paths: the Shinobi (ink) and the Kitsune (fox fire) ----------
+  // Both in the realistic look (no outlines). The Shinobi is ink on paper come to life: her cuts
+  // are wet brush strokes that dry out into bristle streaks at the tail, a hit is a splash of ink,
+  // her smoke bombs are white smoke, her seals red paper tags that burst in a red circle, and her
+  // finisher a giant fox painted in ink in one sweep of the brush (Okami's sumi-e brush; see
+  // research/fx.md). The Kitsune is fox fire: blue flame with a white core and gold sparks, a
+  // flame tail for each tail of her gauge, and a giant fox of blue fire with nine tails.
+  const INKR = ramp([[0, '#07050b'], [0.45, '#241c2c'], [0.8, '#4a3e52'], [1, '#7a6a80']]);
+  const SEAL = ['#ffffff', '#ffd6c8', '#ff6a4e', '#c81e28'];
+  const FIRE = ['#ffffff', '#d8f6ff', '#5cb4ff', '#1e4ad6'];
+  const FOXR = ramp([[0, '#0a1670'], [0.25, '#1838c8'], [0.5, '#2f7cff'], [0.72, '#66c4ff'], [0.9, '#d4f4ff'], [1, '#ffffff']]);
+  const GOLD = ['#ffffff', '#fff3c4', '#ffd36a', '#e09a2a'];
+  const SMOKEW = ramp([[0, '#6a6474'], [0.5, '#b4aebe'], [0.85, '#e8e4ee'], [1, '#ffffff']]);
+  const PAPER = ramp([[0, '#d8cbb0'], [0.6, '#f2e8d2'], [1, '#fffaf0']]);
+  // A cone capsule's distance (a segment whose radius runs from r0 to r1): the shapes the foxes
+  // are built from.
+  function cone(x, y, ax, ay, bx, by, r0, r1) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(x - ax - dx * t, y - ay - dy * t) - (r0 + (r1 - r0) * t);
+  }
+  const oval = (x, y, cx, cy, rx, ry) => (Math.hypot((x - cx) / rx, (y - cy) / ry) - 1) * Math.min(rx, ry);
+  // A fox leaping to the right, about 360 by 200 (its rump at the left, nose at the right): the
+  // signed distance to its edge (below 0 inside). `tails` is how many tails fan out behind it.
+  function foxShape(x, y, tails = 1) {
+    let d = Math.min(
+      oval(x, y, 175, 128, 90, 38), oval(x, y, 245, 115, 42, 36), oval(x, y, 300, 88, 28, 24),
+      cone(x, y, 250, 105, 295, 88, 26, 24), cone(x, y, 310, 92, 352, 104, 15, 5),
+      cone(x, y, 292, 72, 296, 30, 11, 2), cone(x, y, 310, 70, 324, 34, 10, 2),
+      cone(x, y, 262, 135, 318, 176, 12, 6), cone(x, y, 250, 140, 300, 188, 10, 5),
+      cone(x, y, 130, 140, 70, 178, 18, 6), cone(x, y, 150, 145, 95, 190, 14, 5),
+    );
+    for (let k = 0; k < tails; k++) {
+      const a = tails === 1 ? -2.5 : -1.5 - (k / (tails - 1)) * 2.1;
+      const ex = 95 + Math.cos(a) * 110;
+      const ey = 120 + Math.sin(a) * 90;
+      const mx = 95 + Math.cos(a + 0.35) * 60;
+      const my = 120 + Math.sin(a + 0.35) * 50;
+      const w = tails === 1 ? 1 : 0.62;
+      d = Math.min(d, cone(x, y, 100, 122, mx, my, 16 * w, 26 * w), cone(x, y, mx, my, ex, ey, 26 * w, 4));
+    }
+    return d;
+  }
+
+  // Her cut: a wet brush stroke of ink along the swing, thick in the middle and tapering, its
+  // tail drying into bristle streaks; a thin red sheen runs along the outer edge, and a few drops
+  // fly off the end.
+  function inkCut(thick) {
+    return {
+      w: 260, h: 200, n: 8, fps: 30, px: 130, py: 150, swing: [-Math.PI / 2, 1, 100],
+      draw(ctx, i) {
+        const cx = 130;
+        const cy = 150;
+        const R = 100;
+        const a0 = (-168 * Math.PI) / 180;
+        const a1 = (-12 * Math.PI) / 180;
+        const head = [0.45, 1, 1, 1, 1, 1, 1, 1][i];
+        const tail = [0.1, 0.04, 0.12, 0.3, 0.5, 0.66, 0.8, 0.92][i];
+        const a = [0.9, 1, 1, 0.92, 0.8, 0.6, 0.38, 0.18][i];
+        painted(ctx, 0, 0, 260, 200, (x, y) => {
+          const u = (Math.atan2(y - cy, x - cx) - a0) / (a1 - a0);
+          if (u < tail || u > head) return [0, 0];
+          const k = (u - tail) / Math.max(0.01, head - tail);
+          const th = 3 + thick * Math.pow(Math.sin(Math.PI * Math.min(1, k * 1.1)), 0.7);
+          const v = (R - Math.hypot(x - cx, y - cy)) / th;
+          if (v < -0.6 || v > 0.6) return [0, 0];
+          const edge = sstep(0.5, 0.36, Math.abs(v) + (noise(u * 30, v * 4) - 0.5) * 0.15);
+          // Dry brush: bristle streaks along the stroke, more of them toward its tail.
+          const streak = noise(u * 5 + i * 0.1, (v + 0.5) * 22);
+          const dry = sstep(0.55, 0, k) * 0.9;
+          const ink = edge * sstep(dry * 0.85, dry * 0.85 + 0.12, streak);
+          return [0.25 + Math.abs(v) * 0.9 + streak * 0.2, ink * a];
+        }, INKR, 1.5);
+        if (i >= 1 && i <= 5) {
+          const pts = [];
+          for (let k = 0; k <= 24; k++) {
+            const u = tail + (head - tail) * (k / 24);
+            const ang = a0 + (a1 - a0) * u;
+            pts.push([cx + Math.cos(ang) * (R + 2), cy + Math.sin(ang) * (R + 2)]);
+          }
+          glow(ctx, pts, 0.8, SEAL, a * 0.75);
+        }
+        if (i >= 2) {
+          const R2 = rng(1500 + i);
+          for (let j = 0; j < 6; j++) {
+            const ang = a1 + 0.1 + R2() * 0.3;
+            const d = R + (R2() - 0.5) * 20 + (i - 1) * 6;
+            const rr = 2 + R2() * 3.5 * (1 - i / 9);
+            painted(ctx, cx + Math.cos(ang) * d - rr - 2, cy + Math.sin(ang) * d - rr - 2 + (i - 2) * 4, rr * 2 + 4, rr * 2 + 4, (x, y) => [0.3, sstep(1, 0.7, Math.hypot(x - cx - Math.cos(ang) * d, y - cy - Math.sin(ang) * d - (i - 2) * 4) / rr) * a], INKR, 1);
+          }
+        }
+      },
+    };
+  }
+  E.slashink = inkCut(26);
+  // Her hit: a splash of ink thrown across the monster, ragged spikes and flying drops, a thin red
+  // cut flashing through it; it soaks away.
+  E.inkhit = {
+    w: 200, h: 200, n: 6, fps: 26, px: 100, py: 100,
+    draw(ctx, i) {
+      const r = [26, 44, 52, 56, 58, 60][i];
+      const a = [1, 1, 0.9, 0.7, 0.45, 0.2][i];
+      painted(ctx, 0, 0, 200, 200, (x, y) => {
+        const dx = x - 100;
+        const dy = y - 100;
+        const ang = Math.atan2(dy, dx);
+        const spikes = Math.pow(noise(ang * 2.2 + 9, 3), 3) * 1.6;
+        const d = Math.hypot(dx, dy) / (r * (0.55 + spikes) + (fbm(x / 9, y / 9, 3) - 0.5) * 14);
+        if (d > 1.2) return [0, 0];
+        const soak = sstep(1 - a, 1 - a + 0.2, fbm(x / 14 + 5, y / 14, 3));
+        return [0.2 + d * 0.6, sstep(1, 0.85, d) * soak * Math.min(1, a * 1.6)];
+      }, INKR, 1.5);
+      if (i <= 2) {
+        const L = 40 + i * 14;
+        glow(ctx, [[100 - L, 100 + L * 0.5], [100 + L, 100 - L * 0.5]], 1.4, SEAL, 1 - i * 0.25);
+      }
+    },
+  };
+  // A smoke bomb: a pop of light, then thick white smoke billowing out low and wide, curling and
+  // thinning away.
+  E.smokebomb = {
+    w: 300, h: 220, n: 8, fps: 18, px: 150, py: 190,
+    draw(ctx, i) {
+      const k = i / 7;
+      const T = i * 0.4;
+      painted(ctx, 0, 0, 300, 220, (x, y) => {
+        const d = Math.hypot((x - 150) / (50 + k * 100), (y - 160 + k * 36) / (36 + k * 50));
+        const n = fbm(x / 28 + T, y / 28 - T * 0.5, 5);
+        const edge = Math.min(sstep(0, 30, x), sstep(300, 270, x), sstep(0, 26, y));
+        const v = ((1 - d) * 1.1 + (n - 0.5) * 1.5 - k * 0.5) * edge;
+        return [Math.min(1, 0.35 + Math.max(0, n - 0.35) * 1.8 - (y - 120) / 260), sstep(0, 0.4, v) * (0.95 - k * 0.45)];
+      }, SMOKEW);
+      if (i <= 1) bloomDisc(ctx, 150, 168, 40 - i * 10, 30 - i * 8, ['#ffffff', '#ffffff', '#fff4e8', '#ffd6c8'], 1 - i * 0.4);
+    },
+  };
+  // A seal tag (ofuda): a strip of paper with a red brush glyph, glowing as its charge builds,
+  // then it bursts into a red circle of light and scraps of paper.
+  E.seal = {
+    w: 200, h: 200, n: 7, fps: 14, px: 100, py: 100,
+    draw(ctx, i) {
+      if (i <= 3) {
+        const glowA = [0.2, 0.4, 0.7, 1][i];
+        bloomDisc(ctx, 100, 100, 44, 56, SEAL, glowA * 0.5);
+        painted(ctx, 80, 58, 40, 84, (x, y) => {
+          const fib = noise(x / 3, y / 9);
+          return [0.5 + fib * 0.5, sstep(1, 0.92, Math.max(Math.abs(x - 100) / 18, Math.abs(y - 100) / 40)) * 0.97];
+        }, PAPER, 1);
+        // The glyph: brush strokes of red ink.
+        const st = [[[92, 70], [108, 70]], [[100, 66], [100, 110]], [[90, 84], [110, 92]], [[92, 100], [100, 108], [109, 98]], [[94, 120], [106, 120]], [[100, 114], [100, 132]]];
+        for (const pts of st) strokePts(ctx, pts, 3.2, i === 3 ? '#ff4a3a' : '#c81e28', 1);
+        if (i >= 2) for (const pts of st) glow(ctx, pts, 0.7, SEAL, glowA * 0.8);
+        return;
+      }
+      const t = (i - 3) / 3;
+      const r = 30 + t * 64;
+      const a = 1 - t * 0.75;
+      const ring = [];
+      for (let k = 0; k <= 48; k++) ring.push([100 + Math.cos((k / 48) * TAU) * r, 100 + Math.sin((k / 48) * TAU) * r]);
+      glow(ctx, ring, 2.2 * a + 0.4, SEAL, a);
+      const inner = ring.map(([x, y]) => [100 + (x - 100) * 0.78, 100 + (y - 100) * 0.78]);
+      glow(ctx, inner, 0.9, SEAL, a * 0.8);
+      for (let k = 0; k < 8; k++) {
+        const ang = (k / 8) * TAU + t;
+        glow(ctx, [[100 + Math.cos(ang) * r * 0.8, 100 + Math.sin(ang) * r * 0.8], [100 + Math.cos(ang) * r, 100 + Math.sin(ang) * r]], 1.2, SEAL, a);
+      }
+      if (i === 4) bloomDisc(ctx, 100, 100, 46, 46, SEAL, 0.9);
+      const R = rng(1530 + i);
+      for (let k = 0; k < 6; k++) {
+        const ang = R() * TAU;
+        const d = r * (0.6 + R() * 0.6);
+        const px = 100 + Math.cos(ang) * d;
+        const py = 100 + Math.sin(ang) * d + t * 20;
+        painted(ctx, px - 5, py - 5, 10, 10, (x, y) => [0.8, sstep(1, 0.8, Math.max(Math.abs(x - px) / 4, Math.abs(y - py) / 2.5)) * a], PAPER, 1);
+      }
+    },
+  };
+  // Thousand Cuts: a giant fox painted in ink in one sweep of the brush, from the tail to the
+  // nose, with one red eye; it pounces through the line, then breaks up into splashes of ink.
+  E.inkfox = {
+    w: 420, h: 260, n: 8, fps: 14, px: 210, py: 220,
+    draw(ctx, i) {
+      const reveal = [0.35, 0.7, 1, 1, 1, 1, 1, 1][i];
+      const ox = 20 + i * 10;
+      const oy = 20 - Math.sin((i / 7) * Math.PI) * 18;
+      const gone = [0, 0, 0, 0, 0.15, 0.4, 0.65, 0.88][i];
+      painted(ctx, 0, 0, 420, 260, (X, Y) => {
+        const x = X - ox;
+        const y = Y - oy;
+        if (x / 360 > reveal + (noise(y / 20, 3) - 0.5) * 0.1) return [0, 0];
+        const d = foxShape(x, y) + (fbm(x / 16, y / 16, 4) - 0.5) * 12;
+        if (d > 3) return [0, 0];
+        const streak = noise(x / 46, y / 2.6);
+        const breakup = gone ? sstep(gone - 0.05, gone + 0.05, fbm(x / 22 + 3, y / 22, 4)) : 1;
+        return [0.15 + sstep(-14, 2, d) * 0.6 + streak * 0.2, sstep(3, -2, d) * (0.75 + 0.25 * streak) * breakup];
+      }, INKR, 2);
+      if (i >= 2 && i <= 5) bloomDisc(ctx, ox + 304, oy + 84, 6, 4, SEAL, 1 - gone);
+      if (i >= 2 && i <= 4) {
+        const sweep = [];
+        for (let k = 0; k <= 30; k++) sweep.push([ox + 20 + k * 11, oy + 150 - Math.sin((k / 30) * Math.PI) * 60]);
+        glow(ctx, sweep, 0.9, SEAL, 0.7 - (i - 2) * 0.2);
+      }
+    },
+  };
+
+  // Fire from a shape: `d` its signed distance (below 0 inside); turbulence scrolls up through it
+  // over time (`T`, 0-1 round a loop), so the edge breaks into tongues that lick up and tear off,
+  // brightest (white) deep inside. Returns 0-1.
+  function burn(x, y, d, T, k = 1) {
+    const n = fbm(x / (13 * k), (y + T * 90 * k) / (11 * k), 4);
+    const m = fbm(x / (28 * k) + 3, (y + T * 50 * k) / (26 * k), 3);
+    return sstep(0, 1, -d / (18 * k) + (n - 0.5) * 1.6 + (m - 0.5) * 0.9 + 0.2);
+  }
+  // Its colour value: deep blue through most of the flame, white only at its hottest core.
+  const heat = (v, d, k = 1) => v * (0.35 + 0.65 * sstep(-4 * k, -34 * k, d));
+  // A fox-fire flame, looping: a wisp of blue flame, tongues licking up off it and tearing away.
+  E.foxfire = {
+    w: 120, h: 170, n: 8, fps: 16, px: 60, py: 140, loop: true,
+    draw(ctx, i) {
+      const T = i / 8;
+      painted(ctx, 0, 0, 120, 170, (x, y) => {
+        const sway = (fbm(x / 30, y / 30 + T * 2, 2) - 0.5) * 20 * Math.max(0, (130 - y) / 100);
+        const d = cone(x + sway, y, 60, 126, 60, 30, 24, 2);
+        if (d > 26) return [0, 0];
+        const v = burn(x, y, d, T, 0.8);
+        return [heat(v, d, 0.6), sstep(0, 0.25, v)];
+      }, FOXR, 1);
+    },
+  };
+  // A star's wake of fox fire, looping: a streak of blue flame trailing behind, tongues tearing off.
+  E.foxtrail = {
+    w: 190, h: 80, n: 4, fps: 18, px: 176, py: 46, loop: true,
+    draw(ctx, i) {
+      painted(ctx, 0, 0, 190, 80, (x, y) => {
+        const d = cone(x, y, 172, 46, 20, 40, 13, 2);
+        if (d > 20) return [0, 0];
+        const v = burn(x + i * 13, y, d, i / 4, 0.6) * sstep(10, 40, x);
+        return [heat(v, d, 0.3), sstep(0, 0.25, v)];
+      }, FOXR, 1);
+    },
+  };
+  // Her hit: fox fire bursting up off the monster, tongues of blue flame and gold sparks, burning
+  // down to embers.
+  E.foxhit = {
+    w: 200, h: 220, n: 7, fps: 22, px: 100, py: 140,
+    draw(ctx, i) {
+      const k = i / 6;
+      const a = [1, 1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      painted(ctx, 0, 0, 200, 220, (x, y) => {
+        // Tongues of flame spraying up and out from where it struck, longer as it flares.
+        let d = oval(x, y, 100, 145, 26, 20) + k * 18;
+        for (let j = 0; j < 5; j++) {
+          const ang = -Math.PI / 2 + (j - 2) * 0.45;
+          const L = (60 + (j % 2 ? 0 : 30)) * (0.45 + k * 0.9);
+          d = Math.min(d, cone(x, y, 100, 145, 100 + Math.cos(ang) * L, 145 + Math.sin(ang) * L, 18, 3) + k * k * 14);
+        }
+        if (d > 30) return [0, 0];
+        const v = burn(x, y, d, k * 1.2, 0.6);
+        return [heat(v, d, 0.4), sstep(0, 0.25, v) * a];
+      }, FOXR, 1.5);
+      if (i >= 1) {
+        const R = rng(1560 + i);
+        for (let j = 0; j < 10; j++) {
+          const ang = -Math.PI / 2 + (R() - 0.5) * 2.4;
+          const d = 20 + i * 12 * (0.5 + R());
+          const x = 100 + Math.cos(ang) * d;
+          const y2 = 140 + Math.sin(ang) * d + i * i * 1.5;
+          glow(ctx, [[x, y2], [x - Math.cos(ang) * 5, y2 - Math.sin(ang) * 5]], 0.8, GOLD, a);
+        }
+      }
+    },
+  };
+  // One fox-fire tail, looping (her gauge, Tails, puts one more behind her for each tail): a long,
+  // full plume of blue flame curling up and back from its root, tongues licking off it.
+  E.foxtail = {
+    w: 160, h: 210, n: 8, fps: 12, px: 130, py: 190, loop: true,
+    draw(ctx, i) {
+      const T = i / 8;
+      const sw = Math.sin(T * TAU) * 6;
+      const sp = [[130, 190], [118, 150], [96, 112], [70, 82], [52, 56 + sw * 0.5], [56 + sw, 30]];
+      const rr = [7, 18, 26, 28, 22, 6];
+      painted(ctx, 0, 0, 160, 210, (x, y) => {
+        let d = 99;
+        for (let k = 0; k < sp.length - 1; k++) d = Math.min(d, cone(x, y, sp[k][0], sp[k][1], sp[k + 1][0], sp[k + 1][1], rr[k], rr[k + 1]));
+        if (d > 24) return [0, 0];
+        const v = burn(x, y, d, T, 0.75);
+        return [heat(v, d, 0.5), sstep(0, 0.25, v) * 0.95];
+      }, FOXR, 1.5);
+    },
+  };
+  // Nine-Tail Blaze: a giant fox of blue fire with nine tails fanned out, pouncing through the
+  // line, then burning out into embers and gold sparks.
+  E.flamefox = {
+    w: 420, h: 280, n: 8, fps: 14, px: 210, py: 240,
+    draw(ctx, i) {
+      const grow = [0.4, 0.75, 1, 1, 1, 1, 1, 1][i];
+      const ox = 30 + i * 10;
+      const oy = 50 - Math.sin((i / 7) * Math.PI) * 18;
+      const out = [0, 0, 0, 0, 0.2, 0.45, 0.7, 0.9][i];
+      const T = i / 8;
+      painted(ctx, 0, 0, 420, 280, (X, Y) => {
+        const x = X - ox;
+        const y = Y - oy;
+        const d = foxShape(x, y, 9) + 22 * (1 - grow);
+        if (d > 24) return [0, 0];
+        const ember = out ? sstep(out - 0.06, out + 0.06, fbm(x / 20 + 7, y / 20, 4)) : 1;
+        const v = burn(x, y, d, T, 1.1) * ember;
+        return [heat(v, d, 0.8), sstep(0, 0.25, v)];
+      }, FOXR, 2);
+      if (i >= 2 && i <= 5) bloomDisc(ctx, ox + 304, oy + 84, 7, 5, GOLD, 1 - out);
+      if (i >= 4) {
+        const R = rng(1600 + i);
+        for (let j = 0; j < 16; j++) {
+          const x = ox + 40 + R() * 300;
+          const y = oy + 40 + R() * 140 - (i - 4) * 10;
+          glow(ctx, [[x, y], [x + 2, y - 6]], 0.8, j % 3 ? FIRE : GOLD, 1 - out * 0.6);
+        }
+      }
+    },
+  };
+
+  // ---------- The two paths' pillars, rings, emblems and auras ----------
+  // The Shinobi's: a column of ink rising from her feet with red seal light at its root, a ring
+  // of brushed ink spreading over the ground, her emblem a red seal stamp, and Ki as ink rising
+  // round her in wisps.
+  E.pillarink = {
+    w: 150, h: 330, n: 8, fps: 20, px: 75, py: 318,
+    draw(ctx, i) {
+      const top = [250, 60, 24, 20, 30, 70, 130, 200][i];
+      const a = [0.8, 1, 1, 0.95, 0.85, 0.6, 0.35, 0.15][i];
+      const wid = [10, 22, 26, 26, 24, 20, 16, 12][i];
+      painted(ctx, 0, 0, 150, 330, (x, y) => {
+        if (y < top - 10) return [0, 0];
+        const u = (318 - y) / (318 - top);
+        const sway = (fbm(y / 40, i * 0.3, 3) - 0.5) * 18 * u;
+        const half = wid * (1 - u * 0.5) + (fbm(x / 8, y / 14 - i, 3) - 0.5) * 8;
+        const d = Math.abs(x - 75 - sway) / half;
+        const streak = noise(x / 3, y / 40);
+        const v = sstep(1, 0.7, d) * sstep(1.05, 0.9, u) * (0.7 + 0.3 * streak);
+        return [0.2 + d * 0.5, v * a];
+      }, INKR, 2);
+      ctx.save();
+      ctx.translate(75, 318);
+      ctx.scale(1, 0.35);
+      bloomDisc(ctx, 0, 0, 40, 40, SEAL, a * 0.8);
+      ctx.restore();
+    },
+  };
+  E.ringink = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const r = [40, 70, 92, 106, 116, 122][i];
+      const th = [22, 18, 14, 10, 7, 4][i];
+      const a = [1, 1, 0.85, 0.6, 0.4, 0.2][i];
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.abs(Math.hypot(x - 130, y - 130) - r) / th;
+        if (d > 1.3) return [0, 0];
+        const ang = Math.atan2(y - 130, x - 130);
+        const dry = sstep(0.35, 0.7, noise(ang * 3 + 2, d * 6 + i));
+        return [0.3 + d * 0.5, sstep(1, 0.7, d) * dry * a];
+      }, INKR, 1.5);
+      const ring = [];
+      for (let k = 0; k <= 40; k++) ring.push([130 + Math.cos((k / 40) * TAU) * (r + th * 0.6), 130 + Math.sin((k / 40) * TAU) * (r + th * 0.6)]);
+      glow(ctx, ring, 0.6, SEAL, a * 0.6);
+    },
+  };
+  // A seal stamp (hanko): a square of red ink with a white brush glyph, pressed into the air,
+  // then it breaks up into drops of ink and red light.
+  E.embink = {
+    w: 160, h: 160, n: 5, fps: 12, px: 80, py: 80,
+    draw(ctx, i) {
+      const k = i === 0 ? 0.75 : 1;
+      const brk = i < 3 ? 0 : (i - 2) / 2;
+      bloomDisc(ctx, 80, 80, 54 * k, 54 * k, SEAL, (1 - brk) * 0.5);
+      painted(ctx, 30, 30, 100, 100, (x, y) => {
+        const d = Math.max(Math.abs(x - 80), Math.abs(y - 80)) / (42 * k);
+        if (d > 1.05) return [0, 0];
+        const n = fbm(x / 6, y / 6, 3);
+        const glyph = Math.min(Math.abs(x - 80 + (y - 80) * 0.15) / 3.5, Math.abs(y - 66) / 3, Math.abs(y - 94) / 3, Math.hypot(x - 64, y - 80) > 13 ? 9 : Math.abs(Math.hypot(x - 64, y - 80) - 10) / 2.5);
+        const inner = d < 0.78 && glyph < 1 ? 1 : 0;
+        const keep = brk ? sstep(brk - 0.05, brk + 0.05, n) : 1;
+        return [inner ? 1 : 0.15 + n * 0.25, sstep(1.05, 0.95, d) * keep];
+      }, ramp([[0, '#8a1018'], [0.3, '#c81e28'], [0.6, '#ff5a40'], [1, '#fff2e8']]), 1);
+    },
+  };
+  E.inkaura = {
+    w: 170, h: 220, n: 8, fps: 10, px: 85, py: 210, loop: true,
+    draw(ctx, i) {
+      const T = i / 8;
+      painted(ctx, 0, 0, 170, 220, (x, y) => {
+        const up = (210 - y) / 200;
+        const n = (q) => fbm(x / 18 + 3, y / 20 + (T + q) * 3, 5);
+        const flow = n(0) * (1 - T) + n(-1) * T;
+        const ring = 1 - Math.abs(Math.abs(x - 85 + (flow - 0.5) * 40) - 38 * (1 - up * 0.5)) / 18;
+        const edge = Math.min(sstep(0, 20, x), sstep(170, 150, x), sstep(0, 40, y));
+        const v = (ring * 0.8 + (flow - 0.5) * 1.3 - up * 1.1) * edge * sstep(-0.05, 0.1, up);
+        return [0.2 + Math.max(0, flow - 0.4) * 1.2, sstep(0, 0.5, v) * 0.7];
+      }, INKR);
+    },
+  };
+  // A log (Log Swap): a short round of wood with its bark and a pale cut face, tumbling as it
+  // drops where she stood.
+  E.log = {
+    w: 120, h: 120, n: 6, fps: 14, px: 60, py: 100,
+    draw(ctx, i) {
+      const rot = [0, 0.25, 0.5, 0.7, 0.8, 0.85][i];
+      const dy = [-20, -10, 0, 4, 2, 0][i];
+      const bark = ramp([[0, '#3a2414'], [0.5, '#6a4426'], [1, '#9a6a3e']]);
+      painted(ctx, 0, 0, 120, 120, (X, Y) => {
+        const c = Math.cos(rot);
+        const sn = Math.sin(rot);
+        const x = (X - 60) * c + (Y - 80 - dy) * sn;
+        const y = -(X - 60) * sn + (Y - 80 - dy) * c;
+        const body = Math.max(Math.abs(x) / 34, Math.abs(y) / 14);
+        if (body > 1.05) return [0, 0];
+        const face = Math.hypot((x - 30) / 5, y / 14);
+        const grain = noise(x / 12, y * 0.8);
+        if (face < 1) return [0.9 + Math.sin(face * 14) * 0.08, 1];
+        return [0.25 + grain * 0.5 + (y < -6 ? 0.25 : 0), sstep(1.05, 0.95, body)];
+      }, (v) => (v > 0.8 ? mixc(rgb('#d8b88a'), rgb('#f0dcb4'), (v - 0.8) * 5) : bark(v)), 1);
+    },
+  };
+  // The Kitsune's: a column of fox fire, a ring of it racing over the ground, her emblem a fox's
+  // face in blue flame, and a ring of fox fire burning on the ground for her trap.
+  E.pillarfox = {
+    w: 150, h: 330, n: 8, fps: 20, px: 75, py: 318,
+    draw(ctx, i) {
+      const top = [250, 60, 24, 20, 30, 70, 130, 200][i];
+      const a = [0.8, 1, 1, 0.95, 0.85, 0.6, 0.35, 0.15][i];
+      painted(ctx, 0, 0, 150, 330, (x, y) => {
+        const d = cone(x, y, 75, 316, 75, top, 26, 6);
+        if (d > 24) return [0, 0];
+        const v = burn(x, y, d, i / 8, 1);
+        return [heat(v, d, 0.6), sstep(0, 0.25, v) * a];
+      }, FOXR, 2);
+    },
+  };
+  E.ringfox = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const r = [40, 70, 92, 106, 116, 122][i];
+      const a = [1, 1, 0.85, 0.6, 0.4, 0.2][i];
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.abs(Math.hypot(x - 130, y - 130) - r) - [16, 13, 10, 8, 6, 4][i];
+        if (d > 18) return [0, 0];
+        const v = burn(x, y, d, i / 6, 0.6);
+        return [heat(v, d, 0.4), sstep(0, 0.25, v) * a];
+      }, FOXR, 1.5);
+    },
+  };
+  E.embfox = {
+    w: 160, h: 160, n: 5, fps: 12, px: 80, py: 80,
+    draw(ctx, i) {
+      const k = i === 0 ? 0.75 : 1;
+      const brk = i < 3 ? 0 : (i - 2) / 2;
+      painted(ctx, 0, 0, 160, 160, (X, Y) => {
+        const x = 80 + (X - 80) / k;
+        const y = 80 + (Y - 80) / k;
+        // A fox's face from the front: a broad head, two tall ears, a pointed muzzle.
+        const d = Math.min(oval(x, y, 80, 84, 34, 28), cone(x, y, 58, 70, 44, 26, 16, 2), cone(x, y, 102, 70, 116, 26, 16, 2), cone(x, y, 80, 92, 80, 126, 20, 4));
+        if (d > 20) return [0, 0];
+        const v = burn(x, y, d, i / 5, 0.6) * (brk ? sstep(brk - 0.06, brk + 0.06, fbm(x / 14, y / 14, 3)) : 1);
+        return [heat(v, d, 0.5), sstep(0, 0.25, v)];
+      }, FOXR, 1);
+      if (i < 3) for (const ex of [68, 92]) bloomDisc(ctx, 80 + (ex - 80) * k, 80 + 2 * k, 4, 2.5, GOLD, 1);
+    },
+  };
+  E.foxtrapring = {
+    w: 320, h: 110, n: 6, fps: 12, px: 160, py: 70, loop: true,
+    draw(ctx, i) {
+      painted(ctx, 0, 0, 320, 110, (x, y) => {
+        const d = Math.abs(Math.hypot((x - 160) / 130, (y - 70) / 26) - 1) * 26 - 7;
+        const lifted = d - Math.max(0, 70 - y) * 0;
+        if (d > 22) return [0, 0];
+        const v = burn(x, y, lifted, i / 6, 0.55);
+        return [heat(v, lifted, 0.4), sstep(0, 0.25, v)];
+      }, FOXR, 1.5);
+    },
+  };
+  E.ringinkbig = big(E.ringink, 2.6);
+  E.ringfoxbig = big(E.ringfox, 2.6);
+  E.inkfoxbig = big(E.inkfox, 1.4);
+  E.flamefoxbig = big(E.flamefox, 1.4);
+
   function big(e, k) {
     return {
       ...e,

@@ -348,6 +348,10 @@ const GAUGES = {
     tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
   bloom: { color: '#f26aa4', hot: '#8ef0c8', icon: 'flower', name: 'Bloom', full: 'FULL BLOOM', notch: () => null, edge: 'rgba(255,140,190,', ink: '#7a2050',
     tip: 'Your spells that land and your heals build it; it fades once the fighting stops. Full, every damage spell also heals allies near where it lands, and Garden of Light is ready.' },
+  ki: { color: '#2a2230', hot: '#ff5a46', icon: 'seal', name: 'Ki', full: 'SHADOW CLONES', notch: () => null, edge: 'rgba(200,30,40,', ink: '#14101a',
+    tip: 'Your hits build it, and so does every blow you dodge (and Smoke Bomb and Log Swap); it fades once the fighting stops. Full, two ink clones of you repeat every attack, and Thousand Cuts is ready.' },
+  tails: { color: '#2f6cf0', hot: '#ffd36a', icon: 'foxtail', name: 'Tails', full: 'NINE TAILS', notch: () => null, ticks: 9, label: (v) => `${Math.min(9, Math.floor((v * 9) / 100 + 1e-9))}/9`, edge: 'rgba(60,120,255,', ink: '#0c1a6a',
+    tip: 'One fox-fire tail to nine. Your stars that land grow it, more on monsters already burning; it fades once the fighting stops. Every three tails, a fox-fire illusion throws a star beside each of yours; with all nine, three of them, and Nine-Tail Blaze is ready.' },
   shadow: { color: '#7a52e0', hot: '#d2cff0', icon: 'moon', name: 'Shadow', full: 'PHANTOM', notch: () => null, edge: 'rgba(90,60,200,', ink: '#2a1a6a',
     tip: 'Your hits build it, faster when they land in a quick chain; it fades fast once the fighting stops. Full, a shadow copy of you repeats every attack, and your finisher is ready.' },
   rage: { color: '#c0102e', hot: '#ff6a3a', icon: 'flame', name: 'Rage', full: 'BERSERK', notch: () => SKILLS.rampage?.rageCost ?? 30,
@@ -385,7 +389,12 @@ function drawGauge(ui, world, kind, value) {
     ctx.fillStyle = value >= notch ? '#ffffff' : 'rgba(74,53,96,0.55)';
     ctx.fillRect(Math.round(x + 16 + 40 * (notch / 100)), y + 4, 1, 8);
   }
-  text(ctx, `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
+  // A gauge counted in steps (the Kitsune's nine tails) shows each step on the bar.
+  if (G.ticks) {
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (let k = 1; k < G.ticks; k++) ctx.fillRect(Math.round(x + 16 + (40 * k) / G.ticks), y + 5, 1, 6);
+  }
+  text(ctx, G.label ? G.label(value) : `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
   if (full) {
     text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
     // A full gauge is what a finisher spends: say so when you know one.

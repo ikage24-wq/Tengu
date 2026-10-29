@@ -474,6 +474,24 @@ const ICONS = {
     ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2);
     ctx.fill();
   },
+  // A seal tag, a strip of paper with a brush mark (the Shinobi's Ki).
+  seal(ctx, s) {
+    ctx.fillRect(-s * 0.2, -s * 0.44, s * 0.4, s * 0.88);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillRect(-s * 0.04, -s * 0.32, s * 0.08, s * 0.5);
+    ctx.fillRect(-s * 0.12, -s * 0.22, s * 0.24, s * 0.07);
+    ctx.restore();
+  },
+  // A fox's tail, a plume curling up (the Kitsune's Tails).
+  foxtail(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(s * 0.3, s * 0.46);
+    ctx.quadraticCurveTo(-s * 0.5, s * 0.3, -s * 0.3, -s * 0.46);
+    ctx.quadraticCurveTo(s * 0.1, -s * 0.2, s * 0.06, s * 0.1);
+    ctx.quadraticCurveTo(s * 0.12, s * 0.3, s * 0.3, s * 0.46);
+    ctx.fill();
+  },
   // A crescent moon (the Thief's Shadow).
   moon(ctx, s) {
     ctx.beginPath();

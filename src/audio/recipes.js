@@ -257,6 +257,31 @@ const R = {
       { seq: 'A3+E4+A4+C5:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
     ],
   },
+  // The Thief's paths. The Shinobi: Ki topping out (a blade drawn and a taiko hit: Shadow
+  // Clones), a seal bursting, ink spilling over the world, and the ink fox's sweep. The Kitsune:
+  // the ninth tail (a koto run and bells: Nine Tails), night falling with the fox fire, and the
+  // fire fox's pounce.
+  shadowclones: { db: -10, max: 1, duck: [-5, 800], layers: [{ rec: 'unsheathe', rate: 1.1 }, thump(90, 320, { slide: -1 }), { seq: 'r:80 D4+A4:600', inst: 'pan_flute', attack: 0.05, db: -8 }] },
+  sealburst: { db: -10, max: 2, layers: [{ rec: 'darkImpact', len: 700, db: -4 }, thump(110, 260), { seq: 'D5:300', inst: 'orchestral_harp', db: -8 }] },
+  inkwash: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', len: 1400 }, { rec: 'teleOut', db: -6 }, { seq: 'D3+A3:1200', inst: 'pan_flute', attack: 0.3, db: -8 }] },
+  inkfoxsweep: {
+    db: -8, max: 1, duck: [-8, 1200], layers: [
+      { rec: 'bladeSwingHeavy', rate: 0.75 },
+      { rec: 'darkImpact', len: 1400, db: -3 },
+      thump(65, 480, { slide: -1.5 }),
+      { seq: 'D3+A3+D4+F4:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
+    ],
+  },
+  ninetails: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'D5:50 E5:50 A5:50 B5:50 D6:50 E6:700', inst: 'orchestral_harp' }, { seq: 'r:200 A4+D5+E5:900', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
+  foxnight: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 900 }, { seq: 'A5:60 B5:60 E6:60 A6:700', inst: 'celesta', db: -4 }, { seq: 'A3+E4+A4:1100', inst: 'pan_flute', attack: 0.2, db: -8 }] },
+  flamefoxpounce: {
+    db: -8, max: 1, duck: [-8, 1200], layers: [
+      { rec: 'fireLaunch', len: 900, db: -2 },
+      { rec: 'darkImpact', len: 1400, db: -4 },
+      thump(70, 460, { slide: -1.5 }),
+      { seq: 'A3+E4+A4+B4:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
+    ],
+  },
   // The Mage: Bloom topping out (a harp run and bells: Full Bloom), the garden rising, and the
   // giant flower bursting open.
   fullbloom: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'C5:60 E5:60 G5:60 C6:60 E6:700', inst: 'orchestral_harp' }, { seq: 'r:150 G6:700', inst: 'glockenspiel', db: -6 }, { seq: 'r:200 C4+E4+G4:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },

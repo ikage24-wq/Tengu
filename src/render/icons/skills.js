@@ -36,6 +36,8 @@ const BG = {
   blood: ['#ffa0b4', '#5a0e24'],
   indigo: ['#b8bcff', '#1e1a5e'],
   tempest: ['#cdb4ff', '#262a7e'],
+  inkwash: ['#e8dfe0', '#241c2a'],
+  foxfire: ['#a8d8ff', '#14308a'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -1223,6 +1225,125 @@ function fullmoonvolley() {
   return out;
 }
 
+// ---------- Shinobi (ink black, red seals, white smoke) ----------
+const SEALRED = '#d8283a';
+const KUNAI = { w: 1.9, gw: 2.4, glen: 1.6, guard: '#5a5868', grip: '#1c1820', gem: SEALRED };
+// A seal tag: a strip of paper with a red brush glyph.
+function sealTag(cx, cy, k = 1, rot = 0) {
+  const paper = [[cx - 2.2 * k, cy - 4.6 * k], [cx + 2.2 * k, cy - 4.6 * k], [cx + 2.2 * k, cy + 4.6 * k], [cx - 2.2 * k, cy + 4.6 * k]];
+  const glyph = [
+    streak([cx - 1.2 * k, cy - 3 * k], [cx + 1.2 * k, cy - 3 * k], 0.55 * k, SEALRED),
+    streak([cx, cy - 3.6 * k], [cx, cy + 3.4 * k], 0.6 * k, SEALRED),
+    streak([cx - 1.3 * k, cy - 0.6 * k], [cx + 1.3 * k, cy + 0.4 * k], 0.5 * k, SEALRED),
+    streak([cx - 1.1 * k, cy + 2.4 * k], [cx + 1.1 * k, cy + 2.4 * k], 0.5 * k, SEALRED),
+  ];
+  return spin([...solid(paper, '#f6ecd6', { d: 0.4, ink: '#8a6a4a' }), ...glyph], rot, cx, cy);
+}
+function shinobimastery() {
+  const out = [...tile('inkwash', 'passive'), ...aura(8, 8, 6.6, '#ffd6c8')];
+  out.push(...sword([3, 13], [12.6, 3.4], KUNAI));
+  out.push(...sealTag(11.6, 11, 0.6, 20));
+  return out;
+}
+function kunaibarrage() {
+  const out = [...tile('inkwash', 'active')];
+  for (const [y, x0] of [[4, 2], [8.4, 0.8], [12.6, 2.4]]) {
+    out.push(streak([x0, y], [x0 + 4.6, y], 0.8, '#bfb6c8'));
+    out.push(...sword([x0 + 5, y], [x0 + 11.6, y], KUNAI));
+  }
+  out.push(...spark(14, 2.4, 1));
+  return out;
+}
+function explodingseal() {
+  const out = [...tile('inkwash', 'active'), ...aura(8, 8, 7, '#ff8a6a', 1.1, 5)];
+  out.push(...sealTag(8, 8, 1.05, -12));
+  out.push(...spark(13.4, 3, 1.2, '#ffd6c8'), ...spark(2.8, 12.8, 1));
+  return out;
+}
+function smokebomb() {
+  const out = [...tile('inkwash', 'buff')];
+  out.push(...puffs([[4.6, 10.4, 3], [8.4, 9, 3.6], [11.8, 10.8, 2.8], [8, 12.8, 2.6]], '#e8e4ee'));
+  out.push(...solid(oval(7.6, 4.6, 2.2, 2.2, 0, 16), '#2a2230', { d: 0.4 }));
+  out.push(streak([8.8, 2.8], [10.6, 1.4], 0.5, '#c8a070'), ...spark(11, 1.4, 0.9, '#ffd36a'));
+  return out;
+}
+function logswap() {
+  const out = [...tile('inkwash', 'buff'), ...aura(8, 9, 6, '#f2e6d0')];
+  const log = [[2.6, 7.4], [11.6, 5.6], [12.8, 9.8], [3.8, 11.6]];
+  out.push(...solid(log, '#8a5a32', { d: 0.45, ink: '#3a2414' }));
+  out.push(...solid(oval(12.2, 7.7, 1.5, 2.1, -12, 16), '#e8cc9a', { shadow: false, d: 0.3, ink: '#8a5a32' }));
+  out.push(streak([4.2, 8.8], [10.4, 7.6], 0.3, '#5a3a20'));
+  out.push(...puffs([[3, 13.2, 1.8], [6.2, 13.6, 1.5]], '#e8e4ee', { shadow: false }));
+  return out;
+}
+function thousandcuts() {
+  const out = [...tile('inkwash', 'active'), ...aura(8, 8, 7, '#ff8a6a', 1.2, 5)];
+  for (const [a, b] of [[[2, 3], [14, 13]], [[14, 3], [2, 13]], [[1.6, 8.4], [14.4, 7]]]) {
+    out.push(S(tube([a, b], 0.2, 1.6), '#14101a'));
+    out.push(S(tube([a, b], 0.1, 0.5), SEALRED));
+  }
+  out.push(...solid(oval(8, 8, 2, 2, 0, 16), SEALRED, { d: 0.4, ink: '#6a0e18' }));
+  out.push(...spark(13, 2.4, 1.1, '#ffd6c8'), ...spark(3, 13.6, 0.9));
+  return out;
+}
+
+// ---------- Kitsune (gold and blue fox fire) ----------
+// A tongue of fox fire (the shared flame shape, in blue with a white core).
+const foxFlame = (cx, by, w, h, lean = 0) => [...solid(flamePts(cx, by, w * 2, h, lean), '#2f7cff', { d: 0.4, ink: '#0c1a6a' }), S(flamePts(cx, by - 0.3, w * 1.1, h * 0.62, lean * 0.6), '#bfeaff'), S(flamePts(cx, by - 0.4, w * 0.56, h * 0.32, lean * 0.3), W)];
+// A fox's face from the front: a broad head, two tall ears, a pointed muzzle.
+function foxFace(cx, cy, k, c, o = {}) {
+  const head = [[cx - 4 * k, cy - 1 * k], [cx - 4.4 * k, cy - 5.2 * k], [cx - 1.8 * k, cy - 2.6 * k], [cx + 1.8 * k, cy - 2.6 * k], [cx + 4.4 * k, cy - 5.2 * k], [cx + 4 * k, cy - 1 * k], [cx + 2.2 * k, cy + 1.8 * k], [cx, cy + 4 * k], [cx - 2.2 * k, cy + 1.8 * k]];
+  return [...solid(head, c, { d: 0.4, ink: o.ink ?? '#0c1a6a' }), S(oval(cx - 1.6 * k, cy - 0.2 * k, 0.6 * k, 0.35 * k, -20, 10), o.eye ?? '#ffd36a'), S(oval(cx + 1.6 * k, cy - 0.2 * k, 0.6 * k, 0.35 * k, 20, 10), o.eye ?? '#ffd36a'), S(oval(cx, cy + 3.2 * k, 0.5 * k, 0.4 * k, 0, 8), '#1a1420')];
+}
+function kitsunemastery() {
+  const out = [...tile('foxfire', 'passive'), ...aura(8, 8, 6.6, '#bfeaff')];
+  out.push(...foxFlame(8, 14, 3.4, 10));
+  out.push(...throwStar(8, 8, 4.2, -30, '#dfe8ff'));
+  return out;
+}
+function foxfirefan() {
+  const out = [...tile('foxfire', 'active')];
+  for (const [x, y, r, rot] of [[4, 11.4, 2.6, -20], [8.4, 6.4, 3.2, -50], [12.6, 11, 2.6, -70]]) {
+    out.push(...foxFlame(x - 1.6, y + 2.8, 1.8, 5.6, -1.2));
+    out.push(...throwStar(x, y, r, rot, '#dfe8ff'));
+  }
+  out.push(...spark(14, 3, 1, '#ffd36a'));
+  return out;
+}
+function foxillusion() {
+  const out = [...tile('foxfire', 'buff'), ...aura(8, 8, 6.4, '#bfeaff')];
+  out.push(...foxFace(4.2, 9.6, 0.62, '#6ab8ff', { eye: '#ffffff' }), ...foxFace(11.8, 9.6, 0.62, '#6ab8ff', { eye: '#ffffff' }));
+  out.push(...foxFace(8, 8, 0.9, '#ffffff', { ink: '#1e3a8a' }));
+  out.push(streak([6.4, 7], [7.4, 7.6], 0.5, '#d8283a'), streak([9.6, 7], [8.6, 7.6], 0.5, '#d8283a'));
+  return out;
+}
+function foxtrap() {
+  const out = [...tile('foxfire', 'active')];
+  out.push(S(oval(8, 12, 6.4, 2.4, 0, 28), '#0c1a6a'), S(oval(8, 12, 5.6, 1.7, 0, 28), '#2f7cff'), S(oval(8, 12, 4.4, 1.1, 0, 24), '#14308a'));
+  for (const [x, h] of [[2.4, 5], [5, 7], [8, 8.4], [11, 7], [13.6, 5]]) out.push(...foxFlame(x, 12.4, 1.3, h));
+  out.push(...spark(13.8, 2.6, 1, '#ffd36a'));
+  return out;
+}
+function foxhop() {
+  const out = [...tile('foxfire', 'active')];
+  const arc = arcPts(8, 11, 5.2, 6.4, 200, 340, 14);
+  out.push(S(tube(arc, 0.4, 1.3), '#bfeaff'));
+  out.push(S([[2.4, 10.8], [1.6, 7.6], [4.6, 9.2]], '#bfeaff'));
+  out.push(...foxFlame(12.6, 14, 2.2, 7));
+  out.push(...spark(5, 3.4, 0.9, '#ffd36a'));
+  return out;
+}
+function ninetailblaze() {
+  const out = [...tile('foxfire', 'active'), ...aura(8, 8, 7.2, '#bfeaff', 1.2, 5)];
+  for (let i = 0; i < 9; i++) {
+    const a = (-150 + i * 15) * (Math.PI / 180);
+    out.push(S(tube([[8, 11], [8 + Math.cos(a) * 5, 11 + Math.sin(a) * 5], [8 + Math.cos(a - 0.3) * 7.4, 11 + Math.sin(a - 0.3) * 7.4]], 0.9, 0.2), i % 2 ? '#2f7cff' : '#6ab8ff'));
+  }
+  out.push(...foxFace(8, 10.6, 0.8, '#bfeaff', { ink: '#1e3a8a' }));
+  out.push(...spark(14, 2.6, 1.1, '#ffd36a'), ...spark(2.2, 2.8, 0.9, '#ffd36a'));
+  return out;
+}
+
 // ---------- Game master ----------
 
 function gmsmite() {
@@ -1284,6 +1405,8 @@ const ART = {
   beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
   stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
+  shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
+  kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
   gmsmite, gmhaste, gmblessing,
 };
 

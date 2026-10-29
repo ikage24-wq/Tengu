@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
 import { guard } from './pets.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, addKi, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage } from './melee.js';
 import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -106,6 +106,13 @@ export function applyBuff(world, skillId, params) {
   char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name };
   if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
   world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, school: schoolFor(char, s.school), x: body.x, y: body.y, dir: body.facing, t: 0, dur: 1.1 });
+  // A Shinobi's Smoke Bomb: she's untouchable a moment in the smoke, the monsters lose track of
+  // her, and it builds Ki.
+  if (params.ki) addKi(world, params.ki);
+  if (params.guard) world.invuln = Math.max(world.invuln, params.guard);
+  if (params.lose) {
+    for (const m of world.mobs) if (m.hp > 0 && Math.abs(m.x - body.x) < params.lose) m.aggroUntil = 0;
+  }
   if (params.taunt) {
     if (world.dungeon) provoke(world, 'you', body, params.range.w / 2, params.taunt);
     else {

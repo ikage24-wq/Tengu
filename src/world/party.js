@@ -148,6 +148,8 @@ function weaponStyle(bot) {
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
+  // The Kitsune throws her fox-fire stars.
+  if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['throw', 'barrage', 'twirlthrow']), shot: 'foxstar', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
   return { reach: 42, lift: 30, pose: type === 'spear' ? 'thrust' : pick2(['slash', 'slash2']), shot: null, ranged: false };
 }
@@ -165,6 +167,7 @@ export function makeAI(bot, rng, kind = null) {
     : st.ranged ? (rng() < 0.75 ? 'sniper' : 'showoff')
     : bot.char.job === 'paladin' ? (rng() < 0.8 ? 'guardian' : 'rusher')
     : bot.char.job === 'berserker' ? (rng() < 0.8 ? 'rusher' : 'showoff')
+    : bot.char.job === 'shinobi' ? (rng() < 0.7 ? 'rusher' : 'showoff')
     : rng() < 0.55 ? 'rusher' : 'guardian';
   const base = {
     rusher: { keep: 0.6, react: [0.12, 0.25], rhythm: [0.6, 0.95], special: 0.22, habits: ['roar', 'cheer'] },

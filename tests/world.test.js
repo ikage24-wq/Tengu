@@ -303,7 +303,7 @@ test('the warrior, the archer and the thief branch two ways at 30; the mage path
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
   assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['beastmaster', 'stormcaller'], 'archer has two paths at 30');
-  assert.deepEqual(nextJobs('thief', 30), [], 'the thief paths were removed (new ones to come)');
+  assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['kitsune', 'shinobi'], 'thief has two paths at 30');
   assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
 });
 
@@ -353,11 +353,12 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
     assert.equal(r.job, now, was);
     assert.equal(r.sp, 15, `${was}: the old skills' points come back`);
   }
-  // The Assassin and the Night Lord were removed: they go back to the Thief with their points.
-  for (const was of ['assassin', 'nightlord']) {
+  // The Assassin and the Night Lord were removed: they become the Shinobi and the Kitsune (the
+  // new paths for the same weapons), with their old skills' points given back.
+  for (const [was, now] of [['assassin', 'shinobi'], ['nightlord', 'kitsune']]) {
     const r = { job: was, sp: 0, skills: { twinfang: 10, crowcombo: 7, galaxyfall: 3 }, hotkeys: { KeyQ: { skill: 'crowcombo' } } };
     updateRetiredJobs(r);
-    assert.equal(r.job, 'thief', was);
+    assert.equal(r.job, now, was);
     assert.equal(r.sp, 10, `${was}: the old skills' points come back`);
     assert.deepEqual(r.skills, { twinfang: 10 });
     assert.equal(r.hotkeys.KeyQ, null);

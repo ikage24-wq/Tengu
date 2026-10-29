@@ -115,6 +115,70 @@ function drawShot(ctx, f, cam) {
       ctx.fillRect(-15, 1, 4, 2);
       break;
     }
+    case 'kunai': {
+      // A Shinobi's kunai: a dark steel blade pointed along its flight, a cord-wrapped grip and a
+      // ring at its end, a faint streak behind and a red tassel snapping in the wind.
+      ctx.translate(x, y);
+      ctx.rotate(Math.atan2(f.ty - f.y, f.tx - f.x));
+      if (f.phantom) ctx.globalAlpha = 0.6;
+      const a0 = ctx.globalAlpha;
+      ctx.globalAlpha = a0 * 0.35;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-28, -0.6, 18, 1.2);
+      ctx.globalAlpha = a0;
+      ctx.fillStyle = f.phantom ? '#2a2234' : '#5a5868';
+      ctx.beginPath();
+      ctx.moveTo(9, 0);
+      ctx.lineTo(1, -2.6);
+      ctx.lineTo(-1, 0);
+      ctx.lineTo(1, 2.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#c8c6d8';
+      ctx.beginPath();
+      ctx.moveTo(9, 0);
+      ctx.lineTo(1, -2.6);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#1c1820';
+      ctx.fillRect(-6, -0.9, 6, 1.8);
+      ctx.strokeStyle = '#3a3440';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(-7.6, 0, 1.6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = '#d8283a';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-9, 0);
+      ctx.quadraticCurveTo(-13, Math.sin(f.t * 40) * 2.5, -16, Math.sin(f.t * 40 + 1) * 3);
+      ctx.stroke();
+      break;
+    }
+    case 'foxstar': case 'foxmoon': {
+      // A Kitsune's star: steel caught in blue fox fire, a wake of flame behind it; a great one
+      // drawn large; an illusion's is fox fire alone.
+      const big = f.shot === 'foxmoon';
+      fxSprite(ctx, 'celfoxtrail', x - dir * (big ? 4 : 2), y, { t: f.t, flip: dir < 0, scale: big ? 0.55 : 0.36, alpha: f.illusion ? 0.75 : 1 });
+      if (f.illusion) {
+        fxSprite(ctx, 'celfoxfire', x, y + 6, { t: f.t * 2, scale: big ? 0.3 : 0.2 });
+        break;
+      }
+      ctx.translate(x, y);
+      ctx.rotate(f.t * (big ? 16 : 20));
+      const r = big ? 12 : 7;
+      const body = big ? '#dfe8ff' : f.starColor ?? '#c8d2e6';
+      for (const [k, al] of [[0.26, 0.22], [0.13, 0.4]]) {
+        ctx.save();
+        ctx.rotate(-k);
+        ctx.globalAlpha = al;
+        shuriken(ctx, r, '#6ab8ff', '#6ab8ff', null);
+        ctx.restore();
+      }
+      shuriken(ctx, r, body, '#ffffff', mix(body, '#1e3a8a', 0.6));
+      break;
+    }
     case 'star': case 'moonstar': {
       // A Thief's stars trail violet streaks; a big moon star is drawn large; the Phantom's copies
       // are violet shadows of a star.
@@ -805,7 +869,7 @@ function drawFx(ctx, f, cam, time) {
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path || f.path === 'steel' || f.path === 'shadow') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
       else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
       break;
@@ -941,7 +1005,7 @@ function bladePath(f) {
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
     fxSprite(ctx, school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });

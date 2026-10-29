@@ -23,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (steel, hawk, shadow, bloom, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, shadow, ink, fox, bloom, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -677,6 +677,152 @@ export const SKILLS = {
     },
   }),
 
+  // ---------- Shinobi (the thief's dagger path: ink black, red seals, white smoke) ----------
+  // Hits and dodges build Ki (0-100, see world/melee.js); full (Shadow Clones), two ink clones of
+  // her repeat every attack. Thousand Cuts needs it full and spends it.
+  shinobimastery: skill({
+    id: 'shinobimastery', name: 'Shinobi Mastery', job: 'shinobi', type: 'passive', fx: null, icon: 'shinobimastery',
+    desc: 'Steadier dagger cuts, more attack, and more critical hits.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 16, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
+  }),
+  kunaibarrage: skill({
+    id: 'kunaibarrage', name: 'Kunai Barrage', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'kunaibarrage', school: 'ink',
+    desc: 'A three-part combo, one part per press: two kunai, two more, then a spinning throw of five that pins the line. Needs a dagger.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kunai = (at, oy = 0) => ({ at, shot: 'kunai', pct: k(70, 115), range: 280, h: 60, knock: 25, speed: 950, oy });
+      return {
+        mp: k(5, 12), pct: k(70, 115), hits: 9, targets: 1,
+        combo: [
+          { move: 'barrage', dur: 0.36, step: -2, strikes: [kunai(0.17, -3), kunai(0.5, 3)] },
+          { move: 'barrage', dur: 0.36, step: -2, strikes: [kunai(0.17, 3), kunai(0.5, -3)] },
+          { move: 'kunaifan', dur: 0.5, step: -6, finisher: true, strikes: [{ at: 0.55, shot: 'kunai', fan: 5, pct: k(90, 150), range: 300, h: 150, knock: 120, launch: 80, speed: 980, big: true, stop: 0.05, shake: 2 }] },
+        ],
+      };
+    },
+  }),
+  explodingseal: skill({
+    id: 'explodingseal', name: 'Exploding Seal', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'explodingseal', school: 'ink',
+    desc: 'Slap a seal tag on the monsters in front of you: it glows red, then bursts a moment later, catching everything close by. Needs a dagger.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 20), pct: k(170, 290), hits: 2, targets: 4,
+        combo: [{ move: 'palmseal', dur: 0.5, step: 12, strikes: [
+          { at: 0.42, pct: k(60, 100), reach: 54, h: 56, targets: 2, knock: 20, fx: 'sealtag' },
+          { at: 0.42, delay: 0.6, pct: k(170, 290), reach: 80, h: 80, around: true, targets: 4, knock: 180, launch: 160, burst: 'sealburst', burstAt: 0.5, big: true, stop: 0.07, shake: 3 },
+        ] }],
+      };
+    },
+  }),
+  smokebomb: skill({
+    id: 'smokebomb', name: 'Smoke Bomb', job: 'shinobi', type: 'buff', fx: 'buff', icon: 'smokebomb', school: 'ink', maxLevel: 10,
+    desc: "Throw down a smoke bomb: you're untouchable a moment in the smoke, the monsters around you lose track of you, you dodge far more often for a while, and it builds Ki.",
+    at: (lv, m) => ({ mp: lerp(14, 8, lv, m), duration: lerpf(4, 8, lv, m), buff: { eva: lerp(40, 120, lv, m) }, ki: lerp(10, 20, lv, m), guard: 0.6, lose: 220 }),
+  }),
+  logswap: skill({
+    id: 'logswap', name: 'Log Swap', job: 'shinobi', type: 'buff', fx: 'buff', icon: 'logswap', school: 'ink', maxLevel: 10,
+    desc: 'Get ready to swap places with a log: the next blow that would land on you hits a log instead, and you reappear behind whoever struck, with a burst of Ki.',
+    at: (lv, m) => ({ mp: lerp(12, 20, lv, m), duration: lerp(10, 30, lv, m), buff: { ki: lerp(15, 30, lv, m) } }),
+  }),
+  thousandcuts: skill({
+    id: 'thousandcuts', name: 'Thousand Cuts', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'thousandcuts', school: 'ink', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Ki, and spends it. Ink spills over the world; you flicker from monster to monster cutting each one, then a giant fox of ink sweeps through the whole line. Needs a dagger.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      const cut = (at) => ({ at, pct: k(90, 150), reach: 220, h: 150, around: true, targets, knock: 30, fx: 'inkcut', quiet: true, stop: 0.03, gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(460, 780), hits: 6, targets,
+        combo: [{ move: 'assassinate', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, burst: 'inkwash', burstAt: 0, burstDur: 1.3, quiet: true, gauge: 0 },
+          cut(0.3), cut(0.38), cut(0.46), cut(0.54),
+          { at: 0.74, pct: k(460, 780), reach: 230, h: 150, around: true, targets, knock: 300, launch: 380, burst: 'inkfoxsweep', burstAt: 0, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Kitsune (the thief's gauntlet path: gold and blue fox fire) ----------
+  // Stars that land build Tails (0-100, one tail to nine, see world/melee.js), more on monsters
+  // already burning; every three tails a fox-fire illusion throws stars beside hers. Nine-Tail
+  // Blaze needs all nine and spends them.
+  kitsunemastery: skill({
+    id: 'kitsunemastery', name: 'Kitsune Mastery', job: 'kitsune', type: 'passive', fx: null, icon: 'kitsunemastery',
+    desc: 'Steadier stars, more attack, and sharper aim.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 20, lv, m), acc: lerp(3, 25, lv, m) } }),
+  }),
+  foxfirefan: skill({
+    id: 'foxfirefan', name: 'Fox-Fire Fan', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxfirefan', school: 'fox',
+    desc: 'A three-part combo, one part per press: a fan of fox-fire stars, one per monster, another, then a great fox-fire star through the line. Everything they hit burns. Needs a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const n = k(3, 5);
+      return {
+        mp: k(6, 14), pct: k(80, 130), hits: 1, targets: n,
+        combo: [
+          { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'foxstar', fan: n, pct: k(80, 130), range: 290, h: 150, knock: 50, speed: 800 }] },
+          { move: 'twirlthrow', dur: 0.46, step: -3, strikes: [{ at: 0.62, shot: 'foxstar', fan: n, pct: k(85, 140), range: 290, h: 150, knock: 60, speed: 800 }] },
+          { move: 'throwflip', dur: 0.64, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'foxmoon', pct: k(170, 280), range: 330, h: 70, targets: k(3, 5), pierce: true, speed: 860, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2, kickback: 40 }] },
+        ],
+      };
+    },
+  }),
+  foxillusion: skill({
+    id: 'foxillusion', name: 'Fox Illusion', job: 'kitsune', type: 'buff', fx: 'buff', icon: 'foxillusion', school: 'fox',
+    desc: 'Two fox-fire illusions of you appear at your side for a while, and each throws a free star beside every star you throw.',
+    at: (lv, m) => ({ mp: lerp(16, 30, lv, m), duration: lerp(30, 90, lv, m), buff: { illusions: 2 } }),
+  }),
+  foxtrap: skill({
+    id: 'foxtrap', name: 'Fox-Fire Trap', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxtrap', school: 'fox',
+    desc: 'Throw a ring of fox fire onto the ground ahead: it burns everything standing in it for a moment, then bursts. Needs a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const tick = (delay) => ({ at: 0.5, delay, pct: k(40, 70), reach: 200, h: 70, targets: 6, knock: 5, burn: { pct: 0.1, secs: 2 }, quiet: true, gauge: 2 });
+      return {
+        mp: k(12, 24), pct: k(160, 260), hits: 5, targets: 6,
+        combo: [{ move: 'throw', dur: 0.5, step: -4, strikes: [
+          { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, burst: 'foxtrap', burstAt: 0, burstDur: 1.6, quiet: true, gauge: 0 },
+          tick(0.15), tick(0.45), tick(0.75),
+          { at: 0.5, delay: 1.05, pct: k(160, 260), reach: 200, h: 80, targets: 6, knock: 160, launch: 140, burn: { pct: 0.12, secs: 3 }, burst: 'foxtrapburst', burstAt: 0.55, big: true, stop: 0.05, shake: 2 },
+        ] }],
+      };
+    },
+  }),
+  foxhop: skill({
+    id: 'foxhop', name: 'Fox Hop', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxhop', school: 'fox', maxLevel: 10, movement: true,
+    desc: 'Spring back out of reach, leaving a decoy of fox fire where you stood that bursts on anything close. Nothing touches you on the way. Works with either weapon.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(80, 140), hits: 1, targets: 4,
+        combo: [{ move: 'foxhop', dur: 0.46, step: -k(100, 150), carry: 0.6, guard: 0.45, strikes: [{ at: 0.06, pct: k(80, 140), reach: 60, h: 70, around: true, targets: 4, knock: 120, burn: { pct: 0.1, secs: 2 }, burst: 'foxdecoy', burstAt: 0, gauge: 3 }] }],
+      };
+    },
+  }),
+  ninetailblaze: skill({
+    id: 'ninetailblaze', name: 'Nine-Tail Blaze', job: 'kitsune', type: 'attack', fx: 'star', icon: 'ninetailblaze', school: 'fox', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs all nine Tails, and spends them. Nine fox-fire stars spin up into the night and rain down burning on every monster, then they gather into a giant fox of blue fire that pounces through the line. Needs a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(8, 12);
+      return {
+        mp: k(30, 50), pct: k(440, 760), hits: 16, targets,
+        combo: [{ move: 'moonthrow', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.18, pct: 0, reach: 0, h: 0, targets: 0, burst: 'foxnight', burstAt: 0, burstDur: 1.1, quiet: true, gauge: 0 },
+          { at: 0.5, rain: k(10, 14), pct: k(80, 130), rainFrom: 30, rainW: 320, span: 0.4, knock: 30, variant: 'foxstar', school: 'fox', burn: { pct: 0.1, secs: 3 }, gauge: 0 },
+          { at: 0.8, pct: k(440, 760), reach: 230, h: 150, around: true, targets, knock: 300, launch: 380, burn: { pct: 0.15, secs: 3 }, burst: 'flamefoxpounce', burstAt: 0, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Game Master (hidden) ----------
   gmsmite: skill({
     id: 'gmsmite', name: 'GM Smite', job: 'gamemaster', type: 'magic', fx: 'judgment', maxLevel: 1,
@@ -705,6 +851,8 @@ const MOVES_BY_SKILL = {
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
+  shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
+  kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',
 };
 for (const [id, move] of Object.entries(MOVES_BY_SKILL)) SKILLS[id].anim = move;

@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createWorld, updateWorld, loadMap, hurtPlayer } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
@@ -1773,6 +1773,193 @@ test("a weapon's own mastery only counts while that weapon is held", async () =>
   assert.equal(computeStats(w.char, 0).watk, g, 'nothing from it with a gauntlet');
 });
 
+// ---------- The Thief's paths: the Shinobi (dagger, Ki) and the Kitsune (gauntlet, Tails) ----------
+
+function thiefPath(job) {
+  const weapon = job === 'shinobi' ? 'dagger_20' : 'gauntlet_20';
+  const w = arena(weapon);
+  const c = createCharacter('T', {});
+  gainExp(c, 1e6);
+  advanceJob(c, 'thief');
+  c.quests.thief_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, job), `advanced to ${job}`);
+  c.equipment.weapon = makeEquip(weapon, {});
+  c.mp = 9999;
+  c.baseMp = 99999;
+  if (job === 'kitsune') addItem(c.inventory, 'star_pebble', 900);
+  w.char = c;
+  if (job === 'kitsune') w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
+  for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
+  return w;
+}
+const learn = (w, id, lv = 10) => (w.char.skills[id] = lv);
+const castNow = (w, id) => {
+  w.char.mp = 9999;
+  return cast(w, id);
+};
+
+test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {
+  const { JOBS } = await import('../src/data/jobs.js');
+  const c = createCharacter('T', {});
+  gainExp(c, 1e6);
+  advanceJob(c, 'thief');
+  assert.equal(advanceJob(c, 'shinobi'), false, 'not before the trial');
+  assert.deepEqual(JOBS.shinobi.weapons, ['dagger']);
+  assert.deepEqual(JOBS.kitsune.weapons, ['gauntlet']);
+});
+
+test('each thief path has its own basic combo, and mixes its own pool of swings or throws', () => {
+  for (const job of ['shinobi', 'kitsune']) {
+    const steps = PATH_VARIANTS[job];
+    assert.equal(steps.length, PATH_COMBOS[job].length, `${job}: a choice for every step`);
+    steps.forEach((choices, i) => {
+      assert.equal(choices[0], PATH_COMBOS[job][i], `${job}: her own comes first`);
+      assert.ok(choices.length >= 2, `${job}: step ${i + 1} has a choice`);
+      for (const st of choices) assert.ok(MOVES[st.move], `${job}: ${st.move} is drawn`);
+    });
+    assert.ok(steps.at(-1).every((st) => st.finisher), `${job}: every last one is a finisher`);
+    const w = thiefPath(job);
+    const seen = [];
+    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+    for (let i = 0; i < 120; i++) {
+      updateWorld(w, DT, hold);
+      if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
+    }
+    assert.deepEqual(seen.slice(0, 3).map((x) => x.move), PATH_COMBOS[job].map((x) => x.move), job);
+    assert.ok(w.mobs.some((m) => m.hp < 1e9), `${job} hits`);
+  }
+});
+
+test("a Shinobi's hits and dodges build Ki, and it fades once the fighting stops", () => {
+  const w = thiefPath('shinobi');
+  run(w, 1.5, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+  assert.ok(w.ki > 0, 'hits build it');
+  run(w, 12);
+  assert.equal(w.ki, 0, 'faded');
+  // A monster's blow that misses her (a dodge) builds it too.
+  const v = thiefPath('shinobi');
+  const m = v.mobs[0];
+  m.def = { ...m.def, acc: -999, atk: 50 };
+  v.god = false;
+  v.invuln = 0;
+  Object.assign(m, { x: v.body.x, y: v.body.y, air: 0, frozenUntil: 0 });
+  dice(0.999, () => updateWorld(v, DT, idle));
+  assert.ok(v.ki > 0, `a dodge builds Ki (${v.ki})`);
+});
+
+test('full Ki (Shadow Clones): two ink clones repeat every attack, each lighter', () => {
+  const hits = (ki) => {
+    const w = thiefPath('shinobi');
+    w.ki = ki;
+    w.kiAt = 1e9;
+    let n = 0;
+    let last = w.mobs[0].hp;
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 40; i++) {
+      updateWorld(w, DT, idle);
+      if (w.mobs[0].hp < last) n += 1;
+      last = w.mobs[0].hp;
+    }
+    return { n, clones: w.phantom?.clones };
+  };
+  const plain = hits(0);
+  const full = hits(100);
+  assert.equal(full.n, plain.n * 3, `two clones each land the blow again (${plain.n} vs ${full.n})`);
+  assert.equal(full.clones, true);
+});
+
+test("Smoke Bomb hides her and builds Ki; Log Swap trades a blow for a log and puts her behind them", () => {
+  const w = thiefPath('shinobi');
+  learn(w, 'smokebomb');
+  learn(w, 'logswap');
+  assert.ok(castNow(w, 'smokebomb').ok);
+  assert.ok(w.invuln > 0.3, 'untouchable a moment');
+  assert.ok(w.ki >= 10, 'Ki from the smoke');
+  assert.ok(w.char.buffs.smokebomb.values.eva > 0, 'dodges more');
+  run(w, 1.2);
+  assert.ok(castNow(w, 'logswap').ok);
+  w.god = false;
+  w.invuln = 0;
+  const hp = w.char.hp;
+  const x0 = w.body.x;
+  const ki0 = w.ki;
+  hurtPlayer(w, 500, x0 + 30);
+  assert.equal(w.char.hp, hp, 'the log took it');
+  assert.ok(w.body.x > x0 + 50, 'behind the one who struck');
+  assert.equal(w.body.facing, -1, 'turned to face them');
+  assert.ok(w.ki > ki0, 'Ki from the swap');
+  assert.ok(w.fx.some((f) => f.kind === 'logpoof'), 'a log where she stood');
+  assert.ok(!w.char.buffs.logswap, 'spent');
+});
+
+test('Exploding Seal slaps a seal on, and it bursts a moment later on everything close by', () => {
+  const w = thiefPath('shinobi');
+  learn(w, 'explodingseal');
+  const start = w.mobs.map((m) => m.hp);
+  assert.ok(castNow(w, 'explodingseal').ok);
+  run(w, 0.4);
+  const after = w.mobs.map((m) => m.hp);
+  assert.ok(w.fx.some((f) => f.kind === 'sealtag'), 'a seal on them');
+  run(w, 0.8);
+  assert.ok(w.fx.some((f) => f.kind === 'sealburst') || w.mobs.every((m, i) => m.hp < after[i] || after[i] === start[i]), 'it bursts');
+  assert.ok(w.mobs.filter((m, i) => m.hp < after[i]).length >= 2, 'the burst catches several');
+});
+
+test("a Kitsune's stars build Tails, set monsters burning, and grow fox-fire illusions every three tails", () => {
+  const w = thiefPath('kitsune');
+  run(w, 1.5, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+  assert.ok(w.tails > 0, 'stars build it');
+  assert.ok(w.mobs.some((m) => m.poison?.kind === 'burn'), 'they burn');
+  const counts = [0, 34, 67, 100].map((t) => {
+    const v = thiefPath('kitsune');
+    v.tails = t;
+    v.tailsAt = 1e9;
+    updateWorld(v, DT, press('KeyZ'));
+    run(v, 0.3);
+    return v.fx.filter((f) => f.kind === 'projectile' && f.illusion).length;
+  });
+  assert.deepEqual(counts, [0, 1, 2, 3], `illusion stars by tails: ${counts}`);
+});
+
+test('Fox Illusion adds two illusion stars; the trap burns them; Fox Hop springs her back', () => {
+  const w = thiefPath('kitsune');
+  learn(w, 'foxillusion');
+  learn(w, 'foxtrap');
+  learn(w, 'foxhop');
+  assert.ok(castNow(w, 'foxillusion').ok);
+  run(w, 1.2);
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 0.3);
+  assert.equal(w.fx.filter((f) => f.kind === 'projectile' && f.illusion).length, 2, 'two illusion stars');
+  run(w, 1.5);
+  const before = w.mobs.map((m) => m.hp);
+  assert.ok(castNow(w, 'foxtrap').ok);
+  run(w, 1.8);
+  assert.ok(w.mobs.filter((m, i) => m.hp < before[i]).length >= 2, 'the trap catches them');
+  assert.ok(w.mobs.some((m) => m.poison?.kind === 'burn'), 'burning');
+  run(w, 1);
+  const x0 = w.body.x;
+  assert.ok(castNow(w, 'foxhop').ok);
+  run(w, 0.6);
+  assert.ok(w.body.x < x0 - 60, `sprang back (${(x0 - w.body.x).toFixed(0)}px)`);
+});
+
+test("each thief path's finisher needs its gauge full, spends it, and lands its big moment", () => {
+  for (const [job, skill, gauge, burst] of [['shinobi', 'thousandcuts', 'ki', 'inkfoxsweep'], ['kitsune', 'ninetailblaze', 'tails', 'flamefoxpounce']]) {
+    const w = thiefPath(job);
+    learn(w, skill);
+    w[gauge] = 50;
+    assert.equal(castNow(w, skill).reason, `gauge:${gauge}`, `${skill} waits for a full gauge`);
+    w[gauge] = 100;
+    w[`${gauge}At`] = w.now;
+    assert.ok(castNow(w, skill).ok, `${skill} goes off`);
+    assert.equal(w[gauge], 0, `${skill} spends it`);
+    run(w, 2);
+    assert.ok(w.fx.some((f) => f.kind === burst) || w.mobs.some((m) => m.hp < 1e9), `${skill} lands`);
+    assert.ok(w[gauge] < 100, `${skill} doesn't refill it`);
+  }
+});
+
 // ---------- The Mage: Bloom, Full Bloom, damage and healing ----------
 
 function mage() {
@@ -1872,8 +2059,8 @@ test('Garden of Light needs full Bloom, spends it, hits the whole line and heals
 
 test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
   const { SKILLS } = await import('../src/data/skills.js');
-  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], mage: ['mage'] };
-  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', mage: 'wand_20' };
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], mage: ['mage'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', mage: 'wand_20' };
   for (const [label, fam] of Object.entries(families)) {
     // (A Thief fights with either weapon: `thiefstar` is her with a gauntlet.)
     const job = label === 'thiefstar' ? 'thief' : label;

@@ -1373,6 +1373,62 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Thief's paths ----------
+  // The Shinobi's palm strike: drop low with the dagger drawn back, then drive the open free hand
+  // into them, slapping a seal on (it lands at about 0.42), and hold it there a beat.
+  palmseal(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(25, 150, t), arm: lerp(60, 30, t), lunge: -3 * t, tilt: -0.08 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.tx = -1; r.backArm = [q(-2 - 2 * t), -2]; } };
+    }
+    const t = ease(seg(p, 0.3, 0.42));
+    const back = ease(seg(p, 0.62, 1));
+    return {
+      weapon: 150 - 20 * back, arm: 30 + 25 * back, lunge: lerp(-3, 10, t) * (1 - back * 0.8), tilt: 0.2 * t * (1 - back),
+      rig: (r) => { r.tx = 2; r.squat = back < 0.5 ? 2 : 1; lungeLegs(r, 1.4); r.backArm = [q(lerp(-4, 8, t) - 6 * back), q(-4 + 2 * back)]; r.cape = -4; r.hairLift = -1; strikeFace(r); },
+    };
+  },
+
+  // The Shinobi's spinning throw: whip round once with the kunai fanned in the hand, and fling them
+  // out of the turn in a wide sidearm (they leave at about 0.55).
+  kunaifan(p) {
+    if (p < 0.38) {
+      const a = ease(p / 0.38);
+      return { weapon: lerp(60, 150, a), arm: lerp(90, 40, a), orbit: true, turn: a < 0.5 ? -1 : 1, lift: 4 * bump(a, 0, 1), tilt: -0.12 * a, rig: (r) => { r.squat = 1; wideLegs(r); r.backArm = [-3, -4]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.38, 0.58));
+    const back = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(150, 70, t), arm: lerp(40, 105, t) - 30 * back, lunge: 4 * t * (1 - back), tilt: 0.16 * t * (1 - back),
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.2); r.backArm = [-5, -2]; r.hairLift = -1; if (t > 0 && back < 0.5) strikeFace(r); },
+    };
+  },
+
+  // The Kitsune's pounce: crouch like a fox, spring forward in a high arc with the arm drawn back,
+  // whip the stars down at them from the top of it (about 0.56), and land low.
+  foxpounce(p) {
+    const crouch = bump(p, 0, 0.18);
+    const hop = Math.sin(seg(p, 0.14, 0.82) * Math.PI);
+    const whip = ease(seg(p, 0.46, 0.58));
+    const land = bump(p, 0.8, 1);
+    return {
+      weapon: lerp(-30, 130, whip), arm: lerp(185, 40, whip), lift: 26 * hop, tilt: lerp(0.25, -0.1, seg(p, 0.14, 0.5)) * (hop > 0 ? 1 : 0) + 0.12 * crouch,
+      rig: (r) => { if (hop > 0.2) tuck(r); else { r.squat = crouch > 0.3 || land > 0.3 ? 2 : 1; wideLegs(r); } r.backArm = [-3, -4]; r.hairLift = hop > 0.3 ? -1 : 0; r.cape -= hop > 0.3 ? 3 : 0; if (whip > 0 && whip < 1) strikeFace(r); },
+    };
+  },
+
+  // The Kitsune's hop: spring back and away, leaning back with the arm out for balance, and land
+  // low, already turning to throw (the step carries her back).
+  foxhop(p) {
+    const crouch = bump(p, 0, 0.16);
+    const hop = Math.sin(seg(p, 0.1, 0.78) * Math.PI);
+    const land = bump(p, 0.74, 1);
+    return {
+      weapon: 60, arm: 90 + 40 * hop, lift: 22 * hop, tilt: -0.3 * hop + 0.1 * crouch,
+      rig: (r) => { if (hop > 0.25) tuck(r); else { r.squat = crouch > 0.3 || land > 0.3 ? 2 : 1; wideLegs(r); } r.backArm = [-5, -5]; r.hairLift = hop > 0.3 ? -1 : 0; },
+    };
+  },
+
   // A defensive stance: crouch behind the weapon held up across the body.
   guard(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -1406,7 +1462,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
-  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
+  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
 };
 
 // Basic attacks chain into a combo per weapon type.
