@@ -318,6 +318,155 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       if (f.big) fxSprite(ctx, 'celblast', x, y + 4, { p, scale: 0.75 });
       return true;
     }
+    // The Onmyoji's yuki-onna: the frost she leaves where she drifts, her breath, needles,
+    // icicles, blizzard, snow step and the sparkle of cold where she hits.
+    case 'yukiprint': {
+      // A patch of frost on the ground: a little cluster of ice crystals that whitens and melts away.
+      const fade = Math.min(1, f.t * 6) * (1 - Math.max(0, (p - 0.55) / 0.45));
+      if (fade <= 0) return true;
+      ctx.save();
+      ctx.globalAlpha *= fade;
+      ctx.fillStyle = 'rgba(225, 240, 255, 0.85)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 7, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(160, 200, 245, 0.9)';
+      ctx.lineWidth = 0.7;
+      const r = f.seed ?? 0.5;
+      for (let i = 0; i < 4; i++) {
+        const cx = x + (i - 1.5) * 3.2 + (r - 0.5) * 2;
+        const cy = y - 0.4 + ((i * 7 + r * 10) % 3) * 0.4 - 0.6;
+        for (const a of [0, Math.PI / 3, (2 * Math.PI) / 3]) {
+          ctx.beginPath();
+          ctx.moveTo(cx - Math.cos(a) * 1.3, cy - Math.sin(a) * 0.5);
+          ctx.lineTo(cx + Math.cos(a) * 1.3, cy + Math.sin(a) * 0.5);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      return true;
+    }
+    case 'yukibreath': {
+      // Frost Breath: a cone of freezing mist pouring out ahead of her, snowflakes tumbling in it.
+      const dir = f.dir || 1;
+      const k = Math.min(1, p * 6) * (1 - Math.max(0, (p - 0.85) / 0.15));
+      ctx.save();
+      ctx.globalAlpha *= 0.6 * k;
+      for (let i = 0; i < 6; i++) {
+        const d = ((f.t * 1.6 + i / 6) % 1) * (f.r ?? 140);
+        ctx.fillStyle = i % 2 ? 'rgba(220, 238, 255, 0.7)' : 'rgba(190, 220, 250, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(x + dir * d, y + d * 0.08, 6 + d * 0.14, 4 + d * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      for (let i = 0; i < 4; i++) {
+        const d = ((f.t * 1.2 + i / 4) % 1) * (f.r ?? 140);
+        fxSprite(ctx, 'celsnowflake', x + dir * d, y + Math.sin(f.t * 5 + i) * d * 0.12, { t: f.t + i, scale: 0.1 + 0.002 * d, alpha: k });
+      }
+      return true;
+    }
+    case 'yukineedle': {
+      // An ice needle flying straight at its mark, a glint down its length.
+      if (f.t < 0) return true;
+      const ox = x - f.x;
+      const oy = y - f.y;
+      const m = f.mob;
+      const tx = (m && m.hp > 0 ? m.x : f.tx) + ox;
+      const ty = (m && m.hp > 0 ? m.y - m.def.h * 0.6 : f.ty) + oy;
+      const u = Math.min(1, f.t / f.fly);
+      if (u >= 1) return true;
+      const cx = x + (tx - x) * u;
+      const cy = y + (ty - y) * u;
+      const ang = Math.atan2(ty - y, tx - x);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ang);
+      ctx.fillStyle = '#d8ecff';
+      ctx.beginPath();
+      ctx.moveTo(7, 0);
+      ctx.lineTo(-6, -1.3);
+      ctx.lineTo(-8, 0);
+      ctx.lineTo(-6, 1.3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(6, -0.2);
+      ctx.lineTo(-5, -0.6);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(200, 230, 255, 0.5)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-8, 0);
+      ctx.lineTo(-20, 0);
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    }
+    case 'yukiicicle': {
+      // Icicle Fall: a great icicle dropping out of the sky onto the monster, shattering on it.
+      const ox = x - f.x;
+      const m = f.mob;
+      const mx = (m && m.hp > 0 ? m.x : f.x) + ox;
+      if (f.t < f.fall) {
+        const u = f.t / f.fall;
+        const ty = y - 160 * (1 - u * u) - (m?.def.h ?? 24);
+        ctx.save();
+        ctx.translate(mx, ty);
+        ctx.fillStyle = '#cfe4fb';
+        ctx.beginPath();
+        ctx.moveTo(-6, -22);
+        ctx.lineTo(6, -22);
+        ctx.lineTo(0, 16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(-3, -22);
+        ctx.lineTo(0, -22);
+        ctx.lineTo(0, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#8ab4e8';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-6, -22);
+        ctx.lineTo(0, 16);
+        ctx.lineTo(6, -22);
+        ctx.stroke();
+        ctx.restore();
+        return true;
+      }
+      const q = (f.t - f.fall) / (f.dur - f.fall);
+      fxSprite(ctx, 'celfrostburst', mx, y - (m?.def.h ?? 24) * 0.5, { p: q, scale: 0.6 });
+      return true;
+    }
+    case 'yukiblizzard': {
+      // Blizzard: snow whirling round her in a wide ring, flakes streaming round, cold mist.
+      const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.85) / 0.15));
+      const r = f.r ?? 150;
+      fxSprite(ctx, 'celtornado', x, y + 4, { t: f.t, scale: 0.75, alpha: 0.35 * k });
+      groundRing(ctx, 'celringice', x, y, 0.5, r, { alpha: 0.5 * k });
+      for (let i = 0; i < 18; i++) {
+        const a = f.t * (2.4 + (i % 3) * 0.4) + (i / 18) * Math.PI * 2;
+        const rr = r * (0.35 + 0.6 * ((i * 37) % 10) / 10);
+        fxSprite(ctx, 'celsnowflake', x + Math.cos(a) * rr, y - 20 - 40 * ((i * 13) % 10) / 10 + Math.sin(a) * rr * 0.18, { t: f.t + i, scale: 0.1 + 0.04 * (i % 3), alpha: k });
+      }
+      return true;
+    }
+    case 'yukistep': {
+      // Snow Step: she comes apart into a flurry of snow (or gathers out of one).
+      fxSprite(ctx, 'celfrostburst', x, y - 26, { p, scale: 0.55 });
+      fxSprite(ctx, 'celmotes', x, y, { t: f.t, scale: 0.7, alpha: 1 - p });
+      return true;
+    }
+    case 'yukihit': {
+      // Her cold landing: a burst of frost on the monster.
+      fxSprite(ctx, 'celfrostburst', x, y - (f.h ?? 24) * 0.55, { p, flip, scale: f.big ? 0.55 : 0.35 });
+      return true;
+    }
     case 'onipound': {
       groundRing(ctx, 'celshockred', x, y, Math.min(1, p * 1.3), f.r ?? 120);
       return true;

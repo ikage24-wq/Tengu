@@ -36,6 +36,7 @@ import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickGuardian } from './kitsune.js';
 import { tickOni } from './oni.js';
+import { tickYuki } from './yuki.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 
@@ -1020,6 +1021,7 @@ export function tickMelee(world, dt) {
   tickShrine(world);
   tickGuardian(world, dt);
   tickOni(world, dt);
+  tickYuki(world, dt);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -1430,7 +1432,7 @@ function grantSpell(world, g) {
 // A hit of the Spirit Doll's (world/spiritdoll.js): a spell of the Spirit Mage's own magic attack,
 // landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
 export function dollHit(world, m, f, at = 0) {
-  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, gauge: f.gauge ?? 2 }, m, at);
+  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.

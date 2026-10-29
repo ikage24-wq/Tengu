@@ -2730,6 +2730,32 @@ test("the oni grabs a monster, hoists it over her head and slams it; and charges
   assert.ok(m.hp < hp1, 'trampling what is in her way');
 });
 
+test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and fights with ice', () => {
+  const w = onmyoji();
+  assert.ok(w.yuki, 'the yuki-onna is there');
+  assert.equal(shrineMage().yuki ?? null, null, 'a Spirit Mage has none');
+  const seen = new Set();
+  const hp0 = w.mobs.map((m) => m.hp);
+  let froze = false;
+  for (let i = 0; i < 60 * 10; i++) {
+    updateWorld(w, DT, idle);
+    if (w.yuki.act) seen.add(w.yuki.act.kind);
+    froze ||= w.mobs.some((m) => m.frozenUntil > w.now);
+  }
+  assert.ok(['breath', 'needles', 'icicle', 'blizzard'].filter((k) => seen.has(k)).length >= 2, `a mix of her moves (${[...seen]})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her ice lands');
+  assert.ok(froze, 'and freezes them');
+  // Drifting after the Onmyoji, she leaves frost on the ground.
+  w.mobs.forEach((m) => { m.x += 3000; });
+  w.body.x += 200;
+  let prints = 0;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    prints = Math.max(prints, w.fx.filter((f) => f.kind === 'yukiprint').length);
+  }
+  assert.ok(prints > 2, `frost prints where she drifts (${prints})`);
+});
+
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
   const { blockOnHit } = await import('../src/world/combat.js');
   const w = shrineMaiden();

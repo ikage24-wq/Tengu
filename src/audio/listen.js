@@ -44,7 +44,9 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   // The Shrine Maiden.
   'grandblessing', 'purifycircle', 'purifyburn', 'reviveflash', 'resurrection', 'thousandtorii',
   // The Onmyoji's oni.
-  'onihit', 'onipound', 'onipuff', 'oniaura', 'oniroar']);
+  'onihit', 'onipound', 'onipuff', 'oniaura', 'oniroar',
+  // The Onmyoji's yuki-onna (her frost prints are silent).
+  'yukibreath', 'yukineedle', 'yukiicicle', 'yukiblizzard', 'yukistep', 'yukihit']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
