@@ -10,6 +10,7 @@ import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from '.
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
+import { drawPortalGate } from './portals.js';
 import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
 
 const hash = (n) => {
@@ -1757,96 +1758,36 @@ function drawRopes(ctx, map, cam) {
   }
 }
 
-// A portal: a soft oval of light with three arms swirling in toward its heart (each arm a chain
-// of segments, thick at the rim and thinning toward the middle, the tip trailing), a rim lit on
-// the upper left, and motes drawn in along the spiral. It breathes slowly; nothing blinks.
-function drawPortalSwirl(ctx, x, y, time, seed) {
-  const breathe = 0.5 + 0.5 * Math.sin(time * 1.6 + seed);
-  const g = ctx.createRadialGradient(x, y, 2, x, y, 30);
-  g.addColorStop(0, 'rgba(255,255,255,0.95)');
-  g.addColorStop(0.45, `rgba(200,180,255,${0.55 + breathe * 0.15})`);
-  g.addColorStop(1, 'rgba(190,170,255,0)');
-  ctx.save();
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.ellipse(x, y, 18, 28, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // The swirl, squashed to the portal's oval.
-  ctx.translate(x, y);
-  ctx.scale(1, 1.55);
-  ctx.lineCap = 'round';
-  const spin = time * 1.7 + seed * 0.01;
-  for (let k = 0; k < 3; k++) {
-    const n = 9;
-    for (let i = 0; i < n; i++) {
-      const u0 = i / n;
-      const u1 = (i + 1) / n;
-      const at = (u) => {
-        const r = 15 * (1 - u * 0.85);
-        const a = spin + (k * Math.PI * 2) / 3 + u * 3.4;
-        return [Math.cos(a) * r, Math.sin(a) * r];
-      };
-      const [ax, ay] = at(u0);
-      const [bx, by] = at(u1);
-      ctx.globalAlpha = 0.75 * (1 - u0 * 0.7);
-      ctx.strokeStyle = k === 0 ? '#ffffff' : k === 1 ? '#e2d4ff' : '#c9b4ff';
-      ctx.lineWidth = 2.4 * (1 - u0 * 0.75);
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(bx, by);
-      ctx.stroke();
-    }
-  }
-  // The rim: lit on the upper left, in lavender shade on the lower right.
-  ctx.globalAlpha = 0.7;
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(0, 0, 15.5, Math.PI * 0.95, Math.PI * 1.75);
-  ctx.stroke();
-  ctx.strokeStyle = '#9f86e6';
-  ctx.beginPath();
-  ctx.arc(0, 0, 15.5, Math.PI * 1.85, Math.PI * 2.85);
-  ctx.stroke();
-  ctx.restore();
-  // Motes drawn in along the spiral, speeding up as they near the heart.
-  for (let i = 0; i < 6; i++) {
-    const u = (time * 0.35 + i / 6) % 1;
-    const r = 17 * (1 - u * u);
-    const a = spin * 1.3 + i * 1.7 + u * 4;
-    sparkle(ctx, x + Math.cos(a) * r, y + Math.sin(a) * r * 1.55, (i % 2 ? 2.2 : 1.6) * (1 - u * 0.6), i % 3 ? '#ffffff' : '#ffe36b');
-  }
-}
-
 function drawPortals(ctx, map, cam, time, nearId) {
   for (const p of map.portals) {
     if (p.hidden) continue;
     const x = p.x - cam.x;
     const y = p.y - cam.y;
-    drawPortalSwirl(ctx, x, y - 26, time, p.x);
+    // A gateway in the region's own style, its swirl turning inside.
+    drawPortalGate(ctx, map, x, y, time, p.x);
     // A little sign naming where the portal goes.
     const dest = p.label ?? MAPS[p.to]?.name;
     if (dest) {
       ctx.font = 'bold 7px sans-serif';
       const w = ctx.measureText(dest).width + 10;
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      roundRect(ctx, Math.round(x - w / 2), Math.round(y - 68), w, 11, 5);
+      roundRect(ctx, Math.round(x - w / 2), Math.round(y - 94), w, 11, 5);
       ctx.fill();
       ctx.strokeStyle = '#b9a7ff';
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = '#5a3f7a';
       ctx.textAlign = 'center';
-      ctx.fillText(dest, Math.round(x), Math.round(y - 60));
+      ctx.fillText(dest, Math.round(x), Math.round(y - 86));
       ctx.textAlign = 'left';
     }
     if (p.id === nearId) {
       const bob = Math.sin(time * 6) * 2;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(x, y - 82 + bob);
-      ctx.lineTo(x - 6, y - 74 + bob);
-      ctx.lineTo(x + 6, y - 74 + bob);
+      ctx.moveTo(x, y - 108 + bob);
+      ctx.lineTo(x - 6, y - 100 + bob);
+      ctx.lineTo(x + 6, y - 100 + bob);
       ctx.fill();
     }
   }

@@ -349,7 +349,10 @@ to clear it.
   Each region's land has its own look (cobbled meadow earth, mossy forest loam, stacked sandstone
   slabs, temple bricks, crystal rock, cloud), with grassy or mossy lips, hanging vines and roots,
   and big landmarks: giant trees and mushrooms, wishing wells and flower arches, totems and mesas,
-  broken archways and statues, crystal spires, cloud pillars and gazebos. Portals name where they
+  broken archways and statues, crystal spires, cloud pillars and gazebos. Portals are little gateways in
+  each region's style (a flowery trellis in the meadows, a lantern gate in town, a root arch in the
+  woods, stone in the ruins, crystal in the cave, clouds in the sky, a torii on the shrine path,
+  ice on the peak...) with a swirl of the region's colour turning inside, and name where they
   lead. Every region has its own
   monsters, drawn after myths, folklore, and other games (Kitsune Kits, Moss Tortoises, Mandrakes,
   and Jackalopes in the meadow; Basilisk Hatchlings and Manticore Cubs in the canyon; Dryads, Wargs,
