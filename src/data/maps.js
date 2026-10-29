@@ -12,35 +12,43 @@
 //   plaza      in towns, where the fountain stands
 
 export const MAPS = {
-  // The archers' home town, among treehouses under green pennants. Arrival and shops on the west;
-  // a raised plaza with the Archer Lodge, the fountain, and the watchtower (its deck a ledge you
-  // can climb to); the archery range; then the salon by the exit. Nothing you need
-  // is up a ladder.
+  // The archers' home town, laid out in quarters from west to east: a homey corner of two-storey
+  // cottages with a terraced walk up between them (Mira welcomes you at the entrance); the shop
+  // street (Pip's goods and Lulu's salon side by side); the raised plaza under the giant cherry
+  // tree, with the fountain, benches and the noticeboard (a branch of the tree is a ledge, up its
+  // rope); then the archers' quarter: the Archer Lodge, the watchtower (its deck a ledge) and the
+  // range, out to the meadow road. Nothing you need is up a ladder.
   sprout: {
-    id: 'sprout', plaza: 1020, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
-    width: 2200, height: 560, groundY: 480,
-    look: { edges: 'flowers', front: 'blossoms', islands: 'planks' },
-    terrain: [[0, 480], [760, 480], [800, 456], [1240, 456], [1280, 480], [2200, 480]],
+    id: 'sprout', plaza: 1290, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    width: 2600, height: 520, groundY: 480,
+    look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.8 },
+    terrain: [[0, 480], [1180, 480], [1220, 456], [1700, 456], [1740, 480], [2600, 480]],
+    // The cottages along the street, and the plaza's own pieces (render/townhouses.js).
+    cottages: [200, 470, 660, 950, 2160, 2400],
+    townPieces: [['plazatree', 1470], ['noticeboard', 1630]],
     platforms: [
-      // The watchtower's deck (TOWER_DECK above the plaza).
-      { x: 1118, y: 296, w: 84 },
+      // The terraced walk between the cottages.
+      { x: 500, y: 400, w: 150, posts: true }, { x: 600, y: 320, w: 120, posts: true },
+      // A branch of the plaza's cherry tree (the tree's own bough: nothing drawn for it).
+      { x: 1360, y: 330, w: 96, bare: true },
+      // The watchtower's deck (TOWER_DECK above the ground).
+      { x: 1998, y: 320, w: 84 },
     ],
     ropes: [
-      { x: 1134, top: 296, bottom: 456, ladder: true },
+      { x: 1440, top: 330, bottom: 456 },
+      { x: 2014, top: 320, bottom: 480, ladder: true },
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
       // The old mine road west, closing the island's ring: it comes out in the Crystal Cave.
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
-      { id: 'east', x: 2140, y: 480, to: 'meadow1', toPortal: 'west' },
+      { id: 'east', x: 2540, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 300 }, { id: 'pip', x: 500 }, { id: 'kestrel', x: 880 }, { id: 'lulu', x: 1800 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'pip', x: 800 }, { id: 'lulu', x: 1070 }, { id: 'kestrel', x: 1880 }],
     deco: [
-      ['flowerarch', 60], ['archerbanner', 180], ['well', 650], ['archerbanner', 730],
-      ['watchtower', 1160], ['archerbanner', 1310],
+      ['well', 760], ['archerbanner', 1780], ['watchtower', 2040], ['archerbanner', 2110],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
-      ['bowrack', 1380], ['fence', 1440], ['archtarget', 1510, 0], ['archtarget', 1580, 1], ['archtarget', 1650, 2], ['haystack', 1710, 1],
-      ['signpost', 2080],
+      ['bowrack', 2200], ['fence', 2250], ['archtarget', 2300, 0], ['archtarget', 2360, 1], ['archtarget', 2420, 2], ['haystack', 2470, 1],
     ],
     spawns: [],
   },

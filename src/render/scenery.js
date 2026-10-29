@@ -1643,6 +1643,8 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     const x = Math.round(p.x - cam.x);
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
+    // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
+    if (p.bare) continue;
     if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
     else drawIsland(ctx, theme, p, cam, time, pi, map.look);
   }
@@ -1915,8 +1917,11 @@ const BIG_PROPS = ['pine', 'stonelamp', 'chime', 'lamp', 'bench', 'mailbox', 'co
 
 function drawProps(ctx, t, map, cam, width, time) {
   const surfaces = surfacesOf(map).map((s) => ({ x: s.x1, w: s.x2 - s.x1, ground: s.ground, yAt: s.yAt }));
-  const keep = map.isTown ? 0.66 : 0.52;
+  // A map can thin its props (`look.propKeep`, the share of spots left bare).
+  const keep = map.look?.propKeep ?? (map.isTown ? 0.66 : 0.52);
   surfaces.forEach((s, si) => {
+    // Nothing grows on a ledge that's really a tree's bough.
+    if (!s.ground && map.platforms.some((p) => p.bare && Math.abs(p.x - s.x) < 2 && Math.abs(p.y - s.yAt(s.x)) < 2)) return;
     const step = s.ground ? 38 : 44;
     for (let wx = s.x + 14; wx < s.x + s.w - 12; wx += step) {
       const seed = hash(wx * 0.37 + si * 13 + map.width);

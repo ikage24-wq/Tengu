@@ -16,6 +16,7 @@ import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
+import { cottageArt, plazaTreeArt, noticeboardArt } from './townhouses.js';
 import { ITEMS } from '../data/items.js';
 
 const hash = (n) => {
@@ -420,8 +421,54 @@ export function drawStreet(ctx, map, cam, width, time) {
   if (!map.isTown) return;
   const ground = (wx) => snap(groundAt(map, wx) - cam.y);
   const theme = map.theme;
-  // Houses fill the gaps between NPCs, portals, and the plaza.
-  const kinds = STREET[theme] ?? [];
+  // Decks on posts: a town ledge standing on the street (`posts`), its timber legs and braces.
+  for (const p of map.platforms) {
+    if (!p.posts) continue;
+    const x0 = p.x - cam.x;
+    if (x0 + p.w < -20 || x0 > width + 20) continue;
+    const r = ramp('#c99a6b', 0.8);
+    const top = p.y + 12 - cam.y;
+    for (const px of [p.x + 10, p.x + p.w - 16, ...(p.w > 130 ? [p.x + p.w / 2 - 3] : [])]) {
+      const x = snap(px - cam.x);
+      const bottom = ground(px);
+      ctx.fillStyle = r.base;
+      ctx.fillRect(x, top, 6, bottom - top);
+      ctx.fillStyle = r.hi;
+      ctx.fillRect(x, top, 1.5, bottom - top);
+      ctx.fillStyle = r.sh;
+      ctx.fillRect(x + 4, top, 2, bottom - top);
+      ctx.fillStyle = r.deep;
+      ctx.fillRect(x - 1, bottom - 3, 8, 3);
+    }
+    // A cross brace between the outer legs.
+    ctx.strokeStyle = r.sh;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(snap(p.x + 13 - cam.x), top + 6);
+    ctx.lineTo(snap(p.x + p.w - 13 - cam.x), Math.min(ground(p.x + p.w - 13), top + 70));
+    ctx.stroke();
+  }
+  // A redesigned town lays out its own two-storey cottages, set back a step behind the street.
+  for (const wx of map.cottages ?? []) {
+    const x = wx - cam.x;
+    if (x < -80 || x > width + 80) continue;
+    const seed = hash(wx * 0.11 + 3);
+    const s = cottageArt(seed);
+    const hy = ground(wx);
+    ctx.save();
+    ctx.globalAlpha = 0.97;
+    place(ctx, s, snap(x), hy + 2);
+    ctx.restore();
+    chimneySmoke(ctx, x + (hash(seed * 3) > 0.5 ? -32 : 32), hy - 136, time, seed);
+  }
+  for (const [kind, wx] of map.townPieces ?? []) {
+    const x = wx - cam.x;
+    if (x < -140 || x > width + 140) continue;
+    place(ctx, kind === 'plazatree' ? plazaTreeArt(0) : noticeboardArt(), snap(x), ground(wx) + 3);
+  }
+  // Houses fill the gaps between NPCs, portals, and the plaza (in towns not yet laid out with
+  // cottages of their own).
+  const kinds = map.cottages ? [] : STREET[theme] ?? [];
   if (kinds.length) {
     for (let wx = 120, i = 0; wx < map.width - 100; wx += 150, i++) {
       if (map.npcs.some((n) => Math.abs(n.x - wx) < 110) || map.portals.some((p) => Math.abs(p.x - wx) < 70) || Math.abs((map.plaza ?? -999) - wx) < 90) continue;
@@ -1112,14 +1159,16 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     if (x < -60 || x > width + 60) continue;
     const gy = snap(groundAt(map, bot.x) - cam.y);
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
-    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x));
+    // Name tags further than a few steps away fade back, so a busy street stays readable.
+    const far = player && Math.abs(bot.x - player.x) > 150;
+    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }
 
 // One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
 // pros, green with a heart for party members, guild underneath).
-function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
+function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
   if (bot.appear > 0 || bot.state === 'logout') {
     for (let i = 0; i < 8; i++) {
@@ -1158,6 +1207,8 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
     fellAt.delete(bot);
     drawHero(ctx, look, wornGear(bot.char), x, y, state, anim);
   }
+  ctx.save();
+  if (far && !hovered && !bot.party) ctx.globalAlpha = 0.3;
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;
@@ -1179,6 +1230,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0) {
     box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
     if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
   } else if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+  ctx.restore();
   if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
 }
 

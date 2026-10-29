@@ -1,5 +1,5 @@
 // The people (and pets) who live in each town and go about their day there, each tied to the
-// town's own places: apprentices at Sprout's archery range, a sailor hauling crates to the ship at
+// town's own places: apprentices at Sprout's archery range (and a cat asleep on the plaza tree's bough), a sailor hauling crates to the ship at
 // the harbor, trainees at the crag's dummies, students at the grove's rune circle. They're drawn
 // from time alone (render/townlife.js), so they cost the world nothing.
 //
@@ -23,17 +23,17 @@
 export const TOWNSFOLK = {
   sprout: [
     { id: 'sp-apprentice1', name: 'Wren', kind: 'person', seed: 11, look: { outfitColor: '#bff0dc' }, gear: { weapon: { id: 'bow_50' } },
-      act: { type: 'shoot', x: 1452, facing: 1, targets: [1510, 1580, 1650] }, lines: ['Steady... breathe...', 'Bullseye! ...almost.', 'Kestrel says aim small, miss small.'] },
+      act: { type: 'shoot', x: 2238, facing: 1, targets: [2300, 2360, 2420] }, lines: ['Steady... breathe...', 'Bullseye! ...almost.', 'Kestrel says aim small, miss small.'] },
     { id: 'sp-apprentice2', name: 'Alder', kind: 'person', seed: 23, look: { outfitColor: '#d9f7c7' }, gear: { weapon: { id: 'bow_50' } },
-      act: { type: 'shoot', x: 1418, facing: 1, targets: [1580, 1650], offset: 1.6 }, lines: ['My arm hurts.', 'One more quiver, then lunch!'] },
-    { id: 'sp-kid1', name: 'Pippa', kind: 'kid', seed: 37, act: { type: 'chase', a: 860, b: 1180, speed: 62 }, lines: ["Can't catch me!", 'Tag, you\'re it!'] },
-    { id: 'sp-kid2', name: 'Tobi', kind: 'kid', seed: 41, act: { type: 'chase', a: 860, b: 1180, speed: 62, lag: 0.8 }, lines: ['Wait for meee!', 'No fair!'] },
-    { id: 'sp-dog', kind: 'dog', seed: 3, act: { type: 'chase', a: 860, b: 1180, speed: 62, lag: 1.5 } },
+      act: { type: 'shoot', x: 2200, facing: 1, targets: [2360, 2420], offset: 1.6 }, lines: ['My arm hurts.', 'One more quiver, then lunch!'] },
+    { id: 'sp-kid1', name: 'Pippa', kind: 'kid', seed: 37, act: { type: 'chase', a: 1260, b: 1680, speed: 62 }, lines: ["Can't catch me!", 'Tag, you\'re it!'] },
+    { id: 'sp-kid2', name: 'Tobi', kind: 'kid', seed: 41, act: { type: 'chase', a: 1260, b: 1680, speed: 62, lag: 0.8 }, lines: ['Wait for meee!', 'No fair!'] },
+    { id: 'sp-dog', kind: 'dog', seed: 3, act: { type: 'chase', a: 1260, b: 1680, speed: 62, lag: 1.5 } },
     { id: 'sp-elder', name: 'Old Fennel', kind: 'person', seed: 52, look: { hairColor: '#e9ebfa', outfitColor: '#e0cfff' },
       act: { type: 'stroll', a: 560, b: 720, speed: 12, pause: 6 }, lines: ['The well water is sweetest at dawn.', 'In my day, we shot with sticks!'], greet: ['Ah, a new face!', 'Mind the chickens, dear.'] },
     { id: 'sp-chick1', kind: 'chick', seed: 5, act: { type: 'peck', a: 380, b: 440 } },
     { id: 'sp-chick2', kind: 'chick', seed: 9, act: { type: 'peck', a: 410, b: 470 } },
-    { id: 'sp-cat', kind: 'cat', seed: 2, act: { type: 'nap', x: 1185, y: 296 } },
+    { id: 'sp-cat', kind: 'cat', seed: 2, act: { type: 'nap', x: 1404, y: 330 } },
   ],
   harbor: [
     { id: 'hb-sailor', name: 'Bosun Gill', kind: 'person', seed: 61, look: { outfitColor: '#bfe0ff' },
