@@ -792,6 +792,16 @@ function headShapes(look, g, rig) {
     const bunny = (c, inner, lean) => [F(T([[17.4, 7], [17.2, 1], [17.6 + lean * 0.3, -5], [18.6 + lean, -10.6], [20.4 + lean, -11.4], [21.6 + lean * 0.8, -8], [21.4 + lean * 0.4, -1], [20.6, 7]], c)),
       F(T([[18.4, 4], [18.4, -1], [19 + lean * 0.5, -6.6], [19.8 + lean, -9.4], [20.6 + lean * 0.8, -7.6], [20.4 + lean * 0.4, -1], [19.8, 4]], inner))];
     out.push(...mirror(bunny(hr.sh1, '#e88ab4', 1.4)), ...bunny(hr.base, '#ffa8cc', 1.8));
+  } else if (ears === 'fox') {
+    // Fox ears: tall, slender and sharply pointed, standing straight up from the head and turned
+    // a little out, furred in the hair's colour with a pink hollow and their points dipped in
+    // `look.earTip` (a kitsune's vermilion); the far one a shade darker. rig.ears turns each.
+    const tipC = look.earTip ?? hr.base;
+    const fox = (c, inner, tipc) => [F(T([[17.2, 7.0], [18.6, 3.6], [20.2, 0.2], [22.0, -3.6], [23.4, -6.6], [24.6, -7.4], [25.4, -3.6], [25.8, 1.0], [25.6, 5.4], [25.0, 9.4]], c)),
+      F(T([[19.2, 6.6], [20.4, 3.4], [21.8, 0.2], [23.2, -2.8], [24.2, -4.4], [24.4, -0.6], [24.2, 3.6], [23.8, 7.8]], inner)),
+      F(T([[22.0, -3.6], [23.4, -6.6], [24.6, -7.4], [25.4, -3.6], [25.6, -2.0], [23.6, -1.6]], tipc))];
+    const [near, far] = rig.ears ?? [0, 0];
+    out.push(...roll(mirror(fox(hr.sh1, '#e8a6a8', shade(tipC, -14))), 9.8, 7.8, -far), ...roll(fox(hr.base, '#ffc4c0', tipC), 21.2, 7.8, near));
   } else if (ears === 'wolf') {
     // Wolf ears: tall and pointed, set up on the head and turned a little out, furred in the hair's
     // colour with a pale fluff inside; the far one a shade darker.
@@ -986,7 +996,7 @@ function bodyShapes(look, g, rig) {
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
-  const tail = look.tail === 'wolf' ? wolfTail(look, rig, ux, drop + rig.by * 0.5) : [];
+  const tail = look.tail === 'wolf' ? wolfTail(look, rig, ux, drop + rig.by * 0.5) : look.tail === 'fox' ? foxTail(look, rig, ux, drop + rig.by * 0.5) : [];
   // Walking, the pelvis turns toward the way it's going: the hips draw together on screen (they
   // part in depth instead), so the legs scissor past each other rather than splaying from wide
   // hips into splits and an X, and the far leg falls into shadow.
@@ -1037,6 +1047,32 @@ function wolfTail(look, rig, dx, dy) {
     return [rx + (x - rx) * c - (y - ry) * sn, ry + (x - rx) * sn + (y - ry) * c];
   });
   return [F(T(swing(body), hr.base)), F(T(swing(under), hr.sh1)), F(T(swing(tip), mix(hr.base, '#ffffff', 0.7))), F(T(swing(lock), hr.sh1))];
+}
+
+// A fox tail: a great full plume from behind the hips, sweeping out behind and rising in an S,
+// fuller than the wolf's, in the hair's colour with a shaded underside, tufts of fur along its
+// back, and its last third dipped in `look.tailTip` (a kitsune's vermilion). rig.tail (degrees)
+// swings it about the root and rig.tailCurl (degrees) curls it more toward the tip, so it can
+// swish, lash and settle; it sways with the cape spring too.
+function foxTail(look, rig, dx, dy) {
+  const hr = hairRamp(look.hairColor ?? '#e9ebfa');
+  const tipC = look.tailTip ?? '#ff7a62';
+  const sway = (rig.cape ?? 0) * 0.6;
+  const at = (pts) => pts.map(([x, y]) => [x + dx * KX - Math.max(0, 30 - y) * sway * 0.08, y + dy * KY]);
+  const [rx, ry] = [12.4 + dx * KX, 31.4 + dy * KY];
+  const swing = (pts) => pts.map(([x, y]) => {
+    const u = Math.min(1, Math.hypot(x - rx, y - ry) / 22);
+    const a = (((rig.tail ?? 0) * (0.35 + 0.65 * u)) + (rig.tailCurl ?? 0) * u * u) * Math.PI / 180;
+    const [c, sn] = [Math.cos(a), Math.sin(a)];
+    return [rx + (x - rx) * c - (y - ry) * sn, ry + (x - rx) * sn + (y - ry) * c];
+  });
+  const body = at([[12.8, 33.0], [9.4, 36.4], [4.6, 38.0], [-0.4, 37.6], [-4.8, 35.2], [-8.0, 31.2], [-9.4, 26.4], [-9.0, 21.4], [-7.4, 17.2], [-5.0, 14.2], [-2.6, 12.8], [-1.4, 14.6], [-2.2, 17.6], [-2.6, 21.6], [-1.6, 25.6], [0.8, 28.6], [4.4, 30.4], [8.6, 30.6], [12.2, 29.8]]);
+  const under = at([[12.8, 33.0], [9.4, 36.4], [4.6, 38.0], [-0.4, 37.6], [-4.8, 35.2], [-8.0, 31.2], [-9.4, 26.4], [-6.0, 30.4], [-1.8, 33.2], [3.4, 34.6], [8.6, 34.0]]);
+  const tip = at([[-9.2, 22.4], [-9.0, 21.4], [-7.4, 17.2], [-5.0, 14.2], [-2.6, 12.8], [-1.4, 14.6], [-2.2, 17.6], [-2.6, 21.6], [-3.4, 22.8], [-6.6, 23.6]]);
+  const tipSh = at([[-9.2, 22.4], [-9.0, 21.4], [-7.4, 17.2], [-6.4, 18.6], [-6.6, 21.4], [-6.6, 23.6]]);
+  const tufts = [[[6.4, 30.6], [5.6, 29.4], [4.6, 30.4]], [[1.6, 28.6], [0.6, 27.0], [-0.4, 28.0]], [[-1.8, 24.6], [-3.0, 23.6], [-3.4, 24.8]]].map((t) => at(t));
+  return [F(T(swing(body), hr.base)), F(T(swing(under), hr.sh1)), F(T(swing(tip), tipC)), F(T(swing(tipSh), shade(tipC, -18))),
+    ...tufts.map((t) => F(T(swing(t), hr.sh1)))];
 }
 
 // Turns shapes by deg about (cx, cy): polygons point by point, ellipses and rects by their centres
@@ -1686,7 +1722,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, ...r.ears, r.tail, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, ...r.ears, r.tail, r.tailCurl ?? 0, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------

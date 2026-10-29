@@ -1,0 +1,77 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the Shrine Maiden's kitsune guardian (render/kitsune.js) drawn large, on her own rig,
+// to check her design and moves. ?sheet shows her in a row of poses (standing, walking, each move
+// at its key moment, her bow); otherwise she plays ?move=thrust (any of hers, or walk, run, stand)
+// over and over. ?manual steps frames from outside (window.step) for recording. ?scale=4 sets the
+// zoom.
+import { drawKitsune } from '../src/render/kitsune.js';
+import { KMOVES, CALL } from '../src/world/kitsune.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const S = Number(q.get('scale') ?? 3.4);
+const sheet = q.has('sheet');
+const DUR = { ...Object.fromEntries(Object.entries(KMOVES).map(([k, m]) => [k, m.dur])), call: CALL.dur, block: 0.6, bow: 1.5 };
+// The sheet: each panel a move frozen at a moment (u, 0-1).
+const PANELS = sheet
+  ? [['stand', 0], ['walk', 0.3], ['run', 0.6], ['thrust', 0.45], ['sweep', 0.25], ['sweep', 0.55], ['rising', 0.5], ['call', 0.3], ['call', 0.55], ['block', 0.3], ['bow', 0.35]]
+  : [[q.get('move') ?? 'thrust', 0]];
+const COLS = sheet ? 6 : 1;
+const CW = sheet ? 210 : 520;
+const CH = sheet ? 330 : 420;
+canvas.width = CW * COLS;
+canvas.height = CH * Math.ceil(PANELS.length / COLS);
+const ks = PANELS.map(() => ({ body: {}, x: 0, y: 0, dir: 1, act: null, moving: false, vx: 0, hurry: false }));
+const scratch = document.createElement('canvas').getContext('2d');
+let t = 0;
+function step(dt) {
+  t += dt;
+  nextFrame();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, '#9fd8c0');
+  g.addColorStop(1, '#d8f0e0');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  PANELS.forEach(([move, u], i) => {
+    const k = ks[i];
+    const cx = (i % COLS) * CW + CW / 2;
+    const gy = Math.floor(i / COLS) * CH + CH - 40;
+    const loop = sheet ? null : (DUR[move] ?? 1) + 0.6;
+    const local = sheet ? u * (DUR[move] ?? 1) : t % loop;
+    const world = { now: sheet ? local : t };
+    k.moving = move === 'walk' || move === 'run';
+    k.hurry = move === 'run';
+    k.vx = k.moving ? (k.hurry ? 150 : 85) : 0;
+    k.act = DUR[move] && (sheet || local < DUR[move]) ? { kind: move, t0: sheet ? 0 : t - local, dur: DUR[move] } : null;
+    ctx.save();
+    ctx.translate(cx, gy);
+    ctx.scale(S, S);
+    ctx.fillStyle = '#6aa874';
+    ctx.fillRect(-CW / S / 2, 0, CW / S, 2);
+    setHd(true, S);
+    // Sheet panels are frozen, so her springs are first run a while off screen to settle.
+    if (sheet) for (let r = 0; r < 60; r++) drawKitsune(scratch, world, k, { x: 0, y: 0 }, r / 30 + (k.moving ? u * 2 : 0));
+    drawKitsune(ctx, world, k, { x: 0, y: 0 }, sheet ? 2 + (k.moving ? u * 2 : 0) : t);
+    ctx.restore();
+    if (sheet) {
+      ctx.fillStyle = '#2a2440';
+      ctx.font = 'bold 15px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${move}${u ? ` ${u}` : ''}`, cx, gy + 28);
+    }
+  });
+}
+window.step = step;
+step(0);
+if (!q.has('manual') && !sheet) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script></body></html>

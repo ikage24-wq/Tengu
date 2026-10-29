@@ -307,6 +307,46 @@ const OUTFITS = {
       k.poly([[0.2, -0.6], [0.8, -0.6], [1.6, 1.8], [-0.6, 1.8]], c(SCARLET))],
   },
 
+  // A shrine maiden's (miko's) dress: a white kosode crossed at the collar over a scarlet
+  // under-collar, its wide sleeves gathered at the wrist with scarlet cords; scarlet hakama tied
+  // high at the waist with white bands and a bow, falling in deep pleats to the ankles; white tabi
+  // and straw zori with scarlet thongs.
+  miko: {
+    top: (p) => [T(loose(35, 0.8), p.main),
+      T([[MID - 3.4, 25.6], [MID + 3.4, 25.6], [MID, 30.6]], SCARLET), T([[MID + 1.6, 25.6], [MID + 4, 25.6], [MID + 0.2, 31], [MID - 1.4, 31]], p.main),
+      F(limb(MID + 3.8, 25.7, MID, 30.8, 0.55, 0.55, p.dark)), F(limb(MID - 3.4, 25.7, MID - 0.6, 29.8, 0.5, 0.5, p.dark)),
+      // The hakama's high waist and its white bands crossing over it, the bow at the front.
+      T([[9.2, 31.4], [22, 31.2], [22.2, 35], [9, 35.2]], SCARLET), F(R(9.2, 32.2, 12.8, 0.7, '#ffffff')), F(R(9.2, 33.6, 12.8, 0.6, '#ffffff')),
+      ...bow(MID + 3.2, 32.8, 1.5, '#ffffff', PAPER_SH),
+      F(limb(11.6, 27.6, 12.2, 31, 0.4, 0.4, p.dark)), F(limb(19.8, 27.8, 19.4, 31, 0.4, 0.4, p.dark))],
+    sleeve: (p) => p.main,
+    long: true,
+    shoulder: (p) => [E(0, 1, 3, 2.6, p.main), F(E(0, 2.6, 2.4, 0.6, p.dark))],
+    hand: (p, hx, hy, ex, ey) => {
+      // The wide sleeve's mouth at the wrist, a scarlet cord threaded round its edge (its knot
+      // and tail hanging), and the hand out of it.
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const at = (a, b) => [hx + ux * a - uy * b, hy + uy * a + ux * b];
+      return [T([at(-3, -2.2), at(-3, 2.2), at(-0.2, 3.4), at(0.6, 2), at(0.6, -2), at(-0.2, -3.4)], p.main),
+        F(T([at(-0.4, -2.8), at(0.4, -1.8), at(0.4, 1.8), at(-0.4, 2.8), at(-0.8, 0)], p.dark)),
+        F(limb(...at(-0.2, -3.2), ...at(-0.2, 3.2), 0.45, 0.45, SCARLET)), F(limb(...at(-0.4, 3), ...at(-1.4, 5.4), 0.4, 0.3, SCARLET)),
+        F(E(...at(1.6, 0), 1.1, 1.15, p.skin))];
+    },
+    legs: () => ({ top: '#ffffff', low: '#ffffff', pad: null }),
+    skirt: () => {
+      // Hakama: two wide pleated legs to the ankles, a seam down the middle where they part, and
+      // a darker hem.
+      const out = [T([[9.2, 34.6], [22, 34.6], [24.4, 52], [16.2, 52], [15.6, 44], [15, 52], [6.8, 52]], SCARLET),
+        F(R(6.8, 50.8, 17.6, 1.2, SCARLET_DK)), F(limb(MID, 38, MID, 51.6, 0.6, 0.6, SCARLET_DK))];
+      for (const x of [10.6, 12.8, 18.2, 20.6]) out.push(F(limb(x, 35.4, x + (x - MID) * 0.32, 51.6, 0.5, 0.7, SCARLET_DK)));
+      out.push(F(limb(11.6, 35.6, 11.2, 50.6, 0.3, 0.3, '#ff7a7a')), F(limb(19.6, 35.6, 20.4, 50.6, 0.3, 0.3, '#ff7a7a')));
+      return out;
+    },
+    shoe: (p, k, c) => [k.poly([[-2.4, 1.8], [2.8, 1.8], [3.2, 3], [-2.6, 3]], c('#d9b88a')), k.poly([[-1.8, -1.2], [1.8, -1.2], [2.4, 1.8], [-2, 1.8]], c('#ffffff')),
+      k.poly([[0.2, -0.6], [0.8, -0.6], [1.6, 1.8], [-0.6, 1.8]], c(SCARLET))],
+  },
+
   // A summer sundress: thin straps and a sweetheart bodice, a ribbon at the waist, and a skirt in
   // two ruffled tiers scattered with little flowers; sandals.
   sundress: {
