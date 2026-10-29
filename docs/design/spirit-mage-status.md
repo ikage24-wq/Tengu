@@ -48,11 +48,31 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
   (roleOf: the mage family heals), and the finder recruits her there, healing with Blessing and
   warding the tank with Spirit Ward; README and docs/art/README.md.
 
+## Level 30 paths: done so far
+
+- Elowen's trial (20 Wraiths) and both path jobs exist (data/jobs.js, quests.js, skills.js).
+- **The Shrine Maiden's kitsune guardian is built and approved** (world/kitsune.js,
+  render/kitsune.js; dev pages tools/kitsune.html, ?idles, tools/kitsune-outfits.html,
+  tools/kitsune-hair.html):
+  - On the player character, scaled up: a cold, bored warlord of a fox in a shrine queen's robes
+    (jobgear/guardian.js), floor-length "moon river" hair (hair.js GUARDIAN_HAIR), narrowed
+    eyes, a god's naginata (ivory and gold, a sun-disc halo, a glowing blade) held out at her side.
+  - She only walks, slowly; left far behind, she teleports to the Maiden in vermilion fox fire.
+  - Seven heavy weapon moves and three skills (Moonfall's charge and pull, a close-range Crescent
+    Moon, Hundred Thrusts), all melee: no range attacks. Fox-Fire Call and Guard.
+  - Every blow runs on a heavy clock (a hang in the wind-up, a freeze on impact, a dragging
+    follow-through) with footwork and weight.
+  - Nine idles, including a yawn behind her sleeve, leaning on the naginata, inspecting the blade,
+    a hair toss and a sigh.
+  - Rules the player set: no leaps; no range attacks; never reuse the creator's hairstyles (or
+    other parts) for her: make new ones.
+
 ## Next
 
 1. Demo videos of every skill for the player (GIFs so far), and a look in a real dungeon run.
-2. The 30 trial and the two paths: planned in docs/design/spirit-mage-paths.md (the player chose
-   a kitsune shrine guardian for the Shrine Maiden, a yokai troupe that's always out for the
-   Onmyoji, and the doll growing up on each path).
+2. The rest of the Shrine Maiden (docs/design/spirit-mage-paths.md): the doll grown into a fox
+   kit, her dance, the Grace gauge, her skills and the Thousand Torii finisher.
+3. The Onmyoji: the yokai troupe, one yokai at a time (each built on the player character with
+   its own rig and look), the imp doll, her skills and Hyakki Yagyo.
 3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one
    if the player wants.
