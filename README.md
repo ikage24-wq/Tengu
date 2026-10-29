@@ -659,6 +659,10 @@ to clear it.
   song with marimba and pop drums; an accordion sea song in 6/8 at the harbor; sitar and oboe over
   toms in the crags; pan flute and harp in the forest; a waltz for oboe and celesta in the mage
   grove; choir, harp and horn in the ruins; echoing celesta in the cave; flute and bells in the sky;
+  shakuhachi and koto in the old Japanese scale on the Fox Shrine Path; a piano nocturne on Moonlit
+  Ridge; a sitar groove at Serpent Springs; a flute waltz over glockenspiel snow on Frozen Peak;
+  the choir and celesta at Starfall Heights; a grand violin and brass waltz for the queens' trials
+  and rematches;
   a grumbling horn march in the Hollow; a galloping boss theme with brass, strings, choir and
   timpani that cuts in on its sting; and a piano title theme. Songs crossfade between areas and
   pick up where they left off when you come back. **Jingles** on real instruments follow the Japanese RPG formula (quick notes rushing

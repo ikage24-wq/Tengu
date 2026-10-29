@@ -13,6 +13,7 @@ import { prepareSongs } from './bank.js';
 import { getMap } from '../data/maps.js';
 import { hasRage, hasFaith, hasBond } from '../world/melee.js';
 import { SKILLS } from '../data/skills.js';
+import { isQueen } from '../world/story.js';
 
 const memo = new WeakMap();
 
@@ -24,8 +25,12 @@ export function songFor(map, world = null) {
   if (!map) return 'title';
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
   if (map.dungeon) return 'hollow';
+  // A queen's trial, or a queen back on her map for a rematch and in the fight.
+  if (map.trial) return 'queen';
+  if (world?.mobs?.some((m) => isQueen(m) && m.hp > 0 && (m.aggroUntil > world.now || Math.abs(m.x - world.body.x) < 420))) return 'queen';
+  if (map.music) return map.music;
   if (map.isTown) return `${TOWN_SONG[map.town] ?? 'town'}${dayPart() === 'night' ? '-night' : ''}`;
-  return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove', shrine: 'grove', ridge: 'crag', springs: 'forest', snow: 'sky' }[map.theme] ?? 'meadow';
+  return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove', shrine: 'shrine', ridge: 'ridge', springs: 'springs', snow: 'peak' }[map.theme] ?? 'meadow';
 }
 
 const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'smokeburst', 'logpoof', 'inkcut', 'foxtrapburst', 'foxdecoy', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);
@@ -186,7 +191,7 @@ export function hearWorld(world, cam) {
   m.fightK = (m.fightK ?? 0) + ((fighting ? 1 : 0) - (m.fightK ?? 0)) * 0.04;
   const song = songFor(world.map, world);
   updateMusic(song);
-  setFight(song === 'boss' ? 0 : fighting ? 1 : 0);
+  setFight(song === 'boss' || song === 'queen' ? 0 : fighting ? 1 : 0);
   // Low HP muffles the music under a heartbeat.
   const low = !world.dead && char.hp > 0 && char.hp < (world.stats?.maxHp ?? 1) * 0.25;
   setMuffle(low ? 900 : 20000);

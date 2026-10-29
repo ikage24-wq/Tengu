@@ -17,6 +17,12 @@
 // - Ruins: "Forgotten Hymn", a horn hymn with the choir taking it alone.
 // - Cave: "Crystal Lullaby", a celesta music box with one verse in the major.
 // - Sky: "Cloud Garden", Lydian flute and bells.
+// - Fox Shrine Path: "Lantern Path", shakuhachi and koto in the old in-scale, taiko and woodblock.
+// - Moonlit Ridge: "Nocturne on the Ridge", a piano nocturne in 6/8 with a far horn.
+// - Serpent Springs: "Steam and Lanterns", a Dorian sitar groove with marimba and a round bass.
+// - Frozen Peak: "Snowbound", a slow flute waltz over glockenspiel snowflakes.
+// - Starfall Heights: "Where Stars Fall", the choir with a celesta echo, dreamy.
+// - The queens (trials and rematches): "Queen's Waltz", a fast, grand violin and brass waltz.
 // At night the towns play an evening version of their song: slower, softer, the lead on piano.
 // - The Hollow: horns and a grumbling bass march.
 // - Bosses: brass, strings, choir, timpani, a synth bass gallop and big drums.
@@ -510,7 +516,185 @@ const boss = {
   order: ['A', 'A', 'B', 'A'],
 };
 
-export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss };
+// ---------- Fox Shrine Path: "Lantern Path" (D in-scale, the shrine road: shakuhachi, koto, taiko) ----------
+// A breathy pan-flute line in the old D-Eb-G-A-Bb scale over a koto (harp) rippling under it, a
+// festival answer that climbs, and a lantern verse where the koto plays the tune alone.
+const lantern = {
+  A: { mel: bars('D5:4 Eb5:4 G5:6 A5:2', 'Bb5:8 A5:4 G5:4', 'G5:4 A5:2 Bb5:2 D6:8', 'Eb6:4 D6:4 A5:8', 'D6:6 Bb5:2 A5:4 G5:4', 'Eb5:4 G5:4 A5:8', 'Bb5:4 A5:4 G5:4 Eb5:4', 'D5:12 r:4'), chart: ['Dm', 'Eb', 'Gm', 'Dm', 'Bb', 'Gm', 'Eb', 'Dm'] },
+  B: { mel: bars('A5:2 Bb5:2 A5:2 G5:2 A5:4 D6:4', 'Eb6:4 D6:2 Bb5:2 A5:8', 'G5:2 A5:2 Bb5:2 D6:2 Eb6:4 G6:4', 'G6:4 Eb6:4 D6:8', 'Bb5:4 D6:4 A5:4 G5:4', 'Eb5:2 G5:2 A5:4 Bb5:8', 'A5:4 G5:4 Eb5:4 G5:4', 'A5:12 r:4'), chart: ['Dm', 'Eb', 'Gm', 'Eb', 'Bb', 'Gm', 'Eb', 'Asus4'] },
+};
+const lanternPart = ({ mel, chart }, { koto = false } = {}) => ({
+  ...(koto ? { koto: shift(mel, 12), lead: rest(8) } : { lead: mel, koto: part(chart, F.arp(62, 2)) }),
+  drone: part(chart, F.hold(57)),
+  bell: part(chart, (s, len) => `${nm(chord(s, 79).tones[0])}:2 r:${len - 2}`),
+  bass: part(chart, F.root(2)),
+  drums: koto ? times('K.......w.......', 8) : bars(times('K...w...t.w.w...', 7), 't.t.ttw.K.w.tttt'),
+});
+const shrine = {
+  name: 'shrine', bpm: 92, inst: I, drums: 0.6, reverb: { room: 0.9, wet: 0.34 },
+  tracks: {
+    lead: { inst: 'panflute', gain: 0.75, pan: -0.05, verb: 0.38 },
+    koto: { inst: 'harp', gain: 0.4, pan: 0.3, verb: 0.35 },
+    drone: { inst: 'strings', gain: 0.16, pan: -0.3, verb: 0.5 },
+    bell: { inst: 'glock', gain: 0.14, pan: 0.4, verb: 0.55 },
+    bass: { inst: 'pizz', gain: 0.4, verb: 0.2 },
+  },
+  patterns: { A: lanternPart(lantern.A), B: lanternPart(lantern.B), C: lanternPart(lantern.A, { koto: true }) },
+  order: ['A', 'B', 'A', 'C', 'B'],
+};
+
+// ---------- Moonlit Ridge: "Nocturne on the Ridge" (E minor 6/8: piano, strings, a far horn) ----------
+// A piano nocturne rocking in six, a lift into G major where a horn joins far off, and a verse
+// where the violin takes the tune.
+const nocturne = {
+  A: { mel: bars('B4:6 E5:4 F#5:2', 'G5:6 F#5:4 E5:2', 'D5:6 B4:6', 'C5:4 E5:2 A5:6', 'G5:6 F#5:4 E5:2', 'F#5:6 B5:6', 'A5:4 G5:2 F#5:4 D#5:2', 'E5:12'), chart: ['Em', 'Em', 'G', 'Am', 'Em', 'Bm', 'B7', 'Em'] },
+  B: { mel: bars('G5:6 B5:6', 'A5:4 G5:2 E5:6', 'F#5:6 A5:6', 'D6:6 C6:4 B5:2', 'C6:6 E6:6', 'B5:4 A5:2 G5:6', 'A5:6 F#5:6', 'B5:12'), chart: ['G', 'C', 'D', 'G', 'C', 'G', 'Am', 'B7'] },
+};
+const nocturnePart = ({ mel, chart }, { horn = false, violin = false } = {}) => ({
+  ...(violin ? { violin: mel } : { lead: mel }),
+  ...(horn ? { horn: shift(mel, -12) } : {}),
+  harp: part(chart, F.sixEightChord(62), 12),
+  strings: part(chart, F.hold(57), 12),
+  bass: part(chart, F.sixEight(2), 12),
+  drums: times('K.....h.....', 8),
+});
+const ridge = {
+  name: 'ridge', bpm: 72, rows: 12, inst: I, drums: 0.35, reverb: { room: 0.92, wet: 0.38 },
+  tracks: {
+    lead: { inst: 'piano', gain: 0.85, pan: -0.05, verb: 0.4 },
+    violin: { inst: 'violin', gain: 0.55, pan: -0.05, verb: 0.45 },
+    horn: { inst: 'horn', gain: 0.35, pan: 0.3, verb: 0.55 },
+    harp: { inst: 'harp', gain: 0.2, pan: 0.35, verb: 0.45 },
+    strings: { inst: 'strings', gain: 0.2, pan: -0.3, verb: 0.55 },
+    bass: { inst: 'pizz', gain: 0.38, verb: 0.25 },
+  },
+  patterns: { A: nocturnePart(nocturne.A), B: nocturnePart(nocturne.B, { horn: true }), C: nocturnePart(nocturne.A, { violin: true }) },
+  order: ['A', 'B', 'C', 'B', 'A'],
+};
+
+// ---------- Serpent Springs: "Steam and Lanterns" (D Dorian, an easy groove: sitar, marimba, bass) ----------
+// A lazy sitar hook over marimba and a round electric bass, a warmer answer in F, and the hook
+// handed to the marimba while the steam rolls.
+const steam = {
+  A: { mel: bars('D5:3 F5:3 A5:2 G5:4 F5:4', 'E5:2 D5:2 C5:4 D5:8', 'A5:3 C6:3 D6:2 C6:4 A5:4', 'G5:2 A5:2 F5:4 E5:8', 'D5:3 F5:3 A5:2 B5:4 A5:4', 'G5:2 F5:2 E5:4 G5:8', 'F5:4 E5:4 D5:4 C5:4', 'D5:12 r:4'), chart: ['Dm7', 'C', 'Am7', 'C', 'Dm7', 'G', 'F C', 'Dm7'] },
+  B: { mel: bars('F5:4 A5:4 C6:8', 'B5:4 A5:4 G5:8', 'A5:4 G5:4 F5:4 E5:4', 'F5:4 D5:4 A4:8', 'G5:4 B5:4 D6:8', 'C6:4 A5:4 G5:8', 'E5:2 F5:2 G5:2 A5:2 B5:4 C6:4', 'D6:12 r:4'), chart: ['F', 'G', 'Am7', 'Dm7', 'G', 'Am7', 'C', 'Dm7'] },
+};
+const steamPart = ({ mel, chart }, { marimba = false } = {}) => ({
+  ...(marimba ? { marimba: mel } : { lead: mel, marimba: part(chart, F.arp(67, 2)) }),
+  guitar: part(chart, F.offbeat(62)),
+  pad: part(chart, F.hold(60)),
+  bass: part(chart, F.bossaBass(2)),
+  drums: bars(times('K..hS.h.K.hhS.hh', 7), 'K..hS.h.S.SSt.tt'),
+});
+const springs = {
+  name: 'springs', bpm: 96, swing: 0.55, inst: I, pump: 0.12, drums: 0.6, reverb: { room: 0.88, wet: 0.3 },
+  tracks: {
+    lead: { inst: 'sitar', gain: 0.6, pan: -0.05, verb: 0.35 },
+    marimba: { inst: 'marimba', gain: 0.3, pan: 0.3, verb: 0.3 },
+    guitar: { inst: 'guitar', gain: 0.22, pan: -0.35, verb: 0.25 },
+    pad: { inst: 'pad', gain: 0.25, verb: 0.45 },
+    bass: { inst: 'ebass', gain: 0.45, verb: 0.05 },
+  },
+  patterns: { A: steamPart(steam.A), B: steamPart(steam.B), C: steamPart(steam.A, { marimba: true }) },
+  order: ['A', 'A', 'B', 'C', 'B', 'A'],
+};
+
+// ---------- Frozen Peak: "Snowbound" (B minor waltz: flute, glockenspiel, strings, choir) ----------
+// A slow, crisp waltz in the cold, the flute breathing over glockenspiel snowflakes, a brighter
+// verse in D with the choir, and the tune back on the glockenspiel alone.
+const snowbound = {
+  A: { mel: bars('F#5:4 B5:4 C#6:4', 'D6:8 C#6:4', 'B5:4 A5:4 F#5:4', 'G5:12', 'E5:4 G5:4 B5:4', 'A5:8 F#5:4', 'G5:4 F#5:4 E5:4', 'F#5:12'), chart: ['Bm', 'Bm', 'D', 'G', 'Em', 'D', 'Em', 'F#'] },
+  B: { mel: bars('D6:4 F#6:4 E6:4', 'D6:8 A5:4', 'B5:4 D6:4 G6:4', 'F#6:8 D6:4', 'E6:4 C#6:4 A5:4', 'B5:8 G5:4', 'A#5:4 C#6:4 E6:4', 'F#6:12'), chart: ['D', 'D', 'G', 'D', 'A', 'G', 'F#7', 'F#7'] },
+};
+const snowPart = ({ mel, chart }, { choir = false, glock = false } = {}) => ({
+  ...(glock ? { glock: shift(mel, 12) } : { lead: mel, glock: part(chart, F.arp(79, 4), 12) }),
+  ...(choir ? { choir: part(chart, F.hold(64), 12) } : {}),
+  harp: part(chart, F.waltzChord(64), 12),
+  strings: part(chart, F.hold(55), 12),
+  bass: part(chart, F.waltzBass(2), 12),
+  drums: glock ? times('K...........', 8) : times('K...h...h...', 8),
+});
+const peak = {
+  name: 'peak', bpm: 80, rows: 12, inst: I, drums: 0.35, reverb: { room: 0.93, wet: 0.4, damp: 0.2 },
+  tracks: {
+    lead: { inst: 'flute', gain: 0.7, pan: -0.05, verb: 0.4 },
+    glock: { inst: 'glock', gain: 0.22, pan: 0.35, verb: 0.55 },
+    choir: { inst: 'choir', gain: 0.2, pan: 0.15, verb: 0.6 },
+    harp: { inst: 'harp', gain: 0.2, pan: -0.3, verb: 0.45 },
+    strings: { inst: 'strings', gain: 0.2, pan: -0.2, verb: 0.55 },
+    bass: { inst: 'pizz', gain: 0.38, verb: 0.25 },
+  },
+  patterns: { A: snowPart(snowbound.A), B: snowPart(snowbound.B, { choir: true }), C: snowPart(snowbound.A, { glock: true }) },
+  order: ['A', 'B', 'A', 'C', 'B'],
+};
+
+// ---------- Starfall Heights: "Where Stars Fall" (E major, dreamy: choir, celesta, harp, pad) ----------
+// The highest place on the island: the choir sings the tune with a celesta echo, a yearning verse
+// in C# minor, and the celesta alone, high, like falling stars.
+const starsong = {
+  A: { mel: bars('B4:6 E5:2 G#5:8', 'F#5:4 E5:4 C#5:8', 'A4:6 C#5:2 E5:8', 'D#5:4 E5:4 B4:8', 'G#5:6 F#5:2 E5:8', 'C#5:4 E5:4 A5:8', 'G#5:4 F#5:4 D#5:4 F#5:4', 'E5:16'), chart: ['E', 'C#m7', 'A', 'B', 'E', 'A', 'B7', 'E'] },
+  B: { mel: bars('C#5:4 E5:4 G#5:8', 'F#5:6 E5:2 D#5:8', 'E5:4 G#5:4 A5:8', 'G#5:6 F#5:2 E5:8', 'A5:6 G#5:2 F#5:8', 'D#5:4 F#5:4 B4:8', 'C#5:4 E5:4 A5:4 G#5:4', 'F#5:12 r:4'), chart: ['C#m', 'B', 'A', 'E', 'F#m7', 'B', 'A', 'B7'] },
+};
+const starPart = ({ mel, chart }, { high = false } = {}) => ({
+  ...(high ? { echo: shift(mel, 12) } : { lead: mel, echo: shift(mel, 12) }),
+  harp: part(chart, F.arp(64, 2)),
+  pad: part(chart, F.hold(64)),
+  bells: part(chart, F.arp(83, 4)),
+  bass: part(chart, F.root(2)),
+  drums: high ? times('K...............', 8) : times('K.......h...x...', 8),
+});
+const starfall = {
+  name: 'starfall', bpm: 96, inst: I, drums: 0.4, reverb: { room: 0.94, wet: 0.42 },
+  tracks: {
+    lead: { inst: 'choir', gain: 0.5, pan: -0.05, verb: 0.55 },
+    echo: { inst: 'celesta', gain: 0.32, pan: 0.35, delay: 3, verb: 0.55 },
+    harp: { inst: 'harp', gain: 0.22, pan: -0.3, verb: 0.45 },
+    pad: { inst: 'pad', gain: 0.32, verb: 0.5 },
+    bells: { inst: 'bell', gain: 0.16, pan: 0.4, verb: 0.6 },
+    bass: { inst: 'pizz', gain: 0.35, verb: 0.25 },
+  },
+  patterns: { A: starPart(starsong.A), B: starPart(starsong.B), C: starPart(starsong.A, { high: true }) },
+  order: ['A', 'B', 'C', 'B', 'A'],
+};
+
+// ---------- The queens: "Queen's Waltz" (D minor, a fast, grand waltz: violin, brass, choir) ----------
+// For a queen's trial and her rematches in the field: a sweeping violin waltz over brass stabs,
+// a climbing answer where the brass doubles it, all whirling in three.
+const qwaltz = {
+  A: { mel: bars('A5:4 D6:4 F6:4', 'E6:8 D6:4', 'C#6:4 E6:4 A6:4', 'G6:8 F6:4', 'F6:4 E6:4 D6:4', 'Bb5:8 D6:4', 'C#6:4 D6:4 E6:4', 'A5:12'), chart: ['Dm', 'Dm', 'A', 'A7', 'Dm', 'Bb', 'A', 'A7'] },
+  B: { mel: bars('D6:4 F6:4 A6:4', 'G6:8 F6:4', 'E6:4 G6:4 Bb6:4', 'A6:8 F6:4', 'G6:4 F6:4 E6:4', 'D6:8 Bb5:4', 'A5:4 C#6:4 E6:4', 'D6:12'), chart: ['Dm', 'Gm', 'C7', 'F', 'Gm', 'Bb', 'A7', 'Dm'] },
+};
+const queenPart = ({ mel, chart }, { brass = false } = {}) => ({
+  lead: mel,
+  ...(brass ? { brass: shift(mel, -12) } : {}),
+  stabs: part(chart, F.waltzChord(60), 12),
+  strings: part(chart, F.arp(62, 1), 12),
+  choir: part(chart, F.hold(62), 12),
+  bass: part(chart, F.waltzBass(1), 12),
+  timp: part(chart, (s) => `${nm(rootIn(s, 2))}:4 r:8`, 12),
+  drums: bars(times('K...S...S...', 7), 'S.S.SSS.t.tt'),
+});
+const queen = {
+  name: 'queen', bpm: 168, rows: 12, inst: I, pump: 0.15, drums: 0.85, reverb: { room: 0.86, wet: 0.28 },
+  tracks: {
+    lead: { inst: 'violin', gain: 0.62, pan: -0.1, verb: 0.35 },
+    brass: { inst: 'brass', gain: 0.4, pan: 0.2, verb: 0.3 },
+    stabs: { inst: 'brassStab', gain: 0.3, pan: 0.3, verb: 0.25 },
+    strings: { inst: 'strings', gain: 0.18, pan: -0.35, verb: 0.35 },
+    choir: { inst: 'choir', gain: 0.18, pan: 0.1, verb: 0.5 },
+    bass: { inst: 'synbass', gain: 0.34, verb: 0 },
+    timp: { inst: 'timpani', gain: 0.35, verb: 0.3 },
+  },
+  patterns: {
+    sting: { lead: 'D6:3 A5:3 F5:3 D5:3', timp: 'D3:4 D3:4 A2:4', bass: 'D2:4 D2:4 A1:4', drums: 'B...B...SSSS' },
+    A: queenPart(qwaltz.A),
+    B: queenPart(qwaltz.B, { brass: true }),
+  },
+  intro: ['sting'],
+  order: ['A', 'A', 'B', 'A', 'B'],
+};
+
+export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss, shrine, ridge, springs, peak, starfall, queen };
 
 // Each town's evening version: the same song a little slower and softer, the lead handed to a
 // piano (or the horn, for the warriors' march), the bright parts and the drums pulled back.
@@ -535,7 +719,7 @@ for (const [key, lead] of Object.entries(EVENING)) {
 // in on top of the area's song while there's a fight on, and out again after (music.js). The
 // other parts stay in, silenced, so every section keeps the same length.
 const FIGHT_DRUMS = { 16: 'K.h.S.hKK.h.S.tt', 12: 'K.hS.hK.hS.t' };
-for (const key of ['town', 'meadow', 'harbor', 'crag', 'forest', 'grove', 'ruins', 'cave', 'sky', 'hollow']) {
+for (const key of ['town', 'meadow', 'harbor', 'crag', 'forest', 'grove', 'ruins', 'cave', 'sky', 'hollow', 'shrine', 'ridge', 'springs', 'peak', 'starfall']) {
   const song = SONGS[key];
   const grid = FIGHT_DRUMS[song.rows ?? 16] ?? FIGHT_DRUMS[16];
   SONGS[`${key}-fight`] = {

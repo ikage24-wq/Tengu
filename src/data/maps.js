@@ -740,7 +740,7 @@ Object.assign(MAPS, {
   // Above the Sky Garden, where the night comes early: lavender cloud islands under a sky full of
   // shooting stars, the moon close enough to touch. Star Seraphs and Sky Harpies.
   starfall: {
-    id: 'starfall', name: 'Starfall Heights', theme: 'sky', town: 'grove', world: { x: 390, y: 34 },
+    id: 'starfall', name: 'Starfall Heights', theme: 'sky', music: 'starfall', town: 'grove', world: { x: 390, y: 34 },
     width: 2400, height: 900, groundY: 860,
     look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star', 'flower', 'cloudpuff'], drift: 'sparkle', ground: '#e6e0fa', groundDeep: '#c4b8ec', ledge: '#ece6ff', ledgeShade: '#c4b8ec' },
     terrain: [[0, 860], [2400, 860]],
