@@ -2781,7 +2781,8 @@ test('the kitsune guardian has more weapon moves, and skills of her own', () => 
       w.mobs.forEach((m) => { m.hp = Math.max(m.hp, 1); });
     }
   }
-  assert.ok(['cleave', 'reap', 'haft'].filter((k) => seen.has(k)).length >= 1, `new weapon moves (${[...seen]})`);
+  // (Her picks are random, so this asks for some of her seven moves beyond the first four.)
+  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft'].filter((k) => seen.has(k)).length >= 3, `a spread of her weapon moves (${[...seen]})`);
   assert.ok(['moonfall', 'crescent', 'flurry'].filter((k) => seen.has(k)).length >= 2, `her skills (${[...seen]})`);
   assert.ok(!w.fx.some((f) => f.kind === 'kitsunecrescent' && f.speed), 'nothing flies: she has no range');
 });
