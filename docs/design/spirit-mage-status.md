@@ -70,8 +70,9 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
 ## Next
 
 1. Demo videos of every skill for the player (GIFs so far), and a look in a real dungeon run.
-2. The rest of the Shrine Maiden (docs/design/spirit-mage-paths.md): the doll grown into a fox
-   kit, her dance, the Grace gauge, her skills and the Thousand Torii finisher.
+2. The rest of the Shrine Maiden (docs/design/spirit-mage-paths.md): her dance, the Grace gauge,
+   her skills and the Thousand Torii finisher. (Her doll has grown up into the guardian: a Shrine
+   Maiden has no doll.)
 3. The Onmyoji: the yokai troupe, one yokai at a time (each built on the player character with
    its own rig and look), the imp doll, her skills and Hyakki Yagyo.
 3. Bot Spirit Mages have no doll of their own (the doll is the player's world.doll); give them one

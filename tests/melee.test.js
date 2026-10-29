@@ -2563,6 +2563,28 @@ test('the Shrine Maiden has a kitsune guardian who fights in front of her and bo
   assert.ok(bowed, 'and bows to the Maiden once the fight is over');
 });
 
+test("a Shrine Maiden's doll has grown up into her guardian: no doll, and Heaven's Lantern still shines", () => {
+  const w = shrineMaiden();
+  w.god = false;
+  assert.ok(w.guardian, 'her guardian is there');
+  assert.equal(w.doll, null, 'and no doll beside her');
+  w.spirit = 100;
+  w.spiritAt = w.now;
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-240, 150, 300][i] }));
+  assert.ok(cast(w, 'heavenslantern').ok);
+  const rays = new Set();
+  let blaze = false;
+  dice(0.5, () => {
+    for (let i = 0; i < 60 * 6; i++) {
+      updateWorld(w, DT, idle);
+      for (const f of w.fx) if (f.kind === 'lanternray') rays.add(f);
+      blaze ||= w.fx.some((f) => f.kind === 'lanternblaze');
+    }
+  });
+  assert.ok(rays.size >= 8 && blaze, `the lantern shines and blazes without a doll (${rays.size} rays)`);
+  assert.equal(w.doll, null);
+});
+
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
   const { blockOnHit } = await import('../src/world/combat.js');
   const w = shrineMaiden();

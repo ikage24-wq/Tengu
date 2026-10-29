@@ -30,8 +30,9 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   own on cooldowns: Moonfall (raises and charges the naginata, a vortex drags monsters in, then
   one crushing blow), Crescent Moon (a huge cut leaving a crescent of moonlight in front of her) and
   Hundred Thrusts; plus Fox-Fire Call and Guard. No range attacks: everything is the naginata.
-- **The doll grows up (chosen):** she becomes a little shrine fox kit, the guardian's mischievous
-  junior, who rides on the guardian's shoulder or tail and pulls her own pranks.
+- **The doll grows up (chosen):** the doll grows up into the kitsune guardian herself. A Shrine
+  Maiden has no doll of her own any more (world/spiritdoll.js dollGrownUp): the guardian is her
+  doll, grown. (The player corrected the first plan, a separate fox kit doll, on 2026-10-29.)
 - **Gauge:** a shrine's **Grace**: builds from heals and wards landing, faster the more allies
   they reach; full, every heal also wards.
 - **Skills (to pick from with the player):** a great Blessing over the whole party, Torii Gate (a
@@ -74,7 +75,7 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
 
 1. The trial quest and the path choice (both paths stubbed so they can be picked).
 2. Shrine Maiden: the kitsune guardian first (rig, look, moves, AI; GIF check-ins on her design
-   and moves), then the fox kit doll, then her dance, gauge, skills and finisher.
+   and moves; she is the doll grown up), then her dance, gauge, skills and finisher.
 3. Onmyoji: one yokai at a time (rig, look, moves, personality; GIF check-ins), then the imp doll,
    then her dance, gauge, skills and finisher.
 4. Wiring for both: sounds, bots, party roles, dungeon roles, tests, README and art notes, demo

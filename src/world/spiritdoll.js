@@ -28,6 +28,7 @@
 
 import { hasSpirit, dollHit, healAround } from './melee.js';
 import { skillAt } from '../data/skills.js';
+import { jobChain } from '../data/jobs.js';
 
 // Where she floats when idle: behind the Spirit Mage's shoulder (px behind, px over her feet).
 const HOME = { x: 24, y: 34 };
@@ -68,9 +69,11 @@ const pick = (o, last) => {
 };
 
 // The doll, made when she's first needed (null for anyone but a Spirit Mage). On a new map she
-// pops in right beside the Spirit Mage.
+// pops in right beside the Spirit Mage. A Shrine Maiden has none: her doll has grown up into her
+// kitsune guardian (world/kitsune.js).
+export const dollGrownUp = (char) => jobChain(char.job).includes('shrinemaiden');
 export function dollOf(world) {
-  if (!hasSpirit(world.char)) return (world.doll = null);
+  if (!hasSpirit(world.char) || dollGrownUp(world.char)) return (world.doll = null);
   const b = world.body;
   if (!world.doll || world.doll.map !== world.map.id) {
     world.doll = {
@@ -216,11 +219,13 @@ function goal(world, d) {
 
 export function tickDoll(world, dt) {
   const d = dollOf(world);
+  // Heaven's Lantern hangs and shines whether or not a doll rides it (a Shrine Maiden's has grown
+  // into her guardian).
+  tickLantern(world, d);
   if (!d) return;
   const b = world.body;
   const { now } = world;
   tickBells(world, d);
-  tickLantern(world, d);
   // Riding the lantern (she drops whatever she was doing for it) or a monster (her Rodeo): she's
   // carried, not flying.
   if (world.lantern) return perch(world, d);
@@ -401,8 +406,10 @@ function tickLantern(world, d) {
     healAround(world, b.x, b.y, L.p.heal * 4, 400, false);
     L.gone = true;
     world.lantern = null;
-    [d.mood, d.moodUntil] = ['peace', world.now + MOOD.peace * 1.5];
-    d.y -= 10;
+    if (d) {
+      [d.mood, d.moodUntil] = ['peace', world.now + MOOD.peace * 1.5];
+      d.y -= 10;
+    }
   }
 }
 
