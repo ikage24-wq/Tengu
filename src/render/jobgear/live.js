@@ -1,5 +1,6 @@
 // Live gear effects, drawn over the hero each frame: fine pieces (tier 7 and up) catch the light
-// with little glints, tier 12 and up shed motes in their glow color, and a full matching set of
+// with little glints, tier 12 and up shed motes in their glow color, all four pieces of a gear set
+// wear its theme (setAura), and a full matching set of
 // tier 15 or more wears its job's signature: embers off a warrior's shoulders, leaves drifting
 // around an archer, runes circling a mage's hat, shadow wisps trailing a thief. Gilded pieces
 // sparkle gold. Everything is a function of time, so nothing is stored per hero.
@@ -76,12 +77,56 @@ export function drawGearFx(ctx, g, at, s, dir, t) {
       }
     }
   }
+  // A full gear set (data/sets.js) wears its theme.
+  const set = pieces.find(([, p]) => p.set)?.[1].set;
+  if (set && pieces.filter(([, p]) => p.set === set).length >= 4) setAura(ctx, set, pieces.find(([, p]) => p.set === set)[1].pal, at, s, dir, t, few ? 3 : 6);
   // The signature of a full matching set.
   const family = pieces[0][1].family;
   const full = pieces.length === 6 && pieces.every(([, p]) => p.family === family);
   const tier = Math.min(...pieces.map(([, p]) => p.tier));
   if (full && tier >= 15) signature(ctx, family, pieces[1][1].pal, at, s, dir, t, few ? 3 : tier >= 19 ? 7 : 5);
   ctx.restore();
+}
+
+// Each gear set's aura: falling leaves and acorns (Rootwood), drifting petals (Dryad Bloom), blue
+// foxfire wisps (Foxfire), rose petals (Night Rose), crystal sparkles (Prism), moon dust and
+// little stars (Moonlight).
+function setAura(ctx, set, pal, at, s, dir, t, n) {
+  const [cx, cy] = at.chest;
+  const w = at.w;
+  for (let i = 0; i < n; i++) {
+    const life = frac(t * 0.3 + i / n);
+    const fade = Math.sin(life * Math.PI);
+    if (set === 'tamamo') {
+      // Foxfire wisps circling slowly at hip height, flickering.
+      const a = t * 1.1 + (i / n) * Math.PI * 2;
+      const x = cx + Math.cos(a) * w * 2.1;
+      const y = at.hips[1] - 4 * s + Math.sin(a * 2) * 2 * s;
+      const near = Math.sin(a) > 0;
+      dot(ctx, x, y, (1.3 + 0.3 * Math.sin(t * 9 + i)) * s, near ? '#bfe0ff' : pal.accent, near ? 0.85 : 0.45);
+      dot(ctx, x, y - 0.8 * s, 0.6 * s, '#ffffff', near ? 0.8 : 0.3);
+    } else if (set === 'crystalking' || set === 'selene') {
+      // Sparkles and stars rising and twinkling around them.
+      const x = cx + (i % 2 ? 1 : -1) * w * (1.5 + 0.7 * Math.sin(i * 2.4 + t * 0.6));
+      const y = at.feet[1] - life * 34 * s;
+      glint(ctx, x, y, (set === 'selene' ? 1.3 : 1.6) * s * fade + 0.2, i % 2 ? '#ffffff' : pal.accent, 0.9 * fade);
+    } else {
+      // Leaves, petals or rose petals drifting down, turning as they fall.
+      // (Off to the sides, so they never drift across the face.)
+      const x = cx + (i % 2 ? 1 : -1) * w * (1.6 + 0.8 * Math.sin(t * 0.8 + i * 2.1));
+      const y = at.head[1] - 8 * s + life * 42 * s;
+      const c = set === 'lilith' ? (i % 2 ? pal.main : '#ff8aa8') : set === 'sylvana' ? (i % 2 ? pal.accent : '#ffffff') : i % 2 ? '#8fcf7a' : '#c9a27a';
+      ctx.globalAlpha = 0.85 * fade;
+      ctx.fillStyle = c;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(t * 1.6 + i);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 1.5 * s, (set === 'rootwood' ? 0.8 : 1) * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
 }
 
 function signature(ctx, family, pal, at, s, dir, t, n) {

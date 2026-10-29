@@ -1,7 +1,8 @@
 // Gear sets: four matching pieces (hat, top, gloves, cape) for every job, dropped by the queens,
 // the Crystal King, and Rootwood Hollow's chest (a piece for your own job each time; certain from a trial, sometimes from a
-// rematch). Wearing more of a set adds its bonuses: at 2, 3 and 4 pieces. The pieces wear the job
-// gear's designs in the set's colours.
+// rematch). Wearing more of a set adds its bonuses: at 2, 3 and 4 pieces. Each set has its own look
+// (render/jobgear/sets.js: its own hat and back piece, its motif on each job's top and gloves) and,
+// with all four pieces on, an aura of its theme.
 
 export const SET_SLOTS = ['hat', 'top', 'gloves', 'cape'];
 

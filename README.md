@@ -746,9 +746,14 @@ to clear it.
   her trial each queen comes back to her region every ten minutes or so for a rematch anyone there
   can join.
 - **Gear sets and polishing** — Sylvana, Tamamo, Lilith, Selene and the Crystal King each drop
-  pieces of their own set for your job (hat, top, gloves and cape in the set's colours: Dryad
-  Bloom, Foxfire, Night Rose, Prism, Moonlight), always from her trial and sometimes from a
-  rematch. Wearing two, three or four pieces adds the set's bonuses (shown on every piece). Tora
+  pieces of their own set for your job (hat, top, gloves and cape), always from her trial and
+  sometimes from a rematch; Rootwood Hollow's chest gives the Rootwood set. Each set has its own
+  look over your job's cut: Rootwood's acorn cap and mossy bark cloak, Dryad Bloom's flower crown
+  and petal cape, Foxfire's fox ears, side mask, shrine bell and three tails, Night Rose's lace,
+  roses and thorny cape, Prism's floating crystal crown and faceted mantle, Moonlight's crescent
+  tiara and starry cape. All four pieces on wear the set's aura (leaves, petals, foxfire, rose
+  petals, sparkles, moon dust). Wearing two, three or four pieces adds the set's bonuses (shown
+  on every piece). Tora
   in Ember Crag polishes any worn piece up to +10 for gold: each step adds attack, magic, or
   defense and HP, gets less likely to take as it climbs, and a miss only costs the gold.
 - **Collection (B)** — the Monster Book fills a card for every monster you defeat (or help defeat):

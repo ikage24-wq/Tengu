@@ -10,6 +10,10 @@
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
 import { GOLD, SILVER, INK, FIGURE, torsoPts, robePts, dressPts, band, side, MID, collar, tieBow, button, limb, reach, mirrorX } from './figure.js';
 import { JOB_GEAR } from './jobgear/index.js';
+import { setModule, SET_DESIGNS } from './jobgear/sets.js';
+
+// The module that draws a piece: a gear set's own design over its job's, or the job's.
+const gearOf = (piece) => (piece.set ? setModule(piece.set, piece.family, JOB_GEAR[piece.family]) : JOB_GEAR[piece.family]);
 import { finish, hang, hsl, polyOf } from './jobgear/kit.js';
 
 export { limb, reach };
@@ -70,7 +74,7 @@ const MOTION = { sway: 0, hair: 0, flap: 0 };
 // ---------- Tops (torso part) ----------
 
 export function topShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return done(JOB_GEAR[piece.family].top(piece.tier, piece.pal, m), piece);
+  if (piece?.family) return done(gearOf(piece).top(piece.tier, piece.pal, m), piece);
   const d = shade(c, -16);
   const l = shade(c, 18);
   const torso = torsoPts();
@@ -113,7 +117,7 @@ export function topShapes(design, c, piece = null, m = MOTION) {
 
 // Sleeves follow the top's main color; armor shows metal.
 export function sleeveColor(design, c, piece = null) {
-  if (piece?.family) return JOB_GEAR[piece.family].sleeve(piece.tier, piece.pal);
+  if (piece?.family) return gearOf(piece).sleeve(piece.tier, piece.pal);
   if (design === 'plate') return SILVER;
   if (design === 'vest' || design === 'sailor' || design === 'overalls') return '#ffffff';
   if (design === 'jacket' || design === 'blazer' || design === 'maid') return c;
@@ -122,14 +126,14 @@ export function sleeveColor(design, c, piece = null) {
 
 // Robes, armor, and hoodies cover the whole arm; everything else leaves the forearm bare.
 export function longSleeves(design, piece = null) {
-  if (piece?.family) return JOB_GEAR[piece.family].longSleeves(piece.tier);
+  if (piece?.family) return gearOf(piece).longSleeves(piece.tier);
   return ['plate', 'starrobe', 'celestial', 'kimono', 'hoodie', 'jacket', 'sweater', 'blazer', 'puffer', 'maid'].includes(design);
 }
 
 // ---------- Bottoms (leg colors, hips, and an optional skirt) ----------
 
 export function legLook(design, c, skin, piece = null) {
-  if (piece?.family) return { ...JOB_GEAR[piece.family].legs(piece.tier, piece.pal, skin), piece };
+  if (piece?.family) return { ...gearOf(piece).legs(piece.tier, piece.pal, skin), piece };
   switch (design) {
     case 'shorts': return { top: c, low: skin, pad: null };
     case 'leather': return { top: c, low: c, pad: shade(c, 20) };
@@ -152,10 +156,10 @@ export function skirtShapes(design, c, piece = null, m = MOTION) {
   if (piece?.family) {
     const fam = piece.family;
     if (!HANGS.has(fam)) {
-      const out = JOB_GEAR[fam].skirt(piece.tier, piece.pal, m);
+      const out = gearOf(piece).skirt(piece.tier, piece.pal, m);
       return out ? done(out, piece) : null;
     }
-    const out = JOB_GEAR[fam].skirt(piece.tier, piece.pal, STILL(m));
+    const out = gearOf(piece).skirt(piece.tier, piece.pal, STILL(m));
     return out ? done(hang(out.filter(Boolean), 34.4, lowest(out), m, 0.8), piece) : null;
   }
   const out = plainSkirt(design, c);
@@ -371,7 +375,7 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
   const shaft = (h, col, w = 2.8) => limb(ax, ay, ax + ((kx - ax) / len) * h, ay + ((ky - ay) / len) * h, w, w, col);
   // Seen from the front: a small rounded shoe centered under the ankle.
   const sole = (col) => poly([[-1.8, -1.4], [1.8, -1.4], [2.7, 0.2], [3, 2], [2.6, 3], [-2.6, 3], [-3, 2], [-2.7, 0.2]], col);
-  if (shoe.family) return done(JOB_GEAR[shoe.family].shoe(shoe.tier, shoe.pal, { at, poly, dot, shaft, sole, c, tint }), shoe);
+  if (shoe.family) return done(gearOf(shoe).shoe(shoe.tier, shoe.pal, { at, poly, dot, shaft, sole, c, tint }), shoe);
   switch (shoe.design) {
     case 'boots': return [shaft(3.4, c), sole(c), shaft(0.9, shade(c, 18), 3.1)];
     case 'leatherboots': return [shaft(4.6, c), sole(c), shaft(1.2, shade(c, -18), 3.1), dot(0.6, -0.4, 0.5, GOLD)];
@@ -385,7 +389,7 @@ function shoeShapes(ax, ay, kx, ky, tilt, shoe, tint) {
 // ---------- Hats ----------
 
 export function hatShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return done(JOB_GEAR[piece.family].hat(piece.tier, piece.pal, m), piece);
+  if (piece?.family) return done(gearOf(piece).hat(piece.tier, piece.pal, m), piece);
   return done(plainHat(design, c), null);
 }
 
@@ -410,16 +414,16 @@ function plainHat(design, c) {
 
 // Hats that hide the back hair (a hood or helmet wraps the whole head).
 export const TUCKS_HAIR = new Set(['helmet', 'bunny']);
-export const hatTucks = (hat) => Boolean(hat) && (hat.family ? JOB_GEAR[hat.family].hatTucks(hat.tier) : TUCKS_HAIR.has(hat.design));
-export const hatHidesBangs = (hat) => Boolean(hat) && (hat.family ? JOB_GEAR[hat.family].hatHidesBangs(hat.tier) : hat.design === 'bunny');
+export const hatTucks = (hat) => Boolean(hat) && (hat.family ? gearOf(hat).hatTucks(hat.tier) : TUCKS_HAIR.has(hat.design));
+export const hatHidesBangs = (hat) => Boolean(hat) && (hat.family ? gearOf(hat).hatHidesBangs(hat.tier) : hat.design === 'bunny');
 // Pauldrons and puffs over a shoulder at (0, 0); side -1 is the back arm, 1 the front.
 export function shoulderShapes(top, side) {
-  return top?.family ? done(JOB_GEAR[top.family].shoulder(top.tier, top.pal, side), top) : [];
+  return top?.family ? done(gearOf(top).shoulder(top.tier, top.pal, side), top) : [];
 }
 
 // Parts of a hat drawn behind the head: hoods and helmets wrap around it.
 export function hatBackShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return done(JOB_GEAR[piece.family].hatBack(piece.tier, piece.pal, m), piece);
+  if (piece?.family) return done(gearOf(piece).hatBack(piece.tier, piece.pal, m), piece);
   if (design === 'bunny') return done([E(15.5, 14, 13.4, 12.8, '#ffffff'), E(15.5, 26, 9, 3, '#ffffff')], null);
   if (design === 'helmet') return done([E(15.5, 13.4, 12.4, 11.4, SILVER)], null);
   if (design === 'witch') return [R(8, 8.6, 16, 3, shade(c, -18))];
@@ -430,7 +434,7 @@ export function hatBackShapes(design, c, piece = null, m = MOTION) {
 
 export function handShapes(hx, hy, glove, skin, ex = hx, ey = hy - 4) {
   if (!glove) return [E(hx, hy, 2, 2, skin)];
-  if (glove.family) return done(JOB_GEAR[glove.family].hand(glove.tier, glove.pal, hx, hy, ex, ey), glove);
+  if (glove.family) return done(gearOf(glove).hand(glove.tier, glove.pal, hx, hy, ex, ey), glove);
   const c = glove.color;
   switch (glove.design) {
     case 'cuffed': return [E(hx, hy, 1.8, 1.9, c), R(hx - 1.8, hy - 2.8, 3.6, 1.4, shade(c, 25))];
@@ -458,8 +462,9 @@ export function capeShapes(design, c, sway, flap, piece = null, m = null) {
   const mo = m ?? { ...MOTION, sway, flap };
   if (piece?.family) {
     const fam = piece.family;
-    if (!HANGS.has(fam)) return done(JOB_GEAR[fam].cape(piece.tier, piece.pal, mo), piece);
-    const out = JOB_GEAR[fam].cape(piece.tier, piece.pal, STILL(mo)).filter(Boolean);
+    // (A set's own cape moves by itself.)
+    if (!HANGS.has(fam) || SET_DESIGNS[piece.set]?.cape) return done(gearOf(piece).cape(piece.tier, piece.pal, mo), piece);
+    const out = gearOf(piece).cape(piece.tier, piece.pal, STILL(mo)).filter(Boolean);
     return done(hang(out, 26, lowest(out), mo), piece);
   }
   const out = plainCape(design, c, flap);
@@ -493,7 +498,7 @@ function plainCape(design, c, flap) {
 // The front of a cape: ties over the shoulders and a clasp (or a fur collar) at the neck,
 // drawn over the top.
 export function capeFrontShapes(design, c, piece = null, m = MOTION) {
-  if (piece?.family) return done(JOB_GEAR[piece.family].capeFront(piece.tier, piece.pal, m), piece);
+  if (piece?.family) return done(gearOf(piece).capeFront(piece.tier, piece.pal, m), piece);
   if (design === 'fairy' || design === 'angel') return [];
   const ties = [T([[10, 26], [12.6, 26], [13.6, 29.4], [11, 29]], c), T([[21, 26], [18.4, 26], [17.4, 29.4], [20, 29]], c)];
   if (design === 'royal') return [T([[9.6, 25.6], [21.4, 25.6], [21, 28.6], [15.5, 29.6], [10, 28.6]], '#ffffff'), F(E(12.4, 27.4, 0.5, 0.5, INK)), F(E(18.6, 27.4, 0.5, 0.5, INK)), F(E(15.5, 28.6, 1, 1, GOLD))];

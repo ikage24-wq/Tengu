@@ -24,6 +24,7 @@
 import { mix } from '../pixel.js';
 import { darker, lighter } from './kit.js';
 import { variantsFor } from '../../data/items.js';
+import { SETS } from '../../data/sets.js';
 import warrior from './warrior.js';
 import archer from './archer.js';
 import mage from './mage.js';
@@ -82,5 +83,5 @@ export function pieceOf(def, variant = null) {
   const v = variant ? variantsFor(def)?.[variant] : null;
   const color = v?.main ?? def.color;
   if (def.design !== 'job' && def.design !== 'jewel') return { design: def.design, color };
-  return { design: def.design, color, family: def.design === 'job' ? def.family : null, tier: def.tier, variant, pal: gearPalette(def.family ?? 'mage', def.tier, color, v?.accent ?? null, variant) };
+  return { design: def.design, color, family: def.design === 'job' ? def.family : null, set: def.set ?? null, tier: def.tier, variant, pal: gearPalette(def.family ?? 'mage', def.tier, color, v?.accent ?? (def.set ? SETS[def.set].accent : null), variant) };
 }

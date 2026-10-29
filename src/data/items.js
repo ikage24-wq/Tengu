@@ -273,8 +273,8 @@ for (const family of GEAR_FAMILIES) {
   });
 }
 
-// Gear sets (data/sets.js): a set's pieces wear the job gear's designs in the set's colours, and
-// hit a quarter harder than plain gear of their level.
+// Gear sets (data/sets.js): a set's pieces wear its own designs over the job gear's, in the set's
+// colours (render/jobgear/sets.js), and hit a quarter harder than plain gear of their level.
 for (const [key, set] of Object.entries(SETS)) {
   const t = GEAR_LEVELS.indexOf(set.level);
   for (const family of GEAR_FAMILIES) {

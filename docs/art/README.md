@@ -100,6 +100,9 @@ carry an improvement across every part of the game it applies to.
   Capes are the same two-link chain (`animator.js` `cape`/`capeTip`, kit.js `hang`): the root
   spring rides the shoulders (stiffer, damping ratio ~0.5), the hem chases it on a softer one
   (~0.4), so it lags a start and swings past on a stop before settling.
+- Gear sets (`jobgear/sets.js`) draw their own signature pieces (hat, back piece) for every job
+  and layer their motif over the job's own top and gloves, so a set reads at a glance on any job
+  while the job's cut still shows; a full set adds a themed aura (`live.js` `setAura`).
 - The creator's outfits (`jobgear/starter.js`) are a gear family drawn in a palette from the
   picked color plus a paired pastel accent (pink with sky, peach with mint, yellow with
   lavender...). Each has its own silhouette and one signature glyph that reads at game size (a

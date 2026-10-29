@@ -1,0 +1,51 @@
+<!doctype html>
+<html><body style="margin:0;background:#fdf6fb">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every gear set (data/sets.js) on the four job families, drawn with the game's own
+// hero renderer. Open /tools/set-gallery.html (served with the game); ?sets=tamamo,lilith picks
+// rows, ?scale=3 zooms.
+import { drawHero } from '../src/render/hero.js';
+import { setHd } from '../src/render/pixel.js';
+import { SETS, SET_SLOTS, setPieceId } from '../src/data/sets.js';
+import { lookFor } from '../src/render/townlife.js';
+import { makeEquip } from '../src/core/items.js';
+
+const q = new URLSearchParams(location.search);
+const sets = (q.get('sets') ?? Object.keys(SETS).join(',')).split(',');
+const FAM = [['warrior', 'sword_10'], ['archer', 'bow_10'], ['mage', 'wand_10'], ['thief', 'dagger_10']];
+const S = Number(q.get('scale') ?? 2.4);
+const CW = 92, CH = 96;
+const canvas = document.getElementById('c');
+canvas.width = (FAM.length * CW + 110) * S;
+canvas.height = (sets.length * CH + 10) * S;
+const ctx = canvas.getContext('2d');
+setHd?.(true);
+const looks = [lookFor(3), lookFor(7), lookFor(11), lookFor(5)];
+function frame(time) {
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  ctx.fillStyle = '#fdf6fb';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  sets.forEach((key, r) => {
+    const set = SETS[key];
+    ctx.fillStyle = '#5a3f7a';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText(set.name, 6, r * CH + 52);
+    ctx.font = '7px sans-serif';
+    ctx.fillText(`Lv ${set.level}`, 6, r * CH + 62);
+    FAM.forEach(([fam, wpn], i) => {
+      const gear = q.get('weapon') === '0' ? {} : { weapon: makeEquip(wpn) };
+      for (const slot of (q.get('only') ?? SET_SLOTS.join(',')).split(',')) gear[slot] = { id: setPieceId(key, fam, slot) };
+      const x = 110 + i * CW + CW / 2;
+      const y = r * CH + 86;
+      ctx.fillStyle = 'rgba(120,90,160,0.12)';
+      ctx.beginPath(); ctx.ellipse(x, y, 16, 3, 0, 0, Math.PI * 2); ctx.fill();
+      drawHero(ctx, looks[i], gear, x, y, { pose: 'idle', time: time / 1000, scale: 1.6, facing: Number(q.get('face') ?? (i % 2 ? -1 : 1)), job: fam, seed: i });
+    });
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.ready = true;
+</script>
+</body></html>
