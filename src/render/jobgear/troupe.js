@@ -322,4 +322,110 @@ Object.assign(TROUPE_OUTFITS, {
     shoe: yukiFeet,
   },
 });
+// ---------- More blizzard-ghost kimonos for the yuki-onna ----------
+//   yukishroud     a ghost's burial white (a yurei's): crossed the way the dead wear it, a white
+//                  triangle cloth on her brow, long sleeves; below the knee the hem comes apart in
+//                  long wisps that pale into mist and then into blowing snow
+//   yukifrostbite  caught in the storm: storm-grey over white, every edge crusted with frost,
+//                  icicles hanging from her sleeves and hem, a straw rope sash with paper streamers
+//   yukiwhiteout   a whiteout: white with a blizzard in indigo swirling up from the hem, a deep
+//                  indigo obi with a silver cord, sleeves that end in blowing snow
+const MIST = ['#f2f6ff', '#e2ecfa', '#d0e0f4', '#c0d4ee'];
+const STORM = '#9aa6c0';
+const STORM_DK = '#6e7a96';
+const INDIGO_S = '#3a4a8a';
+const INDIGO_SL = '#6a7ac0';
+// A hem coming apart into wisps: one ragged edge of long points from `y0` (touching, so the outline
+// runs only round the outside), each point paling into mist toward its tip.
+function wisps(x0, x1, y0, n, len, seed = 1) {
+  const out = [];
+  const w = (x1 - x0) / n / 2;
+  for (let i = 0; i < n; i++) {
+    const x = x0 + w * (2 * i + 1);
+    const l = len * (0.6 + 0.4 * Math.abs(Math.sin(i * 2.3 + seed)));
+    const tip = [x + Math.sin(i * 1.7 + seed) * 1.4, y0 + l];
+    for (let k = 0; k < MIST.length; k++) {
+      const t = k / MIST.length;
+      const [ax, bx] = [x - w + (tip[0] - (x - w)) * t, x + w + (tip[0] - (x + w)) * t];
+      const y = y0 + l * t;
+      out.push((k ? F : (v) => v)(T([[ax, y - (k ? 0.1 : 0.4)], [bx, y - (k ? 0.1 : 0.4)], tip], MIST[k])));
+    }
+  }
+  return out;
+}
+// A crust of frost along an edge from (x0, y) to (x1, y): a jagged white rim.
+function frostEdge(x0, x1, y, down = 1) {
+  const pts = [[x0, y]];
+  const n = Math.max(3, Math.round((x1 - x0) / 1.2));
+  for (let i = 1; i < n; i++) pts.push([x0 + ((x1 - x0) * i) / n, y + down * (i % 2 ? 1 : 0.35)]);
+  pts.push([x1, y], [x1, y - down * 0.4], [x0, y - down * 0.4]);
+  return F(T(pts, '#ffffff'));
+}
+const icicles = (xs, y) => xs.flatMap(([x, l]) => [F(T([[x - 0.6, y], [x + 0.6, y], [x, y + l]], '#d8ecff')), F(T([[x - 0.15, y], [x + 0.3, y], [x, y + l * 0.7]], '#ffffff'))]);
+// The dead wear the kimono crossed the other way: the far side over the near.
+const shroudTop = (main, line) => [T([...TORSO.slice(0, 6), [22.4, 36], [8.8, 36], ...TORSO.slice(8)], main),
+  T([[MID - 3.4, 25.6], [MID + 3.4, 25.6], [MID, 31]], MIST[1]), T([[MID - 1.4, 25.6], [MID - 4.2, 25.6], [MID - 0.2, 32], [MID + 1.6, 32]], main),
+  F(limb(MID - 4, 25.7, MID, 31.8, 0.5, 0.5, line)), F(limb(MID + 3.6, 25.8, MID + 0.8, 30.4, 0.45, 0.45, line))];
+Object.assign(TROUPE_OUTFITS, {
+  yukishroud: {
+    top: (p) => [...shroudTop('#fafcff', MIST[2]), F(limb(8.8, 33.4, 22.4, 33.2, 0.7, 0.7, MIST[2])), F(limb(19.6, 33.4, 20.4, 38, 0.45, 0.3, MIST[2]))],
+    sleeve: () => '#fafcff',
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? '#fafcff' : MIST[1])],
+    // Long sleeves, their ends coming apart into mist.
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      return [T([[hx - ux * 3 - 2.6, hy - uy * 3], [hx - ux * 3 + 2.6, hy - uy * 3], [hx + 2.4, hy + 5], [hx - 3, hy + 6]], '#fafcff'), ...wisps(hx - 3, hx + 2.4, hy + 5, 3, 5, 2), E(hx + ux * 0.6, hy + uy * 0.6, 1.2, 1.3, p.skin)];
+    },
+    legs: () => ({ top: '#fafcff', low: '#fafcff', pad: null }),
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [23.6, 44], [7.6, 44]], '#fafcff'), F(limb(MID - 1.4, 35.4, MID - 2, 44, 0.5, 0.5, MIST[1])), ...wisps(7.6, 23.6, 43.6, 7, 12)],
+    shoe: () => [],
+    // The white triangle cloth on her brow (a yurei's hitai-kakushi).
+    hat: () => [T([[11.6, 9.2], [19.4, 9.2], [15.5, 13]], '#ffffff'), F(limb(4.4, 8.6, 11.8, 9.4, 0.4, 0.4, '#e2ecfa')), F(limb(19.2, 9.4, 26.6, 8.6, 0.4, 0.4, '#e2ecfa')), F(limb(11.6, 9.4, 19.4, 9.4, 0.3, 0.3, MIST[2]))],
+  },
+  yukifrostbite: {
+    top: (p) => [...yukiTop(STORM, '#ffffff', STORM_DK), frostEdge(MID - 3, MID + 4, 26.2), frostEdge(9.4, 22, 26.6),
+      // A straw rope sash with paper streamers.
+      T([[8.6, 32.6], [22.6, 32.4], [22.8, 34.6], [8.4, 34.8]], '#c9b37a'), ...[10, 12.4, 14.8, 17.2, 19.6, 22].map((x) => F(limb(x - 0.8, 32.8, x + 0.4, 34.6, 0.3, 0.3, '#9a8456'))),
+      ...[12, 18.6].flatMap((x) => [F(T([[x, 34.8], [x + 1, 34.8], [x + 1, 36.2], [x + 1.8, 36.2], [x + 1.8, 37.6], [x + 0.8, 37.6], [x + 0.8, 38.8], [x - 0.2, 38.8], [x - 0.2, 37.4], [x - 1, 37.4], [x - 1, 36], [x, 36]], '#ffffff'))])],
+    sleeve: () => STORM,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? STORM : STORM_DK), frostEdge(-3, 3, -1.4, -1)],
+    hand: (p, hx, hy, ex, ey) => [...wideSleeve(p, hx, hy, ex, ey, STORM, '#ffffff', '#ffffff'), ...icicles([[hx - 2, 2.4], [hx - 0.6, 3.4], [hx + 1, 2]], hy + 3)],
+    legs: () => ({ top: '#ffffff', low: '#ffffff', pad: null }),
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [24.4, 52], [6.8, 52]], STORM), T([[13.6, 35], [17.8, 35], [19.2, 52], [12.4, 52]], '#ffffff'),
+      F(limb(10.6, 36, 9, 51.6, 0.5, 0.6, STORM_DK)), F(limb(21, 36, 22.6, 51.6, 0.5, 0.6, STORM_DK)), frostEdge(6.8, 24.4, 51.6),
+      ...icicles([[8, 2.4], [10.4, 3.6], [13, 2], [16, 3.2], [18.6, 2.2], [21.4, 3.8], [23.4, 2]], 52.2)],
+    shoe: yukiFeet,
+  },
+  yukiwhiteout: {
+    top: (p) => [...yukiTop('#f8faff', INDIGO_SL, INDIGO_S),
+      T([[8.8, 31.4], [22.4, 31.2], [22.6, 35], [8.6, 35.2]], INDIGO_S), F(limb(8.8, 33.2, 22.4, 33, 0.45, 0.45, SILVER_C)), F(E(MID + 2.2, 33.1, 0.9, 0.8, SILVER_C)),
+      F(limb(10.4, 28.6, 12.6, 27.4, 0.35, 0.2, INDIGO_SL))],
+    sleeve: () => '#f8faff',
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? '#f8faff' : MIST[1])],
+    // Sleeves ending in blowing snow.
+    hand: (p, hx, hy, ex, ey) => [...wideSleeve(p, hx, hy, ex, ey, '#f8faff', INDIGO_SL, INDIGO_S), ...[[2, 1], [4, -0.6], [5.6, 1.4], [3.4, 2.6]].map(([dx, dy]) => F(E(hx - dx, hy + 3 + dy, 0.45, 0.45, MIST[2])))],
+    legs: () => ({ top: '#f8faff', low: '#f8faff', pad: null }),
+    // A blizzard in indigo swirling up from the hem, thinning as it rises.
+    skirt: () => {
+      const out = [T([[8.8, 34.6], [22.4, 34.6], [24.6, 55.4], [6.6, 55.4]], '#f8faff')];
+      const swirl = (cx, cy, r, c) => {
+        const pts = [];
+        for (let i = 0; i <= 10; i++) {
+          const a = (i / 10) * Math.PI * 1.6;
+          pts.push([cx + Math.cos(a) * r * (1 - i / 14), cy - Math.sin(a) * r * 0.8 * (1 - i / 14)]);
+        }
+        return pts.slice(1).map((q, i) => F(limb(pts[i][0], pts[i][1], q[0], q[1], 0.5 * (1 - i / 12), 0.5 * (1 - (i + 1) / 12), c)));
+      };
+      out.push(F(T([[6.6, 55.4], [24.6, 55.4], [24, 51.4], [20, 52.6], [16, 50.8], [12, 52.4], [7.2, 51]], INDIGO_S)));
+      for (const [x, y, r, c] of [[9.6, 50, 2.6, INDIGO_S], [14.4, 48.6, 2.2, INDIGO_S], [19.6, 49.8, 2.8, INDIGO_S], [11.6, 44.6, 1.8, INDIGO_SL], [17.8, 43.4, 1.6, INDIGO_SL], [14.6, 39.6, 1.2, INDIGO_SL]]) out.push(...swirl(x, y, r, c));
+      for (const [x, y] of [[8.6, 46], [21.6, 45], [13, 41.4], [20, 39.6], [10.4, 38.6]]) out.push(F(E(x, y, 0.35, 0.35, INDIGO_SL)));
+      return out;
+    },
+    shoe: yukiFeet,
+  },
+});
 export const TROUPE_OUTFIT_KEYS = Object.keys(TROUPE_OUTFITS);

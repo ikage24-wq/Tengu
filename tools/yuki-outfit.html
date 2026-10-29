@@ -9,7 +9,13 @@ import { setHd, nextFrame } from '../src/render/pixel.js';
 
 const SCALE = 1.1;
 const PALE = '#f4f6ff';
-const SAMPLES = [
+// ?set=ghost shows her new blizzard-ghost kimonos.
+const GHOST = new URLSearchParams(location.search).get('set') === 'ghost';
+const SAMPLES = GHOST ? [
+  ['A. Ghost shroud', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukishroud' }],
+  ['B. Frostbitten', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukifrostbite' }],
+  ['C. Whiteout', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukiwhiteout' }],
+] : [
   ['1. Classic snowflake kimono', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukiclassic' }],
   ['2. Frost princess', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukiprincess' }],
   ['3. Blizzard ghost', { hairStyle: 'yukibun', hairColor: '#f6f8ff', hairTip: '#cfe4fb', skinTone: PALE, eyeColor: '#7ab8f0', eyeStyle: 'yukiwhiteveil', mouth: 'yukilips', marks: [], browStyle: 'none', outfit: 'yukighost' }],
@@ -42,7 +48,7 @@ SAMPLES.forEach(([name, look], i) => {
   ctx.rect(i * CW, CH, CW, 300);
   ctx.clip();
   setHd(true, 2.6 * 3.2);
-  drawPosed(ctx, { outfitColor: '#ffffff', earStyle: 'round', ...look }, i * CW + CW / 2 + 6, CH + 400, rig, { scale: 2.6 * 3.2, facing: 1 });
+  drawPosed(ctx, { outfitColor: '#ffffff', earStyle: 'round', ...look }, i * CW + CW / 2 + 6, CH + (GHOST ? 292 : 400), rig, { scale: 2.6 * 3.2, facing: 1 });
   ctx.restore();
   ctx.fillStyle = '#1e2a40';
   ctx.font = 'bold 16px Segoe UI, sans-serif';
