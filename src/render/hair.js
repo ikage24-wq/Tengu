@@ -1205,13 +1205,16 @@ Object.assign(STYLES, {
   // the nape, a longer lock in front of each ear.
   tengusweep(r, m) {
     const side = [[24.4, 11.6], [25.6, 15.4], [25, 19.4]];
+    const temple = [[20.4, 4.2], [24.6, 4.6], [27.6, 6.8], [28.6, 10], [27.6, 13.2], [23.6, 12.6], [21.6, 9]];
     return {
       head: [crown(r, 0.6), streak(21, 2, 25, 8, 0.7, -0.3, r.sh1), streak(20, 2, 10, 6, 0.8, 0.5, r.sh1)],
       // Short and tapered at the back (a man's cut): separate sharp, feathered locks that close in
       // toward the nape, the longest just below his jaw, flicking out a little at the tips.
       hang: [napeShadow(r, 18), ...[[[6.8, 11], [6.2, 16.6], [7.6, 21], [6.6, 23]], [[9.6, 12], [9.4, 18], [10.6, 22.6], [10, 24.4]], [[12.8, 12], [13, 18.4], [13.8, 23]]].flatMap((spine, i) => [
         lock(spine, 5.6 - i * 0.4, r.sh1, m, 0.8), lock(fx(spine), 5.6 - i * 0.4, r.sh1, m, 0.8)]), F(E(HX, 16, 6.4, 5.6, r.sh1))],
-      front: bangs('tenguside', r, m, [lock(side, 2.4, r.base, m, 1.1), lock(fx(side), 2.4, r.sh1, m, 1.1), streak(12, 9, 8.4, 16, 0.6, 0.3, TENGU_SHEEN, m, 1)]),
+      // (Hair over each temple, so no forehead shows between the bangs and the short sides however
+      // his head turns.)
+      front: bangs('tenguside', r, m, [F(T(temple, r.base)), F(T(fx(temple), r.base)), lock(side, 2.4, r.base, m, 1.1), lock(fx(side), 2.4, r.sh1, m, 1.1), streak(12, 9, 8.4, 16, 0.6, 0.3, TENGU_SHEEN, m, 1)]),
       tips: [99, 99],
     };
   },
