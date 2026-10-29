@@ -110,6 +110,39 @@ export function makeEquip(id, { variance = 0, rng = Math.random, rarity = 0, var
   return { uid: nextUid++, id, stats, slotsLeft: UPGRADE_SLOTS, upgrades: 0, rarity, ...(variant ? { variant } : {}) };
 }
 
+// ---------- Polishing (Tora's forge) ----------
+// A favourite piece can be polished up to +10, a little stronger each time. Each try costs gold
+// (more for higher levels and higher polish) and gets less likely to take; a try that doesn't take
+// only costs the gold, never the item.
+export const POLISH_MAX = 10;
+const POLISH_CHANCE = [0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5, 0.42, 0.36, 0.3];
+
+export const polishChance = (inst) => POLISH_CHANCE[inst.polish ?? 0] ?? 0;
+export function polishCost(inst) {
+  const L = ITEMS[inst.id].reqLevel ?? 0;
+  return Math.round((150 + L * L * 3 + L * 40) * (1 + (inst.polish ?? 0) * 0.6));
+}
+// What one more step adds: attack on a weapon (magic attack on a wand or staff), magic and MP on an
+// earring, defense and HP on everything else.
+export function polishGain(inst) {
+  const def = ITEMS[inst.id];
+  const L = def.reqLevel ?? 0;
+  if (def.slot === 'weapon') return { [def.weaponType === 'wand' || def.weaponType === 'staff' ? 'matk' : 'watk']: 1 + Math.floor(L / 15) };
+  if (def.slot === 'earring') return { matk: 1 + Math.floor(L / 20), mp: 10 + L };
+  return { wdef: 2 + Math.floor(L / 8), hp: 5 + L };
+}
+// One try. Returns { ok, why } (why: 'max' or 'gold' when it couldn't be tried).
+export function polish(char, inst, rng = Math.random) {
+  if ((inst.polish ?? 0) >= POLISH_MAX) return { ok: false, why: 'max' };
+  const cost = polishCost(inst);
+  if (char.gold < cost) return { ok: false, why: 'gold' };
+  char.gold -= cost;
+  if (rng() >= polishChance(inst)) return { ok: false, why: null };
+  for (const [k, v] of Object.entries(polishGain(inst))) inst.stats[k] = (inst.stats[k] ?? 0) + v;
+  inst.polish = (inst.polish ?? 0) + 1;
+  return { ok: true, why: null };
+}
+
 export function canScroll(inst, scrollDef) {
   const def = ITEMS[inst.id];
   return inst.slotsLeft > 0 && scrollDef.scroll.slots.includes(def.slot);

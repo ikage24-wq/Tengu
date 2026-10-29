@@ -23,6 +23,8 @@ import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 import { lastRite } from './shrine.js';
+import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
+import { makeEquip } from '../core/items.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
@@ -378,6 +380,11 @@ export function killMob(world, m, byParty = false) {
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
   }
   world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
+  // A queen (or the Crystal King) drops a piece of her set for your job: always from her trial,
+  // sometimes from a rematch.
+  const story = m.def.id === 'crystalking' && char.quests.story_7_2?.state === 'active';
+  const piece = setDropFor(char, m.def.id, m.trialOf || story ? 1 : 0.35);
+  if (piece) world.drops.push(...spawnDrops([{ kind: 'item', inst: makeEquip(piece, { variance: 0.08, rarity: 1, variant: 'roll' }) }], m.x, m.y));
   world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: Boolean(m.def.boss) });
   // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
   // render/particles.js).
@@ -391,6 +398,16 @@ export function killMob(world, m, byParty = false) {
     }
   }
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');
+}
+
+// The set piece a boss drops for this hero (a slot they don't have yet, if any), or null.
+export function setDropFor(char, bossId, chance, rng = Math.random) {
+  const family = JOBS[char.job]?.family;
+  if (!SETS[bossId] || !SET_SLOTS.length || rng() >= chance || !['warrior', 'archer', 'mage', 'thief'].includes(family)) return null;
+  const owned = new Set([...Object.values(char.equipment), ...char.inventory.equip].filter(Boolean).map((e) => e.id));
+  const missing = SET_SLOTS.filter((s) => !owned.has(setPieceId(bossId, family, s)));
+  const slots = missing.length ? missing : SET_SLOTS;
+  return setPieceId(bossId, family, slots[Math.floor(rng() * slots.length)]);
 }
 
 export function hurtPlayer(world, rawAtk, fromX) {

@@ -1,5 +1,7 @@
 // Tooltip lines for items and skills.
 
+import { SETS } from '../data/sets.js';
+import { setsWorn } from '../core/stats.js';
 import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
 import { itemName, variantPrice } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
@@ -8,7 +10,7 @@ import { COLORS } from './kit.js';
 
 const STAT_NAMES = {
   watk: 'Weapon ATK', matk: 'Magic ATK', wdef: 'Weapon DEF', mdef: 'Magic DEF', str: 'STR', dex: 'DEX', int: 'INT', luk: 'LUK',
-  hp: 'Max HP', mp: 'Max MP', acc: 'Accuracy', eva: 'Avoid', speed: 'Speed', jump: 'Jump',
+  hp: 'Max HP', mp: 'Max MP', acc: 'Accuracy', eva: 'Avoid', speed: 'Speed', jump: 'Jump', critRate: 'Crit rate', critDamage: 'Crit damage',
 };
 
 // Shops pay 40% of the price (the full price for monster drops); colors are worth a bit more.
@@ -30,6 +32,7 @@ export function itemTooltip(char, id, inst = null) {
   const v = inst?.variant ? variantsFor(def)?.[inst.variant] : null;
   if (v) lines.push({ text: `◆ ${v.name} color: +${v.about}`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
   if (inst?.rarity) lines.push({ text: `★ ${rarity.name}`, bold: true, color: rarity.color });
+  if (inst?.polish) lines.push({ text: `✦ Polished +${inst.polish}`, bold: true, color: '#e8a23c' });
   if (def.unique) lines.push({ text: '♥ Unique look', bold: true, color: '#e06fa8' });
   if (def.element) lines.push({ text: `✦ ${ELEMENT_NAMES[def.element]} element`, bold: true, color: def.color === '#ffe36b' ? '#d9a440' : def.color });
   if (def.type === 'equip') {
@@ -49,6 +52,18 @@ export function itemTooltip(char, id, inst = null) {
       lines.push({ text: `${STAT_NAMES[k] ?? k} +${v}${diff > 0 ? `  (+${diff})` : ''}`, color: diff > 0 ? '#3f9f5f' : COLORS.ink });
     }
     lines.push({ text: `Upgrade slots: ${inst ? inst.slotsLeft : 7}`, color: COLORS.muted });
+    // A set piece: the set, how much of it you're wearing, and what each step gives.
+    if (def.set) {
+      const set = SETS[def.set];
+      const worn = char ? setsWorn(char.equipment)[def.set] ?? 0 : 0;
+      lines.push({ text: `${set.name} set (${worn}/4 worn)`, bold: true, color: set.color === '#ffffff' ? COLORS.ink : darkened(set.color) });
+      for (const [at, bonus] of Object.entries(set.bonus)) {
+        const words = Object.entries(bonus).map(([k, v]) => (k === 'critRate' || k === 'critDamage' ? `${STAT_NAMES[k] ?? k} +${Math.round(v * 100)}%` : `${STAT_NAMES[k] ?? k} +${v}`));
+        // All four main stats read as one.
+        const joined = ['str', 'dex', 'int', 'luk'].every((k) => bonus[k] === bonus.str) && bonus.str ? [`All stats +${bonus.str}`, ...words.slice(4)] : words;
+        lines.push({ text: `${at} pieces: ${joined.join(', ')}`, size: 8, color: worn >= Number(at) ? '#3f9f5f' : COLORS.muted });
+      }
+    }
   } else if (def.star) {
     lines.push({ text: 'Throwing stars', color: COLORS.muted });
     lines.push({ text: `Req. level ${def.reqLevel}`, color: !char || char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });
@@ -126,4 +141,11 @@ function cashTooltip(def, inst) {
   if (v) lines.push({ text: `◆ ${v.name} color`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
   lines.push({ text: def.cover ? `Reskins the weapon you hold. Its stats stay the same.` : `Covers the look of your ${SLOT_LOOKS[def.slot]}. Your gear keeps its stats.`, color: COLORS.muted, size: 8 });
   return lines;
+}
+
+// A colour pulled down far enough to read as text on the tooltip's pale card.
+function darkened(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (v) => Math.round(v * 0.7).toString(16).padStart(2, '0');
+  return `#${f(n >> 16)}${f((n >> 8) & 255)}${f(n & 255)}`;
 }

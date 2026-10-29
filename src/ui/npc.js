@@ -18,6 +18,7 @@ import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { shopWindow } from './shop.js';
+import { polishWindow } from './polish.js';
 
 export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
@@ -190,6 +191,7 @@ export function npcWindow(ui, state, world) {
   if (dlg.mode !== 'style') dlg.placed = false;
   if (dlg.mode === 'shop') return shopWindow(ui, state, world);
   if (dlg.mode === 'style') return styleWindow(ui, state, world);
+  if (dlg.mode === 'polish') return polishWindow(ui, state, world);
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const char = world.char;
@@ -207,6 +209,7 @@ export function npcWindow(ui, state, world) {
     const sub = st === 'ready' ? 'Ready to hand in!' : st === 'available' ? `New quest · ${QUESTS[id].rewards.exp.toLocaleString()} EXP` : `In progress · ${Math.round(progress * 100)}%`;
     choices.push({ label: QUESTS[id].name, sub, badge: st, progress, primary: st !== 'active', run: () => (dlg.quest = id) });
   }
+  if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
   if (npc.role === 'dungeon') choices.push({ label: `Enter ${DUNGEONS[npc.dungeon].name}`, sub: `Lv ${DUNGEONS[npc.dungeon].minLevel}+ · a group of four`, icon: 'star', primary: true, run: () => (dlg.dungeon = true) });

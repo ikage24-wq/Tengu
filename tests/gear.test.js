@@ -172,3 +172,56 @@ test('the starting outfit can be taken off and put back on, and old saves get it
   giveStartingOutfit(old);
   assert.equal(old.equipment.top, null);
 });
+
+test('a gear set adds its bonuses at 2, 3 and 4 pieces worn', async () => {
+  const { createCharacter } = await import('../src/core/character.js');
+  const { computeStats, setsWorn } = await import('../src/core/stats.js');
+  const { makeEquip } = await import('../src/core/items.js');
+  const { SETS, SET_SLOTS, setPieceId } = await import('../src/data/sets.js');
+  const c = createCharacter('Set', {});
+  c.job = 'warrior';
+  c.level = 30;
+  const before = computeStats(c);
+  for (const slot of SET_SLOTS.slice(0, 2)) c.equipment[slot] = makeEquip(setPieceId('tamamo', 'warrior', slot));
+  assert.equal(setsWorn(c.equipment).tamamo, 2);
+  const two = computeStats(c);
+  assert.ok(two.acc >= before.acc + SETS.tamamo.bonus[2].acc, 'two pieces: accuracy');
+  for (const slot of SET_SLOTS) c.equipment[slot] = makeEquip(setPieceId('tamamo', 'warrior', slot));
+  const four = computeStats(c);
+  assert.ok(four.critRate >= before.critRate + 0.05, 'four pieces: crit');
+  assert.ok(four.str > two.str, 'four pieces: all stats');
+});
+
+test('a boss drops a set piece for your own job, one you are missing first', async () => {
+  const { createCharacter } = await import('../src/core/character.js');
+  const { setDropFor } = await import('../src/world/world.js');
+  const { setPieceId } = await import('../src/data/sets.js');
+  const { makeEquip } = await import('../src/core/items.js');
+  const c = createCharacter('Drop', {});
+  assert.equal(setDropFor(c, 'sylvana', 1), null, 'a Novice gets none');
+  c.job = 'archer';
+  for (const slot of ['hat', 'top', 'gloves']) c.inventory.equip.push(makeEquip(setPieceId('sylvana', 'archer', slot)));
+  assert.equal(setDropFor(c, 'sylvana', 1), setPieceId('sylvana', 'archer', 'cape'));
+  assert.equal(setDropFor(c, 'snailbun', 1), null, 'only set bosses');
+});
+
+test('polishing adds a step at a time, costs gold, and never breaks the piece', async () => {
+  const { createCharacter } = await import('../src/core/character.js');
+  const { makeEquip, polish, polishCost, POLISH_MAX } = await import('../src/core/items.js');
+  const c = createCharacter('Shine', {});
+  const sword = makeEquip('sword_20');
+  c.gold = 0;
+  assert.equal(polish(c, sword).why, 'gold');
+  c.gold = 1e9;
+  const atk = sword.stats.watk;
+  const cost = polishCost(sword);
+  assert.ok(polish(c, sword, () => 0).ok);
+  assert.equal(sword.polish, 1);
+  assert.ok(sword.stats.watk > atk);
+  assert.equal(c.gold, 1e9 - cost);
+  const miss = polish(c, sword, () => 0.999);
+  assert.equal(miss.ok, false);
+  assert.equal(sword.polish, 1, 'a miss keeps the polish');
+  while ((sword.polish ?? 0) < POLISH_MAX) polish(c, sword, () => 0);
+  assert.equal(polish(c, sword, () => 0).why, 'max');
+});

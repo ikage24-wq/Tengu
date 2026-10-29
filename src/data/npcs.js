@@ -78,6 +78,8 @@ export const NPCS = {
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
     quests: ['tora_handles', 'tora_cores'],
+    // She polishes gear at her forge (ui/polish.js).
+    polish: true,
     building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },
     look: { hairStyle: 'wolf', hairColor: '#ff8a5c', skinTone: '#e7b48f', eyeColor: '#c0462f', outfitColor: '#7a5238', outfit: 'overalls', eyeStyle: 'round', face: 'grin' },
     greeting: 'Fresh off the anvil! Blades, axes, spears, and armor that can take a hit.',

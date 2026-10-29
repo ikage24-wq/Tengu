@@ -689,6 +689,12 @@ to clear it.
   title card and plays out in cutscenes; new regions open as the story reaches them; and after
   her trial each queen comes back to her region every ten minutes or so for a rematch anyone there
   can join.
+- **Gear sets and polishing** — Sylvana, Tamamo, Lilith, Selene and the Crystal King each drop
+  pieces of their own set for your job (hat, top, gloves and cape in the set's colours: Dryad
+  Bloom, Foxfire, Night Rose, Prism, Moonlight), always from her trial and sometimes from a
+  rematch. Wearing two, three or four pieces adds the set's bonuses (shown on every piece). Tora
+  in Ember Crag polishes any worn piece up to +10 for gold: each step adds attack, magic, or
+  defense and HP, gets less likely to take as it climbs, and a miss only costs the gold.
 - **Quests and NPCs** — 39 quests from every town's people, covering every field from level 1 to
   48: hunts and fetches, errands (talk to someone, deliver a letter or a parcel, climb to the top
   of a map), short chains (Captain Rook's Windy Canyon trouble leads to Bramble), a task from each

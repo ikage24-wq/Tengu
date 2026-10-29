@@ -2,6 +2,7 @@
 // Everything that needs "the player's real numbers" calls computeStats().
 
 import { ITEMS } from '../data/items.js';
+import { SETS } from '../data/sets.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { jobChain } from '../data/jobs.js';
 import { activeStar } from './inventory.js';
@@ -22,6 +23,26 @@ export function equipmentBonus(equipment) {
     for (const [k, v] of Object.entries(inst.stats)) total[k] = (total[k] ?? 0) + v;
   }
   return total;
+}
+
+// Gear sets: how many pieces of each set are worn, and the bonuses they've reached.
+export function setsWorn(equipment) {
+  const count = {};
+  for (const inst of Object.values(equipment ?? {})) {
+    const set = inst && ITEMS[inst.id]?.set;
+    if (set) count[set] = (count[set] ?? 0) + 1;
+  }
+  return count;
+}
+export function setBonus(equipment) {
+  const out = {};
+  for (const [set, n] of Object.entries(setsWorn(equipment))) {
+    for (const [at, bonus] of Object.entries(SETS[set].bonus)) {
+      if (n < Number(at)) continue;
+      for (const [k, v] of Object.entries(bonus)) out[k] = (out[k] ?? 0) + v;
+    }
+  }
+  return out;
 }
 
 // Passive bonuses from every learned passive in the character's job chain. A weapon's own passive
@@ -61,7 +82,8 @@ export function computeStats(char, now = 0) {
   const eq = equipmentBonus(char.equipment);
   const pas = passiveBonus(char);
   const buf = buffBonus(char, now);
-  const get = (k) => (eq[k] ?? 0) + (pas[k] ?? 0) + (buf[k] ?? 0);
+  const set = setBonus(char.equipment);
+  const get = (k) => (eq[k] ?? 0) + (pas[k] ?? 0) + (buf[k] ?? 0) + (set[k] ?? 0);
 
   const str = char.base.str + get('str');
   const dex = char.base.dex + get('dex');
@@ -86,8 +108,8 @@ export function computeStats(char, now = 0) {
     speed: 100 + get('speed'),
     jump: 100 + get('jump'),
     mastery: Math.max(BASE_MASTERY, pas.mastery ?? 0),
-    critRate: (pas.critRate ?? 0) + (buf.critRate ?? 0),
-    critDamage: (pas.critDamage ?? 0) + (buf.critDamage ?? 0),
+    critRate: (pas.critRate ?? 0) + (buf.critRate ?? 0) + (set.critRate ?? 0),
+    critDamage: (pas.critDamage ?? 0) + (buf.critDamage ?? 0) + (set.critDamage ?? 0),
     attackSpeed: Math.min(0.5, (pas.attackSpeed ?? 0) + (buf.attackSpeed ?? 0)),
     manaShield: buf.manaShield ?? 0,
     restRegen: pas.restRegen ?? 0,
