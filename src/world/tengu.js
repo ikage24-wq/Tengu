@@ -24,9 +24,12 @@
 // He's quick and light where the oni is heavy: snapping blows on a swift clock, a hairline stop on
 // each hit. When what he was fighting goes down he's insufferably pleased with himself; when a
 // move misses, a 'tch'.
+// He is the Spirit Doll too: on this path she fused with him (world/spiritdoll.js has no doll for an
+// Onmyoji): the first time he appears her spirit flies into him, and he carries her red ribbon on
+// his fan.
 // His hits are spells of the Onmyoji's own magic attack (melee.js dollHit).
 
-import { dollHit, hasSpirit } from './melee.js';
+import { dollHit, hasSpirit, troupeRest } from './melee.js';
 import { jobChain } from '../data/jobs.js';
 import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
@@ -73,6 +76,8 @@ export const hasTengu = (char) => jobChain(char.job).includes('onmyoji');
 export function tenguOf(world) {
   if (!hasTengu(world.char) || !hasSpirit(world.char)) return (world.tengu = null);
   const b = world.body;
+  // (The first time he's here, the doll fuses into him.)
+  const fresh = !world.tengu;
   world.tengu ??= { act: null, next: 0, last: null, map: null, mood: null, windAt: 3, stonesAt: 5, spiritedAt: 6, commandAt: 1.5, mark: null, flight: null, air: 0 };
   const k = world.tengu;
   if (k.map !== world.map.id || !k.body) {
@@ -85,6 +90,7 @@ export function tenguOf(world) {
     k.flight = null;
     k.air = 0;
     sync(k);
+    if (fresh) world.fx.push({ kind: 'dollfusion', who: k, x: b.x, y: b.y, t: 0, dur: 1.4 });
   }
   return k;
 }
@@ -192,7 +198,7 @@ function act(world, k, dt) {
     k.act = null;
     k.air = 0;
     if (!a.landed) k.mood = { kind: 'tch', until: world.now + MOOD.tch };
-    k.next = world.now + REST[0] + Math.random() * (REST[1] - REST[0]);
+    k.next = world.now + (REST[0] + Math.random() * (REST[1] - REST[0])) * troupeRest(world);
   }
 }
 // Along his ledge: a step, or a dash (in one blink, between `M.dash` of the move).

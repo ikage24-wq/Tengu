@@ -274,6 +274,51 @@ function graceAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembholy', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
+// Binding: the five-pointed star seal of onmyodo glowing red at the Onmyoji's feet, turning, more of
+// it drawn the fuller it is, and full (All Bound), a red star over her head and rings racing out.
+function bindingAura(ctx, x, y, t, s, k, layer) {
+  const star = (cx, cy, r, sy, rot, part = 1) => {
+    ctx.beginPath();
+    const n = Math.floor(part * 5);
+    for (let i = 0; i <= n; i++) {
+      const a = ((-90 + i * 144) * Math.PI) / 180 + rot;
+      if (i) ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * sy);
+      else ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * sy);
+    }
+    ctx.stroke();
+  };
+  ctx.save();
+  ctx.strokeStyle = '#ff3a46';
+  ctx.shadowColor = 'rgba(255, 60, 70, 0.9)';
+  ctx.shadowBlur = 6;
+  if (layer === 'back') {
+    if (k > 0.15) {
+      ctx.globalAlpha = Math.min(1, (k - 0.15) * 2) * 0.8;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 30 * s, 9 * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 1.2;
+      star(x, y, 26 * s, 0.32, t * 0.6, Math.min(1, k * 1.05));
+    }
+    if (k >= 1) {
+      const u = (t * 2) % 1;
+      ctx.globalAlpha = 1 - u;
+      ctx.beginPath();
+      ctx.ellipse(x, y, (30 + 50 * u) * s, (9 + 15 * u) * s, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (k >= 1) {
+    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 6);
+    ctx.lineWidth = 1.6;
+    star(x, y - 62 * s, 7 * s, 1, t * 1.2);
+    ctx.beginPath();
+    ctx.arc(x, y - 62 * s, 8.4 * s, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // Ki: a ring of brushed ink at the shinobi's feet, ink rising round her in wisps as it builds,
 // and full (Shadow Clones), the red seal over her head and rings of ink racing out.
 function kiAura(ctx, x, y, t, s, k, layer) {
@@ -304,7 +349,7 @@ function tailsAura(ctx, x, y, t, s, k, layer, dir = 1) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { grace: graceAura, spirit: spiritAura, ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
+const COMBAT = { grace: graceAura, binding: bindingAura, spirit: spiritAura, ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

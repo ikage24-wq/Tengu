@@ -50,6 +50,8 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   'yukistream', 'yukiask', 'yukisoul', 'yukisoulfly', 'yukispike', 'yukisnowball', 'yukimist', 'yukiwhiteout', 'yukishatter',
   'yukineedle', 'yukiicicle', 'yukistep', 'yukihit',
   // The Onmyoji's tengu.
+  // The Onmyoji's.
+  'ofuda', 'ofudaburst', 'seimanseal', 'yokairally', 'hyakkiyagyo', 'paradeburst', 'dollfusion',
   'tengumark', 'tengucommand', 'tengucut', 'tengudash', 'tengugust', 'tenguwhirl', 'tengufeatherburst', 'tengufeather', 'tengustone', 'tengutakeoff', 'tenguvanish', 'tenguhit']);
 
 export function hearWorld(world, cam) {

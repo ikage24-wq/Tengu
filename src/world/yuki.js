@@ -28,7 +28,7 @@
 // 'yukifrost'), and at five it freezes solid. Her hits are spells of the Onmyoji's own magic attack
 // (melee.js dollHit); the freezes are the game's own (world.js: frozen solid, bosses shrug it off).
 
-import { dollHit, hasSpirit, healAround } from './melee.js';
+import { dollHit, hasSpirit, healAround, troupeRest } from './melee.js';
 import { jobChain } from '../data/jobs.js';
 import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
@@ -148,7 +148,7 @@ function act(world, k, dt) {
   if (u >= 1) {
     k.act = null;
     k.gliding = false;
-    k.next = world.now + REST[0] + Math.random() * (REST[1] - REST[0]);
+    k.next = world.now + (REST[0] + Math.random() * (REST[1] - REST[0])) * troupeRest(world);
   }
 }
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, t)));

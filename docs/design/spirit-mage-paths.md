@@ -104,10 +104,20 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   line), Seal (she pins a monster with a star seal for them to pile on), a mastery; the finisher
   **Hyakki Yagyo**, the Night Parade of a Hundred Demons: a procession of yokai lanterns and
   spirits floods across the screen behind her troupe, trampling everything.
-- **The doll grows up (chosen):** into a little imp of the troupe, the yokai's ringleader in a
-  paper mask, who eggs them on and starts the fights.
-- **Gauge:** **Binding**: builds as the troupe's hits land; full, the troupe goes wild (faster,
-  bigger moves) until she spends it.
+- **Built (2026-10-29, world/onmyoji.js, data/skills.js):** Ofuda Barrage (a fan of talismans that
+  stick and burst in red star seals), Seiman Seal (she traces the five-pointed star; the seal on
+  the ground binds and burns what stands in it), Yokai Rally (two claps and a raised talisman:
+  the troupe fights faster and harder a while, and the tengu marks a monster at once), Onmyodo
+  (the mastery) and the finisher **Hyakki Yagyo** (night falls, a red moon, and the parade of
+  lanterns, umbrellas, foxes, oni, skulls and sandals marches across the screen trampling every
+  monster, ending in a great star burst). Her dance figures: onmyoofuda, onmyoseal, onmyorally,
+  onmyoparade (render/moves.js).
+- **The doll (the player changed it, 2026-10-29): fused with the tengu.** An Onmyoji has no doll
+  (world/spiritdoll.js); the first time the tengu appears her spirit flies into him in a spiral of
+  light and red ribbon and bursts into black feathers, and he carries her red ribbon on his fan.
+- **Gauge (built):** **Binding**: builds from her spells and from every blow the troupe lands;
+  full (ALL BOUND), the troupe rests half as long between moves, and Hyakki Yagyo is ready. A red
+  star seal turns at her feet as it fills.
 - **Party role:** DPS.
 
 ## Order of work
@@ -115,8 +125,8 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
 1. The trial quest and the path choice (both paths stubbed so they can be picked).
 2. Shrine Maiden: the kitsune guardian first (rig, look, moves, AI; GIF check-ins on her design
    and moves; she is the doll grown up), then her dance, gauge, skills and finisher.
-3. Onmyoji: one yokai at a time (rig, look, moves, personality; GIF check-ins), then the imp doll,
-   then her dance, gauge, skills and finisher.
+3. Onmyoji: one yokai at a time (rig, look, moves, personality; GIF check-ins), then the doll
+   (fused with the tengu), then her dance, gauge, skills and finisher. Done.
 4. Wiring for both: sounds, bots, party roles, dungeon roles, tests, README and art notes, demo
    videos.
 

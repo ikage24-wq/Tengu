@@ -340,7 +340,7 @@ export const SKILLS = {
 
   // ---------- Spirit Mage paths (docs/design/spirit-mage-paths.md) ----------
   // The Shrine Maiden (full support, with her kitsune shrine guardian, the doll grown up) and the
-  // Onmyoji (damage, with a yokai troupe; still being built). The Shrine Maiden dances with a gohei
+  // Onmyoji (damage, with a yokai troupe led by the tengu, the doll fused into him). The Shrine Maiden dances with a gohei
   // in place of the fan, builds Grace (world/melee.js), and her lasting spells live in
   // world/shrine.js.
   shrinemastery: skill({
@@ -405,6 +405,57 @@ export const SKILLS = {
     id: 'onmyodo', name: 'Onmyodo', job: 'onmyoji', type: 'passive', fx: null, icon: 'onmyodo',
     desc: 'The way of yin and yang: steadier spells, much more magic attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
+  }),
+  // The Onmyoji's spells (world/onmyoji.js): she builds Binding (world/melee.js) from her spells
+  // and her troupe's blows; full, her troupe fights faster and Hyakki Yagyo is ready.
+  ofudabarrage: skill({
+    id: 'ofudabarrage', name: 'Ofuda Barrage', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'spirit',
+    desc: 'Snap the fan shut and fling a fan of paper talismans from your fingers: each flies to a monster ahead, sticks fast, and a beat later bursts in a red star seal.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(22, 40), pct: k(90, 170), hits: 2, targets: 0,
+        combo: [{ move: 'onmyoofuda', dur: 1.05, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, ofuda: { n: k(4, 7), pct: k(90, 170), range: 330, stick: 0.38 } }] }],
+      };
+    },
+  }),
+  seimanseal: skill({
+    id: 'seimanseal', name: 'Seiman Seal', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'spirit',
+    desc: 'Trace the five-pointed star of onmyodo in the air with the fan, stroke by stroke, and strike its heart: the seal opens on the ground ahead of you for a while. Monsters standing in it are bound fast where they stand and burn again and again.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(35, 60), pct: k(55, 100), hits: 1, targets: 0,
+        combo: [{ move: 'onmyoseal', dur: 1.5, step: 0, strikes: [{ at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, seiman: { r: k(90, 130), ahead: 90, dur: k(4, 6), every: 0.5, pct: k(55, 100), bind: 0.6 } }] }],
+      };
+    },
+  }),
+  yokairally: skill({
+    id: 'yokairally', name: 'Yokai Rally', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'spirit', maxLevel: 15,
+    desc: 'Clap twice and raise a talisman high: your yokai troupe answers. For a while they fight faster and hit harder, and the tengu marks a monster for them at once.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(30, 50), pct: 0, hits: 0, targets: 0,
+        combo: [{ move: 'onmyorally', dur: 1.25, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, rally: { dur: k(10, 18), power: kf(0.2, 0.5) } }] }],
+      };
+    },
+  }),
+  hyakkiyagyo: skill({
+    id: 'hyakkiyagyo', name: 'Hyakki Yagyo', job: 'onmyoji', type: 'attack', fx: null, icon: 'hyakkiyagyo', school: 'spirit', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Binding, and spends it. Slap a talisman to the ground and rise with your arms flung wide: night falls, and the Night Parade of a Hundred Demons marches across the screen, lanterns and umbrellas, foxes and oni, trampling every monster again and again, and ends in a great burst.',
+    weapons: ['wand', 'staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(40, 60), pct: k(120, 210), hits: 1, targets: 0, range: { w: 700, h: 200, around: true },
+        combo: [{ move: 'onmyoparade', dur: 2.1, step: 0, strikes: [{ at: 0.4, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, parade: { dur: 4.4, start: 0.8, every: 0.4, pct: k(120, 210), big: k(500, 900), w: 360 } }] }],
+      };
+    },
   }),
 
   heavenslantern: skill({
@@ -923,6 +974,7 @@ const MOVES_BY_SKILL = {
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',
   grandblessing: 'shrinegrand', purification: 'shrinepurify', resurrection: 'shrinerevive', thousandtorii: 'shrinetorii',
+  ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', hyakkiyagyo: 'onmyoparade',
   shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',

@@ -1413,6 +1413,51 @@ function onmyodo() {
   return out;
 }
 
+// A five-pointed star seal (onmyodo's seiman) at (cx, cy), radius r.
+function seimanStar(cx, cy, r, c, w = 0.45) {
+  const star = [];
+  for (let k = 0; k <= 5; k++) {
+    const a = (-90 + k * 144) * D2R;
+    star.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+  }
+  return [S(tube(star, w, w), c), S(tube(arcPts(cx, cy, r * 1.2, r * 1.2, 0, 360, 20), w * 0.7, w * 0.7), c)];
+}
+// A paper talisman at (x, y) turned `deg`, with its red star.
+function ofudaTag(x, y, deg) {
+  const tag = turn(rect(x - 1.6, y - 3.2, 3.2, 6.4), deg, x, y);
+  return [...solid(tag, '#fbf8ff', { d: 0.3, ink: '#5a4a8a', shadow: false }), ...seimanStar(x, y - 0.6, 1, '#d8323e', 0.3)];
+}
+// Ofuda Barrage: a fan of three talismans flying out, one bursting red.
+function ofudabarrage() {
+  const out = [...tile('indigo', 'active'), ...aura(11, 6, 5, '#ffd0d4')];
+  out.push(...ofudaTag(4.4, 11, -30), ...ofudaTag(8, 8.6, 10), ...ofudaTag(11.6, 6.2, 45));
+  out.push(...spark(13.6, 3, 1.2, '#ff5a5a'), ...spark(14, 9, 0.8, '#ff9aa0'));
+  return out;
+}
+// Seiman Seal: the five-pointed star glowing red on the ground, seen from above.
+function seimanseal() {
+  const out = [...tile('indigo', 'active'), ...aura(8, 8, 7, '#ffd0d4', 1.1)];
+  out.push(...seimanStar(8, 8.4, 5, '#ff3a46', 0.6));
+  out.push(...spark(13.4, 2.6, 1, '#ffd36a'), ...spark(2.6, 13.4, 0.8, '#ff9aa0'));
+  return out;
+}
+// Yokai Rally: a talisman held high, three red stars over it (the troupe answering).
+function yokairally() {
+  const out = [...tile('indigo', 'buff'), ...aura(8, 9, 6, '#ffd0d4')];
+  out.push(...ofudaTag(8, 10.4, 0));
+  out.push(...seimanStar(3.4, 3.8, 1.5, '#ff3a46', 0.35), ...seimanStar(8, 2.6, 1.7, '#ff3a46', 0.35), ...seimanStar(12.6, 3.8, 1.5, '#ff3a46', 0.35));
+  return out;
+}
+// Hyakki Yagyo: a red moon over a dark night and the parade's silhouettes, a lantern glowing.
+function hyakkiyagyo() {
+  const out = [...tile('indigo', 'active'), ...aura(11, 4.4, 3.6, '#ff9a8a', 1.2)];
+  out.push(...solid(oval(11, 4.4, 2.6, 2.6, 0, 16), '#e8403a', { shadow: false, d: 0.3 }));
+  out.push(...solid([[0.8, 15.2], [1.6, 11], [3.4, 9.6], [4.8, 11.6], [6.4, 10.4], [7.6, 12.6], [9.6, 11.2], [11, 13], [13, 11.8], [15.2, 15.2]], '#1a1028', { shadow: false, d: 0.2 }));
+  out.push(...solid(oval(5.6, 9.8, 1.6, 2.2, 0, 14), '#ff9a3a', { shadow: false, d: 0.3, ink: '#7a3a10' }));
+  out.push(...spark(2.6, 3.2, 0.9, '#9ad0ff'), ...spark(6.4, 5, 0.7, '#9ad0ff'));
+  return out;
+}
+
 // ---------- Game master ----------
 
 function gmsmite() {
@@ -1475,7 +1520,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, hyakkiyagyo,
   gmsmite, gmhaste, gmblessing,
 };
 

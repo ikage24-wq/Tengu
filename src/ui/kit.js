@@ -476,6 +476,23 @@ const ICONS = {
     ctx.fillRect(-s * 0.3, -s * 0.22, s * 0.11, s * 0.68);
     ctx.fillRect(s * 0.19, -s * 0.22, s * 0.11, s * 0.68);
   },
+  // The seiman, onmyodo's five-pointed star, in a ring (the Onmyoji's Binding).
+  seiman(ctx, s) {
+    ctx.save();
+    ctx.lineWidth = s * 0.1;
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.beginPath();
+    for (let k = 0; k <= 5; k++) {
+      const a = ((-90 + k * 144) * Math.PI) / 180;
+      if (k) ctx.lineTo(Math.cos(a) * s * 0.38, Math.sin(a) * s * 0.38);
+      else ctx.moveTo(Math.cos(a) * s * 0.38, Math.sin(a) * s * 0.38);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.46, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  },
   // A zigzag paper streamer (the Spirit Mage's Spirit).
   shide(ctx, s) {
     for (let i = 0; i < 4; i++) {

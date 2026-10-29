@@ -70,8 +70,9 @@ const pick = (o, last) => {
 
 // The doll, made when she's first needed (null for anyone but a Spirit Mage). On a new map she
 // pops in right beside the Spirit Mage. A Shrine Maiden has none: her doll has grown up into her
-// kitsune guardian (world/kitsune.js).
-export const dollGrownUp = (char) => jobChain(char.job).includes('shrinemaiden');
+// kitsune guardian (world/kitsune.js); nor has an Onmyoji: hers has fused with the tengu who leads
+// her troupe (world/tengu.js).
+export const dollGrownUp = (char) => jobChain(char.job).includes('shrinemaiden') || jobChain(char.job).includes('onmyoji');
 export function dollOf(world) {
   if (!hasSpirit(world.char) || dollGrownUp(world.char)) return (world.doll = null);
   const b = world.body;

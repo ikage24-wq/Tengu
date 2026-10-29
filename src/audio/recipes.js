@@ -298,6 +298,15 @@ const R = {
   yukihit: { db: -15, vary: 8, max: 3, gap: 50, layers: [{ rec: 'iceImpact', rate: 1.1, len: 400 }] },
   // The Onmyoji's tengu: a sword cut (a clean ring of steel), the gust and whirlwind of his fan,
   // his feathers flying, stones out of the sky, a beat of his wings, his vanishing.
+  // The Onmyoji's: talismans flicked out and bursting, the star seal opening, her rally, the Night
+  // Parade (a dark drone, a festival drum and flute far off), its burst, the doll fusing.
+  ofuda: { db: -18, vary: 10, max: 4, gap: 50, layers: [{ rec: 'bookFlip', rate: 1.6, len: 200 }, { rec: 'swish', rate: 1.4, db: -6, len: 150 }] },
+  ofudaburst: { db: -13, vary: 8, max: 3, gap: 60, layers: [{ rec: 'fireImpact', rate: 1.5, len: 400 }, sparkle('E6:0', { db: -10 })] },
+  seimanseal: { db: -10, max: 1, room: true, layers: [{ rec: 'darkRiser', rate: 1.2, len: 1200 }, { rec: 'bell', rate: 1.3, db: -6, len: 900 }, sparkle('A5:0 E6:120 A6:240', { db: -8 })] },
+  yokairally: { db: -11, max: 1, layers: [{ rec: 'clangLight', rate: 1.6, len: 150 }, { rec: 'clangLight', rate: 1.6, len: 150, at: 160 }, { seq: 'r:300 E5:120 A5:120 E6:500', inst: 'flute', db: -6 }] },
+  hyakkiyagyo: { db: -8, max: 1, room: true, layers: [{ rec: 'darkWave', rate: 0.8, len: 2200 }, { seq: 'r:700 A3:400 A3:400 A3:200 A3:200 A3:400', inst: 'timpani', db: -4 }, { seq: 'r:900 E5:300 G5:300 A5:300 C6:300 A5:600', inst: 'flute', db: -8 }] },
+  paradeburst: { db: -8, max: 1, room: true, layers: [{ rec: 'darkImpact', rate: 1, len: 1600 }, thump(60, 500, { slide: -1 })] },
+  dollfusion: { db: -12, max: 1, layers: [sparkle('C6:0 E6:90 G6:180 C7:270', { db: -4 }), { rec: 'cloth', rate: 1.2, db: -8, at: 800 }] },
   tengumark: { db: -11, max: 1, layers: [{ rec: 'darkImpact', rate: 1.5, len: 500 }, sparkle('E6:0 B6:60', { db: -8 })] },
   tengucommand: { db: -13, max: 1, layers: [{ rec: 'cloth', rate: 1.5, len: 250 }, { rec: 'clangLight', rate: 1.4, db: -8 }] },
   tengucut: { db: -11, vary: 8, max: 3, gap: 40, layers: [{ rec: 'swingSword', rate: 1.15 }, { rec: 'bladeDraw', rate: 1.3, db: -8, len: 300 }] },

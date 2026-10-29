@@ -2862,6 +2862,98 @@ test("the tengu leads the troupe: he marks a monster and the oni and yuki-onna g
   assert.ok(yuki, 'and the yuki-onna');
 });
 
+// An Onmyoji with her own skills learned, her troupe standing back.
+function onmyojiFull() {
+  const w = onmyoji();
+  Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, hyakkiyagyo: 8 });
+  w.spirit = 0;
+  w.binding = 0;
+  for (const k of [w.oni, w.yuki, w.tengu]) {
+    k.next = Infinity;
+    k.act = null;
+  }
+  return w;
+}
+
+test('an Onmyoji has no doll: it fused into the tengu, who carries its ribbon', () => {
+  const w = onmyoji();
+  assert.equal(w.doll, null, 'no doll');
+  assert.ok(w.tengu, 'the tengu is there');
+  const fresh = onmyojiFresh();
+  assert.ok(fresh.fx.some((f) => f.kind === 'dollfusion' && f.who === fresh.tengu), 'the doll fuses into him when he first appears');
+});
+function onmyojiFresh() {
+  const w = shrineMage();
+  w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
+  w.char.job = 'onmyoji';
+  w.tengu = null;
+  updateWorld(w, DT, idle);
+  return w;
+}
+
+test("an Onmyoji builds Binding (not Spirit) from her spells and her troupe's blows; All Bound, they fight faster", async () => {
+  const { gaugeOf, troupeRest, BOUND_REST } = await import('../src/world/melee.js');
+  const w = onmyojiFull();
+  assert.equal(gaugeOf(w.char), 'binding');
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 80 + i * 40, y: w.body.y, hp: 99999 }));
+  assert.ok(cast(w, 'ofudabarrage').ok);
+  run(w, 2);
+  assert.ok((w.binding ?? 0) > 3, `her spells build it (${w.binding})`);
+  assert.equal(w.spirit ?? 0, 0, 'and no Spirit');
+  const b0 = w.binding;
+  w.oni.next = 0;
+  for (let i = 0; i < 60 * 4; i++) updateWorld(w, DT, idle);
+  assert.ok(w.binding > b0, `the troupe's blows build it (${b0} -> ${w.binding})`);
+  w.binding = 100;
+  w.bindingAt = w.now;
+  assert.equal(troupeRest(w), BOUND_REST, 'All Bound, the troupe rests less');
+});
+
+test("the Onmyoji's spells: talismans burst, the star seal binds, the rally empowers the troupe", () => {
+  const w = onmyojiFull();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 90 + i * 30, y: w.body.y, hp: 99999 }));
+  const hp0 = w.mobs.map((m) => m.hp);
+  assert.ok(cast(w, 'ofudabarrage').ok);
+  let tags = 0;
+  for (let i = 0; i < 60 * 2; i++) {
+    updateWorld(w, DT, idle);
+    tags = Math.max(tags, w.fx.filter((f) => f.kind === 'ofuda').length);
+  }
+  assert.ok(tags >= 4, `talismans fly (${tags})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'and burst on the monsters');
+  // Seiman Seal: bound fast inside it.
+  assert.ok(cast(w, 'seimanseal').ok);
+  let bound = false;
+  for (let i = 0; i < 60 * 3; i++) {
+    updateWorld(w, DT, idle);
+    bound ||= Boolean(w.seiman) && w.mobs.some((m) => m.frozenUntil > w.now && Math.abs(m.x - w.seiman.x) < w.seiman.r);
+  }
+  assert.ok(bound, 'the seal binds what stands in it');
+  // Yokai Rally.
+  assert.ok(cast(w, 'yokairally').ok);
+  run(w, 1.5);
+  assert.ok(w.rally?.until > w.now, 'the troupe is rallied');
+  assert.ok(w.fx.some((f) => f.kind === 'rallied' && f.who === w.oni), 'each of them answers');
+});
+
+test('Hyakki Yagyo: needs full Binding, and the Night Parade tramples every monster on the screen', () => {
+  const w = onmyojiFull();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-150, 120, 260][i % 3], y: w.body.y, hp: 99999 }));
+  const hp0 = w.mobs.map((m) => m.hp);
+  assert.equal(cast(w, 'hyakkiyagyo').reason, 'gauge:binding', 'needs full Binding');
+  w.binding = 100;
+  w.bindingAt = w.now;
+  assert.ok(cast(w, 'hyakkiyagyo').ok);
+  assert.equal(w.binding, 0, 'spends it');
+  let burst = false;
+  for (let i = 0; i < 60 * 6; i++) {
+    updateWorld(w, DT, idle);
+    burst ||= w.fx.some((f) => f.kind === 'paradeburst');
+  }
+  assert.ok(w.fx.length >= 0 && burst, 'it ends in a burst');
+  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'every monster on the screen is trampled, behind her too');
+});
+
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
   const { blockOnHit } = await import('../src/world/combat.js');
   const w = shrineMaiden();

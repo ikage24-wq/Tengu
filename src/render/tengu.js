@@ -82,7 +82,8 @@ function paintWing(c, root, side, spread, flap, k, far = false) {
   c.restore();
 }
 // The hauchiwa: a feather fan, nine white feathers tipped black spread in a broad leaf from a
-// crimson lacquer handle with a gold cap and a red tassel. `ang` (0 up, + forward) from the hand;
+// crimson lacquer handle with a gold cap and a red tassel, and the Spirit Doll's red ribbon tied
+// round the handle in a bow (she fused with him: world/tengu.js). `ang` (0 up, + forward) from the hand;
 // `twirl` turns the head of it face-on to edge-on (a flick).
 function paintFan(c, hand, flip, ang, k, twirl = 0) {
   c.save();
@@ -100,6 +101,29 @@ function paintFan(c, hand, flip, ang, k, twirl = 0) {
   c.quadraticCurveTo(1.6, 3.6, 0.6, 5.4);
   c.lineTo(-0.4, 5.2);
   c.quadraticCurveTo(0.4, 3.6, 0, 2);
+  c.fill();
+  // The doll's ribbon: a little red bow on the handle, its two tails fluttering.
+  c.fillStyle = '#e8343a';
+  for (const s of [-1, 1]) {
+    c.beginPath();
+    c.moveTo(0, -2.6);
+    c.lineTo(s * 2.2, -3.6);
+    c.lineTo(s * 2.2, -1.6);
+    c.closePath();
+    c.fill();
+  }
+  c.fillRect(-0.7, -3.2, 1.4, 1.2);
+  c.beginPath();
+  c.moveTo(-0.4, -2);
+  c.lineTo(-1.6, 1.2 + Math.sin(twirl * 3) * 0.4);
+  c.lineTo(-0.8, 1.4);
+  c.closePath();
+  c.fill();
+  c.beginPath();
+  c.moveTo(0.4, -2);
+  c.lineTo(1.4, 0.8);
+  c.lineTo(0.6, 1);
+  c.closePath();
   c.fill();
   c.translate(0, -6);
   c.scale(Math.max(0.25, Math.cos(twirl)), 1);

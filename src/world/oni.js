@@ -24,7 +24,7 @@
 // goes down, a smug smirk.
 // Her hits are spells of the Onmyoji's own magic attack (melee.js dollHit).
 
-import { dollHit, hasSpirit } from './melee.js';
+import { dollHit, hasSpirit, troupeRest } from './melee.js';
 import { jobChain } from '../data/jobs.js';
 import { createBody, stepBody } from './physics.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
@@ -151,7 +151,7 @@ function act(world, k, dt) {
     k.act = null;
     // A move that hit nothing at all: she sulks.
     if (!a.landed && a.kind !== 'roar') k.mood = { kind: 'sulk', until: world.now + MOOD.sulk };
-    k.next = world.now + (REST[0] + Math.random() * (REST[1] - REST[0])) * (k.fury ? 0.5 : 1) + (a.landed || a.kind === 'roar' ? 0 : 0.8);
+    k.next = world.now + (REST[0] + Math.random() * (REST[1] - REST[0])) * (k.fury ? 0.5 : 1) * troupeRest(world) + (a.landed || a.kind === 'roar' ? 0 : 0.8);
   }
 }
 // A step forward along her ledge.

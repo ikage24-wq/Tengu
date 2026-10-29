@@ -34,6 +34,7 @@ import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
+import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, hyakkiYagyo, TROUPE, rallyPower } from './onmyoji.js';
 import { tickGuardian } from './kitsune.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
@@ -721,8 +722,9 @@ export const SPIRIT_HEAL = 0.03;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
 export function addSpirit(world, n, kind = 'harm') {
   if (!hasSpirit(world.char) || n <= 0) return;
-  // A Shrine Maiden builds Grace instead (her heals and wards count most).
+  // A Shrine Maiden builds Grace instead (her heals and wards count most); an Onmyoji, Binding.
   if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.45));
+  if (hasBinding(world.char)) return addBinding(world, n * 0.7);
   const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
   world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (turn ? 1.5 : 1));
   world.spiritAt = world.now;
@@ -746,6 +748,24 @@ export function addGrace(world, n) {
   world.graceAt = world.now;
 }
 export const divineGrace = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
+// Binding: the Onmyoji's gauge, in place of Spirit: how tightly she holds her yokai troupe. Her
+// spells that land build it, and so does every blow her troupe lands (world/oni.js, yuki.js,
+// tengu.js); it fades once the fighting stops. Full (ALL BOUND), her troupe fights faster
+// (BOUND_REST of their rest between moves) and her finisher, Hyakki Yagyo, is ready.
+export const BINDING_MAX = 100;
+const BINDING_HOLD = 6;
+const BINDING_DRAIN = 9;
+export const BOUND_REST = 0.5;
+export const hasBinding = (char) => jobChain(char.job).includes('onmyoji');
+export function addBinding(world, n) {
+  if (!hasBinding(world.char) || n <= 0) return;
+  world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n);
+  world.bindingAt = world.now;
+}
+export const allBound = (world) => hasBinding(world.char) && (world.binding ?? 0) >= BINDING_MAX;
+// How long a yokai of the troupe rests between moves: shorter when she holds them All Bound, or
+// under Yokai Rally.
+export const troupeRest = (world) => (allBound(world) ? BOUND_REST : 1) * (world.rally?.until > world.now ? 0.6 : 1);
 // How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Grace.
 const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
 // Divine Grace: a heal she gives wards them too.
@@ -779,7 +799,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar', 'foxstar', 'foxmoon']);
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasGrace(char) ? 'grace' : hasSpirit(char) ? 'spirit' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
+  return hasGrace(char) ? 'grace' : hasBinding(char) ? 'binding' : hasSpirit(char) ? 'spirit' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1011,6 +1031,7 @@ export function tickMelee(world, dt) {
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.spirit > 0 && world.now - (world.spiritAt ?? 0) > SPIRIT_HOLD) world.spirit = Math.max(0, world.spirit - SPIRIT_DRAIN * dt);
   if (world.grace > 0 && world.now - (world.graceAt ?? 0) > GRACE_HOLD) world.grace = Math.max(0, world.grace - GRACE_DRAIN * dt);
+  if (world.binding > 0 && world.now - (world.bindingAt ?? 0) > BINDING_HOLD) world.binding = Math.max(0, world.binding - BINDING_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
@@ -1020,6 +1041,7 @@ export function tickMelee(world, dt) {
   tickPets(world, dt);
   tickDoll(world, dt);
   tickShrine(world);
+  tickOnmyoji(world);
   tickGuardian(world, dt);
   tickOni(world, dt);
   tickYuki(world, dt);
@@ -1108,6 +1130,11 @@ function land(world, s) {
   if (s.purify) purify(world, s);
   if (s.revive) resurrect(world, s);
   if (s.torii) thousandTorii(world, s);
+  // The Onmyoji's (world/onmyoji.js).
+  if (s.ofuda) ofudaBarrage(world, s);
+  if (s.seiman) seimanSeal(world, s);
+  if (s.rally) yokaiRally(world, s);
+  if (s.parade) hyakkiYagyo(world, s);
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
@@ -1434,7 +1461,9 @@ function grantSpell(world, g) {
 // A hit of the Spirit Doll's (world/spiritdoll.js): a spell of the Spirit Mage's own magic attack,
 // landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
 export function dollHit(world, m, f, at = 0) {
-  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
+  // (Her yokai troupe hit harder under Yokai Rally.)
+  const pct = TROUPE.has(f.key) ? f.pct * (1 + rallyPower(world)) : f.pct;
+  shotHit(world, { pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
