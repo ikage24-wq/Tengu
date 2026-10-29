@@ -9,8 +9,8 @@ import { drawPosed } from '../src/render/hero.js';
 import { ONI_DESIGNS, ONI_SCALE, paintKanabo } from '../src/render/oni.js';
 import { setHd, nextFrame } from '../src/render/pixel.js';
 
-const S = 2.4;
-const CW = 380;
+const S = 2.2;
+const CW = 350;
 const CH = 400;
 const designs = Object.values(ONI_DESIGNS);
 const canvas = document.getElementById('c');
@@ -37,7 +37,7 @@ POSES.forEach((pz, r) => designs.forEach((d, i) => {
   drawPosed(ctx, look, cx, gy, pz.rig, {
     scale: S * ONI_SCALE, facing: 1, hold: 'front', lean: { tilt: pz.lean, lunge: 0, lift: 0 },
     // (Resting back over his shoulder, the club goes behind him; brought down, in front.)
-    [pz.club < 0 ? 'under' : 'over']: (c, hand, flip) => paintKanabo(c, hand, flip, pz.club, S * ONI_SCALE),
+    [pz.club < 0 ? 'under' : 'over']: (c, hand, flip) => paintKanabo(c, hand, flip, pz.club, S * ONI_SCALE, d.club, 1),
   });
   // The Onmyoji beside him, for size.
   if (r === 0) {

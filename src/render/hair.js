@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onimane', 'onitopknot', 'oniwhite'];
+export const TROUPE_HAIR = ['onisilver', 'onimane', 'onitopknot', 'oniwhite'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -869,10 +869,23 @@ Object.assign(STYLES, {
 Object.assign(FRINGES, {
   // A few big, blunt-tipped spikes falling over the brow, the longest between the eyes.
   onispike: { pts: [[24.2, 13.6], [22, 9.8], [20.2, 15], [17.8, 10.2], [15.6, 16.6], [13.2, 10.2], [11, 15], [9.2, 9.8], [6.8, 13.6]], lean: 0.3 },
+  // Messy and swept to the far side, long ragged points falling past the far eye.
+  onimessy: { pts: [[24.4, 12], [23.2, 9.6], [21.8, 12.6], [20.4, 9.6], [18.6, 13.6], [17.2, 10.2], [15.2, 14.4], [14, 10.6], [11.8, 15], [10.8, 11.8], [8.2, 14.6]], lean: -0.8 },
   // Short and choppy, pushed up off the brow (the hair all dragged up into the topknot).
   onishort: { pts: [[24.4, 11.6], [22.8, 9.2], [21, 11], [19, 8.4], [16.8, 10], [14.6, 8.2], [12.4, 10], [10.2, 8.6], [8.4, 10.6], [6.6, 11.6]], lean: 0.4 },
 });
 Object.assign(STYLES, {
+  // Silver and messy (the crimson oni's): long, thick and tousled, falling past her shoulders in
+  // ragged locks that flick out, a big messy lock over each cheek, bangs swept across.
+  onisilver(r, m) {
+    const flick = (pts, w, c = r.base, k = 1.1) => [lock(pts, w, c, m, k), lock(fx(pts), w, c, m, k)];
+    return {
+      head: [crown(r, 1), ...flick([[9.6, 3.4], [6.4, 1.2], [3.6, 1.8]], 3.6, r.sh1, 0.6)],
+      hang: [napeShadow(r), ...sheet({ len: 40, flare: 15.4, ends: 'points', n: 6, w0: 12.8, wave: 1.2 }, r, m, 1), ...flick([[4.2, 18], [0.6, 24], [-2.2, 28]], 4.4, r.sh1), ...flick([[4.6, 28], [1.6, 34], [0, 38]], 3.8, r.sh1)],
+      front: bangs('onimessy', r, m, [...sideLocks(r, m, [[25.2, 11], [27, 17.6], [26.6, 24], [28, 28.6]], undefined, 3.6), ...flick([[25, 15], [28.4, 20], [30.4, 22]], 3)]),
+      tips: [30, 38],
+    };
+  },
   // A wild mane: thick spikes standing up off the crown and flaring out round his head and nape,
   // shaggy at the back; big spiky bangs.
   onimane(r, m) {

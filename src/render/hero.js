@@ -513,6 +513,14 @@ function faceExtras(extra) {
       out.push(F(E(FACE_X, 13.2, 0.55, 0.85, '#e8463a')), F(E(FACE_X, 13.6, 0.3, 0.3, '#ff9a8a')));
       continue;
     }
+    if (e === 'oniglow') {
+      // A burning eye: a flare of gold light at the near eye's outer corner, and a streak of it
+      // trailing back.
+      const ox = FACE_X + EYE_DX + 1.6;
+      out.push(F(T([[ox - 0.6, EYE_Y - 0.5], [ox + 4.6, EYE_Y - 1.6], [ox + 4.2, EYE_Y - 0.9], [ox - 0.2, EYE_Y + 0.5]], '#ffd36a')));
+      out.push(F(T([[ox, EYE_Y - 1.8], [ox + 0.5, EYE_Y - 0.2], [ox, EYE_Y + 1.4], [ox - 0.5, EYE_Y - 0.2]], '#fff6d0')), F(T([[ox - 1.4, EYE_Y - 0.2], [ox, EYE_Y - 0.6], [ox + 1.4, EYE_Y - 0.2], [ox, EYE_Y + 0.2]], '#fff6d0')));
+      continue;
+    }
     if (e === 'onifangs') {
       // An oni's fangs: two short white fangs standing up from the lower lip at the mouth's corners.
       for (const side of [-1, 1]) out.push(F(T([[FACE_X + side * 0.9, MY + 0.9], [FACE_X + side * 2, MY + 0.9], [FACE_X + side * 1.5, MY - 0.7]], '#ffffff')));

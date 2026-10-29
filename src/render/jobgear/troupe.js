@@ -10,6 +10,10 @@
 //                horn in the middle of his brow
 //   oniwarrior   a war oni: black-lacquer shoulder and shin plates over ragged dark hakama, a
 //                straw rope belt, bare arms; two long curved horns
+//   onicrimson   (the player's reference) a crimson oni woman: a red kimono worn short, crossed
+//                over a white collar, a black obi bound with gold cord and its tassels, wide
+//                sleeves lined dark red with a gold edge, tall black geta; two crimson horns
+//                curving back
 
 import { R, E, T, F, shade } from '../pixel.js';
 import { torsoPts, MID, limb } from '../figure.js';
@@ -33,6 +37,10 @@ const HAKAMA_DK = '#251f2e';
 const HORN = '#f6e3a0';
 const HORN_DK = '#c8a24a';
 const HORN_TIP = '#fff6d8';
+const CRIMSON = '#c4242a';
+const CRIMSON_DK = '#7a1018';
+const CRIMSON_LT = '#ff5a4a';
+const OBI = '#1e1418';
 
 // A tiger-skin patch: the fur in `pts` with black stripes across it at the given rows.
 const tiger = (pts, rows) => [T(pts, TIGER), ...rows.map(([x0, y0, x1, y1, w]) => F(limb(x0, y0, x1, y1, w, w * 0.4, STRIPE)))];
@@ -53,12 +61,51 @@ function horn(x, y, h, w, bend) {
     F(limb(x - w * 0.6, y - 0.2, x + bend * 0.9, y - h * 0.92, 0.35, 0.2, HORN_DK)), F(E(x + bend, y - h + 0.4, w * 0.35, 0.6, HORN_TIP)),
     F(limb(x - w, y - 1, x + w, y - 1.2, 0.3, 0.3, HORN_DK)), F(limb(x - w * 0.85, y - 2.4, x + w * 0.85, y - 2.6, 0.3, 0.3, HORN_DK))];
 }
+// A crimson horn: thick at the base, curving back over her head to a dark point.
+function crimsonHorn(x, y, h, w, bend) {
+  return [T([[x - w, y], [x + w, y], [x + w * 0.3 + bend * 0.7, y - h * 0.62], [x + bend, y - h], [x - w * 0.5 + bend * 0.55, y - h * 0.5]], CRIMSON),
+    F(limb(x - w * 0.5, y - 0.3, x + bend * 0.85, y - h * 0.9, 0.4, 0.2, CRIMSON_DK)), F(limb(x + w * 0.4, y - 0.6, x + bend * 0.9 + 0.4, y - h * 0.8, 0.3, 0.15, CRIMSON_LT)),
+    F(T([[x + bend * 0.85 - 0.5, y - h * 0.82], [x + bend * 0.85 + 0.6, y - h * 0.82], [x + bend, y - h]], '#2a0c10'))];
+}
+// A wide sleeve's mouth at the wrist and the hand out of it.
+function wideSleeve(p, hx, hy, ex, ey, main, lining, edge) {
+  const l = Math.hypot(hx - ex, hy - ey) || 1;
+  const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+  const at = (a, b) => [hx + ux * a - uy * b, hy + uy * a + ux * b];
+  return [T([at(-3.2, -2.8), at(-3.2, 2.8), at(-0.2, 4), at(0.6, 2.4), at(0.6, -2.4), at(-0.2, -4)], main),
+    F(T([at(-0.4, -3.2), at(0.4, -2.2), at(0.4, 2.2), at(-0.4, 3.2), at(-0.8, 0)], lining)),
+    F(limb(...at(-0.2, -3.6), ...at(-0.2, 3.6), 0.45, 0.45, edge)), E(...at(1.6, 0), 1.25, 1.3, p.skin)];
+}
 const bareChest = (p) => [T(TORSO, p.skin), F(limb(12.6, 28.4, 15.2, 29.6, 0.4, 0.4, shade(p.skin, -22))), F(limb(18.6, 28.4, 16, 29.6, 0.4, 0.4, shade(p.skin, -22))),
   F(limb(MID, 30.6, MID, 33.8, 0.3, 0.3, shade(p.skin, -22)))];
 const sandal = (p, k, c) => [k.poly([[-2.4, 1.8], [2.8, 1.8], [3.2, 3], [-2.6, 3]], c('#8a5a34')), k.poly([[0.2, -0.4], [0.8, -0.4], [1.6, 1.8], [-0.6, 1.8]], c(RED))];
 const barefoot = (p, k, c) => [k.poly([[-2.2, -0.6], [2.6, -0.6], [3, 2.6], [-2.4, 2.6]], c(p.skin)), k.poly([[1.4, 1.6], [3, 1.6], [3, 2.6], [1.4, 2.6]], c(p.skin))];
 
 export const TROUPE_OUTFITS = {
+  onicrimson: {
+    top: (p) => [T([...TORSO.slice(0, 6), [22.6, 36], [8.6, 36], ...TORSO.slice(8)], CRIMSON),
+      // The kimono crossed over a white collar, the near side over the far.
+      T([[MID - 3.6, 25.6], [MID + 3.6, 25.6], [MID, 31.4]], '#ffffff'), T([[MID + 1.4, 25.6], [MID + 4.2, 25.6], [MID + 0.2, 32], [MID - 1.6, 32]], CRIMSON),
+      F(limb(MID + 4, 25.7, MID, 31.8, 0.5, 0.5, CRIMSON_DK)), F(limb(MID - 3.6, 25.8, MID - 0.8, 30.4, 0.45, 0.45, CRIMSON_DK)),
+      F(limb(11.4, 27.6, 12, 31, 0.4, 0.4, CRIMSON_DK)), F(limb(19.8, 27.8, 19.2, 31, 0.4, 0.4, CRIMSON_LT)),
+      // The black obi, bound with gold cord, knotted at the front with two tassels hanging.
+      T([[8.8, 31.2], [22.4, 31], [22.6, 34.8], [8.6, 35]], OBI), F(limb(8.8, 32.4, 22.4, 32.2, 0.5, 0.5, GOLD)), F(limb(8.8, 33.8, 22.4, 33.6, 0.4, 0.4, GOLD_DK)),
+      F(E(MID + 2, 33, 1.2, 1, GOLD)), F(limb(MID + 1.6, 33.6, MID + 0.8, 38.6, 0.5, 0.35, GOLD)), F(limb(MID + 2.6, 33.6, MID + 3.6, 38, 0.5, 0.35, GOLD)),
+      F(E(MID + 0.8, 39, 0.7, 0.9, GOLD_DK)), F(E(MID + 3.6, 38.4, 0.7, 0.9, GOLD_DK))],
+    sleeve: () => CRIMSON,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.4, 2.9, side > 0 ? CRIMSON : CRIMSON_DK), F(E(0, 2.8, 2.6, 0.6, CRIMSON_DK))],
+    hand: (p, hx, hy, ex, ey) => wideSleeve(p, hx, hy, ex, ey, CRIMSON, CRIMSON_DK, GOLD),
+    legs: (p, skin) => ({ top: skin, low: skin, pad: null }),
+    // The kimono worn short, to above the knee, open in a slit at the near side, a gold edge at its hem.
+    skirt: () => [T([[8.8, 34.6], [22.4, 34.6], [23.4, 44], [19.6, 44], [18.4, 39], [17.2, 44], [7.8, 44]], CRIMSON),
+      F(R(7.8, 43, 15.6, 1, GOLD)), F(limb(12, 35.4, 11.4, 43, 0.45, 0.6, CRIMSON_DK)), F(limb(15.4, 35.4, 15.2, 43, 0.45, 0.6, CRIMSON_DK)), F(limb(18.4, 36, 18.4, 39, 0.4, 0.4, '#3a0a10'))],
+    // Tall black geta with red thongs.
+    shoe: (p, k, c) => [k.poly([[-2.6, 1.2], [3, 1.2], [3, 2], [-2.6, 2]], c('#1e1418')), k.poly([[-1.8, 2], [-0.6, 2], [-0.6, 3.2], [-1.8, 3.2]], c('#1e1418')), k.poly([[1, 2], [2.2, 2], [2.2, 3.2], [1, 3.2]], c('#1e1418')),
+      k.poly([[-2, -1.2], [2.4, -1.2], [2.8, 1.2], [-2.2, 1.2]], c(p.skin)), k.poly([[0.2, -0.6], [0.8, -0.6], [1.6, 1.2], [-0.6, 1.2]], c(RED))],
+    hat: () => [...crimsonHorn(10.2, 5.2, 9.4, 2, -4.2), ...crimsonHorn(20.8, 5.2, 9.4, 2, 4.2)],
+  },
+
   oniclassic: {
     top: (p) => [...bareChest(p),
       // The tiger pelt slung over his near shoulder and across his chest.
