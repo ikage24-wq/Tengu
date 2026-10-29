@@ -1,0 +1,33 @@
+<!doctype html>
+<html><body style="margin:0;background:#cfeec6">
+<canvas id="c" width="1280" height="400"></canvas>
+<script type="module">
+// Dev tool: the five Mochi (render/mochi.js) in a row doing their idle bits, each cheering now and
+// then in turn. Add ?manual to step frames from outside (window.step) for recording, and
+// window.cheer(i) to make one cheer.
+import { drawMochi, MOCHI_FORMS } from '../src/render/mochi.js';
+
+const ctx = document.getElementById('c').getContext('2d');
+const ZOOM = 4;
+const pets = MOCHI_FORMS.map((form, i) => ({ form, dir: 1, seed: i * 7, cheerAt: null }));
+let t = 0;
+function step(dt) {
+  t += dt;
+  if (!location.search.includes('manual')) pets.forEach((p, i) => { if (Math.floor((t + i * 2) / 10) !== Math.floor((t + i * 2 - dt) / 10)) p.cheerAt = t; });
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#cfeec6';
+  ctx.fillRect(0, 0, 1280, 400);
+  ctx.fillStyle = '#a9d99c';
+  ctx.fillRect(0, 320, 1280, 80);
+  ctx.setTransform(ZOOM, 0, 0, ZOOM, 0, 0);
+  pets.forEach((p, i) => drawMochi(ctx, p, 32 + i * 60, 80, t));
+}
+window.step = step;
+window.cheer = (i) => { pets[i].cheerAt = t; };
+window.pets = pets;
+if (!location.search.includes('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else step(0);
+</script></body></html>
