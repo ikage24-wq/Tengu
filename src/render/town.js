@@ -16,7 +16,7 @@ import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
-import { cottageArt, plazaTreeArt, noticeboardArt } from './townhouses.js';
+import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS } from './townhouses.js';
 import { ITEMS } from '../data/items.js';
 
 const hash = (n) => {
@@ -449,22 +449,48 @@ export function drawStreet(ctx, map, cam, width, time) {
     ctx.stroke();
   }
   // A redesigned town lays out its own two-storey cottages, set back a step behind the street.
+  // Each town's own kind of home (`homeStyle`): Sprout's cottages, the harbor's canal houses, the
+  // crag's flat-roofed sandstone houses, the grove's tree homes.
   for (const wx of map.cottages ?? []) {
     const x = wx - cam.x;
-    if (x < -80 || x > width + 80) continue;
+    if (x < -90 || x > width + 90) continue;
     const seed = hash(wx * 0.11 + 3);
-    const s = cottageArt(seed);
+    const style = map.homeStyle ?? 'cottage';
+    const s = style === 'canal' ? canalHouseArt(seed) : style === 'adobe' ? adobeHouseArt(seed) : style === 'treehome' ? treeHomeArt(seed) : cottageArt(seed);
     const hy = ground(wx);
-    ctx.save();
-    ctx.globalAlpha = 0.97;
     place(ctx, s, snap(x), hy + 2);
-    ctx.restore();
-    chimneySmoke(ctx, x + (hash(seed * 3) > 0.5 ? -32 : 32), hy - 136, time, seed);
+    if (style === 'cottage') chimneySmoke(ctx, x + (hash(seed * 3) > 0.5 ? -32 : 32), hy - 136, time, seed);
+    // Lit windows breathe a little light at night.
+    if (style === 'canal' || style === 'treehome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
   }
   for (const [kind, wx] of map.townPieces ?? []) {
     const x = wx - cam.x;
-    if (x < -140 || x > width + 140) continue;
-    place(ctx, kind === 'plazatree' ? plazaTreeArt(0) : noticeboardArt(), snap(x), ground(wx) + 3);
+    if (x < -160 || x > width + 160) continue;
+    const gy = ground(wx);
+    if (kind === 'plazatree') place(ctx, plazaTreeArt(0), snap(x), gy + 3);
+    else if (kind === 'noticeboard') place(ctx, noticeboardArt(), snap(x), gy + 3);
+    else if (kind === 'arena') place(ctx, arenaArt(), snap(x), gy + 4);
+    else if (kind === 'pier') {
+      place(ctx, pierArt(), snap(x), gy + 3);
+      // Rowboats tied up alongside, bobbing on the water strip.
+      for (const [dx, c, k] of [[-80, '#ff9ec0', 0], [70, '#8fd3ff', 1.7]]) place(ctx, rowboatArt(c), snap(x + dx), gy - 4 + Math.sin(time * 1.6 + k) * 1.5);
+    } else if (kind === 'moontree') {
+      place(ctx, moonTreeArt(), snap(x), gy + 3);
+      // Its lanterns, swaying a little and glowing.
+      for (const [dx, dy] of MOON_LANTERNS) {
+        const sw = Math.sin(time * 1.2 + dx * 0.05) * 2;
+        const lx = x + dx + sw;
+        const ly = gy + dy;
+        glowSoft(ctx, lx, ly, 20, '#ffd27a', 0.45 + 0.1 * Math.sin(time * 2 + dx));
+        ctx.fillStyle = '#ffe9a6';
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, 4, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ff9ec0';
+        ctx.fillRect(lx - 4, ly - 5, 8, 1.4);
+        ctx.fillRect(lx - 4, ly + 3.6, 8, 1.4);
+      }
+    }
   }
   // Houses fill the gaps between NPCs, portals, and the plaza (in towns not yet laid out with
   // cottages of their own).
@@ -510,6 +536,18 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (npc.building === 'forge') forgeGlow(ctx, x, gy, time);
     if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, n.x);
   }
+}
+
+// A soft round glow (lit windows, lanterns).
+function glowSoft(ctx, x, y, r, color, alpha) {
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, color);
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.restore();
 }
 
 function chimneySmoke(ctx, x, y, time, seed) {

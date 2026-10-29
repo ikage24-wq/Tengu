@@ -124,25 +124,35 @@ export const MAPS = {
     ],
   },
 
-  // The thieves' home port: the market, the harbor plaza, a back alley under lanterns and washing
-  // lines (Vex's Den, with an optional rooftop hideout above), then the pier, a moored ship, and
-  // the lighthouse by the exit to the woods.
+  // The thieves' home port at dusk, in quarters: the market (Marlo's cart among tall pastel canal
+  // houses); the raised harbor plaza with the fountain and the Harbor Office; the back alley under
+  // washing lines (Vex's Den, a rooftop hideout up on stilts behind it); then the pier, a walkable
+  // boardwalk over the water with rowboats tied up, the moored ship, and the lighthouse.
   harbor: {
     id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
-    width: 2200, height: 560, groundY: 480,
-    look: { islands: 'planks' },
-    terrain: [[0, 480], [640, 480], [680, 460], [1100, 460], [1140, 480], [2200, 480]],
-    platforms: [{ x: 1360, y: 400, w: 180 }, { x: 1440, y: 320, w: 200 }],
+    width: 2600, height: 520, groundY: 480,
+    look: { islands: 'planks', propKeep: 0.8 },
+    terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
+    homeStyle: 'canal',
+    cottages: [180, 470, 600, 1190, 1420, 1720],
+    townPieces: [['pier', 2120]],
+    platforms: [
+      // The rooftop hideout behind the Den, on stilts.
+      { x: 1660, y: 400, w: 150, posts: true }, { x: 1740, y: 320, w: 150, posts: true },
+      // The pier's deck.
+      { x: 1972, y: 426, w: 296, bare: true },
+    ],
     ropes: [],
     portals: [
       { id: 'start', x: 900, y: 460, hidden: true },
       { id: 'west', x: 40, y: 480, to: 'meadow2', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 480, to: 'woods', toPortal: 'west' },
+      { id: 'east', x: 2540, y: 480, to: 'woods', toPortal: 'west' },
     ],
-    npcs: [{ id: 'marlo', x: 300 }, { id: 'rook', x: 760 }, { id: 'vex', x: 1240 }],
-    deco: [['crates', 120], ['barrels', 480], ['alleylamp', 1180], ['laundryline', 1400], ['alleylamp', 1640], ['crates', 1540, 0, 320], ['ship', 1820], ['lighthouse', 2020], ['signpost', 2100]],
+    npcs: [{ id: 'marlo', x: 330 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
+    deco: [['crates', 120], ['barrels', 720], ['alleylamp', 1320], ['laundryline', 1470], ['alleylamp', 1880], ['crates', 1800, 0, 320], ['lighthouse', 2440]],
     spawns: [],
   },
+
 
   // A tall forest hunted vertically: five floors of branches between three giant trees, with a
   // rope up each trunk. Moss golems hold the wide middle branch.
@@ -314,41 +324,61 @@ Object.assign(MAPS, {
     ],
   },
 
-  // The warriors' camp on the mesa: a training yard by the canyon gate, Brann's hall on the
-  // raised plaza between braziers, then Tora's Forge and an optional mesa lookout.
+  // The warriors' home under the mesas, in quarters: the training yard (dummies and a totem) by the
+  // canyon road; the Warrior Hall; the raised plaza around the sparring arena; then the forge
+  // street with Tora's Forge, out to the Moonlit Ridge road. The sandstone houses have flat roofs
+  // you can climb onto by the ladders on their sides.
   crag: {
-    id: 'crag', plaza: 960, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
-    width: 1800, height: 560, groundY: 480,
-    terrain: [[0, 480], [560, 480], [600, 456], [1240, 456], [1280, 480], [1800, 480]],
-    platforms: [{ x: 1560, y: 400, w: 200 }],
-    ropes: [{ x: 1580, top: 400, bottom: 480, ladder: true }],
+    id: 'crag', plaza: 1300, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
+    width: 2200, height: 520, groundY: 480,
+    look: { propKeep: 0.8 },
+    terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
+    homeStyle: 'adobe',
+    cottages: [530, 1400, 1950],
+    townPieces: [['arena', 1080]],
+    platforms: [
+      // The houses' flat roofs (their own art: nothing drawn for them), up the ladders.
+      { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true }, { x: 1902, y: 360, w: 96, bare: true },
+    ],
+    ropes: [{ x: 490, top: 360, bottom: 480, ladder: true }, { x: 1360, top: 336, bottom: 456, ladder: true }, { x: 1910, top: 360, bottom: 480, ladder: true }],
     portals: [
       { id: 'start', x: 960, y: 456, hidden: true },
       { id: 'south', x: 60, y: 480, to: 'canyon', toPortal: 'north' },
+      { id: 'ridge', x: 2130, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' },
     ],
-    npcs: [{ id: 'brann', x: 760 }, { id: 'tora', x: 1400 }],
-    deco: [['totem', 160], ['dummy', 300], ['dummy', 380], ['weaponrack', 470], ['brazier', 640], ['brazier', 1200], ['tent', 1680, 0, 400], ['totem', 1760]],
+    npcs: [{ id: 'brann', x: 780 }, { id: 'tora', x: 1720 }],
+    deco: [['totem', 160], ['dummy', 300], ['dummy', 380], ['weaponrack', 450], ['brazier', 900], ['brazier', 1260]],
     spawns: [],
   },
 
-  // The mages' moonlit grove: the woods gate with Nim's shop under a lantern tree, the moon plaza
-  // with the Mage Tower, then a rune circle and moonstones leading to the root gate (the exit).
+
+  // The mages' home in a starry night wood, in quarters: tree homes and Nim's spell shop by the
+  // woods road; the raised plaza under the great moon-lantern tree (its bough a ledge, up its
+  // rope); the Mage Tower; then the study circle (the rune circle and its moonstones) by the root
+  // gate to the ruins.
   grove: {
-    id: 'grove', plaza: 1000, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
-    width: 2000, height: 600, groundY: 480,
-    look: { islands: 'planks', edges: 'glowcaps' },
-    terrain: [[0, 480], [700, 480], [740, 456], [1260, 456], [1300, 480], [2000, 480]],
-    platforms: [{ x: 200, y: 400, w: 200 }],
-    ropes: [{ x: 220, top: 400, bottom: 480, ladder: true }],
-    portals: [
-      { id: 'start', x: 1000, y: 456, hidden: true },
-      { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
-      { id: 'east', x: 1940, y: 480, to: 'ruins', toPortal: 'west' },
+    id: 'grove', plaza: 1240, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
+    width: 2400, height: 520, groundY: 480,
+    look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
+    terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
+    homeStyle: 'treehome',
+    cottages: [180, 640, 1980, 2180],
+    townPieces: [['moontree', 1110]],
+    platforms: [
+      // A bough of the moon tree.
+      { x: 1006, y: 324, w: 92, bare: true },
     ],
-    npcs: [{ id: 'nim', x: 520 }, { id: 'elowen', x: 860 }],
-    deco: [['treehouse', 300, 0.3, 400], ['lanterntree', 660], ['moonstone', 1160], ['runecircle', 1480], ['moonstone', 1640], ['rootgate', 1830]],
+    ropes: [{ x: 1086, top: 324, bottom: 456 }],
+    portals: [
+      { id: 'start', x: 1240, y: 456, hidden: true },
+      { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
+      { id: 'east', x: 2340, y: 480, to: 'ruins', toPortal: 'west' },
+    ],
+    npcs: [{ id: 'nim', x: 420 }, { id: 'elowen', x: 1500 }],
+    deco: [['moonstone', 1660], ['runecircle', 1800], ['moonstone', 1940], ['rootgate', 2280]],
     spawns: [],
   },
+
 });
 
 // Towns in world-map order, for fast travel.

@@ -3039,7 +3039,10 @@ test('the kitsune guardian only walks, and teleports to the Maiden when she is l
   assert.ok(Math.abs(w.guardian.x - w.body.x) < 80, 'and is back by the Maiden');
 });
 
-test('the kitsune guardian has more weapon moves, and skills of her own', () => {
+test('the kitsune guardian has more weapon moves, and skills of her own', (t) => {
+  // Her picks are random: a fixed sequence keeps the test steady.
+  let seed = 8080;
+  t.mock.method(Math, 'random', () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648));
   const w = shrineMaiden();
   const seen = new Set();
   // (Her picks are random: a long fight, so she gets round to them.)

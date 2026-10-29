@@ -665,15 +665,17 @@ to clear it.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
   expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.
-- **Towns and the world map** — each job has a home town in its own style: Sprout Village
-  (archers, a pastel village with archery targets), Pastel Harbor (thieves, moonlit docks with
-  string lights and alley cats), Ember Crag (warriors, sandstone mesas with forges, banners, and
-  training dummies), and Moonleaf Grove (mages, a starry forest with glowing treehouses and
-  floating lanterns). Towns are built in tiers like classic side-scroller towns: the streets rise
-  and fall over gentle hills, and floating decks above them, reached by ladders, hold more of
-  the town (houses, a windmill and a mushroom house in Sprout Village, harbor houses under a
-  lighthouse in Pastel Harbor, war tents and a totem on Ember Crag's rocks, treehouses and
-  moonstones up in Moonleaf Grove), always clear of the NPCs' own buildings. The world map (M) shows Tengu Island with every road between maps and a
+- **Towns and the world map** — each job has a home town in its own style, laid out in quarters
+  around one signature landmark, with big homes of its own along the street and places to climb:
+  Sprout Village (archers: two-storey cottages with a deck walk on posts, the shop street, a plaza
+  under a giant cherry tree whose bough you can climb to, and the archers' quarter with the
+  watchtower and range), Pastel Harbor (thieves, at dusk: tall pastel canal houses with lit
+  windows, the market, the harbor plaza, the back alley with a rooftop hideout on stilts, and a
+  walkable pier over the water with rowboats tied up), Ember Crag (warriors: flat-roofed sandstone
+  houses whose roofs you reach by ladder, the training yard, and a sparring arena at its heart), and
+  Moonleaf Grove (mages: homes grown into giant tree trunks, a great moon-lantern tree over the
+  plaza, the Mage Tower, and the study circle). Props are kept few, NPCs stand apart, and other
+  players' name tags fade unless they're near you. The world map (M) shows Tengu Island with every road between maps and a
   "you are here" pin; click a town to fly there from any town for a little gold.
 - **Living towns** — every NPC works from their own place: striped market stalls for Pip's Goods,
   Tora's Forge, Nim's Spells, Marlo's Wares, and Lulu's Salon; guild halls for the Archer Lodge,
