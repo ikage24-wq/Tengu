@@ -155,6 +155,9 @@ function frostfanning(u) {
     hand: lerp2(lerp2(FOLD_F, [-4.6, -8.6], back), [9.4, -3.4], sweep * (1 - rest)), free: lerp2(FOLD_B, [-2, -4], back * (1 - rest)),
     lean: -0.06 * back * (1 - sweep) + 0.14 * sweep * (1 - rest), cloth: 3 * back - 6 * sweep * (1 - rest), tilt: 3 - 5 * back * (1 - sweep) + 4 * sweep * (1 - rest),
     hx: -0.2 - 0.6 * back * (1 - sweep) + 0.6 * sweep * (1 - rest), brows: 'cold', eyes: sweep > 0.3 && rest < 0.5 ? null : 'half', mouth: sweep > 0.3 && rest < 0.5 ? 'yukibreath' : 'yukilips',
+    // The fan itself: frost gathering into it in her hand as she draws back, snapped open, swept
+    // across, and crumbling back into snow.
+    prop: { kind: 'icefan', form: soft(seg(u, 0.02, 0.26)), open: soft(seg(u, 0.26, 0.34)), melt: seg(u, 0.7, 0.94), ang: lerp(lerp(-0.9, -2.3, back), 0.35, sweep) },
   });
 }
 // Into the Mist: she lifts, her sleeves rising round her, as she melts away (the fade is drawn
@@ -405,6 +408,71 @@ function yukiBlink(t) {
 function paintYukiProp(c, p, hand, lips, dir, time, other, feet) {
   if (!p) return;
   const K = YUKI_SCALE;
+  if (p.kind === 'icefan') {
+    // A folding fan of ice: thin ribs from a pivot in her hand, a pale translucent leaf between
+    // them with a white rim. It gathers out of frost (sparkles drawing in, growing clear) and
+    // crumbles into flakes that fall away.
+    const a = p.form * (1 - p.melt);
+    if (a <= 0.01 && p.melt <= 0) return;
+    const len = 7.5 * K * (0.55 + 0.45 * p.form);
+    const half = 0.12 + 0.95 * p.open;
+    c.save();
+    c.translate(hand[0], hand[1]);
+    c.scale(dir, 1);
+    c.rotate(p.ang);
+    if (a > 0.01) {
+      c.globalAlpha = a;
+      c.fillStyle = 'rgba(214, 236, 255, 0.78)';
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 0.7 * K;
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.arc(0, 0, len, -half, half);
+      c.closePath();
+      c.fill();
+      c.stroke();
+      c.strokeStyle = 'rgba(120, 170, 230, 0.9)';
+      c.lineWidth = 0.35 * K;
+      c.beginPath();
+      for (let i = 0; i <= 6; i++) {
+        const t = -half + (2 * half * i) / 6;
+        c.moveTo(Math.cos(t) * len * 0.15, Math.sin(t) * len * 0.15);
+        c.lineTo(Math.cos(t) * len, Math.sin(t) * len);
+      }
+      c.stroke();
+      c.fillStyle = '#ffffff';
+      for (const t of [-half * 0.5, half * 0.3]) {
+        c.beginPath();
+        c.arc(Math.cos(t) * len * 0.7, Math.sin(t) * len * 0.7, 0.45 * K, 0, TAU);
+        c.fill();
+      }
+    }
+    c.restore();
+    // Frost drawn in as it forms, and flakes falling as it melts.
+    c.save();
+    c.fillStyle = '#eef6ff';
+    if (p.form < 1) {
+      for (let i = 0; i < 6; i++) {
+        const t = (i / 6) * TAU + time * 3;
+        const r = (1 - p.form) * 9 * K;
+        c.globalAlpha = 0.9 * p.form + 0.1;
+        c.beginPath();
+        c.arc(hand[0] + Math.cos(t) * r, hand[1] - 3 * K + Math.sin(t) * r, 0.5 * K, 0, TAU);
+        c.fill();
+      }
+    }
+    if (p.melt > 0 && p.melt < 1) {
+      for (let i = 0; i < 7; i++) {
+        const t = p.ang + ((i - 3) / 3) * half;
+        c.globalAlpha = 1 - p.melt;
+        c.beginPath();
+        c.arc(hand[0] + dir * Math.cos(t) * len * (0.3 + 0.1 * i), hand[1] + Math.sin(t) * len * 0.6 + p.melt * (6 + i) * K, 0.5 * K, 0, TAU);
+        c.fill();
+      }
+    }
+    c.restore();
+    return;
+  }
   if (p.kind === 'flower') {
     // The breath on her fingertip, then the ice flower growing there, turning, and shattering.
     if (p.breath > 0 && p.breath < 1) {

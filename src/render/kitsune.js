@@ -39,6 +39,7 @@ const seg = (t, a, b) => clamp01((t - a) / (b - a));
 const ease = (t) => 1 - (1 - t) ** 3;
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
 const lerp = (a, b, t) => a + (b - a) * t;
+const lerp2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
 const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
 // Committing to a strike: fast in, a little past, settling back.
 const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4 * (t - 1) ** 2);
