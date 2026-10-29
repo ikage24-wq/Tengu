@@ -409,6 +409,13 @@ export function getMap(id) {
 // Monsters sharing a `pack` fight together. A `sealed` portal opens once the room is cleared:
 // every monster down and the room's `task` done. `objects` are things to use with Up:
 // glowcaps to light, cages to open, and the chest at the end.
+//
+// Each room has an idea of its own (world/dungeon.js runs them):
+//   dark       the room is pitch black but for the group and the glowcaps they light
+//   bouncers   giant bounce mushrooms that launch whoever steps on them up to the high ledges
+//   rootfall   roots drop from the low ceiling during fights (step out of their shadows)
+//   pillars    stone pillars a charging boss smashes into (and is dazed by)
+//   flood      sap surges over the floor now and then: get up on a ledge
 
 const G = 380; // every room's floor
 const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
@@ -437,7 +444,8 @@ Object.assign(MAPS, {
     id: 'hollow1', name: 'Hollow Entrance', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 2000, height: 420, groundY: G,
     task: { kind: 'light', label: 'Light the glowcaps' },
-    platforms: [{ x: 640, y: 300, w: 180 }, { x: 1360, y: 300, w: 200 }],
+    dark: true,
+    platforms: [{ x: 640, y: 300, w: 180 }, { x: 1360, y: 300, w: 200 }, { x: 820, y: 230, w: 160 }, { x: 1560, y: 230, w: 140 }],
     ropes: [],
     deco: [['giantshroom', 860, 0], ['hollowlog', 1400], ['mushring', 230]],
     portals: [
@@ -453,9 +461,10 @@ Object.assign(MAPS, {
   hollow2: {
     id: 'hollow2', name: "Capper's Garden", theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 1300, height: 420, groundY: G,
-    platforms: [{ x: 120, y: 300, w: 180 }, { x: 1000, y: 300, w: 180 }],
+    platforms: [{ x: 120, y: 300, w: 180 }, { x: 1000, y: 300, w: 180 }, { x: 180, y: 220, w: 160 }, { x: 960, y: 220, w: 160 }],
+    bouncers: [{ x: 360 }, { x: 900 }],
     ropes: [],
-    deco: [['mushring', 400], ['giantshroom', 960, 2]],
+    deco: [['mushring', 560], ['giantshroom', 1220, 2]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow1', toPortal: 'east' },
       { id: 'east', x: 1260, y: G, to: 'hollow3', toPortal: 'west', sealed: true },
@@ -469,6 +478,7 @@ Object.assign(MAPS, {
     id: 'hollow3', name: 'Bramble Tunnels', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 2200, height: 420, groundY: G,
     task: { kind: 'free', label: 'Free the trapped Sprouts' },
+    rootfall: true,
     platforms: [{ x: 500, y: 300, w: 200 }, { x: 1180, y: 300, w: 220 }, { x: 1800, y: 300, w: 180 }],
     ropes: [],
     deco: [['hollowlog', 700], ['giantshroom', 1140, 1], ['stumphouse', 1720]],
@@ -485,8 +495,9 @@ Object.assign(MAPS, {
     id: 'hollow4', name: 'Boar Den', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 1400, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 160 }, { x: 620, y: 300, w: 160 }, { x: 1080, y: 300, w: 160 }],
+    pillars: [{ x: 420 }, { x: 1250 }],
     ropes: [],
-    deco: [['bones', 420], ['hollowlog', 560], ['bones', 1180, 1]],
+    deco: [['bones', 300], ['hollowlog', 560], ['bones', 1180, 1]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow3', toPortal: 'east' },
       { id: 'east', x: 1360, y: G, to: 'hollow5', toPortal: 'west', sealed: true },
@@ -500,7 +511,11 @@ Object.assign(MAPS, {
     id: 'hollow5', name: 'The Root Gate', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 2000, height: 420, groundY: G,
     task: { kind: 'keys', label: 'Find the Root Keys', count: 3 },
-    platforms: [{ x: 420, y: 300, w: 200 }, { x: 1100, y: 300, w: 200 }],
+    flood: { every: 24, warn: 3, last: 7, damage: 40 },
+    platforms: [
+      { x: 160, y: 300, w: 200 }, { x: 420, y: 300, w: 200 }, { x: 760, y: 300, w: 220 }, { x: 1100, y: 300, w: 200 }, { x: 1440, y: 300, w: 220 }, { x: 1720, y: 300, w: 160 },
+      { x: 560, y: 220, w: 160 }, { x: 1240, y: 220, w: 160 },
+    ],
     ropes: [],
     deco: [['giantshroom', 760, 2], ['mushring', 1360], ['rootgate', 1900]],
     portals: [
@@ -518,7 +533,8 @@ Object.assign(MAPS, {
   hollow6: {
     id: 'hollow6', name: 'Heart of the Hollow', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 1500, height: 420, groundY: G,
-    platforms: [{ x: 140, y: 300, w: 170 }, { x: 560, y: 300, w: 150 }, { x: 900, y: 300, w: 150 }, { x: 1220, y: 300, w: 170 }],
+    // Gnarlroot's heart opens above him in his last phase: strike it from the high ledges.
+    platforms: [{ x: 140, y: 300, w: 170 }, { x: 560, y: 300, w: 150 }, { x: 900, y: 300, w: 150 }, { x: 1220, y: 300, w: 170 }, { x: 640, y: 220, w: 120 }, { x: 860, y: 220, w: 120 }],
     ropes: [],
     deco: [['glowpool', 380], ['giantshroom', 1160, 1]],
     portals: [

@@ -157,7 +157,7 @@ export function drawGlowcap(ctx, x, y, lit, time) {
 
 // ---------- Cage: woven roots holding a sprout ----------
 
-function sproutArt(happy, frame) {
+export function sproutArt(happy, frame) {
   return art(`dg-sprout|${happy}|${frame}`, 16, 16, () => {
     const up = frame ? -1.4 : 0;
     const out = [

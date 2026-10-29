@@ -138,6 +138,22 @@ export const SIDE_SCENES = {
   ],
 };
 
+// ---------- Rootwood Hollow ----------
+export const HOLLOW_SCENES = {
+  // Gnarlroot, calmed at last.
+  hollow_sleep: [
+    { who: 'gnarlroot', text: '...so... quiet now... the little ones... cheering...', mood: 'sad' },
+    { who: null, text: 'The great roots sag and settle. Somewhere deep in the Hollow, a lullaby starts up: the Sprouts, humming.' },
+    { who: 'gnarlroot', text: '...thank you... sleep... at last...', mood: 'happy' },
+    { who: null, text: 'Gnarlroot snores. The whole Hollow snores with him. The chest by the exit glows warm.' },
+  ],
+  // The run's result card ({grade}, {time}, {notes}, {bonus} filled in at the chest).
+  hollow_results: [
+    { card: 'Rootwood Hollow', sub: 'Rank {grade}  ·  {time}' },
+    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+  ],
+};
+
 // Taking a job: the instructor sends you off. `first` for a first job (by family), `path` for a
 // second (by job).
 export const JOB_SCENES = {

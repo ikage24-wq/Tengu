@@ -152,6 +152,8 @@ test('a group clears Rootwood Hollow from the first room to the chest', () => {
     for (let i = 0; i < 60 * 60 * 15 && world.dungeon; i++) {
       seen.add(world.map.id);
       done = world.dungeon.done;
+      // (Scenes, like Gnarlroot falling asleep, are clicked through.)
+      if (world.scene) world.scene = null;
       const { held, pressed } = pilot(world);
       updateWorld(world, 1 / 60, { held, pressed, locked: false });
       updateBots(world.bots, world, 1 / 60);

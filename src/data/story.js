@@ -13,7 +13,7 @@
 // being an NPC id, 'player', a monster id (the queens), or null for narration; `mood` a face for
 // whoever speaks ('happy', 'sad', 'surprised', 'angry').
 
-import { SIDE_SCENES, JOB_SCENES } from './scenes.js';
+import { SIDE_SCENES, JOB_SCENES, HOLLOW_SCENES } from './scenes.js';
 
 export const CHAPTERS = [
   { n: 1, title: 'A New Breeze', levels: '1-10' },
@@ -363,5 +363,5 @@ export const SCENES = {
 };
 
 // The side quests' and job advancements' scenes (data/scenes.js) play the same way.
-Object.assign(SCENES, SIDE_SCENES);
+Object.assign(SCENES, SIDE_SCENES, HOLLOW_SCENES);
 for (const [k, v] of Object.entries(JOB_SCENES)) SCENES[`job_${k}`] = v;

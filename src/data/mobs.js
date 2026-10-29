@@ -46,6 +46,8 @@ export const MOBS = {
   boarlet: mob({
     id: 'boarlet', name: 'Warg', level: 14, hp: 330, atk: 43, def: 12, acc: 34, eva: 5, exp: 240, gold: [16, 40],
     speed: 82, gait: 'stalk', w: 38, h: 26, art: 'boarlet', drops: [{ id: 'tusk', chance: 0.45 }],
+    // (Tuskar calls them into his den in Rootwood Hollow, where they fight like its own.)
+    fight: { every: 1.6, reach: 30, windup: 0.4 },
   }),
   mossgolem: mob({
     id: 'mossgolem', name: 'Treant', level: 18, hp: 620, atk: 58, def: 20, acc: 40, eva: 4, exp: 420, gold: [24, 60],

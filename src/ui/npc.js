@@ -6,14 +6,14 @@ import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs, FAMILY_STATS } from '../data/jobs.js';
-import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk } from '../core/quests.js';
+import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today } from '../core/quests.js';
 import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
 import { playScene } from '../world/story.js';
 import { SCENES } from '../data/story.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
-import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
+import { planGroup, startRun, leaveDungeon, clock } from '../world/dungeon.js';
 import { drawHero } from '../render/hero.js';
 import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
@@ -223,7 +223,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? (QUESTS[dlg.quest].rewards.pick ? 166 : 118) : 138) : dlg.dungeon ? 150 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? (QUESTS[dlg.quest].rewards.pick ? 166 : 118) : 138) : dlg.dungeon ? 172 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -434,9 +434,22 @@ function dungeonPage(ui, state, world, npc, area) {
     });
     text(ctx, 'Warriors tank, everyone else deals damage.', tx, y + 52, { role: 'minor' });
   }
+  // Your record here, the day's first-clear bonus, and Normal or Hard (open after a first clear).
+  const rec = world.char.dungeons?.[def.id];
   const by = area.bottom - 16;
-  if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, 'Find group & go', { primary: true, size: 7.5 })) {
-    const why = startRun(world, def.id);
+  const dailyReady = rec?.day !== today();
+  const note = rec ? `Best: rank ${rec.best} in ${clock(rec.bestTime)} · ${rec.clears} clear${rec.clears === 1 ? '' : 's'}` : 'Not cleared yet';
+  text(ctx, note, tx, by - 6, { size: 6.5, bold: true, color: th.dark });
+  if (dailyReady) text(ctx, "★ Today's first clear: bonus Cash, Acorns and a set piece", tx, by + 3, { size: 6, bold: true, color: COLORS.gold });
+  const dlg = state.npc;
+  if (rec?.clears) {
+    for (const [i, mode] of ['Normal', 'Hard'].entries()) {
+      const on = Boolean(dlg.hard) === (i === 1);
+      if (button(ui, tx + i * 46, by + 6, 44, 14, mode, { primary: on, size: 7, theme: i ? 'pink' : null })) dlg.hard = i === 1;
+    }
+  }
+  if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, dlg.hard ? 'Go (Hard)' : 'Find group & go', { primary: true, size: 7.5 })) {
+    const why = startRun(world, def.id, { hard: Boolean(dlg.hard) && Boolean(rec?.clears) });
     if (why) world.log(why, '#ffb3c6');
     state.npc = null;
     state.windows.npc.open = false;

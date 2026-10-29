@@ -27,6 +27,10 @@ import { navOf, surfaceBelow } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { recruitBot } from './bots.js';
 import { loadMap } from './world.js';
+import { roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
+import { playScene } from './story.js';
+import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
+import { today } from '../core/quests.js';
 
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -36,6 +40,22 @@ const BOSS_AGGRO = 190;
 const LEASH = 50; // how far an idle monster strays from its spot
 const STAND_UP = 4; // seconds after a fight before the fallen get back up on their own
 const WIPE_DELAY = 2.5;
+
+// ---------- Hard mode ----------
+// A Hard run: monsters have more than twice the health and hit half again as hard, and the
+// rewards grow to match.
+export const HARD = { hp: 2.2, hurt: 1.5, reward: 2 };
+const hardDefs = new Map();
+function hardOf(def) {
+  if (!hardDefs.has(def)) hardDefs.set(def, { ...def, hp: Math.round(def.hp * HARD.hp), exp: Math.round(def.exp * 1.5), name: def.name });
+  return hardDefs.get(def);
+}
+function toughen(world, m) {
+  if (!world.dungeon?.hard || m.hard) return;
+  m.hard = true;
+  m.def = hardOf(m.def);
+  m.hp = m.def.hp;
+}
 
 // ---------- The group ----------
 
@@ -113,7 +133,7 @@ function prep(bot) {
 }
 
 // Forms the group and goes in. Returns a reason string when it can't.
-export function startRun(world, id = 'hollow') {
+export function startRun(world, id = 'hollow', { hard = false } = {}) {
   const plan = planGroup(world, id);
   if (plan.why) return plan.why;
   if (!world.bots) return 'No one else is online.';
@@ -123,10 +143,10 @@ export function startRun(world, id = 'hollow') {
     const bot = s.who === 'you' ? null : s.who ?? recruit(world, def, s.role);
     roles[bot ? bot.id : 'you'] = s.role;
   }
-  world.dungeon = { id, roles, rooms: {}, start: world.now, wipes: 0, zones: [], shots: [], vfx: [], callout: null, done: false };
+  world.dungeon = { id, roles, rooms: {}, start: world.now, wipes: 0, downs: 0, cheer: 0, hard, zones: [], shots: [], vfx: [], callout: null, done: false };
   for (const bot of partyMembers(world.bots)) prep(bot);
   loadMap(world, def.rooms[0], 'start');
-  world.log(`Your group enters ${def.name}! You are the ${ROLES[roles.you].label}.`, '#ffe36b');
+  world.log(`Your group enters ${def.name}${hard ? ' (Hard)' : ''}! You are the ${ROLES[roles.you].label}.`, '#ffe36b');
   if (roles.you === 'tank') world.log('Tanks: Provoke pulls everything nearby onto you, and Chain Hook drags monsters over for the group.', '#bff0dc');
   return null;
 }
@@ -175,7 +195,11 @@ export function onMapLoaded(world) {
       spawner: world.spawner, adds: [], keys: [], keysGot: 0, cleared: false,
       objects: (map.objects ?? []).map((o, i) => ({ ...o, id: i, done: false, progress: 0 })),
     };
-    for (const m of world.mobs) settle(m);
+    roomSetup(world, room);
+    for (const m of world.mobs) {
+      toughen(world, m);
+      settle(m);
+    }
   } else {
     world.spawner = room.spawner;
     world.mobs = [...room.spawner.slots.map((s) => s.mob), ...room.adds].filter((m) => m && m.hp > 0);
@@ -282,6 +306,9 @@ function finish(world, o, who) {
   if (o.kind === 'glowcap') world.log(`${who} lit a glowcap${count}.`, '#ffe9a0');
   if (o.kind === 'cage') {
     world.log(`${who} freed a Sprout${count}!`, '#bff0dc');
+    // Every Sprout freed follows the group and cheers it on for the rest of the run.
+    world.dungeon.cheer = (world.dungeon.cheer ?? 0) + 1;
+    callout(world, 'A Sprout cheers you on!', `Sprout Cheer x${world.dungeon.cheer}: +${world.dungeon.cheer * 4}% damage`);
     world.numbers.push({ x: o.x, y: world.map.groundY - 44, text: 'Thank you!', color: '#9be08f', t: 0, small: true });
   }
   world.juice.push({ type: 'loot', x: o.x, y: world.map.groundY - 16, color: o.kind === 'glowcap' ? '#ffd66b' : '#9be08f' });
@@ -336,31 +363,80 @@ function tickChannels(world, dt, group) {
   }
 }
 
+// ---------- The end of a run: grade and rewards ----------
+
+// The run's grade: S for a quick clean run, down to C. `secs` is how long it took.
+export function gradeOf(secs, wipes, downs) {
+  if (wipes === 0 && downs <= 2 && secs <= 12 * 60) return 'S';
+  if (wipes === 0 && secs <= 16 * 60) return 'A';
+  if (wipes <= 1) return 'B';
+  return 'C';
+}
+const GRADE_BONUS = { S: 1.5, A: 1.25, B: 1.1, C: 1 };
+const GRADE_ORDER = ['C', 'B', 'A', 'S'];
+
+// The set piece for this hero's job from a dungeon's set (one they're missing first), or null.
+function setPieceFor(char, set) {
+  const family = JOBS[char.job]?.family;
+  if (!SETS[set] || !GEAR_FAMILIES.includes(family)) return null;
+  const owned = new Set([...Object.values(char.equipment), ...char.inventory.equip].filter(Boolean).map((e) => e.id));
+  const missing = SET_SLOTS.filter((s) => !owned.has(setPieceId(set, family, s)));
+  return setPieceId(set, family, pick(missing.length ? missing : SET_SLOTS));
+}
+
 function openChest(world, o) {
   const run = world.dungeon;
-  const reward = DUNGEONS[run.id].reward;
+  const def = DUNGEONS[run.id];
+  const reward = def.reward;
   const char = world.char;
   o.done = true;
   o.open = true;
-  const levels = gainExp(char, reward.exp);
-  char.gold += reward.gold;
-  char.cash = (char.cash ?? 0) + reward.cash;
-  world.log(`Treasure! +${reward.exp} EXP, +${reward.gold} gold, +${reward.cash} Cash`, '#ffe36b');
+  const secs = world.now - run.start;
+  const grade = gradeOf(secs, run.wipes, run.downs);
+  // The first clear of the day brings a bonus; Hard doubles everything.
+  const rec = ((char.dungeons ??= {})[run.id] ??= { clears: 0, hardClears: 0, best: null, bestTime: null, day: null });
+  const daily = rec.day !== today();
+  const k = GRADE_BONUS[grade] * (run.hard ? HARD.reward : 1);
+  const exp = Math.round(reward.exp * k);
+  const gold = Math.round(reward.gold * k);
+  const cash = reward.cash + (daily ? 500 : 0);
+  const levels = gainExp(char, exp);
+  char.gold += gold;
+  char.cash = (char.cash ?? 0) + cash;
+  world.log(`Treasure! +${exp} EXP, +${gold} gold, +${cash} Cash`, '#ffe36b');
+  const give = (inst) => {
+    if (addItem(char.inventory, inst)) world.log(`Received ${itemName(inst)}!`, '#ffd66b');
+    else world.log(`Your bag is full, so the ${itemName(inst)} stays in the chest...`, '#ffb3c6');
+  };
   const family = JOBS[char.job].family;
   const slot = pick(JOB_SLOTS);
   const id = GEAR_FAMILIES.includes(family) ? jobGearId(family, slot, reward.gearLevel) : `ear_${reward.gearLevel}`;
-  if (ITEMS[id]) {
-    const inst = makeEquip(id, { variance: 0.1, rarity: Math.random() < 0.3 ? 2 : 1, variant: 'roll' });
-    if (addItem(char.inventory, inst)) world.log(`Received ${itemName(inst)}!`, '#ffd66b');
-    else world.log(`Your bag is full, so the ${itemName(inst)} stays in the chest...`, '#ffb3c6');
+  if (ITEMS[id]) give(makeEquip(id, { variance: 0.1, rarity: run.hard ? 2 : Math.random() < 0.3 ? 2 : 1, variant: 'roll' }));
+  // A piece of the dungeon's own set: sure on Hard or the day's first clear, half the time otherwise.
+  if (def.set && (run.hard || daily || Math.random() < 0.5)) {
+    const piece = setPieceFor(char, def.set);
+    if (piece) give(makeEquip(piece, { variance: 0.08, rarity: run.hard ? 2 : 1, variant: 'roll' }));
   }
-  for (const it of reward.items) if (addItem(char.inventory, it.id, it.qty)) world.log(`Received ${ITEMS[it.id].name} x${it.qty}.`, ITEMS[it.id].color);
+  for (const it of reward.items) {
+    const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === 'hollow_acorn' ? 5 : 0);
+    if (addItem(char.inventory, it.id, qty)) world.log(`Received ${ITEMS[it.id].name} x${qty}.`, ITEMS[it.id].color);
+  }
+  // The records: clears, best grade and time, Hard unlocked.
+  rec.clears += 1;
+  if (run.hard) rec.hardClears += 1;
+  if (!rec.best || GRADE_ORDER.indexOf(grade) > GRADE_ORDER.indexOf(rec.best)) rec.best = grade;
+  if (rec.bestTime == null || secs < rec.bestTime) rec.bestTime = Math.round(secs);
+  rec.day = today();
+  if (rec.clears === 1) world.log(`Hard mode for ${def.name} is open! Ask ${def.warden[0].toUpperCase()}${def.warden.slice(1)} at the gate.`, '#ffe36b');
   world.juice.push({ type: 'loot', x: o.x, y: world.map.groundY - 20, color: '#ffd66b' }, { type: 'shake', mag: 2, dur: 0.3 });
   world.fx.push({ kind: 'levelup', x: o.x, y: world.map.groundY, t: 0, dur: 1.6 });
   if (levels > 0) {
     world.events.push({ type: 'levelup', level: char.level });
     world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
   }
+  // The run's result card.
+  const notes = [run.hard ? 'Hard' : 'Normal', `${run.wipes} wipe${run.wipes === 1 ? '' : 's'}`, `${run.downs} down${run.downs === 1 ? '' : 's'}`, daily ? 'daily bonus!' : null].filter(Boolean).join(' · ');
+  playScene(world, 'hollow_results', { grade, time: clock(secs), notes, bonus: `${Math.round((GRADE_BONUS[grade] - 1) * 100)}%` });
 }
 
 // ---------- Threat ----------
@@ -397,6 +473,9 @@ export function noteHit(world, m, h) {
   let damage = h.miss ? 0 : h.damage;
   if (m.vulnUntil > world.now) damage = Math.round(damage * 1.5);
   if (m.shield) damage = Math.round(damage * 0.5);
+  // The Sprouts' cheering, and Gnarlroot's open heart (up high is where it's reached).
+  const body = who === 'you' ? world.body : partyMembers(world.bots).find((b) => b.id === who)?.body;
+  damage = Math.round(damage * cheerOf(run) * heartMultiplier(world, m, body));
   engage(world, m, who);
   m.threat[who] = (m.threat[who] ?? 0) + Math.max(1, damage) * (run.roles[who] === 'tank' ? TANK_THREAT : 1);
   return damage;
@@ -441,6 +520,7 @@ export function hookMobs(world, who, body, mobs, dir) {
 
 export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false } = {}) {
   if (!isUp(world, g)) return 0;
+  if (world.dungeon?.hard) raw *= HARD.hurt;
   const body = g.body;
   if (g.bot) {
     const bot = g.bot;
@@ -451,6 +531,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
     if (knock) knockBack(body, fromX);
     if (bot.hp <= 0) {
       bot.down = true;
+      if (world.dungeon) world.dungeon.downs += 1;
       bot.attack = null;
       bot.brain.target = null;
       bot.brain.task = null;
@@ -477,6 +558,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   // (A Shrine Maiden's Last Rite keeps her standing, once.)
   if (char.hp <= 0 && !lastRite(world)) {
     world.dead = true;
+    if (world.dungeon) world.dungeon.downs += 1;
     world.events.push({ type: 'death' });
     world.log('You fainted! Your group can get you back up after the fight.', '#ff6b8a');
   }
@@ -710,11 +792,11 @@ function land(world, g, raw, acc, fromX, heavy = false) {
 
 // ---------- Boss moves ----------
 
-function addZone(world, z) {
+export function addZone(world, z) {
   world.dungeon.zones.push({ t: 0, hit: false, after: 0, y: world.map.groundY, ...z });
 }
 
-function adds(world, boss, mob, xs, threatOn) {
+export function adds(world, boss, mob, xs, threatOn) {
   const room = world.dungeon.room;
   for (const x of xs) {
     const m = spawnMob(world.map, { mob, x: Math.max(40, Math.min(world.map.width - 40, x)), y: world.map.groundY });
@@ -725,6 +807,7 @@ function adds(world, boss, mob, xs, threatOn) {
     m.threat = threatOn ? { [threatOn]: 30 } : {};
     m.atkT = between(0.6, 1.2);
     m.add = true;
+    toughen(world, m);
     world.mobs.push(m);
     room.adds.push(m);
   }
@@ -737,7 +820,8 @@ function bossMove(world, m, up, dt) {
   const frac = m.hp / m.def.hp;
   const nonTanks = up.filter((g) => g.role !== 'tank');
   if (m.def.mech === 'capper') {
-    const s = (m.mech ??= { rain: 7, adds: [0.7, 0.35] });
+    const s = (m.mech ??= { rain: 7, adds: [0.85, 0.5] });
+    capperPhases(world, m, dt);
     s.rain -= dt;
     if (s.rain <= 0 && up.length) {
       s.rain = 10;
@@ -758,11 +842,26 @@ function bossMove(world, m, up, dt) {
   }
   if (m.def.mech === 'boar') {
     const s = (m.mech ??= { charge: 8, gore: 5 });
+    boarPhases(world, m);
     if (m.charging) {
       const c = m.charging;
       m.state = 'walk';
       m.dir = c.dir;
-      m.x += c.dir * 520 * dt;
+      // A stone pillar in the way stops him cold: dazed, and the pillar comes down.
+      const next = m.x + c.dir * 520 * dt;
+      const pillar = pillarHit(world, m, next);
+      if (pillar) {
+        m.x = pillar.x - c.dir * (m.def.w / 2 + 12);
+        m.charging = null;
+        m.frozenUntil = world.now + 4;
+        m.hold = 'stun';
+        m.vulnUntil = world.now + 4;
+        world.juice.push({ type: 'shake', mag: 8, dur: 0.6 });
+        run.vfx.push({ kind: 'crash', x: pillar.x, y: m.y, t: 0, dur: 0.6 });
+        callout(world, 'Tuskar smashed into a pillar!', "He's seeing stars: hit him hard!");
+        return true;
+      }
+      m.x = next;
       for (const g of up) {
         if (c.hit.has(g.id) || Math.abs(g.body.x - m.x) > m.def.w / 2 + 8 || Math.abs(g.body.y - m.y) > 50) continue;
         c.hit.add(g.id);
@@ -772,6 +871,12 @@ function bossMove(world, m, up, dt) {
       if ((c.dir > 0 && m.x >= wall) || (c.dir < 0 && m.x <= wall)) {
         m.x = wall;
         m.charging = null;
+        // Stampeding, he turns and charges straight back the other way once.
+        if (s.stampede && !c.back) {
+          m.charging = { dir: -c.dir, hit: new Set(), back: true };
+          world.juice.push({ type: 'shake', mag: 5, dur: 0.4 });
+          return true;
+        }
         m.frozenUntil = world.now + 3;
         m.hold = 'stun';
         m.vulnUntil = world.now + 3;
@@ -812,6 +917,7 @@ function bossMove(world, m, up, dt) {
   }
   if (m.def.mech === 'gnarl') {
     const s = (m.mech ??= { slam: 11, thorns: 6, flip: 0, saplings: false, enraged: false });
+    gnarlPhases(world, m);
     const k = s.enraged ? 0.7 : 1;
     const pending = run.zones.some((z) => !z.hit);
     s.slam -= dt;
@@ -836,7 +942,7 @@ function bossMove(world, m, up, dt) {
         callout(world, 'Thorns!', 'Stand where the floor is safe');
       }
     }
-    if (!s.saplings && frac <= 0.5) {
+    if (!s.saplings && frac <= 0.75) {
       s.saplings = true;
       adds(world, m, 'sapling', [m.x - 400, m.x + 400], null);
       callout(world, 'Corrupted Saplings!', 'They feed him their life: cut them down!');
@@ -876,7 +982,8 @@ function tickZones(world, up, dt) {
       z.from.charging = { dir: z.dir, hit: new Set() };
       continue;
     }
-    run.vfx.push({ kind: 'zonehit', zone: z.kind, x: z.x, y: z.y, w: z.w, t: 0, dur: 0.5 });
+    run.vfx.push({ kind: 'zonehit', zone: z.kind, root: z.root, x: z.x, y: z.y, w: z.w, t: 0, dur: 0.5 });
+    if (z.kind === 'circle') sporeSprout(world, z);
     if (z.kind === 'floor') world.juice.push({ type: 'shake', mag: 7, dur: 0.6 });
     for (const g of up) if (inZone(world, z, g.body)) hurtMember(world, g, z.damage, z.from?.x ?? z.x, { knock: z.kind !== 'circle' });
   }
@@ -932,6 +1039,7 @@ export function tickDungeon(world, dt) {
   }
   run.combat = world.mobs.some((m) => m.hp > 0 && m.engaged && !m.def.fight?.mender);
   tickZones(world, up, dt);
+  tickRoom(world, dt, group, up);
   tickChannels(world, dt, group);
   tickBuffs(world, group, dt);
   for (const v of run.vfx) v.t += dt;
@@ -1030,6 +1138,10 @@ export function onMobKilled(world, m) {
   const run = world.dungeon;
   if (!run) return;
   if (m.spawn?.key) run.room.keys.push({ x: m.x, y: m.y, t: 0, got: false });
+  if (m.def.mech === 'gnarl') {
+    run.room.walls = null;
+    hollowCalmed(world);
+  }
   if (m.def.boss) {
     run.zones = [];
     for (const a of run.room.adds) if (a.hp > 0) {
@@ -1063,8 +1175,32 @@ function goalAt(world, x, y, mode) {
 }
 
 // What a party member does next, by role. Sets brain.goal (where to be), brain.target (what to
-// hit), and brain.task (a glowcap or cage to work on).
+// hit), and brain.task (a glowcap or cage to work on). The room can change where they stand: up on
+// a ledge when the sap is coming, and (for those who fight) up near Gnarlroot's open heart.
 export function roleThink(bot, world, rng) {
+  thinkRole(bot, world, rng);
+  const br = bot.brain;
+  if (bot.down || !br.goal) return;
+  const role = world.dungeon.roles[bot.id] ?? 'dps';
+  const heart = world.mobs.find((m) => m.heartOpen && m.hp > 0);
+  if (floodComing(world)) br.goal = ledgeGoal(world, br.goal.x, 'fight');
+  else if (heart && role !== 'healer') br.goal = ledgeGoal(world, heart.x + (Math.sign(bot.body.x - heart.x) || 1) * 60, 'fight');
+}
+
+// The nearest ledge (not the floor) to x, as a goal.
+function ledgeGoal(world, x, mode) {
+  const nav = navOf(world.map);
+  let best = null;
+  nav.surfaces.forEach((s, i) => {
+    if (s.ground) return;
+    const cx = Math.max(s.x1 + 8, Math.min(s.x2 - 8, x));
+    const d = Math.abs(cx - x) + (world.map.groundY - s.y) * 0.2;
+    if (!best || d < best.d) best = { d, goal: { x: cx, y: s.y, mode, surface: i } };
+  });
+  return best?.goal ?? goalAt(world, x, world.map.groundY, mode);
+}
+
+function thinkRole(bot, world, rng) {
   const run = world.dungeon;
   const br = bot.brain;
   const body = bot.body;

@@ -410,15 +410,25 @@ to clear it.
     heal when several are), keeps a barrier on the tank, and Renews the group when it's taking
     damage; the damage dealers focus what the tank is fighting, go for adds first,
     and help with the room's task between fights. Everyone steps out of telegraphed attacks.
-  - Six rooms, each sealed until it's cleared: **Hollow Entrance** (trash packs, and light the
-    three glowcaps), **Capper's Garden** (mini-boss the Myconid Queen: Spore Rain patches to step out
-    of, and Spore Mites that rush the healer), **Bramble Tunnels** (trash, and free four trapped
-    Sprouts from root cages), **Boar Den** (mini-boss Tuskar: a tank-busting Gore, and a charge down
-    a telegraphed lane at someone; he crashes into the wall and is dazed, taking extra damage),
-    **The Root Gate** (Bramble Bears carry the three Root Keys that open the gate), and **Heart of the
-    Hollow** (Gnarlroot: a Root Slam to jump or get on a ledge for, alternating Thorn strips,
-    Corrupted Saplings at half HP that heal him and halve his damage taken until killed, and a faster
-    enrage at 20%).
+  - Six rooms, each sealed until it's cleared, each with an idea of its own: **Hollow Entrance**
+    is pitch dark, lit only around the group and by the three glowcaps you light; **Capper's
+    Garden** (the Myconid Queen: Spore Rain patches, then Lights Out while she hides in her spore
+    fog and mushrooms sprout where her spores land, then the Spore Tide floods the floor, so jump
+    on a bounce mushroom to reach the high ledges); **Bramble Tunnels** (roots drop from the low
+    ceiling in fights; each of the four Sprouts you free from root cages follows and cheers the
+    group on, +4% damage each, for the rest of the run); **Boar Den** (Tuskar: Gore, and charges
+    down a lane; bait him into one of the stone pillars and he's dazed and the pillar comes down;
+    at 60% he calls his Wargs, at 30% he stampedes there and back); **The Root Gate** (Bramble Bears
+    carry the three Root Keys, and sap floods the floor every half minute: get up on a ledge); and
+    **Heart of the Hollow** (Gnarlroot in three phases: Root Slam, Thorn strips and Corrupted
+    Saplings that feed him; at 60% root walls close in from both sides; at 30% his heart opens above
+    him, and only blows from the high ledges reach it). He falls asleep at last in a scene of his
+    own. Party members climb for the sap and the heart too.
+  - The end: a rank (S, A, B or C, from the time, wipes and falls) that grows the chest's EXP and
+    gold, and a result card. The chest can hold a piece of the **Rootwood** set for your job (always
+    on Hard or the day's first clear). The first clear of each day adds Cash and Acorns; clearing it
+    once opens **Hard mode** at Bramble (monsters with more than twice the health that hit half
+    again as hard, and double rewards). Bramble shows your best rank and time.
   - Fall in a fight and your group gets you back up once it's over (no EXP lost; you can also
     leave). If everyone falls, the room resets and the group regroups at its entrance. The run
     tracker shows the room, what's left, the clock, and wipes; boss moves are called out on

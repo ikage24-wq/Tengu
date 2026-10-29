@@ -14,8 +14,12 @@ export const DUNGEONS = {
     // Group finder levels for the players it brings in, by role.
     recruit: { tank: [11, 13], healer: [11, 13], dps: [10, 13] },
     // The chest at the end: EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
-    // and Hollow Acorns.
+    // and Hollow Acorns, all grown by the run's grade (S +50%, A +25%, B +10%) and doubled on Hard.
+    // The first clear of each day adds Cash and Acorns.
     reward: { exp: 6000, gold: 2500, cash: 600, gearLevel: 15, items: [{ id: 'hollow_acorn', qty: 5 }, { id: 'elixir', qty: 3 }] },
+    // Its own gear set (data/sets.js), from the chest: a piece for your job on Hard or the day's
+    // first clear, half the time otherwise.
+    set: 'rootwood',
   },
 };
 

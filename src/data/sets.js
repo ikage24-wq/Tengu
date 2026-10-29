@@ -1,5 +1,5 @@
-// Gear sets: four matching pieces (hat, top, gloves, cape) for every job, dropped by the queens and
-// the Crystal King (a piece for your own job each time; certain from a trial, sometimes from a
+// Gear sets: four matching pieces (hat, top, gloves, cape) for every job, dropped by the queens,
+// the Crystal King, and Rootwood Hollow's chest (a piece for your own job each time; certain from a trial, sometimes from a
 // rematch). Wearing more of a set adds its bonuses: at 2, 3 and 4 pieces. The pieces wear the job
 // gear's designs in the set's colours.
 
@@ -8,6 +8,11 @@ export const SET_SLOTS = ['hat', 'top', 'gloves', 'cape'];
 const all = (n) => ({ str: n, dex: n, int: n, luk: n });
 
 export const SETS = {
+  // Rootwood Hollow's own set, from the chest at its heart (data/dungeons.js).
+  rootwood: {
+    name: 'Rootwood', level: 15, color: '#b98e78', accent: '#a6dca2',
+    bonus: { 2: { hp: 80 }, 3: { watk: 4, matk: 4 }, 4: { str: 4, dex: 4, int: 4, luk: 4, hp: 150 } },
+  },
   sylvana: {
     name: 'Dryad Bloom', level: 20, color: '#8fdca8', accent: '#ffb3cf',
     bonus: { 2: { hp: 150 }, 3: { watk: 6, matk: 6 }, 4: { ...all(6), hp: 300 } },

@@ -28,6 +28,7 @@ import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { titleOf } from '../core/collection.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
+import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
@@ -216,6 +217,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
+  if (world.dungeon) drawHollowBack(ctx, world, cam, time);
   // A queen's moves about to land.
   drawZonesBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
@@ -305,6 +307,11 @@ export function drawWorld(ctx, world, viewCam, time) {
   const actors = [{ x: hx, top: hy - 50 }];
   for (const m of world.mobs) if (m.hp > 0) actors.push({ x: m.x - cam.x, top: m.y - m.def.h - cam.y });
   drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time, actors);
+  if (world.dungeon) {
+    drawHollowFront(ctx, world, cam, time);
+    // The dark rooms: light only where the group and the glowcaps are.
+    drawDarkness(ctx, world, cam, time);
+  }
   const drawFx = (g) => {
     drawEffects(g, world, cam, time);
     if (world.dungeon) drawDungeonFront(g, world, cam, time);
