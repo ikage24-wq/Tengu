@@ -13,6 +13,7 @@ import { drawPosed, posedPoint } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
 import { keys, overshoot } from './oni.js';
 import { TENGU_MOVES } from '../world/tengu.js';
+import { COMBO } from '../world/onmyoji.js';
 
 export const TENGU_SCALE = 1.2;
 export const TENGU_LOOK = {
@@ -414,9 +415,28 @@ function command(u) {
     tilt: -3 - 5 * on, hy: -0.2 - 0.4 * on, mouth: u > 0.36 && u < 0.62 ? 'tenguhah' : 'tengusmirk', brows: on > 0.3 ? 'raised' : 'smug', lid: 0.3, cloth: -2 * on,
   });
 }
-// His part in the Onmyoji's Troupe Combo: his whirlwind, the fan thrust down at 0.3 (when they lift).
-const comboWind = (u, t) => whirlwind(u < 0.3 ? (u / 0.3) * 0.5 : 0.5 + ((u - 0.3) / 0.7) * 0.5, t);
-const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command, combo: comboWind };
+// His part in the Onmyoji's Troupe Combo (in seconds from the cast): he steps out of his feathers in
+// the air over the monsters (tenguIn), wings beating, hunched over with the fan swept down and back
+// low under him; carries it round under him, gathering the wind; then sweeps it up and over his
+// head in one great stroke as they lift (lift), wings thrown wide, arching back; holds it high,
+// twirling, till he's gone again before the oni comes down.
+function comboLift(u, time) {
+  const t = u * COMBO.tenguOut;
+  const low = soft(seg(t, COMBO.tenguIn, COMBO.tenguIn + 0.2)) * (1 - soft(seg(t, COMBO.lift[0] - 0.1, COMBO.lift[0])));
+  const sweep = overshoot(seg(t, COMBO.lift[0] - 0.1, COMBO.lift[0] + 0.04));
+  const held = sweep;
+  const gather = seg(t, COMBO.tenguIn + 0.2, COMBO.lift[0] - 0.1);
+  const flying = t >= COMBO.tenguIn ? 1 : 0;
+  return pose({
+    lean: 0.3 * low - 0.14 * held,
+    hand: lerp2(lerp2(HAND, [lerp(-3.4, 5, gather), lerp(2, 5, gather)], low), [2.4, -16.4], held), free: lerp2(lerp2(FREE, [-3, -3], low), [-5.4, -10], held),
+    fan: lerp(lerp(-0.35, lerp(2.6, 3.4, gather), low), -0.2 + 0.2 * Math.sin(time * 9), held), twirl: held * (0.4 + 0.4 * Math.sin(time * 11)),
+    wing: flying, flap: (0.45 * low + 0.3 * held) * Math.sin(time * 13), legF: [1.6, -2.6 * flying, 22 * flying], legB: [-3, -1.6 * flying, -16 * flying],
+    cloth: -3 * flying - 3 * held + 1.5 * Math.sin(time * 10) * held, tilt: 5 * low - 9 * held, hy: -0.2 - 0.6 * held,
+    mouth: held > 0.4 ? 'tengugrin' : 'tengusmirk', brows: low > 0.4 || held > 0.4 ? 'focus' : 'smug', lid: 0.15, eyes: low > 0.5 ? 'half' : null,
+  });
+}
+const MOVES = { iai, kurama, gust, whirlwind, feathers, stones, spirited, command, combo: comboLift };
 
 // ---------- His leader's aura ----------
 // A small black feather (for the ones circling him).
@@ -582,7 +602,8 @@ const STATE = new WeakMap();
 
 // `k.idle` (with `k.idleT0`) forces one idle mood, for recording.
 export function drawTenguCompanion(ctx, world, k, cam, time, layer = 'back') {
-  if (!k?.body) return;
+  // (Gone in feathers, mid-teleport.)
+  if (!k?.body || k.hidden) return;
   let st = STATE.get(k);
   if (!st) {
     st = { last: time, P: null, V: {}, walk: 0, vx: 0, idle: null, idleAt: time + 2, aura: 0.6 };

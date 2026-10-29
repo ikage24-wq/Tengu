@@ -262,6 +262,12 @@ export function absorbJuice(fx, world) {
         if (settings.screenShake === 'full' || settings.screenShake === true) add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: 0.12, size: 1, shape: 'screenflash', color: '#ffffff' });
         world.slowmo = Math.max(world.slowmo ?? 0, 0.75);
       }
+    } else if (j.type === 'screenflash') {
+      // A wash of colour over the whole screen for a beat (a finisher's big impacts).
+      if (settings.screenShake === 'full' || settings.screenShake === true) add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: j.life ?? 0.14, size: 1, shape: 'screenflash', color: j.color ?? '#ffffff' });
+    } else if (j.type === 'shockring') {
+      // A flat shockwave ring racing out along the ground from (x, y).
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, delay: j.delay ?? 0, life: j.life ?? 0.5, size: j.r0 ?? 10, r1: j.r1 ?? 140, thick: j.thick ?? 8, flat: j.flat ?? 0.3, shape: 'shock', color: j.color ?? '#ffffff' });
     } else if (j.type === 'hurt') {
       shake(fx, 3, 0.22);
       // Jolt the view away from whatever hit you.

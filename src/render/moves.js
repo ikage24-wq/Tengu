@@ -1967,13 +1967,13 @@ export const MOVES = {
       },
     };
   },
-  // Troupe Combo (over ~3.7 s): she thrusts the fan out at them, commanding, and holds there,
-  // chin up, while her troupe goes to work, swaying as each of them strikes (freeze ~0.19, lift
-  // ~0.39, slam ~0.74); at ~0.9 she whips the fan shut with a flourish and they shatter.
+  // Troupe Combo (over ~4.4 s): she thrusts the fan out at them, commanding, and holds there,
+  // chin up, while her troupe goes to work, swaying as each of them strikes (freeze ~0.24, lift
+  // ~0.44, slam ~0.77); at ~0.91 she whips the fan shut with a flourish and they shatter.
   onmyocombo(p) {
-    const point = soft(seg(p, 0, 0.08));
-    const sway = 0.5 * (bump(p, 0.17, 0.26) + bump(p, 0.37, 0.46) + 1.4 * bump(p, 0.72, 0.8));
-    const snap = soft(seg(p, 0.86, 0.91));
+    const point = soft(seg(p, 0, 0.07));
+    const sway = 0.5 * (bump(p, 0.22, 0.3) + bump(p, 0.42, 0.5) + 1.6 * bump(p, 0.76, 0.84));
+    const snap = soft(seg(p, 0.87, 0.915));
     const settle = soft(seg(p, 0.96, 1));
     const hold = 1 - settle;
     return {
@@ -2017,7 +2017,7 @@ export const MOVE_MIN = {
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
   shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
-  onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 3.5,
+  onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 4.2,
 };
 
 // Basic attacks chain into a combo per weapon type.

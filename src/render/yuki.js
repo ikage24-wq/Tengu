@@ -9,6 +9,7 @@
 import { drawPosed, posedMouth } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
 import { YUKI_MOVES } from '../world/yuki.js';
+import { COMBO } from '../world/onmyoji.js';
 
 export const YUKI_SCALE = 1.1;
 export const YUKI_LOOK = {
@@ -146,8 +147,23 @@ function misting(u) {
   const k = soft(seg(u, 0, 0.3)) * (1 - soft(seg(u, 0.7, 1)));
   return pose({ lift: 5 * k, hand: lerp2(FOLD_F, [-1, -8], k), free: lerp2(FOLD_B, [3, -8], k), eyes: 'blink', cloth: -4 * k, tilt: 3 - 4 * k });
 }
-// (Her part in the Onmyoji's Troupe Combo: her whiteout, freezing them all.)
-const MOVES = { combo: whiteouting, breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
+// Her part in the Onmyoji's Troupe Combo (in seconds from the cast): gathered out of mist by the
+// monsters (yukiIn), she sinks a little, hands drawn in to her lips, eyes closed, drawing the cold
+// in; then rises and flings her arms wide, head thrown back, and breathes it all out (freeze);
+// holds there floating high, hair and sleeves streaming, and settles.
+function comboFreeze(u) {
+  const t = u * COMBO.yukiOut;
+  const draw = soft(seg(t, COMBO.yukiIn, COMBO.freeze - 0.12)) * (1 - soft(seg(t, COMBO.freeze - 0.12, COMBO.freeze)));
+  const fling = soft(seg(t, COMBO.freeze - 0.12, COMBO.freeze)) * (1 - soft(seg(t, COMBO.yukiOut - 0.4, COMBO.yukiOut)));
+  const k = Math.max(draw, fling);
+  return pose({
+    lift: 2 * draw + 14 * fling + 1.2 * Math.sin(t * 9) * fling, lean: 0.12 * draw - 0.06 * fling,
+    hand: lerp2(lerp2(FOLD_F, [0.6, -10.6], draw), [8, -12], fling), free: lerp2(lerp2(FOLD_B, [2.4, -10], draw), [-7, -12], fling),
+    hy: 0.4 + 0.8 * draw - 1.6 * fling, tilt: 3 + 7 * draw - 13 * fling, cloth: -6 * fling + 2.4 * Math.sin(t * 14) * fling,
+    eyes: draw > 0.4 ? 'blink' : fling > 0.5 ? 'half' : null, mouth: fling > 0.3 ? 'yukibreath' : 'yukilips', brows: k > 0.3 ? 'calm' : 'sad',
+  });
+}
+const MOVES = { combo: comboFreeze, breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
 
 // Her idle moods: how long each lasts and the pose `u` through it.
 export const YUKI_IDLES = {
@@ -230,7 +246,8 @@ function aura(ctx, x, y, time, layer, k) {
 }
 
 export function drawYukiCompanion(ctx, world, k, cam, time, layer = 'back') {
-  if (!k?.body) return;
+  // (Gone in mist, mid-teleport.)
+  if (!k?.body || k.hidden) return;
   const x = k.x - cam.x;
   const y = k.y - cam.y;
   let st = STATE.get(k);

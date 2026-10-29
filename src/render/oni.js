@@ -9,6 +9,7 @@
 import { drawPosed } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
 import { ONI_MOVES } from '../world/oni.js';
+import { COMBO } from '../world/onmyoji.js';
 
 export const ONI_SCALE = 2;
 
@@ -448,19 +449,28 @@ function roar(u) {
     mouth: r > 0.3 && on > 0.4 ? 'yell' : 'onigrin', brows: 'angry', lid: r > 0.3 ? 0 : 0.2,
   });
 }
-// Her part in the Onmyoji's Troupe Combo (the slam at 0.55): a crouch, a huge leap with the club
-// swung right back over her head, a hang at the top, and down with everything onto them; she
-// lands in a deep crouch, the club buried, and rises with a grin.
+// Her part in the Onmyoji's Troupe Combo (in seconds from the cast): she watches, bored, till her
+// moment; then sinks into a deep crouch, the club dragged right down behind her, shaking with it
+// (crouch); springs (leap), knees tucked, swinging the club up and over her head as she rises; at
+// the top (peak) she arches back with it cocked far behind her, hanging there; then the dive, the
+// club brought over and down with everything she has (slam); she lands in a deep crouch, the club
+// buried, holds it, and rises with a grin.
 function comboSlam(u) {
-  const crouch = soft(seg(u, 0, 0.1)) * (1 - soft(seg(u, 0.1, 0.16)));
-  const air = soft(seg(u, 0.1, 0.2)) * (1 - soft(seg(u, 0.5, 0.55)));
-  const land = soft(seg(u, 0.53, 0.58)) * (1 - soft(seg(u, 0.82, 1)));
+  const t = u * COMBO.oniOut;
+  const crouch = soft(seg(t, COMBO.crouch, COMBO.leap - 0.08)) * (1 - soft(seg(t, COMBO.leap - 0.08, COMBO.leap + 0.06)));
+  const rise = seg(t, COMBO.leap, COMBO.peak);
+  const air = soft(seg(t, COMBO.leap - 0.04, COMBO.leap + 0.1)) * (1 - soft(seg(t, COMBO.slam - 0.04, COMBO.slam)));
+  const arch = soft(seg(t, COMBO.peak - 0.12, COMBO.peak + 0.04)) * (1 - soft(seg(t, COMBO.dive, COMBO.dive + 0.08)));
+  const land = soft(seg(t, COMBO.slam - 0.02, COMBO.slam + 0.04)) * (1 - soft(seg(t, COMBO.slam + 0.4, COMBO.oniOut)));
+  const shiver = 0.25 * Math.sin(t * 70) * crouch;
   return pose({
-    club: keys(u, [[0, -0.55], [0.1, -1.2], [0.4, -2.6], [0.48, -2.9], [0.55, 2.3, 'snap'], [0.8, 2.2], [1, -0.55]]),
-    hand: keys(u, [[0, HAND], [0.1, [3, -9]], [0.4, [2, -16]], [0.55, [10, 3], 'snap'], [0.8, [9.5, 3]], [1, HAND]]),
-    free: keys(u, [[0, FREE], [0.4, [2, -14]], [0.55, [7, 2.5], 'snap'], [0.8, [6.5, 2.5]], [1, FREE]]),
-    squat: 3 * crouch + 4.4 * land, lean: -0.18 * air + 0.45 * land, legF: [3.6 + 2 * air, -6 * air, 8 + 40 * air], legB: [-4, -4 * air, -10 - 30 * air],
-    cloth: -4 * air + 5 * land, tilt: 4 - 8 * air + 8 * land, mouth: land > 0.3 ? 'onishark' : air > 0.3 ? 'onigrin' : 'bored', brows: 'angry', lid: 0.1,
+    club: keys(t, [[0, -0.55], [COMBO.crouch, -0.55], [COMBO.leap - 0.08, -2.2], [COMBO.leap + 0.1, -1.2], [COMBO.peak, -2.9], [COMBO.dive, -3.1], [COMBO.slam, 2.35, 'snap'], [COMBO.slam + 0.4, 2.3], [COMBO.oniOut, -0.55]]),
+    hand: keys(t, [[0, HAND], [COMBO.crouch, HAND], [COMBO.leap - 0.08, [-3.4, 2.2]], [COMBO.leap + 0.1, [3, -10]], [COMBO.peak, [1, -16]], [COMBO.dive, [0, -16.6]], [COMBO.slam, [10.4, 3.4], 'snap'], [COMBO.slam + 0.4, [10, 3.2]], [COMBO.oniOut, HAND]]),
+    free: keys(t, [[0, FREE], [COMBO.crouch, FREE], [COMBO.leap - 0.08, [3, 1]], [COMBO.peak, [2, -14]], [COMBO.dive, [1.6, -15]], [COMBO.slam, [7.4, 2.6], 'snap'], [COMBO.slam + 0.4, [7, 2.6]], [COMBO.oniOut, FREE]]),
+    squat: 5 * crouch + 5.4 * land, lean: 0.32 * crouch - 0.12 * air - 0.22 * arch + 0.5 * land, tx: shiver,
+    legF: [3.6 + 3 * air - 1.6 * land, -9 * air * (1 - arch * 0.4), 10 + 70 * air * (1 - rise * 0.3)], legB: [-4 - 1.6 * air + 1 * land, -6 * air, -12 - 50 * air],
+    cloth: -3 * crouch - 6 * air + 6 * land + 2 * Math.sin(t * 16) * air, tilt: 4 + 6 * crouch - 12 * arch + 10 * land,
+    mouth: land > 0.3 ? 'onishark' : air > 0.3 || crouch > 0.3 ? 'onigrin' : t > COMBO.slam + 0.5 ? 'onismirk' : 'bored', brows: crouch > 0.2 || air > 0.2 || land > 0.2 ? 'angry' : 'bored', lid: crouch + air + land > 0.2 ? 0.05 : 0.45,
   });
 }
 const MOVES = { kesa, grab, stomp, charge, whirl, roar, combo: comboSlam };

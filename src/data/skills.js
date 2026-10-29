@@ -453,7 +453,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(120, 210), hits: 1, targets: 0, range: { w: 700, h: 200, around: true },
-        combo: [{ move: 'onmyocombo', dur: 3.7, step: 0, strikes: [{ at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, troupe: { pct: k(120, 210), big: k(600, 1000) } }] }],
+        combo: [{ move: 'onmyocombo', dur: 4.4, step: 0, strikes: [{ at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, troupe: { pct: k(120, 210), big: k(600, 1000) } }] }],
       };
     },
   }),
