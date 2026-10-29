@@ -220,9 +220,10 @@ export function drawHud(ui, state, world) {
     }
     const age = t - k.at;
     const sink = age < 0.09 ? 1.5 : 0;
+    const rise = hover(ui, HK_X + i * HK_STEP, HK_Y, HK_D, HK_D) && age >= 0.09 ? -1 : 0;
     const shake = k.short && age < 0.2 ? Math.round(Math.sin(age * 90) * 1.5) : 0;
     const x = HK_X + i * HK_STEP + shake;
-    const y = HK_Y;
+    const y = HK_Y + rise;
     const D = HK_D;
     const hot = hover(ui, x, y, D, D);
     box(ctx, x, y + 1.5, D, D, { fill: '#dccbee', edge: null, r: D / 2 });
@@ -264,6 +265,17 @@ export function drawHud(ui, state, world) {
         ctx.fill();
       }
       ctx.restore();
+      // A cast sends a ring rippling out of the bubble.
+      if (!k.short && age < 0.3) {
+        const u = age / 0.3;
+        ctx.globalAlpha = 1 - u;
+        ctx.strokeStyle = LAV.main;
+        ctx.lineWidth = 2 * (1 - u) + 0.5;
+        ctx.beginPath();
+        ctx.arc(x + c0, y + c0 + sink, D / 2 + 1 + 7 * u, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
       const ready = t - k.readyAt;
       if (ready < 0.3) {
         ctx.globalAlpha = 1 - ready / 0.3;

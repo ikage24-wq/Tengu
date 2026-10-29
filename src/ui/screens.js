@@ -59,17 +59,23 @@ let world = 0;
 
 // A fixed frame like the in-game windows, without dragging or a close button.
 function panel(ctx, x, y, w, h, title) {
-  ctx.fillStyle = 'rgba(90,63,122,0.22)';
-  roundRect(ctx, x + 3, y + 4, w, h, 8);
+  ctx.fillStyle = 'rgba(90,63,122,0.18)';
+  roundRect(ctx, x + 2, y + 4, w, h, 14);
   ctx.fill();
-  box(ctx, x, y, w, h, { fill: 'rgba(255,247,252,0.94)', r: 8 });
+  box(ctx, x - 2, y - 2, w + 4, h + 4, { fill: null, edge: '#ffe0ef', r: 16, width: 3 });
+  box(ctx, x, y, w, h, { fill: 'rgba(255,247,252,0.96)', edge: '#f4bcd8', r: 14, width: 2 });
   const g = ctx.createLinearGradient(x, y, x + w, y);
   g.addColorStop(0, COLORS.title);
   g.addColorStop(1, COLORS.title2);
   ctx.fillStyle = g;
-  roundRect(ctx, x, y, w, 18, 8);
+  ctx.save();
+  roundRect(ctx, x, y, w, h, 14);
+  ctx.clip();
+  ctx.fillRect(x, y, w, 18);
+  ctx.beginPath();
+  for (let sx = x; sx < x + w; sx += 8) ctx.arc(sx + 4, y + 18, 4, 0, Math.PI);
   ctx.fill();
-  ctx.fillRect(x, y + 10, w, 8);
+  ctx.restore();
   text(ctx, title, x + w / 2, y + 13, { size: 10, bold: true, align: 'center', color: '#ffffff', outline: '#b87ac9' });
 }
 
@@ -117,7 +123,7 @@ export function titleScreen(ui, time) {
   WORLDS.forEach((w, i) => {
     const ry = py + 24 + i * 22;
     const on = i === world;
-    box(ctx, px + 8, ry, pw - 16, 19, { fill: on ? '#ffe9f4' : hover(ui, px + 8, ry, pw - 16, 19) ? '#ffffff' : COLORS.cell, edge: on ? COLORS.accent : COLORS.cellEdge, r: 5 });
+    box(ctx, px + 8, ry, pw - 16, 19, { fill: on ? '#ffe9f4' : hover(ui, px + 8, ry, pw - 16, 19) ? '#ffffff' : COLORS.cell, edge: on ? COLORS.accent : COLORS.cellEdge, r: 9.5 });
     ctx.fillStyle = w.color;
     ctx.beginPath();
     ctx.arc(px + 19, ry + 9.5, 4, 0, Math.PI * 2);
@@ -244,7 +250,8 @@ function ghost(ctx, x, y) {
 
 function infoCard(ui, c, x, y, w, live) {
   const { ctx } = ui;
-  box(ctx, x, y, w, 236, { fill: 'rgba(255,247,252,0.95)', r: 10 });
+  box(ctx, x - 2, y - 2, w + 4, 240, { fill: null, edge: '#ffe0ef', r: 16, width: 3 });
+  box(ctx, x, y, w, 236, { fill: 'rgba(255,247,252,0.96)', edge: '#f4bcd8', r: 14, width: 2 });
   if (!c) {
     text(ctx, 'Empty Slot', x + w / 2, y + 30, { size: 14, bold: true, align: 'center', color: COLORS.muted });
     wrap(ctx, 'Nobody lives here yet. Make a new hero to fill this spot on the tree.', x + 14, y + 56, w - 28, { size: 8, color: COLORS.muted });
@@ -252,19 +259,19 @@ function infoCard(ui, c, x, y, w, live) {
   }
   const s = stats(c);
   text(ctx, `Lv. ${c.level}`, x + w / 2, y + 26, { size: 16, bold: true, align: 'center', color: COLORS.gold, outline: '#fff3d6' });
-  box(ctx, x + 12, y + 34, w - 24, 18, { fill: '#8f6cb0', edge: null, r: 6 });
+  box(ctx, x + 12, y + 34, w - 24, 18, { fill: '#b48cff', edge: '#ffffff', r: 9, width: 1.5 });
   text(ctx, c.name, x + w / 2, y + 47, { size: 10, bold: true, align: 'center', color: '#ffffff' });
   const rows = [['Job', JOBS[c.job]?.name ?? ''], ['Location', MAPS[c.mapId]?.name ?? ''], ['Gold', `${c.gold}`]];
   rows.forEach(([k, v], i) => {
     const ry = y + 60 + i * 18;
-    box(ctx, x + 12, ry, w - 24, 15, { fill: COLORS.cell, edge: null, r: 5 });
+    box(ctx, x + 12, ry, w - 24, 15, { fill: COLORS.cell, edge: null, r: 7.5 });
     text(ctx, k, x + 18, ry + 11, { size: 8, bold: true, color: COLORS.muted });
     text(ctx, v, x + w - 18, ry + 11, { size: 8, bold: true, align: 'right' });
   });
   ['str', 'dex', 'int', 'luk'].forEach((k, i) => {
     const cx = x + 12 + (i % 2) * ((w - 24) / 2 + 2);
     const cy = y + 120 + Math.floor(i / 2) * 18;
-    box(ctx, cx, cy, (w - 24) / 2 - 2, 15, { fill: COLORS.cell, edge: null, r: 5 });
+    box(ctx, cx, cy, (w - 24) / 2 - 2, 15, { fill: COLORS.cell, edge: null, r: 7.5 });
     text(ctx, k.toUpperCase(), cx + 6, cy + 11, { size: 8, bold: true, color: COLORS.muted });
     text(ctx, `${s[k]}`, cx + (w - 24) / 2 - 8, cy + 11, { size: 8, bold: true, align: 'right' });
   });
@@ -340,7 +347,8 @@ export function selectScreen(ui, time, chars, state) {
   // World badge and character card.
   const px = 446, pw = 182;
   const wd = WORLDS[world];
-  box(ctx, px, 10, pw, 40, { fill: 'rgba(255,247,252,0.95)', r: 10 });
+  box(ctx, px - 2, 8, pw + 4, 44, { fill: null, edge: '#ffe0ef', r: 22, width: 3 });
+  box(ctx, px, 10, pw, 40, { fill: 'rgba(255,247,252,0.96)', edge: '#f4bcd8', r: 20, width: 2 });
   ctx.fillStyle = wd.color;
   ctx.beginPath();
   ctx.arc(px + 22, 30, 12, 0, Math.PI * 2);
@@ -431,7 +439,7 @@ function stage(ctx, x, y, w, h, time) {
     ctx.arc(px, py, 0.8, 0, Math.PI * 2);
     ctx.fill();
   }
-  box(ctx, x, y, w, h, { fill: null, edge: COLORS.panelEdge, r: 12, width: 2 });
+  box(ctx, x, y, w, h, { fill: null, edge: '#f4bcd8', r: 14, width: 2 });
   return [cx, fy + 2];
 }
 
@@ -482,7 +490,8 @@ export function creatorScreen(ui, time, draft) {
   const PW = 332;
   const PH = 290;
   softShadow(ctx, PX, PY, PW, PH, 12, 4);
-  box(ctx, PX, PY, PW, PH, { fill: 'rgba(255,250,253,0.97)', edge: COLORS.panelEdge, r: 12, width: 2 });
+  box(ctx, PX - 2, PY - 2, PW + 4, PH + 4, { fill: null, edge: '#ffe0ef', r: 16, width: 3 });
+  box(ctx, PX, PY, PW, PH, { fill: 'rgba(255,250,253,0.97)', edge: '#f4bcd8', r: 14, width: 2 });
   const tabNames = LOOK_TABS.map((t) => t.label);
   draft.tab = tabs(ui, PX + (PW - tabNames.length * 66) / 2, PY + 10, tabNames, draft.tab, { w: 64, h: 17 });
   const cell = [21, 27, 27, 40][draft.tab];
@@ -504,7 +513,7 @@ export function creatorScreen(ui, time, draft) {
     else if (/^[\w '-]$/.test(ch) && draft.name.length < 12 && !(ch === ' ' && !draft.name)) draft.name += ch;
   }
   text(ctx, 'Name', PX + 16, NY + 11, { size: 9, bold: true });
-  box(ctx, PX + 52, NY, PW - 66, 17, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
+  box(ctx, PX + 52, NY, PW - 66, 17, { fill: '#ffffff', edge: COLORS.accent, r: 8.5 });
   const caret = Math.floor(time * 2) % 2 ? '|' : '';
   if (draft.name) text(ctx, `${draft.name}${caret}`, PX + 58, NY + 12, { size: 9, bold: true });
   else text(ctx, `${caret}Type a name`, PX + 58, NY + 12, { size: 9, color: COLORS.muted });

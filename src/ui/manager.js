@@ -158,6 +158,9 @@ function dimWorld(ctx, state) {
   ctx.fillRect(0, 0, 640, 360);
 }
 
+// How long a closing window takes to fade away (s).
+const CLOSE = 0.14;
+
 export function drawUi(ui, state, world) {
   dimWorld(ui.ctx, state);
   drawHud(ui, state, world);
@@ -170,6 +173,7 @@ export function drawUi(ui, state, world) {
   for (const key of state.order) {
     const win = state.windows[key];
     if (win.open && !win.wasOpen) state.order = [...state.order.filter((k) => k !== key), key];
+    if (!win.open && win.wasOpen) win.closedAt = t;
     win.wasOpen = win.open;
   }
   // Only the frontmost window under the mouse sees its clicks, so windows behind it don't react.
@@ -181,6 +185,32 @@ export function drawUi(ui, state, world) {
     const win = state.windows[key];
     if (!win.open) {
       win.openedAt = null;
+      // Just closed: it shrinks a little and fades away instead of vanishing (drawn once more,
+      // blind to the mouse).
+      const c = (t - (win.closedAt ?? -9)) / CLOSE;
+      if (c < 1 && win.w) {
+        const { ctx } = ui;
+        const k = 1 - 0.07 * c * c;
+        const cx = win.x + win.w / 2;
+        const cy = win.y + win.h / 2;
+        const saved = { x: m.x, y: m.y, down: m.down, clicked: m.clicked, right: m.right, double: m.double, wheel: m.wheel, tip: ui.tooltip };
+        Object.assign(m, { x: -999, y: -999, down: false, clicked: false, right: false, double: false, wheel: 0 });
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(k, k);
+        ctx.translate(-cx, -cy);
+        ctx.globalAlpha = 1 - c;
+        win.open = true;
+        try {
+          WINDOWS[key](ui, state, world);
+        } finally {
+          win.open = false;
+          win.wasOpen = false;
+          ctx.restore();
+          Object.assign(m, { x: saved.x, y: saved.y, down: saved.down, clicked: saved.clicked, right: saved.right, double: saved.double, wheel: saved.wheel });
+          ui.tooltip = saved.tip;
+        }
+      }
       continue;
     }
     const mine = key === top && !modal;
