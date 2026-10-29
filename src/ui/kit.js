@@ -1041,6 +1041,9 @@ export function toggle(ui, x, y, on) {
   return clicked(ui, x - 2, y - 2, w + 4, h + 4) ? !on : on;
 }
 
+// The widest a tooltip line runs before it wraps (px).
+const TIP_W = 230;
+
 // Queue a tooltip; endUi draws it on top of everything.
 export function tooltip(ui, lines) {
   ui.tooltip = lines;
@@ -1049,7 +1052,21 @@ export function tooltip(ui, lines) {
 export function endUi(ui) {
   if (!ui.tooltip) return;
   const { ctx } = ui;
-  const lines = ui.tooltip;
+  // Long lines (a skill's description) wrap at TIP_W, so the box never runs off the screen.
+  const lines = ui.tooltip.flatMap((l) => {
+    ctx.font = font(l.size ?? 9, l.bold);
+    const out = [];
+    let cur = '';
+    for (const word of String(l.text).split(' ')) {
+      const next = cur ? `${cur} ${word}` : word;
+      if (cur && ctx.measureText(next).width > TIP_W) {
+        out.push(cur);
+        cur = word;
+      } else cur = next;
+    }
+    out.push(cur);
+    return out.map((t) => ({ ...l, text: t }));
+  });
   const w = Math.max(...lines.map((l) => {
     ctx.font = font(l.size ?? 9, l.bold);
     return ctx.measureText(l.text).width;
@@ -1059,6 +1076,8 @@ export function endUi(ui) {
   let y = ui.mouse.y + 10;
   if (x + w > 636) x = ui.mouse.x - w - 8;
   if (y + h > 356) y = 356 - h;
+  x = Math.max(4, Math.min(636 - w, x));
+  y = Math.max(4, y);
   const accent = lines[0]?.color ?? COLORS.accent;
   softShadow(ctx, x, y, w, h, 8, 3);
   box(ctx, x, y, w, h, { fill: 'rgba(255,251,253,0.98)', edge: null, r: 8 });
