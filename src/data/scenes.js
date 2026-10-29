@@ -154,6 +154,51 @@ export const HOLLOW_SCENES = {
   ],
 };
 
+// The bosses meet the group (each once a run), before the fight.
+export const HOLLOW_BOSS_SCENES = {
+  hollow_capper: [
+    { who: 'mothercapper', text: 'Who is TRAMPLING my garden? My darlings were sleeping!', mood: 'angry' },
+    { who: 'player', text: "We're sorry! We're here to help Gnarlroot sleep." },
+    { who: 'mothercapper', text: "Help? Nobody HELPS anymore. Out, out, out! Spores, my sweets!", mood: 'angry' },
+  ],
+  hollow_boar: [
+    { who: 'tuskar', text: "GRUNT. You smell like trouble. And acorns. Mostly trouble.", mood: 'angry' },
+    { who: null, text: 'Tuskar paws the ground. The stone pillars of his den tremble.' },
+    { who: 'tuskar', text: "Nobody gets past Tuskar! I'm the GATE. Well. The gate's guard. CHARGE!", mood: 'angry' },
+  ],
+  hollow_gnarl: [
+    { who: null, text: 'The Heart of the Hollow. A great old root, tossing and turning, as tall as a house.' },
+    { who: 'gnarlroot', text: 'Hrrmm... too noisy... too QUIET... the wind stopped singing... I cannot sleep...', mood: 'sad' },
+    { who: 'player', text: "Then we'll help you rest. Hold still, old friend!" },
+  ],
+};
+
+// Bramble on the root radio: short lines over the group's heads as they go (world/hollow.js).
+// Each key has a few lines; one is picked.
+export const HOLLOW_RADIO = {
+  'enter:hollow1': ["It's dark in there. Light the glowcaps and stick together.", 'Hear me? Good. The roots carry my voice. Mind the dark.'],
+  'enter:hollow2': ['The Myconid Queen keeps a garden there. She is... very protective of it.'],
+  'enter:hollow3': ['Little Sprouts are trapped in those cages. Free them and they will cheer you on!', 'Low ceiling in the tunnels. Watch for falling roots.'],
+  'enter:hollow4': ["Tuskar's den. Those stone pillars are older than me: let him crash into them, not you!"],
+  'enter:hollow5': ['The sap rises from the floor in that chamber. When it bubbles, climb!', 'Bramble Bears hold the Root Keys. Take them, gently.'],
+  'enter:hollow6': ['This is it. The Heart of the Hollow. Gnarlroot is just... tired. Be kind, be strong.'],
+  'clear:hollow1': ['Lovely light! On you go.', 'The entrance glows again. Well done.'],
+  'clear:hollow2': ["The garden's quiet. She'll forgive you. Probably."],
+  'clear:hollow3': ['Listen to those Sprouts cheer! They will follow you all the way down.'],
+  'clear:hollow4': ['Tuskar is snoring already. Ha! On to the Root Gate.'],
+  'clear:hollow5': ['The Root Gate is open. The Heart is just ahead...'],
+  wipe: ["Up you get! Everyone stumbles in the dark. Try again.", "That's alright. Catch your breath and go again."],
+  flood: ['Sap rising! Get up high!', 'Here comes the sap! Ledges, now!'],
+  lightsout: ["She's put the lights out! Stay close to each other's light!"],
+  tide: ['Spores all over the floor! Use the bounce mushrooms!'],
+  pillar: ['HA! Right into the pillar! Hit him while he sees stars!'],
+  wargs: ['He called his Wargs! Tank, catch them!'],
+  stampede: ["He's stampeding! Watch both ways!"],
+  walls: ['The roots are closing in! Stay in the middle!'],
+  heart: ['His heart is open! Get up high, strike it from above!'],
+  cheer: ['Another Sprout! Hear them cheering?', 'Free! Look at it go!'],
+};
+
 // Taking a job: the instructor sends you off. `first` for a first job (by family), `path` for a
 // second (by job).
 export const JOB_SCENES = {

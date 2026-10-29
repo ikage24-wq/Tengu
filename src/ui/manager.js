@@ -24,7 +24,7 @@ import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
 import { noteTalk, noteVisit, questState } from '../core/quests.js';
 import { say } from './chat.js';
-import { sceneInput, drawScene } from './cutscene.js';
+import { sceneInput, drawScene, drawRadio } from './cutscene.js';
 
 // Places quests send you: marked off on arrival (and, for a spot up high, once you climb there).
 function noteVisits(world) {
@@ -283,7 +283,8 @@ export function drawUi(ui, state, world) {
   if (state.npc) withPop(ui, state.windows.npc, t, () => npcWindow(ui, state, world));
   else state.windows.npc.openedAt = null;
   if (state.death) deathWindow(ui, state, world);
-  // A story scene plays over everything.
+  // Bramble on the root radio in Rootwood Hollow, and a story scene over everything.
+  drawRadio(ui, world);
   drawScene(ui, world);
 }
 

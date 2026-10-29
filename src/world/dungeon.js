@@ -27,7 +27,7 @@ import { navOf, surfaceBelow } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { recruitBot } from './bots.js';
 import { loadMap } from './world.js';
-import { roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
+import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
 import { playScene } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { today } from '../core/quests.js';
@@ -196,6 +196,7 @@ export function onMapLoaded(world) {
       objects: (map.objects ?? []).map((o, i) => ({ ...o, id: i, done: false, progress: 0 })),
     };
     roomSetup(world, room);
+    radio(world, `enter:${map.id}`);
     for (const m of world.mobs) {
       toughen(world, m);
       settle(m);
@@ -208,6 +209,7 @@ export function onMapLoaded(world) {
   for (const m of world.mobs) if (m.engaged) reset(m);
   room.adds = room.adds.filter((m) => m.hp > 0 && world.mobs.includes(m));
   run.room = room;
+  run.callout = null;
   run.zones = [];
   run.shots = [];
   run.wipeIn = 0;
@@ -262,7 +264,10 @@ function checkClear(world) {
   if (last) {
     run.done = true;
     callout(world, `${DUNGEONS[run.id].name} cleared!`, 'Open the chest for your reward');
-  } else callout(world, 'Room cleared!', 'The way ahead is open');
+  } else {
+    callout(world, 'Room cleared!', 'The way ahead is open');
+    radio(world, `clear:${world.map.id}`);
+  }
   world.juice.push({ type: 'shake', mag: 2, dur: 0.4 });
   for (const g of groupOf(world)) {
     if (g.bot && !g.bot.down && Math.random() < 0.5) g.bot.bubble = { text: pick(last ? ['GG!!', 'we did it!', 'ez clap', 'loot time :D'] : ['nice', 'gj', 'next!', 'ez', ':D']), t: 3 };
@@ -309,6 +314,7 @@ function finish(world, o, who) {
     // Every Sprout freed follows the group and cheers it on for the rest of the run.
     world.dungeon.cheer = (world.dungeon.cheer ?? 0) + 1;
     callout(world, 'A Sprout cheers you on!', `Sprout Cheer x${world.dungeon.cheer}: +${world.dungeon.cheer * 4}% damage`);
+    radio(world, 'cheer');
     world.numbers.push({ x: o.x, y: world.map.groundY - 44, text: 'Thank you!', color: '#9be08f', t: 0, small: true });
   }
   world.juice.push({ type: 'loot', x: o.x, y: world.map.groundY - 16, color: o.kind === 'glowcap' ? '#ffd66b' : '#9be08f' });
@@ -454,7 +460,16 @@ function engage(world, m, by = null) {
       o.atkT = between(0.5, 1.1);
       if (by) o.threat[by] = Math.max(o.threat[by] ?? 0, 1);
     }
-    if (m.def.boss) callout(world, m.def.name, BOSS_LINES[m.def.mech] ?? '');
+    if (m.def.boss) {
+      callout(world, m.def.name, BOSS_LINES[m.def.mech] ?? '');
+      // Each boss meets the group with a scene, once a run.
+      const run = world.dungeon;
+      run.met ??= {};
+      if (!run.met[m.def.mech]) {
+        run.met[m.def.mech] = true;
+        playScene(world, `hollow_${m.def.mech}`);
+      }
+    }
   }
   if (by) m.threat[by] = Math.max(m.threat[by] ?? 0, 1);
 }
@@ -859,6 +874,7 @@ function bossMove(world, m, up, dt) {
         world.juice.push({ type: 'shake', mag: 8, dur: 0.6 });
         run.vfx.push({ kind: 'crash', x: pillar.x, y: m.y, t: 0, dur: 0.6 });
         callout(world, 'Tuskar smashed into a pillar!', "He's seeing stars: hit him hard!");
+        radio(world, 'pillar');
         return true;
       }
       m.x = next;
@@ -1130,6 +1146,7 @@ function wipe(world, group) {
   world.invuln = 2;
   world.channel = null;
   callout(world, 'Your group wiped!', 'Regroup and try again');
+  radio(world, 'wipe');
   world.log('Your group wiped. Everyone regroups at the start of the room.', '#ffb3c6');
 }
 

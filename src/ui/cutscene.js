@@ -190,3 +190,51 @@ function drawSpeaker(ctx, world, step, x, y, t) {
   }
   ctx.restore();
 }
+
+// ---------- The root radio ----------
+
+// Bramble talking over the root radio during a Rootwood Hollow run: a little box low in the middle
+// with his face in a round frame, the line typing out, fading after a few seconds.
+export function drawRadio(ui, world) {
+  const r = world.radio;
+  if (!r || world.scene) return;
+  const age = world.now - r.at;
+  if (age > 5.5) {
+    world.radio = null;
+    return;
+  }
+  const { ctx } = ui;
+  const a = Math.min(1, age / 0.25, (5.5 - age) / 0.5);
+  const npc = NPCS[r.who];
+  const W = 300;
+  const H = 34;
+  const x = 320 - W / 2;
+  const y = 268;
+  ctx.save();
+  ctx.globalAlpha = a;
+  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.95)', edge: '#a6dca2', r: 12, width: 2 });
+  // His face in a round frame, with little signal waves.
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x + 18, y + 17, 13, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#e8f6e0';
+  ctx.fillRect(x + 4, y + 3, 28, 28);
+  drawHero(ctx, npc.look, npc.gear ?? null, x + 18, y + 46, { pose: 'idle', time: world.now, seed: 5, scale: 1.2, talking: age * TYPE < r.text.length, facing: 1 });
+  ctx.restore();
+  ctx.strokeStyle = '#7fbf86';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x + 18, y + 17, 13, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let k = 0; k < 2; k++) {
+    ctx.globalAlpha = a * (0.4 + 0.4 * Math.sin(world.now * 6 - k));
+    ctx.beginPath();
+    ctx.arc(x + 31, y + 9, 4 + k * 3, -0.9, 0.3);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = a;
+  text(ctx, `${npc.name} (root radio)`, x + 38, y + 11, { size: 6.5, bold: true, color: '#3f9f5f' });
+  wrap(ctx, r.text, x + 38, y + 22, W - 46, { size: 7.5, chars: Math.floor(age * TYPE), lineHeight: 9 });
+  ctx.restore();
+}

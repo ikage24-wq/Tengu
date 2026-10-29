@@ -423,7 +423,10 @@ to clear it.
     **Heart of the Hollow** (Gnarlroot in three phases: Root Slam, Thorn strips and Corrupted
     Saplings that feed him; at 60% root walls close in from both sides; at 30% his heart opens above
     him, and only blows from the high ledges reach it). He falls asleep at last in a scene of his
-    own. Party members climb for the sap and the heart too.
+    own. Party members climb for the sap and the heart too. Bramble talks to the group over the
+    root radio as it goes (a line on entering each room, on clearing it, and at the big moments),
+    each boss meets the group with a short scene, and at the end the freed Sprouts dance round the
+    chest.
   - The end: a rank (S, A, B or C, from the time, wipes and falls) that grows the chest's EXP and
     gold, and a result card. The chest can hold a piece of the **Rootwood** set for your job (always
     on Hard or the day's first clear). The first clear of each day adds Cash and Acorns; clearing it

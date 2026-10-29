@@ -17,6 +17,14 @@
 import { addZone, adds, callout, hurtMember, isUp } from './dungeon.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { playScene } from './story.js';
+import { HOLLOW_RADIO } from '../data/scenes.js';
+
+// Bramble on the root radio: a line from `key` shows over the group for a few seconds.
+export function radio(world, key) {
+  const lines = HOLLOW_RADIO[key];
+  if (!lines) return;
+  world.radio = { who: 'bramble', text: lines[Math.floor(Math.random() * lines.length)], at: world.now };
+}
 
 // How hard a bounce mushroom throws you: high enough for the top ledges (about 180px).
 export const BOUNCE = 740;
@@ -104,6 +112,7 @@ function tickFlood(world, dt, up) {
     f.t = def.warn;
     f.since = 0;
     callout(world, 'Sap Surge!', 'Get up on a ledge!');
+    radio(world, 'flood');
   } else if (f.state === 'rising' && f.t <= 0) {
     f.state = 'flooded';
     f.t = def.last;
@@ -140,11 +149,13 @@ export function capperPhases(world, m, dt) {
     room.darkUntil = world.now + 10;
     s.darkIn = 22;
     callout(world, 'Lights Out!', 'She hides in her spores. Stay together near the light!');
+    radio(world, 'lightsout');
   }
   if (s.phase === 2 && frac <= 0.35) {
     s.phase = 3;
     s.tide = 4;
     callout(world, 'Spore Tide!', 'The floor floods with spores: the bounce mushrooms throw you up high!');
+    radio(world, 'tide');
   }
   if (s.phase >= 2) {
     s.darkIn = (s.darkIn ?? 22) - dt;
@@ -193,11 +204,13 @@ export function boarPhases(world, m) {
     s.wargs = true;
     adds(world, m, 'boarlet', [m.x - 300, m.x + 300], null);
     callout(world, 'Tuskar calls his Wargs!', 'Tank, grab them! Damage, bring them down!');
+    radio(world, 'wargs');
   }
   if (!s.stampede && frac <= 0.3) {
     s.stampede = true;
     s.charge = Math.min(s.charge, 2);
     callout(world, 'STAMPEDE!', 'He charges there and back now. Watch both ways!');
+    radio(world, 'stampede');
   }
 }
 
@@ -210,11 +223,13 @@ export function gnarlPhases(world, m) {
     s.closing = true;
     room.walls = { l: 0, r: world.map.width, toL: m.x - 420, toR: m.x + 420 };
     callout(world, 'The Roots Close In!', "Stay in the middle: the walls bite");
+    radio(world, 'walls');
   }
   if (!s.heart && frac <= 0.3) {
     s.heart = true;
     m.heartOpen = true;
     callout(world, 'His Heart Opens!', 'Only blows from the high ledges reach it. Climb!');
+    radio(world, 'heart');
   }
 }
 
