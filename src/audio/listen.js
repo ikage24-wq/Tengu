@@ -7,7 +7,8 @@
 // Sounds pan with where they happen on screen. The music follows the map.
 
 import { sfx } from './sfx.js';
-import { updateMusic } from './music.js';
+import { updateMusic, setFight, setMuffle } from './music.js';
+import { updateAmbience, dayPart } from './ambience.js';
 import { prepareSongs } from './bank.js';
 import { getMap } from '../data/maps.js';
 import { hasRage, hasFaith, hasBond } from '../world/melee.js';
@@ -100,7 +101,7 @@ export function hearWorld(world, cam) {
   }
   if (hit) {
     const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasBond(char) ? 'wind' : null;
-    sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x) });
+    sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x), mob: hit.mob, boss: hit.boss });
   }
 
   // ----- Floating words -----
@@ -151,7 +152,7 @@ export function hearWorld(world, cam) {
       const stride = Math.abs(b.vx) > 90 ? 26 : 20;
       if (m.walked > stride) {
         m.walked = 0;
-        sfx('step', { ground: GROUND[world.map.theme] ?? 'grass' });
+        sfx('step', { ground: GROUND[world.map.theme] ?? 'grass', run: Math.abs(b.vx) > 90 });
       }
     } else m.walked = 0;
     if (b.rope && m.map === world.map.id) {
@@ -168,7 +169,73 @@ export function hearWorld(world, cam) {
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
   Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, ki: world.ki, tails: world.tails, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
 
-  updateMusic(songFor(world.map, world));
+  // ----- The summons' voices: each one speaks up when it sets about something new -----
+  hearSummons(world, m, pan);
+
+  // ----- Spending: a skill point, and something bought -----
+  const sp = Object.values(char.skills ?? {}).reduce((n, v) => n + v, 0);
+  if (!first && sp > (m.sp ?? sp)) sfx('skillUp');
+  if (!first && char.gold < (m.gold0 ?? char.gold)) sfx('buy');
+  m.sp = sp;
+  m.gold0 = char.gold;
+
+  // ----- The music and the world around it -----
+  // A fight is on while blows land or you're hurt, and for a few seconds after.
+  if (world.juice.some((j) => j.type === 'hit' || j.type === 'hurt' || j.type === 'swing')) m.fightAt = world.now;
+  const fighting = world.now - (m.fightAt ?? -99) < 5 && !world.map.isTown;
+  m.fightK = (m.fightK ?? 0) + ((fighting ? 1 : 0) - (m.fightK ?? 0)) * 0.04;
+  const song = songFor(world.map, world);
+  updateMusic(song);
+  setFight(song === 'boss' ? 0 : fighting ? 1 : 0);
+  // Low HP muffles the music under a heartbeat; a town at night is calmer, a little muffled.
+  const low = !world.dead && char.hp > 0 && char.hp < (world.stats?.maxHp ?? 1) * 0.25;
+  const night = world.map.isTown && dayPart() === 'night';
+  setMuffle(low ? 900 : night ? 3200 : 20000);
+  if (low && world.now - (m.beatAt ?? -9) > 0.95) {
+    m.beatAt = world.now;
+    sfx('heartbeat');
+  }
+  updateAmbience(world.map, m.fightK);
+}
+
+// Each summon: what it says when it starts a move, and now and then when it's idle.
+const SUMMONS = [
+  ['oni', 'oniGrunt', 'oniSigh'],
+  ['yuki', 'yukiHiss', 'yukiHum'],
+  ['tengu', 'tenguHmph', 'tenguLaugh'],
+  ['guardian', 'kitsuneKiai', null],
+  ['doll', 'dollHey', 'dollGiggle'],
+];
+function hearSummons(world, m, pan) {
+  const said = (m.said ??= {});
+  for (const [key, act, idle] of SUMMONS) {
+    const k = world[key];
+    if (!k) continue;
+    const a = k.act ?? null;
+    if (a && a !== said[key] && Math.random() < 0.6) sfx(act, { pan: pan(k.x) });
+    said[key] = a;
+    // The doll giggles when she starts one of her idle bits.
+    if (key === 'doll') {
+      if (k.bit && k.bit !== said.dollBit) sfx('dollGiggle', { pan: pan(k.x) });
+      said.dollBit = k.bit;
+    }
+    // Now and then, idle, a line of their own.
+    if (idle && !a && world.now > (said[`${key}At`] ?? world.now + 8 + Math.random() * 10)) {
+      said[`${key}At`] = world.now + 18 + Math.random() * 20;
+      if (said[`${key}At0`]) sfx(idle, { pan: pan(k.x) });
+      said[`${key}At0`] = true;
+    }
+  }
+  // Snow wolf: a growl when she swings, a bored huff now and then.
+  const w = world.pets?.snow;
+  if (w) {
+    if (w.act && w.act !== said.wolf) sfx('wolfGrowl', { pan: pan(w.x) });
+    said.wolf = w.act ?? null;
+    if (!w.act && world.now > (said.wolfAt ?? world.now + 6)) {
+      said.wolfAt = world.now + 14 + Math.random() * 16;
+      sfx('wolfHuff', { pan: pan(w.x) });
+    }
+  }
 }
 
 function countItems(char) {
@@ -187,14 +254,15 @@ function questCounts(char) {
   return [active, done];
 }
 
-// Windows popping open and closed.
+// Windows popping open and closed (some with a sound of their own).
+const OPEN_SOUND = { quests: 'openPaper', worldmap: 'openPaper', bag: 'openBag' };
 const uiMemo = new WeakMap();
 export function hearUi(state) {
   const was = uiMemo.get(state) ?? {};
   const now = {};
   for (const [name, w] of Object.entries(state.windows ?? {})) {
     now[name] = Boolean(w.open);
-    if (name in was && now[name] !== was[name]) sfx(now[name] ? 'open' : 'close');
+    if (name in was && now[name] !== was[name]) sfx(now[name] ? OPEN_SOUND[name] ?? 'open' : 'close');
   }
   uiMemo.set(state, now);
 }

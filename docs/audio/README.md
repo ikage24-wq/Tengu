@@ -42,3 +42,17 @@ Rules we keep:
    sub thump.
 6. Every music change happens on a beat or bar line where the music has one.
 7. Each effect has a level (`db`), a pitch spread (`vary`) and a voice cap (`max`).
+
+## Ambience, weight and reactive music (2026-10-29)
+
+- Every area has an ambience bed (looping filtered noise drifting on a slow wave: wind, the sea, a
+  cave's hush, a town's murmur) and little sounds over it (birds, gulls, drips, chatter, chimes),
+  on their own `amb` bus. The player's clock picks day or night (crickets and an owl at night).
+  See `src/audio/ambience.js`.
+- Blows add what the monster is made of (`src/audio/materials.js`), heavy weapons sound lower and
+  daggers higher, crits add a low thump, and finishers drop the music out for a moment.
+- Each field and town song has a fight layer (its bass and a driving drum line, bar for bar) that
+  fades in on top while a fight is on. Low HP muffles the music under a heartbeat; towns at night
+  are a little muffled.
+- Footsteps alternate feet in pitch and stereo; window opens pop, the quest log and map rustle,
+  the bag creaks; skill points and purchases have their own chimes; summons have voices.

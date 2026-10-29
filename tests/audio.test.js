@@ -107,3 +107,14 @@ test('a bar that does not add up is caught, and chords parse', () => {
   assert.deepEqual(events[0].midis, [60, 64, 67]);
 });
 
+
+test('each fight layer loops in step with its area song, and every ambience sound is a recipe', async () => {
+  for (const k of ['meadow', 'harbor', 'town', 'cave']) {
+    const a = renderSong(SONGS[k], bank, 8000);
+    const f = renderSong(SONGS[`${k}-fight`], bank, 8000);
+    assert.ok(Math.abs(a.loopEnd - f.loopEnd) < 1e-6 && Math.abs(a.loopStart - f.loopStart) < 1e-6, `${k} fight layer matches`);
+  }
+  const { RECIPES } = await import('../src/audio/recipes.js');
+  const { MATERIAL } = await import('../src/audio/materials.js');
+  for (const name of ['birdChirp', 'cricket', 'waveWash', 'gull', 'drip', 'chatter', 'heartbeat', 'skillUp', 'buy', 'dollGiggle', 'wolfHuff', 'oniGrunt', 'tenguLaugh', ...new Set(Object.values(MATERIAL))]) assert.ok(RECIPES[name], `${name} exists`);
+});

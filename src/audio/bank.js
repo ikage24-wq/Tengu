@@ -115,8 +115,9 @@ function receive(m) {
     }
     const song = { buffer: toBuffer([m.left, m.right], m.sampleRate), loopStart: m.loopStart, loopEnd: m.loopEnd, bpm: SONGS[m.key].bpm, rows: SONGS[m.key].rows ?? 16 };
     songBufs.set(m.key, song);
-    // A minute of stereo is about 15 MB, so only the most recent few songs are kept.
-    while (songBufs.size > 4) songBufs.delete(songBufs.keys().next().value);
+    // A minute of stereo is about 15 MB, so only the most recent few songs are kept (an area's song
+    // and its fight layer count as two).
+    while (songBufs.size > 6) songBufs.delete(songBufs.keys().next().value);
     for (const fn of waiting.get(m.key) ?? []) fn(song);
     waiting.delete(m.key);
   } else if (m.type === 'error') console.warn('sound', m.key, m.message);

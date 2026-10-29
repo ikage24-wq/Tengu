@@ -478,12 +478,69 @@ const R = {
       { drum: '*', at: 960, db: -12 },
     ],
   },
+  // ---------- The world around you (ambience.js plays these over each area's bed) ----------
+  // Birds: quick sine chirps and a trill; at night, crickets and an owl.
+  birdChirp: { db: -27, vary: 12, max: 2, gap: 200, layers: [{ wave: 'sine', arp: [3300, 4200, 3700], arpStep: 45, slide: 1.2, vib: [28, 3], env: { a: 3, s: 100, d: 40 } }, { wave: 'sine', f0: 3900, slide: 2, env: { a: 2, s: 30, d: 40 }, at: 220, db: -3 }] },
+  birdTrill: { db: -29, vary: 10, max: 2, gap: 300, layers: [{ wave: 'sine', f0: 3600, repeat: 55, repeatSemis: -1, slide: 3, env: { a: 6, s: 320, d: 120 } }] },
+  cricket: { db: -31, vary: 6, max: 3, gap: 120, layers: [0, 34, 68, 102].map((at) => ({ wave: 'sine', f0: 4300, env: { a: 1, s: 9, d: 14 }, at })) },
+  owl: { db: -26, vary: 4, max: 1, gap: 2000, layers: [{ wave: 'sine', f0: 420, slide: -0.3, env: { a: 40, s: 110, d: 180 } }, { wave: 'sine', f0: 400, slide: -0.4, env: { a: 50, s: 260, d: 260 }, at: 430 }] },
+  leafRustle: { db: -31, vary: 8, max: 1, gap: 400, layers: [{ wave: 'noise', env: { a: 90, s: 150, d: 320 }, hpf: [2500], lpf: [7000] }] },
+  // The sea: a wave washing in and drawing back; gulls; the creak of the boards.
+  waveWash: { db: -25, vary: 6, max: 2, gap: 800, layers: [{ wave: 'noise', env: { a: 700, s: 300, d: 1700 }, lpf: [1100, 380] }, { rec: 'splash', rate: 0.7, db: -14 }] },
+  gull: { db: -29, vary: 8, max: 1, gap: 1500, layers: [{ wave: 'saw', f0: 980, slide: -1.3, vib: [9, 4], env: { a: 25, s: 200, d: 180 }, lpf: [2400] }, { wave: 'saw', f0: 1060, slide: -1.6, vib: [9, 4], env: { a: 20, s: 150, d: 160 }, lpf: [2400], at: 380, db: -2 }] },
+  woodCreak: { db: -30, vary: 10, max: 1, gap: 1500, layers: [{ wave: 'saw', f0: 140, slide: 0.6, vib: [18, 6], env: { a: 120, s: 200, d: 300 }, lpf: [900] }] },
+  // Caves and the Hollow: water dripping into pools, with a ring of the room.
+  drip: { db: -24, vary: 14, max: 2, gap: 300, room: true, layers: [{ wave: 'sine', f0: 900, slide: 3.2, env: { a: 1, s: 8, d: 70 } }, { wave: 'sine', f0: 1300, slide: 2.5, env: { a: 1, s: 5, d: 60 }, at: 150, db: -12 }] },
+  // Heights and old stones: a hawk overhead, wind chimes.
+  hawkCry: { db: -29, vary: 6, max: 1, gap: 4000, layers: [{ wave: 'saw', f0: 2300, slide: -1.1, vib: [12, 3], env: { a: 20, s: 280, d: 420 }, lpf: [3600] }] },
+  windChime: { db: -27, vary: 3, max: 1, gap: 2000, room: true, layers: [{ seq: 'E7:120 B6:160 G7:200 D7:300', synth: 'bell', tail: 1600 }] },
+  // Towns: far-off chatter (muffled voices), and the town bell now and then.
+  chatter: { db: -33, vary: 18, max: 2, gap: 400, layers: [{ wave: 'tri', arp: [520, 610, 560, 650, 580, 540], arpStep: 75, vib: [6, 3], env: { a: 10, s: 400, d: 80 }, lpf: [1700] }] },
+  townBell: { db: -26, vary: 2, max: 1, gap: 8000, room: true, layers: [{ rec: 'bell', rate: 0.75 }] },
+  // ---------- Weight under blows (sfx.js) ----------
+  // What a blow lands on: stone cracks, crystal rings, bone and armour clank, wood knocks,
+  // slime squelches, a spirit whooshes through.
+  matStone: { db: -16, vary: 6, max: 2, layers: [{ rec: 'rockHit', len: 300 }, thump(110, 90, { db: -6 })] },
+  matCrystal: { db: -17, vary: 6, max: 2, layers: [{ rec: 'glass', rate: 1.1 }, sparkle('E7:60', { db: -12 })] },
+  matArmor: { db: -17, vary: 5, max: 2, layers: [{ rec: 'plate', len: 260 }] },
+  matWood: { db: -16, vary: 6, max: 2, layers: [{ rec: 'wood' }] },
+  matSlime: { db: -16, vary: 10, max: 2, layers: [{ rec: 'slime' }] },
+  matSpirit: { db: -18, vary: 8, max: 2, layers: [whoosh(220, 3000, 900, { focus: 0.3 })] },
+  // A crit's low thump, under its ring.
+  critThump: { db: -12, vary: 2, max: 1, gap: 120, layers: [thump(70, 220, { slide: -2 }), { wave: 'noise', env: { a: 1, s: 10, d: 90 }, lpf: [500], db: -10 }] },
+  // Low HP: a heartbeat, lub-dub.
+  heartbeat: { db: -15, max: 1, gap: 500, layers: [thump(62, 120, { slide: -1.5 }), thump(55, 160, { slide: -1.5, at: 170, db: -3 })] },
+  // ---------- Your summons' voices (sfx.js; played when they set about something) ----------
+  // The Spirit Doll's giggle: a quick run of tiny high notes.
+  dollGiggle: { db: -21, vary: 6, max: 1, gap: 600, layers: [{ wave: 'sine', arp: [1568, 1760, 1568, 2093, 1760], arpStep: 55, vib: [14, 4], env: { a: 5, s: 260, d: 60 }, overtones: [3, 0.25] }] },
+  dollHey: { db: -20, vary: 6, max: 1, gap: 400, layers: [{ wave: 'sine', f0: 1400, slide: 1.4, vib: [12, 3], env: { a: 4, s: 90, d: 60 }, overtones: [3, 0.25] }] },
+  // Snow wolf: a bored huff through the nose, and a little growl when she swings.
+  wolfHuff: { db: -22, vary: 8, max: 1, gap: 800, layers: [{ wave: 'noise', env: { a: 20, s: 60, d: 200 }, lpf: [1400, 600], hpf: [300] }] },
+  wolfGrowl: { db: -21, vary: 6, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 120, slide: 0.4, vib: [24, 8], env: { a: 30, s: 160, d: 140 }, lpf: [700] }] },
+  // The oni: a low grunt on a swing, a big bored sigh when idle.
+  oniGrunt: { db: -19, vary: 6, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 150, slide: -0.6, vib: [20, 5], env: { a: 15, s: 120, d: 120 }, lpf: [800] }, { rec: 'ogre', rate: 1.3, len: 300, db: -10 }] },
+  oniSigh: { db: -22, vary: 5, max: 1, gap: 2000, layers: [{ wave: 'noise', env: { a: 150, s: 300, d: 600 }, lpf: [900, 400], hpf: [200] }, { wave: 'tri', f0: 180, slide: -0.5, env: { a: 150, s: 300, d: 500 }, lpf: [500], db: -14 }] },
+  // The yuki-onna: a soft breathy hum, and an icy hiss as she strikes.
+  yukiHum: { db: -23, vary: 3, max: 1, gap: 1500, room: true, layers: [{ wave: 'sine', arp: [659, 784, 740], arpStep: 260, vib: [5, 2], env: { a: 80, s: 700, d: 300 } }, { wave: 'noise', env: { a: 80, s: 600, d: 300 }, hpf: [3500], db: -18 }] },
+  yukiHiss: { db: -21, vary: 5, max: 1, gap: 500, layers: [{ wave: 'noise', env: { a: 20, s: 160, d: 200 }, hpf: [2600], lpf: [9000] }] },
+  // The tengu: a smug "hmph" and a short laugh.
+  tenguHmph: { db: -20, vary: 5, max: 1, gap: 600, layers: [{ wave: 'saw', f0: 230, slide: -0.8, env: { a: 10, s: 80, d: 90 }, lpf: [1200] }] },
+  tenguLaugh: { db: -21, vary: 5, max: 1, gap: 1200, layers: [{ wave: 'saw', f0: 260, repeat: 110, repeatSemis: -1, slide: -1, env: { a: 10, s: 380, d: 100 }, lpf: [1400] }] },
+  // The guardian: a short sharp kiai.
+  kitsuneKiai: { db: -20, vary: 4, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 520, slide: -0.9, env: { a: 8, s: 70, d: 100 }, lpf: [2200] }] },
   // ---------- Interface: real clicks, high, short and dry ----------
   click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
   cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },
   cancel: { db: -16, max: 2, layers: [{ rec: 'back', len: 200 }] },
-  open: { db: -20, max: 1, layers: [{ rec: 'open', len: 260 }] },
-  close: { db: -20, max: 1, layers: [{ rec: 'close' }] },
+  // Windows pop open like a soap bubble (a little rising blip) and pop shut (falling).
+  open: { db: -19, max: 1, layers: [{ rec: 'open', len: 200, db: -6 }, { wave: 'sine', f0: 620, slide: 2.6, env: { a: 2, s: 30, d: 60 }, overtones: [2, 0.2] }] },
+  close: { db: -20, max: 1, layers: [{ rec: 'close', db: -6 }, { wave: 'sine', f0: 900, slide: -2.6, env: { a: 2, s: 25, d: 60 }, overtones: [2, 0.2] }] },
+  // The quest log and the map rustle like paper; the bag opens with a creak of leather.
+  openPaper: { db: -19, max: 1, layers: [{ rec: 'bookFlip', len: 300 }] },
+  openBag: { db: -18, max: 1, layers: [{ rec: 'leather', len: 220 }, { rec: 'cloth', len: 200, db: -6 }] },
+  // A skill point spent: a rising run; something bought: coins and a jingle.
+  skillUp: { db: -16, max: 1, gap: 120, layers: [{ seq: 'C6:45 E6:45 G6:45 C7:220', synth: 'pluck', cut: 6000, ring: 0.15, tail: 300 }, sparkle('G7:120', { at: 140, db: -10 })] },
+  buy: { db: -15, max: 1, gap: 150, layers: [{ rec: 'coins', len: 500 }, { seq: 'E6:50 A6:50 E7:200', synth: 'pluck', cut: 6000, ring: 0.12, db: -6, tail: 200 }] },
   denied: { db: -15, max: 1, layers: [{ rec: 'error' }] },
   // NPC voices: a soft round "boop" (rendered at C5 and played back at each speaker's pitch).
   blipTri: { db: -20, gap: 70, max: 1, layers: [{ wave: 'sine', f0: N.C5, overtones: [3, 0.25], env: { a: 3, s: 15, d: 35 }, lpf: [3000] }] },

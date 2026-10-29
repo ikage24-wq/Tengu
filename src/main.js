@@ -20,6 +20,7 @@ import { openProfile } from './ui/profile.js';
 import { unlock } from './audio/engine.js';
 import { hearWorld, hearUi } from './audio/listen.js';
 import { updateMusic } from './audio/music.js';
+import { stopAmbience } from './audio/ambience.js';
 import { preloadFxSprites } from './render/fx-sprites.js';
 
 loadSettings();
@@ -148,7 +149,10 @@ function frame(now) {
   setHd(settings.hdGraphics, pixelScale);
   const ui = beginUi(ctx, input);
 
-  if (screen !== 'game') updateMusic('title');
+  if (screen !== 'game') {
+    updateMusic('title');
+    stopAmbience();
+  }
   if (screen === 'title') {
     if (titleScreen(ui, time)) {
       loadChars();

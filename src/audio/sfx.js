@@ -17,16 +17,18 @@
 //   pitch (the same letter always the same note), rising at the end of a question.
 
 import { play, now, audioReady, duck } from './engine.js';
+import { MATERIAL } from './materials.js';
 import { sfxBuffer } from './bank.js';
 import { RECIPES } from './recipes.js';
 
-const UI = new Set(['click', 'cursor', 'cancel', 'open', 'close', 'denied']);
+const UI = new Set(['click', 'cursor', 'cancel', 'open', 'close', 'denied', 'openPaper', 'openBag', 'skillUp', 'buy']);
 const JINGLES = new Set(['levelup', 'questDone', 'questAccept', 'jobUp', 'rareDrop', 'itemGet', 'bossDefeated', 'death']);
 const voices = [];
 const last = new Map();
 let jingleEnd = 0;
 const combo = { at: -9, step: 0 };
 const coins = { at: -9, step: 0 };
+const feet = { left: false };
 
 // The most recent sounds played, oldest first (for tools and play tests).
 export const played = [];
@@ -119,8 +121,16 @@ const SOUNDS = {
   // A blow landing. Blades: a punch and a cut whose body climbs with each step of a quick chain,
   // a finisher's thump and clang, a crit's ring. Arrows and stars thud in; spells land with their
   // school's own impact. Then the path's (Rage, Faith) or the weapon's element colour.
-  hit({ big, crit, path, school, via = 'blade', weapon, element, many = 1, pan }) {
+  hit({ big, crit, path, school, via = 'blade', weapon, element, many = 1, pan, mob, boss }) {
     const db = Math.min(3, (many - 1) * 1);
+    const heft = { axe: 0.9, spear: 0.95, dagger: 1.08, none: 1.04 }[weapon] ?? 1;
+    const mat = MATERIAL[mob];
+    if (mat) voice(mat, { pan, db: big ? 2 : 0, rate: heft });
+    if (crit) {
+      voice('critThump', { pan });
+      duck(-6, 140);
+    }
+    if (big) duck(boss ? -14 : -10, 170);
     if (ARROWS.has(via) || HEAVY_HITS.has(via)) voice(big || HEAVY_HITS.has(via) ? 'arrowHitHeavy' : 'arrowHit', { pan, db });
     else if (via === 'star' || via === 'moonstar' || via === 'nightstar' || via === 'giantstar' || via === 'pebble') voice('starHit', { pan, db });
     else if (via !== 'blade' && via !== 'chain' && school && COLOUR[school]) voice(COLOUR[school], { pan, db: db + 2 });
@@ -135,7 +145,7 @@ const SOUNDS = {
         combo.step = -1;
       } else {
         const climb = [0, 5, 7][Math.min(2, Math.max(0, combo.step) % 3)];
-        voice(BLADE_HITS[weapon] ?? (many > 2 ? 'hitMedium' : 'hit'), { pan, db });
+        voice(BLADE_HITS[weapon] ?? (many > 2 ? 'hitMedium' : 'hit'), { pan, db, rate: heft });
         voice('hitTone', { pan, db, rate: semis(climb) });
       }
       if (school === 'steel') voice('steelHit', { pan, db: -4 });
@@ -174,7 +184,10 @@ const SOUNDS = {
   },
   spell: ({ kind, pan }) => voice(SPELLS[kind] ?? 'hitMedium', { pan }),
   tier: ({ n = 1 }) => voice('tier', { rate: semis(Math.min(4, n - 1) * 2) }),
-  step: ({ ground = 'grass', pan }) => voice(STEPS[ground] ?? 'stepGrass', { pan }),
+  step({ ground = 'grass', run = false }) {
+    feet.left = !feet.left;
+    voice(STEPS[ground] ?? 'stepGrass', { pan: feet.left ? -0.08 : 0.08, rate: feet.left ? 1 : 0.95, db: (run ? 2 : 0) - Math.random() * 2.5 });
+  },
   land: ({ hard, pan }) => voice(hard ? 'landHard' : 'land', { pan }),
   drop: ({ pan }) => voice('rareDrop', { pan }),
   coin() {

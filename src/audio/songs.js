@@ -452,3 +452,21 @@ const boss = {
 };
 
 export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss };
+
+// Each field and town song's fight layer: the same song, bar for bar (so it loops in step with
+// it), with only its bass and a driving drum line of its own, heavier. The music player fades it
+// in on top of the area's song while there's a fight on, and out again after (music.js). The
+// other parts stay in, silenced, so every section keeps the same length.
+const FIGHT_DRUMS = { 16: 'K.h.S.hKK.h.S.tt', 12: 'K.hS.hK.hS.t' };
+for (const key of ['town', 'meadow', 'harbor', 'crag', 'forest', 'grove', 'ruins', 'cave', 'sky', 'hollow']) {
+  const song = SONGS[key];
+  const grid = FIGHT_DRUMS[song.rows ?? 16] ?? FIGHT_DRUMS[16];
+  SONGS[`${key}-fight`] = {
+    ...song,
+    name: `${key}-fight`,
+    drums: 1.15,
+    pump: 0.3,
+    tracks: Object.fromEntries(Object.entries(song.tracks).map(([k, tr]) => [k, k === 'bass' || k === 'sub' ? { ...tr, gain: tr.gain * 1.3 } : { ...tr, gain: 0 }])),
+    patterns: Object.fromEntries(Object.entries(song.patterns).map(([k, pat]) => [k, { ...pat, drums: grid }])),
+  };
+}

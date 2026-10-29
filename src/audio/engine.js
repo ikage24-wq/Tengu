@@ -22,6 +22,7 @@ let master = null;
 let buses = null;
 let room = null;
 let duckGain = null;
+let musicTone = null;
 let output = null;
 let duckUntil = 0;
 let duckDepth = 0;
@@ -59,14 +60,20 @@ export function unlock() {
   lim.connect(ac.destination);
   output = lim;
   buses = {};
-  for (const name of ['sfx', 'music', 'voice', 'ui']) {
+  for (const name of ['sfx', 'music', 'voice', 'ui', 'amb']) {
     buses[name] = ac.createGain();
     buses[name].connect(master);
   }
-  // The music bus goes through its own ducking gain.
+  // The music bus goes through its own ducking gain, and a lowpass that muffles it (low HP, a
+  // calm night in town; wide open the rest of the time).
   buses.music.disconnect();
   duckGain = ac.createGain();
-  buses.music.connect(duckGain);
+  musicTone = ac.createBiquadFilter();
+  musicTone.type = 'lowpass';
+  musicTone.frequency.value = 20000;
+  musicTone.Q.value = 0.7;
+  buses.music.connect(musicTone);
+  musicTone.connect(duckGain);
   duckGain.connect(master);
   // A small room: 0.3 s of softly decaying noise, about -18 dB.
   room = ac.createConvolver();
@@ -92,6 +99,8 @@ export function applyVolumes() {
   buses.sfx.gain.setTargetAtTime(sfxV, t, 0.05);
   buses.ui.gain.setTargetAtTime(sfxV, t, 0.05);
   buses.voice.gain.setTargetAtTime(sfxV, t, 0.05);
+  // The world's ambience sits under the effects, a little quieter.
+  buses.amb.gain.setTargetAtTime(sfxV * 0.85, t, 0.05);
   buses.music.gain.setTargetAtTime(level(settings.musicVolume), t, 0.05);
 }
 
@@ -118,6 +127,15 @@ export function duck(db, ms) {
   g.setTargetAtTime(dbGain(depth), t, 0.03);
   g.setTargetAtTime(1, duckUntil, 0.18);
 }
+
+// Muffles the music to a lowpass at `hz` (20000 = open), easing there over about `secs`.
+export function muffleMusic(hz, secs = 0.4) {
+  if (!ac) return;
+  musicTone.frequency.setTargetAtTime(Math.max(200, Math.min(20000, hz)), ac.currentTime, secs / 3);
+}
+
+// A bus's input node (for sounds built live from nodes, like the ambience beds).
+export const busNode = (name) => (buses ? buses[name] : null);
 
 // Turns a Float32Array (mono) or [left, right] into an AudioBuffer.
 export function toBuffer(data, sr) {
@@ -158,7 +176,7 @@ export function play(buffer, o = {}) {
 
 // A looping music source on the music bus, starting at audio time `at`, `offset` seconds into
 // the buffer, fading in over `fade` seconds. o.filter: a lowpass to open up over time (cutscenes).
-export function loop(buffer, { at = 0, offset = 0, loopStart = 0, loopEnd = buffer.duration, fade = 0, db = 0, filter = null } = {}) {
+export function loop(buffer, { at = 0, offset = 0, loopStart = 0, loopEnd = buffer.duration, fade = 0, db = 0, filter = null, silent = false } = {}) {
   if (!ac) return null;
   const src = ac.createBufferSource();
   src.buffer = buffer;
@@ -168,7 +186,8 @@ export function loop(buffer, { at = 0, offset = 0, loopStart = 0, loopEnd = buff
   const gain = ac.createGain();
   const t = Math.max(at, ac.currentTime);
   const peak = dbGain(db);
-  if (fade > 0) {
+  if (silent) gain.gain.value = 0;
+  else if (fade > 0) {
     gain.gain.setValueAtTime(0, t);
     gain.gain.linearRampToValueAtTime(peak, t + fade);
   } else gain.gain.value = peak;
