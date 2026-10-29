@@ -104,7 +104,7 @@ test("the Warrior's combo mixes its swings: a fresh string each time, never the 
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
   const seen = new Set();
   const random = Math.random;
-  let seed = 11;
+  let seed = 8080;
   Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   try {
     for (let i = 0; i < 60 * 90; i++) {
@@ -1619,7 +1619,7 @@ test("the Thief's combos mix her own acrobatic pools, and every finisher springs
     const w = thief(weapon);
     const seen = new Set();
     const flips = [];
-    let seed = 11;
+    let seed = 8080;
     dice(0, () => {
       Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
       let fin = null;
@@ -1657,7 +1657,11 @@ test('Backstab melts her into smoke while she slips through, and she steps out o
   assert.ok(w.body.x > x0 + 40, 'slipped through');
 });
 
-test("a Thief's hits build Shadow, faster in a quick chain, and it fades once the fighting stops", () => {
+test("a Thief's hits build Shadow, faster in a quick chain, and it fades once the fighting stops", (t) => {
+  // Crits and the basic combo's swings are random: a fixed sequence keeps the comparison fair
+  // (and the test steady).
+  let seed = 8080;
+  t.mock.method(Math, 'random', () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648));
   const w = thief();
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
   run(w, 1.5, hold);
@@ -2117,7 +2121,7 @@ test("the Paladin's and the Berserker's combos mix their own swing pools too", (
     // Played out with fixed dice, every swing in the pool comes up.
     const w = advanced(job, weapon);
     const seen = new Set();
-    let seed = 7;
+    let seed = 8080;
     dice(0, () => {
       Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
       for (let i = 0; i < 60 * 60; i++) {
