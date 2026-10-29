@@ -4232,6 +4232,240 @@
   E.inkfoxbig = big(E.inkfox, 1.4);
   E.flamefoxbig = big(E.flamefox, 1.4);
 
+  // ---------- The Spirit Mage (white spirit light, paper streamers, scarlet cords, gold bells) ----------
+  // The new base mage, a young shrine mage whose spirits strike and heal (realistic: no outlines).
+  // Her light is white with a warm gold heart and soft lavender shade; her shapes are the shrine's:
+  // zigzag paper streamers (shide) fluttering off everything, scarlet cords, and gold bells.
+  const SPIRIT = ['#ffffff', '#fff7e4', '#e6dcff', '#9a8cd0'];
+  const SPIRITR = ramp([[0, '#7a6cb8'], [0.35, '#c8bff0'], [0.7, '#fff3dc'], [1, '#ffffff']]);
+  const SCARLET = ['#ffffff', '#ffd2cc', '#ff5a4e', '#c41e2c'];
+  const BELL = ['#ffffff', '#fff3c4', '#ffd36a', '#c8902a'];
+  const PAPERW = ramp([[0, '#b8b2c8'], [0.5, '#e8e4f0'], [1, '#ffffff']]);
+  // A paper streamer (shide): a strip of white paper cut and folded into a zigzag, hanging from
+  // (x, y) down `len`, swaying by `sway`; drawn soft, lit on one side.
+  function shide(ctx, x, y, len, w, sway, a = 1, rot = 0) {
+    const steps = 4;
+    const pts = [];
+    for (let k = 0; k <= steps; k++) {
+      const u = k / steps;
+      const side = k % 2 ? 1 : -1;
+      pts.push([x + Math.sin(rot) * len * u + side * w * 0.5 + sway * u * u, y + Math.cos(rot) * len * u]);
+    }
+    for (let k = 0; k < steps; k++) {
+      const [x0, y0] = pts[k];
+      const [x1, y1] = pts[k + 1];
+      const quad = [[x0 - w * 0.5, y0], [x0 + w * 0.5, y0], [x1 + w * 0.5, y1], [x1 - w * 0.5, y1]];
+      ctx.save();
+      ctx.globalAlpha *= a;
+      ctx.fillStyle = k % 2 ? '#e4e0ee' : '#ffffff';
+      ctx.beginPath();
+      quad.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  // Her bolt in flight, looping: a wisp of white spirit light (a bright round head trailing a soft
+  // tail), two paper streamers and a scarlet cord fluttering behind it.
+  E.spiritorb = {
+    w: 200, h: 100, n: 6, fps: 16, px: 160, py: 50, loop: true,
+    draw(ctx, i) {
+      const T = i / 6;
+      painted(ctx, 0, 0, 200, 100, (x, y) => {
+        const u = (160 - x) / 140;
+        const wob = Math.sin(u * 7 - T * TAU) * 5 * u;
+        const half = u < 0 ? 18 * Math.sqrt(Math.max(0, 1 + u * 6)) : 18 * (1 - u) ** 1.2 + 1;
+        const d = Math.abs(y - 50 - wob) / half;
+        if (d > 1.4 || u > 1 || u < -0.2) return [0, 0];
+        const n = fbm(x / 10 - T * 6, y / 10, 3);
+        const v = sstep(1.2, 0.2, d + (n - 0.5) * 0.6) * sstep(1, 0.6, u);
+        return [Math.min(1, v * 1.1 + sstep(0.4, 0, u) * 0.4), Math.min(1, v * 1.4)];
+      }, SPIRITR, 1);
+      bloomDisc(ctx, 160, 50, 14, 14, SPIRIT, 1);
+      shide(ctx, 128, 44, 40, 7, -6 + Math.sin(T * TAU) * 6, 0.9, Math.PI / 2 + 0.25);
+      shide(ctx, 128, 56, 36, 6, 6 + Math.sin(T * TAU + 1.5) * 6, 0.8, Math.PI / 2 - 0.2);
+      const cord = [];
+      for (let k = 0; k <= 12; k++) cord.push([150 - k * 8, 50 + Math.sin(k * 0.8 - T * TAU) * 4 * (k / 12)]);
+      glow(ctx, cord, 0.5, SCARLET, 0.9);
+    },
+  };
+  // Her hit: a flash of white light bursting on the monster, rays, scraps of paper streamers
+  // flung out, and gold bell sparks; it fades in a soft glow.
+  E.spirithit = {
+    w: 200, h: 200, n: 6, fps: 24, px: 100, py: 100,
+    draw(ctx, i) {
+      const a = [1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      const r = [20, 34, 44, 50, 54, 56][i];
+      bloomDisc(ctx, 100, 100, r * 0.9, r * 0.9, SPIRIT, a);
+      for (let k = 0; k < 8; k++) {
+        const ang = (k / 8) * TAU + 0.2;
+        const L = r * (k % 2 ? 1.1 : 1.6);
+        glow(ctx, [[100 + Math.cos(ang) * r * 0.3, 100 + Math.sin(ang) * r * 0.3], [100 + Math.cos(ang) * L, 100 + Math.sin(ang) * L]], 0.9 * a + 0.2, SPIRIT, a);
+      }
+      if (i >= 1) {
+        const R = rng(1700 + i);
+        for (let k = 0; k < 6; k++) {
+          const ang = R() * TAU;
+          const d = r * (0.8 + R() * 0.6);
+          shide(ctx, 100 + Math.cos(ang) * d, 100 + Math.sin(ang) * d + i * 3, 14, 4, (R() - 0.5) * 6, a, ang);
+        }
+        for (let k = 0; k < 6; k++) {
+          const ang = R() * TAU;
+          const d = r * (0.6 + R() * 0.8);
+          bloomDisc(ctx, 100 + Math.cos(ang) * d, 100 + Math.sin(ang) * d, 2.5, 2.5, BELL, a);
+        }
+      }
+    },
+  };
+  // Spirit Wave: a ring of white light racing out over the ground, paper streamers whipping off
+  // its edge.
+  E.ringspirit = {
+    w: 260, h: 260, n: 6, fps: 24, px: 130, py: 130,
+    draw(ctx, i) {
+      const r = [40, 70, 92, 106, 116, 122][i];
+      const a = [1, 1, 0.85, 0.6, 0.4, 0.2][i];
+      painted(ctx, 0, 0, 260, 260, (x, y) => {
+        const d = Math.abs(Math.hypot(x - 130, y - 130) - r) / [18, 15, 12, 9, 7, 5][i];
+        if (d > 1.6) return [0, 0];
+        return [0.55 + sstep(1, 0, d) * 0.45, sstep(1.5, 0.2, d) * a];
+      }, SPIRITR, 1.5);
+      for (let k = 0; k < 10; k++) {
+        const ang = (k / 10) * TAU + i * 0.1;
+        shide(ctx, 130 + Math.cos(ang) * r, 130 + Math.sin(ang) * r, 14 + i * 2, 5, 0, a, ang - Math.PI / 2);
+      }
+    },
+  };
+  // Blessing: a soft column of warm white light coming down over her, motes drifting in it, gold
+  // bells chiming as sparks, and a glow on the ground; it fades from the top.
+  E.blessing = {
+    w: 170, h: 330, n: 8, fps: 16, px: 85, py: 318,
+    draw(ctx, i) {
+      const top = [260, 120, 20, 10, 10, 30, 80, 160][i];
+      const a = [0.6, 0.9, 1, 1, 0.9, 0.7, 0.45, 0.2][i];
+      painted(ctx, 0, 0, 170, 330, (x, y) => {
+        if (y < top) return [0, 0];
+        const half = 26 + (318 - y) * 0.05;
+        const d = Math.abs(x - 85) / half;
+        if (d > 1.3) return [0, 0];
+        const shim = fbm(x / 14, y / 40 - i * 0.3, 3);
+        const v = sstep(1.2, 0, d) * (0.55 + 0.45 * shim) * sstep(top, top + 40, y);
+        return [0.6 + v * 0.4, v * 0.7 * a];
+      }, SPIRITR, 2);
+      ctx.save();
+      ctx.translate(85, 316);
+      ctx.scale(1, 0.32);
+      bloomDisc(ctx, 0, 0, 52, 52, SPIRIT, a);
+      ctx.restore();
+      const R = rng(1720 + i);
+      for (let k = 0; k < 10; k++) {
+        const x = 85 + (R() - 0.5) * 50;
+        const y = 300 - ((R() * 280 + i * 18) % 280);
+        if (y < top) continue;
+        bloomDisc(ctx, x, y, 2.2, 2.2, k % 3 ? SPIRIT : BELL, a);
+      }
+    },
+  };
+  // Spirit Ward, looping: a sphere of pale light round her, a sacred rope (twisted white and
+  // scarlet) circling its middle with paper streamers hanging off it, shimmering.
+  E.spiritward = {
+    w: 200, h: 220, n: 6, fps: 10, px: 100, py: 196, loop: true,
+    draw(ctx, i) {
+      const T = i / 6;
+      painted(ctx, 0, 0, 200, 220, (x, y) => {
+        const d = Math.hypot((x - 100) / 70, (y - 120) / 82);
+        if (d > 1.1) return [0, 0];
+        const rim = sstep(0.75, 1, d) * sstep(1.08, 0.98, d);
+        const shim = fbm(x / 16 + T * 3, y / 16, 3);
+        return [0.7 + rim * 0.3, (rim * 0.75 + 0.08 * shim) * 0.9];
+      }, SPIRITR, 2);
+      const rope = [];
+      for (let k = 0; k <= 40; k++) {
+        const ang = (k / 40) * TAU;
+        rope.push([100 + Math.cos(ang) * 70, 128 + Math.sin(ang) * 14]);
+      }
+      strokePts(ctx, rope.slice(0, 21), 5, '#f6f0f0', 0.9);
+      for (let k = 0; k < 20; k += 2) strokePts(ctx, [rope[k], rope[k + 1]], 3, SCARLET[3], 0.9);
+      for (let k = 0; k < 5; k++) {
+        const ang = (k / 5) * Math.PI + 0.3;
+        shide(ctx, 100 + Math.cos(ang) * 70, 128 + Math.sin(ang) * 14, 22, 6, Math.sin(T * TAU + k) * 4, 0.9);
+      }
+    },
+  };
+  // Spirit Step: she comes apart into a flurry of paper streamers and white light, and gathers again.
+  E.spiritstep = {
+    w: 200, h: 220, n: 7, fps: 20, px: 100, py: 196,
+    draw(ctx, i) {
+      const k = i / 6;
+      const a = 1 - k * 0.8;
+      bloomDisc(ctx, 100, 150, 30 * (1 - k * 0.5), 46 * (1 - k * 0.5), SPIRIT, a);
+      const R = rng(1740);
+      for (let j = 0; j < 14; j++) {
+        const ang = R() * TAU;
+        const d = 10 + k * (40 + R() * 50);
+        shide(ctx, 100 + Math.cos(ang) * d, 150 + Math.sin(ang) * d * 0.8 - k * 20, 16, 5, (R() - 0.5) * 8, a, ang + k * 3);
+      }
+    },
+  };
+  // Heaven's Lantern (her finisher): a giant paper lantern rises over the monsters, glowing warm
+  // from inside, ribbed, with a scarlet cord and streamers; it blazes, then fades into motes.
+  E.lantern = {
+    w: 260, h: 320, n: 8, fps: 12, px: 130, py: 300,
+    draw(ctx, i) {
+      const rise = [0, 30, 60, 76, 80, 80, 80, 80][i];
+      const blaze = [0.3, 0.6, 0.9, 1, 1.2, 1, 0.6, 0.25][i];
+      const a = [0.6, 0.9, 1, 1, 1, 0.9, 0.6, 0.25][i];
+      const cy = 200 - rise;
+      bloomDisc(ctx, 130, cy, 120 * blaze, 120 * blaze, SPIRIT, 0.5 * a);
+      painted(ctx, 40, cy - 90, 180, 180, (x, y) => {
+        const d = Math.hypot((x - 130) / 62, (y - cy) / 78);
+        if (d > 1) return [0, 0];
+        const ribs = 0.5 + 0.5 * Math.cos(((y - cy) / 78) * Math.PI * 7);
+        const warm = 1 - d * 0.6;
+        return [Math.min(1, 0.55 + warm * 0.45 * blaze - ribs * 0.08), sstep(1, 0.95, d) * a];
+      }, ramp([[0, '#c87a3a'], [0.5, '#ffd9a0'], [0.85, '#fff4e0'], [1, '#ffffff']]), 2);
+      for (const yy of [cy - 80, cy + 76]) {
+        painted(ctx, 92, yy - 8, 76, 16, (x, y) => [0.2, sstep(1, 0.9, Math.max(Math.abs(x - 130) / 36, Math.abs(y - yy) / 7)) * a], ramp([[0, '#2a1a20'], [1, '#6a3a3a']]), 1);
+      }
+      strokePts(ctx, [[130, cy - 88], [130, cy - 130]], 4, SCARLET[3], a);
+      for (let k = 0; k < 3; k++) shide(ctx, 112 + k * 18, cy + 84, 34, 7, Math.sin(i + k) * 4, a);
+      if (i >= 5) {
+        const R = rng(1760 + i);
+        for (let k = 0; k < 14; k++) bloomDisc(ctx, 130 + (R() - 0.5) * 200, cy + (R() - 0.5) * 200, 2.5, 2.5, k % 3 ? SPIRIT : BELL, a);
+      }
+    },
+  };
+  // A pillar of her light (buffs going up), with her emblem: a gohei (the shrine wand of zigzag
+  // paper streamers on a stick) rising in it; and Spirit building round her as wisps of light.
+  E.pillarspirit = asLight(E.pillar, SPIRIT);
+  E.embspirit = {
+    w: 160, h: 160, n: 5, fps: 12, px: 80, py: 80,
+    draw(ctx, i) {
+      const k = i === 0 ? 0.75 : 1;
+      const brk = i < 3 ? 0 : (i - 2) / 2;
+      bloomDisc(ctx, 80, 80, 50 * k, 50 * k, SPIRIT, (1 - brk) * 0.6);
+      if (brk >= 1) return;
+      strokePts(ctx, [[80, 80 + 52 * k], [80, 80 - 44 * k]], 5 * k, '#c8a070', 1 - brk);
+      for (const side of [-1, 1]) shide(ctx, 80 + side * 4 * k, 80 - 40 * k, 56 * k, 12 * k, side * 6, 1 - brk, side * 0.35);
+      strokePts(ctx, [[72, 80 - 42 * k], [88, 80 - 42 * k]], 3, SCARLET[3], 1 - brk);
+    },
+  };
+  E.spiritaura = {
+    w: 170, h: 220, n: 8, fps: 10, px: 85, py: 210, loop: true,
+    draw(ctx, i) {
+      const T = i / 8;
+      for (let k = 0; k < 5; k++) {
+        const ang = (k / 5) * TAU + T * TAU;
+        const x = 85 + Math.cos(ang) * 44;
+        const y = 130 + Math.sin(ang) * 14 - k * 14;
+        const front = Math.sin(ang) > 0;
+        bloomDisc(ctx, x, y, front ? 8 : 6, front ? 8 : 6, SPIRIT, front ? 0.95 : 0.6);
+        glow(ctx, [[x, y], [x - Math.cos(ang + 1.2) * 12, y - Math.sin(ang + 1.2) * 4 + 6]], 0.8, SPIRIT, 0.6);
+      }
+    },
+  };
+  E.ringspiritbig = big(E.ringspirit, 2.6);
+  E.lanternbig = big(E.lantern, 1.5);
+
   function big(e, k) {
     return {
       ...e,
