@@ -387,12 +387,6 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   } else {
     for (let i = 1; i < f.pts.length; i += 2) shapes.push(poly(smooth([[f.pts[i][0] - 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.2], [f.pts[i][0] + 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.7]]), r.sh1));
   }
-  // A shadowless cut is edged with a thin line in the hair's own shade, so it still reads on pale skin.
-  if (f.noShade) {
-    // A fine line along the cut.
-    const [x0, x1, y] = [f.pts[f.pts.length - 1][0] + 0.9, f.pts[0][0] - 0.9, f.pts[0][1]];
-    shapes.push(F(R(x0, y - 0.55, x1 - x0, 0.55, r.sh2)));
-  }
   // Where the hair parts, a dark line runs back over the crown.
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
   for (const [x0, y0, x1, y1, w, bow] of f.strands ?? []) shapes.push(streak(x0, y0, x1, y1, w, bow, r.sh1));
