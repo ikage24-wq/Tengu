@@ -40,7 +40,7 @@ const NAMED = new Set(['pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 
   // The Spirit Mage and her doll.
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
   // The Shrine Maiden's kitsune guardian.
-  'kitsunecall', 'kitsuneblock']);
+  'kitsunecall', 'kitsuneblock', 'kitsuneport', 'kitsunegather', 'kitsunemoonfall', 'kitsunecrescent', 'kitsunepillar']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);

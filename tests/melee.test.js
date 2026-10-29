@@ -2551,7 +2551,7 @@ test('the Shrine Maiden has a kitsune guardian who fights in front of her and bo
     updateWorld(w, DT, idle);
     if (w.guardian.act) seen.add(w.guardian.act.kind);
   }
-  assert.ok(['thrust', 'sweep', 'rising', 'twin'].filter((k) => seen.has(k)).length >= 2, `a mix of her own moves (${[...seen]})`);
+  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft'].filter((k) => seen.has(k)).length >= 2, `a mix of her own moves (${[...seen]})`);
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her naginata lands');
   w.mobs.forEach((m) => { m.hp = 0; });
   let bowed = false;
@@ -2574,21 +2574,63 @@ test("the kitsune guardian steps in front of a hit meant for the Maiden", async 
   assert.equal(blockOnHit(w, w.body.x + 60, () => 0), false, 'and not again straight away');
 });
 
-test('the kitsune guardian walks slow, and leaps when she has far to go', () => {
+test('the kitsune guardian only walks, and teleports to the Maiden when she is left far behind', () => {
   const w = shrineMaiden();
   for (const m of w.mobs) m.hp = 0;
   run(w, 2);
-  Object.assign(w.guardian.body, { x: w.body.x - 220 });
+  // A little way off: she walks it, slowly.
+  Object.assign(w.guardian.body, { x: w.body.x - 150 });
   w.guardian.act = null;
-  let leapt = false;
-  let landed = false;
-  for (let i = 0; i < 60 * 3; i++) {
+  let fastest = 0;
+  for (let i = 0; i < 60 * 2; i++) {
     updateWorld(w, DT, idle);
-    if (w.guardian.act?.kind === 'leap') {
-      leapt = true;
-      landed ||= w.guardian.act.landed === true;
+    if (!w.guardian.act) fastest = Math.max(fastest, Math.abs(w.guardian.body.vx));
+    assert.notEqual(w.guardian.act?.kind, 'vanish', 'no teleport for a short walk');
+  }
+  assert.ok(fastest > 10 && fastest < 80, `she walks, slow (${Math.round(fastest)})`);
+  // Far off: she vanishes in fox fire and steps out of it by the Maiden.
+  Object.assign(w.guardian.body, { x: w.body.x - 400 });
+  w.guardian.act = null;
+  const seen = new Set();
+  for (let i = 0; i < 60 * 2; i++) {
+    updateWorld(w, DT, idle);
+    if (w.guardian.act) seen.add(w.guardian.act.kind);
+  }
+  assert.ok(seen.has('vanish') && seen.has('arrive'), `she teleports (${[...seen]})`);
+  assert.ok(w.fx.some((f) => f.kind === 'kitsuneport') || seen.has('arrive'), 'in fox fire');
+  assert.ok(Math.abs(w.guardian.x - w.body.x) < 80, 'and is back by the Maiden');
+});
+
+test('the kitsune guardian has more weapon moves, and skills of her own', () => {
+  const w = shrineMaiden();
+  const seen = new Set();
+  for (let r = 0; r < 4; r++) {
+    w.mobs.forEach((m) => { m.hp = m.maxHp ?? 1e9; });
+    for (let i = 0; i < 60 * 8; i++) {
+      updateWorld(w, DT, idle);
+      if (w.guardian.act) seen.add(w.guardian.act.kind);
+      w.mobs.forEach((m) => { m.hp = Math.max(m.hp, 1); });
     }
   }
-  assert.ok(leapt && landed, 'she covers the ground in a leap');
-  assert.ok(Math.abs(w.guardian.x - w.body.x) < 120, 'and is back by the Maiden');
+  assert.ok(['cleave', 'reap', 'haft'].filter((k) => seen.has(k)).length >= 1, `new weapon moves (${[...seen]})`);
+  assert.ok(['moonfall', 'crescent', 'pillars'].filter((k) => seen.has(k)).length >= 2, `her skills (${[...seen]})`);
+});
+
+test("the kitsune guardian's Moonfall drags the monsters round her in and crushes them", () => {
+  const w = shrineMaiden();
+  const k = w.guardian;
+  const live = w.mobs.slice(0, 3);
+  w.mobs.slice(3).forEach((m) => { m.hp = 0; });
+  live.forEach((m, i) => { m.x = Math.min(m.x2 ?? 1e9, Math.max(m.x1 ?? -1e9, k.x + k.dir * (150 + i * 40))); m.y = k.y; });
+  const hp0 = live.map((m) => m.hp);
+  const far0 = live.map((m) => Math.abs(m.x - k.x));
+  k.act = { kind: 'moonfall', t0: w.now, dur: 2.5, done: 0 };
+  let closest = far0.map(() => Infinity);
+  for (let i = 0; i < 60 * 1.8; i++) {
+    updateWorld(w, DT, idle);
+    live.forEach((m, j) => { closest[j] = Math.min(closest[j], Math.abs(m.x - k.x)); });
+  }
+  assert.ok(live.every((m, j) => closest[j] < far0[j] - 40), `they're pulled in (${far0.map(Math.round)} -> ${closest.map(Math.round)})`);
+  run(w, 1);
+  assert.ok(live.some((m, j) => m.hp < hp0[j]), 'and the blade comes down on them');
 });

@@ -28,9 +28,9 @@ const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', 
 const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringmint', 'celringink', 'celringfox', 'celringspirit']);
 
 // A ring of force racing out flat along the ground to radius `r`.
-export function groundRing(ctx, name, x, y, p, r, { sy = 0.32 } = {}) {
-  if (r > 60 && BIG.has(name)) fxSprite(ctx, `${name}big`, x, y, { p, scale: r / (38 * 2.6), sy });
-  else fxSprite(ctx, name, x, y, { p, scale: r / 38, sy });
+export function groundRing(ctx, name, x, y, p, r, { sy = 0.32, alpha = 1 } = {}) {
+  if (r > 60 && BIG.has(name)) fxSprite(ctx, `${name}big`, x, y, { p, scale: r / (38 * 2.6), sy, alpha });
+  else fxSprite(ctx, name, x, y, { p, scale: r / 38, sy, alpha });
 }
 
 // A path's wave racing out along the ground to radius `r`: a smooth ring in the school's colour,

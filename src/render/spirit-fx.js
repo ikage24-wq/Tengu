@@ -15,6 +15,39 @@ import { groundRing } from './warrior-fx.js';
 // Heaven's Lantern's size (its big strip, cellanternbig): about 85 px across, over the monsters.
 const LANTERN_SCALE = 0.62;
 
+// A crescent of moonlight (Crescent Moon), facing `dir`, about 90 px tall: a white blade of light
+// with a vermilion rim and a soft glow.
+function crescent(ctx, x, y, dir, alpha, s) {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * s, s);
+  ctx.globalAlpha *= alpha;
+  const path = () => {
+    ctx.beginPath();
+    ctx.moveTo(-6, -46);
+    ctx.quadraticCurveTo(34, 0, -6, 46);
+    ctx.quadraticCurveTo(14, 0, -6, -46);
+    ctx.closePath();
+  };
+  ctx.shadowColor = '#ff9a8a';
+  ctx.shadowBlur = 14;
+  path();
+  ctx.fillStyle = '#ffd8d0';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#ff6a52';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-2, -36);
+  ctx.quadraticCurveTo(26, 0, -2, 36);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawSpiritFx(ctx, f, x, y, p) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
@@ -93,6 +126,84 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       // and a flash where it struck the ground.
       groundRing(ctx, 'celringspirit', x, y, p, 120);
       fxSprite(ctx, 'celspirithit', x, y - 6, { p: Math.min(1, p * 1.5), scale: 0.7 });
+      return true;
+    }
+    case 'kitsuneport': {
+      // The guardian's teleport: vermilion fox fire springing up round her feet and licking up her body as she
+      // goes (`out`), or out of which she steps (in), a ring on the ground and a flash of spirit light.
+      const k = f.out ? p : 1 - p;
+      const rise = Math.sin(Math.PI * Math.min(1, p * 1.25));
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + f.t * 3;
+        const dx = Math.cos(a) * 22 * (1 - 0.4 * k);
+        const front = Math.sin(a) > 0;
+        if (!front) fxSprite(ctx, 'celfire', x + dx, y + 2, { t: f.t * 2 + i * 0.17, scale: 0.2 + 0.12 * rise, alpha: 0.6 * rise });
+      }
+      fxSprite(ctx, 'celspiritstep', x, y, { p: Math.min(1, p * 1.3), scale: 0.9 });
+      groundRing(ctx, 'celringrage', x, y, Math.min(1, p * 1.4), 44);
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + f.t * 3;
+        if (Math.sin(a) > 0) fxSprite(ctx, 'celfire', x + Math.cos(a) * 22 * (1 - 0.4 * k), y + 4, { t: f.t * 2 + i * 0.17, scale: 0.2 + 0.12 * rise, alpha: 0.85 * rise });
+      }
+      return true;
+    }
+    case 'kitsunegather': {
+      // Moonfall's charge: a whirl of fox fire round her feet, wisps spiralling in to her from all
+      // round, a ring on the ground drawing in, and motes rising.
+      const k = Math.min(1, p * 4) * (1 - Math.max(0, (p - 0.9) * 10));
+      fxSprite(ctx, 'celtornado', x, y + 4, { t: f.t, scale: 0.35 + 0.25 * p, alpha: 0.3 * k });
+      for (let ring = 0; ring < 2; ring++) {
+        const q = ((f.t * 1.6 + ring * 0.5) % 1);
+        // (Thin and faint, shrinking in on her: the pull.)
+        groundRing(ctx, 'celringrage', x, y, 0.62, (f.r ?? 260) * (1 - q) * 0.9, { alpha: 0.55 * k * Math.min(1, q * 4) });
+      }
+      for (let i = 0; i < 10; i++) {
+        const q = ((f.t * 0.9 + i / 10) % 1);
+        const side = i % 2 ? 1 : -1;
+        const d = (f.r ?? 260) * 0.9 * (1 - q);
+        const wx = x + side * d;
+        const wy = y - 20 - 30 * Math.sin(q * Math.PI) * ((i % 3) / 2);
+        fxSprite(ctx, 'celspiritorb', wx, wy, { t: f.t + i * 0.1, flip: side > 0, scale: 0.2 + 0.1 * q, alpha: k * Math.min(1, q * 3) });
+        if (i % 3 === 0) fxSprite(ctx, 'celfire', wx, wy + 14, { t: f.t * 2 + i, scale: 0.12, alpha: 0.7 * k * Math.min(1, q * 3) });
+      }
+      fxSprite(ctx, 'celembers', x, y, { t: f.t, scale: 0.8, alpha: 0.8 * k });
+      fxSprite(ctx, 'celmotes', x, y, { t: f.t, scale: 0.9, alpha: 0.5 * k });
+      return true;
+    }
+    case 'kitsunemoonfall': {
+      // Moonfall's blow: a great ring of spirit light and fox fire bursting out from where the blade
+      // struck, a pillar of light up out of it, and fox fire flaring along the ground both ways.
+      groundRing(ctx, 'celringspirit', x, y, Math.min(1, p * 1.2), 150);
+      groundRing(ctx, 'celringrage', x, y, Math.min(1, p * 1.6), 100);
+      fxSprite(ctx, 'celpillarspirit', x, y + 4, { p: Math.min(1, p * 1.3), scale: 0.75 });
+      fxSprite(ctx, 'celspirithit', x, y - 10, { p: Math.min(1, p * 1.8), scale: 1.2 });
+      const fade = 1 - Math.max(0, (p - 0.5) * 2);
+      for (let i = 1; i <= 3; i++) {
+        for (const side of [-1, 1]) fxSprite(ctx, 'celfire', x + side * i * 34 * Math.min(1, p * 2.5), y + 3, { t: f.t * 2 + i * 0.3, scale: 0.28 - 0.04 * i, alpha: fade });
+      }
+      return true;
+    }
+    case 'kitsunecrescent': {
+      // Crescent Moon: a tall crescent of moonlight flying out from her cut, a trail of motes behind.
+      const d = Math.min(f.range, f.speed * f.t);
+      const dir = f.dir || 1;
+      const cx = x + dir * d;
+      const fade = f.speed * f.t > f.range ? Math.max(0, 1 - (f.speed * f.t - f.range) / (f.speed * 0.2)) : 1;
+      for (let i = 3; i >= 0; i--) crescent(ctx, cx - dir * i * 14, y, dir, (0.85 - i * 0.18) * fade, 1 - i * 0.08);
+      fxSprite(ctx, 'celmotes', cx - dir * 30, y + 30, { t: f.t, scale: 0.5, alpha: 0.6 * fade });
+      return true;
+    }
+    case 'kitsuneseal': {
+      // A seal of fox fire opening on the ground under a monster, where a pillar is about to go up.
+      groundRing(ctx, 'celringrage', x, y, 0.3 + 0.3 * Math.sin(f.t * 18), 30 + 10 * p);
+      fxSprite(ctx, 'celfire', x, y + 2, { t: f.t * 2, scale: 0.14 + 0.08 * p, alpha: 0.8 });
+      return true;
+    }
+    case 'kitsunepillar': {
+      // A pillar of fox fire bursting up out of the ground.
+      fxSprite(ctx, 'celpillarrage', x, y + 4, { p, scale: 0.55 });
+      fxSprite(ctx, 'celfire', x, y + 4, { t: f.t * 2, scale: 0.22, alpha: 1 - p });
+      groundRing(ctx, 'celringrage', x, y, Math.min(1, p * 1.5), 40);
       return true;
     }
     case 'kitsuneblock': {

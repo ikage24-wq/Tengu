@@ -284,6 +284,13 @@ const R = {
   // a blow taken on the haft.
   kitsunecall: { db: -10, max: 1, room: true, layers: [thump(90, 300, { slide: -1.5 }), { rec: 'clangHeavy', rate: 0.9, db: -6 }, { rec: 'bell', len: 1000, rate: 1.1, db: -4 }] },
   kitsuneblock: { db: -11, vary: 4, max: 2, layers: [{ rec: 'clang', rate: 1.1 }, { rec: 'wood', db: -6 }] },
+  // Her teleport (a rush of fox fire and a bell), Moonfall's charge (a rising rush of wind and
+  // fire) and its blow (a huge heavy crash, a bell), Crescent Moon's flight, and a fox-fire pillar.
+  kitsuneport: { db: -12, max: 2, layers: [{ rec: 'fireLaunch', rate: 1.2, db: -4 }, { rec: 'teleOut', rate: 0.9 }, { rec: 'bell', len: 900, rate: 1.4, db: -10 }] },
+  kitsunegather: { db: -10, max: 1, room: true, layers: [{ rec: 'darkRiser', rate: 1.1 }, { rec: 'fireCharge', rate: 0.9, db: -4 }, whoosh(1500, 200, 1600, { focus: 0.8, db: -6 })] },
+  kitsunemoonfall: { db: -7, max: 1, room: true, layers: [thump(70, 500, { slide: -1.2 }), { rec: 'holyBlast', rate: 0.85 }, { rec: 'rockHit', rate: 0.7, db: -4 }, { rec: 'bell', len: 1200, rate: 0.9, db: -6 }] },
+  kitsunecrescent: { db: -10, max: 2, layers: [{ rec: 'bladeSwingHeavy', rate: 0.9 }, whoosh(600, 400, 3000, { focus: 0.3, db: -4 }), sparkle('E7:0 B7:60', { db: -14 })] },
+  kitsunepillar: { db: -12, vary: 6, max: 3, layers: [{ rec: 'fireLaunch', rate: 1 }, thump(110, 200, { db: -6 })] },
   // The Thief's paths. The Shinobi: Ki topping out (a blade drawn and a taiko hit: Shadow
   // Clones), a seal bursting, ink spilling over the world, and the ink fox's sweep. The Kitsune:
   // the ninth tail (a koto run and bells: Nine Tails), night falling with the fox fire, and the
