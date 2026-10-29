@@ -316,6 +316,15 @@ const EYE_LOOK = {
   yukidiamond: { rx: 2.4, ry: 2.3, tilt: 0.45, wing: 1.8, flicks: 2, iris: 1.15, pupil: 'diamond' },
   yukiglass: { rx: 2.4, ry: 2.9, tilt: 0, wing: 0.6, flicks: 1, iris: 1.5, pupil: 'ring', sparkle: true },
   yukislit: { rx: 2.6, ry: 1.7, tilt: 0.3, wing: 2.2, flicks: 3, iris: 1, open: 0.55 },
+  // More of hers (`lash` sets the lashes' colour: frost white, or ice blue):
+  yukifrostlash: { rx: 2.45, ry: 2.4, tilt: 0.1, wing: 1.8, flicks: 3, iris: 1.25, pupil: 'flake', lash: '#e8f0ff', sparkle: true },
+  yukicrescent: { rx: 2.4, ry: 2.5, tilt: 0.05, wing: 1.4, flicks: 2, iris: 1.3, pupil: 'crescent' },
+  yukimoon: { rx: 2.55, ry: 2.05, tilt: -0.2, wing: 2, flicks: 3, iris: 1.15, pupil: 'crescent', open: 0.58 },
+  yukicrystal: { rx: 2.4, ry: 2.6, tilt: 0.08, wing: 1.3, flicks: 2, iris: 1.35, pupil: 'crystal', sparkle: true },
+  yukiblank: { rx: 2.35, ry: 2.5, tilt: 0.05, wing: 1.2, flicks: 2, iris: 1.3, pupil: 'none' },
+  yukirings: { rx: 2.4, ry: 2.6, tilt: 0.06, wing: 1.2, flicks: 2, iris: 1.35, pupil: 'rings' },
+  yukiwhiteveil: { rx: 2.55, ry: 2.1, tilt: -0.22, wing: 2, flicks: 3, iris: 1.1, open: 0.5, lash: '#e8f0ff' },
+  yukiicelash: { rx: 2.45, ry: 2.3, tilt: 0.35, wing: 2.2, flicks: 3, iris: 1.15, pupil: 'diamond', lash: '#6a9ad8' },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -344,7 +353,7 @@ function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
     k: 1, chibi: true, skin: sk.base, skinSh: sk.sh1, skinSh2: sk.sh2, lip: sk.lip,
     eye: {
       iris: color, pupil: f.heart ? 'heart' : f.shine && !st.pupil ? 'star' : st.pupil, pupilC: f.heart ? '#ff4f86' : mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
-      ink: hr.ink, lashW: 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
+      ink: st.lash ?? hr.ink, lashW: 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
       sparkle: st.sparkle || f.shine, tilt: st.tilt,
     },
   };

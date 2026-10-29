@@ -363,6 +363,43 @@ function drawEye(pen, e, x, look) {
     }
     cl(ell(ix, iy, fr * 0.3, fr * 0.3, 8), pc);
   }
+  else if (E.pupil === 'crescent') {
+    // A thin crescent moon lying on its back (the yuki-onna's).
+    const cr = Math.max(0.9, irx * 0.66 * ps);
+    const cy0 = iy + iry * 0.02;
+    const pts = [];
+    for (let i = 0; i <= 12; i++) {
+      const a = Math.PI * (0.05 + 0.9 * (i / 12));
+      pts.push([ix + Math.cos(a) * cr, cy0 + Math.sin(a) * cr * 0.9]);
+    }
+    for (let i = 12; i >= 0; i--) {
+      const a = Math.PI * (0.05 + 0.9 * (i / 12));
+      pts.push([ix + Math.cos(a) * cr * 0.78, cy0 - cr * 0.18 + Math.sin(a) * cr * 0.55]);
+    }
+    cl(pts, pc);
+  }
+  else if (E.pupil === 'crystal') {
+    // A thin eight-pointed ice crystal.
+    const cr = Math.max(0.85, irx * 0.62 * ps);
+    const pts = [];
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 - Math.PI / 2;
+      const r0 = i % 2 ? cr * 0.2 : i % 4 === 0 ? cr : cr * 0.62;
+      pts.push([ix + Math.cos(a) * r0, iy + Math.sin(a) * r0 * 1.1]);
+    }
+    cl(pts, pc);
+  }
+  else if (E.pupil === 'rings') {
+    // Frozen rings: a dark ring, a pale ring, a dark dot.
+    const pr = Math.max(0.7, irx * 0.48 * ps);
+    cl(ell(ix, iy - iry * 0.04, pr, pr * 1.1, 16), pc);
+    cl(ell(ix, iy - iry * 0.04, pr * 0.72, pr * 0.8, 14), mix(irisLt, '#ffffff', 0.5));
+    cl(ell(ix, iy - iry * 0.04, pr * 0.36, pr * 0.4, 10), pc);
+  }
+  else if (E.pupil === 'none') {
+    // No pupil at all: the iris glows pale from the middle out (a blank, ghostly stare).
+    cl(ell(ix, iy, irx * 0.62, iry * 0.62, 16), mix(irisLt, '#ffffff', 0.6));
+  }
   else if (E.pupil === 'bar') cl(ell(ix, iy - iry * 0.04, Math.max(0.5, irx * 0.46 * ps), Math.max(0.22, iry * 0.1), 12), pc);
   else if (E.pupil === 'diamond') {
     const dr = Math.max(0.6, irx * 0.36 * ps);

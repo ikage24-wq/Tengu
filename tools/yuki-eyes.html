@@ -7,7 +7,18 @@
 import { drawPosed } from '../src/render/hero.js';
 import { setHd, nextFrame } from '../src/render/pixel.js';
 
-const EYES = [
+// ?set=2 shows the second set (frost lashes, crescent and crystal pupils, blank, rings, ice lashes).
+const SET2 = new URLSearchParams(location.search).get('set') === '2';
+const EYES = SET2 ? [
+  ['I. Frost lashes, snowflake', 'yukifrostlash', '#6ab0f0'],
+  ['J. Crescent pupils', 'yukicrescent', '#7ab8f0'],
+  ['K. Crescent, sleepy', 'yukimoon', '#7ab8f0'],
+  ['L. Ice crystal pupils', 'yukicrystal', '#5aa0f0'],
+  ['M. Blank, ghostly', 'yukiblank', '#9ad0ff'],
+  ['N. Frozen rings', 'yukirings', '#6ab0f0'],
+  ['O. White-lashed veil', 'yukiwhiteveil', '#7ab8f0'],
+  ['P. Ice lashes, diamond', 'yukiicelash', '#5a9ae8'],
+] : [
   ['A. Snowflake pupils', 'yukiflake', '#6ab0f0'],
   ['B. Snowflake, veiled', 'yukiflakeveil', '#6ab0f0'],
   ['C. Sleepy veil', 'yukiveil', '#7ab8f0'],
@@ -17,7 +28,7 @@ const EYES = [
   ['G. Narrow glance', 'yukislit', '#7ab8f0'],
   ['H. Calm (before)', 'yukicalm', '#7ab8f0'],
 ];
-const LOOK = { hairStyle: 'yukihime', hairColor: '#1e1a2a', skinTone: '#f4f6ff', browStyle: 'none', earStyle: 'round', outfit: 'yukiclassic', outfitColor: '#ffffff', mouth: 'yukilips', marks: [] };
+const LOOK = { hairStyle: SET2 ? 'yukibun' : 'yukihime', hairColor: SET2 ? '#f6f8ff' : '#1e1a2a', hairTip: SET2 ? '#cfe4fb' : undefined, skinTone: '#f4f6ff', browStyle: 'none', earStyle: 'round', outfit: 'yukiclassic', outfitColor: '#ffffff', mouth: 'yukilips', marks: [] };
 const rig = { frontArm: [0.4, -2], backArm: [0.6, -2.6], hx: -0.2, hy: 0.2, tilt: -2, face: { brows: [[0.15, -0.1], [0.15, -0.1]] } };
 const S = 7.2;
 const CW = 300;
