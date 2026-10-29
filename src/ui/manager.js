@@ -18,6 +18,7 @@ import { cashShopWindow } from './cashshop.js';
 import { petWindow } from './pet.js';
 import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
+import { cookingWindow } from './cooking.js';
 import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
 import { QUESTS } from '../data/quests.js';
@@ -52,9 +53,10 @@ export function createUiState() {
       pet: { x: 150, y: 60, open: false, theme: 'pink', icon: 'heart' },
       online: { x: 200, y: 50, open: false, theme: 'sky', icon: 'friends' },
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
+      cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -95,6 +97,9 @@ export function routeInput(state, world, input, dt) {
         }
         world.log(questState(world.char, done.id) === 'ready' ? `${q.name}: done! Report to ${NPCS[q.giver].name}.` : `${q.name}: talked to ${NPCS[e.npc].name}.`, '#bff0dc');
       }
+    } else if (e.type === 'cook') {
+      state.windows.cook.open = true;
+      state.windows.cook.stir = null;
     } else if (e.type === 'death') {
       state.death = true;
     } else if (e.type === 'admin') {
@@ -161,7 +166,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

@@ -6,11 +6,13 @@ import { MOBS } from '../data/mobs.js';
 import { ACHIEVEMENTS, BOOK_MOBS } from '../data/achievements.js';
 import { masteryAt, bookBonus, CARD_HP } from '../core/collection.js';
 import { drawMonster } from '../render/monsters.js';
+import { drawItemIcon } from '../render/icons.js';
+import { FISH, RARITY_NAMES, RARITY_COLORS } from '../data/fishing.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, sparkle, icon, wrap, bar, fit } from './kit.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Achievements', 'Titles'];
+const TABS = ['Monster Book', 'Fish', 'Achievements', 'Titles'];
 
 // Monsters by level, the bosses after.
 const ORDER = [...BOOK_MOBS].sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
@@ -21,12 +23,13 @@ export function collectionWindow(ui, state, world) {
   const { ctx } = ui;
   const th = ui.theme;
   const char = world.char;
-  const tab = tabs(ui, win.x + 10, win.y + 26, TABS, win.tab ?? 0, { w: 100, h: 15 });
+  const tab = tabs(ui, win.x + 10, win.y + 26, TABS, win.tab ?? 0, { w: 76, h: 15 });
   if (tab !== win.tab) Object.assign(win, { tab, scroll: 0 });
   const x = win.x + 10;
   const y = win.y + 48;
   if (win.tab === 0) book(ui, win, char, world, x, y, th);
-  else if (win.tab === 1) achievements(ui, win, char, x, y, th);
+  else if (win.tab === 1) fishPage(ui, char, x, y, th);
+  else if (win.tab === 2) achievements(ui, win, char, x, y, th);
   else titles(ui, win, char, x, y, th);
 }
 
@@ -77,6 +80,30 @@ function book(ui, win, char, world, x, y, th) {
   text(ctx, `${cards} / ${ORDER.length} cards`, x, y + rows * ch + 10, { size: 8, bold: true, color: th.dark });
   text(ctx, `Book bonus: Max HP +${b.hp}${b.str ? `, all stats +${b.str}` : ''}`, x + 90, y + rows * ch + 10, { size: 7.5, color: '#3f9f5f', bold: true });
   if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 10, { size: 6.5, align: 'right', color: COLORS.muted });
+}
+
+// The fish you've caught: each one's card with how many and the biggest (a dark shape until then),
+// in its rarity's colour.
+function fishPage(ui, char, x, y, th) {
+  const { ctx } = ui;
+  const cols = 5;
+  const cw = 64;
+  const ch = 50;
+  FISH.forEach((f, i) => {
+    const rec = char.fishBook?.[f.id];
+    const cx = x + (i % cols) * cw;
+    const cy = y + Math.floor(i / cols) * ch;
+    box(ctx, cx, cy, cw - 4, ch - 4, { fill: rec ? '#ffffff' : '#f2ecf8', edge: rec ? RARITY_COLORS[f.rarity] : '#e2d8ee', r: 8, width: rec ? 1.5 : 1 });
+    ctx.save();
+    if (!rec) ctx.filter = 'brightness(0) opacity(0.25)';
+    drawItemIcon(ctx, f.id, cx + (cw - 4) / 2 - 12, cy + 3, 1.5);
+    ctx.restore();
+    text(ctx, rec ? fit(ctx, f.name, cw - 8, 6, true) : '???', cx + (cw - 4) / 2, cy + 35, { size: 6, bold: true, align: 'center', color: rec ? COLORS.ink : COLORS.muted });
+    if (rec) text(ctx, `x${rec.n} · ${rec.best}cm`, cx + (cw - 4) / 2, cy + 42, { size: 5.5, align: 'center', color: COLORS.muted });
+    if (hover(ui, cx, cy, cw - 4, ch - 4)) tooltip(ui, rec ? [{ text: f.name, bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, { text: `Caught ${rec.n} · biggest ${rec.best} cm`, size: 8 }] : [{ text: 'Not caught yet', bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }]);
+  });
+  const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
+  text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip or Marlo, and look for the fish signs by the water.`, x, y + Math.ceil(FISH.length / cols) * ch + 8, { size: 7, bold: true, color: th.dark });
 }
 
 function achievements(ui, win, char, x, y, th) {

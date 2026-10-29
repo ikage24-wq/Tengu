@@ -725,6 +725,16 @@ to clear it.
   stat. 23 achievements (levels, hunting, the book, each queen, the story, a full set, a +10
   polish, quests and dailies, playing online, adopting a Mochi, a fortune) each unlock a title to
   wear in gold under your name, which friends online see too.
+- **Fishing** — buy a Fishing Rod from Pip or Marlo, then find a fish sign by the water: the tide
+  pool on Dawnlight Beach, the pond in Clover Hills, the end of Pastel Harbor's pier, the pond in the
+  Whispering Glade, the warm pools of Serpent Springs, an ice hole on Frozen Peak, and a pool of
+  stars at Starfall Heights. Press Up to cast, wait, and tap Attack the moment the bobber dips (too
+  early and it swims off; rarer fish give you less time). 13 fish from common to legendary, each
+  with a size; the Collection's Fish page keeps how many you've caught and your biggest.
+- **Cooking** — every town has a stove (press Up by it). Recipes take fish and monster drops; you
+  know three from the start and learn each fish's own recipe on your first catch. Stir by stopping
+  the spoon: Perfect serves three dishes, Great two, Good one. A dish heals and gives a bonus for
+  10-20 minutes (attack, defense, speed, HP back, crit, even extra EXP), one dish at a time.
 - **Quests and NPCs** — 39 quests from every town's people, covering every field from level 1 to
   48: hunts and fetches, errands (talk to someone, deliver a letter or a parcel, climb to the top
   of a map), short chains (Captain Rook's Windy Canyon trouble leads to Bramble), a task from each

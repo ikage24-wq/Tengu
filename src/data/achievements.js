@@ -37,6 +37,9 @@ export const ACHIEVEMENTS = [
   { id: 'dailies', name: 'Early Riser', desc: 'Finish 7 daily quests.', title: 'Early Riser', check: (c) => (c.dailiesDone ?? 0) >= 7, progress: (c) => count(c.dailiesDone ?? 0, 7) },
   { id: 'friends', name: 'Better Together', desc: 'Play online with a friend.', title: 'Party Pal', check: (c) => Boolean(c.playedOnline) },
   { id: 'mochi', name: 'Mochi Parent', desc: 'Adopt a Mochi.', title: 'Mochi Parent', check: (c) => Boolean(c.pet) },
+  { id: 'angler', name: 'First Catch', desc: 'Catch a fish.', title: 'Angler', check: (c) => Object.keys(c.fishBook ?? {}).length > 0 },
+  { id: 'fishall', name: 'Master Angler', desc: 'Catch every kind of fish.', title: 'Master Angler', check: (c) => Object.keys(c.fishBook ?? {}).length >= 13, progress: (c) => count(Object.keys(c.fishBook ?? {}).length, 13) },
+  { id: 'chef', name: 'Home Cooking', desc: 'Learn 6 recipes.', title: 'Little Chef', check: (c) => (c.recipes ?? []).length + 3 >= 6, progress: (c) => count((c.recipes ?? []).length + 3, 6) },
   { id: 'rich', name: 'Moneybags', desc: 'Have 1,000,000 gold at once.', title: 'Moneybags', check: (c) => c.gold >= 1e6, progress: (c) => count(c.gold, 1e6) },
 ];
 

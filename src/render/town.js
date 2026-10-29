@@ -16,7 +16,7 @@ import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
-import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS } from './townhouses.js';
+import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt } from './townhouses.js';
 import { ITEMS } from '../data/items.js';
 
 const hash = (n) => {
@@ -462,6 +462,34 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (style === 'cottage') chimneySmoke(ctx, x + (hash(seed * 3) > 0.5 ? -32 : 32), hy - 136, time, seed);
     // Lit windows breathe a little light at night.
     if (style === 'canal' || style === 'treehome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
+  }
+  // The town stove, its fire flickering under the pot and steam curling up.
+  if (map.stove != null) {
+    const x = snap(map.stove - cam.x);
+    const gy = ground(map.stove);
+    if (x > -60 && x < width + 60) {
+      glowSoft(ctx, x, gy - 8, 22, '#ffb35a', 0.5 + 0.15 * Math.sin(time * 9));
+      place(ctx, stoveArt(), x, gy + 2);
+      for (let k = 0; k < 3; k++) {
+        const u = (time * 0.6 + k / 3) % 1;
+        ctx.save();
+        ctx.globalAlpha = 0.5 * Math.sin(Math.PI * u);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x - 6 + k * 6 + Math.sin(u * 6 + k) * 3, gy - 50 - u * 26, 3 + u * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#ffd66b';
+      for (let k = 0; k < 3; k++) {
+        const fl = 4 + Math.abs(Math.sin(time * 11 + k)) * 4;
+        ctx.beginPath();
+        ctx.moveTo(x - 6 + k * 6, gy - 2);
+        ctx.lineTo(x - 3 + k * 6, gy - 2 - fl);
+        ctx.lineTo(x + k * 6, gy - 2);
+        ctx.fill();
+      }
+    }
   }
   for (const [kind, wx] of map.townPieces ?? []) {
     const x = wx - cam.x;

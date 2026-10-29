@@ -284,3 +284,19 @@ export function moonTreeArt() {
 }
 // Where the moon tree's lanterns hang (relative to its base center), for their glow and swing.
 export const MOON_LANTERNS = [[-100, -112], [-68, -106], [-38, -112], [40, -100], [70, -106], [100, -112]];
+
+// The town stove: a little brick oven with a copper pot bubbling on top and a wooden spoon,
+// a stack of firewood beside it. 56 wide, 58 tall (the fire and steam are drawn live).
+export function stoveArt() {
+  return art('stove', 56, 58, () => {
+    const brick = ramp('#e8a98a', 0.75);
+    const pot = ramp('#e0956a', 0.8);
+    const out = [...stones(8, 30, 40, 28, brick, 4, { rowH: 6, blockW: 9 }), R(6, 27, 44, 4, brick.base), F(R(6, 30, 44, 1, brick.sh))];
+    out.push(E(28, 48, 9, 7, '#3a2d4f'), R(19, 48, 18, 10, '#3a2d4f'));
+    out.push(T([[12, 27], [14, 14], [42, 14], [44, 27]], pot.base), F(T([[30, 14], [42, 14], [44, 27], [32, 27]], pot.sh)), R(10, 12, 36, 3, pot.hi), F(R(10, 14, 36, 1, pot.sh)));
+    out.push(E(28, 13, 15, 2.4, '#ffd6a0'), F(E(24, 12.6, 5, 1, '#fff1c4')));
+    out.push(T([[38, 12], [46, 0], [48, 1], [40, 13]], '#c99a6b'), E(47, 0.6, 2.4, 1.6, '#c99a6b'));
+    for (const [x, y] of [[50, 50], [52, 54], [48, 54]]) out.push(E(x, y, 4, 2, '#a07a54'), F(E(x - 2, y, 1.2, 1.4, '#e8c69a')));
+    return out;
+  }, false);
+}

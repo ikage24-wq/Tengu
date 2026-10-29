@@ -26,6 +26,7 @@ import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
+import { drawSpots, drawFishing } from './fishing.js';
 import { nextStep } from '../world/routes.js';
 import { titleOf } from '../core/collection.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
@@ -221,6 +222,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
   if (world.dungeon) drawHollowBack(ctx, world, cam, time);
+  // Fishing spots by the water.
+  drawSpots(ctx, world, cam, time);
   // A queen's moves about to land.
   drawZonesBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
@@ -282,6 +285,8 @@ export function drawWorld(ctx, world, viewCam, time) {
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
     if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
+    // The rod and line while you fish (and the Fish / Cook hints).
+    drawFishing(ctx, world, cam, time, hx, hy);
     drawPets(ctx, world, cam, time, 'front');
   }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);

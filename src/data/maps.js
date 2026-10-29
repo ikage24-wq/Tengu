@@ -20,6 +20,8 @@ export const MAPS = {
   // range, out to the meadow road. Nothing you need is up a ladder.
   sprout: {
     id: 'sprout', plaza: 1290, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    // The town stove, for cooking (data/cooking.js).
+    stove: 1140,
     width: 2600, height: 520, groundY: 480,
     look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.8 },
     terrain: [[0, 480], [1180, 480], [1220, 456], [1700, 456], [1740, 480], [2600, 480]],
@@ -130,6 +132,8 @@ export const MAPS = {
   // boardwalk over the water with rowboats tied up, the moored ship, and the lighthouse.
   harbor: {
     id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
+    // The town stove, for cooking (data/cooking.js).
+    stove: 700,
     width: 2600, height: 520, groundY: 480,
     look: { islands: 'planks', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
@@ -330,6 +334,8 @@ Object.assign(MAPS, {
   // you can climb onto by the ladders on their sides.
   crag: {
     id: 'crag', plaza: 1300, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
+    // The town stove, for cooking (data/cooking.js).
+    stove: 1600,
     width: 2200, height: 520, groundY: 480,
     look: { propKeep: 0.8 },
     terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
@@ -358,6 +364,8 @@ Object.assign(MAPS, {
   // gate to the ruins.
   grove: {
     id: 'grove', plaza: 1240, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
+    // The town stove, for cooking (data/cooking.js).
+    stove: 820,
     width: 2400, height: 520, groundY: 480,
     look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
@@ -402,7 +410,7 @@ Object.assign(MAPS, {
       { id: 'east', x: 1440, y: 480, to: 'trainfield', toPortal: 'west', label: 'Practice Field' },
     ],
     npcs: [{ id: 'kuro', x: 1120 }],
-    deco: [['crates', 260], ['barrels', 420], ['signpost', 1360]],
+    deco: [['pond', 300], ['crates', 200], ['barrels', 440], ['signpost', 1360]],
     spawns: [],
   },
   trainfield: {

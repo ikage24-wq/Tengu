@@ -26,6 +26,8 @@ import { lastRite } from './shrine.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { makeEquip } from '../core/items.js';
 import { recordBook, newAchievements } from '../core/collection.js';
+import { spotHere, startFishing, tickFishing } from './fishing.js';
+import { DISH_BY_ID } from '../data/cooking.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
@@ -98,6 +100,7 @@ export function loadMap(world, mapId, portalId) {
   world.pending = [];
   world.strikes = [];
   world.lunge = null;
+  world.fishing = null;
   world.fx = [];
   world.fields = [];
   world.thunder = null;
@@ -210,6 +213,21 @@ export function useItem(world, id) {
     returnToTown(world);
     return true;
   }
+  // A dish: eaten for a little HP and its bonus for a while (one dish at a time).
+  if (def.effect?.food) {
+    const dish = DISH_BY_ID[def.effect.food];
+    if (removeItem(world.char.inventory, id, 1) < 1) {
+      world.log(`No ${def.name} left.`, '#ffb3c6');
+      return false;
+    }
+    const s = world.stats;
+    world.char.hp = Math.min(s.maxHp, world.char.hp + dish.heal);
+    world.char.buffs.food = { name: dish.name, until: world.now + dish.secs, values: { ...dish.values }, food: dish.id };
+    world.log(`Yum! ${dish.name}: ${dish.about} for ${Math.round(dish.secs / 60)} minutes.`, '#ffd6a0');
+    world.itemReadyAt = world.now + ITEM_DELAY;
+    world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
+    return true;
+  }
   // Mochi food: fed to your pet.
   if (def.effect?.pet) {
     const said = feedPet(world.char, id);
@@ -303,6 +321,17 @@ function interact(world) {
     world.events.push({ type: 'talk', npc: npc.id });
     return true;
   }
+  // A fishing spot: cast your line.
+  if (spotHere(world)) {
+    const why = startFishing(world);
+    if (why) world.log(why, '#ffb3c6');
+    return true;
+  }
+  // A town's stove: cook.
+  if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
+    world.events.push({ type: 'cook' });
+    return true;
+  }
   return false;
 }
 
@@ -371,7 +400,9 @@ export function killMob(world, m, byParty = false) {
   // Online, everyone else on the map gets their share too (see net/online.js).
   m.credited = true;
   world.net?.killed(world, m);
-  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)));
+  // (A dish can add to it.)
+  const food = Object.values(char.buffs).reduce((k, b) => k + (b.until > world.now ? b.values?.expPct ?? 0 : 0), 0);
+  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food));
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
@@ -498,7 +529,7 @@ export function updateWorld(world, dt, input) {
   for (const [id, b] of Object.entries(char.buffs)) {
     if (b.until <= world.now) {
       delete char.buffs[id];
-      world.log(`${SKILLS[id]?.name ?? 'Buff'} wore off.`, '#d4cbe8');
+      world.log(`${SKILLS[id]?.name ?? b.name ?? 'Buff'} wore off.`, '#d4cbe8');
     }
   }
   // Renew: a share of max HP back every second.
@@ -517,8 +548,10 @@ export function updateWorld(world, dt, input) {
   char.mp = Math.min(char.mp, world.stats.maxMp);
 
   // ----- Player control -----
-  const held = input.locked || world.dead ? new Set() : input.held;
-  const pressed = input.locked || world.dead ? new Set() : input.pressed;
+  // While you fish, the line has the controls.
+  const fishing = !input.locked && tickFishing(world, dt, input.held, input.pressed);
+  const held = input.locked || world.dead || fishing ? new Set() : input.held;
+  const pressed = input.locked || world.dead || fishing ? new Set() : input.pressed;
   const intent = {
     left: held.has('ArrowLeft'),
     right: held.has('ArrowRight'),

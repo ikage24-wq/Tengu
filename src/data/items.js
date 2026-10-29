@@ -2,6 +2,8 @@
 // Every equip has 7 upgrade slots. Drops roll a little stat variance; shop items don't.
 
 import { SETS, SET_SLOTS, setPieceId } from './sets.js';
+import { FISH, RARITY_NAMES } from './fishing.js';
+import { DISHES } from './cooking.js';
 
 export const EQUIP_SLOTS = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
 export const UPGRADE_SLOTS = 7;
@@ -496,6 +498,13 @@ const ETC = [
 
 for (const [id, name, price, color] of ETC) {
   add({ id, name, type: 'etc', price, color, desc: 'A monster drop. Some quests need these; shops buy them.' });
+}
+
+// Fishing and cooking (data/fishing.js, data/cooking.js): the rod, every fish, and the dishes.
+add({ id: 'fishing_rod', name: 'Fishing Rod', type: 'etc', price: 300, stack: 1, color: '#c99a6b', desc: 'Stand at a fishing spot by the water and press Up to cast. Tap Attack when the bobber dips!' });
+for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, price: f.price, color: f.color, desc: `A ${RARITY_NAMES[f.rarity].toLowerCase()} fish (${f.size[0]}-${f.size[1]} cm). Cook it at a town stove, or sell it.` });
+for (const d of DISHES) {
+  add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 120 + d.heal * 0.4), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes (one dish at a time).` });
 }
 
 // Quest items: carried for a quest (a delivery), never sold or dropped.
