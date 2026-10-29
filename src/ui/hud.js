@@ -346,8 +346,6 @@ const GAUGES = {
     tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
   momentum: { color: '#e8962a', hot: '#7fcfff', icon: 'feather', name: 'Momentum', full: 'HAWKEYE', notch: () => null, edge: 'rgba(255,200,90,', ink: '#8a4a1a',
     tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
-  bloom: { color: '#f26aa4', hot: '#8ef0c8', icon: 'flower', name: 'Bloom', full: 'FULL BLOOM', notch: () => null, edge: 'rgba(255,140,190,', ink: '#7a2050',
-    tip: 'Your spells that land and your heals build it; it fades once the fighting stops. Full, every damage spell also heals allies near where it lands, and Garden of Light is ready.' },
   ki: { color: '#2a2230', hot: '#ff5a46', icon: 'seal', name: 'Ki', full: 'SHADOW CLONES', notch: () => null, edge: 'rgba(200,30,40,', ink: '#14101a',
     tip: 'Your hits build it, and so does every blow you dodge (and Smoke Bomb and Log Swap); it fades once the fighting stops. Full, two ink clones of you repeat every attack, and Thousand Cuts is ready.' },
   tails: { color: '#2f6cf0', hot: '#ffd36a', icon: 'foxtail', name: 'Tails', full: 'NINE TAILS', notch: () => null, ticks: 9, label: (v) => `${Math.min(9, Math.floor((v * 9) / 100 + 1e-9))}/9`, edge: 'rgba(60,120,255,', ink: '#0c1a6a',

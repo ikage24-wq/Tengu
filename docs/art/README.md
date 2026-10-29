@@ -292,11 +292,9 @@ carry an improvement across every part of the game it applies to.
     plumes of it fanned behind her, her emblem a fox's face in flame, her finisher a fox of fire
     with nine tails. Smooth teardrop flames first came out looking like water drops: real fire
     needs the turbulence.
-  - The Mage (first job) is rose pink and mint: pink orbs wrapped in turning petals with petal
-    trails, a flower that pops open and scatters on every hit, a whirling storm of petals on mint
-    wind, a mint flower of light with a rising column for every heal (this replaced the old
-    code-drawn heal sparkles everywhere, revives and GM heals too), a bud of petals for the
-    barrier, and a giant flower of light over a ring of little flowers for Garden of Light.
+  - The Mage was removed (a new magic class is being built from scratch) and her pink petal art
+    with her. What stays from her is the heal: a mint flower of light with a rising column (it
+    replaced the old code-drawn heal sparkles everywhere: party heals, GM heals, HP coming back).
   - Monsters and some buffs' lasting looks are still code-drawn and need the same pass.
 - The Ranger first read as bland next to the Sniper: pale mint wind vanished on purple maps,
   hits were thin white rings, and she had no big moment. Wind is now a saturated emerald with a

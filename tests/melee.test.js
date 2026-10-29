@@ -358,7 +358,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['mage', 'wand_20', 'petalbolt'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'shouldercharge']]) {
+  for (const [job, weapon, skill] of [['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'shouldercharge']]) {
     const w = arena(weapon);
     w.char.job = job;
     if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
@@ -1960,7 +1960,6 @@ test("each thief path's finisher needs its gauge full, spends it, and lands its 
   }
 });
 
-// ---------- The Mage: Bloom, Full Bloom, damage and healing ----------
 
 function mage() {
   const w = arena('wand_20');
@@ -1973,94 +1972,10 @@ function mage() {
   return w;
 }
 
-test('the Mage has her own spell combo with a wand, and her spells hit with magic', () => {
-  const w = mage();
-  const seen = [];
-  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  for (let i = 0; i < 100; i++) {
-    updateWorld(w, DT, hold);
-    if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
-  }
-  assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS.mage.map((s) => s.move));
-  const dealt = (int) => {
-    const x = mage();
-    x.char.base.int = int;
-    updateWorld(x, DT, idle);
-    const random = Math.random;
-    Math.random = () => 0.5;
-    try {
-      updateWorld(x, DT, press('KeyZ'));
-      run(x, 1);
-    } finally {
-      Math.random = random;
-    }
-    return 1e9 - x.mobs[0].hp;
-  };
-  assert.ok(dealt(300) > dealt(50) * 1.5, 'INT makes her spells hit harder');
-});
-
-test("a Mage's spells and heals build Bloom, and it fades once the fighting stops", () => {
-  const w = mage();
-  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  run(w, 1.5, hold);
-  const fromSpells = w.bloom;
-  assert.ok(fromSpells > 0, 'spells that land build it');
-  w.char.skills.healingbloom = 10;
-  w.char.hp = 10;
-  w.attackTimer = 0;
-  w.lockTimer = 0;
-  w.skillReadyAt = 0;
-  run(w, 0.6);
-  assert.ok(cast(w, 'healingbloom').ok);
-  assert.equal(w.char.hp, 10, 'the heal lands as the flower opens, not on the press');
-  run(w, 0.6);
-  assert.ok(w.char.hp > 10, 'healed');
-  assert.ok(w.bloom > fromSpells, 'healing builds it too');
-  run(w, 10);
-  assert.equal(w.bloom, 0);
-});
-
-test('full Bloom: every damage spell also heals allies near where it lands', () => {
-  const healed = (bloom) => {
-    const w = mage();
-    w.mobs.forEach((m) => (m.x = 340));
-    w.char.hp = 10;
-    w.bloom = bloom;
-    w.bloomAt = 1e9;
-    updateWorld(w, DT, press('KeyZ'));
-    run(w, 1);
-    return w.char.hp;
-  };
-  assert.equal(healed(0), 10, 'a plain bolt only hurts');
-  assert.ok(healed(100) > 10, 'under Full Bloom the bolt landing nearby heals her');
-});
-
-test('Garden of Light needs full Bloom, spends it, hits the whole line and heals the party', () => {
-  const w = mage();
-  w.char.skills.gardenoflight = 10;
-  w.bloom = 80;
-  assert.equal(cast(w, 'gardenoflight').reason, 'gauge:bloom', 'waits for full Bloom');
-  w.bloom = 100;
-  w.char.hp = 10;
-  assert.ok(cast(w, 'gardenoflight').ok);
-  assert.equal(w.bloom, 0, 'spends all of it');
-  run(w, 2);
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'hits the whole line');
-  assert.ok(w.char.hp > 10, 'and heals');
-  settle(w);
-  w.bloom = 100;
-  assert.ok(cast(w, 'gardenoflight').ok);
-  run(w, 0.3);
-  w.bloom = 100;
-  assert.equal(cast(w, 'gardenoflight').reason, 'busy');
-});
-
-// ---------- Pace: nothing can be mashed ----------
-
 test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
   const { SKILLS } = await import('../src/data/skills.js');
-  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], mage: ['mage'] };
-  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', mage: 'wand_20' };
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20' };
   for (const [label, fam] of Object.entries(families)) {
     // (A Thief fights with either weapon: `thiefstar` is her with a gauntlet.)
     const job = label === 'thiefstar' ? 'thief' : label;
@@ -2151,7 +2066,7 @@ test('attacking out of a run is still a dash attack', () => {
 // The same for a held attack skill, every kind of job: you stay planted and keep casting it (the
 // key repeats once held), turning with the direction, never walking off between casts.
 test('holding an attack skill and a direction keeps casting it, planted, for every job', () => {
-  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['mage', 'wand_20', 'petalbolt']]) {
+  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang']]) {
     const casts = (dir) => {
       const w = arena(weapon);
       w.char.job = job;

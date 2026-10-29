@@ -58,9 +58,8 @@ export const NPCS = {
   elowen: {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
-    showJob: 'mage',
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
-    greeting: 'Moonleaf Grove welcomes you. Magic is patience and a lot of MP. Shall we begin?',
+    greeting: 'Moonleaf Grove welcomes you. The way of magic is being remade from the ground up; come back soon.',
   },
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',

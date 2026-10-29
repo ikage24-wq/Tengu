@@ -12,8 +12,8 @@ it, and tick it off here.
 
 - Levels 1–100 and gear every 5 levels up to 100, but maps and monsters only go up to about 50.
 - Quests: 9, loose, no story thread. Every map is open from the start.
-- Jobs: every class gets a first job at 10; the Mage advances at 30 and 50, the Warrior at 30
-  (Paladin or Berserker, after a trial).
+- Jobs: Warrior, Archer and Thief get a first job at 10 and two paths at 30 after a trial. The
+  Mage was removed; a new magic class is being built from scratch.
 - Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses), the Crystal King,
   and Boss Rush (Dancing Green, Lv 40+, with a cutscene).
 - Drawn but unused: Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna, and four queens
@@ -57,13 +57,15 @@ to calm each region's spirit, find out who is souring them, and wake the Tengu.
 Side quests stay optional but pay well and tell small stories about each town.
 
 ### 2. Job advancement for everyone (MapleStory)
-- Every class advances: **1st at 10, 2nd at 30, 3rd at 60, 4th at 100** (the Mage's existing
-  30/50 jobs move to 30/60 or stay at 50; decide when building).
+- Every class advances: **1st at 10, 2nd at 30, 3rd at 60, 4th at 100** (the new magic class
+  too, once it's built).
 - Each advancement is a short trial quest from the instructor: go somewhere, prove yourself in a
   solo trial room, come back to a ceremony with a new look (aura, title, outfit piece).
-- Warrior 2nd jobs are in (Paladin tank, Berserker damage), and Archer 2nd jobs (Ranger and
-  Sniper, both damage); Thief next.
-- Role stays tied to job like FFXIV: warriors tank, mages heal, archers and thieves deal damage.
+- Warrior 2nd jobs are in (Paladin tank, Berserker damage), Archer 2nd jobs (Beastmaster and
+  Stormcaller, both damage) and Thief 2nd jobs (Shinobi and Kitsune, both damage); the new
+  magic class next.
+- Role stays tied to job like FFXIV: warriors tank, the new magic class will heal, archers and
+  thieves deal damage (until then an archer or thief fills the healer's seat).
   The 2nd job can add a second role (for example a warrior branch that deals damage).
 
 ### 3. Many characters, one account (MapleStory's Legion)

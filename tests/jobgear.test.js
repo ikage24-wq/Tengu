@@ -104,7 +104,7 @@ test('shops sell gear for your own job at their levels, and a Novice sees every 
 test('quest gear rewards fit the hero who earns them', () => {
   const r = { id: 'warrior_gloves_15', qty: 1, forJob: true };
   assert.equal(rewardId(hero('archer', 15), r), 'archer_gloves_15');
-  assert.equal(rewardId(hero('mage', 15), r), 'mage_gloves_15');
+  assert.equal(rewardId(hero('thief', 15), r), 'thief_gloves_15');
   assert.equal(jobGearId('thief', 'earring', 33), 'ear_30');
 });
 

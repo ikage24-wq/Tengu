@@ -62,7 +62,7 @@ blow).
 - **Check names before using them on the world.** The world already keeps the player's key
   presses as `intent`, so a gauge can't be called that.
 
-- **A support job** (the Mage) builds its spells the same way: `magic` strikes hit with magic
+- **A support job** (like the old Mage, removed to be rebuilt) builds its spells the same way: `magic` strikes hit with magic
   attack, `heal` strikes mend you and the party in range when the spell lands (never on the
   press), and its gauge can build from healing as well as hits.
 

@@ -461,19 +461,6 @@ const ICONS = {
     ctx.fillRect(-s * 0.06, -s * 0.28, s * 0.12, s * 0.56);
     ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
   },
-  // A five-petal flower (the Mage's Bloom).
-  flower(ctx, s) {
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
-      ctx.beginPath();
-      ctx.arc(Math.cos(a) * s * 0.24, Math.sin(a) * s * 0.24, s * 0.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2);
-    ctx.fill();
-  },
   // A seal tag, a strip of paper with a brush mark (the Shinobi's Ki).
   seal(ctx, s) {
     ctx.fillRect(-s * 0.2, -s * 0.44, s * 0.4, s * 0.88);

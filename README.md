@@ -1,7 +1,7 @@
 # Tengu — a cozy pastel side-scroller RPG
 
 A browser game in the spirit of classic 2D MMO side-scrollers: start as a Novice, grind cute
-monsters across connected maps, pick a job at level 10 (mages pick a specialty at 30), spend AP and SP,
+monsters across connected maps, pick a job at level 10 and a path at 30, spend AP and SP,
 loot and upgrade gear, and take on quests and a boss. Everything is drawn in code in a soft
 pastel style: characters are short pixel chibis in the classic MMO style (a big round head with
 ears and big soft eyes, rounded bangs with a shine band, and one sturdy little jointed body for
@@ -53,11 +53,12 @@ to clear it.
 
 ## Systems
 
-- **Jobs** — Novice → Warrior, Mage, Archer, or Thief at level 10 (each instructor lives in their
-  job's home town). Every first job has a movement skill (Shoulder Charge, Blink, Backflip Shot,
-  Shadow Step). The Warrior, Archer and Thief each pick one of two paths at level 30 (below), after
-  their instructor's trial. The Mage has the least HP in the game, but heals and shields the
-  party; her paths are being remade, so she stays a Mage for now.
+- **Jobs** — Novice → Warrior, Archer, or Thief at level 10 (each instructor lives in their job's
+  home town). Every first job has a movement skill (Shoulder Charge, Backflip Shot, Shadow Step).
+  Each picks one of two paths at level 30 (below), after their instructor's trial. The Mage was
+  removed: a new magic class is being built from scratch. Characters who were Mages are Novices
+  again, with their skill points given back; Elowen still keeps the Mage Tower in Moonleaf Grove,
+  waiting for the new class, and wands and staves stay in the game for it.
 
   Monsters can be **frozen** (in a block of ice) or **stunned** (seeing stars) so they can't move or
   hurt you, and **poisoned** (green) or **bleeding** (red) so they take damage every second. Spells
@@ -67,7 +68,7 @@ to clear it.
 - **Stats** — STR, DEX, INT, LUK with 5 AP per level (an Auto button spends them for your job).
   Damage uses a primary and secondary stat per weapon type, mastery raises your minimum damage,
   magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.
-- **Skills** — 3 Novice skills, 5 per first job, 4 per mage second job, 4-5 per mage third job: attacks, area hits, multi-hit
+- **Skills** — 3 Novice skills, 5 or more per first job and 5-6 per path: attacks, area hits, multi-hit
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
   3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
@@ -142,21 +143,6 @@ to clear it.
   crashes into the ground ahead like a meteor: the ground cracks open in gold, a shockwave races
   out both ways, and everything nearby is thrown into the air. A Beastmaster who learned Vault
   looses its shot as her own green arrow.
-- **Mage** (rose pink and mint: flowers, petals and light) — damage and support at once, and the
-  healer of any dungeon group. With a wand or staff she has her own spell combo (a petal bolt, a
-  second, then a blossom bolt that bursts through the line) and her own command spells (a bolt up
-  at fliers, petal bolts from a float in the air, a bolt out of a glide). **Bloom** is her gauge (a
-  flower): spells that land and heals build it. Full, she is in **Full Bloom**: every damage spell
-  also heals the allies near where it lands. Skills: **Petal Bolt** (a three-cast combo), **Petal
-  Storm** (a whirling storm of petals over the monsters ahead), **Healing Bloom** (a flower of light
-  at her feet heals her and the party around her and cuts the monsters close by), **Bloom Barrier**
-  (a bud of petals on her and the party that soaks up damage), **Blink** (scatter into petals and
-  gather again ahead, untouchable), **Rebloom** (raise a fallen party member), **Spell Mastery** and
-  **Blossom Heart**, and the finisher **Garden of Light** (needs full Bloom and spends it: a garden
-  springs up under the monsters, a giant flower of light bursts through them, and its petals heal
-  the party). Her spells hit with magic attack (INT). The Mage's later paths (the Wizards, the
-  Cleric and their level 50 jobs) are retired while they're remade; mages on them are back to
-  the first-job Mage, with their skill points returned.
 - **Thief** (violet and midnight with moonlight silver: crescent moons and smoke) — the first job
   builds the base for both of the Thief's later paths, so its book is a choice: put points into
   the dagger skills, the gauntlet skills, or both. She fights light and acrobatic, low and loose
@@ -357,7 +343,8 @@ to clear it.
 - **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
   Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
   form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank (Berserkers deal damage),
-  mages (and every mage job after them) heal, archers and thieves deal damage**. Your party comes
+  archers and thieves deal damage**; while the new magic class is being built, the group finder
+  brings in an archer or thief who heals in the healer's seat. Your party comes
   with you if it fits the roles, and the group finder brings in players for any open spot. Inside:
   - Everyone in the group has HP (shown under their names and in the group panel), and monsters
     don't hurt on touch: they wind up and swing at whoever they're angriest at. Damage builds
@@ -560,11 +547,6 @@ to clear it.
     burns them, then bursts), **Fox Hop** (springs back out of reach, leaving a decoy of fox fire
     that bursts), **Kitsune Mastery**, and the finisher **Nine-Tail Blaze** (needs all nine
     tails: nine stars rain down burning, then a giant fox of blue fire pounces through the line).
-- **Mage support** — mages are the healers: **Healing Bloom** heals you and every party member
-  around you; **Bloom Barrier** wraps you and the party around you in a bud of petals that soaks up
-  damage until it bursts; **Rebloom** gets a fallen party member nearby back up, even mid-fight;
-  and Full Bloom turns every damage spell into a heal for the allies near where it lands. Outside
-  a dungeon they work on you.
 - **HD graphics** — on by default (Options: Display). Everything in the world is placed on the
   screen's own pixels, so the camera and everyone in it glide instead of stepping, while the art
   itself stays crisp pixel art. Each map gets its own lighting: warm light and slanting sun rays

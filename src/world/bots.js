@@ -89,10 +89,10 @@ function rollLevel(pro, rng) {
 }
 
 // The job path a character of this level would be on. Warriors, archers and thieves advance to a
-// level 30 path; mages stay Mages until their paths are remade.
+// level 30 path (the Mage was removed; a new magic class is being built).
 function jobPath(level, rng) {
   if (level < 10) return ['novice'];
-  const first = pick(['warrior', 'mage', 'archer', 'thief'], rng);
+  const first = pick(['warrior', 'archer', 'thief'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];

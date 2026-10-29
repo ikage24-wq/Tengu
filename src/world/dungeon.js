@@ -88,7 +88,8 @@ export function planGroup(world, id = 'hollow') {
 function recruit(world, def, role) {
   const rng = world.bots.rng;
   const [lo, hi] = def.recruit[role];
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? ['mage'] : [pick(['archer', 'thief'], rng)];
+  const jobs = role === 'tank' ? ['warrior'] : [pick(['archer', 'thief'], rng)];
+  // (The healer's seat is an archer or thief who heals, while the magic class is being remade.)
   const bot = recruitBot(world.bots, world, { level: Math.floor(between(lo, hi + 1, rng)), jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;

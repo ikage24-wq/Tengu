@@ -144,12 +144,6 @@ export const PATH_COMBOS = {
   ],
   // The Thief, by weapon. With a dagger: a stab, a quick slash, then an X-cut that throws them
   // back. With a gauntlet: a star, two stars, then a big spinning moon star through the line.
-  // The Mage: a petal bolt, a second, then a bursting blossom bolt through the line.
-  mage: [
-    { move: 'castforward', dur: 0.44, step: -2, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, pct: 90, range: 280, h: 60, knock: 25, speed: 600 }] },
-    { move: 'castforward', dur: 0.44, step: -2, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, pct: 95, range: 280, h: 60, knock: 25, speed: 600 }] },
-    { move: 'castspin', dur: 0.6, step: -6, finisher: true, strikes: [{ at: 0.55, shot: 'bloombolt', magic: true, pct: 170, range: 300, h: 64, targets: 3, pierce: true, speed: 680, knock: 190, big: true, stop: 0.06, shake: 2 }] },
-  ],
   thiefdagger: [
     { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 58, h: 46, knock: 30, pierce: true }] },
     { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
@@ -420,16 +414,6 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
-  // The Mage: a bolt cast up at whatever flies, petal bolts cast down from a float in the air,
-  // and a bolt cast out of a glide.
-  mage: {
-    up: { move: 'castup', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'bloombolt', magic: true, pct: 110, range: 260, h: 190, lift: 50, targets: 2, pierce: true, knock: 20, launch: 380, speed: 650, big: true, stop: 0.05 }] },
-    air: [
-      { move: 'castforward', dur: 0.4, hang: true, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 620 }] },
-      { move: 'castspin', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.55, shot: 'bloombolt', magic: true, fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 660, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'castforward', dur: 0.46, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'petalbolt', magic: true, fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 640 }] },
-  },
   // The Kitsune: two fox-fire stars flung up at whatever flies, fans of them thrown down from a
   // hang in the air, and a pounce out of a run that throws two as she lands.
   kitsune: {
@@ -690,22 +674,8 @@ export function addTails(world, n, mob = null) {
 }
 export const tailCount = (world) => (hasTails(world.char) ? Math.min(9, Math.floor(((world.tails ?? 0) / TAILS_MAX) * 9 + 1e-9)) : 0);
 export const nineTails = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
-// Bloom: the Mage's gauge (first job). Spells that land and heals build it; it fades once the
-// fighting stops. Full (Full Bloom), every damage spell also heals allies near where it lands
-// (BLOOM_HEAL of their max HP).
-export const BLOOM_MAX = 100;
-const BLOOM_HOLD = 5;
-const BLOOM_DRAIN = 10;
-export const BLOOM_HEAL = 0.03;
-export const hasBloom = (char) => char.job === 'mage';
-export function addBloom(world, n) {
-  if (!hasBloom(world.char) || n <= 0) return;
-  world.bloom = Math.min(BLOOM_MAX, (world.bloom ?? 0) + n);
-  world.bloomAt = world.now;
-}
-export const fullBloom = (world) => hasBloom(world.char) && (world.bloom ?? 0) >= BLOOM_MAX;
-// Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal spell, or Full
-// Bloom's petals where a spell lands); healing builds Bloom.
+// Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
+// Paladin's Judgment).
 export function healAround(world, x, y, pct, r) {
   const { char, body, stats } = world;
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
@@ -715,15 +685,14 @@ export function healAround(world, x, y, pct, r) {
     world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
-  addBloom(world, 40 * pct);
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar', 'foxstar', 'foxmoon']);
-// A job's own gauge: which one the character has ('bloom', 'ki', 'tails', 'valor', 'momentum',
+// A job's own gauge: which one the character has ('ki', 'tails', 'valor', 'momentum',
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasBloom(char) ? 'bloom' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
+  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -732,7 +701,6 @@ export function gaugeFull(world) {
 
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n, mob = null) {
-  addBloom(world, n);
   addTails(world, n, mob);
   addMomentum(world, n);
   addShadow(world, n);
@@ -743,7 +711,6 @@ export function addAim(world, n, mob = null) {
 function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
-  if ((w === 'wand' || w === 'staff') && hasBloom(char)) return 'mage';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
@@ -953,7 +920,6 @@ export function tickMelee(world, dt) {
   if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
-  if (world.bloom > 0 && world.now - (world.bloomAt ?? 0) > BLOOM_HOLD) world.bloom = Math.max(0, world.bloom - BLOOM_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
@@ -994,8 +960,6 @@ export function tickMelee(world, dt) {
 
 function land(world, s) {
   const { char, stats, body, now } = world;
-  // Full Bloom's petals healing where a spell landed (queued for the moment it lands).
-  if (s.healAt) return healAround(world, s.x, s.y, s.amount, 150);
   // Strikes follow the way you were facing when the step began; a `turn` strike (Backstab) turns
   // round to hit what you just passed.
   if (s.turn) s = { ...s, dir: -s.dir, turn: false };
@@ -1051,7 +1015,7 @@ function land(world, s) {
     });
     if (roll?.crit) crits++;
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, dir: s.dir, t: -i * 0.03, dur: 0.6, seed: Math.random() });
-    // Each path's own spark on every blow that lands: shards of rage, or a bloom of light.
+    // Each path's own spark on every blow that lands: shards of rage, or a burst of holy light.
     if (!miss && (hasRage(char) || hasFaith(char))) world.fx.push({ kind: hasRage(char) ? 'ragehit' : 'holyhit', school: hasRage(char) ? 'rage' : 'holy', x: m.x, y: m.y - (m.air ?? 0), h: m.def.h, big: s.big, dir: s.dir, t: 0, dur: s.big ? 0.42 : 0.32, seed: Math.random() });
   });
   // A tank's taunting blow: everything it hits turns on you (in a dungeon, sticking for a while).
@@ -1074,9 +1038,8 @@ function land(world, s) {
   if (crits && !s.phantom) frenzyOnCrit(world);
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
-  // A healing spell mends you and the party around you as it blooms.
+  // A healing blow mends you and the party around you.
   if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220);
-  if (s.magic && targets.length && !s.phantom) addBloom(world, s.gauge ?? 4);
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
@@ -1328,7 +1291,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
-  const spark = hasBloom(char) ? 'bloomhit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
+  const spark = hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1343,11 +1306,6 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     const jumps = (s.arc?.n ?? 0) + (supercharged(world) ? 1 : 0);
     if (jumps) chainArc(world, s, m, delay, jumps, element);
     if (s.field) staticField(world, m, delay, s.field);
-  }
-  // Full Bloom: a damage spell scatters healing petals over the allies near where it lands.
-  if (fullBloom(world) && !miss && s.magic && s.pct > 0) {
-    world.strikes.push({ healAt: true, x: m.x, y: m.y, amount: BLOOM_HEAL, due: world.now + delay });
-    world.fx.push({ kind: 'healpetals', x: m.x, y: m.y, t: -delay, dur: 0.6 });
   }
 }
 

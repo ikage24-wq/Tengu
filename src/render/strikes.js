@@ -11,7 +11,7 @@ import { drawArcheryShot, drawArchery, windRainPiece, hawkRainPiece } from './ar
 import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
 import { drawThiefFx, moonRainPiece, foxRainPiece } from './thief-fx.js';
-import { drawMageFx, drawMageShot } from './mage-fx.js';
+import { drawHealFx } from './heal-fx.js';
 import { wash, deep } from './fxkit.js';
 
 const TAU = Math.PI * 2;
@@ -240,7 +240,7 @@ export function drawStrikeShot(ctx, f, x, y, dir, time) {
       return true;
     }
     default:
-      return drawMageShot(ctx, f, x, y, dir, time) || drawArcheryShot(ctx, f, x, y, dir, time);
+      return drawArcheryShot(ctx, f, x, y, dir, time);
   }
 }
 
@@ -251,7 +251,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   // The warrior paths' effects and skill power-ups come from effect sprites (warrior-fx.js).
   if (drawWarriorFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawThiefFx(ctx, f, x, y, p, cam, time)) return true;
-  if (drawMageFx(ctx, f, x, y, p, cam, time)) return true;
+  if (drawHealFx(ctx, f, x, y, p)) return true;
   const c = colors(f);
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   switch (f.kind) {

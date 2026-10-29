@@ -279,32 +279,32 @@ test('the Game Master stays locked without the passphrase, and its tools work on
 test('skills never go on cooldown: a spell is free again a beat after its motion ends', async () => {
   const { setJob, setLevel, gmCommand } = await import('../src/world/gm.js');
   const w = newWorld();
-  setJob(w.char, 'mage');
+  setJob(w.char, 'thief');
   setLevel(w.char, 40);
-  w.char.equipment.weapon = makeEquip('wand_20', {});
-  w.char.skills.petalstorm = 10;
+  w.char.equipment.weapon = makeEquip('dagger_20', {});
+  w.char.skills.backstab = 10;
   w.char.baseMp = 5000;
   gmCommand(w, 'heal', []);
   updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'petalstorm').ok, true);
-  assert.equal(cast(w, 'petalstorm').reason, 'busy', 'not while the storm is being raised');
-  for (let i = 0; i < 70; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'petalstorm').reason, 'busy', 'a beat of recovery after the motion, so it cannot be mashed');
+  assert.equal(cast(w, 'backstab').ok, true);
+  assert.equal(cast(w, 'backstab').reason, 'busy', 'not while she slips through');
+  for (let i = 0; i < 36; i++) updateWorld(w, DT, idle);
+  assert.equal(cast(w, 'backstab').reason, 'busy', 'a beat of recovery after the motion, so it cannot be mashed');
   for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'petalstorm').ok, true, 'usable again right after that beat: no cooldown');
+  assert.equal(cast(w, 'backstab').ok, true, 'usable again right after that beat: no cooldown');
 });
 
-test('the warrior, the archer and the thief branch two ways at 30; the mage paths are being remade', async () => {
+test('the warrior, the archer and the thief branch two ways at 30; the mage is being remade', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.equal(nextJobs('mage', 200).length, 0, 'no mage paths for now');
-  for (const first of ['warrior', 'mage', 'archer', 'thief']) {
+  assert.ok(!JOBS.mage, 'no mage for now (a new magic class is being built)');
+  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'warrior']);
+  for (const first of ['warrior', 'archer', 'thief']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
   assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['beastmaster', 'stormcaller'], 'archer has two paths at 30');
   assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['kitsune', 'shinobi'], 'thief has two paths at 30');
-  assert.ok(JOBS.mage.hp < JOBS.warrior.hp && JOBS.mage.hp < JOBS.archer.hp, 'mages are the most fragile');
 });
 
 test('a shoulder charge dashes forward and hits the monsters it passes through', () => {
@@ -322,29 +322,19 @@ test('a shoulder charge dashes forward and hits the monsters it passes through',
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 4, 'hit everything it passed');
 });
 
-test('Blink scatters the mage into petals and gathers her up ahead, untouchable on the way', () => {
-  const w = newWorld();
-  gainExp(w.char, 1e5);
-  advanceJob(w.char, 'mage');
-  w.char.skills.petalblink = 10;
-  updateWorld(w, DT, idle);
-  w.body.facing = 1;
-  const x = w.body.x;
-  assert.equal(cast(w, 'petalblink').ok, true);
-  assert.ok(w.invuln > 0, 'untouchable');
-  for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
-  assert.ok(w.body.x > x + 100, 'well ahead');
-});
-
 test('old saves move to the renamed jobs and get SP back for removed skills', async () => {
   const { updateRetiredJobs } = await import('../src/core/save.js');
   const c = { job: 'infernosage', sp: 0, skills: { petalbolt: 10, overload: 5, shadowcross: 3, fireball: 20 }, hotkeys: { KeyQ: { skill: 'overload' }, KeyW: { skill: 'petalbolt' } } };
   updateRetiredJobs(c);
-  assert.equal(c.job, 'mage', 'the retired mage paths go back to the first-job Mage');
-  assert.equal(c.sp, 28);
-  assert.deepEqual(c.skills, { petalbolt: 10 });
+  assert.equal(c.job, 'novice', 'the Mage and her old paths were removed: back to the Novice');
+  assert.equal(c.sp, 38, 'every one of the old skills gives its points back');
+  assert.deepEqual(c.skills, {});
   assert.equal(c.hotkeys.KeyQ, null);
-  assert.deepEqual(c.hotkeys.KeyW, { skill: 'petalbolt' });
+  assert.equal(c.hotkeys.KeyW, null);
+  const m = { job: 'mage', sp: 2, skills: { petalbolt: 10, petalstorm: 5 }, hotkeys: {} };
+  updateRetiredJobs(m);
+  assert.equal(m.job, 'novice', 'a Mage goes back to the Novice');
+  assert.equal(m.sp, 17);
   // The Ranger and Sniper were remade as the Beastmaster and the Stormcaller; a job that exists
   // today stays, even if an old retired job once had its id (the Beastmaster).
   for (const [was, now] of [['ranger', 'beastmaster'], ['sniper', 'stormcaller'], ['beastmaster', 'beastmaster']]) {

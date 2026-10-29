@@ -277,21 +277,9 @@ function tailsAura(ctx, x, y, t, s, k, layer, dir = 1) {
   if (k >= 1) fxSprite(ctx, 'celembfox', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Bloom: a pink ring at the mage's feet, petals drifting up round her as it builds, and full (Full
-// Bloom), the flower emblem over her head and mint rings racing out.
-function bloomAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringbloom', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringmint', x, y, { t: t % 0.6, scale: s * 0.8, sy: 0.32 });
-    return;
-  }
-  if (k > 0.4) fxSprite(ctx, 'celbloomaura', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.55 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
-  if (k >= 1) fxSprite(ctx, 'celembbloom', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-}
-
-// Draws a combat aura: `kind` a job's gauge ('bloom', 'ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
+// Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { bloom: bloomAura, ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
+const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

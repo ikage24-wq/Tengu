@@ -648,93 +648,6 @@ function crimsoneclipse() {
   return out;
 }
 
-// ---------- Mage ----------
-
-// A five-petal flower: pink petals round a gold heart (mint for healing).
-function bloomFlower(cx, cy, r, petal = '#ffa6cc', rot = -90) {
-  const out = [];
-  for (let i = 0; i < 5; i++) {
-    const a = (rot + i * 72) * D2R;
-    out.push(...solid(oval(cx + Math.cos(a) * r * 0.55, cy + Math.sin(a) * r * 0.55, r * 0.5, r * 0.4, rot + i * 72, 14), petal, { shadow: i === 0, d: 0.35, ink: '#a0386e' }));
-  }
-  out.push(...solid(oval(cx, cy, r * 0.32, r * 0.32, 0, 12), '#ffe17a', { shadow: false, d: 0.3, ink: '#a0386e' }));
-  return out;
-}
-
-function petalbolt() {
-  const out = [...tile('sakura', 'active'), ...aura(10, 6, 5.4, '#ffe2ef', 1.1)];
-  out.push(streak([1.4, 13.6], [7.2, 8.6], 1.4, '#ffe2ef'));
-  for (const [x, y, a] of [[3.6, 11.2, 30], [5.8, 13, 60], [2.2, 9, 10]]) out.push(...solid(oval(x, y, 1.1, 0.7, a, 10), '#ffa6cc', { shadow: false, d: 0.3, ink: '#a0386e' }));
-  out.push(...solid(oval(10.4, 6, 3.6, 3.6, 0, 22), '#f26aa4', { d: 0.4, ink: '#a0386e', glow: 1.15 }));
-  out.push(S(oval(9.4, 5, 1.6, 1.6, 0, 12), '#ffe2ef'));
-  out.push(...spark(13.8, 2.4, 1, W));
-  return out;
-}
-
-function petalstorm() {
-  const out = [...tile('sakura', 'active'), ...aura(8, 8, 6.6, '#ffe2ef')];
-  for (const [cy, rx, ry, a0] of [[4.4, 6, 1.8, 200], [8, 4.8, 1.5, 30], [11.4, 3.4, 1.1, 210]]) out.push(...swoosh(8, cy, rx, ry, a0, a0 + 290, 1.2, '#dcfff2', { ink: '#1f7a6a' }));
-  for (const [x, y, a] of [[3, 4, 20], [12.6, 5, -30], [5, 9, 60], [11, 10, 10], [7.6, 13.4, -40], [9, 2.6, 80]]) out.push(...solid(oval(x, y, 1.2, 0.8, a, 10), '#ffa6cc', { shadow: false, d: 0.3, ink: '#a0386e' }));
-  return out;
-}
-
-function healingbloom() {
-  const out = [...tile('mint', 'active'), ...aura(8, 9, 6.6, '#dcfff2', 1.1)];
-  out.push(...bloomFlower(8, 11, 5.4, '#8ef0c8'));
-  out.push(...solid([[7, 1.6], [9, 1.6], [9, 3.6], [11, 3.6], [11, 5.6], [9, 5.6], [9, 7.6], [7, 7.6], [7, 5.6], [5, 5.6], [5, 3.6], [7, 3.6]], '#ffffff', { d: 0.35, ink: '#1f7a6a' }));
-  out.push(...spark(2.6, 3, 1, '#ffe2ef'), ...spark(13.4, 3.6, 0.9, '#ffe2ef'));
-  return out;
-}
-
-function bloombarrier() {
-  const out = [...tile('sakura', 'buff'), ...aura(8, 8, 6.6, '#ffe2ef')];
-  for (const [x, y, a, r] of [[4.6, 9.6, -20, 3.8], [11.4, 9.6, 20, 3.8], [6, 6, -10, 3.4], [10, 6, 10, 3.4], [8, 4, 0, 3]]) out.push(...solid(oval(x, y, r * 0.62, r, a, 18), '#ffa6cc', { d: 0.4, ink: '#a0386e' }));
-  out.push(S(oval(8, 9.4, 1.6, 2.4, 0, 14), '#ffe2ef'));
-  out.push(...spark(13.6, 2.6, 1, W));
-  return out;
-}
-
-function petalblink() {
-  const out = [...tile('sakura', 'active'), ...aura(11, 8, 5, '#ffe2ef', 1.1)];
-  out.push(streak([1, 8], [7, 8], 1.4, '#ffe2ef'), streak([2, 5], [6, 5.6], 0.9, '#dcfff2'), streak([2, 11], [6, 10.4], 0.9, '#dcfff2'));
-  for (const [x, y, a] of [[2.6, 7.4, 10], [4.4, 9.2, 50], [5.4, 6, -30]]) out.push(...solid(oval(x, y, 1, 0.7, a, 10), '#ffa6cc', { shadow: false, d: 0.3, ink: '#a0386e' }));
-  out.push(...bloomFlower(11.2, 8, 4.2));
-  return out;
-}
-
-function rebloom() {
-  const out = [...tile('mint', 'active'), ...aura(8, 7, 6.6, '#dcfff2', 1.1)];
-  out.push(...solid([[7.2, 15], [8.8, 15], [8.6, 8], [7.4, 8]], '#40c898', { d: 0.35, ink: '#1f7a6a' }));
-  out.push(...solid(oval(5.6, 11, 2.2, 1, -30, 12), '#8ef0c8', { shadow: false, d: 0.3, ink: '#1f7a6a' }), ...solid(oval(10.4, 10.4, 2.2, 1, 30, 12), '#8ef0c8', { shadow: false, d: 0.3, ink: '#1f7a6a' }));
-  out.push(...bloomFlower(8, 5.6, 4.4));
-  out.push(...spark(2.6, 3, 1, W), ...spark(13.6, 2.6, 0.9, W));
-  return out;
-}
-
-function spellmastery() {
-  const out = [...tile('sakura', 'passive'), ...aura(8, 8, 6.6, '#ffe2ef')];
-  out.push(...solid(tube([[4, 14], [11, 4]], 0.9), '#c88a5a', { d: 0.35 }));
-  out.push(...bloomFlower(11.2, 4.4, 3.8));
-  out.push(...glint(6, 10, 0.5), ...spark(3, 3, 1, '#dcfff2'));
-  return out;
-}
-
-function blossomheart() {
-  const out = [...tile('sakura', 'passive'), ...aura(8, 8.4, 6.8, '#ffe2ef')];
-  out.push(...solid(heartPts(8, 8.6, 6.2), '#f26aa4', { glow: 1.1 }));
-  out.push(...bloomFlower(8, 8, 2.8, '#ffe2ef'));
-  out.push(...spark(13.6, 2.6, 1.2, '#dcfff2'));
-  return out;
-}
-
-function gardenoflight() {
-  const out = [...tile('sakura', 'active'), ...aura(8, 6, 6.8, '#ffe2ef', 1.15)];
-  out.push(...solid([[7.4, 15.2], [8.6, 15.2], [8.4, 9], [7.6, 9]], '#40c898', { d: 0.3, ink: '#1f7a6a' }));
-  for (const x of [2.6, 13.4]) out.push(...bloomFlower(x, 13.4, 2, '#8ef0c8'));
-  out.push(...bloomFlower(8, 6, 5.6));
-  out.push(...spark(2.4, 2.6, 1, W), ...spark(13.6, 2.4, 1, '#dcfff2'));
-  return out;
-}
 
 // ---------- Archer ----------
 
@@ -1400,7 +1313,6 @@ const ART = {
   bladerush, whirlwind, shouldercharge, warcry, ironguard, swordmastery, toughness, titanbreak,
   paladinmastery, aegissmite, hallowedground, divineaegis, sacredbulwark, judgment, grandverdict,
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
-  petalbolt, petalstorm, healingbloom, bloombarrier, petalblink, rebloom, spellmastery, blossomheart, gardenoflight,
   blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
   beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
   stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,

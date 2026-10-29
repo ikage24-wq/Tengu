@@ -43,8 +43,8 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 
 ## Making a job (every new job or path, the standard the player approved)
 
-Build every future job the way the Warrior, Archer, Thief and Mage and their paths (Paladin, Berserker, Ranger,
-Sniper) were built; the player signed off on that result and wants all jobs made like it. The full
+Build every future job the way the Warrior, Archer and Thief and their paths (Paladin, Berserker,
+Beastmaster, Stormcaller, Shinobi, Kitsune) were built; the player signed off on that result and wants all jobs made like it. The full
 step-by-step recipe is `docs/design/making-a-job.md`: read it before starting any job. In short:
 
 - **Research first.** Read the art research (below) and look at real references for the job
@@ -57,7 +57,7 @@ step-by-step recipe is `docs/design/making-a-job.md`: read it before starting an
 - **Its own animation:** moves drawn for its weapon (a bow really draws, a crossbow kneels and
   cranks), with weight that matches each blow.
 - **Its own colour and shape language**, bold enough to read on every map, so a hit says whose it
-  is (the Warrior's steel-blue cross and giant sword, the Archer's gold arrows and sky-blue feathers, the Mage's pink petals and mint flowers of light, the Thief's violet smoke and crescent moons, the Shinobi's ink and red seals, the Kitsune's blue fox fire and tails, the Paladin's gold star, the Berserker's rose claws, the Ranger's
+  is (the Warrior's steel-blue cross and giant sword, the Archer's gold arrows and sky-blue feathers, the Thief's violet smoke and crescent moons, the Shinobi's ink and red seals, the Kitsune's blue fox fire and tails, the Paladin's gold star, the Berserker's rose claws, the Ranger's
   emerald wind and leaves, the Sniper's ice-blue streaks and rose sight).
 - **Effects in Tengu's own art** (`tools/fx-art.js`, HD with a soft glow; see the effects rule
   below): swipes or shots, a hit mark, a buff pillar with its emblem, a gauge aura, and a picture

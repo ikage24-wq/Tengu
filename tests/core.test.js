@@ -88,11 +88,11 @@ test('job advancement needs the level and adds HP, MP, and SP', () => {
 test('auto-assign spends every AP into the family stats', () => {
   const c = fresh();
   gainExp(c, 20000);
-  advanceJob(c, 'mage');
+  advanceJob(c, 'thief');
   autoAssignAp(c);
   assert.equal(c.ap, 0);
-  assert.ok(c.base.int > c.base.str);
-  assert.ok(c.base.luk > 4);
+  assert.ok(c.base.luk > c.base.str);
+  assert.ok(c.base.dex > 4);
 });
 
 test('skills: learning needs SP and the right job, and binds a hotkey', () => {

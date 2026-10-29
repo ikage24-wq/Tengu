@@ -141,8 +141,6 @@ export const PLAYSTYLES = {
 
 function weaponStyle(bot) {
   const type = bot.stats.weaponType;
-  const mage = JOBS[bot.char.job].family === 'mage';
-  if (mage) return { reach: 170, lift: 100, pose: 'castforward', shot: 'petalbolt', magic: true, ranged: true };
   // Archers shoot their own way: an Archer's gold arrows, a Beastmaster's wild arrows, a Stormcaller's
   // heavy bolts.
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
@@ -162,7 +160,6 @@ export function makeAI(bot, rng, kind = null) {
   const family = JOBS[bot.char.job].family;
   kind ??= bot.level < 12 && rng() < 0.6 ? 'rookie'
     : bot.pro && rng() < 0.6 ? 'showoff'
-    : family === 'mage' && rng() < 0.5 ? 'healer'
     : bot.char.job === 'beastmaster' ? (rng() < 0.6 ? 'showoff' : 'sniper')
     : st.ranged ? (rng() < 0.75 ? 'sniper' : 'showoff')
     : bot.char.job === 'paladin' ? (rng() < 0.8 ? 'guardian' : 'rusher')

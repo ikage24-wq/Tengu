@@ -250,7 +250,9 @@ export function npcWindow(ui, state, world) {
     if (!options.length) {
       const next = Object.values(JOBS).filter((j) => j.parent === char.job && (!npc.family || j.family === npc.family));
       const trial = next.find((j) => j.trial && char.level >= j.level)?.trial;
-      const msg = trial ? `First, pass my trial: ${QUESTS[trial].name}. Then I'll teach you more.` : next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
+      // An instructor whose way has no job right now (the Mage, being remade) says so.
+      const remade = npc.family && !Object.values(JOBS).some((j) => j.family === npc.family);
+      const msg = remade ? 'The way of magic is being remade from the ground up. Come back soon!' : trial ? `First, pass my trial: ${QUESTS[trial].name}. Then I'll teach you more.` : next.length ? `Come back at level ${next[0].level} and I'll teach you more.` : char.job === 'novice' ? '' : 'You have learned all I can teach for now.';
       const fam = JOBS[char.job].family;
       const words = npc.family && char.job !== 'novice' && fam !== npc.family ? 'You walk a different path. Seek your own instructor.' : msg;
       wrap(ctx, words, tx, y + 8, tw, { size: 8.5, chars: typed(ui, dlg, `job:${words}`, world, area, words) });
@@ -391,11 +393,11 @@ function dungeonPage(ui, state, world, npc, area) {
       box(ctx, cx + 3, cy + 3, 36, 13, { fill: r.color, edge: null, r: 6 });
       text(ctx, r.label, cx + 21, cy + 12.5, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.5)' });
       const who = s.who === 'you' ? `${world.char.name} (you)` : s.who ? `Lv${s.who.level} ${s.who.name}` : 'Group finder...';
-      const job = s.who === 'you' ? JOBS[world.char.job].name : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a Mage' : s.role === 'tank' ? 'a Warrior' : 'any job';
+      const job = s.who === 'you' ? JOBS[world.char.job].name : s.who ? JOBS[s.who.char.job].short ?? JOBS[s.who.char.job].name : s.role === 'healer' ? 'a healer' : s.role === 'tank' ? 'a Warrior' : 'any job';
       text(ctx, who, cx + 44, cy + 9, { size: 7.5, bold: true, color: s.who ? COLORS.ink : COLORS.muted });
       text(ctx, job, cx + 44, cy + 16.5, { size: 6, color: COLORS.muted });
     });
-    text(ctx, 'Warriors tank, Mages heal, everyone else deals damage.', tx, y + 52, { role: 'minor' });
+    text(ctx, 'Warriors tank, everyone else deals damage.', tx, y + 52, { role: 'minor' });
   }
   const by = area.bottom - 16;
   if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, 'Find group & go', { primary: true, size: 7.5 })) {

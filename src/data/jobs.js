@@ -24,11 +24,6 @@ export const JOBS = {
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
-  mage: {
-    id: 'mage', name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
-    hp: 13, mp: 24, advanceHp: 100, advanceMp: 380, weapons: ['wand', 'staff'],
-    blurb: 'Spells of flowers and light: petal bolts and storms for damage with INT, plus heals, barriers and revives for the party. Builds Bloom; full, every damage spell also heals allies near where it lands. The healer of any dungeon group.',
-  },
   archer: {
     id: 'archer', name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
@@ -90,9 +85,9 @@ export const JOBS = {
 // Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
 // The archer's Ranger and Sniper were remade as the Beastmaster and the Stormcaller.
 export const RETIRED_JOBS = {
-  // The mage paths are retired for now (to be remade like the warrior's and archer's): those
-  // characters return to the first-job Mage.
-  pyromancer: 'mage', infernosage: 'mage', seraph: 'mage', ilwizard: 'mage', fpwizard: 'mage', cleric: 'mage', ilarchmage: 'mage', fparchmage: 'mage', bishop: 'mage',
+  // The Mage and her old paths were removed (a new magic class is being built from scratch): those
+  // characters go back to the Novice, their skill points given back, free to pick a job again.
+  mage: 'novice', pyromancer: 'novice', infernosage: 'novice', seraph: 'novice', ilwizard: 'novice', fpwizard: 'novice', cleric: 'novice', ilarchmage: 'novice', fparchmage: 'novice', bishop: 'novice',
   blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'shinobi', nightlord: 'kitsune', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 

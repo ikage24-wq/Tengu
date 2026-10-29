@@ -83,7 +83,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { petalbolt: 'zap', bloombolt: 'zap', nightstar: 'star', giantstar: 'star', moonstar: 'star', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
+const SHOTS = { moonstar: 'star', foxstar: 'star', foxmoon: 'star', kunai: 'arrow', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   burst: 'zapHit', beam: 'zapHit',
@@ -93,7 +93,7 @@ const SPELLS = {
   judgment: 'holyBurst', holy: 'holyBurst',
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
-  feathers: 'gust', titanwave: 'quake', moonslash: 'bladestorm', smokepuff: 'gust', petalstorm: 'gust', healbloom: 'holyBurst', crowburst: 'gust', crowcut: 'bladestorm', execute: 'bladestorm', starpop: 'zapHit',
+  feathers: 'gust', titanwave: 'quake', moonslash: 'bladestorm', smokepuff: 'gust', healbloom: 'holyBurst',
   zapstrike: 'lightning', chainarc: 'zap', staticfield: 'zap', supercharged: 'castZap',
   skybolt: 'zap', stormsky: 'castZap', gigabolt: 'meteor',
   galeblast: 'stormburst', thunderblast: 'lightning',

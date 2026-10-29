@@ -23,7 +23,7 @@
 // instead of ice; `bleed` works like poison, in red. `hitFx` is an extra effect on each monster hit,
 // and `ultimate` marks a screen-wide ultimate. `freeze` (seconds) stops monsters it hits;
 // `poison` ({ pct, secs }) makes them take pct of the hit again every second for secs.
-// `school` (steel, hawk, shadow, ink, fox, bloom, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
+// `school` (steel, hawk, shadow, ink, fox, arcane, ice, lightning, fire, poison, holy, rage, wind, focus) colors the casting circle.
 
 const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1, max - 1));
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
@@ -248,105 +248,6 @@ export const SKILLS = {
           { at: 0.47, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoon', burstAt: 0, rage: 0 },
           { at: 0.68, pct: k(440, 760), reach: 175, h: 150, around: true, targets, knock: 300, launch: 380, crack: true, burst: 'eclipse', burstAt: 0, big: true, stop: 0.16, shake: 8, rage: 0 },
           { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 200, burst: 'rageburst', burstAt: 0.3, big: true, stop: 0.05, shake: 3, rage: 0 },
-        ] }],
-      };
-    },
-  }),
-
-  // ---------- Mage (rose pink and mint: flowers, petals and light) ----------
-  // Damage and support at once. Spells that land and heals build Bloom (0-100, see world/melee.js);
-  // full (Full Bloom), every damage spell also heals allies near where it lands. Garden of Light
-  // needs it full and spends it. Spells are timed combo steps like every other attack: `magic`
-  // strikes hit with magic attack, and `heal` strikes mend you and the party around you.
-  petalbolt: skill({
-    id: 'petalbolt', name: 'Petal Bolt', job: 'mage', type: 'attack', fx: 'bolt', icon: 'petalbolt', school: 'bloom',
-    desc: 'A three-part combo, one cast per press: a bolt of petals, two more, then a great blossom bolt that bursts through the whole line.',
-    weapons: ['wand', 'staff'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const bolt = (at, pct, oy = 0) => ({ at, shot: 'petalbolt', magic: true, pct, range: 300, h: 60, knock: 25, speed: 620, oy });
-      return {
-        mp: k(6, 14), pct: k(150, 260), hits: 4, targets: 1,
-        combo: [
-          { move: 'castforward', dur: 0.42, step: -2, strikes: [bolt(0.5, k(150, 260))] },
-          { move: 'castforward', dur: 0.46, step: -2, strikes: [bolt(0.32, k(100, 170), -4), bolt(0.66, k(100, 170), 4)] },
-          { move: 'castspin', dur: 0.62, step: -4, finisher: true, strikes: [{ at: 0.55, shot: 'bloombolt', magic: true, pct: k(220, 360), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 700, knock: 180, launch: 120, big: true, stop: 0.06, shake: 2 }] },
-        ],
-      };
-    },
-  }),
-  petalstorm: skill({
-    id: 'petalstorm', name: 'Petal Storm', job: 'mage', type: 'attack', fx: 'burst', icon: 'petalstorm', school: 'bloom',
-    desc: 'Raise a whirling storm of petals over the monsters ahead: it cuts them four times, drawing them together, then flings them away.',
-    weapons: ['wand', 'staff'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(4, 8);
-      const cut = (at) => ({ at, magic: true, pct: k(70, 120), reach: 230, h: 120, targets, knock: 0, pull: 40, quiet: true, stop: 0.02 });
-      return {
-        mp: k(12, 26), pct: k(70, 120), hits: 4, targets,
-        combo: [{ move: 'castspin', dur: 1, step: -2, strikes: [
-          { ...cut(0.3), burst: 'petalstorm', burstAt: 0.55 }, cut(0.45), cut(0.6),
-          { ...cut(0.75), pull: 0, knock: 180, launch: 160, big: true, stop: 0.06, shake: 2 },
-        ] }],
-      };
-    },
-  }),
-  healingbloom: skill({
-    id: 'healingbloom', name: 'Healing Bloom', job: 'mage', type: 'attack', fx: 'heal', icon: 'healingbloom', school: 'bloom',
-    desc: 'A flower of light opens at your feet: it heals you and the party around you, and its petals cut the monsters close by.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(14, 30), pct: k(80, 140), hits: 1, targets: 6,
-        combo: [{ move: 'pray', dur: 0.7, step: 0, strikes: [{ at: 0.5, magic: true, pct: k(80, 140), reach: 130, h: 120, around: true, targets: 6, knock: 60, heal: lerpf(0.15, 0.35, lv, m), healR: 260, burst: 'healbloom', burstAt: 0, quiet: true }] }],
-      };
-    },
-  }),
-  bloombarrier: skill({
-    id: 'bloombarrier', name: 'Bloom Barrier', job: 'mage', type: 'buff', fx: 'shield', icon: 'bloombarrier', school: 'bloom', party: true,
-    desc: 'Wrap you and the party around you in a bud of petals that soaks up damage until it bursts.',
-    at: (lv, m) => ({ mp: lerp(14, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { barrier: lerpf(0.12, 0.35, lv, m) }, range: { w: 440, h: 160, around: true } }),
-  }),
-  petalblink: skill({
-    id: 'petalblink', name: 'Blink', job: 'mage', type: 'attack', fx: 'blink', icon: 'petalblink', maxLevel: 10, school: 'bloom', movement: true,
-    desc: 'Scatter into petals and gather again a long way ahead. Nothing touches you on the way.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(10, 6), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'vanish', dur: 0.34, step: k(120, 180), carry: 0.3, guard: 0.4, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
-      };
-    },
-  }),
-  rebloom: skill({
-    id: 'rebloom', name: 'Rebloom', job: 'mage', type: 'revive', fx: 'heal', icon: 'rebloom', school: 'bloom', maxLevel: 10, lock: 0.6,
-    desc: 'Get a fallen party member nearby back on their feet, even mid-fight.',
-    at: (lv, m) => ({ mp: lerp(40, 22, lv, m), healPct: lerpf(0.3, 0.7, lv, m), range: { w: 300, h: 140, around: true } }),
-  }),
-  spellmastery: skill({
-    id: 'spellmastery', name: 'Spell Mastery', job: 'mage', type: 'passive', fx: null, icon: 'spellmastery',
-    desc: 'Steadier spells and more magic attack.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.45, lv, m), matk: lerp(2, 20, lv, m) } }),
-  }),
-  blossomheart: skill({
-    id: 'blossomheart', name: 'Blossom Heart', job: 'mage', type: 'passive', fx: null, icon: 'blossomheart',
-    desc: 'Sturdier and steadier: more max HP and MP, and faster HP recovery.',
-    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.15, lv, m), maxMpPct: lerpf(0.03, 0.15, lv, m), restRegen: lerp(2, 20, lv, m) } }),
-  }),
-  gardenoflight: skill({
-    id: 'gardenoflight', name: 'Garden of Light', job: 'mage', type: 'attack', fx: 'heal', icon: 'gardenoflight', school: 'bloom', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Bloom, and spends it. Raise your wand and a garden springs up under the monsters ahead: a giant flower of light blooms and bursts through them, and its petals rain down healing on the party.',
-    weapons: ['wand', 'staff'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(8, 12);
-      return {
-        mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
-        combo: [{ move: 'castup', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.15, pct: 0, reach: 0, h: 0, targets: 0, burst: 'gardenbud', burstAt: 0, quiet: true, gauge: 0 },
-          { at: 0.5, magic: true, pct: k(150, 260), reach: 240, h: 150, targets, knock: 40, launch: 200, quiet: true, stop: 0.04, gauge: 0 },
-          { at: 0.7, magic: true, pct: k(420, 720), reach: 260, h: 160, targets, knock: 300, launch: 380, burst: 'gardenbloom', burstAt: 0.55, big: true, stop: 0.15, shake: 7, heal: 0.4, healR: 400, gauge: 0 },
         ] }],
       };
     },
@@ -849,7 +750,6 @@ const MOVES_BY_SKILL = {
   stampede: 'skyshot', snacktime: 'throw', overcharge: 'steadyaim', thunderhead: 'skyshot',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
-  petalbolt: 'castforward', petalstorm: 'castspin', healingbloom: 'pray', bloombarrier: 'castup', petalblink: 'vanish', rebloom: 'pray', gardenoflight: 'castup',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',

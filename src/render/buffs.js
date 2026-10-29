@@ -137,11 +137,6 @@ export const BUFF_LOOKS = {
       sheen(ctx, x, y, t, '#ffffff', a);
     },
   },
-  // The Mage's Bloom Barrier: a bud of petals curled round her, faint, until it bursts.
-  bloombarrier: {
-    color: '#ffa6cc', cast: 'converge',
-    front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celbudshield', x, y + 4, { t, scale: 0.42, alpha: a * 0.55 }),
-  },
   // The Shinobi's Smoke Bomb: white smoke hanging round her feet while it lasts; Log Swap: a ring
   // of ink at her feet, ready. The Kitsune's Fox Illusion is drawn as the illusions themselves.
   smokebomb: {

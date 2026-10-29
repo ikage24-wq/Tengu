@@ -282,18 +282,7 @@ const R = {
       { seq: 'A3+E4+A4+B4:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
     ],
   },
-  // The Mage: Bloom topping out (a harp run and bells: Full Bloom), the garden rising, and the
-  // giant flower bursting open.
-  fullbloom: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'C5:60 E5:60 G5:60 C6:60 E6:700', inst: 'orchestral_harp' }, { seq: 'r:150 G6:700', inst: 'glockenspiel', db: -6 }, { seq: 'r:200 C4+E4+G4:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },
-  gardenbud: { db: -11, max: 1, room: true, layers: [{ rec: 'holyWave', len: 1200, db: -4 }, { seq: 'C5:120 E5:120 G5:120 C6:600', inst: 'celesta', db: -4 }] },
-  gardenbloom: {
-    db: -8, max: 1, room: true, duck: [-8, 1200], layers: [
-      { rec: 'holyBlast', len: 1300, db: -3 },
-      thump(70, 460, { slide: -1.5 }),
-      { seq: 'C5:40 E5:40 G5:40 C6:40 E6:800', inst: 'orchestral_harp', db: -4 },
-      { seq: 'C4+E4+G4+C5:1100', inst: 'choir_aahs', attack: 0.05, db: -6 },
-    ],
-  },
+
   // The archer paths' gauges topping out: Gale (a rush of wind, a rising flute and harp) and the
   // Sniper's lock (a sharp metal click, a high glint).
   galeFull: {

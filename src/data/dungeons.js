@@ -26,13 +26,14 @@ export const ROLES = {
 };
 
 // A group's roles, in finder order.
+// (While the magic class is being remade no job of yours heals: the group finder brings in an
+// archer or thief who keeps the group alive in the healer's seat.)
 export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
   if (jobId === 'berserker') return 'dps';
   if (family === 'warrior') return 'tank';
-  if (family === 'mage') return 'healer';
   return 'dps';
 }
 
