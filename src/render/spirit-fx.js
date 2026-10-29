@@ -312,6 +312,12 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       fxSprite(ctx, 'celhitred', x, y - (f.h ?? 24) * 0.5, { p, flip, scale: f.big ? 0.8 : 0.6 });
       return true;
     }
+    case 'oniimpact': {
+      // Where her club strikes: a red blast punched out of the ground.
+      fxSprite(ctx, 'celhitred', x, y - 14, { p, flip, scale: f.big ? 1.3 : 0.8 });
+      if (f.big) fxSprite(ctx, 'celblast', x, y + 4, { p, scale: 0.75 });
+      return true;
+    }
     case 'onipound': {
       groundRing(ctx, 'celshockred', x, y, Math.min(1, p * 1.3), f.r ?? 120);
       return true;

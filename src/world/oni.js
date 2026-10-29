@@ -50,7 +50,7 @@ export const ONI_MOVES = {
 const at = (v, i) => (Array.isArray(v) ? v[i] : v);
 // The heavy clock (see world/kitsune.js for the same idea in the guardian's): it hangs before the
 // last (biggest) blow of a move; in her fury it all runs faster.
-const HEAVY = { hang: [0.16, 0.035], hangRate: 0.35, snap: 1.8, drag: 0.16, dragRate: 0.5, freeze: 0.05, lastFreeze: 0.2, recover: 0.8 };
+const HEAVY = { hang: [0.16, 0.035], hangRate: 0.35, snap: 1.8, drag: 0.16, dragRate: 0.5, freeze: 0.07, lastFreeze: 0.24, recover: 0.8 };
 function heavyRate(M, u) {
   const h = M.hits ? M.hits[M.hits.length - 1] : M.slam ?? 0.5;
   if (u >= h - HEAVY.hang[0] && u < h - HEAVY.hang[1]) return HEAVY.hangRate;
@@ -123,8 +123,12 @@ function act(world, k, dt) {
   const M = ONI_MOVES[a.kind];
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   a.clock ??= 0;
+  // (Her clock eases from one pace to the next, never jumps, so the motion stays smooth: fast
+  // into a snap, but no hitch where the pace changes.)
+  const pace = heavyRate(M, a.clock / a.dur) * (k.fury ? 1.3 : 1);
+  a.rate = a.rate == null ? pace : a.rate + (pace - a.rate) * Math.min(1, dt * 22);
   if (a.freeze > 0) a.freeze -= dt;
-  else a.clock += dt * heavyRate(M, a.clock / a.dur) * (k.fury ? 1.3 : 1);
+  else a.clock += dt * a.rate;
   const u = a.clock / a.dur;
   if (a.kind === 'grab') grabbing(world, k, a, M, u);
   else if (a.kind === 'charge') charging(world, k, a, M, u, dt);
@@ -166,17 +170,27 @@ function strike(world, k, kind, M, i, last) {
   const dir = k.dir;
   const around = at(M.around, i);
   const reach = M.reach;
-  if (kind !== 'roar') world.fx.push({ kind: 'arc', x: k.x + dir * 14, y: k.y - 36, dir, r: reach * 0.66, start: around ? -100 : -30, sweep: around ? 300 : 180, thick: last ? 12 : 8, big: last, color: '#ff5a3a', t: 0, dur: 0.3 });
+  if (kind !== 'roar') world.fx.push({ kind: 'arc', snd: 'rage', x: k.x + dir * 14, y: k.y - 36, dir, r: reach * 0.66, start: around ? -100 : -30, sweep: around ? 300 : 180, thick: last ? 12 : 8, big: last, color: '#ff5a3a', t: 0, dur: 0.3 });
   const hit = world.mobs
     .filter((m) => alive(m) && Math.abs(m.y - k.y) < 90 && (around || (m.x - k.x) * dir > -14) && Math.abs(m.x - k.x) < reach + m.def.w / 2)
     .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))
     .slice(0, M.targets);
-  hit.forEach((m, j) => dollHit(world, m, { pct: at(M.pct, i), x: k.x, knock: at(M.knock, i), launch: at(M.launch, i) ?? 0, stun: at(M.stun, i), stop: j ? 0 : last ? 0.07 : 0.03, shake: !j ? at(M.shake, i) : 0, big: last && !j, burst: 'onihit', gauge: 2, key: 'oni' }));
-  world.juice.push({ type: 'shake', mag: at(M.shake, i) * (hit.length ? 1 : 0.4), dur: 0.2 });
-  world.juice.push({ type: 'dust', x: k.x + dir * reach * 0.5, y: k.y, count: last ? 7 : 3 });
+  hit.forEach((m, j) => dollHit(world, m, { pct: at(M.pct, i), x: k.x, knock: at(M.knock, i), launch: at(M.launch, i) ?? 0, stun: at(M.stun, i), stop: j ? 0 : last ? 0.12 : 0.05, shake: !j ? at(M.shake, i) * 1.3 : 0, big: last && !j, burst: 'onihit', gauge: 2, key: 'oni' }));
+  world.juice.push({ type: 'shake', mag: at(M.shake, i) * (hit.length ? 1.4 : 0.5), dur: last ? 0.3 : 0.18 });
+  world.juice.push({ type: 'dust', x: k.x + dir * reach * 0.5, y: k.y, count: last ? 9 : 4 });
+  // Where the club comes down: a burst of light and, on a big blow, rubble and embers flying.
+  if (kind !== 'roar') impact(world, around && !at(M.crack, i) ? k.x : k.x + dir * reach * 0.62, k.y, dir, last || at(M.crack, i));
   if (at(M.crack, i) || (kind === 'stomp')) world.fx.push({ kind: 'crack', school: 'rage', x: k.x + (around ? 0 : dir * reach * 0.6), y: k.y, w: around ? reach * 2 : 120, t: 0, dur: 0.8, seed: Math.random() });
   if (kind === 'stomp') world.fx.push({ kind: 'onipound', x: k.x, y: k.y, r: reach, t: 0, dur: 0.7 });
   return hit.length;
+}
+
+// The punch of a blow landing: a starburst where the club strikes, and on a big blow the ground
+// bursting (rubble, embers), a red flash and a ring.
+function impact(world, x, y, dir, big) {
+  world.juice.push({ type: 'oniimpact', x, y: y - 8, dir, big });
+  if (big) world.juice.push({ type: 'slam', school: 'rage', x, y, range: 80 });
+  world.fx.push({ kind: 'oniimpact', x, y, dir, big, t: 0, dur: big ? 0.5 : 0.3 });
 }
 
 // Grab & Slam: she catches the nearest monster in front in her fist (never a boss), hoists it up
@@ -207,8 +221,9 @@ function grabbing(world, k, a, M, u) {
     const x = k.x + dir * 36;
     world.fx.push({ kind: 'crack', school: 'rage', x, y: k.y, w: 110, t: 0, dur: 0.8, seed: Math.random() });
     world.fx.push({ kind: 'onipound', x, y: k.y, r: 70, t: 0, dur: 0.6 });
-    world.juice.push({ type: 'shake', mag: M.shake, dur: 0.3 });
-    world.juice.push({ type: 'dust', x, y: k.y, count: 8 });
+    world.juice.push({ type: 'shake', mag: M.shake * 1.4, dur: 0.35 });
+    world.juice.push({ type: 'dust', x, y: k.y, count: 10 });
+    impact(world, x, k.y, dir, true);
     if (m && alive(m)) {
       m.x = Math.max(m.x1 ?? -Infinity, Math.min(m.x2 ?? Infinity, x));
       m.air = 26;
@@ -244,7 +259,8 @@ function charging(world, k, a, M, u, dt) {
     if (!alive(m) || a.hitSet.has(m) || Math.abs(m.y - k.body.y) > 60 || Math.abs(m.x - x) > 22 + m.def.w / 2) continue;
     a.hitSet.add(m);
     a.landed = (a.landed ?? 0) + 1;
-    dollHit(world, m, { pct: M.pct, x: x - dir * 30, knock: M.knock, launch: M.launch, stop: 0.04, shake: M.shake, big: true, burst: 'onihit', gauge: 2, key: 'oni' });
+    dollHit(world, m, { pct: M.pct, x: x - dir * 30, knock: M.knock, launch: M.launch, stop: 0.08, shake: M.shake * 1.3, big: true, burst: 'onihit', gauge: 2, key: 'oni' });
+    impact(world, m.x, k.body.y, dir, true);
   }
 }
 

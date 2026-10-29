@@ -312,8 +312,10 @@ function running(ph) {
 }
 
 // ---------- Her moves (ONI_MOVES in world/oni.js; `u` runs on her heavy clock) ----------
-// Keyframes: [[u, value, ease], ...], each value a number or [x, y], eased into from the key
-// before: soft (a sine) by default, 'snap' committing into a blow (fast, a little past, settling).
+// Keyframes: [[u, value, ease], ...], each value a number or [x, y]. Between keys the motion
+// flows through them (a smooth curve whose speed carries on through each key, never stopping
+// dead at a pose), except 'snap', which commits into a blow (fast, a little past, settling) and
+// leaves the pose from a standstill.
 function keys(u, ks) {
   if (u <= ks[0][0]) return ks[0][1];
   for (let i = 1; i < ks.length; i++) {
@@ -321,8 +323,19 @@ function keys(u, ks) {
     if (u > b) continue;
     const [a, va] = ks[i - 1];
     const t = seg(u, a, b);
-    const e = how === 'snap' ? overshoot(t) : soft(t);
-    return Array.isArray(va) ? lerp2(va, vb, e) : lerp(va, vb, e);
+    if (how === 'snap') return Array.isArray(va) ? lerp2(va, vb, overshoot(t)) : lerp(va, vb, overshoot(t));
+    // Tangents from the neighbours (none out of a snap's landing, none into the last key).
+    const prev = i >= 2 && ks[i - 1][2] !== 'snap' ? ks[i - 2] : null;
+    const next = ks[i + 1] && ks[i + 1][2] !== 'snap' ? ks[i + 1] : null;
+    const h = b - a;
+    const tan = (p0, p1) => (p0 && p1 ? (Array.isArray(p1[1]) ? [0, 1].map((j) => ((p1[1][j] - p0[1][j]) / (p1[0] - p0[0])) * h) : ((p1[1] - p0[1]) / (p1[0] - p0[0])) * h) : null);
+    const m0 = tan(prev, ks[i]);
+    const m1 = tan(ks[i - 1], next);
+    const t2 = t * t;
+    const t3 = t2 * t;
+    const [h00, h10, h01, h11] = [2 * t3 - 3 * t2 + 1, t3 - 2 * t2 + t, -2 * t3 + 3 * t2, t3 - t2];
+    const herm = (p0, p1, d0, d1) => h00 * p0 + h10 * (d0 ?? 0) + h01 * p1 + h11 * (d1 ?? 0);
+    return Array.isArray(va) ? [0, 1].map((j) => herm(va[j], vb[j], m0?.[j], m1?.[j])) : herm(va, vb, m0, m1);
   }
   return ks[ks.length - 1][1];
 }
@@ -477,9 +490,10 @@ const IDLE_KEYS = Object.keys(ONI_IDLES);
 // ---------- Her rig ----------
 // Every number of her pose rides a spring to its target: her club hand and the club stiff and
 // heavy, her body slower, her free hand quick.
-const SLOW = { k: 140, damp: 0.82 };
-const QUICK = { k: 320, damp: 0.74 };
-const HEAVY = { k: 200, damp: 0.95 };
+const SLOW = { k: 150, damp: 0.86 };
+const QUICK = { k: 320, damp: 0.78 };
+// (Stiff enough that a snap stays a snap, damped so the heavy club never wobbles.)
+const HEAVY = { k: 280, damp: 0.92 };
 const HEAVY_KEYS = new Set(['hand', 'club']);
 const QUICK_KEYS = new Set(['free']);
 function follow(st, target, dt) {
@@ -551,8 +565,15 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   if (k.mood?.kind === 'smug' && !a) p = { ...p, mouth: 'onismirk', brows: 'smug', lid: 0.35 };
   // In her fury her eye burns.
   if (k.fury) p = { ...p, props: [...p.props, 'oniglow'] };
-  // On an impact she's stopped dead (her hair and clothes swing on).
-  const P = follow(st, p, a?.freeze > 0 ? 0 : dt);
+  // On an impact she's stopped dead (her hair and clothes swing on); as it lets go she rebounds:
+  // driven down into her knees by the blow, then springing back up a touch past and settling.
+  const frozen = a?.freeze > 0;
+  if (frozen && !st.frozen) [st.pk, st.pkV] = [1, 0];
+  st.frozen = frozen;
+  if (!frozen) [st.pk, st.pkV] = spring(st.pk ?? 0, st.pkV ?? 0, 0, 110, 9, dt);
+  const pk = st.pk ?? 0;
+  const P0 = follow(st, p, frozen ? 0 : dt);
+  const P = { ...P0, squat: P0.squat + 1.8 * pk, by: P0.by + 0.9 * pk, lean: P0.lean + 0.06 * pk, hy: P0.hy + 0.7 * pk };
 
   // The life layer.
   const calm = a ? 0.4 : 1;
@@ -594,9 +615,21 @@ export function drawOniCompanion(ctx, world, k, cam, time) {
   const club = (c, hand, flip) => {
     if (P.planted <= 0.02) st.plantAt = null;
     else st.plantAt ??= [...hand];
-    const pk = clamp01(P.planted * 1.5);
-    const at = st.plantAt ? [lerp(hand[0], st.plantAt[0], pk), lerp(hand[1], st.plantAt[1], pk)] : hand;
-    paintKanabo(c, at, flip, P.club * (1 - pk), ONI_SCALE, 'crimson', time);
+    const pl = clamp01(P.planted * 1.5);
+    const at = st.plantAt ? [lerp(hand[0], st.plantAt[0], pl), lerp(hand[1], st.plantAt[1], pl)] : hand;
+    const ang2 = P.club * (1 - pl);
+    // A swinging club leaves a trail: fading copies where it just was, while it moves fast.
+    st.trail = [{ at, ang: ang2 }, ...(st.trail ?? [])].slice(0, 5);
+    const speed = st.trail[1] ? Math.abs(ang2 - st.trail[1].ang) / Math.max(dt, 1e-3) : 0;
+    if (speed > 5 && !frozen) {
+      c.save();
+      for (let i = st.trail.length - 1; i >= 1; i--) {
+        c.globalAlpha = 0.34 * (1 - i / st.trail.length) * Math.min(1, (speed - 5) / 6);
+        paintKanabo(c, st.trail[i].at, flip, st.trail[i].ang, ONI_SCALE, 'crimson', time);
+      }
+      c.restore();
+    }
+    paintKanabo(c, at, flip, ang2, ONI_SCALE, 'crimson', time);
   };
   // Her fury: red fire burning round her.
   if (k.fury) fxSprite(ctx, 'celragefire', x, y + 2, { t: time, scale: 0.85, alpha: 0.75 });

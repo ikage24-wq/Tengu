@@ -276,6 +276,15 @@ export function absorbJuice(fx, world) {
     } else if (j.type === 'dust') {
       // A companion's footwork (a lunge, a planted heel): dust kicked up from under a foot.
       dust(fx, j.x, j.y, j.count ?? 3, j.dir ?? 0);
+    } else if (j.type === 'oniimpact') {
+      // The oni's club landing: a hot starburst, shards flung out, and on a big blow a red flash
+      // over the whole screen and the view kicked down.
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: j.big ? 0.26 : 0.16, size: j.big ? 30 : 16, shape: 'flash', rot: Math.random(), spikes: j.big ? 8 : 5, color: '#ff6a3a' });
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: 0, life: j.big ? 0.4 : 0.25, size: 6, r1: j.big ? 56 : 30, thick: j.big ? 6 : 4, shape: 'shards', n: j.big ? 11 : 7, seed: Math.random(), rot: Math.random() * 6, color: '#ffd0a0' });
+      if (j.big) {
+        add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: 0.12, size: 1, shape: 'screenflash', color: '#ff4a2a' });
+        kick(fx, 0, 3);
+      } else kick(fx, 0, 1.4);
     } else if (j.type === 'kick') {
       kick(fx, j.x ?? 0, j.y ?? 0);
     } else if (j.type === 'shake') {
