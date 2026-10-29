@@ -98,10 +98,14 @@ but it is always drawn at its own width and height: a spin is a clean mirror fli
 turn, never a squeeze, and jumping, landing and getting hit show in the pose alone. `rigid` in
 `render/hero.js` enforces it and `tests/anim.test.js` checks every move against it.
 
-**Re-rigging is always allowed (the player's standing rule).** To animate something, make it fit,
-or make it look better, you may re-rig freely: change the rig, poses, joints, how weapons are held,
-or how a move is built, for any character, job, monster or move. You don't need to ask first; just
-keep the other rules (no squash or stretch, hits on the animation) and show the result.
+**Freedom to make it better (the player's standing rule).** The player always wants things better,
+so you have broad freedom to improve whatever you're working on: redraw, rework, add, or replace
+art, effects, animation, moves and feel when it raises the quality, without asking first. That
+includes re-rigging freely (the rig, poses, joints, how weapons are held, how a move is built) for
+any character, job, monster or move, to animate it, make it fit, or make it look better. Keep the
+other standing rules (no squash or stretch, hits on the animation, no spam), and show the result
+with pictures or videos. Still ask before changing what the game is (story, progression, removing
+features) or when the player's choice is genuinely needed.
 
 "Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
 `docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items
