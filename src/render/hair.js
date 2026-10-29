@@ -388,7 +388,11 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
     for (let i = 1; i < f.pts.length; i += 2) shapes.push(poly(smooth([[f.pts[i][0] - 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.2], [f.pts[i][0] + 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.7]]), r.sh1));
   }
   // A shadowless cut is edged with a thin line in the hair's own shade, so it still reads on pale skin.
-  if (f.noShade) shapes.push(F(R(f.pts[f.pts.length - 1][0] + 0.4, f.pts[0][1] - 0.75, f.pts[0][0] - f.pts[f.pts.length - 1][0] - 0.8, 0.75, r.sh2)));
+  if (f.noShade) {
+    // A soft shade along the bottom of the cut (narrowing into the sides), and a fine edge line.
+    const [x0, x1, y] = [f.pts[f.pts.length - 1][0] + 0.9, f.pts[0][0] - 0.9, f.pts[0][1]];
+    shapes.push(F(T([[x0 + 0.6, y - 1.6], [x1 - 0.6, y - 1.6], [x1, y - 0.5], [x0, y - 0.5]], r.sh1)), F(R(x0, y - 0.55, x1 - x0, 0.55, r.sh2)));
+  }
   // Where the hair parts, a dark line runs back over the crown.
   if (f.part) shapes.push(streak(...f.part[0], ...f.part[1], 0.9, 0, r.sh2));
   for (const [x0, y0, x1, y1, w, bow] of f.strands ?? []) shapes.push(streak(x0, y0, x1, y1, w, bow, r.sh1));
@@ -875,7 +879,11 @@ Object.assign(FRINGES, {
   onimessy: { pts: [[24.4, 12.6], [23.2, 11.2], [21.8, 13.2], [20.4, 11.4], [18.6, 14], [17.2, 11.8], [15.2, 14.6], [14, 12.2], [11.8, 15], [10.8, 12.8], [8.2, 14.6]], lean: -0.8 },
   // The yuki-onna's blunt bangs: one heavy, perfectly straight cut just above her eyes, casting no
   // shadow on her pale brow (`noShade`).
-  yukiblunt: { pts: [[24.6, 14.4], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true, noShade: true },
+  yukiblunt: {
+    pts: [[24.6, 14.4], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true, noShade: true,
+    // (Strands combed down to the cut, so the bangs read as hair, not a bare brow.)
+    strands: [[10.4, 8.4, 8.8, 13.4, 0.5, 0.6], [13, 9.6, 12.4, 13.6, 0.4, 0.3], [16.4, 8.8, 16.6, 13.4, 0.45, -0.1], [19.4, 9.8, 20.2, 13.6, 0.4, -0.3], [21.8, 8.2, 23.2, 13.2, 0.5, -0.6]],
+  },
   // The yuki-onna's: long, thin strands falling over her brow in an uneven curtain, parted a little
   // off-centre, a few wisps longer than the rest.
   yukicurtain: { pts: [[24.6, 17.4], [23.4, 13.8], [22, 16.4], [20.6, 12.6], [19.2, 15], [17.6, 11.2], [16, 13.6], [14.6, 10.8], [13, 14.6], [11.4, 12.4], [9.8, 16.2], [8.4, 13.4], [6.6, 17]], lean: 0, softTips: true },
