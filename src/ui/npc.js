@@ -10,6 +10,7 @@ import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveTex
 import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn } from '../world/world.js';
+import { playScene } from '../world/story.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero } from '../render/hero.js';
@@ -22,6 +23,8 @@ export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
   // Someone you've been sent to talk to (or bring something to) waits with a "?" too.
   if (ids.some((id) => questState(char, id) === 'ready') || waitingToTalk(char, npcId)) return '?';
+  // The next step of the story shows a star.
+  if (ids.some((id) => QUESTS[id].story && questState(char, id) === 'available')) return '★';
   if (ids.some((id) => questState(char, id) === 'available')) return '!';
   return null;
 }
@@ -319,7 +322,7 @@ function questPage(ui, state, world, npc, area, key) {
       const { verb, name: what } = objectiveText(o);
       const name = `${verb} ${what}`;
       const done = st === 'active' && o.have >= o.count;
-      text(ctx, fit(ctx, `${name}${st === 'active' || o.type === 'talk' || o.type === 'deliver' || o.type === 'visit' ? '' : ` x${o.count}`}`, tw / 2, 7, true), tx, y + 2, { size: 7, bold: true, color: done ? '#2f8f52' : COLORS.ink });
+      text(ctx, fit(ctx, `${name}${st === 'active' || ['talk', 'deliver', 'visit', 'job'].includes(o.type) ? '' : ` x${o.count}`}`, tw / 2, 7, true), tx, y + 2, { size: 7, bold: true, color: done ? '#2f8f52' : COLORS.ink });
       if (st === 'active') {
         box(ctx, tx + tw / 2 + 4, y - 3.5, tw / 2 - 40, 4, { fill: COLORS.cell, edge: null, r: 2 });
         box(ctx, tx + tw / 2 + 4, y - 3.5, Math.max(4, ((tw / 2 - 40) * o.have) / o.count), 4, { fill: done ? COLORS.good : th.main, edge: null, r: 2 });
@@ -371,7 +374,13 @@ function questPage(ui, state, world, npc, area, key) {
   const enter = ui.input.pressed?.has('Enter') && chars >= words.length && (!picking || dlg.pick);
   if (st === 'available' && (button(ui, tx + tw - 154, by, 74, 17, 'Accept', { primary: true }) || enter)) {
     acceptQuest(char, dlg.quest);
-    world.log(`Quest accepted: ${q.name}`, '#bff0dc');
+    world.log(`${q.story ? 'Story' : 'Quest'} accepted: ${q.name}`, '#bff0dc');
+    // A story quest opens with its scene.
+    if (q.scenes?.accept) {
+      playScene(world, q.scenes.accept);
+      dlg.quest = null;
+      return;
+    }
     if (questState(char, dlg.quest) !== 'ready') dlg.quest = null;
     return;
   }
@@ -381,6 +390,7 @@ function questPage(ui, state, world, npc, area, key) {
       world.log(`Quest complete: ${q.name}! +${r.exp} EXP, +${r.gold} gold`, '#ffe36b');
       for (const it of r.items) world.log(`Received ${ITEMS[it.id].name}${it.qty > 1 ? ` x${it.qty}` : ''}.`, ITEMS[it.id].color);
       if (r.levels) world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
+      if (q.scenes?.done) playScene(world, q.scenes.done);
       dlg.quest = null;
       dlg.pick = null;
     } else {

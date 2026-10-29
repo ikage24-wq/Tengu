@@ -39,6 +39,8 @@ export const online = {
 };
 
 export const isOnline = () => online.status === 'on';
+// Dungeon runs and the queens' trial arenas are each player's own.
+const solo = (world) => Boolean(world.dungeon || world.map?.trial);
 
 function reset() {
   const w = online.world;
@@ -135,7 +137,7 @@ const api = {
   },
   // Whether the monsters here are another player's, shown in this game.
   mirrored(world) {
-    return !world.dungeon && online.claim !== world.map.id && Boolean(world.mirror?.endsWith(`@${world.map.id}`));
+    return !solo(world) && online.claim !== world.map.id && Boolean(world.mirror?.endsWith(`@${world.map.id}`));
   },
   // The player a monster chases: whoever's nearest of everyone on the map.
   target(world, m) {
@@ -189,7 +191,7 @@ const api = {
 
 // Everyone else in the room on your map (no one shares a dungeon run).
 export function othersHere(world) {
-  if (!isOnline() || !world || world.dungeon) return [];
+  if (!isOnline() || !world || solo(world)) return [];
   return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.body);
 }
 
@@ -233,7 +235,7 @@ export function tickNet(world, dt) {
 function updateClaim(world) {
   const map = world.map.id;
   const here = `@${map}`;
-  if (world.dungeon) {
+  if (solo(world)) {
     online.claim = null;
     return;
   }
@@ -450,7 +452,7 @@ function onMe(world, msg) {
   g.emote = msg.emote;
   g.buffs = {};
   for (const [id, b] of Object.entries(msg.buffs ?? {})) g.buffs[id] = { ...b, until: world.now + b.until };
-  if (msg.map !== world.map.id || world.dungeon) return;
+  if (msg.map !== world.map.id || solo(world)) return;
   for (const f of msg.fx ?? []) {
     reviveFx(world, f);
     f._remote = true;
@@ -485,7 +487,7 @@ function slamHere(world, f) {
 }
 
 function onMobs(world, msg) {
-  if (msg.map !== world.map.id || world.dungeon || online.claim === world.map.id) return;
+  if (msg.map !== world.map.id || solo(world) || online.claim === world.map.id) return;
   if (world.mirror !== `${msg.id}@${world.map.id}`) return;
   const mine = new Map(world.mobs.filter((m) => m.net).map((m) => [m.net, m]));
   const now = world.now;
@@ -551,7 +553,7 @@ function onHit(world, msg) {
 }
 
 function onDead(world, msg) {
-  if (msg.map !== world.map.id || world.dungeon) return;
+  if (msg.map !== world.map.id || solo(world)) return;
   let m = world.mobs.find((o) => netId(o) === msg.mob || o.net === msg.mob);
   if (m?.credited) return;
   if (!m) {

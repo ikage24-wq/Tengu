@@ -52,7 +52,10 @@ function questLists(char) {
     .filter((id) => st[id] === 'locked' && QUESTS[id].minLevel <= char.level + 10 && (!QUESTS[id].prereq || char.quests[QUESTS[id].prereq]?.state === 'done'))
     .sort((a, b) => QUESTS[a].minLevel - QUESTS[b].minLevel);
   const done = ids.filter((id) => st[id] === 'done');
-  return [live, [...open, ...soon], done];
+  // The story: every chapter step reached so far, in order, and the next one coming up.
+  const story = ids.filter((id) => QUESTS[id].story && (st[id] !== 'locked' || soon.includes(id)));
+  const side = (list) => list.filter((id) => !QUESTS[id].story);
+  return [story, live, side([...open, ...soon]), side(done)];
 }
 
 // A round badge for a quest's state: a progress ring while active, a check when ready or done,
@@ -99,8 +102,8 @@ const W = 312;
 const H = 240;
 const LIST_W = 118;
 const ROW = 25;
-const TABS = ['In progress', 'Available', 'Done'];
-const EMPTY = ['Nothing in progress. Look for villagers with a "!" over their heads.', 'No new quests right now. Level up and check back!', 'Finished quests are kept here.'];
+const TABS = ['Story', 'In progress', 'Available', 'Done'];
+const EMPTY = ['The story begins with Mira in Sprout Village (look for the ★).', 'Nothing in progress. Look for villagers with a "!" over their heads.', 'No new quests right now. Level up and check back!', 'Finished quests are kept here.'];
 
 export function questsWindow(ui, state, world) {
   const win = state.windows.quests;
@@ -109,8 +112,8 @@ export function questsWindow(ui, state, world) {
   const th = ui.theme;
   const char = world.char;
   const lists = questLists(char);
-  win.tab ??= 0;
-  const tab = tabs(ui, win.x + 10, win.y + 27, TABS.map((l, i) => `${l} (${lists[i].length})`), win.tab, { w: 94, h: 15 });
+  win.tab ??= 1;
+  const tab = tabs(ui, win.x + 10, win.y + 27, TABS.map((l, i) => (i ? `${l} (${lists[i].length})` : l)), win.tab, { w: 70, h: 15 });
   if (tab !== win.tab) Object.assign(win, { tab, sel: null, scroll: 0 });
   const list = lists[win.tab];
   if (!list.includes(win.sel)) win.sel = list[0] ?? null;
@@ -171,7 +174,7 @@ function listRow(ui, char, id, x, y, w, on, th) {
   else if (st === 'active') {
     const o = objectiveProgress(char, id).find((x) => x.have < x.count);
     sub = o ? (errand(o) ? objName(o) : `${objName(o)} ${o.have}/${o.count}`) : `${Math.round(progressOf(char, id) * 100)}%`;
-  } else if (st === 'available') sub = `${giverName(q)}, ${giverPlace(q)}`;
+  } else if (st === 'available') sub = q.story ? `Chapter ${q.chapter} · ${giverName(q)}` : `${giverName(q)}, ${giverPlace(q)}`;
   else if (st === 'locked') sub = `Opens at Lv ${q.minLevel}`;
   else sub = giverName(q);
   text(ctx, fit(ctx, sub, w - 26, 6.5, false), x + 21, y + 19, { size: 6.5, color: ready ? COLORS.good : COLORS.muted, bold: ready });
@@ -421,7 +424,7 @@ export function drawQuestTracker(ui, state, world) {
     }
     if (hot) tooltip(ui, [{ text: c.q.name, bold: true }, { text: 'Click to open the quest log', color: COLORS.muted, size: 7 }]);
     if (press(x + 3, cy, w - 6, ch)) {
-      Object.assign(log, { open: true, tab: 0, sel: c.id, reveal: true });
+      Object.assign(log, { open: true, tab: QUESTS[c.id].story ? 0 : 1, sel: c.id, reveal: true });
     }
     cy += ch + 2;
   }

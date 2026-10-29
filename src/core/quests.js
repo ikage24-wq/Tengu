@@ -41,6 +41,7 @@ export function objectiveProgress(char, id) {
   const rec = char.quests[id] ?? { kills: {} };
   return q.objectives.map((o, i) => {
     if (MARKED.has(o.type)) return { ...o, count: 1, have: rec.marks?.[i] ? 1 : 0 };
+    if (o.type === 'job') return { ...o, count: 1, have: (JOBS[char.job]?.tier ?? 0) >= o.tier ? 1 : 0 };
     const have = o.type === 'kill' ? rec.kills?.[o.mob] ?? 0 : countItem(char.inventory, o.item);
     return { ...o, have: Math.min(have, o.count) };
   });
@@ -58,6 +59,7 @@ export function objectiveText(o) {
   if (o.type === 'kill') return { verb: 'Defeat', name: MOBS[o.mob].name };
   if (o.type === 'collect') return { verb: 'Bring', name: ITEMS[o.item].name };
   if (o.type === 'talk') return { verb: 'Talk to', name: NPCS[o.npc].name };
+  if (o.type === 'job') return { verb: 'Take your', name: o.tier > 1 ? `${['', 'first', 'second', 'third', 'fourth'][o.tier]} job advancement` : 'first job' };
   if (o.type === 'deliver') return { verb: `Give ${ITEMS[o.item].name} to`, name: NPCS[o.npc].name };
   return { verb: 'Go to', name: o.place ?? MAPS[o.map].name };
 }
@@ -220,7 +222,8 @@ export function itemSources(itemId) {
 export function objectiveHint(o) {
   if (o.type === 'kill') return mobPlaces(o.mob).slice(0, 2).join(', ');
   if (o.type === 'talk' || o.type === 'deliver') return MAPS[npcMap(o.npc)]?.name ?? '';
-  if (o.type === 'visit') return o.above != null ? `${MAPS[o.map].name}, up high` : '';
+  if (o.type === 'visit') return o.above != null ? `${MAPS[o.map].name}, up high` : MAPS[o.map].name;
+  if (o.type === 'job') return 'Your instructor (world map, M)';
   const from = itemSources(o.item)[0];
   if (!from) return '';
   const where = mobPlaces(from)[0];

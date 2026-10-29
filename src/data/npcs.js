@@ -18,7 +18,7 @@ export const NPCS = {
     building: 'kiosk', sign: 'Info',
     look: { hairStyle: 'candy', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
-    quests: ['first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
+    quests: ['story_1_1', 'story_1_2', 'story_1_3', 'story_1_4', 'story_7_1', 'story_7_2', 'first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
   },
   // Kuro, a young tengu who keeps Dawnlight Isle, the tutorial island: he shows new adventurers
   // the ropes and sees them onto the boat to Sprout Village.
@@ -58,7 +58,7 @@ export const NPCS = {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
-    quests: ['elowen_dance', 'elowen_foxfire', 'spiritmage_trial'], showJob: 'spiritmage',
+    quests: ['story_3_1', 'story_3_2', 'story_6_1', 'story_6_2', 'story_6_3', 'elowen_dance', 'elowen_foxfire', 'spiritmage_trial'], showJob: 'spiritmage',
     greeting: 'Moonleaf Grove welcomes you. Magic here is a dance with the spirits: they strike for you and they mend for you. Shall we begin?',
   },
   kestrel: {
@@ -71,7 +71,7 @@ export const NPCS = {
   vex: {
     id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
-    quests: ['vex_rumor', 'vex_shadows', 'vex_miko', 'thief_trial'], showJob: 'shinobi',
+    quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_miko', 'thief_trial'], showJob: 'shinobi',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
   },
@@ -86,7 +86,7 @@ export const NPCS = {
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
-    quests: ['nim_chimes', 'nim_candles', 'nim_stardust'],
+    quests: ['story_5_1', 'story_5_2', 'story_5_3', 'nim_chimes', 'nim_candles', 'nim_stardust'],
     building: 'magic', sign: "Nim's Spells",
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
     greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',
@@ -98,14 +98,14 @@ export const NPCS = {
     building: 'office', sign: 'Harbor Office',
     look: { hairStyle: 'spiky', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
-    quests: ['canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
+    quests: ['story_2_1', 'canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
   },
   bramble: {
     id: 'bramble', name: 'Bramble', title: 'Hollow Warden', role: 'dungeon', dungeon: 'hollow',
     look: { hairStyle: 'wolf', hairColor: '#8fbf7a', skinTone: '#e7b48f', eyeColor: '#7a4a2b', outfitColor: '#b08860', eyeStyle: 'round', face: 'grin' },
     greeting: "Rootwood Hollow is no place to wander alone. Bring a warrior to tank, a mage to heal, and two fighters, or I'll find you some.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
-    quests: ['hollow_heart'],
+    quests: ['story_2_2', 'hollow_heart'],
   },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',

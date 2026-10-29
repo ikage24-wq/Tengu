@@ -23,6 +23,7 @@ import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
 import { noteTalk, noteVisit, questState } from '../core/quests.js';
 import { say } from './chat.js';
+import { sceneInput, drawScene } from './cutscene.js';
 
 // Places quests send you: marked off on arrival (and, for a spot up high, once you climb there).
 function noteVisits(world) {
@@ -103,6 +104,12 @@ export function routeInput(state, world, input, dt) {
   }
   world.events.length = 0;
 
+  // A story scene has the controls while it plays.
+  if (sceneInput(world, input)) {
+    state.npc = null;
+    state.windows.npc.open = false;
+    return true;
+  }
   // While the chat bar is open it has the keyboard.
   updateChat(state.chat, world, dt);
   if (!state.npc && !state.death && chatInput(state.chat, world, input)) return true;
@@ -274,6 +281,8 @@ export function drawUi(ui, state, world) {
   if (state.npc) withPop(ui, state.windows.npc, t, () => npcWindow(ui, state, world));
   else state.windows.npc.openedAt = null;
   if (state.death) deathWindow(ui, state, world);
+  // A story scene plays over everything.
+  drawScene(ui, world);
 }
 
 function withPop(ui, win, t, draw) {

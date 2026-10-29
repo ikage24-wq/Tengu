@@ -7,6 +7,8 @@
 
 // A reward marked `forJob` is job gear: the hero gets their own job's piece instead (the id names
 // the slot and level). `variant` gives it a color ('roll' picks one).
+import { STORY_QUESTS } from './story.js';
+
 export const QUESTS = {
   // Dawnlight Isle, the tutorial (Kuro; world/tutorial.js).
   tut_hello: {
@@ -324,3 +326,6 @@ export const QUESTS = {
     rewards: { exp: 200000, gold: 40000, items: [{ id: 'warrior_top_45', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 15 }] },
   },
 };
+
+// The main story's quests (data/story.js) live with the rest.
+Object.assign(QUESTS, STORY_QUESTS);

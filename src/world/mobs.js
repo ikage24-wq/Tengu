@@ -98,9 +98,11 @@ function respawnSpot(map, spawn, near) {
 
 // Fills empty spawn slots whose timers are up. Returns newly spawned mobs. `near` are the bodies
 // a respawn keeps clear of (you and your party); the first fill of a map ignores them.
-export function tickSpawner(spawner, map, now, near = []) {
+// `allow(spawn)` can hold a slot back (a field boss that only comes once its story is done).
+export function tickSpawner(spawner, map, now, near = [], allow = null) {
   const born = [];
   for (const slot of spawner.slots) {
+    if (allow && !allow(slot.spawn)) continue;
     if (slot.mob && slot.mob.hp > 0) continue;
     if (slot.mob && slot.mob.hp <= 0 && !slot.respawnAt) {
       const [lo, hi] = slot.spawn.respawn != null ? [slot.spawn.respawn, slot.spawn.respawn * 1.6] : RESPAWN;

@@ -120,7 +120,11 @@ jobs.)
 
 ## Phases (build in this order)
 
-- [ ] **Phase 1: Story foundation.** Story quests with their own marker and quest-window tab,
+- [x] **Phase 1: Story foundation.** Done: chapters 1-7 (Mira, Rook and Bramble, Elowen, Vex, Nim,
+  Elowen, Mira again), 19 story quests with a ★ marker and a Story tab, cutscenes (letterbox, title
+  cards, speakers acting their lines), regions opened by the story (the glade, the shrine path, the
+  springs and the peak, Starfall), and the four queens as solo trials with their own moves, who
+  return to their regions as field bosses after. Was: Story quests with their own marker and quest-window tab,
   locked regions that open with the story, chapters 1–3 (up to Sylvana's trial), and story
   cutscenes (a new cutscene system). Rework the 9 existing quests into
   chapter steps or side quests.
@@ -131,7 +135,8 @@ jobs.)
   Combat additions: command combos (launcher, air combo and slam, dash attack), a hit counter,
   Links, and a finisher per warrior path (more finishers to come for other jobs).
 - [ ] **Phase 3: Collecting.** Monster book, achievements, and titles under the name.
-- [ ] **Phase 4: Chapters 4–7.** Tamamo, Lilith and Selene trials, the crystal mines dungeon,
+- [x] **Phase 4: Chapters 4–7.** Story done with Phase 1 (the crystal mines dungeon is left to the
+  dungeon redesign). Was: Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.
 - [x] **Phase 5: Archer and Thief 2nd jobs.** Archer done: Kestrel's trial at 30 (shoot down 15
   Wraiths), then Ranger (bow, Gale gauge: Gale Volley, Cyclone Arrow, Tailwind, mastery, Storm

@@ -700,3 +700,51 @@ Object.assign(MAPS, {
     ],
   },
 });
+
+// ---------- The queens' trial arenas ----------
+//
+// Each queen waits in her own arena at the end of her region (story chapters 3-6): one open floor
+// with a ledge on each side to get up on when the floor itself is about to be hit. `trial` names
+// the queen's trial (data/story.js); the arena is yours alone. After her trial she also comes back
+// on her region's map now and then (the spawn `after` her trial quest).
+const arena = (id, name, theme, town, world, look, deco, back) => ({
+  id, name, theme, town, world, trial: id, look,
+  width: 1400, height: 560, groundY: 480,
+  terrain: [[0, 480], [1400, 480]],
+  platforms: [{ x: 120, y: 400, w: 300 }, { x: 980, y: 400, w: 300 }, { x: 560, y: 330, w: 280, thick: 40 }],
+  ropes: [{ x: 600, top: 330, bottom: 480, ladder: true }],
+  portals: [{ id: 'west', x: 40, y: 480, to: back[0], toPortal: back[1] }],
+  npcs: [],
+  deco,
+  spawns: [],
+});
+
+Object.assign(MAPS, {
+  // Sylvana's bower: white flowers and green light under one enormous tree.
+  bower: arena('bower', "Sylvana's Bower", 'forest', 'harbor', { x: 294, y: 168 },
+    { sky: ['#7fd6b8', '#c8f0d8', '#fff6e0'], far: '#7fc99e', mid: '#5fb88a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'chime'], drift: 'leaf', rainbow: 0 },
+    [['bigtree', 700, 0], ['giantflower', 240, 1], ['giantflower', 1160, 2]], ['glade', 'bower']),
+  // Tamamo's sanctum: foxfire lanterns round a great gate, at dusk.
+  sanctum: arena('sanctum', "Tamamo's Sanctum", 'shrine', 'grove', { x: 388, y: 100 },
+    { sky: ['#6a4a9a', '#e88ab0', '#ffd0a8'], light: 'dusk' },
+    [['torii', 700], ['foxstatue', 560, 0], ['foxstatue', 840, 1], ['sakura', 200, 0], ['sakura', 1200, 1]], ['shrine', 'sanctum']),
+  // Lilith's grotto behind the waterfall: a night garden of warm roses.
+  grotto: arena('grotto', 'Rose Grotto', 'springs', 'grove', { x: 244, y: 30 },
+    { sky: ['#3a2450', '#7a3f74', '#d87aa0'], far: '#5a3a6a', mid: '#7a4a7e', midTrim: '#a86a9a', stars: true, face: 'moon', light: 'dusk', drift: 'petal', props: ['flower', 'tulip', 'reed', 'flower'] },
+    [['hotspring', 700], ['giantflower', 260, 0], ['giantflower', 1140, 0]], ['springs', 'grotto']),
+  // Selene's moon terrace: the moon close overhead, stars falling slowly.
+  terrace: arena('terrace', 'Moon Terrace', 'sky', 'grove', { x: 396, y: 22 },
+    { sky: ['#14123a', '#3a3184', '#8a74c8'], sun: '#e6dcff', far: '#4a3f8e', mid: '#5a4f9e', midTrim: '#7a6cc0', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star'], drift: 'sparkle' },
+    [['moonstone', 700], ['cloudpillar', 260], ['cloudpillar', 1140]], ['starfall', 'terrace']),
+});
+
+MAPS.glade.portals.push({ id: 'bower', x: 2140, y: 720, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
+MAPS.shrine.portals.push({ id: 'sanctum', x: 2560, y: 760, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
+MAPS.springs.portals.push({ id: 'grotto', x: 1500, y: 760, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
+MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
+
+// After their trials, the queens come back to their regions every ten minutes or so.
+MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 720, respawn: 600, after: 'story_3_2' });
+MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 760, respawn: 600, after: 'story_4_3' });
+MAPS.springs.spawns.push({ mob: 'lilith', x: 1900, y: 760, respawn: 600, after: 'story_5_3' });
+MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600, after: 'story_6_3' });

@@ -23,6 +23,7 @@ import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 import { lastRite } from './shrine.js';
+import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
 const REGEN_EVERY = 5;
@@ -88,7 +89,8 @@ export function loadMap(world, mapId, portalId) {
   world.char.portal = portal.id;
   world.body = createBody(portal.x, portal.y);
   world.spawner = createSpawner(map);
-  world.mobs = tickSpawner(world.spawner, map, world.now);
+  world.mobs = tickSpawner(world.spawner, map, world.now, [], (sp) => spawnAllowed(world, sp));
+  world.trial = null;
   world.drops = [];
   world.pending = [];
   world.strikes = [];
@@ -108,6 +110,7 @@ export function loadMap(world, mapId, portalId) {
   world.troupeCombo = null;
   world.events.push({ type: 'map', mapId: map.id });
   onMapLoaded(world);
+  onStoryMap(world);
 }
 
 function townOf(world) {
@@ -276,6 +279,12 @@ function interact(world) {
     world.events.push({ type: 'talk', npc: DUNGEONS[portal.dungeon].warden });
     return true;
   }
+  const locked = portal && storyLock(world, world.map, portal);
+  if (locked) {
+    if (world.warnTimer <= 0) world.log(locked, '#ffb3c6');
+    world.warnTimer = 1;
+    return true;
+  }
   if (portal && portalSealed(world, portal)) {
     if (world.warnTimer <= 0) world.log('Roots seal the way. Clear the room first!', '#ffb3c6');
     world.warnTimer = 1;
@@ -440,6 +449,11 @@ function overlaps(a, b) {
 // input: { held: Set<code>, pressed: Set<code>, locked: bool } (locked while a menu has focus)
 export function updateWorld(world, dt, input) {
   const char = world.char;
+  // A cutscene holds the world still until it's over.
+  if (world.scene) {
+    world.scene.t += dt;
+    return;
+  }
   // Without a renderer draining it (tests, background tabs), keep the cue queue short.
   if (world.juice.length > 200) world.juice.length = 0;
   world.now += dt;
@@ -668,7 +682,9 @@ export function updateWorld(world, dt, input) {
   // Monsters don't pop up right on top of you or your party.
   const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
   if (world.net) near.push(...world.net.bodies(world));
-  if (!mirrored) world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near));
+  if (!mirrored) world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near, (sp) => spawnAllowed(world, sp)));
+  // The queens' moves, and their warnings going off.
+  tickStory(world, dt, hurtPlayer);
   world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < 0.5);
 
   world.drops = updateDrops(world.drops, world.map, dt);

@@ -26,6 +26,7 @@ import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './
 import { botsIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
+import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
@@ -214,6 +215,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
+  // A queen's moves about to land.
+  drawZonesBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
   drawMobs(ctx, world, cam, time);
   // A Beastmaster's wolf and bear walk behind her; her hawk flies over her (drawn after her).
@@ -301,12 +304,14 @@ export function drawWorld(ctx, world, viewCam, time) {
   const drawFx = (g) => {
     drawEffects(g, world, cam, time);
     if (world.dungeon) drawDungeonFront(g, world, cam, time);
+    drawZonesFront(g, world, cam, time);
     drawParticles(g, feel.fx, cam, time);
   };
   if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
   if (settings.filter === 'dreamy') drawDreamy(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
+  drawCallout(ctx, world);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
   flushBubbles(ctx);

@@ -680,6 +680,15 @@ to clear it.
   fewer than 20; someone logging out is soon replaced), spread over the towns by level: beginners
   in Sprout Village, mid levels in Ember Crag and Pastel Harbor, veterans and pros in Moonleaf Grove,
   with a few wandering anywhere. The busier a town, the less each person chats.
+- **The story** — seven chapters from level 1 to 50 (cozy, with heart). Hayate, the island's
+  great Tengu, has fallen asleep and her wind has stopped; Mira takes you in, and chapter by
+  chapter you calm each region's lonely spirit: Gnarlroot in the Hollow, then four queens in trials
+  of their own (Sylvana in her bower, Tamamo in her sanctum, Lilith in the Rose Grotto, Selene on
+  the Moon Terrace), each with moves you read and dodge, until the Crystal King gives the light
+  back and Hayate stirs. Story quests wear a ★ and have their own tab; each chapter opens with a
+  title card and plays out in cutscenes; new regions open as the story reaches them; and after
+  her trial each queen comes back to her region every ten minutes or so for a rematch anyone there
+  can join.
 - **Quests and NPCs** — 39 quests from every town's people, covering every field from level 1 to
   48: hunts and fetches, errands (talk to someone, deliver a letter or a parcel, climb to the top
   of a map), short chains (Captain Rook's Windy Canyon trouble leads to Bramble), a task from each
