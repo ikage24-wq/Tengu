@@ -5,9 +5,11 @@
 //     hime cut, tall fox ears and a great fox tail both tipped vermilion, amber eyes with kitsune
 //     shrine make-up, and a shrine maiden's dress; drawn a good deal bigger than the Maiden (the
 //     whole figure scaled, never stretched);
-//   - her bearing: proud and noble. She stands tall with her chin up and her weight back, her
-//     naginata planted upright beside her like a standard; she walks slow and measured; she never
-//     hurries her strikes or wastes a motion;
+//   - her bearing: a very strong woman, proud, cold and not friendly at all. She stands like a
+//     warlord: feet planted wide, chin up, a heavy-lidded stare, the naginata gripped out at her
+//     side with its butt on the ground and her other arm hanging with the fist clenched, a long war
+//     coat thrown over her shoulders; she walks slow and measured; she never smiles, never hurries
+//     a strike or wastes a motion;
 //   - her naginata: a huge, ornate glaive taller than she is (a lacquered vermilion haft bound in
 //     gold, a long curved blade with a groove down it, a gold collar, a great red tassel with a
 //     bell), which she handles with ease: it twirls in her hand, sweeps in great arcs, and is
@@ -23,10 +25,10 @@ import { KMOVES, CALL } from '../world/kitsune.js';
 
 export const KITSUNE_LOOK = {
   hairStyle: 'hime', hairColor: '#f4f2ff', hairTip: '#ffb8ae', earStyle: 'fox', earTip: '#ff6a52', tail: 'fox', tailTip: '#ff6a52',
-  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'thin', face: 'cool', outfit: 'miko', outfitColor: '#ffffff', marks: ['kitsune'],
+  skinTone: '#fff0e6', eyeColor: '#f0a53a', eyeStyle: 'sleepy', browStyle: 'sharp', face: 'cool', lid: 0.4, outfit: 'mikocoat', outfitColor: '#ffffff', marks: ['kitsune'],
 };
 // She's big: the whole figure scaled up (never stretched).
-const SCALE = 1.45;
+const SCALE = 1.6;
 const TAU = Math.PI * 2;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const seg = (t, a, b) => clamp01((t - a) / (b - a));
@@ -50,42 +52,45 @@ const overshoot = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : 1 + 2.4 * (t - 1) ** 3 + 1.4
 //   tail, curl      her tail's swing (+ down and back) and curl (+ tighter), degrees
 //   cloth           how the robes and sleeves swing; mouth, eyes, brows the face
 const REST = {
-  lean: -0.03, lunge: 0, lift: 0, pole: 0, grip: 0.21, hand: [1.6, 2], free: [-1.4, 0.8], legF: [2, 0, 4], legB: [-2.2, 0, -4], squat: 0,
-  tx: 0, by: 0, hx: 0.3, hy: -0.4, tilt: -2, ears: [-4, -4], tail: 0, curl: 0, cloth: 0, mouth: 'smirk', eyes: null, brows: null,
+  lean: -0.05, lunge: 0, lift: 0, pole: 0, grip: 0.24, hand: [4.6, 1.6], free: [0.2, 2.6], legF: [3.4, 0, 6], legB: [-3.6, 0, -6], squat: 0,
+  tx: 0, by: 0, hx: 0.4, hy: -0.6, tilt: -3, ears: [-6, -6], tail: 8, curl: -10, cloth: 0, mouth: 'flat', eyes: null, brows: 'stern',
 };
 const pose = (o) => ({ ...REST, ...o });
 
 // ---------- Standing, and her idle acting ----------
-// Her guard: tall, chin up, the naginata planted upright beside her, her free hand resting at her
-// side; every few seconds she does one small, proud thing (her `bit`, `u` 0-1 through it).
+// Her guard, a warlord's stance: feet planted wide, chest out, chin up, the naginata gripped out at
+// her side with its butt on the ground, her other arm hanging with the fist clenched, her tail low
+// and heavy; every few seconds she does one small thing (her `bit`, `u` 0-1 through it).
 function standing(bit, u) {
   const k = soft(seg(u, 0, 0.22)) * (1 - soft(seg(u, 0.78, 1)));
   if (bit === 'glance') {
-    // A glance back over her shoulder at the Maiden, one ear turned to her, a small nod.
-    return pose({ hx: -1.4 * k, hy: -0.4 + 0.5 * bump(u, 0.45, 0.62), tilt: -2 - 4 * k, ears: [-4 + 16 * k, -4 - 4 * k], lean: -0.03 - 0.03 * k });
+    // A cold look back over her shoulder at the Maiden, one ear turned to her, and away again.
+    return pose({ hx: -1.4 * k, tilt: -3 - 4 * k, ears: [-6 + 16 * k, -6 - 4 * k], lean: -0.05 - 0.02 * k });
   }
-  if (bit === 'hair') {
-    // She sweeps her hair back over her shoulder with her free hand, chin lifting, eyes closing.
-    const sweep = soft(seg(u, 0.25, 0.6));
-    return pose({ free: [lerp(-1.4, 3.6, k) - 4 * sweep * k, lerp(0.8, -10.8, k)], hx: 0.4 * k, hy: -0.4 - 0.6 * k, tilt: -2 - 5 * k, ears: [-4 - 8 * k, -4], eyes: k > 0.5 ? 'half' : null });
+  if (bit === 'stamp') {
+    // She lifts the naginata a hand's width and drives its butt back into the ground: a warning.
+    const up = soft(seg(u, 0.2, 0.42));
+    const down = ease(seg(u, 0.44, 0.52));
+    return pose({ hand: [4.6, 1.6 - 3.4 * up * (1 - down) + 0.8 * bump(u, 0.5, 0.66)], by: 0.8 * bump(u, 0.5, 0.66), lean: -0.05 + 0.04 * bump(u, 0.48, 0.7), ears: [-10 * up, -10 * up], eyes: up > 0.5 && down < 0.5 ? 'half' : null });
   }
   if (bit === 'twirl') {
     // She lifts the naginata, twirls it once in a full circle beside her, and plants it with a stamp.
     const spin = ease(seg(u, 0.18, 0.72));
     const stamp = bump(u, 0.7, 0.86);
     return pose({
-      pole: TAU * spin, grip: lerp(0.3, 0.5, k), hand: [1.6 + 1.6 * k, 2 - 6 * k * (1 - stamp)], lean: -0.03 + 0.05 * k * Math.sin(spin * TAU), by: 0.8 * stamp,
-      legF: [2 + 0.6 * stamp, -1.4 * bump(u, 0.62, 0.74), 4], tail: 18 * Math.sin(spin * TAU), ears: [-8 * k, -8 * k], eyes: k > 0.5 && u < 0.7 ? 'half' : null,
+      pole: TAU * spin, grip: lerp(0.24, 0.5, k), hand: [4.6, 1.6 - 6 * k * (1 - stamp)], lean: -0.05 + 0.05 * k * Math.sin(spin * TAU), by: 0.8 * stamp,
+      legF: [3.4 + 0.6 * stamp, -1.4 * bump(u, 0.62, 0.74), 6], tail: 8 + 14 * Math.sin(spin * TAU), ears: [-8 * k, -8 * k], eyes: k > 0.5 && u < 0.7 ? 'half' : null,
     });
   }
   if (bit === 'tail') {
-    // Her tail curls slowly right round in front of her feet and back; she glances down at it.
-    return pose({ tail: -30 * k, curl: 60 * k, hx: 0.6 * k, hy: -0.4 + 0.6 * k, ears: [-10 * k, -10 * k], eyes: k > 0.6 ? 'half' : null });
+    // Her tail lashes once, slow and heavy, the way a big cat's does; her ears flatten a moment.
+    const lash = Math.sin(seg(u, 0.1, 0.9) * TAU);
+    return pose({ tail: 8 - 26 * lash * k, curl: -10 + 30 * k, ears: [-6 + 10 * k, -6 + 10 * k] });
   }
   return pose({});
 }
-const BITS = ['glance', 'hair', 'twirl', 'tail'];
-const BIT_LEN = { glance: 2.4, hair: 2.6, twirl: 2.2, tail: 3 };
+const BITS = ['glance', 'stamp', 'twirl', 'tail'];
+const BIT_LEN = { glance: 2.4, stamp: 1.8, twirl: 2.2, tail: 2.6 };
 
 // Walking: slow and measured, upright, the naginata carried upright at her side, her free hand
 // still, her robes swaying.
@@ -94,7 +99,7 @@ function walking(ph) {
   const c = Math.cos(ph);
   return pose({
     legF: [2 + 3.6 * s, -1.6 * Math.max(0, c), 14 * s], legB: [-2 - 3.6 * s, -1.6 * Math.max(0, -c), -14 * s], by: -0.6 * Math.abs(c), tx: 0.6 * s, lean: 0.02,
-    pole: 0.06 + 0.03 * c, grip: 0.24, hand: [2, 0.6 - 0.4 * Math.abs(c)], free: [-1.4 - 1.2 * s, 0.6], tail: -6 * s, curl: 8 * c, ears: [-6, -6], cloth: -1 - 1.4 * s,
+    pole: 0.06 + 0.03 * c, grip: 0.28, hand: [4, 0.4 - 0.4 * Math.abs(c)], free: [0.2 - 1 * s, 2.4], tail: 8 - 6 * s, curl: -10 + 8 * c, ears: [-6, -6], cloth: -1 - 1.4 * s,
   });
 }
 // Running (hurrying into place): long low bounding strides, leaning hard, the naginata held low
@@ -202,24 +207,21 @@ function blocking(p) {
     mouth: jolt > 0.3 ? 'open' : null, eyes: jolt > 0.3 ? 'half' : null, brows: 'knit',
   });
 }
-// Her bow to the Maiden after a fight: the naginata held upright, her free hand to her chest, a
-// measured, graceful bow (a guardian's, from the hips), and back up tall with a small smile.
+// After a fight: she turns to the Maiden and gives one curt nod, eyes closing a moment (a
+// guardian's acknowledgement, not a bow), then plants the naginata and stands tall again.
 function bowing(p) {
-  const k = soft(seg(p, 0.1, 0.42)) * (1 - soft(seg(p, 0.7, 0.95)));
-  const smile = bump(p, 0.72, 1);
-  return pose({
-    lean: 0.42 * k, pole: 0.02, grip: 0.21, hand: [1.6, 2], free: [2.8 * k - 1.4, lerp(0.8, -3.6, k)], hy: -0.4 + 0.6 * k, ears: [10 * k, 8 * k], tail: -10 * k, curl: 20 * k,
-    eyes: k > 0.3 ? 'blink' : smile > 0.3 ? 'happy' : null, legF: [1.6, 0, 2], legB: [-1.6, 0, -2], mouth: 'smirk',
-  });
+  const k = soft(seg(p, 0.15, 0.35)) * (1 - soft(seg(p, 0.5, 0.7)));
+  const plant = bump(p, 0.62, 0.8);
+  return pose({ lean: -0.05 + 0.1 * k, hy: -0.6 + 1.4 * k, hx: 0.4 + 0.4 * k, tilt: -3 + 6 * k, ears: [-6 + 6 * k, -6 + 6 * k], eyes: k > 0.4 ? 'blink' : null, by: 0.6 * plant, hand: [4.6, 1.6 + 0.8 * plant] });
 }
 
 // ---------- Her moods ----------
 //   cross    the Maiden was hurt: ears pinned flat, brows knit, eyes narrowed, tail bristling up
-//   pleased  what she was fighting went down: ears up, a quick swish of the tail, a proud smile
+//   pleased  what she was fighting went down: a cold "hmph", chin up, eyes half shut, ears up
 //   attend   the Maiden's Blessing or Ward went up: ears pricked and turned to her, a glance back
 function moodOver(p, mood, t, k) {
-  if (mood === 'cross') return { ...p, ears: [p.ears[0] + 28 * k, p.ears[1] + 26 * k], brows: 'knit', eyes: p.eyes ?? 'half', tail: p.tail - 20 * k, curl: p.curl + 20 * k, mouth: p.mouth === 'open' ? 'open' : 'flat' };
-  if (mood === 'pleased') return { ...p, ears: [p.ears[0] - 10 * k, p.ears[1] - 8 * k], tail: p.tail + 14 * Math.sin(t * 12) * k, curl: p.curl + 12 * k, eyes: p.eyes ?? 'happy', hy: p.hy - 0.4 * k };
+  if (mood === 'cross') return { ...p, ears: [p.ears[0] + 30 * k, p.ears[1] + 28 * k], brows: 'knit', eyes: p.eyes ?? 'half', tail: p.tail - 24 * k, curl: p.curl + 24 * k, mouth: p.mouth === 'open' ? 'open' : 'grit' };
+  if (mood === 'pleased') return { ...p, ears: [p.ears[0] - 8 * k, p.ears[1] - 6 * k], tail: p.tail - 10 * k, eyes: p.eyes ?? 'half', hy: p.hy - 0.5 * k, tilt: p.tilt - 3 * k };
   if (mood === 'attend') return { ...p, ears: [p.ears[0] + 16 * k, p.ears[1] - 10 * k], hx: p.hx - 1.4 * k, hy: p.hy + 0.3 * k };
   return p;
 }
@@ -319,8 +321,9 @@ export function drawKitsune(ctx, world, k, cam, time) {
     [st[name], st[name + 'V']] = spring(st[name] ?? to, st[name + 'V'] ?? 0, to, kk, c, dt);
     return st[name];
   };
-  const tail = S('tail', P.tail + 9 * Math.sin(time * 1.1) * calm + 4 * Math.sin(time * 2.7) * calm - 18 * v - 26 * surge, 60, 6.5);
-  const curl = S('curl', P.curl + 14 * Math.sin(time * 1.1 + 1.2) * calm + 10 * v, 45, 6);
+  // (Her tail is heavy and slow, a big cat's: it sways, it doesn't wag.)
+  const tail = S('tail', P.tail + 6 * Math.sin(time * 0.7) * calm + 2 * Math.sin(time * 1.9) * calm - 18 * v - 26 * surge, 50, 6.5);
+  const curl = S('curl', P.curl + 8 * Math.sin(time * 0.7 + 1.2) * calm + 10 * v, 40, 6);
   const earN = S('earN', P.ears[0] + twitch + 8 * v, 240, 12);
   const earF = S('earF', P.ears[1] + twitch * 0.6 + 8 * v + 3 * Math.sin(time * 0.7), 210, 12);
   const hair = S('hair', -1.4 * v - 2 * surge + 0.5 * breeze + (P.lift > 2 ? -1 : 0), 55, 5.5);
@@ -331,7 +334,8 @@ export function drawKitsune(ctx, world, k, cam, time) {
 
   const x = k.x - cam.x;
   const y = k.y - cam.y;
-  const brows = P.brows === 'knit' ? [[-0.2, 0.7], [-0.2, 0.7]] : null;
+  // Her brows: always stern, drawn down hard when she strikes or is crossed.
+  const brows = P.brows === 'knit' ? [[-0.4, 0.95], [-0.4, 0.95]] : [[-0.15, 0.55], [-0.15, 0.55]];
   const rig = {
     tx: q(P.tx + 0.35 * shift * calm), by: q(P.by + 0.3 * breath * calm), hx: q(P.hx + Math.max(-1.6, Math.min(1.6, head)) + 0.2 * shift * calm), hy: q(P.hy + 0.22 * breath * calm),
     tilt: deg(P.tilt + 1.2 * shift * calm), backArm: [q(P.hand[0]), q(P.hand[1] + 0.25 * breath * calm)], frontArm: [q(P.free[0]), q(P.free[1] + 0.3 * breath * calm)], armSide: 1,
@@ -340,7 +344,7 @@ export function drawKitsune(ctx, world, k, cam, time) {
     // into the ground however hard it lashes.)
     ears: [deg(earN), deg(earF)], tail: deg(-Math.max(-60, Math.min(6, tail))), tailCurl: deg(Math.max(-40, Math.min(60, curl))), cape: q(sway),
     hair: q(Math.max(-3, Math.min(3, hair))), hairTip: q(Math.max(-4, Math.min(4, tip))), hairLift: Math.abs(hair) > 1.6 ? -1 : 0, hairWave: Math.floor((((time / 1.7) % 1) + 1) % 1 * 8),
-    eyes: P.eyes ?? blinkOf(time), face: brows ? { brows } : undefined,
+    eyes: P.eyes ?? blinkOf(time), face: { brows },
   };
   const look = { ...KITSUNE_LOOK, mouth: P.mouth ?? undefined };
   // The naginata goes behind her while it's upright or slung back, in front when it's out at them.
