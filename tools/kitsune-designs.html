@@ -1,0 +1,81 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: design options for the Shrine Maiden's kitsune shrine guardian (docs/design/
+// spirit-mage-paths.md), drawn with the game's own character renderer so the player can pick a
+// look before she gets a skeleton of her own. Each option: hair, eyes, fox ears and tail, outfit
+// colours and a naginata (a spear stands in for now). Open /tools/kitsune-designs.html.
+import { drawHero } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const OPTIONS = [
+  {
+    name: 'A  Silver Moon', note: ['serene and calm', 'silver-white, red-tipped tail, white robes'],
+    look: { hairStyle: 'hime', hairColor: '#f2f0ff', hairTip: '#ff8a7a', earStyle: 'wolf', tail: 'wolf', skinTone: '#fff0e6', eyeColor: '#e8a23c', eyeStyle: 'sleepy', face: 'cool', outfit: 'bigkimono', outfitColor: '#ffffff' },
+    gear: { weapon: { id: 'spear_50' }, top: { id: 'outfit_top' }, bottom: { id: 'outfit_bottom' }, shoes: { id: 'outfit_shoes' } },
+  },
+  {
+    name: 'B  Autumn Fox', note: ['warm and bold', 'gold-orange, crimson armour, hakama'],
+    look: { hairStyle: 'ponytail', hairColor: '#ffb35c', hairTip: '#fff4e0', earStyle: 'wolf', tail: 'wolf', skinTone: '#fbd9bf', eyeColor: '#c0392b', eyeStyle: 'round', face: 'smile', outfit: 'kimono', outfitColor: '#e0453a' },
+    gear: { weapon: { id: 'spear_50', variant: 'crimson' }, top: { id: 'warrior_top_40', variant: 'crimson' }, bottom: { id: 'thief_bottom_30' }, shoes: { id: 'outfit_shoes' } },
+  },
+  {
+    name: 'C  Night Fox', note: ['stern and quiet', 'black with white tips, dark shinobi garb'],
+    look: { hairStyle: 'wolfsleek', hairColor: '#2a2440', hairTip: '#f2f0ff', earStyle: 'wolf', tail: 'wolf', skinTone: '#f7e2d6', eyeColor: '#9b6cff', eyeStyle: 'sleepy', face: 'smug', outfit: 'bigkimono', outfitColor: '#3c3a7a' },
+    gear: { weapon: { id: 'spear_50', variant: 'dark' }, top: { id: 'thief_top_50', variant: 'dark' }, bottom: { id: 'thief_bottom_50', variant: 'dark' }, shoes: { id: 'outfit_shoes' } },
+  },
+  {
+    name: 'D  Spring Fox', note: ['gentle and kind', 'blossom pink, white kimono'],
+    look: { hairStyle: 'wavylong', hairColor: '#ffd6e4', hairTip: '#ffffff', earStyle: 'wolf', tail: 'wolf', skinTone: '#fff0e6', eyeColor: '#5aa86a', eyeStyle: 'sparkle', face: 'smile', outfit: 'kimono', outfitColor: '#fff4f8' },
+    gear: { weapon: { id: 'spear_50' }, top: { id: 'outfit_top' }, bottom: { id: 'outfit_bottom' }, shoes: { id: 'outfit_shoes' } },
+  },
+];
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1200;
+const H = 640;
+canvas.width = W;
+canvas.height = H;
+const S = 4.6;
+let t = 0;
+function draw() {
+  nextFrame();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#3a3266');
+  g.addColorStop(1, '#6a5aa8');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  OPTIONS.forEach((o, i) => {
+    const cx = 150 + i * 300;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(cx, 520, 100, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.scale(S, S);
+    setHd(true, S);
+    drawHero(ctx, o.look, o.gear, cx / S, 520 / S, { pose: 'idle', time: t, facing: 1, seed: i });
+    ctx.restore();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(o.name, cx, 566);
+    ctx.fillStyle = '#d8d0ff';
+    ctx.font = '15px Segoe UI, sans-serif';
+    o.note.forEach((line, k) => ctx.fillText(line, cx, 592 + k * 20));
+  });
+}
+window.step = (dt) => {
+  t += dt;
+  draw();
+};
+window.step(0);
+if (!new URLSearchParams(location.search).has('manual')) {
+  let last = performance.now();
+  const loop = (now) => { window.step((now - last) / 1000); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script></body></html>
