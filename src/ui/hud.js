@@ -662,6 +662,18 @@ function drawMinimap(ui, world) {
     ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
+  // Other players hunting here: small cream dots.
+  for (const b of world.bots?.list ?? []) {
+    if (!b.hunter || !b.body || b.map !== map.id) continue;
+    ctx.fillStyle = '#7a6a92';
+    ctx.beginPath();
+    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff3d6';
+    ctx.beginPath();
+    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
   // Friends online: sky-blue dots, party friends a bigger rose dot with a white heart-ring.
   for (const g of othersHere(world)) {
     const gx = x + g.body.x * scale;

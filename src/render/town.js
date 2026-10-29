@@ -18,6 +18,8 @@ import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
 import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt } from './townhouses.js';
 import { ITEMS } from '../data/items.js';
+import { SPOTS } from '../data/fishing.js';
+import { drawFriendFishing } from './fishing.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -1223,8 +1225,21 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    const gy = snap(groundAt(map, bot.x) - cam.y);
+    const gy = snap(floorFor(map, bot) - cam.y);
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
+    // Fishing off the pier: the rod, the line and the bobber; cooking: steam off the pot.
+    if (bot.fish) drawFriendFishing(ctx, bot.fish, x, gy, cam, time);
+    if (bot.state === 'cook') {
+      for (let i = 0; i < 3; i++) {
+        const u = (time * 0.6 + i / 3) % 1;
+        ctx.globalAlpha = 0.55 * Math.sin(u * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(snap(map.stove - cam.x) + Math.sin(time * 2 + i) * 3, gy - 30 - u * 22, 3 + u * 3, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
     // Name tags further than a few steps away fade back, so a busy street stays readable.
     const far = player && Math.abs(bot.x - player.x) > 150;
     drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far);
@@ -1232,8 +1247,18 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }
 
+// Where a player in town stands: on the pier when they're out fishing on it, else the ground.
+function floorFor(map, bot) {
+  const spot = (bot.fish || bot.then?.fishing) && SPOTS[map.id]?.[0];
+  if (spot) {
+    const pier = map.platforms.find((p) => Math.abs(p.y - spot.y) < 4 && bot.x >= p.x && bot.x <= p.x + p.w);
+    if (pier) return pier.y;
+  }
+  return groundAt(map, bot.x);
+}
+
 // One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
-// pros, green with a heart for party members, guild underneath).
+// pros, green with a heart for party members, a title in gold and the guild underneath).
 function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
   if (bot.appear > 0 || bot.state === 'logout') {
@@ -1244,11 +1269,16 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     }
     ctx.globalAlpha = 1;
   }
-  const body = bot.party ? bot.body : null;
+  const body = bot.body ?? null;
   if (!body || body.onGround) shadow(ctx, x, y, body ? slopeAt(body.surface, body.x) : slope);
   const waving = bot.state === 'wave';
   let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) ? 'walk' : 'idle';
   let progress = waving ? (1.6 - bot.timer) / 1.6 : 0;
+  // A little emote, or a cheer at a catch.
+  if (!body && bot.emote && !waving) {
+    pose = bot.emote.pose;
+    progress = bot.emote.t / bot.emote.dur;
+  }
   if (body) {
     if (bot.attack) {
       pose = bot.attack.pose;
@@ -1295,7 +1325,11 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     const f = Math.max(0, bot.hp / bot.stats.maxHp);
     box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
     if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
-  } else if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + 20, { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+  } else {
+    // The title they wear (gold), then their guild.
+    if (bot.title) text(ctx, bot.title, x, y + 20, { size: 6, bold: true, align: 'center', color: '#ffe08a', outline: 'rgba(60,40,20,0.7)' });
+    if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + (bot.title ? 28 : 20), { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+  }
   ctx.restore();
   if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
 }

@@ -78,11 +78,14 @@ export function joinParty(bots, bot, world) {
   const b = world.body;
   bot.party = true;
   bot.shop = null;
+  // (A player out hunting this map joins from right where they are.)
+  bot.hunter = false;
+  bot.leaving = null;
   bot.state = 'party';
   bot.map = world.map.id;
   // They'll stay a good while, but not forever.
   bot.session = Math.max(bot.session, 0) + between(600, 1500, bots.rng);
-  bot.body = createBody(bot.x, groundAt(world.map, bot.x));
+  bot.body = bot.body && bot.map === world.map.id ? bot.body : createBody(bot.x, groundAt(world.map, bot.x));
   bot.stats = computeStats(bot.char);
   bot.cooldown = between(0.5, 1, bots.rng);
   bot.stuck = 0;
@@ -205,9 +208,14 @@ function huntTarget(bot, world, members) {
   if (cur && cur.hp > 0 && world.mobs.includes(cur) && !skip(cur)) return cur;
   let best = null;
   let bestScore = Infinity;
+  const you = world.body;
   for (const m of world.mobs) {
     if (m.hp <= 0 || skip(m)) continue;
+    // Players out hunting on their own (not in your party) leave the monsters by you alone, so
+    // nobody steals your kills; a queen back for a rematch draws them all in.
+    if (!bot.party && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
     let score = Math.abs(m.x - body.x) + Math.abs(m.y - body.y) * 3;
+    if (!bot.party && m.def.boss) score -= 600;
     if (members.some((o) => o !== bot && o.brain?.target === m)) score += 300;
     if (Math.sign(m.x - body.x) === -body.facing) score += 40;
     if (bot.ai.kind === 'guardian') score += (Math.abs(m.x - world.body.x) + Math.abs(m.y - world.body.y) * 3) * 0.5;
@@ -441,7 +449,7 @@ function strike(bot, m, world, rng) {
     const miss = rng() >= hitChance(acc, level, m.def);
     const roll = miss ? null : rollHit(range, bot.stats, m.def, level, rng);
     const travel = st.shot ? Math.hypot(m.x - from.x, m.y - from.y) / 620 : impact;
-    world.pending.push({ at: world.now + travel + i * 0.09, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id, knock: cut?.knock, launch: cut?.launch, big: cut?.big });
+    world.pending.push({ at: world.now + travel + i * 0.09, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id, stranger: !bot.party, knock: cut?.knock, launch: cut?.launch, big: cut?.big });
     if (st.shot) world.fx.push({ kind: 'projectile', shot: st.shot, x: from.x, y: from.y - i * 3, tx: m.x, ty: m.y - m.def.h / 2 + (i - 1) * 4, t: -i * 0.09, dur: Math.max(0.08, travel) });
   }
   const box = { x: body.x - 34, y: body.y - 50, w: 68, h: 50 };
@@ -479,6 +487,64 @@ function heal(bot, world, bots) {
   bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
+}
+
+// ---------- Other players hunting the same map ----------
+// A player out hunting on their own (world/bots.js keeps a few on the map you're on): the same
+// hunting as a party member in the field (finding monsters, paths over ledges and ropes, their
+// own weapon and playstyle), but they never take the monsters by you, their kills give you
+// nothing, and they don't heal you.
+export function tickHunter(bot, world, hunters, dt, rng) {
+  const map = world.map;
+  bot.stats ??= computeStats(bot.char);
+  bot.ai ??= makeAI(bot, rng);
+  bot.brain ??= { think: between(0.2, 0.8, rng), goal: null, target: null, settled: false, still: 0, habitIn: between(4, 10, rng), healIn: 99 };
+  bot.cooldown ??= between(0.5, 1, rng);
+  bot.stuck ??= 0;
+  const br = bot.brain;
+  const body = bot.body;
+  br.think -= dt;
+  if (br.think <= 0 && !bot.leaving) {
+    br.think = between(bot.ai.react[0], bot.ai.react[1], rng);
+    hunt(bot, world, hunters, rng);
+  }
+  if (bot.leaving) br.goal = bot.leaving;
+  const busy = bot.attack && ['cheer', 'flip', 'roar', 'guard', 'aimshot', 'pray'].includes(bot.attack.pose) && !bot.attack.fighting;
+  const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : fieldSteer(bot, world, hunters);
+  const pushing = (intent.left || intent.right) && body.onGround;
+  br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
+  br.lastX = body.x;
+  if (br.stall > 1.5) {
+    br.path = null;
+    if (br.target) br.skip = { mob: br.target, until: world.now + 6 };
+    br.target = null;
+    br.goal = bot.leaving ?? null;
+    br.stall = 0;
+  }
+  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100 });
+  const m = br.target;
+  const st = bot.ai.weapon;
+  // (A monster that's wandered over to you is yours now.)
+  if (m && !m.def.boss && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
+  if (!bot.leaving && br.target && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
+    const toward = m.x < body.x ? -1 : 1;
+    if (!intent.left && !intent.right) body.facing = toward;
+    bot.cooldown -= dt;
+    if (bot.cooldown <= 0 && body.facing === toward) {
+      strike(bot, m, world, rng);
+      bot.attack.fighting = true;
+      bot.cooldown = between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng);
+    }
+  }
+  if (!m && body.onGround && !bot.attack && br.goal?.mode === 'wander' && br.settled) {
+    br.habitIn -= dt;
+    if (br.habitIn <= 0) {
+      br.habitIn = between(6, 14, rng) * bot.ai.patience;
+      bot.attack = { pose: bot.ai.habits[Math.floor(rng() * bot.ai.habits.length)], t: 0, dur: 0.9 };
+    }
+  }
+  if (bot.attack && (bot.attack.t += dt) >= bot.attack.dur) bot.attack = null;
+  bot.x = body.x;
 }
 
 // Members level up from the party's kills too.

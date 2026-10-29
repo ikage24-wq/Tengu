@@ -735,6 +735,16 @@ to clear it.
   fewer than 20; someone logging out is soon replaced), spread over the towns by level: beginners
   in Sprout Village, mid levels in Ember Crag and Pastel Harbor, veterans and pros in Moonleaf Grove,
   with a few wandering anywhere. The busier a town, the less each person chats.
+  They talk about everything in the game (fishing, cooking, the queens, Rootwood Hollow, sets,
+  polishing, titles), and they talk back: they say hi when you do, answer questions from the
+  game's own data ("where is Clover Hills?", "where do Jackalopes spawn?", "where can I catch Moon
+  Koi?", "what level is Mossy Woods?"), cheer when you level up, change job or land a good fish,
+  and return your emotes. In town they fish off the harbor pier, cook at the stove, stop to chat
+  with each other in little back-and-forth conversations, and emote; many wear a title and pieces
+  of a gear set. A few also hunt the field you're on (with their own playstyles, paths over ledges
+  and ropes); they leave the monsters by you alone, their kills give you nothing, and they come
+  running when a queen returns for a rematch (her last blow is always yours). Now and then the
+  server shares someone's big moment (a legendary fish, a job, a cleared dungeon, a passed trial).
 - **The story** — seven chapters from level 1 to 50 (cozy, with heart). Hayate, the island's
   great Tengu, has fallen asleep and her wind has stopped; Mira takes you in, and chapter by
   chapter you calm each region's lonely spirit: Gnarlroot in the Hollow, then four queens in trials

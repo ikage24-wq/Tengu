@@ -1,5 +1,10 @@
 // Other "players": generated characters who log in, walk around towns, chat, travel between
 // towns, open shops to sell their loot, wave at you now and then, and eventually log out for good.
+// In town they also fish off the pier, cook at the stove, stop to chat with each other, and emote;
+// they wear titles and gear sets. They talk back to you (hellos, questions answered from the
+// game's own data, cheers when you level up or land a rare fish, emotes returned). A few hunt the
+// field map you're on (never taking the monsters by you, and rushing in when a queen comes back),
+// and now and then the server shares news of someone's big moment.
 // Each one is built like a real character (level, job, stat build, rolled gear), so you can click
 // them to see their stats and gear. Nobody comes back after logging out, and no name repeats.
 //
@@ -16,8 +21,17 @@ import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
-import { speak, moodFor, makeStyle, price as priceText } from './chatter.js';
-import { updateParty } from './party.js';
+import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced } from './chatter.js';
+import { updateParty, tickHunter } from './party.js';
+import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
+import { GEAR_FAMILIES } from '../data/items.js';
+import { ACHIEVEMENTS } from '../data/achievements.js';
+import { SPOTS, FISH } from '../data/fishing.js';
+import { DISHES } from '../data/cooking.js';
+import { MOBS } from '../data/mobs.js';
+import { createBody } from './physics.js';
+import { navOf, surfaceBelow } from './nav.js';
+import { isQueen } from './story.js';
 
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
@@ -174,10 +188,31 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
       char.outfit[def.slot] = makeCash(def.id, def.slot === 'earring' ? null : color);
     }
   }
+  // Plenty of players past level 15 wear pieces of a gear set (the top ones the whole thing).
+  const family = JOBS[char.job].family;
+  const sets = Object.entries(SETS).filter(([, set]) => set.level <= char.level);
+  if (GEAR_FAMILIES.includes(family) && sets.length && rng() < (pro ? 0.8 : 0.4)) {
+    const [key] = rng() < 0.6 ? sets.sort((a, b) => b[1].level - a[1].level)[0] : pick(sets, rng);
+    const n = pro || rng() < 0.45 ? 4 : 2 + Math.floor(rng() * 2);
+    for (const slot of [...SET_SLOTS].sort(() => rng() - 0.5).slice(0, n)) char.equipment[slot] = makeEquip(setPieceId(key, family, slot), { variance: 0.08, rng, rarity: rollRarity(rng) });
+  }
   const s = computeStats(char);
   char.hp = s.maxHp;
   char.mp = s.maxMp;
   return char;
+}
+
+// A title to wear under their name (the Collection's), one that fits how far along they are.
+const TITLES = {
+  low: ['hello', 'lv10', 'angler', 'friends', 'mochi', 'dailies', 'chef', 'k100'],
+  mid: ['cards10', 'gnarl', 'sylvana', 'quests20', 'set', 'lv30', 'k1000'],
+  high: ['tamamo', 'lilith', 'selene', 'polish', 'cards25', 'fishall', 'story'],
+  pro: ['lv50', 'k5000', 'cardsAll', 'rich', 'story'],
+};
+function titleFor(level, pro, rng) {
+  if (rng() < 0.4) return null;
+  const pool = [...TITLES.low, ...(level >= 15 ? TITLES.mid : []), ...(level >= 32 ? TITLES.high : []), ...(pro ? TITLES.pro : [])];
+  return ACHIEVEMENTS.find((a) => a.id === pick(pool.slice(level >= 32 ? 6 : 0), rng))?.title ?? null;
 }
 
 // ---------- Shops ----------
@@ -225,7 +260,7 @@ function makeShop(bot, rng) {
 // ---------- Population ----------
 
 export function createBots(world, rng = Math.random) {
-  const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), rng };
+  const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng };
   // Everyone's already around when you log in.
   for (let i = 0; i < TOTAL; i++) spawn(bots, world, { quiet: true });
   return bots;
@@ -249,7 +284,7 @@ function townFor(bots, level, not = null) {
 
 function townCounts(bots) {
   const counts = Object.fromEntries(TOWNS.map((t) => [t, 0]));
-  for (const b of bots.list) if (!b.party && counts[b.map] != null) counts[b.map]++;
+  for (const b of bots.list) if (!b.party && !b.hunter && counts[b.map] != null) counts[b.map]++;
   return counts;
 }
 
@@ -272,7 +307,7 @@ function spawn(bots, world, { quiet = false } = {}) {
   const map = MAPS[town];
   const bot = {
     id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: char.level >= 56,
-    guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng),
+    guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng), title: titleFor(char.level, char.level >= 56, rng),
     map: town, x: freeX(map, bots, rng), facing: rng() < 0.5 ? 1 : -1, state: 'idle', timer: between(1, 4, rng),
     session: between(150, 480, rng), stay: between(70, 200, rng), nextLine: between(4, 30, rng), bubble: null,
     waved: false, shop: null, appear: quiet ? 0 : 1,
@@ -329,8 +364,9 @@ export function updateBots(bots, world, dt) {
     bot.session -= dt;
     bot.stay -= dt;
     if (bot.bubble && (bot.bubble.t -= dt) <= 0) bot.bubble = null;
-    // Party members follow you instead (see party.js).
-    if (bot.party) continue;
+    if (bot.emote && (bot.emote.t += dt) >= bot.emote.dur) bot.emote = null;
+    // Party members follow you instead (see party.js), and hunters fight (huntersHere).
+    if (bot.party || bot.hunter) continue;
     if (bot.appear > 0) bot.appear = Math.max(0, bot.appear - dt * 1.5);
     if (bot.state === 'transit') {
       bot.timer -= dt;
@@ -356,9 +392,9 @@ export function updateBots(bots, world, dt) {
       goToPortal(bot, map, 'travel');
     }
     behave(bot, bots, world, map, dt);
-    // Chat, at a relaxed pace.
+    // Chat, at a relaxed pace (not while in a chat of their own).
     bot.nextLine -= dt;
-    if (bot.nextLine <= 0 && !bot.bubble && !['logout', 'leave'].includes(bot.state)) {
+    if (bot.nextLine <= 0 && !bot.bubble && !['logout', 'leave', 'chat', 'chatwait'].includes(bot.state)) {
       // The busier the town, the less each person talks, so chat stays readable.
       bot.nextLine = (bot.shop ? between(25, 50, rng) : between(30, 75, rng)) * crowd;
       const line = speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng);
@@ -384,6 +420,11 @@ export function updateBots(bots, world, dt) {
     }
   }
   updateParty(bots, world, dt);
+  huntersHere(bots, world, dt);
+  listen(bots, world);
+  deliverReplies(bots, world);
+  news(bots, world, dt);
+  for (const b of bots.list) if (b.gone) endChat(b);
   bots.list = bots.list.filter((b) => !b.gone);
   // Whoever just logged out is replaced, so the server never dips under its minimum.
   for (let i = 0; i < 4 && bots.list.length < MIN_ONLINE; i++) spawn(bots, world);
@@ -396,6 +437,8 @@ function goToPortal(bot, map, why) {
     return;
   }
   const p = portals.reduce((a, c) => (Math.abs(c.x - bot.x) < Math.abs(a.x - bot.x) ? c : a));
+  endChat(bot);
+  bot.fish = null;
   bot.state = 'leave';
   bot.target = p.x;
   bot.why = why;
@@ -455,16 +498,40 @@ function behave(bot, bots, world, map, dt) {
       break;
     case 'idle':
       bot.timer -= dt;
-      if (bot.timer <= 0) {
+      if (bot.timer <= 0 && !pastime(bot, bots, world, map)) {
         bot.state = 'walk';
         bot.target = Math.max(120, Math.min(map.width - 120, bot.x + between(-260, 260, rng)));
       }
       break;
     case 'walk':
       if (walkTo(bot.target)) {
+        const then = bot.then;
+        bot.then = null;
         bot.state = 'idle';
         bot.timer = between(2, 8, rng);
+        then?.();
       }
+      break;
+    case 'fish':
+      tickFishing(bot, bots, world, dt);
+      break;
+    case 'cook':
+      bot.facing = Math.sign(map.stove - bot.x) || bot.facing;
+      bot.timer -= dt;
+      if (bot.timer <= 0) {
+        const dish = pick(DISHES, rng);
+        if (rng() < 0.7) shout(bot, bots, world, speak(bots.memory, 'cooking', { player: world.char.name }, bot.style, rng) ?? `made ${dish.name}!`);
+        bot.emote = { pose: 'cheer', t: 0, dur: 1 };
+        bot.state = 'idle';
+        bot.timer = between(3, 6, rng);
+      }
+      break;
+    case 'chatwait':
+      bot.timer -= dt;
+      if (bot.timer <= 0 || !bot.chatWith || bot.chatWith.gone) endChat(bot);
+      break;
+    case 'chat':
+      tickChat(bot, bots, world, dt);
       break;
     case 'leave':
       if (walkTo(bot.target)) {
@@ -503,6 +570,409 @@ function behave(bot, bots, world, map, dt) {
   }
 }
 
+// ---------- Town life ----------
+
+// Something to do instead of a stroll: fish off the pier, cook at the stove, go chat with
+// someone, or a little emote. Returns whether they took one up.
+function pastime(bot, bots, world, map) {
+  const rng = bots.rng;
+  const r = rng();
+  const here = botsIn(bots, map.id);
+  const spot = SPOTS[map.id]?.[0];
+  if (spot && r < 0.25) {
+    const anglers = here.filter((b) => b.state === 'fish' || b.then?.fishing).length;
+    if (anglers < 3) {
+      const x = spot.x - spot.face * (8 + anglers * 26);
+      bot.state = 'walk';
+      bot.target = x;
+      bot.then = () => startFishing(bot, spot, anglers, rng);
+      bot.then.fishing = true;
+      return true;
+    }
+  }
+  if (map.stove && r < 0.38 && !here.some((b) => b.state === 'cook' || b.then?.cooking)) {
+    bot.state = 'walk';
+    bot.target = map.stove + (rng() < 0.5 ? -20 : 20);
+    bot.then = () => {
+      bot.state = 'cook';
+      bot.timer = between(6, 11, rng);
+    };
+    bot.then.cooking = true;
+    return true;
+  }
+  if (r < 0.62) {
+    const mate = here.find((b) => b !== bot && b.state === 'idle' && !b.shop && Math.abs(b.x - bot.x) < 420 && Math.abs(b.x - world.body.x) > 30);
+    if (mate) {
+      mate.state = 'chatwait';
+      mate.timer = 12;
+      mate.chatWith = bot;
+      bot.chatWith = mate;
+      bot.state = 'walk';
+      bot.target = mate.x + (bot.x < mate.x ? -30 : 30);
+      bot.then = () => startChat(bot, mate, bots, world);
+      return true;
+    }
+  }
+  if (r < 0.74) {
+    bot.emote = { pose: pick(['cheer', 'kagura', 'flip', 'roar', 'pray'], rng), t: 0, dur: 1.2 };
+    bot.timer = between(3, 7, rng);
+    return true;
+  }
+  return false;
+}
+
+function startFishing(bot, spot, i, rng) {
+  bot.state = 'fish';
+  bot.facing = spot.face;
+  bot.timer = between(25, 70, rng);
+  bot.fish = { bx: spot.bx - spot.face * i * 10, by: spot.by, face: spot.face, phase: 'cast', t: 0.5, pool: spot.pool };
+}
+
+// Cast, wait, a bite, and (mostly) a catch, again and again until they've had enough.
+function tickFishing(bot, bots, world, dt) {
+  const rng = bots.rng;
+  const f = bot.fish;
+  bot.timer -= dt;
+  f.t -= dt;
+  if (f.t > 0) return;
+  if (f.phase === 'cast') {
+    f.phase = 'wait';
+    f.t = between(3, 9, rng);
+  } else if (f.phase === 'wait') {
+    f.phase = 'bite';
+    f.t = 0.7;
+  } else if (f.phase === 'bite') {
+    f.phase = 'catch';
+    f.t = 1;
+    if (rng() < 0.75) {
+      const pool = Object.entries(f.pool);
+      let r = rng() * pool.reduce((a, [, w]) => a + w, 0);
+      const id = pool.find(([, w]) => (r -= w) <= 0)?.[0] ?? pool[0][0];
+      const fish = FISH.find((x) => x.id === id);
+      const size = Math.round(fish.size[0] + (fish.size[1] - fish.size[0]) * rng() ** 1.6);
+      bot.emote = { pose: 'cheer', t: 0, dur: 0.9 };
+      if (rng() < (fish.rarity >= 3 ? 1 : 0.35)) shout(bot, bots, world, fish.rarity >= 3 ? `OMG ${fish.name.toUpperCase()}!! ${size}cm` : pick([`got a ${fish.name} ${size}cm`, `${fish.name}! ${size} cm`, `ooh ${fish.name}`, `another ${fish.name} lol`], rng));
+    } else if (rng() < 0.3) shout(bot, bots, world, pick(['it got away!!', 'nooo', 'missed it lol', 'so close >_<'], rng));
+  } else if (bot.timer <= 0) {
+    bot.fish = null;
+    bot.state = 'idle';
+    bot.timer = between(3, 6, rng);
+  } else {
+    f.phase = 'cast';
+    f.t = 0.6;
+  }
+}
+
+function startChat(bot, mate, bots, world) {
+  if (mate.gone || mate.state !== 'chatwait' || mate.chatWith !== bot) {
+    endChat(bot);
+    return;
+  }
+  const lines = conversation({ player: world.char.name, level: bot.level }, bots.rng);
+  bot.facing = mate.x > bot.x ? 1 : -1;
+  mate.facing = -bot.facing;
+  bot.state = 'chat';
+  mate.state = 'chat';
+  bot.convo = { lines, i: 0, at: 0.4, lead: true };
+  mate.convo = null;
+}
+
+// The two take turns: each line from the one whose turn it is, a few seconds apart.
+function tickChat(bot, bots, world, dt) {
+  const c = bot.convo;
+  const mate = bot.chatWith;
+  if (!mate || mate.gone) return endChat(bot);
+  if (!c) return;
+  c.at -= dt;
+  if (c.at > 0) return;
+  if (c.i >= c.lines.length) {
+    if (bots.rng() < 0.5) mate.emote = { pose: 'cheer', t: 0, dur: 1 };
+    return endChat(bot);
+  }
+  const who = c.i % 2 ? mate : bot;
+  shout(who, bots, world, c.lines[c.i]);
+  c.i += 1;
+  c.at = between(2.6, 4, bots.rng);
+}
+
+function endChat(bot) {
+  const mate = bot.chatWith;
+  bot.chatWith = null;
+  bot.convo = null;
+  if (['chat', 'chatwait'].includes(bot.state)) {
+    bot.state = 'idle';
+    bot.timer = 2 + Math.random() * 4;
+  }
+  if (mate?.chatWith === bot) endChat(mate);
+}
+
+// Says a line (and, if you're on their map, it shows in the chat log).
+function shout(bot, bots, world, line) {
+  if (!line) return;
+  say(bot, line);
+  if (bot.map === world.map.id) world.log?.(`${bot.name}: ${line}`, '#e6dcff');
+}
+
+// ---------- Talking back to you ----------
+
+const HELLO = /\b(hi+|hey+|hello|hiya|yo|howdy|sup|heya|hai|helo|gm|good morning|evening)\b/i;
+const THANKS = /\b(ty|thx|thanks|thank you|tysm|tyvm)\b/i;
+const LAUGH = /\b(lol|lmao|haha+|hehe+|xd|rofl)\b/i;
+
+// Everyone on your map who could answer, nearest first.
+function listeners(bots, world) {
+  const b = world.body;
+  return bots.list
+    .filter((x) => x.map === world.map.id && x.state !== 'transit' && !['logout', 'leave'].includes(x.state) && !x.leaving && (x.party || x.hunter || world.map.isTown))
+    .map((x) => ({ x, d: Math.abs((x.body?.x ?? x.x) - b.x) }))
+    .sort((a, c) => a.d - c.d)
+    .map((e) => e.x);
+}
+
+function queueReply(bots, world, bot, text, { pose = null, delay = 0 } = {}) {
+  if (!text || bots.replies.some((r) => r.bot === bot)) return;
+  bots.replies.push({ bot, text, pose, at: world.now + delay + 1 + bots.rng() * 1.8 + Math.min(2, text.length * 0.035) });
+}
+
+function deliverReplies(bots, world) {
+  const due = bots.replies.filter((r) => r.at <= world.now);
+  bots.replies = bots.replies.filter((r) => r.at > world.now && !r.bot.gone);
+  for (const { bot, text, pose } of due) {
+    if (bot.gone || bot.map !== world.map.id) continue;
+    const bx = bot.body?.x ?? bot.x;
+    if (bot.body) bot.body.facing = world.body.x < bx ? -1 : 1;
+    else if (!['fish', 'cook', 'shop'].includes(bot.state)) bot.facing = world.body.x < bx ? -1 : 1;
+    say(bot, text);
+    world.log?.(`${bot.party ? '[Party] ' : ''}${bot.name}: ${text}`, bot.party ? '#9fe0b0' : '#e6dcff');
+    if (pose) {
+      if (bot.body) bot.attack ??= { pose, t: 0, dur: 1 };
+      else bot.emote = { pose, t: 0, dur: 1.1 };
+    }
+  }
+}
+
+// What you said or did, and who answers it.
+function listen(bots, world) {
+  const rng = bots.rng;
+  const char = world.char;
+  const ctx = (bot) => ({ player: char.name, level: bot.level, here: world.map.id, playerLevel: char.level, jobName: JOBS[char.job].name, fishName: world.lastCatch?.fish.name });
+  const near = () => listeners(bots, world);
+  // Chat and emotes.
+  const h = world.heard;
+  if (h && h.at > (bots.heardAt ?? -1)) {
+    bots.heardAt = h.at;
+    const all = near();
+    if (all.length) {
+      if (h.emote) {
+        const bot = all[0];
+        if (rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'kagura'], rng) });
+      } else {
+        const words = h.words.toLowerCase();
+        const named = all.find((b) => words.includes(b.name.toLowerCase()));
+        const info = answer(h.words, ctx(all[0]));
+        const asking = /\?|^(how|where|what|which|who|is|are|does|do|can|any)\b/.test(words);
+        if (info && (asking || named)) {
+          // The one you named answers, or whoever knows the most (the highest level nearby).
+          const bot = named ?? [...all.slice(0, 5)].sort((a, c) => c.level - a.level)[0];
+          queueReply(bots, world, bot, voiced(info, ctx(bot), { ...bot.style, typos: false, shout: false, stretch: false }, rng), { delay: 0.6 });
+        } else if (named) queueReply(bots, world, named, reply(bots.memory, asking ? 'dunno' : 'name', ctx(named), named.style, rng));
+        else if (HELLO.test(words)) {
+          for (const bot of all.slice(0, rng() < 0.5 ? 2 : 1)) queueReply(bots, world, bot, reply(bots.memory, 'hi', ctx(bot), bot.style, rng), { pose: rng() < 0.4 ? 'cheer' : null, delay: rng() });
+        } else if (asking) {
+          if (rng() < 0.55) queueReply(bots, world, all[0], reply(bots.memory, 'dunno', ctx(all[0]), all[0].style, rng));
+        } else if (THANKS.test(words)) {
+          if (rng() < 0.6) queueReply(bots, world, all[0], reply(bots.memory, 'thanks', ctx(all[0]), all[0].style, rng));
+        } else if (LAUGH.test(words)) {
+          if (rng() < 0.4) queueReply(bots, world, pick(all.slice(0, 3), rng), reply(bots.memory, 'laugh', ctx(all[0]), all[0].style, rng));
+        } else if (rng() < 0.28) {
+          const bot = pick(all.slice(0, 3), rng);
+          queueReply(bots, world, bot, reply(bots.memory, 'chat', ctx(bot), bot.style, rng));
+        }
+      }
+    }
+  }
+  // Your level ups, a new job, a good catch.
+  bots.seenLevel ??= char.level;
+  bots.seenJob ??= char.job;
+  bots.seenCatch ??= world.lastCatch?.at ?? -1;
+  let cheer = null;
+  if (char.level > bots.seenLevel) cheer = 'level';
+  if (char.job !== bots.seenJob) cheer = 'job';
+  if (world.lastCatch && world.lastCatch.at > bots.seenCatch && world.lastCatch.fish.rarity >= 2) cheer = 'catch';
+  bots.seenLevel = char.level;
+  bots.seenJob = char.job;
+  bots.seenCatch = world.lastCatch?.at ?? -1;
+  if (cheer) {
+    const all = near().slice(0, 6);
+    const n = Math.min(all.length, cheer === 'catch' ? 1 + Math.floor(rng() * 2) : 1 + Math.floor(rng() * 3));
+    for (const bot of all.sort(() => rng() - 0.5).slice(0, n)) queueReply(bots, world, bot, reply(bots.memory, cheer, ctx(bot), bot.style, rng), { pose: 'cheer', delay: rng() * 2 });
+  }
+}
+
+// ---------- Hunters on your map ----------
+
+const NO_HUNTERS = new Set(['dawnbeach', 'trainfield', 'dock']);
+
+// The level band of a map's monsters, or null.
+function bandOf(map) {
+  const lv = (map.spawns ?? []).filter((s) => !MOBS[s.mob].boss).map((s) => MOBS[s.mob].level);
+  return lv.length ? [Math.min(...lv), Math.max(...lv)] : null;
+}
+
+function huntable(world) {
+  const map = world.map;
+  if (map.isTown || map.dungeon || map.trial || world.dungeon || NO_HUNTERS.has(map.id) || !bandOf(map)) return false;
+  // Online with friends here, the monsters are shared with real players instead.
+  return !world.net?.bodies?.(world)?.length;
+}
+
+// A player hunting here: built to the map's level, on a ledge away from you (walking in through
+// a portal when `walkIn`).
+function addHunter(bots, world, walkIn = false) {
+  const rng = bots.rng;
+  const map = world.map;
+  const [lo, hi] = bandOf(map);
+  const name = makeName(bots.names, rng);
+  const char = makeBotCharacter(rng, { name, pro: false, level: Math.max(10, Math.floor(between(lo, hi + 5, rng))) });
+  if (char.job === 'novice') return null;
+  const nav = navOf(map);
+  let x;
+  let y;
+  const portal = walkIn ? pick(map.portals.filter((p) => !p.hidden && !p.dungeon), rng) : null;
+  if (portal) {
+    x = portal.x;
+    y = portal.y;
+  } else {
+    for (let i = 0; i < 12; i++) {
+      const s = pick(nav.surfaces, rng);
+      x = between(Math.max(40, s.x1 + 20), Math.min(map.width - 40, s.x2 - 20), rng);
+      y = s.yAt(x);
+      if (Math.abs(x - world.body.x) > 260) break;
+    }
+  }
+  const bot = {
+    id: `hunter${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: false, hunter: true,
+    guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng), title: titleFor(char.level, false, rng),
+    map: map.id, x, facing: 1, state: 'hunt', body: createBody(x, y),
+    session: between(90, 300, rng), stay: 999, nextLine: between(15, 50, rng), bubble: null, waved: true, shop: null, appear: 1,
+  };
+  bots.list.push(bot);
+  return bot;
+}
+
+function huntersHere(bots, world, dt) {
+  const rng = bots.rng;
+  const map = world.map;
+  // A new map: whoever was hunting the last one stays there (out of sight), and a few are here.
+  if (bots.huntMap !== map.id) {
+    for (const b of bots.list) if (b.hunter) b.gone = true;
+    bots.huntMap = map.id;
+    bots.arriveIn = between(30, 80, rng);
+    bots.queenSeen = null;
+    if (huntable(world)) {
+      const cap = Math.min(3, Math.max(1, Math.floor(map.width / 900)));
+      const n = rng() < 0.25 ? 0 : 1 + Math.floor(rng() * cap);
+      for (let i = 0; i < n; i++) addHunter(bots, world);
+    }
+  }
+  const hunters = bots.list.filter((b) => b.hunter && !b.gone);
+  if (!huntable(world)) {
+    for (const b of hunters) b.gone = true;
+    return;
+  }
+  world.onStrangerKill = (id) => {
+    const bot = hunters.find((b) => b.id === id);
+    if (bot && !bot.bubble && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
+  };
+  // A queen back for a rematch: word gets around, and people come running.
+  const queen = world.mobs.find((m) => isQueen(m) && m.hp > 0);
+  if (queen && bots.queenSeen !== queen) {
+    bots.queenSeen = queen;
+    world.log?.(`★ ${queen.def.name.split(',')[0]} is back on ${map.name}! Players are gathering.`, '#ffd6f0');
+    for (let i = 0; i < 2; i++) {
+      const b = addHunter(bots, world, true);
+      if (b) {
+        b.appear = 1 + i * 0.4;
+        b.nextLine = 3 + i * 4;
+        if (i === 0) say(b, pick(['queen is back!!', 'omg rematch time', 'is she here?? lets gooo', 'wait for me!!'], rng));
+      }
+    }
+  }
+  // Now and then someone walks in.
+  bots.arriveIn -= dt;
+  const cap = Math.min(3, Math.max(1, Math.floor(map.width / 900))) + (queen ? 2 : 0);
+  if (bots.arriveIn <= 0) {
+    bots.arriveIn = between(45, 110, rng);
+    if (hunters.length < cap) addHunter(bots, world, true);
+  }
+  for (const bot of hunters) {
+    if (bot.appear > 0) bot.appear = Math.max(0, bot.appear - dt * 1.5);
+    // Done for the day: log out with a sparkle, or walk off through a portal.
+    if (bot.session <= 0 && !bot.leaving && bot.state !== 'logout') {
+      const nav = navOf(map);
+      const p = rng() < 0.5 ? null : map.portals.filter((q) => !q.hidden && !q.dungeon).sort((a, c) => Math.abs(a.x - bot.body.x) - Math.abs(c.x - bot.body.x))[0];
+      if (p) bot.leaving = { x: p.x, y: p.y, mode: 'leave', surface: surfaceBelow(nav, p.x, p.y - 4) };
+      else {
+        bot.state = 'logout';
+        bot.timer = 0.6;
+        if (rng() < 0.5) say(bot, speak(bots.memory, 'bye', {}, bot.style, rng) ?? 'bye');
+      }
+    }
+    if (bot.state === 'logout') {
+      bot.timer -= dt;
+      if (bot.timer <= 0) bot.gone = true;
+      continue;
+    }
+    if (bot.leaving && Math.abs(bot.body.x - bot.leaving.x) < 12 && Math.abs(bot.body.y - bot.leaving.y) < 30) {
+      bot.gone = true;
+      continue;
+    }
+    tickHunter(bot, world, hunters, dt, rng);
+    bot.nextLine -= dt;
+    if (bot.nextLine <= 0 && !bot.bubble) {
+      bot.nextLine = between(40, 90, rng);
+      const line = queen ? pick(['shes so strong', 'focus the queen!', 'dodge the circles!!', 'keep going!', 'her moves are so pretty tho'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng);
+      if (line) shout(bot, bots, world, line);
+    }
+  }
+}
+
+// ---------- Server news ----------
+
+function news(bots, world, dt) {
+  const rng = bots.rng;
+  bots.newsIn -= dt;
+  if (bots.newsIn > 0) return;
+  bots.newsIn = between(80, 170, rng);
+  const who = pick(bots.list.filter((b) => !b.party && !b.gone), rng);
+  if (!who) return;
+  const queens = ['Sylvana', 'Tamamo', 'Lilith', 'Selene'];
+  const rare = FISH.filter((f) => f.rarity >= 3);
+  const kinds = [
+    () => {
+      const f = pick(rare, rng);
+      return `${who.name} caught a ${f.name} (${Math.round(f.size[0] + (f.size[1] - f.size[0]) * rng())} cm)!`;
+    },
+    () => (who.level >= 20 ? `${who.name} reached level ${who.level}!` : null),
+    () => (who.level >= 30 && who.char.job !== 'novice' ? `${who.name} became a ${JOBS[who.char.job].name}!` : null),
+    () => (who.level >= 14 ? `${who.name}'s group cleared Rootwood Hollow${rng() < 0.3 ? ' on Hard' : ''}!` : null),
+    () => (who.level >= 20 ? `${who.name} passed ${pick(queens, rng)}'s trial!` : null),
+    () => (who.level >= 25 ? `${who.name} polished their gear to +10!` : null),
+    () => (who.level >= 20 ? `${who.name} completed the ${pick(Object.values(SETS), rng).name} set!` : null),
+    () => `${who.name} mastered the ${pick(Object.values(MOBS).filter((m) => !m.boss), rng).name} card!`,
+  ];
+  let line = null;
+  for (let i = 0; i < 6 && !line; i++) line = pick(kinds, rng)();
+  if (!line) return;
+  world.log?.(`★ ${line}`, '#ffd6f0');
+  // Someone around says well done.
+  const all = listeners(bots, world).filter((b) => b !== who);
+  if (all.length && rng() < 0.45) {
+    const bot = pick(all.slice(0, 4), rng);
+    queueReply(bots, world, bot, pick([`grats ${who.name}!!`, `gz ${who.name}`, `omg grats ${who.name}`, `${who.name} so lucky`, 'gratz!!', `ooh grats`], rng), { delay: 1.5 });
+  }
+}
+
 // Buying from a player's shop. Returns a message for the log.
 export function buyFromShop(bot, index, char, addItem) {
   const entry = bot.shop?.items[index];
@@ -529,5 +999,10 @@ export function thank(bots, bot, playerName) {
 
 // The players standing in a map right now (for drawing and clicking).
 export function botsIn(bots, mapId) {
-  return bots ? bots.list.filter((b) => b.map === mapId && b.state !== 'transit' && !b.party) : [];
+  return bots ? bots.list.filter((b) => b.map === mapId && b.state !== 'transit' && !b.party && !b.hunter) : [];
+}
+
+// Everyone on the map with a body of their own (party members and hunters), for drawing and clicks.
+export function bodiedIn(bots, mapId) {
+  return bots ? bots.list.filter((b) => (b.party || b.hunter) && b.body && b.map === mapId) : [];
 }

@@ -17,6 +17,8 @@ export const EMOTES = [
 export function playEmote(world, e) {
   if (world.dead || world.fishing) return;
   world.emote = { face: e.face, t: 3 };
+  // The players around you see it (world/bots.js).
+  world.heard = { emote: e.id, at: world.now };
   if (e.pose && world.body.onGround && !world.pose && !(world.attackTimer > 0)) world.pose = { kind: e.pose, t: e.dur, dur: e.dur, since: world.now };
 }
 

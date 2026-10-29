@@ -88,8 +88,9 @@ function send(chat, world, words) {
   world.log(`${name}: ${words}`, CHAT_COLOR);
   world.messages.at(-1).t = 14;
   say(world, 'player', words);
-  // Friends in your online room hear it too.
+  // Friends in your online room hear it too, and the players around you (world/bots.js).
   world.net?.chat(words);
+  world.heard = { words, at: world.now };
   const face = emoteOf(words);
   if (face) world.emote = { face, t: EMOTE_TIME };
   chat.history.push(words);

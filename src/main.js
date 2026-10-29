@@ -13,7 +13,7 @@ import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
 import { setHd, gfx, nextFrame } from './render/pixel.js';
 import { FILTERS, drawRetro } from './render/post.js';
-import { createBots, updateBots, botsIn } from './world/bots.js';
+import { createBots, updateBots, botsIn, bodiedIn } from './world/bots.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
 import { openProfile } from './ui/profile.js';
@@ -121,7 +121,7 @@ function watchSpeed(raw) {
 // mover's position between its last two ticks, so motion (and the camera following it) stays
 // smooth instead of stepping, at 60Hz, 144Hz, or with uneven frame timing.
 function movers(world) {
-  return [world.body, ...world.mobs, ...partyMembers(world.bots).map((b) => b.body).filter(Boolean)];
+  return [world.body, ...world.mobs, ...bodiedIn(world.bots, world.map.id).map((b) => b.body)];
 }
 function remember(world) {
   for (const o of movers(world)) {
@@ -278,8 +278,8 @@ function npcPointer(ui) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
     if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
-    // Party members, wherever they are on the map.
-    if (!npc) bot = partyMembers(world.bots).find((b) => b.body && b.map === world.map.id && Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
+    // Party members and other players hunting, wherever they are on the map.
+    if (!npc) bot = bodiedIn(world.bots, world.map.id).find((b) => Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
     if (!npc && !bot && settings.showCrowd && world.map.isTown) {
       bot = botsIn(world.bots, world.map.id).find((b) => {
         const by = groundAt(world.map, b.x);

@@ -634,6 +634,12 @@ export function updateWorld(world, dt, input) {
     const m = h.mob;
     if (m.hp <= 0) continue;
     if (world.dungeon) h.damage = noteHit(world, m, h);
+    // Another player hunting here never lands a boss's last blow: that one's yours.
+    if (h.stranger && m.def.boss) h.damage = Math.max(0, Math.min(h.damage, m.hp - 1));
+    if (h.stranger) {
+      m.foe = world.bots?.list.find((b) => b.id === h.party)?.body ?? null;
+      m.foeUntil = world.now + 6;
+    }
     const top = m.y - (m.air ?? 0) - m.def.h - 8 - h.stack * 15;
     if (h.miss) {
       world.numbers.push({ x: m.x, y: top, text: 'MISS', color: '#d4cbe8', t: 0 });
@@ -662,7 +668,12 @@ export function updateWorld(world, dt, input) {
     // Online, a monster another player's game runs takes the real hit there.
     world.net?.hit(world, m, h);
     if (hitMob(m, h.damage, h.fromX, world.now, { knock: h.knock ?? 90, launch: h.launch ?? 0 })) {
-      killMob(world, m, Boolean(h.party));
+      // Their own kill: it falls, and nothing comes to you.
+      if (h.stranger) {
+        m.credited = true;
+        world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: false, party: true });
+        world.onStrangerKill?.(h.party, m);
+      } else killMob(world, m, Boolean(h.party));
       continue;
     }
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
@@ -710,7 +721,9 @@ export function updateWorld(world, dt, input) {
   // shows them where it says they are. Monsters chase whichever player is nearest.
   const mirrored = Boolean(world.net?.mirrored(world));
   if (!world.dungeon) for (const m of world.mobs) {
-    const event = mirrored ? world.net.step(m, dt) : updateMob(m, world.net ? world.net.target(world, m) : world.body, dt, world.now);
+    // (A monster another player hunting here just hit goes after them, not you.)
+    const foe = m.foe && world.now < m.foeUntil && !m.def.boss ? m.foe : null;
+    const event = mirrored ? world.net.step(m, dt) : updateMob(m, foe ?? (world.net ? world.net.target(world, m) : world.body), dt, world.now);
     if (event === 'slam') {
       m.attackAt = world.now;
       world.fx.push({ kind: 'slam', x: m.x, y: m.y, t: 0, dur: 0.6, range: m.def.special.range });

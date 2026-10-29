@@ -130,3 +130,122 @@ test('a party member\'s kill gives you a share of the EXP and counts for your qu
   assert.equal(world.char.exp - exp, Math.round(m.def.exp * 0.6));
   assert.equal(world.char.quests.snail_trouble.kills.snailbun, 1);
 });
+
+// ---------- Talking back, town life, hunters, news ----------
+
+import { answer } from '../src/world/chatter.js';
+import { loadMap, updateWorld } from '../src/world/world.js';
+import { gainExp } from '../src/core/character.js';
+import { expToNext } from '../src/core/exp.js';
+
+const quiet = (world) => {
+  const lines = [];
+  world.log = (t) => lines.push(t);
+  return lines;
+};
+const NONE = { held: new Set(), pressed: new Set() };
+
+test('players answer questions from the game itself: maps, monsters, NPCs, fish, dishes', () => {
+  const ctx = { here: 'sprout', playerLevel: 12 };
+  assert.match(answer('where is clover hills?', ctx), /Petal Meadow/);
+  assert.match(answer('what lvl is mossy woods', ctx), /lv 11-18/);
+  assert.match(answer('where do jackalopes spawn?', ctx), /Clover Hills/);
+  assert.match(answer('where is pip', ctx), /Sprout Village/);
+  assert.match(answer('how do i fish?', ctx), /rod/);
+  assert.match(answer('where is tamamo', ctx), /Fox Shrine Path/);
+  assert.match(answer('how do i make Glow Eel Kabayaki', ctx), /Glow Eel \+ 1 Wisp Flame/);
+  assert.equal(answer('i like turtles', ctx), null);
+});
+
+test('players nearby say hi back, answer a question, and cheer when you level up', () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  const bots = createBots(world, seeded(11));
+  // Put a few right next to you.
+  for (const b of bots.list.slice(0, 3)) Object.assign(b, { map: 'sprout', x: world.body.x + 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null });
+  const step = (secs) => {
+    for (let t = 0; t < secs; t += 0.1) {
+      world.now += 0.1;
+      updateBots(bots, world, 0.1);
+    }
+  };
+  world.heard = { words: 'hi everyone!', at: world.now };
+  step(5);
+  assert.ok(lines.some((l) => /: /.test(l) && bots.list.slice(0, 3).some((b) => l.startsWith(b.name))), 'someone said hi back');
+  lines.length = 0;
+  world.heard = { words: 'where is clover hills?', at: world.now };
+  step(5);
+  assert.ok(lines.some((l) => /clover hills/i.test(l)), `an answer about Clover Hills (${lines.join(' | ')})`);
+  lines.length = 0;
+  gainExp(world.char, expToNext(world.char.level));
+  step(6);
+  assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
+});
+
+test('in town, players fish off the pier, cook, chat with each other, and wear titles and sets', () => {
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  loadMap(world, 'harbor', 'start');
+  const bots = createBots(world, seeded(5));
+  const seen = new Set();
+  for (let t = 0; t < 600; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    for (const b of botsIn(bots, 'harbor')) seen.add(b.state);
+  }
+  assert.ok(seen.has('fish'), `someone fished (${[...seen]})`);
+  assert.ok(seen.has('cook'), 'someone cooked');
+  assert.ok(seen.has('chat'), 'two chatted');
+  const rng = seeded(9);
+  const chars = Array.from({ length: 60 }, (_, i) => makeBotCharacter(rng, { name: `s${i}`, level: 40 }));
+  assert.ok(chars.some((c) => Object.values(c.equipment).some((e) => e?.id.startsWith('set_'))), 'some wear set pieces');
+  assert.ok(bots.list.some((b) => b.title), 'some wear titles');
+});
+
+test('players hunt the field you are on, leave the monsters by you alone, and their kills give you nothing', () => {
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  world.char.level = 20;
+  world.god = true;
+  const bots = createBots(world, seeded(21));
+  loadMap(world, 'woods', 'start');
+  // Make sure some are here.
+  let n = 0;
+  for (let i = 0; i < 6 && n < 2; i++) {
+    bots.huntMap = null;
+    updateBots(bots, world, 0.05);
+    n = bots.list.filter((b) => b.hunter).length;
+  }
+  assert.ok(n >= 1, 'hunters on the map');
+  const exp0 = world.char.exp;
+  const lvl0 = world.char.level;
+  let hits = 0;
+  const seenHits = new Set();
+  for (let t = 0; t < 40; t += 1 / 30) {
+    updateWorld(world, 1 / 30, NONE);
+    updateBots(bots, world, 1 / 30);
+    for (const h of world.pending) if (h.stranger && !seenHits.has(h)) {
+      seenHits.add(h);
+      hits++;
+      assert.ok(Math.abs(h.mob.x - world.body.x) >= 140 || Math.abs(h.mob.y - world.body.y) >= 90 || h.mob.def.boss, `never a monster by you (${Math.round(h.mob.x)},${Math.round(h.mob.y)} you ${Math.round(world.body.x)},${Math.round(world.body.y)} from ${Math.round(h.fromX)})`);
+    }
+  }
+  assert.ok(hits > 0, 'they fought');
+  assert.equal(world.char.level, lvl0);
+  assert.equal(world.char.exp, exp0, 'no EXP from their kills');
+  // Back in town they're gone from the field.
+  loadMap(world, 'sprout', 'start');
+  updateBots(bots, world, 0.05);
+  assert.equal(bots.list.filter((b) => b.hunter && !b.gone).length, 0);
+});
+
+test('the server shares news of big moments now and then', () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  const bots = createBots(world, seeded(2));
+  for (let t = 0; t < 600; t += 0.5) {
+    world.now += 0.5;
+    updateBots(bots, world, 0.5);
+  }
+  assert.ok(lines.filter((l) => l.startsWith('★')).length >= 2, 'a few announcements in ten minutes');
+});

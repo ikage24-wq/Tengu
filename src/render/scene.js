@@ -23,7 +23,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
-import { botsIn } from '../world/bots.js';
+import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { drawSpots, drawFishing } from './fishing.js';
@@ -231,7 +231,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   // A Beastmaster's wolf and bear walk behind her; her hawk flies over her (drawn after her).
   drawPets(ctx, world, cam, time, 'back');
 
-  drawParty(ctx, partyMembers(world.bots).filter((b) => b.map === world.map.id), cam, VIEW_W, time, world.hoverBot);
+  drawParty(ctx, bodiedIn(world.bots, world.map.id), cam, VIEW_W, time, world.hoverBot);
   // Friends in your online room.
   drawGhosts(ctx, world, cam, VIEW_W, time);
 

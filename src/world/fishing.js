@@ -106,6 +106,8 @@ function catchFish(world, f, rng) {
   const record = size > rec.best && !first;
   rec.best = Math.max(rec.best, size);
   world.pose = { kind: 'cheer', t: 0.9, dur: 0.9, since: world.now };
+  // (The players around you notice a good one: world/bots.js.)
+  world.lastCatch = { fish, size, at: world.now };
   world.log(`You caught a ${fish.name}! ${size} cm${first ? ' (new!)' : record ? ' (new record!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
   world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: `${fish.name} ${size}cm`, color: '#9fe8ff', t: 0, small: true });
   world.juice.push({ type: 'loot', x: f.spot.bx, y: f.spot.by - 10, color: fish.color });
