@@ -7,6 +7,9 @@ import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, LEVEL
 import { openProfile } from './profile.js';
 import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
 import { settings } from '../core/settings.js';
+import { online } from '../net/online.js';
+import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade } from '../net/together.js';
+import { MAPS } from '../data/maps.js';
 
 // ---------- Right-click menu ----------
 
@@ -19,7 +22,21 @@ function menuItems(state, world) {
   const items = [];
   if (m.kind === 'self') {
     items.push({ label: 'View my profile', icon: 'user', run: () => openProfile(state, { kind: 'self' }) });
-    if (partyMembers(world.bots).length) items.push({ label: 'Leave party', icon: 'door', run: () => leaveParty(world.bots, world) });
+    if (partyMembers(world.bots).length || online.party) items.push({ label: 'Leave party', icon: 'door', run: () => leaveAll(world) });
+    return items;
+  }
+  // A friend online.
+  if (m.kind === 'ghost') {
+    const g = online.ghosts.get(m.id);
+    if (!g) return items;
+    items.push({ label: 'View profile', icon: 'user', run: () => openProfile(state, { kind: 'ghost', id: g.id }) });
+    if (inParty(g.id)) {
+      if (online.party.leader === online.id) items.push({ label: 'Remove from party', icon: 'door', run: () => kickFromParty(world, g.id) });
+    } else {
+      const why = partyBlocker(g);
+      items.push({ label: 'Invite to party', icon: 'heart', why, enabled: !why, run: () => askParty(world, g.id) });
+    }
+    if (!online.trade) items.push({ label: 'Trade', icon: 'coin', run: () => askTrade(world, g.id) });
     return items;
   }
   const bot = world.bots?.list.find((b) => b.id === m.id);
@@ -40,8 +57,8 @@ export function drawMenu(ui, state, world) {
   if (!m) return;
   const { ctx } = ui;
   const items = menuItems(state, world);
-  const bot = m.kind === 'bot' ? world.bots?.list.find((b) => b.id === m.id) : null;
-  if (!items.length || (m.kind === 'bot' && !bot)) {
+  const bot = m.kind === 'bot' ? world.bots?.list.find((b) => b.id === m.id) : m.kind === 'ghost' ? online.ghosts.get(m.id) : null;
+  if (!items.length || (m.kind !== 'self' && !bot)) {
     state.menu = null;
     return;
   }
@@ -89,9 +106,16 @@ const PLAYSTYLE_TEXT = {
   showoff: 'Flashy moves, flips, and taunts.',
 };
 
+// Leaving takes you out of both: your friends' party and the players you invited.
+export function leaveAll(world) {
+  if (online.party) leaveOnlineParty(world, partyMembers(world.bots).length > 0);
+  leaveParty(world.bots, world);
+}
+
 export function drawPartyPanel(ui, state, world) {
   const members = partyMembers(world.bots);
-  if (!members.length) return;
+  const friends = world.dungeon ? [] : partyFriends();
+  if (!members.length && !friends.length) return;
   const { ctx } = ui;
   const th = THEMES.mint;
   const x = 6;
@@ -99,14 +123,14 @@ export function drawPartyPanel(ui, state, world) {
   const top = settings.minimap ? 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8 : 8;
   const y = top + (Object.keys(world.char.buffs).length ? 30 : 0);
   const w = 120;
-  const h = 18 + (members.length + 1) * 19;
+  const h = 18 + (members.length + friends.length + 1) * 19;
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.5 });
   box(ctx, x + 2, y + 2, w - 4, 12, { fill: th.main, edge: null, r: 6 });
   icon(ctx, 'heart', x + 9, y + 8, 8, '#ffffff');
   // In a dungeon the panel shows the group: everyone's role and real HP.
   const run = world.dungeon;
-  text(ctx, run ? 'Dungeon group' : `Party ${members.length + 1}/${PARTY_MAX + 1}`, x + 17, y + 11, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
-  if (!run && button(ui, x + w - 32, y + 2, 28, 12, 'Leave', { size: 6.5 })) leaveParty(world.bots, world);
+  text(ctx, run ? 'Dungeon group' : friends.length ? `Party ${members.length + friends.length + 1}` : `Party ${members.length + 1}/${PARTY_MAX + 1}`, x + 17, y + 11, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  if (!run && button(ui, x + w - 32, y + 2, 28, 12, 'Leave', { size: 6.5 })) leaveAll(world);
   const role = (id) => ROLES[run.roles[id] ?? 'dps'];
   const row = (i, name, level, job, hp, leader, onClick, onRight, hot, style = null) => {
     const ry = y + 17 + i * 19;
@@ -130,9 +154,22 @@ export function drawPartyPanel(ui, state, world) {
     }
   };
   const s = world.stats;
-  row(0, world.char.name, world.char.level, world.char.job, world.dead ? 0 : world.char.hp / s.maxHp, !run,
+  const lead = !online.party || online.party.leader === online.id;
+  row(0, world.char.name, world.char.level, world.char.job, world.dead ? 0 : world.char.hp / s.maxHp, !run && lead,
     () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17, w - 6, 17), run ? role('you') : null);
+  // Friends online in your party: their HP, and where they are when it isn't here.
+  friends.forEach((g, i) => {
+    const ry = y + 17 + (i + 1) * 19;
+    const hot = hover(ui, x + 3, ry, w - 6, 17);
+    const away = g.map !== world.map.id;
+    row(i + 1, g.name, g.level ?? 1, g.job ?? 'novice', g.dead ? 0 : (g.hp ?? 1) / (g.maxHp || 1), online.party.leader === g.id,
+      () => openProfile(state, { kind: 'ghost', id: g.id }), (r) => openMenu(state, { kind: 'ghost', id: g.id, x: x + w + 2, y: r }), hot,
+      { label: away ? (MAPS[g.map]?.name ?? '...') : JOBS[g.job]?.short ?? JOBS[g.job]?.name ?? '', color: away ? '#9c86b8' : '#4f95e0' });
+    if (hot) tooltip(ui, [{ text: `${g.name} · friend online`, bold: true, color: '#4f95e0' }, { text: away ? `In ${MAPS[g.map]?.name ?? 'somewhere'}` : 'Here with you', size: 8, color: COLORS.muted }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
+  });
+  const off = friends.length;
   members.forEach((bot, i) => {
+    i += off;
     const hp = !run || bot.hp == null ? 1 : bot.down ? 0 : bot.hp / bot.stats.maxHp;
     row(i + 1, bot.name, bot.level, bot.char.job, hp, false,
       () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17),

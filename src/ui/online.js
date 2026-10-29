@@ -1,14 +1,16 @@
 // The Online window (N, or the friends button): host a room and share its six-digit code, or type
 // a friend's code on the number pad to join theirs. In a room it lists everyone, where they are,
-// and their level, with a way out.
+// and their level (tap a friend for their profile), with Party, Warp and Trade buttons, the
+// invites waiting on you, and a way out.
 
-import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip } from './kit.js';
-import { askTrade, answerTrade, warpTo, warpBlocker, warpCost } from '../net/together.js';
+import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip, clicked } from './kit.js';
+import { askTrade, answerTrade, warpTo, warpBlocker, warpCost, askParty, answerParty, partyBlocker, inParty } from '../net/together.js';
+import { openProfile } from './profile.js';
 import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.js';
 import { JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 
-const W = 236;
+const W = 262;
 const H = 300;
 
 export function onlineWindow(ui, state, world) {
@@ -46,14 +48,23 @@ export function onlineWindow(ui, state, world) {
     }
     for (const r of rows) {
       box(ctx, x - 2, y, W - 20, 22, { fill: r.me ? '#fff3c4' : '#ffffff', edge: r.me ? COLORS.select : th.light, r: 8, width: 1 });
-      icon(ctx, 'user', x + 9, y + 11, 11, r.me ? COLORS.gold : '#4f95e0');
-      text(ctx, fit(ctx, `${r.name}${r.me ? ' (you)' : ''}`, 70, 8, true), x + 20, y + 10, { size: 8, bold: true });
-      text(ctx, `Lv${r.level ?? 1} ${JOBS[r.job]?.name ?? ''}`, x + 20, y + 18.5, { size: 6.5, color: COLORS.muted });
+      const mate = r.me ? Boolean(online.party) : inParty(r.id);
+      icon(ctx, mate ? 'heart' : 'user', x + 9, y + 11, 11, r.me ? COLORS.gold : mate ? '#ff6b9a' : '#4f95e0');
+      if (online.party && (r.me ? online.party.leader === online.id : online.party.leader === r.id)) icon(ctx, 'crown', x + 9, y + 2, 7, '#f0b53a');
+      text(ctx, fit(ctx, `${r.name}${r.me ? ' (you)' : ''}`, 78, 8, true), x + 20, y + 10, { size: 8, bold: true });
       const where = MAPS[r.map]?.name ?? '';
       const same = r.map === world.map.id;
-      text(ctx, fit(ctx, where, 60, 6.5, same), x + 96, y + 14, { size: 6.5, bold: same, color: same ? COLORS.good : COLORS.muted });
-      // A friend: warp to them, or trade with them.
+      text(ctx, fit(ctx, `Lv${r.level ?? 1} ${JOBS[r.job]?.short ?? JOBS[r.job]?.name ?? ''} · ${same ? 'here' : where}`, 96, 6.5, false), x + 20, y + 18.5, { size: 6.5, color: same ? COLORS.good : COLORS.muted });
+      // Tap a friend (or yourself) for their profile.
+      if (clicked(ui, x - 2, y, 118, 22)) openProfile(state, r.me ? { kind: 'self' } : { kind: 'ghost', id: r.id });
+      if (hover(ui, x - 2, y, 118, 22)) tooltip(ui, [{ text: r.me ? 'Your profile' : `${r.name}'s profile`, size: 8 }]);
+      // A friend: invite them to your party, warp to them, or trade with them.
       if (!r.me) {
+        if (!inParty(r.id)) {
+          const pw = partyBlocker(r);
+          if (button(ui, x + W - 128, y + 3, 34, 16, online.partyAsked === r.id ? '...' : 'Party', { size: 7, enabled: !pw, theme: 'pink' })) askParty(world, r.id);
+          if (pw && hover(ui, x + W - 128, y + 3, 34, 16)) tooltip(ui, [{ text: pw, size: 8 }]);
+        }
         const why = warpBlocker(world, r);
         if (!why || why === 'Not enough gold') {
           if (button(ui, x + W - 92, y + 3, 36, 16, 'Warp', { size: 7, enabled: !why, primary: true, theme: 'sky' })) {
@@ -65,6 +76,16 @@ export function onlineWindow(ui, state, world) {
         }
         if (!online.trade && button(ui, x + W - 54, y + 3, 34, 16, 'Trade', { size: 7, enabled: online.tradeAsked !== r.id })) askTrade(world, r.id);
       }
+      y += 25;
+    }
+    // Someone invited you to their party.
+    if (online.partyAsk && !online.party) {
+      const name = online.ghosts.get(online.partyAsk)?.name ?? 'Someone';
+      box(ctx, x - 2, y, W - 20, 22, { fill: '#ffe9f2', edge: '#ff8fc1', r: 8, width: 1.5 });
+      icon(ctx, 'heart', x + 9, y + 11, 10, '#ff6b9a');
+      text(ctx, fit(ctx, `${name} invited you to a party!`, W - 130, 8, true), x + 20, y + 14, { size: 8, bold: true });
+      if (button(ui, x + W - 92, y + 3, 36, 16, 'Join', { size: 7.5, primary: true })) answerParty(world, true);
+      if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerParty(world, false);
       y += 25;
     }
     // Someone asked to trade.

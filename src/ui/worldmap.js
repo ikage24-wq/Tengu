@@ -10,7 +10,9 @@ import { MOBS } from '../data/mobs.js';
 import { JOBS } from '../data/jobs.js';
 import { travelTo, travelCost } from '../world/world.js';
 import { levelRange, routeBetween, setRoute } from '../world/routes.js';
-import { COLORS, windowFrame, text, box, button, roundRect, font } from './kit.js';
+import { COLORS, windowFrame, text, box, button, roundRect, font, tooltip } from './kit.js';
+import { online } from '../net/online.js';
+import { inParty } from '../net/together.js';
 
 // The map is drawn in its own 400x240 frame, shown K times larger.
 const K = 1.2;
@@ -428,7 +430,10 @@ export function worldMapWindow(ui, state, world) {
     ctx.fillStyle = '#ffffff';
     circle(ctx, px, py - 6, 2);
   }
+  // Friends online: a little badge with their initial by the stop they're at (rose for your party).
+  const friendHover = drawFriends(ctx, m, time, here);
   ctx.restore();
+  if (friendHover) tooltip(ui, [{ text: friendHover.name, bold: true, color: inParty(friendHover.id) ? '#e0659f' : '#4f95e0' }, { text: `Lv${friendHover.level ?? 1} ${JOBS[friendHover.job]?.name ?? ''}`, size: 8, color: COLORS.muted }, { text: `In ${getMap(friendHover.map)?.name ?? '...'}${inParty(friendHover.id) ? ' · your party' : ''}`, size: 8 }]);
   if (tapped) state.travelPick = tapped.id === state.travelPick ? null : tapped.id;
 
   // The bar under the map: the picked place (its level, monsters, how far), the way there, and a
@@ -469,4 +474,41 @@ export function worldMapWindow(ui, state, world) {
       if (!guiding) win.open = false;
     }
   }
+}
+
+// Friends in your online room, by the stop each is at; returns the one under the pointer.
+function drawFriends(ctx, m, time, here) {
+  if (online.status !== 'on') return null;
+  const at = new Map();
+  for (const g of online.ghosts.values()) {
+    const mp = g.map && getMap(g.map);
+    if (!mp) continue;
+    const stop = onMap(mp) ? mp : MAPS[mp.portals[0]?.to];
+    if (!stop || !onMap(stop)) continue;
+    if (!at.has(stop.id)) at.set(stop.id, []);
+    at.get(stop.id).push(g);
+  }
+  let hot = null;
+  for (const [id, list] of at) {
+    const mp = MAPS[id];
+    const p = spot(mp);
+    // Beside the stop (and beside your own pin there), side by side.
+    const base = p.x + (mp.isTown ? 13 : 9) + (id === here ? 4 : 0);
+    list.forEach((g, i) => {
+      const gx = base + 2 + i * 12;
+      const gy = p.y - (mp.isTown ? 10 : 6) - Math.abs(Math.sin(time * 3 + i)) * 1.5;
+      const mate = inParty(g.id);
+      ctx.fillStyle = '#ffffff';
+      circle(ctx, gx, gy, 6.5);
+      ctx.fillStyle = mate ? '#ff6b9a' : '#4f95e0';
+      circle(ctx, gx, gy, 5.2);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = font(6.5, true);
+      ctx.textAlign = 'center';
+      ctx.fillText((g.name ?? '?')[0].toUpperCase(), gx, gy + 2.3);
+      ctx.textAlign = 'left';
+      if (Math.abs(m.x - gx) <= 7 && Math.abs(m.y - gy) <= 7) hot = g;
+    });
+  }
+  return hot;
 }

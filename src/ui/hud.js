@@ -22,6 +22,8 @@ import { questMarker } from './npc.js';
 import { drawQuestTracker } from './quests.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson } from '../world/tutorial.js';
+import { othersHere } from '../net/online.js';
+import { inParty } from '../net/together.js';
 
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
@@ -658,6 +660,20 @@ function drawMinimap(ui, world) {
     ctx.fillStyle = PLAYSTYLES[b.ai?.kind]?.color ?? '#3fc48a';
     ctx.beginPath();
     ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Friends online: sky-blue dots, party friends a bigger rose dot with a white heart-ring.
+  for (const g of othersHere(world)) {
+    const gx = x + g.body.x * scale;
+    const gy = y + g.body.y * scale - 2.5;
+    const mate = inParty(g.id);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(gx, gy, mate ? 3.3 : 2.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = g.dead ? '#b8a8c8' : mate ? '#ff6b9a' : '#4f95e0';
+    ctx.beginPath();
+    ctx.arc(gx, gy, mate ? 2.3 : 1.9, 0, Math.PI * 2);
     ctx.fill();
   }
   // You: a pink arrow pointing the way you face, with a ring pulsing out from it.

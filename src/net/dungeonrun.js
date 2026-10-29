@@ -22,10 +22,11 @@ export const inShared = (world) => Boolean(world?.dungeon?.shared);
 export const leads = (world) => inShared(world) && world.dungeon.shared.leader === online.id;
 const follows = (world) => inShared(world) && !leads(world);
 
-// Friends who'd come along: at the same gate, with a job (role) of their own.
+// Friends who'd come along: at the same gate, with a job (role) of their own (in a party, only
+// your party's friends).
 export function friendsAtGate(world) {
   if (online.status !== 'on') return [];
-  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.job && roleOf(g.job, JOBS[g.job]?.family));
+  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.job && roleOf(g.job, JOBS[g.job]?.family) && (!online.party || online.party.members.includes(g.id)));
 }
 
 // Tells the friends in the group the run has started (the leader's startRun calls it).

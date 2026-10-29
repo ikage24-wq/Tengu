@@ -22,7 +22,7 @@ import { hearWorld, hearUi } from './audio/listen.js';
 import { updateMusic } from './audio/music.js';
 import { stopAmbience } from './audio/ambience.js';
 import { preloadFxSprites } from './render/fx-sprites.js';
-import { tickNet, leaveRoom } from './net/online.js';
+import { tickNet, leaveRoom, othersHere } from './net/online.js';
 import { createTouch, touchFrame } from './ui/touch.js';
 
 loadSettings();
@@ -271,6 +271,7 @@ function npcPointer(ui) {
   const m = input.mouse;
   let npc = null;
   let bot = null;
+  let friend = null;
   let self = false;
   if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
@@ -284,24 +285,28 @@ function npcPointer(ui) {
         return (Math.abs(b.x - wx) < 13 && wy > by - 46 && wy < by + 22) || (b.shop && Math.abs(b.x - wx) < 40 && wy > by - 76 && wy < by - 58);
       }) ?? null;
     }
+    // Friends online.
+    if (!npc && !bot) friend = othersHere(world).find((g) => Math.abs(g.body.x - wx) < 13 && wy > g.body.y - 46 && wy < g.body.y + 13) ?? null;
     const b = world.body;
-    if (!npc && !bot) self = Math.abs(b.x - wx) < 12 && wy > b.y - 46 && wy < b.y + 13;
+    if (!npc && !bot && !friend) self = Math.abs(b.x - wx) < 12 && wy > b.y - 46 && wy < b.y + 13;
   }
   world.hoverNpc = npc?.id ?? null;
   world.hoverBot = bot?.id ?? null;
   world.hoverSelf = self;
-  canvas.style.cursor = npc || bot || self ? 'pointer' : '';
+  world.hoverFriend = friend?.id ?? null;
+  canvas.style.cursor = npc || bot || friend || self ? 'pointer' : '';
   // Right-click a player or yourself for the menu (invite to party, profile, leave).
-  if (m.right && (bot || self)) {
-    openMenu(uiState, bot ? { kind: 'bot', id: bot.id, x: m.x + 4, y: m.y } : { kind: 'self', x: m.x + 4, y: m.y });
+  if (m.right && (bot || friend || self)) {
+    openMenu(uiState, bot ? { kind: 'bot', id: bot.id, x: m.x + 4, y: m.y } : friend ? { kind: 'ghost', id: friend.id, x: m.x + 4, y: m.y } : { kind: 'self', x: m.x + 4, y: m.y });
     m.right = false;
     return;
   }
   if (!m.clicked) return;
   if (npc) world.events.push({ type: 'talk', npc: npc.id });
   else if (bot) openProfile(uiState, { kind: 'bot', id: bot.id, shop: Boolean(bot.shop) });
+  else if (friend) openProfile(uiState, { kind: 'ghost', id: friend.id });
   else if (self) openProfile(uiState, { kind: 'self' });
-  if (npc || bot || self) m.clicked = false;
+  if (npc || bot || friend || self) m.clicked = false;
 }
 
 // Exposed for debugging and automated play tests.

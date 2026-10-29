@@ -29,6 +29,13 @@ Adding `?net=local` to the address plays between tabs of one browser instead, fo
 
 Things to do together:
 
+- **Parties.** Invite a friend from their row in Play with Friends, or tap them (right-click for
+  options). The leader invites; party friends show on the party panel with their HP and where
+  they are, warping to them costs half, and the warden takes only your party into dungeons.
+- **Inspect.** Tap a friend (in the world, the party panel or the friends list) to see their
+  profile: their look, gear, stats, title and collection.
+- **Friends on the maps.** Friends show as dots on the minimap (rose for your party) and as badges
+  with their initial on the world map.
 - **Party dungeons.** Friends standing at a dungeon's gate with a job join the group the warden
   forms (bots fill the seats left). The one who formed it leads: their game runs the rooms,
   monsters, bosses and bots, and everyone's blows, taunts, heals, buffs and room tasks reach it.

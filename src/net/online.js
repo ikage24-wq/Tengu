@@ -14,7 +14,7 @@ import { killMob, hurtPlayer } from '../world/world.js';
 import { playerPose } from '../render/scene.js';
 import { createAnim } from '../render/animator.js';
 import { titleOf } from '../core/collection.js';
-import { handleTogether, togetherApi } from './together.js';
+import { handleTogether, togetherApi, tickParty } from './together.js';
 import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
 import { noteHit } from '../world/dungeon.js';
 
@@ -60,6 +60,9 @@ function reset() {
   online.ghosts.clear();
   online.outbox = [];
   online.claim = null;
+  online.party = null;
+  online.partyAsk = online.partyAsked = null;
+  online.trade = null;
   if (online.world) online.world.net = null;
 }
 
@@ -236,6 +239,7 @@ export function tickNet(world, dt) {
     sendMe(world);
   }
   fullApi().runTick(world, dt);
+  tickParty(world);
   if (online.mobsIn <= 0 && online.claim === world.map.id && othersHere(world).length) {
     online.mobsIn = MOBS_EVERY;
     sendMobs(world);

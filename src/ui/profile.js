@@ -1,5 +1,6 @@
-// A player's profile: click another player (or yourself) to see their look, level, job, guild,
-// stat build, gear, and full stats, and to browse their shop if they have one open.
+// A player's profile: click another player, a friend online, or yourself to see their look, level,
+// job, guild, stat build, gear, and full stats, and to browse their shop if they have one open. A
+// friend's profile asks their game for it (and has Invite and Trade buttons).
 
 import { ITEMS, EQUIP_SLOTS, RARITIES } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
@@ -15,6 +16,8 @@ import { drawHero } from '../render/hero.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { titleOf } from '../core/collection.js';
+import { online } from '../net/online.js';
+import { askInspect, askParty, partyBlocker, inParty, askTrade } from '../net/together.js';
 
 const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings' };
 const STAT_COLORS = { str: '#ff7a6b', dex: '#3fc48a', int: '#5aa8ff', luk: '#f0b53a' };
@@ -31,14 +34,23 @@ export function profileWindow(ui, state, world) {
   const win = state.windows.profile;
   const who = state.profile;
   const bot = who?.kind === 'bot' ? world.bots?.list.find((b) => b.id === who.id) : null;
-  const char = who?.kind === 'self' ? world.char : bot?.char;
+  const friend = who?.kind === 'ghost' ? online.ghosts.get(who.id) : null;
+  if (friend) askInspect(friend.id);
+  const card = friend?.inspect;
+  const char = who?.kind === 'self' ? world.char : friend ? card?.char : bot?.char;
+  const H = card ? 262 : 236;
   const W = 320;
-  const H = 236;
-  if (!windowFrame(ui, win, W, H, char ? `${char.name}'s Profile` : 'Profile')) return;
+  if (!windowFrame(ui, win, W, H, char ? `${char.name}'s Profile` : friend ? `${friend.name}'s Profile` : 'Profile')) return;
   const { ctx } = ui;
   const th = ui.theme;
   if (!char) {
-    wrap(ctx, 'This player has logged out.', win.x + 20, win.y + 50, W - 40, { size: 9, color: COLORS.muted });
+    if (friend) {
+      text(ctx, `Asking ${friend.name}'s game...`, win.x + W / 2, win.y + 110, { size: 9, bold: true, align: 'center', color: COLORS.muted });
+      for (let i = 0; i < 5; i++) {
+        const a = world.now * 3 + (i / 5) * Math.PI * 2;
+        sparkle(ctx, win.x + W / 2 + Math.cos(a) * 16, win.y + 135 + Math.sin(a) * 8, 2.2, i % 2 ? th.main : '#ffe36b');
+      }
+    } else wrap(ctx, 'This player has logged out.', win.x + 20, win.y + 50, W - 40, { size: 9, color: COLORS.muted });
     return;
   }
   const s = who.kind === 'self' ? world.stats : computeStats(char);
@@ -75,8 +87,18 @@ export function profileWindow(ui, state, world) {
     }
   }
   else if (bot?.shop) tag('Shop open', ly + 184, '#ff8fc1');
+  // A friend online: invite them, or trade.
+  if (friend) {
+    if (inParty(friend.id)) tag('In your party', ly + 169, '#4f95e0');
+    else {
+      const why = partyBlocker(friend);
+      if (button(ui, lx + 6, ly + 166, 92, 15, why === 'Waiting for an answer' ? 'Invited...' : 'Invite to party', { size: 7, primary: true, enabled: !why, iconName: 'heart' })) askParty(world, friend.id);
+      if (why && why !== 'Waiting for an answer' && hover(ui, lx + 6, ly + 166, 92, 15)) tooltip(ui, [{ text: why, size: 8, color: COLORS.bad }]);
+    }
+    if (button(ui, lx + 6, ly + 184, 92, 15, 'Trade', { size: 7, enabled: !online.trade, iconName: 'coin' })) askTrade(world, friend.id);
+  }
   // The title they wear.
-  const title = who.kind === 'self' ? titleOf(char) : null;
+  const title = who.kind === 'self' ? titleOf(char) : card?.title ?? null;
   if (title) text(ctx, title, lx + 52, ly + 146, { size: 6.5, bold: true, align: 'center', color: '#c99a1f' });
   if (bot?.party && bot.ai) tag(`Party · ${PLAYSTYLES[bot.ai.kind].label}`, ly + (pro ? 184 : 169), PLAYSTYLES[bot.ai.kind].color);
 
@@ -120,11 +142,12 @@ export function profileWindow(ui, state, world) {
     const mag = magicRange(s, 100);
     const family = JOBS[char.job].family;
     const rows = [
-      ['HP', `${who.kind === 'self' ? char.hp : s.maxHp} / ${s.maxHp}`], ['MP', `${who.kind === 'self' ? char.mp : s.maxMp} / ${s.maxMp}`],
+      ['HP', `${who.kind === 'self' ? char.hp : card?.hp ?? s.maxHp} / ${s.maxHp}`], ['MP', `${who.kind === 'self' ? char.mp : card?.mp ?? s.maxMp} / ${s.maxMp}`],
       ['Attack', `${Math.round(phys.min)} ~ ${Math.round(phys.max)}`],
       ['Magic', family === 'mage' ? `${Math.round(mag.min)} ~ ${Math.round(mag.max)}` : `${Math.floor(s.int / 2) + s.matk}`],
       ['Defense', `${s.wdef} / ${s.mdef}`], ['Accuracy', `${accuracy(family, s, char.level)}`], ['Avoid', `${avoid(s)}`],
       ['Critical', `${Math.round((0.05 + s.critRate) * 100)}%`], ['Speed', `${s.speed}%`],
+      ...(card ? [['Monster cards · Fish', `${card.cards ?? 0} · ${card.fish ?? 0}`], ['Achievements', `${card.achievements ?? 0}`]] : []),
     ];
     well(ctx, rx, y - 4, rw, rows.length * 13 + 6, th);
     y += 7;
