@@ -37,7 +37,22 @@ export function answerTrade(world, yes) {
 }
 
 function openTrade(id) {
-  online.trade = { with: id, mine: { items: [], gold: 0 }, theirs: { items: [], gold: 0 }, ready: { me: false, them: false } };
+  online.trade = { with: id, mine: { items: [], gold: 0 }, theirs: { items: [], gold: 0 }, ready: { me: false, them: false }, chat: [] };
+}
+
+// The trade's own chat: just between the two of you, shown in the trade window.
+const TRADE_CHAT = 30;
+export function tradeSay(world, words) {
+  const tr = online.trade;
+  if (!tr) return;
+  words = words.slice(0, 80);
+  noteSay(tr, world.char.name, words, true);
+  send({ t: 'trade', to: tr.with, op: 'say', text: words });
+}
+
+function noteSay(tr, who, words, mine) {
+  tr.chat.push({ who, text: words, mine });
+  if (tr.chat.length > TRADE_CHAT) tr.chat.shift();
 }
 
 export function cancelTrade(world, quiet = false) {
@@ -150,6 +165,7 @@ function onTrade(world, msg, g) {
     online.tradeAsked = null;
     world.log(`${g.name} can't trade right now.`, '#ffb3c6');
   } else if (msg.op === 'cancel' && tr?.with === msg.id) cancelTrade(world, true);
+  else if (msg.op === 'say' && tr?.with === msg.id) noteSay(tr, g.name, String(msg.text).slice(0, 80), false);
   else if ((msg.op === 'offer' || msg.op === 'ready') && tr?.with === msg.id) {
     tr.theirs = { items: (msg.offer?.items ?? []).filter((o) => (o.inst ? ITEMS[o.inst.id] : ITEMS[o.id]) && tradable(o.inst?.id ?? o.id)), gold: Math.max(0, msg.offer?.gold ?? 0) };
     if (msg.op === 'offer') tr.ready.me = false;

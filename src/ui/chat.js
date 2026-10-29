@@ -80,6 +80,11 @@ function send(chat, world, words) {
     }
     return;
   }
+  // A window with a chat of its own (trading) takes what's typed.
+  if (chat.sendTo) {
+    chat.sendTo(words);
+    return;
+  }
   world.log(`${name}: ${words}`, CHAT_COLOR);
   world.messages.at(-1).t = 14;
   say(world, 'player', words);
@@ -154,7 +159,7 @@ export function updateChat(chat, world, dt) {
 
 // The chat bar along the bottom of the message log while typing.
 export function drawChatBar(ui, chat, world) {
-  if (chat.typing === null) return;
+  if (chat.typing === null || chat.sendTo) return;
   const { ctx } = ui;
   const y = 311;
   box(ctx, 4, y, 300, 15, { fill: 'rgba(255,255,255,0.92)', edge: COLORS.accent, r: 6 });

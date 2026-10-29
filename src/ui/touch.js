@@ -155,6 +155,15 @@ function start(t, id, p, field) {
       }
     }
   }
+  // A window's own chat box (the trade window's).
+  const f = t.screen === 'game' && t.ui?.typeField;
+  if (f && p.x >= f.x && p.x <= f.x + f.w && p.y >= f.y && p.y <= f.y + f.h) {
+    t.chatOpen = true;
+    if (t.ui.chat?.typing == null) input.pressed.add('Enter');
+    t.focus();
+    t.fingers.set(id, { kind: 'none' });
+    return;
+  }
   // Typing a name on the creator screen.
   if (t.screen === 'creator' && p.x >= 338 && p.x <= 604 && p.y >= 266 && p.y <= 295) t.focus();
   // Everything else is the mouse (one finger at a time).

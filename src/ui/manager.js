@@ -20,6 +20,7 @@ import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
 import { cookingWindow } from './cooking.js';
 import { tradeWindow } from './trade.js';
+import { tradeSay } from '../net/together.js';
 import { online } from '../net/online.js';
 import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
@@ -218,6 +219,10 @@ const CLOSE = 0.14;
 export function drawUi(ui, state, world) {
   // The trade window opens and closes with the trade itself.
   state.windows.trade.open = Boolean(online.trade);
+  // While trading, what you type goes to the trade's own chat (and its box is where a phone taps
+  // to type).
+  state.chat.sendTo = online.trade ? (words) => tradeSay(world, words) : null;
+  state.typeField = null;
   dimWorld(ui.ctx, state);
   drawHud(ui, state, world);
   // The guide arrow and pill, while a route is set.
