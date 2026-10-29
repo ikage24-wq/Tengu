@@ -2742,7 +2742,7 @@ test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and f
     if (w.yuki.act) seen.add(w.yuki.act.kind);
     froze ||= w.mobs.some((m) => m.frozenUntil > w.now);
   }
-  assert.ok(['breath', 'needles', 'icicle', 'blizzard'].filter((k) => seen.has(k)).length >= 2, `a mix of her moves (${[...seen]})`);
+  assert.ok(['breath', 'ask', 'spikes', 'icicle', 'whiteout', 'snowball', 'needles'].filter((k) => seen.has(k)).length >= 3, `a mix of her moves (${[...seen]})`);
   assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her ice lands');
   assert.ok(froze, 'and freezes them');
   // Drifting after the Onmyoji, she leaves frost on the ground.
@@ -2754,6 +2754,32 @@ test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and f
     prints = Math.max(prints, w.fx.filter((f) => f.kind === 'yukiprint').length);
   }
   assert.ok(prints > 2, `frost prints where she drifts (${prints})`);
+});
+
+test("the yuki-onna's cold builds up on a monster until it freezes, and her question heals the Onmyoji", () => {
+  const w = onmyoji();
+  const k = w.yuki;
+  const m = w.mobs.find((o) => o.hp > 0);
+  Object.assign(m, { x: k.x + 60, y: k.y });
+  // White Breath: chilled again and again, it frosts over and freezes solid.
+  k.act = { kind: 'breath', t0: w.now, dur: 2.3, mob: m, x0: k.x };
+  let frost = false;
+  let froze = false;
+  for (let i = 0; i < 60 * 2.4; i++) {
+    updateWorld(w, DT, idle);
+    frost ||= (m.yukiChill?.n ?? 0) >= 2 && w.fx.some((f) => f.kind === 'yukifrost' && f.mob === m);
+    froze ||= m.frozenUntil > w.now;
+  }
+  assert.ok(frost, 'frost creeps over it');
+  assert.ok(froze, 'and it freezes');
+  // Answer Me: its soul is drawn out, and goes to heal the Onmyoji.
+  w.char.hp = Math.round(w.stats.maxHp / 2);
+  m.frozenUntil = 0;
+  Object.assign(m, { x: k.x + 40, y: k.y, hp: m.def.hp ?? m.hp });
+  const hp = w.char.hp;
+  k.act = { kind: 'ask', t0: w.now, dur: 2.8, mob: m, x0: k.x };
+  for (let i = 0; i < 60 * 3.6; i++) updateWorld(w, DT, idle);
+  assert.ok(w.char.hp > hp, `she heals the Onmyoji (${hp} -> ${w.char.hp})`);
 });
 
 test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {

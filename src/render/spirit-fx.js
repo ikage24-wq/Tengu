@@ -86,6 +86,47 @@ function toriiGate(ctx, x, y, h, rise, alpha) {
   ctx.restore();
 }
 
+// A soft round glow of cold light (the yuki-onna's soul-wisps and mist).
+function glow(ctx, x, y, r, a, c = '#bfe0ff') {
+  if (a <= 0 || r <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= Math.min(1, a);
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.35, c);
+  g.addColorStop(1, 'rgba(160, 200, 255, 0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+// Shards of ice flying out from (x, y) and falling (`p` 0-1 through it).
+function shards(ctx, x, y, p, n, reach, seed = 0.5, c = '#d8ecff') {
+  if (p <= 0 || p >= 1) return;
+  ctx.save();
+  ctx.globalAlpha *= 1 - p;
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI * (0.1 + 0.8 * ((i + seed * 3) % n) / n) + Math.sin(i * 7.3 + seed * 10) * 0.2;
+    const d = reach * p * (0.6 + 0.4 * ((i * 37) % 10) / 10);
+    const sx = x + Math.cos(a) * d;
+    const sy = y + Math.sin(a) * d + 60 * p * p;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(a + p * 8 * (i % 2 ? 1 : -1));
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(2.6, 0);
+    ctx.lineTo(-1.6, -1.2);
+    ctx.lineTo(-1.6, 1.2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, t)));
+
 export function drawSpiritFx(ctx, f, x, y, p) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
@@ -346,23 +387,34 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       ctx.restore();
       return true;
     }
-    case 'yukibreath': {
-      // Frost Breath: a cone of freezing mist pouring out ahead of her, snowflakes tumbling in it.
+    case 'yukistream': {
+      // White Breath: a long stream of bright white smoke from her lips, sloping down onto what she
+      // bends over, billowing as it goes, snowflakes tumbling in it.
       const dir = f.dir || 1;
-      const k = Math.min(1, p * 6) * (1 - Math.max(0, (p - 0.85) / 0.15));
+      const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.8) / 0.2));
+      const r = f.r ?? 118;
       ctx.save();
-      ctx.globalAlpha *= 0.6 * k;
-      for (let i = 0; i < 6; i++) {
-        const d = ((f.t * 1.6 + i / 6) % 1) * (f.r ?? 140);
-        ctx.fillStyle = i % 2 ? 'rgba(220, 238, 255, 0.7)' : 'rgba(190, 220, 250, 0.6)';
+      for (let i = 0; i < 20; i++) {
+        const u = (f.t * 1.4 + i / 20) % 1;
+        const d = u * r;
+        const wob = Math.sin(f.t * 7 + i * 1.9) * (1 + u * 4);
+        const cy = y + d * 0.26 + wob;
+        const rr = 3.4 + u * 12;
+        ctx.globalAlpha = k * (1 - 0.45 * u);
+        const g = ctx.createRadialGradient(x + dir * d, cy, 0, x + dir * d, cy, rr);
+        g.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        g.addColorStop(0.6, 'rgba(236, 246, 255, 0.85)');
+        g.addColorStop(1, 'rgba(200, 225, 250, 0)');
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.ellipse(x + dir * d, y + d * 0.08, 6 + d * 0.14, 4 + d * 0.1, 0, 0, Math.PI * 2);
+        ctx.arc(x + dir * d, cy, rr, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
-      for (let i = 0; i < 4; i++) {
-        const d = ((f.t * 1.2 + i / 4) % 1) * (f.r ?? 140);
-        fxSprite(ctx, 'celsnowflake', x + dir * d, y + Math.sin(f.t * 5 + i) * d * 0.12, { t: f.t + i, scale: 0.1 + 0.002 * d, alpha: k });
+      fxSprite(ctx, 'celsmoke', x + dir * r * 0.85, y + r * 0.26 + 8, { t: f.t, scale: 0.3, flip: dir < 0, alpha: 0.45 * k });
+      for (let i = 0; i < 5; i++) {
+        const u = (f.t * 1.1 + i / 5) % 1;
+        fxSprite(ctx, 'celsnowflake', x + dir * u * r, y + u * r * 0.26 + Math.sin(f.t * 5 + i) * u * 10, { t: f.t + i, scale: 0.07 + 0.05 * u, alpha: k });
       }
       return true;
     }
@@ -440,20 +492,242 @@ export function drawSpiritFx(ctx, f, x, y, p) {
         return true;
       }
       const q = (f.t - f.fall) / (f.dur - f.fall);
-      fxSprite(ctx, 'celfrostburst', mx, y - (m?.def.h ?? 24) * 0.5, { p: q, scale: 0.6 });
+      fxSprite(ctx, 'celfrostburst', mx, y - (m?.def.h ?? 24) * 0.5, { p: q, scale: f.shatter ? 0.9 : 0.6 });
+      if (f.shatter) shards(ctx, mx, y - (m?.def.h ?? 24) * 0.5, q, 10, 46);
       return true;
     }
-    case 'yukiblizzard': {
-      // Blizzard: snow whirling round her in a wide ring, flakes streaming round, cold mist.
-      const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.85) / 0.15));
-      const r = f.r ?? 150;
-      fxSprite(ctx, 'celtornado', x, y + 4, { t: f.t, scale: 0.75, alpha: 0.35 * k });
-      groundRing(ctx, 'celringice', x, y, 0.5, r, { alpha: 0.5 * k });
-      for (let i = 0; i < 18; i++) {
-        const a = f.t * (2.4 + (i % 3) * 0.4) + (i / 18) * Math.PI * 2;
-        const rr = r * (0.35 + 0.6 * ((i * 37) % 10) / 10);
-        fxSprite(ctx, 'celsnowflake', x + Math.cos(a) * rr, y - 20 - 40 * ((i * 13) % 10) / 10 + Math.sin(a) * rr * 0.18, { t: f.t + i, scale: 0.1 + 0.04 * (i % 3), alpha: k });
+    case 'yukiwhiteout': {
+      // Whiteout: the world goes white round her (a haze, thickest at her), snow driving sideways
+      // through it, flakes whirling, frost on the ground.
+      const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.82) / 0.18));
+      const r = f.r ?? 170;
+      ctx.save();
+      ctx.globalAlpha *= 0.38 * k;
+      const g = ctx.createRadialGradient(x, y - 30, 10, x, y - 30, r * 1.2);
+      g.addColorStop(0, 'rgba(250, 252, 255, 0.95)');
+      g.addColorStop(0.6, 'rgba(232, 242, 255, 0.6)');
+      g.addColorStop(1, 'rgba(220, 235, 252, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 30, r * 1.2, r * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      groundRing(ctx, 'celringice', x, y, 0.5, r * 0.8, { alpha: 0.3 * k });
+      // Driving snow.
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 46; i++) {
+        const sp = 180 + (i % 5) * 40;
+        const sx = x - r * 1.3 + ((((i * 97) % 260) / 260) * r * 2.6 + f.t * sp) % (r * 2.6);
+        const sy = y - 100 + ((i * 53) % 110) + Math.sin(f.t * 3 + i) * 4;
+        const edge = 1 - Math.abs(sx - x) / (r * 1.3);
+        ctx.globalAlpha = k * Math.max(0, edge) * 0.9;
+        ctx.lineWidth = 0.8 + (i % 3) * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx - 5 - (i % 4) * 2, sy - 1.2);
+        ctx.stroke();
       }
+      ctx.restore();
+      for (let i = 0; i < 14; i++) {
+        const a = f.t * (2 + (i % 3) * 0.5) + (i / 14) * Math.PI * 2;
+        const rr = r * (0.3 + 0.6 * ((i * 37) % 10) / 10);
+        fxSprite(ctx, 'celsnowflake', x + Math.cos(a) * rr, y - 20 - 50 * ((i * 13) % 10) / 10 + Math.sin(a) * rr * 0.2, { t: f.t + i, scale: 0.1 + 0.04 * (i % 3), alpha: k });
+      }
+      return true;
+    }
+    case 'yukiask': {
+      // Answer Me: her question, a whisper hanging cold in the air by her lips.
+      const k = Math.min(1, p * 6) * (1 - Math.max(0, (p - 0.7) / 0.3));
+      ctx.save();
+      ctx.globalAlpha *= k;
+      ctx.font = 'bold 10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(60, 90, 150, 0.9)';
+      const ty = y - 6 * p;
+      ctx.strokeText('…?', x + (f.dir || 1) * 8, ty);
+      ctx.fillStyle = '#eef6ff';
+      ctx.fillText('…?', x + (f.dir || 1) * 8, ty);
+      ctx.restore();
+      fxSprite(ctx, 'celsnowflake', x + (f.dir || 1) * 18, ty - 4, { t: f.t, scale: 0.07, alpha: k });
+      return true;
+    }
+    case 'yukisoul': {
+      // Answer Me: its soul drawn out of it, a pale blue thread of light flowing from the monster
+      // into her cupped hands, where it gathers as an orb.
+      const m = f.mob;
+      const ox = x - f.x;
+      const k = Math.min(1, p * 5) * (1 - Math.max(0, (p - 0.9) / 0.1));
+      const mx = (m ? m.x : f.x) + ox;
+      const my = (m ? m.y - m.def.h * 0.6 : f.y) + (y - f.y);
+      for (let i = 0; i < 9; i++) {
+        const u = (f.t * 1.2 + i / 9) % 1;
+        const px = mx + (x - mx) * u;
+        const py = my + (y - my) * u + Math.sin(u * Math.PI * 2 + f.t * 4) * 5 * (1 - u);
+        glow(ctx, px, py, 3.4 - 1.4 * u, k * (0.4 + 0.6 * Math.sin(u * Math.PI)));
+      }
+      glow(ctx, x, y, 3 + 3 * Math.min(1, p * 1.5) + 0.6 * Math.sin(f.t * 9), k);
+      return true;
+    }
+    case 'yukisoulfly': {
+      // Answer Me: let go, the soul drifts to the Onmyoji in a slow arc, trailing light.
+      const tx = f.tx + (x - f.x);
+      const ty = f.ty + (y - f.y);
+      for (let i = 4; i >= 0; i--) {
+        const u = Math.max(0, p - i * 0.05);
+        const px = x + (tx - x) * soft(u);
+        const py = y + (ty - y) * soft(u) - Math.sin(u * Math.PI) * 30;
+        glow(ctx, px, py, 5 - i * 0.8, 1 - i * 0.18);
+      }
+      return true;
+    }
+    case 'yukispike': {
+      // Ice Spikes: a cluster of jagged ice crystals bursting up out of the ground (the middle one
+      // tallest), holding a moment, then cracking apart.
+      if (f.t < 0) return true;
+      const rise = soft(f.t / 0.1);
+      const crack = Math.max(0, (f.t - 0.55) / 0.35);
+      const H = f.big ? 40 : 30;
+      const r = f.seed ?? 0.5;
+      ctx.save();
+      ctx.globalAlpha *= 1 - crack;
+      ctx.beginPath();
+      ctx.rect(x - 30, y - H * 1.4, 60, H * 1.4 + 1);
+      ctx.clip();
+      for (const [dx, hh, w, lean] of [[-7 - r * 2, 0.55, 5, -0.35], [7 + r * 2, 0.62, 5, 0.3], [-2.5, 0.85, 5.5, -0.12], [2 + r, 1, 6.5, 0.08]]) {
+        const h = H * hh * rise;
+        const bx = x + dx;
+        const tx = bx + lean * h;
+        ctx.fillStyle = '#9cc4ee';
+        ctx.beginPath();
+        ctx.moveTo(bx - w, y + 1);
+        ctx.lineTo(tx, y - h);
+        ctx.lineTo(bx + w, y + 1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#e4f2ff';
+        ctx.beginPath();
+        ctx.moveTo(bx - w, y + 1);
+        ctx.lineTo(tx, y - h);
+        ctx.lineTo(bx + w * 0.15, y + 1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(bx - w * 0.4, y - 2);
+        ctx.lineTo(tx - lean * 3, y - h + 4);
+        ctx.stroke();
+        if (crack > 0) {
+          ctx.strokeStyle = 'rgba(70, 110, 170, 0.8)';
+          ctx.beginPath();
+          ctx.moveTo(bx - w * 0.6, y - h * 0.3);
+          ctx.lineTo(bx + w * 0.2, y - h * 0.45);
+          ctx.lineTo(bx - w * 0.1, y - h * 0.6);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      if (f.t < 0.35) fxSprite(ctx, 'celfrostburst', x, y - 8, { p: f.t / 0.35, scale: f.big ? 0.42 : 0.32 });
+      if (crack > 0) shards(ctx, x, y - H * 0.5, crack, 7, 22, r);
+      // Frost left on the ground where it stood.
+      ctx.save();
+      ctx.globalAlpha *= 0.8 * (1 - Math.max(0, (f.t - 0.6) / 0.3));
+      ctx.fillStyle = '#eef6ff';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 13, 2.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return true;
+    }
+    case 'yukisnowball': {
+      // A snowball tossed underhand, arcing over to its mark.
+      const tx = (f.mob && f.mob.hp > 0 ? f.mob.x : f.tx) + (x - f.x);
+      const ty = (f.mob && f.mob.hp > 0 ? f.mob.y - f.mob.def.h * 0.5 : f.ty) + (y - f.y);
+      const u = Math.min(1, f.t / f.fly);
+      if (u >= 1) return true;
+      const bx = x + (tx - x) * u;
+      const by = y + (ty - y) * u - Math.sin(u * Math.PI) * 28;
+      ctx.save();
+      ctx.fillStyle = '#b8d0ee';
+      ctx.beginPath();
+      ctx.arc(bx, by, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(bx - 0.6, by - 0.6, 2.7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      fxSprite(ctx, 'celsnowflake', bx - (tx - x) * 0.04, by + 2, { t: f.t, scale: 0.05, alpha: 0.8 });
+      return true;
+    }
+    case 'yukipuff': {
+      // The snowball bursting on the monster: a puff of snow.
+      if (f.t < 0) return true;
+      const m = f.mob;
+      const px = (m && m.hp > 0 ? m.x : f.x) + (x - f.x);
+      const q = Math.min(1, f.t / 0.5);
+      fxSprite(ctx, 'celfrostburst', px, y, { p: q, scale: 0.3 });
+      shards(ctx, px, y, q, 6, 14, 0.3, '#ffffff');
+      return true;
+    }
+    case 'yukimist': {
+      // Into the Mist: a drift of white mist carrying her off from where she was to where she
+      // gathers again.
+      const tx = f.tx + (x - f.x);
+      const ty = f.ty + (y - f.y);
+      const lead = soft(Math.min(1, p / 0.75));
+      for (let i = 0; i < 6; i++) {
+        const u = Math.max(0, lead - i * 0.09);
+        const k = (1 - i / 6) * (1 - Math.max(0, (p - 0.75) / 0.25));
+        const px = x + (tx - x) * u;
+        const py = y + (ty - y) * u - 22 - Math.sin(u * Math.PI) * 10 + Math.sin(f.t * 5 + i) * 3;
+        fxSprite(ctx, 'celsmoke', px, py + 14, { t: f.t + i * 0.1, scale: 0.26 - i * 0.02, alpha: 0.55 * k });
+        glow(ctx, px, py, 7 - i * 0.6, 0.45 * k, '#ffffff');
+        fxSprite(ctx, 'celsnowflake', px + Math.sin(i * 3.1) * 10, py + Math.cos(i * 2.3) * 8, { t: f.t + i, scale: 0.07, alpha: k });
+      }
+      return true;
+    }
+    case 'yukifrost': {
+      // Her cold on a monster: frost creeping over it, more crystals and a paler coat the colder it
+      // gets, a rim of frost at its feet.
+      const m = f.mob;
+      const n = m?.yukiChill?.n ?? 0;
+      if (!m || m.hp <= 0 || n <= 0) return true;
+      const k = 1 - Math.max(0, (p - 0.8) / 0.2);
+      const mx = m.x + (x - f.x);
+      const my = m.y + (y - f.y);
+      const w = m.def.w;
+      const h = m.def.h;
+      ctx.save();
+      ctx.globalAlpha *= k * Math.min(0.42, 0.09 * n);
+      ctx.fillStyle = '#dcecff';
+      ctx.beginPath();
+      ctx.ellipse(mx, my - h * 0.5, w * 0.55, h * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha *= k;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 0.8;
+      for (let i = 0; i < n * 3; i++) {
+        const cx = mx + (((i * 37 + (m.uid ?? 0) * 11) % 100) / 100 - 0.5) * w * 0.9;
+        const cy = my - (((i * 61 + (m.uid ?? 0) * 7) % 100) / 100) * h * 0.95;
+        const r = 1.2 + (i % 3) * 0.5;
+        for (const a of [0, Math.PI / 3, (2 * Math.PI) / 3]) {
+          ctx.beginPath();
+          ctx.moveTo(cx - Math.cos(a) * r, cy - Math.sin(a) * r);
+          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+          ctx.stroke();
+        }
+      }
+      ctx.fillStyle = 'rgba(235, 245, 255, 0.85)';
+      ctx.beginPath();
+      ctx.ellipse(mx, my, w * 0.5 + n, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
       return true;
     }
     case 'yukistep': {
@@ -465,6 +739,12 @@ export function drawSpiritFx(ctx, f, x, y, p) {
     case 'yukihit': {
       // Her cold landing: a burst of frost on the monster.
       fxSprite(ctx, 'celfrostburst', x, y - (f.h ?? 24) * 0.55, { p, flip, scale: f.big ? 0.55 : 0.35 });
+      return true;
+    }
+    case 'yukishatter': {
+      // A frozen monster shattering: a big burst of frost and shards of ice flying off it.
+      fxSprite(ctx, 'celfrostburst', x, y - (f.h ?? 24) * 0.55, { p, flip, scale: 0.85 });
+      shards(ctx, x, y - (f.h ?? 24) * 0.55, p, 12, 50);
       return true;
     }
     case 'onipound': {

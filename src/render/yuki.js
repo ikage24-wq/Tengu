@@ -25,10 +25,13 @@ export const YUKI_LOOK = {
 //   - her frost aura: always about her, a ring of frost on the ground under her, snowflakes
 //     drifting slowly round her and a breath of cold mist; and where she drifts she leaves frost
 //     on the ground (world/yuki.js, render/spirit-fx.js 'yukiprint');
-//   - her moves: Frost Breath (she leans in, a sleeve to her lips, and breathes the cold out),
-//     Ice Needles (a flick of her sleeve), Icicle Fall (a hand raised to the sky and brought down),
-//     Blizzard (her arms spread wide, rising, her hair lifting), Snow Step (she comes apart into
-//     snow);
+//   - her moves: White Breath (she glides in and bends over the monster, a sleeve at her lips,
+//     breathing out long and slow), Answer Me (she leans in face to face, head tilted, a hand to
+//     its cheek; draws its soul out into her cupped hands and lets it go to the Onmyoji), Ice
+//     Spikes (she bends and presses her palm to the snow), Icicle Fall (a hand raised slowly to
+//     the sky and brought down), Whiteout (she rises, arms spread, head back, hair and robe
+//     streaming), a lazy underhand snowball, a flick of her sleeve for the needles, and Into the
+//     Mist (she melts away);
 //   - her idle moods: catching a snowflake on her palm, breathing on her cold hands, looking down
 //     sadly, gazing at the Onmyoji, humming with her eyes closed;
 //   - and a layer of life: breath, a slow sway, hair stirring, springs on every number.
@@ -38,7 +41,6 @@ const seg = (t, a, b) => clamp01((t - a) / (b - a));
 const soft = (t) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerp2 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
-const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
 const TAU = Math.PI * 2;
 
 // ---------- Her poses ----------
@@ -56,24 +58,46 @@ const standing = () => pose({});
 function drifting(t) {
   return pose({ lean: 0.12, hand: [-1.4, -1.6 + 0.4 * Math.sin(t * 2)], free: [0.6, -1.2], cloth: -3, hy: 0.6, tilt: 1, eyes: 'half' });
 }
-// Frost Breath (breathing from ~0.32 to ~0.78): she draws a sleeve up to her lips, leans in, and
-// breathes out long and slow, her other hand opening toward the cold.
+// White Breath: she glides in leaning into it, then bends right over the monster (head bowed to
+// it), a sleeve drawn to her lips and the other hand held out low over it, and breathes out long
+// and slow (from ~0.34 to ~0.84); she straightens as it ends.
 function breathing(u) {
-  const draw = soft(seg(u, 0, 0.3));
-  const out = soft(seg(u, 0.3, 0.42)) * (1 - soft(seg(u, 0.8, 1)));
+  const glide = 1 - soft(seg(u, 0.18, 0.3));
+  const bend = soft(seg(u, 0.2, 0.36)) * (1 - soft(seg(u, 0.86, 1)));
+  const out = soft(seg(u, 0.32, 0.4)) * (1 - soft(seg(u, 0.82, 0.9)));
   return pose({
-    lean: 0.02 + 0.08 * draw + 0.14 * out, hand: lerp2(FOLD_F, [1, -11], draw * (1 - out * 0.4)), free: lerp2(FOLD_B, [6, -4], out),
-    hy: 0.4 + 0.4 * out, tilt: 3 + 3 * out, mouth: out > 0.3 ? 'yukibreath' : 'yukilips', eyes: out > 0.3 ? 'half' : null, lift: 1 * out, cloth: -2 * out,
+    lean: 0.02 + 0.12 * glide + 0.3 * bend, lift: -1.5 * bend, hand: lerp2(lerp2(FOLD_F, [-1.4, -1.6], glide), [0.6, -10.4], bend), free: lerp2(lerp2(FOLD_B, [0.6, -1.2], glide), [6.4, -1], bend),
+    hy: 0.4 + 1.2 * bend, tilt: 3 + 9 * bend, cloth: -3 * glide + 1.5 * bend, mouth: out > 0.3 ? 'yukibreath' : 'yukilips', eyes: bend > 0.4 ? 'half' : null, brows: bend > 0.4 ? 'calm' : 'sad',
   });
 }
-// Ice Needles (0.42): her sleeve swept back, then flicked out at them, fingers spread.
-function needling(u) {
-  const back = soft(seg(u, 0, 0.34));
-  const flick = soft(seg(u, 0.36, 0.46));
-  const rest = soft(seg(u, 0.7, 1));
+// Answer Me: she glides in and leans close, face to face, her head tipping to one side as she asks
+// (0.24), a hand lifted to its cheek; then draws the soul out (0.4-0.8), that hand coming slowly
+// back to her breast and the other cupped beneath it; at 0.84 she lifts her cupped hands and lets
+// it go, glancing after it to the Onmyoji.
+function asking(u) {
+  const glide = 1 - soft(seg(u, 0.16, 0.26));
+  const lean = soft(seg(u, 0.16, 0.3)) * (1 - soft(seg(u, 0.8, 0.95)));
+  const cheek = soft(seg(u, 0.2, 0.32)) * (1 - soft(seg(u, 0.4, 0.62)));
+  const draw = soft(seg(u, 0.4, 0.66)) * (1 - soft(seg(u, 0.8, 0.88)));
+  const give = soft(seg(u, 0.8, 0.88)) * (1 - soft(seg(u, 0.93, 1)));
+  const cup = Math.max(draw, give);
+  const hand = lerp2(lerp2(lerp2(lerp2(FOLD_F, [-1.4, -1.6], glide), [8.6, -9.6], cheek), [2.4, -6.6], draw), [5.4, -12.6], give);
   return pose({
-    lean: 0.02 - 0.06 * back * (1 - flick) + 0.1 * flick * (1 - rest), hand: lerp2(lerp2(FOLD_F, [-5, -6], back), [8, -5], flick * (1 - rest)),
-    cloth: 2 * back - 4 * flick * (1 - rest), brows: 'cold', eyes: flick > 0.3 && rest < 0.5 ? null : 'half', tilt: 3 - 3 * flick * (1 - rest),
+    lean: 0.02 + 0.1 * glide + 0.16 * lean, hand, free: lerp2(lerp2(FOLD_B, [0.6, -1.2], glide), [3.6, -5], cup),
+    hx: -0.2 + 0.6 * lean, hy: 0.4 + 0.3 * lean, tilt: 3 - 13 * cheek - 4 * draw + 8 * give, glance: -1 * give, lid: 0.15 * draw,
+    eyes: draw > 0.3 ? 'half' : null, brows: cheek > 0.3 ? 'calm' : 'sad', mouth: cheek > 0.4 && Math.sin(u * 60) > 0 ? 'yukibreath' : 'yukilips', cloth: -3 * glide,
+  });
+}
+// Ice Spikes (0.44): she bends low, her sleeve swept back, and presses her palm down to the snow;
+// holds it there, head lifting to watch the spikes go; then rises.
+function spiking(u) {
+  const down = soft(seg(u, 0, 0.38));
+  const press = soft(seg(u, 0.36, 0.46));
+  const rise = soft(seg(u, 0.74, 1));
+  const k = down * (1 - rise);
+  return pose({
+    lean: 0.02 + 0.22 * k, lift: -3 * k, hand: lerp2(lerp2(FOLD_F, [-4, -4], down * (1 - press)), [6.6, 4.4], press * (1 - rise)), free: lerp2(FOLD_B, [-3, -6], k),
+    hy: 0.4 + 0.6 * k - 0.8 * press * (1 - rise), tilt: 3 + 6 * k - 8 * press * (1 - rise), cloth: 3 * k - 4 * press * (1 - rise), brows: 'cold', eyes: down > 0.3 && press < 0.5 ? 'half' : null,
   });
 }
 // Icicle Fall (0.5): one hand raised slowly to the sky, eyes lifting with it; brought down sharply
@@ -87,21 +111,42 @@ function icicling(u) {
     brows: 'cold', eyes: up > 0.5 && down < 0.3 ? 'half' : null, cloth: -2 * up + 3 * down * (1 - rest),
   });
 }
-// Blizzard: she rises, spreading her arms wide, her head tipping back and eyes closing, her hair and
-// robe lifted by the storm; she sinks back as it dies.
-function blizzarding(u) {
-  const k = soft(seg(u, 0, 0.22)) * (1 - soft(seg(u, 0.86, 1)));
+// Whiteout: she rises high, spreading her arms wide, her head tipping back and eyes closing, her
+// hair and robe streaming in the storm; she sinks back as it dies.
+function whiteouting(u) {
+  const k = soft(seg(u, 0, 0.22)) * (1 - soft(seg(u, 0.88, 1)));
   return pose({
-    lift: 8 * k + 1.2 * Math.sin(u * 30) * k, hand: lerp2(FOLD_F, [6, -9], k), free: lerp2(FOLD_B, [-5, -9], k), hy: 0.4 - 1.2 * k, tilt: 3 - 9 * k, cloth: -4 * k + 2 * Math.sin(u * 22) * k,
+    lift: 12 * k + 1.4 * Math.sin(u * 26) * k, hand: lerp2(FOLD_F, [7, -10], k), free: lerp2(FOLD_B, [-6, -10], k), hy: 0.4 - 1.4 * k, tilt: 3 - 11 * k, cloth: -5 * k + 2.4 * Math.sin(u * 22) * k,
     eyes: k > 0.5 ? 'blink' : null, mouth: k > 0.5 ? 'yukibreath' : 'yukilips', brows: 'calm',
   });
 }
-// Snow Step: she lifts and fades (the fade is drawn below), and gathers again.
-function stepping(u) {
-  const k = bump(u, 0, 1);
-  return pose({ lift: 4 * k, hand: lerp2(FOLD_F, [-1, -8], k), free: lerp2(FOLD_B, [3, -8], k), eyes: 'blink', cloth: -3 * k });
+// Snowball (0.42): a lazy scoop down at her side, then an underhand toss, unbothered, eyes half shut.
+function snowballing(u) {
+  const scoop = soft(seg(u, 0, 0.3));
+  const toss = soft(seg(u, 0.32, 0.46));
+  const rest = soft(seg(u, 0.66, 1));
+  return pose({
+    lean: 0.02 + 0.1 * scoop * (1 - toss) + 0.04 * toss * (1 - rest), lift: -1 * scoop * (1 - toss), hand: lerp2(lerp2(FOLD_F, [-2, 3], scoop), [8, -7.4], toss * (1 - rest)),
+    hy: 0.4 + 0.6 * scoop * (1 - toss), tilt: 3 + 5 * scoop * (1 - toss) - 3 * toss * (1 - rest), cloth: 1.5 * scoop - 3 * toss * (1 - rest), eyes: 'half', brows: 'calm',
+  });
 }
-const MOVES = { breath: breathing, needles: needling, icicle: icicling, blizzard: blizzarding, step: stepping };
+// Ice Needles (0.42): her sleeve swept back, then flicked out at them, fingers spread.
+function needling(u) {
+  const back = soft(seg(u, 0, 0.34));
+  const flick = soft(seg(u, 0.36, 0.46));
+  const rest = soft(seg(u, 0.7, 1));
+  return pose({
+    lean: 0.02 - 0.06 * back * (1 - flick) + 0.1 * flick * (1 - rest), hand: lerp2(lerp2(FOLD_F, [-5, -6], back), [8, -5], flick * (1 - rest)),
+    cloth: 2 * back - 4 * flick * (1 - rest), brows: 'cold', eyes: flick > 0.3 && rest < 0.5 ? null : 'half', tilt: 3 - 3 * flick * (1 - rest),
+  });
+}
+// Into the Mist: she lifts, her sleeves rising round her, as she melts away (the fade is drawn
+// below), and settles again as she gathers.
+function misting(u) {
+  const k = soft(seg(u, 0, 0.3)) * (1 - soft(seg(u, 0.7, 1)));
+  return pose({ lift: 5 * k, hand: lerp2(FOLD_F, [-1, -8], k), free: lerp2(FOLD_B, [3, -8], k), eyes: 'blink', cloth: -4 * k, tilt: 3 - 4 * k });
+}
+const MOVES = { breath: breathing, ask: asking, spikes: spiking, icicle: icicling, whiteout: whiteouting, snowball: snowballing, needles: needling, mist: misting };
 
 // Her idle moods: how long each lasts and the pose `u` through it.
 export const YUKI_IDLES = {
@@ -226,11 +271,11 @@ export function drawYukiCompanion(ctx, world, k, cam, time, layer = 'back') {
     [st[name], st[name + 'V']] = spring(st[name] ?? to, st[name + 'V'] ?? 0, to, kk, c, dt);
     return st[name];
   };
-  const hair = S('hair', -1.6 * v + 0.6 * Math.sin(time * 0.7) + (a?.kind === 'blizzard' ? -2.4 * Math.sin(time * 6) : 0), 40, 5);
+  const hair = S('hair', -1.6 * v + 0.6 * Math.sin(time * 0.7) + (a?.kind === 'whiteout' ? -2.8 * Math.sin(time * 6) : 0), 40, 5);
   const tip = S('tip', hair + 0.5 * Math.sin(time * 1.3), 30, 4);
   const robe = S('robe', P.cloth + 1 * Math.sin(time * 0.8) - 2.4 * v, 60, 6);
-  // Snow Step and the blizzard's peak: she fades.
-  const fade = a?.kind === 'step' ? 1 - 0.85 * bump(u, 0.15, 0.75) : 1;
+  // Into the Mist: she melts away and gathers again (gone in between).
+  const fade = a?.kind === 'mist' ? (u < 0.5 ? 1 - soft(seg(u, 0.06, 0.3)) : soft(seg(u, 0.7, 0.94))) : 1;
   st.fade = fade;
   if (fade <= 0.02) return;
   ctx.save();

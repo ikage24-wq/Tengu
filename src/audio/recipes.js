@@ -279,12 +279,21 @@ const R = {
   onipound: { db: -8, max: 1, room: true, layers: [thump(60, 500, { slide: -1.2 }), { rec: 'rockHit', rate: 0.7 }, { rec: 'punchHeavy', rate: 0.6, db: -4 }] },
   oniaura: { db: -11, max: 1, layers: [{ rec: 'fireCharge', rate: 0.8 }, whoosh(600, 200, 1200, { db: -6 })] },
   oniroar: { db: -7, max: 1, room: true, layers: [{ rec: 'ogre', rate: 1.25 }, { rec: 'darkImpact', rate: 0.9, db: -4 }, thump(70, 400, { slide: -1 })] },
-  // The Onmyoji's yuki-onna: frost breath (a cold rushing hiss), ice needles (glassy tinks), an
-  // icicle shattering, her blizzard (a howling wind), her snow step, and her cold hits.
-  yukibreath: { db: -12, max: 1, layers: [{ rec: 'iceCharge', rate: 0.8 }, whoosh(1200, 400, 2400, { focus: 0.6, db: -6 })] },
+  // The Onmyoji's yuki-onna: her white breath (a long cold hiss), her question (a soft chime) and
+  // the soul drawn out (a hollow rising tone) and let go, ice spikes cracking up, ice needles
+  // (glassy tinks), an icicle and a frozen monster shattering, the whiteout (a howling wind), her
+  // snowball, her mist and her cold hits.
+  yukistream: { db: -12, max: 1, layers: [{ rec: 'iceCharge', rate: 0.75 }, whoosh(1800, 500, 2400, { focus: 0.5, db: -5 })] },
+  yukiask: { db: -14, max: 1, layers: [sparkle('E6:0 B6:120 E7:240', { db: -6 }), { rec: 'teleIn', rate: 1.5, len: 400, db: -6 }] },
+  yukisoul: { db: -13, max: 1, layers: [{ rec: 'darkRiser', rate: 1.4, len: 1200 }, { rec: 'iceCharge', rate: 1.2, db: -8 }] },
+  yukisoulfly: { db: -12, max: 1, layers: [{ rec: 'holyHeal', rate: 1.3, len: 700 }, sparkle('B6:0 E7:80', { db: -8 })] },
+  yukispike: { db: -13, vary: 10, max: 3, gap: 50, layers: [{ rec: 'iceImpact', rate: 0.9, len: 450 }, { rec: 'rockHit', rate: 1.6, db: -10, len: 250 }] },
+  yukisnowball: { db: -16, max: 2, layers: [{ rec: 'swish', rate: 1.2, len: 250 }] },
+  yukimist: { db: -14, max: 1, layers: [whoosh(900, 400, 1400, { focus: 0.4, db: -4 }), sparkle('B6:0 E7:90', { db: -12 })] },
+  yukiwhiteout: { db: -9, max: 1, room: true, layers: [{ rec: 'windWhoosh', rate: 0.65, len: 3000 }, { rec: 'iceCharge', rate: 0.6, db: -6 }, whoosh(3000, 300, 1800, { focus: 0.8, db: -3 })] },
+  yukishatter: { db: -9, max: 2, gap: 80, layers: [{ rec: 'glass', rate: 0.9 }, { rec: 'iceBig', rate: 1.1, len: 800, db: -3 }] },
   yukineedle: { db: -16, vary: 10, max: 4, gap: 40, layers: [{ rec: 'iceLaunch', rate: 1.6, len: 300 }, sparkle('E7:0 B7:40', { db: -12 })] },
   yukiicicle: { db: -11, max: 3, gap: 90, layers: [{ rec: 'iceBig', rate: 1.2, len: 900 }, { rec: 'glass', rate: 0.8, db: -4 }] },
-  yukiblizzard: { db: -10, max: 1, room: true, layers: [{ rec: 'windWhoosh', rate: 0.7, len: 2400 }, { rec: 'iceCharge', rate: 0.7, db: -6 }, whoosh(2600, 300, 1800, { focus: 0.8, db: -4 })] },
   yukistep: { db: -14, max: 2, layers: [{ rec: 'teleOut', rate: 1.4, len: 500 }, sparkle('B6:0 E7:60', { db: -10 })] },
   yukihit: { db: -15, vary: 8, max: 3, gap: 50, layers: [{ rec: 'iceImpact', rate: 1.1, len: 400 }] },
   onipuff: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.3, len: 500 }, whoosh(300, 300, 1400, { db: -6 })] },
