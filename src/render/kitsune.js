@@ -265,7 +265,7 @@ function haftStrike(p) {
   });
 }
 
-// ---------- Her skills (world/kitsune.js MOONFALL, CRESCENT, PILLARS) ----------
+// ---------- Her skills (world/kitsune.js MOONFALL, CRESCENT, FLURRY) ----------
 // Moonfall: she raises the naginata straight up over her head in both hands, legs planted wide,
 // leaning back, chin up and eyes shut as it charges (the vortex drags them in: the blade trembles,
 // her robes and tail whip in its wind); then she brings it down (at 0.75) in one crushing blow in
@@ -293,7 +293,8 @@ function moonfallPose(u) {
 }
 // Crescent Moon: she coils, drawing the naginata far back up over her shoulder with her free hand
 // thrown out ahead to aim; then one huge diagonal cut, high to low, her whole body thrown after it
-// (at 0.42: the crescent flies), and holds the follow-through before she rises.
+// (at 0.42: the blade leaves a great crescent of moonlight hanging in the air in front of her), and
+// holds the follow-through before she rises.
 function crescentPose(p) {
   const wind = soft(seg(p, 0, 0.34));
   const cut = overshoot(seg(p, 0.36, 0.46));
@@ -310,25 +311,30 @@ function crescentPose(p) {
     mouth: cut > 0.3 && on > 0.5 ? 'open' : null, eyes: wind > 0.4 && cut < 0.2 ? 'half' : null, brows: 'knit',
   });
 }
-// Fox-Fire Pillars: she drives the naginata's butt into the ground, raises her free hand to the sky
-// with her eyes shut and her tail fanned up; then throws the hand down and out at them (at 0.42) and
-// the pillars go up; she lowers it slowly, chin up.
-function pillarsPose(p) {
-  const raise = soft(seg(p, 0.12, 0.36));
-  const cast = overshoot(seg(p, 0.38, 0.48));
-  const back = soft(seg(p, 0.76, 1));
+// Hundred Thrusts: she drops into a low stance with the naginata levelled at her hip, and drives it
+// out again and again, each thrust a jolt of her whole body (at 0.2 to 0.52), her tail lashing with
+// them; then draws it right back and puts everything into a last great lunge (at 0.7) that throws
+// it, and holds it there.
+function flurryPose(p) {
+  const level = soft(seg(p, 0, 0.14));
+  const back = soft(seg(p, 0.84, 1));
   const on = 1 - back;
-  const sky = raise * (1 - cast);
+  let jab = 0;
+  for (const h of [0.2, 0.28, 0.36, 0.44, 0.52]) jab = Math.max(jab, bump(p, h - 0.045, h + 0.035));
+  const draw = soft(seg(p, 0.55, 0.64)) * (1 - seg(p, 0.64, 0.7));
+  const last = overshoot(seg(p, 0.64, 0.71));
+  const k = level * on;
   return pose({
-    lean: -0.05 + (-0.1 * sky + 0.16 * cast) * on, squat: 1.6 * cast * on, by: 0.8 * bump(p, 0.12, 0.3),
-    hand: [8, -1.2 - 3.4 * bump(p, 0, 0.13) + 0.8 * bump(p, 0.12, 0.3)],
-    free: [(lerp(0.2, 2.4, raise) * (1 - cast) + 7 * cast) * on + 0.2 * back, (lerp(2.6, -12, raise) * (1 - cast) - 1 * cast) * on + 2.6 * back],
-    tail: 8 - 40 * sky * on - 10 * cast * on, curl: -10 - 20 * sky * on, ears: [-6 - 12 * sky + 16 * cast * on, -6 - 10 * sky + 12 * cast * on], cloth: -2 * sky + 4 * cast * on,
-    hy: -0.6 - 1.2 * sky + 0.4 * cast * on, tilt: -3 - 8 * sky + 3 * cast * on,
-    mouth: cast > 0.3 && on > 0.5 ? 'open' : null, eyes: sky > 0.6 ? 'blink' : null, brows: 'knit',
+    lean: -0.05 + (0.12 * k + 0.16 * jab - 0.14 * draw + 0.42 * last) * on, lunge: (2 + 4 * jab - 3 * draw + 9 * last) * k, squat: (2.4 + 0.6 * jab + 1.4 * last) * k,
+    pole: lerp(0, 1.58 + 0.05 * Math.sin(p * 70) * (1 - last), level) * on, grip: 0.3,
+    hand: [(lerp(8, 1, level) + 6.4 * jab * (1 - last) - 3.6 * draw + 9 * last) * on + 8 * back, (lerp(-1.2, 3.4, level) - 0.8 * Math.sin(p * 47) * jab) * on - 1.2 * back],
+    free: [(-1.6 + 2 * jab + 4.6 * last) * k + 0.2 * back, (1.4 - 1.2 * last) * k + 2.6 * back],
+    legF: [3.4 + (1 + 1.4 * jab + 3.6 * last) * k, 0, 10], legB: [-3.6 - (0.8 + 1.8 * last) * k, 0, -14 - 6 * last * k],
+    tail: 8 - 18 * jab * Math.sign(Math.sin(p * 40)) - 36 * last * on, curl: -10 + 14 * jab + 26 * last * on, ears: [(10 * jab + 24 * last) * on - 6, (8 * jab + 20 * last) * on - 6], cloth: (-2 * jab - 6 * last) * on,
+    hy: -0.6 + 0.6 * k, tilt: -3 + (2 * jab + 5 * last) * on,
+    mouth: (jab > 0.5 || last > 0.3) && on > 0.5 ? 'open' : null, eyes: draw > 0.5 ? 'half' : null, brows: 'knit',
   });
 }
-
 // ---------- Her teleport (world/kitsune.js TELE) ----------
 // Vanishing: she plants the naginata, lifts her chin, closes her eyes, and is gone in fox fire
 // (she fades; the fire is the effect's).
@@ -421,7 +427,7 @@ const deg = (v) => Math.round(v);
 const STATE = new WeakMap();
 const POSES = {
   thrust: thrusting, sweep: sweeping, rising: risingCut, twin: twinning, cleave: cleaving, reap: reaping, haft: haftStrike,
-  moonfall: moonfallPose, crescent: crescentPose, pillars: pillarsPose, call: calling, block: blocking, bow: bowing, vanish: vanishing, arrive: arriving,
+  moonfall: moonfallPose, crescent: crescentPose, flurry: flurryPose, call: calling, block: blocking, bow: bowing, vanish: vanishing, arrive: arriving,
 };
 
 export function drawKitsune(ctx, world, k, cam, time) {

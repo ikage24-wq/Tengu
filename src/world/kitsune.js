@@ -16,9 +16,10 @@
 // her skills, each on its own cooldown:
 //   Moonfall      she raises the naginata high and charges it: a vortex of fox fire drags every
 //                 monster round her in to her feet, and she brings the blade down on all of them
-//   Crescent Moon a great cut that sends a crescent of moonlight flying, through everything in line
-//   Fox-Fire Pillars  she plants the naginata and raises her hand: pillars of fox fire erupt under
-//                 the monsters round her, throwing them up
+//   Crescent Moon one huge diagonal cut, the blade trailing a great crescent of moonlight, through
+//                 everything in front of her
+//   Hundred Thrusts  a storm of thrusts at whatever's in front of her, ending in one that throws it
+// (She has no range: everything she does is the naginata, at arm's length or pulled in to it.)
 // and her duties as a guardian:
 //   Fox-Fire Call every so often, when monsters crowd the Maiden, she plants the naginata's butt
 //                 with a ring of fox fire that throws them back off the Maiden, dazed
@@ -60,10 +61,10 @@ export const KMOVES = {
 //   to `pull` px/s, to `close` px in front of her; the blade comes down at `hit`, and everything
 //   within `blast` is hit and thrown.
 export const MOONFALL = { dur: 2.5, every: 14, r: 290, charge: 0.16, pull: 240, close: 34, hit: 0.75, blast: 120, pct: 230, launch: 300, knock: 160, stun: 0.6 };
-//   Crescent Moon: released at `hit`, flying `speed` px/s out to `range`, through everything in line.
-export const CRESCENT = { dur: 1.15, every: 6, hit: 0.42, speed: 560, range: 360, h: 70, pct: 125, knock: 140 };
-//   Fox-Fire Pillars: cast at `hit`, under up to `n` monsters within `r`, each `gap` s apart.
-export const PILLARS = { dur: 1.5, every: 10, hit: 0.42, r: 300, n: 4, gap: 0.09, pct: 135, launch: 320, knock: 30 };
+//   Crescent Moon and Hundred Thrusts are blows like her moves (KMOVES), at the blade's reach; the
+//   last of Hundred Thrusts' blows hits harder (`lastPct`) and throws (`lastKnock`, `launch`).
+export const CRESCENT = { dur: 1.15, every: 7, hits: [0.42], reach: 150, pct: 175, knock: 210, targets: 6, shake: 4 };
+export const FLURRY = { dur: 1.7, every: 9, hits: [0.2, 0.28, 0.36, 0.44, 0.52, 0.7], reach: 125, pct: 42, knock: 15, lastPct: 130, lastKnock: 220, launch: 180, targets: 2, shake: 1 };
 // The rest she takes between moves (seconds, a random span): steady, never frantic.
 const REST = [0.3, 0.55];
 // Fox-Fire Call: how often (s), how close to the Maiden the monsters must be, how long it takes,
@@ -73,7 +74,7 @@ export const CALL = { every: 7, range: 160, dur: 1.0, hit: 0.5, push: 170, daze:
 export const GUARD = { chance: 0.3, every: 2.5, near: 110 };
 const BOW = 1.5; // how long her bow after a fight lasts
 // Each move's smear: where its arc starts and how far it sweeps (degrees), and how thick it is.
-const SMEAR = { thrust: [72, 36, 5], sweep: [-70, 190, 9], rising: [120, -210, 8], twin: [70, 40, 4], cleave: [-20, 160, 10], reap: [150, -70, 7], haft: [-10, 150, 7] };
+const SMEAR = { crescent: [-40, 200, 12], flurry: [80, 24, 4], thrust: [72, 36, 5], sweep: [-70, 190, 9], rising: [120, -210, 8], twin: [70, 40, 4], cleave: [-20, 160, 10], reap: [150, -70, 7], haft: [-10, 150, 7] };
 const NONE = { left: false, right: false, up: false, down: false, jump: false };
 const alive = (m) => m && m.hp > 0;
 
@@ -84,7 +85,7 @@ export const hasGuardian = (char) => jobChain(char.job).includes('shrinemaiden')
 export function guardianOf(world) {
   if (!hasGuardian(world.char) || !hasSpirit(world.char)) return (world.guardian = null);
   const b = world.body;
-  world.guardian ??= { act: null, next: 0, last: null, callAt: 0, guardAt: 0, map: null, skillAt: { moonfall: 6, crescent: 0, pillars: 3 } };
+  world.guardian ??= { act: null, next: 0, last: null, callAt: 0, guardAt: 0, map: null, skillAt: { moonfall: 6, crescent: 2, flurry: 4 } };
   const k = world.guardian;
   if (k.map !== world.map.id || !k.body) {
     k.map = world.map.id;
@@ -190,11 +191,7 @@ function act(world, k, dt) {
   stepBody(k.body, world.map, NONE, dt, { speed: 0, jump: 0 });
   sync(k);
   if (a.kind === 'moonfall') moonfall(world, k, a, t, dt);
-  else if (a.kind === 'crescent' && !a.hit && t >= CRESCENT.hit * CRESCENT.dur) {
-    a.hit = true;
-    crescentMoon(world, k);
-  } else if (a.kind === 'pillars') pillars(world, k, a, t);
-  const M = KMOVES[a.kind];
+  const M = KMOVES[a.kind] ?? BLOWS[a.kind];
   // Her lunges kick up dust from the front foot as she drives in, and her planted heel when she
   // slams the naginata down.
   const stamp = M ? M.hits[0] * M.dur - 0.06 : a.kind === 'call' ? CALL.hit * CALL.dur : null;
@@ -232,7 +229,13 @@ function strike(world, k, kind, M, last) {
   // The naginata is very heavy: every blow lands with a jolt, a long hit-stop and the ground shaking.
   // (Haft Strike's first blow is the butt, which dazes; its second is the blade.)
   const stun = kind === 'haft' && last ? 0 : M.stun;
-  hit.forEach((m, i) => dollHit(world, m, { pct: M.pct, x: k.x, knock: M.knock, launch: M.launch ?? 0, stun, stop: i ? 0 : last ? 0.1 : 0.06, shake: !i && last ? M.shake : 0, big: last && !i, burst: 'spirithit', gauge: 2, key: 'kitsune' }));
+  // (Hundred Thrusts' last blow is the big one: it throws.)
+  const final = last && M.lastPct;
+  const pct = final ? M.lastPct : M.pct;
+  const knock = final ? M.lastKnock : M.knock;
+  const launch = M.lastPct && !last ? 0 : M.launch ?? 0;
+  if (kind === 'crescent') world.fx.push({ kind: 'kitsunecrescent', x: k.x + dir * 58, y: k.y - 36, dir, t: 0, dur: 0.55 });
+  hit.forEach((m, i) => dollHit(world, m, { pct, x: k.x, knock, launch, stun, stop: i ? 0 : last ? 0.1 : 0.06, shake: !i && last ? M.shake : 0, big: last && !i, burst: 'spirithit', gauge: 2, key: 'kitsune' }));
   world.juice.push({ type: 'shake', mag: last ? M.shake : M.shake * 0.5, dur: 0.18 });
   world.juice.push({ type: 'dust', x: k.x + dir * M.reach * 0.6, y: k.y, count: last ? 5 : 3 });
   // Cleave buries the blade in the ground ahead: it cracks.
@@ -240,7 +243,9 @@ function strike(world, k, kind, M, last) {
 }
 
 // ---------- Her skills ----------
-const SKILLS = { moonfall: MOONFALL, crescent: CRESCENT, pillars: PILLARS };
+const SKILLS = { moonfall: MOONFALL, crescent: CRESCENT, flurry: FLURRY };
+// Her skills that are blows of the blade, played out like her moves.
+const BLOWS = { crescent: CRESCENT, flurry: FLURRY };
 const near = (world, k, r, h = 90) => world.mobs.filter((m) => alive(m) && !(m.air > 60) && Math.abs(m.x - k.x) < r && Math.abs(m.y - k.y) < h);
 
 // Moonfall: the naginata held high and charging; the vortex drags everything round her in to her
@@ -275,39 +280,6 @@ function moonfall(world, k, a, t, dt) {
     world.mobs
       .filter((m) => alive(m) && Math.abs(m.x - x) < M.blast + m.def.w / 2 && Math.abs(m.y - k.y) < 90)
       .forEach((m, i) => dollHit(world, m, { pct: M.pct, x, knock: M.knock, launch: M.launch, stun: M.stun, stop: i ? 0 : 0.16, shake: i ? 0 : 6, big: !i, burst: 'spirithit', gauge: 3, key: 'kitsune' }));
-  }
-}
-
-// Crescent Moon: a crescent of moonlight flies out from the cut, through everything in its line.
-function crescentMoon(world, k) {
-  const C = CRESCENT;
-  const dir = k.dir;
-  world.fx.push({ kind: 'kitsunecrescent', x: k.x + dir * 20, y: k.y - 34, dir, speed: C.speed, range: C.range, t: 0, dur: C.range / C.speed + 0.2 });
-  world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
-  world.mobs
-    .filter((m) => alive(m) && (m.x - k.x) * dir > -10 && Math.abs(m.x - k.x) < C.range && Math.abs(m.y - (m.air ?? 0) - k.y) < C.h)
-    .forEach((m) => dollHit(world, m, { pct: C.pct, x: k.x, knock: C.knock, stop: 0.04, burst: 'spirithit', big: true, gauge: 2, key: 'kitsune' }, Math.abs(m.x - k.x) / C.speed));
-}
-
-// Fox-Fire Pillars: a seal under each monster round her, then, one after another, pillars of fox
-// fire burst up out of them.
-function pillars(world, k, a, t) {
-  const P = PILLARS;
-  if (!a.marks && t >= P.hit * P.dur) {
-    a.marks = near(world, k, P.r, 120)
-      .sort((m, o) => Math.abs(m.x - k.x) - Math.abs(o.x - k.x))
-      .slice(0, P.n)
-      .map((m, i) => ({ m, x: m.x, y: m.y, at: t + 0.22 + i * P.gap }));
-    for (const s of a.marks) world.fx.push({ kind: 'kitsuneseal', x: s.x, y: s.y, t: 0, dur: s.at - t + 0.1 });
-    world.juice.push({ type: 'shake', mag: 1, dur: 0.15 });
-  }
-  for (const s of a.marks ?? []) {
-    if (s.done || t < s.at) continue;
-    s.done = true;
-    const x = alive(s.m) ? s.m.x : s.x;
-    world.fx.push({ kind: 'kitsunepillar', x, y: s.y, t: 0, dur: 0.8 });
-    world.juice.push({ type: 'shake', mag: 2, dur: 0.15 });
-    if (alive(s.m)) dollHit(world, s.m, { pct: P.pct, x, knock: P.knock, launch: P.launch, stop: 0.05, burst: 'spirithit', big: true, gauge: 2, key: 'kitsune' });
   }
 }
 
@@ -439,9 +411,8 @@ function stuck(world, k, intent, dt) {
 }
 
 // Her own moves at her target, once she's rested: never the same twice running; and her skills
-// when they're ready and worth it (Moonfall at several round her, or one she can't reach;
-// Fox-Fire Pillars at a few round her, or one up or down a ledge; Crescent Moon at one out of reach
-// ahead).
+// when they're ready and worth it (Moonfall at several round her, or one she can't reach, which it
+// drags in; Crescent Moon and Hundred Thrusts at what's in front of her).
 function fight(world, k) {
   const m = k.brain.target;
   if (!alive(m) || !k.body.onGround || k.act || world.now < k.next) return;
@@ -452,12 +423,11 @@ function fight(world, k) {
   const round = near(world, k, MOONFALL.r * 0.8).length;
   let kind = null;
   if (ready('moonfall') && (round >= 3 || (round >= 2 && Math.random() < 0.5) || (!inReach && level && dx < MOONFALL.r * 0.8 && Math.random() < 0.3))) kind = 'moonfall';
-  else if (ready('pillars') && near(world, k, PILLARS.r, 120).length >= 2 && Math.random() < 0.6) kind = 'pillars';
-  else if (ready('crescent') && !inReach && level && dx < CRESCENT.range - 20) kind = 'crescent';
-  else if (ready('pillars') && !inReach && dx < PILLARS.r && Math.abs(m.y - k.y) < 120) kind = 'pillars';
+  else if (!inReach) return;
+  else if (ready('crescent') && (near(world, k, CRESCENT.reach).length >= 2 || Math.random() < 0.4)) kind = 'crescent';
+  else if (ready('flurry') && Math.random() < 0.5) kind = 'flurry';
   if (kind) k.skillAt[kind] = world.now + SKILLS[kind].every;
   else {
-    if (!inReach) return;
     const crowd = world.mobs.filter((o) => alive(o) && Math.abs(o.x - k.x) < 80 && Math.abs(o.y - k.y) < 40).length;
     const pool = (crowd >= 2 ? ['sweep', 'sweep', 'reap', 'reap', 'cleave', 'thrust', 'rising', 'twin', 'haft'] : ['thrust', 'rising', 'twin', 'sweep', 'cleave', 'reap', 'haft']).filter((n) => n !== k.last);
     kind = pool[Math.floor(Math.random() * pool.length)];

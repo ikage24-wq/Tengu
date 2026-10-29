@@ -27,8 +27,8 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   vermilion fox fire and steps out of it at the Maiden's side (no leaps). Seven weapon moves
   (Thrust, Sweep, Rising Cut, Twin Strike, Cleave, Low Reap, Haft Strike) and three skills of her
   own on cooldowns: Moonfall (raises and charges the naginata, a vortex drags monsters in, then
-  one crushing blow), Crescent Moon (a flying crescent of moonlight) and Fox-Fire Pillars; plus
-  Fox-Fire Call and Guard.
+  one crushing blow), Crescent Moon (a huge cut leaving a crescent of moonlight in front of her) and
+  Hundred Thrusts; plus Fox-Fire Call and Guard. No range attacks: everything is the naginata.
 - **The doll grows up (chosen):** she becomes a little shrine fox kit, the guardian's mischievous
   junior, who rides on the guardian's shoulder or tail and pulls her own pranks.
 - **Gauge:** a shrine's **Grace**: builds from heals and wards landing, faster the more allies

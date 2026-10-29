@@ -2613,7 +2613,8 @@ test('the kitsune guardian has more weapon moves, and skills of her own', () => 
     }
   }
   assert.ok(['cleave', 'reap', 'haft'].filter((k) => seen.has(k)).length >= 1, `new weapon moves (${[...seen]})`);
-  assert.ok(['moonfall', 'crescent', 'pillars'].filter((k) => seen.has(k)).length >= 2, `her skills (${[...seen]})`);
+  assert.ok(['moonfall', 'crescent', 'flurry'].filter((k) => seen.has(k)).length >= 2, `her skills (${[...seen]})`);
+  assert.ok(!w.fx.some((f) => f.kind === 'kitsunecrescent' && f.speed), 'nothing flies: she has no range');
 });
 
 test("the kitsune guardian's Moonfall drags the monsters round her in and crushes them", () => {

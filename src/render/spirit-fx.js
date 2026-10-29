@@ -184,26 +184,13 @@ export function drawSpiritFx(ctx, f, x, y, p) {
       return true;
     }
     case 'kitsunecrescent': {
-      // Crescent Moon: a tall crescent of moonlight flying out from her cut, a trail of motes behind.
-      const d = Math.min(f.range, f.speed * f.t);
+      // Crescent Moon: a great crescent of moonlight left hanging in the air in front of her where the
+      // blade passed (it stays at arm's length), swelling a little and fading, motes falling off it.
       const dir = f.dir || 1;
-      const cx = x + dir * d;
-      const fade = f.speed * f.t > f.range ? Math.max(0, 1 - (f.speed * f.t - f.range) / (f.speed * 0.2)) : 1;
-      for (let i = 3; i >= 0; i--) crescent(ctx, cx - dir * i * 14, y, dir, (0.85 - i * 0.18) * fade, 1 - i * 0.08);
-      fxSprite(ctx, 'celmotes', cx - dir * 30, y + 30, { t: f.t, scale: 0.5, alpha: 0.6 * fade });
-      return true;
-    }
-    case 'kitsuneseal': {
-      // A seal of fox fire opening on the ground under a monster, where a pillar is about to go up.
-      groundRing(ctx, 'celringrage', x, y, 0.3 + 0.3 * Math.sin(f.t * 18), 30 + 10 * p);
-      fxSprite(ctx, 'celfire', x, y + 2, { t: f.t * 2, scale: 0.14 + 0.08 * p, alpha: 0.8 });
-      return true;
-    }
-    case 'kitsunepillar': {
-      // A pillar of fox fire bursting up out of the ground.
-      fxSprite(ctx, 'celpillarrage', x, y + 4, { p, scale: 0.55 });
-      fxSprite(ctx, 'celfire', x, y + 4, { t: f.t * 2, scale: 0.22, alpha: 1 - p });
-      groundRing(ctx, 'celringrage', x, y, Math.min(1, p * 1.5), 40);
+      const fade = 1 - Math.max(0, (p - 0.25) / 0.75);
+      const grow = 0.9 + 0.35 * Math.min(1, p * 3);
+      for (let i = 2; i >= 0; i--) crescent(ctx, x - dir * i * 6 * (1 - p), y + i * 4 * (1 - p), dir, (0.95 - i * 0.3) * fade, grow * (1 - i * 0.06));
+      fxSprite(ctx, 'celmotes', x, y + 40, { t: f.t, scale: 0.6, alpha: 0.7 * fade });
       return true;
     }
     case 'kitsuneblock': {
