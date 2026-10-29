@@ -412,7 +412,7 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
     } else flush();
   }
   flush();
-  return { shapes: [...shapes, ...extra, ...(shine ? ring(r.hi) : [])], shade: f.noShade ? [] : shade, hairline: !f.plain && !f.noShade };
+  return { shapes: [...shapes, ...extra, ...(shine && !f.noShine ? ring(r.hi) : [])], shade: f.noShade ? [] : shade, hairline: !f.plain && !f.noShade };
 }
 // Locks that frame the face, one in front of each ear, swinging a beat behind.
 const sideLocks = (r, m, near, far = near ? fx(near) : null, w = 3.6, k = 1.2) => [
@@ -880,7 +880,8 @@ Object.assign(FRINGES, {
   // The yuki-onna's blunt bangs: one heavy, perfectly straight cut just above her eyes, casting no
   // shadow on her pale brow (`noShade`).
   yukiblunt: {
-    pts: [[24.6, 14.4], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true, noShade: true,
+    // (`noShine`: on white hair the warm shine ring reads as bare scalp, so she has none.)
+    pts: [[24.6, 14.4], [6.4, 14.4]], lean: 0, blunt: true, noCrease: true, noShade: true, noShine: true,
     // (Strands combed down to the cut, so the bangs read as hair, not a bare brow.)
     strands: [[10.4, 8.4, 8.8, 13.4, 0.5, 0.6], [13, 9.6, 12.4, 13.6, 0.4, 0.3], [16.4, 8.8, 16.6, 13.4, 0.45, -0.1], [19.4, 9.8, 20.2, 13.6, 0.4, -0.3], [21.8, 8.2, 23.2, 13.2, 0.5, -0.6]],
   },
@@ -1002,7 +1003,7 @@ Object.assign(STYLES, {
       return F(T([[x - Math.cos(a) * r0, y - Math.sin(a) * r0 - 0.25], [x + Math.cos(a) * r0, y + Math.sin(a) * r0 - 0.25], [x + Math.cos(a) * r0, y + Math.sin(a) * r0 + 0.25], [x - Math.cos(a) * r0, y - Math.sin(a) * r0 + 0.25]], '#9cc8f0'));
     });
     const pins = [...icicle(19.6, 0.4, 1), ...icicle(11.4, 0.8, -1), ...flakeAt(20.6, 3.4, 1.6), F(E(20.6, 3.4, 0.5, 0.5, '#ffffff'))];
-    const knot = [F(E(15.5, 1.2, 6, 4.6, r.sh1)), F(E(15.5, 0.6, 5, 3.8, r.base)), streak(12.6, -1, 18, -1.6, 0.9, 0.6, r.hi), streak(13, 2, 17.6, 1, 0.6, 0.4, r.sh1)];
+    const knot = [F(E(15.5, 1.2, 6, 4.6, r.sh1)), F(E(15.5, 0.6, 5, 3.8, r.base)), streak(13, 2, 17.6, 1, 0.6, 0.4, r.sh1)];
     return {
       head: [crown(r, 0.2), ...knot],
       hang: [napeShadow(r), ...sheet({ len: 46, flare: 13, ends: 'level', n: 4, w0: 11.6 }, r, m, 0.7)],
