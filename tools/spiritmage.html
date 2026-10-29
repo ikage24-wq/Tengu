@@ -37,7 +37,7 @@ const c = createCharacter('Tester', {});
 gainExp(c, 1e6);
 advanceJob(c, 'spiritmage');
 c.equipment.weapon = makeEquip('wand_20', {});
-Object.assign(c.skills, { spiritbolt: 20, spiritstep: 10, spiritwave: 20, blessing: 20, spiritward: 15, dollmischief: 15, manamastery: 20, heavenslantern: 10 });
+Object.assign(c.skills, { spiritbolt: 20, spiritstep: 10, spiritwave: 20, blessing: 20, spiritward: 15, manamastery: 20, heavenslantern: 10 });
 c.mp = 9999;
 c.baseMp = 99999;
 const w = createWorld(c);
@@ -84,6 +84,7 @@ function step(dt) {
 }
 window.step = step;
 window.world = w;
+window.cam = cam;
 if (!q.has('manual')) {
   let last = performance.now();
   const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };

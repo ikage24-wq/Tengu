@@ -332,19 +332,6 @@ export const SKILLS = {
     },
   }),
 
-  dollmischief: skill({
-    id: 'dollmischief', name: "Doll's Mischief", job: 'spiritmage', type: 'attack', fx: null, icon: 'dollmischief', school: 'spirit', maxLevel: 15,
-    desc: "Point your fan at a monster and let the Spirit Doll loose: she pops up on its head and rides it, bonking it with her bell again and again (it can't get her off), then a last big bonk throws it into the air.",
-    weapons: ['wand', 'staff'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(14, 26), pct: k(70, 120), hits: k(5, 8), targets: 1,
-        combo: [{ move: 'kaguracall', dur: 0.95, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, mischief: { bonks: k(5, 8), pct: k(70, 120), last: k(200, 320), range: 320 } }] }],
-      };
-    },
-  }),
-
   manamastery: skill({
     id: 'manamastery', name: 'Mana Mastery', job: 'spiritmage', type: 'passive', fx: null, icon: 'manamastery',
     desc: 'Steadier spells, more magic attack, and a deeper well of MP.',
@@ -865,7 +852,7 @@ const MOVES_BY_SKILL = {
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
-  spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', dollmischief: 'kaguracall', heavenslantern: 'kaguralantern',
+  spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',
   shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',

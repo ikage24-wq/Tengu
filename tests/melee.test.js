@@ -2429,7 +2429,7 @@ test("the Spirit Mage's dance is slow and elegant: about a second a figure, and 
 function shrineMage() {
   const w = arena('wand_20');
   w.char.job = 'spiritmage';
-  Object.assign(w.char.skills, { spiritbolt: 20, spiritwave: 20, blessing: 20, spiritward: 15, dollmischief: 15, manamastery: 20, heavenslantern: 10 });
+  Object.assign(w.char.skills, { spiritbolt: 20, spiritwave: 20, blessing: 20, spiritward: 15, manamastery: 20, heavenslantern: 10 });
   w.char.baseMp = 1e6;
   w.char.mp = 1e6;
   run(w, 0.2);
@@ -2472,27 +2472,6 @@ test('Spirit Ward puts a barrier on her that soaks up damage', () => {
   assert.ok(Math.abs(b.shield - Math.round(w.stats.maxHp * b.values.barrier)) <= 1, 'as strong as its share of her max HP');
 });
 
-test("Doll's Mischief: the doll rides a monster, bonking it again and again, then hops off", () => {
-  const w = shrineMage();
-  const m = w.mobs[0];
-  assert.ok(cast(w, 'dollmischief').ok);
-  run(w, 0.5);
-  assert.equal(w.doll.act?.kind, 'ride', 'she pops up on its head');
-  assert.equal(w.doll.act.mob, m, 'the nearest monster in front');
-  let onHead = true;
-  let hits = 0;
-  let last = m.hp;
-  for (let i = 0; i < 60 * 4; i++) {
-    updateWorld(w, DT, idle);
-    if (w.doll.act?.kind === 'ride') onHead &&= Math.abs(w.doll.x - m.x) < 12;
-    if (m.hp < last) hits++;
-    last = m.hp;
-  }
-  assert.ok(onHead, 'carried on its head the whole ride');
-  assert.ok(hits >= 5, `bonked again and again (${hits})`);
-  assert.notEqual(w.doll.act?.kind, 'ride', 'and she hops off');
-});
-
 test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, and never refills it", () => {
   const w = shrineMage();
   w.god = false;
@@ -2527,21 +2506,24 @@ test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, 
   assert.ok(w.spirit < 10, `and it never refills Spirit (${w.spirit})`);
 });
 
-test('the Spirit Doll has a pool of six tricks, and each one lands', () => {
+test('the Spirit Doll has a pool of seven tricks of her own, and each one lands', async () => {
   const w = shrineMage();
   run(w, 0.5);
   const d = w.doll;
   const seen = new Set();
-  for (const kind of ['slap', 'twirl', 'bonk', 'kick', 'charm', 'akanbe']) {
+  for (const kind of ['slap', 'twirl', 'bonk', 'kick', 'charm', 'akanbe', 'ride']) {
     const m = w.mobs[0];
     const before = m.hp;
     d.act = null;
     d.next = 1e9;
     Object.assign(d, { x: m.x - 30, y: m.y - 18 });
-    d.act = { kind, t0: w.now, dur: TRICKS[kind].dur, mob: m, done: 0, x: m.x, y: m.y, x0: d.x };
+    const ride = { bonks: TRICKS.ride.bonks, from: [d.x, d.y], o: TRICKS.ride, hits: [0.5, 0.84, 1.18, 1.52] };
+    d.act = kind === 'ride' ? { kind, t0: w.now, dur: 2, mob: m, done: 0, ...ride } : { kind, t0: w.now, dur: TRICKS[kind].dur, mob: m, done: 0, x: m.x, y: m.y, x0: d.x };
     if (kind === 'bonk') d.bells.push({ mob: m, t0: w.now, at: w.now + TRICKS.bonk.hits[0] * TRICKS.bonk.dur, x: m.x, y: m.y });
-    run(w, TRICKS[kind].dur + 1);
+    run(w, (TRICKS[kind].dur ?? 2) + 1);
     if (m.hp < before) seen.add(kind);
   }
-  assert.deepEqual([...seen].sort(), ['akanbe', 'bonk', 'charm', 'kick', 'slap', 'twirl']);
+  assert.deepEqual([...seen].sort(), ['akanbe', 'bonk', 'charm', 'kick', 'ride', 'slap', 'twirl']);
+  const { SKILLS } = await import('../src/data/skills.js');
+  assert.ok(!Object.values(SKILLS).some((sk) => sk.job === 'spiritmage' && /doll/i.test(sk.name)), 'the Spirit Mage never orders the doll about');
 });

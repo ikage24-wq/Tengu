@@ -10,19 +10,19 @@
 //   Paper Charm    a charm of spirit light flicked at it from a way off: it sticks, then pops
 //   Akanbe         right up in its face, pulling an eyelid down and sticking her tongue out:
 //                  it's so cross it can't move for a moment (a little hit, a long daze)
+//   Rodeo          a hop up onto its head, and she rides it, bonking it with her bell on the
+//                  beat (each bonk dazes it, so it can't shake her off); a last big bonk throws
+//                  it into the air and she hops off cheering
 // She cheers with a peace sign when what she was picking on goes down, and puffs up furious when the
 // Spirit Mage is hurt. She flies (no ground under her, so she never needs a path), keeps within
 // LEASH of the Spirit Mage, and her hits are spells of the Spirit Mage's own magic attack
 // (melee.js dollHit). render/spiritdoll.js draws her.
 //
-// Two of the Spirit Mage's skills are hers too (data/skills.js):
-//   Doll's Mischief  ordered onto a monster, she pops up on its head and rides it, bonking it with
-//                    her bell again and again (each bonk dazes it, so it can't shake her off), then
-//                    a last big bonk throws it into the air and she hops off cheering
-//   Heaven's Lantern the finisher: a giant paper lantern rises over the monsters with the doll riding
-//                    on top, cheering; its rays strike monsters on the screen one after another,
-//                    each mending the Spirit Mage and the party, then it blazes and bursts
-// and she answers the others: a Blessing or a Ward going up makes her cheer.
+// Her tricks are her own (the Spirit Mage never orders them). She joins in with the Spirit Mage's
+// finisher, Heaven's Lantern (data/skills.js): a giant paper lantern rises over the monsters with
+// the doll riding on top, cheering; its rays strike monsters on the screen one after another, each
+// mending the Spirit Mage and the party, then it blazes and bursts. A Blessing or a Ward going up
+// makes her cheer.
 
 import { hasSpirit, dollHit, healAround } from './melee.js';
 import { skillAt } from '../data/skills.js';
@@ -32,6 +32,9 @@ const HOME = { x: 24, y: 34 };
 // How far from the Spirit Mage she'll go after a fight (across, and up or down).
 const LEASH = { x: 280, y: 150 };
 const SPEED = 330; // px/s at most, flying
+// How she steers: how hard she wants to close on where she's going (per second of distance), and
+// how quickly her speed turns toward that (so she swoops in curves instead of snapping about).
+const STEER = { fight: 6, idle: 4, dive: 13, accel: 9, diveAccel: 22 };
 const THINK = 0.2; // seconds between decisions
 // Her tricks: how long each lasts, when its hits land (0-1), how hard (% of a spell), and how far
 // they reach. The bell is dropped from overhead: it falls for `fall` of the move before it lands.
@@ -42,6 +45,7 @@ export const TRICKS = {
   kick: { dur: 0.9, hits: [0.62], pct: 46, reach: 40, knock: [190], launch: 150 },
   charm: { dur: 0.8, hits: [0.42], pct: 40, reach: 220, fly: 0.25, stick: 0.45, knock: [60] },
   akanbe: { dur: 1.1, hits: [0.5], pct: 12, reach: 50, stun: 1.4, knock: [10] },
+  ride: { bonks: 4, pct: 22, last: 60 },
 };
 // How fast she dives in a dropkick (px/s), past her usual flying speed.
 const DIVE = 720;
@@ -205,7 +209,7 @@ export function tickDoll(world, dt) {
   const { now } = world;
   tickBells(world, d);
   tickLantern(world, d);
-  // Riding a monster (Doll's Mischief) or the lantern: she's carried, not flying.
+  // Riding a monster (her Rodeo) or the lantern: she's carried, not flying.
   if (d.act?.kind === 'ride') return ride(world, d);
   if (world.lantern) return perch(world, d);
   // Her Spirit Mage's Blessing or Ward going up: she cheers.
@@ -231,9 +235,12 @@ export function tickDoll(world, dt) {
     let kind = null;
     if (dx < 40 + m.def.w / 2 && Math.abs(m.y - 18 - d.y) < 40) {
       const r = Math.random();
-      kind = crowd >= 2 && r < 0.3 ? 'twirl' : r < 0.52 ? 'slap' : r < 0.7 ? 'kick' : r < 0.84 ? 'akanbe' : 'bonk';
+      kind = crowd >= 2 && r < 0.28 ? 'twirl' : r < 0.48 ? 'slap' : r < 0.64 ? 'kick' : r < 0.76 ? 'akanbe' : r < 0.88 ? 'ride' : 'bonk';
     } else if (dx < TRICKS.charm.reach && Math.random() < 0.03) kind = Math.random() < 0.55 ? 'charm' : 'bonk';
-    if (kind) {
+    if (kind === 'ride') {
+      rodeo(world, d, m);
+      d.next = now + d.act.dur + REST[0] + Math.random() * (REST[1] - REST[0]);
+    } else if (kind) {
       start(world, d, kind, m);
       d.next = now + TRICKS[kind].dur + REST[0] + Math.random() * (REST[1] - REST[0]);
     }
@@ -253,12 +260,16 @@ export function tickDoll(world, dt) {
   // Flying there: she eases toward where she wants to be, quicker the further off, and turns to
   // face where she's going (or her target, or the way the Spirit Mage faces).
   const [gx, gy] = goal(world, d);
-  const k = 1 - Math.exp(-dt * (d.act?.kind === 'kick' ? 14 : alive(m) ? 7 : 5));
-  let vx = ((gx - d.x) * k) / Math.max(dt, 1e-3);
-  let vy = ((gy - d.y) * k) / Math.max(dt, 1e-3);
-  const sp = Math.hypot(vx, vy);
-  const top = d.act?.kind === 'kick' ? DIVE : SPEED;
-  if (sp > top) [vx, vy] = [(vx * top) / sp, (vy * top) / sp];
+  const dive = d.act?.kind === 'kick';
+  const pull = dive ? STEER.dive : alive(m) ? STEER.fight : STEER.idle;
+  let wx = (gx - d.x) * pull;
+  let wy = (gy - d.y) * pull;
+  const want = Math.hypot(wx, wy);
+  const top = dive ? DIVE : SPEED;
+  if (want > top) [wx, wy] = [(wx * top) / want, (wy * top) / want];
+  const turn = 1 - Math.exp(-dt * (dive ? STEER.diveAccel : STEER.accel));
+  let vx = (d.vx ?? 0) + (wx - (d.vx ?? 0)) * turn;
+  let vy = (d.vy ?? 0) + (wy - (d.vy ?? 0)) * turn;
   // Too far behind (a fall, a blink): she zips back in a flash.
   if (Math.abs(b.x - d.x) > LEASH.x * 1.8 || Math.abs(b.y - d.y) > LEASH.y * 2) {
     world.fx.push({ kind: 'dollpop', x: d.x, y: d.y, t: 0, dur: 0.4 });
@@ -280,32 +291,18 @@ export function tickDoll(world, dt) {
   else d.layer = alive(m) || d.bit?.kind === 'poke' || d.bit?.kind === 'peek' ? 'front' : 'back';
 }
 
-// ---------- Doll's Mischief: riding a monster ----------
+// ---------- Rodeo: riding a monster ----------
 
-// How long she takes to pop up on its head, the beat between bonks, and the beat after the last
+// How long her hop up onto its head takes, the beat between bonks, and the beat after the last
 // bonk before she hops off (seconds); how long each bonk dazes it.
-const RIDE = { hop: 0.25, beat: 0.32, off: 0.45, daze: 0.6 };
+const RIDE = { hop: 0.3, beat: 0.34, off: 0.45, daze: 0.6 };
 
-// The Spirit Mage points her fan: the doll picks the monster nearest in front of her (or any near
-// one) and pops up on its head. Nothing in reach: she pouts.
-export function dollMischief(world, o) {
-  const d = dollOf(world);
-  if (!d || world.dead) return;
-  const b = world.body;
-  const near = world.mobs.filter((m) => alive(m) && Math.abs(m.x - b.x) <= o.range && Math.abs(m.y - b.y) < 120);
-  const ahead = near.filter((m) => Math.sign(m.x - b.x) === b.facing);
-  const m = (ahead.length ? ahead : near).sort((p, q) => Math.abs(p.x - b.x) - Math.abs(q.x - b.x))[0];
-  if (!m) {
-    [d.mood, d.moodUntil] = ['mad', world.now + MOOD.mad];
-    return;
-  }
+// She hops up onto its head (an arc from where she is).
+function rodeo(world, d, m) {
+  const o = TRICKS.ride;
   const dur = RIDE.hop + o.bonks * RIDE.beat + RIDE.off;
-  d.act = { kind: 'ride', t0: world.now, dur, mob: m, done: 0, o, hits: Array.from({ length: o.bonks }, (_, i) => RIDE.hop + i * RIDE.beat + 0.2) };
-  d.bells = [];
+  d.act = { kind: 'ride', t0: world.now, dur, mob: m, done: 0, o, from: [d.x, d.y], hits: Array.from({ length: o.bonks }, (_, i) => RIDE.hop + i * RIDE.beat + 0.2) };
   d.bit = null;
-  world.fx.push({ kind: 'dollpop', x: d.x, y: d.y, t: 0, dur: 0.4 });
-  [d.x, d.y] = seat(m);
-  world.fx.push({ kind: 'dollpop', x: d.x, y: d.y, t: 0, dur: 0.4 });
 }
 
 // Where she sits on a monster: astride the top of its head.
@@ -318,8 +315,13 @@ function ride(world, d) {
   const t = world.now - a.t0;
   if (!alive(m)) a.done = a.hits.length;
   else {
-    [d.x, d.y] = seat(m);
-    d.dir = m.dir || d.dir;
+    // The hop: up and over in an arc, landing astride it.
+    const [sx, sy] = seat(m);
+    const u = Math.min(1, t / RIDE.hop);
+    const e = u * u * (3 - 2 * u);
+    d.x = a.from[0] + (sx - a.from[0]) * e;
+    d.y = a.from[1] + (sy - a.from[1]) * e - 26 * Math.sin(u * Math.PI);
+    d.dir = u < 1 ? Math.sign(sx - a.from[0]) || d.dir : m.dir || d.dir;
   }
   d.vx = 0;
   d.vy = 0;
@@ -328,7 +330,7 @@ function ride(world, d) {
     const last = a.done === a.hits.length - 1;
     a.done += 1;
     world.fx.push({ kind: 'bellbonk', x: m.x, y: m.y - m.def.h, t: 0, dur: 0.6, seed: Math.random(), small: !last });
-    dollHit(world, m, { pct: last ? a.o.last : a.o.pct, x: m.x - (m.dir || 1), knock: last ? 160 : 0, launch: last ? 260 : 0, stun: last ? 0.4 : RIDE.daze, stop: last ? 0.08 : 0.03, shake: last ? 3 : 0, big: last, burst: 'spirithit', gauge: 3, key: 'dollmischief' });
+    dollHit(world, m, { pct: last ? a.o.last : a.o.pct, x: m.x - (m.dir || 1), knock: last ? 160 : 0, launch: last ? 260 : 0, stun: last ? 0.4 : RIDE.daze, stop: last ? 0.08 : 0.03, shake: last ? 3 : 0, big: last, burst: 'spirithit', gauge: 3 });
   }
   if (t >= a.dur || (!alive(m) && t >= RIDE.hop)) {
     d.act = null;

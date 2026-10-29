@@ -1,9 +1,12 @@
 // Draws the Spirit Doll, the Spirit Mage's imp of a companion (world/spiritdoll.js), on a skeleton
 // of her own: her look is the hero's parts (a kokeshi bob, glassy doll eyes, painted dot brows, a
 // paper doll's kimono), but nothing of the player's rig moves her. She never touches the ground: she
-// floats, legs dangling and kicking, and everything she does is a pose from here, blended into the
-// next so nothing ever snaps, handed to the hero's drawing whole (hero.js drawPosed). Her paper fan
-// is a bone in her right hand, drawn from where the hand really is.
+// floats, legs dangling and kicking, and everything she does is a pose from here. She never jumps
+// to a pose: every part of her is carried there on a spring (`follow`), so she moves fluidly, a
+// quick move overshoots a hair and settles, and one action flows into the next. On top of that she
+// leans into her flight and her head, hair and sleeves trail after her body (follow-through). The
+// result is handed to the hero's drawing whole (hero.js drawPosed). Her paper fan is a bone in her
+// right hand, drawn from where the hand really is.
 import { drawPosed } from './hero.js';
 import { fxSprite } from './fx-sprites.js';
 import { paintFan } from './props.js';
@@ -88,14 +91,13 @@ function slapping(p) {
     extras: p > 0.7 ? ['spark0'] : [], ...kickLegs(p * 6, 0.4),
   });
 }
-// Streamer Twirl: arms flung out, she spins (a clean flip each half turn) three times, faster
-// then slowing, and comes out of it dizzy for a beat.
+// Streamer Twirl: arms flung out, she wheels round twice in the air (one smooth turn of the whole
+// figure, never a flip), fast then slowing, streamers whipping out, and comes out of it dizzy.
 function twirling(p) {
-  const turns = ease(seg(p, 0.05, 0.85)) * 3;
-  const half = Math.floor(turns * 2) % 2 === 1;
+  const turns = ease(seg(p, 0.05, 0.85)) * 2;
   const dizzy = seg(p, 0.85, 1);
   return pose({
-    turned: half && dizzy === 0, hand: [3, -3], free: [3, -3], fan: -0.4, open: 1, tilt: 6 * Math.sin(turns * TAU), by: -0.6, cloth: 3, kick: -1.5,
+    spin: -turns * TAU, hand: [3, -3], free: [3, -3], fan: -0.4, open: 1, tilt: 4 * Math.sin(turns * TAU), by: -0.6, cloth: 3, kick: -1.5,
     legF: [1.6, -2, 30], legB: [-1.6, -0.6, -20], mouth: dizzy > 0 ? 'wavy' : 'grin', eyes: dizzy > 0 ? null : 'happy', extras: dizzy > 0 ? [`orbit${Math.floor(p * 40) % 8}`] : [],
   });
 }
@@ -204,7 +206,16 @@ function humming(u, t) {
   });
 }
 
-// ---------- Doll's Mischief ----------
+// ---------- Rodeo ----------
+
+// The hop up onto a monster: knees tucked, both arms flung up, bell held high, a whoop.
+function hopping(u) {
+  const k = Math.sin(u * Math.PI);
+  return pose({
+    hand: [1.4, -11], free: [2, -10], fan: null, bell: true, tilt: -12 * k, by: -1 * k, kick: -1.2 * k, cloth: 2,
+    legF: [2.4, -4.6, 70], legB: [1.2, -4, 60], mouth: 'open', eyes: 'happy', blush: 1.5,
+  });
+}
 
 // Riding a monster: sat astride its head, legs kicking at its sides, the gold bell swung up high
 // and brought down on the beat (`since`: seconds since the last bonk, `beat` between bonks), a
@@ -237,29 +248,58 @@ function fuming(p, t) {
   });
 }
 
-// Blending: every number eases over, angles the short way round.
-function blend(a, b, k) {
-  if (k >= 1) return b;
-  const out = { ...b };
-  for (const key of Object.keys(b)) {
-    const x = a[key];
-    const y = b[key];
-    if (typeof y === 'number' && typeof x === 'number') out[key] = lerp(x, y, k);
-    else if (Array.isArray(y) && Array.isArray(x) && typeof y[0] === 'number') out[key] = y.map((v, i) => lerp(x[i], v, k));
+// Following: every number of her pose is carried toward the pose she's in on a spring, a touch
+// under-damped (so a quick move overshoots a hair and settles, and nothing ever snaps); whole turns
+// (`spin`) take the short way round. Faces, the bell and other switches change at once.
+const FOLLOW = { k: 420, damp: 0.74 };
+function follow(st, target, dt) {
+  if (!st.P) {
+    st.P = structuredClone(target);
+    st.V = {};
+    return st.P;
   }
-  return out;
+  const c = 2 * Math.sqrt(FOLLOW.k) * FOLLOW.damp;
+  const P = { ...target };
+  const step = (x, v, to, h) => {
+    const nv = v + ((to - x) * FOLLOW.k - v * c) * h;
+    return [x + nv * h, nv];
+  };
+  const n = Math.max(1, Math.ceil(dt / (1 / 120)));
+  const h = dt / n;
+  for (const key of Object.keys(target)) {
+    const to = target[key];
+    const was = st.P[key];
+    if (typeof to === 'number' && typeof was === 'number') {
+      let x = key === 'spin' ? was - TAU * Math.round((was - to) / TAU) : was;
+      let v = st.V[key] ?? 0;
+      for (let i = 0; i < n; i++) [x, v] = step(x, v, to, h);
+      P[key] = x;
+      st.V[key] = v;
+    } else if (Array.isArray(to) && Array.isArray(was) && to.every((e) => typeof e === 'number') && was.length === to.length) {
+      const vs = (st.V[key] ??= to.map(() => 0));
+      P[key] = to.map((t, i) => {
+        let x = was[i];
+        let v = vs[i];
+        for (let j = 0; j < n; j++) [x, v] = step(x, v, t, h);
+        vs[i] = v;
+        return x;
+      });
+    } else st.V[key] = undefined;
+  }
+  st.P = P;
+  return P;
 }
 
-const q = (v) => Math.round(v * 2) / 2;
-const deg3 = (v) => Math.round(v / 3) * 3;
-// Her state between frames: what she was doing and the pose it blends from, the hair spring,
-// blinks, and the motes she trails when she flies.
+const q = (v) => Math.round(v * 4) / 4;
+const deg2 = (v) => Math.round(v / 2) * 2;
+// Her state between frames: her pose as it's carried along (and its speeds), the hair spring, her
+// flight (to lean into turns), blinks, and the motes she trails when she flies.
 const STATE = new WeakMap();
 
 export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   if (!d) return;
   let st = STATE.get(d);
-  if (!st) STATE.set(d, (st = { last: time, doing: null, from: null, since: -9, shown: null, hair: 0, hairV: 0, tip: 0, tipV: 0, motes: [] }));
+  if (!st) STATE.set(d, (st = { last: time, P: null, V: {}, hair: 0, hairV: 0, tip: 0, tipV: 0, lean: 0, leanV: 0, head: 0, headV: 0, vx: 0, vy: 0, motes: [] }));
   const dt = Math.max(0, Math.min(0.1, time - st.last));
   st.last = time;
   // Her bells falling on heads (drawn on the front layer, over the monsters).
@@ -270,42 +310,33 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   const sp = Math.hypot(d.vx, d.vy);
   const a = d.act;
   // What she's doing, and her pose for it.
-  let doing;
   let p;
   if (a) {
-    doing = a.kind;
     const u = clamp01((world.now - a.t0) / a.dur);
     if (a.kind === 'ride') {
-      const last = a.hits.filter((h) => h <= world.now - a.t0).at(-1);
-      p = riding(last == null ? 0.25 : world.now - a.t0 - last, 0.32, time);
+      const t = world.now - a.t0;
+      const last = a.hits.filter((h) => h <= t).at(-1);
+      p = t < a.hits[0] - 0.2 ? hopping(clamp01(t / (a.hits[0] - 0.2))) : riding(last == null ? 0.25 : t - last, a.hits[1] - a.hits[0] || 0.34, time);
     } else p = { slap: slapping, twirl: twirling, bonk: bonking, kick: dropkicking, charm: charming, akanbe: (v) => akanbe(v, time) }[a.kind](u);
-  } else if (d.mood === 'peace') {
-    doing = 'peace';
-    p = cheering(0, time);
-  } else if (d.mood === 'mad') {
-    doing = 'mad';
-    p = fuming(0, time);
-  } else if (d.bit) {
-    doing = d.bit.kind;
+  } else if (d.mood === 'peace') p = cheering(0, time);
+  else if (d.mood === 'mad') p = fuming(0, time);
+  else if (d.bit) {
     const u = clamp01((world.now - d.bit.t0) / BITS[d.bit.kind]);
     p = { orbit: () => orbiting(time, u), peek: () => peeking(u), poke: () => poking(u, time), blep: () => blepping(u, time), loop: () => looping(u), hum: () => humming(u, time) }[d.bit.kind]();
-  } else if (sp > 90) {
-    doing = 'fly';
-    p = flying(time, sp);
-  } else {
-    doing = 'hover';
-    p = hovering(time);
-  }
-  if (doing !== st.doing) {
-    st.from = st.shown;
-    st.since = time;
-    st.doing = doing;
-  }
-  const k = st.from ? ease(clamp01((time - st.since) / 0.16)) : 1;
-  const P = st.from ? blend(st.from, p, k) : p;
-  st.shown = P;
+  } else if (sp > 90) p = flying(time, sp);
+  else p = hovering(time);
+  const P = follow(st, p, dt);
+  // Follow-through: she banks into her flight (leaning the way she's going, harder as she speeds
+  // up or swerves), and her head trails her body a beat behind; both on springs of their own.
+  const dir = d.dir || 1;
+  const ax = dt > 0 ? (d.vx - st.vx) / dt : 0;
+  const ay = dt > 0 ? (d.vy - st.vy) / dt : 0;
+  [st.vx, st.vy] = [d.vx, d.vy];
+  const bank = Math.max(-22, Math.min(22, (d.vx * dir) / 22 + (ax * dir) / 260));
+  [st.lean, st.leanV] = spring(st.lean, st.leanV, a ? bank * 0.3 : bank, 90, 13, dt);
+  [st.head, st.headV] = spring(st.head, st.headV, Math.max(-1.6, Math.min(1.6, -(ax * dir) / 900 + ay / 1400)), 120, 11, dt);
   // The hair: a spring that swings after her and is thrown about by what she does.
-  const pull = -(d.vx / 90) * (d.dir || 1) + (P.kick ?? 0);
+  const pull = -(d.vx / 90) * dir + (P.kick ?? 0) - ay / 900;
   [st.hair, st.hairV] = spring(st.hair, st.hairV, pull, 60, 6, dt);
   [st.tip, st.tipV] = spring(st.tip, st.tipV, st.hair, 40, 4.5, dt);
   // Motes of spirit light trailing her when she flies fast.
@@ -314,13 +345,12 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
   const blink = (time * 0.37) % 1;
   const eyes = P.eyes ?? (blink < 0.012 || (blink > 0.03 && blink < 0.042) ? 'half' : blink < 0.03 ? 'blink' : 'open');
   const look = { ...DOLL_LOOK, mouth: P.mouth };
-  const dir = d.dir || 1;
   const facing = P.turned ? -dir : dir;
   const rig = {
-    tx: q(P.tx), by: q(P.by), hx: q(P.hx), hy: q(P.hy), tilt: deg3(P.tilt), backArm: [q(P.hand[0]), q(P.hand[1])], frontArm: [q(P.free[0]), q(P.free[1])], armSide: 0.6,
-    frontLeg: [q(P.legF[0]), q(P.legF[1]), deg3(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), deg3(P.legB[2])], air: true,
+    tx: q(P.tx), by: q(P.by), hx: q(P.hx + st.head), hy: q(P.hy), tilt: deg2(P.tilt + st.lean), backArm: [q(P.hand[0]), q(P.hand[1])], frontArm: [q(P.free[0]), q(P.free[1])], armSide: 0.6,
+    frontLeg: [q(P.legF[0]), q(P.legF[1]), deg2(P.legF[2])], backLeg: [q(P.legB[0]), q(P.legB[1]), deg2(P.legB[2])], air: true,
     hair: q(Math.max(-3, Math.min(3, st.hair))), hairTip: q(Math.max(-4, Math.min(4, st.tip))), hairLift: q(-(P.kick ?? 0)), hairWave: Math.floor((((time / 2.2) % 1) + 1) % 1 * 8),
-    cape: q(P.cloth), eyes, face: { brows: P.brows, extra: P.extras, blush: P.blush, puff: P.puff },
+    cape: q(P.cloth - st.lean / 8), eyes, face: { brows: P.brows, extra: P.extras, blush: P.blush, puff: P.puff },
   };
   // A soft glow of spirit light under her, so she reads as floating, not standing.
   ctx.save();
@@ -353,7 +383,7 @@ export function drawSpiritDoll(ctx, world, d, cam, time, layer) {
     ctx.rotate(P.spin * dir);
     ctx.translate(-x, -cy);
   }
-  drawPosed(ctx, look, Math.round(x), Math.round(y), rig, { scale: SCALE, facing, over: fanOn });
+  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: SCALE, facing, over: fanOn });
   ctx.restore();
 }
 

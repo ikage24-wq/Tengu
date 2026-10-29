@@ -32,7 +32,7 @@ import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, ap
 import { moveAt } from '../render/moves.js';
 import { useStars } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
-import { tickDoll, dollMischief, raiseLantern } from './spiritdoll.js';
+import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
 import { provoke, healMembers } from './dungeon.js';
 
@@ -1056,11 +1056,9 @@ function land(world, s) {
   if (s.burst) {
     world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
   }
-  // The Spirit Mage's support spells and her doll's orders land with the dance (world/spiritdoll.js):
-  // a buff on her and the party round her (`grant`), the doll let loose on a monster (`mischief`),
-  // Heaven's Lantern raised (`lantern`).
+  // The Spirit Mage's support spells land with the dance: a buff on her and the party round her
+  // (`grant`), Heaven's Lantern raised (`lantern`, world/spiritdoll.js).
   if (s.grant) grantSpell(world, s.grant);
-  if (s.mischief) dollMischief(world, s.mischief);
   if (s.lantern) raiseLantern(world, s.key);
   let crits = 0;
   targets.forEach((m, i) => {

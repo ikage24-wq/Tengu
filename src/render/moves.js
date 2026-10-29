@@ -62,7 +62,7 @@ function danceLegs(r, ...stances) {
 const breathe = (p) => Math.sin(p * Math.PI * 3);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
-export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguracall', 'kaguralantern']);
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern']);
 
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
@@ -1769,26 +1769,6 @@ export const MOVES = {
       },
     };
   },
-  // Doll's Mischief (the doll goes at ~0.42): a sly little lean back with the fan hiding a grin,
-  // then a flick: the fan snaps open and points straight at the monster, up on one toe, a wink.
-  kaguracall(p) {
-    const sly = soft(seg(p, 0, 0.3));
-    const flick = soft(seg(p, 0.34, 0.44));
-    const settle = soft(seg(p, 0.75, 1));
-    const hold = 1 - settle;
-    return {
-      weapon: lerp(10, 0, sly) + 15 * settle, arm: lerp(70, 60, sly) + 10 * settle,
-      tilt: -0.12 * sly * (1 - flick) + 0.12 * flick * hold, lunge: -2 * sly * (1 - flick) + 5 * flick * hold, lift: 2 * flick * hold,
-      fan: lerp(0.6, 0.9, sly) * (1 - 0.5 * flick) + flick * 0.6, fanA: lerp(-20, 30, sly) * (1 - flick) + 80 * flick * hold, fanFront: true,
-      rig: (r) => {
-        r.backArm = [q(lerp(0, 5, sly) * (1 - flick) + 12 * flick * hold), q(lerp(0, -6, sly) * (1 - flick) - 6 * flick * hold)];
-        r.hairLift = flick * hold > 0.4 ? -1 : 0;
-        danceLegs(r, [flick * hold, [1.6, -1.6, 12], [-1.6, 0, -6]]);
-        if (flick * hold > 0.3) [r.eyes, r.mouth] = ['happy', 'open'];
-        else if (sly > 0.3) r.eyes = 'half';
-      },
-    };
-  },
   // Heaven's Lantern (the lantern goes up at ~0.48): a deep, slow bow with both hands together
   // low before her, eyes closed; then she straightens and lifts both arms high, slowly, as if
   // raising the lantern into the sky herself, up on her toes, and holds there, looking up at it.
@@ -1838,7 +1818,7 @@ export const MOVE_MIN = {
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
-  kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguracall: 0.85, kaguralantern: 1.6,
+  kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
 };
 
 // Basic attacks chain into a combo per weapon type.

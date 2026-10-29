@@ -1324,15 +1324,6 @@ function spiritward() {
   out.push(...spark(13.6, 2.6, 0.9, '#ffd36a'));
   return out;
 }
-// Doll's Mischief: a gold bell swung down for a bonk, little stars of the impact flying off.
-function dollmischief() {
-  const out = [...tile('shrine', 'active')];
-  const bell = [[4.6, 11.2], [5.4, 5.6], [8, 3.6], [10.6, 5.6], [11.4, 11.2]];
-  out.push(...solid(bell, '#ffd36a', { d: 0.35, ink: '#8a5a10' }), S(rect(4, 10.6, 8, 1.4), '#c8902a'), ...solid(oval(8, 12.8, 1.1, 1.1, 0, 12), '#ffd36a', { d: 0.3, ink: '#8a5a10' }));
-  out.push(S(tube([[6.4, 6], [6, 9.6]], 0.5, 0.3), '#fff3c4'), S(tube([[8, 3.6], [8, 1.4]], 0.5, 0.5), SCARLET));
-  out.push(...spark(2.2, 4, 1, '#ffd36a'), ...spark(13.6, 4.6, 1.1, '#ffd36a'), ...spark(13.4, 13.4, 0.8));
-  return out;
-}
 // Mana Mastery: a wisp of spirit light curling round a gold heart of light.
 function manamastery() {
   const out = [...tile('shrine', 'passive'), ...aura(8, 8, 6.4, '#fff3dc', 1.1)];
@@ -1415,7 +1406,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, dollmischief, manamastery, heavenslantern,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern,
   gmsmite, gmhaste, gmblessing,
 };
 
