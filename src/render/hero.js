@@ -328,6 +328,13 @@ const EYE_LOOK = {
   // The tengu's: long, sharp and upswept under a heavy lid (a smug, unhurried look down his nose),
   // a man's light lashes, a narrow gold iris.
   tengusmug: { rx: 2.55, ry: 1.85, tilt: 0.34, wing: 1.1, flicks: 1, iris: 1.12, open: 0.64 },
+  // More of his, to pick from: a fox's, narrow and sharply upswept; heavy-lidded and bored; keen,
+  // with a slit pupil; long and calm, almond-shaped; a hawk's, a small fierce iris in a wide eye.
+  tengufox: { rx: 2.6, ry: 1.7, tilt: 0.55, wing: 1.5, flicks: 1, iris: 1.05, open: 0.56 },
+  tenguheavy: { rx: 2.5, ry: 2, tilt: 0.12, wing: 1, flicks: 1, iris: 1.1, open: 0.48 },
+  tengukeen: { rx: 2.45, ry: 2, tilt: 0.42, wing: 1.3, flicks: 1, iris: 1.15, pupil: 'slit', open: 0.7 },
+  tengucalm: { rx: 2.6, ry: 1.9, tilt: 0.2, wing: 1.2, flicks: 1, iris: 1.25, open: 0.72 },
+  tenguhawk: { rx: 2.35, ry: 2.3, tilt: 0.3, wing: 1, flicks: 1, iris: 0.9, open: 0.8 },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -550,6 +557,9 @@ function mouthShapes(kind, sk) {
     case 'tengugrin': return [F(T([[x - 1.2, MY + 0.3], [x + 1.9, MY - 0.5], [x + 1.4, MY + 1], [x - 0.6, MY + 0.9]], MOUTH)), F(T([[x - 0.9, MY + 0.35], [x + 1.8, MY - 0.4], [x + 1.6, MY + 0.2], [x - 0.6, MY + 0.55]], '#ffffff')),
       stroke([[x - 1.4, MY + 0.35], [x + 0.6, MY + 0.05], [x + 2, MY - 0.6]], 0.45, LIP)];
     case 'tenguhah': return [F(E(x + 0.3, MY + 0.7, 1.1, 0.75, MOUTH)), F(E(x + 0.3, MY + 0.35, 0.9, 0.25, '#ffffff'))];
+    // A sly half smile with one small fang showing; a cool, faint line.
+    case 'tengusly': return [stroke([[x - 1.4, MY + 0.4], [x + 0.2, MY + 0.7], [x + 1.6, MY + 0.1], [x + 2, MY - 0.4]], 0.55, LIP), F(T([[x + 0.6, MY + 0.55], [x + 1.3, MY + 0.35], [x + 1.05, MY + 1.35]], '#ffffff'))];
+    case 'tengucool': return [stroke([[x - 1, MY + 0.6], [x + 1.4, MY + 0.45]], 0.5, LIP)];
     case 'tengutch': return [stroke([[x - 1.2, MY + 0.7], [x + 0.6, MY + 0.5], [x + 1.6, MY + 0.8]], 0.55, LIP), F(E(x + 1.8, MY + 0.6, 0.3, 0.25, LIP))];
     case 'onismirk': return [stroke([[x - 1.6, MY + 0.7], [x + 0.2, MY + 0.6], [x + 1.6, MY - 0.6], [x + 2, MY - 0.9]], 0.62, LIP), F(T([[x + 0.8, MY + 0.4], [x + 1.6, MY - 0.1], [x + 1.4, MY + 1.3]], '#ffffff'))];
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];

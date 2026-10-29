@@ -35,7 +35,7 @@ export const hairStyleOf = (look) => {
 export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
-export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime', 'yukibob', 'yukibun', 'yukitails', 'yukifrost', 'tengupart'];
+export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime', 'yukibob', 'yukibun', 'yukitails', 'yukifrost', 'tengupart', 'tengusweep', 'tengulong', 'tenguwolf', 'tenguhalf', 'tenguslick'];
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
 
@@ -1183,6 +1183,77 @@ Object.assign(STYLES, {
       hang: [napeShadow(r), ...sheet({ len: 23, flare: 12.4, ends: 'points', n: 7, w0: 12, wave: 0.2 }, r, m, 0.7)],
       front: bangs('tengupart', r, m, [lock(side, 3.2, r.base, m, 1.1, 0.25), lock(fx(side), 3.2, r.sh1, m, 1.1, 0.25),
         streak(24.6, 13, 25.6, 22, 0.6, -0.2, r.hi, m, 1.1)]),
+      tips: [99, 99],
+    };
+  },
+});
+
+// More of the tengu's, to pick from:
+Object.assign(FRINGES, {
+  // Parted far to the side: long bangs swept across his brow and down past the far eye.
+  tenguside: { pts: [[25, 13.6], [24, 11], [22.6, 12.6], [21.6, 10.4], [19.4, 13.6], [17.8, 12], [15, 15.6], [13.8, 13.8], [10.6, 17], [10, 15], [7, 18.2], [6, 16.6]], lean: -1.2, part: [[21.6, 2], [21.8, 9.6]] },
+  // A wolf cut's: choppy, sharp, uneven pieces, parted in the middle.
+  tenguwolf: { pts: [[25.2, 15.8], [24, 12.2], [22.8, 15.6], [21.2, 11], [19.8, 14.4], [18, 10.4], [16.4, 12.6], [HX, 8.2], [14.6, 12.6], [13, 10.4], [11.2, 14.4], [9.8, 11], [8.2, 15.6], [7, 12.2], [5.8, 15.8]], lean: 0.2, part: [[HX, 1.4], [HX, 8]] },
+  // Slicked back off his brow, parted in the middle, two loose locks falling forward over it.
+  tenguslick: { pts: [[24.8, 12], [22, 8.6], [18.6, 7.2], [HX, 6.6], [12.4, 7.2], [9, 8.6], [6.2, 12]], lean: 0, plain: true, part: [[HX, 1.4], [HX, 6.4]] },
+});
+Object.assign(STYLES, {
+  // Side-swept: a deep side part, long bangs swept across past the far eye, sleek and layered to
+  // the nape, a longer lock in front of each ear.
+  tengusweep(r, m) {
+    const side = [[24.4, 11.6], [26, 16], [25.6, 21], [26.4, 24]];
+    return {
+      head: [crown(r, 0.4), streak(21, 2, 25, 8, 0.7, -0.3, r.sh1), streak(20, 2, 10, 6, 0.8, 0.5, r.sh1)],
+      hang: [napeShadow(r), ...sheet({ len: 23, flare: 12.6, ends: 'points', n: 7, w0: 12, wave: 0.3 }, r, m, 0.7)],
+      front: bangs('tenguside', r, m, [lock(side, 3, r.base, m, 1.1, 0.25), lock(fx(side), 3, r.sh1, m, 1.1, 0.25), streak(12, 9, 8.4, 16, 0.6, 0.3, r.hi, m, 1)]),
+      tips: [99, 99],
+    };
+  },
+  // Long, parted in the middle and tied low at his nape, the tail brought forward over his near
+  // shoulder to his chest, tied with a crimson cord; loose strands framing his face.
+  tengulong(r, m) {
+    const tail = [[24.4, 20], [26.2, 25], [25.8, 31], [26.4, 37]];
+    const strand = [[23.8, 12], [25.2, 17], [24.8, 22]];
+    return {
+      head: [crown(r, 0.4), streak(HX - 0.6, 2, 9, 7, 0.7, 0.4, r.sh1), streak(HX + 0.6, 2, 22, 7, 0.7, -0.4, r.sh1)],
+      hang: [napeShadow(r), ...sheet({ len: 21, flare: 12, ends: 'level', n: 4, w0: 11.8 }, r, m, 0.6)],
+      front: bangs('tengupart', r, m, [lock(strand, 2, r.base, m, 1.2, 0.3), lock(fx(strand), 2, r.sh1, m, 1.2, 0.3), lock(tail, 4.4, r.base, m, 1.1, 0.35),
+        streak(25, 23, 26, 34, 0.6, -0.2, r.hi, m, 1.1), F(E(24.8, 22.4, 1.8, 0.9, '#c4242a')), F(E(24.8, 22.4, 0.8, 0.5, '#f2c94c'))]),
+      tips: [99, 99],
+    };
+  },
+  // A wolf cut: thick and shaggy on top, choppy layers flicking out at his jaw and nape, sharp
+  // uneven bangs parted in the middle.
+  tenguwolf(r, m) {
+    const flick = (pts, w, c = r.base, k = 1.1) => [lock(pts, w, c, m, k), lock(fx(pts), w, c, m, k)];
+    return {
+      head: [crown(r, 1), streak(HX - 0.6, 2, 8, 8, 0.8, 0.5, r.sh1), streak(HX + 0.6, 2, 23, 8, 0.8, -0.5, r.sh1)],
+      hang: [napeShadow(r), ...sheet({ len: 25, flare: 14, ends: 'points', n: 8, w0: 12.6, wave: 0.6 }, r, m, 0.85), ...flick([[5, 20], [2.4, 24.6], [0.6, 26.4]], 3.4, r.sh1)],
+      front: bangs('tenguwolf', r, m, [...flick([[24.6, 12], [26.6, 17], [26.2, 21.4], [28, 23.6]], 3.2), streak(23, 10, 25, 20, 0.6, -0.2, r.hi, m, 1.1)]),
+      tips: [99, 99],
+    };
+  },
+  // Half up: the top tied up into a small knot at the crown with a crimson cord, the rest falling
+  // straight to his shoulders; parted curtain bangs.
+  tenguhalf(r, m) {
+    const side = [[24.2, 11.6], [26, 16.4], [25.8, 21.4], [26.6, 25]];
+    const knot = [F(E(HX, 0.6, 3.4, 2.6, r.sh1)), F(E(HX, 0.2, 2.6, 2, r.base)), F(R(HX - 2.2, 2.2, 4.4, 0.9, '#c4242a'))];
+    return {
+      head: [crown(r, 0.3), ...knot, streak(HX - 1, 3, 9, 8, 0.7, 0.4, r.sh1), streak(HX + 1, 3, 22, 8, 0.7, -0.4, r.sh1)],
+      hang: [napeShadow(r), ...sheet({ len: 31, flare: 13.4, ends: 'points', n: 6, w0: 12, wave: 0.3 }, r, m, 0.75)],
+      front: bangs('tengupart', r, m, [lock(side, 3.2, r.base, m, 1.1, 0.25), lock(fx(side), 3.2, r.sh1, m, 1.1, 0.25)]),
+      top: knot,
+      tips: [99, 99],
+    };
+  },
+  // Slicked back: combed straight back off his brow, sleek to the nape, two loose locks fallen
+  // forward over his forehead.
+  tenguslick(r, m) {
+    return {
+      head: [crown(r, 0.2), streak(HX - 1.4, 2, 7, 10, 0.8, 0.6, r.sh1), streak(HX + 1.4, 2, 24, 10, 0.8, -0.6, r.sh1), streak(HX - 4, 2.4, 6.4, 13, 0.6, 0.5, r.sh1), streak(HX + 4, 2.4, 24.6, 13, 0.6, -0.5, r.sh1)],
+      hang: [napeShadow(r), ...sheet({ len: 22, flare: 12, ends: 'points', n: 6, w0: 11.8, wave: 0.2 }, r, m, 0.6)],
+      front: bangs('tenguslick', r, m, [...sideLocks(r, m, [[24.4, 11], [25.6, 15.4], [25.2, 19]], undefined, 2.6),
+        lock([[16.4, 6.4], [17.6, 10.4], [16.8, 14.6]], 1.5, r.base, m, 1.2, 0.2), lock([[15, 6.6], [14, 9.8], [14.6, 12.8]], 1.1, r.base, m, 1.2, 0.2)]),
       tips: [99, 99],
     };
   },
