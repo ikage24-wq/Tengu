@@ -98,6 +98,18 @@ but it is always drawn at its own width and height: a spin is a clean mirror fli
 turn, never a squeeze, and jumping, landing and getting hit show in the pose alone. `rigid` in
 `render/hero.js` enforces it and `tests/anim.test.js` checks every move against it.
 
+**Expressive, smooth, creative, never generic (the player's standing rule, for everything).**
+Every character, summon, NPC, monster, move, effect, UI piece and map must be expressive,
+smoothly animated, creative and polished to as near perfect as we can make it. Nothing may be
+generic, stiff or clunky:
+- Poses blend into each other, never snap.
+- Motion has anticipation, follow-through and overlap: hair, cloth, tails and props trail and
+  settle.
+- Faces and bodies act: they react, emote and have idle life.
+- Every design has its own idea rather than a stock one.
+
+If something reads as plain, rigid or "default", it isn't done: rework it before showing it.
+
 **Freedom to make it better (the player's standing rule).** The player always wants things better,
 so you have broad freedom to improve whatever you're working on: redraw, rework, add, or replace
 art, effects, animation, moves and feel when it raises the quality, without asking first. That
