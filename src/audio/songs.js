@@ -3,16 +3,21 @@
 // accompaniment is built from each song's written chord chart by the helpers below (strums,
 // arpeggios, basslines, pads), so each part follows the harmony exactly.
 //
-// The sound, area by area (see docs/audio/README.md):
-// - Town: flute over nylon guitar, plucked strings and a soft synth double, light modern drums.
-// - Meadows: a running flute and synth pluck, marimba, a punchy bass, full pop drums.
-// - Harbor: accordion and guitar in a lilting 6/8, shaker and woodblock.
-// - Crags: sitar and oboe over a drone, toms and shaker.
-// - Forest: pan flute, harp and marimba, hats only.
-// - Mage grove: a waltz for oboe, celesta and harp.
-// - Ruins: choir and harp, a horn lead, timpani.
-// - Cave: celesta and glockenspiel echoing over strings and choir.
-// - Sky: flute and bells, harp, an airy pad.
+// The sound, area by area (see docs/audio/README.md). Each town has a style of its own and each
+// song runs four or five sections (a hook, an answer, a bridge or a contrasting verse, the hook
+// again), so a loop takes a minute and a half or more:
+// - Sprout Village: "Treetop Picnic", a swung, hopping flute hook with a marimba answering it, a
+//   bridge in the relative minor, and the hook a step up.
+// - Pastel Harbor: "Seaside Café", bossa nova: flute over nylon-guitar comping, jazz chords, a
+//   piano solo.
+// - Ember Crag: "March of the Hall", a brass march with a lyrical horn trio.
+// - Moonleaf Grove: "Moonleaf Waltz", a violin waltz, a turn to C minor, a music-box verse.
+// - Meadows: "Petal Dash", the adventure theme: flute and violin, a chase, a half-time lift.
+// - Forest: "Mossy Jig", a Celtic jig in 6/8 on pan flute, with a slow air in the middle.
+// - Ruins: "Forgotten Hymn", a horn hymn with the choir taking it alone.
+// - Cave: "Crystal Lullaby", a celesta music box with one verse in the major.
+// - Sky: "Cloud Garden", Lydian flute and bells.
+// At night the towns play an evening version of their song: slower, softer, the lead on piano.
 // - The Hollow: horns and a grumbling bass march.
 // - Bosses: brass, strings, choir, timpani, a synth bass gallop and big drums.
 
@@ -152,237 +157,291 @@ const title = {
   order: ['A', 'A2'],
 };
 
-// ---------- Town: "Morning Bread" (C major, swung, cozy) ----------
-const townA = bars('E5:4 G5:2 E5:2 D5:4 C5:4', 'A4:4 C5:4 E5:8', 'F5:4 A5:2 F5:2 E5:4 D5:4', 'G4:4 B4:4 D5:8', 'E5:4 G5:2 E5:2 D5:4 C5:4', 'A5:4 G5:2 E5:2 C5:4 E5:4', 'F5:4 E5:2 D5:2 B4:4 D5:4', 'C5:12 r:4');
-const townB = bars('A5:6 G5:2 F5:4 E5:4', 'D5:6 E5:2 F5:4 G5:4', 'B5:6 A5:2 G5:4 E5:4', 'C6:8 A5:8', 'F5:4 A5:4 D6:4 C6:4', 'B5:4 G5:4 F5:4 D5:4', 'E5:8 G5:4 C6:4', 'C6:12 r:4');
-const townChartA = ['C', 'Am', 'F', 'G', 'C', 'Am', 'Dm7 G', 'C'];
-const townChartB = ['FM7', 'G7', 'Em7', 'Am', 'Dm7', 'G7', 'C', 'C'];
-const townDrums = bars(times('K...h.c.h...h.hh', 3), 'K...h.c.h...hxhh', times('K...h.c.h...h.hh', 3), 'K...h.c.h.c.c.cc');
-const townPart = (mel, chart) => ({
+// ---------- Arranging helpers for the town and field songs ----------
+// 4/4 bossa figures: the chord on the bossa's syncopated pulse, and the root and fifth beneath.
+F.bossa = (c = 62) => (s, len) => (len === 16 ? `${tones(s, c)}:3 r:3 ${tones(s, c)}:2 r:2 ${tones(s, c)}:3 r:1 ${tones(s, c)}:2` : `${tones(s, c)}:3 r:1 ${tones(s, c)}:2 r:2`);
+F.bossaBass = (oct = 2) => (s, len) => {
+  const r = rootIn(s, oct);
+  return len === 16 ? `${nm(r)}:6 ${nm(r + 7)}:2 ${nm(r + 7)}:6 ${nm(r)}:2` : `${nm(r)}:6 ${nm(r + 7)}:2`;
+};
+// A march: root and fifth on the beats, like a tuba.
+F.oompah = (oct = 2) => (s, len) => {
+  const r = rootIn(s, oct);
+  return Array(len / 8).fill(`${nm(r)}:3 r:1 ${nm(r + 7)}:3 r:1`).join(' ');
+};
+// A bar of rest, for a part sitting a section out.
+const rest = (n, rows = 16) => times(`r:${rows}`, n);
+
+// ---------- Town: "Treetop Picnic" (Sprout Village; F major, swung, bouncy) ----------
+// A hook that hops (flute), a marimba answering it, a bridge in D minor where the strings swell,
+// and the hook back a whole step up in G before it all drops home to F again.
+const picnicA = ['C5:2 F5:2 A5:3 G5:1 F5:4 C5:4', 'E5:2 G5:2 C6:4 A5:8', 'D5:2 F5:2 Bb5:3 A5:1 G5:4 F5:4', 'E5:6 G5:2 Bb5:4 G5:4', 'C5:2 F5:2 A5:3 G5:1 F5:4 A5:4', 'D6:6 C6:2 A5:4 F5:4', 'G5:4 Bb5:4 A5:2 G5:2 E5:4'];
+const picnic = {
+  A: { mel: bars(...picnicA, 'F5:12 r:4'), chart: ['F', 'Am7', 'Bb', 'C7', 'F', 'Dm7', 'Gm7 C7', 'F'] },
+  B: {
+    mel: bars('D6:4 C6:2 Bb5:2 A5:8', 'r:8 G5:2 A5:2 G5:2 E5:2', 'C6:4 B5:2 A5:2 E5:8', 'r:8 F5:2 G5:2 A5:2 C6:2', 'D6:4 C6:2 Bb5:2 G5:8', 'r:8 A5:2 G5:2 E5:2 C5:2', 'D5:4 F5:4 E5:4 G5:4', 'F5:8 r:8'),
+    answer: bars('r:8 F5:2 G5:2 A5:2 C6:2', 'E6:4 C6:4 r:8', 'r:8 A5:2 C6:2 E6:2 C6:2', 'A5:4 F5:4 r:8', 'r:8 Bb5:2 D6:2 G6:2 D6:2', 'C6:4 A5:4 r:8', 'r:16', 'r:8 C6:2 A5:2 F5:2 C5:2'),
+    chart: ['BbM7', 'C', 'Am7', 'Dm7', 'Gm7', 'Am7', 'BbM7 C7', 'F'],
+  },
+  C: { mel: bars('A5:6 F5:2 D5:8', 'D6:6 C6:2 Bb5:8', 'G5:4 Bb5:4 D6:4 C6:4', 'C#6:8 A5:8', 'F5:4 A5:4 D6:6 E6:2', 'F6:8 D6:4 Bb5:4', 'D6:6 C6:2 Bb5:4 G5:4', 'F#5:4 A5:4 C6:4 D6:4'), chart: ['Dm', 'Bb', 'Gm', 'A7', 'Dm', 'Bb', 'Gm7', 'D7'] },
+  D: { mel: bars(...picnicA.map((b) => shift(b, 2)), 'E5:4 G5:4 Bb5:4 C6:4'), chart: ['G', 'Bm7', 'C', 'D7', 'G', 'Em7', 'Am7 D7', 'C7'] },
+};
+const picnicDrums = bars(times('K...h.c.h...h.hh', 3), 'K...h.c.h...hxhh', times('K...h.c.h...h.hh', 3), 'K...h.c.h.c.c.cc');
+const picnicPart = ({ mel, chart, answer }, { glock = false, swell = false } = {}) => ({
   lead: mel,
   double: shift(mel, -12),
-  glock: shift(mel, 12),
+  ...(glock ? { glock: shift(mel, 12) } : {}),
+  ...(answer ? { answer } : {}),
   guitar: part(chart, F.offbeat(62)),
-  strings: part(chart, (s, len) => `${nm(chord(s).tones[0] - 12)}:${len}`),
+  strings: swell ? part(chart, F.hold(62)) : part(chart, (s, len) => `${nm(chord(s).tones[0] - 12)}:${len}`),
   bass: part(chart, F.bounce(2)),
   sub: part(chart, F.bounce(1)),
-  drums: townDrums,
+  drums: swell ? bars(times('K.......h.......', 7), 'K...S...S.S.SSSS') : picnicDrums,
 });
 const town = {
-  name: 'town', bpm: 100, swing: 0.58, inst: I, pump: 0.18, drums: 0.7, reverb: { room: 0.85, wet: 0.26 },
+  name: 'town', bpm: 104, swing: 0.6, inst: I, pump: 0.18, drums: 0.7, reverb: { room: 0.85, wet: 0.26 },
   tracks: {
-    lead: { inst: 'flute', gain: 0.7, pan: -0.05, verb: 0.3 },
-    double: { inst: 'pluckSoft', gain: 0.35, pan: 0.1, echo: { rows: 3, fb: 0.25, wet: 0.25 }, verb: 0.2 },
-    glock: { inst: 'glock', gain: 0.25, pan: 0.45, delay: 3, verb: 0.4 },
+    lead: { inst: 'flute', gain: 0.72, pan: -0.05, verb: 0.3 },
+    double: { inst: 'pluckSoft', gain: 0.32, pan: 0.1, echo: { rows: 3, fb: 0.25, wet: 0.25 }, verb: 0.2 },
+    answer: { inst: 'marimba', gain: 0.42, pan: 0.35, verb: 0.25 },
+    glock: { inst: 'glock', gain: 0.26, pan: 0.45, delay: 3, verb: 0.4 },
     guitar: { inst: 'guitar', gain: 0.32, pan: 0.3, verb: 0.25 },
-    strings: { inst: 'strings', gain: 0.18, pan: -0.35, verb: 0.4 },
+    strings: { inst: 'strings', gain: 0.2, pan: -0.35, verb: 0.45 },
     bass: { inst: 'pizz', gain: 0.45, verb: 0.15 },
     sub: { inst: 'sub', gain: 0.2, verb: 0 },
   },
-  patterns: { A: townPart(townA, townChartA), B: townPart(townB, townChartB) },
-  order: ['A', 'A', 'B', 'A'],
+  patterns: { A: picnicPart(picnic.A), B: picnicPart(picnic.B), C: picnicPart(picnic.C, { swell: true }), D: picnicPart(picnic.D, { glock: true }) },
+  order: ['A', 'A', 'B', 'C', 'D'],
 };
 
-// ---------- Meadows: "Meadow Run" (D dorian, running) ----------
-const meadowA = bars('D5:3 F5:3 A5:2 G5:4 F5:2 E5:2', 'D5:3 B4:3 D5:2 G5:8', 'D5:3 F5:3 A5:2 C6:4 A5:2 F5:2', 'G5:6 B5:2 A5:4 G5:4', 'F5:3 D5:3 F5:2 Bb5:4 A5:2 G5:2', 'E5:3 C5:3 E5:2 G5:4 F5:2 E5:2', 'F5:3 E5:3 D5:2 A4:4 D5:2 F5:2', 'E5:8 C#5:4 A4:4');
-const meadowB = bars('D5:4 F5:4 Bb4:6 C5:2', 'E5:4 G5:4 C5:8', 'C5:4 E5:4 A4:6 B4:2', 'C5:4 D5:4 A4:8', 'F5:4 D5:2 F5:2 Bb5:4 A5:4', 'G5:4 E5:2 G5:2 C6:8', 'B5:4 G#5:4 E5:4 B4:4', 'C#5:4 E5:4 A5:8');
-const meadowChartA = ['Dm', 'G', 'Dm', 'G', 'Bb', 'C', 'Dm', 'A'];
-const meadowChartB = ['Bb', 'C', 'Am', 'Dm', 'Bb', 'C', 'E', 'A'];
-const meadowPart = (mel, chart) => ({
+// ---------- Meadows: "Petal Dash" (G major, bright and running: flute, violin, pop drums) ----------
+// The adventure theme: a hook that climbs, a chase in E minor, a half-time lift in C with the
+// violin singing over it, then the chase and the hook again.
+const dash = {
+  A: { mel: bars('D5:2 G5:2 B5:2 D6:2 B5:4 G5:4', 'A5:2 F#5:2 A5:2 D6:2 C#6:4 A5:4', 'B5:2 G5:2 E5:2 G5:2 B5:4 E6:4', 'D6:4 C6:4 G5:8', 'D5:2 G5:2 B5:2 D6:2 G6:4 F#6:4', 'E6:4 D6:4 A5:8', 'G5:4 E5:4 F#5:4 A5:4', 'G5:12 r:4'), chart: ['G', 'D', 'Em', 'C', 'G', 'D', 'C D', 'G'] },
+  B: { mel: bars('E6:4 D6:2 B5:2 G5:4 B5:4', 'C6:6 B5:2 A5:4 G5:4', 'B5:4 A5:2 G5:2 D5:4 G5:4', 'F#5:8 A5:8', 'G5:4 B5:4 E6:6 D6:2', 'C6:4 E6:4 G6:8', 'E6:4 C6:4 A5:4 G5:4', 'F#5:4 A5:4 D6:8'), chart: ['Em', 'C', 'G', 'D', 'Em', 'C', 'Am7', 'D'] },
+  C: { mel: bars('E6:8 G5:8', 'D6:8 B5:8', 'C6:6 B5:2 A5:8', 'A5:4 C6:4 F6:8', 'G6:8 E6:8', 'D6:6 E6:2 D6:8', 'C6:4 A5:4 F5:8', 'F#5:4 A5:4 C6:4 D6:4'), chart: ['C', 'G', 'Am', 'F', 'C', 'G', 'F', 'D7'] },
+};
+const dashPart = ({ mel, chart }, { half = false, sing = false } = {}) => ({
   lead: mel,
-  pluck: mel,
+  pluck: half ? rest(8) : mel,
+  ...(sing ? { violin: shift(mel, -12) } : { violin: part(chart, (s, len) => `${nm(chord(s, 72).tones[1])}:${len}`) }),
   marimba: part(chart, F.arp(67, 2)),
   guitar: part(chart, F.strum(62)),
-  bass: part(chart, F.octaves(2)),
-  drums: bars(times('K.h.S.h.K.hKS.h.', 7), 'K.h.S.h.S.SSt.t.'),
+  bass: half ? part(chart, F.root(2)) : part(chart, F.octaves(2)),
+  drums: half ? bars(times('K.......S.......', 7), 'K...S...S.S.SSSS') : bars(times('K.h.S.h.K.hKS.h.', 7), 'K.h.S.h.S.SSt.t.'),
 });
 const meadow = {
-  name: 'meadow', bpm: 132, inst: I, pump: 0.22, drums: 0.8, reverb: { room: 0.8, wet: 0.2 },
+  name: 'meadow', bpm: 140, inst: I, pump: 0.22, drums: 0.8, reverb: { room: 0.8, wet: 0.2 },
   tracks: {
     lead: { inst: 'flute', gain: 0.8, pan: -0.1, verb: 0.25 },
-    pluck: { inst: 'pluck', gain: 0.3, pan: 0.15, echo: { rows: 3, fb: 0.25, wet: 0.2 }, verb: 0.15 },
-    marimba: { inst: 'marimba', gain: 0.22, pan: 0.4, verb: 0.2 },
-    guitar: { inst: 'guitar', gain: 0.3, pan: -0.35, verb: 0.2 },
+    pluck: { inst: 'pluck', gain: 0.28, pan: 0.15, echo: { rows: 3, fb: 0.25, wet: 0.2 }, verb: 0.15 },
+    violin: { inst: 'violin', gain: 0.3, pan: 0.25, verb: 0.35 },
+    marimba: { inst: 'marimba', gain: 0.2, pan: 0.4, verb: 0.2 },
+    guitar: { inst: 'guitar', gain: 0.28, pan: -0.35, verb: 0.2 },
     bass: { inst: 'synbass', gain: 0.36, verb: 0 },
   },
-  patterns: { A: meadowPart(meadowA, meadowChartA), B: meadowPart(meadowB, meadowChartB) },
-  order: ['A', 'A', 'B', 'A'],
+  patterns: { A: dashPart(dash.A), B: dashPart(dash.B), C: dashPart(dash.C, { half: true, sing: true }) },
+  order: ['A', 'A', 'B', 'C', 'B', 'A'],
 };
 
-// ---------- Harbor (F major, a lilting 6/8: accordion and guitar) ----------
-const harborA = bars('C5:4 F5:2 A5:4 G5:2', 'F5:4 D5:2 Bb4:6', 'C5:4 E5:2 G5:4 Bb5:2', 'A5:6 F5:4 r:2', 'A5:4 F5:2 D5:4 F5:2', 'G5:4 Bb5:2 D6:4 C6:2', 'Bb5:4 A5:2 G5:4 E5:2', 'G5:4 Bb5:2 C6:6');
-const harborB = bars('D6:6 C6:4 Bb5:2', 'A5:6 F5:6', 'Bb5:4 A5:2 G5:4 F5:2', 'E5:6 C5:6', 'D5:4 F5:2 Bb5:4 D6:2', 'C6:4 A5:2 F5:4 A5:2', 'G5:4 Bb5:2 E5:4 G5:2', 'F5:12');
-const harborChartA = ['F', 'Bb', 'C', 'F', 'Dm', 'Gm', 'C', 'C7'];
-const harborChartB = ['Bb', 'F', 'Gm', 'C', 'Bb', 'F', 'Gm C', 'F'];
-const harborPart = (mel, chart) => ({
-  lead: mel,
-  echo: shift(mel, -12),
-  guitar: part(chart, (s, len) => (len === 12 ? F.sixEightChord(62)(s, len) : `r:2 ${tones(s, 62)}:2 ${tones(s, 62)}:2`), 12),
-  bass: part(chart, (s, len) => (len === 12 ? F.sixEight(2)(s, len) : `${nm(rootIn(s, 2))}:5 r:1`), 12),
-  strings: part(chart, F.hold(58), 12),
-  drums: 'K.x.x.w.x.x.',
+// ---------- Harbor: "Seaside Café" (Pastel Harbor; G major bossa nova) ----------
+// A flute over nylon-guitar bossa comping, brushed drums and a walking root-fifth bass, jazz chords
+// (major sevenths, ii-V turns), a turn to E minor, and a piano solo over its own changes.
+const cafe = {
+  A: { mel: bars('B5:3 A5:3 G5:2 F#5:8', 'E5:3 G5:3 A5:2 C6:6 B5:2', 'D6:3 C#6:3 B5:2 F#5:8', 'G#5:4 B5:4 D6:8', 'C6:3 B5:3 A5:2 E5:8', 'F#5:3 A5:3 C6:2 B5:4 A5:4', 'B5:8 D6:4 F#6:4', 'E6:4 C6:4 A5:4 F#5:4'), chart: ['GM7', 'Am7 D7', 'Bm7', 'E7', 'Am7', 'D7', 'GM7', 'Am7 D7'] },
+  B: { mel: bars('E6:6 D6:2 B5:4 G5:4', 'D#6:6 C6:2 A5:4 F#5:4', 'G5:6 B5:2 E6:8', 'C#6:4 E6:4 G6:4 E6:4', 'C6:6 B5:2 A5:4 G5:4', 'F#5:4 A5:4 C6:4 E6:4', 'D6:8 G#5:8', 'A5:4 B5:4 C6:4 D6:4'), chart: ['CM7', 'B7', 'Em7', 'A7', 'Am7', 'D7', 'GM7 E7', 'Am7 D7'] },
+  C: { solo: bars('B5:2 G5:2 E5:2 G5:2 B5:4 D6:4', 'C#6:6 B5:2 A5:4 G5:4', 'F#5:2 A5:2 C#6:2 E6:2 D6:8', 'B5:4 A5:4 F#5:8', 'E5:4 G#5:4 A#5:4 C#6:4', 'D6:6 C#6:2 B5:8', 'G5:4 B5:4 C#6:4 E6:4', 'C6:4 A5:4 F#5:4 D5:4'), chart: ['Em7', 'A7', 'DM7', 'GM7', 'C#m7 F#7', 'Bm7', 'Em7 A7', 'Am7 D7'] },
+};
+const cafePart = ({ mel, solo, chart }) => ({
+  ...(mel ? { lead: mel } : {}),
+  ...(solo ? { piano: solo } : {}),
+  guitar: part(chart, F.bossa(60)),
+  pad: part(chart, F.hold(64)),
+  bass: part(chart, F.bossaBass(2)),
+  drums: times('K.hxh.K.hxh.K.hx', 8),
 });
 const harbor = {
-  name: 'harbor', bpm: 104, rows: 12, inst: I, drums: 0.7, reverb: { room: 0.84, wet: 0.24 },
+  name: 'harbor', bpm: 112, inst: I, drums: 0.5, reverb: { room: 0.84, wet: 0.26 },
   tracks: {
-    lead: { inst: 'accordion', gain: 0.55, pan: -0.1, verb: 0.25 },
-    echo: { inst: 'pluckSoft', gain: 0.22, pan: 0.2, delay: 3, verb: 0.3 },
-    guitar: { inst: 'guitar', gain: 0.3, pan: 0.35, verb: 0.2 },
-    bass: { inst: 'pizz', gain: 0.42, verb: 0.15 },
-    strings: { inst: 'strings', gain: 0.14, pan: -0.4, verb: 0.4 },
+    lead: { inst: 'flute', gain: 0.72, pan: -0.05, verb: 0.3 },
+    piano: { inst: 'piano', gain: 0.75, pan: 0.1, verb: 0.3 },
+    guitar: { inst: 'guitar', gain: 0.4, pan: 0.3, verb: 0.2 },
+    pad: { inst: 'pad', gain: 0.25, pan: -0.3, verb: 0.4 },
+    bass: { inst: 'ebass', gain: 0.45, verb: 0.05 },
   },
-  patterns: { A: harborPart(harborA, harborChartA), B: harborPart(harborB, harborChartB) },
-  order: ['A', 'A', 'B', 'A'],
+  patterns: { A: cafePart(cafe.A), B: cafePart(cafe.B), C: cafePart(cafe.C) },
+  order: ['A', 'B', 'A', 'C', 'B', 'A'],
 };
 
-// ---------- The crags (E Phrygian dominant: sitar and oboe, toms) ----------
-const cragA = bars('E5:2 F5:2 G#5:4 F5:2 E5:2 B4:4', 'A5:4 G#5:2 F5:2 E5:8', 'G#5:2 A5:2 B5:4 C6:2 B5:2 A5:4', 'G#5:4 F5:4 E5:8', 'E6:4 D6:2 C6:2 B5:4 A5:4', 'C6:4 B5:2 A5:2 G#5:4 F5:4', 'A5:2 G#5:2 F5:4 D5:4 F5:4', 'E5:12 r:4');
-const cragB = bars('B4:2 E5:2 G#5:2 B5:2 C6:4 B5:4', 'A5:2 F5:2 D5:2 F5:2 A5:8', 'G#5:2 E5:2 B4:2 E5:2 G#5:4 A5:4', 'B5:16', 'C6:6 B5:2 A5:4 G#5:4', 'A5:6 G#5:2 F5:4 E5:4', 'F5:4 E5:4 D5:4 C5:4', 'B4:8 E5:8');
-const cragChartA = ['E', 'F', 'E', 'Dm E', 'E', 'F', 'Dm', 'E'];
-const cragChartB = ['E', 'Dm', 'E', 'E', 'Am', 'F', 'Dm', 'E'];
-const cragPart = (mel, chart, lead) => ({
-  [lead]: mel,
-  pluck: shift(mel, -12),
-  drone: part(chart, (s, len) => `${nm(rootIn(s, 3))}+${nm(rootIn(s, 3) + 7)}:${len}`),
-  bass: part(chart, (s, len) => Array(len / 8).fill(`${nm(rootIn(s, 2))}:4 ${nm(rootIn(s, 2))}:2 ${nm(rootIn(s, 2))}:2`).join(' ')),
-  drums: bars(times('K.x.x.t.K.xt.xt.', 7), 'K.x.t.t.t.t.tttt'),
+// ---------- Ember Crag: "March of the Hall" (the warriors' town; Bb major, a brass march) ----------
+// Trumpets on the tune over an oom-pah bass and snare, horns taking a minor turn, and a lyrical
+// trio in Eb in the middle, as marches go.
+const hall = {
+  A: { mel: bars('F5:3 F5:1 Bb5:4 D6:4 Bb5:4', 'C6:3 Bb5:1 G5:4 Eb6:8', 'C5:3 C5:1 F5:4 A5:4 C6:4', 'D6:8 Bb5:8', 'G5:3 A5:1 Bb5:4 D6:4 Bb5:4', 'Eb6:6 D6:2 C6:4 Bb5:4', 'A5:4 C6:4 E5:4 G5:4', 'F5:12 r:4'), chart: ['Bb', 'Eb', 'F', 'Bb', 'Gm', 'Eb', 'C7', 'F'] },
+  B: { mel: bars('D5:4 G5:4 Bb5:6 A5:2', 'F#5:4 A5:4 C6:8', 'Bb5:4 G5:4 D6:6 C6:2', 'Bb5:8 G5:8', 'C6:4 Eb6:4 G5:4 C6:4', 'A5:4 C6:4 F5:8', 'D6:4 F5:4 G5:4 Bb5:4', 'E5:4 G5:4 A5:8'), chart: ['Gm', 'D7', 'Gm', 'Eb', 'Cm', 'F', 'Bb Gm', 'C7 F'] },
+  C: { mel: bars('G5:6 F5:2 Eb5:8', 'F5:4 Ab5:4 D5:8', 'Bb5:6 Ab5:2 G5:8', 'C6:6 Bb5:2 Ab5:8', 'G5:4 Bb5:4 Eb6:8', 'C6:4 Bb5:4 G5:8', 'A5:4 C6:4 Eb6:4 C6:4', 'D6:4 Bb5:4 Ab5:4 F5:4'), chart: ['Eb', 'Bb7', 'Eb', 'Ab', 'Eb', 'Cm', 'F7', 'Bb7'] },
+};
+const hallPart = ({ mel, chart }, { trio = false } = {}) => ({
+  ...(trio ? { horn: shift(mel, -12) } : { lead: mel }),
+  brass: part(chart, (s, len) => Array(len / 8).fill(`r:4 ${tones(s, 60)}:3 r:1`).join(' ')),
+  strings: trio ? part(chart, F.hold(62)) : rest(8),
+  bass: part(chart, F.oompah(2)),
+  timp: part(chart, (s, len) => Array(len / 8).fill(`${nm(rootIn(s, 2))}:4 r:4`).join(' ')),
+  drums: trio ? times('K.......h.......', 8) : bars(times('K.S.K.S.K.S.KSSS', 3), 'K.S.SSSSS.S.S.SS', times('K.S.K.S.K.S.KSSS', 3), 'S.SSS.SSSSSSSSSS'),
 });
 const crag = {
-  name: 'crag', bpm: 108, inst: I, pump: 0.15, drums: 0.6, reverb: { room: 0.82, wet: 0.24 },
+  name: 'crag', bpm: 120, inst: I, pump: 0.1, drums: 0.75, reverb: { room: 0.84, wet: 0.24 },
   tracks: {
-    sitar: { inst: 'sitar', gain: 0.8, pan: -0.15, verb: 0.3 },
-    oboe: { inst: 'oboe', gain: 0.8, pan: -0.1, verb: 0.3 },
-    pluck: { inst: 'pluckSoft', gain: 0.2, pan: 0.25, echo: { rows: 2, fb: 0.3, wet: 0.3 }, verb: 0.2 },
-    drone: { inst: 'strings', gain: 0.15, pan: 0.3, verb: 0.4 },
-    bass: { inst: 'pizz', gain: 0.35, verb: 0.15 },
+    lead: { inst: 'trumpet', gain: 0.6, pan: -0.05, verb: 0.3 },
+    horn: { inst: 'horn', gain: 0.7, pan: 0.05, verb: 0.35 },
+    brass: { inst: 'brassStab', gain: 0.3, pan: 0.3, verb: 0.25 },
+    strings: { inst: 'strings', gain: 0.22, pan: -0.3, verb: 0.45 },
+    bass: { inst: 'pizz', gain: 0.5, verb: 0.15 },
+    timp: { inst: 'timpani', gain: 0.35, verb: 0.3 },
   },
-  patterns: { A: cragPart(cragA, cragChartA, 'sitar'), B: cragPart(cragB, cragChartB, 'oboe') },
-  order: ['A', 'A', 'B', 'A'],
+  patterns: { A: hallPart(hall.A), B: hallPart(hall.B), C: hallPart(hall.C, { trio: true }) },
+  order: ['A', 'A', 'B', 'A', 'C', 'C', 'A'],
 };
 
-// ---------- The forest (D dorian, gentle: pan flute, harp, marimba) ----------
-const forestA = bars('D5:4 F5:4 A5:6 G5:2', 'B5:4 A5:2 G5:2 D5:8', 'F5:4 E5:2 D5:2 A5:4 C6:4', 'G5:8 E5:4 C5:4', 'D5:4 F5:2 G5:2 A5:4 Bb5:4', 'C6:4 B5:2 G5:2 E5:8', 'A5:4 G5:2 E5:2 C5:4 E5:4', 'D5:12 r:4');
-const forestB = bars('A5:6 C6:2 A5:4 F5:4', 'G5:6 E5:2 C5:8', 'F5:4 A5:4 D6:4 C6:4', 'A5:4 E5:4 C5:8', 'Bb5:6 A5:2 F5:4 D5:4', 'C6:6 A5:2 F5:8', 'B5:4 G5:4 D5:4 B4:4', 'C#5:4 E5:4 A5:8');
-const forestChartA = ['Dm', 'G', 'Dm', 'C', 'Bb', 'C', 'Am', 'Dm'];
-const forestChartB = ['F', 'C', 'Dm', 'Am', 'Bb', 'F', 'G', 'A'];
-const forestPart = (mel, chart) => ({
+// ---------- The forest: "Mossy Jig" (E minor, a Celtic jig in 6/8: pan flute, pizzicato, harp) ----------
+// Two quick jig tunes (the second brighter, in G) and a slow air in the middle where only the
+// harp and the flute are left.
+const jig = {
+  A: { mel: bars('E5:2 G5:2 B5:2 E6:2 B5:2 G5:2', 'F#5:2 A5:2 D6:2 A5:4 F#5:2', 'G5:2 B5:2 E6:2 G6:4 E6:2', 'F#6:4 D6:2 B5:6', 'E5:2 G5:2 B5:2 E6:2 B5:2 G5:2', 'A5:2 F#5:2 D5:2 F#5:2 A5:2 D6:2', 'E6:4 C6:2 G5:4 E5:2', 'F#5:6 D5:6'), chart: ['Em', 'D', 'Em', 'Bm', 'Em', 'D', 'C', 'D'] },
+  B: { mel: bars('D6:4 B5:2 G5:4 B5:2', 'A5:4 F#5:2 D5:6', 'E5:2 F#5:2 G5:2 B5:4 G5:2', 'C6:6 E6:6', 'D6:2 C6:2 B5:2 G5:2 B5:2 D6:2', 'F#6:4 E6:2 D6:6', 'C6:2 B5:2 A5:2 E5:2 A5:2 C6:2', 'D#6:6 B5:6'), chart: ['G', 'D', 'Em', 'C', 'G', 'D', 'Am', 'B7'] },
+  C: { mel: bars('A5:6 C6:6', 'B5:12', 'C6:6 E6:6', 'D6:12', 'E6:6 C6:6', 'B5:6 G5:6', 'A5:6 E5:6', 'D#5:12'), chart: ['Am', 'Em', 'C', 'D', 'Am', 'Em', 'C', 'B7'] },
+};
+const jigPart = ({ mel, chart }, { air = false } = {}) => ({
   lead: mel,
-  harp: part(chart, F.arp(62, 2)),
-  marimba: part(chart, F.offbeat(67)),
-  strings: part(chart, F.hold(57)),
-  bass: part(chart, F.bounce(2)),
-  drums: bars('K...h.h.x...h.h.', 'K...h.h.x...hxh.'),
+  harp: part(chart, F.arp(62, 2), 12),
+  guitar: air ? rest(8, 12) : part(chart, F.sixEightChord(62), 12),
+  bass: air ? part(chart, F.root(2), 12) : part(chart, F.sixEight(2), 12),
+  drums: air ? times('K...........', 8) : times('K.hS.hK.hS.h', 8),
 });
 const forest = {
-  name: 'forest', bpm: 92, inst: I, drums: 0.55, pump: 0.1, reverb: { room: 0.88, wet: 0.3 },
+  name: 'forest', bpm: 100, rows: 12, inst: I, drums: 0.55, reverb: { room: 0.88, wet: 0.3 },
   tracks: {
-    lead: { inst: 'panflute', gain: 0.65, pan: -0.1, echo: { rows: 3, fb: 0.2, wet: 0.15 }, verb: 0.35 },
-    harp: { inst: 'harp', gain: 0.32, pan: 0.35, verb: 0.35 },
-    marimba: { inst: 'marimba', gain: 0.2, pan: -0.35, verb: 0.25 },
-    strings: { inst: 'strings', gain: 0.18, pan: 0.1, verb: 0.45 },
-    bass: { inst: 'pizz', gain: 0.5, verb: 0.15 },
+    lead: { inst: 'panflute', gain: 0.75, pan: -0.05, verb: 0.3 },
+    harp: { inst: 'harp', gain: 0.3, pan: 0.35, verb: 0.4 },
+    guitar: { inst: 'pizz', gain: 0.35, pan: -0.3, verb: 0.2 },
+    bass: { inst: 'pizz', gain: 0.45, verb: 0.15 },
   },
-  patterns: { A: forestPart(forestA, forestChartA), B: forestPart(forestB, forestChartB) },
-  order: ['A', 'A', 'B', 'A'],
+  patterns: { A: jigPart(jig.A), B: jigPart(jig.B), C: jigPart(jig.C, { air: true }) },
+  order: ['A', 'A', 'B', 'C', 'B', 'A'],
 };
 
-// ---------- The mage grove (E dorian waltz in 3/4: oboe, celesta, harp) ----------
-const groveA = bars('E5:4 G5:4 B5:4', 'C#6:6 B5:2 A5:4', 'G5:4 F#5:4 E5:4', 'F#5:8 D5:4', 'E5:4 G5:4 C6:4', 'D6:6 C6:2 A5:4', 'B5:4 G5:4 E5:4', 'F#5:8 B4:4');
-const groveA2 = bars('E6:6 D6:2 B5:4', 'C#6:4 A5:4 E5:4', 'G5:6 A5:2 B5:4', 'D6:8 B5:4', 'C6:4 B5:4 G5:4', 'A5:4 F#5:4 D5:4', 'E5:4 F#5:4 G5:4', 'E5:12');
-const groveChartA = ['Em', 'A', 'Em', 'Bm', 'C', 'D', 'Em', 'B'];
-const groveChartA2 = ['Em', 'A', 'Em', 'Bm', 'C', 'D', 'Em', 'Em'];
-const grovePart = (mel, chart) => ({
-  lead: mel,
-  celesta: shift(mel, 12),
+// ---------- Moonleaf Grove: "Moonleaf Waltz" (the mages' town; Eb major waltz: violin, celesta, harp) ----------
+// A violin waltz, a turn into C minor, and a music-box verse where the celesta takes over.
+const waltz = {
+  A: { mel: bars('G5:4 Bb5:4 Eb6:4', 'D6:4 C6:8', 'Ab5:4 C6:4 Eb6:4', 'D6:8 Bb5:4', 'G5:4 Bb5:4 G6:4', 'F6:4 D6:4 Bb5:4', 'C6:4 Eb6:4 C6:4', 'Bb5:12'), chart: ['Eb', 'Cm', 'Ab', 'Bb7', 'Eb', 'Gm', 'Ab', 'Bb7'] },
+  A2: { mel: bars('G5:4 Bb5:4 Eb6:4', 'D6:4 C6:8', 'Ab5:4 C6:4 Eb6:4', 'D6:8 Bb5:4', 'G5:4 Bb5:4 G6:4', 'F6:4 D6:4 Bb5:4', 'D6:4 F5:4 Ab5:4', 'G5:12'), chart: ['Eb', 'Cm', 'Ab', 'Bb7', 'Eb', 'Gm', 'Bb7', 'Eb'] },
+  B: { mel: bars('Eb6:4 D6:4 C6:4', 'B5:8 G5:4', 'C6:4 Eb6:4 G6:4', 'F6:4 Eb6:4 C6:4', 'Ab5:4 C6:4 F6:4', 'D6:8 Ab5:4', 'G5:4 Bb5:4 Eb6:4', 'D6:4 B5:4 G5:4'), chart: ['Cm', 'G7', 'Cm', 'Ab', 'Fm', 'Bb7', 'Eb', 'G7'] },
+};
+const waltzPart = ({ mel, chart }, { box = false } = {}) => ({
+  ...(box ? { music: shift(mel, 12) } : { lead: mel }),
+  celesta: part(chart, F.arp(74, 2), 12),
   harp: part(chart, F.waltzChord(64), 12),
-  bass: part(chart, F.waltzBass(2), 12),
   strings: part(chart, F.hold(57), 12),
-  drums: 'x.....x.....|x.....x...x.',
+  bass: part(chart, F.waltzBass(2), 12),
 });
 const grove = {
-  name: 'grove', bpm: 88, rows: 12, inst: I, drums: 0.5, reverb: { room: 0.9, wet: 0.34 },
+  name: 'grove', bpm: 88, rows: 12, inst: I, drums: 0.4, reverb: { room: 0.9, wet: 0.34 },
   tracks: {
-    lead: { inst: 'oboe', gain: 0.6, pan: -0.1, verb: 0.35 },
-    celesta: { inst: 'celesta', gain: 0.16, pan: 0.45, delay: 2, verb: 0.5 },
-    harp: { inst: 'harp', gain: 0.32, pan: 0.3, verb: 0.35 },
-    bass: { inst: 'pizz', gain: 0.5, verb: 0.2 },
-    strings: { inst: 'strings', gain: 0.15, pan: -0.3, verb: 0.5 },
+    lead: { inst: 'violin', gain: 0.62, pan: -0.05, verb: 0.4 },
+    music: { inst: 'celesta', gain: 0.5, pan: 0.1, verb: 0.45 },
+    celesta: { inst: 'celesta', gain: 0.18, pan: 0.4, verb: 0.45 },
+    harp: { inst: 'harp', gain: 0.25, pan: -0.3, verb: 0.4 },
+    strings: { inst: 'strings', gain: 0.18, pan: -0.2, verb: 0.5 },
+    bass: { inst: 'pizz', gain: 0.4, verb: 0.2 },
   },
-  patterns: { A: grovePart(groveA, groveChartA), A2: grovePart(groveA2, groveChartA2) },
-  order: ['A', 'A2'],
+  patterns: { A: waltzPart(waltz.A), A2: waltzPart(waltz.A2), B: waltzPart(waltz.B), C: waltzPart(waltz.A, { box: true }) },
+  order: ['A', 'A2', 'B', 'C', 'A2'],
 };
 
-// ---------- The ruins (A minor: a harp and choir bed, a horn lead joining in) ----------
-const ruinsChart = ['Am', 'F', 'C', 'G', 'Am', 'F', 'G', 'E'];
-const ruinsBed = {
-  harp: part(ruinsChart, F.arp(62, 2)),
-  choir: part(ruinsChart, F.hold(60)),
-  bass: part(ruinsChart, F.root(2)),
-  pad: part(ruinsChart, F.hold(57)),
-  timp: bars('A2:8 r:8', 'r:16', 'r:16', 'r:16', 'A2:8 r:8', 'r:16', 'r:16', 'E2:4 E2:4 E2:8'),
+// ---------- The ruins: "Forgotten Hymn" (A minor, slow: horn, choir, harp, timpani) ----------
+// A horn hymn over harp and timpani, a lift into the relative major with the choir, and a verse
+// where the choir sings the hymn alone over the harp.
+const hymn = {
+  A: { mel: bars('A4:6 G4:2 E4:8', 'F4:4 A4:4 C5:8', 'E5:6 D5:2 C5:8', 'B4:4 D5:4 G4:8', 'C5:6 B4:2 A4:8', 'A4:4 C5:4 F5:8', 'E5:4 D5:4 A4:8', 'G#4:8 B4:8'), chart: ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'E'] },
+  B: { mel: bars('A4:4 C5:4 F5:6 E5:2', 'D5:8 B4:8', 'E5:6 D5:2 B4:8', 'C5:4 E5:4 A4:8', 'F5:6 E5:2 D5:8', 'B4:4 D5:4 F5:8', 'E5:12 r:4', 'G#4:4 B4:4 E5:8'), chart: ['F', 'G7', 'Em', 'Am', 'Dm', 'G7', 'C', 'E'] },
 };
+const hymnPart = ({ mel, chart }, { choir = false } = {}) => ({
+  ...(choir ? { choir: mel } : { lead: mel, choir: part(chart, F.hold(60)) }),
+  harp: part(chart, F.arp(62, 2)),
+  bass: part(chart, F.root(2)),
+  timp: part(chart, (s, len) => `${nm(rootIn(s, 2))}:4 r:${len - 4}`),
+  drums: choir ? times('K...............', 8) : times('K.......K...h...', 8),
+});
 const ruins = {
-  name: 'ruins', bpm: 84, inst: I, drums: 0.6, reverb: { room: 0.9, wet: 0.34 },
+  name: 'ruins', bpm: 84, inst: I, drums: 0.5, reverb: { room: 0.9, wet: 0.36 },
   tracks: {
-    lead: { inst: 'horn', gain: 0.6, pan: -0.1, verb: 0.4 },
+    lead: { inst: 'horn', gain: 0.7, pan: -0.05, verb: 0.4 },
+    choir: { inst: 'choir', gain: 0.32, pan: 0.15, verb: 0.55 },
     harp: { inst: 'harp', gain: 0.3, pan: 0.35, verb: 0.4 },
-    choir: { inst: 'choir', gain: 0.22, pan: -0.3, verb: 0.5 },
-    bass: { inst: 'pizz', gain: 0.45, verb: 0.2 },
-    pad: { inst: 'padDark', gain: 0.25, verb: 0.4 },
-    timp: { inst: 'timpani', gain: 0.4, verb: 0.35 },
+    bass: { inst: 'strings', gain: 0.3, verb: 0.4 },
+    timp: { inst: 'timpani', gain: 0.3, verb: 0.35 },
   },
-  patterns: {
-    A: { ...ruinsBed, lead: bars('r:16', 'r:16', 'r:16', 'r:16', 'E5:6 D5:2 C5:4 E5:4', 'A5:8 G5:4 F5:4', 'G5:6 F5:2 D5:4 B4:4', 'G#5:8 E5:8'), drums: 'K.......x.......|K.......x...h.h.' },
-    B: { ...ruinsBed, lead: bars('A5:6 B5:2 C6:4 A5:4', 'F5:8 C6:8', 'E5:4 G5:4 C6:4 E6:4', 'D6:12 B5:4', 'C6:6 B5:2 A5:4 E5:4', 'F5:6 E5:2 D5:4 C5:4', 'B4:4 D5:4 G5:4 B5:4', 'G#5:12 r:4'), drums: 'K...h...S...h...|K...h...S...h.h.' },
-  },
-  order: ['A', 'B'],
+  patterns: { A: hymnPart(hymn.A), B: hymnPart(hymn.B), C: hymnPart(hymn.A, { choir: true }) },
+  order: ['A', 'B', 'C', 'B', 'A'],
 };
 
-// ---------- The crystal cave: "Glass Hollow" (A minor, slow, echoing) ----------
-const caveLine = bars('r:4 E5:4 B5:6 A5:2', 'C6:8 B5:4 E5:4', 'A5:6 G5:2 E5:8', 'D5:12 r:4', 'r:4 C5:4 F5:4 A5:4', 'B5:8 G5:4 E5:4', 'F5:6 E5:2 D5:4 F5:4', 'G#5:8 B5:4 E5:4');
-const caveChart = ['Amadd9', 'FM7', 'Am', 'G', 'FM7', 'Em', 'Dm', 'E'];
-const caveBed = {
-  strings: part(caveChart, F.hold(57)),
-  choir: part(caveChart, (s, len) => `${nm(chord(s, 64).tones[1])}:${len}`),
-  bass: part(caveChart, (s, len) => `${nm(rootIn(s, 2))}:${len / 2} ${nm(rootIn(s, 2) + 7)}:${len / 2}`),
+// ---------- The crystal cave: "Crystal Lullaby" (A minor music box: celesta, glockenspiel, choir) ----------
+// A lullaby on the celesta, a climbing answer, and one shining verse in A major before it slips
+// back to the minor.
+const lullaby = {
+  A: { mel: bars('E6:4 A5:4 C6:4 E6:4', 'D6:4 B5:4 G5:8', 'C6:4 A5:4 F5:4 A5:4', 'G5:8 E5:8', 'F5:4 A5:4 D6:4 F6:4', 'E6:8 C6:8', 'A5:4 C6:4 F6:4 E6:4', 'B5:8 G#5:8'), chart: ['Am', 'Em', 'F', 'C', 'Dm', 'Am', 'F', 'E'] },
+  B: { mel: bars('A6:6 G6:2 F6:8', 'G6:4 D6:4 B5:8', 'E6:4 G6:4 B6:8', 'A6:8 E6:8', 'F6:4 D6:4 A5:8', 'G#5:4 B5:4 E6:8', 'C6:4 E6:4 A6:8', 'G#6:8 E6:8'), chart: ['F', 'G', 'Em', 'Am', 'Dm', 'E', 'Am', 'E'] },
+  C: { mel: bars('E6:4 A5:4 C#6:4 E6:4', 'F#6:8 C#6:8', 'D6:4 F#6:4 A6:8', 'G#6:8 B5:8', 'A6:6 G#6:2 E6:8', 'C#6:4 F#6:4 A6:8', 'F6:4 D6:4 A5:8', 'G#5:8 B5:8'), chart: ['A', 'F#m', 'D', 'E', 'A', 'F#m', 'Dm', 'E'] },
 };
-const cave = {
-  name: 'cave', bpm: 76, inst: I, drums: 0.6, reverb: { room: 0.93, wet: 0.4, damp: 0.25 },
-  tracks: {
-    lead: { inst: 'celesta', gain: 0.75, pan: -0.15, echo: { rows: 3, fb: 0.4, wet: 0.4 }, verb: 0.5 },
-    strings: { inst: 'strings', gain: 0.18, pan: 0.3, verb: 0.5 },
-    choir: { inst: 'choir', gain: 0.16, pan: -0.35, verb: 0.6 },
-    bass: { inst: 'pizz', gain: 0.4, verb: 0.3 },
-  },
-  patterns: {
-    A: { ...caveBed, lead: caveLine, drums: '........w.......|............w...' },
-    A2: { ...caveBed, lead: `@glock ${shift(caveLine, 12)}`, drums: '........w.......|....w.......w...' },
-  },
-  order: ['A', 'A2'],
-};
-
-// ---------- The sky (D Lydian, high and airy: flute, bells, harp) ----------
-const skyLine = bars('A5:4 F#5:2 A5:2 D6:8', 'G#5:4 B5:2 G#5:2 E6:8', 'F#6:4 E6:2 D6:2 A5:4 F#5:4', 'G#5:4 B5:4 E6:4 G#6:4', 'F#6:6 E6:2 D6:4 B5:4', 'G#5:6 B5:2 E6:8', 'D6:4 B5:2 G5:2 D6:4 G6:4', 'E6:8 C#6:4 A5:4');
-const skyChart = ['D', 'E', 'D', 'E', 'Bm', 'E', 'G', 'A'];
-const skyPart = (mel) => ({
+const lullabyPart = ({ mel, chart }) => ({
   lead: mel,
-  bell: shift(mel, 12),
-  harp: part(skyChart, F.arp(66, 2)),
-  pad: part(skyChart, F.hold(62)),
-  bass: part(skyChart, (s, len) => `${s === 'E' ? 'D2' : nm(rootIn(s, 1))}:${len}`),
-  drums: 'K...x...h...x...|K...x...h.h.x.x.',
+  echo: mel,
+  glock: part(chart, F.arp(76, 4)),
+  strings: part(chart, F.hold(57)),
+  choir: part(chart, F.hold(64)),
+  bass: part(chart, F.root(2)),
+  drums: times('K.......h.......', 8),
+});
+const cave = {
+  name: 'cave', bpm: 76, inst: I, drums: 0.4, reverb: { room: 0.93, wet: 0.42, damp: 0.25 },
+  tracks: {
+    lead: { inst: 'celesta', gain: 0.75, pan: -0.1, verb: 0.5 },
+    echo: { inst: 'celesta', gain: 0.25, pan: 0.45, delay: 3, verb: 0.6 },
+    glock: { inst: 'glock', gain: 0.16, pan: 0.3, verb: 0.55 },
+    strings: { inst: 'strings', gain: 0.2, pan: -0.3, verb: 0.55 },
+    choir: { inst: 'choir', gain: 0.14, pan: 0.2, verb: 0.6 },
+    bass: { inst: 'pizz', gain: 0.35, verb: 0.3 },
+  },
+  patterns: { A: lullabyPart(lullaby.A), B: lullabyPart(lullaby.B), C: lullabyPart(lullaby.C) },
+  order: ['A', 'B', 'A', 'C', 'A'],
+};
+
+// ---------- The sky: "Cloud Garden" (D Lydian, floating: flute, bells, harp, a soft beat) ----------
+// The bright Lydian lift (D major with an E major chord) on a flute, a warmer verse, and an
+// interlude where the bells and harp carry it alone.
+const cloud = {
+  A: { mel: bars('F#5:4 A5:4 C#6:4 A5:4', 'G#5:4 B5:4 E6:8', 'D6:6 C#6:2 B5:8', 'G#5:8 E5:8', 'A5:4 C#6:4 F#6:4 E6:4', 'G#6:6 F#6:2 E6:8', 'D6:4 B5:4 F#6:8', 'E6:8 C#6:8'), chart: ['DM7', 'E', 'Bm7', 'E', 'DM7', 'E', 'GM7', 'A'] },
+  B: { mel: bars('B5:6 A5:2 F#5:8', 'E5:4 A5:4 C#6:8', 'C#6:6 B5:2 A5:8', 'D6:4 F#6:4 B5:8', 'B5:4 D6:4 F#6:8', 'E6:6 C#6:2 A5:8', 'B5:4 D6:4 G#5:4 B5:4', 'A5:12 r:4'), chart: ['GM7', 'A', 'F#m7', 'Bm7', 'GM7', 'A', 'Bm7 E', 'DM7'] },
+};
+const cloudPart = ({ mel, chart }, { bells = false } = {}) => ({
+  ...(bells ? { bells: shift(mel, 12) } : { lead: mel, bells: part(chart, F.arp(79, 4)) }),
+  harp: part(chart, F.arp(64, 2)),
+  pad: part(chart, F.hold(64)),
+  bass: part(chart, F.root(2)),
+  drums: bells ? times('K...............', 8) : times('K.....h.K.h...h.', 8),
 });
 const sky = {
-  name: 'sky', bpm: 112, inst: I, drums: 0.5, pump: 0.12, reverb: { room: 0.9, wet: 0.36 },
+  name: 'sky', bpm: 112, inst: I, pump: 0.12, drums: 0.5, reverb: { room: 0.9, wet: 0.36 },
   tracks: {
-    lead: { inst: 'flute', gain: 0.6, pan: -0.15, verb: 0.4 },
-    bell: { inst: 'bell', gain: 0.25, pan: 0.5, delay: 3, verb: 0.5 },
-    harp: { inst: 'harp', gain: 0.3, pan: 0.35, verb: 0.4 },
-    pad: { inst: 'pad', gain: 0.35, verb: 0.4 },
-    bass: { inst: 'sub', gain: 0.28, verb: 0 },
+    lead: { inst: 'flute', gain: 0.72, pan: -0.05, verb: 0.35 },
+    bells: { inst: 'bell', gain: 0.32, pan: 0.35, verb: 0.5 },
+    harp: { inst: 'harp', gain: 0.25, pan: -0.3, verb: 0.4 },
+    pad: { inst: 'pad', gain: 0.3, verb: 0.45 },
+    bass: { inst: 'pizz', gain: 0.38, verb: 0.2 },
   },
-  patterns: { A: skyPart(skyLine), A2: skyPart(shift(skyLine, -12)) },
-  order: ['A', 'A2'],
+  patterns: { A: cloudPart(cloud.A), B: cloudPart(cloud.B), C: cloudPart(cloud.A, { bells: true }) },
+  order: ['A', 'B', 'A', 'C', 'B', 'A'],
 };
 
 // ---------- The Hollow (C minor, a grumbling dungeon march: horns, brass, a growling bass) ----------
@@ -452,6 +511,24 @@ const boss = {
 };
 
 export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss };
+
+// Each town's evening version: the same song a little slower and softer, the lead handed to a
+// piano (or the horn, for the warriors' march), the bright parts and the drums pulled back.
+const EVENING = { town: 'piano', harbor: 'piano', crag: 'horn', grove: 'piano' };
+for (const [key, lead] of Object.entries(EVENING)) {
+  const song = SONGS[key];
+  SONGS[`${key}-night`] = {
+    ...song,
+    name: `${key}-night`,
+    bpm: Math.round(song.bpm * 0.86),
+    drums: (song.drums ?? 0.6) * 0.45,
+    pump: 0,
+    reverb: { ...song.reverb, wet: (song.reverb?.wet ?? 0.3) + 0.08 },
+    tracks: Object.fromEntries(Object.entries(song.tracks).map(([k, tr]) => [k,
+      k === 'lead' ? { ...tr, inst: lead, gain: tr.gain * 0.95, verb: (tr.verb ?? 0.3) + 0.1 }
+        : ['glock', 'answer', 'brass', 'timp', 'pluck', 'double', 'marimba'].includes(k) ? { ...tr, gain: tr.gain * 0.45 } : tr])),
+  };
+}
 
 // Each field and town song's fight layer: the same song, bar for bar (so it loops in step with
 // it), with only its bass and a driving drum line of its own, heavier. The music player fades it

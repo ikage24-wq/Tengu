@@ -52,7 +52,14 @@ Rules we keep:
 - Blows add what the monster is made of (`src/audio/materials.js`), heavy weapons sound lower and
   daggers higher, crits add a low thump, and finishers drop the music out for a moment.
 - Each field and town song has a fight layer (its bass and a driving drum line, bar for bar) that
-  fades in on top while a fight is on. Low HP muffles the music under a heartbeat; towns at night
-  are a little muffled.
+  fades in on top while a fight is on. Low HP muffles the music under a heartbeat. Towns play an
+  evening version of their song at night (slower and softer, the lead on piano).
 - Footsteps alternate feet in pitch and stereo; window opens pop, the quest log and map rustle,
   the bag creaks; skill points and purchases have their own chimes; summons have voices.
+
+## Town and field songs (2026-10-29)
+
+Every town has its own style and every song runs four or five sections (80-125 s a loop): Sprout
+Village's swung picnic tune, Pastel Harbor's bossa nova, Ember Crag's brass march with a horn
+trio, Moonleaf Grove's violin waltz; the meadows' adventure theme, the forest's Celtic jig, the
+ruins' horn hymn, the cave's music box, the sky's Lydian flute. See the top of `songs.js`.

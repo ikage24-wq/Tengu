@@ -24,7 +24,7 @@ export function songFor(map, world = null) {
   if (!map) return 'title';
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
   if (map.dungeon) return 'hollow';
-  if (map.isTown) return TOWN_SONG[map.town] ?? 'town';
+  if (map.isTown) return `${TOWN_SONG[map.town] ?? 'town'}${dayPart() === 'night' ? '-night' : ''}`;
   return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove' }[map.theme] ?? 'meadow';
 }
 
@@ -187,10 +187,9 @@ export function hearWorld(world, cam) {
   const song = songFor(world.map, world);
   updateMusic(song);
   setFight(song === 'boss' ? 0 : fighting ? 1 : 0);
-  // Low HP muffles the music under a heartbeat; a town at night is calmer, a little muffled.
+  // Low HP muffles the music under a heartbeat.
   const low = !world.dead && char.hp > 0 && char.hp < (world.stats?.maxHp ?? 1) * 0.25;
-  const night = world.map.isTown && dayPart() === 'night';
-  setMuffle(low ? 900 : night ? 3200 : 20000);
+  setMuffle(low ? 900 : 20000);
   if (low && world.now - (m.beatAt ?? -9) > 0.95) {
     m.beatAt = world.now;
     sfx('heartbeat');
