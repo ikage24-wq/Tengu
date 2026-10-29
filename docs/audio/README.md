@@ -31,7 +31,7 @@ How it fits together:
 Rules we keep:
 
 1. Each area has its own instruments (see the top of `songs.js`), a lead that sits on top, and
-   drums light enough for a cozy game (heavier in fights and the disco).
+   drums light enough for a cozy game (heavier in fights).
 2. Every instrument is evened out in loudness, so track gains mean what they say: lead about
    -18 dB, bass -22 to -24, drums -24 to -28, accompaniment -26 to -32, ornaments lower.
 3. Jingles: quick notes into a long landing note reached by an upward leap, major key;
@@ -40,5 +40,5 @@ Rules we keep:
 4. Menu sounds are short, dry, and on their own bus that never dips.
 5. Blows: a recorded contact plus a synth body; the body climbs through a combo; finishers add a
    sub thump.
-6. Every music change happens on a beat or bar line where the music has one (Dancing Green).
+6. Every music change happens on a beat or bar line where the music has one.
 7. Each effect has a level (`db`), a pitch spread (`vary`) and a voice cap (`max`).

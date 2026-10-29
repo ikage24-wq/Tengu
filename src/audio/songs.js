@@ -15,8 +15,6 @@
 // - Sky: flute and bells, harp, an airy pad.
 // - The Hollow: horns and a grumbling bass march.
 // - Bosses: brass, strings, choir, timpani, a synth bass gallop and big drums.
-// - Dancing Green: modern disco (a synth hook, brass stabs, strings, a punchy bass and a pumping
-//   four-on-the-floor), at 120 bpm in F minor to match the stage lights and his FFXIV theme's feel.
 
 // ---------- Writing helpers ----------
 const bars = (...b) => b.join(' | ');
@@ -453,83 +451,4 @@ const boss = {
   order: ['A', 'A', 'B', 'A'],
 };
 
-// ---------- Dancing Green: "Funky Fever" (F minor disco, 120 bpm, locked to the stage) ----------
-// Matched to the feel of his FFXIV theme (measured from the track: 120 bpm, F minor, four on the
-// floor with offbeat hats and busy claps, bass-heavy, the flat-six / flat-seven lift to the home
-// chord) with our own melody: none of its tune or lyrics. The chorus climbs Db - Eb - Fm twice and
-// lands the second time on a bright F major.
-const HOOK = bars('F5:3 r:1 Ab5:2 Db6:3 r:1 C6:2 Ab5:2 F5:2', 'G5:3 r:1 Bb5:2 Eb6:3 r:1 Db6:2 C6:2 Bb5:2', 'C6:6 Ab5:2 F5:4 G5:2 Ab5:2', 'C6:3 r:1 C6:2 Bb5:2 Ab5:2 G5:2 F5:4', 'F5:3 r:1 Ab5:2 Db6:3 r:1 F6:2 Eb6:2 Db6:2', 'Eb6:3 r:1 Db6:2 C6:3 r:1 Bb5:2 G5:2 Bb5:2', 'A5:4 C6:4 F6:8', 'E6:2 F6:2 G6:2 F6:2 C6:4 A5:4');
-const RIFF = { Fm: 'r:2 C5:2 r:2 Eb5:2 F5:3 r:1 Ab5:2 F5:2', Fm2: 'r:2 C5:2 r:2 Eb5:2 G5:2 F5:2 Eb5:2 C5:2', Db: 'r:2 Db5:2 r:2 F5:2 Ab5:3 r:1 F5:2 Db5:2', Eb: 'r:2 Eb5:2 r:2 G5:2 Bb5:3 r:1 G5:2 Eb5:2', C: 'r:2 E5:2 r:2 G5:2 Bb5:3 r:1 G5:2 E5:2' };
-const VERSE = ['Fm', 'Fm', 'Db', 'Eb', 'Fm', 'Fm', 'Db', 'C'];
-const VERSE_RIFF = ['Fm', 'Fm2', 'Db', 'Eb', 'Fm', 'Fm2', 'Db', 'C'];
-const CHORUS = ['Db', 'Eb', 'Fm', 'Fm', 'Db', 'Eb', 'F', 'F'];
-const DISCO = 'KhohChohKhohChoh';
-const DISCO2 = 'KhohChohKhohChoc';
-const discoBass = (s, len) => {
-  const r = rootIn(s, 1);
-  return Array(len / 4).fill(`${nm(r)}:2 ${nm(r + 12)}:2`).join(' ');
-};
-const brassHits = (s) => `r:2 ${tones(s, 62)}:2 r:6 ${tones(s, 62)}:2 r:4`;
-const funkyPatterns = (fever) => ({
-  chorus: {
-    lead: HOOK,
-    brass: part(CHORUS, brassHits),
-    strings: part(CHORUS, F.hold(60)),
-    arp: part(CHORUS, F.arp(74, 1)),
-    bass: part(CHORUS, discoBass),
-    sub: part(CHORUS, F.root(1)),
-    drums: fever ? bars('OhohChohKhohChKh', times('KhohChohKhohChKh', 6), 'KhohChohB.B.BBBB') : bars('OhohChohKhohChoh', DISCO2, DISCO, DISCO2, DISCO, DISCO2, DISCO, 'KhohChohB.S.SSSS'),
-  },
-  verse: {
-    guitar: bars(...VERSE_RIFF.map((r) => RIFF[r])),
-    brass: part(VERSE, brassHits),
-    ...(fever ? { arp: part(VERSE, F.arp(74, 1)) } : {}),
-    pad: part(VERSE, F.hold(64)),
-    bass: part(VERSE, discoBass),
-    sub: part(VERSE, F.root(1)),
-    drums: fever ? bars(times('KhohChohKhohChKh', 7), 'KhohChohB.B.BBBB') : bars(DISCO, DISCO2, DISCO, DISCO2, DISCO, DISCO2, DISCO, 'KhohChohB.S.SSSS'),
-  },
-  // The breakdown: the drums drop out, the strings swell, then a snare build into the chorus.
-  break: {
-    strings: bars('Db4+F4+Ab4:16', 'Db4+F4+Ab4+C5:16', 'Eb4+G4+Bb4:16', 'Eb4+G4+Bb4+Db5:16'),
-    pad: bars('F5:16', 'Ab5:16', 'G5:16', 'Bb5:8 Eb6:8'),
-    sub: bars('Db2:16', 'Db2:16', 'Eb2:16', 'Eb2:16'),
-    bass: bars('r:16', 'r:16', part(['Eb'], discoBass), part(['Eb'], discoBass)),
-    drums: bars('c.......c.......', 'c.......c.......', 'K...C...K...C...', 'S.S.S.S.SSSSSSSS'),
-  },
-});
-const funkyTracks = {
-  lead: { inst: 'lead', gain: 1.1, pan: 0, echo: { rows: 3, fb: 0.25, wet: 0.2 }, verb: 0.25 },
-  guitar: { inst: 'pluck', gain: 0.7, pan: -0.2, echo: { rows: 3, fb: 0.3, wet: 0.25 }, verb: 0.2 },
-  brass: { inst: 'brassStab', gain: 0.8, pan: 0.2, verb: 0.25 },
-  strings: { inst: 'strings', gain: 0.25, pan: -0.35, verb: 0.4 },
-  pad: { inst: 'pad', gain: 0.35, verb: 0.3 },
-  arp: { inst: 'pluckSoft', gain: 0.35, pan: 0.4, verb: 0.2 },
-  bass: { inst: 'ebass', gain: 0.45, verb: 0 },
-  sub: { inst: 'sub', gain: 0.35, verb: 0 },
-};
-const funky = {
-  name: 'funky', bpm: 120, inst: I, pump: 0.35, drums: 1.05, reverb: { room: 0.82, wet: 0.22 },
-  tracks: funkyTracks,
-  patterns: funkyPatterns(false),
-  intro: ['chorus'],
-  order: ['verse', 'chorus', 'break', 'chorus'],
-};
-// Hi-NRG Fever: the same song a whole step up, hats in sixteenths, the arpeggio all through.
-const funkyFever = { ...funky, name: 'funky-fever', transpose: 2, drums: 1.15, pump: 0.4, patterns: funkyPatterns(true) };
-// His entrance: the groove from behind a door (the game opens it up with a filter), then a
-// heartbeat and a low drone while he transforms.
-const funkyGroove = {
-  name: 'funky-groove', bpm: 120, inst: I, pump: 0.35, drums: 1,
-  tracks: { bass: funkyTracks.bass, sub: funkyTracks.sub, brass: funkyTracks.brass },
-  patterns: { G: { bass: part(['Fm', 'Fm'], discoBass), sub: part(['Fm', 'Fm'], F.root(1)), brass: part(['Fm', 'Fm'], brassHits), drums: bars(DISCO, DISCO2) } },
-  order: ['G'],
-};
-const funkyHeart = {
-  name: 'funky-heart', bpm: 120, inst: I, drums: 0.9, reverb: { room: 0.9, wet: 0.4 },
-  tracks: { pad: { inst: 'padDark', gain: 0.5, verb: 0.5 }, choir: { inst: 'choir', gain: 0.2, verb: 0.6 }, sub: { inst: 'sub', gain: 0.4, verb: 0 } },
-  patterns: { H: { pad: bars('F3+C4:16', 'F3+C4:16'), choir: bars('F4:16', 'Ab4:16'), sub: bars('F1:16', 'F1:16'), drums: bars('K..K............', 'K..K............') } },
-  order: ['H'],
-};
-
-export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss, funky, 'funky-fever': funkyFever, 'funky-groove': funkyGroove, 'funky-heart': funkyHeart };
+export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss };

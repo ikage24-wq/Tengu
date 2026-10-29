@@ -14,7 +14,7 @@
 export const MAPS = {
   // The archers' home town, among treehouses under green pennants. Arrival and shops on the west;
   // a raised plaza with the Archer Lodge, the fountain, and the watchtower (its deck a ledge you
-  // can climb to); the archery range; then the salon and Boss Rush by the exit. Nothing you need
+  // can climb to); the archery range; then the salon by the exit. Nothing you need
   // is up a ladder.
   sprout: {
     id: 'sprout', plaza: 1020, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
@@ -30,11 +30,9 @@ export const MAPS = {
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
-      // Where you come back from a Boss Rush stage, in front of Roxy's booth.
-      { id: 'arena', x: 1980, y: 480, hidden: true },
       { id: 'east', x: 2140, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 300 }, { id: 'pip', x: 500 }, { id: 'kestrel', x: 880 }, { id: 'lulu', x: 1800 }, { id: 'roxy', x: 1980 }],
+    npcs: [{ id: 'mira', x: 300 }, { id: 'pip', x: 500 }, { id: 'kestrel', x: 880 }, { id: 'lulu', x: 1800 }],
     deco: [
       ['flowerarch', 60], ['archerbanner', 180], ['well', 650], ['archerbanner', 730],
       ['watchtower', 1160], ['archerbanner', 1310],
@@ -271,16 +269,6 @@ export const MAPS = {
     deco: [['crystalspire', 420, 1], ['crystalspire', 760, 0], ['throne', 600]],
     spawns: [{ mob: 'crystalking', x: 560, y: 380, respawn: 300 }],
   },
-};
-
-// ---------- Dancing Green's stage ----------
-MAPS.discostage = {
-  id: 'discostage', name: 'Funky Fever Stage', theme: 'cave', town: 'grove', world: { x: 380, y: 170 },
-  width: 1100, height: 420, groundY: 350,
-  look: { stage: 'disco', light: 'disco', sky: ['#120c26', '#2a1748', '#4a2160'], far: '#2a1748', mid: '#3a2a4e', front: null, drift: null, props: [], critters: [] },
-  platforms: [], ropes: [],
-  portals: [{ id: 'west', x: 50, y: 350, to: 'sprout', toPortal: 'arena', label: 'Sprout Village' }],
-  npcs: [], deco: [], spawns: [{ mob: 'dancinggreen', x: 640, y: 350, respawn: 300 }],
 };
 
 // ---------- The warrior and mage homes, and the canyon road up to the warriors ----------

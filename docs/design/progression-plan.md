@@ -15,7 +15,7 @@ it, and tick it off here.
 - Jobs: Warrior, Archer and Thief get a first job at 10 and two paths at 30 after a trial. The
   Mage was removed; a new magic class is being built from scratch.
 - Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses), the Crystal King,
-  and Boss Rush (Dancing Green, Lv 40+, with a cutscene).
+  (Dancing Green and Roxy's Boss Rush were a test boss, removed 2026-10-29).
 - Drawn but unused: Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna, and four queens
   (Sylvana Lv 22, Tamamo Lv 30, Lilith Lv 38, Selene Lv 50). These make ready-made story bosses.
 - Cash flows freely (5,000 to start, more every level), so outfits don't say anything about you.
@@ -35,8 +35,8 @@ it, and tick it off here.
 ### 1. Main story (FFXIV's main story quest)
 A chain of story quests marked with a special icon, split into chapters by level. Regions stay
 **locked until the story reaches them** (a collapsed bridge, a sealed ruin gate, a wind wall
-around the Sky Garden), so the world opens up as you go. Each chapter uses the cutscene system
-built for Dancing Green (letterbox shots, name cards) for its big moments.
+around the Sky Garden), so the world opens up as you go. Each chapter gets a cutscene system
+(letterbox shots, name cards) for its big moments.
 
 Premise (draft): Tengu Island's guardian spirit, the Tengu, has gone silent, and the island's
 spirits are souring: the old trees grow grumpy, the fox spirits play cruel tricks, and the crystals
@@ -79,7 +79,7 @@ jobs.)
 
 ### 4. Dungeons and trials as story beats (FFXIV duties)
 - Each chapter ends in a dungeon (four players, tank/healer/2 DPS, like Rootwood Hollow) or a
-  **trial** (one big boss arena with telegraphed moves on a rhythm, like Dancing Green).
+  **trial** (one big boss arena with telegraphed moves on a rhythm).
 - The group finder already exists; add a **daily bonus** for the first run of the day (FFXIV
   roulette) so old dungeons stay useful and new players always find a group.
 - Dungeons drop **tokens** you trade for that chapter's gear set, so bad luck still makes progress.
@@ -95,7 +95,7 @@ jobs.)
 - Every boss gets **Normal** and **Hard**. Hard drops the best stuff and a boss trophy.
 - **Weekly clears**: each boss gives its big reward once a week (per character), so there's a
   weekly routine without endless grinding.
-- **Boss Rush** gets grades (S/A/B), best times, and a trophy wall in Roxy's booth.
+- **Boss Rush** (to be rebuilt) gets grades (S/A/B), best times, and a trophy wall.
 
 ### 7. Daily and weekly tasks
 - **Daily tasks** from each town's board: "hunt 100 Wargs", "deliver 20 Dryad Leaves". These pay EXP,
@@ -122,7 +122,7 @@ jobs.)
 
 - [ ] **Phase 1: Story foundation.** Story quests with their own marker and quest-window tab,
   locked regions that open with the story, chapters 1–3 (up to Sylvana's trial), and story
-  cutscenes reusing the Dancing Green cutscene system. Rework the 9 existing quests into
+  cutscenes (a new cutscene system). Rework the 9 existing quests into
   chapter steps or side quests.
 - [x] **Phase 2: Warrior 2nd job.** Done: Brann's trial at 30, then Paladin (tank: Aegis Smite,
   Hallowed Ground, Divine Aegis, mastery) or Berserker (damage, Rage gauge: Ravage, Blood Frenzy,

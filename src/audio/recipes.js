@@ -478,10 +478,6 @@ const R = {
       { drum: '*', at: 960, db: -12 },
     ],
   },
-  // Dancing Green's entrance: a rising sweep and a snare roll that speeds up, and a cymbal crash.
-  riser: { db: -12, max: 1, layers: [{ wave: 'noise', env: { a: 1800, d: 60, curve: 1 }, lpf: [200, 7000, 2], db: -2 }, { wave: 'saw', f0: 82, slide: 2.4, env: { a: 1700, d: 120 }, lpf: [2000], db: -8 }] },
-  roll: { db: -14, max: 1, layers: [0, 250, 500, 700, 850, 975, 1100, 1200, 1300, 1375, 1450, 1525, 1600, 1650, 1700, 1750, 1800, 1850].map((at, i) => ({ drum: 'S', at, db: -12 + i * 0.6 })) },
-  crash: { db: -14, max: 2, layers: [{ drum: '*' }] },
   // ---------- Interface: real clicks, high, short and dry ----------
   click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
   cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },

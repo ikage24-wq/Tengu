@@ -23,8 +23,6 @@ const LOOKS = {
   noon: { light: '#fffbe0', shade: '#5c9a8a', rays: 0.35, sun: 0.85, pool: 0.05 },
   dusk: { light: '#ffc08a', shade: '#4a2f6a', rays: 0.6, sun: 0.2, pool: 0.15 },
   throne: { light: '#c9b6ff', shade: '#1f1846', rays: 0, sun: 0.5, pool: 0.22, warm: '#e6dcff' },
-  // Dancing Green's stage: club light, deep shadows at the edges, warm pink pools.
-  disco: { light: '#a060d8', shade: '#0c0620', rays: 0, sun: 0.5, pool: 0.22, warm: '#ffb8e6' },
 };
 
 const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;

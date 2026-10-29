@@ -176,18 +176,6 @@ export const MOBS = {
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 420, range: 420 },
   }),
 
-  // Dancing Green: the disco boss of the Funky Fever Stage. His fight is scripted to the beat in
-  // world/discoboss.js and he is drawn on the hero body (render/discoboss.js).
-  dancinggreen: mob({
-    id: 'dancinggreen', name: 'Dancing Green, the Party Animal', level: 50, hp: 220000, atk: 280, def: 62, acc: 115, eva: 14, exp: 150000,
-    gold: [5000, 9000], speed: 0, w: 70, h: 150, art: 'dancinggreen', boss: true, disco: true,
-    drops: [
-      { id: 'scroll_watk_10', chance: 0.6 },
-      { id: 'scroll_matk_10', chance: 0.6 },
-      { id: 'elixir', chance: 1, qty: 6 },
-    ],
-  }),
-
   // Queens out of myth: field bosses not placed in any map yet. Each winds up a big attack every
   // few seconds that hits anyone on the floor near her.
   sylvana: mob({

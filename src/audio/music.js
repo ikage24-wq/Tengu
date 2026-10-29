@@ -4,11 +4,9 @@
 // Moving between areas, the old song fades out over a second while the new one fades in, and an
 // area's song picks up where it left off if the player comes back within a minute and a half
 // (towns and fields feel continuous, like MapleStory's). Bosses cut in at once on their sting.
-// Dancing Green's stage plays his own song, locked to the stage lights (funky.js).
 
 import { audioReady, now, loop, stop } from './engine.js';
 import { songBuffer, prepareSongs } from './bank.js';
-import { updateFunky, stopFunky } from './funky.js';
 
 let want = null;
 let cur = null;
@@ -21,17 +19,9 @@ export function songPos(v, t) {
   return v.loopStart + ((e - v.loopStart) % (v.loopEnd - v.loopStart));
 }
 
-// Call every frame with the music that should be playing (or null for silence). `cut` is how
-// far into Dancing Green's cutscene it is.
-export function updateMusic(key, cut = 0) {
+// Call every frame with the music that should be playing (or null for silence).
+export function updateMusic(key) {
   if (!audioReady()) return;
-  if (key?.startsWith('funky')) {
-    if (cur) leave(0.6);
-    want = key;
-    updateFunky(key, cut);
-    return;
-  }
-  if (want?.startsWith('funky')) stopFunky();
   if (key === want) return;
   want = key;
   const hard = key === 'boss';

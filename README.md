@@ -304,16 +304,6 @@ to clear it.
   two-tone smoke cloud that breaks into shrinking puffs; landings skid dust out to both sides; a
   boss stomp bursts rock spikes up from the ground. Plus screen shake, short hitstop on crits and
   kills, and ambient petals, fireflies, and glints in every map.
-- **Boss Rush: Dancing Green** — Roxy, the Boss Rush Host, runs a neon booth at the east end of
-  Sprout Village (from level 40). Challenge Dancing Green, the Party Animal, on the Funky Fever
-  Stage: a disco arena with a giant neon sign, mirror balls, dancing neon figures and a glowing
-  tile floor, all pulsing to a 120 bpm beat. A cutscene opens the fight (skip it with Space or
-  Enter): letterboxed shots pan the stage, he struts in and dances, says his line, and red energy
-  swallows him; quick close-ups reveal his toad form, then his name card slams in. Then
-  every attack lands on the beat and is shown first: rainbow walls and cube walls that hit half
-  the stage, a slashing kick, flashing floor tiles, spotlights to stand in, waves to jump, frog
-  backup dancers who call his cleaves, moonwalking frogs whose tracks burst, and a Hi-NRG Fever
-  enrage if the party runs too long.
 - **Monsters and maps** — 19 chibi monsters and the Crystal King boss across 12 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room). Field maps
   are built like classic side-scroller maps: the ground rolls in hills and slopes, rises into
@@ -596,12 +586,7 @@ to clear it.
   grove; choir, harp and horn in the ruins; echoing celesta in the cave; flute and bells in the sky;
   a grumbling horn march in the Hollow; a galloping boss theme with brass, strings, choir and
   timpani that cuts in on its sting; and a piano title theme. Songs crossfade between areas and
-  pick up where they left off when you come back. **Funky Fever**, Dancing Green's disco song (F
-  minor, 120 bpm, matched to the feel of his FFXIV theme with our own melody), is locked to the
-  stage lights: a muffled groove that opens up as he struts in, a riser and snare roll, a boom and a
-  heartbeat while he transforms, the drop on a bar line with the chorus on the stage's drop, a phase
-  sting into Hi-NRG Fever (a whole step up) on the next bar, and the victory fanfare on the beat when
-  he falls. **Jingles** on real instruments follow the Japanese RPG formula (quick notes rushing
+  pick up where they left off when you come back. **Jingles** on real instruments follow the Japanese RPG formula (quick notes rushing
   into a long, rising landing note): level up, quest accepted and complete, rare drops, job
   advancement, boss defeated, healing, and a gentle faint; the music dips under them and they never
   overlap. **Effects**: blows are recorded punches with a body that climbs in pitch through a combo

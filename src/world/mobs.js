@@ -214,11 +214,6 @@ export function updateMob(m, player, dt, now) {
     return null;
   }
   m.phase += dt;
-  // Dancing Green moves to his own script (world/discoboss.js).
-  if (m.def.disco) {
-    if (m.stagger > 0) m.stagger -= dt;
-    return null;
-  }
 
   let event = null;
   if (m.special) {

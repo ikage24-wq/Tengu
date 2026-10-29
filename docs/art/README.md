@@ -20,9 +20,7 @@ carry an improvement across every part of the game it applies to.
   [diives](research/diives.md) (Diives' safe-for-work character acting: expressions, emotion symbols,
   squash and timing),
   [combat](research/combat.md) (combo counters, links, finishers and cut-ins, juggles, blending
-  between moves),
-  [dancing-green](research/dancing-green.md) (the FFXIV boss the player wants as a disco boss: his
-  look, how he moves, and every attack with its tell).
+  between moves)).
 - [briefs/](briefs/): the briefs the art and improvement passes worked from (conventions, quality
   bar, review loop).
 

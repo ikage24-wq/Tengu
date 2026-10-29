@@ -21,14 +21,6 @@ const TOWN_SONG = { sprout: 'town', harbor: 'harbor', crag: 'crag', grove: 'grov
 
 export function songFor(map, world = null) {
   if (!map) return 'title';
-  // Dancing Green's stage plays his song, following the fight.
-  if (map.id === 'discostage') {
-    const boss = world?.mobs.find((m) => m.def.disco);
-    // Gone (or falling): the victory fanfare, then quiet.
-    if (!boss || boss.hp <= 0) return 'funky-win';
-    if (world.cutscene) return 'funky-intro';
-    return boss.brain?.enraged ? 'funky-fever' : 'funky';
-  }
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
   if (map.dungeon) return 'hollow';
   if (map.isTown) return TOWN_SONG[map.town] ?? 'town';
@@ -98,7 +90,7 @@ export function hearWorld(world, cam) {
     if (j.type === 'hit') {
       hits++;
       if (!hit || j.crit || j.big) hit = j;
-    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, stage: world.map.id === 'discostage', pan: pan(j.x) });
+    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x) });
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
@@ -123,7 +115,7 @@ export function hearWorld(world, cam) {
   // ----- The hero's state -----
   const first = m.level == null;
   // Get the songs of the maps next door ready, so walking on never waits for one.
-  if (world.map.id !== m.map) prepareSongs((world.map.portals ?? []).map((pt) => pt.to && getMap(pt.to)).filter(Boolean).flatMap((mp) => (mp.id === 'discostage' ? ['funky-groove', 'funky-heart', 'funky'] : [songFor(mp)])));
+  if (world.map.id !== m.map) prepareSongs((world.map.portals ?? []).map((pt) => pt.to && getMap(pt.to)).filter(Boolean).map((mp) => songFor(mp)));
   if (!first) {
     if (char.job !== m.job) sfx('jobUp');
     else if (char.level > m.level) sfx('levelup');
@@ -176,7 +168,7 @@ export function hearWorld(world, cam) {
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
   Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, ki: world.ki, tails: world.tails, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
 
-  updateMusic(songFor(world.map, world), world.disco?.cut ?? 0);
+  updateMusic(songFor(world.map, world));
 }
 
 function countItems(char) {

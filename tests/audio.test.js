@@ -107,11 +107,3 @@ test('a bar that does not add up is caught, and chords parse', () => {
   assert.deepEqual(events[0].midis, [60, 64, 67]);
 });
 
-test('the disco songs keep time with the stage (120 bpm, whole bars, the fever a step up)', () => {
-  for (const k of ['funky', 'funky-fever', 'funky-groove', 'funky-heart']) {
-    const r = renderSong(SONGS[k], bank, 8000);
-    assert.equal(SONGS[k].bpm, 120);
-    assert.ok(Math.abs((r.loopEnd / 2) % 1) < 1e-9 && Math.abs((r.loopStart / 2) % 1) < 1e-9, `${k} is whole bars`);
-  }
-  assert.equal(SONGS['funky-fever'].transpose, 2);
-});

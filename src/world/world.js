@@ -19,7 +19,6 @@ import { rodGuard } from './storm.js';
 import { tickMelee, faithGuard, addAim, addKi, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
-import { tickDisco } from './discoboss.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 import { lastRite } from './shrine.js';
 
@@ -462,10 +461,8 @@ export function updateWorld(world, dt, input) {
   char.mp = Math.min(char.mp, world.stats.maxMp);
 
   // ----- Player control -----
-  // A boss cutscene takes the controls; Space, Enter or Escape skips it.
-  if (world.cutscene && ['Space', 'Enter', 'Escape'].some((k) => input.pressed?.has(k))) world.cutSkip = true;
-  const held = input.locked || world.dead || world.cutscene ? new Set() : input.held;
-  const pressed = input.locked || world.dead || world.cutscene ? new Set() : input.pressed;
+  const held = input.locked || world.dead ? new Set() : input.held;
+  const pressed = input.locked || world.dead ? new Set() : input.pressed;
   const intent = {
     left: held.has('ArrowLeft'),
     right: held.has('ArrowRight'),
@@ -616,7 +613,6 @@ export function updateWorld(world, dt, input) {
   // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
   if (world.dungeon) tickDungeon(world, dt);
-  else tickDisco(world, dt);
   if (!world.dungeon) for (const m of world.mobs) {
     const event = updateMob(m, world.body, dt, world.now);
     if (event === 'slam') {
@@ -629,7 +625,7 @@ export function updateWorld(world, dt, input) {
         m.gloatAt = world.now;
       }
     }
-    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now || m.def.disco) continue;
+    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
     m.attackAt = world.now;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
@@ -645,7 +641,7 @@ export function updateWorld(world, dt, input) {
   // Monsters don't pop up right on top of you or your party.
   const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
   world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near));
-  world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < (m.def.disco ? 4 : 0.5));
+  world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < 0.5);
 
   world.drops = updateDrops(world.drops, world.map, dt);
 

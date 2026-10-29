@@ -189,7 +189,7 @@ export const SYNTHS = {
     }
     return x;
   },
-  // A singing supersaw lead with vibrato (for the disco hook).
+  // A singing supersaw lead with vibrato.
   lead(m, d, sr, rand, o) {
     const f = hz(m);
     const n = Math.round((d + 0.25) * sr);

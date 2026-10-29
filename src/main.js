@@ -215,8 +215,7 @@ function frame(now) {
     });
     // The HUD needs the camera to fly picked-up loot from the world into the Bag button.
     uiState.cam = camera;
-    // A boss cutscene plays without the HUD.
-    if (!world.cutscene) drawUi(ui, uiState, world);
+    drawUi(ui, uiState, world);
     hearUi(uiState);
     npcPointer(ui);
     // The Options window can send you back to character select or the title.

@@ -7,7 +7,6 @@
 // The designs themselves live in mobs/, one module per region. Little emote bubbles (!, anger
 // marks, sweat, music notes, z's) float over their heads.
 
-import { drawDiscoBoss } from './discoboss.js';
 import { sprite, spriteLater, blit, snap, footShadow } from './pixel.js';
 import { springStep } from './animator.js';
 import { fxSprite } from './fx-sprites.js';
@@ -20,7 +19,6 @@ export { ARTS };
 // a fixed rhythm for designs that sway in place. An art may also give `atkMs`, its attack timing
 // (see attackTiming).
 export function framesOf(art) {
-  // Dancing Green has no sprite frames: he is drawn on the hero body (render/discoboss.js).
   const a = ARTS[art] ?? {};
   return { walk: a.walk ?? 4, idle: a.idle ?? 2, attack: a.attack ?? 0, stride: a.stride ?? null, cycle: a.cycle ?? null };
 }
@@ -286,10 +284,6 @@ function poofCloud(ctx, x, y, w, u) {
 // hurt face held for a beat; they drag a little behind sudden starts and stops; new monsters pop
 // in; and defeated ones are knocked up, bounce, and poof.
 export function drawMonster(ctx, m, x, y, time, now = time) {
-  if (m.def.disco) {
-    drawDiscoBoss(ctx, m, x, y, now);
-    return;
-  }
   const frozen = m.frozenUntil > now && m.hp > 0;
   const flying = m.def.fly;
   const moving = !frozen && ((m.state === 'walk' && m.stagger <= 0) || flying);

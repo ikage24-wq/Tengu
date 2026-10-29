@@ -9,9 +9,7 @@ import { JOBS, nextJobs, FAMILY_STATS } from '../data/jobs.js';
 import { questState, acceptQuest, completeQuest, objectiveProgress, rewardId, objectiveHint } from '../core/quests.js';
 import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
-import { respawn, loadMap } from '../world/world.js';
-import { MAPS } from '../data/maps.js';
-import { drawDiscoBoss } from '../render/discoboss.js';
+import { respawn } from '../world/world.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon } from '../world/dungeon.js';
 import { drawHero } from '../render/hero.js';
@@ -31,7 +29,7 @@ export function questMarker(char, npcId) {
 // ---------- Dialog ----------
 
 // Each NPC role gets its own color.
-const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender', dungeon: 'mint', arena: 'ruby' };
+const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender', dungeon: 'mint' };
 
 // A visual-novel style dialog box along the bottom of the screen: the NPC stands large at the
 // left, their name on a ribbon, and their words type out. Returns the text area, or null if the
@@ -206,7 +204,6 @@ export function npcWindow(ui, state, world) {
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
   if (npc.role === 'dungeon') choices.push({ label: `Enter ${DUNGEONS[npc.dungeon].name}`, sub: `Lv ${DUNGEONS[npc.dungeon].minLevel}+ · a group of four`, icon: 'star', primary: true, run: () => (dlg.dungeon = true) });
-  if (npc.role === 'arena') choices.push({ label: 'Boss Battles', sub: `${npc.bosses.length} challenger${npc.bosses.length > 1 ? 's' : ''} waiting`, icon: 'star', primary: true, run: () => (dlg.arena = true) });
   if (npc.role === 'instructor') {
     const ready = nextJobs(char.job, char.level, char.quests).some((j) => j.family === npc.family);
     const trial = !ready && nextJobs(char.job, char.level).some((j) => j.family === npc.family && j.trial);
@@ -216,7 +213,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 150 : dlg.arena ? 168 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 150 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -235,12 +232,6 @@ export function npcWindow(ui, state, world) {
   if (dlg.dungeon) {
     dlg.talking = false;
     dungeonPage(ui, state, world, npc, area);
-    return;
-  }
-
-  if (dlg.arena) {
-    dlg.talking = false;
-    arenaPage(ui, state, world, npc, area, key);
     return;
   }
 
@@ -408,74 +399,6 @@ function dungeonPage(ui, state, world, npc, area) {
     return;
   }
   if (button(ui, tx + tw - 74, by, 74, 17, 'Back')) state.npc.dungeon = false;
-}
-
-// ---------- Boss Rush ----------
-
-// One challenger card: a live preview of the boss dancing on a little stage, its name, level and
-// stage, how hard it is, what it's about, what it drops, and a Challenge button.
-function arenaPage(ui, state, world, npc, area, key) {
-  const { ctx } = ui;
-  const { x: tx, w: tw, theme: th } = area;
-  const b = npc.bosses[state.npc.boss ?? 0];
-  const def = MOBS[b.mob];
-  const map = MAPS[b.map];
-  const y = area.y - 6;
-  const ph = 104;
-  // The preview: a dark stage with a beat-pulsing floor and spotlights, the boss grooving on it.
-  ctx.save();
-  roundRect(ctx, tx, y, 96, ph, 8);
-  ctx.clip();
-  const g = ctx.createLinearGradient(0, y, 0, y + ph);
-  g.addColorStop(0, '#1a1030');
-  g.addColorStop(1, '#3a1f52');
-  ctx.fillStyle = g;
-  ctx.fillRect(tx, y, 96, ph);
-  const beat = Math.floor(world.now * 2);
-  for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = (i + beat) % 2 ? 'rgba(255,90,180,0.45)' : 'rgba(110,220,255,0.35)';
-    ctx.fillRect(tx + i * 16, y + ph - 16, 16, 16);
-  }
-  const sx = tx + 48 + Math.sin(world.now * 0.9) * 30;
-  ctx.fillStyle = 'rgba(255,250,220,0.16)';
-  ctx.beginPath();
-  ctx.moveTo(tx + 46, y);
-  ctx.lineTo(tx + 50, y);
-  ctx.lineTo(sx + 14, y + ph - 14);
-  ctx.lineTo(sx - 14, y + ph - 14);
-  ctx.fill();
-  ctx.translate(tx + 48, y + ph - 14);
-  ctx.scale(0.5, 0.5);
-  const preview = (state.npc.preview ??= { def, dir: 1, hp: 1, flash: 0, brain: { form: 'toad', move: 'groove', moveT: 0 } });
-  drawDiscoBoss(ctx, preview, 0, 0, world.now);
-  ctx.restore();
-  box(ctx, tx, y, 96, ph, { fill: null, edge: th.dark, r: 8, width: 1.5 });
-  // The details.
-  const dx = tx + 104;
-  const dw = tw - 104;
-  text(ctx, fit(ctx, def.name, dw, 10, true), dx, y + 10, { size: 10, bold: true, color: th.ink });
-  text(ctx, `Lv ${def.level} Boss  ·  ${map.name}`, dx, y + 21, { size: 7, bold: true, color: COLORS.muted });
-  // Difficulty stars.
-  for (let i = 0; i < 5; i++) {
-    const on = i < b.stars;
-    text(ctx, '★', dx + i * 10, y + 33, { size: 9, color: on ? '#ffb020' : '#e0d6ec', outline: on ? '#a8601a' : null });
-  }
-  text(ctx, 'Difficulty', dx + 54, y + 32, { size: 6.5, color: COLORS.muted });
-  wrap(ctx, b.blurb, dx, y + 44, dw, { size: 7, lineHeight: 8.6 });
-  text(ctx, fit(ctx, `Rewards: ${def.exp.toLocaleString()} EXP · ${b.rewards}`, dw, 6.5, true), dx, y + ph - 2, { size: 6.5, bold: true, color: th.dark });
-  // Challenge, or come back later.
-  const by = area.bottom - 16;
-  const ready = world.char.level >= b.minLevel;
-  if (!ready) text(ctx, `Come back at Lv ${b.minLevel}, rookie!`, tx, by + 12, { size: 8.5, bold: true, color: COLORS.bad });
-  else text(ctx, 'Dodge on the beat. Good luck out there!', tx, by + 12, { size: 7.5, bold: true, color: th.ink });
-  if (ready && (button(ui, tx + tw - 160, by, 84, 17, 'Challenge!', { primary: true, size: 8.5 }) || key === 1)) {
-    world.log(`Roxy: "Give it up for... ${def.name}!"`, '#ff8fc1');
-    state.npc = null;
-    state.windows.npc.open = false;
-    loadMap(world, b.map, b.portal);
-    return;
-  }
-  if (button(ui, tx + tw - 72, by, 72, 17, 'Back') || ui.input.pressed?.has('Backspace')) state.npc.arena = false;
 }
 
 // ---------- Stylist ----------

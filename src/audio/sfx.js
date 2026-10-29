@@ -148,12 +148,12 @@ const SOUNDS = {
   miss: ({ pan }) => voice('miss', { pan }),
   hurt: ({ pan }) => voice('hurt', { pan }),
   // A monster pops: a soft squish and a little cry; a boss booms.
-  poof({ boss, stage, pan }) {
+  poof({ boss, pan }) {
     voice('poof', { pan });
     voice('enemyHurt', { pan, db: -4 });
     if (boss) {
       voice('boom', { pan });
-      if (!stage) voice('bossDefeated');
+      voice('bossDefeated');
     }
   },
   boom: ({ size = 1, pan }) => voice('boom', { pan, rate: size > 1.5 ? 0.8 : 1 }),
