@@ -294,6 +294,30 @@ test('skills never go on cooldown: a spell is free again a beat after its motion
   assert.equal(cast(w, 'backstab').ok, true, 'usable again right after that beat: no cooldown');
 });
 
+test("a GM job swap forgets skills from outside the new job's line and gives their SP back", async () => {
+  const { setJob } = await import('../src/world/gm.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  const w = newWorld();
+  const c = w.char;
+  setJob(c, 'shinobi');
+  const thiefSkill = Object.values(SKILLS).find((s) => s.job === 'thief' && s.type !== 'passive').id;
+  const shinobiSkill = Object.values(SKILLS).find((s) => s.job === 'shinobi' && s.type !== 'passive').id;
+  c.skills[thiefSkill] = 3;
+  c.skills[shinobiSkill] = 2;
+  c.hotkeys = { KeyQ: { skill: thiefSkill }, KeyW: { skill: shinobiSkill }, KeyE: { item: 'potion_red' } };
+  const sp = c.sp;
+  setJob(c, 'kitsune');
+  assert.equal(c.skills[thiefSkill], 3, 'the shared Thief skills stay');
+  assert.equal(c.skills[shinobiSkill], undefined, "the Shinobi's own skills are gone");
+  assert.equal(c.sp, sp + 2);
+  assert.deepEqual(c.hotkeys, { KeyQ: { skill: thiefSkill }, KeyE: { item: 'potion_red' } });
+  setJob(c, 'gamemaster');
+  const spAsGm = c.sp;
+  setJob(c, 'warrior');
+  assert.equal(c.sp, spAsGm, 'the free GM skills give no SP');
+  assert.ok(Object.keys(c.skills).every((id) => ['novice', 'warrior'].includes(SKILLS[id].job)));
+});
+
 test("the Spirit Mage branches two ways at 30, the Shrine Maiden and the Onmyoji, after Elowen's trial", async () => {
   const { nextJobs, jobChain } = await import('../src/data/jobs.js');
   const { QUESTS } = await import('../src/data/quests.js');

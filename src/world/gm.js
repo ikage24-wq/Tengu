@@ -4,7 +4,7 @@
 // teleport, spawn or clear monsters, and toggle god mode, from chat commands or the admin menu.
 
 import { ITEMS } from '../data/items.js';
-import { JOBS } from '../data/jobs.js';
+import { JOBS, jobChain } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { SKILLS } from '../data/skills.js';
@@ -55,9 +55,19 @@ function refill(char) {
 }
 
 // Switches straight to any job, including the Game Master. GMs get their skills at once.
+// Skills from outside the new job's line are forgotten (their SP comes back; the GM's were free)
+// and leave their hotkeys.
 export function setJob(char, jobId) {
   if (!JOBS[jobId]) return false;
   char.job = jobId;
+  const chain = new Set(jobChain(jobId));
+  for (const [id, lv] of Object.entries(char.skills)) {
+    const s = SKILLS[id];
+    if (s && chain.has(s.job)) continue;
+    if (s && s.job !== 'gamemaster') char.sp += lv;
+    delete char.skills[id];
+  }
+  for (const [key, b] of Object.entries(char.hotkeys)) if (b?.skill && !char.skills[b.skill]) delete char.hotkeys[key];
   if (jobId === 'gamemaster') {
     for (const s of Object.values(SKILLS).filter((k) => k.job === 'gamemaster')) {
       if (!char.skills[s.id]) {
