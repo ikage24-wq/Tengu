@@ -668,7 +668,8 @@ export function updateWorld(world, dt, input) {
     if (world.dungeon) h.damage = noteHit(world, m, h);
     // Another player hunting here never lands a boss's last blow: that one's yours.
     if (h.stranger && m.def.boss) h.damage = Math.max(0, Math.min(h.damage, m.hp - 1));
-    if (h.stranger) {
+    // (A monster a player hits goes after them, your party members too: it fights back.)
+    if (h.party && !world.dungeon) {
       m.foe = world.bots?.list.find((b) => b.id === h.party)?.body ?? null;
       m.foeUntil = world.now + 6;
     }

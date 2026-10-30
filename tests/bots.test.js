@@ -286,3 +286,107 @@ test('other players really fight: their job\'s own string of moves, back to back
     assert.ok(moves.size >= 5, `${job[1]} mixes up their moves (${[...moves].join(', ')})`);
   }
 });
+
+test('fields are busy: every hunting map has a few players on it', () => {
+  for (const id of ['woods', 'meadow1']) {
+    for (let seed = 1; seed < 6; seed++) {
+      const world = createWorld(createCharacter('Me', {}));
+      quiet(world);
+      world.char.level = 20;
+      const bots = createBots(world, seeded(seed * 7));
+      loadMap(world, id, 'start');
+      updateBots(bots, world, 0.05);
+      const n = bots.list.filter((b) => b.hunter && !b.gone).length;
+      assert.ok(n >= 2 && n <= 5, `${id}: ${n} hunters`);
+    }
+  }
+});
+
+test('monsters fight back: a player hit drinks potions, falls under a tombstone, and logs back in later', async () => {
+  const { tickHunter } = await import('../src/world/party.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { createBody } = await import('../src/world/physics.js');
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  world.god = true;
+  const bots = createBots(world, seeded(3));
+  loadMap(world, 'woods', 'start');
+  bots.huntMap = world.map.id;
+  bots.list = bots.list.filter((b) => !b.hunter);
+  world.mobs = [];
+  const x = world.body.x + 600;
+  const char = makeBotCharacter(seeded(9), { name: 'Unlucky', level: 20, jobs: ['warrior'], pro: false });
+  // A monster too strong for them (each touch takes about 40% of their HP), right on top of them.
+  const st = computeStats(char);
+  const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
+  m.def = { ...m.def, atk: Math.round((st.maxHp * 0.4 * (100 + st.wdef)) / 100), acc: 999, speed: 0 };
+  m.hp = 1e9;
+  world.mobs.push(m);
+  const bot = { id: 'u1', name: 'Unlucky', char, level: 20, hunter: true, map: world.map.id, x, facing: 1, state: 'hunt', body: createBody(x, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0, potions: 2 };
+  bots.list.push(bot);
+  let drank = 0;
+  for (let t = 0; t < 20 && !bot.down; t += 1 / 30) {
+    world.now += 1 / 30;
+    const before = bot.potions;
+    tickHunter(bot, world, [bot], 1 / 30, seeded(Math.floor(t * 30) + 1));
+    if (bot.potions < before) drank++;
+  }
+  assert.equal(drank, 2, 'they drank their potions first');
+  assert.ok(bot.down && bot.tomb, 'down under a tombstone');
+  // A few seconds later they're gone back to town, and a while after that they log back in.
+  world.mobs = [];
+  for (let t = 0; t < 8; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateBots(bots, world, 1 / 30);
+  }
+  assert.ok(!bots.list.some((b) => b.name === 'Unlucky' && !b.gone), 'off to town');
+  assert.equal(bots.returns.length, 1);
+  world.now += 120;
+  for (let t = 0; t < 1; t += 1 / 30) updateBots(bots, world, 1 / 30);
+  const again = bots.list.find((b) => b.name === 'Unlucky' && !b.gone);
+  assert.ok(again && again.char === char, 'the same player, back for more');
+});
+
+test('dash moves carry a player along, and a party member who dies walks back in to you', async () => {
+  const { tickHunter, updateParty } = await import('../src/world/party.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { createBody } = await import('../src/world/physics.js');
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  world.god = true;
+  loadMap(world, 'woods', 'start');
+  world.mobs = [];
+  const x = world.body.x + 700;
+  const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
+  m.hp = m.def.hp = 1e9;
+  m.def = { ...m.def, speed: 0, atk: 0 };
+  world.mobs.push(m);
+  const char = makeBotCharacter(seeded(4), { name: 'Dasher', level: 45, jobs: ['thief', 'shinobi'], pro: false });
+  const bot = { id: 'd1', name: 'Dasher', char, level: 45, hunter: true, map: world.map.id, x: x - 40, facing: 1, state: 'hunt', body: createBody(x - 40, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
+  let carried = 0;
+  for (let t = 0; t < 15; t += 1 / 30) {
+    world.now += 1 / 30;
+    const x0 = bot.body.x;
+    tickHunter(bot, world, [bot], 1 / 30, seeded(Math.floor(t * 30) + 7));
+    if (bot.lunge) carried += Math.abs(bot.body.x - x0);
+  }
+  assert.ok(carried > 100, `steps and dashes move them (${Math.round(carried)}px)`);
+
+  // A party member falls in the field: back to town, then in through a portal near you.
+  const bots = { list: [], memory: new Set(), names: new Set(), rng: seeded(2) };
+  world.bots = bots;
+  const pal = { id: 'p1', name: 'Pal', char: makeBotCharacter(seeded(8), { name: 'Pal', level: 20, jobs: ['warrior'] }), level: 20, party: true, style: {}, map: world.map.id, x: world.body.x, facing: 1, state: 'idle', session: 999, stay: 999, nextLine: 999, appear: 0 };
+  pal.stats = computeStats(pal.char);
+  bots.list.push(pal);
+  updateParty(bots, world, 1 / 30);
+  pal.hp = 0;
+  for (let t = 0; t < 6; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateParty(bots, world, 1 / 30);
+  }
+  assert.ok(pal.away && !pal.body, 'gone back to town for a bit');
+  world.now += 60;
+  updateParty(bots, world, 1 / 30);
+  assert.ok(pal.body && !pal.away && !pal.down, 'back again');
+  assert.equal(pal.hp, pal.stats.maxHp);
+});
