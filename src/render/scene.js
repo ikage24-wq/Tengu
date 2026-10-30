@@ -3,7 +3,8 @@
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, shadowClones, inForm, hasFaith, thiefSchool } from '../world/melee.js';
-import { moveAt, MOVES, DANCE_MOVES } from './moves.js';
+import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
+import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
@@ -279,11 +280,14 @@ export function drawWorld(ctx, world, viewCam, time) {
     const gauge = gaugeOf(world.char);
     // In a form the aura stays at its fullest.
     const power = gauge ? [gauge, inForm(world) ? 1 : (world[gauge] ?? 0) / 100] : null;
-    const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
+    // (Floating in Endless Fox-Fire's Ascension, the aura rises with her.)
+    const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0) - (p.flow ? streamHover(p.flow.heat, p.flow.t0 + (p.progress ?? 0) * (p.dur ?? 0)) : 0);
     // A form draws the whole aura larger.
     const auraScale = inForm(world) ? 1.4 : 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
+    drawFoxWheel(ctx, world, hx, hy, time, 'back');
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+    drawFoxWheel(ctx, world, hx, hy, time, 'front');
     if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
     // The rod and line while you fish (and the Fish / Cook hints).
     drawFishing(ctx, world, cam, time, hx, hy);
@@ -371,6 +375,45 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
     const gy = snap(k.y - cam.y);
     const alpha = k.blur ? 0.18 + 0.17 * Math.min(1, k.blur) : 0.5;
     drawTinted(ctx, gx, gy, k.tint ?? '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * alpha * (1 - age) ** 1.5 }));
+  }
+}
+
+// Endless Fox-Fire: the wheel of fox fire round her (world/foxwheel.js), its back half drawn
+// behind her and its front half in front, each wisp trailing a blur of itself round the ring that
+// grows as it spins faster. From the Wheel stage a faint ring marks its path, and at the very top a
+// circle of fox fire burns on the ground under her as she floats. When she lets go, the wisps fly
+// apart and fade.
+function drawFoxWheel(ctx, world, hx, hy, time, layer) {
+  const run = world.barrage ?? world.wheelGone;
+  if (!run || run.heat == null) return;
+  const fade = world.barrage ? 1 : 1 - (world.now - run.goneAt) / 0.35;
+  if (fade <= 0) return;
+  const t = (world.barrage ? world.now : run.goneAt) - run.since;
+  const heat = run.heat;
+  const spread = 1 + (1 - fade) * 1.8;
+  const dir = world.body.facing;
+  const k = Math.min(1, heat / 1.6);
+  const shape = wheelShape(heat, t);
+  if (layer === 'back') {
+    if (heat >= 1.5) fxSprite(ctx, 'celfoxtrapring', hx, hy + 4, { t: time * 1.4, scale: 0.75, alpha: fade * Math.min(1, (heat - 1.5) / 0.08) });
+    if (heat >= 0.9) {
+      ctx.save();
+      ctx.globalAlpha = 0.3 * fade * Math.min(1, (heat - 0.9) / 0.2);
+      ctx.strokeStyle = '#8cc4ff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(hx, hy + shape.cy, shape.rx * spread, shape.ry * spread, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  const trail = heat >= 0.9 ? 4 : 2;
+  for (const w of wheelWisps(heat, t, dir)) {
+    if (w.front !== (layer === 'front')) continue;
+    for (let j = trail; j >= 0; j--) {
+      const at = j ? wheelWisps(heat, t - j * 0.02, dir)[w.i] : w;
+      fxSprite(ctx, 'celfoxfire', hx + at.x * spread, hy + shape.cy + (at.y - shape.cy) * spread, { t: time * 1.4 + w.i * 0.17, scale: (0.26 + 0.14 * k) * (1 - j * 0.14), alpha: fade * (j ? 0.4 * (1 - j / (trail + 1)) : 1) });
+    }
   }
 }
 

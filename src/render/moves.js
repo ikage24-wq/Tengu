@@ -277,120 +277,118 @@ export const MOVES = {
   },
 
   // ---------- Endless Fox-Fire (world/melee.js barrageThrow) ----------
-  // A pool of quick throws she strings together without a pause, each a pose of its own, the star
-  // leaving at about 0.4 of each: a short wind (to 0.18), the whip (to 0.42), and the arm already
-  // coming back for the next (from 0.6). Which ones come up grows with how long she's held it, and
-  // `streamFlow` below moves her whole body through them on one clock, so the barrage reads as one
-  // long, wild dance instead of the same throw over and over.
-  // The star hand overhand, the whole body thrown in after it.
-  streamthrow(p) {
+  // A fox spirit playing with fox fire, not a soldier hurling: upright and cocky, chin up, never
+  // hunched over. Stars leave at about 0.4 of each move: a short wind (to 0.18), the flick (to
+  // 0.42), the hand already coming back for the next (from 0.6). `poised` keeps the weapon sway
+  // from tipping her forward into a lunge. `streamFlow` below carries her body through the moves on
+  // the barrage's own clock, and the stages (world/melee.js STREAM_STAGES) run:
+  //   Fox Sign   the sign hand up at her face, stars flicked from the hip, then the sign thrust out
+  //   Trickster  a no-look throw over her shoulder, a pirouette on one foot, a lazy lob leaning back
+  //   Wheel      spinning inside a ring of fox fire, arms out wide, the stars peeling off the ring
+  //   Ascension  floating, lounging back in the air, flicking stars off the ring without a care
+  // Fox Sign: the sign hand held up by her face; the star hand flicks a star out from the hip with
+  // a snap of the wrist.
+  foxsign(p) {
     const w = sWind(p);
     const f = sFling(p);
     const b = sBack(p);
     return {
-      weapon: lerp(lerp(40, -45, w), 140, f) - 45 * b, arm: lerp(lerp(110, 192, w), 52, f) + 40 * b, tilt: -0.12 * w + 0.24 * f * (1 - b * 0.6), lunge: -2 * w + 4.5 * f, trail: f > 0 && b < 0.5,
-      rig: (r) => { r.tx = q(-1.5 * w + 3 * f); lungeLegs(r, 1.1); r.backArm = [q(4 * w - 6 * f), q(-2 - 2 * f)]; r.hairLift = f > 0.3 ? -1 : 0; if (f > 0 && b < 0.6) strikeFace(r); },
+      weapon: lerp(lerp(120, 50, w), 175, f) - 70 * b, arm: lerp(lerp(55, 30, w), 112, f) - 45 * b, tilt: -0.1 - 0.05 * f, lunge: 1.5 * f, poised: true,
+      rig: (r) => { r.frontLeg = [2.5, 0, -2]; r.backLeg = [-2.5, 0, -8]; r.tx = q(-0.5 + f); r.backArm = [6, -9]; r.cape = -2; },
     };
   },
-  // The free hand's turn: it jabs a star out straight from the shoulder while the star hand cocks
-  // back high, ready.
-  streamthrow2(p) {
+  // ...then the sign itself thrust out at them: a star leaves the sign (a fox face of fox fire pops
+  // there), the star hand held up by her shoulder.
+  foxsign2(p) {
     const w = sWind(p);
     const f = sFling(p);
     const b = sBack(p);
     return {
-      weapon: lerp(70, -25, f) + 40 * b, arm: lerp(110, 176, f) - 30 * b, tilt: -0.06 * w + 0.2 * f * (1 - b * 0.6), lunge: -1.5 * w + 3.5 * f,
-      rig: (r) => { r.tx = q(-1 * w + 2.5 * f); r.frontLeg = [2, 0, 2]; r.backLeg = [-4, 0, -12]; r.backArm = [q(lerp(-4, 9, f) - 5 * b), q(lerp(-1, -4, f))]; if (f > 0 && b < 0.6) strikeFace(r); },
+      weapon: lerp(40, 10, f) + 20 * b, arm: lerp(150, 168, f) - 10 * b, tilt: -0.12 + 0.1 * f * (1 - b), lunge: -w + 3 * f * (1 - 0.5 * b), poised: true,
+      rig: (r) => { r.frontLeg = [3.5, 0, 4]; r.backLeg = [-3, 0, -12]; r.tx = q(-0.5 + 1.5 * f); r.backArm = [q(lerp(6, 12, f) - 6 * b), q(lerp(-9, -4, f) - 4 * b)]; r.cape = -3; },
     };
   },
-  // A low side-arm sweep: she drops into a crouch and whips the star out flat across the ground.
-  streamside(p) {
+  // Trickster: a no-look throw. She turns her back on them, kicks a heel up behind her, and flicks
+  // the star back over her shoulder without looking.
+  foxtease(p) {
     const w = sWind(p);
     const f = sFling(p);
     const b = sBack(p);
     return {
-      weapon: lerp(lerp(30, -70, w), 155, f) - 50 * b, arm: lerp(lerp(90, 120, w), 92, f) - 10 * b, tilt: 0.1 * w + 0.22 * f * (1 - b * 0.5), lunge: 5 * f - 2 * b, trail: f > 0 && b < 0.5,
-      rig: (r) => { r.squat = b < 0.7 ? 3 : 2; wideLegs(r); r.frontLeg = [4, 0, 6]; r.tx = q(-1 + 3 * f); r.backArm = [q(lerp(2, -7, f)), q(lerp(-2, -5, f))]; r.cape = -5; r.hairLift = -1; if (f > 0 && b < 0.6) strikeFace(r); },
+      turn: -1, weapon: lerp(lerp(90, 120, w), -110, f) + 40 * b, arm: lerp(lerp(40, 20, w), 235, f) - 50 * b, tilt: -0.08 - 0.16 * f, lift: 2 * bump(p, 0.15, 0.85), lunge: -1.5 * f, poised: true,
+      rig: (r) => { r.frontLeg = [2, 0, 2]; r.backLeg = f > 0.3 && b < 0.7 ? [-3, -4, -50] : [-2.5, 0, -8]; r.backArm = [5, -2]; r.hairLift = -2; r.cape = 3; },
     };
   },
-  // Underhand from a deep crouch, rising up onto her toes as the star leaves.
-  streamlow(p) {
+  // A pirouette on one foot, knee drawn up, arms gathered high, and a star flung out of the turn.
+  foxtwirl(p) {
+    const s = seg(p, 0.02, 0.34);
+    const f = sFling(p);
+    const b = sBack(p);
+    return {
+      turn: s > 0.25 && s < 0.75 ? -1 : 1, weapon: p < 0.34 ? 20 : lerp(20, 150, f) - 50 * b, arm: p < 0.34 ? 172 : lerp(172, 95, f) - 30 * b, lift: 4 * bump(p, 0, 0.62), tilt: -0.06 + 0.06 * f, poised: true,
+      rig: (r) => { r.frontLeg = p < 0.5 ? [3, -5, 64] : [2.5, 0, 2]; r.backLeg = [-1, 0, -4]; r.backArm = p < 0.34 ? [-1, -10] : [q(-7 * f), q(-10 + 6 * f)]; r.hairLift = -3; r.cape = -6; },
+    };
+  },
+  // Leaning way back with a hand on her hip, a lazy lob of a star tossed up and over at them.
+  foxwink(p) {
     const w = sWind(p);
     const f = sFling(p);
     const b = sBack(p);
     return {
-      weapon: lerp(lerp(60, 175, w), 75, f) - 20 * b, arm: lerp(lerp(40, 15, w), 120, f) - 20 * b, lift: 2.5 * f * (1 - b), tilt: lerp(0.22 * w, -0.08, f), lunge: 3 * f,
-      rig: (r) => { r.squat = w > 0.4 && f < 0.5 ? 4 : f < 1 ? 2 : 1; lungeLegs(r, 1.2); r.backArm = [q(lerp(-3, -6, f)), q(lerp(2, -5, f))]; r.hairLift = f > 0.5 ? -2 : 0; if (f > 0 && b < 0.6) strikeFace(r); },
+      weapon: lerp(lerp(60, 0, w), 125, f) - 40 * b, arm: lerp(lerp(110, 175, w), 120, f) - 30 * b, tilt: -0.22 - 0.08 * f, lift: 1, poised: true,
+      rig: (r) => { r.frontLeg = [3.5, 0, 10]; r.backLeg = [-2, 0, -14]; r.tx = -1; r.backArm = [-3, 1]; r.hairLift = -1; r.cape = 2; },
     };
   },
-  // A backhand flung from across the body, leaning away from it.
-  streamcross(p) {
-    const w = sWind(p);
+  // Wheel: a full turn on her toes inside the ring of fox fire, arms flung out wide.
+  foxwheel(p) {
+    return {
+      turn: p < 0.25 || p >= 0.75 ? 1 : -1, weapon: 105 + 25 * Math.sin(p * Math.PI * 2), arm: 98 + 10 * Math.sin(p * Math.PI * 2), lift: 2, tilt: -0.05, poised: true,
+      rig: (r) => { r.frontLeg = [2, -1, 8]; r.backLeg = [-2, -1, -8]; r.backArm = [-9, -2]; r.hairLift = -3; r.cape = -7; },
+    };
+  },
+  // ...and another, arms swept up high over her head.
+  foxwheel2(p) {
+    return {
+      turn: p < 0.25 || p >= 0.75 ? -1 : 1, weapon: 30 + 25 * Math.sin(p * Math.PI * 2), arm: 165, lift: 3, tilt: -0.08, poised: true,
+      rig: (r) => { r.frontLeg = [1.5, -1, 4]; r.backLeg = [-1.5, -1, -4]; r.backArm = [1, -11]; r.hairLift = -3; r.cape = -8; },
+    };
+  },
+  // Ascension: floating, lounging back on nothing, legs folded, one hand behind her head; the other
+  // lazily points and flicks a star off the ring.
+  foxfloat(p) {
     const f = sFling(p);
     const b = sBack(p);
     return {
-      weapon: lerp(lerp(90, 165, w), 55, f) + 15 * b, arm: lerp(lerp(70, 35, w), 118, f) - 10 * b, tilt: 0.14 * w - 0.12 * f, lunge: 2 * w + 2 * f, trail: f > 0 && b < 0.5,
-      rig: (r) => { r.tx = q(2 * w - 1.5 * f); r.frontLeg = [3, 0, 4]; r.backLeg = [-3, 0, -8]; r.backArm = [q(lerp(3, -7, f)), q(lerp(1, -3, f))]; r.hairLift = -1; r.cape = -3; if (f > 0 && b < 0.6) strikeFace(r); },
+      weapon: lerp(70, 160, f) - 60 * b, arm: lerp(100, 135, f) - 25 * b, tilt: -0.46, poised: true,
+      rig: (r) => { r.air = true; r.frontLeg = [4, -6, 76]; r.backLeg = [1, -4, 46]; r.backArm = [-4, -11]; r.hairLift = -2; r.cape = 4; },
     };
   },
-  // A spin throw: whirl round once with the star hand high and fling it out of the turn.
-  streamspin(p) {
+  // ...and the other hand's turn: the sign hand swept out, the star hand resting on her knee.
+  foxfloat2(p) {
+    const f = sFling(p);
+    const b = sBack(p);
+    return {
+      weapon: 120, arm: 70, tilt: -0.4 + 0.06 * f, poised: true,
+      rig: (r) => { r.air = true; r.frontLeg = [3, -4, 50]; r.backLeg = [2, -7, 82]; r.backArm = [q(lerp(2, 11, f) - 5 * b), q(lerp(-6, -5, f))]; r.hairLift = -2; r.cape = 4; },
+    };
+  },
+  // In the air (jumped, not floating): tucked, a star flicked down at them.
+  foxairthrow(p) {
+    const f = sFling(p);
+    const b = sBack(p);
+    return {
+      weapon: lerp(-30, 160, f) - 30 * b, arm: lerp(190, 40, f) + 30 * b, tilt: -0.1 + 0.15 * f * (1 - b), poised: true,
+      rig: (r) => { tuck(r); r.backArm = [6, -8]; r.hairLift = -2; r.cape = -5; },
+    };
+  },
+  // In the air: a tucked somersault-turn, a star flung out of it.
+  foxairspin(p) {
     const s = seg(p, 0.02, 0.3);
     const f = sFling(p);
     const b = sBack(p);
     return {
-      weapon: p < 0.3 ? lerp(40, -30, s) : lerp(-30, 140, f) - 40 * b, arm: p < 0.3 ? lerp(120, 185, s) : lerp(185, 55, f) + 35 * b, turn: s > 0.2 && s < 0.85 ? -1 : 1, lift: 3.5 * bump(p, 0, 0.5), tilt: p < 0.3 ? -0.08 : 0.22 * f * (1 - b * 0.6), lunge: 4 * f,
-      trail: true,
-      rig: (r) => { if (p < 0.3) { wideLegs(r); r.backArm = [-3, -5]; r.hairLift = -2; r.cape = -6; } else { r.tx = q(2.5 * f); lungeLegs(r, 1.1); r.backArm = [q(-6 * f), -3]; if (b < 0.6) strikeFace(r); } },
-    };
-  },
-  // A hop throw: spring up a little and whip the star down at them from the top of it.
-  streamhop(p) {
-    const f = sFling(p);
-    const b = sBack(p);
-    const up = bump(p, 0, 0.9);
-    return {
-      weapon: lerp(-40, 150, f) - 30 * b, arm: lerp(195, 40, f) + 30 * b, lift: 7 * up, tilt: -0.1 * (1 - f) + 0.32 * f * (1 - b), lunge: 3 * f,
-      trail: f > 0 && b < 0.5,
-      rig: (r) => { if (up > 0.25) tuck(r); else lungeLegs(r, 0.9); r.backArm = [q(lerp(2, -6, f)), -4]; r.hairLift = -2; r.cape = -6; if (f > 0 && b < 0.6) strikeFace(r); },
-    };
-  },
-  // Both hands at once, flung wide apart: a fan of stars from each.
-  streamdouble(p) {
-    const w = sWind(p);
-    const f = sFling(p);
-    const b = sBack(p);
-    return {
-      weapon: lerp(lerp(40, -20, w), 120, f) - 35 * b, arm: lerp(lerp(100, 165, w), 82, f) + 25 * b, tilt: -0.1 * w + 0.18 * f * (1 - b * 0.6), lunge: -1 * w + 4 * f,
-      rig: (r) => { r.squat = f > 0 && b < 0.6 ? 1 : 0; wideLegs(r); r.tx = q(2 * f); r.backArm = [q(lerp(-4, 9, f) - 4 * b), q(lerp(-5, -2, f))]; r.hairLift = -1; if (f > 0 && b < 0.6) strikeFace(r); },
-    };
-  },
-  // Flat out: her hands are a blur, flicking stars out faster than she can wind up, leaning hard
-  // into it with everything streaming behind her.
-  streamblur(p) {
-    const a = p * Math.PI * 2;
-    return {
-      weapon: 105 + 55 * Math.sin(a + 1.2), arm: 98 + 28 * Math.sin(a), tilt: 0.24, lunge: 3.5, trail: true,
-      rig: (r) => { r.squat = 1; lungeLegs(r, 1.2); r.tx = 2; r.backArm = [q(5 + 4 * Math.cos(a)), q(-3 + 1.5 * Math.sin(a))]; r.hairLift = -3; r.cape = -8; strikeFace(r); },
-    };
-  },
-  // In the air: tucked, throwing down at them.
-  streamair(p) {
-    const f = sFling(p);
-    const b = sBack(p);
-    return {
-      weapon: lerp(-30, 160, f) - 30 * b, arm: lerp(190, 30, f) + 30 * b, tilt: -0.08 * (1 - f) + 0.3 * f * (1 - b * 0.5), trail: f > 0 && b < 0.5,
-      rig: (r) => { tuck(r); r.backArm = [q(lerp(3, -6, f)), -4]; r.hairLift = -2; r.cape = -5; if (f > 0 && b < 0.6) strikeFace(r); },
-    };
-  },
-  // In the air: a tucked spin, a star flung out of the turn.
-  streamairspin(p) {
-    const s = seg(p, 0.02, 0.3);
-    const f = sFling(p);
-    const b = sBack(p);
-    return {
-      weapon: p < 0.3 ? lerp(40, -30, s) : lerp(-30, 150, f) - 30 * b, arm: p < 0.3 ? 180 : lerp(185, 40, f) + 30 * b, turn: s > 0.2 && s < 0.85 ? -1 : 1, tilt: p < 0.3 ? -0.15 : 0.26 * f, trail: true,
-      rig: (r) => { tuck(r); r.backArm = [p < 0.3 ? -4 : q(-6 * f), -5]; r.hairLift = -3; r.cape = -7; if (p >= 0.3 && b < 0.6) strikeFace(r); },
+      turn: s > 0.2 && s < 0.85 ? -1 : 1, weapon: p < 0.3 ? 20 : lerp(20, 150, f) - 30 * b, arm: p < 0.3 ? 175 : lerp(175, 60, f) + 30 * b, tilt: -0.12, poised: true,
+      rig: (r) => { tuck(r); r.backArm = [-4, -6]; r.hairLift = -3; r.cape = -7; },
     };
   },
 
@@ -2453,7 +2451,7 @@ const bend = (p, hit, pre = 1, post = 1) => {
 };
 
 function sway(kind, progress, dur, mv, f = {}) {
-  if (mv.weapon == null || mv.orbit || mv.pull != null || mv.nock) return mv;
+  if (mv.weapon == null || mv.orbit || mv.poised || mv.pull != null || mv.nock) return mv;
   const back = rawMoveAt(kind, Math.max(0, progress - SWAY.window), dur);
   if (back.weapon == null || back.orbit) return mv;
   // How hard it's going forward: the blade swinging round, or the arm driving out (a thrust, a
@@ -2508,36 +2506,33 @@ function after(mv, p, hit, f, fin) {
   return out;
 }
 
-// Endless Fox-Fire's body, on top of whichever throw is playing: one clock for the whole barrage
-// (`flow.t0`, seconds into it when this throw began), so her body keeps moving straight through
-// the throws instead of starting each one from the same stance. `flow.heat` is how far it has
-// built (0 to 1.6, world/melee.js): she rocks her weight fore and aft and weaves, bounces to the
-// rhythm harder and harder, her hair and cape stream out further, the star hand trails a smear,
-// and flat out she's up on her toes in little skipping steps, half off the ground.
+// Endless Fox-Fire's body, on top of whichever move is playing: one clock for the whole barrage
+// (`flow.t0`, seconds into it when this move began), so she keeps moving straight through the
+// moves instead of starting each from the same stance. `flow.heat` is how far it has built (0 to
+// 1.6, world/melee.js). She sways at the hips and rolls her shoulders to the rhythm, chin up, her
+// hair and cape streaming further the hotter it gets; from Ascension (heat 1.25) she rises off the
+// ground and floats there, bobbing slowly (streamHover, which the fox-fire wheel follows too).
+export const streamHover = (heat, t) => clamp01((heat - 1.25) / 0.25) * (12 + 1.6 * Math.sin(t * 2.4));
 export function streamFlow(mv, flow, p, dur) {
   if (!mv || !flow) return mv;
   const t = flow.t0 + p * dur;
   const h = flow.heat;
-  const rock = Math.sin(t * 5.2);
-  const weave = Math.sin(t * 2.3 + 1);
-  const beat = Math.abs(Math.sin(t * Math.PI * (3 + 2 * Math.min(1, h))));
-  const hover = clamp01((h - 1) / 0.6);
-  const skip = Math.sin(t * 8.5);
+  const hips = Math.sin(t * 4.4);
+  const roll = Math.sin(t * 2.2 + 0.8);
+  const hover = streamHover(h, t);
+  const floating = hover > 1;
   return {
     ...mv,
-    lift: mv.lift + (0.5 + 1.3 * Math.min(1, h)) * beat + hover * (2 + 1.5 * skip),
-    lunge: mv.lunge + (1 + h) * rock,
-    tilt: mv.tilt + 0.05 * weave + 0.07 * Math.min(1, h),
-    trail: mv.trail || h > 0.5,
+    lift: mv.lift + (floating ? hover : (0.4 + 0.8 * Math.min(1, h)) * Math.abs(Math.sin(t * Math.PI * 2.5))),
+    lunge: mv.lunge + (floating ? 1.5 * roll : 0.8 * hips),
+    tilt: mv.tilt + 0.05 * roll - 0.03 * Math.min(1, h),
     rig: (r) => {
       mv.rig?.(r);
       r.hairLift = Math.min(r.hairLift ?? 0, -Math.round(1 + 1.4 * h));
-      r.hairWave = Math.floor((((t * (1.5 + h)) % 1) + 1) % 1 * 8);
-      r.cape = q(Math.min(r.cape ?? 0, -2 - 3.5 * h) + 1.5 * Math.sin(t * 9));
-      r.tx = q((r.tx ?? 0) + 0.8 * weave);
-      if (hover > 0.3 && !r.air) {
-        if (skip > 0.2) { r.frontLeg = [3, -2, 10]; r.backLeg = [-3, 0, -8]; } else if (skip < -0.2) { r.frontLeg = [3, 0, 4]; r.backLeg = [-2, -2, -14]; }
-      }
+      r.hairWave = Math.floor((((t * (1.2 + h)) % 1) + 1) % 1 * 8);
+      r.cape = q((r.cape ?? 0) - 1.5 * h + 2 * Math.sin(t * 6));
+      r.tx = q((r.tx ?? 0) + 0.8 * hips);
+      if (floating) r.air = true;
     },
   };
 }

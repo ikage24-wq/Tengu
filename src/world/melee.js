@@ -36,6 +36,7 @@ import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
 import { tickGuardian } from './kitsune.js';
+import { launchWisp } from './foxwheel.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
 import { tickTengu } from './tengu.js';
@@ -765,31 +766,36 @@ export function barrageOf(world) {
   const lv = world.char.skills.foxbarrage ?? 0;
   return lv > 0 && pathOf(world) === 'kitsune' ? skillAt('foxbarrage', lv).barrage : null;
 }
-// Her throws (render/moves.js), by how far the barrage has built (`heat`: 0 to 1 over the ramp,
-// then on to 1.6 over FRENZY more seconds, so it keeps getting better after it's at full speed).
-// Each stage has a pool for the star hand and one for the other turn; she never throws the same
-// one twice running. In the air, the air throws.
+// Her figures (render/moves.js), by how far the barrage has built (`heat`: 0 to 1 over the ramp,
+// then on to 1.6 over FRENZY more seconds, so it keeps getting better after it's at full speed):
+// Fox Sign, Trickster, Wheel, Ascension, and at the very top a circle of fox fire under her (render/scene.js).
+// A figure plays for its own length (FIGURES, a little quicker as she speeds up) while the stars
+// keep coming at the barrage's rate: from her hand, from her fox sign (a fox face of fire pops
+// there), or, from the Wheel on, peeling off the wheel of fox fire round her (world/foxwheel.js).
+// She never plays the same figure twice running. In the air (jumped, not floating), air figures.
 const FRENZY = 3;
+const FIGURES = { foxsign: 0.24, foxsign2: 0.24, foxtease: 0.36, foxtwirl: 0.42, foxwink: 0.34, foxwheel: 0.5, foxwheel2: 0.5, foxfloat: 0.62, foxfloat2: 0.62, foxairthrow: 0.3, foxairspin: 0.36 };
+const SIGN_FIGURES = new Set(['foxsign2', 'foxfloat2']);
 const STREAM_STAGES = [
-  { at: 0, star: ['streamthrow'], other: ['streamthrow2'] },
-  { at: 0.45, star: ['streamthrow', 'streamside', 'streamlow'], other: ['streamthrow2', 'streamcross'] },
-  { at: 0.9, star: ['streamthrow', 'streamside', 'streamlow', 'streamspin', 'streamhop'], other: ['streamthrow2', 'streamcross', 'streamdouble'] },
-  { at: 1.3, star: ['streamblur', 'streamspin', 'streamside', 'streamhop', 'streamblur'], other: ['streamblur', 'streamdouble', 'streamcross'] },
-  { at: 1.55, star: ['streamblur', 'streamblur', 'streamspin', 'streamhop'], other: ['streamblur', 'streamblur', 'streamdouble'] },
+  { at: 0, figures: ['foxsign', 'foxsign2'] },
+  { at: 0.45, figures: ['foxsign', 'foxsign2', 'foxtease', 'foxtwirl', 'foxwink'] },
+  { at: 0.9, figures: ['foxwheel', 'foxwheel2', 'foxtwirl'] },
+  { at: 1.25, figures: ['foxfloat', 'foxfloat2'] },
+  { at: 1.55, figures: ['foxfloat', 'foxfloat2'] },
 ];
-export const STREAM_MOVES = new Set(['streamthrow', 'streamthrow2', 'streamside', 'streamlow', 'streamcross', 'streamspin', 'streamhop', 'streamdouble', 'streamblur', 'streamair', 'streamairspin']);
+export const STREAM_MOVES = new Set(Object.keys(FIGURES));
 export const barrageHeat = (b, held) => Math.min(1, held / b.ramp) + 0.6 * Math.min(1, Math.max(0, held - b.ramp) / FRENZY);
 function barrageThrow(world, b, rng = Math.random) {
   const { now, body } = world;
   // A pause (a skill, a stagger) starts the ramp over.
   let run = world.barrage;
-  if (!run || now - run.last > 0.5) run = world.barrage = { since: now, last: now, n: 0, airSince: null, stage: 0, move: null };
+  if (!run || now - run.last > 0.5) run = world.barrage = { since: now, last: now, n: 0, airSince: null, stage: 0, figure: null, heat: 0 };
   const held = now - run.since;
   const rate = b.from + (b.to - b.from) * Math.min(1, held / b.ramp);
   const heat = barrageHeat(b, held);
+  run.heat = heat;
   const air = !body.onGround;
   run.airSince = air ? run.airSince ?? now : null;
-  const other = run.n % 2 === 1;
   // Each new stage flares up in fox fire round her, harder the higher it goes.
   const stage = STREAM_STAGES.findLastIndex((s) => heat >= s.at);
   if (stage > run.stage) {
@@ -797,16 +803,28 @@ function barrageThrow(world, b, rng = Math.random) {
     if (stage >= 3) world.juice.push({ type: 'shake', mag: 1, dur: 0.15 });
   }
   run.stage = stage;
-  const pool = (air ? (heat >= 0.9 ? ['streamair', 'streamairspin'] : ['streamair']) : STREAM_STAGES[stage][other ? 'other' : 'star']).filter((m, i, all) => m !== run.move || m === 'streamblur' || all.length === 1);
-  const move = pool[Math.floor(rng() * pool.length)];
-  // playStep runs basic moves at 0.9 of their written length.
-  playStep(world, {
-    move, dur: 1 / (rate * 0.9), step: 0, stream: true, hang: air && now - run.airSince < BARRAGE_HANG,
-    strikes: [{ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, oy: other ? 4 : 0, gauge: 1 }],
-  }, 100, air ? 'basicairstream' : 'basicstream');
-  // The drawing moves her body through the throws on the barrage's own clock (render/moves.js streamFlow).
-  world.pose.flow = { t0: held, heat };
-  run.move = move;
+  const key = air ? 'basicairstream' : 'basicstream';
+  const shot = { at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, wheel: !air && stage >= 2 };
+  const fig = run.figure;
+  // (A new figure starts before this one would run out ahead of the next star, so she's never
+  // left without one.)
+  if (!fig || now + 1 / rate > fig.until || fig.air !== air) {
+    const pool = (air ? (heat >= 0.9 ? ['foxairthrow', 'foxairspin'] : ['foxairthrow']) : STREAM_STAGES[stage].figures).filter((m, i, all) => m !== fig?.move || all.length === 1);
+    const move = pool[Math.floor(rng() * pool.length)];
+    const len = FIGURES[move] * (0.7 + 0.3 * (b.from / rate));
+    // playStep runs basic moves at 0.9 of their written length.
+    playStep(world, { move, dur: len / 0.9, step: 0, stream: true, hang: air && now - run.airSince < BARRAGE_HANG, strikes: [{ ...shot, sign: SIGN_FIGURES.has(move) }] }, 100, key);
+    // The drawing moves her body through the figures on the barrage's own clock (render/moves.js streamFlow).
+    world.pose.flow = { t0: held, heat };
+    run.figure = { move, until: now + len, air, dur: world.pose.dur };
+  } else {
+    // Another star while the figure plays out.
+    world.strikes.push({ ...shot, sign: SIGN_FIGURES.has(fig.move), n: 0, of: 1, due: now + 0.02, dir: body.facing, scale: 100, key, school: null, finisher: false, move: fig.move, dur: fig.dur, hit: 0.4 });
+  }
+  // The stars keep the barrage's own rate, whatever the figure.
+  world.attackTimer = Math.min(world.attackTimer, 0.86 / rate);
+  world.lockTimer = Math.min(world.lockTimer, 0.86 / rate);
+  world.basicReadyAt = now + 1 / rate;
   run.last = now;
   run.n += 1;
 }
@@ -814,6 +832,8 @@ function barrageThrow(world, b, rng = Math.random) {
 export function barrageRelease(world) {
   const run = world.barrage;
   world.barrage = null;
+  // The wheel of fox fire flies apart (render/scene.js drawFoxWheel).
+  world.wheelGone = { since: run.since, heat: run.heat, goneAt: world.now };
   const b = barrageOf(world);
   if (!b || world.dead || world.body.rope || !activeStar(world.char)) return;
   if (world.recoverKind === 'skill' && world.attackTimer > 0) return;
@@ -1026,7 +1046,7 @@ export function basicCombo(world) {
       world.combo = -1;
       return;
     }
-    if ((world.runFor ?? 0) >= DASH_AFTER) {
+    if ((world.runFor ?? 0) >= DASH_AFTER && !(stream && world.barrage)) {
       playStep(world, cmd.dash, 100, 'basicdash');
       world.combo = -1;
       return;
@@ -1638,8 +1658,16 @@ function fire(world, strike) {
   // A Kitsune's stars catch fox fire: everything they hit burns a little while.
   if (hasTails(world.char) && STAR_SHOTS.has(s.shot) && !s.burn) s = { ...s, burn: { pct: 0.08, secs: 2 } };
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
-  const ox = body.x + s.dir * 10;
-  const oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
+  let ox = body.x + s.dir * 10;
+  let oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
+  // Endless Fox-Fire: from the Wheel on, the stars peel off the wisp of fox fire swinging round
+  // toward them; a star from her fox sign pops a fox face of fire there.
+  if (s.wheel && world.barrage) {
+    const wisp = launchWisp(world.barrage.heat, world.now - world.barrage.since, s.dir);
+    ox = body.x + wisp.x;
+    oy = body.y + wisp.y;
+    if (!s.illusion) world.fx.push({ kind: 'wisplaunch', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.25 });
+  } else if (s.sign && !s.illusion) world.fx.push({ kind: 'foxsign', x: ox, y: oy - 3, dir: s.dir, t: 0, dur: 0.32 });
   // A recoiling shot kicks you back (`recoil` in the air hops you up; `kickback` shoves you on
   // the ground), and some burst at the bow as they go (`muzzle`).
   if (s.recoil) body.vy = Math.min(body.vy, -s.recoil);

@@ -1830,26 +1830,33 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   run(w, 2);
   learn(w, 'foxbarrage');
   const hp = w.mobs.reduce((n, m) => n + m.hp, 0);
-  const throws = [];
-  let last = null;
-  for (let i = 0; i < 6 * 60; i++) {
+  const stars = [];
+  const figures = [];
+  let n = 0;
+  let since = null;
+  for (let i = 0; i < 7 * 60; i++) {
     updateWorld(w, DT, i === 0 ? press('KeyZ') : hold());
-    if (w.pose?.since !== last && streaming()) throws.push({ at: w.now, kind: w.pose.kind, flow: w.pose.flow });
-    last = w.pose?.since;
+    if (w.barrage && w.barrage.n > n) stars.push(w.now);
+    n = w.barrage?.n ?? 0;
+    if (w.pose?.since !== since && streaming()) figures.push({ at: w.now, kind: w.pose.kind, flow: w.pose.flow });
+    since = w.pose?.since;
+    assert.ok(i < 2 || streaming(), `always in a figure while held (${w.now.toFixed(2)}: ${w.pose?.kind})`);
   }
-  const start = throws[0].at;
-  const within = (a, b) => throws.filter((t) => t.at >= start + a && t.at < start + b);
-  assert.ok(within(0, 1).length >= 4, `a quick stream from the start (${within(0, 1).length})`);
-  assert.ok(within(3, 4).length > within(0, 1).length + 2, `faster the longer it's held (${within(0, 1).length} then ${within(3, 4).length})`);
-  assert.ok(throws.every((t, i) => !i || t.at - throws[i - 1].at < 0.25), 'never a pause');
-  // It starts hand over hand, and grows wilder: more and more different throws, then the blur.
-  assert.deepEqual([...new Set(within(0, 0.8).map((t) => t.kind))].sort(), ['streamthrow', 'streamthrow2']);
-  assert.ok(new Set(within(2.5, 4).map((t) => t.kind)).size >= 4, 'many different throws once it has built');
-  assert.ok(within(5, 6).some((t) => t.kind === 'streamblur'), 'flat out, a blur');
+  const start = stars[0];
+  const within = (list, a, b) => list.filter((t) => (t.at ?? t) >= start + a && (t.at ?? t) < start + b);
+  assert.ok(within(stars, 0, 1).length >= 4, `a quick stream from the start (${within(stars, 0, 1).length})`);
+  assert.ok(within(stars, 3, 4).length > within(stars, 0, 1).length + 2, `faster the longer it's held (${within(stars, 0, 1).length} then ${within(stars, 3, 4).length})`);
+  assert.ok(stars.every((t, i) => !i || t - stars[i - 1] < 0.25), 'never a pause');
+  // The stages: Fox Sign, then the Trickster's tricks, the Wheel, and floating in Ascension.
+  assert.deepEqual([...new Set(within(figures, 0, 0.8).map((t) => t.kind))].sort(), ['foxsign', 'foxsign2']);
+  const kinds = new Set(figures.map((t) => t.kind));
+  for (const k of ['foxtease', 'foxtwirl', 'foxwink', 'foxwheel', 'foxwheel2', 'foxfloat', 'foxfloat2']) assert.ok(kinds.has(k), `plays ${k}`);
+  assert.ok(within(figures, 6, 7).every((t) => t.kind.startsWith('foxfloat')), 'flat out, floating');
+  assert.ok(figures.every((t, i) => !i || t.kind !== figures[i - 1].kind), 'never the same figure twice running');
   // Her body moves on one clock through all of it, and it keeps building after full speed.
-  assert.ok(throws.every((t, i) => !i || t.flow.t0 > throws[i - 1].flow.t0));
-  assert.ok(throws.at(-1).flow.heat > 1.3, `still building past full speed (${throws.at(-1).flow.heat})`);
-  assert.ok(w.mobs.reduce((n, m) => n + m.hp, 0) < hp, 'the stars land');
+  assert.ok(figures.every((t, i) => !i || t.flow.t0 > figures[i - 1].flow.t0));
+  assert.ok(figures.at(-1).flow.heat > 1.5, `still building past full speed (${figures.at(-1).flow.heat})`);
+  assert.ok(w.mobs.reduce((m, x) => m + x.hp, 0) < hp, 'the stars land');
   // She walks through it, slowly.
   const x = w.body.x;
   run(w, 0.5, hold('ArrowRight'));
@@ -1857,17 +1864,29 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   assert.ok(walked > 5, `walks while throwing (${walked})`);
   assert.ok(walked < (w.stats.speed / 100) * 60, 'but slowly');
   assert.ok(streaming(), 'still throwing');
-  // Letting go: the fox moon.
+  // Letting go: the fox moon, and the wheel of fox fire flies apart.
   updateWorld(w, DT, idle);
   assert.equal(w.pose.kind, 'heavethrow');
   assert.ok(w.pose.fin);
   assert.equal(w.barrage, null);
+  assert.ok(w.wheelGone.heat > 1.5);
   // A tap is one star and no finisher.
   run(w, 1);
   updateWorld(w, DT, press('KeyZ'));
-  assert.equal(w.pose.kind, 'streamthrow');
+  assert.ok(w.pose.kind.startsWith('foxsign'));
   updateWorld(w, DT, idle);
-  assert.equal(w.pose.kind, 'streamthrow', 'no finisher after a tap');
+  assert.ok(w.pose.kind.startsWith('foxsign'), 'no finisher after a tap');
+});
+
+test('Endless Fox-Fire: from the Wheel on, stars leave from the wisp of fox fire swinging round toward them', async () => {
+  const { wheelWisps, launchWisp, wheelShape } = await import('../src/world/foxwheel.js');
+  assert.deepEqual([0, 0.5, 1, 1.4].map((h) => wheelShape(h, 0).n), [2, 4, 6, 9]);
+  for (const facing of [1, -1]) {
+    const w = launchWisp(1.2, 0.37, facing);
+    assert.ok(wheelWisps(1.2, 0.37, facing).every((o) => o.x * facing <= w.x * facing));
+    assert.ok(w.x * facing > 0, 'out in front of her');
+  }
+  assert.ok(wheelShape(1.6, 0).cy < wheelShape(1, 0).cy - 8, 'the wheel rises with her when she floats');
 });
 
 test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {

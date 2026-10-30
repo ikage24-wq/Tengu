@@ -70,6 +70,18 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       if (big) groundRing(ctx, 'celringshadow', x, y, p, 46);
       return true;
     }
+    case 'foxsign': {
+      // Endless Fox-Fire: a star leaving her fox sign pops a little fox face of fox fire there.
+      const pop = p < 0.25 ? 0.6 + 1.6 * p : 1;
+      fxSprite(ctx, 'celembfox', x + (f.dir || 1) * 4, y, { p: 0.6, scale: 0.2 * pop, alpha: p > 0.55 ? (1 - p) / 0.45 : 1 });
+      fxSprite(ctx, 'celfoxfire', x, y + 5, { t: p * 0.6, scale: 0.16, alpha: p > 0.5 ? (1 - p) / 0.5 : 1 });
+      return true;
+    }
+    case 'wisplaunch': {
+      // A star peeling off a wisp of her wheel of fox fire: a flash of it.
+      fxSprite(ctx, 'celfoxhit', x, y + 6, { p, scale: 0.32 });
+      return true;
+    }
     case 'smokepuff': {
       // A puff of violet smoke off the hand as a fan of stars goes.
       fxSprite(ctx, 'celsmoke', x + (f.dir || 1) * 6, y + 14, { p, flip, scale: 0.55 });
