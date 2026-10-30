@@ -876,6 +876,15 @@ export const SKILLS = {
     desc: 'Steadier stars, more attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 20, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
+  // Changes her basic attack (world/melee.js barrageThrow): `from` to `to` stars a second over
+  // `ramp` seconds of holding; the fox-moon finisher on letting go grows from `finish[0]` to
+  // `finish[1]` over `full` seconds.
+  foxbarrage: skill({
+    id: 'foxbarrage', name: 'Endless Fox-Fire', job: 'kitsune', type: 'passive', fx: null, icon: 'foxbarrage', maxLevel: 10,
+    desc: 'Her basic attack becomes an endless barrage: hold attack and fox-fire stars fly hand over hand without stopping, faster the longer you hold, and you can walk slowly while throwing. In the air she hangs a moment and keeps throwing. Let go and she ends it with a fox-moon star through the line, stronger the longer you held. Needs a gauntlet.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => ({ passive: {}, barrage: { pct: 26, from: 5, to: lerpf(10, 12, lv, m), ramp: 2.5, finish: [lerp(140, 200, lv, m), lerp(320, 460, lv, m)], full: 3 } }),
+  }),
   foxfirefan: skill({
     id: 'foxfirefan', name: 'Fox-Fire Fan', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxfirefan', school: 'fox',
     desc: 'A three-part combo, one part per press: a fan of fox-fire stars, one per monster, another, then a great fox-fire star through the line. Everything they hit burns. Needs a gauntlet.',

@@ -1820,6 +1820,48 @@ const castNow = (w, id) => {
   return cast(w, id);
 };
 
+test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks slowly, and ends in a fox moon', () => {
+  const w = thiefPath('kitsune');
+  const hold = (...keys) => ({ held: new Set(['KeyZ', ...keys]), pressed: new Set(), locked: false });
+  updateWorld(w, DT, press('KeyZ'));
+  assert.ok(!w.pose.kind.startsWith('streamthrow'), 'without the passive, her usual combo');
+  run(w, 2);
+  learn(w, 'foxbarrage');
+  const hp = w.mobs.reduce((n, m) => n + m.hp, 0);
+  const throws = [];
+  let last = null;
+  for (let i = 0; i < 4 * 60; i++) {
+    updateWorld(w, DT, i === 0 ? press('KeyZ') : hold());
+    if (w.pose?.since !== last && w.pose?.kind.startsWith('streamthrow')) throws.push({ at: w.now, kind: w.pose.kind });
+    last = w.pose?.since;
+  }
+  const start = throws[0].at;
+  const inSecond = (k) => throws.filter((t) => t.at >= start + k && t.at < start + k + 1).length;
+  assert.ok(inSecond(0) >= 4, `a quick stream from the start (${inSecond(0)})`);
+  assert.ok(inSecond(3) > inSecond(0) + 2, `faster the longer it's held (${inSecond(0)} then ${inSecond(3)})`);
+  assert.ok(throws.every((t, i) => !i || t.at - throws[i - 1].at < 0.25), 'never a pause');
+  assert.ok(throws.some((t) => t.kind === 'streamthrow2'), 'hand over hand');
+  assert.ok(w.mobs.reduce((n, m) => n + m.hp, 0) < hp, 'the stars land');
+  // She walks through it, slowly.
+  const x = w.body.x;
+  run(w, 0.5, hold('ArrowRight'));
+  const walked = w.body.x - x;
+  assert.ok(walked > 5, `walks while throwing (${walked})`);
+  assert.ok(walked < (w.stats.speed / 100) * 60, 'but slowly');
+  assert.ok(w.pose.kind.startsWith('streamthrow'), 'still throwing');
+  // Letting go: the fox moon.
+  updateWorld(w, DT, idle);
+  assert.equal(w.pose.kind, 'heavethrow');
+  assert.ok(w.pose.fin);
+  assert.equal(w.barrage, null);
+  // A tap is one star and no finisher.
+  run(w, 1);
+  updateWorld(w, DT, press('KeyZ'));
+  assert.ok(w.pose.kind.startsWith('streamthrow'));
+  updateWorld(w, DT, idle);
+  assert.ok(w.pose.kind.startsWith('streamthrow'), 'no finisher after a tap');
+});
+
 test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {
   const { JOBS } = await import('../src/data/jobs.js');
   const c = createCharacter('T', {});

@@ -272,6 +272,26 @@ export const MOVES = {
     };
   },
 
+  // Endless Fox-Fire, hand over hand: the star hand snaps a star out from a short wind (there's no
+  // time for a big one, the next is already coming; the star leaves at about 0.4)...
+  streamthrow(p) {
+    const t = ease(seg(p, 0.08, 0.4));
+    const back = seg(p, 0.55, 1);
+    return {
+      weapon: lerp(20, 125, t) - 50 * back, arm: lerp(150, 70, t) + 45 * back, tilt: 0.06 * t, lunge: 1.5 * t,
+      rig: (r) => { r.tx = 1; lungeLegs(r, 0.8); r.backArm = [q(lerp(5, -2, t)), -3]; strikeFace(r); },
+    };
+  },
+  // ...then the free hand's turn: it flicks a star out as the star hand draws back for the next.
+  streamthrow2(p) {
+    const t = ease(seg(p, 0.08, 0.4));
+    const back = seg(p, 0.55, 1);
+    return {
+      weapon: lerp(75, 20, t), arm: lerp(115, 150, t), tilt: 0.05 * t, lunge: 1.5 * t,
+      rig: (r) => { r.tx = 1; lungeLegs(r, 0.8); r.backArm = [q(lerp(-2, 7, t) - 2 * back), q(lerp(-2, -4, t))]; strikeFace(r); },
+    };
+  },
+
   // A full bow draw: pull the string back slowly, then release with a snap of recoil.
   draw(p) {
     // Swing the bow up from across the body to upright, draw and hold the aim, then loose.

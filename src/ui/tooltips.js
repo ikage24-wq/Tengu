@@ -132,6 +132,10 @@ function describeParts(params, tune = 1) {
     if (x.torii?.heal) parts.push(`each gate heals ${Math.round(x.torii.heal * 100)}%`, `ward ${Math.round(x.torii.ward * 100)}% for ${x.torii.wardDur}s`);
   }
   if (params.healPct) parts.push(`heals ${Math.round(params.healPct * 100)}% HP`);
+  if (params.barrage) {
+    const b = params.barrage;
+    parts.push(`${pc(b.pct)} a star`, `${b.from} to ${Math.round(b.to * 10) / 10} stars a second`, `finisher ${pc(b.finish[0])} to ${pc(b.finish[1])}`);
+  }
   if (params.hold) parts.push(`${params.range.w / 2}px around, holds them ${Math.round(params.hold * 10) / 10}s`);
   if (params.pull) parts.push(`pulls from ${params.range.w}px`);
   if (params.buff) parts.push(...buffParts(params.buff, params.duration));

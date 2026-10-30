@@ -1215,6 +1215,16 @@ function kitsunemastery() {
   out.push(...throwStar(8, 8, 4.2, -30, '#dfe8ff'));
   return out;
 }
+// A stream of fox-fire stars, small and far to big and near, trailing blue fire.
+function foxbarrage() {
+  const out = [...tile('foxfire', 'passive'), ...aura(8, 8, 6.6, '#bfeaff')];
+  for (const [x, y, r, rot] of [[3.4, 12.6, 1.5, -10], [6, 10, 2, -35], [9, 7.4, 2.5, -60], [12.4, 4.6, 3, -85]]) {
+    out.push(streak([x - 2.6, y + 2.6], [x - 0.6, y + 0.6], r * 0.5, '#2f7cff'));
+    out.push(...throwStar(x, y, r, rot, '#dfe8ff'));
+  }
+  out.push(...spark(3.4, 4, 1, '#ffd36a'));
+  return out;
+}
 function foxfirefan() {
   const out = [...tile('foxfire', 'active')];
   for (const [x, y, r, rot] of [[4, 11.4, 2.6, -20], [8.4, 6.4, 3.2, -50], [12.6, 11, 2.6, -70]]) {
@@ -1521,7 +1531,7 @@ const ART = {
   stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
-  kitsunemastery, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
+  kitsunemastery, foxbarrage, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };

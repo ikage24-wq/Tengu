@@ -30,7 +30,7 @@ import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
-import { useStars } from '../core/inventory.js';
+import { useStars, activeStar } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
@@ -754,6 +754,51 @@ export function addTails(world, n, mob = null) {
   world.tails = Math.min(TAILS_MAX, (world.tails ?? 0) + n * (burning ? 1.5 : 1));
   world.tailsAt = world.now;
 }
+// Endless Fox-Fire (a Kitsune passive, data/skills.js): while attack is held her basic attack is
+// an endless barrage of fox-fire stars, hand over hand, faster the longer it's held. She can walk
+// slowly through it (world.js), and in the air she hangs a moment, then keeps throwing as she
+// falls. Let go after a while and a fox-moon star ends it, stronger the longer she held.
+export const BARRAGE_WALK = 0.35;
+const BARRAGE_HANG = 0.6;
+const BARRAGE_FINISH_AFTER = 0.6;
+export function barrageOf(world) {
+  const lv = world.char.skills.foxbarrage ?? 0;
+  return lv > 0 && pathOf(world) === 'kitsune' ? skillAt('foxbarrage', lv).barrage : null;
+}
+function barrageThrow(world, b) {
+  const { now, body } = world;
+  // A pause (a skill, a stagger) starts the ramp over.
+  let run = world.barrage;
+  if (!run || now - run.last > 0.5) run = world.barrage = { since: now, last: now, n: 0, airSince: null };
+  const rate = b.from + (b.to - b.from) * Math.min(1, (now - run.since) / b.ramp);
+  const air = !body.onGround;
+  run.airSince = air ? run.airSince ?? now : null;
+  const other = run.n % 2 === 1;
+  // playStep runs basic moves at 0.9 of their written length.
+  playStep(world, {
+    move: air ? 'airthrow' : other ? 'streamthrow2' : 'streamthrow', dur: 1 / (rate * 0.9), step: 0, stream: true, hang: air && now - run.airSince < BARRAGE_HANG,
+    strikes: [{ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, oy: other ? 4 : 0, gauge: 1 }],
+  }, 100, air ? 'basicairstream' : 'basicstream');
+  run.last = now;
+  run.n += 1;
+}
+// Letting go of attack: the fox-moon finisher, if she held long enough (not over a skill).
+export function barrageRelease(world) {
+  const run = world.barrage;
+  world.barrage = null;
+  const b = barrageOf(world);
+  if (!b || world.dead || world.body.rope || !activeStar(world.char)) return;
+  if (world.recoverKind === 'skill' && world.attackTimer > 0) return;
+  const held = run.last - run.since;
+  if (held < BARRAGE_FINISH_AFTER) return;
+  const k = Math.min(1, held / b.full);
+  const air = !world.body.onGround;
+  const pct = Math.round(b.finish[0] + (b.finish[1] - b.finish[0]) * k);
+  playStep(world, {
+    move: air ? 'airthrow' : 'heavethrow', dur: air ? 0.4 : 0.56, step: air ? 0 : 6, hang: air, finisher: true,
+    strikes: [{ at: air ? 0.5 : 0.52, shot: 'foxmoon', pct, range: 320, h: air ? 190 : 80, drop: air ? 60 : 0, targets: 3, pierce: true, speed: 880, knock: 190, big: true, stop: 0.04 + 0.03 * k, shake: Math.round(1 + 2 * k) }],
+  }, 100, air ? 'basicair1' : 'basic2');
+}
 export const tailCount = (world) => (hasTails(world.char) ? Math.min(9, Math.floor(((world.tails ?? 0) / TAILS_MAX) * 9 + 1e-9)) : 0);
 export const nineTails = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
 // Spirit: the Spirit Mage's gauge. Her spells that land build it, and so do her heals; turning
@@ -934,8 +979,10 @@ export function basicCombo(world) {
   // bow, and the archer paths have their own command shots.
   const path = pathOf(world);
   const cmd = ARCHER_COMMANDS[path];
+  const stream = barrageOf(world);
   if (cmd) {
     if (!body.onGround && !body.rope) {
+      if (stream) return barrageThrow(world, stream);
       if ((world.airCombo ?? 0) >= cmd.air.length) return;
       playStep(world, cmd.air[world.airCombo], 100, `basicair${world.airCombo}`);
       world.airCombo += 1;
@@ -957,6 +1004,7 @@ export function basicCombo(world) {
       return;
     }
   }
+  if (stream) return barrageThrow(world, stream);
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   const flowing = world.now <= (world.comboUntil ?? -9);
   if (!flowing) world.owed = 0;
@@ -999,7 +1047,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (key.startsWith('basic')) {
     // Basic attacks keep their rhythm; a finisher or a command move ends with a beat.
     const own = /^basic(air)?\d$/.test(key);
-    world.basicReadyAt = now + busy + (step.finisher ? AFTER.basicFinisher : own ? 0 : AFTER.command);
+    // A stream of throws (Endless Fox-Fire) goes on with no beat at all.
+    world.basicReadyAt = now + (step.stream ? dur : busy + (step.finisher ? AFTER.basicFinisher : own ? 0 : AFTER.command));
   } else {
     // A skill plays out its whole motion, then its beat; a basic attack can follow once the
     // motion is nearly over.

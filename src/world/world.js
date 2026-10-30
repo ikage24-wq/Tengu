@@ -19,7 +19,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
 import { rodGuard } from './storm.js';
-import { tickMelee, faithGuard, addAim, addKi, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum } from './melee.js';
+import { tickMelee, faithGuard, addAim, addKi, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
@@ -601,13 +601,16 @@ export function updateWorld(world, dt, input) {
     world.recoverAt = null;
     world.lunge = null;
   }
-  const rooted = (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
+  // Endless Fox-Fire's barrage doesn't root her: she walks slowly through it (and can jump into the
+  // air barrage). Its finisher roots her as any move does.
+  const streaming = basicHeld && Boolean(world.barrage) && world.recoverKind === 'basic' && !world.pose?.fin;
+  const rooted = !streaming && (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
   // A Thief's flash jump and shadow dash, an Archer's air leap (world/agility.js).
   startAgility(world, intent, pressed);
   if (!(pressed.has('ArrowUp') && interact(world))) {
-    stepBody(world.body, world.map, bodyIntent, dt, world.stats);
+    stepBody(world.body, world.map, bodyIntent, dt, streaming ? { ...world.stats, speed: world.stats.speed * BARRAGE_WALK } : world.stats);
   }
   tickAgility(world, dt, blockWalls);
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
@@ -626,6 +629,8 @@ export function updateWorld(world, dt, input) {
       faceHeld(null);
       if (cast(world, null).ok) world.attackBuffer = 0;
     }
+    // Letting go ends an Endless Fox-Fire barrage (with its finisher, if held long enough).
+    if (world.barrage && !basicHeld) barrageRelease(world);
     const buffered = world.skillBuffer;
     if (buffered && buffered.until > world.now && world.attackTimer <= 0 && world.lockTimer <= 0) useHotkey(world, buffered.binding, false);
     world.heldSince ??= {};
