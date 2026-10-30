@@ -73,12 +73,27 @@ const kind = (id) => {
 
 // One run: the job plays for `secs` against `n` targets (dummies, or real monsters that fight back
 // when `fight`). `main` is the attack skill it leans on (null: basics only).
-export function run(job, level, { n = 1, secs = 30, main = null, fight = false, mpFree = true, seed = 1, skip = [] } = {}) {
+export function run(job, level, { secs = 30, ...opts } = {}) {
+  const r = makeRun(job, level, opts);
+  while (r.t < secs && !r.died) r.tick();
+  return r.result(secs);
+}
+
+// A run to step a tick (1/60 s) at a time, for a stage to draw (tools/dps-stage.html) or `run` to
+// finish. Its own seeded randomness is used only while it steps, so every run plays the same.
+export function makeRun(job, level, { n = 1, main = null, fight = false, mpFree = true, seed = 1, skip = [] } = {}) {
   let r = seed;
   const rng = () => ((r = (r * 1664525 + 1013904223) % 4294967296) / 4294967296);
-  const realRandom = Math.random;
-  Math.random = rng;
-  try {
+  const seeded = (fn) => {
+    const realRandom = Math.random;
+    Math.random = rng;
+    try {
+      return fn();
+    } finally {
+      Math.random = realRandom;
+    }
+  };
+  const S = seeded(() => {
     const c = balanceChar(job, level);
     const w = createWorld(c);
     w.log = () => {};
@@ -102,16 +117,23 @@ export function run(job, level, { n = 1, secs = 30, main = null, fight = false, 
       dummies.push(m);
     }
     const skills = Object.keys(c.skills).filter((id) => kind(id));
-    const buffs = skills.filter((id) => kind(id) === 'buff' && !skip.includes(id));
-    const finishers = skills.filter((id) => kind(id) === 'finisher' && !skip.includes(id));
-    const heals = skills.filter((id) => kind(id) === 'heal' && SKILLS[id].type === 'heal' && !skillAt(id, c.skills[id]).combo?.[0]?.strikes?.[0]?.revive);
-    let mpSpent = 0;
-    let healed = 0;
-    let lastHp = c.hp;
-    let diedAt = null;
-    const tried = {};
-    const input = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-    for (let t = 0; t < secs; t += DT) {
+    return {
+      c, w, x0, dummies,
+      buffs: skills.filter((id) => kind(id) === 'buff' && !skip.includes(id)),
+      finishers: skills.filter((id) => kind(id) === 'finisher' && !skip.includes(id)),
+      heals: skills.filter((id) => kind(id) === 'heal' && SKILLS[id].type === 'heal' && !skillAt(id, c.skills[id]).combo?.[0]?.strikes?.[0]?.revive),
+    };
+  });
+  const { c, w, x0, dummies, buffs, finishers, heals } = S;
+  let mpSpent = 0;
+  let healed = 0;
+  let lastHp = c.hp;
+  const tried = {};
+  const input = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  const out = {
+    w, c, dummies, t: 0, died: false, diedAt: null, last: null, casts: {},
+    damage: () => dummies.reduce((a, m) => a + (1e9 - Math.max(0, m.hp)), 0),
+    tick: () => seeded(() => {
       // Keep facing the targets, in reach (a step back or a dash can't carry them off).
       if (w.body.x > dummies[0].x - 20) w.body.x = dummies[0].x - 40;
       if (w.body.x < dummies[0].x - 170) w.body.x = dummies[0].x - 120;
@@ -141,11 +163,15 @@ export function run(job, level, { n = 1, secs = 30, main = null, fight = false, 
       const want = mend ?? buffs.find((id) => !(c.buffs[id]?.until > w.now) && ready(id)) ?? finishers.find(ready) ?? (main && ready(main) ? main : null);
       if (want) {
         const ok = cast(w, want).ok;
+        if (ok) {
+          out.last = want;
+          out.lastAt = w.now;
+          out.casts[want] = (out.casts[want] ?? 0) + 1;
+        }
         // (One that didn't take waits a moment; one that works on the troupe rather than the hero,
         // like Yokai Rally, is recast when it runs out.)
         if (buffs.includes(want) && (!ok || !(c.buffs[want]?.until > w.now))) tried[want] = w.now + (ok ? (w.rally?.until ?? w.now + 20) - w.now : 5);
       }
-      const mp0 = c.mp;
       updateWorld(w, DT, input);
       input.pressed.clear();
       if (c.hp > lastHp) healed += c.hp - lastHp;
@@ -154,18 +180,18 @@ export function run(job, level, { n = 1, secs = 30, main = null, fight = false, 
         mpSpent += Math.max(0, computeStats(c).maxMp - c.mp);
         c.mp = computeStats(c).maxMp;
       }
+      out.t += DT;
       if (fight && (w.dead || c.hp <= 0)) {
-        diedAt = t;
-        break;
+        out.died = true;
+        out.diedAt = out.t;
       }
-      void mp0;
-    }
-    const dmg = dummies.reduce((a, m) => a + (1e9 - Math.max(0, m.hp)), 0);
-    const st = computeStats(c);
-    return { dps: dmg / secs, mpPerSec: mpSpent / secs, maxMp: st.maxMp, maxHp: st.maxHp, healPerSec: healed / secs, diedAt, hpLeft: c.hp };
-  } finally {
-    Math.random = realRandom;
-  }
+    }),
+    result: (secs) => {
+      const st = computeStats(c);
+      return { dps: out.damage() / secs, mpPerSec: mpSpent / secs, maxMp: st.maxMp, maxHp: st.maxHp, healPerSec: healed / secs, diedAt: out.diedAt, hpLeft: c.hp };
+    },
+  };
+  return out;
 }
 
 // The attack skill a job does the most single-target damage with (tried one at a time), and
@@ -237,7 +263,7 @@ function healRun(job, level, id) {
 }
 
 // ---------- Command line ----------
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (typeof process !== 'undefined' && import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
   const level = Number(args.find((a) => /^\d+$/.test(a)) ?? 60);

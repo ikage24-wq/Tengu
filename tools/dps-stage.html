@@ -1,0 +1,152 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a job on an immortal training dummy, playing its best single-target rotation (the one
+// tools/balance.mjs finds), drawn with the game's own renderer under a live DPS meter; and a
+// ranking card. For recording (tools/record-dps.cjs): ?job=paladin&main=&skip=titanbreak, then
+// window.step(dt) from outside; window.rank(list, p) draws the ranking card at progress p.
+import { makeRun } from './balance.mjs';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { JOBS } from '../src/data/jobs.js';
+import { SKILLS } from '../src/data/skills.js';
+import { roleOf } from '../src/data/dungeons.js';
+import { text, box, sparkle } from '../src/ui/kit.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+
+const ROLE = { dps: ['Damage', '#ff7a6b'], tank: ['Tank', '#5aa8ff'], healer: ['Healer', '#4fbf6f'] };
+const job = q.get('job') ?? 'paladin';
+const main = q.get('main') || null;
+const skip = (q.get('skip') ?? '').split(',').filter(Boolean);
+const level = Number(q.get('level') ?? 60);
+const run = makeRun(job, level, { n: 1, main, skip });
+const { w } = run;
+const cam = createCamera();
+const role = roleOf(job, JOBS[job].family);
+run.c.name = JOBS[job].name;
+
+let t = 0;
+const samples = [];
+let peak = 0;
+const fmt = (n) => Math.round(n).toLocaleString('en');
+
+function meter() {
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  const dmg = run.damage();
+  const dps = run.t > 0.5 ? dmg / run.t : 0;
+  // Top left: who.
+  box(ctx, 10, 10, 214, 54, { fill: 'rgba(255,250,248,0.94)', edge: '#f4bcd8', r: 10, width: 2 });
+  text(ctx, JOBS[job].name, 22, 32, { size: 15, bold: true, color: '#4a3560' });
+  const [rn, rc] = ROLE[role];
+  box(ctx, 22, 40, 52, 14, { fill: rc, edge: null, r: 7 });
+  text(ctx, rn, 48, 50.5, { size: 8, bold: true, align: 'center', color: '#ffffff' });
+  text(ctx, `Lv ${level} · one immortal dummy`, 82, 50.5, { size: 7.5, color: '#8a7aa0' });
+  // Top right: the DPS meter.
+  const x = VW - 214;
+  box(ctx, x, 10, 204, 118, { fill: 'rgba(40,30,58,0.86)', edge: '#ffd66b', r: 10, width: 2 });
+  text(ctx, 'DPS', x + 14, 28, { size: 9, bold: true, color: '#ffd66b' });
+  text(ctx, `${run.t.toFixed(1)}s`, x + 190, 28, { size: 9, bold: true, align: 'right', color: '#d8cdea' });
+  text(ctx, fmt(dps), x + 14, 58, { size: 26, bold: true, color: '#ffffff' });
+  text(ctx, `Total ${fmt(dmg)}`, x + 14, 74, { size: 8, color: '#d8cdea' });
+  // A small chart of the running DPS.
+  const gx = x + 14;
+  const gy = 82;
+  const gw = 176;
+  const gh = 36;
+  box(ctx, gx, gy, gw, gh, { fill: 'rgba(255,255,255,0.06)', edge: null, r: 4 });
+  if (samples.length > 1) {
+    const top = Math.max(peak, 1) * 1.1;
+    ctx.beginPath();
+    samples.forEach(([st, v], i) => {
+      const px = gx + (st / Math.max(20, run.t)) * gw;
+      const py = gy + gh - (v / top) * gh;
+      if (i) ctx.lineTo(px, py);
+      else ctx.moveTo(px, py);
+    });
+    ctx.strokeStyle = '#ffd66b';
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+  // Bottom: the rotation, the skill just used lit up.
+  const by = VH - 34;
+  ctx.font = 'bold 8px sans-serif';
+  let cx = 12;
+  box(ctx, 8, by - 4, VW - 16, 26, { fill: 'rgba(255,250,248,0.9)', edge: '#e6d6f4', r: 9, width: 1.5 });
+  text(ctx, 'Rotation', cx + 6, by + 12, { size: 8, bold: true, color: '#9a7cc8' });
+  cx += 56;
+  // The rotation: the main skill (or basic attacks), then each buff and finisher as it's first used.
+  const used = Object.keys(run.casts).filter((id) => id !== main);
+  const rotation = [main ? SKILLS[main].name : 'Basic attacks + procs', ...used.map((id) => SKILLS[id].name)];
+  for (const [i, name] of rotation.entries()) {
+    const id = i === 0 ? main : used[i - 1];
+    const lit = id && run.last === id && run.w.now - (run.lastAt ?? -9) < 0.6;
+    const wdt = ctx.measureText(name).width + 16;
+    box(ctx, cx, by, wdt, 16, { fill: lit ? '#ffd66b' : i === 0 ? '#ffe9f2' : '#f1ebfa', edge: lit ? '#e0a52f' : null, r: 8, width: 1.2 });
+    text(ctx, name, cx + wdt / 2, by + 11, { size: 8, bold: true, align: 'center', color: '#4a3560' });
+    cx += wdt + 6;
+  }
+}
+
+function step(dt) {
+  for (let k = 0; k < Math.round(dt * 60); k++) run.tick();
+  t += dt;
+  const dps = run.t > 0.5 ? run.damage() / run.t : 0;
+  if (run.t > 1) {
+    samples.push([run.t, dps]);
+    peak = Math.max(peak, dps);
+  }
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, dt);
+  drawWorld(ctx, w, cam, t);
+  meter();
+}
+
+// The ranking: a bar per job, longest first, growing in with p (0..1).
+function rank(list, p) {
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, VH);
+  g.addColorStop(0, '#fbe7f2');
+  g.addColorStop(1, '#e4dcfb');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VW, VH);
+  for (let i = 0; i < 14; i++) sparkle(ctx, (i * 97) % VW, 20 + ((i * 53) % 300), 2 + (i % 3), i % 2 ? '#ffffff' : '#ffd66b');
+  text(ctx, 'DPS ranking', VW / 2, 36, { size: 20, bold: true, align: 'center', color: '#4a3560' });
+  text(ctx, `Second jobs · Lv ${level} · one immortal dummy · best rotation`, VW / 2, 52, { size: 8.5, align: 'center', color: '#8a7aa0' });
+  const sorted = [...list].sort((a, b) => b.dps - a.dps);
+  const max = sorted[0].dps;
+  const x0 = 150;
+  const bw = VW - x0 - 90;
+  sorted.forEach((r, i) => {
+    const y = 70 + i * 34;
+    const k = Math.max(0, Math.min(1, p * 1.6 - i * 0.08));
+    const e = 1 - (1 - k) ** 3;
+    const [rn, rc] = ROLE[r.role];
+    text(ctx, `${i + 1}`, 22, y + 17, { size: 12, bold: true, align: 'center', color: i < 3 ? '#e0a52f' : '#8a7aa0' });
+    text(ctx, r.name, 38, y + 15, { size: 10, bold: true, color: '#4a3560' });
+    text(ctx, rn, 38, y + 25, { size: 7, bold: true, color: rc });
+    box(ctx, x0, y + 4, bw, 20, { fill: 'rgba(255,255,255,0.55)', edge: null, r: 6 });
+    if (e > 0) box(ctx, x0, y + 4, Math.max(8, bw * (r.dps / max) * e), 20, { fill: rc, edge: null, r: 6 });
+    text(ctx, fmt(r.dps * e), x0 + bw + 8, y + 18, { size: 10, bold: true, color: '#4a3560' });
+  });
+}
+
+window.step = step;
+window.rank = rank;
+window.frame = () => canvas.toDataURL('image/jpeg', 0.92);
+window.result = () => ({ job, name: JOBS[job].name, role, dps: run.damage() / run.t });
+window.ready = true;
+</script></body></html>
