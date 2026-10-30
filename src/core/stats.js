@@ -5,7 +5,7 @@ import { ITEMS } from '../data/items.js';
 import { SETS } from '../data/sets.js';
 import { bookBonus } from './collection.js';
 import { SKILLS, skillAt } from '../data/skills.js';
-import { jobChain } from '../data/jobs.js';
+import { jobChain, JOBS } from '../data/jobs.js';
 import { activeStar } from './inventory.js';
 
 const FIST_WATK = 6; // bare hands still do a little damage
@@ -109,6 +109,12 @@ export function computeStats(char, now = 0) {
     maxMp: Math.round((char.baseMp + get('mp')) * (1 + maxMpPct)),
     speed: 100 + get('speed'),
     jump: 100 + get('jump'),
+    // The job's damage tuning (data/jobs.js `power`): how hard it hits for its role.
+    power: JOBS[char.job]?.power ?? 1,
+    // How much of its damage carries to a crowd (world.js): hits on the monsters past the first.
+    spread: JOBS[char.job]?.spread ?? 1,
+    // A tank's steadiness (data/jobs.js `guard`): the share of every hit it actually takes.
+    guard: JOBS[char.job]?.guard ?? 1,
     mastery: Math.max(BASE_MASTERY, pas.mastery ?? 0),
     critRate: (pas.critRate ?? 0) + (buf.critRate ?? 0) + (set.critRate ?? 0),
     critDamage: (pas.critDamage ?? 0) + (buf.critDamage ?? 0) + (set.critDamage ?? 0),

@@ -1,5 +1,12 @@
 // Jobs: a Novice start, four first jobs at level 10, and second-job branches at level 30.
 // HP/MP growth follows the classic split: warriors tanky, mages MP-heavy, archers and thieves between.
+//
+// Balance (tools/tune.mjs finds these from the real game, tools/balance.mjs measures it): `power`
+// scales everything a job hits for, `spread` its hits on monsters past the one it's on. Damage
+// jobs come out level overall, each with its own lean (one target or crowds, up to 8% either
+// way); tanks deal 75% of that and healers 65%, on one target and on a crowd alike, so neither
+// ever outdoes a damage job: they make up for it in toughness and support. A tank's `guard` is the
+// share of every hit it actually takes.
 
 export const FAMILY_STATS = {
   beginner: { primary: 'str', secondary: 'dex' },
@@ -20,24 +27,24 @@ export const JOBS = {
   },
 
   warrior: {
-    id: 'warrior', name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: 10,
+    id: 'warrior', guard: 0.85, power: 0.52, spread: 0.67, name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: 10,
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
   // The Spirit Mage: a young shrine mage whose spirits strike and heal (remade from scratch; the
   // old Mage is retired). Damage and support at once, with the Spirit Doll at her side.
   spiritmage: {
-    id: 'spiritmage', name: 'Spirit Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
+    id: 'spiritmage', power: 0.41, spread: 1.06, name: 'Spirit Mage', family: 'mage', tier: 1, parent: 'novice', level: 10,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 380, weapons: ['wand', 'staff'],
     blurb: 'Dances her spells with a wand or staff: bolts of white spirit light for damage with INT, and blessings that heal the party. Spirit builds from both, faster when she weaves them; full, her damage spells heal too. A mischievous Spirit Doll floats at her side and fights with her own little tricks.',
   },
   archer: {
-    id: 'archer', name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
+    id: 'archer', power: 1.53, spread: 0.68, name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
     blurb: 'Fires from a distance with DEX. Steady and safe.',
   },
   thief: {
-    id: 'thief', name: 'Thief', family: 'thief', tier: 1, parent: 'novice', level: 10,
+    id: 'thief', power: 0.7, spread: 1.55, name: 'Thief', family: 'thief', tier: 1, parent: 'novice', level: 10,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
     blurb: 'Quick hits with LUK. Daggers up close, or a gauntlet that hurls throwing stars at range.',
   },
@@ -46,36 +53,36 @@ export const JOBS = {
   // Both are built: the Shrine Maiden (her guardian, Grace, her skills and Thousand Torii) and the
   // Onmyoji (her yokai troupe led by the tengu, Binding, her skills and Troupe Combo).
   shrinemaiden: {
-    id: 'shrinemaiden', name: 'Shrine Maiden', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    id: 'shrinemaiden', power: 1.78, spread: 0.84, name: 'Shrine Maiden', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand', 'staff'],
     blurb: 'The shrine\'s own priestess, the heart of any party. Heals, wards and blessings carry everyone, and a kitsune shrine guardian with a naginata stands in front of them. The healer of any dungeon group.',
   },
   onmyoji: {
-    id: 'onmyoji', name: 'Onmyoji', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    id: 'onmyoji', power: 1.06, spread: 1.42, name: 'Onmyoji', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
     blurb: 'The spirit-binder. A rowdy troupe of yokai (an oni, a yuki-onna and a tengu) fights at her side, kept in line with talismans and star seals. Deals damage in a group.',
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   paladin: {
-    id: 'paladin', name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'paladin', guard: 0.8, power: 1.91, spread: 0.86, name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 32, mp: 14, advanceHp: 600, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The shield of the party. Holy light stuns and taunts, and blessings guard everyone near. The tank of any dungeon group.',
   },
   berserker: {
-    id: 'berserker', name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'berserker', power: 0.68, spread: 0.69, name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 30, mp: 12, advanceHp: 450, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Rage made flesh. Every blow builds Rage and makes them bleed; Rampage spends it all in one savage flurry. Deals damage in a group.',
   },
 
   // Archer branches. Both ask for Kestrel's trial first.
   beastmaster: {
-    id: 'beastmaster', name: 'Beastmaster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    id: 'beastmaster', power: 2.52, spread: 1.04, name: 'Beastmaster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 26, mp: 17, advanceHp: 340, advanceMp: 260, weapons: ['bow'],
     blurb: 'Hunts with a bow beside her wolf and hawk. Her shots and her animals\' hits build Bond; full, the animals grow bigger and hunt on their own. Pounces, dives, howls and a stampede of spirit beasts.',
   },
   stormcaller: {
-    id: 'stormcaller', name: 'Stormcaller', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    id: 'stormcaller', power: 1.54, spread: 0.61, name: 'Stormcaller', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 24, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['crossbow'],
     blurb: 'Calls the storm down with a crossbow. Her bolts build Charge; full, every bolt chains on to one more monster. Lightning that jumps between monsters, charged ground, a storm cloud overhead, and Thunderhead: a storm over the whole screen.',
   },
@@ -83,12 +90,12 @@ export const JOBS = {
   // Thief branches, a pair from the same mountain shrine. Both ask for Vex's trial first; each
   // keeps to one of the Thief's two weapons.
   shinobi: {
-    id: 'shinobi', name: 'Shinobi', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    id: 'shinobi', power: 1.38, spread: 1.03, name: 'Shinobi', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
     blurb: 'Ink, smoke and seals with a dagger. Hits and dodges build Ki; full, two ink clones repeat every attack. Kunai, exploding seals, smoke bombs, a log to swap places with, and Thousand Cuts: a giant ink fox.',
   },
   kitsune: {
-    id: 'kitsune', name: 'Kitsune', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    id: 'kitsune', power: 1.04, spread: 1.29, name: 'Kitsune', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 23, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['gauntlet'],
     blurb: 'Fox-fire stars from a gauntlet. Her stars set monsters burning and grow her Tails, one to nine; every three tails a fox-fire illusion throws stars beside her. Fox-fire fans, illusions, traps, and Nine-Tail Blaze: a giant fox of blue fire.',
   },

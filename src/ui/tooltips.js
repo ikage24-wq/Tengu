@@ -1,7 +1,8 @@
 // Tooltip lines for items and skills.
 
 import { SETS } from '../data/sets.js';
-import { setsWorn } from '../core/stats.js';
+import { setsWorn, computeStats } from '../core/stats.js';
+import { physicalRange, magicRange } from '../core/formulas.js';
 import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
 import { itemName, variantPrice } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
@@ -84,29 +85,57 @@ export function describeSkill(skillId, lv) {
   return describe(skillAt(skillId, lv));
 }
 
-function describe(params) {
+function describe(params, tune = 1) {
+  return describeParts(params, tune).join(', ');
+}
+
+const BUFF_NAMES = { attackSpeed: 'attack speed', manaShield: 'damage to MP', maxHpPct: 'max HP', critRate: 'crit rate', regenPct: 'HP every second', barrier: 'max HP as a barrier', dmgCut: 'less damage taken' };
+const PCT_BUFFS = ['attackSpeed', 'manaShield', 'maxHpPct', 'critRate', 'regenPct', 'barrier', 'dmgCut'];
+const buffParts = (buff, duration) => [
+  ...Object.entries(buff).map(([k, v]) => `${k === 'barrier' || k === 'dmgCut' ? '' : '+'}${PCT_BUFFS.includes(k) ? `${Math.round(v * 1000) / 10}%` : v} ${BUFF_NAMES[k] ?? STAT_NAMES[k] ?? k}`),
+  ...(duration ? [`${duration}s`] : []),
+];
+
+// What a skill does at a level, piece by piece (so the next level can show only what changes).
+// `tune` is the skill's own damage tuning (data/skills.js `dmg`), shown in its percentages.
+function describeParts(params, tune = 1) {
   // A proc (a skill that sets itself off): how often, then what it does when it does.
   if (params.proc) {
     const p = params.proc;
     const when = [p.chance != null && `${Math.round(p.chance * 100)}% chance`, p.hard && `on a hit of ${Math.round(p.hard * 100)}%+ HP`, p.crowd && `always on ${p.crowd}+ foes`].filter(Boolean);
-    return [...when, describe({ ...p, chance: undefined, proc: undefined })].filter(Boolean).join(', ');
+    return [...when, ...describeParts({ ...p, chance: undefined, proc: undefined }, tune)];
   }
   const parts = [];
-  if (params.pct) parts.push(`${params.pct}% damage`);
-  if (params.power) parts.push(`${params.power}% magic`);
-  if (params.hits > 1) parts.push(`${params.hits} hits`);
+  const pc = (v) => `${Math.round(v * tune)}%`;
+  // A combo skill: each step's blows (and the volleys, gates and chains it calls down).
+  const steps = params.combo ?? [];
+  const stepHits = steps.map((st) => (st.strikes ?? []).flatMap((x) => {
+    if (x.rain) return [`${x.rain}×${pc(x.pct)}`];
+    if (x.torii) return [`${x.torii.n} gates ×${pc(x.torii.pct)}`];
+    if (x.troupe) return [`chain ${pc(x.troupe.pct)} + ${pc(x.troupe.big)}`];
+    return x.pct > 0 ? [pc(x.pct)] : [];
+  }));
+  if (stepHits.some((h) => h.length)) {
+    if (steps.length > 1) parts.push(`${steps.length}-step chain: ${stepHits.map((h) => h.join('+') || '—').join(' / ')}`);
+    else parts.push(`${stepHits[0].join(' + ')} damage`);
+  } else {
+    if (params.pct) parts.push(`${pc(params.pct)} damage`);
+    if (params.power) parts.push(`${pc(params.power)} magic`);
+    if (params.hits > 1) parts.push(`${params.hits} hits`);
+  }
   if (params.targets > 1) parts.push(`up to ${params.targets} foes`);
+  const strikes = steps.flatMap((st) => st.strikes ?? []);
+  // Heals, blessings and revives a dance gives.
+  for (const x of strikes) {
+    if (x.heal) parts.push(`heals ${Math.round(x.heal * 100)}% max HP${params.range ? ' (you and the party near)' : ''}`);
+    if (x.grant) parts.push(...buffParts(x.grant.buff, x.grant.duration));
+    if (x.revive) parts.push(`revives the fallen at ${Math.round(x.revive.pct * 100)}% HP`);
+    if (x.torii?.heal) parts.push(`each gate heals ${Math.round(x.torii.heal * 100)}%`, `ward ${Math.round(x.torii.ward * 100)}% for ${x.torii.wardDur}s`);
+  }
   if (params.healPct) parts.push(`heals ${Math.round(params.healPct * 100)}% HP`);
   if (params.hold) parts.push(`${params.range.w / 2}px around, holds them ${Math.round(params.hold * 10) / 10}s`);
   if (params.pull) parts.push(`pulls from ${params.range.w}px`);
-  if (params.buff) {
-    for (const [k, v] of Object.entries(params.buff)) {
-      const pct = ['attackSpeed', 'manaShield', 'maxHpPct', 'critRate', 'regenPct', 'barrier', 'dmgCut'].includes(k);
-      const name = { attackSpeed: 'attack speed', manaShield: 'damage to MP', maxHpPct: 'max HP', critRate: 'crit rate', regenPct: 'HP every second', barrier: 'max HP as a barrier', dmgCut: 'less damage taken' }[k] ?? STAT_NAMES[k] ?? k;
-      parts.push(`${k === 'barrier' || k === 'dmgCut' ? '' : '+'}${pct ? `${Math.round(v * 1000) / 10}%` : v} ${name}`);
-    }
-    parts.push(`${params.duration}s`);
-  }
+  if (params.buff) parts.push(...buffParts(params.buff, params.duration));
   if (params.passive) {
     for (const [k, v] of Object.entries(params.passive)) {
       const pct = ['maxHpPct', 'maxMpPct', 'critRate', 'critDamage', 'mastery'].includes(k);
@@ -115,19 +144,47 @@ function describe(params) {
     }
   }
   if (params.mp) parts.push(`${params.mp} MP`);
-  return parts.join(', ');
+  return parts;
+}
+
+// The biggest single blow of a skill at a level, as a % (for its real damage range).
+function biggestPct(params) {
+  const p = params.proc ?? params;
+  const strikes = (p.combo ?? []).flatMap((st) => st.strikes ?? []);
+  return Math.max(0, p.pct ?? 0, ...strikes.map((x) => x.troupe?.big ?? x.torii?.pct ?? x.pct ?? 0));
 }
 
 export function skillTooltip(char, skillId) {
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
+  const tune = s.dmg ?? 1;
   const lines = [
     { text: s.name, bold: true, size: 10 },
     { text: `${JOBS[s.job].name} skill  ·  Level ${lv}/${s.maxLevel}`, color: COLORS.muted },
     { text: s.desc },
   ];
-  if (lv > 0) lines.push({ text: `Now: ${describe(skillAt(skillId, lv))}`, color: '#3f9f5f' });
-  if (lv < s.maxLevel) lines.push({ text: `Next: ${describe(skillAt(skillId, lv + 1))}`, color: COLORS.accent });
+  // (Troupe Combo focuses its own way; Thousand Torii's gates cut wherever they rise.)
+  const focus = skillId === 'troupecombo' ? ' Hits harder the fewer it catches (three times on one).' : skillId === 'thousandtorii' ? '' : ' Hits harder the fewer it catches (double on one).';
+  if (s.fullGauge) lines.push({ text: `Finisher: needs a full gauge and spends it.${focus}`, color: '#c99a1f', size: 8 });
+  const now = lv > 0 ? describeParts(skillAt(skillId, lv), tune) : [];
+  if (lv > 0) lines.push({ text: `Now: ${now.join(', ')}`, color: '#3f9f5f' });
+  // Your real damage with it: its biggest blow, from your stats right now.
+  if (lv > 0 && SKILLS[skillId].type !== 'buff') {
+    const params = skillAt(skillId, lv);
+    const pct = biggestPct(params) * tune;
+    if (pct > 0) {
+      const st = computeStats(char);
+      const magic = (params.proc ?? params).power != null || s.job === 'spiritmage' || JOBS[s.job]?.family === 'mage';
+      const r = magic ? magicRange(st, pct) : physicalRange(st, st.weaponType, pct);
+      lines.push({ text: `Your biggest blow: ${Math.round(r.min).toLocaleString()} – ${Math.round(r.max).toLocaleString()}`, color: '#a8467a', size: 8 });
+    }
+  }
+  // The next level: only what changes.
+  if (lv < s.maxLevel) {
+    const next = describeParts(skillAt(skillId, lv + 1), tune);
+    const changed = lv > 0 ? next.filter((p) => !now.includes(p)) : next;
+    lines.push({ text: `${lv > 0 ? 'Next level' : 'Level 1'}: ${changed.join(', ') || 'no change'}`, color: COLORS.accent });
+  }
   if (s.lock) lines.push({ text: `Roots you for ${s.lock}s`, color: COLORS.muted });
   if (s.weapons) lines.push({ text: `Needs: ${s.weapons.join(' or ')}`, color: COLORS.muted });
   return lines;

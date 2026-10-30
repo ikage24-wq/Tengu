@@ -563,7 +563,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   const body = g.body;
   if (g.bot) {
     const bot = g.bot;
-    const dmg = absorb(world, body, bot.buffs, Math.round((pierce ? raw : damageTaken(raw, bot.stats.wdef)) * (1 - cutOf(bot.buffs, world.now))));
+    const dmg = absorb(world, body, bot.buffs, Math.round((pierce ? raw : damageTaken(raw, bot.stats.wdef)) * (bot.stats.guard ?? 1) * (1 - cutOf(bot.buffs, world.now))));
     bot.hp = Math.max(0, bot.hp - dmg);
     bot.hurt = 0.3;
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
@@ -582,7 +582,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   if (world.god || blockOnHit(world, fromX)) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
+  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

@@ -218,7 +218,13 @@ export function drinkBlood(world, dmg) {
   const { char, stats, body } = world;
   if (!p || world.dead || dmg <= 0 || char.hp >= stats.maxHp) return 0;
   const missing = 1 - char.hp / stats.maxHp;
-  const heal = Math.min(stats.maxHp - char.hp, Math.max(1, Math.round(dmg * p.steal * (1 + (p.low - 1) * missing))));
+  const more = 1 + (p.low - 1) * missing;
+  // (No more than `cap` of max HP a second, so a whole crowd can't make him unkillable.)
+  if (world.now - (world.drinkSec?.at ?? -9) >= 1) world.drinkSec = { at: world.now, n: 0 };
+  const room = Math.max(0, stats.maxHp * (p.cap ?? 1) * more - world.drinkSec.n);
+  const heal = Math.min(stats.maxHp - char.hp, room, Math.max(1, Math.round(dmg * p.steal * more)));
+  if (heal <= 0) return 0;
+  world.drinkSec.n += heal;
   char.hp += heal;
   world.drunk = (world.drunk ?? 0) + heal;
   if (world.now - (world.drunkAt ?? -9) >= 0.5) {
@@ -369,7 +375,8 @@ export function cast(world, skillId, rng = Math.random) {
   const targets = pickTargets(world.mobs, body, area, params.targets);
   const family = JOBS[char.job].family;
   const acc = accuracy(family, stats, char.level);
-  const range = params.pct != null ? physicalRange(stats, stats.weaponType, params.pct) : magicRange(stats, params.power);
+  const tune = s?.dmg ?? 1;
+  const range = params.pct != null ? physicalRange(stats, stats.weaponType, params.pct * tune) : magicRange(stats, params.power * tune);
   const fxKind = s?.fx ?? (ranged ? 'arrow' : 'swing');
   const ultimate = Boolean(s?.ultimate);
   const look = { school: s?.school, variant: s?.variant };

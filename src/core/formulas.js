@@ -28,7 +28,8 @@ export function physicalRange(stats, weaponType, skillPct = 100) {
   const w = WEAPON_TYPES[weaponType] ?? WEAPON_TYPES.none;
   const primary = stats[w.primary];
   const secondary = w.secondary.reduce((sum, key) => sum + stats[key], 0);
-  const s = skillPct / 100;
+  // (`power` is the job's own damage tuning, data/jobs.js.)
+  const s = (skillPct / 100) * (stats.power ?? 1);
   const max = s * stats.watk * (1 + (primary * w.mult + secondary) / 100);
   const min = s * stats.watk * (0.8 + (primary * stats.mastery * w.mult + secondary) / 100);
   return { min: Math.max(1, min), max: Math.max(1, max) };
@@ -36,7 +37,7 @@ export function physicalRange(stats, weaponType, skillPct = 100) {
 
 // Spell damage range. Magic power is half of INT plus equipment and buffs.
 export function magicRange(stats, skillPower) {
-  const s = skillPower / 100;
+  const s = (skillPower / 100) * (stats.power ?? 1);
   const magic = Math.floor(stats.int / 2) + stats.matk;
   const max = s * magic * (1 + stats.int / 125);
   const min = s * magic * (1 + (stats.int * stats.mastery) / 125);

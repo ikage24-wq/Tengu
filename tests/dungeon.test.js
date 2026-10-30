@@ -7,7 +7,7 @@ import { makeBotCharacter, createBots, updateBots } from '../src/world/bots.js';
 import { createWorld, updateWorld } from '../src/world/world.js';
 import { createCharacter } from '../src/core/character.js';
 import { partyMembers } from '../src/world/party.js';
-import { roleOf, DUNGEONS } from '../src/data/dungeons.js';
+import { roleOf, DUNGEONS, TANK_THREAT } from '../src/data/dungeons.js';
 import { MAPS } from '../src/data/maps.js';
 import { MOBS } from '../src/data/mobs.js';
 import { planGroup, startRun, groupOf, isUp, noteHit, healerTurn } from '../src/world/dungeon.js';
@@ -75,7 +75,7 @@ test('every dungeon room is laid out and every monster in it exists', () => {
   }
 });
 
-test("a tank's hits make five times the threat", () => {
+test("a tank's hits make several times the threat", () => {
   const rng = seeded(9);
   const world = heroAt(rng, 11, ['archer']);
   startRun(world);
@@ -84,7 +84,7 @@ test("a tank's hits make five times the threat", () => {
   noteHit(world, m, { damage: 100, party: tank.id });
   noteHit(world, m, { damage: 100 });
   // (Waking up adds a point for whoever started it.)
-  assert.equal(m.threat[tank.id], 501);
+  assert.equal(m.threat[tank.id], 100 * TANK_THREAT + 1);
   assert.equal(m.threat.you, 101);
   assert.ok(m.engaged);
   // Its whole pack wakes up with it.

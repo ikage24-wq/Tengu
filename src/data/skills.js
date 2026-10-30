@@ -29,6 +29,7 @@ const lerp = (a, b, lv, max) => Math.round(a + ((b - a) * (lv - 1)) / Math.max(1
 const lerpf = (a, b, lv, max) => a + ((b - a) * (lv - 1)) / Math.max(1, max - 1);
 
 // `lock` is a short delay after using a skill that plants you in place (no moving, jumping, or other attacks), for big wind-ups.
+// `dmg` tunes a skill's whole damage (balance, see tools/balance.mjs), on top of the job's `power`.
 function skill(def) {
   return { maxLevel: 20, lock: 0, ...def };
 }
@@ -122,7 +123,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m), restRegen: lerp(2, 20, lv, m) } }),
   }),
   titanbreak: skill({
-    id: 'titanbreak', name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
+    id: 'titanbreak', dmg: 1.2, name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Valor, and spends it. Crouch and leap high with the blade raised as a giant sword of steel forms above you, then crash down and split the ground in two, throwing everything around you into the air.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -177,7 +178,7 @@ export const SKILLS = {
   }),
 
   grandverdict: skill({
-    id: 'grandverdict', name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, fullGauge: true,
+    id: 'grandverdict', dmg: 1.75, name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Faith, and spends it. Kneel, rise on a column of light, then drive a giant sword of light down on everything around you; pillars of light strike every monster it hits.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -225,8 +226,8 @@ export const SKILLS = {
   // His late skills (`minLevel`).
   bloodlust: skill({
     id: 'bloodlust', name: 'Bloodlust', job: 'berserker', type: 'passive', fx: null, icon: 'bloodlust', school: 'rage', maxLevel: 10, minLevel: 50,
-    desc: 'Your blows drink blood: they heal you for a share of the damage they do, up to three times as much the lower your HP.',
-    at: (lv, m) => ({ passive: {}, proc: { steal: lerpf(0.02, 0.05, lv, m), low: 3 } }),
+    desc: 'Your blows drink blood: they heal you for a share of the damage they do (up to a share of your max HP each second), up to three times as much the lower your HP.',
+    at: (lv, m) => ({ passive: {}, proc: { steal: lerpf(0.02, 0.05, lv, m), low: 3, cap: lerpf(0.012, 0.02, lv, m) } }),
   }),
   demonform: skill({
     id: 'demonform', name: 'Demon Form', job: 'berserker', type: 'passive', fx: null, icon: 'demonform', school: 'rage', maxLevel: 10, minLevel: 70,
@@ -235,7 +236,7 @@ export const SKILLS = {
   }),
 
   crimsoneclipse: skill({
-    id: 'crimsoneclipse', name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, fullGauge: true,
+    id: 'crimsoneclipse', dmg: 2.5, name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Rage, and spends it. A whirlwind spins you up into the air, sucking monsters in, then you crash down under a blood-red moon in one enormous smash.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -267,7 +268,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       const bolt = (at, pct, oy = 0) => ({ at, shot: 'spiritorb', magic: true, pct, range: 300, h: 60, knock: 25, speed: 620, oy });
       return {
-        mp: k(13, 30), pct: k(330, 570), hits: 4, targets: 1,
+        mp: k(10, 22), pct: k(330, 570), hits: 4, targets: 1,
         combo: [
           { move: 'kagura', dur: 1.01, step: 2, strikes: [bolt(0.55, k(330, 570))] },
           { move: 'kaguraturn', dur: 1.14, step: 2, strikes: [bolt(0.58, k(220, 375), -5), bolt(0.68, k(220, 375), 5)] },
@@ -296,7 +297,7 @@ export const SKILLS = {
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(16, 30), pct: k(220, 380), hits: 1, targets: k(5, 8),
+        mp: k(12, 22), pct: k(220, 380), hits: 1, targets: k(5, 8),
         combo: [{ move: 'kaguraslam', dur: 1.25, step: 0, strikes: [{ at: 0.5, magic: true, pct: k(220, 380), reach: 160, h: 90, around: true, targets: k(5, 8), knock: 170, launch: 150, burst: 'spiritwave', burstAt: 0, burstDur: 0.8, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
       };
     },
@@ -306,14 +307,14 @@ export const SKILLS = {
   // the strike lands, see world/melee.js).
   blessing: skill({
     id: 'blessing', name: 'Blessing', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'spirit', party: true,
-    desc: 'Ring the bells over your head and open your arms: a column of warm light falls on you and the party around you, healing at once, then a little more every second for a while.',
+    desc: 'Ring the bells over your head and open your arms: a column of warm light falls on you and the party around you, healing at once, then a little more every second for a while, and lifting everyone\'s attack and magic while it lasts.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       const range = { w: 440, h: 160, around: true };
       return {
         mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'kagurabless', dur: 1.35, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.12, 0.3), healR: 220, burst: 'blessing', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(6, 10), buff: { regenPct: kf(0.01, 0.025) }, range } }] }],
+        combo: [{ move: 'kagurabless', dur: 1.35, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst: 'blessing', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } }] }],
       };
     },
   }),
@@ -327,7 +328,7 @@ export const SKILLS = {
       const range = { w: 440, h: 160, around: true };
       return {
         mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'kaguraward', dur: 1.2, step: 0, strikes: [{ at: 0.62, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.15, 0.35) }, range } }] }],
+        combo: [{ move: 'kaguraward', dur: 1.2, step: 0, strikes: [{ at: 0.62, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } }] }],
       };
     },
   }),
@@ -350,7 +351,7 @@ export const SKILLS = {
   }),
   grandblessing: skill({
     id: 'grandblessing', name: 'Grand Blessing', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'spirit', party: true,
-    desc: 'Ring the bells high and sweep the gohei over your head, left and right and left, then open your arms: a great pillar of warm light falls on you and the whole party, healing a lot at once and more every second for a good while.',
+    desc: 'Ring the bells high and sweep the gohei over your head, left and right and left, then open your arms: a great pillar of warm light falls on you and the whole party, healing a lot at once and more every second for a good while, and everyone fights harder while it lasts.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -358,7 +359,7 @@ export const SKILLS = {
       const range = { w: 640, h: 180, around: true };
       return {
         mp: k(45, 80), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'shrinegrand', dur: 1.55, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.25, 0.45), healR: 320, burst: 'grandblessing', burstAt: 0, burstDur: 1.3, grant: { id: 'grandblessing', duration: k(10, 16), buff: { regenPct: kf(0.02, 0.04) }, range } }] }],
+        combo: [{ move: 'shrinegrand', dur: 1.55, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.32, 0.55), healR: 320, burst: 'grandblessing', burstAt: 0, burstDur: 1.3, grant: { id: 'grandblessing', duration: k(12, 20), buff: { regenPct: kf(0.03, 0.05), watk: k(8, 18), matk: k(8, 18) }, range } }] }],
       };
     },
   }),
@@ -383,8 +384,8 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
-        mp: k(90, 140), pct: 0, hits: 0, targets: 0, range: { w: 640, h: 180, around: true },
-        combo: [{ move: 'shrinerevive', dur: 2.4, step: 0, strikes: [{ at: 0.7, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.3, 0.6), rite: k(20, 40) } }] }],
+        mp: k(60, 100), pct: 0, hits: 0, targets: 0, range: { w: 640, h: 180, around: true },
+        combo: [{ move: 'shrinerevive', dur: 1.8, step: 0, strikes: [{ at: 0.7, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
       };
     },
   }),
@@ -441,12 +442,12 @@ export const SKILLS = {
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'onmyorally', dur: 1.25, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, rally: { dur: k(10, 18), power: kf(0.2, 0.5) } }] }],
+        combo: [{ move: 'onmyorally', dur: 1.25, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, rally: { dur: k(16, 30), power: kf(0.4, 0.9) } }] }],
       };
     },
   }),
   troupecombo: skill({
-    id: 'troupecombo', name: 'Troupe Combo', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'spirit', maxLevel: 10, fullGauge: true,
+    id: 'troupecombo', dmg: 2.4, name: 'Troupe Combo', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'spirit', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Binding, and spends it. Point your fan and call your whole troupe into one chained attack on every monster on the screen: the yuki-onna freezes them all solid, a whirlwind from the tengu lifts them high, the oni leaps up and smashes them back into the ground, and you snap your fan shut and they shatter.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -696,7 +697,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       const stab = (at, pct) => ({ at, pct, reach: 66, h: 50, targets: 2, knock: 25, pierce: true });
       return {
-        mp: k(4, 10), pct: k(80, 140), hits: 5, targets: 2,
+        mp: k(2, 4), pct: k(80, 140), hits: 5, targets: 2,
         combo: [
           { move: 'thrust', dur: 0.3, step: 8, strikes: [stab(0.42, k(80, 140))] },
           { move: 'flurry', dur: 0.36, step: 8, strikes: [stab(0.3, k(60, 100)), stab(0.7, k(60, 100))] },
@@ -715,7 +716,7 @@ export const SKILLS = {
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(8, 16), pct: k(180, 300), hits: 1, targets: 2,
+        mp: k(6, 11), pct: k(180, 300), hits: 1, targets: 2,
         combo: [{ move: 'backstab', dur: 0.56, step: 90, carry: 0.35, guard: 0.35, blink: true, strikes: [{ at: 0.62, pct: k(180, 300), reach: 70, h: 56, targets: 2, turn: true, backstab: 1.6, knock: 160, pierce: true, big: true, stop: 0.08, shake: 2 }] }],
       };
     },
@@ -753,7 +754,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       const star = (at, oy = 0) => ({ at, shot: 'star', pct: k(60, 105), range: 290, h: 60, knock: 25, speed: 760, oy });
       return {
-        mp: k(4, 10), pct: k(60, 105), hits: 5, targets: 1,
+        mp: k(3, 7), pct: k(60, 105), hits: 5, targets: 1,
         combo: [
           { move: 'barrage', dur: 0.4, step: -2, strikes: [star(0.17, -3), star(0.5, 3)] },
           { move: 'barrage', dur: 0.4, step: -3, strikes: [star(0.17, 3), star(0.5, -3)] },
@@ -831,7 +832,7 @@ export const SKILLS = {
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(10, 20), pct: k(170, 290), hits: 2, targets: 4,
+        mp: k(8, 15), pct: k(170, 290), hits: 2, targets: 4,
         combo: [{ move: 'palmseal', dur: 0.5, step: 12, strikes: [
           { at: 0.42, pct: k(60, 100), reach: 54, h: 56, targets: 2, knock: 20, fx: 'sealtag' },
           { at: 0.42, delay: 0.6, pct: k(170, 290), reach: 80, h: 80, around: true, targets: 4, knock: 180, launch: 160, burst: 'sealburst', burstAt: 0.5, big: true, stop: 0.07, shake: 3 },
@@ -850,7 +851,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(12, 20, lv, m), duration: lerp(10, 30, lv, m), buff: { ki: lerp(15, 30, lv, m) } }),
   }),
   thousandcuts: skill({
-    id: 'thousandcuts', name: 'Thousand Cuts', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'thousandcuts', school: 'ink', maxLevel: 10, fullGauge: true,
+    id: 'thousandcuts', dmg: 2.5, name: 'Thousand Cuts', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'thousandcuts', school: 'ink', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Ki, and spends it. Ink spills over the world; you flicker from monster to monster cutting each one, then a giant fox of ink sweeps through the whole line. Needs a dagger.',
     weapons: ['dagger'],
     at: (lv, m) => {
@@ -928,7 +929,7 @@ export const SKILLS = {
     },
   }),
   ninetailblaze: skill({
-    id: 'ninetailblaze', name: 'Nine-Tail Blaze', job: 'kitsune', type: 'attack', fx: 'star', icon: 'ninetailblaze', school: 'fox', maxLevel: 10, fullGauge: true,
+    id: 'ninetailblaze', dmg: 1.45, name: 'Nine-Tail Blaze', job: 'kitsune', type: 'attack', fx: 'star', icon: 'ninetailblaze', school: 'fox', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs all nine Tails, and spends them. Nine fox-fire stars spin up into the night and rain down burning on every monster, then they gather into a giant fox of blue fire that pounces through the line. Needs a gauntlet.',
     weapons: ['gauntlet'],
     at: (lv, m) => {

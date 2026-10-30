@@ -113,7 +113,10 @@ export function troupeCombo(world, s) {
   const [x, y] = groundAt(world, cx, b.y);
   // (The nearest of them, for the yuki-onna to face.)
   const near = marks.length ? marks.reduce((a, m) => (Math.abs(m.x - b.x) < Math.abs(a.x - b.x) ? m : a)).x : x - dir * 40;
-  world.troupeCombo = { t0: world.now, x, y, dir, marks, pct: C.pct, big: C.big, key: s.key, done: {} };
+  // The fewer it catches, the harder each is hit: the whole troupe on one monster is a beating
+  // (three times as hard alone, twice for two), while a screenful shares it out.
+  const focus = marks.length <= 1 ? 3 : marks.length === 2 ? 2 : marks.length === 3 ? 1.4 : 1;
+  world.troupeCombo = { t0: world.now, x, y, dir, marks, pct: C.pct * focus, big: C.big * focus, key: s.key, done: {} };
   // Her troupe take their parts (world/oni.js, yuki.js, tengu.js hand over to comboStep): the
   // yuki-onna right in front of the nearest monster, the tengu in the air over the middle of them,
   // the oni down onto the middle of them.

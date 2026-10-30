@@ -1099,6 +1099,11 @@ export function tickMelee(world, dt) {
   for (const s of due) land(world, s);
 }
 
+// A skill's own damage tuning (`dmg` in data/skills.js), for every hit it makes: its combo's
+// strikes, its shots, and the hits it calls down (a proc's key is 'proc' and the skill's id).
+const FOCUS = [1, 2, 1.5, 1.2, 1];
+export const tuneOf = (key) => (key ? SKILLS[key]?.dmg ?? SKILLS[key.replace(/^proc/, '')]?.dmg ?? 1 : 1);
+
 function land(world, s) {
   const { char, stats, body, now } = world;
   // Kami's Favour mending allies where a spell landed (queued for the moment it lands).
@@ -1122,7 +1127,13 @@ function land(world, s) {
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
   const power = hasRage(char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1;
   const weight = weightOf(world);
-  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * power) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * power) / 100);
+  // A finisher hits harder the fewer it catches: double on one, half again on two (its whole
+  // gauge goes into them), so it pays on a lone boss as well as a crowd.
+  const focus = SKILLS[s.key]?.fullGauge ? FOCUS[Math.min(targets.length, FOCUS.length - 1)] : 1;
+  const tune = tuneOf(s.key) * focus;
+  // ...and it feels it: its big blow, a whole gauge into one or two, lands with a heavier stop and shake.
+  if (focus > 1 && (s.stop ?? 0) >= 0.1) s = { ...s, stop: Math.max(s.stop ?? 0, 0.1 + 0.04 * focus), shake: Math.max(s.shake ?? 0, 3 + 2 * focus) };
+  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * power * tune) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * power * tune) / 100);
   const cy = body.y - body.h / 2;
   // The smear, spike, or whirl of the blow.
   if (s.pierce) {
@@ -1446,7 +1457,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const sure = s.crit;
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : 0;
-  const range = s.magic ? magicRange(stats, (s.pct * s.scale) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale) / 100);
+  const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({

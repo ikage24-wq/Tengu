@@ -42,6 +42,6 @@ export function roleOf(jobId, family) {
 }
 
 // A party tank's Provoke: how far it reaches and how long monsters stick to them.
-export const PROVOKE = { range: 240, hold: 3 };
+export const PROVOKE = { range: 280, hold: 5 };
 // How much more threat a tank's damage makes.
-export const TANK_THREAT = 5;
+export const TANK_THREAT = 8;

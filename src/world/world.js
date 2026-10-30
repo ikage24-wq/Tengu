@@ -395,6 +395,21 @@ function fitsJob(char, def) {
   return def.slot !== 'weapon' || job.weapons.includes(def.weaponType);
 }
 
+// The live monster nearest you.
+function nearestMob(world) {
+  let best = null;
+  let d = Infinity;
+  for (const m of world.mobs) {
+    if (m.hp <= 0) continue;
+    const e = Math.abs(m.x - world.body.x) + Math.abs(m.y - world.body.y) * 2;
+    if (e < d) {
+      d = e;
+      best = m;
+    }
+  }
+  return best;
+}
+
 export function killMob(world, m, byParty = false) {
   const char = world.char;
   // Online, everyone else on the map gets their share too (see net/online.js).
@@ -450,7 +465,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god || blockOnHit(world, fromX) || logSwap(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -630,9 +645,14 @@ export function updateWorld(world, dt, input) {
   tickMelee(world, dt);
   const due = world.pending.filter((h) => h.at <= world.now);
   world.pending = world.pending.filter((h) => h.at > world.now);
+  // Your hits on monsters other than the one you're on (the nearest) land at your job's `spread`
+  // (data/jobs.js): how much of its damage carries to a crowd.
+  const spread = world.stats.spread ?? 1;
+  const focus = spread !== 1 && due.length ? nearestMob(world) : null;
   for (const h of due) {
     const m = h.mob;
     if (m.hp <= 0) continue;
+    if (focus && m !== focus && !h.party) h.damage = Math.max(1, Math.round(h.damage * spread));
     if (world.dungeon) h.damage = noteHit(world, m, h);
     // Another player hunting here never lands a boss's last blow: that one's yours.
     if (h.stranger && m.def.boss) h.damage = Math.max(0, Math.min(h.damage, m.hp - 1));

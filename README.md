@@ -71,6 +71,16 @@ Progress saves to your browser automatically (every 20 seconds, on map changes, 
 leave the tab). Pick a world, then pick a hero on the character select tree and press **Start**
 (or Enter). The tree holds up to 8 characters; click an empty slot to create one.
 
+### Job balance
+
+`npm run balance` plays every job in the real game against practice dummies and checks the role
+rule at levels 20 to 60: damage jobs come out level overall (each with its own lean toward one
+target or crowds, up to 8%), tanks deal 75% of that and healers 65%, on one target and on a
+crowd, so a tank or healer never outdoes a damage job. `node tools/balance.mjs 50` prints the
+full table (damage, MP, toughness, healing); `tools/tune.mjs` finds each job's damage tuning
+(`power` and `spread` in `src/data/jobs.js`) and `tools/tune-skills.mjs` makes every finisher
+worth its full gauge (`dmg` in `src/data/skills.js`).
+
 ## Controls
 
 | Key | Action |
