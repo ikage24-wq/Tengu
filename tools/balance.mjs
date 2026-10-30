@@ -234,7 +234,7 @@ export function measure(job, level = 60, { secs = 30 } = {}) {
   }
   return {
     job, role: roleOf(job, JOBS[job].family), level,
-    single: Math.round(single.dps), singleSkill: best1.id, pack: Math.round(pack.dps), packSkill: bestPack.id, skipped: [...new Set([...b1.skip, ...b5.skip])],
+    single: Math.round(single.dps), singleSkill: best1.id, pack: Math.round(pack.dps), packSkill: bestPack.id, skipped: [...new Set([...b1.skip, ...b5.skip])], singleSkip: b1.skip, packSkip: b5.skip,
     mpPerSec: Math.round(single.mpPerSec * 10) / 10, mpLasts: single.mpPerSec > 0 ? Math.round(single.maxMp / single.mpPerSec) : Infinity,
     maxHp: single.maxHp, survive: fight.diedAt == null ? 300 : Math.round(fight.diedAt), heal: Math.round(heal),
   };

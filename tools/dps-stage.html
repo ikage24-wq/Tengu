@@ -29,7 +29,8 @@ const job = q.get('job') ?? 'paladin';
 const main = q.get('main') || null;
 const skip = (q.get('skip') ?? '').split(',').filter(Boolean);
 const level = Number(q.get('level') ?? 60);
-const run = makeRun(job, level, { n: 1, main, skip });
+const n = Number(q.get('n') ?? 1);
+const run = makeRun(job, level, { n, main, skip });
 const { w } = run;
 const cam = createCamera();
 const role = roleOf(job, JOBS[job].family);
@@ -50,7 +51,7 @@ function meter() {
   const [rn, rc] = ROLE[role];
   box(ctx, 22, 40, 52, 14, { fill: rc, edge: null, r: 7 });
   text(ctx, rn, 48, 50.5, { size: 8, bold: true, align: 'center', color: '#ffffff' });
-  text(ctx, `Lv ${level} · one immortal dummy`, 82, 50.5, { size: 7.5, color: '#8a7aa0' });
+  text(ctx, `Lv ${level} · ${n === 1 ? 'one immortal dummy' : `${n} immortal dummies`}`, 82, 50.5, { size: 7.5, color: '#8a7aa0' });
   // Top right: the DPS meter.
   const x = VW - 214;
   box(ctx, x, 10, 204, 118, { fill: 'rgba(40,30,58,0.86)', edge: '#ffd66b', r: 10, width: 2 });
@@ -124,8 +125,8 @@ function rank(list, p) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, VW, VH);
   for (let i = 0; i < 14; i++) sparkle(ctx, (i * 97) % VW, 20 + ((i * 53) % 300), 2 + (i % 3), i % 2 ? '#ffffff' : '#ffd66b');
-  text(ctx, 'DPS ranking', VW / 2, 36, { size: 20, bold: true, align: 'center', color: '#4a3560' });
-  text(ctx, `Second jobs · Lv ${level} · one immortal dummy · best rotation`, VW / 2, 52, { size: 8.5, align: 'center', color: '#8a7aa0' });
+  text(ctx, n === 1 ? 'DPS ranking' : 'AoE DPS ranking', VW / 2, 36, { size: 20, bold: true, align: 'center', color: '#4a3560' });
+  text(ctx, `Second jobs · Lv ${level} · ${n === 1 ? 'one immortal dummy' : `${n} immortal dummies`} · best rotation`, VW / 2, 52, { size: 8.5, align: 'center', color: '#8a7aa0' });
   const sorted = [...list].sort((a, b) => b.dps - a.dps);
   const max = sorted[0].dps;
   const x0 = 150;

@@ -24,7 +24,7 @@ const tmp = fs.mkdtempSync(path.join(path.dirname(outFile), 'frames-'));
   };
   const results = [];
   for (const [job, r] of Object.entries(rot)) {
-    await page.goto(`http://localhost:8000/tools/dps-stage.html?job=${job}&main=${r.main ?? ''}&skip=${(r.skip ?? []).join(',')}`);
+    await page.goto(`http://localhost:8000/tools/dps-stage.html?job=${job}&main=${r.main ?? ''}&skip=${(r.skip ?? []).join(',')}&n=${r.n ?? 1}`);
     await page.waitForFunction(() => window.ready);
     await page.waitForTimeout(1500);
     for (let i = 0; i < SECS * FPS; i++) {
