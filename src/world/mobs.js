@@ -157,7 +157,9 @@ export function hitMob(m, damage, fromX, now, { knock = 90, launch = 0 } = {}) {
   m.aggroUntil = now + AGGRO_TIME;
   if (!m.def.boss) {
     m.stagger = Math.max(m.stagger, knock > 150 ? 0.4 : 0.25);
-    m.knockVx = (m.x >= fromX ? 1 : -1) * knock;
+    // Everyday blows barely nudge (half their push), so monsters stay in reach; heavy ones still
+    // shove clearly (three quarters), and launchers send them up as ever.
+    m.knockVx = (m.x >= fromX ? 1 : -1) * knock * (knock >= 250 ? 0.75 : 0.5);
     // Hits keep a monster up in the air (a juggle); a launcher sends it up.
     if (launch && !m.def.fly) m.airV = Math.max(m.airV ?? 0, launch);
     else if (m.air > 0) m.airV = Math.max(m.airV ?? 0, 120);

@@ -1845,6 +1845,8 @@ test("a Shinobi's hits and dodges build Ki, and it fades once the fighting stops
   const w = thiefPath('shinobi');
   run(w, 1.5, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
   assert.ok(w.ki > 0, 'hits build it');
+  // The fight stops (the monsters wander far off).
+  for (const m of w.mobs) Object.assign(m, { x: w.body.x + 2000, aggroUntil: 0 });
   run(w, 12);
   assert.equal(w.ki, 0, 'faded');
   // A monster's blow that misses her (a dodge) builds it too.

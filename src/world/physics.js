@@ -225,8 +225,9 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100 } = {}
 
 export function knockBack(body, fromX) {
   body.rope = null;
-  body.vx = (body.x >= fromX ? 1 : -1) * 140;
-  body.vy = -260;
+  // (A short hop back: enough to feel the hit, not enough to throw you out of a fight.)
+  body.vx = (body.x >= fromX ? 1 : -1) * 70;
+  body.vy = -150;
   body.onGround = false;
-  body.knockTimer = 0.35;
+  body.knockTimer = 0.25;
 }
