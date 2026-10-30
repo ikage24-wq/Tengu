@@ -202,21 +202,27 @@ export function makeAI(bot, rng, kind = null) {
 // The monster a member hunts: one near them that no partymate is already on, anywhere on the
 // map. They stick with it until it's dead (or turns out to be out of reach), so they don't flip
 // between two. Guardians lean toward monsters near you, rushers toward packs.
+const helping = (bot, world) => Boolean(bot.helping && world.now < bot.helping);
+
 function huntTarget(bot, world, members) {
   const br = bot.brain;
   const body = bot.body;
   const skip = (m) => br.skip?.mob === m && world.now < br.skip.until;
   const cur = br.target;
-  if (cur && cur.hp > 0 && world.mobs.includes(cur) && !skip(cur)) return cur;
+  if (cur && cur.hp > 0 && world.mobs.includes(cur) && !skip(cur) && !(helping(bot, world) && !br.rescuing)) return cur;
+  br.rescuing = helping(bot, world);
   let best = null;
   let bestScore = Infinity;
   const you = world.body;
+  // You're in trouble: whoever came to help (and your party) go for the monsters around you.
+  const rescue = helping(bot, world) || (bot.party && !world.dungeon && world.char.hp < world.stats.maxHp * 0.3);
   for (const m of world.mobs) {
     if (m.hp <= 0 || skip(m)) continue;
     // Players out hunting on their own (not in your party) leave the monsters by you alone, so
     // nobody steals your kills; a queen back for a rematch draws them all in.
-    if (!bot.party && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
+    if (!bot.party && !rescue && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
     let score = Math.abs(m.x - body.x) + Math.abs(m.y - body.y) * 3;
+    if (rescue) score = (Math.abs(m.x - you.x) + Math.abs(m.y - you.y) * 3) * 2 + score * 0.2;
     if (!bot.party && m.def.boss) score -= 600;
     if (members.some((o) => o !== bot && o.brain?.target === m)) score += 300;
     if (Math.sign(m.x - body.x) === -body.facing) score += 40;
@@ -247,6 +253,16 @@ function hunt(bot, world, members, rng) {
     return wander(bot, world, nav, rng);
   }
   br.target = target;
+  // Come to help with nothing to fight by you: they run over to you.
+  if (!target && helping(bot, world) && !bot.gave) {
+    const you = world.body;
+    const s = surfaceOf(nav, you);
+    if (s >= 0) {
+      const x = you.x + (Math.sign(body.x - you.x) || 1) * 30;
+      br.goal = { x, y: you.y, mode: 'fight', surface: s };
+      return;
+    }
+  }
   if (target) {
     if (br.fightOn !== target) {
       br.fightOn = target;
@@ -531,7 +547,7 @@ function play(bot, step, m, world, rng) {
   const f = bot.fight;
   // Players hunting on their own never catch the monsters by you in a sweep or a fan either.
   const you = world.body;
-  const fair = (mob) => bot.party || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
+  const fair = (mob) => bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
   const reachable = (look, box, n) => pickTargets(world.mobs.filter(fair), look, box, n);
   for (const s of step.strikes) {
     const lag = s.at * step.dur + (s.delay ?? 0);
@@ -723,7 +739,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   const m = br.target;
   const st = bot.ai.weapon;
   // (A monster that's wandered over to you is yours now.)
-  if (m && !m.def.boss && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
+  if (m && !m.def.boss && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
   if (!bot.leaving && br.target && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
     fight(bot, m, world, intent, rng);
   }

@@ -55,7 +55,7 @@ export function createUiState() {
       profile: { x: 160, y: 46, open: false, tab: 0, theme: 'sky', icon: 'user' },
       cashshop: { x: 140, y: 40, open: false, theme: 'pink', icon: 'gift' },
       pet: { x: 150, y: 60, open: false, theme: 'pink', icon: 'heart' },
-      online: { x: 200, y: 50, open: false, theme: 'sky', icon: 'friends' },
+      online: { x: 200, y: 30, open: false, theme: 'sky', icon: 'friends' },
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
       trade: { x: 110, y: 50, open: false, tab: 0, theme: 'sky', icon: 'friends' },

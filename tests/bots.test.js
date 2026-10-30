@@ -174,7 +174,7 @@ test('players nearby say hi back, answer a question, and cheer when you level up
   assert.ok(lines.some((l) => /: /.test(l) && bots.list.slice(0, 3).some((b) => l.startsWith(b.name))), 'someone said hi back');
   lines.length = 0;
   world.heard = { words: 'where is clover hills?', at: world.now };
-  step(5);
+  step(8);
   assert.ok(lines.some((l) => /clover hills/i.test(l)), `an answer about Clover Hills (${lines.join(' | ')})`);
   lines.length = 0;
   gainExp(world.char, expToNext(world.char.level));
@@ -389,4 +389,104 @@ test('dash moves carry a player along, and a party member who dies walks back in
   updateParty(bots, world, 1 / 30);
   assert.ok(pal.body && !pal.away && !pal.down, 'back again');
   assert.equal(pal.hp, pal.stats.maxHp);
+});
+
+// ---------- Friends, your rival, and help ----------
+
+test('friends: add a player, they stay on your list across sessions, log in as themselves, and come hunt', async () => {
+  const { askFriend, buddiesOf, answerHunt } = await import('../src/world/buddies.js');
+  const { joinParty } = await import('../src/world/party.js');
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.char.level = 30;
+  const bots = createBots(world, seeded(31));
+  world.bots = bots;
+  const pal = bots.list.find((b) => !b.shop && b.level <= 30 && b.level >= 10);
+  joinParty(bots, pal, world);
+  askFriend(world, pal);
+  for (let t = 0; t < 3; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+  }
+  assert.equal(buddiesOf(world.char).length, 1, 'added');
+  assert.ok(lines.some((l) => /is now your friend/.test(l)));
+  // A new session (the save goes through JSON): the friend logs in looking just as they did.
+  const char = JSON.parse(JSON.stringify(world.char));
+  const world2 = createWorld(char);
+  const lines2 = quiet(world2);
+  const bots2 = createBots(world2, seeded(32));
+  world2.bots = bots2;
+  assert.ok(!bots2.list.some((b) => b.name === pal.name), 'nobody else gets their name');
+  let friend = null;
+  for (let t = 0; t < 400 && !friend; t += 0.5) {
+    world2.now += 0.5;
+    updateBots(bots2, world2, 0.5);
+    friend = bots2.list.find((b) => b.buddy && b.name === pal.name);
+  }
+  assert.ok(friend, 'they logged in');
+  assert.deepEqual(friend.char.appearance, pal.char.appearance);
+  assert.ok(lines2.some((l) => l.includes(`[Friend] ${pal.name} logged in`)));
+  // Before long they ask you to hunt; say yes and they're in your party, here with you.
+  for (let t = 0; t < 900 && !bots2.huntAsk; t += 0.5) {
+    world2.now += 0.5;
+    updateBots(bots2, world2, 0.5);
+    if (!bots2.list.includes(friend)) break;
+  }
+  if (bots2.huntAsk) {
+    const asker = bots2.huntAsk.bot;
+    answerHunt(bots2, world2, true);
+    assert.ok(asker.party && asker.map === world2.map.id, 'they came to you and joined');
+  }
+});
+
+test('your rival turns up in your fields and races you to every level', async () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  world.char.level = 20;
+  const bots = createBots(world, seeded(41));
+  world.bots = bots;
+  let rival = null;
+  for (let i = 0; i < 20 && !rival; i++) {
+    loadMap(world, i % 2 ? 'woods' : 'meadow1', 'start');
+    updateBots(bots, world, 0.05);
+    rival = bots.list.find((b) => b.rival && !b.gone);
+  }
+  assert.ok(rival && world.char.rival, 'a rival showed up');
+  assert.ok(Math.abs(world.char.rival.level - 20) <= 2, 'near your level');
+  assert.ok(lines.some((l) => /picked you as their rival/.test(l)));
+  updateBots(bots, world, 0.05);
+  gainExp(world.char, expToNext(world.char.level));
+  updateBots(bots, world, 0.05);
+  assert.ok(lines.some((l) => l.startsWith(`[Rival] ${world.char.rival.name}:`)), 'they let you know');
+  assert.ok(world.char.rival.level >= world.char.level - 1, 'and keep pace');
+});
+
+test('in trouble out in the field, a player nearby rushes over and patches you up; say thanks', async () => {
+  const { tickHunter } = await import('../src/world/party.js');
+  const { createBody } = await import('../src/world/physics.js');
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.char.level = 25;
+  const bots = createBots(world, seeded(51));
+  world.bots = bots;
+  loadMap(world, 'woods', 'start');
+  world.mobs = [];
+  bots.huntMap = world.map.id;
+  bots.list = bots.list.filter((b) => !b.hunter);
+  const char = makeBotCharacter(seeded(5), { name: 'Kind', level: 25, jobs: ['warrior'], pro: false });
+  const kind = { id: 'k1', name: 'Kind', char, level: 25, hunter: true, map: world.map.id, x: world.body.x + 200, facing: -1, state: 'hunt', body: createBody(world.body.x + 200, world.body.y), session: 999, stay: 999, nextLine: 999, appear: 0 };
+  bots.list.push(kind);
+  world.char.hp = Math.round(world.stats.maxHp * 0.1);
+  const low = world.char.hp;
+  for (let t = 0; t < 12 && !kind.gave; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateBots(bots, world, 1 / 30);
+  }
+  assert.ok(lines.some((l) => /rushes over to help you/.test(l)), 'someone came');
+  assert.ok(kind.gave && world.char.hp > low, 'and healed you');
+  world.heard = { words: 'ty!!', at: world.now };
+  updateBots(bots, world, 0.1);
+  assert.ok(kind.thanked, 'thanks went to them');
+  void tickHunter;
 });

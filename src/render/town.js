@@ -1376,8 +1376,19 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;
   const w = ctx.measureText(label).width + pad;
-  const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
-  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : hovered ? '#ffffff' : null, r: 5, width: 1 });
+  // Your rival's tag is rose, a friend's sky blue.
+  const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.rival ? 'rgba(190,50,95,0.8)' : bot.buddy ? 'rgba(50,110,190,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
+  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : bot.rival ? '#ffc2d4' : bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null, r: 5, width: 1 });
+  if (bot.rival && !bot.party) {
+    ctx.font = 'bold 5.5px sans-serif';
+    const tw = ctx.measureText('RIVAL').width + 6;
+    const bx = x - w / 2 - tw - 2;
+    box(ctx, bx, y + 3.5, tw, 7, { fill: '#ff6b8a', edge: '#ffffff', r: 3.5, width: 0.8 });
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.fillText('RIVAL', bx + tw / 2, y + 9);
+    ctx.font = 'bold 7px sans-serif';
+  }
   if (bot.party) {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
