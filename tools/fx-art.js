@@ -4683,6 +4683,70 @@
   E.ringspiritbig = big(E.ringspirit, 2.6);
   E.lanternbig = big(E.lantern, 1.5);
 
+  // ---------- Movement bursts (the Thief's flash jump and dash, the archers' air leap) ----------
+  // A burst of speed in the path's own colours: a pop of light where she kicks off the air, a ring
+  // of it standing up across her path like a sound barrier, a crescent swoosh and speed lines
+  // trailing behind her, then the whole thing breaking up into beads and sparkles that drift
+  // and fade. Drawn heading right (the game flips it); (px, py) is where she kicks off.
+  function leapOf(A, B, seed) {
+    return {
+      w: 300, h: 190, n: 7, fps: 20, px: 200, py: 100,
+      draw(ctx, i) {
+        const R = rng(seed);
+        const x = 200;
+        const y = 100;
+        const fade = [1, 1, 1, 0.9, 0.7, 0.45, 0.22][i];
+        ctx.save();
+        ctx.globalAlpha *= fade;
+        // The pop where she kicks off.
+        if (i <= 2) starburst(ctx, B, x, y, [40, 30, 16][i], 8, seed + 1, { rot: i * 0.3 });
+        // The ring standing across her path (squeezed to an upright oval), breaking as it spreads.
+        if (i <= 5) {
+          const r = [16, 34, 46, 54, 60, 64][i];
+          ctx.save();
+          ctx.translate(x - 6 - i * 8, y);
+          ctx.scale(0.42, 1);
+          celRing(ctx, A, 0, 0, r, [10, 12, 10, 8, 6, 4][i], { broken: [0, 0, 0.1, 0.3, 0.55, 0.8][i], seed: seed + 2 });
+          ctx.restore();
+        }
+        // A puff of cloud kicked off the air under her feet, breaking up.
+        if (i >= 1 && i <= 5) puff(ctx, A, x - 18 - i * 6, y + 26 + i * 2, [16, 22, 24, 22, 18][i - 1], seed + 3, { holes: [0, 0.2, 0.45, 0.7, 0.9][i - 1], lobes: 6 });
+        // Speed lines streaking back.
+        if (i >= 1 && i <= 5) {
+          for (let j = 0; j < 5; j++) {
+            const ly = y - 34 + j * 17 + (R() - 0.5) * 6;
+            const len = (70 + R() * 90) * [0.6, 1, 1, 0.8, 0.55][i - 1];
+            const x1 = x - 16 - (i - 1) * 22 - R() * 12;
+            speedLine(ctx, j % 2 ? B : A, x1 - len, ly, x1, ly, (j === 2 ? 5 : 3.6) * [1, 1, 0.85, 0.7, 0.5][i - 1]);
+          }
+        }
+        // Beads and sparkles left in her wake, drifting down and away.
+        if (i >= 2) {
+          const k = (i - 2) / 4;
+          for (let j = 0; j < 7; j++) {
+            const bx = x - 30 - j * 26 - k * 30 + (R() - 0.5) * 10;
+            const by = y + (R() - 0.5) * 70 + k * 18;
+            if (j % 2) sparkle(ctx, j % 4 === 1 ? B : A, bx, by, (9 - j * 0.6) * (1 - k * 0.6), R());
+            else shard(ctx, A, bx, by, Math.PI + (R() - 0.5) * 0.6, 12 * (1 - k * 0.5), 3 * (1 - k * 0.5));
+          }
+        }
+        ctx.restore();
+      },
+    };
+  }
+  {
+    const INK5 = ['#ffffff', '#e8e4ee', '#7a6a80', '#2a2230', '#0e0a12'];
+    const SEAL5 = ['#ffffff', '#ffd6c8', '#ff6a4e', '#c81e28', '#7a0a1a'];
+    const FOX5 = ['#ffffff', '#d8f6ff', '#5cb4ff', '#1e4ad6', '#1a2a8a'];
+    const GOLD5 = ['#ffffff', '#fff3c4', '#ffd36a', '#e09a2a', '#9a5a1a'];
+    E.leapshadow = leapOf(PAL.shadow, PAL.moon, 611);
+    E.leapink = leapOf(INK5, SEAL5, 623);
+    E.leapfox = leapOf(FOX5, GOLD5, 637);
+    E.leaphawk = leapOf(PAL.hawk, PAL.sky, 641);
+    E.leapwind = leapOf(PAL.wind, LEAF, 653);
+    E.leapstorm = leapOf(PAL.storm, PAL.lightning, 661);
+  }
+
   function big(e, k) {
     return {
       ...e,

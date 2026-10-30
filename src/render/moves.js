@@ -1482,6 +1482,70 @@ export const MOVES = {
     return backflip(seg(p, 0.52, 0.92), 0.6);
   },
 
+  // The X-cut finisher, planted: the two cuts, then she sinks into a low wide stance with the
+  // dagger held out at them, ready to go again (no flip away: the combo keeps flowing). Cuts at
+  // about 0.12 and 0.4.
+  crossfin(p) {
+    const m = MOVES.cross(Math.min(1, p / 0.55));
+    const sink = ease(seg(p, 0.5, 0.7)) * (1 - ease(seg(p, 0.86, 1)));
+    return {
+      ...m, lunge: (m.lunge ?? 0) + 5 * sink, tilt: (m.tilt ?? 0) + 0.12 * sink,
+      rig: (r) => { m.rig?.(r); if (sink > 0.2) { r.squat = 2; wideLegs(r); r.backArm = [-5, -3]; r.hairLift = -1; r.cape -= 2; strikeFace(r); } },
+    };
+  },
+
+  // A whirl that cuts all round her twice and stops dead, low, blade out at them. Cuts at about
+  // 0.21 and 0.42.
+  whirlfin(p) {
+    const m = MOVES.spin(Math.min(1, p / 0.6), 1);
+    const sink = ease(seg(p, 0.58, 0.72)) * (1 - ease(seg(p, 0.88, 1)));
+    return {
+      ...m, lunge: (m.lunge ?? 0) + 4 * sink,
+      rig: (r) => { m.rig?.(r); if (sink > 0.2) { r.squat = 2; wideLegs(r); r.backArm = [-5, -3]; r.cape -= 2; strikeFace(r); } },
+    };
+  },
+
+  // Mid-string: a slash, and she rides its swing straight up into a backflip, landing low and
+  // coiled to dart back in with the next blow. Cut at about 0.2.
+  cutflip(p) {
+    if (p < 0.44) return MOVES.slash(p / 0.44);
+    return backflip(seg(p, 0.44, 0.94), 0.75);
+  },
+
+  // A heaving throw: wind the arm right back with a deep twist, step through hard and whip the
+  // star out, the whole body following it forward. The star leaves at about 0.52.
+  heavethrow(p) {
+    const m = MOVES.throw(p);
+    const coil = bump(p, 0, 0.45);
+    const drive = ease(seg(p, 0.4, 0.6)) * (1 - ease(seg(p, 0.85, 1)));
+    return {
+      ...m, lunge: (m.lunge ?? 0) - 3 * coil + 7 * drive, tilt: (m.tilt ?? 0) - 0.1 * coil + 0.1 * drive, arm: m.arm + 15 * coil,
+      rig: (r) => { m.rig?.(r); if (coil > 0.3) { r.squat = 1; r.hairLift = 1; } if (drive > 0.3) { r.squat = 2; wideLegs(r); r.hairLift = -1; r.cape -= 3; } },
+    };
+  },
+
+  // The flash jump: a second kick off the air that throws her forward, body laid out flat and
+  // streamlined with the arms swept back, then a tuck as she rides it out.
+  flashjump(p) {
+    const kick = bump(p, 0, 0.3);
+    const lay = ease(seg(p, 0.05, 0.25)) * (1 - ease(seg(p, 0.65, 1)));
+    return {
+      weapon: lerp(25, 150, lay), arm: lerp(60, 15, lay), tilt: 0.55 * lay - 0.1 * kick, lift: 3 * kick,
+      rig: (r) => { if (lay > 0.4) { r.backArm = [-6, 0]; r.frontLeg = [-1, -2, -40]; r.backLeg = [-4, -1, -60]; } else tuck(r); r.hairLift = -1; r.cape -= 4; r.mouth = 'open'; },
+    };
+  },
+
+  // The shadow dash: dropped low into a sprint, leaning hard into it, dagger reversed along the
+  // arm and the free hand trailing, then she plants and rises.
+  shadowrun(p) {
+    const go = ease(seg(p, 0, 0.15)) * (1 - ease(seg(p, 0.75, 1)));
+    const stride = Math.sin(p * Math.PI * 6);
+    return {
+      weapon: lerp(25, 160, go), arm: lerp(60, 20, go), tilt: 0.42 * go, lunge: -2 * go,
+      rig: (r) => { if (go > 0.3) { r.squat = 2; r.frontLeg = [q(2 + 3 * stride), 0, q(30 * stride)]; r.backLeg = [q(-2 - 3 * stride), 0, q(-30 * stride)]; r.backArm = [-6, 1]; r.hairLift = -1; r.cape -= 4; strikeFace(r); } },
+    };
+  },
+
   // A spinning roundhouse: turn on the front foot with the dagger tucked, the leg whipping round
   // high into them, and come back down on guard. Lands at about 0.5.
   spinkick(p) {
@@ -2174,7 +2238,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
-  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
+  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, crossfin: 0.55, whirlfin: 0.6, cutflip: 0.5, heavethrow: 0.5, flashjump: 0.3, shadowrun: 0.3, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
   shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
   onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 4.2,

@@ -149,30 +149,33 @@ export const PATH_COMBOS = {
     { move: 'rapid', dur: 0.46, step: -4, strikes: [{ at: 0.17, shot: 'hawkarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 800 }, { at: 0.5, shot: 'hawkarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 800 }] },
     { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 175, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 210, big: true, stop: 0.06, shake: 2 }] },
   ],
-  // The Thief, by weapon. With a dagger: a stab, a quick slash, then an X-cut that throws them
-  // back. With a gauntlet: a star, two stars, then a big spinning moon star through the line.
+  // The Thief, by weapon. Her back flips come in the middle of a string, never at its end (the
+  // player's call): she flips out, and the next blow darts straight back in (`owed`, playStep),
+  // so holding attack flows on and on. With a dagger: a stab, a slash that rides up into a
+  // backflip, then a planted X-cut. With a gauntlet: a star, a backflip whipping two stars down
+  // from the top of it, then a heaving throw of the moon star through the line.
   thiefdagger: [
     { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 58, h: 46, knock: 30, pierce: true }] },
-    { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
-    { move: 'crossflip', dur: 0.62, step: 10, carry: 0.36, finisher: true, strikes: [{ at: 0.11, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.36, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06, flipback: 44 }] },
+    { move: 'cutflip', dur: 0.56, step: 6, strikes: [{ at: 0.2, pct: 95, reach: 60, h: 52, knock: 40, arc: [-100, 190], thick: 5, flipback: 44 }] },
+    { move: 'crossfin', dur: 0.62, step: 10, carry: 0.12, finisher: true, strikes: [{ at: 0.12, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.4, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
   ],
   thiefstar: [
     { move: 'throw', dur: 0.38, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 280, h: 60, knock: 25, speed: 760 }] },
-    { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
-    { move: 'throwflip', dur: 0.62, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2, kickback: 40 }] },
+    { move: 'flipthrow', dur: 0.6, step: -30, carry: 0.46, strikes: [{ at: 0.46, shot: 'star', fan: 2, pct: 60, range: 280, h: 110, drop: 20, knock: 30, speed: 800 }] },
+    { move: 'heavethrow', dur: 0.62, step: 8, carry: 0.5, finisher: true, strikes: [{ at: 0.52, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2 }] },
   ],
-  // The Thief's paths. The Shinobi: a kunai stab, a quick slash, then an X-cut and a backflip
-  // that throws two kunai down at them. The Kitsune: a fox-fire star, two more, then a backflip
-  // that whips a great fox-fire star through the line.
+  // The Thief's paths. The Shinobi: a kunai stab, a slash up into a backflip that throws two kunai
+  // down at them from the top, then a planted X-cut. The Kitsune: a fox-fire star, a backflip
+  // whipping two down from the top of it, then a heaving throw of a great fox-fire star.
   shinobi: [
     { move: 'thrust', dur: 0.26, step: 8, strikes: [{ at: 0.42, pct: 95, reach: 60, h: 46, knock: 30, pierce: true }] },
-    { move: 'slash', dur: 0.28, step: 6, strikes: [{ at: 0.45, pct: 100, reach: 60, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
-    { move: 'crossflip', dur: 0.66, step: 10, carry: 0.36, finisher: true, strikes: [{ at: 0.11, pct: 90, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.36, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06, flipback: 44 }, { at: 0.66, shot: 'kunai', fan: 2, pct: 60, range: 240, h: 120, drop: 30, knock: 40, speed: 900 }] },
+    { move: 'cutflip', dur: 0.56, step: 6, strikes: [{ at: 0.2, pct: 90, reach: 60, h: 52, knock: 40, arc: [-100, 190], thick: 5, flipback: 44 }, { at: 0.66, shot: 'kunai', fan: 2, pct: 45, range: 240, h: 120, drop: 30, knock: 30, speed: 900 }] },
+    { move: 'crossfin', dur: 0.62, step: 10, carry: 0.12, finisher: true, strikes: [{ at: 0.12, pct: 95, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.4, pct: 130, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06, burst: 'inkhit', burstAt: 0.4 }] },
   ],
   kitsune: [
     { move: 'throw', dur: 0.36, step: -2, strikes: [{ at: 0.5, shot: 'foxstar', pct: 90, range: 290, h: 60, knock: 25, speed: 780 }] },
-    { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
-    { move: 'flipthrow', dur: 0.66, step: -30, carry: 0.46, finisher: true, strikes: [{ at: 0.46, shot: 'foxmoon', pct: 160, range: 320, h: 80, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'flipthrow', dur: 0.6, step: -30, carry: 0.46, strikes: [{ at: 0.46, shot: 'foxstar', fan: 2, pct: 65, range: 290, h: 110, drop: 20, knock: 30, speed: 800 }] },
+    { move: 'heavethrow', dur: 0.62, step: 8, carry: 0.5, finisher: true, strikes: [{ at: 0.52, shot: 'foxmoon', pct: 160, range: 320, h: 80, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] },
   ],
   // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the swaying step a second,
   // and the dance's last figure looses a great bolt of spirit light that bursts through the line.
@@ -192,8 +195,9 @@ export const PATH_COMBOS = {
     { move: 'cleave2', dur: 0.52, step: 8, strikes: [{ at: 0.42, pct: 120, reach: 80, h: 66, targets: 2, knock: 60, launch: 160, arc: [110, -240], thick: 11 }] },
     { move: 'reaver', dur: 0.8, step: 16, finisher: true, strikes: [{ at: 0.47, pct: 270, reach: 96, h: 76, targets: 3, knock: 250, arc: [-110, 200], thick: 15, big: true, crack: true, stop: 0.1, shake: 4 }] },
   ],
-  // The archer paths. The Beastmaster: a snap shot, a twirl that looses two arrows, then a hop
-  // that fans three wild arrows down on them; light and quick, her animals at her side.
+  // The archer paths. The Beastmaster: a snap shot, a backflip that fans three wild arrows down
+  // on them from the top of it, then a gale shot through the line as she lands and darts back in;
+  // light and quick, her animals at her side.
   // The Stormcaller: a bolt snapped off from the hip, a double tap, then a kneeling thunderbolt
   // that tears through the line. Violet lightning crackles off every bolt.
   stormcaller: [
@@ -203,8 +207,8 @@ export const PATH_COMBOS = {
   ],
   beastmaster: [
     { move: 'quickshot', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'spinshot', dur: 0.48, step: 6, strikes: [{ at: 0.32, shot: 'windarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 860 }, { at: 0.72, shot: 'windarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 860 }] },
-    { move: 'leapshot', dur: 0.62, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'galearrow', fan: 3, pct: 95, range: 310, h: 110, knock: 130, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'leapshot', dur: 0.6, step: -30, carry: 0.6, strikes: [{ at: 0.56, shot: 'windarrow', fan: 3, pct: 50, range: 300, h: 110, knock: 40, speed: 880 }] },
+    { move: 'galeshot', dur: 0.7, step: 4, finisher: true, strikes: [{ at: 0.62, shot: 'galearrow', pct: 200, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 230, launch: 120, big: true, stop: 0.07, shake: 2, muzzle: 'gust' }] },
   ],
 };
 
@@ -236,7 +240,7 @@ function shotsOf(L) {
     overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: L.big, pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: L.muzzle }] },
     triple: { move: 'tripleshot', dur: 0.56, step: -4, strikes: [arrowAt(0.55, 50, { fan: 3, h: 110, knock: 40 })] },
     lob: { move: 'lobshot', dur: 0.5, step: -2, strikes: [arrowAt(0.5, 100, { speed: 380, lob: 70, knock: 60, stop: 0.04 })] },
-    flipfan: { move: 'leapshot', dur: 0.62, step: -34, carry: 0.6, finisher: true, strikes: [{ at: 0.56, shot: L.big, fan: 3, pct: 100, range: 310, h: 120, knock: 140, launch: 120, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+    flipfan: { move: 'leapshot', dur: 0.6, step: -30, carry: 0.6, strikes: [arrowAt(0.56, 50, { fan: 3, h: 110, knock: 40, speed: 880 })] },
     skyrain: { move: 'skyshot', dur: 0.7, step: -4, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
   };
 }
@@ -352,47 +356,53 @@ export const PATH_VARIANTS = {
   ],
   // The Archer, nimble and showy, her gold hawk arrows in every shot. Openers: her snap shot, a
   // stomping kick then a shot point-blank, or a twirl that looses two. Second: her double shot,
-  // three arrows in a burst, or a hop back loosing two down at them. Finisher: her full draw, an
-  // overdraw that tears through the line, or a backflip fan of three.
+  // three arrows in a burst, a hop back loosing two down at them, or a backflip fan of three.
+  // Finisher: her full draw, an overdraw that tears through the line, or a volley up that rains
+  // back down on them.
   // The Thief with a dagger, light and acrobatic. Openers: her stab, a blur of stabs, or a flash cut
   // that darts through. Second: her slash, a spinning roundhouse kick, or a spinning backhand.
-  // Finisher: the X-cut, a vaulting front flip that cuts down out of the air, or a whirl that cuts
-  // all round her; each springs her back out in a backflip.
+  // Second: a slash up into a backflip, a plain slash, a spinning roundhouse kick, or a spinning
+  // backhand. Finisher, always planted in reach so the next string flows on: the X-cut, a vaulting
+  // front flip that cuts down out of the air, or a whirl that cuts all round her.
   thiefdagger: [
     [PATH_COMBOS.thiefdagger[0],
       { move: 'flurry', dur: 0.32, step: 8, strikes: [{ at: 0.3, pct: 50, reach: 58, h: 46, knock: 15, pierce: true }, { at: 0.7, pct: 55, reach: 58, h: 46, knock: 30, pierce: true }] },
       { move: 'flashcut', dur: 0.34, step: 30, carry: 0.42, strikes: [{ at: 0.4, pct: 90, reach: 62, h: 50, targets: 2, knock: 40, arc: [-80, 200], thick: 5, pierce: true }] }],
     [PATH_COMBOS.thiefdagger[1],
+      { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
       { move: 'spinkick', dur: 0.4, step: 8, strikes: [{ at: 0.5, pct: 90, reach: 52, h: 52, knock: 110, stop: 0.04 }] },
       { move: 'spinback', dur: 0.38, step: 8, strikes: [{ at: 0.58, pct: 95, reach: 60, h: 56, targets: 2, knock: 60, launch: 100, arc: [100, -215], thick: 5 }] }],
     [PATH_COMBOS.thiefdagger[2],
       { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 150, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, stop: 0.06, shake: 2 }] },
-      { move: 'whirlflip', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 70, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 110, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05, flipback: 40 }] }],
+      { move: 'whirlfin', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 70, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 110, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05 }] }],
   ],
-  // The Thief with a gauntlet. Openers: her star or a twirling throw. Second: two stars, or a fan of
-  // three at once. Finisher: the moon star then a backflip, or a backflip that whips the moon star
-  // out from the top of it.
+  // The Thief with a gauntlet. Openers: her star or a twirling throw. Second: a backflip whipping
+  // two stars down, two stars, or a fan of three at once. Finisher: the heaving throw of the moon
+  // star, or a twirl that flings it out of the turn.
   thiefstar: [
     [PATH_COMBOS.thiefstar[0],
       { move: 'twirlthrow', dur: 0.44, step: -2, strikes: [{ at: 0.62, shot: 'star', pct: 90, range: 280, h: 60, knock: 30, speed: 800 }] }],
     [PATH_COMBOS.thiefstar[1],
+      { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
       { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'star', fan: 3, pct: 45, range: 280, h: 110, knock: 30, speed: 760, muzzle: 'smokepuff' }] }],
     [PATH_COMBOS.thiefstar[2],
-      { move: 'flipthrow', dur: 0.66, step: -30, carry: 0.46, finisher: true, strikes: [{ at: 0.46, shot: 'moonstar', pct: 150, range: 320, h: 80, targets: 2, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
+      { move: 'twirlthrow', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.62, shot: 'moonstar', pct: 150, range: 320, h: 80, targets: 2, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
   ],
   // The Shinobi. Openers: her kunai stab, a blur of stabs, or a dash cut through the line.
   // Second: her slash, a palm strike that slaps a seal on them (it bursts a beat later), or a
-  // spinning throw of three kunai. Finisher: the X-cut and backflip, a vaulting cut, or a whirl.
+  // spinning throw of three kunai, or a slash up into a backflip throwing two down. Finisher, always
+  // planted in reach: the X-cut, a vaulting cut, or a whirl.
   shinobi: [
     [PATH_COMBOS.shinobi[0],
       { move: 'flurry', dur: 0.3, step: 8, strikes: [{ at: 0.3, pct: 55, reach: 58, h: 46, knock: 15, pierce: true }, { at: 0.7, pct: 60, reach: 58, h: 46, knock: 30, pierce: true }] },
       { move: 'flashcut', dur: 0.32, step: 32, carry: 0.42, strikes: [{ at: 0.4, pct: 95, reach: 62, h: 50, targets: 2, knock: 40, arc: [-80, 200], thick: 5, pierce: true }] }],
     [PATH_COMBOS.shinobi[1],
       { move: 'palmseal', dur: 0.4, step: 10, strikes: [{ at: 0.42, pct: 60, reach: 50, h: 52, knock: 20, fx: 'sealtag' }, { at: 0.42, delay: 0.5, pct: 110, reach: 70, h: 70, around: true, targets: 3, knock: 120, burst: 'sealburst', burstAt: 0.5, stop: 0.04, shake: 1, quiet: true }] },
-      { move: 'kunaifan', dur: 0.42, step: -4, strikes: [{ at: 0.55, shot: 'kunai', fan: 3, pct: 55, range: 260, h: 120, knock: 40, speed: 900 }] }],
+      { move: 'kunaifan', dur: 0.42, step: -4, strikes: [{ at: 0.55, shot: 'kunai', fan: 3, pct: 55, range: 260, h: 120, knock: 40, speed: 900 }] },
+      { move: 'slash', dur: 0.28, step: 6, strikes: [{ at: 0.45, pct: 100, reach: 60, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] }],
     [PATH_COMBOS.shinobi[2],
       { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 155, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, burst: 'inkhit', burstAt: 0.5, stop: 0.06, shake: 2 }] },
-      { move: 'whirlflip', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 75, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 115, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05, flipback: 40 }] }],
+      { move: 'whirlfin', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 75, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 115, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05 }] }],
   ],
   // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a rise onto one
   // foot. Second: the swaying step, the sleeve fan (three bolts fanning out), or the bells.
@@ -407,30 +417,31 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.spiritmage[2],
       { move: 'bowrise', dur: 1.54, step: 2, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 365, range: 300, h: 110, lift: 40, targets: 3, pierce: true, speed: 640, knock: 120, launch: 300, big: true, stop: 0.06, shake: 2 }] }],
   ],
-  // The Kitsune. Openers: her fox-fire star or a twirling throw. Second: two stars, or a fan of
-  // three. Finisher: the flipping throw, a pounce that throws down at them as she lands, or the
-  // great star then a backflip.
+  // The Kitsune. Openers: her fox-fire star or a twirling throw. Second: a backflip whipping two
+  // stars down, two stars, or a fan of three. Finisher, always planted in reach: the heaving throw,
+  // a pounce that throws down at them as she lands, or a twirl that flings the great star.
   kitsune: [
     [PATH_COMBOS.kitsune[0],
       { move: 'twirlthrow', dur: 0.42, step: -2, strikes: [{ at: 0.62, shot: 'foxstar', pct: 95, range: 290, h: 60, knock: 30, speed: 800 }] }],
     [PATH_COMBOS.kitsune[1],
+      { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
       { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'foxstar', fan: 3, pct: 48, range: 290, h: 110, knock: 30, speed: 780 }] }],
     [PATH_COMBOS.kitsune[2],
       { move: 'foxpounce', dur: 0.64, step: 50, carry: 0.55, finisher: true, strikes: [{ at: 0.56, shot: 'foxmoon', fan: 2, pct: 110, range: 260, h: 120, drop: 30, knock: 160, speed: 900, big: true, stop: 0.05, shake: 2 }] },
-      { move: 'throwflip', dur: 0.64, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'foxmoon', pct: 160, range: 320, h: 64, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2, kickback: 40 }] }],
+      { move: 'twirlthrow', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.62, shot: 'foxmoon', pct: 160, range: 320, h: 64, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
   ],
   archer: [
     [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl, ARCHER_SHOTS.lob],
-    [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop, ARCHER_SHOTS.triple],
-    [PATH_COMBOS.archer[2], ARCHER_SHOTS.overdraw, ARCHER_SHOTS.flipfan],
+    [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop, ARCHER_SHOTS.triple, ARCHER_SHOTS.flipfan],
+    [PATH_COMBOS.archer[2], ARCHER_SHOTS.overdraw, ARCHER_SHOTS.skyrain],
   ],
   // The Beastmaster, quick and wild, her green arrows flying beside her animals. Openers: her snap
-  // shot, the point-blank kick, or a slide in loosing two. Second: her twirl, a burst of three, or
-  // a hop back loosing two down. Finisher: her leaping fan, an overdraw through the line, or a
-  // volley up that rains back down on them.
+  // shot, the point-blank kick, or a slide in loosing two. Second: her backflip fan, her twirl, a
+  // burst of three, or a hop back loosing two down. Finisher: her gale shot, an overdraw through
+  // the line, or a volley up that rains back down on them.
   beastmaster: [
     [PATH_COMBOS.beastmaster[0], BEAST_SHOTS.kick, BEAST_SHOTS.slide],
-    [PATH_COMBOS.beastmaster[1], BEAST_SHOTS.burst, BEAST_SHOTS.hop],
+    [PATH_COMBOS.beastmaster[1], BEAST_SHOTS.twirl, BEAST_SHOTS.burst, BEAST_SHOTS.hop],
     [PATH_COMBOS.beastmaster[2], BEAST_SHOTS.overdraw, BEAST_SHOTS.skyrain],
   ],
   // The Stormcaller. Openers: her hip shot, crank and fire, or a roll up onto one knee. Second: her
@@ -527,6 +538,19 @@ const ARCHER_COMMANDS = {
     dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'stormbolt', pct: 95, range: 300, h: 60, knock: 80, speed: 1000 }] },
   },
 };
+// The archers' air leap (world/agility.js): jump again in mid-air and she springs up and back in a
+// backflip, loosing two shots down at them from the top of it.
+for (const [path, arrow, big] of [['archer', 'hawkarrow', 'feathers'], ['beastmaster', 'windarrow', 'gust'], ['stormcaller', 'stormbolt', 'stormspark']]) {
+  ARCHER_COMMANDS[path].leap = { move: 'leapshot', dur: 0.5, strikes: [{ at: 0.55, shot: arrow, fan: 2, pct: 80, range: 280, h: 180, drop: 50, knock: 50, speed: 900, muzzle: big }] };
+}
+export function airLeap(world) {
+  const leap = ARCHER_COMMANDS[pathOf(world)]?.leap;
+  if (!leap) return;
+  const b = world.body;
+  b.vy = Math.min(b.vy, -380);
+  b.vx = -b.facing * 210;
+  playStep(world, leap, 100, 'basicleap');
+}
 
 // The command variants of a melee basic combo (any blade, axe, spear, dagger or bare hands).
 const MELEE = new Set(['sword', 'axe', 'spear', 'dagger', 'none']);
@@ -934,7 +958,9 @@ export function basicCombo(world) {
     }
   }
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
-  world.combo = world.now <= (world.comboUntil ?? -9) ? ((world.combo ?? -1) + 1) % steps.length : 0;
+  const flowing = world.now <= (world.comboUntil ?? -9);
+  if (!flowing) world.owed = 0;
+  world.combo = flowing ? ((world.combo ?? -1) + 1) % steps.length : 0;
   // A path with a choice of swings draws a fresh string each time the combo starts over.
   const variants = PATH_VARIANTS[path];
   if (variants && (world.combo === 0 || !world.comboPlan)) world.comboPlan = planCombo(variants, world.comboPlan);
@@ -981,8 +1007,17 @@ function playStep(world, step, scale, key, school = null, after = 0) {
     world.basicReadyAt = Math.max(world.basicReadyAt ?? 0, now + dur * 0.9);
   }
   // Step into it (or hop back from it): carried until the first strike lands (or through `carry`).
+  // A combo's back flips come mid-string, and the next blow darts straight back in over the
+  // ground the flip gave up (`owed`), so the string flows on in reach instead of stopping.
+  const ownStep = /^basic\d$/.test(key);
+  let dx = step.step ?? 0;
+  if (ownStep && world.owed && body.onGround && dx > -15) {
+    dx += world.owed;
+    world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * dx, dir: body.facing, t: 0, dur: 0.4 });
+  }
+  world.owed = ownStep && dx <= -15 ? -dx : 0;
   const first = (step.carry ?? step.strikes[0].at) * dur;
-  if (step.step) world.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: now + first };
+  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first };
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
   // Shield Rush's wall of light, carried before her as she marches.
@@ -1214,7 +1249,10 @@ function land(world, s) {
   if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   // A Thief's finisher springs her back out of the blow in a backflip (`flipback`, px), hit or miss.
-  if (s.flipback && body.onGround && !s.phantom) world.lunge = { v: (-s.dir * s.flipback) / 0.3, until: world.now + 0.3 };
+  if (s.flipback && body.onGround && !s.phantom) {
+    world.lunge = { v: (-s.dir * s.flipback) / 0.3, until: world.now + 0.3 };
+    if (/^basic\d$/.test(s.key)) world.owed = (world.owed ?? 0) + s.flipback;
+  }
   // A launcher hops you up after them, ready for an air combo.
   if (s.hop && body.onGround) {
     body.vy = -s.hop;

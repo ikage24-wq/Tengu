@@ -73,6 +73,7 @@ export function hearWorld(world, cam) {
       case 'buffcast': sfx('buff', { party: SKILLS[f.skill]?.party, pan: p }); break;
       case 'heal': sfx('heal', { pan: p }); break;
       case 'chargetrail': sfx('dash', { pan: p }); break;
+      case 'leapburst': sfx('dash', { pan: p }); break;
       case 'blink': sfx('blink', { pan: p }); break;
       case 'gather': sfx('gather', { dur: f.dur, school: f.school, pan: p }); break;
       case 'freeze': sfx('freeze', { pan: p }); break;

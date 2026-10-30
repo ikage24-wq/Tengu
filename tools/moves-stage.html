@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a job among a line of training dummies, driven key by key from outside, drawn with the
+// game's own renderer, with a caption. For demo videos (tools/record-moves.cjs):
+// ?job=shinobi&level=45, then window.step(dt, held, pressed) and window.caption(text).
+import { balanceChar } from './balance.mjs';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { spawnMob } from '../src/world/mobs.js';
+import { MOBS } from '../src/data/mobs.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { JOBS } from '../src/data/jobs.js';
+import { text, box } from '../src/ui/kit.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+
+const job = q.get('job') ?? 'thief';
+const level = Number(q.get('level') ?? (JOBS[job].tier === 1 ? 25 : 45));
+const c = balanceChar(job, level);
+c.mp = c.baseMp = 99999;
+const w = createWorld(c);
+w.log = () => {};
+loadMap(w, 'woods', 'west');
+w.spawner.slots = [];
+w.mobs = [];
+w.god = true;
+Object.assign(w.body, { x: 300, y: w.map.groundY, facing: 1 });
+const base = Object.values(MOBS).filter((m) => !m.boss && m.level <= level - 8).sort((a, b) => b.level - a.level)[0];
+for (const x of [430, 470, 510]) {
+  const m = spawnMob(w.map, { mob: base.id, x, y: w.map.groundY });
+  m.def = { ...m.def, hp: 1e9, aggro: false, speed: 0, atk: 0 };
+  m.hp = 1e9;
+  w.mobs.push(m);
+}
+const cam = createCamera();
+// Settle in first (a level-up glow and the map's arrival fade play out off camera).
+for (let k = 0; k < 240; k++) updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
+let t = 0;
+let words = '';
+
+function step(dt, held = [], pressed = []) {
+  const n = Math.round(dt * 60);
+  for (let k = 0; k < n; k++) {
+    for (const m of w.mobs) m.hp = 1e9;
+    updateWorld(w, 1 / 60, { held: new Set(held), pressed: new Set(k === 0 ? pressed : []), locked: false });
+  }
+  t += dt;
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, dt);
+  drawWorld(ctx, w, cam, t);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  box(ctx, 10, 10, 200, 30, { fill: 'rgba(255,250,248,0.94)', edge: '#f4bcd8', r: 10, width: 2 });
+  text(ctx, JOBS[job].name, 22, 30, { size: 13, bold: true, color: '#4a3560' });
+  if (words) {
+    ctx.font = 'bold 11px sans-serif';
+    const ww = ctx.measureText(words).width + 30;
+    box(ctx, VW / 2 - ww / 2, VH - 44, ww, 26, { fill: 'rgba(40,30,58,0.86)', edge: '#ffd66b', r: 12, width: 2 });
+    text(ctx, words, VW / 2, VH - 27, { size: 11, bold: true, align: 'center', color: '#ffffff' });
+  }
+}
+
+window.step = step;
+window.caption = (s) => (words = s);
+window.place = (x) => Object.assign(w.body, { x, y: w.map.groundY, vx: 0, vy: 0, onGround: true, rope: null, facing: 1 });
+window.frame = () => canvas.toDataURL('image/jpeg', 0.92);
+window.ready = true;
+</script></body></html>

@@ -69,7 +69,7 @@ export function groundAt(map, x) {
 }
 
 // Stops a body walking (or flying) into a cliff wall that rises above its feet.
-function blockWalls(map, body, nx) {
+export function blockWalls(map, body, nx) {
   const dir = Math.sign(nx - body.x);
   if (!dir) return nx;
   const piece = groundPieceAt(map, nx + dir * WALL_PAD);

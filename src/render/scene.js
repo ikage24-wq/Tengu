@@ -2,7 +2,7 @@
 
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, phantom, shadowClones, inForm, hasFaith } from '../world/melee.js';
+import { gaugeOf, phantom, shadowClones, inForm, hasFaith, thiefSchool } from '../world/melee.js';
 import { moveAt, MOVES, DANCE_MOVES } from './moves.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
@@ -348,20 +348,22 @@ export function drawWorld(ctx, world, viewCam, time) {
 // The Thief's darting moves (Shadow Step, her dashes and flash cuts, a blink, the finisher's
 // blinks) leave afterimages: a copy of her every few pixels she covers, tinted violet, fading out
 // over a quarter second (the speed reads as shadow, not as a smear).
-const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'vaultcut']);
+const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'vaultcut', 'shadowrun', 'flashjump']);
 const GHOST_LIFE = 0.24;
+// The Shinobi's afterimages are ink, the Kitsune's blue fox fire.
+const GHOST_TINT = { shadow: '#6a4ec8', ink: '#1c1624', fox: '#3a6ee0' };
 function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   const g = (feel.ghosts ??= []);
   const b = world.body;
   const w = world.stats?.weaponType;
   const last = g.at(-1);
-  if ((w === 'dagger' || w === 'gauntlet') && GHOST_MOVES.has(world.pose?.kind) && (!last || Math.abs(last.x - b.x) > 7 || Math.abs(last.y - b.y) > 7)) g.push({ x: b.x, y: b.y, at: time, state });
+  if ((w === 'dagger' || w === 'gauntlet') && GHOST_MOVES.has(world.pose?.kind) && (!last || Math.abs(last.x - b.x) > 7 || Math.abs(last.y - b.y) > 7)) g.push({ x: b.x, y: b.y, at: time, state, tint: GHOST_TINT[thiefSchool(world.char)] });
   while (g.length && (time - g[0].at > GHOST_LIFE || time < g[0].at)) g.shift();
   for (const k of g) {
     const age = (time - k.at) / GHOST_LIFE;
     const gx = snap(k.x - cam.x);
     const gy = snap(k.y - cam.y);
-    drawTinted(ctx, gx, gy, '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * 0.5 * (1 - age) ** 1.5 }));
+    drawTinted(ctx, gx, gy, k.tint ?? '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * 0.5 * (1 - age) ** 1.5 }));
   }
 }
 

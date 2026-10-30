@@ -13,7 +13,8 @@ import { gainExp, usePotion, applyDeath } from '../core/character.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
-import { createBody, stepBody, knockBack, groundAt } from './physics.js';
+import { createBody, stepBody, knockBack, groundAt, blockWalls } from './physics.js';
+import { startAgility, tickAgility } from './agility.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
@@ -100,6 +101,9 @@ export function loadMap(world, mapId, portalId) {
   world.pending = [];
   world.strikes = [];
   world.lunge = null;
+  world.dash = null;
+  world.flash = null;
+  world.owed = 0;
   world.fishing = null;
   world.fx = [];
   world.fields = [];
@@ -600,9 +604,12 @@ export function updateWorld(world, dt, input) {
   const rooted = (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
+  // A Thief's flash jump and shadow dash, an Archer's air leap (world/agility.js).
+  startAgility(world, intent, pressed);
   if (!(pressed.has('ArrowUp') && interact(world))) {
     stepBody(world.body, world.map, bodyIntent, dt, world.stats);
   }
+  tickAgility(world, dt, blockWalls);
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
   // What the controls ask for (attacks read Up for a launcher), and how long you've been running
   // (an attack after a short run becomes a dash attack).

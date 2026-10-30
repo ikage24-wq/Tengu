@@ -177,8 +177,11 @@ to clear it.
   crossbow mixes its shots so it never repeats (the first combo is her own: a snap shot, two gold
   arrows a beat apart, a full draw that tears through the line; after that each shot is drawn from
   a pool: a stomping kick then a shot point-blank, a twirl that looses two, three arrows in a
-  burst, a hop back loosing two down at them, an overdraw through the line, a backflip fan of
-  three), and she has her own command shots (up + attack shoots fliers higher, down + attack leans
+  burst, a hop back loosing two down at them, a backflip fan of three, an overdraw through the
+  line, a volley that rains down on them); her back flips come mid-string and the next shot darts
+  her back in, so the combo flows on. **Air leap**: jump again in mid-air and she springs up and
+  back in a backflip, loosing two shots down at them from the top of it (gold, or green wind for
+  the Beastmaster, violet storm for the Stormcaller), once per jump. She has her own command shots (up + attack shoots fliers higher, down + attack leans
   out and looses two arrows down at whatever is below, two shots from a hang in the air, a sliding
   shot out of a run). **Momentum** is her gauge (a feather): every shot
   that lands builds it, more for each one landed in a row, and taking a hit knocks half of it
@@ -200,14 +203,21 @@ to clear it.
 - **Thief** (violet and midnight with moonlight silver: crescent moons and smoke) — the first job
   builds the base for both of the Thief's later paths, so its book is a choice: put points into
   the dagger skills, the gauntlet skills, or both. She fights light and acrobatic, low and loose
-  on the balls of her feet. With a dagger she has her own basic combo (a stab, a slash, an X-cut)
-  and a pool of others it mixes in (a blur of stabs, a flash cut that darts through, a spinning
-  roundhouse kick, a spinning backhand, a vaulting front-flip cut, a whirl), and every finisher
-  springs her back out in a backflip; her own dagger command moves are a flipping launcher, fast
-  air stabs and a diving stab, and a dash that slips through the line. With a gauntlet her own
-  star combo (a star, two stars, a big moon star through the line, then a backflip) mixes in a
-  twirling throw, a fan of three, and a backflip that whips the moon star out from the top of it;
-  her command throws go up at fliers, from the air, and out of a run. Darting (Shadow Step, her
+  on the balls of her feet. Her combos never stop: back flips come in the middle of a string, and
+  the next blow darts her straight back in, so every finisher ends planted in reach and holding
+  attack flows on and on. With a dagger she has her own basic combo (a stab, a slash that rides up
+  into a backflip, a planted X-cut) and a pool of others it mixes in (a blur of stabs, a flash cut
+  that darts through, a plain slash, a spinning roundhouse kick, a spinning backhand, a vaulting
+  front-flip cut, a whirl); her own dagger command moves are a flipping launcher, fast air stabs
+  and a diving stab, and a dash that slips through the line. With a gauntlet her own star combo (a
+  star, a backflip whipping two stars down from the top of it, a heaving throw of the moon star
+  through the line) mixes in a twirling throw, two stars, a fan of three, and a twirl that flings
+  the moon star out of the turn; her command throws go up at fliers, from the air, and out of a
+  run. **Flash jump**: jump again in mid-air and she kicks off the air and shoots far forward in a
+  burst of her colour (violet moonlight; ink and a red seal for the Shinobi, blue fox fire for the
+  Kitsune), once per jump. **Shadow dash**: double-tap left or right and she drops low and slips
+  forward as a shadow, untouchable, straight through the monsters, with a short beat before the
+  next. Darting (Shadow Step, her
   dashes and flash cuts, Backstab, the finisher's blinks) leaves violet afterimages of her behind. **Shadow** is her gauge (a crescent moon): every hit builds it, faster while
   hits land in a quick chain, and it fades fast once the fighting stops. Full, she has
   **Phantom**: a smoky, see-through violet copy of her repeats every attack a beat later (its
@@ -582,8 +592,8 @@ to clear it.
     (spinning the sword round, heaving it overhead and dropping it, flicking crescents). The
     Beastmaster's skills are orders she drops what she's doing for. Like
     the Archer the Beastmaster fights with her basic shots (green wild arrows, from her own pool: a
-    snap shot, a twirl, a leaping fan, a point-blank kick, a slide shot, a burst of three, a hop
-    back, an overdraw, a volley that rains back down) and her skills go off on their own: **Fine,
+    snap shot, a backflip fan mid-string, a twirl, a point-blank kick, a slide shot, a burst of
+    three, a hop back, a gale shot through the line, an overdraw, a volley that rains back down) and her skills go off on their own: **Fine,
     I'll Go** (a shot sometimes makes Snow wolf drag herself over to the nearest monster and spin
     the sword round in a full circle of moonlight), **Moonfall** (a shot sometimes makes her plant
     the sword with a sigh and call a beam of moonlight down on the farthest), **Lunar Howl** (the
@@ -630,10 +640,11 @@ to clear it.
   shrine. Each keeps to one of the Thief's two weapons, and keeps her first-job skills for it.
   (The old Assassin and Night Lord were removed: those characters became the Shinobi and the
   Kitsune, with their old skills' points given back.)
-  - **Shinobi** (dagger; ink black, red seals, white smoke): her own combo (a kunai stab, a quick
-    slash, then an X-cut and a backflip that throws two kunai down) and a pool it mixes in (a blur
-    of stabs, a dash cut, a palm strike that slaps on a seal that bursts a beat later, a spinning
-    throw of three kunai, a vaulting cut, a whirl); her command moves are a launcher that throws a
+  - **Shinobi** (dagger; ink black, red seals, white smoke): her own combo (a kunai stab, a slash
+    up into a backflip that throws two kunai down, then darting back in for a planted X-cut that
+    splashes ink) and a pool it mixes in (a blur of stabs, a dash cut, a palm strike that slaps on
+    a seal that bursts a beat later, a spinning throw of three kunai, a quick slash, a vaulting
+    cut, a whirl); her command moves are a launcher that throws a
     kunai up after them, air cuts then a fan of kunai thrown down, and a dash in a burst of smoke.
     **Ki** builds from every hit and every blow she dodges. Full, **Shadow Clones**: two ink clones
     of her repeat every attack. Skills: **Kunai Barrage** (three presses: two kunai, two more, a
@@ -643,9 +654,10 @@ to clear it.
     reappears behind whoever struck), **Shinobi Mastery**, and the finisher **Thousand Cuts**
     (needs full Ki: ink spills over the world, she flickers from monster to monster cutting each,
     then a giant fox of ink sweeps the line).
-  - **Kitsune** (gauntlet; gold and blue fox fire): her own combo (a fox-fire star, two more, then
-    a backflip that whips a great fox-fire star through the line) and a pool (a twirling throw, a
-    fan of three, a pounce that throws down as she lands); her command throws go up at fliers,
+  - **Kitsune** (gauntlet; gold and blue fox fire): her own combo (a fox-fire star, a
+    backflip whipping two down from the top of it, then a heaving throw of a great fox-fire star
+    through the line) and a pool (a twirling throw, two stars, a fan of three, a pounce that throws
+    down as she lands, a twirl that flings the great star); her command throws go up at fliers,
     down from a hang in the air, and out of a pounce on the run. Her stars set monsters burning.
     **Tails** grows from one fox-fire tail to nine (drawn behind her) as her stars land, faster on
     burning monsters; every three tails a fox-fire illusion throws a star beside each of hers, and

@@ -440,6 +440,14 @@ What makes them read:
   swords. Rendered as glowing emblems (white core, coloured body, soft glow), they give skills
   MapleStory's "one picture per skill" read.
 
+- Movement (MapleStory's Flash Jump, from the game: the Thief's second jump in the air). The
+  kick off the air is the moment: a pop of light at the feet, a burst trailing behind her the way
+  she flies, speed lines, then it breaks up and fades while she is already far away; the jump
+  carries far forward and barely up, so it reads as speed, not height. Tengu's version (`leapOf`
+  in tools/fx-art.js, the `celleap*` strips): a pop, a ring standing up across her path like a
+  sound barrier, a kicked-off cloud, speed lines and sparkles in the path's own colours; the
+  Thief's double-tap dash and the archers' air leap use it too, smaller.
+
 ## 7. Better effect packs (searched again; all shippable)
 - jellyfish0, Sprite Effects parts 1-2 (CC0) — https://opengameart.org/content/sprite-effects-part-1,
   https://opengameart.org/content/sprite-effects-part-2 (EN). About 98 smooth painted effects in

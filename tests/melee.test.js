@@ -1602,7 +1602,7 @@ test('the Thief has her own basic combo with each weapon', () => {
   }
 });
 
-test("the Thief's combos mix her own acrobatic pools, and every finisher springs her back in a backflip", () => {
+test("the Thief's combos mix her own acrobatic pools, flip mid-string and dart back in, so the combo flows on", () => {
   for (const [weapon, path] of [['dagger_20', 'thiefdagger'], ['gauntlet_20', 'thiefstar']]) {
     const steps = PATH_VARIANTS[path];
     assert.equal(steps.length, PATH_COMBOS[path].length, `${path}: a choice for every step`);
@@ -1612,32 +1612,43 @@ test("the Thief's combos mix her own acrobatic pools, and every finisher springs
       for (const s of choices) assert.ok(MOVES[s.move], `${path}: ${s.move} is drawn`);
     });
     assert.ok(steps.at(-1).every((s) => s.finisher), `${path}: every last swing is a finisher`);
-    // Played out with fixed dice, every swing in the pool comes up, and each finisher ends with
-    // her sprung back from where she struck (the backflip).
+    // Back flips only in the middle of a string, never as its end.
+    assert.ok(steps.at(-1).every((s) => !/flip/.test(s.move) && !(s.step < 0) && s.strikes.every((t) => !t.flipback && !t.kickback)), `${path}: finishers stay planted`);
+    assert.ok(steps[1].some((s) => /flip/.test(s.move)), `${path}: a mid-string flip`);
+    // Played out with fixed dice, every swing in the pool comes up; a flip springs her back, and
+    // the next blow darts her back in, so each string ends about where it started.
     const w = thief(weapon);
     const seen = new Set();
     const flips = [];
     let seed = 11;
     dice(0, () => {
       Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-      let fin = null;
+      let flip = null;
+      let since = null;
       for (let i = 0; i < 60 * 60; i++) {
         w.char.mp = 9999;
-        // (Kept off the map's edge, so springing back always has room.)
         if (!w.pose) w.body.x = Math.max(w.body.x, 300);
         updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
-        if (w.pose) seen.add(w.pose.kind);
-        if (w.pose?.fin && !fin) fin = { kind: w.pose.kind, x: w.body.x, low: w.body.x };
-        if (fin) fin.low = Math.min(fin.low, w.body.x);
-        if (fin && !w.pose?.fin) {
-          flips.push(fin);
-          fin = null;
+        if (!w.pose) continue;
+        seen.add(w.pose.kind);
+        if (w.pose.since !== since) {
+          since = w.pose.since;
+          if (flip) flip.next = w.pose.kind;
+          if (/flip/.test(w.pose.kind) && !w.pose.fin) flip = { x: w.body.x, low: w.body.x };
+        }
+        if (flip && !flip.next) flip.low = Math.min(flip.low, w.body.x);
+        if (flip?.next && w.pose.fin && w.now - w.pose.since > w.pose.dur * 0.6) {
+          flips.push({ ...flip, end: w.body.x });
+          flip = null;
         }
       }
     });
     for (const s of steps.flat()) assert.ok(seen.has(s.move), `${path}: ${s.move} came up`);
-    for (const f of flips.filter((f) => /flip/.test(f.kind))) assert.ok(f.low < f.x - 20, `${path}: ${f.kind} springs her back (${(f.x - f.low).toFixed(0)}px)`);
-    assert.ok(flips.some((f) => /flip/.test(f.kind)), `${path}: a backflip came up`);
+    assert.ok(flips.length >= 2, `${path}: mid-string flips came up`);
+    for (const f of flips) {
+      assert.ok(f.low < f.x - 20, `${path}: the flip springs her back (${(f.x - f.low).toFixed(0)}px)`);
+      assert.ok(f.end >= f.x - 4, `${path}: ${f.next} darts her back in (${(f.end - f.x).toFixed(0)}px)`);
+    }
   }
 });
 
@@ -3077,4 +3088,103 @@ test("the kitsune guardian's Moonfall drags the monsters round her in and crushe
   assert.ok(live.every((m, j) => closest[j] < far0[j] - 40), `they're pulled in (${far0.map(Math.round)} -> ${closest.map(Math.round)})`);
   run(w, 1);
   assert.ok(live.some((m, j) => m.hp < hp0[j]), 'and the blade comes down on them');
+});
+
+// ---------- Getting about: the Thief's flash jump and shadow dash, the Archer's air leap ----------
+const tap = (w, keys, held = keys) => updateWorld(w, DT, { held: new Set(held), pressed: new Set(keys), locked: false });
+const keep = (w, keys, n) => {
+  for (let i = 0; i < n; i++) updateWorld(w, DT, { held: new Set(keys), pressed: new Set(), locked: false });
+};
+
+test("a Thief's flash jump throws her far forward in mid-air, once per jump, in her own colour", () => {
+  for (const job of [null, 'shinobi', 'kitsune']) {
+    const w = job ? thiefPath(job) : thief();
+    w.mobs = [];
+    w.body.x = 200;
+    w.body.facing = 1;
+    tap(w, ['Space']);
+    keep(w, [], 12);
+    assert.ok(!w.body.onGround, 'in the air');
+    const x0 = w.body.x;
+    tap(w, ['Space']);
+    assert.equal(w.pose?.kind, 'flashjump');
+    const fx = w.fx.find((f) => f.kind === 'leapburst');
+    assert.equal(fx?.school, { null: 'shadow', shinobi: 'ink', kitsune: 'fox' }[job]);
+    keep(w, [], 20);
+    assert.ok(w.body.x - x0 > 140, `${job ?? 'thief'} flies forward (${(w.body.x - x0).toFixed(0)}px)`);
+    // Only once per jump.
+    const x1 = w.body.x;
+    const vx = w.body.vx;
+    tap(w, ['Space']);
+    assert.ok(!w.flash && w.body.vx <= vx + 1, 'no second flash jump');
+    for (let i = 0; i < 120 && !w.body.onGround; i++) keep(w, [], 1);
+    assert.ok(w.body.onGround && w.body.x > x1, 'lands ahead');
+  }
+});
+
+test("a Thief's shadow dash: double-tap slips her through monsters untouched, with a beat before the next", () => {
+  const w = thief();
+  w.god = false;
+  w.body.x = 250;
+  w.body.facing = 1;
+  keep(w, [], 5);
+  const x0 = w.body.x;
+  tap(w, ['ArrowRight']);
+  keep(w, [], 3);
+  tap(w, ['ArrowRight']);
+  assert.equal(w.pose?.kind, 'shadowrun');
+  assert.ok(w.invuln > 0.2, 'untouchable while she slips through');
+  keep(w, [], 14);
+  assert.ok(w.body.x - x0 > 120, `dashes through the line (${(w.body.x - x0).toFixed(0)}px)`);
+  assert.ok(w.body.x > Math.max(...w.mobs.map((m) => m.x)), 'out the far side');
+  // Straight away again: nothing; after the beat, yes.
+  const x1 = w.body.x;
+  tap(w, ['ArrowRight']);
+  keep(w, [], 2);
+  tap(w, ['ArrowRight']);
+  keep(w, [], 8);
+  assert.ok(w.body.x - x1 < 60, 'no chaining dashes');
+  keep(w, [], 30);
+  const x2 = w.body.x;
+  tap(w, ['ArrowRight']);
+  keep(w, [], 2);
+  tap(w, ['ArrowRight']);
+  keep(w, [], 14);
+  assert.ok(w.body.x - x2 > 120, 'ready again after its beat');
+  // A single tap is just a step.
+  keep(w, [], 40);
+  const x3 = w.body.x;
+  tap(w, ['ArrowRight']);
+  keep(w, [], 14);
+  assert.ok(w.body.x - x3 < 60, 'one tap only walks');
+});
+
+test("an Archer's air leap springs her up and back and looses a shot from the top, once per jump", () => {
+  for (const job of ['beastmaster', 'stormcaller']) {
+    const w = archer(job);
+    w.body.x = 200;
+    w.body.facing = 1;
+    tap(w, ['Space']);
+    keep(w, [], 10);
+    const x0 = w.body.x;
+    const before = shots(w);
+    tap(w, ['Space']);
+    assert.equal(w.pose?.kind, 'leapshot');
+    assert.ok(w.airJumped, 'used for this jump');
+    let fired = 0;
+    for (let i = 0; i < 40; i++) {
+      keep(w, [], 1);
+      fired += shots(w);
+    }
+    assert.ok(fired > before, `${job} looses from the leap`);
+    assert.ok(w.body.x < x0 - 30, `${job} springs back (${(x0 - w.body.x).toFixed(0)}px)`);
+  }
+  // A Warrior has no second jump.
+  const w = arena();
+  w.body.x = 200;
+  tap(w, ['Space']);
+  keep(w, [], 10);
+  const vy = w.body.vy;
+  tap(w, ['Space']);
+  assert.ok(w.body.vy >= vy, 'no air jump');
 });

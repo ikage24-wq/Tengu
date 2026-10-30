@@ -55,6 +55,9 @@ export function shuriken(ctx, r, body, lit, ink) {
   ctx.fill();
 }
 
+// Each path's movement burst (tools/fx-art.js `leapOf`).
+const LEAP = { shadow: 'shadow', ink: 'ink', fox: 'fox', hawk: 'hawk', wind: 'wind', storm: 'storm' };
+
 export function drawThiefFx(ctx, f, x, y, p, cam, time) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
@@ -70,6 +73,13 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
     case 'smokepuff': {
       // A puff of violet smoke off the hand as a fan of stars goes.
       fxSprite(ctx, 'celsmoke', x + (f.dir || 1) * 6, y + 14, { p, flip, scale: 0.55 });
+      return true;
+    }
+    case 'leapburst': {
+      // A flash jump, a shadow dash or an archer's air leap: a pop of light where she kicks off,
+      // a ring standing across her path, speed lines and sparkles trailing behind her, in her
+      // path's own colours.
+      fxSprite(ctx, `celleap${LEAP[f.school] ?? 'shadow'}`, x, y, { p, flip, scale: 0.95 * (f.k ?? 1) });
       return true;
     }
     case 'blinksmoke': {
