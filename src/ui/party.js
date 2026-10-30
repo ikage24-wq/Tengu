@@ -10,6 +10,7 @@ import { settings } from '../core/settings.js';
 import { online } from '../net/online.js';
 import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade } from '../net/together.js';
 import { MAPS } from '../data/maps.js';
+import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
 
 // ---------- Right-click menu ----------
 
@@ -47,6 +48,11 @@ function menuItems(state, world) {
     const why = inviteBlocker(world.bots, bot, world);
     const high = bot.level > world.char.level + LEVEL_GAP;
     items.push({ label: 'Invite to party', icon: 'heart', why: why ?? (high ? `Lv ${bot.level} is well above you, they'll likely say no` : null), enabled: !why, run: () => invite(world.bots, bot, world) });
+  }
+  if (bot.helped && !bot.thanked) items.push({ label: 'Say thanks', icon: 'heart', run: () => thanked(world.bots, world) });
+  if (!isBuddy(world.char, bot.name)) {
+    const why = addBlocker(world, bot);
+    items.push({ label: 'Add friend', icon: 'friends', why, enabled: !why, run: () => askFriend(world, bot) });
   }
   if (bot.shop) items.push({ label: 'Browse shop', icon: 'shop', run: () => openProfile(state, { kind: 'bot', id: bot.id, shop: true }) });
   return items;
@@ -170,7 +176,8 @@ export function drawPartyPanel(ui, state, world) {
   const off = friends.length;
   members.forEach((bot, i) => {
     i += off;
-    const hp = !run || bot.hp == null ? 1 : bot.down ? 0 : bot.hp / bot.stats.maxHp;
+    // (Their HP shows out in the field too, where monsters fight back; nothing while they're away.)
+    const hp = bot.away || bot.down ? 0 : bot.hp == null || !bot.stats ? 1 : bot.hp / bot.stats.maxHp;
     row(i + 1, bot.name, bot.level, bot.char.job, hp, false,
       () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17),
       run ? role(bot.id) : bot.ai ? PLAYSTYLES[bot.ai.kind] : null);

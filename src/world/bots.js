@@ -23,6 +23,7 @@ import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
 import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced } from './chatter.js';
 import { updateParty, tickHunter, fieldDownOver } from './party.js';
+import { updateBuddies, rivalHere, thanked, buddiesOf } from './buddies.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -261,6 +262,9 @@ function makeShop(bot, rng) {
 
 export function createBots(world, rng = Math.random) {
   const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng };
+  // Your friends' and your rival's names are theirs: nobody else turns up with them.
+  for (const b of buddiesOf(world.char)) bots.names.add(b.name);
+  if (world.char.rival) bots.names.add(world.char.rival.name);
   // Everyone's already around when you log in.
   for (let i = 0; i < TOTAL; i++) spawn(bots, world, { quiet: true });
   return bots;
@@ -298,23 +302,35 @@ function freeX(map, bots, rng) {
   return between(140, map.width - 140, rng);
 }
 
-function spawn(bots, world, { quiet = false } = {}) {
+// `who` logs in someone you know (a friend) as they are; now and then in the town you're in.
+function spawn(bots, world, { quiet = false, who = null } = {}) {
   const rng = bots.rng;
-  const name = makeName(bots.names, rng);
-  const char = makeBotCharacter(rng, { name });
-  const town = townFor(bots, char.level);
+  const name = who?.name ?? makeName(bots.names, rng);
+  const char = who?.char ?? makeBotCharacter(rng, { name });
+  const town = who && world.map.isTown && rng() < 0.5 ? world.map.id : townFor(bots, char.level);
   if (!town) return null;
   const map = MAPS[town];
   const bot = {
     id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: char.level >= 56,
-    guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng), title: titleFor(char.level, char.level >= 56, rng),
+    guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: who?.title ?? titleFor(char.level, char.level >= 56, rng),
     map: town, x: freeX(map, bots, rng), facing: rng() < 0.5 ? 1 : -1, state: 'idle', timer: between(1, 4, rng),
     session: between(150, 480, rng), stay: between(70, 200, rng), nextLine: between(4, 30, rng), bubble: null,
     waved: false, shop: null, appear: quiet ? 0 : 1,
   };
-  if (rng() < 0.28) openShop(bot, map, bots);
+  if (!who && rng() < 0.28) openShop(bot, map, bots);
   bots.list.push(bot);
   return bot;
+}
+
+// What world/buddies.js needs to bring people in.
+function hooksFor(bots, world) {
+  return {
+    logIn: (who) => spawn(bots, world, { who }),
+    addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
+    makeChar: makeBotCharacter,
+    makeName: () => makeName(bots.names, bots.rng),
+    makeStyle: () => makeStyle(bots.rng),
+  };
 }
 
 // A player the group finder brings in: a level and job path to order, appearing right next to
@@ -421,10 +437,14 @@ export function updateBots(bots, world, dt) {
   }
   updateParty(bots, world, dt);
   huntersHere(bots, world, dt);
+  updateBuddies(bots, world, dt, hooksFor(bots, world));
   listen(bots, world);
   deliverReplies(bots, world);
   news(bots, world, dt);
-  for (const b of bots.list) if (b.gone) endChat(b);
+  for (const b of bots.list) if (b.gone) {
+    endChat(b);
+    if (b.buddy && !b.hunter && !b.party) world.log?.(`[Friend] ${b.name} logged off.`, '#9c86b8');
+  }
   bots.list = bots.list.filter((b) => !b.gone);
   // Whoever just logged out is replaced, so the server never dips under its minimum.
   for (let i = 0; i < 4 && bots.list.length < MIN_ONLINE; i++) spawn(bots, world);
@@ -555,7 +575,8 @@ function behave(bot, bots, world, map, dt) {
         bot.facing = px < bot.x ? -1 : 1;
         bot.state = 'wave';
         bot.timer = 1.6;
-        say(bot, speak(bots.memory, 'greet', { player: world.char.name }, bot.style, rng) ?? 'hi!');
+        say(bot, bot.hello ?? speak(bots.memory, 'greet', { player: world.char.name }, bot.style, rng) ?? 'hi!');
+        bot.hello = null;
       }
       break;
     }
@@ -781,7 +802,7 @@ function listen(bots, world) {
         } else if (asking) {
           if (rng() < 0.55) queueReply(bots, world, all[0], reply(bots.memory, 'dunno', ctx(all[0]), all[0].style, rng));
         } else if (THANKS.test(words)) {
-          if (rng() < 0.6) queueReply(bots, world, all[0], reply(bots.memory, 'thanks', ctx(all[0]), all[0].style, rng));
+          if (!thanked(bots, world) && rng() < 0.6) queueReply(bots, world, all[0], reply(bots.memory, 'thanks', ctx(all[0]), all[0].style, rng));
         } else if (LAUGH.test(words)) {
           if (rng() < 0.4) queueReply(bots, world, pick(all.slice(0, 3), rng), reply(bots.memory, 'laugh', ctx(all[0]), all[0].style, rng));
         } else if (rng() < 0.28) {
@@ -876,6 +897,7 @@ function huntersHere(bots, world, dt) {
       const cap = huntCap(map);
       const n = 2 + Math.floor(rng() * (cap - 1));
       for (let i = 0; i < n; i++) addHunter(bots, world);
+      rivalHere(bots, world, hooksFor(bots, world));
     }
   }
   const hunters = bots.list.filter((b) => b.hunter && !b.gone);
@@ -885,7 +907,8 @@ function huntersHere(bots, world, dt) {
   }
   world.onStrangerKill = (id) => {
     const bot = hunters.find((b) => b.id === id);
-    if (bot && !bot.bubble && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
+    if (bot) bot.kills = (bot.kills ?? 0) + 1;
+    if (bot && !bot.bubble && !bot.rival && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
   };
   // A queen back for a rematch: word gets around, and people come running.
   const queen = world.mobs.find((m) => isQueen(m) && m.hp > 0);

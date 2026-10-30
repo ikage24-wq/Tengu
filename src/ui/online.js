@@ -1,7 +1,8 @@
-// The Online window (N, or the friends button): host a room and share its six-digit code, or type
-// a friend's code on the number pad to join theirs. In a room it lists everyone, where they are,
-// and their level (tap a friend for their profile), with Party, Warp and Trade buttons, the
-// invites waiting on you, and a way out.
+// The Online window (N, or the friends button), two tabs. Friends: the players you've added (who's
+// on and where, Invite to bring one to you, a friend asking you to hunt) and your rival. Room:
+// host a room and share its six-digit code, or type a friend's code on the number pad to join
+// theirs. In a room it lists everyone, where they are, and their level (tap a friend for their
+// profile), with Party, Warp and Trade buttons, the invites waiting on you, and a way out.
 
 import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip, clicked } from './kit.js';
 import { askTrade, answerTrade, warpTo, warpBlocker, warpCost, askParty, answerParty, partyBlocker, inParty } from '../net/together.js';
@@ -9,9 +10,12 @@ import { openProfile } from './profile.js';
 import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.js';
 import { JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
+import { buddiesOf, buddyOnline, callBuddy, answerHunt, removeBuddy, whereIs } from '../world/buddies.js';
+import { partyMembers, PARTY_MAX } from '../world/party.js';
 
 const W = 262;
-const H = 300;
+const H = 320;
+const PER_PAGE = 7;
 
 export function onlineWindow(ui, state, world) {
   const win = state.windows.online;
@@ -19,8 +23,15 @@ export function onlineWindow(ui, state, world) {
   const { ctx } = ui;
   const th = ui.theme;
   const x = win.x + 12;
-  let y = win.y + 30;
+  let y = win.y + 26;
   win.code ??= '';
+  // The tabs: your friends list, or a room with friends online.
+  win.tab ??= 'friends';
+  for (const [i, [key, label, ic]] of [['friends', 'Friends', 'friends'], ['room', 'Online room', 'crown']].entries()) {
+    if (button(ui, x + i * 92, y, 88, 15, label, { size: 7.5, iconName: ic, primary: win.tab === key })) win.tab = key;
+  }
+  y += 20;
+  if (win.tab === 'friends') return friendsTab(ui, state, world, win, x, y);
 
   if (online.status === 'connecting') {
     const t = performance.now() / 1000;
@@ -102,7 +113,7 @@ export function onlineWindow(ui, state, world) {
       text(ctx, 'Catch board', x, y + 9, { size: 7.5, bold: true, color: th.dark });
       online.catches.slice(0, 3).forEach((c, i) => text(ctx, fit(ctx, `${i + 1}. ${c.who}: ${c.name} ${c.size}cm`, W - 30, 6.5, false), x + 4, y + 19 + i * 8, { size: 6.5, color: COLORS.ink }));
     }
-    const left = win.y + H - 30;
+    const left = win.y + H - 26;
     if (button(ui, win.x + W / 2 - 46, left, 92, 19, 'Leave room', { size: 8.5, iconName: 'door' })) leaveRoom(world);
     return;
   }
@@ -148,4 +159,83 @@ export function onlineWindow(ui, state, world) {
   });
   if (ui.input.pressed?.has('Enter') && win.code.length === 6) joinRoom(world, win.code);
   if (online.error) text(ctx, online.error, win.x + W / 2, win.y + H - 10, { size: 7.5, bold: true, align: 'center', color: COLORS.bad });
+}
+
+// ---------- Friends ----------
+
+const ago = (t) => {
+  const m = Math.max(1, Math.round((Date.now() - (t ?? Date.now())) / 60000));
+  return m < 60 ? `${m}m ago` : m < 60 * 24 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+};
+const jobOf = (snap) => snap.jobs?.[snap.jobs.length - 1] ?? 'novice';
+const jobName = (job) => JOBS[job]?.short ?? JOBS[job]?.name ?? '';
+
+function friendsTab(ui, state, world, win, x, y) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const bots = world.bots;
+  // A friend asking you to come hunt.
+  const ask = bots?.huntAsk;
+  if (ask) {
+    box(ctx, x - 2, y, W - 20, 22, { fill: '#e6f3ff', edge: '#7ec8ff', r: 8, width: 1.5 });
+    icon(ctx, 'friends', x + 9, y + 11, 10, '#4f95e0');
+    text(ctx, fit(ctx, `${ask.bot.name} wants to hunt!`, W - 130, 8, true), x + 20, y + 14, { size: 8, bold: true });
+    if (button(ui, x + W - 92, y + 3, 36, 16, 'Join', { size: 7.5, primary: true })) answerHunt(bots, world, true);
+    if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerHunt(bots, world, false);
+    y += 26;
+  }
+  // Your rival, and how the race stands.
+  const r = world.char.rival;
+  if (r) {
+    const on = bots?.list.find((b) => b.rival && !b.gone);
+    box(ctx, x - 2, y, W - 20, 22, { fill: '#fff0f4', edge: '#ff9eb8', r: 8, width: 1.5 });
+    icon(ctx, 'bolt', x + 9, y + 11, 10, '#ff6b8a');
+    text(ctx, fit(ctx, `Rival: ${r.name}`, 130, 8, true), x + 20, y + 10, { size: 8, bold: true, color: '#d9466f' });
+    const lead = r.level - world.char.level;
+    text(ctx, `Lv${r.level} ${jobName(jobOf(r))} · ${lead > 0 ? `${lead} ahead of you` : lead < 0 ? `${-lead} behind you` : 'neck and neck'}`, x + 20, y + 18.5, { size: 6.5, color: COLORS.muted });
+    text(ctx, on && on.map === world.map.id ? 'here!' : on ? 'hunting' : 'offline', x + W - 30, y + 14, { size: 7, bold: true, align: 'right', color: on ? COLORS.good : COLORS.muted });
+    y += 26;
+  }
+  const list = buddiesOf(world.char);
+  text(ctx, `Friends ${list.length}`, x, y + 8, { size: 8.5, bold: true });
+  y += 13;
+  if (!list.length) {
+    wrap(ctx, 'Right-click a player and choose Add friend. Friends log in now and then, wave when they see you, and ask you along to hunt.', x, y + 8, W - 24, { size: 7.5, color: COLORS.muted });
+    return;
+  }
+  // Online first, then whoever was on most recently.
+  const rows = list.map((snap) => ({ snap, bot: buddyOnline(bots, snap.name) })).sort((a, b) => Number(Boolean(b.bot)) - Number(Boolean(a.bot)) || (b.snap.seen ?? 0) - (a.snap.seen ?? 0));
+  const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+  win.page = Math.min(win.page ?? 0, pages - 1);
+  const full = partyMembers(bots).length >= PARTY_MAX;
+  for (const { snap, bot } of rows.slice(win.page * PER_PAGE, (win.page + 1) * PER_PAGE)) {
+    box(ctx, x - 2, y, W - 20, 22, { fill: '#ffffff', edge: th.light, r: 8, width: 1 });
+    box(ctx, x + 5, y + 8, 6, 6, { fill: bot ? '#7ee081' : '#d4cbe8', edge: null, r: 3 });
+    text(ctx, fit(ctx, snap.name, 100, 8, true), x + 16, y + 10, { size: 8, bold: true });
+    const where = bot ? (bot.party ? 'in your party' : bot.map === world.map.id ? 'here' : whereIs(bot)) : `offline · ${ago(snap.seen)}`;
+    text(ctx, fit(ctx, `Lv${bot?.char.level ?? snap.level} ${jobName(jobOf(snap))} · ${where}`, 130, 6.5, false), x + 16, y + 18.5, { size: 6.5, color: bot ? COLORS.good : COLORS.muted });
+    if (bot && clicked(ui, x - 2, y, 150, 22)) openProfile(state, { kind: 'bot', id: bot.id });
+    if (bot && !bot.party) {
+      if (button(ui, x + W - 92, y + 3, 40, 16, 'Invite', { size: 7, primary: true, enabled: !full, theme: 'pink' })) {
+        const no = callBuddy(bots, world, bot);
+        if (no) world.log(no, '#ffb3c6');
+      }
+      if (hover(ui, x + W - 92, y + 3, 40, 16)) tooltip(ui, [{ text: `Invite ${snap.name}`, bold: true }, { text: full ? 'Your party is full' : 'They come to you and join your party', size: 8, color: COLORS.muted }]);
+    }
+    if (button(ui, x + W - 48, y + 3, 24, 16, '', { size: 7, iconName: 'trash' })) {
+      if (win.confirm === snap.name) {
+        removeBuddy(world, bots, snap.name);
+        win.confirm = null;
+        world.log(`${snap.name} was removed from your friends.`, '#d4cbe8');
+      } else win.confirm = snap.name;
+    }
+    if (hover(ui, x + W - 48, y + 3, 24, 16)) tooltip(ui, [{ text: win.confirm === snap.name ? 'Click again to remove' : 'Remove friend', size: 8 }]);
+    y += 25;
+  }
+  if (pages > 1) {
+    const py = win.y + H - 26;
+    if (button(ui, win.x + W / 2 - 62, py, 30, 17, '<', { size: 9, enabled: win.page > 0 })) win.page -= 1;
+    text(ctx, `${win.page + 1}/${pages}`, win.x + W / 2, py + 12, { size: 8, bold: true, align: 'center' });
+    if (button(ui, win.x + W / 2 + 32, py, 30, 17, '>', { size: 9, enabled: win.page < pages - 1 })) win.page += 1;
+  }
 }
