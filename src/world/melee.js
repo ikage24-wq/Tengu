@@ -31,7 +31,7 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { useStars, activeStar } from '../core/inventory.js';
-import { tickPets, sendSnow, moonfall, howl } from './pets.js';
+import { tickPets, sendSnow, moonfall, howl, duetSnow, duetMoon } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
@@ -755,97 +755,221 @@ export function addTails(world, n, mob = null) {
   world.tails = Math.min(TAILS_MAX, (world.tails ?? 0) + n * (burning ? 1.5 : 1));
   world.tailsAt = world.now;
 }
-// Endless Fox-Fire (a Kitsune passive, data/skills.js): while attack is held her basic attack is
-// an endless barrage of fox-fire stars, hand over hand, faster the longer it's held. She can walk
-// slowly through it (world.js), and in the air she hangs a moment, then keeps throwing as she
-// falls. Let go after a while and a fox-moon star ends it, stronger the longer she held.
+// Endless barrages (a passive for three paths, data/skills.js): while attack is held her basic
+// attack goes on and on, faster the longer it's held, building through stages of its own; she can
+// walk slowly through it (world.js), and in the air she hangs a moment, then keeps going as she
+// falls. Let go after a while and a finisher ends it, stronger the longer she held.
+//   Kitsune     Endless Fox-Fire: fox-fire stars hand over hand (Fox Sign, Trickster, Wheel,
+//               Ascension), ending in a fox-moon star
+//   Shinobi     Endless Blade Dance: quick cuts, spinning cuts, blinking from monster to monster
+//               through ink, then her ink clones joining the storm; ending in one drawn cut, a
+//               giant brush stroke of ink through the line
+//   Beastmaster Wild Hunt: quick shots, shooting on the move, then Snow wolf joins the hunt and
+//               they fight as one, and at the top a gale of leaves wheels round her; ending in a
+//               great gale arrow as Snow wolf brings the moon down on them
 export const BARRAGE_WALK = 0.35;
 const BARRAGE_HANG = 0.6;
 const BARRAGE_FINISH_AFTER = 0.6;
-export function barrageOf(world) {
-  const lv = world.char.skills.foxbarrage ?? 0;
-  return lv > 0 && pathOf(world) === 'kitsune' ? skillAt('foxbarrage', lv).barrage : null;
-}
-// Her figures (render/moves.js), by how far the barrage has built (`heat`: 0 to 1 over the ramp,
-// then on to 1.6 over FRENZY more seconds, so it keeps getting better after it's at full speed):
-// Fox Sign, Trickster, Wheel, Ascension, and at the very top a circle of fox fire under her (render/scene.js).
-// A figure plays for its own length (FIGURES, a little quicker as she speeds up) while the stars
-// keep coming at the barrage's rate: from her hand, from her fox sign (a fox face of fire pops
-// there), or, from the Wheel on, peeling off the wheel of fox fire round her (world/foxwheel.js).
-// She never plays the same figure twice running. In the air (jumped, not floating), air figures.
+// How far it has built (`heat`): 0 to 1 over the ramp, then on to 1.6 over FRENZY more seconds,
+// so it keeps getting better after it's at full speed.
 const FRENZY = 3;
-const FIGURES = { foxsign: 0.24, foxsign2: 0.24, foxtease: 0.36, foxtwirl: 0.42, foxwink: 0.34, foxwheel: 0.5, foxwheel2: 0.5, foxfloat: 0.62, foxfloat2: 0.62, foxairthrow: 0.3, foxairspin: 0.36 };
-const SIGN_FIGURES = new Set(['foxsign2', 'foxfloat2']);
-const STREAM_STAGES = [
-  { at: 0, figures: ['foxsign', 'foxsign2'] },
-  { at: 0.45, figures: ['foxsign', 'foxsign2', 'foxtease', 'foxtwirl', 'foxwink'] },
-  { at: 0.9, figures: ['foxwheel', 'foxwheel2', 'foxtwirl'] },
-  { at: 1.25, figures: ['foxfloat', 'foxfloat2'] },
-  { at: 1.55, figures: ['foxfloat', 'foxfloat2'] },
-];
-export const STREAM_MOVES = new Set(Object.keys(FIGURES));
 export const barrageHeat = (b, held) => Math.min(1, held / b.ramp) + 0.6 * Math.min(1, Math.max(0, held - b.ramp) / FRENZY);
+// Each path's barrage: its skill, its school (the stage flares), its figures (render/moves.js) and
+// how long each plays, the stages they're drawn from as it builds, the air figures, and what each
+// beat looses (`strike`), anything else it does on a beat (`beat`), and the finisher (`finish`).
+// A figure plays for its own length (a little quicker as it speeds up) while the beats keep the
+// barrage's rate; never the same figure twice running.
+const FOX_SIGNS = new Set(['foxsign2', 'foxfloat2']);
+// The Shinobi's cuts, by figure: their reach and the arc of the ink they leave.
+const INK_CUTS = {
+  inkjab: { reach: 62, h: 46, pierce: true, targets: 2 },
+  inkjab2: { reach: 62, h: 44, pierce: true, targets: 2 },
+  inkslice: { reach: 64, h: 54, arc: [-100, 190], thick: 6, targets: 2 },
+  inkspin: { reach: 66, h: 56, around: true, arc: [-90, 360], thick: 6, targets: 3 },
+  inkrise: { reach: 64, h: 70, arc: [80, -175], thick: 6, targets: 2 },
+  inkhook: { reach: 60, h: 54, arc: [110, -230], thick: 6, targets: 2 },
+  inkblink: { reach: 66, h: 60, arc: [-150, 200], thick: 7, targets: 3 },
+  inkblink2: { reach: 66, h: 56, arc: [100, -215], thick: 7, targets: 3 },
+  inkstorm: { reach: 72, h: 60, arc: [-115, 205], thick: 8, targets: 3 },
+  inkstorm2: { reach: 76, h: 72, arc: [-170, 330], thick: 9, targets: 4 },
+  inkaircut: { reach: 62, h: 80, arc: [-60, 150], thick: 6, targets: 2 },
+  inkairspin: { reach: 64, h: 80, around: true, arc: [-90, 360], thick: 6, targets: 3 },
+};
+export const STREAMS = {
+  kitsune: {
+    skill: 'foxbarrage', school: 'fox', hover: true,
+    figures: { foxsign: 0.24, foxsign2: 0.24, foxtease: 0.36, foxtwirl: 0.42, foxwink: 0.34, foxwheel: 0.5, foxwheel2: 0.5, foxfloat: 0.62, foxfloat2: 0.62, foxairthrow: 0.3, foxairspin: 0.36 },
+    stages: [
+      { at: 0, figures: ['foxsign', 'foxsign2'] },
+      { at: 0.45, figures: ['foxsign', 'foxsign2', 'foxtease', 'foxtwirl', 'foxwink'] },
+      { at: 0.9, figures: ['foxwheel', 'foxwheel2', 'foxtwirl'] },
+      { at: 1.25, figures: ['foxfloat', 'foxfloat2'] },
+      { at: 1.55, figures: ['foxfloat', 'foxfloat2'] },
+    ],
+    air: (heat) => (heat >= 0.9 ? ['foxairthrow', 'foxairspin'] : ['foxairthrow']),
+    ready: (world) => Boolean(activeStar(world.char)),
+    strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
+    finish: (b, pct, k, air) => ({
+      move: air ? 'airthrow' : 'heavethrow', dur: air ? 0.4 : 0.56, step: air ? 0 : 6, hang: air, finisher: true,
+      strikes: [{ at: air ? 0.5 : 0.52, shot: 'foxmoon', pct, range: 320, h: air ? 190 : 80, drop: air ? 60 : 0, targets: 3, pierce: true, speed: 880, knock: 190, big: true, stop: 0.04 + 0.03 * k, shake: Math.round(1 + 2 * k) }],
+    }),
+  },
+  shinobi: {
+    skill: 'inkdance', school: 'ink', closeIn: 40,
+    figures: { inkjab: 0.22, inkjab2: 0.22, inkslice: 0.28, inkspin: 0.4, inkrise: 0.34, inkhook: 0.34, inkblink: 0.36, inkblink2: 0.36, inkstorm: 0.34, inkstorm2: 0.44, inkaircut: 0.28, inkairspin: 0.36 },
+    stages: [
+      { at: 0, figures: ['inkjab', 'inkjab2', 'inkslice'] },
+      { at: 0.45, figures: ['inkslice', 'inkspin', 'inkrise', 'inkhook'] },
+      { at: 0.9, figures: ['inkblink', 'inkblink2', 'inkspin'] },
+      { at: 1.25, figures: ['inkstorm', 'inkstorm2', 'inkblink', 'inkblink2'] },
+      { at: 1.55, figures: ['inkstorm', 'inkstorm2', 'inkblink2'] },
+    ],
+    air: (heat) => (heat >= 0.45 ? ['inkaircut', 'inkairspin'] : ['inkaircut']),
+    ready: () => true,
+    strike: (b, { move, stage }) => ({ at: 0.45, pct: b.pct, knock: stage >= 3 ? 24 : 10, gauge: 1, ...INK_CUTS[move], burst: stage >= 2 && (move === 'inkstorm2' || move === 'inkblink') ? 'inkhit' : undefined }),
+    // Ink Blink: at the start of a blink figure she melts into ink and steps out on the far side
+    // of the monster in front, turning to cut it (back and forth through the line).
+    start: (world, run, move) => {
+      if (!move.startsWith('inkblink') || !world.body.onGround) return;
+      const b = world.body;
+      const m = pickTargets(world.mobs, b, { w: 170, h: 40 }, 1)[0];
+      if (!m) return;
+      const side = Math.sign(m.x - b.x) || b.facing;
+      const nx = Math.max(b.w / 2, Math.min(world.map.width - b.w / 2, m.x + side * 26));
+      world.fx.push({ kind: 'inkbrush', x: (b.x + nx) / 2, y: b.y - 22, len: Math.abs(nx - b.x), dir: side, t: 0, dur: 0.4, seed: Math.random() });
+      world.fx.push({ kind: 'smokeburst', x: b.x, y: b.y, dir: side, t: 0, dur: 0.6 });
+      b.x = nx;
+      b.facing = -side;
+      world.fx.push({ kind: 'smokeburst', x: nx, y: b.y, dir: -side, t: 0, dur: 0.6 });
+    },
+    // The Clone Storm (from stage 3): two ink clones of her join in, each beat (render/scene.js
+    // draws them dancing the figures a beat behind her).
+    clones: 3,
+    finish: (b, pct, k, air) => (air
+      ? { move: 'inkaircut', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, pct, reach: 90, h: 120, targets: 4, arc: [-80, 200], thick: 14, knock: 200, launch: 160, big: true, burst: 'inkhit', stop: 0.05 + 0.03 * k, shake: Math.round(1 + 2 * k) }] }
+      : { move: 'inkdraw', dur: 0.72, step: 70, carry: 0.56, trail: true, finisher: true, brush: true, strikes: [{ at: 0.56, pct, reach: 120, h: 70, targets: 5, pierce: true, around: false, knock: 240, launch: 180, arc: [-160, 200], thick: 16, big: true, burst: 'inkhit', fx: 'inkcut', stop: 0.06 + 0.04 * k, shake: Math.round(2 + 3 * k) }] }),
+  },
+  beastmaster: {
+    skill: 'wildhunt', school: 'wind',
+    figures: { bmsnap: 0.24, bmsnap2: 0.26, bmskip: 0.36, bmspin: 0.4, bmslide: 0.36, bmhunt: 0.36, bmhunt2: 0.36, bmgale: 0.42, bmgale2: 0.44, bmairshot: 0.28, bmairspin: 0.38 },
+    stages: [
+      { at: 0, figures: ['bmsnap', 'bmsnap2'] },
+      { at: 0.45, figures: ['bmsnap', 'bmskip', 'bmspin', 'bmslide'] },
+      { at: 0.9, figures: ['bmhunt', 'bmhunt2', 'bmspin', 'bmskip'] },
+      { at: 1.25, figures: ['bmgale', 'bmgale2', 'bmhunt'] },
+      { at: 1.55, figures: ['bmgale', 'bmgale2'] },
+    ],
+    air: (heat) => (heat >= 0.45 ? ['bmairshot', 'bmairspin'] : ['bmairshot']),
+    ready: () => true,
+    strike: (b, { air, stage }) => ({ at: 0.4, shot: stage >= 3 ? 'galearrow' : 'windarrow', pct: b.pct, ...(stage >= 3 ? { targets: 4, pierce: true } : stage >= 1 ? { targets: 2, pierce: true } : {}), range: 300, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 900, gauge: 1, leaf: stage >= 3 && !air }),
+    // From the Duet (stage 2) Snow wolf joins the hunt: whenever she's free, she hauls herself
+    // over to whatever the arrows are on and cuts it, every few beats (no wait between).
+    beat: (world, b, run) => {
+      if (run.stage < 2) return;
+      const m = pickTargets(world.mobs, world.body, { w: 320, h: 80 }, 1)[0];
+      if (m) duetSnow(world, m, b.wolf);
+    },
+    finish: (b, pct, k, air) => ({
+      move: air ? 'airshot2' : 'galeshot', dur: air ? 0.42 : 0.62, step: air ? 0 : -4, hang: air, finisher: true, moon: { pct: Math.round(pct * b.moon), k },
+      strikes: [{ at: air ? 0.5 : 0.62, shot: 'galearrow', pct, range: 360, h: air ? 190 : 70, drop: air ? 60 : 0, targets: 4, pierce: true, speed: 950, knock: 230, launch: 120, big: true, muzzle: 'gust', stop: 0.05 + 0.03 * k, shake: Math.round(1 + 2 * k) }],
+    }),
+  },
+};
+export const STREAM_MOVES = new Set(Object.values(STREAMS).flatMap((sp) => Object.keys(sp.figures)));
+export const streamOf = (world) => STREAMS[pathOf(world)] ?? null;
+export function barrageOf(world) {
+  const spec = streamOf(world);
+  const lv = spec ? world.char.skills[spec.skill] ?? 0 : 0;
+  return lv > 0 ? skillAt(spec.skill, lv).barrage : null;
+}
+// The Shinobi's ink clones are out (the Clone Storm stage).
+export const inkStorm = (world) => Boolean(world.barrage?.kind === 'shinobi' && world.barrage.stage >= STREAMS.shinobi.clones);
 function barrageThrow(world, b, rng = Math.random) {
   const { now, body } = world;
+  const kind = pathOf(world);
+  const spec = STREAMS[kind];
   // A pause (a skill, a stagger) starts the ramp over.
   let run = world.barrage;
-  if (!run || now - run.last > 0.5) run = world.barrage = { since: now, last: now, n: 0, airSince: null, stage: 0, figure: null, heat: 0 };
+  if (!run || now - run.last > 0.5 || run.kind !== kind) run = world.barrage = { kind, since: now, last: now, n: 0, airSince: null, stage: 0, figure: null, heat: 0 };
   const held = now - run.since;
   const rate = b.from + (b.to - b.from) * Math.min(1, held / b.ramp);
   const heat = barrageHeat(b, held);
   run.heat = heat;
   const air = !body.onGround;
   run.airSince = air ? run.airSince ?? now : null;
-  // Each new stage flares up in fox fire round her, harder the higher it goes.
-  const stage = STREAM_STAGES.findLastIndex((s) => heat >= s.at);
+  // Each new stage flares up in the path's colour round her, harder the higher it goes.
+  const stage = spec.stages.findLastIndex((s) => heat >= s.at);
   if (stage > run.stage) {
-    world.fx.push({ kind: 'powerup', school: 'fox', x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
+    world.fx.push({ kind: 'powerup', school: spec.school, x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
     if (stage >= 3) world.juice.push({ type: 'shake', mag: 1, dur: 0.15 });
   }
   run.stage = stage;
   const key = air ? 'basicairstream' : 'basicstream';
-  const shot = { at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, wheel: !air && stage >= 2 };
+  // (Cuts and arrows land in the path's own colour; her stars carry their own.)
+  const look = kind === 'kitsune' ? null : spec.school;
   const fig = run.figure;
-  // (A new figure starts before this one would run out ahead of the next star, so she's never
+  // (A new figure starts before this one would run out ahead of the next beat, so she's never
   // left without one.)
   if (!fig || now + 1 / rate > fig.until || fig.air !== air) {
-    const pool = (air ? (heat >= 0.9 ? ['foxairthrow', 'foxairspin'] : ['foxairthrow']) : STREAM_STAGES[stage].figures).filter((m, i, all) => m !== fig?.move || all.length === 1);
+    const pool = (air ? spec.air(heat) : spec.stages[stage].figures).filter((m, i, all) => m !== fig?.move || all.length === 1);
     const move = pool[Math.floor(rng() * pool.length)];
-    const len = FIGURES[move] * (0.7 + 0.3 * (b.from / rate));
+    spec.start?.(world, run, move);
+    const len = spec.figures[move] * (0.7 + 0.3 * (b.from / rate));
+    // A blade dance closes in on them: each figure steps in to the one in front, if it's just out
+    // of reach.
+    let stepIn = 0;
+    if (spec.closeIn && !air) {
+      const m = pickTargets(world.mobs, body, { w: 150, h: 40 }, 1)[0];
+      if (m) stepIn = Math.max(0, Math.min(spec.closeIn, Math.abs(m.x - body.x) - 34));
+    }
     // playStep runs basic moves at 0.9 of their written length.
-    playStep(world, { move, dur: len / 0.9, step: 0, stream: true, hang: air && now - run.airSince < BARRAGE_HANG, strikes: [{ ...shot, sign: SIGN_FIGURES.has(move) }] }, 100, key);
+    playStep(world, { move, dur: len / 0.9, step: stepIn, carry: 0.4, stream: true, hang: air && now - run.airSince < BARRAGE_HANG, strikes: [spec.strike(b, { air, stage, move, heat })] }, 100, key, look);
     // The drawing moves her body through the figures on the barrage's own clock (render/moves.js streamFlow).
-    world.pose.flow = { t0: held, heat };
+    world.pose.flow = { t0: held, heat, kind, float: Boolean(spec.hover) };
     run.figure = { move, until: now + len, air, dur: world.pose.dur };
   } else {
-    // Another star while the figure plays out.
-    world.strikes.push({ ...shot, sign: SIGN_FIGURES.has(fig.move), n: 0, of: 1, due: now + 0.02, dir: body.facing, scale: 100, key, school: null, finisher: false, move: fig.move, dur: fig.dur, hit: 0.4 });
+    // Another beat while the figure plays out.
+    world.strikes.push({ ...spec.strike(b, { air, stage, move: fig.move, heat }), n: 0, of: 1, due: now + 0.02, dir: body.facing, scale: 100, key, school: look, finisher: false, move: fig.move, dur: fig.dur, hit: 0.4 });
   }
-  // The stars keep the barrage's own rate, whatever the figure.
+  // The Shinobi's ink clones cut beside her, a beat behind (lighter).
+  if (kind === 'shinobi' && stage >= spec.clones) {
+    const cut = spec.strike(b, { air, stage, move: run.figure.move, heat });
+    for (const lag of [CLONE_LAG, CLONE_LAG * 2]) world.strikes.push({ ...cut, n: 0, of: 1, due: now + 0.02 + lag, dir: body.facing, scale: 100 * CLONE_POWER, key, school: 'ink', finisher: false, move: run.figure.move, dur: run.figure.dur, phantom: true, quiet: true, gauge: 0, burst: undefined });
+    world.phantom = { kind: run.figure.move, since: now + CLONE_LAG, dur: run.figure.dur, until: now + CLONE_LAG * 2 + run.figure.dur, clones: true };
+  }
+  spec.beat?.(world, b, run);
+  // The beats keep the barrage's own rate, whatever the figure.
   world.attackTimer = Math.min(world.attackTimer, 0.86 / rate);
   world.lockTimer = Math.min(world.lockTimer, 0.86 / rate);
   world.basicReadyAt = now + 1 / rate;
   run.last = now;
   run.n += 1;
 }
-// Letting go of attack: the fox-moon finisher, if she held long enough (not over a skill).
+// Letting go of attack: the finisher, if she held long enough (not over a skill).
 export function barrageRelease(world) {
   const run = world.barrage;
   world.barrage = null;
-  // The wheel of fox fire flies apart (render/scene.js drawFoxWheel).
-  world.wheelGone = { since: run.since, heat: run.heat, goneAt: world.now };
+  // Kitsune: the wheel of fox fire flies apart; Beastmaster: the gale of leaves scatters
+  // (render/scene.js drawFoxWheel, drawLeafWheel).
+  world.wheelGone = { kind: run.kind, since: run.since, heat: run.heat, goneAt: world.now };
+  const spec = STREAMS[run.kind];
   const b = barrageOf(world);
-  if (!b || world.dead || world.body.rope || !activeStar(world.char)) return;
+  if (!b || !spec || pathOf(world) !== run.kind || world.dead || world.body.rope || !spec.ready(world)) return;
   if (world.recoverKind === 'skill' && world.attackTimer > 0) return;
   const held = run.last - run.since;
   if (held < BARRAGE_FINISH_AFTER) return;
   const k = Math.min(1, held / b.full);
   const air = !world.body.onGround;
   const pct = Math.round(b.finish[0] + (b.finish[1] - b.finish[0]) * k);
-  playStep(world, {
-    move: air ? 'airthrow' : 'heavethrow', dur: air ? 0.4 : 0.56, step: air ? 0 : 6, hang: air, finisher: true,
-    strikes: [{ at: air ? 0.5 : 0.52, shot: 'foxmoon', pct, range: 320, h: air ? 190 : 80, drop: air ? 60 : 0, targets: 3, pierce: true, speed: 880, knock: 190, big: true, stop: 0.04 + 0.03 * k, shake: Math.round(1 + 2 * k) }],
-  }, 100, air ? 'basicair1' : 'basic2');
+  const step = spec.finish(b, pct, k, air);
+  playStep(world, step, 100, air ? 'basicair1' : 'basic2');
+  // The Shinobi's last cut leaves a giant brush stroke of ink along the line.
+  if (step.brush) world.fx.push({ kind: 'inkbrush', x: world.body.x + world.body.facing * 70, y: world.body.y - 24, len: 200, dir: world.body.facing, big: true, t: -0.56 * step.dur * 0.9, dur: 0.6, seed: Math.random() });
+  // The Beastmaster's: Snow wolf brings the moon down on them as the gale arrow flies.
+  if (step.moon) {
+    const m = pickTargets(world.mobs, world.body, { w: 340, h: 120 }, 1)[0];
+    if (m) duetMoon(world, m, step.moon.pct);
+  }
 }
 export const tailCount = (world) => (hasTails(world.char) ? Math.min(9, Math.floor(((world.tails ?? 0) / TAILS_MAX) * 9 + 1e-9)) : 0);
 export const nineTails = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
@@ -1001,7 +1125,9 @@ export function basicCombo(world) {
   if (MELEE.has(world.stats.weaponType)) {
     const own = { thiefdagger: DAGGER_COMMANDS, shinobi: SHINOBI_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
+    const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
+      if (blades) return barrageThrow(world, blades);
       if ((world.airCombo ?? 0) >= air.length) return;
       playStep(world, air[world.airCombo], 100, `basicair${world.airCombo}`);
       world.airCombo += 1;
@@ -1017,7 +1143,7 @@ export function basicCombo(world) {
       world.combo = -1;
       return;
     }
-    if ((world.runFor ?? 0) >= DASH_AFTER) {
+    if ((world.runFor ?? 0) >= DASH_AFTER && !(blades && world.barrage)) {
       playStep(world, own?.dash ?? PATH_DASH[hasFaith(world.char) ? 'paladin' : hasRage(world.char) ? 'berserker' : null] ?? DASH, 100, 'basicdash');
       world.combo = -1;
       return;
@@ -1662,11 +1788,11 @@ function fire(world, strike) {
   let oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
   // Endless Fox-Fire: from the Wheel on, the stars peel off the wisp of fox fire swinging round
   // toward them; a star from her fox sign pops a fox face of fire there.
-  if (s.wheel && world.barrage) {
-    const wisp = launchWisp(world.barrage.heat, world.now - world.barrage.since, s.dir);
+  if ((s.wheel || s.leaf) && world.barrage) {
+    const wisp = launchWisp(world.barrage.heat, world.now - world.barrage.since, s.dir, !s.leaf);
     ox = body.x + wisp.x;
     oy = body.y + wisp.y;
-    if (!s.illusion) world.fx.push({ kind: 'wisplaunch', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.25 });
+    if (!s.illusion) world.fx.push({ kind: s.leaf ? 'leaflaunch' : 'wisplaunch', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.25 });
   } else if (s.sign && !s.illusion) world.fx.push({ kind: 'foxsign', x: ox, y: oy - 3, dir: s.dir, t: 0, dur: 0.32 });
   // A recoiling shot kicks you back (`recoil` in the air hops you up; `kickback` shoves you on
   // the ground), and some burst at the bow as they go (`muzzle`).

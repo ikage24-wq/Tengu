@@ -599,7 +599,12 @@ to clear it.
     the sword with a sigh and call a beam of moonlight down on the farthest), **Lunar Howl** (the
     combo's last shot sometimes sets her howling under a pale moon, knocking away and stunning
     everything close round her; always with three or more in front); **Beast Mastery** adds
-    mastery, attack and accuracy. Her last skills: **Moon Ward** (a hit sometimes never
+    mastery, attack and accuracy. **Wild Hunt** (a passive) makes her basic attack an endless hunt
+    with Snow wolf: hold attack and the arrows fly faster and faster as she shoots on the move
+    (snap shots, skipping and spinning shots, a slide on one knee), and she can walk slowly through
+    it; soon Snow wolf joins in, cutting beside her whenever she's free, and flat out a gale of
+    leaves wheels round her, the arrows peeling off it through the line; let go and she looses a
+    great gale arrow as Snow wolf brings the moon down on them, stronger the longer she held. Her last skills: **Moon Ward** (a hit sometimes never
     reaches the Beastmaster: Snow wolf plants the sword in front of it behind a crescent shield of
     moonlight and flicks a crescent back) and **Queen's Awakening** (while Snow wolf is
     Fed Up, the wolf head on her sword wakes and her eyes open; she attacks faster and harder, and
@@ -651,7 +656,12 @@ to clear it.
     spinning throw of five), **Exploding Seal** (a seal slapped on, bursting a moment later on
     everything close), **Smoke Bomb** (untouchable a moment in white smoke, the monsters lose
     her, she dodges far more, and Ki rises), **Log Swap** (the next blow hits a log and she
-    reappears behind whoever struck), **Shinobi Mastery**, and the finisher **Thousand Cuts**
+    reappears behind whoever struck), **Shinobi Mastery**, **Endless Blade Dance** (a passive: hold
+    attack and the cuts never stop, faster and faster, and she can walk slowly through it: quick
+    cuts, then spinning cuts, then she blinks through ink from one side of them to the other,
+    cutting as she turns, and flat out her ink clones join the storm; let go and she drops low and
+    is through the line in one drawn cut, a giant brush stroke of ink behind her, stronger the
+    longer she held), and the finisher **Thousand Cuts**
     (needs full Ki: ink spills over the world, she flickers from monster to monster cutting each,
     then a giant fox of ink sweeps the line).
   - **Kitsune** (gauntlet; gold and blue fox fire): her own combo (a fox-fire star, a
@@ -665,7 +675,11 @@ to clear it.
     of stars, then a great star through the line), **Fox Illusion** (two illusions at her side
     each throw a free star with hers), **Fox-Fire Trap** (a ring of fox fire on the ground that
     burns them, then bursts), **Fox Hop** (springs back out of reach, leaving a decoy of fox fire
-    that bursts), **Kitsune Mastery**, and the finisher **Nine-Tail Blaze** (needs all nine
+    that bursts), **Kitsune Mastery**, **Endless Fox-Fire** (a passive: hold attack and fox-fire
+    stars fly hand over hand without stopping, faster and faster, through four stages: her fox
+    sign, a trickster's no-look throws and pirouettes, spinning inside a wheel of fox fire, and
+    floating over a circle of fox fire; let go for a fox-moon star through the line), and the
+    finisher **Nine-Tail Blaze** (needs all nine
     tails: nine stars rain down burning, then a giant fox of blue fire pounces through the line).
 - **HD graphics** — on by default (Options: Display). Everything in the world is placed on the
   screen's own pixels, so the camera and everyone in it glide instead of stepping, while the art

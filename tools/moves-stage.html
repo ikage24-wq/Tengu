@@ -4,7 +4,7 @@
 <script type="module">
 // Dev tool: a job among a line of training dummies, driven key by key from outside, drawn with the
 // game's own renderer, with a caption. For demo videos (tools/record-moves.cjs):
-// ?job=shinobi&level=45, then window.step(dt, held, pressed) and window.caption(text).
+// ?job=shinobi&level=45&learn=inkdance, then window.step(dt, held, pressed) and window.caption(text).
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { spawnMob } from '../src/world/mobs.js';
@@ -28,6 +28,8 @@ const job = q.get('job') ?? 'thief';
 const level = Number(q.get('level') ?? (JOBS[job].tier === 1 ? 25 : 45));
 const c = balanceChar(job, level);
 c.mp = c.baseMp = 99999;
+// ?learn=inkdance: a passive to try (at its top level).
+for (const id of (q.get('learn') ?? '').split(',').filter(Boolean)) c.skills[id] = 10;
 const w = createWorld(c);
 w.log = () => {};
 loadMap(w, 'woods', 'west');
@@ -36,7 +38,8 @@ w.mobs = [];
 w.god = true;
 Object.assign(w.body, { x: 300, y: w.map.groundY, facing: 1 });
 const base = Object.values(MOBS).filter((m) => !m.boss && m.level <= level - 8).sort((a, b) => b.level - a.level)[0];
-for (const x of [430, 470, 510]) {
+const homes = [430, 470, 510];
+for (const x of homes) {
   const m = spawnMob(w.map, { mob: base.id, x, y: w.map.groundY });
   m.def = { ...m.def, hp: 1e9, aggro: false, speed: 0, atk: 0 };
   m.hp = 1e9;
@@ -51,7 +54,8 @@ let words = '';
 function step(dt, held = [], pressed = []) {
   const n = Math.round(dt * 60);
   for (let k = 0; k < n; k++) {
-    for (const m of w.mobs) m.hp = 1e9;
+    // (Training dummies: they stay put however hard they're hit.)
+    w.mobs.forEach((m, i) => Object.assign(m, { hp: 1e9, x: homes[i], knockVx: 0 }));
     updateWorld(w, 1 / 60, { held: new Set(held), pressed: new Set(k === 0 ? pressed : []), locked: false });
   }
   t += dt;

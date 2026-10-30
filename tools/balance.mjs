@@ -16,6 +16,7 @@ import { makeEquip } from '../src/core/items.js';
 import { addItem } from '../src/core/inventory.js';
 import { spawnMob } from '../src/world/mobs.js';
 import { cast, castBlocker } from '../src/world/combat.js';
+import { barrageOf } from '../src/world/melee.js';
 import { computeStats } from '../src/core/stats.js';
 import { JOBS } from '../src/data/jobs.js';
 import { SKILLS, skillAt } from '../src/data/skills.js';
@@ -134,10 +135,14 @@ export function makeRun(job, level, { n = 1, main = null, fight = false, mpFree 
     w, c, dummies, t: 0, died: false, diedAt: null, last: null, casts: {},
     damage: () => dummies.reduce((a, m) => a + (1e9 - Math.max(0, m.hp)), 0),
     tick: () => seeded(() => {
-      // Keep facing the targets, in reach (a step back or a dash can't carry them off).
-      if (w.body.x > dummies[0].x - 20) w.body.x = dummies[0].x - 40;
-      if (w.body.x < dummies[0].x - 170) w.body.x = dummies[0].x - 120;
-      w.body.facing = 1;
+      // Keep facing the targets, in reach (a step back or a dash can't carry them off). (The Endless
+      // Blade Dance blinks her through them and back: she turns to face them herself.)
+      const blinking = w.barrage?.kind === 'shinobi' && Math.abs(w.body.x - dummies[0].x) < 120;
+      if (!blinking) {
+        if (w.body.x > dummies[0].x - 20) w.body.x = dummies[0].x - 40;
+        if (w.body.x < dummies[0].x - 170) w.body.x = dummies[0].x - 120;
+        w.body.facing = 1;
+      }
       if (!fight) {
         for (const m of dummies) {
           m.x = Math.max(m.x, x0 + 40);
@@ -172,12 +177,12 @@ export function makeRun(job, level, { n = 1, main = null, fight = false, mpFree 
         // like Yokai Rally, is recast when it runs out.)
         if (buffs.includes(want) && (!ok || !(c.buffs[want]?.until > w.now))) tried[want] = w.now + (ok ? (w.rally?.until ?? w.now + 20) - w.now : 5);
       }
-      // Endless Fox-Fire is played the way it's meant to be: hold the barrage until the fox moon is
-      // fully charged, let go for its throw, and hold again.
-      const barrage = c.skills.foxbarrage ? skillAt('foxbarrage', c.skills.foxbarrage).barrage : null;
+      // An endless barrage (Endless Fox-Fire, Endless Blade Dance, Wild Hunt) is played the way it's
+      // meant to be: held until it's flat out (its last stage), let go for the finisher, and held again.
+      const barrage = barrageOf(w);
       if (barrage) {
         out.held = (out.held ?? 0) + DT;
-        if (out.held > barrage.full + 0.15) {
+        if (out.held > barrage.ramp + 3.3) {
           out.held = -0.1;
           input.held.delete('KeyZ');
         } else if (out.held >= 0) input.held.add('KeyZ');

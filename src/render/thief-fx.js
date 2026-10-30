@@ -77,6 +77,18 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celfoxfire', x, y + 5, { t: p * 0.6, scale: 0.16, alpha: p > 0.5 ? (1 - p) / 0.5 : 1 });
       return true;
     }
+    case 'inkbrush': {
+      // A brush stroke of ink along her path: a blink through the line, or the Endless Blade
+      // Dance's drawn cut (big), splashing ink on the ground at its end.
+      fxSprite(ctx, 'celinkbrush', x, y, { p, flip, sx: Math.max(0.35, (f.len ?? 120) / 100), sy: f.big ? 1.3 : 0.8 });
+      if (f.big) groundRing(ctx, 'celringink', x + (f.dir || 1) * 60, y + 24, p, 90);
+      return true;
+    }
+    case 'leaflaunch': {
+      // An arrow peeling off the Beastmaster's gale of leaves: a gust off the leaf.
+      fxSprite(ctx, 'celwindhit', x, y, { p, scale: 0.3 });
+      return true;
+    }
     case 'wisplaunch': {
       // A star peeling off a wisp of her wheel of fox fire: a flash of it.
       fxSprite(ctx, 'celfoxhit', x, y + 6, { p, scale: 0.32 });

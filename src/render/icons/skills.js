@@ -817,6 +817,18 @@ function beastmastery() {
   return out;
 }
 
+// Wild Hunt: three green arrows streaming forward, the Fang of the Wolf Queen cutting across
+// beside them, leaves tumbling on the wind.
+function wildhunt() {
+  const out = [...tile('mint', 'passive'), ...aura(8, 8, 6.6, '#f4fff0')];
+  out.push(...swoosh(8, 8.6, 6.4, 5.6, -150, 30, 1.2, '#bdf5d6', { ink: '#13706e' }));
+  out.push(...fang([2.6, 13.6], [13.6, 4.4], { w: 2.2 }));
+  for (const [y, x0] of [[4.2, 1.6], [7.8, 3.2], [11.6, 5.2]]) out.push(...arrow([x0, y], [x0 + 9.4, y - 0.6], { hw: 1.1, hl: 1.8, fl: '#9cf0b8' }));
+  out.push(...leaf([11.6, 13.6], [14.2, 11.2], 1.4, '#7ad860').shapes, ...leaf([2.2, 3.8], [4.4, 1.8], 1.1, '#7ad860').shapes);
+  out.push(...spark(14, 2.4, 1, '#ffffff'));
+  return out;
+}
+
 function wolfpounce() {
   const out = [...tile('indigo', 'passive'), ...aura(8, 8, 6.8, '#dce8ff', 1.2)];
   // Fine, I'll Go: the greatsword swung round in a full ring of moonlight.
@@ -1166,6 +1178,18 @@ function kunaibarrage() {
     out.push(...sword([x0 + 5, y], [x0 + 11.6, y], KUNAI));
   }
   out.push(...spark(14, 2.4, 1));
+  return out;
+}
+// Endless Blade Dance: three cuts of ink sweeping round a reverse-grip dagger, red seal-light on
+// their edges, drops of ink flicked off.
+function inkdance() {
+  const out = [...tile('inkwash', 'passive'), ...aura(8, 8, 6.6, '#ffd6c8')];
+  out.push(...swoosh(8, 8, 6.2, 5.6, -200, -40, 1.5, '#14101a', { ink: SEALRED }));
+  out.push(...swoosh(8, 8.4, 5, 4.4, 10, 150, 1.2, '#14101a', { ink: SEALRED }));
+  out.push(...sword([4.4, 11.6], [11.8, 4.2], KUNAI));
+  out.push(...swoosh(8, 8, 3.2, 2.6, 190, 300, 0.8, '#2a2230', { ink: SEALRED }));
+  out.push(S(oval(13.4, 12.8, 0.7, 0.7, 0, 8), '#14101a'), S(oval(2.6, 3.4, 0.5, 0.5, 0, 8), '#14101a'));
+  out.push(...spark(13.2, 2.8, 1.1, '#ffd6c8'));
   return out;
 }
 function explodingseal() {
@@ -1527,10 +1551,10 @@ const ART = {
   paladinmastery, aegissmite, hallowedground, divineaegis, sacredbulwark, judgment, grandverdict,
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
-  beastmastery, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
+  beastmastery, wildhunt, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
   stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
-  shinobimastery, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
+  shinobimastery, inkdance, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
   kitsunemastery, foxbarrage, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,

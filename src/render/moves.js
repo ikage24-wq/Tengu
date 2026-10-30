@@ -392,6 +392,253 @@ export const MOVES = {
     };
   },
 
+  // ---------- Endless Blade Dance (the Shinobi's barrage, world/melee.js STREAMS.shinobi) ----------
+  // A dancer with a reverse-grip blade, low and loose, never still: every cut flows out of the
+  // last on the barrage's own clock (streamFlow). Cuts land at about 0.45: a coil (to 0.2), the
+  // cut (to 0.48), the blade carried round for the next (from 0.62). Stages:
+  //   Quick cuts    stabs from the hip and a low jab, a flat slice
+  //   Spinning cuts a full turn cutting all round, a rising cut off the toes, a hook-kick cut
+  //   Ink Blink     she melts into ink and steps out on the far side of them, cutting as she turns
+  //   Clone Storm   two-handed X-cuts and a great overhead brush cut, her ink clones beside her
+  inkjab(p) {
+    const c = ease(seg(p, 0, 0.2));
+    const f = ease(seg(p, 0.2, 0.45));
+    const b = seg(p, 0.62, 1);
+    return {
+      weapon: 92, arm: lerp(lerp(80, 50, c), 104, f) - 30 * b, lunge: -2 * c + 9 * f * (1 - 0.7 * b), tilt: 0.14 * f * (1 - b),
+      rig: (r) => { r.tx = f > 0.4 ? 2 : -1; lungeLegs(r, 1 + 0.3 * f); r.backArm = [q(-4 * f), -2]; r.cape = -3; if (f > 0.3) strikeFace(r); },
+    };
+  },
+  inkjab2(p) {
+    const c = ease(seg(p, 0, 0.2));
+    const f = ease(seg(p, 0.2, 0.45));
+    const b = seg(p, 0.62, 1);
+    return {
+      weapon: 80, arm: lerp(lerp(60, 30, c), 75, f) - 15 * b, lunge: -3 * c + 10 * f * (1 - 0.6 * b), tilt: 0.24 * f * (1 - b) + 0.06,
+      rig: (r) => { r.squat = 2; r.tx = 2; lungeLegs(r, 1.5); r.backArm = [-6, 0]; r.hairLift = -1; r.cape = -5; strikeFace(r); },
+    };
+  },
+  inkslice(p) {
+    const c = ease(seg(p, 0, 0.2));
+    const f = ease(seg(p, 0.2, 0.48));
+    const b = seg(p, 0.62, 1);
+    return {
+      weapon: lerp(lerp(60, -60, c), 165, f) - 70 * b, arm: lerp(lerp(90, 130, c), 55, f) + 35 * b, lunge: 6 * f * (1 - 0.6 * b), tilt: -0.06 * c + 0.12 * f * (1 - b), trail: p > 0.18 && p < 0.6,
+      rig: (r) => { r.tx = f > 0.5 ? 2 : -1; lungeLegs(r, 1.2); r.backArm = [q(3 - 8 * f), -3]; r.hairLift = -1; r.cape = -4; if (f > 0.2) strikeFace(r); },
+    };
+  },
+  inkspin(p) {
+    const a = ease(seg(p, 0.1, 0.62));
+    const b = seg(p, 0.7, 1);
+    return {
+      weapon: 95 + a * 360, arm: 98 - 20 * b, orbit: true, turn: a > 0.25 && a < 0.75 ? -1 : 1, lift: 5 * bump(p, 0.12, 0.66), lunge: 2 * a * (1 - b), trail: p > 0.1 && p < 0.66,
+      rig: (r) => { r.squat = p < 0.1 || p > 0.7 ? 2 : 0; if (p >= 0.1 && p <= 0.7) { r.frontLeg = [2, -2, 20]; r.backLeg = [-2, 0, -10]; } else wideLegs(r); r.backArm = [-8, -3]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
+    };
+  },
+  inkrise(p) {
+    const c = ease(seg(p, 0, 0.22));
+    const f = ease(seg(p, 0.22, 0.48));
+    const b = seg(p, 0.64, 1);
+    return {
+      weapon: lerp(lerp(120, 165, c), -70, f) + 120 * b, arm: lerp(lerp(45, 30, c), 172, f) - 110 * b, lift: 9 * bump(p, 0.22, 0.85), lunge: 3 * f * (1 - b), tilt: -0.12 * f * (1 - b), trail: p > 0.2 && p < 0.6,
+      rig: (r) => { if (p > 0.3 && p < 0.75) tuck(r); else { r.squat = 2; wideLegs(r); } r.backArm = [-3, 3]; r.hairLift = -3; r.cape = -6; if (f > 0.2) strikeFace(r); },
+    };
+  },
+  inkhook(p) {
+    const c = ease(seg(p, 0, 0.22));
+    const k = bump(p, 0.2, 0.62);
+    const f = ease(seg(p, 0.25, 0.48));
+    const b = seg(p, 0.66, 1);
+    return {
+      turn: p > 0.12 && p < 0.38 ? -1 : 1, weapon: lerp(lerp(40, 150, c), -100, f) + 140 * b, arm: lerp(lerp(70, 35, c), 160, f) - 100 * b, lift: 4 * k, tilt: -0.2 * k, lunge: 4 * k,
+      rig: (r) => { r.frontLeg = k > 0.3 ? [q(3 + 4 * k), q(-6 * k), q(60 + 30 * k)] : [2, 0, 4]; r.backLeg = [-2, 0, -6]; r.backArm = [-5, -4]; r.hairLift = -2; r.cape = -6; if (k > 0.3) strikeFace(r); },
+    };
+  },
+  // Ink Blink: gone into ink at the start (the world moves her through the line), out of it on the
+  // far side already turned, cutting down through them.
+  inkblink(p) {
+    const f = ease(seg(p, 0.24, 0.48));
+    const b = seg(p, 0.64, 1);
+    return {
+      weapon: lerp(-90, 160, f) - 60 * b, arm: lerp(170, 45, f) + 40 * b, lunge: 4 * f * (1 - b), tilt: 0.16 * f * (1 - b), lift: 4 * (1 - seg(p, 0.1, 0.3)), trail: p > 0.22 && p < 0.6,
+      fade: 1 - seg(p, 0.08, 0.24),
+      rig: (r) => { if (p < 0.24) tuck(r); else { r.squat = 2; lungeLegs(r, 1.4); } r.backArm = [-7, -2]; r.hairLift = -3; r.cape = -6; strikeFace(r); },
+    };
+  },
+  inkblink2(p) {
+    const f = ease(seg(p, 0.24, 0.48));
+    const b = seg(p, 0.64, 1);
+    return {
+      turn: p < 0.3 ? -1 : 1, weapon: lerp(40, 175, f) - 80 * b, arm: lerp(100, 40, f) + 50 * b, lunge: 5 * f * (1 - b), tilt: 0.1 * f * (1 - b), trail: p > 0.22 && p < 0.6,
+      fade: 1 - seg(p, 0.08, 0.24),
+      rig: (r) => { r.squat = 2; wideLegs(r); r.backArm = [5, -6]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
+    };
+  },
+  // Clone Storm: a quick X, two cuts crossing (the second lands the blow), arms flung wide after.
+  inkstorm(p) {
+    const f1 = ease(seg(p, 0.05, 0.25));
+    const f2 = ease(seg(p, 0.28, 0.48));
+    const b = seg(p, 0.64, 1);
+    return {
+      weapon: p < 0.27 ? lerp(-80, 150, f1) : lerp(150, -40, f2) + 90 * b, arm: p < 0.27 ? lerp(165, 40, f1) : lerp(40, 150, f2) - 70 * b, lunge: 5 * f2 * (1 - b) + 2 * f1, tilt: 0.12 * f1 - 0.1 * f2 * (1 - b), trail: p > 0.05 && p < 0.55,
+      rig: (r) => { r.squat = 1; lungeLegs(r, 1.3); r.backArm = [q(-8 + 12 * f2), q(-6 + 4 * f2)]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
+    };
+  },
+  // ...and the great overhead brush cut: up on her toes, the blade raised high behind, then brought
+  // down through everything in front, landing low.
+  inkstorm2(p) {
+    const c = ease(seg(p, 0, 0.26));
+    const f = ease(seg(p, 0.26, 0.5));
+    const b = seg(p, 0.7, 1);
+    return {
+      weapon: lerp(lerp(60, -130, c), 175, f) - 60 * b, arm: lerp(lerp(90, 185, c), 30, f) + 50 * b, lift: 6 * c * (1 - f), lunge: -2 * c + 8 * f * (1 - 0.6 * b), tilt: -0.1 * c + 0.26 * f * (1 - b), trail: p > 0.24 && p < 0.6,
+      rig: (r) => { if (f > 0.5) { r.squat = 3; wideLegs(r); } else if (c > 0.5) { r.frontLeg = [2, -1, 4]; r.backLeg = [-2, -1, -4]; } r.backArm = [q(-4 - 4 * f), -6]; r.hairLift = -3; r.cape = q(-8 * f - 2); strikeFace(r); },
+    };
+  },
+  inkaircut(p) {
+    const f = ease(seg(p, 0.15, 0.48));
+    const b = seg(p, 0.64, 1);
+    return {
+      weapon: lerp(-60, 150, f) - 40 * b, arm: lerp(170, 50, f) + 30 * b, tilt: 0.2 * f * (1 - b), trail: p > 0.12 && p < 0.6,
+      rig: (r) => { tuck(r); r.backArm = [-6, -4]; r.hairLift = -3; r.cape = -6; strikeFace(r); },
+    };
+  },
+  inkairspin(p) {
+    const a = ease(seg(p, 0.06, 0.6));
+    return {
+      weapon: 95 + a * 360, arm: 100, orbit: true, turn: a > 0.25 && a < 0.75 ? -1 : 1, tilt: 0.1, trail: p > 0.06 && p < 0.62,
+      rig: (r) => { tuck(r); r.backArm = [-8, -3]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
+    };
+  },
+  // The drawn cut that ends the dance: she drops low with the blade sheathed along her forearm,
+  // holds it a breath, then she's through the line in one cut and stands frozen past them, blade out,
+  // as the ink lands behind her.
+  inkdraw(p) {
+    const c = ease(seg(p, 0, 0.3));
+    const hold = p >= 0.3 && p < 0.5;
+    const f = ease(seg(p, 0.5, 0.6));
+    const b = ease(seg(p, 0.82, 1));
+    const shiver = hold ? Math.sin(p * 220) * 0.6 : 0;
+    return {
+      weapon: p < 0.5 ? lerp(25, 172, c) + shiver : lerp(172, 88, f) - 60 * b, arm: p < 0.5 ? lerp(60, 15, c) : lerp(15, 92, f) - 30 * b, lunge: -3 * c * (1 - f) + 10 * f * (1 - b), tilt: 0.12 * c + 0.2 * f * (1 - b), trail: p > 0.5 && p < 0.66,
+      rig: (r) => { r.squat = p < 0.82 ? 3 : 1; if (f > 0) lungeLegs(r, 1.8); else wideLegs(r); r.backArm = [q(3 - 9 * f), q(-1 - 3 * f)]; r.hairLift = f > 0 ? -3 : 0; r.cape = q(-8 * f); r.eyes = hold ? 'half' : null; if (f > 0) strikeFace(r); },
+    };
+  },
+
+  // ---------- Wild Hunt (the Beastmaster's barrage, world/melee.js STREAMS.beastmaster) ----------
+  // Light, quick and wild, the bow never still: shots loose at about 0.4 (the draw from 0.1, the
+  // loose at 0.4, the bow coming back for the next from 0.6). Stages:
+  //   Quick draw   snap shots, standing and from a crouch
+  //   Run and gun  a skipping shot, a turn and shot out of it, a slide on one knee
+  //   Duet         Snow wolf cuts beside her: shots canted flat, leaning back to back with nothing
+  //   Gale         the wind under her: shots loosed off the gale of leaves wheeling round her
+  bmsnap(p) {
+    const r0 = ease(seg(p, 0, 0.1));
+    const pull = ease(seg(p, 0.08, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: lerp(-20, 0, r0) - 6 * snap * (1 - back), arm: lerp(80, 95, r0) + 4 * snap * (1 - back), pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lunge: -2 * snap * (1 - back), tilt: -0.05 * snap * (1 - back),
+      rig: (r) => { r.backArm = snap > 0 ? [q(-7 + 5 * back), -3] : [q(2 - 6 * pull), -3]; r.frontLeg = [2.6, 0, 2]; r.backLeg = [-3, 0, -6]; r.cape = -2; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmsnap2(p) {
+    const pull = ease(seg(p, 0.08, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 8 - 6 * snap * (1 - back), arm: 88 + 4 * snap * (1 - back), pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lunge: -3 * snap * (1 - back), tilt: 0.08,
+      rig: (r) => { r.squat = 2; r.frontLeg = [3.4, 0, 8]; r.backLeg = [-3, 1, -30]; r.backArm = snap > 0 ? [q(-7 + 5 * back), -2] : [q(2 - 6 * pull), -2]; r.hairLift = -1; r.cape = -3; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmskip(p) {
+    const hop = bump(p, 0.05, 0.85);
+    const pull = ease(seg(p, 0.1, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 6 * hop - 6 * snap * (1 - back), arm: 92, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lift: 10 * hop, lunge: 2 * hop, tilt: -0.06 * hop,
+      rig: (r) => { if (hop > 0.3) { r.air = true; r.frontLeg = [3, -3, 24]; r.backLeg = [-3, -5, -40]; } r.backArm = snap > 0 ? [q(-7 + 5 * back), -3] : [q(2 - 6 * pull), -3]; r.hairLift = -2; r.cape = -5; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmspin(p) {
+    const s = seg(p, 0.02, 0.3);
+    const pull = ease(seg(p, 0.22, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      turn: s > 0.25 && s < 0.75 ? -1 : 1, weapon: p < 0.3 ? -30 : -6 * snap * (1 - back), arm: p < 0.3 ? 140 : 95, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lift: 4 * bump(p, 0, 0.4),
+      rig: (r) => { r.frontLeg = p < 0.3 ? [2, -3, 30] : [2.6, 0, 2]; r.backLeg = [-2, 0, -6]; r.backArm = snap > 0 ? [q(-7 + 5 * back), -3] : [q(2 - 6 * pull), -4]; r.hairLift = -3; r.cape = -6; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmslide(p) {
+    const slide = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.75, 1)));
+    const pull = ease(seg(p, 0.1, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 25 * slide - 6 * snap * (1 - back), arm: 88, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lunge: 6 * slide, tilt: -0.12 * slide,
+      rig: (r) => { if (slide > 0.3) { r.squat = 3; r.frontLeg = [5, 0, 30]; r.backLeg = [-4, 2, -70]; } r.backArm = snap > 0 ? [q(-7 + 5 * back), -2] : [q(2 - 6 * pull), -2]; r.hairLift = -2; r.cape = -6; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  // Duet: the bow canted flat for a quick shot, leaning out as Snow wolf cuts at her side.
+  bmhunt(p) {
+    const pull = ease(seg(p, 0.08, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 55 - 8 * snap * (1 - back), arm: 92, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lunge: 3 - 3 * snap * (1 - back), tilt: 0.1,
+      rig: (r) => { r.squat = 1; lungeLegs(r, 1.3); r.backArm = snap > 0 ? [q(-7 + 5 * back), 0] : [q(2 - 6 * pull), 0]; r.hairLift = -2; r.cape = -4; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmhunt2(p) {
+    const pull = ease(seg(p, 0.08, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: -18 - 6 * snap * (1 - back), arm: 112, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lunge: -2, tilt: -0.2 - 0.05 * snap * (1 - back),
+      rig: (r) => { r.frontLeg = [3.4, 0, 12]; r.backLeg = [-2, 0, -16]; r.backArm = snap > 0 ? [q(-7 + 5 * back), -5] : [q(2 - 6 * pull), -5]; r.hairLift = -1; r.cape = 2; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  // Gale: the wind lifts her onto her toes and bears her up a little; the bow swept out flat and
+  // an arrow loosed off the wheel of leaves, then a full turn with the wind and another.
+  bmgale(p) {
+    const pull = ease(seg(p, 0.08, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: 70 - 10 * snap * (1 - back), arm: 100, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lift: 5 + 2 * Math.sin(p * Math.PI * 2), tilt: -0.1,
+      rig: (r) => { r.air = true; r.frontLeg = [3, -3, 30]; r.backLeg = [-2, -1, -20]; r.backArm = snap > 0 ? [q(-7 + 5 * back), -4] : [q(2 - 6 * pull), -4]; r.hairLift = -3; r.cape = -8; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmgale2(p) {
+    const s = seg(p, 0.02, 0.32);
+    const pull = ease(seg(p, 0.24, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      turn: s > 0.25 && s < 0.75 ? -1 : 1, weapon: p < 0.32 ? -60 : 10 - 6 * snap * (1 - back), arm: p < 0.32 ? 160 : 98, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4), lift: 6 + 3 * bump(p, 0, 0.5),
+      rig: (r) => { r.air = true; r.frontLeg = [2, -4, 40]; r.backLeg = [-2, -2, -30]; r.backArm = snap > 0 ? [q(-7 + 5 * back), -4] : [q(2 - 6 * pull), -6]; r.hairLift = -3; r.cape = -8; if (snap > 0 && back < 0.4) strikeFace(r); },
+    };
+  },
+  bmairshot(p) {
+    const pull = ease(seg(p, 0.06, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    return {
+      weapon: 32 - 6 * snap, arm: 58, tilt: 0.35 - 0.1 * snap, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4),
+      rig: (r) => { tuck(r); r.backArm = snap > 0 ? [-4, 0] : [q(2 - 6 * pull), -1]; r.hairLift = -2; r.cape = -5; if (snap > 0) strikeFace(r); },
+    };
+  },
+  bmairspin(p) {
+    const s = seg(p, 0.02, 0.3);
+    const pull = ease(seg(p, 0.22, 0.38));
+    const snap = seg(p, 0.4, 0.5);
+    return {
+      turn: s > 0.25 && s < 0.75 ? -1 : 1, weapon: p < 0.3 ? -40 : 34 - 6 * snap, arm: p < 0.3 ? 150 : 60, tilt: 0.3, pull: snap > 0 ? 0 : pull, nock: snap === 0, twang: twang(p, 0.4),
+      rig: (r) => { tuck(r); r.backArm = snap > 0 ? [-4, 0] : [q(2 - 6 * pull), -3]; r.hairLift = -3; r.cape = -7; if (snap > 0) strikeFace(r); },
+    };
+  },
+
   // A full bow draw: pull the string back slowly, then release with a snap of recoil.
   draw(p) {
     // Swing the bow up from across the body to upright, draw and hold the aim, then loose.
@@ -2358,7 +2605,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
-  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, crossfin: 0.55, whirlfin: 0.6, cutflip: 0.5, heavethrow: 0.5, flashjump: 0.3, shadowrun: 0.3, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
+  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, crossfin: 0.55, whirlfin: 0.6, inkdraw: 0.6, cutflip: 0.5, heavethrow: 0.5, flashjump: 0.3, shadowrun: 0.3, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
   shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
   onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 4.2,
@@ -2519,7 +2766,8 @@ export function streamFlow(mv, flow, p, dur) {
   const h = flow.heat;
   const hips = Math.sin(t * 4.4);
   const roll = Math.sin(t * 2.2 + 0.8);
-  const hover = streamHover(h, t);
+  // (Only Endless Fox-Fire floats; the others keep their feet.)
+  const hover = flow.float === false ? 0 : streamHover(h, t);
   const floating = hover > 1;
   return {
     ...mv,

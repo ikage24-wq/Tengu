@@ -1834,14 +1834,19 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   const figures = [];
   let n = 0;
   let since = null;
-  for (let i = 0; i < 7 * 60; i++) {
-    updateWorld(w, DT, i === 0 ? press('KeyZ') : hold());
-    if (w.barrage && w.barrage.n > n) stars.push(w.now);
-    n = w.barrage?.n ?? 0;
-    if (w.pose?.since !== since && streaming()) figures.push({ at: w.now, kind: w.pose.kind, flow: w.pose.flow });
-    since = w.pose?.since;
-    assert.ok(i < 2 || streaming(), `always in a figure while held (${w.now.toFixed(2)}: ${w.pose?.kind})`);
-  }
+  // (Fixed dice, so every figure in each stage's pool comes up.)
+  let seed = 11;
+  dice(0, () => {
+    Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 7 * 60; i++) {
+      updateWorld(w, DT, i === 0 ? press('KeyZ') : hold());
+      if (w.barrage && w.barrage.n > n) stars.push(w.now);
+      n = w.barrage?.n ?? 0;
+      if (w.pose?.since !== since && streaming()) figures.push({ at: w.now, kind: w.pose.kind, flow: w.pose.flow });
+      since = w.pose?.since;
+      assert.ok(i < 2 || streaming(), `always in a figure while held (${w.now.toFixed(2)}: ${w.pose?.kind})`);
+    }
+  });
   const start = stars[0];
   const within = (list, a, b) => list.filter((t) => (t.at ?? t) >= start + a && (t.at ?? t) < start + b);
   assert.ok(within(stars, 0, 1).length >= 4, `a quick stream from the start (${within(stars, 0, 1).length})`);
@@ -3256,4 +3261,99 @@ test("an Archer's air leap springs her up and back and looses a shot from the to
   const vy = w.body.vy;
   tap(w, ['Space']);
   assert.ok(w.body.vy >= vy, 'no air jump');
+});
+
+// ---------- The other endless barrages: the Shinobi's blade dance, the Beastmaster's wild hunt ----------
+// Holds attack for `secs` with fixed dice, noting the figures she dances.
+function holdBarrage(w, secs, seed = 11) {
+  const figures = [];
+  let since = null;
+  dice(0, () => {
+    Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < secs * 60; i++) {
+      w.char.mp = 9999;
+      updateWorld(w, DT, i === 0 ? press('KeyZ') : { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+      if (w.pose?.since !== since && w.pose?.flow) figures.push({ at: w.now, kind: w.pose.kind, heat: w.pose.flow.heat, x: w.body.x });
+      since = w.pose?.since;
+    }
+  });
+  return figures;
+}
+
+test('Endless Blade Dance: quick cuts, spinning cuts, ink blinks through the line, then her ink clones join; a drawn cut ends it', async () => {
+  const { STREAMS, inkStorm } = await import('../src/world/melee.js');
+  const w = thiefPath('shinobi');
+  learn(w, 'inkdance');
+  const hp = w.mobs.reduce((n, m) => n + m.hp, 0);
+  const figures = holdBarrage(w, 6.5);
+  const kinds = new Set(figures.map((f) => f.kind));
+  for (const st of STREAMS.shinobi.stages.slice(0, 4)) assert.ok(st.figures.filter((k) => kinds.has(k)).length >= 2, `dances the stage from ${st.at}`);
+  assert.ok(figures.filter((f) => f.at < figures[0].at + 0.8).every((f) => ['inkjab', 'inkjab2', 'inkslice'].includes(f.kind)), 'opens on quick cuts');
+  assert.ok(figures.every((f, i) => !i || f.kind !== figures[i - 1].kind), 'never the same figure twice running');
+  for (const k of kinds) assert.ok(MOVES[k], `${k} is drawn`);
+  // Blinks carry her through the line, back and forth.
+  const sides = new Set(figures.filter((f) => f.kind.startsWith('inkblink')).map((f) => Math.sign(f.x - w.mobs[0].x)));
+  assert.equal(sides.size, 2, 'blinks out on both sides of them');
+  assert.ok(inkStorm(w), 'flat out, her ink clones are out');
+  assert.ok(w.phantom?.clones, 'and they dance beside her');
+  assert.ok(w.mobs.reduce((n, m) => n + m.hp, 0) < hp, 'the cuts land');
+  // Letting go: the drawn cut, a brush stroke of ink through the line.
+  updateWorld(w, DT, idle);
+  assert.equal(w.pose.kind, 'inkdraw');
+  assert.ok(w.pose.fin);
+  assert.ok(w.fx.some((f) => f.kind === 'inkbrush' && f.big), 'a giant brush stroke of ink');
+  assert.equal(inkStorm(w), false, 'the clones go with it');
+});
+
+test('Wild Hunt: quick shots, shooting on the move, Snow wolf joins the hunt, a gale of leaves; a gale arrow and her moon end it', async () => {
+  const { STREAMS } = await import('../src/world/melee.js');
+  const w = archer('beastmaster');
+  learn(w, 'wildhunt');
+  run(w, 1);
+  const acts = [];
+  const figures = [];
+  let since = null;
+  let seed = 11;
+  dice(0, () => {
+    Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 6.5 * 60; i++) {
+      updateWorld(w, DT, i === 0 ? press('KeyZ') : { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+      if (w.pose?.since !== since && w.pose?.flow) figures.push({ at: w.now, kind: w.pose.kind, heat: w.pose.flow.heat });
+      since = w.pose?.since;
+      if (w.pets.snow.act?.duet && !acts.includes(w.pets.snow.act)) acts.push(w.pets.snow.act);
+    }
+  });
+  const kinds = new Set(figures.map((f) => f.kind));
+  // Every stage comes up, each with a mix of its figures.
+  for (const st of STREAMS.beastmaster.stages.slice(0, 4)) assert.ok(st.figures.filter((k) => kinds.has(k)).length >= 2, `plays the stage from ${st.at}`);
+  for (const k of kinds) assert.ok(MOVES[k], `${k} is drawn`);
+  assert.ok(figures.every((f, i) => !i || f.kind !== figures[i - 1].kind), 'never the same figure twice running');
+  // Snow wolf only joins from the Duet on, then keeps hunting with her.
+  const duet = figures.find((f) => f.heat >= 0.9).at;
+  assert.ok(acts.length >= 2, `Snow wolf hunts beside her (${acts.length})`);
+  assert.ok(acts.every((a) => a.t0 >= duet - 0.05), 'once the Duet starts');
+  // Flat out, her arrows peel off the gale of leaves.
+  assert.ok(w.fx.some((f) => f.kind === 'leaflaunch') || figures.at(-1).heat > 1.25, 'the gale');
+  assert.ok(figures.at(-1).heat > 1.5, 'still building');
+  // Letting go: the gale arrow, and Snow wolf brings the moon down.
+  updateWorld(w, DT, idle);
+  assert.equal(w.pose.kind, 'galeshot');
+  assert.ok(w.pose.fin);
+  assert.equal(w.pets.snow.act?.kind, 'cast', 'her moon');
+});
+
+test('the endless barrages need their passive and their weapon, and keep the no-squash rule', async () => {
+  const { barrageOf } = await import('../src/world/melee.js');
+  const sh = thiefPath('shinobi');
+  assert.equal(barrageOf(sh), null, 'not without the passive');
+  learn(sh, 'inkdance');
+  assert.ok(barrageOf(sh));
+  const bm = archer('beastmaster');
+  assert.equal(barrageOf(bm), null);
+  learn(bm, 'wildhunt');
+  assert.ok(barrageOf(bm));
+  // A Kitsune's passive does nothing for a Shinobi.
+  const sh2 = thiefPath('shinobi');
+  learn(sh2, 'foxbarrage');
+  assert.equal(barrageOf(sh2), null);
 });

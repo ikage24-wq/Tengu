@@ -4683,6 +4683,66 @@
   E.ringspiritbig = big(E.ringspirit, 2.6);
   E.lanternbig = big(E.lantern, 1.5);
 
+  // ---------- Endless barrages (the Shinobi's blade dance, the Beastmaster's wild hunt) ----------
+  // A brush stroke of ink laid straight along her path: when she blinks through the line, and as
+  // the drawn cut that ends the dance. The brush lands heavy, drags out to the right with its
+  // bristles splitting into dry streaks toward the tail, a thin red seal-light along its top
+  // edge, then the ink breaks into drops that fall away. Drawn heading right; (px, py) its middle.
+  E.inkbrush = {
+    w: 340, h: 120, n: 8, fps: 22, px: 170, py: 60,
+    draw(ctx, i) {
+      const x0 = 20;
+      const x1 = 320;
+      const head = [0.35, 0.8, 1, 1, 1, 1, 1, 1][i];
+      const tail = [0, 0, 0.05, 0.2, 0.38, 0.56, 0.72, 0.88][i];
+      const a = [0.95, 1, 1, 0.95, 0.85, 0.65, 0.42, 0.2][i];
+      painted(ctx, 0, 0, 340, 120, (x, y) => {
+        const u = (x - x0) / (x1 - x0);
+        if (u < tail || u > head) return [0, 0];
+        const k = (u - tail) / Math.max(0.01, head - tail);
+        // Heavy where the brush lands, tapering to a point at the head.
+        const th = 10 + 46 * Math.pow(Math.sin(Math.PI * Math.min(1, 0.15 + k * 0.9)), 0.6) * (1 - 0.45 * u);
+        const mid = 60 + Math.sin(u * 3.2) * 6;
+        const v = (y - mid) / th;
+        if (v < -0.6 || v > 0.6) return [0, 0];
+        const edge = sstep(0.5, 0.34, Math.abs(v) + (noise(u * 34, v * 4) - 0.5) * 0.16);
+        const streak = noise(u * 4 + i * 0.1, (v + 0.5) * 24);
+        const dry = sstep(0.6, 0, k) * 0.85;
+        const ink = edge * sstep(dry * 0.85, dry * 0.85 + 0.12, streak);
+        return [0.22 + Math.abs(v) * 0.9 + streak * 0.2, ink * a];
+      }, INKR, 1.5);
+      if (i >= 1 && i <= 5) {
+        const pts = [];
+        for (let k = 0; k <= 24; k++) {
+          const u = tail + (head - tail) * (k / 24);
+          const kk = (u - tail) / Math.max(0.01, head - tail);
+          pts.push([x0 + (x1 - x0) * u, 60 + Math.sin(u * 3.2) * 6 - 0.3 * (10 + 46 * Math.pow(Math.sin(Math.PI * Math.min(1, 0.15 + kk * 0.9)), 0.6) * (1 - 0.45 * u))]);
+        }
+        glow(ctx, pts, 0.8, SEAL, a * 0.7);
+      }
+      if (i >= 3) {
+        const R2 = rng(1700 + i);
+        for (let j = 0; j < 9; j++) {
+          const dx = x0 + (x1 - x0) * (0.1 + R2() * 0.85);
+          const dy = 60 + (R2() - 0.4) * 30 + (i - 3) * (5 + R2() * 6);
+          const rr = 1.8 + R2() * 3.5 * (1 - i / 10);
+          painted(ctx, dx - rr - 2, dy - rr - 2, rr * 2 + 4, rr * 2 + 4, (x, y) => [0.3, sstep(1, 0.7, Math.hypot(x - dx, y - dy) / rr) * a], INKR, 1);
+        }
+      }
+    },
+  };
+  // A leaf caught in the gale, looping: it tumbles end over end on a little curl of wind (the
+  // Beastmaster's wheel of leaves is a ring of these).
+  E.leafwisp = {
+    w: 90, h: 90, n: 8, fps: 14, px: 45, py: 45, loop: true,
+    draw(ctx, i) {
+      const t = (i / 8) * TAU;
+      curl(ctx, PAL.wind, 45, 45, 30, t + 1.2, 1.3, 5);
+      leaf(ctx, 45 + Math.cos(t) * 4, 45 + Math.sin(t) * 3, 16, t + 0.6);
+      sparkle(ctx, PAL.wind, 45 - Math.cos(t) * 22, 45 - Math.sin(t) * 16, 4, t);
+    },
+  };
+
   // ---------- Movement bursts (the Thief's flash jump and dash, the archers' air leap) ----------
   // A burst of speed in the path's own colours: a pop of light where she kicks off the air, a ring
   // of it standing up across her path like a sound barrier, a crescent swoosh and speed lines

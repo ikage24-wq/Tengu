@@ -2,7 +2,7 @@
 
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, phantom, shadowClones, inForm, hasFaith, thiefSchool } from '../world/melee.js';
+import { gaugeOf, phantom, shadowClones, inForm, hasFaith, thiefSchool, inkStorm } from '../world/melee.js';
 import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
@@ -257,7 +257,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
-  if (!world.dead && (phantom(world) || shadowClones(world))) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
+  if (!world.dead && (phantom(world) || shadowClones(world) || inkStorm(world))) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
   // A Thief darting leaves violet afterimages of herself along the way, fading fast.
   drawAfterimages(ctx, world, look, gear, cam, heroState, time);
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
@@ -281,7 +281,7 @@ export function drawWorld(ctx, world, viewCam, time) {
     // In a form the aura stays at its fullest.
     const power = gauge ? [gauge, inForm(world) ? 1 : (world[gauge] ?? 0) / 100] : null;
     // (Floating in Endless Fox-Fire's Ascension, the aura rises with her.)
-    const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0) - (p.flow ? streamHover(p.flow.heat, p.flow.t0 + (p.progress ?? 0) * (p.dur ?? 0)) : 0);
+    const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0) - (p.flow && p.flow.float !== false ? streamHover(p.flow.heat, p.flow.t0 + (p.progress ?? 0) * (p.dur ?? 0)) : 0);
     // A form draws the whole aura larger.
     const auraScale = inForm(world) ? 1.4 : 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
@@ -356,6 +356,8 @@ const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 
 const GHOST_LIFE = 0.24;
 // The Shinobi's afterimages are ink, the Kitsune's blue fox fire.
 const GHOST_TINT = { shadow: '#6a4ec8', ink: '#1c1624', fox: '#3a6ee0' };
+// The endless barrages' speed blur: blue fox fire, ink, the green of the wind.
+const BLUR_TINT = { kitsune: '#3a6ee0', shinobi: '#1c1624', beastmaster: '#2fae7c' };
 function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   const g = (feel.ghosts ??= []);
   const b = world.body;
@@ -366,7 +368,7 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   // fire on top of her, more often, longer and brighter the further the barrage has built, so flat
   // out her arms are a smear of hands and stars. They drift back off her a little as they fade.
   const heat = world.pose?.flow?.heat ?? 0;
-  if (heat > 0.35 && (!last || time - last.at >= 0.075 - 0.03 * Math.min(1.6, heat) / 1.6)) g.push({ x: b.x, y: b.y, at: time, state, tint: GHOST_TINT.fox, blur: heat, dir: b.facing });
+  if (heat > 0.35 && (!last || time - last.at >= 0.075 - 0.03 * Math.min(1.6, heat) / 1.6)) g.push({ x: b.x, y: b.y, at: time, state, tint: BLUR_TINT[world.barrage?.kind] ?? GHOST_TINT.fox, blur: heat, dir: b.facing });
   while (g.length && (time - g[0].at > (g[0].blur ? 0.1 + 0.1 * g[0].blur : GHOST_LIFE) || time < g[0].at)) g.shift();
   for (const k of g) {
     const life = k.blur ? 0.1 + 0.1 * k.blur : GHOST_LIFE;
@@ -386,6 +388,8 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
 function drawFoxWheel(ctx, world, hx, hy, time, layer) {
   const run = world.barrage ?? world.wheelGone;
   if (!run || run.heat == null) return;
+  if (run.kind === 'beastmaster') return drawLeafWheel(ctx, world, run, hx, hy, time, layer);
+  if (run.kind && run.kind !== 'kitsune') return;
   const fade = world.barrage ? 1 : 1 - (world.now - run.goneAt) / 0.35;
   if (fade <= 0) return;
   const t = (world.barrage ? world.now : run.goneAt) - run.since;
@@ -417,6 +421,28 @@ function drawFoxWheel(ctx, world, hx, hy, time, layer) {
   }
 }
 
+// Wild Hunt's gale (the Beastmaster at full tilt, heat 1.25 on): leaves tumbling round her on the
+// wind at chest height, on the same wheel as Endless Fox-Fire's (world/foxwheel.js, never rising),
+// a whirl of wind turning at her feet; her arrows peel off the leaf swinging toward them. When
+// she lets go the leaves scatter on the wind.
+function drawLeafWheel(ctx, world, run, hx, hy, time, layer) {
+  const on = Math.min(1, Math.max(0, (run.heat - 1.25) / 0.15));
+  const fade = (world.barrage ? 1 : 1 - (world.now - run.goneAt) / 0.4) * on;
+  if (fade <= 0) return;
+  const t = (world.barrage ? world.now : run.goneAt) - run.since;
+  const spread = 1 + (world.barrage ? 0 : (world.now - run.goneAt) * 5);
+  const dir = world.body.facing;
+  const shape = wheelShape(run.heat, t, false);
+  if (layer === 'back') fxSprite(ctx, 'celwindspin', hx, hy - 4, { t: time * 1.6, scale: 0.5, sy: 0.3, alpha: 0.75 * fade });
+  for (const w of wheelWisps(run.heat, t, dir, false)) {
+    if (w.front !== (layer === 'front')) continue;
+    for (let j = 3; j >= 0; j--) {
+      const at = j ? wheelWisps(run.heat, t - j * 0.025, dir, false)[w.i] : w;
+      fxSprite(ctx, 'celleafwisp', hx + at.x * spread * 1.15, hy + shape.cy + (at.y - shape.cy) * spread, { t: time * 1.2 + w.i * 0.23, flip: w.i % 2 === 1, scale: 0.34 * (1 - j * 0.16), alpha: fade * (j ? 0.35 * (1 - j / 4) : 1) });
+    }
+  }
+}
+
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
 function drawPhantom(ctx, world, look, gear, x, y, state) {
   const ph = world.phantom;
@@ -424,7 +450,7 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
   const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
   // Shadow Clones (full Ki): two ink clones of the Shinobi, one each side of her, inked flat black
   // with a brush-dry edge of smoke rising off them.
-  if (shadowClones(world)) {
+  if (shadowClones(world) || inkStorm(world)) {
     const t = state.time ?? 0;
     for (const [k, side] of [[0, -1], [1, 1]]) {
       const cx = x + state.facing * side * (live ? 14 : 20);

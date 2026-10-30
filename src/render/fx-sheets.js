@@ -175,6 +175,8 @@ export const FX_SHEETS = {
   celspitsplat: { w: 156, h: 157, n: 8, fps: 20, px: 71, py: 67, d: 3, loop: false },
   celringspiritbig: { of: 'celringspirit', k: 2.6 },
   cellanternbig: { of: 'cellantern', k: 1.5 },
+  celinkbrush: { w: 311, h: 77, n: 8, fps: 22, px: 155, py: 30, d: 3, loop: false },
+  celleafwisp: { w: 92, h: 91, n: 8, fps: 14, px: 46, py: 45, d: 3, loop: true },
   celleapshadow: { w: 256, h: 155, n: 7, fps: 20, px: 206, py: 78, d: 3, loop: false },
   celleapink: { w: 253, h: 148, n: 7, fps: 20, px: 206, py: 73, d: 3, loop: false },
   celleapfox: { w: 257, h: 152, n: 7, fps: 20, px: 206, py: 76, d: 3, loop: false },

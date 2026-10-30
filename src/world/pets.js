@@ -168,6 +168,27 @@ export function sendSnow(world, m, pct) {
   return true;
 }
 
+// Wild Hunt (the Beastmaster's barrage, melee.js): Snow wolf hunts with her. Whenever she's free
+// she hauls herself over to whatever the arrows are on and cuts it (no wait between, unlike Fine,
+// I'll Go), and when the Beastmaster lets go she brings the moon down on them, dropping whatever
+// lighter thing she was doing.
+export function duetSnow(world, m, pct) {
+  const s = snowOf(world);
+  if (!s || busy(s) || !alive(m)) return false;
+  s.body.facing = Math.sign(m.x - s.x) || s.body.facing;
+  sync(s);
+  if (sameLedge(s, m) && Math.abs(m.x - s.x) < 320) s.act = { kind: 'go', phase: 'dash', mob: m, from: s.x, t0: world.now, dur: 0.18 + Math.min(0.22, Math.abs(m.x - s.x) / 1200), pct, duet: true };
+  else s.act = { kind: 'flick', t0: world.now, dur: FLICK_T.dur, mob: m, pct, gauge: 3 };
+  return true;
+}
+export function duetMoon(world, m, pct) {
+  const s = snowOf(world);
+  if (!s || !alive(m) || ['leap', 'straw', 'snack'].includes(s.act?.kind)) return false;
+  s.body.facing = Math.sign(m.x - s.x) || s.body.facing;
+  s.act = { kind: 'cast', mob: m, at: [m.x, m.y], t0: world.now, dur: CAST_T.dur, pct, duet: true };
+  return true;
+}
+
 // Moonfall: she plants the sword with a sigh and a beam of moonlight crashes down on `m`, however
 // far off it is.
 export function moonfall(world, m, pct) {

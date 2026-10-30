@@ -856,14 +856,15 @@ function drawFx(ctx, f, cam, time) {
       }
       // A crit: the shared burst, but the warriors' are their own real light and fire (a big flare
       // of light for the Paladin, a white-hot burst and claws for the Berserker, a big cross of
-      // cuts and sparks for the Warrior).
+      // cuts and sparks for the Warrior), and the Shinobi's a splash of ink.
       if (f.crit) {
         if (f.path === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: 1 });
         else if (f.path === 'steel') fxSprite(ctx, 'celcross', x, y, { p, scale: 1.15, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
         else if (f.path === 'rage') {
           fxSprite(ctx, 'celhitred', x, y, { p, scale: 0.95 });
           fxSprite(ctx, 'celclaw', x, y, { p, scale: 0.55, flip: (f.dir ?? 1) < 0 });
-        } else fxSprite(ctx, 'celcrit', x, y, { p, scale: 0.75 });
+        } else if (f.path === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: 0.8, flip: (f.dir ?? 1) < 0, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
+        else fxSprite(ctx, 'celcrit', x, y, { p, scale: 0.75 });
         break;
       }
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage

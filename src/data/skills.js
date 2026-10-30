@@ -551,6 +551,16 @@ export const SKILLS = {
     desc: 'Steadier shots, more attack, and sharper aim, and Snow wolf hits harder too.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
+  // Changes her basic attack (world/melee.js barrageThrow, STREAMS.beastmaster): `from` to `to`
+  // arrows a second over `ramp` seconds of holding; from the Duet on Snow wolf cuts beside her
+  // (`wolf`, % a cut); let go and a gale arrow ends it (`finish`, growing over `full` seconds),
+  // with Snow wolf's moon crashing down on them at `moon` of its strength.
+  wildhunt: skill({
+    id: 'wildhunt', name: 'Wild Hunt', job: 'beastmaster', type: 'passive', fx: null, icon: 'wildhunt', school: 'wind', maxLevel: 10,
+    desc: 'Her basic attack becomes an endless hunt with Snow wolf: hold attack and green arrows fly faster and faster as she shoots on the move, and you can walk slowly while shooting. Soon Snow wolf joins in, cutting beside her, and at full tilt a gale of leaves wheels round her. Let go and she looses a great gale arrow through the line as Snow wolf brings the moon down on them, stronger the longer you held. Needs a bow.',
+    weapons: ['bow'],
+    at: (lv, m) => ({ passive: {}, barrage: { unit: 'arrow', pct: 48, from: 5, to: lerpf(9, 11, lv, m), ramp: 2.5, wolf: lerp(140, 240, lv, m), moon: 0.6, finish: [lerp(140, 200, lv, m), lerp(320, 460, lv, m)], full: 3 } }),
+  }),
   wolfpounce: skill({
     id: 'wolfpounce', name: "Fine, I'll Go", job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
     desc: 'Your shots sometimes make Snow wolf drag herself over to the nearest monster in front of you, hit or miss, and spin her greatsword round in a full circle of moonlight, cutting everything close.',
@@ -806,6 +816,15 @@ export const SKILLS = {
     desc: 'Steadier dagger cuts, more attack, and more critical hits.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 16, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
   }),
+  // Changes her basic attack (world/melee.js barrageThrow, STREAMS.shinobi): `from` to `to` cuts a
+  // second over `ramp` seconds of holding; let go and one drawn cut ends it (`finish`, growing
+  // over `full` seconds).
+  inkdance: skill({
+    id: 'inkdance', name: 'Endless Blade Dance', job: 'shinobi', type: 'passive', fx: null, icon: 'inkdance', school: 'ink', maxLevel: 10,
+    desc: 'Her basic attack becomes an endless dance of the blade: hold attack and the cuts never stop, faster the longer you hold, and you can walk slowly while cutting. Quick cuts become spinning cuts, then she blinks through ink from one side of them to the other, and at full tilt her ink clones join the storm. Let go and she ends it with one drawn cut, a giant brush stroke of ink through the line, stronger the longer you held. Needs a dagger.',
+    weapons: ['dagger'],
+    at: (lv, m) => ({ passive: {}, barrage: { unit: 'cut', pct: 56, from: 5, to: lerpf(9, 11, lv, m), ramp: 2.5, finish: [lerp(180, 240, lv, m), lerp(400, 540, lv, m)], full: 3 } }),
+  }),
   kunaibarrage: skill({
     id: 'kunaibarrage', name: 'Kunai Barrage', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'kunaibarrage', school: 'ink',
     desc: 'A three-part combo, one part per press: two kunai, two more, then a spinning throw of five that pins the line. Needs a dagger.',
@@ -883,7 +902,7 @@ export const SKILLS = {
     id: 'foxbarrage', name: 'Endless Fox-Fire', job: 'kitsune', type: 'passive', fx: null, icon: 'foxbarrage', maxLevel: 10,
     desc: 'Her basic attack becomes an endless barrage: hold attack and fox-fire stars fly hand over hand without stopping, faster the longer you hold, and you can walk slowly while throwing. In the air she hangs a moment and keeps throwing. Let go and she ends it with a fox-moon star through the line, stronger the longer you held. Needs a gauntlet.',
     weapons: ['gauntlet'],
-    at: (lv, m) => ({ passive: {}, barrage: { pct: 26, from: 5, to: lerpf(10, 12, lv, m), ramp: 2.5, finish: [lerp(140, 200, lv, m), lerp(320, 460, lv, m)], full: 3 } }),
+    at: (lv, m) => ({ passive: {}, barrage: { unit: 'star', pct: 26, from: 5, to: lerpf(10, 12, lv, m), ramp: 2.5, finish: [lerp(140, 200, lv, m), lerp(320, 460, lv, m)], full: 3 } }),
   }),
   foxfirefan: skill({
     id: 'foxfirefan', name: 'Fox-Fire Fan', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxfirefan', school: 'fox',
