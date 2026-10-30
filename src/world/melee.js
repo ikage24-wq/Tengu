@@ -1078,7 +1078,7 @@ export function addAim(world, n, mob = null) {
   addCharge(world, n);
 }
 // The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
-function pathOf(world) {
+export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
   if ((w === 'wand' || w === 'staff') && hasSpirit(char)) return 'spiritmage';
