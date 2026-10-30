@@ -9,7 +9,7 @@
 
 import { SKILLS } from '../data/skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
-import { learnSkill, canLearn } from '../core/character.js';
+import { learnSkill, canLearn, maxSkill } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon } from './kit.js';
 import { describeSkill } from './tooltips.js';
@@ -239,7 +239,7 @@ function details(ui, state, world, s, x, y, w, h, win) {
     box(ctx, x + 8, fy + 2, 11, 11, { fill: '#b48cff', edge: '#ffffff', r: 5.5, width: 1 });
     text(ctx, key, x + 13.5, fy + 10.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
   }
-  text(ctx, fit(ctx, hint, w - 76 - (key ? 14 : 0), 7), x + 8 + (key ? 14 : 0), fy + 10.5, { size: 7, bold: true, color: state.selectedSkill === s.id ? COLORS.accent : COLORS.muted });
+  text(ctx, fit(ctx, hint, w - (lv >= s.maxLevel ? 76 : 110) - (key ? 14 : 0), 7), x + 8 + (key ? 14 : 0), fy + 10.5, { size: 7, bold: true, color: state.selectedSkill === s.id ? COLORS.accent : COLORS.muted });
   const why = learnBlocker(char, s);
   // Mastered: a gold pill instead of a dead button.
   if (lv >= s.maxLevel) {
@@ -250,4 +250,10 @@ function details(ui, state, world, s, x, y, w, h, win) {
   }
   if (button(ui, x + w - 62, fy, 56, 16, lv ? 'Level up' : 'Learn', { enabled: open, primary: open, size: 7.5 })) learnSkill(char, s.id);
   if (!open && why && hover(ui, x + w - 62, fy, 56, 16)) tooltip(ui, [{ text: why, bold: true }]);
+  // Max: every point it can take, in one click.
+  if (button(ui, x + w - 96, fy, 30, 16, 'Max', { enabled: open, primary: open, size: 7.5 })) {
+    const n = maxSkill(char, s.id);
+    world.log(`${s.name} Lv ${char.skills[s.id]}${char.skills[s.id] < s.maxLevel ? ` (out of SP after ${n})` : ' · Mastered!'}`, '#d4cbe8');
+  }
+  if (hover(ui, x + w - 96, fy, 30, 16)) tooltip(ui, [{ text: open ? `Spend up to ${Math.min(char.sp, s.maxLevel - lv)} SP` : why ?? '', bold: true }]);
 }

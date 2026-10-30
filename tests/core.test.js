@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { expToNext, MAX_LEVEL } from '../src/core/exp.js';
 import { physicalRange, magicRange, hitChance, levelGapFactor, deathExpLoss, rollHit } from '../src/core/formulas.js';
 import {
-  createCharacter, gainExp, advanceJob, autoAssignAp, learnSkill, equipFromBag, stats, usePotion, applyDeath,
+  createCharacter, gainExp, advanceJob, autoAssignAp, learnSkill, maxSkill, equipFromBag, stats, usePotion, applyDeath,
 } from '../src/core/character.js';
 import { addItem, countItem, removeItem, STACK_MAX, sortTab, createInventory, moveItem } from '../src/core/inventory.js';
 import { makeEquip, applyScroll } from '../src/core/items.js';
@@ -124,6 +124,22 @@ test('skills: learning needs SP and the right job, and binds a hotkey', () => {
   assert.equal(learnSkill(c, 'pebble'), true);
   assert.equal(c.skills.pebble, 1);
   assert.deepEqual(c.hotkeys.KeyQ, { skill: 'pebble' });
+});
+
+test('max puts every point a skill can take in at once, stopping when SP runs out', async () => {
+  const { SKILLS } = await import('../src/data/skills.js');
+  const c = fresh();
+  c.sp = 100;
+  assert.equal(maxSkill(c, 'pebble'), SKILLS.pebble.maxLevel);
+  assert.equal(c.skills.pebble, SKILLS.pebble.maxLevel);
+  assert.equal(c.sp, 100 - SKILLS.pebble.maxLevel);
+  assert.equal(maxSkill(c, 'pebble'), 0, 'nothing more once mastered');
+  c.sp = 2;
+  const other = Object.values(SKILLS).find((s) => s.job === 'novice' && s.id !== 'pebble' && s.maxLevel > 2).id;
+  assert.equal(maxSkill(c, other), 2);
+  assert.equal(c.skills[other], 2);
+  assert.equal(c.sp, 0);
+  assert.equal(maxSkill(c, 'bladerush'), 0, 'not for another job');
 });
 
 test('equipping checks level', () => {

@@ -165,6 +165,13 @@ export function learnSkill(char, skillId) {
   return true;
 }
 
+// Puts points in until the skill is maxed or SP runs out. Returns how many went in.
+export function maxSkill(char, skillId) {
+  let n = 0;
+  while (learnSkill(char, skillId)) n++;
+  return n;
+}
+
 export const HOTKEYS = ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'Digit1', 'Digit2', 'Digit3', 'Digit4'];
 
 export function bindFreeHotkey(char, binding) {
