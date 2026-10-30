@@ -15,7 +15,9 @@ import { WEAPON_TYPES } from '../core/formulas.js';
 import { speak } from './chatter.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 import { roleThink, healerTurn, jumpNow } from './dungeon.js';
-import { COMBOS } from './melee.js';
+import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf } from './melee.js';
+import { pickTargets } from './combat.js';
+import { SKILLS } from '../data/skills.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -87,7 +89,6 @@ export function joinParty(bots, bot, world) {
   bot.session = Math.max(bot.session, 0) + between(600, 1500, bots.rng);
   bot.body = bot.body && bot.map === world.map.id ? bot.body : createBody(bot.x, groundAt(world.map, bot.x));
   bot.stats = computeStats(bot.char);
-  bot.cooldown = between(0.5, 1, bots.rng);
   bot.stuck = 0;
   bot.ai = makeAI(bot, bots.rng);
   bot.brain = { think: 0, goal: null, target: null, settled: false, still: 0, habitIn: between(4, 10, bots.rng), healIn: between(5, 10, bots.rng) };
@@ -425,51 +426,142 @@ function steerTo(bot, world, members, level = false) {
   return intent;
 }
 
-function strike(bot, m, world, rng) {
-  const ai = bot.ai;
-  const st = ai.weapon;
+// ---------- Fighting the way you do ----------
+// Members (and other players hunting here) fight with their job's own basic combo: the pool of
+// swings or shots at each step (world/melee.js PATH_VARIANTS), a fresh string each time, its steps
+// chained back to back with the same beats as yours and every blow landing on its frame. Between
+// strings they now and then throw one of their job's attack skills, and the hits they land fill
+// their gauge until they can let loose their job's big finisher, which spends it all.
+
+const GAUGE_FULL = 100;
+const GAUGE_PER_HIT = 3;
+// A string left alone this long starts over from its opener.
+const COMBO_RESET = 1.2;
+// Parts of a skill a bot can't play (buffs, heals, lasting spells): a skill with any is left out.
+const EXOTIC = ['grant', 'lantern', 'purify', 'revive', 'torii', 'ofuda', 'seiman', 'rally', 'troupe', 'heal', 'sky', 'provoke', 'rain'];
+const plain = (s) => !EXOTIC.some((k) => s[k] != null);
+const CUT_TINT = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
+
+function poolOf(bot) {
+  const path = pathOf({ char: bot.char, stats: bot.stats });
+  if (PATH_VARIANTS[path]) return PATH_VARIANTS[path];
+  return (COMBOS[bot.stats.weaponType] ?? COMBOS.none).map((s) => [s]);
+}
+
+// Their job's attack skills at a level that fits theirs: [{ id, steps, full, tune }].
+export function botSkills(char) {
+  const chain = jobChain(char.job);
+  const out = [];
+  for (const s of Object.values(SKILLS)) {
+    if (!chain.includes(s.job) || s.type !== 'attack' || s.movement) continue;
+    const lv = Math.max(1, Math.min(s.maxLevel, Math.round(s.maxLevel * Math.min(1, (char.level - 8) / 40))));
+    const combo = s.at(lv, s.maxLevel).combo;
+    if (!combo || !combo.every((st) => st.strikes.every(plain))) continue;
+    if (!combo.some((st) => st.strikes.some((k) => k.pct > 0 && (k.reach > 0 || k.shot)))) continue;
+    out.push({ id: s.id, steps: combo, full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job) });
+  }
+  // Their finisher is their own path's (a Paladin's Grand Verdict, not the Warrior's Titan Breaker).
+  const top = Math.max(-1, ...out.filter((s) => s.full).map((s) => s.rank));
+  return out.filter((s) => !s.full || s.rank === top);
+}
+
+// The next move of the fight: a step of the string they're on, or a skill (or their finisher)
+// between strings.
+function nextMove(bot, rng) {
+  const f = bot.fight;
+  if (f.queue.length) return f.queue.shift();
+  if (f.step === 0) {
+    const full = f.gauge >= GAUGE_FULL ? f.skills.filter((s) => s.full) : [];
+    const pool = full.length ? full : rng() < bot.ai.special ? f.skills.filter((s) => !s.full) : [];
+    const sk = pool.length ? pool[Math.floor(rng() * pool.length)] : null;
+    if (sk) {
+      if (sk.full) f.gauge = 0;
+      const steps = sk.steps.map((st, i) => ({ ...st, kind: sk.full ? 'finisher' : st.dur >= 1 ? 'heavy' : 'skill', tune: sk.tune, last: i === sk.steps.length - 1 }));
+      f.queue = steps.slice(1);
+      return steps[0];
+    }
+    f.plan = planCombo(f.pool, f.last, rng);
+    f.last = f.plan;
+  }
+  const step = f.pool[f.step][f.plan[f.step]];
+  f.step = (f.step + 1) % f.pool.length;
+  return { ...step, kind: step.finisher ? 'basicFinisher' : 'chain', last: Boolean(step.finisher) };
+}
+
+// Fights `m` while it's in reach: one move after another, as fast as the moves themselves allow.
+function fight(bot, m, world, intent, rng) {
   const body = bot.body;
+  const f = (bot.fight ??= { pool: poolOf(bot), skills: botSkills(bot.char), plan: null, last: null, step: 0, queue: [], readyAt: 0, gauge: 0, lastAt: -9 });
+  if (world.now - f.lastAt > COMBO_RESET) {
+    f.step = 0;
+    f.queue = [];
+  }
+  const toward = m.x < body.x ? -1 : 1;
+  if (!intent.left && !intent.right) body.facing = toward;
+  if (world.now < f.readyAt || body.facing !== toward) return;
+  const step = nextMove(bot, rng);
+  play(bot, step, m, world, rng);
+  // The beat after it: a chained step flows on; a finisher, a skill, or the end of a string
+  // takes a breath (longer for a calmer player).
+  const breath = step.last ? between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng) * 0.2 : 0;
+  f.readyAt = world.now + step.dur + (AFTER[step.kind] ?? AFTER.chain) + breath;
+  f.lastAt = f.readyAt;
+  bot.attack = { pose: step.move, t: 0, dur: step.dur, fighting: true };
+}
+
+// Plays one step: each of its blows lands on its own frame, on what it reaches.
+function play(bot, step, m, world, rng) {
+  const body = bot.body;
+  const dir = body.facing;
   const level = bot.char.level;
-  const family = JOBS[bot.char.job].family;
-  // Now and then a fancier move: a spin, a flurry, a volley, or a burst spell.
-  const special = rng() < ai.special;
-  const power = special ? between(160, 230, rng) : 100;
-  const range = st.magic ? magicRange(bot.stats, power * 1.3) : physicalRange(bot.stats, bot.stats.weaponType, power);
-  const acc = accuracy(family, bot.stats, level);
-  // Shots and spells leave from the hands, chest high.
-  const from = { x: body.x + body.facing * 10, y: body.y - 16 };
-  const hits = special && !st.magic ? (st.ranged ? 3 : 2) : 1;
-  // Melee members work through their weapon's combo, one step per swing: the hit lands as the
-  // blade cuts, with that step's push and smear.
-  const steps = !special && !st.ranged && !st.magic ? COMBOS[bot.stats.weaponType] ?? COMBOS.none : null;
-  const step = steps ? steps[(bot.comboStep = ((bot.comboStep ?? -1) + 1) % steps.length)] : null;
-  const cut = step?.strikes[0];
-  const impact = cut ? cut.at * step.dur : 0.12;
-  for (let i = 0; i < hits; i++) {
-    const miss = rng() >= hitChance(acc, level, m.def);
-    const roll = miss ? null : rollHit(range, bot.stats, m.def, level, rng);
-    const travel = st.shot ? Math.hypot(m.x - from.x, m.y - from.y) / 620 : impact;
-    world.pending.push({ at: world.now + travel + i * 0.09, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id, stranger: !bot.party, knock: cut?.knock, launch: cut?.launch, big: cut?.big });
-    if (st.shot) world.fx.push({ kind: 'projectile', shot: st.shot, x: from.x, y: from.y - i * 3, tx: m.x, ty: m.y - m.def.h / 2 + (i - 1) * 4, t: -i * 0.09, dur: Math.max(0.08, travel) });
-  }
-  const box = { x: body.x - 34, y: body.y - 50, w: 68, h: 50 };
-  if (special) {
-    // (An Onmyoji's talismans fly with her spell, stick, and burst.)
-    if (st.ofuda) {
-      for (let i = 0; i < 4; i++) {
-        const fly = Math.hypot(m.x - from.x, m.y - from.y) / 420 + 0.06;
-        const dy = -m.def.h * (0.3 + 0.12 * i);
-        world.fx.push({ kind: 'ofuda', x: from.x, y: from.y, tx: m.x, ty: m.y + dy, mob: m, dx: (i - 1.5) * 3, dy, fly, stick: 0.36, arc: (i - 1.5) * 9, t: -i * 0.06, dur: fly + 0.42 + i * 0.06, seed: rng() });
-        world.fx.push({ kind: 'ofudaburst', x: m.x, y: m.y, h: m.def.h, t: -(fly + 0.36 + i * 0.06), dur: fly + 0.36 + i * 0.06 + 0.45 });
+  const acc = accuracy(JOBS[bot.char.job].family, bot.stats, level);
+  const path = pathOf({ char: bot.char, stats: bot.stats });
+  const school = path === 'paladin' ? 'holy' : path === 'berserker' ? 'rage' : null;
+  const f = bot.fight;
+  // Players hunting on their own never catch the monsters by you in a sweep or a fan either.
+  const you = world.body;
+  const fair = (mob) => bot.party || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
+  const reachable = (look, box, n) => pickTargets(world.mobs.filter(fair), look, box, n);
+  for (const s of step.strikes) {
+    const lag = s.at * step.dur + (s.delay ?? 0);
+    const sdir = s.turn ? -dir : dir;
+    const look = { ...body, facing: sdir };
+    if (s.burst) world.fx.push({ kind: s.burst, x: body.x + sdir * (s.reach || 60) * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach || 60, dir: sdir, t: -lag, dur: (s.burstDur ?? 0.7) + lag, seed: rng() });
+    if (!(s.pct > 0)) continue;
+    const pct = s.pct * (step.tune ?? 1);
+    const range = s.magic ? magicRange(bot.stats, pct * 1.3) : physicalRange(bot.stats, bot.stats.weaponType, pct);
+    const hit = (mob, at, i) => {
+      const miss = rng() >= hitChance(acc, level, mob.def);
+      const roll = miss ? null : rollHit(range, bot.stats, mob.def, level, rng);
+      if (!miss) f.gauge = Math.min(GAUGE_FULL, f.gauge + GAUGE_PER_HIT);
+      // (Their blows don't stop your world or shake your screen; that's for your own.)
+      world.pending.push({ at: world.now + at, mob, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id, stranger: !bot.party, knock: s.knock, launch: s.launch, big: s.big, bleed: s.bleed, burn: s.burn, stun: s.stun, via: s.shot ? 'shot' : s.magic ? 'spell' : 'blade' });
+    };
+    if (s.shot) {
+      // Shots leave on the release frame and hit when they get there; a fan spreads over a few.
+      const from = { x: body.x + sdir * 10, y: body.y - 16 + (s.oy ?? 0) };
+      const n = s.fan ?? 1;
+      const near = reachable(look, { w: s.range ?? 280, h: s.h ?? 60 }, Math.max(n, s.targets ?? 1));
+      const aims = near.length ? near : [m];
+      for (let i = 0; i < n; i++) {
+        const mob = aims[i % aims.length];
+        const travel = Math.hypot(mob.x - from.x, mob.y - from.y) / (s.speed ?? 620);
+        hit(mob, lag + travel, i);
+        world.fx.push({ kind: 'projectile', shot: s.shot, x: from.x, y: from.y, tx: mob.x, ty: mob.y - mob.def.h / 2 + (i - (n - 1) / 2) * 6, t: -lag, dur: lag + Math.max(0.08, travel) });
       }
-    } else if (st.magic) world.fx.push({ kind: 'burst', x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.55, seed: rng() });
-    else if (!st.ranged) world.fx.push({ kind: rng() < 0.5 ? 'spin' : 'flurry', x: body.x, y: body.y, dir: body.facing, box, t: 0, dur: 0.4 });
+      // A piercing shot carries on through the line behind its mark.
+      if (s.pierce) aims.slice(n).forEach((mob, i) => hit(mob, lag + Math.abs(mob.x - from.x) / (s.speed ?? 620), n + i));
+      continue;
+    }
+    const box = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
+    const targets = reachable(look, box, s.targets ?? 1);
+    if (!targets.length && Math.abs(m.x - body.x) <= s.reach + m.def.w / 2) targets.push(m);
+    targets.forEach((mob, i) => hit(mob, lag, i));
+    const cy = body.y - 25;
+    if (s.arc) world.fx.push({ kind: 'arc', path: school, x: body.x + sdir * (s.around ? 0 : 10), y: cy, dir: sdir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: CUT_TINT[school]?.[s.big ? 1 : 0] ?? (s.big ? '#ffb347' : '#8fb8ff'), t: -lag, dur: (s.big ? 0.32 : 0.24) + lag });
+    if (s.pierce && !s.arc) world.fx.push({ kind: 'pierce', school, x: body.x, y: body.y, dir: sdir, box: { x: sdir > 0 ? body.x - 6 : body.x + 6 - s.reach, y: cy - 10, w: s.reach, h: 20 }, t: -lag, dur: (s.big ? 0.35 : 0.25) + lag });
+    if (s.crack) world.fx.push({ kind: 'crack', school, x: body.x + sdir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: -lag, dur: 0.7 + lag, seed: rng() });
   }
-  if (cut?.arc) {
-    world.fx.push({ kind: 'arc', x: body.x + body.facing * 10, y: body.y - 25, dir: body.facing, r: cut.reach * 0.52, start: cut.arc[0], sweep: cut.arc[1], thick: cut.thick ?? 7, big: cut.big, color: cut.big ? '#ffb347' : '#8fb8ff', t: -impact, dur: cut.big ? 0.32 : 0.24 });
-  }
-  const pose = special ? (st.special ?? (st.magic ? 'castspin' : st.ranged ? (st.shot === 'star' ? 'barrage' : 'rapid') : rng() < 0.5 ? 'spin' : 'flurry')) : st.ranged ? (st.poses ? pick2(st.poses) : st.pose) : step.move;
-  bot.attack = { pose, t: 0, dur: st.dur ? st.dur * (special ? 1.4 : 1) : special ? 0.6 : step?.dur ?? 0.42 };
 }
 
 // Healers keep an eye on your HP.
@@ -499,7 +591,6 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   bot.stats ??= computeStats(bot.char);
   bot.ai ??= makeAI(bot, rng);
   bot.brain ??= { think: between(0.2, 0.8, rng), goal: null, target: null, settled: false, still: 0, habitIn: between(4, 10, rng), healIn: 99 };
-  bot.cooldown ??= between(0.5, 1, rng);
   bot.stuck ??= 0;
   const br = bot.brain;
   const body = bot.body;
@@ -527,14 +618,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   // (A monster that's wandered over to you is yours now.)
   if (m && !m.def.boss && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
   if (!bot.leaving && br.target && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
-    const toward = m.x < body.x ? -1 : 1;
-    if (!intent.left && !intent.right) body.facing = toward;
-    bot.cooldown -= dt;
-    if (bot.cooldown <= 0 && body.facing === toward) {
-      strike(bot, m, world, rng);
-      bot.attack.fighting = true;
-      bot.cooldown = between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng);
-    }
+    fight(bot, m, world, intent, rng);
   }
   if (!m && body.onGround && !bot.attack && br.goal?.mode === 'wander' && br.settled) {
     br.habitIn -= dt;
@@ -648,14 +732,7 @@ export function updateParty(bots, world, dt) {
     const st = bot.ai.weapon;
     if (m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
       // Turn to it once planted (walking sets their facing), and only swing at what they face.
-      const toward = m.x < body.x ? -1 : 1;
-      if (!intent.left && !intent.right) body.facing = toward;
-      bot.cooldown -= dt;
-      if (bot.cooldown <= 0 && body.facing === toward) {
-        strike(bot, m, world, rng);
-        bot.attack.fighting = true;
-        bot.cooldown = between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng);
-      }
+      fight(bot, m, world, intent, rng);
     } else if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') {
       // Standing about: look where you're headed if you're on the move, or at you if not.
       body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;

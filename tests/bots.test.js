@@ -249,3 +249,40 @@ test('the server shares news of big moments now and then', () => {
   }
   assert.ok(lines.filter((l) => l.startsWith('★')).length >= 2, 'a few announcements in ten minutes');
 });
+
+test('other players really fight: their job\'s own string of moves, back to back, with skills and a finisher', async () => {
+  const { tickHunter, botSkills } = await import('../src/world/party.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { createBody } = await import('../src/world/physics.js');
+  for (const job of [['warrior', 'paladin'], ['thief', 'shinobi'], ['archer', 'beastmaster']]) {
+    const world = createWorld(createCharacter('Me', {}));
+    quiet(world);
+    world.god = true;
+    loadMap(world, 'woods', 'start');
+    world.mobs = [];
+    // A tough monster well away from you, with a player on it.
+    const x = world.body.x + 600 < world.map.width - 100 ? world.body.x + 600 : world.body.x - 600;
+    const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
+    m.hp = m.def.hp = 1e9;
+    m.def = { ...m.def, speed: 0 };
+    world.mobs.push(m);
+    const char = makeBotCharacter(seeded(5), { name: 'Hunter', level: 45, jobs: job, pro: false });
+    assert.ok(botSkills(char).some((s) => s.full), `${job[1]} has a finisher to fight with`);
+    const bot = { id: 'h1', name: 'Hunter', char, level: 45, hunter: true, map: world.map.id, x: x - 30, facing: 1, state: 'hunt', body: createBody(x - 30, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
+    const moves = new Set();
+    const seen = new Set();
+    let blows = 0;
+    for (let t = 0; t < 20; t += 1 / 30) {
+      world.now += 1 / 30;
+      world.pending = world.pending.filter((h) => h.at > world.now);
+      tickHunter(bot, world, [bot], 1 / 30, seeded(Math.floor(t * 30) + 1));
+      if (bot.attack?.fighting) moves.add(bot.attack.pose);
+      for (const h of world.pending) if (!seen.has(h)) {
+        seen.add(h);
+        blows++;
+      }
+    }
+    assert.ok(blows >= 26, `${job[1]} lands a steady stream of blows (${blows} in 20 s)`);
+    assert.ok(moves.size >= 5, `${job[1]} mixes up their moves (${[...moves].join(', ')})`);
+  }
+});
