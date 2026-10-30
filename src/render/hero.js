@@ -30,7 +30,7 @@ import { weaponShapes, weaponFrames } from './weapons.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
-import { moveAt } from './moves.js';
+import { moveAt, streamFlow } from './moves.js';
 import { heroineEye } from './mobs/heroine.js';
 import { HAIR_STYLES, BANG_STYLES, hairStyleOf, coversEye, hairParts, hairNape } from './hair.js';
 
@@ -902,6 +902,15 @@ function liveFace(look, state, mv) {
   const beat = (n) => Math.floor(time * n);
   const pose = state.pose ?? 'idle';
   if (state.down) return { spiral: 1 + (beat(8) % 4) * 1.5, mouth: beat(3) % 2 ? 'wavy' : 'o', brows: [[0.3, -0.5], [0.3, -0.5]], extra: [`orbit${beat(8) % 8}`] };
+  // Endless Fox-Fire: her face builds with the barrage, not with each throw (that would flicker):
+  // focused, then fierce, then a thrilled fanged grin, then flat out, laughing.
+  if (mv && state.flow) {
+    const h = state.flow.heat;
+    if (h < 0.45) return { lid: 0.3, cross: 0.5, mouth: 'grit', brows: [[-0.3, 0.7], [-0.3, 0.7]] };
+    if (h < 0.9) return { lid: 0.12, cross: 0.6, mouth: beat(5) % 2 ? 'yell' : 'grit', brows: [[-0.2, 0.9], [-0.2, 0.9]] };
+    if (h < 1.4) return { lid: 0.05, mouth: beat(4) % 3 ? 'fang' : 'D', brows: [[0.1, 0.6], [0.1, 0.6]] };
+    return { mouth: beat(4) % 2 ? 'D' : 'grin', brows: [[0.6, 0.1], [0.6, 0.1]], closed: beat(3) % 4 === 0 ? true : null };
+  }
   if (mv) {
     const p = state.progress ?? 0;
     if (p < 0.3) return { lid: 0.25, cross: 0.5, mouth: 'grit', brows: [[-0.3, 0.7], [-0.3, 0.7]] };
@@ -2284,6 +2293,9 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
     const from = moveAt(POSE_MOVES[state.from.kind] ?? state.from.kind, state.from.progress, state.from.dur, { weapon: feel.weapon });
     moved = blendMove(from, moved, Math.max(0, state.blend));
   }
+  // Endless Fox-Fire: her body keeps moving through the barrage on its own clock (after the blend,
+  // so it never jumps from one throw to the next).
+  if (moved && state.flow) moved = streamFlow(moved, state.flow, state.progress ?? 0, state.dur ?? 0.35);
   // A move that just ended eases back to the standing guard (`settle`, 0-1) instead of snapping.
   if (moved && state.settle != null) moved = blendMove(moved, SETTLE_POSE, Math.min(1, state.settle));
   // The pose the arm and weapon are drawn from follows the same rule as the body (see `rigid`).

@@ -765,20 +765,48 @@ export function barrageOf(world) {
   const lv = world.char.skills.foxbarrage ?? 0;
   return lv > 0 && pathOf(world) === 'kitsune' ? skillAt('foxbarrage', lv).barrage : null;
 }
-function barrageThrow(world, b) {
+// Her throws (render/moves.js), by how far the barrage has built (`heat`: 0 to 1 over the ramp,
+// then on to 1.6 over FRENZY more seconds, so it keeps getting better after it's at full speed).
+// Each stage has a pool for the star hand and one for the other turn; she never throws the same
+// one twice running. In the air, the air throws.
+const FRENZY = 3;
+const STREAM_STAGES = [
+  { at: 0, star: ['streamthrow'], other: ['streamthrow2'] },
+  { at: 0.45, star: ['streamthrow', 'streamside', 'streamlow'], other: ['streamthrow2', 'streamcross'] },
+  { at: 0.9, star: ['streamthrow', 'streamside', 'streamlow', 'streamspin', 'streamhop'], other: ['streamthrow2', 'streamcross', 'streamdouble'] },
+  { at: 1.3, star: ['streamblur', 'streamspin', 'streamside', 'streamhop', 'streamblur'], other: ['streamblur', 'streamdouble', 'streamcross'] },
+  { at: 1.55, star: ['streamblur', 'streamblur', 'streamspin', 'streamhop'], other: ['streamblur', 'streamblur', 'streamdouble'] },
+];
+export const STREAM_MOVES = new Set(['streamthrow', 'streamthrow2', 'streamside', 'streamlow', 'streamcross', 'streamspin', 'streamhop', 'streamdouble', 'streamblur', 'streamair', 'streamairspin']);
+export const barrageHeat = (b, held) => Math.min(1, held / b.ramp) + 0.6 * Math.min(1, Math.max(0, held - b.ramp) / FRENZY);
+function barrageThrow(world, b, rng = Math.random) {
   const { now, body } = world;
   // A pause (a skill, a stagger) starts the ramp over.
   let run = world.barrage;
-  if (!run || now - run.last > 0.5) run = world.barrage = { since: now, last: now, n: 0, airSince: null };
-  const rate = b.from + (b.to - b.from) * Math.min(1, (now - run.since) / b.ramp);
+  if (!run || now - run.last > 0.5) run = world.barrage = { since: now, last: now, n: 0, airSince: null, stage: 0, move: null };
+  const held = now - run.since;
+  const rate = b.from + (b.to - b.from) * Math.min(1, held / b.ramp);
+  const heat = barrageHeat(b, held);
   const air = !body.onGround;
   run.airSince = air ? run.airSince ?? now : null;
   const other = run.n % 2 === 1;
+  // Each new stage flares up in fox fire round her, harder the higher it goes.
+  const stage = STREAM_STAGES.findLastIndex((s) => heat >= s.at);
+  if (stage > run.stage) {
+    world.fx.push({ kind: 'powerup', school: 'fox', x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
+    if (stage >= 3) world.juice.push({ type: 'shake', mag: 1, dur: 0.15 });
+  }
+  run.stage = stage;
+  const pool = (air ? (heat >= 0.9 ? ['streamair', 'streamairspin'] : ['streamair']) : STREAM_STAGES[stage][other ? 'other' : 'star']).filter((m, i, all) => m !== run.move || m === 'streamblur' || all.length === 1);
+  const move = pool[Math.floor(rng() * pool.length)];
   // playStep runs basic moves at 0.9 of their written length.
   playStep(world, {
-    move: air ? 'airthrow' : other ? 'streamthrow2' : 'streamthrow', dur: 1 / (rate * 0.9), step: 0, stream: true, hang: air && now - run.airSince < BARRAGE_HANG,
+    move, dur: 1 / (rate * 0.9), step: 0, stream: true, hang: air && now - run.airSince < BARRAGE_HANG,
     strikes: [{ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, oy: other ? 4 : 0, gauge: 1 }],
   }, 100, air ? 'basicairstream' : 'basicstream');
+  // The drawing moves her body through the throws on the barrage's own clock (render/moves.js streamFlow).
+  world.pose.flow = { t0: held, heat };
+  run.move = move;
   run.last = now;
   run.n += 1;
 }

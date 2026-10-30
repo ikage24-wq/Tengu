@@ -107,7 +107,7 @@ export function playerPose(world) {
     return { pose: last.kind, progress: 1, dur: last.dur, settle: (world.now - last.endedAt) / settle, ready: true, hit: last.hit, fin: last.fin };
   }
   const blend = world.pose && DANCE_MOVES.has(world.pose.kind) ? DANCE_BLEND : BLEND;
-  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / blend, hit: world.pose.hit, fin: world.pose.fin };
+  if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / blend, hit: world.pose.hit, fin: world.pose.fin, flow: world.pose.flow };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
   if (Math.abs(b.vx) > 8) return { pose: 'walk' };
@@ -358,12 +358,19 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   const w = world.stats?.weaponType;
   const last = g.at(-1);
   if ((w === 'dagger' || w === 'gauntlet') && GHOST_MOVES.has(world.pose?.kind) && (!last || Math.abs(last.x - b.x) > 7 || Math.abs(last.y - b.y) > 7)) g.push({ x: b.x, y: b.y, at: time, state, tint: GHOST_TINT[thiefSchool(world.char)] });
-  while (g.length && (time - g[0].at > GHOST_LIFE || time < g[0].at)) g.shift();
+  // Endless Fox-Fire blurs with speed: copies of the poses she just threw from linger in blue fox
+  // fire on top of her, more often, longer and brighter the further the barrage has built, so flat
+  // out her arms are a smear of hands and stars. They drift back off her a little as they fade.
+  const heat = world.pose?.flow?.heat ?? 0;
+  if (heat > 0.35 && (!last || time - last.at >= 0.075 - 0.03 * Math.min(1.6, heat) / 1.6)) g.push({ x: b.x, y: b.y, at: time, state, tint: GHOST_TINT.fox, blur: heat, dir: b.facing });
+  while (g.length && (time - g[0].at > (g[0].blur ? 0.1 + 0.1 * g[0].blur : GHOST_LIFE) || time < g[0].at)) g.shift();
   for (const k of g) {
-    const age = (time - k.at) / GHOST_LIFE;
-    const gx = snap(k.x - cam.x);
+    const life = k.blur ? 0.1 + 0.1 * k.blur : GHOST_LIFE;
+    const age = (time - k.at) / life;
+    const gx = snap(k.x - cam.x - (k.blur ? k.dir * age * (3 + 3 * k.blur) : 0));
     const gy = snap(k.y - cam.y);
-    drawTinted(ctx, gx, gy, k.tint ?? '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * 0.5 * (1 - age) ** 1.5 }));
+    const alpha = k.blur ? 0.18 + 0.17 * Math.min(1, k.blur) : 0.5;
+    drawTinted(ctx, gx, gy, k.tint ?? '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * alpha * (1 - age) ** 1.5 }));
   }
 }
 

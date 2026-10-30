@@ -1820,27 +1820,35 @@ const castNow = (w, id) => {
   return cast(w, id);
 };
 
-test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks slowly, and ends in a fox moon', () => {
+test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks slowly, and ends in a fox moon', async () => {
+  const { STREAM_MOVES } = await import('../src/world/melee.js');
   const w = thiefPath('kitsune');
   const hold = (...keys) => ({ held: new Set(['KeyZ', ...keys]), pressed: new Set(), locked: false });
+  const streaming = () => STREAM_MOVES.has(w.pose?.kind);
   updateWorld(w, DT, press('KeyZ'));
-  assert.ok(!w.pose.kind.startsWith('streamthrow'), 'without the passive, her usual combo');
+  assert.ok(!streaming(), 'without the passive, her usual combo');
   run(w, 2);
   learn(w, 'foxbarrage');
   const hp = w.mobs.reduce((n, m) => n + m.hp, 0);
   const throws = [];
   let last = null;
-  for (let i = 0; i < 4 * 60; i++) {
+  for (let i = 0; i < 6 * 60; i++) {
     updateWorld(w, DT, i === 0 ? press('KeyZ') : hold());
-    if (w.pose?.since !== last && w.pose?.kind.startsWith('streamthrow')) throws.push({ at: w.now, kind: w.pose.kind });
+    if (w.pose?.since !== last && streaming()) throws.push({ at: w.now, kind: w.pose.kind, flow: w.pose.flow });
     last = w.pose?.since;
   }
   const start = throws[0].at;
-  const inSecond = (k) => throws.filter((t) => t.at >= start + k && t.at < start + k + 1).length;
-  assert.ok(inSecond(0) >= 4, `a quick stream from the start (${inSecond(0)})`);
-  assert.ok(inSecond(3) > inSecond(0) + 2, `faster the longer it's held (${inSecond(0)} then ${inSecond(3)})`);
+  const within = (a, b) => throws.filter((t) => t.at >= start + a && t.at < start + b);
+  assert.ok(within(0, 1).length >= 4, `a quick stream from the start (${within(0, 1).length})`);
+  assert.ok(within(3, 4).length > within(0, 1).length + 2, `faster the longer it's held (${within(0, 1).length} then ${within(3, 4).length})`);
   assert.ok(throws.every((t, i) => !i || t.at - throws[i - 1].at < 0.25), 'never a pause');
-  assert.ok(throws.some((t) => t.kind === 'streamthrow2'), 'hand over hand');
+  // It starts hand over hand, and grows wilder: more and more different throws, then the blur.
+  assert.deepEqual([...new Set(within(0, 0.8).map((t) => t.kind))].sort(), ['streamthrow', 'streamthrow2']);
+  assert.ok(new Set(within(2.5, 4).map((t) => t.kind)).size >= 4, 'many different throws once it has built');
+  assert.ok(within(5, 6).some((t) => t.kind === 'streamblur'), 'flat out, a blur');
+  // Her body moves on one clock through all of it, and it keeps building after full speed.
+  assert.ok(throws.every((t, i) => !i || t.flow.t0 > throws[i - 1].flow.t0));
+  assert.ok(throws.at(-1).flow.heat > 1.3, `still building past full speed (${throws.at(-1).flow.heat})`);
   assert.ok(w.mobs.reduce((n, m) => n + m.hp, 0) < hp, 'the stars land');
   // She walks through it, slowly.
   const x = w.body.x;
@@ -1848,7 +1856,7 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   const walked = w.body.x - x;
   assert.ok(walked > 5, `walks while throwing (${walked})`);
   assert.ok(walked < (w.stats.speed / 100) * 60, 'but slowly');
-  assert.ok(w.pose.kind.startsWith('streamthrow'), 'still throwing');
+  assert.ok(streaming(), 'still throwing');
   // Letting go: the fox moon.
   updateWorld(w, DT, idle);
   assert.equal(w.pose.kind, 'heavethrow');
@@ -1857,9 +1865,9 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   // A tap is one star and no finisher.
   run(w, 1);
   updateWorld(w, DT, press('KeyZ'));
-  assert.ok(w.pose.kind.startsWith('streamthrow'));
+  assert.equal(w.pose.kind, 'streamthrow');
   updateWorld(w, DT, idle);
-  assert.ok(w.pose.kind.startsWith('streamthrow'), 'no finisher after a tap');
+  assert.equal(w.pose.kind, 'streamthrow', 'no finisher after a tap');
 });
 
 test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {
