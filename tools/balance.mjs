@@ -172,6 +172,16 @@ export function makeRun(job, level, { n = 1, main = null, fight = false, mpFree 
         // like Yokai Rally, is recast when it runs out.)
         if (buffs.includes(want) && (!ok || !(c.buffs[want]?.until > w.now))) tried[want] = w.now + (ok ? (w.rally?.until ?? w.now + 20) - w.now : 5);
       }
+      // Endless Fox-Fire is played the way it's meant to be: hold the barrage until the fox moon is
+      // fully charged, let go for its throw, and hold again.
+      const barrage = c.skills.foxbarrage ? skillAt('foxbarrage', c.skills.foxbarrage).barrage : null;
+      if (barrage) {
+        out.held = (out.held ?? 0) + DT;
+        if (out.held > barrage.full + 0.15) {
+          out.held = -0.1;
+          input.held.delete('KeyZ');
+        } else if (out.held >= 0) input.held.add('KeyZ');
+      }
       updateWorld(w, DT, input);
       input.pressed.clear();
       if (c.hp > lastHp) healed += c.hp - lastHp;
