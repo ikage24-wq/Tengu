@@ -1545,7 +1545,7 @@ function fire(world, strike) {
   // A gauntlet throws real stars: one each, from the set in your bag.
   let star = null;
   if (STAR_SHOTS.has(s.shot) && !s.phantom && !s.free) {
-    star = useStars(world.char, s.pierce ? 1 : s.fan ?? 1);
+    star = useStars(world.char);
     if (!star) {
       if (world.warnTimer <= 0) world.log('Out of throwing stars!', '#ffb3c6');
       world.warnTimer = 1.5;

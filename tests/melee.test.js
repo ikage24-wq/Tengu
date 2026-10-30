@@ -1718,7 +1718,7 @@ test('full Shadow (Phantom): a shadow copy repeats every attack a beat later, li
   updateWorld(w, DT, press('KeyZ'));
   assert.ok(w.strikes.some((s) => s.phantom && s.shot), 'the copy throws a star of its own');
   run(w, 0.5);
-  assert.equal(before - stars(), 1, 'the shadow star is not from your bag');
+  assert.equal(before - stars(), 0, 'stars never run out, the shadow star neither');
 });
 
 test('dagger skills need a dagger and gauntlet skills a gauntlet; shared skills work with both', () => {

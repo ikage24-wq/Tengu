@@ -73,14 +73,11 @@ export function activeStar(char) {
   return char.inventory.use.find((e) => ITEMS[e.id].star && e.qty > 0 && char.level >= ITEMS[e.id].reqLevel) ?? null;
 }
 
-// Uses up `n` stars from the active set (a set that runs out is gone). Returns the set's item
-// def, or null if there were none.
-export function useStars(char, n = 1) {
+// The stars a throw flies with. Stars never run out: one in your bag throws forever. Returns the
+// set's item def, or null if there were none.
+export function useStars(char) {
   const stack = activeStar(char);
-  if (!stack) return null;
-  stack.qty -= n;
-  if (stack.qty <= 0) char.inventory.use.splice(char.inventory.use.indexOf(stack), 1);
-  return ITEMS[stack.id];
+  return stack ? ITEMS[stack.id] : null;
 }
 
 // Recharging a set of throwing stars back to full costs what the missing stars are worth.

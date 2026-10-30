@@ -1,5 +1,5 @@
-// Throwing stars: a gauntlet throws stars from your bag, one per throw. Sets stack to 500, the
-// stars add their attack, better stars need a higher level, and shops recharge used sets.
+// Throwing stars: a gauntlet throws stars from your bag, and one star throws forever. Sets stack
+// to 500, the stars add their attack, better stars need a higher level, and shops refill old sets.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -80,20 +80,20 @@ test('stars add their attack to a gauntlet, and only stars your level allows are
   assert.equal(activeStar(c).id, 'star_mint', 'the top set goes first');
 });
 
-test('every throw uses up stars, and with none left you cannot throw', () => {
+test('stars never run out: a single star throws forever, and with none you cannot throw', () => {
   const w = arena(thief());
   const c = w.char;
+  c.inventory.use = [{ id: 'star_pebble', qty: 1 }];
   updateWorld(w, DT, { held: new Set(), pressed: new Set(['KeyZ']), locked: false });
   run(w, 1);
-  assert.ok(stars(c) < 500, 'a basic throw used a star');
-  const before = stars(c);
+  assert.equal(stars(c), 1, 'a basic throw keeps the star');
   c.skills.luckyseven = 10;
   c.mp = 9999;
   assert.ok(cast(w, 'luckyseven').ok);
-  assert.equal(before - stars(c), 0, 'the stars leave on the throw, not the press');
-  run(w, 0.4);
-  assert.equal(before - stars(c), 2, "Lucky Seven's first part throws two");
-  run(w, 1.5);
+  run(w, 2);
+  assert.ok(cast(w, 'luckyseven').ok, 'still throwing');
+  run(w, 2);
+  assert.equal(stars(c), 1, 'skills keep it too');
   c.inventory.use = [];
   assert.equal(cast(w, null).reason, 'stars');
   assert.equal(cast(w, 'luckyseven').reason, 'stars');

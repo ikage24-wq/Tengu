@@ -411,9 +411,10 @@ add({ id: 'mochi_clover', name: 'Clover Crunch', type: 'use', price: 120, effect
 add({ id: 'mochi_bun', name: 'Meat Bun', type: 'use', price: 120, effect: { pet: { full: 25, joy: 6, stat: 'strong', amount: 8 } }, color: '#ffb36b', desc: 'Your Mochi grows toward a Strong Mochi.' });
 add({ id: 'mochi_gem', name: 'Spirit Gem Candy', type: 'use', price: 120, effect: { pet: { full: 15, joy: 8, stat: 'spirit', amount: 8 } }, color: '#c9b6ff', desc: 'Your Mochi grows toward a Spirit Mochi.' });
 add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100 }, color: '#6fb8ff', desc: 'Restores 100 MP.' });
-// Throwing stars: what a gauntlet throws, one star per throw. They come in sets that stack up to
-// `stack`; the topmost set in your Use tab (that your level allows) is the one you throw, and its
-// `star.watk` adds to your attack. A shop recharges a set back to full for `price / stack` a star.
+// Throwing stars: what a gauntlet throws. Throws never use them up, so one star is enough. They
+// come in sets that stack up to `stack`; the topmost set in your Use tab (that your level allows)
+// is the one you throw, and its `star.watk` adds to your attack. A shop can still refill an old
+// part-thrown set for `price / stack` a star.
 // Better stars only drop from monsters. `element` gives the star's hits that element's impact.
 export const STARS = [
   { key: 'pebble', name: 'Pebble Stars', level: 10, watk: 15, price: 500, color: '#c9c2b8' },

@@ -70,9 +70,8 @@ export function itemTooltip(char, id, inst = null) {
     lines.push({ text: `Req. level ${def.reqLevel}`, color: !char || char.level >= def.reqLevel ? COLORS.muted : COLORS.bad });
     lines.push({ text: `Attack +${def.star.watk}`, color: COLORS.ink });
     if (def.star.element) lines.push({ text: `✦ ${ELEMENT_NAMES[def.star.element]} element`, bold: true, color: def.color === '#ffe36b' || def.color === '#fff3b8' ? '#d9a440' : def.color });
-    lines.push({ text: `${def.stack} to a set, one per throw.`, color: COLORS.muted });
+    lines.push({ text: 'Never runs out: just one is enough.', color: COLORS.muted });
     lines.push({ text: 'The first set in your bag is thrown.', color: COLORS.muted });
-    lines.push({ text: 'Shops recharge used sets.', color: COLORS.muted });
   } else {
     if (def.desc) lines.push({ text: def.desc, color: COLORS.muted });
   }

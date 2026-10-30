@@ -391,7 +391,7 @@ export function cast(world, skillId, rng = Math.random) {
   }
 
   // Thrown stars come out of your bag, one per star, and carry its look and element.
-  const star = params.projectile && fxKind === 'star' ? useStars(char, targets.length * params.hits) : null;
+  const star = params.projectile && fxKind === 'star' ? useStars(char) : null;
   const shotElement = star?.star.element ?? element;
 
   targets.forEach((m, ti) => {
