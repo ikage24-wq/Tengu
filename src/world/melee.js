@@ -884,13 +884,24 @@ export function barrageOf(world) {
 }
 // The Shinobi's ink clones are out (the Clone Storm stage).
 export const inkStorm = (world) => Boolean(world.barrage?.kind === 'shinobi' && world.barrage.stage >= STREAMS.shinobi.clones);
+// The barrage's own dice (xorshift).
+function barrageDice(run) {
+  let s = run.dice;
+  s ^= s << 13;
+  s ^= s >>> 17;
+  s ^= s << 5;
+  run.dice = s >>> 0 || 1;
+  return run.dice / 4294967296;
+}
 function barrageThrow(world, b, rng = Math.random) {
   const { now, body } = world;
   const kind = pathOf(world);
   const spec = STREAMS[kind];
   // A pause (a skill, a stagger) starts the ramp over.
   let run = world.barrage;
-  if (!run || now - run.last > 0.5 || run.kind !== kind) run = world.barrage = { kind, since: now, last: now, n: 0, airSince: null, stage: 0, figure: null, heat: 0 };
+  // (It rolls its dice once as it starts: the figures come from its own stream, so the other rolls
+  // along the way, every crit and every monster's whim, never change which figure comes next.)
+  if (!run || now - run.last > 0.5 || run.kind !== kind) run = world.barrage = { kind, since: now, last: now, n: 0, airSince: null, stage: 0, figure: null, heat: 0, dice: Math.floor(rng() * 4294967296) >>> 0 || 1 };
   const held = now - run.since;
   const rate = b.from + (b.to - b.from) * Math.min(1, held / b.ramp);
   const heat = barrageHeat(b, held);
@@ -912,7 +923,7 @@ function barrageThrow(world, b, rng = Math.random) {
   // left without one.)
   if (!fig || now + 1 / rate > fig.until || fig.air !== air) {
     const pool = (air ? spec.air(heat) : spec.stages[stage].figures).filter((m, i, all) => m !== fig?.move || all.length === 1);
-    const move = pool[Math.floor(rng() * pool.length)];
+    const move = pool[Math.floor(barrageDice(run) * pool.length)];
     spec.start?.(world, run, move);
     const len = spec.figures[move] * (0.7 + 0.3 * (b.from / rate));
     // A blade dance closes in on them: each figure steps in to the one in front, if it's just out
