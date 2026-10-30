@@ -1144,6 +1144,72 @@ export function drawFallen(ctx, look, gear, x, y, state, since) {
   ctx.restore();
 }
 
+// A player who died out in the field gets a little tombstone dropped on them from the sky: it
+// falls in a beat after they do, thuds into the ground with a puff of dust and a bounce, and
+// wobbles to a stop, a flower on top.
+const TOMB_AT = 0.7;
+const TOMB_FALL = 0.28;
+function drawTomb(ctx, x, y, since) {
+  const s = since - TOMB_AT;
+  if (s <= 0) return;
+  const k = Math.min(1, s / TOMB_FALL);
+  const land = s - TOMB_FALL;
+  const drop = (1 - k * k) * 90;
+  const bounce = land > 0 && land < 0.22 ? 4 * Math.sin((Math.PI * land) / 0.22) : 0;
+  const wobble = land > 0 ? Math.sin(land * 22) * Math.exp(-land * 6) * 0.18 : 0;
+  ctx.save();
+  ctx.translate(snap(x), snap(y - drop - bounce));
+  ctx.rotate(wobble);
+  ctx.fillStyle = '#5d5285';
+  ctx.beginPath();
+  ctx.moveTo(-8, 0);
+  ctx.lineTo(-8, -12);
+  ctx.arc(0, -12, 8, Math.PI, 0);
+  ctx.lineTo(8, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#e4def3';
+  ctx.beginPath();
+  ctx.moveTo(-6.6, -1);
+  ctx.lineTo(-6.6, -12);
+  ctx.arc(0, -12, 6.6, Math.PI, 0);
+  ctx.lineTo(6.6, -1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#c4bcdc';
+  ctx.fillRect(2.5, -14, 4.1, 13);
+  ctx.fillStyle = '#7a6fa3';
+  ctx.font = 'bold 5px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('RIP', 0, -9);
+  ctx.fillRect(-0.6, -7, 1.2, 4.5);
+  ctx.fillRect(-2.2, -5.8, 4.4, 1.1);
+  // The flower on top.
+  ctx.fillStyle = '#ff9ec0';
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(2 + Math.cos(a) * 1.6, -20.5 + Math.sin(a) * 1.6, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fff3a6';
+  ctx.fillRect(1.4, -21.1, 1.2, 1.2);
+  ctx.restore();
+  // A puff of dust where it lands.
+  if (land > 0 && land < 0.5) {
+    const u = land / 0.5;
+    ctx.save();
+    ctx.globalAlpha = 0.6 * (1 - u);
+    ctx.fillStyle = '#efe7da';
+    for (const d of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(x + d * (8 + 10 * u), y - 2 - 3 * u, 2.5 + 2 * u, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
 function animFor(key, x, facing, time, body = null) {
   let a = anims.get(key);
   if (!a) {
@@ -1299,6 +1365,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   if (bot.down) {
     if (!fellAt.has(bot)) fellAt.set(bot, time);
     drawFallen(ctx, look, wornGear(bot.char), x, y, { ...state, alpha: 0.75 }, time - fellAt.get(bot));
+    if (bot.tomb) drawTomb(ctx, x + facing * 11, y, time - fellAt.get(bot));
   } else {
     fellAt.delete(bot);
     drawHero(ctx, look, wornGear(bot.char), x, y, state, anim);

@@ -22,7 +22,7 @@ import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
 import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced } from './chatter.js';
-import { updateParty, tickHunter } from './party.js';
+import { updateParty, tickHunter, fieldDownOver } from './party.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -826,14 +826,17 @@ function huntable(world) {
   return !world.net?.bodies?.(world)?.length;
 }
 
+// How many players hunt a map at once: two on a small one, up to five on the biggest.
+const huntCap = (map) => Math.max(2, Math.min(5, 1 + Math.floor(map.width / 700)));
+
 // A player hunting here: built to the map's level, on a ledge away from you (walking in through
-// a portal when `walkIn`).
-function addHunter(bots, world, walkIn = false) {
+// a portal when `walkIn`). `who` is someone back from town after dying here, as they were.
+function addHunter(bots, world, walkIn = false, who = null) {
   const rng = bots.rng;
   const map = world.map;
   const [lo, hi] = bandOf(map);
-  const name = makeName(bots.names, rng);
-  const char = makeBotCharacter(rng, { name, pro: false, level: Math.max(10, Math.floor(between(lo, hi + 5, rng))) });
+  const name = who?.name ?? makeName(bots.names, rng);
+  const char = who?.char ?? makeBotCharacter(rng, { name, pro: false, level: Math.max(10, Math.floor(between(lo, hi + 5, rng))) });
   if (char.job === 'novice') return null;
   const nav = navOf(map);
   let x;
@@ -852,7 +855,7 @@ function addHunter(bots, world, walkIn = false) {
   }
   const bot = {
     id: `hunter${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: false, hunter: true,
-    guild: rng() < 0.4 ? pick(GUILDS, rng) : null, style: makeStyle(rng), title: titleFor(char.level, false, rng),
+    guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: who?.title ?? titleFor(char.level, false, rng),
     map: map.id, x, facing: 1, state: 'hunt', body: createBody(x, y),
     session: between(90, 300, rng), stay: 999, nextLine: between(15, 50, rng), bubble: null, waved: true, shop: null, appear: 1,
   };
@@ -870,8 +873,8 @@ function huntersHere(bots, world, dt) {
     bots.arriveIn = between(30, 80, rng);
     bots.queenSeen = null;
     if (huntable(world)) {
-      const cap = Math.min(3, Math.max(1, Math.floor(map.width / 900)));
-      const n = rng() < 0.25 ? 0 : 1 + Math.floor(rng() * cap);
+      const cap = huntCap(map);
+      const n = 2 + Math.floor(rng() * (cap - 1));
       for (let i = 0; i < n; i++) addHunter(bots, world);
     }
   }
@@ -900,10 +903,21 @@ function huntersHere(bots, world, dt) {
   }
   // Now and then someone walks in.
   bots.arriveIn -= dt;
-  const cap = Math.min(3, Math.max(1, Math.floor(map.width / 900))) + (queen ? 2 : 0);
+  const cap = huntCap(map) + (queen ? 2 : 0);
   if (bots.arriveIn <= 0) {
-    bots.arriveIn = between(45, 110, rng);
+    bots.arriveIn = between(30, 80, rng);
     if (hunters.length < cap) addHunter(bots, world, true);
+  }
+  // Someone who died here logs back in after a while and comes back for more.
+  bots.returns = (bots.returns ?? []).filter((r) => world.now - r.at < 600);
+  const back = bots.returns.find((r) => r.map === map.id && world.now >= r.at);
+  if (back && hunters.length < cap + 1) {
+    bots.returns = bots.returns.filter((r) => r !== back);
+    const b = addHunter(bots, world, true, back.who);
+    if (b) {
+      b.appear = 1;
+      say(b, pick(['ok im back', 'round 2', 'bought 50 pots this time', 'that was so embarrassing', 'i have returned', 'revenge time'], rng));
+    }
   }
   for (const bot of hunters) {
     if (bot.appear > 0) bot.appear = Math.max(0, bot.appear - dt * 1.5);
@@ -917,6 +931,15 @@ function huntersHere(bots, world, dt) {
         bot.timer = 0.6;
         if (rng() < 0.5) say(bot, speak(bots.memory, 'bye', {}, bot.style, rng) ?? 'bye');
       }
+    }
+    // Died here: a few seconds under the tombstone, then back to town (and back here later).
+    if (fieldDownOver(bot, world) && bot.state !== 'logout') {
+      bot.state = 'logout';
+      bot.timer = 0.6;
+      if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
+      const char = bot.char;
+      char.hp = computeStats(char).maxHp;
+      bots.returns = [...(bots.returns ?? []), { at: world.now + between(40, 100, rng), map: map.id, who: { name: bot.name, char, guild: bot.guild, style: bot.style, title: bot.title } }];
     }
     if (bot.state === 'logout') {
       bot.timer -= dt;

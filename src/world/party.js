@@ -5,10 +5,11 @@
 // and drop loot for you). They chat and level up alongside you, until you leave the party (or
 // they log off).
 
-import { createBody, stepBody, groundAt } from './physics.js';
+import { createBody, stepBody, groundAt, knockBack } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, autoAssignAp } from '../core/character.js';
-import { physicalRange, magicRange, accuracy, hitChance, rollHit } from '../core/formulas.js';
+import { physicalRange, magicRange, accuracy, hitChance, rollHit, mobHitChance, avoid, damageTaken } from '../core/formulas.js';
+import { mobBox } from './mobs.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
@@ -500,7 +501,17 @@ function fight(bot, m, world, intent, rng) {
   if (!intent.left && !intent.right) body.facing = toward;
   if (world.now < f.readyAt || body.facing !== toward) return;
   const step = nextMove(bot, rng);
-  play(bot, step, m, world, rng);
+  // Now and then they fluff it like anyone does: a swing the wrong way at thin air, or a step
+  // carried right off the ledge (rookies most of all).
+  const clumsy = bot.ai.kind === 'rookie' ? 0.08 : 0.025;
+  if (rng() < clumsy) {
+    body.facing = -toward;
+    play(bot, { ...step, strikes: step.strikes.map((s) => ({ ...s, pct: 0, burst: undefined })) }, m, world, rng);
+    if (!bot.bubble && rng() < 0.5) say(bot, pick2(['lag', 'wat', 'missed lol', '??', 'wrong way oops', 'my hands slipped']));
+  } else play(bot, step, m, world, rng);
+  // Stepping in (or hopping back) carries them along until the first blow, like you.
+  const first = (step.carry ?? step.strikes[0]?.at ?? 0.4) * step.dur;
+  if (step.step) bot.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: world.now + first, slip: rng() < clumsy * 2 };
   // The beat after it: a chained step flows on; a finisher, a skill, or the end of a string
   // takes a breath (longer for a calmer player).
   const breath = step.last ? between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng) * 0.2 : 0;
@@ -564,6 +575,95 @@ function play(bot, step, m, world, rng) {
   }
 }
 
+// Moves a member along a step they're carried through, kept on their ledge (unless they slipped,
+// in which case off they go, and they'll say so when they land).
+function carry(bot, world, dt, rng) {
+  const body = bot.body;
+  const L = bot.lunge;
+  if (bot.oops && body.onGround) {
+    bot.oops = false;
+    if (!bot.bubble && rng() < 0.7) say(bot, pick2(['oops', 'LOL i fell', 'nooo my combo', 'who moved the ledge', 'that was on purpose']));
+  }
+  if (!L) return;
+  if (world.now >= L.until || bot.down) {
+    bot.lunge = null;
+    if (L.slip && !body.onGround) bot.oops = true;
+    return;
+  }
+  let x = body.x + L.v * dt;
+  const nav = navOf(world.map);
+  const s = nav.surfaces[surfaceOf(nav, body)];
+  if (s && !L.slip) x = Math.max(s.x1 + 6, Math.min(s.x2 - 6, x));
+  body.x = clampX(world.map, x);
+  if (L.slip && !body.onGround) bot.oops = true;
+}
+
+// ---------- Monsters fight back (out in the field) ----------
+// A monster a member hits goes after them (world.js), and touching them hurts as it hurts you.
+// They drink a potion when they get low, while they have any; out of them and out of HP, they
+// fall, a tombstone drops on them, and a few seconds later they're off back to town (a player
+// hunting on their own logs back in a while later, a party member walks back in to you).
+
+const BOT_INVULN = 0.7;
+const DOWN_FOR = 4.5;
+
+function takeHits(bot, world, dt, rng) {
+  const body = bot.body;
+  const max = bot.stats.maxHp;
+  bot.hp ??= max;
+  bot.potions ??= 1 + Math.floor(rng() * 5);
+  if (bot.hurt > 0) bot.hurt = Math.max(0, bot.hurt - dt);
+  bot.invuln = Math.max(0, (bot.invuln ?? 0) - dt);
+  if (bot.down) return;
+  // Resting between fights, they get their HP back slowly.
+  if (bot.hp > 0 && !bot.brain?.target) bot.hp = Math.min(max, bot.hp + max * 0.03 * dt);
+  if (bot.invuln <= 0) {
+    const box = { x: body.x - body.w / 2, y: body.y - body.h, w: body.w, h: body.h };
+    const m = world.mobs.find((o) => o.hp > 0 && !(o.frozenUntil > world.now) && touches(box, mobBox(o)));
+    if (m) {
+      m.attackAt = world.now;
+      bot.invuln = BOT_INVULN;
+      if (rng() < mobHitChance(m.def.acc, avoid(bot.stats))) {
+        const dmg = damageTaken(m.def.atk, bot.stats.wdef, rng);
+        bot.hp = Math.max(0, bot.hp - dmg);
+        bot.hurt = 0.3;
+        bot.lunge = null;
+        knockBack(body, m.x);
+        world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
+      } else world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0, small: true });
+    }
+  }
+  // A potion when they get low.
+  if (bot.hp > 0 && bot.hp < max * 0.35 && world.now >= (bot.potionAt ?? 0)) {
+    bot.potionAt = world.now + 1.5;
+    if (bot.potions > 0) {
+      bot.potions -= 1;
+      const add = Math.round(max * 0.5);
+      bot.hp = Math.min(max, bot.hp + add);
+      world.fx.push({ kind: 'heal', x: body.x, y: body.y, t: 0, dur: 0.6 });
+      world.numbers.push({ x: body.x, y: body.y - body.h - 14, text: `+${add}`, color: '#7ee081', t: 0, small: true });
+      if (!bot.potions && !bot.bubble && rng() < 0.6) say(bot, pick2(['last pot...', 'out of pots uh oh', 'shouldve bought more pots']));
+    } else if (!bot.bubble && rng() < 0.3) say(bot, pick2(['no pots!!', 'help', 'im gonna die lol', 'hp hp hp']));
+  }
+  if (bot.hp <= 0) fall(bot, world, rng);
+}
+
+const touches = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+function fall(bot, world, rng) {
+  bot.down = true;
+  bot.tomb = true;
+  bot.downAt = world.now;
+  bot.attack = null;
+  bot.lunge = null;
+  bot.brain.target = null;
+  say(bot, pick2(['x_x', 'noooo', 'rip me', 'i died lol', 'LAG', 'how', 'that snail hits hard wtf', 'brb dying']));
+  if (bot.party) world.log(`${bot.name} died! They'll be back in a bit.`, '#ff8fa8');
+}
+
+// Down in the field: lying there under the tombstone, then off to town after a few seconds.
+export const fieldDownOver = (bot, world) => bot.down && bot.tomb && world.now - bot.downAt > DOWN_FOR;
+
 // Healers keep an eye on your HP.
 function heal(bot, world, bots) {
   const char = world.char;
@@ -594,6 +694,12 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   bot.stuck ??= 0;
   const br = bot.brain;
   const body = bot.body;
+  takeHits(bot, world, dt, rng);
+  if (bot.down) {
+    stepBody(body, map, { left: false, right: false, up: false, down: false, jump: false }, dt, { speed: 0, jump: 0 });
+    bot.x = body.x;
+    return;
+  }
   br.think -= dt;
   if (br.think <= 0 && !bot.leaving) {
     br.think = between(bot.ai.react[0], bot.ai.react[1], rng);
@@ -613,6 +719,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
     br.stall = 0;
   }
   stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100 });
+  carry(bot, world, dt, rng);
   const m = br.target;
   const st = bot.ai.weapon;
   // (A monster that's wandered over to you is yours now.)
@@ -629,6 +736,20 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   }
   if (bot.attack && (bot.attack.t += dt) >= bot.attack.dur) bot.attack = null;
   bot.x = body.x;
+}
+
+// Back from town after dying: in through the portal nearest you, a little sheepish.
+function walkBackIn(bot, world) {
+  const b = world.body;
+  const portals = world.map.portals.filter((p) => !p.hidden && !p.dungeon).sort((p, q) => Math.abs(p.x - b.x) - Math.abs(q.x - b.x));
+  const p = world.map.isTown || world.dungeon ? null : portals[0];
+  bot.away = null;
+  bot.map = world.map.id;
+  bot.body = createBody(p ? p.x : b.x - b.facing * FOLLOW_GAP, p ? p.y : b.y);
+  bot.appear = 1;
+  Object.assign(bot.brain, { goal: null, target: null, path: null });
+  say(bot, pick2(['back!! sorry', 'im back, that was embarrassing', 'bought more pots this time', 'ok round 2', 'did u miss me']));
+  world.log(`${bot.name} is back.`, '#9fe0b0');
 }
 
 // Members level up from the party's kills too.
@@ -666,6 +787,11 @@ export function updateParty(bots, world, dt) {
     bot.ai ??= makeAI(bot, rng);
     bot.brain ??= { think: 0, goal: null, target: null, settled: false, still: 0, habitIn: 6, healIn: 6 };
     const br = bot.brain;
+    // Died out in the field and gone back to town for a bit: then they walk back in to you.
+    if (bot.away) {
+      if (world.now < bot.away && !world.dungeon) return;
+      walkBackIn(bot, world);
+    }
     // Following you to a new map: they arrive right behind you, a beat apart.
     if (bot.map !== map.id || !bot.body) {
       bot.map = map.id;
@@ -682,7 +808,14 @@ export function updateParty(bots, world, dt) {
       return;
     }
     const body = bot.body;
-    // Fallen in a dungeon: they lie where they fell until someone gets them up.
+    bot.stats ??= computeStats(bot.char);
+    if (!world.dungeon && !map.isTown) takeHits(bot, world, dt, rng);
+    // Fallen in the field, a few seconds under the tombstone, then off to town.
+    if (fieldDownOver(bot, world)) {
+      Object.assign(bot, { down: false, tomb: false, hp: bot.stats.maxHp, potions: 1 + Math.floor(rng() * 5), away: world.now + between(20, 40, rng), body: null, bubble: null });
+      return;
+    }
+    // Fallen (in a dungeon they lie where they fell until someone gets them up).
     if (bot.down) {
       bot.attack = null;
       stepBody(body, map, { left: false, right: false, up: false, down: false, jump: false }, dt, { speed: 0, jump: 0 });
@@ -726,6 +859,7 @@ export function updateParty(bots, world, dt) {
       br.stall = 0;
     }
     stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100 });
+    carry(bot, world, dt, rng);
     br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;
     // Fight.
     const m = br.target;
