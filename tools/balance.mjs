@@ -198,7 +198,8 @@ export function measure(job, level = 60, { secs = 30 } = {}) {
   const pack = run(job, level, { n: 5, secs, main: b5.main, skip: b5.skip });
   const bestPack = { id: b5.main };
   const best1 = { id: b1.main };
-  const fight = run(job, level, { n: 4, secs: 300, main: bestPack.id, skip: b5.skip, fight: true, mpFree: false });
+  // (Surviving, every buff and heal is used: a ward matters more than a little damage.)
+  const fight = run(job, level, { n: 4, secs: 300, main: bestPack.id, fight: true, mpFree: false });
   const heals = Object.keys(c.skills).filter((id) => kind(id) === 'heal');
   let heal = 0;
   for (const id of heals) {
