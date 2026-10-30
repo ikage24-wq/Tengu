@@ -43,8 +43,7 @@ export function balanceChar(job, level) {
   }
   while (c.level < level) up();
   autoAssignAp(c);
-  // (Only what the level allows: some skills open later, `minLevel`.)
-  for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job) && (s.minLevel ?? 0) <= level) c.skills[id] = s.maxLevel;
+  for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job)) c.skills[id] = s.maxLevel;
   const gl = Math.max(...GEAR_LEVELS.filter((l) => l <= level));
   const family = JOBS[job].family;
   c.equipment.weapon = makeEquip(`${WEAPON[job]}_${gl}`, { variance: 0 });

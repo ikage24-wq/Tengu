@@ -152,8 +152,6 @@ export function canLearn(char, skillId) {
   const s = SKILLS[skillId];
   if (!s || char.sp <= 0) return false;
   if (!jobChain(char.job).includes(s.job)) return false;
-  // Late skills open at a level of their own.
-  if (char.level < (s.minLevel ?? 0)) return false;
   return (char.skills[skillId] ?? 0) < s.maxLevel;
 }
 

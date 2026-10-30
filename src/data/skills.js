@@ -165,14 +165,13 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { low: 0.5, duration: lerp(12, 24, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } } }),
   }),
 
-  // Her late skills (`minLevel`: they open at that level, see core/character.js).
   sacredbulwark: skill({
-    id: 'sacredbulwark', name: 'Sacred Bulwark', job: 'paladin', type: 'passive', fx: null, icon: 'bulwark', school: 'holy', maxLevel: 10, minLevel: 50,
+    id: 'sacredbulwark', name: 'Sacred Bulwark', job: 'paladin', type: 'passive', fx: null, icon: 'bulwark', school: 'holy', maxLevel: 10,
     desc: 'A shield of light sometimes flashes up and blocks a hit outright, then answers with a holy shockwave that stuns everything around you.',
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.08, 0.2, lv, m), pct: lerp(120, 220, lv, m), targets: lerp(4, 7, lv, m), stun: lerpf(1, 2, lv, m) } }),
   }),
   judgment: skill({
-    id: 'judgment', name: 'Judgment', job: 'paladin', type: 'passive', fx: null, icon: 'judgment', school: 'holy', maxLevel: 10, minLevel: 70,
+    id: 'judgment', name: 'Judgment', job: 'paladin', type: 'passive', fx: null, icon: 'judgment', school: 'holy', maxLevel: 10,
     desc: 'When your Faith fills, you ascend for a while: every swing strikes again with holy light (no knockback), your swings reach farther, your Faith stays full, and the last swing of every combo calls a rain of holy swords down ahead of you that mends you and the party around you a little.',
     at: (lv, m) => ({ passive: {}, proc: { duration: lerp(8, 15, lv, m), echo: lerp(50, 80, lv, m), buff: { watk: lerp(10, 40, lv, m), dmgCut: lerpf(0.05, 0.12, lv, m) }, swords: lerp(5, 8, lv, m), pct: lerp(90, 150, lv, m), heal: lerpf(0.01, 0.02, lv, m) } }),
   }),
@@ -223,14 +222,13 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.25, 0.7, lv, m), pct: lerp(110, 190, lv, m), smash: lerp(300, 520, lv, m), targets: lerp(4, 7, lv, m) } }),
   }),
 
-  // His late skills (`minLevel`).
   bloodlust: skill({
-    id: 'bloodlust', name: 'Bloodlust', job: 'berserker', type: 'passive', fx: null, icon: 'bloodlust', school: 'rage', maxLevel: 10, minLevel: 50,
+    id: 'bloodlust', name: 'Bloodlust', job: 'berserker', type: 'passive', fx: null, icon: 'bloodlust', school: 'rage', maxLevel: 10,
     desc: 'Your blows drink blood: they heal you for a share of the damage they do (up to a share of your max HP each second), up to three times as much the lower your HP.',
     at: (lv, m) => ({ passive: {}, proc: { steal: lerpf(0.02, 0.05, lv, m), low: 3, cap: lerpf(0.012, 0.02, lv, m) } }),
   }),
   demonform: skill({
-    id: 'demonform', name: 'Demon Form', job: 'berserker', type: 'passive', fx: null, icon: 'demonform', school: 'rage', maxLevel: 10, minLevel: 70,
+    id: 'demonform', name: 'Demon Form', job: 'berserker', type: 'passive', fx: null, icon: 'demonform', school: 'rage', maxLevel: 10,
     desc: 'When your Rage fills, the demon takes you over for a while: a blood-red shadow of you stands behind you and strikes again after every swing (no knockback), your swings reach farther, and your Rage stays full until it ends.',
     at: (lv, m) => ({ passive: {}, proc: { duration: lerp(8, 15, lv, m), echo: lerp(50, 80, lv, m), buff: { watk: lerp(10, 40, lv, m) } } }),
   }),
@@ -545,7 +543,7 @@ export const SKILLS = {
   // hits, build Bond (0-100, see world/melee.js), shown as Snow wolf's Patience running out; full
   // (Fed Up), Snow wolf fights on her own, and the finisher spends it. Like the Archer, she fights
   // with her basic shots and her skills set themselves off: Fine, I'll Go and Moonfall from any
-  // shot, Lunar Howl from her combo's last shot. Her late skills (`minLevel`): Moon Ward and
+  // shot, Lunar Howl from her combo's last shot. Her last skills: Moon Ward and
   // Queen's Awakening. Her buttons are the Archer's Vault, Snack Time and the finisher, Last Straw.
   // (The skill ids are the old animals' names, kept for saves.)
   beastmastery: skill({
@@ -569,7 +567,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), crowd: 3, pct: lerp(80, 140, lv, m), stun: lerpf(0.8, 1.6, lv, m), r: lerp(90, 130, lv, m) } }),
   }),
   loyalguard: skill({
-    id: 'loyalguard', name: 'Moon Ward', job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10, minLevel: 50,
+    id: 'loyalguard', name: 'Moon Ward', job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10,
     desc: 'A hit sometimes never reaches you: Snow wolf plants her greatsword in front of it, a crescent shield of moonlight takes it, and she flicks a crescent back at the attacker.',
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m), pct: lerp(120, 200, lv, m) } }),
   }),
@@ -579,7 +577,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { snackPct: lerpf(1.25, 1.6, lv, m), snackSpeed: lerpf(1.2, 1.45, lv, m) } }),
   }),
   alpha: skill({
-    id: 'alpha', name: "Queen's Awakening", job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10, minLevel: 70,
+    id: 'alpha', name: "Queen's Awakening", job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10,
     desc: 'While Snow wolf is Fed Up (full Bond), the wolf head on her greatsword wakes: her eyes open, she attacks faster and harder, and every swing also throws a crescent of moonlight at the farthest monster.',
     at: (lv, m) => ({ passive: {}, proc: { pct: lerp(150, 260, lv, m), every: lerpf(1.3, 0.9, lv, m) } }),
   }),
@@ -606,7 +604,7 @@ export const SKILLS = {
   // jumps to builds it too; it fades once the fighting stops. Full (Supercharged), every bolt
   // chains to one more monster. Like the Archer, she fights with her basic shots and her skills
   // set themselves off (world/storm.js): Arc Bolt and Static Field from any bolt, Thunderclap from
-  // her combo's last bolt. Storm Mastery is her passive. Her late skills (`minLevel`): Lightning
+  // her combo's last bolt. Storm Mastery is her passive. Her last skills: Lightning
   // Rod and Eye of the Storm. Her buttons are the Archer's Vault, Overcharge and the finisher,
   // Thunderhead.
   stormmastery: skill({
@@ -630,12 +628,12 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), crowd: 3, pct: lerp(120, 200, lv, m), stun: lerpf(0.5, 1, lv, m), r: lerp(50, 70, lv, m) } }),
   }),
   lightningrod: skill({
-    id: 'lightningrod', name: 'Lightning Rod', job: 'stormcaller', type: 'passive', fx: null, school: 'storm', maxLevel: 10, minLevel: 50,
+    id: 'lightningrod', name: 'Lightning Rod', job: 'stormcaller', type: 'passive', fx: null, school: 'storm', maxLevel: 10,
     desc: 'You are charged with the storm: every hit you take is softened, and its shock arcs straight back into the monster that hit you.',
     at: (lv, m) => ({ passive: {}, proc: { cut: lerpf(0.1, 0.25, lv, m), pct: lerp(120, 220, lv, m) } }),
   }),
   eyeofstorm: skill({
-    id: 'eyeofstorm', name: 'Eye of the Storm', job: 'stormcaller', type: 'passive', fx: null, school: 'storm', maxLevel: 10, minLevel: 70,
+    id: 'eyeofstorm', name: 'Eye of the Storm', job: 'stormcaller', type: 'passive', fx: null, school: 'storm', maxLevel: 10,
     desc: 'While you are Supercharged, a storm cloud gathers over your head and keeps dropping lightning on the monsters around you.',
     at: (lv, m) => ({ passive: {}, proc: { every: lerpf(1.1, 0.6, lv, m), pct: lerp(100, 180, lv, m), r: 280 } }),
   }),

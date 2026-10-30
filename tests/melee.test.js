@@ -591,16 +591,14 @@ test('Divine Aegis: a hit that leaves the Paladin under half HP raises it, once 
   assert.equal(w.char.buffs.divineaegis.since, since, 'not again while it holds');
 });
 
-test('late skills open at their own level: Sacred Bulwark at 50, Judgment and Demon Form at 70', async () => {
+test('no skill has a level limit: every skill of a path can be learned from the start', async () => {
   const { canLearn } = await import('../src/core/character.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  for (const s of Object.values(SKILLS)) assert.equal(s.minLevel, undefined, s.id);
   const w = advanced('paladin');
   w.char.sp = 5;
-  w.char.level = 49;
-  assert.equal(canLearn(w.char, 'sacredbulwark'), false, 'not yet at 49');
-  w.char.level = 50;
-  assert.ok(canLearn(w.char, 'sacredbulwark'), 'open at 50');
-  assert.equal(canLearn(w.char, 'judgment'), false, 'Judgment waits for 70');
-  w.char.level = 70;
+  w.char.level = 31;
+  assert.ok(canLearn(w.char, 'sacredbulwark'));
   assert.ok(canLearn(w.char, 'judgment'));
 });
 

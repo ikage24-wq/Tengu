@@ -35,7 +35,6 @@ function learnBlocker(char, s) {
   const lv = char.skills[s.id] ?? 0;
   if (lv >= s.maxLevel) return 'Mastered';
   if (!jobChain(char.job).includes(s.job)) return `Learned as a ${JOBS[s.job].name}`;
-  if (char.level < (s.minLevel ?? 0)) return `Opens at Lv ${s.minLevel}`;
   if (char.sp <= 0) return 'No SP: level up for more';
   return null;
 }
@@ -204,8 +203,7 @@ function details(ui, state, world, s, x, y, w, h, win) {
   if (hot && lv && s.type !== 'passive') tooltip(ui, [{ text: 'Drag onto a hotkey to bind', bold: true }]);
   if (lv && s.type !== 'passive' && clicked(ui, x + 6, y + 6, 36, 36)) win.carry = { id: s.id, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
   text(ctx, fit(ctx, s.name, tw, 9.5), tx, y + 15, { size: 9.5, bold: true, color: lv ? th.ink : COLORS.muted });
-  const gate = s.minLevel ? ` · Lv ${s.minLevel}+` : '';
-  text(ctx, `${KIND_NAMES[kind]} · ${JOBS[s.job].name}${gate}`, tx, y + 25, { size: 7, color: s.minLevel && char.level < s.minLevel ? COLORS.bad : COLORS.muted });
+  text(ctx, `${KIND_NAMES[kind]} · ${JOBS[s.job].name}`, tx, y + 25, { size: 7, color: COLORS.muted });
   // The level gauge, big.
   box(ctx, tx, y + 30, tw - 30, 5, { fill: COLORS.cell, edge: null, r: 2.5 });
   if (lv) box(ctx, tx, y + 30, Math.max(5, ((tw - 30) * lv) / s.maxLevel), 5, { fill: tone, edge: null, r: 2.5 });

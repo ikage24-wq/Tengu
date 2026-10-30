@@ -492,9 +492,9 @@ to clear it.
     into the floor so a ring of holy light bursts out, turns every monster it hits on you, and lifts
     them on pillars of light; always when it catches three or more), **Divine Aegis** (a hit that
     leaves her under half HP makes her raise her blade, guarding and mending her and the party
-    around her). Two late skills open with level: **Sacred Bulwark** (level 50: a shield of light
+    around her). Two more skills: **Sacred Bulwark** (a shield of light
     sometimes flashes up and blocks a hit outright, answering with a holy shockwave that stuns all
-    around her) and **Judgment** (level 70: when her Faith fills she ascends for a while, the Paladin's
+    around her) and **Judgment** (when her Faith fills she ascends for a while, the Paladin's
     answer to Demon Form: every swing strikes again with holy light, her swings reach a third farther, her aura grows, a gold glow breathes round her
     and flashes with each heartbeat, swings burst with holy light, her Faith stays full, and every
     combo finisher calls a rain of holy swords down ahead of her, mending her and the party). Her buttons are Shoulder Charge
@@ -512,9 +512,9 @@ to clear it.
     chops and a leaping smash that feeds on his Rage without spending it, up to double damage at full
     Rage), **Blood
     Frenzy** (a critical hit sometimes sends him into a frenzy: more attack, attack speed and crits,
-    and a quarter of his Rage). Two late skills open with level: **Bloodlust** (level 50: his blows
+    and a quarter of his Rage). Two more skills: **Bloodlust** (his blows
     heal him for a share of their damage, up to three times as much the lower his HP) and **Demon
-    Form** (level 70: when his Rage fills, the demon takes him over for a while; a blood-red shadow of
+    Form** (when his Rage fills, the demon takes him over for a while; a blood-red shadow of
     himself stands behind him and strikes again after every swing, with no knockback; his swings
     reach a third farther, his aura grows, a blood-red glow breathes round him and flashes with each
     heartbeat, and his Rage stays full until it ends). His buttons
@@ -589,9 +589,9 @@ to clear it.
     the sword with a sigh and call a beam of moonlight down on the farthest), **Lunar Howl** (the
     combo's last shot sometimes sets her howling under a pale moon, knocking away and stunning
     everything close round her; always with three or more in front); **Beast Mastery** adds
-    mastery, attack and accuracy. Late skills: **Moon Ward** (level 50: a hit sometimes never
+    mastery, attack and accuracy. Her last skills: **Moon Ward** (a hit sometimes never
     reaches the Beastmaster: Snow wolf plants the sword in front of it behind a crescent shield of
-    moonlight and flicks a crescent back) and **Queen's Awakening** (level 70: while Snow wolf is
+    moonlight and flicks a crescent back) and **Queen's Awakening** (while Snow wolf is
     Fed Up, the wolf head on her sword wakes and her eyes open; she attacks faster and harder, and
     every swing also throws a crescent at the farthest monster). **Snack Time** is a buff: the
     Beastmaster tosses her a moon cookie, she catches it and munches it, and for a while she's
@@ -614,8 +614,8 @@ to clear it.
     nearest monsters), **Static Field** (the ground where a bolt lands crackles and zaps whatever
     stands on it), and **Thunderclap** from her combo's last bolt (lightning from the sky on the
     farthest monster, throwing it up and stunning it; always with three or more in front). Storm
-    Mastery is her passive. Late on, **Lightning Rod** (level 50) softens every hit she takes and
-    arcs its shock back into the attacker, and **Eye of the Storm** (level 70) gathers a storm
+    Mastery is her passive. **Lightning Rod** softens every hit she takes and
+    arcs its shock back into the attacker, and **Eye of the Storm** gathers a storm
     cloud over her while she's Supercharged that keeps dropping lightning on the monsters near
     her. Her buttons are the Archer's Vault, **Overcharge** (her next few bolts go out as massive
     bolts of lightning through the whole line) and her finisher, **Thunderhead**: a bolt fired
