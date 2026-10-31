@@ -1,11 +1,8 @@
-// The players you get to know: friends, your rival, and whoever jumps in when you're in trouble.
+// The players you get to know: friends, and whoever jumps in when you're in trouble.
 //
 // Friends: add a player (right-click them) and they're on your friends list for good (saved with
 // your character, as they looked). Now and then they log in, wave hello if they're near, and ask
 // you along to hunt; invite them from the friends list (N) and they come to you.
-//
-// Your rival: from level 10 one player near your level picks you out. They turn up hunting your
-// fields, race you to every level, and tease you (nicely) about who's ahead.
 //
 // Help: out in the field with your HP low, a player hunting nearby rushes over, takes on the
 // monsters around you, and heals you or tosses you a potion. Say thanks and they might add you.
@@ -17,7 +14,6 @@ import { createBody } from './physics.js';
 import { joinParty, partyMembers, LEVEL_GAP } from './party.js';
 
 export const BUDDY_MAX = 20;
-const RIVAL_FROM = 10;
 
 const between = (a, b, rng) => a + rng() * (b - a);
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
@@ -66,7 +62,7 @@ export function addBlocker(world, bot) {
 }
 
 // Asks them; they answer after a moment (see tickAsks). Those who partied with you, who helped
-// you, or who offered say yes; your rival takes some convincing.
+// you, or who offered say yes.
 export function askFriend(world, bot) {
   const why = addBlocker(world, bot);
   if (why) return why;
@@ -81,16 +77,16 @@ function tickAsks(bots, world) {
     if (!bot.friendAsk || world.now < bot.friendAsk.at) continue;
     bot.friendAsk = null;
     const keen = bot.party || bot.helped || bot.offered;
-    const yes = bot.rival ? rng() < 0.35 : keen || rng() < 0.7;
+    const yes = keen || rng() < 0.7;
     if (!yes) {
-      say(bot, bot.rival ? pick(['lol no', 'friends?? we are RIVALS', 'beat me first'], rng) : pick(['sorry i dont add randoms', 'maybe later', 'hmm no ty'], rng));
+      say(bot, pick(['sorry i dont add randoms', 'maybe later', 'hmm no ty'], rng));
       world.log(`${bot.name} declined your friend request.`, '#ffb3c6');
       continue;
     }
     if (isBuddy(world.char, bot.name) || buddiesOf(world.char).length >= BUDDY_MAX) continue;
     buddiesOf(world.char).push(snapshot(bot));
     bot.buddy = true;
-    say(bot, bot.rival ? pick(['fine. frenemies', 'ok but im still winning', 'friends... for now'], rng) : pick(['added!! :D', 'yay friends', 'added u!', 'omg yes', 'hehe hi friend'], rng));
+    say(bot, pick(['added!! :D', 'yay friends', 'added u!', 'omg yes', 'hehe hi friend'], rng));
     world.log(`${bot.name} is now your friend! (N: friends list)`, '#bfe0ff');
   }
 }
@@ -182,73 +178,6 @@ export function answerHunt(bots, world, yes) {
   if (no) world.log(no, '#ffb3c6');
 }
 
-// ---------- Your rival ----------
-
-const RIVAL_LINES = {
-  first: ['hey. ur always hunting here huh', 'oh, YOU again', 'bet i level faster than u', 'this is MY spot btw'],
-  again: ['oh look who it is', 'stalking me?? :P', 'race u to the next level', 'ur still slower than me', 'yo rival'],
-  ahead: (lv) => [`lv ${lv} already, keep up :P`, `${lv}!! catch me if u can`, `ding ${lv}. ur turn`],
-  tied: (lv) => [`tied at ${lv}... not for long`, `${lv}? same. hmph`],
-  behind: () => ['HOW are u faster than me', 'ok ur fast. i will grind all night', 'not fair i was afk', 'enjoy it while it lasts'],
-};
-
-// From level 10, one player near your level becomes your rival (and stays it).
-function makeRival(bots, world, hooks) {
-  const rng = bots.rng;
-  const level = Math.max(RIVAL_FROM, world.char.level + Math.floor(rng() * 3) - 1);
-  const name = hooks.makeName();
-  const char = hooks.makeChar(rng, { name, level, pro: false });
-  if (char.job === 'novice') return null;
-  return snapshot({ name, char, guild: null, style: hooks.makeStyle(), title: null });
-}
-
-// Your level ups: your rival keeps pace, and lets you know where you stand.
-function rivalRace(bots, world) {
-  const r = world.char.rival;
-  const lv = world.char.level;
-  if (!r || bots.yourLevel === lv) return;
-  const was = bots.yourLevel;
-  bots.yourLevel = lv;
-  if (was == null || lv < was) return;
-  const rng = bots.rng;
-  r.level = Math.max(r.level, lv - 1 + Math.floor(rng() * 3));
-  const lines = r.level > lv ? RIVAL_LINES.ahead(r.level) : r.level === lv ? RIVAL_LINES.tied(r.level) : RIVAL_LINES.behind();
-  world.log(`[Rival] ${r.name}: ${pick(lines, rng)}`, '#ff9eb8');
-  const bot = bots.list.find((b) => b.rival && !b.gone);
-  if (bot) bot.char.level = bot.level = r.level;
-}
-
-// A field you walk into: now and then your rival's hunting there too (always, with `force`: a raid).
-export function rivalHere(bots, world, hooks, force = false) {
-  const rng = bots.rng;
-  if (world.char.level < RIVAL_FROM) return null;
-  const first = !world.char.rival;
-  if (first) {
-    if (!force && rng() < 0.5) return null;
-    world.char.rival = makeRival(bots, world, hooks);
-    if (!world.char.rival) return null;
-  } else if (!force && rng() >= 0.3) return null;
-  const r = world.char.rival;
-  const bot = hooks.addHunter(who(r, remake(r, hooks.makeChar, rng)));
-  if (!bot) return null;
-  bot.rival = true;
-  bot.buddy = isBuddy(world.char, r.name);
-  bot.kills = 0;
-  say(bot, pick(first ? RIVAL_LINES.first : RIVAL_LINES.again, rng));
-  if (first) world.log(`★ ${r.name} has picked you as their rival!`, '#ff9eb8');
-  return bot;
-}
-
-// While you share a map, your rival brags about their kills now and then.
-function rivalTaunts(bots, world) {
-  const bot = bots.list.find((b) => b.rival && !b.gone && b.map === world.map.id && !b.down);
-  if (!bot || bot.bubble) return;
-  if ((bot.kills ?? 0) >= (bot.bragged ?? 0) + 8) {
-    bot.bragged = bot.kills;
-    say(bot, pick([`${bot.kills} kills. u?`, `thats ${bot.kills} for me`, `${bot.kills}! beat that`], bots.rng));
-  }
-}
-
 // ---------- Help when you're in trouble ----------
 
 const HELP_LOW = 0.3;
@@ -266,12 +195,12 @@ function sendHelp(bots, world) {
     .filter((x) => x.hunter && !x.gone && !x.down && !x.leaving && x.state !== 'logout' && x.body && Math.abs(x.body.x - b.x) < 520 && Math.abs(x.body.y - b.y) < 200)
     .sort((x, y) => Math.abs(x.body.x - b.x) - Math.abs(y.body.x - b.x));
   bots.helpAt = world.now + 45;
-  const bot = near.find((x) => x.rival) ?? near[0];
+  const bot = near[0];
   if (!bot) return;
   bot.helping = world.now + HELP_FOR;
   bot.gave = false;
   Object.assign(bot.brain ?? {}, { target: null, path: null });
-  say(bot, bot.rival ? pick(['ugh fine, i got u', 'dont die before i beat u', 'only i get to beat u'], rng) : pick(['u ok??', 'i got u!', 'hang on!!', 'omg ur hp', 'coming!!'], rng));
+  say(bot, pick(['u ok??', 'i got u!', 'hang on!!', 'omg ur hp', 'coming!!'], rng));
   world.log(`${bot.name} rushes over to help you!`, '#bff0dc');
 }
 
@@ -324,13 +253,11 @@ function offers(bots, world) {
 
 // ---------- Each frame ----------
 
-// `hooks` (from world/bots.js): logIn(who), addHunter(who), makeChar, makeName, makeStyle.
+// `hooks` (from world/bots.js): logIn(who), makeChar.
 export function updateBuddies(bots, world, dt, hooks) {
   tickAsks(bots, world);
   tickBuddies(bots, world, dt, hooks);
   if (bots.huntAsk && (world.now > bots.huntAsk.until || bots.huntAsk.bot.gone)) bots.huntAsk = null;
-  rivalRace(bots, world);
-  rivalTaunts(bots, world);
   sendHelp(bots, world);
   helpers(bots, world);
   offers(bots, world);
