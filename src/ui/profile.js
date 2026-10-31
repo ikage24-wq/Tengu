@@ -10,7 +10,7 @@ import { addItem } from '../core/inventory.js';
 import { itemName } from '../core/items.js';
 import { STAT_KEYS, wornGear } from '../core/character.js';
 import { buildLabel, buyFromShop, thank } from '../world/bots.js';
-import { haggle } from '../world/market.js';
+import { haggle } from '../world/social.js';
 import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';

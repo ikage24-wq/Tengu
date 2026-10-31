@@ -24,6 +24,8 @@ import { createBody } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { addItem } from '../core/inventory.js';
 import { COMBOS } from './melee.js';
+import { botChat } from './chatlog.js';
+import { happened } from './chatter.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -58,6 +60,7 @@ function gmSays(world, text) {
 function doubleExp(ev, bots, world) {
   const mins = 5;
   ev.gm = { kind: 'exp', until: world.now + mins * 60 };
+  happened(bots, world, 'the double exp');
   world.expEvent = 2;
   gmSays(world, `DOUBLE EXP for the next ${mins} minutes! Go go go!`);
   world.callout = { title: 'Double EXP!', sub: `${mins} minutes, everyone on the server`, color: '#ffd24f', at: world.now };
@@ -66,6 +69,7 @@ function doubleExp(ev, bots, world) {
 
 function mochiRain(ev, bots, world) {
   ev.gm = { kind: 'rain', until: world.now + 18, next: world.now };
+  happened(bots, world, 'the mochi rain');
   gmSays(world, `Mochi Rain on ${world.map.name}! Look up!`);
   world.callout = { title: 'Mochi Rain!', sub: 'Catch what falls!', color: '#ffc2d8', at: world.now };
   chatter(bots, world, ['MOCHI RAIN', 'its raining treats!!', 'mine mine mine', 'yummy']);
@@ -95,6 +99,7 @@ function hideAndSeek(ev, bots, world, hooks) {
   if (!bot) return;
   Object.assign(bot, { gm: true, state: 'hide', session: 600, stay: 9999, shop: null, waved: true });
   ev.gm = { kind: 'seek', until: world.now + 8 * 60, bot, map: mapId };
+  happened(bots, world, 'gm hide and seek');
   gmSays(world, `Hide and Seek! I'm hiding somewhere near ${world.map.name}. First to find me wins a prize!`);
   world.callout = { title: 'Hide and Seek!', sub: `Find ${GM} nearby`, color: '#ffd24f', at: world.now };
   const name = map.name;
@@ -204,6 +209,7 @@ function invasionTick(ev, bots, world) {
   }
   if (!left) {
     world.log?.(`★ ${world.map.name} is safe! Everyone cheers.`, '#ffe36b');
+    happened(bots, world, `the ${world.map.name} invasion`);
     world.juice.push({ type: 'confetti', x: world.body.x, y: world.body.y - 120, w: 360, count: 60 });
     chatter(bots, world, ['WE DID IT', 'town saved!!', 'gg everyone', 'heroes of the day', 'my shop survived :D'], 3);
   }
@@ -394,6 +400,7 @@ function showTick(ev, bots, world, dt) {
     const name = win === 'you' ? world.char.name : win.name;
     shout(world, host, `the winner is... ${name}!!!`);
     world.log?.(`★ ${name} won the fashion show!`, '#ffe36b');
+    happened(bots, world, 'the fashion show');
     world.juice.push({ type: 'confetti', x: win === 'you' ? world.body.x : win.x, y: world.map.groundY - 120, w: 120 });
     if (win === 'you') {
       const prize = 800 + world.char.level * 60;
@@ -422,7 +429,7 @@ const MEMES = [
 export function memeLine(bots, rng) {
   const m = bots.events?.meme;
   if (!m || m.over) return null;
-  return rng() < 0.35 ? pick(m.lines, rng) : null;
+  return rng() < 0.12 ? pick(m.lines, rng) : null;
 }
 
 function memeTick(ev, bots, world) {
@@ -495,6 +502,7 @@ function weddingTick(ev, bots, world, dt) {
       if (rng() < 0.4) later(g, world.now + between(0.3, 2.5, rng), pick(['congrats!!', 'so cute', 'im not crying ur crying', 'kiss!!', 'best wedding ever', 'where is the cake'], rng));
     }
     world.log?.(`★ ${a.name} and ${b.name} are married!`, '#ffd6f0');
+    happened(bots, world, `${a.name} and ${b.name}'s wedding`);
   } else if (w.phase === 'kiss' && world.now >= w.at) {
     // The bouquet: to a guest, or to you if you're there.
     const near = world.map.id === a.map && Math.abs(world.body.x - cx) < 260;
@@ -517,9 +525,9 @@ function weddingTick(ev, bots, world, dt) {
 
 // ---------- Helpers ----------
 
+// (What drives the moment: an announcement, a vow, a winner. It skips chat's wait.)
 function shout(world, bot, line) {
-  bot.bubble = { text: line, t: 4.5 };
-  if (bot.map === world.map.id) world.log?.(`${bot.name}: ${line}`, '#e6dcff');
+  botChat(world, bot, line, { important: true });
 }
 
 // Something said a moment from now, in the chat too.
@@ -530,7 +538,7 @@ function later(bot, at, line) {
 }
 
 // A few people on your map say something, a beat apart.
-function chatter(bots, world, lines, n = 3) {
+function chatter(bots, world, lines, n = 2) {
   const rng = bots.rng;
   bots.list.filter((b) => b.map === world.map.id && !b.gone && !b.party).sort(() => rng() - 0.5).slice(0, n)
     .forEach((b, i) => later(b, world.now + 0.8 + i * between(0.8, 1.6, rng), pick(lines, rng)));

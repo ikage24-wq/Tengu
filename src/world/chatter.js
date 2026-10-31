@@ -1,8 +1,8 @@
-// Procedural chat for the other "players": a grammar of templates with slots (items, maps,
-// monsters, towns, prices, levels, jobs, NPCs, fish, dishes, queens, sets, titles, the real
-// player's name), spoken in each player's own style (caps, emoticons, slang, the odd typo). The
-// combinations run into the millions, and a memory of recent lines keeps anything from being said
-// twice in a session. `answer` lets them reply to what the real player says in chat (directions,
+// Procedural chat for the other "players": templates about what's real for each speaker (their own
+// weapon, job and title, the map they're on and its monsters, where they're headed next, the
+// weather, what just happened on the server), spoken in each player's own style (caps, emoticons,
+// slang, the odd typo). A line whose slots don't fit the speaker isn't used; no line is said twice
+// in a session, and no template comes round again until many others have. `answer` lets them reply to what the real player says in chat (directions,
 // levels, where monsters live, how fishing and cooking work), from the game's own data.
 
 import { ITEMS } from '../data/items.js';
@@ -19,11 +19,6 @@ import { levelRange, routeBetween } from './routes.js';
 
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 
-const GEAR = () => Object.values(ITEMS).filter((d) => d.type === 'equip');
-const WEAPONS = () => Object.values(ITEMS).filter((d) => d.slot === 'weapon');
-const DROPS = () => Object.values(ITEMS).filter((d) => d.type === 'etc');
-const POTIONS = () => Object.values(ITEMS).filter((d) => d.type === 'use' && d.effect && !d.scroll);
-const HUNTS = () => Object.values(MAPS).filter((m) => !m.isTown);
 
 export function price(n) {
   if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace(/\.0$/, '')}m`;
@@ -31,89 +26,101 @@ export function price(n) {
   return `${n}`;
 }
 
-// Slots: each returns a phrase. `ctx` carries the speaker and the real player's name.
+// Slots: each returns a phrase, or null when it doesn't fit this speaker (and then the line isn't
+// used). `ctx` (contextOf) is the speaker: who they are, where, what's around them, what just
+// happened on the server, and the real player's name.
 const SLOTS = {
-  item: () => pick(GEAR()).name,
-  // A party member talks about their own weapon; anyone else about whatever.
-  weapon: (c) => c.weapon ?? pick(WEAPONS()).name,
-  drop: () => pick(DROPS()).name,
-  potion: () => pick(POTIONS()).name,
-  map: () => pick(HUNTS()).name,
-  town: () => MAPS[pick(TOWNS)].name,
-  mob: () => pick(Object.values(MOBS)).name,
-  mobs: () => `${pick(Object.values(MOBS)).name}s`,
-  boss: () => pick(['Crystal King', 'Gnarlroot', 'Sylvana', 'Tamamo', 'Lilith', 'Selene']),
-  queen: () => pick(['Sylvana', 'Tamamo', 'Lilith', 'Selene']),
-  fish: (c) => c.fishName ?? pick(FISH).name,
+  // About the speaker.
+  me: (c) => c.player ?? null,
+  mylvl: (c) => (c.level ? `${c.level}` : null),
+  myjob: (c) => c.jobName ?? null,
+  myweapon: (c) => c.weapon ?? null,
+  mytitle: (c) => c.title ?? null,
+  myguild: (c) => c.guild ?? null,
+  shopitem: (c) => c.shopItem ?? null,
+  // Where they are, and what's there.
+  here: (c) => c.hereName ?? null,
+  town: (c) => (c.isTown ? c.hereName : null),
+  field: (c) => (c.isTown ? null : c.hereName),
+  mobhere: (c) => (c.mobsHere?.length ? pick(c.mobsHere) : null),
+  drophere: (c) => (c.dropsHere?.length ? pick(c.dropsHere) : null),
+  next: (c) => c.next ?? null,
+  nextmob: (c) => c.nextMob ?? null,
+  weather: (c) => c.weather ?? null,
+  happened: (c) => c.happened ?? null,
+  // Things anyone might mention.
+  fish: (c) => c.fishName ?? pick(FISH.filter((f) => f.rarity <= 2)).name,
   rarefish: () => pick(FISH.filter((f) => f.rarity >= 3)).name,
-  cm: () => `${pick([12, 18, 24, 31, 38, 45, 52, 66, 80, 120, 240])}`,
   dish: () => pick(DISHES).name,
-  set: () => pick(Object.values(SETS)).name,
-  title: () => pick(ACHIEVEMENTS).title,
-  plus: () => pick(['+3', '+5', '+6', '+7', '+8', '+9', '+10']),
+  queen: (c) => (c.level >= 18 ? pick(['Sylvana', 'Tamamo', 'Lilith', 'Selene'].slice(0, c.level >= 40 ? 4 : c.level >= 30 ? 3 : 2)) : null),
   dungeon: () => 'Rootwood Hollow',
-  emotew: () => pick(['dance', 'flip', 'cheer', 'flex', 'love']),
-  npc: () => pick(Object.values(NPCS)).name,
-  job: (c) => c.jobName ?? pick(Object.values(JOBS).filter((j) => !j.hidden && j.id !== 'novice')).name,
-  price: () => price(pick([1, 2, 3, 5, 8, 12, 15, 25, 40, 60, 80, 120, 200, 350, 500, 750, 900, 1200, 2500]) * 1000),
-  small: () => pick(['2', '3', '5', '10', '20', '50', '100']),
-  lvl: (c) => `${Math.max(2, c.level + pick([1, 2, 3, 5, 10]))}`,
-  mylvl: (c) => `${c.level}`,
-  hours: () => pick(['2', '3', '4', '6', 'like 8', '10', '3am-']),
-  me: (c) => c.player ?? 'friend',
+  npc: (c) => c.npcHere ?? pick(Object.values(NPCS)).name,
   stat: () => pick(['STR', 'DEX', 'INT', 'LUK']),
-  feel: () => pick(['so cute', 'so good', 'adorable', 'insane', 'kinda op', 'super pretty', 'cozy', 'actually great', 'too good']),
+  small: () => pick(['2', '3', '5', '10', '20']),
+  hours: () => pick(['2', '3', '4', 'like 6']),
   emote: () => pick([':D', ':)', ';)', ':3', '^^', 'xD', ':P', 'uwu', '<3', 'B)', ':O', '>_<', 'owo', '^_^']),
-  laugh: () => pick(['lol', 'lmao', 'haha', 'hehe', 'lolol', 'xD', 'hahaha', 'rofl', 'pfft']),
-  hi: () => pick(['hi', 'hey', 'hello', 'heyo', 'hiya', 'yo', 'hai', 'sup', 'howdy', 'heya', 'oh hi']),
+  laugh: () => pick(['lol', 'lmao', 'haha', 'hehe', 'lolol', 'xD', 'hahaha', 'pfft']),
+  hi: () => pick(['hi', 'hey', 'hello', 'heyo', 'hiya', 'yo', 'hai', 'sup', 'heya', 'oh hi']),
   bye: () => pick(['gtg', 'cya', 'bye all', 'logging off', 'gn everyone', 'ttyl', 'brb dinner', 'night!', 'off to bed', 'later']),
   yes: () => pick(['yes', 'yep', 'ya', 'yeah', 'ofc', 'sure', 'yesss', 'mhm']),
   wow: () => pick(['wow', 'omg', 'whoa', 'woah', 'no way', 'wait what', 'ooh', 'yooo']),
-  adj: () => pick(['legendary', 'shiny', 'rare', 'epic', 'cute', 'cheap', 'clean', 'perfect', 'sparkly', 'max']),
-  color: () => pick(['pink', 'mint', 'lavender', 'peach', 'gold', 'sky blue', 'white', 'black']),
+  emotew: () => pick(['dance', 'flip', 'cheer', 'flex', 'love']),
+  // (Answers only: a weapon that came up, a job.)
+  weapon: (c) => c.weapon ?? null,
+  job: (c) => c.jobName ?? null,
+  mob: (c) => (c.mobsHere?.length ? pick(c.mobsHere) : null),
+  map: (c) => c.next ?? null,
+  price: () => price(pick([2, 5, 8, 12, 25, 40]) * 1000),
+  set: () => pick(Object.values(SETS)).name,
 };
 
-// Templates by mood. {slot} fills in; some lines only fit some players (pros, newbies, shops).
+// Templates by mood. Every one is about something real for the speaker (their own weapon, the map
+// they're on and its monsters, where they're headed next, what just happened); a line whose slots
+// don't fit them is skipped.
 const TEMPLATES = {
-  lfg: [
-    'LFG {map}', 'anyone wanna party at {map}?', 'need 1 more for {map}!', 'party for {mobs}, lvl {lvl}+', 'LF healer for {boss}', 'duo {map}? {emote}',
-    'party at {map} pls', 'who wants to grind {mobs} with me', 'lf2m {map}', 'any {job} want to party?', 'free exp at {map} come', 'need a tank for {boss} lol',
+  hunting: [
+    '{mobhere}s keep knocking me off the ledge {laugh}', 'need {small} more {mobhere}s for my quest', '{field} is packed today', 'anyone else farming {drophere}?',
+    'been on {field} for {hours} hours', '{mobhere} respawn is so fast here', 'my {myweapon} two-shots {mobhere}s now', 'finally got a {drophere}',
+    'why do {mobhere}s always aggro me', '{field} music hits different', 'one more lvl then im leaving {field}', 'the {mobhere}s here are kinda cute ngl',
   ],
-  trade: [
-    'WTS {item} {price}', 'WTB {drop} x{small}', 'selling {weapon}, pm offers', 'buying {potion}s cheap', 'WTT {item} for {item}', 'S> {item} {price} B> {drop}',
-    'anyone selling {weapon}?', 'price check {item}?', 'WTB {adj} {weapon}, paying {price}', 'selling {drop} x{small} {price} each', '{item} for {price} or best offer', 'trading {item}, need {item}',
+  plans: [
+    'heading to {next} after this', 'is {next} good at lvl {mylvl}?', 'almost strong enough for {next}', 'gonna try the {nextmob}s at {next}',
+    '{next} tomorrow, today i rest', 'lvl {mylvl}... {next} time soon', 'who wants to duo {next} later?',
   ],
-  question: [
-    'how do i get to {town}?', 'where do {mobs} spawn?', 'is {weapon} good for a {job}?', 'what lvl for {map}?', 'which job is best?', 'how do u get {item}?',
-    'where is {npc}?', 'what do i put my AP in', 'is {stat} good for {job}?', 'how long to lvl {lvl}?', 'does anyone know where {drop} drops', 'whats the best map at lvl {mylvl}?',
-    'should i go {job} or {job}?', 'is the {boss} hard?', 'how do i use hotkeys', 'what does {potion} do?',
-  ],
-  smalltalk: [
-    '{hi} everyone {emote}', 'this game is {feel}', 'love the {color} outfit someone has', '{town} is so pretty at night', 'just hit lvl {mylvl}!!', '{laugh} i fell off the rope again',
-    'been grinding {mobs} for {hours} hours', 'the music here is {feel}', 'anyone else love {npc}?', 'my {weapon} finally dropped!!', 'ok {mobs} are {feel}', '{wow} that {job} aura',
-    'snack break brb', 'who else is up late {laugh}', 'i keep dying to {mobs} {laugh}', 'the fountain here is {feel}', 'finally got my {job} job {emote}', '{town} > {town} fight me',
-    'i just want a pet {mob} tbh', 'grats to whoever just leveled!', '{yes} finally done with that quest', 'the sunset in {town} {emote}',
-  ],
-  brag: [
-    'just soloed {boss} {emote}', 'lvl {mylvl} {job} btw', '{adj} {weapon} finally', 'who needs a carry? {emote}', 'max {stat} build ftw', 'farming {map} for fun now',
-    'got a legendary {item} drop today', 'anyone wanna see my {weapon}?', '{boss} in under a minute B)', 'first {job} on the server ;)',
+  gear: [
+    'my {myweapon} finally feels strong', 'should i upgrade my {myweapon}?', 'wearing {mytitle} now {emote}', 'how do u guys like {mytitle} as a title',
+    'saving up for a better {myweapon}', '{myguild} gang', 'anyone else in {myguild} on?', 'love being {myjob} tbh', '{myjob} is so fun at lvl {mylvl}',
   ],
   newbie: [
     'how do i jump', 'what button attacks', 'where do i go first?', 'whats a hotkey', 'this is my first day {emote}', 'how do i talk to {npc}',
-    'is {mob} dangerous?', 'how do i get money', 'im lost lol', 'what does AP mean', 'whats the {town}?', 'omg i leveled!',
+    'im lost lol', 'what does AP mean', 'omg i leveled!', 'is {next} too hard for me?', 'how do i get a job?',
   ],
-  shop: [
-    'come see my shop!', 'shop open: {item} and more', 'cheap stuff at my shop {emote}', 'selling my loot, come look', 'everything must go!!', 'new stock in my shop',
-    'shop here, {adj} prices', 'my shop has {item}', 'browse my shop pls {emote}', 'clearing my bag, cheap!',
+  shop: ['come see my shop!', 'selling {shopitem}, come look', '{shopitem} in my shop {emote}', 'clearing my bag, {shopitem} and more', 'shop open in {town}!'],
+  news: [
+    'did anyone see {happened}?', '{happened} was wild', 'still thinking about {happened}', 'i missed {happened} :(', 'was anyone at {happened}?', '{happened} tho {laugh}',
   ],
+  weather: ['this {weather} tho', 'who ordered {weather}', '{weather} in {here} is kinda cozy', 'my hair in this {weather}...', 'perfect {weather} for fishing', 'ugh {weather}'],
+  fishing: [
+    'anyone know where {rarefish} bites?', 'just caught a {fish} {emote}', 'fishing here is so relaxing', 'my rod is my main weapon now {laugh}',
+    'still no {rarefish} after {hours} hours', 'the bobber dipped and i panicked {laugh}', 'who caught the big one??',
+  ],
+  cooking: ['made {dish} {emote}', 'anyone wanna try my {dish}?', 'perfect stir!! 3 servings', '{dish} + grind = so much exp', 'cooking is my new hobby {emote}', 'i burned it {laugh} jk only Good'],
+  story: [
+    'just beat {queen}\'s trial!!', '{queen} is so pretty tho', 'is Hayate waking up soon?', 'cried a little at the {queen} cutscene ngl', 'Mira is the best {emote}', 'wait the wind STOPPED?? thats the plot??',
+  ],
+  dungeon: ['anyone run {dungeon} with me?', 'the Hollow Heart is so cute when its asleep', 'hard mode {dungeon} anyone?', 'the boar den room {laugh}', 'cleared {dungeon} in {small} min B)'],
+  smalltalk: [
+    '{hi} everyone {emote}', '{here} is so pretty today', 'love the music in {here}', 'who else just idles in {here}', 'snack break brb', 'who else is up late {laugh}',
+    'anyone else love {npc}?', 'i just want a pet {mobhere} tbh', 'ok who keeps dancing {laugh}', 'brb gonna get water',
+  ],
+  brag: ['lvl {mylvl} {myjob} btw', 'my {myweapon} hits so hard', 'farming {field} for fun now', 'who needs a carry? {emote}', '{mytitle} and proud'],
   greet: [
-    '{hi} {me}!', '{hi} {me} {emote}', 'oh {hi} {me}', 'love your outfit {me}!', 'nice weapon {me}', '{me}!! {emote}', 'hey {me}, wanna party sometime?',
-    '{hi}! cute look {me}', 'yo {me} whats ur lvl', '{me} hii {emote}', 'sup {me}', 'heya {me}, good luck out there',
+    '{hi} {me}!', '{hi} {me} {emote}', 'oh {hi} {me}', 'love your outfit {me}!', '{me}!! {emote}', 'hey {me}, wanna party sometime?',
+    'yo {me} whats ur lvl', '{me} hii {emote}', 'sup {me}', 'heya {me}, good luck out there',
   ],
   party: [
-    'nice!', 'gj {me}', 'ty for the party {emote}', 'brb pot', '{laugh} that {mob}', 'this spot is good', 'go go go', 'omg crit', 'ez',
-    'almost lvl up!', 'ooh a drop', 'my {weapon} hits so hard here', 'ur so strong {me}', 'lets do {map} after', 'one more round?', 'loot is yours {me}',
-    'party exp is so good', 'love this party {emote}', 'careful {me}!', 'i got aggro lol', 'wait for me', 'so many {mobs}', 'grinding with friends > solo', 'nice combo',
+    'gj {me}', 'ty for the party {emote}', 'brb pot', '{laugh} that {mobhere}', 'this spot is good', 'almost lvl up!', 'ooh a {drophere}', 'my {myweapon} hits so hard here',
+    'ur so strong {me}', 'lets do {next} after', 'one more round?', 'careful {me}!', 'i got aggro lol', 'wait for me', 'so many {mobhere}s', 'nice combo',
   ],
   joined: ['{yes}! {emote}', 'omg ty for the invite', 'sure, lets go!', 'yay party!', 'ok im in {emote}', 'lets grind {me}!', 'thx {me}!!', 'ooh ok'],
   declined: ['sry cant rn', 'no ty', 'afk soon sorry', 'maybe later!', 'busy rn {emote}', 'im good solo ty', 'not rn sry'],
@@ -122,27 +129,6 @@ const TEMPLATES = {
   levelUp: ['LVL UP!!', 'ding!! {emote}', 'lvl {mylvl}!!', 'leveled!! ty party', 'ding {mylvl} {emote}'],
   leaving: ['gtg, ty for the party!', 'thx for the pt {me}!', 'that was fun, cya!', 'ty! logging off', 'gg party {emote}'],
   thanks: ['ty!!', 'thanks {emote}', 'tysm', 'enjoy it!', 'pleasure doing business', 'thx {me}!', 'have fun with it!', 'ty, come again {emote}'],
-  fishing: [
-    'anyone know where {rarefish} bites?', 'just caught a {fish}, {cm} cm {emote}', 'fishing at the harbor pier is so relaxing', 'my rod is my main weapon now {laugh}',
-    'WTB {fish} x{small}', 'selling {fish}, fresh!', 'still no {rarefish} after {hours} hours', 'the bobber dipped and i panicked {laugh}', 'fish book {small}/13 lets gooo',
-    'Frozen Peak fishing hits different', 'the springs have Steamfins, so warm {emote}', 'who caught the {cm} cm one??',
-  ],
-  cooking: [
-    'made {dish} {emote}', 'anyone wanna try my {dish}?', 'perfect stir!! 3 servings', 'what does {dish} do?', '{dish} + grind = so much exp', 'cooking is my new hobby {emote}',
-    'i burned it {laugh} jk only Good', 'need {fish} for {dish}', 'the stove in {town} is so cozy', 'WTB {dish}',
-  ],
-  story: [
-    'just beat {queen}\'s trial!!', '{queen} is so pretty tho', 'chapter {small} of the story was so sweet', 'is Hayate waking up soon?', 'cried a little at the {queen} cutscene ngl',
-    'the {queen} rematch is back on her map!', 'Mira is the best {emote}', 'wait the wind STOPPED?? thats the plot??', '{queen} rematch dropped my {set} piece!!',
-  ],
-  dungeon: [
-    'LF group {dungeon}!', 'anyone run {dungeon} with me?', 'the Hollow Heart is so cute when its asleep', 'need a healer for {dungeon} pls', 'hard mode {dungeon} anyone?',
-    'got a {set} piece from the {dungeon} chest {emote}', 'the boar den room {laugh}', 'tank here, lf {dungeon}', 'cleared {dungeon} in {small} min B)',
-  ],
-  gear: [
-    'finally full {set} set!!', 'is the {set} aura cute or what', 'polished to {plus} {emote}', 'Tora failed my polish {small} times {laugh}', 'just got the {title} title',
-    'which title do u guys wear?', 'love my {set} hat', 'monster book {small} cards done', 'WTS {set} piece, wrong job', 'the fox tails on Foxfire omg',
-  ],
   bye: ['{bye}', '{bye} {emote}', 'ok {bye}', '{bye}, gl everyone'],
 };
 
@@ -191,24 +177,33 @@ function voice(line, style, rng) {
 
 // A reply to the real player of a kind (REPLIES), never one said this session.
 export function reply(memory, kind, ctx, style, rng = Math.random) {
+  let last = null;
   for (let i = 0; i < 10; i++) {
-    const line = voice(fill(pick(REPLIES[kind], rng), ctx), style, rng);
+    const filled = fill(pick(REPLIES[kind], rng), ctx);
+    if (!filled) continue;
+    const line = voice(filled, style, rng);
+    last = line;
     if (!memory.has(line)) {
       memory.add(line);
       return line;
     }
   }
-  return voice(fill(pick(REPLIES[kind], rng), ctx), style, rng);
+  return last;
 }
 
 // A line of our own (an answer) in a player's voice, its {slots} filled.
 export function voiced(line, ctx, style, rng = Math.random) {
-  return voice(fill(line, ctx), style, rng);
+  return voice(fill(line, ctx) ?? line.replace(/\{\w+\}/g, ''), style, rng);
 }
 
 // A little chat between two players: the lines in order, filled in.
 export function conversation(ctx, rng = Math.random) {
-  return pick(CONVERSATIONS, rng).map((l) => fill(l, ctx));
+  // (One whose every line fits.)
+  for (let i = 0; i < 10; i++) {
+    const lines = pick(CONVERSATIONS, rng).map((l) => fill(l, ctx));
+    if (lines.every(Boolean)) return lines;
+  }
+  return ['{hi}', '{hi} {emote}'].map((l) => fill(l, ctx));
 }
 
 // ---------- Answering the real player ----------
@@ -303,36 +298,90 @@ export function makeStyle(rng = Math.random) {
   return { lower: rng() < 0.6, shout: rng() < 0.08, excited: rng() < 0.4, emotes: rng() < 0.5, laughs: rng() < 0.3, typos: rng() < 0.25, stretch: rng() < 0.15 };
 }
 
+// A template with its slots filled, or null when one doesn't fit the speaker.
 function fill(template, ctx) {
-  return template.replace(/\{(\w+)\}/g, (_, k) => (SLOTS[k] ? SLOTS[k](ctx) : k));
+  let ok = true;
+  const line = template.replace(/\{(\w+)\}/g, (_, k) => {
+    const v = SLOTS[k] ? SLOTS[k](ctx) : k;
+    if (v == null) ok = false;
+    return v ?? '';
+  });
+  return ok ? line : null;
 }
 
-// A fresh line for `kind` (a mood), never one already said this session.
+// Templates used lately (by anyone), so the same line shape doesn't come round again soon.
+const RECENT_TEMPLATES = 60;
+
+// A fresh line for `kind` (a mood): never one already said this session, never a template used
+// lately, and only one that fits the speaker. Null when there's nothing good to say.
 export function speak(memory, kind, ctx, style, rng = Math.random) {
+  const list = TEMPLATES[kind];
+  if (!list) return null;
+  memory.recent ??= [];
+  const fresh = list.filter((t) => !memory.recent.includes(t));
   for (let i = 0; i < 12; i++) {
-    const line = voice(fill(pick(TEMPLATES[kind], rng), ctx), style, rng);
-    if (!memory.has(line)) {
-      memory.add(line);
-      return line;
-    }
+    const t = pick(fresh.length ? fresh : list, rng);
+    const filled = fill(t, ctx);
+    if (!filled) continue;
+    const line = voice(filled, style, rng);
+    if (memory.has(line)) continue;
+    memory.add(line);
+    memory.recent.push(t);
+    if (memory.recent.length > RECENT_TEMPLATES) memory.recent.shift();
+    return line;
   }
   return null;
 }
 
-// What a player feels like saying, given who they are.
-export function moodFor(bot, rng = Math.random) {
+// ---------- What a player knows to talk about ----------
+
+const dropName = (id) => (ITEMS[id]?.type === 'etc' ? ITEMS[id].name : null);
+
+// The speaker: who they are, where they are and what's there, where they're headed next, what
+// just happened on the server, the weather if they're with you.
+export function contextOf(bot, bots, world) {
+  const c = bot.char;
+  const map = MAPS[bot.map];
+  const spawns = (map?.spawns ?? []).map((s) => MOBS[s.mob]).filter((d) => d && !d.boss);
+  const mobs = [...new Set(spawns.map((d) => d.name))];
+  const drops = [...new Set(spawns.flatMap((d) => (d.drops ?? []).map((x) => dropName(x.id)).filter(Boolean)))];
+  const next = bestMap(c.level + 3);
+  const nextMobs = (next?.spawns ?? []).map((s) => MOBS[s.mob]).filter((d) => d && !d.boss);
+  const w = c.equipment?.weapon;
+  const recent = (bots.happened ?? []).filter((h) => world.now - h.at < 900);
+  return {
+    player: world.char.name, level: c.level, jobName: c.job === 'novice' ? null : JOBS[c.job]?.name,
+    weapon: w ? ITEMS[w.id]?.name ?? null : null, title: bot.title ?? null, guild: bot.guild ?? null,
+    shopItem: bot.shop?.items[0] ? (ITEMS[bot.shop.items[0].id]?.name ?? null) : null,
+    hereName: map?.name ?? null, isTown: Boolean(map?.isTown), here: bot.map,
+    mobsHere: mobs, dropsHere: drops, npcHere: map?.npcs?.length ? NPCS[pick(map.npcs).id]?.name : null,
+    next: next && next.id !== bot.map ? next.name : null, nextMob: nextMobs.length ? pick(nextMobs).name : null,
+    weather: bot.map === world.map.id ? world.weather ?? null : null,
+    happened: recent.length ? pick(recent).what : null,
+  };
+}
+
+// Something big just happened on the server (a raid, a wedding, an invasion): people talk about it
+// for a while after.
+export function happened(bots, world, what) {
+  bots.happened = [...(bots.happened ?? []), { what, at: world.now }].slice(-8);
+}
+
+// What a player feels like saying, given who they are, where, and what's going on.
+export function moodFor(bot, rng = Math.random, ctx = {}) {
   if (bot.party && rng() < 0.7) return 'party';
   if (bot.shop && rng() < 0.55) return 'shop';
-  if (bot.level < 12 && rng() < 0.55) return 'newbie';
-  if (bot.pro && rng() < 0.4) return 'brag';
+  if (bot.level < 12 && rng() < 0.5) return 'newbie';
+  if (ctx.happened && rng() < 0.3) return 'news';
+  if (ctx.weather && rng() < 0.25) return 'weather';
+  if (bot.pro && rng() < 0.3) return 'brag';
+  if (!ctx.isTown && ctx.mobsHere?.length && rng() < 0.6) return 'hunting';
   const r = rng();
-  if (r < 0.12) return 'lfg';
-  if (r < 0.26) return 'trade';
-  if (r < 0.38) return 'question';
-  if (r < 0.46) return 'fishing';
-  if (r < 0.52) return 'cooking';
-  if (r < 0.6) return bot.level >= 18 ? 'story' : 'smalltalk';
-  if (r < 0.66) return bot.level >= 12 ? 'dungeon' : 'smalltalk';
-  if (r < 0.74) return bot.level >= 15 ? 'gear' : 'smalltalk';
+  if (r < 0.2) return 'plans';
+  if (r < 0.38) return 'gear';
+  if (r < 0.46 && ctx.isTown) return 'fishing';
+  if (r < 0.52 && ctx.isTown) return 'cooking';
+  if (r < 0.62) return bot.level >= 18 ? 'story' : 'plans';
+  if (r < 0.7) return bot.level >= 12 ? 'dungeon' : 'smalltalk';
   return 'smalltalk';
 }

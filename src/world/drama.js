@@ -12,6 +12,7 @@
 import { COMBOS } from './melee.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
 import { computeStats } from '../core/stats.js';
+import { happened } from './chatter.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -166,6 +167,7 @@ function tickDuel(duel, d, bots, world, dt) {
   d.shout(winner, pick(DUEL.win, rng));
   d.say(loser, pick(DUEL.lose, rng));
   world.log?.(`${winner.name} won the duel against ${loser.name}!`, '#ffd6f0');
+  happened(bots, world, `${winner.name} beating ${loser.name} in that duel`);
   for (const o of duel.crowd) {
     if (o.drama !== duel) continue;
     o.emote = { pose: 'cheer', t: 0, dur: 1.2 };
@@ -196,6 +198,7 @@ function legendIn(d, bots, world, hooks) {
   bot.stay = 999;
   bot.legendLine = world.now + 6;
   world.log?.(`★ The legendary ${name} has logged in!`, '#ffe36b');
+  happened(bots, world, `${name} showing up`);
   // The town loses it, and a few fans start following them about.
   const here = bots.list.filter((o) => o.map === bot.map && o !== bot && !o.shop && !o.party && !o.hunter && !o.legend);
   here.slice(0, 4).forEach((o, i) => {
@@ -367,10 +370,11 @@ function tickAfk(bot, d, bots, world, dt) {
     }
     return;
   }
+  // Someone who hasn't just spoken notices (and if chat won't take it yet, a little later).
   if (!A.noticed && world.now >= A.noticeAt) {
-    A.noticed = true;
-    const o = pick(bots.list.filter((x) => x !== bot && x.map === bot.map && !x.shop && !x.party && !x.hunter && !x.drama), rng);
-    if (o) d.shout(o, pick(AFK_NOTICE(bot.name), rng));
+    const o = pick(bots.list.filter((x) => x !== bot && x.map === bot.map && !x.shop && !x.party && !x.hunter && !x.drama && world.now - (x.chatAt ?? -99) > 30), rng);
+    if (o && d.shout(o, pick(AFK_NOTICE(bot.name), rng))) A.noticed = true;
+    else A.noticeAt = world.now + 3;
   }
   if (world.now < A.until) return;
   bot.afkTag = false;
