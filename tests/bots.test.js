@@ -871,27 +871,6 @@ test('GM events: Double EXP doubles what you earn, a Mochi Rain pours treats, an
   assert.ok(world.char.gold > gold && lines.some((l) => /found me/.test(l)), 'found, with a prize');
 });
 
-test('an invasion: monsters pour into town, the players there fight them off with you, and cheer', () => {
-  const { world, bots, lines } = eventTown(203);
-  bots.events.invadeIn = 0;
-  townStep(world, bots, 0.1);
-  const inv = bots.events.invasion;
-  assert.ok(inv && inv.mobs.length >= 9, 'monsters in town');
-  assert.ok(lines.some((l) => /invading/.test(l)));
-  assert.ok(inv.fighters.length >= 3 && inv.fighters.every((b) => b.hunter && b.body), 'the townsfolk take up arms');
-  let hits = 0;
-  for (let t = 0; t < 60 && bots.events.invasion; t += 1 / 30) {
-    updateWorld(world, 1 / 30, NONE);
-    updateBots(bots, world, 1 / 30);
-    hits += world.pending.filter((h) => h.stranger && !h.counted && (h.counted = true)).length;
-    // (You help too.)
-    if (t > 20) for (const m of inv.mobs) m.hp = Math.min(m.hp, 1);
-  }
-  assert.ok(hits > 10, `they fought (${hits} blows)`);
-  assert.ok(!bots.events.invasion && lines.some((l) => /is safe/.test(l)), 'the town is safe');
-  assert.ok(inv.fighters.every((b) => b.gone || (!b.hunter && !b.body && b.state === 'idle')), 'and back to town life');
-});
-
 test('a festival by the calendar: Spooky Night in October, with fireworks and festive outfits', async () => {
   const { festivalOn } = await import('../src/world/events.js');
   assert.equal(festivalOn(new Date(2026, 9, 31)).name, 'Spooky Night');
@@ -1041,7 +1020,7 @@ test('a player asks for help with their quest; help them and they thank you with
   assert.ok(world.char.regulars.some((r) => r.name === ask.bot.name && r.helped), 'and they remember it');
 });
 
-test('weather: umbrellas up in the rain, snowball fights in the snow', () => {
+test('weather: rain comes and goes, and snowball fights in the snow', () => {
   const { world, bots, lines } = eventTown(321);
   const roll = (kind) => {
     for (let i = 0; i < 60 && world.weather !== kind; i++) {
@@ -1052,8 +1031,6 @@ test('weather: umbrellas up in the rain, snowball fights in the snow', () => {
   roll('rain');
   assert.equal(world.weather, 'rain');
   assert.ok(lines.some((l) => /starts to rain/.test(l)));
-  townStep(world, bots, 15);
-  assert.ok(bots.list.some((b) => b.umbrella), 'umbrellas up');
   // Snow in December.
   bots.clock = () => new Date(2026, 11, 20, 18, 0);
   roll('snow');
@@ -1066,7 +1043,6 @@ test('weather: umbrellas up in the rain, snowball fights in the snow', () => {
     world.juice = [];
   }
   assert.ok(thrown.length >= 2, 'snowballs fly');
-  assert.ok(!bots.list.some((b) => b.umbrella), 'and the umbrellas are down');
 });
 
 test('a photographer at a landmark asks you into the shot, and the photo is yours too', () => {

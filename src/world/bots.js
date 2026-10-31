@@ -909,7 +909,6 @@ function bandOf(map) {
 // (A boss's own room, like the Crystal Throne, is huntable while he's on it: players come to raid.)
 function huntable(world) {
   const map = world.map;
-  if (world.invading && !world.dungeon) return true;
   if (map.isTown || map.dungeon || map.trial || world.dungeon || NO_HUNTERS.has(map.id) || (!bandOf(map) && !raidBoss(world))) return false;
   // Online with friends here, the monsters are shared with real players instead.
   return !world.net?.bodies?.(world)?.length;

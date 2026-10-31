@@ -816,11 +816,9 @@ to clear it.
     menu), guilds hold meetups, and someone storms out now and then; someone goes afk right on a
     portal; photographers pose at a landmark and ask you into the shot (stand there and the photo is
     yours too); music jams with notes floating up and people dancing; cosplay as a townsperson or
-    in a queen's colours; umbrellas in the rain and snowball fights in the snow (weather comes and
-    goes on each map).
+    in a queen's colours; snowball fights in the snow (rain and snow come and go on each map).
   - **Server events.** GM Momo runs Double EXP for five minutes, a Mochi Rain, or Hide and Seek
-    (hidden on a nearby map: find them for gold, Elixirs and Cash). Monsters **invade** the town
-    you're in, and the players there arm themselves and fight with you. Festivals follow the real
+    (hidden on a nearby map: find them for gold, Elixirs and Cash). Festivals follow the real
     calendar (Spooky Night in October, the Snow Festival in December, and more) with festival
     colours, dancing and fireworks. A wandering merchant sets up for a few minutes with odd wares.
     Players beat on the training dummies in Ember Crag and brag about their damage. A host calls a
@@ -828,7 +826,7 @@ to clear it.
     **married** in town, with vows, hearts, confetti and a bouquet (sometimes to you).
   - **Chat.** They talk about what's real for them: their own weapon, job, title and guild, the map
     they're on and its monsters and drops, where they're headed next, the weather, and the raid,
-    wedding or invasion that just happened; a line that doesn't fit the speaker isn't used. They
+    wedding or GM event that just happened; a line that doesn't fit the speaker isn't used. They
     talk back too: hi when you say hi, answers from the game's own data ("where is Clover Hills?",
     "where do Jackalopes spawn?", "what level is Mossy Woods?"), cheers when you level up or land a
     good fish, and your emotes returned. A phrase sometimes catches on as a meme for a while. All of
@@ -900,7 +898,7 @@ src/world/              simulation: physics, monsters, loot, combat, the world u
                         how bots fight), chatter.js (what they say), chatlog.js (the chat gate),
                         buddies.js (friends, help), raids.js (raids, party combos, photos),
                         drama.js (duels, legends, guilds, afk, the clock), events.js (GM events,
-                        invasions, festivals, the merchant, dummies, fashion shows, memes,
+                        festivals, the merchant, dummies, fashion shows, memes,
                         weddings), lives.js (regulars, help requests, weather, photographers, jams,
                         cosplay), social.js (haggling, lucky drops, dungeon groups, the hall of fame)
 src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects, towns

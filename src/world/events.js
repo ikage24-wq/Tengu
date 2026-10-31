@@ -3,8 +3,6 @@
 //   - GM events: a Game Master (GM Momo) logs in and runs one: Double EXP for a while, a Mochi
 //     Rain (treats and coins pouring out of the sky), or Hide and Seek (GM Momo hides on a map
 //     nearby, chat trades hints, and whoever finds them first wins a prize; right-click them).
-//   - Invasions: monsters pour into the town you're in. The players there take up arms and fight
-//     them off with you, chat in a panic, and cheer when the town's safe.
 //   - Festivals: by the real calendar (Spooky Night in October, the Snow Festival in December...),
 //     towns celebrate: players dress in the festival's colour, dance, and fireworks go up.
 //   - The wandering merchant: once in a long while a peddler sets up in a town for a few minutes
@@ -18,9 +16,7 @@
 
 import { MOBS } from '../data/mobs.js';
 import { ITEMS } from '../data/items.js';
-import { spawnMob } from './mobs.js';
 import { spawnDrops } from './drops.js';
-import { createBody } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { addItem } from '../core/inventory.js';
 import { COMBOS } from './melee.js';
@@ -145,73 +141,6 @@ function endGm(ev, bots, world) {
     if (!g.done) gmSays(world, `Nobody found me! I was on ${g.bot.map ? 'the map with the ' : ''}... it's a secret.`);
     g.bot.state = 'logout';
     g.bot.timer = 0.6;
-  }
-}
-
-// ---------- Invasions ----------
-
-const PANIC = ['MONSTERS IN TOWN', 'defend the town!!', 'where are the guards??', 'everyone fight!', 'my shop!!!', 'protect the newbies'];
-
-function invade(ev, bots, world, hooks) {
-  const rng = bots.rng;
-  const map = world.map;
-  const [lo, hi] = hooks.townLevels(map.id);
-  const kinds = Object.values(MOBS).filter((d) => !d.boss && d.level >= lo && d.level <= hi + 4 && d.atk > 0 && !d.fight?.mender);
-  if (!kinds.length) return;
-  const n = 9 + Math.floor(rng() * 5);
-  const mobs = [];
-  for (let i = 0; i < n; i++) {
-    const def = pick(kinds, rng);
-    const x = Math.max(80, Math.min(map.width - 80, world.body.x + (i % 2 ? 1 : -1) * between(180, 700, rng)));
-    const m = spawnMob(map, { mob: def.id, x, y: map.groundY });
-    m.invader = true;
-    m.aggroUntil = Infinity;
-    mobs.push(m);
-  }
-  world.mobs.push(...mobs);
-  // The players in town take up arms: they're out fighting in it now, with bodies of their own.
-  const fighters = bots.list.filter((b) => free(b, world) && b.level >= 10).slice(0, 5);
-  world.invading = true;
-  for (const b of fighters) {
-    b.event = 'defend';
-    b.hunter = true;
-    b.raid = true;
-    b.helping = Infinity;
-    b.body = createBody(b.x, map.groundY);
-    b.stats = computeStats(b.char);
-    b.state = 'hunt';
-  }
-  ev.invasion = { map: map.id, mobs, fighters, panicAt: world.now + 1 };
-  world.log?.(`★ Monsters are invading ${map.name}! Defend the town!`, '#ff9eb8');
-  world.callout = { title: 'Invasion!', sub: `Monsters in ${map.name}`, color: '#ff6b8a', at: world.now };
-  world.juice.push({ type: 'shake', mag: 3, dur: 0.4 });
-}
-
-function invasionTick(ev, bots, world) {
-  const inv = ev.invasion;
-  const rng = bots.rng;
-  if (world.now >= inv.panicAt) {
-    inv.panicAt = world.now + between(4, 9, rng);
-    const b = pick(bots.list.filter((x) => x.map === inv.map && !x.gone && (x.event === 'defend' || free(x, world))), rng);
-    if (b && !b.bubble) shout(world, b, pick(PANIC, rng));
-  }
-  const left = inv.mobs.filter((m) => m.hp > 0 && world.mobs.includes(m)).length;
-  if (left && world.map.id === inv.map) return;
-  // Over: the town's safe (or you left it to its fate).
-  ev.invasion = null;
-  world.invading = false;
-  for (const m of inv.mobs) if (m.hp > 0) m.hp = 0;
-  for (const b of inv.fighters) {
-    if (b.gone) continue;
-    Object.assign(b, { hunter: false, raid: false, helping: null, body: null, down: false, tomb: false, attack: null, brain: null, fight: null, map: inv.map });
-    release(b, rng);
-    if (!left) b.emote = { pose: 'cheer', t: 0, dur: 1.2 };
-  }
-  if (!left) {
-    world.log?.(`★ ${world.map.name} is safe! Everyone cheers.`, '#ffe36b');
-    happened(bots, world, `the ${world.map.name} invasion`);
-    world.juice.push({ type: 'confetti', x: world.body.x, y: world.body.y - 120, w: 360, count: 60 });
-    chatter(bots, world, ['WE DID IT', 'town saved!!', 'gg everyone', 'heroes of the day', 'my shop survived :D'], 3);
   }
 }
 
@@ -550,7 +479,7 @@ function chatter(bots, world, lines, n = 2) {
 // townLevels(id), dress(bot, colour), travel(bot, town), equipFor(def).
 export function updateEvents(bots, world, dt, hooks) {
   const rng = bots.rng;
-  const ev = (bots.events ??= { gmIn: between(240, 480, rng), invadeIn: between(600, 1200, rng), merchantIn: between(900, 1800, rng), showIn: between(500, 900, rng), memeIn: between(200, 500, rng), weddingIn: between(900, 1800, rng) });
+  const ev = (bots.events ??= { gmIn: between(240, 480, rng), merchantIn: between(900, 1800, rng), showIn: between(500, 900, rng), memeIn: between(200, 500, rng), weddingIn: between(900, 1800, rng) });
   world.expEvent ??= 1;
   const tick = (key, lo, hi, ok, fn) => {
     ev[key] -= dt;
@@ -565,9 +494,6 @@ export function updateEvents(bots, world, dt, hooks) {
     if (ev.gm.kind === 'seek') seekTick(ev, bots, world);
     if (world.now >= ev.gm.until) endGm(ev, bots, world);
   } else tick('gmIn', 900, 1800, !world.dungeon, () => pick([doubleExp, mochiRain, hideAndSeek], rng)(ev, bots, world, hooks));
-  // Invasions.
-  if (ev.invasion) invasionTick(ev, bots, world);
-  else tick('invadeIn', 1200, 2400, town && !ev.show && !ev.wedding, () => invade(ev, bots, world, hooks));
   festivalTick(ev, bots, world, dt, hooks);
   // The merchant.
   if (ev.merchant && (world.now >= ev.merchant.until || ev.merchant.bot.gone)) {
@@ -576,11 +502,11 @@ export function updateEvents(bots, world, dt, hooks) {
   } else if (!ev.merchant) tick('merchantIn', 1500, 3000, !world.dungeon, () => merchant(ev, bots, world, hooks));
   if (town) dummies(ev, bots, world, dt);
   if (ev.show) showTick(ev, bots, world, dt);
-  else tick('showIn', 900, 1600, town && !ev.invasion && !ev.wedding, () => fashionShow(ev, bots, world));
+  else tick('showIn', 900, 1600, town && !ev.wedding, () => fashionShow(ev, bots, world));
   memeTick(ev, bots, world);
   tick('memeIn', 400, 900, !ev.meme, () => startMeme(ev, bots, world));
   if (ev.wedding) weddingTick(ev, bots, world, dt);
-  else tick('weddingIn', 1500, 2700, town && !ev.invasion && !ev.show, () => wedding(ev, bots, world));
+  else tick('weddingIn', 1500, 2700, town && !ev.show, () => wedding(ev, bots, world));
   // Anyone pulled into something that's since ended goes back to normal.
   for (const b of bots.list) {
     if (b.event === 'model' || b.event === 'host' || b.event === 'crowd') if (!ev.show) release(b, rng);

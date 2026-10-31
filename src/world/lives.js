@@ -6,8 +6,8 @@
 //   - Asking for help: now and then a player is stuck on a quest and asks around. Right-click
 //     them (Help) and they join your party; hunt their monsters together and they thank you with a
 //     gift (and remember it).
-//   - Weather: rain or snow comes and goes on each map. In the rain the players in town put up
-//     umbrellas and grumble; in the snow they start snowball fights.
+//   - Weather: rain or snow comes and goes on each map; in the snow the players in town start
+//     snowball fights.
 //   - Photographers: a player poses at a landmark while a friend takes the picture, and asks you
 //     to get in it (stand by them: the photo's yours too, in the Collection).
 //   - Music jams: a few players gather and play, notes floating up, others dancing round them.
@@ -231,14 +231,6 @@ function weatherTick(L, bots, world, dt, hooks) {
     else if (!world.weather && was) world.log?.(`The ${was} stops.`, '#bfe0ff');
   }
   const here = bots.list.filter((b) => b.map === map.id && !b.gone && !b.party && !b.hunter);
-  // Umbrellas up in the rain (and down again after).
-  for (const b of here) {
-    const want = world.weather === 'rain' && map.isTown && (b.umbrellaRoll ??= rng()) < 0.65;
-    if (want && !b.umbrella && rng() < dt * 0.6) {
-      b.umbrella = true;
-      if (!b.bubble && rng() < 0.2) shout(world, b, pick(['ugh rain', 'good thing i brought an umbrella', 'my hair!!', 'rain = fishing weather'], rng));
-    } else if (!want && b.umbrella) b.umbrella = false;
-  }
   // Snowball fights.
   if (world.weather === 'snow' && map.isTown) {
     L.snowAt = (L.snowAt ?? 0) - dt;

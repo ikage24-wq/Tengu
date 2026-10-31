@@ -1144,38 +1144,6 @@ export function drawFallen(ctx, look, gear, x, y, state, since) {
   ctx.restore();
 }
 
-// An umbrella held up over a player in the rain, in one of a few pastel colours by who they are.
-const UMBRELLAS = [['#ff9ec0', '#ffc2d6'], ['#8fd3ff', '#bfe0ff'], ['#ffe36b', '#fff3a6'], ['#9be08f', '#bff0dc'], ['#c9a6ff', '#e0cfff']];
-function drawUmbrella(ctx, x, y, facing, seed) {
-  const [main, light] = UMBRELLAS[Math.floor(seed * 997) % UMBRELLAS.length];
-  const cx = x + facing * 3;
-  const top = y - 62;
-  ctx.save();
-  ctx.fillStyle = '#5d5285';
-  ctx.fillRect(cx - 0.5, top + 2, 1.2, 30);
-  ctx.beginPath();
-  ctx.arc(cx, top + 10, 16, Math.PI, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = main;
-  ctx.beginPath();
-  ctx.arc(cx, top + 10, 14.8, Math.PI, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = light;
-  for (const k of [-1, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(cx, top - 4);
-    ctx.quadraticCurveTo(cx + k * 6, top + 2, cx + k * 5, top + 10);
-    ctx.lineTo(cx + k * 9, top + 10);
-    ctx.quadraticCurveTo(cx + k * 9, top + 1, cx, top - 4);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#5d5285';
-  ctx.fillRect(cx - 0.6, top - 7, 1.2, 3);
-  ctx.restore();
-}
-
 // A player who died out in the field gets a little tombstone dropped on them from the sky: it
 // falls in a beat after they do, thuds into the ground with a puff of dust and a bounce, and
 // wobbles to a stop, a flower on top.
@@ -1404,7 +1372,6 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   } else {
     fellAt.delete(bot);
     drawHero(ctx, look, gear, x, y, state, anim);
-    if (bot.umbrella && !body) drawUmbrella(ctx, x, y, facing, seedOf(bot.id));
   }
   ctx.save();
   if (far && !hovered && !bot.party) ctx.globalAlpha = 0.3;

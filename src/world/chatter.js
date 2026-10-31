@@ -361,7 +361,7 @@ export function contextOf(bot, bots, world) {
   };
 }
 
-// Something big just happened on the server (a raid, a wedding, an invasion): people talk about it
+// Something big just happened on the server (a raid, a wedding, a GM event): people talk about it
 // for a while after.
 export function happened(bots, world, what) {
   bots.happened = [...(bots.happened ?? []), { what, at: world.now }].slice(-8);
