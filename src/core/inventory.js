@@ -68,9 +68,15 @@ export function removeItem(inv, id, qty = 1) {
   return qty - left;
 }
 
-// The throwing stars a gauntlet throws: the topmost set in the Use tab your level allows.
+// The throwing stars a gauntlet throws: always the strongest set you own that your level allows.
 export function activeStar(char) {
-  return char.inventory.use.find((e) => ITEMS[e.id].star && e.qty > 0 && char.level >= ITEMS[e.id].reqLevel) ?? null;
+  let best = null;
+  for (const e of char.inventory.use) {
+    const def = ITEMS[e.id];
+    if (!def.star || e.qty <= 0 || char.level < def.reqLevel) continue;
+    if (!best || def.star.watk > ITEMS[best.id].star.watk) best = e;
+  }
+  return best;
 }
 
 // The stars a throw flies with. Stars never run out: one in your bag throws forever. Returns the
@@ -80,15 +86,9 @@ export function useStars(char) {
   return stack ? ITEMS[stack.id] : null;
 }
 
-// Recharging a set of throwing stars back to full costs what the missing stars are worth.
-export function rechargePrice(def, qty) {
-  return Math.ceil(((def.stack - qty) * def.price) / def.stack);
-}
-
 // Tidies a tab: partial stacks of the same item merge, then items line up by kind. Equipment
 // goes by slot, then highest level and rarity first; stackables follow the catalogue's order.
-// Throwing-star sets keep their own order (the first one is the set being thrown) and never
-// merge, since each set is recharged on its own.
+// Throwing-star sets keep their own order and never merge.
 const SLOT_ORDER = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
 let catalogue = null;
 export function sortTab(inv, tab) {

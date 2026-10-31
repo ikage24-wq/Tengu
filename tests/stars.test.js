@@ -7,7 +7,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { computeStats } from '../src/core/stats.js';
-import { addItem, activeStar, rechargePrice } from '../src/core/inventory.js';
+import { addItem, activeStar } from '../src/core/inventory.js';
 import { ITEMS } from '../src/data/items.js';
 import { spawnMob } from '../src/world/mobs.js';
 import { cast } from '../src/world/combat.js';
@@ -77,7 +77,9 @@ test('stars add their attack to a gauntlet, and only stars your level allows are
   addItem(c.inventory, 'star_steel', 500);
   assert.equal(activeStar(c).id, 'star_steel');
   c.level = 20;
-  assert.equal(activeStar(c).id, 'star_mint', 'the top set goes first');
+  assert.equal(activeStar(c).id, 'star_mint', 'the strongest set goes, whatever its place in the bag');
+  c.inventory.use.reverse();
+  assert.equal(activeStar(c).id, 'star_mint');
 });
 
 test('stars never run out: a single star throws forever, and with none you cannot throw', () => {
@@ -97,10 +99,4 @@ test('stars never run out: a single star throws forever, and with none you canno
   c.inventory.use = [];
   assert.equal(cast(w, null).reason, 'stars');
   assert.equal(cast(w, 'luckyseven').reason, 'stars');
-});
-
-test('recharging a set costs what its missing stars are worth', () => {
-  assert.equal(rechargePrice(ITEMS.star_pebble, 250), 250);
-  assert.equal(rechargePrice(ITEMS.star_moon, 499), 24);
-  assert.equal(rechargePrice(ITEMS.star_moon, 500), 0);
 });

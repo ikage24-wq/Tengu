@@ -1,6 +1,7 @@
 // Always-on HUD: status bar, hotkeys, minimap, buffs, quest tracker, message log, map banner.
 
 import { SKILLS, skillAt } from '../data/skills.js';
+import { ITEMS } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
 import { countItem, activeStar } from '../core/inventory.js';
@@ -365,17 +366,16 @@ export function hotkeyAt(x, y) {
   return y >= HK_Y && y < HK_Y + HK_D ? HOTKEYS[i] : null;
 }
 
-// The throwing stars a gauntlet is throwing, and how many are left in the set.
+// The throwing stars a gauntlet is throwing (the strongest set you own; they never run out).
 function drawStars(ui, world) {
   const { ctx } = ui;
   const char = world.char;
   const set = activeStar(char);
   const x = 584;
   const y = TRAY_Y - 22;
-  const low = !set || set.qty < 50;
-  box(ctx, x, y, 52, 16, { fill: 'rgba(255,250,248,0.94)', edge: low && Math.sin(world.now * 8) > 0 ? COLORS.bad : '#f4bcd8', r: 8, width: 1.5 });
+  box(ctx, x, y, 52, 16, { fill: 'rgba(255,250,248,0.94)', edge: set ? '#f4bcd8' : COLORS.bad, r: 8, width: 1.5 });
   if (set) drawItemIcon(ctx, set.id, x + 2, y);
-  text(ctx, set ? `${set.qty}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: low ? COLORS.bad : COLORS.ink });
+  text(ctx, set ? `+${ITEMS[set.id].star.watk}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: set ? COLORS.ink : COLORS.bad });
   if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
 }
 

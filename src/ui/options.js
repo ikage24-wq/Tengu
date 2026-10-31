@@ -14,7 +14,6 @@ const PAGES = {
     ['particles', 'Particles', 'Dust, sparks, petals, and footsteps.', ['full', 'reduced', 'off']],
     ['jobAuras', 'Job auras', 'The glow around advanced jobs while idle.'],
     ['weaponEffects', 'Weapon effects', 'Live effects on weapons and elemental footsteps.'],
-    ['gearEffects', 'Gear effects', 'Glints on fine armor, and the glow of a full high-level set.'],
   ],
   Interface: [
     ['minimap', 'Minimap', 'The map in the top-left corner.'],

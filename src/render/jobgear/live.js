@@ -45,7 +45,7 @@ const hash = (n) => frac(Math.sin(n * 127.1 + 311.7) * 43758.5453);
 // { head: [x, y], chest, hips, feet, hands, back, w } where w is the body's half width;
 // s: scale; dir: facing (1 or -1); t: time.
 export function drawGearFx(ctx, g, at, s, dir, t) {
-  if (!settings.gearEffects || settings.particles === 'off') return;
+  if (settings.particles === 'off') return;
   const few = settings.particles === 'reduced';
   const pieces = SLOTS.map((slot) => [slot, g[slot]]).filter(([, p]) => p?.family && !LOOK_FAMILIES.has(p.family));
   if (!pieces.length) return;

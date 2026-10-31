@@ -9,7 +9,7 @@
 
 import { NPCS, shopStock } from '../data/npcs.js';
 import { ITEMS, RARITIES } from '../data/items.js';
-import { addItem, removeItem, countItem, rechargePrice, TAB_SIZE, STACK_MAX } from '../core/inventory.js';
+import { addItem, removeItem, countItem, TAB_SIZE, STACK_MAX } from '../core/inventory.js';
 import { makeEquip, itemName, itemColors } from '../core/items.js';
 import { equipBlocker, wornGear } from '../core/character.js';
 import { shade } from '../render/pixel.js';
@@ -301,7 +301,7 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
     if (!char.equipment[def.slot]) text(ctx, `Nothing worn as ${SLOT_NAMES[def.slot].toLowerCase()}`, x + 51, cy + 50, { size: 6, color: COLORS.muted });
     cy += 58;
   } else {
-    const desc = def.star ? `Attack +${def.star.watk}, ${def.stack} to a set. The first set in your bag is thrown; shops refill used sets.` : def.desc ?? '';
+    const desc = def.star ? `Attack +${def.star.watk}. They never run out; a gauntlet always throws the strongest stars you own.` : def.desc ?? '';
     cy = wrap(ctx, desc, x + 7, cy + 2, w - 14, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 2;
     const have = countItem(char.inventory, e.id);
     text(ctx, have ? `You have ${have}` : "You don't have any", x + 7, cy + 2, { size: 6.5, bold: true, color: have ? th.dark : COLORS.muted });
@@ -330,16 +330,6 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
   text(ctx, dlg.tab === 0 ? 'Total' : 'You get', x + 7, by + 6, { size: 6.5, bold: true, color: COLORS.muted });
   icon(ctx, 'coin', x + 11, by + 12.5, 7, '#f0b53a');
   text(ctx, total.toLocaleString(), x + 17, by + 15, { size: 8.5, bold: true, color: afford ? COLORS.gold : COLORS.bad });
-  // A part-thrown set of stars can be refilled instead of sold.
-  if (dlg.tab === 1 && def.star && e.qty < def.stack) {
-    const cost = rechargePrice(def, e.qty);
-    if (button(ui, x + w - 106, by, 50, 16, `Refill ${cost.toLocaleString()}g`, { enabled: char.gold >= cost, primary: true, size: 6 })) {
-      char.inventory.use[e.index].qty = def.stack;
-      char.gold -= cost;
-      dlg.flash = { at: world.now, text: `-${cost.toLocaleString()}g`, color: COLORS.bad };
-      world.log(`Recharged ${def.name}.`, def.color);
-    }
-  }
   const label = dlg.tab === 0 ? (def.star ? 'Buy sets' : 'Buy') : 'Sell';
   if (button(ui, x + w - 52, by, 46, 16, label, { enabled: afford, primary: dlg.tab === 0, theme: dlg.tab === 1 ? 'peach' : null, size: 8 })) trade(world, dlg, e, dlg.qty);
 }

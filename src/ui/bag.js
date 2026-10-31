@@ -516,7 +516,7 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
   } else {
     const kind = def.star ? 'Throwing stars' : tab === 'use' ? 'Consumable' : 'Material';
     text(ctx, `${kind}${entry.qty > 1 ? ` · ${entry.qty} in the bag` : ''}`, tx, y + 25, { size: 7, color: COLORS.muted });
-    const desc = def.star ? `Attack +${def.star.watk}. The first set in your bag is thrown.` : def.desc ?? '';
+    const desc = def.star ? `Attack +${def.star.watk}. They never run out; your gauntlet throws the strongest stars you own.` : def.desc ?? '';
     let ly = wrap(ctx, desc, tx, y + 36, tw, { size: 7, color: COLORS.ink, lineHeight: 9 });
     // Which hotkey it's on, and which quests want it.
     const key = tab === 'use' ? hotkeyOf(char, entry.id) : null;
@@ -530,7 +530,7 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       text(ctx, fit(ctx, `${q.name}: ${q.have}/${q.count}`, tw - 80, 6.5), tx + 12, ly + 1, { size: 6.5, bold: true, color: MINT.ink });
     }
     if (def.price) foot = `Sells for ${sellPrice(entry.id).toLocaleString()} gold each`;
-    if (tab === 'use') label = def.star ? 'Throw' : 'Use';
+    if (tab === 'use') label = def.star ? null : 'Use';
   }
   if (foot) text(ctx, fit(ctx, foot, tw - (label ? 74 : 24) - (tab !== 'cash' ? 21 : 0), 6.5, false), tx, by + 11, { size: 6.5, color: tab === 'equip' ? COLORS.muted : COLORS.gold, bold: tab !== 'equip' });
   // Actions, right to left: the main one, drop on the ground, and the bin (which asks first).
@@ -568,16 +568,7 @@ function activate(state, world, tab, index) {
     bag.view = 1;
   } else if (tab === 'use') {
     const def = ITEMS[entry.id];
-    if (def.star) {
-      // Picks the set a gauntlet throws: it moves to the front of the tab.
-      if (char.level < def.reqLevel) world.log(`${def.name} need level ${def.reqLevel}.`, '#ffb3c6');
-      else {
-        char.inventory.use.splice(index, 1);
-        char.inventory.use.unshift(entry);
-        bag.sel = 0;
-        world.log(`Now throwing ${def.name}.`, def.color);
-      }
-    } else {
+    if (!def.star) {
       useItem(world, entry.id);
     }
   }
