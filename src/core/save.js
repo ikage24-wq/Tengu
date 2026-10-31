@@ -58,10 +58,11 @@ export function dropRetiredItems(char) {
   return char;
 }
 
-// Jobs that were renamed move to their new job, and skills that were removed give their SP back.
+// Jobs that were renamed move to their new job (any other that no longer exists, like the old Mage,
+// starts over as a Novice), and skills that were removed give their SP back.
 export function updateRetiredJobs(char) {
   // A job that exists today is never retired, even if an old job once had its id (the Ranger).
-  if (!JOBS[char.job]) char.job = RETIRED_JOBS[char.job] ?? char.job;
+  if (!JOBS[char.job]) char.job = RETIRED_JOBS[char.job] ?? 'novice';
   for (const [id, lv] of Object.entries(char.skills ?? {})) {
     if (SKILLS[id]) continue;
     char.sp += lv;

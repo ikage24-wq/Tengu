@@ -223,7 +223,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? (QUESTS[dlg.quest].rewards.pick ? 166 : 118) : 138) : dlg.dungeon ? 172 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -309,8 +309,7 @@ function questPage(ui, state, world, npc, area, key) {
   const { x: tx, w: tw, theme: th } = area;
   const q = QUESTS[dlg.quest];
   const st = questState(char, dlg.quest);
-  const picking = st === 'ready' && q.rewards.pick;
-  const words = picking ? 'Which one will you train with? Tap it, then Complete. (Your first job gives your stat points back, so any choice is fine.)' : st === 'ready' ? 'You did it! Thank you so much. Here is your reward.' : q.text;
+  const words = st === 'ready' ? 'You did it! Thank you so much. Here is your reward.' : q.text;
   const chars = typed(ui, dlg, `q:${dlg.quest}:${st}`, world, area, words);
   text(ctx, q.name, tx, area.y, { size: 9.5, bold: true, color: th.ink });
   ctx.font = font(9.5, true);
@@ -357,27 +356,7 @@ function questPage(ui, state, world, npc, area, key) {
   icon(ctx, 'coin', ix + 6, ry + 15, 7, COLORS.gold);
   text(ctx, `${q.rewards.gold.toLocaleString()} gold`, ix + 12, ry + 17.5, { size: 7, bold: true, color: COLORS.ink });
 
-  // A choice of reward: one card each, the chosen one lit up (or its number key).
-  if (picking) {
-    const n = q.rewards.pick.length;
-    const cw = (tw - (n - 1) * 4) / n;
-    const cy = ry - 40;
-    q.rewards.pick.forEach((id, i) => {
-      const cx = tx + i * (cw + 4);
-      const on = dlg.pick === id;
-      const hot = hover(ui, cx, cy, cw, 34);
-      box(ctx, cx, cy, cw, 34, { fill: on ? '#fff3c4' : hot ? '#ffffff' : '#fffdfb', edge: on ? COLORS.select : th.light, r: 8, width: on ? 2 : 1.2 });
-      itemSlot(ctx, cx + 4, cy + 8, 18, { id }, { shadow: false, edge: on ? COLORS.select : undefined });
-      const def = ITEMS[id];
-      const kind = def.weaponType[0].toUpperCase() + def.weaponType.slice(1);
-      text(ctx, `${i + 1} ${kind}`, cx + 25, cy + 15, { size: 8, bold: true, color: on ? COLORS.gold : COLORS.ink });
-      text(ctx, def.main.toUpperCase(), cx + 25, cy + 25, { size: 7, bold: true, color: COLORS.muted });
-      if (hot) tooltip(ui, itemTooltip(char, id));
-      if (clicked(ui, cx, cy, cw, 34) || key === i + 1) dlg.pick = id;
-    });
-  }
-
-  const enter = ui.input.pressed?.has('Enter') && chars >= words.length && (!picking || dlg.pick);
+  const enter = ui.input.pressed?.has('Enter') && chars >= words.length;
   if (st === 'available' && (button(ui, tx + tw - 154, by, 74, 17, 'Accept', { primary: true }) || enter)) {
     acceptQuest(char, dlg.quest);
     world.log(`${q.story ? 'Story' : 'Quest'} accepted: ${q.name}`, '#bff0dc');
@@ -390,15 +369,14 @@ function questPage(ui, state, world, npc, area, key) {
     if (questState(char, dlg.quest) !== 'ready') dlg.quest = null;
     return;
   }
-  if (st === 'ready' && (button(ui, tx + tw - 154, by, 74, 17, 'Complete', { primary: true, enabled: !picking || Boolean(dlg.pick) }) || enter)) {
-    const r = completeQuest(char, dlg.quest, picking ? dlg.pick : null);
+  if (st === 'ready' && (button(ui, tx + tw - 154, by, 74, 17, 'Complete', { primary: true }) || enter)) {
+    const r = completeQuest(char, dlg.quest);
     if (r) {
       world.log(`Quest complete: ${q.name}! +${r.exp} EXP, +${r.gold} gold`, '#ffe36b');
       for (const it of r.items) world.log(`Received ${ITEMS[it.id].name}${it.qty > 1 ? ` x${it.qty}` : ''}.`, ITEMS[it.id].color);
       if (r.levels) world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
       if (q.scenes?.done) playScene(world, q.scenes.done);
       dlg.quest = null;
-      dlg.pick = null;
     } else {
       world.log('Make room in your bag first.', '#ffb3c6');
     }

@@ -2,9 +2,7 @@
 // (ui/hud.js; `phone` is the hint for the touch controls) and a check that says when it's done.
 // A new character who chose the island starts with `char.tutorial = { step: 0 }`; the lessons
 // follow what the player actually does, so any order of doing them works out (a lesson already
-// done is skipped), and any lesson can be skipped. The island's lessons end with the boat to
-// Sprout Village; then a few town lessons show what the island can't (the map guide, the story,
-// the Collection, fishing, cooking, friends). A character who skipped the island starts there.
+// done is skipped), and any lesson can be skipped. The lessons end with the boat to Sprout Village.
 
 import { countItem } from '../core/inventory.js';
 import { questState } from '../core/quests.js';
@@ -33,17 +31,10 @@ export const LESSONS = [
   { hint: 'Drag Quick Step from the Skills window onto an empty hotkey, then press that key.', phone: 'Drag Quick Step onto an empty hotkey bubble. It shows up by the attack button!', done: (w) => Object.values(w.char.hotkeys).some((h) => h?.skill === 'quickstep') },
   { hint: 'Go east to Sunny Dock and talk to Kuro one last time.', phone: 'Go east to Sunny Dock and tap Kuro one last time.', done: (w) => Boolean(w.char.quests.tut_farewell) },
   { hint: 'Board the boat at the end of the dock with [↑]. Off to Sprout Village!', phone: 'Board the boat at the end of the dock (push up). Off to Sprout Village!', done: (w) => w.map.id === 'sprout' },
-  // ----- In town: what the island can't show -----
-  { hint: 'Gold [★] quests are the story. Talk to Mira to begin it.', phone: 'Gold [★] quests are the story. Tap Mira to begin it.', done: (w) => Boolean(w.char.quests.story_1_1) },
-  { hint: 'Lost? Open the World Map with [M] and tap a place: a pink trail leads you there.', phone: 'Lost? Tap the [map] on the menu bar, then tap a place: a pink trail leads you there.', done: (w) => Boolean(w.route || w.char.seen?.worldmap) },
-  { hint: 'Open your Collection with [B]: monster cards and fish.', phone: 'Tap [Collection] on the menu bar: monster cards and fish.', done: (w) => Boolean(w.char.seen?.collection) },
-  { hint: 'Fishing: buy a Fishing Rod from Pip, then press [↑] at a rippling spot. [Z] when it bites!', phone: 'Fishing: buy a Fishing Rod from Pip, push up at a rippling spot, tap [★] when it bites!', done: (w) => Object.keys(w.char.fishBook ?? {}).length > 0 },
-  { hint: 'Cooking: stand at a town stove and press [↑]. Your catches make tasty buffs.', phone: 'Cooking: stand at a town stove and push up. Your catches make tasty buffs.', done: (w) => Boolean(w.char.seen?.cook) },
-  { hint: 'Play with friends: press [N] to host a room and share its code. Have fun!', phone: 'Play with friends: tap [Friends] on the menu bar, host a room, share the code. Have fun!', done: (w) => Boolean(w.char.seen?.online) },
 ];
 
-// Where the island's lessons end and the town's begin.
-export const ISLAND_LESSONS = 16;
+// How many lessons there are (a character who skipped the island starts past them).
+export const ISLAND_LESSONS = LESSONS.length;
 const ISLAND = ['dawnbeach', 'trainfield', 'dock', 'sprout'];
 
 // Skips the lesson showing now (the Skip on its card).
@@ -63,8 +54,7 @@ function advance(world, t) {
     LESSONS[t.step].start?.(world, t.scratch);
     t.begun = true;
   }
-  if (t.step === ISLAND_LESSONS) world.log('Island lessons done! Welcome to Sprout Village.', '#ffe36b');
-  if (t.step >= LESSONS.length) world.log('Tutorial complete! Have a lovely adventure.', '#ffe36b');
+  if (t.step === LESSONS.length) world.log('Tutorial complete! Welcome to Sprout Village.', '#ffe36b');
 }
 
 // The lesson showing now (or null when there's no tutorial or it's over).

@@ -109,13 +109,11 @@ export const JOBS = {
   },
 };
 
-// Jobs renamed or retired since older saves were made, and what they became.
+// Jobs renamed or retired since older saves were made, and what they became (a job not listed here
+// that no longer exists starts over as a Novice: core/save.js).
 // Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
 // The archer's Ranger and Sniper were remade as the Beastmaster and the Stormcaller.
 export const RETIRED_JOBS = {
-  // The Mage and her old paths were removed (a new magic class is being built from scratch): those
-  // characters go back to the Novice, their skill points given back, free to pick a job again.
-  mage: 'novice', pyromancer: 'novice', infernosage: 'novice', seraph: 'novice', ilwizard: 'novice', fpwizard: 'novice', cleric: 'novice', ilarchmage: 'novice', fparchmage: 'novice', bishop: 'novice',
   blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'shinobi', nightlord: 'kitsune', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 

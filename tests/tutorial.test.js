@@ -40,16 +40,15 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   run(w, keys('ArrowUp'), 0.5);
   assert.ok(step(w) >= 3, 'climbing done');
   w.body.rope = null;
-  // Kuro's first quest: a practice weapon of your choice (here a wand), then the stats.
+  // Kuro's first quest: a practice sword, then the stats.
   acceptQuest(c, 'tut_hello');
-  assert.equal(completeQuest(c, 'tut_hello'), null, 'a weapon has to be picked');
-  assert.ok(completeQuest(c, 'tut_hello', 'wand_0'));
+  assert.ok(completeQuest(c, 'tut_hello'));
   run(w, idle, 0.1);
   assert.ok(step(w) >= 4, 'talked to Kuro');
   const bag = c.inventory.equip;
-  equipFromBag(c, bag.findIndex((e) => e?.id === 'wand_0'));
+  equipFromBag(c, bag.findIndex((e) => e?.id === 'sword_0'));
   autoAssignAp(c);
-  assert.ok(c.base.int > c.base.str, 'Auto grows the stat of the weapon in hand');
+  assert.ok(c.base.str > c.base.int, 'Auto grows the stat of the weapon in hand');
   run(w, idle, 0.1);
   assert.ok(step(w) >= 6, 'equipped and spent stats');
   // On to the practice field.
@@ -94,18 +93,6 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   w.body.x = boat.x;
   run(w, keys('ArrowUp'), 0.3);
   assert.equal(w.map.id, 'sprout', 'sailed to Sprout Village');
-  assert.equal(step(w), ISLAND_LESSONS, 'island lessons over');
-  // The town lessons: the story, the map, the Collection, fishing, cooking, friends.
-  acceptQuest(c, 'story_1_1');
-  run(w, idle, 0.1);
-  assert.equal(step(w), ISLAND_LESSONS + 1, 'began the story');
-  c.seen = { worldmap: true, collection: true };
-  run(w, idle, 0.1);
-  assert.equal(step(w), ISLAND_LESSONS + 3, 'opened the map and the Collection');
-  c.fishBook = { fish_minnow: { n: 1, best: 10 } };
-  c.seen.cook = true;
-  c.seen.online = true;
-  run(w, idle, 0.1);
   assert.equal(step(w), LESSONS.length, 'tutorial over');
   assert.equal(currentLesson(c), null);
 });
@@ -131,8 +118,8 @@ test('a character who skips the island has no island lessons', () => {
   assert.equal(w.map.id, 'sprout');
   run(w, idle, 0.2);
   assert.equal(currentLesson(c), null);
-  // (New characters who skip it start on the town lessons.)
+  // (New characters who skip it start past every lesson.)
   c.tutorial = { step: ISLAND_LESSONS };
   run(w, idle, 0.1);
-  assert.equal(currentLesson(c).step, ISLAND_LESSONS);
+  assert.equal(currentLesson(c), null);
 });
