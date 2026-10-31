@@ -45,7 +45,7 @@ monsters and bosses, animal anatomy, animation principles) — do so before desi
 - Match surrounding code style (short comments, naming). No model names anywhere.
 - When done: `node --check` your files, `npm test` passes, and commit ONLY your files with explicit
   `git add <paths>` (do not push). Commit message ends with exactly:
-  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Co-Authored-By: Claude <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01LAADQTFD8976KUnMUbXVRk
   If the commit fails because another agent is committing at the same moment, wait a few seconds and retry.
 - Report: files changed, commit hash, each design in 1–2 lines, the INFO table, and the gallery

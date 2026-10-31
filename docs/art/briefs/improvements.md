@@ -29,7 +29,7 @@ per-frame full-screen passes you can bake or cache).
 - Commit in coherent steps (each with tests passing) using explicit `git add <your files>`; do not
   push. If git is busy (another agent committing), wait a few seconds and retry. Commit messages end
   with exactly:
-  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Co-Authored-By: Claude <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01LAADQTFD8976KUnMUbXVRk
 - Report at the end: what you implemented (finding → change), commit hashes, before/after image
   paths, anything left undone and why.

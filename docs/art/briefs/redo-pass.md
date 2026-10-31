@@ -44,7 +44,7 @@ scratchpad: /tmp/claude-0/-home-user-Twzt/b83c50f6-dbf8-5bef-8415-22f5394e79c8/s
 - Match surrounding code style; no model names anywhere.
 - `npm test` passes; commit in coherent steps with explicit `git add <files>` (don't push; retry if
   git is busy). Commit messages end with exactly:
-  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Co-Authored-By: Claude <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01LAADQTFD8976KUnMUbXVRk
 - If you learn a new technique or rule that works, add it to `docs/art/README.md` under the right
   heading (short, concrete) in the same commit — the user wants everything we learn saved. Keep
