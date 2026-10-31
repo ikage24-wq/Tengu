@@ -31,6 +31,7 @@ const PAGES = {
     ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.', ['full', 'low', 'off']],
     ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
     ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],
+    ['autoStats', 'Auto stats', 'Stat points go where your job needs them as soon as you level up.'],
     ['autoLoot', 'Auto-loot', 'Pick up items just by walking over them.'],
     ['npcClick', 'Click NPCs to talk', 'Click any NPC on screen to open their dialog.'],
     ['showCrowd', 'Townsfolk and players', 'Villagers and other players wandering the towns.'],

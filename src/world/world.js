@@ -9,7 +9,8 @@ import { itemName, itemColors } from '../core/items.js';
 import { QUESTS } from '../data/quests.js';
 import { SKILLS } from '../data/skills.js';
 import { computeStats } from '../core/stats.js';
-import { gainExp, usePotion, applyDeath } from '../core/character.js';
+import { gainExp, usePotion, applyDeath, autoAssignAp } from '../core/character.js';
+import { settings } from '../core/settings.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
@@ -32,7 +33,11 @@ import { DISH_BY_ID } from '../data/cooking.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
-const REGEN_EVERY = 5;
+const REGEN_EVERY = 1;
+// Out of a fight (nothing hit or hurt for OUT_OF_FIGHT seconds), HP and MP come back REST_PCT of
+// their max a second (twice that in town); in a fight only a trickle of MP.
+const OUT_OF_FIGHT = 4;
+const REST_PCT = 0.02;
 const TALK_RANGE = 34;
 const PORTAL_RANGE = 22;
 
@@ -476,6 +481,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   char.hp = Math.max(0, char.hp - dmg);
   world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 6, text: `${dmg}`, color: '#ff6b8a', t: 0 });
   world.invuln = INVULN;
+  world.hurtAt = world.now;
   world.juice.push({ type: 'hurt', x: world.body.x, y: world.body.y - world.body.h / 2 });
   // Unbroken (full Valor), nothing knocks a Warrior back; a hit breaks an Archer's Momentum.
   if (!unbroken(world)) knockBack(world.body, fromX);
@@ -801,12 +807,16 @@ export function updateWorld(world, dt, input) {
   world.regenTimer -= dt;
   if (world.regenTimer <= 0 && !world.dead) {
     world.regenTimer = REGEN_EVERY;
-    const resting = world.stillTime > 2 ? 1 : 0;
-    const townBonus = world.map.isTown ? 2 : 1;
     const s = world.stats;
-    char.hp = Math.min(s.maxHp, char.hp + (3 + Math.floor(char.level / 4) + resting * (10 + s.restRegen)) * townBonus);
-    char.mp = Math.min(s.maxMp, char.mp + (2 + Math.floor(s.int / 20) + s.mpRegen + resting * (6 + s.restRegen)) * townBonus);
+    const calm = world.now - Math.max(world.hurtAt ?? -99, world.hitsAt ?? -99) >= OUT_OF_FIGHT;
+    const k = REST_PCT * (world.map.isTown ? 2 : 1);
+    if (calm) {
+      char.hp = Math.min(s.maxHp, char.hp + Math.max(1, Math.round(s.maxHp * k)));
+      char.mp = Math.min(s.maxMp, char.mp + Math.max(1, Math.round(s.maxMp * k)));
+    } else char.mp = Math.min(s.maxMp, char.mp + Math.max(1, Math.round((2 + Math.floor(s.int / 20) + s.mpRegen) / 5)));
   }
+  // Stat points go straight where the job needs them (Options: Auto stats).
+  if (char.ap > 0 && settings.autoStats !== false) autoAssignAp(char);
 
   // ----- Visual timers -----
   for (const f of world.fx) {

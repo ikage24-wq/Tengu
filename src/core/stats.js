@@ -120,7 +120,6 @@ export function computeStats(char, now = 0) {
     critDamage: (pas.critDamage ?? 0) + (buf.critDamage ?? 0) + (set.critDamage ?? 0),
     attackSpeed: Math.min(0.5, (pas.attackSpeed ?? 0) + (buf.attackSpeed ?? 0)),
     manaShield: buf.manaShield ?? 0,
-    restRegen: pas.restRegen ?? 0,
     mpRegen: pas.mpRegen ?? 0,
     weaponType: weaponTypeOf(char),
   };

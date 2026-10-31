@@ -103,6 +103,7 @@ export function tickYuki(world, dt) {
     for (const t of k.thaw) if (world.now >= t.at) t.m.frozenUntil = Math.min(t.m.frozenUntil ?? 0, world.now);
     k.thaw = k.thaw.filter((t) => world.now < t.at);
   }
+  soulArrives(world, k);
   if (k.act) act(world, k, dt);
   else {
     const br = k.brain;
@@ -216,12 +217,16 @@ function ask(world, k, a, M, u) {
     if (!a.drank) return;
     const b = world.body;
     world.fx.push({ kind: 'yukisoulfly', x: k.x + k.dir * 6, y: k.y - 40, tx: b.x, ty: b.y - 24, t: 0, dur: M.fly });
-    a.healAt = world.now + M.fly;
+    // (Kept on her, not the move: the soul can still be flying when her move ends.)
+    k.healAt = world.now + M.fly;
+    k.heal = M.heal;
   }
-  if (a.healAt && world.now >= a.healAt) {
-    a.healAt = 0;
-    healAround(world, world.body.x, world.body.y, M.heal, 60, false);
-  }
+}
+// The soul she drew out reaches the Onmyoji and mends her.
+function soulArrives(world, k) {
+  if (!k.healAt || world.now < k.healAt) return;
+  k.healAt = 0;
+  healAround(world, world.body.x, world.body.y, k.heal, 60, false);
 }
 // Ice Spikes: a line of ice spikes bursting up out of the ground ahead of her, one after another.
 function spikes(world, k, a, M) {

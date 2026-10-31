@@ -459,3 +459,37 @@ test('elite monsters: tougher and worth more, only in the fields, and they alway
     Math.random = roll;
   }
 });
+
+test('out of a fight you heal a share of your max HP every second; stat points place themselves', async () => {
+  const { settings } = await import('../src/core/settings.js');
+  const w = newWorld();
+  loadMap(w, 'meadow1', 'west');
+  w.mobs = [];
+  w.spawner.slots = [];
+  const idle = { held: new Set(), pressed: new Set(), locked: false };
+  const max = w.stats.maxHp;
+  w.char.hp = Math.round(max / 2);
+  w.hurtAt = w.now;
+  for (let i = 0; i < 60 * 2; i++) updateWorld(w, 1 / 60, idle);
+  assert.ok(w.char.hp <= Math.round(max / 2) + 1, 'not right after a hit');
+  for (let i = 0; i < 60 * 5; i++) updateWorld(w, 1 / 60, idle);
+  assert.ok(w.char.hp >= Math.round(max / 2) + Math.round(max * 0.02) * 2, `heals once the fight is over (${w.char.hp}/${max})`);
+  // A level up's stat points go straight where they're needed (on by default).
+  assert.equal(settings.autoStats, true);
+  gainExp(w.char, 5000);
+  updateWorld(w, 1 / 60, idle);
+  assert.equal(w.char.ap, 0);
+});
+
+test('potions heal a share of your max as well as a flat amount, so they keep up', async () => {
+  const { usePotion } = await import('../src/core/character.js');
+  const { addItem } = await import('../src/core/inventory.js');
+  const { computeStats } = await import('../src/core/stats.js');
+  const c = createCharacter('Drinker', {});
+  c.baseHp = 3000;
+  const max = computeStats(c).maxHp;
+  c.hp = 1;
+  addItem(c.inventory, 'white_potion', 1);
+  usePotion(c, 'white_potion');
+  assert.equal(c.hp, 1 + 300 + Math.round(max * 0.3));
+});

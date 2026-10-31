@@ -2878,7 +2878,9 @@ test("the yuki-onna's cold builds up on a monster until it freezes, and her ques
   w.oni.next = w.tengu.next = Infinity;
   w.oni.act = w.tengu.act = null;
   const m = w.mobs.find((o) => o.hp > 0);
-  Object.assign(m, { x: k.x + 60, y: k.y });
+  // (A sturdy one of its kind, so it lives through both of her moves.)
+  m.def = { ...m.def, hp: 1e9 };
+  Object.assign(m, { x: k.x + 60, y: k.y, hp: 1e9 });
   // White Breath: chilled again and again, it frosts over and freezes solid.
   k.act = { kind: 'breath', t0: w.now, dur: 2.3, mob: m, x0: k.x };
   let frost = false;

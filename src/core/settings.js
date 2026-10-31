@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS = {
   musicVolume: 'mid',
   sfxVolume: 'high',
   // Gameplay
+  autoStats: true, // stat points placed for your job as soon as you get them
   autoLoot: false,
   npcClick: true,
   // Phone and tablet controls

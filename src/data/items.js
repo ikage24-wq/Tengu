@@ -399,10 +399,10 @@ export const RARITIES = [
 
 // ---------- Consumables ----------
 
-add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 50, effect: { hp: 50 }, color: '#ff6b8a', desc: 'Restores 50 HP.' });
-add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 160, effect: { hp: 150 }, color: '#ffa94d', desc: 'Restores 150 HP.' });
-add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 320, effect: { hp: 300 }, color: '#fff7ea', desc: 'Restores 300 HP.' });
-add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100 }, color: '#6fb8ff', desc: 'Restores 100 MP.' });
+add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 50, effect: { hp: 50, hpPct: 0.1 }, color: '#ff6b8a', desc: 'Restores 50 HP and 10% of your max HP.' });
+add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 160, effect: { hp: 150, hpPct: 0.2 }, color: '#ffa94d', desc: 'Restores 150 HP and 20% of your max HP.' });
+add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 320, effect: { hp: 300, hpPct: 0.3 }, color: '#fff7ea', desc: 'Restores 300 HP and 30% of your max HP.' });
+add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100, mpPct: 0.15 }, color: '#6fb8ff', desc: 'Restores 100 MP and 15% of your max MP.' });
 // Throwing stars: a gauntlet throws its own, better ones the higher its level (no stars to buy,
 // carry or run out of). `watk` adds to your attack; `element` gives the star's hits that
 // element's impact; `color` tints the star in flight.
@@ -420,7 +420,7 @@ export const STARS = [
 // The stars a gauntlet of `level` throws.
 export const gauntletStars = (level) => STARS.reduce((best, s) => (s.level <= (level ?? 0) ? s : best), STARS[0]);
 
-add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 620, effect: { mp: 300 }, color: '#a58cff', desc: 'Restores 300 MP.' });
+add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 620, effect: { mp: 300, mpPct: 0.3 }, color: '#a58cff', desc: 'Restores 300 MP and 30% of your max MP.' });
 add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 3000, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });
 add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 400, effect: { returnTown: true }, color: '#bff0dc', desc: 'Takes you back to the nearest town.' });
 
