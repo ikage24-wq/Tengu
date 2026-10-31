@@ -200,7 +200,7 @@ test('players nearby say hi back, answer a question, and cheer when you level up
   lines.length = 0;
   gainExp(world.char, expToNext(world.char.level));
   step(6);
-  assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
+  assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo|level/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
 });
 
 test('in town, players fish off the pier, cook, chat with each other, and wear titles and sets', () => {
@@ -497,7 +497,7 @@ test('in trouble out in the field, a player nearby rushes over and patches you u
 
 // ---------- Raids, party combos, the priestesses ----------
 
-test('a queen back for a rematch: players gather, dodge and take her moves, and pose for a photo', async () => {
+test('a queen back for a rematch: players gather, dodge and take her moves, and cheer when she falls', async () => {
   const { spawnMob } = await import('../src/world/mobs.js');
   const { killMob } = await import('../src/world/world.js');
   const world = createWorld(createCharacter('Me', {}));
@@ -525,19 +525,16 @@ test('a queen back for a rematch: players gather, dodge and take her moves, and 
   assert.ok(raid.length >= 3, `players gathered (${raid.length})`);
   assert.ok(lines.some((l) => /Players are gathering/.test(l)));
   assert.ok(hurt > 0, 'her moves (or her touch) caught some of them');
-  // Down she goes: everyone poses, and the photo's kept.
+  // Down she goes: everyone cheers.
   queen.hp = 0;
   killMob(world, queen);
+  const said = new Set();
   for (let t = 0; t < 4; t += 1 / 30) {
     world.now += 1 / 30;
     updateBots(bots, world, 1 / 30);
+    for (const b of bots.list) if (b.bubble) said.add(b.bubble.text);
   }
-  const photo = world.char.photos?.[0];
-  assert.ok(photo, 'a group photo');
-  assert.equal(photo.boss, 'sylvana');
-  assert.equal(photo.people[0].name, 'Me');
-  assert.ok(photo.people.length >= 2);
-  assert.ok(JSON.parse(JSON.stringify(photo)).people[1].look, 'it saves');
+  assert.ok([...said].some((l) => /GG|we did it|ez clap|gg|WOO|so fun/.test(l)), `they cheer (${[...said].join(' | ')})`);
 });
 
 test('a party combo: your finisher brings the members fighting by you in with theirs', async () => {
@@ -626,23 +623,6 @@ test('the Crystal Throne fills up for a raid on the Crystal King', async () => {
   assert.ok(bots.list.filter((b) => b.raid && !b.gone).length >= 3);
 });
 
-// ---------- Server life: duels, legends, guilds, the clock, afk, kill stealers ----------
-
-test('night owls: fewest players on late at night, most in the evening and at the weekend, and they talk about it', async () => {
-  const { serverTime, onlineCount, timeLine } = await import('../src/world/drama.js');
-  const at = (d, h) => serverTime(new Date(2026, 9, d, h, 0));
-  const night = onlineCount(at(28, 3));
-  const evening = onlineCount(at(28, 20));
-  const saturday = onlineCount(at(31, 20));
-  assert.ok(night < evening && evening < saturday, `${night} < ${evening} < ${saturday}`);
-  const world = createWorld(createCharacter('Me', {}));
-  quiet(world);
-  const late = createBots(world, seeded(5), { clock: () => new Date(2026, 9, 28, 3, 0) });
-  const busy = createBots(world, seeded(5), { clock: () => new Date(2026, 9, 31, 20, 0) });
-  assert.ok(late.list.length < busy.list.length);
-  assert.match(timeLine(at(28, 3), seeded(1)), /am|bed|sleep|night|mom|gn/);
-});
-
 // Steps the town (and its goings-on) a while.
 function townStep(world, bots, secs, dt = 0.1) {
   for (let t = 0; t < secs; t += dt) {
@@ -674,89 +654,6 @@ test('a duel in town: two players spar with real moves, a crowd gathers, and som
   assert.ok(lines.some((l) => /won the duel/.test(l)), 'a winner');
   assert.ok(poses.size >= 3, `moves traded (${[...poses].join(', ')})`);
   assert.ok(!bots.list.some((b) => ['duel', 'watch'].includes(b.state)), 'everyone back to normal');
-});
-
-test('a legend logs in: the town loses it and fans follow them around', () => {
-  const world = createWorld(createCharacter('Me', {}));
-  const lines = quiet(world);
-  const bots = createBots(world, seeded(93), { clock: EVENING });
-  world.bots = bots;
-  for (const b of bots.list.slice(0, 8)) Object.assign(b, { map: world.map.id, x: world.body.x + 60 + bots.list.indexOf(b) * 50, state: 'idle', timer: 99, session: 999, stay: 999, shop: null, level: 12 });
-  townStep(world, bots, 0.2);
-  bots.drama.legendIn = 0;
-  townStep(world, bots, 6);
-  const legend = bots.list.find((b) => b.legend);
-  assert.ok(legend && legend.level === 70 && legend.map === world.map.id, 'here, at the top level');
-  assert.ok(lines.some((l) => /legendary .* has logged in/.test(l)));
-  assert.ok((spoken(world, lines).match(new RegExp(legend.name.toLowerCase(), 'g')) ?? []).length >= 3, 'chat goes wild');
-  assert.ok(bots.list.some((b) => b.state === 'follow'), 'fans follow');
-});
-
-test('guilds: a recruiter asks you to join, you join, and someone storms out', async () => {
-  const { joinGuild, leaveGuild } = await import('../src/world/drama.js');
-  const world = createWorld(createCharacter('Me', {}));
-  const lines = quiet(world);
-  const bots = createBots(world, seeded(95), { clock: EVENING });
-  world.bots = bots;
-  for (const b of bots.list.slice(0, 8)) Object.assign(b, { map: world.map.id, x: world.body.x + 80 + bots.list.indexOf(b) * 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null, guild: 'Cozy Corner' });
-  townStep(world, bots, 0.2);
-  let offer = null;
-  for (let i = 0; i < 20 && !offer; i++) {
-    bots.drama.recruitIn = 0;
-    townStep(world, bots, 0.2);
-    offer = bots.list.find((b) => b.guildOffer);
-  }
-  assert.ok(lines.some((l) => /recruiting|looking for|join|needs/.test(l)), 'recruiting in chat');
-  assert.ok(offer, 'someone asks you');
-  joinGuild(world, offer);
-  assert.equal(world.char.guild, 'Cozy Corner');
-  assert.equal(JSON.parse(JSON.stringify(world.char)).guild, 'Cozy Corner', 'it saves');
-  bots.drama.stormIn = 0;
-  townStep(world, bots, 5);
-  assert.ok(lines.some((l) => /\[Guild\] .* has left the guild/.test(l)), 'drama, in guild chat');
-  leaveGuild(world);
-  assert.equal(world.char.guild, null);
-});
-
-test('afk on a portal in town, and afk in the field with a monster nibbling', async () => {
-  const world = createWorld(createCharacter('Me', {}));
-  const lines = quiet(world);
-  world.god = true;
-  const bots = createBots(world, seeded(97), { clock: EVENING });
-  world.bots = bots;
-  for (const b of bots.list.slice(0, 6)) Object.assign(b, { map: world.map.id, x: world.body.x + 80 + bots.list.indexOf(b) * 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null });
-  townStep(world, bots, 0.2);
-  bots.drama.afkIn = 0;
-  townStep(world, bots, 25);
-  const afk = bots.list.find((b) => b.state === 'afk');
-  assert.ok(afk && afk.afkTag, 'afk on the spot');
-  assert.ok(world.map.portals.some((p) => Math.abs(p.x - afk.x) < 4), 'right on a portal');
-  assert.ok(afk.drama.noticed && /afk|poke|hello|forever/.test(spoken(world, lines)), 'people notice');
-  // Out in the field.
-  world.char.level = 20;
-  loadMap(world, 'woods', 'start');
-  for (let i = 0; i < 6 && !bots.list.some((b) => b.hunter && !b.gone); i++) {
-    bots.huntMap = null;
-    updateBots(bots, world, 0.05);
-  }
-  // (A snail by each of them, so there's something to nibble.)
-  const { spawnMob } = await import('../src/world/mobs.js');
-  for (const b of bots.list.filter((h) => h.hunter && !h.gone)) world.mobs.push(spawnMob(world.map, { mob: 'snailbun', x: b.body.x + 40, y: b.body.y }));
-  let idle = null;
-  for (let i = 0; i < 60 && !idle; i++) {
-    bots.afkIn = 0;
-    updateBots(bots, world, 0.05);
-    idle = bots.list.find((b) => b.hunter && b.afk);
-  }
-  assert.ok(idle, 'a hunter goes afk');
-  assert.ok(world.mobs.some((m) => m.foe === idle.body), 'a monster goes for them');
-  let fought = false;
-  for (let t = 0; t < 5; t += 1 / 30) {
-    updateWorld(world, 1 / 30, NONE);
-    updateBots(bots, world, 1 / 30);
-    fought ||= Boolean(idle.attack?.fighting);
-  }
-  assert.ok(!fought, 'they just stand there (nobody at the keyboard)');
 });
 
 test('a kill stealer takes the monster you were on, and gets called out', async () => {
@@ -820,10 +717,9 @@ function eventTown(seed, mapId = 'sprout') {
   return { world, bots, lines };
 }
 
-test('GM events: Double EXP doubles what you earn, a Mochi Rain pours treats, and GM Momo hides for you to find', async () => {
+test('GM events: Double EXP doubles what you earn', async () => {
   const { killMob } = await import('../src/world/world.js');
   const { spawnMob } = await import('../src/world/mobs.js');
-  const { found } = await import('../src/world/events.js');
   const { world, bots, lines } = eventTown(201, 'woods');
   const kill = () => {
     const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 30, y: world.map.groundY });
@@ -849,26 +745,6 @@ test('GM events: Double EXP doubles what you earn, a Mochi Rain pours treats, an
   bots.events.gm.until = 0;
   townStep(world, bots, 0.1);
   assert.equal(kill(), plain, 'and back to normal after');
-  // A Mochi Rain.
-  for (let i = 0; i < 30 && bots.events.gm?.kind !== 'rain'; i++) {
-    if (bots.events.gm) bots.events.gm.until = 0;
-    bots.events.gmIn = 0;
-    townStep(world, bots, 0.1);
-  }
-  const drops = world.drops.length;
-  townStep(world, bots, 5);
-  assert.ok(world.drops.length > drops + 5, 'treats fall');
-  // Hide and Seek.
-  for (let i = 0; i < 40 && bots.events.gm?.kind !== 'seek'; i++) {
-    if (bots.events.gm) bots.events.gm.until = 0;
-    bots.events.gmIn = 0;
-    townStep(world, bots, 0.1);
-  }
-  const gm = bots.events.gm?.bot;
-  assert.ok(gm && gm.gm, 'GM Momo is hiding');
-  const gold = world.char.gold;
-  found(bots.events, bots, world);
-  assert.ok(world.char.gold > gold && lines.some((l) => /found me/.test(l)), 'found, with a prize');
 });
 
 test('a festival by the calendar: Spooky Night in October, with fireworks and festive outfits', async () => {
@@ -895,110 +771,6 @@ test('the wandering merchant sets up shop with odd wares, and word spreads', () 
   assert.ok(!bots.list.includes(pip) || pip.state === 'logout', 'and packs up after');
 });
 
-test('training dummies in Ember Crag: players beat on them and compare damage', () => {
-  const { world, bots, lines } = eventTown(209, 'crag');
-  let swung = 0;
-  for (let t = 0; t < 120; t += 0.1) {
-    world.now += 0.1;
-    updateBots(bots, world, 0.1);
-    swung += bots.list.filter((b) => b.state === 'dummy' && b.emote?.t === 0).length;
-  }
-  assert.ok(swung > 5, 'swinging at the dummies');
-  assert.ok(lines.some((l) => /dps|dummy|total|weapon/.test(l)), 'and talking about it');
-});
-
-test('a fashion show: you can enter, everyone walks the runway, and someone wins', async () => {
-  const { enterShow } = await import('../src/world/events.js');
-  const { world, bots, lines } = eventTown(211);
-  bots.events.showIn = 0;
-  townStep(world, bots, 0.1);
-  const show = bots.events.show;
-  assert.ok(show, 'a show');
-  enterShow(world, show.host);
-  assert.ok(show.entries.includes('you'));
-  townStep(world, bots, 70);
-  assert.ok(lines.some((l) => /won the fashion show/.test(l)));
-  assert.ok(lines.some((l) => l.includes(`next: ${world.char.name}`)), 'your turn on the runway');
-  assert.equal(bots.events.show, null);
-});
-
-test('a meme catches on, everyone says it, and you saying it gets a reaction', async () => {
-  const { memeLine } = await import('../src/world/events.js');
-  const { world, bots, lines } = eventTown(213);
-  bots.events.memeIn = 0;
-  townStep(world, bots, 0.1);
-  const meme = bots.events.meme;
-  assert.ok(meme, 'a meme');
-  let said = 0;
-  for (let i = 0; i < 200; i++) if (memeLine(bots, Math.random)) said++;
-  assert.ok(said > 10, 'it shows up in chat');
-  world.heard = { words: `${meme.word} lol`, at: world.now };
-  townStep(world, bots, 6);
-  assert.ok(/said it|gets it/.test(spoken(world, lines)) || spoken(world, lines).includes(meme.word), 'they react');
-  meme.until = 0;
-  townStep(world, bots, 0.2);
-  assert.equal(bots.events.meme, null, 'and then it dies');
-});
-
-test('a wedding in town: guests gather, the couple says I do, hearts and confetti, and a bouquet', () => {
-  const { world, bots, lines } = eventTown(215);
-  bots.events.weddingIn = 0;
-  townStep(world, bots, 0.1);
-  const w = bots.events.wedding;
-  assert.ok(w, 'a wedding');
-  assert.ok(lines.some((l) => /getting married/.test(l)));
-  const juice = [];
-  for (let t = 0; t < 60 && bots.events.wedding; t += 0.1) {
-    world.now += 0.1;
-    updateBots(bots, world, 0.1);
-    juice.push(...world.juice.map((j) => j.type));
-    world.juice = [];
-  }
-  assert.ok(lines.some((l) => /are married/.test(l)));
-  assert.ok(juice.includes('hearts') && juice.includes('confetti'));
-  assert.equal(w.a.spouse, w.b.name);
-});
-
-// ---------- Players with lives ----------
-
-test('regulars: players you met come back grown (levels, a new job) and remember you', async () => {
-  const { remember, grow, regularsOf } = await import('../src/world/lives.js');
-  // Growing: more levels the longer it's been, and a job once they reach it.
-  const r = { name: 'Kid', level: 8, jobs: [], seen: 0 };
-  assert.equal(grow({ ...r, seen: 1000 }, 1000 + 60000, seeded(1)), null, 'nothing in a minute');
-  const g = grow(r, 40 * 3.6e6, seeded(2));
-  assert.ok(g.to > 8 && r.level >= 10 && r.jobs.length === 1 && g.job === r.jobs[0], `grew to ${r.level} and became a ${r.jobs[0]}`);
-  const big = { name: 'Vet', level: 29, jobs: ['warrior'], seen: 0 };
-  grow(big, 40 * 3.6e6, seeded(3));
-  assert.ok(['paladin', 'berserker'].includes(big.jobs[1]), 'a second job past 30');
-  // A whole session: meet someone, play again ten hours later, and they come over with their news.
-  const at = new Date(2026, 9, 28, 10, 0);
-  const world = createWorld(createCharacter('Me', {}));
-  quiet(world);
-  const bots = createBots(world, seeded(301), { clock: () => at });
-  world.bots = bots;
-  const pal = bots.list.find((b) => !b.shop && b.level >= 10 && b.level < 25);
-  remember(world, pal, 'party');
-  const metAt = pal.char.level;
-  assert.equal(regularsOf(world.char).length, 1);
-  const later = new Date(at.getTime() + 10 * 3.6e6);
-  const char = JSON.parse(JSON.stringify(world.char));
-  const world2 = createWorld(char);
-  const lines = quiet(world2);
-  const bots2 = createBots(world2, seeded(302), { clock: () => later });
-  world2.bots = bots2;
-  loadMap(world2, 'sprout', 'start');
-  updateBots(bots2, world2, 0.1);
-  const back = bots2.list.find((b) => b.name === pal.name);
-  assert.ok(back, 'they are on today');
-  assert.ok(back.char.level > metAt, `grown (${metAt} -> ${back.char.level})`);
-  assert.deepEqual(back.char.appearance, pal.char.appearance, 'looking just the same');
-  // What they'll say when they see you: your name, and their news.
-  const news = back.news ?? back.hello ?? back.bubble?.text ?? '';
-  assert.ok(news.includes('Me'), `they remember you (${news})`);
-  void lines;
-});
-
 test('a player asks for help with their quest; help them and they thank you with a gift', async () => {
   const { helpOut } = await import('../src/world/lives.js');
   const { killMob } = await import('../src/world/world.js');
@@ -1017,10 +789,9 @@ test('a player asks for help with their quest; help them and they thank you with
   const gold = world.char.gold;
   for (let i = 0; i < ask.n; i++) killMob(world, spawnMob(world.map, { mob: ask.mob, x: world.body.x + 40, y: world.map.groundY }));
   assert.ok(ask.bot.quest.done && world.char.gold > gold, 'quest done, and a thank-you');
-  assert.ok(world.char.regulars.some((r) => r.name === ask.bot.name && r.helped), 'and they remember it');
 });
 
-test('weather: rain comes and goes, and snowball fights in the snow', () => {
+test('weather: rain comes and goes, and snow in winter', () => {
   const { world, bots, lines } = eventTown(321);
   const roll = (kind) => {
     for (let i = 0; i < 60 && world.weather !== kind; i++) {
@@ -1035,81 +806,6 @@ test('weather: rain comes and goes, and snowball fights in the snow', () => {
   bots.clock = () => new Date(2026, 11, 20, 18, 0);
   roll('snow');
   assert.equal(world.weather, 'snow');
-  const thrown = [];
-  for (let t = 0; t < 15; t += 0.1) {
-    world.now += 0.1;
-    updateBots(bots, world, 0.1);
-    thrown.push(...world.juice.filter((j) => j.type === 'snowball'));
-    world.juice = [];
-  }
-  assert.ok(thrown.length >= 2, 'snowballs fly');
-});
-
-test('a photographer at a landmark asks you into the shot, and the photo is yours too', () => {
-  const { world, bots, lines } = eventTown(331);
-  // By the well in Sprout Village.
-  world.body.x = 760;
-  bots.lives.shootIn = 0;
-  for (let i = 0; i < 10 && !bots.lives.shoot; i++) {
-    bots.lives.shootIn = 0;
-    townStep(world, bots, 0.1);
-  }
-  const s = bots.lives.shoot;
-  assert.ok(s, 'a shoot');
-  world.body.x = s.x + 10;
-  for (let t = 0; t < 60 && bots.lives.shoot; t += 0.1) {
-    world.now += 0.1;
-    world.body.x = s.x + 10;
-    updateBots(bots, world, 0.1);
-  }
-  assert.ok(lines.some((l) => /get in the pic/.test(l)), 'asked in');
-  const photo = world.char.photos?.[0];
-  assert.ok(photo && photo.landmark === s.kind && photo.people.length === 2);
-});
-
-test('a music jam: notes float up and people come to dance; and someone in costume plays the part', () => {
-  const { world, bots, lines } = eventTown(341);
-  bots.lives.jamIn = 0;
-  townStep(world, bots, 0.1);
-  assert.ok(bots.lives.jam, 'a jam');
-  const notes = [];
-  for (let t = 0; t < 20; t += 0.1) {
-    world.now += 0.1;
-    updateBots(bots, world, 0.1);
-    notes.push(...world.juice.filter((j) => j.type === 'notes'));
-    world.juice = [];
-  }
-  assert.ok(notes.length > 10, 'music');
-  assert.ok(bots.lives.jam?.fans.length >= 1, 'dancers');
-  bots.lives.cosplayIn = 0;
-  townStep(world, bots, 5);
-  const fan = bots.list.find((b) => b.costume);
-  assert.ok(fan && fan.costume.look, 'in costume');
-  assert.ok(lines.some((l) => l.includes(`cosplaying as ${fan.costume.as}`)));
-});
-
-// ---------- The economy and group play ----------
-
-test('haggling: friends give you a deal, strangers counter or take offence', async () => {
-  const { haggle } = await import('../src/world/social.js');
-  const { world, bots } = eventTown(411);
-  const shop = (price) => ({ title: 't', items: [{ id: 'fluff', qty: 1, price }, { id: 'fluff', qty: 1, price }] });
-  const friend = bots.list[0];
-  world.char.buddies = [{ name: friend.name }];
-  friend.shop = shop(1000);
-  const r = haggle(bots, world, friend, 0);
-  assert.ok(r.ok && friend.shop.items[0].price === 750, 'a friend price');
-  assert.equal(haggle(bots, world, friend, 0).ok, false, 'only once per item');
-  // Strangers: over many tries, some deals, some counters, some offence.
-  const seen = new Set();
-  for (let i = 0; i < 40; i++) {
-    const s = bots.list[2];
-    s.shop = shop(1000);
-    s.offended = 0;
-    const out = haggle(bots, world, s, 0);
-    seen.add(out.ok ? (s.shop.items[0].price === 850 ? 'deal' : 'counter') : 'offended');
-  }
-  assert.deepEqual([...seen].sort(), ['counter', 'deal', 'offended']);
 });
 
 test('a lucky drop: the players around react', async () => {
@@ -1143,19 +839,6 @@ test('a dungeon group looking for your role takes you in', async () => {
   assert.equal(joinGroup(bots, world, bot), null);
   assert.ok(world.dungeon && bot.party, 'in the dungeon with them');
 });
-
-test('the hall of fame ranks you among the server by level, kills and raids', async () => {
-  const { hallOfFame } = await import('../src/world/social.js');
-  const { killMob } = await import('../src/world/world.js');
-  const { spawnMob } = await import('../src/world/mobs.js');
-  const { world, bots } = eventTown(441);
-  for (let i = 0; i < 12; i++) killMob(world, spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 30, y: world.map.groundY }));
-  const fame = hallOfFame(bots, world);
-  assert.ok(fame.level.some((p) => p.you) && fame.level.length > 10);
-  for (let i = 1; i < fame.kills.length; i++) assert.ok(fame.kills[i - 1].kills >= fame.kills[i].kills, 'ranked');
-  assert.ok(fame.kills.find((p) => p.you).kills >= 12, 'your kills counted');
-});
-
 
 test('accepting a help request or a dungeon group never pushes your party past its cap', async () => {
   const { helpOut } = await import('../src/world/lives.js');

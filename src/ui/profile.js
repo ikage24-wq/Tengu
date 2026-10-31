@@ -10,7 +10,6 @@ import { addItem } from '../core/inventory.js';
 import { itemName } from '../core/items.js';
 import { STAT_KEYS, wornGear } from '../core/character.js';
 import { buildLabel, buyFromShop, thank } from '../world/bots.js';
-import { haggle } from '../world/social.js';
 import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
@@ -178,11 +177,6 @@ export function profileWindow(ui, state, world) {
     icon(ctx, 'coin', rx + 27, cy + 14.5, 6, '#f0b53a');
     text(ctx, price(it.price), rx + 32, cy + 17, { size: 7, bold: true, color: world.char.gold >= it.price ? COLORS.gold : COLORS.bad });
     if (hover(ui, rx, cy, rw - 90, 20)) tooltip(ui, itemTooltip(world.char, it.id, it.inst ?? null));
-    // Haggle first (once per item), if you like.
-    if (button(ui, rx + rw - 86, cy + 2, 42, 16, 'Haggle', { enabled: !it.haggled && !(world.now < (bot.offended ?? 0)), size: 7 })) {
-      const r = haggle(world.bots, world, bot, index);
-      if (r) world.log(r.text, r.ok ? '#bff0dc' : '#ffb3c6');
-    }
     if (button(ui, rx + rw - 42, cy + 2, 38, 16, 'Buy', { primary: true, enabled: world.char.gold >= it.price, size: 7.5 })) {
       const r = buyFromShop(bot, index, world.char, addItem);
       if (r) world.log(r.text, r.ok ? '#bff0dc' : '#ffb3c6');

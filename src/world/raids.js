@@ -5,8 +5,6 @@
 //     moves as she shows them, dodge (mostly), and take the hit when they don't.
 //   - A party combo: let your finisher loose and the members fighting by you join in with theirs,
 //     a beat apart, each hitting harder for it.
-//   - A victory photo: once the boss is down, everyone who fought her poses for a group photo,
-//     kept in your Collection (B, Photos).
 
 import { inZone, isQueen } from './story.js';
 import { hurtBot, joinCombo, partyMembers } from './party.js';
@@ -14,7 +12,6 @@ import { buddyOnline, buddiesOf } from './buddies.js';
 import { botChat, stale } from './chatlog.js';
 import { happened } from './chatter.js';
 
-export const PHOTO_MAX = 24;
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
 
@@ -135,15 +132,10 @@ function combos(bots, world) {
   });
 }
 
-// ---------- The victory photo ----------
-
-// Who's in a photo: just enough to draw them as they looked.
-const pose = (name, char) => ({ name, look: char.appearance, equipment: char.equipment, outfit: char.outfit ?? {}, job: char.job, level: char.level });
+// ---------- The boss falls ----------
 
 function bossDown(bots, world) {
   world.onBossDown = (m) => {
-    // (For the hall of fame.)
-    world.char.raids = (world.char.raids ?? 0) + 1;
     const here = raiders(bots, world);
     if (!here.length) return;
     const rng = bots.rng;
@@ -151,36 +143,8 @@ function bossDown(bots, world) {
       b.sayAt = world.now + 0.3 + i * 0.35;
       b.sayLine = pick(['GG!!', 'we did it!!', 'ez clap', 'gg everyone', 'WOOO', 'that was so fun'], rng);
     });
-    bots.photo = { at: world.now + 3, boss: m.def.id, name: m.def.name.split(',')[0], map: world.map.id };
     happened(bots, world, `the ${m.def.name.split(',')[0]} raid`);
-    here.slice(0, 2).forEach((b, i) => {
-      b.photoLine = i ? 'everyone pose!' : 'PHOTO!! group photo!!';
-    });
   };
-}
-
-function photo(bots, world) {
-  const p = bots.photo;
-  if (!p) return;
-  const here = raiders(bots, world);
-  // A moment before: someone calls for it, and everyone turns to the camera.
-  if (!p.called && world.now >= p.at - 1.6) {
-    p.called = true;
-    for (const b of here) if (b.photoLine) say(b, b.photoLine);
-  }
-  if (world.now < p.at) return;
-  bots.photo = null;
-  if (!here.length || world.map.id !== p.map) return;
-  for (const b of here) {
-    b.attack = { pose: pick(['cheer', 'flip', 'cheer'], bots.rng), t: 0, dur: 1.4 };
-    b.body.facing = b.body.x < world.body.x ? 1 : -1;
-  }
-  world.juice.push({ type: 'screenflash', life: 0.3, color: '#ffffff' });
-  const photos = (world.char.photos ??= []);
-  const people = [pose(world.char.name, world.char), ...here.slice(0, 5).map((b) => pose(b.name, b.char))];
-  photos.unshift({ at: Date.now(), boss: p.boss, name: p.name, map: p.map, mapName: world.map.name, people });
-  photos.length = Math.min(photos.length, PHOTO_MAX);
-  world.log(`Snap! A group photo of you and ${people.length - 1} other player${people.length > 2 ? 's' : ''} was saved to your Collection (B, Photos).`, '#ffe36b');
 }
 
 // ---------- Each frame ----------
@@ -191,5 +155,4 @@ export function updateRaids(bots, world) {
   callouts(bots, world);
   sayings(bots, world);
   combos(bots, world);
-  photo(bots, world);
 }

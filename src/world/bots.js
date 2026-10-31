@@ -26,8 +26,8 @@ import { updateParty, tickHunter, fieldDownOver } from './party.js';
 import { updateBuddies, thanked, buddiesOf } from './buddies.js';
 import { updateRaids, raidBoss, gather } from './raids.js';
 import { isQueen } from './story.js';
-import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
-import { updateEvents, memeLine, heardMeme } from './events.js';
+import { updateDrama, serverTime, ONLINE, timeLine } from './drama.js';
+import { updateEvents } from './events.js';
 import { updateLives } from './lives.js';
 import { updateSocial, luckyDrop } from './social.js';
 import { botChat, stale } from './chatlog.js';
@@ -43,10 +43,9 @@ import { navOf, surfaceBelow } from './nav.js';
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 
-// Players online across all towns (counting those between towns) follows the real clock
-// (world/drama.js): fewest late at night, most in the evening and at the weekend. Never fewer than
-// two under it: someone logging out is soon replaced.
-const onlineNow = (bots) => onlineCount(serverTime((bots.clock ??= () => new Date())()));
+// Players online across all towns (counting those between towns): a steady full server
+// (world/drama.js), never fewer than two under it: someone logging out is soon replaced.
+const onlineNow = () => ONLINE;
 const PER_TOWN = 8; // most in one town at once
 
 // Where players of each level hang out, following the hunting grounds around each town: Sprout
@@ -275,7 +274,10 @@ export function createBots(world, rng = Math.random, { clock = () => new Date() 
   for (const b of buddiesOf(world.char)) bots.names.add(b.name.toLowerCase());
   // (Saves from when there were rivals drop theirs.)
   delete world.char.rival;
-  for (const r of world.char.regulars ?? []) bots.names.add(r.name.toLowerCase());
+  // (Saves from before the cleanup drop their regulars, photos and fake guild.)
+  delete world.char.regulars;
+  delete world.char.photos;
+  delete world.char.guild;
   // Everyone's already around when you log in.
   const total = onlineNow(bots);
   for (let i = 0; i < total; i++) spawn(bots, world, { quiet: true });
@@ -300,8 +302,8 @@ function townFor(bots, level, not = null) {
 
 function townCounts(bots) {
   const counts = Object.fromEntries(TOWNS.map((t) => [t, 0]));
-  // (Special visitors, a legend, the merchant, a GM, don't take anyone's place.)
-  for (const b of bots.list) if (!b.party && !b.hunter && !b.legend && !b.merchant && !b.gm && counts[b.map] != null) counts[b.map]++;
+  // (Special visitors, the merchant, a GM, don't take anyone's place.)
+  for (const b of bots.list) if (!b.party && !b.hunter && !b.merchant && !b.gm && counts[b.map] != null) counts[b.map]++;
   return counts;
 }
 
@@ -409,6 +411,7 @@ function say(bot, text) {
 // Advances everyone: comings and goings, walking, chatting, and the occasional wave.
 export function updateBots(bots, world, dt) {
   if (!bots) return;
+  bots.clock ??= () => new Date();
   const rng = bots.rng;
   const here = world.map.id;
   // Logins: right away if the server dips under its minimum, otherwise now and then up to the usual
@@ -460,7 +463,7 @@ export function updateBots(bots, world, dt) {
       // The busier the town, the less each person talks, so chat stays readable.
       bot.nextLine = (bot.shop ? between(60, 120, rng) : between(70, 160, rng)) * crowd;
       // (Now and then, something about the time: a night owl, a kid home from school.)
-      const line = memeLine(bots, rng) ?? (rng() < 0.12 ? timeLine(serverTime(bots.clock()), rng) : talk(bot, bots, world, rng));
+      const line = rng() < 0.12 ? timeLine(serverTime(bots.clock()), rng) : talk(bot, bots, world, rng);
       botChat(world, bot, line);
     }
   }
@@ -851,8 +854,6 @@ function listen(bots, world) {
       if (h.emote) {
         const bot = all[0];
         if (rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'kagura'], rng) });
-      } else if (heardMeme(bots, world, h.words)) {
-        // (They said the meme: chat loses it, world/events.js.)
       } else {
         const words = h.words.toLowerCase();
         const named = all.find((b) => words.includes(b.name.toLowerCase()));
@@ -1055,7 +1056,7 @@ function huntersHere(bots, world, dt) {
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
       bot.nextLine = between(90, 200, rng);
-      const line = memeLine(bots, rng) ?? (queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : talk(bot, bots, world, rng));
+      const line = (queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : talk(bot, bots, world, rng));
       if (line) shout(bot, bots, world, line);
     }
   }

@@ -1,7 +1,6 @@
 // The Collection window (B): the Monster Book (a card for every monster: shown once you've
 // defeated one, a silhouette until then, with a star once mastered), achievements with their
-// progress, the titles they unlock (pick one to wear under your name), and Photos: the group
-// photos taken after a raid (world/raids.js), everyone who fought cheering in front of the boss.
+// progress, and the titles they unlock (pick one to wear under your name).
 
 import { MOBS } from '../data/mobs.js';
 import { ACHIEVEMENTS, BOOK_MOBS } from '../data/achievements.js';
@@ -10,14 +9,10 @@ import { drawMonster } from '../render/monsters.js';
 import { drawItemIcon } from '../render/icons.js';
 import { FISH, RARITY_NAMES, RARITY_COLORS } from '../data/fishing.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, sparkle, icon, wrap, bar, fit } from './kit.js';
-import { MAPS } from '../data/maps.js';
-import { drawHero } from '../render/hero.js';
-import { wornGear } from '../core/character.js';
-import { drawLandmark, LANDMARKS } from '../render/landmarks.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Fish', 'Achievements', 'Titles', 'Photos'];
+const TABS = ['Monster Book', 'Fish', 'Achievements', 'Titles'];
 
 // Monsters by level, the bosses after.
 const ORDER = [...BOOK_MOBS].sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
@@ -35,89 +30,7 @@ export function collectionWindow(ui, state, world) {
   if (win.tab === 0) book(ui, win, char, world, x, y, th);
   else if (win.tab === 1) fishPage(ui, char, x, y, th);
   else if (win.tab === 2) achievements(ui, win, char, x, y, th);
-  else if (win.tab === 3) titles(ui, win, char, x, y, th);
-  else photos(ui, win, char, world, x, y);
-}
-
-// ---------- Photos ----------
-// One photo at a time on a white print: the map's sky, the boss standing behind, and everyone who
-// fought cheering in a row with their names; the arrows flip through them.
-function photos(ui, win, char, world, x, y) {
-  const { ctx } = ui;
-  const list = char.photos ?? [];
-  if (!list.length) {
-    wrap(ctx, 'No photos yet. Beat a boss with other players around (a queen back for a rematch, the Crystal King on his throne) and everyone poses for a group photo.', x, y + 14, W - 20, { size: 8, color: COLORS.muted });
-    return;
-  }
-  win.photo = Math.max(0, Math.min(win.photo ?? 0, list.length - 1));
-  const p = list[win.photo];
-  const pw = W - 20;
-  const ph = 150;
-  // The print.
-  box(ctx, x, y, pw, ph + 22, { fill: '#ffffff', edge: '#e2d6ee', r: 6, width: 1.5 });
-  const ix = x + 6;
-  const iy = y + 6;
-  const iw = pw - 12;
-  const ih = ph - 6;
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(ix, iy, iw, ih);
-  ctx.clip();
-  const look = MAPS[p.map]?.look ?? {};
-  const sky = look.sky ?? ['#bfe0ff', '#e6f3ff', '#fff6e6'];
-  const g = ctx.createLinearGradient(0, iy, 0, iy + ih);
-  sky.forEach((c, i) => g.addColorStop(i / Math.max(1, sky.length - 1), c));
-  ctx.fillStyle = g;
-  ctx.fillRect(ix, iy, iw, ih);
-  ctx.fillStyle = look.far ?? '#d8cdf0';
-  ctx.globalAlpha = 0.6;
-  ctx.fillRect(ix, iy + ih * 0.55, iw, ih * 0.45);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = look.mid ?? '#bfe8b8';
-  ctx.fillRect(ix, iy + ih - 22, iw, 22);
-  // The boss behind them, a little dimmed (they won).
-  const def = MOBS[p.boss];
-  // (A photo at a landmark has it behind everyone instead.)
-  if (p.landmark && LANDMARKS[p.landmark]) {
-    const k = Math.min(1, 110 / LANDMARKS[p.landmark].h);
-    ctx.save();
-    ctx.translate(ix + iw / 2, iy + ih - 20);
-    ctx.scale(k, k);
-    drawLandmark(ctx, p.landmark, 0, 0, world.now, 3, 0, MAPS[p.map]?.theme);
-    ctx.restore();
-  }
-  if (def) {
-    const k = Math.min(1, 84 / def.h);
-    ctx.save();
-    ctx.translate(ix + iw / 2, iy + ih - 30);
-    ctx.scale(k, k);
-    ctx.globalAlpha = 0.85;
-    drawMonster(ctx, { def, x: 0, y: 0, hp: def.hp, dir: -1, state: 'idle', flash: 0, stagger: 0, phase: 0, age: 9, dying: 0, uid: 9100 + win.photo, aggroUntil: 0, attackAt: -9, gloatAt: -9 }, 0, 0, world.now, world.now);
-    ctx.restore();
-  }
-  // Everyone in a row, cheering, you in the middle.
-  const people = p.people.slice(0, 6);
-  const order = [...people.slice(1)];
-  order.splice(Math.floor(order.length / 2), 0, people[0]);
-  const gap = Math.min(48, (iw - 30) / Math.max(1, order.length));
-  const x0 = ix + iw / 2 - ((order.length - 1) * gap) / 2;
-  order.forEach((q, i) => {
-    const px = x0 + i * gap;
-    const py = iy + ih - 8;
-    const facing = px < ix + iw / 2 ? 1 : -1;
-    drawHero(ctx, q.look, wornGear({ equipment: q.equipment ?? {}, outfit: q.outfit ?? {} }), px, py, { pose: 'cheer', progress: 0.65 + ((i * 0.37) % 0.1), time: world.now + i, seed: i, facing, job: q.job, scale: 1 });
-    text(ctx, fit(ctx, q.name, gap + 6, 6, true), px, py + 7, { size: 6, bold: true, align: 'center', color: q === people[0] ? '#fff3a6' : '#ffffff', outline: 'rgba(58,45,79,0.75)' });
-  });
-  for (let i = 0; i < 6; i++) sparkle(ctx, ix + 14 + ((i * 53) % (iw - 28)), iy + 10 + ((i * 29) % 40), 2, i % 2 ? '#ffffff' : '#ffe36b');
-  ctx.restore();
-  // The caption, handwritten along the bottom of the print.
-  const when = new Date(p.at);
-  text(ctx, fit(ctx, `${p.landmark ? 'Snapshot' : `${p.name} raid`} · ${p.mapName ?? MAPS[p.map]?.name ?? ''} · ${when.toLocaleDateString()}`, pw - 16, 8, true), x + pw / 2, y + ph + 13, { size: 8, bold: true, align: 'center', color: COLORS.ink });
-  // Flipping through.
-  const by = y + ph + 28;
-  if (button(ui, x + pw / 2 - 70, by, 30, 16, '<', { size: 9, enabled: win.photo > 0 })) win.photo -= 1;
-  text(ctx, `${win.photo + 1} / ${list.length}`, x + pw / 2, by + 11, { size: 8, bold: true, align: 'center' });
-  if (button(ui, x + pw / 2 + 40, by, 30, 16, '>', { size: 9, enabled: win.photo < list.length - 1 })) win.photo += 1;
+  else titles(ui, win, char, x, y, th);
 }
 
 // The book: a grid of cards, scrolled by the wheel, with what it's all worth along the bottom.

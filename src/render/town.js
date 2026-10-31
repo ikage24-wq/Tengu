@@ -1353,10 +1353,9 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     else if (!body.onGround) pose = 'jump';
     else pose = Math.abs(body.vx) > 8 ? 'walk' : 'idle';
   }
-  // (In costume they wear someone else's look: world/lives.js.)
-  const own = bot.costume ? { ...bot.char.appearance, ...bot.costume.look } : bot.char.appearance;
+  const own = bot.char.appearance;
   const look = bot.bubble ? { ...own, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : own;
-  const gear = bot.costume?.gear ? { ...wornGear(bot.char), ...bot.costume.gear } : wornGear(bot.char);
+  const gear = wornGear(bot.char);
   const seed = seedOf(bot.id);
   const facing = body ? body.facing : bot.facing;
   const anim = animFor(bot.id, body ? body.x : bot.x, facing, time, body);
@@ -1393,8 +1392,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     ctx.fillText(word, bx + tw / 2, y + 9);
     ctx.font = 'bold 7px sans-serif';
   };
-  if (bot.legend) badge('LEGEND', '#e0a21f', -1);
-  if (bot.afkTag || (bot.afk && bot.body && !bot.down)) badge('AFK', '#9c90b4', 1);
+  if (bot.afk && bot.body && !bot.down) badge('AFK', '#9c90b4', 1);
   if (bot.party) {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();

@@ -11,7 +11,6 @@ import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.j
 import { JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { buddiesOf, buddyOnline, callBuddy, answerHunt, removeBuddy, whereIs } from '../world/buddies.js';
-import { hallOfFame } from '../world/social.js';
 import { partyMembers, PARTY_MAX } from '../world/party.js';
 
 const W = 262;
@@ -27,13 +26,12 @@ export function onlineWindow(ui, state, world) {
   let y = win.y + 26;
   win.code ??= '';
   // The tabs: your friends list, or a room with friends online.
-  const TABS = ['friends', 'fame', 'room'];
+  const TABS = ['friends', 'room'];
   win.tab = TABS.includes(win.tab) ? win.tab : 'friends';
-  const t = tabs(ui, x, y, ['Friends', 'Fame', 'Room'], TABS.indexOf(win.tab), { w: 76, h: 15 });
+  const t = tabs(ui, x, y, ['Friends', 'Room'], TABS.indexOf(win.tab), { w: 76, h: 15 });
   win.tab = TABS[t];
   y += 20;
   if (win.tab === 'friends') return friendsTab(ui, state, world, win, x, y);
-  if (win.tab === 'fame') return fameTab(ui, world, win, x, y);
 
   if (online.status === 'connecting') {
     const t = performance.now() / 1000;
@@ -230,32 +228,3 @@ function friendsTab(ui, state, world, win, x, y) {
   }
 }
 
-// ---------- Fame ----------
-
-const gold = (n) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : `${n}`);
-
-function fameTab(ui, world, win, x, y) {
-  const { ctx } = ui;
-  const th = ui.theme;
-  const fame = hallOfFame(world.bots, world);
-  const kinds = [['level', 'Level'], ['kills', 'Kills'], ['raids', 'Raids']];
-  win.fame ??= 'level';
-  kinds.forEach(([k, label], i) => {
-    if (button(ui, x + i * 60, y, 56, 14, label, { size: 7, primary: win.fame === k })) win.fame = k;
-  });
-  y += 19;
-  const list = fame[win.fame];
-  const top = list.slice(0, 10);
-  const me = list.findIndex((p) => p.you);
-  const value = (p) => (win.fame === 'level' ? `Lv ${p.level}` : win.fame === 'kills' ? `${gold(p.kills)} kills` : `${p.raids} raids`);
-  top.forEach((p, i) => {
-    box(ctx, x - 2, y, W - 20, 17, { fill: p.you ? '#fff3c4' : i < 3 ? '#fffaf0' : '#ffffff', edge: p.you ? COLORS.select : th.light, r: 7, width: 1 });
-    if (i < 3) icon(ctx, 'crown', x + 7, y + 8, 8, ['#f0b53a', '#b8c4d8', '#d89a6a'][i]);
-    else text(ctx, `${i + 1}`, x + 7, y + 11.5, { size: 7, bold: true, align: 'center', color: COLORS.muted });
-    text(ctx, fit(ctx, `${p.name}${p.you ? ' (you)' : ''}`, 110, 7.5, true), x + 16, y + 11.5, { size: 7.5, bold: true });
-    text(ctx, JOBS[p.job]?.short ?? JOBS[p.job]?.name ?? '', x + 140, y + 11.5, { size: 6.5, color: COLORS.muted });
-    text(ctx, value(p), x + W - 28, y + 11.5, { size: 7.5, bold: true, align: 'right', color: th.dark });
-    y += 19;
-  });
-  if (me >= 10) text(ctx, `You: #${me + 1} · ${value(list[me])}`, x + (W - 24) / 2, y + 10, { size: 8, bold: true, align: 'center', color: COLORS.gold });
-}

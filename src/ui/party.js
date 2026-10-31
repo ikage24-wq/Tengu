@@ -11,8 +11,6 @@ import { online } from '../net/online.js';
 import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade } from '../net/together.js';
 import { MAPS } from '../data/maps.js';
 import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
-import { joinGuild, leaveGuild } from '../world/drama.js';
-import { found, enterShow } from '../world/events.js';
 import { helpOut } from '../world/lives.js';
 import { joinGroup } from '../world/social.js';
 
@@ -28,7 +26,6 @@ function menuItems(state, world) {
   if (m.kind === 'self') {
     items.push({ label: 'View my profile', icon: 'user', run: () => openProfile(state, { kind: 'self' }) });
     if (partyMembers(world.bots).length || online.party) items.push({ label: 'Leave party', icon: 'door', run: () => leaveAll(world) });
-    if (world.char.guild) items.push({ label: `Leave <${world.char.guild}>`, icon: 'door', run: () => leaveGuild(world) });
     return items;
   }
   // A friend online.
@@ -55,9 +52,6 @@ function menuItems(state, world) {
     items.push({ label: 'Invite to party', icon: 'heart', why: why ?? (high ? `Lv ${bot.level} is well above you, they'll likely say no` : null), enabled: !why, run: () => invite(world.bots, bot, world) });
   }
   if (bot.helped && !bot.thanked) items.push({ label: 'Say thanks', icon: 'heart', run: () => thanked(world.bots, world) });
-  if (bot.guildOffer && !world.char.guild) items.push({ label: `Join <${bot.guildOffer}>`, icon: 'crown', run: () => joinGuild(world, bot) });
-  if (bot.gm && world.bots.events?.gm?.bot === bot && !world.bots.events.gm.done) items.push({ label: 'Found you!', icon: 'star', run: () => found(world.bots.events, world.bots, world) });
-  if (bot.showHost?.phase === 'call' && !bot.showHost.you) items.push({ label: 'Enter fashion show', icon: 'star', run: () => enterShow(world, bot) });
   if (bot.helpAsk && !bot.party) items.push({ label: 'Help them', icon: 'heart', run: () => helpOut(world.bots, world, bot) });
   if (bot.lfg && !bot.party) {
     const why = partyMembers(world.bots).length ? 'Leave your party first' : null;

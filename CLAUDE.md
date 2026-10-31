@@ -159,6 +159,15 @@ there and update the status file as they get done.
   something real for the speaker (their own gear, job and map, its monsters, where they're headed,
   what just happened on the server); a line that doesn't fit isn't said. New features that make
   bots talk follow the same rules, and new townsfolk get lines of their own beyond their trade's.
+- **No useless features (the player's standing rule).** Before building anything the player asks
+  for (or that you'd suggest), check that it actually helps or improves the game: something the
+  player does, decides, earns or enjoys in play, not background flavour, a one-off gag, a chore, a
+  copy of a system that already exists, or a setting nobody would touch. If it doesn't clear that
+  bar, say so plainly before building it, explain why in a sentence, and offer a version that would
+  help (or suggest skipping it). Build it only if the player still wants it after hearing that.
+  The 2026-10-31 cleanup removed a long list of such things (fake-player town gags, gear layers
+  that duplicated polishing, chores like running out of stars or a hungry pet): don't bring them
+  back.
 - Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
   maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
   monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece

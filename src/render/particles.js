@@ -292,8 +292,8 @@ export function absorbJuice(fx, world) {
         kick(fx, 0, 3);
       } else kick(fx, 0, 1.4);
     } else if (j.type === 'confetti') {
-      // A shower of confetti over (x, y), `w` wide: little paper bits tumbling down (a wedding, a
-      // festival, a winner).
+      // A shower of confetti over (x, y), `w` wide: little paper bits tumbling down (a thank-you
+      // for helping with a quest).
       const colors = j.colors ?? ['#ff8fc1', '#ffe36b', '#8fd3ff', '#9be08f', '#c9a6ff', '#ffffff'];
       for (let i = 0; i < (j.count ?? 40); i++) {
         add(fx, { x: j.x + (Math.random() - 0.5) * (j.w ?? 160), y: j.y - Math.random() * 40, vx: (Math.random() - 0.5) * 40, vy: -40 - Math.random() * 60, g: 60, drag: 1.5, delay: Math.random() * 0.4, life: 2 + Math.random() * 1.2, size: 1.6 + Math.random(), shape: 'petal', spin: 6 + Math.random() * 6, phase: Math.random() * 6, color: colors[i % colors.length] });
@@ -307,25 +307,6 @@ export function absorbJuice(fx, world) {
         const a = (i / 26) * Math.PI * 2;
         const sp = 70 + Math.random() * 40;
         add(fx, { x: j.x, y: j.y - up, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 50, drag: 1.6, delay: (j.delay ?? 0) + 0.6, life: 1.1 + Math.random() * 0.4, size: 1 + Math.random() * 0.8, shape: i % 3 ? 'glow' : 'star', spin: 4, color: i % 4 ? color : '#ffffff' });
-      }
-    } else if (j.type === 'hearts') {
-      // Hearts floating up and away (a wedding kiss).
-      for (let i = 0; i < (j.count ?? 10); i++) {
-        add(fx, { x: j.x + (Math.random() - 0.5) * 30, y: j.y, vx: (Math.random() - 0.5) * 30, vy: -30 - Math.random() * 30, drag: 0.5, delay: Math.random() * 0.8, life: 1.6 + Math.random(), size: 2.4 + Math.random() * 1.2, shape: 'heart', color: i % 3 ? '#ff8fc1' : '#ff6b8a' });
-      }
-    } else if (j.type === 'snowball') {
-      // A snowball lobbed from (x, y) to (tx, ty), bursting into powder where it lands.
-      const fly = 0.45;
-      const delay = j.delay ?? 0;
-      add(fx, { x: j.x, y: j.y, vx: (j.tx - j.x) / fly, vy: (j.ty - j.y) / fly - 0.5 * 420 * fly, g: 420, delay, life: fly, size: 1.8, color: '#ffffff' });
-      for (let i = 0; i < 7; i++) {
-        const a = Math.random() * Math.PI * 2;
-        add(fx, { x: j.tx, y: j.ty, vx: Math.cos(a) * 50, vy: Math.sin(a) * 50 - 20, g: 160, drag: 2, delay: delay + fly, life: 0.4, size: 1 + Math.random() * 0.6, color: i % 2 ? '#ffffff' : '#dceaff' });
-      }
-    } else if (j.type === 'notes') {
-      // Music notes floating up and swaying (a jam session).
-      for (let i = 0; i < (j.count ?? 2); i++) {
-        add(fx, { x: j.x + (Math.random() - 0.5) * 14, y: j.y, vx: (Math.random() - 0.5) * 20, vy: -26 - Math.random() * 14, drag: 0.3, delay: i * 0.15, life: 1.6, size: 2, shape: 'note', color: j.color ?? '#ff8fc1' });
       }
     } else if (j.type === 'kick') {
       kick(fx, j.x ?? 0, j.y ?? 0);
@@ -570,25 +551,6 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'pixel':
         ctx.fillRect(snap(x), snap(y), p.size * 2, p.size * 2);
         break;
-      case 'note': {
-        // A quaver: a round head and a stem with its flag.
-        const r = p.size;
-        ctx.beginPath();
-        ctx.ellipse(x, y, r, r * 0.8, -0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillRect(x + r * 0.6, y - r * 3.2, 0.9, r * 3.2);
-        ctx.fillRect(x + r * 0.6, y - r * 3.2, r * 1.4, 0.9);
-        break;
-      }
-      case 'heart': {
-        const r = p.size;
-        ctx.beginPath();
-        ctx.moveTo(x, y + r);
-        ctx.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.6, y - r * 1.4, x, y - r * 0.4);
-        ctx.bezierCurveTo(x + r * 0.6, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r);
-        ctx.fill();
-        break;
-      }
       default:
         ctx.beginPath();
         ctx.arc(x, y, Math.max(0.3, p.size), 0, Math.PI * 2);

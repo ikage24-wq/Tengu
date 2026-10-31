@@ -309,7 +309,6 @@ export function drawWorld(ctx, world, viewCam, time) {
     const title = titleOf(world.char);
     if (title) text(ctx, title, hx, hy + 20, { size: 6.5, bold: true, align: 'center', color: '#ffe9a0', outline: 'rgba(90,63,122,0.85)' });
     // Your guild, like everyone else's, under that.
-    if (world.char.guild) text(ctx, `<${world.char.guild}>`, hx, hy + (title ? 28 : 20), { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
   }
 
   // HD: light and color over the world, then effects on a glowing layer.
