@@ -1820,7 +1820,7 @@ const castNow = (w, id) => {
   return cast(w, id);
 };
 
-test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks slowly, and ends in a fox moon', async () => {
+test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks slowly, and just stops on letting go', async () => {
   const { STREAM_MOVES } = await import('../src/world/melee.js');
   const w = thiefPath('kitsune');
   const hold = (...keys) => ({ held: new Set(['KeyZ', ...keys]), pressed: new Set(), locked: false });
@@ -1870,10 +1870,10 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   assert.ok(walked > 5, `walks while throwing (${walked})`);
   assert.ok(walked < (w.stats.speed / 100) * 60, 'but slowly');
   assert.ok(streaming(), 'still throwing');
-  // Letting go: the fox moon, and the wheel of fox fire flies apart.
+  // Letting go: no finisher, she just stops, and the wheel of fox fire flies apart.
   updateWorld(w, DT, idle);
-  assert.equal(w.pose.kind, 'foxmoonrise');
-  assert.ok(w.pose.fin);
+  assert.ok(!w.pose?.fin, `no finisher (${w.pose?.kind})`);
+  assert.ok(!w.strikes.some((s) => s.finisher), 'no finishing shot');
   assert.equal(w.barrage, null);
   assert.ok(w.wheelGone.heat > 1.5);
   // A tap is one star and no finisher.
@@ -1887,10 +1887,10 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
 
 test('Endless Fox-Fire never puts her throwing hand over her face', async () => {
   // Her head is most of her: an arm raised between about 120 and 260 degrees puts the gauntlet over
-  // her face. Every figure, and the finisher, keeps the hand low and wide (follow-through included).
+  // her face. Every figure keeps the hand low and wide (follow-through included).
   const { moveAt } = await import('../src/render/moves.js');
   const { STREAMS } = await import('../src/world/melee.js');
-  const figures = [...Object.keys(STREAMS.kitsune.figures), 'foxmoonrise'];
+  const figures = Object.keys(STREAMS.kitsune.figures);
   for (const k of figures) {
     for (let p = 0; p <= 1.0001; p += 0.02) {
       const a = (((moveAt(k, p, 0.4).arm % 360) + 360) % 360);

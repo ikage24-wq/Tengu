@@ -426,26 +426,6 @@ export const MOVES = {
       rig: (r) => { r.air = true; r.frontLeg = [3, -4, 50]; r.backLeg = [2, -7, 82]; r.backArm = [q(lerp(2, 11, f) - 5 * b), q(lerp(-6, -5, f))]; r.hairLift = -2; r.cape = 4; },
     };
   },
-  // The finisher: she rises up onto her toes, chest up and arms swept out wide behind her as the
-  // nine tails' fire gathers, then whips the fox moon out from the hip and steps after it, the
-  // giant fox spirit pouncing past her (world/melee.js barrageRelease).
-  foxmoonrise(p) {
-    const g = ease(seg(p, 0, 0.38));
-    const f = ease(seg(p, 0.42, 0.56));
-    const b = seg(p, 0.7, 1);
-    return {
-      weapon: lerp(lerp(90, -60, g), 120, f) - 30 * b, arm: lerp(lerp(60, -70, g), 92, f) - 30 * b,
-      lift: 5 * g * (1 - f) + 7 * f * (1 - b), tilt: -0.14 * g * (1 - f) + 0.14 * f * (1 - b), lunge: -2 * g + 6 * f * (1 - 0.5 * b), poised: true,
-      rig: (r) => {
-        r.frontLeg = f > 0.3 ? [4, 0, 10] : [2, -1, 4];
-        r.backLeg = f > 0.3 && b < 0.6 ? [-4, -4, -46] : [-2, -1, -6];
-        r.backArm = [q(-10 + 4 * f), q(-6 + 3 * f)];
-        r.hairLift = -3;
-        r.cape = q(-5 * g - 3 * f);
-        if (f > 0.2) strikeFace(r);
-      },
-    };
-  },
   // In the air (jumped, not floating): tucked, a star whipped round sidearm and down at them.
   foxairthrow(p) {
     const f = sFling(p);

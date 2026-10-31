@@ -686,8 +686,8 @@ to clear it.
     a time: one tail lit as she deals stars like cards, three for a trickster's spin throws,
     behind-the-back throws, hop-backs and lazy lobs, six as she spins inside a wheel of fox fire,
     and all nine as she floats over a circle of fox fire, until a giant fox spirit looms over her
-    and stars pour from its mouth too; let go and she rises to whip a fox-moon star through the
-    line as the fox of blue fire pounces after it), and the
+    and stars pour from its mouth too; it never ends in a finisher, so she can hold it on mobs
+    and bosses as long as she likes), and the
     finisher **Nine-Tail Blaze** (needs all nine
     tails: nine stars rain down burning, then a giant fox of blue fire pounces through the line).
 - **HD graphics** — on by default (Options: Display). Everything in the world is placed on the

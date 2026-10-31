@@ -810,12 +810,8 @@ export const STREAMS = {
     ready: (world) => Boolean(activeStar(world.char)),
     // (On the ground her throws come from the hip, lower than a bow hand.)
     strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, oy: air ? 0 : 5, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
-    // The finisher: she rises onto her toes, arms swept wide, and whips the fox moon out as the
-    // giant fox spirit pounces through the line with it (`spirit`, barrageRelease).
-    finish: (b, pct, k, air) => ({
-      move: air ? 'foxairthrow' : 'foxmoonrise', dur: air ? 0.4 : 0.62, step: air ? 0 : 6, hang: air, finisher: true, spirit: true,
-      strikes: [{ at: air ? 0.5 : 0.52, shot: 'foxmoon', pct, range: 320, h: air ? 190 : 80, drop: air ? 60 : 0, targets: 3, pierce: true, speed: 880, knock: 190, big: true, stop: 0.04 + 0.03 * k, shake: Math.round(1 + 2 * k) }],
-    }),
+    // No finisher: it's for holding on mobs and bosses, so letting go just stops (the wheel of
+    // fox fire still flies apart).
   },
   shinobi: {
     skill: 'inkdance', school: 'ink', closeIn: 40,
@@ -960,7 +956,8 @@ function barrageThrow(world, b, rng = Math.random) {
   run.last = now;
   run.n += 1;
 }
-// Letting go of attack: the finisher, if she held long enough (not over a skill).
+// Letting go of attack: the finisher, if her barrage has one and she held long enough (not over a
+// skill).
 export function barrageRelease(world) {
   const run = world.barrage;
   world.barrage = null;
@@ -969,7 +966,7 @@ export function barrageRelease(world) {
   world.wheelGone = { kind: run.kind, since: run.since, heat: run.heat, goneAt: world.now };
   const spec = STREAMS[run.kind];
   const b = barrageOf(world);
-  if (!b || !spec || pathOf(world) !== run.kind || world.dead || world.body.rope || !spec.ready(world)) return;
+  if (!b || !spec?.finish || pathOf(world) !== run.kind || world.dead || world.body.rope || !spec.ready(world)) return;
   if (world.recoverKind === 'skill' && world.attackTimer > 0) return;
   const held = run.last - run.since;
   if (held < BARRAGE_FINISH_AFTER) return;
@@ -980,13 +977,6 @@ export function barrageRelease(world) {
   playStep(world, step, 100, air ? 'basicair1' : 'basic2');
   // The Shinobi's last cut leaves a giant brush stroke of ink along the line.
   if (step.brush) world.fx.push({ kind: 'inkbrush', x: world.body.x + world.body.facing * 70, y: world.body.y - 24, len: 200, dir: world.body.facing, big: true, t: -0.56 * step.dur * 0.9, dur: 0.6, seed: Math.random() });
-  // The Kitsune's: the giant fox of blue fire pounces through the line with the moon, bigger the
-  // longer she held.
-  if (step.spirit) {
-    const at = step.strikes[0].at * step.dur;
-    world.fx.push({ kind: 'flamefoxpounce', x: world.body.x + world.body.facing * 40, y: world.body.y, dir: world.body.facing, r: 100 + 70 * k, t: -at, dur: at + 0.9 });
-    world.juice.push({ type: 'shake', mag: 1 + 2 * k, dur: 0.25, delay: at });
-  }
   // The Beastmaster's: Snow wolf brings the moon down on them as the gale arrow flies.
   if (step.moon) {
     const m = pickTargets(world.mobs, world.body, { w: 340, h: 120 }, 1)[0];

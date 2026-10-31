@@ -137,7 +137,7 @@ function describeParts(params, tune = 1) {
     const unit = b.unit ?? 'star';
     parts.push(`${pc(b.pct)} a ${unit}`, `${b.from} to ${Math.round(b.to * 10) / 10} ${unit}s a second`);
     if (b.wolf) parts.push(`Snow wolf ${pc(b.wolf)} a cut`);
-    parts.push(`finisher ${pc(b.finish[0])} to ${pc(b.finish[1])}`);
+    if (b.finish) parts.push(`finisher ${pc(b.finish[0])} to ${pc(b.finish[1])}`);
   }
   if (params.hold) parts.push(`${params.range.w / 2}px around, holds them ${Math.round(params.hold * 10) / 10}s`);
   if (params.pull) parts.push(`pulls from ${params.range.w}px`);
