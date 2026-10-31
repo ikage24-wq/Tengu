@@ -1,16 +1,22 @@
-// The Online window (N, or the friends button), two tabs. Friends: the players you've added (who's
-// on and where, Invite to bring one to you, a friend asking you to hunt) and your rival. Room:
+// The Online window (N, or the friends button). Friends: the players you've added (who's on and
+// where, Invite to bring one to you, a friend asking you to hunt) and your rival. Market: trade
+// chat's offers to answer (and anyone wanting what you just found). Bounty: the bounty board.
+// Fame: the hall of fame. Room:
 // host a room and share its six-digit code, or type a friend's code on the number pad to join
 // theirs. In a room it lists everyone, where they are, and their level (tap a friend for their
 // profile), with Party, Warp and Trade buttons, the invites waiting on you, and a way out.
 
-import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip, clicked } from './kit.js';
+import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip, clicked, tabs } from './kit.js';
 import { askTrade, answerTrade, warpTo, warpBlocker, warpCost, askParty, answerParty, partyBlocker, inParty } from '../net/together.js';
 import { openProfile } from './profile.js';
 import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.js';
 import { JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { buddiesOf, buddyOnline, callBuddy, answerHunt, removeBuddy, whereIs } from '../world/buddies.js';
+import { answerOffer, takeBounty, hallOfFame, priceOf } from '../world/market.js';
+import { ITEMS } from '../data/items.js';
+import { MOBS } from '../data/mobs.js';
+import { countItem } from '../core/inventory.js';
 import { partyMembers, PARTY_MAX } from '../world/party.js';
 
 const W = 262;
@@ -26,12 +32,15 @@ export function onlineWindow(ui, state, world) {
   let y = win.y + 26;
   win.code ??= '';
   // The tabs: your friends list, or a room with friends online.
-  win.tab ??= 'friends';
-  for (const [i, [key, label, ic]] of [['friends', 'Friends', 'friends'], ['room', 'Online room', 'crown']].entries()) {
-    if (button(ui, x + i * 92, y, 88, 15, label, { size: 7.5, iconName: ic, primary: win.tab === key })) win.tab = key;
-  }
+  const TABS = ['friends', 'market', 'bounty', 'fame', 'room'];
+  win.tab = TABS.includes(win.tab) ? win.tab : 'friends';
+  const t = tabs(ui, x, y, ['Friends', 'Market', 'Bounty', 'Fame', 'Room'], TABS.indexOf(win.tab), { w: 45, h: 15 });
+  win.tab = TABS[t];
   y += 20;
   if (win.tab === 'friends') return friendsTab(ui, state, world, win, x, y);
+  if (win.tab === 'market') return marketTab(ui, world, win, x, y);
+  if (win.tab === 'bounty') return bountyTab(ui, world, x, y);
+  if (win.tab === 'fame') return fameTab(ui, world, win, x, y);
 
   if (online.status === 'connecting') {
     const t = performance.now() / 1000;
@@ -238,4 +247,83 @@ function friendsTab(ui, state, world, win, x, y) {
     text(ctx, `${win.page + 1}/${pages}`, win.x + W / 2, py + 12, { size: 8, bold: true, align: 'center' });
     if (button(ui, win.x + W / 2 + 32, py, 30, 17, '>', { size: 9, enabled: win.page < pages - 1 })) win.page += 1;
   }
+}
+
+// ---------- Market, bounties, fame ----------
+
+const gold = (n) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : `${n}`);
+
+function marketTab(ui, world, win, x, y) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const M = world.bots?.market;
+  if (M?.rush) {
+    box(ctx, x - 2, y, W - 20, 18, { fill: '#fff3c4', edge: COLORS.select, r: 8, width: 1.5 });
+    text(ctx, fit(ctx, `Rush on ${ITEMS[M.rush.id].name}! ${gold(priceOf(world.bots, M.rush.id))} gold each`, W - 30, 7.5, true), x + 4, y + 12, { size: 7.5, bold: true, color: '#a8467a' });
+    y += 22;
+  }
+  const offers = M?.offers ?? [];
+  if (!offers.length) {
+    wrap(ctx, 'Trade chat is quiet right now. Offers show up here as players post them: buy what they sell, or sell them what they want.', x, y + 10, W - 24, { size: 7.5, color: COLORS.muted });
+    return;
+  }
+  for (const o of offers.slice(0, 9)) {
+    const yours = o.kind === 'yours';
+    box(ctx, x - 2, y, W - 20, 22, { fill: yours ? '#f3e9ff' : '#ffffff', edge: yours ? '#c9a6ff' : th.light, r: 8, width: 1 });
+    const what = yours ? `wants your ${o.label}` : `${o.kind === 'sell' ? 'S>' : 'B>'} ${ITEMS[o.item].name}${o.qty > 1 ? ` x${o.qty}` : ''}`;
+    text(ctx, fit(ctx, what, 150, 7.5, true), x + 5, y + 10, { size: 7.5, bold: true, color: yours ? '#7a4ab0' : o.kind === 'sell' ? '#2f8f6a' : '#4f95e0' });
+    text(ctx, fit(ctx, `${o.bot.name} · ${gold(o.each)}${yours ? '' : ' ea'}${o.kind === 'buy' ? ` · you have ${countItem(world.char.inventory, o.item)}` : ''}`, 150, 6.5, false), x + 5, y + 18.5, { size: 6.5, color: COLORS.muted });
+    const label = o.kind === 'sell' ? 'Buy' : 'Sell';
+    const ok = o.kind === 'sell' ? world.char.gold >= o.each * o.qty : o.kind === 'buy' ? countItem(world.char.inventory, o.item) > 0 : true;
+    if (button(ui, x + W - 64, y + 3, 40, 16, label, { size: 7.5, primary: true, enabled: ok })) {
+      const why = answerOffer(world.bots, world, o);
+      if (why) world.log(why, '#ffb3c6');
+    }
+    if (hover(ui, x + W - 64, y + 3, 40, 16)) tooltip(ui, [{ text: o.kind === 'sell' ? `Buy for ${gold(o.each * o.qty)} gold` : o.kind === 'buy' ? `Sell yours at ${gold(o.each)} each` : `Sell it for ${gold(o.each)} gold`, size: 8 }]);
+    y += 25;
+  }
+}
+
+function bountyTab(ui, world, x, y) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const list = world.bots?.market?.bounties ?? [];
+  if (!list.length) {
+    wrap(ctx, 'No bounties up right now. Players post jobs here now and then: take one, hunt the monsters, and collect the gold.', x, y + 10, W - 24, { size: 7.5, color: COLORS.muted });
+    return;
+  }
+  for (const b of list.slice(0, 8)) {
+    box(ctx, x - 2, y, W - 20, 24, { fill: b.done ? '#eafbe9' : b.taken ? '#fff8e6' : '#ffffff', edge: b.taken ? '#ffd6a0' : th.light, r: 8, width: 1 });
+    text(ctx, fit(ctx, `${b.n} ${MOBS[b.mob].name}s · Lv ${MOBS[b.mob].level}`, 150, 7.5, true), x + 5, y + 10, { size: 7.5, bold: true });
+    text(ctx, fit(ctx, `for ${b.by} · ${gold(b.reward)} gold${b.taken ? ` · ${b.got}/${b.n}` : ''}`, 150, 6.5, false), x + 5, y + 19, { size: 6.5, color: b.taken ? COLORS.gold : COLORS.muted });
+    if (b.done) text(ctx, 'Done!', x + W - 44, y + 15, { size: 8, bold: true, align: 'center', color: COLORS.good });
+    else if (!b.taken && button(ui, x + W - 64, y + 4, 40, 16, 'Take', { size: 7.5, primary: true })) takeBounty(world, b);
+    y += 27;
+  }
+}
+
+function fameTab(ui, world, win, x, y) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const fame = hallOfFame(world.bots, world);
+  const kinds = [['level', 'Level'], ['kills', 'Kills'], ['raids', 'Raids']];
+  win.fame ??= 'level';
+  kinds.forEach(([k, label], i) => {
+    if (button(ui, x + i * 60, y, 56, 14, label, { size: 7, primary: win.fame === k })) win.fame = k;
+  });
+  y += 19;
+  const list = fame[win.fame];
+  const top = list.slice(0, 10);
+  const me = list.findIndex((p) => p.you);
+  const value = (p) => (win.fame === 'level' ? `Lv ${p.level}` : win.fame === 'kills' ? `${gold(p.kills)} kills` : `${p.raids} raids`);
+  top.forEach((p, i) => {
+    box(ctx, x - 2, y, W - 20, 17, { fill: p.you ? '#fff3c4' : i < 3 ? '#fffaf0' : '#ffffff', edge: p.you ? COLORS.select : th.light, r: 7, width: 1 });
+    if (i < 3) icon(ctx, 'crown', x + 7, y + 8, 8, ['#f0b53a', '#b8c4d8', '#d89a6a'][i]);
+    else text(ctx, `${i + 1}`, x + 7, y + 11.5, { size: 7, bold: true, align: 'center', color: COLORS.muted });
+    text(ctx, fit(ctx, `${p.name}${p.you ? ' (you)' : ''}`, 110, 7.5, true), x + 16, y + 11.5, { size: 7.5, bold: true });
+    text(ctx, JOBS[p.job]?.short ?? JOBS[p.job]?.name ?? '', x + 140, y + 11.5, { size: 6.5, color: COLORS.muted });
+    text(ctx, value(p), x + W - 28, y + 11.5, { size: 7.5, bold: true, align: 'right', color: th.dark });
+    y += 19;
+  });
+  if (me >= 10) text(ctx, `You: #${me + 1} · ${value(list[me])}`, x + (W - 24) / 2, y + 10, { size: 8, bold: true, align: 'center', color: COLORS.gold });
 }

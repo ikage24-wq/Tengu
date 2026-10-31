@@ -29,6 +29,7 @@ import { isQueen } from './story.js';
 import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
 import { updateEvents, memeLine, heardMeme } from './events.js';
 import { updateLives } from './lives.js';
+import { updateMarket, luckyDrop } from './market.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -487,6 +488,8 @@ export function updateBots(bots, world, dt) {
   updateDrama(bots, world, dt, hooksFor(bots, world));
   updateEvents(bots, world, dt, hooksFor(bots, world));
   updateLives(bots, world, dt, hooksFor(bots, world));
+  updateMarket(bots, world, dt);
+  world.onLoot = (inst) => luckyDrop(bots, world, inst);
   listen(bots, world);
   deliverReplies(bots, world);
   news(bots, world, dt);
