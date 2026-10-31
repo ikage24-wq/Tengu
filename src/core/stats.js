@@ -47,13 +47,26 @@ export function setBonus(equipment) {
   return out;
 }
 
-// Passive bonuses from every learned passive in the character's job chain. A weapon's own passive
-// (`weapons`, like Dagger Mastery) only counts while that weapon is held.
+// A stat-only skill (`grows`, the masteries) comes with its job at level 1 and grows on its own
+// to its top level GROW_LEVELS levels later (a first job's by 30, a second job's by 50).
+const GROW_LEVELS = 20;
+const GROWS = Object.values(SKILLS).filter((s) => s.grows);
+export function grownLevel(char, s) {
+  const from = JOBS[s.job]?.level ?? 1;
+  if (char.level < from || !jobChain(char.job).includes(s.job)) return 0;
+  return Math.min(s.maxLevel, 1 + Math.floor(((char.level - from) * s.maxLevel) / GROW_LEVELS));
+}
+
+// Passive bonuses from every learned passive in the character's job chain, and the ones that grow
+// with your level. A weapon's own passive (`weapons`, like Dagger Mastery) only counts while that
+// weapon is held.
 export function passiveBonus(char) {
   const chain = new Set(jobChain(char.job));
   const weapon = char.equipment ? weaponTypeOf(char) : null;
   const out = {};
-  for (const [id, lv] of Object.entries(char.skills)) {
+  const levels = { ...char.skills };
+  for (const s of GROWS) levels[s.id] = grownLevel(char, s);
+  for (const [id, lv] of Object.entries(levels)) {
     const s = SKILLS[id];
     if (!s || s.type !== 'passive' || lv <= 0 || !chain.has(s.job)) continue;
     if (s.weapons && weapon && !s.weapons.includes(weapon)) continue;

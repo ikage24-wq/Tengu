@@ -6,6 +6,7 @@
 //   - The wandering merchant: once in a long while a peddler sets up in a town for a few minutes
 //     with odd wares at odd prices; word spreads and players race there.
 
+import { MAX_LEVEL } from '../core/exp.js';
 import { ITEMS } from '../data/items.js';
 import { botChat } from './chatlog.js';
 import { happened } from './chatter.js';
@@ -101,7 +102,7 @@ function merchant(ev, bots, world, hooks) {
   const bot = hooks.logIn({ name: 'Wandering Pip', char: hooks.makeChar(rng, { name: 'Wandering Pip', level: 45, pro: false }), guild: null, style: hooks.makeStyle(), title: '★ Wandering Merchant' }, { map: town, x: map.plaza ?? map.width / 2 });
   if (!bot) return;
   const items = ODD_WARES.filter((id) => ITEMS[id]).map((id) => ({ id, qty: Math.floor(between(3, 12, rng)), price: Math.max(10, Math.round(ITEMS[id].price * between(0.4, 0.8, rng))) }));
-  const rare = Object.values(ITEMS).filter((d) => d.type === 'equip' && d.unique && !d.legacy && d.reqLevel <= world.char.level + 5);
+  const rare = Object.values(ITEMS).filter((d) => d.type === 'equip' && d.unique && !d.legacy && d.reqLevel <= Math.min(world.char.level + 5, MAX_LEVEL));
   if (rare.length) items.push(hooks.equipFor(pick(rare, rng)));
   Object.assign(bot, { merchant: true, shop: { title: 'Curious Wares (today only!)', items }, state: 'shop', session: 240, stay: 9999, waved: true });
   ev.merchant = { bot, until: world.now + 240 };

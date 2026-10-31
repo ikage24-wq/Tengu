@@ -27,6 +27,7 @@
 
 import { thrownStars } from '../core/items.js';
 import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
+import { grownLevel } from '../core/stats.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
@@ -1055,7 +1056,7 @@ function graceWard(world) {
 export function healAround(world, x, y, pct, r, gauge = true) {
   const { char, body, stats } = world;
   // A Shrine Maiden's Shrine Mastery makes every heal she gives mend more.
-  const lv = char.skills?.shrinemastery ?? 0;
+  const lv = grownLevel(char, SKILLS.shrinemastery);
   if (lv > 0) pct *= 1 + (skillAt('shrinemastery', lv).passive.healPower ?? 0);
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
@@ -1521,9 +1522,8 @@ function land(world, s) {
 // The warrior paths' skills set themselves off from their basic swings, hit or miss (see
 // data/skills.js). Any swing may rush on into extra blows: Blade Rush's cross-cut of steel, Aegis
 // Smite's pillar of light (Paladin), Ravage's bleeding cleaves (Berserker). A combo's last swing
-// may flow on into a whole move: the path's own (Hallowed Ground for the Paladin, Rampage for the
-// Berserker once he has the Rage) or, failing that, the Warrior's Whirlwind. Proc strikes aren't
-// basic swings, so they never set off procs.
+// may flow on into the Warrior's Whirlwind. Proc strikes aren't basic swings, so they never set
+// off procs.
 
 // The fields every proc strike shares: aimed the way the swing was, never turning you round.
 const procStrike = (world, s, key, delay, fields) => ({
@@ -1555,24 +1555,6 @@ function whirlStep(p) {
   return { move: 'spin', dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
     ...[0.15, 0.3, 0.45, 0.6].map(hit),
     { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4 },
-  ] };
-}
-
-// Hallowed Ground: the blade driven into the ground, a ring of holy light that turns everything
-// it hits on you, then pillars of light lifting them.
-function hallowedStep(p) {
-  return { move: 'consecrate', dur: 0.9, step: 4, finisher: true, strikes: [
-    { at: 0.46, pct: p.pct, reach: 120, h: 90, around: true, targets: p.targets, knock: 60, provoke: p.provoke, burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
-    { at: 0.8, pct: Math.round(p.pct * 0.8), reach: 130, h: 90, around: true, targets: p.targets, knock: 30, launch: 220, fx: 'pillar', stop: 0.04 },
-  ] };
-}
-
-// Rampage: three wild cleaves back and forth, then a leaping skull-splitter.
-function rampageStep(p) {
-  const chop = (at, arc) => ({ at, pct: p.pct, reach: 82, h: 70, targets: p.targets, knock: 40, arc, thick: 12, rage: 0 });
-  return { move: 'rampage', dur: 1.45, step: 30, carry: 0.6, finisher: true, strikes: [
-    chop(0.064, [-150, 230]), chop(0.227, [110, -240]), chop(0.384, [-150, 230]),
-    { at: 0.724, pct: p.smash, reach: 120, h: 92, around: true, targets: p.targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
   ] };
 }
 
@@ -1614,21 +1596,16 @@ function bladeProcs(world, s, count, rng = Math.random) {
   const judgment = procOf(char, 'judgment');
   if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
   if (world.queuedStep) return;
-  const queue = (step, key, school, extra = {}) => (world.queuedStep = { at: world.now + 0.12, step, key, school, ...extra });
-  const hallowed = procOf(char, 'hallowedground');
-  if (hallowed && (count >= hallowed.crowd || rng() < hallowed.chance)) return queue(hallowedStep(hallowed), 'prochallowedground', 'holy');
-  const rampage = procOf(char, 'rampage');
-  if (rampage && (world.rage ?? 0) >= SKILLS.rampage.rageCost && rng() < rampage.chance) return queue(rampageStep(rampage), 'procrampage', 'rage', { feedsOnRage: true });
+  const queue = (step, key, school) => (world.queuedStep = { at: world.now + 0.12, step, key, school });
   const whirl = procOf(char, 'whirlwind');
   if (whirl && (count >= whirl.crowd || rng() < whirl.chance)) queue(whirlStep(whirl), 'procwhirlwind', pathSchool(char));
 }
 
 // ---------- Archer procs ----------
 // The Archer's tricks set themselves off from her basic shots, hit or miss (see data/skills.js):
-// any shot may become a Blast Arrow (it bursts on impact) or a Snare Arrow (a net holds its target);
-// the combo's last shot may drop a Spring Trap ahead. A Beastmaster's shots may also make Snow
-// wolf fight (world/pets.js): dragging herself over to the nearest monster to cut it, or calling
-// a beam of moonlight down on the farthest, and the combo's last shot may set her howling.
+// any shot may become a Blast Arrow (it bursts on impact) or a Snare Arrow (a net holds its target).
+// A Beastmaster's shots may also make Snow wolf fight (world/pets.js): dragging herself over to the
+// nearest monster to cut it, or calling a beam of moonlight down on the farthest.
 // Returns the shot to loose. `rng` for tests.
 // Blast Arrow's burst (and a sprung trap's) in each archer path's own look: the Archer's fire, the
 // Beastmaster's gale of wind and leaves, the Stormcaller's thunderclap.
@@ -1639,17 +1616,10 @@ function shotProcs(world, s, rng = Math.random) {
   if (blast && s.shot && rng() < blast.chance) s = { ...s, blast: blast.r, blastFx: BLASTS[pathOf(world)] ?? 'blast', burst: BLASTS[pathOf(world)] ?? 'blast', pct: (s.pct * blast.pct) / 100, big: true, stop: Math.max(s.stop ?? 0, 0.05), shake: Math.max(s.shake ?? 0, 1) };
   const snare = procOf(char, 'snarearrow');
   if (snare && s.shot && rng() < snare.chance) s = { ...s, snare: snare.secs };
-  const trap = procOf(char, 'springtrap');
-  if (trap && s.finisher && /^basic\d$/.test(s.key) && rng() < trap.chance) setTrap(world, body.x + s.dir * 90, trap);
   const wolf = procOf(char, 'wolfpounce');
   if (wolf && rng() < wolf.chance) sendSnow(world, pickTargets(world.mobs, body, { w: 300, h: 120 }, 1)[0], wolf.pct);
   const moon = procOf(char, 'hawkstrike');
   if (moon && rng() < moon.chance) moonfall(world, pickTargets(world.mobs, body, { w: 340, h: 160 }, 9).at(-1), moon.pct);
-  const howlP = procOf(char, 'packhowl');
-  if (howlP && s.finisher && /^basic\d$/.test(s.key)) {
-    const crowd = pickTargets(world.mobs, body, { w: 320, h: 150 }, 9).length;
-    if (crowd >= howlP.crowd || rng() < howlP.chance) howl(world, howlP);
-  }
   // The Stormcaller's: a bolt may jump on from what it hits (Arc Bolt) or charge the ground there
   // (Static Field), and the combo's last bolt may call lightning down on the farthest monster in
   // front of her (Thunderclap).
@@ -1680,8 +1650,8 @@ export function stormHit(world, m, f, at = 0, element = null) {
 
 // Spring Trap: a trap set on the ground ahead, armed until a monster steps on it or it rusts away
 // (`life`), at most TRAPS at once (the oldest goes).
-const TRAPS = 2;
-function setTrap(world, x, p) {
+const TRAPS = 3;
+export function setTrap(world, x, p) {
   const traps = (world.traps ??= []);
   const y = world.body.y;
   if (traps.length >= TRAPS) traps.shift().fx.dur = 0;
@@ -1704,19 +1674,12 @@ function tickTraps(world) {
 }
 
 // A proc's own move, a beat after the blow that set it off (on the ground, and still standing).
-// Rampage feeds on your Rage without spending it: the more you have, the harder it hits (double
-// at full Rage).
 function playQueued(world) {
   const q = world.queuedStep;
   if (!q || world.now < q.at) return;
   world.queuedStep = null;
   if (world.dead || !world.body.onGround) return;
-  let scale = 100;
-  if (q.feedsOnRage) {
-    scale += Math.round((100 * (world.rage ?? 0)) / RAGE_MAX);
-    world.fx.push({ kind: 'powerup', school: 'rage', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, big: true });
-  }
-  playStep(world, q.step, scale, q.key, q.school ?? pathSchool(world.char), AFTER.finisher);
+  playStep(world, q.step, 100, q.key, q.school ?? pathSchool(world.char), AFTER.finisher);
 }
 
 // How a shot would hit a monster: rolled now, landing when it arrives.
@@ -1732,9 +1695,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const extraCrit = sure ? 1 : 0;
   const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
+  // (Snare Arrow: a monster held in her net takes more.)
+  const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
   const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
-    at: world.now + delay, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
+    at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
     gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank,
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
@@ -1831,9 +1796,9 @@ function fire(world, strike) {
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
   // The Kitsune's illusions: one fox-fire illusion for every three tails (three at Nine Tails),
-  // and two more under Fox Illusion, each throwing a free, lighter star beside hers.
+  // each throwing a free, lighter star beside hers.
   if (hasTails(world.char) && STAR_SHOTS.has(s.shot) && !s.illusion) {
-    const n = Math.floor(tailCount(world) / 3) + (world.char.buffs.foxillusion?.until > world.now ? 2 : 0);
+    const n = Math.floor(tailCount(world) / 3);
     for (let k = 0; k < n; k++) {
       const oyk = (k % 2 ? 1 : -1) * (8 + Math.floor(k / 2) * 7);
       fire(world, { ...s, illusion: true, free: true, phantom: true, fan: 1, pierce: false, pct: s.pct * ILLUSION_POWER, oy: (s.oy ?? 0) + oyk, lag: (s.lag ?? 0) + 0.05 * (k + 1), bend: oyk * 2, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined, kickback: 0 });

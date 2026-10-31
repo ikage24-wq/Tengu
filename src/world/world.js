@@ -11,6 +11,7 @@ import { SKILLS } from '../data/skills.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, usePotion, applyDeath, autoAssignAp } from '../core/character.js';
 import { settings } from '../core/settings.js';
+import { decoyFor, tickDecoy } from './decoy.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
@@ -753,12 +754,14 @@ export function updateWorld(world, dt, input) {
   tickTutorial(world);
   tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id) });
   if (world.dungeon) tickDungeon(world, dt);
+  tickDecoy(world);
   // Online, the monsters on a map another player got to first are run by their game; this one
   // shows them where it says they are. Monsters chase whichever player is nearest.
   const mirrored = Boolean(world.net?.mirrored(world));
   if (!world.dungeon) for (const m of world.mobs) {
     // (A monster another player hunting here just hit goes after them, not you.)
-    const foe = m.foe && world.now < m.foeUntil && !m.def.boss ? m.foe : null;
+    // (And a Kitsune's Fox Decoy pulls the monsters near it.)
+    const foe = m.foe && world.now < m.foeUntil && !m.def.boss ? m.foe : decoyFor(world, m);
     const event = mirrored ? world.net.step(m, dt) : updateMob(m, foe ?? (world.net ? world.net.target(world, m) : world.body), dt, world.now);
     if (event === 'slam') {
       m.attackAt = world.now;

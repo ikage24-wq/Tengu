@@ -258,6 +258,15 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
+  // Fox Decoy: an illusion of the Kitsune in blue fox fire where she set it, flickering, flames
+  // licking up off it.
+  const d = world.decoy;
+  if (d && d.map === world.map.id && !world.dead) {
+    const dx = snap(d.x - cam.x);
+    const dy = snap(d.y - cam.y);
+    fxSprite(ctx, 'celfoxfire', dx, dy + 4, { t: time, scale: 0.36, alpha: 0.6 });
+    drawTinted(ctx, dx, dy, '#2f6cf0', 0.7, (c) => drawHero(c, look, gear, dx, dy, { time, facing: d.facing, ready: true, job: null, alpha: 0.68 + 0.12 * Math.sin(time * 7) }));
+  }
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
   if (!world.dead && (phantom(world) || shadowClones(world) || inkStorm(world))) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
@@ -501,16 +510,6 @@ function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
   const clone = (dx, alpha, tint, k) => drawTinted(ctx, x + dx, y, tint, k, (c) => drawHero(c, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha }));
   if (buffs.shadowpartner) {
     clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, '#1e1650', 0.85);
-  }
-  // Fox Illusion: two illusions of the Kitsune in blue fox fire at her sides, flickering, flames
-  // licking up off them.
-  if (buffs.foxillusion) {
-    for (const side of [-1, 1]) {
-      const dx = side * (24 + Math.sin(time * 1.3 + side) * 3);
-      const flicker = 0.4 + 0.12 * Math.sin(time * 7 + side * 2);
-      fxSprite(ctx, 'celfoxfire', x + dx, y + 4, { t: time + side, scale: 0.3, alpha: 0.6 });
-      clone(dx, flicker, '#2f6cf0', 0.7);
-    }
   }
   if (buffs.mirage) {
     for (const side of [-1, 1]) {

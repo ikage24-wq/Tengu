@@ -201,10 +201,10 @@ export function moonfall(world, m, pct) {
 }
 
 // Lunar Howl: a grudging howl, a pale moon rising behind her; everything close round her is
-// knocked away and stunned.
+// knocked away and stunned. Called for (the Beastmaster's button), it drops whatever she's doing.
 export function howl(world, p) {
   const s = snowOf(world);
-  if (!s || busy(s) || !s.body.onGround || !cooled(world, s, 'howl')) return false;
+  if (!s || !s.body.onGround) return false;
   cool(world, s, 'howl');
   s.act = { kind: 'howl', t0: world.now, dur: 0.8, p };
   world.fx.push({ kind: 'lunarhowl', x: s.x, y: s.y, dir: s.dir, r: p.r, t: 0, dur: 0.8 });

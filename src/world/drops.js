@@ -1,6 +1,7 @@
 // Loot: what a monster drops, how it falls, and picking it up.
 
 import { ITEMS } from '../data/items.js';
+import { MAX_LEVEL } from '../core/exp.js';
 import { makeEquip, rollRarity } from '../core/items.js';
 import { surfacesOf } from './physics.js';
 
@@ -19,7 +20,8 @@ function potionFor(level, rng) {
 // Equipment near the monster's level: anything from 15 below to 5 above. Unique gear is rarer,
 // and half the time it's something for the hero's own job (`fits`), so drops stay useful.
 function gearFor(level, rng, fits = null) {
-  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && d.reqLevel <= level + 5 && d.reqLevel >= level - 15);
+  // (Never above the level cap: the gear past 50 is only kept for old saves.)
+  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && d.reqLevel <= Math.min(level + 5, MAX_LEVEL) && d.reqLevel >= level - 15);
   // One-of-a-kind outfits and endgame weapons are the rare part of the pool.
   const special = near.filter((d) => d.unique || d.endgame);
   let pool = special.length && rng() < 0.15 ? special : near.filter((d) => !d.unique && !d.endgame);

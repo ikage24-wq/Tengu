@@ -10,7 +10,7 @@ import { MOBS } from '../data/mobs.js';
 import { SKILLS } from '../data/skills.js';
 import { MAX_LEVEL } from '../core/exp.js';
 import { addItem } from '../core/inventory.js';
-import { clampVitals, stats as statsOf, bindFreeHotkey } from '../core/character.js';
+import { clampVitals, stats as statsOf, bindFreeHotkey, settleSkills } from '../core/character.js';
 import { loadMap } from './world.js';
 import { spawnMob } from './mobs.js';
 import { groundAt } from './physics.js';
@@ -67,6 +67,7 @@ export function setJob(char, jobId) {
     if (s && s.job !== 'gamemaster') char.sp += lv;
     delete char.skills[id];
   }
+  settleSkills(char);
   for (const [key, b] of Object.entries(char.hotkeys)) if (b?.skill && !char.skills[b.skill]) delete char.hotkeys[key];
   if (jobId === 'gamemaster') {
     for (const s of Object.values(SKILLS).filter((k) => k.job === 'gamemaster')) {

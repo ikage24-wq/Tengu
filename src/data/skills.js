@@ -17,6 +17,10 @@
 //             `dmgCut` takes that share off every hit. `taunt` (seconds) also turns every monster
 //             in `range` on you (a war cry; how long they stick to you in a dungeon).
 //   passive - always-on bonuses once learned
+// `grows` marks a passive that's only stats (the masteries): it isn't learned with SP, it comes
+// with the job and grows with your level (see core/stats.js). `replaces` names a skill of an
+// earlier job this one takes the place of (Haste for Quick Step): the old one leaves the list,
+// its SP comes back, and its hotkeys move over.
 //
 // Range: `w`/`h` is the hit box in front of the player. `projectile` skills hit the nearest
 // targets within range and draw a flying shot. `stun` (seconds) also stops monsters, with stars
@@ -40,11 +44,6 @@ export const SKILLS = {
     id: 'pebble', name: 'Star Pebble', job: 'novice', type: 'attack', maxLevel: 3, fx: 'pebble',
     desc: 'Flick a sparkly pebble at the nearest monster.',
     at: (lv) => ({ mp: 2, pct: 110 + lv * 25, hits: 1, targets: 1, range: { w: 220, h: 50 }, projectile: true }),
-  }),
-  cozyrest: skill({
-    id: 'cozyrest', name: 'Cozy Rest', job: 'novice', type: 'passive', maxLevel: 3, fx: null,
-    desc: 'Recover extra HP and MP while standing still.',
-    at: (lv) => ({ passive: { restRegen: lv * 4 } }),
   }),
   quickstep: skill({
     id: 'quickstep', name: 'Quick Step', job: 'novice', type: 'buff', maxLevel: 3, fx: 'buff',
@@ -113,14 +112,14 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), hard: 0.06, duration: lerp(4, 10, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m), wdef: lerp(10, 50, lv, m) } } }),
   }),
   swordmastery: skill({
-    id: 'swordmastery', name: 'Weapon Mastery', job: 'warrior', type: 'passive', fx: null, icon: 'swordmastery',
+    id: 'swordmastery', name: 'Weapon Mastery', job: 'warrior', type: 'passive', grows: true, fx: null, icon: 'swordmastery',
     desc: 'Steadier blows and more attack with every blade.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), watk: lerp(2, 20, lv, m) } }),
   }),
   toughness: skill({
-    id: 'toughness', name: 'Toughness', job: 'warrior', type: 'passive', fx: null, icon: 'toughness',
-    desc: 'Tougher all around: more max HP, weapon defense, and HP recovery.',
-    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m), restRegen: lerp(2, 20, lv, m) } }),
+    id: 'toughness', name: 'Toughness', job: 'warrior', type: 'passive', grows: true, fx: null, icon: 'toughness',
+    desc: 'Tougher all around: more max HP and weapon defense.',
+    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
   }),
   titanbreak: skill({
     id: 'titanbreak', dmg: 1.2, name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
@@ -145,7 +144,7 @@ export const SKILLS = {
   // swing, Divine Aegis when a hit leaves her low. Her buttons are Shoulder Charge and Grand
   // Verdict, the big finisher on full Faith.
   paladinmastery: skill({
-    id: 'paladinmastery', name: 'Paladin Mastery', job: 'paladin', type: 'passive', fx: null,
+    id: 'paladinmastery', name: 'Paladin Mastery', job: 'paladin', type: 'passive', grows: true, fx: null,
     desc: 'Steadier blows, thicker armor, and more max HP.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), wdef: lerp(5, 40, lv, m), maxHpPct: lerpf(0.02, 0.15, lv, m) } }),
   }),
@@ -155,21 +154,29 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), pct: lerp(80, 150, lv, m), targets: lerp(2, 4, lv, m), stun: lerpf(0.6, 1.4, lv, m) } }),
   }),
   hallowedground: skill({
-    id: 'hallowedground', name: 'Hallowed Ground', job: 'paladin', type: 'passive', fx: null, icon: 'hallowed', school: 'holy',
-    desc: 'The last swing of your combo sometimes drives the blade into the ground, hit or miss: a ring of holy light bursts out, every monster it hits turns on you, and pillars of light lift them up. Always, if the swing catches three or more.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.6, lv, m), crowd: 3, pct: lerp(100, 170, lv, m), targets: lerp(5, 8, lv, m), provoke: lerpf(3, 5, lv, m) } }),
+    id: 'hallowedground', name: 'Hallowed Ground', job: 'paladin', type: 'attack', fx: null, icon: 'hallowed', school: 'holy', maxLevel: 10, party: true,
+    desc: 'Drive your blade into the ground: a ring of holy light bursts out round you, every monster it catches turns on you, and its warmth mends you and the party around you. A beat later the ring flares again and throws them off their feet.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(6, 9);
+      return {
+        mp: k(14, 24), pct: k(140, 240), hits: 2, targets, mend: lerpf(0.06, 0.12, lv, m),
+        combo: [{ move: 'consecrate', dur: 0.9, step: 4, strikes: [
+          { at: 0.46, pct: k(140, 240), reach: 120, h: 90, around: true, targets, knock: 60, provoke: lerpf(3, 5, lv, m), burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
+          { at: 0.8, pct: k(110, 190), reach: 130, h: 90, around: true, targets, knock: 30, launch: 220, burst: 'consecrate', burstAt: 0, stop: 0.04, shake: 1 },
+        ] }],
+      };
+    },
   }),
   divineaegis: skill({
     id: 'divineaegis', name: 'Divine Aegis', job: 'paladin', type: 'passive', fx: null, icon: 'aegis', school: 'holy', party: true,
-    desc: 'When a hit leaves you under half your HP, you raise your blade to the sky: you and the party around you take less damage and slowly heal for a while.',
-    at: (lv, m) => ({ passive: {}, proc: { low: 0.5, duration: lerp(12, 24, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true } } }),
+    desc: 'When a hit leaves you under half your HP, you raise your blade to the sky: you and the party around you take less damage and slowly heal for a while. And a shield of light sometimes flashes up and blocks a hit outright, then answers with a holy shockwave that stuns everything around you (twice as often while the blade is raised).',
+    at: (lv, m) => ({ passive: {}, proc: {
+      low: 0.5, duration: lerp(12, 24, lv, m), buff: { dmgCut: lerpf(0.1, 0.25, lv, m), regenPct: lerpf(0.01, 0.025, lv, m) }, range: { w: 440, h: 160, around: true },
+      block: lerpf(0.06, 0.15, lv, m), pct: lerp(120, 220, lv, m), targets: lerp(4, 7, lv, m), stun: lerpf(1, 2, lv, m),
+    } }),
   }),
 
-  sacredbulwark: skill({
-    id: 'sacredbulwark', name: 'Sacred Bulwark', job: 'paladin', type: 'passive', fx: null, icon: 'bulwark', school: 'holy', maxLevel: 10,
-    desc: 'A shield of light sometimes flashes up and blocks a hit outright, then answers with a holy shockwave that stuns everything around you.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.08, 0.2, lv, m), pct: lerp(120, 220, lv, m), targets: lerp(4, 7, lv, m), stun: lerpf(1, 2, lv, m) } }),
-  }),
   judgment: skill({
     id: 'judgment', name: 'Judgment', job: 'paladin', type: 'passive', fx: null, icon: 'judgment', school: 'holy', maxLevel: 10,
     desc: 'When your Faith fills, you ascend for a while: every swing strikes again with holy light (no knockback), your swings reach farther, your Faith stays full, and the last swing of every combo calls a rain of holy swords down ahead of you that mends you and the party around you a little.',
@@ -202,7 +209,7 @@ export const SKILLS = {
 // Finishers (`fullGauge`) need the path's own gauge full (Rage, Faith, Gale or Focus) and spend
 // all of it (see world/combat.js).
   berserkermastery: skill({
-    id: 'berserkermastery', name: 'Berserker Mastery', job: 'berserker', type: 'passive', fx: null,
+    id: 'berserkermastery', name: 'Berserker Mastery', job: 'berserker', type: 'passive', grows: true, fx: null,
     desc: 'Steadier blows, more attack, and harder critical hits.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(3, 30, lv, m), critDamage: lerpf(0.05, 0.25, lv, m) } }),
   }),
@@ -217,9 +224,20 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.5, 1, lv, m), duration: lerp(10, 20, lv, m), rageGain: 25, buff: { watk: lerp(5, 35, lv, m), attackSpeed: lerpf(0.05, 0.15, lv, m), critRate: lerpf(0.02, 0.1, lv, m) } } }),
   }),
   rampage: skill({
-    id: 'rampage', name: 'Rampage', job: 'berserker', type: 'passive', fx: null, icon: 'rampage', school: 'rage', rageCost: 30,
-    desc: 'With 30 Rage or more, the last swing of your combo sometimes flows on into a Rampage: three wild cleaves back and forth, then a leaping skull-splitter that smashes the ground around you. It feeds on your Rage without spending it: the more Rage, the harder it hits (double at full Rage).',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.25, 0.7, lv, m), pct: lerp(110, 190, lv, m), smash: lerp(300, 520, lv, m), targets: lerp(4, 7, lv, m) } }),
+    id: 'rampage', name: 'Rampage', job: 'berserker', type: 'attack', fx: null, icon: 'rampage', school: 'rage', rageCost: 30, maxLevel: 10,
+    desc: 'Needs 30 Rage, and spends it. Three wild cleaves back and forth, then a leaping skull-splitter that smashes the ground around you. It feeds on the rest of your Rage: the more you have, the harder it hits (double at full Rage).',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const targets = k(4, 7);
+      const chop = (at, arc) => ({ at, pct: k(110, 190), reach: 82, h: 70, targets, knock: 40, arc, thick: 12, rage: 0 });
+      return {
+        mp: 0, pct: k(110, 190), hits: 4, targets,
+        combo: [{ move: 'rampage', dur: 1.45, step: 30, carry: 0.6, strikes: [
+          chop(0.064, [-150, 230]), chop(0.227, [110, -240]), chop(0.384, [-150, 230]),
+          { at: 0.724, pct: k(300, 520), reach: 120, h: 92, around: true, targets: targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
+        ] }],
+      };
+    },
   }),
 
   bloodlust: skill({
@@ -332,7 +350,7 @@ export const SKILLS = {
   }),
 
   manamastery: skill({
-    id: 'manamastery', name: 'Mana Mastery', job: 'spiritmage', type: 'passive', fx: null, icon: 'manamastery',
+    id: 'manamastery', name: 'Mana Mastery', job: 'spiritmage', type: 'passive', grows: true, fx: null, icon: 'manamastery',
     desc: 'Steadier spells, more magic attack, and a deeper well of MP.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), matk: lerp(2, 25, lv, m), maxMpPct: lerpf(0.04, 0.2, lv, m) } }),
   }),
@@ -343,12 +361,12 @@ export const SKILLS = {
   // in place of the fan, builds Grace (world/melee.js), and her lasting spells live in
   // world/shrine.js.
   shrinemastery: skill({
-    id: 'shrinemastery', name: 'Shrine Mastery', job: 'shrinemaiden', type: 'passive', fx: null, icon: 'shrinemastery',
+    id: 'shrinemastery', name: 'Shrine Mastery', job: 'shrinemaiden', type: 'passive', grows: true, fx: null, icon: 'shrinemastery',
     desc: 'The shrine answers you: more magic attack, a deeper well of MP, and every heal you give mends more.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(5, 35, lv, m), maxMpPct: lerpf(0.05, 0.25, lv, m), healPower: lerpf(0.05, 0.3, lv, m) } }),
   }),
   grandblessing: skill({
-    id: 'grandblessing', name: 'Grand Blessing', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'spirit', party: true,
+    id: 'grandblessing', name: 'Grand Blessing', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'spirit', party: true, replaces: 'blessing',
     desc: 'Ring the bells high and sweep the gohei over your head, left and right and left, then open your arms: a great pillar of warm light falls on you and the whole party, healing a lot at once and more every second for a good while, and everyone fights harder while it lasts.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -401,7 +419,7 @@ export const SKILLS = {
     },
   }),
   onmyodo: skill({
-    id: 'onmyodo', name: 'Onmyodo', job: 'onmyoji', type: 'passive', fx: null, icon: 'onmyodo',
+    id: 'onmyodo', name: 'Onmyodo', job: 'onmyoji', type: 'passive', grows: true, fx: null, icon: 'onmyodo',
     desc: 'The way of yin and yang: steadier spells, much more magic attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
   }),
@@ -489,13 +507,13 @@ export const SKILLS = {
   }),
   snarearrow: skill({
     id: 'snarearrow', name: 'Snare Arrow', job: 'archer', type: 'passive', fx: null, school: 'hawk',
-    desc: 'Your shots sometimes tangle their target in a net, holding it in place for a moment.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), secs: lerpf(1, 2.2, lv, m) } }),
+    desc: 'Your shots sometimes tangle their target in a net, holding it in place for a few seconds. While it is held, your shots hit it harder.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), secs: lerpf(2, 3.5, lv, m), bonus: lerpf(0.15, 0.3, lv, m) } }),
   }),
   springtrap: skill({
-    id: 'springtrap', name: 'Spring Trap', job: 'archer', type: 'passive', fx: null, school: 'hawk',
-    desc: 'The last shot of your combo sometimes drops a spring trap on the ground ahead. The first monster to step on it is snapped and flung into the air. Up to two traps at once.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), pct: lerp(150, 260, lv, m), life: lerp(8, 14, lv, m) } }),
+    id: 'springtrap', name: 'Spring Trap', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10,
+    desc: 'Set a spring trap on the ground just ahead. The first monster to step on it is snapped and flung into the air. Up to three traps at once.',
+    at: (lv, m) => ({ mp: lerp(8, 14, lv, m), pct: lerp(180, 300, lv, m), life: lerp(12, 20, lv, m), trap: true }),
   }),
   vault: skill({
     id: 'vault', name: 'Vault', job: 'archer', type: 'attack', fx: null, icon: 'vault', maxLevel: 10, school: 'hawk', movement: true,
@@ -510,12 +528,12 @@ export const SKILLS = {
     },
   }),
   steadyhands: skill({
-    id: 'steadyhands', name: 'Steady Hands', job: 'archer', type: 'passive', fx: null,
+    id: 'steadyhands', name: 'Steady Hands', job: 'archer', type: 'passive', grows: true, fx: null,
     desc: 'Quicker on the draw: you shoot faster and aim truer.',
     at: (lv, m) => ({ passive: { attackSpeed: lerpf(0.03, 0.15, lv, m), acc: lerp(3, 25, lv, m), mastery: lerpf(0.1, 0.35, lv, m) } }),
   }),
   lightfeet: skill({
-    id: 'lightfeet', name: 'Light Feet', job: 'archer', type: 'passive', fx: null,
+    id: 'lightfeet', name: 'Light Feet', job: 'archer', type: 'passive', grows: true, fx: null,
     desc: 'Light on your feet: you run faster and dodge more.',
     at: (lv, m) => ({ passive: { speed: lerp(3, 18, lv, m), eva: lerp(3, 25, lv, m) } }),
   }),
@@ -547,7 +565,7 @@ export const SKILLS = {
   // Queen's Awakening. Her buttons are the Archer's Vault, Snack Time and the finisher, Last Straw.
   // (The skill ids are the old animals' names, kept for saves.)
   beastmastery: skill({
-    id: 'beastmastery', name: 'Beast Mastery', job: 'beastmaster', type: 'passive', fx: null,
+    id: 'beastmastery', name: 'Beast Mastery', job: 'beastmaster', type: 'passive', grows: true, fx: null,
     desc: 'Steadier shots, more attack, and sharper aim, and Snow wolf hits harder too.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
@@ -572,9 +590,9 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.14, 0.32, lv, m), pct: lerp(80, 140, lv, m) } }),
   }),
   packhowl: skill({
-    id: 'packhowl', name: 'Lunar Howl', job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
-    desc: 'The last shot of your combo sometimes makes Snow wolf let out a grudging howl, a pale moon rising behind her: every monster close round her is knocked away and stunned. Always, if three or more monsters are in front of you.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), crowd: 3, pct: lerp(80, 140, lv, m), stun: lerpf(0.8, 1.6, lv, m), r: lerp(90, 130, lv, m) } }),
+    id: 'packhowl', name: 'Lunar Howl', job: 'beastmaster', type: 'attack', fx: null, school: 'wind', maxLevel: 10,
+    desc: "Call on Snow wolf to howl, wherever she is and whatever she's doing (even mid-hunt): she lets out a grudging howl, a pale moon rising behind her, and every monster close round her is knocked away and stunned.",
+    at: (lv, m) => ({ mp: lerp(10, 18, lv, m), pct: lerp(100, 170, lv, m), stun: lerpf(1, 2, lv, m), r: lerp(100, 140, lv, m), howl: true }),
   }),
   loyalguard: skill({
     id: 'loyalguard', name: 'Moon Ward', job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10,
@@ -618,7 +636,7 @@ export const SKILLS = {
   // Rod and Eye of the Storm. Her buttons are the Archer's Vault, Overcharge and the finisher,
   // Thunderhead.
   stormmastery: skill({
-    id: 'stormmastery', name: 'Storm Mastery', job: 'stormcaller', type: 'passive', fx: null,
+    id: 'stormmastery', name: 'Storm Mastery', job: 'stormcaller', type: 'passive', grows: true, fx: null,
     desc: 'Steadier bolts, more attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
@@ -687,12 +705,12 @@ export const SKILLS = {
     },
   }),
   quickhaste: skill({
-    id: 'quickhaste', name: 'Haste', job: 'thief', type: 'buff', fx: 'buff', icon: 'quickhaste', school: 'shadow', party: true,
+    id: 'quickhaste', name: 'Haste', job: 'thief', type: 'buff', fx: 'buff', icon: 'quickhaste', school: 'shadow', party: true, replaces: 'quickstep',
     desc: 'You and the party around you run faster and jump higher.',
     at: (lv, m) => ({ mp: lerp(10, 20, lv, m), duration: lerp(60, 180, lv, m), buff: { speed: lerp(8, 30, lv, m), jump: lerp(4, 18, lv, m) }, range: { w: 440, h: 160, around: true } }),
   }),
   nimblefeet: skill({
-    id: 'nimblefeet', name: 'Nimble', job: 'thief', type: 'passive', fx: null, icon: 'nimblefeet',
+    id: 'nimblefeet', name: 'Nimble', job: 'thief', type: 'passive', grows: true, fx: null, icon: 'nimblefeet',
     desc: 'Permanently raises avoid and accuracy.',
     at: (lv, m) => ({ passive: { eva: lerp(3, 30, lv, m), acc: lerp(2, 20, lv, m) } }),
   }),
@@ -730,7 +748,7 @@ export const SKILLS = {
     },
   }),
   daggermastery: skill({
-    id: 'daggermastery', name: 'Dagger Mastery', job: 'thief', type: 'passive', fx: null, icon: 'daggermastery',
+    id: 'daggermastery', name: 'Dagger Mastery', job: 'thief', type: 'passive', grows: true, fx: null, icon: 'daggermastery',
     desc: 'Steadier, stronger dagger hits and more critical hits with a dagger.',
     weapons: ['dagger'],
     at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), watk: lerp(2, 18, lv, m) } }),
@@ -785,7 +803,7 @@ export const SKILLS = {
     },
   }),
   gauntletmastery: skill({
-    id: 'gauntletmastery', name: 'Gauntlet Mastery', job: 'thief', type: 'passive', fx: null, icon: 'gauntletmastery',
+    id: 'gauntletmastery', name: 'Gauntlet Mastery', job: 'thief', type: 'passive', grows: true, fx: null, icon: 'gauntletmastery',
     desc: 'Steadier, stronger stars and sharper aim with a gauntlet.',
     weapons: ['gauntlet'],
     at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), acc: lerp(3, 25, lv, m) } }),
@@ -812,7 +830,7 @@ export const SKILLS = {
   // Hits and dodges build Ki (0-100, see world/melee.js); full (Shadow Clones), two ink clones of
   // her repeat every attack. Thousand Cuts needs it full and spends it.
   shinobimastery: skill({
-    id: 'shinobimastery', name: 'Shinobi Mastery', job: 'shinobi', type: 'passive', fx: null, icon: 'shinobimastery',
+    id: 'shinobimastery', name: 'Shinobi Mastery', job: 'shinobi', type: 'passive', grows: true, fx: null, icon: 'shinobimastery',
     desc: 'Steadier dagger cuts, more attack, and more critical hits.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 16, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
   }),
@@ -859,13 +877,8 @@ export const SKILLS = {
   }),
   smokebomb: skill({
     id: 'smokebomb', name: 'Smoke Bomb', job: 'shinobi', type: 'buff', fx: 'buff', icon: 'smokebomb', school: 'ink', maxLevel: 10,
-    desc: "Throw down a smoke bomb: you're untouchable a moment in the smoke, the monsters around you lose track of you, you dodge far more often for a while, and it builds Ki.",
-    at: (lv, m) => ({ mp: lerp(14, 8, lv, m), duration: lerpf(4, 8, lv, m), buff: { eva: lerp(40, 120, lv, m) }, ki: lerp(10, 20, lv, m), guard: 0.6, lose: 220 }),
-  }),
-  logswap: skill({
-    id: 'logswap', name: 'Log Swap', job: 'shinobi', type: 'buff', fx: 'buff', icon: 'logswap', school: 'ink', maxLevel: 10,
-    desc: 'Get ready to swap places with a log: the next blow that would land on you hits a log instead, and you reappear behind whoever struck, with a burst of Ki.',
-    at: (lv, m) => ({ mp: lerp(12, 20, lv, m), duration: lerp(10, 30, lv, m), buff: { ki: lerp(15, 30, lv, m) } }),
+    desc: "Throw down a smoke bomb: you're untouchable a moment in the smoke, the monsters around you lose track of you, you dodge far more often for a while, and it builds Ki. A log waits in the smoke too: the next blow that would land on you hits it instead, and you reappear behind whoever struck, with a burst of Ki.",
+    at: (lv, m) => ({ mp: lerp(14, 10, lv, m), duration: lerpf(4, 8, lv, m), buff: { eva: lerp(40, 120, lv, m) }, ki: lerp(10, 20, lv, m), guard: 0.6, lose: 220, log: { secs: lerp(10, 30, lv, m), ki: lerp(15, 30, lv, m) } }),
   }),
   thousandcuts: skill({
     id: 'thousandcuts', dmg: 2.5, name: 'Thousand Cuts', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'thousandcuts', school: 'ink', maxLevel: 10, fullGauge: true,
@@ -891,7 +904,7 @@ export const SKILLS = {
   // already burning; every three tails a fox-fire illusion throws stars beside hers. Nine-Tail
   // Blaze needs all nine and spends them.
   kitsunemastery: skill({
-    id: 'kitsunemastery', name: 'Kitsune Mastery', job: 'kitsune', type: 'passive', fx: null, icon: 'kitsunemastery',
+    id: 'kitsunemastery', name: 'Kitsune Mastery', job: 'kitsune', type: 'passive', grows: true, fx: null, icon: 'kitsunemastery',
     desc: 'Steadier stars, more attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 20, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
@@ -921,9 +934,9 @@ export const SKILLS = {
     },
   }),
   foxillusion: skill({
-    id: 'foxillusion', name: 'Fox Illusion', job: 'kitsune', type: 'buff', fx: 'buff', icon: 'foxillusion', school: 'fox',
-    desc: 'Two fox-fire illusions of you appear at your side for a while, and each throws a free star beside every star you throw.',
-    at: (lv, m) => ({ mp: lerp(16, 30, lv, m), duration: lerp(30, 90, lv, m), buff: { illusions: 2 } }),
+    id: 'foxillusion', name: 'Fox Decoy', job: 'kitsune', type: 'attack', fx: null, icon: 'foxillusion', school: 'fox',
+    desc: 'Set a fox-fire illusion of yourself down just ahead. For a few seconds every monster near it goes after it instead of you, and when its time is up it bursts in fox fire on everything close.',
+    at: (lv, m) => ({ mp: lerp(16, 26, lv, m), duration: lerpf(5, 9, lv, m), pct: lerp(150, 260, lv, m), targets: lerp(4, 7, lv, m), r: 260, decoy: true }),
   }),
   foxtrap: skill({
     id: 'foxtrap', name: 'Fox-Fire Trap', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxtrap', school: 'fox',
@@ -993,7 +1006,7 @@ export const SKILLS = {
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
-  vault: 'vault', cometarrow: 'comet',
+  vault: 'vault', cometarrow: 'comet', springtrap: 'throw', packhowl: 'cheer',
   stampede: 'skyshot', snacktime: 'throw', overcharge: 'steadyaim', thunderhead: 'skyshot',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
@@ -1001,7 +1014,7 @@ const MOVES_BY_SKILL = {
   spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',
   grandblessing: 'shrinegrand', purification: 'shrinepurify', resurrection: 'shrinerevive', thousandtorii: 'shrinetorii',
   ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', troupecombo: 'onmyocombo',
-  shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', logswap: 'cheer', thousandcuts: 'assassinate',
+  shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', thousandcuts: 'assassinate',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',
 };

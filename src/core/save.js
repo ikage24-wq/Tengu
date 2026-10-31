@@ -5,6 +5,8 @@ import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
+import { settleSkills } from './character.js';
+import { MAX_LEVEL } from './exp.js';
 
 // Slot 0 keeps the original key so saves from before character slots still load.
 export const SLOTS = 8;
@@ -30,6 +32,8 @@ export function loadGame(slot = 0) {
     char.outfit ??= {};
     char.cash ??= STARTING_CASH;
     char.inventory.cash ??= [];
+    // (A character from before the level cap came down to 50 is at the cap.)
+    char.level = Math.min(char.level, MAX_LEVEL);
     dropRetiredItems(char);
     updateRetiredJobs(char);
     // Keep new item ids from colliding with saved ones.
@@ -68,6 +72,7 @@ export function updateRetiredJobs(char) {
     char.sp += lv;
     delete char.skills[id];
   }
+  settleSkills(char);
   // A key bound to a skill that's gone, or that now sets itself off (a Warrior's procs), is freed.
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.skill && (!SKILLS[b.skill] || SKILLS[b.skill].type === 'passive')) char.hotkeys[code] = null;
   return char;

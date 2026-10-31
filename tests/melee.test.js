@@ -294,10 +294,10 @@ test('the finishing arrow pierces the whole line', () => {
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'all three in the line got hit');
 });
 
-test("the archer's tricks go off on their own: Blast Arrow bursts, Snare Arrow nets, Spring Trap snaps", () => {
+test("the archer's tricks: Blast Arrow and Snare Arrow go off on their own, Spring Trap is pressed", () => {
   const w = range();
-  Object.assign(w.char.skills, { blastarrow: 20, snarearrow: 20, springtrap: 20 });
-  for (const id of ['blastarrow', 'snarearrow', 'springtrap']) assert.equal(cast(w, id).reason, 'passive', `${id} is not a key to press`);
+  Object.assign(w.char.skills, { blastarrow: 20, snarearrow: 20 });
+  for (const id of ['blastarrow', 'snarearrow']) assert.equal(cast(w, id).reason, 'passive', `${id} is not a key to press`);
   // A lucky shot bursts on its target (catching the ones beside it) and nets it in place.
   let burst = false;
   dice(0.01, () => {
@@ -309,14 +309,28 @@ test("the archer's tricks go off on their own: Blast Arrow bursts, Snare Arrow n
   });
   assert.ok(burst, 'the arrow burst on impact');
   assert.ok(w.mobs.filter((m) => m.hp < 1e9).length >= 2, 'catching the monsters beside its target');
-  assert.ok(w.mobs.some((m) => m.hold === 'snare' && m.frozenUntil > w.now), 'a net holds its target');
-  // Spring Trap: the combo's last shot drops a trap ahead; a monster walking onto it is flung up.
+  const netted = w.mobs.find((m) => m.hold === 'snare' && m.frozenUntil > w.now);
+  assert.ok(netted, 'a net holds its target');
+  assert.ok(netted.frozenUntil - w.now > 1.5, 'for a few seconds');
+  // A netted monster takes more from her shots.
+  const dealt = (held) => {
+    const u = range();
+    u.char.skills.snarearrow = 20;
+    if (held) for (const m of u.mobs) Object.assign(m, { hold: 'snare', frozenUntil: 1e9 });
+    dice(0.5, () => {
+      updateWorld(u, DT, press('KeyZ'));
+      run(u, 0.8);
+    });
+    return u.mobs.reduce((n, m) => n + 1e9 - m.hp, 0);
+  };
+  const free = dealt(false);
+  const held = dealt(true);
+  assert.ok(free > 0 && held > free * 1.2, `harder on a netted one (${free} -> ${held})`);
+  // Spring Trap: pressed, a trap goes down ahead; a monster walking onto it is flung up.
   const v = range();
-  v.char.skills.springtrap = 20;
-  dice(0.01, () => {
-    finisher(v);
-    run(v, 0.8);
-  });
+  v.char.skills.springtrap = 10;
+  v.char.mp = 9999;
+  assert.ok(cast(v, 'springtrap').ok);
   assert.equal(v.traps?.length, 1, 'a trap is set');
   const trap = v.traps[0];
   const m = v.mobs[2];
@@ -480,19 +494,23 @@ test("Aegis Smite: a swing sometimes calls down a pillar of light that stuns, hi
   assert.ok(empty.fx.some((f) => f.kind === 'aegis'), 'a flare of light ahead');
 });
 
-test('Hallowed Ground: the combo finisher drives the blade down and turns every monster it hits on you', () => {
+test('Hallowed Ground: pressed, the blade goes into the ground, every monster it hits turns on you, and it mends you', () => {
   const w = advanced('paladin');
   w.char.skills.hallowedground = 10;
+  w.char.mp = 9999;
   for (const m of w.mobs) m.aggroUntil = 0;
-  // The smite catches all three boars, so it always goes off (no lucky roll needed).
+  w.char.hp = Math.round(w.stats.maxHp / 2);
+  w.hurtAt = w.now;
+  const hp = w.char.hp;
   dice(0.99, () => {
-    finisher(w);
-    run(w, 0.6);
+    assert.ok(cast(w, 'hallowedground').ok);
+    run(w, 0.3);
   });
   assert.equal(w.pose.kind, 'consecrate', 'the blade goes into the ground');
-  dice(0.99, () => run(w, 0.6));
+  dice(0.99, () => run(w, 0.8));
   assert.ok(w.mobs.every((m) => m.aggroUntil > w.now), 'all of them come after you');
   assert.ok(w.fx.some((f) => f.kind === 'consecrate'), 'a ring of holy light');
+  assert.ok(w.char.hp > hp, 'its warmth mends you');
 });
 
 test("a Berserker's blows build Rage (Ravage's cleaves more), which drains once the fighting stops", () => {
@@ -522,32 +540,26 @@ test("a Berserker's blows build Rage (Ravage's cleaves more), which drains once 
   assert.equal(p.rage, 0);
 });
 
-test('Rampage: with enough Rage the combo finisher flows into it, keeping the Rage, harder the more there was', () => {
+test('Rampage: pressed on 30 Rage or more, it spends 30 and hits harder the more Rage there was', () => {
   const rampageAt = (rage) => {
     const w = advanced('berserker', 'axe_20');
-    w.char.skills.rampage = 20;
+    w.char.skills.rampage = 10;
     w.rage = rage;
     w.rageAt = 1e9;
     const m = w.mobs[0];
-    let from = null;
-    let spent = null;
+    const from = m.hp;
+    let r;
     dice(0.01, () => {
-      finisher(w);
-      for (let i = 0; i < 150; i++) {
-        updateWorld(w, DT, idle);
-        if (w.pose?.kind === 'rampage' && from == null) {
-          from = m.hp;
-          spent = w.rage;
-        }
-      }
+      r = cast(w, 'rampage');
+      run(w, 2);
     });
-    return from == null ? null : { dealt: from - m.hp, spent };
+    return r.ok ? { dealt: from - m.hp, left: w.rage } : null;
   };
   assert.equal(rampageAt(10), null, 'not enough Rage: no Rampage');
   const some = rampageAt(40);
   const full = rampageAt(100);
-  assert.ok(some && full, 'it goes off with the Rage');
-  assert.ok(full.spent >= 95, 'it feeds on the Rage without spending it');
+  assert.ok(some && full, 'it goes with the Rage');
+  assert.ok(full.left >= 65 && full.left <= 75, `it spends 30 (${full.left} left)`);
   assert.ok(full.dealt > some.dealt * 1.25, `full Rage hits much harder (${some.dealt} vs ${full.dealt})`);
 });
 
@@ -597,15 +609,15 @@ test('no skill has a level limit: every skill of a path can be learned from the 
   const w = advanced('paladin');
   w.char.sp = 5;
   w.char.level = 31;
-  assert.ok(canLearn(w.char, 'sacredbulwark'));
+  assert.ok(canLearn(w.char, 'hallowedground'));
   assert.ok(canLearn(w.char, 'judgment'));
 });
 
-test('Sacred Bulwark: a blocked hit does no damage and answers with a stunning holy shockwave', async () => {
+test('Divine Aegis: a shield of light sometimes blocks a hit outright and answers with a stunning holy shockwave', async () => {
   const { hurtPlayer } = await import('../src/world/world.js');
   const w = advanced('paladin');
   w.god = false;
-  w.char.skills.sacredbulwark = 10;
+  w.char.skills.divineaegis = 10;
   w.char.hp = w.stats.maxHp;
   dice(0.99, () => hurtPlayer(w, 300, w.body.x + 20));
   assert.ok(w.char.hp < w.stats.maxHp, 'an unlucky roll: the hit lands');
@@ -1004,19 +1016,14 @@ test("Fine, I'll Go, Moonfall and Lunar Howl make Snow wolf fight", () => {
     }
   });
   assert.ok(beam, 'moonlight falls');
-  // Lunar Howl: the combo's last shot with a crowd in front sets her howling; they're stunned.
+  // Lunar Howl: pressed, she howls whatever she was doing; what's close round her is stunned.
   const v = archer('beastmaster');
-  v.char.skills.packhowl = 20;
-  const put = () => Object.assign(v.pets.snow.body, { x: v.mobs[0].x - 20, vx: 0 });
-  put();
-  v.pets.snow.act = null;
-  dice(0.99, () => {
-    finisher(v);
-    for (let i = 0; i < 50 && v.pets.snow.act?.kind !== 'howl'; i++) {
-      if (v.pets.snow.act?.kind !== 'howl') v.pets.snow.act = null;
-      updateWorld(v, DT, idle);
-    }
-  });
+  v.char.skills.packhowl = 10;
+  v.char.mp = 9999;
+  Object.assign(v.pets.snow.body, { x: v.mobs[0].x - 20, vx: 0 });
+  run(v, 0.05);
+  v.pets.snow.act = { kind: 'cast', t0: v.now, dur: 9 };
+  assert.ok(cast(v, 'packhowl').ok);
   assert.equal(v.pets.snow.act?.kind, 'howl', 'she howls');
   dice(0.99, () => run(v, 0.5));
   assert.ok(v.mobs.some((m) => m.hold === 'stun' && m.frozenUntil > v.now), 'stunning what is close round her');
@@ -1782,16 +1789,16 @@ test("each of the Thief's finishers needs full Shadow, spends it, and lands its 
   }
 });
 
-test("a weapon's own mastery only counts while that weapon is held", async () => {
-  const { computeStats } = await import('../src/core/stats.js');
+test("a weapon's own mastery only counts while that weapon is held, and grows with your level", async () => {
+  const { passiveBonus } = await import('../src/core/stats.js');
   const w = thief();
-  const plain = computeStats(w.char, 0).watk;
-  w.char.skills.daggermastery = 20;
-  assert.ok(computeStats(w.char, 0).watk > plain, 'Dagger Mastery with a dagger');
+  w.char.level = 12;
+  const early = passiveBonus(w.char).watk ?? 0;
+  w.char.level = 28;
+  const later = passiveBonus(w.char).watk ?? 0;
+  assert.ok(early > 0 && later > early, `Dagger Mastery with a dagger, growing (${early} -> ${later})`);
   w.char.equipment.weapon = makeEquip('gauntlet_20', {});
-  const g = computeStats(w.char, 0).watk;
-  w.char.skills.daggermastery = 0;
-  assert.equal(computeStats(w.char, 0).watk, g, 'nothing from it with a gauntlet');
+  assert.equal(passiveBonus(w.char).watk ?? 0, 0, 'nothing from it with a gauntlet');
 });
 
 // ---------- The Thief's paths: the Shinobi (dagger, Ki) and the Kitsune (gauntlet, Tails) ----------
@@ -1980,16 +1987,15 @@ test('full Ki (Shadow Clones): two ink clones repeat every attack, each lighter'
   assert.equal(full.clones, true);
 });
 
-test("Smoke Bomb hides her and builds Ki; Log Swap trades a blow for a log and puts her behind them", () => {
+test("Smoke Bomb hides her and builds Ki, and leaves a log that takes the next blow and puts her behind them", () => {
   const w = thiefPath('shinobi');
   learn(w, 'smokebomb');
-  learn(w, 'logswap');
   assert.ok(castNow(w, 'smokebomb').ok);
   assert.ok(w.invuln > 0.3, 'untouchable a moment');
   assert.ok(w.ki >= 10, 'Ki from the smoke');
   assert.ok(w.char.buffs.smokebomb.values.eva > 0, 'dodges more');
+  assert.ok(w.char.buffs.logswap, 'a log waits in the smoke');
   run(w, 1.2);
-  assert.ok(castNow(w, 'logswap').ok);
   w.god = false;
   w.invuln = 0;
   const hp = w.char.hp;
@@ -2033,17 +2039,20 @@ test("a Kitsune's stars build Tails, set monsters burning, and grow fox-fire ill
   assert.deepEqual(counts, [0, 1, 2, 3], `illusion stars by tails: ${counts}`);
 });
 
-test('Fox Illusion adds two illusion stars; the trap burns them; Fox Hop springs her back', () => {
+test('Fox Decoy pulls the monsters near it, then bursts on them; the trap burns them; Fox Hop springs her back', async () => {
+  const { decoyFor } = await import('../src/world/decoy.js');
   const w = thiefPath('kitsune');
   learn(w, 'foxillusion');
   learn(w, 'foxtrap');
   learn(w, 'foxhop');
+  const start = w.mobs.map((m) => m.hp);
   assert.ok(castNow(w, 'foxillusion').ok);
-  run(w, 1.2);
-  updateWorld(w, DT, press('KeyZ'));
-  run(w, 0.3);
-  assert.equal(w.fx.filter((f) => f.kind === 'projectile' && f.illusion).length, 2, 'two illusion stars');
-  run(w, 1.5);
+  const d = w.decoy;
+  assert.ok(d && Math.abs(d.x - w.body.x) > 40, 'set down ahead of her');
+  assert.ok(w.mobs.some((m) => decoyFor(w, m) === d), 'the monsters near it go after it');
+  run(w, 10);
+  assert.equal(w.decoy, null, 'gone when its time is up');
+  assert.ok(w.mobs.some((m, i) => m.hp < start[i]), 'it burst on them');
   const before = w.mobs.map((m) => m.hp);
   assert.ok(castNow(w, 'foxtrap').ok);
   run(w, 1.8);

@@ -493,3 +493,21 @@ test('potions heal a share of your max as well as a flat amount, so they keep up
   usePotion(c, 'white_potion');
   assert.equal(c.hp, 1 + 300 + Math.round(max * 0.3));
 });
+
+test('the stat-only skills grow by themselves and give their SP back; a replaced skill hands its hotkey over', async () => {
+  const { updateRetiredJobs } = await import('../src/core/save.js');
+  const { canLearn } = await import('../src/core/character.js');
+  const c = { job: 'shrinemaiden', level: 35, sp: 0, skills: { manamastery: 12, shrinemastery: 4, blessing: 7, grandblessing: 2, cozyrest: 3 }, hotkeys: { KeyQ: { skill: 'blessing' } } };
+  updateRetiredJobs(c);
+  assert.equal(c.sp, 12 + 4 + 7 + 3, 'the masteries, the replaced Blessing and the cut Cozy Rest give their points back');
+  assert.deepEqual(c.skills, { grandblessing: 2 });
+  assert.equal(c.hotkeys.KeyQ.skill, 'grandblessing', "Blessing's key now casts Grand Blessing");
+  c.sp = 5;
+  assert.ok(!canLearn(c, 'manamastery'), 'a mastery is not learned with SP');
+  assert.ok(!canLearn(c, 'blessing'), 'nor is a replaced skill');
+  const { grownLevel } = await import('../src/core/stats.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  assert.equal(grownLevel(c, SKILLS.manamastery), 20, 'a first-job mastery is full by 30');
+  assert.equal(grownLevel(c, SKILLS.shrinemastery), 6, 'a second-job mastery grows from 30');
+  assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.shrinemastery), 20, 'and is full by 50');
+});

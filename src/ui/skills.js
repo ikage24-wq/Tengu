@@ -9,7 +9,7 @@
 
 import { SKILLS } from '../data/skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
-import { learnSkill, canLearn, maxSkill } from '../core/character.js';
+import { learnSkill, canLearn, maxSkill, replaced } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon } from './kit.js';
 import { describeSkill } from './tooltips.js';
@@ -82,7 +82,8 @@ export function skillsWindow(ui, state, world) {
   text(ctx, `${char.sp} SP`, win.x + W - 31, win.y + 36, { size: 8.5, bold: true, align: 'center', color: char.sp ? '#ffffff' : COLORS.muted, outline: char.sp ? th.ink : null });
   if (hover(ui, win.x + W - 54, win.y + 24, 46, 17)) tooltip(ui, [{ text: 'Skill Points', bold: true }, { text: 'Each level up gives you more. Spend them with the + buttons.', size: 8, color: COLORS.muted }]);
 
-  const all = Object.values(SKILLS).filter((s) => s.job === job);
+  // (The stat-only skills grow by themselves, and a replaced one is gone: neither is listed.)
+  const all = Object.values(SKILLS).filter((s) => s.job === job && !s.grows && !replaced(char, s.id));
   if (!all.some((s) => s.id === win.pick)) win.pick = all[0]?.id ?? null;
 
   // ---- The list ----

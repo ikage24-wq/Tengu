@@ -99,6 +99,7 @@ export function advanceJob(char, jobId) {
   char.baseHp += job.advanceHp;
   char.baseMp += job.advanceMp;
   char.sp += 1;
+  settleSkills(char);
   const s = computeStats(char);
   char.hp = s.maxHp;
   char.mp = s.maxMp;
@@ -143,9 +144,32 @@ export function autoAssignAp(char) {
   }
 }
 
+// A skill of an earlier job that one of yours takes the place of (Quick Step, once Haste is yours).
+export function replaced(char, skillId) {
+  const chain = jobChain(char.job);
+  return REPLACERS[skillId]?.some((r) => chain.includes(r.job)) ?? false;
+}
+const REPLACERS = {};
+for (const s of Object.values(SKILLS)) if (s.replaces) (REPLACERS[s.replaces] ??= []).push(s);
+
+// Skills that no longer need SP: the stat-only ones (they grow with your level) and the ones a
+// later job replaced. Their SP comes back, and a replaced skill's hotkeys go to what replaced it.
+export function settleSkills(char) {
+  for (const [id, lv] of Object.entries(char.skills)) {
+    const s = SKILLS[id];
+    if (!s || !(s.grows || replaced(char, id))) continue;
+    char.sp += lv;
+    delete char.skills[id];
+    const by = REPLACERS[id]?.find((r) => jobChain(char.job).includes(r.job));
+    for (const b of Object.values(char.hotkeys ?? {})) if (b?.skill === id) b.skill = by?.id ?? null;
+    for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b && 'skill' in b && !b.skill) char.hotkeys[code] = null;
+  }
+  return char;
+}
+
 export function canLearn(char, skillId) {
   const s = SKILLS[skillId];
-  if (!s || char.sp <= 0) return false;
+  if (!s || char.sp <= 0 || s.grows || replaced(char, skillId)) return false;
   if (!jobChain(char.job).includes(s.job)) return false;
   return (char.skills[skillId] ?? 0) < s.maxLevel;
 }

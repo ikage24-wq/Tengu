@@ -153,7 +153,6 @@ export const BUFF_LOOKS = {
     color: '#c8a070', cast: 'shine',
     back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celringink', x, y, { frame: 2, scale: 0.3, sy: 0.32, alpha: a * 0.5 }),
   },
-  foxillusion: { color: '#6ab8ff', cast: 'shine' },
   quickhaste: {
     color: '#b89cff', cast: 'gust',
     // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).

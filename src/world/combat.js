@@ -9,9 +9,10 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { guard } from './pets.js';
+import { guard, howl } from './pets.js';
+import { foxDecoy } from './decoy.js';
 import { kitsuneGuard } from './kitsune.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, addKi, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, addKi, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -107,6 +108,8 @@ export function applyBuff(world, skillId, params) {
   // A Shinobi's Smoke Bomb: she's untouchable a moment in the smoke, the monsters lose track of
   // her, and it builds Ki.
   if (params.ki) addKi(world, params.ki);
+  // (And a log waits in the smoke: see logSwap in world/world.js.)
+  if (params.log) char.buffs.logswap = { until: now + params.log.secs, since: now, values: { ki: params.log.ki }, name: 'Log Swap' };
   if (params.guard) world.invuln = Math.max(world.invuln, params.guard);
   if (params.lose) {
     for (const m of world.mobs) if (m.hp > 0 && Math.abs(m.x - body.x) < params.lose) m.aggroUntil = 0;
@@ -153,6 +156,8 @@ export function braceOnHit(world, dmg, rng = Math.random) {
   if (!p || world.dead || dmg < world.stats.maxHp * p.hard) return;
   if ((world.char.buffs.ironguard?.until ?? 0) > world.now || rng() >= p.chance) return;
   applyBuff(world, 'ironguard', p);
+  const { body } = world;
+  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'IRON GUARD', color: '#cfe3ff', t: 0 });
 }
 
 // Divine Aegis (Paladin): a hit that leaves you under `low` of your max HP makes you raise your
@@ -166,14 +171,15 @@ export function rallyOnHit(world) {
   world.fx.push({ kind: 'powerup', school: 'holy', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
 }
 
-// Before a hit lands, it may not land at all. Sacred Bulwark (Paladin): a shield of light flashes
-// up and blocks it, then a holy shockwave answers it. Moon Ward (Beastmaster): Snow wolf plants her
+// Before a hit lands, it may not land at all. Divine Aegis (Paladin): a shield of light flashes
+// up and blocks it, then a holy shockwave answers it (twice as often while the Aegis is up). Moon Ward (Beastmaster): Snow wolf plants her
 // greatsword in front of it (from `fromX`) behind a crescent of moonlight, and flicks one back. True if the hit is gone. `rng` for tests.
 export function blockOnHit(world, fromX = null, rng = Math.random) {
   const { body } = world;
   if (world.dead) return false;
-  const p = procOf(world.char, 'sacredbulwark');
-  if (p && rng() < p.chance) {
+  const p = procOf(world.char, 'divineaegis');
+  const raised = (world.char.buffs.divineaegis?.until ?? 0) > world.now;
+  if (p && rng() < p.block * (raised ? 2 : 1)) {
     world.invuln = Math.max(world.invuln, 0.5);
     world.fx.push({ kind: 'aegis', school: 'holy', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.6 });
     world.fx.push({ kind: 'powerup', school: 'holy', x: body.x, y: body.y, t: 0, dur: 0.5 });
@@ -274,7 +280,6 @@ export function cast(world, skillId, rng = Math.random) {
     const path = hasFaith(char) ? 'paladin' : hasRage(char) ? 'berserker' : null;
     if (params.paths?.[path]) params = { ...params, combo: params.paths[path] };
     if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
-    // Rampage spends all your Rage: the more there was, the harder every blow hits (double at full).
     let scale = 100;
     // A Link: a skill started right after a combo finisher connects (a basic combo's last blow, or
     // another skill's) hits harder.
@@ -293,11 +298,15 @@ export function cast(world, skillId, rng = Math.random) {
     }
     if (params.rageGain) addRage(world, params.rageGain);
     if (params.aimGain) addAim(world, params.aimGain);
+    // Rampage spends its Rage and feeds on the rest: the more there was, the harder every blow
+    // hits (double at full).
     if (s.rageCost) {
       scale += Math.round((100 * world.rage) / RAGE_MAX);
       if (world.rage >= RAGE_MAX) world.juice?.push({ type: 'shake', mag: 2, dur: 0.25 });
-      world.rage = 0;
+      world.rage = Math.max(0, world.rage - s.rageCost);
     }
+    // Hallowed Ground's warmth mends you and the party around you.
+    if (params.mend) healAround(world, body.x, body.y, params.mend, 260);
     skillCombo(world, skillId, { ...params, school: schoolFor(char, s.school), fullGauge: s.fullGauge }, scale);
     return { ok: true };
   }
@@ -351,6 +360,21 @@ export function cast(world, skillId, rng = Math.random) {
     }
     if (!params.pct) return { ok: true };
     area = { w: Math.abs(body.x - from) + 40, h: 64, back: true };
+  }
+
+  // Tricks of their own: the Archer's Spring Trap, the Beastmaster's Lunar Howl (Snow wolf does
+  // it; without her there's nothing to howl, and the MP comes back), the Kitsune's Fox Decoy.
+  if (params.trap) {
+    setTrap(world, body.x + body.facing * 70, params);
+    return { ok: true };
+  }
+  if (params.howl) {
+    if (!howl(world, params)) char.mp += params.mp ?? 0;
+    return { ok: true };
+  }
+  if (params.decoy) {
+    foxDecoy(world, params);
+    return { ok: true };
   }
 
   if (type === 'buff') {
