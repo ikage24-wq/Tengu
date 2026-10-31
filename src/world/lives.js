@@ -22,7 +22,7 @@ import { snapshot, remake } from './buddies.js';
 import { joinParty, partyMembers } from './party.js';
 import { addItem } from '../core/inventory.js';
 import { jobChain } from '../data/jobs.js';
-import { bountyKill } from './market.js';
+import { botChat } from './chatlog.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -46,9 +46,9 @@ function release(bot, rng) {
   bot.timer = between(2, 5, rng);
 }
 
+// (What drives the moment: an announcement, a vow, a winner. It skips chat's wait.)
 function shout(world, bot, line) {
-  bot.bubble = { text: line, t: 4.5 };
-  if (bot.map === world.map.id) world.log?.(`${bot.name}: ${line}`, '#e6dcff');
+  botChat(world, bot, line, { important: true });
 }
 
 function later(bot, at, line) {
@@ -400,11 +400,8 @@ export function updateLives(bots, world, dt, hooks) {
     L.loggedIn = true;
     regularsLogIn(L, bots, world, hooks);
   }
-  // (A kill may count for someone you're helping, or a bounty you took: world/market.js.)
-  world.onAnyKill = (m) => {
-    questKill(bots, world, m);
-    bountyKill(bots, world, m);
-  };
+  // (A kill may count for someone you're helping.)
+  world.onAnyKill = (m) => questKill(bots, world, m);
   noticing(L, bots, world, dt);
   greetings(L, bots, world);
   weatherTick(L, bots, world, dt, hooks);

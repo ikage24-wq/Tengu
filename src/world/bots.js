@@ -21,7 +21,7 @@ import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
-import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced } from './chatter.js';
+import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced, contextOf } from './chatter.js';
 import { updateParty, tickHunter, fieldDownOver } from './party.js';
 import { updateBuddies, thanked, buddiesOf } from './buddies.js';
 import { updateRaids, raidBoss, gather } from './raids.js';
@@ -29,7 +29,8 @@ import { isQueen } from './story.js';
 import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
 import { updateEvents, memeLine, heardMeme } from './events.js';
 import { updateLives } from './lives.js';
-import { updateMarket, luckyDrop } from './market.js';
+import { updateSocial, luckyDrop } from './social.js';
+import { botChat, stale } from './chatlog.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -457,13 +458,10 @@ export function updateBots(bots, world, dt) {
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble && !['logout', 'leave', 'chat', 'chatwait'].includes(bot.state)) {
       // The busier the town, the less each person talks, so chat stays readable.
-      bot.nextLine = (bot.shop ? between(25, 50, rng) : between(30, 75, rng)) * crowd;
+      bot.nextLine = (bot.shop ? between(60, 120, rng) : between(70, 160, rng)) * crowd;
       // (Now and then, something about the time: a night owl, a kid home from school.)
-      const line = memeLine(bots, rng) ?? (rng() < 0.15 ? timeLine(serverTime(bots.clock()), rng) : speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng));
-      if (line) {
-        say(bot, line);
-        world.log?.(`${bot.name}: ${line}`, '#e6dcff');
-      }
+      const line = memeLine(bots, rng) ?? (rng() < 0.12 ? timeLine(serverTime(bots.clock()), rng) : talk(bot, bots, world, rng));
+      botChat(world, bot, line);
     }
   }
   // Now and then someone comes over to say hi. Never often, and each player only once.
@@ -488,7 +486,7 @@ export function updateBots(bots, world, dt) {
   updateDrama(bots, world, dt, hooksFor(bots, world));
   updateEvents(bots, world, dt, hooksFor(bots, world));
   updateLives(bots, world, dt, hooksFor(bots, world));
-  updateMarket(bots, world, dt);
+  updateSocial(bots, world, dt);
   world.onLoot = (inst) => luckyDrop(bots, world, inst);
   listen(bots, world);
   deliverReplies(bots, world);
@@ -743,7 +741,12 @@ function startChat(bot, mate, bots, world) {
     endChat(bot);
     return;
   }
-  const lines = conversation({ player: world.char.name, level: bot.level }, bots.rng);
+  const lines = conversation(contextOf(bot, bots, world), bots.rng);
+  // (Something just said by someone else isn't how a chat starts.)
+  if (stale(world, lines[0])) {
+    endChat(bot);
+    return;
+  }
   bot.facing = mate.x > bot.x ? 1 : -1;
   mate.facing = -bot.facing;
   bot.state = 'chat';
@@ -765,7 +768,9 @@ function tickChat(bot, bots, world, dt) {
     return endChat(bot);
   }
   const who = c.i % 2 ? mate : bot;
-  shout(who, bots, world, c.lines[c.i]);
+  // (The whole chat plays out; it's in your log when you're standing by them.)
+  const near = who.map === world.map.id && Math.abs(who.x - world.body.x) < 350;
+  botChat(world, who, c.lines[c.i], { repeat: true, important: near, log: near });
   c.i += 1;
   c.at = between(2.6, 4, bots.rng);
 }
@@ -781,11 +786,16 @@ function endChat(bot) {
   if (mate?.chatWith === bot) endChat(mate);
 }
 
-// Says a line (and, if you're on their map, it shows in the chat log).
+// Something of their own to say, about who they are, where, and what's going on (world/chatter.js).
+function talk(bot, bots, world, rng) {
+  const ctx = contextOf(bot, bots, world);
+  return speak(bots.memory, moodFor(bot, rng, ctx), ctx, bot.style, rng);
+}
+
+// Says a line (and, if you're on their map and chat has room, it shows in the chat log: see
+// world/chatlog.js).
 function shout(bot, bots, world, line) {
-  if (!line) return;
-  say(bot, line);
-  if (bot.map === world.map.id) world.log?.(`${bot.name}: ${line}`, '#e6dcff');
+  return botChat(world, bot, line);
 }
 
 // ---------- Talking back to you ----------
@@ -817,8 +827,8 @@ function deliverReplies(bots, world) {
     const bx = bot.body?.x ?? bot.x;
     if (bot.body) bot.body.facing = world.body.x < bx ? -1 : 1;
     else if (!['fish', 'cook', 'shop'].includes(bot.state)) bot.facing = world.body.x < bx ? -1 : 1;
-    say(bot, text);
-    world.log?.(`${bot.party ? '[Party] ' : ''}${bot.name}: ${text}`, bot.party ? '#9fe0b0' : '#e6dcff');
+    // (An answer to you: never held back, though never a repeat either.)
+    if (!botChat(world, bot, text, { prefix: bot.party ? '[Party] ' : '', color: bot.party ? '#9fe0b0' : '#e6dcff', important: true })) continue;
     if (pose) {
       if (bot.body) bot.attack ??= { pose, t: 0, dur: 1 };
       else bot.emote = { pose, t: 0, dur: 1.1 };
@@ -973,7 +983,11 @@ function huntersHere(bots, world, dt) {
     const bot = hunters.find((b) => b.id === id);
     if (bot) bot.kills = (bot.kills ?? 0) + 1;
     if (bot?.rude && m && Math.abs(m.x - world.body.x) < 230 && Math.abs(m.y - world.body.y) < 120) return killSteal(bots, world, bot, hunters);
-    if (bot && !bot.bubble && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
+    // (Now and then, about what they just took down.)
+    if (bot && m && !bot.bubble && rng() < 0.03) {
+      const n = m.def.name;
+      shout(bot, bots, world, pick([`another ${n} down`, `${bot.kills} ${n}s so far`, `${n}s go down so fast now`, `that ${n} almost got me`, `${n}s give good exp here`], rng));
+    }
   };
   // A boss here (a queen back for a rematch, the Crystal King on his throne): word gets around,
   // and people come running for the raid (world/raids.js).
@@ -1041,8 +1055,8 @@ function huntersHere(bots, world, dt) {
     tickHunter(bot, world, hunters, dt, rng);
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
-      bot.nextLine = between(40, 90, rng);
-      const line = memeLine(bots, rng) ?? (queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng));
+      bot.nextLine = between(90, 200, rng);
+      const line = memeLine(bots, rng) ?? (queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : talk(bot, bots, world, rng));
       if (line) shout(bot, bots, world, line);
     }
   }

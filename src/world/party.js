@@ -13,7 +13,8 @@ import { mobBox } from './mobs.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
-import { speak } from './chatter.js';
+import { speak, contextOf } from './chatter.js';
+import { botChat } from './chatlog.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 import { roleThink, healerTurn, jumpNow } from './dungeon.js';
 import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf } from './melee.js';
@@ -1082,12 +1083,9 @@ export function updateParty(bots, world, dt) {
     // Party chat.
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
-      bot.nextLine = between(35, 80, rng) * Math.max(1, members.length / 2);
-      const line = speak(bots.memory, 'party', { player: world.char.name, level: bot.level, weapon: ITEMS[bot.char.equipment.weapon?.id]?.name }, bot.style, rng);
-      if (line) {
-        say(bot, line);
-        world.log(`[Party] ${bot.name}: ${line}`, '#9fe0b0');
-      }
+      bot.nextLine = between(70, 150, rng) * Math.max(1, members.length / 2);
+      const line = speak(bots.memory, 'party', contextOf(bot, bots, world), bot.style, rng);
+      botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0' });
     }
   });
 }

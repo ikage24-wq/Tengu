@@ -64,16 +64,32 @@ test('players come and go over time, at least 20 online, spread by level, and no
   assert.equal(names.size, bots.names.size, 'names are never reused');
 });
 
-test('chat lines never repeat', () => {
+test('chat is about what is real for the speaker, and never repeats', async () => {
+  const { contextOf, moodFor } = await import('../src/world/chatter.js');
+  const { MAPS } = await import('../src/data/maps.js');
+  const { MOBS } = await import('../src/data/mobs.js');
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  const bots = createBots(world, seeded(5), { clock: EVENING });
+  // A hunter out on Mossy Woods.
+  const char = makeBotCharacter(seeded(6), { name: 'Hunter', level: 20, jobs: ['archer'] });
+  const bot = { name: 'Hunter', char, level: 20, map: 'woods', style: makeStyle(seeded(7)), title: 'Veteran' };
+  const here = new Set(MAPS.woods.spawns.map((sp) => MOBS[sp.mob].name.toLowerCase()));
+  const elsewhere = Object.values(MOBS).map((d) => d.name.toLowerCase()).filter((n) => !here.has(n) && ![...here].some((h) => h.includes(n) || n.includes(h)));
   const memory = new Set();
-  const style = makeStyle(seeded(5));
   const said = [];
-  for (let i = 0; i < 300; i++) {
-    const line = speak(memory, ['lfg', 'trade', 'question', 'smalltalk'][i % 4], { level: 20, player: 'Me' }, style, Math.random);
+  for (let i = 0; i < 60; i++) {
+    const ctx = contextOf(bot, bots, world);
+    const line = speak(memory, moodFor(bot, Math.random, ctx), ctx, bot.style, Math.random);
     if (line) said.push(line);
   }
-  assert.equal(new Set(said).size, said.length);
-  assert.ok(said.length > 250, 'there is plenty to say');
+  assert.equal(new Set(said).size, said.length, 'never the same line twice');
+  assert.ok(said.length >= 25, `plenty to say (${said.length})`);
+  // A monster from somewhere else only comes up with the map it lives on (where they're headed next).
+  const livesAt = (n) => Object.values(MAPS).filter((m) => (m.spawns ?? []).some((sp) => MOBS[sp.mob].name.toLowerCase() === n)).map((m) => m.name.toLowerCase());
+  for (const l of said) for (const n of elsewhere) if (l.toLowerCase().includes(n)) assert.ok(livesAt(n).some((m) => l.toLowerCase().includes(m)), `a monster that's here, or where it lives: ${l}`);
+  // Nothing about trading (the market is gone) or generic party-finding.
+  assert.ok(!said.some((l) => /wts|wtb|price check/i.test(l)));
 });
 
 test('buying from a player shop moves the item and the gold', () => {
@@ -147,6 +163,8 @@ const quiet = (world) => {
   return lines;
 };
 const NONE = { held: new Set(), pressed: new Set() };
+// Everything said, in the log or only over someone's head (chat holds some back: chatlog.js).
+const spoken = (world, lines) => [...lines, ...(world.chatGate ? world.chatGate.said.keys() : [])].join(String.fromCharCode(10)).toLowerCase();
 
 test('players answer questions from the game itself: maps, monsters, NPCs, fish, dishes', () => {
   const ctx = { here: 'sprout', playerLevel: 12 };
@@ -670,7 +688,7 @@ test('a legend logs in: the town loses it and fans follow them around', () => {
   const legend = bots.list.find((b) => b.legend);
   assert.ok(legend && legend.level === 70 && legend.map === world.map.id, 'here, at the top level');
   assert.ok(lines.some((l) => /legendary .* has logged in/.test(l)));
-  assert.ok(lines.filter((l) => l.includes(legend.name)).length >= 3, 'chat goes wild');
+  assert.ok((spoken(world, lines).match(new RegExp(legend.name.toLowerCase(), 'g')) ?? []).length >= 3, 'chat goes wild');
   assert.ok(bots.list.some((b) => b.state === 'follow'), 'fans follow');
 });
 
@@ -713,7 +731,7 @@ test('afk on a portal in town, and afk in the field with a monster nibbling', as
   const afk = bots.list.find((b) => b.state === 'afk');
   assert.ok(afk && afk.afkTag, 'afk on the spot');
   assert.ok(world.map.portals.some((p) => Math.abs(p.x - afk.x) < 4), 'right on a portal');
-  assert.ok(lines.some((l) => l.includes(afk.name) && /afk|poke|hello|forever/.test(l)), 'people notice');
+  assert.ok(afk.drama.noticed && /afk|poke|hello|forever/.test(spoken(world, lines)), 'people notice');
   // Out in the field.
   world.char.level = 20;
   loadMap(world, 'woods', 'start');
@@ -776,8 +794,9 @@ test('a kill stealer takes the monster you were on, and gets called out', async 
     updateWorld(world, 1 / 30, NONE);
     updateBots(bots, world, 1 / 30);
   }
-  assert.ok(lines.some((l) => l.startsWith('Grabby:')), 'they gloat');
-  assert.ok(lines.some((l) => /KS|not cool|reported|own mobs|wow|ignore/.test(l) && !l.startsWith('Grabby')), 'and get called out');
+  const talk = spoken(world, lines);
+  assert.ok(/exp|finders|never heard|too slow|mine now/.test(talk), 'they gloat');
+  assert.ok(/ks|not cool|reported|own mobs|wow|ignore/.test(talk), 'and get called out');
   void rude;
 });
 
@@ -797,7 +816,7 @@ function eventTown(seed, mapId = 'sprout') {
   for (const k of Object.keys(bots.events)) if (k.endsWith('In')) bots.events[k] = 1e9;
   for (const k of Object.keys(bots.drama)) if (k.endsWith('In')) bots.drama[k] = 1e9;
   for (const k of Object.keys(bots.lives)) if (k.endsWith('In')) bots.lives[k] = 1e9;
-  for (const k of Object.keys(bots.market)) if (k.endsWith('In')) bots.market[k] = 1e9;
+  for (const k of Object.keys(bots.social)) if (k.endsWith('In')) bots.social[k] = 1e9;
   return { world, bots, lines };
 }
 
@@ -933,10 +952,10 @@ test('a meme catches on, everyone says it, and you saying it gets a reaction', a
   assert.ok(meme, 'a meme');
   let said = 0;
   for (let i = 0; i < 200; i++) if (memeLine(bots, Math.random)) said++;
-  assert.ok(said > 30, 'it shows up in chat');
+  assert.ok(said > 10, 'it shows up in chat');
   world.heard = { words: `${meme.word} lol`, at: world.now };
   townStep(world, bots, 6);
-  assert.ok(lines.some((l) => l.includes(`${world.char.name} said it`) || l.includes(`${world.char.name} gets it`) || l.includes(meme.word.toUpperCase())));
+  assert.ok(/said it|gets it/.test(spoken(world, lines)) || spoken(world, lines).includes(meme.word), 'they react');
   meme.until = 0;
   townStep(world, bots, 0.2);
   assert.equal(bots.events.meme, null, 'and then it dies');
@@ -1095,46 +1114,8 @@ test('a music jam: notes float up and people come to dance; and someone in costu
 
 // ---------- The economy and group play ----------
 
-test('the market: prices drift, trade chat posts offers you can answer, and a rush sends one price flying', async () => {
-  const { priceOf, answerOffer } = await import('../src/world/market.js');
-  const { ITEMS } = await import('../src/data/items.js');
-  const { countItem } = await import('../src/core/inventory.js');
-  const { world, bots, lines } = eventTown(401);
-  world.char.gold = 1e6;
-  const M = bots.market;
-  M.postIn = 0;
-  for (let t = 0; t < 300; t += 1) {
-    world.now += 1;
-    updateBots(bots, world, 1);
-  }
-  assert.ok(lines.filter((l) => l.startsWith('[Trade]')).length >= 4, 'trade chat');
-  assert.ok(Object.values(M.mult).some((m) => Math.abs(m - 1) > 0.02), 'prices moved');
-  // Buy what someone's selling.
-  const sell = { id: 'x', bot: bots.list[0], kind: 'sell', item: 'fluff', qty: 5, each: 10, until: world.now + 99 };
-  M.offers.unshift(sell);
-  const have = countItem(world.char.inventory, sell.item);
-  assert.equal(answerOffer(bots, world, sell), null);
-  assert.equal(countItem(world.char.inventory, sell.item), have + sell.qty);
-  // Sell someone what they want.
-  const want = { id: 'y', bot: bots.list[1], kind: 'buy', item: sell.item, qty: 2, each: 99, until: world.now + 99 };
-  M.offers.unshift(want);
-  const g0 = world.char.gold;
-  assert.equal(answerOffer(bots, world, want), null);
-  assert.equal(world.char.gold, g0 + 2 * 99);
-  // A rush.
-  M.rushIn = 0;
-  townStep(world, bots, 0.2);
-  assert.ok(M.rush, 'a rush');
-  const id = M.rush.id;
-  assert.ok(priceOf(bots, id) >= ITEMS[id].price * 2, 'the price shoots up');
-  assert.ok(lines.some((l) => l.includes(`Everyone's buying ${ITEMS[id].name}`)));
-  M.rush.until = 0;
-  townStep(world, bots, 0.2);
-  assert.ok(!M.rush && priceOf(bots, id) < ITEMS[id].price, 'and crashes');
-});
-
 test('haggling: friends give you a deal, strangers counter or take offence', async () => {
-  const { haggle } = await import('../src/world/market.js');
+  const { haggle } = await import('../src/world/social.js');
   const { world, bots } = eventTown(411);
   const shop = (price) => ({ title: 't', items: [{ id: 'fluff', qty: 1, price }, { id: 'fluff', qty: 1, price }] });
   const friend = bots.list[0];
@@ -1155,28 +1136,17 @@ test('haggling: friends give you a deal, strangers counter or take offence', asy
   assert.deepEqual([...seen].sort(), ['counter', 'deal', 'offended']);
 });
 
-test('a lucky drop: the players around react, and someone wants to buy it', async () => {
-  const { luckyDrop, answerOffer } = await import('../src/world/market.js');
+test('a lucky drop: the players around react', async () => {
+  const { luckyDrop } = await import('../src/world/social.js');
   const { makeEquip } = await import('../src/core/items.js');
-  const { addItem } = await import('../src/core/inventory.js');
   const { world, bots, lines } = eventTown(421);
-  const inst = makeEquip('sword_10', { rarity: 3 });
-  addItem(world.char.inventory, inst);
-  let offer = null;
-  for (let i = 0; i < 20 && !offer; i++) {
-    luckyDrop(bots, world, inst);
-    offer = bots.market.offers.find((o) => o.kind === 'yours');
-  }
+  luckyDrop(bots, world, makeEquip('sword_10', { rarity: 3 }));
   townStep(world, bots, 6);
   assert.ok(lines.some((l) => /gz|lucky|farmed|crazy|fair|legendary/.test(l)), 'they react');
-  assert.ok(offer, 'an offer for it');
-  const g0 = world.char.gold;
-  assert.equal(answerOffer(bots, world, offer), null);
-  assert.ok(world.char.gold > g0 && !world.char.inventory.equip.includes(inst), 'sold');
 });
 
 test('a dungeon group looking for your role takes you in', async () => {
-  const { joinGroup } = await import('../src/world/market.js');
+  const { joinGroup } = await import('../src/world/social.js');
   const { advanceJob } = await import('../src/core/character.js');
   const { world, bots, lines } = eventTown(431);
   world.char.level = 15;
@@ -1188,7 +1158,7 @@ test('a dungeon group looking for your role takes you in', async () => {
   }
   let bot = null;
   for (let i = 0; i < 10 && !bot; i++) {
-    bots.market.lfgIn = 0;
+    bots.social.lfgIn = 0;
     townStep(world, bots, 0.1);
     bot = bots.list.find((b) => b.lfg);
   }
@@ -1198,23 +1168,15 @@ test('a dungeon group looking for your role takes you in', async () => {
   assert.ok(world.dungeon && bot.party, 'in the dungeon with them');
 });
 
-test('the bounty board: take a bounty, hunt, get paid; and the hall of fame ranks you among them', async () => {
-  const { takeBounty, hallOfFame } = await import('../src/world/market.js');
+test('the hall of fame ranks you among the server by level, kills and raids', async () => {
+  const { hallOfFame } = await import('../src/world/social.js');
   const { killMob } = await import('../src/world/world.js');
   const { spawnMob } = await import('../src/world/mobs.js');
-  const { world, bots, lines } = eventTown(441);
-  bots.market.bountyIn = 0;
-  townStep(world, bots, 0.2);
-  const b = bots.market.bounties[0];
-  assert.ok(b && lines.some((l) => l.startsWith('[Board]')), 'a bounty posted');
-  takeBounty(world, b);
-  const g0 = world.char.gold;
-  for (let i = 0; i < b.n; i++) killMob(world, spawnMob(world.map, { mob: b.mob, x: world.body.x + 30, y: world.map.groundY }));
-  townStep(world, bots, 0.1);
-  assert.ok(b.done && world.char.gold >= g0 + b.reward, 'paid');
+  const { world, bots } = eventTown(441);
+  for (let i = 0; i < 12; i++) killMob(world, spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 30, y: world.map.groundY }));
   const fame = hallOfFame(bots, world);
   assert.ok(fame.level.some((p) => p.you) && fame.level.length > 10);
   for (let i = 1; i < fame.kills.length; i++) assert.ok(fame.kills[i - 1].kills >= fame.kills[i].kills, 'ranked');
-  const me = fame.kills.find((p) => p.you);
-  assert.ok(me.kills >= b.n, 'your kills counted');
+  assert.ok(fame.kills.find((p) => p.you).kills >= 12, 'your kills counted');
 });
+

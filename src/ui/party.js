@@ -14,7 +14,7 @@ import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
 import { joinGuild, leaveGuild } from '../world/drama.js';
 import { found, enterShow } from '../world/events.js';
 import { helpOut } from '../world/lives.js';
-import { joinGroup } from '../world/market.js';
+import { joinGroup } from '../world/social.js';
 
 // ---------- Right-click menu ----------
 

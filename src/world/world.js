@@ -280,7 +280,7 @@ export function collectDrop(world, d) {
     const rarity = d.inst?.rarity ? RARITIES[d.inst.rarity] : null;
     const name = itemName(d.inst ?? d.id);
     if (rarity) world.log(`Picked up a ${rarity.name} ${name}!`, rarity.color);
-    // (The players around see it too: world/market.js.)
+    // (The players around see it too: world/social.js.)
     if (d.inst) world.onLoot?.(d.inst);
     else world.log(`Picked up ${name}${d.qty > 1 ? ` x${d.qty}` : ''}.`, d.inst ? itemColors(d.inst).main : def.color);
     if (rarity || def.unique) world.juice.push({ type: 'loot', x: d.x, y: d.y, color: rarity?.color ?? '#ff9ec0' });

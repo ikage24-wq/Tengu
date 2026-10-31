@@ -11,6 +11,8 @@
 import { inZone, isQueen } from './story.js';
 import { hurtBot, joinCombo, partyMembers } from './party.js';
 import { buddyOnline, buddiesOf } from './buddies.js';
+import { botChat, stale } from './chatlog.js';
+import { happened } from './chatter.js';
 
 export const PHOTO_MAX = 24;
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
@@ -106,8 +108,8 @@ function sayings(bots, world) {
     if (b.sayAt == null || world.now < b.sayAt || !(b.hunter || b.party)) continue;
     b.sayAt = null;
     if (b.down || b.gone) continue;
-    say(b, b.sayLine);
-    if (b.sayShout && b.map === world.map.id) world.log?.(`${b.name}: ${b.sayLine}`, '#e6dcff');
+    if (b.sayShout) botChat(world, b, b.sayLine);
+    else if (!stale(world, b.sayLine)) say(b, b.sayLine);
     b.sayShout = false;
   }
 }
@@ -150,6 +152,7 @@ function bossDown(bots, world) {
       b.sayLine = pick(['GG!!', 'we did it!!', 'ez clap', 'gg everyone', 'WOOO', 'that was so fun'], rng);
     });
     bots.photo = { at: world.now + 3, boss: m.def.id, name: m.def.name.split(',')[0], map: world.map.id };
+    happened(bots, world, `the ${m.def.name.split(',')[0]} raid`);
     here.slice(0, 2).forEach((b, i) => {
       b.photoLine = i ? 'everyone pose!' : 'PHOTO!! group photo!!';
     });
