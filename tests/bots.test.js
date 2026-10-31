@@ -490,3 +490,133 @@ test('in trouble out in the field, a player nearby rushes over and patches you u
   assert.ok(kind.thanked, 'thanks went to them');
   void tickHunter;
 });
+
+// ---------- Raids, party combos, the priestesses ----------
+
+test('a queen back for a rematch: players gather (your rival among them), dodge and take her moves, and pose for a photo', async () => {
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { killMob } = await import('../src/world/world.js');
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  world.char.level = 32;
+  const bots = createBots(world, seeded(61));
+  world.bots = bots;
+  loadMap(world, 'glade', 'start');
+  updateBots(bots, world, 0.05);
+  const queen = spawnMob(world.map, { mob: 'sylvana', x: world.body.x + 260, y: world.map.groundY });
+  queen.aggroUntil = Infinity;
+  world.mobs.push(queen);
+  let hurt = 0;
+  const seen = new Set();
+  for (let t = 0; t < 25; t += 1 / 30) {
+    updateWorld(world, 1 / 30, NONE);
+    updateBots(bots, world, 1 / 30);
+    for (const n of world.numbers) if (n.small && n.color === '#ff8fa8' && !seen.has(n)) {
+      seen.add(n);
+      hurt++;
+    }
+  }
+  const raid = bots.list.filter((b) => b.raid && !b.gone);
+  assert.ok(raid.length >= 3, `players gathered (${raid.length})`);
+  assert.ok(raid.some((b) => b.rival), 'your rival came too');
+  assert.ok(lines.some((l) => /Players are gathering/.test(l)));
+  assert.ok(hurt > 0, 'her moves (or her touch) caught some of them');
+  // Down she goes: everyone poses, and the photo's kept.
+  queen.hp = 0;
+  killMob(world, queen);
+  for (let t = 0; t < 4; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateBots(bots, world, 1 / 30);
+  }
+  const photo = world.char.photos?.[0];
+  assert.ok(photo, 'a group photo');
+  assert.equal(photo.boss, 'sylvana');
+  assert.equal(photo.people[0].name, 'Me');
+  assert.ok(photo.people.length >= 2);
+  assert.ok(JSON.parse(JSON.stringify(photo)).people[1].look, 'it saves');
+});
+
+test('a party combo: your finisher brings the members fighting by you in with theirs', async () => {
+  const { joinParty } = await import('../src/world/party.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  world.char.level = 40;
+  const bots = { list: [], memory: new Set(), names: new Set(), rng: seeded(71), replies: [], spawnIn: 999, waveIn: 999, newsIn: 999 };
+  world.bots = bots;
+  loadMap(world, 'woods', 'start');
+  world.mobs = [];
+  const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 60, y: world.map.groundY });
+  m.hp = m.def.hp = 1e9;
+  m.def = { ...m.def, speed: 0, atk: 0 };
+  world.mobs.push(m);
+  const pal = { id: 'p1', name: 'Pal', char: makeBotCharacter(seeded(8), { name: 'Pal', level: 40, jobs: ['warrior', 'paladin'] }), level: 40, style: {}, map: world.map.id, x: world.body.x + 20, facing: 1, state: 'idle', session: 9999, stay: 9999, nextLine: 999, appear: 0 };
+  bots.list.push(pal);
+  joinParty(bots, pal, world);
+  for (let t = 0; t < 6; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateBots(bots, world, 1 / 30);
+  }
+  assert.ok(pal.fight, 'they were fighting');
+  pal.fight.gauge = 60;
+  world.finisherCast = { at: world.now, id: 'grandverdict' };
+  updateBots(bots, world, 1 / 30);
+  assert.ok(lines.some((l) => /Party Combo! Pal/.test(l)));
+  let fin = false;
+  for (let t = 0; t < 3 && !fin; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateBots(bots, world, 1 / 30);
+    fin = pal.attack?.pose === 'verdict';
+  }
+  assert.ok(fin, 'and their own finisher goes off');
+});
+
+test('the priestesses fight with their whole kit: torii gates, talismans, and blessings', async () => {
+  const { botSkills, tickHunter } = await import('../src/world/party.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { createBody } = await import('../src/world/physics.js');
+  const shrine = makeBotCharacter(seeded(3), { name: 'Miko', level: 50, jobs: ['spiritmage', 'shrinemaiden'] });
+  const onmyo = makeBotCharacter(seeded(4), { name: 'Abe', level: 50, jobs: ['spiritmage', 'onmyoji'] });
+  const ids = (c) => botSkills(c).map((s) => s.id);
+  for (const id of ['thousandtorii', 'grandblessing', 'blessing']) assert.ok(ids(shrine).includes(id), `Shrine Maiden: ${id}`);
+  for (const id of ['ofudabarrage', 'troupecombo']) assert.ok(ids(onmyo).includes(id), `Onmyoji: ${id}`);
+  for (const [char, fx] of [[shrine, 'thousandtorii'], [onmyo, 'ofuda']]) {
+    const world = createWorld(createCharacter('Me', {}));
+    quiet(world);
+    world.god = true;
+    loadMap(world, 'woods', 'start');
+    world.mobs = [];
+    const x = world.body.x + 600;
+    const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
+    m.hp = m.def.hp = 1e9;
+    m.def = { ...m.def, speed: 0, atk: 0 };
+    world.mobs.push(m);
+    const bot = { id: 'b1', name: char.name, char, level: 50, hunter: true, map: world.map.id, x: x - 120, facing: 1, state: 'hunt', body: createBody(x - 120, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
+    let seen = false;
+    for (let t = 0; t < 40 && !seen; t += 1 / 30) {
+      world.now += 1 / 30;
+      world.pending = world.pending.filter((h) => h.at > world.now);
+      tickHunter(bot, world, [bot], 1 / 30, seeded(Math.floor(t * 30) + 3));
+      if (bot.fight) bot.fight.gauge = Math.max(bot.fight.gauge, 100);
+      seen = world.fx.some((f) => f.kind === fx);
+      world.fx = world.fx.filter((f) => f.kind === fx);
+    }
+    assert.ok(seen, `${char.name} casts with ${fx}`);
+  }
+});
+
+test('the Crystal Throne fills up for a raid on the Crystal King', async () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  world.char.level = 45;
+  const bots = createBots(world, seeded(81));
+  world.bots = bots;
+  loadMap(world, 'bossroom', 'west');
+  for (let t = 0; t < 1; t += 1 / 30) updateBots(bots, world, 1 / 30);
+  assert.ok(world.mobs.some((m) => m.def.id === 'crystalking'));
+  assert.ok(lines.some((l) => /Prismaris is on Crystal Throne/.test(l)), lines.join(' | '));
+  assert.ok(bots.list.filter((b) => b.raid && !b.gone).length >= 3);
+});

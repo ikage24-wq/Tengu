@@ -425,6 +425,7 @@ export function killMob(world, m, byParty = false) {
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
+  if (m.def.boss) world.onBossDown?.(m);
   onMobKilled(world, m);
   // The Monster Book.
   const card = recordBook(char, m.def.id);

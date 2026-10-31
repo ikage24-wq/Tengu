@@ -24,6 +24,8 @@ import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYL
 import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced } from './chatter.js';
 import { updateParty, tickHunter, fieldDownOver } from './party.js';
 import { updateBuddies, rivalHere, thanked, buddiesOf } from './buddies.js';
+import { updateRaids, raidBoss, gather } from './raids.js';
+import { isQueen } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -32,7 +34,6 @@ import { DISHES } from '../data/cooking.js';
 import { MOBS } from '../data/mobs.js';
 import { createBody } from './physics.js';
 import { navOf, surfaceBelow } from './nav.js';
-import { isQueen } from './story.js';
 
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
@@ -327,6 +328,7 @@ function hooksFor(bots, world) {
   return {
     logIn: (who) => spawn(bots, world, { who }),
     addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
+    addRival: () => rivalHere(bots, world, hooksFor(bots, world), true),
     makeChar: makeBotCharacter,
     makeName: () => makeName(bots.names, bots.rng),
     makeStyle: () => makeStyle(bots.rng),
@@ -438,12 +440,13 @@ export function updateBots(bots, world, dt) {
   updateParty(bots, world, dt);
   huntersHere(bots, world, dt);
   updateBuddies(bots, world, dt, hooksFor(bots, world));
+  updateRaids(bots, world);
   listen(bots, world);
   deliverReplies(bots, world);
   news(bots, world, dt);
   for (const b of bots.list) if (b.gone) {
     endChat(b);
-    if (b.buddy && !b.hunter && !b.party) world.log?.(`[Friend] ${b.name} logged off.`, '#9c86b8');
+    if (b.buddy && !b.hunter && !b.party && !b.quietGone) world.log?.(`[Friend] ${b.name} logged off.`, '#9c86b8');
   }
   bots.list = bots.list.filter((b) => !b.gone);
   // Whoever just logged out is replaced, so the server never dips under its minimum.
@@ -840,9 +843,10 @@ function bandOf(map) {
   return lv.length ? [Math.min(...lv), Math.max(...lv)] : null;
 }
 
+// (A boss's own room, like the Crystal Throne, is huntable while he's on it: players come to raid.)
 function huntable(world) {
   const map = world.map;
-  if (map.isTown || map.dungeon || map.trial || world.dungeon || NO_HUNTERS.has(map.id) || !bandOf(map)) return false;
+  if (map.isTown || map.dungeon || map.trial || world.dungeon || NO_HUNTERS.has(map.id) || (!bandOf(map) && !raidBoss(world))) return false;
   // Online with friends here, the monsters are shared with real players instead.
   return !world.net?.bodies?.(world)?.length;
 }
@@ -855,7 +859,8 @@ const huntCap = (map) => Math.max(2, Math.min(5, 1 + Math.floor(map.width / 700)
 function addHunter(bots, world, walkIn = false, who = null) {
   const rng = bots.rng;
   const map = world.map;
-  const [lo, hi] = bandOf(map);
+  const boss = raidBoss(world);
+  const [lo, hi] = bandOf(map) ?? [Math.max(10, boss.def.level - 6), boss.def.level + 4];
   const name = who?.name ?? makeName(bots.names, rng);
   const char = who?.char ?? makeBotCharacter(rng, { name, pro: false, level: Math.max(10, Math.floor(between(lo, hi + 5, rng))) });
   if (char.job === 'novice') return null;
@@ -895,7 +900,8 @@ function huntersHere(bots, world, dt) {
     bots.queenSeen = null;
     if (huntable(world)) {
       const cap = huntCap(map);
-      const n = 2 + Math.floor(rng() * (cap - 1));
+      // (A boss's own room fills up once the raid gathers.)
+      const n = bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
       for (let i = 0; i < n; i++) addHunter(bots, world);
       rivalHere(bots, world, hooksFor(bots, world));
     }
@@ -910,19 +916,12 @@ function huntersHere(bots, world, dt) {
     if (bot) bot.kills = (bot.kills ?? 0) + 1;
     if (bot && !bot.bubble && !bot.rival && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
   };
-  // A queen back for a rematch: word gets around, and people come running.
-  const queen = world.mobs.find((m) => isQueen(m) && m.hp > 0);
+  // A boss here (a queen back for a rematch, the Crystal King on his throne): word gets around,
+  // and people come running for the raid (world/raids.js).
+  const queen = raidBoss(world);
   if (queen && bots.queenSeen !== queen) {
     bots.queenSeen = queen;
-    world.log?.(`★ ${queen.def.name.split(',')[0]} is back on ${map.name}! Players are gathering.`, '#ffd6f0');
-    for (let i = 0; i < 2; i++) {
-      const b = addHunter(bots, world, true);
-      if (b) {
-        b.appear = 1 + i * 0.4;
-        b.nextLine = 3 + i * 4;
-        if (i === 0) say(b, pick(['queen is back!!', 'omg rematch time', 'is she here?? lets gooo', 'wait for me!!'], rng));
-      }
-    }
+    gather(bots, world, queen, hooksFor(bots, world));
   }
   // Now and then someone walks in.
   bots.arriveIn -= dt;
@@ -977,7 +976,7 @@ function huntersHere(bots, world, dt) {
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
       bot.nextLine = between(40, 90, rng);
-      const line = queen ? pick(['shes so strong', 'focus the queen!', 'dodge the circles!!', 'keep going!', 'her moves are so pretty tho'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng);
+      const line = queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng);
       if (line) shout(bot, bots, world, line);
     }
   }

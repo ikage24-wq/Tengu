@@ -148,6 +148,8 @@ export function tickStory(world, dt, hurt) {
     if (z.from && z.from.hp <= 0) continue;
     world.juice.push({ type: 'shake', mag: z.kind === 'floor' ? 7 : 3, dur: z.kind === 'floor' ? 0.6 : 0.25 });
     if (!world.dead && inZone(world, z, world.body)) hurt(world, z.damage, z.from?.x ?? z.x);
+    // (The other players fighting her get caught too: world/raids.js.)
+    world.onZoneHit?.(z);
   }
   world.zones = world.zones.filter((z) => !z.hit || z.after < 0.6);
   // A queen's trial won: her words, then back to whoever sent you.

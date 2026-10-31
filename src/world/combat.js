@@ -288,7 +288,11 @@ export function cast(world, skillId, rng = Math.random) {
       world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.4 });
     }
     // A finisher spends the path's whole gauge.
-    if (s.fullGauge) world[gaugeOf(char)] = 0;
+    if (s.fullGauge) {
+      world[gaugeOf(char)] = 0;
+      // (Your party may join in with theirs: a party combo, world/raids.js.)
+      world.finisherCast = { at: world.now, id: skillId };
+    }
     if (params.rageGain) addRage(world, params.rageGain);
     if (params.aimGain) addAim(world, params.aimGain);
     if (s.rageCost) {
