@@ -218,16 +218,16 @@ function rivalRace(bots, world) {
   if (bot) bot.char.level = bot.level = r.level;
 }
 
-// A field you walk into: now and then your rival's hunting there too.
-export function rivalHere(bots, world, hooks) {
+// A field you walk into: now and then your rival's hunting there too (always, with `force`: a raid).
+export function rivalHere(bots, world, hooks, force = false) {
   const rng = bots.rng;
   if (world.char.level < RIVAL_FROM) return null;
   const first = !world.char.rival;
   if (first) {
-    if (rng() < 0.5) return null;
+    if (!force && rng() < 0.5) return null;
     world.char.rival = makeRival(bots, world, hooks);
     if (!world.char.rival) return null;
-  } else if (rng() >= 0.3) return null;
+  } else if (!force && rng() >= 0.3) return null;
   const r = world.char.rival;
   const bot = hooks.addHunter(who(r, remake(r, hooks.makeChar, rng)));
   if (!bot) return null;

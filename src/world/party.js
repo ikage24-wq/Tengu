@@ -19,6 +19,7 @@ import { roleThink, healerTurn, jumpNow } from './dungeon.js';
 import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf } from './melee.js';
 import { pickTargets } from './combat.js';
 import { SKILLS } from '../data/skills.js';
+import { inZone } from './story.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -465,13 +466,22 @@ function poolOf(bot) {
   return (COMBOS[bot.stats.weaponType] ?? COMBOS.none).map((s) => [s]);
 }
 
-// Their job's attack skills at a level that fits theirs: [{ id, steps, full, tune }].
+// Their job's attack skills at a level that fits theirs: [{ id, steps, full, tune }]. The
+// priestesses' spells that work their own way (Ofuda Barrage, Thousand Torii, the blessings) are
+// played by SPECIALS below.
 export function botSkills(char) {
   const chain = jobChain(char.job);
   const out = [];
   for (const s of Object.values(SKILLS)) {
-    if (!chain.includes(s.job) || s.type !== 'attack' || s.movement) continue;
+    if (!chain.includes(s.job) || s.movement) continue;
     const lv = Math.max(1, Math.min(s.maxLevel, Math.round(s.maxLevel * Math.min(1, (char.level - 8) / 40))));
+    if (SPECIALS[s.id]) {
+      const params = s.at(lv, s.maxLevel);
+      const sp = SPECIALS[s.id];
+      out.push({ id: s.id, steps: [{ move: sp.move, dur: sp.dur, strikes: [], special: s.id, params }], full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), heal: sp.heal });
+      continue;
+    }
+    if (s.type !== 'attack') continue;
     const combo = s.at(lv, s.maxLevel).combo;
     if (!combo || !combo.every((st) => st.strikes.every(plain))) continue;
     if (!combo.some((st) => st.strikes.some((k) => k.pct > 0 && (k.reach > 0 || k.shot)))) continue;
@@ -489,7 +499,10 @@ function nextMove(bot, rng) {
   if (f.queue.length) return f.queue.shift();
   if (f.step === 0) {
     const full = f.gauge >= GAUGE_FULL ? f.skills.filter((s) => s.full) : [];
-    const pool = full.length ? full : rng() < bot.ai.special ? f.skills.filter((s) => !s.full) : [];
+    // (A blessing only when someone needs one.)
+    const heals = f.skills.filter((s) => s.heal && !s.full);
+    const hurt = bot.hp != null && bot.hp < bot.stats.maxHp * 0.6;
+    const pool = full.length ? full : hurt && heals.length && rng() < 0.6 ? heals : rng() < bot.ai.special ? f.skills.filter((s) => !s.full && !s.heal) : [];
     const sk = pool.length ? pool[Math.floor(rng() * pool.length)] : null;
     if (sk) {
       if (sk.full) f.gauge = 0;
@@ -517,6 +530,18 @@ function fight(bot, m, world, intent, rng) {
   if (!intent.left && !intent.right) body.facing = toward;
   if (world.now < f.readyAt || body.facing !== toward) return;
   const step = nextMove(bot, rng);
+  if (step.special) {
+    SPECIALS[step.special].play(bot, world, m, rng, step.params, step.tune * (f.boost ?? 1));
+    f.boost = null;
+    f.readyAt = world.now + step.dur + (AFTER[step.kind] ?? AFTER.skill);
+    f.lastAt = f.readyAt;
+    bot.attack = { pose: step.move, t: 0, dur: step.dur, fighting: true };
+    return;
+  }
+  if (f.boost && step.kind === 'finisher') {
+    step.tune = (step.tune ?? 1) * f.boost;
+    f.boost = null;
+  }
   // Now and then they fluff it like anyone does: a swing the wrong way at thin air, or a step
   // carried right off the ledge (rookies most of all).
   const clumsy = bot.ai.kind === 'rookie' ? 0.08 : 0.025;
@@ -540,15 +565,9 @@ function fight(bot, m, world, intent, rng) {
 function play(bot, step, m, world, rng) {
   const body = bot.body;
   const dir = body.facing;
-  const level = bot.char.level;
-  const acc = accuracy(JOBS[bot.char.job].family, bot.stats, level);
   const path = pathOf({ char: bot.char, stats: bot.stats });
   const school = path === 'paladin' ? 'holy' : path === 'berserker' ? 'rage' : null;
-  const f = bot.fight;
-  // Players hunting on their own never catch the monsters by you in a sweep or a fan either.
-  const you = world.body;
-  const fair = (mob) => bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
-  const reachable = (look, box, n) => pickTargets(world.mobs.filter(fair), look, box, n);
+  const reachable = (look, box, n) => pickTargets(world.mobs.filter((mob) => fair(bot, world, mob)), look, box, n);
   for (const s of step.strikes) {
     const lag = s.at * step.dur + (s.delay ?? 0);
     const sdir = s.turn ? -dir : dir;
@@ -557,13 +576,7 @@ function play(bot, step, m, world, rng) {
     if (!(s.pct > 0)) continue;
     const pct = s.pct * (step.tune ?? 1);
     const range = s.magic ? magicRange(bot.stats, pct * 1.3) : physicalRange(bot.stats, bot.stats.weaponType, pct);
-    const hit = (mob, at, i) => {
-      const miss = rng() >= hitChance(acc, level, mob.def);
-      const roll = miss ? null : rollHit(range, bot.stats, mob.def, level, rng);
-      if (!miss) f.gauge = Math.min(GAUGE_FULL, f.gauge + GAUGE_PER_HIT);
-      // (Their blows don't stop your world or shake your screen; that's for your own.)
-      world.pending.push({ at: world.now + at, mob, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: i, party: bot.id, stranger: !bot.party, knock: s.knock, launch: s.launch, big: s.big, bleed: s.bleed, burn: s.burn, stun: s.stun, via: s.shot ? 'shot' : s.magic ? 'spell' : 'blade' });
-    };
+    const hit = (mob, at, i) => land(bot, world, mob, at, range, { stack: i, knock: s.knock, launch: s.launch, big: s.big, bleed: s.bleed, burn: s.burn, stun: s.stun, via: s.shot ? 'shot' : s.magic ? 'spell' : 'blade' }, rng);
     if (s.shot) {
       // Shots leave on the release frame and hit when they get there; a fan spreads over a few.
       const from = { x: body.x + sdir * 10, y: body.y - 16 + (s.oy ?? 0) };
@@ -589,6 +602,152 @@ function play(bot, step, m, world, rng) {
     if (s.pierce && !s.arc) world.fx.push({ kind: 'pierce', school, x: body.x, y: body.y, dir: sdir, box: { x: sdir > 0 ? body.x - 6 : body.x + 6 - s.reach, y: cy - 10, w: s.reach, h: 20 }, t: -lag, dur: (s.big ? 0.35 : 0.25) + lag });
     if (s.crack) world.fx.push({ kind: 'crack', school, x: body.x + sdir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: -lag, dur: 0.7 + lag, seed: rng() });
   }
+}
+
+// One blow of theirs landing on `mob` after `delay`: hit or miss, and their gauge filling.
+// (Their blows don't stop your world or shake your screen; that's for your own.)
+function land(bot, world, mob, delay, range, fields, rng) {
+  const level = bot.char.level;
+  const miss = rng() >= hitChance(accuracy(JOBS[bot.char.job].family, bot.stats, level), level, mob.def);
+  const roll = miss ? null : rollHit(range, bot.stats, mob.def, level, rng);
+  if (!miss && bot.fight) bot.fight.gauge = Math.min(GAUGE_FULL, bot.fight.gauge + GAUGE_PER_HIT);
+  world.pending.push({ at: world.now + delay, mob, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: bot.body.x, stack: 0, party: bot.id, stranger: !bot.party, ...fields });
+}
+
+// Players hunting on their own never catch the monsters by you (unless they came to help).
+function fair(bot, world, mob) {
+  const you = world.body;
+  return bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
+}
+
+// ---------- The priestesses' own spells ----------
+// The Spirit Mage line's spells that work their own way, played by a bot in her own style: Ofuda
+// Barrage's talismans flying, sticking and bursting; Thousand Torii's corridor of gates rising one
+// after another, each cutting what stands in it; the blessings mending everyone round her (you
+// too, when she's with you). An Onmyoji bot has no troupe of her own, so her finisher is a
+// talisman storm instead of the Troupe Combo.
+
+function ofudaVolley(bot, world, m, rng, n, pct, range) {
+  const b = bot.body;
+  const dir = b.facing;
+  const list = world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.sign(o.x - b.x) !== -dir && Math.abs(o.x - b.x) < range && Math.abs(o.y - b.y) < 110)
+    .sort((o, q) => Math.abs(o.x - b.x) - Math.abs(q.x - b.x));
+  if (!list.length) list.push(m);
+  const range2 = magicRange(bot.stats, pct * 1.3);
+  const chip = magicRange(bot.stats, pct * 0.35 * 1.3);
+  for (let i = 0; i < n; i++) {
+    const mob = list[i % list.length];
+    const spread = (i - (n - 1) / 2) * 9;
+    const tx = mob.x + (rng() - 0.5) * mob.def.w * 0.5;
+    const ty = mob.y - mob.def.h * (0.35 + rng() * 0.4);
+    const ox = b.x + dir * 12;
+    const oy = b.y - 34 + spread * 0.4;
+    const fly = Math.hypot(tx - ox, ty - oy) / 420 + 0.06;
+    const lag = 0.4 + i * 0.06;
+    world.fx.push({ kind: 'ofuda', x: ox, y: oy, tx, ty, mob, dx: tx - mob.x, dy: ty - mob.y, fly, stick: 0.38, arc: spread, t: -lag, dur: fly + 0.43, seed: rng() });
+    land(bot, world, mob, lag + fly, chip, { knock: 10, burst: 'ofudahit', via: 'spell' }, rng);
+    land(bot, world, mob, lag + fly + 0.38, range2, { knock: 60, burst: 'ofudaburst', via: 'spell' }, rng);
+  }
+}
+
+function bless(bot, world, rng, pct, r, big) {
+  const b = bot.body;
+  const mend = (body, apply, maxHp) => {
+    if (Math.abs(body.x - b.x) > r || Math.abs(body.y - b.y) > 160) return;
+    const add = Math.round(maxHp * pct);
+    apply(add);
+    world.fx.push({ kind: 'blessing', x: body.x, y: body.y, t: -0.5, dur: 1.5 });
+    world.numbers.push({ x: body.x, y: body.y - 52, text: `+${add}`, color: '#7ee081', t: -0.5, small: true });
+  };
+  for (const o of world.bots?.list ?? []) {
+    if (!o.body || o.down || o.map !== world.map.id || o.hp == null) continue;
+    mend(o.body, (add) => (o.hp = Math.min(o.stats.maxHp, o.hp + add)), o.stats.maxHp);
+  }
+  // You, when she's on your side.
+  if ((bot.party || helping(bot, world)) && !world.dead) mend(world.body, (add) => (world.char.hp = Math.min(world.stats.maxHp, world.char.hp + add)), world.stats.maxHp);
+  if (big) world.juice.push({ type: 'shake', mag: 1, dur: 0.2 });
+  if (!bot.bubble && rng() < 0.3) say(bot, pick2(['heal!', 'blessings~', 'feel better!', 'hp up!']));
+}
+
+const SPECIALS = {
+  ofudabarrage: { move: 'onmyoofuda', dur: 1.05, play: (bot, world, m, rng, P, tune) => { const O = P.combo[0].strikes[0].ofuda; ofudaVolley(bot, world, m, rng, O.n, O.pct * tune, O.range); } },
+  troupecombo: { move: 'onmyoofuda', dur: 1.6, play: (bot, world, m, rng, P, tune) => { ofudaVolley(bot, world, m, rng, 12, P.combo[0].strikes[0].troupe.pct * tune, 360); world.fx.push({ kind: 'seimanseal', x: m.x, y: m.y, r: 90, t: 0, dur: 1.4 }); } },
+  blessing: { move: 'kagurabless', dur: 1.35, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
+  grandblessing: { move: 'shrinegrand', dur: 1.55, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
+  thousandtorii: {
+    move: 'shrinetorii', dur: 2.2,
+    play: (bot, world, m, rng, P, tune) => {
+      const T = P.combo[0].strikes[0].torii;
+      const b = bot.body;
+      const dir = b.facing;
+      const nav = navOf(world.map);
+      const surf = nav.surfaces[surfaceOf(nav, b)];
+      const gates = Array.from({ length: T.n }, (_, i) => {
+        let x = b.x + dir * (60 + (i * T.span) / Math.max(1, T.n - 1));
+        if (surf) x = Math.max(surf.x1 + 10, Math.min(surf.x2 - 10, x));
+        return { x, y: surf ? surf.yAt(x) : b.y, at: world.now + 0.45 + i * T.gap };
+      });
+      const torii = { t0: world.now, gates, dir, n: T.n, gap: T.gap, hold: T.hold };
+      world.fx.push({ kind: 'thousandtorii', torii, x: b.x, y: b.y, t: 0, dur: 0.45 + T.n * T.gap + T.hold + 0.9 });
+      const range = magicRange(bot.stats, T.pct * tune * 1.3);
+      for (const g of gates) {
+        world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - g.x) < T.cut + o.def.w / 2 && Math.abs(o.y - g.y) < 90)
+          .forEach((o, i) => land(bot, world, o, g.at - world.now, range, { stack: i, knock: 160, launch: 220, stun: 0.4, big: !i, burst: 'spirithit', via: 'spell' }, rng));
+      }
+    },
+  },
+};
+
+// ---------- Raids: a queen's moves ----------
+// Her moves are drawn on the ground a moment before they land (world/story.js). Most players see
+// them coming and step out or jump (rookies, not so often); whoever's standing in one when it goes
+// off takes the hit.
+
+function dodge(bot, world, intent, rng) {
+  const body = bot.body;
+  if (bot.dodge && world.now < bot.dodge.until) {
+    Object.assign(intent, bot.dodge.intent);
+    return;
+  }
+  bot.dodge = null;
+  for (const z of world.zones ?? []) {
+    if (z.hit || z.t < z.warn - 0.6 || !inZone(world, z, body)) continue;
+    bot.dodged ??= new WeakSet();
+    if (bot.dodged.has(z)) continue;
+    bot.dodged.add(z);
+    if (rng() > (bot.ai.kind === 'rookie' ? 0.4 : 0.8)) continue;
+    const away = Math.sign(body.x - (z.kind === 'lane' ? z.x + z.w / 2 : z.x)) || 1;
+    const jump = z.kind === 'lane' && z.low;
+    bot.dodge = { until: world.now + (jump ? 0.25 : 0.7), intent: { left: !jump && away < 0, right: !jump && away > 0, jump, up: false, down: false } };
+    Object.assign(intent, bot.dodge.intent);
+    return;
+  }
+}
+
+// Something big (a queen's move) hitting a member out in the field.
+export function hurtBot(bot, world, raw, fromX, rng = Math.random) {
+  if (bot.down || !bot.body || !bot.stats) return;
+  bot.hp ??= bot.stats.maxHp;
+  const dmg = damageTaken(raw, bot.stats.wdef, rng);
+  bot.hp = Math.max(0, bot.hp - dmg);
+  bot.hurt = 0.3;
+  bot.lunge = null;
+  knockBack(bot.body, fromX);
+  world.numbers.push({ x: bot.body.x, y: bot.body.y - bot.body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
+  if (bot.hp <= 0) fall(bot, world, rng);
+}
+
+// A party combo: you let your finisher loose, and the members fighting by you join in with theirs.
+export function joinCombo(bot, world, delay) {
+  const f = bot.fight;
+  if (!f) return false;
+  f.gauge = GAUGE_FULL;
+  f.step = 0;
+  f.queue = [];
+  f.readyAt = world.now + delay;
+  f.lastAt = world.now;
+  f.boost = 1.25;
+  return true;
 }
 
 // Moves a member along a step they're carried through, kept on their ledge (unless they slipped,
@@ -724,6 +883,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   if (bot.leaving) br.goal = bot.leaving;
   const busy = bot.attack && ['cheer', 'flip', 'roar', 'guard', 'aimshot', 'pray'].includes(bot.attack.pose) && !bot.attack.fighting;
   const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : fieldSteer(bot, world, hunters);
+  dodge(bot, world, intent, rng);
   const pushing = (intent.left || intent.right) && body.onGround;
   br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
   br.lastX = body.x;
@@ -861,8 +1021,9 @@ export function updateParty(bots, world, dt) {
     // Move.
     const busy = bot.attack && ['pray', 'cheer', 'flip', 'roar', 'guard', 'aimshot'].includes(bot.attack.pose) && !bot.attack.fighting;
     const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : map.isTown ? steerTo(bot, world, members) : fieldSteer(bot, world, members);
-    // In a dungeon, hop over the Root Slam.
+    // In a dungeon, hop over the Root Slam; in the field, out of a queen's way.
     if (world.dungeon && jumpNow(world, body)) intent.jump = true;
+    else if (!map.isTown) dodge(bot, world, intent, rng);
     // Walking into something and getting nowhere: plan again, and give up on that monster.
     const pushing = (intent.left || intent.right) && body.onGround;
     br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
