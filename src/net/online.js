@@ -61,6 +61,7 @@ function reset() {
   online.claim = null;
   online.party = null;
   online.partyAsk = online.partyAsked = null;
+  online.trade = null;
   if (online.world) online.world.net = null;
 }
 

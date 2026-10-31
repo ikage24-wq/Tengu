@@ -42,6 +42,8 @@ Things to do together:
 - **Party dungeons.** Friends standing at a dungeon's gate with a job join the group the warden
   forms (bots fill the seats left). The one who formed it leads: their game runs the rooms,
   monsters, bosses and bots, and everyone's blows, taunts, heals, buffs and room tasks reach it.
+- **Trading.** Each friend's row has a Trade button: both sides put in up to six items and some
+  gold, press Ready, and the swap happens when both are ready (any change takes the marks off).
 - **Warp to a friend** for free, unless they're in a dungeon or trial.
 - **Fishing together.** Friends see each other's lines and hear about each other's catches.
 - **Queen rematches.** A returning queen's moves (and their warnings) reach everyone on her map.

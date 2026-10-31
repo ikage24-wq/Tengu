@@ -19,6 +19,8 @@ import { petWindow } from './pet.js';
 import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
 import { cookingWindow } from './cooking.js';
+import { tradeWindow } from './trade.js';
+import { tradeSay } from '../net/together.js';
 import { online } from '../net/online.js';
 import { drawMenu, drawPartyPanel } from './party.js';
 import { isGm } from '../world/gm.js';
@@ -56,9 +58,10 @@ export function createUiState() {
       online: { x: 200, y: 30, open: false, theme: 'sky', icon: 'friends' },
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
+      trade: { x: 110, y: 50, open: false, tab: 0, theme: 'sky', icon: 'friends' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'trade', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -167,7 +170,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, trade: tradeWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.
@@ -211,6 +214,11 @@ function dimWorld(ctx, state) {
 const CLOSE = 0.14;
 
 export function drawUi(ui, state, world) {
+  // The trade window opens and closes with the trade itself.
+  state.windows.trade.open = Boolean(online.trade);
+  // While trading, what you type goes to the trade's own chat (and its box is where a phone taps
+  // to type).
+  state.chat.sendTo = online.trade ? (words) => tradeSay(world, words) : null;
   state.typeField = null;
   dimWorld(ui.ctx, state);
   drawHud(ui, state, world);
