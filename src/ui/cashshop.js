@@ -12,18 +12,20 @@ import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, well, icon, sparkle } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 
-const LABELS = ['Hat', 'Top', 'Bottom', 'Shoes', 'Gloves', 'Cape', 'Earrings', 'Weapon'];
+// The slots the shop sells for (none of its lines makes earrings).
+const LABEL = { hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings', weapon: 'Weapon' };
+const SLOTS = OUTFIT_SLOTS.filter((slot) => CASH_ITEMS.some((id) => ITEMS[id].slot === slot));
+const LABELS = SLOTS.map((slot) => LABEL[slot]);
 const COLS = 4;
 const ROWS = 3;
 const PINK = '#d0559a';
 
-const STYLE_LABELS = ['All', 'Casual', 'Swim', 'Funny', 'Fantasy'];
+const STYLE_LABELS = ['All', 'Casual', 'Swim', 'Funny'];
 
-// The catalog for a slot: casual, swim, and funny lines first, then the fantasy costumes (one-of-a-
-// kind looks, then each job's by level) and covers.
+// The catalog for a slot: the casual, swim, and funny lines, cheapest first in each.
 const styleRank = (d) => OUTFIT_STYLES.indexOf(d.style);
-const bySlot = Object.fromEntries(OUTFIT_SLOTS.map((slot) => [slot, CASH_ITEMS.filter((id) => ITEMS[id].slot === slot)
-  .sort((a, b) => styleRank(ITEMS[a]) - styleRank(ITEMS[b]) || Number(Boolean(ITEMS[a].family)) - Number(Boolean(ITEMS[b].family)) || ITEMS[a].cash - ITEMS[b].cash)]));
+const bySlot = Object.fromEntries(SLOTS.map((slot) => [slot, CASH_ITEMS.filter((id) => ITEMS[id].slot === slot)
+  .sort((a, b) => styleRank(ITEMS[a]) - styleRank(ITEMS[b]) || ITEMS[a].cash - ITEMS[b].cash)]));
 
 export function cashShopWindow(ui, state, world) {
   const win = state.windows.cashshop;
@@ -58,7 +60,8 @@ export function cashShopWindow(ui, state, world) {
   // Slots and catalog.
   const rx = win.x + 128;
   const was = `${win.cat}|${win.style}`;
-  win.style = tabs(ui, rx, win.y + 24, STYLE_LABELS, win.style ?? 0, { w: 42.6, h: 12 });
+  win.style = Math.min(tabs(ui, rx, win.y + 24, STYLE_LABELS, Math.min(win.style ?? 0, STYLE_LABELS.length - 1), { w: 53, h: 12 }), STYLE_LABELS.length - 1);
+  win.cat = Math.min(win.cat, SLOTS.length - 1);
   // Two rows of slot tabs act as one set: a click in either row picks that slot.
   const in1 = win.cat < 4 ? win.cat : -1;
   const in2 = win.cat >= 4 ? win.cat - 4 : -1;
@@ -67,7 +70,7 @@ export function cashShopWindow(ui, state, world) {
   if (row1 !== in1) win.cat = row1;
   else if (row2 !== in2) win.cat = row2 + 4;
   if (`${win.cat}|${win.style}` !== was) win.scroll = 0;
-  const slot = OUTFIT_SLOTS[win.cat];
+  const slot = SLOTS[win.cat];
   const style = win.style ? OUTFIT_STYLES[win.style - 1] : null;
   const list = style ? bySlot[slot].filter((id) => ITEMS[id].style === style) : bySlot[slot];
   const cw = 55;

@@ -1,8 +1,9 @@
 // Cash outfits: cosmetic pieces bought with Cash in the Cash Shop. Worn in the outfit slots, they
 // cover the look of your real gear (which keeps all its stats); an outfit piece has no stats of
-// its own. Costumes copy the look of any job's set (so a warrior can wear a wizard hat), the
-// unique outfits and clothes, and jewel earrings; weapon covers reskin whatever weapon you hold
-// as an endgame design or a top material. Most come in the same colors as gear.
+// its own. The shop sells only looks you can't find: the casual, swim and funny lines. Costumes of
+// things that drop (job sets, the unique outfits and clothes, jewel earrings, endgame and top
+// material weapon covers) are no longer sold, but stay defined so pieces already bought still
+// work (`retired`). Most come in the same colors as gear.
 //
 // A cash item: { type: 'cash', slot, skin (the item whose look it wears) or cover
 // ({ theme } or { tier }), cash (price) }. Instances: { uid, id, variant }.
@@ -13,7 +14,7 @@ import { FUN_LOOKS } from './outfits-fun.js';
 
 export const OUTFIT_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring', 'weapon'];
 // Shop styles: everyday clothes, beachwear, silly stuff, and the fantasy costumes and covers.
-export const OUTFIT_STYLES = ['casual', 'swim', 'funny', 'fantasy'];
+export const OUTFIT_STYLES = ['casual', 'swim', 'funny'];
 
 // Cash a hero starts with, and earns per level and per quest.
 export const STARTING_CASH = 5000;
@@ -23,8 +24,8 @@ export const CASH_PER_QUEST = 300;
 export const CASH_ITEMS = [];
 
 function add(def) {
-  ITEMS[def.id] = { type: 'cash', price: 0, style: 'fantasy', ...def };
-  CASH_ITEMS.push(def.id);
+  ITEMS[def.id] = { type: 'cash', price: 0, ...def };
+  if (!def.retired) CASH_ITEMS.push(def.id);
 }
 
 // The casual, swim, and funny lines. Each piece wears a hidden "look" item per slot it dresses
@@ -43,13 +44,14 @@ for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS]]) {
   });
 }
 
+// No longer sold (they copy things that drop); kept for pieces already bought.
 // Costumes of each job's sets, every fourth tier from Lv 20 up.
 const COSTUME_TIERS = [3, 7, 11, 15, 19];
 for (const family of GEAR_FAMILIES) {
   for (const t of COSTUME_TIERS) {
     for (const slot of JOB_SLOTS) {
       const skin = ITEMS[`${family}_${slot}_${(t + 1) * 5}`];
-      add({ id: `cash_${skin.id}`, name: `${skin.name} Costume`, slot, skin: skin.id, family, cash: 600 + t * 90 + (slot === 'top' ? 300 : 0), color: skin.color });
+      add({ id: `cash_${skin.id}`, name: `${skin.name} Costume`, slot, skin: skin.id, family, retired: true, cash: 600 + t * 90 + (slot === 'top' ? 300 : 0), color: skin.color });
     }
   }
 }
@@ -58,21 +60,21 @@ for (const family of GEAR_FAMILIES) {
 const CLOTHES = ['denim_jacket', 'cozy_sweater', 'overalls', 'sundress', 'school_blazer', 'puffer_jacket', 'maid_dress', 'pleated_skirt', 'blue_jeans', 'cargo_pants', 'long_skirt'];
 for (const id of [...new Set([...UNIQUE_IDS, ...CLOTHES])]) {
   const skin = ITEMS[id];
-  add({ id: `cash_${id}`, name: `${skin.name} Costume`, slot: skin.slot, skin: id, cash: skin.unique ? 1500 : 700, color: skin.color });
+  add({ id: `cash_${id}`, name: `${skin.name} Costume`, slot: skin.slot, skin: id, retired: true, cash: skin.unique ? 1500 : 700, color: skin.color });
 }
 
 // Jewel earrings.
 for (const L of [45, 65, 85, 100]) {
   const skin = ITEMS[`ear_${L}`];
-  add({ id: `cash_${skin.id}`, name: `${skin.name} Charm`, slot: 'earring', skin: skin.id, cash: 800 + L * 10, color: skin.color });
+  add({ id: `cash_${skin.id}`, name: `${skin.name} Charm`, slot: 'earring', skin: skin.id, retired: true, cash: 800 + L * 10, color: skin.color });
 }
 
 // Weapon covers: an endgame design, or one of the top materials.
 const THEME_NAMES = { holy: 'Seraph', demonic: 'Hellfire', bone: 'Ossuary', laser: 'Photon', chainsaw: 'Ripper', cyber: 'Neon' };
-for (const theme of ENDGAME_THEMES) add({ id: `cover_${theme}`, name: `${THEME_NAMES[theme]} Weapon Cover`, slot: 'weapon', cover: { theme }, cash: 5000, color: ITEMS[`sword_${theme}`].color });
+for (const theme of ENDGAME_THEMES) add({ id: `cover_${theme}`, name: `${THEME_NAMES[theme]} Weapon Cover`, slot: 'weapon', cover: { theme }, retired: true, cash: 5000, color: ITEMS[`sword_${theme}`].color });
 const MATERIAL_COVERS = { 8: 'Crystal', 10: 'Starsteel', 12: 'Sunforged', 13: 'Dragonbone', 16: 'Phoenix', 17: 'Abyssal', 18: 'Astral', 19: 'Celestial', 20: 'Genesis' };
 for (const [t, name] of Object.entries(MATERIAL_COVERS)) {
-  add({ id: `cover_${t}`, name: `${name} Weapon Cover`, slot: 'weapon', cover: { tier: Number(t) }, cash: 1200 + t * 150, color: ITEMS[`sword_${t * 5}`].color });
+  add({ id: `cover_${t}`, name: `${name} Weapon Cover`, slot: 'weapon', cover: { tier: Number(t) }, retired: true, cash: 1200 + t * 150, color: ITEMS[`sword_${t * 5}`].color });
 }
 
 // A cash item at a color costs a little more, and Gilded or Diamond a lot more.

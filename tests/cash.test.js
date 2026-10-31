@@ -13,7 +13,8 @@ import { JOB_GEAR, pieceOf } from '../src/render/jobgear/index.js';
 import { hatShapes, topShapes, skirtShapes, legLook, legShapes, handShapes, capeShapes, earringShapes } from '../src/render/gear.js';
 
 test('the cash catalog covers every outfit slot with real looks', () => {
-  for (const slot of OUTFIT_SLOTS) assert.ok(CASH_ITEMS.some((id) => ITEMS[id].slot === slot), slot);
+  // (Earrings only ever came as copies of dropped ones, which the shop no longer sells.)
+  for (const slot of OUTFIT_SLOTS.filter((s) => s !== 'earring')) assert.ok(CASH_ITEMS.some((id) => ITEMS[id].slot === slot), slot);
   for (const id of CASH_ITEMS) {
     const def = ITEMS[id];
     assert.equal(def.type, 'cash');
@@ -92,4 +93,19 @@ test('a full-body outfit dresses every slot it covers, and wearing a piece that 
   assert.equal(char.outfit.bottom, null, 'the bottoms come off');
   assert.equal(wornGear(char).bottom.id, onesie.covers.bottom);
   assert.equal(char.inventory.cash.length, 1);
+});
+
+test('the Cash Shop never sells a costume of something that drops, but old ones still work', async () => {
+  const { CASH_ITEMS } = await import('../src/data/cash.js');
+  assert.ok(CASH_ITEMS.length > 50);
+  for (const id of CASH_ITEMS) {
+    const def = ITEMS[id];
+    assert.ok(!def.retired, id);
+    const looks = [def.skin, ...Object.values(def.covers ?? {})].filter(Boolean);
+    assert.ok(looks.every((l) => ITEMS[l].type === 'look'), `${id} wears only its own line's looks`);
+    assert.ok(!def.cover || def.cover.fun, `${id}: only the fun lines' weapon covers`);
+  }
+  for (const id of ['cash_mage_hat_100', 'cover_holy', 'cover_20', 'cash_bunny_hood', 'cash_sundress']) {
+    assert.ok(ITEMS[id]?.retired && !CASH_ITEMS.includes(id), `${id} is off the shelf but still known`);
+  }
 });
