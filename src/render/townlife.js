@@ -324,8 +324,38 @@ const met = new Map();
 const GREET_NEAR = 48;
 const GREET_AGAIN = 20;
 
+// What residents busy with the same thing might say, on top of their own lines.
+const ACT_LINES = {
+  shoot: ['Wind from the left today.', 'Who moved the target?', 'Draw, anchor, release...', 'I hit the hay bale again.', 'One day I\'ll split an arrow.', 'Fletching is harder than it looks.'],
+  train: ['Left, right, left...', 'Is it lunch yet?', 'Sensei would be proud. Maybe.', 'This dummy has seen things.', 'Footwork first, then power.', 'I can feel tomorrow\'s bruises already.'],
+  spar: ['Again!', 'Keep your guard up!', 'You call that a swing?', 'Best two out of three.', 'Okay, okay, truce!'],
+  cast: ['The words are on the tip of my tongue...', 'Sparkles. Why is it always sparkles?', 'Focus, breathe, channel...', 'I singed my sleeve again.', 'That one was nearly a real spell!'],
+  chase: ['You\'re it!', 'Safe! I touched the fountain!', 'Faster!', 'Hide and seek next!', 'I\'m telling Mum!', 'Ten more minutes!'],
+  stroll: ['Lovely day for a walk.', 'The bakery smells wonderful.', 'So many adventurers these days.', 'Have you seen my glasses?', 'The flowers came up nicely this year.', 'Mind the puddles.'],
+  chat: ['And then what happened?', 'You didn\'t hear it from me...', 'Honestly, the prices lately!', 'My cousin saw a slime the size of a cart.', 'We should have tea sometime.'],
+  smith: ['Hot iron waits for no one.', 'Another dent? What do you DO with these?', 'Hand me the tongs, would you?', 'Good steel sings when you strike it.'],
+  read: ['Just one more chapter.', 'Shh, this is the good part.', 'Did you know slimes have no bones?', 'The library\'s quiet today.'],
+};
+
+// Each resident's lines (their own, then their trade's), and a shuffled order to say them in, so
+// a line only comes round again once all the others have.
+const pools = new Map();
+function poolOf(p) {
+  let e = pools.get(p.id);
+  if (!e) {
+    const lines = [...new Set([...(p.lines ?? []), ...(ACT_LINES[p.act?.type] ?? [])])];
+    const order = lines.map((_, i) => i).sort((a, b) => hash(p.seed * 31 + a) - hash(p.seed * 31 + b));
+    pools.set(p.id, (e = { lines, order }));
+  }
+  return e;
+}
+
+// How far off they can be and still be heard, and how long between their lines.
+const EARSHOT = 420;
+const TALK_EVERY = 75;
+
 // What a resident says right now, if anything: a hello when you've just walked up, or now and
-// then one of their own lines.
+// then one of their lines, while you're within earshot.
 function speech(p, at, gx, gy, player, time) {
   if (!p.lines && !p.greet) return null;
   const near = player && Math.abs(player.x - at.x) < GREET_NEAR && Math.abs(player.y - gy) < 30;
@@ -334,11 +364,12 @@ function speech(p, at, gx, gy, player, time) {
   if (near && !m.near && time - m.at > GREET_AGAIN) m.at = time;
   m.near = near;
   if (time - m.at < 2.6) return { text: pick(p.greet ?? ['Hi!', 'Hello!', 'Oh, hello!'], hash(Math.floor(m.at) + p.seed)), hello: true };
-  if (!p.lines) return null;
-  const period = 24 + (p.seed % 9) * 2;
+  if (!p.lines || !player || Math.abs(player.x - at.x) > EARSHOT) return null;
+  const period = TALK_EVERY + (p.seed % 9) * 5;
   const k = time + p.seed * 3.7;
   if (k % period > 3.6) return null;
-  return { text: p.lines[Math.floor(k / period) % p.lines.length] };
+  const { lines, order } = poolOf(p);
+  return { text: lines[order[Math.floor(k / period) % lines.length]] };
 }
 
 // Draws everyone who lives in this town; `player` is your body, so they can greet you.
