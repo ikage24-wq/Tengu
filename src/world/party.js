@@ -512,7 +512,8 @@ function nextMove(bot, rng) {
       f.queue = steps.slice(1);
       return steps[0];
     }
-    f.plan = planCombo(f.pool, f.last, rng);
+    // (A weapon's plain combo has no choices to vary.)
+    f.plan = f.pool.some((v) => v.length > 1) ? planCombo(f.pool, f.last, rng) : f.pool.map(() => 0);
     f.last = f.plan;
   }
   const step = f.pool[f.step][f.plan[f.step]];

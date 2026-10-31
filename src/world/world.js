@@ -421,7 +421,8 @@ export function killMob(world, m, byParty = false) {
   world.net?.killed(world, m);
   // (A dish can add to it.)
   const food = Object.values(char.buffs).reduce((k, b) => k + (b.until > world.now ? b.values?.expPct ?? 0 : 0), 0);
-  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food));
+  // (A GM's Double EXP counts too: world/events.js.)
+  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food) * (world.expEvent ?? 1));
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);

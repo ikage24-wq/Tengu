@@ -291,6 +291,28 @@ export function absorbJuice(fx, world) {
         add(fx, { x: 0, y: 0, vx: 0, vy: 0, life: 0.12, size: 1, shape: 'screenflash', color: '#ff4a2a' });
         kick(fx, 0, 3);
       } else kick(fx, 0, 1.4);
+    } else if (j.type === 'confetti') {
+      // A shower of confetti over (x, y), `w` wide: little paper bits tumbling down (a wedding, a
+      // festival, a winner).
+      const colors = j.colors ?? ['#ff8fc1', '#ffe36b', '#8fd3ff', '#9be08f', '#c9a6ff', '#ffffff'];
+      for (let i = 0; i < (j.count ?? 40); i++) {
+        add(fx, { x: j.x + (Math.random() - 0.5) * (j.w ?? 160), y: j.y - Math.random() * 40, vx: (Math.random() - 0.5) * 40, vy: -40 - Math.random() * 60, g: 60, drag: 1.5, delay: Math.random() * 0.4, life: 2 + Math.random() * 1.2, size: 1.6 + Math.random(), shape: 'petal', spin: 6 + Math.random() * 6, phase: Math.random() * 6, color: colors[i % colors.length] });
+      }
+    } else if (j.type === 'firework') {
+      // A firework: a streak climbing, then a ring of sparks bursting and drifting down.
+      const color = j.color ?? '#ffe36b';
+      const up = j.rise ?? 120;
+      add(fx, { x: j.x, y: j.y, vx: 0, vy: -up / 0.6, life: 0.6, size: 1.2, shape: 'pixel', color: '#fff3c4', delay: j.delay ?? 0 });
+      for (let i = 0; i < 26; i++) {
+        const a = (i / 26) * Math.PI * 2;
+        const sp = 70 + Math.random() * 40;
+        add(fx, { x: j.x, y: j.y - up, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: 50, drag: 1.6, delay: (j.delay ?? 0) + 0.6, life: 1.1 + Math.random() * 0.4, size: 1 + Math.random() * 0.8, shape: i % 3 ? 'glow' : 'star', spin: 4, color: i % 4 ? color : '#ffffff' });
+      }
+    } else if (j.type === 'hearts') {
+      // Hearts floating up and away (a wedding kiss).
+      for (let i = 0; i < (j.count ?? 10); i++) {
+        add(fx, { x: j.x + (Math.random() - 0.5) * 30, y: j.y, vx: (Math.random() - 0.5) * 30, vy: -30 - Math.random() * 30, drag: 0.5, delay: Math.random() * 0.8, life: 1.6 + Math.random(), size: 2.4 + Math.random() * 1.2, shape: 'heart', color: i % 3 ? '#ff8fc1' : '#ff6b8a' });
+      }
     } else if (j.type === 'kick') {
       kick(fx, j.x ?? 0, j.y ?? 0);
     } else if (j.type === 'shake') {
@@ -520,6 +542,15 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'pixel':
         ctx.fillRect(snap(x), snap(y), p.size * 2, p.size * 2);
         break;
+      case 'heart': {
+        const r = p.size;
+        ctx.beginPath();
+        ctx.moveTo(x, y + r);
+        ctx.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.6, y - r * 1.4, x, y - r * 0.4);
+        ctx.bezierCurveTo(x + r * 0.6, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r);
+        ctx.fill();
+        break;
+      }
       default:
         ctx.beginPath();
         ctx.arc(x, y, Math.max(0.3, p.size), 0, Math.PI * 2);

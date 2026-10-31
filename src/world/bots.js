@@ -27,6 +27,7 @@ import { updateBuddies, rivalHere, thanked, buddiesOf } from './buddies.js';
 import { updateRaids, raidBoss, gather } from './raids.js';
 import { isQueen } from './story.js';
 import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
+import { updateEvents, memeLine, heardMeme } from './events.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -268,8 +269,8 @@ function makeShop(bot, rng) {
 export function createBots(world, rng = Math.random, { clock = () => new Date() } = {}) {
   const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng, clock };
   // Your friends' and your rival's names are theirs: nobody else turns up with them.
-  for (const b of buddiesOf(world.char)) bots.names.add(b.name);
-  if (world.char.rival) bots.names.add(world.char.rival.name);
+  for (const b of buddiesOf(world.char)) bots.names.add(b.name.toLowerCase());
+  if (world.char.rival) bots.names.add(world.char.rival.name.toLowerCase());
   // Everyone's already around when you log in.
   const total = onlineNow(bots);
   for (let i = 0; i < total; i++) spawn(bots, world, { quiet: true });
@@ -294,7 +295,8 @@ function townFor(bots, level, not = null) {
 
 function townCounts(bots) {
   const counts = Object.fromEntries(TOWNS.map((t) => [t, 0]));
-  for (const b of bots.list) if (!b.party && !b.hunter && counts[b.map] != null) counts[b.map]++;
+  // (Special visitors, a legend, the merchant, a GM, don't take anyone's place.)
+  for (const b of bots.list) if (!b.party && !b.hunter && !b.legend && !b.merchant && !b.gm && counts[b.map] != null) counts[b.map]++;
   return counts;
 }
 
@@ -309,12 +311,14 @@ function freeX(map, bots, rng) {
 }
 
 // `who` logs in someone you know (a friend) as they are; now and then in the town you're in
-// (always, with `here`).
-function spawn(bots, world, { quiet = false, who = null, here = false } = {}) {
+// (always, with `here`). `at` ({ map, x }) puts them somewhere in particular (a GM hiding).
+function spawn(bots, world, { quiet = false, who = null, here = false, at = null } = {}) {
   const rng = bots.rng;
   const name = who?.name ?? makeName(bots.names, rng);
+  bots.names.add(name.toLowerCase());
   const char = who?.char ?? makeBotCharacter(rng, { name });
-  const town = who && world.map.isTown && (here || rng() < 0.5) ? world.map.id : townFor(bots, char.level);
+  // (Someone you know always gets in, even with every town at its usual crowd.)
+  const town = at?.map ?? (who && world.map.isTown && (here || rng() < 0.5) ? world.map.id : townFor(bots, char.level) ?? (who ? pick(TOWNS, rng) : null));
   if (!town) return null;
   const map = MAPS[town];
   const bot = {
@@ -324,15 +328,41 @@ function spawn(bots, world, { quiet = false, who = null, here = false } = {}) {
     session: between(150, 480, rng), stay: between(70, 200, rng), nextLine: between(4, 30, rng), bubble: null,
     waved: false, shop: null, appear: quiet ? 0 : 1,
   };
+  if (at?.x != null) bot.x = at.x;
   if (!who && rng() < 0.28) openShop(bot, map, bots);
   bots.list.push(bot);
   return bot;
 }
 
+// Dresses a player for a festival: their outfit (or a piece of one) in its colour.
+function dress(bot, color) {
+  const rng = Math.random;
+  const outfit = (bot.char.outfit ??= {});
+  if (!Object.keys(outfit).length) {
+    const def = ITEMS[pick(CASH_ITEMS, rng)];
+    outfit[def.slot] = makeCash(def.id, def.slot === 'earring' ? null : color);
+    return;
+  }
+  for (const [slot, inst] of Object.entries(outfit)) if (inst && slot !== 'earring') outfit[slot] = makeCash(inst.id, color);
+}
+
+
 // What world/buddies.js needs to bring people in.
 function hooksFor(bots, world) {
   return {
-    logIn: (who, { here = false } = {}) => spawn(bots, world, { who, here }),
+    logIn: (who, { here = false, map = null, x = null } = {}) => spawn(bots, world, { who, here, at: map ? { map, x } : null }),
+    map: (id) => MAPS[id],
+    towns: () => TOWNS,
+    townLevels: (id) => TOWN_LEVELS[id] ?? [1, 99],
+    dress,
+    travel: (b, town) => {
+      goToPortal(b, MAPS[b.map], 'travel');
+      b.dest = town;
+    },
+    equipFor: (def) => {
+      const inst = makeEquip(def.id, { variance: 0.12, rng: bots.rng, rarity: 1, variant: 'roll' });
+      return { inst, id: def.id, qty: 1, price: Math.max(500, Math.round(variantPrice(def, inst.variant) * 0.7 / 10) * 10) };
+    },
     say: (b, text) => say(b, text),
     shout: (b, text) => shout(b, bots, world, text),
     addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
@@ -415,7 +445,7 @@ export function updateBots(bots, world, dt) {
         bot.timer = 0.6;
         if (rng() < 0.6) say(bot, speak(bots.memory, 'bye', ctx, bot.style, rng) ?? 'bye');
       }
-    } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave', 'duel', 'watch', 'meet', 'follow', 'afk'].includes(bot.state)) {
+    } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave', 'duel', 'watch', 'meet', 'follow', 'afk', 'event', 'dummy', 'hide'].includes(bot.state)) {
       goToPortal(bot, map, 'travel');
     }
     behave(bot, bots, world, map, dt);
@@ -425,7 +455,7 @@ export function updateBots(bots, world, dt) {
       // The busier the town, the less each person talks, so chat stays readable.
       bot.nextLine = (bot.shop ? between(25, 50, rng) : between(30, 75, rng)) * crowd;
       // (Now and then, something about the time: a night owl, a kid home from school.)
-      const line = rng() < 0.15 ? timeLine(serverTime(bots.clock()), rng) : speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng);
+      const line = memeLine(bots, rng) ?? (rng() < 0.15 ? timeLine(serverTime(bots.clock()), rng) : speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng));
       if (line) {
         say(bot, line);
         world.log?.(`${bot.name}: ${line}`, '#e6dcff');
@@ -452,6 +482,7 @@ export function updateBots(bots, world, dt) {
   updateBuddies(bots, world, dt, hooksFor(bots, world));
   updateRaids(bots, world);
   updateDrama(bots, world, dt, hooksFor(bots, world));
+  updateEvents(bots, world, dt, hooksFor(bots, world));
   listen(bots, world);
   deliverReplies(bots, world);
   news(bots, world, dt);
@@ -494,7 +525,9 @@ function depart(bot, bots) {
 
 function arrive(bot, bots, world) {
   const rng = bots.rng;
-  const town = bot.session > 0 ? townFor(bots, bot.level, bot.from) : null;
+  // (Off to somewhere in particular: the wandering merchant's town.)
+  const town = bot.session > 0 ? (bot.dest && townCounts(bots)[bot.dest] < PER_TOWN ? bot.dest : townFor(bots, bot.level, bot.from)) : null;
+  bot.dest = null;
   if (!town) {
     bot.gone = true;
     return;
@@ -801,6 +834,8 @@ function listen(bots, world) {
       if (h.emote) {
         const bot = all[0];
         if (rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'kagura'], rng) });
+      } else if (heardMeme(bots, world, h.words)) {
+        // (They said the meme: chat loses it, world/events.js.)
       } else {
         const words = h.words.toLowerCase();
         const named = all.find((b) => words.includes(b.name.toLowerCase()));
@@ -857,6 +892,7 @@ function bandOf(map) {
 // (A boss's own room, like the Crystal Throne, is huntable while he's on it: players come to raid.)
 function huntable(world) {
   const map = world.map;
+  if (world.invading && !world.dungeon) return true;
   if (map.isTown || map.dungeon || map.trial || world.dungeon || NO_HUNTERS.has(map.id) || (!bandOf(map) && !raidBoss(world))) return false;
   // Online with friends here, the monsters are shared with real players instead.
   return !world.net?.bodies?.(world)?.length;
@@ -871,7 +907,9 @@ function addHunter(bots, world, walkIn = false, who = null) {
   const rng = bots.rng;
   const map = world.map;
   const boss = raidBoss(world);
-  const [lo, hi] = bandOf(map) ?? [Math.max(10, boss.def.level - 6), boss.def.level + 4];
+  const band = bandOf(map) ?? (boss ? [Math.max(10, boss.def.level - 6), boss.def.level + 4] : null);
+  if (!band) return null;
+  const [lo, hi] = band;
   const name = who?.name ?? makeName(bots.names, rng);
   const char = who?.char ?? makeBotCharacter(rng, { name, pro: false, level: Math.max(10, Math.floor(between(lo, hi + 5, rng))) });
   if (char.job === 'novice') return null;
@@ -998,7 +1036,7 @@ function huntersHere(bots, world, dt) {
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
       bot.nextLine = between(40, 90, rng);
-      const line = queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng);
+      const line = memeLine(bots, rng) ?? (queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng));
       if (line) shout(bot, bots, world, line);
     }
   }
