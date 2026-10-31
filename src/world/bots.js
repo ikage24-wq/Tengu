@@ -28,6 +28,7 @@ import { updateRaids, raidBoss, gather } from './raids.js';
 import { isQueen } from './story.js';
 import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
 import { updateEvents, memeLine, heardMeme } from './events.js';
+import { updateLives } from './lives.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -271,6 +272,7 @@ export function createBots(world, rng = Math.random, { clock = () => new Date() 
   // Your friends' and your rival's names are theirs: nobody else turns up with them.
   for (const b of buddiesOf(world.char)) bots.names.add(b.name.toLowerCase());
   if (world.char.rival) bots.names.add(world.char.rival.name.toLowerCase());
+  for (const r of world.char.regulars ?? []) bots.names.add(r.name.toLowerCase());
   // Everyone's already around when you log in.
   const total = onlineNow(bots);
   for (let i = 0; i < total; i++) spawn(bots, world, { quiet: true });
@@ -352,6 +354,7 @@ function hooksFor(bots, world) {
   return {
     logIn: (who, { here = false, map = null, x = null } = {}) => spawn(bots, world, { who, here, at: map ? { map, x } : null }),
     map: (id) => MAPS[id],
+    now: () => bots.clock().getTime(),
     towns: () => TOWNS,
     townLevels: (id) => TOWN_LEVELS[id] ?? [1, 99],
     dress,
@@ -445,7 +448,7 @@ export function updateBots(bots, world, dt) {
         bot.timer = 0.6;
         if (rng() < 0.6) say(bot, speak(bots.memory, 'bye', ctx, bot.style, rng) ?? 'bye');
       }
-    } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave', 'duel', 'watch', 'meet', 'follow', 'afk', 'event', 'dummy', 'hide'].includes(bot.state)) {
+    } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave', 'duel', 'watch', 'meet', 'follow', 'afk', 'event', 'dummy', 'hide', 'life'].includes(bot.state)) {
       goToPortal(bot, map, 'travel');
     }
     behave(bot, bots, world, map, dt);
@@ -483,6 +486,7 @@ export function updateBots(bots, world, dt) {
   updateRaids(bots, world);
   updateDrama(bots, world, dt, hooksFor(bots, world));
   updateEvents(bots, world, dt, hooksFor(bots, world));
+  updateLives(bots, world, dt, hooksFor(bots, world));
   listen(bots, world);
   deliverReplies(bots, world);
   news(bots, world, dt);

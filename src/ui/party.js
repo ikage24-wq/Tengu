@@ -13,6 +13,7 @@ import { MAPS } from '../data/maps.js';
 import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
 import { joinGuild, leaveGuild } from '../world/drama.js';
 import { found, enterShow } from '../world/events.js';
+import { helpOut } from '../world/lives.js';
 
 // ---------- Right-click menu ----------
 
@@ -56,6 +57,7 @@ function menuItems(state, world) {
   if (bot.guildOffer && !world.char.guild) items.push({ label: `Join <${bot.guildOffer}>`, icon: 'crown', run: () => joinGuild(world, bot) });
   if (bot.gm && world.bots.events?.gm?.bot === bot && !world.bots.events.gm.done) items.push({ label: 'Found you!', icon: 'star', run: () => found(world.bots.events, world.bots, world) });
   if (bot.showHost?.phase === 'call' && !bot.showHost.you) items.push({ label: 'Enter fashion show', icon: 'star', run: () => enterShow(world, bot) });
+  if (bot.helpAsk && !bot.party) items.push({ label: 'Help them', icon: 'heart', run: () => helpOut(world.bots, world, bot) });
   if (!isBuddy(world.char, bot.name)) {
     const why = addBlocker(world, bot);
     items.push({ label: 'Add friend', icon: 'friends', why, enabled: !why, run: () => askFriend(world, bot) });

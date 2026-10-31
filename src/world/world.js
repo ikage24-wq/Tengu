@@ -427,6 +427,8 @@ export function killMob(world, m, byParty = false) {
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
   if (m.def.boss) world.onBossDown?.(m);
+  // (Someone you're helping may need this one: world/lives.js.)
+  world.onAnyKill?.(m);
   onMobKilled(world, m);
   // The Monster Book.
   const card = recordBook(char, m.def.id);
