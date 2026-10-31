@@ -3,7 +3,7 @@
 
 import { JOBS } from '../data/jobs.js';
 import { ROLES } from '../data/dungeons.js';
-import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, LEVEL_GAP, PLAYSTYLES } from '../world/party.js';
+import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, PLAYSTYLES } from '../world/party.js';
 import { openProfile } from './profile.js';
 import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
 import { settings } from '../core/settings.js';
@@ -48,8 +48,7 @@ function menuItems(state, world) {
   if (bot.party) items.push({ label: 'Remove from party', icon: 'door', run: () => kick(world.bots, bot, world) });
   else {
     const why = inviteBlocker(world.bots, bot, world);
-    const high = bot.level > world.char.level + LEVEL_GAP;
-    items.push({ label: 'Invite to party', icon: 'heart', why: why ?? (high ? `Lv ${bot.level} is well above you, they'll likely say no` : null), enabled: !why, run: () => invite(world.bots, bot, world) });
+    items.push({ label: 'Invite to party', icon: 'heart', why, enabled: !why, run: () => invite(world.bots, bot, world) });
   }
   if (bot.helped && !bot.thanked) items.push({ label: 'Say thanks', icon: 'heart', run: () => thanked(world.bots, world) });
   if (bot.helpAsk && !bot.party) items.push({ label: 'Help them', icon: 'heart', run: () => helpOut(world.bots, world, bot) });
@@ -115,8 +114,6 @@ const PLAYSTYLE_TEXT = {
   guardian: 'Hunts on their own, picking off monsters near you.',
   sniper: 'Hunts on their own from range, shooting across ledges.',
   healer: 'Hunts on their own and heals you from anywhere on the map.',
-  rookie: 'Still learning: gets distracted and wanders off.',
-  showoff: 'Flashy moves, flips, and taunts.',
 };
 
 // Leaving takes you out of both: your friends' party and the players you invited.

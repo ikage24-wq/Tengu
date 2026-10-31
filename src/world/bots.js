@@ -34,8 +34,7 @@ import { botChat, stale } from './chatlog.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
-import { SPOTS, FISH } from '../data/fishing.js';
-import { DISHES } from '../data/cooking.js';
+import { FISH } from '../data/fishing.js';
 import { MOBS } from '../data/mobs.js';
 import { createBody } from './physics.js';
 import { navOf, surfaceBelow } from './nav.js';
@@ -225,46 +224,6 @@ function titleFor(level, pro, rng) {
 
 // ---------- Shops ----------
 
-const SHOP_TITLES = [
-  (n) => `${n}'s Shop`, (n) => `${n}'s Bargains`, (n) => `${n}'s Treasures`, () => 'Cheap pots!!', () => 'Loot sale ~', () => 'Everything must go',
-  () => 'Rare gear inside', () => '~Cute Shop~', (n) => `${n}'s Loot Pile`, () => 'WTS gear, good prices', () => 'Half price today!', () => 'Mystery bag of stuff',
-  (n) => `${n}'s Corner`, () => 'Fresh from the Cave', () => 'Potions & more', () => 'Starter gear here',
-];
-
-function makeShop(bot, rng) {
-  const char = bot.char;
-  const items = [];
-  const count = 4 + Math.floor(rng() * 4);
-  const drops = Object.values(ITEMS).filter((d) => d.type === 'etc');
-  const pots = Object.values(ITEMS).filter((d) => d.type === 'use' && d.effect);
-  const gear = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.endgame && !d.legacy && Math.abs(d.reqLevel - char.level) <= 15);
-  for (let i = 0; i < count; i++) {
-    const r = rng();
-    if (r < 0.45 && gear.length) {
-      const def = pick(gear, rng);
-      const inst = makeEquip(def.id, { variance: 0.12, rng, rarity: Math.max(rollRarity(rng), rng() < 0.3 ? 1 : 0), variant: 'roll' });
-      const cost = Math.round((variantPrice(def, inst.variant) * (1 + inst.rarity * 0.9) * between(0.6, 1.5, rng)) / 10) * 10;
-      items.push({ inst, id: def.id, qty: 1, price: Math.max(50, cost) });
-    } else if (r < 0.75 && drops.length) {
-      const def = pick(drops, rng);
-      items.push({ id: def.id, qty: Math.floor(between(5, 40, rng)), price: Math.max(5, Math.round(def.price * between(0.9, 2, rng))) });
-    } else {
-      const def = pick(pots, rng);
-      items.push({ id: def.id, qty: Math.floor(between(10, 80, rng)), price: Math.max(10, Math.round(def.price * between(0.7, 1.1, rng))) });
-    }
-  }
-  // A pro might put up one endgame piece at an eye-watering price.
-  if (bot.pro && rng() < 0.6) {
-    const eg = Object.values(ITEMS).filter((d) => d.endgame);
-    const def = pick(eg, rng);
-    items.push({ inst: makeEquip(def.id, { rng, rarity: Math.max(1, rollRarity(rng)) }), id: def.id, qty: 1, price: Math.round(between(400, 1200, rng)) * 1000 });
-  }
-  // No two open shops share a name.
-  let title = pick(SHOP_TITLES, rng)(bot.name).slice(0, 22);
-  for (let i = 0; i < 8 && bot.taken?.has(title); i++) title = pick(SHOP_TITLES, rng)(bot.name).slice(0, 22);
-  return { title, items };
-}
-
 // ---------- Population ----------
 
 // `clock`: the real time by default (tests pin it).
@@ -336,7 +295,6 @@ function spawn(bots, world, { quiet = false, who = null, here = false, at = null
     waved: false, shop: null, appear: quiet ? 0 : 1,
   };
   if (at?.x != null) bot.x = at.x;
-  if (!who && rng() < 0.28) openShop(bot, map, bots);
   bots.list.push(bot);
   return bot;
 }
@@ -394,14 +352,6 @@ export function recruitBot(bots, world, { level, jobs }) {
   };
   bots.list.push(bot);
   return bot;
-}
-
-function openShop(bot, map, bots) {
-  bot.taken = new Set(bots.list.filter((b) => b.shop).map((b) => b.shop.title));
-  bot.shop = makeShop(bot, bots.rng);
-  delete bot.taken;
-  bot.state = 'shop';
-  bot.x = freeX(map, { list: bots.list.filter((b) => b !== bot) }, bots.rng);
 }
 
 function say(bot, text) {
@@ -511,7 +461,6 @@ function goToPortal(bot, map, why) {
   }
   const p = portals.reduce((a, c) => (Math.abs(c.x - bot.x) < Math.abs(a.x - bot.x) ? c : a));
   endChat(bot);
-  bot.fish = null;
   bot.state = 'leave';
   bot.target = p.x;
   bot.why = why;
@@ -555,7 +504,6 @@ function arrive(bot, bots, world) {
     bot.state = 'idle';
     bot.timer = between(1, 3, rng);
   }
-  if (rng() < 0.25) openShop(bot, map, bots);
 }
 
 function behave(bot, bots, world, map, dt) {
@@ -585,20 +533,6 @@ function behave(bot, bots, world, map, dt) {
         bot.state = 'idle';
         bot.timer = between(2, 8, rng);
         then?.();
-      }
-      break;
-    case 'fish':
-      tickFishing(bot, bots, world, dt);
-      break;
-    case 'cook':
-      bot.facing = Math.sign(map.stove - bot.x) || bot.facing;
-      bot.timer -= dt;
-      if (bot.timer <= 0) {
-        const dish = pick(DISHES, rng);
-        if (rng() < 0.7) shout(bot, bots, world, speak(bots.memory, 'cooking', { player: world.char.name }, bot.style, rng) ?? `made ${dish.name}!`);
-        bot.emote = { pose: 'cheer', t: 0, dur: 1 };
-        bot.state = 'idle';
-        bot.timer = between(3, 6, rng);
       }
       break;
     case 'chatwait':
@@ -648,35 +582,12 @@ function behave(bot, bots, world, map, dt) {
 
 // ---------- Town life ----------
 
-// Something to do instead of a stroll: fish off the pier, cook at the stove, go chat with
-// someone, or a little emote. Returns whether they took one up.
+// Something to do instead of a stroll: go chat with someone, or a little emote. Returns whether they took one up.
 function pastime(bot, bots, world, map) {
   const rng = bots.rng;
   const r = rng();
   const here = botsIn(bots, map.id);
-  const spot = SPOTS[map.id]?.[0];
-  if (spot && r < 0.25) {
-    const anglers = here.filter((b) => b.state === 'fish' || b.then?.fishing).length;
-    if (anglers < 3) {
-      const x = spot.x - spot.face * (8 + anglers * 26);
-      bot.state = 'walk';
-      bot.target = x;
-      bot.then = () => startFishing(bot, spot, anglers, rng);
-      bot.then.fishing = true;
-      return true;
-    }
-  }
-  if (map.stove && r < 0.38 && !here.some((b) => b.state === 'cook' || b.then?.cooking)) {
-    bot.state = 'walk';
-    bot.target = map.stove + (rng() < 0.5 ? -20 : 20);
-    bot.then = () => {
-      bot.state = 'cook';
-      bot.timer = between(6, 11, rng);
-    };
-    bot.then.cooking = true;
-    return true;
-  }
-  if (r < 0.62) {
+  if (r < 0.5) {
     const mate = here.find((b) => b !== bot && b.state === 'idle' && !b.shop && Math.abs(b.x - bot.x) < 420 && Math.abs(b.x - world.body.x) > 30);
     if (mate) {
       mate.state = 'chatwait';
@@ -689,54 +600,12 @@ function pastime(bot, bots, world, map) {
       return true;
     }
   }
-  if (r < 0.74) {
+  if (r < 0.65) {
     bot.emote = { pose: pick(['cheer', 'kagura', 'flip', 'roar', 'pray'], rng), t: 0, dur: 1.2 };
     bot.timer = between(3, 7, rng);
     return true;
   }
   return false;
-}
-
-function startFishing(bot, spot, i, rng) {
-  bot.state = 'fish';
-  bot.facing = spot.face;
-  bot.timer = between(25, 70, rng);
-  bot.fish = { bx: spot.bx - spot.face * i * 10, by: spot.by, face: spot.face, phase: 'cast', t: 0.5, pool: spot.pool };
-}
-
-// Cast, wait, a bite, and (mostly) a catch, again and again until they've had enough.
-function tickFishing(bot, bots, world, dt) {
-  const rng = bots.rng;
-  const f = bot.fish;
-  bot.timer -= dt;
-  f.t -= dt;
-  if (f.t > 0) return;
-  if (f.phase === 'cast') {
-    f.phase = 'wait';
-    f.t = between(3, 9, rng);
-  } else if (f.phase === 'wait') {
-    f.phase = 'bite';
-    f.t = 0.7;
-  } else if (f.phase === 'bite') {
-    f.phase = 'catch';
-    f.t = 1;
-    if (rng() < 0.75) {
-      const pool = Object.entries(f.pool);
-      let r = rng() * pool.reduce((a, [, w]) => a + w, 0);
-      const id = pool.find(([, w]) => (r -= w) <= 0)?.[0] ?? pool[0][0];
-      const fish = FISH.find((x) => x.id === id);
-      const size = Math.round(fish.size[0] + (fish.size[1] - fish.size[0]) * rng() ** 1.6);
-      bot.emote = { pose: 'cheer', t: 0, dur: 0.9 };
-      if (rng() < (fish.rarity >= 3 ? 1 : 0.35)) shout(bot, bots, world, fish.rarity >= 3 ? `OMG ${fish.name.toUpperCase()}!! ${size}cm` : pick([`got a ${fish.name} ${size}cm`, `${fish.name}! ${size} cm`, `ooh ${fish.name}`, `another ${fish.name} lol`], rng));
-    } else if (rng() < 0.3) shout(bot, bots, world, pick(['it got away!!', 'nooo', 'missed it lol', 'so close >_<'], rng));
-  } else if (bot.timer <= 0) {
-    bot.fish = null;
-    bot.state = 'idle';
-    bot.timer = between(3, 6, rng);
-  } else {
-    f.phase = 'cast';
-    f.t = 0.6;
-  }
 }
 
 function startChat(bot, mate, bots, world) {
@@ -829,7 +698,7 @@ function deliverReplies(bots, world) {
     if (bot.gone || bot.map !== world.map.id) continue;
     const bx = bot.body?.x ?? bot.x;
     if (bot.body) bot.body.facing = world.body.x < bx ? -1 : 1;
-    else if (!['fish', 'cook', 'shop'].includes(bot.state)) bot.facing = world.body.x < bx ? -1 : 1;
+    else if (bot.state !== 'shop') bot.facing = world.body.x < bx ? -1 : 1;
     // (An answer to you: never held back, though never a repeat either.)
     if (!botChat(world, bot, text, { prefix: bot.party ? '[Party] ' : '', color: bot.party ? '#9fe0b0' : '#e6dcff', important: true })) continue;
     if (pose) {
@@ -969,9 +838,6 @@ function huntersHere(bots, world, dt) {
       // (A boss's own room fills up once the raid gathers.)
       const n = bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
       for (let i = 0; i < n; i++) addHunter(bots, world);
-      // Now and then one of them is a kill stealer.
-      const plain = bots.list.filter((b) => b.hunter && !b.gone && !b.buddy);
-      if (plain.length && rng() < 0.15) pick(plain, rng).rude = { steals: 0 };
     }
   }
   const hunters = bots.list.filter((b) => b.hunter && !b.gone);
@@ -982,7 +848,6 @@ function huntersHere(bots, world, dt) {
   world.onStrangerKill = (id, m) => {
     const bot = hunters.find((b) => b.id === id);
     if (bot) bot.kills = (bot.kills ?? 0) + 1;
-    if (bot?.rude && m && Math.abs(m.x - world.body.x) < 230 && Math.abs(m.y - world.body.y) < 120) return killSteal(bots, world, bot, hunters);
     // (Now and then, about what they just took down.)
     if (bot && m && !bot.bubble && rng() < 0.03) {
       const n = m.def.name;
@@ -995,12 +860,6 @@ function huntersHere(bots, world, dt) {
   if (queen && bots.queenSeen !== queen) {
     bots.queenSeen = queen;
     gather(bots, world, queen, hooksFor(bots, world));
-  }
-  // Now and then someone goes afk where they stand.
-  bots.afkIn = (bots.afkIn ?? between(60, 180, rng)) - dt;
-  if (bots.afkIn <= 0) {
-    bots.afkIn = between(120, 300, rng);
-    fieldAfk(bots, world, hunters);
   }
   // Now and then someone walks in.
   bots.arriveIn -= dt;
@@ -1037,8 +896,7 @@ function huntersHere(bots, world, dt) {
     if (fieldDownOver(bot, world) && bot.state !== 'logout') {
       bot.state = 'logout';
       bot.timer = 0.6;
-      if (bot.diedAfk) say(bot, pick(['wait why am i dead', 'i was AFK!!', 'died while afk lmao'], rng));
-      else if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
+      if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
       const char = bot.char;
       char.hp = computeStats(char).maxHp;
       bots.returns = [...(bots.returns ?? []), { at: world.now + between(40, 100, rng), map: map.id, who: { name: bot.name, char, guild: bot.guild, style: bot.style, title: bot.title } }];
@@ -1059,45 +917,6 @@ function huntersHere(bots, world, dt) {
       const line = (queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : talk(bot, bots, world, rng));
       if (line) shout(bot, bots, world, line);
     }
-  }
-}
-
-// A kill stolen from right under you: they gloat, the others call them out, and after a couple
-// they get the message.
-function killSteal(bots, world, bot, hunters) {
-  const rng = bots.rng;
-  bot.rude.steals += 1;
-  shout(bot, bots, world, pick(['ty for the exp :)', 'finders keepers', 'ks? never heard of it', 'too slow lol', 'mine now'], rng));
-  hunters.filter((b) => b !== bot && !b.down && !b.afk).slice(0, 2).forEach((b, i) => {
-    b.sayAt = world.now + 1.2 + i * 1.5;
-    b.sayShout = true;
-    b.sayLine = pick([`dude thats a KS`, `@${bot.name} not cool`, 'reported', 'go find ur own mobs', `${bot.name} wow. just wow`, 'ignore them, theyre like that'], rng);
-  });
-  if (bot.rude.steals >= 2) {
-    bot.rude = null;
-    bot.sayAt = world.now + 5;
-    bot.sayShout = true;
-    bot.sayLine = pick(['ok ok fine, sorry', 'whatever, this map sucks anyway', 'jeez fine'], rng);
-  }
-}
-
-// Someone out hunting goes afk right where they stand, and the nearest monster has a nibble.
-function fieldAfk(bots, world, hunters) {
-  const rng = bots.rng;
-  const bot = pick(hunters.filter((b) => !b.raid && !b.rude && !b.down && !b.leaving && !b.afk && b.body?.onGround), rng);
-  if (!bot) return;
-  bot.afk = { until: world.now + between(30, 60, rng) };
-  say(bot, pick(['brb', 'afk', 'brb food', 'afk 2 min'], rng));
-  const m = world.mobs.filter((o) => o.hp > 0 && !o.def.boss).sort((a, b) => Math.abs(a.x - bot.body.x) - Math.abs(b.x - bot.body.x))[0];
-  if (m && Math.abs(m.x - bot.body.x) < 300) {
-    m.foe = bot.body;
-    m.foeUntil = bot.afk.until;
-  }
-  const o = hunters.find((b) => b !== bot && !b.down);
-  if (o) {
-    o.sayAt = world.now + between(10, 18, rng);
-    o.sayShout = true;
-    o.sayLine = pick([`lol ${bot.name} is getting eaten`, `${bot.name} ur afk and a monster is chewing on u`, 'rip the afk guy'], rng);
   }
 }
 

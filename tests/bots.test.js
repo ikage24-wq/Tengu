@@ -103,7 +103,7 @@ test('buying from a player shop moves the item and the gold', () => {
   assert.equal(bot.shop, null, 'a sold-out shop closes');
 });
 
-test('parties: players around your level or below join, higher ones decline, and they leave when you do', async () => {
+test('parties: anyone you invite joins (no refusals), and they leave when you do', async () => {
   const { invite, partyMembers, leaveParty, updateParty } = await import('../src/world/party.js');
   const world = createWorld(createCharacter('Me', {}));
   world.log = () => {};
@@ -121,11 +121,8 @@ test('parties: players around your level or below join, higher ones decline, and
   const near = make('near', 24);
   const high = make('high', 40);
   for (const b of [low, near, high]) invite(bots, b, world);
-  // A rigged coin so nobody declines on a whim.
-  bots.rng = () => 0.5;
   for (let i = 0; i < 60; i++) updateParty(bots, world, 0.05);
-  assert.deepEqual(partyMembers(bots).map((b) => b.id).sort(), ['low', 'near']);
-  assert.equal(high.party, undefined, 'too far above you');
+  assert.deepEqual(partyMembers(bots).map((b) => b.id).sort(), ['high', 'low', 'near']);
   leaveParty(bots, world);
   assert.equal(partyMembers(bots).length, 0);
 });
@@ -203,7 +200,7 @@ test('players nearby say hi back, answer a question, and cheer when you level up
   assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo|level/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
 });
 
-test('in town, players fish off the pier, cook, chat with each other, and wear titles and sets', () => {
+test('in town, players chat with each other, and wear titles and sets (no rug shops, fishing or cooking)', () => {
   const world = createWorld(createCharacter('Me', {}));
   quiet(world);
   loadMap(world, 'harbor', 'start');
@@ -214,9 +211,9 @@ test('in town, players fish off the pier, cook, chat with each other, and wear t
     updateBots(bots, world, 0.1);
     for (const b of botsIn(bots, 'harbor')) seen.add(b.state);
   }
-  assert.ok(seen.has('fish'), `someone fished (${[...seen]})`);
-  assert.ok(seen.has('cook'), 'someone cooked');
+  assert.ok(!seen.has('fish') && !seen.has('cook'), `nobody fishes or cooks (${[...seen]})`);
   assert.ok(seen.has('chat'), 'two chatted');
+  assert.ok(!bots.list.some((b) => b.shop), 'no rug shops');
   const rng = seeded(9);
   const chars = Array.from({ length: 60 }, (_, i) => makeBotCharacter(rng, { name: `s${i}`, level: 40 }));
   assert.ok(chars.some((c) => Object.values(c.equipment).some((e) => e?.id.startsWith('set_'))), 'some wear set pieces');
@@ -521,7 +518,8 @@ test('a queen back for a rematch: players gather, dodge and take her moves, and 
       hurt++;
     }
   }
-  const raid = bots.list.filter((b) => b.raid && !b.gone);
+  // (Counting everyone who came: some may have fallen to her by now.)
+  const raid = bots.list.filter((b) => b.raid);
   assert.ok(raid.length >= 3, `players gathered (${raid.length})`);
   assert.ok(lines.some((l) => /Players are gathering/.test(l)));
   assert.ok(hurt > 0, 'her moves (or her touch) caught some of them');
@@ -654,47 +652,6 @@ test('a duel in town: two players spar with real moves, a crowd gathers, and som
   assert.ok(lines.some((l) => /won the duel/.test(l)), 'a winner');
   assert.ok(poses.size >= 3, `moves traded (${[...poses].join(', ')})`);
   assert.ok(!bots.list.some((b) => ['duel', 'watch'].includes(b.state)), 'everyone back to normal');
-});
-
-test('a kill stealer takes the monster you were on, and gets called out', async () => {
-  const { spawnMob } = await import('../src/world/mobs.js');
-  const { createBody } = await import('../src/world/physics.js');
-  const world = createWorld(createCharacter('Me', {}));
-  const lines = quiet(world);
-  world.god = true;
-  world.char.level = 25;
-  const bots = createBots(world, seeded(99), { clock: EVENING });
-  world.bots = bots;
-  loadMap(world, 'woods', 'start');
-  updateBots(bots, world, 0.05);
-  bots.list = bots.list.filter((b) => !b.hunter);
-  world.mobs = [];
-  const mine = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 60, y: world.map.groundY });
-  mine.hp = Math.ceil(mine.def.hp * 0.3);
-  mine.def = { ...mine.def, speed: 0, atk: 0 };
-  world.mobs.push(mine);
-  const mk = (id, dx, rude) => {
-    const char = makeBotCharacter(seeded(id.length * 7), { name: id, level: 40, jobs: ['warrior'], pro: false });
-    const b = { id, name: id, char, level: 40, hunter: true, map: world.map.id, x: world.body.x + dx, facing: -1, state: 'hunt', body: createBody(world.body.x + dx, world.body.y), session: 999, stay: 999, nextLine: 999, appear: 0, rude: rude ? { steals: 0 } : null };
-    bots.list.push(b);
-    return b;
-  };
-  const rude = mk('Grabby', 160, true);
-  mk('Fair', 420, false);
-  mk('Nice', -420, false);
-  for (let t = 0; t < 15 && mine.hp > 0; t += 1 / 30) {
-    updateWorld(world, 1 / 30, NONE);
-    updateBots(bots, world, 1 / 30);
-  }
-  assert.ok(mine.hp <= 0 && mine.credited, 'they took it');
-  for (let t = 0; t < 5; t += 1 / 30) {
-    updateWorld(world, 1 / 30, NONE);
-    updateBots(bots, world, 1 / 30);
-  }
-  const talk = spoken(world, lines);
-  assert.ok(/exp|finders|never heard|too slow|mine now/.test(talk), 'they gloat');
-  assert.ok(/ks|not cool|reported|own mobs|wow|ignore/.test(talk), 'and get called out');
-  void rude;
 });
 
 // ---------- Server events and celebrations ----------

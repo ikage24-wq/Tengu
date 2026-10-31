@@ -18,8 +18,6 @@ import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
 import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt } from './townhouses.js';
 import { ITEMS } from '../data/items.js';
-import { SPOTS } from '../data/fishing.js';
-import { drawFriendFishing } from './fishing.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -1241,7 +1239,7 @@ function shadow(ctx, x, y, slope = 0) {
 // How steep the ground is under someone at world x.
 const groundSlope = (map, wx) => (groundAt(map, wx + 6) - groundAt(map, wx - 6)) / 12;
 
-// A player's shop: a picnic rug with a few wares, and their shop's name on a board above them.
+// The wandering merchant's shop: a picnic rug with a few wares, and their shop's name on a board above them.
 function shopBooth(ctx, x, gy, bot, time, hovered) {
   const rugW = 46;
   ctx.fillStyle = '#ffd6ea';
@@ -1291,36 +1289,13 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    const gy = snap(floorFor(map, bot) - cam.y);
+    const gy = snap(groundAt(map, bot.x) - cam.y);
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
-    // Fishing off the pier: the rod, the line and the bobber; cooking: steam off the pot.
-    if (bot.fish) drawFriendFishing(ctx, bot.fish, x, gy, cam, time);
-    if (bot.state === 'cook') {
-      for (let i = 0; i < 3; i++) {
-        const u = (time * 0.6 + i / 3) % 1;
-        ctx.globalAlpha = 0.55 * Math.sin(u * Math.PI);
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(snap(map.stove - cam.x) + Math.sin(time * 2 + i) * 3, gy - 30 - u * 22, 3 + u * 3, 0, TAU);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    }
     // Name tags further than a few steps away fade back, so a busy street stays readable.
     const far = player && Math.abs(bot.x - player.x) > 150;
     drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
-}
-
-// Where a player in town stands: on the pier when they're out fishing on it, else the ground.
-function floorFor(map, bot) {
-  const spot = (bot.fish || bot.then?.fishing) && SPOTS[map.id]?.[0];
-  if (spot) {
-    const pier = map.platforms.find((p) => Math.abs(p.y - spot.y) < 4 && bot.x >= p.x && bot.x <= p.x + p.w);
-    if (pier) return pier.y;
-  }
-  return groundAt(map, bot.x);
 }
 
 // One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
@@ -1381,18 +1356,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   // A friend's tag is sky blue.
   const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.buddy ? 'rgba(50,110,190,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
   box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null, r: 5, width: 1 });
-  // Little badges beside the tag: a legend, someone afk.
-  const badge = (word, fill, side) => {
-    ctx.font = 'bold 5.5px sans-serif';
-    const tw = ctx.measureText(word).width + 6;
-    const bx = side < 0 ? x - w / 2 - tw - 2 : x + w / 2 + 2;
-    box(ctx, bx, y + 3.5, tw, 7, { fill, edge: '#ffffff', r: 3.5, width: 0.8 });
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.fillText(word, bx + tw / 2, y + 9);
-    ctx.font = 'bold 7px sans-serif';
-  };
-  if (bot.afk && bot.body && !bot.down) badge('AFK', '#9c90b4', 1);
+
   if (bot.party) {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();

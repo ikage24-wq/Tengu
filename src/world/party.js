@@ -59,19 +59,10 @@ function answer(bots, bot, world) {
   const rng = bots.rng;
   const ctx = { player: world.char.name, level: bot.level };
   bot.invite = null;
-  let mood = null;
   // The party may have filled up while they were thinking it over.
   if (partyMembers(bots).length >= PARTY_MAX) {
     say(bot, 'aw party full');
     world.log(`${bot.name} couldn't join: your party is full.`, '#ffb3c6');
-    return;
-  }
-  if (bot.level > world.char.level + LEVEL_GAP) mood = 'tooHigh';
-  else if (bot.shop) mood = 'shopBusy';
-  else if (rng() < 0.15) mood = 'declined';
-  if (mood) {
-    say(bot, speak(bots.memory, mood, ctx, bot.style, rng));
-    world.log(`${bot.name} declined your party invite.`, '#ffb3c6');
     return;
   }
   joinParty(bots, bot, world);
@@ -88,8 +79,8 @@ export function joinParty(bots, bot, world) {
   bot.leaving = null;
   bot.state = 'party';
   bot.map = world.map.id;
-  // They'll stay a good while, but not forever.
-  bot.session = Math.max(bot.session, 0) + between(600, 1500, bots.rng);
+  // They stay as long as you keep them.
+  bot.session = Infinity;
   bot.body = bot.body && bot.map === world.map.id ? bot.body : createBody(bot.x, groundAt(world.map, bot.x));
   bot.stats = computeStats(bot.char);
   bot.stuck = 0;
@@ -133,8 +124,6 @@ export function kick(bots, bot, world) {
 //   Guardian  steady and tough, picks off monsters closer to you
 //   Sniper    fights from range, shooting up and down ledges
 //   Healer    heals you from anywhere on the map, chips in with spells
-//   Rookie    a bit lost: gets distracted and wanders off to look at things
-//   Show-off  flashy: flips and taunts between fancy attacks
 // Each also has its own reaction speed, rhythm, walking pace, and idle habits.
 
 export const PLAYSTYLES = {
@@ -142,8 +131,6 @@ export const PLAYSTYLES = {
   guardian: { label: 'Guardian', color: '#5aa8ff' },
   sniper: { label: 'Sniper', color: '#3fc48a' },
   healer: { label: 'Healer', color: '#f0b53a' },
-  rookie: { label: 'Rookie', color: '#c9a6ff' },
-  showoff: { label: 'Show-off', color: '#ff8fc1' },
 };
 
 function weaponStyle(bot) {
@@ -172,21 +159,15 @@ function pick2(list) {
 export function makeAI(bot, rng, kind = null) {
   const st = weaponStyle(bot);
   const family = JOBS[bot.char.job].family;
-  kind ??= bot.level < 12 && rng() < 0.6 ? 'rookie'
-    : bot.pro && rng() < 0.6 ? 'showoff'
-    : bot.char.job === 'beastmaster' ? (rng() < 0.6 ? 'showoff' : 'sniper')
-    : st.ranged ? (rng() < 0.75 ? 'sniper' : 'showoff')
+  kind ??= st.ranged ? 'sniper'
     : bot.char.job === 'paladin' ? (rng() < 0.8 ? 'guardian' : 'rusher')
-    : bot.char.job === 'berserker' ? (rng() < 0.8 ? 'rusher' : 'showoff')
-    : bot.char.job === 'shinobi' ? (rng() < 0.7 ? 'rusher' : 'showoff')
+    : bot.char.job === 'berserker' || bot.char.job === 'shinobi' ? 'rusher'
     : rng() < 0.55 ? 'rusher' : 'guardian';
   const base = {
     rusher: { keep: 0.6, react: [0.12, 0.25], rhythm: [0.6, 0.95], special: 0.22, habits: ['roar', 'cheer'] },
     guardian: { keep: 0.7, react: [0.15, 0.3], rhythm: [0.9, 1.3], special: 0.12, habits: ['guard', 'roar'] },
     sniper: { keep: 0.85, react: [0.18, 0.35], rhythm: [0.95, 1.35], special: 0.15, habits: ['aimshot', 'cheer'] },
     healer: { keep: 0.9, react: [0.2, 0.4], rhythm: [1.2, 1.8], special: 0.1, habits: ['pray', 'cheer'] },
-    rookie: { keep: 0.5, react: [0.3, 0.7], rhythm: [1.1, 1.8], special: 0.04, habits: ['cheer', 'flip'] },
-    showoff: { keep: 0.65, react: [0.12, 0.22], rhythm: [0.75, 1.1], special: 0.35, habits: ['flip', 'roar', 'cheer'] },
   }[kind];
   return {
     kind, ...base, weapon: st,
@@ -222,10 +203,8 @@ function huntTarget(bot, world, members) {
     if (m.hp <= 0 || skip(m)) continue;
     // Players out hunting on their own (not in your party) leave the monsters by you alone, so
     // nobody steals your kills; a queen back for a rematch draws them all in.
-    if (!bot.party && !rescue && !bot.rude && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
+    if (!bot.party && !rescue && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
     let score = Math.abs(m.x - body.x) + Math.abs(m.y - body.y) * 3;
-    // (A kill stealer: the monsters you're on, the ones you've worn down most of all.)
-    if (bot.rude) score = Math.abs(m.x - you.x) + Math.abs(m.y - you.y) * 3 + (m.hp / m.def.hp) * 240 + score * 0.1;
     if (rescue) score = (Math.abs(m.x - you.x) + Math.abs(m.y - you.y) * 3) * 2 + score * 0.2;
     if (!bot.party && m.def.boss) score -= 600;
     if (members.some((o) => o !== bot && o.brain?.target === m)) score += 300;
@@ -249,13 +228,7 @@ function hunt(bot, world, members, rng) {
   const body = bot.body;
   const st = ai.weapon;
   const nav = navOf(world.map);
-  // Rookies get distracted now and then and go look at something instead.
-  const distracted = ai.kind === 'rookie' && br.goal?.mode === 'wander' && world.now < br.wanderUntil;
-  const target = distracted ? null : huntTarget(bot, world, members);
-  if (target && target !== br.target && ai.kind === 'rookie' && rng() < 0.2) {
-    br.target = null;
-    return wander(bot, world, nav, rng);
-  }
+  const target = huntTarget(bot, world, members);
   br.target = target;
   // Come to help with nothing to fight by you: they run over to you.
   if (!target && helping(bot, world) && !bot.gave) {
@@ -361,14 +334,7 @@ function think(bot, world, members, rng) {
   const mine = b.x + ai.side * off;
   const home = clampX(world.map, mine) === mine ? mine : b.x - ai.side * off;
   br.target = null;
-  // Rookies sometimes wander off to look at something, and stick with it for a few seconds;
-  // everyone else settles into their spot by you, with a little drift.
-  if (br.goal?.mode === 'wander' && world.now < br.wanderUntil && Math.abs(body.x - br.goal.x) > 8) return;
-  if (ai.kind === 'rookie' && rng() < 0.025) {
-    br.goal = { x: clampX(world.map, b.x + between(-140, 140, rng)), y: b.y, mode: 'wander' };
-    br.wanderUntil = world.now + between(3, 6, rng);
-    return;
-  }
+  // They settle into their spot by you, with a little drift.
   const drift = br.still > 4 ? Math.sin(world.now * 0.4 + bot.slot) * 16 : 0;
   br.goal = { x: home + drift, y: b.y, mode: 'follow' };
 }
@@ -546,17 +512,10 @@ function fight(bot, m, world, intent, rng) {
     step.tune = (step.tune ?? 1) * f.boost;
     f.boost = null;
   }
-  // Now and then they fluff it like anyone does: a swing the wrong way at thin air, or a step
-  // carried right off the ledge (rookies most of all).
-  const clumsy = bot.ai.kind === 'rookie' ? 0.08 : 0.025;
-  if (rng() < clumsy) {
-    body.facing = -toward;
-    play(bot, { ...step, strikes: step.strikes.map((s) => ({ ...s, pct: 0, burst: undefined })) }, m, world, rng);
-    if (!bot.bubble && rng() < 0.5) say(bot, pick2(['lag', 'wat', 'missed lol', '??', 'wrong way oops', 'my hands slipped']));
-  } else play(bot, step, m, world, rng);
+  play(bot, step, m, world, rng);
   // Stepping in (or hopping back) carries them along until the first blow, like you.
   const first = (step.carry ?? step.strikes[0]?.at ?? 0.4) * step.dur;
-  if (step.step) bot.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: world.now + first, slip: rng() < clumsy * 2 };
+  if (step.step) bot.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: world.now + first };
   // The beat after it: a chained step flows on; a finisher, a skill, or the end of a string
   // takes a breath (longer for a calmer player).
   const breath = step.last ? between(bot.ai.rhythm[0], bot.ai.rhythm[1], rng) * 0.2 : 0;
@@ -621,7 +580,7 @@ function land(bot, world, mob, delay, range, fields, rng) {
 // Players hunting on their own never catch the monsters by you (unless they came to help).
 function fair(bot, world, mob) {
   const you = world.body;
-  return bot.party || bot.rude || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
+  return bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
 }
 
 // ---------- The priestesses' own spells ----------
@@ -704,7 +663,7 @@ const SPECIALS = {
 
 // ---------- Raids: a queen's moves ----------
 // Her moves are drawn on the ground a moment before they land (world/story.js). Most players see
-// them coming and step out or jump (rookies, not so often); whoever's standing in one when it goes
+// them coming and step out or jump (most of the time); whoever's standing in one when it goes
 // off takes the hit.
 
 function dodge(bot, world, intent, rng) {
@@ -719,7 +678,7 @@ function dodge(bot, world, intent, rng) {
     bot.dodged ??= new WeakSet();
     if (bot.dodged.has(z)) continue;
     bot.dodged.add(z);
-    if (rng() > (bot.ai.kind === 'rookie' ? 0.4 : 0.8)) continue;
+    if (rng() > 0.8) continue;
     const away = Math.sign(body.x - (z.kind === 'lane' ? z.x + z.w / 2 : z.x)) || 1;
     const jump = z.kind === 'lane' && z.low;
     bot.dodge = { until: world.now + (jump ? 0.25 : 0.7), intent: { left: !jump && away < 0, right: !jump && away > 0, jump, up: false, down: false } };
@@ -759,22 +718,16 @@ export function joinCombo(bot, world, delay) {
 function carry(bot, world, dt, rng) {
   const body = bot.body;
   const L = bot.lunge;
-  if (bot.oops && body.onGround) {
-    bot.oops = false;
-    if (!bot.bubble && rng() < 0.7) say(bot, pick2(['oops', 'LOL i fell', 'nooo my combo', 'who moved the ledge', 'that was on purpose']));
-  }
   if (!L) return;
   if (world.now >= L.until || bot.down) {
     bot.lunge = null;
-    if (L.slip && !body.onGround) bot.oops = true;
     return;
   }
   let x = body.x + L.v * dt;
   const nav = navOf(world.map);
   const s = nav.surfaces[surfaceOf(nav, body)];
-  if (s && !L.slip) x = Math.max(s.x1 + 6, Math.min(s.x2 - 6, x));
+  if (s) x = Math.max(s.x1 + 6, Math.min(s.x2 - 6, x));
   body.x = clampX(world.map, x);
-  if (L.slip && !body.onGround) bot.oops = true;
 }
 
 // ---------- Monsters fight back (out in the field) ----------
@@ -813,7 +766,7 @@ function takeHits(bot, world, dt, rng) {
     }
   }
   // A potion when they get low.
-  if (bot.hp > 0 && bot.hp < max * 0.35 && world.now >= (bot.potionAt ?? 0) && !(bot.afk && world.now < bot.afk.until)) {
+  if (bot.hp > 0 && bot.hp < max * 0.35 && world.now >= (bot.potionAt ?? 0) ) {
     bot.potionAt = world.now + 1.5;
     if (bot.potions > 0) {
       bot.potions -= 1;
@@ -836,8 +789,7 @@ function fall(bot, world, rng) {
   bot.attack = null;
   bot.lunge = null;
   bot.brain.target = null;
-  say(bot, bot.afk ? pick2(['...', 'zzz']) : pick2(['x_x', 'noooo', 'rip me', 'i died lol', 'LAG', 'how', 'that snail hits hard wtf', 'brb dying']));
-  if (bot.afk) bot.diedAfk = true;
+  say(bot, pick2(['x_x', 'noooo', 'rip me', 'i died lol', 'LAG', 'how', 'that snail hits hard wtf', 'brb dying']));
   if (bot.party) world.log(`${bot.name} died! They'll be back in a bit.`, '#ff8fa8');
 }
 
@@ -875,12 +827,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   const br = bot.brain;
   const body = bot.body;
   takeHits(bot, world, dt, rng);
-  const afk = bot.afk && world.now < bot.afk.until;
-  if (bot.afk && !afk && !bot.down) {
-    say(bot, bot.hp < bot.stats.maxHp * 0.5 ? pick2(['back... why is my hp so low', 'who attacked me while i was gone', 'back! wait what']) : pick2(['back', 'back, what did i miss', 'ok im back']));
-    bot.afk = null;
-  }
-  if (bot.down || afk) {
+  if (bot.down) {
     stepBody(body, map, { left: false, right: false, up: false, down: false, jump: false }, dt, { speed: 0, jump: 0 });
     bot.attack = null;
     bot.x = body.x;
@@ -910,7 +857,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   const m = br.target;
   const st = bot.ai.weapon;
   // (A monster that's wandered over to you is yours now.)
-  if (m && !m.def.boss && !bot.rude && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
+  if (m && !m.def.boss && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
   if (!bot.leaving && br.target && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
     fight(bot, m, world, intent, rng);
   }
@@ -988,11 +935,6 @@ export function updateParty(bots, world, dt) {
       br.goal = null;
       br.target = null;
       br.think = 0.2 + i * 0.15;
-    }
-    if (bot.session <= 0) {
-      dismiss(bots, bot, world);
-      world.log(`${bot.name} left the party.`, '#d4cbe8');
-      return;
     }
     const body = bot.body;
     bot.stats ??= computeStats(bot.char);
