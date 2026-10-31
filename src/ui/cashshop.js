@@ -13,14 +13,14 @@ import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, 
 import { itemTooltip } from './tooltips.js';
 
 // The slots the shop sells for (none of its lines makes earrings).
-const LABEL = { hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings', weapon: 'Weapon' };
+const LABEL = { hat: 'Hat', face: 'Face', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings', weapon: 'Weapon' };
 const SLOTS = OUTFIT_SLOTS.filter((slot) => CASH_ITEMS.some((id) => ITEMS[id].slot === slot));
 const LABELS = SLOTS.map((slot) => LABEL[slot]);
 const COLS = 4;
 const ROWS = 3;
 const PINK = '#d0559a';
 
-const STYLE_LABELS = ['All', 'Casual', 'Swim', 'Funny'];
+const STYLE_LABELS = ['All', 'Casual', 'Swim', 'Funny', 'Outfits', 'Fancy'];
 
 // The catalog for a slot: the casual, swim, and funny lines, cheapest first in each.
 const styleRank = (d) => OUTFIT_STYLES.indexOf(d.style);
@@ -60,7 +60,7 @@ export function cashShopWindow(ui, state, world) {
   // Slots and catalog.
   const rx = win.x + 128;
   const was = `${win.cat}|${win.style}`;
-  win.style = Math.min(tabs(ui, rx, win.y + 24, STYLE_LABELS, Math.min(win.style ?? 0, STYLE_LABELS.length - 1), { w: 53, h: 12 }), STYLE_LABELS.length - 1);
+  win.style = Math.min(tabs(ui, rx, win.y + 24, STYLE_LABELS, Math.min(win.style ?? 0, STYLE_LABELS.length - 1), { w: 34.7, h: 12 }), STYLE_LABELS.length - 1);
   win.cat = Math.min(win.cat, SLOTS.length - 1);
   // Two rows of slot tabs act as one set: a click in either row picks that slot.
   const in1 = win.cat < 4 ? win.cat : -1;

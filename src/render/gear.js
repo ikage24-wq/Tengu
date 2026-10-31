@@ -65,7 +65,7 @@ function matFor(piece) {
 const done = (shapes, piece) => finish(shapes.filter(Boolean), matFor(piece));
 // Hanging cloth is drawn at rest and bent as a chain (kit.js `hang`) from its root.
 const STILL = (m) => ({ ...m, sway: 0, hair: 0 });
-const HANGS = new Set(['warrior', 'archer', 'mage', 'starter']);
+const HANGS = new Set(['warrior', 'archer', 'mage', 'starter', 'costume']);
 const lowest = (shapes) => Math.max(...shapes.filter(Boolean).map((s) => (s.t === 'r' ? s.y + s.h : s.t === 'e' ? s.y + s.ry : Math.max(...s.pts.map((q) => q[1] + s.y)))));
 
 // Standing still, nothing swaying.

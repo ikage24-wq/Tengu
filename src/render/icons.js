@@ -60,9 +60,9 @@ function wornShapes(def, variant) {
   const pc = pieceOf(def, variant);
   const skin = '#fff0e6';
   switch (def.slot) {
-    case 'hat': return [...hatBackShapes(def.design, pc.color, pc), ...hatShapes(def.design, pc.color, pc)];
+    case 'hat': case 'face': return [...hatBackShapes(def.design, pc.color, pc), ...hatShapes(def.design, pc.color, pc)];
     case 'top': {
-      const sleeve = sleeveColor(def.design, pc.color, pc);
+      const sleeve = sleeveColor(def.design, pc.color, pc) === 'skin' ? skin : sleeveColor(def.design, pc.color, pc);
       const arms = [[10.4, 7.6], [20.8, 23.6]].flatMap(([sx, hx]) => [limb(sx, 28.2, hx, 35.6, 4.2, 3.4, sleeve), ...offset(shoulderShapes(pc, sx < 15 ? -1 : 1), sx, 28.2)]);
       return [...arms, ...topShapes(def.design, pc.color, pc)];
     }

@@ -24,6 +24,8 @@ const lum = (hex) => {
 };
 // White details turn to the second cloth on white pieces so they still show.
 const pale = (p) => (lum(p.main) > 0.85 ? p.second : WHITE);
+// The wearer's skin (set by the hero renderer), for swimsuits' bare shoulders and midriffs.
+const skinOf = (p) => p.skin ?? '#fff0e6';
 
 // ---------- Shape helpers ----------
 
@@ -103,14 +105,21 @@ const TOPS = {
   pinafore: (p) => [T(TORSO, SHIRT), ...[27.6, 30, 32.4].map((y) => band(TORSO, y, y + 0.8, '#ff9ec0')),
     T([[MID - 3.4, 29.6], [MID + 3.4, 29.6], [MID + 4.2, 35.8], [MID - 4.2, 35.8]], p.main), R(MID - 4.4, 25.8, 1.4, 4.4, p.main), R(MID + 3, 25.8, 1.4, 4.4, p.main),
     button(MID - 3.4, 30.4, GOLD), button(MID + 3.4, 30.4, GOLD), R(MID - 1.6, 31.4, 3.2, 2.4, p.dark), heart(MID, 32.4, 0.9, pale(p))],
-  // Swim tops cover the whole torso: frills, tiers, and stripes say "swimsuit".
-  onepiece: (p) => [T(TORSO, p.main), ...dots([[11.6, 31], [19.6, 30.6], [MID, 32], [13, 33.4], [18.4, 33.6]], 0.6, pale(p)),
-    frill(9.8, 21.6, 26, 9.4, 22, 29.4, 5, 0.9, pale(p)), band(TORSO, 33.6, 34.8, p.dark), ...tieBow(19.6, 34.2, p.dark)],
-  bikini: (p) => [T(TORSO, p.main), frill(9.8, 21.6, 30.4, 9, 22.4, 34.6, 6, 0.9, p.light), frill(9.8, 21.6, 26, 9.2, 22.2, 31, 6, 1, p.main),
-    ...dots([[12, 28.4], [17, 28], [19.8, 29.4], [13.6, 32.6], [18.6, 32.8]], 0.55, pale(p)), ...tieBow(MID, 26.8, pale(p))],
-  dotbikini: (p) => [T(TORSO, p.main), ...dots([[11.6, 28.4], [19.4, 28.2], [13.2, 31.4], [18, 31.6], [11.4, 34], [MID, 33.8], [19.8, 34]], 0.75, pale(p)),
-    F(T([[MID - 2.6, 26.2], [MID + 2.6, 26.2], [MID, 28.4]], p.dark)), E(MID, 29.6, 1.2, 1.2, GOLD), F(E(MID, 29.6, 0.55, 0.55, p.main)), frill(9.6, 21.6, 34.6, 9.4, 21.8, 36.6, 6, 0.6, pale(p))],
-  tankini: (p) => [T(TORSO, p.main), ...[28.4, 30.8].map((y) => band(TORSO, y, y + 1.1, pale(p))), crew(p.dark),
+  // Swimsuits show the wearer's skin (p.skin) at the shoulders and midriff, cut cute and modest:
+  // ruffles, bows, polka dots and stripes say "swimsuit".
+  // A one-piece with a sweetheart neckline, ruffled straps, dots and a bow at the hip.
+  onepiece: (p) => [T(TORSO, skinOf(p)), side(TORSO, 12, -1, shade(skinOf(p), -10)), band(TORSO, 28.6, 35.8, p.main), E(12.9, 28.9, 3.1, 1.3, p.main), E(18.3, 28.9, 3.1, 1.3, p.main),
+    frill(9.8, 21.6, 28.2, 9.6, 21.8, 29.6, 7, 0.4, pale(p)), F(limb(12.2, 28.4, 12.4, 25.8, 0.8, 0.7, p.main)), F(limb(19, 28.4, 18.8, 25.8, 0.8, 0.7, p.main)),
+    ...dots([[11.6, 31.4], [19.6, 31], [MID, 32.4], [13, 33.8], [18.4, 34]], 0.6, pale(p)), band(TORSO, 34, 35, p.dark), ...tieBow(19.6, 34.5, pale(p))],
+  // A ruffled bandeau with a bow in the middle; the midriff shows.
+  bikini: (p) => [T(TORSO, skinOf(p)), side(TORSO, 12, -1, shade(skinOf(p), -10)), band(TORSO, 27.6, 30.8, p.main), frill(9.8, 21.6, 30, 9.2, 22.2, 32.2, 7, 0.6, p.light),
+    ...dots([[12, 28.8], [17.6, 28.6], [20.2, 29.4]], 0.5, pale(p)), ...tieBow(MID, 28.6, pale(p)), F(E(MID, 33.8, 0.25, 0.35, shade(skinOf(p), -24)))],
+  // A polka-dot halter: two cups, a ring in the middle, straps tied behind the neck.
+  dotbikini: (p) => [T(TORSO, skinOf(p)), side(TORSO, 12, -1, shade(skinOf(p), -10)),
+    T([[MID - 0.6, 27.8], [10.4, 28.6], [10.2, 31.4], [MID - 0.6, 31]], p.main), T([[MID + 0.6, 27.8], [20.8, 28.6], [21, 31.4], [MID + 0.6, 31]], p.main),
+    ...dots([[12, 29.4], [13.6, 30.4], [18, 29.6], [19.6, 30.6]], 0.55, pale(p)), F(limb(11, 28.6, MID - 1.4, 25.6, 0.6, 0.5, p.main)), F(limb(20.2, 28.6, MID + 1.4, 25.6, 0.6, 0.5, p.main)),
+    E(MID, 29.4, 1.1, 1.1, GOLD), F(E(MID, 29.4, 0.5, 0.5, skinOf(p))), F(E(MID, 33.8, 0.25, 0.35, shade(skinOf(p), -24)))],
+  tankini: (p) => [T(TORSO, skinOf(p)), band(TORSO, 27.8, 35.8, p.main), ...[29.2, 31.4].map((y) => band(TORSO, y, y + 1.1, pale(p))), F(limb(12.4, 28, 12.6, 25.8, 0.8, 0.7, p.main)), F(limb(18.8, 28, 18.6, 25.8, 0.8, 0.7, p.main)),
     frill(9.6, 21.6, 33.4, 8.4, 22.8, 37.6, 5, 0.8, p.main), F(R(9.6, 33.4, 12, 0.6, pale(p))), F(T([[20, 30.8], [21, 30.3], [20.6, 31.8]], RED))],
   rashguard: (p) => [T(TORSO, p.main), side(TORSO, 11.6, -1, p.dark), side(TORSO, 19.6, 1, p.dark),
     T([[9.8, 31.4], [12, 30], [14, 31.2], [16, 30], [18, 31.2], [20, 30], [21.6, 31.2], [21.6, 32.4], [20, 31.2], [18, 32.4], [16, 31.2], [14, 32.4], [12, 31.2], [9.8, 32.6]], pale(p)),
@@ -118,7 +127,8 @@ const TOPS = {
 };
 
 // Upper-arm colors (the forearm is bare unless longSleeves).
-const SLEEVES = { varsity: (p) => pale(p), sweatervest: () => SHIRT, sailor: () => WHITE, pinafore: () => SHIRT, chef: (p) => p.main };
+// 'skin': a bare arm.
+const SLEEVES = { onepiece: () => 'skin', bikini: () => 'skin', dotbikini: () => 'skin', tankini: () => 'skin', varsity: (p) => pale(p), sweatervest: () => SHIRT, sailor: () => WHITE, pinafore: () => SHIRT, chef: (p) => p.main };
 const LONG = new Set(['stripes', 'cardigan', 'varsity', 'flannel', 'track', 'sweatervest', 'parka', 'raincoat', 'chef', 'rashguard']);
 
 // Puffs and ruffles over the shoulder (drawn at the shoulder joint).
@@ -126,9 +136,9 @@ const ruffle = (p, c) => [E(0, 0.6, 2.6, 2.2, p.main), frill(-2.6, 2.6, 1.2, -3.
 const SHOULDERS = {
   idol: (p) => [E(0, 0.4, 3, 2.6, p.main), F(E(-0.6, -0.4, 1.2, 0.8, p.light)), frill(-2.8, 2.8, 2, -3.4, 3.4, 4, 3, 0.6, pale(p))],
   parka: (p) => [E(0, 0.6, 2.8, 2.6, p.main), F(R(-2.6, 1.6, 5.2, 0.5, p.dark))],
-  onepiece: (p) => ruffle(p, pale(p)),
-  bikini: (p) => ruffle(p, p.light),
-  dotbikini: (p) => [E(0, 0.6, 2.4, 2, p.main), ...tieBow(0, 0.2, pale(p))],
+  onepiece: (p) => [frill(-1.8, 1.8, -0.8, -2.2, 2.2, 1.2, 3, 0.4, pale(p))],
+  bikini: () => [],
+  dotbikini: () => [],
 };
 
 // ---------- Bottoms ----------
@@ -216,8 +226,11 @@ const HATS = {
   },
   headphones: (p) => [hoop(15.5, 13, 12.6, 12.2, 10.8, 10.4, p.main, 162, 378), E(4.4, 17.4, 2.6, 3.6, p.main), E(26.6, 17.4, 2.6, 3.6, p.main),
     F(E(4.4, 17.4, 1.4, 2.2, p.light)), F(E(26.6, 17.4, 1.4, 2.2, p.light)), heart(26.6, 17.2, 1, pale(p))],
-  glasses: (p) => [F(hoop(11.2, 18.2, 3.1, 3.3, 2.3, 2.5, p.main)), F(hoop(19.8, 18.2, 3.1, 3.3, 2.3, 2.5, p.main)), F(R(14.2, 17.2, 2.6, 0.7, p.main)),
-    F(R(5.6, 16.8, 2.6, 0.7, p.main)), F(R(22.8, 16.8, 2.6, 0.7, p.main)), F(E(13, 16.6, 0.45, 0.45, WHITE)), F(E(21.6, 16.6, 0.45, 0.45, WHITE))],
+  // Round wire glasses: thin rims with a lit top edge, a curved bridge, nose pads, a glint on each lens.
+  glasses: (p) => [...[11.2, 19.8].flatMap((x) => [F(hoop(x, 18.2, 3.1, 3.2, 2.5, 2.6, p.main)), F(hoop(x, 18.2, 3, 3.1, 2.6, 2.7, shade(p.main, 40), 200, 320, 6)),
+    F(limb(x - 1.6, 16.8, x - 0.4, 15.9, 0.45, 0.35, WHITE)), F(E(x + 1.3, 19.6, 0.3, 0.3, WHITE))]),
+    F(hoop(15.5, 18.2, 1.6, 1.4, 1.1, 0.9, p.main, 200, 340, 6)), F(E(13.9, 19.8, 0.4, 0.5, '#e6eef8')), F(E(17.1, 19.8, 0.4, 0.5, '#e6eef8')),
+    F(R(5.4, 17, 2.8, 0.6, p.main)), F(R(22.8, 17, 2.8, 0.6, p.main))],
   catears: (p, m) => {
     const s = m.hair * 0.4;
     const ear = [T([[5, 6], [6.6 + s, -3], [12, 2.4]], p.main), F(T([[6.6, 4.4], [7.2 + s, -0.6], [10.2, 2.4]], '#ffc2d6'))];

@@ -1,0 +1,57 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every Cash Shop accessory (hats, face pieces, capes and back pieces from the casual,
+// funny and accessory lines) on the hero, facing right then left. ?slot=hat|face|cape picks a
+// slot, ?line=casual|fun|acc a line, ?style=swim a style, ?z= zooms, ?cols= sets the columns.
+import { drawHero } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { CASUAL_LOOKS } from '../src/data/outfits-casual.js';
+import { FUN_LOOKS } from '../src/data/outfits-fun.js';
+import { ACC_LOOKS } from '../src/data/outfits-acc.js';
+import '../src/data/cash.js';
+
+const q = new URLSearchParams(location.search);
+const SLOTS = (q.get('slot') ?? 'face,hat,cape').split(',');
+const LINES = { casual: CASUAL_LOOKS, fun: FUN_LOOKS, acc: ACC_LOOKS };
+const LIST = Object.entries(LINES).filter(([k]) => !q.get('line') || q.get('line').split(',').includes(k))
+  .flatMap(([family, list]) => list.filter((e) => SLOTS.includes(e.slot) && (!q.get('style') || e.style === q.get('style'))).map((e) => ({ ...e, family })))
+  .sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+const Z = Number(q.get('z') ?? 3.4);
+const CW = 40 * Z;
+const CH = 52 * Z;
+const COLS = Number(q.get('cols') ?? 3);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * 2 * COLS;
+canvas.height = (CH + 20) * Math.ceil(LIST.length / COLS);
+ctx.fillStyle = '#2a2440';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+LIST.forEach((e, i) => {
+  const gear = {};
+  for (const slot of [e.slot, ...(e.covers ?? [])]) gear[slot] = { id: `look_${e.family}_${e.key}_${slot}` };
+  [1, -1].forEach((facing, j) => {
+    const x0 = ((i % COLS) * 2 + j) * CW;
+    const y0 = Math.floor(i / COLS) * (CH + 20);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0 + 2, y0 + 2, CW - 4, CH - 4);
+    ctx.fillStyle = (i % 2) ? '#d4e8f0' : '#c2dce8';
+    ctx.fill();
+    ctx.clip();
+    nextFrame();
+    setHd(true, Z);
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
+    const look = { hairStyle: ['pixie', 'hime', 'candy', 'crewcut', 'wolfsleek', 'fluffybob'][i % 6], hairColor: ['#e8a0b8', '#3a3550', '#ffd08a', '#6a4a38', '#8fb8ff', '#ff9a6a'][i % 6], skinTone: i % 4 === 2 ? '#c98e66' : '#fbeee4', eyeColor: '#4a7ad8', face: 'smile', outfit: 'casual', outfitColor: '#c9b8f0' };
+    drawHero(ctx, look, gear, (x0 + CW / 2) / Z, (y0 + CH) / Z + (['hat', 'face'].includes(e.slot) ? 8 : -2), { pose: 'idle', time: 0.6 + j * 0.9, facing, alpha: 1 });
+    ctx.restore();
+  });
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = e.draft ? '#ffe36b' : '#e8e4f4';
+  ctx.font = 'bold 12px Segoe UI, sans-serif';
+  ctx.fillText(`${e.name}${e.draft ? ' (new)' : ''}`, (i % COLS) * 2 * CW + 6, Math.floor(i / COLS) * (CH + 20) + CH + 14);
+});
+window.done = true;
+</script></body></html>

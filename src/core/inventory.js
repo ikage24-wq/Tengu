@@ -70,7 +70,7 @@ export function removeItem(inv, id, qty = 1) {
 
 // Tidies a tab: partial stacks of the same item merge, then items line up by kind. Equipment
 // goes by slot, then highest level and rarity first; stackables follow the catalogue's order.
-const SLOT_ORDER = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
+const SLOT_ORDER = ['weapon', 'hat', 'face', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
 let catalogue = null;
 export function sortTab(inv, tab) {
   const list = inv[tab];

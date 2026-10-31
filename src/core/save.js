@@ -57,6 +57,15 @@ export function dropRetiredItems(char) {
   for (const b of Object.values(char.hotkeys ?? {})) if (b?.item && RENAMED_ITEMS[b.item]) b.item = RENAMED_ITEMS[b.item];
   for (const [slot, inst] of Object.entries(char.equipment)) if (inst && !ITEMS[inst.id]) char.equipment[slot] = null;
   for (const [slot, inst] of Object.entries(char.outfit ?? {})) if (inst && !ITEMS[inst.id]) char.outfit[slot] = null;
+  // An outfit piece that moved slot (glasses went from the hat slot to the face slot) moves with it,
+  // or back to the Cash tab if that slot is taken.
+  for (const [slot, inst] of Object.entries(char.outfit ?? {})) {
+    const to = inst && ITEMS[inst.id].slot;
+    if (!to || to === slot) continue;
+    char.outfit[slot] = null;
+    if (char.outfit[to]) char.inventory.cash.push(inst);
+    else char.outfit[to] = inst;
+  }
   for (const tab of Object.keys(char.inventory)) char.inventory[tab] = char.inventory[tab].filter((e) => ITEMS[e.id]);
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.item && !ITEMS[b.item]) char.hotkeys[code] = null;
   return char;

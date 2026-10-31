@@ -26,7 +26,7 @@ test('the cash catalog covers every outfit slot with real looks', () => {
     for (const [slot, look] of Object.entries({ [def.slot]: def.skin, ...def.covers })) {
       if (!look) continue;
       const pc = pieceOf(ITEMS[look]);
-      const shapes = { hat: () => hatShapes(pc.design, pc.color, pc), top: () => topShapes(pc.design, pc.color, pc), bottom: () => skirtShapes(pc.design, pc.color, pc) ?? [legLook(pc.design, pc.color, '#fff', pc)], shoes: () => legShapes(11, { top: '#fff', low: '#fff' }, pc, false), gloves: () => handShapes(10, 30, pc, '#fff'), cape: () => capeShapes(pc.design, pc.color, 0, 0, pc), earring: () => earringShapes(pc.design, pc.color, pc) }[slot]();
+      const shapes = { hat: () => hatShapes(pc.design, pc.color, pc), face: () => hatShapes(pc.design, pc.color, pc), top: () => topShapes(pc.design, pc.color, pc), bottom: () => skirtShapes(pc.design, pc.color, pc) ?? [legLook(pc.design, pc.color, '#fff', pc)], shoes: () => legShapes(11, { top: '#fff', low: '#fff' }, pc, false), gloves: () => handShapes(10, 30, pc, '#fff'), cape: () => capeShapes(pc.design, pc.color, 0, 0, pc), earring: () => earringShapes(pc.design, pc.color, pc) }[slot]();
       assert.ok(shapes.length, `${id} draws its ${slot}`);
     }
   }
@@ -108,4 +108,12 @@ test('the Cash Shop never sells a costume of something that drops, but old ones 
   for (const id of ['cash_mage_hat_100', 'cover_holy', 'cover_20', 'cash_bunny_hood', 'cash_sundress']) {
     assert.ok(ITEMS[id]?.retired && !CASH_ITEMS.includes(id), `${id} is off the shelf but still known`);
   }
+});
+
+test('glasses moved to the face slot leave the hat slot of an old save for the face slot', async () => {
+  const { dropRetiredItems } = await import('../src/core/save.js');
+  const char = { equipment: {}, outfit: { hat: { uid: 1, id: 'cash_casual_glasses' } }, inventory: { equip: [], use: [], etc: [], cash: [] } };
+  dropRetiredItems(char);
+  assert.equal(char.outfit.hat, null);
+  assert.equal(char.outfit.face.id, 'cash_casual_glasses');
 });

@@ -194,7 +194,10 @@ function resolveGear(look, gear) {
     const def = inst ? ITEMS[inst.id] : null;
     // The starting outfit pieces are drawn as the outfit picked in the creator.
     if (def?.starterOutfit) return starter;
-    return def ? pieceOf(def, inst.variant ?? null) : fallback;
+    if (!def) return fallback;
+    // Outfit lines can show the wearer's skin (a swimsuit's bare shoulders and midriff).
+    const pc = pieceOf(def, inst.variant ?? null);
+    return pc.pal ? { ...pc, pal: { ...pc.pal, skin: look.skinTone ?? '#fff0e6' } } : pc;
   };
   const dressed = !own || Boolean(gear.top);
   const under = own ? basics : starter;
@@ -221,13 +224,15 @@ function resolveGear(look, gear) {
     // Outfits whose sleeves cover the hands draw them as their own gloves.
     gloves: piece('gloves', starterHasHands(style) && dressed ? starter : null),
     earring: piece('earring', null),
+    // Glasses, masks and stickers: an outfit-only slot, drawn over the face and under the hat.
+    face: piece('face', null),
     weapon,
   };
 }
 
 function gearKey(gear) {
   if (!gear) return '-';
-  return ['top', 'bottom', 'shoes', 'gloves', 'hat', 'cape', 'earring'].map((s) => (gear[s] ? `${gear[s].id}${gear[s].variant ? `:${gear[s].variant}` : ''}` : '')).join(',');
+  return ['top', 'bottom', 'shoes', 'gloves', 'hat', 'face', 'cape', 'earring'].map((s) => (gear[s] ? `${gear[s].id}${gear[s].variant ? `:${gear[s].variant}` : ''}` : '')).join(',');
 }
 
 // ---------- Head ----------
@@ -1067,6 +1072,7 @@ function headShapes(look, g, rig) {
   const out = [];
   const hairNow = hairOf(look, rig);
   if (!tucked) out.push(...hairNow.head);
+  if (g.face) out.push(...hatBackShapes(g.face.design, g.face.color, g.face, m));
   if (hat) out.push(...hatBackShapes(hat.design, hat.color, hat, m));
   // Facing the screen: a round head with soft full cheeks, an ear peeking out on each side, big
   // eyes set low and wide apart, blush under each eye and a small mouth in the middle. The skin
@@ -1160,6 +1166,7 @@ function headShapes(look, g, rig) {
     const ring = offset(earringShapes(g.earring.design, g.earring.color, g.earring), -1.6, 0);
     out.push(...ring, ...mirror(ring));
   }
+  if (g.face) out.push(...hatShapes(g.face.design, g.face.color, g.face, m));
   if (hat) out.push(...hatShapes(hat.design, hat.color, hat, m));
   return out;
 }
@@ -1231,10 +1238,16 @@ const LEFT_LEG = 11.4;
 const RIGHT_LEG = 16.6;
 const LEG_MID = (LEFT_LEG + RIGHT_LEG) / 2;
 
+// A top's sleeve colour; 'skin' is a bare arm (swimsuits, leotards, off-shoulder gowns).
+const sleeveOf = (top, skin) => {
+  const c = sleeveColor(top.design, top.color, top);
+  return c === 'skin' ? skin : c;
+};
+
 function bodyShapes(look, g, rig) {
   const skin = look.skinTone ?? '#fff0e6';
   const top = g.top;
-  const sleeve = sleeveColor(top.design, top.color, top);
+  const sleeve = sleeveOf(top, skin);
   const long = longSleeves(top.design, top);
   const legs = legLook(g.bottom.design, g.bottom.color, skin, g.bottom);
   const m = motionOf(rig);
@@ -2706,7 +2719,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const sy = (py) => top + (py + OY) * scale;
 
   const skin = look.skinTone ?? '#fff0e6';
-  const sleeve = sleeveColor(g.top.design, g.top.color, g.top);
+  const sleeve = sleeveOf(g.top, skin);
   const long = longSleeves(g.top.design, g.top);
   // A bow being drawn (`mv.pull`) is drawn without its straight string; the string is bent back
   // to the draw hand live, with the arrow on it (see drawString).

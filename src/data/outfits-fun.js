@@ -9,7 +9,7 @@ export const FUN_LOOKS = [
   // Hats.
   { key: 'cone', name: 'Traffic Cone Hat', slot: 'hat', style: 'funny', cash: 800, color: '#ff8a3c', colors: false },
   { key: 'paperbag', name: 'Paper Bag Disguise', slot: 'hat', style: 'funny', cash: 800, color: '#d9b07a', colors: false },
-  { key: 'groucho', name: 'Nose & Mustache Glasses', slot: 'hat', style: 'funny', cash: 900, color: '#2b2233', colors: false },
+  { key: 'groucho', name: 'Nose & Mustache Glasses', slot: 'face', style: 'funny', cash: 900, color: '#2b2233', colors: false },
   { key: 'clownwig', name: 'Rainbow Clown Wig', slot: 'hat', style: 'funny', cash: 1200, color: '#ff5a6a', colors: false },
   { key: 'fishbowl', name: 'Fishbowl Helmet', slot: 'hat', style: 'funny', cash: 1400, color: '#d8f2ff', colors: false },
   { key: 'chickenhat', name: 'Roosting Chicken Hat', slot: 'hat', style: 'funny', cash: 1100, color: '#ffffff', colors: false },

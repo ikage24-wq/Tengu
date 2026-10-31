@@ -32,17 +32,19 @@ const CELL = 24;
 const SLOT = 22;
 const TAB_KEYS = ['equip', 'use', 'etc', 'cash'];
 const TAB_NAMES = ['Equip', 'Use', 'Etc', 'Cash'];
-const SLOT_NAMES = { hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring' };
+const SLOT_NAMES = { hat: 'Hat', face: 'Face', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring' };
 const GREEN = '#2f9f58';
 const MINT = THEMES.mint;
 const LAV = THEMES.lavender;
 
 // The paper doll: four slots down each side of the hero.
 const LEFT = ['hat', 'top', 'bottom', 'shoes'];
+// The outfit doll has a face slot too (glasses, masks), under the hat.
+const OUTFIT_LEFT = ['hat', 'face', 'top', 'bottom', 'shoes'];
 const RIGHT = ['weapon', 'gloves', 'cape', 'earring'];
 
 // What an empty slot shows, greyed.
-const SLOT_GHOST = { hat: 'hat_0', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'ear_5' };
+const SLOT_GHOST = { hat: 'hat_0', face: 'look_casual_glasses_face', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'ear_5' };
 
 // Short stat names for the compare chips, in the order they show.
 const STAT_SHORT = { watk: 'ATK', matk: 'M.ATK', wdef: 'DEF', mdef: 'M.DEF', str: 'STR', dex: 'DEX', int: 'INT', luk: 'LUK', hp: 'HP', mp: 'MP', acc: 'ACC', eva: 'AVD', speed: 'SPD', jump: 'JMP' };
@@ -162,8 +164,10 @@ export function bagWindow(ui, state, world) {
   }
   const target = tryOn && ((tab === 'equip' && !outfit) || (tab === 'cash' && outfit)) ? ITEMS[tryOn.id].slot : null;
   const worn = outfit ? char.outfit ?? {} : char.equipment;
-  [...LEFT.map((s, i) => [s, lx + 4, i]), ...RIGHT.map((s, i) => [s, lx + lw - 4 - SLOT, i])].forEach(([slot, x, i]) => {
-    dollSlot(ui, state, world, slot, x, oy + 51 + i * 29, worn[slot], outfit, slot === target, win);
+  const left = outfit ? OUTFIT_LEFT : LEFT;
+  const step = outfit ? 24 : 29;
+  [...left.map((s, i) => [s, lx + 4, i]), ...RIGHT.map((s, i) => [s, lx + lw - 4 - SLOT, i])].forEach(([slot, x, i]) => {
+    dollSlot(ui, state, world, slot, x, oy + 51 + i * step, worn[slot], outfit, slot === target, win);
   });
 
   // Your totals, and how they'd change with the piece you're trying on.

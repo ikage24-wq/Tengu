@@ -1,0 +1,51 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the full outfits (data/outfits-costume.js) on the hero, standing, mid-walk and facing
+// left. ?only=yukata,gothic picks; ?z= zooms.
+import { drawHero } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import '../src/data/cash.js';
+import { COSTUME_LOOKS } from '../src/data/outfits-costume.js';
+
+const q = new URLSearchParams(location.search);
+const LIST = q.get('only') ? COSTUME_LOOKS.filter((e) => q.get('only').split(',').includes(e.key)) : COSTUME_LOOKS;
+const VIEWS = [['idle', 1], ['walk', 1], ['idle', -1]];
+const Z = Number(q.get('z') ?? 4);
+const CW = 36 * Z;
+const CH = 64 * Z;
+const COLS = Number(q.get('cols') ?? 2);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * VIEWS.length * COLS;
+canvas.height = (CH + 22) * Math.ceil(LIST.length / COLS);
+ctx.fillStyle = '#2a2440';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+LIST.forEach((e, i) => {
+  const gear = {};
+  for (const slot of [e.slot, ...(e.covers ?? [])]) gear[slot] = { id: `look_costume_${e.key}_${slot}` };
+  VIEWS.forEach(([pose, facing], j) => {
+    const x0 = ((i % COLS) * VIEWS.length + j) * CW;
+    const y0 = Math.floor(i / COLS) * (CH + 22);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0 + 2, y0 + 2, CW - 4, CH - 4);
+    ctx.fillStyle = (i % 2) ? '#d4e8f0' : '#c2dce8';
+    ctx.fill();
+    ctx.clip();
+    nextFrame();
+    setHd(true, Z);
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
+    const look = { hairStyle: ['hime', 'candy', 'fluffybob', 'crewcut', 'sidecrop', 'princess', 'slickback', 'ponytail', 'wolf', 'wavylong', 'curtains90', 'odango'][i % 12], hairColor: ['#3a3550', '#f2d0e0', '#ffb38a', '#6a4a38', '#8a5a3a', '#e8c060', '#2a2440', '#ff9ac0', '#3a2a24', '#ff9a6a', '#6a4a38', '#f2f2ff'][i % 12], skinTone: i % 3 === 1 ? '#c98e66' : '#fbeee4', eyeColor: '#4a7ad8', face: 'smile' };
+    drawHero(ctx, look, gear, (x0 + CW / 2) / Z, (y0 + CH) / Z - 3, { pose, time: 1.2 + j * 0.37, facing, alpha: 1 });
+    ctx.restore();
+  });
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#e8e4f4';
+  ctx.font = 'bold 13px Segoe UI, sans-serif';
+  ctx.fillText(e.name, (i % COLS) * VIEWS.length * CW + 6, Math.floor(i / COLS) * (CH + 22) + CH + 15);
+});
+window.done = true;
+</script></body></html>

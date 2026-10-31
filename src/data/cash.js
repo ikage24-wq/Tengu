@@ -11,10 +11,13 @@
 import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, ENDGAME_THEMES, UNIQUE_IDS } from './items.js';
 import { CASUAL_LOOKS } from './outfits-casual.js';
 import { FUN_LOOKS } from './outfits-fun.js';
+import { COSTUME_LOOKS } from './outfits-costume.js';
+import { ACC_LOOKS } from './outfits-acc.js';
 
-export const OUTFIT_SLOTS = ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring', 'weapon'];
-// Shop styles: everyday clothes, beachwear, silly stuff, and the fantasy costumes and covers.
-export const OUTFIT_STYLES = ['casual', 'swim', 'funny'];
+// `face` is an outfit-only slot (glasses, masks, stickers), so they can be worn under any hat.
+export const OUTFIT_SLOTS = ['hat', 'face', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring', 'weapon'];
+// Shop styles: everyday clothes, beachwear, silly stuff, full outfits, and fancy accessories.
+export const OUTFIT_STYLES = ['casual', 'swim', 'funny', 'costume', 'fancy'];
 
 // Cash a hero starts with, and earns per level and per quest.
 export const STARTING_CASH = 5000;
@@ -31,14 +34,15 @@ function add(def) {
 // The casual, swim, and funny lines. Each piece wears a hidden "look" item per slot it dresses
 // (its own, plus any it covers, like a onesie's legs), drawn by that line's module with the
 // entry's index as its design.
-for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS]]) {
+for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS], ['costume', COSTUME_LOOKS], ['acc', ACC_LOOKS]]) {
   list.forEach((e, t) => {
     const look = (slot) => {
       const id = `look_${family}_${e.key}_${slot}`;
       ITEMS[id] = { id, name: e.name, type: 'look', slot, design: 'job', family, tier: t, color: e.color, colors: e.colors };
       return id;
     };
-    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color };
+    // (A draft is drawn but not sold yet.)
+    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color, ...(e.draft ? { retired: true } : {}) };
     if (e.slot === 'weapon') add({ ...base, cover: { fun: family, t } });
     else add({ ...base, skin: look(e.slot), ...(e.covers?.length ? { covers: Object.fromEntries(e.covers.map((s) => [s, look(s)])) } : {}) });
   });
