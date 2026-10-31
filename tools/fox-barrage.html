@@ -7,7 +7,8 @@
 //   (default)       live: she holds attack; ?zoom=3
 //   ?manual         stepped from outside: window.go(secs) holds attack that long (0 lets go) and
 //                   draws; window.strip(n, dt) draws the next n frames, dt apart, side by side
-//   ?sheet&heat=0.5 every barrage pose drawn at 8 moments of its motion, a row each
+//   ?sheet&heat=0.5 every barrage pose drawn at 7 moments of its motion, a row each (&moves=a,b
+//                   for just those, &cols=n for more moments)
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { spawnMob } from '../src/world/mobs.js';
@@ -85,10 +86,12 @@ const label = (s, x, y) => {
 const Z = Number(q.get('zoom') ?? 3);
 if (q.has('sheet')) {
   const heat = Number(q.get('heat') ?? 0.5);
-  const moves = [...STREAM_MOVES];
-  const cols = 7;
-  const cw = 150;
-  const rh = 125;
+  const moves = q.get('moves')?.split(',') ?? [...STREAM_MOVES];
+  const cols = Number(q.get('cols') ?? 7);
+  // (&z=5 draws them bigger.)
+  const sz = Number(q.get('z') ?? 3);
+  const cw = 50 * sz;
+  const rh = 42 * sz;
   canvas.width = 130 + cols * cw;
   canvas.height = moves.length * rh;
   ctx.fillStyle = '#3a3346';
@@ -99,10 +102,10 @@ if (q.has('sheet')) {
     for (let i = 0; i < cols; i++) {
       const p = i / (cols - 1);
       nextFrame();
-      ctx.setTransform(3, 0, 0, 3, 0, 0);
-      setHd(true, 3);
-      const x = (130 + i * cw + cw / 2) / 3;
-      const y = (r * rh + rh - 14) / 3;
+      ctx.setTransform(sz, 0, 0, sz, 0, 0);
+      setHd(true, sz);
+      const x = (130 + i * cw + cw / 2) / sz;
+      const y = (r * rh + rh - 14) / sz;
       ctx.fillStyle = '#4a4258';
       ctx.fillRect(x - 15, y, 30, 1);
       drawHero(ctx, c.appearance, gear, x, y, { pose: kind, progress: p, dur: 0.1, time: 1 + i * 0.1, facing: 1, alpha: 1, job: 'kitsune', hit: 0.4, flow: { t0: 1 + r * 0.37 + p * 0.1, heat } });

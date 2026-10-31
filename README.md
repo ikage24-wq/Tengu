@@ -682,9 +682,12 @@ to clear it.
     each throw a free star with hers), **Fox-Fire Trap** (a ring of fox fire on the ground that
     burns them, then bursts), **Fox Hop** (springs back out of reach, leaving a decoy of fox fire
     that bursts), **Kitsune Mastery**, **Endless Fox-Fire** (a passive: hold attack and fox-fire
-    stars fly hand over hand without stopping, faster and faster, through four stages: her fox
-    sign, a trickster's no-look throws and pirouettes, spinning inside a wheel of fox fire, and
-    floating over a circle of fox fire; let go for a fox-moon star through the line), and the
+    stars fly hand over hand without stopping, faster and faster, and her tails wake one stage at
+    a time: one tail lit as she deals stars like cards, three for a trickster's spin throws,
+    behind-the-back throws, hop-backs and lazy lobs, six as she spins inside a wheel of fox fire,
+    and all nine as she floats over a circle of fox fire, until a giant fox spirit looms over her
+    and stars pour from its mouth too; let go and she rises to whip a fox-moon star through the
+    line as the fox of blue fire pounces after it), and the
     finisher **Nine-Tail Blaze** (needs all nine
     tails: nine stars rain down burning, then a giant fox of blue fire pounces through the line).
 - **HD graphics** — on by default (Options: Display). Everything in the world is placed on the

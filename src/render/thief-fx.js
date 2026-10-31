@@ -73,8 +73,8 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
     case 'foxsign': {
       // Endless Fox-Fire: a star leaving her fox sign pops a little fox face of fox fire there.
       const pop = p < 0.25 ? 0.6 + 1.6 * p : 1;
-      fxSprite(ctx, 'celembfox', x + (f.dir || 1) * 4, y, { p: 0.6, scale: 0.2 * pop, alpha: p > 0.55 ? (1 - p) / 0.45 : 1 });
-      fxSprite(ctx, 'celfoxfire', x, y + 5, { t: p * 0.6, scale: 0.16, alpha: p > 0.5 ? (1 - p) / 0.5 : 1 });
+      fxSprite(ctx, 'celembfox', x + (f.dir || 1) * 4, y, { p: 0.6, scale: 0.14 * pop, alpha: p > 0.55 ? (1 - p) / 0.45 : 1 });
+      fxSprite(ctx, 'celfoxfire', x, y + 4, { t: p * 0.6, scale: 0.12, alpha: p > 0.5 ? (1 - p) / 0.5 : 1 });
       return true;
     }
     case 'inkbrush': {
@@ -87,6 +87,14 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
     case 'leaflaunch': {
       // An arrow peeling off the Beastmaster's gale of leaves: a gust off the leaf.
       fxSprite(ctx, 'celwindhit', x, y, { p, scale: 0.3 });
+      return true;
+    }
+    case 'tailwake': {
+      // Endless Fox-Fire reaching a new stage: another tail wakes, a burst of fox fire where it
+      // grows from (behind her hips) and a ring racing out at her feet.
+      const pop = p < 0.3 ? p / 0.3 : 1;
+      fxSprite(ctx, 'celfoxhit', x, y - 14, { p, scale: (f.big ? 0.7 : 0.5) * pop });
+      groundRing(ctx, 'celringfox', x + (f.dir || 1) * 8, y, p, f.big ? 80 : 56);
       return true;
     }
     case 'wisplaunch': {

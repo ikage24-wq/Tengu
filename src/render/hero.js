@@ -903,11 +903,12 @@ function liveFace(look, state, mv) {
   const pose = state.pose ?? 'idle';
   if (state.down) return { spiral: 1 + (beat(8) % 4) * 1.5, mouth: beat(3) % 2 ? 'wavy' : 'o', brows: [[0.3, -0.5], [0.3, -0.5]], extra: [`orbit${beat(8) % 8}`] };
   // Endless Fox-Fire: her face builds with the barrage, not with each throw (that would flicker):
-  // focused, then fierce, then a thrilled fanged grin, then flat out, laughing.
+  // a fox spirit at play, never strained: sly, then playful (a cheeky tongue now and then), then a
+  // thrilled fanged grin, then flat out, laughing.
   if (mv && state.flow) {
     const h = state.flow.heat;
-    if (h < 0.45) return { lid: 0.3, cross: 0.5, mouth: 'grit', brows: [[-0.3, 0.7], [-0.3, 0.7]] };
-    if (h < 0.9) return { lid: 0.12, cross: 0.6, mouth: beat(5) % 2 ? 'yell' : 'grit', brows: [[-0.2, 0.9], [-0.2, 0.9]] };
+    if (h < 0.45) return { lid: 0.2, mouth: 'smirk', brows: [[0, 0.3], [0.5, -0.2]] };
+    if (h < 0.9) return { lid: 0.1, mouth: beat(5) % 3 ? 'grin' : 'tongue', brows: [[0.3, 0.2], [0.5, -0.1]] };
     if (h < 1.4) return { lid: 0.05, mouth: beat(4) % 3 ? 'fang' : 'D', brows: [[0.1, 0.6], [0.1, 0.6]] };
     return { mouth: beat(4) % 2 ? 'D' : 'grin', brows: [[0.6, 0.1], [0.6, 0.1]], closed: beat(3) % 4 === 0 ? true : null };
   }

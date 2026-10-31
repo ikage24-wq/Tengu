@@ -36,7 +36,7 @@ import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
 import { tickGuardian } from './kitsune.js';
-import { launchWisp } from './foxwheel.js';
+import { launchWisp, foxSpirit, FOX_SPIRIT_HEAT } from './foxwheel.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
 import { tickTengu } from './tengu.js';
@@ -779,7 +779,7 @@ export const barrageHeat = (b, held) => Math.min(1, held / b.ramp) + 0.6 * Math.
 // beat looses (`strike`), anything else it does on a beat (`beat`), and the finisher (`finish`).
 // A figure plays for its own length (a little quicker as it speeds up) while the beats keep the
 // barrage's rate; never the same figure twice running.
-const FOX_SIGNS = new Set(['foxsign2', 'foxfloat2']);
+const FOX_SIGNS = new Set(['foxdeal2', 'foxfloat2']);
 // The Shinobi's cuts, by figure: their reach and the arc of the ink they leave.
 const INK_CUTS = {
   inkjab: { reach: 62, h: 46, pierce: true, targets: 2 },
@@ -798,19 +798,22 @@ const INK_CUTS = {
 export const STREAMS = {
   kitsune: {
     skill: 'foxbarrage', school: 'fox', hover: true,
-    figures: { foxsign: 0.24, foxsign2: 0.24, foxtease: 0.36, foxtwirl: 0.42, foxwink: 0.34, foxwheel: 0.5, foxwheel2: 0.5, foxfloat: 0.62, foxfloat2: 0.62, foxairthrow: 0.3, foxairspin: 0.36 },
+    figures: { foxdeal: 0.28, foxdeal2: 0.28, foxspin: 0.42, foxbehind: 0.4, foxhopback: 0.42, foxlob: 0.36, foxwheel: 0.5, foxwheel2: 0.5, foxfloat: 0.62, foxfloat2: 0.62, foxairthrow: 0.3, foxairspin: 0.36 },
     stages: [
-      { at: 0, figures: ['foxsign', 'foxsign2'] },
-      { at: 0.45, figures: ['foxsign', 'foxsign2', 'foxtease', 'foxtwirl', 'foxwink'] },
-      { at: 0.9, figures: ['foxwheel', 'foxwheel2', 'foxtwirl'] },
+      { at: 0, figures: ['foxdeal', 'foxdeal2'] },
+      { at: 0.45, figures: ['foxdeal', 'foxspin', 'foxbehind', 'foxhopback', 'foxlob'] },
+      { at: 0.9, figures: ['foxwheel', 'foxwheel2', 'foxspin'] },
       { at: 1.25, figures: ['foxfloat', 'foxfloat2'] },
       { at: 1.55, figures: ['foxfloat', 'foxfloat2'] },
     ],
     air: (heat) => (heat >= 0.9 ? ['foxairthrow', 'foxairspin'] : ['foxairthrow']),
     ready: (world) => Boolean(activeStar(world.char)),
-    strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
+    // (On the ground her throws come from the hip, lower than a bow hand.)
+    strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, oy: air ? 0 : 5, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
+    // The finisher: she rises onto her toes, arms swept wide, and whips the fox moon out as the
+    // giant fox spirit pounces through the line with it (`spirit`, barrageRelease).
     finish: (b, pct, k, air) => ({
-      move: air ? 'airthrow' : 'heavethrow', dur: air ? 0.4 : 0.56, step: air ? 0 : 6, hang: air, finisher: true,
+      move: air ? 'foxairthrow' : 'foxmoonrise', dur: air ? 0.4 : 0.62, step: air ? 0 : 6, hang: air, finisher: true, spirit: true,
       strikes: [{ at: air ? 0.5 : 0.52, shot: 'foxmoon', pct, range: 320, h: air ? 190 : 80, drop: air ? 60 : 0, targets: 3, pierce: true, speed: 880, knock: 190, big: true, stop: 0.04 + 0.03 * k, shake: Math.round(1 + 2 * k) }],
     }),
   },
@@ -911,7 +914,8 @@ function barrageThrow(world, b, rng = Math.random) {
   // Each new stage flares up in the path's colour round her, harder the higher it goes.
   const stage = spec.stages.findLastIndex((s) => heat >= s.at);
   if (stage > run.stage) {
-    world.fx.push({ kind: 'powerup', school: spec.school, x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
+    if (kind === 'kitsune') world.fx.push({ kind: 'tailwake', x: body.x - body.facing * 8, y: body.y, dir: body.facing, t: 0, dur: 0.6, big: stage >= 3 });
+    else world.fx.push({ kind: 'powerup', school: spec.school, x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
     if (stage >= 3) world.juice.push({ type: 'shake', mag: 1, dur: 0.15 });
   }
   run.stage = stage;
@@ -976,6 +980,13 @@ export function barrageRelease(world) {
   playStep(world, step, 100, air ? 'basicair1' : 'basic2');
   // The Shinobi's last cut leaves a giant brush stroke of ink along the line.
   if (step.brush) world.fx.push({ kind: 'inkbrush', x: world.body.x + world.body.facing * 70, y: world.body.y - 24, len: 200, dir: world.body.facing, big: true, t: -0.56 * step.dur * 0.9, dur: 0.6, seed: Math.random() });
+  // The Kitsune's: the giant fox of blue fire pounces through the line with the moon, bigger the
+  // longer she held.
+  if (step.spirit) {
+    const at = step.strikes[0].at * step.dur;
+    world.fx.push({ kind: 'flamefoxpounce', x: world.body.x + world.body.facing * 40, y: world.body.y, dir: world.body.facing, r: 100 + 70 * k, t: -at, dur: at + 0.9 });
+    world.juice.push({ type: 'shake', mag: 1 + 2 * k, dur: 0.25, delay: at });
+  }
   // The Beastmaster's: Snow wolf brings the moon down on them as the gale arrow flies.
   if (step.moon) {
     const m = pickTargets(world.mobs, world.body, { w: 340, h: 120 }, 1)[0];
@@ -1800,11 +1811,14 @@ function fire(world, strike) {
   // Endless Fox-Fire: from the Wheel on, the stars peel off the wisp of fox fire swinging round
   // toward them; a star from her fox sign pops a fox face of fire there.
   if ((s.wheel || s.leaf) && world.barrage) {
-    const wisp = launchWisp(world.barrage.heat, world.now - world.barrage.since, s.dir, !s.leaf);
-    ox = body.x + wisp.x;
-    oy = body.y + wisp.y;
+    const run = world.barrage;
+    const wisp = launchWisp(run.heat, world.now - run.since, s.dir, !s.leaf);
+    // (At the very top, every other star leaves from the fox spirit's mouth instead.)
+    const spirit = !s.leaf && run.heat >= FOX_SPIRIT_HEAT && run.n % 2 === 1 ? foxSpirit(run.heat, world.now - run.since, s.dir).mouth : null;
+    ox = body.x + (spirit ?? wisp).x;
+    oy = body.y + (spirit ?? wisp).y;
     if (!s.illusion) world.fx.push({ kind: s.leaf ? 'leaflaunch' : 'wisplaunch', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.25 });
-  } else if (s.sign && !s.illusion) world.fx.push({ kind: 'foxsign', x: ox, y: oy - 3, dir: s.dir, t: 0, dur: 0.32 });
+  } else if (s.sign && !s.illusion) world.fx.push({ kind: 'foxsign', x: ox + s.dir * 3, y: oy, dir: s.dir, t: 0, dur: 0.32 });
   // A recoiling shot kicks you back (`recoil` in the air hops you up; `kickback` shoves you on
   // the ground), and some burst at the bow as they go (`muzzle`).
   if (s.recoil) body.vy = Math.min(body.vy, -s.recoil);

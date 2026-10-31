@@ -4,7 +4,7 @@ import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, shadowClones, inForm, hasFaith, thiefSchool, inkStorm } from '../world/melee.js';
 import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
-import { wheelShape, wheelWisps } from '../world/foxwheel.js';
+import { wheelShape, wheelWisps, foxSpirit, FOX_SPIRIT_HEAT } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
@@ -278,8 +278,10 @@ export function drawWorld(ctx, world, viewCam, time) {
     // A job's gauge builds up around them as the fight goes on: a Warrior's Valor, an Archer's
     // Momentum, a Berserker's Rage, a Paladin's Faith, a Beastmaster's Bond (each 0-100).
     const gauge = gaugeOf(world.char);
-    // In a form the aura stays at its fullest.
-    const power = gauge ? [gauge, inForm(world) ? 1 : (world[gauge] ?? 0) / 100] : null;
+    // In a form the aura stays at its fullest. In Endless Fox-Fire her tails wake with the barrage,
+    // one stage at a time (one, three, six, then all nine), whatever her gauge.
+    const awake = gauge === 'tails' && p.flow ? [1, 3, 6, 9][[0.45, 0.9, 1.25].filter((h) => p.flow.heat >= h).length] / 9 : null;
+    const power = gauge ? [gauge, inForm(world) ? 1 : awake ?? (world[gauge] ?? 0) / 100] : null;
     // (Floating in Endless Fox-Fire's Ascension, the aura rises with her.)
     const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0) - (p.flow && p.flow.float !== false ? streamHover(p.flow.heat, p.flow.t0 + (p.progress ?? 0) * (p.dur ?? 0)) : 0);
     // A form draws the whole aura larger.
@@ -401,6 +403,11 @@ function drawFoxWheel(ctx, world, hx, hy, time, layer) {
   const k = Math.min(1, heat / 1.6);
   const shape = wheelShape(heat, t);
   if (layer === 'back') {
+    // At the very top, the giant fox spirit of fox fire looms over and behind her, flickering.
+    if (heat >= FOX_SPIRIT_HEAT) {
+      const sp = foxSpirit(heat, t, dir);
+      fxSprite(ctx, 'celembfox', hx + sp.x, hy + sp.y, { frame: 1 + (Math.floor(time * 6) % 2), scale: 1.9 + 0.08 * Math.sin(time * 5), alpha: 0.95 * fade * Math.min(1, (heat - FOX_SPIRIT_HEAT) / 0.12) });
+    }
     if (heat >= 1.5) fxSprite(ctx, 'celfoxtrapring', hx, hy + 4, { t: time * 1.4, scale: 0.75, alpha: fade * Math.min(1, (heat - 1.5) / 0.08) });
     if (heat >= 0.9) {
       ctx.save();

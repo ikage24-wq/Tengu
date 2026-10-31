@@ -1852,10 +1852,11 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   assert.ok(within(stars, 0, 1).length >= 4, `a quick stream from the start (${within(stars, 0, 1).length})`);
   assert.ok(within(stars, 3, 4).length > within(stars, 0, 1).length + 2, `faster the longer it's held (${within(stars, 0, 1).length} then ${within(stars, 3, 4).length})`);
   assert.ok(stars.every((t, i) => !i || t - stars[i - 1] < 0.25), 'never a pause');
-  // The stages: Fox Sign, then the Trickster's tricks, the Wheel, and floating in Ascension.
-  assert.deepEqual([...new Set(within(figures, 0, 0.8).map((t) => t.kind))].sort(), ['foxsign', 'foxsign2']);
+  // The stages: Kitsunebi (stars dealt like cards), then the Trickster's tricks, the Wheel, and
+  // floating in Ascension.
+  assert.deepEqual([...new Set(within(figures, 0, 0.8).map((t) => t.kind))].sort(), ['foxdeal', 'foxdeal2']);
   const kinds = new Set(figures.map((t) => t.kind));
-  for (const k of ['foxtease', 'foxtwirl', 'foxwink', 'foxwheel', 'foxwheel2', 'foxfloat', 'foxfloat2']) assert.ok(kinds.has(k), `plays ${k}`);
+  for (const k of ['foxspin', 'foxbehind', 'foxhopback', 'foxlob', 'foxwheel', 'foxwheel2', 'foxfloat', 'foxfloat2']) assert.ok(kinds.has(k), `plays ${k}`);
   assert.ok(within(figures, 6, 7).every((t) => t.kind.startsWith('foxfloat')), 'flat out, floating');
   assert.ok(figures.every((t, i) => !i || t.kind !== figures[i - 1].kind), 'never the same figure twice running');
   // Her body moves on one clock through all of it, and it keeps building after full speed.
@@ -1871,16 +1872,31 @@ test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks 
   assert.ok(streaming(), 'still throwing');
   // Letting go: the fox moon, and the wheel of fox fire flies apart.
   updateWorld(w, DT, idle);
-  assert.equal(w.pose.kind, 'heavethrow');
+  assert.equal(w.pose.kind, 'foxmoonrise');
   assert.ok(w.pose.fin);
   assert.equal(w.barrage, null);
   assert.ok(w.wheelGone.heat > 1.5);
   // A tap is one star and no finisher.
   run(w, 1);
   updateWorld(w, DT, press('KeyZ'));
-  assert.ok(w.pose.kind.startsWith('foxsign'));
+  assert.ok(w.pose.kind.startsWith('foxdeal'));
   updateWorld(w, DT, idle);
-  assert.ok(w.pose.kind.startsWith('foxsign'), 'no finisher after a tap');
+  assert.ok(w.pose.kind.startsWith('foxdeal'), 'no finisher after a tap');
+});
+
+
+test('Endless Fox-Fire never puts her throwing hand over her face', async () => {
+  // Her head is most of her: an arm raised between about 120 and 260 degrees puts the gauntlet over
+  // her face. Every figure, and the finisher, keeps the hand low and wide (follow-through included).
+  const { moveAt } = await import('../src/render/moves.js');
+  const { STREAMS } = await import('../src/world/melee.js');
+  const figures = [...Object.keys(STREAMS.kitsune.figures), 'foxmoonrise'];
+  for (const k of figures) {
+    for (let p = 0; p <= 1.0001; p += 0.02) {
+      const a = (((moveAt(k, p, 0.4).arm % 360) + 360) % 360);
+      assert.ok(a <= 122 || a >= 262, `${k} at ${p.toFixed(2)}: arm ${Math.round(a)}`);
+    }
+  }
 });
 
 test('Endless Fox-Fire: from the Wheel on, stars leave from the wisp of fox fire swinging round toward them', async () => {
