@@ -4,7 +4,7 @@ import { SETS } from '../data/sets.js';
 import { setsWorn, computeStats } from '../core/stats.js';
 import { physicalRange, magicRange } from '../core/formulas.js';
 import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
-import { itemName, variantPrice } from '../core/items.js';
+import { itemName } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { COLORS } from './kit.js';
@@ -14,10 +14,10 @@ const STAT_NAMES = {
   hp: 'Max HP', mp: 'Max MP', acc: 'Accuracy', eva: 'Avoid', speed: 'Speed', jump: 'Jump', critRate: 'Crit rate', critDamage: 'Crit damage',
 };
 
-// Shops pay 40% of the price (the full price for monster drops); colors are worth a bit more.
+// Shops pay 40% of the price (the full price for monster drops).
 export function sellPrice(id, inst = null) {
   const def = ITEMS[id];
-  const price = inst?.variant ? variantPrice(def, inst.variant) : def.price || 0;
+  const price = def.price || 0;
   return Math.max(1, Math.floor(price * (def.type === 'etc' ? 1 : 0.4)));
 }
 
@@ -27,11 +27,10 @@ export function itemTooltip(char, id, inst = null) {
   const def = ITEMS[id];
   if (def.type === 'cash') return cashTooltip(def, inst);
   const lines = [];
-  const upgrades = inst?.upgrades ? ` (+${inst.upgrades})` : '';
   const rarity = RARITIES[inst?.rarity ?? 0];
-  lines.push({ text: `${itemName(inst ?? id)}${upgrades}`, bold: true, size: 10, color: rarity.color ?? (inst?.upgrades ? '#e06fa8' : COLORS.ink) });
+  lines.push({ text: itemName(inst ?? id), bold: true, size: 10, color: rarity.color ?? COLORS.ink });
   const v = inst?.variant ? variantsFor(def)?.[inst.variant] : null;
-  if (v) lines.push({ text: `◆ ${v.name} color: +${v.about}`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
+  if (v) lines.push({ text: `◆ ${v.name} color`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
   if (inst?.rarity) lines.push({ text: `★ ${rarity.name}`, bold: true, color: rarity.color });
   if (inst?.polish) lines.push({ text: `✦ Polished +${inst.polish}`, bold: true, color: '#e8a23c' });
   if (def.unique) lines.push({ text: '♥ Unique look', bold: true, color: '#e06fa8' });
@@ -52,7 +51,6 @@ export function itemTooltip(char, id, inst = null) {
       const diff = v - base;
       lines.push({ text: `${STAT_NAMES[k] ?? k} +${v}${diff > 0 ? `  (+${diff})` : ''}`, color: diff > 0 ? '#3f9f5f' : COLORS.ink });
     }
-    lines.push({ text: `Upgrade slots: ${inst ? inst.slotsLeft : 7}`, color: COLORS.muted });
     // A set piece: the set, how much of it you're wearing, and what each step gives.
     if (def.set) {
       const set = SETS[def.set];

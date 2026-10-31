@@ -16,8 +16,8 @@
 
 import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
 import { equipFromBag, unequip, equipBlocker, wearOutfit, removeOutfit, wornGear, stats } from '../core/character.js';
-import { applyScroll, itemName } from '../core/items.js';
-import { removeItem, sortTab, moveItem, TAB_SIZE } from '../core/inventory.js';
+import { itemName } from '../core/items.js';
+import { sortTab, moveItem, TAB_SIZE } from '../core/inventory.js';
 import { questsWanting } from '../core/quests.js';
 import { useItem, dropItem as dropOnGround } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
@@ -125,7 +125,7 @@ export function bagWindow(ui, state, world) {
   const dragged = drag?.from === 'bag' ? list[drag.index] : null;
   const focusIndex = dragged ? drag.index : list[hotIndex] ? hotIndex : win.sel;
   const focus = list[focusIndex] ?? null;
-  const tryOn = focus && !state.scrollMode && (tab === 'equip' || tab === 'cash') ? focus : null;
+  const tryOn = focus && (tab === 'equip' || tab === 'cash') ? focus : null;
 
   // ---- Equipment (left) ----
   win.view = tabs(ui, lx + 9, oy + 26, ['Gear', 'Outfit'], win.view ?? 0, { w: 45, h: 13 });
@@ -324,19 +324,15 @@ function dollSlot(ui, state, world, slot, x, y, inst, outfit, lit, win) {
     const k = 0.5 + 0.5 * Math.sin(world.now * 6);
     box(ctx, x - 2, y - 2, SLOT + 4, SLOT + 4, { fill: null, edge: COLORS.select, r: 7, width: 1.5 + k });
   }
-  itemSlot(ctx, x, y, SLOT, inst, { state: hot ? 'hot' : null, ghost: SLOT_GHOST[slot], fill: outfit ? '#fff0f7' : '#fffdfb', edge: state.scrollMode && inst && !outfit ? COLORS.accent : outfit ? '#f6c6de' : '#eadcf3' });
+  itemSlot(ctx, x, y, SLOT, inst, { state: hot ? 'hot' : null, ghost: SLOT_GHOST[slot], fill: outfit ? '#fff0f7' : '#fffdfb', edge: outfit ? '#f6c6de' : '#eadcf3' });
   if (hot && !win.carry?.live) tooltip(ui, inst ? [...itemTooltip(char, inst.id, inst), { text: 'Double-click, or drag it into the bag, to take off', color: COLORS.muted, size: 8 }] : [{ text: `${SLOT_NAMES[slot]}${outfit ? ' outfit' : ''}`, bold: true }, { text: outfit ? 'Wear cash items from the Cash tab.' : 'Nothing worn here', size: 8, color: COLORS.muted }]);
   // Read the click once: clicked() uses it up. A press also arms a drag back into the bag.
   const press = inst && clicked(ui, x, y, SLOT, SLOT);
   const hit = press || (inst && ui.mouse.right && hot);
   if (!hit) return;
-  if (press && !state.scrollMode) win.carry = { from: 'doll', slot, outfit, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
+  if (press) win.carry = { from: 'doll', slot, outfit, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
   const key = `${outfit ? 'of' : 'eq'}:${slot}`;
   const dbl = ui.mouse.right || ui.mouse.double || (state.lastClick?.key === key && world.now - state.lastClick.at < 0.4);
-  if (!outfit && state.scrollMode) {
-    scrollOnto(state, world, inst);
-    return;
-  }
   if (dbl) {
     const ok = outfit ? removeOutfit(char, slot) : unequip(char, slot);
     if (!ok) world.log(outfit ? 'Your Cash tab is full.' : 'Your bag is full.', '#ffb3c6');
@@ -401,9 +397,8 @@ function gridCell(ui, state, world, tab, list, i, x, y, win, dropHere) {
     win.confirm = null;
     win.dropAsk = null;
     state.lastClick = { key: `${tab}:${i}`, at: world.now };
-    if (!right && !state.scrollMode) win.carry = { from: 'bag', index: i, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
-    if (state.scrollMode && tab === 'equip') scrollOnto(state, world, entry);
-    else if (dbl) activate(state, world, tab, i);
+    if (!right) win.carry = { from: 'bag', index: i, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
+    if (dbl) activate(state, world, tab, i);
   }
 }
 
@@ -468,14 +463,6 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       return;
     }
   }
-  if (state.scrollMode) {
-    const s = ITEMS[state.scrollMode];
-    itemSlot(ctx, x + 6, y + 6, 40, { id: s.id }, { scale: 2, shadow: false, edge: COLORS.accent });
-    text(ctx, s.name, x + 52, y + 15, { size: 8.5, bold: true, color: COLORS.accent });
-    wrap(ctx, 'Click a piece of equipment, in the bag or on the hero, to use it on.', x + 52, y + 26, w - 58, { size: 7, color: COLORS.muted, lineHeight: 9 });
-    if (button(ui, x + w - 52, y + h - 20, 46, 15, 'Cancel', { size: 7.5 })) state.scrollMode = null;
-    return;
-  }
   if (!entry) {
     icon(ctx, 'bag', x + w / 2, y + h / 2 - 10, 16, th.light);
     text(ctx, 'Hover an item to see it here.', x + w / 2, y + h / 2 + 8, { size: 7.5, bold: true, align: 'center', color: COLORS.muted });
@@ -488,7 +475,7 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
   const tx = x + 52;
   const tw = w - 58;
   const rare = entry.rarity ? RARITIES[entry.rarity].color : null;
-  const name = `${itemName(entry.uid ? entry : entry.id)}${entry.upgrades ? ` +${entry.upgrades}` : ''}`;
+  const name = itemName(entry.uid ? entry : entry.id);
   text(ctx, fit(ctx, name, tw, 9), tx, y + 15, { size: 9, bold: true, color: rare ?? COLORS.ink });
   const by = y + h - 20;
   let label = null;
@@ -518,16 +505,16 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       if (ds) text(ctx, ds, sx + 4 + sw, sy, { size: 7, bold: true, color: d > 0 ? GREEN : COLORS.bad });
       sx += cw + 3;
     }
-    // The rest of what the tooltip says: color, element, slots left, and what it replaces.
+    // The rest of what the tooltip says: color, element, and what it replaces.
     const tint = entry.variant ? variantsFor(def)?.[entry.variant] : null;
-    foot = [tint && `◆ ${tint.name}`, def.element && `✦ ${ELEMENT_NAMES[def.element]}`, `${entry.slotsLeft ?? 7} slots`, char.equipment[def.slot] ? `vs ${itemName(char.equipment[def.slot])}` : 'nothing worn here'].filter(Boolean).join(' · ');
+    foot = [tint && `◆ ${tint.name}`, def.element && `✦ ${ELEMENT_NAMES[def.element]}`, char.equipment[def.slot] ? `vs ${itemName(char.equipment[def.slot])}` : 'nothing worn here'].filter(Boolean).join(' · ');
     label = why ? null : 'Equip';
   } else if (tab === 'cash') {
     text(ctx, `Outfit · ${SLOT_NAMES[def.slot] ?? def.slot}`, tx, y + 25, { size: 7, color: '#d0559a', bold: true });
     wrap(ctx, def.cover ? 'Reskins the weapon you hold; its stats stay the same.' : "Shows over your gear's look; your gear keeps its stats.", tx, y + 36, tw, { size: 7, color: COLORS.muted, lineHeight: 9 });
     label = 'Wear';
   } else {
-    const kind = def.star ? 'Throwing stars' : def.scroll ? 'Upgrade charm' : tab === 'use' ? 'Consumable' : 'Material';
+    const kind = def.star ? 'Throwing stars' : tab === 'use' ? 'Consumable' : 'Material';
     text(ctx, `${kind}${entry.qty > 1 ? ` · ${entry.qty} in the bag` : ''}`, tx, y + 25, { size: 7, color: COLORS.muted });
     const desc = def.star ? `Attack +${def.star.watk}. The first set in your bag is thrown.` : def.desc ?? '';
     let ly = wrap(ctx, desc, tx, y + 36, tw, { size: 7, color: COLORS.ink, lineHeight: 9 });
@@ -543,7 +530,7 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       text(ctx, fit(ctx, `${q.name}: ${q.have}/${q.count}`, tw - 80, 6.5), tx + 12, ly + 1, { size: 6.5, bold: true, color: MINT.ink });
     }
     if (def.price) foot = `Sells for ${sellPrice(entry.id).toLocaleString()} gold each`;
-    if (tab === 'use') label = def.star ? 'Throw' : def.scroll ? 'Apply' : 'Use';
+    if (tab === 'use') label = def.star ? 'Throw' : 'Use';
   }
   if (foot) text(ctx, fit(ctx, foot, tw - (label ? 74 : 24) - (tab !== 'cash' ? 21 : 0), 6.5, false), tx, by + 11, { size: 6.5, color: tab === 'equip' ? COLORS.muted : COLORS.gold, bold: tab !== 'equip' });
   // Actions, right to left: the main one, drop on the ground, and the bin (which asks first).
@@ -590,25 +577,8 @@ function activate(state, world, tab, index) {
         bag.sel = 0;
         world.log(`Now throwing ${def.name}.`, def.color);
       }
-    } else if (def.scroll) {
-      state.scrollMode = entry.id;
-      bag.tab = 0;
-      bag.sel = -1;
     } else {
       useItem(world, entry.id);
     }
   }
-}
-
-function scrollOnto(state, world, inst) {
-  const scroll = ITEMS[state.scrollMode];
-  const r = applyScroll(inst, scroll);
-  if (!r.used) {
-    world.log(inst.slotsLeft <= 0 ? 'No upgrade slots left.' : "That charm doesn't fit this item.", '#ffb3c6');
-    return;
-  }
-  removeItem(world.char.inventory, state.scrollMode, 1);
-  world.log(r.ok ? `The charm worked! ${itemName(inst)} +${inst.upgrades}` : 'The charm fizzled...', r.ok ? '#7ee081' : '#ffb3c6');
-  world.fx.push({ kind: 'buff', x: world.body.x, y: world.body.y, t: 0, dur: 0.7, color: r.ok ? '#7ee081' : '#ff9ec0' });
-  state.scrollMode = null;
 }

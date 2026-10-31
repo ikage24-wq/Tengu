@@ -120,7 +120,7 @@ export function profileWindow(ui, state, world) {
       box(ctx, rx, cy, rw, 20, { fill: hover(ui, rx, cy, rw, 20) ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
       itemSlot(ctx, rx + 1, cy + 1, 18, inst, { shadow: false, fill: th.light, edge: th.light });
       text(ctx, SLOT_NAMES[slot], rx + 24, cy + 8, { size: 6, color: COLORS.muted });
-      text(ctx, def ? `${itemName(inst)}${inst.upgrades ? ` +${inst.upgrades}` : ''}` : '—', rx + 24, cy + 16.5, { size: 7.5, bold: true, color: rare ? rare.color : def ? COLORS.ink : COLORS.muted });
+      text(ctx, def ? itemName(inst) : '—', rx + 24, cy + 16.5, { size: 7.5, bold: true, color: rare ? rare.color : def ? COLORS.ink : COLORS.muted });
       if (inst && hover(ui, rx, cy, rw, 20)) tooltip(ui, itemTooltip(world.char, inst.id, inst));
     });
     return;

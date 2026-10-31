@@ -136,7 +136,6 @@ function itemShapes(def, variant = null) {
     }
   }
   if (ITEM_ART[def.id]) return ITEM_ART[def.id]();
-  if (def.scroll) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), E(8, 8, 3, 3, c), P(7, 7, '#ffffff')];
   if (def.effect?.returnTown) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), R(6, 6, 4, 5, c), R(5, 6, 6, 1, d)];
   // Throwing stars: a little pile of shuriken in the set's color.
   if (def.star) {

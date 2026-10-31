@@ -5,7 +5,6 @@ import { makeEquip, rollRarity } from '../core/items.js';
 import { surfacesOf } from './physics.js';
 
 const GEAR_CHANCE = 0.045;
-const SCROLL_CHANCE = 0.018;
 const POTION_CHANCE = 0.12;
 const STAR_CHANCE = 0.004; // a boss rolls BOSS_STAR_CHANCE
 const BOSS_STAR_CHANCE = 0.2;
@@ -18,8 +17,6 @@ function starFor(level, rng) {
   const near = DROP_STARS.filter((d) => d.reqLevel <= level + 5 && d.reqLevel >= level - 20);
   return near.length ? near[Math.floor(rng() * near.length)] : null;
 }
-
-const RARE_SCROLLS = Object.values(ITEMS).filter((d) => d.scroll && d.scroll.chance < 1).map((d) => d.id);
 
 function potionFor(level, rng) {
   if (rng() < 0.3) return level < 20 ? 'blue_potion' : 'mana_elixir';
@@ -48,11 +45,10 @@ export function rollLoot(def, rng = Math.random, fits = null) {
   for (const d of def.drops) {
     if (rng() >= d.chance) continue;
     // Equipment on a monster's own list (like a boss's signature weapon) drops as rolled gear.
-    if (ITEMS[d.id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(d.id, { variance: 0.12, rng, rarity: Math.max(1, rollRarity(rng)), variant: 'roll' }) });
+    if (ITEMS[d.id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(d.id, { rng, rarity: Math.max(1, rollRarity(rng)), variant: 'roll' }) });
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
   }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });
-  if (rng() < SCROLL_CHANCE) loot.push({ kind: 'item', id: RARE_SCROLLS[Math.floor(rng() * RARE_SCROLLS.length)], qty: 1 });
   if (rng() < (def.boss ? BOSS_STAR_CHANCE : STAR_CHANCE)) {
     const star = starFor(def.level, rng);
     if (star) loot.push({ kind: 'item', id: star.id, qty: star.stack });
@@ -62,7 +58,7 @@ export function rollLoot(def, rng = Math.random, fits = null) {
     const id = gearFor(def.level, rng, fits);
     // Bosses never drop plain gear.
     const rarity = def.boss ? Math.max(1, rollRarity(rng)) : rollRarity(rng);
-    if (id) loot.push({ kind: 'item', inst: makeEquip(id, { variance: 0.12, rng, rarity, variant: 'roll' }) });
+    if (id) loot.push({ kind: 'item', inst: makeEquip(id, { rng, rarity, variant: 'roll' }) });
   }
   return loot;
 }

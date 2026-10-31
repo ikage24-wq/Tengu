@@ -50,7 +50,7 @@ export const STORY_QUESTS = {
     name: 'Grumbling Hills', giver: 'mira', minLevel: 6, prereq: 'story_1_2',
     text: "Clover Hills is worse. The Toadstool Goblins have been stealing laundry right off the lines! Calm 12 of them and bring me 5 of their caps. I want to see if they're... sour.",
     objectives: [{ type: 'kill', mob: 'mushkin', count: 12 }, { type: 'collect', item: 'mushcap', count: 5 }],
-    rewards: { exp: 900, gold: 600, items: [{ id: 'scroll_def_60', qty: 1 }] },
+    rewards: { exp: 900, gold: 600, items: [] },
     scenes: { done: 'ch1_sour' },
   }),
   story_1_4: s('story_1_4', 1, {
@@ -106,7 +106,7 @@ export const STORY_QUESTS = {
     name: 'A Forgotten Shrine', giver: 'vex', minLevel: 25, prereq: 'story_4_1',
     text: "There's a little shrine on the top terrace up there. Nobody's left an offering in years. Relight its lanterns with 10 Wisp Flames from the Kitsune Miko, and say a prayer while you're there.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
-    rewards: { exp: 22000, gold: 6000, items: [{ id: 'scroll_luck_60', qty: 1 }] },
+    rewards: { exp: 22000, gold: 6000, items: [] },
     scenes: { done: 'ch4_shrine' },
   }),
   story_4_3: s('story_4_3', 4, {

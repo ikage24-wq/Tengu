@@ -7,7 +7,7 @@ import {
   createCharacter, gainExp, advanceJob, autoAssignAp, learnSkill, maxSkill, equipFromBag, stats, usePotion, applyDeath,
 } from '../src/core/character.js';
 import { addItem, countItem, removeItem, STACK_MAX, sortTab, createInventory, moveItem } from '../src/core/inventory.js';
-import { makeEquip, applyScroll } from '../src/core/items.js';
+import { makeEquip } from '../src/core/items.js';
 import { ITEMS } from '../src/data/items.js';
 
 const fresh = () => createCharacter('Tester', {});
@@ -168,19 +168,6 @@ test('potions heal and are consumed', () => {
   assert.equal(usePotion(c, 'red_potion'), true);
   assert.equal(c.hp, 50);
   assert.equal(usePotion(c, 'red_potion'), false);
-});
-
-test('scrolls spend a slot whether they pass or fail', () => {
-  const gloves = makeEquip('gloves_2');
-  const before = gloves.stats.watk;
-  const pass = applyScroll(gloves, ITEMS.scroll_glove_60, () => 0.1);
-  assert.equal(pass.ok, true);
-  assert.equal(gloves.stats.watk, before + 1);
-  const fail = applyScroll(gloves, ITEMS.scroll_glove_60, () => 0.9);
-  assert.equal(fail.ok, false);
-  assert.equal(gloves.slotsLeft, 5);
-  const hat = makeEquip('hat_0');
-  assert.equal(applyScroll(hat, ITEMS.scroll_glove_60).used, false, 'a glove charm does not fit a hat');
 });
 
 test('death costs some EXP but never a level', () => {

@@ -148,19 +148,19 @@ export const MOBS = {
   mothercapper: mob({
     id: 'mothercapper', name: 'Myconid Queen', level: 12, hp: 7000, atk: 84, def: 16, acc: 40, eva: 2, exp: 3000, gold: [300, 600],
     speed: 34, w: 70, h: 100, art: 'mothercapper', boss: true,
-    drops: [{ id: 'hollow_acorn', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }, { id: 'scroll_watk_60', chance: 0.25 }],
+    drops: [{ id: 'hollow_acorn', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }],
     fight: { every: 1.8, reach: 52, windup: 0.5 }, mech: 'capper',
   }),
   tuskar: mob({
     id: 'tuskar', name: 'Tuskar the Behemoth', level: 13, hp: 9000, atk: 94, def: 18, acc: 42, eva: 2, exp: 4500, gold: [400, 800],
     speed: 44, w: 96, h: 72, art: 'tuskar', boss: true,
-    drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }, { id: 'scroll_def_60', chance: 0.25 }],
+    drops: [{ id: 'hollow_acorn', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
     fight: { every: 2, reach: 56, windup: 0.5 }, mech: 'boar',
   }),
   gnarlroot: mob({
     id: 'gnarlroot', name: 'Gnarlroot, the Hollow Heart', level: 14, hp: 16000, atk: 98, def: 20, acc: 44, eva: 2, exp: 9000, gold: [800, 1500],
     speed: 16, w: 100, h: 150, art: 'gnarlroot', boss: true,
-    drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }, { id: 'scroll_watk_60', chance: 0.5 }, { id: 'scroll_matk_60', chance: 0.5 }],
+    drops: [{ id: 'hollow_acorn', chance: 1, qty: 5 }],
     fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',
   }),
 
@@ -170,8 +170,6 @@ export const MOBS = {
     drops: [
       { id: 'king_crystal', chance: 1 },
       { id: 'seraphim_staff', chance: 0.08 },
-      { id: 'scroll_watk_10', chance: 0.5 },
-      { id: 'scroll_matk_10', chance: 0.5 },
       { id: 'elixir', chance: 1, qty: 5 },
     ],
     // Every few seconds the king slams the ground; anyone standing on it takes heavy damage.

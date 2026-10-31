@@ -8,9 +8,9 @@
 // sells one at once; Shift makes that ten.
 
 import { NPCS, shopStock } from '../data/npcs.js';
-import { ITEMS, RARITIES, variantsFor } from '../data/items.js';
+import { ITEMS, RARITIES } from '../data/items.js';
 import { addItem, removeItem, countItem, rechargePrice, TAB_SIZE, STACK_MAX } from '../core/inventory.js';
-import { makeEquip, itemName, itemColors, variantPrice } from '../core/items.js';
+import { makeEquip, itemName, itemColors } from '../core/items.js';
 import { equipBlocker, wornGear } from '../core/character.js';
 import { shade } from '../render/pixel.js';
 import { drawHero } from '../render/hero.js';
@@ -38,22 +38,20 @@ function starSellPrice(def, qty) {
   return Math.max(1, Math.floor((def.price * 0.4 * qty) / def.stack));
 }
 
-// A shop item with a variant, for its stats and tooltip before you buy it (stats as sold).
+// A shop piece, for its stats and tooltip before you buy it (stats as sold).
 const previews = new Map();
-function makePreview(id, variant) {
-  const key = `${id}|${variant}`;
-  if (!previews.has(key)) previews.set(key, makeEquip(id, { variant }));
-  return previews.get(key);
+function makePreview(id) {
+  if (!previews.has(id)) previews.set(id, makeEquip(id));
+  return previews.get(id);
 }
 
 // What one costs to buy (a whole set, for stars), and what one sells for (a whole set or piece).
-const unitCost = (def, variant) => (variant ? variantPrice(def, variant) : def.price);
+const unitCost = (def) => def.price;
 const unitGain = (def, e) => (def.star ? starSellPrice(def, e.qty) : sellPrice(e.id, e.inst));
 
 const kindOf = (def) => {
   if (def.type === 'equip') return def.slot === 'weapon' ? def.weaponType[0].toUpperCase() + def.weaponType.slice(1) : SLOT_NAMES[def.slot];
   if (def.star) return 'Throwing stars';
-  if (def.scroll) return 'Upgrade charm';
   return def.type === 'use' ? 'Consumable' : 'Material';
 };
 
@@ -170,14 +168,14 @@ function listRow(ui, world, dlg, e, x, y, w, th) {
   const def = ITEMS[e.id];
   const on = dlg.sel === e.key;
   const hot = hover(ui, x, y, w, ROW - 2);
-  const variant = e.inst?.variant ?? (dlg.tab === 0 && variantsFor(def) ? dlg.pick[e.id] ?? null : null);
+  const variant = e.inst?.variant ?? null;
   const shown = e.inst ?? { id: e.id, variant };
   const rare = e.inst?.rarity ? RARITIES[e.inst.rarity].color : null;
   box(ctx, x, y, w, ROW - 2, { fill: on ? th.light : hot ? '#ffffff' : 'rgba(255,255,255,0.7)', edge: on ? th.main : rare ?? th.light, r: 7, width: on || rare ? 1.5 : 1 });
-  itemSlot(ctx, x + 2, y + 1, 20, { id: e.id, variant, rarity: e.inst?.rarity, upgrades: e.inst?.upgrades }, { shadow: false, count: false, r: 5 });
+  itemSlot(ctx, x + 2, y + 1, 20, { id: e.id, variant, rarity: e.inst?.rarity }, { shadow: false, count: false, r: 5 });
   const color = rare ?? (variant ? readable(itemColors(shown).main) : COLORS.ink);
   const priceW = 56;
-  text(ctx, fit(ctx, `${itemName(shown)}${e.inst?.upgrades ? ` +${e.inst.upgrades}` : ''}`, w - priceW - 30, 7.5), x + 26, y + 9.5, { size: 7.5, bold: true, color });
+  text(ctx, fit(ctx, itemName(shown), w - priceW - 30, 7.5), x + 26, y + 9.5, { size: 7.5, bold: true, color });
   // What it is, and whether you can use it.
   let sub = kindOf(def);
   let subColor = COLORS.muted;
@@ -196,7 +194,7 @@ function listRow(ui, world, dlg, e, x, y, w, th) {
   const afford = dlg.tab === 1 || char.gold >= price;
   icon(ctx, 'coin', x + w - priceW + 4, y + 11, 7, '#f0b53a');
   text(ctx, price.toLocaleString(), x + w - 5, y + 13.5, { size: 7.5, bold: true, align: 'right', color: afford ? COLORS.gold : COLORS.bad });
-  if (hot) tooltip(ui, itemTooltip(char, e.id, e.inst ?? (variant ? makePreview(e.id, variant) : null)));
+  if (hot) tooltip(ui, itemTooltip(char, e.id, e.inst ?? null));
   return clicked(ui, x, y, w, ROW - 2);
 }
 
@@ -212,7 +210,7 @@ function maxQty(char, dlg, e, def, variant) {
 function trade(world, dlg, e, qty) {
   const char = world.char;
   const def = ITEMS[e.id];
-  const variant = e.inst?.variant ?? (dlg.tab === 0 && variantsFor(def) ? dlg.pick[e.id] ?? null : null);
+  const variant = e.inst?.variant ?? null;
   qty = Math.max(1, Math.min(qty, maxQty(char, dlg, e, def, variant)));
   if (dlg.tab === 0) {
     const cost = unitCost(def, variant) * qty;
@@ -220,7 +218,7 @@ function trade(world, dlg, e, qty) {
       world.log('Not enough gold.', '#ffb3c6');
       return false;
     }
-    const item = def.type === 'equip' ? makeEquip(e.id, { variant }) : e.id;
+    const item = def.type === 'equip' ? makeEquip(e.id) : e.id;
     // Stars come by the full set; addItem splits them into sets.
     if (!addItem(char.inventory, item, def.type === 'equip' ? 1 : def.star ? def.stack * qty : qty)) {
       world.log('Your bag is full.', '#ffb3c6');
@@ -257,11 +255,10 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
   well(ctx, x, y, w, h, th);
   if (!e) return;
   const def = ITEMS[e.id];
-  const variants = dlg.tab === 0 ? variantsFor(def) : null;
-  const variant = e.inst?.variant ?? (variants ? dlg.pick[e.id] ?? null : null);
-  const shown = e.inst ?? (def.type === 'equip' ? makePreview(e.id, variant) : { id: e.id, variant });
+  const variant = e.inst?.variant ?? null;
+  const shown = e.inst ?? (def.type === 'equip' ? makePreview(e.id) : { id: e.id, variant });
   const rare = e.inst?.rarity ? RARITIES[e.inst.rarity].color : null;
-  itemSlot(ctx, x + 6, y + 6, 36, { id: e.id, variant, rarity: e.inst?.rarity, upgrades: e.inst?.upgrades }, { scale: 2, shadow: false });
+  itemSlot(ctx, x + 6, y + 6, 36, { id: e.id, variant, rarity: e.inst?.rarity }, { scale: 2, shadow: false });
   const tx = x + 47;
   const tw = w - 53;
   const color = rare ?? (variant ? readable(itemColors(shown).main) : COLORS.ink);
@@ -303,27 +300,6 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
     }
     if (!char.equipment[def.slot]) text(ctx, `Nothing worn as ${SLOT_NAMES[def.slot].toLowerCase()}`, x + 51, cy + 50, { size: 6, color: COLORS.muted });
     cy += 58;
-    // Colors to pick from before buying, each with what it adds.
-    if (variants) {
-      const keys = [null, ...Object.keys(variants)];
-      keys.forEach((k, i) => {
-        const cx = x + 12 + i * 13;
-        const on = k === variant;
-        const hot = hover(ui, cx - 5.5, cy - 1, 11, 11);
-        ctx.fillStyle = on ? '#4a3560' : hot ? '#b9a2d6' : 'rgba(74,53,96,0.25)';
-        ctx.beginPath();
-        ctx.arc(cx, cy + 4.5, on ? 5.2 : 4.6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = k ? variants[k].main : def.color;
-        ctx.beginPath();
-        ctx.arc(cx, cy + 4.5, on ? 3.9 : 3.4, 0, Math.PI * 2);
-        ctx.fill();
-        if (hot) tooltip(ui, [{ text: k ? `${variants[k].name}: +${variants[k].about}` : 'Standard', bold: true, color: k ? readable(variants[k].main) : COLORS.ink }, { text: k ? `${Math.round((variantPrice(def, k) / def.price - 1) * 100)}% more gold` : 'No extra bonus', size: 7, color: COLORS.muted }]);
-        if (clicked(ui, cx - 5.5, cy - 1, 11, 11)) dlg.pick[e.id] = k;
-      });
-      text(ctx, fit(ctx, variant ? `${variants[variant].name}: +${variants[variant].about}` : 'Standard color', w - 14, 6.5, true), x + 7, cy + 19, { size: 6.5, bold: true, color: variant ? readable(variants[variant].main) : COLORS.muted });
-      cy += 24;
-    }
   } else {
     const desc = def.star ? `Attack +${def.star.watk}, ${def.stack} to a set. The first set in your bag is thrown; shops refill used sets.` : def.desc ?? '';
     cy = wrap(ctx, desc, x + 7, cy + 2, w - 14, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 2;

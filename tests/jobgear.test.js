@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { ITEMS, GEAR_LEVELS, GEAR_FAMILIES, JOB_SLOTS, VARIANTS, GEMS, variantsFor, jobGearId } from '../src/data/items.js';
 import { NPCS, shopStock } from '../src/data/npcs.js';
-import { makeEquip, itemName, rollVariant, variantStats, variantPrice } from '../src/core/items.js';
+import { makeEquip, itemName, rollVariant } from '../src/core/items.js';
 import { createCharacter, advanceJob, gainExp, equipBlocker } from '../src/core/character.js';
 import { expToNext } from '../src/core/exp.js';
 import { rewardId } from '../src/core/quests.js';
@@ -57,27 +57,16 @@ test('only the right job wears a set, and a Novice can wear the starter sets', (
   assert.match(equipBlocker(novice, { id: 'mage_hat_10' }), /level 10|mages only/);
 });
 
-test('color variants add the right stats and names', () => {
+test('colors are a look only: a name and a recolor, never stats', () => {
   const dark = makeEquip('warrior_top_50', { variant: 'dark' });
-  const white = makeEquip('warrior_top_50', { variant: 'white' });
-  const base = ITEMS.warrior_top_50.stats;
-  assert.ok(dark.stats.str > (base.str ?? 0), 'dark gives the main stat');
-  assert.ok(white.stats.dex > 0, 'white gives the second stat');
-  assert.ok(makeEquip('mage_gloves_40', { variant: 'crimson' }).stats.matk > ITEMS.mage_gloves_40.stats.matk, 'crimson gives a mage magic');
-  assert.ok(makeEquip('sword_40', { variant: 'crimson' }).stats.watk > ITEMS.sword_40.stats.watk);
-  assert.ok(makeEquip('archer_hat_20', { variant: 'azure' }).stats.hp > 0);
+  assert.deepEqual(dark.stats, makeEquip('warrior_top_50').stats, 'no extra stats');
   assert.equal(itemName(dark), `Dark ${ITEMS.warrior_top_50.name}`);
-  const ruby = makeEquip('ear_30', { variant: 'ruby' });
-  assert.ok(ruby.stats.str > 0);
-  assert.equal(itemName(ruby), `Ruby ${ITEMS.ear_30.name}`);
   // Things without variants never get one.
   assert.equal(makeEquip('hoodie', { variant: 'dark' }).variant, undefined);
   assert.equal(variantsFor(ITEMS.red_potion), null);
-  assert.equal(variantsFor(ITEMS.ear_5), GEMS);
   assert.equal(variantsFor(ITEMS.thief_cape_5), VARIANTS);
-  // Bigger bonuses at higher levels; gilded costs most.
-  assert.ok(variantStats(ITEMS.warrior_top_100, 'dark').str > variantStats(ITEMS.warrior_top_10, 'dark').str);
-  assert.ok(variantPrice(ITEMS.warrior_top_50, 'gilded') > variantPrice(ITEMS.warrior_top_50, 'dark'));
+  // Drops are the same piece every time (no random stat rolls).
+  assert.deepEqual(makeEquip('sword_40', { rng: seeded(1) }).stats, makeEquip('sword_40', { rng: seeded(2) }).stats);
 });
 
 test('variant rolls favor the common colors and sometimes give none', () => {

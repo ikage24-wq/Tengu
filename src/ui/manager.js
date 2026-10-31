@@ -71,7 +71,6 @@ export function createUiState() {
     npc: null,
     chat: createChat(),
     death: false,
-    scrollMode: null,
     selectedSkill: null,
     lastClick: null,
     banner: 0,
@@ -138,7 +137,6 @@ export function routeInput(state, world, input, dt) {
   }
   if (input.pressed.has('Escape')) {
     if (state.menu) state.menu = null;
-    else if (state.scrollMode) state.scrollMode = null;
     else if (state.npc) {
       state.npc = null;
       state.windows.npc.open = false;

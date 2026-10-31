@@ -65,25 +65,25 @@ export const QUESTS = {
     id: 'mush_menace', name: 'Toadstool Trouble', giver: 'rook', minLevel: 8,
     text: 'Toadstool Goblins have been sneaking onto the docks. Clear out 20 of them in Clover Hills.',
     objectives: [{ type: 'kill', mob: 'mushkin', count: 20 }],
-    rewards: { exp: 1400, gold: 800, items: [{ id: 'scroll_watk_60', qty: 1 }, { id: 'orange_potion', qty: 20 }] },
+    rewards: { exp: 1400, gold: 800, items: [{ id: 'orange_potion', qty: 20 }] },
   },
   leaf_samples: {
     id: 'leaf_samples', name: 'Leaf Samples', giver: 'rook', minLevel: 12, prereq: 'mush_menace',
     text: 'Our herbalist needs 20 Dryad Leaves from the Dryads in Mossy Woods.',
     objectives: [{ type: 'collect', item: 'leaf_fragment', count: 20 }],
-    rewards: { exp: 3500, gold: 1500, items: [{ id: 'warrior_gloves_15', qty: 1, forJob: true }, { id: 'scroll_glove_60', qty: 1 }] },
+    rewards: { exp: 3500, gold: 1500, items: [{ id: 'warrior_gloves_15', qty: 1, forJob: true }] },
   },
   tusk_trader: {
     id: 'tusk_trader', name: 'Fang Trader', giver: 'marlo', minLevel: 15,
     text: "Warg fangs sell like hotcakes. Bring me 15 and I'll share the profits.",
     objectives: [{ type: 'collect', item: 'tusk', count: 15 }],
-    rewards: { exp: 6000, gold: 4000, items: [{ id: 'scroll_def_60', qty: 2 }] },
+    rewards: { exp: 6000, gold: 4000, items: [] },
   },
   restless_ruins: {
     id: 'restless_ruins', name: 'Restless Ruins', giver: 'rook', minLevel: 20, prereq: 'leaf_samples',
     text: 'Headless Dullahans ride the Twilight Ruins at night. Put 25 of them to rest.',
     objectives: [{ type: 'kill', mob: 'boneknight', count: 25 }],
-    rewards: { exp: 18000, gold: 6000, items: [{ id: 'scroll_watk_10', qty: 1 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
+    rewards: { exp: 18000, gold: 6000, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
   },
   // A job trial: Brann asks it of a warrior before teaching either level 30 path (`family` keeps
   // it to warriors).
@@ -151,7 +151,7 @@ export const QUESTS = {
     id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
     text: "Standing targets teach you nothing. The Jackalopes in Clover Hills never stop hopping: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
     objectives: [{ type: 'kill', mob: 'piglet', count: 15 }],
-    rewards: { exp: 1000, gold: 600, items: [{ id: 'orange_potion', qty: 15 }, { id: 'scroll_glove_60', qty: 1 }] },
+    rewards: { exp: 1000, gold: 600, items: [{ id: 'orange_potion', qty: 15 }] },
   },
   mira_letter: {
     id: 'mira_letter', name: 'A Letter for Elowen', giver: 'mira', minLevel: 10, prereq: 'sprout_sweep',
@@ -202,7 +202,7 @@ export const QUESTS = {
       { type: 'talk', npc: 'marlo', say: "Wisp Flames? Some kid from the Grove sold me a whole jar. Said they were 'escapees'." },
       { type: 'talk', npc: 'tora', say: "Buying? Not me. Nim from the Grove lost a box of candles, though. Poor thing hasn't slept." },
     ],
-    rewards: { exp: 4000, gold: 2500, items: [{ id: 'scroll_luck_60', qty: 1 }] },
+    rewards: { exp: 4000, gold: 2500, items: [] },
   },
   rook_harpies: {
     id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'crystal_heart',
@@ -222,7 +222,7 @@ export const QUESTS = {
     id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
     text: "The best hilts are Heartwood, straight from a Treant in Mossy Woods. Bring me 12 and I'll put an edge on your gear.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
-    rewards: { exp: 7000, gold: 2500, items: [{ id: 'scroll_watk_60', qty: 1 }, { id: 'scroll_matk_60', qty: 1 }] },
+    rewards: { exp: 7000, gold: 2500, items: [] },
   },
   tora_cores: {
     id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_handles',
@@ -288,7 +288,7 @@ export const QUESTS = {
     id: 'nim_chimes', name: 'Stolen Chimes', giver: 'nim', minLevel: 19,
     text: "The Sylphs in the Whispering Glade, past Mossy Woods, keep stealing my wind chimes to play with! Shoo 20 of them away and bring back 8 of the feathers they shed.",
     objectives: [{ type: 'kill', mob: 'sylph', count: 20 }, { type: 'collect', item: 'feather', count: 8 }],
-    rewards: { exp: 12000, gold: 3500, items: [{ id: 'mana_elixir', qty: 5 }, { id: 'scroll_matk_60', qty: 1 }] },
+    rewards: { exp: 12000, gold: 3500, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   elowen_foxfire: {
     id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24,
@@ -300,13 +300,13 @@ export const QUESTS = {
     id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26,
     text: "The Kitsune Miko on the Fox Shrine Path are 'borrowing' from every traveler. Teach 25 of them some manners. Quietly, if you can.",
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
-    rewards: { exp: 30000, gold: 7000, items: [{ id: 'scroll_luck_60', qty: 1 }, { id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 30000, gold: 7000, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   brann_howl: {
     id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28,
     text: "Up past my camp, Moonlit Ridge. Lupina's pack howls all night and nobody sleeps! Climb the howling rock at the top so they know who's boss, and calm 25 of them.",
     objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
-    rewards: { exp: 42000, gold: 8000, items: [{ id: 'scroll_watk_60', qty: 1 }, { id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 42000, gold: 8000, items: [{ id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
   marlo_spa: {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31,

@@ -434,11 +434,11 @@ function openChest(world, o) {
   const family = JOBS[char.job].family;
   const slot = pick(JOB_SLOTS);
   const id = GEAR_FAMILIES.includes(family) ? jobGearId(family, slot, reward.gearLevel) : `ear_${reward.gearLevel}`;
-  if (ITEMS[id]) give(makeEquip(id, { variance: 0.1, rarity: run.hard ? 2 : Math.random() < 0.3 ? 2 : 1, variant: 'roll' }));
+  if (ITEMS[id]) give(makeEquip(id, { rarity: run.hard ? 2 : Math.random() < 0.3 ? 2 : 1, variant: 'roll' }));
   // A piece of the dungeon's own set: sure on Hard or the day's first clear, half the time otherwise.
   if (def.set && (run.hard || daily || Math.random() < 0.5)) {
     const piece = setPieceFor(char, def.set);
-    if (piece) give(makeEquip(piece, { variance: 0.08, rarity: run.hard ? 2 : 1, variant: 'roll' }));
+    if (piece) give(makeEquip(piece, { rarity: run.hard ? 2 : 1, variant: 'roll' }));
   }
   for (const it of reward.items) {
     const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === 'hollow_acorn' ? 5 : 0);

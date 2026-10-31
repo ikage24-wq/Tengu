@@ -15,7 +15,7 @@
 import { createCharacter, gainExp, advanceJob, spendAp, STAT_KEYS } from '../core/character.js';
 import { computeStats } from '../core/stats.js';
 import { expToNext } from '../core/exp.js';
-import { makeEquip, makeCash, rollRarity, variantPrice, itemName } from '../core/items.js';
+import { makeEquip, makeCash, rollRarity, itemName } from '../core/items.js';
 import { CASH_ITEMS } from '../data/cash.js';
 import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
 import { JOBS, FAMILY_STATS } from '../data/jobs.js';
@@ -164,7 +164,7 @@ function gearFor(char, slot, pro, rng, variant) {
   const def = uniques.length && rng() < 0.2 ? pick(uniques, rng) : pick(pool.slice(0, 2), rng);
   const rarity = pro ? Math.max(2, rollRarity(rng)) : rollRarity(rng);
   const own = def.slot === 'earring' ? 'roll' : rng() < 0.7 ? variant : 'roll';
-  return makeEquip(def.id, { variance: 0.12, rng, rarity, variant: own });
+  return makeEquip(def.id, { rng, rarity, variant: own });
 }
 
 // `level` and `jobs` (the job path, first job on) pick them instead of rolling.
@@ -201,7 +201,7 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
   if (GEAR_FAMILIES.includes(family) && sets.length && rng() < (pro ? 0.8 : 0.4)) {
     const [key] = rng() < 0.6 ? sets.sort((a, b) => b[1].level - a[1].level)[0] : pick(sets, rng);
     const n = pro || rng() < 0.45 ? 4 : 2 + Math.floor(rng() * 2);
-    for (const slot of [...SET_SLOTS].sort(() => rng() - 0.5).slice(0, n)) char.equipment[slot] = makeEquip(setPieceId(key, family, slot), { variance: 0.08, rng, rarity: rollRarity(rng) });
+    for (const slot of [...SET_SLOTS].sort(() => rng() - 0.5).slice(0, n)) char.equipment[slot] = makeEquip(setPieceId(key, family, slot), { rng, rarity: rollRarity(rng) });
   }
   const s = computeStats(char);
   char.hp = s.maxHp;
@@ -326,8 +326,8 @@ function hooksFor(bots, world) {
       b.dest = town;
     },
     equipFor: (def) => {
-      const inst = makeEquip(def.id, { variance: 0.12, rng: bots.rng, rarity: 1, variant: 'roll' });
-      return { inst, id: def.id, qty: 1, price: Math.max(500, Math.round(variantPrice(def, inst.variant) * 0.7 / 10) * 10) };
+      const inst = makeEquip(def.id, { rng: bots.rng, rarity: 1, variant: 'roll' });
+      return { inst, id: def.id, qty: 1, price: Math.max(500, Math.round(def.price * 0.7 / 10) * 10) };
     },
     say: (b, text) => say(b, text),
     shout: (b, text) => shout(b, bots, world, text),

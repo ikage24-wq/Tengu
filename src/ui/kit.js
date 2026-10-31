@@ -323,7 +323,6 @@ export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', f
     ctx.restore();
   }
   if (count && item.qty > 1) text(ctx, `${item.qty}`, x + s - 2.5, y + s - 2.5, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
-  if (item.upgrades) text(ctx, `+${item.upgrades}`, x + s - 2, y + 7.5, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: '#d0559a' });
 }
 
 // A four-pointed twinkle.
