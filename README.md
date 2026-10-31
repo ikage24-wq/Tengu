@@ -36,14 +36,12 @@ Things to do together:
   options). The leader invites; party friends show on the party panel with their HP and where
   they are, warping to them costs half, and the warden takes only your party into dungeons.
 - **Inspect.** Tap a friend (in the world, the party panel or the friends list) to see their
-  profile: their look, gear, stats, title and collection.
+  profile: their look, gear, stats and collection.
 - **Friends on the maps.** Friends show as dots on the minimap (rose for your party) and as badges
   with their initial on the world map.
 - **Party dungeons.** Friends standing at a dungeon's gate with a job join the group the warden
   forms (bots fill the seats left). The one who formed it leads: their game runs the rooms,
   monsters, bosses and bots, and everyone's blows, taunts, heals, buffs and room tasks reach it.
-- **Trading.** Each friend's row has a Trade button: both sides put in up to six items and some
-  gold, press Ready, and the swap happens when both are ready (any change takes the marks off).
 - **Warp to a friend** for free, unless they're in a dungeon or trial.
 - **Fishing together.** Friends see each other's lines and hear about each other's catches.
 - **Queen rematches.** A returning queen's moves (and their warnings) reach everyone on her map.
@@ -55,8 +53,7 @@ Things to do together:
 A thumb stick on the left walks and climbs (push up to talk to NPCs and take portals). On the
 right: Attack, Jump, Loot, and your first four hotkeys as skill buttons; the hotkey bar's bubbles
 can be tapped too. The speech button opens chat with the phone's keyboard. Everything else (menus,
-windows, NPCs) works by tapping. Options > Phone sets the button size (small, normal, big), how
-see-through they are, and a left-handed layout (stick on the right).
+windows, NPCs) works by tapping. Options > Phone sets a left-handed layout (stick on the right).
 
 ## Run it
 
@@ -135,13 +132,11 @@ to clear it.
   thief's star-throwing gauntlets chain too: two snap shots and then a heavy piercing arrow (or bolt) that tears through the
   whole line, or two throws and a three-star barrage. Arrows leave on the string's snap, fly to
   their target pointed along their path, and hit when they arrive.
-- **Throwing stars** — a gauntlet throws stars from your bag, and they never run out. Stars add
-  their own attack: Pebble (Lv 10, +15), Steel (Lv 10, +17), Mint
-  (Lv 20, +19), and Moon (Lv 30, +21) are sold in shops; Crimson (Lv 40), Thunder (Lv 50),
-  Flame (Lv 60), Crystal (Lv 70), and Starlight (Lv 80, +30) only drop from monsters (bosses
-  often), and the last four hit with their element. New thieves get a set of Pebble Stars. A
-  gauntlet always throws the strongest stars you own (shown by the hotkeys); with none, it can't
-  attack.
+- **Throwing stars** — a gauntlet throws its own stars, better ones the higher its level, and
+  they add their attack: Pebble (+15), Steel (Lv 10, +17), Mint (Lv 20, +19), Moon (Lv 30, +21),
+  Crimson (Lv 40), Thunder (Lv 50), Flame (Lv 60), Crystal (Lv 70) and Starlight (Lv 80, +30); the
+  last four hit with their element. There are no stars to buy, carry or run out of (a gauntlet's
+  tooltip says which it throws).
 - **Warrior** (steel blue and white: the blue cross, swords, a shield) — he fights with his basic
   attacks, and his skills go off on their own from them. His own basic combo is four swings, each
   drawn from a few so the string keeps changing (the first combo is the classic one, and never
@@ -364,16 +359,11 @@ to clear it.
   across three maps: walking, jumping and climbing on the beach, the bag, gear and stats, fighting
   and looting Kitsune Kits on the practice field, potions, skills and hotkeys, then a boat from
   the dock to Sprout Village. A hint card at the top of the screen shows the current lesson (in
-  words for the stick and buttons when you play on a phone), with a Skip button. Six town lessons
-  follow in Sprout Village (also for characters who skip the island): the story's gold-star
-  quests, the World Map's guide trail, the Collection, fishing, cooking, and playing with friends.
-  Kuro's first quest offers a practice weapon of your choice (sword, wand, bow or dagger); a
-  Novice's Auto stats follow the weapon in hand (STR, INT, DEX or LUK).
+  words for the stick and buttons when you play on a phone), with a Skip button. Kuro's first
+  quest gives a practice sword; your job's own weapon comes with your first job at level 10.
 - **Mochi pets** — adopt a Mochi egg for 3,000 Cash in the Mochi window (P, or from the Cash
   Shop). It follows you, fetches loot in range, drinks your best tonic when HP or MP drops below
-  the marks you set. Treats from Pip and Marlo grow it: a baby becomes a Sky (reaches ledges),
-  Swift (wider range), Strong (faster pickup) or Spirit (reacts sooner) Mochi, each with its own
-  outfit, idles and cheer. It never gets hungry or sulks, and it cheers when you level up.
+  the marks you set. It never needs feeding, and it cheers when you level up.
 - **Monsters and maps** — 25 chibi monsters and the Crystal King boss across 18 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room, plus the far
   regions for levels 19-50: the Whispering Glade of wind chimes past the woods, the Fox Shrine Path
@@ -753,7 +743,7 @@ to clear it.
   twirls, and Mira waves (they turn to face you when you come over). Villagers stroll the streets.
 - **Other players** — the server is full of generated players, each a real character: a level
   (pros at a low rate, Lv 56+ with endgame gear and a gold name tag), a job that fits it, a stat
-  build (pure, standard, or hybrid), rolled gear, a title, and sometimes a guild. About 26 are on
+  build (pure, standard, or hybrid), rolled gear, and sometimes a guild. About 26 are on
   at any hour (never more than two under; someone logging out is soon replaced), spread over the
   towns by level
   (beginners in Sprout Village, veterans and pros in Moonleaf Grove, at most 8 in one
@@ -791,7 +781,7 @@ to clear it.
     calendar (Spooky Night in October, the Snow Festival in December, and more) with festival
     colours, dancing and fireworks. A wandering merchant sets up shop for a few minutes with odd
     wares.
-  - **Chat.** They talk about what's real for them: their own weapon, job, title and guild, the map
+  - **Chat.** They talk about what's real for them: their own weapon, job and guild, the map
     they're on and its monsters and drops, where they're headed next, the weather, and the raid
     or GM event that just happened; a line that doesn't fit the speaker isn't used. They
     talk back too: hi when you say hi, answers from the game's own data ("where is Clover Hills?",
@@ -823,19 +813,16 @@ to clear it.
   defense and HP, gets less likely to take as it climbs, and a miss only costs the gold.
 - **Collection (B)** — the Monster Book fills a card for every monster you defeat (or help defeat):
   a card is mastered at 100 defeats (5 for a boss). Cards are for collecting, with no hidden stat
-  bonus. 26 achievements (levels, hunting, the book, each queen, the story, a full set, a +10
-  polish, quests and dailies, playing online, adopting a Mochi, a fortune) each unlock a title to
-  wear in gold under your name, which friends online see too.
+  bonus. The Fish page keeps how many of each fish you've caught.
 - **Fishing** — buy a Fishing Rod from Pip or Marlo, then find a fish sign by the water: the tide
   pool on Dawnlight Beach, the pond in Clover Hills, the end of Pastel Harbor's pier, the pond in the
   Whispering Glade, the warm pools of Serpent Springs, an ice hole on Frozen Peak, and a pool of
   stars at Starfall Heights. Press Up to cast, wait, and tap Attack the moment the bobber dips (too
-  early and it swims off; rarer fish give you less time). 13 fish from common to legendary, each
-  with a size; the Collection's Fish page keeps how many you've caught and your biggest.
+  early and it swims off; rarer fish give you less time). 13 fish from common to legendary.
 - **Cooking** — every town has a stove (press Up by it). Recipes take fish and monster drops; you
-  know three from the start and learn each fish's own recipe on your first catch. Stir by stopping
-  the spoon: Perfect serves three dishes, Great two, Good one. A dish heals and gives a bonus for
-  10-20 minutes (attack, defense, speed, HP back, crit, even extra EXP), one dish at a time.
+  know three from the start and learn each fish's own recipe on your first catch. Press Cook and
+  the pot serves two dishes. A dish heals and gives a bonus for 10-20 minutes (attack, defense,
+  speed, HP back, crit, even extra EXP); different dishes add up.
 - **Quests and NPCs** — 39 quests from every town's people, covering every field from level 1 to
   48: hunts and fetches, errands (talk to someone, deliver a letter or a parcel, climb to the top
   of a map), short chains (Captain Rook's Windy Canyon trouble leads to Bramble), a task from each
