@@ -13,7 +13,6 @@ import { gaugeOf, inForm } from '../world/melee.js';
 import { killMob, hurtPlayer } from '../world/world.js';
 import { playerPose } from '../render/scene.js';
 import { createAnim } from '../render/animator.js';
-import { titleOf } from '../core/collection.js';
 import { handleTogether, togetherApi, tickParty } from './together.js';
 import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
 import { noteHit } from '../world/dungeon.js';
@@ -319,7 +318,7 @@ function adopt(world) {
 function sendProfile(world) {
   online.profileIn = PROFILE_EVERY;
   const c = world.char;
-  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, title: titleOf(c) });
+  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level });
 }
 
 function sendMe(world) {
@@ -445,7 +444,7 @@ function receive(world, msg) {
     case 'prof': {
       const g = ghostOf(msg.id);
       const fresh = g.name === '...';
-      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, title: msg.title ?? null });
+      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level });
       if (fresh && !online.host) world.log(`${msg.name} is in the room.`, '#bff0dc');
       return;
     }

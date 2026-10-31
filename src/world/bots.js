@@ -33,7 +33,6 @@ import { updateSocial, luckyDrop } from './social.js';
 import { botChat, stale } from './chatlog.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
-import { ACHIEVEMENTS } from '../data/achievements.js';
 import { FISH } from '../data/fishing.js';
 import { MOBS } from '../data/mobs.js';
 import { createBody } from './physics.js';
@@ -209,19 +208,6 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
   return char;
 }
 
-// A title to wear under their name (the Collection's), one that fits how far along they are.
-const TITLES = {
-  low: ['hello', 'lv10', 'angler', 'friends', 'mochi', 'dailies', 'chef', 'k100'],
-  mid: ['cards10', 'gnarl', 'sylvana', 'quests20', 'set', 'lv30', 'k1000'],
-  high: ['tamamo', 'lilith', 'selene', 'polish', 'cards25', 'fishall', 'story'],
-  pro: ['lv50', 'k5000', 'cardsAll', 'rich', 'story'],
-};
-function titleFor(level, pro, rng) {
-  if (rng() < 0.4) return null;
-  const pool = [...TITLES.low, ...(level >= 15 ? TITLES.mid : []), ...(level >= 32 ? TITLES.high : []), ...(pro ? TITLES.pro : [])];
-  return ACHIEVEMENTS.find((a) => a.id === pick(pool.slice(level >= 32 ? 6 : 0), rng))?.title ?? null;
-}
-
 // ---------- Shops ----------
 
 // ---------- Population ----------
@@ -289,7 +275,7 @@ function spawn(bots, world, { quiet = false, who = null, here = false, at = null
   const map = MAPS[town];
   const bot = {
     id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: char.level >= 56,
-    guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: who?.title ?? titleFor(char.level, char.level >= 56, rng),
+    guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: null,
     map: town, x: freeX(map, bots, rng), facing: rng() < 0.5 ? 1 : -1, state: 'idle', timer: between(1, 4, rng),
     session: between(150, 480, rng), stay: between(70, 200, rng), nextLine: between(4, 30, rng), bubble: null,
     waved: false, shop: null, appear: quiet ? 0 : 1,
@@ -816,7 +802,7 @@ function addHunter(bots, world, walkIn = false, who = null) {
   }
   const bot = {
     id: `hunter${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: false, hunter: true,
-    guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: who?.title ?? titleFor(char.level, false, rng),
+    guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: null,
     map: map.id, x, facing: 1, state: 'hunt', body: createBody(x, y),
     session: between(90, 300, rng), stay: 999, nextLine: between(15, 50, rng), bubble: null, waved: true, shop: null, appear: 1,
   };

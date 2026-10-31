@@ -7,7 +7,6 @@ import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { addItem, removeItem, countItem, TAB_SIZE } from '../core/inventory.js';
 import { loadMap } from '../world/world.js';
-import { titleOf } from '../core/collection.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -162,11 +161,10 @@ function onInspect(world, msg, g) {
         name: c.name, level: c.level, job: c.job, appearance: c.appearance, base: c.base, baseHp: c.baseHp, baseMp: c.baseMp,
         equipment: c.equipment, outfit: c.outfit ?? null, skills: c.skills, buffs: {},
       },
-      title: titleOf(c), fish: Object.keys(c.fishBook ?? {}).length, cards: Object.keys(c.book ?? {}).length,
-      achievements: Object.values(c.achievements ?? {}).filter(Boolean).length, hp: c.hp, mp: c.mp,
+      fish: Object.keys(c.fishBook ?? {}).length, cards: Object.keys(c.book ?? {}).length, hp: c.hp, mp: c.mp,
     });
   } else if (msg.op === 'card' && msg.char?.base && msg.char.equipment) {
-    g.inspect = { char: msg.char, title: msg.title, fish: msg.fish, cards: msg.cards, achievements: msg.achievements, hp: msg.hp, mp: msg.mp };
+    g.inspect = { char: msg.char, fish: msg.fish, cards: msg.cards, hp: msg.hp, mp: msg.mp };
   }
 }
 

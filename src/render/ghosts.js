@@ -64,7 +64,6 @@ function nameTag(ctx, g, x, y, time) {
   box(ctx, x - w / 2, y + 2, w, 10, { fill: TAG, edge: TAG_EDGE, r: 5, width: 1 });
   sparkle(ctx, x - w / 2 + 6, y + 7, 2.4 + Math.sin(time * 4 + g.id.length) * 0.4, '#ffffff');
   text(ctx, label, x + 4, y + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
-  if (g.title) text(ctx, g.title, x, y + 25, { size: 6.5, bold: true, align: 'center', color: '#ffe9a0', outline: 'rgba(58,90,150,0.85)' });
   if (g.maxHp) {
     const f = Math.max(0, Math.min(1, g.hp / g.maxHp));
     box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });

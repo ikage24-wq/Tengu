@@ -200,7 +200,7 @@ test('players nearby say hi back, answer a question, and cheer when you level up
   assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo|level/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
 });
 
-test('in town, players chat with each other, and wear titles and sets (no rug shops, fishing or cooking)', () => {
+test('in town, players chat with each other and wear sets (no titles, rug shops, fishing or cooking)', () => {
   const world = createWorld(createCharacter('Me', {}));
   quiet(world);
   loadMap(world, 'harbor', 'start');
@@ -217,7 +217,7 @@ test('in town, players chat with each other, and wear titles and sets (no rug sh
   const rng = seeded(9);
   const chars = Array.from({ length: 60 }, (_, i) => makeBotCharacter(rng, { name: `s${i}`, level: 40 }));
   assert.ok(chars.some((c) => Object.values(c.equipment).some((e) => e?.id.startsWith('set_'))), 'some wear set pieces');
-  assert.ok(bots.list.some((b) => b.title), 'some wear titles');
+  assert.ok(!bots.list.some((b) => b.title), 'no titles');
 });
 
 test('players hunt the field you are on, leave the monsters by you alone, and their kills give you nothing', () => {

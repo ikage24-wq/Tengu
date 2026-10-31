@@ -29,7 +29,6 @@ import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { drawSpots, drawFishing } from './fishing.js';
 import { nextStep } from '../world/routes.js';
-import { titleOf } from '../core/collection.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
@@ -305,9 +304,6 @@ export function drawWorld(ctx, world, viewCam, time) {
     const hot = world.hoverSelf;
     box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
     text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
-    // The title you wear, in gold under your name.
-    const title = titleOf(world.char);
-    if (title) text(ctx, title, hx, hy + 20, { size: 6.5, bold: true, align: 'center', color: '#ffe9a0', outline: 'rgba(90,63,122,0.85)' });
     // Your guild, like everyone else's, under that.
   }
 

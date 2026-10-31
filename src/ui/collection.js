@@ -1,21 +1,19 @@
 // The Collection window (B): the Monster Book (a card for every monster: shown once you've
-// defeated one, a silhouette until then, with a star once mastered), achievements with their
-// progress, and the titles they unlock (pick one to wear under your name).
+// defeated one, a silhouette until then, with a star once mastered) and the fish you've caught.
 
 import { MOBS } from '../data/mobs.js';
-import { ACHIEVEMENTS, BOOK_MOBS } from '../data/achievements.js';
 import { masteryAt } from '../core/collection.js';
 import { drawMonster } from '../render/monsters.js';
 import { drawItemIcon } from '../render/icons.js';
 import { FISH, RARITY_NAMES, RARITY_COLORS } from '../data/fishing.js';
-import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, sparkle, icon, wrap, bar, fit } from './kit.js';
+import { COLORS, windowFrame, tabs, text, box, hover, tooltip, sparkle, fit } from './kit.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Fish', 'Achievements', 'Titles'];
+const TABS = ['Monster Book', 'Fish'];
 
 // Monsters by level, the bosses after.
-const ORDER = [...BOOK_MOBS].sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
+const ORDER = Object.keys(MOBS).sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
 
 export function collectionWindow(ui, state, world) {
   const win = state.windows.collection;
@@ -28,9 +26,7 @@ export function collectionWindow(ui, state, world) {
   const x = win.x + 10;
   const y = win.y + 48;
   if (win.tab === 0) book(ui, win, char, world, x, y, th);
-  else if (win.tab === 1) fishPage(ui, char, x, y, th);
-  else if (win.tab === 2) achievements(ui, win, char, x, y, th);
-  else titles(ui, win, char, x, y, th);
+  else fishPage(ui, char, x, y, th);
 }
 
 // The book: a grid of cards, scrolled by the wheel, with what it's all worth along the bottom.
@@ -102,47 +98,4 @@ function fishPage(ui, char, x, y, th) {
   });
   const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
   text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip or Marlo, and look for the fish signs by the water.`, x, y + Math.ceil(FISH.length / cols) * ch + 8, { size: 7, bold: true, color: th.dark });
-}
-
-function achievements(ui, win, char, x, y, th) {
-  const { ctx } = ui;
-  const rowH = 28;
-  const rows = 6;
-  if (hover(ui, x, y, W - 20, rows * rowH)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
-  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, ACHIEVEMENTS.length - rows));
-  const got = Object.keys(char.achievements ?? {}).length;
-  text(ctx, `${got} / ${ACHIEVEMENTS.length} earned`, x, y + rows * rowH + 10, { size: 8, bold: true, color: th.dark });
-  ACHIEVEMENTS.slice(win.scroll, win.scroll + rows).forEach((a, i) => {
-    const ry = y + i * rowH;
-    const have = Boolean(char.achievements?.[a.id]);
-    box(ctx, x, ry, W - 20, rowH - 3, { fill: have ? '#effcf3' : '#ffffff', edge: have ? COLORS.good : th.light, r: 8, width: 1 });
-    ctx.fillStyle = have ? COLORS.good : '#ddd2e8';
-    ctx.beginPath();
-    ctx.arc(x + 12, ry + 12, 7, 0, Math.PI * 2);
-    ctx.fill();
-    icon(ctx, have ? 'check' : 'lock', x + 12, ry + 12, 8, '#ffffff');
-    text(ctx, a.name, x + 24, ry + 10, { size: 8, bold: true, color: have ? '#2f8f52' : COLORS.ink });
-    text(ctx, fit(ctx, a.desc, 160, 6.5, false), x + 24, ry + 19.5, { size: 6.5, color: COLORS.muted });
-    text(ctx, `"${a.title}"`, x + W - 26, ry + 10, { size: 7, bold: true, align: 'right', color: have ? '#c99a1f' : COLORS.muted });
-    const p = !have && a.progress?.(char);
-    if (p) {
-      bar(ctx, x + W - 96, ry + 14, 70, 5, p[0] / p[1], th.main, null);
-      text(ctx, `${p[0].toLocaleString()}/${p[1].toLocaleString()}`, x + W - 26, ry + 23, { size: 5.5, align: 'right', color: COLORS.muted });
-    }
-  });
-}
-
-function titles(ui, win, char, x, y, th) {
-  const { ctx } = ui;
-  const earned = ACHIEVEMENTS.filter((a) => char.achievements?.[a.id]);
-  wrap(ctx, 'Wear a title under your name. Earn more from achievements.', x, y + 2, W - 20, { size: 7.5, color: COLORS.muted });
-  const list = [{ id: null, title: 'No title' }, ...earned];
-  list.forEach((a, i) => {
-    const cx = x + (i % 2) * 160;
-    const cy = y + 14 + Math.floor(i / 2) * 22;
-    if (cy > win.y + H - 26) return;
-    const on = (char.title ?? null) === a.id;
-    if (button(ui, cx, cy, 154, 19, a.title, { primary: on, size: 8 })) char.title = a.id;
-  });
-  if (!earned.length) wrap(ctx, 'No titles yet. Your first comes from saying hello in Sprout Village!', x, y + 44, W - 20, { size: 8 });
 }

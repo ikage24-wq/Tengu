@@ -13,7 +13,6 @@ import { JOBS } from '../data/jobs.js';
 import { FISH, SPOTS } from '../data/fishing.js';
 import { DISHES } from '../data/cooking.js';
 import { SETS } from '../data/sets.js';
-import { ACHIEVEMENTS } from '../data/achievements.js';
 import { TRIALS } from '../data/story.js';
 import { levelRange, routeBetween } from './routes.js';
 
@@ -35,7 +34,6 @@ const SLOTS = {
   mylvl: (c) => (c.level ? `${c.level}` : null),
   myjob: (c) => c.jobName ?? null,
   myweapon: (c) => c.weapon ?? null,
-  mytitle: (c) => c.title ?? null,
   myguild: (c) => c.guild ?? null,
   shopitem: (c) => c.shopItem ?? null,
   // Where they are, and what's there.
@@ -88,7 +86,7 @@ const TEMPLATES = {
     '{next} tomorrow, today i rest', 'lvl {mylvl}... {next} time soon', 'who wants to duo {next} later?',
   ],
   gear: [
-    'my {myweapon} finally feels strong', 'should i upgrade my {myweapon}?', 'wearing {mytitle} now {emote}', 'how do u guys like {mytitle} as a title',
+    'my {myweapon} finally feels strong', 'should i upgrade my {myweapon}?',
     'saving up for a better {myweapon}', '{myguild} gang', 'anyone else in {myguild} on?', 'love being {myjob} tbh', '{myjob} is so fun at lvl {mylvl}',
   ],
   newbie: [
@@ -113,7 +111,7 @@ const TEMPLATES = {
     '{hi} everyone {emote}', '{here} is so pretty today', 'love the music in {here}', 'who else just idles in {here}', 'snack break brb', 'who else is up late {laugh}',
     'anyone else love {npc}?', 'i just want a pet {mobhere} tbh', 'ok who keeps dancing {laugh}', 'brb gonna get water',
   ],
-  brag: ['lvl {mylvl} {myjob} btw', 'my {myweapon} hits so hard', 'farming {field} for fun now', 'who needs a carry? {emote}', '{mytitle} and proud'],
+  brag: ['lvl {mylvl} {myjob} btw', 'my {myweapon} hits so hard', 'farming {field} for fun now', 'who needs a carry? {emote}'],
   greet: [
     '{hi} {me}!', '{hi} {me} {emote}', 'oh {hi} {me}', 'love your outfit {me}!', '{me}!! {emote}', 'hey {me}, wanna party sometime?',
     'yo {me} whats ur lvl', '{me} hii {emote}', 'sup {me}', 'heya {me}, good luck out there',
@@ -275,7 +273,7 @@ export function answer(said, ctx) {
   if (has(w, ['cook', 'stove', 'recipe', 'food'])) return 'every town has a stove, press up at it. stop the spoon in the middle for 3 servings!';
   if (has(w, ['polish', 'enhance', 'upgrade'])) return 'Tora in Ember Crag polishes gear up to +10, gets harder each step tho';
   if (has(w, ['set', 'sets'])) return 'queens drop set pieces for ur job, and the Hollow chest gives Rootwood. full set = aura!';
-  if (has(w, ['title', 'achievement', 'collection', 'book'])) return 'press B for the Collection, achievements give titles to wear';
+  if (has(w, ['collection', 'book', 'cards'])) return 'press B for the Collection, a card for every monster you beat';
   if (has(w, ['dungeon', 'hollow', 'warden'])) return 'Rootwood Hollow is at Hollow Gate, talk to the warden to make a group';
   if (has(w, ['job', 'advance', 'class'])) return level < 10 ? 'first job at lvl 10, visit the instructor in their town!' : 'second job is at lvl 30, ur instructor gives a trial';
   if (has(w, ['money', 'gold', 'meso', 'rich'])) return 'sell fish and drops, and grind a map at ur level. dishes sell well too';

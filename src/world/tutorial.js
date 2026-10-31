@@ -36,7 +36,7 @@ export const LESSONS = [
   // ----- In town: what the island can't show -----
   { hint: 'Gold [★] quests are the story. Talk to Mira to begin it.', phone: 'Gold [★] quests are the story. Tap Mira to begin it.', done: (w) => Boolean(w.char.quests.story_1_1) },
   { hint: 'Lost? Open the World Map with [M] and tap a place: a pink trail leads you there.', phone: 'Lost? Tap the [map] on the menu bar, then tap a place: a pink trail leads you there.', done: (w) => Boolean(w.route || w.char.seen?.worldmap) },
-  { hint: 'Open your Collection with [B]: monster cards, fish, achievements and titles.', phone: 'Tap [Collection] on the menu bar: monster cards, fish, achievements and titles.', done: (w) => Boolean(w.char.seen?.collection) },
+  { hint: 'Open your Collection with [B]: monster cards and fish.', phone: 'Tap [Collection] on the menu bar: monster cards and fish.', done: (w) => Boolean(w.char.seen?.collection) },
   { hint: 'Fishing: buy a Fishing Rod from Pip, then press [↑] at a rippling spot. [Z] when it bites!', phone: 'Fishing: buy a Fishing Rod from Pip, push up at a rippling spot, tap [★] when it bites!', done: (w) => Object.keys(w.char.fishBook ?? {}).length > 0 },
   { hint: 'Cooking: stand at a town stove and press [↑]. Your catches make tasty buffs.', phone: 'Cooking: stand at a town stove and push up. Your catches make tasty buffs.', done: (w) => Boolean(w.char.seen?.cook) },
   { hint: 'Play with friends: press [N] to host a room and share its code. Have fun!', phone: 'Play with friends: tap [Friends] on the menu bar, host a room, share the code. Have fun!', done: (w) => Boolean(w.char.seen?.online) },

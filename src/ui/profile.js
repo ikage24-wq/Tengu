@@ -15,7 +15,6 @@ import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
-import { titleOf } from '../core/collection.js';
 import { online } from '../net/online.js';
 import { askInspect, askParty, partyBlocker, inParty, askTrade } from '../net/together.js';
 
@@ -80,7 +79,7 @@ export function profileWindow(ui, state, world) {
   if (pro) tag('★ Top player', ly + 169, '#e0a52f');
   if (who.kind === 'self') {
     tag("That's you!", ly + 169, COLORS.accent);
-    // Your Monster Book, achievements and titles (also B).
+    // Your Monster Book and fish (also B).
     if (button(ui, lx + 12, ly + 183, 80, 16, 'Collection', { size: 7.5, iconName: 'crown', theme: 'gold' })) {
       state.windows.collection.open = true;
       state.order = [...state.order.filter((k) => k !== 'collection'), 'collection'];
@@ -97,9 +96,6 @@ export function profileWindow(ui, state, world) {
     }
     if (button(ui, lx + 6, ly + 184, 92, 15, 'Trade', { size: 7, enabled: !online.trade, iconName: 'coin' })) askTrade(world, friend.id);
   }
-  // The title they wear.
-  const title = who.kind === 'self' ? titleOf(char) : card?.title ?? null;
-  if (title) text(ctx, title, lx + 52, ly + 146, { size: 6.5, bold: true, align: 'center', color: '#c99a1f' });
   if (bot?.party && bot.ai) tag(`Party · ${PLAYSTYLES[bot.ai.kind].label}`, ly + (pro ? 184 : 169), PLAYSTYLES[bot.ai.kind].color);
 
   // Tabs: gear, stats, and their shop if one is open.
@@ -147,7 +143,7 @@ export function profileWindow(ui, state, world) {
       ['Magic', family === 'mage' ? `${Math.round(mag.min)} ~ ${Math.round(mag.max)}` : `${Math.floor(s.int / 2) + s.matk}`],
       ['Defense', `${s.wdef} / ${s.mdef}`], ['Accuracy', `${accuracy(family, s, char.level)}`], ['Avoid', `${avoid(s)}`],
       ['Critical', `${Math.round((0.05 + s.critRate) * 100)}%`], ['Speed', `${s.speed}%`],
-      ...(card ? [['Monster cards · Fish', `${card.cards ?? 0} · ${card.fish ?? 0}`], ['Achievements', `${card.achievements ?? 0}`]] : []),
+      ...(card ? [['Monster cards · Fish', `${card.cards ?? 0} · ${card.fish ?? 0}`]] : []),
     ];
     well(ctx, rx, y - 4, rw, rows.length * 13 + 6, th);
     y += 7;
