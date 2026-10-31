@@ -123,3 +123,13 @@ test('a character who skips the island has no island lessons', () => {
   run(w, idle, 0.1);
   assert.equal(currentLesson(c), null);
 });
+
+test('leaving the island partway through ends the lessons without a hitch', () => {
+  const c = createCharacter('Leaver', {});
+  Object.assign(c, { mapId: 'dawnbeach', portal: 'start', tutorial: { step: 2 } });
+  const w = createWorld(c);
+  run(w, idle, 0.1);
+  loadMap(w, 'meadow1', 'west');
+  run(w, idle, 0.2);
+  assert.equal(currentLesson(c), null);
+});

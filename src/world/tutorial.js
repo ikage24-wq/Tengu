@@ -69,11 +69,10 @@ export function currentLesson(char) {
 export function tickTutorial(world) {
   const t = world.char.tutorial;
   if (!t || t.step >= LESSONS.length) return;
-  // Off the island some other way (a skip, an old save): on to the town lessons.
-  if (t.step < ISLAND_LESSONS && !ISLAND.includes(world.map.id)) {
-    t.step = ISLAND_LESSONS;
-    t.scratch = {};
-    t.begun = false;
+  // Off the island some other way (a skip, an old save): the lessons are over.
+  if (!ISLAND.includes(world.map.id)) {
+    t.step = LESSONS.length;
+    return;
   }
   t.scratch ??= {};
   if (!t.begun) {
