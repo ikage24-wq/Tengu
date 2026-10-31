@@ -1,0 +1,65 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: frames where the arms used to rig oddly, drawn as the game draws them (idle acting plus
+// the idle bits on top); ?moves shows attack frames whose back arm reaches far. ?only=0,3 picks.
+import { drawHero } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { makeEquip } from '../src/core/items.js';
+
+const CASES = [
+  ['determined', 9.267, 'none', 'Determined + hands-on-hips bit'],
+  ['smug', 9.333, 'none', 'Smug + hands-on-hips bit'],
+  ['sassy', 9.333, 'none', 'Sassy + hands-on-hips bit'],
+  ['pout', 15.0, 'none', 'Pout (arms crossed) + stretch bit'],
+  ['hmph', 15.333, 'none', 'Hmph (arms crossed) + stretch bit'],
+  ['proud', 3.267, 'none', 'Proud laugh: hand at chin'],
+  ['judging', 3.267, 'none', 'Judging: hand at chin'],
+  ['sad', 3.267, 'none', 'Sad: hands to face'],
+  ['giggle', 14.867, 'none', 'Giggle: hands to mouth'],
+  ['dimple', 3.8, 'none', 'Dimple + stretch bit'],
+  ['tired', 15.333, 'sword', 'Low HP (tired) with a sword'],
+  ['sleepy', 4.333, 'none', 'Sleepy yawn stretch'],
+];
+const Q = new URLSearchParams(location.search);
+const Z = Number(Q.get('z') ?? 5);
+const CW = (Q.has('moves') ? 70 : 40) * Z;
+const CH = 48 * Z;
+const COLS = Q.has('moves') ? 3 : 4;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * COLS;
+canvas.height = (CH + 22) * Math.ceil(CASES.length / COLS);
+ctx.fillStyle = '#2a2440';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+const MOVE_CASES = [['kagurafin', 0.65], ['glidecast', 0.55], ['kagurabless', 0.65], ['twirlstep', 0.7], ['shrinegrand', 0.65], ['floatcast', 0.5], ['sleevefan', 0.15], ['shrinepurify', 0.75], ['onmyoofuda', 0.6], ['onmyoseal', 0.65], ['kaguraup', 0.4], ['onmyorally', 0.15], ['kaguralantern', 0.45], ['foxfloat2', 0.35], ['ballista', 0.85], ['smite', 0.15]];
+if (Q.has('moves')) CASES.splice(0, CASES.length, ...MOVE_CASES.map(([k, p]) => ['smile', p, 'none', `${k} @ ${p}`, k]));
+const SHOW = Q.get('only') ? Q.get('only').split(',').map(Number).map((i) => CASES[i]) : CASES;
+canvas.height = (CH + 22) * Math.ceil(SHOW.length / COLS);
+ctx.fillStyle = '#2a2440';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+SHOW.forEach(([face, time, w, label, move], i) => {
+  const x0 = (i % COLS) * CW;
+  const y0 = Math.floor(i / COLS) * (CH + 22);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0 + 2, y0 + 2, CW - 4, CH - 4);
+  ctx.fillStyle = '#c8e0ec';
+  ctx.fill();
+  ctx.clip();
+  nextFrame();
+  setHd(true, Z);
+  ctx.setTransform(Z, 0, 0, Z, 0, 0);
+  const gear = w === 'none' ? null : { weapon: makeEquip(`${w}_0`) };
+  const look = { hairStyle: 'pixie', hairColor: '#e8a0b8', skinTone: '#fbeee4', eyeColor: '#4a7ad8', face };
+  drawHero(ctx, look, gear, (x0 + CW / 2) / Z, (y0 + CH) / Z - 4, move ? { pose: move, progress: time, dur: 0.5, time: 1, facing: 1, alpha: 1 } : { pose: 'idle', time, facing: 1, alpha: 1, low: face === 'tired' });
+  ctx.restore();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#e8e4f4';
+  ctx.font = 'bold 12px Segoe UI, sans-serif';
+  ctx.fillText(label, x0 + 6, y0 + CH + 15);
+});
+window.done = true;
+</script></body></html>

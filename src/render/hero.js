@@ -1180,9 +1180,13 @@ const FOREARM = 4.7;
 // eases out a little while the arm foreshortens, instead of jutting out like a wing.
 function arm(sx, sy, hx, hy, sleeve, long, g, skin, side = 1) {
   const [[bx, by], [wx, wy]] = reach(sx, sy, hx, hy, UPPER_ARM, FOREARM, sx < HEAD_X ? 1 : -1);
-  const k = UPPER_ARM / (UPPER_ARM + FOREARM);
-  const mx = sx + (wx - sx) * k;
-  const my = sy + (wy - sy) * k;
+  // `side` swings the elbow about the shoulder-to-wrist line: 1 as solved, -1 mirrored across it
+  // (bent outward, both bones keeping their length), between them toward the viewer (shorter).
+  const len = Math.hypot(wx - sx, wy - sy) || 1;
+  const [ux, uy] = [(wx - sx) / len, (wy - sy) / len];
+  const along = (bx - sx) * ux + (by - sy) * uy;
+  const mx = sx + ux * along;
+  const my = sy + uy * along;
   const ex = mx + (bx - mx) * side;
   const ey = my + (by - my) * side;
   const out = [
@@ -1509,7 +1513,9 @@ function idleActing(r, mood, t, armed) {
   const onHips = (both = true) => { hands(HIPS[0], HIPS[1], both ? -HIPS[0] : 0, both ? HIPS[1] : 0); r.armSide = -1; };
   const CLASP = [5.6, -6.1];
   const HIPS = [0.6, -4.2];
-  const CHIN = [3, -10];
+  // Up under the jaw, on the chest (the head is drawn over the arms in the same skin, so any
+  // higher and the hand vanishes into the face).
+  const CHIN = [6.5, -8.5];
   switch (mood) {
     case 'smile': {
       // A happy little bounce on the beat the eyes close in a smile.
@@ -1993,7 +1999,12 @@ function solveRig(state, anim, mv = null) {
     r.tx = q(0.6 * Math.sin(t * 0.45));
     // The head tips a little toward the hip the weight shifts onto, a beat after the body.
     r.tilt = Math.round(1.6 * Math.sin(t * 0.45 - 0.7)) * 2;
-    if (pose === 'idle' && state.mood) idleActing(r, state.mood, t, state.armed);
+    if (pose === 'idle' && state.mood) {
+      const [b0, f0] = [r.backArm.join(), r.frontArm.join()];
+      idleActing(r, state.mood, t, state.armed);
+      // Which arms the mood is holding in a pose of its own (an idle bit leaves those alone).
+      r.posed = { back: r.backArm.join() !== b0 || r.armSide !== 1, front: r.frontArm.join() !== f0 || r.armSide !== 1 };
+    }
   }
 
   // Landing: the knees give, the hips drop, and the feet spread (a pose; the figure keeps its shape).
@@ -2665,10 +2676,14 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   rig.armIn = !attack && over == null;
   // (Bare hands have idle bits too, unless someone else is already moving the arms: an NPC.)
   const idleW = !attack && pose === 'idle' && !state.ready && rig.view !== 'back' && (g.weapon || !state.rig) ? weaponIdle(g.weapon?.type ?? 'none', (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
-  if (idleW) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
+  // An arm the mood is already posing (crossed, on the hips, behind the back) keeps its pose: the
+  // bit's own move for that arm is dropped rather than piled on top of it.
+  const posed = rig.posed ?? {};
+  if (idleW && !(posed.front && !g.weapon)) rig.frontArm = [rig.frontArm[0] + q(idleW.arm[0]), rig.frontArm[1] + q(idleW.arm[1])];
   // The rest of the body acts along, on top of the breathing (not for an NPC's own routine).
   if (idleW?.rig && !state.rig) {
     for (const [key, v] of Object.entries(idleW.rig)) {
+      if ((key === 'backArm' && posed.back) || (key === 'armSide' && (posed.back || posed.front))) continue;
       if (key === 'armSide') rig.armSide = v;
       else if (Array.isArray(v)) rig[key] = rig[key].map((x, i) => x + v[i]);
       else rig[key] = (rig[key] ?? 0) + v;
@@ -2711,7 +2726,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     armKey = `a${Math.round(angles.arm / 5)}`;
   } else {
     armShapesNow = armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin, rig.armSide);
-    hand = [FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0] + rig.tx, HAND_Y + rig.frontArm[1] + bodyY];
+    // Where the hand actually gets to: a target out of reach leaves it at the end of the
+    // straightened arm, and the weapon goes there too, not at the target.
+    const [, [wx, wy]] = reach(FRONT_SHOULDER, SHOULDER_Y, FRONT_SHOULDER + HAND_FORWARD + rig.frontArm[0], HAND_Y + rig.frontArm[1], UPPER_ARM, FOREARM, -1);
+    hand = [wx + rig.tx, wy + bodyY];
     armKey = `r${rig.frontArm.join(',')},${rig.armSide}`;
   }
   const armDx = rig.tx;
