@@ -19,8 +19,11 @@ import { R, E, T, F } from './pixel.js';
 const HX = 15.5;
 const CY = 13.2;
 
-// Twenty-one styles: anime, princess and fantasy, cool, punk and cute, and a doll's.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek', 'kokeshi'];
+// Forty-two styles: anime, princess and fantasy, cool, punk and cute, a doll's, then short,
+// tomboy, evil and cosplay cuts, and men's cuts.
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek', 'kokeshi',
+  'bowlcut', 'sidecrop', 'curlycrop', 'tomboy', 'stubtail', 'shavedside', 'vampire', 'demonbuns', 'hexlong', 'magical', 'idol', 'samurai',
+  'crewcut', 'curtains90', 'slickback', 'buzzcut', 'comma', 'longtied', 'mullet', 'surfer', 'hightop'];
 // Older styles draw as the closest current one; anything else unknown draws as the first.
 const RETIRED = {
   twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'wolfsleek', hero: 'wolfsleek',
@@ -378,8 +381,9 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   const pts = dense(outline, 1.2).map(flutter);
   // Side hair over the ears and the sides of the head, so no skin or skull ever shows between
   // the bangs and the hair behind (elf ears are long enough to poke out past it).
-  // (`shortSides`: cut short over the ears, tapering to a sideburn, for a man's cut.)
-  const side = f.shortSides ? [[22.4, 5.8], [27.6, 7.4], [29.2, 11], [29, 15.6], [26, 19.8], [24.8, 20.6], [24.2, 17.4], [23.4, 11.6]] : [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
+  // (`shortSides`: cut short over the ears, tapering to a sideburn, for a man's cut; `cropSides`:
+  // cropped closer still, hugging the head.)
+  const side = f.cropSides ? [[23, 7], [26.4, 8.6], [27.2, 12], [26.6, 15.6], [25.2, 17.2], [24.4, 14.6], [23.6, 11]] : f.shortSides ? [[22.4, 5.8], [27.6, 7.4], [29.2, 11], [29, 15.6], [26, 19.8], [24.8, 20.6], [24.2, 17.4], [23.4, 11.6]] : [[24.6, 10.6], [27.4, 12.4], [28, 17.4], [27.4, 21.6], [25.8, 22.4], [24.6, 19.6], [24.2, 14.6]];
   const sideHair = [poly(smooth(side), r.base), poly(smooth(side.map(([x, y]) => [31 - x, y])), r.base)];
   const shapes = [...sideHair, poly(pts, r.base)];
   // Creases rise from the notches.
@@ -728,6 +732,270 @@ const STYLES = {
     };
   },
 };
+
+// ---------- Short, tomboy, evil and cosplay ----------
+// Three of each, made of hair alone, soft rounded ends, nothing jagged.
+Object.assign(FRINGES, {
+  // A short neat side part: swept bangs cut high, the sides cropped close over the ears.
+  sweptcrop: { pts: [[23.4, 10.2], [22.2, 8.4], [20.4, 11.4], [19, 9.4], [16.6, 12.8], [15.4, 10.8], [12.6, 14], [11.8, 11.8], [9, 14.6], [8.4, 12.6], [6.6, 13.8]], lean: -1.2, part: [[21.4, 3.8], [23, 7]], gentle: true, shortSides: true },
+  // Tight curls along the brow, the sides cropped close.
+  curlycrop: { pts: [[23.6, 12.4], [21.8, 13.4], [19.8, 12.4], [17.8, 13.8], [15.6, 12.6], [13.4, 13.8], [11.2, 12.4], [9.2, 13.4], [7.6, 12.4]], lean: 0, round: true, shortSides: true },
+  // A long floppy fringe falling across from a part on the near side, uneven, soft-tipped.
+  flop: { pts: [[23.8, 11.6], [22.6, 9.2], [21, 13.6], [19.4, 10.6], [17, 15.4], [15.6, 12], [12.8, 16.6], [11.8, 13.4], [9.2, 17], [8.6, 14.2], [6.8, 15.6]], lean: -1.3, part: [[22, 2.6], [23.2, 7.6]], gentle: true },
+  // The same flop with the near side shaved: a deep part, the hair all thrown to the far side.
+  flopside: { pts: [[24.2, 9.4], [22.8, 7.6], [21.2, 11.6], [19.6, 9.6], [17.2, 14.4], [15.8, 11.4], [13, 16], [12, 13], [9.4, 17], [8.8, 14], [6.8, 15.8]], lean: -1.4, part: [[23, 2], [24, 7.4]], gentle: true, shortSides: true },
+  // A widow's peak: no fringe, the hairline dipping to a point in the middle of the brow, the hair
+  // combed straight back.
+  widow: { pts: [[24.6, 12.4], [21.8, 8.6], [18.4, 7.2], P(HX, 10.2), [12.6, 7.2], [9.2, 8.6], [6.4, 12.4]], lean: 0, plain: true, strands: [[18.6, 7.6, 12.6, 2.4, 0.9, 0.5], [21.6, 9, 16, 2.4, 0.8, 0.5], [13, 7.6, 8.4, 3.6, 0.8, 0.4]] },
+});
+// A short back: the hair behind the skull stopping at the nape, with a few soft tufts.
+const shortBack = (r, m, low = 21) => mass([[6, low - 1], P(4.4, low + 0.6), [3.6, 15], [3.8, 9], [7, 3], [13.2, 1.2], [20, 1.4], [26.4, 6], [27.4, 12], [26.8, low - 2], P(25, low + 0.4), [21, low - 0.6], P(15.5, low + 1.6), [10, low - 0.6]], r.sh1, m, 0.5);
+// A soft heart of hair: two round lobes and a rounded point, with a hollow line down the middle.
+const heart = (x, y, s, r) => [
+  poly(smooth([[x, y - 1.2 * s], [x - 1.4 * s, y - 2.6 * s], [x - 3.2 * s, y - 1.8 * s], [x - 3 * s, y + 0.4 * s], [x - 1.4 * s, y + 2 * s], P(x, y + 3.2 * s), [x + 1.4 * s, y + 2 * s], [x + 3 * s, y + 0.4 * s], [x + 3.2 * s, y - 1.8 * s], [x + 1.4 * s, y - 2.6 * s]]), r.base),
+  streak(x, y - 1, x, y + 2.6 * s, 0.6, 0, r.sh1),
+  streak(x - 2.4 * s, y - 1.6 * s, x - 1 * s, y - 2.2 * s, 0.7, 0.3, r.hi),
+];
+Object.assign(STYLES, {
+  // ----- Short -----
+  // Bowl cut: a round glossy helmet cut level all the way round just under the ears, blunt bangs.
+  bowlcut(r, m) {
+    const side = (dir) => {
+      const p = [[24, 9.6], [28.2, 10.4], [28.8, 19, 1], [22.6, 19, 1], [22.6, 14]];
+      return mass(dir > 0 ? p : fx(p), r.base, m, 0.4);
+    };
+    const helmet = [[HX, 0.4], [24.8, 2.4], [29.4, 8.6], [30, 15], P(29.8, 19.4), P(1.2, 19.4), [1, 15], [1.6, 8.6], [6.2, 2.4]];
+    return {
+      head: [mass(helmet, r.sh1, m, 0.3), F(R(1.6, 18.2, 28, 1, r.sh2))],
+      hang: [],
+      front: bangs('blunt', r, m, [side(1), side(-1), F(R(22.6, 17.8, 6.2, 1.2, r.sh1)), F(R(2.2, 17.8, 6.2, 1.2, r.sh1))]),
+      tips: [16, 19],
+    };
+  },
+  // A neat short crop parted at the side, the bangs swept across and cut high, the nape tapered.
+  sidecrop(r, m) {
+    return { head: [shortBack(r, m, 20)], hang: [], front: bangs('sweptcrop', r, m), tips: [15, 18] };
+  },
+  // Tight curls piled on top, the sides and nape cropped close.
+  curlycrop(r, m) {
+    const curls = [[5.4, 8.6, 3.2], [7.8, 4, 3.4], [12.4, 1.4, 3.6], [18.6, 1.2, 3.6], [23.4, 3.6, 3.4], [26.2, 8.2, 3]];
+    const puff = curls.flatMap(([x, y, rr]) => [F(E(x, y, rr, rr * 0.9, r.sh1)), poly(smooth([[x - rr * 0.5, y + rr * 0.1], [x, y + rr * 0.45], [x + rr * 0.5, y + rr * 0.05], [x, y + rr * 0.25]]), r.sh2)]);
+    return { head: [shortBack(r, m, 19), ...puff], hang: [], front: bangs('curlycrop', r, m), top: puff, tips: [15, 18] };
+  },
+
+  // ----- Tomboy -----
+  // Tomboy: short and messy, a long floppy fringe, two cowlicks that won't lie down, tufts at the nape.
+  tomboy(r, m) {
+    const lick = [lock([[16.4, 3], [17.2, 0.2], [19.4, -0.8], [21.2, 0.6]], 3.4, r.base, m, 0.6, 0.45), lock([[9.6, 3.6], [8, 1.6], [6.6, 1.8]], 2.6, r.base, m, 0.6, 0.45)];
+    return {
+      head: [shortBack(r, m, 21), lock([[6, 18], [4.4, 21.4], [3.4, 23.4]], 3, r.sh1, m, 1, 0.4), lock([[9.4, 19.6], [8.6, 22.6], [8.2, 24.4]], 2.8, r.sh1, m, 1, 0.4)],
+      hang: [],
+      front: bangs('flop', r, m, [...sideLocks(r, m, [[25, 10.6], [25.8, 14.4], [25.4, 17.8]], undefined, 3), ...lick]),
+      top: lick,
+      tips: [16, 20],
+    };
+  },
+  // A short rough ponytail stub tied low at the nape, loose strands left framing the face.
+  stubtail(r, m) {
+    const stub = [[5.4, 14.6], [2.6, 16.4], [0.8, 19.4], [0.4, 22]];
+    return {
+      head: [crown(r, -0.2), F(E(5.2, 14.8, 1.5, 1.8, r.sh2))],
+      hang: [lock(stub, 5.4, r.sh1, m, 1, 0.45), lock([[5, 15.6], [3, 18.6], [2.4, 21]], 2.4, r.base, m, 1.1, 0.4)],
+      front: bangs('short', r, m, sideLocks(r, m, [[24.8, 10.4], [25.6, 15], [25.2, 19.6], [26, 22]], undefined, 2.2)),
+      tips: [17, 21],
+    };
+  },
+  // Shaved on the near side, the long top thrown over to the far side in one big flop.
+  shavedside(r, m) {
+    const buzz = [poly(smooth([[23.4, 6.6], [27.2, 8.2], [28.6, 12.2], [28, 16.6], [25.8, 18.6], [24.6, 15.2], [23.6, 10.6]]), r.sh2)];
+    for (const y of [9.6, 12, 14.4]) buzz.push(streak(24.4, y, 27.6, y + 0.6, 0.35, 0, r.sh1));
+    const flop = lock([[9, 6], [6, 9], [4.4, 14], [4.6, 19], [5.6, 21.6]], 6, r.base, m, 1.1, 0.3);
+    return {
+      head: [shortBack(r, m, 20)],
+      hang: [],
+      front: bangs('flopside', r, m, [...buzz, flop, lock([[8, 10], [6.4, 15.6], [6.8, 21]], 3.4, r.base, m, 1.2, 0.3)]),
+      tips: [15, 20],
+    };
+  },
+
+  // ----- Evil -----
+  // Vampire: slicked back from a sharp widow's peak, long, straight and heavy, cut level.
+  vampire(r, m) {
+    return {
+      head: [crown(r, -0.2)],
+      hang: [napeShadow(r), ...sheet({ len: 44, flare: 12.4, ends: 'level', n: 3, w0: 11.4 }, r, m, 0.8)],
+      front: bangs('widow', r, m, [lock([[25.2, 12], [26.4, 18], [26.2, 25], [26.8, 31]], 3, r.base, m, 1.1, 0.3), lock([[5.8, 12], [4.6, 18], [4.8, 25], [4.2, 31]], 3, r.sh1, m, 1.1, 0.3)]),
+      tips: [33, 38],
+    };
+  },
+  // Demon buns: two buns twisted up into smooth curved horns, long hair down the back.
+  demonbuns(r, m) {
+    const horn = (dir) => {
+      const p = [[5.8, 6.6], [3.6, 3], [2.8, -1.2], [3.8, -4.4], P(5.6, -6.6), [6, -3.6], [7.6, -0.2], [9.8, 3.2], [9.6, 5.8]];
+      const s = dir > 0 ? (q) => q : (q) => [31 - q[0], q[1]];
+      return [poly(smooth(dir > 0 ? p : fx(p)), r.base), streak(...s([4.4, 2.6]), ...s([5, -3.6]), 0.7, 0.3 * dir, r.hi), streak(...s([6.2, 4.4]), ...s([8.4, 1.6]), 0.6, -0.2 * dir, r.sh1), streak(...s([4.4, -1]), ...s([6.8, 0.6]), 0.5, -0.2 * dir, r.sh1)];
+    };
+    const horns = [...horn(1), ...horn(-1)];
+    return {
+      head: [crown(r), ...horns],
+      hang: [napeShadow(r), ...sheet({ len: 40, flare: 13.4, wave: 1.4, ends: 'points', n: 5 }, r, m)],
+      front: bangs('regal', r, m, sideLocks(r, m, [[25, 11], [26.6, 18], [26.4, 24.4], [27.4, 28.4]], undefined, 3.2)),
+      top: horns,
+      tips: [30, 36],
+    };
+  },
+  // Hex: hair to the knees, two long curtains framing the face, the ends drifting apart.
+  hexlong(r, m) {
+    const curtain = [[23.6, 11], [26.2, 17], [26.4, 25], [25.6, 33], [26.4, 39]];
+    return {
+      head: [crown(r, 0.4)],
+      hang: [napeShadow(r), ...sheet({ len: 58, flare: 15.4, wave: 2.4, ends: 'points', n: 6 }, r, m)],
+      front: bangs('queenpart', r, m, [lock(curtain, 4.4, r.base, m, 1.15, 0.2), lock(fx(curtain), 4.4, r.sh1, m, 1.15, 0.2), streak(24.8, 15, 25.4, 30, 0.7, -0.3, r.hi, m, 1.15)]),
+      tips: [42, 50],
+    };
+  },
+
+  // ----- Cosplay -----
+  // Magical girl: huge twin tails tied high with a round loop over each tie, falling past the
+  // knees in big soft curls.
+  magical(r, m) {
+    const tail = [[5.6, 4.8], [1.4, 6.4], [-2.4, 11.6], [-4.6, 19], [-3, 26], [-5, 33], [-5.2, 40], [-2.6, 45], [0.4, 45.2], [1.2, 43]];
+    const loop = (dir) => {
+      const p = [[6.4, 4], [4.2, 0.6], [1.6, -1], [-0.4, 1.4], [0.6, 4.6], [3.6, 5.6]];
+      return lock(dir > 0 ? p : fx(p), 3.8, r.base, m, 0.4, 0.6);
+    };
+    const loops = [loop(1), loop(-1), F(E(6, 4.6, 1.8, 2, r.sh2)), F(E(25, 4.6, 1.8, 2, r.sh2)), ...heart(6, 4.6, 0.45, r), ...heart(25, 4.6, 0.45, r)];
+    return {
+      head: [crown(r), ...loops],
+      hang: [lock(tail, 9.6, r.sh1, m, 1.05, 0.2), lock(fx(tail), 9.6, r.sh1, m, 1.05, 0.2), lock([[5.4, 6], [2.6, 10], [0.6, 17], [1.2, 24], [-0.6, 31]], 4, r.base, m, 1.2), lock(fx([[5.4, 6], [2.6, 10], [0.6, 17], [1.2, 24], [-0.6, 31]]), 4, r.base, m, 1.2)],
+      front: bangs('soft', r, m, sideLocks(r, m, [[25.2, 11], [26.8, 17.4], [26.2, 24], [27.6, 29]], undefined, 3.4)),
+      top: loops,
+      tips: [32, 40],
+    };
+  },
+  // Idol: a big high side tail on the near side bouncing in a loose curl, a star clip at the tie.
+  idol(r, m) {
+    const tail = [[25.4, 4.6], [29.6, 3.6], [33, 7], [33.6, 13], [32, 19], [33.6, 24.6], [32.6, 29], [30, 30], [29.6, 27.6]];
+    const star = [[26.2, 1.6], [27, 3.4], [29, 3.6], [27.5, 4.8], [28, 6.8], [26.2, 5.7], [24.4, 6.8], [24.9, 4.8], [23.4, 3.6], [25.4, 3.4]];
+    const pieces = [lock(tail, 8, r.sh1, m, 1.1, 0.2), lock([[26, 5.4], [29.4, 6], [31.4, 10.4], [31.4, 16], [30.4, 21]], 3.6, r.base, m, 1.25), streak(29.6, 7, 31.2, 13, 0.9, -0.4, r.hi, m, 1.2), F(T(star, '#ffd36a')), F(E(26.2, 4.8, 0.7, 0.6, '#fff6d0'))];
+    return {
+      head: [crown(r)],
+      hang: [...sheet({ len: 26, flare: 12.4, ends: 'curls', n: 3 }, r, m), lock(tail, 8, r.sh1, m, 1.1, 0.2)],
+      front: bangs('swept', r, m, [...sideLocks(r, m, null, [[5.8, 11], [5, 16], [5.6, 20.4]], 3), ...pieces]),
+      tips: [24, 29],
+    };
+  },
+  // Samurai: a topknot folded forward on the crown, tied in red cord, long locks framing the face
+  // and a long tail down the back.
+  samurai(r, m) {
+    const knot = [poly(smooth([[11.6, 1.6], [13, -1.6], [18.6, -2.6], [22.4, -1], P(23.4, 1.4), [19.6, 0.6], [14, 1.8]]), r.base), streak(14, -0.6, 20.4, -1.6, 0.7, -0.3, r.hi), F(R(11.4, -1, 1.6, 3, '#d8352c')), F(R(11.4, -0.2, 1.6, 0.5, '#8e1c16'))];
+    return {
+      head: [crown(r), ...knot],
+      hang: [lock([[10.6, 1.4], [6, 3], [1.6, 8], [0, 16], [0.8, 26], [-0.6, 34]], 6.4, r.sh1, m, 1.05, 0.25)],
+      front: bangs('part', r, m, [lock([[24.4, 10], [26, 16], [25.6, 23], [26.4, 28]], 3, r.base, m, 1.15, 0.25), lock([[6.6, 10], [5, 16], [5.4, 23], [4.6, 28]], 3, r.base, m, 1.15, 0.25)]),
+      top: knot,
+      tips: [24, 30],
+    };
+  },
+});
+
+// ---------- Men's cuts ----------
+// Nine masculine cuts: mostly short at the sides and nape, soft rounded clumps, nothing jagged.
+Object.assign(FRINGES, {
+  // A crew cut: a short textured fringe high on the brow, the sides cropped close.
+  crew: { pts: [[23.4, 10.2], [21.8, 8.6], [20, 10.6], [18, 8.8], [15.8, 10.8], [13.6, 9], [11.4, 10.6], [9.4, 8.8], [7.6, 10.2]], lean: 0.4, gentle: true, cropSides: true },
+  // 90s curtains: parted in the middle, two short curtains swept out to the cheekbones.
+  curtains90: { pts: [[24.4, 16], [23.2, 12.8], [21, 10.6], [18.4, 9.4], [HX, 8.8], [12.6, 9.4], [10, 10.6], [7.8, 12.8], [6.6, 16]], lean: 0, plain: true, part: [[HX, 1.8], [HX, 8.4]] },
+  // Combed straight back with a side part, the sides cropped close.
+  slick: { pts: [[24.6, 11.6], [22, 8.4], [18.6, 7], [HX, 6.6], [12.4, 7], [9, 8.4], [6.4, 11.6]], lean: 0, plain: true, cropSides: true, part: [[21, 2], [22, 7.6]],
+    strands: [[21, 7.8, 14, 2.4, 0.8, 0.5], [17.6, 7.4, 10.6, 3, 0.8, 0.5], [13.6, 7.6, 7.6, 5.4, 0.7, 0.4]] },
+  // A buzz: the hair a close cap following the hairline, no fringe at all.
+  buzz: { pts: [[24.4, 11.4], [22, 8.8], [18.6, 7.6], [HX, 7.4], [12.4, 7.6], [9, 8.8], [6.6, 11.4]], lean: 0, plain: true, cropSides: true, noShine: true },
+  // Comma bangs: a heavy fringe swept to the far side, its end curling in by the far brow.
+  comma: { pts: [[23.6, 11], [22.4, 9.2], [20.6, 12.4], [19, 10.2], [16.6, 13.6], [15.2, 11.2], [12.6, 14.8], [11.4, 12.4], [8.8, 15.4], [7.8, 13.6], [6.6, 14.4]], lean: -1.2, part: [[21.6, 2.4], [22.8, 7.4]], gentle: true, cropSides: true },
+});
+// The newer styles by kind, for the dev sheet (tools/new-hair.html).
+export const NEW_HAIR = {
+  Short: ['bowlcut', 'sidecrop', 'curlycrop'],
+  Tomboy: ['tomboy', 'stubtail', 'shavedside'],
+  Evil: ['vampire', 'demonbuns', 'hexlong'],
+  Cosplay: ['magical', 'idol', 'samurai'],
+  Men: ['crewcut', 'curtains90', 'slickback', 'buzzcut', 'comma', 'longtied', 'mullet', 'surfer', 'hightop'],
+};
+// A man's short back: close to the skull, stopping at the nape.
+const cropBack = (r, m, low = 19) => mass([[6.4, low - 2], P(5.4, low), [4.4, 14], [4.4, 9], [7.4, 3.4], [13.2, 1.6], [20, 1.8], [25.8, 6], [26.6, 11.6], [26, low - 2.6], P(25, low - 0.4), [21, low - 1], P(15.5, low + 0.6), [10, low - 1]], r.sh1, m, 0.4);
+// The sides cut close: a thin darker fade over each ear under the cropped sides.
+const fade = (r) => {
+  const p = [[23.8, 10.4], [26.2, 11.4], [26.8, 13.8], [26.2, 16], [25, 16.8], [24.4, 14.6], [23.8, 12.4]];
+  return [poly(smooth(p), r.sh1), poly(smooth(fx(p)), r.sh1)];
+};
+Object.assign(STYLES, {
+  // Crew cut: short and tidy all over, a little texture at the front.
+  crewcut(r, m) {
+    return { head: [cropBack(r, m, 18)], hang: [], front: bangs('crew', r, m, fade(r)), tips: [14, 17] };
+  },
+  // 90s curtains: parted in the middle, short curtains swept out over the cheekbones, a short back.
+  curtains90(r, m) {
+    const curl = [[24, 12], [25.6, 15.4], [25.4, 18.4]];
+    return {
+      head: [cropBack(r, m, 20)],
+      hang: [],
+      front: bangs('curtains90', r, m, [lock(curl, 3.4, r.base, m, 1.1, 0.3), lock(fx(curl), 3.4, r.sh1, m, 1.1, 0.3)]),
+      tips: [15, 19],
+    };
+  },
+  // Slicked back: combed straight back off a side part, neat and glossy, the sides short.
+  slickback(r, m) {
+    return { head: [cropBack(r, m, 18)], hang: [], front: bangs('slick', r, m, fade(r)), tips: [14, 17] };
+  },
+  // Buzz cut: a close even cap of hair.
+  buzzcut(r, m) {
+    const cap = [[HX, 1.6], [23.6, 3.4], [27.2, 8.4], [27.6, 14], [26, 18.4], [HX, 19.6], [5, 18.4], [3.4, 14], [3.8, 8.4], [7.4, 3.4]];
+    return { head: [mass(cap, r.sh1, m, 0.2)], hang: [], front: bangs('buzz', r, m, fade(r), { shine: false }), tips: [99, 99] };
+  },
+  // Comma hair: a heavy swept fringe curling in at the far brow, the sides tapered.
+  comma(r, m) {
+    const hook = lock([[9.4, 13.4], [8.4, 15.4], [9.2, 16.8], [10.4, 16.4]], 2.6, r.base, m, 0.6, 0.4);
+    return { head: [cropBack(r, m, 19)], hang: [], front: bangs('comma', r, m, [...fade(r), hook]), tips: [14, 18] };
+  },
+  // Long and tied: a ronin's long hair gathered low at the nape, falling down the back, loose
+  // locks left framing the face.
+  longtied(r, m) {
+    const tail = [[5.6, 17], [3.4, 21], [2.6, 27], [3.4, 33], [2.4, 39]];
+    return {
+      head: [crown(r), F(E(5.6, 17, 1.6, 1.9, r.sh2))],
+      hang: [lock(tail, 5.6, r.sh1, m, 1.1, 0.25), streak(4.6, 20, 3.6, 30, 0.7, 0.3, r.base, m, 1.1)],
+      front: bangs('part', r, m, sideLocks(r, m, [[24.8, 10.4], [26, 16], [25.6, 21], [26.2, 24.6]], undefined, 2.6)),
+      tips: [28, 34],
+    };
+  },
+  // Mullet: short on top and at the sides, long at the back to the shoulders.
+  mullet(r, m) {
+    return {
+      head: [cropBack(r, m, 20)],
+      hang: [napeShadow(r, 21), ...sheet({ len: 30, flare: 11.4, n: 4, w0: 9.8, top: 17 }, r, m)],
+      front: bangs('crew', r, m, fade(r)),
+      tips: [24, 29],
+    };
+  },
+  // Surfer: shaggy waves to the chin, parted in the middle, flicking out at the ends.
+  surfer(r, m) {
+    const wave = [[25, 10.6], [26.8, 14.6], [26, 18.6], [27.6, 22], [28.6, 21.4]];
+    return {
+      head: [crown(r, 0.6)],
+      hang: sheet({ len: 25, flare: 14, wave: 1.2, ends: 'points', n: 4, w0: 12.4 }, r, m, 0.7),
+      front: bangs('curtains90', r, m, sideLocks(r, m, wave, undefined, 4)),
+      tips: [19, 23],
+    };
+  },
+  // High-top: a tall flat-topped block of tight curls, the sides faded short.
+  hightop(r, m) {
+    const block = [poly(smooth([[5.6, 9], [5.4, 3], [6.4, -0.8], [8.8, -2.4], [22.2, -2.4], [24.6, -0.8], [25.6, 3], [25.4, 9]]), r.base)];
+    for (const [x, y] of [[9.4, -0.6], [13.2, -1], [17.2, -1], [21, -0.6], [7.8, 2.6], [11.6, 1.8], [15.6, 1.6], [19.6, 1.8], [23.4, 2.6]]) block.push(F(E(x, y, 1, 0.7, r.sh1)));
+    block.push(streak(9.4, -1.6, 18, -1.9, 0.7, 0, r.hi));
+    return { head: [cropBack(r, m, 18), ...block], hang: [], front: bangs('buzz', r, m, fade(r), { shine: false }), top: block, tips: [99, 99] };
+  },
+});
 
 // ---------- Two-tone ----------
 

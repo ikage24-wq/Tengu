@@ -34,7 +34,8 @@ const OPTION = Object.fromEntries(LOOK_OPTIONS.map((o) => [o.key, o]));
 // What each tab holds. `thumb` says how a style is previewed: the head, the face close up, or
 // the whole body.
 export const LOOK_TABS = [
-  { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairBangs', label: 'Bangs', thumb: 'head' }, { key: 'hairColor', label: 'Color' }, { key: 'hairTip', label: 'Tips' }] },
+  { label: 'Hair', rows: [{ key: 'hairStyle', label: 'Style', thumb: 'head' }, { key: 'hairColor', label: 'Color' }, { key: 'hairTip', label: 'Tips' }] },
+  { label: 'Bangs', rows: [{ key: 'hairBangs', label: 'Bangs', thumb: 'head' }] },
   { label: 'Eyes', rows: [{ key: 'eyeStyle', label: 'Eyes', thumb: 'face' }, { key: 'browStyle', label: 'Brows', thumb: 'brow' }, { key: 'eyeColor', label: 'Eye color' }] },
   { label: 'Face', rows: [{ key: 'face', label: 'Expression', thumb: 'face' }, { key: 'earStyle', label: 'Ears', thumb: 'ears' }, { key: 'skinTone', label: 'Skin' }] },
   { label: 'Outfit', rows: [{ key: 'outfit', label: 'Style', thumb: 'body' }, { key: 'outfitColor', label: 'Color' }] },
@@ -52,7 +53,10 @@ export function randomLook(rng = Math.random) {
 }
 
 // Display names for the styles whose ids aren't plain words.
-const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', auto: 'Own', blunt: 'Blunt', hime: 'Hime', baby: 'Baby', heavy: 'Heavy', mshape: 'M-shape', wispy: 'Wispy', swept: 'Swept', peek: 'Peekaboo', part: 'Parted', curtain: 'Curtain', short: 'Short', spiky: 'Spiky', curly: 'Curly', slicked: 'Swept back', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns', wolf: 'Wolf cut', swoop: 'Swoop', ponytail: 'Ponytail', halfup: 'Half up', spiky: 'Spiky', pixie: 'Pixie', fluffybob: 'Fluffy bob', wavylong: 'Long waves', cloud: 'Cloud curls', lowtails: 'Low twintails', braids: 'Braids' };
+const NAMES = { elf: 'Elf', long: 'Long elf', pointed: 'Pointed', droopy: 'Droopy elf', none: 'Hidden', soft: 'Soft', round: 'Round', thick: 'Thick', thin: 'Thin', arched: 'Arched', sharp: 'Sharp', bald: 'Bald', auto: 'Own', blunt: 'Blunt', hime: 'Hime', baby: 'Baby', heavy: 'Heavy', mshape: 'M-shape', wispy: 'Wispy', swept: 'Swept', peek: 'Peekaboo', part: 'Parted', curtain: 'Curtain', short: 'Short', spiky: 'Spiky', curly: 'Curly', slicked: 'Swept back', candy: 'Candy curls', drills: 'Drill curls', sidetail: 'Side tail', catbun: 'Cat-ear buns', princess: 'Princess', bowhair: 'Hair bow', hime: 'Hime cut', crownbraid: 'Crown braid', odango: 'Odango buns', wolf: 'Wolf cut', swoop: 'Swoop', ponytail: 'Ponytail', halfup: 'Half up', spiky: 'Spiky', pixie: 'Pixie', fluffybob: 'Fluffy bob', wavylong: 'Long waves', cloud: 'Cloud curls', lowtails: 'Low twintails', braids: 'Braids',
+  bleh: 'Bleh!', excuseme: 'Excuse me?', dimple: 'Dimple', mmhm: 'Mm-hm, sure', hmph: 'Hmph', judging: 'Judging', ohoho: 'Ohohoho', sneer: 'Sneer', heh: 'Heh~', smugcat: 'Smug :3', toldyou: 'Told you so', lookdown: 'Looking down',
+  bowlcut: 'Bowl cut', sidecrop: 'Side crop', curlycrop: 'Curly crop', tomboy: 'Tomboy', stubtail: 'Stub tail', shavedside: 'Shaved side', vampire: 'Vampire', demonbuns: 'Demon buns', hexlong: 'Hex', magical: 'Magical girl', idol: 'Idol', samurai: 'Samurai',
+  crewcut: 'Crew cut', curtains90: '90s curtains', slickback: 'Slick back', buzzcut: 'Buzz cut', comma: 'Comma', longtied: 'Long tied', mullet: 'Mullet', surfer: 'Surfer', hightop: 'High-top' };
 export const styleName = (id) => NAMES[id] ?? String(id).charAt(0).toUpperCase() + String(id).slice(1);
 
 // Where a thumbnail looks, in hero units from the feet: the point to centre and how much of the

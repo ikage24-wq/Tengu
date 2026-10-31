@@ -462,8 +462,8 @@ function styleWindow(ui, state, world) {
   box(ctx, win.x + 8, win.y + 24, 104, H - 32, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
   drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 });
   if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, char.appearance) })) dlg.look = { ...char.appearance };
-  dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 56, h: 15 });
-  dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [20, 24, 24, 32][dlg.tab], time: world.now, gap: 2 }).look;
+  dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 50, h: 15 });
+  dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [20, 26, 24, 20, 32][dlg.tab], time: world.now, gap: 2 }).look;
   const cost = npc.styleCost;
   const by = win.y + H - 22;
   if (button(ui, win.x + 122, by, 110, 15, `Done (${cost}g)`, { primary: true, enabled: char.gold >= cost && !sameLook(dlg.look, char.appearance) })) {

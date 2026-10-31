@@ -924,8 +924,8 @@ export function creatorScreen(ui, time, draft) {
   box(ctx, PX - 2, PY - 2, PW + 4, PH + 4, { fill: null, edge: '#ffe0ef', r: 16, width: 3 });
   box(ctx, PX, PY, PW, PH, { fill: 'rgba(255,250,253,0.97)', edge: '#f4bcd8', r: 14, width: 2 });
   const tabNames = LOOK_TABS.map((t) => t.label);
-  draft.tab = tabs(ui, PX + (PW - tabNames.length * 66) / 2, PY + 10, tabNames, draft.tab, { w: 64, h: 17 });
-  const cell = [21, 27, 27, 40][draft.tab];
+  draft.tab = tabs(ui, PX + (PW - tabNames.length * 60) / 2, PY + 10, tabNames, draft.tab, { w: 58, h: 17 });
+  const cell = [21, 30, 27, 24, 40][draft.tab];
   const picked = lookRows(ui, draft.look, draft.tab, PX + 14, PY + 36, PW - 28, { cell, time });
   remember(picked.look);
 

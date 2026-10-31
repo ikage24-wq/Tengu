@@ -1,0 +1,55 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the draft hairstyles (hair.js NEW_HAIR), grouped by kind, each facing right and then
+// left. ?rows= picks groups, ?cols= styles per row, ?one faces right only, ?c=hex sets the colour,
+// ?z= zooms.
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { NEW_HAIR } from '../src/render/hair.js';
+
+const q = new URLSearchParams(location.search);
+const ROWS = (q.get('rows') ?? Object.keys(NEW_HAIR).join(',')).split(',');
+const COLORS = { Short: '#8a5a3a', Tomboy: '#3a3550', Evil: '#2a1e2e', Cosplay: '#b48aff', Men: '#4a3a30' };
+const Z = Number(q.get('z') ?? 4);
+const SIDES = q.has('one') ? [1] : [1, -1];
+const CW = 52 * Z;
+const CH = 66 * Z;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const COLS = Number(q.get('cols') ?? 3);
+canvas.width = CW * COLS * SIDES.length + 90;
+canvas.height = (CH + 20) * ROWS.reduce((n, k) => n + Math.ceil(NEW_HAIR[k].length / COLS), 0);
+nextFrame();
+ctx.fillStyle = '#2a2440';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+let row = 0;
+ROWS.forEach((kind) => {
+  const y0 = row * (CH + 20);
+  row += Math.ceil(NEW_HAIR[kind].length / COLS);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 16px Segoe UI, sans-serif';
+  ctx.fillText(kind, 8, y0 + CH / 2);
+  NEW_HAIR[kind].forEach((hair, i) => SIDES.forEach((facing, j) => {
+    const x0 = 90 + ((i % COLS) * SIDES.length + j) * CW;
+    const yy = y0 + Math.floor(i / COLS) * (CH + 20);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0 + 2, yy + 2, CW - 4, CH - 4);
+    ctx.fillStyle = (i % 2) ? '#d4e8f0' : '#c2dce8';
+    ctx.fill();
+    ctx.clip();
+    setHd(true, Z);
+    const look = { hairStyle: hair, hairColor: q.get('c') ? `#${q.get('c')}` : COLORS[kind] ?? '#4a3a30', skinTone: '#fbeee4', eyeColor: '#4a7ad8', face: 'smile' };
+    drawPosed(ctx, look, x0 + CW / 2, yy + CH - 6, { frontArm: [-3, 4], backArm: [3, 4], frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2] }, { scale: Z, facing });
+    ctx.restore();
+    if (!j) {
+      ctx.fillStyle = '#e8e4f4';
+      ctx.font = 'bold 13px Segoe UI, sans-serif';
+      ctx.fillText(hair, x0 + 6, yy + CH + 14);
+    }
+  }));
+});
+window.done = true;
+</script></body></html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: new sassy, pretentious and smug faces, close up, made of eyes, brows and mouths alone
+// (the attitude mouths and the per-eye squint).
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const ROWS = [
+  ['Sassy', { hairStyle: 'candy', hairBangs: 'short', hairColor: '#e8a0b8', eyeColor: '#3a9a6a' }, [
+    ['"Bleh!"', 'sparkle', { closed: [false, true], mouth: 'bleh', brows: [[0.6, -0.3], [1, -0.4]] }, { tilt: 5 }],
+    ['"Excuse me?"', 'cat', { lids: [0.55, 0], mouth: 'sneer', brows: [[-0.1, 0.4], [1.7, -0.5]] }, { tilt: -3 }],
+    ['Sly dimple smile', 'cat', { lid: 0.32, glance: 1, mouth: 'slysmile', brows: [[0.1, 0.2], [0.9, -0.4]], blush: 1.1 }, { tilt: 7 }],
+    ['"Mm-hm. Sure."', 'droopy', { lid: 0.5, glance: -1, mouth: 'pursed', brows: [[1.2, -0.3], [0.2, 0.1]] }, { tilt: -5 }],
+  ]],
+  ['Pretentious', { hairStyle: 'hime', hairBangs: 'baby', hairColor: '#5a4a8a', eyeColor: '#8a5ad8' }, [
+    ['"How common."', 'cat', { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.3, -0.4], [1.3, -0.4]] }, { tilt: -9 }],
+    ['Judging you', 'round', { lids: [0.62, 0.15], look: 'down', mouth: 'bored', brows: [[-0.2, 0.4], [1.4, -0.4]] }, { tilt: 3 }],
+    ['"Ohohoho!"', 'sparkle', { closed: [true, true], mouth: 'ohoho', brows: [[1, -0.4], [1, -0.4]] }, { tilt: -9 }],
+    ['Sneer down the nose', 'cat', { lid: 0.6, look: 'down', mouth: 'sneer', brows: [[0.8, -0.3], [1.2, -0.4]] }, { tilt: -8 }],
+  ]],
+  ['Smug', { hairStyle: 'wolfsleek', hairBangs: 'short', hairColor: '#f2c060', eyeColor: '#d8603a' }, [
+    ['"Heh~"', 'cat', { closed: [true, true], mouth: 'slysmile', brows: [[0.6, -0.3], [0.9, -0.4]], blush: 1.1 }, { tilt: -5 }],
+    ['Smug :3', 'cat', { lid: 0.5, mouth: 'smugcat', brows: [[0.1, 0.2], [1, -0.4]] }, { tilt: 6 }],
+    ['"Told you so."', 'sparkle', { lid: 0.45, glance: 1, mouth: 'smirkwide', brows: [[0, 0.3], [1.3, -0.5]] }, { tilt: 4 }],
+    ['Looking down on you', 'droopy', { lid: 0.62, look: 'down', mouth: 'smirkwide', brows: [[0.9, -0.3], [1.2, -0.4]] }, { tilt: -9 }],
+  ]],
+];
+const CW = 300;
+const CH = 330;
+const S = 8;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * 4;
+canvas.height = (CH + 40) * ROWS.length;
+nextFrame();
+ctx.fillStyle = '#c8e0ec';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ROWS.forEach(([title, hair, faces], r) => {
+  const ry = r * (CH + 40);
+  ctx.fillStyle = '#1e2a40';
+  ctx.font = 'bold 22px Segoe UI, sans-serif';
+  ctx.fillText(title, 14, ry + 28);
+  faces.forEach(([name, eyes, face, pose], i) => {
+    const x0 = i * CW;
+    const y0 = ry + 40;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x0 + 4, y0 + 4, CW - 8, CH - 36);
+    ctx.fillStyle = (i + r) % 2 ? '#d4e8f0' : '#c2dce8';
+    ctx.fill();
+    ctx.clip();
+    setHd(true, S);
+    drawPosed(ctx, { ...hair, skinTone: '#fbeee4', eyeStyle: eyes }, x0 + CW / 2, y0 + 372, { frontArm: [-3, 4], backArm: [3, 4], frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2], hx: 0.2, ...pose, face }, { scale: S, facing: 1 });
+    ctx.restore();
+    ctx.fillStyle = '#1e2a40';
+    ctx.font = 'bold 15px Segoe UI, sans-serif';
+    ctx.fillText(name, x0 + 12, y0 + CH - 12);
+  });
+});
+window.done = true;
+</script></body></html>

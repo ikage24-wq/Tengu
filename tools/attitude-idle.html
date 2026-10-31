@@ -1,0 +1,68 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the sassy, pretentious and smug expressions playing their idle loops on the hero as
+// in the game (face and body). ?strip=n freezes each into n moments across 5 s, one row per face.
+import { drawHero } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const q = new URLSearchParams(location.search);
+const FACES = (q.get('faces') ?? 'bleh,excuseme,dimple,mmhm,hmph,judging,ohoho,sneer,heh,smugcat,toldyou,lookdown').split(',');
+const LOOKS = [
+  { hairStyle: 'candy', hairBangs: 'short', hairColor: '#e8a0b8', eyeColor: '#3a9a6a', eyeStyle: 'cat' },
+  { hairStyle: 'hime', hairBangs: 'baby', hairColor: '#5a4a8a', eyeColor: '#8a5ad8', eyeStyle: 'cat' },
+  { hairStyle: 'wolfsleek', hairBangs: 'short', hairColor: '#f2c060', eyeColor: '#d8603a', eyeStyle: 'cat' },
+];
+const STRIP = Number(q.get('strip') ?? 0);
+const Z = Number(q.get('z') ?? 6);
+const CW = 34 * Z;
+const CH = 40 * Z;
+const COLS = STRIP || 4;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * COLS + (STRIP ? 110 : 0);
+canvas.height = (CH + 22) * (STRIP ? FACES.length : Math.ceil(FACES.length / COLS));
+
+function cell(face, i, x0, y0, time, label) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0 + 2, y0 + 2, CW - 4, CH - 4);
+  ctx.fillStyle = '#c8e0ec';
+  ctx.fill();
+  ctx.clip();
+  nextFrame();
+  setHd(true, Z);
+  ctx.setTransform(Z, 0, 0, Z, 0, 0);
+  const look = { ...LOOKS[Math.floor(FACES.indexOf(face) / 4) % 3], skinTone: '#fbeee4', face };
+  drawHero(ctx, look, null, (x0 + CW / 2) / Z, (y0 + CH) / Z + 6, { pose: 'idle', time, facing: 1, alpha: 1 });
+  ctx.restore();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#e8e4f4';
+  ctx.font = 'bold 13px Segoe UI, sans-serif';
+  ctx.fillText(label, x0 + 6, y0 + CH + 15);
+}
+
+function draw(now) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#2a2440';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (STRIP) {
+    FACES.forEach((face, r) => {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 15px Segoe UI, sans-serif';
+      ctx.fillText(face, 8, r * (CH + 22) + CH / 2);
+      for (let i = 0; i < STRIP; i++) {
+        const time = (i * 5) / STRIP;
+        cell(face, i, 110 + i * CW, r * (CH + 22), time, `${time.toFixed(2)} s`);
+      }
+    });
+    window.done = true;
+    return;
+  }
+  FACES.forEach((face, i) => cell(face, i, (i % COLS) * CW, Math.floor(i / COLS) * (CH + 22), now / 1000, face));
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script></body></html>

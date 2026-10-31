@@ -38,7 +38,8 @@ export { HAIR_STYLES, BANG_STYLES, hairStyleOf };
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
 export const PICKABLE_EYE_STYLES = ['sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
-export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited', 'love', 'sleepy', 'sad', 'shock', 'playful', 'proud', 'dizzy', 'nervous', 'giggle', 'determined'];
+export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited', 'love', 'sleepy', 'sad', 'shock', 'playful', 'proud', 'dizzy', 'nervous', 'giggle', 'determined',
+  'bleh', 'excuseme', 'dimple', 'mmhm', 'hmph', 'judging', 'ohoho', 'sneer', 'heh', 'smugcat', 'toldyou', 'lookdown'];
 
 // Parts are designed on a 30x56 figure with feet at y 56, then everything below the neck is
 // squashed into a small, slim chibi body under the same big head: heights shrink to KY and (for
@@ -344,14 +345,15 @@ const mirrorAt = (x, y) => [-x, y];
 // face frame `f` acts on it: `lid` (0-1) lowers the upper lid, `glance` looks aside and `look`
 // up or down, `shine` swaps in sparkles, `wide` pops the eye open with a shrunken iris (shock),
 // `heart` turns the pupils to hearts, `spiral` spins them (dizzy), `teary` fills the eye with
-// water. `cross` pulls the inner lid down (angry).
+// water. `cross` pulls the inner lid down (angry). `lids` ([back, front]) lowers each upper lid
+// apart (a skeptical squint).
 function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
   const st = EYE_LOOK[style] ?? EYE_LOOK.sparkle;
   const sk = skinRamp(look.skinTone ?? '#fff0e6');
   const hr = hairRamp(look.hairColor ?? '#e9ebfa');
   const closed = mode === 'happy' || style === 'happy' || (style === 'wink' && out > 0);
   const lids = mode === 'blink' ? 'blink' : mode === 'hurt' ? 'squeeze' : mode === 'dead' ? 'dead' : closed ? 'happy' : 'open';
-  const lid = f.lid ?? 0;
+  const lid = f.lids ? f.lids[out < 0 ? 0 : 1] : f.lid ?? 0;
   // Iris offset on screen: a touch toward the facing side, more when glancing.
   const g = 0.3 + 0.55 * (f.glance ?? 0);
   const gy = f.look === 'down' ? 0.13 : f.look === 'up' ? -0.1 : 0;
@@ -563,6 +565,19 @@ function mouthShapes(kind, sk) {
     case 'tengucool': return [stroke([[x - 1, MY + 0.6], [x + 1.4, MY + 0.45]], 0.5, LIP)];
     case 'tengutch': return [stroke([[x - 1.2, MY + 0.7], [x + 0.6, MY + 0.5], [x + 1.6, MY + 0.8]], 0.55, LIP), F(E(x + 1.8, MY + 0.6, 0.3, 0.25, LIP))];
     case 'onismirk': return [stroke([[x - 1.6, MY + 0.7], [x + 0.2, MY + 0.6], [x + 1.6, MY - 0.6], [x + 2, MY - 0.9]], 0.62, LIP), F(T([[x + 0.8, MY + 0.4], [x + 1.6, MY - 0.1], [x + 1.4, MY + 1.3]], '#ffffff'))];
+    // Attitude: lips pressed into a small prim knot pushed to one side; a sneer, the lifted corner
+    // baring a sliver of teeth; a sly closed smile curling up into a dimple; a tongue stuck
+    // straight out ("bleh"); an open "ohoho" laugh, tipped up at the near corner.
+    case 'pursed': return [stroke([[x - 0.2, MY + 0.65], [x + 1.6, MY + 0.5]], 0.45, LIP), F(E(x + 0.8, MY + 0.6, 0.62, 0.48, sk.lip)), F(E(x + 0.8, MY + 0.6, 0.28, 0.2, LIP))];
+    case 'sneer': return [F(T([[x + 0.1, MY + 0.5], [x + 1.5, MY - 0.3], [x + 1.7, MY + 0.3], [x + 0.5, MY + 0.8]], '#ffffff')),
+      stroke([[x - 1.5, MY + 0.75], [x + 0.2, MY + 0.55], [x + 1.6, MY - 0.4], [x + 2, MY - 0.7]], 0.55, LIP), stroke([[x + 0.5, MY + 0.85], [x + 1.7, MY + 0.35]], 0.35, LIP)];
+    case 'slysmile': return [stroke([[x - 1.7, MY + 0.15], [x - 0.6, MY + 0.75], [x + 0.6, MY + 0.65], [x + 1.6, MY - 0.05], [x + 1.95, MY - 0.55]], 0.6, LIP), F(E(x + 2.45, MY - 0.05, 0.2, 0.38, LIP))];
+    case 'bleh': return [F(E(x, MY + 1.5, 0.95, 1.25, TONGUE)), F(R(x - 0.08, MY + 0.8, 0.16, 1.3, '#e86d8c')), stroke([[x - 1.5, MY + 0.35], [x + 1.5, MY + 0.35]], 0.55, LIP)];
+    // Smug: a lopsided ":3", the near half bigger and flicked up; a wide one-sided smirk, its
+    // corner hitched high into a crease in the cheek.
+    case 'smugcat': return [arc(x - 0.7, MY + 0.35, 0.72, 0.68, 10, 170, 0.58, LIP), arc(x + 0.85, MY + 0.1, 0.9, 0.85, 10, 170, 0.6, LIP), stroke([[x + 1.65, MY + 0.3], [x + 2.15, MY - 0.35]], 0.5, LIP)];
+    case 'smirkwide': return [stroke([[x - 1.6, MY + 0.6], [x + 0.2, MY + 0.6], [x + 1.8, MY - 0.3], [x + 2.3, MY - 0.9]], 0.6, LIP), stroke([[x + 2.75, MY - 1.2], [x + 2.95, MY - 0.2]], 0.32, sk.lip)];
+    case 'ohoho': return [F(T([[x - 1.6, MY - 0.2], [x + 1.9, MY - 0.7], [x + 0.9, MY + 1.4], [x - 0.6, MY + 1.3]], MOUTH)), F(T([[x - 1.4, MY - 0.15], [x + 1.7, MY - 0.6], [x + 1.6, MY - 0.15], [x - 1.3, MY + 0.25]], '#ffffff')), F(E(x + 0.2, MY + 1, 0.7, 0.3, '#ff9fb8'))];
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
 }
@@ -883,6 +898,107 @@ export function faceFrame(kind, time) {
       const p = at(3.8);
       const f = { lid: 0.22, cross: 0.4, mouth: 'flat', brows: [[-0.3, 0.6], [-0.3, 0.6]] };
       if (win(p, 0.55, 0.7)) Object.assign(f, { shine: true, mouth: 'grit', extra: ['spark1'] });
+      return f;
+    }
+    // Sassy.
+    case 'bleh': {
+      // A wink and a tongue stuck out; it drops to a sly smile, then the tongue waggles.
+      const p = at(3.4);
+      const f = { closed: [false, true], mouth: 'bleh', brows: [[0.6, -0.3], [1, -0.4]] };
+      if (win(p, 0.55, 0.75)) Object.assign(f, { closed: null, lid: 0.25, mouth: 'slysmile' });
+      if (win(p, 0.8, 0.95)) f.mouth = Math.floor(t * 8) % 2 ? 'bleh' : 'tongue';
+      return f;
+    }
+    case 'excuseme': {
+      // One eye narrowed, the other brow shot up; the brow hops higher, then the squint deepens.
+      const p = at(4);
+      const f = { lids: [0.55, 0], mouth: 'sneer', brows: [[-0.1, 0.4], [1.7, -0.5]] };
+      if (win(p, 0.3, 0.45)) f.brows = [[-0.1, 0.4], [Math.floor(t * 8) % 2 ? 2.2 : 1.8, -0.6]];
+      if (win(p, 0.6, 0.85)) Object.assign(f, { lids: [0.75, 0.2], mouth: 'pursed' });
+      return f;
+    }
+    case 'dimple': {
+      // A sly smile, eyes away; she looks back at you with a wink, and blushes.
+      const p = at(3.8);
+      const f = { lid: 0.32, glance: 1, mouth: 'slysmile', brows: [[0.1, 0.2], [0.9, -0.4]], blush: 1.1 };
+      if (win(p, 0.5, 0.7)) Object.assign(f, { glance: 0, closed: [false, true] });
+      if (win(p, 0.7, 0.82)) Object.assign(f, { glance: 0, blush: 1.4 });
+      return f;
+    }
+    case 'mmhm': {
+      // "Sure.": a flat sideways stare, a slow roll of the eyes up and over, a long blink.
+      const p = at(4.6);
+      const f = { lid: 0.5, glance: -1, mouth: 'pursed', brows: [[1.2, -0.3], [0.2, 0.1]] };
+      if (win(p, 0.35, 0.47)) Object.assign(f, { lid: 0.3, look: 'up', glance: -0.4, brows: [[1.4, -0.3], [0.6, -0.1]] });
+      if (win(p, 0.47, 0.6)) Object.assign(f, { lid: 0.3, look: 'up', glance: 0.6, brows: [[1.4, -0.3], [0.6, -0.1]] });
+      if (win(p, 0.6, 0.72)) Object.assign(f, { closed: ['blink', 'blink'], mouth: 'bored' });
+      return f;
+    }
+    // Pretentious.
+    case 'hmph': {
+      // "How common.": eyes shut, nose up; one eye peeks to see if you're impressed, then shuts.
+      const p = at(4.2);
+      const f = { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.3, -0.4], [1.3, -0.4]] };
+      if (win(p, 0.4, 0.58)) Object.assign(f, { closed: ['blink', false], lid: 0.5, glance: 1, brows: [[1.3, -0.4], [0.7, -0.1]] });
+      if (win(p, 0.58, 0.7)) f.mouth = 'bored';
+      return f;
+    }
+    case 'judging': {
+      // Looking you up and down through a narrowed eye, then the eyes narrow further.
+      const p = at(4.4);
+      const f = { lids: [0.62, 0.15], look: 'down', mouth: 'bored', brows: [[-0.2, 0.4], [1.4, -0.4]] };
+      if (win(p, 0.3, 0.45)) Object.assign(f, { look: 'up', glance: -0.6 });
+      if (win(p, 0.45, 0.58)) Object.assign(f, { look: 'down', glance: 0.8 });
+      if (win(p, 0.75, 0.9)) Object.assign(f, { lids: [0.8, 0.4], mouth: 'flat' });
+      return f;
+    }
+    case 'ohoho': {
+      // "Ohohoho!": eyes shut, the laugh in quick beats, then a satisfied smile to catch her breath.
+      const p = at(3.2);
+      const f = { closed: [true, true], mouth: Math.floor(t * 8) % 2 ? 'ohoho' : 'smirk', brows: [[1, -0.4], [1, -0.4]] };
+      if (win(p, 0.6, 1)) f.mouth = 'slysmile';
+      return f;
+    }
+    case 'sneer': {
+      // A sneer down the nose; the lip curls higher, then the eyes slide away, done with you.
+      const p = at(4.6);
+      const f = { lid: 0.6, look: 'down', mouth: 'sneer', brows: [[0.8, -0.3], [1.2, -0.4]] };
+      if (win(p, 0.4, 0.55)) Object.assign(f, { lid: 0.7, brows: [[1, -0.3], [1.6, -0.5]] });
+      if (win(p, 0.7, 0.85)) Object.assign(f, { lid: 0.55, look: null, glance: -1, mouth: 'bored' });
+      return f;
+    }
+    // Smug.
+    case 'heh': {
+      // "Heh~": eyes closed, pleased with herself; one eye opens to check on you, the smile curls.
+      const p = at(3.6);
+      const f = { closed: [true, true], mouth: 'slysmile', brows: [[0.6, -0.3], [0.9, -0.4]], blush: 1.1 };
+      if (win(p, 0.45, 0.62)) Object.assign(f, { closed: [true, false], lid: 0.3, glance: 1 });
+      if (win(p, 0.62, 0.76)) f.mouth = 'smugcat';
+      return f;
+    }
+    case 'smugcat': {
+      // A lopsided ":3"; the eyes close in a pleased squint, then a brow hops.
+      const p = at(4);
+      const f = { lid: 0.5, mouth: 'smugcat', brows: [[0.1, 0.2], [1, -0.4]] };
+      if (win(p, 0.4, 0.6)) Object.assign(f, { closed: [true, true], blush: 1.2 });
+      if (win(p, 0.75, 0.85)) f.brows = [[0.1, 0.2], [Math.floor(t * 8) % 2 ? 1.6 : 1.1, -0.5]];
+      return f;
+    }
+    case 'toldyou': {
+      // "Told you so.": a side glance and a wide smirk; she turns to look right at you, brows up,
+      // and winks.
+      const p = at(4.2);
+      const f = { lid: 0.45, glance: 1, mouth: 'smirkwide', brows: [[0, 0.3], [1.3, -0.5]] };
+      if (win(p, 0.35, 0.55)) Object.assign(f, { glance: 0, lid: 0.3, brows: [[0.7, -0.2], [1.5, -0.5]] });
+      if (win(p, 0.55, 0.66)) Object.assign(f, { glance: 0, closed: [false, true] });
+      return f;
+    }
+    case 'lookdown': {
+      // Chin up, looking down on you with a wide smirk; a slow, superior blink.
+      const p = at(5);
+      const f = { lid: 0.62, look: 'down', mouth: 'smirkwide', brows: [[0.9, -0.3], [1.2, -0.4]] };
+      if (win(p, 0.5, 0.62)) Object.assign(f, { closed: ['blink', 'blink'] });
+      if (win(p, 0.62, 0.8)) Object.assign(f, { lid: 0.7, mouth: 'slysmile' });
       return f;
     }
     default: {
@@ -1370,6 +1486,8 @@ const WALK_STYLE = {
   smile: 'bouncy', grin: 'bouncy', cat: 'bouncy', playful: 'bouncy', giggle: 'bouncy', excited: 'skip', love: 'skip',
   smug: 'strut', proud: 'strut', cool: 'cool', sassy: 'sassy', angry: 'stomp', determined: 'stomp', pout: 'stomp',
   sad: 'droop', sleepy: 'droop', tired: 'droop', shy: 'timid', nervous: 'timid', dizzy: 'weave', shock: 'panic',
+  bleh: 'sassy', excuseme: 'sassy', dimple: 'sassy', mmhm: 'cool', judging: 'cool',
+  hmph: 'strut', ohoho: 'strut', sneer: 'strut', heh: 'strut', smugcat: 'strut', toldyou: 'strut', lookdown: 'strut',
 };
 // Lean added to the walk (radians): stomps and droops bend forward, struts stand tall.
 export const WALK_LEAN = { stomp: 0.03, droop: 0.02, strut: -0.02, cool: -0.015, sassy: -0.01, panic: 0.02 };
@@ -1556,6 +1674,102 @@ function idleActing(r, mood, t, armed) {
       r.squat = Math.sin(T * Math.PI * 1.5) > 0.3 ? 1 : 0;
       r.frontLeg = [2, 0, 4];
       r.backLeg = [-2, 0, -6];
+      break;
+    }
+    // The attitude faces: sassy hip pops and crossed arms, pretentious chins in the air, smug
+    // hands on hips; each moves on its face's beat.
+    case 'bleh': {
+      const p = at(3.4);
+      onHips(false);
+      r.tilt = 4;
+      if (win(p, 0.8, 0.95)) r.tilt = Math.floor(T * 8) % 2 ? 6 : 3;
+      break;
+    }
+    case 'excuseme': {
+      const p = at(4);
+      onHips();
+      r.tx = q(-0.8);
+      r.tilt = -2;
+      if (win(p, 0.3, 0.45)) { r.tilt = -4; r.tx = q(-1.4); }
+      break;
+    }
+    case 'dimple': {
+      // Hands behind the back, swaying; a lean in on the wink.
+      const p = at(3.8);
+      hands(-2.5, -1.5);
+      r.tilt = q(4 + Math.sin(2 * Math.PI * p) * 2);
+      if (win(p, 0.5, 0.7)) { r.tilt = 6; r.tx = q(1); }
+      break;
+    }
+    case 'mmhm': {
+      const p = at(4.6);
+      hands(9.5, -5.6, -9.7, -5.1);
+      r.tilt = -3;
+      if (win(p, 0.35, 0.6)) r.tilt = -6;
+      break;
+    }
+    case 'hmph': {
+      // Arms crossed, nose in the air, turned away; she turns back a little to peek.
+      const p = at(4.2);
+      hands(9.5, -5.6, -9.7, -5.1);
+      r.tilt = -6;
+      r.tx = q(-1);
+      if (win(p, 0.4, 0.58)) { r.tilt = -3; r.tx = 0; }
+      break;
+    }
+    case 'judging': {
+      // A hand to the chin, weighing you up.
+      const p = at(4.4);
+      r.backArm = [q(CHIN[0]), q(CHIN[1])];
+      r.armSide = 1;
+      r.tilt = 2;
+      if (win(p, 0.3, 0.45)) r.tilt = -2;
+      break;
+    }
+    case 'ohoho': {
+      // Hands on the hips, chest out; the laugh shakes her in quick beats.
+      const p = at(3.2);
+      onHips();
+      r.by = q(r.by - 0.5);
+      r.tilt = -4;
+      if (win(p, 0, 0.6)) { r.by = Math.floor(T * 8) % 2 ? 0 : -0.5; r.tilt = Math.floor(T * 8) % 2 ? -5 : -3; }
+      break;
+    }
+    case 'sneer': {
+      const p = at(4.6);
+      onHips();
+      r.tilt = -4;
+      if (win(p, 0.7, 0.85)) { r.tilt = -2; r.tx = q(-1); }
+      break;
+    }
+    case 'heh': {
+      const p = at(3.6);
+      hands(-1.5, -2.5);
+      r.tilt = -2;
+      if (win(p, 0.45, 0.62)) r.tilt = 2;
+      break;
+    }
+    case 'smugcat': {
+      const p = at(4);
+      onHips(false);
+      r.tx = q(1);
+      r.tilt = 3;
+      if (win(p, 0.4, 0.6)) r.tilt = 5;
+      break;
+    }
+    case 'toldyou': {
+      // A hand on the hip; she turns square to you for the "so".
+      const p = at(4.2);
+      onHips(false);
+      r.tx = q(1);
+      r.tilt = 2;
+      if (win(p, 0.35, 0.66)) { r.tilt = -1; r.tx = 0; }
+      break;
+    }
+    case 'lookdown': {
+      onHips();
+      r.by = q(r.by - 0.5);
+      r.tilt = -5;
       break;
     }
     case 'tired': {

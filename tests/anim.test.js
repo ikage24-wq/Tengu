@@ -164,3 +164,16 @@ test('every weapon keeps its blow on time and leans into it', async () => {
   const fin = (p) => moveAt('slash', p, 0.4, { hit: 0.4, fin: true }).lift;
   assert.ok(fin(0.52) > 2 && fin(0.99) < 0.5, 'a finisher bounces, then rests');
 });
+
+test('every expression has its own idle loop', async () => {
+  const { FACE_STYLES, faceFrame } = await import('../src/render/hero.js');
+  const loop = (face) => Array.from({ length: 48 }, (_, i) => JSON.stringify(faceFrame(face, i / 8)));
+  const seen = new Map();
+  for (const face of FACE_STYLES) {
+    const frames = loop(face);
+    assert.ok(new Set(frames).size >= 2, `${face} moves`);
+    const key = frames.join('|');
+    assert.ok(!seen.has(key), `${face} loops like ${seen.get(key)}`);
+    seen.set(key, face);
+  }
+});
