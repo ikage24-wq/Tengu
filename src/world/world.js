@@ -435,7 +435,7 @@ export function killMob(world, m, byParty = false) {
   // The Monster Book.
   const card = recordBook(char, m.def.id);
   if (card === 'card') world.log(`New Monster Book card: ${m.def.name}!`, '#c9a6ff');
-  if (card === 'master') world.log(`${m.def.name} card mastered! +1 to every stat.`, '#ffe36b');
+  if (card === 'master') world.log(`${m.def.name} card mastered!`, '#ffe36b');
   for (const qid of recordKill(char, m.def.id)) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
     world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
@@ -754,7 +754,7 @@ export function updateWorld(world, dt, input) {
   // In a dungeon they fight the whole group (see dungeon.js); elsewhere they hurt you on touch.
   const pbox = playerBox(world.body);
   tickTutorial(world);
-  tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id), cast: (id) => Boolean(cast(world, id)?.ok) });
+  tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id) });
   if (world.dungeon) tickDungeon(world, dt);
   // Online, the monsters on a map another player got to first are run by their game; this one
   // shows them where it says they are. Monsters chase whichever player is nearest.

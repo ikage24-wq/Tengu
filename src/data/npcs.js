@@ -33,7 +33,7 @@ export const NPCS = {
     building: 'goods', sign: "Pip's Goods",
     look: { hairStyle: 'pixie', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
-    shop: ['fishing_rod', 'red_potion', 'orange_potion', 'blue_potion', 'return_scroll', 'star_pebble', 'mochi_snack', 'mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
+    shop: ['fishing_rod', 'red_potion', 'orange_potion', 'blue_potion', 'return_scroll', 'star_pebble', 'mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
     // Job gear for your own job (a Novice sees every job's starter set), by level.
     stockLevels: [5, 10],
     quests: ['snail_trouble', 'pip_parcel'],
@@ -115,7 +115,7 @@ export const NPCS = {
     look: { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
     greeting: 'Finest goods on the coast. Bows, blades, armor, and tonics!',
     shop: ['fishing_rod', 
-      'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll', 'mochi_snack', 'mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem', 
+      'red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll', 'mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem', 
       'star_pebble', 'star_steel', 'star_mint', 'star_moon',
       ...arms(15, 40, 'bow', 'crossbow', 'dagger', 'gauntlet'),
       'hoodie', 'kitty_ears', 'sailor_top',

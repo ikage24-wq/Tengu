@@ -4,7 +4,7 @@
 
 import { MOBS } from '../data/mobs.js';
 import { ACHIEVEMENTS, BOOK_MOBS } from '../data/achievements.js';
-import { masteryAt, bookBonus, CARD_HP } from '../core/collection.js';
+import { masteryAt } from '../core/collection.js';
 import { drawMonster } from '../render/monsters.js';
 import { drawItemIcon } from '../render/icons.js';
 import { FISH, RARITY_NAMES, RARITY_COLORS } from '../data/fishing.js';
@@ -71,14 +71,12 @@ function book(ui, win, char, world, x, y, th) {
         { text: def.name, bold: true },
         { text: `Lv ${def.level}${def.boss ? ' boss' : ''}`, size: 8, color: COLORS.muted },
         { text: `Defeated ${n.toLocaleString()} / ${masteryAt(id)} to master`, size: 8, color: master ? '#3f9f5f' : COLORS.ink },
-        { text: master ? 'Mastered: +1 to every stat' : `Card: +${CARD_HP} max HP`, size: 8, color: '#3f9f5f' },
+        ...(master ? [{ text: 'Mastered!', size: 8, color: '#3f9f5f' }] : []),
       ] : [{ text: 'Not met yet', bold: true }, { text: `Lv ${def.level}`, size: 8, color: COLORS.muted }]);
     }
   });
-  const b = bookBonus(char);
   const cards = Object.keys(char.book ?? {}).filter((id) => MOBS[id]).length;
   text(ctx, `${cards} / ${ORDER.length} cards`, x, y + rows * ch + 10, { size: 8, bold: true, color: th.dark });
-  text(ctx, `Book bonus: Max HP +${b.hp}${b.str ? `, all stats +${b.str}` : ''}`, x + 90, y + rows * ch + 10, { size: 7.5, color: '#3f9f5f', bold: true });
   if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 10, { size: 6.5, align: 'right', color: COLORS.muted });
 }
 

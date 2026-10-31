@@ -91,7 +91,7 @@ function festivalTick(ev, bots, world, dt, hooks) {
 
 // ---------- The wandering merchant ----------
 
-const ODD_WARES = ['elixir', 'mana_elixir', 'white_potion', 'mochi_snack', 'mochi_feather', 'mochi_clover'];
+const ODD_WARES = ['elixir', 'mana_elixir', 'white_potion', 'mochi_feather', 'mochi_clover'];
 
 function merchant(ev, bots, world, hooks) {
   const rng = bots.rng;

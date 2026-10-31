@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
-import { createCharacter, gainExp, learnSkill } from '../src/core/character.js';
+import { createCharacter } from '../src/core/character.js';
 import { addItem, countItem } from '../src/core/inventory.js';
 import { spawnDrops } from '../src/world/drops.js';
 import { adoptPet, feedPet, EGG_CASH, GROW_AT, hatchPet } from '../src/world/mochi.js';
@@ -51,28 +51,21 @@ test('out with you, a Mochi follows, fetches loot in range and leaves loot out o
   assert.equal(countItem(w.char.inventory, 'shell'), 0, 'left the far one');
 });
 
-test('a Mochi drinks a tonic when you run low, recasts your buffs, and stops helping when hungry', () => {
+test('a Mochi drinks a tonic when you run low, and never goes hungry or sulks', () => {
   const w = world();
   const c = w.char;
-  gainExp(c, 2000);
-  c.sp = 5;
-  learnSkill(c, 'quickstep');
   hatchPet(c);
+  assert.equal(c.pet.full, undefined, 'no tummy to fill');
   addItem(c.inventory, 'red_potion', 5);
-  c.mp = 999;
   run(w, 2);
-  assert.ok(c.buffs.quickstep, 'buffed you');
   c.hp = 1;
   run(w, 1);
   assert.ok(c.hp > 1, 'gave you a tonic');
-  // An empty tummy: no more help.
-  c.pet.full = 0;
+  // An hour out with you later, it still helps.
+  run(w, 2);
+  w.now += 3600;
   const n = countItem(c.inventory, 'red_potion');
   c.hp = 1;
   run(w, 1);
-  assert.equal(countItem(c.inventory, 'red_potion'), n, 'too hungry to help');
-  addItem(c.inventory, 'mochi_snack', 1);
-  feedPet(c, 'mochi_snack');
-  run(w, 1);
-  assert.ok(countItem(c.inventory, 'red_potion') < n, 'fed, it helps again');
+  assert.ok(countItem(c.inventory, 'red_potion') < n, 'still helping');
 });

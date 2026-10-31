@@ -4,17 +4,16 @@ import assert from 'node:assert/strict';
 
 import { createCharacter } from '../src/core/character.js';
 import { computeStats } from '../src/core/stats.js';
-import { recordBook, bookBonus, newAchievements, titleOf, masteryAt, CARD_HP } from '../src/core/collection.js';
+import { recordBook, newAchievements, titleOf, masteryAt } from '../src/core/collection.js';
 import { ACHIEVEMENTS } from '../src/data/achievements.js';
 
-test('a card fills on the first defeat and masters at 100 (5 for a boss), each adding to your stats', () => {
+test('a card fills on the first defeat and masters at 100 (5 for a boss), with no hidden stat bonus', () => {
   const c = createCharacter('Book', {});
-  const hp = computeStats(c).maxHp;
+  const before = computeStats(c);
   assert.equal(recordBook(c, 'snailbun'), 'card');
-  assert.equal(computeStats(c).maxHp, hp + CARD_HP);
   for (let i = 1; i < masteryAt('snailbun') - 1; i++) assert.equal(recordBook(c, 'snailbun'), null);
   assert.equal(recordBook(c, 'snailbun'), 'master');
-  assert.equal(bookBonus(c).str, 1);
+  assert.deepEqual(computeStats(c), before, 'cards are for collecting');
   assert.equal(masteryAt('gnarlroot'), 5);
 });
 

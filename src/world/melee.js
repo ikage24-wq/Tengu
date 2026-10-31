@@ -102,18 +102,18 @@ export const COMBOS = {
     { move: 'cross', dur: 0.46, step: 10, finisher: true, strikes: [{ at: 0.22, pct: 80, reach: 60, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.72, pct: 110, reach: 60, h: 56, knock: 160, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
   ],
   bow: [
-    { move: 'quickshot', dur: 0.46, step: -3, strikes: [{ at: 0.5, shot: 'arrow', pct: 90, range: 290, h: 60, knock: 25 }] },
-    { move: 'quickshot', dur: 0.44, step: -3, strikes: [{ at: 0.5, shot: 'arrow', pct: 95, range: 290, h: 60, knock: 25 }] },
+    { move: 'quickshot', dur: 0.46, strikes: [{ at: 0.5, shot: 'arrow', pct: 90, range: 290, h: 60, knock: 25 }] },
+    { move: 'quickshot', dur: 0.44, strikes: [{ at: 0.5, shot: 'arrow', pct: 95, range: 290, h: 60, knock: 25 }] },
     { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'bigarrow', pct: 170, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
   crossbow: [
-    { move: 'quickshot', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'arrow', pct: 100, range: 300, h: 56, knock: 50, speed: 820 }] },
-    { move: 'quickshot', dur: 0.5, step: -4, strikes: [{ at: 0.5, shot: 'arrow', pct: 105, range: 300, h: 56, knock: 50, speed: 820 }] },
+    { move: 'quickshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'arrow', pct: 100, range: 300, h: 56, knock: 50, speed: 820 }] },
+    { move: 'quickshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'arrow', pct: 105, range: 300, h: 56, knock: 50, speed: 820 }] },
     { move: 'aimshot', dur: 0.66, step: -12, finisher: true, strikes: [{ at: 0.68, shot: 'bigarrow', pct: 190, range: 340, h: 56, targets: 3, pierce: true, speed: 1000, knock: 240, big: true, stop: 0.07, shake: 3 }] },
   ],
   gauntlet: [
-    { move: 'throw', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 270, h: 60, knock: 25 }] },
-    { move: 'throw', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 90, range: 270, h: 60, knock: 25 }] },
+    { move: 'throw', dur: 0.4, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 270, h: 60, knock: 25 }] },
+    { move: 'throw', dur: 0.4, strikes: [{ at: 0.5, shot: 'star', pct: 90, range: 270, h: 60, knock: 25 }] },
     { move: 'barrage', dur: 0.56, step: -6, finisher: true, strikes: [0.2, 0.5, 0.8].map((at) => ({ at, shot: 'star', pct: 70, range: 280, h: 70, knock: 60, fan: 1 })) },
   ],
   none: [
@@ -146,8 +146,8 @@ export const PATH_COMBOS = {
     { move: 'cleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
   ],
   archer: [
-    { move: 'quickshot', dur: 0.44, step: -3, strikes: [{ at: 0.5, shot: 'hawkarrow', pct: 90, range: 300, h: 60, knock: 25, speed: 800 }] },
-    { move: 'rapid', dur: 0.46, step: -4, strikes: [{ at: 0.17, shot: 'hawkarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 800 }, { at: 0.5, shot: 'hawkarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 800 }] },
+    { move: 'quickshot', dur: 0.44, strikes: [{ at: 0.5, shot: 'hawkarrow', pct: 90, range: 300, h: 60, knock: 25, speed: 800 }] },
+    { move: 'rapid', dur: 0.46, strikes: [{ at: 0.17, shot: 'hawkarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 800 }, { at: 0.5, shot: 'hawkarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 800 }] },
     { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 175, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 210, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Thief, by weapon. Her back flips come in the middle of a string, never at its end (the
@@ -161,7 +161,7 @@ export const PATH_COMBOS = {
     { move: 'crossfin', dur: 0.62, step: 10, carry: 0.12, finisher: true, strikes: [{ at: 0.12, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.4, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
   ],
   thiefstar: [
-    { move: 'throw', dur: 0.38, step: -2, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 280, h: 60, knock: 25, speed: 760 }] },
+    { move: 'throw', dur: 0.38, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 280, h: 60, knock: 25, speed: 760 }] },
     { move: 'flipthrow', dur: 0.6, step: -30, carry: 0.46, strikes: [{ at: 0.46, shot: 'star', fan: 2, pct: 60, range: 280, h: 110, drop: 20, knock: 30, speed: 800 }] },
     { move: 'heavethrow', dur: 0.62, step: 8, carry: 0.5, finisher: true, strikes: [{ at: 0.52, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2 }] },
   ],
@@ -174,7 +174,7 @@ export const PATH_COMBOS = {
     { move: 'crossfin', dur: 0.62, step: 10, carry: 0.12, finisher: true, strikes: [{ at: 0.12, pct: 95, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.4, pct: 130, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06, burst: 'inkhit', burstAt: 0.4 }] },
   ],
   kitsune: [
-    { move: 'throw', dur: 0.36, step: -2, strikes: [{ at: 0.5, shot: 'foxstar', pct: 90, range: 290, h: 60, knock: 25, speed: 780 }] },
+    { move: 'throw', dur: 0.36, strikes: [{ at: 0.5, shot: 'foxstar', pct: 90, range: 290, h: 60, knock: 25, speed: 780 }] },
     { move: 'flipthrow', dur: 0.6, step: -30, carry: 0.46, strikes: [{ at: 0.46, shot: 'foxstar', fan: 2, pct: 65, range: 290, h: 110, drop: 20, knock: 30, speed: 800 }] },
     { move: 'heavethrow', dur: 0.62, step: 8, carry: 0.5, finisher: true, strikes: [{ at: 0.52, shot: 'foxmoon', pct: 160, range: 320, h: 80, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] },
   ],
@@ -202,12 +202,12 @@ export const PATH_COMBOS = {
   // The Stormcaller: a bolt snapped off from the hip, a double tap, then a kneeling thunderbolt
   // that tears through the line. Violet lightning crackles off every bolt.
   stormcaller: [
-    { move: 'hipfire', dur: 0.4, step: -3, strikes: [{ at: 0.4, shot: 'stormbolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
-    { move: 'quickshot', dur: 0.46, step: -3, strikes: [{ at: 0.3, shot: 'stormbolt', pct: 55, range: 320, h: 60, knock: 20, speed: 1000 }, { at: 0.6, shot: 'stormbolt', pct: 60, range: 320, h: 60, knock: 40, speed: 1000, oy: 3 }] },
+    { move: 'hipfire', dur: 0.4, strikes: [{ at: 0.4, shot: 'stormbolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
+    { move: 'quickshot', dur: 0.46, strikes: [{ at: 0.3, shot: 'stormbolt', pct: 55, range: 320, h: 60, knock: 20, speed: 1000 }, { at: 0.6, shot: 'stormbolt', pct: 60, range: 320, h: 60, knock: 40, speed: 1000, oy: 3 }] },
     { move: 'kneelshot', dur: 0.66, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'thunderbolt', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1100, knock: 230, big: true, stop: 0.07, shake: 3, muzzle: 'stormspark' }] },
   ],
   beastmaster: [
-    { move: 'quickshot', dur: 0.4, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'quickshot', dur: 0.4, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
     { move: 'leapshot', dur: 0.6, step: -30, carry: 0.6, strikes: [{ at: 0.56, shot: 'windarrow', fan: 3, pct: 50, range: 300, h: 110, knock: 40, speed: 880 }] },
     { move: 'galeshot', dur: 0.7, step: 4, finisher: true, strikes: [{ at: 0.62, shot: 'galearrow', pct: 200, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 230, launch: 120, big: true, stop: 0.07, shake: 2, muzzle: 'gust' }] },
   ],
@@ -236,13 +236,13 @@ function shotsOf(L) {
     ] },
     twirl: { move: 'spinshot', dur: 0.48, step: 6, strikes: [arrowAt(0.32, 55, { knock: 20 }), arrowAt(0.72, 60, { knock: 30 })] },
     slide: { move: 'slideshot', dur: 0.5, step: 30, carry: 0.6, strikes: [arrowAt(0.35, 55), arrowAt(0.62, 60, { knock: 60 })] },
-    burst: { move: 'rapid', dur: 0.5, step: -4, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
+    burst: { move: 'rapid', dur: 0.5, strikes: [0.17, 0.5, 0.83].map((at, i) => arrowAt(at, 45, { knock: 20, oy: (i - 1) * 4 })) },
     hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [arrowAt(0.5, 70, { fan: 2, range: 290, h: 150, drop: 30, knock: 60 })] },
     overdraw: { move: 'galeshot', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: L.big, pct: 220, range: 360, h: 64, targets: 4, pierce: true, speed: 950, knock: 260, launch: 140, big: true, stop: 0.08, shake: 3, muzzle: L.muzzle }] },
-    triple: { move: 'tripleshot', dur: 0.56, step: -4, strikes: [arrowAt(0.55, 50, { fan: 3, h: 110, knock: 40 })] },
-    lob: { move: 'lobshot', dur: 0.5, step: -2, strikes: [arrowAt(0.5, 100, { speed: 380, lob: 70, knock: 60, stop: 0.04 })] },
+    triple: { move: 'tripleshot', dur: 0.56, strikes: [arrowAt(0.55, 50, { fan: 3, h: 110, knock: 40 })] },
+    lob: { move: 'lobshot', dur: 0.5, strikes: [arrowAt(0.5, 100, { speed: 380, lob: 70, knock: 60, stop: 0.04 })] },
     flipfan: { move: 'leapshot', dur: 0.6, step: -30, carry: 0.6, strikes: [arrowAt(0.56, 50, { fan: 3, h: 110, knock: 40, speed: 880 })] },
-    skyrain: { move: 'skyshot', dur: 0.7, step: -4, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
+    skyrain: { move: 'skyshot', dur: 0.7, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
   };
 }
 const ARCHER_SHOTS = shotsOf(ARCHER_LOOK.archer);
@@ -251,7 +251,7 @@ const BEAST_SHOTS = shotsOf(ARCHER_LOOK.beastmaster);
 // for a bolt, the point-blank kick, a hop back loosing two down at them, and a braced spray of three.
 const boltAt = (at, pct, f = {}) => ({ at, shot: 'stormbolt', pct, range: 320, h: 60, knock: 30, speed: 1000, ...f });
 const STORM_SHOTS = {
-  crank: { move: 'crankshot', dur: 0.62, step: -2, strikes: [boltAt(0.5, 55), boltAt(0.8, 65, { knock: 60, oy: -3 })] },
+  crank: { move: 'crankshot', dur: 0.62, strikes: [boltAt(0.5, 55), boltAt(0.8, 65, { knock: 60, oy: -3 })] },
   roll: { move: 'rollshot', dur: 0.56, step: 40, carry: 0.55, strikes: [boltAt(0.66, 105, { knock: 90, stop: 0.04 })] },
   kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
     { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
@@ -382,10 +382,10 @@ export const PATH_VARIANTS = {
   // star, or a twirl that flings it out of the turn.
   thiefstar: [
     [PATH_COMBOS.thiefstar[0],
-      { move: 'twirlthrow', dur: 0.44, step: -2, strikes: [{ at: 0.62, shot: 'star', pct: 90, range: 280, h: 60, knock: 30, speed: 800 }] }],
+      { move: 'twirlthrow', dur: 0.44, strikes: [{ at: 0.62, shot: 'star', pct: 90, range: 280, h: 60, knock: 30, speed: 800 }] }],
     [PATH_COMBOS.thiefstar[1],
-      { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
-      { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'star', fan: 3, pct: 45, range: 280, h: 110, knock: 30, speed: 760, muzzle: 'smokepuff' }] }],
+      { move: 'barrage', dur: 0.4, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
+      { move: 'throw', dur: 0.42, strikes: [{ at: 0.5, shot: 'star', fan: 3, pct: 45, range: 280, h: 110, knock: 30, speed: 760, muzzle: 'smokepuff' }] }],
     [PATH_COMBOS.thiefstar[2],
       { move: 'twirlthrow', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.62, shot: 'moonstar', pct: 150, range: 320, h: 80, targets: 2, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
   ],
@@ -399,7 +399,7 @@ export const PATH_VARIANTS = {
       { move: 'flashcut', dur: 0.32, step: 32, carry: 0.42, strikes: [{ at: 0.4, pct: 95, reach: 62, h: 50, targets: 2, knock: 40, arc: [-80, 200], thick: 5, pierce: true }] }],
     [PATH_COMBOS.shinobi[1],
       { move: 'palmseal', dur: 0.4, step: 10, strikes: [{ at: 0.42, pct: 60, reach: 50, h: 52, knock: 20, fx: 'sealtag' }, { at: 0.42, delay: 0.5, pct: 110, reach: 70, h: 70, around: true, targets: 3, knock: 120, burst: 'sealburst', burstAt: 0.5, stop: 0.04, shake: 1, quiet: true }] },
-      { move: 'kunaifan', dur: 0.42, step: -4, strikes: [{ at: 0.55, shot: 'kunai', fan: 3, pct: 55, range: 260, h: 120, knock: 40, speed: 900 }] },
+      { move: 'kunaifan', dur: 0.42, strikes: [{ at: 0.55, shot: 'kunai', fan: 3, pct: 55, range: 260, h: 120, knock: 40, speed: 900 }] },
       { move: 'slash', dur: 0.28, step: 6, strikes: [{ at: 0.45, pct: 100, reach: 60, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] }],
     [PATH_COMBOS.shinobi[2],
       { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 155, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, burst: 'inkhit', burstAt: 0.5, stop: 0.06, shake: 2 }] },
@@ -423,10 +423,10 @@ export const PATH_VARIANTS = {
   // a pounce that throws down at them as she lands, or a twirl that flings the great star.
   kitsune: [
     [PATH_COMBOS.kitsune[0],
-      { move: 'twirlthrow', dur: 0.42, step: -2, strikes: [{ at: 0.62, shot: 'foxstar', pct: 95, range: 290, h: 60, knock: 30, speed: 800 }] }],
+      { move: 'twirlthrow', dur: 0.42, strikes: [{ at: 0.62, shot: 'foxstar', pct: 95, range: 290, h: 60, knock: 30, speed: 800 }] }],
     [PATH_COMBOS.kitsune[1],
-      { move: 'barrage', dur: 0.4, step: -2, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
-      { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'foxstar', fan: 3, pct: 48, range: 290, h: 110, knock: 30, speed: 780 }] }],
+      { move: 'barrage', dur: 0.4, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
+      { move: 'throw', dur: 0.42, strikes: [{ at: 0.5, shot: 'foxstar', fan: 3, pct: 48, range: 290, h: 110, knock: 30, speed: 780 }] }],
     [PATH_COMBOS.kitsune[2],
       { move: 'foxpounce', dur: 0.64, step: 50, carry: 0.55, finisher: true, strikes: [{ at: 0.56, shot: 'foxmoon', fan: 2, pct: 110, range: 260, h: 120, drop: 30, knock: 160, speed: 900, big: true, stop: 0.05, shake: 2 }] },
       { move: 'twirlthrow', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.62, shot: 'foxmoon', pct: 160, range: 320, h: 64, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
@@ -487,7 +487,7 @@ const ARCHER_COMMANDS = {
   // The Kitsune: two fox-fire stars flung up at whatever flies, fans of them thrown down from a
   // hang in the air, and a pounce out of a run that throws two as she lands.
   kitsune: {
-    up: { move: 'upthrow', dur: 0.44, step: -2, strikes: [{ at: 0.45, shot: 'foxstar', fan: 2, pct: 105, range: 260, h: 190, lift: 50, knock: 20, launch: 380, speed: 780, big: true, stop: 0.04 }] },
+    up: { move: 'upthrow', dur: 0.44, strikes: [{ at: 0.45, shot: 'foxstar', fan: 2, pct: 105, range: 260, h: 190, lift: 50, knock: 20, launch: 380, speed: 780, big: true, stop: 0.04 }] },
     air: [
       { move: 'airthrow', dur: 0.34, hang: true, strikes: [{ at: 0.45, shot: 'foxstar', fan: 3, pct: 65, range: 260, h: 170, drop: 50, knock: 30, speed: 780 }] },
       { move: 'airthrow', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'foxmoon', fan: 2, pct: 100, range: 260, h: 190, drop: 60, knock: 120, speed: 860, big: true, stop: 0.05, shake: 1 }] },
@@ -497,7 +497,7 @@ const ARCHER_COMMANDS = {
   // The Thief with a gauntlet: a star flung up at whatever flies, stars thrown down from a hang in
   // the air, and a star thrown out of a run.
   thiefstar: {
-    up: { move: 'upthrow', dur: 0.44, step: -2, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 100, range: 260, h: 190, lift: 50, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    up: { move: 'upthrow', dur: 0.44, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 100, range: 260, h: 190, lift: 50, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
     air: [
       { move: 'airthrow', dur: 0.34, hang: true, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 760 }] },
       { move: 'airthrow', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 820, big: true, stop: 0.05, shake: 1 }] },
@@ -508,8 +508,8 @@ const ARCHER_COMMANDS = {
   // sliding shot out of a run, and Down + attack: leaning out to loose two arrows down at whatever
   // is below.
   archer: {
-    down: { move: 'downshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'hawkarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 880 }] },
-    up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 880, big: true, stop: 0.05 }] },
+    down: { move: 'downshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'hawkarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 880 }] },
+    up: { move: 'skyshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 880, big: true, stop: 0.05 }] },
     air: [
       { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'hawkarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 880 }] },
       { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 920, big: true, stop: 0.05, shake: 1 }] },
@@ -519,8 +519,8 @@ const ARCHER_COMMANDS = {
   // The Beastmaster: a wild arrow shot up at fliers, two down from a hang, a slide shot out of a
   // run, and down at whatever is below.
   beastmaster: {
-    down: { move: 'downshot', dur: 0.48, step: -2, strikes: [{ at: 0.5, shot: 'windarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 900 }] },
-    up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'galearrow', fan: 2, pct: 110, range: 280, h: 190, lift: 50, knock: 20, launch: 380, speed: 900, big: true, stop: 0.05 }] },
+    down: { move: 'downshot', dur: 0.48, strikes: [{ at: 0.5, shot: 'windarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 900 }] },
+    up: { move: 'skyshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'galearrow', fan: 2, pct: 110, range: 280, h: 190, lift: 50, knock: 20, launch: 380, speed: 900, big: true, stop: 0.05 }] },
     air: [
       { move: 'airshot', dur: 0.36, hang: true, strikes: [{ at: 0.45, shot: 'windarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 900 }] },
       { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'galearrow', fan: 3, pct: 90, range: 280, h: 190, drop: 60, knock: 120, speed: 950, big: true, stop: 0.05, shake: 1 }] },
@@ -530,8 +530,8 @@ const ARCHER_COMMANDS = {
   // The Stormcaller: a thunderbolt up at fliers, two bolts down from a hang, a slide shot out of a
   // run, and down at whatever is below.
   stormcaller: {
-    down: { move: 'downshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'stormbolt', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 1000 }] },
-    up: { move: 'skyshot', dur: 0.5, step: -2, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 1000, big: true, stop: 0.05 }] },
+    down: { move: 'downshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'stormbolt', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 1000 }] },
+    up: { move: 'skyshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 1000, big: true, stop: 0.05 }] },
     air: [
       { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'stormbolt', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 1000 }] },
       { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 1050, big: true, stop: 0.05, shake: 1 }] },

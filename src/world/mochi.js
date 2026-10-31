@@ -1,26 +1,22 @@
-// The Mochi: a pet that follows you round, picks up your loot, drinks your potions when you run
-// low, and recasts your buffs when they wear off. You adopt one as an egg (Cash), it hatches a
-// baby, and what you feed it decides what it grows into: feathers make a Sky Mochi (it flies, and
-// reaches loot up on ledges), clover a Swift one (it gathers loot from further off), buns a Strong
-// one (it carries faster), spirit gems a Spirit one (it reacts sooner and rebuffs early). Fed and
-// happy it's Sunny; left hungry it turns Moon (sulky), and an empty tummy stops it helping until
-// it's fed. It cheers when you level up.
+// The Mochi: a pet that follows you round, picks up your loot, and drinks your potions when you
+// run low. You adopt one as an egg (Cash), it hatches a baby, and the treats you give it decide
+// what it grows into: feathers make a Sky Mochi (it flies, and reaches loot up on ledges), clover
+// a Swift one (it gathers loot from further off), buns a Strong one (it carries faster), spirit
+// gems a Spirit one (it reacts sooner). It never gets hungry or sulks. It cheers when you level up.
 //
 // The pet you own is saved on the character (`char.pet`); the one walking about in the world is
 // `world.mochi` (where it is, what it's doing), made fresh on each map.
 
 import { ITEMS } from '../data/items.js';
-import { SKILLS, skillAt } from '../data/skills.js';
 import { countItem, removeItem } from '../core/inventory.js';
 
-// What adopting one costs, and how fast a full tummy empties (out with you, in seconds).
+// What adopting one costs.
 export const EGG_CASH = 3000;
-const EMPTY_AFTER = 40 * 60;
 // A baby grows into a form once one of its four stats reaches this.
 export const GROW_AT = 40;
 export const PET_STATS = ['sky', 'swift', 'strong', 'spirit'];
 // What each form adds to the helping: loot range (px from you, across and up), how often it
-// can pick something up (s), and how much sooner it drinks and rebuffs.
+// can pick something up (s), and how much sooner it drinks.
 const FORM = {
   baby: { range: 80, up: 40, every: 0.4, early: 0 },
   sky: { range: 90, up: 110, every: 0.35, early: 0 },
@@ -32,7 +28,7 @@ export const formBonus = (form) => FORM[form] ?? FORM.baby;
 
 // A newly hatched pet.
 export function hatchPet(char, name = 'Mochi') {
-  char.pet = { name, form: 'baby', stats: { sky: 0, swift: 0, strong: 0, spirit: 0 }, full: 80, joy: 70, out: true, opts: { loot: true, buffs: true, hp: 40, mp: 25 } };
+  char.pet = { name, form: 'baby', stats: { sky: 0, swift: 0, strong: 0, spirit: 0 }, out: true, opts: { loot: true, hp: 40, mp: 25 } };
   return char.pet;
 }
 // Adopting from the pet window: Cash for an egg that hatches at once. Returns a reason it can't.
@@ -44,19 +40,13 @@ export function adoptPet(char) {
   return null;
 }
 
-export const moodOf = (pet) => (pet.joy < 30 ? 'moon' : 'sunny');
-export const hungry = (pet) => pet.full <= 0;
-
 // Feeds the pet one of `id` from the bag. Returns what happened, for the log.
 export function feedPet(char, id) {
   const pet = char.pet;
   const food = ITEMS[id]?.effect?.pet;
   if (!pet || !food) return null;
-  if (pet.full >= 100 && !food.stat) return `${pet.name} is full.`;
   if (removeItem(char.inventory, id, 1) < 1) return null;
-  pet.full = Math.min(100, pet.full + food.full);
-  pet.joy = Math.min(100, pet.joy + food.joy);
-  if (food.stat) pet.stats[food.stat] = Math.min(99, pet.stats[food.stat] + food.amount);
+  pet.stats[food.stat] = Math.min(99, pet.stats[food.stat] + food.amount);
   // A baby whose stat reaches the mark grows into that form, for good.
   if (pet.form === 'baby') {
     const best = PET_STATS.reduce((a, b) => (pet.stats[b] > pet.stats[a] ? b : a));
@@ -71,8 +61,8 @@ export function feedPet(char, id) {
 
 // ---------- In the world ----------
 
-// Called every tick: the pet walks along behind you, sees to its hunger and mood, and helps.
-// `api` is the world's: { collect(drop), useItem(id), cast(id) } (so this file needs nothing
+// Called every tick: the pet walks along behind you and helps.
+// `api` is the world's: { collect(drop), useItem(id) } (so this file needs nothing
 // from world.js).
 export function tickMochi(world, dt, api) {
   const char = world.char;
@@ -83,16 +73,11 @@ export function tickMochi(world, dt, api) {
   }
   const b = world.body;
   if (!world.mochi || world.mochi.map !== world.map.id) {
-    world.mochi = { map: world.map.id, x: b.x - b.facing * 26, y: b.y, dir: b.facing, moving: false, target: null, pickAt: 0, potAt: 0, buffAt: 0, level: char.level, cheerAt: null };
+    world.mochi = { map: world.map.id, x: b.x - b.facing * 26, y: b.y, dir: b.facing, moving: false, target: null, pickAt: 0, potAt: 0, level: char.level, cheerAt: null };
   }
   const m = world.mochi;
   m.form = pet.form;
-  m.mood = moodOf(pet);
-  // Hunger and mood: the tummy empties while it's out with you; a full tummy cheers it up, an
-  // empty one sours it.
-  pet.full = Math.max(0, pet.full - (dt * 100) / EMPTY_AFTER);
-  pet.joy = Math.max(0, Math.min(100, pet.joy + dt * (pet.full > 50 ? 0.02 : pet.full <= 0 ? -0.08 : 0)));
-  const helping = !hungry(pet) && !world.dead;
+  const helping = !world.dead;
   const bonus = formBonus(pet.form);
   // A level up: it cheers.
   if (char.level > m.level) m.cheerAt = world.now;
@@ -146,22 +131,6 @@ export function tickMochi(world, dt, api) {
         m.potAt = world.now + 0.6;
         m.servedAt = world.now;
       } else m.potAt = world.now + 1.5;
-    }
-  }
-  // Buffs: any of your buffs that has run out (a Spirit Mochi rebuffs a few seconds early), when
-  // you're free to cast and have the MP.
-  if (pet.opts.buffs && world.now >= m.buffAt && !world.pose && !world.dungeon?.cutscene) {
-    m.buffAt = world.now + 1.2;
-    for (const [id, lv] of Object.entries(char.skills)) {
-      const sk = SKILLS[id];
-      if (!sk || sk.type !== 'buff' || !lv || sk.fullGauge) continue;
-      const on = char.buffs?.[id];
-      if (on && on.until - world.now > (pet.form === 'spirit' ? 5 : 0)) continue;
-      if (char.mp < (skillAt(id, lv).mp ?? 0)) continue;
-      if (api.cast(id)) {
-        m.servedAt = world.now;
-        break;
-      }
     }
   }
 }

@@ -8,12 +8,12 @@ import { ITEMS } from '../data/items.js';
 import { countItem } from '../core/inventory.js';
 import { drawItemIcon } from '../render/icons.js';
 import { drawMochi, MOCHI_CHEER } from '../render/mochi.js';
-import { adoptPet, feedPet, moodOf, hungry, GROW_AT, PET_STATS, EGG_CASH, formBonus } from '../world/mochi.js';
+import { adoptPet, feedPet, GROW_AT, PET_STATS, EGG_CASH, formBonus } from '../world/mochi.js';
 import { COLORS, windowFrame, button, text, box, bar, hover, clicked, tooltip, well, toggle } from './kit.js';
 
 const W = 330;
 const H = 214;
-const FOODS = ['mochi_snack', 'mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem'];
+const FOODS = ['mochi_feather', 'mochi_clover', 'mochi_bun', 'mochi_gem'];
 const STAT_COLORS = { sky: '#7fb8ff', swift: '#5fcf86', strong: '#ff9a4f', spirit: '#a98ae8' };
 const FORM_NAMES = { baby: 'Baby', sky: 'Sky', swift: 'Swift', strong: 'Strong', spirit: 'Spirit' };
 const FORM_ABOUT = {
@@ -79,7 +79,6 @@ export function petWindow(ui, state, world) {
     return;
   }
   preview.form = pet.form;
-  preview.mood = moodOf(pet);
   // Click it to make it cheer.
   if (clicked(ui, x0, y0, 110, 100)) preview.cheerAt = now;
   ctx.save();
@@ -93,14 +92,10 @@ export function petWindow(ui, state, world) {
   if (preview.cheerAt != null && now - preview.cheerAt > (MOCHI_CHEER[pet.form] ?? 2)) preview.cheerAt = null;
   text(ctx, pet.name, x0 + 55, y0 + 114, { size: 11, bold: true, align: 'center', color: th.ink });
   text(ctx, `${FORM_NAMES[pet.form]} Mochi`, x0 + 55, y0 + 126, { size: 8, bold: true, align: 'center', color: STAT_COLORS[pet.form] ?? COLORS.accent });
-  const mood = moodOf(pet);
-  const moodText = hungry(pet) ? 'Hungry! Not helping' : mood === 'moon' ? 'Moon mood: sulky' : 'Sunny mood';
-  box(ctx, x0 + 8, y0 + 132, 94, 12, { fill: hungry(pet) ? '#ffd3dc' : mood === 'moon' ? '#e3daf7' : '#fff0c4', edge: null, r: 6 });
-  text(ctx, moodText, x0 + 55, y0 + 141, { size: 7, bold: true, align: 'center', color: hungry(pet) ? COLORS.bad : mood === 'moon' ? '#6a48ad' : '#b07a12' });
   if (button(ui, x0 + 12, y0 + 150, 86, 16, pet.out ? 'Send home' : 'Take along', { size: 8, primary: !pet.out })) pet.out = !pet.out;
   if (hover(ui, x0 + 2, y0 + 108, 106, 22)) tooltip(ui, [{ text: `${FORM_NAMES[pet.form]} Mochi`, bold: true }, { text: FORM_ABOUT[pet.form], size: 8, color: COLORS.muted }]);
 
-  // ----- The right: tummy, joy, growth, food, helping -----
+  // ----- The right: growth, treats, helping -----
   const rx = x0 + 118;
   const rw = W - 138;
   let y = y0 + 4;
@@ -109,9 +104,6 @@ export function petWindow(ui, state, world) {
     bar(ctx, rx + 44, y, rw - 44, 8, k, color, sub, { size: 6 });
     y += 12;
   };
-  row('Tummy', pet.full / 100, '#ffb36b', `${Math.round(pet.full)}%`);
-  row('Joy', pet.joy / 100, '#ff8fb0', `${Math.round(pet.joy)}%`);
-  y += 2;
   // Its four stats; a baby's show the mark it grows at.
   for (const st of PET_STATS) {
     const v = pet.stats[st];
@@ -127,8 +119,8 @@ export function petWindow(ui, state, world) {
     y += 10;
   }
   y += 4;
-  // Food from your bag: click one to feed it.
-  text(ctx, 'Feed', rx, y + 9, { size: 7.5, bold: true, color: th.ink });
+  // Treats from your bag: click one to give it.
+  text(ctx, 'Treats', rx, y + 9, { size: 7.5, bold: true, color: th.ink });
   FOODS.forEach((id, i) => {
     const fx = rx + 30 + i * 25;
     const n = countItem(char.inventory, id);
@@ -152,8 +144,6 @@ export function petWindow(ui, state, world) {
   const opts = pet.opts;
   text(ctx, 'Loot', rx, y + 9, { size: 7.5, bold: true, color: th.ink });
   opts.loot = toggle(ui, rx + 26, y + 1, opts.loot);
-  text(ctx, 'Buffs', rx + 62, y + 9, { size: 7.5, bold: true, color: th.ink });
-  opts.buffs = toggle(ui, rx + 92, y + 1, opts.buffs);
   text(ctx, `${formBonus(pet.form).range}px`, rx + rw - 4, y + 9, { size: 6.5, align: 'right', color: COLORS.muted });
   y += 16;
   const stepper = (label, key, color) => {

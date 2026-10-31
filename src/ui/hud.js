@@ -461,15 +461,14 @@ function edgeTint(ctx, rgba, a) {
   ctx.restore();
 }
 
-// The hit counter, on the right: the count pops each time it climbs, takes a warmer colour and a
-// word at each tier, and fades as the combo is about to drop. Once it's long enough for a finisher
-// you know, it says so.
+// The hit counter, on the right: the count pops each time it climbs, takes a warmer colour as it
+// grows, and fades as the combo is about to drop.
 const HIT_TIERS = [
-  [100, '#ff5ab4', 'LEGENDARY!'],
-  [50, '#ff8a3c', 'AWESOME!'],
-  [25, '#ffc83c', 'GREAT!'],
-  [10, '#6fd0ff', 'NICE!'],
-  [0, '#ffffff', ''],
+  [100, '#ff5ab4'],
+  [50, '#ff8a3c'],
+  [25, '#ffc83c'],
+  [10, '#6fd0ff'],
+  [0, '#ffffff'],
 ];
 function drawHits(ui, state, world) {
   const { ctx } = ui;
@@ -484,7 +483,7 @@ function drawHits(ui, state, world) {
   const left = HITS_WINDOW - (world.now - (world.hitsAt ?? world.now));
   const a = Math.max(0, Math.min(1, left / 0.6));
   const pop = Math.max(0, 1 - (now - (hud.hitsPop ?? -9)) / 0.16);
-  const [, color, word] = HIT_TIERS.find(([min]) => n >= min);
+  const [, color] = HIT_TIERS.find(([min]) => n >= min);
   const x = 628;
   const y = 150;
   ctx.save();
@@ -497,7 +496,6 @@ function drawHits(ui, state, world) {
   ctx.save();
   ctx.globalAlpha = a;
   text(ctx, 'HITS', x, y + 11, { size: 8, bold: true, align: 'right', color: '#ffffff', outline: '#4a3560' });
-  if (word) text(ctx, word, x, y + 22, { size: 9, bold: true, align: 'right', color, outline: '#4a3560' });
   // The bar under it drains toward the drop.
   box(ctx, x - 52, y + 26, 52, 3, { fill: 'rgba(74,53,96,0.4)', edge: null, r: 1.5 });
   box(ctx, x - 52, y + 26, 52 * Math.max(0, left / HITS_WINDOW), 3, { fill: color, edge: null, r: 1.5 });
