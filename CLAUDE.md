@@ -153,6 +153,12 @@ there and update the status file as they get done.
   recommendation first, instead of deciding alone. Show samples (pictures or short videos) before
   the full build and between stages, and fold the player's answers back into the work. Small
   polish and fixes that are clearly better don't need asking; the freedom rule covers those.
+- Bot and NPC chat must never read generic, spammy or repetitive (the player's standing ask).
+  Everything the other players say goes through the chat gate (`src/world/chatlog.js`: no repeats
+  for ten minutes, one line of their own per 30 s, a paced chat log), and every line is about
+  something real for the speaker (their own gear, job and map, its monsters, where they're headed,
+  what just happened on the server); a line that doesn't fit isn't said. New features that make
+  bots talk follow the same rules, and new townsfolk get lines of their own beyond their trade's.
 - Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
   maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
   monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece
