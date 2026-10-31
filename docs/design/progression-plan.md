@@ -86,8 +86,9 @@ jobs.)
 
 ### 5. Gear progression
 - Story dungeons give the "next step" gear; fields and shops fill gaps.
-- Keep the 7 charm slots. Add a later, MapleStory-style **star upgrade** (each star a small boost,
-  getting harder as you go), but **never destroy items**, to keep it cozy.
+- Charm slots were removed (2026-10-31): polishing at Tora's is the one way to strengthen a piece.
+  Any later upgrade system replaces polishing rather than stacking on top of it, and **never
+  destroys items**, to keep it cozy.
 - Endgame designs (Holy, Demonic, Bone, Laser, Chainsaw, Cyber) move to boss and weekly rewards,
   so they mean "I beat that".
 

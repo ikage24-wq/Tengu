@@ -19,9 +19,9 @@ the phone sideways).
 
 ### With friends
 
-**Play with Friends** (the two-people button on the menu bar, or N) has three tabs: **Friends**
-(the players you've added: who's on and where, Invite, a friend asking you to hunt), **Fame** (the
-hall of fame, ranking you among the server by level, kills and raids), and **Room**. On Room, press
+**Play with Friends** (the two-people button on the menu bar, or N) has two tabs: **Friends**
+(the players you've added: who's on and where, Invite, a friend asking you to hunt) and **Room**.
+On Room, press
 **Host a room**:
 you get a six-digit code. Friends (up to 3) open the same window, type the code on the pad, and
 press **Join**. Everyone in the room sees each other on the same map, fights the same monsters,
@@ -44,10 +44,8 @@ Things to do together:
   monsters, bosses and bots, and everyone's blows, taunts, heals, buffs and room tasks reach it.
 - **Trading.** Each friend's row has a Trade button: both sides put in up to six items and some
   gold, press Ready, and the swap happens when both are ready (any change takes the marks off).
-- **Warp to a friend** for a little gold (more the farther they are), unless they're in a dungeon
-  or trial.
-- **Fishing together.** Friends see each other's lines and catches, and the room keeps a board of
-  its five best catches.
+- **Warp to a friend** for free, unless they're in a dungeon or trial.
+- **Fishing together.** Friends see each other's lines and hear about each other's catches.
 - **Queen rematches.** A returning queen's moves (and their warnings) reach everyone on her map.
 - **Quests** count every kill on the map you share, so friends hunting together all progress.
 - **Emotes.** T (or the phone's EMOTE button) opens a wheel of eight: cheer, dance, flip, love, thanks and more.
@@ -58,8 +56,7 @@ A thumb stick on the left walks and climbs (push up to talk to NPCs and take por
 right: Attack, Jump, Loot, and your first four hotkeys as skill buttons; the hotkey bar's bubbles
 can be tapped too. The speech button opens chat with the phone's keyboard. Everything else (menus,
 windows, NPCs) works by tapping. Options > Phone sets the button size (small, normal, big), how
-see-through they are, a left-handed layout (stick on the right), and a little vibration on each
-press, with a preview.
+see-through they are, and a left-handed layout (stick on the right).
 
 ## Run it
 
@@ -113,15 +110,12 @@ to clear it.
   in their job's home town). Every first job has a movement skill (Shoulder Charge, Backflip Shot,
   Shadow Step, Spirit Step). Taking a first job gives back every stat point spent as a Novice, to
   put into the new job's stat. The Warrior, Archer and Thief each pick one of two paths at level 30
-  (below), after their instructor's trial; the Spirit Mage's paths (the Shrine Maiden and the
-  Onmyoji) are still to come. The old Mage was retired for her: characters who were Mages are
-  Novices again, with their skill points given back.
+  (below), after their instructor's trial; the Spirit Mage picks the Shrine Maiden or the Onmyoji.
 
   Monsters can be **frozen** (in a block of ice) or **stunned** (seeing stars) so they can't move or
   hurt you, and **poisoned** (green) or **bleeding** (red) so they take damage every second. Spells
   cast over a magic circle in their school's color; big weapon skills flare with a burst of
-  power. Saves in a retired job return to that first job, and skills that were removed give their
-  SP back.
+  power.
 - **Stats** — STR, DEX, INT, LUK with 5 AP per level (an Auto button spends them for your job).
   Damage uses a primary and secondary stat per weapon type, mastery raises your minimum damage,
   magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.
@@ -140,16 +134,14 @@ to clear it.
   and crack the ground. Party members swing through the same combos. Bows, crossbows, and the
   thief's star-throwing gauntlets chain too: two snap shots and then a heavy piercing arrow (or bolt) that tears through the
   whole line, or two throws and a three-star barrage. Arrows leave on the string's snap, fly to
-  their target pointed along their path, and hit when they arrive; you hop back a little with each
-  shot.
-- **Throwing stars** — a gauntlet throws real stars from your bag, one per star thrown. Stars
-  come in sets of 500 and add their own attack: Pebble (Lv 10, +15), Steel (Lv 10, +17), Mint
+  their target pointed along their path, and hit when they arrive.
+- **Throwing stars** — a gauntlet throws stars from your bag, and they never run out. Stars add
+  their own attack: Pebble (Lv 10, +15), Steel (Lv 10, +17), Mint
   (Lv 20, +19), and Moon (Lv 30, +21) are sold in shops; Crimson (Lv 40), Thunder (Lv 50),
   Flame (Lv 60), Crystal (Lv 70), and Starlight (Lv 80, +30) only drop from monsters (bosses
-  often), and the last four hit with their element. New thieves get a set of Pebble Stars. The
-  first set in your bag is the one thrown (double-click a set to throw it), the HUD shows how
-  many are left, and any shop recharges a part-thrown set for what its missing stars are worth.
-  Out of stars, a gauntlet can't attack.
+  often), and the last four hit with their element. New thieves get a set of Pebble Stars. A
+  gauntlet always throws the strongest stars you own (shown by the hotkeys); with none, it can't
+  attack.
 - **Warrior** (steel blue and white: the blue cross, swords, a shield) — he fights with his basic
   attacks, and his skills go off on their own from them. His own basic combo is four swings, each
   drawn from a few so the string keeps changing (the first combo is the classic one, and never
@@ -270,8 +262,8 @@ to clear it.
   **attacking out of a run** is a lunging dash attack. Each move eases out of the one before it
   instead of snapping.
 - **Hit counter, Links and finishers** — every hit you land keeps a counter going on the right
-  (it drops after 3 seconds without a hit, but never mid-move), with tiers at 10 (Nice), 25
-  (Great), 50 (Awesome) and 100 (Legendary). Start a skill right after a combo's last blow lands
+  (it drops after 3 seconds without a hit, but never mid-move), warming in colour at 10, 25, 50
+  and 100. Start a skill right after a combo's last blow lands
   and it's a **LINK** for +25% damage. When a path's own gauge is full, its finisher is ready
   ("FINISHER READY" over the gauge): the Paladin's **Grand Verdict** at full Faith (rise on a
   column of light and drive a giant sword of light into the ground) and the Berserker's **Crimson
@@ -300,16 +292,14 @@ to clear it.
   Plumes, scarves, capes, sashes, and hems sway as you move, hat tips and feathers follow your
   head, and wings beat. Fine gear glints, high sets shed motes in their glow color, and a full set
   of Lv 80+ gear wears its job's signature: embers for warriors, drifting leaves for archers, runes
-  circling a mage's hat, shadow wisps behind a thief (toggle in Options: Gear effects). Starter
+  circling a mage's hat, shadow wisps behind a thief. Starter
   sets (Lv 5) fit a Novice too. **Earrings** suit every job and climb their own ladder, from
   copper studs to Genesis Stars. 11 **unique** outfit pieces (Bunny Hood, Kitty Ears, Flower Crown,
   Star Beret, Crystal Crown, Blossom Kimono, Sailor Blouse, Comfy Hoodie, Fairy Wings, Angel Wings,
   Galaxy Cape) and Lulu's everyday clothes work for anyone.
-- **Colors** — job gear and weapons come in **Dark** (+main stat), **White** (+second stat),
-  **Crimson** (+attack), **Azure** (+defense and HP), and the rarer **Gilded** (a bit of every
-  stat); earrings come in **Ruby** (STR), **Emerald** (DEX), **Sapphire** (INT), **Topaz** (LUK),
-  and **Diamond** (all). The color repaints the piece and its icon, and bonuses grow with the
-  item's level. Most drops come in a color; in shops, pick one from the swatches under an item.
+- **Colors** — dropped job gear and weapons often come in **Dark**, **White**, **Crimson**,
+  **Azure**, or the rarer **Gilded**; earrings in **Ruby**, **Emerald**, **Sapphire**, **Topaz**,
+  or **Diamond**. A color is a look only: it repaints the piece and its icon, never its stats.
 - **Cash outfits** — the Cash Shop (O, or the gift button) sells outfit pieces that cover the
   look of your gear without touching its stats, sorted by style (All, Casual, Swim, Funny):
   everyday modern clothes, cute swimwear (frilly one-pieces, ruffle bikinis, board shorts, swim
@@ -352,8 +342,8 @@ to clear it.
   higher stats and bonus STR/DEX/INT/LUK. Rare weapons shimmer with a sweeping glint, Epic ones
   glow and have motes circling the tip, and Legendary ones pulse with an aura and shed sparkles.
   Rare loot glows with a colored beam on the ground, and bosses always
-  drop Rare or better. Drops also roll small stat differences. Every item has 7 upgrade slots for
-  charms (100% / 60% / 10%) that spend a slot whether they work or not.
+  drop Rare or better. A piece is otherwise the same wherever it comes from; polishing (below) is
+  how you make a favourite stronger.
 - **Animation and feel** — the hero is a layered rig drawn at 2x detail with jointed limbs (hips,
   knees, ankles, elbows) and shaded automatically (the back third of each part and the back limbs
   in a lavender shadow, bangs casting onto the face): a 24-frame walk cycle driven by distance,
@@ -381,10 +371,9 @@ to clear it.
   Novice's Auto stats follow the weapon in hand (STR, INT, DEX or LUK).
 - **Mochi pets** — adopt a Mochi egg for 3,000 Cash in the Mochi window (P, or from the Cash
   Shop). It follows you, fetches loot in range, drinks your best tonic when HP or MP drops below
-  the marks you set, and recasts your buffs when they wear off. Treats from Pip and Marlo fill its
-  tummy and grow it: a baby becomes a Sky (reaches ledges), Swift (wider range), Strong (faster
-  pickup) or Spirit (reacts sooner) Mochi, each with its own outfit, idles and cheer. Left hungry
-  it turns sulky (Moon) and stops helping until fed; it cheers when you level up.
+  the marks you set. Treats from Pip and Marlo grow it: a baby becomes a Sky (reaches ledges),
+  Swift (wider range), Strong (faster pickup) or Spirit (reacts sooner) Mochi, each with its own
+  outfit, idles and cheer. It never gets hungry or sulks, and it cheers when you level up.
 - **Monsters and maps** — 25 chibi monsters and the Crystal King boss across 18 maps (four towns, two
   meadows, a canyon, woods, ruins, a crystal cave, a sky garden, and the throne room, plus the far
   regions for levels 19-50: the Whispering Glade of wind chimes past the woods, the Fox Shrine Path
@@ -423,8 +412,7 @@ to clear it.
   when you enter a map round it out. NPCs talk in a visual-novel box: they stand large at the left
   with a name ribbon in their role's color, and their words type out (click to skip).
 - **Parties** — right-click another player for a menu (view profile, invite to party, browse
-  their shop). Players around your level (up to 5 above) or below usually say yes; anyone higher
-  turns you down, as do shopkeepers busy selling. A party holds you and up to five others. Members
+  their shop). Anyone you invite joins. A party holds you and up to five others. Members
   come along from map to map. In town they hang around near you; out in the field each one goes
   off hunting **on their own**, anywhere on the map: they pick a monster no partymate is on, find a
   way to it over the ledges (jumping up, dropping through, walking off edges, climbing ropes), fight
@@ -432,14 +420,12 @@ to clear it.
   it, and give up on a monster they can't reach. They show on the minimap as dots in their
   playstyle's color, and chat in party chat. Their kills give you 60% of the EXP, count for your
   quests, and drop loot for you; your own kills get +10% EXP per member. They level up with you.
-  Each member has their own playstyle, picked from their job and level, plus small quirks (how
+  Each member has their own playstyle, picked from their job, plus small quirks (how
   fast they react and walk, their attack rhythm and idle habits):
   - **Rusher**: dives into packs, fast swings and big spin moves.
   - **Guardian**: steady and tough, picks off monsters closer to you.
   - **Sniper**: fights from range, shooting up and down ledges.
   - **Healer**: heals you from anywhere on the map when your HP drops.
-  - **Rookie**: gets distracted and wanders off to look at things.
-  - **Show-off**: flashy specials, flips, and taunts.
 
   Members fight with their job's own combos, skills and finisher (see Other players), monsters
   fight them back, and one who falls under a tombstone walks back in to you through a portal a
@@ -447,8 +433,8 @@ to clear it.
   monster and keep it and hold a good spot instead of chasing every step,
   so their movement stays calm. A party panel under the minimap
   shows everyone with their playstyle (click for a profile,
-  right-click to remove someone); Leave, or right-clicking yourself, leaves the party, and members
-  head off on their own (or log off after a long session).
+  right-click to remove someone); members stay as long as you keep them. Leave, or right-clicking
+  yourself, leaves the party, and members head off on their own.
 - **Dungeons** — **Rootwood Hollow** (Lv 10+), the first dungeon, lies under the old tree off
   Windy Canyon. Talk to Bramble, the Hollow Warden, at the Hollow Gate (or walk into the door) to
   form a group of four: **1 Tank, 1 Healer, 2 DPS**. Your job sets your role: **warriors tank (Berserkers deal damage),
@@ -694,9 +680,6 @@ to clear it.
   from above, cool shade below, and a soft vignette. Spells, sparks, and particles glow (bloom),
   the far backdrop is softly out of focus behind the play area, shadows are soft, crits glow, and
   new maps fade in. On a slow device it drops the glow, then the lighting, by itself.
-- **Filters** — Options: Display: Filter. **Vivid** (the default) makes colors richer, **Dreamy**
-  adds a soft-focus glow, **Retro** adds scanlines and darker screen corners like an old TV, and
-  **Natural** leaves the colors as drawn.
 - **Sound** — "real plus modern": recorded instruments (flute, strings, harp, guitar, horns,
   piano, choir, marimba, celesta and more, from the FluidR3 soundfont) and recorded effects (from
   Kenney's packs), mixed with synths, drums and effects made in code (credits in
@@ -730,8 +713,8 @@ to clear it.
   the end of a question. Sounds pan to where they happen; a limiter keeps busy fights clean. Sound
   starts on your first key press or click. Options: Sound has volume for everything, music, and
   effects.
-- **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: filter, HD graphics, particles
-  (full, reduced, or off), job auras, weapon effects, and gear effects. Interface: minimap, quest
+- **Options** — Esc (or the gear button) opens Options. Sound: volume, music, effects. Display: HD graphics, particles
+  (full, reduced, or off), job auras, and weapon effects. Interface: minimap, quest
   tracker, message log, map banner, monster HP bars, and an FPS counter. Gameplay: screen shake,
   hit-stop, damage numbers, auto-loot, click-to-talk NPCs, townsfolk and players, and chat bubbles. A Controls page lists every key, and
   the Character page changes character or returns to the title (saving first). Settings are saved in
@@ -770,17 +753,15 @@ to clear it.
   twirls, and Mira waves (they turn to face you when you come over). Villagers stroll the streets.
 - **Other players** — the server is full of generated players, each a real character: a level
   (pros at a low rate, Lv 56+ with endgame gear and a gold name tag), a job that fits it, a stat
-  build (pure, standard, or hybrid), rolled gear, a title, and sometimes a guild. How many are on
-  follows the real clock: about 13 late at night, 26 in the evening, a few more at the weekend
-  (never more than two under; someone logging out is soon replaced), spread over the towns by level
+  build (pure, standard, or hybrid), rolled gear, a title, and sometimes a guild. About 26 are on
+  at any hour (never more than two under; someone logging out is soon replaced), spread over the
+  towns by level
   (beginners in Sprout Village, veterans and pros in Moonleaf Grove, at most 8 in one
   town besides special visitors). They log in, wander, travel between towns through the portals,
-  and log out; a stranger's name never comes back. Click any player, or yourself, for a profile
-  with their look, gear, full stats, build, guild and shop. The systems behind them live in `src/world/` (see Layout).
-  - **In town** they fish off the harbor pier, cook at the stove, stop to chat with each other in
-    little conversations, emote, and open shops on a rug with their loot and gear (a **Haggle**
-    button in the shop asks for a better price: friends and regulars give one, strangers deal,
-    counter, or take offence at a lowball). Now and then one walks over to say hi to you by name.
+  and log out. Click any player, or yourself, for a profile with their look, gear, full stats,
+  build and guild. The systems behind them live in `src/world/` (see Layout).
+  - **In town** they stop to chat with each other in little conversations and emote. Now and then
+    one walks over to say hi to you by name.
   - **Out hunting** a few of them share the field you're on, 2 to 5 by the map's size. They fight
     like you do: their job's own combo pool (a fresh string each time, steps carrying them forward
     or back), their job's skills between strings, and their path's finisher once their gauge fills.
@@ -788,9 +769,7 @@ to clear it.
     talismans, the blessings); bots have no troupe, so an Onmyoji's finisher is a talisman storm.
     They leave the monsters by you alone and their kills give you nothing. Monsters they hit fight
     back: they drink potions when low, and with none left they fall, a tombstone drops on them, and
-    they head back to town (to log in again later). They also fluff it now and then (a swing the
-    wrong way, a dash off the ledge), go afk while a monster nibbles at them, and one in a while
-    is a **kill stealer** who takes the monster you're on and gets called out for it.
+    they head back to town (to log in again later).
   - **Help.** Out in the field with your HP under 30%, a player nearby rushes over, takes on the
     monsters around you, and heals you or tosses you a potion; say "ty" (or right-click: Say
     thanks) and they may offer to be friends. Now and then a player in town asks for help with a
@@ -799,39 +778,25 @@ to clear it.
   - **Friends.** Right-click a player (**Add friend**): friends are saved with your character as they
     looked, log in now and then (waving if they're by you), ask you along to hunt, and come to you
     when invited from the Friends tab (N). Their name tags are sky blue.
-  - **Regulars.** Anyone you party with, who helps you, or who spends a while around you is
-    remembered. Next time you play a few are on, grown by how long it's been (levels, a job at 10
-    and 30), and they come over with their news ("remember me? i was lv 8 when we met").
   - **Raids.** A boss on your map (a queen back for a rematch, the Crystal King on his throne) draws
     3 or 4 players, a friend among them when one's online. They call out her moves as she shows
-    them, mostly dodge (rookies less), and take the hit when they don't. Once she's down everyone
-    poses for a **group photo**, kept in the Collection (B, Photos).
+    them, mostly dodge, and take the hit when they don't. Once she's down everyone cheers.
   - **Party combos.** Let your gauge finisher loose and the party members fighting by you join in
     with theirs, a beat apart and harder for it.
   - **Dungeon groups.** Players shout for the role their group is missing ("LF healer for Rootwood
     Hollow"); when it's yours and you're on your own, right-click them (**Join their group**) and
     they take you in.
-  - **Town life.** Duels in town with a crowd cheering; once in a long while a **legend** (Lv 70,
-    a LEGEND badge) logs in and fans follow them about; guilds recruit in chat, a recruiter may ask
-    you to join (right-click: **Join**, and your guild shows under your name; leave from your own
-    menu), guilds hold meetups, and someone storms out now and then; someone goes afk right on a
-    portal; photographers pose at a landmark and ask you into the shot (stand there and the photo is
-    yours too); music jams with notes floating up and people dancing; cosplay as a townsperson or
-    in a queen's colours; snowball fights in the snow (rain and snow come and go on each map).
-  - **Server events.** GM Momo runs Double EXP for five minutes, a Mochi Rain, or Hide and Seek
-    (hidden on a nearby map: find them for gold, Elixirs and Cash). Festivals follow the real
+  - **Town life.** Duels in town with a crowd cheering; rain and snow come and go on each map.
+  - **Server events.** GM Momo runs Double EXP for five minutes. Festivals follow the real
     calendar (Spooky Night in October, the Snow Festival in December, and more) with festival
-    colours, dancing and fireworks. A wandering merchant sets up for a few minutes with odd wares.
-    Players beat on the training dummies in Ember Crag and brag about their damage. A host calls a
-    **fashion show** (right-click them to enter; the best dressed wins gold). Two players get
-    **married** in town, with vows, hearts, confetti and a bouquet (sometimes to you).
+    colours, dancing and fireworks. A wandering merchant sets up shop for a few minutes with odd
+    wares.
   - **Chat.** They talk about what's real for them: their own weapon, job, title and guild, the map
-    they're on and its monsters and drops, where they're headed next, the weather, and the raid,
-    wedding or GM event that just happened; a line that doesn't fit the speaker isn't used. They
+    they're on and its monsters and drops, where they're headed next, the weather, and the raid
+    or GM event that just happened; a line that doesn't fit the speaker isn't used. They
     talk back too: hi when you say hi, answers from the game's own data ("where is Clover Hills?",
     "where do Jackalopes spawn?", "what level is Mossy Woods?"), cheers when you level up or land a
-    good fish, and your emotes returned. A phrase sometimes catches on as a meme for a while. All of
-    it goes through one gate (`src/world/chatlog.js`): no line (or one differing only by names and
+    good fish, and your emotes returned. All of it goes through one gate (`src/world/chatlog.js`): no line (or one differing only by names and
     numbers) comes back for ten minutes, nobody speaks of their own accord more than once every 30
     seconds, and the log takes a line at most every 4 seconds and 7 a minute (the rest show only
     over their heads); answers to you and party chat skip the waits.
@@ -857,12 +822,10 @@ to clear it.
   in Ember Crag polishes any worn piece up to +10 for gold: each step adds attack, magic, or
   defense and HP, gets less likely to take as it climbs, and a miss only costs the gold.
 - **Collection (B)** — the Monster Book fills a card for every monster you defeat (or help defeat):
-  each card adds max HP, and a card mastered (100 defeats, 5 for a boss) adds a point to every
-  stat. 23 achievements (levels, hunting, the book, each queen, the story, a full set, a +10
+  a card is mastered at 100 defeats (5 for a boss). Cards are for collecting, with no hidden stat
+  bonus. 26 achievements (levels, hunting, the book, each queen, the story, a full set, a +10
   polish, quests and dailies, playing online, adopting a Mochi, a fortune) each unlock a title to
-  wear in gold under your name, which friends online see too. **Photos** keeps your last 24 group
-  photos: after a raid (the boss behind everyone who fought it) and from a photographer's shot at a
-  landmark.
+  wear in gold under your name, which friends online see too.
 - **Fishing** — buy a Fishing Rod from Pip or Marlo, then find a fish sign by the water: the tide
   pool on Dawnlight Beach, the pond in Clover Hills, the end of Pastel Harbor's pier, the pond in the
   Whispering Glade, the warm pools of Serpent Springs, an ice hole on Frozen Peak, and a pool of
@@ -897,11 +860,10 @@ src/data/               content: jobs, skills, items, monsters, maps, NPCs, ques
 src/world/              simulation: physics, monsters, loot, combat, the world update; and the
                         other players: bots.js (population, towns, hunters), party.js (parties and
                         how bots fight), chatter.js (what they say), chatlog.js (the chat gate),
-                        buddies.js (friends, help), raids.js (raids, party combos, photos),
-                        drama.js (duels, legends, guilds, afk, the clock), events.js (GM events,
-                        festivals, the merchant, dummies, fashion shows, memes,
-                        weddings), lives.js (regulars, help requests, weather, photographers, jams,
-                        cosplay), social.js (haggling, lucky drops, dungeon groups, the hall of fame)
+                        buddies.js (friends, help), raids.js (raids, party combos),
+                        drama.js (duels, the clock), events.js (Double EXP, festivals, the
+                        merchant), lives.js (help requests, weather), social.js (lucky drops,
+                        dungeon groups)
 src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects, towns
                         and elements, animator,
                         particles,
