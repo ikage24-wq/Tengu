@@ -222,14 +222,12 @@ test('every town connects to every other town by road', () => {
   assert.deepEqual(new Set(TOWNS.map((t) => MAPS[t].job)), new Set(['archer', 'thief', 'warrior', 'mage']));
 });
 
-test('fast travel flies between towns for gold, and only from a town', () => {
+test('fast travel flies between towns for free, and only from a town', () => {
   const w = newWorld();
-  w.char.gold = 1000;
-  const cost = travelCost('sprout', 'grove');
-  assert.ok(cost > 0);
+  w.char.gold = 0;
+  assert.equal(travelCost('sprout', 'grove'), 0);
   assert.equal(travelTo(w, 'grove'), null);
   assert.equal(w.map.id, 'grove');
-  assert.equal(w.char.gold, 1000 - cost);
   loadMap(w, 'ruins', 'west');
   assert.ok(travelTo(w, 'sprout'), 'no flights from the field');
   assert.equal(w.map.id, 'ruins');

@@ -152,18 +152,15 @@ export function hops(from, to) {
   return Infinity;
 }
 
-// Flying between towns costs a little gold per road on the way.
-export function travelCost(fromId, townId) {
-  return fromId === townId ? 0 : 20 * Math.min(8, hops(fromId, townId));
+// Flying between towns is free.
+export function travelCost() {
+  return 0;
 }
 
 // Travel is only offered from a town. Returns a reason string when it can't happen.
 export function travelTo(world, townId) {
   if (!world.map.isTown) return 'Fast travel leaves from towns.';
   if (world.map.id === townId) return 'You are already here.';
-  const cost = travelCost(world.map.id, townId);
-  if (world.char.gold < cost) return `You need ${cost} gold.`;
-  world.char.gold -= cost;
   loadMap(world, townId, 'start');
   world.log(`You fly to ${getMap(townId).name}!`, '#bff0dc');
   return null;
@@ -351,7 +348,6 @@ const BLOCKER_TEXT = {
   busy: null,
   weapon: "That skill needs a different weapon.",
   noone: 'No fallen party member nearby.',
-  stars: 'You need throwing stars! Shops sell them.',
   rage: 'Not enough Rage. Land some blows first!',
   'gauge:valor': 'A finisher needs full Valor. Keep fighting, the more at once the better!',
   'gauge:momentum': 'A finisher needs full Momentum. Land your shots and keep out of harm!',

@@ -8,7 +8,7 @@
 import { MAPS, TOWNS, getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS } from '../data/jobs.js';
-import { travelTo, travelCost } from '../world/world.js';
+import { travelTo } from '../world/world.js';
 import { levelRange, routeBetween, setRoute } from '../world/routes.js';
 import { COLORS, windowFrame, text, box, button, roundRect, font, tooltip } from './kit.js';
 import { online } from '../net/online.js';
@@ -454,10 +454,9 @@ export function worldMapWindow(ui, state, world) {
   text(ctx, mobs.length ? `${mobs.join(', ')}  ·  ${far}` : far, win.x + 12, by + 21, { size: 7, color: COLORS.muted });
   let bx = win.x + W - 12;
   if (pick.isTown && TOWNS.includes(pick.id) && pick.id !== here) {
-    const cost = travelCost(here, pick.id);
-    const can = world.map.isTown && world.char.gold >= cost;
+    const can = world.map.isTown;
     bx -= 76;
-    if (button(ui, bx, by + 4, 74, 16, world.map.isTown ? `Fly ${cost}g` : 'Fly (from town)', { primary: true, enabled: can, size: 7.5 })) {
+    if (button(ui, bx, by + 4, 74, 16, world.map.isTown ? 'Fly' : 'Fly (from town)', { primary: true, enabled: can, size: 7.5 })) {
       const reason = travelTo(world, pick.id);
       if (reason) world.log(reason, '#ffb3c6');
       else {

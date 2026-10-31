@@ -47,6 +47,7 @@ test('hit chance is a probability and drops against stronger monsters', () => {
   const hard = hitChance(40, 10, { level: 30, eva: 40 });
   assert.ok(easy >= 0 && easy <= 1 && hard >= 0 && hard <= 1);
   assert.ok(easy > hard);
+  assert.equal(hitChance(10, 10, { level: 15, eva: 99 }), 1, 'up to five levels above you is never missed');
   assert.equal(levelGapFactor(10, 5), 1);
   assert.ok(levelGapFactor(10, 15) < 1);
 });
@@ -55,7 +56,7 @@ test('rollHit respects defense and reports crits', () => {
   const s = { critRate: 1, critDamage: 0 };
   const hit = rollHit({ min: 100, max: 100 }, s, { level: 1, def: 0 }, 1, () => 0.5);
   assert.equal(hit.crit, true);
-  assert.equal(hit.damage, 120);
+  assert.equal(hit.damage, 150, 'a crit deals +50%');
   const armored = rollHit({ min: 100, max: 100 }, { critRate: -1, critDamage: 0 }, { level: 1, def: 100 }, 1, () => 0.5);
   assert.equal(armored.damage, 50);
 });

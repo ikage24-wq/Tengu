@@ -8,7 +8,9 @@ import { jobChain, JOBS } from '../data/jobs.js';
 import { thrownStars } from './items.js';
 
 const FIST_WATK = 6; // bare hands still do a little damage
-const BASE_MASTERY = 0.1;
+// How close a weak hit comes to a strong one (the damage spread): high, so hits land within about
+// a fifth of each other instead of swinging wildly.
+const BASE_MASTERY = 0.6;
 
 const ZERO = () => ({
   str: 0, dex: 0, int: 0, luk: 0, watk: 0, matk: 0, wdef: 0, mdef: 0, acc: 0, eva: 0,

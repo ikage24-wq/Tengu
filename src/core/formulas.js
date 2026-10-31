@@ -19,7 +19,7 @@ export const WEAPON_TYPES = {
 };
 
 export const BASE_CRIT_RATE = 0.05;
-export const BASE_CRIT_DAMAGE = 0.2; // a crit deals +20%
+export const BASE_CRIT_DAMAGE = 0.5; // a crit deals +50%
 export const DAMAGE_CAP = 99999;
 
 // Weapon (physical) damage range for a skill of `skillPct` percent (100 = a basic attack).
@@ -82,8 +82,11 @@ export function avoid(stats) {
   return Math.floor(stats.luk / 3) + Math.floor(stats.dex / 6) + 5 + stats.eva;
 }
 
-// Chance (0-1) that the player's attack lands on `mob`. Higher-level monsters are harder to hit.
+// Chance (0-1) that the player's attack lands on `mob`. Anything up to MISS_GAP levels above you
+// is always hit; past that, higher-level monsters get harder to hit.
+export const MISS_GAP = 5;
 export function hitChance(acc, playerLevel, mob) {
+  if ((mob.level ?? 0) <= playerLevel + MISS_GAP) return 1;
   const gap = Math.max(0, mob.level - playerLevel);
   const a = (acc * 100) / (10 * gap + 255);
   const eva = mob.eva ?? 0;
