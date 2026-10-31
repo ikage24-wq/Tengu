@@ -3723,8 +3723,8 @@
   // finisher a giant fox painted in ink in one sweep of the brush (Okami's sumi-e brush; see
   // research/fx.md). The Kitsune is fox fire: blue flame with a white core and gold sparks, a
   // flame tail for each tail of her gauge, and a giant fox of blue fire with nine tails.
-  // Ink: deep indigo, never black (the player asked for nothing near-black in the effects).
-  const INKR = ramp([[0, '#2a2468'], [0.45, '#463c98'], [0.8, '#7268c4'], [1, '#aaa2e4']]);
+  // Ink: black sumi ink (the player's pick).
+  const INKR = ramp([[0, '#07050b'], [0.45, '#241c2c'], [0.8, '#4a3e52'], [1, '#7a6a80']]);
   const SEAL = ['#ffffff', '#ffd6c8', '#ff6a4e', '#c81e28'];
   const FIRE = ['#ffffff', '#d8f6ff', '#5cb4ff', '#1e4ad6'];
   const FOXR = ramp([[0, '#0a1670'], [0.25, '#1838c8'], [0.5, '#2f7cff'], [0.72, '#66c4ff'], [0.9, '#d4f4ff'], [1, '#ffffff']]);
@@ -4764,7 +4764,7 @@
     };
   }
   {
-    const INK5 = ['#ffffff', '#e8e4f6', '#7268c4', '#3c3488', '#2a2468'];
+    const INK5 = ['#ffffff', '#e8e4ee', '#7a6a80', '#2a2230', '#0e0a12'];
     const SEAL5 = ['#ffffff', '#ffd6c8', '#ff6a4e', '#c81e28', '#7a0a1a'];
     const FOX5 = ['#ffffff', '#d8f6ff', '#5cb4ff', '#1e4ad6', '#1a2a8a'];
     const GOLD5 = ['#ffffff', '#fff3c4', '#ffd36a', '#e09a2a', '#9a5a1a'];
