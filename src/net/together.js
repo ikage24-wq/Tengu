@@ -375,8 +375,8 @@ function onZones(world, msg) {
 
 export const togetherApi = {
   // A catch: friends in the room hear about it.
-  caught(world, fish, size) {
-    send({ t: 'catch', fish: fish.id, name: fish.name, rarity: fish.rarity, size });
+  caught(world, fish) {
+    send({ t: 'catch', fish: fish.id, name: fish.name, rarity: fish.rarity });
   },
   zones(world, zones, callout) {
     shareZones(world, zones, callout);
@@ -388,7 +388,7 @@ export function handleTogether(world, msg, g) {
     case 'trade':
       return onTrade(world, msg, g);
     case 'catch':
-      if (othersHere(world).includes(g) || msg.rarity >= 3) world.log(`${g.name} caught a ${msg.name} (${msg.size} cm)!`, msg.rarity >= 3 ? '#ffe36b' : '#bff0dc');
+      if (othersHere(world).includes(g) || msg.rarity >= 3) world.log(`${g.name} caught a ${msg.name}!`, msg.rarity >= 3 ? '#ffe36b' : '#bff0dc');
       return;
     case 'zones':
       return onZones(world, msg);

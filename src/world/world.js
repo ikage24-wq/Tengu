@@ -739,7 +739,6 @@ export function updateWorld(world, dt, input) {
     m.hp = Math.max(0, m.hp - m.poison.dmg);
     const bleed = m.poison.kind === 'bleed';
     const burn = m.poison.kind === 'burn';
-    world.numbers.push({ x: m.x + 8, y: m.y - m.def.h - 4, text: `${m.poison.dmg}`, color: bleed ? '#ff6b7a' : burn ? '#7cc4ff' : '#9be86b', t: 0, small: true });
     world.fx.push({ kind: burn ? 'foxburn' : 'poisonpuff', bleed, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 0.6, seed: Math.random() });
     if (m.hp <= 0) killMob(world, m);
   }

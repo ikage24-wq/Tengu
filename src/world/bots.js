@@ -920,7 +920,7 @@ function news(bots, world, dt) {
   const kinds = [
     () => {
       const f = pick(rare, rng);
-      return `${who.name} caught a ${f.name} (${Math.round(f.size[0] + (f.size[1] - f.size[0]) * rng())} cm)!`;
+      return `${who.name} caught a ${f.name}!`;
     },
     () => (who.level >= 20 ? `${who.name} reached level ${who.level}!` : null),
     () => (who.level >= 30 && who.char.job !== 'novice' ? `${who.name} became a ${JOBS[who.char.job].name}!` : null),

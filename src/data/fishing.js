@@ -9,19 +9,19 @@
 // the bobber floats ({ bx, by }), and what bites there (`pool`: fish id -> weight).
 
 export const FISH = [
-  { id: 'fish_minnow', name: 'Sunny Minnow', color: '#ffd66b', fin: '#ffab5a', pattern: 'plain', size: [5, 12], price: 20, rarity: 1, react: 1.2 },
-  { id: 'fish_carp', name: 'Pink Carp', color: '#ffb3cf', fin: '#ff8fb0', pattern: 'spots', size: [20, 45], price: 45, rarity: 1, react: 1.1 },
-  { id: 'fish_trout', name: 'Mint Trout', color: '#9fe0c0', fin: '#5fb88a', pattern: 'spots', size: [25, 50], price: 60, rarity: 2, react: 0.95 },
-  { id: 'fish_sardine', name: 'Silver Sardine', color: '#d6e4ff', fin: '#9fb8e8', pattern: 'stripes', size: [10, 20], price: 35, rarity: 1, react: 1.1 },
-  { id: 'fish_mackerel', name: 'Tide Mackerel', color: '#8fb8ff', fin: '#5a7ad0', pattern: 'stripes', size: [30, 55], price: 80, rarity: 2, react: 0.9 },
-  { id: 'fish_puffer', name: 'Puff-Puff', color: '#fff1c4', fin: '#ffd66b', pattern: 'spots', size: [15, 30], price: 120, rarity: 3, react: 0.75 },
-  { id: 'fish_koi', name: 'Moon Koi', color: '#ffffff', fin: '#ff8a5c', pattern: 'spots', size: [40, 80], price: 220, rarity: 3, react: 0.7 },
-  { id: 'fish_eel', name: 'Glow Eel', color: '#7fe6d6', fin: '#c9b6ff', pattern: 'stripes', size: [50, 110], price: 180, rarity: 3, react: 0.7 },
-  { id: 'fish_hotfish', name: 'Steamfin', color: '#ff9a8a', fin: '#ffd0c4', pattern: 'plain', size: [20, 40], price: 150, rarity: 2, react: 0.85 },
-  { id: 'fish_icefish', name: 'Frostfin', color: '#cfe8ff', fin: '#8fc8ff', pattern: 'stripes', size: [20, 45], price: 200, rarity: 3, react: 0.7 },
-  { id: 'fish_starfish', name: 'Wishing Starfish', color: '#ffe36b', fin: '#ff9ec0', pattern: 'star', size: [10, 25], price: 400, rarity: 4, react: 0.55 },
-  { id: 'fish_seraph', name: 'Seraph Angelfish', color: '#e6dcff', fin: '#ffe9a6', pattern: 'stripes', size: [25, 50], price: 500, rarity: 4, react: 0.55 },
-  { id: 'fish_whale', name: 'Baby Cloud Whale', color: '#f4f8ff', fin: '#b6c8ff', pattern: 'plain', size: [90, 160], price: 900, rarity: 4, react: 0.5 },
+  { id: 'fish_minnow', name: 'Sunny Minnow', color: '#ffd66b', fin: '#ffab5a', pattern: 'plain', price: 20, rarity: 1, react: 1.2 },
+  { id: 'fish_carp', name: 'Pink Carp', color: '#ffb3cf', fin: '#ff8fb0', pattern: 'spots', price: 45, rarity: 1, react: 1.1 },
+  { id: 'fish_trout', name: 'Mint Trout', color: '#9fe0c0', fin: '#5fb88a', pattern: 'spots', price: 60, rarity: 2, react: 0.95 },
+  { id: 'fish_sardine', name: 'Silver Sardine', color: '#d6e4ff', fin: '#9fb8e8', pattern: 'stripes', price: 35, rarity: 1, react: 1.1 },
+  { id: 'fish_mackerel', name: 'Tide Mackerel', color: '#8fb8ff', fin: '#5a7ad0', pattern: 'stripes', price: 80, rarity: 2, react: 0.9 },
+  { id: 'fish_puffer', name: 'Puff-Puff', color: '#fff1c4', fin: '#ffd66b', pattern: 'spots', price: 120, rarity: 3, react: 0.75 },
+  { id: 'fish_koi', name: 'Moon Koi', color: '#ffffff', fin: '#ff8a5c', pattern: 'spots', price: 220, rarity: 3, react: 0.7 },
+  { id: 'fish_eel', name: 'Glow Eel', color: '#7fe6d6', fin: '#c9b6ff', pattern: 'stripes', price: 180, rarity: 3, react: 0.7 },
+  { id: 'fish_hotfish', name: 'Steamfin', color: '#ff9a8a', fin: '#ffd0c4', pattern: 'plain', price: 150, rarity: 2, react: 0.85 },
+  { id: 'fish_icefish', name: 'Frostfin', color: '#cfe8ff', fin: '#8fc8ff', pattern: 'stripes', price: 200, rarity: 3, react: 0.7 },
+  { id: 'fish_starfish', name: 'Wishing Starfish', color: '#ffe36b', fin: '#ff9ec0', pattern: 'star', price: 400, rarity: 4, react: 0.55 },
+  { id: 'fish_seraph', name: 'Seraph Angelfish', color: '#e6dcff', fin: '#ffe9a6', pattern: 'stripes', price: 500, rarity: 4, react: 0.55 },
+  { id: 'fish_whale', name: 'Baby Cloud Whale', color: '#f4f8ff', fin: '#b6c8ff', pattern: 'plain', price: 900, rarity: 4, react: 0.5 },
 ];
 
 export const FISH_BY_ID = Object.fromEntries(FISH.map((f) => [f.id, f]));

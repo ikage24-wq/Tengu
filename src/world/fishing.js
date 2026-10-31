@@ -86,9 +86,6 @@ export function tickFishing(world, dt, held, pressed, rng = Math.random) {
 function catchFish(world, f, rng) {
   const fish = f.fish;
   const char = world.char;
-  const [lo, hi] = fish.size;
-  // Bigger ones are rarer: the size leans small.
-  const size = Math.round(lo + (hi - lo) * rng() ** 1.6);
   if (!addItem(char.inventory, fish.id, 1)) {
     world.log('Your Etc bag is full!', '#ffb3c6');
     f.phase = 'miss';
@@ -97,23 +94,20 @@ function catchFish(world, f, rng) {
   }
   f.phase = 'catch';
   f.t = 0;
-  f.size = size;
-  // The Fish page: how many, and the biggest.
+  // The Fish page: how many.
   char.fishBook ??= {};
-  const rec = (char.fishBook[fish.id] ??= { n: 0, best: 0 });
+  const rec = (char.fishBook[fish.id] ??= { n: 0 });
   const first = rec.n === 0;
   rec.n += 1;
-  const record = size > rec.best && !first;
-  rec.best = Math.max(rec.best, size);
   world.pose = { kind: 'cheer', t: 0.9, dur: 0.9, since: world.now };
   // (The players around you notice a good one: world/bots.js.)
-  world.lastCatch = { fish, size, at: world.now };
-  world.log(`You caught a ${fish.name}! ${size} cm${first ? ' (new!)' : record ? ' (new record!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
-  world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: `${fish.name} ${size}cm`, color: '#9fe8ff', t: 0, small: true });
+  world.lastCatch = { fish, at: world.now };
+  world.log(`You caught a ${fish.name}!${first ? ' (new!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
+  world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: fish.name, color: '#9fe8ff', t: 0, small: true });
   world.juice.push({ type: 'loot', x: f.spot.bx, y: f.spot.by - 10, color: fish.color });
   world.fishCaught = { fish, at: world.now };
   // Friends in your online room hear about it.
-  world.net?.caught?.(world, fish, size);
+  world.net?.caught?.(world, fish);
   // A fish's own recipe comes with your first one.
   if (first) {
     const dish = DISHES.find((d) => d.learn === fish.id);
