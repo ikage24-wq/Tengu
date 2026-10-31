@@ -395,11 +395,6 @@ to clear it.
   walk cycle and idle motion, and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
   when they chase you (hit monsters do), >< eyes when hit, and x eyes when they poof. The boss
   telegraphs a ground slam.
-- **Elite monsters** — out in the fields, a monster now and then comes back as an elite of its
-  kind (embers rising round it, a gold ★ Elite tag and an orange HP bar): six times the HP, half
-  again the attack, five times the EXP and four times the gold, and it always drops a piece of gear,
-  Rare or better. It counts as its kind for quests and the Monster Book. Friends in your room see it
-  too.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
   dagger toss, gauntlet flick). The level 30 paths get a quiet aura that fades in while idle in the

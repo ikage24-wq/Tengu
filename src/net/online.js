@@ -6,7 +6,7 @@
 // those who hit it, a party share to the rest), and each player rolls their own loot.
 
 import { openLink, newCode } from './link.js';
-import { spawnMob, hitMob, makeElite } from '../world/mobs.js';
+import { spawnMob, hitMob } from '../world/mobs.js';
 import { MOBS } from '../data/mobs.js';
 import { wornGear } from '../core/character.js';
 import { gaugeOf, inForm } from '../world/melee.js';
@@ -385,8 +385,6 @@ function sendMobs(world) {
     round(now - (m.attackAt ?? -99)), round(now - (m.gloatAt ?? -99)),
     // In a dungeon: a wind-up, a shield, a charge, the open heart.
     world.dungeon ? [round(m.windup ?? 0), m.shield ? 1 : 0, m.charging?.dir ?? 0, m.heartOpen ? 1 : 0, m.engaged ? 1 : 0] : null,
-    // An elite (world/mobs.js makeElite).
-    m.elite ? 1 : 0,
   ]);
   send({ t: 'mobs', map: world.map.id, list });
 }
@@ -537,12 +535,11 @@ function onMobs(world, msg) {
   const now = world.now;
   const next = [];
   for (const e of msg.list) {
-    const [id, mobId, sx, sy, x, y, hp, dir, state, air, flash, stagger, warn, frozen, hold, dying, aggro, attackAgo, gloatAgo, dg, elite] = e;
+    const [id, mobId, sx, sy, x, y, hp, dir, state, air, flash, stagger, warn, frozen, hold, dying, aggro, attackAgo, gloatAgo, dg] = e;
     let m = mine.get(id);
     if (!m) {
       if (!MOBS[mobId]) continue;
       m = spawnMob(world.map, { mob: mobId, x: sx, y: sy });
-      if (elite) makeElite(m);
       m.net = id;
       m.x = x;
       m.y = y;

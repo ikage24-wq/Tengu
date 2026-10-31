@@ -17,7 +17,7 @@ import { recordKill } from '../core/quests.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { createBody, stepBody, knockBack, groundAt, blockWalls } from './physics.js';
 import { startAgility, tickAgility } from './agility.js';
-import { createSpawner, tickSpawner, updateMob, hitMob, mobBox, makeElite, ELITE_CHANCE } from './mobs.js';
+import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
 import { rodGuard } from './storm.js';
@@ -789,17 +789,7 @@ export function updateWorld(world, dt, input) {
   // Monsters don't pop up right on top of you or your party.
   const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
   if (world.net) near.push(...world.net.bodies(world));
-  if (!mirrored) {
-    const born = tickSpawner(world.spawner, world.map, world.now, near, (sp) => spawnAllowed(world, sp));
-    // Out in the fields, a monster now and then comes back as an elite.
-    const field = !world.map.isTown && !world.dungeon && !world.map.trial;
-    for (const m of born) {
-      if (!field || m.def.boss || Math.random() >= ELITE_CHANCE) continue;
-      makeElite(m);
-      world.log(`★ An elite ${m.def.name} appeared! Tougher, with better loot.`, '#ffd24f');
-    }
-    world.mobs.push(...born);
-  }
+  if (!mirrored) world.mobs.push(...tickSpawner(world.spawner, world.map, world.now, near, (sp) => spawnAllowed(world, sp)));
   // The queens' moves, and their warnings going off.
   tickStory(world, dt, hurtPlayer);
   world.mobs = world.mobs.filter((m) => m.hp > 0 || m.dying < 0.5);

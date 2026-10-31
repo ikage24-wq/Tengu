@@ -42,11 +42,11 @@ export function rollLoot(def, rng = Math.random, fits = null) {
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
   }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });
-  const gearRolls = def.boss ? 3 : def.elite ? 1 + (rng() < GEAR_CHANCE ? 1 : 0) : rng() < GEAR_CHANCE ? 1 : 0;
+  const gearRolls = def.boss ? 3 : rng() < GEAR_CHANCE ? 1 : 0;
   for (let i = 0; i < gearRolls; i++) {
     const id = gearFor(def.level, rng, fits);
-    // Bosses and elites never drop plain gear.
-    const rarity = def.boss || def.elite ? Math.max(1, rollRarity(rng)) : rollRarity(rng);
+    // Bosses never drop plain gear.
+    const rarity = def.boss ? Math.max(1, rollRarity(rng)) : rollRarity(rng);
     if (id) loot.push({ kind: 'item', inst: makeEquip(id, { rng, rarity, variant: 'roll' }) });
   }
   return loot;
