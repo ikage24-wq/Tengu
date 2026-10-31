@@ -17,10 +17,10 @@
   const PAL = {
     steel: ['#ffffff', '#e4f3ff', '#9fd2ff', '#6f9cf0', '#4f5fcc'],
     holy: ['#ffffff', '#fff6d0', '#ffdc78', '#ffad62', '#d9776a'],
-    // The Berserker is demonic (the player's call): a white-hot ember core, ember orange, blood
-    // crimson, deep blood, and an ink near black with violet in it. Dark tones mostly, so the glow
-    // (which only blooms from bright parts) comes off as embers burning out of black and blood.
-    rage: ['#fff0e2', '#ff7a4e', '#e01c3c', '#7c0a34', '#1e0618'],
+    // The Berserker's rage: a white-hot ember core, ember orange, hot red, deep red, inked in deep
+    // raspberry. Bright and fiery (the player asked for no black, no gore), so it sits with the
+    // other jobs' light.
+    rage: ['#fff0e2', '#ff7a4e', '#e8344e', '#b8183c', '#8e1f48'],
     arcane: ['#ffffff', '#f1e6ff', '#cfa8ff', '#a374f0', '#6f4ac8'],
     ice: ['#ffffff', '#e2fbff', '#9ae9ff', '#5ab8ee', '#3a78c8'],
     fire: ['#ffffff', '#fff1c0', '#ffbe72', '#ff8a5c', '#cc566a'],
@@ -925,41 +925,10 @@
     };
   }
   // Demon Form's: blood red, embers. Judgment's: gold light, motes of light.
-  E.demonglow = glowOf(['rgba(255, 122, 78, 0.75)', 'rgba(224, 28, 60, 0.5)', 'rgba(124, 10, 52, 0.22)', 'rgba(124, 10, 52, 0)'], PAL.rage, 400);
+  E.demonglow = glowOf(['rgba(255, 196, 120, 0.75)', 'rgba(255, 108, 72, 0.5)', 'rgba(232, 52, 78, 0.22)', 'rgba(232, 52, 78, 0)'], PAL.rage, 400);
   E.holyglow = glowOf(['rgba(255, 255, 240, 0.8)', 'rgba(255, 220, 120, 0.55)', 'rgba(255, 173, 98, 0.22)', 'rgba(255, 173, 98, 0)'], PAL.holy, 420);
 
-  // Black smoke curling up round a raging Berserker's feet, with embers rising through it.
-  E.blacksmoke = {
-    w: 170, h: 120, n: 6, fps: 10, px: 85, py: 112, loop: true,
-    draw(ctx, i) {
-      const [core, light, , deep, ink] = PAL.rage;
-      const R = rng(41);
-      for (let j = 0; j < 8; j++) {
-        const life = ((i / 6) + j / 8) % 1;
-        const x = 30 + R() * 110 + Math.sin(life * 5 + j) * 8;
-        const y = 104 - life * 80;
-        const r = (8 + R() * 10) * (0.6 + life * 0.7);
-        ctx.globalAlpha = 1 - life * 0.75;
-        ctx.beginPath();
-        ctx.arc(x, y, r + 2.5, 0, TAU);
-        ctx.fillStyle = ink;
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, TAU);
-        ctx.fillStyle = '#2a0c22';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x - r * 0.3, y - r * 0.35, r * 0.45, 0, TAU);
-        ctx.fillStyle = deep;
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      for (let j = 0; j < 5; j++) {
-        const life = ((i / 6) + j / 5 + 0.13) % 1;
-        shard(ctx, [core, light, light, deep, ink], 40 + R() * 90, 100 - life * 95, -Math.PI / 2, 6 * (1 - life) + 2, 1.5);
-      }
-    },
-  };
+
 
   // Cracks of ember light splitting the ground round a Berserker at full Rage, pulsing.
   E.ragecracks = {
@@ -3078,9 +3047,9 @@
   const SUN = ['#ffffff', '#fff3c4', '#ffd36a', '#f0a040'];
   const FLAME = ['#fff6e0', '#ffd27a', '#ff7a3a', '#c8102e'];
   const sunRamp = ramp([[0, '#f0a040'], [0.4, '#ffd36a'], [0.75, '#fff3c4'], [1, '#ffffff']]);
-  const fireRamp = ramp([[0, '#2a040c'], [0.22, '#8a0c1e'], [0.42, '#d8281c'], [0.62, '#ff7028'], [0.82, '#ffc458'], [1, '#fff4dc']]);
+  const fireRamp = ramp([[0, '#b8183c'], [0.3, '#ea3438'], [0.55, '#ff6c34'], [0.8, '#ffc25a'], [1, '#fff6e2']]);
   // Cooling: white-hot, then yellow, orange, red, dull red.
-  const COOL = [FLAME, FLAME, ['#ffd27a', '#ff7a3a', '#e0301c', '#8a0a20'], ['#ff7a3a', '#e0301c', '#c8102e', '#5a0616'], ['#e0301c', '#c8102e', '#8a0a20', '#3a0410'], ['#c8102e', '#8a0a20', '#5a0616', '#2a0208']];
+  const COOL = [FLAME, FLAME, ['#ffd27a', '#ff7a3a', '#ea3438', '#c8204a'], ['#ff7a3a', '#ea3438', '#c8204a', '#a01c48'], ['#ea3438', '#c8204a', '#a01c48', '#8e1f48']];
   const cooled = (k) => COOL[Math.max(0, Math.min(COOL.length - 1, Math.floor(k * COOL.length)))];
 
   // The Paladin's swipes, whirls, dashes, gathering, war cry, plates, shield, sword of light, cross
@@ -3314,24 +3283,7 @@
       }
     },
   };
-  // Black smoke curling up round his feet as Rage builds: soft, churning, dark crimson-black,
-  // thinning as it rises (soft like the Stormcaller's cloud). Loops.
-  const smokeRamp = ramp([[0, '#0e0408'], [0.5, '#2a0c1a'], [1, '#5a2234']]);
-  E.blacksmoke = {
-    w: 170, h: 120, n: 6, fps: 10, px: 85, py: 112, loop: true,
-    draw(ctx, i) {
-      const T = i / 6;
-      painted(ctx, 0, 0, 170, 120, (x, y) => {
-        const up = (112 - y) / 100;
-        const n = (k) => fbm(x / 24 + k * 0.6, y / 24 + (T + k) * 2.2, 5);
-        const flow = n(0) * (1 - T) + n(-1) * T;
-        const body = 1 - Math.abs(x - 85 + (flow - 0.5) * 36 * up) / (62 - up * 18);
-        const edge = Math.min(sstep(0, 30, x), sstep(170, 140, x), sstep(0, 34, y));
-        const v = (body * 0.9 + (flow - 0.5) * 1.4 - up * 0.8) * sstep(-0.05, 0.1, up) * edge;
-        return [Math.max(0, flow - 0.35) * 1.6, sstep(0, 0.6, v) * 0.8];
-      }, smokeRamp);
-    },
-  };
+
   // Molten cracks splitting the ground round him at full Rage, glowing and pulsing (fire's light,
   // no outline). Loops.
   E.ragecracks = {
@@ -3365,25 +3317,40 @@
       }, fireRamp);
     },
   };
-  // Blood bursting from a heavy blow: dark glossy drops flung out and arcing down (no outline).
-  E.blood = asLight(E.blood, PAL.rage, { deep: 0.9, mid: 0.95 });
-  // The black sun of his Crimson Eclipse: a disc of pure black with a thin white-hot rim and a
-  // corona of real fire licking off it, churning. Loops.
+  // A heavy blow (and a monster's bleeding): a flash, then hot sparks spraying out and arcing
+  // down, cooling as they go (no blood: the player asked for none).
+  E.blood = {
+    w: 200, h: 200, n: 6, fps: 22, px: 100, py: 90,
+    draw(ctx, i) {
+      const a = [1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      if (i <= 2) bloomDisc(ctx, 100, 90, [26, 40, 30][i], [26, 40, 30][i], FLAME, 1);
+      const R = rng(29);
+      for (let j = 0; j < 12; j++) {
+        const ang = -Math.PI * (0.05 + R() * 0.9);
+        const sp = 40 + R() * 40;
+        const t = (i + 1) / 6;
+        const x = 100 + Math.cos(ang) * sp * t * 1.6;
+        const y = 90 + Math.sin(ang) * sp * t * 1.6 + t * t * 40;
+        glow(ctx, [[x, y], [x - Math.cos(ang) * 9, y - Math.sin(ang) * 9]], 1.5, cooled(t * 0.8), a);
+      }
+    },
+  };
+  // The blood moon of his Crimson Eclipse: a blazing red moon, white-hot at its heart, in a corona
+  // of real fire licking off it, churning. Loops.
   E.eclipse = {
     w: 260, h: 260, n: 6, fps: 12, px: 130, py: 130, loop: true,
     draw(ctx, i) {
       const T = i / 6;
       painted(ctx, 0, 0, 260, 260, (x, y) => {
         const d = Math.hypot(x - 130, y - 130);
-        if (d < 60) return [0, 1];
+        if (d < 60) return [0.62 + 0.38 * (1 - d / 60) ** 2, 1];
         const ang = Math.atan2(y - 130, x - 130);
         const n = (k) => fbm(Math.cos(ang) * 3 + 5, Math.sin(ang) * 3 + (d / 30) - (T + k) * 3, 5);
         const flick = n(0) * (1 - T) + n(-1) * T;
         const v = 1 - (d - 60) / (14 + flick * 70);
         if (v <= 0) return [0, 0];
-        return [v * 1.2 + (flick - 0.5) * 0.4, sstep(0, 0.3, v)];
-      }, (v) => (v <= 0.01 ? rgb('#060104') : fireRamp(v)));
-      strokePts(ctx, Array.from({ length: 49 }, (_, k) => [130 + Math.cos((k / 48) * TAU) * 60, 130 + Math.sin((k / 48) * TAU) * 60]), 3, '#fff4dc', 1);
+        return [0.2 + v * 0.9 + (flick - 0.5) * 0.3, sstep(0, 0.3, v)];
+      }, fireRamp);
     },
   };
 

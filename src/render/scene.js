@@ -478,7 +478,7 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
 
 // The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).
 const FORM_LOOKS = {
-  rage: { glow: 'celdemonglow', shadow: '#8a0a24' },
+  rage: { glow: 'celdemonglow', shadow: '#e8344e' },
   holy: { glow: 'celholyglow', shadow: null },
 };
 

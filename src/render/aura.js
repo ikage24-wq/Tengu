@@ -153,7 +153,6 @@ function rageAura(ctx, x, y, t, s, k, layer) {
       fxSprite(ctx, 'celragecracks', x, y, { t, scale: s * 0.9, sy: 0.6, alpha: 0.95 });
     }
     if (k > 0.1) fxSprite(ctx, 'celembers', x, y, { t, scale: s * (0.4 + 0.3 * k), alpha: Math.min(1, (k - 0.1) * 2) });
-    if (k > 0.15) fxSprite(ctx, 'celblacksmoke', x, y + 2 * s, { t, scale: s * (0.5 + 0.35 * k), alpha: Math.min(0.9, (k - 0.15) * 2) });
     if (k >= 1 && heartbeat(t) < 1) fxSprite(ctx, 'celshockred', x, y, { p: heartbeat(t), scale: s * 0.9, sy: 0.32 });
     if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.62 * flicker });
     return;
