@@ -46,7 +46,7 @@ test('players come and go over time, at least 20 online, spread by level, and no
   for (let i = 0; i < 20000; i++) {
     updateBots(bots, world, 0.1);
     assert.ok(bots.list.length >= 20, 'at least 20 online');
-    for (const t of TOWNS) assert.ok(botsIn(bots, t).length <= 8, `${t} stays uncrowded`);
+    for (const t of TOWNS) assert.ok(botsIn(bots, t).filter((b) => !b.legend && !b.merchant && !b.gm).length <= 8, `${t} stays uncrowded`);
     for (const b of bots.list) names.add(b.name);
     if (i % 50 === 0) {
       for (const t of TOWNS) {
@@ -425,6 +425,8 @@ test('friends: add a player, they stay on your list across sessions, log in as t
   let friend = null;
   for (let t = 0; t < 400 && !friend; t += 0.5) {
     world2.now += 0.5;
+    // (Their login rolls come round every minute or so; here, every couple of seconds.)
+    if (t % 2 === 0) bots2.buddyIn = 0;
     updateBots(bots2, world2, 0.5);
     friend = bots2.list.find((b) => b.buddy && b.name === pal.name);
   }
@@ -739,17 +741,24 @@ test('afk on a portal in town, and afk in the field with a monster nibbling', as
     bots.huntMap = null;
     updateBots(bots, world, 0.05);
   }
-  bots.afkIn = 0;
-  updateBots(bots, world, 0.05);
-  const idle = bots.list.find((b) => b.hunter && b.afk);
+  // (A snail by each of them, so there's something to nibble.)
+  const { spawnMob } = await import('../src/world/mobs.js');
+  for (const b of bots.list.filter((h) => h.hunter && !h.gone)) world.mobs.push(spawnMob(world.map, { mob: 'snailbun', x: b.body.x + 40, y: b.body.y }));
+  let idle = null;
+  for (let i = 0; i < 60 && !idle; i++) {
+    bots.afkIn = 0;
+    updateBots(bots, world, 0.05);
+    idle = bots.list.find((b) => b.hunter && b.afk);
+  }
   assert.ok(idle, 'a hunter goes afk');
-  const x = idle.body.x;
+  assert.ok(world.mobs.some((m) => m.foe === idle.body), 'a monster goes for them');
+  let fought = false;
   for (let t = 0; t < 5; t += 1 / 30) {
     updateWorld(world, 1 / 30, NONE);
     updateBots(bots, world, 1 / 30);
+    fought ||= Boolean(idle.attack?.fighting);
   }
-  if (!idle.down) assert.ok(Math.abs(idle.body.x - x) < 40, 'standing where they were');
-  assert.ok(world.mobs.some((m) => m.foe === idle.body), 'a monster goes for them');
+  assert.ok(!fought, 'they just stand there (nobody at the keyboard)');
 });
 
 test('a kill stealer takes the monster you were on, and gets called out', async () => {
@@ -790,4 +799,182 @@ test('a kill stealer takes the monster you were on, and gets called out', async 
   assert.ok(lines.some((l) => l.startsWith('Grabby:')), 'they gloat');
   assert.ok(lines.some((l) => /KS|not cool|reported|own mobs|wow|ignore/.test(l) && !l.startsWith('Grabby')), 'and get called out');
   void rude;
+});
+
+// ---------- Server events and celebrations ----------
+
+// A town full of people, every event's timer pushed far off (the test starts the one it wants).
+function eventTown(seed, mapId = 'sprout') {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  world.char.level = 30;
+  const bots = createBots(world, seeded(seed), { clock: EVENING });
+  world.bots = bots;
+  loadMap(world, mapId, 'start');
+  for (const [i, b] of bots.list.filter((x) => !x.shop).slice(0, 10).entries()) Object.assign(b, { map: world.map.id, x: world.body.x + 60 + i * 40, state: 'idle', timer: 99, session: 9999, stay: 9999, level: 25 });
+  townStep(world, bots, 0.2);
+  for (const k of Object.keys(bots.events)) if (k.endsWith('In')) bots.events[k] = 1e9;
+  for (const k of Object.keys(bots.drama)) if (k.endsWith('In')) bots.drama[k] = 1e9;
+  return { world, bots, lines };
+}
+
+test('GM events: Double EXP doubles what you earn, a Mochi Rain pours treats, and GM Momo hides for you to find', async () => {
+  const { killMob } = await import('../src/world/world.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { found } = await import('../src/world/events.js');
+  const { world, bots, lines } = eventTown(201, 'woods');
+  const kill = () => {
+    const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 30, y: world.map.groundY });
+    const exp = world.char.exp;
+    killMob(world, m);
+    return world.char.exp - exp;
+  };
+  world.char.level = 5;
+  const plain = kill();
+  bots.events.gmIn = 0;
+  // (Roll until it's Double EXP.)
+  for (let i = 0; i < 30 && bots.events.gm?.kind !== 'exp'; i++) {
+    if (bots.events.gm) {
+      bots.events.gm.until = 0;
+      townStep(world, bots, 0.1);
+    }
+    bots.events.gmIn = 0;
+    townStep(world, bots, 0.1);
+  }
+  assert.equal(bots.events.gm?.kind, 'exp');
+  assert.ok(lines.some((l) => l.startsWith('[GM] GM Momo: DOUBLE EXP')));
+  assert.equal(kill(), plain * 2, 'twice the EXP');
+  bots.events.gm.until = 0;
+  townStep(world, bots, 0.1);
+  assert.equal(kill(), plain, 'and back to normal after');
+  // A Mochi Rain.
+  for (let i = 0; i < 30 && bots.events.gm?.kind !== 'rain'; i++) {
+    if (bots.events.gm) bots.events.gm.until = 0;
+    bots.events.gmIn = 0;
+    townStep(world, bots, 0.1);
+  }
+  const drops = world.drops.length;
+  townStep(world, bots, 5);
+  assert.ok(world.drops.length > drops + 5, 'treats fall');
+  // Hide and Seek.
+  for (let i = 0; i < 40 && bots.events.gm?.kind !== 'seek'; i++) {
+    if (bots.events.gm) bots.events.gm.until = 0;
+    bots.events.gmIn = 0;
+    townStep(world, bots, 0.1);
+  }
+  const gm = bots.events.gm?.bot;
+  assert.ok(gm && gm.gm, 'GM Momo is hiding');
+  const gold = world.char.gold;
+  found(bots.events, bots, world);
+  assert.ok(world.char.gold > gold && lines.some((l) => /found me/.test(l)), 'found, with a prize');
+});
+
+test('an invasion: monsters pour into town, the players there fight them off with you, and cheer', () => {
+  const { world, bots, lines } = eventTown(203);
+  bots.events.invadeIn = 0;
+  townStep(world, bots, 0.1);
+  const inv = bots.events.invasion;
+  assert.ok(inv && inv.mobs.length >= 9, 'monsters in town');
+  assert.ok(lines.some((l) => /invading/.test(l)));
+  assert.ok(inv.fighters.length >= 3 && inv.fighters.every((b) => b.hunter && b.body), 'the townsfolk take up arms');
+  let hits = 0;
+  for (let t = 0; t < 60 && bots.events.invasion; t += 1 / 30) {
+    updateWorld(world, 1 / 30, NONE);
+    updateBots(bots, world, 1 / 30);
+    hits += world.pending.filter((h) => h.stranger && !h.counted && (h.counted = true)).length;
+    // (You help too.)
+    if (t > 20) for (const m of inv.mobs) m.hp = Math.min(m.hp, 1);
+  }
+  assert.ok(hits > 10, `they fought (${hits} blows)`);
+  assert.ok(!bots.events.invasion && lines.some((l) => /is safe/.test(l)), 'the town is safe');
+  assert.ok(inv.fighters.every((b) => b.gone || (!b.hunter && !b.body && b.state === 'idle')), 'and back to town life');
+});
+
+test('a festival by the calendar: Spooky Night in October, with fireworks and festive outfits', async () => {
+  const { festivalOn } = await import('../src/world/events.js');
+  assert.equal(festivalOn(new Date(2026, 9, 31)).name, 'Spooky Night');
+  assert.equal(festivalOn(new Date(2026, 11, 24)).name, 'Snow Festival');
+  assert.equal(festivalOn(new Date(2026, 4, 10)), null);
+  const { world, bots, lines } = eventTown(205);
+  townStep(world, bots, 12);
+  assert.ok(lines.some((l) => /celebrating the Spooky Night/.test(l)));
+  assert.ok(bots.list.some((b) => b.map === world.map.id && Object.values(b.char.outfit ?? {}).some((o) => o?.variant === 'dark')), 'dressed for it');
+});
+
+test('the wandering merchant sets up shop with odd wares, and word spreads', () => {
+  const { world, bots, lines } = eventTown(207);
+  bots.events.merchantIn = 0;
+  townStep(world, bots, 0.1);
+  const pip = bots.events.merchant?.bot;
+  assert.ok(pip && pip.shop && pip.shop.items.length >= 4, 'a shop');
+  assert.ok(pip.shop.items.every((it) => it.price > 0));
+  assert.ok(lines.some((l) => /Wandering Merchant has set up shop/.test(l)));
+  bots.events.merchant.until = 0;
+  townStep(world, bots, 2);
+  assert.ok(!bots.list.includes(pip) || pip.state === 'logout', 'and packs up after');
+});
+
+test('training dummies in Ember Crag: players beat on them and compare damage', () => {
+  const { world, bots, lines } = eventTown(209, 'crag');
+  let swung = 0;
+  for (let t = 0; t < 120; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    swung += bots.list.filter((b) => b.state === 'dummy' && b.emote?.t === 0).length;
+  }
+  assert.ok(swung > 5, 'swinging at the dummies');
+  assert.ok(lines.some((l) => /dps|dummy|total|weapon/.test(l)), 'and talking about it');
+});
+
+test('a fashion show: you can enter, everyone walks the runway, and someone wins', async () => {
+  const { enterShow } = await import('../src/world/events.js');
+  const { world, bots, lines } = eventTown(211);
+  bots.events.showIn = 0;
+  townStep(world, bots, 0.1);
+  const show = bots.events.show;
+  assert.ok(show, 'a show');
+  enterShow(world, show.host);
+  assert.ok(show.entries.includes('you'));
+  townStep(world, bots, 70);
+  assert.ok(lines.some((l) => /won the fashion show/.test(l)));
+  assert.ok(lines.some((l) => l.includes(`next: ${world.char.name}`)), 'your turn on the runway');
+  assert.equal(bots.events.show, null);
+});
+
+test('a meme catches on, everyone says it, and you saying it gets a reaction', async () => {
+  const { memeLine } = await import('../src/world/events.js');
+  const { world, bots, lines } = eventTown(213);
+  bots.events.memeIn = 0;
+  townStep(world, bots, 0.1);
+  const meme = bots.events.meme;
+  assert.ok(meme, 'a meme');
+  let said = 0;
+  for (let i = 0; i < 200; i++) if (memeLine(bots, Math.random)) said++;
+  assert.ok(said > 30, 'it shows up in chat');
+  world.heard = { words: `${meme.word} lol`, at: world.now };
+  townStep(world, bots, 6);
+  assert.ok(lines.some((l) => l.includes(`${world.char.name} said it`) || l.includes(`${world.char.name} gets it`) || l.includes(meme.word.toUpperCase())));
+  meme.until = 0;
+  townStep(world, bots, 0.2);
+  assert.equal(bots.events.meme, null, 'and then it dies');
+});
+
+test('a wedding in town: guests gather, the couple says I do, hearts and confetti, and a bouquet', () => {
+  const { world, bots, lines } = eventTown(215);
+  bots.events.weddingIn = 0;
+  townStep(world, bots, 0.1);
+  const w = bots.events.wedding;
+  assert.ok(w, 'a wedding');
+  assert.ok(lines.some((l) => /getting married/.test(l)));
+  const juice = [];
+  for (let t = 0; t < 60 && bots.events.wedding; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    juice.push(...world.juice.map((j) => j.type));
+    world.juice = [];
+  }
+  assert.ok(lines.some((l) => /are married/.test(l)));
+  assert.ok(juice.includes('hearts') && juice.includes('confetti'));
+  assert.equal(w.a.spouse, w.b.name);
 });

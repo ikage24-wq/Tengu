@@ -57,7 +57,7 @@ function walk(bot, x, dt) {
   return false;
 }
 
-const free = (b) => b.state === 'idle' && !b.shop && !b.party && !b.hunter && !b.legend && !b.drama;
+const free = (b) => b.state === 'idle' && !b.shop && !b.party && !b.hunter && !b.legend && !b.drama && !b.event;
 
 function settle(bot, rng) {
   bot.drama = null;
@@ -179,14 +179,13 @@ function tickDuel(duel, d, bots, world, dt) {
 // ---------- Legends ----------
 
 const LEGENDS = ['Seraphine', 'KuroHime', 'Aurelion', 'Nyxie', 'RoninZero', 'Starweaver', 'Mochizuki', 'Lumina', 'Tsukiyo', 'Valkyra'];
-const FAN = (n) => [`OMG ITS ${n.toUpperCase()}`, `${n} is online!!`, `can i have ur autograph ${n}`, `${n} senpai notice me`, 'wait is that THE legend??', 'i cant believe its really them', 'everyone act cool', `${n} pls carry me`];
+const FAN = (n) => [`OMG ITS ${n.toUpperCase()}`, `${n} is online!!`, `can i have ur autograph ${n}`, `${n} senpai notice me`, `wait is that THE ${n}??`, `i cant believe its really ${n}`, `everyone act cool, ${n} is here`, `${n} pls carry me`];
 const LEGEND_SAYS = ['hi everyone :)', 'no autographs pls lol', 'gl on ur grind!', 'just here for pots', 'u guys are sweet <3', 'see u at the top'];
 
 function legendIn(d, bots, world, hooks) {
   const rng = bots.rng;
-  const name = LEGENDS.find((n) => !bots.names.has(n)) ?? null;
+  const name = LEGENDS.find((n) => !bots.names.has(n.toLowerCase())) ?? null;
   if (!name) return;
-  bots.names.add(name);
   const char = hooks.makeChar(rng, { name, level: 70, pro: true });
   const bot = hooks.logIn({ name, char, guild: 'Legends', style: hooks.makeStyle(), title: '★ Legend' }, { here: true });
   if (!bot) return;
@@ -350,7 +349,8 @@ function goAfk(d, bots, world) {
   const portals = world.map.portals.filter((p) => !p.hidden);
   const bot = pick(bots.list.filter((o) => o.map === world.map.id && free(o)), rng);
   if (!bot || !portals.length) return;
-  const p = pick(portals, rng);
+  // (The nearest portal: they wandered onto it and stopped.)
+  const p = portals.reduce((a, c) => (Math.abs(c.x - bot.x) < Math.abs(a.x - bot.x) ? c : a));
   bot.state = 'afk';
   bot.drama = { x: p.x, until: world.now + between(40, 80, rng), noticed: false, at: false };
   d.say(bot, pick(AFK_SAYS, rng));
