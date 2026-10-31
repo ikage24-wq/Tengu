@@ -816,6 +816,7 @@ function eventTown(seed, mapId = 'sprout') {
   townStep(world, bots, 0.2);
   for (const k of Object.keys(bots.events)) if (k.endsWith('In')) bots.events[k] = 1e9;
   for (const k of Object.keys(bots.drama)) if (k.endsWith('In')) bots.drama[k] = 1e9;
+  for (const k of Object.keys(bots.lives)) if (k.endsWith('In')) bots.lives[k] = 1e9;
   return { world, bots, lines };
 }
 
@@ -977,4 +978,136 @@ test('a wedding in town: guests gather, the couple says I do, hearts and confett
   assert.ok(lines.some((l) => /are married/.test(l)));
   assert.ok(juice.includes('hearts') && juice.includes('confetti'));
   assert.equal(w.a.spouse, w.b.name);
+});
+
+// ---------- Players with lives ----------
+
+test('regulars: players you met come back grown (levels, a new job) and remember you', async () => {
+  const { remember, grow, regularsOf } = await import('../src/world/lives.js');
+  // Growing: more levels the longer it's been, and a job once they reach it.
+  const r = { name: 'Kid', level: 8, jobs: [], seen: 0 };
+  assert.equal(grow({ ...r, seen: 1000 }, 1000 + 60000, seeded(1)), null, 'nothing in a minute');
+  const g = grow(r, 40 * 3.6e6, seeded(2));
+  assert.ok(g.to > 8 && r.level >= 10 && r.jobs.length === 1 && g.job === r.jobs[0], `grew to ${r.level} and became a ${r.jobs[0]}`);
+  const big = { name: 'Vet', level: 29, jobs: ['warrior'], seen: 0 };
+  grow(big, 40 * 3.6e6, seeded(3));
+  assert.ok(['paladin', 'berserker'].includes(big.jobs[1]), 'a second job past 30');
+  // A whole session: meet someone, play again ten hours later, and they come over with their news.
+  const at = new Date(2026, 9, 28, 10, 0);
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  const bots = createBots(world, seeded(301), { clock: () => at });
+  world.bots = bots;
+  const pal = bots.list.find((b) => !b.shop && b.level >= 10 && b.level < 25);
+  remember(world, pal, 'party');
+  const metAt = pal.char.level;
+  assert.equal(regularsOf(world.char).length, 1);
+  const later = new Date(at.getTime() + 10 * 3.6e6);
+  const char = JSON.parse(JSON.stringify(world.char));
+  const world2 = createWorld(char);
+  const lines = quiet(world2);
+  const bots2 = createBots(world2, seeded(302), { clock: () => later });
+  world2.bots = bots2;
+  loadMap(world2, 'sprout', 'start');
+  updateBots(bots2, world2, 0.1);
+  const back = bots2.list.find((b) => b.name === pal.name);
+  assert.ok(back, 'they are on today');
+  assert.ok(back.char.level > metAt, `grown (${metAt} -> ${back.char.level})`);
+  assert.deepEqual(back.char.appearance, pal.char.appearance, 'looking just the same');
+  // What they'll say when they see you: your name, and their news.
+  const news = back.news ?? back.hello ?? back.bubble?.text ?? '';
+  assert.ok(news.includes('Me'), `they remember you (${news})`);
+  void lines;
+});
+
+test('a player asks for help with their quest; help them and they thank you with a gift', async () => {
+  const { helpOut } = await import('../src/world/lives.js');
+  const { killMob } = await import('../src/world/world.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { world, bots, lines } = eventTown(311);
+  bots.lives.askIn = 0;
+  for (let i = 0; i < 10 && !bots.lives.ask; i++) {
+    bots.lives.askIn = 0;
+    townStep(world, bots, 0.1);
+  }
+  const ask = bots.lives.ask;
+  assert.ok(ask, 'someone asks');
+  assert.ok(lines.some((l) => l.startsWith(`${ask.bot.name}:`)), 'in chat');
+  helpOut(bots, world, ask.bot);
+  assert.ok(ask.bot.party && ask.bot.quest, 'they join you');
+  const gold = world.char.gold;
+  for (let i = 0; i < ask.n; i++) killMob(world, spawnMob(world.map, { mob: ask.mob, x: world.body.x + 40, y: world.map.groundY }));
+  assert.ok(ask.bot.quest.done && world.char.gold > gold, 'quest done, and a thank-you');
+  assert.ok(world.char.regulars.some((r) => r.name === ask.bot.name && r.helped), 'and they remember it');
+});
+
+test('weather: umbrellas up in the rain, snowball fights in the snow', () => {
+  const { world, bots, lines } = eventTown(321);
+  const roll = (kind) => {
+    for (let i = 0; i < 60 && world.weather !== kind; i++) {
+      bots.lives.weatherIn = 0;
+      townStep(world, bots, 0.1);
+    }
+  };
+  roll('rain');
+  assert.equal(world.weather, 'rain');
+  assert.ok(lines.some((l) => /starts to rain/.test(l)));
+  townStep(world, bots, 15);
+  assert.ok(bots.list.some((b) => b.umbrella), 'umbrellas up');
+  // Snow in December.
+  bots.clock = () => new Date(2026, 11, 20, 18, 0);
+  roll('snow');
+  assert.equal(world.weather, 'snow');
+  const thrown = [];
+  for (let t = 0; t < 15; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    thrown.push(...world.juice.filter((j) => j.type === 'snowball'));
+    world.juice = [];
+  }
+  assert.ok(thrown.length >= 2, 'snowballs fly');
+  assert.ok(!bots.list.some((b) => b.umbrella), 'and the umbrellas are down');
+});
+
+test('a photographer at a landmark asks you into the shot, and the photo is yours too', () => {
+  const { world, bots, lines } = eventTown(331);
+  // By the well in Sprout Village.
+  world.body.x = 760;
+  bots.lives.shootIn = 0;
+  for (let i = 0; i < 10 && !bots.lives.shoot; i++) {
+    bots.lives.shootIn = 0;
+    townStep(world, bots, 0.1);
+  }
+  const s = bots.lives.shoot;
+  assert.ok(s, 'a shoot');
+  world.body.x = s.x + 10;
+  for (let t = 0; t < 60 && bots.lives.shoot; t += 0.1) {
+    world.now += 0.1;
+    world.body.x = s.x + 10;
+    updateBots(bots, world, 0.1);
+  }
+  assert.ok(lines.some((l) => /get in the pic/.test(l)), 'asked in');
+  const photo = world.char.photos?.[0];
+  assert.ok(photo && photo.landmark === s.kind && photo.people.length === 2);
+});
+
+test('a music jam: notes float up and people come to dance; and someone in costume plays the part', () => {
+  const { world, bots, lines } = eventTown(341);
+  bots.lives.jamIn = 0;
+  townStep(world, bots, 0.1);
+  assert.ok(bots.lives.jam, 'a jam');
+  const notes = [];
+  for (let t = 0; t < 20; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    notes.push(...world.juice.filter((j) => j.type === 'notes'));
+    world.juice = [];
+  }
+  assert.ok(notes.length > 10, 'music');
+  assert.ok(bots.lives.jam?.fans.length >= 1, 'dancers');
+  bots.lives.cosplayIn = 0;
+  townStep(world, bots, 5);
+  const fan = bots.list.find((b) => b.costume);
+  assert.ok(fan && fan.costume.look, 'in costume');
+  assert.ok(lines.some((l) => l.includes(`cosplaying as ${fan.costume.as}`)));
 });

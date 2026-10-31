@@ -57,7 +57,7 @@ function walk(bot, x, dt) {
   return false;
 }
 
-const free = (b) => b.state === 'idle' && !b.shop && !b.party && !b.hunter && !b.legend && !b.drama && !b.event;
+const free = (b) => b.state === 'idle' && !b.shop && !b.party && !b.hunter && !b.legend && !b.drama && !b.event && !b.life;
 
 function settle(bot, rng) {
   bot.drama = null;

@@ -39,7 +39,7 @@ function walk(bot, x, dt) {
 }
 
 // Town folk free to be pulled into something.
-const free = (b, world) => b.map === world.map.id && b.state === 'idle' && !b.shop && !b.party && !b.hunter && !b.legend && !b.drama && !b.event;
+const free = (b, world) => b.map === world.map.id && b.state === 'idle' && !b.shop && !b.party && !b.hunter && !b.legend && !b.drama && !b.event && !b.life;
 
 function release(bot, rng) {
   bot.event = null;

@@ -13,6 +13,7 @@ import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, 
 import { MAPS } from '../data/maps.js';
 import { drawHero } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
+import { drawLandmark, LANDMARKS } from '../render/landmarks.js';
 
 const W = 340;
 const H = 250;
@@ -76,6 +77,15 @@ function photos(ui, win, char, world, x, y) {
   ctx.fillRect(ix, iy + ih - 22, iw, 22);
   // The boss behind them, a little dimmed (they won).
   const def = MOBS[p.boss];
+  // (A photo at a landmark has it behind everyone instead.)
+  if (p.landmark && LANDMARKS[p.landmark]) {
+    const k = Math.min(1, 110 / LANDMARKS[p.landmark].h);
+    ctx.save();
+    ctx.translate(ix + iw / 2, iy + ih - 20);
+    ctx.scale(k, k);
+    drawLandmark(ctx, p.landmark, 0, 0, world.now, 3, 0, MAPS[p.map]?.theme);
+    ctx.restore();
+  }
   if (def) {
     const k = Math.min(1, 84 / def.h);
     ctx.save();
@@ -102,7 +112,7 @@ function photos(ui, win, char, world, x, y) {
   ctx.restore();
   // The caption, handwritten along the bottom of the print.
   const when = new Date(p.at);
-  text(ctx, fit(ctx, `${p.name} raid · ${p.mapName ?? MAPS[p.map]?.name ?? ''} · ${when.toLocaleDateString()}`, pw - 16, 8, true), x + pw / 2, y + ph + 13, { size: 8, bold: true, align: 'center', color: COLORS.ink });
+  text(ctx, fit(ctx, `${p.landmark ? 'Snapshot' : `${p.name} raid`} · ${p.mapName ?? MAPS[p.map]?.name ?? ''} · ${when.toLocaleDateString()}`, pw - 16, 8, true), x + pw / 2, y + ph + 13, { size: 8, bold: true, align: 'center', color: COLORS.ink });
   // Flipping through.
   const by = y + ph + 28;
   if (button(ui, x + pw / 2 - 70, by, 30, 16, '<', { size: 9, enabled: win.photo > 0 })) win.photo -= 1;

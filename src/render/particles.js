@@ -313,6 +313,20 @@ export function absorbJuice(fx, world) {
       for (let i = 0; i < (j.count ?? 10); i++) {
         add(fx, { x: j.x + (Math.random() - 0.5) * 30, y: j.y, vx: (Math.random() - 0.5) * 30, vy: -30 - Math.random() * 30, drag: 0.5, delay: Math.random() * 0.8, life: 1.6 + Math.random(), size: 2.4 + Math.random() * 1.2, shape: 'heart', color: i % 3 ? '#ff8fc1' : '#ff6b8a' });
       }
+    } else if (j.type === 'snowball') {
+      // A snowball lobbed from (x, y) to (tx, ty), bursting into powder where it lands.
+      const fly = 0.45;
+      const delay = j.delay ?? 0;
+      add(fx, { x: j.x, y: j.y, vx: (j.tx - j.x) / fly, vy: (j.ty - j.y) / fly - 0.5 * 420 * fly, g: 420, delay, life: fly, size: 1.8, color: '#ffffff' });
+      for (let i = 0; i < 7; i++) {
+        const a = Math.random() * Math.PI * 2;
+        add(fx, { x: j.tx, y: j.ty, vx: Math.cos(a) * 50, vy: Math.sin(a) * 50 - 20, g: 160, drag: 2, delay: delay + fly, life: 0.4, size: 1 + Math.random() * 0.6, color: i % 2 ? '#ffffff' : '#dceaff' });
+      }
+    } else if (j.type === 'notes') {
+      // Music notes floating up and swaying (a jam session).
+      for (let i = 0; i < (j.count ?? 2); i++) {
+        add(fx, { x: j.x + (Math.random() - 0.5) * 14, y: j.y, vx: (Math.random() - 0.5) * 20, vy: -26 - Math.random() * 14, drag: 0.3, delay: i * 0.15, life: 1.6, size: 2, shape: 'note', color: j.color ?? '#ff8fc1' });
+      }
     } else if (j.type === 'kick') {
       kick(fx, j.x ?? 0, j.y ?? 0);
     } else if (j.type === 'shake') {
@@ -393,6 +407,20 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
       const x = cam.x - 40 + Math.random() * (viewW + 40);
       const y = cam.y + Math.random() * viewH;
       add(fx, { ...amb.make(x, y), ambient: true, phase: Math.random() * 6 });
+    }
+  }
+
+  // Weather (world/lives.js): rain streaking down, or snow drifting, across the view.
+  if (world.weather) {
+    const rain = world.weather === 'rain';
+    fx.weatherTimer = (fx.weatherTimer ?? 0) - dt * (rain ? 110 : 26);
+    while (fx.weatherTimer <= 0) {
+      fx.weatherTimer += 1;
+      const x = cam.x - 40 + Math.random() * (viewW + 80);
+      const y = cam.y - 10 + Math.random() * 30;
+      add(fx, rain
+        ? { x, y, vx: -30, vy: 380 + Math.random() * 80, life: (viewH + 20) / 420, size: 0.9, shape: 'needle', color: '#d6ebff', alpha: 0.85, ambient: true, phase: 0 }
+        : { x, y, vx: -8 + Math.random() * 16, vy: 22 + Math.random() * 14, life: viewH / 28, size: 0.8 + Math.random() * 0.7, color: '#ffffff', alpha: 0.9, ambient: true, phase: Math.random() * 6 });
     }
   }
 
@@ -542,6 +570,16 @@ export function drawParticles(ctx, fx, cam, time) {
       case 'pixel':
         ctx.fillRect(snap(x), snap(y), p.size * 2, p.size * 2);
         break;
+      case 'note': {
+        // A quaver: a round head and a stem with its flag.
+        const r = p.size;
+        ctx.beginPath();
+        ctx.ellipse(x, y, r, r * 0.8, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x + r * 0.6, y - r * 3.2, 0.9, r * 3.2);
+        ctx.fillRect(x + r * 0.6, y - r * 3.2, r * 1.4, 0.9);
+        break;
+      }
       case 'heart': {
         const r = p.size;
         ctx.beginPath();
