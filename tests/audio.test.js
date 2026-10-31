@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { render } from '../src/audio/synth.js';
 import { RECIPES, variantsOf } from '../src/audio/recipes.js';
-import { renderSong, parseNotes } from '../src/audio/studio.js';
+import { renderSong, parseNotes, VOICES } from '../src/audio/studio.js';
 import { SONGS } from '../src/audio/songs.js';
 import { MANIFEST } from '../src/audio/manifest.js';
 
@@ -48,11 +48,11 @@ test('every recording and instrument the sounds ask for exists', () => {
   for (const [name, r] of Object.entries(RECIPES)) {
     for (const L of r.layers) {
       if (L.rec) assert.ok(MANIFEST.sfx.items[L.rec], `${name} wants a recording "${L.rec}"`);
-      if (L.inst) assert.ok(MANIFEST.inst[L.inst], `${name} wants an instrument "${L.inst}"`);
+      if (L.inst) assert.ok(VOICES[L.inst], `${name} wants an instrument "${L.inst}"`);
     }
   }
   for (const [key, song] of Object.entries(SONGS)) {
-    for (const [iname, inst] of Object.entries(song.inst)) if (inst.sample) assert.ok(MANIFEST.inst[inst.sample], `${key}: ${iname} wants "${inst.sample}"`);
+    for (const [iname, inst] of Object.entries(song.inst)) if (inst.sample) assert.ok(VOICES[inst.sample], `${key}: ${iname} wants "${inst.sample}"`);
   }
 });
 

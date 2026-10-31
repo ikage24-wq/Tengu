@@ -8,7 +8,7 @@
 //   35 ms plays once, a little louder, and no more than 24 sounds ring at a time.
 // - Blows in a quick chain climb in pitch (the first at the base, then up a fourth, then a fifth)
 //   so the player hears the combo build, and a finisher drops back down with a deep thump.
-// - Swords, daggers, bows, arrows and spells are recorded (combat packs, see assets/audio/CREDITS.md):
+// - Swords, daggers, bows, arrows and spells are recorded (public domain packs, see assets/audio/SOURCES.md):
 //   each school casts and lands with its own sound (fire, ice, lightning, holy, poison, dark, wind,
 //   earth), and each path and weapon element adds its colour over a blow.
 // - Jingles never stack: a second one waits for the first to finish. The music dips under them.

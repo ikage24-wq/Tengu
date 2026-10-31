@@ -1,5 +1,5 @@
-// The studio: renders a song (songs.js) into a stereo loop, mixing recorded instruments (the
-// sample bank, samples.js) with modern synths and drums made in code, then a reverb, a gentle
+// The studio: renders a song (songs.js) into a stereo loop, mixing instrument voices and modern
+// synths and drums, all made in code, then a reverb, a gentle
 // sidechain pump under the kick, and a level that's the same for every song. Pure JS, so it runs
 // in the worker, on the page, or in node tests.
 //
@@ -13,7 +13,8 @@
 // every bar must add up to a whole bar).
 // Drums, one character per row: K kick, S snare, c clap, h hat, o open hat, t tom, x shaker,
 // w woodblock, * crash, C kick + clap, O kick + open hat, B kick + snare, H kick + hat, . nothing.
-// Instruments: { sample: 'flute', gain, attack, rel, gate } for a recording, or
+// Instruments: { sample: 'flute', gain, attack, rel, gate } for an instrument voice (VOICES below,
+// named after the General MIDI instrument each stands in for), or
 // { synth: 'pluck' | 'pad' | 'sub' | 'lead' | 'bell' | 'stab' | 'bass', gain, gate, cut } for a synth.
 
 const TAU = Math.PI * 2;
@@ -36,57 +37,18 @@ export function rng(seed = 1) {
   };
 }
 
-// ---------- Recorded instruments ----------
-// Plays a recorded note into `out` (mono) from sample `s0`: the nearest recorded pitch, retuned;
-// a held note on a sustained instrument loops its middle with a crossfade; then the release.
+// ---------- Instrument voices ----------
+// Plays one note of an instrument voice into `out` (mono) from sample `s0`. Every voice is a synth
+// (SYNTHS below) with its own settings and a level matching the rest of the mix: the music has no
+// recordings in it. (`bank` is unused, kept so callers stay the same.)
 export function sampleNote(out, s0, sr, bank, inst, midi, dur, gain = 1) {
-  const I = bank?.inst?.[inst.sample];
-  if (!I) return;
-  let best = I.notes[0];
-  for (const n of I.notes) if (Math.abs(n - midi) < Math.abs(best - midi)) best = n;
-  const k = I.notes.indexOf(best);
-  const data = I.data;
-  const scale = I.scale ?? 1 / 32768;
-  const base = Math.round((I.offset + I.lead + k * I.slot) * I.sr);
-  const slotN = Math.round(I.slot * I.sr) - 2;
-  const step = Math.pow(2, (midi - best) / 12) * (I.sr / sr);
-  const loopA = slotN * 0.45;
-  const loopB = slotN - I.sr * 0.18;
-  const xf = I.sr * 0.06;
-  const loops = I.sustain && inst.loop !== false;
-  const held = dur * (inst.gate ?? 1);
-  const rel = inst.rel ?? (I.sustain ? 0.12 : 0.35);
-  const att = inst.attack ?? 0;
-  const total = Math.min(out.length - s0, Math.round((held + rel) * sr), loops ? Infinity : Math.floor(slotN / step));
-  const at = (p) => {
-    const i = Math.floor(p);
-    const f = p - i;
-    const a = data[base + i] ?? 0;
-    const b = data[base + i + 1] ?? 0;
-    return (a + (b - a) * f) * scale;
-  };
-  const g = gain * (inst.gain ?? 1) * (I.norm ?? 1);
-  const relAt = held * sr;
-  for (let i = 0; i < total; i++) {
-    let p = i * step;
-    let v;
-    if (loops && p >= loopB - xf) {
-      const len = loopB - loopA;
-      const q = loopA + ((p - loopA) % len);
-      if (q >= loopB - xf) {
-        const w = (q - (loopB - xf)) / xf;
-        v = at(q) * Math.sqrt(1 - w) + at(q - len) * Math.sqrt(w);
-      } else v = at(q);
-    } else {
-      if (p >= slotN) break;
-      v = at(p);
-    }
-    let e = 1;
-    if (att && i < att * sr) e = i / (att * sr);
-    if (i > relAt) e *= Math.max(0, 1 - (i - relAt) / (rel * sr));
-    if (i >= total - 64) e *= (total - i) / 64;
-    out[s0 + i] += v * e * g;
-  }
+  const v = VOICES[inst.sample];
+  if (!v) return;
+  const o = { ...v, attack: inst.attack ?? v.attack, rel: inst.rel ?? v.rel };
+  const x = SYNTHS[v.synth](midi, dur * (inst.gate ?? 1), sr, rng(midi * 7919 + s0), o);
+  const g = gain * (inst.gain ?? 1) * v.level;
+  const n = Math.min(x.length, out.length - s0);
+  for (let i = 0; i < n; i++) out[s0 + i] += x[i] * g * (i >= n - 64 ? (n - i) / 64 : 1);
 }
 
 // ---------- Synths ----------
@@ -115,6 +77,14 @@ function lowpass(x, sr, cut, q = 0.8) {
       lo += f * bp;
     }
     x[i] = lo;
+  }
+  return x;
+}
+// An attack, a hold for the note, and a release after it.
+function env(x, sr, d, attack, rel) {
+  for (let i = 0; i < x.length; i++) {
+    const t = i / sr;
+    x[i] *= Math.min(1, t / Math.max(attack, 0.001)) * (t < d ? 1 : Math.exp((-(t - d) / Math.max(rel, 0.01)) * 2.5));
   }
   return x;
 }
@@ -221,6 +191,144 @@ export const SYNTHS = {
     for (let i = 0; i < n; i++) x[i] *= Math.min(1, i / sr / 0.004) * Math.exp(-i / sr / 0.12);
     return x;
   },
+  // A flute: a pure tone with a little of its octave, a breath of noise in the attack, and a
+  // vibrato that comes in once the note settles. (`breath`, `vib`.)
+  flute(m, d, sr, rand, o) {
+    const f = hz(m);
+    const n = Math.round((d + (o.rel ?? 0.15) + 0.05) * sr);
+    const x = new Float32Array(n);
+    let ph = rand();
+    let lp = 0;
+    const br = o.breath ?? 0.1;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const vib = 1 + (o.vib ?? 0.005) * Math.sin(TAU * 5.2 * t) * Math.min(1, Math.max(0, (t - 0.18) / 0.25));
+      ph = (ph + (f * vib) / sr) % 1;
+      lp += (rand() * 2 - 1 - lp) * 0.2;
+      x[i] = Math.sin(TAU * ph) + 0.18 * Math.sin(2 * TAU * ph) + 0.05 * Math.sin(3 * TAU * ph) + lp * br * (0.5 + 2 * Math.exp(-t / 0.06));
+    }
+    return env(x, sr, d, o.attack ?? 0.04, o.rel ?? 0.15);
+  },
+  // A reed (oboe, accordion): a narrow pulse, filtered, with a light vibrato; `trem` adds the
+  // accordion's shimmer of two reeds a hair apart.
+  reed(m, d, sr, rand, o) {
+    const f = hz(m);
+    const n = Math.round((d + (o.rel ?? 0.12) + 0.05) * sr);
+    const x = new Float32Array(n);
+    const duty = o.duty ?? 0.3;
+    const ph = [rand(), rand()];
+    const reeds = o.trem ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const vib = 1 + 0.003 * Math.sin(TAU * 5 * t) * Math.min(1, t / 0.3);
+      let s = 0;
+      for (let r = 0; r < reeds; r++) {
+        const dt = (f * vib * (1 + r * 0.004)) / sr;
+        ph[r] = (ph[r] + dt) % 1;
+        const q = (ph[r] + duty) % 1;
+        s += 2 * ph[r] - 1 - blep(ph[r], dt) - (2 * q - 1 - blep(q, dt));
+      }
+      x[i] = s / reeds;
+    }
+    lowpass(x, sr, () => o.cut ?? 2400, 0.9);
+    return env(x, sr, d, o.attack ?? 0.03, o.rel ?? 0.12);
+  },
+  // Bowed strings (violin, a string section, a choir): detuned saws, softly filtered, swelling in,
+  // with a vibrato that grows. (`voices`, `detune`, `cut`, `vib`.)
+  bowed(m, d, sr, rand, o) {
+    const f = hz(m);
+    const n = Math.round((d + (o.rel ?? 0.3) + 0.05) * sr);
+    const voices = o.voices ?? 4;
+    const x = new Float32Array(n);
+    const ph = Array.from({ length: voices }, () => rand());
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const vib = 1 + (o.vib ?? 0.006) * Math.sin(TAU * 5.6 * t + 1) * Math.min(1, Math.max(0, (t - 0.12) / 0.3));
+      let s = 0;
+      for (let v = 0; v < voices; v++) {
+        const dt = (f * vib * (1 + ((o.detune ?? 0.25) / 100) * (voices > 1 ? (v / (voices - 1)) * 2 - 1 : 0))) / sr;
+        ph[v] = (ph[v] + dt) % 1;
+        s += 2 * ph[v] - 1 - blep(ph[v], dt);
+      }
+      x[i] = s / Math.sqrt(voices);
+    }
+    lowpass(x, sr, () => o.cut ?? 2400, 0.75);
+    return env(x, sr, d, o.attack ?? 0.08, o.rel ?? 0.3);
+  },
+  // Brass (horn, trumpet, a section): saws whose filter opens with the breath and settles back.
+  brass(m, d, sr, rand, o) {
+    const n = Math.round((d + (o.rel ?? 0.15) + 0.05) * sr);
+    const x = saws(hz(m), n, sr, o.voices ?? 3, 0.2, rand);
+    const top = o.cut ?? 2600;
+    lowpass(x, sr, (t) => 400 + top * (1 - Math.exp(-t / 0.05)) * (0.75 + 0.25 * Math.exp(-t / 0.3)), 1);
+    return env(x, sr, d, o.attack ?? 0.025, o.rel ?? 0.15);
+  },
+  // An electric-piano tine (two-operator FM): a bright strike that mellows, lower notes ringing longer.
+  keys(m, d, sr, rand, o) {
+    const f = hz(m);
+    const ring = (o.decay ?? 1.3) * Math.min(1.6, Math.max(0.5, 440 / f));
+    const n = Math.round((d + (o.rel ?? 0.3) + 0.1) * sr);
+    const x = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const idx = 1.6 * Math.exp(-t / 0.18) + 0.25;
+      x[i] = (Math.sin(TAU * f * t + idx * Math.sin(TAU * f * t)) + 0.15 * Math.sin(TAU * 4 * f * t) * Math.exp(-t / 0.05)) * Math.exp(-t / ring);
+    }
+    return env(x, sr, d, 0.002, o.rel ?? 0.3);
+  },
+  // A plucked string (guitar, harp, pizzicato, sitar): a burst of noise ringing down a tuned
+  // delay line (Karplus-Strong). `bright` 0-1, `decay` in seconds; `buzz` adds the sitar's rattle.
+  string(m, d, sr, rand, o) {
+    const f = hz(m);
+    const len = Math.max(2, Math.round(sr / f));
+    const line = new Float32Array(len);
+    let lp = 0;
+    for (let i = 0; i < len; i++) {
+      lp += (rand() * 2 - 1 - lp) * (0.25 + 0.7 * (o.bright ?? 0.6));
+      line[i] = lp;
+    }
+    const n = Math.round((Math.min(d, 4) + (o.rel ?? 0.3) + 0.1) * sr);
+    const x = new Float32Array(n);
+    const fb = Math.pow(0.001, 1 / ((o.decay ?? 1) * f));
+    let prev = 0;
+    for (let i = 0; i < n; i++) {
+      const k = i % len;
+      const v = line[k];
+      line[k] = (v + prev) * 0.5 * fb;
+      prev = v;
+      x[i] = o.buzz ? Math.tanh(v * 2.2) * 0.7 + v * 0.4 : v;
+    }
+    return env(x, sr, d, 0.001, o.rel ?? 0.3);
+  },
+  // A mallet (marimba, glockenspiel, celesta): FM with an inharmonic modulator, struck and
+  // decaying. `ratio` sets the bar's colour, `decay` how long it rings.
+  mallet(m, d, sr, rand, o) {
+    const f = hz(m);
+    const ring = o.decay ?? 0.6;
+    const n = Math.round((Math.max(d, 0.2) + ring * 2) * sr);
+    const x = new Float32Array(n);
+    const r = o.ratio ?? 4;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      x[i] = (Math.sin(TAU * f * t + 1.2 * Math.exp(-t / 0.03) * Math.sin(TAU * f * r * t)) * Math.exp(-t / ring) + 0.25 * Math.sin(TAU * f * r * t) * Math.exp(-t / (ring * 0.2))) * Math.min(1, t / 0.001);
+    }
+    return x;
+  },
+  // A timpani: a deep tone that sags a touch in pitch, over a soft thump.
+  timpani(m, d, sr, rand) {
+    const f = hz(m);
+    const n = Math.round(1.6 * sr);
+    const x = new Float32Array(n);
+    let ph = 0;
+    let lp = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      ph += (f * (1 + 0.04 * Math.exp(-t / 0.05))) / sr;
+      lp += (rand() * 2 - 1 - lp) * 0.08;
+      x[i] = (Math.sin(TAU * ph) + 0.4 * Math.sin(TAU * ph * 1.5) * Math.exp(-t / 0.3)) * Math.exp(-t / 0.7) + lp * 1.5 * Math.exp(-t / 0.04);
+    }
+    return x;
+  },
   // A soft bell (two sines, a touch of a higher partial): sparkle.
   bell(m, d, sr) {
     const f = hz(m);
@@ -236,6 +344,31 @@ export const SYNTHS = {
 
 // Each synth's level, so a synth and a recorded instrument at the same gain sound about as loud.
 const SYNTH_LEVEL = { pluck: 0.4, pad: 0.6, sub: 0.21, bass: 0.58, lead: 0.26, stab: 0.5, bell: 0.28 };
+
+// The instrument voices, named after the General MIDI instruments each stands in for. `level`
+// matches each voice to the loudness of the recording it replaced, so songs keep their balance.
+export const VOICES = {
+  flute: { synth: 'flute', level: 0.173 },
+  pan_flute: { synth: 'flute', breath: 0.22, vib: 0.003, level: 0.205 },
+  oboe: { synth: 'reed', duty: 0.22, cut: 2200, level: 0.227 },
+  violin: { synth: 'bowed', voices: 2, detune: 0.12, cut: 3400, vib: 0.008, level: 0.291 },
+  string_ensemble_1: { synth: 'bowed', voices: 6, detune: 0.3, cut: 2200, level: 0.14 },
+  choir_aahs: { synth: 'bowed', voices: 5, detune: 0.35, cut: 1100, vib: 0.004, attack: 0.15, level: 0.198 },
+  accordion: { synth: 'reed', trem: true, duty: 0.35, cut: 2800, level: 0.234 },
+  french_horn: { synth: 'brass', cut: 1300, level: 0.2 },
+  trumpet: { synth: 'brass', voices: 2, cut: 3400, level: 0.252 },
+  brass_section: { synth: 'brass', voices: 5, cut: 2600, level: 0.153 },
+  acoustic_guitar_nylon: { synth: 'string', bright: 0.45, decay: 1.6, level: 1.51 },
+  pizzicato_strings: { synth: 'string', bright: 0.35, decay: 0.35, level: 2.24 },
+  orchestral_harp: { synth: 'string', bright: 0.65, decay: 2.2, level: 1.525 },
+  acoustic_grand_piano: { synth: 'keys', decay: 1.4, level: 0.208 },
+  marimba: { synth: 'mallet', ratio: 4, decay: 0.35, level: 0.356 },
+  glockenspiel: { synth: 'mallet', ratio: 3.5, decay: 1.2, level: 0.221 },
+  celesta: { synth: 'mallet', ratio: 2, decay: 0.9, level: 0.258 },
+  sitar: { synth: 'string', bright: 0.8, decay: 1.8, buzz: true, level: 0.826 },
+  timpani: { synth: 'timpani', level: 0.207 },
+  electric_bass_finger: { synth: 'bass', cut: 900, level: 0.394 },
+};
 
 // ---------- Drums ----------
 // Each piece: (sr, rand, bank) -> mono samples.
@@ -300,9 +433,13 @@ export const DRUMS = {
     return x;
   },
   '*': (sr, rand) => hat(sr, rand, 0.6, Math.round(1.6 * sr)),
-  w(sr, rand, bank) {
-    const x = new Float32Array(Math.round(0.3 * sr));
-    sampleNote(x, 0, sr, bank, { sample: 'woodblock', rel: 0.05 }, 76, 0.2);
+  // A woodblock: two hollow tones, knocked and gone.
+  w(sr) {
+    const x = new Float32Array(Math.round(0.15 * sr));
+    for (let i = 0; i < x.length; i++) {
+      const t = i / sr;
+      x[i] = (Math.sin(TAU * 1250 * t) * 0.8 + Math.sin(TAU * 2030 * t) * 0.35) * Math.exp(-t / 0.025) * Math.min(1, t / 0.0005) * 0.6;
+    }
     return x;
   },
 };
@@ -584,7 +721,8 @@ function normalize(l, r, level, sr) {
   }
   const ahead = Math.max(1, Math.round((0.005 * sr) / B));
   const rel = Math.exp(-B / (0.12 * sr));
-  let cur = 1;
+  // (Already turned down for a peak right at the start, since there's no earlier block to ease in on.)
+  let cur = Math.min(1, ...need.slice(0, ahead + 1));
   for (let b = 0; b * B < n; b++) {
     let want = 1;
     for (let j = b; j <= Math.min(need.length - 1, b + ahead); j++) want = Math.min(want, need[j]);

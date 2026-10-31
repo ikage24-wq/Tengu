@@ -1,6 +1,6 @@
-// Every sound effect as data for the synthesizer (synth.js): recorded effects (Kenney, CC0) and
-// recorded instruments (FluidR3) layered with synth sweeps, thumps and sparkles, the same "real
-// plus modern" mix as the music. Units: Hz, ms, octaves per second (slide), dB. Each recipe:
+// Every sound effect as data for the synthesizer (synth.js): recorded effects (all CC0) and
+// instrument voices layered with synth sweeps, thumps and sparkles, the same "real plus modern"
+// mix as the music. Units: Hz, ms, octaves per second (slide), dB. Each recipe:
 // { layers, db (peak level once normalized), vary (± % random pitch per play), max (voices at
 // once), gap (ms: repeats closer than this play once; 35 by default), duck: [dB the music dips,
 // ms], room (a little of the short room) }.
