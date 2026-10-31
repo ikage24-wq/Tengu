@@ -370,7 +370,6 @@ test('the same no-spam rule holds for every job, spells and thief skills include
   for (const [job, weapon, skill] of [['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'shouldercharge']]) {
     const w = arena(weapon);
     w.char.job = job;
-    if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
     w.char.skills[skill] = 10;
     w.char.mp = 9999;
     assert.ok(cast(w, skill).ok, `${skill} goes off`);
@@ -1582,7 +1581,6 @@ function thief(weapon = 'dagger_20') {
   w.char.job = 'thief';
   w.char.mp = 9999;
   w.char.baseMp = 99999;
-  if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
   if (weapon.startsWith('gauntlet')) w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
   for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
   return w;
@@ -1808,7 +1806,6 @@ function thiefPath(job) {
   c.equipment.weapon = makeEquip(weapon, {});
   c.mp = 9999;
   c.baseMp = 99999;
-  if (job === 'kitsune') addItem(c.inventory, 'star_pebble', 900);
   w.char = c;
   if (job === 'kitsune') w.mobs.forEach((m, i) => (m.x = 420 + i * 30));
   for (let i = 0; i < 10; i++) updateWorld(w, DT, idle);
@@ -2099,7 +2096,6 @@ test('no job can mash out its attacks: every skill plays its motion and a beat, 
     for (const [id] of skills) {
       const w = arena(weapon);
       w.char.job = job;
-      if (type === 'gauntlet') addItem(w.char.inventory, 'star_pebble', 5000);
       w.char.skills[id] = 20;
       w.char.hotkeys.KeyA = { skill: id };
       w.char.baseMp = 1e7;
@@ -2117,7 +2113,6 @@ test('no job can mash out its attacks: every skill plays its motion and a beat, 
     }
     const w = arena(weapon);
     w.char.job = job;
-    if (type === 'gauntlet') addItem(w.char.inventory, 'star_pebble', 5000);
     let moves = 0;
     let last = null;
     for (let i = 0; i < 6 * 60; i++) {
@@ -2184,7 +2179,6 @@ test('holding an attack skill and a direction keeps casting it, planted, for eve
     const casts = (dir) => {
       const w = arena(weapon);
       w.char.job = job;
-      if (weapon.startsWith('gauntlet')) addItem(w.char.inventory, 'star_pebble', 500);
       w.char.skills[skill] = 10;
       w.char.hotkeys.KeyA = { skill };
       w.char.baseMp = 99999;

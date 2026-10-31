@@ -5,7 +5,7 @@ import { ITEMS } from '../data/items.js';
 import { SETS } from '../data/sets.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { jobChain, JOBS } from '../data/jobs.js';
-import { activeStar } from './inventory.js';
+import { thrownStars } from './items.js';
 
 const FIST_WATK = 6; // bare hands still do a little damage
 const BASE_MASTERY = 0.1;
@@ -97,7 +97,7 @@ export function computeStats(char, now = 0) {
   return {
     str, dex, int, luk,
     // A gauntlet hits as hard as the stars it throws.
-    watk: (hasWeapon ? 0 : FIST_WATK) + get('watk') + (weaponTypeOf(char) === 'gauntlet' && char.inventory ? ITEMS[activeStar(char)?.id]?.star.watk ?? 0 : 0),
+    watk: (hasWeapon ? 0 : FIST_WATK) + get('watk') + (thrownStars(char)?.watk ?? 0),
     matk: get('matk'),
     wdef: Math.floor(str / 4) + get('wdef'),
     mdef: Math.floor(int / 4) + get('mdef'),

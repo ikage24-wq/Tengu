@@ -49,7 +49,6 @@ export function balanceChar(job, level) {
   const family = JOBS[job].family;
   c.equipment.weapon = makeEquip(`${WEAPON[job]}_${gl}`, { variance: 0 });
   for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) c.equipment[slot] = makeEquip(`${family}_${slot}_${gl}`, { variance: 0 });
-  addItem(c.inventory, 'star_pebble', 999);
   const s = computeStats(c);
   c.hp = s.maxHp;
   c.mp = s.maxMp;

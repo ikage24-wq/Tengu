@@ -402,32 +402,23 @@ export const RARITIES = [
 add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 50, effect: { hp: 50 }, color: '#ff6b8a', desc: 'Restores 50 HP.' });
 add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 160, effect: { hp: 150 }, color: '#ffa94d', desc: 'Restores 150 HP.' });
 add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 320, effect: { hp: 300 }, color: '#fff7ea', desc: 'Restores 300 HP.' });
-// Mochi food (world/mochi.js): a snack fills the tummy; the others also grow it toward a form.
 add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100 }, color: '#6fb8ff', desc: 'Restores 100 MP.' });
-// Throwing stars: what a gauntlet throws. Throws never use them up, so one star is enough. They
-// come in sets that stack up to `stack`; the topmost set in your Use tab (that your level allows)
-// is the one you throw, and its `star.watk` adds to your attack. A shop can still refill an old
-// part-thrown set for `price / stack` a star.
-// Better stars only drop from monsters. `element` gives the star's hits that element's impact.
+// Throwing stars: a gauntlet throws its own, better ones the higher its level (no stars to buy,
+// carry or run out of). `watk` adds to your attack; `element` gives the star's hits that
+// element's impact; `color` tints the star in flight.
 export const STARS = [
-  { key: 'pebble', name: 'Pebble Stars', level: 10, watk: 15, price: 500, color: '#c9c2b8' },
-  { key: 'steel', name: 'Steel Stars', level: 10, watk: 17, price: 1800, color: '#c8d2e0' },
-  { key: 'mint', name: 'Mint Stars', level: 20, watk: 19, price: 5000, color: '#8ff0c8' },
-  { key: 'moon', name: 'Moon Stars', level: 30, watk: 21, price: 12000, color: '#c9b6ff' },
-  { key: 'crimson', name: 'Crimson Stars', level: 40, watk: 23, price: 22000, color: '#ff6b7a', drop: true },
-  { key: 'thunder', name: 'Thunder Stars', level: 50, watk: 25, price: 36000, color: '#ffe36b', element: 'storm', drop: true },
-  { key: 'flame', name: 'Flame Stars', level: 60, watk: 27, price: 52000, color: '#ff9b5c', element: 'fire', drop: true },
-  { key: 'crystal', name: 'Crystal Stars', level: 70, watk: 27, price: 52000, color: '#a8e8ff', element: 'water', drop: true },
-  { key: 'starlight', name: 'Starlight Stars', level: 80, watk: 30, price: 90000, color: '#fff3b8', element: 'cosmic', drop: true },
+  { key: 'pebble', name: 'Pebble Stars', level: 0, watk: 15, color: '#c9c2b8' },
+  { key: 'steel', name: 'Steel Stars', level: 10, watk: 17, color: '#c8d2e0' },
+  { key: 'mint', name: 'Mint Stars', level: 20, watk: 19, color: '#8ff0c8' },
+  { key: 'moon', name: 'Moon Stars', level: 30, watk: 21, color: '#c9b6ff' },
+  { key: 'crimson', name: 'Crimson Stars', level: 40, watk: 23, color: '#ff6b7a' },
+  { key: 'thunder', name: 'Thunder Stars', level: 50, watk: 25, color: '#ffe36b', element: 'storm' },
+  { key: 'flame', name: 'Flame Stars', level: 60, watk: 27, color: '#ff9b5c', element: 'fire' },
+  { key: 'crystal', name: 'Crystal Stars', level: 70, watk: 27, color: '#a8e8ff', element: 'water' },
+  { key: 'starlight', name: 'Starlight Stars', level: 80, watk: 30, color: '#fff3b8', element: 'cosmic' },
 ];
-export const STAR_STACK = 500;
-for (const s of STARS) {
-  add({
-    id: `star_${s.key}`, name: s.name, type: 'use', price: s.price, stack: STAR_STACK, reqLevel: s.level, color: s.color,
-    star: { watk: s.watk, element: s.element ?? null }, drop: Boolean(s.drop),
-    desc: `Throwing stars for a gauntlet: +${s.watk} attack. ${STAR_STACK} to a set, one per throw.`,
-  });
-}
+// The stars a gauntlet of `level` throws.
+export const gauntletStars = (level) => STARS.reduce((best, s) => (s.level <= (level ?? 0) ? s : best), STARS[0]);
 
 add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 620, effect: { mp: 300 }, color: '#a58cff', desc: 'Restores 300 MP.' });
 add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 3000, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });

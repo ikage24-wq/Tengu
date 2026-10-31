@@ -181,15 +181,12 @@ test('death costs some EXP but never a level', () => {
   assert.ok(deathExpLoss(10, 4) > deathExpLoss(10, 100));
 });
 
-test('sorting a bag tab merges split stacks, orders gear by slot and level, and keeps star sets in order', () => {
+test('sorting a bag tab merges split stacks and orders gear by slot and level', () => {
   const inv = createInventory();
   inv.use.push({ id: 'blue_potion', qty: 5 }, { id: 'red_potion', qty: 150 }, { id: 'red_potion', qty: 120 }, { id: 'blue_potion', qty: 3 });
-  const stars = Object.values(ITEMS).filter((d) => d.star).slice(0, 2);
-  inv.use.push({ id: stars[1].id, qty: 10 }, { id: stars[0].id, qty: 4 });
   sortTab(inv, 'use');
   assert.equal(countItem(inv, 'red_potion'), 270);
   assert.equal(countItem(inv, 'blue_potion'), 8);
-  assert.deepEqual(inv.use.slice(0, 2).map((e) => e.id), [stars[1].id, stars[0].id]);
   assert.deepEqual(inv.use.filter((e) => e.id === 'red_potion').map((e) => e.qty), [STACK_MAX, 70]);
   assert.equal(inv.use.filter((e) => e.id === 'blue_potion').length, 1);
 

@@ -33,11 +33,6 @@ function lum(hex) {
 }
 const readable = (c) => shade(c, lum(c) > 0.75 ? -45 : -8);
 
-// A set of stars sells for what its stars are worth.
-function starSellPrice(def, qty) {
-  return Math.max(1, Math.floor((def.price * 0.4 * qty) / def.stack));
-}
-
 // A shop piece, for its stats and tooltip before you buy it (stats as sold).
 const previews = new Map();
 function makePreview(id) {
@@ -45,18 +40,17 @@ function makePreview(id) {
   return previews.get(id);
 }
 
-// What one costs to buy (a whole set, for stars), and what one sells for (a whole set or piece).
+// What one costs to buy, and what one sells for.
 const unitCost = (def) => def.price;
-const unitGain = (def, e) => (def.star ? starSellPrice(def, e.qty) : sellPrice(e.id, e.inst));
+const unitGain = (def, e) => sellPrice(e.id, e.inst);
 
 const kindOf = (def) => {
   if (def.type === 'equip') return def.slot === 'weapon' ? def.weaponType[0].toUpperCase() + def.weaponType.slice(1) : SLOT_NAMES[def.slot];
-  if (def.star) return 'Throwing stars';
   return def.type === 'use' ? 'Consumable' : 'Material';
 };
 
 // The rows of a tab. Buying: the shop's stock in a category. Selling: your bag tab, with
-// stackables gathered into one row per item (star sets stay one row per set).
+// stackables gathered into one row per item.
 function entriesOf(npc, char, dlg) {
   if (dlg.tab === 0) {
     const kind = (id) => (ITEMS[id].type !== 'equip' ? 3 : ITEMS[id].slot === 'weapon' ? 2 : 1);
@@ -68,7 +62,6 @@ function entriesOf(npc, char, dlg) {
     // Quest items stay with you.
     if (ITEMS[e.id].quest) return;
     if (tab === 'equip') out.push({ id: e.id, inst: e, index, tab, key: `u${e.uid}` });
-    else if (ITEMS[e.id].star) out.push({ id: e.id, qty: e.qty, index, tab, star: true, key: `s${index}:${e.id}` });
     else {
       const have = out.find((o) => o.id === e.id);
       if (have) have.qty += e.qty;
@@ -182,12 +175,9 @@ function listRow(ui, world, dlg, e, x, y, w, th) {
   if (def.type === 'equip') {
     if (def.reqLevel) sub += ` · Lv ${def.reqLevel}`;
     if (char.level < def.reqLevel) subColor = COLORS.bad;
-  } else if (def.star) {
-    sub = `Lv ${def.reqLevel} · +${def.star.watk} attack${e.qty != null && e.qty < def.stack ? ` · ${e.qty}/${def.stack}` : ''}`;
-    if (char.level < def.reqLevel) subColor = COLORS.bad;
   }
   const have = dlg.tab === 0 && def.type !== 'equip' ? countItem(char.inventory, e.id) : e.qty;
-  if (have && def.type !== 'equip' && !def.star) sub += dlg.tab === 0 ? ` · have ${have}` : ` · x${have}`;
+  if (have && def.type !== 'equip') sub += dlg.tab === 0 ? ` · have ${have}` : ` · x${have}`;
   text(ctx, fit(ctx, sub, w - priceW - 30, 6.5, false), x + 26, y + 18, { size: 6.5, color: subColor });
   // The price: what one costs (or sells for); red when you can't afford it.
   const price = dlg.tab === 0 ? unitCost(def, variant) : unitGain(def, e);
@@ -200,10 +190,10 @@ function listRow(ui, world, dlg, e, x, y, w, th) {
 
 // How many of the picked item the stepper can go up to.
 function maxQty(char, dlg, e, def, variant) {
-  if (def.type === 'equip' || (dlg.tab === 1 && def.star)) return 1;
+  if (def.type === 'equip') return 1;
   if (dlg.tab === 1) return e.qty;
   const each = unitCost(def, variant);
-  return Math.max(1, Math.min(def.star ? 10 : STACK_MAX, Math.floor(char.gold / Math.max(1, each))));
+  return Math.max(1, Math.min(STACK_MAX, Math.floor(char.gold / Math.max(1, each))));
 }
 
 // Buys or sells `qty` of an entry. Returns true when it went through.
@@ -220,7 +210,7 @@ function trade(world, dlg, e, qty) {
     }
     const item = def.type === 'equip' ? makeEquip(e.id) : e.id;
     // Stars come by the full set; addItem splits them into sets.
-    if (!addItem(char.inventory, item, def.type === 'equip' ? 1 : def.star ? def.stack * qty : qty)) {
+    if (!addItem(char.inventory, item, def.type === 'equip' ? 1 : qty)) {
       world.log('Your bag is full.', '#ffb3c6');
       return false;
     }
@@ -233,9 +223,6 @@ function trade(world, dlg, e, qty) {
   if (e.inst) {
     char.inventory.equip.splice(char.inventory.equip.indexOf(e.inst), 1);
     gain = sellPrice(e.id, e.inst);
-  } else if (def.star) {
-    char.inventory.use.splice(e.index, 1);
-    gain = starSellPrice(def, e.qty);
   } else {
     removeItem(char.inventory, e.id, qty);
     gain = sellPrice(e.id) * qty;
@@ -267,7 +254,7 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
   const lines = ctx.measureText(name).width > tw ? 2 : 1;
   let ny = wrap(ctx, name, tx, y + 15, tw, { size: 8.5, bold: true, color, lineHeight: 9.5 });
   if (lines === 1) ny = y + 25;
-  const why = def.type === 'equip' ? equipBlocker(char, shown) : def.star && char.level < def.reqLevel ? `needs level ${def.reqLevel}` : null;
+  const why = def.type === 'equip' ? equipBlocker(char, shown) : null;
   text(ctx, fit(ctx, why ? `Can't use: ${why}` : `${kindOf(def)}${def.reqLevel ? ` · Lv ${def.reqLevel}` : ''}`, tw, 6.5, Boolean(why)), tx, ny + 1, { size: 6.5, bold: Boolean(why), color: why ? COLORS.bad : COLORS.muted });
 
   let cy = y + 48;
@@ -301,7 +288,7 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
     if (!char.equipment[def.slot]) text(ctx, `Nothing worn as ${SLOT_NAMES[def.slot].toLowerCase()}`, x + 51, cy + 50, { size: 6, color: COLORS.muted });
     cy += 58;
   } else {
-    const desc = def.star ? `Attack +${def.star.watk}. They never run out; a gauntlet always throws the strongest stars you own.` : def.desc ?? '';
+    const desc = def.desc ?? '';
     cy = wrap(ctx, desc, x + 7, cy + 2, w - 14, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 2;
     const have = countItem(char.inventory, e.id);
     text(ctx, have ? `You have ${have}` : "You don't have any", x + 7, cy + 2, { size: 6.5, bold: true, color: have ? th.dark : COLORS.muted });
@@ -322,7 +309,6 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
     if (button(ui, x + 62, sy, 16, 15, '+', { size: 9 })) dlg.qty += step;
     if (button(ui, x + 81, sy, 26, 15, 'Max', { size: 6.5 })) dlg.qty = max;
     dlg.qty = Math.max(1, Math.min(max, dlg.qty));
-    if (def.star && dlg.tab === 0) text(ctx, 'sets', x + 110, sy + 9.5, { size: 6.5, color: COLORS.muted });
   }
   const each = dlg.tab === 0 ? unitCost(def, variant) : unitGain(def, e);
   const total = each * dlg.qty;
@@ -330,6 +316,6 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
   text(ctx, dlg.tab === 0 ? 'Total' : 'You get', x + 7, by + 6, { size: 6.5, bold: true, color: COLORS.muted });
   icon(ctx, 'coin', x + 11, by + 12.5, 7, '#f0b53a');
   text(ctx, total.toLocaleString(), x + 17, by + 15, { size: 8.5, bold: true, color: afford ? COLORS.gold : COLORS.bad });
-  const label = dlg.tab === 0 ? (def.star ? 'Buy sets' : 'Buy') : 'Sell';
+  const label = dlg.tab === 0 ? 'Buy' : 'Sell';
   if (button(ui, x + w - 52, by, 46, 16, label, { enabled: afford, primary: dlg.tab === 0, theme: dlg.tab === 1 ? 'peach' : null, size: 8 })) trade(world, dlg, e, dlg.qty);
 }

@@ -3,7 +3,7 @@
 import { SETS } from '../data/sets.js';
 import { setsWorn, computeStats } from '../core/stats.js';
 import { physicalRange, magicRange } from '../core/formulas.js';
-import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor } from '../data/items.js';
+import { ITEMS, RARITIES, ELEMENT_NAMES, variantsFor, gauntletStars } from '../data/items.js';
 import { itemName } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
@@ -38,6 +38,10 @@ export function itemTooltip(char, id, inst = null) {
   if (def.type === 'equip') {
     const kind = def.slot === 'weapon' ? def.weaponType[0].toUpperCase() + def.weaponType.slice(1) : def.slot[0].toUpperCase() + def.slot.slice(1);
     lines.push({ text: kind, color: COLORS.muted });
+    if (def.weaponType === 'gauntlet') {
+      const st = gauntletStars(def.reqLevel);
+      lines.push({ text: `Throws ${st.name}: attack +${st.watk}${st.element ? `, ${ELEMENT_NAMES[st.element]}` : ''}`, bold: true, color: '#9a7fd0' });
+    }
     const lvOk = !char || char.level >= def.reqLevel;
     lines.push({ text: `Req. level ${def.reqLevel}`, color: lvOk ? COLORS.muted : COLORS.bad });
     if (def.family) {

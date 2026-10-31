@@ -1,7 +1,7 @@
 // Item instances: what a specific sword or hat in your bag looks like.
 // Definitions live in data/items.js; instances carry their stats, rarity, color and polish.
 
-import { ITEMS, RARITIES, variantsFor } from '../data/items.js';
+import { ITEMS, RARITIES, variantsFor, gauntletStars } from '../data/items.js';
 
 let nextUid = 1;
 
@@ -106,4 +106,11 @@ export function polish(char, inst, rng = Math.random) {
   for (const [k, v] of Object.entries(polishGain(inst))) inst.stats[k] = (inst.stats[k] ?? 0) + v;
   inst.polish = (inst.polish ?? 0) + 1;
   return { ok: true, why: null };
+}
+
+// The stars you throw: your gauntlet's own (by its level), or null without one.
+export function thrownStars(char) {
+  const w = char.equipment?.weapon;
+  const def = w && ITEMS[w.id];
+  return def?.weaponType === 'gauntlet' ? gauntletStars(def.reqLevel) : null;
 }

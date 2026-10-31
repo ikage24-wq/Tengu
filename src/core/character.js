@@ -99,11 +99,6 @@ export function advanceJob(char, jobId) {
   char.baseHp += job.advanceHp;
   char.baseMp += job.advanceMp;
   char.sp += 1;
-  // New thieves get a set of stars to throw.
-  if (jobId === 'thief') {
-    addItem(char.inventory, 'star_pebble', ITEMS.star_pebble.stack);
-    char.gotStars = true;
-  }
   const s = computeStats(char);
   char.hp = s.maxHp;
   char.mp = s.maxMp;

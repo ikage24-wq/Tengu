@@ -1,6 +1,7 @@
 // Using attacks and skills: checks, target selection, hit rolls, buffs, heals, and visual effects.
 // Hits are queued with a delay (projectile travel, multi-hit spacing) and applied by the world.
 
+import { thrownStars } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
@@ -11,7 +12,6 @@ import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from '.
 import { guard } from './pets.js';
 import { kitsuneGuard } from './kitsune.js';
 import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, addKi, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage } from './melee.js';
-import { activeStar, useStars } from '../core/inventory.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -83,9 +83,6 @@ export function castBlocker(world, skillId) {
   }
   if (!skillId && world.now < (world.basicReadyAt ?? 0)) return 'busy';
   if (skillId && world.now < (world.skillReadyAt ?? 0)) return 'busy';
-  // A gauntlet throws stars from your bag: none left, nothing to throw.
-  const throwsStars = stats.weaponType === 'gauntlet' && (!skillId || SKILLS[skillId]?.weapons?.includes('gauntlet'));
-  if (throwsStars && SKILLS[skillId]?.type !== 'passive' && (!skillId || char.skills[skillId] > 0) && !activeStar(char)) return 'stars';
   if (!skillId) return null;
   const s = SKILLS[skillId];
   const lv = char.skills[skillId] ?? 0;
@@ -394,9 +391,9 @@ export function cast(world, skillId, rng = Math.random) {
     }
   }
 
-  // Thrown stars come out of your bag, one per star, and carry its look and element.
-  const star = params.projectile && fxKind === 'star' ? useStars(char) : null;
-  const shotElement = star?.star.element ?? element;
+  // Thrown stars are the gauntlet's own, and carry their look and element.
+  const star = params.projectile && fxKind === 'star' ? thrownStars(char) : null;
+  const shotElement = star?.element ?? element;
 
   targets.forEach((m, ti) => {
     const dist = Math.abs(m.x - body.x);
@@ -412,7 +409,7 @@ export function cast(world, skillId, rng = Math.random) {
         at, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: n, knock: params.knock, launch: params.launch,
         stop: weighty ? spellStop(params, ultimate) : undefined,
         freeze: params.freeze, poison: params.poison, stun: params.stun, bleed: params.bleed,
-        school: s?.school, element: star?.star.element,
+        school: s?.school, element: star?.element,
         // What landed (for its sound): the shot, a spell, or a blade.
         via: params.projectile || fxKind === 'rain' ? fxKind : type === 'magic' || type === 'heal' ? 'spell' : 'blade',
       });

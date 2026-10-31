@@ -1,10 +1,9 @@
 // Always-on HUD: status bar, hotkeys, minimap, buffs, quest tracker, message log, map banner.
 
 import { SKILLS, skillAt } from '../data/skills.js';
-import { ITEMS } from '../data/items.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
-import { countItem, activeStar } from '../core/inventory.js';
+import { countItem } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
@@ -312,7 +311,6 @@ export function drawHud(ui, state, world) {
   });
 
   drawHits(ui, state, world);
-  if (s.weaponType === 'gauntlet') drawStars(ui, world);
   const gauge = gaugeOf(char);
   if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0);
   if (settings.minimap) drawMinimap(ui, world);
@@ -364,19 +362,6 @@ export function hotkeyAt(x, y) {
   const i = Math.floor((x - HK_X) / HK_STEP);
   if (i < 0 || i >= HOTKEYS.length || x > HK_X + i * HK_STEP + HK_D) return null;
   return y >= HK_Y && y < HK_Y + HK_D ? HOTKEYS[i] : null;
-}
-
-// The throwing stars a gauntlet is throwing (the strongest set you own; they never run out).
-function drawStars(ui, world) {
-  const { ctx } = ui;
-  const char = world.char;
-  const set = activeStar(char);
-  const x = 584;
-  const y = TRAY_Y - 22;
-  box(ctx, x, y, 52, 16, { fill: 'rgba(255,250,248,0.94)', edge: set ? '#f4bcd8' : COLORS.bad, r: 8, width: 1.5 });
-  if (set) drawItemIcon(ctx, set.id, x + 2, y);
-  text(ctx, set ? `+${ITEMS[set.id].star.watk}` : 'No stars', set ? x + 48 : x + 26, y + 11, { size: set ? 8 : 7, bold: true, align: set ? 'right' : 'center', color: set ? COLORS.ink : COLORS.bad });
-  if (hover(ui, x, y, 52, 16)) tooltip(ui, set ? itemTooltip(char, set.id) : [{ text: 'No throwing stars', bold: true, color: COLORS.bad }, { text: 'Shops sell them by the set.', size: 8, color: COLORS.muted }]);
 }
 
 // A job's gauge over the hotkeys: a Warrior's Valor (a shield), an Archer's Momentum (a feather), a

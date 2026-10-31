@@ -25,12 +25,12 @@
 // a Berserker's blow builds (see addRage).
 // Pressing again while a step plays carries on to the next one; wait too long and it starts over.
 
+import { thrownStars } from '../core/items.js';
 import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
-import { useStars, activeStar } from '../core/inventory.js';
 import { tickPets, sendSnow, moonfall, howl, duetSnow, duetMoon } from './pets.js';
 import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
@@ -807,7 +807,7 @@ export const STREAMS = {
       { at: 1.55, figures: ['foxfloat', 'foxfloat2'] },
     ],
     air: (heat) => (heat >= 0.9 ? ['foxairthrow', 'foxairspin'] : ['foxairthrow']),
-    ready: (world) => Boolean(activeStar(world.char)),
+    ready: (world) => Boolean(thrownStars(world.char)),
     // (On the ground her throws come from the hip, lower than a bow hand.)
     strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, oy: air ? 0 : 5, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
     // No finisher: it's for holding on mobs and bosses, so letting go just stops (the wheel of
@@ -1777,16 +1777,8 @@ function fire(world, strike) {
   // Overcharge: her next few bolts go out as massive bolts of lightning.
   let s = hasCharge(world.char) ? overcharged(world, strike) : strike;
   const { body } = world;
-  // A gauntlet throws real stars: one each, from the set in your bag.
-  let star = null;
-  if (STAR_SHOTS.has(s.shot) && !s.phantom && !s.free) {
-    star = useStars(world.char);
-    if (!star) {
-      if (world.warnTimer <= 0) world.log('Out of throwing stars!', '#ffb3c6');
-      world.warnTimer = 1.5;
-      return;
-    }
-  }
+  // A gauntlet throws its own stars (their look and element).
+  const star = STAR_SHOTS.has(s.shot) && !s.phantom && !s.free ? thrownStars(world.char) : null;
   // Hawkeye (full Momentum): arrows fly faster and reach further, and curve to find monsters above
   // and below (a taller search box, and a bend in their flight as they home in).
   if (hawkeye(world) && !s.hawkeye) {
@@ -1816,7 +1808,7 @@ function fire(world, strike) {
   if (s.muzzle) world.fx.push({ kind: s.muzzle, school: s.school, x: ox, y: oy, dir: s.dir, t: 0, dur: 0.6, seed: Math.random() });
   const speed = s.speed ?? 680;
   const box = { w: s.range, h: s.h ?? 60 };
-  const element = star?.star.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
+  const element = star?.element ?? (s.key.startsWith('basic') ? weaponElement(world.char) : null);
   // A twin arrow trails its first a beat behind (`lag`).
   const lag = s.lag ?? 0;
   // A shot aimed at a monster follows it in flight (`mob`; see world.js): it homes in on where the

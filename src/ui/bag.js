@@ -232,7 +232,7 @@ export function bagWindow(ui, state, world) {
       itemShadow(ctx, m.x, m.y + 10);
       drawItemIcon(ctx, inst.id, m.x - 8, m.y - 11, 1, inst.variant);
       const ground = d.from === 'bag' && overGround(ui, state, win);
-      const hint = d.from === 'bag' && hotkeyAt(m.x, m.y) && tab === 'use' && !ITEMS[inst.id].star ? 'Set hotkey' : d.from === 'bag' && overBin ? 'Throw away?' : ground ? (tab === 'cash' ? "Can't drop Cash items" : 'Drop on the ground') : null;
+      const hint = d.from === 'bag' && hotkeyAt(m.x, m.y) && tab === 'use' ? 'Set hotkey' : d.from === 'bag' && overBin ? 'Throw away?' : ground ? (tab === 'cash' ? "Can't drop Cash items" : 'Drop on the ground') : null;
       if (hint) {
         ctx.font = '800 6.5px sans-serif';
         const tw = ctx.measureText(hint).width + 10;
@@ -277,7 +277,7 @@ function placeCarried(world, win, d, at) {
       activate({ windows: { bag: win } }, world, tab, d.index);
     } else if (at.bin) {
       Object.assign(win, { confirm: { tab, entry }, dropAsk: null });
-    } else if (at.key && tab === 'use' && !ITEMS[entry.id].star) {
+    } else if (at.key && tab === 'use') {
       for (const [k, b] of Object.entries(char.hotkeys)) if (b?.item === entry.id) delete char.hotkeys[k];
       char.hotkeys[at.key] = { item: entry.id };
       world.log(`${ITEMS[entry.id].name} set to ${at.key.replace('Key', '').replace('Digit', '')}.`, '#d4cbe8');
@@ -382,12 +382,10 @@ function gridCell(ui, state, world, tab, list, i, x, y, win, dropHere) {
   }
   // One badge in the top-left corner, most important first.
   const key = tab === 'use' ? hotkeyOf(char, entry.id) : null;
-  const active = tab === 'use' && def.star && char.inventory.use.find((e) => ITEMS[e.id].star && char.level >= ITEMS[e.id].reqLevel) === entry;
   if (!win.seen.has(seenKey(tab, entry))) {
     chip(ctx, x, y, 'NEW', '#ff6fae');
     if (hot) win.seen.add(seenKey(tab, entry));
   } else if (tab === 'etc' && questsWanting(char, entry.id).length) chip(ctx, x, y, '!', MINT.dark);
-  else if (active) chip(ctx, x, y, '▶', COLORS.accent);
   else if (key) chip(ctx, x, y, key, LAV.main);
   // No tooltip here: the detail strip under the grid shows the hovered item.
   const right = ui.mouse.right && hot;
@@ -514,9 +512,9 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
     wrap(ctx, def.cover ? 'Reskins the weapon you hold; its stats stay the same.' : "Shows over your gear's look; your gear keeps its stats.", tx, y + 36, tw, { size: 7, color: COLORS.muted, lineHeight: 9 });
     label = 'Wear';
   } else {
-    const kind = def.star ? 'Throwing stars' : tab === 'use' ? 'Consumable' : 'Material';
+    const kind = tab === 'use' ? 'Consumable' : 'Material';
     text(ctx, `${kind}${entry.qty > 1 ? ` · ${entry.qty} in the bag` : ''}`, tx, y + 25, { size: 7, color: COLORS.muted });
-    const desc = def.star ? `Attack +${def.star.watk}. They never run out; your gauntlet throws the strongest stars you own.` : def.desc ?? '';
+    const desc = def.desc ?? '';
     let ly = wrap(ctx, desc, tx, y + 36, tw, { size: 7, color: COLORS.ink, lineHeight: 9 });
     // Which hotkey it's on, and which quests want it.
     const key = tab === 'use' ? hotkeyOf(char, entry.id) : null;
@@ -530,7 +528,7 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       text(ctx, fit(ctx, `${q.name}: ${q.have}/${q.count}`, tw - 80, 6.5), tx + 12, ly + 1, { size: 6.5, bold: true, color: MINT.ink });
     }
     if (def.price) foot = `Sells for ${sellPrice(entry.id).toLocaleString()} gold each`;
-    if (tab === 'use') label = def.star ? null : 'Use';
+    if (tab === 'use') label = 'Use';
   }
   if (foot) text(ctx, fit(ctx, foot, tw - (label ? 74 : 24) - (tab !== 'cash' ? 21 : 0), 6.5, false), tx, by + 11, { size: 6.5, color: tab === 'equip' ? COLORS.muted : COLORS.gold, bold: tab !== 'equip' });
   // Actions, right to left: the main one, drop on the ground, and the bin (which asks first).
@@ -567,9 +565,6 @@ function activate(state, world, tab, index) {
     bag.sel = -1;
     bag.view = 1;
   } else if (tab === 'use') {
-    const def = ITEMS[entry.id];
-    if (!def.star) {
-      useItem(world, entry.id);
-    }
+    useItem(world, entry.id);
   }
 }

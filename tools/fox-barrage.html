@@ -28,7 +28,6 @@ preloadFxSprites();
 const c = balanceChar('kitsune', 60);
 c.mp = c.baseMp = 99999;
 c.skills.foxbarrage = 10;
-c.inventory.use.unshift({ id: 'star_pebble', qty: 1 });
 const w = createWorld(c);
 w.log = () => {};
 loadMap(w, 'woods', 'west');

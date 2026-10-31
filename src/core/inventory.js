@@ -1,5 +1,5 @@
 // Inventory with three tabs. Equipment is one item per cell; Use and Etc items stack (up to
-// STACK_MAX, or the item's own `stack`, like a set of throwing stars).
+// STACK_MAX, or the item's own `stack`).
 
 import { ITEMS } from '../data/items.js';
 import { makeEquip } from './items.js';
@@ -68,27 +68,8 @@ export function removeItem(inv, id, qty = 1) {
   return qty - left;
 }
 
-// The throwing stars a gauntlet throws: always the strongest set you own that your level allows.
-export function activeStar(char) {
-  let best = null;
-  for (const e of char.inventory.use) {
-    const def = ITEMS[e.id];
-    if (!def.star || e.qty <= 0 || char.level < def.reqLevel) continue;
-    if (!best || def.star.watk > ITEMS[best.id].star.watk) best = e;
-  }
-  return best;
-}
-
-// The stars a throw flies with. Stars never run out: one in your bag throws forever. Returns the
-// set's item def, or null if there were none.
-export function useStars(char) {
-  const stack = activeStar(char);
-  return stack ? ITEMS[stack.id] : null;
-}
-
 // Tidies a tab: partial stacks of the same item merge, then items line up by kind. Equipment
 // goes by slot, then highest level and rarity first; stackables follow the catalogue's order.
-// Throwing-star sets keep their own order and never merge.
 const SLOT_ORDER = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
 let catalogue = null;
 export function sortTab(inv, tab) {
@@ -99,10 +80,6 @@ export function sortTab(inv, tab) {
     const merged = [];
     for (const e of list) {
       const def = ITEMS[e.id];
-      if (def.star) {
-        merged.push(e);
-        continue;
-      }
       const max = def.stack ?? STACK_MAX;
       let left = e.qty;
       for (const m of merged) {
@@ -119,8 +96,7 @@ export function sortTab(inv, tab) {
   const rank = (e) => {
     const def = ITEMS[e.id];
     if (tab === 'equip' || tab === 'cash') return [SLOT_ORDER.indexOf(def.slot), -(def.reqLevel ?? 0), -(e.rarity ?? 0), catalogue.get(e.id)];
-    // Stars first (as a block, in their own order), then everything else by catalogue order.
-    return def.star ? [0, 0] : [1, catalogue.get(e.id)];
+    return [catalogue.get(e.id)];
   };
   const keyed = list.map((e, i) => ({ e, k: [...rank(e), i] }));
   keyed.sort((a, b) => {
@@ -144,7 +120,7 @@ export function moveItem(inv, tab, from, to) {
   }
   const b = list[to];
   const def = ITEMS[a.id];
-  if (b.id === a.id && a.uid == null && b.uid == null && !def.star) {
+  if (b.id === a.id && a.uid == null && b.uid == null) {
     const max = def.stack ?? STACK_MAX;
     const take = Math.min(a.qty, max - b.qty);
     if (take <= 0) {

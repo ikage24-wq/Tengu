@@ -6,17 +6,8 @@ import { surfacesOf } from './physics.js';
 
 const GEAR_CHANCE = 0.045;
 const POTION_CHANCE = 0.12;
-const STAR_CHANCE = 0.004; // a boss rolls BOSS_STAR_CHANCE
-const BOSS_STAR_CHANCE = 0.2;
 const LIFETIME = 90;
 const PICKUP_RANGE = 26;
-
-// Stars shops don't sell drop as a full set, from monsters near their level.
-const DROP_STARS = Object.values(ITEMS).filter((d) => d.star && d.drop);
-function starFor(level, rng) {
-  const near = DROP_STARS.filter((d) => d.reqLevel <= level + 5 && d.reqLevel >= level - 20);
-  return near.length ? near[Math.floor(rng() * near.length)] : null;
-}
 
 function potionFor(level, rng) {
   if (rng() < 0.3) return level < 20 ? 'blue_potion' : 'mana_elixir';
@@ -49,10 +40,6 @@ export function rollLoot(def, rng = Math.random, fits = null) {
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
   }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });
-  if (rng() < (def.boss ? BOSS_STAR_CHANCE : STAR_CHANCE)) {
-    const star = starFor(def.level, rng);
-    if (star) loot.push({ kind: 'item', id: star.id, qty: star.stack });
-  }
   const gearRolls = def.boss ? 3 : rng() < GEAR_CHANCE ? 1 : 0;
   for (let i = 0; i < gearRolls; i++) {
     const id = gearFor(def.level, rng, fits);

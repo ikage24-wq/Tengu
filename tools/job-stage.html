@@ -49,7 +49,6 @@ for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job)) c.skill
 // (?weapon=none fights bare-handed.)
 if (q.get('weapon') !== 'none') c.equipment.weapon = makeEquip(`${q.get('weapon') ?? WEAPON[job] ?? 'sword'}_60`, {});
 else delete c.equipment.weapon;
-addItem(c.inventory, 'star_pebble', 999);
 c.mp = 99999;
 c.baseMp = 99999;
 const w = createWorld(c);
