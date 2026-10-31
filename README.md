@@ -307,6 +307,8 @@ to clear it.
   then Buy & Wear. You start with 5,000 Cash and earn 250 per level and 300 per quest. Bought
   pieces live in the bag's **Cash** tab; the equipment panel switches between **Gear** and
   **Outfit** (double-click to take a piece off). Other players dress up too, top players most of all.
+- **Sell junk** — on any shop's Sell tab, one button sells every monster drop your quests and the
+  recipes you know don't need (the tooltip lists what goes and for how much).
 - **Shops** — Pip, Tora, Marlo, and Nim sell gear for *your* job at their town's levels (with
   All / Gear / Arms / Other filters), and weapons you can use. Half of all gear drops are for
   your job, and quest gear rewards come as your job's piece. Other players wear their own job's
@@ -390,6 +392,11 @@ to clear it.
   walk cycle and idle motion, and they show how they feel: blinking and humming when calm, fierce brows and an anger mark
   when they chase you (hit monsters do), >< eyes when hit, and x eyes when they poof. The boss
   telegraphs a ground slam.
+- **Elite monsters** — out in the fields, a monster now and then comes back as an elite of its
+  kind (embers rising round it, a gold ★ Elite tag and an orange HP bar): six times the HP, half
+  again the attack, five times the EXP and four times the gold, and it always drops a piece of gear,
+  Rare or better. It counts as its kind for quests and the Monster Book. Friends in your room see it
+  too.
 - **Idle animations** — standing still with a weapon plays a routine for its type (sword
   flourish, axe on the shoulder, spear twirl, wand sparkles, staff tap, bow check, crossbow aim,
   dagger toss, gauntlet flick). The level 30 paths get a quiet aura that fades in while idle in the
@@ -400,7 +407,7 @@ to clear it.
   pops open with a little bounce. The HUD has a portrait medallion with your hero's face and
   level, glossy HP and MP capsules (a pale trail shows what you just lost, and the heart pulses
   when HP runs low), an EXP strip along the bar's top edge, round icon buttons for each window, and
-  keycap hotkeys. The minimap, the quest tracker card, ringed buff timers, and a ribbon banner
+  keycap hotkeys. The minimap, the quest tracker card (each quest's map pin starts the guide trail to it), ringed buff timers, and a ribbon banner
   when you enter a map round it out. NPCs talk in a visual-novel box: they stand large at the left
   with a name ribbon in their role's color, and their words type out (click to skip).
 - **Parties** — right-click another player for a menu (view profile, invite to party, browse

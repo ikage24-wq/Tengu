@@ -168,13 +168,17 @@ function drawMobs(ctx, world, cam, time) {
     const amp = struck ? Math.min(2.5, 0.8 + m.stopPeak * 18) * (world.hitstop / m.stopPeak) : 0;
     const sign = Math.floor(time * 60) % 2 ? 1 : -1;
     const ang = m.air > 0 ? Math.floor(time * 60) * 2.4 : 0;
+    // An elite: warm embers rising round it (behind), its tag over its head.
+    const ek = m.elite && m.hp > 0 ? Math.min(1, m.def.w / 40) : 0;
+    if (ek) fxSprite(ctx, 'celembers', x, y, { t: time * 0.6 + m.uid, scale: 0.9 + 0.5 * ek, alpha: 1 });
     drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sign * amp * Math.sin(ang), time, world.now);
+    if (ek) text(ctx, '★ Elite', x, y - m.def.h - 10, { size: 7, bold: true, align: 'center', color: '#ffd24f', outline: '#7a3f1a' });
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
     if (m.def.boss) boss = m;
-    if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
+    if (settings.monsterHp && m.hp > 0 && (m.hp < m.def.hp || m.elite) && !m.def.boss) {
       const w = Math.max(24, m.def.w);
       box(ctx, x - w / 2, y - m.def.h - 7, w, 4, { fill: 'rgba(58,45,79,0.5)', edge: null, r: 2 });
-      box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: COLORS.hp, edge: null, r: 2 });
+      box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: m.elite ? '#ffb340' : COLORS.hp, edge: null, r: 2 });
     }
   }
   if (boss && boss.hp > 0) {

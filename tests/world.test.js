@@ -429,3 +429,35 @@ test('bag items dropped in the world land in front of you and only come back wit
   w.char.inventory.cash.push(makeEquip('hat_0'));
   assert.equal(dropItem(w, 'cash', 0), false);
 });
+
+test('elite monsters: tougher and worth more, only in the fields, and they always drop gear', async () => {
+  const { makeElite, ELITE, spawnMob } = await import('../src/world/mobs.js');
+  const { rollLoot } = await import('../src/world/drops.js');
+  const { MOBS } = await import('../src/data/mobs.js');
+  const map = (await import('../src/data/maps.js')).MAPS.meadow1;
+  const m = spawnMob(map, { mob: 'snailbun', x: 300, y: map.groundY });
+  const plain = MOBS.snailbun;
+  makeElite(m);
+  assert.ok(m.elite);
+  assert.equal(m.hp, plain.hp * ELITE.hp);
+  assert.equal(m.def.exp, plain.exp * ELITE.exp);
+  assert.equal(MOBS.snailbun.hp, plain.hp, 'the other snails stay ordinary');
+  assert.equal(m.def.id, 'snailbun', 'counts as its kind for quests and the book');
+  for (let i = 0; i < 20; i++) {
+    const gear = rollLoot(m.def).filter((l) => l.inst);
+    assert.ok(gear.length >= 1 && gear.every((l) => l.inst.rarity >= 1), 'always gear, Rare or better');
+  }
+  // The fields roll for elites; towns never do.
+  const w = createWorld(createCharacter('Hunter', {}));
+  w.god = true;
+  const roll = Math.random;
+  Math.random = () => 0.001;
+  try {
+    loadMap(w, 'meadow1', 'west');
+    for (const m2 of w.mobs) m2.hp = 0;
+    for (let i = 0; i < 60 * 40 && !w.mobs.some((x) => x.elite); i++) updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
+    assert.ok(w.mobs.some((x) => x.elite), 'an elite came back in the field');
+  } finally {
+    Math.random = roll;
+  }
+});

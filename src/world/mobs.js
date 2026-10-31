@@ -25,6 +25,19 @@ function surfaceFor(map, x, y) {
   return fits[0] ?? groundPieceAt(map, x);
 }
 
+// Elite monsters: now and then a field monster comes back as an elite of its kind, tougher and
+// worth a lot more (`ELITE`: how much more HP, attack, EXP and gold). Its own copy of the
+// monster's def, so the others stay ordinary; the Monster Book and quests count it as its kind.
+export const ELITE_CHANCE = 0.03;
+export const ELITE = { hp: 6, atk: 1.5, exp: 5, gold: 4 };
+export function makeElite(m) {
+  const d = m.def;
+  m.elite = true;
+  m.def = { ...d, elite: true, hp: d.hp * ELITE.hp, atk: Math.round(d.atk * ELITE.atk), exp: d.exp * ELITE.exp, gold: d.gold.map((g) => g * ELITE.gold) };
+  m.hp = m.def.hp;
+  return m;
+}
+
 export function spawnMob(map, spawn) {
   const def = MOBS[spawn.mob];
   const surface = surfaceFor(map, spawn.x, spawn.y);
