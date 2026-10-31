@@ -19,7 +19,10 @@ the phone sideways).
 
 ### With friends
 
-Open **Play with Friends** (the two-people button on the menu bar, or N) and press **Host a room**:
+**Play with Friends** (the two-people button on the menu bar, or N) has three tabs: **Friends**
+(the players you've added: who's on and where, Invite, a friend asking you to hunt), **Fame** (the
+hall of fame, ranking you among the server by level, kills and raids), and **Room**. On Room, press
+**Host a room**:
 you get a six-digit code. Friends (up to 3) open the same window, type the code on the pad, and
 press **Join**. Everyone in the room sees each other on the same map, fights the same monsters,
 and chats; a monster's fall gives full EXP to everyone who hit it and a party share to the others
@@ -440,7 +443,10 @@ to clear it.
   - **Rookie**: gets distracted and wanders off to look at things.
   - **Show-off**: flashy specials, flips, and taunts.
 
-  Members pick a side of a monster and keep it and hold a good spot instead of chasing every step,
+  Members fight with their job's own combos, skills and finisher (see Other players), monsters
+  fight them back, and one who falls under a tombstone walks back in to you through a portal a
+  little later. While your HP is low they go for the monsters around you. Members pick a side of a
+  monster and keep it and hold a good spot instead of chasing every step,
   so their movement stays calm. A party panel under the minimap
   shows everyone with their playstyle (click for a profile,
   right-click to remove someone); Leave, or right-clicking yourself, leaves the party, and members
@@ -731,7 +737,9 @@ to clear it.
   the browser.
 - **Chat** — press Enter to talk. Messages show in the log and as a speech bubble over your head,
   emoticons like :) :D ;) >:( :3 <3 B) make your face act them out, `/e <face>` shows any
-  expression, NPCs chat now and then, and NPCs nearby say hi back when you greet them.
+  expression, and NPCs nearby say hi back when you greet them. Townsfolk say a line now and then
+  while you're within earshot (their own, and their trade's: archers, trainees, kids, gossips), in a
+  shuffled order so one only comes back after all the others.
 - **Towns and the world map** — each job has a home town in its own style, laid out in quarters
   around one signature landmark, with big homes of its own along the street and places to climb:
   Sprout Village (archers: two-storey cottages with a deck walk on posts, the shop street, a plaza
@@ -759,28 +767,75 @@ to clear it.
   sword drills, Kestrel shoots arrows, Elowen floats in meditation, Nim reads a floating spellbook,
   Vex flips a dagger, Rook scans the sea through a spyglass, Marlo flips a coin, Lulu snips and
   twirls, and Mira waves (they turn to face you when you come over). Villagers stroll the streets.
-- **Other players** — the towns have a small, changing population of generated players, each a
-  real character: a level (pros at a low rate, Lv 56+ with endgame gear and a gold name tag), a job
-  that fits it, a stat build (pure, standard, or hybrid), rolled gear, and sometimes a guild. They
-  log in, wander, chat in their own typing style from a procedural grammar (trades, LFG, questions,
-  small talk, bragging, newbie questions; a line is never said twice), travel between towns
-  through the portals, and log out for good; a name never comes back. Some set up a shop on a rug
-  with a sign and sell their loot and gear, which you can buy. Now and then one walks over to wave
-  and say hi to you by name (rarely, and each only once). Click any player, or yourself, to see a
-  profile with their look, gear, full stats, build, guild, and shop. About 22 are online (never
-  fewer than 20; someone logging out is soon replaced), spread over the towns by level: beginners
-  in Sprout Village, mid levels in Ember Crag and Pastel Harbor, veterans and pros in Moonleaf Grove,
-  with a few wandering anywhere. The busier a town, the less each person chats.
-  They talk about everything in the game (fishing, cooking, the queens, Rootwood Hollow, sets,
-  polishing, titles), and they talk back: they say hi when you do, answer questions from the
-  game's own data ("where is Clover Hills?", "where do Jackalopes spawn?", "where can I catch Moon
-  Koi?", "what level is Mossy Woods?"), cheer when you level up, change job or land a good fish,
-  and return your emotes. In town they fish off the harbor pier, cook at the stove, stop to chat
-  with each other in little back-and-forth conversations, and emote; many wear a title and pieces
-  of a gear set. A few also hunt the field you're on (with their own playstyles, paths over ledges
-  and ropes); they leave the monsters by you alone, their kills give you nothing, and they come
-  running when a queen returns for a rematch (her last blow is always yours). Now and then the
-  server shares someone's big moment (a legendary fish, a job, a cleared dungeon, a passed trial).
+- **Other players** — the server is full of generated players, each a real character: a level
+  (pros at a low rate, Lv 56+ with endgame gear and a gold name tag), a job that fits it, a stat
+  build (pure, standard, or hybrid), rolled gear, a title, and sometimes a guild. How many are on
+  follows the real clock: about 13 late at night, 26 in the evening, a few more at the weekend
+  (never more than two under; someone logging out is soon replaced), spread over the towns by level
+  (beginners in Sprout Village, veterans and pros in Moonleaf Grove, at most 8 in one
+  town besides special visitors). They log in, wander, travel between towns through the portals,
+  and log out; a stranger's name never comes back. Click any player, or yourself, for a profile
+  with their look, gear, full stats, build, guild and shop. The systems behind them live in `src/world/` (see Layout).
+  - **In town** they fish off the harbor pier, cook at the stove, stop to chat with each other in
+    little conversations, emote, and open shops on a rug with their loot and gear (a **Haggle**
+    button in the shop asks for a better price: friends and regulars give one, strangers deal,
+    counter, or take offence at a lowball). Now and then one walks over to say hi to you by name.
+  - **Out hunting** a few of them share the field you're on, 2 to 5 by the map's size. They fight
+    like you do: their job's own combo pool (a fresh string each time, steps carrying them forward
+    or back), their job's skills between strings, and their path's finisher once their gauge fills.
+    The Shrine Maiden and Onmyoji use their own spells (Thousand Torii's gates, Ofuda Barrage's
+    talismans, the blessings); bots have no troupe, so an Onmyoji's finisher is a talisman storm.
+    They leave the monsters by you alone and their kills give you nothing. Monsters they hit fight
+    back: they drink potions when low, and with none left they fall, a tombstone drops on them, and
+    they head back to town (to log in again later). They also fluff it now and then (a swing the
+    wrong way, a dash off the ledge), go afk while a monster nibbles at them, and one in a while
+    is a **kill stealer** who takes the monster you're on and gets called out for it.
+  - **Help.** Out in the field with your HP under 30%, a player nearby rushes over, takes on the
+    monsters around you, and heals you or tosses you a potion; say "ty" (or right-click: Say
+    thanks) and they may offer to be friends. Now and then a player in town asks for help with a
+    quest: right-click them (**Help them**) and they join you, and hunting their monsters together
+    earns a gift.
+  - **Friends.** Right-click a player (**Add friend**): friends are saved with your character as they
+    looked, log in now and then (waving if they're by you), ask you along to hunt, and come to you
+    when invited from the Friends tab (N). Their name tags are sky blue.
+  - **Regulars.** Anyone you party with, who helps you, or who spends a while around you is
+    remembered. Next time you play a few are on, grown by how long it's been (levels, a job at 10
+    and 30), and they come over with their news ("remember me? i was lv 8 when we met").
+  - **Raids.** A boss on your map (a queen back for a rematch, the Crystal King on his throne) draws
+    3 or 4 players, a friend among them when one's online. They call out her moves as she shows
+    them, mostly dodge (rookies less), and take the hit when they don't. Once she's down everyone
+    poses for a **group photo**, kept in the Collection (B, Photos).
+  - **Party combos.** Let your gauge finisher loose and the party members fighting by you join in
+    with theirs, a beat apart and harder for it.
+  - **Dungeon groups.** Players shout for the role their group is missing ("LF healer for Rootwood
+    Hollow"); when it's yours and you're on your own, right-click them (**Join their group**) and
+    they take you in.
+  - **Town life.** Duels in town with a crowd cheering; once in a long while a **legend** (Lv 70,
+    a LEGEND badge) logs in and fans follow them about; guilds recruit in chat, a recruiter may ask
+    you to join (right-click: **Join**, and your guild shows under your name; leave from your own
+    menu), guilds hold meetups, and someone storms out now and then; someone goes afk right on a
+    portal; photographers pose at a landmark and ask you into the shot (stand there and the photo is
+    yours too); music jams with notes floating up and people dancing; cosplay as a townsperson or
+    in a queen's colours; umbrellas in the rain and snowball fights in the snow (weather comes and
+    goes on each map).
+  - **Server events.** GM Momo runs Double EXP for five minutes, a Mochi Rain, or Hide and Seek
+    (hidden on a nearby map: find them for gold, Elixirs and Cash). Monsters **invade** the town
+    you're in, and the players there arm themselves and fight with you. Festivals follow the real
+    calendar (Spooky Night in October, the Snow Festival in December, and more) with festival
+    colours, dancing and fireworks. A wandering merchant sets up for a few minutes with odd wares.
+    Players beat on the training dummies in Ember Crag and brag about their damage. A host calls a
+    **fashion show** (right-click them to enter; the best dressed wins gold). Two players get
+    **married** in town, with vows, hearts, confetti and a bouquet (sometimes to you).
+  - **Chat.** They talk about what's real for them: their own weapon, job, title and guild, the map
+    they're on and its monsters and drops, where they're headed next, the weather, and the raid,
+    wedding or invasion that just happened; a line that doesn't fit the speaker isn't used. They
+    talk back too: hi when you say hi, answers from the game's own data ("where is Clover Hills?",
+    "where do Jackalopes spawn?", "what level is Mossy Woods?"), cheers when you level up or land a
+    good fish, and your emotes returned. A phrase sometimes catches on as a meme for a while. All of
+    it goes through one gate (`src/world/chatlog.js`): no line (or one differing only by names and
+    numbers) comes back for ten minutes, nobody speaks of their own accord more than once every 30
+    seconds, and the log takes a line at most every 4 seconds and 7 a minute (the rest show only
+    over their heads); answers to you and party chat skip the waits.
 - **The story** — seven chapters from level 1 to 50 (cozy, with heart). Hayate, the island's
   great Tengu, has fallen asleep and her wind has stopped; Mira takes you in, and chapter by
   chapter you calm each region's lonely spirit: Gnarlroot in the Hollow, then four queens in trials
@@ -806,7 +861,9 @@ to clear it.
   each card adds max HP, and a card mastered (100 defeats, 5 for a boss) adds a point to every
   stat. 23 achievements (levels, hunting, the book, each queen, the story, a full set, a +10
   polish, quests and dailies, playing online, adopting a Mochi, a fortune) each unlock a title to
-  wear in gold under your name, which friends online see too.
+  wear in gold under your name, which friends online see too. **Photos** keeps your last 24 group
+  photos: after a raid (the boss behind everyone who fought it) and from a photographer's shot at a
+  landmark.
 - **Fishing** — buy a Fishing Rod from Pip or Marlo, then find a fish sign by the water: the tide
   pool on Dawnlight Beach, the pond in Clover Hills, the end of Pastel Harbor's pier, the pond in the
   Whispering Glade, the warm pools of Serpent Springs, an ice hole on Frozen Peak, and a pool of
@@ -838,7 +895,14 @@ src/main.js             canvas scaling, screens, fixed-step loop, autosave
 src/input.js            keyboard and mouse (mapped into the 640x360 game space)
 src/core/               pure rules: exp curve, formulas, stats, character, inventory, items, quests, save
 src/data/               content: jobs, skills, items, monsters, maps, NPCs, quests
-src/world/              simulation: physics, monsters, loot, combat, the world update
+src/world/              simulation: physics, monsters, loot, combat, the world update; and the
+                        other players: bots.js (population, towns, hunters), party.js (parties and
+                        how bots fight), chatter.js (what they say), chatlog.js (the chat gate),
+                        buddies.js (friends, help), raids.js (raids, party combos, photos),
+                        drama.js (duels, legends, guilds, afk, the clock), events.js (GM events,
+                        invasions, festivals, the merchant, dummies, fashion shows, memes,
+                        weddings), lives.js (regulars, help requests, weather, photographers, jams,
+                        cosplay), social.js (haggling, lucky drops, dungeon groups, the hall of fame)
 src/render/             drawing: pixel toolkit, hero rig, gear designs, weapon forms, looks, and live effects, towns
                         and elements, animator,
                         particles,
@@ -862,7 +926,9 @@ reward, and portal resolves; every surface of every map can be reached and left 
 (slopes, cliff walls, and party members finding their way between any two spots on every field
 map), world behavior (movement, ropes, portals, NPC
 talk, combat and loot, respawns, death, the boss slam), and dungeons (roles, the group finder,
-threat, and a whole Rootwood Hollow run played by an autopilot).
+threat, and a whole Rootwood Hollow run played by an autopilot). `tests/bots.test.js` covers the
+other players: how they fight, help, raid and talk, every town and server event, and the chat gate;
+it pins the clock (`createBots(world, rng, { clock })`) so runs don't change with the time of day.
 
 ## Credits
 
