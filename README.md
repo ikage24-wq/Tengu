@@ -1,6 +1,6 @@
 # Tengu
 
-A pastel 2D side-scrolling RPG you can play with friends.
+A 2D side-scrolling RPG you can play with friends.
 
 - **Play:** https://ikage24-wq.github.io/Twzt/
 - **Windows:** [Releases](https://github.com/ikage24-wq/Twzt/releases) (updates itself)
