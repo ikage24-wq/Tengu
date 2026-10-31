@@ -98,6 +98,12 @@ function lookingForGroup(M, bots, world) {
 // You answer: they take you into their group, and off you all go.
 export function joinGroup(bots, world, bot) {
   if (!bot.lfg) return null;
+  // (Their group has its other seats: you come alone, not with a party of your own.)
+  if (partyMembers(bots).length || world.dungeon) {
+    const why = world.dungeon ? "You're already in a dungeon." : 'Leave your party first: their group only has room for you.';
+    world.log(why, '#ffb3c6');
+    return why;
+  }
   const id = bot.lfg.dungeon;
   bot.lfg = null;
   joinParty(bots, bot, world);

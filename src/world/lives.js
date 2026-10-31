@@ -19,7 +19,7 @@ import { MAPS } from '../data/maps.js';
 import { LANDMARKS } from '../render/landmarks.js';
 import { queenStyle } from './story.js';
 import { snapshot, remake } from './buddies.js';
-import { joinParty, partyMembers } from './party.js';
+import { joinParty, partyMembers, PARTY_MAX } from './party.js';
 import { addItem } from '../core/inventory.js';
 import { jobChain } from '../data/jobs.js';
 import { botChat } from './chatlog.js';
@@ -153,7 +153,7 @@ const ASK = (mob, n) => [`can someone help me kill ${n} ${mob}s? for my quest`, 
 
 function askForHelp(L, bots, world) {
   const rng = bots.rng;
-  if (L.ask || partyMembers(bots).length >= 5) return;
+  if (L.ask || partyMembers(bots).length >= PARTY_MAX) return;
   const bot = pick(bots.list.filter((b) => free(b, world) && b.level >= 10 && b.level <= world.char.level + 5), rng);
   if (!bot) return;
   // A monster from a field near their level.
@@ -170,7 +170,12 @@ function askForHelp(L, bots, world) {
 // You said yes: they join your party, and you hunt their monsters together.
 export function helpOut(bots, world, bot) {
   const ask = bot.helpAsk;
-  if (!ask || bot.party) return;
+  if (!ask || bot.party) return null;
+  // (Your party may have filled up since they asked.)
+  if (partyMembers(bots).length >= PARTY_MAX) {
+    world.log('Your party is full.', '#ffb3c6');
+    return 'Your party is full';
+  }
   joinParty(bots, bot, world);
   bot.helpAsk = null;
   bots.lives.ask = null;

@@ -59,7 +59,10 @@ function menuItems(state, world) {
   if (bot.gm && world.bots.events?.gm?.bot === bot && !world.bots.events.gm.done) items.push({ label: 'Found you!', icon: 'star', run: () => found(world.bots.events, world.bots, world) });
   if (bot.showHost?.phase === 'call' && !bot.showHost.you) items.push({ label: 'Enter fashion show', icon: 'star', run: () => enterShow(world, bot) });
   if (bot.helpAsk && !bot.party) items.push({ label: 'Help them', icon: 'heart', run: () => helpOut(world.bots, world, bot) });
-  if (bot.lfg && !bot.party) items.push({ label: 'Join their group', icon: 'shield', run: () => joinGroup(world.bots, world, bot) });
+  if (bot.lfg && !bot.party) {
+    const why = partyMembers(world.bots).length ? 'Leave your party first' : null;
+    items.push({ label: 'Join their group', icon: 'shield', why, enabled: !why, run: () => joinGroup(world.bots, world, bot) });
+  }
   if (!isBuddy(world.char, bot.name)) {
     const why = addBlocker(world, bot);
     items.push({ label: 'Add friend', icon: 'friends', why, enabled: !why, run: () => askFriend(world, bot) });

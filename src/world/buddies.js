@@ -11,7 +11,7 @@ import { computeStats } from '../core/stats.js';
 import { jobChain } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { createBody } from './physics.js';
-import { joinParty, partyMembers, LEVEL_GAP } from './party.js';
+import { joinParty, partyMembers, LEVEL_GAP, PARTY_MAX } from './party.js';
 
 export const BUDDY_MAX = 20;
 
@@ -138,7 +138,7 @@ function tickBuddies(bots, world, dt, hooks) {
   }
   // A friend online (not with you) asks you to come hunt.
   const free = online.map((s) => buddyOnline(bots, s.name)).filter((b) => !b.party && !b.shop && b.state !== 'logout');
-  if (free.length && !bots.huntAsk && rng() < 0.5 && partyMembers(bots).length < 5) {
+  if (free.length && !bots.huntAsk && rng() < 0.5 && partyMembers(bots).length < PARTY_MAX) {
     const bot = pick(free, rng);
     bots.huntAsk = { bot, until: world.now + 60 };
     world.log(`[Friend] ${bot.name}: ${pick(['wanna hunt together?', 'party up?? im bored', 'lets go grind!', 'u free? lets hunt'], rng)} (N to answer)`, '#bfe0ff');
@@ -148,7 +148,7 @@ function tickBuddies(bots, world, dt, hooks) {
 // You said yes (or invited them yourself): they come to you, in through the nearest portal, and join.
 export function callBuddy(bots, world, bot) {
   if (bot.party) return 'Already in your party';
-  if (partyMembers(bots).length >= 5) return 'Your party is full';
+  if (partyMembers(bots).length >= PARTY_MAX) return 'Your party is full';
   if (bot.level > world.char.level + LEVEL_GAP) return `Lv ${bot.level} is too far above you`;
   const b = world.body;
   const p = world.map.portals.filter((q) => !q.hidden && !q.dungeon).sort((q, r) => Math.abs(q.x - b.x) - Math.abs(r.x - b.x))[0];
