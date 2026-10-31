@@ -16,6 +16,8 @@ import { shade } from '../render/pixel.js';
 import { drawHero } from '../render/hero.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, icon, fit, itemSlot, font } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
+import { questsWanting } from '../core/quests.js';
+import { knownRecipes } from './cooking.js';
 import { compareStats } from './bag.js';
 
 const W = 396;
@@ -150,8 +152,48 @@ export function shopWindow(ui, state, world) {
   const bagTab = picked ? ITEMS[picked.id].type : ['equip', 'use', 'etc'][dlg.sellTab ?? 0];
   const used = char.inventory[bagTab]?.length ?? 0;
   text(ctx, `Bag (${bagTab[0].toUpperCase() + bagTab.slice(1)}) ${used}/${TAB_SIZE}`, lx + gw + 8, fy + 11.5, { size: 7, bold: true, color: used >= TAB_SIZE ? COLORS.bad : COLORS.muted });
-  text(ctx, 'Double-click: buy or sell one · Shift: 10', win.x + W - 70, fy + 11.5, { size: 6.5, align: 'right', color: COLORS.muted });
+  // Selling: everything that's only worth gold, in one go.
+  if (dlg.tab === 1) {
+    const junk = junkOf(char);
+    const gain = junk.reduce((n, o) => n + o.gain, 0);
+    const jx = win.x + W - 136;
+    if (button(ui, jx, fy, 70, 16, 'Sell junk', { size: 7.5, primary: gain > 0, enabled: gain > 0, theme: 'peach', iconName: 'coin' })) {
+      const got = sellJunk(char);
+      dlg.flash = { at: world.now, text: `+${got.toLocaleString()}g`, color: GREEN };
+      world.log(`Sold ${junk.reduce((n, o) => n + o.qty, 0)} monster drops for ${got.toLocaleString()} gold.`, '#ffe36b');
+    }
+    if (hover(ui, jx, fy, 70, 16)) {
+      tooltip(ui, gain ? [{ text: `Sell for ${gain.toLocaleString()} gold`, bold: true }, ...junk.slice(0, 8).map((o) => ({ text: `${ITEMS[o.id].name} x${o.qty}`, size: 7 })), ...(junk.length > 8 ? [{ text: `and ${junk.length - 8} more`, size: 7, color: COLORS.muted }] : []), { text: 'Keeps what your quests and recipes need.', size: 7, color: COLORS.muted }]
+        : [{ text: 'No junk to sell', bold: true }, { text: 'Monster drops your quests and recipes need are kept.', size: 7, color: COLORS.muted }]);
+    }
+  } else text(ctx, 'Double-click: buy or sell one · Shift: 10', win.x + W - 70, fy + 11.5, { size: 6.5, align: 'right', color: COLORS.muted });
   if (button(ui, win.x + W - 62, fy, 54, 16, 'Back', { size: 8 })) dlg.mode = null;
+}
+
+// Junk: monster drops in your bag that no quest you're on wants and no recipe you know uses.
+// [{ id, qty, gain }] (what each stack sells for).
+export function junkOf(char) {
+  const cooking = new Set(knownRecipes(char).flatMap((d) => Object.keys(d.needs)));
+  const out = [];
+  for (const e of char.inventory.etc) {
+    if (!ITEMS[e.id].loot || cooking.has(e.id) || questsWanting(char, e.id).length) continue;
+    const have = out.find((o) => o.id === e.id);
+    if (have) have.qty += e.qty;
+    else out.push({ id: e.id, qty: e.qty });
+  }
+  for (const o of out) o.gain = sellPrice(o.id) * o.qty;
+  return out;
+}
+
+// Sells all the junk at once. Returns the gold it made.
+export function sellJunk(char) {
+  let gold = 0;
+  for (const o of junkOf(char)) {
+    removeItem(char.inventory, o.id, o.qty);
+    gold += o.gain;
+  }
+  char.gold += gold;
+  return gold;
 }
 
 // One row: the item's cell, its name (in its color), what it is, how many you have, and its price.

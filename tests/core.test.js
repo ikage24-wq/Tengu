@@ -211,3 +211,22 @@ test('moving bag items swaps, merges stacks, and moves past the end', () => {
   assert.equal(moveItem(inv, 'use', 5, 0), false);
   assert.equal(countItem(inv, 'red_potion'), 270);
 });
+
+test('Sell junk sells monster drops, but keeps what quests and known recipes need', async () => {
+  const { junkOf, sellJunk } = await import('../src/ui/shop.js');
+  const { createCharacter } = await import('../src/core/character.js');
+  const { addItem: add, countItem: count } = await import('../src/core/inventory.js');
+  const c = createCharacter('Seller', {});
+  add(c.inventory, 'bone_shard', 7);
+  add(c.inventory, 'sprout_leaf', 4);
+  add(c.inventory, 'fish_minnow', 2);
+  add(c.inventory, 'fishing_rod', 1);
+  assert.deepEqual(junkOf(c).map((o) => o.id), ['bone_shard'], 'the leaf goes in a recipe; fish and the rod are not junk');
+  const gold = c.gold;
+  const got = sellJunk(c);
+  assert.equal(got, ITEMS.bone_shard.price * 7);
+  assert.equal(c.gold, gold + got);
+  assert.equal(count(c.inventory, 'bone_shard'), 0);
+  assert.equal(count(c.inventory, 'sprout_leaf'), 4);
+  assert.equal(count(c.inventory, 'fish_minnow'), 2);
+});

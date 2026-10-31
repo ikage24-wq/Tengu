@@ -451,7 +451,7 @@ const ETC = [
 ];
 
 for (const [id, name, price, color] of ETC) {
-  add({ id, name, type: 'etc', price, color, desc: 'A monster drop. Some quests need these; shops buy them.' });
+  add({ id, name, type: 'etc', loot: true, price, color, desc: 'A monster drop. Some quests need these; shops buy them.' });
 }
 
 // Fishing and cooking (data/fishing.js, data/cooking.js): the rod, every fish, and the dishes.

@@ -400,7 +400,7 @@ export function drawQuestTracker(ui, state, world) {
       box(ctx, x + 1.5, cy - 1.5, w - 3, ch + 3, { fill: null, edge: COLORS.good, r: 7, width: 2.5 });
       ctx.globalAlpha = 1;
     }
-    text(ctx, fit(ctx, c.q.name, w - 22, 7.5), x + 8, cy + 9.5, { size: 7.5, bold: true, color: c.ready ? GREEN : th.ink });
+    text(ctx, fit(ctx, c.q.name, w - (c.ready ? 36 : 24), 7.5), x + 8, cy + 9.5, { size: 7.5, bold: true, color: c.ready ? GREEN : th.ink });
     if (c.ready) {
       icon(ctx, 'check', x + w - 11, cy + 6.5, 8, COLORS.good);
       const bob = Math.sin(t * 5) * 1;
@@ -427,8 +427,19 @@ export function drawQuestTracker(ui, state, world) {
         bar(ctx, x + 15, oy + 8.2, w - 24, 2.6, o.have / o.count, done ? COLORS.good : th.main, null, { flash: pop });
       });
     }
-    if (hot) tooltip(ui, [{ text: c.q.name, bold: true }, { text: 'Click to open the quest log', color: COLORS.muted, size: 7 }]);
-    if (press(x + 3, cy, w - 6, ch)) {
+    // A map pin: the guide trail straight to where the quest wants you now.
+    const to = questTarget(char, c.id);
+    const px = x + w - (c.ready ? 24 : 12);
+    const pinHot = to && !covered && hover(ui, px - 5, cy + 1, 11, 11);
+    if (to) {
+      const guiding = world.route?.to === to;
+      if (pinHot || guiding) box(ctx, px - 5, cy + 1.5, 11, 10, { fill: guiding ? th.main : 'rgba(255,255,255,0.9)', edge: th.main, r: 5, width: 0.8 });
+      icon(ctx, 'map', px, cy + 6.5, 7, guiding ? '#ffffff' : th.dark);
+    }
+    if (pinHot) tooltip(ui, [{ text: world.route?.to === to ? 'Stop the guide' : `Show the way: ${MAPS[to].name}`, bold: true }]);
+    else if (hot) tooltip(ui, [{ text: c.q.name, bold: true }, { text: 'Click to open the quest log', color: COLORS.muted, size: 7 }]);
+    if (to && press(px - 5, cy + 1, 11, 11)) setRoute(world, world.route?.to === to ? null : to);
+    else if (press(x + 3, cy, w - 6, ch)) {
       Object.assign(log, { open: true, tab: QUESTS[c.id].story ? 0 : 1, sel: c.id, reveal: true });
     }
     cy += ch + 2;
