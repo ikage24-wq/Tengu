@@ -24,7 +24,7 @@ export const NPCS = {
   // the ropes and sees them onto the boat to Sprout Village.
   kuro: {
     id: 'kuro', name: 'Kuro', title: 'Island Keeper', role: 'guide',
-    look: { hairStyle: 'spiky', hairColor: '#2a2440', skinTone: '#fbd9bf', eyeColor: '#d8343a', eyeStyle: 'round', outfitColor: '#3a3550', face: 'grin' },
+    look: { hairStyle: 'wolfsleek', hairColor: '#2a2440', skinTone: '#fbd9bf', eyeColor: '#d8343a', eyeStyle: 'round', outfitColor: '#3a3550', face: 'grin' },
     greeting: "Morning! You washed up on Dawnlight Isle. Don't worry, I'll show you the ropes, then the boat will take you to Sprout Village.",
     quests: ['tut_hello', 'tut_practice', 'tut_farewell'],
   },
@@ -98,7 +98,7 @@ export const NPCS = {
   rook: {
     id: 'rook', name: 'Captain Rook', title: 'Harbor Captain', role: 'guide',
     building: 'office', sign: 'Harbor Office',
-    look: { hairStyle: 'spiky', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
+    look: { hairStyle: 'wolfsleek', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
     quests: ['story_2_1', 'canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
   },

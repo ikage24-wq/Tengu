@@ -19,12 +19,12 @@ import { R, E, T, F } from './pixel.js';
 const HX = 15.5;
 const CY = 13.2;
 
-// Twenty-two styles: anime, princess and fantasy, cool, punk and cute, and a doll's.
-export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'spiky', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek', 'kokeshi'];
+// Twenty-one styles: anime, princess and fantasy, cool, punk and cute, and a doll's.
+export const HAIR_STYLES = ['candy', 'drills', 'sidetail', 'catbun', 'princess', 'bowhair', 'hime', 'crownbraid', 'odango', 'wolf', 'swoop', 'ponytail', 'halfup', 'pixie', 'fluffybob', 'wavylong', 'cloud', 'lowtails', 'braids', 'wolfsleek', 'kokeshi'];
 // Older styles draw as the closest current one; anything else unknown draws as the first.
 const RETIRED = {
-  twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'spiky', hero: 'spiky',
-  mohawk: 'spiky', bun: 'odango', topknot: 'odango', long: 'wavylong', wavy: 'wavylong', fluffy: 'wavylong', curly: 'cloud', ahoge: 'pixie', braid: 'braids',
+  twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'wolfsleek', hero: 'wolfsleek',
+  mohawk: 'wolfsleek', spiky: 'wolfsleek', bun: 'odango', topknot: 'odango', long: 'wavylong', wavy: 'wavylong', fluffy: 'wavylong', curly: 'cloud', ahoge: 'pixie', braid: 'braids',
 };
 export const hairStyleOf = (look) => {
   const s = RETIRED[look.hairStyle] ?? look.hairStyle;
@@ -316,22 +316,22 @@ const napeShadow = (r, y = 20) => F(E(HX, y, 9.6, 4.4, r.sh2));
 // The lower edge of the bangs, from the near temple across to the far one: tips and notches.
 const FRINGES = {
   // A few big rounded clumps of different lengths, the middle one longest.
-  soft: { pts: [[23.8, 13], [22.2, 10.4], [20.4, 15.4], [18.2, 10.8], [15.6, 16.8], [13, 10.8], [10.6, 15.2], [8.8, 10.6], [7.2, 13.2]], lean: 0.9 },
+  soft: { pts: [[23.8, 13], [22.2, 10.4], [20.4, 15.4], [18.2, 10.8], [15.6, 16.8], [13, 10.8], [10.6, 15.2], [8.8, 10.6], [7.2, 13.2]], lean: 0.9, gentle: true },
   // Blunt: one heavy straight cut low on the brow, with tiny V notches.
   blunt: { pts: [[23.6, 14.8], [22.9, 13.9], [22.2, 14.9], [18.9, 15], [18.3, 14], [17.7, 15], [13.4, 15], [12.8, 14], [12.2, 15], [8.9, 14.9], [8.3, 13.9], [7.6, 14.8]], lean: 0, blunt: true },
   // Wispy: soft separate strands of uneven length with rounded tips, a little forehead showing
   // between them.
-  wispy: { pts: [[23.8, 13.4], [22.4, 10.8], [20.6, 15], [19, 11], [16.8, 15.8], [15.2, 11.2], [13, 15.4], [11.4, 11], [9.4, 14.6], [8, 11.6], [7, 13.2]], lean: -0.4, softTips: true },
+  wispy: { pts: [[23.8, 13.4], [22.4, 10.8], [20.6, 15], [19, 11], [16.8, 15.8], [15.2, 11.2], [13, 15.4], [11.4, 11], [9.4, 14.6], [8, 11.6], [7, 13.2]], lean: -0.4, softTips: true, gentle: true },
   // Swept: a strong diagonal from high on the near side down past the far eye.
-  swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[21.4, 3.8], [23, 7]] },
+  swept: { pts: [[23.4, 10.4], [22.2, 8.6], [20.4, 12.2], [19, 9.8], [16.6, 14.4], [15.4, 11.6], [12.6, 16.4], [11.8, 13.2], [9, 17.6], [8.4, 14.6], [6.6, 16.8]], lean: -1.4, part: [[21.4, 3.8], [23, 7]], gentle: true },
   // Parted in the middle, curving apart to open a triangle of forehead.
   part: { pts: [[23.4, 15.2], [21.8, 12.4], [20.2, 14.2], [18.2, 11.2], [16.4, 10.2], [HX, 9.4], [14.6, 10.2], [12.8, 11.2], [10.8, 14.2], [9.2, 12.4], [7.6, 15.2]], lean: 0, part: [[HX, 2.2], [HX, 8.6]], softTips: true, noCrease: true },
   // Hime: one heavy, perfectly straight line low on the brow, no notches.
   hime: { pts: [[24.4, 15.6], [6.6, 15.6]], lean: 0, blunt: true, noCrease: true },
   // Short and choppy, high on the brow.
-  short: { pts: [[23, 12.4], [21.4, 10.2], [19.6, 13], [17.6, 10.4], [15.2, 13.4], [13.2, 10.6], [11, 13], [9.2, 10.6], [7.6, 12.4]], lean: 0.5 },
+  short: { pts: [[23, 12.4], [21.4, 10.2], [19.6, 13], [17.6, 10.4], [15.2, 13.4], [13.2, 10.6], [11, 13], [9.2, 10.6], [7.6, 12.4]], lean: 0.5, gentle: true },
   // Jagged spikes of every length, one long between the eyes.
-  spiky: { pts: [[23.6, 13.4], [21.6, 10.2], [19.8, 15], [17.8, 10.4], [15.4, 17.6], [13.4, 10.6], [10.8, 15.4], [9, 10.2], [7.4, 13.4]], lean: 0.4 },
+  spiky: { pts: [[23.6, 13.4], [21.6, 10.2], [19.8, 15], [17.8, 10.4], [15.4, 17.6], [13.4, 10.6], [10.8, 15.4], [9, 10.2], [7.4, 13.4]], lean: 0.4, gentle: true },
   // Curtain: parted in the middle, sweeping out to the cheekbones, short at the centre.
   curtain: { pts: [[23.6, 17.2], [22.4, 14], [20.6, 12], [18.4, 10.8], [HX, 10.2], [12.6, 10.8], [10.4, 12], [8.6, 14], [7.4, 17.2]], lean: 0, plain: true, part: [[HX, 2.2], [HX, 9.6]] },
   // Swept back: no fringe at all, the hairline high so the whole brow shows.
@@ -339,9 +339,9 @@ const FRINGES = {
   // Baby bangs: very short and straight, high on the forehead.
   baby: { pts: [[23.4, 11.4], [22.8, 10.5], [22.2, 11.5], [17.8, 11.6], [17.2, 10.6], [16.6, 11.6], [13.2, 11.6], [12.6, 10.6], [12, 11.6], [7.6, 11.4]], lean: 0, blunt: true },
   // Heavy: three big thick clumps down to the eyes.
-  heavy: { pts: [[23.8, 15.6], [21.4, 11], [19.2, 17.2], [16.6, 11], [13.6, 17.4], [11.2, 11], [8.6, 16.6], [7.2, 14.2]], lean: 0.5, softTips: true },
+  heavy: { pts: [[23.8, 15.6], [21.4, 11], [19.2, 17.2], [16.6, 11], [13.6, 17.4], [11.2, 11], [8.6, 16.6], [7.2, 14.2]], lean: 0.5, softTips: true, gentle: true },
   // M-shape: short in the middle, longer at the sides.
-  mshape: { pts: [[23.6, 15.8], [21.8, 12.4], [19.8, 14.8], [17.8, 11.2], [HX, 12.4], [13.2, 11.2], [11.2, 14.8], [9.2, 12.4], [7.4, 15.8]], lean: 0, softTips: true },
+  mshape: { pts: [[23.6, 15.8], [21.8, 12.4], [19.8, 14.8], [17.8, 11.2], [HX, 12.4], [13.2, 11.2], [11.2, 14.8], [9.2, 12.4], [7.4, 15.8]], lean: 0, softTips: true, gentle: true },
   // Peekaboo: a long fringe swept down from a part on the far side over the near eye to the
   // cheek, in soft points; the far eye stays clear.
   peek: { pts: [[27.2, 18.4], [25.8, 24.2, 1], [24.2, 22, 1], [21.4, 23.6, 1], [19.4, 21.4], [18.6, 21.4], [16.6, 18.6], [15.4, 14.8], [14.6, 14, 1], [11.4, 14.1, 1], [10.9, 13.2, 1], [10.4, 14.1, 1], [7.4, 14, 1]], lean: 0, plain: true,
@@ -363,11 +363,14 @@ const FRINGES = {
 // by the bangs. The tips flutter a little with the hair. Returns { shapes, shade }.
 function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   const f = FRINGES[BANGS ?? kind];
+  // Gentle bangs (the player's): rounded tips and shallower notches, so they read as soft clumps
+  // of hair rather than thin spiky strips.
+  const fp = f.gentle ? f.pts.map(([x, y], i) => (i % 2 && f.pts[i + 1] ? [x, y + 0.6 * ((f.pts[i - 1][1] + f.pts[i + 1][1]) / 2 - y)] : [x, y])) : f.pts;
   const edge = [];
-  f.pts.forEach((p, i) => {
+  fp.forEach((p, i) => {
     // Soft tips round off (the notches between them stay crisp).
-    edge.push(f.round || f.plain || (f.softTips && i % 2 === 0) ? p : P(...p));
-    const b = f.pts[i + 1];
+    edge.push(f.round || f.plain || ((f.softTips || f.gentle) && i % 2 === 0) ? p : P(...p));
+    const b = fp[i + 1];
     if (b && !f.blunt && !f.round && !f.plain) edge.push([(p[0] + b[0]) / 2 + f.lean, (p[1] + b[1]) / 2]);
   });
   const outline = smooth([...dome(160, 380), [26.4, 14.6], P(24.8, 12), ...edge, P(6.2, 12), [4.6, 14.6]]);
@@ -383,8 +386,8 @@ function bangs(kind, r, m, extra = [], { shine = true } = {}) {
   if (f.noCrease || f.plain) {
     // no creases
   } else if (!f.round) {
-    const notches = f.blunt ? f.pts.filter((_, i) => i % 3 === 1) : f.pts.filter((_, i) => i % 2 === 1);
-    for (const [x, y] of notches) shapes.push(crease(x, y, f.blunt ? 2.4 : 3.4, r.sh2, f.lean * 0.5));
+    const notches = f.blunt ? fp.filter((_, i) => i % 3 === 1) : fp.filter((_, i) => i % 2 === 1);
+    for (const [x, y] of notches) shapes.push(crease(x, y, f.blunt ? 2.4 : f.gentle ? 2 : 3.4, f.gentle ? r.sh1 : r.sh2, f.lean * 0.5));
   } else {
     for (let i = 1; i < f.pts.length; i += 2) shapes.push(poly(smooth([[f.pts[i][0] - 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.2], [f.pts[i][0] + 1.4, f.pts[i][1] - 1.2], [f.pts[i][0], f.pts[i][1] - 0.7]]), r.sh1));
   }
@@ -609,16 +612,6 @@ const STYLES = {
       front: bangs('curtain', r, m, sideLocks(r, m, [[25.2, 10.6], [26.8, 17], [26.2, 24], [27.4, 29.4]], undefined, 3.4)),
       top: loop,
       tips: [33, 39],
-    };
-  },
-  // Spiky hero hair: big spikes swept back round the head, a jagged fringe.
-  spiky(r, m) {
-    const spikes = mass([[8, 22], P(1.6, 21.8), [3.4, 17], P(-2.6, 11.4), [3.6, 8.4], P(0.8, 1.6), [7.6, 3.4], P(7.8, -4.2), [12.6, 1.2], P(16.8, -5.2), [19.4, 1.4], P(25.2, -2.2), [26.6, 6], [27.6, 9], [27.6, 15], [23, 22]], r.sh1, m, 0.4);
-    return {
-      head: [spikes],
-      hang: [],
-      front: bangs('spiky', r, m, [lock([[25.2, 10.4], [27.8, 14.4], [30, 18.6]], 4, r.base, m, 0.8), lock([[5.8, 10.4], [3.2, 14.4], [1, 18.6]], 4, r.base, m, 0.8)]),
-      tips: [18, 21],
     };
   },
   // A short choppy pixie with an ahoge that bounces, perks up when excited and wilts when sulking.

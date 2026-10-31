@@ -23,7 +23,7 @@ const SKIN = '#fff0e6';
 export const MOCHI_LOOKS = {
   baby: { hairStyle: 'fluffybob', hairColor: '#ffc8da', hairTip: '#ff9ec0', eyeStyle: 'big', eyeColor: '#c06a92', browStyle: 'stubby', earStyle: 'wolf', tail: 'wolf', face: 'smile', mouth: 'cat', outfit: 'petbaby', skinTone: SKIN },
   swift: { hairStyle: 'ponytail', hairColor: '#7fd39a', hairTip: '#c8f7d6', eyeStyle: 'sparkle', eyeColor: '#2f8a4f', browStyle: 'stubby', earStyle: 'bunny', face: 'grin', mouth: 'grin', outfit: 'petswift', skinTone: SKIN },
-  strong: { hairStyle: 'spiky', hairColor: '#ff9a4f', hairTip: '#ffd08a', eyeStyle: 'round', eyeColor: '#b8561a', browStyle: 'stubby', earStyle: 'round', face: 'determined', mouth: 'grin', outfit: 'petstrong', skinTone: '#ffe2cc' },
+  strong: { hairStyle: 'wolfsleek', hairColor: '#ff9a4f', hairTip: '#ffd08a', eyeStyle: 'round', eyeColor: '#b8561a', browStyle: 'stubby', earStyle: 'round', face: 'determined', mouth: 'grin', outfit: 'petstrong', skinTone: '#ffe2cc' },
   spirit: { hairStyle: 'hime', hairColor: '#b9a2f2', hairTip: '#e8dcff', eyeStyle: 'droopy', eyeColor: '#7a52cc', browStyle: 'stubby', earStyle: 'fox', earTip: '#e8dcff', tail: 'fox', tailTip: '#e8dcff', face: 'shy', mouth: 'cat', outfit: 'petspirit', skinTone: SKIN },
   sky: { hairStyle: 'cloud', hairColor: '#9fd0ff', hairTip: '#ffffff', eyeStyle: 'star', eyeColor: '#3f78c8', browStyle: 'stubby', earStyle: 'elf', face: 'excited', mouth: 'tiny', outfit: 'petsky', skinTone: SKIN },
 };

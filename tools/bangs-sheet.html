@@ -1,0 +1,44 @@
+<!doctype html>
+<html><body style="margin:0;background:#2a2440">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every player hairstyle with its own bangs, then every bang style on one hairstyle,
+// heads close up, to judge the fringes side by side.
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { HAIR_STYLES, BANG_STYLES } from '../src/render/hair.js';
+
+const q = new URLSearchParams(location.search);
+const ALL = [...HAIR_STYLES.map((h) => [h, 'auto']), ...BANG_STYLES.filter((b) => b !== 'auto').map((b) => ['pixie', b])];
+const ITEMS = q.get('only') ? ALL.filter(([h, b]) => q.get('only').split(',').includes(b === 'auto' ? h : b)) : ALL;
+const Z = Number(q.get('z') ?? 1);
+const COLS = Z > 1 ? 4 : 8;
+const CW = 190 * Z;
+const CH = 200 * Z;
+const S = 5 * Z;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = CW * COLS;
+canvas.height = CH * Math.ceil(ITEMS.length / COLS);
+nextFrame();
+ctx.fillStyle = '#c8e0ec';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ITEMS.forEach(([hair, bangs], i) => {
+  const x0 = (i % COLS) * CW;
+  const y0 = Math.floor(i / COLS) * CH;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0 + 3, y0 + 3, CW - 6, CH - 28);
+  ctx.fillStyle = i % 2 ? '#d4e8f0' : '#c2dce8';
+  ctx.fill();
+  ctx.clip();
+  setHd(true, S);
+  const look = { hairStyle: hair, hairBangs: bangs, hairColor: q.get('c') ?? '#e8a0b8', skinTone: '#fbeee4', eyeColor: '#4a7ad8' };
+  drawPosed(ctx, look, x0 + CW / 2, y0 + 262 * Z, { frontArm: [-3, 4], backArm: [3, 4], frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2] }, { scale: S, facing: 1 });
+  ctx.restore();
+  ctx.fillStyle = '#1e2a40';
+  ctx.font = 'bold 13px Segoe UI, sans-serif';
+  ctx.fillText(bangs === 'auto' ? hair : `bangs: ${bangs}`, x0 + 10, y0 + CH - 10);
+});
+window.done = true;
+</script></body></html>
