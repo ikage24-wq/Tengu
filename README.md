@@ -117,10 +117,12 @@ to clear it.
   power.
 - **Stats** — STR, DEX, INT, LUK with 5 AP per level (an Auto button spends them for your job).
   Damage uses a primary and secondary stat per weapon type, mastery raises your minimum damage,
-  magic scales with INT, and accuracy vs. monster avoid decides hits and misses. Crits deal +20%.
+  magic scales with INT, and accuracy vs. monster avoid decides hits and misses (nothing within 5
+  levels of you is ever missed). Crits deal +50%. Levels go to 50, the cap for now.
 - **Skills** — 3 Novice skills, 5 or more per first job and 5-6 per path: attacks, area hits, multi-hit
   combos, projectiles, buffs (attack, defense, speed, booster, mana shield), heals, and passives.
-  3 SP per level after advancing. Big skills root you in place for a short wind-up (about a
+  3 SP per level after advancing. Stat-only skills (the masteries, Toughness, Nimble...) aren't
+  bought with SP: they grow with your level, full 20 levels after the job. Big skills root you in place for a short wind-up (about a
   second for ultimates like Meteor Shower and Judgment), so they can't be spammed.
 - **Combos** — with a sword, axe, spear, dagger, or bare hands, basic attacks chain into a
   combo: sword slash → backhand → lunging thrust → a spinning cleave finisher; axe slash →
@@ -158,8 +160,8 @@ to clear it.
   cleave sometimes spins on into a whirlwind that sucks monsters in and flings them away; always
   when it catches three or more), **War Cry** (as Valor fills he shouts: every monster around
   turns on him, and he and the party around him take less damage), **Iron Guard** (a hard hit
-  sometimes makes him brace: much less damage and harder armor for a few seconds); **Weapon
-  Mastery** and **Toughness** are passives. Only two buttons besides attack: **Shoulder Charge**
+  sometimes makes him brace, calling out IRON GUARD: much less damage and harder armor for a few
+  seconds); **Weapon Mastery** and **Toughness** grow by themselves with his level. Only two buttons besides attack: **Shoulder Charge**
   barrels through everything in your path (untouchable on the way), and his finisher, **Titan
   Breaker**, needs full Valor and spends it: he leaps high as a giant sword of steel forms over
   him, then crashes down and drives it into the ground, splitting it open with blades of steel
@@ -178,14 +180,14 @@ to clear it.
   shot out of a run). **Momentum** is her gauge (a feather): every shot
   that lands builds it, more for each one landed in a row, and taking a hit knocks half of it
   away. Full, she has **Hawkeye**: her arrows fly faster and reach further, and curve to find
-  monsters above and below. A simple first job (the paths add the flair): three tricks go off on
+  monsters above and below. A simple first job (the paths add the flair): two tricks go off on
   their own, hit or miss: **Blast Arrow** (a shot sometimes bursts on impact, hitting everything
   close round its target; a burst of fire, or on the paths a gale of wind and leaves for the
   Beastmaster and a thunderclap for the Stormcaller), **Snare Arrow** (a shot sometimes tangles its target in a rope net that
-  holds it in place for a moment), **Spring Trap** (her combo's last shot sometimes drops a steel
-  trap on the ground ahead; the first monster to step on it is snapped and flung into the air; up
-  to two at once). **Steady Hands** (faster, truer shots) and **Light Feet** (faster running, more
-  dodging) are passives. Her buttons are **Vault** (she springs up and over the monster in front
+  holds it in place for a few seconds, and her shots hit a netted monster harder). **Steady Hands**
+  (faster, truer shots) and **Light Feet** (faster running, more dodging) grow by themselves with
+  her level. Her buttons are **Spring Trap** (a steel trap set on the ground just ahead; the first
+  monster to step on it is snapped and flung into the air; up to three at once), **Vault** (she springs up and over the monster in front
   in a front flip, untouchable, lands behind it and turns to shoot it) and her finisher,
   **Comet Arrow**, which needs full Momentum and spends it: she leaps high into the air, hangs
   there aiming straight down while the arrow catches fire, and fires a giant flaming arrow that
@@ -272,7 +274,7 @@ to clear it.
   skill can start, though, and moving doesn't skip that, so skills can't be spammed back to back.
   Skills pressed mid-swing go off the moment they can.
 - **Gear** — 8 slots (weapon, hat, top, bottom, shoes, gloves, cape, earrings). Everything you
-  wear shows on your character. Every job has its own set **every 5 levels, from 5 to 100**, in
+  wear shows on your character. Every job has its own set **every 5 levels, from 5 to 50**, in
   every armor slot, and each set looks a step grander than the one before:
   - **Warriors** go from a squire's leather kettle cap and jerkin through knight plate with plumed
     great helms, crusader tabards, horned warlord helms and spiked pauldrons, dragonscale,
@@ -316,7 +318,8 @@ to clear it.
 - **Weapons** — every type (sword, axe, spear, wand, staff, bow, crossbow, dagger, gauntlet) has a
   weapon every 5 levels: a wood or stone trainer, then Copper, Bronze, Iron, Steel, Silver,
   Mithril, Cobalt, Crystal, Runic, Starsteel, Moonsilver, Sunforged, Dragonbone, Obsidian,
-  Adamant, Phoenix, Abyssal, Astral, Celestial, and Genesis (Lv 100). They grow every four
+  Adamant, Phoenix, Abyssal, Astral, Celestial, and Genesis (Lv 100; only up to Starsteel, Lv 50,
+  can be found while the level cap is 50). They grow every four
   tiers, gain gems, fins, and runes, and the top ones carry their material's crest (stars,
   moons, suns, dragon horns, phoenix wings, an abyssal eye, an orbiting ring, angel wings, a
   rainbow halo). From Silver up they shine and animate, and higher ones have live effects
@@ -487,13 +490,13 @@ to clear it.
   Crystal Golems in the Crystal Cave); pass it and pick a path:
   - **Paladin**, the tank. Like the Warrior, she fights with her basic attacks and her skills go
     off on their own: **Aegis Smite** (a swing, hit or miss, sometimes calls a pillar of light down
-    just ahead that stuns), **Hallowed Ground** (her combo's last swing sometimes drives the blade
-    into the floor so a ring of holy light bursts out, turns every monster it hits on you, and lifts
-    them on pillars of light; always when it catches three or more), **Divine Aegis** (a hit that
-    leaves her under half HP makes her raise her blade, guarding and mending her and the party
-    around her). Two more skills: **Sacred Bulwark** (a shield of light
-    sometimes flashes up and blocks a hit outright, answering with a holy shockwave that stuns all
-    around her) and **Judgment** (when her Faith fills she ascends for a while, the Paladin's
+    just ahead that stuns), **Divine Aegis** (a hit that leaves her under half HP makes her raise
+    her blade, guarding and mending her and the party around her; and a shield of light sometimes
+    flashes up and blocks a hit outright, answering with a holy shockwave that stuns all around
+    her, twice as often while the blade is raised). **Hallowed Ground** is pressed: she drives the
+    blade into the floor, a ring of holy light bursts out, every monster it catches turns on her,
+    and its warmth mends her and the party around her; a beat later it flares again and throws
+    them off their feet. And **Judgment** (when her Faith fills she ascends for a while, the Paladin's
     answer to Demon Form: every swing strikes again with holy light, her swings reach a third farther, her aura grows, a gold glow breathes round her
     and flashes with each heartbeat, swings burst with holy light, her Faith stays full, and every
     combo finisher calls a rain of holy swords down ahead of her, mending her and the party). Her buttons are Shoulder Charge
@@ -507,11 +510,11 @@ to clear it.
   - **Berserker**, a damage dealer: every blow builds **Rage** (a flame gauge over the hotkeys) that
     drains once the fighting stops. He fights with his basic attacks and his skills go off on their
     own: **Ravage** (a swing, hit or miss, sometimes rips on into two savage cleaves that make them
-    bleed), **Rampage** (with 30 Rage or more, his combo's last swing sometimes flows into three wild
-    chops and a leaping smash that feeds on his Rage without spending it, up to double damage at full
-    Rage), **Blood
+    bleed), **Blood
     Frenzy** (a critical hit sometimes sends him into a frenzy: more attack, attack speed and crits,
-    and a quarter of his Rage). Two more skills: **Bloodlust** (his blows
+    and a quarter of his Rage). **Rampage** is pressed: with 30 Rage or more he spends 30 on three
+    wild chops and a leaping smash that feeds on the rest, up to double damage at full Rage. Two
+    more skills: **Bloodlust** (his blows
     heal him for a share of their damage, up to three times as much the lower his HP) and **Demon
     Form** (when his Rage fills, the demon takes him over for a while; a blood-red shadow of
     himself stands behind him and strikes again after every swing, with no knockback; his swings
@@ -585,10 +588,10 @@ to clear it.
     three, a hop back, a gale shot through the line, an overdraw, a volley that rains back down) and her skills go off on their own: **Fine,
     I'll Go** (a shot sometimes makes Snow wolf drag herself over to the nearest monster and spin
     the sword round in a full circle of moonlight), **Moonfall** (a shot sometimes makes her plant
-    the sword with a sigh and call a beam of moonlight down on the farthest), **Lunar Howl** (the
-    combo's last shot sometimes sets her howling under a pale moon, knocking away and stunning
-    everything close round her; always with three or more in front); **Beast Mastery** adds
-    mastery, attack and accuracy. **Wild Hunt** (a passive) makes her basic attack an endless hunt
+    the sword with a sigh and call a beam of moonlight down on the farthest). **Lunar Howl** is
+    pressed: Snow wolf howls under a pale moon whatever she's doing (even mid-hunt), knocking away
+    and stunning everything close round her. **Beast Mastery** grows with her level: mastery,
+    attack and accuracy. **Wild Hunt** (a passive) makes her basic attack an endless hunt
     with Snow wolf: hold attack and the arrows fly faster and faster as she shoots on the move
     (snap shots, skipping and spinning shots, a slide on one knee), and she can walk slowly through
     it; soon Snow wolf joins in, cutting beside her whenever she's free, and flat out a gale of
@@ -644,8 +647,8 @@ to clear it.
     of her repeat every attack. Skills: **Kunai Barrage** (three presses: two kunai, two more, a
     spinning throw of five), **Exploding Seal** (a seal slapped on, bursting a moment later on
     everything close), **Smoke Bomb** (untouchable a moment in white smoke, the monsters lose
-    her, she dodges far more, and Ki rises), **Log Swap** (the next blow hits a log and she
-    reappears behind whoever struck), **Shinobi Mastery**, **Endless Blade Dance** (a passive: hold
+    her, she dodges far more, and Ki rises; a log waits in the smoke too, so the next blow hits it
+    and she reappears behind whoever struck), **Shinobi Mastery** (grows with her level), **Endless Blade Dance** (a passive: hold
     attack and the cuts never stop, faster and faster, and she can walk slowly through it: quick
     cuts, then spinning cuts, then she blinks through ink from one side of them to the other,
     cutting as she turns, and flat out her ink clones join the storm; let go and she drops low and
@@ -661,10 +664,11 @@ to clear it.
     **Tails** grows from one fox-fire tail to nine (drawn behind her) as her stars land, faster on
     burning monsters; every three tails a fox-fire illusion throws a star beside each of hers, and
     with all nine, **Nine Tails**, three of them. Skills: **Fox-Fire Fan** (three presses: two fans
-    of stars, then a great star through the line), **Fox Illusion** (two illusions at her side
-    each throw a free star with hers), **Fox-Fire Trap** (a ring of fox fire on the ground that
+    of stars, then a great star through the line), **Fox Decoy** (a fox-fire illusion of her set down
+    just ahead: for a few seconds the monsters near it go after it instead of her, then it bursts
+    in fox fire on everything close), **Fox-Fire Trap** (a ring of fox fire on the ground that
     burns them, then bursts), **Fox Hop** (springs back out of reach, leaving a decoy of fox fire
-    that bursts), **Kitsune Mastery**, **Endless Fox-Fire** (a passive: hold attack and fox-fire
+    that bursts), **Kitsune Mastery** (grows with her level), **Endless Fox-Fire** (a passive: hold attack and fox-fire
     stars fly hand over hand without stopping, faster and faster, and her tails wake one stage at
     a time: one tail lit as she deals stars like cards, three for a trickster's spin throws,
     behind-the-back throws, hop-backs and lazy lobs, six as she spins inside a wheel of fox fire,
