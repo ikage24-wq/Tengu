@@ -1895,7 +1895,8 @@
   };
   const rgb = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
   const mixc = (a, b, t) => a.map((v, k) => v + (b[k] - v) * t);
-  const CLOUD = { under: rgb('#1c183c'), mid: rgb('#46417c'), top: rgb('#a29ed6'), lit: rgb('#f4ecff') };
+  // A soft violet storm cloud (no near-black underside).
+  const CLOUD = { under: rgb('#4a4486'), mid: rgb('#7670b8'), top: rgb('#c2bcee'), lit: rgb('#faf4ff') };
   // Paints a cloud over (x0, y0, w, h) from `field(x, y)` (about 1 deep inside, 0 at its edge, below
   // 0 outside), churned by `turn` (radians, round a loop); `flash` is [x, y, r, strength] of
   // lightning lighting it from inside.
@@ -2026,7 +2027,7 @@
     for (const s of [-1, 1]) fill(ctx, [[s * 6, -2], [s * 16, -6], [s * 14, 2]], pal[3]);
   });
   // An emblem's thundercloud colours (a badge keeps outlined puffs; the sky's clouds are soft).
-  const THUNDERCLOUD = ['#a8a2dc', '#6c66ae', '#4c478a', '#332f66', '#14122c'];
+  const THUNDERCLOUD = ['#c4bfee', '#8e88cc', '#6c66ae', '#56509a', '#3c3680'];
   // The Stormcaller's emblem: a bolt of lightning striking out of a thundercloud, on a badge of
   // her violet.
   E.embstorm = emblem(PAL.storm, (ctx, pal) => {
@@ -3722,7 +3723,8 @@
   // finisher a giant fox painted in ink in one sweep of the brush (Okami's sumi-e brush; see
   // research/fx.md). The Kitsune is fox fire: blue flame with a white core and gold sparks, a
   // flame tail for each tail of her gauge, and a giant fox of blue fire with nine tails.
-  const INKR = ramp([[0, '#07050b'], [0.45, '#241c2c'], [0.8, '#4a3e52'], [1, '#7a6a80']]);
+  // Ink: deep indigo, never black (the player asked for nothing near-black in the effects).
+  const INKR = ramp([[0, '#2a2468'], [0.45, '#463c98'], [0.8, '#7268c4'], [1, '#aaa2e4']]);
   const SEAL = ['#ffffff', '#ffd6c8', '#ff6a4e', '#c81e28'];
   const FIRE = ['#ffffff', '#d8f6ff', '#5cb4ff', '#1e4ad6'];
   const FOXR = ramp([[0, '#0a1670'], [0.25, '#1838c8'], [0.5, '#2f7cff'], [0.72, '#66c4ff'], [0.9, '#d4f4ff'], [1, '#ffffff']]);
@@ -4762,7 +4764,7 @@
     };
   }
   {
-    const INK5 = ['#ffffff', '#e8e4ee', '#7a6a80', '#2a2230', '#0e0a12'];
+    const INK5 = ['#ffffff', '#e8e4f6', '#7268c4', '#3c3488', '#2a2468'];
     const SEAL5 = ['#ffffff', '#ffd6c8', '#ff6a4e', '#c81e28', '#7a0a1a'];
     const FOX5 = ['#ffffff', '#d8f6ff', '#5cb4ff', '#1e4ad6', '#1a2a8a'];
     const GOLD5 = ['#ffffff', '#fff3c4', '#ffd36a', '#e09a2a', '#9a5a1a'];

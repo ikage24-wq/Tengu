@@ -195,7 +195,7 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       const a = Math.min(1, p * 5) * (p > 0.85 ? (1 - p) / 0.15 : 1);
       ctx.save();
       ctx.globalAlpha = 0.42 * a;
-      ctx.fillStyle = '#14101a';
+      ctx.fillStyle = '#1c1240';
       wash(ctx);
       ctx.restore();
       fxSprite(ctx, 'celsmokebomb', x, y + 6, { p: Math.min(1, p * 2), scale: 0.9 });

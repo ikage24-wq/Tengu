@@ -463,7 +463,7 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
       const cx = x + state.facing * side * (live ? 14 : 20);
       const pose = live && world.now >= ph.since + k * 0.08 ? { pose: ph.kind, progress: Math.min(1, (world.now - ph.since - k * 0.08) / ph.dur), dur: ph.dur, from: null, blend: 1 } : {};
       fxSprite(ctx, 'celinkaura', cx, y + 4, { t: t * 0.8 + k, scale: 0.36, alpha: 0.7 * state.alpha });
-      drawTinted(ctx, cx, y, '#14101a', 0.86, (c) => drawHero(c, look, gear, cx, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 }));
+      drawTinted(ctx, cx, y, '#2a2468', 0.86, (c) => drawHero(c, look, gear, cx, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 }));
     }
     return;
   }
