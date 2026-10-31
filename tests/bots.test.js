@@ -1180,3 +1180,23 @@ test('the hall of fame ranks you among the server by level, kills and raids', as
   assert.ok(fame.kills.find((p) => p.you).kills >= 12, 'your kills counted');
 });
 
+
+test('accepting a help request or a dungeon group never pushes your party past its cap', async () => {
+  const { helpOut } = await import('../src/world/lives.js');
+  const { joinGroup } = await import('../src/world/social.js');
+  const { joinParty, partyMembers, PARTY_MAX } = await import('../src/world/party.js');
+  const { world, bots } = eventTown(451);
+  world.char.level = 40;
+  const others = bots.list.filter((b) => !b.shop && b.char.job !== 'novice');
+  for (const b of others.slice(0, PARTY_MAX)) joinParty(bots, b, world);
+  assert.equal(partyMembers(bots).length, PARTY_MAX);
+  const asker = others[PARTY_MAX];
+  asker.helpAsk = { mob: 'snailbun', n: 5, until: world.now + 60 };
+  bots.lives.ask = asker.helpAsk;
+  assert.ok(helpOut(bots, world, asker), 'a full party says so');
+  const lead = others[PARTY_MAX + 1];
+  lead.lfg = { dungeon: 'hollow', role: 'healer', until: world.now + 60 };
+  assert.ok(joinGroup(bots, world, lead), 'and a group asks you to leave your party first');
+  assert.equal(partyMembers(bots).length, PARTY_MAX);
+  assert.ok(!world.dungeon);
+});
