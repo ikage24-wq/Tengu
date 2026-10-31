@@ -70,6 +70,42 @@ Progress saves to your browser automatically (every 20 seconds, on map changes, 
 leave the tab). Pick a world, then pick a hero on the character select tree and press **Start**
 (or Enter). The tree holds up to 8 characters; click an empty slot to create one.
 
+### Windows app (auto-updating)
+
+Tengu also ships as a Windows app: an installer (`Tengu-Setup-<version>.exe`) that puts it in
+the Start menu and on the desktop, and updates itself from this repository's GitHub Releases. On
+every launch (and every few hours) it checks for a newer release, downloads it in the
+background, and asks the player to restart; if they choose Later it installs when they quit.
+Saves carry over: the app always serves the game from the same address (`app://tengu/`), whose
+local storage is kept in the player's app data folder.
+
+```sh
+npm install          # once: Electron, the installer builder and the updater
+npm run desktop      # play the app from the source, no installer (F11 full screen, F12 dev tools)
+npm run dist         # build dist/Tengu-Setup-<version>.exe without publishing
+npm run icon         # redraw electron/icon.png from tools/app-icon.html
+```
+
+To ship an update:
+
+1. Bump the version: `npm version patch` (or `minor` / `major`). This updates `package.json` and
+   the version on the title screen (`src/version.js`), then commits and tags it.
+2. Make a GitHub token with **repo** access (GitHub > Settings > Developer settings > Personal
+   access tokens) and put it in the `GH_TOKEN` environment variable, for example in PowerShell:
+   `$env:GH_TOKEN = "ghp_..."`.
+3. `npm run release`: builds the installer and uploads it, with the `latest.yml` file the
+   updater reads, to a new GitHub Release for that version. Push the commit and tag too
+   (`git push --follow-tags`).
+
+Every installed copy picks the new version up the next time it starts. Players install the first
+version themselves from the Releases page. The app isn't code-signed, so on first install Windows
+SmartScreen says "Windows protected your PC": click **More info**, then **Run anyway** (updates
+don't ask again). A code-signing certificate removes that warning.
+
+`TENGU_SMOKE=1` makes the app (from the source or a build) load the game, check it started with
+no errors and that saves stick, print the result and quit, so a build can be checked from the
+command line: `$env:TENGU_SMOKE=1; ./dist/win-unpacked/Tengu.exe`.
+
 ### Job balance
 
 `npm run balance` plays every job in the real game against practice dummies and checks the role

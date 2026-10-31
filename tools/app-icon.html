@@ -1,0 +1,42 @@
+<!doctype html>
+<html><body style="margin:0;background:transparent">
+<canvas id="c" width="256" height="256"></canvas>
+<script type="module">
+// Dev tool: the desktop app's icon (electron/icon.png, made by `npm run icon`): the hero's head in
+// the game's own style on a pink rounded square.
+import { drawPosed } from '../src/render/hero.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+// A rounded square with a soft top-to-bottom gradient and a light rim.
+const r = 52;
+const box = () => {
+  ctx.beginPath();
+  ctx.moveTo(12 + r, 12);
+  ctx.arcTo(244, 12, 244, 244, r);
+  ctx.arcTo(244, 244, 12, 244, r);
+  ctx.arcTo(12, 244, 12, 12, r);
+  ctx.arcTo(12, 12, 244, 12, r);
+  ctx.closePath();
+};
+const g = ctx.createLinearGradient(0, 12, 0, 244);
+g.addColorStop(0, '#ffd3e6');
+g.addColorStop(1, '#ff8fc1');
+box();
+ctx.fillStyle = g;
+ctx.fill();
+ctx.lineWidth = 6;
+ctx.strokeStyle = '#fff4fa';
+ctx.stroke();
+ctx.save();
+box();
+ctx.clip();
+nextFrame();
+const S = 7.2;
+setHd(true, S);
+const look = { hairStyle: 'candy', hairColor: '#ff6fae', skinTone: '#fbeee4', eyeColor: '#4a7ad8', eyeStyle: 'sparkle', face: 'smile', outfit: 'casual', outfitColor: '#ffffff' };
+drawPosed(ctx, look, 128, 318, { frontArm: [-3, 4], backArm: [3, 4], frontLeg: [1.4, 0, 2], backLeg: [-1.4, 0, -2] }, { scale: S, facing: 1 });
+ctx.restore();
+window.done = true;
+</script></body></html>

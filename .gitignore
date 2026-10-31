@@ -1,1 +1,3 @@
 tools/.audio-cache/
+node_modules/
+dist/

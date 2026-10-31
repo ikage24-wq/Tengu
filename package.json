@@ -2,11 +2,68 @@
   "name": "tengu",
   "version": "1.0.0",
   "private": true,
-  "description": "A cute pastel 2D side-scrolling RPG that runs in the browser.",
+  "description": "A cute pastel 2D side-scrolling RPG that runs in the browser and on Windows.",
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
     "start": "python3 -m http.server 8000",
-    "balance": "node tools/rolecheck.mjs"
+    "balance": "node tools/rolecheck.mjs",
+    "desktop": "electron .",
+    "icon": "electron electron/make-icon.cjs",
+    "dist": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always",
+    "version": "node tools/sync-version.mjs && git add src/version.js"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "author": "ikage24",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.ikage24.tengu",
+    "productName": "Tengu",
+    "artifactName": "Tengu-Setup-${version}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "src/**/*",
+      "assets/**/*",
+      "electron/main.cjs",
+      "electron/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Tengu"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ikage24-wq",
+        "repo": "Twzt",
+        "releaseType": "release"
+      }
+    ]
   }
 }

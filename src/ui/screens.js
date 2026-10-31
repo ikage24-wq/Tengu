@@ -1,6 +1,7 @@
 // Title (world select), character select, and character creator screens.
 
 import { MAPS } from '../data/maps.js';
+import { VERSION } from '../version.js';
 import { JOBS } from '../data/jobs.js';
 import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
@@ -401,7 +402,7 @@ export function titleScreen(ui, time) {
   ctx.fill();
   text(ctx, `Server online · ${WORLDS[world].name}`, 25, 351, { size: 7.5, bold: true, color: COLORS.ink });
   text(ctx, 'Arrows move · Space jumps · Z attacks · X loots · Up talks', 320, 351, { size: 7.5, align: 'center', color: COLORS.muted });
-  text(ctx, 'v1.0.0', 626, 351, { size: 7.5, bold: true, align: 'right', color: COLORS.ink });
+  text(ctx, `v${VERSION}`, 626, 351, { size: 7.5, bold: true, align: 'right', color: COLORS.ink });
   return pick;
 }
 
