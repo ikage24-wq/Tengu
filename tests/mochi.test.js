@@ -1,4 +1,4 @@
-// The Mochi pet (world/mochi.js): adopting one, feeding it into a form, and what it does for you.
+// The Mochi pet (world/mochi.js): adopting one, and what it does for you.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -6,7 +6,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter } from '../src/core/character.js';
 import { addItem, countItem } from '../src/core/inventory.js';
 import { spawnDrops } from '../src/world/drops.js';
-import { adoptPet, feedPet, EGG_CASH, GROW_AT, hatchPet } from '../src/world/mochi.js';
+import { adoptPet, EGG_CASH, hatchPet } from '../src/world/mochi.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -22,20 +22,14 @@ function world() {
   return w;
 }
 
-test('a Mochi is adopted for Cash and grows into the form it is fed toward', () => {
+test('a Mochi is adopted for Cash, one at a time, and never needs feeding', () => {
   const c = createCharacter('Owner', {});
   c.cash = EGG_CASH - 1;
   assert.ok(adoptPet(c), 'not enough Cash');
   c.cash = EGG_CASH;
   assert.equal(adoptPet(c), null);
-  assert.equal(c.pet.form, 'baby');
   assert.ok(adoptPet(c), 'only one');
-  addItem(c.inventory, 'mochi_clover', 10);
-  let said = '';
-  for (let i = 0; i < 10 && c.pet.form === 'baby'; i++) said = feedPet(c, 'mochi_clover');
-  assert.equal(c.pet.form, 'swift', said);
-  assert.ok(c.pet.stats.swift >= GROW_AT);
-  assert.match(said, /grew/);
+  assert.equal(c.pet.stats, undefined, 'no growth stats to feed');
 });
 
 test('out with you, a Mochi follows, fetches loot in range and leaves loot out of range', () => {

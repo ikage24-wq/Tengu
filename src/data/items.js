@@ -403,10 +403,6 @@ add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 50, effect
 add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 160, effect: { hp: 150 }, color: '#ffa94d', desc: 'Restores 150 HP.' });
 add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 320, effect: { hp: 300 }, color: '#fff7ea', desc: 'Restores 300 HP.' });
 // Mochi food (world/mochi.js): a snack fills the tummy; the others also grow it toward a form.
-add({ id: 'mochi_feather', name: 'Sky Feather Treat', type: 'use', price: 120, effect: { pet: { stat: 'sky', amount: 8 } }, color: '#9fd0ff', desc: 'Your Mochi grows toward a Sky Mochi.' });
-add({ id: 'mochi_clover', name: 'Clover Crunch', type: 'use', price: 120, effect: { pet: { stat: 'swift', amount: 8 } }, color: '#7fd39a', desc: 'Your Mochi grows toward a Swift Mochi.' });
-add({ id: 'mochi_bun', name: 'Meat Bun', type: 'use', price: 120, effect: { pet: { stat: 'strong', amount: 8 } }, color: '#ffb36b', desc: 'Your Mochi grows toward a Strong Mochi.' });
-add({ id: 'mochi_gem', name: 'Spirit Gem Candy', type: 'use', price: 120, effect: { pet: { stat: 'spirit', amount: 8 } }, color: '#c9b6ff', desc: 'Your Mochi grows toward a Spirit Mochi.' });
 add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100 }, color: '#6fb8ff', desc: 'Restores 100 MP.' });
 // Throwing stars: what a gauntlet throws. Throws never use them up, so one star is enough. They
 // come in sets that stack up to `stack`; the topmost set in your Use tab (that your level allows)

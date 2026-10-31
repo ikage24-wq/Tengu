@@ -1,7 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
-import { tickMochi, feedPet } from './mochi.js';
+import { tickMochi } from './mochi.js';
 import { tickTutorial } from './tutorial.js';
 import { getMap } from '../data/maps.js';
 import { ITEMS, RARITIES } from '../data/items.js';
@@ -231,12 +231,6 @@ export function useItem(world, id) {
     world.itemReadyAt = world.now + ITEM_DELAY;
     world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
     return true;
-  }
-  // Mochi food: fed to your pet.
-  if (def.effect?.pet) {
-    const said = feedPet(world.char, id);
-    if (said) world.log(said, '#ffc2d8');
-    return Boolean(said);
   }
   if (!usePotion(world.char, id, world.now)) {
     world.log(`No ${def.name} left.`, '#ffb3c6');

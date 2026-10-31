@@ -1,34 +1,21 @@
 // The Mochi: a pet that follows you round, picks up your loot, and drinks your potions when you
-// run low. You adopt one as an egg (Cash), it hatches a baby, and the treats you give it decide
-// what it grows into: feathers make a Sky Mochi (it flies, and reaches loot up on ledges), clover
-// a Swift one (it gathers loot from further off), buns a Strong one (it carries faster), spirit
-// gems a Spirit one (it reacts sooner). It never gets hungry or sulks. It cheers when you level up.
+// run low. You adopt one as an egg (Cash). It never needs feeding, and it cheers when you level up.
 //
 // The pet you own is saved on the character (`char.pet`); the one walking about in the world is
 // `world.mochi` (where it is, what it's doing), made fresh on each map.
 
 import { ITEMS } from '../data/items.js';
-import { countItem, removeItem } from '../core/inventory.js';
+import { countItem } from '../core/inventory.js';
 
 // What adopting one costs.
 export const EGG_CASH = 3000;
-// A baby grows into a form once one of its four stats reaches this.
-export const GROW_AT = 40;
-export const PET_STATS = ['sky', 'swift', 'strong', 'spirit'];
-// What each form adds to the helping: loot range (px from you, across and up), how often it
-// can pick something up (s), and how much sooner it drinks.
-const FORM = {
-  baby: { range: 80, up: 40, every: 0.4, early: 0 },
-  sky: { range: 90, up: 110, every: 0.35, early: 0 },
-  swift: { range: 140, up: 50, every: 0.3, early: 0 },
-  strong: { range: 90, up: 50, every: 0.16, early: 0 },
-  spirit: { range: 90, up: 50, every: 0.35, early: 10 },
-};
-export const formBonus = (form) => FORM[form] ?? FORM.baby;
+// How it helps: its loot range (px from you, across and up), and how often it can pick something
+// up (s).
+export const PET_REACH = { range: 120, up: 80, every: 0.25 };
 
 // A newly hatched pet.
 export function hatchPet(char, name = 'Mochi') {
-  char.pet = { name, form: 'baby', stats: { sky: 0, swift: 0, strong: 0, spirit: 0 }, out: true, opts: { loot: true, hp: 40, mp: 25 } };
+  char.pet = { name, out: true, opts: { loot: true, hp: 40, mp: 25 } };
   return char.pet;
 }
 // Adopting from the pet window: Cash for an egg that hatches at once. Returns a reason it can't.
@@ -38,25 +25,6 @@ export function adoptPet(char) {
   char.cash -= EGG_CASH;
   hatchPet(char);
   return null;
-}
-
-// Feeds the pet one of `id` from the bag. Returns what happened, for the log.
-export function feedPet(char, id) {
-  const pet = char.pet;
-  const food = ITEMS[id]?.effect?.pet;
-  if (!pet || !food) return null;
-  if (removeItem(char.inventory, id, 1) < 1) return null;
-  pet.stats[food.stat] = Math.min(99, pet.stats[food.stat] + food.amount);
-  // A baby whose stat reaches the mark grows into that form, for good.
-  if (pet.form === 'baby') {
-    const best = PET_STATS.reduce((a, b) => (pet.stats[b] > pet.stats[a] ? b : a));
-    if (pet.stats[best] >= GROW_AT) {
-      pet.form = best;
-      pet.grewAt = Date.now();
-      return `${pet.name} grew into a ${best[0].toUpperCase()}${best.slice(1)} Mochi!`;
-    }
-  }
-  return `${pet.name} ate the ${ITEMS[id].name}.`;
 }
 
 // ---------- In the world ----------
@@ -76,9 +44,9 @@ export function tickMochi(world, dt, api) {
     world.mochi = { map: world.map.id, x: b.x - b.facing * 26, y: b.y, dir: b.facing, moving: false, target: null, pickAt: 0, potAt: 0, level: char.level, cheerAt: null };
   }
   const m = world.mochi;
-  m.form = pet.form;
+  m.form = 'baby';
   const helping = !world.dead;
-  const bonus = formBonus(pet.form);
+  const bonus = PET_REACH;
   // A level up: it cheers.
   if (char.level > m.level) m.cheerAt = world.now;
   m.level = char.level;
@@ -123,7 +91,7 @@ export function tickMochi(world, dt, api) {
   // Potions: below your mark, the best tonic you have, a moment apart.
   const s = world.stats;
   if (s && world.now >= m.potAt) {
-    const low = (cur, max, mark) => mark > 0 && cur / max < (mark + bonus.early) / 100;
+    const low = (cur, max, mark) => mark > 0 && cur / max < mark / 100;
     const kind = low(char.hp, s.maxHp, pet.opts.hp) && char.hp > 0 ? 'hp' : low(char.mp, s.maxMp, pet.opts.mp) ? 'mp' : null;
     if (kind) {
       const id = bestTonic(char, kind);
