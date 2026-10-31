@@ -221,8 +221,10 @@ function huntTarget(bot, world, members) {
     if (m.hp <= 0 || skip(m)) continue;
     // Players out hunting on their own (not in your party) leave the monsters by you alone, so
     // nobody steals your kills; a queen back for a rematch draws them all in.
-    if (!bot.party && !rescue && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
+    if (!bot.party && !rescue && !bot.rude && !m.def.boss && Math.abs(m.x - you.x) < 170 && Math.abs(m.y - you.y) < 90) continue;
     let score = Math.abs(m.x - body.x) + Math.abs(m.y - body.y) * 3;
+    // (A kill stealer: the monsters you're on, the ones you've worn down most of all.)
+    if (bot.rude) score = Math.abs(m.x - you.x) + Math.abs(m.y - you.y) * 3 + (m.hp / m.def.hp) * 240 + score * 0.1;
     if (rescue) score = (Math.abs(m.x - you.x) + Math.abs(m.y - you.y) * 3) * 2 + score * 0.2;
     if (!bot.party && m.def.boss) score -= 600;
     if (members.some((o) => o !== bot && o.brain?.target === m)) score += 300;
@@ -617,7 +619,7 @@ function land(bot, world, mob, delay, range, fields, rng) {
 // Players hunting on their own never catch the monsters by you (unless they came to help).
 function fair(bot, world, mob) {
   const you = world.body;
-  return bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
+  return bot.party || bot.rude || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
 }
 
 // ---------- The priestesses' own spells ----------
@@ -809,7 +811,7 @@ function takeHits(bot, world, dt, rng) {
     }
   }
   // A potion when they get low.
-  if (bot.hp > 0 && bot.hp < max * 0.35 && world.now >= (bot.potionAt ?? 0)) {
+  if (bot.hp > 0 && bot.hp < max * 0.35 && world.now >= (bot.potionAt ?? 0) && !(bot.afk && world.now < bot.afk.until)) {
     bot.potionAt = world.now + 1.5;
     if (bot.potions > 0) {
       bot.potions -= 1;
@@ -832,7 +834,8 @@ function fall(bot, world, rng) {
   bot.attack = null;
   bot.lunge = null;
   bot.brain.target = null;
-  say(bot, pick2(['x_x', 'noooo', 'rip me', 'i died lol', 'LAG', 'how', 'that snail hits hard wtf', 'brb dying']));
+  say(bot, bot.afk ? pick2(['...', 'zzz']) : pick2(['x_x', 'noooo', 'rip me', 'i died lol', 'LAG', 'how', 'that snail hits hard wtf', 'brb dying']));
+  if (bot.afk) bot.diedAfk = true;
   if (bot.party) world.log(`${bot.name} died! They'll be back in a bit.`, '#ff8fa8');
 }
 
@@ -870,8 +873,14 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   const br = bot.brain;
   const body = bot.body;
   takeHits(bot, world, dt, rng);
-  if (bot.down) {
+  const afk = bot.afk && world.now < bot.afk.until;
+  if (bot.afk && !afk && !bot.down) {
+    say(bot, bot.hp < bot.stats.maxHp * 0.5 ? pick2(['back... why is my hp so low', 'who attacked me while i was gone', 'back! wait what']) : pick2(['back', 'back, what did i miss', 'ok im back']));
+    bot.afk = null;
+  }
+  if (bot.down || afk) {
     stepBody(body, map, { left: false, right: false, up: false, down: false, jump: false }, dt, { speed: 0, jump: 0 });
+    bot.attack = null;
     bot.x = body.x;
     return;
   }
@@ -899,7 +908,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   const m = br.target;
   const st = bot.ai.weapon;
   // (A monster that's wandered over to you is yours now.)
-  if (m && !m.def.boss && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
+  if (m && !m.def.boss && !bot.rude && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
   if (!bot.leaving && br.target && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
     fight(bot, m, world, intent, rng);
   }

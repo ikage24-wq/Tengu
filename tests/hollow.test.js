@@ -21,7 +21,7 @@ function run(opts = {}) {
   const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level: 12, jobs: ['archer'] });
   char.mapId = 'hollow_gate';
   const w = createWorld(char);
-  w.bots = createBots(w, rng);
+  w.bots = createBots(w, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
   w.god = true;
   assert.equal(startRun(w, 'hollow', opts), null);
   return w;

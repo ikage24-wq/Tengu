@@ -26,6 +26,7 @@ import { updateParty, tickHunter, fieldDownOver } from './party.js';
 import { updateBuddies, rivalHere, thanked, buddiesOf } from './buddies.js';
 import { updateRaids, raidBoss, gather } from './raids.js';
 import { isQueen } from './story.js';
+import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { ACHIEVEMENTS } from '../data/achievements.js';
@@ -38,8 +39,10 @@ import { navOf, surfaceBelow } from './nav.js';
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 
-const TOTAL = 22; // players online across all towns, counting those between towns
-const MIN_ONLINE = 20; // never fewer: someone logging out is soon replaced
+// Players online across all towns (counting those between towns) follows the real clock
+// (world/drama.js): fewest late at night, most in the evening and at the weekend. Never fewer than
+// two under it: someone logging out is soon replaced.
+const onlineNow = (bots) => onlineCount(serverTime((bots.clock ??= () => new Date())()));
 const PER_TOWN = 8; // most in one town at once
 
 // Where players of each level hang out, following the hunting grounds around each town: Sprout
@@ -261,13 +264,15 @@ function makeShop(bot, rng) {
 
 // ---------- Population ----------
 
-export function createBots(world, rng = Math.random) {
-  const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng };
+// `clock`: the real time by default (tests pin it).
+export function createBots(world, rng = Math.random, { clock = () => new Date() } = {}) {
+  const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng, clock };
   // Your friends' and your rival's names are theirs: nobody else turns up with them.
   for (const b of buddiesOf(world.char)) bots.names.add(b.name);
   if (world.char.rival) bots.names.add(world.char.rival.name);
   // Everyone's already around when you log in.
-  for (let i = 0; i < TOTAL; i++) spawn(bots, world, { quiet: true });
+  const total = onlineNow(bots);
+  for (let i = 0; i < total; i++) spawn(bots, world, { quiet: true });
   return bots;
 }
 
@@ -303,12 +308,13 @@ function freeX(map, bots, rng) {
   return between(140, map.width - 140, rng);
 }
 
-// `who` logs in someone you know (a friend) as they are; now and then in the town you're in.
-function spawn(bots, world, { quiet = false, who = null } = {}) {
+// `who` logs in someone you know (a friend) as they are; now and then in the town you're in
+// (always, with `here`).
+function spawn(bots, world, { quiet = false, who = null, here = false } = {}) {
   const rng = bots.rng;
   const name = who?.name ?? makeName(bots.names, rng);
   const char = who?.char ?? makeBotCharacter(rng, { name });
-  const town = who && world.map.isTown && rng() < 0.5 ? world.map.id : townFor(bots, char.level);
+  const town = who && world.map.isTown && (here || rng() < 0.5) ? world.map.id : townFor(bots, char.level);
   if (!town) return null;
   const map = MAPS[town];
   const bot = {
@@ -326,7 +332,9 @@ function spawn(bots, world, { quiet = false, who = null } = {}) {
 // What world/buddies.js needs to bring people in.
 function hooksFor(bots, world) {
   return {
-    logIn: (who) => spawn(bots, world, { who }),
+    logIn: (who, { here = false } = {}) => spawn(bots, world, { who, here }),
+    say: (b, text) => say(b, text),
+    shout: (b, text) => shout(b, bots, world, text),
     addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
     addRival: () => rivalHere(bots, world, hooksFor(bots, world), true),
     makeChar: makeBotCharacter,
@@ -372,7 +380,8 @@ export function updateBots(bots, world, dt) {
   // number.
   bots.spawnIn -= dt;
   const online = bots.list.length;
-  if (online < MIN_ONLINE || (bots.spawnIn <= 0 && online < TOTAL)) {
+  const total = onlineNow(bots);
+  if (online < total - 2 || (bots.spawnIn <= 0 && online < total)) {
     bots.spawnIn = between(12, 30, rng);
     spawn(bots, world);
   }
@@ -406,7 +415,7 @@ export function updateBots(bots, world, dt) {
         bot.timer = 0.6;
         if (rng() < 0.6) say(bot, speak(bots.memory, 'bye', ctx, bot.style, rng) ?? 'bye');
       }
-    } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave'].includes(bot.state)) {
+    } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave', 'duel', 'watch', 'meet', 'follow', 'afk'].includes(bot.state)) {
       goToPortal(bot, map, 'travel');
     }
     behave(bot, bots, world, map, dt);
@@ -415,7 +424,8 @@ export function updateBots(bots, world, dt) {
     if (bot.nextLine <= 0 && !bot.bubble && !['logout', 'leave', 'chat', 'chatwait'].includes(bot.state)) {
       // The busier the town, the less each person talks, so chat stays readable.
       bot.nextLine = (bot.shop ? between(25, 50, rng) : between(30, 75, rng)) * crowd;
-      const line = speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng);
+      // (Now and then, something about the time: a night owl, a kid home from school.)
+      const line = rng() < 0.15 ? timeLine(serverTime(bots.clock()), rng) : speak(bots.memory, moodFor(bot, rng), ctx, bot.style, rng);
       if (line) {
         say(bot, line);
         world.log?.(`${bot.name}: ${line}`, '#e6dcff');
@@ -441,6 +451,7 @@ export function updateBots(bots, world, dt) {
   huntersHere(bots, world, dt);
   updateBuddies(bots, world, dt, hooksFor(bots, world));
   updateRaids(bots, world);
+  updateDrama(bots, world, dt, hooksFor(bots, world));
   listen(bots, world);
   deliverReplies(bots, world);
   news(bots, world, dt);
@@ -450,7 +461,7 @@ export function updateBots(bots, world, dt) {
   }
   bots.list = bots.list.filter((b) => !b.gone);
   // Whoever just logged out is replaced, so the server never dips under its minimum.
-  for (let i = 0; i < 4 && bots.list.length < MIN_ONLINE; i++) spawn(bots, world);
+  for (let i = 0; i < 4 && bots.list.length < total - 2; i++) spawn(bots, world);
 }
 
 function goToPortal(bot, map, why) {
@@ -904,6 +915,9 @@ function huntersHere(bots, world, dt) {
       const n = bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
       for (let i = 0; i < n; i++) addHunter(bots, world);
       rivalHere(bots, world, hooksFor(bots, world));
+      // Now and then one of them is a kill stealer.
+      const plain = bots.list.filter((b) => b.hunter && !b.gone && !b.rival && !b.buddy);
+      if (plain.length && rng() < 0.15) pick(plain, rng).rude = { steals: 0 };
     }
   }
   const hunters = bots.list.filter((b) => b.hunter && !b.gone);
@@ -911,9 +925,10 @@ function huntersHere(bots, world, dt) {
     for (const b of hunters) b.gone = true;
     return;
   }
-  world.onStrangerKill = (id) => {
+  world.onStrangerKill = (id, m) => {
     const bot = hunters.find((b) => b.id === id);
     if (bot) bot.kills = (bot.kills ?? 0) + 1;
+    if (bot?.rude && m && Math.abs(m.x - world.body.x) < 230 && Math.abs(m.y - world.body.y) < 120) return killSteal(bots, world, bot, hunters);
     if (bot && !bot.bubble && !bot.rival && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
   };
   // A boss here (a queen back for a rematch, the Crystal King on his throne): word gets around,
@@ -922,6 +937,12 @@ function huntersHere(bots, world, dt) {
   if (queen && bots.queenSeen !== queen) {
     bots.queenSeen = queen;
     gather(bots, world, queen, hooksFor(bots, world));
+  }
+  // Now and then someone goes afk where they stand.
+  bots.afkIn = (bots.afkIn ?? between(60, 180, rng)) - dt;
+  if (bots.afkIn <= 0) {
+    bots.afkIn = between(120, 300, rng);
+    fieldAfk(bots, world, hunters);
   }
   // Now and then someone walks in.
   bots.arriveIn -= dt;
@@ -958,7 +979,8 @@ function huntersHere(bots, world, dt) {
     if (fieldDownOver(bot, world) && bot.state !== 'logout') {
       bot.state = 'logout';
       bot.timer = 0.6;
-      if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
+      if (bot.diedAfk) say(bot, pick(['wait why am i dead', 'i was AFK!!', 'died while afk lmao'], rng));
+      else if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
       const char = bot.char;
       char.hp = computeStats(char).maxHp;
       bots.returns = [...(bots.returns ?? []), { at: world.now + between(40, 100, rng), map: map.id, who: { name: bot.name, char, guild: bot.guild, style: bot.style, title: bot.title } }];
@@ -979,6 +1001,45 @@ function huntersHere(bots, world, dt) {
       const line = queen ? pick(isQueen(queen) ? ['shes so strong', 'focus the queen!', 'keep going!', 'her moves are so pretty tho', 'almost there!!'] : ['hes so tanky', 'focus the boss!', 'keep going!', 'almost there!!', 'my pots are running low'], rng) : speak(bots.memory, moodFor(bot, rng), { player: world.char.name }, bot.style, rng);
       if (line) shout(bot, bots, world, line);
     }
+  }
+}
+
+// A kill stolen from right under you: they gloat, the others call them out, and after a couple
+// they get the message.
+function killSteal(bots, world, bot, hunters) {
+  const rng = bots.rng;
+  bot.rude.steals += 1;
+  shout(bot, bots, world, pick(['ty for the exp :)', 'finders keepers', 'ks? never heard of it', 'too slow lol', 'mine now'], rng));
+  hunters.filter((b) => b !== bot && !b.down && !b.afk).slice(0, 2).forEach((b, i) => {
+    b.sayAt = world.now + 1.2 + i * 1.5;
+    b.sayShout = true;
+    b.sayLine = pick([`dude thats a KS`, `@${bot.name} not cool`, 'reported', 'go find ur own mobs', `${bot.name} wow. just wow`, 'ignore them, theyre like that'], rng);
+  });
+  if (bot.rude.steals >= 2) {
+    bot.rude = null;
+    bot.sayAt = world.now + 5;
+    bot.sayShout = true;
+    bot.sayLine = pick(['ok ok fine, sorry', 'whatever, this map sucks anyway', 'jeez fine'], rng);
+  }
+}
+
+// Someone out hunting goes afk right where they stand, and the nearest monster has a nibble.
+function fieldAfk(bots, world, hunters) {
+  const rng = bots.rng;
+  const bot = pick(hunters.filter((b) => !b.rival && !b.raid && !b.rude && !b.down && !b.leaving && !b.afk && b.body?.onGround), rng);
+  if (!bot) return;
+  bot.afk = { until: world.now + between(30, 60, rng) };
+  say(bot, pick(['brb', 'afk', 'brb food', 'afk 2 min'], rng));
+  const m = world.mobs.filter((o) => o.hp > 0 && !o.def.boss).sort((a, b) => Math.abs(a.x - bot.body.x) - Math.abs(b.x - bot.body.x))[0];
+  if (m && Math.abs(m.x - bot.body.x) < 300) {
+    m.foe = bot.body;
+    m.foeUntil = bot.afk.until;
+  }
+  const o = hunters.find((b) => b !== bot && !b.down);
+  if (o) {
+    o.sayAt = world.now + between(10, 18, rng);
+    o.sayShout = true;
+    o.sayLine = pick([`lol ${bot.name} is getting eaten`, `${bot.name} ur afk and a monster is chewing on u`, 'rip the afk guy'], rng);
   }
 }
 
