@@ -1,7 +1,6 @@
 // Cooking: every town has a stove (the map's `stove`). Pick a recipe you know, have its
-// ingredients (fish from fishing and monster drops), and stir: stop the spoon in the sweet spot
-// and the pot serves more (Good one dish, Great two, Perfect three). Eating a dish heals a little and gives its bonus for a while (one
-// dish at a time; a new one replaces the last). You know the first recipes from the start and
+// ingredients (fish from fishing and monster drops), and the pot serves SERVINGS dishes. Eating a
+// dish heals a little and gives its bonus for a while (different dishes add up). You know the first recipes from the start and
 // learn each fish's own recipe the first time you catch that fish.
 //
 // DISHES: { id, name, vessel ('bowl' | 'plate'), colors [food, topping], needs { item: qty },
@@ -26,9 +25,5 @@ export const DISHES = [
 
 export const DISH_BY_ID = Object.fromEntries(DISHES.map((d) => [d.id, d]));
 
-// How the stir went, and how many dishes the pot serves.
-export const QUALITY = [
-  { name: 'Good', servings: 1, color: '#9c86b8' },
-  { name: 'Great', servings: 2, color: '#3f9f5f' },
-  { name: 'Perfect', servings: 3, color: '#e0a52f' },
-];
+// How many dishes a pot serves.
+export const SERVINGS = 2;

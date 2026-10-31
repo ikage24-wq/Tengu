@@ -217,7 +217,8 @@ export function useItem(world, id) {
     returnToTown(world);
     return true;
   }
-  // A dish: eaten for a little HP and its bonus for a while (one dish at a time).
+  // A dish: eaten for a little HP and its bonus for a while (different dishes add up; the same
+  // dish again starts its time over).
   if (def.effect?.food) {
     const dish = DISH_BY_ID[def.effect.food];
     if (removeItem(world.char.inventory, id, 1) < 1) {
@@ -226,7 +227,8 @@ export function useItem(world, id) {
     }
     const s = world.stats;
     world.char.hp = Math.min(s.maxHp, world.char.hp + dish.heal);
-    world.char.buffs.food = { name: dish.name, until: world.now + dish.secs, values: { ...dish.values }, food: dish.id };
+    delete world.char.buffs.food;
+    world.char.buffs[`food:${dish.id}`] = { name: dish.name, since: world.now, until: world.now + dish.secs, values: { ...dish.values }, food: dish.id };
     world.log(`Yum! ${dish.name}: ${dish.about} for ${Math.round(dish.secs / 60)} minutes.`, '#ffd6a0');
     world.itemReadyAt = world.now + ITEM_DELAY;
     world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });

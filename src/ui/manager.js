@@ -103,7 +103,6 @@ export function routeInput(state, world, input, dt) {
       }
     } else if (e.type === 'cook') {
       state.windows.cook.open = true;
-      state.windows.cook.stir = null;
     } else if (e.type === 'death') {
       state.death = true;
     } else if (e.type === 'admin') {

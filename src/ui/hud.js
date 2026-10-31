@@ -716,7 +716,8 @@ function drawBuffs(ui, world) {
     ctx.beginPath();
     ctx.arc(x + 9, y + 9, 9, 0, Math.PI * 2);
     ctx.clip();
-    drawSkillIcon(ctx, id, x + 1, y + 1);
+    if (b.food) drawItemIcon(ctx, b.food, x + 1, y + 1);
+    else drawSkillIcon(ctx, id, x + 1, y + 1);
     ctx.restore();
     ctx.strokeStyle = left < 5 && Math.sin(world.now * 10) > 0 ? COLORS.bad : COLORS.select;
     ctx.lineWidth = 2;
@@ -724,7 +725,7 @@ function drawBuffs(ui, world) {
     ctx.arc(x + 9, y + 9, 9.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
     ctx.stroke();
     text(ctx, `${Math.ceil(left)}`, x + 9, y + 26, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: COLORS.ink });
-    if (hover(ui, x, y, 18, 18)) tooltip(ui, [{ text: SKILLS[id].name, bold: true }, { text: `${Math.ceil(left)}s left`, color: COLORS.muted }]);
+    if (hover(ui, x, y, 18, 18)) tooltip(ui, [{ text: SKILLS[id]?.name ?? b.name, bold: true }, { text: `${Math.ceil(left)}s left`, color: COLORS.muted }]);
   });
 }
 

@@ -102,7 +102,7 @@ const TEMPLATES = {
     'anyone know where {rarefish} bites?', 'just caught a {fish} {emote}', 'fishing here is so relaxing', 'my rod is my main weapon now {laugh}',
     'still no {rarefish} after {hours} hours', 'the bobber dipped and i panicked {laugh}', 'who caught the big one??',
   ],
-  cooking: ['made {dish} {emote}', 'anyone wanna try my {dish}?', 'perfect stir!! 3 servings', '{dish} + grind = so much exp', 'cooking is my new hobby {emote}', 'i burned it {laugh} jk only Good'],
+  cooking: ['made {dish} {emote}', 'anyone wanna try my {dish}?', '{dish} + grind = so much exp', 'cooking is my new hobby {emote}', 'i burned it {laugh} jk only Good'],
   story: [
     'just beat {queen}\'s trial!!', '{queen} is so pretty tho', 'is Hayate waking up soon?', 'cried a little at the {queen} cutscene ngl', 'Mira is the best {emote}', 'wait the wind STOPPED?? thats the plot??',
   ],
@@ -270,7 +270,7 @@ export function answer(said, ctx) {
   }
   // Topics.
   if (has(w, ['fish', 'fishing', 'rod', 'bobber'])) return 'buy a rod from Pip or Marlo, stand at ripples on the water, press up, then attack the second it bites!';
-  if (has(w, ['cook', 'stove', 'recipe', 'food'])) return 'every town has a stove, press up at it. stop the spoon in the middle for 3 servings!';
+  if (has(w, ['cook', 'stove', 'recipe', 'food'])) return 'every town has a stove, press up at it. a pot makes 2 dishes';
   if (has(w, ['polish', 'enhance', 'upgrade'])) return 'Tora in Ember Crag polishes gear up to +10, gets harder each step tho';
   if (has(w, ['set', 'sets'])) return 'queens drop set pieces for ur job, and the Hollow chest gives Rootwood. full set = aura!';
   if (has(w, ['collection', 'book', 'cards'])) return 'press B for the Collection, a card for every monster you beat';
