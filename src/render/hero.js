@@ -910,7 +910,7 @@ function liveFace(look, state, mv) {
     if (h < 0.45) return { lid: 0.2, mouth: 'smirk', brows: [[0, 0.3], [0.5, -0.2]] };
     if (h < 0.9) return { lid: 0.1, mouth: beat(5) % 3 ? 'grin' : 'tongue', brows: [[0.3, 0.2], [0.5, -0.1]] };
     if (h < 1.4) return { lid: 0.05, mouth: beat(4) % 3 ? 'fang' : 'D', brows: [[0.1, 0.6], [0.1, 0.6]] };
-    return { mouth: beat(4) % 2 ? 'D' : 'grin', brows: [[0.6, 0.1], [0.6, 0.1]], closed: beat(3) % 4 === 0 ? true : null };
+    return { mouth: beat(4) % 2 ? 'D' : 'grin', brows: [[0.6, 0.1], [0.6, 0.1]], closed: beat(3) % 4 === 0 ? [true, true] : null };
   }
   if (mv) {
     const p = state.progress ?? 0;
