@@ -204,7 +204,9 @@ function cashTooltip(def, inst) {
   const lines = [{ text: itemName(inst ?? def.id), bold: true, size: 10, color: '#d0559a' }];
   lines.push({ text: `✦ Cash outfit · ${def.slot[0].toUpperCase() + def.slot.slice(1)}`, bold: true, color: '#ff8fc1' });
   if (v) lines.push({ text: `◆ ${v.name} color`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
-  lines.push({ text: def.cover ? `Reskins the weapon you hold. Its stats stay the same.` : `Covers the look of your ${SLOT_LOOKS[def.slot]}. Your gear keeps its stats.`, color: COLORS.muted, size: 8 });
+  // (The face slot is outfit-only: there's no gear under it to cover.)
+  const what = def.cover ? 'Reskins the weapon you hold. Its stats stay the same.' : def.slot === 'face' ? 'Worn on your face, under any hat.' : `Covers the look of your ${SLOT_LOOKS[def.slot]}. Your gear keeps its stats.`;
+  lines.push({ text: what, color: COLORS.muted, size: 8 });
   return lines;
 }
 

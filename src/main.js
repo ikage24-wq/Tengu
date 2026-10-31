@@ -149,7 +149,7 @@ function blended(world, alpha, draw) {
 // Browsers only allow sound after the player does something: start it on the first key or click.
 for (const ev of ['pointerdown', 'pointerup', 'keydown', 'touchstart', 'touchend']) window.addEventListener(ev, unlock, { passive: true });
 
-function frame(now) {
+function step(now) {
   const raw = (now - last) / 1000;
   const dt = Math.min(0.1, raw);
   last = now;
@@ -260,7 +260,22 @@ function frame(now) {
   if (canvas.style.filter !== VIVID) canvas.style.filter = VIVID;
   endUi(ui);
   endFrame(input);
+}
+
+// One bad frame never freezes the game: the next frame is booked first, and an error is logged
+// (once per message) and the frame's input let go, so play carries on.
+const crashes = new Set();
+function frame(now) {
   requestAnimationFrame(frame);
+  try {
+    step(now);
+  } catch (err) {
+    if (!crashes.has(err.message)) {
+      crashes.add(err.message);
+      console.error('Frame error:', err);
+    }
+    endFrame(input);
+  }
 }
 requestAnimationFrame(frame);
 

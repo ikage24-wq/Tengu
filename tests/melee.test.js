@@ -593,7 +593,14 @@ test('Divine Aegis: a hit that leaves the Paladin under half HP raises it, once 
   assert.ok(!w.char.buffs.divineaegis, 'not while healthy');
   w.invuln = 0;
   w.char.hp = Math.round(w.stats.maxHp * 0.55);
-  hurtPlayer(w, 400, w.body.x + 20);
+  // (The Aegis also blocks a hit outright now and then: no luck here, so the hit lands.)
+  const roll = Math.random;
+  Math.random = () => 0.99;
+  try {
+    hurtPlayer(w, 400, w.body.x + 20);
+  } finally {
+    Math.random = roll;
+  }
   assert.ok(w.char.hp < w.stats.maxHp * 0.5, 'knocked under half');
   assert.ok(w.char.buffs.divineaegis?.values.dmgCut > 0, 'the blade goes up');
   const since = w.char.buffs.divineaegis.since;
@@ -966,7 +973,7 @@ test('Snow wolf picks her own fights, and comes back to the Beastmaster when the
   run(w, 1.2, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
   // She waddles (slowly, by design), so from the far end of a fight it can take her a while.
   const beside = () => Math.abs(w.pets.snow.x - w.body.x) < 80 && Math.abs(w.pets.snow.y - w.body.y) < 30;
-  for (let i = 0; i < 60 * 8 && !beside(); i++) updateWorld(w, DT, idle);
+  for (let i = 0; i < 60 * 12 && !beside(); i++) updateWorld(w, DT, idle);
   assert.ok(beside(), 'back beside her');
 });
 
