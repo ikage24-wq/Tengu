@@ -37,23 +37,23 @@ function backdrop(ctx, time) {
 
 // A silly subtitle under the logo, rolled fresh on every page load.
 const oneOf = (list) => list[Math.floor(Math.random() * list.length)];
-const THINGS = ['slimes', 'potions', 'mushrooms', 'bunny hoods', 'loot', 'jumping', 'sparkles', 'crits'];
+const JOB_NAMES = ['Paladin', 'Berserker', 'Beastmaster', 'Stormcaller', 'Shinobi', 'Kitsune', 'Onmyoji'];
 const QUOTE_MAKERS = [
-  () => `Now with ${10 + Math.floor(Math.random() * 90)}% more ${oneOf(THINGS)}!`,
-  () => `Warning: may contain ${oneOf(THINGS)}.`,
-  () => `Powered by ${oneOf(THINGS)} and questionable decisions.`,
-  () => `${oneOf(['Mira', 'Marlo', 'The Crystal King', 'Your mom'])} says hi!`,
+  () => `${oneOf(JOB_NAMES)}s are perfectly balanced. Probably.`,
+  () => `${oneOf(['Mira', 'Marlo', 'Lulu', 'The Crystal King'])} says hi!`,
   () => oneOf([
-    'The slimes have unionized.',
-    'Press Z to solve your problems. Mostly.',
-    'No mushrooms were harmed. Okay, a few.',
-    'Level 1 forever is a lifestyle.',
-    'Have you tried jumping at it?',
-    'Grinding is just walking with ambition.',
-    'Ropes: the original fast travel.',
+    'Bring friends. Share the loot. Or don\'t.',
+    'The snow wolf is a very good girl.',
+    'Paladins hit like a pillow, on purpose.',
+    'Stormcallers: please stop zapping the bots.',
+    'Smug face sold separately.',
+    'New hair. Same bad decisions.',
+    'Big round glasses: now in the Cash Shop.',
+    'Swimwear is not armor. We checked.',
+    'Now on Windows. It even updates itself.',
+    'Every sound made by hand. Mostly by beeping.',
+    'The bots are learning. Be nice to them.',
     'Your bag is full. Of dreams.',
-    '100% organic, free-range pixels.',
-    'Tengu does not sponsor your sleep schedule.',
   ]),
 ];
 const quote = oneOf(QUOTE_MAKERS)();
