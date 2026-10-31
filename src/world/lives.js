@@ -22,6 +22,7 @@ import { snapshot, remake } from './buddies.js';
 import { joinParty, partyMembers } from './party.js';
 import { addItem } from '../core/inventory.js';
 import { jobChain } from '../data/jobs.js';
+import { bountyKill } from './market.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -399,7 +400,11 @@ export function updateLives(bots, world, dt, hooks) {
     L.loggedIn = true;
     regularsLogIn(L, bots, world, hooks);
   }
-  world.onAnyKill = (m) => questKill(bots, world, m);
+  // (A kill may count for someone you're helping, or a bounty you took: world/market.js.)
+  world.onAnyKill = (m) => {
+    questKill(bots, world, m);
+    bountyKill(bots, world, m);
+  };
   noticing(L, bots, world, dt);
   greetings(L, bots, world);
   weatherTick(L, bots, world, dt, hooks);

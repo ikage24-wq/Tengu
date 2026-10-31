@@ -143,6 +143,8 @@ const pose = (name, char) => ({ name, look: char.appearance, equipment: char.equ
 
 function bossDown(bots, world) {
   world.onBossDown = (m) => {
+    // (For the hall of fame.)
+    world.char.raids = (world.char.raids ?? 0) + 1;
     const here = raiders(bots, world);
     if (!here.length) return;
     const rng = bots.rng;
