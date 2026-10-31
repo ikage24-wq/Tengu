@@ -102,12 +102,16 @@ function zoneHits(bots, world) {
   };
 }
 
-// Lines said a beat later (a callout, a hello on the way in).
+// Lines said a beat later out in the field (a callout, a hello on the way in, calling out a kill
+// stealer); `sayShout` ones go in the chat too. (Town lines: world/drama.js.)
 function sayings(bots, world) {
   for (const b of bots.list) {
-    if (b.sayAt == null || world.now < b.sayAt) continue;
+    if (b.sayAt == null || world.now < b.sayAt || !(b.hunter || b.party)) continue;
     b.sayAt = null;
-    if (!b.down && !b.gone) say(b, b.sayLine);
+    if (b.down || b.gone) continue;
+    say(b, b.sayLine);
+    if (b.sayShout && b.map === world.map.id) world.log?.(`${b.name}: ${b.sayLine}`, '#e6dcff');
+    b.sayShout = false;
   }
 }
 

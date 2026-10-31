@@ -24,7 +24,7 @@ function heroAt(rng, level, jobs) {
   const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level, jobs });
   char.mapId = 'hollow_gate';
   const world = createWorld(char);
-  world.bots = createBots(world, rng);
+  world.bots = createBots(world, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
   return world;
 }
 
@@ -58,7 +58,7 @@ test('the group finder fills a 1 tank / 1 healer / 2 DPS group around you', () =
 test('novices and full roles are turned away', () => {
   const rng = seeded(5);
   const novice = createWorld(Object.assign(createCharacter('Nov', {}), { mapId: 'hollow_gate' }));
-  novice.bots = createBots(novice, rng);
+  novice.bots = createBots(novice, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
   assert.match(planGroup(novice).why, /first job/);
   const world = heroAt(rng, 12, ['warrior']);
   const other = makeBotCharacter(rng, { name: 'Two', pro: false, level: 12, jobs: ['warrior'] });

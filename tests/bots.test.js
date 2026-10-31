@@ -11,6 +11,9 @@ import { computeStats } from '../src/core/stats.js';
 import { JOBS } from '../src/data/jobs.js';
 import { TOWNS } from '../src/data/maps.js';
 
+// A weekday evening, so how many are online (it follows the clock) is the same every run.
+const EVENING = () => new Date(2026, 9, 28, 20, 0);
+
 // A small seeded random so the test is repeatable.
 function seeded(n) {
   return () => {
@@ -36,7 +39,7 @@ test('generated players are real characters with a job for their level and gear 
 test('players come and go over time, at least 20 online, spread by level, and nobody comes back', () => {
   const world = createWorld(createCharacter('Me', {}));
   world.log = () => {};
-  const bots = createBots(world, seeded(3));
+  const bots = createBots(world, seeded(3), { clock: EVENING });
   const names = new Set();
   // Levels seen in each town over the whole run (one moment can be a fluke).
   const seen = Object.fromEntries(TOWNS.map((t) => [t, { sum: 0, n: 0 }]));
@@ -160,7 +163,7 @@ test('players answer questions from the game itself: maps, monsters, NPCs, fish,
 test('players nearby say hi back, answer a question, and cheer when you level up', () => {
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
-  const bots = createBots(world, seeded(11));
+  const bots = createBots(world, seeded(11), { clock: EVENING });
   // Put a few right next to you.
   for (const b of bots.list.slice(0, 3)) Object.assign(b, { map: 'sprout', x: world.body.x + 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null });
   const step = (secs) => {
@@ -186,7 +189,7 @@ test('in town, players fish off the pier, cook, chat with each other, and wear t
   const world = createWorld(createCharacter('Me', {}));
   quiet(world);
   loadMap(world, 'harbor', 'start');
-  const bots = createBots(world, seeded(5));
+  const bots = createBots(world, seeded(5), { clock: EVENING });
   const seen = new Set();
   for (let t = 0; t < 600; t += 0.1) {
     world.now += 0.1;
@@ -207,7 +210,7 @@ test('players hunt the field you are on, leave the monsters by you alone, and th
   quiet(world);
   world.char.level = 20;
   world.god = true;
-  const bots = createBots(world, seeded(21));
+  const bots = createBots(world, seeded(21), { clock: EVENING });
   loadMap(world, 'woods', 'start');
   // Make sure some are here.
   let n = 0;
@@ -242,7 +245,7 @@ test('players hunt the field you are on, leave the monsters by you alone, and th
 test('the server shares news of big moments now and then', () => {
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
-  const bots = createBots(world, seeded(2));
+  const bots = createBots(world, seeded(2), { clock: EVENING });
   for (let t = 0; t < 600; t += 0.5) {
     world.now += 0.5;
     updateBots(bots, world, 0.5);
@@ -263,8 +266,9 @@ test('other players really fight: their job\'s own string of moves, back to back
     // A tough monster well away from you, with a player on it.
     const x = world.body.x + 600 < world.map.width - 100 ? world.body.x + 600 : world.body.x - 600;
     const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
-    m.hp = m.def.hp = 1e9;
-    m.def = { ...m.def, speed: 0 };
+    // (A copy of its kind, so other tests still get ordinary ones.)
+    m.def = { ...m.def, hp: 1e9, speed: 0 };
+    m.hp = 1e9;
     world.mobs.push(m);
     const char = makeBotCharacter(seeded(5), { name: 'Hunter', level: 45, jobs: job, pro: false });
     assert.ok(botSkills(char).some((s) => s.full), `${job[1]} has a finisher to fight with`);
@@ -293,7 +297,7 @@ test('fields are busy: every hunting map has a few players on it', () => {
       const world = createWorld(createCharacter('Me', {}));
       quiet(world);
       world.char.level = 20;
-      const bots = createBots(world, seeded(seed * 7));
+      const bots = createBots(world, seeded(seed * 7), { clock: EVENING });
       loadMap(world, id, 'start');
       updateBots(bots, world, 0.05);
       const n = bots.list.filter((b) => b.hunter && !b.gone).length;
@@ -309,7 +313,7 @@ test('monsters fight back: a player hit drinks potions, falls under a tombstone,
   const world = createWorld(createCharacter('Me', {}));
   quiet(world);
   world.god = true;
-  const bots = createBots(world, seeded(3));
+  const bots = createBots(world, seeded(3), { clock: EVENING });
   loadMap(world, 'woods', 'start');
   bots.huntMap = world.map.id;
   bots.list = bots.list.filter((b) => !b.hunter);
@@ -358,8 +362,9 @@ test('dash moves carry a player along, and a party member who dies walks back in
   world.mobs = [];
   const x = world.body.x + 700;
   const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
-  m.hp = m.def.hp = 1e9;
-  m.def = { ...m.def, speed: 0, atk: 0 };
+  // (A copy of its kind, so other tests still get ordinary ones.)
+  m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
+  m.hp = 1e9;
   world.mobs.push(m);
   const char = makeBotCharacter(seeded(4), { name: 'Dasher', level: 45, jobs: ['thief', 'shinobi'], pro: false });
   const bot = { id: 'd1', name: 'Dasher', char, level: 45, hunter: true, map: world.map.id, x: x - 40, facing: 1, state: 'hunt', body: createBody(x - 40, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
@@ -399,7 +404,7 @@ test('friends: add a player, they stay on your list across sessions, log in as t
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
   world.char.level = 30;
-  const bots = createBots(world, seeded(31));
+  const bots = createBots(world, seeded(31), { clock: EVENING });
   world.bots = bots;
   const pal = bots.list.find((b) => !b.shop && b.level <= 30 && b.level >= 10);
   joinParty(bots, pal, world);
@@ -414,7 +419,7 @@ test('friends: add a player, they stay on your list across sessions, log in as t
   const char = JSON.parse(JSON.stringify(world.char));
   const world2 = createWorld(char);
   const lines2 = quiet(world2);
-  const bots2 = createBots(world2, seeded(32));
+  const bots2 = createBots(world2, seeded(32), { clock: EVENING });
   world2.bots = bots2;
   assert.ok(!bots2.list.some((b) => b.name === pal.name), 'nobody else gets their name');
   let friend = null;
@@ -444,7 +449,7 @@ test('your rival turns up in your fields and races you to every level', async ()
   const lines = quiet(world);
   world.god = true;
   world.char.level = 20;
-  const bots = createBots(world, seeded(41));
+  const bots = createBots(world, seeded(41), { clock: EVENING });
   world.bots = bots;
   let rival = null;
   for (let i = 0; i < 20 && !rival; i++) {
@@ -468,7 +473,7 @@ test('in trouble out in the field, a player nearby rushes over and patches you u
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
   world.char.level = 25;
-  const bots = createBots(world, seeded(51));
+  const bots = createBots(world, seeded(51), { clock: EVENING });
   world.bots = bots;
   loadMap(world, 'woods', 'start');
   world.mobs = [];
@@ -500,7 +505,7 @@ test('a queen back for a rematch: players gather (your rival among them), dodge 
   const lines = quiet(world);
   world.god = true;
   world.char.level = 32;
-  const bots = createBots(world, seeded(61));
+  const bots = createBots(world, seeded(61), { clock: EVENING });
   world.bots = bots;
   loadMap(world, 'glade', 'start');
   updateBots(bots, world, 0.05);
@@ -549,8 +554,9 @@ test('a party combo: your finisher brings the members fighting by you in with th
   loadMap(world, 'woods', 'start');
   world.mobs = [];
   const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 60, y: world.map.groundY });
-  m.hp = m.def.hp = 1e9;
-  m.def = { ...m.def, speed: 0, atk: 0 };
+  // (A copy of its kind, so other tests still get ordinary ones.)
+  m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
+  m.hp = 1e9;
   world.mobs.push(m);
   const pal = { id: 'p1', name: 'Pal', char: makeBotCharacter(seeded(8), { name: 'Pal', level: 40, jobs: ['warrior', 'paladin'] }), level: 40, style: {}, map: world.map.id, x: world.body.x + 20, facing: 1, state: 'idle', session: 9999, stay: 9999, nextLine: 999, appear: 0 };
   bots.list.push(pal);
@@ -590,8 +596,9 @@ test('the priestesses fight with their whole kit: torii gates, talismans, and bl
     world.mobs = [];
     const x = world.body.x + 600;
     const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
-    m.hp = m.def.hp = 1e9;
-    m.def = { ...m.def, speed: 0, atk: 0 };
+    // (A copy of its kind, so other tests still get ordinary ones.)
+    m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
+    m.hp = 1e9;
     world.mobs.push(m);
     const bot = { id: 'b1', name: char.name, char, level: 50, hunter: true, map: world.map.id, x: x - 120, facing: 1, state: 'hunt', body: createBody(x - 120, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
     let seen = false;
@@ -612,11 +619,175 @@ test('the Crystal Throne fills up for a raid on the Crystal King', async () => {
   const lines = quiet(world);
   world.god = true;
   world.char.level = 45;
-  const bots = createBots(world, seeded(81));
+  const bots = createBots(world, seeded(81), { clock: EVENING });
   world.bots = bots;
   loadMap(world, 'bossroom', 'west');
   for (let t = 0; t < 1; t += 1 / 30) updateBots(bots, world, 1 / 30);
   assert.ok(world.mobs.some((m) => m.def.id === 'crystalking'));
   assert.ok(lines.some((l) => /Prismaris is on Crystal Throne/.test(l)), lines.join(' | '));
   assert.ok(bots.list.filter((b) => b.raid && !b.gone).length >= 3);
+});
+
+// ---------- Server life: duels, legends, guilds, the clock, afk, kill stealers ----------
+
+test('night owls: fewest players on late at night, most in the evening and at the weekend, and they talk about it', async () => {
+  const { serverTime, onlineCount, timeLine } = await import('../src/world/drama.js');
+  const at = (d, h) => serverTime(new Date(2026, 9, d, h, 0));
+  const night = onlineCount(at(28, 3));
+  const evening = onlineCount(at(28, 20));
+  const saturday = onlineCount(at(31, 20));
+  assert.ok(night < evening && evening < saturday, `${night} < ${evening} < ${saturday}`);
+  const world = createWorld(createCharacter('Me', {}));
+  quiet(world);
+  const late = createBots(world, seeded(5), { clock: () => new Date(2026, 9, 28, 3, 0) });
+  const busy = createBots(world, seeded(5), { clock: () => new Date(2026, 9, 31, 20, 0) });
+  assert.ok(late.list.length < busy.list.length);
+  assert.match(timeLine(at(28, 3), seeded(1)), /am|bed|sleep|night|mom|gn/);
+});
+
+// Steps the town (and its goings-on) a while.
+function townStep(world, bots, secs, dt = 0.1) {
+  for (let t = 0; t < secs; t += dt) {
+    world.now += dt;
+    updateBots(bots, world, dt);
+  }
+}
+
+test('a duel in town: two players spar with real moves, a crowd gathers, and someone wins', () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  const bots = createBots(world, seeded(91), { clock: EVENING });
+  world.bots = bots;
+  // Plenty of people about, and a duel due.
+  for (const b of bots.list.slice(0, 8)) Object.assign(b, { map: world.map.id, x: world.body.x + 100 + bots.list.indexOf(b) * 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null });
+  townStep(world, bots, 0.2);
+  bots.drama.duelIn = 0;
+  townStep(world, bots, 0.2);
+  assert.ok(lines.some((l) => /challenged .* to a duel/.test(l)), 'a challenge');
+  assert.ok(bots.list.some((b) => b.state === 'watch'), 'a crowd');
+  const poses = new Set();
+  for (let t = 0; t < 60 && !lines.some((l) => /won the duel/.test(l)); t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    for (const b of bots.list) if (b.state === 'duel' && b.emote) poses.add(b.emote.pose);
+  }
+  assert.ok(lines.some((l) => /won the duel/.test(l)), 'a winner');
+  assert.ok(poses.size >= 3, `moves traded (${[...poses].join(', ')})`);
+  assert.ok(!bots.list.some((b) => ['duel', 'watch'].includes(b.state)), 'everyone back to normal');
+});
+
+test('a legend logs in: the town loses it and fans follow them around', () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  const bots = createBots(world, seeded(93), { clock: EVENING });
+  world.bots = bots;
+  for (const b of bots.list.slice(0, 8)) Object.assign(b, { map: world.map.id, x: world.body.x + 60 + bots.list.indexOf(b) * 50, state: 'idle', timer: 99, session: 999, stay: 999, shop: null, level: 12 });
+  townStep(world, bots, 0.2);
+  bots.drama.legendIn = 0;
+  townStep(world, bots, 6);
+  const legend = bots.list.find((b) => b.legend);
+  assert.ok(legend && legend.level === 70 && legend.map === world.map.id, 'here, at the top level');
+  assert.ok(lines.some((l) => /legendary .* has logged in/.test(l)));
+  assert.ok(lines.filter((l) => l.includes(legend.name)).length >= 3, 'chat goes wild');
+  assert.ok(bots.list.some((b) => b.state === 'follow'), 'fans follow');
+});
+
+test('guilds: a recruiter asks you to join, you join, and someone storms out', async () => {
+  const { joinGuild, leaveGuild } = await import('../src/world/drama.js');
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  const bots = createBots(world, seeded(95), { clock: EVENING });
+  world.bots = bots;
+  for (const b of bots.list.slice(0, 8)) Object.assign(b, { map: world.map.id, x: world.body.x + 80 + bots.list.indexOf(b) * 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null, guild: 'Cozy Corner' });
+  townStep(world, bots, 0.2);
+  let offer = null;
+  for (let i = 0; i < 20 && !offer; i++) {
+    bots.drama.recruitIn = 0;
+    townStep(world, bots, 0.2);
+    offer = bots.list.find((b) => b.guildOffer);
+  }
+  assert.ok(lines.some((l) => /recruiting|looking for|join|needs/.test(l)), 'recruiting in chat');
+  assert.ok(offer, 'someone asks you');
+  joinGuild(world, offer);
+  assert.equal(world.char.guild, 'Cozy Corner');
+  assert.equal(JSON.parse(JSON.stringify(world.char)).guild, 'Cozy Corner', 'it saves');
+  bots.drama.stormIn = 0;
+  townStep(world, bots, 5);
+  assert.ok(lines.some((l) => /\[Guild\] .* has left the guild/.test(l)), 'drama, in guild chat');
+  leaveGuild(world);
+  assert.equal(world.char.guild, null);
+});
+
+test('afk on a portal in town, and afk in the field with a monster nibbling', async () => {
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  const bots = createBots(world, seeded(97), { clock: EVENING });
+  world.bots = bots;
+  for (const b of bots.list.slice(0, 6)) Object.assign(b, { map: world.map.id, x: world.body.x + 80 + bots.list.indexOf(b) * 40, state: 'idle', timer: 99, session: 999, stay: 999, shop: null });
+  townStep(world, bots, 0.2);
+  bots.drama.afkIn = 0;
+  townStep(world, bots, 25);
+  const afk = bots.list.find((b) => b.state === 'afk');
+  assert.ok(afk && afk.afkTag, 'afk on the spot');
+  assert.ok(world.map.portals.some((p) => Math.abs(p.x - afk.x) < 4), 'right on a portal');
+  assert.ok(lines.some((l) => l.includes(afk.name) && /afk|poke|hello|forever/.test(l)), 'people notice');
+  // Out in the field.
+  world.char.level = 20;
+  loadMap(world, 'woods', 'start');
+  for (let i = 0; i < 6 && !bots.list.some((b) => b.hunter && !b.gone); i++) {
+    bots.huntMap = null;
+    updateBots(bots, world, 0.05);
+  }
+  bots.afkIn = 0;
+  updateBots(bots, world, 0.05);
+  const idle = bots.list.find((b) => b.hunter && b.afk);
+  assert.ok(idle, 'a hunter goes afk');
+  const x = idle.body.x;
+  for (let t = 0; t < 5; t += 1 / 30) {
+    updateWorld(world, 1 / 30, NONE);
+    updateBots(bots, world, 1 / 30);
+  }
+  if (!idle.down) assert.ok(Math.abs(idle.body.x - x) < 40, 'standing where they were');
+  assert.ok(world.mobs.some((m) => m.foe === idle.body), 'a monster goes for them');
+});
+
+test('a kill stealer takes the monster you were on, and gets called out', async () => {
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { createBody } = await import('../src/world/physics.js');
+  const world = createWorld(createCharacter('Me', {}));
+  const lines = quiet(world);
+  world.god = true;
+  world.char.level = 25;
+  const bots = createBots(world, seeded(99), { clock: EVENING });
+  world.bots = bots;
+  loadMap(world, 'woods', 'start');
+  updateBots(bots, world, 0.05);
+  bots.list = bots.list.filter((b) => !b.hunter);
+  world.mobs = [];
+  const mine = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 60, y: world.map.groundY });
+  mine.hp = Math.ceil(mine.def.hp * 0.3);
+  mine.def = { ...mine.def, speed: 0, atk: 0 };
+  world.mobs.push(mine);
+  const mk = (id, dx, rude) => {
+    const char = makeBotCharacter(seeded(id.length * 7), { name: id, level: 40, jobs: ['warrior'], pro: false });
+    const b = { id, name: id, char, level: 40, hunter: true, map: world.map.id, x: world.body.x + dx, facing: -1, state: 'hunt', body: createBody(world.body.x + dx, world.body.y), session: 999, stay: 999, nextLine: 999, appear: 0, rude: rude ? { steals: 0 } : null };
+    bots.list.push(b);
+    return b;
+  };
+  const rude = mk('Grabby', 160, true);
+  mk('Fair', 420, false);
+  mk('Nice', -420, false);
+  for (let t = 0; t < 15 && mine.hp > 0; t += 1 / 30) {
+    updateWorld(world, 1 / 30, NONE);
+    updateBots(bots, world, 1 / 30);
+  }
+  assert.ok(mine.hp <= 0 && mine.credited, 'they took it');
+  for (let t = 0; t < 5; t += 1 / 30) {
+    updateWorld(world, 1 / 30, NONE);
+    updateBots(bots, world, 1 / 30);
+  }
+  assert.ok(lines.some((l) => l.startsWith('Grabby:')), 'they gloat');
+  assert.ok(lines.some((l) => /KS|not cool|reported|own mobs|wow|ignore/.test(l) && !l.startsWith('Grabby')), 'and get called out');
+  void rude;
 });

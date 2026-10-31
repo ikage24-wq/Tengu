@@ -1338,7 +1338,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const body = bot.body ?? null;
   if (!body || body.onGround) shadow(ctx, x, y, body ? slopeAt(body.surface, body.x) : slope);
   const waving = bot.state === 'wave';
-  let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) ? 'walk' : 'idle';
+  let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) || bot.moving ? 'walk' : 'idle';
   let progress = waving ? (1.6 - bot.timer) / 1.6 : 0;
   // A little emote, or a cheer at a catch.
   if (!body && bot.emote && !waving) {
@@ -1379,16 +1379,20 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   // Your rival's tag is rose, a friend's sky blue.
   const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.rival ? 'rgba(190,50,95,0.8)' : bot.buddy ? 'rgba(50,110,190,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
   box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : bot.rival ? '#ffc2d4' : bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null, r: 5, width: 1 });
-  if (bot.rival && !bot.party) {
+  // Little badges beside the tag: your rival, a legend, someone afk.
+  const badge = (word, fill, side) => {
     ctx.font = 'bold 5.5px sans-serif';
-    const tw = ctx.measureText('RIVAL').width + 6;
-    const bx = x - w / 2 - tw - 2;
-    box(ctx, bx, y + 3.5, tw, 7, { fill: '#ff6b8a', edge: '#ffffff', r: 3.5, width: 0.8 });
+    const tw = ctx.measureText(word).width + 6;
+    const bx = side < 0 ? x - w / 2 - tw - 2 : x + w / 2 + 2;
+    box(ctx, bx, y + 3.5, tw, 7, { fill, edge: '#ffffff', r: 3.5, width: 0.8 });
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
-    ctx.fillText('RIVAL', bx + tw / 2, y + 9);
+    ctx.fillText(word, bx + tw / 2, y + 9);
     ctx.font = 'bold 7px sans-serif';
-  }
+  };
+  if (bot.rival && !bot.party) badge('RIVAL', '#ff6b8a', -1);
+  if (bot.legend) badge('LEGEND', '#e0a21f', -1);
+  if (bot.afkTag || (bot.afk && bot.body && !bot.down)) badge('AFK', '#9c90b4', 1);
   if (bot.party) {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
