@@ -262,7 +262,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'ragehit': {
-      // A Berserker's blow: claw marks torn across the target, drops flying on the heavy ones.
+      // A Berserker's blow: a fiery cut across the target, sparks flying on the heavy ones.
       const cy = y - (f.h ?? 24) / 2;
       hitMark(ctx, 'rage', x, cy, p, { big: f.big, seed, dir });
       if (f.big) fxSprite(ctx, 'celblood', x + dir * 6, cy, { p, scale: 0.8, flip });

@@ -219,7 +219,8 @@ export function drinkBlood(world, dmg) {
   // (No more than `cap` of max HP a second, so a whole crowd can't make him unkillable.)
   if (world.now - (world.drinkSec?.at ?? -9) >= 1) world.drinkSec = { at: world.now, n: 0 };
   const room = Math.max(0, stats.maxHp * (p.cap ?? 1) * more - world.drinkSec.n);
-  const heal = Math.min(stats.maxHp - char.hp, room, Math.max(1, Math.round(dmg * p.steal * more)));
+  // (Whole HP only: a share of a share can come out fractional.)
+  const heal = Math.floor(Math.min(stats.maxHp - char.hp, room, Math.max(1, Math.round(dmg * p.steal * more))));
   if (heal <= 0) return 0;
   world.drinkSec.n += heal;
   char.hp += heal;

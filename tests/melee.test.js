@@ -653,6 +653,7 @@ test('Bloodlust: blows heal the Berserker, more the lower his HP', () => {
   const high = healed(0.9);
   const low = healed(0.1);
   assert.ok(high > 0, 'a blow heals a little');
+  assert.ok(Number.isInteger(high) && Number.isInteger(low), `whole HP only (${high}, ${low})`);
   assert.ok(low > high * 1.3, `much more when low (${high} vs ${low})`);
 });
 

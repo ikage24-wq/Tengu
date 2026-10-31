@@ -1451,7 +1451,10 @@
     }
   });
   E.embrage = emblem(PAL.rage, (ctx, pal) => {
-    tongue(ctx, pal, 0, 44, 40, 110, 10);
+    badge(ctx, pal, [[-46, -52], [46, -52], [46, 8], [0, 58], [-46, 8]]);
+    tongue(ctx, PAL.fire, -14, 26, 13, 48, -6);
+    tongue(ctx, PAL.fire, 14, 26, 13, 48, 6);
+    tongue(ctx, PAL.fire, 0, 30, 18, 70, 2);
   });
 
   // ---------- The Ranger's wind ----------
@@ -3209,64 +3212,61 @@
       }
     },
   };
-  // Torn ground: three claw gashes molten deep inside, their lips charred black, embers rising out,
-  // cooling to glowing seams.
+  // Torn ground: the earth cracks open where the blow lands, jagged cracks running out both ways
+  // glowing with fire inside, a flare at the heart and sparks rising, cooling to dull seams.
   E.gash = {
     w: 300, h: 150, n: 8, fps: 20, px: 150, py: 110,
     draw(ctx, i) {
       const heat = [1, 1, 0.95, 0.85, 0.7, 0.5, 0.3, 0.15][i];
-      const open = [0.4, 1, 1, 0.95, 0.85, 0.7, 0.5, 0.35][i];
-      const tears = [-1, 0, 1].map((j) => ({ x: 150 + j * 30, y: 110 + j * 17, len: 190 - Math.abs(j) * 36 }));
-      painted(ctx, 0, 40, 300, 110, (x, y) => {
-        let best = 0;
-        for (const t of tears) {
-          const u = (x - (t.x - t.len / 2)) / t.len;
-          if (u < 0 || u > 1) continue;
-          const cy = t.y + (u - 0.5) * t.len * 0.16;
-          const w = Math.pow(Math.sin(Math.PI * u), 0.8) * 9 * open * (0.75 + 0.5 * fbm(x / 12, t.x, 2));
-          best = Math.max(best, 1 - Math.abs(y - cy) / Math.max(0.5, w));
-        }
-        if (best <= 0) return [0, 0];
-        return [best < 0.35 ? 0.02 : ((best - 0.35) / 0.65) * heat * (0.85 + 0.3 * fbm(x / 9, y / 9 + i, 2)) * 1.2, sstep(0, 0.2, best)];
-      }, fireRamp);
-      const R = rng(730);
-      for (let j = 0; j < 10; j++) {
-        const t = tears[j % 3];
-        const u = 0.2 + R() * 0.6;
+      const run = Math.min(1, 0.35 + i * 0.3);
+      const L = cooled(1 - heat);
+      for (const [dx, dy, seed] of [[-1, 0.08, 11], [1, -0.05, 12], [-0.7, -0.22, 13], [0.75, 0.2, 14]]) {
+        const x1 = 150 + dx * 130 * run;
+        const y1 = 110 + dy * 130 * run * 0.35;
+        glow(ctx, zig(150, 110, x1, y1, 7, 7, seed), 2.6 * heat + 0.6, L, heat);
+      }
+      if (i <= 3) bloomDisc(ctx, 150, 110, [24, 40, 34, 22][i], [9, 14, 12, 8][i], FLAME, 0.9);
+      const R = rng(731);
+      for (let j = 0; j < 9; j++) {
         const life = Math.min(1, (i + R() * 2) / 8);
-        const x = t.x - t.len / 2 + t.len * u;
-        const y = t.y + (u - 0.5) * t.len * 0.16 - life * 70;
-        glow(ctx, [[x, y], [x, y - 6]], 1.3 * (1 - life) + 0.3, FLAME, (1 - life) * heat * 1.2);
+        const x = 60 + R() * 180;
+        const y = 110 - life * 70;
+        glow(ctx, [[x, y], [x, y - 6]], 1.2 * (1 - life) + 0.3, FLAME, (1 - life) * heat * 1.1);
       }
     },
   };
-  // His claw hit: three red-hot rakes torn across the monster, white-hot at their heart, cooling
-  // from yellow to deep red as they fade, sparks flying off.
+
+  // His hit: a fiery cut crossing a second, white-hot where they meet, a flare of flame there and
+  // sparks flying off, cooling from gold to red as they fade.
   E.claw = {
     w: 200, h: 200, n: 7, fps: 26, px: 100, py: 100,
     draw(ctx, i) {
-      const a = [0.7, 1, 1, 0.85, 0.6, 0.35, 0.15][i];
+      const a = [0.8, 1, 1, 0.85, 0.6, 0.35, 0.15][i];
       const L = cooled(i / 7);
-      for (let j = 0; j < Math.min(3, i + 1); j++) {
+      const cut = (x0, y0, x1, y1, grow) => {
         const pts = [];
-        for (let k = 0; k <= 12; k++) {
-          const t = k / 12;
-          pts.push([100 + (j - 1) * 30 - 70 + 140 * t + Math.sin(t * Math.PI) * 10, 30 + 140 * t]);
+        for (let k = 0; k <= 10; k++) {
+          const t = (k / 10) * grow;
+          pts.push([x0 + (x1 - x0) * t + Math.sin(t * Math.PI) * 6, y0 + (y1 - y0) * t]);
         }
-        glow(ctx, pts, i < 3 ? 5.5 : 4.4, L, a);
-      }
+        glow(ctx, pts, i < 3 ? 5 : 4, L, a);
+      };
+      cut(48, 52, 152, 148, Math.min(1, 0.5 + i * 0.5));
+      if (i >= 1) cut(150, 58, 52, 142, Math.min(1, i * 0.6));
+      if (i >= 1 && i <= 4) bloomDisc(ctx, 100, 100, [0, 30, 36, 26, 14][i], [0, 30, 36, 26, 14][i], FLAME, 0.9);
       if (i >= 2) {
-        const R = rng(740);
-        for (let j = 0; j < 9; j++) {
-          const ang = -0.3 + R() * 2.4;
-          const d = 20 + (i - 1) * 16 * (0.6 + R() * 0.8);
+        const R = rng(741);
+        for (let j = 0; j < 8; j++) {
+          const ang = R() * TAU;
+          const d = 24 + (i - 1) * 14 * (0.6 + R() * 0.8);
           const x = 100 + Math.cos(ang) * d;
-          const y = 100 + Math.sin(ang) * d * 0.6 + (i - 2) ** 2 * 3;
-          glow(ctx, [[x, y], [x - Math.cos(ang) * 6, y - Math.sin(ang) * 6]], 1.4, FLAME, a);
+          const y = 100 + Math.sin(ang) * d * 0.7 + (i - 2) ** 2 * 3;
+          glow(ctx, [[x, y], [x - Math.cos(ang) * 6, y - Math.sin(ang) * 6]], 1.3, FLAME, a);
         }
       }
     },
   };
+
   // Embers climbing on a hot wind (his power, in place of a pillar): sparks of fire flicking side
   // to side, cooling from white-hot to red as they rise. Loops.
   E.embers = {
