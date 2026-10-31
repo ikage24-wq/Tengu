@@ -1,7 +1,7 @@
 // Raids and big moments with the other players.
 //
 //   - A boss on your map (a queen back for a rematch, the Crystal King on his throne): players
-//     gather for it, your rival and a friend among them, and fight her with you. They call out her
+//     gather for it, a friend among them, and fight her with you. They call out her
 //     moves as she shows them, dodge (mostly), and take the hit when they don't.
 //   - A party combo: let your finisher loose and the members fighting by you join in with theirs,
 //     a beat apart, each hitting harder for it.
@@ -31,18 +31,14 @@ const raiders = (bots, world) => bots.list.filter((b) => (b.hunter || b.party) &
 
 // ---------- Gathering ----------
 
-// A boss shows up: word gets around and players come running (your rival, if you have one, and
-// a friend who's online), a few seconds apart.
+// A boss shows up: word gets around and players come running (a friend who's online among
+// them), a few seconds apart.
 export function gather(bots, world, boss, hooks) {
   const rng = bots.rng;
   const name = boss.def.name.split(',')[0];
   world.log(`★ ${name} is on ${world.map.name}! Players are gathering.`, '#ffd6f0');
   const n = 3 + Math.floor(rng() * 2);
   const come = [];
-  // Your rival never misses a boss.
-  const there = bots.list.find((b) => b.rival && !b.gone && b.map === world.map.id);
-  const rival = there ?? hooks.addRival();
-  if (rival) come.push([rival, pick(['dont even think about stealing my kill', 'race u to the most dmg', 'oh ur here too'], rng)]);
   // A friend online drops what they're doing.
   const friend = buddiesOf(world.char).map((s) => buddyOnline(bots, s.name)).find((b) => b && !b.party && !b.hunter && b.state !== 'logout');
   if (friend && rng() < 0.7) {
@@ -55,13 +51,14 @@ export function gather(bots, world, boss, hooks) {
       come.push([b, pick(['im here!!', 'friend assist :D', 'lets do this together'], rng)]);
     }
   }
-  while (come.length < n) {
+  // (A roll can come up a beginner who can't hunt yet: try again, a few times.)
+  for (let tries = 0; come.length < n && tries < n * 3; tries++) {
     const b = hooks.addHunter(null);
-    if (!b) break;
+    if (!b) continue;
     come.push([b, pick(['is she here?? lets gooo', 'raid time!', 'wait for me!!', 'boss!!', 'lfg lfg', 'who has pots'], rng)]);
   }
   come.forEach(([b, line], i) => {
-    if (b !== there) b.appear = 1 + i * 0.5;
+    b.appear = 1 + i * 0.5;
     b.raid = true;
     b.sayAt = world.now + 0.8 + i * 1.6;
     b.sayLine = line;

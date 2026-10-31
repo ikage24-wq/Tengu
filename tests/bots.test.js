@@ -230,6 +230,8 @@ test('players hunt the field you are on, leave the monsters by you alone, and th
     for (const h of world.pending) if (h.stranger && !seenHits.has(h)) {
       seenHits.add(h);
       hits++;
+      // (A kill stealer goes for yours on purpose: that's their whole thing.)
+      if (bots.list.find((b) => b.id === h.party)?.rude) continue;
       assert.ok(Math.abs(h.mob.x - world.body.x) >= 140 || Math.abs(h.mob.y - world.body.y) >= 90 || h.mob.def.boss, `never a monster by you (${Math.round(h.mob.x)},${Math.round(h.mob.y)} you ${Math.round(world.body.x)},${Math.round(world.body.y)} from ${Math.round(h.fromX)})`);
     }
   }
@@ -396,7 +398,7 @@ test('dash moves carry a player along, and a party member who dies walks back in
   assert.equal(pal.hp, pal.stats.maxHp);
 });
 
-// ---------- Friends, your rival, and help ----------
+// ---------- Friends, and help ----------
 
 test('friends: add a player, they stay on your list across sessions, log in as themselves, and come hunt', async () => {
   const { askFriend, buddiesOf, answerHunt } = await import('../src/world/buddies.js');
@@ -446,29 +448,6 @@ test('friends: add a player, they stay on your list across sessions, log in as t
   }
 });
 
-test('your rival turns up in your fields and races you to every level', async () => {
-  const world = createWorld(createCharacter('Me', {}));
-  const lines = quiet(world);
-  world.god = true;
-  world.char.level = 20;
-  const bots = createBots(world, seeded(41), { clock: EVENING });
-  world.bots = bots;
-  let rival = null;
-  for (let i = 0; i < 20 && !rival; i++) {
-    loadMap(world, i % 2 ? 'woods' : 'meadow1', 'start');
-    updateBots(bots, world, 0.05);
-    rival = bots.list.find((b) => b.rival && !b.gone);
-  }
-  assert.ok(rival && world.char.rival, 'a rival showed up');
-  assert.ok(Math.abs(world.char.rival.level - 20) <= 2, 'near your level');
-  assert.ok(lines.some((l) => /picked you as their rival/.test(l)));
-  updateBots(bots, world, 0.05);
-  gainExp(world.char, expToNext(world.char.level));
-  updateBots(bots, world, 0.05);
-  assert.ok(lines.some((l) => l.startsWith(`[Rival] ${world.char.rival.name}:`)), 'they let you know');
-  assert.ok(world.char.rival.level >= world.char.level - 1, 'and keep pace');
-});
-
 test('in trouble out in the field, a player nearby rushes over and patches you up; say thanks', async () => {
   const { tickHunter } = await import('../src/world/party.js');
   const { createBody } = await import('../src/world/physics.js');
@@ -500,7 +479,7 @@ test('in trouble out in the field, a player nearby rushes over and patches you u
 
 // ---------- Raids, party combos, the priestesses ----------
 
-test('a queen back for a rematch: players gather (your rival among them), dodge and take her moves, and pose for a photo', async () => {
+test('a queen back for a rematch: players gather, dodge and take her moves, and pose for a photo', async () => {
   const { spawnMob } = await import('../src/world/mobs.js');
   const { killMob } = await import('../src/world/world.js');
   const world = createWorld(createCharacter('Me', {}));
@@ -526,7 +505,6 @@ test('a queen back for a rematch: players gather (your rival among them), dodge 
   }
   const raid = bots.list.filter((b) => b.raid && !b.gone);
   assert.ok(raid.length >= 3, `players gathered (${raid.length})`);
-  assert.ok(raid.some((b) => b.rival), 'your rival came too');
   assert.ok(lines.some((l) => /Players are gathering/.test(l)));
   assert.ok(hurt > 0, 'her moves (or her touch) caught some of them');
   // Down she goes: everyone poses, and the photo's kept.

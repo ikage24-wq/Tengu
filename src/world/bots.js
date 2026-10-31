@@ -23,7 +23,7 @@ import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
 import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced } from './chatter.js';
 import { updateParty, tickHunter, fieldDownOver } from './party.js';
-import { updateBuddies, rivalHere, thanked, buddiesOf } from './buddies.js';
+import { updateBuddies, thanked, buddiesOf } from './buddies.js';
 import { updateRaids, raidBoss, gather } from './raids.js';
 import { isQueen } from './story.js';
 import { updateDrama, serverTime, onlineCount, timeLine } from './drama.js';
@@ -270,9 +270,10 @@ function makeShop(bot, rng) {
 // `clock`: the real time by default (tests pin it).
 export function createBots(world, rng = Math.random, { clock = () => new Date() } = {}) {
   const bots = { list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng, clock };
-  // Your friends' and your rival's names are theirs: nobody else turns up with them.
+  // Your friends' names are theirs: nobody else turns up with them.
   for (const b of buddiesOf(world.char)) bots.names.add(b.name.toLowerCase());
-  if (world.char.rival) bots.names.add(world.char.rival.name.toLowerCase());
+  // (Saves from when there were rivals drop theirs.)
+  delete world.char.rival;
   for (const r of world.char.regulars ?? []) bots.names.add(r.name.toLowerCase());
   // Everyone's already around when you log in.
   const total = onlineNow(bots);
@@ -370,7 +371,6 @@ function hooksFor(bots, world) {
     say: (b, text) => say(b, text),
     shout: (b, text) => shout(b, bots, world, text),
     addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
-    addRival: () => rivalHere(bots, world, hooksFor(bots, world), true),
     makeChar: makeBotCharacter,
     makeName: () => makeName(bots.names, bots.rng),
     makeStyle: () => makeStyle(bots.rng),
@@ -959,9 +959,8 @@ function huntersHere(bots, world, dt) {
       // (A boss's own room fills up once the raid gathers.)
       const n = bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
       for (let i = 0; i < n; i++) addHunter(bots, world);
-      rivalHere(bots, world, hooksFor(bots, world));
       // Now and then one of them is a kill stealer.
-      const plain = bots.list.filter((b) => b.hunter && !b.gone && !b.rival && !b.buddy);
+      const plain = bots.list.filter((b) => b.hunter && !b.gone && !b.buddy);
       if (plain.length && rng() < 0.15) pick(plain, rng).rude = { steals: 0 };
     }
   }
@@ -974,7 +973,7 @@ function huntersHere(bots, world, dt) {
     const bot = hunters.find((b) => b.id === id);
     if (bot) bot.kills = (bot.kills ?? 0) + 1;
     if (bot?.rude && m && Math.abs(m.x - world.body.x) < 230 && Math.abs(m.y - world.body.y) < 120) return killSteal(bots, world, bot, hunters);
-    if (bot && !bot.bubble && !bot.rival && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
+    if (bot && !bot.bubble && rng() < 0.06) shout(bot, bots, world, pick(['ez', 'nice', 'ooh a drop', 'one more', 'gg', 'so many here', 'exp exp exp'], rng));
   };
   // A boss here (a queen back for a rematch, the Crystal King on his throne): word gets around,
   // and people come running for the raid (world/raids.js).
@@ -1071,7 +1070,7 @@ function killSteal(bots, world, bot, hunters) {
 // Someone out hunting goes afk right where they stand, and the nearest monster has a nibble.
 function fieldAfk(bots, world, hunters) {
   const rng = bots.rng;
-  const bot = pick(hunters.filter((b) => !b.rival && !b.raid && !b.rude && !b.down && !b.leaving && !b.afk && b.body?.onGround), rng);
+  const bot = pick(hunters.filter((b) => !b.raid && !b.rude && !b.down && !b.leaving && !b.afk && b.body?.onGround), rng);
   if (!bot) return;
   bot.afk = { until: world.now + between(30, 60, rng) };
   say(bot, pick(['brb', 'afk', 'brb food', 'afk 2 min'], rng));

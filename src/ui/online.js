@@ -1,5 +1,5 @@
 // The Online window (N, or the friends button). Friends: the players you've added (who's on and
-// where, Invite to bring one to you, a friend asking you to hunt) and your rival. Market: trade
+// where, Invite to bring one to you, a friend asking you to hunt). Market: trade
 // chat's offers to answer (and anyone wanting what you just found). Bounty: the bounty board.
 // Fame: the hall of fame. Room:
 // host a room and share its six-digit code, or type a friend's code on the number pad to join
@@ -191,18 +191,6 @@ function friendsTab(ui, state, world, win, x, y) {
     text(ctx, fit(ctx, `${ask.bot.name} wants to hunt!`, W - 130, 8, true), x + 20, y + 14, { size: 8, bold: true });
     if (button(ui, x + W - 92, y + 3, 36, 16, 'Join', { size: 7.5, primary: true })) answerHunt(bots, world, true);
     if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerHunt(bots, world, false);
-    y += 26;
-  }
-  // Your rival, and how the race stands.
-  const r = world.char.rival;
-  if (r) {
-    const on = bots?.list.find((b) => b.rival && !b.gone);
-    box(ctx, x - 2, y, W - 20, 22, { fill: '#fff0f4', edge: '#ff9eb8', r: 8, width: 1.5 });
-    icon(ctx, 'bolt', x + 9, y + 11, 10, '#ff6b8a');
-    text(ctx, fit(ctx, `Rival: ${r.name}`, 130, 8, true), x + 20, y + 10, { size: 8, bold: true, color: '#d9466f' });
-    const lead = r.level - world.char.level;
-    text(ctx, `Lv${r.level} ${jobName(jobOf(r))} · ${lead > 0 ? `${lead} ahead of you` : lead < 0 ? `${-lead} behind you` : 'neck and neck'}`, x + 20, y + 18.5, { size: 6.5, color: COLORS.muted });
-    text(ctx, on && on.map === world.map.id ? 'here!' : on ? 'hunting' : 'offline', x + W - 30, y + 14, { size: 7, bold: true, align: 'right', color: on ? COLORS.good : COLORS.muted });
     y += 26;
   }
   const list = buddiesOf(world.char);
