@@ -6,7 +6,6 @@ const KEY = 'twzt-settings-v1';
 export const DEFAULT_SETTINGS = {
   // Display
   hdGraphics: true,
-  filter: 'vivid', // 'natural' | 'vivid' | 'dreamy' | 'retro'
   screenShake: 'full', // 'full' | 'low' | 'off'
   hitStop: true,
   damageNumbers: true,
@@ -34,7 +33,6 @@ export const DEFAULT_SETTINGS = {
   touchSize: 'normal', // 'small' | 'normal' | 'big'
   touchAlpha: 'soft', // 'clear' | 'soft' | 'solid'
   touchLeft: false, // the stick on the right, the buttons on the left
-  touchVibrate: true,
 };
 
 export const settings = { ...DEFAULT_SETTINGS };

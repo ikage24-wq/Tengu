@@ -1,12 +1,12 @@
 // Playing together in an online room (net/online.js carries the messages): a party of friends,
-// looking at a friend's profile, trading, warping to a friend, fishing side by side (and the room's catch board), and a returning queen's moves reaching
+// looking at a friend's profile, trading, warping to a friend, fishing side by side, and a returning queen's moves reaching
 // everyone on her map. Shared dungeon runs are in net/dungeonrun.js.
 
 import { online, send, othersHere } from './online.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { addItem, removeItem, countItem, TAB_SIZE } from '../core/inventory.js';
-import { loadMap, hops } from '../world/world.js';
+import { loadMap } from '../world/world.js';
 import { titleOf } from '../core/collection.js';
 
 // ---------- A party of friends ----------
@@ -338,42 +338,24 @@ function onTrade(world, msg, g) {
 
 // ---------- Warping to a friend ----------
 
-export const warpCost = (world, g) => Math.round((100 + 40 * Math.min(10, hops(world.map.id, g.map) || 1)) * (inParty(g.id) ? 0.5 : 1));
-
 // Whether you can warp to friend `g` now, or why not.
 export function warpBlocker(world, g) {
   if (!g?.map || !MAPS[g.map]) return 'Not sure where they are';
   if (g.map === world.map.id) return 'Already here';
   if (MAPS[g.map].dungeon || MAPS[g.map].trial || world.dungeon) return 'Busy in a dungeon or trial';
   if (world.dead) return 'Get back up first';
-  if (world.char.gold < warpCost(world, g)) return 'Not enough gold';
   return null;
 }
 
 export function warpTo(world, g) {
   const why = warpBlocker(world, g);
   if (why) return why;
-  world.char.gold -= warpCost(world, g);
   const map = MAPS[g.map];
   const portal = map.portals.find((p) => p.id === 'start') ?? map.portals[0];
   loadMap(world, g.map, portal.id);
   Object.assign(world.body, { x: g.body?.x ?? portal.x, y: (g.body?.y ?? portal.y) - 6, vy: 0, onGround: false });
   world.log(`Whoosh! You warped to ${g.name} in ${map.name}.`, '#bff0dc');
   return null;
-}
-
-// ---------- Fishing together ----------
-// The room's catch board: the best catches anyone in the room has made (rarest, then biggest).
-
-export function shareCatch(world, fish, size) {
-  noteCatch(world.char.name, fish, size);
-  send({ t: 'catch', fish: fish.id, name: fish.name, rarity: fish.rarity, size });
-}
-
-function noteCatch(who, fish, size) {
-  online.catches = [...(online.catches ?? []), { who, name: fish.name, rarity: fish.rarity, size }]
-    .sort((a, b) => b.rarity - a.rarity || b.size - a.size)
-    .slice(0, 5);
 }
 
 // ---------- A queen's moves reach everyone on her map ----------
@@ -394,8 +376,9 @@ function onZones(world, msg) {
 // ---------- The world's hooks (merged into world.net) ----------
 
 export const togetherApi = {
+  // A catch: friends in the room hear about it.
   caught(world, fish, size) {
-    shareCatch(world, fish, size);
+    send({ t: 'catch', fish: fish.id, name: fish.name, rarity: fish.rarity, size });
   },
   zones(world, zones, callout) {
     shareZones(world, zones, callout);
@@ -407,7 +390,6 @@ export function handleTogether(world, msg, g) {
     case 'trade':
       return onTrade(world, msg, g);
     case 'catch':
-      noteCatch(g.name, { name: msg.name, rarity: msg.rarity }, msg.size);
       if (othersHere(world).includes(g) || msg.rarity >= 3) world.log(`${g.name} caught a ${msg.name} (${msg.size} cm)!`, msg.rarity >= 3 ? '#ffe36b' : '#bff0dc');
       return;
     case 'zones':

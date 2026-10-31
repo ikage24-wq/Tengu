@@ -256,7 +256,6 @@ function press(input, code) {
   if (!input.held.has(code)) {
     input.pressed.add(code);
     // A little buzz under the thumb.
-    if (settings.touchVibrate) navigator.vibrate?.(9);
   }
   input.held.add(code);
 }

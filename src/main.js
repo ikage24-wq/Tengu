@@ -12,7 +12,7 @@ import { groundAt } from './world/physics.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
 import { setHd, gfx, nextFrame } from './render/pixel.js';
-import { FILTERS, drawRetro } from './render/post.js';
+import { VIVID } from './render/post.js';
 import { createBots, updateBots, botsIn, bodiedIn } from './world/bots.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
@@ -257,9 +257,7 @@ function frame(now) {
 
   // The touch controls over everything else while playing.
   touchFrame(touch, ctx, screen, world, uiState);
-  if (settings.filter === 'retro') drawRetro(ctx, pixelScale);
-  const filter = FILTERS[settings.filter] ?? '';
-  if (canvas.style.filter !== filter) canvas.style.filter = filter;
+  if (canvas.style.filter !== VIVID) canvas.style.filter = VIVID;
   endUi(ui);
   endFrame(input);
   requestAnimationFrame(frame);

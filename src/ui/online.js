@@ -5,7 +5,7 @@
 // profile), with Party, Warp and Trade buttons, the invites waiting on you, and a way out.
 
 import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip, clicked, tabs } from './kit.js';
-import { askTrade, answerTrade, warpTo, warpBlocker, warpCost, askParty, answerParty, partyBlocker, inParty } from '../net/together.js';
+import { askTrade, answerTrade, warpTo, warpBlocker, askParty, answerParty, partyBlocker, inParty } from '../net/together.js';
 import { openProfile } from './profile.js';
 import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.js';
 import { JOBS } from '../data/jobs.js';
@@ -83,7 +83,7 @@ export function onlineWindow(ui, state, world) {
             if (no) world.log(no, '#ffb3c6');
             else win.open = false;
           }
-          if (hover(ui, x + W - 92, y + 3, 36, 16)) tooltip(ui, [{ text: `Warp to ${r.name}`, bold: true }, { text: `${warpCost(world, r)} gold`, size: 8, color: COLORS.gold }]);
+          if (hover(ui, x + W - 92, y + 3, 36, 16)) tooltip(ui, [{ text: `Warp to ${r.name}`, bold: true }, { text: 'Free', size: 8, color: COLORS.muted }]);
         }
         if (!online.trade && button(ui, x + W - 54, y + 3, 34, 16, 'Trade', { size: 7, enabled: online.tradeAsked !== r.id })) askTrade(world, r.id);
       }
@@ -107,11 +107,6 @@ export function onlineWindow(ui, state, world) {
       if (button(ui, x + W - 92, y + 3, 36, 16, 'Yes', { size: 7.5, primary: true })) answerTrade(world, true);
       if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerTrade(world, false);
       y += 25;
-    }
-    // The room's best catches.
-    if (online.catches?.length) {
-      text(ctx, 'Catch board', x, y + 9, { size: 7.5, bold: true, color: th.dark });
-      online.catches.slice(0, 3).forEach((c, i) => text(ctx, fit(ctx, `${i + 1}. ${c.who}: ${c.name} ${c.size}cm`, W - 30, 6.5, false), x + 4, y + 19 + i * 8, { size: 6.5, color: COLORS.ink }));
     }
     const left = win.y + H - 26;
     if (button(ui, win.x + W / 2 - 46, left, 92, 19, 'Leave room', { size: 8.5, iconName: 'door' })) leaveRoom(world);

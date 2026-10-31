@@ -35,7 +35,7 @@ import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
-import { drawGlowing, drawLighting, drawDreamy } from './post.js';
+import { drawGlowing, drawLighting } from './post.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -335,7 +335,6 @@ export function drawWorld(ctx, world, viewCam, time) {
   };
   if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
-  if (settings.filter === 'dreamy') drawDreamy(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   drawCallout(ctx, world);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);

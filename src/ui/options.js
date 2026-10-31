@@ -9,7 +9,6 @@ import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, w
 
 const PAGES = {
   Display: [
-    ['filter', 'Filter', 'A look for the whole screen.', ['natural', 'vivid', 'dreamy', 'retro']],
     ['hdGraphics', 'HD graphics', 'Lighting, glow, and a smooth-gliding camera.'],
     ['particles', 'Particles', 'Dust, sparks, petals, and footsteps.', ['full', 'reduced', 'off']],
     ['jobAuras', 'Job auras', 'The glow around advanced jobs while idle.'],
@@ -41,7 +40,6 @@ const PAGES = {
     ['touchSize', 'Button size', 'How big the stick and buttons are.', ['small', 'normal', 'big']],
     ['touchAlpha', 'See-through', 'How much of the game shows through them.', ['clear', 'soft', 'solid']],
     ['touchLeft', 'Left-handed', 'The stick on the right, the buttons on the left.'],
-    ['touchVibrate', 'Vibrate', 'A little buzz when you press a button.'],
   ],
 };
 

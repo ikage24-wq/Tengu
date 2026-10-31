@@ -228,55 +228,8 @@ export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
 }
 
 
-// ---------- Filters ----------
+// ---------- The screen's color ----------
 
-// Screen filters (Options: Filter). Color changes are a CSS filter on the canvas, which the
-// browser applies for free; Dreamy adds a soft glow over the world, and Retro scanlines.
-export const FILTERS = {
-  natural: '',
-  vivid: 'saturate(1.22) contrast(1.05)',
-  dreamy: 'saturate(1.1) brightness(1.03)',
-  retro: 'saturate(1.12) contrast(1.12)',
-};
-
-// Dreamy: the bright parts of the scene bloom softly, like a camera with a soft-focus filter.
-export function drawDreamy(ctx) {
-  const shrink = 6;
-  const c = layer('dream', Math.ceil(ctx.canvas.width / shrink), Math.ceil(ctx.canvas.height / shrink));
-  const g = c.getContext('2d');
-  g.imageSmoothingEnabled = true;
-  g.clearRect(0, 0, c.width, c.height);
-  g.drawImage(ctx.canvas, 0, 0, c.width, c.height);
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.globalCompositeOperation = 'screen';
-  ctx.globalAlpha = 0.24;
-  ctx.drawImage(c, 0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.restore();
-}
-
-// Retro: a scanline over every row of game pixels and darker, rounded screen corners, like an
-// old TV. Drawn over everything, interface included.
-export function drawRetro(ctx, scale) {
-  const w = ctx.canvas.width;
-  const h = ctx.canvas.height;
-  const key = `retro|${w}|${h}|${scale}`;
-  let c = layers.get(key);
-  if (!c) {
-    c = layer(key, w, h);
-    const g = c.getContext('2d');
-    const line = Math.max(1, Math.round(scale / 3));
-    g.fillStyle = 'rgba(30,20,50,0.2)';
-    for (let y = scale - line; y < h; y += scale) g.fillRect(0, y, w, line);
-    const v = g.createRadialGradient(w / 2, h / 2, h * 0.55, w / 2, h / 2, w * 0.62);
-    v.addColorStop(0, 'rgba(20,10,40,0)');
-    v.addColorStop(1, 'rgba(20,10,40,0.3)');
-    g.fillStyle = v;
-    g.fillRect(0, 0, w, h);
-  }
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(c, 0, 0);
-  ctx.restore();
-}
+// The game's colors, a little richer than drawn: a CSS filter on the canvas, which the browser
+// applies for free.
+export const VIVID = 'saturate(1.22) contrast(1.05)';
