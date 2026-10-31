@@ -203,3 +203,20 @@ export const MOBS = {
     special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 480, range: 440 },
   }),
 };
+
+// Steady fights: monster HP grew faster than a hero's damage (an at-level monster took about 6
+// basic hits at level 12 but over 30 by level 48), so from level 18 up field monsters have their
+// HP brought down to keep a kill at about 8-11 hits all the way. EXP comes down less than HP
+// (by its square root), so a level takes a little less time than before, not a lot. And from
+// level 20 up they hit a bit harder (3% more a level), so gear and healing matter out there.
+// Bosses keep their own numbers.
+for (const m of Object.values(MOBS)) {
+  if (m.boss) continue;
+  const hits = 6.2 + 0.69 * (m.level - 12);
+  if (hits > 10) {
+    const k = 10 / hits;
+    m.hp = Math.round(m.hp * k);
+    m.exp = Math.round(m.exp * Math.sqrt(k));
+  }
+  if (m.level > 20) m.atk = Math.round(m.atk * (1 + 0.03 * (m.level - 20)));
+}

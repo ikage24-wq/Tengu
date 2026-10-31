@@ -6,7 +6,7 @@ import { SKILLS } from '../src/data/skills.js';
 import { run, measure, balanceChar, BALANCE_JOBS } from './balance.mjs';
 
 const args = process.argv.slice(2);
-const level = Number(args.find((a) => /^\d+$/.test(a)) ?? 60);
+const level = Number(args.find((a) => /^\d+$/.test(a)) ?? 50);
 const jobs = args.filter((a) => JOBS[a]);
 for (const job of jobs.length ? jobs : BALANCE_JOBS.filter((j) => JOBS[j].tier === (level < 30 ? 1 : 2))) {
   const m = measure(job, level, { secs: 12 });

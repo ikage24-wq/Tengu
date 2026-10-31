@@ -12,6 +12,7 @@
 // This runs alongside the world (main.js calls updateBots), not inside updateWorld, so the game
 // rules stay deterministic for tests.
 
+import { MAX_LEVEL } from '../core/exp.js';
 import { createCharacter, gainExp, advanceJob, spendAp, STAT_KEYS } from '../core/character.js';
 import { computeStats } from '../core/stats.js';
 import { expToNext } from '../core/exp.js';
@@ -100,12 +101,13 @@ function makeLook(rng) {
   };
 }
 
+// (Pros are at the level cap, 50, in endgame gear.)
 function rollLevel(pro, rng) {
-  if (pro) return Math.floor(between(56, 71, rng));
+  if (pro) return MAX_LEVEL;
   const r = rng();
   if (r < 0.3) return Math.floor(between(1, 12, rng));
   if (r < 0.8) return Math.floor(between(12, 40, rng));
-  return Math.floor(between(40, 56, rng));
+  return Math.floor(between(40, MAX_LEVEL, rng));
 }
 
 // The job path a character of this level would be on. Warriors, archers and thieves advance to a
@@ -169,7 +171,7 @@ function gearFor(char, slot, pro, rng, variant) {
 // `level` and `jobs` (the job path, first job on) pick them instead of rolling.
 export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name, level = rollLevel(pro, rng), jobs = null } = {}) {
   const char = createCharacter(name, makeLook(rng));
-  while (char.level < level) gainExp(char, expToNext(char.level));
+  while (char.level < Math.min(level, MAX_LEVEL)) gainExp(char, expToNext(char.level));
   for (const job of jobs ?? jobPath(char.level, rng)) {
     if (job === 'novice') continue;
     // Anyone past a job's trial has passed it.
@@ -274,7 +276,7 @@ function spawn(bots, world, { quiet = false, who = null, here = false, at = null
   if (!town) return null;
   const map = MAPS[town];
   const bot = {
-    id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: char.level >= 56,
+    id: `bot${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: char.level >= MAX_LEVEL,
     guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: null,
     map: town, x: freeX(map, bots, rng), facing: rng() < 0.5 ? 1 : -1, state: 'idle', timer: between(1, 4, rng),
     session: between(150, 480, rng), stay: between(70, 200, rng), nextLine: between(4, 30, rng), bubble: null,

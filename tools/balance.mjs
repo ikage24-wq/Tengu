@@ -210,7 +210,7 @@ export function makeRun(job, level, { n = 1, main = null, fight = false, mpFree 
 
 // The attack skill a job does the most single-target damage with (tried one at a time), and
 // with it, its numbers.
-export function measure(job, level = 60, { secs = 30 } = {}) {
+export function measure(job, level = 50, { secs = 30 } = {}) {
   const c = balanceChar(job, level);
   const attacks = Object.keys(c.skills).filter((id) => kind(id) === 'attack' || kind(id) === 'heal');
   const extras = Object.keys(c.skills).filter((id) => kind(id) === 'buff' || kind(id) === 'finisher');
@@ -280,7 +280,7 @@ function healRun(job, level, id) {
 if (typeof process !== 'undefined' && import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
-  const level = Number(args.find((a) => /^\d+$/.test(a)) ?? 60);
+  const level = Number(args.find((a) => /^\d+$/.test(a)) ?? 50);
   const jobs = args.filter((a) => WEAPON[a]);
   // By default, each tier at its own stage: first jobs below 30, their paths from 30 on.
   const tier = (j) => JOBS[j].tier;

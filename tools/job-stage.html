@@ -43,7 +43,7 @@ for (const id of chain.slice(1)) {
   if (J.trial) c.quests[J.trial] = { state: 'done', kills: {} };
   advanceJob(c, id);
 }
-while (c.level < Number(q.get('level') ?? 60)) up();
+while (c.level < Number(q.get('level') ?? 50)) up();
 autoAssignAp(c);
 for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job)) c.skills[id] = s.maxLevel;
 // (?weapon=none fights bare-handed.)

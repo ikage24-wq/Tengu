@@ -19,7 +19,7 @@ test('EXP curve matches the classic shape', () => {
   assert.equal(expToNext(10), 1716);
   assert.equal(expToNext(20), 20216);
   assert.equal(expToNext(30), 95700);
-  assert.ok(expToNext(60) > expToNext(50));
+  assert.ok(expToNext(49) > expToNext(40));
   assert.equal(expToNext(MAX_LEVEL), Infinity);
 });
 

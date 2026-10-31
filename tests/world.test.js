@@ -259,8 +259,8 @@ test('the Game Master stays locked without the passphrase, and its tools work on
   gmCommand(w, 'job', ['gamemaster']);
   assert.equal(w.char.job, 'gamemaster');
   assert.ok(w.char.skills.gmsmite, 'GM skills come with the job');
-  gmCommand(w, 'level', ['77']);
-  assert.equal(w.char.level, 77);
+  gmCommand(w, 'level', ['37']);
+  assert.equal(w.char.level, 37);
   gmCommand(w, 'give', ['hat_5', '1']);
   assert.ok(w.char.inventory.equip.some((e) => e.id === 'hat_5'));
   gmCommand(w, 'tp', ['sky']);
