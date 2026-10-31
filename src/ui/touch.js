@@ -20,18 +20,12 @@ const BASE = {
   EMOTE: { x: 622, y: 164, r: 11, code: 'KeyT', label: 'Emote', color: '#ffc6e0', dark: '#e0659f' },
 };
 const DEAD = 11;
-// The phone settings: how big the controls are, how see-through, and which side the stick is on.
-const SIZES = { small: 0.82, normal: 1, big: 1.22 };
-const ALPHAS = { clear: 0.55, soft: 1, solid: 1.3 };
 let STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, ARC;
-let FADE = 1;
-// Lays the controls out from the settings: each grows from its own corner of the screen (the
-// stick from the bottom left, the buttons from the bottom right, chat and emotes from the right
-// edge), and left-handed play mirrors the whole set.
+const FADE = 1;
+// Lays the controls out from the settings: left-handed play mirrors the whole set.
 function relayout() {
-  const k = SIZES[settings.touchSize] ?? 1;
+  const k = 1;
   const flip = settings.touchLeft;
-  FADE = ALPHAS[settings.touchAlpha] ?? 1;
   const place = (b, cx, cy) => {
     const x = cx + (b.x - cx) * k;
     return { ...b, x: flip ? VW - x : x, y: cy + (b.y - cy) * k, r: b.r * k, k, ...(b.grab ? { grab: b.grab * k } : {}) };

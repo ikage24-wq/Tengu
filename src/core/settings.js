@@ -30,8 +30,6 @@ export const DEFAULT_SETTINGS = {
   autoLoot: false,
   npcClick: true,
   // Phone and tablet controls
-  touchSize: 'normal', // 'small' | 'normal' | 'big'
-  touchAlpha: 'soft', // 'clear' | 'soft' | 'solid'
   touchLeft: false, // the stick on the right, the buttons on the left
 };
 

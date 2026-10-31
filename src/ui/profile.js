@@ -16,7 +16,7 @@ import { drawHero } from '../render/hero.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { online } from '../net/online.js';
-import { askInspect, askParty, partyBlocker, inParty, askTrade } from '../net/together.js';
+import { askInspect, askParty, partyBlocker, inParty } from '../net/together.js';
 
 const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings' };
 const STAT_COLORS = { str: '#ff7a6b', dex: '#3fc48a', int: '#5aa8ff', luk: '#f0b53a' };
@@ -86,7 +86,7 @@ export function profileWindow(ui, state, world) {
     }
   }
   else if (bot?.shop) tag('Shop open', ly + 184, '#ff8fc1');
-  // A friend online: invite them, or trade.
+  // A friend online: invite them.
   if (friend) {
     if (inParty(friend.id)) tag('In your party', ly + 169, '#4f95e0');
     else {
@@ -94,7 +94,6 @@ export function profileWindow(ui, state, world) {
       if (button(ui, lx + 6, ly + 166, 92, 15, why === 'Waiting for an answer' ? 'Invited...' : 'Invite to party', { size: 7, primary: true, enabled: !why, iconName: 'heart' })) askParty(world, friend.id);
       if (why && why !== 'Waiting for an answer' && hover(ui, lx + 6, ly + 166, 92, 15)) tooltip(ui, [{ text: why, size: 8, color: COLORS.bad }]);
     }
-    if (button(ui, lx + 6, ly + 184, 92, 15, 'Trade', { size: 7, enabled: !online.trade, iconName: 'coin' })) askTrade(world, friend.id);
   }
   if (bot?.party && bot.ai) tag(`Party · ${PLAYSTYLES[bot.ai.kind].label}`, ly + (pro ? 184 : 169), PLAYSTYLES[bot.ai.kind].color);
 

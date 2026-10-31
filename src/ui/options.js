@@ -37,8 +37,6 @@ const PAGES = {
     ['chatBubbles', 'Chat bubbles', 'Speech bubbles over people who talk.'],
   ],
   Phone: [
-    ['touchSize', 'Button size', 'How big the stick and buttons are.', ['small', 'normal', 'big']],
-    ['touchAlpha', 'See-through', 'How much of the game shows through them.', ['clear', 'soft', 'solid']],
     ['touchLeft', 'Left-handed', 'The stick on the right, the buttons on the left.'],
   ],
 };

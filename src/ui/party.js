@@ -8,7 +8,7 @@ import { openProfile } from './profile.js';
 import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
 import { settings } from '../core/settings.js';
 import { online } from '../net/online.js';
-import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade } from '../net/together.js';
+import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends } from '../net/together.js';
 import { MAPS } from '../data/maps.js';
 import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
 import { helpOut } from '../world/lives.js';
@@ -39,7 +39,6 @@ function menuItems(state, world) {
       const why = partyBlocker(g);
       items.push({ label: 'Invite to party', icon: 'heart', why, enabled: !why, run: () => askParty(world, g.id) });
     }
-    if (!online.trade) items.push({ label: 'Trade', icon: 'coin', run: () => askTrade(world, g.id) });
     return items;
   }
   const bot = world.bots?.list.find((b) => b.id === m.id);
