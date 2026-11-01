@@ -6,13 +6,13 @@
 <script type="module">
 // Dev tool: renders every frame and mood of a group's monster art at 3x, next to a hero for scale.
 // Open /tools/mob-gallery.html?group=meadow (or wilds, ruins, sky, hollow, bosses); &keys=a,b
-// limits it to some designs; &bg=%23hex sets the background.
+// limits it to some designs; &bg=%23hex sets the background; &s=6 draws it bigger.
 import { setHd, sprite, blit } from '../src/render/pixel.js';
 import { drawHero } from '../src/render/hero.js';
 
 const q = new URLSearchParams(location.search);
 const group = q.get('group') ?? 'meadow';
-const S = 3;
+const S = Number(q.get('s') ?? 3);
 setHd(true, S);
 const { ART } = await import(`../src/render/mobs/${group}.js`);
 const keys = (q.get('keys') ?? Object.keys(ART).join(',')).split(',').filter((k) => ART[k]);

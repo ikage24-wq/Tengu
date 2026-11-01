@@ -9,8 +9,9 @@ import { ART as HOLLOW } from './hollow.js';
 import { ART as BOSSES } from './bosses.js';
 import { ART as MAIDENS } from './maidens.js';
 import { ART as QUEENS } from './queens.js';
+import { ART as BEES } from './bees.js';
 
-export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS };
+export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES };
 
 export const mobBuild = (art, pose, frame, mood) => {
   const a = ARTS[art];

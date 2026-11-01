@@ -1,0 +1,38 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Bee faces</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the Bumble's and the Queen Bee's faces (render/mobs/bees.js simpleEye / simpleMouth)
+// in every mood, close up. Open /tools/bee-eyes.html?who=bumble (or queenbee); ?s= sets the scale.
+import { setHd, sprite, blit } from '../src/render/pixel.js';
+import { ART } from '../src/render/mobs/bees.js';
+
+const q = new URLSearchParams(location.search);
+const who = q.get('who') ?? 'bumble';
+const moods = ['idle', 'happy', 'angry', 'hurt', 'blink', 'dead'];
+const S = Number(q.get('s') ?? (who === 'bumble' ? 5 : 3));
+const cw = who === 'bumble' ? 46 : 90;
+const ch = who === 'bumble' ? 50 : 92;
+setHd(true, S);
+const c = document.getElementById('c');
+const W = cw * 3 + 10;
+const H = ch * 2 + 10;
+c.width = W * S;
+c.height = H * S;
+const ctx = c.getContext('2d');
+ctx.setTransform(S, 0, 0, S, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+ctx.font = 'bold 5px sans-serif';
+moods.forEach((m, k) => {
+  const x = 5 + (k % 3) * cw;
+  const y = 5 + Math.floor(k / 3) * ch;
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillText(m, x + 2, y + 6);
+  const s = sprite(`face|${who}|${m}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, pad: 4, ...ART[who].draw('idle', 0, m) }));
+  blit(ctx, s, x, y + 6);
+});
+document.title = 'ready';
+</script>

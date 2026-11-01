@@ -163,3 +163,38 @@ test('monsters live there: they nap at night (harmless), play chase by day, and 
   assert.equal(kits[0].habit?.kind, 'flee', 'a hit wakes it and it runs off');
   assert.ok(kits[0].habit.x > kits[0].x, 'away from the blow');
 });
+
+test("the Queen Bee bursts out of the hive after enough hunting, and her honey slam hits her floor", async () => {
+  const { killMob } = await import('../src/world/world.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { nestBoss } = await import('../src/world/nest.js');
+  const w = createWorld(createCharacter('Keeper', {}));
+  w.log = () => {};
+  loadMap(w, 'meadow1', 'west');
+  w.mobs = [];
+  w.spawner.slots = [];
+  const nest = w.map.nest;
+  for (let k = 0; k < nest.kills - 1; k++) {
+    const m = spawnMob(w.map, { mob: 'bumble', x: 900, y: 680 });
+    m.hp = 0;
+    killMob(w, m);
+  }
+  assert.equal(nestBoss(w), null, 'not yet');
+  const last = spawnMob(w.map, { mob: 'bumble', x: 900, y: 680 });
+  last.hp = 0;
+  killMob(w, last);
+  const queen = nestBoss(w);
+  assert.ok(queen && queen.def.id === 'queenbee', 'she wakes');
+  assert.ok(Math.abs(queen.x - nest.x) < 2, 'at her hive');
+  // Standing on her floor near her when the dipper lands hurts.
+  Object.assign(w.body, { x: queen.x + 40, y: nest.y, onGround: true, vx: 0, vy: 0 });
+  w.invuln = 0;
+  w.god = false;
+  const hp = w.char.hp;
+  queen.special.timer = 0;
+  step(w, queen.def.special.warn + 0.3);
+  assert.ok(w.char.hp < hp, 'the honey slam lands');
+  queen.hp = 0;
+  killMob(w, queen);
+  assert.equal(w.nestKills.meadow1, 0, 'the count starts again');
+});

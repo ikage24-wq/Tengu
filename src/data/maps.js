@@ -57,9 +57,9 @@ export const MAPS = {
 
   // Petal Meadow climbs one hillside of blossom in four zones (the map style the player picked:
   // tall, zoned, exits on different floors). Petal Fields at the bottom, where the Moss Tortoises
-  // graze round the pond; Beehive Banks, the Kitsune Kits' sunny den round the giant hive; the
-  // Blossom Boughs of the great cherry tree, where both roam; and the Petal Clouds on top, a quiet
-  // lookout with the road to Windy Canyon as the reward for the climb. Each zone hunts in a loop:
+  // graze round the pond; Beehive Banks, where the Bumbles buzz round the giant hive; the
+  // Blossom Boughs of the great cherry tree, the Kitsune Kits' playground; and the Petal Clouds on
+  // top, where Petal Sprites drift, with a quiet lookout with the road to Windy Canyon as the reward for the climb. Each zone hunts in a loop:
   // ropes at both ends, a long floor between, gaps to drop through. No monsters near the portals.
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
@@ -93,8 +93,11 @@ export const MAPS = {
     // top floor, two floors high), the hive's warm pollen updraft on the banks, the petal whirl
     // round the cherry tree in the boughs, and the drifting cloud on top.
     // How its monsters live (world/habits.js): the tortoises doze (most of the night) and amble
-    // down to the pond; the fox kits play chase round their den by the hive and curl up at night.
-    habitats: { snailbun: { naps: true, home: { x: 1650, y: 1000 } }, puffle: { naps: true, play: true, home: { x: 1200, y: 680 } } },
+    // down to the pond; the Bumbles buzz home to their hive and chase each other; the fox kits play
+    // chase in the boughs and curl up at night; the Petal Sprites doze on the clouds at night.
+    habitats: { snailbun: { naps: true, home: { x: 1650, y: 1000 } }, bumble: { home: { x: 1200, y: 680 }, play: true }, puffle: { naps: true, play: true }, petalsprite: { naps: true } },
+    // The area boss (world/nest.js): after enough hunting, the Queen Bee bursts out of the hive.
+    nest: { mob: 'queenbee', x: 1200, y: 680, kills: 150, name: 'The giant hive', wake: 'Her Majesty is NOT amused. Everyone to Beehive Banks!' },
     // The meadow's spirit floats by the cherry tree's crown when the map is calm (world/calm.js).
     spirit: { x: 1010, y: 380 },
     // At night (world/daytime.js) warm light glows at the arch, the picnic, the hive and the lookout.
@@ -136,16 +139,16 @@ export const MAPS = {
       ...[760, 1060].map((x) => ({ mob: 'snailbun', x, y: 976 })),
       ...[400, 800, 1500, 1950].map((x) => ({ mob: 'snailbun', x, y: 920 })),
       ...[900, 1500].map((x) => ({ mob: 'snailbun', x, y: 840 })),
-      // Beehive Banks: Kitsune Kits.
-      ...[350, 2000].map((x) => ({ mob: 'puffle', x, y: 760 })),
-      ...[650, 950, 1450, 1750].map((x) => ({ mob: 'puffle', x, y: 680 })),
-      ...[500, 1880].map((x) => ({ mob: 'puffle', x, y: 600 })),
-      // Blossom Boughs: both.
-      ...[620, 1750].map((x) => ({ mob: 'puffle', x, y: 520 })),
-      ...[950, 1450].map((x) => ({ mob: 'snailbun', x, y: 440 })),
+      // Beehive Banks: Bumbles round their hive.
+      ...[350, 2000].map((x) => ({ mob: 'bumble', x, y: 760 })),
+      ...[650, 950, 1450, 1750].map((x) => ({ mob: 'bumble', x, y: 680 })),
+      ...[500, 1880].map((x) => ({ mob: 'bumble', x, y: 600 })),
+      // Blossom Boughs: the Kitsune Kits' playground under the great tree.
+      ...[620, 950, 1750].map((x) => ({ mob: 'puffle', x, y: 520 })),
+      ...[900, 1500].map((x) => ({ mob: 'puffle', x, y: 440 })),
       ...[450, 1900].map((x) => ({ mob: 'puffle', x, y: 360 })),
-      // Petal Clouds: a few kits, the lookout left quiet.
-      ...[850, 1550].map((x) => ({ mob: 'puffle', x, y: 280 })),
+      // Petal Clouds: Petal Sprites drifting, the lookout left quiet.
+      ...[700, 850, 1500, 1700].map((x) => ({ mob: 'petalsprite', x, y: 280 })),
     ],
   },
 

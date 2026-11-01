@@ -423,6 +423,7 @@ export const gauntletStars = (level) => STARS.reduce((best, s) => (s.level <= (l
 
 add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 620, effect: { mp: 300, mpPct: 0.3 }, color: '#a58cff', desc: 'Restores 300 MP and 30% of your max MP.' });
 add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 3000, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });
+add({ id: 'royal_jelly', name: 'Royal Jelly', type: 'use', price: 800, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#fff2b8', desc: "The Queen Bee's own. Restores half your HP and MP." });
 add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 400, effect: { returnTown: true }, color: '#bff0dc', desc: 'Takes you back to the nearest town.' });
 
 // ---------- Monster drops (etc) ----------
@@ -430,6 +431,8 @@ add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 400, eff
 const ETC = [
   ['fluff', 'Fox Fluff', 4, '#fff0fa'],
   ['shell', 'Mossy Scute', 6, '#ff9ec0'],
+  ['bee_fuzz', 'Bumble Fuzz', 5, '#ffd65a'],
+  ['sprite_petal', 'Sprite Petal', 7, '#ffb7d3'],
   ['sprout_leaf', 'Mandrake Leaf', 9, '#9be08f'],
   ['mushcap', 'Toadstool Cap', 12, '#ff7a7a'],
   ['ribbon', 'Jackalope Antler', 15, '#ff6b9a'],

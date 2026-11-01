@@ -19,7 +19,7 @@ test('every place on the island can be reached from Sprout Village, and back', (
   assert.equal(path.at(-1).to, 'glade');
   assert.ok(path.every((p, i) => i === 0 || MAPS[path[i - 1].to].portals.includes(p)), 'each step leaves from the last');
   assert.equal(nextStep('sprout', 'glade').left, 5);
-  assert.equal(levelRange(MAPS.meadow1), 'Lv 1-2');
+  assert.equal(levelRange(MAPS.meadow1), 'Lv 1-3');
   // Each map has one road to each neighbour (no doubled portals).
   for (const m of Object.values(MAPS)) {
     const to = m.portals.filter((p) => !p.hidden && p.to).map((p) => p.to);

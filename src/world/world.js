@@ -34,6 +34,7 @@ import { nodeHere, startGathering, tickGathering } from './gathering.js';
 import { tickDaytime } from './daytime.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
+import { nestKill } from './nest.js';
 import { DISH_BY_ID } from '../data/cooking.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
@@ -439,6 +440,7 @@ export function killMob(world, m, byParty = false) {
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
   calmKill(world);
+  nestKill(world, m);
   if (m.def.boss) world.onBossDown?.(m);
   // (Someone you're helping may need this one: world/lives.js.)
   world.onAnyKill?.(m);
@@ -784,9 +786,10 @@ export function updateWorld(world, dt, input) {
     const event = mirrored ? world.net.step(m, dt) : updateMob(m, foe ?? (world.net ? world.net.target(world, m) : world.body), dt, world.now);
     if (event === 'slam') {
       m.attackAt = world.now;
-      world.fx.push({ kind: 'slam', x: m.x, y: m.y, t: 0, dur: 0.6, range: m.def.special.range });
+      world.fx.push({ kind: 'slam', x: m.x, y: m.def.fly ? m.spawn.y : m.y, t: 0, dur: 0.6, range: m.def.special.range });
       world.juice.push({ type: 'shake', mag: 6, dur: 0.5 }, { type: 'slam', x: m.x, y: m.y, range: m.def.special.range });
-      const onFloor = world.body.onGround && world.body.surface?.ground;
+      // It hits anyone standing on its floor near it (a flyer's floor is the one it hovers over).
+      const onFloor = world.body.onGround && (m.def.fly ? Math.abs(world.body.y - m.spawn.y) < 8 : world.body.surface?.ground);
       if (onFloor && Math.abs(world.body.x - m.x) < m.def.special.range && !world.dead) {
         hurtPlayer(world, m.def.special.damage, m.x);
         m.gloatAt = world.now;

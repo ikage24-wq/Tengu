@@ -18,6 +18,24 @@ export const MOBS = {
     id: 'snailbun', name: 'Moss Tortoise', level: 2, hp: 22, atk: 8, def: 0, acc: 10, eva: 0, exp: 12, gold: [2, 8],
     speed: 16, w: 32, h: 22, art: 'snailbun', aggro: false, drops: [{ id: 'shell', chance: 0.55 }],
   }),
+  // Petal Meadow's hive and clouds (render/mobs/bees.js).
+  bumble: mob({
+    id: 'bumble', name: 'Bumble', level: 2, hp: 20, atk: 8, def: 0, acc: 10, eva: 1, exp: 13, gold: [2, 8],
+    speed: 40, gait: 'dart', w: 24, h: 24, art: 'bumble', fly: true, drops: [{ id: 'bee_fuzz', chance: 0.55 }],
+  }),
+  petalsprite: mob({
+    id: 'petalsprite', name: 'Petal Sprite', level: 3, hp: 30, atk: 10, def: 1, acc: 12, eva: 2, exp: 17, gold: [3, 10],
+    speed: 30, w: 22, h: 32, art: 'petalsprite', fly: true, aggro: false, drops: [{ id: 'sprite_petal', chance: 0.55 }],
+  }),
+  // Petal Meadow's area boss: she bursts out of the giant hive once enough of the meadow has been
+  // hunted (world/nest.js), and every few seconds brings her honey dipper down in a splash that
+  // hits anyone on her floor near her.
+  queenbee: mob({
+    id: 'queenbee', name: 'The Queen Bee', level: 6, hp: 1800, atk: 26, def: 4, acc: 20, eva: 1, exp: 900, gold: [150, 300],
+    speed: 40, w: 60, h: 64, art: 'queenbee', fly: true, boss: true,
+    drops: [{ id: 'royal_jelly', chance: 1, qty: 3 }, { id: 'honeycomb', chance: 1, qty: 4 }, { id: 'bee_fuzz', chance: 1, qty: 5 }],
+    special: { kind: 'slam', every: 6, warn: 1.3, damage: 60, range: 170 },
+  }),
   sproutling: mob({
     id: 'sproutling', name: 'Mandrake', level: 4, hp: 45, atk: 13, def: 2, acc: 14, eva: 1, exp: 22, gold: [4, 12],
     speed: 34, w: 18, h: 28, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }],
