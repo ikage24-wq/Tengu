@@ -11,8 +11,9 @@ import { isCalm } from './calm.js';
 
 const key = (mapId, i) => `${mapId}:${i}`;
 
+// A map's spots: listed in data/gathering.js, or laid out with the map (data/climb.js).
 export function nodesOf(world) {
-  return NODES[world.map.id] ?? [];
+  return NODES[world.map.id] ?? world.map.nodes ?? [];
 }
 
 // A night spot (`night: true`) is only there at night.

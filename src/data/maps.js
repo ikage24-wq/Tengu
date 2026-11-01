@@ -11,6 +11,8 @@
 //   job        towns that are a job's home, where its instructor lives
 //   plaza      in towns, where the fountain stands
 
+import { climb } from './climb.js';
+
 export const MAPS = {
   // The archers' home town, laid out in quarters from west to east: a homey corner of two-storey
   // cottages with a terraced walk up between them (Mira welcomes you at the entrance); the shop
@@ -272,39 +274,42 @@ export const MAPS = {
   },
 
 
-  // A tall forest hunted vertically: five floors of branches between three giant trees, with a
-  // rope up each trunk. Moss golems hold the wide middle branch.
+  // Mossy Woods climbs an old forest in three zones (the tall-map rules, a light rework, laid out
+  // by data/climb.js): the Fern Floor, where Dryads tend the ferns and Wargs prowl; the Warg
+  // Hollows, the wolves' den among the roots, with a log drifting across its gap; and the Treant
+  // Canopy, where old Treants doze in the treetops and glowing spores float you up, with a lookout
+  // on top and the way on to the Whispering Glade as the reward for the climb. A mushroom on the
+  // floor bounces you up.
   woods: {
     id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
-    width: 2200, height: 960, groundY: 920,
     look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'planks', edges: 'glowcaps' },
-    terrain: [[0, 920], [1000, 920], [1060, 900], [1180, 900], [1240, 920], [2200, 920]],
-    platforms: [
-      { x: 120, y: 840, w: 840 }, { x: 1240, y: 840, w: 840 },
-      { x: 260, y: 760, w: 500 }, { x: 900, y: 760, w: 400 }, { x: 1440, y: 760, w: 500 },
-      { x: 120, y: 680, w: 500 }, { x: 760, y: 680, w: 680 }, { x: 1580, y: 680, w: 500 },
-      { x: 300, y: 600, w: 600 }, { x: 1300, y: 600, w: 600 },
-      { x: 200, y: 520, w: 360 }, { x: 900, y: 520, w: 400 }, { x: 1640, y: 520, w: 360 },
-    ],
-    ropes: [
-      { x: 380, top: 520, bottom: 920 }, { x: 1100, top: 520, bottom: 680 }, { x: 1820, top: 520, bottom: 920 },
-      { x: 1000, top: 760, bottom: 920, ladder: true },
-    ],
+    ...climb({
+      width: 2200, ground: 900, quiet: [[40, 900, 160], [2140, 900, 160]],
+      zones: [
+        { name: 'Fern Floor', color: '#4f9e55', rows: ['split', 'long'], mobs: ['leafling', 'boarlet'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Warg Hollows', color: '#8a6656', rows: ['splitwide', 'tri', 'long'], mobs: ['boarlet', 'leafling'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] }],
+          look: { sky: ['#7cc49a', '#b4e0b8', '#e6f2cc'], far: '#6aae84', mid: '#4f9466' } },
+        { name: 'Treant Canopy', color: '#3f9a7a', rows: ['split', 'middle', 'splitwide'], mobs: ['mossgolem', 'leafling'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+          look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
+      ],
+    }),
+    // A moving part per zone: a bouncy mushroom on the floor, a log drifting across the hollows'
+    // gap, and glowing spores rising through the canopy (Up to ride them).
+    springs: [{ x: 1100, y: 900, up: 170, kind: 'shroom' }],
+    updrafts: [{ x: 1250, w: 56, top: 300, bottom: 500, kind: 'spores' }],
     portals: [
-      { id: 'west', x: 40, y: 920, to: 'harbor', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 920, to: 'grove', toPortal: 'west' },
+      { id: 'west', x: 40, y: 900, to: 'harbor', toPortal: 'east' },
+      { id: 'east', x: 2140, y: 900, to: 'grove', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['bigtree', 380, 0], ['bigtree', 1100, 1], ['bigtree', 1820, 0], ['hollowlog', 640], ['mushring', 1500], ['giantshroom', 2060, 1], ['stumphouse', 1100, 0, 520]],
-    spawns: [
-      { mob: 'leafling', x: 513, y: 920 }, { mob: 'boarlet', x: 898, y: 920 }, { mob: 'leafling', x: 1283, y: 920 }, { mob: 'boarlet', x: 1668, y: 920 },
-      { mob: 'leafling', x: 338, y: 840 }, { mob: 'boarlet', x: 742, y: 840 }, { mob: 'leafling', x: 1458, y: 840 }, { mob: 'boarlet', x: 1862, y: 840 },
-      { mob: 'leafling', x: 393, y: 760 }, { mob: 'leafling', x: 627, y: 760 }, { mob: 'mossgolem', x: 1100, y: 760 }, { mob: 'leafling', x: 1573, y: 760 },
-      { mob: 'leafling', x: 1807, y: 760 }, { mob: 'boarlet', x: 370, y: 680 }, { mob: 'mossgolem', x: 938, y: 680 }, { mob: 'mossgolem', x: 1262, y: 680 },
-      { mob: 'boarlet', x: 1830, y: 680 }, { mob: 'leafling', x: 458, y: 600 }, { mob: 'leafling', x: 742, y: 600 }, { mob: 'leafling', x: 1458, y: 600 },
-      { mob: 'leafling', x: 1742, y: 600 }, { mob: 'leafling', x: 380, y: 520 }, { mob: 'leafling', x: 1100, y: 520 }, { mob: 'leafling', x: 1820, y: 520 },
-    ],
+    // A landmark per zone: the great trees and the hollow log on the floor, the mushroom ring in
+    // the hollows, the stump house on the lookout.
+    deco: [['bigtree', 380, 0], ['bigtree', 1820, 0], ['hollowlog', 640], ['giantshroom', 2000, 1], ['mushring', 1100, 0, 500], ['stumphouse', 1000, 0, 180]],
+    lamps: [{ x: 1000, y: 140 }, { x: 1100, y: 470 }, { x: 640, y: 870 }],
+    spirit: { x: 1500, y: 210 },
+    habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true }, mossgolem: { naps: true } },
   },
+
 
   // Long stone floors broken by gaps: drop through a gap to the floor below, jump back up. Bats
   // and wisps hover in the gaps; an arch stands on the throne terrace at the top.
@@ -761,7 +766,9 @@ Object.assign(MAPS, {
 // `n` monsters evenly along a surface from x1 to x2 at height y, taking turns from `mobs`.
 const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ mob: mobs[i % mobs.length], x: Math.round(x1 + ((i + 0.5) / n) * (x2 - x1)), y }));
 
-MAPS.woods.portals.push({ id: 'glade', x: 1650, y: 920, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
+// Mossy Woods' drifting log, gliding across the gap in the Warg Hollows.
+MAPS.woods.platforms.push({ x: 950, y: 660, w: 120, style: 'planks', drift: { dx: 180, period: 8 } });
+MAPS.woods.portals.push({ id: 'glade', x: 1240, y: 180, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
 MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 760, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
 MAPS.cave.portals.push({ id: 'springs', x: 1660, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east', label: 'Frozen Peak' });

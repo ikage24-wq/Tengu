@@ -143,9 +143,52 @@ function vent(ctx, x, y, time, since) {
   ctx.restore();
 }
 
+// A bouncy mushroom: a fat red cap with cream spots on a stubby stem, swaying a little; stepped
+// on, the cap squashes down, springs up past its rest and wobbles back, spores puffing off it.
+function shroom(ctx, x, y, time, since, wx) {
+  const k = since < 0.9 ? since : 9;
+  const s = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
+  const sway = Math.sin(time * 1.5 + wx) * 0.8;
+  ctx.save();
+  ctx.fillStyle = '#fff2e0';
+  ctx.strokeStyle = shade('#fff2e0', -40);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x - 4, y - 9, 8, 9, 3);
+  ctx.fill();
+  ctx.stroke();
+  const cy = y - 9 - s * 3;
+  const rx = 14 - s * 2;
+  const ry = 7 + s * 2;
+  ctx.fillStyle = '#ff6a6a';
+  ctx.strokeStyle = shade('#ff6a6a', -45);
+  ctx.beginPath();
+  ctx.ellipse(x + sway, cy, rx, ry, 0, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#fff2e0';
+  for (const [dx, dy, r] of [[-7, -2.4, 2], [0, -5, 2.4], [7, -2.6, 1.8], [-2, -1.4, 1.2]]) {
+    ctx.beginPath();
+    ctx.ellipse(x + sway + dx, cy + dy * (ry / 7), r, r * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (since < 0.9) {
+    ctx.fillStyle = '#c8ffd0';
+    for (let i = 0; i < 6; i++) {
+      ctx.globalAlpha = 1 - since / 0.9;
+      ctx.beginPath();
+      ctx.arc(x + (i - 2.5) * 5 + Math.sin(i * 3) * 4 * since, cy - 8 - since * 30 - i % 2 * 4, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 // An updraft: motes rising in a slow spiral, with a faint column of light. Pollen is warm gold
 // dust off the hive; petals are cherry blossom caught in a whirl round the tree.
 const DRAFTS = {
+  spores: { glow: '#c8ffd0', bits: ['#9fffb0', '#e6ffd0', '#bfe6ff'], count: 22, speed: 60, size: 1.6, petal: false },
   gust: { glow: '#e8f4ff', bits: ['#ffffff', '#d8ecff', '#f0e0c8'], count: 22, speed: 120, size: 1.8, petal: true },
   chaff: { glow: '#ffe6b0', bits: ['#e8c070', '#f6dc98', '#fff2c8'], count: 20, speed: 75, size: 2.2, petal: true },
   pollen: { glow: '#ffd970', bits: ['#ffc83a', '#ffdc6e', '#fff2b8'], count: 24, speed: 70, size: 2, petal: false },
@@ -199,6 +242,7 @@ export function drawMovers(ctx, map, cam, width, height, time) {
     const since = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
     if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'gust') vent(ctx, snap(x), snap(s.y - cam.y), time, since);
+    else if (s.kind === 'shroom') shroom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
     else blossom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
   }
 }
