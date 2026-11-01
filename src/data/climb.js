@@ -118,3 +118,56 @@ export function climb({ width, ground, zones, lookout = {}, quiet = [] }) {
     zones: outZones, platforms, ropes, spawns, nodes, top,
   };
 }
+
+// For hand-laid maps (sky islands, valleys, side-by-side journeys): give the ledges yourself and
+// it adds what each needs the same way, by zone. Zones here can run left to right (`by: 'x'`,
+// each starting `from` its x) or by height (`from` its y up, listed bottom first). Any ledge with
+// nothing within a jump below it gets a rope down to whatever is under it, so every ledge can be
+// reached; monsters and gathering spots spread over each zone's ledges (and its stretch of the
+// ground) as in climb().
+// lay({ width, ground, ledges, by, zones: [{ name, color, look, from, mobs, nodes }], quiet })
+export function lay({ width, ground, ledges, by = 'x', zones, quiet = [] }) {
+  const platforms = ledges.map((l) => ({ ...l }));
+  const zoneOf = (x, y) => {
+    let k = 0;
+    zones.forEach((z, i) => {
+      if (by === 'x' ? x >= (z.from ?? 0) : y <= (z.from ?? Infinity)) k = i;
+    });
+    return k;
+  };
+  const ropes = [];
+  for (const l of platforms) {
+    if (l.drift) continue;
+    const cx = l.x + l.w / 2;
+    const under = platforms.filter((o) => o !== l && !o.drift && o.y > l.y && cx >= o.x && cx <= o.x + o.w).sort((a, b) => a.y - b.y)[0];
+    const below = under ? under.y : ground;
+    // Close enough to jump up to from right below (or from a neighbour within reach)? No rope.
+    const near = platforms.some((o) => o !== l && !o.drift && o.y > l.y && o.y - l.y <= 80 && o.x < l.x + l.w + 20 && o.x + o.w > l.x - 20) || below - l.y <= 80;
+    if (!near) ropes.push({ x: Math.round(cx), top: l.y, bottom: below });
+  }
+  const clear = (x, y) => !ropes.some((rp) => Math.abs(rp.x - x) < 50 && (rp.top === y || rp.bottom === y)) && !quiet.some(([qx, qy, qr]) => Math.abs(qx - x) < qr && Math.abs(qy - y) < 10);
+  const floors = [{ x: 0, y: ground, w: width }, ...platforms.filter((l) => !l.drift && !l.thick)];
+  const spawns = [];
+  const counts = zones.map(() => 0);
+  for (const l of floors) {
+    for (let x = l.x + 110; x <= l.x + l.w - 110; x += 280) {
+      const k = zoneOf(x, l.y);
+      if (!clear(x, l.y) || !zones[k].mobs?.length) continue;
+      spawns.push({ mob: zones[k].mobs[counts[k]++ % zones[k].mobs.length], x, y: l.y });
+    }
+  }
+  const nodes = [];
+  zones.forEach((z, zi) => {
+    const free = [];
+    for (const l of floors) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y) && !spawns.some((s) => s.y === l.y && Math.abs(s.x - x) < 80)) free.push([x, l.y]);
+    (z.nodes ?? []).forEach((n, i) => {
+      const at = free[Math.floor(((i + 1) * free.length) / (z.nodes.length + 1))];
+      if (at) nodes.push({ x: at[0], y: at[1], ...n });
+    });
+  });
+  return {
+    width, height: ground + 40, groundY: ground, terrain: [[0, ground], [width, ground]],
+    zonesBy: by, zones: zones.map((z, i) => ({ name: z.name, color: z.color, from: i ? z.from : by === 'x' ? 0 : Infinity, ...(z.look ? { look: z.look } : {}) })),
+    platforms, ropes, spawns, nodes,
+  };
+}

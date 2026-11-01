@@ -189,7 +189,7 @@ function drawMobs(ctx, world, cam, time) {
 // Climbing into a new zone of a tall map shows its name for a moment, softly, near the top.
 function drawZoneTitle(ctx, world, time) {
   const b = world.body;
-  const z = world.map.zones?.length ? zoneAt(world.map, b.onGround || b.rope ? b.y : feel.zoneY ?? b.y) : null;
+  const z = world.map.zones?.length ? zoneAt(world.map, b.onGround || b.rope ? b.y : feel.zoneY ?? b.y, b.x) : null;
   if (b.onGround || b.rope) feel.zoneY = b.y;
   if (!z) return;
   if (feel.zone !== z) {

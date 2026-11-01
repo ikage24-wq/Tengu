@@ -1651,7 +1651,7 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     // A drifting ledge glides on the same clock as the physics. It's drawn at its own spot with the
     // camera shifted the other way, so its texture and edge flowers ride along with it instead of
     // sliding over it.
-    else drawIsland(ctx, theme, p, p.drift ? { ...cam, x: cam.x - driftOffset(p, map.clock ?? 0) } : cam, time, pi, zoneLook(map, p.y));
+    else drawIsland(ctx, theme, p, p.drift ? { ...cam, x: cam.x - driftOffset(p, map.clock ?? 0) } : cam, time, pi, zoneLook(map, p.y, p.x + p.w / 2));
   }
 }
 
@@ -1983,7 +1983,7 @@ function drawProps(ctx, t, map, cam, width, time) {
       const x = wx - cam.x;
       if (x < -40 || x > width + 40) continue;
       // A zone grows its own props.
-      const props = zoneAt(map, sy)?.look?.props ?? t.props;
+      const props = zoneAt(map, sy, wx)?.look?.props ?? t.props;
       let kind = props[Math.floor(hash(wx + si) * props.length)];
       // Ledges only get small things.
       if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? (t.ledgeProp ?? 'flower') : kind;
@@ -2382,15 +2382,18 @@ export function drawSceneFront(ctx, map, cam, width, height, time, actors = []) 
 // Everything behind the characters.
 // Zones: a tall map is split by height (`map.zones`, listed bottom first, each starting `from`
 // its y upward), and each zone restyles the map's look with its own (sky, ledges, props...).
-export function zoneAt(map, y) {
+// A map laid out side by side (`zonesBy: 'x'`) lists its zones left to right instead, each
+// starting `from` its x rightward.
+export function zoneAt(map, y, x = 0) {
   const zones = map.zones;
   if (!zones?.length) return null;
   let z = zones[0];
-  for (const n of zones) if (y <= n.from) z = n;
+  if (map.zonesBy === 'x') for (const n of zones) { if (x >= n.from) z = n; }
+  else for (const n of zones) if (y <= n.from) z = n;
   return z;
 }
-export function zoneLook(map, y) {
-  const z = zoneAt(map, y);
+export function zoneLook(map, y, x = 0) {
+  const z = zoneAt(map, y, x);
   return z?.look ? { ...map.look, ...z.look } : map.look;
 }
 // The backdrop eases from one zone's look into the next over a band either side of the line
@@ -2408,14 +2411,25 @@ function blendLook(a, b, k) {
   }
   return out;
 }
-function backdropLook(map, base, cam, height) {
+function backdropLook(map, base, cam, height, width = 640) {
   if (!map.zones?.length) return base;
+  const look = (z) => ({ ...base, ...z.look });
+  if (map.zonesBy === 'x') {
+    // Side by side: blend by where the middle of the view is.
+    const x = cam.x + width / 2;
+    const here = zoneAt(map, 0, x);
+    const i = map.zones.indexOf(here);
+    const next = map.zones[i + 1];
+    const prev = map.zones[i - 1];
+    if (next && next.from - x < ZONE_BLEND) return blendLook(look(here), look(next), 0.5 - (next.from - x) / (2 * ZONE_BLEND));
+    if (prev && x - here.from < ZONE_BLEND) return blendLook(look(prev), look(here), 0.5 + (x - here.from) / (2 * ZONE_BLEND));
+    return look(here);
+  }
   const y = cam.y + height * 0.6;
   const here = zoneAt(map, y);
   const i = map.zones.indexOf(here);
   const up = map.zones[i + 1];
   const down = map.zones[i - 1];
-  const look = (z) => ({ ...base, ...z.look });
   // Nearing the zone above, or just come up from the one below.
   if (up && y - up.from < ZONE_BLEND) return blendLook(look(here), look(up), 0.5 - (y - up.from) / (2 * ZONE_BLEND));
   if (down && here.from - y < ZONE_BLEND) return blendLook(look(down), look(here), 0.5 + (here.from - y) / (2 * ZONE_BLEND));
@@ -2433,7 +2447,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike, and a
   // tall map's zones restyle it again as you climb.
-  const day = backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height);
+  const day = backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height, width);
   // At night (world/daytime.js) the sky darkens to stars and the moon, and fireflies come out.
   const t = map.night > 0 ? nightLook(day, map.night) : day;
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll

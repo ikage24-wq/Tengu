@@ -191,8 +191,15 @@ there and update the status file as they get done.
   map can be big too when that makes it better (a town climbing a cliff in districts, a linking
   path up a mountain), as long as it is designed really well, with a reason for every floor and
   nothing that's just filler. Boss rooms and trial arenas are usually their own size, built for
-  the fight. New maps follow this, and older maps get it when they are reworked. Every map also
-  follows these (the player picked them):
+  the fight. New maps follow this, and older maps get it when they are reworked.
+  **Layouts vary (the player's standing rule, 2026-11-01): not every map is a bottom-middle-top
+  climb, and no two neighbouring maps share a shape.** The shapes: a tall climb (zones by
+  height); side by side (zones left to right, a journey across); sky islands (floating islands at
+  different heights, gaps crossed by drifting clouds and updrafts); a descent (arrive at the top,
+  the best part at the bottom); a valley (high at both ends, down into a low middle and up out);
+  and surface and underground (a walk along the top with tunnels beneath, holes and ladders
+  between). Floor shapes vary too: no stamped repeats of the same rows. Every map also follows
+  these (the player picked them):
   - **Hunt in a loop:** monsters and ropes are placed so you can hunt round a floor or zone
     without walking back over empty ground, and respawns keep up with one hunter.
   - **Room to fight:** hunting floors are wide enough for dashes, knockbacks and launches; no low

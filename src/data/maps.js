@@ -11,7 +11,7 @@
 //   job        towns that are a job's home, where its instructor lives
 //   plaza      in towns, where the fountain stands
 
-import { climb } from './climb.js';
+import { climb, lay } from './climb.js';
 
 export const MAPS = {
   // The archers' home town, laid out in quarters from west to east: a homey corner of two-storey
@@ -385,32 +385,62 @@ export const MAPS = {
   },
 
 
-  // Five layers of floating islands held up by cloud pillars, climbing to the gazebo garden at
-  // the top. Sheep graze low; birds and star spirits fly higher.
+  // Sky Garden is a chain of floating islands over a sea of cloud (a sky-islands layout, its zones
+  // side by side, data/climb.js lay()): the Cloud Meadows in the west, low flowered islands where
+  // the Pegasus Foals graze and a blossom bounces you up off the cloud sea; the Harpy Roost in the
+  // middle, islands stacked round the cloud pillars, where a skyward wind lifts you; and the Starlit
+  // Terrace in the east, the Star Seraphs' high islands, reached by a drifting cloud, with the way
+  // up to Starfall Heights on the highest of them. Frozen Peak is down on the cloud sea's far end.
   sky: {
     id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 },
-    width: 2400, height: 1000, groundY: 960,
-    terrain: [[0, 960], [2400, 960]],
-    platforms: [
-      { x: 100, y: 880, w: 600 }, { x: 1000, y: 880, w: 600 }, { x: 1900, y: 880, w: 400 },
-      { x: 400, y: 800, w: 700 }, { x: 1500, y: 800, w: 600 },
-      { x: 150, y: 720, w: 500 }, { x: 900, y: 720, w: 600 }, { x: 1800, y: 720, w: 500 },
-      { x: 500, y: 640, w: 700 }, { x: 1500, y: 640, w: 500 },
-      { x: 900, y: 560, w: 600, thick: 44 },
+    ...lay({
+      width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200]],
+      zones: [
+        { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Harpy Roost', color: '#4f95e0', from: 1000, mobs: ['windbird'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+          look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
+        { name: 'Starlit Terrace', color: '#e0b84a', from: 2050, mobs: ['starspirit'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+          look: { sky: ['#6a6ad0', '#a8a0e8', '#fff0d8'], stars: true } },
+      ],
+      ledges: [
+        // Cloud Meadows: low islands stepping up from the cloud sea.
+        { x: 100, y: 960, w: 320 }, { x: 560, y: 960, w: 340 },
+        { x: 260, y: 880, w: 360 },
+        { x: 80, y: 800, w: 300 }, { x: 520, y: 800, w: 360 },
+        { x: 300, y: 720, w: 340 },
+        { x: 700, y: 640, w: 300 },
+        // Harpy Roost: islands round the cloud pillars.
+        { x: 1000, y: 720, w: 300 }, { x: 1250, y: 640, w: 300 },
+        { x: 1050, y: 560, w: 300 },
+        { x: 1400, y: 480, w: 300 },
+        { x: 1750, y: 560, w: 300 },
+        // Starlit Terrace: the high islands, the topmost with the way to Starfall.
+        { x: 2100, y: 640, w: 300 }, { x: 2300, y: 560, w: 300 },
+        { x: 2050, y: 480, w: 300 },
+        { x: 2400, y: 400, w: 300 },
+        { x: 2650, y: 320, w: 300, thick: 44 },
+        // The drifting cloud from the roost over to the terrace.
+        { x: 1710, y: 480, w: 140, drift: { dx: 200, period: 9 } },
+      ],
+    }),
+    // A moving part per zone: a blossom on the cloud sea bouncing you up into the meadows, a
+    // skyward wind through the roost (Up to ride it), and the drifting cloud to the terrace.
+    springs: [{ x: 470, y: 1040, up: 170, kind: 'blossom' }],
+    updrafts: [{ x: 1450, w: 56, top: 450, bottom: 1040, kind: 'gust' }],
+    portals: [
+      { id: 'west', x: 40, y: 1040, to: 'cave', toPortal: 'east' },
+      { id: 'peak', x: 2940, y: 1040, to: 'peak', toPortal: 'east', label: 'Frozen Peak' },
+      { id: 'starfall', x: 2880, y: 320, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' },
     ],
-    ropes: [{ x: 1150, top: 560, bottom: 640 }, { x: 200, top: 720, bottom: 960 }, { x: 2250, top: 720, bottom: 960 }],
-    portals: [{ id: 'west', x: 40, y: 960, to: 'cave', toPortal: 'east' }],
     npcs: [],
-    deco: [['cloudpillar', 850], ['cloudpillar', 1750], ['skygazebo', 1200, 0, 560], ['giantflower', 300, 1, 880], ['skygazebo', 2100, 0, 880]],
-    spawns: [
-      { mob: 'cloudsheep', x: 526, y: 960 }, { mob: 'cloudsheep', x: 939, y: 960 }, { mob: 'cloudsheep', x: 1352, y: 960 }, { mob: 'cloudsheep', x: 1765, y: 960 },
-      { mob: 'cloudsheep', x: 2178, y: 960 }, { mob: 'cloudsheep', x: 258, y: 880 }, { mob: 'cloudsheep', x: 542, y: 880 }, { mob: 'cloudsheep', x: 1158, y: 880 },
-      { mob: 'cloudsheep', x: 1442, y: 880 }, { mob: 'windbird', x: 2100, y: 880 }, { mob: 'windbird', x: 583, y: 800 }, { mob: 'windbird', x: 917, y: 800 },
-      { mob: 'cloudsheep', x: 1658, y: 800 }, { mob: 'cloudsheep', x: 1942, y: 800 }, { mob: 'cloudsheep', x: 400, y: 720 }, { mob: 'starspirit', x: 1058, y: 720 },
-      { mob: 'starspirit', x: 1342, y: 720 }, { mob: 'cloudsheep', x: 2050, y: 720 }, { mob: 'starspirit', x: 683, y: 640 }, { mob: 'starspirit', x: 1017, y: 640 },
-      { mob: 'windbird', x: 1750, y: 640 }, { mob: 'starspirit', x: 1058, y: 560 }, { mob: 'starspirit', x: 1342, y: 560 },
-    ],
+    // A landmark per zone: a giant flower in the meadows, the cloud pillars and the gazebo in the
+    // roost, the gazebo on the terrace's high island.
+    deco: [['giantflower', 450, 1, 880], ['cloudpillar', 1150, 0], ['cloudpillar', 1850, 1], ['skygazebo', 1200, 0, 560], ['skygazebo', 2750, 0, 320]],
+    lamps: [{ x: 1200, y: 520 }, { x: 2750, y: 280 }, { x: 450, y: 840 }],
+    spirit: { x: 2550, y: 260 },
+    habitats: { cloudsheep: { naps: true, play: true }, windbird: { play: true }, starspirit: { naps: true } },
   },
+
 
   bossroom: {
     id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'grove', world: { x: 360, y: 186 },
@@ -787,8 +817,6 @@ MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 580, to: 'shrine', toPortal:
 // Crystal Cave's drifting crystal slab, and the tunnel to the springs off the galleries.
 MAPS.cave.platforms.push({ x: 975, y: 400, w: 150, style: 'stone', drift: { dx: 500, period: 11 } });
 MAPS.cave.portals.push({ id: 'springs', x: 200, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
-MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east', label: 'Frozen Peak' });
-MAPS.sky.portals.push({ id: 'starfall', x: 1420, y: 560, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' });
 
 Object.assign(MAPS, {
   // The Whispering Glade climbs in three zones (the tall-map rules, a light rework, data/climb.js):
