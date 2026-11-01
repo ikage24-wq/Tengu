@@ -347,9 +347,9 @@ function clump(pts, w, c, o = {}) {
 // sheen high on the lock; `line` a fading interior line along the front edge (over skin).
 function lock(pts, w, R, o = {}) {
   const out = [clump(pts, w, o.dark ?? R.sh1, o)];
-  const lx = o.lx ?? w * 0.17;
+  const lx = o.lx ?? w * 0.08;
   const base = pts.map(([x, y], i) => [x + lx * (i ? 1 : 0.5), y]);
-  out.push(clump(base, w * 0.66, o.c ?? R.base, { ...o, tip: (o.tip ?? Math.max(0.8, w * 0.3)) * 0.4, end: 0.18 }));
+  out.push(clump(base, w * 0.84, o.c ?? R.base, { ...o, tip: (o.tip ?? Math.max(0.8, w * 0.3)) * 0.4, end: 0.18 }));
   const sp = spline(pts, 3);
   const m = sp.length;
   if (o.hi) {
@@ -372,7 +372,7 @@ function pair(pa, pb, wa, wb, R, o = {}) {
   const mid = [];
   for (let i = 0; i < m; i++) mid.push([lerp(pa[i][0], pb[i][0], 0.5) + (o.lx ?? 0.5), lerp(pa[i][1], pb[i][1], 0.5) - (i === m - 1 ? (o.short ?? 2) : 0)]);
   const w = Math.max(wa, wb) + Math.hypot(pa[0][0] - pb[0][0], pa[0][1] - pb[0][1]) * 0.6;
-  out.push(clump(mid, w * 0.72, R.base, { ...o, end: 0.3, tip: 0.6 }));
+  out.push(clump(mid, w * 0.84, R.base, { ...o, end: 0.3, tip: 0.6 }));
   const sp = spline(mid, 3);
   const n = sp.length;
   if (o.hi) {
@@ -447,8 +447,8 @@ function hairCap(R, o) {
     const bow = (o.curl ?? 0) * (o.split ? Math.sign(x - P[0]) : 1);
     seps.push([[x, y], [lerp(x, P[0], L * 0.45) + bow, lerp(y, P[1], L * 0.45)], [lerp(x, P[0], L) + bow * 0.6, lerp(y, P[1], L)]]);
   });
-  for (const s of seps) out.push(strip(s, (t) => lerp(1.1, 0.15, t ** 0.6), R.sh1, { n: 3, flat: true, tip: 0.8 }));
-  for (const s of o.crown ?? []) out.push(strip(s, (t) => 0.95 * Math.sin(PI * lerp(0.12, 1, t)) ** 0.5, s.c ?? R.sh1, { n: 3, flat: true, tip: 0.6 }));
+  // (Fine and short: wide dark gaps on every clump read as stripes at sprite size.)
+  seps.forEach((s, i) => { if (i % 2 === 0) out.push(strip(s.map(([x, y], j) => (j ? [lerp(s[0][0], x, 0.7), lerp(s[0][1], y, 0.7)] : [x, y])), (t) => lerp(0.75, 0.12, t ** 0.6), R.sh1, { n: 3, flat: true, tip: 0.6 })); });
   // Shadow 2 under the crown, along the nape.
   if (o.nape) {
     const [span, nw] = o.nape;
@@ -556,13 +556,24 @@ function finish(out, w, h, dead) {
   return { w, h, res: 3, shapes };
 }
 
+// Softer shadows: every shadow tone in a palette (a key ending in Dk, Sh or Sh2 whose base key is
+// there too) pulled a third of the way back toward its base, so folds, locks and gaps read as
+// gentle form instead of hard dark stripes.
+function soften(P, k = 0.62) {
+  for (const key of Object.keys(P)) {
+    const m = key.match(/^(.*?)(Dk|Sh2|Sh)$/);
+    if (m && P[m[1]]) P[key] = mix(P[m[1]], P[key], k);
+  }
+  return P;
+}
+
 // ---------- Tamamo, the Nine-Tailed Empress ----------
 
-const K = {
+const K = soften({
   skin: '#fff2ea', skinDk: '#f1d2cf', hair: '#ffd27a', hairDk: '#e89a3c', hairLt: '#fff3c4', hairSh2: '#b8682a', tail: '#ffd284', tailDk: '#e6a24c', tip: '#fffaf3',
   earIn: '#ffc2d2', fire: '#5ec5ff', fire2: '#a8e8ff', fire3: '#f2fdff', hot: '#9a7bff', robe: '#fff8f1', robeDk: '#eadbe3', robeLt: '#ffffff',
   crimson: '#dc3a60', crimsonDk: '#a82448', pink: '#ffa3bd', gold: '#ffd36b', goldDk: '#d39a42', goldLt: '#fff1b6', wood: '#8a4a3c', lip: '#e2486c',
-};
+});
 const FIRE = [K.fire, K.fire2, K.fire3];
 const FIRE_HOT = ['#8c74ff', '#c4b4ff', '#ffffff'];
 
@@ -590,14 +601,14 @@ const TAMAMO_RAMP = { hi: K.hairLt, base: K.hair, sh1: K.hairDk, sh2: K.hairSh2 
 const TAMAMO_FACE = {
   skin: K.skin, skinSh: '#f8d0ca', skinSh2: '#e6a6ab', blush: '#ff9fb2', lip: '#e2486c', lipLine: '#a8344f',
   bangs: bangsOf(TAMAMO_HAIR.edge),
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
-  eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.6, far: 0.8, iris: '#22b8a8', irisDk: '#0a5c62', irisLt: '#b6fff0', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#06303a', tilt: 0.38, wing: 1.2, flicks: 2, lashLen: 1.1, shadow: '#ffb0bc', smoky: 0.2, lowerLash: '#c86478', ink: '#3a1a1c' },
-  brow: { c: '#c07a3a', kind: 'soft', w: 0.7, lift: 0.3 },
-  mouth: [8.2, 12.2],
-  nose: [9.2, 9.6],
+  head: { chin: [8.2, 15.8], cheek: 13.8, jaw: -0.6, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  eye: { nearX: 2.6, farX: 9.6, rx: 3.3, ry: 1.9, far: 0.82, iris: '#22b8a8', irisDk: '#0a5c62', irisLt: '#b6fff0', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#06303a', tilt: 0.55, wing: 1.6, flicks: 2, lashLen: 1, shadow: '#ffa8b4', smoky: 0.15, lowerLash: '#c86478', ink: '#3a1a1c' },
+  brow: { c: '#c07a3a', kind: 'arch', w: 0.6, lift: 0.7 },
+  mouth: [8.6, 12.8],
+  nose: [9.4, 9.4],
   blushK: 0.8,
   fang: 'angry',
-  moods: { idle: { open: 0.82, mouth: 'smirk', gaze: [0.12, 0] }, angry: { mouth: 'snarl', pupil: 0.55 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
+  moods: { idle: { open: 0.78, mouth: 'sly', gaze: [0.12, 0] }, angry: { mouth: 'snarl', pupil: 0.55 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'smirk' } },
 };
 
 function tamamo(pose, f, mood) {
@@ -696,7 +707,7 @@ function tamamo(pose, f, mood) {
     // Fur strokes and the white tip.
     const sp = spline(pts, 3);
     const m = sp.length;
-    out.push(line(sp.slice(Math.round(m * 0.15), Math.round(m * 0.6)).map(([x, y]) => [x - 2, y + 1]), 0.7, K.tailDk, 1), line(sp.slice(Math.round(m * 0.25), Math.round(m * 0.7)).map(([x, y]) => [x + 2, y - 1]), 0.6, mix(K.tail, '#ffffff', 0.5), 1));
+    out.push(line(sp.slice(Math.round(m * 0.25), Math.round(m * 0.7)).map(([x, y]) => [x + 2, y - 1]), 0.6, mix(K.tail, '#ffffff', 0.5), 1));
     const i0 = Math.round(m * 0.68);
     const i1 = Math.round(m * 0.78);
     out.push(strip(sp.slice(i0), (t) => prof(lerp(i0 / (m - 1), 1, t)) * 0.8, mix(K.tail, K.tip, 0.55), { n: 1, flat: true, tip: 1.6 }));
@@ -931,12 +942,12 @@ function tamamo(pose, f, mood) {
 
 // ---------- Sylvana, the Dryad Queen ----------
 
-const S = {
+const S = soften({
   hair: '#bde27e', hairDk: '#86b45a', hairLt: '#d9f29a', hairHi: '#efffc4', hairSh: '#7fbf63', hairSh2: '#4b8a5c',
   skin: '#f7f2e8', skinDk: '#ddd2c2', mark: '#7f7068', vein: '#7dffb0', veinHot: '#e4ff6a', leaf: '#62c48e', leafDk: '#3f9a70', leafLt: '#a8ecc0',
   leaf2: '#4fb0a0', leaf2Dk: '#357f7a', moss: '#86b86a', mossDk: '#5f8f4f', wood: '#8b6a58', woodDk: '#634a40', woodLt: '#b48f74', bloom: '#ffc6dd',
   bloomDk: '#f08fb4', wis: '#c3a2ff', wisLt: '#e6d8ff', fly: '#fff6a6', flyGlow: '#efffc4', thorn: '#4f3a3a', lip: '#e8879f',
-};
+});
 
 // Sylvana's willow hair: a fringe of six leaf-pointed clumps swept from the crown, two willow
 // locks before the shoulder, and a long cascade of tapering locks behind.
@@ -963,13 +974,13 @@ const SYLVANA_FACE = {
   skin: S.skin, skinSh: '#e2dccb', skinSh2: '#b9c4ae', blush: '#ff9ab4', lip: S.lip, lipLine: '#b0546c',
   bangs: bangsOf(SYLVANA_HAIR.edge),
   bangLine: S.hairSh2,
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
-  eye: { nearX: 2.4, farX: 9.8, rx: 3.8, ry: 2.9, far: 0.82, iris: '#e2587a', irisDk: '#7a1e42', irisLt: '#ffd6c4', hot: '#ffc23a', hotDk: '#9a5a08', pupil: 'round', pupilC: '#3a0e26', tilt: 0.1, wing: 1, flicks: 1, lashLen: 1.2, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#16302a', sparkle: true },
-  brow: { c: '#3f7a52', kind: 'soft', w: 0.7, lift: 0.3 },
-  mouth: [8.2, 12.2],
-  nose: [9.2, 9.6],
+  head: { chin: [7.2, 15], cheek: 14.8, jaw: -0.8, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  eye: { nearX: 2.2, farX: 9.4, rx: 2.9, ry: 2.5, far: 0.84, iris: '#e2587a', irisDk: '#7a1e42', irisLt: '#ffd6c4', hot: '#ffc23a', hotDk: '#9a5a08', pupil: 'round', pupilC: '#3a0e26', tilt: -0.12, wing: 0.6, flicks: 1, lashLen: 1, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#16302a', sparkle: true },
+  brow: { c: '#3f7a52', kind: 'soft', w: 0.6, lift: 0.7 },
+  mouth: [8, 11.9],
+  nose: [9, 9.3],
   blushK: 1.05,
-  moods: { idle: { mouth: 'soft' }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' } },
+  moods: { idle: { open: 0.92, mouth: 'soft' }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' }, happy: { mouth: 'grin' } },
 };
 
 function sylvana(pose, f, mood) {
@@ -1294,11 +1305,11 @@ function sylvana(pose, f, mood) {
 
 // ---------- Lilith, the Succubus Queen ----------
 
-const D = {
+const D = soften({
   skin: '#ffe5ea', skinDk: '#f0c3cf', hair: '#6c47ab', hairDk: '#4a3080', hairSh2: '#2c1d55', hairHi: '#b9a0ff', horn: '#7a5e8e', hornLt: '#b9a0d2',
   gold: '#ffcc66', goldDk: '#cf9440', goldLt: '#fff0b8', black: '#4a3a64', blackDk: '#30264a', blackLt: '#75609c', wine: '#b43b60', wineDk: '#842a49',
   wineLt: '#de6c90', wing: '#9b4a88', wingDk: '#6f3064', wingLt: '#c777b0', bone: '#4b2b50', gem: '#ff4f9c', pink: '#ff9fd0', violet: '#b884ff', lip: '#c8386a',
-};
+});
 
 // Lilith's hair: long, wavy, and dark violet; the fringe sweeps from a part over the near brow
 // toward the back in long pointed clumps, a wavy lock falls over the front shoulder, and the
@@ -1324,14 +1335,14 @@ const LILITH_RAMP = { hi: D.hairHi, base: D.hair, sh1: D.hairDk, sh2: D.hairSh2 
 const LILITH_FACE = {
   skin: D.skin, skinSh: '#f2c0d1', skinSh2: '#d593b5', blush: '#ff9cbc', lip: '#c8306a', lipLine: '#8a1c46',
   bangs: bangsOf(LILITH_HAIR.edge),
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
-  eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.8, far: 0.82, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.28, wing: 1.4, flicks: 2, lashLen: 1.2, shadow: '#e2b0d8', smoky: 0.3, lowerLash: '#7a3a6a', ink: '#24112e' },
-  brow: { c: '#2c1d55', kind: 'arch', w: 0.7, lift: 0.3 },
-  mouth: [8.2, 12.2],
-  nose: [9.2, 9.6],
+  head: { chin: [7.8, 16.2], cheek: 14.2, jaw: -0.2, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  eye: { nearX: 2.4, farX: 10, rx: 3.5, ry: 2.3, far: 0.8, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.22, wing: 1.8, flicks: 3, lashLen: 1.3, shadow: '#e2b0d8', smoky: 0.35, lowerLash: '#7a3a6a', ink: '#24112e' },
+  brow: { c: '#2c1d55', kind: 'arch', w: 0.75, lift: 0.1 },
+  mouth: [8.2, 13],
+  nose: [9.2, 9.8],
   mole: [-0.6, 10.2],
   fang: 'always',
-  moods: { idle: { open: 0.62, mouth: 'smirk', gaze: [0.1, 0.03] }, angry: { open: 0.85, mouth: 'snarl' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
+  moods: { idle: { open: 0.58, mouth: 'smirk', gaze: [0.1, 0.03] }, angry: { open: 0.85, mouth: 'grin' }, hurt: { mouth: 'grimace' }, happy: { lids: 'open', open: 0.5, mouth: 'laugh', blush: 1.4 } },
 };
 
 function lilith(pose, f, mood) {
@@ -1659,11 +1670,11 @@ function lilith(pose, f, mood) {
 
 // ---------- Selene, the Moon Valkyrie ----------
 
-const M = {
+const M = soften({
   skin: '#fff0e8', skinDk: '#efcec9', hair: '#c8cff4', hairDk: '#99a2de', hairSh2: '#666dba', hairLt: '#f2f4ff', silver: '#e3e6f6', silverDk: '#a4a8d0', silverLt: '#ffffff',
   steel: '#8a8ec0', lav: '#c5b0ff', lavDk: '#9580df', lavLt: '#e6dcff', gold: '#ffe08a', goldDk: '#d4a748', cape: '#40439a', capeDk: '#2b2d70',
   capeIn: '#5c62c8', star: '#fffbe0', halo: '#fff4c2', haloDk: '#efd27e', moon: '#fff8d8', glow: '#bfe9ff', lip: '#e07a92',
-};
+});
 
 // A crescent around (cx, cy), radius r, thickest (w) in the middle, opening toward `dir`.
 function crescentPts(cx, cy, r, w, dir) {
@@ -1709,12 +1720,12 @@ const SELENE_FACE = {
   skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffa8bc', blushK: 0.9, lip: M.lip, lipLine: '#b0566a',
   bangs: bangsOf(SELENE_HAIR.edge),
   bangLine: '#666dba',
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
-  eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.8, far: 0.82, iris: '#6a78e0', irisDk: '#28307a', irisLt: '#d0e0ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#1a1c50', tilt: 0.08, wing: 1.1, flicks: 2, lashLen: 1.1, ink: '#22234e', sparkle: true },
-  brow: { c: '#666dba', kind: 'straight', w: 0.8, lift: 0 },
-  mouth: [8.2, 12.2],
+  head: { chin: [7.6, 15.6], cheek: 14.6, jaw: 0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  eye: { nearX: 2.5, farX: 9.7, rx: 3.1, ry: 2.1, far: 0.84, iris: '#6a78e0', irisDk: '#28307a', irisLt: '#d0e0ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#1a1c50', tilt: 0.14, wing: 0.8, flicks: 1, lashLen: 0.9, ink: '#22234e' },
+  brow: { c: '#666dba', kind: 'straight', w: 0.9, lift: -0.5 },
+  mouth: [8.2, 12.5],
   nose: [9.2, 9.6],
-  moods: { idle: { open: 0.94, mouth: 'calm' }, angry: { mouth: 'grit', brow: { inner: 1.4, outer: 0.2, arch: -0.8, w: 1.4 } }, hurt: { mouth: 'grimace' } },
+  moods: { idle: { open: 0.9, mouth: 'calm' }, angry: { mouth: 'grit', brow: { inner: 1.4, outer: 0.2, arch: -0.8, w: 1.4 } }, hurt: { mouth: 'grimace' }, happy: { lids: 'open', open: 0.95, mouth: 'smile' } },
 };
 
 function selene(pose, f, mood) {
