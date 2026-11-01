@@ -955,14 +955,20 @@ const SYLVANA_HAIR = {
 };
 const SYLVANA_RAMP = { hi: S.hairHi, base: S.hair, sh1: S.hairSh, sh2: S.hairSh2 };
 
-// Sylvana's face: big round gentle eyes of rose gold (a blossom's colour, set against the green
-// hair) with leaf-shaped lashes, soft arched brows,
-// and a kind small smile; she gasps when hurt.
+// Sylvana's face: matched round gentle eyes of deep rose (a blossom's colour, the strongest
+// contrast against her green hair and pale birch skin) with leaf-shaped lashes, soft arched brows
+// and a kind small smile on a soft chin; she gasps when hurt. A fine dark line where the bangs
+// meet the skin keeps the pale green hair apart from the pale face.
 const SYLVANA_FACE = {
-  skin: S.skin, skinSh: '#d7e2cf', skinSh2: '#a9c1ae', blush: '#ffb0c4', lip: S.lip, lipLine: '#b0546c',
+  skin: S.skin, skinSh: '#e2dccb', skinSh2: '#b9c4ae', blush: '#ff9ab4', lip: S.lip, lipLine: '#b0546c',
   bangs: bangsOf(SYLVANA_HAIR.edge),
-  eye: { ry: 3.15, iris: '#f2869a', irisDk: '#8e2e52', irisLt: '#ffe0c4', hot: '#ffc23a', hotDk: '#9a5a08', pupil: 'round', pupilC: '#4a1430', tilt: 0.04, wing: 1.2, flicks: 1, lashLen: 1.5, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#1f3d32', sparkle: true },
-  brow: { c: '#3f7a52', kind: 'soft', w: 0.7 },
+  bangLine: S.hairSh2,
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  eye: { nearX: 2.4, farX: 9.8, rx: 3.8, ry: 2.9, far: 0.82, iris: '#e2587a', irisDk: '#7a1e42', irisLt: '#ffd6c4', hot: '#ffc23a', hotDk: '#9a5a08', pupil: 'round', pupilC: '#3a0e26', tilt: 0.1, wing: 1, flicks: 1, lashLen: 1.2, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#16302a', sparkle: true },
+  brow: { c: '#3f7a52', kind: 'soft', w: 0.7, lift: 0.3 },
+  mouth: [8.2, 12.2],
+  nose: [9.2, 9.6],
+  blushK: 1.05,
   moods: { idle: { mouth: 'soft' }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' } },
 };
 
@@ -976,12 +982,12 @@ function sylvana(pose, f, mood) {
   const { angry, hurt, dead, happy } = moods(mood);
   // She flows rather than walks: the body rises and settles on a slow wave and sways side to
   // side while the roots under her gown ripple backward along the ground.
-  let bob = walk ? -1.3 * Math.sin(ph) : 0.7 * Math.sin(ph);
-  let lean = walk ? 1 + Math.sin(ph) * 0.6 : 0;
+  let bob = walk ? -1.9 * Math.sin(ph) : 0.7 * Math.sin(ph);
+  let lean = walk ? 1 + Math.sin(ph) * 1.1 : 0;
   let tilt = walk ? 0.035 * Math.sin(ph + 0.4) : 0.01 * Math.sin(ph);
   let headA = walk ? -0.035 * Math.sin(ph + 0.4) : 0.035 * Math.sin(ph - 0.8);
   let drop = 0;
-  let swing = walk ? -1.8 + Math.sin(ph - 1.3) * 1.4 : Math.sin(ph - 1.2) * 1;
+  let swing = walk ? -1.8 + Math.sin(ph - 1.3) * 2.3 : Math.sin(ph - 1.2) * 1;
   let handAt = [bx + 20, G - 66 + bob];
   let backHand = [bx - 15, G - 54 + bob];
   let lash = 0;
@@ -1136,7 +1142,7 @@ function sylvana(pose, f, mood) {
       for (let i = 0; i <= n; i++) {
         const t = i / n;
         const x = lerp(bl[0], br[0], t);
-        const tipY = yb + 4 + Math.sin(i * 1.7 + seed + ph) * 0.6;
+        const tipY = yb + 4 + Math.sin(i * 1.7 + seed + ph * (walk ? 2 : 1)) * (walk ? 1.2 : 0.6);
         if (i > 0) pts.push([x - (br[0] - bl[0]) / n / 2, ys(yb - 0.5)]);
         pts.push([x, ys(tipY)]);
       }
@@ -1177,9 +1183,8 @@ function sylvana(pose, f, mood) {
   // ---- Head: birch skin with glowing veins, willow hair, and the blossoming branch crown.
   within(Th, () => {
     out.push(...queenHead(hx, hy, mood, SYLVANA_FACE));
-    // Bark lenticels and a glowing vein along the cheek and temple.
-    for (const [x, y, w] of [[hx - 8, hy + 6, 2.4], [hx - 6, hy + 10, 1.6], [hx - 2, hy + 13, 1.4]]) out.push(line([[x - w / 2, y], [x + w / 2, y - 0.2]], 0.5, S.mark));
-    if (!dead) out.push(line(spline([[hx + 11.6, hy - 1], [hx + 12.4, hy + 2.6], [hx + 11, hy + 6], [hx + 12.2, hy + 8.2]], 3), 0.5, glow), dot(hx + 12.2, hy + 8.2, 0.55, glow));
+    // A glowing vein down the jaw, clear of the eyes.
+    if (!dead) out.push(line(spline([[hx + 12.6, hy + 6.4], [hx + 12.2, hy + 9], [hx + 10.4, hy + 11.6], [hx + 10.8, hy + 13.4]], 3), 0.5, glow), dot(hx + 10.8, hy + 13.4, 0.55, glow));
     // The willow crown of hair, and two willow locks falling before the shoulder.
     inHead(hx, hy, () => {
       out.push(...hairCap(R, SYLVANA_HAIR));
@@ -1227,7 +1232,7 @@ function sylvana(pose, f, mood) {
     const { k: el, f: wr } = bend(sh, tgt, 14, 13, -1);
     out.push(taper([sh, el], 6.6, 5.4, S.skinDk, { n: 1 }), taper([[sh[0] + 0.3, sh[1] - 0.3], el], 5.2, 4.2, S.skin, { n: 1 }), oval(el[0], el[1], 2.6, 2.6, S.skin, 0, 12));
     out.push(taper([el, wr], 5.2, 4, S.skinDk, { n: 1 }), taper([[el[0] + 0.2, el[1] - 0.2], wr], 4, 3, S.skin, { n: 1 }));
-    out.push(line([[lerp(sh[0], el[0], 0.3), lerp(sh[1], el[1], 0.3) - 0.5], [lerp(sh[0], el[0], 0.3) + 1.6, lerp(sh[1], el[1], 0.3) - 0.2]], 0.5, S.mark), line([[lerp(el[0], wr[0], 0.5) - 0.8, lerp(el[1], wr[1], 0.5) + 0.4], [lerp(el[0], wr[0], 0.5) + 0.8, lerp(el[1], wr[1], 0.5) + 0.6]], 0.5, S.mark));
+    out.push(line([[lerp(sh[0], el[0], 0.3), lerp(sh[1], el[1], 0.3) - 0.5], [lerp(sh[0], el[0], 0.3) + 1.6, lerp(sh[1], el[1], 0.3) - 0.2]], 0.5, mix(S.mark, S.skin, 0.5)), line([[lerp(el[0], wr[0], 0.5) - 0.8, lerp(el[1], wr[1], 0.5) + 0.4], [lerp(el[0], wr[0], 0.5) + 0.8, lerp(el[1], wr[1], 0.5) + 0.6]], 0.5, mix(S.mark, S.skin, 0.5)));
     out.push(line([[lerp(el[0], wr[0], 0.1), lerp(el[1], wr[1], 0.1) + 1], [lerp(el[0], wr[0], 0.85), lerp(el[1], wr[1], 0.85) + 0.8]], 0.5, glow));
     const fa = Math.atan2(wr[1] - el[1], wr[0] - el[0]);
     out.push(...leaf(lerp(el[0], wr[0], 0.8), lerp(el[1], wr[1], 0.8), fa + 2.4, 5, 2.6, S.leaf), ...leaf(lerp(el[0], wr[0], 0.8), lerp(el[1], wr[1], 0.8), fa - 2.4, 5, 2.6, S.leaf2));
