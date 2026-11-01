@@ -890,31 +890,41 @@ Object.assign(MAPS, {
   },
 
 
-  // A misty gorge off the Crystal Cave full of steaming turquoise pools, bamboo and reeds. Lamia
-  // bask in the warm water; Wraiths drift in the steam.
+  // Serpent Springs climbs a steaming mountainside in three zones (the tall-map rules, a light
+  // rework, data/climb.js): the Hot Spring Pools, where the Lamias bask and steam lifts you up; the
+  // Waterfall Steps, with a ledge drifting across the gap and, behind the waterfall, the way into
+  // Lilith's Rose Grotto; and the Steam Heights, the Wraiths' crags, where steam vents bounce you up
+  // to the lookout and the road on to Frozen Peak. The hot-spring fishing spot is in the quiet east
+  // corner with a dock of its own.
   springs: {
     id: 'springs', name: 'Serpent Springs', theme: 'springs', town: 'grove', world: { x: 256, y: 40 },
-    width: 2400, height: 800, groundY: 760,
-    terrain: [[0, 760], [2400, 760]],
-    platforms: [
-      { x: 140, y: 680, w: 620 }, { x: 960, y: 680, w: 560 }, { x: 1700, y: 680, w: 560 },
-      { x: 360, y: 600, w: 500 }, { x: 1160, y: 600, w: 560 },
-      { x: 120, y: 520, w: 420 }, { x: 760, y: 520, w: 560 }, { x: 1600, y: 520, w: 520 },
-      { x: 1040, y: 440, w: 400, thick: 44 },
-    ],
-    ropes: [{ x: 160, top: 520, bottom: 760 }, { x: 2060, top: 520, bottom: 760 }, { x: 1080, top: 440, bottom: 520, ladder: true }],
+    ...climb({
+      width: 2400, ground: 880, quiet: [[40, 880, 160], [2200, 880, 320], [2200, 800, 260], [2200, 720, 260], [1560, 560, 200]],
+      zones: [
+        { name: 'Hot Spring Pools', color: '#e0705a', rows: ['wide', 'split'], mobs: ['lamia'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Waterfall Steps', color: '#4fb0d8', rows: ['tri', 'long', 'splitwide'], mobs: ['lamia', 'shade'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+          look: { sky: ['#9fd8e8', '#cfeef0', '#fff4ea'] } },
+        { name: 'Steam Heights', color: '#8a86b0', rows: ['split', 'middle'], mobs: ['shade', 'lamia'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+          look: { sky: ['#c8c4e0', '#e4e0f0', '#fff4f0'] } },
+      ],
+    }),
+    // A moving part per zone: steam rising off the pools (Up to ride it), a ledge drifting across
+    // the steps' gap, and steam vents in the heights.
+    updrafts: [{ x: 1050, w: 56, top: 610, bottom: 880, kind: 'mist' }],
+    springs: [{ x: 960, y: 480, up: 175, kind: 'gust' }],
     portals: [
-      { id: 'west', x: 40, y: 760, to: 'cave', toPortal: 'springs' },
-      { id: 'east', x: 2340, y: 760, to: 'peak', toPortal: 'west' },
+      { id: 'west', x: 40, y: 880, to: 'cave', toPortal: 'springs' },
+      { id: 'east', x: 1350, y: 240, to: 'peak', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['hotspring', 860], ['hotspring', 1620], ['waterfall', 1240, 0, 440], ['hotspring', 2200]],
-    spawns: [
-      ...along(760, 120, 2280, 5, 'lamia', 'shade'), ...along(680, 160, 740, 1, 'lamia'), ...along(680, 980, 1500, 2, 'lamia', 'shade'), ...along(680, 1720, 2240, 1, 'lamia'),
-      ...along(600, 380, 840, 1, 'shade'), ...along(600, 1180, 1700, 2, 'lamia'), ...along(520, 140, 520, 1, 'shade'), ...along(520, 780, 1300, 1, 'lamia'),
-      ...along(520, 1620, 2100, 1, 'lamia'),
-    ],
+    // A landmark per zone: the hot springs on the pools floor (the east one with the fishing dock),
+    // the waterfall on the steps, a spring at the top.
+    deco: [['hotspring', 860], ['hotspring', 1620], ['hotspring', 2250], ['waterfall', 1500, 0, 560], ['hotspring', 1100, 0, 240]],
+    lamps: [{ x: 2230, y: 810 }, { x: 1500, y: 520 }, { x: 1100, y: 200 }],
+    spirit: { x: 1600, y: 200 },
+    habitats: { lamia: { naps: true, home: { x: 860, y: 880 } }, shade: { play: true } },
   },
+
 
   // The mountain's snowy shoulder between the springs and the Sky Garden: snowfields, laden pines,
   // a snowman someone built, icicles under every ledge. Yuki-onna glide over the snow; Pegasus
@@ -1012,7 +1022,9 @@ MAPS.ridge.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9
 // The shrine path's petal cloud.
 MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
-MAPS.springs.portals.push({ id: 'grotto', x: 1500, y: 760, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
+// Serpent Springs' drifting ledge and fishing dock; the grotto is behind the waterfall.
+MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 2180, y: 832, w: 95, posts: true });
+MAPS.springs.portals.push({ id: 'grotto', x: 1560, y: 560, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
 MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
@@ -1021,5 +1033,5 @@ MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 880, respawn: 600 });
 // The glade's fishing dock and leaf.
 MAPS.glade.platforms.push({ x: 1960, y: 832, w: 95, posts: true }, { x: 830, y: 400, w: 140, drift: { dx: 400, period: 10 } });
 MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 880, respawn: 600 });
-MAPS.springs.spawns.push({ mob: 'lilith', x: 1900, y: 760, respawn: 600 });
+MAPS.springs.spawns.push({ mob: 'lilith', x: 1300, y: 880, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600 });
