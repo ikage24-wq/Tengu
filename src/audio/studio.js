@@ -4,9 +4,11 @@
 // in the worker, on the page, or in node tests.
 //
 // A song: { name, bpm, swing (0.5 straight), rows (per bar: 16 in 4/4, 12 in 3/4 or 6/8),
-//   inst: { name: instrument }, tracks: { name: { inst, gain, pan, verb (reverb send), echo: { rows, fb, wet }, delay (rows late) } },
+//   inst: { name: instrument }, tracks: { name: { inst, gain, pan, verb (reverb send), echo: { rows, fb, wet }, delay (rows late),
+//   low (a bass part: keeps its lows), hp (otherwise, the low cut in Hz; 150) } },
 //   patterns: { A: { track: notes, drums: grid } }, intro: [...], order: [...],
-//   reverb: { room, damp, wet }, pump (0-1), transpose, bright (presence, 0-1), drums (kit level),
+//   reverb: { room, damp, wet }, pump (0-1), transpose, bright (presence, 0-1), lowShelf (0-1, how far the
+//   lows below 100 Hz come down; 0.6), drums (kit level),
 //   level, raw (true: leave the level as mixed, for measuring) }.
 // Notes: `E5:4` (note and length in rows), `C4+E4+G4:8` (a chord), `r:4` rest, `~:4` hold the last
 // note longer, `@name` switch instrument, `v12` volume 0-15 until changed, `|` bar marks (checked:
@@ -14,7 +16,7 @@
 // Drums, one character per row: K kick, S snare, c clap, h hat, o open hat, t tom, x shaker,
 // w woodblock, * crash, C kick + clap, O kick + open hat, B kick + snare, H kick + hat, . nothing;
 // the hard kicks: X hardstyle, F Frenchcore, P euphoric (punchy, short), Z X + clap, W X + crash,
-// G F + clap, V F + crash, Y P + clap, U P + crash.
+// G F + clap, V F + crash, Y P + clap, U P + crash; I K + crash.
 // Instruments: { sample: 'flute', gain, attack, rel, gate } for a recording (the instruments in
 // the bank's manifest; without one, like the choir, its synth voice in VOICES below), or
 // { synth: 'pluck' | 'pad' | 'sub' | 'lead' | 'bell' | 'stab' | 'bass', gain, gate, cut } for a synth.
@@ -130,6 +132,21 @@ function lowpass(x, sr, cut, q = 0.8) {
       lo += f * bp;
     }
     x[i] = lo;
+  }
+  return x;
+}
+// A 12 dB/octave low cut at `f` Hz (two one-pole high-passes), in place.
+export function highpass(x, sr, f) {
+  const a = Math.exp((-TAU * f) / sr);
+  for (let pass = 0; pass < 2; pass++) {
+    let px = 0;
+    let py = 0;
+    for (let i = 0; i < x.length; i++) {
+      const y = a * (py + x[i] - px);
+      px = x[i];
+      py = y;
+      x[i] = y;
+    }
   }
   return x;
 }
@@ -632,8 +649,15 @@ function hat(sr, rand, decay, n = Math.round((decay * 5 + 0.02) * sr)) {
   }
   return x;
 }
-const COMBO = { C: ['K', 'c'], O: ['K', 'o'], B: ['K', 'S'], H: ['K', 'h'], Z: ['X', 'c'], W: ['X', '*'], G: ['F', 'c'], V: ['F', '*'], Y: ['P', 'c'], U: ['P', '*'] };
-const DRUM_MIX = { K: 0.32, S: 0.22, c: 0.2, h: 0.14, o: 0.14, x: 0.25, t: 0.2, '*': 0.18, w: 0.12, X: 0.28, F: 0.32, P: 0.36 };
+// The kicks and toms (they keep their lows; the rest of the kit is cut below 140 Hz).
+const KITLOW = 'KXFPt';
+const COMBO = {
+  C: ['K', 'c'], O: ['K', 'o'], B: ['K', 'S'], H: ['K', 'h'], Z: ['X', 'c'], W: ['X', '*'], G: ['F', 'c'], V: ['F', '*'], Y: ['P', 'c'], U: ['P', '*'],
+  I: ['K', '*'],
+};
+const DRUM_MIX = {
+  K: 0.32, S: 0.22, c: 0.2, h: 0.14, o: 0.14, x: 0.25, t: 0.2, '*': 0.18, w: 0.12, X: 0.24, F: 0.27, P: 0.32,
+};
 const DRUM_PAN = { h: 0.25, o: 0.25, x: -0.3, t: -0.15, w: -0.35, '*': 0.1 };
 
 // ---------- Effects ----------
@@ -790,6 +814,9 @@ export function renderSong(song, bank, sr = 32000) {
       for (let i = dl; i < n; i++) e[i] = (buf[i - dl] + e[i - dl] * fb);
       for (let i = 0; i < n; i++) buf[i] += e[i] * wet;
     }
+    // Only the bass parts (`low`) and the kick own the low end: every other part is cut below
+    // `hp` (150 Hz unless set), so nothing else muddies it.
+    if (!tr.low) highpass(buf, sr, tr.hp ?? 150);
     const [gl, gr] = pan(tr.pan ?? 0);
     const g = tr.gain ?? 1;
     const send = tr.verb ?? 0.25;
@@ -804,7 +831,7 @@ export function renderSong(song, bank, sr = 32000) {
   }
 
   // The sidechain pump: everything but the drums dips under each kick and swells back.
-  const kicks = hits.filter((h) => 'KCOBHXZWFGVPYU'.includes(h.c)).map((h) => at(h.row));
+  const kicks = hits.filter((h) => 'KCOBHXZWFGVPYUI'.includes(h.c)).map((h) => at(h.row));
   if (song.pump && kicks.length) {
     const env = new Float32Array(n).fill(1);
     const len = Math.round(0.22 * sr);
@@ -824,12 +851,13 @@ export function renderSong(song, bank, sr = 32000) {
   for (const h of hits) {
     for (const c of COMBO[h.c] ?? [h.c]) {
       if (!DRUMS[c]) continue;
-      kit[c] ??= DRUMS[c](sr, rng(c.charCodeAt(0)), bank);
+      // Hats, snares, claps and cymbals lose their low thud (it's the kick's room).
+      kit[c] ??= KITLOW.includes(c) ? DRUMS[c](sr, rng(c.charCodeAt(0)), bank) : highpass(DRUMS[c](sr, rng(c.charCodeAt(0)), bank), sr, 140);
       const x = kit[c];
       const [gl, gr] = pan(DRUM_PAN[c] ?? 0);
       const g = DRUM_MIX[c] * dg * (0.95 + rand() * 0.1);
       const s0 = Math.round(at(h.row) * sr);
-      const sv = c === 'c' || c === 'S' || c === '*' ? 0.15 : 0.04;
+      const sv = 'cS*'.includes(c) ? 0.15 : 0.04;
       for (let i = 0; i < x.length && s0 + i < n; i++) {
         L[s0 + i] += x[i] * g * gl;
         R[s0 + i] += x[i] * g * gr;
@@ -839,7 +867,10 @@ export function renderSong(song, bank, sr = 32000) {
     }
   }
 
-  // The reverb, then fold the tail past the loop end back onto the loop start.
+  // The reverb (fed nothing below 300 Hz, so its tail stays clear, never boomy), then fold the
+  // tail past the loop end back onto the loop start.
+  highpass(sendL, sr, 300);
+  highpass(sendR, sr, 300);
   const [wl, wr] = reverb(sendL, sendR, sr, song.reverb);
   const wet = song.reverb?.wet ?? 0.25;
   const len = Math.ceil(loopEnd * sr);
@@ -852,8 +883,18 @@ export function renderSong(song, bank, sr = 32000) {
     left[j] += L[i] + wl[i] * wet;
     right[j] += R[i] + wr[i] * wet;
   }
-  // A touch of presence (a gentle lift above about 2.5 kHz, `bright`), a low cut (no rumble),
-  // and the same loudness for every song.
+  // A low shelf (everything below about 100 Hz down by `lowShelf`, 0.6 = about 8 dB, so the
+  // lows sit under the song, not over it), a touch of presence (a gentle lift above about
+  // 2.5 kHz, `bright`), a low cut (no rumble), and the same loudness for every song.
+  const shelf = song.lowShelf ?? 0.6;
+  const al = 1 - Math.exp((-TAU * 100) / sr);
+  for (const x of [left, right]) {
+    let lp = 0;
+    for (let i = 0; i < x.length; i++) {
+      lp += (x[i] - lp) * al;
+      x[i] -= lp * shelf;
+    }
+  }
   const lift = song.bright ?? 0.5;
   const ab = 1 - Math.exp((-TAU * 2500) / sr);
   for (const x of [left, right]) {
