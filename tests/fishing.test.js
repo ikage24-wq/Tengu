@@ -100,7 +100,7 @@ test('cooking makes two dishes, no stirring; eating heals, and different dishes 
 test("a reworked map's fishing spots are quiet nooks no monster reaches", async () => {
   const { MOBS } = await import('../src/data/mobs.js');
   // The maps rebuilt to the new map rules so far (the others get this when they're reworked).
-  for (const id of ['meadow1', 'meadow2', 'glade', 'springs']) {
+  for (const id of ['meadow1', 'meadow2', 'glade', 'springs', 'peak']) {
     const m = MAPS[id];
     for (const sp of SPOTS[id]) {
       const surf = surfacesOf(m).find((s) => sp.x >= s.x1 && sp.x <= s.x2 && Math.abs(s.yAt(sp.x) - sp.y) < 2);

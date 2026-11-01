@@ -954,33 +954,54 @@ Object.assign(MAPS, {
   },
 
 
-  // The mountain's snowy shoulder between the springs and the Sky Garden: snowfields, laden pines,
-  // a snowman someone built, icicles under every ledge. Yuki-onna glide over the snow; Pegasus
-  // Foals graze the high drifts.
+  // Frozen Peak is a descent (data/climb.js lay()): you arrive on the windswept Summit, where the
+  // Yuki-onna drift in the snow and a frost vent bounces you up to the lookout, and work your way
+  // down the Icefall Crevasse, ice ledges zig-zagging down its walls with a floe drifting across the
+  // gap and a howling wind to ride back up, to the Frozen Lake at the bottom, the Pegasus Foals'
+  // snowfield, with an ice-fishing dock in its quiet corner and the way out to the Sky Garden's sea
+  // of cloud.
   peak: {
     id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'grove', world: { x: 312, y: 18 },
-    width: 2200, height: 1000, groundY: 960,
-    terrain: [[0, 960], [2200, 960]],
-    platforms: [
-      { x: 120, y: 880, w: 640 }, { x: 900, y: 880, w: 520 }, { x: 1560, y: 880, w: 520 },
-      { x: 300, y: 800, w: 520 }, { x: 1100, y: 800, w: 600 },
-      { x: 140, y: 720, w: 480 }, { x: 760, y: 720, w: 520 }, { x: 1440, y: 720, w: 560 },
-      { x: 420, y: 640, w: 560 }, { x: 1160, y: 640, w: 560 },
-      { x: 760, y: 560, w: 520, thick: 44 },
-    ],
-    ropes: [{ x: 180, top: 720, bottom: 960 }, { x: 1960, top: 720, bottom: 960 }, { x: 800, top: 560, bottom: 640, ladder: true }],
+    ...lay({
+      width: 2200, ground: 1120, by: 'y', quiet: [[40, 280, 200], [2140, 1120, 160], [1950, 1120, 320], [1950, 1040, 260], [2000, 960, 260]],
+      zones: [
+        { name: 'Frozen Lake', color: '#7ab8e8', mobs: ['cloudsheep', 'yukionna'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.2] }] },
+        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 760, mobs: ['yukionna', 'cloudsheep'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+          look: { sky: ['#9fb8e8', '#c8d8f4', '#eef4ff'] } },
+        { name: 'Summit', color: '#e8f4ff', from: 480, mobs: ['yukionna'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.3] }],
+          look: { sky: ['#6a8ad0', '#a8c4f0', '#f0f6ff'] } },
+      ],
+      ledges: [
+        // The Summit: the plateau you arrive on, and its lookout.
+        { x: 0, y: 280, w: 560 }, { x: 640, y: 340, w: 420 }, { x: 1140, y: 300, w: 380 },
+        { x: 760, y: 220, w: 300, thick: 44 },
+        // The Icefall Crevasse, zig-zagging down.
+        { x: 1500, y: 420, w: 480 }, { x: 1100, y: 500, w: 420 }, { x: 500, y: 580, w: 520 },
+        { x: 150, y: 660, w: 400 }, { x: 620, y: 740, w: 500 }, { x: 1200, y: 800, w: 520 },
+        { x: 1700, y: 880, w: 420 }, { x: 1150, y: 960, w: 440 }, { x: 500, y: 1040, w: 520 },
+        // The ice floe drifting across the crevasse.
+        { x: 1040, y: 660, w: 130, drift: { dx: 300, period: 10 } },
+        // The ice-fishing dock on the lake.
+        { x: 1900, y: 1072, w: 95, posts: true },
+      ],
+    }),
+    // A moving part per zone: a frost vent on the summit, the drifting floe in the crevasse, and a
+    // howling wind up from the lake (Up to ride it).
+    springs: [{ x: 1040, y: 340, up: 160, kind: 'gust' }],
+    updrafts: [{ x: 1050, w: 56, top: 470, bottom: 1120, kind: 'gust' }],
     portals: [
-      { id: 'west', x: 40, y: 960, to: 'springs', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 960, to: 'sky', toPortal: 'peak' },
+      { id: 'west', x: 40, y: 280, to: 'springs', toPortal: 'east' },
+      { id: 'east', x: 2140, y: 1120, to: 'sky', toPortal: 'peak' },
     ],
     npcs: [],
-    deco: [['snowpine', 280, 0], ['snowman', 640], ['snowpine', 1000, 1], ['snowpine', 1480, 0], ['snowman', 1020, 0, 560], ['snowpine', 1900, 1]],
-    spawns: [
-      ...along(960, 120, 2080, 6, 'yukionna', 'cloudsheep'), ...along(880, 140, 740, 2, 'yukionna'), ...along(880, 920, 1400, 2, 'cloudsheep', 'yukionna'), ...along(880, 1580, 2060, 2, 'yukionna'),
-      ...along(800, 320, 800, 2, 'cloudsheep'), ...along(800, 1120, 1680, 2, 'yukionna', 'cloudsheep'), ...along(720, 160, 600, 1, 'yukionna'), ...along(720, 780, 1260, 2, 'cloudsheep', 'yukionna'),
-      ...along(720, 1460, 1980, 2, 'yukionna'), ...along(640, 440, 960, 2, 'cloudsheep'), ...along(640, 1180, 1700, 2, 'yukionna', 'cloudsheep'),
-    ],
+    // A landmark per zone: the great pine on the summit, a snowman on the crevasse ledges, the
+    // snowmen and pines round the frozen lake.
+    deco: [['snowpine', 420, 0, 280], ['snowman', 900, 0, 740], ['snowman', 640], ['snowpine', 1000, 1], ['snowpine', 1480, 0], ['snowman', 1700]],
+    lamps: [{ x: 900, y: 180 }, { x: 1950, y: 1050 }, { x: 900, y: 710 }],
+    spirit: { x: 1800, y: 300 },
+    habitats: { yukionna: { play: true, naps: true }, cloudsheep: { naps: true, home: { x: 640, y: 1120 } } },
   },
+
 
   // Above the Sky Garden, where the night comes early: lavender cloud islands under a sky full of
   // shooting stars, the moon close enough to touch. Star Seraphs and Sky Harpies.
