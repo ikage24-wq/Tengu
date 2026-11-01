@@ -1957,7 +1957,7 @@ const SMALL_PROPS = ['flower', 'tulip', 'tuft', 'rock', 'glowshroom', 'crystal',
 const BIG_PROPS = ['pine', 'stonelamp', 'chime', 'lamp', 'bench', 'mailbox', 'column', 'target', 'dummy', 'rack', 'poster', 'lantern', 'torch', 'bush', 'cat', 'crate', 'barrel', 'cactus', 'hlantern'];
 
 function drawProps(ctx, t, map, cam, width, time) {
-  const surfaces = surfacesOf(map).map((s) => ({ x: s.x1, w: s.x2 - s.x1, ground: s.ground, yAt: s.yAt }));
+  const surfaces = surfacesOf(map).map((s) => ({ x: s.x1, w: s.x2 - s.x1, ground: s.ground, yAt: s.yAt, drift: s.drift }));
   // A map can thin its props (`look.propKeep`, the share of spots left bare).
   const keep = map.look?.propKeep ?? (map.isTown ? 0.66 : 0.52);
   surfaces.forEach((s, si) => {

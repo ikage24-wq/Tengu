@@ -102,7 +102,7 @@ export const MAPS = {
     spirit: { x: 1010, y: 380 },
     // At night (world/daytime.js) warm light glows at the arch, the picnic, the hive and the lookout.
     lamps: [{ x: 260, y: 950 }, { x: 1950, y: 975 }, { x: 1200, y: 640, c: '#ffd970' }, { x: 1100, y: 170 }],
-    springs: [{ x: 1150, y: 976, up: 170, kind: 'blossom' }, { x: 1820, y: 840, up: 190, kind: 'blossom' }],
+    springs: [{ x: 1150, y: 976, up: 170, kind: 'blossom' }, { x: 1720, y: 840, up: 190, kind: 'blossom' }],
     updrafts: [
       { x: 1200, w: 50, top: 500, bottom: 680, kind: 'pollen' },
       { x: 1200, w: 60, top: 250, bottom: 440, kind: 'petals' },
