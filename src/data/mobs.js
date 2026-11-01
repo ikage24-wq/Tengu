@@ -130,7 +130,9 @@ export const MOBS = {
     speed: 34, w: 34, h: 36, art: 'starspirit', fly: true, drops: [{ id: 'stardust', chance: 0.45 }],
   }),
 
-  // Spirit maidens out of myth. Not placed in any map yet: they're ready for new areas.
+  // Spirit maidens out of myth, living on the mid and late maps: Sylph in Whispering Glade, Nekomata
+  // and Kitsune Miko on the Fox Shrine Path, Lupina on Moonlit Ridge, Lamia at Serpent Springs,
+  // Yuki-onna on Frozen Peak.
   sylph: mob({
     id: 'sylph', name: 'Sylph', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [26, 66],
     speed: 70, w: 24, h: 46, art: 'sylph', fly: true, drops: [{ id: 'feather', chance: 0.45 }],
@@ -216,7 +218,8 @@ export const MOBS = {
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 420, range: 420 },
   }),
 
-  // Queens out of myth: field bosses not placed in any map yet. Each winds up a big attack every
+  // Queens out of myth: field bosses (Sylvana in Whispering Glade, Tamamo on the Fox Shrine Path,
+  // Lilith at Serpent Springs, Selene at Starfall Heights; each also has a story fight). Each winds up a big attack every
   // few seconds that hits anyone on the floor near her.
   sylvana: mob({
     id: 'sylvana', name: 'Sylvana, the Dryad Queen', level: 22, hp: 40000, atk: 110, def: 26, acc: 60, eva: 6, exp: 30000,

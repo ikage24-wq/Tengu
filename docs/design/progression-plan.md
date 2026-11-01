@@ -16,8 +16,9 @@ it, and tick it off here.
   Mage was removed; a new magic class is being built from scratch.
 - Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses) and the Crystal King
   (Dancing Green and Roxy's Boss Rush were a test boss, removed 2026-10-29).
-- Drawn but unused: Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna, and four queens
-  (Sylvana Lv 22, Tamamo Lv 30, Lilith Lv 38, Selene Lv 50). These make ready-made story bosses.
+- The six spirit maidens (Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna) live on the
+  mid and late maps, and the four queens (Sylvana Lv 22, Tamamo Lv 30, Lilith Lv 38, Selene Lv 50)
+  are field bosses there, each with a story fight too.
 - Cash flows freely (5,000 to start, more every level), so outfits don't say anything about you.
 
 ## The core loop we want
