@@ -20,11 +20,27 @@ test('every place on the island can be reached from Sprout Village, and back', (
   assert.ok(path.every((p, i) => i === 0 || MAPS[path[i - 1].to].portals.includes(p)), 'each step leaves from the last');
   assert.equal(nextStep('sprout', 'glade').left, 5);
   assert.equal(levelRange(MAPS.meadow1), 'Lv 1-3');
-  // Each map has one road to each neighbour (no doubled portals).
+  // Each map has one road to each neighbour (no doubled portals; a homestone is a shortcut, not a road).
   for (const m of Object.values(MAPS)) {
-    const to = m.portals.filter((p) => !p.hidden && p.to).map((p) => p.to);
+    const to = m.portals.filter((p) => !p.hidden && !p.homestone && p.to).map((p) => p.to);
     assert.equal(new Set(to).size, to.length, `${m.id} has two roads to one place`);
   }
+});
+
+test('every big hunting map has a homestone at its far end, one way back to its town', () => {
+  for (const m of Object.values(MAPS)) {
+    if (m.isTown || m.dungeon || !m.town || m.width < 2000) continue;
+    const stones = m.portals.filter((p) => p.homestone);
+    assert.equal(stones.length, 1, `${m.id} has a homestone`);
+    const s = stones[0];
+    assert.equal(s.to, m.town, `${m.id}'s homestone goes to its town`);
+    assert.ok(MAPS[m.town].portals.some((p) => p.id === s.toPortal), `${m.id}: the town has somewhere to arrive`);
+    assert.ok(m.platforms.some((p) => !p.drift && s.y === p.y && s.x > p.x + 10 && s.x < p.x + p.w - 10), `${m.id}: it stands on a ledge`);
+    assert.ok(!(m.ropes ?? []).some((r) => Math.abs(r.x - s.x) < 40 && s.y >= r.top && s.y <= r.bottom), `${m.id}: clear of ropes`);
+    assert.ok(!m.portals.some((p) => p !== s && Math.abs(p.x - s.x) < 80 && Math.abs(p.y - s.y) < 8), `${m.id}: clear of other portals`);
+  }
+  // The guide never sends you through one (it's one way).
+  assert.ok(!routeBetween('sprout', 'starfall').some((p) => p.homestone));
 });
 
 test('the guide leads to a place and stops on arrival; a quest knows where it wants you', () => {

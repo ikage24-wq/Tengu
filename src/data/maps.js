@@ -1167,3 +1167,16 @@ MAPS.glade.spawns.push({ mob: 'sylvana', x: 600, y: 880, respawn: 600 });
 MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 880, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 1300, y: 880, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
+
+// A shortcut home (the map rules): a homestone on a ledge at each big hunting map's far end, far
+// from the way you came in from town. Step up to it and it carries you straight back to town (one
+// way), so a long map never means a long walk back.
+const HOMESTONES = {
+  meadow1: [1900, 360], meadow2: [200, 700], woods: [1950, 920], ruins: [2220, 900], cave: [2380, 520],
+  sky: [2800, 320], canyon: [410, 520], glade: [2140, 560], shrine: [2164, 560], ridge: [2200, 400],
+  springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
+};
+for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
+  const m = MAPS[id];
+  m.portals.push({ id: 'homestone', x, y, to: m.town, toPortal: 'start', homestone: true, label: `Home: ${MAPS[m.town].name}` });
+}

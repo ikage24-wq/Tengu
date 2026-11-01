@@ -1765,6 +1765,65 @@ function drawRopes(ctx, map, cam) {
   }
 }
 
+// A homestone (the shortcut home): a mossy standing stone with a house rune that glows and fades
+// in a slow breath, a soft halo, and motes drifting up from it.
+function drawHomestone(ctx, x, y, time, seed) {
+  const breath = 0.5 + 0.5 * Math.sin(time * 1.6 + seed * 0.01);
+  ctx.save();
+  // The halo, swelling with the breath.
+  const g = ctx.createRadialGradient(x, y - 16, 2, x, y - 16, 26 + breath * 6);
+  g.addColorStop(0, `rgba(190,240,220,${0.32 + breath * 0.2})`);
+  g.addColorStop(1, 'rgba(190,240,220,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 34, y - 50, 68, 52);
+  // The stone: rounded on top, a lighter face on the left, moss at the foot.
+  ctx.fillStyle = '#8a86a8';
+  ctx.beginPath();
+  ctx.moveTo(x - 10, y);
+  ctx.lineTo(x - 11, y - 20);
+  ctx.quadraticCurveTo(x - 10, y - 33, x, y - 34);
+  ctx.quadraticCurveTo(x + 10, y - 33, x + 11, y - 20);
+  ctx.lineTo(x + 10, y);
+  ctx.fill();
+  ctx.fillStyle = '#a9a6c6';
+  ctx.beginPath();
+  ctx.moveTo(x - 8, y - 2);
+  ctx.lineTo(x - 9, y - 20);
+  ctx.quadraticCurveTo(x - 8, y - 30, x - 1, y - 31);
+  ctx.lineTo(x - 2, y - 2);
+  ctx.fill();
+  ctx.fillStyle = '#7fc88f';
+  ctx.beginPath();
+  ctx.ellipse(x - 4, y - 1, 9, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + 6, y - 1, 6, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // The house rune: a roof and a door, glowing with the breath.
+  ctx.strokeStyle = `rgba(214,255,240,${0.55 + breath * 0.45})`;
+  ctx.shadowColor = '#bff0dc';
+  ctx.shadowBlur = 4 + breath * 5;
+  ctx.lineWidth = 1.6;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y - 17);
+  ctx.lineTo(x, y - 23);
+  ctx.lineTo(x + 5, y - 17);
+  ctx.moveTo(x - 3.5, y - 18);
+  ctx.lineTo(x - 3.5, y - 11);
+  ctx.lineTo(x + 3.5, y - 11);
+  ctx.lineTo(x + 3.5, y - 18);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  // Motes rising and fading, each on its own smooth loop.
+  for (let i = 0; i < 4; i++) {
+    const t = (time * 0.35 + i / 4 + seed * 0.001) % 1;
+    ctx.fillStyle = `rgba(220,255,240,${Math.sin(t * Math.PI) * 0.85})`;
+    ctx.beginPath();
+    ctx.arc(x + Math.sin(t * 6 + i * 2) * 7, y - 8 - t * 40, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 // Each portal's sign: where it goes, that place's level range (or that it's a town), and an
 // arrow pointing the way out. The portal on your guided route glows pink with a star.
 function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
@@ -1772,8 +1831,11 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
     if (p.hidden) continue;
     const x = p.x - cam.x;
     const y = p.y - cam.y;
-    // A gateway in the region's own style, its swirl turning inside.
-    drawPortalGate(ctx, map, x, y, time, p.x);
+    // A gateway in the region's own style, its swirl turning inside (a homestone is a small rune
+    // stone instead, with its sign lower down).
+    if (p.homestone) drawHomestone(ctx, x, y, time, p.x);
+    else drawPortalGate(ctx, map, x, y, time, p.x);
+    const top = p.homestone ? 62 : 94;
     const dest = MAPS[p.to];
     const name = p.label ?? dest?.name;
     if (name) {
@@ -1786,7 +1848,7 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
       const lw = lv ? ctx.measureText(lv).width + 5 : 0;
       const w = nw + lw + 10 + (out ? 7 : 0) + (onRoute ? 8 : 0);
       const bx = Math.round(x - w / 2);
-      const by = Math.round(y - 94 - (onRoute ? Math.abs(Math.sin(time * 4)) * 2 : 0));
+      const by = Math.round(y - top - (onRoute ? Math.abs(Math.sin(time * 4)) * 2 : 0));
       ctx.fillStyle = onRoute ? '#ff6b9a' : 'rgba(255,255,255,0.92)';
       roundRect(ctx, bx, by, w, 12, 6);
       ctx.fill();
@@ -1830,9 +1892,9 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
       const bob = Math.sin(time * 6) * 2;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(x, y - 108 + bob);
-      ctx.lineTo(x - 6, y - 100 + bob);
-      ctx.lineTo(x + 6, y - 100 + bob);
+      ctx.moveTo(x, y - top - 14 + bob);
+      ctx.lineTo(x - 6, y - top - 6 + bob);
+      ctx.lineTo(x + 6, y - top - 6 + bob);
       ctx.fill();
     }
   }

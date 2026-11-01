@@ -790,7 +790,7 @@ function addHunter(bots, world, walkIn = false, who = null) {
   const nav = navOf(map);
   let x;
   let y;
-  const portal = walkIn ? pick(map.portals.filter((p) => !p.hidden && !p.dungeon), rng) : null;
+  const portal = walkIn ? pick(map.portals.filter((p) => !p.hidden && !p.dungeon && !p.homestone), rng) : null;
   if (portal) {
     x = portal.x;
     y = portal.y;

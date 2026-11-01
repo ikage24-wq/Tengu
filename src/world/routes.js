@@ -18,7 +18,7 @@ export function levelRange(map) {
 
 // The roads out of a map: its open portals (not dungeon doors or a dungeon's own rooms).
 function roads(map) {
-  return map.portals.filter((p) => !p.hidden && p.to && MAPS[p.to] && !p.dungeon && !MAPS[p.to].dungeon);
+  return map.portals.filter((p) => !p.hidden && !p.homestone && p.to && MAPS[p.to] && !p.dungeon && !MAPS[p.to].dungeon);
 }
 
 // The shortest way from map `from` to map `to`: the list of portals to take, in order (empty when
