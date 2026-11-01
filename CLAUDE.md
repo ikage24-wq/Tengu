@@ -230,6 +230,14 @@ there and update the status file as they get done.
   - **Fishing spots are quiet nooks:** a spot sits where no monster walks or flies to (a dock or
     a ledge of its own over the water), never on a floor monsters roam. No invisible walls or
     invincibility: the safety comes from the map's design.
+  - **A shortcut home:** every map's far end has a quick way back toward its town (a slide, a zip
+    line, a portal stone), so a long map never means a long walk back.
+  - **Towns are split into districts with a feel:** each town's quarters (homes, market, plaza,
+    its job's quarter...) are districts like a hunting map's zones, each with its own name, look
+    and street life.
+  - **Everything is close to the plaza in a town:** the shops, the stove and the job instructor are
+    a short walk from the plaza (about 700 px at most); nothing important is up a ladder. Climbs in
+    town lead to views, secrets and cozy spots.
   - **Life skills are important (the player's words):** every map has spots for fishing, mining
     and gathering that fit its theme and zones (fishing where there's water, ore veins in caves
     and cliffs, herbs and fruit in woods and meadows), worth visiting alongside hunting.

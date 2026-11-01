@@ -49,6 +49,16 @@ export const MAPS = {
       { id: 'east', x: 2540, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
     npcs: [{ id: 'mira', x: 330 }, { id: 'pip', x: 800 }, { id: 'lulu', x: 1070 }, { id: 'kestrel', x: 1880 }],
+    // Its districts (the town rules: each with its own name, feel and street life), left to right.
+    zonesBy: 'x',
+    zones: [
+      { name: 'Cottage Row', from: 0, color: '#e889b4', look: { props: ['flower', 'tulip', 'bench', 'mailbox', 'flower'] } },
+      { name: 'Market Street', from: 740, color: '#e0a040', look: { sky: ['#ffd9b0', '#ffecd0', '#fff8ea'], props: ['lamp', 'crate', 'barrel', 'sign', 'lamp'] } },
+      { name: 'Cherry Plaza', from: 1180, color: '#ff7fb6', look: { props: ['bench', 'lamp', 'flower', 'tulip'] } },
+      { name: "Archers' Quarter", from: 1760, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'], props: ['target', 'rack', 'fence', 'tuft'] } },
+    ],
+    // Street lamps that glow at night (world/daytime.js).
+    lamps: [{ x: 250, y: 440 }, { x: 600, y: 440 }, { x: 900, y: 440 }, { x: 1140, y: 440 }, { x: 1290, y: 420 }, { x: 1630, y: 420 }, { x: 2040, y: 290 }, { x: 2300, y: 440 }],
     deco: [
       ['well', 760], ['archerbanner', 1780], ['watchtower', 2040], ['archerbanner', 2110],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
