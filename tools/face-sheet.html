@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Face sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every field monster's face on one sheet, at rest and angry, to check the simple eyes
+// (faces.js simpleEye / easyEye) across the game. Open /tools/face-sheet.html; ?mood=happy,hurt
+// picks the moods, ?s= the scale.
+import { setHd, sprite, blit } from '../src/render/pixel.js';
+import { ARTS } from '../src/render/mobs/index.js';
+import { MOBS } from '../src/data/mobs.js';
+
+const q = new URLSearchParams(location.search);
+const moods = (q.get('mood') ?? 'idle,angry').split(',');
+const S = Number(q.get('s') ?? 2);
+const keys = [...new Set(Object.values(MOBS).filter((m) => !m.boss && ARTS[m.art]).map((m) => m.art))];
+const cw = 70;
+const ch = 64;
+const cols = 6;
+setHd(true, S);
+const c = document.getElementById('c');
+const W = cols * cw * moods.length;
+const H = Math.ceil(keys.length / cols) * ch;
+c.width = W * S;
+c.height = H * S;
+const ctx = c.getContext('2d');
+ctx.setTransform(S, 0, 0, S, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+ctx.font = 'bold 6px sans-serif';
+keys.forEach((k, i) => {
+  const x = (i % cols) * cw * moods.length;
+  const y = Math.floor(i / cols) * ch;
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillText(k, x + 2, y + 7);
+  moods.forEach((m, j) => {
+    const s = sprite(`sheet|${k}|${m}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, pad: 4, ...ARTS[k].draw('idle', 0, m) }));
+    const k2 = Math.min(1, (cw - 4) / s.w, (ch - 10) / s.h);
+    ctx.save();
+    ctx.translate(x + j * cw + 2, y + 9);
+    ctx.scale(k2, k2);
+    blit(ctx, s, 0, 0);
+    ctx.restore();
+  });
+});
+document.title = 'ready';
+</script>

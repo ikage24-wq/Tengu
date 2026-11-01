@@ -10,7 +10,7 @@
 // design faces right; see kit.js for the shapes and faces.js for the faces.
 
 import { E, T, F, mix, shade, stroke } from './kit.js';
-import { eye, mouth, blush as cheek, sweat, tear, vein, deadEye, simpleEye, simpleMouth } from './faces.js';
+import { easyEye, mouth, blush as cheek, sweat, tear, vein, deadEye, simpleEye, simpleMouth } from './faces.js';
 import { ramp, crescent, shine, smear, breath, sway, chain, wave } from './meadow.js';
 
 const TAU = Math.PI * 2;
@@ -95,7 +95,7 @@ function beeFace(out, hx, hy, k, mood, attacking, { queen = false } = {}) {
   const near = [hx + 3.4 * k, ey - 0.2 * k];
   const em = angry ? 'angry' : hurt ? 'hurt' : happy ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
   // A Bumble's eyes are round and warm honey; the queen's narrower, violet, lashed with a wing.
-  const eo = queen ? { iris: '#a04ad0', ink, lash: 1.25, wing: 1, skin: FUZZ.base } : { iris: '#c98a2e', ink, lash: 1, skin: FUZZ.base };
+  const eo = queen ? { iris: '#a04ad0', ink, lash: 1.25, wing: 1 } : { iris: '#c98a2e', ink, lash: 1 };
   const [fw, fh, nw, nh] = queen ? [1.4, 1.8, 1.8, 2.1] : [1.5, 1.9, 1.9, 2.3];
   if (dead) out.push(...deadEye(far[0], far[1], 1.4 * k, { type: 'swirl', s: -1, c: ink }), ...deadEye(near[0], near[1], 1.7 * k, { type: 'swirl', c: ink }));
   else out.push(...simpleEye(far[0], far[1], { ...eo, s: -1, w: fw * k, h: fh * k, mood: em }), ...simpleEye(near[0], near[1], { ...eo, s: 1, w: nw * k, h: nh * k, mood: em }));
@@ -304,7 +304,7 @@ function petalsprite(pose, f, mood) {
   const fe = [hx + 0.4, ey];
   const ne = [hx + 4.4, ey - 0.1];
   if (dead) head.push(...deadEye(fe[0], fe[1], 1.5, { type: 'swirl', s: -1, c: lashC }), ...deadEye(ne[0], ne[1], 1.7, { type: 'swirl', c: lashC }));
-  else head.push(...eye(fe[0], fe[1], { shape: 'animal', iris, lashC, lash: 0.6, flicks: 0, irisW: 1, irisH: 1, ...act, s: -1, w: 1.8, h: 2.3 }), ...eye(ne[0], ne[1], { shape: 'animal', iris, lashC, lash: 0.6, flicks: 0, irisW: 1, irisH: 1, ...act, s: 1, w: 2.1, h: 2.5 }));
+  else head.push(...easyEye(fe[0], fe[1], { shape: 'animal', iris, lashC, lash: 0.6, flicks: 0, irisW: 1, irisH: 1, ...act, s: -1, w: 1.8, h: 2.3 }), ...easyEye(ne[0], ne[1], { shape: 'animal', iris, lashC, lash: 0.6, flicks: 0, irisW: 1, irisH: 1, ...act, s: 1, w: 2.1, h: 2.5 }));
   if (!dead) head.push(...cheek(fe[0] - 1.4, ey + 2.6, 1.1, { lines: 2 }), ...cheek(ne[0] + 1.6, ey + 2.6, 1.2, { lines: 2 }));
   const mx = hx + 2.8;
   const my = hy + 4.2;

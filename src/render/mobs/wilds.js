@@ -12,7 +12,7 @@
 // strike, impact, recover).
 
 import { R, E, T, F, C, mix, sparkLine } from './kit.js';
-import { eye, glowEye, brow, mouth, nose as snout, blush as cheek, sweat, tear, vein, deadEye, band, LASH, TONGUE, THROAT, TOOTH } from './faces.js';
+import { eye, glowEye, brow, mouth, nose as snout, blush as cheek, sweat, tear, vein, deadEye, band, LASH, TONGUE, THROAT, TOOTH, easyEye } from './faces.js';
 import { ramp, hue, crescent, shine, smear, chain, wave as ripple, reach, breath, sway } from './meadow.js';
 
 // ---------- Geometry helpers ----------
@@ -344,7 +344,7 @@ function pebblet(pose, f, mood) {
   const act = { idle: {}, angry: { lid: 0.35, slant: 0.8, pupilK: 0.55 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
   if (A && f === 0 && !dead && !hurt) Object.assign(act, { lid: 0.3, slant: 0.6, pupilK: 0.5 });
   if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.4, { c: lashC }), ...deadEye(eyeN[0], eyeN[1], 1.7, { c: lashC }));
-  else head.push(...eye(eyeF[0], eyeF[1], { ...be, ...act, s: -1, w: 1.8, h: 2.1 }), ...eye(eyeN[0], eyeN[1], { ...be, ...act, s: 1, w: 2.2, h: 2.4 }));
+  else head.push(...easyEye(eyeF[0], eyeF[1], { ...be, ...act, s: -1, w: 1.8, h: 2.1 }), ...easyEye(eyeN[0], eyeN[1], { ...be, ...act, s: 1, w: 2.2, h: 2.4 }));
   head.push(C(T([[X - 2, Y - 3.2 + bl], [X - 1, Y - 4.8 + bl], [X + 1.8, Y - 5.4], [X + 4.4, Y - 5], [X + 7, Y - 3.8 + bl * 0.6], [X + 7.8, Y - 2.8 + bl], [X + 5.4, Y - 3.6 + bl * 0.4], [X + 3.6, Y - 3.8 + bl * 0.2], [X + 1.4, Y - 3.8 + bl * 0.4]], stone)));
   for (const [x, y] of [[X - 0.4, Y - 4.2], [X + 2, Y - 4.9], [X + 4.6, Y - 4.6], [X + 6.6, Y - 3.6]]) head.push(F(E(x + 0.2, y - 0.1 + bl * 0.5, 0.75, 0.42, stoneL)));
   if (!dead) head.push(...cheek(X - 0.4, Y + 3, 1.3, { on: skin, lines: happy ? 2 : 0 }));
@@ -544,7 +544,7 @@ function scorpip(pose, f, mood) {
   const act = { angry: { lid: 0.3, slant: 0.7, pupilK: 0.6 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
   if (A && f === 0 && !dead && !hurt) Object.assign(act, { lid: 0.3, slant: 0.6 });
   if (dead) head.push(...deadEye(X + 0.6, Y - 0.6, 1.8, { c: lashC }), ...deadEye(X + 5.7, Y - 0.8, 1.3, { c: lashC }));
-  else head.push(...eye(X + 0.6, Y - 0.6, { ...ce, ...act, s: -1, w: 2.3, h: 2.4 }), ...eye(X + 5.7, Y - 0.8, { ...ce, ...act, s: 1, w: 1.5, h: 2.1 }));
+  else head.push(...easyEye(X + 0.6, Y - 0.6, { ...ce, ...act, s: -1, w: 2.3, h: 2.4 }), ...easyEye(X + 5.7, Y - 0.8, { ...ce, ...act, s: 1, w: 1.5, h: 2.1 }));
   if (angry || hurt) head.push(...brow(X + 0.8, Y - 3.8, { s: -1, len: 1.5, angle: angry ? 24 : -20, shape: 'tuft', th: 0.8, c: MA.sh }), ...brow(X + 5.6, Y - 3.6, { s: 1, len: 1.1, angle: angry ? 24 : -20, shape: 'tuft', th: 0.7, c: MA.sh }));
   if (!dead) head.push(...cheek(X - 1.4, Y + 2.8, 1.4, { on: FU.base, lines: happy ? 2 : 0 }));
 
@@ -740,7 +740,7 @@ function leafling(pose, f, mood) {
   const de = { shape: 'almond', sclera: '#fffdf6', iris: hot ? ['#7a1040', '#ff5fa8', '#ffd0e8'] : ['#7a4410', '#e09a3a', '#ffe6a0'], pupil: 'round', pupilC: '#3a2210', lashC: '#2f4a28', lash: 1, flicks: 1, lower: 0.5, lowerC: SK.sh, look: [glance, 0.1] };
   const act = { angry: { lid: 0.25, slant: 0.6 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
   if (dead) head.push(...deadEye(cx - 2.6, cy, 1.5, { c: '#2f4a28' }), ...deadEye(cx + 2.6, cy, 1.3, { c: '#2f4a28' }));
-  else head.push(...eye(cx - 2.6, cy, { ...de, ...act, s: -1, w: 1.75, h: 2.1 }), ...eye(cx + 2.6, cy, { ...de, ...act, s: 1, w: 1.45, h: 1.95 }));
+  else head.push(...easyEye(cx - 2.6, cy, { ...de, ...act, s: -1, w: 1.75, h: 2.1 }), ...easyEye(cx + 2.6, cy, { ...de, ...act, s: 1, w: 1.45, h: 1.95 }));
   if (angry || hurt || happy) for (const s of [-1, 1]) head.push(...brow(cx + s * 2.6, cy - 3, { s, len: 1.2, angle: angry ? 22 : hurt ? -20 : -8, th: 0.45, c: '#4f7a3e' }));
   head.push(...snout(cx - 0.2, cy + 1.7, { type: 'tick', r: 0.6, c: SK.deep }));
   if (!dead) head.push(...cheek(cx - 4.2, cy + 2.6, 1.3, { on: SK.base, lines: happy ? 2 : 0 }), ...cheek(cx + 4, cy + 2.7, 1, { on: SK.base }));
@@ -914,7 +914,7 @@ function boarlet(pose, f, mood) {
   const act = { angry: { lid: 0.3, slant: 0.8, pupilK: 0.55 }, hurt: { closed: 'squeeze' }, happy: { closed: 'happy' }, blink: { closed: 'blink' } }[mood] ?? {};
   if (A && !dead && !hurt) Object.assign(act, { lid: 0.25, slant: 0.7, pupilK: 0.6 });
   if (dead) h.push(...deadEye(ex1, ey1, 1.4, { c: lashC }), ...deadEye(ex2, ey2, 1, { c: lashC }));
-  else h.push(...eye(ex1, ey1, { ...eo, ...act, s: -1, w: 1.9, h: 1.4 }), ...eye(ex2, ey2, { ...eo, ...act, s: 1, w: 1.3, h: 1.1 }));
+  else h.push(...easyEye(ex1, ey1, { ...eo, ...act, s: -1, w: 1.9, h: 1.4 }), ...easyEye(ex2, ey2, { ...eo, ...act, s: 1, w: 1.3, h: 1.1 }));
   h.push(band([[ex1 + 1.2, ey1 + 1.4], [ex1 + 1.8, ey1 + 3.4]], 0.55, FU.deep));
   h.push(band([[ex1 - 1.4, ey1 - 3.6], [ex1 - 0.6, ey1 - 1.6]], 0.55, scar), band([[ex1 + 0.2, ey1 + 1.6], [ex1 + 0.9, ey1 + 3.2]], 0.55, scar));
   // Brow: a heavy scowl when angry, a single furrow otherwise.

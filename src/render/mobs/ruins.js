@@ -4,7 +4,7 @@
 
 import { E, T, F, mix, arc, stroke, keyAt } from './kit.js';
 import { walkBob } from '../animator.js';
-import { eye, glowEye, brow, mouth, blush, sweat, tear, deadEye, vein, starPts, ovalPts } from './faces.js';
+import { eye, glowEye, brow, mouth, blush, sweat, tear, deadEye, vein, starPts, ovalPts, easyEye } from './faces.js';
 
 const TAU = Math.PI * 2;
 
@@ -208,7 +208,7 @@ function wispFace(m, mood, P, look, flick, shout) {
     // Shut, the fire inside goes out of view: lid lines in the flame's own deep violet.
     const closed = { happy: 'happy', blink: 'blink', hurt: 'squeeze' }[mood];
     const o = { closed, lashC: WISP_LINE, shape: 'round' };
-    out.push(...eye(E0[0], E0[1], { ...o, s: -1, w: 1.35, h: 1.8 }), ...eye(E1[0], E1[1], { ...o, s: 1, w: 1.7, h: 2 }));
+    out.push(...easyEye(E0[0], E0[1], { ...o, s: -1, w: 1.35, h: 1.8 }), ...easyEye(E1[0], E1[1], { ...o, s: 1, w: 1.7, h: 2 }));
   } else {
     // Hollow flame eyes: a deep socket with the glow burning inside it, the strongest contrast on
     // the sprite.
@@ -418,7 +418,7 @@ function impFace(mood, look, wind) {
     blink: { closed: 'blink' },
   }[mood] ?? {};
   if (mood === 'dead') out.push(...deadEye(eF[0], eF[1], 1.2, { c: P.lash }), ...deadEye(eN[0], eN[1], 1.5, { c: P.lash }));
-  else out.push(...eye(eF[0], eF[1], { ...ie, ...act, s: -1, w: 1.85, h: 2.5 }), ...eye(eN[0], eN[1], { ...ie, ...act, s: 1, w: 2.5, h: 2.8 }));
+  else out.push(...easyEye(eF[0], eF[1], { ...ie, ...act, s: -1, w: 1.85, h: 2.5 }), ...easyEye(eN[0], eN[1], { ...ie, ...act, s: 1, w: 2.5, h: 2.8 }));
   const ba = { idle: 12, angry: 30, hurt: -24, happy: -8, dead: -10 }[mood] ?? 0;
   const bu = { angry: -0.5, hurt: 0.5, happy: 0.4 }[mood] ?? 0;
   out.push(...brow(eF[0] - 0.1, eF[1] - 3.7 - bu, { s: -1, len: 1.2, angle: ba, th: 0.7, arch: 0.3, c: P.hair }), ...brow(eN[0] + 0.2, eN[1] - 4 - bu, { s: 1, len: 1.6, angle: ba, th: 0.8, arch: 0.35, c: P.hair }));
@@ -831,7 +831,7 @@ function gemEye(x, y, mood, look) {
   out.push(F(E(x, y, 4.3, 3.8, P.goldS)), F(E(x + 0.2, y - 0.2, 4, 3.5, P.gold)), arc(x + 0.2, y - 0.1, 3.9, 3.4, 200, 300, 0.67, P.goldHi), F(E(x, y, 3.4, 3, shut ? P.wood : P.woodS2)));
   const act = { angry: { lid: 0.3, slant: 0.7, raise: 0.2, pupilK: 0.7 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[mood] ?? {};
   if (mood === 'dead') out.push(...deadEye(x, y, 2, { c: P.lash, type: 'swirl' }));
-  else out.push(...eye(x, y, { shape: 'round', iris: mood === 'angry' ? ['#7a1032', '#ff4d7a', '#ffc2d0'] : P.iris, pupil: 'slit', sclera: '#fff8ec', lashC: P.lash, flicks: 0, irisW: 0.72, look: [look, 0], ...act, w: 3.1, h: 2.7 }));
+  else out.push(...easyEye(x, y, { shape: 'round', iris: mood === 'angry' ? ['#7a1032', '#ff4d7a', '#ffc2d0'] : P.iris, pupil: 'slit', sclera: '#fff8ec', lashC: P.lash, flicks: 0, irisW: 0.72, look: [look, 0], ...act, w: 3.1, h: 2.7 }));
   out.push(...brow(x - 0.2, y - 4.5 - (mood === 'hurt' ? -0.4 : 0), { len: 2.6, angle: mood === 'angry' ? 0 : mood === 'hurt' ? -6 : 4, arch: mood === 'angry' ? -0.6 : 0.5, th: 0.7, c: P.woodS2, shape: 'flat' }));
   return out;
 }

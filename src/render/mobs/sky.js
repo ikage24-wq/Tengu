@@ -8,7 +8,7 @@
 // parts stay readable inside the automatic silhouette outline.
 
 import { E, T, F, C, shade, mix, stroke, INK, BLUSH } from './kit.js';
-import { eye, mouth, deadEye } from './faces.js';
+import { eye, mouth, deadEye, easyEye } from './faces.js';
 import { ID, ap, pivot, move, put, breath, beat, burst, streaks, ik, gait } from './ruins.js';
 
 const TAU = Math.PI * 2;
@@ -257,7 +257,7 @@ function pegasus(pose, f, mood) {
   const lashC = '#5a3a72';
   const act = { angry: { lid: 0.32, slant: 0.7, pupilK: 0.7 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[em] ?? {};
   if (dead) head.push(...deadEye(42.2, 14, 1.8, { c: lashC }));
-  else head.push(...eye(42.2, 13.8, { s: 1, shape: 'round', w: 2.3, h: 2.7, iris: ['#3b2a7a', '#6a4fc0', '#c2b0ff'], lashC, flicks: 2, look: [look, 0], ...act }));
+  else head.push(...easyEye(42.2, 13.8, { s: 1, shape: 'round', w: 2.3, h: 2.7, iris: ['#3b2a7a', '#6a4fc0', '#c2b0ff'], lashC, flicks: 2, look: [look, 0], ...act }));
   if (!dead) head.push(F(E(40.6, 18.4, 1.8, 0.8, BLUSH)));
   const mo = { ink: MUZ, s: 1 };
   if (ak && f === 1 && !dead) head.push(...mouth(47.8, 22.8, { ...mo, type: 'shout', w: 1.1, h: 1.6, open: 1 }));
@@ -403,7 +403,7 @@ function harpy(pose, f, mood) {
   const act = { angry: { lid: 0.3, slant: 0.85, raise: 0.2, pupilK: 0.6 }, happy: { closed: 'happy' }, blink: { closed: 'blink' }, hurt: { closed: 'squeeze' } }[em] ?? {};
   const eo = { shape: 'sharp', iris: ['#a2580e', '#ffbb2e', '#ffe9a0'], lashC, look: [look, 0], flicks: 1, ...act };
   if (dead) head.push(...deadEye(32.4, 17, 1.4, { c: lashC }), ...deadEye(37.8, 16.6, 1.1, { c: lashC }));
-  else head.push(...eye(32.4, 16.9, { ...eo, s: -1, w: 2.1, h: 2.2 }), ...eye(37.8, 16.5, { ...eo, s: 1, w: 1.6, h: 1.9 }));
+  else head.push(...easyEye(32.4, 16.9, { ...eo, s: -1, w: 2.1, h: 2.2 }), ...easyEye(37.8, 16.5, { ...eo, s: 1, w: 1.6, h: 1.9 }));
   const bl = em === 'angry' ? 1 : hurt ? -0.8 : happy ? -0.4 : 0;
   if (!dead) head.push(...stroke([[30, 14 - bl * 0.2], [32.4, 13.6 + bl * 0.2], [34.2, 14 + bl * 0.8]], 0.8, PLUME_D), ...stroke([[36.6, 14 + bl * 0.6], [38.2, 13.6], [39.4, 14 - bl * 0.3]], 0.67, PLUME_D));
   if (!dead) head.push(F(E(31, 20.2, 1.5, 0.7, BLUSH)), F(E(38, 19.8, 0.9, 0.55, BLUSH)));
@@ -583,7 +583,7 @@ function seraph(pose, f, mood) {
     ? { shape: 'round', iris: ['#4a2f9a', '#9a6cf0', '#e2d4ff'], pupil: 'star', pupilC: '#fff3b0', lashC, ...(em === 'angry' ? { lid: 0.25, slant: 0.7 } : {}) }
     : { closed: { happy: 'happy', hurt: 'squeeze', blink: 'blink' }[em] ?? 'sleep', lashC, flicks: 2 };
   if (dead) out.push(...deadEye(fx - 3, fy, 1.3, { c: lashC }), ...deadEye(fx + 3, fy, 1.3, { c: lashC }));
-  else out.push(...eye(fx - 3, fy, { ...so, s: -1, w: 1.7, h: 1.9 }), ...eye(fx + 3, fy, { ...so, s: 1, w: 1.7, h: 1.9 }));
+  else out.push(...easyEye(fx - 3, fy, { ...so, s: -1, w: 1.7, h: 1.9 }), ...easyEye(fx + 3, fy, { ...so, s: 1, w: 1.7, h: 1.9 }));
   if (!dead) out.push(F(E(fx - 4.4, fy + 2.6, 1.4, 0.7, BLUSH)), F(E(fx + 4.4, fy + 2.6, 1.4, 0.7, BLUSH)));
   const mo = { ink: MUZ };
   if (ak && f > 0 && f < 3 && !dead) out.push(...mouth(fx, fy + 3.6, { ...mo, type: 'o', w: 0.9, h: 1.2, open: 1 }));

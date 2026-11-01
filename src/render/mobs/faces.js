@@ -654,7 +654,7 @@ const arcPts = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, 
 const line = (pts, w, c) => band(pts, (t) => w * (0.55 + 0.45 * Math.sin(Math.PI * t) ** 0.5), c);
 
 // `lid` (0-1) drops a level lid of skin over the top at rest: sleepy, smug.
-export function simpleEye(x, y, { s = 1, w = 2, h = 2.6, mood = 'idle', iris = '#c98a2e', ink = '#2a1a2e', lash = 1, wing = 0, skin = '#fff1cc', lid = 0 }) {
+export function simpleEye(x, y, { s = 1, w = 2, h = 2.6, mood = 'idle', iris = '#c98a2e', ink = '#2a1a2e', lash = 1, wing = 0, lid = 0 }) {
   x = snap3(x);
   y = snap3(y);
   const out = [];
@@ -664,20 +664,17 @@ export function simpleEye(x, y, { s = 1, w = 2, h = 2.6, mood = 'idle', iris = '
     const d = s;
     return [line([[x - w * d, y - h * 0.55], [x + w * 0.7 * d, y], [x - w * d, y + h * 0.55]], 0.85, ink)];
   }
-  // The eye: a soft dark oval, the iris colour as a band low in it.
-  out.push(oval(x, y, w, h, ink, 0, 16));
-  out.push(oval(x + s * w * 0.05, y + h * 0.42, w * 0.7, h * 0.42, iris, 0, 14));
-  // Angry: the top cut off by a slanted lid of skin, lower toward the nose.
-  if (mood === 'angry') {
-    const [yl, yr] = s > 0 ? [y - h * 0.05, y - h * 0.55] : [y - h * 0.55, y - h * 0.05];
-    out.push(poly([[x - w * 1.3, y - h * 1.3], [x + w * 1.3, y - h * 1.3], [x + w * 1.3, yr], [x - w * 1.3, yl]], skin));
-  }
-  // The lash cap: a thick arc over the top, a little flick at the outer corner (a wing for lashes).
+  // The lid line: angry, slanted down toward the nose; lidded (sleepy, smug), level; else none.
+  // The eye is cut off above it, so the face's own colour shows: no skin patch is needed.
   const yc = y - h + 2 * h * lid;
-  if (mood === 'idle' && lid > 0) out.push(poly([[x - w * 1.3, y - h * 1.3], [x + w * 1.3, y - h * 1.3], [x + w * 1.3, yc], [x - w * 1.3, yc]], skin));
-  const top = mood === 'angry'
-    ? [[x - w * 1.1, y - h * (s > 0 ? 0.08 : 0.58)], [x + w * 1.1, y - h * (s > 0 ? 0.58 : 0.08)]]
-    : mood === 'idle' && lid > 0 ? [[x - w * 1.05, yc + 0.1], [x + w * 1.05, yc + 0.1]] : arcPts(x, y + h * 0.05, w * 1.08, h * 1.02, 195, 345);
+  const [yl, yr] = mood === 'angry' ? (s > 0 ? [y - h * 0.05, y - h * 0.55] : [y - h * 0.55, y - h * 0.05]) : [yc, yc];
+  const cut = mood === 'angry' || lid > 0 ? (px) => yl + ((yr - yl) * (px - (x - w * 1.1))) / (w * 2.2) : null;
+  const clip = (pts) => (cut ? pts.map(([px, py]) => [px, Math.max(py, cut(px))]) : pts);
+  // The eye: a soft dark oval, the iris colour as a band low in it.
+  out.push(poly(clip(ovalPts(x, y, w, h, 0, 16)), ink));
+  out.push(poly(clip(ovalPts(x + s * w * 0.05, y + h * 0.42, w * 0.7, h * 0.42, 0, 14)), iris));
+  // The lash: a thick arc over the top (or along the lid line), a little flick at the outer corner.
+  const top = cut ? [[x - w * 1.1, yl + 0.1], [x + w * 1.1, yr + 0.1]] : arcPts(x, y + h * 0.05, w * 1.08, h * 1.02, 195, 345);
   out.push(line(top, 0.95 * lash, ink));
   if (wing && mood !== 'angry') {
     const o = top.at(s > 0 ? -1 : 0);
@@ -687,6 +684,17 @@ export function simpleEye(x, y, { s = 1, w = 2, h = 2.6, mood = 'idle', iris = '
   if (mood !== 'angry' && lid < 0.35) out.push(oval(x + w * 0.3, y - h * 0.38, w * 0.38, w * 0.38, '#ffffff', 0, 10));
   out.push(oval(x - w * 0.35, y + h * 0.45, w * 0.17, w * 0.17, '#ffffff', 0, 8));
   return out;
+}
+
+// Takes the detailed eye()'s settings (its iris, lash colour, liner, and the mood acted with
+// closed / lid / slant) and draws the simple eye instead, a little smaller (the simple eye has no
+// white round it). Every field monster's face goes through this.
+export function easyEye(x, y, o = {}) {
+  const mood = o.closed === 'happy' ? 'happy' : o.closed === 'squeeze' ? 'hurt' : o.closed ? 'blink' : (o.slant ?? 0) >= 0.5 ? 'angry' : 'idle';
+  return simpleEye(x, y, {
+    s: o.s ?? 1, w: (o.w ?? 2) * 0.8, h: (o.h ?? 2.6) * 0.85, mood, iris: irisTones(o.iris ?? '#8a6ad0')[1],
+    ink: o.lashC ?? LASH, wing: o.liner ? 1 : 0, lid: mood === 'idle' ? Math.min(0.45, Math.max(0, o.lid ?? 0)) : 0,
+  });
 }
 
 // A simple mouth on the face's centre line, in a lip colour: a small smile at rest, a smug curl

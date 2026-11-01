@@ -11,7 +11,7 @@
 // the creature face kit (faces.js) and hold the sprite's strongest contrast.
 
 import { T, F, C, shade, mix, sparkLine, keyAt } from './kit.js';
-import { eye, glowEye, brow, mouth, blush, sweat, tear, vein, deadEye, band, ovalPts } from './faces.js';
+import { eye, glowEye, brow, mouth, blush, sweat, tear, vein, deadEye, band, ovalPts, easyEye } from './faces.js';
 
 const TAU = Math.PI * 2;
 const TEAL = '#5ff0d6';
@@ -781,7 +781,7 @@ function sporeMite(pose, f, mood) {
     const eF = [-0.6, 0.3];
     const eN = [2.4, 0.2];
     if (dead) h.push(...deadEye(eF[0], eF[1], 0.95, { type: 'swirl', s: -1, c: P.ink, th: 0.5 }), ...deadEye(eN[0], eN[1], 1.1, { type: 'swirl', c: P.ink, th: 0.55 }));
-    else h.push(...eye(eF[0], eF[1], { ...me, ...act, s: -1, w: 1.15, h: 1.4 }), ...eye(eN[0], eN[1], { ...me, ...act, s: 1, w: 1.35, h: 1.55 }));
+    else h.push(...easyEye(eF[0], eF[1], { ...me, ...act, s: -1, w: 1.15, h: 1.4 }), ...easyEye(eN[0], eN[1], { ...me, ...act, s: 1, w: 1.35, h: 1.55 }));
     if (!dead && !angry) h.push(...blush(-1.6, 2.6, 0.8, { on: R.base }));
     if (happy) h.push(...mouth(1.2, 2.9, { s: 1, type: 'grin', w: 0.9, h: 1.1, open: 1, teeth: 'none', ink: P.ink }));
     else if (angry || att >= 0) h.push(...mouth(1.2, 2.8, { s: 1, type: 'snarl', w: 1, h: 1.1, open: 1, teeth: 'top', tongue: false, ink: P.ink }));
