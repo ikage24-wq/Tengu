@@ -583,16 +583,21 @@ const TAMAMO_HAIR = {
 };
 const TAMAMO_RAMP = { hi: K.hairLt, base: K.hair, sh1: K.hairDk, sh2: K.hairSh2 };
 
-// Tamamo's face: serene, regal fox eyes of jade teal (the hue opposite her gold hair, so the face
-// holds the sprite's strongest contrast) lifted at the corners, a red liner wing, slit pupils,
-// and a sly half-smile; she bares a fang only when roused.
+// Tamamo's face: a sly fox empress. Matched almond eyes of jade teal (the hue opposite her gold
+// hair, so the face holds the sprite's strongest contrast) lifted at the corners, slit pupils, a
+// soft rose eyeshadow where a long red liner used to streak (it smeared at sprite size), a smug
+// curl of a smile on a softer chin; she bares a fang only when roused.
 const TAMAMO_FACE = {
   skin: K.skin, skinSh: '#f8d0ca', skinSh2: '#e6a6ab', blush: '#ff9fb2', lip: '#e2486c', lipLine: '#a8344f',
   bangs: bangsOf(TAMAMO_HAIR.edge),
-  eye: { ry: 2.75, iris: '#22b8a8', irisDk: '#0a5c62', irisLt: '#b6fff0', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#06303a', tilt: 0.62, wing: 2, flicks: 2, lashLen: 1.3, liner: '#e0283f', shadow: '#ffd0d6', lowerLash: '#c86478', ink: '#3a1a1c' },
-  brow: { c: '#b8682a', kind: 'soft', w: 0.75 },
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.6, far: 0.8, iris: '#22b8a8', irisDk: '#0a5c62', irisLt: '#b6fff0', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#06303a', tilt: 0.38, wing: 1.2, flicks: 2, lashLen: 1.1, shadow: '#ffb0bc', smoky: 0.2, lowerLash: '#c86478', ink: '#3a1a1c' },
+  brow: { c: '#c07a3a', kind: 'soft', w: 0.7, lift: 0.3 },
+  mouth: [8.2, 12.2],
+  nose: [9.2, 9.6],
+  blushK: 0.8,
   fang: 'angry',
-  moods: { idle: { open: 0.85, mouth: 'sly' }, angry: { mouth: 'snarl', pupil: 0.55 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
+  moods: { idle: { open: 0.82, mouth: 'smirk', gaze: [0.12, 0] }, angry: { mouth: 'snarl', pupil: 0.55 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
 };
 
 function tamamo(pose, f, mood) {
@@ -605,13 +610,13 @@ function tamamo(pose, f, mood) {
   const { angry, hurt, dead, happy } = moods(mood);
   // A stately glide: she floats along without steps, the train sweeping behind, and the body
   // rises a touch once per cycle; idle is a slow breath.
-  let bob = walk ? -0.8 * Math.sin(ph) : 0.6 * Math.sin(ph);
-  let lean = walk ? 1.6 : 0;
-  let tilt = walk ? 0.03 : 0;
-  let headA = walk ? -0.02 : 0.03 * Math.sin(ph - 0.6);
+  let bob = walk ? -1.6 * Math.sin(ph) : 0.6 * Math.sin(ph);
+  let lean = walk ? 1.6 + 0.9 * Math.sin(ph - 0.5) : 0;
+  let tilt = walk ? 0.03 + 0.012 * Math.sin(ph - 0.9) : 0;
+  let headA = walk ? -0.02 + 0.03 * Math.sin(ph - 1.3) : 0.03 * Math.sin(ph - 0.6);
   let drop = 0;
   // Secondary motion: hair, sleeves, and the train lag behind the body.
-  let swing = walk ? -2.4 + Math.sin(ph - 1.2) * 1 : Math.sin(ph - 1.1) * 1.1;
+  let swing = walk ? -2.4 + Math.sin(ph - 1.2) * 1.9 : Math.sin(ph - 1.1) * 1.1;
   let spread = 1;
   let tlen = 1;
   let burst = 0;
@@ -666,7 +671,7 @@ function tamamo(pose, f, mood) {
   const tails = [];
   for (let i = 0; i < 9; i++) {
     const side = (i - 4) / 4;
-    const wave = atk ? Math.sin(a * 1.2 - i * 0.6) * 0.04 : (walk ? 0.05 : 0.075) * Math.sin(ph - i * 0.7);
+    const wave = atk ? Math.sin(a * 1.2 - i * 0.6) * 0.04 : (walk ? 0.09 : 0.075) * Math.sin(ph - i * 0.7);
     let ang = -PI / 2 + side * 1.22 * spread + wave - (walk ? 0.1 : 0);
     if (dead) ang = -PI * 0.62 - (i / 8) * PI * 0.36;
     tails.push({ i, side, ang, wave });
@@ -737,12 +742,12 @@ function tamamo(pose, f, mood) {
   {
     const top = G - 82;
     const P = (x, y) => Tu(x, y);
-    const wv = (k) => Math.sin(ph * (walk ? 2 : 1) + k) * (walk ? 1.2 : 0.5);
+    const wv = (k) => Math.sin(ph * (walk ? 2 : 1) + k) * (walk ? 1.9 : 0.5);
     const hem = [];
     for (let i = 0; i <= 12; i++) {
       const t = i / 12;
       const x = lerp(bx + 26 + (dead ? 6 : 0) + (atk ? lean * 0.5 : 0), bx - 34 - (walk ? 6 : 0) - (dead ? 8 : 0), t) + wv(t * 6) * 0.6;
-      hem.push([x, G - 0.4 - Math.abs(Math.sin(t * 9 + ph * 2)) * 0.8 * (1 - t)]);
+      hem.push([x, G - 0.4 - 3.2 * (1 - t) ** 5 - Math.abs(Math.sin(t * 7 + ph * 2)) * 0.9 * (1 - t) * t * 3]);
     }
     const train = [[bx - 46 - (walk ? 9 : 0) + wv(2) - (dead ? 6 : 0), G - 0.2], [bx - 36 - (walk ? 6 : 0) + wv(3), G - 3.6], [bx - 28 + wv(4) * 0.4, G - 12]];
     const back = [P(bx - 10, top + 3), P(bx - 12, top + 16), P(bx - 10.5, top + 26), P(bx - 14, top + 38), ...(drop ? [] : [[bx - 21 + lean * 0.3, G - 28]])];
@@ -761,11 +766,12 @@ function tamamo(pose, f, mood) {
     const outer = [...edge, ...hem.slice(4), ...train, ...back.slice().reverse()];
     out.push(T(outer, K.robe));
     // Soft folds falling from the hips, and the shadowed back of the train.
-    for (const [x0, x1, w] of [[bx - 4, bx - 6, 2.2], [bx - 10, bx - 18, 2.6], [bx - 15, bx - 30, 2.2]]) {
+    for (const [x0, x1, w] of [[bx - 1, bx + 1, 1.6], [bx - 4, bx - 6, 2.2], [bx - 7, bx - 11, 1.4], [bx - 10, bx - 18, 2.6], [bx - 13, bx - 25, 2]]) {
       const t0 = Tu(x0, top + 40);
       out.push(strip([t0, [lerp(t0[0], x1, 0.5) + wv(x0) * 0.6, lerp(t0[1], G, 0.5)], [x1 + wv(x0 + 1), G - 2]], (t) => w * Math.sin(PI * Math.min(1, t * 1.1 + 0.05)), K.robeDk, { n: 3, flat: true }));
     }
     out.push(F(T([train[0], train[1], train[2], [train[2][0] + 6, train[2][1] + 6], [train[1][0] + 10, G - 2]], K.robeDk)));
+    out.push(strip([P(bx + 3.4, top + 8), P(bx - 1, top + 26), P(bx - 1, top + 38), [bx + 1 + lean * 0.4, G - 16]], (t) => 2.4 * Math.sin(PI * Math.min(1, t * 1.05 + 0.04)), K.robeLt, { n: 3, flat: true }));
     // Embroidered gold clouds and fox-fire.
     const emb = [[bx - 20, G - 12, 1], [bx - 6, G - 22, -1], [bx - 30, G - 9, -1], [bx - 15, G - 33, 1]];
     for (const [x, y, d] of emb) {
@@ -779,12 +785,15 @@ function tamamo(pose, f, mood) {
     out.push(T(es.map(([x, y]) => [x + 2.8, y]).concat(es.map(([x, y]) => [x + 1.6, y]).reverse()), K.pink));
     const hemOut = [...hem.slice(3), ...train.slice(0, 1)];
     // A crimson hem band with gold waves and white fox-fire above the padded roll.
-    out.push(strip(hemOut.map(([x, y]) => [x, y - 4.6]), () => 6.4, K.crimson, { n: 1, flat: true }));
-    out.push(line(hemOut.map(([x, y], i) => [x, y - 8 + Math.sin(i * 1.7 + ph) * 0.6]), 1, K.gold));
-    hemOut.forEach(([x, y], i) => {
-      if (i % 2 === 0 && i < hemOut.length - 1) out.push(...blossom(x - 2, y - 4.4, 1.7, K.goldLt, K.crimsonDk, i));
+    const nh = hemOut.length - 1;
+    const bw = (t) => 4.4 * Math.min(1, 0.4 + t * 6) * lerp(1, 0.45, t * t);
+    const hb = hemOut.map(([x, y], i) => [x, y - 1.6 - bw(i / nh) / 2 + Math.sin(i * 1.3 + ph * 2) * 0.5 * (i / nh)]);
+    out.push(strip(hb, bw, K.crimson, { n: 2, flat: true, tip: 2 }));
+    out.push(line(spline(hb.map(([x, y], i) => [x, y - bw(i / nh) / 2 - 0.6]), 2), 1, K.gold));
+    hb.forEach(([x, y], i) => {
+      if (i % 2 === 0 && i > 0 && i < nh) out.push(...blossom(x - 2, y + 0.2, 1.7 * lerp(1, 0.7, i / nh), K.goldLt, K.crimsonDk, i));
     });
-    out.push(strip(hemOut.map(([x, y]) => [x, y - 1.2]), () => 3, K.crimsonDk, { n: 1 }), strip(hemOut.map(([x, y]) => [x, y - 1.7]), () => 1.6, K.crimson, { n: 1, flat: true }));
+    out.push(strip(hemOut.map(([x, y]) => [x, y - 1.2]), (t) => 3 * lerp(1, 0.55, t), K.crimsonDk, { n: 2, tip: 2 }), strip(hemOut.map(([x, y]) => [x, y - 1.7]), (t) => 1.6 * lerp(1, 0.55, t), K.crimson, { n: 2, flat: true, tip: 2 }));
     // The obi: a broad gold sash with a crimson cord, and its great bow at the back.
     within(Tu, () => {
       const oy = top + 22;
