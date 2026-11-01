@@ -347,36 +347,43 @@ export const MAPS = {
   },
 
 
-  // A low tunnel with three glowing pits (slimes live in them), two rows of galleries above, and
-  // the throne door on a raised alcove in the middle.
+  // Crystal Cave climbs a great crystal cavern in three zones (the tall-map rules, a light rework,
+  // data/climb.js): the Glowpool Grotto, where Crystal Slimes bask by the glowing pools and a vent
+  // bounces you up; the Golem Galleries, the Rock Golems' halls, where crystal dust floats you
+  // higher and a tunnel leads off to Serpent Springs; and the Shade Hollows on top, with a slab of
+  // crystal drifting across the gap and, on the lookout, the ways on to the Sky Garden and up to the
+  // Crystal Throne. The mine road back to Sprout Village leaves from the grotto floor.
   cave: {
     id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'grove', world: { x: 336, y: 148 },
-    width: 2600, height: 760, groundY: 640,
     look: { ceiling: true },
-    terrain: [[0, 640], [500, 640], [500, 720], [700, 720], [700, 640], [1300, 640], [1300, 720], [1560, 720], [1560, 640], [2100, 640], [2100, 720], [2300, 720], [2300, 640], [2600, 640]],
-    platforms: [
-      { x: 150, y: 560, w: 330 }, { x: 720, y: 560, w: 560 }, { x: 1580, y: 560, w: 500 }, { x: 2320, y: 560, w: 180 },
-      { x: 300, y: 480, w: 600 }, { x: 1100, y: 480, w: 600 }, { x: 1900, y: 480, w: 500 },
-      { x: 1100, y: 400, w: 300, thick: 44 },
-    ],
-    ropes: [{ x: 1240, top: 400, bottom: 480, ladder: true }],
+    ...climb({
+      width: 2600, ground: 880, quiet: [[40, 880, 160], [2540, 880, 160], [200, 640, 200]],
+      zones: [
+        { name: 'Glowpool Grotto', color: '#4fb0d8', rows: ['split', 'long'], mobs: ['crystalslime', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.15] }] },
+        { name: 'Golem Galleries', color: '#8a7ab0', rows: ['splitwide', 'tri', 'long'], mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.15] }] },
+        { name: 'Shade Hollows', color: '#5d5285', rows: ['split', 'middle'], mobs: ['shade', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.25] }] },
+      ],
+    }),
+    // A moving part per zone: a vent bouncing you up in the grotto, crystal dust rising through
+    // the galleries (Up to ride it), and a crystal slab drifting across the hollows' gap.
+    springs: [{ x: 1300, y: 880, up: 170, kind: 'gust' }],
+    updrafts: [{ x: 1180, w: 56, top: 450, bottom: 720, kind: 'wisplight' }],
     portals: [
-      { id: 'west', x: 40, y: 640, to: 'ruins', toPortal: 'east' },
-      { id: 'east', x: 2540, y: 640, to: 'sky', toPortal: 'west' },
-      { id: 'boss', x: 1300, y: 400, to: 'bossroom', toPortal: 'west', label: 'Throne' },
+      { id: 'west', x: 40, y: 880, to: 'ruins', toPortal: 'east' },
+      { id: 'east', x: 1450, y: 240, to: 'sky', toPortal: 'west' },
+      { id: 'boss', x: 1150, y: 240, to: 'bossroom', toPortal: 'west', label: 'Throne' },
       // The mine road back down to Sprout Village (the ring round the island).
-      { id: 'sprout', x: 1000, y: 640, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
+      { id: 'sprout', x: 2540, y: 880, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
     ],
     npcs: [],
-    deco: [['glowpool', 600], ['glowpool', 1430], ['glowpool', 2200], ['crystalspire', 380, 0], ['stalagmite', 1000], ['crystalspire', 1800, 1], ['stalagmite', 2450]],
-    spawns: [
-      { mob: 'rockgolem', x: 402, y: 640 }, { mob: 'crystalslime', x: 600, y: 720 }, { mob: 'rockgolem', x: 858, y: 640 }, { mob: 'rockgolem', x: 1142, y: 640 },
-      { mob: 'crystalslime', x: 1430, y: 720 }, { mob: 'crystalslime', x: 1703, y: 640 }, { mob: 'rockgolem', x: 1957, y: 640 }, { mob: 'crystalslime', x: 2200, y: 720 },
-      { mob: 'crystalslime', x: 315, y: 560 }, { mob: 'crystalslime', x: 868, y: 560 }, { mob: 'crystalslime', x: 1132, y: 560 }, { mob: 'crystalslime', x: 1713, y: 560 },
-      { mob: 'crystalslime', x: 1947, y: 560 }, { mob: 'shade', x: 458, y: 480 }, { mob: 'shade', x: 742, y: 480 }, { mob: 'rockgolem', x: 1258, y: 480 },
-      { mob: 'rockgolem', x: 1542, y: 480 }, { mob: 'shade', x: 2033, y: 480 }, { mob: 'shade', x: 2267, y: 480 },
-    ],
+    // A landmark per zone: the glowing pools in the grotto, a crystal spire in the galleries, a
+    // great crystal by the throne's gate.
+    deco: [['glowpool', 600], ['glowpool', 1500], ['stalagmite', 1000], ['crystalspire', 2200, 0], ['crystalspire', 1500, 1, 480], ['stalagmite', 700, 0, 480], ['crystalspire', 1300, 0, 240]],
+    lamps: [{ x: 600, y: 860 }, { x: 1500, y: 860 }, { x: 1300, y: 200 }],
+    spirit: { x: 1700, y: 200 },
+    habitats: { crystalslime: { naps: true, home: { x: 600, y: 880 } }, rockgolem: { naps: true }, shade: { play: true } },
   },
+
 
   // Five layers of floating islands held up by cloud pillars, climbing to the gazebo garden at
   // the top. Sheep graze low; birds and star spirits fly higher.
@@ -777,7 +784,9 @@ MAPS.woods.portals.push({ id: 'glade', x: 1240, y: 180, to: 'glade', toPortal: '
 // The ruins' floating slab, and the way to the shrine from the galleries.
 MAPS.ruins.platforms.push({ x: 1115, y: 500, w: 140, drift: { dx: 230, period: 9 } });
 MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 580, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
-MAPS.cave.portals.push({ id: 'springs', x: 1660, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
+// Crystal Cave's drifting crystal slab, and the tunnel to the springs off the galleries.
+MAPS.cave.platforms.push({ x: 975, y: 400, w: 150, style: 'stone', drift: { dx: 500, period: 11 } });
+MAPS.cave.portals.push({ id: 'springs', x: 200, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east', label: 'Frozen Peak' });
 MAPS.sky.portals.push({ id: 'starfall', x: 1420, y: 560, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' });
 

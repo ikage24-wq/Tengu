@@ -23,6 +23,7 @@ export const GATHERED = [
   ['honeycomb', 'Honeycomb', 14, '#ffc83a', 'Golden comb from the giant hive. Sweetens tea and tarts at a town stove; shops buy it.'],
   ['cherry', 'Blossom Cherry', 12, '#ff6b8a', 'A plump cherry off the great tree. Baked into tarts at a town stove; shops buy it.'],
   ['copper_ore', 'Copper Ore', 10, '#e0915a', "Bring it to Tora's forge: ore makes a polish more likely to take (gear up to Lv 29)."],
+  ['silver_ore', 'Silver Ore', 22, '#c8d0e0', "Bring it to Tora's forge: ore makes a polish more likely to take (gear Lv 30 to 49)."],
   ['moonpetal', 'Moonpetal', 40, '#c9c4ff', 'A flower that only opens at night, glowing softly. Steeped into Moonpetal Tea at a town stove; shops buy it.'],
   ['rose_quartz', 'Rose Quartz', 80, '#ffb3d1', "A rare pink crystal. At Tora's forge it makes a polish much more likely to take."],
 ];

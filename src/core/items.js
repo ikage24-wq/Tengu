@@ -100,7 +100,7 @@ export function polishGain(inst) {
 // Mined ore (data/gathering.js) makes a try likelier to take: ORE_USE of the ore for the piece's
 // level, or one rare gem. Each tier of ore covers gear up to its `upTo` level.
 export const ORE_USE = 2;
-export const POLISH_ORES = [{ id: 'copper_ore', upTo: 29, boost: 0.12 }];
+export const POLISH_ORES = [{ id: 'copper_ore', upTo: 29, boost: 0.12 }, { id: 'silver_ore', upTo: 49, boost: 0.12 }];
 export const POLISH_GEMS = [{ id: 'rose_quartz', boost: 0.25 }];
 export const oreFor = (inst) => POLISH_ORES.find((o) => (ITEMS[inst.id].reqLevel ?? 0) <= o.upTo) ?? null;
 // The chance with a boost (an ore or gem id, or null), capped so it's never certain.
