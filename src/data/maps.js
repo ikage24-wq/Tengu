@@ -816,32 +816,38 @@ Object.assign(MAPS, {
   },
 
 
-  // A stone path climbing through cherry trees at sunset under one vermilion gate after another,
-  // fox guardians at each, a little roadside shrine on the terrace. Nekomata prowl the lower
-  // path; Kitsune Miko keep the upper terraces.
+  // The Fox Shrine Path climbs a sacred hill in three zones (the tall-map rules, a light rework,
+  // data/climb.js): the Torii Steps, where the Nekomata lounge under the great gates and blossoms
+  // bounce you up; the Lantern Terraces, where foxfire rises to carry you higher; and the Hokora
+  // Heights, the Kitsune Miko's terraces, with a petal cloud drifting across the gap and the shrine
+  // on the top terrace, where the way into Tamamo's Sanctum opens at the end of the path.
   shrine: {
     id: 'shrine', name: 'Fox Shrine Path', theme: 'shrine', town: 'grove', world: { x: 378, y: 86 },
-    width: 2600, height: 840, groundY: 800,
-    terrain: [[0, 800], [700, 800], [780, 780], [1500, 780], [1580, 760], [2600, 760]],
-    // Each great gate stands in the open, with the terraces climbing between them.
-    platforms: [
-      { x: 520, y: 720, w: 500 }, { x: 1360, y: 700, w: 540 }, { x: 2200, y: 680, w: 340 },
-      { x: 140, y: 640, w: 440 }, { x: 860, y: 630, w: 560 }, { x: 1700, y: 610, w: 620 },
-      { x: 420, y: 560, w: 520 }, { x: 1300, y: 540, w: 520 },
-      { x: 2000, y: 520, w: 420, thick: 44 },
-    ],
-    ropes: [{ x: 2380, top: 520, bottom: 760 }, { x: 200, top: 640, bottom: 800 }],
-    portals: [{ id: 'west', x: 40, y: 800, to: 'ruins', toPortal: 'shrine' }],
+    ...climb({
+      width: 2600, ground: 880, quiet: [[40, 880, 160]],
+      zones: [
+        { name: 'Torii Steps', color: '#e0504a', rows: ['split', 'long'], mobs: ['nekomata'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Lantern Terraces', color: '#e0a040', rows: ['splitwide', 'tri', 'long'], mobs: ['nekomata', 'kitsunemiko'], nodes: [{ kind: 'fruit', pool: { cherry: 1 } }],
+          look: { sky: ['#ffb8a8', '#ffd8c8', '#fff0e4'] } },
+        { name: 'Hokora Heights', color: '#8f6cc4', rows: ['split', 'middle'], mobs: ['kitsunemiko'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+          look: { sky: ['#c8a8e0', '#e8d0f0', '#fff0f4'] } },
+      ],
+    }),
+    // A moving part per zone: blossoms that bounce you up the steps, foxfire rising through the
+    // terraces (Up to ride it), and a petal cloud drifting across the heights' gap.
+    springs: [{ x: 1300, y: 880, up: 170, kind: 'blossom' }],
+    updrafts: [{ x: 1180, w: 56, top: 450, bottom: 720, kind: 'foxfire' }],
+    portals: [{ id: 'west', x: 40, y: 880, to: 'ruins', toPortal: 'shrine' }],
     npcs: [],
-    deco: [['torii', 380], ['foxstatue', 290, 0], ['foxstatue', 470, 1], ['torii', 1220], ['foxstatue', 1130, 0], ['foxstatue', 1300, 1], ['torii', 2070], ['foxstatue', 1990, 0], ['foxstatue', 2150, 1],
-      ['sakura', 690, 0, 560], ['sakura', 1560, 1, 540], ['hokora', 2210, 0, 520]],
-    spawns: [
-      ...along(800, 100, 690, 2, 'nekomata'), ...along(780, 800, 1480, 3, 'nekomata', 'kitsunemiko'), ...along(760, 1600, 2560, 3, 'nekomata', 'kitsunemiko'),
-      ...along(720, 540, 1000, 2, 'nekomata'), ...along(700, 1380, 1880, 2, 'kitsunemiko', 'nekomata'), ...along(680, 2220, 2520, 1, 'kitsunemiko'),
-      ...along(640, 160, 560, 1, 'nekomata'), ...along(630, 880, 1400, 2, 'kitsunemiko', 'nekomata'), ...along(610, 1720, 2300, 2, 'kitsunemiko'),
-      ...along(560, 440, 920, 2, 'kitsunemiko'), ...along(540, 1320, 1800, 2, 'kitsunemiko'),
-    ],
+    // A landmark per zone: the three great gates on the steps, the cherry trees on the terraces,
+    // the hokora shrine on the top terrace.
+    deco: [['torii', 380], ['foxstatue', 290, 0], ['foxstatue', 470, 1], ['torii', 1220], ['foxstatue', 1130, 0], ['foxstatue', 1310, 1], ['torii', 2070], ['foxstatue', 1990, 0], ['foxstatue', 2150, 1],
+      ['sakura', 700, 0, 480], ['sakura', 1800, 1, 480], ['hokora', 1200, 0, 240]],
+    lamps: [{ x: 1200, y: 200 }, { x: 700, y: 440 }, { x: 1220, y: 850 }],
+    spirit: { x: 1700, y: 200 },
+    habitats: { nekomata: { naps: true, play: true, home: { x: 1220, y: 880 } }, kitsunemiko: { naps: true } },
   },
+
 
   // High on the mountain above Ember Crag at night: blue rock and pines under a huge moon, the
   // howling rock at the top where Lupina's pack sings. Crystal Golems wander down from the cave.
@@ -984,7 +990,9 @@ Object.assign(MAPS, {
 });
 
 MAPS.glade.portals.push({ id: 'bower', x: 1250, y: 240, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
-MAPS.shrine.portals.push({ id: 'sanctum', x: 2560, y: 760, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
+// The shrine path's petal cloud.
+MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
+MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
 MAPS.springs.portals.push({ id: 'grotto', x: 1500, y: 760, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
 MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
@@ -993,6 +1001,6 @@ MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPo
 MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 880, respawn: 600 });
 // The glade's fishing dock and leaf.
 MAPS.glade.platforms.push({ x: 1960, y: 832, w: 95, posts: true }, { x: 830, y: 400, w: 140, drift: { dx: 400, period: 10 } });
-MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 760, respawn: 600 });
+MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 880, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 1900, y: 760, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600 });
