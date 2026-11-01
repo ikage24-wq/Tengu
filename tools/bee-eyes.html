@@ -5,16 +5,17 @@
 <canvas id="c"></canvas>
 <script type="module">
 // Dev tool: the Bumble's and the Queen Bee's faces (render/mobs/bees.js simpleEye / simpleMouth)
-// in every mood, close up. Open /tools/bee-eyes.html?who=bumble (or queenbee); ?s= sets the scale.
+// in every mood, close up. Open /tools/bee-eyes.html?who=bumble (or queenbee); ?s= sets the scale;
+// ?group=meadow&who=puffle shows another design's face.
 import { setHd, sprite, blit } from '../src/render/pixel.js';
-import { ART } from '../src/render/mobs/bees.js';
+const { ART } = await import(`../src/render/mobs/${new URLSearchParams(location.search).get('group') ?? 'bees'}.js`);
 
 const q = new URLSearchParams(location.search);
 const who = q.get('who') ?? 'bumble';
 const moods = ['idle', 'happy', 'angry', 'hurt', 'blink', 'dead'];
-const S = Number(q.get('s') ?? (who === 'bumble' ? 5 : 3));
-const cw = who === 'bumble' ? 46 : 90;
-const ch = who === 'bumble' ? 50 : 92;
+const S = Number(q.get('s') ?? (who === 'queenbee' ? 3 : 5));
+const cw = who === 'queenbee' ? 90 : 50;
+const ch = who === 'queenbee' ? 92 : 46;
 setHd(true, S);
 const c = document.getElementById('c');
 const W = cw * 3 + 10;

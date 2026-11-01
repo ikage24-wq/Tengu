@@ -10,7 +10,7 @@
 // design faces right; see kit.js for the shapes and faces.js for the faces.
 
 import { E, T, F, mix, shade, stroke } from './kit.js';
-import { eye, mouth, blush as cheek, sweat, tear, vein, deadEye, band } from './faces.js';
+import { eye, mouth, blush as cheek, sweat, tear, vein, deadEye, simpleEye, simpleMouth } from './faces.js';
 import { ramp, crescent, shine, smear, breath, sway, chain, wave } from './meadow.js';
 
 const TAU = Math.PI * 2;
@@ -81,72 +81,6 @@ const COCOA = ramp('#6e4a5e', { step: 8, turn: 10 });
 const FUZZ = ramp('#fff1cc', { step: 6, turn: 30 });
 const WING = '#dff2ff';
 const WINGV = '#a9c8ea';
-
-// ---------- Simple faces (the bees) ----------
-// The player asked for simple eyes and mouths, not overdetailed ones. Following the art bible
-// (a few clean clusters, the darkest dark against the lightest light at the eyes, mouths in a lip
-// colour, never ink), each eye is: a soft dark oval, one band of iris colour low in it, a thick
-// lash cap over the top, one big catchlight up front and a small one low behind (the same place
-// in both eyes, never mirrored). Moods change the shape, not the parts: a slanted lid when angry,
-// thick arcs when happy, a line on a blink, chevrons when hurt.
-
-const s3 = (v) => Math.round(v * 3) / 3;
-const arcPts = (cx, cy, rx, ry, a0, a1, n = 8) => Array.from({ length: n + 1 }, (_, i) => {
-  const a = (a0 + ((a1 - a0) * i) / n) * D2R;
-  return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry];
-});
-// A thick soft stroke: a band tapering a little at its ends.
-const line = (pts, w, c) => band(pts, (t) => w * (0.55 + 0.45 * Math.sin(Math.PI * t) ** 0.5), c);
-
-function simpleEye(x, y, { s = 1, w = 2, h = 2.6, mood = 'idle', iris = '#c98a2e', ink = '#2a1a2e', lash = 1, wing = 0, skin = '#fff1cc' }) {
-  x = s3(x);
-  y = s3(y);
-  const out = [];
-  if (mood === 'happy') return [line(arcPts(x, y + h * 0.35, w * 1.05, h * 0.75, 200, 340), 0.9 * lash, ink)];
-  if (mood === 'blink') return [line(arcPts(x, y - h * 0.1, w * 1.05, h * 0.45, 20, 160), 0.85 * lash, ink)];
-  if (mood === 'hurt') {
-    const d = s;
-    return [line([[x - w * d, y - h * 0.55], [x + w * 0.7 * d, y], [x - w * d, y + h * 0.55]], 0.85, ink)];
-  }
-  // The eye: a soft dark oval, the iris colour as a band low in it.
-  out.push(F(O(x, y, w, h, 0, ink, 16)));
-  out.push(F(O(x + s * w * 0.05, y + h * 0.42, w * 0.7, h * 0.42, 0, iris, 14)));
-  // Angry: the top cut off by a slanted lid of skin, lower toward the nose.
-  if (mood === 'angry') {
-    const [yl, yr] = s > 0 ? [y - h * 0.05, y - h * 0.55] : [y - h * 0.55, y - h * 0.05];
-    out.push(F(T([[x - w * 1.3, y - h * 1.3], [x + w * 1.3, y - h * 1.3], [x + w * 1.3, yr], [x - w * 1.3, yl]], skin)));
-  }
-  // The lash cap: a thick arc over the top, a little flick at the outer corner (a wing for lashes).
-  const top = mood === 'angry'
-    ? [[x - w * 1.1, y - h * (s > 0 ? 0.08 : 0.58)], [x + w * 1.1, y - h * (s > 0 ? 0.58 : 0.08)]]
-    : arcPts(x, y + h * 0.05, w * 1.08, h * 1.02, 195, 345);
-  out.push(line(top, 0.95 * lash, ink));
-  if (wing && mood !== 'angry') {
-    const o = top.at(s > 0 ? -1 : 0);
-    out.push(line([o, [o[0] + s * 1.1 * wing, o[1] - 0.6 * wing]], 0.6 * lash, ink));
-  }
-  // Catchlights: big up front, small low behind, the same place in both eyes.
-  if (mood !== 'angry') out.push(F(E(x + w * 0.3, y - h * 0.38, w * 0.38, w * 0.38, '#ffffff')));
-  out.push(F(E(x - w * 0.35, y + h * 0.45, w * 0.17, w * 0.17, '#ffffff')));
-  return out;
-}
-
-// A simple mouth on the face's centre line, in a lip colour: a small smile at rest, a smug curl
-// for the queen, an open D when happy, an open shout attacking, a tight frown angry, a wobble hurt.
-function simpleMouth(x, y, { k = 1, mood = 'idle', smug = false, lip = '#8a3550', inner = '#5e2446', tongue = '#ff8fab' }) {
-  x = s3(x);
-  y = s3(y);
-  const w = 1.2 * k;
-  if (mood === 'shout' || mood === 'happy') {
-    const h = (mood === 'shout' ? 1.5 : 1.1) * k;
-    const pts = mood === 'shout' ? arcPts(x, y, w * 0.8, h, 0, 360, 12) : [[x - w, y - h * 0.2], [x + w, y - h * 0.2], ...arcPts(x, y - h * 0.2, w, h, 0, 180, 8)];
-    return [F(T(pts, inner)), F(O(x, y + h * 0.45, w * 0.55, h * 0.3, 0, tongue, 10))];
-  }
-  if (mood === 'angry') return [line(arcPts(x, y + 0.5 * k, w * 0.9, 0.7 * k, 200, 340), 0.55 * k, lip)];
-  if (mood === 'hurt' || mood === 'dead') return [line(Array.from({ length: 7 }, (_, i) => [x - w + (2 * w * i) / 6, y + (i % 2 ? -0.3 : 0.3) * k]), 0.45 * k, lip)];
-  if (smug) return [line([[x - w, y - 0.1 * k], [x - w * 0.2, y + 0.45 * k], [x + w * 0.7, y + 0.1 * k], [x + w * 1.05, y - 0.45 * k]], 0.55 * k, lip)];
-  return [line(arcPts(x, y - 0.3 * k, w * 0.8, 0.6 * k, 20, 160), 0.5 * k, lip)];
-}
 
 // The bee's face shared by Bumble and the Queen: simple eyes and mouth acting each mood, cheeks,
 // and the little acting marks.
