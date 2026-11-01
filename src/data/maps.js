@@ -311,36 +311,41 @@ export const MAPS = {
   },
 
 
-  // Long stone floors broken by gaps: drop through a gap to the floor below, jump back up. Bats
-  // and wisps hover in the gaps; an arch stands on the throne terrace at the top.
+  // Twilight Ruins climbs a fallen temple in three zones (the tall-map rules, a light rework,
+  // data/climb.js): the Fallen Courtyard, where the Dullahans keep their silent watch among the
+  // statues and a column of wisp-light lifts you up; the Wisp Galleries, broken halls with a slab of
+  // floating stone drifting across their gap and the way on to the Fox Shrine Path; and the Imp
+  // Spires on top, where air vents bounce you up to the lookout and the road on to Crystal Cave.
   ruins: {
     id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 },
-    width: 2600, height: 800, groundY: 760,
     look: { islands: 'stone' },
-    terrain: [[0, 760], [2600, 760]],
-    platforms: [
-      { x: 100, y: 680, w: 1000 }, { x: 1220, y: 680, w: 1280 },
-      { x: 200, y: 600, w: 600 }, { x: 920, y: 600, w: 680 }, { x: 1720, y: 600, w: 680 },
-      { x: 400, y: 520, w: 600 }, { x: 1120, y: 520, w: 680 }, { x: 1920, y: 520, w: 380 },
-      { x: 1000, y: 440, w: 500, thick: 44 },
-    ],
-    ropes: [{ x: 150, top: 680, bottom: 760, ladder: true }, { x: 2450, top: 680, bottom: 760, ladder: true }, { x: 1460, top: 440, bottom: 520, ladder: true }],
+    ...climb({
+      width: 2600, ground: 900, quiet: [[40, 900, 160], [2000, 580, 200]],
+      zones: [
+        { name: 'Fallen Courtyard', color: '#8a6ad0', rows: ['wide', 'split'], mobs: ['boneknight', 'wisp'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.12] }] },
+        { name: 'Wisp Galleries', color: '#4f95e0', rows: ['tri', 'long', 'splitwide'], mobs: ['wisp', 'gloombat'], nodes: [{ kind: 'herb', pool: { clover: 1 } }],
+          look: { sky: ['#6a5aa8', '#9a86d0', '#d8c8f0'] } },
+        { name: 'Imp Spires', color: '#c84f8a', rows: ['split', 'middle'], mobs: ['gloombat'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+          look: { sky: ['#4a3a8a', '#7a5ab0', '#c8a8e0'] } },
+      ],
+    }),
+    // A moving part per zone: wisp-light rising from the courtyard (Up to ride it), a floating slab
+    // drifting across the galleries' gap, and air vents in the spires.
+    updrafts: [{ x: 1150, w: 56, top: 620, bottom: 900, kind: 'wisplight' }],
+    springs: [{ x: 900, y: 420, up: 175, kind: 'gust' }],
     portals: [
-      { id: 'west', x: 40, y: 760, to: 'grove', toPortal: 'east' },
-      { id: 'east', x: 2540, y: 760, to: 'cave', toPortal: 'west' },
+      { id: 'west', x: 40, y: 900, to: 'grove', toPortal: 'east' },
+      { id: 'east', x: 1450, y: 260, to: 'cave', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['ruinarch', 300], ['ruinpillar', 1160], ['statue', 860], ['ruinpillar', 1660], ['ruinarch', 1250, 0, 440], ['statue', 2200]],
-    spawns: [
-      { mob: 'boneknight', x: 482, y: 760 }, { mob: 'gloombat', x: 805, y: 760 }, { mob: 'boneknight', x: 1128, y: 760 }, { mob: 'gloombat', x: 1452, y: 760 },
-      { mob: 'boneknight', x: 1775, y: 760 }, { mob: 'gloombat', x: 2098, y: 760 }, { mob: 'boneknight', x: 277, y: 680 }, { mob: 'boneknight', x: 600, y: 680 },
-      { mob: 'boneknight', x: 923, y: 680 }, { mob: 'boneknight', x: 1392, y: 680 }, { mob: 'gloombat', x: 1704, y: 680 }, { mob: 'boneknight', x: 2016, y: 680 },
-      { mob: 'gloombat', x: 2328, y: 680 }, { mob: 'wisp', x: 358, y: 600 }, { mob: 'wisp', x: 642, y: 600 }, { mob: 'wisp', x: 1098, y: 600 },
-      { mob: 'boneknight', x: 1422, y: 600 }, { mob: 'wisp', x: 1898, y: 600 }, { mob: 'wisp', x: 2222, y: 600 }, { mob: 'gloombat', x: 558, y: 520 },
-      { mob: 'gloombat', x: 842, y: 520 }, { mob: 'boneknight', x: 1298, y: 520 }, { mob: 'boneknight', x: 1622, y: 520 }, { mob: 'gloombat', x: 2110, y: 520 },
-      { mob: 'wisp', x: 1133, y: 440 }, { mob: 'wisp', x: 1367, y: 440 },
-    ],
+    // A landmark per zone: the arch and the statues in the courtyard, the great arch in the
+    // galleries, a pillar on the spires.
+    deco: [['ruinarch', 300], ['statue', 860], ['ruinpillar', 1660], ['statue', 2200], ['ruinarch', 1300, 0, 580], ['ruinpillar', 1100, 0, 340]],
+    lamps: [{ x: 1300, y: 540 }, { x: 1300, y: 220 }, { x: 860, y: 860 }],
+    spirit: { x: 1700, y: 220 },
+    habitats: { boneknight: { naps: true, home: { x: 860, y: 900 } }, wisp: { play: true }, gloombat: { play: true, naps: true } },
   },
+
 
   // A low tunnel with three glowing pits (slimes live in them), two rows of galleries above, and
   // the throne door on a raised alcove in the middle.
@@ -769,7 +774,9 @@ const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ 
 // Mossy Woods' drifting log, gliding across the gap in the Warg Hollows.
 MAPS.woods.platforms.push({ x: 950, y: 660, w: 120, style: 'planks', drift: { dx: 180, period: 8 } });
 MAPS.woods.portals.push({ id: 'glade', x: 1240, y: 180, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
-MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 760, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
+// The ruins' floating slab, and the way to the shrine from the galleries.
+MAPS.ruins.platforms.push({ x: 1115, y: 500, w: 140, drift: { dx: 230, period: 9 } });
+MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 580, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
 MAPS.cave.portals.push({ id: 'springs', x: 1660, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east', label: 'Frozen Peak' });
 MAPS.sky.portals.push({ id: 'starfall', x: 1420, y: 560, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' });
