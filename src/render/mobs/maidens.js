@@ -373,9 +373,37 @@ function backHair(H, low = 7.6) {
 
 // ---------- Body parts ----------
 
-// A limb from a to b to c as two tapered bands, inked so it reads over the body.
+// A limb from a to b to c as one smooth inked band (a curve through the joint, so knees and elbows
+// bend softly instead of two straight pieces meeting at a ball). With a second colour `col2` the
+// lower part (a boot, a glove) is col2 and the upper part laid over it in `col` to the joint.
 function limb(a, b, c, w0, w1, w2, col, col2 = col) {
-  return [...oband([a, b], taperW(w0, w1), col, 1), ...ooval(b[0], b[1], w1 * 0.5, w1 * 0.5, col2), ...oband([b, c], taperW(w1, w2), col2, 1)];
+  const sm = (t) => t * t * (3 - 2 * t);
+  const wf = (t) => (t < 0.5 ? lerp(w0, w1, sm(t / 0.5)) : lerp(w1, w2, sm((t - 0.5) / 0.5)));
+  if (col2 === col) return oband([a, b, c], wf, col, 5);
+  return [...oband([a, b, c], wf, col2, 5), ...oband([a, b], (t) => wf(t * 0.5), col, 4)];
+}
+// A closed shape with its corners rounded off (Chaikin corner cutting, `k` passes).
+function round(pts, k = 2) {
+  let p = pts;
+  for (let it = 0; it < k; it++) {
+    const q = [];
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i];
+      const b = p[(i + 1) % p.length];
+      q.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    p = q;
+  }
+  return p;
+}
+// Softer shadows: every shadow tone in a palette (a key ending in Dk, Sh or Sh2 whose base key is
+// there too) pulled a third of the way back toward its base, so folds read as gentle form.
+function soften(P, k = 0.62) {
+  for (const key of Object.keys(P)) {
+    const m = key.match(/^(.*?)(Dk|Sh2|Sh)$/);
+    if (m && P[m[1]]) P[key] = mix(P[m[1]], P[key], k);
+  }
+  return P;
 }
 
 // A wide kimono sleeve: it wraps the upper arm, opens at the wrist, and hangs in a deep pocket
@@ -384,8 +412,8 @@ function sleeve(sh, e, h, c, cDk, sw, drop = 6, edge = null) {
   const low = Math.max(e[1], h[1]);
   const fx = Math.max(h[0], e[0] + 1);
   const pts = [[sh[0] - 2.1, sh[1] - 0.6], [sh[0] + 1.6, sh[1] - 1.4], [e[0] + 2, e[1] - 1.2], [h[0] - 0.4, h[1] - 1.5], [h[0] + 0.3, h[1] + 1.5], [fx - 0.6 + sw * 0.25, low + drop * 0.8], [lerp(fx, e[0], 0.5) - 0.6 + sw * 0.6, low + drop + 0.4], [e[0] - 2.8 + sw, low + drop * 0.65], [e[0] - 2.9 + sw * 0.3, e[1] - 0.4]];
-  const out = [...opoly(pts, c)];
-  out.push(fpoly([pts[6], pts[7], pts[8], [e[0] - 0.6, e[1] + 1.4], [lerp(fx, e[0], 0.5) - 0.4 + sw * 0.5, low + drop - 1]], cDk));
+  const out = [...opoly(round(pts, 2), c)];
+  out.push(fpoly(round([pts[6], pts[7], pts[8], [e[0] - 0.6, e[1] + 1.4], [lerp(fx, e[0], 0.5) - 0.4 + sw * 0.5, low + drop - 1]], 1), cDk));
   out.push(line([[e[0] + 0.4, e[1] + 1], [lerp(fx, e[0], 0.4) + sw * 0.4, low + drop - 1.2]], 0.45, cDk));
   if (edge) out.push(line([pts[5], pts[6], pts[7]], 0.8, edge, 1));
   return out;
@@ -437,20 +465,20 @@ function fluffTail(pts, w, c, tip, o = {}) {
 
 // ---------- Kitsune Miko ----------
 
-const KM = {
+const KM = soften({
   skin: '#fff0e4', skinDk: '#f4d3c8', hair: '#ffbf72', hairDk: '#e8914f', hairLt: '#ffe1ae', tip: '#fffaf2', earIn: '#ffd9cf',
   robe: '#fffaf6', robeDk: '#e9dcea', red: '#ef5d74', redDk: '#c8435d', redLt: '#ff8a9a', gold: '#ffd36b', fire: '#a3b6ff', fire2: '#e4ecff', fireHot: '#ff8fd0',
   wood: '#c98f5c', paper: '#ffffff', tabi: '#ffffff', zori: '#ef5d74', lip: '#d8556e',
-};
+});
 // Fox eyes: almond, lifted at the outer corner, fox-fire violet (a strong contrast to her orange
 // hair) with slit pupils and a red liner flick; a
 // sly closed smile, a fang when roused.
 const FOX_FACE = {
   skin: KM.skin, skinSh: '#f6cdc2', skinSh2: '#e2a0a2', blush: '#ff9fb2', lip: '#d8556e', lipLine: '#9e3550',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.1, ry: 3, tilt: 0.55, iris: '#8f6bff', irisDk: '#3a238f', irisLt: '#d6c8ff', hot: '#ff4f6e', hotDk: '#8e1430', pupil: 'slit', pupilC: '#1c1048', wing: 1.8, flicks: 1, lashLen: 1.2, liner: '#e8384f', ink: '#4a1e26', crease: false, lower: '#e3a59e' },
+  eye: { nearX: 2.2, farX: 9.6, rx: 3.4, ry: 2.3, far: 0.82, tilt: 0.5, iris: '#8f6bff', irisDk: '#3a238f', irisLt: '#d6c8ff', hot: '#ff4f6e', hotDk: '#8e1430', pupil: 'slit', pupilC: '#1c1048', wing: 1.3, flicks: 1, lashLen: 1, shadow: '#ffb4bc', smoky: 0.1, ink: '#4a1e26', crease: false, lower: '#e3a59e' },
   brow: { c: '#b8622f', kind: 'soft', w: 0.8 },
   fang: 'angry',
-  moods: { idle: { open: 0.86, mouth: 'sly' }, angry: { mouth: 'snarl', pupil: 0.5 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
+  moods: { idle: { open: 0.84, mouth: 'sly' }, angry: { mouth: 'snarl', pupil: 0.5 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'smirk' } },
 };
 // A miko's fringe: pointed clumps parted a little off centre, the middle one dipping between the eyes.
 const FOX_FRINGE = [[-2.4, -4.6, -3.2, 0.8, 3, -0.5], [-0.4, -5.6, -0.6, -0.4, 3.4, -0.3], [2, -5.6, 2.9, 1.2, 3.4, 0.4], [4.4, -5, 5.2, -0.4, 3.2, 0.4], [6.4, -3.6, 7.5, 1.8, 2.4, 0.4]];
@@ -582,7 +610,7 @@ function kitsune(pose, f, mood) {
     const lag = clamp(-v * 0.8, -2, 2);
     const top = back ? [pt(-5, -3.4), pt(1.6, -3.4)] : [pt(-2.4, -3.4), pt(4.2, -3.4)];
     const hem = [[a[0] + 4.3 + lag, hy + 0.2], [a[0] + 0.6 + lag * 0.6, hy - 0.4], [a[0] - 3.8 + lag, hy + 0.4]];
-    const r = [...opoly([top[0], top[1], [k[0] + 3, k[1] - 1], hem[0], hem[1], hem[2], [k[0] - 3.3, k[1] + 0.4]], c)];
+    const r = [...opoly(round([top[0], top[1], [k[0] + 3, k[1] - 1], hem[0], hem[1], hem[2], [k[0] - 3.3, k[1] + 0.4]], 2), c)];
     for (const t of [0.3, 0.65]) r.push(line([lerp2(top[0], top[1], t), [k[0] - 3 + t * 6, k[1]], lerp2(hem[2], hem[0], t)], 0.4, shade(c, -9), 1));
     if (!back) r.push(fband([[top[1][0] - 0.6, top[1][1] + 1], [k[0] + 2.2, k[1]], [hem[0][0] - 0.8, hem[0][1] - 0.6]], 0.7, P.redLt, 2));
     r.push(line([hem[0], hem[1], hem[2]], 0.5, shade(c, -14), 1));
@@ -685,17 +713,17 @@ function kitsune(pose, f, mood) {
 
 // ---------- Sylph ----------
 
-const SY = {
+const SY = soften({
   skin: '#f3fffa', skinDk: '#d2efe6', hair: '#8fe2c4', hairDk: '#5fc2a2', hairLt: '#dcfff0', dress: '#86dcb4', dressDk: '#5fbf98', dressLt: '#c8f6dc',
   leaf: '#78d494', ribbon: '#ffc4e4', ribbonDk: '#f09ccb', wing: '#effdff', wingDk: '#c8eef0', vein: '#8fd6cc', wingTint: '#f2dcff', gust: '#d4fff1', gust2: '#ffffff', flower: '#ffb3d9', gold: '#ffe08a',
-};
+});
 // Round, glowing lilac eyes (set against her mint hair) with a star glint, soft lashes; airy and
 // sweet, she gasps when struck.
 const SYLPH_FACE = {
   skin: SY.skin, skinSh: '#d2efe6', skinSh2: '#a6d2cc', blush: '#ffb0d0', lip: '#ff7fb0', lipLine: '#c0457a',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.3, ry: 3.5, tilt: 0.04, iris: '#b07cff', irisDk: '#4a2a9a', irisLt: '#efe2ff', hot: '#ff6fb8', hotDk: '#a01a6a', pupil: 'round', pupilC: '#22145a', sparkle: true, wing: 1.1, flicks: 1, lashLen: 1.2, ink: '#1f5a5a', crease: false, lower: '#a8d8cc', lashSh: '#c8e8e2' },
+  eye: { nearX: 2.2, farX: 9.6, rx: 3.4, ry: 3, far: 0.86, tilt: 0.02, iris: '#b07cff', irisDk: '#4a2a9a', irisLt: '#efe2ff', hot: '#ff6fb8', hotDk: '#a01a6a', pupil: 'round', pupilC: '#22145a', sparkle: true, wing: 1.1, flicks: 1, lashLen: 1.2, ink: '#1f5a5a', crease: false, lower: '#a8d8cc', lashSh: '#c8e8e2' },
   brow: { c: '#3f9a86', kind: 'soft', w: 0.7 },
-  moods: { idle: { mouth: 'soft', gaze: [0.06, -0.03] }, angry: { mouth: 'shout' }, hurt: { mouth: 'gasp' }, happy: { mouth: 'laugh' } },
+  moods: { idle: { mouth: 'soft', gaze: [0.06, -0.03] }, angry: { mouth: 'gasp' }, hurt: { mouth: 'gasp' }, happy: { lids: 'open', open: 1, iris: 1.1, mouth: 'grin', blush: 1.5 } },
 };
 // Wispy clumps that lift and curl at the tips.
 const SYLPH_FRINGE = [[-2.4, -4.6, -3.4, 0.4, 2.8, -0.8], [-0.4, -5.6, -0.4, -0.2, 3.2, -0.5], [2, -5.6, 3.1, 1.2, 3.2, 0.6], [4.4, -5, 5.4, -0.6, 3, 0.7], [6.4, -3.6, 7.6, 1.6, 2.4, 0.6]];
@@ -908,16 +936,16 @@ function sylph(pose, f, mood) {
 
 // ---------- Yuki-onna ----------
 
-const YU = {
+const YU = soften({
   skin: '#f6f8ff', skinDk: '#dde3f6', hair: '#3b3858', hairDk: '#28253f', hairLt: '#7584b4', kimono: '#fbfdff', kimonoDk: '#dbe3f4', ice: '#a6d8ff', iceDk: '#6eaee8', iceLt: '#dcf1ff',
   obi: '#8ec6f6', obiDk: '#5f9ad8', silver: '#d4dcf0', snow: '#ffffff', breath: '#e2f4ff',
-};
+});
 // Pale, frosty eyes that droop at the outer corner, a melancholy lift to the brows, blue lips.
 const YUKI_FACE = {
   skin: YU.skin, skinSh: '#dde3f6', skinSh2: '#b7bfe6', blush: '#c9d2ff', blushK: 0.75, lip: '#86aef0', lipLine: '#3f62b0', mouthIn: '#2e3a78', tongue: '#9fb6f0', tearC: '#d8f0ff',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.1, ry: 2.9, tilt: -0.22, iris: '#a8dcff', irisDk: '#3c64b0', irisLt: '#eefaff', hot: '#4fc0ff', hotDk: '#1a4a9a', pupil: 'round', pupilC: '#22346e', ink: '#2a2c58', wing: 1.3, flicks: 2, lashLen: 1.1, crease: false, lower: '#b8c2e8', lashSh: '#cfd6f2' },
+  eye: { nearX: 2.2, farX: 9.6, rx: 3.6, ry: 2.2, far: 0.82, tilt: -0.26, iris: '#a8dcff', irisDk: '#3c64b0', irisLt: '#eefaff', hot: '#4fc0ff', hotDk: '#1a4a9a', pupil: 'round', pupilC: '#22346e', ink: '#2a2c58', wing: 1.5, flicks: 3, lashLen: 1.2, crease: false, lower: '#b8c2e8', lashSh: '#cfd6f2' },
   brow: { c: '#4a4870', kind: 'straight', w: 0.7 },
-  moods: { idle: { open: 0.8, mouth: 'calm', blush: 0.5, brow: { inner: -0.7, outer: 0.3, arch: 0, w: 1 } }, angry: { open: 0.85, mouth: 'shout', blush: 0 }, hurt: { mouth: 'gasp' }, happy: { mouth: 'soft', blush: 0.8 } },
+  moods: { idle: { open: 0.8, mouth: 'calm', blush: 0.5, brow: { inner: -0.7, outer: 0.3, arch: 0, w: 1 } }, angry: { open: 0.9, mouth: 'shout', blush: 0 }, hurt: { mouth: 'gasp' }, happy: { lids: 'open', open: 0.6, mouth: 'soft', blush: 0.9 } },
 };
 // A hime cut: a straight-cut fringe, still split into pointed clumps.
 const YUKI_FRINGE = [[-2.4, -4.6, -2.8, 0.2, 3, -0.2], [-0.4, -5.6, -0.5, -0.2, 3.2, -0.1], [2, -5.6, 2.4, 0.6, 3.2, 0.1], [4.4, -5, 4.8, -0.3, 3.2, 0.1], [6.4, -3.6, 7, 0.4, 2.6, 0.1]];
@@ -1113,16 +1141,16 @@ function frostSleeve(sh, e, h, c, cDk, sw, drop, P, ph) {
 
 // ---------- Nekomata ----------
 
-const NK = {
+const NK = soften({
   skin: '#fff0e8', skinDk: '#f2d3cc', fur: '#bba8e8', furDk: '#8d7ac6', furLt: '#e4dbff', tip: '#fff8ff', earIn: '#ffc6dc',
   leather: '#5c4680', leatherDk: '#44345f', leatherLt: '#7f68a8', scarf: '#ff7fa0', scarfDk: '#d95f82', belt: '#b47c54', beltDk: '#87593a', gold: '#ffd36b',
   blade: '#eef4ff', bladeDk: '#a7b4d8', stocking: '#433a63', stockingLt: '#5f5486', slash: '#ffe2f0',
-};
+});
 // Big, sharp cat eyes: gold with slit pupils that pinch to needles when she's angry, a little
 // 'w' mouth with a fang.
 const CAT_FACE = {
   skin: NK.skin, skinSh: '#f4cfca', skinSh2: '#dc9fab', blush: '#ffa0b8', lip: '#d85c7a', lipLine: '#9a3452',
-  eye: { nearX: 1.4, farX: 9.8, rx: 4.4, ry: 3.5, tilt: 0.42, iris: '#ffd23f', irisDk: '#b06a08', irisLt: '#fff4a6', hot: '#ff8a1f', hotDk: '#9a3a06', pupil: 'slit', pupilC: '#2a1408', ink: '#2a1f3d', wing: 1.7, flicks: 2, lashLen: 1.3, crease: false, lower: '#e0a0a8' },
+  eye: { nearX: 2.2, farX: 9.6, rx: 3.5, ry: 2.9, far: 0.85, tilt: 0.42, iris: '#ffd23f', irisDk: '#b06a08', irisLt: '#fff4a6', hot: '#ff8a1f', hotDk: '#9a3a06', pupil: 'slit', pupilC: '#2a1408', ink: '#2a1f3d', wing: 1.2, flicks: 1, lashLen: 1, crease: false, lower: '#e0a0a8' },
   brow: { c: '#6a58a6', kind: 'arch', w: 0.75 },
   fang: 'always',
   moods: { idle: { mouth: 'cat' }, angry: { mouth: 'snarl', pupil: 0.4 }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } },
@@ -1331,18 +1359,18 @@ function dagger(h, a, P, back) {
 
 // ---------- Lamia ----------
 
-const LA = {
+const LA = soften({
   skin: '#ffe0c6', skinDk: '#f1c3a6', hair: '#2f8483', hairDk: '#1f6266', hairLt: '#6fc8bb', scale: '#56c39a', scaleDk: '#2e9877', scaleLt: '#a2ecc6', belly: '#fff0c6', bellyDk: '#ead098',
   pattern: '#25806a', gold: '#ffd36b', goldDk: '#d39a42', gem: '#5fd8e6', gem2: '#ff7fb0', veil: '#ffd2ea', veilDk: '#f3a9cf', veilLt: '#fff0f8', strike: '#fff2c8',
-};
+});
 // Heavy-lidded serpent eyes: gold with slit pupils under half-lowered lids, a violet liner flick,
 // a knowing smirk; when she glares the lids lift and the pupils pinch.
 const SNAKE_FACE = {
   skin: LA.skin, skinSh: '#f2bea0', skinSh2: '#d9918a', blush: '#ffaab4', lip: '#d4507a', lipLine: '#962c58',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.2, ry: 3, tilt: 0.35, iris: '#ffcf4a', irisDk: '#a0620a', irisLt: '#fff2a0', hot: '#ff5fa8', hotDk: '#8a1050', pupil: 'slit', pupilC: '#3a1a06', ink: '#24142e', wing: 2, flicks: 2, lashLen: 1.4, liner: '#9a5ad0', crease: false, lower: '#d7959a' },
+  eye: { nearX: 2.2, farX: 9.8, rx: 3.6, ry: 2.4, far: 0.8, tilt: 0.3, iris: '#ffcf4a', irisDk: '#a0620a', irisLt: '#fff2a0', hot: '#ff5fa8', hotDk: '#8a1050', pupil: 'slit', pupilC: '#3a1a06', ink: '#24142e', wing: 1.8, flicks: 3, lashLen: 1.3, shadow: '#d6b4ea', smoky: 0.3, crease: false, lower: '#d7959a' },
   brow: { c: '#1f4a50', kind: 'arch', w: 0.75 },
   fang: 'angry',
-  moods: { idle: { open: 0.62, mouth: 'smirk', gaze: [0.1, 0.03] }, angry: { open: 0.92, mouth: 'snarl', pupil: 0.45 }, hurt: { mouth: 'grimace' }, happy: { open: 0.62, mouth: 'grin' } },
+  moods: { idle: { open: 0.62, mouth: 'smirk', gaze: [0.1, 0.03] }, angry: { open: 0.92, mouth: 'snarl', pupil: 0.45 }, hurt: { mouth: 'grimace' }, happy: { lids: 'open', open: 0.5, mouth: 'laugh' } },
 };
 // A side-swept fringe: long clumps sweeping toward the face.
 const SNAKE_FRINGE = [[-2.6, -4.4, -3.6, 1.2, 3, -0.8], [-0.6, -5.6, -0.4, -0.6, 3.2, -0.6], [1.6, -5.8, 4, 0.6, 3.4, -0.9], [4, -5.2, 6.4, -0.2, 3, -0.8], [6, -3.8, 7.8, 2.2, 2.4, -0.4]];
@@ -1547,18 +1575,18 @@ const lerp2 = (p, q, t) => [lerp(p[0], q[0], t), lerp(p[1], q[1], t)];
 
 // ---------- Lupina ----------
 
-const LU = {
+const LU = soften({
   skin: '#fbe5d6', skinDk: '#ecc6b4', hair: '#bcc6de', hairDk: '#8f9cc0', hairLt: '#e8eefb', fur: '#dde4f2', furDk: '#a8b2cc', tip: '#ffffff', earIn: '#ffc9d8',
   leather: '#a4714e', leatherDk: '#7a5038', leatherLt: '#cc9a6e', shirt: '#fff4e2', shirtDk: '#e8d6c4', cape: '#5fa07c', capeDk: '#447e5f', capeLt: '#8bc9a2',
   wood: '#8c5c3e', woodLt: '#bb8b5f', string: '#fff7e2', metal: '#dbe3f2', gold: '#ffd36b', fletch: '#ff8fae', legging: '#5a4d6e', streak: '#fff6d8',
-};
+});
 // Amber wolf eyes, level and sure, under straight brows; a confident smirk that shows a fang.
 const WOLF_FACE = {
   skin: LU.skin, skinSh: '#eec3b2', skinSh2: '#d4979a', blush: '#ffa8b0', lip: '#cf5a6e', lipLine: '#93344c',
-  eye: { nearX: 1.5, farX: 9.8, rx: 4.1, ry: 3.1, tilt: 0.3, iris: '#ffb037', irisDk: '#a8520a', irisLt: '#ffe48a', hot: '#ff6a2a', hotDk: '#9a2a06', pupil: 'round', pupilC: '#3a1a06', ink: '#2a2238', wing: 1.5, flicks: 2, lashLen: 1.2, crease: false, lower: '#dca0a0' },
+  eye: { nearX: 2.3, farX: 9.6, rx: 3.3, ry: 2.4, far: 0.84, tilt: 0.2, iris: '#ffb037', irisDk: '#a8520a', irisLt: '#ffe48a', hot: '#ff6a2a', hotDk: '#9a2a06', pupil: 'round', pupilC: '#3a1a06', ink: '#2a2238', wing: 1, flicks: 1, lashLen: 0.9, crease: false, lower: '#dca0a0' },
   brow: { c: '#5d6890', kind: 'straight', w: 0.72 },
   fang: 'always',
-  moods: { idle: { mouth: 'smirk', gaze: [0.1, 0], brow: { inner: 0.5, outer: -0.3, arch: 0, w: 1 } }, angry: { mouth: 'snarl' }, hurt: { mouth: 'grit' }, happy: { mouth: 'laugh' } },
+  moods: { idle: { mouth: 'smirk', gaze: [0.1, 0], brow: { inner: 0.5, outer: -0.3, arch: 0, w: 1 } }, angry: { mouth: 'snarl' }, hurt: { mouth: 'grit' }, happy: { lids: 'open', open: 0.9, mouth: 'grin' } },
 };
 // A shaggy fringe of long pointed clumps, one falling between the eyes.
 const WOLF_FRINGE = [[-2.4, -4.6, -3.4, 0.6, 3, -0.6], [-0.4, -5.6, -0.8, -0.4, 3.2, -0.4], [1.8, -5.8, 2.8, 1.4, 3, 0.4], [4, -5.2, 5, -0.6, 3, 0.6], [6, -4, 7.2, 0.8, 2.6, 0.5], [7.2, -2.4, 8, 2.6, 1.6, 0.3]];
@@ -1697,8 +1725,8 @@ function lupina(pose, f, mood) {
     const ang = Math.atan2(a[1] - kn.k[1], a[0] - kn.k[0]);
     const top = [kn.k[0] + Math.cos(ang) * 1.2, kn.k[1] + Math.sin(ang) * 1.2];
     const c = back ? P.leatherDk : P.leather;
-    r.push(...oband([top, a], taperW(3.3, 2.6), c, 1));
-    r.push(...opoly([[a[0] - 1.8, a[1] - 1], [a[0] + 1.4, a[1] - 1.4], [a[0] + 3.6, a[1] + 0.1], [a[0] + 3.5, a[1] + 1.1], [a[0] - 1.9, a[1] + 1.1]], c));
+    r.push(...oband([top, [lerp(top[0], a[0], 0.5) + 0.2, lerp(top[1], a[1], 0.5)], a], (t) => lerp(3.4, 2.6, t), c, 3));
+    r.push(...opoly(round([[a[0] - 1.8, a[1] - 1], [a[0] + 1.4, a[1] - 1.4], [a[0] + 3.6, a[1] + 0.1], [a[0] + 3.5, a[1] + 1.1], [a[0] - 1.9, a[1] + 1.1]], 2), c));
     r.push(...ooval(top[0], top[1], 2.4, 1.3, back ? P.furDk : P.fur, ang + Math.PI / 2));
     return r;
   };
