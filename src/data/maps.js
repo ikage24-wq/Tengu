@@ -158,88 +158,59 @@ export const MAPS = {
   },
 
 
-  // Clover Hills climbs a farm hillside in three zones (the tall-map rules, a light rework): the
-  // Mandrake Rows at the bottom, crop fields where Mandrakes grow and Scarecrow Imps stand; the
-  // Goblin Barnyard round the big barn, the Toadstool Goblins' den, swept by Kitchen Brownies; and
-  // the breezy Jackalope Ridge, where Wind Ferrets dart, with a lookout on top.
-  // Each zone hunts in a loop (ropes at both ends) and has a moving part: a hay-bale bounce, the
-  // hayloft's chaff updraft, and a ledge drifting across the ridge. The fishing pond is in the quiet
-  // west corner with a dock of its own; no monsters near the portals.
+  // Clover Hills is a surface-and-underground farm (data/climb.js lay(), zones by height): the
+  // Farm Fields along the top, where the Scarecrow Imps stand and the Toadstool Goblins keep the
+  // big barn (Old MacGoblin's nest), broken by holes into the Root Cellar below, where the
+  // Mandrakes grow in the dark, the Kitchen Brownies keep house, and a quiet underground spring is
+  // good for fishing; and the Hayloft Ridge above, where the Jackalopes play and the Wind Ferrets
+  // dart. A hay bale bounces you up from the fields, chaff rises from the cellar through a hole,
+  // and a ledge drifts along the ridge.
   meadow2: {
     id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
-    width: 2400, height: 1000, groundY: 960,
     look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'farm', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
-    zones: [
-      { name: 'Mandrake Rows', from: Infinity, color: '#5fae5f' },
-      { name: 'Goblin Barnyard', from: 760, color: '#d0704a', look: { sky: ['#7fc8ff', '#c8e8ff', '#fff0d8'], far: '#b8dc9a', mid: '#8fcf7a', midTrim: '#6fae5f', props: ['tuft', 'rock', 'bush'] } },
-      { name: 'Jackalope Ridge', from: 600, color: '#4f95e0', look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
-    ],
-    terrain: [[0, 960], [950, 960], [1030, 930], [1470, 930], [1550, 960], [2400, 960]],
-    platforms: [
-      // Mandrake Rows (and the fishing dock over the pond by the west exit).
-      { x: 300, y: 880, w: 550 }, { x: 1550, y: 880, w: 700 },
-      { x: 500, y: 800, w: 1400 },
-      { x: 150, y: 912, w: 95, posts: true },
-      // Goblin Barnyard.
-      { x: 100, y: 720, w: 900 }, { x: 1400, y: 720, w: 900 },
-      { x: 450, y: 640, w: 1500 },
-      // Jackalope Ridge, a ledge drifting across its gap, and the lookout.
-      { x: 250, y: 560, w: 600 }, { x: 1550, y: 560, w: 600 },
-      { x: 700, y: 480, w: 1000 },
-      { x: 300, y: 400, w: 500 }, { x: 1600, y: 400, w: 500 },
-      { x: 820, y: 400, w: 140, drift: { dx: 600, period: 12 } },
-      { x: 1000, y: 320, w: 400, thick: 44 },
-    ],
-    ropes: [
-      { x: 820, top: 880, bottom: 960, ladder: true }, { x: 2230, top: 880, bottom: 960, ladder: true },
-      { x: 540, top: 800, bottom: 880 }, { x: 1860, top: 800, bottom: 880 },
-      { x: 960, top: 720, bottom: 800 }, { x: 1440, top: 720, bottom: 800 },
-      { x: 480, top: 640, bottom: 720 }, { x: 1920, top: 640, bottom: 720 },
-      { x: 820, top: 560, bottom: 640 }, { x: 1580, top: 560, bottom: 640 },
-      { x: 720, top: 480, bottom: 560 }, { x: 1640, top: 480, bottom: 560 },
-      { x: 760, top: 400, bottom: 480 }, { x: 1650, top: 400, bottom: 480 },
-      { x: 1050, top: 320, bottom: 480, ladder: true },
-    ],
-    // A hay bale on the hill bounces you up to the top row; the hayloft breathes a warm updraft of
-    // chaff up past the ridge (Up to ride it).
-    springs: [{ x: 1250, y: 930, up: 170, kind: 'hay' }],
-    updrafts: [{ x: 1200, w: 50, top: 450, bottom: 640, kind: 'chaff' }],
+    ...lay({
+      width: 2400, ground: 1000, by: 'y', quiet: [[40, 700, 160], [2340, 700, 160], [90, 1000, 320], [90, 920, 280], [90, 840, 280]],
+      zones: [
+        { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.08] }],
+          look: { sky: ['#6a8a6a', '#8aa88a', '#c8d8b8'], far: '#7a9a7a', mid: '#5a7a5a' } },
+        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }, { kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+          look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
+      ],
+      ledges: [
+        // The Farm Fields, with two holes into the cellar.
+        { x: 0, y: 700, w: 700 }, { x: 800, y: 700, w: 900 }, { x: 1800, y: 700, w: 600 },
+        // Shelves in the Root Cellar, and the dock at its underground spring.
+        { x: 300, y: 920, w: 300 }, { x: 950, y: 920, w: 400 }, { x: 1900, y: 920, w: 300 },
+        { x: 600, y: 840, w: 240 }, { x: 1400, y: 840, w: 260 },
+        { x: 40, y: 952, w: 95, posts: true },
+        // The Hayloft Ridge, and the old tree's hilltop.
+        { x: 250, y: 620, w: 300 }, { x: 1800, y: 620, w: 300 },
+        { x: 550, y: 540, w: 300 }, { x: 1500, y: 540, w: 300 },
+        { x: 900, y: 460, w: 600 }, { x: 1100, y: 380, w: 300, thick: 44 },
+        // The ledge drifting along the ridge.
+        { x: 860, y: 540, w: 120, drift: { dx: 500, period: 11 } },
+      ],
+    }),
+    // A moving part per zone: chaff rising from the cellar through a hole (Up to ride it), a hay
+    // bale bouncing you up from the fields, and the ledge drifting along the ridge.
+    updrafts: [{ x: 750, w: 50, top: 670, bottom: 1000, kind: 'chaff' }],
+    springs: [{ x: 1500, y: 700, up: 170, kind: 'hay' }],
     portals: [
-      { id: 'west', x: 40, y: 960, to: 'meadow1', toPortal: 'east' },
-      { id: 'east', x: 2340, y: 960, to: 'harbor', toPortal: 'west' },
+      { id: 'west', x: 40, y: 700, to: 'meadow1', toPortal: 'east' },
+      { id: 'east', x: 2340, y: 700, to: 'harbor', toPortal: 'west' },
     ],
     npcs: [],
-    // A landmark per zone: the scarecrow in the rows, the barn in the barnyard, the old tree on
-    // the ridge.
-    deco: [['fence', 330], ['scarecrow', 600], ['cart', 1750], ['pond', 235], ['haystack', 2050, 2], ['signpost', 2180],
-      ['barn', 1200, 0, 640], ['haystack', 860, 0, 640], ['fence', 1600, 1, 640], ['beehive', 250, 0, 720],
-      ['bigtree', 1480, 1, 480]],
-    lamps: [{ x: 200, y: 890 }, { x: 1200, y: 590 }, { x: 1200, y: 290 }, { x: 600, y: 930 }],
-    spirit: { x: 1480, y: 360 },
+    // A landmark per zone: the spring pool in the cellar, the scarecrow and the barn in the fields,
+    // the old tree on the ridge.
+    deco: [['pond', 120], ['scarecrow', 400, 0, 700], ['barn', 1200, 0, 700], ['haystack', 900, 0, 700], ['fence', 1600, 1, 700], ['cart', 2000, 0, 700], ['signpost', 2200, 0, 700], ['beehive', 1900, 0, 620], ['bigtree', 1200, 1, 460]],
+    lamps: [{ x: 110, y: 930 }, { x: 1200, y: 650 }, { x: 1250, y: 340 }],
+    spirit: { x: 1700, y: 420 },
     // The area boss (world/nest.js): after enough hunting, Old MacGoblin storms out of the barn.
-    nest: { mob: 'macgoblin', x: 1200, y: 640, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the Goblin Barnyard!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
-    habitats: { sproutling: { naps: true, home: { x: 600, y: 960 } }, strawimp: { naps: true }, mushkin: { naps: true, home: { x: 1200, y: 640 } }, brownie: { home: { x: 1200, y: 640 } }, piglet: { play: true, naps: true }, kamaitachi: { play: true } },
-    spawns: [
-      // Mandrake Rows: Mandrakes, and Scarecrow Imps standing among them.
-      ...[420, 1700].map((x) => ({ mob: 'sproutling', x, y: 960 })),
-      ...[720, 1950].map((x) => ({ mob: 'strawimp', x, y: 960 })),
-      ...[1100, 1400].map((x) => ({ mob: 'sproutling', x, y: 930 })),
-      ...[400, 1750].map((x) => ({ mob: 'sproutling', x, y: 880 })),
-      ...[700, 2050].map((x) => ({ mob: 'strawimp', x, y: 880 })),
-      ...[800, 1200, 1600].map((x) => ({ mob: 'sproutling', x, y: 800 })),
-      // Goblin Barnyard: Toadstool Goblins, and Kitchen Brownies sweeping round the barn.
-      ...[350, 1650].map((x) => ({ mob: 'mushkin', x, y: 720 })),
-      ...[750, 2000].map((x) => ({ mob: 'brownie', x, y: 720 })),
-      ...[700, 1500].map((x) => ({ mob: 'mushkin', x, y: 640 })),
-      ...[1000, 1800].map((x) => ({ mob: 'brownie', x, y: 640 })),
-      // Jackalope Ridge: Jackalopes, and Wind Ferrets darting on the breeze.
-      ...[450, 1750].map((x) => ({ mob: 'piglet', x, y: 560 })),
-      ...[700, 2000].map((x) => ({ mob: 'kamaitachi', x, y: 560 })),
-      ...[900].map((x) => ({ mob: 'piglet', x, y: 480 })),
-      ...[1450].map((x) => ({ mob: 'kamaitachi', x, y: 480 })),
-      ...[500, 1850].map((x) => ({ mob: 'piglet', x, y: 400 })),
-    ],
+    nest: { mob: 'macgoblin', x: 1200, y: 700, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the barn!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
+    habitats: { sproutling: { naps: true, home: { x: 1100, y: 1000 } }, brownie: { home: { x: 1100, y: 1000 } }, strawimp: { naps: true }, mushkin: { naps: true, home: { x: 1200, y: 700 } }, piglet: { play: true, naps: true }, kamaitachi: { play: true } },
   },
+
 
 
   // The thieves' home port at dusk, in quarters: the market (Marlo's cart among tall pastel canal
@@ -506,77 +477,54 @@ export const MAPS = {
 // ---------- The warrior and mage homes, and the canyon road up to the warriors ----------
 
 Object.assign(MAPS, {
-  // Windy Canyon climbs a canyon wall in three zones (the tall-map rules, a light rework): the
-  // Canyon Floor, a dry riverbed where the Basilisk Hatchlings bask; the Basilisk Ledges, layered
-  // shelves of rock with a rope bridge drifting on the wind across the gap; and the Manticore Mesa
-  // on top, the Manticore Cubs' windy home, with the windmill lookout and the road on to Ember Crag
-  // as the reward for the climb. Each zone hunts in a loop and has a moving part: a canyon gust up
-  // from the floor, the drifting bridge, and air vents on the mesa.
+  // Windy Canyon is a trek across, side by side (data/climb.js lay()): the West Mesa where you
+  // arrive, the Basilisk Hatchlings' sunny plateau with a vent to bounce you up; the Gorge, a long
+  // rope bridge swaying over a deep canyon whose floor below is the Hatchlings' and Manticore Cubs'
+  // hunting ground, with the way into Rootwood Hollow down there and a gust to carry you back up to
+  // the bridge; and the East Mesa, the Manticore Cubs' crags, with the windmill lookout high above
+  // and the road on to Ember Crag beside it.
   canyon: {
     id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 },
-    width: 2400, height: 1100, groundY: 1060,
-    zones: [
-      { name: 'Canyon Floor', from: Infinity, color: '#c97a3a' },
-      { name: 'Basilisk Ledges', from: 860, color: '#b05a4a', look: { sky: ['#ffcf9e', '#ffe4c4', '#fff4e4'] } },
-      { name: 'Manticore Mesa', from: 620, color: '#6a7ad0', look: { sky: ['#9fc8ff', '#cfe4ff', '#fff0e0'] } },
-    ],
-    terrain: [[0, 1060], [2400, 1060]],
-    platforms: [
-      // Canyon Floor.
-      { x: 150, y: 980, w: 650 }, { x: 1500, y: 980, w: 700 },
-      { x: 500, y: 900, w: 1300 },
-      // Basilisk Ledges, and the rope bridge drifting across their gap.
-      { x: 100, y: 820, w: 800 }, { x: 1350, y: 820, w: 900 },
-      { x: 400, y: 740, w: 1500 },
-      { x: 150, y: 660, w: 600 }, { x: 1500, y: 660, w: 650 },
-      { x: 780, y: 660, w: 160, style: 'bridge', drift: { dx: 520, period: 11 } },
-      // Manticore Mesa, and the lookout.
-      { x: 300, y: 580, w: 900 },
-      { x: 1000, y: 500, w: 1100 },
-      { x: 200, y: 420, w: 700 },
-      { x: 1300, y: 340, w: 800 },
-      { x: 850, y: 260, w: 470, thick: 44 },
-    ],
-    ropes: [
-      { x: 170, top: 980, bottom: 1060, ladder: true }, { x: 2180, top: 980, bottom: 1060, ladder: true },
-      { x: 520, top: 900, bottom: 980 }, { x: 1780, top: 900, bottom: 980 },
-      { x: 870, top: 820, bottom: 900 }, { x: 1380, top: 820, bottom: 900 },
-      { x: 450, top: 740, bottom: 820 }, { x: 1880, top: 740, bottom: 820 },
-      { x: 700, top: 660, bottom: 740 }, { x: 1520, top: 660, bottom: 740 },
-      { x: 320, top: 580, bottom: 660 }, { x: 1100, top: 500, bottom: 580 }, { x: 1900, top: 500, bottom: 660 },
-      { x: 350, top: 420, bottom: 580 }, { x: 1350, top: 340, bottom: 500 }, { x: 2050, top: 340, bottom: 500 },
-      { x: 880, top: 260, bottom: 420, ladder: true }, { x: 1310, top: 260, bottom: 340, ladder: true },
-    ],
-    // A canyon gust lifts you from the floor (Up to ride it); air vents on the mesa bounce you up.
-    updrafts: [{ x: 1150, w: 54, top: 800, bottom: 1060, kind: 'gust' }],
-    springs: [{ x: 1500, y: 500, up: 175, kind: 'gust' }, { x: 600, y: 580, up: 175, kind: 'gust' }],
+    ...lay({
+      width: 2400, ground: 1000, by: 'x',
+      terrain: [[0, 600], [700, 600], [700, 1000], [1700, 1000], [1700, 560], [2400, 560]],
+      // Ropes down both canyon walls, hanging beside them from the top.
+      ropes: [{ x: 710, top: 600, bottom: 1000 }, { x: 1690, top: 560, bottom: 1000 }],
+      quiet: [[40, 600, 160], [1450, 1000, 200], [2130, 300, 200]],
+      zones: [
+        { name: 'West Mesa', color: '#c97a3a', from: 0, mobs: ['pebblet'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'The Gorge', color: '#b05a4a', from: 700, mobs: ['pebblet', 'scorpip'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] }],
+          look: { sky: ['#ffcf9e', '#ffe4c4', '#fff4e4'] } },
+        { name: 'East Mesa', color: '#6a7ad0', from: 1700, mobs: ['scorpip'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+          look: { sky: ['#9fc8ff', '#cfe4ff', '#fff0e0'] } },
+      ],
+      ledges: [
+        // The West Mesa's rocks.
+        { x: 150, y: 520, w: 300 },
+        // The rope bridge over the gorge, and ledges down its walls.
+        { x: 700, y: 600, w: 990, style: 'bridge' },
+        { x: 750, y: 900, w: 260 }, { x: 1450, y: 880, w: 220 }, { x: 900, y: 790, w: 240 }, { x: 1300, y: 770, w: 240 },
+        // The East Mesa's crags and the windmill lookout.
+        { x: 1900, y: 460, w: 300 }, { x: 2000, y: 300, w: 260, thick: 44 },
+      ],
+    }),
+    // A moving part per zone: a vent on the west mesa, a gust from the gorge floor back up to the
+    // bridge (Up to ride it), and a vent on the east mesa up to the crags.
+    springs: [{ x: 400, y: 600, up: 175, kind: 'gust' }, { x: 1960, y: 560, up: 120, kind: 'gust' }],
+    updrafts: [{ x: 1100, w: 54, top: 570, bottom: 1000, kind: 'gust' }],
     portals: [
-      { id: 'south', x: 40, y: 1060, to: 'meadow1', toPortal: 'north' },
-      { id: 'north', x: 1250, y: 260, to: 'crag', toPortal: 'south' },
+      { id: 'south', x: 40, y: 600, to: 'meadow1', toPortal: 'north' },
+      { id: 'north', x: 2200, y: 300, to: 'crag', toPortal: 'south' },
     ],
     npcs: [],
-    // A landmark per zone: the mesa rock and the old bones on the floor, the camp tent on the
-    // ledges, the windmill on the lookout.
-    deco: [['mesa', 300], ['bones', 860], ['totem', 1600], ['signpost', 2100], ['tent', 1100, 0, 740], ['windmillcrag', 1050, 0, 260]],
-    lamps: [{ x: 1100, y: 710 }, { x: 1050, y: 220 }, { x: 860, y: 1030 }],
-    spirit: { x: 1450, y: 200 },
-    habitats: { pebblet: { naps: true, home: { x: 860, y: 1060 } }, scorpip: { play: true, naps: true } },
-    spawns: [
-      // Canyon Floor: Basilisk Hatchlings basking.
-      ...[400, 700, 1300, 1700, 2000].map((x) => ({ mob: 'pebblet', x, y: 1060 })),
-      ...[400, 1650, 1950].map((x) => ({ mob: 'pebblet', x, y: 980 })),
-      ...[800, 1200, 1600].map((x) => ({ mob: 'pebblet', x, y: 900 })),
-      // Basilisk Ledges: both.
-      { mob: 'pebblet', x: 400, y: 820 }, { mob: 'scorpip', x: 700, y: 820 }, { mob: 'pebblet', x: 1600, y: 820 }, { mob: 'scorpip', x: 2000, y: 820 },
-      { mob: 'scorpip', x: 800, y: 740 }, { mob: 'pebblet', x: 1200, y: 740 }, { mob: 'scorpip', x: 1650, y: 740 },
-      { mob: 'pebblet', x: 400, y: 660 }, { mob: 'scorpip', x: 1800, y: 660 },
-      // Manticore Mesa: Manticore Cubs; the lookout left quiet.
-      ...[700, 1000].map((x) => ({ mob: 'scorpip', x, y: 580 })),
-      ...[1300, 1800].map((x) => ({ mob: 'scorpip', x, y: 500 })),
-      ...[450, 750].map((x) => ({ mob: 'scorpip', x, y: 420 })),
-      ...[1600, 1950].map((x) => ({ mob: 'scorpip', x, y: 340 })),
-    ],
+    // A landmark per zone: the mesa rock and the camp tent in the west, the old bones and the totem
+    // on the gorge floor, the windmill on the lookout.
+    deco: [['mesa', 550], ['tent', 300, 0, 520], ['bones', 1000], ['totem', 1550], ['signpost', 2300, 0, 560], ['windmillcrag', 2100, 0, 300]],
+    lamps: [{ x: 300, y: 480 }, { x: 1000, y: 970 }, { x: 2100, y: 260 }],
+    spirit: { x: 1200, y: 500 },
+    habitats: { pebblet: { naps: true, home: { x: 1000, y: 1000 } }, scorpip: { play: true, naps: true } },
   },
+
 
 
   // The warriors' home under the mesas, in quarters: the training yard (dummies and a totem) by the
@@ -717,7 +665,7 @@ export function getMap(id) {
 const G = 380; // every room's floor
 const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
 
-MAPS.canyon.portals.push({ id: 'hollow', x: 2260, y: 1060, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
+MAPS.canyon.portals.push({ id: 'hollow', x: 1450, y: 1000, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
 
 Object.assign(MAPS, {
   hollow_gate: {
