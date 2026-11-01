@@ -110,6 +110,19 @@ generic, stiff or clunky:
 
 If something reads as plain, rigid or "default", it isn't done: rework it before showing it.
 
+**Everything is animated, fluid, smooth and good (the player's standing rule, 2026-11-01).** Nothing
+in the game sits frozen: characters, monsters, summons, NPCs, props, plants, gathering spots,
+platforms, effects, UI and HUD pieces all have motion or idle life. And every motion is fluid:
+- Changes ease in and out (smoothstep, springs, blends between key poses), never snap or jump
+  between two states; timed beats use eased windows, not on/off switches.
+- Motion runs on time, at the frame rate, with in-between frames where sprites step; nothing
+  stutters, flickers or pops in and out.
+- Animation phases come from a thing's own place in the world (or its own id), never from where
+  it is on screen, so nothing speeds up or stalls as the camera moves; things on a moving platform
+  move with it.
+- Check it moving (a strip of moments or a short recording), not just a still, before calling it
+  done.
+
 **Summons are built on a player character, with a new rig (the player's standing rule, for every
 summon and companion).** Every summon (a companion, a shikigami, a guardian, anything a job calls
 to fight beside it) starts from the player character (the hero's body, parts and drawing, so it
