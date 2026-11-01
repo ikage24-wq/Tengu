@@ -30,6 +30,7 @@ import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { makeEquip } from '../core/items.js';
 import { recordBook } from '../core/collection.js';
 import { spotHere, startFishing, tickFishing } from './fishing.js';
+import { nodeHere, startGathering, tickGathering } from './gathering.js';
 import { DISH_BY_ID } from '../data/cooking.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
@@ -332,6 +333,12 @@ function interact(world) {
     if (why) world.log(why, '#ffb3c6');
     return true;
   }
+  // A gathering or mining spot: work it.
+  if (nodeHere(world)) {
+    const why = startGathering(world);
+    if (why) world.log(why, '#ffb3c6');
+    return true;
+  }
   // A town's stove: cook.
   if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
     world.events.push({ type: 'cook' });
@@ -534,6 +541,8 @@ export function updateWorld(world, dt, input) {
   // Without a renderer draining it (tests, background tabs), keep the cue queue short.
   if (world.juice.length > 200) world.juice.length = 0;
   world.now += dt;
+  // The map's moving parts run on the world's clock.
+  world.map.clock = world.now;
   world.attackTimer = Math.max(0, world.attackTimer - dt);
   world.lockTimer = Math.max(0, (world.lockTimer ?? 0) - dt);
   world.invuln = Math.max(0, world.invuln - dt);
@@ -573,7 +582,8 @@ export function updateWorld(world, dt, input) {
 
   // ----- Player control -----
   // While you fish, the line has the controls.
-  const fishing = !input.locked && tickFishing(world, dt, input.held, input.pressed);
+  // (Gathering works the same way.)
+  const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed));
   const held = input.locked || world.dead || fishing ? new Set() : input.held;
   const pressed = input.locked || world.dead || fishing ? new Set() : input.pressed;
   const intent = {
@@ -615,7 +625,7 @@ export function updateWorld(world, dt, input) {
   // A Thief's flash jump and shadow dash, an Archer's air leap (world/agility.js).
   startAgility(world, intent, pressed);
   if (!(pressed.has('ArrowUp') && interact(world))) {
-    stepBody(world.body, world.map, bodyIntent, dt, streaming ? { ...world.stats, speed: world.stats.speed * BARRAGE_WALK } : world.stats);
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), rider: true });
   }
   tickAgility(world, dt, blockWalls);
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;

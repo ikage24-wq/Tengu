@@ -33,6 +33,7 @@ export const BITE_WAIT = [2.5, 6];
 
 export const SPOTS = {
   dawnbeach: [{ x: 380, y: 480, face: -1, bx: 300, by: 478, pool: { fish_minnow: 6, fish_sardine: 4, fish_puffer: 1 } }],
+  meadow1: [{ x: 1580, y: 1000, face: 1, bx: 1650, by: 998, pool: { fish_minnow: 6, fish_carp: 4 } }],
   meadow2: [{ x: 1930, y: 680, face: 1, bx: 2000, by: 678, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2 } }],
   harbor: [{ x: 2230, y: 426, face: 1, bx: 2300, by: 466, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3 } }],
   glade: [{ x: 1630, y: 720, face: 1, bx: 1700, by: 718, pool: { fish_carp: 4, fish_trout: 4, fish_koi: 1.2, fish_eel: 0.8 } }],

@@ -2,6 +2,7 @@
 // Definitions live in data/items.js; instances carry their stats, rarity, color and polish.
 
 import { ITEMS, RARITIES, variantsFor, gauntletStars } from '../data/items.js';
+import { countItem, removeItem } from './inventory.js';
 
 let nextUid = 1;
 
@@ -96,13 +97,29 @@ export function polishGain(inst) {
   if (def.slot === 'earring') return { matk: 1 + Math.floor(L / 20), mp: 10 + L };
   return { wdef: 2 + Math.floor(L / 8), hp: 5 + L };
 }
-// One try. Returns { ok, why } (why: 'max' or 'gold' when it couldn't be tried).
-export function polish(char, inst, rng = Math.random) {
+// Mined ore (data/gathering.js) makes a try likelier to take: ORE_USE of the ore for the piece's
+// level, or one rare gem. Each tier of ore covers gear up to its `upTo` level.
+export const ORE_USE = 2;
+export const POLISH_ORES = [{ id: 'copper_ore', upTo: 29, boost: 0.12 }];
+export const POLISH_GEMS = [{ id: 'rose_quartz', boost: 0.25 }];
+export const oreFor = (inst) => POLISH_ORES.find((o) => (ITEMS[inst.id].reqLevel ?? 0) <= o.upTo) ?? null;
+// The chance with a boost (an ore or gem id, or null), capped so it's never certain.
+export const boostedChance = (inst, boost) => {
+  const b = POLISH_ORES.find((o) => o.id === boost)?.boost ?? POLISH_GEMS.find((o) => o.id === boost)?.boost ?? 0;
+  return Math.min(0.98, polishChance(inst) + b);
+};
+// One try, with an optional boost (an ore or gem id). Returns { ok, why } (why: 'max', 'gold' or
+// 'ore' when it couldn't be tried).
+export function polish(char, inst, rng = Math.random, boost = null) {
   if ((inst.polish ?? 0) >= POLISH_MAX) return { ok: false, why: 'max' };
   const cost = polishCost(inst);
   if (char.gold < cost) return { ok: false, why: 'gold' };
+  const gem = POLISH_GEMS.some((g) => g.id === boost);
+  const need = gem ? 1 : ORE_USE;
+  if (boost && (!gem && oreFor(inst)?.id !== boost || countItem(char.inventory, boost) < need)) return { ok: false, why: 'ore' };
   char.gold -= cost;
-  if (rng() >= polishChance(inst)) return { ok: false, why: null };
+  if (boost) removeItem(char.inventory, boost, need);
+  if (rng() >= boostedChance(inst, boost)) return { ok: false, why: null };
   for (const [k, v] of Object.entries(polishGain(inst))) inst.stats[k] = (inst.stats[k] ?? 0) + v;
   inst.polish = (inst.polish ?? 0) + 1;
   return { ok: true, why: null };

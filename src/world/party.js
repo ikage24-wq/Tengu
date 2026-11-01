@@ -852,7 +852,7 @@ export function tickHunter(bot, world, hunters, dt, rng) {
     br.goal = bot.leaving ?? null;
     br.stall = 0;
   }
-  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100 });
+  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
   carry(bot, world, dt, rng);
   const m = br.target;
   const st = bot.ai.weapon;
@@ -988,7 +988,7 @@ export function updateParty(bots, world, dt) {
       br.goal = null;
       br.stall = 0;
     }
-    stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100 });
+    stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
     carry(bot, world, dt, rng);
     br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;
     // Fight.

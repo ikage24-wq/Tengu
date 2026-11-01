@@ -5,6 +5,7 @@
 import { SETS, SET_SLOTS, setPieceId } from './sets.js';
 import { FISH, RARITY_NAMES } from './fishing.js';
 import { DISHES } from './cooking.js';
+import { GATHERED } from './gathering.js';
 
 export const EQUIP_SLOTS = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
 
@@ -460,6 +461,9 @@ for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, pri
 for (const d of DISHES) {
   add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 120 + d.heal * 0.4), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes.` });
 }
+
+// Gathered and mined finds (data/gathering.js).
+for (const [id, name, price, color, desc] of GATHERED) add({ id, name, type: 'etc', gathered: true, price, color, desc });
 
 // Quest items: carried for a quest (a delivery), never sold or dropped.
 add({ id: 'letter', name: 'Sealed Letter', type: 'etc', quest: true, price: 0, color: '#ff9ec0', desc: 'For someone special. Deliver it by talking to them.' });

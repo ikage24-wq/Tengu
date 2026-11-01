@@ -1,4 +1,5 @@
-// Player movement: walking, jumping, one-way ledges, ropes, drop-through, and knockback.
+// Player movement: walking, jumping, one-way ledges, ropes, drop-through, and knockback, and a
+// map's moving parts (bounce flowers, updrafts, drifting ledges).
 // Bodies use center-x and feet-y, so "standing on a surface" means body.y === surface.y.
 
 export const GRAVITY = 1500;
@@ -51,10 +52,66 @@ const surfaceCache = new WeakMap();
 export function surfacesOf(map) {
   let list = surfaceCache.get(map);
   if (!list) {
-    list = [...groundPieces(map), ...map.platforms.map((p) => ({ x1: p.x, x2: p.x + p.w, y: p.y, ground: false, yAt: () => p.y }))];
+    list = [...groundPieces(map), ...map.platforms.map((p) => p.drift
+      // A drifting ledge (a cloud) glides back and forth on the map's clock.
+      ? { get x1() { return p.x + driftOffset(p, map.clock ?? 0); }, get x2() { return p.x + p.w + driftOffset(p, map.clock ?? 0); }, y: p.y, ground: false, drift: p, yAt: () => p.y }
+      : { x1: p.x, x2: p.x + p.w, y: p.y, ground: false, yAt: () => p.y })];
     surfaceCache.set(map, list);
   }
   return list;
+}
+
+// How far a drifting ledge (`drift: { dx, period }`) has glided from its spot at `clock` (the
+// map's clock, world seconds): out and back each period, easing at both ends.
+export function driftOffset(p, clock) {
+  return p.drift.dx * (0.5 - 0.5 * Math.cos((2 * Math.PI * clock) / p.drift.period));
+}
+
+// The moving parts riders feel (the player and the other players, not summons or monsters):
+//   springs   {x, y, up}: a bounce flower on a surface; stepping on it throws you `up` px high
+//   updrafts  {x, w, top, bottom}: a column of rising air; press Up in it and you float up to
+//             `top` and hover there a moment (Down lets go)
+const SPRING_REACH = 13;
+const LIFT = 190;
+const HOVER = 3;
+function ride(body, map, intent, dt) {
+  // A drifting ledge carries whoever stands on it.
+  const s = body.onGround ? body.surface : null;
+  if (s?.drift) {
+    const o = driftOffset(s.drift, map.clock ?? 0);
+    if (body.carry === s) body.x += o - body.carryAt;
+    body.carry = s;
+    body.carryAt = o;
+  } else body.carry = null;
+  if (body.onGround) {
+    const sp = map.springs?.find((q) => Math.abs(q.x - body.x) <= SPRING_REACH && Math.abs(q.y - body.y) < 2);
+    if (sp) {
+      body.vy = -Math.sqrt(2 * GRAVITY * sp.up);
+      body.onGround = false;
+      body.surface = null;
+      body.y -= 1;
+      sp.firedAt = map.clock ?? 0;
+      return;
+    }
+  }
+  const u = map.updrafts?.find((q) => Math.abs(body.x - q.x) <= q.w / 2 && body.y <= q.bottom + 1 && body.y >= q.top - 40);
+  // Up (or a jump) catches the air; once caught it carries you until you let go with Down, drift
+  // out of it, or have hung at the top for a few seconds.
+  if (!u || body.onGround && !body.lifted) body.hoverT = 0;
+  else if (body.y <= u.top + 6) body.hoverT = (body.hoverT ?? 0) + dt;
+  if (u && !intent.down && body.hoverT < HOVER && (body.lifted === u || intent.up || intent.jump)) {
+    if (body.onGround) {
+      body.onGround = false;
+      body.surface = null;
+      body.y -= 1;
+      body.vy = -LIFT * 0.7;
+    }
+    // Rise to the top and hang there, bobbing a little, free to drift out sideways (gravity, added
+    // after this, is taken off up front).
+    const target = body.y > u.top + 30 ? -LIFT : Math.max(-LIFT, (u.top - body.y) * 5 + 14 * Math.sin((map.clock ?? 0) * 3));
+    body.vy += (target - body.vy) * Math.min(1, dt * 8) - GRAVITY * dt;
+    body.lifted = u;
+  } else body.lifted = null;
 }
 
 // The ground piece under x (at a wall, the one on the right).
@@ -105,9 +162,10 @@ export function ropeTop(map, r) {
 const ROPE_REACH = 16;
 
 // intent: { left, right, up, down, jump } booleans. `speed` and `jump` are percentages (100 = normal).
-export function stepBody(body, map, intent, dt, { speed = 100, jump = 100 } = {}) {
+export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider = false } = {}) {
   body.dropTimer = Math.max(0, body.dropTimer - dt);
   body.knockTimer = Math.max(0, body.knockTimer - dt);
+  if (rider && !body.rope) ride(body, map, intent, dt);
 
   // ----- On a rope -----
   if (body.rope) {

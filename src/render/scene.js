@@ -7,7 +7,7 @@ import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps, foxSpirit, FOX_SPIRIT_HEAT } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
-import { drawSceneBack, drawSceneFront } from './scenery.js';
+import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
 import { drawHero } from './hero.js';
 import { drawMonster } from './monsters.js';
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
@@ -28,6 +28,7 @@ import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { drawSpots, drawFishing } from './fishing.js';
+import { drawNodes } from './gathering.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
@@ -184,6 +185,31 @@ function drawMobs(ctx, world, cam, time) {
   }
 }
 
+// Climbing into a new zone of a tall map shows its name for a moment, softly, near the top.
+function drawZoneTitle(ctx, world, time) {
+  const b = world.body;
+  const z = world.map.zones?.length ? zoneAt(world.map, b.onGround || b.rope ? b.y : feel.zoneY ?? b.y) : null;
+  if (b.onGround || b.rope) feel.zoneY = b.y;
+  if (!z) return;
+  if (feel.zone !== z) {
+    // Not on arriving in the map: its own name card covers that.
+    feel.zoneAt = feel.zone && feel.zoneMap === world.map.id ? time : -99;
+    feel.zone = z;
+    feel.zoneMap = world.map.id;
+  }
+  const since = time - feel.zoneAt;
+  if (since > 3) return;
+  const a = Math.min(1, since / 0.4, (3 - since) / 0.6);
+  ctx.save();
+  ctx.globalAlpha = a;
+  const y = 46 - 6 * (1 - Math.min(1, since / 0.4)) ** 2;
+  text(ctx, z.name, VIEW_W / 2, y, { size: 12, bold: true, align: 'center', color: '#ffffff', outline: z.color ?? '#8f6cc4' });
+  ctx.globalAlpha = a * 0.85;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(VIEW_W / 2 - 40 * Math.min(1, since / 0.5), y + 5, 80 * Math.min(1, since / 0.5), 1);
+  ctx.restore();
+}
+
 export function drawWorld(ctx, world, viewCam, time) {
   const b = world.body;
   const dt = feel.last === null ? 0 : Math.min(0.1, Math.max(0, time - feel.last));
@@ -224,6 +250,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (world.dungeon) drawHollowBack(ctx, world, cam, time);
   // Fishing spots by the water.
   drawSpots(ctx, world, cam, time);
+  // Gathering and mining spots.
+  drawNodes(ctx, world, cam, time);
   // A queen's moves about to land.
   drawZonesBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
@@ -342,6 +370,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   else drawFx(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   drawCallout(ctx, world);
+  drawZoneTitle(ctx, world, time);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
   flushBubbles(ctx);

@@ -10,7 +10,7 @@
 // floor, the root shelves, the mushroom caps, the canopy), each with its own monsters, joined by
 // ropes and ladders, with exits on different floors. Players spread out over the floors instead of
 // crowding one line. Open /tools/tall-map.html to play it (arrows, Alt jump, Z attack, Up on a
-// rope); ?overview draws the whole map next to Petal Meadow, today's tallest meadow map.
+// rope); ?map=<id> plays another map; ?overview draws the whole map next to Petal Meadow.
 import { MAPS } from '../src/data/maps.js';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
@@ -121,11 +121,11 @@ if (q.has('overview')) {
     ctx.fillStyle = '#f6f0ff'; ctx.font = 'bold 16px sans-serif';
     ctx.fillText(label, x, y - 8);
   };
-  put(a, pad, 'Petal Meadow today (4 floors)');
+  put(a, pad, 'Petal Meadow');
   put(b, pad * 2 + a.width * K, 'Blossom Heights (4 zones, 14 floors, 3 exits)');
   document.title = 'ready';
 } else {
-  loadMap(w, 'heights', 'west');
+  loadMap(w, q.get('map') ?? 'heights', 'west');
   const SCALE = 2;
   canvas.width = VIEW_W * SCALE; canvas.height = VIEW_H * SCALE;
   document.getElementById('hint').textContent = 'Arrows move · Alt jumps · Up/Down on ropes · Z attacks · climb to the lookout at the top';

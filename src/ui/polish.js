@@ -1,11 +1,14 @@
 // Tora's forge: polish a piece of the gear you're wearing (core/items.js polish). The eight worn
 // pieces on the left, each with its polish shown as little stars; on the right the picked piece:
-// what the next step adds, the chance it takes, its price, and the Polish button. Sparks fly when a
+// what the next step adds, the chance it takes, ore to make it likelier (mined, data/gathering.js),
+// its price, and the Polish button. Sparks fly when a
 // step takes; a puff of smoke when it doesn't.
 
 import { NPCS } from '../data/npcs.js';
 import { EQUIP_SLOTS } from '../data/items.js';
-import { itemName, POLISH_MAX, polishChance, polishCost, polishGain, polish } from '../core/items.js';
+import { itemName, POLISH_MAX, polishCost, polishGain, polish, oreFor, POLISH_GEMS, ORE_USE, boostedChance } from '../core/items.js';
+import { countItem } from '../core/inventory.js';
+import { ITEMS } from '../data/items.js';
 import { COLORS, windowFrame, text, box, button, itemSlot, hover, clicked, tooltip, sparkle, icon, wrap } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { sfx } from '../audio/sfx.js';
@@ -87,13 +90,29 @@ export function polishWindow(ui, state, world) {
   const gain = Object.entries(polishGain(inst)).map(([k, v]) => `${NAMES[k] ?? k} +${v}`).join(', ');
   text(ctx, 'Next step', px, y + 60, { size: 7.5, bold: true, color: COLORS.muted });
   text(ctx, gain, px, y + 71, { size: 8.5, bold: true, color: '#3f9f5f' });
-  text(ctx, `Chance ${Math.round(polishChance(inst) * 100)}%`, px, y + 87, { size: 8.5, bold: true });
+  // Ore for this piece's level, or a rare gem: click one to use it on the next tries.
+  const boosts = [oreFor(inst) && { id: oreFor(inst).id, need: ORE_USE }, ...POLISH_GEMS.map((g) => ({ id: g.id, need: 1 }))].filter(Boolean);
+  const have = (b) => countItem(char.inventory, b.id) >= b.need;
+  if (dlg.boost && !boosts.some((b) => b.id === dlg.boost && have(b))) dlg.boost = null;
+  text(ctx, `Chance ${Math.round(boostedChance(inst, dlg.boost) * 100)}%`, px, y + 87, { size: 8.5, bold: true, color: dlg.boost ? '#3f9f5f' : COLORS.ink });
+  boosts.forEach((b, i) => {
+    const bx = px + 70 + i * 50;
+    const on = dlg.boost === b.id;
+    const ok = have(b);
+    ctx.globalAlpha = ok ? 1 : 0.45;
+    box(ctx, bx, y + 78, 46, 13, { fill: on ? '#d8f5d0' : '#ffffff', edge: on ? '#3f9f5f' : th.light, r: 6, width: on ? 2 : 1 });
+    icon(ctx, 'drop', bx + 7, y + 84.5, 7, ITEMS[b.id].color);
+    text(ctx, `x${b.need} (${countItem(char.inventory, b.id)})`, bx + 13, y + 87.5, { size: 6.5, bold: true, color: COLORS.ink });
+    ctx.globalAlpha = 1;
+    if (hover(ui, bx, y + 78, 46, 13)) tooltip(ui, `${ITEMS[b.id].name}: use ${b.need} a try for a better chance.${ok ? '' : ' (You need more: mine it on the fields.)'}`);
+    if (ok && clicked(ui, bx, y + 78, 46, 13)) dlg.boost = on ? null : b.id;
+  });
   const cost = polishCost(inst);
   icon(ctx, 'coin', px + 4, y + 98, 8, COLORS.gold);
   text(ctx, `${cost.toLocaleString()} gold`, px + 11, y + 101, { size: 8.5, bold: true, color: char.gold >= cost ? COLORS.gold : COLORS.bad });
-  wrap(ctx, "If it doesn't take, you only lose the gold.", px, y + 116, pw, { size: 7, color: COLORS.muted });
+  wrap(ctx, dlg.boost ? `If it doesn't take, you lose the gold and the ${ITEMS[dlg.boost].name}.` : "If it doesn't take, you only lose the gold. Mined ore makes it likelier.", px, y + 116, pw, { size: 7, color: COLORS.muted });
   if (button(ui, px, y + 136, 80, 20, 'Polish', { primary: true, enabled: char.gold >= cost, iconName: 'star' })) {
-    const r = polish(char, inst);
+    const r = polish(char, inst, Math.random, dlg.boost ?? null);
     dlg.polishAt = world.now;
     dlg.polishOk = r.ok;
     if (r.ok) {

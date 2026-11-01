@@ -5,7 +5,8 @@
 // nothing jitters as you move; animation comes only from `time`.
 
 import { R, E, T, F, sprite, blit, shade, mix, snap, tinted, gfx } from './pixel.js';
-import { groundAt, surfacesOf } from '../world/physics.js';
+import { groundAt, surfacesOf, driftOffset } from '../world/physics.js';
+import { drawMovers } from './movers.js';
 import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
@@ -1641,13 +1642,14 @@ function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
 
 function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of map.platforms.entries()) {
-    const x = Math.round(p.x - cam.x);
+    const x = Math.round(p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x);
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
     if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
-    else drawIsland(ctx, theme, p, cam, time, pi, map.look);
+    // A drifting ledge glides on the same clock as the physics.
+    else drawIsland(ctx, theme, p.drift ? { ...p, x: p.x + driftOffset(p, map.clock ?? 0) } : p, cam, time, pi, zoneLook(map, p.y));
   }
 }
 
@@ -1959,7 +1961,8 @@ function drawProps(ctx, t, map, cam, width, time) {
   // A map can thin its props (`look.propKeep`, the share of spots left bare).
   const keep = map.look?.propKeep ?? (map.isTown ? 0.66 : 0.52);
   surfaces.forEach((s, si) => {
-    // Nothing grows on a ledge that's really a tree's bough.
+    // Nothing grows on a drifting ledge, or on a ledge that's really a tree's bough.
+    if (s.drift) return;
     if (!s.ground && map.platforms.some((p) => p.bare && Math.abs(p.x - s.x) < 2 && Math.abs(p.y - s.yAt(s.x)) < 2)) return;
     const step = s.ground ? 38 : 44;
     for (let wx = s.x + 14; wx < s.x + s.w - 12; wx += step) {
@@ -1977,7 +1980,9 @@ function drawProps(ctx, t, map, cam, width, time) {
       if (Math.abs(s.yAt(wx + 6) - s.yAt(wx - 6)) > 5) continue;
       const x = wx - cam.x;
       if (x < -40 || x > width + 40) continue;
-      let kind = t.props[Math.floor(hash(wx + si) * t.props.length)];
+      // A zone grows its own props.
+      const props = zoneAt(map, sy)?.look?.props ?? t.props;
+      let kind = props[Math.floor(hash(wx + si) * props.length)];
       // Ledges only get small things.
       if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? (t.ledgeProp ?? 'flower') : kind;
       prop(ctx, kind, snap(x), snap(sy - cam.y), seed, t, time, wx);
@@ -2373,10 +2378,53 @@ export function drawSceneFront(ctx, map, cam, width, height, time, actors = []) 
 }
 
 // Everything behind the characters.
+// Zones: a tall map is split by height (`map.zones`, listed bottom first, each starting `from`
+// its y upward), and each zone restyles the map's look with its own (sky, ledges, props...).
+export function zoneAt(map, y) {
+  const zones = map.zones;
+  if (!zones?.length) return null;
+  let z = zones[0];
+  for (const n of zones) if (y <= n.from) z = n;
+  return z;
+}
+export function zoneLook(map, y) {
+  const z = zoneAt(map, y);
+  return z?.look ? { ...map.look, ...z.look } : map.look;
+}
+// The backdrop eases from one zone's look into the next over a band either side of the line
+// between them, so climbing changes the sky gradually: colours blend, other choices switch halfway.
+const ZONE_BLEND = 140;
+function blendLook(a, b, k) {
+  if (k <= 0) return a;
+  if (k >= 1) return b;
+  const out = { ...(k < 0.5 ? a : b) };
+  for (const key of Object.keys(b)) {
+    const x = a[key];
+    const y = b[key];
+    if (typeof x === 'string' && typeof y === 'string' && x[0] === '#' && y[0] === '#') out[key] = mix(x, y, k);
+    else if (Array.isArray(x) && Array.isArray(y) && x.length === y.length && typeof x[0] === 'string' && x[0][0] === '#') out[key] = x.map((c, i) => mix(c, y[i], k));
+  }
+  return out;
+}
+function backdropLook(map, base, cam, height) {
+  if (!map.zones?.length) return base;
+  const y = cam.y + height * 0.6;
+  const here = zoneAt(map, y);
+  const i = map.zones.indexOf(here);
+  const up = map.zones[i + 1];
+  const down = map.zones[i - 1];
+  const look = (z) => ({ ...base, ...z.look });
+  // Nearing the zone above, or just come up from the one below.
+  if (up && y - up.from < ZONE_BLEND) return blendLook(look(here), look(up), 0.5 - (y - up.from) / (2 * ZONE_BLEND));
+  if (down && here.from - y < ZONE_BLEND) return blendLook(look(down), look(here), 0.5 + (here.from - y) / (2 * ZONE_BLEND));
+  return look(here);
+}
+
 export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null, routePortalId = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
-  // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike.
-  const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
+  // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike, and a
+  // tall map's zones restyle it again as you climb.
+  const t = backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height);
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll
   // vertically at a fraction of the camera so taller maps still feel deep.
   const camBottom = Math.max(0, map.height - height);
@@ -2414,6 +2462,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   drawDeco(ctx, map, cam, width, time, 'ledges');
   drawProps(ctx, t, map, cam, width, time);
   drawRopes(ctx, map, cam);
+  drawMovers(ctx, map, cam, width, height, time);
   drawPortals(ctx, map, cam, time, nearPortalId, routePortalId);
   drawCritters(ctx, t, map, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time);

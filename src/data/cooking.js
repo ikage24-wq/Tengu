@@ -1,5 +1,5 @@
 // Cooking: every town has a stove (the map's `stove`). Pick a recipe you know, have its
-// ingredients (fish from fishing and monster drops), and the pot serves SERVINGS dishes. Eating a
+// ingredients (fish from fishing, gathered finds and monster drops), and the pot serves SERVINGS dishes. Eating a
 // dish heals a little and gives its bonus for a while (different dishes add up). You know the first recipes from the start and
 // learn each fish's own recipe the first time you catch that fish.
 //
@@ -20,6 +20,9 @@ export const DISHES = [
   { id: 'dish_sashimi', name: 'Frostfin Sashimi', vessel: 'plate', colors: ['#cfe8ff', '#ff9ec0'], needs: { fish_icefish: 1, crystal_gel: 1 }, heal: 900, values: { watk: 16, matk: 16 }, secs: 600, about: 'Attack and magic', learn: 'fish_icefish' },
   { id: 'dish_angel', name: 'Seraph Soufflé', vessel: 'bowl', colors: ['#e6dcff', '#ffe9a6'], needs: { fish_seraph: 1, feather: 2 }, heal: 1200, values: { hp: 600, mp: 300 }, secs: 900, about: 'Max HP and MP', learn: 'fish_seraph' },
   { id: 'dish_wishcake', name: 'Wishing Star Cake', vessel: 'plate', colors: ['#ffe36b', '#ff9ec0'], needs: { fish_starfish: 1, stardust: 2 }, heal: 1500, values: { str: 10, dex: 10, int: 10, luk: 10, critRate: 0.05 }, secs: 900, about: 'All stats and crit', learn: 'fish_starfish' },
+  // From gathering (data/gathering.js), known from the start.
+  { id: 'dish_clovertea', name: 'Clover Honey Tea', vessel: 'bowl', colors: ['#b8e6a0', '#ffd65a'], needs: { clover: 2, honeycomb: 1 }, heal: 150, values: { regenPct: 0.015 }, secs: 600, about: 'HP back every second' },
+  { id: 'dish_cherrytart', name: 'Blossom Cherry Tart', vessel: 'plate', colors: ['#ffd9a0', '#ff6b8a'], needs: { cherry: 2, honeycomb: 1 }, heal: 250, values: { speed: 6, jump: 4 }, secs: 600, about: 'Speed and jump' },
   { id: 'dish_feast', name: 'Cloud Whale Feast', vessel: 'bowl', colors: ['#f4f8ff', '#b6c8ff'], needs: { fish_whale: 1, wool: 3 }, heal: 2500, values: { str: 15, dex: 15, int: 15, luk: 15, watk: 15, matk: 15, expPct: 0.2 }, secs: 1200, about: 'Everything, +20% EXP', learn: 'fish_whale' },
 ];
 
