@@ -96,3 +96,18 @@ test('cooking makes two dishes, no stirring; eating heals, and different dishes 
   assert.equal(w.stats.watk, atk + 16, 'both bonuses at once');
   assert.equal(cook(char, d), 0, 'nothing left to cook with');
 });
+
+test("a reworked map's fishing spots are quiet nooks no monster reaches", async () => {
+  const { MOBS } = await import('../src/data/mobs.js');
+  // The maps rebuilt to the new map rules so far (the others get this when they're reworked).
+  for (const id of ['meadow1']) {
+    const m = MAPS[id];
+    for (const sp of SPOTS[id]) {
+      const surf = surfacesOf(m).find((s) => sp.x >= s.x1 && sp.x <= s.x2 && Math.abs(s.yAt(sp.x) - sp.y) < 2);
+      for (const s of m.spawns) {
+        if (MOBS[s.mob].fly) assert.ok(Math.abs(s.x - sp.x) >= 240 || Math.abs(s.y - sp.y) >= 120, `${id}: a ${s.mob} flies near the spot`);
+        else assert.ok(!(s.x >= surf.x1 && s.x <= surf.x2 && Math.abs(surf.yAt(s.x) - s.y) < 4), `${id}: a ${s.mob} walks the spot's floor`);
+      }
+    }
+  }
+});

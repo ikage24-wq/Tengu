@@ -57,7 +57,7 @@ export const MAPS = {
 
   // Petal Meadow climbs one hillside of blossom in four zones (the map style the player picked:
   // tall, zoned, exits on different floors). Petal Fields at the bottom, where the Moss Tortoises
-  // graze round the pond; Beehive Banks, where the Bumbles buzz round the giant hive; the
+  // graze by the giant flower (the fishing pond is in the quiet east corner); Beehive Banks, where the Bumbles buzz round the giant hive; the
   // Blossom Boughs of the great cherry tree, the Kitsune Kits' playground; and the Petal Clouds on
   // top, where Petal Sprites drift, with a quiet lookout with the road to Windy Canyon as the reward for the climb. Each zone hunts in a loop:
   // ropes at both ends, a long floor between, gaps to drop through. No monsters near the portals.
@@ -87,21 +87,24 @@ export const MAPS = {
       // Petal Clouds: two banks of cloud with a drifting one between, and the lookout on top.
       { x: 500, y: 280, w: 500 }, { x: 1400, y: 280, w: 500 },
       { x: 1000, y: 280, w: 150, drift: { dx: 250, period: 9 } },
+      // The fishing dock over the pond in the quiet east corner, a hop up from the ground: no
+      // monster lives on it, so you can fish in peace.
+      { x: 2195, y: 952, w: 95, posts: true },
       { x: 900, y: 200, w: 400, thick: 44 },
     ],
     // A moving part per zone: bounce blossoms in the fields (one up the hill, one at the end of the
     // top floor, two floors high), the hive's warm pollen updraft on the banks, the petal whirl
     // round the cherry tree in the boughs, and the drifting cloud on top.
     // How its monsters live (world/habits.js): the tortoises doze (most of the night) and amble
-    // down to the pond; the Bumbles buzz home to their hive and chase each other; the fox kits play
+    // over to the giant flower on the hill; the Bumbles buzz home to their hive and chase each other; the fox kits play
     // chase in the boughs and curl up at night; the Petal Sprites doze on the clouds at night.
-    habitats: { snailbun: { naps: true, home: { x: 1650, y: 1000 } }, bumble: { home: { x: 1200, y: 680 }, play: true }, puffle: { naps: true, play: true }, petalsprite: { naps: true } },
+    habitats: { snailbun: { naps: true, home: { x: 900, y: 976 } }, bumble: { home: { x: 1200, y: 680 }, play: true }, puffle: { naps: true, play: true }, petalsprite: { naps: true } },
     // The area boss (world/nest.js): after enough hunting, the Queen Bee bursts out of the hive.
     nest: { mob: 'queenbee', x: 1200, y: 680, kills: 150, name: 'The giant hive', wake: 'Her Majesty is NOT amused. Everyone to Beehive Banks!' },
     // The meadow's spirit floats by the cherry tree's crown when the map is calm (world/calm.js).
     spirit: { x: 1010, y: 380 },
     // At night (world/daytime.js) warm light glows at the arch, the picnic, the hive and the lookout.
-    lamps: [{ x: 260, y: 950 }, { x: 1950, y: 975 }, { x: 1200, y: 640, c: '#ffd970' }, { x: 1100, y: 170 }],
+    lamps: [{ x: 260, y: 950 }, { x: 2245, y: 930 }, { x: 1200, y: 640, c: '#ffd970' }, { x: 1100, y: 170 }],
     springs: [{ x: 1150, y: 976, up: 170, kind: 'blossom' }, { x: 1720, y: 840, up: 190, kind: 'blossom' }],
     updrafts: [
       { x: 1200, w: 50, top: 500, bottom: 680, kind: 'pollen' },
@@ -125,10 +128,10 @@ export const MAPS = {
       { id: 'north', x: 1220, y: 200, to: 'canyon', toPortal: 'south' },
     ],
     npcs: [],
-    // A landmark per zone: the giant flower and the pond in the fields, the hive on the banks, the
+    // A landmark per zone: the giant flower and the fishing pond in the fields, the hive on the banks, the
     // cherry tree's crown in the boughs, the cloud pillar by the lookout.
     deco: [
-      ['flowerarch', 260], ['giantflower', 900, 0], ['pond', 1650], ['picnic', 1950], ['signpost', 2220],
+      ['flowerarch', 260], ['giantflower', 900, 0], ['pond', 2235], ['picnic', 1650], ['signpost', 2060],
       ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
       ['sakura', 1200, 0, 440],
       ['cloudpillar', 880, 0, 280],

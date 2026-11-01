@@ -206,6 +206,9 @@ there and update the status file as they get done.
     meadow, the Sky Garden above the peak), so the island reads as one place.
   - **Weather per region:** real weather that changes play a little (wind pushes jumps on the
     peak, rain raises ponds and brings new fish, snow slows monsters).
+  - **Fishing spots are quiet nooks:** a spot sits where no monster walks or flies to (a dock or
+    a ledge of its own over the water), never on a floor monsters roam. No invisible walls or
+    invincibility: the safety comes from the map's design.
   - **Life skills are important (the player's words):** every map has spots for fishing, mining
     and gathering that fit its theme and zones (fishing where there's water, ore veins in caves
     and cliffs, herbs and fruit in woods and meadows), worth visiting alongside hunting.
