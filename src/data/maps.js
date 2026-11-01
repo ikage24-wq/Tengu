@@ -156,33 +156,80 @@ export const MAPS = {
   },
 
 
-  // Farm terraces climbing from both sides to a long hilltop field with the barn: up one side,
-  // across the top, down the other. Mandrakes low, mushrooms in the middle, piglets on top.
+  // Clover Hills climbs a farm hillside in three zones (the tall-map rules, a light rework): the
+  // Mandrake Rows at the bottom, crop fields the Mandrakes grow in; the Goblin Barnyard round the
+  // big barn, the Toadstool Goblins' den; and the breezy Jackalope Ridge, with a lookout on top.
+  // Each zone hunts in a loop (ropes at both ends) and has a moving part: a hay-bale bounce, the
+  // hayloft's chaff updraft, and a ledge drifting across the ridge. The fishing pond is in the quiet
+  // west corner with a dock of its own; no monsters near the portals.
   meadow2: {
     id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
-    width: 2400, height: 720, groundY: 680,
+    width: 2400, height: 1000, groundY: 960,
     look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'farm', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
-    terrain: [[0, 680], [900, 680], [1000, 650], [1500, 650], [1600, 680], [2400, 680]],
-    platforms: [
-      { x: 120, y: 600, w: 640 }, { x: 1640, y: 600, w: 640 },
-      { x: 360, y: 520, w: 620 }, { x: 1420, y: 520, w: 620 },
-      { x: 620, y: 440, w: 1160 },
+    zones: [
+      { name: 'Mandrake Rows', from: Infinity, color: '#5fae5f' },
+      { name: 'Goblin Barnyard', from: 760, color: '#d0704a', look: { sky: ['#7fc8ff', '#c8e8ff', '#fff0d8'], far: '#b8dc9a', mid: '#8fcf7a', midTrim: '#6fae5f', props: ['tuft', 'rock', 'bush'] } },
+      { name: 'Jackalope Ridge', from: 600, color: '#4f95e0', look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
     ],
-    ropes: [{ x: 140, top: 600, bottom: 680, ladder: true }, { x: 2260, top: 600, bottom: 680, ladder: true }],
+    terrain: [[0, 960], [950, 960], [1030, 930], [1470, 930], [1550, 960], [2400, 960]],
+    platforms: [
+      // Mandrake Rows (and the fishing dock over the pond by the west exit).
+      { x: 300, y: 880, w: 550 }, { x: 1550, y: 880, w: 700 },
+      { x: 500, y: 800, w: 1400 },
+      { x: 150, y: 912, w: 95, posts: true },
+      // Goblin Barnyard.
+      { x: 100, y: 720, w: 900 }, { x: 1400, y: 720, w: 900 },
+      { x: 450, y: 640, w: 1500 },
+      // Jackalope Ridge, a ledge drifting across its gap, and the lookout.
+      { x: 250, y: 560, w: 600 }, { x: 1550, y: 560, w: 600 },
+      { x: 700, y: 480, w: 1000 },
+      { x: 300, y: 400, w: 500 }, { x: 1600, y: 400, w: 500 },
+      { x: 820, y: 400, w: 140, drift: { dx: 600, period: 12 } },
+      { x: 1000, y: 320, w: 400, thick: 44 },
+    ],
+    ropes: [
+      { x: 820, top: 880, bottom: 960, ladder: true }, { x: 2230, top: 880, bottom: 960, ladder: true },
+      { x: 540, top: 800, bottom: 880 }, { x: 1860, top: 800, bottom: 880 },
+      { x: 960, top: 720, bottom: 800 }, { x: 1440, top: 720, bottom: 800 },
+      { x: 480, top: 640, bottom: 720 }, { x: 1920, top: 640, bottom: 720 },
+      { x: 820, top: 560, bottom: 640 }, { x: 1580, top: 560, bottom: 640 },
+      { x: 720, top: 480, bottom: 560 }, { x: 1640, top: 480, bottom: 560 },
+      { x: 760, top: 400, bottom: 480 }, { x: 1650, top: 400, bottom: 480 },
+      { x: 1050, top: 320, bottom: 480, ladder: true },
+    ],
+    // A hay bale on the hill bounces you up to the top row; the hayloft breathes a warm updraft of
+    // chaff up past the ridge (Up to ride it).
+    springs: [{ x: 1250, y: 930, up: 170, kind: 'hay' }],
+    updrafts: [{ x: 1200, w: 50, top: 450, bottom: 640, kind: 'chaff' }],
     portals: [
-      { id: 'west', x: 40, y: 680, to: 'meadow1', toPortal: 'east' },
-      { id: 'east', x: 2340, y: 680, to: 'harbor', toPortal: 'west' },
+      { id: 'west', x: 40, y: 960, to: 'meadow1', toPortal: 'east' },
+      { id: 'east', x: 2340, y: 960, to: 'harbor', toPortal: 'west' },
     ],
     npcs: [],
-    deco: [['fence', 240], ['scarecrow', 560], ['barn', 1200, 0, 440], ['haystack', 900, 0, 440], ['fence', 1500, 1, 440], ['cart', 1250], ['pond', 2000], ['haystack', 2150, 2], ['signpost', 2200]],
+    // A landmark per zone: the scarecrow in the rows, the barn in the barnyard, the old tree on
+    // the ridge.
+    deco: [['fence', 330], ['scarecrow', 600], ['cart', 1750], ['pond', 235], ['haystack', 2050, 2], ['signpost', 2180],
+      ['barn', 1200, 0, 640], ['haystack', 860, 0, 640], ['fence', 1600, 1, 640], ['beehive', 250, 0, 720],
+      ['bigtree', 1480, 1, 480]],
+    lamps: [{ x: 200, y: 890 }, { x: 1200, y: 590 }, { x: 1200, y: 290 }, { x: 600, y: 930 }],
+    spirit: { x: 1480, y: 360 },
+    habitats: { sproutling: { naps: true, home: { x: 600, y: 960 } }, mushkin: { naps: true, home: { x: 1200, y: 640 } }, piglet: { play: true, naps: true } },
     spawns: [
-      { mob: 'sproutling', x: 465, y: 680 }, { mob: 'sproutling', x: 755, y: 680 }, { mob: 'sproutling', x: 1045, y: 650 }, { mob: 'sproutling', x: 1335, y: 650 },
-      { mob: 'sproutling', x: 1625, y: 680 }, { mob: 'sproutling', x: 1915, y: 680 }, { mob: 'sproutling', x: 288, y: 600 }, { mob: 'mushkin', x: 592, y: 600 },
-      { mob: 'mushkin', x: 1808, y: 600 }, { mob: 'sproutling', x: 2112, y: 600 }, { mob: 'mushkin', x: 523, y: 520 }, { mob: 'piglet', x: 817, y: 520 },
-      { mob: 'piglet', x: 1583, y: 520 }, { mob: 'mushkin', x: 1877, y: 520 }, { mob: 'piglet', x: 777, y: 440 }, { mob: 'mushkin', x: 1059, y: 440 },
-      { mob: 'piglet', x: 1341, y: 440 }, { mob: 'mushkin', x: 1623, y: 440 },
+      // Mandrake Rows: Mandrakes.
+      ...[420, 720, 1700, 1950].map((x) => ({ mob: 'sproutling', x, y: 960 })),
+      ...[1100, 1400].map((x) => ({ mob: 'sproutling', x, y: 930 })),
+      ...[400, 700, 1750, 2050].map((x) => ({ mob: 'sproutling', x, y: 880 })),
+      ...[800, 1200, 1600].map((x) => ({ mob: 'sproutling', x, y: 800 })),
+      // Goblin Barnyard: Toadstool Goblins.
+      ...[350, 750, 1650, 2000].map((x) => ({ mob: 'mushkin', x, y: 720 })),
+      ...[700, 1000, 1500, 1800].map((x) => ({ mob: 'mushkin', x, y: 640 })),
+      // Jackalope Ridge: Jackalopes.
+      ...[450, 700, 1750, 2000].map((x) => ({ mob: 'piglet', x, y: 560 })),
+      ...[900, 1450].map((x) => ({ mob: 'piglet', x, y: 480 })),
+      ...[500, 1850].map((x) => ({ mob: 'piglet', x, y: 400 })),
     ],
   },
+
 
   // The thieves' home port at dusk, in quarters: the market (Marlo's cart among tall pastel canal
   // houses); the raised harbor plaza with the fountain and the Harbor Office; the back alley under

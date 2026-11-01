@@ -81,9 +81,46 @@ function blossom(ctx, x, y, time, since, wx = x) {
   }
 }
 
+// A hay bale bounce: a round golden bale tied with twine. Stepped on, it dips and springs back,
+// straw flying off it.
+function hay(ctx, x, y, since) {
+  const k = since < 0.9 ? since : 9;
+  const dip = k < 0.08 ? k / 0.08 : k < 9 ? -Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
+  const h = 14 - dip * 3;
+  ctx.save();
+  ctx.fillStyle = '#e8c070';
+  ctx.strokeStyle = shade('#e8c070', -45);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x, y - h / 2, 13, h / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#f6dc98';
+  ctx.beginPath();
+  ctx.ellipse(x + 2, y - h * 0.65, 8, h * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#a3714c';
+  for (const dx of [-6, 6]) {
+    ctx.beginPath();
+    ctx.moveTo(x + dx, y - h);
+    ctx.lineTo(x + dx, y);
+    ctx.stroke();
+  }
+  if (since < 0.9) {
+    ctx.fillStyle = '#f6dc98';
+    for (let i = 0; i < 8; i++) {
+      const a = -Math.PI / 2 + (((i * 0.37) % 1) - 0.5) * 2;
+      ctx.globalAlpha = 1 - since / 0.9;
+      ctx.fillRect(x + Math.cos(a) * 60 * since, y - h + Math.sin(a) * 60 * since + 50 * since * since, 3, 1);
+    }
+  }
+  ctx.restore();
+}
+
 // An updraft: motes rising in a slow spiral, with a faint column of light. Pollen is warm gold
 // dust off the hive; petals are cherry blossom caught in a whirl round the tree.
 const DRAFTS = {
+  chaff: { glow: '#ffe6b0', bits: ['#e8c070', '#f6dc98', '#fff2c8'], count: 20, speed: 75, size: 2.2, petal: true },
   pollen: { glow: '#ffd970', bits: ['#ffc83a', '#ffdc6e', '#fff2b8'], count: 24, speed: 70, size: 2, petal: false },
   petals: { glow: '#ffd2e6', bits: ['#ff9ec7', '#ffc2dc', '#ffffff'], count: 18, speed: 85, size: 2.4, petal: true },
 };
@@ -132,6 +169,8 @@ export function drawMovers(ctx, map, cam, width, height, time) {
   for (const s of map.springs ?? []) {
     const x = s.x - cam.x;
     if (x < -30 || x > width + 30) continue;
-    blossom(ctx, snap(x), snap(s.y - cam.y), time, s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt, s.x);
+    const since = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
+    if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since);
+    else blossom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
   }
 }
