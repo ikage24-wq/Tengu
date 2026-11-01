@@ -906,105 +906,131 @@ export function faceFrame(kind, time) {
       return f;
     }
     // Sassy.
+    // The attitude faces, reworked to be livelier and cuter (the player's ask, 2026-11-01): each
+    // loop runs four or five beats instead of two, with blushes, sparkles and hearts on its
+    // happiest beat, and the body acting (idleActing) moves on the same beats.
     case 'bleh': {
-      // A wink and a tongue stuck out; it drops to a sly smile, then the tongue waggles.
-      const p = at(3.4);
-      const f = { closed: [false, true], mouth: 'bleh', brows: [[0.6, -0.3], [1, -0.4]] };
-      if (win(p, 0.55, 0.75)) Object.assign(f, { closed: null, lid: 0.25, mouth: 'slysmile' });
-      if (win(p, 0.8, 0.95)) f.mouth = Math.floor(t * 8) % 2 ? 'bleh' : 'tongue';
-      return f;
+      // A wink and a tongue out; the tongue waggles; she peeks at you with a ":3"; a giggle with
+      // her eyes shut; a cheeky wink with the other eye.
+      const p = at(3.2);
+      const tick = Math.floor(t * 8) % 2;
+      if (win(p, 0, 0.2)) return { closed: [false, true], mouth: 'bleh', brows: [[0.6, -0.3], [1, -0.4]], blush: 1 };
+      if (win(p, 0.2, 0.36)) return { closed: [false, true], mouth: tick ? 'bleh' : 'bigtongue', brows: [[0.7, -0.3], [1.1, -0.4]], blush: 1.1, extra: ['spark0'] };
+      if (win(p, 0.36, 0.55)) return { lid: 0.2, glance: 1, mouth: 'cat', brows: [[0.5, -0.2], [0.9, -0.3]], blush: 1 };
+      if (win(p, 0.55, 0.72)) return { closed: [true, true], mouth: 'grin', brows: [[0.8, -0.3], [0.8, -0.3]], blush: 1.4, extra: ['spark1'] };
+      return { closed: [true, false], mouth: 'tongue', brows: [[1, -0.4], [0.6, -0.3]], blush: 1.1, extra: ['spark0'] };
     }
     case 'excuseme': {
-      // One eye narrowed, the other brow shot up; the brow hops higher, then the squint deepens.
-      const p = at(4);
-      const f = { lids: [0.55, 0], mouth: 'sneer', brows: [[-0.1, 0.4], [1.7, -0.5]] };
-      if (win(p, 0.3, 0.45)) f.brows = [[-0.1, 0.4], [Math.floor(t * 8) % 2 ? 2.2 : 1.8, -0.6]];
-      if (win(p, 0.6, 0.85)) Object.assign(f, { lids: [0.75, 0.2], mouth: 'pursed' });
-      return f;
+      // One eye narrowed, a brow shot up; it hops; she looks away, lips pursed; a blink "hmph";
+      // then a peek back with a little smirk and a blush.
+      const p = at(3.6);
+      if (win(p, 0, 0.25)) return { lids: [0.55, 0], mouth: 'sneer', brows: [[-0.1, 0.4], [1.7, -0.5]] };
+      if (win(p, 0.25, 0.4)) return { lids: [0.55, 0], mouth: 'o', brows: [[-0.1, 0.4], [Math.floor(t * 8) % 2 ? 2.2 : 1.8, -0.6]], extra: ['vein'] };
+      if (win(p, 0.4, 0.6)) return { lids: [0.6, 0.3], glance: -1, mouth: 'pursed', brows: [[0.2, 0.2], [1.2, -0.4]] };
+      if (win(p, 0.6, 0.75)) return { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1, -0.3], [1.2, -0.4]] };
+      return { lid: 0.4, glance: 1, mouth: 'smirk', brows: [[0.2, 0.1], [1.4, -0.5]], blush: 1 };
     }
     case 'dimple': {
-      // A sly smile, eyes away; she looks back at you with a wink, and blushes.
-      const p = at(3.8);
-      const f = { lid: 0.32, glance: 1, mouth: 'slysmile', brows: [[0.1, 0.2], [0.9, -0.4]], blush: 1.1 };
-      if (win(p, 0.5, 0.7)) Object.assign(f, { glance: 0, closed: [false, true] });
-      if (win(p, 0.7, 0.82)) Object.assign(f, { glance: 0, blush: 1.4 });
-      return f;
+      // A sly smile, eyes away; she looks back and winks; a happy squint with hearts; then a
+      // shy look down, pink to the ears.
+      const p = at(3.4);
+      if (win(p, 0, 0.3)) return { lid: 0.32, glance: 1, mouth: 'slysmile', brows: [[0.1, 0.2], [0.9, -0.4]], blush: 1.1 };
+      if (win(p, 0.3, 0.45)) return { closed: [false, true], mouth: 'slysmile', brows: [[0.3, 0.1], [1, -0.4]], blush: 1.4, extra: ['spark0'] };
+      if (win(p, 0.45, 0.68)) return { closed: [true, true], mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.6, extra: [`hearts${Math.floor(((p - 0.45) / 0.23) * 4)}`] };
+      return { lid: 0.35, look: 'down', glance: -0.5, mouth: 'tiny', brows: [[0.8, 0.3], [0.8, 0.3]], blush: 1.4 };
     }
     case 'mmhm': {
-      // "Sure.": a flat sideways stare, a slow roll of the eyes up and over, a long blink.
-      const p = at(4.6);
-      const f = { lid: 0.5, glance: -1, mouth: 'pursed', brows: [[1.2, -0.3], [0.2, 0.1]] };
-      if (win(p, 0.35, 0.47)) Object.assign(f, { lid: 0.3, look: 'up', glance: -0.4, brows: [[1.4, -0.3], [0.6, -0.1]] });
-      if (win(p, 0.47, 0.6)) Object.assign(f, { lid: 0.3, look: 'up', glance: 0.6, brows: [[1.4, -0.3], [0.6, -0.1]] });
-      if (win(p, 0.6, 0.72)) Object.assign(f, { closed: ['blink', 'blink'], mouth: 'bored' });
-      return f;
+      // "Sure.": a flat sideways stare; a slow roll of the eyes up and over; a long blink; a sigh
+      // that puffs out; then a side-eye.
+      const p = at(4);
+      if (win(p, 0, 0.25)) return { lid: 0.5, glance: -1, mouth: 'pursed', brows: [[1.2, -0.3], [0.2, 0.1]] };
+      if (win(p, 0.25, 0.37)) return { lid: 0.3, look: 'up', glance: -0.4, mouth: 'pursed', brows: [[1.4, -0.3], [0.6, -0.1]] };
+      if (win(p, 0.37, 0.49)) return { lid: 0.3, look: 'up', glance: 0.6, mouth: 'pursed', brows: [[1.4, -0.3], [0.6, -0.1]] };
+      if (win(p, 0.49, 0.62)) return { closed: ['blink', 'blink'], mouth: 'bored', brows: [[1, -0.2], [0.4, 0]] };
+      if (win(p, 0.62, 0.78)) return { lid: 0.55, mouth: 'o', brows: [[0.8, -0.2], [0.3, 0]], extra: ['sighpuff'] };
+      return { lid: 0.55, glance: 1, mouth: 'flat', brows: [[1.1, -0.3], [0.2, 0.1]] };
     }
-    // Pretentious.
     case 'hmph': {
-      // "How common.": eyes shut, nose up; one eye peeks to see if you're impressed, then shuts.
-      const p = at(4.2);
-      const f = { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.3, -0.4], [1.3, -0.4]] };
-      if (win(p, 0.4, 0.58)) Object.assign(f, { closed: ['blink', false], lid: 0.5, glance: 1, brows: [[1.3, -0.4], [0.7, -0.1]] });
-      if (win(p, 0.58, 0.7)) f.mouth = 'bored';
-      return f;
+      // "How common.": eyes shut, nose up; one eye peeks to see if you're impressed; caught
+      // looking, she shuts it tight and puffs her cheeks, pink; a little huff.
+      const p = at(3.8);
+      if (win(p, 0, 0.32)) return { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.3, -0.4], [1.3, -0.4]] };
+      if (win(p, 0.32, 0.5)) return { closed: ['blink', false], lid: 0.45, glance: 1, mouth: 'pursed', brows: [[1.3, -0.4], [0.7, -0.1]] };
+      if (win(p, 0.5, 0.56)) return { closed: ['blink', false], lid: 0.1, glance: 1, mouth: 'o', brows: [[1.3, -0.4], [1.4, -0.4]], blush: 1 };
+      if (win(p, 0.56, 0.8)) return { closed: ['blink', 'blink'], mouth: 'pout', brows: [[1.5, -0.5], [1.5, -0.5]], blush: 1.4 };
+      return { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.3, -0.4], [1.3, -0.4]], blush: 1, extra: ['sighpuff'] };
     }
     case 'judging': {
-      // Looking you up and down through a narrowed eye, then the eyes narrow further.
-      const p = at(4.4);
-      const f = { lids: [0.62, 0.15], look: 'down', mouth: 'bored', brows: [[-0.2, 0.4], [1.4, -0.4]] };
-      if (win(p, 0.3, 0.45)) Object.assign(f, { look: 'up', glance: -0.6 });
-      if (win(p, 0.45, 0.58)) Object.assign(f, { look: 'down', glance: 0.8 });
-      if (win(p, 0.75, 0.9)) Object.assign(f, { lids: [0.8, 0.4], mouth: 'flat' });
-      return f;
+      // Looking you up and down through a narrowed eye, scanning; the eyes narrow; a doubtful
+      // "hmm" with a brow up; then a slow nod of a blink.
+      const p = at(4);
+      if (win(p, 0, 0.22)) return { lids: [0.62, 0.15], look: 'down', mouth: 'bored', brows: [[-0.2, 0.4], [1.4, -0.4]] };
+      if (win(p, 0.22, 0.36)) return { lids: [0.62, 0.15], look: 'up', glance: -0.6, mouth: 'bored', brows: [[-0.2, 0.4], [1.4, -0.4]] };
+      if (win(p, 0.36, 0.5)) return { lids: [0.62, 0.15], look: 'down', glance: 0.8, mouth: 'bored', brows: [[-0.2, 0.4], [1.4, -0.4]] };
+      if (win(p, 0.5, 0.68)) return { lids: [0.8, 0.4], mouth: 'flat', brows: [[-0.4, 0.5], [1, -0.3]] };
+      if (win(p, 0.68, 0.86)) return { lids: [0.5, 0.1], mouth: 'o', brows: [[0, 0.3], [Math.floor(t * 8) % 2 ? 1.9 : 1.6, -0.5]] };
+      return { closed: ['blink', 'blink'], mouth: 'flat', brows: [[0, 0.3], [1.2, -0.4]] };
     }
     case 'ohoho': {
-      // "Ohohoho!": eyes shut, the laugh in quick beats, then a satisfied smile to catch her breath.
+      // "Ohohoho!": eyes shut, the laugh in quick beats with sparkles; she peeks with a satisfied
+      // smile, pink; then one more trill of a laugh.
       const p = at(3.2);
-      const f = { closed: [true, true], mouth: Math.floor(t * 8) % 2 ? 'ohoho' : 'smirk', brows: [[1, -0.4], [1, -0.4]] };
-      if (win(p, 0.6, 1)) f.mouth = 'slysmile';
-      return f;
+      const tick = Math.floor(t * 8) % 2;
+      if (win(p, 0, 0.5)) return { closed: [true, true], mouth: tick ? 'ohoho' : 'smirk', brows: [[1, -0.4], [1, -0.4]], extra: [tick ? 'spark1' : 'spark0'] };
+      if (win(p, 0.5, 0.72)) return { lid: 0.3, mouth: 'slysmile', brows: [[0.8, -0.3], [1.1, -0.4]], blush: 1.1 };
+      if (win(p, 0.72, 0.9)) return { closed: [true, true], mouth: tick ? 'ohoho' : 'slysmile', brows: [[1.1, -0.4], [1.1, -0.4]], blush: 1, extra: ['spark0'] };
+      return { lid: 0.35, mouth: 'slysmile', brows: [[0.8, -0.3], [1, -0.4]] };
     }
     case 'sneer': {
-      // A sneer down the nose; the lip curls higher, then the eyes slide away, done with you.
-      const p = at(4.6);
-      const f = { lid: 0.6, look: 'down', mouth: 'sneer', brows: [[0.8, -0.3], [1.2, -0.4]] };
-      if (win(p, 0.4, 0.55)) Object.assign(f, { lid: 0.7, brows: [[1, -0.3], [1.6, -0.5]] });
-      if (win(p, 0.7, 0.85)) Object.assign(f, { lid: 0.55, look: null, glance: -1, mouth: 'bored' });
-      return f;
+      // A sneer down the nose; the lip curls higher; the eyes slide away, done with you; a snort;
+      // then back to looking down on you.
+      const p = at(4);
+      if (win(p, 0, 0.3)) return { lid: 0.6, look: 'down', mouth: 'sneer', brows: [[0.8, -0.3], [1.2, -0.4]] };
+      if (win(p, 0.3, 0.45)) return { lid: 0.7, look: 'down', mouth: 'sneer', brows: [[1, -0.3], [1.6, -0.5]] };
+      if (win(p, 0.45, 0.65)) return { lid: 0.55, glance: -1, mouth: 'bored', brows: [[0.8, -0.3], [1.1, -0.4]] };
+      if (win(p, 0.65, 0.76)) return { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.1, -0.4], [1.3, -0.4]], extra: ['sighpuff'] };
+      return { lid: 0.6, look: 'down', mouth: 'smirk', brows: [[0.8, -0.3], [1.2, -0.4]] };
     }
-    // Smug.
     case 'heh': {
-      // "Heh~": eyes closed, pleased with herself; one eye opens to check on you, the smile curls.
-      const p = at(3.6);
-      const f = { closed: [true, true], mouth: 'slysmile', brows: [[0.6, -0.3], [0.9, -0.4]], blush: 1.1 };
-      if (win(p, 0.45, 0.62)) Object.assign(f, { closed: [true, false], lid: 0.3, glance: 1 });
-      if (win(p, 0.62, 0.76)) f.mouth = 'smugcat';
-      return f;
+      // "Heh~": eyes closed, pleased with herself; one eye opens to check on you; the smile curls
+      // into a ":3"; a giggle with sparkles; then a contented hum.
+      const p = at(3.4);
+      if (win(p, 0, 0.28)) return { closed: [true, true], mouth: 'slysmile', brows: [[0.6, -0.3], [0.9, -0.4]], blush: 1.1 };
+      if (win(p, 0.28, 0.44)) return { closed: [true, false], lid: 0.3, glance: 1, mouth: 'slysmile', brows: [[0.6, -0.3], [1.1, -0.4]], blush: 1.1 };
+      if (win(p, 0.44, 0.58)) return { closed: [true, false], lid: 0.3, glance: 1, mouth: 'smugcat', brows: [[0.6, -0.3], [1.3, -0.5]], blush: 1.2 };
+      if (win(p, 0.58, 0.78)) return { closed: [true, true], mouth: Math.floor(t * 8) % 2 ? 'smugcat' : 'grin', brows: [[0.8, -0.3], [0.8, -0.3]], blush: 1.4, extra: ['spark0'] };
+      return { closed: [true, true], mouth: 'tiny', brows: [[0.6, -0.3], [0.8, -0.3]], blush: 1.2 };
     }
     case 'smugcat': {
-      // A lopsided ":3"; the eyes close in a pleased squint, then a brow hops.
-      const p = at(4);
-      const f = { lid: 0.5, mouth: 'smugcat', brows: [[0.1, 0.2], [1, -0.4]] };
-      if (win(p, 0.4, 0.6)) Object.assign(f, { closed: [true, true], blush: 1.2 });
-      if (win(p, 0.75, 0.85)) f.brows = [[0.1, 0.2], [Math.floor(t * 8) % 2 ? 1.6 : 1.1, -0.5]];
-      return f;
+      // A lopsided ":3"; a pleased squint, pink; a brow hops; a "nya~" with a sparkle; then the
+      // smug look again, a slow blink.
+      const p = at(3.6);
+      if (win(p, 0, 0.26)) return { lid: 0.5, mouth: 'smugcat', brows: [[0.1, 0.2], [1, -0.4]] };
+      if (win(p, 0.26, 0.44)) return { closed: [true, true], mouth: 'smugcat', brows: [[0.4, -0.1], [1, -0.4]], blush: 1.3 };
+      if (win(p, 0.44, 0.56)) return { lid: 0.45, mouth: 'smugcat', brows: [[0.1, 0.2], [Math.floor(t * 8) % 2 ? 1.6 : 1.1, -0.5]] };
+      if (win(p, 0.56, 0.76)) return { closed: [false, true], lid: 0.2, mouth: 'meow', brows: [[0.6, -0.2], [0.9, -0.3]], blush: 1.2, extra: ['spark1'] };
+      if (win(p, 0.86, 0.94)) return { closed: ['blink', 'blink'], mouth: 'smugcat', brows: [[0.1, 0.2], [1, -0.4]] };
+      return { lid: 0.5, glance: 0.6, mouth: 'smugcat', brows: [[0.1, 0.2], [1, -0.4]] };
     }
     case 'toldyou': {
-      // "Told you so.": a side glance and a wide smirk; she turns to look right at you, brows up,
-      // and winks.
-      const p = at(4.2);
-      const f = { lid: 0.45, glance: 1, mouth: 'smirkwide', brows: [[0, 0.3], [1.3, -0.5]] };
-      if (win(p, 0.35, 0.55)) Object.assign(f, { glance: 0, lid: 0.3, brows: [[0.7, -0.2], [1.5, -0.5]] });
-      if (win(p, 0.55, 0.66)) Object.assign(f, { glance: 0, closed: [false, true] });
-      return f;
+      // "Told you so.": a side glance and a wide smirk; she turns to look right at you, brows up;
+      // a wink; then a bright grin with a sparkle, very pleased.
+      const p = at(3.8);
+      if (win(p, 0, 0.3)) return { lid: 0.45, glance: 1, mouth: 'smirkwide', brows: [[0, 0.3], [1.3, -0.5]] };
+      if (win(p, 0.3, 0.48)) return { lid: 0.3, mouth: 'smirkwide', brows: [[0.7, -0.2], [1.5, -0.5]] };
+      if (win(p, 0.48, 0.6)) return { closed: [false, true], mouth: 'smirkwide', brows: [[0.7, -0.2], [1.5, -0.5]], blush: 1 };
+      if (win(p, 0.6, 0.8)) return { closed: [true, true], mouth: 'grin', brows: [[0.9, -0.3], [0.9, -0.3]], blush: 1.2, extra: ['spark1'] };
+      return { lid: 0.4, glance: 0.5, mouth: 'smirk', brows: [[0.2, 0.2], [1.2, -0.4]] };
     }
     case 'lookdown': {
-      // Chin up, looking down on you with a wide smirk; a slow, superior blink.
-      const p = at(5);
-      const f = { lid: 0.62, look: 'down', mouth: 'smirkwide', brows: [[0.9, -0.3], [1.2, -0.4]] };
-      if (win(p, 0.5, 0.62)) Object.assign(f, { closed: ['blink', 'blink'] });
-      if (win(p, 0.62, 0.8)) Object.assign(f, { lid: 0.7, mouth: 'slysmile' });
-      return f;
+      // Chin up, looking down on you with a wide smirk; a slow, superior blink; a lazy smile; a
+      // little "ohoho" behind it; then the stare again.
+      const p = at(4.2);
+      if (win(p, 0, 0.3)) return { lid: 0.62, look: 'down', mouth: 'smirkwide', brows: [[0.9, -0.3], [1.2, -0.4]] };
+      if (win(p, 0.3, 0.42)) return { closed: ['blink', 'blink'], mouth: 'smirkwide', brows: [[1, -0.3], [1.3, -0.4]] };
+      if (win(p, 0.42, 0.6)) return { lid: 0.7, look: 'down', mouth: 'slysmile', brows: [[0.9, -0.3], [1.2, -0.4]] };
+      if (win(p, 0.6, 0.78)) return { closed: [true, true], mouth: Math.floor(t * 8) % 2 ? 'ohoho' : 'slysmile', brows: [[1.1, -0.4], [1.1, -0.4]], blush: 0.9, extra: ['spark0'] };
+      return { lid: 0.62, look: 'down', glance: 0.4, mouth: 'smirkwide', brows: [[0.9, -0.3], [1.2, -0.4]] };
     }
     default: {
       const p = at(5);
@@ -1516,6 +1542,11 @@ function idleActing(r, mood, t, armed) {
   const at = (period) => (T % period) / period;
   const win = (p, a, b) => p >= a && p < b;
   const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
+  // 1 through the window a..b, easing in and out over `e` at each edge (so beats blend, never snap).
+  const hold = (p, a, b, e = 0.06) => {
+    const k = Math.min(1, Math.max(0, (p - a) / e), Math.max(0, (b - p) / e));
+    return k * k * (3 - 2 * k);
+  };
   const hands = (bx, by, fx = -bx, fy = by) => {
     r.backArm = [q(bx), q(by)];
     if (!armed) r.frontArm = [q(fx), q(fy)];
@@ -1696,99 +1727,150 @@ function idleActing(r, mood, t, armed) {
       break;
     }
     // The attitude faces: sassy hip pops and crossed arms, pretentious chins in the air, smug
-    // hands on hips; each moves on its face's beat.
+    // hands on hips; each moves on its face's beats (faceFrame), and every change eases in and
+    // out (`hold`) instead of snapping.
     case 'bleh': {
-      const p = at(3.4);
+      // A hand on her hip, head tilted; she sways with the waggle, bounces on the giggle, and
+      // leans in for the last wink.
+      const p = at(3.2);
       onHips(false);
-      r.tilt = 4;
-      if (win(p, 0.8, 0.95)) r.tilt = Math.floor(T * 8) % 2 ? 6 : 3;
+      const wag = hold(p, 0.2, 0.36);
+      const giggle = hold(p, 0.55, 0.72);
+      r.tilt = q(4 + 2.5 * wag * Math.sin(T * 14) - 2 * giggle);
+      hop(Math.round(giggle * Math.abs(Math.sin(T * Math.PI * 5)) * 2) / 2);
+      r.tx = q(hold(p, 0.72, 1) * 1.2);
       break;
     }
     case 'excuseme': {
-      const p = at(4);
+      // Hands on her hips; the hip pops out with the brow, she turns away with her nose up, and
+      // swings back round for the peek.
+      const p = at(3.6);
       onHips();
-      r.tx = q(-0.8);
-      r.tilt = -2;
-      if (win(p, 0.3, 0.45)) { r.tilt = -4; r.tx = q(-1.4); }
+      const pop = hold(p, 0.25, 0.4);
+      const away = hold(p, 0.4, 0.75);
+      const back = hold(p, 0.75, 1);
+      r.tx = q(-0.8 - 0.8 * pop - 0.6 * away + 0.6 * back);
+      r.tilt = q(-2 - 3 * pop - 4 * away + 3 * back);
+      if (back > 0.5) hop(Math.round(bump(p, 0.75, 0.85) * 2) / 2);
       break;
     }
     case 'dimple': {
-      // Hands behind the back, swaying; a lean in on the wink.
-      const p = at(3.8);
+      // Hands behind her back, swaying; she leans in on the wink, bounces on her toes with the
+      // hearts, and twists shyly at the end.
+      const p = at(3.4);
       hands(-2.5, -1.5);
-      r.tilt = q(4 + Math.sin(2 * Math.PI * p) * 2);
-      if (win(p, 0.5, 0.7)) { r.tilt = 6; r.tx = q(1); }
+      const wink = hold(p, 0.3, 0.45);
+      const happy = hold(p, 0.45, 0.68);
+      const shy = hold(p, 0.68, 1);
+      r.tilt = q(4 + Math.sin(2 * Math.PI * p) * 2 * (1 - wink) + 2 * wink - 3 * shy);
+      r.tx = q(wink - 0.6 * shy);
+      hop(Math.round(happy * Math.abs(Math.sin(T * Math.PI * 4)) * 2) / 2);
       break;
     }
     case 'mmhm': {
-      const p = at(4.6);
+      // Arms crossed; the head rolls back with the eyes, the shoulders drop on the sigh, and a
+      // foot taps through the side-eye.
+      const p = at(4);
       hands(9.5, -5.6, -9.7, -5.1);
-      r.tilt = -3;
-      if (win(p, 0.35, 0.6)) r.tilt = -6;
+      const roll = hold(p, 0.25, 0.49);
+      const sigh = hold(p, 0.62, 0.78);
+      r.tilt = q(-3 - 3 * roll);
+      if (sigh > 0) slump(q(sigh * 0.8));
+      if (win(p, 0.78, 1)) r.frontLeg = [r.frontLeg[0], Math.floor(T * 6) % 2 ? -0.6 : 0, 4];
       break;
     }
     case 'hmph': {
-      // Arms crossed, nose in the air, turned away; she turns back a little to peek.
-      const p = at(4.2);
+      // Arms crossed, nose in the air, turned away; she turns back a little to peek, snaps away
+      // when caught, and huffs.
+      const p = at(3.8);
       hands(9.5, -5.6, -9.7, -5.1);
-      r.tilt = -6;
-      r.tx = q(-1);
-      if (win(p, 0.4, 0.58)) { r.tilt = -3; r.tx = 0; }
+      const peek = hold(p, 0.32, 0.56);
+      const snap = hold(p, 0.56, 0.8, 0.03);
+      r.tilt = q(-6 + 3 * peek - 2.5 * snap);
+      r.tx = q(-1 + peek - 0.4 * snap);
+      r.by = q(r.by - 0.5 * bump(p, 0.8, 0.95));
       break;
     }
     case 'judging': {
-      // A hand to the chin, weighing you up.
-      const p = at(4.4);
+      // A hand to the chin; the head follows the eyes up and down, she leans in to narrow them,
+      // and nods slowly on the blink.
+      const p = at(4);
       r.backArm = [q(CHIN[0]), q(CHIN[1])];
       r.armSide = 1;
-      r.tilt = 2;
-      if (win(p, 0.3, 0.45)) r.tilt = -2;
+      const up = hold(p, 0.22, 0.36);
+      const down = hold(p, 0.36, 0.5);
+      const lean = hold(p, 0.5, 0.86);
+      r.tilt = q(2 - 4 * up + 2 * down + 1.5 * lean);
+      r.tx = q(0.8 * lean);
+      r.hy = q(r.hy + 0.5 * bump(p, 0.86, 1));
       break;
     }
     case 'ohoho': {
-      // Hands on the hips, chest out; the laugh shakes her in quick beats.
+      // Hands on the hips, chest out; the laugh shakes her in quick beats, she leans back to
+      // catch her breath, and one more trill shakes her.
       const p = at(3.2);
       onHips();
-      r.by = q(r.by - 0.5);
-      r.tilt = -4;
-      if (win(p, 0, 0.6)) { r.by = Math.floor(T * 8) % 2 ? 0 : -0.5; r.tilt = Math.floor(T * 8) % 2 ? -5 : -3; }
+      const laugh = Math.max(hold(p, 0, 0.5), hold(p, 0.72, 0.9));
+      const breath = hold(p, 0.5, 0.72);
+      const shake = Math.sin(T * Math.PI * 8);
+      r.by = q(r.by - 0.5 - 0.35 * laugh * shake);
+      r.tilt = q(-4 - 1.2 * laugh * shake - 2 * breath);
       break;
     }
     case 'sneer': {
-      const p = at(4.6);
+      // Hands on her hips, chin up; she rears back as the lip curls, turns away, and gives a
+      // little toss of the head on the snort.
+      const p = at(4);
       onHips();
-      r.tilt = -4;
-      if (win(p, 0.7, 0.85)) { r.tilt = -2; r.tx = q(-1); }
+      const curl = hold(p, 0.3, 0.45);
+      const away = hold(p, 0.45, 0.65);
+      r.tilt = q(-4 - 1.5 * curl + 2 * away - 2 * bump(p, 0.65, 0.76));
+      r.tx = q(-away);
       break;
     }
     case 'heh': {
-      const p = at(3.6);
+      // Hands clasped behind; she leans toward you to peek, and her shoulders bob with the giggle.
+      const p = at(3.4);
       hands(-1.5, -2.5);
-      r.tilt = -2;
-      if (win(p, 0.45, 0.62)) r.tilt = 2;
+      const peek = hold(p, 0.28, 0.58);
+      const giggle = hold(p, 0.58, 0.78);
+      r.tilt = q(-2 + 4 * peek);
+      r.by = q(r.by - 0.4 * giggle * Math.abs(Math.sin(T * Math.PI * 6)));
       break;
     }
     case 'smugcat': {
-      const p = at(4);
+      // A hand on her hip, weight on one leg; she leans into the squint, bobs with the brow, and
+      // gives a little hop on the "nya".
+      const p = at(3.6);
       onHips(false);
       r.tx = q(1);
-      r.tilt = 3;
-      if (win(p, 0.4, 0.6)) r.tilt = 5;
+      const squint = hold(p, 0.26, 0.44);
+      const nya = hold(p, 0.56, 0.76);
+      r.tilt = q(3 + 2 * squint - 2 * nya);
+      r.by = q(r.by - 0.4 * bump(p, 0.44, 0.56));
+      hop(Math.round(nya * bump(p, 0.58, 0.72) * 2) / 2);
       break;
     }
     case 'toldyou': {
-      // A hand on the hip; she turns square to you for the "so".
-      const p = at(4.2);
+      // A hand on her hip; she turns square to you for the "so", leans in on the wink, and bounces
+      // on her heels with the grin.
+      const p = at(3.8);
       onHips(false);
-      r.tx = q(1);
-      r.tilt = 2;
-      if (win(p, 0.35, 0.66)) { r.tilt = -1; r.tx = 0; }
+      const square = hold(p, 0.3, 0.6);
+      const grin = hold(p, 0.6, 0.8);
+      r.tx = q(1 - square);
+      r.tilt = q(2 - 3 * square + 2 * hold(p, 0.48, 0.6));
+      hop(Math.round(grin * Math.abs(Math.sin(T * Math.PI * 4)) * 2) / 2);
       break;
     }
     case 'lookdown': {
+      // Hands on her hips, chin high; a slow, superior sway, and her shoulders shake with the
+      // little "ohoho".
+      const p = at(4.2);
       onHips();
-      r.by = q(r.by - 0.5);
-      r.tilt = -5;
+      const laugh = hold(p, 0.6, 0.78);
+      r.by = q(r.by - 0.5 - 0.3 * laugh * Math.sin(T * Math.PI * 8));
+      r.tilt = q(-5 + Math.sin(2 * Math.PI * p) * 1.2 - laugh);
       break;
     }
     case 'tired': {
