@@ -10,12 +10,12 @@ const hash = (n) => {
 
 // A bounce blossom: a wide flower pad on a short stem. It sways a little at rest; stepped on, it
 // dips, flings itself up past its rest and settles back, petals and pollen bursting off it.
-function blossom(ctx, x, y, time, since) {
+function blossom(ctx, x, y, time, since, wx = x) {
   const k = since < 0.9 ? since : 9;
   // Dip, fling, settle (a damped spring).
   const fling = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
   const lift = 3 + fling * 5;
-  const sway = Math.sin(time * 1.8 + x) * 0.06;
+  const sway = Math.sin(time * 1.8 + wx) * 0.06;
   const petal = '#ff9ec7';
   const light = '#ffd2e6';
   const line = shade(petal, -38);
@@ -132,6 +132,6 @@ export function drawMovers(ctx, map, cam, width, height, time) {
   for (const s of map.springs ?? []) {
     const x = s.x - cam.x;
     if (x < -30 || x > width + 30) continue;
-    blossom(ctx, snap(x), snap(s.y - cam.y), time, s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt);
+    blossom(ctx, snap(x), snap(s.y - cam.y), time, s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt, s.x);
   }
 }

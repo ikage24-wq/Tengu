@@ -348,7 +348,7 @@ function hangingSign(ctx, x, y, label, time, wx = x) {
   ctx.font = 'bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const w = Math.round(ctx.measureText(label).width + 12);
   const r = ramp('#f0cf9a', 0.8);
-  pivoted(ctx, x, y - 6, swing(time, wx, 1.3, x * 0.01), () => {
+  pivoted(ctx, x, y - 6, swing(time, wx, 1.3, wx * 0.01), () => {
     const bx = Math.round(x - w / 2);
     // Chains of small links from the hooks.
     for (const cx of [bx + 4, bx + w - 5]) {

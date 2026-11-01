@@ -33,9 +33,10 @@ function twinkle(ctx, x, y, time, seed) {
   ctx.globalAlpha = 1;
 }
 
+// (Animations are phased by the spot's world x, wx, so they don't speed up as the camera moves.)
 const DRAW = {
   // A moonpetal: a pale bloom that only opens at night, glowing, its petals breathing open.
-  moonpetal(ctx, x, y, time, ready) {
+  moonpetal(ctx, x, y, time, ready, wx) {
     ctx.strokeStyle = '#6aa88a';
     ctx.beginPath();
     ctx.moveTo(x, y); ctx.quadraticCurveTo(x - 2, y - 6, x, y - 11);
@@ -44,7 +45,7 @@ const DRAW = {
       blob(ctx, x, y - 11, 2, 3, '#b8b0e6');
       return;
     }
-    const open = 0.8 + 0.2 * Math.sin(time * 1.4 + x);
+    const open = 0.8 + 0.2 * Math.sin(time * 1.4 + wx);
     const glow = ctx.createRadialGradient(x, y - 12, 0, x, y - 12, 16);
     glow.addColorStop(0, 'rgba(220,214,255,0.55)');
     glow.addColorStop(1, 'rgba(220,214,255,0)');
@@ -55,11 +56,11 @@ const DRAW = {
       blob(ctx, x + Math.cos(a) * 3.6 * open, y - 12 + Math.sin(a) * 3 * open, 2.8, 1.8, '#e6e2ff', a);
     }
     blob(ctx, x, y - 12, 1.6, 1.6, '#fff2b8');
-    twinkle(ctx, x + 5, y - 18, time, x);
+    twinkle(ctx, x + 5, y - 18, time, wx);
   },
   // Four round clover leaves on short stems, swaying; picked, a lone sprout.
-  herb(ctx, x, y, time, ready) {
-    const sway = Math.sin(time * 2 + x) * 1.2;
+  herb(ctx, x, y, time, ready, wx) {
+    const sway = Math.sin(time * 2 + wx) * 1.2;
     if (!ready) {
       blob(ctx, x, y - 3, 2, 3, '#9ad88f');
       return;
@@ -75,10 +76,10 @@ const DRAW = {
         blob(ctx, x + dx + sway + Math.cos(a) * 2.2, y - h + Math.sin(a) * 1.6, 2, 1.6, c);
       }
     }
-    twinkle(ctx, x + 2, y - 15, time, x);
+    twinkle(ctx, x + 2, y - 15, time, wx);
   },
   // A rock mound with copper veins and glints; mined, a cracked stump of rock.
-  ore(ctx, x, y, time, ready) {
+  ore(ctx, x, y, time, ready, wx) {
     blob(ctx, x, y - 6, 14, ready ? 9 : 5, ready ? '#b8a8c8' : '#a898b4');
     blob(ctx, x - 6, y - 9, 7, 6, ready ? '#c9bcd6' : '#b4a6c0');
     if (!ready) {
@@ -90,11 +91,11 @@ const DRAW = {
     }
     for (const [dx, dy] of [[-3, -10], [4, -7], [8, -11], [-8, -5]]) blob(ctx, x + dx, y + dy, 2.2, 1.6, '#e0915a', 0.5);
     blob(ctx, x + 2, y - 13, 1.8, 1.4, '#ffb3d1');
-    twinkle(ctx, x + 6, y - 12, time, x);
-    twinkle(ctx, x - 4, y - 9, time + 1.3, x + 5);
+    twinkle(ctx, x + 6, y - 12, time, wx);
+    twinkle(ctx, x - 4, y - 9, time + 1.3, wx + 5);
   },
   // Golden comb hanging on its stalk with a slow drip; taken, an empty pale comb.
-  honey(ctx, x, y, time, ready) {
+  honey(ctx, x, y, time, ready, wx) {
     const top = y - 30;
     ctx.strokeStyle = '#a3714c';
     ctx.lineWidth = 2;
@@ -116,17 +117,17 @@ const DRAW = {
       ctx.stroke();
     }
     if (!ready) return;
-    const d = (time * 0.6 + x * 0.01) % 1;
+    const d = (time * 0.6 + wx * 0.01) % 1;
     ctx.fillStyle = '#ffb020';
     ctx.beginPath();
     ctx.ellipse(x + 1, top + 25 + d * 8, 1.4, 1.4 + d, 0, 0, Math.PI * 2);
     ctx.fill();
-    twinkle(ctx, x - 3, top + 6, time, x);
+    twinkle(ctx, x - 3, top + 6, time, wx);
   },
   // Two plump cherries on a stem hanging low off the tree's bough; picked, just the leaf.
-  fruit(ctx, x, y, time, ready) {
+  fruit(ctx, x, y, time, ready, wx) {
     const top = y - 60;
-    const sway = Math.sin(time * 1.6 + x) * 1.5;
+    const sway = Math.sin(time * 1.6 + wx) * 1.5;
     ctx.strokeStyle = '#7a5a3a';
     ctx.beginPath();
     ctx.moveTo(x - 8, top); ctx.quadraticCurveTo(x, top + 4, x + 8, top);
@@ -143,7 +144,7 @@ const DRAW = {
       ctx.fillStyle = '#ffd2dc';
       ctx.fillRect(x + s * 4 + sway - 2, top + 16, 1.5, 1.5);
     }
-    twinkle(ctx, x + 7 + sway, top + 14, time, x);
+    twinkle(ctx, x + 7 + sway, top + 14, time, wx);
   },
 };
 
@@ -164,7 +165,7 @@ export function drawNodes(ctx, world, cam, time) {
     const y = snap(n.y - cam.y);
     if (x < -60 || x > 700 || y < -60 || y > 420 || !nodeOpen(world, n)) return;
     ctx.save();
-    DRAW[n.look ?? n.kind]?.(ctx, x, y, time, nodeReady(world, i));
+    DRAW[n.look ?? n.kind]?.(ctx, x, y, time, nodeReady(world, i), n.x);
     ctx.restore();
     if (here?.i === i) hint(ctx, x, y - (n.kind === 'fruit' ? 74 : 32), nodeReady(world, i) ? `▲ ${KINDS[n.kind].verb}` : 'Growing back...', nodeReady(world, i));
   });
