@@ -1296,7 +1296,7 @@ function sylvana(pose, f, mood) {
 
 const D = {
   skin: '#ffe5ea', skinDk: '#f0c3cf', hair: '#6c47ab', hairDk: '#4a3080', hairSh2: '#2c1d55', hairHi: '#b9a0ff', horn: '#7a5e8e', hornLt: '#b9a0d2',
-  gold: '#ffcc66', goldDk: '#cf9440', goldLt: '#fff0b8', black: '#3d3150', blackDk: '#2a2139', blackLt: '#5d4c78', wine: '#b43b60', wineDk: '#842a49',
+  gold: '#ffcc66', goldDk: '#cf9440', goldLt: '#fff0b8', black: '#4a3a64', blackDk: '#30264a', blackLt: '#75609c', wine: '#b43b60', wineDk: '#842a49',
   wineLt: '#de6c90', wing: '#9b4a88', wingDk: '#6f3064', wingLt: '#c777b0', bone: '#4b2b50', gem: '#ff4f9c', pink: '#ff9fd0', violet: '#b884ff', lip: '#c8386a',
 };
 
@@ -1318,14 +1318,18 @@ const LILITH_HAIR = {
 };
 const LILITH_RAMP = { hi: D.hairHi, base: D.hair, sh1: D.hairDk, sh2: D.hairSh2 };
 
-// Lilith's face: heavy smoky lids half lowered, heart pupils, a beauty mark, full dark lips in a
-// smouldering smirk with a fang.
+// Lilith's face: matched almond eyes under half-lowered lids, heart pupils, a light plum shadow
+// (a heavy smoky one smeared at sprite size), a beauty mark, full dark lips in a smouldering
+// smirk with a fang, on a soft chin.
 const LILITH_FACE = {
   skin: D.skin, skinSh: '#f2c0d1', skinSh2: '#d593b5', blush: '#ff9cbc', lip: '#c8306a', lipLine: '#8a1c46',
   bangs: bangsOf(LILITH_HAIR.edge),
-  eye: { ry: 3, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.3, wing: 2, flicks: 3, lashLen: 1.6, shadow: '#c98ac6', smoky: 1, lowerLash: '#7a3a6a', ink: '#24112e' },
-  brow: { c: '#2c1d55', kind: 'arch', w: 0.7 },
-  mole: [-1.4, 9.4],
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.8, far: 0.82, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.28, wing: 1.4, flicks: 2, lashLen: 1.2, shadow: '#e2b0d8', smoky: 0.3, lowerLash: '#7a3a6a', ink: '#24112e' },
+  brow: { c: '#2c1d55', kind: 'arch', w: 0.7, lift: 0.3 },
+  mouth: [8.2, 12.2],
+  nose: [9.2, 9.6],
+  mole: [-0.6, 10.2],
   fang: 'always',
   moods: { idle: { open: 0.62, mouth: 'smirk', gaze: [0.1, 0.03] }, angry: { open: 0.85, mouth: 'snarl' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } },
 };
@@ -1347,8 +1351,8 @@ function lilith(pose, f, mood) {
   let headA = walk ? -0.03 * step : 0.04 * Math.sin(ph - 0.7) - 0.02;
   let drop = 0;
   let swing = walk ? -1.4 - 1.4 * Math.sin(ph * 2 - 1.1) : Math.sin(ph - 1.1) * 1;
-  let wingA = walk ? -0.1 + 0.08 * Math.sin(ph * 2 - 0.6) : 0.1 * Math.sin(ph - 0.3);
-  let curl = walk ? Math.sin(ph * 2 + 1.4) : Math.sin(ph - 0.4);
+  let wingA = walk ? -0.1 + 0.14 * Math.sin(ph * 2 - 0.6) : 0.1 * Math.sin(ph - 0.3);
+  let curl = walk ? 1.4 * Math.sin(ph * 2 + 1.4) : Math.sin(ph - 0.4);
   let handAt = [bx + 14, G - 54];
   let hearts = 0;
   if (atk) {
