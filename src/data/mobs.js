@@ -36,6 +36,19 @@ export const MOBS = {
     drops: [{ id: 'royal_jelly', chance: 1, qty: 3 }, { id: 'honeycomb', chance: 1, qty: 4 }, { id: 'bee_fuzz', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 6, warn: 1.3, damage: 60, range: 170 },
   }),
+  // Clover Hills' farm folk (render/mobs/farm.js), one more in each zone.
+  strawimp: mob({
+    id: 'strawimp', name: 'Scarecrow Imp', level: 5, hp: 65, atk: 16, def: 3, acc: 16, eva: 2, exp: 30, gold: [5, 14],
+    speed: 30, gait: 'bound', w: 22, h: 36, art: 'strawimp', drops: [{ id: 'straw_tuft', chance: 0.5 }],
+  }),
+  brownie: mob({
+    id: 'brownie', name: 'Kitchen Brownie', level: 7, hp: 105, atk: 22, def: 5, acc: 20, eva: 3, exp: 48, gold: [7, 20],
+    speed: 34, w: 22, h: 30, art: 'brownie', drops: [{ id: 'brownie_crumb', chance: 0.5 }],
+  }),
+  kamaitachi: mob({
+    id: 'kamaitachi', name: 'Wind Ferret', level: 9, hp: 150, atk: 28, def: 7, acc: 24, eva: 5, exp: 72, gold: [9, 26],
+    speed: 70, gait: 'dart', w: 34, h: 22, art: 'kamaitachi', drops: [{ id: 'wind_whisker', chance: 0.45 }],
+  }),
   // Clover Hills' area boss (world/nest.js, render/mobs/farm.js): the Toadstool Goblins' grumpy
   // old farmer chief bursts out of the big barn once enough of the hills has been hunted, and
   // every few seconds slams his pitchfork down, hurting anyone on his floor near him.

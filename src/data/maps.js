@@ -157,8 +157,9 @@ export const MAPS = {
 
 
   // Clover Hills climbs a farm hillside in three zones (the tall-map rules, a light rework): the
-  // Mandrake Rows at the bottom, crop fields the Mandrakes grow in; the Goblin Barnyard round the
-  // big barn, the Toadstool Goblins' den; and the breezy Jackalope Ridge, with a lookout on top.
+  // Mandrake Rows at the bottom, crop fields where Mandrakes grow and Scarecrow Imps stand; the
+  // Goblin Barnyard round the big barn, the Toadstool Goblins' den, swept by Kitchen Brownies; and
+  // the breezy Jackalope Ridge, where Wind Ferrets dart, with a lookout on top.
   // Each zone hunts in a loop (ropes at both ends) and has a moving part: a hay-bale bounce, the
   // hayloft's chaff updraft, and a ledge drifting across the ridge. The fishing pond is in the quiet
   // west corner with a dock of its own; no monsters near the portals.
@@ -215,19 +216,25 @@ export const MAPS = {
     spirit: { x: 1480, y: 360 },
     // The area boss (world/nest.js): after enough hunting, Old MacGoblin storms out of the barn.
     nest: { mob: 'macgoblin', x: 1200, y: 640, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the Goblin Barnyard!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
-    habitats: { sproutling: { naps: true, home: { x: 600, y: 960 } }, mushkin: { naps: true, home: { x: 1200, y: 640 } }, piglet: { play: true, naps: true } },
+    habitats: { sproutling: { naps: true, home: { x: 600, y: 960 } }, strawimp: { naps: true }, mushkin: { naps: true, home: { x: 1200, y: 640 } }, brownie: { home: { x: 1200, y: 640 } }, piglet: { play: true, naps: true }, kamaitachi: { play: true } },
     spawns: [
-      // Mandrake Rows: Mandrakes.
-      ...[420, 720, 1700, 1950].map((x) => ({ mob: 'sproutling', x, y: 960 })),
+      // Mandrake Rows: Mandrakes, and Scarecrow Imps standing among them.
+      ...[420, 1700].map((x) => ({ mob: 'sproutling', x, y: 960 })),
+      ...[720, 1950].map((x) => ({ mob: 'strawimp', x, y: 960 })),
       ...[1100, 1400].map((x) => ({ mob: 'sproutling', x, y: 930 })),
-      ...[400, 700, 1750, 2050].map((x) => ({ mob: 'sproutling', x, y: 880 })),
+      ...[400, 1750].map((x) => ({ mob: 'sproutling', x, y: 880 })),
+      ...[700, 2050].map((x) => ({ mob: 'strawimp', x, y: 880 })),
       ...[800, 1200, 1600].map((x) => ({ mob: 'sproutling', x, y: 800 })),
-      // Goblin Barnyard: Toadstool Goblins.
-      ...[350, 750, 1650, 2000].map((x) => ({ mob: 'mushkin', x, y: 720 })),
-      ...[700, 1000, 1500, 1800].map((x) => ({ mob: 'mushkin', x, y: 640 })),
-      // Jackalope Ridge: Jackalopes.
-      ...[450, 700, 1750, 2000].map((x) => ({ mob: 'piglet', x, y: 560 })),
-      ...[900, 1450].map((x) => ({ mob: 'piglet', x, y: 480 })),
+      // Goblin Barnyard: Toadstool Goblins, and Kitchen Brownies sweeping round the barn.
+      ...[350, 1650].map((x) => ({ mob: 'mushkin', x, y: 720 })),
+      ...[750, 2000].map((x) => ({ mob: 'brownie', x, y: 720 })),
+      ...[700, 1500].map((x) => ({ mob: 'mushkin', x, y: 640 })),
+      ...[1000, 1800].map((x) => ({ mob: 'brownie', x, y: 640 })),
+      // Jackalope Ridge: Jackalopes, and Wind Ferrets darting on the breeze.
+      ...[450, 1750].map((x) => ({ mob: 'piglet', x, y: 560 })),
+      ...[700, 2000].map((x) => ({ mob: 'kamaitachi', x, y: 560 })),
+      ...[900].map((x) => ({ mob: 'piglet', x, y: 480 })),
+      ...[1450].map((x) => ({ mob: 'kamaitachi', x, y: 480 })),
       ...[500, 1850].map((x) => ({ mob: 'piglet', x, y: 400 })),
     ],
   },

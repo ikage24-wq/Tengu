@@ -3,11 +3,14 @@
 //              huge, round, grumpy old goblin in patched denim overalls and a wide straw hat with
 //              a red toadstool growing out of its crown, drooping old ears, a bulbous nose, bushy
 //              white brows and a walrus moustache, and a giant pitchfork he slams into the ground.
+//   strawimp   Scarecrow Imp: a burlap-headed straw imp hopping on its post (the Mandrake Rows).
+//   brownie    Kitchen Brownie: a tiny hooded house spirit with a big broom (the Goblin Barnyard).
+//   kamaitachi Wind Ferret: the sickle weasel, darting on the wind (Jackalope Ridge).
 // Faces use the simple eyes and mouths (faces.js). Faces right; see kit.js for the shapes.
 
 import { E, T, F, mix, shade, stroke } from './kit.js';
 import { simpleEye, simpleMouth, deadEye, sweat, vein } from './faces.js';
-import { ramp, crescent, shine, smear, breath, sway } from './meadow.js';
+import { ramp, crescent, shine, smear, breath, sway, chain, wave } from './meadow.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -211,6 +214,226 @@ function macgoblin(pose, f, mood) {
   return { w: 96, h: 110, res: 3, shapes: shift(shapes, 2, 22) };
 }
 
+
+// ---------- Scarecrow Imp ----------
+// A little straw imp that passes for a scarecrow: a burlap-sack head with a stitched grin under a
+// patched straw hat, a plaid shirt with straw poking out of the cuffs and collar, standing on one
+// wooden post it hops along on. At rest it holds still with its arms out, like a real scarecrow,
+// its head lolling; it lunges with a straw-stuffed punch.
+
+const BURLAP = ramp('#e2c08c', { step: 9, turn: 14, sat: -8 });
+const PLAID = ramp('#d0504a', { step: 10, turn: 12 });
+const STRAW2 = ramp('#f2d27a', { step: 9, turn: 12, sat: -4 });
+
+const IMP_ATK = [
+  { lean: -10, arm: -60, hop: 0 },
+  { lean: 14, arm: 70, hop: 2 },
+  { lean: 16, arm: 80, hop: 1 },
+  { lean: 4, arm: 20, hop: 0 },
+];
+
+function strawimp(pose, f, mood) {
+  const walk = pose === 'walk';
+  const idle = pose === 'idle';
+  const A = pose === 'attack' ? IMP_ATK[f] : null;
+  const q = walk ? f / 8 : idle ? f / 6 : 0;
+  const dead = mood === 'dead';
+  const hurt = mood === 'hurt';
+  const out = [];
+  // It hops on its post: up off the ground and down twice a loop; at rest it stands stock still,
+  // only the head lolling and the straw stirring.
+  const hop = walk ? Math.abs(Math.sin(TAU * q)) * 5 : A ? A.hop : 0;
+  const x0 = 18;
+  const gy = 40;
+  const lean = dead ? 80 : A ? A.lean : hurt ? -14 : walk ? 6 * Math.sin(TAU * q * 2) : 0;
+  const by = gy - 12 - hop;
+  const body = [];
+  // The post, and a straw tuft at its foot.
+  body.push(...stroke([[x0, gy - hop], [x0, by + 2]], 2.4, WOOD.base, false), ...stroke([[x0 + 0.6, gy - hop], [x0 + 0.6, by + 2]], 0.6, WOOD.hi));
+  // Plaid shirt: a little body, the checks as two crossing stripes.
+  body.push(E(x0, by - 2, 6, 6.4, PLAID.base), crescent(x0, by - 2, 6, 6.4, PLAID.sh, { k: 0.3, a0: 60, a1: 220 }));
+  for (const k of [-2.4, 1.6]) body.push(...stroke([[x0 + k, by - 8], [x0 + k + 0.4, by + 4]], 0.8, PLAID.sh), ...stroke([[x0 - 5.6, by - 3 + k], [x0 + 5.6, by - 3 + k]], 0.8, PLAID.sh));
+  // Straw poking out under the shirt.
+  for (let i = 0; i < 6; i++) body.push(...stroke([[x0 - 4 + i * 1.6, by + 3], [x0 - 4.6 + i * 1.8, by + 6 + (i % 2)]], 0.7, i % 2 ? STRAW2.base : STRAW2.hi));
+  // Arms: held straight out like a scarecrow at rest (sagging a little, swaying), punching.
+  const sag = idle ? 4 + Math.sin(TAU * q) * 2 : walk ? 10 + 6 * Math.sin(TAU * q * 2) : 14;
+  const arm = (s, near) => {
+    const sh2 = [x0 + s * 4, by - 5];
+    // (Attacking, A.arm is how far the near fist reaches: back and up winding up, out to punch.)
+    const tip = A && near ? [sh2[0] + A.arm / 7, sh2[1] - (A.arm < 0 ? 6 : 0)] : [sh2[0] + s * 9, sh2[1] + (hurt ? -6 : sag * 0.5)];
+    const o = [...stroke([sh2, tip], 2.6, near ? PLAID.base : PLAID.sh, false)];
+    for (let i = 0; i < 4; i++) o.push(...stroke([tip, [tip[0] + s * 2 + (i - 1.5) * 0.6, tip[1] - 1.5 + i * 1.2]], 0.6, STRAW2.base));
+    return o;
+  };
+  const back = arm(-1, false);
+  const front = arm(1, true);
+  out.push(...rotate([...back, ...body, ...front], x0, gy - hop, lean));
+  // The head: a lumpy burlap sack tied at the neck, a stitched grin, simple eyes (button-dark).
+  const hx = x0 + 1;
+  const hy = by - 13 + (idle ? Math.sin(TAU * q - 1) * 0.6 : 0);
+  const roll = idle ? Math.sin(TAU * q - 0.8) * 10 : walk ? Math.sin(TAU * q * 2 - 2) * 8 : 0;
+  const head = [O(hx, hy, 7.4, 6.8, 0, BURLAP.base, 18), crescent(hx, hy, 7.4, 6.8, BURLAP.sh, { k: 0.3, a0: 90, a1: 230 })];
+  for (let i = 0; i < 4; i++) head.push(...stroke([[hx - 6 + i * 3.6, hy - 5 + (i % 2)], [hx - 5 + i * 3.6, hy + 5]], 0.35, BURLAP.sh));
+  head.push(...stroke([[hx - 4, hy + 6.4], [hx + 4, hy + 6.4]], 1, '#8a5a3c'));
+  const em = dead ? 'dead' : hurt ? 'hurt' : mood === 'angry' || A ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
+  if (dead) head.push(...deadEye(hx, hy - 1, 1.6, { s: -1, c: '#3a2a2a' }), ...deadEye(hx + 4.4, hy - 1, 1.8, { c: '#3a2a2a' }));
+  else head.push(...simpleEye(hx, hy - 1, { s: -1, w: 1.5, h: 1.7, mood: em, iris: '#3a2a2a', ink: '#2a1a1a' }), ...simpleEye(hx + 4.4, hy - 1.2, { s: 1, w: 1.7, h: 1.9, mood: em, iris: '#3a2a2a', ink: '#2a1a1a' }));
+  // The stitched grin: a curve with little cross-stitches (wide open shouting).
+  const open = A && f < 3;
+  head.push(...stroke([[hx - 1.6, hy + 2.6], [hx + 1.6, hy + 3.6 + (open ? 1.4 : 0)], [hx + 5, hy + 2.4]], 0.6, '#5a3a2a'));
+  for (const k of [0, 1.6, 3.2]) head.push(...stroke([[hx - 0.6 + k, hy + 2.4], [hx - 0.2 + k, hy + 4]], 0.4, '#5a3a2a'));
+  // The patched straw hat, its brim flopping.
+  const hat = [O(hx, hy - 5.4, 9.4, 2, -6, STRAW2.base, 16), E(hx - 0.6, hy - 8, 5, 3.6, STRAW2.base), crescent(hx - 0.6, hy - 8, 5, 3.6, STRAW2.sh, { k: 0.3, a0: 90, a1: 220 }),
+    F(T([[hx - 3, hy - 9.6], [hx - 0.6, hy - 9.8], [hx - 0.4, hy - 7.6], [hx - 2.8, hy - 7.4]], '#5b86c8'))];
+  for (let i = 0; i < 5; i++) hat.push(...stroke([[hx - 8 + i * 4, hy - 4.6], [hx - 8.6 + i * 4, hy - 2.8]], 0.5, STRAW2.sh));
+  head.push(...hat);
+  out.push(...rotate(head, hx, hy + 6, roll + lean * 0.5));
+  if (A && f === 1) out.push(smear([[x0 + 4, by - 6], [x0 + 12, by - 4], [x0 + 18, by - 2]], 3, '#fff2c0'));
+  if (A && f === 2) out.push(...star(x0 + 19, by - 3, 2.4, '#fff2b8'));
+  return { w: 40, h: 46, res: 3, shapes: shift(out, 2, 4) };
+}
+
+// ---------- Kitchen Brownie ----------
+// A tiny house spirit from the old stories: a round little fellow in a brown hooded cloak with
+// long ears poking out, a patched apron and a broom twice his size. He sweeps as he goes, and
+// whacks you with the broom (a puff of dust) when his chores are interrupted.
+
+const CLOAK = ramp('#9a6a4a', { step: 10, turn: 12 });
+const BSKIN = ramp('#ffd8b8', { step: 7, turn: 30 });
+const APRON = ramp('#f6efe0', { step: 6, turn: 30 });
+const BRISTLE = ramp('#e8c070', { step: 9, turn: 12 });
+
+const BROWNIE_ATK = [
+  { broom: -150, lean: -8 },
+  { broom: 30, lean: 12 },
+  { broom: 50, lean: 14 },
+  { broom: 0, lean: 2 },
+];
+
+function brownie(pose, f, mood) {
+  const walk = pose === 'walk';
+  const idle = pose === 'idle';
+  const A = pose === 'attack' ? BROWNIE_ATK[f] : null;
+  const q = walk ? f / 8 : idle ? f / 6 : 0;
+  const dead = mood === 'dead';
+  const hurt = mood === 'hurt';
+  const out = [];
+  const bob = walk ? Math.abs(Math.sin(TAU * q * 2)) * 1.4 : idle ? breath(q) * 0.8 : 0;
+  const x0 = 18 + (hurt ? -1.4 : 0);
+  const gy = 40;
+  const lean = dead ? 80 : A ? A.lean : hurt ? -12 : walk ? 4 : sway(q) * 3;
+  const body = [];
+  // Little boots pattering under the cloak.
+  for (const [dx, ph] of [[-3, 0], [3, 0.5]]) {
+    const step = walk ? Math.sin(TAU * (q + ph)) * 2.4 : 0;
+    body.push(E(x0 + dx + step, gy - 1.2, 2.6, 1.6, CLOAK.deep));
+  }
+  // The cloak: a round brown bell, the apron over its front.
+  const cy = gy - 8 - bob;
+  body.push(O(x0, cy, 6.6, 7, 0, CLOAK.base, 18), crescent(x0, cy, 6.6, 7, CLOAK.sh, { k: 0.3, a0: 50, a1: 230 }));
+  body.push(T([[x0 + 0.6, cy - 3], [x0 + 5.6, cy - 3], [x0 + 6.2, cy + 6], [x0 + 0.4, cy + 6.4]], APRON.base), F(T([[x0 + 2.4, cy + 1], [x0 + 5, cy + 1], [x0 + 5, cy + 3.6], [x0 + 2.4, cy + 3.6]], APRON.sh)));
+  out.push(...rotate(body, x0, gy, lean * 0.5));
+  // The broom: sweeping side to side at rest and walking, raised high and brought down to attack.
+  const ba = A ? A.broom : walk ? 15 + 12 * Math.sin(TAU * q * 2) : 20 + 14 * Math.sin(TAU * q);
+  const hand = [x0 + 10, cy - 2];
+  const d = [Math.sin(ba * D2R), Math.cos(ba * D2R)];
+  const top = [hand[0] - d[0] * 8, hand[1] - d[1] * 8];
+  const foot = [hand[0] + d[0] * 13, hand[1] + d[1] * 13];
+  const broom = [...stroke([top, foot], 1.4, WOOD.base, false)];
+  const n = [Math.cos(ba * D2R), -Math.sin(ba * D2R)];
+  broom.push(T([[foot[0] - n[0] * 2, foot[1] - n[1] * 2], [foot[0] + n[0] * 2, foot[1] + n[1] * 2], [foot[0] + n[0] * 4 + d[0] * 7, foot[1] + n[1] * 4 + d[1] * 7], [foot[0] - n[0] * 4 + d[0] * 7, foot[1] - n[1] * 4 + d[1] * 7]], BRISTLE.base));
+  for (const k of [-2.4, 0, 2.4]) broom.push(...stroke([[foot[0] + n[0] * k * 0.5, foot[1] + n[1] * k * 0.5], [foot[0] + n[0] * k + d[0] * 6.6, foot[1] + n[1] * k + d[1] * 6.6]], 0.4, BRISTLE.sh));
+  broom.push(...stroke([[foot[0] - n[0] * 2.2, foot[1] - n[1] * 2.2 + 0.6], [foot[0] + n[0] * 2.2, foot[1] + n[1] * 2.2 + 0.6]], 0.8, '#d0504a'));
+  out.push(...broom, E(hand[0], hand[1], 1.6, 1.6, BSKIN.base));
+  // The head: a round face in the hood, long ears poking out of it, a button nose, simple eyes.
+  const hx = x0 + 1.4;
+  const hy = cy - 11 + (walk ? -bob * 0.5 : 0);
+  const head = [];
+  const ear = (s, c) => T([[hx + s * 4, hy - 2], [hx + s * 14, hy - 5 + (hurt || dead ? 4 : 0) + (idle ? Math.sin(TAU * q) * 0.8 : 0)], [hx + s * 4, hy + 2]], c);
+  head.push(ear(-1, BSKIN.sh), O(hx, hy - 1, 9.6, 9.2, 0, CLOAK.base, 18), crescent(hx, hy - 1, 9.6, 9.2, CLOAK.sh, { k: 0.3, a0: 90, a1: 230 }));
+  head.push(E(hx + 1.6, hy + 0.8, 7, 6.4, BSKIN.base), crescent(hx + 1.6, hy + 0.8, 7, 6.4, BSKIN.sh, { k: 0.3, a0: 100, a1: 220 }), ear(1, BSKIN.base));
+  head.push(T([[hx - 7, hy - 7], [hx - 1, hy - 13], [hx + 4, hy - 8]], CLOAK.base));
+  const em = dead ? 'dead' : hurt ? 'hurt' : mood === 'angry' || A ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
+  if (dead) head.push(...deadEye(hx, hy, 1.3, { type: 'swirl', s: -1, c: '#3a2a2a' }), ...deadEye(hx + 3.6, hy, 1.4, { type: 'swirl', c: '#3a2a2a' }));
+  else head.push(...simpleEye(hx - 0.4, hy, { s: -1, w: 1.6, h: 2, mood: em, iris: '#7a4a2a', ink: '#2a1a1a' }), ...simpleEye(hx + 4.4, hy - 0.1, { s: 1, w: 1.9, h: 2.3, mood: em, iris: '#7a4a2a', ink: '#2a1a1a' }));
+  head.push(E(hx + 4.6, hy + 2, 1.2, 1, BSKIN.sh), F(E(hx - 0.6, hy + 2.4, 1, 0.6, '#ffb3c6')), F(E(hx + 5, hy + 2.8, 1, 0.6, '#ffb3c6')));
+  head.push(...simpleMouth(hx + 2, hy + 3.6, { k: 0.8, mood: dead ? 'dead' : A && f < 3 ? 'shout' : em === 'angry' ? 'angry' : em, lip: '#8a3550' }));
+  out.push(...rotate(head, x0, gy, lean * 0.6));
+  if (A && f === 1) out.push(smear([[x0 + 2, cy - 18], [x0 + 12, cy - 10], [x0 + 16, cy + 6]], 3, '#fff2c0'));
+  if (A && f === 2) for (const k of [-4, 0, 4]) out.push(E(x0 + 18 + k, gy - 1 - Math.abs(k) * 0.3, 2.6, 1.6, '#f3e6d6'));
+  return { w: 40, h: 46, res: 3, shapes: shift(out, 2, 4) };
+}
+
+// ---------- Wind Ferret (kamaitachi) ----------
+// The sickle weasel of the old stories: a slim cream ferret with a sky-blue wind ribbon round its
+// neck, little sickle blades for claws and a tail that trails off into a swirl of wind. It zips
+// along the ridge in darting bursts and dashes through you, leaving slashes of wind.
+
+const FUR = ramp('#f6e6cc', { step: 8, turn: 24, sat: -4 });
+const MASK = ramp('#c9a37a', { step: 9, turn: 14 });
+const GUST = '#bfe6ff';
+
+const FERRET_ATK = [
+  { crouch: 3, dash: -3, stretch: 0 },
+  { crouch: -1, dash: 10, stretch: 1 },
+  { crouch: 0, dash: 12, stretch: 1 },
+  { crouch: 1, dash: 4, stretch: 0 },
+];
+
+function kamaitachi(pose, f, mood) {
+  const walk = pose === 'walk';
+  const idle = pose === 'idle';
+  const A = pose === 'attack' ? FERRET_ATK[f] : null;
+  const q = walk ? f / 8 : idle ? f / 6 : 0;
+  const dead = mood === 'dead';
+  const hurt = mood === 'hurt';
+  const out = [];
+  // A bounding run: the long body arches and stretches with each bound; idle, it rears up to
+  // sniff the wind.
+  const bound = walk ? Math.sin(TAU * q) : 0;
+  const x0 = 22 + (A ? A.dash : 0) + (hurt ? -2 : 0);
+  const gy = 30;
+  const rear = idle ? Math.max(0, Math.sin(TAU * q)) * 4 : 0;
+  const by = gy - 6 - (walk ? Math.abs(bound) * 2.4 : 0) + (A ? A.crouch : 0) - rear * 0.5 + (dead ? 3 : 0);
+  const arch = walk ? bound * 3 : A ? -A.crouch : 0;
+  // The tail: a long plume that turns into a swirl of wind at its tip.
+  const tail = chain(x0 - 10, by - 1, 190 + (walk ? -bound * 12 : idle ? Math.sin(TAU * q) * 10 : 0), [3, 3, 3, 3], (i) => -14 + wave(TAU * q * (walk ? 2 : 1), 8)(i));
+  out.push(...stroke(tail.map(([x, y]) => [x, y]), 2.6, FUR.sh, false));
+  const tt = tail.at(-1);
+  for (let k = 0; k < 3; k++) out.push(...stroke(Array.from({ length: 6 }, (_, i) => { const a = (i / 5) * 4 + k * 2.1 + q * TAU; return [tt[0] - 2 - i * 0.8 + Math.cos(a) * (1 + i * 0.5), tt[1] + Math.sin(a) * (1 + i * 0.5)]; }), 0.6, GUST));
+  // Legs: four quick little paws, sickle claws gleaming on the front ones.
+  for (const [dx, ph, front] of [[-7, 0, false], [-4, 0.5, false], [5, 0.25, true], [8, 0.75, true]]) {
+    const step = walk ? Math.sin(TAU * (q + ph)) * 3 : 0;
+    const lift = walk ? Math.max(0, Math.cos(TAU * (q + ph))) * 2 : 0;
+    const p = [x0 + dx + step, gy - lift];
+    out.push(...stroke([[x0 + dx * 0.8, by + 2], p], 1.8, front ? FUR.base : FUR.sh, false));
+    if (front) out.push(...stroke([[p[0], p[1] - 0.6], [p[0] + 2.4, p[1] - 2.4], [p[0] + 3.2, p[1] - 0.4]], 0.6, '#b8c2d4'));
+  }
+  // The long body, arching with the bound, stretching out in the dash.
+  const len = 10 + (A ? A.stretch * 3 : walk ? Math.abs(bound) * 1.2 : 0);
+  const body = [O(x0, by - arch * 0.4, len, 4.4, 0, FUR.base, 18), crescent(x0, by - arch * 0.4, len, 4.4, FUR.sh, { k: 0.3, a0: 60, a1: 200 }), shine(x0, by - arch * 0.4, len, 4.4, '#ffffff', 0, 0.8)];
+  out.push(...rotate(body, x0, by, (dead ? 0 : -rear * 3) + arch));
+  // The wind ribbon round its neck, its ends streaming back.
+  const nx = x0 + len - 1;
+  const ny = by - 2 - rear;
+  const flow = walk || A ? 1 : 0.4;
+  out.push(...stroke([[nx - 1, ny - 2], [nx - 6, ny - 3 - 2 * flow * Math.sin(TAU * q * 2)], [nx - 11, ny - 2]], 1.4, GUST), ...stroke([[nx - 1, ny + 1], [nx - 7, ny + 2 + flow * Math.sin(TAU * q * 2 + 1)], [nx - 12, ny + 3]], 1, mix(GUST, '#ffffff', 0.4)));
+  // The head: a pointed little muzzle with a darker mask round the eyes, round ears.
+  const hx = nx + 3;
+  const hy = ny - 3;
+  const head = [E(hx - 3, hy - 4, 2, 2, MASK.base), O(hx, hy, 5.4, 4.2, -8, FUR.base, 16), crescent(hx, hy, 5.4, 4.2, FUR.sh, { k: 0.3, a0: 100, a1: 220 }), O(hx + 5, hy + 1.4, 3, 2, -10, FUR.base, 12), F(E(hx + 7.6, hy + 0.8, 0.9, 0.8, '#3a2a3a')), E(hx + 1, hy - 4.4, 2, 2, MASK.base), F(O(hx + 2, hy - 0.6, 3.4, 1.8, -8, MASK.hi, 12))];
+  const em = dead ? 'dead' : hurt ? 'hurt' : mood === 'angry' || A ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
+  if (dead) head.push(...deadEye(hx + 1, hy - 0.6, 1.2, { type: 'swirl', c: '#2a1a2e' }));
+  else head.push(...simpleEye(hx + 1.6, hy - 0.6, { s: 1, w: 1.3, h: 1.5, mood: em, iris: '#4f95e0', ink: '#2a1a2e', wing: 1 }));
+  head.push(...simpleMouth(hx + 5.6, hy + 2.8, { k: 0.7, mood: dead ? 'dead' : A && f < 3 ? 'shout' : em, lip: '#8a3550', smug: em === 'idle' }));
+  out.push(...rotate(head, hx, hy + 3, (idle ? Math.sin(TAU * q - 1) * 8 : 0) - rear * 2));
+  if (A && f >= 1 && f <= 2) {
+    out.push(smear([[x0 - 14, by - 2], [x0 - 2, by - 2], [x0 + 10, by - 3]], 4, mix(GUST, '#ffffff', 0.5)));
+    for (const k of [-3, 0, 3]) out.push(...stroke([[x0 + 14 + k, by - 8 + k], [x0 + 20 + k, by + 2 + k]], 0.8, GUST));
+  }
+  return { w: 50, h: 36, res: 3, shapes: shift(out, 2, 4) };
+}
+
 // Turns shapes about (cx, cy) by deg.
 function rotate(shapes, cx, cy, deg) {
   if (!deg) return shapes;
@@ -227,8 +450,14 @@ function rotate(shapes, cx, cy, deg) {
 
 export const ART = {
   macgoblin: { walk: 8, idle: 6, attack: 5, stride: 26, atkMs: [120, 460, 220, 260], draw: macgoblin },
+  strawimp: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [60, 240, 180], draw: strawimp },
+  brownie: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [70, 260, 200], draw: brownie },
+  kamaitachi: { walk: 8, idle: 6, attack: 4, stride: 34, atkMs: [50, 220, 160], draw: kamaitachi },
 };
 
 export const INFO = {
   macgoblin: { name: 'Old MacGoblin', w: 70, h: 84 },
+  strawimp: { name: 'Scarecrow Imp', w: 22, h: 36 },
+  brownie: { name: 'Kitchen Brownie', w: 22, h: 30 },
+  kamaitachi: { name: 'Wind Ferret', w: 34, h: 22 },
 };
