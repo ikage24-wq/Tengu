@@ -590,7 +590,7 @@ const TAMAMO_RAMP = { hi: K.hairLt, base: K.hair, sh1: K.hairDk, sh2: K.hairSh2 
 const TAMAMO_FACE = {
   skin: K.skin, skinSh: '#f8d0ca', skinSh2: '#e6a6ab', blush: '#ff9fb2', lip: '#e2486c', lipLine: '#a8344f',
   bangs: bangsOf(TAMAMO_HAIR.edge),
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
   eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.6, far: 0.8, iris: '#22b8a8', irisDk: '#0a5c62', irisLt: '#b6fff0', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#06303a', tilt: 0.38, wing: 1.2, flicks: 2, lashLen: 1.1, shadow: '#ffb0bc', smoky: 0.2, lowerLash: '#c86478', ink: '#3a1a1c' },
   brow: { c: '#c07a3a', kind: 'soft', w: 0.7, lift: 0.3 },
   mouth: [8.2, 12.2],
@@ -612,7 +612,7 @@ function tamamo(pose, f, mood) {
   // rises a touch once per cycle; idle is a slow breath.
   let bob = walk ? -1.6 * Math.sin(ph) : 0.6 * Math.sin(ph);
   let lean = walk ? 1.6 + 0.9 * Math.sin(ph - 0.5) : 0;
-  let tilt = walk ? 0.03 + 0.012 * Math.sin(ph - 0.9) : 0;
+  let tilt = walk ? 0.006 + 0.012 * Math.sin(ph - 0.9) : 0;
   let headA = walk ? -0.02 + 0.03 * Math.sin(ph - 1.3) : 0.03 * Math.sin(ph - 0.6);
   let drop = 0;
   // Secondary motion: hair, sleeves, and the train lag behind the body.
@@ -659,10 +659,10 @@ function tamamo(pose, f, mood) {
     fanAng = 20;
   }
   const hipY = G - 50;
-  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt));
-  const hx = bx + 3;
-  const hy = G - 100;
-  const Th = chain(Tu, rot(hx, hy + 13, headA));
+  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
+  const hx = bx - 0.4;
+  const hy = G - 103.5;
+  const Th = chain(Tu, rot(hx, hy + 13, headA - 0.05));
   const out = [];
   const fireC = angry || atk ? FIRE_HOT : FIRE;
 
@@ -963,7 +963,7 @@ const SYLVANA_FACE = {
   skin: S.skin, skinSh: '#e2dccb', skinSh2: '#b9c4ae', blush: '#ff9ab4', lip: S.lip, lipLine: '#b0546c',
   bangs: bangsOf(SYLVANA_HAIR.edge),
   bangLine: S.hairSh2,
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
   eye: { nearX: 2.4, farX: 9.8, rx: 3.8, ry: 2.9, far: 0.82, iris: '#e2587a', irisDk: '#7a1e42', irisLt: '#ffd6c4', hot: '#ffc23a', hotDk: '#9a5a08', pupil: 'round', pupilC: '#3a0e26', tilt: 0.1, wing: 1, flicks: 1, lashLen: 1.2, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#16302a', sparkle: true },
   brow: { c: '#3f7a52', kind: 'soft', w: 0.7, lift: 0.3 },
   mouth: [8.2, 12.2],
@@ -1021,10 +1021,10 @@ function sylvana(pose, f, mood) {
   const glow = angry || atk ? S.veinHot : dead ? '#cfe6d6' : mix(S.vein, '#ffffff', 0.2 + 0.2 * Math.sin(ph));
   const top = G - 82;
   const hipY = G - 50;
-  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt));
-  const hx = bx + 3;
-  const hy = G - 100;
-  const Th = chain(Tu, rot(hx, hy + 13, headA));
+  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
+  const hx = bx - 0.4;
+  const hy = G - 103.5;
+  const Th = chain(Tu, rot(hx, hy + 13, headA - 0.05));
   const out = [];
 
   // Fireflies circling her; the far half of the orbit is drawn behind.
@@ -1324,7 +1324,7 @@ const LILITH_RAMP = { hi: D.hairHi, base: D.hair, sh1: D.hairDk, sh2: D.hairSh2 
 const LILITH_FACE = {
   skin: D.skin, skinSh: '#f2c0d1', skinSh2: '#d593b5', blush: '#ff9cbc', lip: '#c8306a', lipLine: '#8a1c46',
   bangs: bangsOf(LILITH_HAIR.edge),
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
   eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.8, far: 0.82, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.28, wing: 1.4, flicks: 2, lashLen: 1.2, shadow: '#e2b0d8', smoky: 0.3, lowerLash: '#7a3a6a', ink: '#24112e' },
   brow: { c: '#2c1d55', kind: 'arch', w: 0.7, lift: 0.3 },
   mouth: [8.2, 12.2],
@@ -1385,10 +1385,10 @@ function lilith(pose, f, mood) {
   if (angry && !atk) wingA += 0.18;
   const top = G - 82;
   const hipY = G - 48;
-  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt));
-  const hx = bx + 3;
-  const hy = G - 100;
-  const Th = chain(Tu, rot(hx, hy + 13, headA));
+  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
+  const hx = bx - 0.4;
+  const hy = G - 103.5;
+  const Th = chain(Tu, rot(hx, hy + 13, headA - 0.05));
   const out = [];
 
   // ---- Bat wings: an arm bone, a wrist, four fingers, and scalloped membrane between them.
@@ -1709,7 +1709,7 @@ const SELENE_FACE = {
   skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffa8bc', blushK: 0.9, lip: M.lip, lipLine: '#b0566a',
   bangs: bangsOf(SELENE_HAIR.edge),
   bangLine: '#666dba',
-  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
   eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.8, far: 0.82, iris: '#6a78e0', irisDk: '#28307a', irisLt: '#d0e0ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#1a1c50', tilt: 0.08, wing: 1.1, flicks: 2, lashLen: 1.1, ink: '#22234e', sparkle: true },
   brow: { c: '#666dba', kind: 'straight', w: 0.8, lift: 0 },
   mouth: [8.2, 12.2],
@@ -1730,7 +1730,7 @@ function selene(pose, f, mood) {
   const fall = walk ? Math.abs(Math.sin(ph)) : 0;
   let bob = walk ? -2 + fall * 2.4 : 0.5 * Math.sin(ph);
   let lean = walk ? 1.4 : 0;
-  let tilt = walk ? 0.02 + 0.015 * Math.sin(ph * 2) : 0;
+  let tilt = walk ? 0.004 + 0.015 * Math.sin(ph * 2) : 0;
   let headA = walk ? -0.03 : 0.025 * Math.sin(ph - 0.7);
   let drop = 0;
   let swing = walk ? -2.6 + Math.sin(ph * 2 - 1.2) * 1.4 : Math.sin(ph - 1.1) * 2;
@@ -1766,10 +1766,10 @@ function selene(pose, f, mood) {
   }
   const top = G - 82;
   const hipY = G - 48;
-  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt));
-  const hx = bx + 3;
-  const hy = G - 100;
-  const Th = chain(Tu, rot(hx, hy + 13, headA));
+  const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
+  const hx = bx - 0.4;
+  const hy = G - 103.5;
+  const Th = chain(Tu, rot(hx, hy + 13, headA - 0.05));
   const out = [];
   const moonGlow = angry || atk ? M.glow : M.halo;
 
