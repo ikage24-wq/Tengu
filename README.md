@@ -2,8 +2,8 @@
 
 A 2D side-scrolling RPG you can play with friends.
 
-- **Play:** https://ikage24-wq.github.io/Twzt/
-- **Windows:** [Releases](https://github.com/ikage24-wq/Twzt/releases) (updates itself)
+- **Play:** https://ikage24-wq.github.io/Tengu/
+- **Windows:** [Releases](https://github.com/ikage24-wq/Tengu/releases) (updates itself)
 
 ```sh
 npm start         # http://localhost:8000
