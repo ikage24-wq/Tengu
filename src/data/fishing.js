@@ -39,7 +39,7 @@ export const SPOTS = {
   glade: [{ x: 1985, y: 832, face: 1, bx: 2045, by: 878, pool: { fish_carp: 4, fish_trout: 4, fish_koi: 1.2, fish_eel: 0.8 } }],
   springs: [{ x: 2200, y: 832, face: 1, bx: 2260, by: 870, pool: { fish_hotfish: 6, fish_koi: 1.5, fish_eel: 1.5 } }],
   peak: [{ x: 1920, y: 1072, face: 1, bx: 2030, by: 1118, ice: true, pool: { fish_icefish: 6, fish_trout: 2, fish_seraph: 0.4 } }],
-  starfall: [{ x: 1130, y: 860, face: 1, bx: 1200, by: 858, sky: true, pool: { fish_seraph: 3, fish_starfish: 2, fish_whale: 0.5 } }],
+  starfall: [{ x: 830, y: 752, face: 1, bx: 905, by: 796, sky: true, pool: { fish_seraph: 3, fish_starfish: 2, fish_whale: 0.5 } }],
 };
 
 // How close you must stand to a spot to cast.

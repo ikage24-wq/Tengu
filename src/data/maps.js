@@ -1003,29 +1003,55 @@ Object.assign(MAPS, {
   },
 
 
-  // Above the Sky Garden, where the night comes early: lavender cloud islands under a sky full of
-  // shooting stars, the moon close enough to touch. Star Seraphs and Sky Harpies.
+  // Starfall Heights is a valley (data/climb.js lay(), its zones side by side): you arrive high on
+  // the West Rim, where the Sky Harpies wheel and a star pool by its lower steps is a quiet place to
+  // fish; step down the cliff terraces into the Fallen Star Crater, where the Star Seraphs gather
+  // round the fallen stars, Selene walks, and starlight rises to lift you; and climb out up the
+  // East Rim to the high island where the way to the Moon Terrace opens. A star-cloud ferry glides
+  // the whole width of the valley, rim to rim.
   starfall: {
     id: 'starfall', name: 'Starfall Heights', theme: 'sky', music: 'starfall', town: 'grove', world: { x: 390, y: 34 },
-    width: 2400, height: 900, groundY: 860,
     look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star', 'flower', 'cloudpuff'], drift: 'sparkle', ground: '#e6e0fa', groundDeep: '#c4b8ec', ledge: '#ece6ff', ledgeShade: '#c4b8ec' },
-    terrain: [[0, 860], [2400, 860]],
-    platforms: [
-      { x: 140, y: 780, w: 560 }, { x: 900, y: 780, w: 600 }, { x: 1700, y: 780, w: 560 },
-      { x: 400, y: 700, w: 600 }, { x: 1300, y: 700, w: 600 },
-      { x: 160, y: 620, w: 460 }, { x: 860, y: 620, w: 560 }, { x: 1660, y: 620, w: 560 },
-      { x: 1000, y: 540, w: 420, thick: 44 },
-    ],
-    ropes: [{ x: 200, top: 620, bottom: 860 }, { x: 2180, top: 620, bottom: 860 }, { x: 1040, top: 540, bottom: 620, ladder: true }],
-    portals: [{ id: 'west', x: 40, y: 860, to: 'sky', toPortal: 'starfall' }],
+    ...lay({
+      width: 2600, ground: 1040, by: 'x',
+      terrain: [[0, 520], [460, 520], [460, 640], [760, 640], [760, 800], [1000, 800], [1000, 1040], [1600, 1040], [1600, 800], [1840, 800], [1840, 640], [2140, 640], [2140, 520], [2600, 520]],
+      // Ropes down each cliff step, hanging beside the wall from its top.
+      ropes: [{ x: 470, top: 520, bottom: 640 }, { x: 770, top: 640, bottom: 800 }, { x: 1010, top: 800, bottom: 1040 }, { x: 1590, top: 800, bottom: 1040 }, { x: 1830, top: 640, bottom: 800 }, { x: 2130, top: 520, bottom: 640 }],
+      quiet: [[40, 520, 200], [880, 800, 260], [820, 640, 320], [2500, 440, 200]],
+      zones: [
+        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }] },
+        { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'windbird'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.3] }],
+          look: { sky: ['#2a1e58', '#5a3f8c', '#c08ad6'] } },
+        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit'], nodes: [{ kind: 'herb', pool: { clover: 1 } }],
+          look: { sky: ['#141238', '#3a2f7c', '#8a7ad0'] } },
+      ],
+      ledges: [
+        // Islands floating over the crater.
+        { x: 1050, y: 960, w: 220 }, { x: 1330, y: 960, w: 220 },
+        { x: 1150, y: 880, w: 300 },
+        // A ledge over the west rim, and the east rim's high island with the way to the terrace.
+        { x: 100, y: 440, w: 260 },
+        { x: 2250, y: 440, w: 300, thick: 44 },
+        // The star-cloud ferry, gliding rim to rim across the valley.
+        { x: 760, y: 640, w: 150, drift: { dx: 930, period: 16 } },
+        // The fishing dock by the star pool on the west steps.
+        { x: 800, y: 752, w: 95, posts: true },
+      ],
+    }),
+    // A moving part per zone: the ferry on the west rim's steps, starlight rising from the crater
+    // (Up to ride it, and catch the ferry going over), and a vent up to the east rim's island.
+    updrafts: [{ x: 1300, w: 56, top: 610, bottom: 1040, kind: 'wisplight' }],
+    springs: [{ x: 2300, y: 520, up: 120, kind: 'gust' }],
+    portals: [{ id: 'west', x: 40, y: 520, to: 'sky', toPortal: 'starfall' }],
     npcs: [],
-    deco: [['cloudpillar', 700], ['moonstone', 1200], ['cloudpillar', 1600], ['skygazebo', 1210, 0, 540], ['moonstone', 2100]],
-    spawns: [
-      ...along(860, 120, 2300, 6, 'starspirit', 'windbird'), ...along(780, 160, 680, 2, 'windbird'), ...along(780, 920, 1480, 2, 'starspirit', 'windbird'), ...along(780, 1720, 2240, 2, 'starspirit'),
-      ...along(700, 420, 980, 2, 'starspirit'), ...along(700, 1320, 1880, 2, 'windbird', 'starspirit'), ...along(620, 180, 600, 1, 'starspirit'), ...along(620, 880, 1400, 2, 'windbird', 'starspirit'),
-      ...along(620, 1680, 2200, 2, 'starspirit'),
-    ],
+    // A landmark per zone: a cloud pillar on the west rim, the moonstones round the crater, the
+    // gazebo on the east rim's island.
+    deco: [['cloudpillar', 300], ['glowpool', 900], ['moonstone', 1200], ['moonstone', 1450], ['cloudpillar', 2000], ['skygazebo', 2380, 0, 440]],
+    lamps: [{ x: 860, y: 730 }, { x: 1300, y: 1000 }, { x: 2380, y: 400 }],
+    spirit: { x: 1300, y: 760 },
+    habitats: { windbird: { play: true }, starspirit: { naps: true, home: { x: 1300, y: 1040 } } },
   },
+
 });
 
 // ---------- The queens' trial arenas ----------
@@ -1074,7 +1100,7 @@ MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPort
 // Serpent Springs' drifting ledge and fishing dock; the grotto is behind the waterfall.
 MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 2180, y: 832, w: 95, posts: true });
 MAPS.springs.portals.push({ id: 'grotto', x: 1560, y: 560, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
-MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
+MAPS.starfall.portals.push({ id: 'terrace', x: 2500, y: 440, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.
@@ -1083,4 +1109,4 @@ MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 880, respawn: 600 });
 MAPS.glade.platforms.push({ x: 1960, y: 832, w: 95, posts: true }, { x: 830, y: 400, w: 140, drift: { dx: 400, period: 10 } });
 MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 880, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 1300, y: 880, respawn: 600 });
-MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600 });
+MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
