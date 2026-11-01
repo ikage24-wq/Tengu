@@ -36,7 +36,7 @@ export const SPOTS = {
   meadow1: [{ x: 2272, y: 952, face: -1, bx: 2215, by: 998, pool: { fish_minnow: 6, fish_carp: 4 } }],
   meadow2: [{ x: 168, y: 912, face: 1, bx: 230, by: 958, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2 } }],
   harbor: [{ x: 2230, y: 426, face: 1, bx: 2300, by: 466, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3 } }],
-  glade: [{ x: 1630, y: 720, face: 1, bx: 1700, by: 718, pool: { fish_carp: 4, fish_trout: 4, fish_koi: 1.2, fish_eel: 0.8 } }],
+  glade: [{ x: 1985, y: 832, face: 1, bx: 2045, by: 878, pool: { fish_carp: 4, fish_trout: 4, fish_koi: 1.2, fish_eel: 0.8 } }],
   springs: [{ x: 790, y: 760, face: 1, bx: 860, by: 750, pool: { fish_hotfish: 6, fish_koi: 1.5, fish_eel: 1.5 } }],
   peak: [{ x: 520, y: 960, face: 1, bx: 590, by: 958, ice: true, pool: { fish_icefish: 6, fish_trout: 2, fish_seraph: 0.4 } }],
   starfall: [{ x: 1130, y: 860, face: 1, bx: 1200, by: 858, sky: true, pool: { fish_seraph: 3, fish_starfish: 2, fish_whale: 0.5 } }],

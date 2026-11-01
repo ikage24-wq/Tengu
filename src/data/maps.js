@@ -775,28 +775,39 @@ MAPS.sky.portals.push({ id: 'peak', x: 2340, y: 960, to: 'peak', toPortal: 'east
 MAPS.sky.portals.push({ id: 'starfall', x: 1420, y: 560, to: 'starfall', toPortal: 'west', label: 'Starfall Heights' });
 
 Object.assign(MAPS, {
-  // A sunny clearing deep in the woods where the wind never stops: wind chimes in every tree,
-  // giant flowers, a waterfall off the high ledge. Sylphs ride the breeze; Treants stand guard.
+  // The Whispering Glade climbs in three zones (the tall-map rules, a light rework, data/climb.js):
+  // the Flower Meadow, where Treants wander among giant flowers and blossoms bounce you up; the
+  // Waterfall Terraces, where the falls' mist floats you higher; and the Sylph Boughs, the sylphs'
+  // treetops, with a leaf drifting across the gap and the lookout on top, where the way into
+  // Sylvana's Bower opens. The fishing pond is in the quiet east corner with a dock of its own.
   glade: {
     id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 },
-    width: 2200, height: 760, groundY: 720,
     look: { sky: ['#8fe0d0', '#d2f4e2', '#fffbe0'], far: '#8fd6b4', mid: '#6cc498', midTrim: '#4fae7f', light: 'morning', edges: 'flowers', props: ['flower', 'chime', 'tuft', 'bush', 'tulip', 'flower'], drift: 'leaf', rainbow: 0.3 },
-    terrain: [[0, 720], [2200, 720]],
-    platforms: [
-      { x: 160, y: 640, w: 700 }, { x: 1000, y: 640, w: 600 }, { x: 1720, y: 640, w: 360 },
-      { x: 320, y: 560, w: 480 }, { x: 1100, y: 560, w: 520 },
-      { x: 560, y: 480, w: 720 }, { x: 1500, y: 480, w: 420 },
-      { x: 900, y: 400, w: 380, thick: 44 },
-    ],
-    ropes: [{ x: 1880, top: 480, bottom: 720 }, { x: 1180, top: 400, bottom: 480, ladder: true }],
-    portals: [{ id: 'west', x: 40, y: 720, to: 'woods', toPortal: 'glade' }],
+    ...climb({
+      width: 2200, ground: 880, quiet: [[40, 880, 160], [2000, 880, 320], [2000, 800, 260], [2000, 720, 260]],
+      zones: [
+        { name: 'Flower Meadow', color: '#e889b4', rows: ['long', 'split'], mobs: ['mossgolem', 'sylph'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Waterfall Terraces', color: '#4fb0d8', rows: ['splitwide', 'tri', 'long'], mobs: ['sylph', 'mossgolem', 'sylph'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.12] }],
+          look: { sky: ['#9fe4f0', '#d8f4f6', '#fffbe8'], far: '#9fd8c8', mid: '#7fc8b0' } },
+        { name: 'Sylph Boughs', color: '#6fae5f', rows: ['split', 'middle'], mobs: ['sylph'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+          look: { sky: ['#b8ecd8', '#e2f8e8', '#fffbe6'], far: '#b0e4c4', mid: '#90d4a8' } },
+      ],
+    }),
+    // The fishing dock, a hop up from the ground over the pond in the east corner.
+    // A moving part per zone: blossoms that bounce you up in the meadow, the waterfall's mist rising
+    // through the terraces (Up to ride it), and a leaf drifting across the boughs' gap.
+    springs: [{ x: 1100, y: 880, up: 170, kind: 'blossom' }, { x: 1600, y: 880, up: 170, kind: 'blossom' }],
+    updrafts: [{ x: 1100, w: 56, top: 530, bottom: 800, kind: 'mist' }],
+    portals: [{ id: 'west', x: 40, y: 880, to: 'woods', toPortal: 'glade' }],
     npcs: [],
-    deco: [['giantflower', 260, 0], ['bigtree', 940, 1], ['giantflower', 1450, 2], ['waterfall', 1000, 0, 400], ['pond', 1700], ['giantflower', 2120, 1]],
-    spawns: [
-      ...along(720, 140, 2160, 6, 'mossgolem', 'sylph'), ...along(640, 180, 840, 3, 'sylph', 'mossgolem'), ...along(640, 1020, 1580, 3, 'mossgolem', 'sylph'),
-      ...along(560, 340, 780, 2, 'sylph'), ...along(560, 1120, 1600, 2, 'sylph', 'mossgolem'), ...along(480, 580, 1260, 3, 'mossgolem', 'sylph', 'sylph'), ...along(480, 1520, 1900, 2, 'sylph'),
-    ],
+    // A landmark per zone: the giant flowers in the meadow, the waterfall on the terraces, the great
+    // tree in the boughs.
+    deco: [['giantflower', 260, 0], ['giantflower', 1450, 2], ['pond', 2040], ['waterfall', 1100, 0, 800], ['bigtree', 1550, 1, 480], ['giantflower', 700, 1, 480]],
+    lamps: [{ x: 2010, y: 810 }, { x: 1100, y: 200 }, { x: 1550, y: 440 }],
+    spirit: { x: 1500, y: 200 },
+    habitats: { sylph: { play: true, naps: true }, mossgolem: { naps: true, home: { x: 1100, y: 800 } } },
   },
+
 
   // A stone path climbing through cherry trees at sunset under one vermilion gate after another,
   // fox guardians at each, a little roadside shrine on the terrace. Nekomata prowl the lower
@@ -965,14 +976,16 @@ Object.assign(MAPS, {
     [['moonstone', 700], ['cloudpillar', 260], ['cloudpillar', 1140]], ['starfall', 'terrace']),
 });
 
-MAPS.glade.portals.push({ id: 'bower', x: 2140, y: 720, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
+MAPS.glade.portals.push({ id: 'bower', x: 1250, y: 240, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 2560, y: 760, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
 MAPS.springs.portals.push({ id: 'grotto', x: 1500, y: 760, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
 MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.
-MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 720, respawn: 600 });
+MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 880, respawn: 600 });
+// The glade's fishing dock and leaf.
+MAPS.glade.platforms.push({ x: 1960, y: 832, w: 95, posts: true }, { x: 830, y: 400, w: 140, drift: { dx: 400, period: 10 } });
 MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 760, respawn: 600 });
 MAPS.springs.spawns.push({ mob: 'lilith', x: 1900, y: 760, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600 });

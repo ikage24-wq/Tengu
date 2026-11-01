@@ -87,7 +87,7 @@ export const STORY_QUESTS = {
   }),
   story_3_2: s('story_3_2', 3, {
     name: 'The Dryad Queen', giver: 'elowen', minLevel: 20, prereq: 'story_3_1',
-    text: "It's Sylvana, the Dryad Queen. Her bower is at the far end of the glade. She won't listen to words right now... show her your heart, and don't be afraid to stand your ground.",
+    text: "It's Sylvana, the Dryad Queen. Her bower is at the top of the glade, past the waterfall. She won't listen to words right now... show her your heart, and don't be afraid to stand your ground.",
     objectives: [{ type: 'kill', mob: 'sylvana', count: 1 }],
     trial: 'bower',
     rewards: { exp: 30000, gold: 8000, items: [{ id: 'warrior_hat_20', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },

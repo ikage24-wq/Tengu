@@ -188,6 +188,7 @@ function shroom(ctx, x, y, time, since, wx) {
 // An updraft: motes rising in a slow spiral, with a faint column of light. Pollen is warm gold
 // dust off the hive; petals are cherry blossom caught in a whirl round the tree.
 const DRAFTS = {
+  mist: { glow: '#d8f4ff', bits: ['#ffffff', '#cfeeff', '#a8dcff'], count: 24, speed: 80, size: 2, petal: false },
   spores: { glow: '#c8ffd0', bits: ['#9fffb0', '#e6ffd0', '#bfe6ff'], count: 22, speed: 60, size: 1.6, petal: false },
   gust: { glow: '#e8f4ff', bits: ['#ffffff', '#d8ecff', '#f0e0c8'], count: 22, speed: 120, size: 1.8, petal: true },
   chaff: { glow: '#ffe6b0', bits: ['#e8c070', '#f6dc98', '#fff2c8'], count: 20, speed: 75, size: 2.2, petal: true },
