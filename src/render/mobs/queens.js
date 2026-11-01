@@ -1660,7 +1660,7 @@ function lilith(pose, f, mood) {
 // ---------- Selene, the Moon Valkyrie ----------
 
 const M = {
-  skin: '#fff0e8', skinDk: '#efcec9', hair: '#eceaff', hairDk: '#c6c1ee', hairSh2: '#8f8ad0', hairLt: '#ffffff', silver: '#e3e6f6', silverDk: '#a4a8d0', silverLt: '#ffffff',
+  skin: '#fff0e8', skinDk: '#efcec9', hair: '#c8cff4', hairDk: '#99a2de', hairSh2: '#666dba', hairLt: '#f2f4ff', silver: '#e3e6f6', silverDk: '#a4a8d0', silverLt: '#ffffff',
   steel: '#8a8ec0', lav: '#c5b0ff', lavDk: '#9580df', lavLt: '#e6dcff', gold: '#ffe08a', goldDk: '#d4a748', cape: '#40439a', capeDk: '#2b2d70',
   capeIn: '#5c62c8', star: '#fffbe0', halo: '#fff4c2', haloDk: '#efd27e', moon: '#fff8d8', glow: '#bfe9ff', lip: '#e07a92',
 };
@@ -1702,11 +1702,18 @@ const SELENE_RAMP = { hi: M.hairLt, base: M.hair, sh1: M.hairDk, sh2: M.hairSh2 
 
 // Selene's face: clear, steady eyes with clean strong lashes and straight brows, a calm resolve;
 // she grits her teeth when struck.
+// Selene's face: matched clear eyes of deep moon blue (the darkest, strongest note in a sprite of
+// silver and lavender), straight resolute brows, a calm mouth on a soft chin; a fine dark line
+// where the bangs meet the skin keeps the pale hair apart from the face.
 const SELENE_FACE = {
-  skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffb0c0', blushK: 0.8, lip: M.lip, lipLine: '#b0566a',
+  skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffa8bc', blushK: 0.9, lip: M.lip, lipLine: '#b0566a',
   bangs: bangsOf(SELENE_HAIR.edge),
-  eye: { ry: 2.9, iris: '#8e9be6', irisDk: '#3d3f8f', irisLt: '#d8e6ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#23245a', tilt: 0, wing: 1.3, flicks: 2, lashLen: 1.2, ink: '#2c2d5a', sparkle: true },
-  brow: { c: '#8f8ad0', kind: 'straight', w: 0.8, lift: -0.3 },
+  bangLine: '#666dba',
+  head: { chin: [7.6, 15.4], cheek: 14.4, jaw: -0.4 },
+  eye: { nearX: 2.4, farX: 9.8, rx: 3.7, ry: 2.8, far: 0.82, iris: '#6a78e0', irisDk: '#28307a', irisLt: '#d0e0ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#1a1c50', tilt: 0.08, wing: 1.1, flicks: 2, lashLen: 1.1, ink: '#22234e', sparkle: true },
+  brow: { c: '#666dba', kind: 'straight', w: 0.8, lift: 0 },
+  mouth: [8.2, 12.2],
+  nose: [9.2, 9.6],
   moods: { idle: { open: 0.94, mouth: 'calm' }, angry: { mouth: 'grit', brow: { inner: 1.4, outer: 0.2, arch: -0.8, w: 1.4 } }, hurt: { mouth: 'grimace' } },
 };
 
@@ -1727,8 +1734,8 @@ function selene(pose, f, mood) {
   let headA = walk ? -0.03 : 0.025 * Math.sin(ph - 0.7);
   let drop = 0;
   let swing = walk ? -2.6 + Math.sin(ph * 2 - 1.2) * 1.4 : Math.sin(ph - 1.1) * 2;
-  let spearHand = walk ? [bx + 16, G - 70 + bob] : [bx + 18, G - 64 + bob];
-  let spearA = walk ? -1.15 : -1.52;
+  let spearHand = walk ? [bx + 21, G - 68 + bob] : [bx + 24, G - 62 + bob];
+  let spearA = walk ? -1.12 : -1.36;
   let shieldHand = walk ? [bx - 16 + Math.sin(ph) * 3, G - 60 + bob] : [bx - 17, G - 60 + bob];
   let flash = 0;
   let stance = 0;
