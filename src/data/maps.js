@@ -849,29 +849,37 @@ Object.assign(MAPS, {
   },
 
 
-  // High on the mountain above Ember Crag at night: blue rock and pines under a huge moon, the
-  // howling rock at the top where Lupina's pack sings. Crystal Golems wander down from the cave.
+  // Moonlit Ridge climbs a night-blue mountainside in three zones (the tall-map rules, a light
+  // rework, data/climb.js): the Moonlit Meadow among the moonstones, where a moonbeam lifts you up;
+  // the Wolf Den Ledges, the Lupina's ledges, with a ledge drifting across the gap; and the Howling
+  // Rock on top, the Rock Golems' crags, with an air vent to bounce you up and the howling rock on
+  // the lookout.
   ridge: {
     id: 'ridge', name: 'Moonlit Ridge', theme: 'ridge', town: 'crag', world: { x: 246, y: 104 },
-    width: 2400, height: 840, groundY: 800,
-    terrain: [[0, 800], [600, 800], [700, 770], [1300, 770], [1400, 740], [2400, 740]],
-    platforms: [
-      { x: 160, y: 720, w: 400 }, { x: 760, y: 690, w: 480 }, { x: 1460, y: 660, w: 820 },
-      { x: 320, y: 640, w: 560 }, { x: 1000, y: 610, w: 400 }, { x: 1600, y: 580, w: 560 },
-      { x: 640, y: 560, w: 440 }, { x: 1240, y: 530, w: 420 },
-      { x: 1880, y: 500, w: 380, thick: 44 },
-    ],
-    ropes: [{ x: 2220, top: 500, bottom: 740 }, { x: 340, top: 640, bottom: 800 }],
-    portals: [{ id: 'west', x: 40, y: 800, to: 'crag', toPortal: 'ridge' }],
+    ...climb({
+      width: 2400, ground: 880, quiet: [[40, 880, 160]],
+      zones: [
+        { name: 'Moonlit Meadow', color: '#6a8ad0', rows: ['wide', 'split'], mobs: ['lupina'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Wolf Den Ledges', color: '#8a7ab0', rows: ['tri', 'long', 'splitwide'], mobs: ['lupina', 'rockgolem'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+          look: { sky: ['#2a2e6a', '#4a4e8a', '#8a8ac0'] } },
+        { name: 'Howling Rock', color: '#a8b8e0', rows: ['split', 'middle'], mobs: ['rockgolem', 'lupina'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+          look: { sky: ['#1e2058', '#3a3c7a', '#6a6aa8'] } },
+      ],
+    }),
+    // A moving part per zone: a moonbeam rising from the meadow (Up to ride it), a ledge drifting
+    // across the den's gap, and an air vent on the rock.
+    updrafts: [{ x: 1050, w: 56, top: 610, bottom: 880, kind: 'wisplight' }],
+    springs: [{ x: 960, y: 480, up: 175, kind: 'gust' }],
+    portals: [{ id: 'west', x: 40, y: 880, to: 'crag', toPortal: 'ridge' }],
     npcs: [],
-    deco: [['howlrock', 2060, 0, 500], ['moonstone', 900], ['howlrock', 480], ['moonstone', 1700]],
-    spawns: [
-      ...along(800, 120, 580, 2, 'lupina'), ...along(770, 720, 1280, 3, 'lupina', 'rockgolem'), ...along(740, 1420, 2360, 4, 'lupina', 'rockgolem'),
-      ...along(720, 180, 540, 2, 'lupina'), ...along(690, 780, 1220, 2, 'rockgolem', 'lupina'), ...along(660, 1480, 2260, 3, 'lupina'),
-      ...along(640, 340, 860, 2, 'lupina', 'rockgolem'), ...along(610, 1020, 1380, 2, 'lupina'), ...along(580, 1620, 2140, 2, 'rockgolem', 'lupina'),
-      ...along(560, 660, 1060, 2, 'lupina'), ...along(530, 1260, 1640, 2, 'lupina'),
-    ],
+    // A landmark per zone: the moonstones in the meadow, a howling rock on the den ledges, the
+    // great howling rock on the lookout.
+    deco: [['moonstone', 900], ['howlrock', 480], ['moonstone', 1700], ['howlrock', 1500, 1, 560], ['howlrock', 1200, 0, 240]],
+    lamps: [{ x: 1200, y: 200 }, { x: 900, y: 850 }, { x: 1500, y: 530 }],
+    spirit: { x: 1600, y: 200 },
+    habitats: { lupina: { play: true, home: { x: 1500, y: 560 } }, rockgolem: { naps: true } },
   },
+
 
   // A misty gorge off the Crystal Cave full of steaming turquoise pools, bamboo and reeds. Lamia
   // bask in the warm water; Wraiths drift in the steam.
@@ -990,6 +998,8 @@ Object.assign(MAPS, {
 });
 
 MAPS.glade.portals.push({ id: 'bower', x: 1250, y: 240, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
+// Moonlit Ridge's drifting ledge, across the den's gap.
+MAPS.ridge.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } });
 // The shrine path's petal cloud.
 MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
