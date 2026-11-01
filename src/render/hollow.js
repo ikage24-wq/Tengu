@@ -239,7 +239,17 @@ export function drawDarkness(ctx, world, cam, time) {
   const g = c.getContext('2d');
   g.globalCompositeOperation = 'source-over';
   g.clearRect(0, 0, W, H);
-  g.fillStyle = `rgba(14,8,26,${k})`;
+  // A room can grow darker with depth (`darkDepth`: [top, bottom] shares of the darkness): moonlight
+  // reaches the canopy, the trunk floor below is pitch black.
+  const dd = world.map.darkDepth;
+  if (dd) {
+    const top = 120 - cam.y;
+    const bot = world.map.groundY - cam.y;
+    const gr = g.createLinearGradient(0, top, 0, bot);
+    gr.addColorStop(0, `rgba(14,8,26,${k * dd[0]})`);
+    gr.addColorStop(1, `rgba(14,8,26,${k * dd[1]})`);
+    g.fillStyle = gr;
+  } else g.fillStyle = `rgba(14,8,26,${k})`;
   g.fillRect(0, 0, W, H);
   g.globalCompositeOperation = 'destination-out';
   const hole = (x, y, r, a = 1) => {
@@ -255,7 +265,7 @@ export function drawDarkness(ctx, world, cam, time) {
   const room = world.dungeon.room;
   for (const o of room.objects) {
     if (o.kind !== 'glowcap') continue;
-    hole(o.x - cam.x, world.map.groundY - 24 - cam.y, o.done ? 190 * flick : 34, o.done ? 1 : 0.6);
+    hole(o.x - cam.x, (o.y ?? world.map.groundY) - 24 - cam.y, o.done ? 190 * flick : 34, o.done ? 1 : 0.6);
   }
   for (const z of world.dungeon.zones) if (!z.hit && z.kind === 'circle') hole(z.x - cam.x, z.y - cam.y, z.w / 2 + 26, 0.8);
   for (const p of world.map.portals) if (!p.hidden) hole(p.x - cam.x, p.y - 30 - cam.y, 60, 0.7);

@@ -581,11 +581,12 @@ function drawDungeonBack(ctx, world, cam, time) {
   for (const o of room.objects) {
     const x = o.x - cam.x;
     if (x < -40 || x > VIEW_W + 40) continue;
+    const gy = (o.y ?? world.map.groundY) - cam.y;
     if (o.kind === 'glowcap') drawGlowcap(ctx, x, gy, o.done, time + o.id);
     else if (o.kind === 'cage') drawCage(ctx, x, gy, o.done, o.done ? 1 : o.progress, time + o.id);
-    else if (o.kind === 'chest') drawChest(ctx, x, gy, Boolean(o.open), time);
+    else if (o.kind === 'chest' || o.kind === 'cache') drawChest(ctx, x, gy, Boolean(o.open), time);
     // A hint over what you can use.
-    const near = !o.done && Math.abs(o.x - world.body.x) < 26 && world.body.onGround && !world.channel;
+    const near = !o.done && Math.abs(o.x - world.body.x) < 26 && Math.abs((o.y ?? world.map.groundY) - world.body.y) <= 4 && world.body.onGround && !world.channel;
     if (near && (o.kind !== 'chest' || room.cleared)) {
       box(ctx, x - 24, gy - 62, 48, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
       text(ctx, o.kind === 'chest' ? '▲ Open' : o.kind === 'cage' ? '▲ Free' : '▲ Light', x, gy - 53, { size: 8, bold: true, align: 'center', color: COLORS.accent });

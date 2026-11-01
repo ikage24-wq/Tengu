@@ -1470,6 +1470,49 @@ function picnicArt() {
 
 // ---------- Deep forest ----------
 
+// The owl's nest in Rootwood Hollow's canopy: a deep bowl of woven twigs and moss on a branch fork,
+// in two layers so the owl sits inside it (the back of the bowl, then the owl, then the front rim).
+function owlnestArt(front) {
+  return art(`owlnest|${front}`, 96, 52, () => {
+    const twig = '#a07a5e';
+    const lr = ramp(twig);
+    const out = [];
+    if (!front) {
+      // The back wall of the bowl, in shadow, and the fork of the branch it sits in.
+      out.push(T([[6, 40], [16, 22], [34, 16], [62, 16], [80, 22], [90, 40]], lr.sh));
+      out.push(T([[30, 52], [40, 40], [56, 40], [66, 52]], '#8a6650'), F(T([[40, 44], [46, 40], [50, 40], [56, 44]], lr.deep)));
+      return out;
+    }
+    // The front rim: a fat woven ring, twigs crossing it, moss tucked in, a few feathers.
+    out.push(T([[2, 34], [12, 28], [48, 26], [84, 28], [94, 34], [90, 44], [70, 49], [26, 49], [6, 44]], twig));
+    out.push(F(T([[6, 42], [26, 47.6], [70, 47.6], [90, 42], [88, 46], [70, 50], [26, 50], [8, 46]], lr.deep)));
+    for (const [x0, y0, x1, y1] of [[8, 34, 40, 30], [20, 40, 58, 33], [40, 44, 84, 36], [56, 32, 90, 40], [14, 30, 36, 40], [60, 44, 80, 30], [30, 30, 50, 44]]) {
+      out.push(F(band([[x0, y0], [(x0 + x1) / 2, (y0 + y1) / 2 - 1], [x1, y1]], () => 0.9, (x0 + y1) % 3 ? lr.hi : lr.deep)));
+    }
+    out.push(F(band([[8, 29.4], [48, 27], [88, 29.4]], () => 1.2, lr.hi)));
+    for (const [x, y] of [[18, 29], [44, 27], [72, 28.6], [88, 33]]) out.push(...ringed(x, y, 5, 2.4, x % 2 ? '#8fd18f' : '#a0dc98', 0.6));
+    out.push(T([[78, 30], [92, 22], [94, 25], [80, 32]], '#f6efe2'), F(T([[80, 30.4], [91, 23.6], [92, 24.6]], '#d8cbb8')));
+    out.push(T([[12, 32], [2, 26], [4, 24], [14, 30]], '#e8d8c8'));
+    return out;
+  });
+}
+// The owl: a round, sleepy barn-owl puff with a heart-shaped face and ear tufts.
+function owlArt() {
+  return art('owl', 44, 40, () => {
+    const out = [];
+    const body = '#c9a07e';
+    out.push(E(22, 26, 16, 14, body), F(E(22, 31, 11, 8, '#f3e2cc')));
+    for (const [x, y] of [[16, 30], [22, 33], [28, 30], [19, 36], [25, 36]]) out.push(F(T([[x - 1.2, y], [x + 1.2, y], [x, y + 1.6]], '#b08868')));
+    out.push(E(22, 16, 14, 11.6, body));
+    out.push(T([[9, 10], [11, 0], [16, 8]], body), T([[35, 10], [33, 0], [28, 8]], body), F(T([[11, 8], [11.6, 3], [14, 8]], '#a88466')), F(T([[33, 8], [32.4, 3], [30, 8]], '#a88466')));
+    // The heart-shaped face disc and a little beak.
+    out.push(F(T([[22, 9], [28, 7], [33, 11], [33, 19], [28, 24], [22, 26], [16, 24], [11, 19], [11, 11], [16, 7]], '#fbf3e6')));
+    out.push(F(T([[20.8, 17.6], [23.2, 17.6], [22, 21]], '#e8a85c')));
+    out.push(F(E(14.6, 20, 2.2, 1.2, BLUSH)), F(E(29.4, 20, 2.2, 1.2, BLUSH)));
+    return out;
+  });
+}
+
 function hollowlogArt() {
   return art('hollowlog', 120, 46, () => {
     const bark = '#a88466';
@@ -2863,6 +2906,45 @@ const KINDS = {
         ctx.fill();
       }
       ctx.restore();
+    },
+  },
+  // A giant owl's nest high in the canopy; its owl dozes, breathing, and now and then peeks.
+  owlnest: {
+    w: 96, h: 52,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, owlnestArt(false), x, y);
+      // Breathing: a slow rise and fall (eased), and a little lean.
+      const b = 0.5 - 0.5 * Math.cos(time * 1.6 + seed);
+      const ox = x - 2 + Math.sin(time * 0.45 + seed) * 0.6;
+      const oy = y - 14 - b * 1.6;
+      place(ctx, owlArt(), ox, oy);
+      // Eyes: closed, sleepy arcs; every few seconds one peeks open, gold.
+      const peek = ((time * 0.18 + seed) % 1) < 0.12;
+      const ex = ox;
+      const ey = oy - 40 + 17;
+      ctx.save();
+      ctx.strokeStyle = '#3a2d4f';
+      ctx.lineWidth = 1;
+      ctx.lineCap = 'round';
+      for (const s of [-1, 1]) {
+        if (peek && s > 0) {
+          glow(ctx, ex + s * 5.4, ey, 6, '#fff3a6', 0.3, true);
+          ctx.fillStyle = '#ffd23f';
+          ctx.beginPath();
+          ctx.ellipse(ex + s * 5.4, ey, 2.2, 2.2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#3a2d4f';
+          ctx.beginPath();
+          ctx.ellipse(ex + s * 5.4, ey, 1, 1.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(ex + s * 5.4, ey - 1, 2.4, 0.2 * Math.PI, 0.8 * Math.PI);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+      place(ctx, owlnestArt(true), x, y);
     },
   },
   stumphouse: {

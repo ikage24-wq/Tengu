@@ -704,6 +704,9 @@ export function getMap(id) {
 
 const G = 380; // every room's floor
 const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
+// What every Hollow room's backdrop shares: root silhouettes, the hollow's own earth, fireflies.
+const ROOTS = { skyline: 'roots', material: 'hollow', critters: ['firefly'] };
+const packAt = (id, x, y, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y, pack: id }));
 
 MAPS.canyon.portals.push({ id: 'hollow', x: 1450, y: 1000, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
 
@@ -725,108 +728,173 @@ Object.assign(MAPS, {
     spawns: [],
   },
 
+  // The Canopy Door: the way into Rootwood Hollow starts high in the great tree and goes down. In
+  // the dark the group lands on a canopy branch by a giant owl's nest, crosses on a drifting leaf
+  // (or climbs down), drops into the hollow limb, and reaches the trunk floor where the way on is.
+  // One glowcap waits on each level; ropes join every level so nobody is ever stuck.
   hollow1: {
-    id: 'hollow1', name: 'Hollow Entrance', theme: 'hollow', town: 'crag', dungeon: 'hollow',
-    width: 2000, height: 420, groundY: G,
+    id: 'hollow1', name: 'The Canopy Door', theme: 'hollow', town: 'crag', dungeon: 'hollow',
+    ...lay({
+      width: 1900, ground: 860, by: 'y',
+      ledges: [
+        { x: 40, y: 260, w: 700 }, { x: 780, y: 250, w: 120, style: 'leaf', drift: { dx: 300, period: 9 } }, { x: 1200, y: 300, w: 560 },
+        { x: 960, y: 480, w: 760 }, { x: 140, y: 580, w: 700 },
+        { x: 900, y: 720, w: 160 },
+        { x: 1780, y: 216, w: 100 },
+      ],
+      zones: [
+        { name: 'Trunk Floor', color: '#8fe0c8', mobs: [], look: { sky: ['#1e1a2e', '#33284a', '#4a3a5a'] } },
+        { name: 'Hollow Limb', color: '#b08ad8', from: 640, mobs: [], look: { sky: ['#2a2a4a', '#45406a', '#6a5a80'] } },
+        { name: 'Canopy', color: '#9fd88a', from: 380, mobs: [], look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'] } },
+      ],
+    }),
+    look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'], far: '#2a4a4a', mid: '#3a5a4a', midTrim: '#5a8a6a', skyline: 'bigtrees', light: 'ridge', drift: 'leaf', front: 'leaves', critters: ['firefly'] },
     task: { kind: 'light', label: 'Light the glowcaps' },
     dark: true,
-    platforms: [{ x: 640, y: 300, w: 180 }, { x: 1360, y: 300, w: 200 }, { x: 820, y: 230, w: 160 }, { x: 1560, y: 230, w: 140 }],
-    ropes: [],
-    deco: [['giantshroom', 860, 0], ['hollowlog', 1400], ['mushring', 230]],
+    darkDepth: [0.45, 1],
+    deco: [['owlnest', 520, 0, 260], ['hollowlog', 1420, 0, 480], ['giantshroom', 700, 0], ['mushring', 300]],
     portals: [
-      { id: 'out', x: 40, y: G, to: 'hollow_gate', toPortal: 'door', label: 'Leave' },
-      { id: 'start', x: 140, y: G, hidden: true },
-      { id: 'east', x: 1950, y: G, to: 'hollow2', toPortal: 'west', sealed: true },
+      { id: 'out', x: 60, y: 260, to: 'hollow_gate', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 160, y: 260, hidden: true },
+      { id: 'east', x: 1850, y: 860, to: 'hollow2', toPortal: 'west', sealed: true },
     ],
-    objects: [{ kind: 'glowcap', x: 330 }, { kind: 'glowcap', x: 1180 }, { kind: 'glowcap', x: 1840 }],
+    objects: [{ kind: 'glowcap', x: 1660, y: 300 }, { kind: 'glowcap', x: 240, y: 580 }, { kind: 'glowcap', x: 1500, y: 860 }, { kind: 'cache', x: 1840, y: 216 }],
     npcs: [],
-    spawns: [...pack('a', 560, 'rootling', 'sporecap'), ...pack('b', 1000, 'rootling', 'rootling', 'rootling'), ...pack('c', 1560, 'rootling', 'sporecap', 'rootling', 'sporecap')],
+    spawns: [...packAt('a', 1420, 300, 'rootling', 'sporecap'), ...packAt('b', 560, 580, 'rootling', 'rootling', 'rootling'), ...packAt('c', 1060, 860, 'rootling', 'sporecap', 'rootling', 'sporecap')],
   },
 
+  // Capper's Garden: a sunken bowl of giant mushrooms, tiers rising up both walls and a great cap
+  // standing in the middle. The Myconid Queen holds the floor; bounce caps throw you up out of
+  // her Spore Tide, and the tiers give the group somewhere to be when it floods.
   hollow2: {
     id: 'hollow2', name: "Capper's Garden", theme: 'hollow', town: 'crag', dungeon: 'hollow',
-    width: 1300, height: 420, groundY: G,
-    platforms: [{ x: 120, y: 300, w: 180 }, { x: 1000, y: 300, w: 180 }, { x: 180, y: 220, w: 160 }, { x: 960, y: 220, w: 160 }],
-    bouncers: [{ x: 360 }, { x: 900 }],
-    ropes: [],
-    deco: [['mushring', 560], ['giantshroom', 1220, 2]],
+    ...lay({
+      width: 1400, ground: 540,
+      ledges: [
+        { x: 60, y: 460, w: 230 }, { x: 60, y: 380, w: 160 }, { x: 170, y: 300, w: 210 },
+        { x: 1110, y: 460, w: 230 }, { x: 1180, y: 380, w: 160 }, { x: 1020, y: 300, w: 210 },
+        { x: 600, y: 320, w: 200 },
+        { x: 90, y: 220, w: 100 },
+      ],
+      zones: [{ name: "Capper's Garden", color: '#ffb0d0', mobs: [] }],
+    }),
+    look: { sky: ['#4a2a5a', '#8a4a80', '#d890b8'], far: '#5a3460', mid: '#8a5480', midTrim: '#c890b8', ...ROOTS, light: 'grove', drift: 'spore', shrooms: ['#ff9ec8', '#ffd0e8', '#c9a6ff'] },
+    bouncers: [{ x: 440 }, { x: 960 }],
+    deco: [['mushring', 700], ['giantshroom', 200, 2, 300], ['giantshroom', 1120, 0, 300], ['glowpool', 700, 0, 320]],
     portals: [
-      { id: 'west', x: 40, y: G, to: 'hollow1', toPortal: 'east' },
-      { id: 'east', x: 1260, y: G, to: 'hollow3', toPortal: 'west', sealed: true },
+      { id: 'west', x: 40, y: 540, to: 'hollow1', toPortal: 'east' },
+      { id: 'east', x: 1360, y: 540, to: 'hollow3', toPortal: 'west', sealed: true },
     ],
-    objects: [],
+    objects: [{ kind: 'cache', x: 130, y: 220 }],
     npcs: [],
-    spawns: [{ mob: 'mothercapper', x: 820, y: G }],
+    spawns: [{ mob: 'mothercapper', x: 760, y: 540 }],
   },
 
+  // Bramble Tunnels: a root floor on top with holes dropping into the tunnels beneath. The trapped
+  // Sprouts are caged on both levels; spores rise through the first hole to carry you back up, the
+  // Sprouts' stump house stands on top, and roots fall from the low tunnel roof in a fight.
   hollow3: {
     id: 'hollow3', name: 'Bramble Tunnels', theme: 'hollow', town: 'crag', dungeon: 'hollow',
-    width: 2200, height: 420, groundY: G,
+    ...lay({
+      width: 2400, ground: 700, by: 'y',
+      ledges: [
+        { x: 40, y: 420, w: 560 }, { x: 700, y: 420, w: 620 }, { x: 1420, y: 420, w: 560 }, { x: 2060, y: 420, w: 300 },
+        { x: 1080, y: 580, w: 160 },
+      ],
+      zones: [
+        { name: 'The Tunnels', color: '#b08ad8', mobs: [], look: { sky: ['#1e1418', '#2e2026', '#45302e'] } },
+        { name: 'The Root Floor', color: '#9fd88a', from: 500, mobs: [], look: { sky: ['#2a3a2a', '#45583a', '#6a7a4a'] } },
+      ],
+    }),
+    look: { sky: ['#1e1418', '#2e2026', '#45302e'], far: '#2e2226', mid: '#4a3434', midTrim: '#6a4a44', ...ROOTS, light: 'cave', drift: 'spore', front: 'roots' },
     task: { kind: 'free', label: 'Free the trapped Sprouts' },
     rootfall: true,
-    platforms: [{ x: 500, y: 300, w: 200 }, { x: 1180, y: 300, w: 220 }, { x: 1800, y: 300, w: 180 }],
-    ropes: [],
-    deco: [['hollowlog', 700], ['giantshroom', 1140, 1], ['stumphouse', 1720]],
+    updrafts: [{ x: 650, w: 56, top: 400, bottom: 700, kind: 'spores' }],
+    deco: [['stumphouse', 1560, 0, 420], ['hollowlog', 420, 0], ['giantshroom', 2240, 1, 420], ['mushring', 1640]],
     portals: [
-      { id: 'west', x: 40, y: G, to: 'hollow2', toPortal: 'east' },
-      { id: 'east', x: 2150, y: G, to: 'hollow4', toPortal: 'west', sealed: true },
+      { id: 'west', x: 60, y: 420, to: 'hollow2', toPortal: 'east' },
+      { id: 'east', x: 2350, y: 700, to: 'hollow4', toPortal: 'west', sealed: true },
     ],
-    objects: [{ kind: 'cage', x: 420 }, { kind: 'cage', x: 980 }, { kind: 'cage', x: 1480 }, { kind: 'cage', x: 2040 }],
+    objects: [{ kind: 'cage', x: 320, y: 420 }, { kind: 'cage', x: 880, y: 700 }, { kind: 'cage', x: 1780, y: 420 }, { kind: 'cage', x: 2160, y: 700 }, { kind: 'cache', x: 140, y: 700 }],
     npcs: [],
-    spawns: [...pack('a', 700, 'rootling', 'thornback', 'rootling'), ...pack('b', 1260, 'sporecap', 'rootling', 'sporecap'), ...pack('c', 1800, 'thornback', 'sporecap', 'rootling')],
+    spawns: [...packAt('a', 1000, 420, 'rootling', 'thornback', 'rootling'), ...packAt('b', 1340, 700, 'sporecap', 'rootling', 'sporecap'), ...packAt('c', 1880, 700, 'thornback', 'sporecap', 'rootling')],
   },
 
+  // Boar Den: a long, low den, room for Tuskar's charges, with a mud wallow, old bones, two stone
+  // pillars to trick him into, and raised side ledges to dodge onto.
   hollow4: {
     id: 'hollow4', name: 'Boar Den', theme: 'hollow', town: 'crag', dungeon: 'hollow',
-    width: 1400, height: 420, groundY: G,
-    platforms: [{ x: 160, y: 300, w: 160 }, { x: 620, y: 300, w: 160 }, { x: 1080, y: 300, w: 160 }],
+    ...lay({
+      width: 1500, ground: 460,
+      ledges: [{ x: 60, y: 380, w: 200 }, { x: 1240, y: 380, w: 200 }, { x: 660, y: 340, w: 180 }, { x: 1360, y: 300, w: 100 }],
+      zones: [{ name: 'Boar Den', color: '#d8a878', mobs: [] }],
+    }),
+    look: { sky: ['#3a2420', '#6a4232', '#a8704e'], far: '#4a2e26', mid: '#6a4636', midTrim: '#9a6a4e', ...ROOTS, light: 'dusk', drift: 'spore' },
     pillars: [{ x: 420 }, { x: 1250 }],
-    ropes: [],
-    deco: [['bones', 300], ['hollowlog', 560], ['bones', 1180, 1]],
+    deco: [['bones', 300], ['pond', 980], ['bones', 1180, 1], ['hollowlog', 560]],
     portals: [
-      { id: 'west', x: 40, y: G, to: 'hollow3', toPortal: 'east' },
-      { id: 'east', x: 1360, y: G, to: 'hollow5', toPortal: 'west', sealed: true },
+      { id: 'west', x: 40, y: 460, to: 'hollow3', toPortal: 'east' },
+      { id: 'east', x: 1460, y: 460, to: 'hollow5', toPortal: 'west', sealed: true },
     ],
-    objects: [],
+    objects: [{ kind: 'cache', x: 1410, y: 300 }],
     npcs: [],
-    spawns: [{ mob: 'tuskar', x: 900, y: G }],
+    spawns: [{ mob: 'tuskar', x: 900, y: 460 }],
   },
 
+  // The Root Gate: a tall climb out of the sap. The sap surges over the floor now and then, so the
+  // group climbs: the Sap Pools, the Root Stair, then the Gate Ledge with the Root Gate on top. The
+  // keys are on the Thornbacks, one on each level, and a column of spores lifts you up the middle.
   hollow5: {
     id: 'hollow5', name: 'The Root Gate', theme: 'hollow', town: 'crag', dungeon: 'hollow',
-    width: 2000, height: 420, groundY: G,
+    ...lay({
+      width: 2000, ground: 1000, by: 'y',
+      ledges: [
+        { x: 80, y: 920, w: 360 }, { x: 1500, y: 920, w: 420 }, { x: 560, y: 860, w: 300 }, { x: 1080, y: 850, w: 320 },
+        { x: 200, y: 770, w: 260 }, { x: 1340, y: 760, w: 300 }, { x: 760, y: 720, w: 240 }, { x: 100, y: 680, w: 300 }, { x: 1600, y: 680, w: 280 },
+        { x: 520, y: 620, w: 260 }, { x: 1220, y: 610, w: 240 }, { x: 820, y: 530, w: 420, thick: 44 },
+        { x: 120, y: 600, w: 130 },
+      ],
+      zones: [
+        { name: 'The Sap Pools', color: '#e8c070', mobs: [], look: { sky: ['#4a2a14', '#8a5220', '#d8903a'] } },
+        { name: 'The Root Stair', color: '#b08ad8', from: 800, mobs: [] },
+        { name: 'The Gate Ledge', color: '#9fd88a', from: 650, mobs: [], look: { sky: ['#3a3a2a', '#6a6a3a', '#b8b060'] } },
+      ],
+    }),
+    look: { sky: ['#4a2e1a', '#9a6028', '#e8a850'], far: '#5a3a20', mid: '#7a5030', midTrim: '#b88048', ...ROOTS, light: 'crag', drift: 'spore' },
     task: { kind: 'keys', label: 'Find the Root Keys', count: 3 },
     flood: { every: 24, warn: 3, last: 7, damage: 40 },
-    platforms: [
-      { x: 160, y: 300, w: 200 }, { x: 420, y: 300, w: 200 }, { x: 760, y: 300, w: 220 }, { x: 1100, y: 300, w: 200 }, { x: 1440, y: 300, w: 220 }, { x: 1720, y: 300, w: 160 },
-      { x: 560, y: 220, w: 160 }, { x: 1240, y: 220, w: 160 },
-    ],
-    ropes: [],
-    deco: [['giantshroom', 760, 2], ['mushring', 1360], ['rootgate', 1900]],
+    updrafts: [{ x: 1040, w: 60, top: 540, bottom: 1000, kind: 'spores' }],
+    deco: [['rootgate', 1160, 0, 530], ['giantshroom', 300, 2], ['mushring', 1500]],
     portals: [
-      { id: 'west', x: 40, y: G, to: 'hollow4', toPortal: 'east' },
-      { id: 'east', x: 1950, y: G, to: 'hollow6', toPortal: 'west', sealed: true },
+      { id: 'west', x: 40, y: 1000, to: 'hollow4', toPortal: 'east' },
+      { id: 'east', x: 1160, y: 530, to: 'hollow6', toPortal: 'west', sealed: true },
     ],
-    objects: [],
+    objects: [{ kind: 'cache', x: 170, y: 600 }],
     npcs: [],
     spawns: [
-      ...pack('a', 520, 'rootling', 'thornback', 'sporecap'), ...pack('b', 1040, 'sporecap', 'thornback', 'rootling', 'rootling'),
-      ...pack('c', 1580, 'rootling', 'sporecap', 'thornback', 'sporecap'),
-    ].map((s) => (s.mob === 'thornback' ? { ...s, key: true } : s)),
+      ...packAt('a', 800, 1000, 'rootling', 'thornback', 'sporecap'), ...packAt('b', 1240, 850, 'sporecap', 'thornback', 'rootling', 'rootling'),
+      ...packAt('c', 1740, 680, 'rootling', 'sporecap', 'thornback', 'sporecap'),
+    ].map((sp) => (sp.mob === 'thornback' ? { ...sp, key: true } : sp)),
   },
 
+  // Heart of the Hollow: the round chamber under the great tree's glowing heart, ringed with two
+  // tiers of ledges. Gnarlroot's heart opens above him in his last phase: strike it from up high.
   hollow6: {
     id: 'hollow6', name: 'Heart of the Hollow', theme: 'hollow', town: 'crag', dungeon: 'hollow',
     width: 1500, height: 420, groundY: G,
-    // Gnarlroot's heart opens above him in his last phase: strike it from the high ledges.
-    platforms: [{ x: 140, y: 300, w: 170 }, { x: 560, y: 300, w: 150 }, { x: 900, y: 300, w: 150 }, { x: 1220, y: 300, w: 170 }, { x: 640, y: 220, w: 120 }, { x: 860, y: 220, w: 120 }],
+    platforms: [
+      { x: 140, y: 300, w: 170 }, { x: 560, y: 300, w: 150 }, { x: 900, y: 300, w: 150 }, { x: 1220, y: 300, w: 170 },
+      { x: 640, y: 220, w: 120 }, { x: 860, y: 220, w: 120 }, { x: 250, y: 220, w: 140 }, { x: 1060, y: 220, w: 140 },
+      { x: 1180, y: 140, w: 100 },
+    ],
     ropes: [],
-    deco: [['glowpool', 380], ['giantshroom', 1160, 1]],
+    look: { sky: ['#14242e', '#1e4a4a', '#5ac0a8'], far: '#1e3a3a', mid: '#2e5a52', midTrim: '#5aa088', ...ROOTS, light: 'hollow', drift: 'spore', shrooms: ['#7fe6d6', '#c4f6ee', '#9fffb0'] },
+    deco: [['glowpool', 380], ['giantshroom', 1160, 1], ['glowpool', 1120], ['mushring', 760]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow5', toPortal: 'east' },
       { id: 'out', x: 1450, y: G, to: 'hollow_gate', toPortal: 'start', label: 'Exit', sealed: true },
     ],
-    objects: [{ kind: 'chest', x: 1330, after: 'clear' }],
+    objects: [{ kind: 'chest', x: 1330, after: 'clear' }, { kind: 'cache', x: 1230, y: 140 }],
     npcs: [],
     spawns: [{ mob: 'gnarlroot', x: 860, y: G }],
   },

@@ -861,6 +861,7 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null) {
   if (style !== 'earth') {
     if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
+    else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
     return;
   }
@@ -906,6 +907,59 @@ const WOOD = '#d9a86c';
 
 // A wooden deck, Ellinia style: planks on a log beam with round sawn ends, braces underneath,
 // and vines trailing down.
+// A giant leaf to ride (Rootwood Hollow's canopy): broad and green with a pale midrib and veins,
+// its tip curling up, rocking gently as it drifts. Its flat top is the ledge.
+function drawLeafPad(ctx, x, y, w, time, seed) {
+  const rock = Math.sin(time * 1.3 + seed) * 0.025;
+  const cx = x + w / 2;
+  ctx.save();
+  ctx.translate(cx, y + 2);
+  ctx.rotate(rock);
+  const h = 13;
+  const half = w / 2 + 10;
+  const outline = (grow) => {
+    ctx.beginPath();
+    ctx.moveTo(-half - grow, -1);
+    ctx.bezierCurveTo(-half * 0.6, -4 - grow, half * 0.5, -4 - grow, half + 6 + grow, -9 - grow);
+    ctx.bezierCurveTo(half * 0.6, h + grow, -half * 0.5, h + grow, -half - grow, -1);
+    ctx.closePath();
+  };
+  ctx.fillStyle = '#3f8a5c';
+  outline(1.2);
+  ctx.fill();
+  const g = ctx.createLinearGradient(0, -4, 0, h);
+  g.addColorStop(0, '#9fe08a');
+  g.addColorStop(0.5, '#6cc47a');
+  g.addColorStop(1, '#4fa46a');
+  ctx.fillStyle = g;
+  outline(0);
+  ctx.fill();
+  // The midrib and veins.
+  ctx.strokeStyle = 'rgba(236,255,214,0.85)';
+  ctx.lineWidth = 1.4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-half + 2, 0);
+  ctx.quadraticCurveTo(0, 2, half + 2, -6);
+  ctx.stroke();
+  ctx.lineWidth = 0.8;
+  for (let k = -3; k <= 3; k++) {
+    const vx = (k / 3.6) * half;
+    ctx.beginPath();
+    ctx.moveTo(vx, 1.4 - k * 0.6);
+    ctx.lineTo(vx + 7, 6.4 - k * 0.6);
+    ctx.stroke();
+  }
+  // The stem trailing behind.
+  ctx.strokeStyle = '#5e8a4a';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-half, -1);
+  ctx.quadraticCurveTo(-half - 8, -2, -half - 12, -8);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawPlanks(ctx, m, x, y, w, time, seed, deco) {
   const line = edge(WOOD);
   const vine = { ...m, drip: m.drip === 'crystal' ? 'crystal' : 'vine' };

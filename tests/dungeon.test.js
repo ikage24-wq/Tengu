@@ -11,6 +11,7 @@ import { roleOf, DUNGEONS, TANK_THREAT } from '../src/data/dungeons.js';
 import { MAPS } from '../src/data/maps.js';
 import { MOBS } from '../src/data/mobs.js';
 import { planGroup, startRun, groupOf, isUp, noteHit, healerTurn } from '../src/world/dungeon.js';
+import { navOf, surfaceOf, surfaceBelow, findPath, followPath } from '../src/world/nav.js';
 
 function seeded(n) {
   return () => {
@@ -93,6 +94,7 @@ test("a tank's hits make several times the threat", () => {
 
 // A plain autopilot: fight what the group fights, step out of telegraphs, jump the slam, light,
 // free, and pick up what the room needs, then walk through the exit (opening the chest first).
+// It finds its way between floors (ropes, drops, jumps) the way party members do.
 function pilot(world) {
   const run = world.dungeon;
   const b = world.body;
@@ -100,6 +102,25 @@ function pilot(world) {
   const pressed = new Set();
   const go = (x) => {
     if (Math.abs(x - b.x) > 6) held.add(x > b.x ? 'ArrowRight' : 'ArrowLeft');
+  };
+  const nav = navOf(world.map);
+  const goTo = (x, y) => {
+    const here = surfaceOf(nav, b);
+    if (here >= 0) {
+      const to = surfaceBelow(nav, x, y - 4);
+      world.pilotPath = findPath(nav, here, b.x, to, x);
+      if (!world.pilotPath) return go(x);
+    } else if (!world.pilotPath) {
+      if (b.rope) held.add(y > b.y ? 'ArrowDown' : 'ArrowUp');
+      return go(x);
+    }
+    const { intent, lost } = followPath(nav, b, world.pilotPath, x, 6);
+    if (lost) world.pilotPath = null;
+    if (intent.left) held.add('ArrowLeft');
+    if (intent.right) held.add('ArrowRight');
+    if (intent.up) held.add('ArrowUp');
+    if (intent.down) held.add('ArrowDown');
+    if (intent.jump) held.add('Space');
   };
   if (world.dead) return { held, pressed };
   const fights = world.mobs.filter((m) => m.hp > 0 && m.engaged);
@@ -111,29 +132,31 @@ function pilot(world) {
     const hi = danger.kind === 'circle' ? danger.x + danger.w / 2 + 20 : danger.x + danger.w + 20;
     go(Math.abs(b.x - lo) < Math.abs(b.x - hi) && lo > 30 ? lo : hi);
   } else if (fights.length) {
-    const t = fights.reduce((a, m) => (Math.abs(m.x - b.x) < Math.abs(a.x - b.x) ? m : a));
+    const t = fights.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
     const spot = t.x + (Math.sign(b.x - t.x) || -1) * 150;
-    if (Math.abs(b.x - spot) > 20) go(spot);
+    if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
+    else if (Math.abs(b.x - spot) > 20) go(spot);
     else {
       b.facing = Math.sign(t.x - b.x) || 1;
       held.add('KeyZ');
     }
   } else if (room.cleared) {
     const chest = room.objects.find((o) => o.kind === 'chest' && !o.done);
-    const x = chest ? chest.x : world.map.portals.find((p) => p.sealed).x;
-    go(x);
-    if (Math.abs(x - b.x) < 10 && Math.round(world.now * 60) % 10 === 0) pressed.add('ArrowUp');
+    const door = world.map.portals.find((p) => p.sealed);
+    const [x, y] = chest ? [chest.x, chest.y] : [door.x, door.y];
+    goTo(x, y);
+    if (Math.abs(x - b.x) < 10 && Math.abs(y - b.y) < 4 && Math.round(world.now * 60) % 10 === 0) pressed.add('ArrowUp');
   } else {
     const key = room.keys.find((k) => !k.got);
     const asleep = world.mobs.filter((m) => m.hp > 0 && !m.engaged);
-    const obj = room.objects.find((o) => !o.done && o.kind !== 'chest' && !asleep.some((m) => Math.abs(m.x - o.x) < 170));
-    if (key) go(key.x);
+    const obj = room.objects.find((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !asleep.some((m) => Math.abs(m.x - o.x) < 170 && Math.abs(m.y - o.y) < 60));
+    if (key) goTo(key.x, key.y);
     else if (obj) {
-      go(obj.x);
-      if (Math.abs(obj.x - b.x) < 8 && !world.channel && b.onGround && Math.abs(b.vx) < 1) pressed.add('ArrowUp');
+      goTo(obj.x, obj.y);
+      if (Math.abs(obj.x - b.x) < 8 && Math.abs(obj.y - b.y) < 4 && !world.channel && b.onGround && Math.abs(b.vx) < 1) pressed.add('ArrowUp');
     } else {
       const tank = groupOf(world).find((g) => g.role === 'tank' && isUp(world, g));
-      if (tank) go(tank.body.x - 60);
+      if (tank) goTo(tank.body.x - 60, tank.body.y);
     }
   }
   return { held, pressed };
@@ -181,7 +204,7 @@ test("a warrior's tank procs: War Cry taunts and guards as Valor fills, Iron Gua
   loadMap(world, 'hollow_gate', 'start');
   assert.equal(startRun(world), null);
   const pack = world.mobs.filter((x) => x.spawn.pack === 'a');
-  Object.assign(world.body, { x: pack[0].x - 120, y: world.map.groundY, onGround: true });
+  Object.assign(world.body, { x: pack[0].x - 120, y: pack[0].y, onGround: true });
   world.valor = 95;
   addValor(world, 10);
   for (const x of pack) {

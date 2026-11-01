@@ -209,7 +209,8 @@ export function onMapLoaded(world) {
   if (!room) {
     room = run.rooms[map.id] = {
       spawner: world.spawner, adds: [], keys: [], keysGot: 0, cleared: false,
-      objects: (map.objects ?? []).map((o, i) => ({ ...o, id: i, done: false, progress: 0 })),
+      // Things in the room stand on the floor unless they're given a height (`y`, on a ledge).
+      objects: (map.objects ?? []).map((o, i) => ({ y: map.groundY, ...o, id: i, done: false, progress: 0 })),
     };
     roomSetup(world, room);
     radio(world, `enter:${map.id}`);
@@ -301,14 +302,18 @@ const CHANNEL = { glowcap: 1, cage: 1.5 };
 
 function objectNear(world, body, reach = 26) {
   const room = world.dungeon?.room;
-  if (!room || !body.onGround || Math.abs(body.y - world.map.groundY) > 4) return null;
-  return room.objects.find((o) => !o.done && Math.abs(o.x - body.x) < reach) ?? null;
+  if (!room || !body.onGround) return null;
+  return room.objects.find((o) => !o.done && Math.abs(o.x - body.x) < reach && Math.abs(body.y - o.y) <= 4) ?? null;
 }
 
 // Up near something usable: start lighting or freeing it, or open the chest.
 export function dungeonInteract(world) {
   const o = objectNear(world, world.body);
   if (!o) return false;
+  if (o.kind === 'cache') {
+    openCache(world, o);
+    return true;
+  }
   if (o.kind === 'chest') {
     if (!roomCleared(world)) world.log('The chest is wrapped in roots. Calm Gnarlroot first!', '#ffb3c6');
     else openChest(world, o);
@@ -332,9 +337,9 @@ function finish(world, o, who) {
     world.dungeon.cheer = (world.dungeon.cheer ?? 0) + 1;
     callout(world, 'A Sprout cheers you on!', `Sprout Cheer x${world.dungeon.cheer}: +${world.dungeon.cheer * 4}% damage`);
     radio(world, 'cheer');
-    world.numbers.push({ x: o.x, y: world.map.groundY - 44, text: 'Thank you!', color: '#9be08f', t: 0, small: true });
+    world.numbers.push({ x: o.x, y: o.y - 44, text: 'Thank you!', color: '#9be08f', t: 0, small: true });
   }
-  world.juice.push({ type: 'loot', x: o.x, y: world.map.groundY - 16, color: o.kind === 'glowcap' ? '#ffd66b' : '#9be08f' });
+  world.juice.push({ type: 'loot', x: o.x, y: o.y - 16, color: o.kind === 'glowcap' ? '#ffd66b' : '#9be08f' });
 }
 
 function tickChannels(world, dt, group) {
@@ -357,7 +362,7 @@ function tickChannels(world, dt, group) {
     const br = g.bot?.brain;
     if (!br?.task || g.bot.down) continue;
     const o = br.task;
-    if (o.done || run.combat || Math.abs(o.x - g.body.x) > 20 || !g.body.onGround) {
+    if (o.done || run.combat || Math.abs(o.x - g.body.x) > 20 || Math.abs(o.y - g.body.y) > 6 || !g.body.onGround) {
       br.taskT = 0;
       continue;
     }
@@ -407,6 +412,24 @@ function setPieceFor(char, set) {
   return setPieceId(set, family, pick(missing.length ? missing : SET_SLOTS));
 }
 
+// A room's hidden cache (its secret): tucked off the main way, never needed to go on, open any
+// time. A handful of gold, a Hollow Acorn and potions, doubled on Hard.
+function openCache(world, o) {
+  const run = world.dungeon;
+  const char = world.char;
+  const k = run.hard ? HARD.reward : 1;
+  o.done = true;
+  o.open = true;
+  const gold = Math.round((150 + Math.random() * 150) * k);
+  char.gold += gold;
+  world.log(`A hidden cache! +${gold} gold`, '#ffe36b');
+  for (const [id, qty] of [['hollow_acorn', k], [Math.random() < 0.5 ? 'orange_potion' : 'white_potion', 3 * k]]) {
+    if (ITEMS[id] && addItem(char.inventory, id, qty)) world.log(`Received ${ITEMS[id].name} x${qty}.`, ITEMS[id].color);
+  }
+  world.juice.push({ type: 'loot', x: o.x, y: o.y - 20, color: '#ffd66b' });
+  world.fx.push({ kind: 'levelup', x: o.x, y: o.y, t: 0, dur: 1.2 });
+}
+
 function openChest(world, o) {
   const run = world.dungeon;
   const def = DUNGEONS[run.id];
@@ -451,8 +474,8 @@ function openChest(world, o) {
   if (rec.bestTime == null || secs < rec.bestTime) rec.bestTime = Math.round(secs);
   rec.day = today();
   if (rec.clears === 1) world.log(`Hard mode for ${def.name} is open! Ask ${def.warden[0].toUpperCase()}${def.warden.slice(1)} at the gate.`, '#ffe36b');
-  world.juice.push({ type: 'loot', x: o.x, y: world.map.groundY - 20, color: '#ffd66b' }, { type: 'shake', mag: 2, dur: 0.3 });
-  world.fx.push({ kind: 'levelup', x: o.x, y: world.map.groundY, t: 0, dur: 1.6 });
+  world.juice.push({ type: 'loot', x: o.x, y: o.y - 20, color: '#ffd66b' }, { type: 'shake', mag: 2, dur: 0.3 });
+  world.fx.push({ kind: 'levelup', x: o.x, y: o.y, t: 0, dur: 1.6 });
   if (levels > 0) {
     world.events.push({ type: 'levelup', level: char.level });
     world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
@@ -756,13 +779,49 @@ function pickTarget(world, m, up) {
 
 const reachOf = (m) => (m.def.fight.range ?? m.def.fight.reach) + m.def.w / 2;
 
+// A monster chasing someone on a floor below hops off its ledge after them: a short eased arc
+// down onto whatever is under the edge, and from then on it walks that floor. (Rooms are tall now,
+// so a pack woken on a ledge mustn't stand stuck at the edge while the group fights below.)
+function startHop(world, m, dir) {
+  const nav = navOf(world.map);
+  const nx = (dir > 0 ? m.x2 : m.x1) + dir * (m.def.w / 2 + 10);
+  if (nx < 20 || nx > world.map.width - 20) return false;
+  const k = surfaceBelow(nav, nx, m.y + 4);
+  const surf = nav.surfaces[k];
+  if (!surf || surf.yAt(nx) <= m.y + 8) return false;
+  m.hop = { x0: m.x, y0: m.y, x1: nx, y1: surf.yAt(nx), t: 0, dur: 0.35 + Math.min(0.35, (surf.yAt(nx) - m.y) / 900), surf };
+  m.state = 'walk';
+  return true;
+}
+function tickHop(m, dt) {
+  const h = m.hop;
+  if (!h) return false;
+  h.t += dt;
+  const u = Math.min(1, h.t / h.dur);
+  m.x = h.x0 + (h.x1 - h.x0) * u;
+  // Up a little first, then down: a hop, not a slide.
+  m.y = h.y0 + (h.y1 - h.y0) * u * u - 18 * Math.sin(Math.PI * u) * (1 - u);
+  if (u < 1) return true;
+  const s = h.surf;
+  m.hop = null;
+  m.yAt = s.yAt;
+  m.y = s.yAt(m.x);
+  m.baseY = m.y;
+  m.fx1 = s.x1 + m.def.w / 2;
+  m.fx2 = s.x2 - m.def.w / 2;
+  m.x1 = m.fx1;
+  m.x2 = m.fx2;
+  m.home = m.x;
+  return true;
+}
+
 // One engaged monster's turn: step toward its target, wind up, swing.
 function fight(world, m, up, dt) {
   const now = world.now;
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
   m.lunge = Math.max(0, (m.lunge ?? 0) - dt);
-  if (tickYank(m, dt) || tickAir(m, dt)) return;
+  if (tickYank(m, dt) || tickAir(m, dt) || tickHop(m, dt)) return;
   if (m.frozenUntil > now) {
     m.stagger = 0;
     return;
@@ -793,6 +852,9 @@ function fight(world, m, up, dt) {
       m.x += m.dir * m.def.speed * 1.3 * dt;
     } else m.state = 'idle';
     m.x = Math.max(m.x1, Math.min(m.x2, m.x));
+    // Stopped at the edge with its target on a floor below: hop down after them.
+    const atEdge = (m.dir < 0 && m.x <= m.x1 + 0.5) || (m.dir > 0 && m.x >= m.x2 - 0.5);
+    if (atEdge && !m.def.boss && !m.def.fly && target.body.y > m.y + 30 && Math.abs(dx) > reach * 0.7 && startHop(world, m, m.dir)) return;
   }
   m.atkT -= dt;
   if (m.windup > 0) {
@@ -1174,7 +1236,7 @@ export function followerRevive(world, pct) {
 // The leader's group wiped: back to the room's entrance, up and full.
 export function followerWiped(world) {
   const entry = world.map.portals.find((p) => p.id === 'start') ?? world.map.portals.find((p) => p.id === 'west') ?? world.map.portals[0];
-  Object.assign(world.body, { x: entry.x + 50, y: world.map.groundY, vx: 0, vy: 0, rope: null, onGround: true });
+  Object.assign(world.body, { x: entry.x + 50, y: entry.y ?? world.map.groundY, vx: 0, vy: 0, rope: null, onGround: true });
   world.dead = false;
   world.char.hp = world.stats.maxHp;
   world.char.mp = world.stats.maxMp;
@@ -1245,7 +1307,7 @@ function wipe(world, group) {
   for (const m of world.mobs) reset(m);
   const entry = world.map.portals.find((p) => p.id === 'start') ?? world.map.portals.find((p) => p.id === 'west') ?? world.map.portals[0];
   group.forEach((g, i) => {
-    Object.assign(g.body, { x: entry.x + 30 + i * 22, y: world.map.groundY, vx: 0, vy: 0, rope: null, onGround: true });
+    Object.assign(g.body, { x: entry.x + 30 + i * 22, y: entry.y ?? world.map.groundY, vx: 0, vy: 0, rope: null, onGround: true });
     if (g.bot) {
       g.bot.down = false;
       g.bot.hp = g.bot.stats.maxHp;
@@ -1317,6 +1379,15 @@ export function roleThink(bot, world, rng) {
   const heart = world.mobs.find((m) => m.heartOpen && m.hp > 0);
   if (floodComing(world)) br.goal = ledgeGoal(world, br.goal.x, 'fight');
   else if (heart && role !== 'healer') br.goal = ledgeGoal(world, heart.x + (Math.sign(bot.body.x - heart.x) || 1) * 60, 'fight');
+}
+
+// A spot near x on the same surface as the monster m (so a pack on a short ledge is approached on
+// that ledge, not from the floor below where it can't be reached).
+function goalOn(world, m, x, mode) {
+  const nav = navOf(world.map);
+  const s = surfaceBelow(nav, m.x, m.y - 4);
+  const surf = nav.surfaces[s];
+  return { x: Math.max(surf.x1 + 8, Math.min(surf.x2 - 8, x)), y: surf.y, mode, surface: s };
 }
 
 // The nearest ledge (not the floor) to x, as a goal.
@@ -1428,7 +1499,7 @@ function thinkRole(bot, world, rng) {
         if (rng() < 0.5) bot.bubble = { text: pick(['pulling!', 'gather up!', 'get over here!', 'AoE them!']), t: 2.5 };
         return;
       }
-      br.goal = ready ? goalAt(world, next.x - Math.sign(next.x - body.x || 1) * (next.def.boss ? 20 : 220), next.y, 'fight') : goalAt(world, next.x - Math.sign(next.x - body.x || 1) * 190, next.y, 'follow');
+      br.goal = ready ? goalOn(world, next, next.x - Math.sign(next.x - body.x || 1) * (next.def.boss ? 20 : 220), 'fight') : goalOn(world, next, next.x - Math.sign(next.x - body.x || 1) * 190, 'follow');
       if (ready && rng() < 0.02) bot.bubble = { text: pick(['pulling!', 'ready?', 'going in', 'next pack']), t: 2.5 };
       return;
     }
@@ -1441,11 +1512,11 @@ function thinkRole(bot, world, rng) {
       return;
     }
     const busy = new Set(group.filter((g) => g.bot && g.bot !== bot).map((g) => g.bot.brain?.task));
-    const todo = room.objects.filter((o) => !o.done && o.kind !== 'chest' && !busy.has(o) && safe(o.x) && world.channel?.obj !== o);
+    const todo = room.objects.filter((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !busy.has(o) && safe(o.x) && world.channel?.obj !== o);
     const o = role === 'dps' ? nearest(todo, body) : null;
     if (o) {
       br.task = o;
-      br.goal = goalAt(world, o.x, world.map.groundY, 'fight');
+      br.goal = goalAt(world, o.x, o.y, 'fight');
       return;
     }
   }
