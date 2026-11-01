@@ -246,7 +246,7 @@ test('a daily quest comes back the next day', () => {
 test("in a town, the shops, the stove and the job's instructor are a short walk from the plaza", async () => {
   const { NPCS } = await import('../src/data/npcs.js');
   // The towns reworked to the town rules so far (the rest join as they're reworked).
-  for (const m of ['sprout'].map((id) => MAPS[id])) {
+  for (const m of ['sprout', 'harbor'].map((id) => MAPS[id])) {
     if (m.stove != null) assert.ok(Math.abs(m.stove - m.plaza) <= 700, `${m.id}: the stove`);
     for (const n of m.npcs) {
       const def = NPCS[n.id];

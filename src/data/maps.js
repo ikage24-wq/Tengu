@@ -252,6 +252,16 @@ export const MAPS = {
       { id: 'east', x: 2540, y: 480, to: 'woods', toPortal: 'west' },
     ],
     npcs: [{ id: 'marlo', x: 330 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
+    // Its districts, left to right, each named as you walk in (the town rules).
+    zonesBy: 'x',
+    zones: [
+      { name: 'Canal Row', from: 0, color: '#6aa8d8' },
+      { name: 'Harbor Square', from: 760, color: '#ffb38a', look: { sky: ['#ffd8c0', '#ffe8d8', '#fff4ea'] } },
+      { name: "Thieves' Alley", from: 1280, color: '#8f6cc4', look: { sky: ['#c8b8e8', '#e0d4f4', '#f6f0ff'] } },
+      { name: 'The Pier', from: 1950, color: '#4fb0d8', look: { sky: ['#a8dcff', '#d0ecff', '#f2fbff'] } },
+    ],
+    // Lamps that glow at night (world/daytime.js): the canal, the square, the alley, the lighthouse.
+    lamps: [{ x: 330, y: 440 }, { x: 700, y: 440 }, { x: 1060, y: 420 }, { x: 1320, y: 430 }, { x: 1880, y: 430 }, { x: 2120, y: 400 }, { x: 2440, y: 330 }],
     deco: [['crates', 120], ['barrels', 720], ['alleylamp', 1320], ['laundryline', 1470], ['alleylamp', 1880], ['crates', 1800, 0, 320], ['lighthouse', 2440]],
     spawns: [],
   },
