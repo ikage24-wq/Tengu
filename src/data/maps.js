@@ -14,61 +14,60 @@
 import { climb, lay } from './climb.js';
 
 export const MAPS = {
-  // The archers' home town, laid out in quarters from west to east: a homey corner of two-storey
-  // cottages with a terraced walk up between them (Mira welcomes you at the entrance); the shop
-  // street (Pip's goods and Lulu's salon side by side); the raised plaza under the giant cherry
-  // tree, with the fountain, benches and the noticeboard (a branch of the tree is a ledge, up its
-  // rope); then the archers' quarter: the Archer Lodge, the watchtower (its deck a ledge) and the
-  // range, out to the meadow road. Nothing you need is up a ladder.
+  // Sprout Village, laid out with room to breathe (the town rules: districts with a feel, everything
+  // a short walk from the plaza, nothing important up a ladder). Left to right: Cottage Row by the
+  // west gate, where Mira welcomes you, with the terraced walk between two cottages; a duck pond in a
+  // flower garden; Market Street (Pip's goods, Lulu's salon, the stove by the well); Cherry Plaza, a
+  // step up, round the fountain and the great cherry tree (a branch to climb, where the cat naps);
+  // and the Archers' Quarter, Kestrel and the watchtower, the range, and a cottage by the east road.
   sprout: {
-    id: 'sprout', plaza: 1290, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    id: 'sprout', plaza: 1760, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
-    stove: 1140,
-    width: 2600, height: 700, groundY: 640,
-    look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.8 },
-    // A hillside village: Cottage Row low by the west gate, Market Street a step up, Cherry Plaza
-    // on the summit round the great tree, and the Archers' Quarter down the far side, all joined by
-    // walkable slopes (nothing important up a ladder; the climbs lead to views).
-    terrain: [[0, 640], [720, 640], [770, 600], [1180, 600], [1230, 540], [1720, 540], [1770, 600], [2600, 600]],
-    // The cottages along the street, and the plaza's own pieces (render/townhouses.js).
-    cottages: [200, 470, 660, 950, 2160, 2400],
-    townPieces: [['plazatree', 1470], ['noticeboard', 1630]],
+    stove: 1550,
+    width: 3200, height: 520, groundY: 480,
+    look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.86 },
+    terrain: [[0, 480], [1600, 480], [1640, 456], [2160, 456], [2200, 480], [3200, 480]],
+    // The cottages, and the plaza's own pieces (render/townhouses.js).
+    cottages: [200, 520, 800, 1340, 3050],
+    townPieces: [['plazatree', 1960], ['noticeboard', 2120]],
     platforms: [
-      // The terraced walk between the cottages.
-      { x: 500, y: 560, w: 150, posts: true }, { x: 600, y: 480, w: 120, posts: true },
+      // The terraced walk between two cottages.
+      { x: 610, y: 400, w: 150, posts: true }, { x: 700, y: 320, w: 120, posts: true },
       // A branch of the plaza's cherry tree (the tree's own bough: nothing drawn for it).
-      { x: 1360, y: 414, w: 96, bare: true },
+      { x: 1850, y: 330, w: 96, bare: true },
       // The watchtower's deck (TOWER_DECK above the ground).
-      { x: 1998, y: 440, w: 84 },
+      { x: 2478, y: 320, w: 84 },
     ],
     ropes: [
-      { x: 1440, top: 414, bottom: 540 },
-      { x: 2014, top: 440, bottom: 600, ladder: true },
+      { x: 1930, top: 330, bottom: 456 },
+      { x: 2494, top: 320, bottom: 480, ladder: true },
     ],
     portals: [
-      { id: 'start', x: 140, y: 640, hidden: true },
+      { id: 'start', x: 140, y: 480, hidden: true },
       // The old mine road west, closing the island's ring: it comes out in the Crystal Cave.
-      { id: 'west', x: 40, y: 640, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
-      { id: 'east', x: 2540, y: 600, to: 'meadow1', toPortal: 'west' },
+      { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
+      { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'pip', x: 800 }, { id: 'lulu', x: 1070 }, { id: 'kestrel', x: 1880 }],
-    // Its districts (the town rules: each with its own name, feel and street life), left to right.
+    npcs: [{ id: 'mira', x: 330 }, { id: 'pip', x: 1180 }, { id: 'lulu', x: 1480 }, { id: 'kestrel', x: 2340 }],
+    // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
-      { name: 'Cottage Row', from: 0, color: '#e889b4', look: { props: ['flower', 'tulip', 'bench', 'mailbox', 'flower'] } },
-      { name: 'Market Street', from: 740, color: '#e0a040', look: { sky: ['#ffd9b0', '#ffecd0', '#fff8ea'], props: ['lamp', 'crate', 'barrel', 'sign', 'lamp'] } },
-      { name: 'Cherry Plaza', from: 1180, color: '#ff7fb6', look: { props: ['bench', 'lamp', 'flower', 'tulip'] } },
-      { name: "Archers' Quarter", from: 1760, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'], props: ['target', 'rack', 'fence', 'tuft'] } },
+      { name: 'Cottage Row', from: 0, color: '#e889b4' },
+      { name: 'Market Street', from: 900, color: '#e0a040', look: { sky: ['#ffd9b0', '#ffecd0', '#fff8ea'] } },
+      { name: 'Cherry Plaza', from: 1600, color: '#ff7fb6' },
+      { name: "Archers' Quarter", from: 2180, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'] } },
     ],
     // Street lamps that glow at night (world/daytime.js).
-    lamps: [{ x: 250, y: 600 }, { x: 600, y: 600 }, { x: 900, y: 560 }, { x: 1140, y: 560 }, { x: 1290, y: 500 }, { x: 1630, y: 500 }, { x: 2040, y: 410 }, { x: 2300, y: 560 }],
+    lamps: [{ x: 300, y: 440 }, { x: 660, y: 440 }, { x: 1150, y: 440 }, { x: 1520, y: 440 }, { x: 1760, y: 416 }, { x: 2120, y: 416 }, { x: 2520, y: 290 }, { x: 2900, y: 440 }],
     deco: [
-      ['well', 760], ['archerbanner', 1780], ['watchtower', 2040], ['archerbanner', 2110],
+      ['pond', 980], ['giantflower', 900, 1], ['well', 1100],
+      ['archerbanner', 2240], ['watchtower', 2520], ['archerbanner', 2600],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
-      ['bowrack', 2200], ['fence', 2250], ['archtarget', 2300, 0], ['archtarget', 2360, 1], ['archtarget', 2420, 2], ['haystack', 2470, 1],
+      ['bowrack', 2680], ['fence', 2720], ['archtarget', 2780, 0], ['archtarget', 2840, 1], ['archtarget', 2900, 2], ['haystack', 2950, 1],
     ],
     spawns: [],
   },
+
 
   // Petal Meadow climbs one hillside of blossom in four zones (the map style the player picked:
   // tall, zoned, exits on different floors). Petal Fields at the bottom, where the Moss Tortoises
