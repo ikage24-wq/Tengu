@@ -18,7 +18,7 @@
 //   skin, skinSh, skinSh2   skin base and its two shadow tones (hue-shifted, not grey);
 //                  skinLt cheek/nose glint; blush, blushDk, blushK (blush size, 0 = none),
 //                  blushLines (always hatch the blush), blushN (hatch strokes, default 3)
-//   head           { chin: [x, y], cheek, jaw, neck: { x, w, top, bot } }   face outline
+//   head           { chin: [x, y], cheek, jaw, neck: { x, w, top, bot, flare } }   face outline
 //   bangs          [[x, y], ...] lower edge of the bangs, left to right: shadow on the forehead;
 //                  bangLine: a colour for a fine line along that edge (pale hair on pale skin)
 //   eye            { y, nearX, farX, rx, ry, far (far eye width, ~0.7), tilt (outer corner lift),
@@ -587,7 +587,8 @@ export function heroineHead(at, mood, look) {
   const L0 = layout(look);
 
   // Neck in shadow, darker for the first stretch under the jaw (it sets the chin apart).
-  pen.poly([[nx - nw / 2, ntop], [nx + nw / 2, ntop], [nx + nw / 2 + 0.2, nbot], [nx - nw / 2 - 0.4, nbot]], sh, 'l');
+  const fl = N.flare ?? 0;
+  pen.poly([[nx - nw / 2, ntop], [nx + nw / 2, ntop], [nx + nw / 2 + 0.2, nbot - fl * 1.6], [nx + nw / 2 + 0.2 + fl, nbot], [nx - nw / 2 - 0.4 - fl, nbot], [nx - nw / 2 - 0.4, nbot - fl * 1.6]], sh, 'l');
   pen.poly([[nx - nw / 2, ntop], [nx + nw / 2 + 0.4, ntop], [nx + nw / 2 + 0.5, chy + 0.4], [nx + 1.6, chy + 1.6], [nx - nw / 2 - 0.2, chy + 0.6]], sh2);
   pen.poly([[nx + nw / 2 - 1.2, chy + 2], [nx + nw / 2 + 0.2, chy + 1.2], [nx + nw / 2 + 0.2, nbot], [nx + nw / 2 - 0.9, nbot]], mix(sh, skin, 0.45));
 

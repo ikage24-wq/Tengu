@@ -63,6 +63,21 @@ function ovalPts(cx, cy, rx, ry, n = 28, a = 0, a0 = 0, a1 = TAU) {
 }
 const oval = (cx, cy, rx, ry, c, a = 0, n = 28) => poly(ovalPts(cx, cy, rx, ry, n, a), c);
 const foval = (cx, cy, rx, ry, c, a = 0, n = 22) => F(oval(cx, cy, rx, ry, c, a, n));
+// A closed shape with its corners rounded off (Chaikin corner cutting, `k` passes), so a body
+// part drawn from a few points reads as a soft, shaped form instead of a box.
+function round(pts, k = 2) {
+  let p = pts;
+  for (let it = 0; it < k; it++) {
+    const q = [];
+    for (let i = 0; i < p.length; i++) {
+      const a = p[i];
+      const b = p[(i + 1) % p.length];
+      q.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    p = q;
+  }
+  return p;
+}
 const dot = (x, y, rx, c, ry = rx) => {
   const [px, py] = X(x, y);
   return F(E(px, py, rx, ry, c));
@@ -239,16 +254,43 @@ function bend(h, ft, a, b, dir) {
   return { k: kn, f: [kn[0] + ((ft[0] - kn[0]) / fl) * Math.min(b, fl), kn[1] + ((ft[1] - kn[1]) / fl) * Math.min(b, fl)] };
 }
 
-// A slender hand at (x, y), fingers toward angle `a`; `open` spreads them.
+// An arm as one smooth piece: a rounded shoulder cap, then a single band from the shoulder through
+// the elbow to the wrist (a curve, so the elbow bends softly instead of meeting two boxes at a
+// lump), w0 at the shoulder, w1 at the elbow, w2 at the wrist. The edge colour `dk` shows as a
+// fine rim on the shadow side; the base `c` sits a touch toward the light over it.
+function limb(sh, el, wr, w0, w1, w2, c, dk) {
+  const sm = (t) => t * t * (3 - 2 * t);
+  const wf = (t) => (t < 0.5 ? lerp(w0, w1, sm(t / 0.5)) : lerp(w1, w2, sm((t - 0.5) / 0.5)));
+  const pts = [sh, el, wr];
+  const lit = pts.map(([x, y]) => [x - 0.3, y - 0.3]);
+  return [
+    oval(sh[0], sh[1], w0 * 0.58, w0 * 0.54, dk, 0, 16),
+    strip(pts, (t) => wf(t) + 0.8, dk, { n: 6 }),
+    oval(sh[0] - 0.3, sh[1] - 0.3, w0 * 0.48, w0 * 0.45, c, 0, 16),
+    strip(lit, (t) => wf(t) * 0.86, c, { n: 6, flat: true }),
+  ];
+}
+
+// A slender hand at (x, y), fingers toward angle `a`: a soft palm, the fingers held together in one
+// gently curled shape with a fine line between them, and a thumb. `open` (over a half) spreads
+// the fingers apart (a casting or reaching hand).
 function hand(x, y, a, skin, dk, open = 0) {
   const out = [];
   within(rot(x, y, a), () => {
-    out.push(oval(x, y, 2.5, 2.1, dk, 0, 14), oval(x + 0.2, y - 0.2, 2.2, 1.8, skin, 0, 14));
-    for (let k = 0; k < 3; k++) {
-      const sp = (k - 1) * (0.25 + open * 0.3);
-      out.push(taper([[x + 1.4, y - 0.6 + k * 0.7], [x + 1.4 + Math.cos(sp) * 3.4, y - 0.6 + k * 0.7 + Math.sin(sp) * 3.4]], 1.1, 0.8, skin, { n: 1 }));
+    out.push(oval(x + 0.2, y, 2.3, 1.95, dk, 0, 16), oval(x + 0.3, y - 0.15, 1.95, 1.62, skin, 0, 16));
+    if (open < 0.5) {
+      const curl = [[x + 1.1, y - 0.3], [x + 2.9, y - 0.1], [x + 4.1, y + 0.7]];
+      out.push(strip(curl, (t) => lerp(2.9, 1.5, t) + 0.7, dk, { n: 3, tip: 0.5 }), strip(curl.map(([px, py]) => [px, py - 0.15]), (t) => lerp(2.5, 1.2, t), skin, { n: 3, flat: true, tip: 0.4 }));
+      out.push(line([[x + 2.2, y + 0.15], [x + 3.7, y + 0.65]], 0.3, dk));
+    } else {
+      for (let k = 0; k < 3; k++) {
+        const sp = (k - 1) * (0.25 + open * 0.3);
+        const p0 = [x + 1.3, y - 0.5 + k * 0.6];
+        const p1 = [p0[0] + Math.cos(sp) * 3.2, p0[1] + Math.sin(sp) * 3.2];
+        out.push(taper([p0, p1], 1.5, 1.1, dk, { n: 1 }), taper([p0, p1], 1.05, 0.75, skin, { n: 1, flat: true }));
+      }
     }
-    out.push(taper([[x, y - 1.2], [x + 1.6, y - 3 - open]], 1.1, 0.8, skin, { n: 1 }));
+    out.push(taper([[x + 0.4, y - 1.1], [x + 1.9, y - 2.6 - open]], 1.6, 1.1, dk, { n: 1 }), taper([[x + 0.4, y - 1.1], [x + 1.9, y - 2.6 - open]], 1.15, 0.75, skin, { n: 1, flat: true }));
   });
   return out;
 }
@@ -601,7 +643,7 @@ const TAMAMO_RAMP = { hi: K.hairLt, base: K.hair, sh1: K.hairDk, sh2: K.hairSh2 
 const TAMAMO_FACE = {
   skin: K.skin, skinSh: '#f8d0ca', skinSh2: '#e6a6ab', blush: '#ff9fb2', lip: '#e2486c', lipLine: '#a8344f',
   bangs: bangsOf(TAMAMO_HAIR.edge),
-  head: { chin: [8.2, 15.8], cheek: 13.8, jaw: -0.6, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  head: { chin: [8.2, 15.8], cheek: 13.8, jaw: -0.6, neck: { x: -0.9, w: 4.1, top: 9, bot: 23, flare: 1.4 } },
   eye: { nearX: 2.6, farX: 9.6, rx: 3.3, ry: 1.9, far: 0.82, iris: '#22b8a8', irisDk: '#0a5c62', irisLt: '#b6fff0', hot: '#ff3d63', hotDk: '#9a1030', pupil: 'slit', pupilC: '#06303a', tilt: 0.55, wing: 1.6, flicks: 2, lashLen: 1, shadow: '#ffa8b4', smoky: 0.15, lowerLash: '#c86478', ink: '#3a1a1c' },
   brow: { c: '#c07a3a', kind: 'arch', w: 0.6, lift: 0.7 },
   mouth: [8.6, 12.8],
@@ -743,7 +785,7 @@ function tamamo(pose, f, mood) {
   within(Tu, () => {
     const sw = swing;
     const top = G - 82;
-    out.push(poly([[bx - 6, top + 2], [bx - 14, top + 6], [bx - 20 + sw * 0.3, top + 24], [bx - 25 + sw, top + 44], [bx - 23 + sw, top + 50], [bx - 15 + sw * 0.8, top + 52], [bx - 9 + sw * 0.6, top + 47], [bx - 6, top + 26]], K.robeDk));
+    out.push(poly(round([[bx - 6, top + 2], [bx - 14, top + 6], [bx - 20 + sw * 0.3, top + 24], [bx - 25 + sw, top + 44], [bx - 23 + sw, top + 50], [bx - 15 + sw * 0.8, top + 52], [bx - 9 + sw * 0.6, top + 47], [bx - 6, top + 26]], 2), K.robeDk));
     out.push(line([[bx - 25 + sw, top + 44], [bx - 23 + sw, top + 50], [bx - 15 + sw * 0.8, top + 52], [bx - 9 + sw * 0.6, top + 47]], 1.8, K.crimson, 1));
     out.push(line([[bx - 23 + sw, top + 50.6], [bx - 15 + sw * 0.8, top + 52.4]], 0.8, K.gold, 1));
   });
@@ -761,7 +803,8 @@ function tamamo(pose, f, mood) {
       hem.push([x, G - 0.4 - 3.2 * (1 - t) ** 5 - Math.abs(Math.sin(t * 7 + ph * 2)) * 0.9 * (1 - t) * t * 3]);
     }
     const train = [[bx - 46 - (walk ? 9 : 0) + wv(2) - (dead ? 6 : 0), G - 0.2], [bx - 36 - (walk ? 6 : 0) + wv(3), G - 3.6], [bx - 28 + wv(4) * 0.4, G - 12]];
-    const back = [P(bx - 10, top + 3), P(bx - 12, top + 16), P(bx - 10.5, top + 26), P(bx - 14, top + 38), ...(drop ? [] : [[bx - 21 + lean * 0.3, G - 28]])];
+    // The robe's back edge as one smooth curve (it used to step in and out).
+    const back = spline([P(bx - 10, top + 3), P(bx - 12.4, top + 18), P(bx - 15, top + 34), ...(drop ? [] : [[bx - 21 + lean * 0.3, G - 28]])], 3);
     const front = [P(bx + 10, top + 3), P(bx + 12.6, top + 11), P(bx + 9, top + 24), P(bx + 12, top + 36), ...(drop ? [] : [[bx + 17 + lean * 0.5, G - 22]])];
     // Inner kimono, crimson with little gold blossoms.
     out.push(T([...front, hem[0], ...hem, ...train, ...back.slice().reverse()], K.crimson));
@@ -882,8 +925,8 @@ function tamamo(pose, f, mood) {
     // Sleeve: fitted along the arm, then hanging in a long swallowtail drape.
     const hang = 19;
     const drape = [[el[0] + 2, el[1] - 3], [wr[0] + 1.2, wr[1] - 3], [wr[0] + 2, wr[1] + 2.6], [wr[0] - 2 + sw * 0.5, wr[1] + hang * 0.6], [wr[0] - 6 + sw, wr[1] + hang], [el[0] - 8 + sw, Math.max(el[1], wr[1]) + hang + 2], [el[0] - 7 + sw * 0.6, el[1] + hang * 0.5], [el[0] - 3.4, el[1] + 2]];
-    out.push(taper([sh, el], 9, 8, K.robeDk, { n: 1 }), taper([[sh[0] + 0.5, sh[1] - 0.5], el], 7.6, 7, K.robe, { n: 1 }));
-    out.push(poly(spline(drape, 2), K.robe), line(spline(drape.slice(3, 6), 2), 2, K.crimson), line(spline(drape.slice(3, 6), 2).map(([x, y]) => [x, y + 1.2]), 0.8, K.gold));
+    out.push(...limb(sh, el, [lerp(el[0], wr[0], 0.55), lerp(el[1], wr[1], 0.55)], 9, 8.4, 8, K.robe, K.robeDk));
+    out.push(poly(round(drape.map(([x, y]) => [x - 0.5, y + 0.6]), 2), K.robeDk), poly(round(drape, 2), K.robe), line(spline(drape.slice(3, 6), 2), 2, K.crimson), line(spline(drape.slice(3, 6), 2).map(([x, y]) => [x, y + 1.2]), 0.8, K.gold));
     out.push(line([drape[1], drape[2]], 1.6, K.crimson), line([[drape[1][0] + 0.8, drape[1][1]], [drape[2][0] + 0.8, drape[2][1]]], 0.7, K.pink));
     out.push(fpoly([[wr[0] - 4 + sw * 0.6, wr[1] + 10], [wr[0] - 6 + sw * 0.8, wr[1] + 16], [wr[0] - 9 + sw * 0.8, wr[1] + 14]], K.gold));
     // The fan: crimson leaves with a gold band and sakura, opening from the hand.
@@ -974,7 +1017,7 @@ const SYLVANA_FACE = {
   skin: S.skin, skinSh: '#e2dccb', skinSh2: '#b9c4ae', blush: '#ff9ab4', lip: S.lip, lipLine: '#b0546c',
   bangs: bangsOf(SYLVANA_HAIR.edge),
   bangLine: S.hairSh2,
-  head: { chin: [7.2, 15], cheek: 14.8, jaw: -0.8, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  head: { chin: [7.2, 15], cheek: 14.8, jaw: -0.8, neck: { x: -0.9, w: 4.1, top: 9, bot: 23, flare: 1.4 } },
   eye: { nearX: 2.2, farX: 9.4, rx: 2.9, ry: 2.5, far: 0.84, iris: '#e2587a', irisDk: '#7a1e42', irisLt: '#ffd6c4', hot: '#ffc23a', hotDk: '#9a5a08', pupil: 'round', pupilC: '#3a0e26', tilt: -0.12, wing: 0.6, flicks: 1, lashLen: 1, leafLash: S.leafDk, crease: false, lower: '#9cc4a8', ink: '#16302a', sparkle: true },
   brow: { c: '#3f7a52', kind: 'soft', w: 0.6, lift: 0.7 },
   mouth: [8, 11.9],
@@ -1133,7 +1176,7 @@ function sylvana(pose, f, mood) {
     const sh = [bx - 7, top + 2];
     const tgt = [backHand[0] - lean, backHand[1] - bob - drop];
     const { k: el, f: wr } = bend(sh, tgt, 14, 13, -1);
-    out.push(taper([sh, el], 6.4, 5.2, S.skinDk, { n: 1 }), taper([el, wr], 5.2, 4, S.skinDk, { n: 1 }), oval(el[0], el[1], 2.6, 2.6, S.skinDk, 0, 12));
+    out.push(...limb(sh, el, wr, 6, 4.8, 3.6, S.skinDk, shade(S.skinDk, -10)));
     out.push(...hand(wr[0], wr[1], Math.atan2(wr[1] - el[1], wr[0] - el[0]), S.skinDk, shade(S.skinDk, -8)));
   });
 
@@ -1171,7 +1214,7 @@ function sylvana(pose, f, mood) {
     // Blossoms tucked into the tiers.
     for (const [x, y, r] of [[bx - 14, G - 24, 2.2], [bx + 10, G - 30, 1.8], [bx + 19, G - 9, 2.2], [bx - 22, G - 8, 1.8], [bx + 2, G - 12, 1.6]]) out.push(...blossom(x + sw * 0.5, y, r, S.bloom, '#fff6a0', x * 0.1));
     // Bodice of overlapping leaf scales, with a moss sash at the waist.
-    const bod = [[bx - 9, top + 2], [bx - 10.5, top + 12], [bx - 8, waist], [bx + 8.6, waist], [bx + 11.6, top + 10], [bx + 9.4, top + 2], [bx + 2, top - 1]];
+    const bod = round([[bx - 9, top + 2], [bx - 10.6, top + 10], [bx - 7.4, top + 17], [bx - 8, waist], [bx + 8.6, waist], [bx + 8.6, top + 17], [bx + 11.6, top + 10], [bx + 9.4, top + 2], [bx + 2, top - 1]], 2);
     out.push(poly(bod.map(([x, y]) => [x + (x - bx) * 0.08, y + 0.6]), S.leafDk), poly(bod, S.leaf));
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 4; c++) {
@@ -1183,7 +1226,7 @@ function sylvana(pose, f, mood) {
     out.push(strip([[bx - 9, waist - 1], [bx, waist + 0.5], [bx + 9, waist - 1]], () => 3.4, S.mossDk, { n: 2 }), strip([[bx - 9, waist - 1.4], [bx, waist], [bx + 9, waist - 1.4]], () => 2.2, S.moss, { n: 2, flat: true }));
     out.push(...blossom(bx + 6, waist - 0.6, 2.6, S.bloom, '#fff6a0', 0.4), ...blossom(bx + 1.6, waist + 0.2, 1.8, '#ffffff', S.bloomDk, 1));
     // A neckline of moss and tiny flowers, and leafy capelets on the shoulders.
-    out.push(lpoly([[bx - 3, top - 1], [bx + 7, top - 0.6], [bx + 5, top + 5], [bx + 1, top + 6]], S.skin));
+    out.push(lpoly(round([[bx - 4, top - 1.4], [bx + 8, top - 1], [bx + 6.4, top + 3.6], [bx + 3, top + 6.2], [bx, top + 4.8]], 2), S.skin));
     out.push(line(spline([[bx - 7, top + 1], [bx - 1, top + 6.4], [bx + 5, top + 6], [bx + 10, top + 1]], 3), 1.8, S.moss));
     for (const [x, y] of [[bx - 4, top + 4.4], [bx + 1, top + 6.4], [bx + 6, top + 5]]) out.push(dot(x, y, 0.9, S.bloom), dot(x, y, 0.35, '#ffffff'));
     for (const [x, y, a0] of [[bx - 9, top + 1, 2.3], [bx - 8, top + 3, 2.0], [bx - 10, top + 4, 2.6]]) out.push(...leaf(x, y, a0 + sw * 0.03, 10, 5, S.leaf2, { rib: S.leaf2Dk, flat: false }));
@@ -1241,9 +1284,7 @@ function sylvana(pose, f, mood) {
     const sh = [bx + 7, top + 2];
     const tgt = [handAt[0] - lean, handAt[1] - bob - drop];
     const { k: el, f: wr } = bend(sh, tgt, 14, 13, -1);
-    out.push(taper([sh, el], 6.6, 5.4, S.skinDk, { n: 1 }), taper([[sh[0] + 0.3, sh[1] - 0.3], el], 5.2, 4.2, S.skin, { n: 1 }), oval(el[0], el[1], 2.6, 2.6, S.skin, 0, 12));
-    out.push(taper([el, wr], 5.2, 4, S.skinDk, { n: 1 }), taper([[el[0] + 0.2, el[1] - 0.2], wr], 4, 3, S.skin, { n: 1 }));
-    out.push(line([[lerp(sh[0], el[0], 0.3), lerp(sh[1], el[1], 0.3) - 0.5], [lerp(sh[0], el[0], 0.3) + 1.6, lerp(sh[1], el[1], 0.3) - 0.2]], 0.5, mix(S.mark, S.skin, 0.5)), line([[lerp(el[0], wr[0], 0.5) - 0.8, lerp(el[1], wr[1], 0.5) + 0.4], [lerp(el[0], wr[0], 0.5) + 0.8, lerp(el[1], wr[1], 0.5) + 0.6]], 0.5, mix(S.mark, S.skin, 0.5)));
+    out.push(...limb(sh, el, wr, 6, 4.8, 3.4, S.skin, S.skinDk));
     out.push(line([[lerp(el[0], wr[0], 0.1), lerp(el[1], wr[1], 0.1) + 1], [lerp(el[0], wr[0], 0.85), lerp(el[1], wr[1], 0.85) + 0.8]], 0.5, glow));
     const fa = Math.atan2(wr[1] - el[1], wr[0] - el[0]);
     out.push(...leaf(lerp(el[0], wr[0], 0.8), lerp(el[1], wr[1], 0.8), fa + 2.4, 5, 2.6, S.leaf), ...leaf(lerp(el[0], wr[0], 0.8), lerp(el[1], wr[1], 0.8), fa - 2.4, 5, 2.6, S.leaf2));
@@ -1335,7 +1376,7 @@ const LILITH_RAMP = { hi: D.hairHi, base: D.hair, sh1: D.hairDk, sh2: D.hairSh2 
 const LILITH_FACE = {
   skin: D.skin, skinSh: '#f2c0d1', skinSh2: '#d593b5', blush: '#ff9cbc', lip: '#c8306a', lipLine: '#8a1c46',
   bangs: bangsOf(LILITH_HAIR.edge),
-  head: { chin: [7.8, 16.2], cheek: 14.2, jaw: -0.2, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  head: { chin: [7.8, 16.2], cheek: 14.2, jaw: -0.2, neck: { x: -0.9, w: 4.1, top: 9, bot: 23, flare: 1.4 } },
   eye: { nearX: 2.4, farX: 10, rx: 3.5, ry: 2.3, far: 0.8, iris: '#ff3f9e', irisDk: '#7a0f4a', irisLt: '#ffc2e4', hot: '#ff2a5c', hotDk: '#8a0a2a', pupil: 'heart', pupilC: '#4a0a2c', tilt: 0.22, wing: 1.8, flicks: 3, lashLen: 1.3, shadow: '#e2b0d8', smoky: 0.35, lowerLash: '#7a3a6a', ink: '#24112e' },
   brow: { c: '#2c1d55', kind: 'arch', w: 0.75, lift: 0.1 },
   mouth: [8.2, 13],
@@ -1494,9 +1535,9 @@ function lilith(pose, f, mood) {
     const { k, f: an } = bend(h, [fx, fy], 22, 21, 1);
     const c = far ? D.blackDk : D.black;
     const res = [];
-    res.push(taper([h, k], 8, 6, c, { n: 1 }), oval(k[0], k[1], 3.2, 3.2, c, 0, 12), taper([k, an], 6, 3.6, c, { n: 1 }));
+    res.push(...limb(h, k, an, 7.6, 5.4, 3.4, c, shade(c, -10)));
     const toe = [an[0] + 5, an[1] + 5.4];
-    res.push(poly([[an[0] - 2, an[1] - 1], [an[0] + 2, an[1] - 1], [toe[0] + 1, toe[1]], [toe[0] - 2.6, toe[1] + 0.6], [an[0] - 1.6, an[1] + 2]], c));
+    res.push(poly(round([[an[0] - 2.2, an[1] - 1.2], [an[0] + 2.2, an[1] - 1.2], [toe[0] + 1.2, toe[1]], [toe[0] - 2.6, toe[1] + 0.7], [an[0] - 1.8, an[1] + 2.2]], 2), c));
     res.push(taper([[an[0] - 1.2, an[1] + 1.6], [an[0] - 1.8, an[1] + 5.8]], 1.4, 0.8, D.wineDk, { n: 1 }));
     if (!far) res.push(line([[k[0] - 1, k[1] - 6], [k[0] + 2.2, k[1] - 5.4]], 1.4, D.wine), line([[lerp(k[0], an[0], 0.2) + 1.6, lerp(k[1], an[1], 0.2)], [lerp(k[0], an[0], 0.8) + 1, lerp(k[1], an[1], 0.8)]], 0.6, D.blackLt));
     return res;
@@ -1540,9 +1581,9 @@ function lilith(pose, f, mood) {
   // ---- Torso: corset, sleeves, collar.
   within(Tu, () => {
     const waist = G - 58;
-    out.push(poly([[bx - 8.4, top + 2], [bx - 10, top + 12], [bx - 8, waist + 2], [bx + 9.4, waist + 2], [bx + 11.6, top + 11], [bx + 9.6, top + 2], [bx + 2, top - 2]], D.black));
+    out.push(poly(round([[bx - 8.4, top + 2], [bx - 10.2, top + 10], [bx - 7.6, top + 17], [bx - 8.4, waist + 2], [bx + 9.6, waist + 2], [bx + 9, top + 17], [bx + 11.8, top + 10], [bx + 9.6, top + 2], [bx + 2, top - 2]], 2), D.black));
     // The corset: wine panels with gold boning and lacing, dipping to a point.
-    out.push(poly([[bx - 8.6, top + 13], [bx + 11.4, top + 12], [bx + 10, waist + 1], [bx + 3, waist + 5], [bx - 8, waist + 1]], D.wineDk), poly([[bx - 7.8, top + 13.6], [bx + 10.6, top + 12.6], [bx + 9.2, waist + 0.4], [bx + 3, waist + 4], [bx - 7.4, waist + 0.4]], D.wine));
+    out.push(poly(round([[bx - 8.4, top + 13], [bx + 10.4, top + 12], [bx + 9.6, top + 17.5], [bx + 10, waist + 1], [bx + 3, waist + 5], [bx - 8, waist + 1], [bx - 7.4, top + 17.5]], 1), D.wineDk), poly(round([[bx - 7.6, top + 13.6], [bx + 9.8, top + 12.6], [bx + 8.9, top + 17.6], [bx + 9.2, waist + 0.4], [bx + 3, waist + 4], [bx - 7.4, waist + 0.4], [bx - 6.8, top + 17.6]], 1), D.wine));
     for (const x of [bx - 4, bx + 0.6, bx + 6]) out.push(line([[x, top + 14], [x + (x - bx) * 0.05, waist + 1.5]], 0.6, D.goldDk));
     for (let k = 0; k < 4; k++) out.push(line([[bx + 1.8, top + 15 + k * 2.4], [bx + 4.2, top + 16.4 + k * 2.4]], 0.5, D.goldLt), line([[bx + 4.2, top + 15 + k * 2.4], [bx + 1.8, top + 16.4 + k * 2.4]], 0.5, D.goldLt));
     out.push(line([[bx - 8.6, top + 12.8], [bx + 11.6, top + 11.8]], 1, D.gold), line([[bx - 8, waist + 0.8], [bx + 3, waist + 4.6], [bx + 10, waist + 0.6]], 1, D.gold));
@@ -1561,7 +1602,7 @@ function lilith(pose, f, mood) {
     const sh = [bx - 7, top + 3];
     const hand0 = dead ? [bx - 16, G - 20 - drop] : [bx - 19, G - 62 + (atk ? key([-6, 2, 2, 1, 0], a) : 0)];
     const { k: el, f: wr } = bend(sh, hand0, 13, 12, -1);
-    out.push(taper([sh, el], 6, 5, D.blackDk, { n: 1 }), taper([el, wr], 5, 4.6, D.blackDk, { n: 1 }), poly([[wr[0] - 3, wr[1] - 3], [wr[0] + 3, wr[1] - 3], [wr[0] + 4, wr[1] + 2], [wr[0] - 4, wr[1] + 2]], D.wineDk));
+    out.push(...limb(sh, el, wr, 5.8, 4.8, 4.4, D.blackDk, shade(D.blackDk, -10)), poly([[wr[0] - 3, wr[1] - 3], [wr[0] + 3, wr[1] - 3], [wr[0] + 4, wr[1] + 2], [wr[0] - 4, wr[1] + 2]], D.wineDk));
     if (!dead) {
       const sx = wr[0];
       const st = wr[1] - 24;
@@ -1625,8 +1666,7 @@ function lilith(pose, f, mood) {
     const tgt = [handAt[0] - lean, handAt[1] - bob - drop];
     const { k: el, f: wr } = bend(sh, tgt, 13.5, 12.5, atk ? -1 : 1);
     out.push(...ball(sh[0], sh[1] + 1, 5.2, 4.4, D.black, { dark: D.blackDk, light: D.blackLt }));
-    out.push(taper([sh, el], 5.6, 4.6, D.blackDk, { n: 1 }), taper([[sh[0] + 0.3, sh[1] - 0.3], el], 4.4, 3.6, D.black, { n: 1 }), oval(el[0], el[1], 2.4, 2.4, D.black, 0, 12));
-    out.push(taper([el, wr], 4.6, 3.6, D.blackDk, { n: 1 }), taper([[el[0] + 0.2, el[1] - 0.2], wr], 3.6, 2.8, D.black, { n: 1 }));
+    out.push(...limb(sh, el, wr, 5.2, 4.2, 3.4, D.black, D.blackDk));
     // A flared wine cuff.
     const ang = Math.atan2(wr[1] - el[1], wr[0] - el[0]);
     const cx = lerp(el[0], wr[0], 0.82);
@@ -1720,7 +1760,7 @@ const SELENE_FACE = {
   skin: M.skin, skinSh: '#ecd1d6', skinSh2: '#c7b0c9', blush: '#ffa8bc', blushK: 0.9, lip: M.lip, lipLine: '#b0566a',
   bangs: bangsOf(SELENE_HAIR.edge),
   bangLine: '#666dba',
-  head: { chin: [7.6, 15.6], cheek: 14.6, jaw: 0.4, neck: { x: -1.2, w: 5.4, top: 9, bot: 23 } },
+  head: { chin: [7.6, 15.6], cheek: 14.6, jaw: 0.4, neck: { x: -0.9, w: 4.1, top: 9, bot: 23, flare: 1.4 } },
   eye: { nearX: 2.5, farX: 9.7, rx: 3.1, ry: 2.1, far: 0.84, iris: '#6a78e0', irisDk: '#28307a', irisLt: '#d0e0ff', hot: '#7fd8ff', hotDk: '#2a6a9a', pupil: 'round', pupilC: '#1a1c50', tilt: 0.14, wing: 0.8, flicks: 1, lashLen: 0.9, ink: '#22234e' },
   brow: { c: '#666dba', kind: 'straight', w: 0.9, lift: -0.5 },
   mouth: [8.2, 12.5],
@@ -1874,7 +1914,7 @@ function selene(pose, f, mood) {
       const sh = [bx - 7, top + 3];
       const tgt = [shieldHand[0] - lean, shieldHand[1] - bob];
       const { k: el, f: wr } = bend(sh, tgt, 13, 12, -1);
-      out.push(taper([sh, el], 6, 5, M.silverDk, { n: 1 }), taper([el, wr], 5.4, 4.6, M.silverDk, { n: 1 }));
+      out.push(...limb(sh, el, wr, 5.8, 5, 4.6, M.silverDk, shade(M.silverDk, -10)));
     });
     drawShield();
   }
@@ -1899,10 +1939,13 @@ function selene(pose, f, mood) {
     const { k, f: an } = bend(h, [fx, fy], 21, 21, 1);
     const res = [];
     const dk = far ? shade(M.silverDk, -6) : M.silverDk;
-    res.push(taper([h, k], 8.4, 6.6, far ? M.lavDk : M.lav, { n: 1 }));
-    res.push(taper([k, an], 6.8, 4.6, dk, { n: 1 }), taper([[k[0] + 0.4, k[1]], [an[0] + 0.3, an[1]]], 5.2, 3.4, far ? M.silverDk : M.silver, { n: 1 }));
-    res.push(oval(k[0] + 0.6, k[1], 3.8, 3.4, dk, 0, 12), oval(k[0] + 0.9, k[1] - 0.3, 2.8, 2.4, far ? M.silverDk : M.silver, 0, 12), dot(k[0] + 1.2, k[1] - 0.4, 0.8, M.gold));
-    res.push(poly([[an[0] - 3, an[1] - 1.4], [an[0] + 2.4, an[1] - 1.6], [an[0] + 8, an[1] + 3.4], [an[0] + 6, an[1] + 4.4], [an[0] - 3, an[1] + 4.4]], dk), fpoly([[an[0] - 2.2, an[1] - 0.8], [an[0] + 2, an[1] - 1], [an[0] + 6.6, an[1] + 3], [an[0] - 2, an[1] + 3]], far ? M.silverDk : M.silver));
+    const sil = far ? M.silverDk : M.silver;
+    res.push(...limb(h, k, an, 8, 6, 4.2, far ? M.lavDk : M.lav, far ? shade(M.lavDk, -8) : M.lavDk));
+    const g0 = [lerp(k[0], an[0], 0.1), lerp(k[1], an[1], 0.1)];
+    const shin = (w) => (t) => w * (t < 0.35 ? lerp(0.92, 1, t / 0.35) : lerp(1, 0.72, (t - 0.35) / 0.65));
+    res.push(strip([g0, [lerp(k[0], an[0], 0.5) + 0.5, lerp(k[1], an[1], 0.5)], an], shin(7), dk, { n: 3 }), strip([[g0[0] + 0.2, g0[1]], [lerp(k[0], an[0], 0.5) + 0.6, lerp(k[1], an[1], 0.5)], [an[0] + 0.2, an[1]]], shin(5.6), sil, { n: 3, flat: true }));
+    res.push(oval(k[0] + 0.6, k[1], 3.6, 3.2, dk, 0, 18), oval(k[0] + 0.85, k[1] - 0.3, 2.7, 2.3, sil, 0, 18), dot(k[0] + 1.2, k[1] - 0.4, 0.8, M.gold));
+    res.push(poly(round([[an[0] - 3, an[1] - 1.6], [an[0] + 2.4, an[1] - 1.8], [an[0] + 8.6, an[1] + 3.2], [an[0] + 6.4, an[1] + 4.6], [an[0] - 3.2, an[1] + 4.6]], 2), dk), fpoly(round([[an[0] - 2.2, an[1] - 0.9], [an[0] + 2, an[1] - 1.1], [an[0] + 7, an[1] + 3], [an[0] - 2.2, an[1] + 3.2]], 2), sil));
     if (!far) res.push(line([[k[0] + 1.6, k[1] + 3], [an[0] + 1.6, an[1] - 2]], 0.6, M.silverLt));
     return res;
   };
@@ -1913,23 +1956,23 @@ function selene(pose, f, mood) {
   within(Tu, () => {
     const waist = G - 58;
     const sk = (t) => Math.sin(ph * 2 + t) * (walk ? 1.4 : 0.4);
-    out.push(poly([[bx - 9, waist], [bx + 9.6, waist], [bx + 14 + sk(1) + stance * 2, G - 30], [bx + 4, G - 27.6], [bx - 4, G - 29], [bx - 14 + sk(0) - stance * 2, G - 31]], M.lavDk));
-    out.push(poly([[bx - 8.4, waist], [bx + 9, waist], [bx + 13 + sk(1) + stance * 2, G - 31.4], [bx + 4, G - 29], [bx - 4, G - 30.4], [bx - 12 + sk(0) - stance * 2, G - 32]], M.lav));
+    out.push(poly(round([[bx - 9, waist], [bx + 9.6, waist], [bx + 12, waist + 12], [bx + 14 + sk(1) + stance * 2, G - 30], [bx + 4, G - 27.6], [bx - 4, G - 29], [bx - 14 + sk(0) - stance * 2, G - 31], [bx - 11.6, waist + 12]], 2), M.lavDk));
+    out.push(poly(round([[bx - 8.4, waist], [bx + 9, waist], [bx + 11.2, waist + 12], [bx + 13 + sk(1) + stance * 2, G - 31.4], [bx + 4, G - 29], [bx - 4, G - 30.4], [bx - 12 + sk(0) - stance * 2, G - 32], [bx - 10.6, waist + 12]], 2), M.lav));
     for (const x of [bx - 5, bx + 1, bx + 7]) out.push(line([[x, waist + 2], [x + (x - bx) * 0.25 + sk(x), G - 31]], 0.6, M.lavDk));
     out.push(line([[bx - 12 + sk(0) - stance * 2, G - 31.6], [bx - 4, G - 30], [bx + 4, G - 28.6], [bx + 13 + sk(1) + stance * 2, G - 31]], 1, M.gold));
     // Tassets.
     for (const [x0, dx, c] of [[bx - 9, -3, M.silverDk], [bx + 2, 4, M.silver]]) {
-      out.push(poly([[x0, waist], [x0 + 9, waist], [x0 + 9 + dx, waist + 12], [x0 + dx, waist + 13]], shade(c, -10)), poly([[x0 + 0.6, waist + 0.4], [x0 + 8.4, waist + 0.4], [x0 + 8.4 + dx, waist + 11.4], [x0 + 0.6 + dx, waist + 12.2]], c));
+      out.push(poly(round([[x0, waist], [x0 + 9, waist], [x0 + 9 + dx, waist + 12], [x0 + 4.5 + dx, waist + 13.6], [x0 + dx, waist + 13]], 2), shade(c, -10)), poly(round([[x0 + 0.6, waist + 0.4], [x0 + 8.4, waist + 0.4], [x0 + 8.4 + dx, waist + 11.4], [x0 + 4.5 + dx, waist + 12.8], [x0 + 0.6 + dx, waist + 12.2]], 2), c));
       out.push(line([[x0 + dx * 0.5 + 0.6, waist + 6.4], [x0 + dx * 0.5 + 8.6, waist + 6]], 0.6, M.silverDk), line([[x0 + dx + 0.6, waist + 12], [x0 + dx + 8.4, waist + 11.4]], 0.8, M.gold));
     }
     // Breastplate.
-    const bp = [[bx - 9, top + 2], [bx - 10.6, top + 12], [bx - 8.6, waist + 1], [bx + 9, waist + 1], [bx + 11.8, top + 12], [bx + 10, top + 2], [bx + 2, top - 1]];
+    const bp = round([[bx - 9, top + 2], [bx - 10.8, top + 10], [bx - 8, top + 18], [bx - 8.8, waist + 1], [bx + 9.2, waist + 1], [bx + 9, top + 18], [bx + 11.8, top + 11], [bx + 10, top + 2], [bx + 2, top - 1]], 2);
     out.push(poly(bp, M.silverDk), poly(bp.map(([x, y]) => [x + (bx + 2 - x) * 0.08, y + 0.4]), M.silver));
     out.push(F(T(ovalPts(bx + 6, top + 10, 4.4, 3.6, 16, -0.3).map(([x, y]) => X(x, y)), M.silverLt)), line(spline([[bx - 2, top + 6], [bx + 4, top + 12.4], [bx + 11, top + 9]], 3), 0.6, M.silverDk));
     out.push(line([[bx - 8.6, waist + 0.6], [bx + 9, waist + 0.6]], 1.6, M.gold), ...gem(bx + 2, waist + 0.4, 1.6, M.lavDk));
     out.push(F(T(crescentPts(bx + 1.5, top + 13, 3.2, 1.4, 0.2).map(([x, y]) => X(x, y)), M.goldDk)));
     // Gorget and a lavender collar.
-    out.push(poly([[bx - 5, top - 1], [bx + 8, top - 1.6], [bx + 9, top + 3], [bx + 2, top + 5], [bx - 6, top + 3]], M.silverDk), line([[bx - 5, top + 1.6], [bx + 2, top + 3.4], [bx + 8.6, top + 1]], 0.9, M.gold));
+    out.push(poly(round([[bx - 5, top - 1], [bx + 8, top - 1.6], [bx + 9, top + 3], [bx + 2, top + 5], [bx - 6, top + 3]], 2), M.silverDk), line([[bx - 5, top + 1.6], [bx + 2, top + 3.4], [bx + 8.6, top + 1]], 0.9, M.gold));
     out.push(lpoly([[bx - 1, top - 2], [bx + 6, top - 2.4], [bx + 5, top + 1], [bx, top + 1]], M.skinDk));
   });
 
@@ -1973,8 +2016,9 @@ function selene(pose, f, mood) {
     // Pauldron: two layered crescent plates.
     out.push(...ball(sh[0] - 0.5, sh[1] + 1, 6.4, 5.2, M.silver, { dark: M.silverDk, light: M.silverLt }));
     out.push(line(arcPts(sh[0] - 0.5, sh[1] + 2, 6.2, 4, 10, 170, 6), 1, M.gold), line(arcPts(sh[0] - 0.5, sh[1] + 4.6, 6.6, 3.4, 15, 165, 6), 0.8, M.silverDk));
-    out.push(taper([sh, el], 5.4, 4.6, M.lavDk, { n: 1 }), oval(el[0], el[1], 2.6, 2.6, M.silverDk, 0, 12));
-    out.push(taper([el, wr], 5.6, 4.6, M.silverDk, { n: 1 }), taper([[el[0] + 0.3, el[1] - 0.3], wr], 4.2, 3.4, M.silver, { n: 1 }), line([[lerp(el[0], wr[0], 0.75), lerp(el[1], wr[1], 0.75) - 2], [lerp(el[0], wr[0], 0.75), lerp(el[1], wr[1], 0.75) + 2]], 0.8, M.gold));
+    out.push(...limb(sh, el, wr, 5.2, 4.6, 4, M.lav, M.lavDk));
+    const g0 = [lerp(el[0], wr[0], 0.12), lerp(el[1], wr[1], 0.12)];
+    out.push(taper([g0, wr], 5.8, 4.8, M.silverDk, { n: 1 }), taper([[g0[0] - 0.3, g0[1] - 0.3], [wr[0] - 0.2, wr[1] - 0.2]], 4.6, 3.8, M.silver, { n: 1, flat: true }), line([[lerp(el[0], wr[0], 0.75), lerp(el[1], wr[1], 0.75) - 2], [lerp(el[0], wr[0], 0.75), lerp(el[1], wr[1], 0.75) + 2]], 0.8, M.gold));
     // The spear.
     if (!dead) {
       const d = [Math.cos(spearA), Math.sin(spearA)];
