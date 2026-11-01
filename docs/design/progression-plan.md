@@ -33,7 +33,9 @@ it, and tick it off here.
 ## Pillars
 
 ### 1. Main story (FFXIV's main story quest)
-A chain of story quests marked with a special icon, split into chapters by level. Regions stay
+A chain of story quests marked with a special icon, split into chapters by level. **Optional** (the
+player's call, 2026-11-01): every region is open from the start; only the story's own arenas wait for it.
+(Was: regions stay
 **locked until the story reaches them** (a collapsed bridge, a sealed ruin gate, a wind wall
 around the Sky Garden), so the world opens up as you go. Each chapter gets a cutscene system
 (letterbox shots, name cards) for its big moments.

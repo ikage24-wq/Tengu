@@ -182,17 +182,14 @@ export const STORY_QUESTS = {
   }),
 };
 
-// The regions the story opens: a portal on the way stays shut until its chapter's quest has been
-// accepted (or finished). `note` is what you're told at the door.
+// Story locks: a portal stays shut until its chapter's quest has been accepted (or finished);
+// `note` is what you're told at the door.
+// The main story is optional (the player's call, 2026-11-01): every region is open from the start.
+// Only the story's own arenas, where its queens wait, stay closed until the story gets there.
 export const STORY_LOCKS = {
-  'woods.glade': { quest: 'story_3_1', note: 'A wall of wild wind blows you back. Follow the story (★) to Chapter 3.' },
   'glade.bower': { quest: 'story_3_2', note: 'Thorny vines close the way to the bower.' },
-  'ruins.shrine': { quest: 'story_4_1', note: 'Fox-fire illusions turn you round in circles. Follow the story (★) to Chapter 4.' },
   'shrine.sanctum': { quest: 'story_4_3', note: 'The sanctum gate is sealed with a fox charm.' },
-  'cave.springs': { quest: 'story_5_1', note: 'A rockfall blocks the tunnel. Follow the story (★) to Chapter 5.' },
-  'sky.peak': { quest: 'story_5_1', note: 'A blizzard blocks the way down the mountain.' },
   'springs.grotto': { quest: 'story_5_3', note: 'Roses grow thick behind the waterfall.' },
-  'sky.starfall': { quest: 'story_6_2', note: 'The stairs to the stars fade in and out of sight. Follow the story (★) to Chapter 6.' },
   'starfall.terrace': { quest: 'story_6_3', note: 'Moonlight bars the terrace.' },
 };
 

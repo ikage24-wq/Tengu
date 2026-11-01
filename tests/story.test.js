@@ -35,16 +35,17 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   for (const sc of Object.values(SCENES)) for (const st of sc) assert.ok(st.card || typeof st.text === 'string', 'every step is a card or a line');
 });
 
-test('the regions open with the story', () => {
+test('the story is optional: every region is open, only its arenas wait for it', () => {
   for (const key of Object.keys(STORY_LOCKS)) {
     const [map, portal] = key.split('.');
     assert.ok(MAPS[map]?.portals.some((p) => p.id === portal), `${key} is a real portal`);
   }
   const w = createWorld(createCharacter('Hana', {}));
-  const door = MAPS.woods.portals.find((p) => p.id === 'glade');
-  assert.ok(storyLock(w, MAPS.woods, door), 'the glade is shut at first');
-  w.char.quests.story_3_1 = { state: 'active', kills: {}, marks: {} };
-  assert.equal(storyLock(w, MAPS.woods, door), null, 'open once chapter 3 starts');
+  assert.equal(storyLock(w, MAPS.woods, MAPS.woods.portals.find((p) => p.id === 'glade')), null, 'the glade is open from the start');
+  const bower = MAPS.glade.portals.find((p) => p.id === 'bower');
+  assert.ok(storyLock(w, MAPS.glade, bower), "Sylvana's bower waits for the story");
+  w.char.quests.story_3_2 = { state: 'active', kills: {}, marks: {} };
+  assert.equal(storyLock(w, MAPS.glade, bower), null, 'open once the story gets there');
 });
 
 test("a queen waits in her arena for her trial, and comes back to her region after it", () => {
