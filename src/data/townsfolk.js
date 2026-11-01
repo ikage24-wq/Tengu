@@ -30,10 +30,10 @@ export const TOWNSFOLK = {
     { id: 'sp-kid2', name: 'Tobi', kind: 'kid', seed: 41, act: { type: 'chase', a: 1260, b: 1680, speed: 62, lag: 0.8 }, lines: ['Wait for meee!', 'No fair!'] },
     { id: 'sp-dog', kind: 'dog', seed: 3, act: { type: 'chase', a: 1260, b: 1680, speed: 62, lag: 1.5 } },
     { id: 'sp-elder', name: 'Old Fennel', kind: 'person', seed: 52, look: { hairColor: '#e9ebfa', outfitColor: '#e0cfff' },
-      act: { type: 'stroll', a: 560, b: 720, speed: 12, pause: 6 }, lines: ['The well water is sweetest at dawn.', 'In my day, we shot with sticks!'], greet: ['Ah, a new face!', 'Mind the chickens, dear.'] },
+      act: { type: 'stroll', a: 540, b: 700, speed: 12, pause: 6 }, lines: ['The well water is sweetest at dawn.', 'In my day, we shot with sticks!'], greet: ['Ah, a new face!', 'Mind the chickens, dear.'] },
     { id: 'sp-chick1', kind: 'chick', seed: 5, act: { type: 'peck', a: 380, b: 440 } },
     { id: 'sp-chick2', kind: 'chick', seed: 9, act: { type: 'peck', a: 410, b: 470 } },
-    { id: 'sp-cat', kind: 'cat', seed: 2, act: { type: 'nap', x: 1404, y: 330 } },
+    { id: 'sp-cat', kind: 'cat', seed: 2, act: { type: 'nap', x: 1404, y: 414 } },
   ],
   harbor: [
     { id: 'hb-sailor', name: 'Bosun Gill', kind: 'person', seed: 61, look: { outfitColor: '#bfe0ff' },

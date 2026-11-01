@@ -24,29 +24,32 @@ export const MAPS = {
     id: 'sprout', plaza: 1290, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1140,
-    width: 2600, height: 520, groundY: 480,
+    width: 2600, height: 700, groundY: 640,
     look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.8 },
-    terrain: [[0, 480], [1180, 480], [1220, 456], [1700, 456], [1740, 480], [2600, 480]],
+    // A hillside village: Cottage Row low by the west gate, Market Street a step up, Cherry Plaza
+    // on the summit round the great tree, and the Archers' Quarter down the far side, all joined by
+    // walkable slopes (nothing important up a ladder; the climbs lead to views).
+    terrain: [[0, 640], [720, 640], [770, 600], [1180, 600], [1230, 540], [1720, 540], [1770, 600], [2600, 600]],
     // The cottages along the street, and the plaza's own pieces (render/townhouses.js).
     cottages: [200, 470, 660, 950, 2160, 2400],
     townPieces: [['plazatree', 1470], ['noticeboard', 1630]],
     platforms: [
       // The terraced walk between the cottages.
-      { x: 500, y: 400, w: 150, posts: true }, { x: 600, y: 320, w: 120, posts: true },
+      { x: 500, y: 560, w: 150, posts: true }, { x: 600, y: 480, w: 120, posts: true },
       // A branch of the plaza's cherry tree (the tree's own bough: nothing drawn for it).
-      { x: 1360, y: 330, w: 96, bare: true },
+      { x: 1360, y: 414, w: 96, bare: true },
       // The watchtower's deck (TOWER_DECK above the ground).
-      { x: 1998, y: 320, w: 84 },
+      { x: 1998, y: 440, w: 84 },
     ],
     ropes: [
-      { x: 1440, top: 330, bottom: 456 },
-      { x: 2014, top: 320, bottom: 480, ladder: true },
+      { x: 1440, top: 414, bottom: 540 },
+      { x: 2014, top: 440, bottom: 600, ladder: true },
     ],
     portals: [
-      { id: 'start', x: 140, y: 480, hidden: true },
+      { id: 'start', x: 140, y: 640, hidden: true },
       // The old mine road west, closing the island's ring: it comes out in the Crystal Cave.
-      { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
-      { id: 'east', x: 2540, y: 480, to: 'meadow1', toPortal: 'west' },
+      { id: 'west', x: 40, y: 640, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
+      { id: 'east', x: 2540, y: 600, to: 'meadow1', toPortal: 'west' },
     ],
     npcs: [{ id: 'mira', x: 330 }, { id: 'pip', x: 800 }, { id: 'lulu', x: 1070 }, { id: 'kestrel', x: 1880 }],
     // Its districts (the town rules: each with its own name, feel and street life), left to right.
@@ -58,7 +61,7 @@ export const MAPS = {
       { name: "Archers' Quarter", from: 1760, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'], props: ['target', 'rack', 'fence', 'tuft'] } },
     ],
     // Street lamps that glow at night (world/daytime.js).
-    lamps: [{ x: 250, y: 440 }, { x: 600, y: 440 }, { x: 900, y: 440 }, { x: 1140, y: 440 }, { x: 1290, y: 420 }, { x: 1630, y: 420 }, { x: 2040, y: 290 }, { x: 2300, y: 440 }],
+    lamps: [{ x: 250, y: 600 }, { x: 600, y: 600 }, { x: 900, y: 560 }, { x: 1140, y: 560 }, { x: 1290, y: 500 }, { x: 1630, y: 500 }, { x: 2040, y: 410 }, { x: 2300, y: 560 }],
     deco: [
       ['well', 760], ['archerbanner', 1780], ['watchtower', 2040], ['archerbanner', 2110],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
