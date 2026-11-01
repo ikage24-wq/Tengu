@@ -414,33 +414,78 @@ export const MAPS = {
 // ---------- The warrior and mage homes, and the canyon road up to the warriors ----------
 
 Object.assign(MAPS, {
-  // One long climb north to Ember Crag: the ground steps up in cliffs, with cliff paths, a long
-  // rope bridge, and a windmill lookout at the top.
+  // Windy Canyon climbs a canyon wall in three zones (the tall-map rules, a light rework): the
+  // Canyon Floor, a dry riverbed where the Basilisk Hatchlings bask; the Basilisk Ledges, layered
+  // shelves of rock with a rope bridge drifting on the wind across the gap; and the Manticore Mesa
+  // on top, the Manticore Cubs' windy home, with the windmill lookout and the road on to Ember Crag
+  // as the reward for the climb. Each zone hunts in a loop and has a moving part: a canyon gust up
+  // from the floor, the drifting bridge, and air vents on the mesa.
   canyon: {
     id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 },
-    width: 2400, height: 760, groundY: 720,
-    terrain: [[0, 720], [600, 720], [600, 640], [1100, 640], [1100, 560], [1700, 560], [1700, 480], [2400, 480]],
-    platforms: [
-      { x: 100, y: 640, w: 460 },
-      { x: 300, y: 560, w: 760 },
-      { x: 700, y: 480, w: 960, style: 'bridge' },
-      { x: 1200, y: 400, w: 1100 },
-      { x: 1800, y: 320, w: 450 },
+    width: 2400, height: 1100, groundY: 1060,
+    zones: [
+      { name: 'Canyon Floor', from: Infinity, color: '#c97a3a' },
+      { name: 'Basilisk Ledges', from: 860, color: '#b05a4a', look: { sky: ['#ffcf9e', '#ffe4c4', '#fff4e4'] } },
+      { name: 'Manticore Mesa', from: 620, color: '#6a7ad0', look: { sky: ['#9fc8ff', '#cfe4ff', '#fff0e0'] } },
     ],
-    ropes: [{ x: 640, top: 560, bottom: 640 }, { x: 1250, top: 400, bottom: 560, ladder: true }],
+    terrain: [[0, 1060], [2400, 1060]],
+    platforms: [
+      // Canyon Floor.
+      { x: 150, y: 980, w: 650 }, { x: 1500, y: 980, w: 700 },
+      { x: 500, y: 900, w: 1300 },
+      // Basilisk Ledges, and the rope bridge drifting across their gap.
+      { x: 100, y: 820, w: 800 }, { x: 1350, y: 820, w: 900 },
+      { x: 400, y: 740, w: 1500 },
+      { x: 150, y: 660, w: 600 }, { x: 1500, y: 660, w: 650 },
+      { x: 780, y: 660, w: 160, style: 'bridge', drift: { dx: 520, period: 11 } },
+      // Manticore Mesa, and the lookout.
+      { x: 300, y: 580, w: 900 },
+      { x: 1000, y: 500, w: 1100 },
+      { x: 200, y: 420, w: 700 },
+      { x: 1300, y: 340, w: 800 },
+      { x: 850, y: 260, w: 470, thick: 44 },
+    ],
+    ropes: [
+      { x: 170, top: 980, bottom: 1060, ladder: true }, { x: 2180, top: 980, bottom: 1060, ladder: true },
+      { x: 520, top: 900, bottom: 980 }, { x: 1780, top: 900, bottom: 980 },
+      { x: 870, top: 820, bottom: 900 }, { x: 1380, top: 820, bottom: 900 },
+      { x: 450, top: 740, bottom: 820 }, { x: 1880, top: 740, bottom: 820 },
+      { x: 700, top: 660, bottom: 740 }, { x: 1520, top: 660, bottom: 740 },
+      { x: 320, top: 580, bottom: 660 }, { x: 1100, top: 500, bottom: 580 }, { x: 1900, top: 500, bottom: 660 },
+      { x: 350, top: 420, bottom: 580 }, { x: 1350, top: 340, bottom: 500 }, { x: 2050, top: 340, bottom: 500 },
+      { x: 880, top: 260, bottom: 420, ladder: true }, { x: 1310, top: 260, bottom: 340, ladder: true },
+    ],
+    // A canyon gust lifts you from the floor (Up to ride it); air vents on the mesa bounce you up.
+    updrafts: [{ x: 1150, w: 54, top: 800, bottom: 1060, kind: 'gust' }],
+    springs: [{ x: 1500, y: 500, up: 175, kind: 'gust' }, { x: 600, y: 580, up: 175, kind: 'gust' }],
     portals: [
-      { id: 'south', x: 40, y: 720, to: 'meadow1', toPortal: 'north' },
-      { id: 'north', x: 2340, y: 480, to: 'crag', toPortal: 'south' },
+      { id: 'south', x: 40, y: 1060, to: 'meadow1', toPortal: 'north' },
+      { id: 'north', x: 1250, y: 260, to: 'crag', toPortal: 'south' },
     ],
     npcs: [],
-    deco: [['mesa', 250], ['bones', 860], ['totem', 950], ['tent', 1500, 0, 400], ['windmillcrag', 2025, 0, 320], ['signpost', 2280]],
+    // A landmark per zone: the mesa rock and the old bones on the floor, the camp tent on the
+    // ledges, the windmill on the lookout.
+    deco: [['mesa', 300], ['bones', 860], ['totem', 1600], ['signpost', 2100], ['tent', 1100, 0, 740], ['windmillcrag', 1050, 0, 260]],
+    lamps: [{ x: 1100, y: 710 }, { x: 1050, y: 220 }, { x: 860, y: 1030 }],
+    spirit: { x: 1450, y: 200 },
+    habitats: { pebblet: { naps: true, home: { x: 860, y: 1060 } }, scorpip: { play: true, naps: true } },
     spawns: [
-      { mob: 'pebblet', x: 452, y: 720 }, { mob: 'scorpip', x: 733, y: 640 }, { mob: 'scorpip', x: 967, y: 640 }, { mob: 'pebblet', x: 1258, y: 560 },
-      { mob: 'pebblet', x: 1542, y: 560 }, { mob: 'scorpip', x: 1888, y: 480 }, { mob: 'pebblet', x: 223, y: 640 }, { mob: 'pebblet', x: 437, y: 640 },
-      { mob: 'scorpip', x: 498, y: 560 }, { mob: 'pebblet', x: 862, y: 560 }, { mob: 'scorpip', x: 1206, y: 480 }, { mob: 'pebblet', x: 1498, y: 480 },
-      { mob: 'pebblet', x: 1394, y: 400 }, { mob: 'scorpip', x: 1750, y: 400 }, { mob: 'pebblet', x: 2106, y: 400 }, { mob: 'scorpip', x: 2025, y: 320 },
+      // Canyon Floor: Basilisk Hatchlings basking.
+      ...[400, 700, 1300, 1700, 2000].map((x) => ({ mob: 'pebblet', x, y: 1060 })),
+      ...[400, 1650, 1950].map((x) => ({ mob: 'pebblet', x, y: 980 })),
+      ...[800, 1200, 1600].map((x) => ({ mob: 'pebblet', x, y: 900 })),
+      // Basilisk Ledges: both.
+      { mob: 'pebblet', x: 400, y: 820 }, { mob: 'scorpip', x: 700, y: 820 }, { mob: 'pebblet', x: 1600, y: 820 }, { mob: 'scorpip', x: 2000, y: 820 },
+      { mob: 'scorpip', x: 800, y: 740 }, { mob: 'pebblet', x: 1200, y: 740 }, { mob: 'scorpip', x: 1650, y: 740 },
+      { mob: 'pebblet', x: 400, y: 660 }, { mob: 'scorpip', x: 1800, y: 660 },
+      // Manticore Mesa: Manticore Cubs; the lookout left quiet.
+      ...[700, 1000].map((x) => ({ mob: 'scorpip', x, y: 580 })),
+      ...[1300, 1800].map((x) => ({ mob: 'scorpip', x, y: 500 })),
+      ...[450, 750].map((x) => ({ mob: 'scorpip', x, y: 420 })),
+      ...[1600, 1950].map((x) => ({ mob: 'scorpip', x, y: 340 })),
     ],
   },
+
 
   // The warriors' home under the mesas, in quarters: the training yard (dummies and a totem) by the
   // canyon road; the Warrior Hall; the raised plaza around the sparring arena; then the forge
@@ -580,7 +625,7 @@ export function getMap(id) {
 const G = 380; // every room's floor
 const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
 
-MAPS.canyon.portals.push({ id: 'hollow', x: 780, y: 480, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
+MAPS.canyon.portals.push({ id: 'hollow', x: 2260, y: 1060, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
 
 Object.assign(MAPS, {
   hollow_gate: {

@@ -39,6 +39,14 @@ export const NODES = {
     // Up in the clouds, a moonpetal opens at night.
     { x: 620, y: 280, kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' },
   ],
+  // Windy Canyon: copper in the riverbed and on the ledges, clover on the floor, a moonpetal on the
+  // lookout at night.
+  canyon: [
+    { x: 1000, y: 1060, kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] },
+    { x: 1000, y: 740, kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] },
+    { x: 1850, y: 980, kind: 'herb', pool: { clover: 1 } },
+    { x: 1150, y: 260, kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' },
+  ],
   // Clover Hills: clover in the rows, copper in the hill, honey from the barnyard hive, a
   // moonpetal on the lookout at night.
   meadow2: [

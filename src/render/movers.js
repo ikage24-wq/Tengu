@@ -117,9 +117,36 @@ function hay(ctx, x, y, since) {
   ctx.restore();
 }
 
+// An air vent on the mesa: a crack in the rock breathing little swirls of wind; stepped on, it
+// bursts in a puff of air.
+function vent(ctx, x, y, time, since) {
+  ctx.save();
+  ctx.fillStyle = '#a8724a';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 1, 9, 2.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#5a3a2a';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 1.2, 6, 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const k = since < 0.6 ? 1 - since / 0.6 : 0;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const u = (time * 0.9 + i / 3) % 1;
+    ctx.globalAlpha = 0.6 * Math.sin(u * Math.PI) * (1 - k) + k;
+    const h = 6 + u * 16 + k * 20;
+    ctx.beginPath();
+    ctx.arc(x + Math.sin(u * 6 + i) * 3, y - h, 2 + u * 2 + k * 3, 0.2, Math.PI * 1.5);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // An updraft: motes rising in a slow spiral, with a faint column of light. Pollen is warm gold
 // dust off the hive; petals are cherry blossom caught in a whirl round the tree.
 const DRAFTS = {
+  gust: { glow: '#e8f4ff', bits: ['#ffffff', '#d8ecff', '#f0e0c8'], count: 22, speed: 120, size: 1.8, petal: true },
   chaff: { glow: '#ffe6b0', bits: ['#e8c070', '#f6dc98', '#fff2c8'], count: 20, speed: 75, size: 2.2, petal: true },
   pollen: { glow: '#ffd970', bits: ['#ffc83a', '#ffdc6e', '#fff2b8'], count: 24, speed: 70, size: 2, petal: false },
   petals: { glow: '#ffd2e6', bits: ['#ff9ec7', '#ffc2dc', '#ffffff'], count: 18, speed: 85, size: 2.4, petal: true },
@@ -171,6 +198,7 @@ export function drawMovers(ctx, map, cam, width, height, time) {
     if (x < -30 || x > width + 30) continue;
     const since = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
     if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since);
+    else if (s.kind === 'gust') vent(ctx, snap(x), snap(s.y - cam.y), time, since);
     else blossom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
   }
 }
