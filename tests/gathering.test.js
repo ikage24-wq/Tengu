@@ -90,9 +90,11 @@ test("ore at Tora's makes a polish likelier to take, and is used up", () => {
   assert.equal(countItem(c.inventory, 'copper_ore'), 0);
 });
 
-test('night follows the real clock, and night spots only open in the dark', async () => {
-  const { nightOf } = await import('../src/world/daytime.js');
-  const at = (h, m = 0) => nightOf(new Date(2026, 10, 1, h, m));
+test('night follows the game clock, and night spots only open in the dark', async () => {
+  const { nightOf, DAY_MINUTES } = await import('../src/world/daytime.js');
+  // (A game hour is a real minute: game hour h at h real minutes past a whole game day.)
+  const hourAt = (h, m = 0) => new Date((h + m / 60) * 60000 * (DAY_MINUTES / 24));
+  const at = (h, m = 0) => nightOf(hourAt(h, m));
   assert.equal(at(12), 0);
   assert.equal(at(23), 1);
   assert.equal(at(2), 1);
@@ -104,11 +106,11 @@ test('night follows the real clock, and night spots only open in the dark', asyn
   w.spawner.slots = [];
   const n = NODES.meadow1.find((q) => q.night);
   Object.assign(w.body, { x: n.x, y: n.y, onGround: true, vx: 0, vy: 0 });
-  w.dayClock = () => new Date(2026, 10, 1, 12);
+  w.dayClock = () => hourAt(12);
   step(w, 1.2);
   step(w, 0.1, 'ArrowUp');
   assert.ok(!w.gathering, 'closed by day');
-  w.dayClock = () => new Date(2026, 10, 1, 23);
+  w.dayClock = () => hourAt(23);
   step(w, 1.2);
   step(w, 0.1, 'ArrowUp');
   assert.ok(w.gathering, 'open at night');

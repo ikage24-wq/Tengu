@@ -1,4 +1,6 @@
-// Day and night follow the real clock (the player's map rule). `nightOf` is how dark it is, 0 (day)
+// Day and night follow the game's own clock (the player's call, 2026-11-01): a game day lasts
+// DAY_MINUTES real minutes (a game hour is a real minute), worked out from the real time, so every
+// player sees the same hour and it carries on across reloads. `nightOf` is how dark it is, 0 (day)
 // to 1 (full night): dusk falls 18:30-21:00, full night until 4:30, dawn breaks by 6:30. The world
 // keeps it in world.night (and on the map, map.night, for the renderer); maps under a roof (caves,
 // dungeons, arenas) stay as they are.
@@ -10,8 +12,12 @@
 const DUSK = [18.5, 21];
 const DAWN = [4.5, 6.5];
 
+export const DAY_MINUTES = 24;
+// The game's hour (0-24) at a real moment.
+export const gameHour = (date) => ((date.getTime() / 60000) % DAY_MINUTES) * (24 / DAY_MINUTES);
+
 export function nightOf(date) {
-  const h = date.getHours() + date.getMinutes() / 60;
+  const h = gameHour(date);
   if (h >= DUSK[1] || h < DAWN[0]) return 1;
   if (h >= DUSK[0]) return (h - DUSK[0]) / (DUSK[1] - DUSK[0]);
   if (h < DAWN[1]) return 1 - (h - DAWN[0]) / (DAWN[1] - DAWN[0]);

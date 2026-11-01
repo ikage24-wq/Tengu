@@ -198,7 +198,8 @@ there and update the status file as they get done.
     caps, swinging vines, drifting clouds, zip lines, updrafts).
   - **An area boss nest:** hunt enough on a map and its own boss wakes in a set spot, a shared
     moment for everyone there.
-  - **Day and night:** maps follow the real clock; at night some floors change, other monsters
+  - **Day and night:** maps follow the game clock (a 24-minute day, the same for everyone); at night
+    some floors change, other monsters
     come out, lanterns light up and a night-only spot opens.
   - **Monsters live there:** they act like it's their home (nap on ledges, gather at the pond,
     chase each other, flee to their nest when hurt), a habitat rather than a spawn list.
