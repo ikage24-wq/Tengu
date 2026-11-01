@@ -1,7 +1,7 @@
-// The sample bank: the recorded effects (assets/audio/sfx.mp3, built by tools/build-audio.mjs),
-// fetched and decoded once, as soon as the page loads (no click needed: decoding uses an offline
-// audio context), kept as 16-bit numbers at 44.1 kHz. (The music has no recordings, so `inst` is
-// empty; it is kept for the bank's shape.)
+// The sample bank: the recorded instruments and effects (assets/audio, built by
+// tools/build-audio.mjs), fetched and decoded once, as soon as the page loads (no click needed:
+// decoding uses an offline audio context). Instruments are decoded at 32 kHz and kept as 16-bit
+// numbers to save memory; effects at 44.1 kHz, also as 16-bit numbers.
 //
 // The bank: { inst: { name: { data, scale, sr, offset, lead, slot, notes, sustain } },
 //   sfx: { data, scale, sr, offset, lead, items: { name: [[start, length], ...] } } }.
@@ -10,7 +10,7 @@
 
 import { MANIFEST } from './manifest.js';
 
-const INST_SR = 24000;
+const INST_SR = 32000;
 const SFX_SR = 44100;
 
 // Where the alignment click landed, minus where it was put.

@@ -12,16 +12,19 @@ Read the research before changing any sound or song:
 - `research-sfx.md`: the sfxr model for synth layers, levels per category, the recipe table.
 - `research-japanese.md`: FFXIV, Pokémon, Dragon Quest, Kirby, MOTHER, Animal Crossing and
   MapleStory; the jingle and UI rules (G1, G2), hits and skills (G3), phase-changing boss music
-  (G4), NPC voice blips (G5), and 17 written jingle specs (orchestrated on the synth voices).
+  (G4), NPC voice blips (G5), and 17 written jingle specs.
 
 How it fits together:
 
-- `tools/build-audio.mjs` packs the recorded effects into one strip, `assets/audio/sfx.mp3`, and
-  writes `src/audio/manifest.js`. Every recording is public domain (CC0, see
-  `assets/audio/SOURCES.md`); the music has no recordings, its instruments are synth voices
-  (`VOICES` in `studio.js`).
-- Pick a take by its name in the build script's `EFFECTS` ('pack:file@skip~length'); the build
-  trims, levels and packs it. Prefer takes that hit within 0.1 s (sounds land on the animation),
+- `tools/build-audio.mjs` packs each recorded instrument into a strip (`assets/audio/inst/`, a
+  note every three semitones, each checked by ear for its pitch) and the recorded effects into
+  one, `assets/audio/sfx.mp3`, and writes `src/audio/manifest.js`. Every recording is public
+  domain (CC0, see `assets/audio/SOURCES.md`). An instrument with no recording (the choir) plays
+  its synth voice (`VOICES` in `studio.js`); `node tools/build-audio.mjs koto cello` rebuilds just
+  those instruments, `sfx` just the effects.
+- Pick a take by its name in the build script's `EFFECTS` ('pack:file@skip~length', or
+  'C:folder/file.wav' from a Versilian library; 'a + b*0.5' layers takes); the build trims,
+  levels and packs it. Prefer takes that hit within 0.1 s (sounds land on the animation),
   and skip a take's wind-up.
 - `samples.js` loads and decodes them when the page opens; `bank.js` hands them to a worker that
   renders every effect (`synth.js` + `recipes.js`) and song (`studio.js` + `songs.js`) once.

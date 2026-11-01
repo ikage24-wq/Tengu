@@ -1,5 +1,5 @@
-// The studio: renders a song (songs.js) into a stereo loop, mixing instrument voices and modern
-// synths and drums, all made in code, then a reverb, a gentle
+// The studio: renders a song (songs.js) into a stereo loop, mixing recorded instruments (the
+// sample bank, samples.js) with modern synths and drums made in code, then a reverb, a gentle
 // sidechain pump under the kick, and a level that's the same for every song. Pure JS, so it runs
 // in the worker, on the page, or in node tests.
 //
@@ -12,9 +12,11 @@
 // note longer, `@name` switch instrument, `v12` volume 0-15 until changed, `|` bar marks (checked:
 // every bar must add up to a whole bar).
 // Drums, one character per row: K kick, S snare, c clap, h hat, o open hat, t tom, x shaker,
-// w woodblock, * crash, C kick + clap, O kick + open hat, B kick + snare, H kick + hat, . nothing.
-// Instruments: { sample: 'flute', gain, attack, rel, gate } for an instrument voice (VOICES below,
-// named after the General MIDI instrument each stands in for), or
+// w woodblock, * crash, C kick + clap, O kick + open hat, B kick + snare, H kick + hat, . nothing;
+// the hard kicks: X hardstyle, F Frenchcore, P euphoric (punchy, short), Z X + clap, W X + crash,
+// G F + clap, V F + crash, Y P + clap, U P + crash.
+// Instruments: { sample: 'flute', gain, attack, rel, gate } for a recording (the instruments in
+// the bank's manifest; without one, like the choir, its synth voice in VOICES below), or
 // { synth: 'pluck' | 'pad' | 'sub' | 'lead' | 'bell' | 'stab' | 'bass', gain, gate, cut } for a synth.
 
 const TAU = Math.PI * 2;
@@ -37,11 +39,62 @@ export function rng(seed = 1) {
   };
 }
 
-// ---------- Instrument voices ----------
-// Plays one note of an instrument voice into `out` (mono) from sample `s0`. Every voice is a synth
-// (SYNTHS below) with its own settings and a level matching the rest of the mix: the music has no
-// recordings in it. (`bank` is unused, kept so callers stay the same.)
+// ---------- Recorded instruments ----------
+// Plays a recorded note into `out` (mono) from sample `s0`: the nearest recorded pitch, retuned;
+// a held note on a sustained instrument loops its middle with a crossfade; then the release.
+// An instrument with no recording (or no bank: tests, before it loads) plays its synth voice.
 export function sampleNote(out, s0, sr, bank, inst, midi, dur, gain = 1) {
+  const I = bank?.inst?.[inst.sample];
+  if (!I) return voiceNote(out, s0, sr, inst, midi, dur, gain);
+  let best = I.notes[0];
+  for (const n of I.notes) if (Math.abs(n - midi) < Math.abs(best - midi)) best = n;
+  const k = I.notes.indexOf(best);
+  const data = I.data;
+  const scale = I.scale ?? 1 / 32768;
+  const base = Math.round((I.offset + I.lead + k * I.slot) * I.sr);
+  const slotN = Math.round(I.slot * I.sr) - 2;
+  const step = Math.pow(2, (midi - best) / 12) * (I.sr / sr);
+  const loopA = slotN * 0.45;
+  const loopB = slotN - I.sr * 0.18;
+  const xf = I.sr * 0.06;
+  const loops = I.sustain && inst.loop !== false;
+  const held = dur * (inst.gate ?? 1);
+  const rel = inst.rel ?? (I.sustain ? 0.12 : 0.35);
+  const att = inst.attack ?? 0;
+  const total = Math.min(out.length - s0, Math.round((held + rel) * sr), loops ? Infinity : Math.floor(slotN / step));
+  const at = (p) => {
+    const i = Math.floor(p);
+    const f = p - i;
+    const a = data[base + i] ?? 0;
+    const b = data[base + i + 1] ?? 0;
+    return (a + (b - a) * f) * scale;
+  };
+  const g = gain * (inst.gain ?? 1) * (I.norm ?? 1);
+  const relAt = held * sr;
+  for (let i = 0; i < total; i++) {
+    const p = i * step;
+    let v;
+    if (loops && p >= loopB - xf) {
+      const len = loopB - loopA;
+      const q = loopA + ((p - loopA) % len);
+      if (q >= loopB - xf) {
+        const w = (q - (loopB - xf)) / xf;
+        v = at(q) * Math.sqrt(1 - w) + at(q - len) * Math.sqrt(w);
+      } else v = at(q);
+    } else {
+      if (p >= slotN) break;
+      v = at(p);
+    }
+    let e = 1;
+    if (att && i < att * sr) e = i / (att * sr);
+    if (i > relAt) e *= Math.max(0, 1 - (i - relAt) / (rel * sr));
+    if (i >= total - 64) e *= (total - i) / 64;
+    out[s0 + i] += v * e * g;
+  }
+}
+
+// One note of an instrument's synth voice (VOICES below), at a level matching its recording.
+function voiceNote(out, s0, sr, inst, midi, dur, gain) {
   const v = VOICES[inst.sample];
   if (!v) return;
   const o = { ...v, attack: inst.attack ?? v.attack, rel: inst.rel ?? v.rel };
@@ -180,6 +233,78 @@ export const SYNTHS = {
     for (let i = 0; i < n; i++) {
       const t = i / sr;
       x[i] *= Math.min(1, t / 0.01) * (t < d ? 1 : Math.exp(-(t - d) / 0.08));
+    }
+    return x;
+  },
+  // The hardstyle lead: seven wide-detuned saws plus one an octave down, driven into saturation,
+  // bright and huge. (`cut`, `drive`.)
+  hardlead(m, d, sr, rand, o) {
+    const f = hz(m);
+    const n = Math.round((d + 0.15) * sr);
+    const x = saws(f, n, sr, 7, o.detune ?? 0.9, rand);
+    const low = saws(f / 2, n, sr, 2, 0.4, rand);
+    for (let i = 0; i < n; i++) x[i] += low[i] * 0.5;
+    lowpass(x, sr, () => o.cut ?? 7000, 0.8);
+    const drive = o.drive ?? 1.6;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      x[i] = Math.tanh(x[i] * drive) * Math.min(1, t / 0.004) * (t < d ? 1 : Math.exp(-(t - d) / 0.06));
+    }
+    return x;
+  },
+  // The raw screech: two saws and a square sliding up into the note, a fast wobble, a resonant
+  // filter swept by an LFO, all distorted hard. (`bend` semitones it slides from, `lfo` Hz.)
+  screech(m, d, sr, rand, o) {
+    const f = hz(m);
+    const n = Math.round((d + 0.06) * sr);
+    const x = new Float32Array(n);
+    const ph = [rand(), rand(), rand()];
+    const bend = o.bend ?? -5;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const p = f * Math.pow(2, (bend * Math.exp(-t / 0.035)) / 12) * (1 + 0.012 * Math.sin(TAU * 7 * t) * Math.min(1, t / 0.12));
+      const fr = [p, p * 1.008, p * 0.5];
+      for (let v = 0; v < 3; v++) {
+        ph[v] += fr[v] / sr;
+        if (ph[v] >= 1) ph[v] -= 1;
+      }
+      x[i] = 2 * ph[0] - 1 + (2 * ph[1] - 1) + (ph[2] < 0.5 ? 0.7 : -0.7);
+    }
+    const lfo = o.lfo ?? 6;
+    lowpass(x, sr, (t) => 700 + 3800 * (0.5 + 0.5 * Math.sin(TAU * lfo * t - 1.5)), 4);
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      x[i] = Math.tanh(x[i] * 3) * Math.min(1, t / 0.003) * (t < d ? 1 : Math.exp(-(t - d) / 0.03));
+    }
+    return x;
+  },
+  // The reverse bass: a distorted saw bass that swells up through each offbeat and cuts dead
+  // before the next kick (hardstyle's "rolling" bass between the kicks).
+  rbass(m, d, sr, rand, o) {
+    const f = hz(m);
+    const n = Math.round((d + 0.01) * sr);
+    const x = saws(f, n, sr, 2, 0.5, rand);
+    lowpass(x, sr, (t) => 300 + (o.cut ?? 1400) * Math.min(1, t / Math.max(0.02, d)), 1.2);
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      const swell = 0.25 + 0.75 * Math.pow(Math.min(1, t / Math.max(0.01, d)), 1.6);
+      x[i] = Math.tanh((x[i] + Math.sin(TAU * f * t)) * 2.4 * swell) * (t < d ? 1 : 0) * Math.min(1, (d - t) * sr / 40 + 0.0001);
+    }
+    return x;
+  },
+  // A build-up riser: noise swept up through a band, growing over the note (its pitch is unused).
+  riser(m, d, sr, rand) {
+    const n = Math.round((d + 0.05) * sr);
+    const x = new Float32Array(n);
+    let lo = 0;
+    let bp = 0;
+    for (let i = 0; i < n; i++) {
+      const p = Math.min(1, i / (d * sr));
+      const c = 1 - Math.exp((-TAU * (300 * Math.pow(30, p))) / sr);
+      const v = rand() * 2 - 1;
+      lo += (v - lo) * c;
+      bp += (lo - bp) * c * 0.5;
+      x[i] = (lo - bp) * p * p * 1.5 * (i < d * sr ? 1 : 0);
     }
     return x;
   },
@@ -343,10 +468,11 @@ export const SYNTHS = {
 };
 
 // Each synth's level, so a synth and a recorded instrument at the same gain sound about as loud.
-const SYNTH_LEVEL = { pluck: 0.4, pad: 0.6, sub: 0.21, bass: 0.58, lead: 0.26, stab: 0.5, bell: 0.28 };
+const SYNTH_LEVEL = { pluck: 0.4, pad: 0.6, sub: 0.21, bass: 0.58, lead: 0.26, stab: 0.5, bell: 0.28, hardlead: 0.2, rbass: 0.3, riser: 0.3, screech: 0.22 };
 
-// The instrument voices, named after the General MIDI instruments each stands in for. `level`
-// matches each voice to the loudness of the recording it replaced, so songs keep their balance.
+// The instruments' synth voices, for an instrument with no recording (the choir) or before the
+// recordings load (and in tests). `level` matches each voice to its recording's loudness, so songs
+// keep their balance either way.
 export const VOICES = {
   flute: { synth: 'flute', level: 0.173 },
   pan_flute: { synth: 'flute', breath: 0.22, vib: 0.003, level: 0.205 },
@@ -373,6 +499,49 @@ export const VOICES = {
 // ---------- Drums ----------
 // Each piece: (sr, rand, bank) -> mono samples.
 export const DRUMS = {
+  // The hardstyle kick: a click, a punch dropping fast, and a long tonal tail, all driven hard
+  // into distortion.
+  X(sr, rand) {
+    const n = Math.round(0.36 * sr);
+    const x = new Float32Array(n);
+    let ph = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      ph += (58 + 280 * Math.exp(-t / 0.011) + 55 * Math.exp(-t / 0.07)) / sr;
+      const amp = t < 0.19 ? 1 : Math.exp(-(t - 0.19) / 0.05);
+      x[i] = Math.tanh(7 * Math.sin(TAU * ph) * amp) * 0.8 * amp + (t < 0.002 ? (rand() * 2 - 1) * 0.6 : 0);
+    }
+    lowpass(x, sr, () => 4200, 0.7);
+    return x;
+  },
+  // The euphoric kick: punchy and short, a bright click and a tight body, little boom.
+  P(sr, rand) {
+    const n = Math.round(0.24 * sr);
+    const x = new Float32Array(n);
+    let ph = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      ph += (62 + 240 * Math.exp(-t / 0.012)) / sr;
+      const amp = Math.exp(-t / 0.09);
+      x[i] = Math.tanh(3 * Math.sin(TAU * ph)) * amp + (t < 0.0025 ? (rand() * 2 - 1) * 0.5 : 0);
+    }
+    return x;
+  },
+  // The Frenchcore kick: shorter, higher, harder, folded past clipping.
+  F(sr, rand) {
+    const n = Math.round(0.3 * sr);
+    const x = new Float32Array(n);
+    let ph = 0;
+    for (let i = 0; i < n; i++) {
+      const t = i / sr;
+      ph += (60 + 340 * Math.exp(-t / 0.009) + 40 * Math.exp(-t / 0.05)) / sr;
+      const amp = t < 0.18 ? 1 : Math.exp(-(t - 0.18) / 0.04);
+      const v = 11 * Math.sin(TAU * ph) * amp;
+      x[i] = (Math.tanh(v) * 0.7 + Math.sin(v * 0.35) * 0.3) * 0.85 * amp + (t < 0.002 ? (rand() * 2 - 1) * 0.7 : 0);
+    }
+    lowpass(x, sr, () => 5000, 0.7);
+    return x;
+  },
   K(sr, rand) {
     const n = Math.round(0.4 * sr);
     const x = new Float32Array(n);
@@ -433,8 +602,13 @@ export const DRUMS = {
     return x;
   },
   '*': (sr, rand) => hat(sr, rand, 0.6, Math.round(1.6 * sr)),
-  // A woodblock: two hollow tones, knocked and gone.
-  w(sr) {
+  // A woodblock: the recorded one, or two hollow tones, knocked and gone.
+  w(sr, rand, bank) {
+    if (bank?.inst?.woodblock) {
+      const x = new Float32Array(Math.round(0.3 * sr));
+      sampleNote(x, 0, sr, bank, { sample: 'woodblock', rel: 0.05 }, 76, 0.2);
+      return x;
+    }
     const x = new Float32Array(Math.round(0.15 * sr));
     for (let i = 0; i < x.length; i++) {
       const t = i / sr;
@@ -458,8 +632,8 @@ function hat(sr, rand, decay, n = Math.round((decay * 5 + 0.02) * sr)) {
   }
   return x;
 }
-const COMBO = { C: ['K', 'c'], O: ['K', 'o'], B: ['K', 'S'], H: ['K', 'h'] };
-const DRUM_MIX = { K: 0.32, S: 0.22, c: 0.2, h: 0.14, o: 0.14, x: 0.25, t: 0.2, '*': 0.18, w: 0.12 };
+const COMBO = { C: ['K', 'c'], O: ['K', 'o'], B: ['K', 'S'], H: ['K', 'h'], Z: ['X', 'c'], W: ['X', '*'], G: ['F', 'c'], V: ['F', '*'], Y: ['P', 'c'], U: ['P', '*'] };
+const DRUM_MIX = { K: 0.32, S: 0.22, c: 0.2, h: 0.14, o: 0.14, x: 0.25, t: 0.2, '*': 0.18, w: 0.12, X: 0.28, F: 0.32, P: 0.36 };
 const DRUM_PAN = { h: 0.25, o: 0.25, x: -0.3, t: -0.15, w: -0.35, '*': 0.1 };
 
 // ---------- Effects ----------
@@ -630,7 +804,7 @@ export function renderSong(song, bank, sr = 32000) {
   }
 
   // The sidechain pump: everything but the drums dips under each kick and swells back.
-  const kicks = hits.filter((h) => 'KCOBH'.includes(h.c)).map((h) => at(h.row));
+  const kicks = hits.filter((h) => 'KCOBHXZWFGVPYU'.includes(h.c)).map((h) => at(h.row));
   if (song.pump && kicks.length) {
     const env = new Float32Array(n).fill(1);
     const len = Math.round(0.22 * sr);

@@ -1,5 +1,5 @@
 // Every sound effect as data for the synthesizer (synth.js): recorded effects (all CC0) and
-// instrument voices layered with synth sweeps, thumps and sparkles, the same "real plus modern"
+// recorded instruments layered with synth sweeps, thumps and sparkles, the same "real plus modern"
 // mix as the music. Units: Hz, ms, octaves per second (slide), dB. Each recipe:
 // { layers, db (peak level once normalized), vary (± % random pitch per play), max (voices at
 // once), gap (ms: repeats closer than this play once; 35 by default), duck: [dB the music dips,
@@ -65,9 +65,10 @@ const R = {
       { rec: 'clangHeavy', db: -8 },
       { rec: 'cut', rate: 0.8, db: -8 },
       thump(95, 200, { db: -1, slide: -2.5 }),
+      { drum: 'P', db: -7 },
     ],
   },
-  crit: { db: -10, gap: 120, vary: 2, max: 2, layers: [{ rec: 'punch' }, { rec: 'clang', db: -3 }, sparkle('A6+E7:200', { at: 15, db: -8 })] },
+  crit: { db: -10, gap: 120, vary: 2, max: 2, layers: [{ rec: 'punch' }, { drum: 'P', db: -4 }, { rec: 'clang', db: -3 }, sparkle('A6+E7:200', { at: 15, db: -8 })] },
   // Path and element colours, laid over a blow.
   holyHit: { db: -15, gap: 90, max: 2, room: true, layers: [{ rec: 'holyBlast', len: 700 }, sparkle('E6+B6:400', { db: -6 })] },
   rageHit: { db: -12, gap: 90, vary: 4, max: 2, layers: [{ rec: 'punchHeavy', rate: 0.85, len: 260 }, { rec: 'darkFire', len: 400, db: -5 }] },
@@ -421,7 +422,10 @@ const R = {
       { seq: 'G2:70 r:70 G2:70 r:70 G2:70 r:70 F2:105 r:105 F2:105 G2:700', inst: 'pizzicato_strings', db: -2 },
       { seq: 'r:735 G4+B4+D5+G5:800', inst: 'string_ensemble_1', db: -6 },
       { seq: 'r:735 G6:30 B6:30 D7:600', inst: 'glockenspiel', db: -8 },
-      { drum: 'K', at: 735, db: -6 },
+      { synth: 'riser', seq: 'C4:700', db: -14, tail: 50 },
+      { drum: 'X', at: 735, db: -4 },
+      { drum: '*', at: 735, db: -12 },
+      { seq: 'r:735 G4+B4+D5+G5:650', synth: 'hardlead', db: -13, tail: 200 },
     ],
   },
   questDone: {
@@ -431,6 +435,8 @@ const R = {
       { seq: 'C3:240 A2:240 F2:240 G2:240 C3:480', inst: 'pizzicato_strings', db: -2 },
       { seq: 'r:960 C4+E4+G4+C5:960', inst: 'string_ensemble_1', db: -6 },
       { seq: 'r:960 C7:600', inst: 'glockenspiel', db: -10 },
+      { drum: 'P', at: 960, db: -5 },
+      { seq: 'r:960 C4+E4+G4+C5:700', synth: 'hardlead', db: -15, tail: 200 },
     ],
   },
   questAccept: { db: -12, max: 1, duck: [-6, 500], layers: [{ seq: 'D6:70 G6:300', inst: 'orchestral_harp' }, { seq: 'r:70 G6:250', inst: 'glockenspiel', db: -8 }, { seq: 'G3:300', inst: 'pizzicato_strings', db: -6 }] },
@@ -441,6 +447,8 @@ const R = {
       { seq: 'C5:60 E5:60 G5:60 C6:60 r:60 D6:90 E6:90 G6:600', inst: 'orchestral_harp', db: -4 },
       { seq: 'r:480 C6+E6+G6:500', synth: 'bell', db: -10 },
       { seq: 'C3:240 G2:240 C3:600', inst: 'pizzicato_strings', db: -4 },
+      { drum: 'P', at: 480, db: -6 },
+      { seq: 'r:480 C5+G5+C6:450', synth: 'hardlead', db: -15, tail: 150 },
     ],
   },
   itemGet: { db: -12, max: 1, duck: [-6, 700], layers: [{ seq: 'A5:50 C#6:50 E6:50 A6:350', inst: 'celesta' }, { seq: 'E5:150 C#6:350', inst: 'orchestral_harp', db: -5 }, { rec: 'sparkle', db: -10, at: 150 }] },
@@ -452,7 +460,10 @@ const R = {
       { seq: 'F2:1000 Bb2:500 C3:500 r:100 F2:1300', inst: 'pizzicato_strings', db: -2 },
       { seq: 'r:2100 F2:60 F2:60 F2:60 F2:600', inst: 'timpani', db: -2 },
       { seq: 'r:2100 F5:50 A5:50 C6:50 F6:50 A6:50 C7:700', inst: 'orchestral_harp', db: -6 },
-      { drum: '*', at: 2100, db: -14 },
+      { drum: '*', at: 2100, db: -10 },
+      { synth: 'riser', seq: 'r:200 C4:1900', db: -12, tail: 50 },
+      { drum: 'X', at: 2100, db: -3 },
+      { seq: 'r:2100 F3+C4+F4+A4+C5:1200', synth: 'hardlead', db: -12, tail: 300 },
     ],
   },
   heal: { db: -13, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1300 }, { seq: 'G4:90 C5:90 E5:90 A5:480', inst: 'orchestral_harp', db: -6 }] },
@@ -463,7 +474,10 @@ const R = {
       { seq: 'D4+F#4+A4:500 r:125 Bb3+D4+F4:250 C4+E4+G4:250 D4+F#4+A4+D5:1500', inst: 'string_ensemble_1', db: -4 },
       { seq: 'D3:500 r:125 Bb2:250 C3:250 D3:750', inst: 'pizzicato_strings', db: -2 },
       { seq: 'r:1125 D2:60 D2:60 D2:600', inst: 'timpani', db: -2 },
-      { drum: '*', at: 1125, db: -14 },
+      { drum: '*', at: 1125, db: -10 },
+      { synth: 'riser', seq: 'C4:1100', db: -12, tail: 50 },
+      { drum: 'X', at: 1125, db: -3 },
+      { seq: 'r:1125 D4+F#4+A4+D5:1400', synth: 'hardlead', db: -12, tail: 300 },
     ],
   },
   // Fainting: a falling triad and a sad leading note, resting gently on the home note.

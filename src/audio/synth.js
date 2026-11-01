@@ -6,8 +6,8 @@
 // NES-style noise, swept resonant filters, bit crushing and a short echo, in physical units.
 //
 // Layers can also be recordings: `rec` plays a recorded effect (samples.js; a different take for
-// each variant), `seq` plays written notes ("G4:70 B4:70 r:40 D5+G5:700", lengths in ms) on an
-// instrument voice (`inst`) or one of the studio's synths (`synth`), and `drum` one hit of the
+// each variant), `seq` plays written notes ("G4:70 B4:70 r:40 D5+G5:700", lengths in ms) on a
+// recorded instrument (`inst`) or one of the studio's synths (`synth`), and `drum` one hit of the
 // studio's drum kit.
 //
 // Algorithms after sfxr (DrPetter, MIT), jsfxr (Unlicense), ZzFX (Frank Force, MIT) and bfxr2

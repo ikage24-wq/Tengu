@@ -4,6 +4,7 @@
 // the recipes ask for exists. The tests use a stand-in for the recordings (soft tones and noise in
 // the same layout), so they run without decoding audio files.
 
+import fs from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { render } from '../src/audio/synth.js';
@@ -48,11 +49,19 @@ test('every recording and instrument the sounds ask for exists', () => {
   for (const [name, r] of Object.entries(RECIPES)) {
     for (const L of r.layers) {
       if (L.rec) assert.ok(MANIFEST.sfx.items[L.rec], `${name} wants a recording "${L.rec}"`);
-      if (L.inst) assert.ok(VOICES[L.inst], `${name} wants an instrument "${L.inst}"`);
+      if (L.inst) assert.ok(MANIFEST.inst[L.inst] || VOICES[L.inst], `${name} wants an instrument "${L.inst}"`);
     }
   }
   for (const [key, song] of Object.entries(SONGS)) {
-    for (const [iname, inst] of Object.entries(song.inst)) if (inst.sample) assert.ok(VOICES[inst.sample], `${key}: ${iname} wants "${inst.sample}"`);
+    for (const [iname, inst] of Object.entries(song.inst)) if (inst.sample) assert.ok(MANIFEST.inst[inst.sample] || VOICES[inst.sample], `${key}: ${iname} wants "${inst.sample}"`);
+  }
+});
+
+test('every instrument the songs used to play is recorded again (only the choir stays a synth)', () => {
+  for (const name of Object.keys(VOICES)) if (name !== 'choir_aahs') assert.ok(MANIFEST.inst[name], `${name} has no recording`);
+  for (const [name, I] of Object.entries(MANIFEST.inst)) {
+    assert.ok(I.notes.length >= 2 && I.slot > 0, `${name}: notes and a slot`);
+    assert.ok(fs.existsSync(new URL(`../${I.file}`, import.meta.url)), `${name}: ${I.file} is missing`);
   }
 });
 
