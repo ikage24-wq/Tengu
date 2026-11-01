@@ -4,7 +4,7 @@
 //
 // KINDS: how each kind of spot works: the hero's move, how long it takes, the hint over it.
 // NODES: per map, the spots: { x, y (the floor you stand on), kind, pool (item id -> weight),
-// rare (an item and its chance, rolled on top) }.
+// rare (an item and its chance, rolled on top), night (only there at night, world/daytime.js) }.
 // What the finds are for: cooking (data/cooking.js), polishing at Tora's (ore makes a try likelier
 // to take, core/items.js), and selling.
 
@@ -23,6 +23,7 @@ export const GATHERED = [
   ['honeycomb', 'Honeycomb', 14, '#ffc83a', 'Golden comb from the giant hive. Sweetens tea and tarts at a town stove; shops buy it.'],
   ['cherry', 'Blossom Cherry', 12, '#ff6b8a', 'A plump cherry off the great tree. Baked into tarts at a town stove; shops buy it.'],
   ['copper_ore', 'Copper Ore', 10, '#e0915a', "Bring it to Tora's forge: ore makes a polish more likely to take (gear up to Lv 29)."],
+  ['moonpetal', 'Moonpetal', 40, '#c9c4ff', 'A flower that only opens at night, glowing softly. Steeped into Moonpetal Tea at a town stove; shops buy it.'],
   ['rose_quartz', 'Rose Quartz', 80, '#ffb3d1', "A rare pink crystal. At Tora's forge it makes a polish much more likely to take."],
 ];
 
@@ -35,5 +36,7 @@ export const NODES = {
     { x: 1260, y: 680, kind: 'honey', pool: { honeycomb: 1 } },
     { x: 1120, y: 440, kind: 'fruit', pool: { cherry: 1 } },
     { x: 1290, y: 440, kind: 'fruit', pool: { cherry: 1 } },
+    // Up in the clouds, a moonpetal opens at night.
+    { x: 620, y: 280, kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' },
   ],
 };

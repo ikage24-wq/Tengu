@@ -5,7 +5,7 @@
 
 import { shade, snap } from './pixel.js';
 import { text, box, COLORS } from '../ui/kit.js';
-import { nodesOf, nodeReady, nodeHere } from '../world/gathering.js';
+import { nodesOf, nodeReady, nodeHere, nodeOpen } from '../world/gathering.js';
 import { KINDS } from '../data/gathering.js';
 import { ITEMS } from '../data/items.js';
 
@@ -34,6 +34,29 @@ function twinkle(ctx, x, y, time, seed) {
 }
 
 const DRAW = {
+  // A moonpetal: a pale bloom that only opens at night, glowing, its petals breathing open.
+  moonpetal(ctx, x, y, time, ready) {
+    ctx.strokeStyle = '#6aa88a';
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.quadraticCurveTo(x - 2, y - 6, x, y - 11);
+    ctx.stroke();
+    if (!ready) {
+      blob(ctx, x, y - 11, 2, 3, '#b8b0e6');
+      return;
+    }
+    const open = 0.8 + 0.2 * Math.sin(time * 1.4 + x);
+    const glow = ctx.createRadialGradient(x, y - 12, 0, x, y - 12, 16);
+    glow.addColorStop(0, 'rgba(220,214,255,0.55)');
+    glow.addColorStop(1, 'rgba(220,214,255,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - 16, y - 28, 32, 32);
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2 - Math.PI / 2;
+      blob(ctx, x + Math.cos(a) * 3.6 * open, y - 12 + Math.sin(a) * 3 * open, 2.8, 1.8, '#e6e2ff', a);
+    }
+    blob(ctx, x, y - 12, 1.6, 1.6, '#fff2b8');
+    twinkle(ctx, x + 5, y - 18, time, x);
+  },
   // Four round clover leaves on short stems, swaying; picked, a lone sprout.
   herb(ctx, x, y, time, ready) {
     const sway = Math.sin(time * 2 + x) * 1.2;
@@ -102,7 +125,7 @@ const DRAW = {
   },
   // Two plump cherries on a stem hanging low off the tree's bough; picked, just the leaf.
   fruit(ctx, x, y, time, ready) {
-    const top = y - 46;
+    const top = y - 60;
     const sway = Math.sin(time * 1.6 + x) * 1.5;
     ctx.strokeStyle = '#7a5a3a';
     ctx.beginPath();
@@ -139,11 +162,11 @@ export function drawNodes(ctx, world, cam, time) {
   nodesOf(world).forEach((n, i) => {
     const x = snap(n.x - cam.x);
     const y = snap(n.y - cam.y);
-    if (x < -60 || x > 700 || y < -60 || y > 420) return;
+    if (x < -60 || x > 700 || y < -60 || y > 420 || !nodeOpen(world, n)) return;
     ctx.save();
-    DRAW[n.kind]?.(ctx, x, y, time, nodeReady(world, i));
+    DRAW[n.look ?? n.kind]?.(ctx, x, y, time, nodeReady(world, i));
     ctx.restore();
-    if (here?.i === i) hint(ctx, x, y - (n.kind === 'fruit' ? 62 : 32), nodeReady(world, i) ? `▲ ${KINDS[n.kind].verb}` : 'Growing back...', nodeReady(world, i));
+    if (here?.i === i) hint(ctx, x, y - (n.kind === 'fruit' ? 74 : 32), nodeReady(world, i) ? `▲ ${KINDS[n.kind].verb}` : 'Growing back...', nodeReady(world, i));
   });
   const pop = world.lastGathered;
   const since = pop ? world.now - pop.at : 9;

@@ -2420,11 +2420,20 @@ function backdropLook(map, base, cam, height) {
   return look(here);
 }
 
+const NIGHT = { sky: ['#1a1646', '#33296e', '#5a4790'], far: '#3a3274', mid: '#463c84', midTrim: '#5a4e9a' };
+function nightLook(t, k) {
+  const out = blendLook(t, { ...t, ...NIGHT, far: mix(t.far, NIGHT.far, 0.75), mid: mix(t.mid, NIGHT.mid, 0.7), midTrim: mix(t.midTrim ?? t.mid, NIGHT.midTrim, 0.7) }, k);
+  if (k < 0.5) return out;
+  return { ...out, face: 'moon', stars: true, rainbow: 0, critters: [...new Set([...(t.critters ?? []).filter((c) => c !== 'butterfly'), 'firefly'])] };
+}
+
 export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null, routePortalId = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike, and a
   // tall map's zones restyle it again as you climb.
-  const t = backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height);
+  const day = backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height);
+  // At night (world/daytime.js) the sky darkens to stars and the moon, and fireflies come out.
+  const t = map.night > 0 ? nightLook(day, map.night) : day;
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll
   // vertically at a fraction of the camera so taller maps still feel deep.
   const camBottom = Math.max(0, map.height - height);

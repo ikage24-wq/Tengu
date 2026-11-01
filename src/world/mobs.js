@@ -2,6 +2,7 @@
 
 import { MOBS } from '../data/mobs.js';
 import { surfacesOf, groundPieceAt } from './physics.js';
+import { habitGoal } from './habits.js';
 
 // A monster comes back somewhere between these many seconds after it falls (a map's own
 // `respawn` sets the shortest wait instead), so a cleared ledge fills up again bit by bit.
@@ -155,6 +156,8 @@ export function hitMob(m, damage, fromX, now, { knock = 90, launch = 0 } = {}) {
   m.hp = Math.max(0, m.hp - damage);
   m.flash = 0.12;
   m.aggroUntil = now + AGGRO_TIME;
+  // A hit wakes it from a nap; a peaceful one that's hurt runs off (world/habits.js).
+  m.habit = !m.def.aggro && !m.def.boss && m.hp > 0 ? { kind: 'flee', x: m.x + (m.x >= fromX ? 1 : -1) * 300, speed: 1.8, until: now + 2.5 } : null;
   if (!m.def.boss) {
     m.stagger = Math.max(m.stagger, knock > 150 ? 0.4 : 0.25);
     // Everyday blows barely nudge (half their push), so monsters stay in reach; heavy ones still
@@ -245,6 +248,15 @@ export function updateMob(m, player, dt, now) {
     m.state = 'walk';
     m.x += m.dir * m.def.speed * 1.35 * pace(m, true, dt) * dt;
     if (m.def.fly) m.baseY += Math.sign(player.y - 30 - m.baseY) * 30 * dt;
+  } else if (habitGoal(m, now)) {
+    // Living there: napping, heading home, playing chase or running off (world/habits.js).
+    const goal = habitGoal(m, now);
+    const dx = goal === 'stay' ? 0 : goal.x - m.x;
+    if (Math.abs(dx) > 6) {
+      m.dir = Math.sign(dx);
+      m.state = 'walk';
+      m.x += m.dir * m.def.speed * goal.speed * pace(m, false, dt) * dt;
+    } else m.state = 'idle';
   } else {
     m.timer -= dt;
     if (m.timer <= 0) {

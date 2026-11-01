@@ -6,11 +6,18 @@
 import { NODES, KINDS, NODE_REACH } from '../data/gathering.js';
 import { addItem } from '../core/inventory.js';
 import { ITEMS } from '../data/items.js';
+import { isNight } from './daytime.js';
+import { isCalm } from './calm.js';
 
 const key = (mapId, i) => `${mapId}:${i}`;
 
 export function nodesOf(world) {
   return NODES[world.map.id] ?? [];
+}
+
+// A night spot (`night: true`) is only there at night.
+export function nodeOpen(world, n) {
+  return !n.night || isNight(world);
 }
 
 export function nodeReady(world, i) {
@@ -22,7 +29,7 @@ export function nodeHere(world) {
   const b = world.body;
   if (!b.onGround) return null;
   const list = nodesOf(world);
-  const i = list.findIndex((n) => Math.abs(n.x - b.x) < NODE_REACH && Math.abs(n.y - b.y) < 6);
+  const i = list.findIndex((n) => nodeOpen(world, n) && Math.abs(n.x - b.x) < NODE_REACH && Math.abs(n.y - b.y) < 6);
   return i < 0 ? null : { node: list[i], i };
 }
 
@@ -61,7 +68,8 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
   world.gathering = null;
   const [lo, hi] = g.kind.count;
   const got = {};
-  const n = lo + Math.floor(rng() * (hi - lo + 1));
+  // A calm map (world/calm.js) gives one more.
+  const n = lo + Math.floor(rng() * (hi - lo + 1)) + (isCalm(world, world.map.id) ? 1 : 0);
   for (let k = 0; k < n; k++) {
     const id = roll(g.node.pool, rng);
     got[id] = (got[id] ?? 0) + 1;

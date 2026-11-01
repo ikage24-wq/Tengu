@@ -29,13 +29,14 @@ import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { drawSpots, drawFishing } from './fishing.js';
 import { drawNodes } from './gathering.js';
+import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
-import { drawGlowing, drawLighting } from './post.js';
+import { drawGlowing, drawLighting, drawNight } from './post.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -252,6 +253,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawSpots(ctx, world, cam, time);
   // Gathering and mining spots.
   drawNodes(ctx, world, cam, time);
+  // A calm map's spirit (world/calm.js).
+  drawSpirit(ctx, world, cam, time);
   // A queen's moves about to land.
   drawZonesBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
@@ -349,7 +352,14 @@ export function drawWorld(ctx, world, viewCam, time) {
   // Light gathers around you and the portals.
   const lights = [{ x: hx, y: hy - 22, r: 96 }];
   for (const pt of world.map.portals) if (!pt.hidden) lights.push({ x: pt.x - cam.x, y: pt.y - 26 - cam.y, r: 56, k: 0.8, c: '#e6dcff' });
+  // A soured map's colours fade.
+  drawSoured(ctx, world, VIEW_W, VIEW_H);
   if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time, lights);
+  // Night: the map's lamps light up too.
+  if (world.map.night > 0) {
+    for (const l of world.map.lamps ?? []) lights.push({ x: l.x - cam.x, y: l.y - cam.y, r: 80, c: l.c });
+    drawNight(ctx, VIEW_W, VIEW_H, world.map.night, lights);
+  }
   // The foreground: framing pieces and the nearest drifting petals, in front of everyone (and of
   // the light, being between it and the camera), but under the effects.
   const actors = [{ x: hx, top: hy - 50 }];

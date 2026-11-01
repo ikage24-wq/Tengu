@@ -228,6 +228,42 @@ export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
 }
 
 
+// Night (world/daytime.js): a deep blue dusk laid over the world, `k` deep (0-1), with soft holes
+// where the lights are and a warm glow round each ({ x, y, r, c? } in screen space).
+export function drawNight(ctx, w, h, k, lights = []) {
+  if (k <= 0) return;
+  const c = layer('night', LIGHT_W, LIGHT_H);
+  const g = c.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, LIGHT_W, LIGHT_H);
+  g.fillStyle = rgba('#1c1650', 0.42 * k);
+  g.fillRect(0, 0, LIGHT_W, LIGHT_H);
+  g.setTransform(LIGHT_W / w, 0, 0, LIGHT_H / h, 0, 0);
+  g.globalCompositeOperation = 'destination-out';
+  for (const l of lights) {
+    const r = l.r * 1.25;
+    const hole = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, r);
+    hole.addColorStop(0, 'rgba(0,0,0,0.85)');
+    hole.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = hole;
+    g.fillRect(l.x - r, l.y - r, r * 2, r * 2);
+  }
+  g.globalCompositeOperation = 'source-over';
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(c, 0, 0, w, h);
+  // The warm glow, added on top.
+  ctx.globalCompositeOperation = 'lighter';
+  for (const l of lights) {
+    const glow = ctx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 0.8);
+    glow.addColorStop(0, rgba(l.c ?? '#ffd9a0', 0.16 * k));
+    glow.addColorStop(1, rgba(l.c ?? '#ffd9a0', 0));
+    ctx.fillStyle = glow;
+    ctx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+  }
+  ctx.restore();
+}
+
 // ---------- The screen's color ----------
 
 // The game's colors, a little richer than drawn: a CSS filter on the canvas, which the browser

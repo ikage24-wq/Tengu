@@ -31,6 +31,9 @@ import { makeEquip } from '../core/items.js';
 import { recordBook } from '../core/collection.js';
 import { spotHere, startFishing, tickFishing } from './fishing.js';
 import { nodeHere, startGathering, tickGathering } from './gathering.js';
+import { tickDaytime } from './daytime.js';
+import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
+import { tickHabits, napping } from './habits.js';
 import { DISH_BY_ID } from '../data/cooking.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
@@ -429,10 +432,13 @@ export function killMob(world, m, byParty = false) {
   // (A dish can add to it.)
   const food = Object.values(char.buffs).reduce((k, b) => k + (b.until > world.now ? b.values?.expPct ?? 0 : 0), 0);
   // (A GM's Double EXP counts too: world/events.js.)
-  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food) * (world.expEvent ?? 1));
+  // (A calm map pays a little more: world/calm.js.)
+  const calm = soothes(world.map) && isCalm(world, world.map.id) ? CALM_EXP : 0;
+  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food + calm) * (world.expEvent ?? 1));
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
+  calmKill(world);
   if (m.def.boss) world.onBossDown?.(m);
   // (Someone you're helping may need this one: world/lives.js.)
   world.onAnyKill?.(m);
@@ -541,8 +547,10 @@ export function updateWorld(world, dt, input) {
   // Without a renderer draining it (tests, background tabs), keep the cue queue short.
   if (world.juice.length > 200) world.juice.length = 0;
   world.now += dt;
-  // The map's moving parts run on the world's clock.
+  // The map's moving parts run on the world's clock; its light follows the real one.
   world.map.clock = world.now;
+  tickDaytime(world, dt);
+  tickCalm(world);
   world.attackTimer = Math.max(0, world.attackTimer - dt);
   world.lockTimer = Math.max(0, (world.lockTimer ?? 0) - dt);
   world.invuln = Math.max(0, world.invuln - dt);
@@ -768,6 +776,7 @@ export function updateWorld(world, dt, input) {
   // Online, the monsters on a map another player got to first are run by their game; this one
   // shows them where it says they are. Monsters chase whichever player is nearest.
   const mirrored = Boolean(world.net?.mirrored(world));
+  tickHabits(world, dt);
   if (!world.dungeon) for (const m of world.mobs) {
     // (A monster another player hunting here just hit goes after them, not you.)
     // (And a Kitsune's Fox Decoy pulls the monsters near it.)
@@ -783,7 +792,8 @@ export function updateWorld(world, dt, input) {
         m.gloatAt = world.now;
       }
     }
-    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now) continue;
+    // (A napping monster is harmless: world/habits.js.)
+    if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now || napping(m, world.now)) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
     m.attackAt = world.now;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {

@@ -7,6 +7,7 @@ import { countItem } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
 import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
+import { calmOf, soothes, CALM, SOUR } from '../world/calm.js';
 import { drawHero } from '../render/hero.js';
 import { heartbeat } from '../render/aura.js';
 import { settings } from '../core/settings.js';
@@ -698,6 +699,17 @@ function drawMinimap(ui, world) {
   ctx.fillStyle = '#ff5fa2';
   arrow(1);
   ctx.restore();
+  // The map's calm (world/calm.js) on the right of the title bar: a petal and a little bar that
+  // fills pink as the map calms, and glows once it's calm.
+  if (soothes(map)) {
+    const v = calmOf(world);
+    const bx = x + w - 40;
+    const by = y - 10;
+    box(ctx, bx, by, 36, 5, { fill: 'rgba(255,255,255,0.85)', edge: null, r: 2.5 });
+    box(ctx, bx, by, Math.max(5, 36 * v), 5, { fill: v >= CALM ? '#ff7fb6' : v < SOUR ? '#b8b0c8' : '#ffb3d1', edge: null, r: 2.5 });
+    icon(ctx, 'heart', bx - 6, by + 2.5, 6, v >= CALM ? '#ff5fa2' : '#ffffff');
+    if (hover(ui, bx - 10, by - 3, 48, 11)) tooltip(ui, v >= CALM ? 'Calm: its spirit is back. More EXP here, extra finds when gathering.' : v < SOUR ? 'Souring: hunt here to calm it.' : `Calming: ${Math.round(v * 100)}%. Hunt here to calm it.`);
+  }
 }
 
 // Active buffs: round icons with a ring that runs down as the buff wears off.

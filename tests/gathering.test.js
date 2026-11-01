@@ -89,3 +89,77 @@ test("ore at Tora's makes a polish likelier to take, and is used up", () => {
   assert.ok(r.ok, 'a roll that only the boost makes good takes');
   assert.equal(countItem(c.inventory, 'copper_ore'), 0);
 });
+
+test('night follows the real clock, and night spots only open in the dark', async () => {
+  const { nightOf } = await import('../src/world/daytime.js');
+  const at = (h, m = 0) => nightOf(new Date(2026, 10, 1, h, m));
+  assert.equal(at(12), 0);
+  assert.equal(at(23), 1);
+  assert.equal(at(2), 1);
+  assert.ok(at(19, 45) > 0 && at(19, 45) < 1, 'dusk falls gradually');
+  assert.ok(at(5, 30) > 0 && at(5, 30) < 1, 'dawn breaks gradually');
+  const w = createWorld(createCharacter('Owl', {}));
+  loadMap(w, 'meadow1', 'west');
+  w.mobs = [];
+  w.spawner.slots = [];
+  const n = NODES.meadow1.find((q) => q.night);
+  Object.assign(w.body, { x: n.x, y: n.y, onGround: true, vx: 0, vy: 0 });
+  w.dayClock = () => new Date(2026, 10, 1, 12);
+  step(w, 1.2);
+  step(w, 0.1, 'ArrowUp');
+  assert.ok(!w.gathering, 'closed by day');
+  w.dayClock = () => new Date(2026, 10, 1, 23);
+  step(w, 1.2);
+  step(w, 0.1, 'ArrowUp');
+  assert.ok(w.gathering, 'open at night');
+});
+
+test('a map calms as you hunt, pays more EXP when calm, and sours when left alone', async () => {
+  const { calmOf, CALM, SOUR } = await import('../src/world/calm.js');
+  const { killMob } = await import('../src/world/world.js');
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const w = createWorld(createCharacter('Calmer', {}));
+  w.log = () => {};
+  loadMap(w, 'meadow1', 'west');
+  w.mobs = [];
+  w.spawner.slots = [];
+  const before = calmOf(w);
+  const fell = () => {
+    const m = spawnMob(w.map, { mob: 'puffle', x: 600, y: 1000 });
+    m.hp = 0;
+    const exp = w.char.exp;
+    killMob(w, m);
+    return w.char.exp - exp;
+  };
+  const plain = fell();
+  assert.ok(calmOf(w) > before, 'a kill calms it');
+  while (calmOf(w) < CALM) fell();
+  const calmExp = fell();
+  assert.ok(calmExp > plain, `a calm map pays more (${calmExp} vs ${plain})`);
+  w.now += 3600;
+  assert.ok(calmOf(w) < SOUR, 'an hour alone sours it');
+});
+
+test('monsters live there: they nap at night (harmless), play chase by day, and run off when hurt', async () => {
+  const { tickHabits, napping } = await import('../src/world/habits.js');
+  const { spawnMob, hitMob } = await import('../src/world/mobs.js');
+  const w = createWorld(createCharacter('Watcher', {}));
+  loadMap(w, 'meadow1', 'west');
+  w.spawner.slots = [];
+  w.body.x = 100;
+  // (Up on the clouds, away from their den, so they don't just head home.)
+  const kits = [spawnMob(w.map, { mob: 'puffle', x: 600, y: 280 }), spawnMob(w.map, { mob: 'puffle', x: 700, y: 280 })];
+  w.mobs = kits;
+  w.map.night = 0;
+  for (const m of kits) m.think = 0;
+  tickHabits(w, 0.016, () => 0.2);
+  assert.equal(kits[0].habit?.kind, 'play', 'kits play chase by day');
+  assert.equal(kits[1].habit?.kind, 'play');
+  w.map.night = 1;
+  for (const m of kits) Object.assign(m, { think: 0, habit: null });
+  tickHabits(w, 0.016, () => 0.2);
+  assert.ok(napping(kits[0], w.now), 'and curl up at night');
+  hitMob(kits[0], 1, kits[0].x - 20, w.now);
+  assert.equal(kits[0].habit?.kind, 'flee', 'a hit wakes it and it runs off');
+  assert.ok(kits[0].habit.x > kits[0].x, 'away from the blow');
+});

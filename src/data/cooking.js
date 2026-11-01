@@ -22,6 +22,7 @@ export const DISHES = [
   { id: 'dish_wishcake', name: 'Wishing Star Cake', vessel: 'plate', colors: ['#ffe36b', '#ff9ec0'], needs: { fish_starfish: 1, stardust: 2 }, heal: 1500, values: { str: 10, dex: 10, int: 10, luk: 10, critRate: 0.05 }, secs: 900, about: 'All stats and crit', learn: 'fish_starfish' },
   // From gathering (data/gathering.js), known from the start.
   { id: 'dish_clovertea', name: 'Clover Honey Tea', vessel: 'bowl', colors: ['#b8e6a0', '#ffd65a'], needs: { clover: 2, honeycomb: 1 }, heal: 150, values: { regenPct: 0.015 }, secs: 600, about: 'HP back every second' },
+  { id: 'dish_moontea', name: 'Moonpetal Tea', vessel: 'bowl', colors: ['#d8d2ff', '#fff2b8'], needs: { moonpetal: 1, honeycomb: 1 }, heal: 300, values: { expPct: 0.08 }, secs: 900, about: '+8% EXP' },
   { id: 'dish_cherrytart', name: 'Blossom Cherry Tart', vessel: 'plate', colors: ['#ffd9a0', '#ff6b8a'], needs: { cherry: 2, honeycomb: 1 }, heal: 250, values: { speed: 6, jump: 4 }, secs: 600, about: 'Speed and jump' },
   { id: 'dish_feast', name: 'Cloud Whale Feast', vessel: 'bowl', colors: ['#f4f8ff', '#b6c8ff'], needs: { fish_whale: 1, wool: 3 }, heal: 2500, values: { str: 15, dex: 15, int: 15, luk: 15, watk: 15, matk: 15, expPct: 0.2 }, secs: 1200, about: 'Everything, +20% EXP', learn: 'fish_whale' },
 ];

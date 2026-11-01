@@ -104,6 +104,9 @@ function moodOf(m, t, now, held) {
   if (held) return 'hurt';
   if (now - (m.gloatAt ?? -9) < 0.9) return 'happy';
   if (now < m.aggroUntil && m.def.aggro) return 'angry';
+  // Napping (world/habits.js): eyes shut; playing chase: happy.
+  if (m.habit?.kind === 'nap' && now < m.habit.until) return 'blink';
+  if (m.habit?.kind === 'play' && now < m.habit.until) return 'happy';
   const cyc = (t * 0.3) % 1;
   if (cyc < 0.04) return 'blink';
   if (lowOn(m) && ((t * 1.7) % 1) < 0.08) return 'blink';
@@ -185,6 +188,15 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
     ctx.lineTo(hx + 3, top - 3 + u * 5);
     ctx.lineTo(hx + 4.8, top + 0.4 + u * 5);
     ctx.fill();
+  } else if (m.habit?.kind === 'nap' && now < m.habit.until && m.hp > 0) {
+    // Asleep: a slow stream of z's, each drifting up and growing.
+    for (let k = 0; k < 3; k++) {
+      const u = (t * 0.45 + k / 3) % 1;
+      ctx.globalAlpha = Math.sin(u * Math.PI);
+      ctx.fillStyle = '#8f7cc4';
+      ctx.font = `bold ${6 + u * 5}px sans-serif`;
+      ctx.fillText('z', hx + u * 7, top - 1 - u * 13);
+    }
   } else if (m.state === 'idle' && m.hp > 0) {
     const cyc = (t * 0.3) % 1;
     if (cyc > 0.55 && cyc < 0.8) {

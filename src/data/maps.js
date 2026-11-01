@@ -92,6 +92,13 @@ export const MAPS = {
     // A moving part per zone: bounce blossoms in the fields (one up the hill, one at the end of the
     // top floor, two floors high), the hive's warm pollen updraft on the banks, the petal whirl
     // round the cherry tree in the boughs, and the drifting cloud on top.
+    // How its monsters live (world/habits.js): the tortoises doze (most of the night) and amble
+    // down to the pond; the fox kits play chase round their den by the hive and curl up at night.
+    habitats: { snailbun: { naps: true, home: { x: 1650, y: 1000 } }, puffle: { naps: true, play: true, home: { x: 1200, y: 680 } } },
+    // The meadow's spirit floats by the cherry tree's crown when the map is calm (world/calm.js).
+    spirit: { x: 1010, y: 380 },
+    // At night (world/daytime.js) warm light glows at the arch, the picnic, the hive and the lookout.
+    lamps: [{ x: 260, y: 950 }, { x: 1950, y: 975 }, { x: 1200, y: 640, c: '#ffd970' }, { x: 1100, y: 170 }],
     springs: [{ x: 1150, y: 976, up: 170, kind: 'blossom' }, { x: 1820, y: 840, up: 190, kind: 'blossom' }],
     updrafts: [
       { x: 1200, w: 50, top: 500, bottom: 680, kind: 'pollen' },
