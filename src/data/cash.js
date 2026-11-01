@@ -31,6 +31,9 @@ function add(def) {
   if (!def.retired) CASH_ITEMS.push(def.id);
 }
 
+// The pieces a whole-body costume is split into, and each one's share of the set's price.
+const SPLIT = { bottom: { name: 'Bottom', share: 0.25 }, hat: { name: 'Hat', share: 0.25 }, shoes: { name: 'Shoes', share: 0.15 } };
+
 // The casual, swim, and funny lines. Each piece wears a hidden "look" item per slot it dresses
 // (its own, plus any it covers, like a onesie's legs), drawn by that line's module with the
 // entry's index as its design.
@@ -44,7 +47,15 @@ for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS], ['co
     // (A draft is drawn but not sold yet.)
     const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color, ...(e.draft ? { retired: true } : {}) };
     if (e.slot === 'weapon') add({ ...base, cover: { fun: family, t } });
-    else add({ ...base, skin: look(e.slot), ...(e.covers?.length ? { covers: Object.fromEntries(e.covers.map((s) => [s, look(s)])) } : {}) });
+    else if (e.covers?.includes('hat')) {
+      // A whole-body costume or onesie is sold in pieces (the player's call, 2026-11-01): its top
+      // (with any gloves and cape it has), and its bottom, hat and shoes each on their own, so
+      // they mix and match. The full set is kept, unsold, for anyone who bought it before.
+      add({ ...base, retired: true, skin: look(e.slot), covers: Object.fromEntries(e.covers.map((s) => [s, look(s)])) });
+      const rest = e.covers.filter((s) => !SPLIT[s]);
+      add({ ...base, id: `${base.id}_top`, name: `${e.name} Top`, cash: Math.round(e.cash * 0.45 / 10) * 10, skin: look(e.slot), ...(rest.length ? { covers: Object.fromEntries(rest.map((s) => [s, look(s)])) } : {}) });
+      for (const s of e.covers.filter((c) => SPLIT[c])) add({ ...base, id: `${base.id}_${s}`, name: `${e.name} ${SPLIT[s].name}`, slot: s, cash: Math.round(e.cash * SPLIT[s].share / 10) * 10, skin: look(s) });
+    } else add({ ...base, skin: look(e.slot), ...(e.covers?.length ? { covers: Object.fromEntries(e.covers.map((s) => [s, look(s)])) } : {}) });
   });
 }
 
