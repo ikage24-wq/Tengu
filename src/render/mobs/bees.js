@@ -134,10 +134,10 @@ function bumble(pose, f, mood) {
   // Flight: a quick bob twice a loop (each wingbeat pair lifts it), a wobble that lags behind;
   // idle, a lazy hover with a breath. The wings blur: up on even frames, down on odd.
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 3 : A ? A.by : walk ? -1.1 * Math.sin(2 * TAU * q) : -br * 0.8 + sway(q) * 0.3;
+  const bob = dead ? 3 : A ? A.by : walk ? -1.6 * Math.sin(2 * TAU * q) : -br * 1.8 + sway(q) * 0.9;
   const bx = 15 + (A ? A.bx : 0) + (hurt ? -1.6 : 0) + (walk ? 0.5 * Math.sin(TAU * q - 1) : 0);
   const by = 17 + bob;
-  const rot = dead ? 160 : A ? A.rot : hurt ? -10 : walk ? 4 + 3 * Math.sin(2 * TAU * q - 1.2) : sway(q) * 2;
+  const rot = dead ? 160 : A ? A.rot : hurt ? -10 : walk ? 4 + 5 * Math.sin(2 * TAU * q - 1.2) : sway(q) * 5;
   const up = Math.round(f) % 2 === 0;
   const flap = dead ? -10 : hurt ? -70 : up ? -78 : -18;
 
@@ -241,10 +241,10 @@ function petalsprite(pose, f, mood) {
   // A slow drifting float: she rises and sinks once a loop, swaying like a falling petal; her
   // wings beat slowly (open, closing, closed, opening).
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 5 : walk ? -1.8 * Math.sin(TAU * q) : -br * 1.3;
+  const bob = dead ? 5 : walk ? -2.4 * Math.sin(TAU * q) : -br * 2.2;
   const x0 = 16 + (walk ? 1.2 * Math.sin(TAU * q - 1.6) : 0) + (hurt ? -1.4 : 0);
   const y0 = 24 + bob;
-  const lean = dead ? 70 : A ? A.lean : hurt ? -14 : walk ? 6 + 4 * Math.sin(TAU * q - 1.6) : sway(q) * 4;
+  const lean = dead ? 70 : A ? A.lean : hurt ? -14 : walk ? 6 + 6 * Math.sin(TAU * q - 1.6) : sway(q) * 7;
   const beat = walk ? Math.sin(TAU * q * 2) : Math.sin(TAU * q);
   const open = dead ? 0.2 : hurt ? 1 : 0.55 + 0.45 * beat;
   const WP = mix(PINK.hi, '#ffffff', 0.35);
@@ -360,10 +360,10 @@ function queenbee(pose, f, mood) {
   const out = [];
   // A heavy, regal hover: one slow rise and settle a loop, the train of her tail swaying after.
   const br = idle ? breath(q) : 0;
-  const bob = dead ? 10 : A ? A.drop : walk ? -2.4 * Math.sin(TAU * q) : -br * 1.8;
+  const bob = dead ? 10 : A ? A.drop : walk ? -3.2 * Math.sin(TAU * q) : -br * 2.8;
   const bx = 40 + (hurt ? -2.4 : 0) + (walk ? Math.sin(TAU * q - 1.2) : 0);
   const by = 44 + bob;
-  const rot = dead ? 30 : A ? A.rear : hurt ? -8 : walk ? 3 * Math.sin(TAU * q - 1.6) : sway(q) * 1.6;
+  const rot = dead ? 30 : A ? A.rear : hurt ? -8 : walk ? 4 * Math.sin(TAU * q - 1.6) : sway(q) * 3;
   const up = Math.round(f) % 2 === 0;
   const flap = dead ? -10 : A?.arm < -100 ? -95 : hurt ? -80 : walk || idle ? (up ? -80 : -30) : -40;
 
