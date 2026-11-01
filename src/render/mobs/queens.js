@@ -808,26 +808,27 @@ function tamamo(pose, f, mood) {
     const front = [P(bx + 10, top + 3), P(bx + 12.6, top + 11), P(bx + 9, top + 24), P(bx + 12, top + 36), ...(drop ? [] : [[bx + 17 + lean * 0.5, G - 22]])];
     // Inner kimono, crimson with little gold blossoms.
     out.push(T([...front, hem[0], ...hem, ...train, ...back.slice().reverse()], K.crimson));
-    for (let k = 0; k < 5; k++) {
-      const t = 0.15 + k * 0.17;
+    // (Three bigger gold blossoms read better than a scatter of small dots.)
+    for (let k = 0; k < 3; k++) {
+      const t = 0.2 + k * 0.28;
       const [x0, y0] = front[3];
-      const x = lerp(x0, hem[0][0], t) - 4 - (k % 2) * 5;
+      const x = lerp(x0, hem[0][0], t) - 4 - (k % 2) * 3;
       const y = lerp(y0, G, t);
-      if (y < G - 3) out.push(F(T(ovalPts(x, y, 1.4, 1.4, 8), k % 2 ? K.goldLt : K.gold)));
+      if (y < G - 4) out.push(...blossom(x, y, 1.9, K.goldLt, K.gold, k));
     }
     // The open uchikake: from the shoulders, its front edge running down behind the obi.
     const edge = [P(bx + 6, top + 1), P(bx + 7, top + 13), P(bx + 1, top + 26), P(bx + 1, top + 38), [bx + 4 + lean * 0.4, G - 18], [hem[3][0] - 2, G - 1.2]];
     const outer = [...edge, ...hem.slice(4), ...train, ...back.slice().reverse()];
     out.push(T(outer, K.robe));
     // Soft folds falling from the hips, and the shadowed back of the train.
-    for (const [x0, x1, w] of [[bx - 1, bx + 1, 1.6], [bx - 4, bx - 6, 2.2], [bx - 7, bx - 11, 1.4], [bx - 10, bx - 18, 2.6], [bx - 13, bx - 25, 2]]) {
+    for (const [x0, x1, w] of [[bx - 4, bx - 7, 3], [bx - 12, bx - 23, 3.2]]) {
       const t0 = Tu(x0, top + 40);
       out.push(strip([t0, [lerp(t0[0], x1, 0.5) + wv(x0) * 0.6, lerp(t0[1], G, 0.5)], [x1 + wv(x0 + 1), G - 2]], (t) => w * Math.sin(PI * Math.min(1, t * 1.1 + 0.05)), K.robeDk, { n: 3, flat: true }));
     }
     out.push(F(T([train[0], train[1], train[2], [train[2][0] + 6, train[2][1] + 6], [train[1][0] + 10, G - 2]], K.robeDk)));
     out.push(strip([P(bx + 3.4, top + 8), P(bx - 1, top + 26), P(bx - 1, top + 38), [bx + 1 + lean * 0.4, G - 16]], (t) => 2.4 * Math.sin(PI * Math.min(1, t * 1.05 + 0.04)), K.robeLt, { n: 3, flat: true }));
     // Embroidered gold clouds and fox-fire.
-    const emb = [[bx - 20, G - 12, 1], [bx - 6, G - 22, -1], [bx - 30, G - 9, -1], [bx - 15, G - 33, 1]];
+    const emb = [[bx - 18, G - 13, 1], [bx - 7, G - 28, -1]];
     for (const [x, y, d] of emb) {
       const pp = drop ? Tu(x, y - drop * 0.3) : [x, y];
       if (drop && pp[1] > G - 3) continue;
@@ -845,7 +846,7 @@ function tamamo(pose, f, mood) {
     out.push(strip(hb, bw, K.crimson, { n: 2, flat: true, tip: 2 }));
     out.push(line(spline(hb.map(([x, y], i) => [x, y - bw(i / nh) / 2 - 0.6]), 2), 1, K.gold));
     hb.forEach(([x, y], i) => {
-      if (i % 2 === 0 && i > 0 && i < nh) out.push(...blossom(x - 2, y + 0.2, 1.7 * lerp(1, 0.7, i / nh), K.goldLt, K.crimsonDk, i));
+      if (i % 3 === 1 && i < nh) out.push(...blossom(x - 2, y + 0.2, 1.7 * lerp(1, 0.7, i / nh), K.goldLt, K.crimsonDk, i));
     });
     out.push(strip(hemOut.map(([x, y]) => [x, y - 1.2]), (t) => 3 * lerp(1, 0.55, t), K.crimsonDk, { n: 2, tip: 2 }), strip(hemOut.map(([x, y]) => [x, y - 1.7]), (t) => 1.6 * lerp(1, 0.55, t), K.crimson, { n: 2, flat: true, tip: 2 }));
     // The obi: a broad gold sash with a crimson cord, and its great bow at the back.
@@ -1202,25 +1203,21 @@ function sylvana(pose, f, mood) {
       }
       pts.push([lerp(right[0], br[0], 0.55) + 1.5, lerp(y0, yb, 0.55)], right);
       out.push(poly(pts.map(([x, y]) => [x, y + 0.9]), cDk), poly(pts, c));
-      for (let i = 1; i < n; i += 2) {
-        const x = lerp(bl[0], br[0], i / n);
-        out.push(line([[x, yb + 2.6], [x + (bx - x) * 0.12, yb - (yb - y0) * 0.45]], 0.5, cDk));
-      }
     };
     const sw = swing;
     tierAt(G - 26 - drop * 0.1, G - 6 - drop * 0.1, 19, 33, S.moss, S.mossDk, 9, sw * 0.9, 0);
     tierAt(G - 40, G - 22, 15, 26, S.leaf2, S.leaf2Dk, 7, sw * 0.6, 2);
     tierAt(waist - 2, G - 36, 9.5, 18, S.leaf, S.leafDk, 6, sw * 0.3, 4);
     // Blossoms tucked into the tiers.
-    for (const [x, y, r] of [[bx - 14, G - 24, 2.2], [bx + 10, G - 30, 1.8], [bx + 19, G - 9, 2.2], [bx - 22, G - 8, 1.8], [bx + 2, G - 12, 1.6]]) out.push(...blossom(x + sw * 0.5, y, r, S.bloom, '#fff6a0', x * 0.1));
+    for (const [x, y, r] of [[bx - 14, G - 24, 2.4], [bx + 10, G - 30, 2.2], [bx + 2, G - 11, 2]]) out.push(...blossom(x + sw * 0.5, y, r, S.bloom, '#fff6a0', x * 0.1));
     // Bodice of overlapping leaf scales, with a moss sash at the waist.
     const bod = round([[bx - 9, top + 2], [bx - 10.6, top + 10], [bx - 7.4, top + 17], [bx - 8, waist], [bx + 8.6, waist], [bx + 8.6, top + 17], [bx + 11.6, top + 10], [bx + 9.4, top + 2], [bx + 2, top - 1]], 2);
     out.push(poly(bod.map(([x, y]) => [x + (x - bx) * 0.08, y + 0.6]), S.leafDk), poly(bod, S.leaf));
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 4; c++) {
-        const x = bx - 6 + c * 4.6 + (r % 2) * 2.2;
-        const y = top + 6 + r * 6;
-        out.push(...leaf(x, y - 3, PI / 2 + 0.15, 6, 4, r % 2 ? S.leafLt : mix(S.leaf, S.leafLt, 0.4)));
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 3; c++) {
+        const x = bx - 5 + c * 6.4 + (r % 2) * 3;
+        const y = top + 7 + r * 8;
+        out.push(...leaf(x, y - 3, PI / 2 + 0.15, 8, 5.4, r % 2 ? S.leafLt : mix(S.leaf, S.leafLt, 0.4)));
       }
     }
     out.push(strip([[bx - 9, waist - 1], [bx, waist + 0.5], [bx + 9, waist - 1]], () => 3.4, S.mossDk, { n: 2 }), strip([[bx - 9, waist - 1.4], [bx, waist], [bx + 9, waist - 1.4]], () => 2.2, S.moss, { n: 2, flat: true }));
@@ -1584,15 +1581,14 @@ function lilith(pose, f, mood) {
     out.push(poly(round([[bx - 8.4, top + 2], [bx - 10.2, top + 10], [bx - 7.6, top + 17], [bx - 8.4, waist + 2], [bx + 9.6, waist + 2], [bx + 9, top + 17], [bx + 11.8, top + 10], [bx + 9.6, top + 2], [bx + 2, top - 2]], 2), D.black));
     // The corset: wine panels with gold boning and lacing, dipping to a point.
     out.push(poly(round([[bx - 8.4, top + 13], [bx + 10.4, top + 12], [bx + 9.6, top + 17.5], [bx + 10, waist + 1], [bx + 3, waist + 5], [bx - 8, waist + 1], [bx - 7.4, top + 17.5]], 1), D.wineDk), poly(round([[bx - 7.6, top + 13.6], [bx + 9.8, top + 12.6], [bx + 8.9, top + 17.6], [bx + 9.2, waist + 0.4], [bx + 3, waist + 4], [bx - 7.4, waist + 0.4], [bx - 6.8, top + 17.6]], 1), D.wine));
-    for (const x of [bx - 4, bx + 0.6, bx + 6]) out.push(line([[x, top + 14], [x + (x - bx) * 0.05, waist + 1.5]], 0.6, D.goldDk));
-    for (let k = 0; k < 4; k++) out.push(line([[bx + 1.8, top + 15 + k * 2.4], [bx + 4.2, top + 16.4 + k * 2.4]], 0.5, D.goldLt), line([[bx + 4.2, top + 15 + k * 2.4], [bx + 1.8, top + 16.4 + k * 2.4]], 0.5, D.goldLt));
+    for (const x of [bx - 4, bx + 6]) out.push(line([[x, top + 14], [x + (x - bx) * 0.05, waist + 1.5]], 0.6, D.goldDk));
+    for (let k = 0; k < 3; k++) out.push(line([[bx + 1.8, top + 15 + k * 2.4], [bx + 4.2, top + 16.4 + k * 2.4]], 0.5, D.goldLt), line([[bx + 4.2, top + 15 + k * 2.4], [bx + 1.8, top + 16.4 + k * 2.4]], 0.5, D.goldLt));
     out.push(line([[bx - 8.6, top + 12.8], [bx + 11.6, top + 11.8]], 1, D.gold), line([[bx - 8, waist + 0.8], [bx + 3, waist + 4.6], [bx + 10, waist + 0.6]], 1, D.gold));
     // A gold heart brooch at the throat on a black lace neckline.
     out.push(line([[bx - 4, top + 1], [bx + 2, top + 4], [bx + 8, top + 1]], 0.7, D.blackLt), ...gem(bx + 3, top + 2.4, 1.8, D.gem));
     // The high standing collar fanning up behind the head: black outside, wine within.
     const cl = [[bx - 9, top + 2], [bx - 15, top - 12], [bx - 11, top - 16], [bx - 5, top - 13], [bx - 1, top - 4]];
     out.push(poly(cl, D.blackDk), poly([[bx - 9, top + 1], [bx - 13.6, top - 11], [bx - 10.6, top - 14], [bx - 6, top - 11.6], [bx - 2, top - 3]], D.wine), line([[bx - 15, top - 12], [bx - 11, top - 16], [bx - 5, top - 13]], 0.8, D.gold));
-    for (const [x, y] of [[bx - 13, top - 9], [bx - 10, top - 12], [bx - 7, top - 9]]) out.push(line([[bx - 6, top - 1], [x, y]], 0.4, D.wineDk));
     // Puffed shoulder caps.
     out.push(...ball(bx - 7, top + 4, 5.4, 4.4, D.black, { dark: D.blackDk, light: D.blackLt }));
   });
@@ -1859,7 +1855,7 @@ function selene(pose, f, mood) {
     // The lining turned out along the trailing edge, scattered with stars.
     const lin = edge.slice(3).map(([x, y], i) => [x - 0.4, y + i * 0.3]);
     out.push(strip(lin, (t) => 2 + t * 4.5, M.capeIn, { n: 2 }));
-    for (let i = 1; i < lin.length; i++) out.push(star(lin[i][0] + 0.8, lin[i][1] - 1, 1.1 + (i % 2) * 0.5, M.star));
+    for (let i = 2; i < lin.length; i += 2) out.push(star(lin[i][0] + 0.8, lin[i][1] - 1, 1.1 + (i % 2) * 0.5, M.star));
     for (const [x, y] of [[bx - 14, G - 60], [bx - 20, G - 40], [bx - 10, G - 30], [bx - 24, G - 20]]) out.push(dot(x + sw * 0.5, y, 0.5, M.lavLt));
   });
 
@@ -1904,8 +1900,8 @@ function selene(pose, f, mood) {
     out.push(F(T(ovalPts(sx + 2, sy - 3, r - 5, r - 6, 20, tl - 0.6), M.lavLt)));
     out.push(F(T(crescentPts(sx + 0.6, sy - 0.4, 7.4, 3.2, -0.5), M.goldDk)), F(T(crescentPts(sx + 0.8, sy - 0.6, 6.8, 2.4, -0.5), M.gold)));
     out.push(star(sx + 3, sy - 2, 1.8, '#ffffff'));
-    for (let k = 0; k < 6; k++) {
-      const t = (k / 6) * TAU + 0.3;
+    for (let k = 0; k < 4; k++) {
+      const t = (k / 4) * TAU + 0.8;
       out.push(dot(sx + 0.3 + Math.cos(t) * (r - 1.1), sy - 0.3 + Math.sin(t) * (r - 1.1), 0.7, M.silverDk));
     }
   };
@@ -1958,12 +1954,11 @@ function selene(pose, f, mood) {
     const sk = (t) => Math.sin(ph * 2 + t) * (walk ? 1.4 : 0.4);
     out.push(poly(round([[bx - 9, waist], [bx + 9.6, waist], [bx + 12, waist + 12], [bx + 14 + sk(1) + stance * 2, G - 30], [bx + 4, G - 27.6], [bx - 4, G - 29], [bx - 14 + sk(0) - stance * 2, G - 31], [bx - 11.6, waist + 12]], 2), M.lavDk));
     out.push(poly(round([[bx - 8.4, waist], [bx + 9, waist], [bx + 11.2, waist + 12], [bx + 13 + sk(1) + stance * 2, G - 31.4], [bx + 4, G - 29], [bx - 4, G - 30.4], [bx - 12 + sk(0) - stance * 2, G - 32], [bx - 10.6, waist + 12]], 2), M.lav));
-    for (const x of [bx - 5, bx + 1, bx + 7]) out.push(line([[x, waist + 2], [x + (x - bx) * 0.25 + sk(x), G - 31]], 0.6, M.lavDk));
     out.push(line([[bx - 12 + sk(0) - stance * 2, G - 31.6], [bx - 4, G - 30], [bx + 4, G - 28.6], [bx + 13 + sk(1) + stance * 2, G - 31]], 1, M.gold));
     // Tassets.
     for (const [x0, dx, c] of [[bx - 9, -3, M.silverDk], [bx + 2, 4, M.silver]]) {
       out.push(poly(round([[x0, waist], [x0 + 9, waist], [x0 + 9 + dx, waist + 12], [x0 + 4.5 + dx, waist + 13.6], [x0 + dx, waist + 13]], 2), shade(c, -10)), poly(round([[x0 + 0.6, waist + 0.4], [x0 + 8.4, waist + 0.4], [x0 + 8.4 + dx, waist + 11.4], [x0 + 4.5 + dx, waist + 12.8], [x0 + 0.6 + dx, waist + 12.2]], 2), c));
-      out.push(line([[x0 + dx * 0.5 + 0.6, waist + 6.4], [x0 + dx * 0.5 + 8.6, waist + 6]], 0.6, M.silverDk), line([[x0 + dx + 0.6, waist + 12], [x0 + dx + 8.4, waist + 11.4]], 0.8, M.gold));
+      out.push(line([[x0 + dx + 0.6, waist + 12], [x0 + dx + 8.4, waist + 11.4]], 0.8, M.gold));
     }
     // Breastplate.
     const bp = round([[bx - 9, top + 2], [bx - 10.8, top + 10], [bx - 8, top + 18], [bx - 8.8, waist + 1], [bx + 9.2, waist + 1], [bx + 9, top + 18], [bx + 11.8, top + 11], [bx + 10, top + 2], [bx + 2, top - 1]], 2);
