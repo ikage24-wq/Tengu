@@ -100,7 +100,7 @@ export const MAPS = {
     // chase in the boughs and curl up at night; the Petal Sprites doze on the clouds at night.
     habitats: { snailbun: { naps: true, home: { x: 900, y: 976 } }, bumble: { home: { x: 1200, y: 680 }, play: true }, puffle: { naps: true, play: true }, petalsprite: { naps: true } },
     // The area boss (world/nest.js): after enough hunting, the Queen Bee bursts out of the hive.
-    nest: { mob: 'queenbee', x: 1200, y: 680, kills: 150, name: 'The giant hive', wake: 'Her Majesty is NOT amused. Everyone to Beehive Banks!' },
+    nest: { mob: 'queenbee', x: 1200, y: 680, kills: 150, name: 'The giant hive', wake: 'Her Majesty is NOT amused. Everyone to Beehive Banks!', stirs: ['The giant hive is buzzing...', 'The giant hive is shaking! Something big is waking up.'] },
     // The meadow's spirit floats by the cherry tree's crown when the map is calm (world/calm.js).
     spirit: { x: 1010, y: 380 },
     // At night (world/daytime.js) warm light glows at the arch, the picnic, the hive and the lookout.
@@ -213,6 +213,8 @@ export const MAPS = {
       ['bigtree', 1480, 1, 480]],
     lamps: [{ x: 200, y: 890 }, { x: 1200, y: 590 }, { x: 1200, y: 290 }, { x: 600, y: 930 }],
     spirit: { x: 1480, y: 360 },
+    // The area boss (world/nest.js): after enough hunting, Old MacGoblin storms out of the barn.
+    nest: { mob: 'macgoblin', x: 1200, y: 640, kills: 150, name: 'The big barn', wake: 'GET OFF MY LAND! Everyone to the Goblin Barnyard!', stirs: ['Something is stomping around in the big barn...', 'The barn doors rattle! Someone is VERY grumpy.'] },
     habitats: { sproutling: { naps: true, home: { x: 600, y: 960 } }, mushkin: { naps: true, home: { x: 1200, y: 640 } }, piglet: { play: true, naps: true } },
     spawns: [
       // Mandrake Rows: Mandrakes.

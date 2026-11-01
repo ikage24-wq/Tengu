@@ -36,6 +36,15 @@ export const MOBS = {
     drops: [{ id: 'royal_jelly', chance: 1, qty: 3 }, { id: 'honeycomb', chance: 1, qty: 4 }, { id: 'bee_fuzz', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 6, warn: 1.3, damage: 60, range: 170 },
   }),
+  // Clover Hills' area boss (world/nest.js, render/mobs/farm.js): the Toadstool Goblins' grumpy
+  // old farmer chief bursts out of the big barn once enough of the hills has been hunted, and
+  // every few seconds slams his pitchfork down, hurting anyone on his floor near him.
+  macgoblin: mob({
+    id: 'macgoblin', name: 'Old MacGoblin', level: 10, hp: 3200, atk: 40, def: 8, acc: 26, eva: 1, exp: 1600, gold: [250, 500],
+    speed: 30, w: 70, h: 84, art: 'macgoblin', boss: true,
+    drops: [{ id: 'mushcap', chance: 1, qty: 6 }, { id: 'clover', chance: 1, qty: 5 }, { id: 'orange_potion', chance: 1, qty: 8 }],
+    special: { kind: 'slam', every: 6, warn: 1.3, damage: 90, range: 180 },
+  }),
   sproutling: mob({
     id: 'sproutling', name: 'Mandrake', level: 4, hp: 45, atk: 13, def: 2, acc: 14, eva: 1, exp: 22, gold: [4, 12],
     speed: 34, w: 18, h: 28, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }],

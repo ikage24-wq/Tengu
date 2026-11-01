@@ -789,7 +789,7 @@ export function updateWorld(world, dt, input) {
       world.fx.push({ kind: 'slam', x: m.x, y: m.def.fly ? m.spawn.y : m.y, t: 0, dur: 0.6, range: m.def.special.range });
       world.juice.push({ type: 'shake', mag: 6, dur: 0.5 }, { type: 'slam', x: m.x, y: m.y, range: m.def.special.range });
       // It hits anyone standing on its floor near it (a flyer's floor is the one it hovers over).
-      const onFloor = world.body.onGround && (m.def.fly ? Math.abs(world.body.y - m.spawn.y) < 8 : world.body.surface?.ground);
+      const onFloor = world.body.onGround && Math.abs(world.body.y - (m.def.fly ? m.spawn.y : m.y)) < 8;
       if (onFloor && Math.abs(world.body.x - m.x) < m.def.special.range && !world.dead) {
         hurtPlayer(world, m.def.special.damage, m.x);
         m.gloatAt = world.now;

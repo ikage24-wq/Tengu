@@ -198,3 +198,15 @@ test("the Queen Bee bursts out of the hive after enough hunting, and her honey s
   killMob(w, queen);
   assert.equal(w.nestKills.meadow1, 0, 'the count starts again');
 });
+
+test('every area boss nest wakes a real boss, over a floor, with its own warnings', async () => {
+  const { MOBS } = await import('../src/data/mobs.js');
+  const { ARTS } = await import('../src/render/mobs/index.js');
+  for (const m of Object.values(MAPS)) {
+    if (!m.nest) continue;
+    const def = MOBS[m.nest.mob];
+    assert.ok(def?.boss && ARTS[def.art], `${m.id}: ${m.nest.mob} is a drawn boss`);
+    assert.ok(surfacesOf(m).some((s) => m.nest.x >= s.x1 && m.nest.x <= s.x2 && Math.abs(s.yAt(m.nest.x) - m.nest.y) < 2), `${m.id}: the nest is over a floor`);
+    assert.equal(m.nest.stirs?.length, 2, `${m.id}: two warnings`);
+  }
+});

@@ -1,6 +1,7 @@
 // Area boss nests (the player's map rule): hunt enough on a map and its own boss wakes at its nest,
 // a shared moment for everyone there. A map's `nest` is { mob, x, y (the floor it wakes over),
-// kills (how many monsters must fall first), name (what stirs) }. The count is kept per map in
+// kills (how many monsters must fall first), name (what stirs), stirs (the two warnings as it
+// nears: half way, then nearly there), wake (the callout's line) }. The count is kept per map in
 // world.nestKills; it rises with every monster that falls there, warns as it gets close, and starts
 // again once the boss is beaten. Other players gather for it like any field boss (world/raids.js).
 
@@ -26,7 +27,7 @@ export function nestKill(world, m) {
   const now = was + 1;
   world.nestKills[world.map.id] = now;
   for (const w of WARN) {
-    if (was < nest.kills * w && now >= nest.kills * w) world.log(w < 0.8 ? `${nest.name} is buzzing...` : `${nest.name} is shaking! Something big is waking up.`, '#ffd65a');
+    if (was < nest.kills * w && now >= nest.kills * w) world.log(nest.stirs[w < 0.8 ? 0 : 1], '#ffd65a');
   }
   if (now >= nest.kills) wakeNest(world);
 }
