@@ -325,40 +325,54 @@ export const MAPS = {
 
 
 
-  // Twilight Ruins climbs a fallen temple in three zones (the tall-map rules, a light rework,
-  // data/climb.js): the Fallen Courtyard, where the Dullahans keep their silent watch among the
-  // statues and a column of wisp-light lifts you up; the Wisp Galleries, broken halls with a slab of
-  // floating stone drifting across their gap and the way on to the Fox Shrine Path; and the Imp
-  // Spires on top, where air vents bounce you up to the lookout and the road on to Crystal Cave.
+  // Twilight Ruins is a descent into a sunken temple (data/climb.js lay(), zones by height): you
+  // arrive on the Temple Roof, broken rooftops where the Imps nest and a vent bounces you up; drop
+  // down through the Collapsed Halls, storeys whose floors have fallen through, where the Wisps
+  // drift, a slab of stone floats across the gap and the way to the Fox Shrine Path leads off; to
+  // the Sunken Crypt at the bottom, where the Dullahans keep their watch and the way on to Crystal
+  // Cave runs underground. A great column of wisp-light rises from the crypt through every hole,
+  // all the way back up to the roof (Up to ride it).
   ruins: {
     id: 'ruins', name: 'Twilight Ruins', theme: 'ruins', town: 'grove', world: { x: 322, y: 90 },
     look: { islands: 'stone' },
-    ...climb({
-      width: 2600, ground: 900, quiet: [[40, 900, 160], [2000, 580, 200]],
+    ...lay({
+      width: 2600, ground: 1120, by: 'y', quiet: [[40, 300, 160], [2380, 700, 200], [2540, 1120, 160]],
       zones: [
-        { name: 'Fallen Courtyard', color: '#8a6ad0', rows: ['wide', 'split'], mobs: ['boneknight', 'wisp'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.12] }] },
-        { name: 'Wisp Galleries', color: '#4f95e0', rows: ['tri', 'long', 'splitwide'], mobs: ['wisp', 'gloombat'], nodes: [{ kind: 'herb', pool: { clover: 1 } }],
-          look: { sky: ['#6a5aa8', '#9a86d0', '#d8c8f0'] } },
-        { name: 'Imp Spires', color: '#c84f8a', rows: ['split', 'middle'], mobs: ['gloombat'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
-          look: { sky: ['#4a3a8a', '#7a5ab0', '#c8a8e0'] } },
+        { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.15] }],
+          look: { sky: ['#2a2250', '#4a3a7a', '#8a7ab0'] } },
+        { name: 'Collapsed Halls', color: '#4f95e0', from: 800, mobs: ['wisp', 'gloombat'], nodes: [{ kind: 'herb', pool: { clover: 1 } }],
+          look: { sky: ['#5a4a98', '#8a76c0', '#c8b8e8'] } },
+        { name: 'Temple Roof', color: '#c84f8a', from: 440, mobs: ['gloombat'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }] },
+      ],
+      ledges: [
+        // The Temple Roof, broken in the middle.
+        { x: 0, y: 300, w: 900 }, { x: 1000, y: 340, w: 600 }, { x: 1700, y: 300, w: 900 },
+        // The Collapsed Halls: two storeys with their floors fallen through.
+        { x: 100, y: 520, w: 700 }, { x: 950, y: 520, w: 400 }, { x: 1500, y: 520, w: 900 },
+        { x: 300, y: 700, w: 600 }, { x: 1100, y: 700, w: 500 }, { x: 1750, y: 700, w: 700 },
+        // Shelves in the crypt.
+        { x: 200, y: 900, w: 400 }, { x: 1000, y: 900, w: 500 }, { x: 1900, y: 900, w: 400 },
+        // The slab of stone floating across the halls.
+        { x: 1360, y: 620, w: 120, style: 'stone', drift: { dx: 300, period: 10 } },
       ],
     }),
-    // A moving part per zone: wisp-light rising from the courtyard (Up to ride it), a floating slab
-    // drifting across the galleries' gap, and air vents in the spires.
-    updrafts: [{ x: 1150, w: 56, top: 620, bottom: 900, kind: 'wisplight' }],
-    springs: [{ x: 900, y: 420, up: 175, kind: 'gust' }],
+    // A moving part per zone: a vent on the roof, the floating slab in the halls, and the column of
+    // wisp-light rising from the crypt through every hole to the roof.
+    updrafts: [{ x: 930, w: 50, top: 330, bottom: 1120, kind: 'wisplight' }],
+    springs: [{ x: 1250, y: 340, up: 160, kind: 'gust' }],
     portals: [
-      { id: 'west', x: 40, y: 900, to: 'grove', toPortal: 'east' },
-      { id: 'east', x: 1450, y: 260, to: 'cave', toPortal: 'west' },
+      { id: 'west', x: 40, y: 300, to: 'grove', toPortal: 'east' },
+      { id: 'east', x: 2540, y: 1120, to: 'cave', toPortal: 'west' },
     ],
     npcs: [],
-    // A landmark per zone: the arch and the statues in the courtyard, the great arch in the
-    // galleries, a pillar on the spires.
-    deco: [['ruinarch', 300], ['statue', 860], ['ruinpillar', 1660], ['statue', 2200], ['ruinarch', 1300, 0, 580], ['ruinpillar', 1100, 0, 340]],
-    lamps: [{ x: 1300, y: 540 }, { x: 1300, y: 220 }, { x: 860, y: 860 }],
-    spirit: { x: 1700, y: 220 },
-    habitats: { boneknight: { naps: true, home: { x: 860, y: 900 } }, wisp: { play: true }, gloombat: { play: true, naps: true } },
+    // A landmark per zone: pillars and a statue on the roof, the great arch in the halls, the
+    // statues and arch of the crypt.
+    deco: [['ruinpillar', 400, 0, 300], ['statue', 2100, 0, 300], ['ruinarch', 1150, 0, 520], ['ruinarch', 300], ['statue', 860], ['ruinpillar', 1660]],
+    lamps: [{ x: 1150, y: 480 }, { x: 860, y: 1080 }, { x: 930, y: 1100 }],
+    spirit: { x: 1300, y: 240 },
+    habitats: { boneknight: { naps: true, home: { x: 860, y: 1120 } }, wisp: { play: true }, gloombat: { play: true, naps: true } },
   },
+
 
 
   // Crystal Cave climbs a great crystal cavern in three zones (the tall-map rules, a light rework,
@@ -823,9 +837,8 @@ Object.assign(MAPS, {
 const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ mob: mobs[i % mobs.length], x: Math.round(x1 + ((i + 0.5) / n) * (x2 - x1)), y }));
 
 MAPS.woods.portals.push({ id: 'glade', x: 1250, y: 440, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
-// The ruins' floating slab, and the way to the shrine from the galleries.
-MAPS.ruins.platforms.push({ x: 1115, y: 500, w: 140, drift: { dx: 230, period: 9 } });
-MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 580, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
+// The way to the shrine leads off the collapsed halls.
+MAPS.ruins.portals.push({ id: 'shrine', x: 2380, y: 700, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
 // Crystal Cave's drifting crystal slab, and the tunnel to the springs off the galleries.
 MAPS.cave.platforms.push({ x: 975, y: 400, w: 150, style: 'stone', drift: { dx: 500, period: 11 } });
 MAPS.cave.portals.push({ id: 'springs', x: 200, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
