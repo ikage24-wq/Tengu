@@ -504,6 +504,9 @@ test('a queen back for a rematch: players gather, dodge and take her moves, and 
   const bots = createBots(world, seeded(61), { clock: EVENING });
   world.bots = bots;
   loadMap(world, 'glade', 'start');
+  // (Just this one queen: the glade's own roaming one is sent off for the test.)
+  world.mobs = world.mobs.filter((m) => !m.def.boss);
+  world.spawner.slots = world.spawner.slots.filter((s) => !s.spawn?.respawn);
   updateBots(bots, world, 0.05);
   const queen = spawnMob(world.map, { mob: 'sylvana', x: world.body.x + 260, y: world.map.groundY });
   queen.aggroUntil = Infinity;

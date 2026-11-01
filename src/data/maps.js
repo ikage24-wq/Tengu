@@ -862,8 +862,9 @@ MAPS.shrine.portals.push({ id: 'sanctum', x: 2560, y: 760, to: 'sanctum', toPort
 MAPS.springs.portals.push({ id: 'grotto', x: 1500, y: 760, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
 MAPS.starfall.portals.push({ id: 'terrace', x: 2340, y: 860, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
-// After their trials, the queens come back to their regions every ten minutes or so.
-MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 720, respawn: 600, after: 'story_3_2' });
-MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 760, respawn: 600, after: 'story_4_3' });
-MAPS.springs.spawns.push({ mob: 'lilith', x: 1900, y: 760, respawn: 600, after: 'story_5_3' });
-MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600, after: 'story_6_3' });
+// The queens roam their regions as field bosses (from the start: the story is optional), back
+// every ten minutes or so after they fall.
+MAPS.glade.spawns.push({ mob: 'sylvana', x: 1300, y: 720, respawn: 600 });
+MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 760, respawn: 600 });
+MAPS.springs.spawns.push({ mob: 'lilith', x: 1900, y: 760, respawn: 600 });
+MAPS.starfall.spawns.push({ mob: 'selene', x: 1200, y: 860, respawn: 600 });

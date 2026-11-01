@@ -48,7 +48,7 @@ test('the story is optional: every region is open, only its arenas wait for it',
   assert.equal(storyLock(w, MAPS.glade, bower), null, 'open once the story gets there');
 });
 
-test("a queen waits in her arena for her trial, and comes back to her region after it", () => {
+test("a queen waits in her arena for her trial, and roams her region as a field boss", () => {
   const char = createCharacter('Hana', {});
   gainExp(char, 1e6);
   char.tutorial = null;
@@ -78,7 +78,7 @@ test("a queen waits in her arena for her trial, and comes back to her region aft
   assert.ok(w.mobs.some((m) => m.def.id === 'sylvana'), 'her rematch on the field');
   const fresh = createWorld(createCharacter('Kai', {}));
   loadMap(fresh, 'glade', 'west');
-  assert.ok(!fresh.mobs.some((m) => m.def.id === 'sylvana'), 'not before her trial');
+  assert.ok(fresh.mobs.some((m) => m.def.id === 'sylvana'), 'she roams her region as a field boss from the start');
 });
 
 test('a scene holds the world still and steps through its lines', () => {
