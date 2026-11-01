@@ -1648,8 +1648,10 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
     if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
-    // A drifting ledge glides on the same clock as the physics.
-    else drawIsland(ctx, theme, p.drift ? { ...p, x: p.x + driftOffset(p, map.clock ?? 0) } : p, cam, time, pi, zoneLook(map, p.y));
+    // A drifting ledge glides on the same clock as the physics. It's drawn at its own spot with the
+    // camera shifted the other way, so its texture and edge flowers ride along with it instead of
+    // sliding over it.
+    else drawIsland(ctx, theme, p, p.drift ? { ...cam, x: cam.x - driftOffset(p, map.clock ?? 0) } : cam, time, pi, zoneLook(map, p.y));
   }
 }
 
