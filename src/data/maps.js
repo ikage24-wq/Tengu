@@ -574,6 +574,15 @@ Object.assign(MAPS, {
       { id: 'ridge', x: 2130, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' },
     ],
     npcs: [{ id: 'brann', x: 780 }, { id: 'tora', x: 1720 }],
+    // Its districts, left to right, each named as you walk in (the town rules).
+    zonesBy: 'x',
+    zones: [
+      { name: 'Training Yard', from: 0, color: '#c97a3a' },
+      { name: 'Arena Plateau', from: 640, color: '#d0504a', look: { sky: ['#ffc8a0', '#ffe0c4', '#fff2e2'] } },
+      { name: 'Forge Row', from: 1520, color: '#e0703a', look: { sky: ['#ffb890', '#ffd8b8', '#fff0e0'] } },
+    ],
+    // Lamps that glow at night (world/daytime.js): the yard, the arena's braziers, the forge.
+    lamps: [{ x: 300, y: 440 }, { x: 900, y: 420 }, { x: 1260, y: 420 }, { x: 1720, y: 440, c: '#ffb070' }, { x: 2050, y: 440 }],
     deco: [['totem', 160], ['dummy', 300], ['dummy', 380], ['weaponrack', 450], ['brazier', 900], ['brazier', 1260]],
     spawns: [],
   },
