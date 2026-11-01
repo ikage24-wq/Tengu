@@ -612,7 +612,16 @@ Object.assign(MAPS, {
       { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
       { id: 'east', x: 2340, y: 480, to: 'ruins', toPortal: 'west' },
     ],
-    npcs: [{ id: 'nim', x: 420 }, { id: 'elowen', x: 1500 }],
+    npcs: [{ id: 'nim', x: 600 }, { id: 'elowen', x: 1500 }],
+    // Its districts, left to right, each named as you walk in (the town rules).
+    zonesBy: 'x',
+    zones: [
+      { name: 'Lantern Lane', from: 0, color: '#bfe6ff' },
+      { name: 'Moon Tree Plaza', from: 880, color: '#c9a6ff', look: { sky: ['#8a7ad0', '#b8a8e8', '#e8e0ff'] } },
+      { name: 'Rune Garden', from: 1380, color: '#9fe0b0', look: { sky: ['#7ac8b0', '#a8e0d0', '#e0f8ee'] } },
+    ],
+    // Lamps that glow at night (world/daytime.js): the lane, the moon tree, the rune circle.
+    lamps: [{ x: 300, y: 440 }, { x: 760, y: 440 }, { x: 1110, y: 400, c: '#e6dcff' }, { x: 1800, y: 440, c: '#bfe6ff' }, { x: 2180, y: 440 }],
     deco: [['moonstone', 1660], ['runecircle', 1800], ['moonstone', 1940], ['rootgate', 2280]],
     spawns: [],
   },
