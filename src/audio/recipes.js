@@ -521,7 +521,6 @@ const R = {
   matSlime: { db: -16, vary: 10, max: 2, layers: [{ rec: 'slime' }] },
   matSpirit: { db: -18, vary: 8, max: 2, layers: [whoosh(220, 3000, 900, { focus: 0.3 })] },
   // A crit's low thump, under its ring.
-  critThump: { db: -12, vary: 2, max: 1, gap: 120, layers: [thump(70, 220, { slide: -2 }), { wave: 'noise', env: { a: 1, s: 10, d: 90 }, lpf: [500], db: -10 }] },
   // Low HP: a heartbeat, lub-dub.
   heartbeat: { db: -15, max: 1, gap: 500, layers: [thump(62, 120, { slide: -1.5 }), thump(55, 160, { slide: -1.5, at: 170, db: -3 })] },
   // ---------- Your summons' voices (sfx.js; played when they set about something) ----------

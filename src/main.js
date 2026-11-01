@@ -216,7 +216,12 @@ function step(now) {
       updateWorld(world, TICK, { held: input.held, pressed: queued, locked });
       queued = new Set();
     }
+    // Everything the other players set off this frame is theirs: its sounds play softer, behind
+    // yours (listen.js).
+    const before = new Set([...world.fx, ...world.juice]);
     updateBots(world.bots, world, dt);
+    for (const f of world.fx) if (!before.has(f)) f.ally = true;
+    for (const j of world.juice) if (!before.has(j)) j.ally = true;
     // Online: tell friends what you're doing, and show what they're doing.
     tickNet(world, dt);
     if (world.events.some((e) => e.type === 'map')) saveGame(world.char);

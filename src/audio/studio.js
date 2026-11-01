@@ -15,8 +15,8 @@
 // every bar must add up to a whole bar).
 // Drums, one character per row: K kick, S snare, c clap, h hat, o open hat, t tom, x shaker,
 // w woodblock, * crash, C kick + clap, O kick + open hat, B kick + snare, H kick + hat, . nothing;
-// X the hard kick (the jingles' payoff), P a punchy, short kick (drum & bass, trap), Y P + clap,
-// U P + crash, I K + crash.
+// X the hard kick (the jingles' payoff), P a punchy, short kick, Y P + clap, U P + crash,
+// I K + crash.
 // Instruments: { sample: 'flute', gain, attack, rel, gate } for a recording (the instruments in
 // the bank's manifest; without one, like the choir, its synth voice in VOICES below), or
 // { synth: 'pluck' | 'pad' | 'sub' | 'lead' | 'bell' | 'stab' | 'bass', gain, gate, cut } for a synth.
@@ -269,47 +269,6 @@ export const SYNTHS = {
     }
     return x;
   },
-  // The dubstep wobble: three detuned saws and a sine an octave under, through a resonant filter
-  // that opens and shuts `rate` times a second, then driven.
-  wobble(m, d, sr, rand, o) {
-    const f = hz(m);
-    const n = Math.round((d + 0.03) * sr);
-    const x = saws(f, n, sr, 3, 0.8, rand);
-    const rate = o.rate ?? 4.67;
-    for (let i = 0; i < n; i++) x[i] += Math.sin((TAU * f * i) / sr) * 0.6;
-    lowpass(x, sr, (t) => 150 + 2600 * Math.pow(0.5 + 0.5 * Math.sin(TAU * rate * t - Math.PI / 2), 2), 3);
-    for (let i = 0; i < n; i++) {
-      const t = i / sr;
-      x[i] = Math.tanh(x[i] * 2.2) * Math.min(1, t / 0.005) * (t < d ? 1 : Math.exp(-(t - d) / 0.03));
-    }
-    return x;
-  },
-  // The drum & bass reese: four saws detuned wide so they phase against each other, a slowly
-  // moving filter, a sine underneath.
-  reese(m, d, sr, rand) {
-    const f = hz(m);
-    const n = Math.round((d + 0.05) * sr);
-    const x = saws(f, n, sr, 4, 1.4, rand);
-    lowpass(x, sr, (t) => 700 + 500 * (0.5 + 0.5 * Math.sin(TAU * 0.7 * t)), 0.9);
-    for (let i = 0; i < n; i++) {
-      const t = i / sr;
-      x[i] = Math.tanh((x[i] + Math.sin(TAU * f * t) * 0.7) * 1.4) * Math.min(1, t / 0.01) * (t < d ? 1 : Math.exp(-(t - d) / 0.04));
-    }
-    return x;
-  },
-  // The trap 808: a sine that punches down from above the note, held, with a touch of grit.
-  s808(m, d, sr) {
-    const f = hz(m);
-    const n = Math.round((d + 0.15) * sr);
-    const x = new Float32Array(n);
-    let ph = 0;
-    for (let i = 0; i < n; i++) {
-      const t = i / sr;
-      ph += (f * (1 + 2 * Math.exp(-t / 0.012))) / sr;
-      x[i] = Math.tanh(2.2 * Math.sin(TAU * ph)) * (t < d ? 1 : Math.exp(-(t - d) / 0.1)) * Math.min(1, t / 0.002);
-    }
-    return x;
-  },
   // A build-up riser: noise swept up through a band, growing over the note (its pitch is unused).
   riser(m, d, sr, rand) {
     const n = Math.round((d + 0.05) * sr);
@@ -486,7 +445,7 @@ export const SYNTHS = {
 };
 
 // Each synth's level, so a synth and a recorded instrument at the same gain sound about as loud.
-const SYNTH_LEVEL = { pluck: 0.4, pad: 0.6, sub: 0.21, bass: 0.58, lead: 0.26, stab: 0.5, bell: 0.28, hardlead: 0.2, riser: 0.3, wobble: 0.3, reese: 0.3, s808: 0.35 };
+const SYNTH_LEVEL = { pluck: 0.4, pad: 0.6, sub: 0.21, bass: 0.58, lead: 0.26, stab: 0.5, bell: 0.28, hardlead: 0.2, riser: 0.3 };
 
 // The instruments' synth voices, for an instrument with no recording (the choir) or before the
 // recordings load (and in tests). `level` matches each voice to its recording's loudness, so songs
@@ -532,7 +491,7 @@ export const DRUMS = {
     lowpass(x, sr, () => 4200, 0.7);
     return x;
   },
-  // The punchy kick (drum & bass, trap): short, a bright click and a tight body, little boom.
+  // The punchy kick: short, a bright click and a tight body, little boom.
   P(sr, rand) {
     const n = Math.round(0.24 * sr);
     const x = new Float32Array(n);

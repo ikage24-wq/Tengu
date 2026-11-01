@@ -5,7 +5,12 @@
 // The rules, from docs/audio/research-sfx.md and research-japanese.md:
 // - Each sound has its own level (recipes' `db`), a little random pitch so repeats don't sound
 //   like a machine (`vary`), and a cap on how many play at once (`max`); the same sound inside
-//   35 ms plays once, a little louder, and no more than 24 sounds ring at a time.
+//   35 ms plays once, and no more than 16 sounds ring at a time.
+// - Yours come first (the player's ask: a busy map was a mess). The other players' sounds (`ally`:
+//   party members, other hunters, friends online) play 9 dB softer, one at a time (one starts
+//   every 90 ms at most), and their hits are a single plain blow. Only so many sounds may start
+//   in any 100 ms (theirs give way first), and the more that ring at once, the softer they all
+//   are (engine.js `setDensity`), so a crowded fight stays clear instead of piling up.
 // - Blows in a quick chain climb in pitch (the first at the base, then up a fourth, then a fifth)
 //   so the player hears the combo build, and a finisher drops back down with a deep thump.
 // - Swords, daggers, bows, arrows and spells are recorded (public domain packs, see assets/audio/SOURCES.md):
@@ -16,7 +21,7 @@
 // - NPCs speak in little blips, one per couple of letters, from a three-note set around their own
 //   pitch (the same letter always the same note), rising at the end of a question.
 
-import { play, now, audioReady, duck } from './engine.js';
+import { play, now, audioReady, duck, setDensity } from './engine.js';
 import { MATERIAL } from './materials.js';
 import { sfxBuffer } from './bank.js';
 import { RECIPES } from './recipes.js';
@@ -25,6 +30,12 @@ const UI = new Set(['click', 'cursor', 'cancel', 'open', 'close', 'denied', 'ope
 const JINGLES = new Set(['levelup', 'questDone', 'questAccept', 'jobUp', 'rareDrop', 'itemGet', 'bossDefeated', 'death']);
 const voices = [];
 const last = new Map();
+// The sfx-bus sounds started in the last 100 ms, and when the other players' last one started.
+const recent = [];
+let allyAt = -9;
+// Set while one of the other players' sounds is being played (sfx(), below).
+let allyNow = false;
+const ALLY_DB = -9;
 let jingleEnd = 0;
 const combo = { at: -9, step: 0 };
 const coins = { at: -9, step: 0 };
@@ -43,6 +54,14 @@ function voice(name, o = {}) {
   // Repeats inside a recipe's gap (35 ms unless it says) are one sound: a volley of spell hits,
   // a fan of arrows, or quick dialog letters don't machine-gun.
   if (t - (last.get(name) ?? -9) < (r.gap ?? 35) / 1000) return;
+  const ally = allyNow || Boolean(o.ally);
+  const ranked = !JINGLES.has(name) && !UI.has(name) && o.bus !== 'voice';
+  if (ranked) {
+    // The others' sounds: one at a time. Everyone's: only so many starting at once.
+    if (ally && t - allyAt < 0.09) return;
+    while (recent.length && recent[0] < t - 0.1) recent.shift();
+    if (recent.length >= (ally ? 3 : 7)) return;
+  }
   last.set(name, t);
   for (let i = voices.length - 1; i >= 0; i--) if (voices[i].end < t) voices.splice(i, 1);
   const mine = voices.filter((v) => v.name === name);
@@ -51,7 +70,7 @@ function voice(name, o = {}) {
     mine[0].v?.gain.gain.setTargetAtTime(0, t, 0.01);
     voices.splice(voices.indexOf(mine[0]), 1);
   }
-  if (voices.length >= 24 && !JINGLES.has(name)) return;
+  if (voices.length >= 16 && !JINGLES.has(name)) return;
   const buf = sfxBuffer(name);
   if (!buf) return;
   const vary = r.vary ? 1 + ((Math.random() * 2 - 1) * r.vary) / 100 : 1;
@@ -61,19 +80,26 @@ function voice(name, o = {}) {
     at = Math.max(t, jingleEnd);
     jingleEnd = at + buf.duration * 0.9;
   }
-  const v = play(buf, { bus: UI.has(name) ? 'ui' : o.bus ?? 'sfx', db: (r.db ?? -14) + (o.db ?? 0), rate, pan: UI.has(name) ? 0 : o.pan, room: r.room ? 0.35 : 0, at });
-  voices.push({ name, v, end: (at || t) + buf.duration / rate });
-  if (r.duck) {
+  const db = (r.db ?? -14) + (o.db ?? 0) + (ally ? ALLY_DB : 0);
+  const v = play(buf, { bus: UI.has(name) ? 'ui' : o.bus ?? 'sfx', db, rate, pan: UI.has(name) ? 0 : o.pan, room: r.room ? 0.35 : 0, at });
+  voices.push({ name, v, end: (at || t) + buf.duration / rate, ranked });
+  if (ranked) {
+    recent.push(t);
+    if (ally) allyAt = t;
+  }
+  setDensity(voices.filter((x) => x.ranked).length);
+  if (r.duck && !ally) {
     if (at > t + 0.01) setTimeout(() => duck(r.duck[0], r.duck[1]), (at - t) * 1000);
     else duck(r.duck[0], r.duck[1]);
   }
   played.push(name);
   if (played.length > 300) played.shift();
-  log.push({ name, at: at || t, len: buf.duration / rate });
-  if (log.length > 600) log.shift();
+  log.push({ name, at: at || t, len: buf.duration / rate, db, rate, pan: UI.has(name) ? 0 : o.pan ?? 0, bus: UI.has(name) ? 'ui' : o.bus ?? 'sfx', ally });
+  if (log.length > 3000) log.shift();
 }
 
-// Every sound played, with when it starts and how long it rings (for tools and play tests).
+// Every sound played: when it starts, how long it rings, its level, speed, pan and bus (for tools
+// and play tests, which can rebuild exactly what was heard).
 export const log = [];
 
 const STEPS = { grass: 'stepGrass', stone: 'stepStone', wood: 'stepWood', sand: 'stepSand', cloud: 'stepCloud', crystal: 'stepCrystal' };
@@ -121,16 +147,17 @@ const SOUNDS = {
   // A blow landing. Blades: a punch and a cut whose body climbs with each step of a quick chain,
   // a finisher's thump and clang, a crit's ring. Arrows and stars thud in; spells land with their
   // school's own impact. Then the path's (Rage, Faith) or the weapon's element colour.
-  hit({ big, crit, path, school, via = 'blade', weapon, element, many = 1, pan, mob, boss }) {
+  hit({ big, crit, path, school, via = 'blade', weapon, element, many = 1, pan, mob, boss, ally }) {
+    // The other players' blows: one plain sound, no layers.
+    if (ally) return voice(ARROWS.has(via) ? 'arrowHit' : big ? 'hitHeavy' : 'hit', { pan });
     const db = Math.min(3, (many - 1) * 1);
     const heft = { axe: 0.9, spear: 0.95, dagger: 1.08, none: 1.04 }[weapon] ?? 1;
+    const colour = COLOUR[path] ?? COLOUR[element];
+    // What the monster is made of, unless an element already colours the blow.
     const mat = MATERIAL[mob];
-    if (mat) voice(mat, { pan, db: big ? 2 : 0, rate: heft });
-    if (crit) {
-      voice('critThump', { pan });
-      duck(-6, 140);
-    }
-    if (big) duck(boss ? -14 : -10, 170);
+    if (mat && !colour) voice(mat, { pan, db: (big ? 2 : 0) - 3, rate: heft });
+    if (crit) duck(-4, 120);
+    if (big) duck(boss ? -8 : -5, 150);
     if (ARROWS.has(via) || HEAVY_HITS.has(via)) voice(big || HEAVY_HITS.has(via) ? 'arrowHitHeavy' : 'arrowHit', { pan, db });
     else if (via === 'star' || via === 'moonstar' || via === 'nightstar' || via === 'giantstar' || via === 'pebble') voice('starHit', { pan, db });
     else if (via !== 'blade' && via !== 'chain' && school && COLOUR[school]) voice(COLOUR[school], { pan, db: db + 2 });
@@ -151,16 +178,16 @@ const SOUNDS = {
       if (school === 'steel') voice('steelHit', { pan, db: -4 });
     }
     if (crit) voice('crit', { pan });
-    const colour = COLOUR[path] ?? COLOUR[element];
     if (colour) voice(colour, { pan, db: -2 });
   },
   thrust: ({ weapon, lead = 0, pan }) => voice(weapon === 'spear' ? 'spearThrust' : 'thrust', { pan, at: now() + Math.max(0, lead - 0.06) }),
   miss: ({ pan }) => voice('miss', { pan }),
   hurt: ({ pan }) => voice('hurt', { pan }),
-  // A monster pops: a soft squish and a little cry; a boss booms.
-  poof({ boss, pan }) {
+  // A monster pops: a soft squish and a little cry (just the squish for the others' kills); a
+  // boss booms.
+  poof({ boss, pan, ally }) {
     voice('poof', { pan });
-    voice('enemyHurt', { pan, db: -4 });
+    if (!ally) voice('enemyHurt', { pan, db: -6 });
     if (boss) {
       voice('boom', { pan });
       voice('bossDefeated');
@@ -208,7 +235,9 @@ const SOUNDS = {
 
 export function sfx(name, o = {}) {
   if (!audioReady()) return;
+  allyNow = Boolean(o.ally);
   if (SOUNDS[name]) SOUNDS[name](o);
   else voice(name, o);
+  allyNow = false;
 }
 

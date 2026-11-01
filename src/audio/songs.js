@@ -1,28 +1,28 @@
-// The music: one song per area, all EDM (the player's ask: fast and epic, never boring; hardstyle,
-// Frenchcore, rock and metal were tried and dropped), each area its own kind of EDM, with its own
-// key, tempo, two hooks written note by note, the area's recorded instrument carrying the theme,
-// its groove and its opening. Built by `edm()` below on recorded instruments and synths;
-// studio.js renders them.
+// The music: one song per area, every one built the way of the village's "Market Hop" (the one the
+// player liked; the others, in many genres, sounded smeared and cluttered): a plucked or struck
+// lead playing short notes, a hook with rests that bounces, a bouncy bass under a steady kick,
+// chords off the beat. Each area has its own lead instrument, key, tempo, groove and opening.
+// Built by `edm()` below on recorded instruments; studio.js renders them.
 //
 // The areas:
-// - Title: "Dawn Over Tengu", progressive house (126), E-flat major, a piano opening.
+// - Title: "Tengu Rising", disco house (122), D major, a piano hook, flute in the opening.
 // - Sprout Village: "Market Hop", future house (126), F major, a skipping pluck hook, bouncy bass.
-// - Meadows: "Grass Runner", liquid drum & bass (174), D major, violin, a rolling reese bass.
-// - Pastel Harbor: "Harbor Lights", UK garage (134, swung), A minor, a two-step beat, flute.
-// - Ember Crag: "Forge Breaker", dubstep (140, half-time), F minor, recorded brass over a wobble.
-// - Forest: "Mushroom Ritual", psytrance (145), E minor, a rolling bass, pan flute.
-// - Moonleaf Grove: "Silver Canopy", melodic dubstep (150), D minor, violin, swelling chords.
-// - Ruins: "Black Obelisk", dark techno (132), A minor, a stabbing pluck, then the horn.
-// - Cave: "Crystal Depths", neurofunk drum & bass (174), B minor, celesta over a reese.
-// - Sky: "Above the Clouds", uplifting trance (138), G major, glockenspiel, rolling arpeggios.
-// - The Hollow: "Root Riot", electro house (128), C# minor, a dirty saw, horns.
-// - Bosses: "Tengu King", drumstep (175, half-time), D minor, a fast wobble, brass, timpani.
-// - Fox Shrine Path: "Fox Lantern", trap (140), the koto in the old in-scale over an 808, taiko.
-// - Moonlit Ridge: "Night Drive", synthwave (124), F# minor, a piano opening, gated snares.
-// - Serpent Springs: "Serpent Drop", big room (128), G minor, a recorded sitar hook.
-// - Frozen Peak: "Ice Cathedral", melodic techno (130), B-flat minor, a glassy arpeggio.
-// - Starfall Heights: "Falling Stars", future bass (150), B major, chopped hand chimes.
-// - The queens (trials and rematches): "Queen's Gauntlet", an electro waltz in G minor, violin.
+// - Meadows: "Flower Run", house (124), G major, marimba over nylon-guitar chops.
+// - Pastel Harbor: "Seabreeze", tropical house (118), B-flat major, kalimba, shakers.
+// - Ember Crag: "Ember Strut", funky house (124), E minor, brass stabs, a house piano, funk bass.
+// - Forest: "Mossy Groove", afro house (120), A minor, balafon, toms and shakers, pan flute.
+// - Moonleaf Grove: "Moonleaf", deep house (118), F# minor, harp, violin, cello.
+// - Ruins: "Old Stones", house (120), C minor, vibraphone over a house piano, bells.
+// - Cave: "Glimmer", house (122), B minor, celesta, glockenspiel in the opening.
+// - Sky: "Cloud Hop", disco house (126), A major, glockenspiel over rolling arpeggios.
+// - The Hollow: "Root Funk", funky house (124), G minor, pizzicato strings, horns.
+// - Bosses: "Tengu King", house (130), D minor, the village's pluck turned dark, brass, timpani.
+// - Fox Shrine Path: "Lantern Night", house (120), the koto in the old in-scale, taiko toms.
+// - Moonlit Ridge: "Night Drive", swung chill house (116), A-flat major, nylon guitar, piano.
+// - Serpent Springs: "Serpent Bounce", house (124), E Dorian, a sitar hook.
+// - Frozen Peak: "Snowfall", house (120), E minor, xylophone, celesta, chimes.
+// - Starfall Heights: "Stargazer", house (124), E major, vibraphone, hand chimes.
+// - The queens (trials and rematches): "Queen's Gauntlet", a waltz in G minor, harp and violin.
 // At night the towns play an evening version (the lead on piano, the drums pulled back), and a
 // fight layers more drums and bass over an area's song.
 
@@ -139,7 +139,7 @@ const I = {
 };
 
 
-// The EDM instruments: the recorded ones above, plus the synths.
+// The song instruments: the recorded ones above, plus a few synths.
 const E = {
   ...I,
   koto: { sample: 'koto', rel: 0.5, gain: 0.9 },
@@ -148,23 +148,29 @@ const E = {
   bells: { sample: 'tubular_bells', rel: 0.8, gain: 0.7 },
   kalimba: { sample: 'kalimba', rel: 0.4, gain: 0.8 },
   cello: { sample: 'cello', attack: 0.05, rel: 0.4 },
-  // Leads: a wide supersaw, a dirty one, a singing one, plucks, and recorded instruments that
-  // take the lead themselves.
-  saw: { synth: 'hardlead', gain: 0.5, drive: 1.3, cut: 6500 },
-  sawDirty: { synth: 'hardlead', gain: 0.5, drive: 3, cut: 3500, detune: 0.5 },
-  edmLead: { synth: 'lead', gain: 0.5, cut: 4200 },
+  // Leads that are plucked or struck: short notes that stop, so a hook never smears (the
+  // village's pluck is the model the player picked).
   edmPluck: { synth: 'pluck', gain: 0.45, cut: 5000, ring: 0.25 },
-  darkPluck: { synth: 'pluck', gain: 0.45, cut: 2000, ring: 0.2 },
-  brassLead: { sample: 'brass_section', rel: 0.15, gate: 0.9 },
-  kotoLead: { sample: 'koto', rel: 0.5 },
+  saw: { synth: 'hardlead', gain: 0.5, drive: 1.3, cut: 6500 },
+  pianoLead: { sample: 'acoustic_grand_piano', rel: 0.3, gain: 0.85 },
+  marimbaLead: { sample: 'marimba', rel: 0.25, gain: 0.9 },
+  kalimbaLead: { sample: 'kalimba', rel: 0.3, gain: 0.9 },
+  balafonLead: { sample: 'balafon', rel: 0.2, gain: 0.9 },
+  harpLead: { sample: 'orchestral_harp', rel: 0.4, gain: 0.9 },
+  vibesLead: { sample: 'vibraphone', rel: 0.35, gain: 0.85 },
   celestaLead: { sample: 'celesta', rel: 0.5 },
-  chimesLead: { sample: 'hand_chimes', rel: 0.5 },
+  glockLead: { sample: 'glockenspiel', rel: 0.4, gain: 0.6 },
+  xyloLead: { sample: 'xylophone', rel: 0.2, gain: 0.8 },
+  pizzLead: { sample: 'pizzicato_strings', rel: 0.2, gain: 0.95 },
+  guitarLead: { sample: 'acoustic_guitar_nylon', rel: 0.3, gain: 0.9 },
+  kotoLead: { sample: 'koto', rel: 0.5 },
   sitarLead: { sample: 'sitar', rel: 0.4 },
-  // Chord beds and basses.
-  swellPad: { synth: 'pad', gain: 0.4, cut: 3000, attack: 0.02 },
-  reese: { synth: 'reese', gain: 0.6 },
-  wobble: { synth: 'wobble', gain: 0.6, rate: 4.67 },
-  s808: { synth: 's808', gain: 0.6 },
+  // The areas' own instruments, played short for intros and breakdowns.
+  fluteStacc: { sample: 'flute', rel: 0.1, gate: 0.6 },
+  violinStacc: { sample: 'violin', rel: 0.12, gate: 0.6 },
+  // Chord parts: a house piano and nylon-guitar chops.
+  pianoChord: { sample: 'acoustic_grand_piano', rel: 0.2, gain: 0.7 },
+  guitarChop: { sample: 'acoustic_guitar_nylon', rel: 0.15, gain: 0.7, strum: 0.012 },
   riser: { synth: 'riser', gain: 0.6 },
 };
 
@@ -175,29 +181,29 @@ const E = {
 // bed, at most one extra colour. What makes each its own:
 // { name, bpm, rows (16, or 12 for the waltz), swing, chart (8 bars), hookA, hookB (8 bars each),
 //   lead (the drop's instrument), lead2 (the second drop's, if different), voice (the area's
-//   instrument: intro and breakdown), voiceShift (-12), bass (BASS below), chords ('stab' |
-//   'pad' | 'swell' | 'none'), arp (sixteenths in the second drop: 1, eighths: 2, none: 0),
+//   instrument: intro and breakdown), voiceShift (-12), bass (BASS below), chords (CHORDS below,
+//   or 'none'), arp (sixteenths in the second drop: 1, eighths: 2, none: 0),
 //   beat, fill (one bar of drums each), intro ('solo' | 'arp' | 'drums' | 'kick' | 'perc'),
 //   introBeat, perc, build ('snare' | 'stop' | 'kick' | 'tom'), kick (the kick letter, K or P),
-//   form ('classic' | 'coldopen' | 'breakfirst'), wobble (the wobble's rate in Hz), pump, extra }.
+//   form ('classic' | 'coldopen' | 'breakfirst'), pump, extra }.
 const r2 = (s) => nm(rootIn(s, 2));
 const BASS = {
   off: ['synbass', (s, len) => Array(len / 4).fill(`r:2 ${r2(s)}:2`).join(' ')],
-  roll: ['synbass', (s, len) => Array(len / 4).fill(`r:1 ${r2(s)}:1 ${r2(s)}:1 ${r2(s)}:1`).join(' ')],
+  // The village's: root then octave, bouncing between the kicks.
   house: ['synbass', (s, len) => Array(len / 4).fill(`r:2 ${r2(s)}:1 ${nm(rootIn(s, 3))}:1`).join(' ')],
-  garage: ['synbass', (s) => `${r2(s)}:3 r:1 ${r2(s)}:2 r:2 ${nm(rootIn(s, 3))}:3 r:1 ${r2(s)}:2 r:2`],
-  techno: ['synbass', (s, len) => Array(len / 4).fill(`r:2 ${r2(s)}:1 ${r2(s)}:1`).join(' ')],
+  // Disco: octaves in eighths.
   octaves: ['synbass', F.octaves(2)],
-  reese: ['reese', (s, len) => Array(len / 8).fill(`${r2(s)}:8`).join(' ')],
-  wobble: ['wobble', (s) => `${r2(s)}:6 ${r2(s)}:2 ${r2(s)}:8`],
-  sub: ['sub', F.root(2)],
-  808: ['s808', (s) => `${nm(rootIn(s, 1))}:6 ${nm(rootIn(s, 1))}:2 r:4 ${nm(rootIn(s, 1))}:4`],
+  // Funk: root, octave and fifth, syncopated.
+  funk: ['synbass', (s) => `${r2(s)}:2 r:1 ${r2(s)}:1 ${nm(rootIn(s, 3))}:2 ${r2(s)}:2 r:2 ${r2(s)}:1 ${nm(rootIn(s, 2) + 7)}:1 ${nm(rootIn(s, 3))}:2 r:2`],
   waltz: ['synbass', (s) => `r:4 ${r2(s)}:4 ${r2(s)}:4`],
 };
 const CHORDS = {
   stab: ['stab', (s, len) => (len === 12 ? `r:4 ${tones(s, 64)}:3 r:1 ${tones(s, 64)}:3 r:1` : F.offbeat(64)(s, len))],
   pad: ['pad', F.hold(60)],
-  swell: ['swellPad', (s, len) => Array(len / 8).fill(`${tones(s, 64)}:3 r:1 ${tones(s, 64)}:2 ${tones(s, 64)}:2`).join(' ')],
+  // The house piano: chords off the beat, pushed.
+  piano: ['pianoChord', (s, len) => Array(len / 16).fill(`r:2 ${tones(s, 64)}:2 r:1 ${tones(s, 64)}:1 r:2 ${tones(s, 64)}:2 r:2 ${tones(s, 64)}:2 r:2`).join(' ')],
+  // Nylon-guitar chops on the offbeats.
+  guitar: ['guitarChop', F.offbeat(62)],
 };
 // A four-bar roll on `c`: every beat, every beat, every eighth, every sixteenth.
 const rollOf = (c, rows) => bars(...[4, 4, 2, 1].map((step) => Array.from({ length: rows }, (_, i) => (i % step ? '.' : c)).join('')));
@@ -219,12 +225,11 @@ function edm(o) {
   const [bassInst, bassFig] = BASS[o.bass ?? 'off'];
   const chords = CHORDS[o.chords ?? 'stab'];
   const arp = F.arp(72, o.arp === 1 ? 1 : 2);
-  const inst = { ...E, wobble: { ...E.wobble, rate: o.wobble ?? E.wobble.rate } };
   const tracks = {
     lead: { inst: o.lead ?? 'saw', gain: 0.5, verb: 0.25, echo: { rows: 3, fb: 0.28, wet: 0.18 } },
     voice: { inst: o.voice, gain: o.voiceGain ?? 0.5, pan: -0.15, verb: 0.35 },
     arp: { inst: o.arpInst ?? 'edmPluck', gain: 0.3, pan: 0.25, verb: 0.3, echo: { rows: 3, fb: 0.25, wet: 0.18 } },
-    bass: { inst: bassInst, gain: bassInst === 'sub' ? 0.3 : 0.36, verb: 0, low: true },
+    bass: { inst: bassInst, gain: 0.36, verb: 0, low: true },
     riser: { inst: 'riser', gain: 0.5, verb: 0.3 },
   };
   if (chords) tracks.chords = { inst: chords[0], gain: 0.3, pan: -0.2, verb: 0.3 };
@@ -259,7 +264,7 @@ function edm(o) {
   const [intro, order] = forms[o.form ?? 'classic'];
   const hats = Array.from({ length: rows }, (_, i) => (i % 2 ? 'h' : '.')).join('');
   return {
-    name: o.name, bpm: o.bpm, rows, swing: o.swing, inst, pump: o.pump ?? 0.4, drums: o.drums ?? 1, bright: 0.6, reverb: { room: 0.84, wet: 0.18 },
+    name: o.name, bpm: o.bpm, rows, swing: o.swing, inst: E, pump: o.pump ?? 0.4, drums: o.drums ?? 1, bright: 0.6, reverb: { room: 0.84, wet: 0.18 },
     fight: { top: hats, kick: o.beat },
     tracks,
     patterns,
@@ -269,13 +274,17 @@ function edm(o) {
 }
 
 // ---------- The songs ----------
+// Every song is built the village's way (the one the player liked): a plucked or struck lead
+// playing short notes, a hook with rests that bounces, a bouncy bass under a steady kick, and
+// chords off the beat. Each area has its own lead instrument, key, tempo and groove.
 const title = edm({
-  name: 'title', bpm: 126, voice: 'piano', lead: 'saw', bass: 'off', chords: 'pad', arp: 2,
-  intro: 'solo', form: 'breakfirst', build: 'stop', beat: 'K.h.C.h.K.h.C.h.', fill: 'K.h.C.h.K.SSSSSS',
-  chart: ['Eb', 'Bb', 'Cm', 'Ab', 'Eb', 'Bb', 'Ab', 'Bb'],
-  hookA: bars('G6:3 Bb6:3 Eb7:2 D7:4 Bb6:4', 'F6:3 Bb6:3 D7:2 C7:4 Bb6:4', 'G6:3 C7:3 Eb7:2 D7:4 C7:4', 'Ab6:6 G6:2 Eb6:8',
-    'G6:3 Bb6:3 Eb7:2 F7:4 G7:4', 'F7:3 D7:3 Bb6:2 D7:4 F7:4', 'Eb7:3 C7:3 Ab6:2 C7:4 Eb7:4', 'D7:8 Bb6:8'),
-  hookB: bars('Bb7:8 G7:8', 'F7:8 D7:8', 'G7:8 Eb7:8', 'C7:6 Ab6:2 Eb7:8', 'Bb7:4 G7:4 Eb7:4 G7:4', 'F7:4 D7:4 Bb6:4 D7:4', 'C7:4 Eb7:4 Ab7:4 G7:4', 'F7:8 D7:8'),
+  name: 'title', bpm: 122, voice: 'fluteStacc', lead: 'pianoLead', bass: 'octaves', chords: 'stab',
+  intro: 'solo', build: 'snare', beat: 'K.o.C.o.K.o.C.o.', fill: 'K.o.C.o.K.SSSSSS',
+  chart: ['D', 'Bm', 'G', 'A', 'D', 'Bm', 'G', 'A'],
+  hookA: bars('F#6:3 A6:3 D7:2 C#7:3 A6:3 F#6:2', 'F#6:3 B6:3 D7:2 C#7:3 B6:3 F#6:2', 'G6:3 B6:3 D7:2 C#7:3 B6:3 G6:2', 'A6:4 C#7:4 E7:8',
+    'F#6:3 A6:3 D7:2 C#7:3 A6:3 F#6:2', 'F#6:3 B6:3 D7:2 C#7:3 B6:3 F#6:2', 'B6:3 D7:3 G7:2 F#7:3 D7:3 B6:2', 'A6:6 E6:2 A6:8'),
+  hookB: bars('D7:4 F#7:4 A6:4 D7:4', 'F#7:6 E7:2 D7:8', 'G7:4 B6:4 D7:4 G7:4', 'E7:6 C#7:2 A6:8', 'F#7:4 A7:4 F#7:4 D7:4', 'D7:6 C#7:2 B6:8', 'B6:4 D7:4 G7:4 F#7:4', 'E7:8 C#7:8'),
+  extra: { glock: ['glock', 'arp', 0.22] },
 });
 
 const town = edm({
@@ -289,156 +298,155 @@ const town = edm({
 });
 
 const meadow = edm({
-  name: 'meadow', bpm: 174, voice: 'violin', lead: 'edmLead', bass: 'reese', chords: 'pad', kick: 'P', pump: 0.2,
-  intro: 'drums', build: 'snare', beat: 'P.h.S.h..hP.S.h.', fill: 'P.h.S.hSP.SSS.SS',
-  chart: ['D', 'A', 'Bm', 'G', 'D', 'A', 'G', 'A'],
-  hookA: bars('F#6:6 E6:2 D6:4 A6:4', 'E6:6 C#6:2 A5:8', 'D6:4 F#6:4 B6:6 A6:2', 'G6:8 B6:8', 'A6:6 F#6:2 D7:4 C#7:4', 'C#7:6 B6:2 A6:8', 'B6:4 D7:4 G7:6 F#7:2', 'E7:8 C#7:8'),
-  hookB: bars('D7:4 F#7:4 A7:4 F#7:4', 'E7:4 C#7:4 A6:8', 'F#7:4 D7:4 B6:4 D7:4', 'G7:6 F#7:2 D7:8', 'A7:4 F#7:4 D7:4 F#7:4', 'E7:4 A7:4 C#7:8', 'D7:4 G7:4 B7:4 A7:4', 'A7:16'),
-  extra: { strings: ['strings', 'high', 0.25] },
+  name: 'meadow', bpm: 124, voice: 'violinStacc', lead: 'marimbaLead', bass: 'house', chords: 'guitar',
+  intro: 'arp', build: 'snare', beat: 'K.hhC.hhK.hhC.hh', fill: 'K.hhC.hhK.hhSSSS',
+  chart: ['G', 'Em', 'C', 'D', 'G', 'Em', 'Am', 'D'],
+  hookA: bars('G6:1 r:1 B6:1 r:1 D7:2 B6:2 G6:2 A6:2 B6:4', 'E6:1 r:1 G6:1 r:1 B6:2 G6:2 E6:2 F#6:2 G6:4', 'C6:1 r:1 E6:1 r:1 G6:2 E6:2 C6:2 D6:2 E6:4', 'F#6:2 A6:2 D7:4 C7:2 A6:2 F#6:4',
+    'G6:1 r:1 B6:1 r:1 D7:2 B6:2 G6:2 A6:2 B6:4', 'E6:1 r:1 G6:1 r:1 B6:2 G6:2 E6:2 F#6:2 G6:4', 'A6:1 r:1 C7:1 r:1 E7:2 C7:2 A6:2 B6:2 C7:4', 'D7:6 F#6:2 A6:8'),
+  hookB: bars('D7:4 B6:2 G6:2 D7:4 E7:4', 'G7:4 E7:2 B6:2 G6:8', 'E7:4 C7:2 G6:2 E7:4 G7:4', 'F#7:6 E7:2 D7:8', 'B6:4 D7:2 G7:2 F#7:4 D7:4', 'E7:4 G7:2 B6:2 E7:8', 'C7:4 E7:2 A7:2 G7:4 E7:4', 'D7:8 A6:8'),
 });
 
 const harbor = edm({
-  name: 'harbor', bpm: 134, swing: 0.58, voice: 'flute', lead: 'edmLead', bass: 'garage', chords: 'stab',
-  intro: 'perc', perc: bars(...Array(4).fill('x.hxx.h.x.hxx.hh')), build: 'tom', beat: 'K..hc.h..Kh.c.hh', fill: 'K..hc.h.SSc.SSSS',
-  chart: ['Am', 'F', 'C', 'G', 'Am', 'F', 'C', 'E'],
-  hookA: bars('r:1 E6:2 A6:1 r:2 C7:2 B6:1 A6:2 E6:1 r:1 A6:3', 'r:1 F6:2 A6:1 r:2 C7:2 A6:1 F6:2 C6:1 r:1 F6:3', 'r:1 E6:2 G6:1 r:2 C7:2 G6:1 E6:2 C6:1 r:1 E6:3', 'D6:3 G6:3 B6:2 D7:8',
-    'r:1 E6:2 A6:1 r:2 C7:2 B6:1 A6:2 E6:1 r:1 A6:3', 'r:1 F6:2 A6:1 r:2 C7:2 A6:1 F6:2 C6:1 r:1 F6:3', 'r:1 G6:2 C7:1 r:2 E7:2 D7:1 C7:2 G6:1 r:1 C7:3', 'B6:6 G#6:2 E6:8'),
-  hookB: bars('C7:3 E7:3 A7:2 G7:4 E7:4', 'A6:3 C7:3 F7:2 E7:4 C7:4', 'G6:3 C7:3 E7:2 D7:4 C7:4', 'B6:6 D7:2 G7:8', 'E7:3 A7:3 B7:2 A7:4 E7:4', 'F7:3 E7:3 C7:2 A6:4 F6:4', 'E7:3 G7:3 C7:2 E7:4 G7:4', 'G#7:8 E7:8'),
-  extra: { marimba: ['marimba', 'arp', 0.25] },
+  name: 'harbor', bpm: 118, voice: 'fluteStacc', voiceShift: 0, lead: 'kalimbaLead', bass: 'off', chords: 'stab',
+  intro: 'perc', perc: bars(...Array(4).fill('x.hwx.h.x.hwx.hw')), build: 'tom', beat: 'K.x.C.x.K.xxC.x.', fill: 'K.x.C.x.K.x.SSSS',
+  chart: ['Bb', 'F', 'Gm', 'Eb', 'Bb', 'F', 'Eb', 'F'],
+  hookA: bars('r:2 D5:2 F5:2 Bb5:2 r:2 A5:2 F5:4', 'r:2 C5:2 F5:2 A5:2 r:2 G5:2 F5:4', 'r:2 Bb4:2 D5:2 G5:2 r:2 F5:2 D5:4', 'Eb5:3 G5:3 Bb5:2 G5:8',
+    'r:2 D5:2 F5:2 Bb5:2 r:2 A5:2 F5:4', 'r:2 C5:2 F5:2 A5:2 r:2 G5:2 F5:4', 'G5:2 Bb5:2 Eb6:2 D6:2 C6:2 Bb5:2 G5:4', 'A5:6 C6:2 F5:8'),
+  hookB: bars('F5:3 Bb5:3 D6:2 C6:4 Bb5:4', 'A5:3 C6:3 F5:2 A5:4 C6:4', 'Bb5:3 D6:3 G5:2 Bb5:4 D6:4', 'Eb6:6 D6:2 Bb5:8', 'D6:3 C6:3 Bb5:2 F5:4 D5:4', 'C6:3 A5:3 F5:2 A5:4 C6:4', 'G5:3 Bb5:3 Eb6:2 D6:4 C6:4', 'C6:8 F5:8'),
+  extra: { marimba: ['marimba', 'arp', 0.22] },
 });
 
 const crag = edm({
-  name: 'crag', bpm: 140, voice: 'brass', lead: 'brassLead', lead2: 'saw', bass: 'wobble', wobble: 4.67, chords: 'none', pump: 0.25,
-  intro: 'solo', build: 'stop', beat: 'K.h.h.h.S.h.h.hK', fill: 'K.h.h.h.S.SSSSSS',
-  chart: ['Fm', 'Db', 'Ab', 'Eb', 'Fm', 'Db', 'Bbm', 'C'],
-  hookA: bars('F6:2 r:2 F6:2 Ab6:2 C7:4 Bb6:2 Ab6:2', 'F6:2 r:2 F6:2 Ab6:2 Db7:4 C7:2 Ab6:2', 'Eb6:2 r:2 Eb6:2 Ab6:2 C7:4 Bb6:2 Ab6:2', 'G6:4 Bb6:4 Eb7:8',
-    'F6:2 r:2 F6:2 Ab6:2 C7:4 Bb6:2 Ab6:2', 'F6:2 r:2 F6:2 Ab6:2 Db7:4 C7:2 Ab6:2', 'Db7:2 r:2 Db7:2 Bb6:2 F6:4 Bb6:2 Db7:2', 'C7:6 E6:2 G6:8'),
-  hookB: bars('C7:4 Ab6:4 F6:4 C7:4', 'Db7:4 F7:4 Ab7:8', 'Eb7:4 C7:4 Ab6:4 Eb7:4', 'G7:6 Eb7:2 Bb6:8', 'F7:3 Eb7:3 C7:2 Ab6:4 C7:4', 'F7:4 Db7:4 Ab6:8', 'Bb6:4 Db7:4 F7:8', 'E7:8 C7:8'),
-  extra: { timp: ['timpani', 'timp', 0.4] },
+  name: 'crag', bpm: 124, voice: 'horn', lead: 'brassStab', bass: 'funk', chords: 'piano',
+  intro: 'drums', build: 'kick', beat: 'K.hhC.hKK.hhC.hh', fill: 'K.hhC.hKK.KKCCCC',
+  chart: ['Em', 'C', 'D', 'B7', 'Em', 'C', 'Am', 'B7'],
+  hookA: bars('E5:2 E5:1 G5:1 B5:2 E6:2 r:2 D6:2 B5:4', 'E5:2 E5:1 G5:1 C6:2 E6:2 r:2 D6:2 C6:4', 'D5:2 D5:1 F#5:1 A5:2 D6:2 r:2 C6:2 A5:4', 'D#6:4 F#6:4 B5:8',
+    'E5:2 E5:1 G5:1 B5:2 E6:2 r:2 D6:2 B5:4', 'E5:2 E5:1 G5:1 C6:2 E6:2 r:2 D6:2 C6:4', 'A5:2 A5:1 C6:1 E6:2 A6:2 r:2 G6:2 E6:4', 'F#6:6 D#6:2 B5:8'),
+  hookB: bars('B5:4 E6:4 G6:4 F#6:4', 'E6:6 D6:2 C6:8', 'A5:4 D6:4 F#6:4 E6:4', 'D#6:6 F#6:2 B6:8', 'G6:4 F#6:4 E6:4 B5:4', 'C6:4 E6:4 G6:8', 'A6:4 G6:4 E6:4 C6:4', 'B5:8 D#6:8'),
+  extra: { timp: ['timpani', 'timp', 0.35] },
 });
 
 const forest = edm({
-  name: 'forest', bpm: 145, voice: 'panflute', lead: 'edmPluck', lead2: 'saw', bass: 'roll', chords: 'none', pump: 0.2,
-  intro: 'kick', build: 'snare', beat: 'K.ohK.ohK.ohK.oh', fill: 'K.ohK.ohK.ohSSSS',
-  chart: ['Em', 'C', 'Em', 'D', 'Em', 'C', 'Am', 'B'],
-  hookA: bars('E6:1 G6:1 B6:1 E7:1 B6:1 G6:1 E6:2 F#6:1 G6:1 A6:1 B6:1 A6:2 G6:2', 'C6:1 E6:1 G6:1 C7:1 G6:1 E6:1 C6:2 D6:1 E6:1 G6:1 A6:1 G6:2 E6:2',
-    'E6:1 G6:1 B6:1 E7:1 B6:1 G6:1 E6:2 F#6:1 G6:1 A6:1 B6:1 A6:2 G6:2', 'D6:1 F#6:1 A6:1 D7:1 A6:1 F#6:1 D6:2 E6:1 F#6:1 A6:1 B6:1 A6:2 F#6:2',
-    'E6:1 G6:1 B6:1 E7:1 B6:1 G6:1 E6:2 F#6:1 G6:1 A6:1 B6:1 A6:2 G6:2', 'C6:1 E6:1 G6:1 C7:1 G6:1 E6:1 C6:2 D6:1 E6:1 G6:1 A6:1 G6:2 E6:2',
-    'A5:1 C6:1 E6:1 A6:1 E6:1 C6:1 A5:2 B5:1 C6:1 E6:1 F#6:1 E6:2 C6:2', 'B5:1 D#6:1 F#6:1 B6:1 F#6:1 D#6:1 B5:2 F#6:8'),
-  hookB: bars('B6:8 G6:8', 'E7:8 C7:8', 'B6:6 G6:2 E6:8', 'F#6:8 A6:8', 'G6:4 B6:4 E7:8', 'G7:6 E7:2 C7:8', 'A6:4 C7:4 E7:8', 'D#7:8 F#7:8'),
-  extra: { kalimba: ['kalimba', 'arp', 0.25] },
+  name: 'forest', bpm: 120, voice: 'panflute', voiceShift: 0, lead: 'balafonLead', bass: 'off', chords: 'pad',
+  intro: 'perc', perc: bars(...Array(4).fill('t..xt.x.t..xt.xx')), build: 'tom', beat: 'K..tC.t.K.t.Cxt.', fill: 'K..tC.t.K.tttttt',
+  chart: ['Am', 'G', 'F', 'G', 'Am', 'G', 'F', 'E'],
+  hookA: bars('A4:1 r:1 C5:1 r:1 E5:2 C5:2 A4:2 B4:2 C5:4', 'G4:1 r:1 B4:1 r:1 D5:2 B4:2 G4:2 A4:2 B4:4', 'F4:1 r:1 A4:1 r:1 C5:2 A4:2 F4:2 G4:2 A4:4', 'B4:2 D5:2 G5:4 F5:2 D5:2 B4:4',
+    'A4:1 r:1 C5:1 r:1 E5:2 C5:2 A4:2 B4:2 C5:4', 'G4:1 r:1 B4:1 r:1 D5:2 B4:2 G4:2 A4:2 B4:4', 'A4:1 r:1 C5:1 r:1 F5:2 E5:2 C5:2 A4:2 C5:4', 'B4:6 G#4:2 E5:8'),
+  hookB: bars('E5:4 A5:4 C6:4 B5:4', 'D5:4 G5:4 B5:8', 'C5:4 F5:4 A5:4 G5:4', 'B5:6 A5:2 G5:8', 'C6:4 B5:4 A5:4 E5:4', 'D5:4 G5:4 B5:4 D6:4', 'C6:4 A5:4 F5:4 A5:4', 'G#5:8 E5:8'),
+  extra: { kalimba: ['kalimba', 'arp', 0.2] },
 });
 
 const grove = edm({
-  name: 'grove', bpm: 150, voice: 'violin', lead: 'saw', bass: 'sub', chords: 'swell', pump: 0.3,
-  intro: 'solo', form: 'breakfirst', build: 'stop', beat: 'K.h.h.h.S.h.h.h.', fill: 'K.h.h.hKS.h.SSSS',
-  chart: ['Dm', 'Bb', 'F', 'C', 'Dm', 'Bb', 'Gm', 'A'],
-  hookA: bars('A6:6 F6:2 D6:4 F6:4', 'D7:6 C7:2 Bb6:8', 'A6:6 F6:2 C7:4 A6:4', 'G6:8 E6:8', 'A6:4 D7:4 F7:6 E7:2', 'D7:6 C7:2 Bb6:4 F6:4', 'G6:4 Bb6:4 D7:4 C7:4', 'C#7:8 E7:8'),
-  hookB: bars('F7:3 E7:3 D7:2 A6:4 D7:4', 'F7:3 D7:3 Bb6:2 F7:8', 'C7:3 F7:3 A7:2 G7:4 F7:4', 'E7:6 C7:2 G6:8', 'A7:3 F7:3 D7:2 F7:4 A7:4', 'Bb7:4 A7:4 F7:8', 'G7:3 F7:3 D7:2 Bb6:4 D7:4', 'E7:8 C#7:8'),
-  extra: { cello: ['cello', 'high', 0.25] },
+  name: 'grove', bpm: 118, voice: 'violinStacc', lead: 'harpLead', bass: 'house', chords: 'pad',
+  intro: 'solo', form: 'breakfirst', build: 'stop', beat: 'K.h.C.h.K.hhC.h.', fill: 'K.h.C.h.K.hhSSSS',
+  chart: ['F#m', 'D', 'A', 'E', 'F#m', 'D', 'Bm', 'C#'],
+  hookA: bars('C#6:3 F#6:3 A6:2 G#6:3 F#6:3 C#6:2', 'D6:3 F#6:3 A6:2 F#6:3 E6:3 D6:2', 'C#6:3 E6:3 A6:2 G#6:3 E6:3 C#6:2', 'B5:4 E6:4 G#6:8',
+    'C#6:3 F#6:3 A6:2 G#6:3 F#6:3 C#6:2', 'D6:3 F#6:3 A6:2 F#6:3 E6:3 D6:2', 'B5:3 D6:3 F#6:2 E6:3 D6:3 B5:2', 'F6:6 G#6:2 C#6:8'),
+  hookB: bars('A6:6 G#6:2 F#6:8', 'F#6:6 E6:2 D6:8', 'E6:6 F#6:2 A6:8', 'G#6:6 F#6:2 E6:8', 'C#7:6 B6:2 A6:8', 'A6:6 F#6:2 D6:8', 'F#6:4 D6:4 B5:8', 'G#6:8 F6:8'),
+  extra: { cello: ['cello', 'high', 0.22] },
 });
 
 const ruins = edm({
-  name: 'ruins', bpm: 132, voice: 'horn', lead: 'darkPluck', lead2: 'horn', bass: 'techno', chords: 'none', pump: 0.3,
-  intro: 'kick', introBeat: bars(...Array(4).fill('K...K...K...K..h')), build: 'kick', beat: 'K.hoC.hoK.hoC.ho', fill: 'K.hoC.hoKKhoCCCC',
-  chart: ['Am', 'Am', 'Bb', 'Am', 'Am', 'Am', 'Gm', 'Bb'],
-  hookA: bars('A5:2 r:2 A5:2 C6:2 r:2 E6:2 r:2 D6:2', 'A5:2 r:2 A5:2 C6:2 r:2 E6:2 F6:2 E6:2', 'Bb5:2 r:2 Bb5:2 D6:2 r:2 F6:2 r:2 E6:2', 'A5:2 r:2 A5:2 E6:2 r:2 A6:2 G6:2 E6:2',
-    'A5:2 r:2 A5:2 C6:2 r:2 E6:2 r:2 D6:2', 'A5:2 r:2 A5:2 C6:2 r:2 E6:2 F6:2 E6:2', 'G5:2 r:2 G5:2 Bb5:2 r:2 D6:2 r:2 C6:2', 'Bb5:2 D6:2 F6:2 A6:2 Bb6:8'),
-  hookB: bars('E6:8 A6:8', 'G6:6 F6:2 E6:8', 'F6:8 Bb6:8', 'A6:16', 'C7:8 B6:4 A6:4', 'E7:6 D7:2 C7:8', 'D7:8 Bb6:8', 'A6:8 F6:8'),
-  extra: { bells: ['bells', 'root5', 0.3] },
+  name: 'ruins', bpm: 120, voice: 'horn', lead: 'vibesLead', bass: 'octaves', chords: 'piano',
+  intro: 'arp', build: 'snare', beat: 'K.h.C.hhK.hhC.h.', fill: 'K.h.C.hhK.hhSSSS',
+  chart: ['Cm', 'Ab', 'Fm', 'G', 'Cm', 'Ab', 'Bb', 'G'],
+  hookA: bars('C5:2 C5:1 Eb5:1 G5:2 C6:2 r:2 Bb5:2 G5:4', 'C5:2 C5:1 Eb5:1 Ab5:2 C6:2 r:2 Bb5:2 Ab5:4', 'C5:2 C5:1 F5:1 Ab5:2 C6:2 r:2 Ab5:2 F5:4', 'G5:4 B5:4 D6:8',
+    'C5:2 C5:1 Eb5:1 G5:2 C6:2 r:2 Bb5:2 G5:4', 'C5:2 C5:1 Eb5:1 Ab5:2 C6:2 r:2 Bb5:2 Ab5:4', 'D5:2 D5:1 F5:1 Bb5:2 D6:2 r:2 C6:2 Bb5:4', 'B5:6 G5:2 D5:8'),
+  hookB: bars('G5:4 C6:4 Eb6:4 D6:4', 'C6:6 Bb5:2 Ab5:8', 'Ab5:4 C6:4 F6:4 Eb6:4', 'D6:6 B5:2 G5:8', 'Eb6:4 D6:4 C6:4 G5:4', 'Ab5:4 C6:4 Eb6:8', 'F6:4 D6:4 Bb5:4 D6:4', 'B5:8 D6:8'),
+  extra: { bells: ['bells', 'root5', 0.22] },
 });
 
 const cave = edm({
-  name: 'cave', bpm: 174, voice: 'celesta', lead: 'celestaLead', lead2: 'edmLead', bass: 'reese', chords: 'none', kick: 'P', pump: 0.2,
-  intro: 'arp', form: 'coldopen', build: 'stop', beat: 'P.h.S.h..PP.S.h.', fill: 'P.h.S.hSSP.SSSSS',
-  chart: ['Bm', 'G', 'Em', 'F#', 'Bm', 'G', 'Em', 'F#'],
-  hookA: bars('B6:2 D7:2 F#7:2 D7:2 B6:2 F#6:2 D6:4', 'B6:2 D7:2 G7:2 D7:2 B6:2 G6:2 D6:4', 'B6:2 E7:2 G7:2 E7:2 B6:2 G6:2 E6:4', 'A#6:4 C#7:4 F#7:8',
-    'B6:2 D7:2 F#7:2 D7:2 B6:2 F#6:2 D6:4', 'B6:2 D7:2 G7:2 D7:2 B6:2 G6:2 D6:4', 'G6:2 B6:2 E7:2 B6:2 G6:2 E6:2 B5:4', 'C#7:6 A#6:2 F#6:8'),
-  hookB: bars('F#7:6 E7:2 D7:8', 'D7:6 B6:2 G6:8', 'E7:6 D7:2 B6:8', 'C#7:8 A#6:8', 'B6:4 D7:4 F#7:8', 'G7:4 F#7:4 D7:8', 'E7:4 G7:4 B7:8', 'A#7:8 F#7:8'),
-  extra: { glock: ['glock', 'arp', 0.25] },
+  name: 'cave', bpm: 122, voice: 'glock', voiceShift: 0, voiceGain: 0.4, lead: 'celestaLead', bass: 'house', chords: 'stab',
+  intro: 'arp', build: 'stop', beat: 'K..hC..hK..hC.hh', fill: 'K..hC..hK..hSSSS',
+  chart: ['Bm', 'G', 'D', 'A', 'Bm', 'G', 'Em', 'F#'],
+  hookA: bars('r:1 F#6:1 B6:2 r:1 D7:1 C#7:2 B6:2 F#6:2 D6:4', 'r:1 G6:1 B6:2 r:1 D7:1 C#7:2 B6:2 G6:2 D6:4', 'r:1 F#6:1 A6:2 r:1 D7:1 C#7:2 A6:2 F#6:2 D6:4', 'E6:4 A6:4 C#7:8',
+    'r:1 F#6:1 B6:2 r:1 D7:1 C#7:2 B6:2 F#6:2 D6:4', 'r:1 G6:1 B6:2 r:1 D7:1 C#7:2 B6:2 G6:2 D6:4', 'r:1 G6:1 B6:2 r:1 E7:1 D7:2 B6:2 G6:2 E6:4', 'A#6:6 C#7:2 F#6:8'),
+  hookB: bars('D7:4 C#7:4 B6:8', 'B6:4 A6:4 G6:8', 'A6:4 F#6:4 D7:8', 'C#7:4 E7:4 A6:8', 'F#7:4 E7:4 D7:8', 'D7:4 B6:4 G6:8', 'G7:4 E7:4 B6:8', 'A#6:8 F#7:8'),
+  extra: { vibes: ['vibes', 'arp', 0.2] },
 });
 
 const sky = edm({
-  name: 'sky', bpm: 138, voice: 'glock', voiceShift: 0, voiceGain: 0.4, lead: 'saw', bass: 'off', chords: 'pad', arp: 1,
+  name: 'sky', bpm: 126, voice: 'fluteStacc', lead: 'glockLead', bass: 'octaves', chords: 'stab', arp: 1,
   intro: 'arp', build: 'snare', beat: 'K.oxC.oxK.oxC.ox', fill: 'K.oxC.oxSSSSSSSS',
-  chart: ['G', 'D', 'Em', 'C', 'G', 'D', 'C', 'D'],
-  hookA: bars('B6:2 D7:2 G7:2 D7:2 B6:2 D7:2 G7:2 A7:2', 'A6:2 D7:2 F#7:2 D7:2 A6:2 D7:2 F#7:2 G7:2', 'G6:2 B6:2 E7:2 B6:2 G6:2 B6:2 E7:2 F#7:2', 'E7:2 C7:2 G6:2 C7:2 E7:4 G7:4',
-    'B6:2 D7:2 G7:2 D7:2 B6:2 D7:2 G7:2 A7:2', 'A6:2 D7:2 F#7:2 D7:2 A6:2 D7:2 F#7:2 G7:2', 'C7:2 E7:2 G7:2 E7:2 C7:2 E7:2 G7:2 B7:2', 'A7:8 F#7:8'),
-  hookB: bars('B7:8 G7:8', 'A7:8 F#7:8', 'G7:8 E7:8', 'E7:6 G7:2 C7:8', 'B7:4 A7:4 G7:4 D7:4', 'F#7:4 A7:4 D7:8', 'E7:4 G7:4 C7:4 E7:4', 'F#7:8 A7:8'),
+  chart: ['A', 'E', 'F#m', 'D', 'A', 'E', 'D', 'E'],
+  hookA: bars('A6:1 r:1 C#7:1 r:1 E7:2 C#7:2 A6:2 B6:2 C#7:4', 'G#6:1 r:1 B6:1 r:1 E7:2 B6:2 G#6:2 A6:2 B6:4', 'F#6:1 r:1 A6:1 r:1 C#7:2 A6:2 F#6:2 G#6:2 A6:4', 'D7:2 F#7:2 A7:4 G#7:2 F#7:2 D7:4',
+    'A6:1 r:1 C#7:1 r:1 E7:2 C#7:2 A6:2 B6:2 C#7:4', 'G#6:1 r:1 B6:1 r:1 E7:2 B6:2 G#6:2 A6:2 B6:4', 'F#7:1 r:1 A7:1 r:1 D7:2 F#7:2 A7:2 G#7:2 F#7:4', 'E7:8 B6:8'),
+  hookB: bars('E7:8 C#7:8', 'B6:8 E7:8', 'C#7:8 A6:8', 'F#7:6 E7:2 D7:8', 'A7:8 E7:8', 'G#7:8 B7:8', 'F#7:4 A7:4 D7:8', 'E7:16'),
 });
 
 const hollow = edm({
-  name: 'hollow', bpm: 128, voice: 'horn', lead: 'sawDirty', bass: 'off', chords: 'none',
-  form: 'coldopen', build: 'kick', beat: 'K.h.C.hKK.h.C.h.', fill: 'K.h.C.hKKKKCCCCC',
-  chart: ['C#m', 'A', 'E', 'B', 'C#m', 'A', 'F#m', 'G#'],
-  hookA: bars('C#6:1 r:1 C#6:1 r:1 E6:2 C#6:2 G#6:2 F#6:2 E6:4', 'A5:1 r:1 A5:1 r:1 C#6:2 A5:2 E6:2 C#6:2 A5:4', 'B5:1 r:1 B5:1 r:1 E6:2 B5:2 G#6:2 F#6:2 E6:4', 'D#6:4 F#6:4 B6:8',
-    'C#6:1 r:1 C#6:1 r:1 E6:2 C#6:2 G#6:2 F#6:2 E6:4', 'A5:1 r:1 A5:1 r:1 C#6:2 A5:2 E6:2 C#6:2 A5:4', 'F#6:1 r:1 F#6:1 r:1 A6:2 F#6:2 C#7:2 B6:2 A6:4', 'G#6:6 C7:2 D#7:8'),
-  hookB: bars('E7:4 C#7:4 G#6:4 C#7:4', 'E7:4 A7:4 C#7:8', 'G#7:4 E7:4 B6:4 E7:4', 'F#7:6 D#7:2 B6:8', 'C#7:3 E7:3 G#7:2 F#7:4 E7:4', 'A7:4 E7:4 C#7:8', 'F#7:3 A7:3 F#7:2 C#7:4 A6:4', 'G#7:8 D#7:8'),
-  extra: { timp: ['timpani', 'timp', 0.4] },
+  name: 'hollow', bpm: 124, voice: 'horn', lead: 'pizzLead', bass: 'funk', chords: 'stab',
+  form: 'coldopen', build: 'kick', beat: 'K.hhC.h.KKhhC.h.', fill: 'K.hhC.h.KKKKCCCC',
+  chart: ['Gm', 'Eb', 'Cm', 'D', 'Gm', 'Eb', 'F', 'D'],
+  hookA: bars('G4:3 Bb4:3 D5:2 C5:3 Bb4:3 G4:2', 'G4:3 Bb4:3 Eb5:2 D5:3 Bb4:3 G4:2', 'G4:3 C5:3 Eb5:2 D5:3 C5:3 G4:2', 'F#4:4 A4:4 D5:8',
+    'G4:3 Bb4:3 D5:2 C5:3 Bb4:3 G4:2', 'G4:3 Bb4:3 Eb5:2 D5:3 Bb4:3 G4:2', 'A4:3 C5:3 F5:2 Eb5:3 C5:3 A4:2', 'D5:6 C5:2 A4:8'),
+  hookB: bars('D5:4 G5:4 Bb5:4 A5:4', 'G5:6 F5:2 Eb5:8', 'Eb5:4 G5:4 C6:4 Bb5:4', 'A5:6 F#5:2 D5:8', 'Bb5:4 A5:4 G5:4 D5:4', 'G5:4 Bb5:4 Eb6:8', 'C6:4 A5:4 F5:4 A5:4', 'F#5:8 D5:8'),
+  extra: { timp: ['timpani', 'timp', 0.35] },
 });
 
 const boss = edm({
-  name: 'boss', bpm: 175, voice: 'brass', lead: 'sawDirty', bass: 'wobble', wobble: 5.83, chords: 'none', kick: 'P', pump: 0.25,
-  intro: 'drums', build: 'kick', beat: 'P.h.h.h.S.h.hPh.', fill: 'P.h.h.hPS.SSSSSS',
-  chart: ['Dm', 'Bb', 'C', 'A', 'Dm', 'Bb', 'Gm', 'A'],
-  hookA: bars('D6:2 D6:1 D6:1 F6:2 A6:2 D7:2 C7:2 A6:4', 'D6:2 D6:1 D6:1 F6:2 Bb6:2 D7:2 C7:2 Bb6:4', 'C6:2 C6:1 C6:1 E6:2 G6:2 C7:2 Bb6:2 G6:4', 'A6:4 C#7:4 E7:8',
-    'D6:2 D6:1 D6:1 F6:2 A6:2 D7:2 C7:2 A6:4', 'D6:2 D6:1 D6:1 F6:2 Bb6:2 D7:2 C7:2 Bb6:4', 'G6:2 G6:1 G6:1 Bb6:2 D7:2 G7:2 F7:2 D7:4', 'C#7:4 E7:4 A7:8'),
-  hookB: bars('A7:6 F7:2 D7:8', 'Bb7:6 F7:2 D7:8', 'G7:6 E7:2 C7:8', 'A7:4 E7:4 C#7:8', 'D7:3 F7:3 A7:2 G7:4 F7:4', 'F7:3 D7:3 Bb6:2 D7:4 F7:4', 'G7:3 Bb7:3 G7:2 D7:4 Bb6:4', 'C#7:8 A6:8'),
-  extra: { timp: ['timpani', 'timp', 0.45] },
+  name: 'boss', bpm: 130, voice: 'brass', lead: 'edmPluck', lead2: 'saw', bass: 'house', chords: 'stab',
+  intro: 'drums', build: 'kick', beat: 'K.h.C.hKK.h.C.hK', fill: 'K.h.C.hKK.KKCCCC',
+  chart: ['Dm', 'Bb', 'F', 'C', 'Dm', 'Bb', 'Gm', 'A'],
+  hookA: bars('A5:2 D6:2 r:1 F6:1 E6:2 D6:2 r:1 A5:1 D6:4', 'Bb5:2 D6:2 r:1 F6:1 E6:2 D6:2 r:1 Bb5:1 F6:4', 'A5:2 C6:2 r:1 F6:1 E6:2 C6:2 r:1 A5:1 C6:4', 'E6:4 D6:2 C6:2 G5:8',
+    'A5:2 D6:2 r:1 F6:1 E6:2 D6:2 r:1 A5:1 D6:4', 'Bb5:2 D6:2 r:1 F6:1 E6:2 D6:2 r:1 Bb5:1 F6:4', 'D6:2 G6:2 r:1 Bb6:1 A6:2 G6:2 r:1 D6:1 Bb6:4', 'C#7:6 A6:2 E6:8'),
+  hookB: bars('D7:4 F7:4 A6:4 D7:4', 'F7:6 E7:2 D7:8', 'C7:4 F7:4 A7:4 G7:4', 'E7:6 D7:2 C7:8', 'A7:4 F7:4 D7:4 F7:4', 'Bb7:6 A7:2 F7:8', 'G7:4 D7:4 Bb6:4 D7:4', 'C#7:8 E7:8'),
+  extra: { timp: ['timpani', 'timp', 0.4] },
 });
 
 const shrine = edm({
-  name: 'shrine', bpm: 140, voice: 'panflute', lead: 'kotoLead', lead2: 'edmLead', bass: '808', chords: 'none', kick: 'P', pump: 0.15,
-  intro: 'perc', perc: bars(...Array(4).fill('t.t...w.t.tt..ww')), build: 'tom', beat: 'P.hhh.hhS.hhh.hP', fill: 'P.hhhhhhS.hhhhhh',
-  chart: ['Am', 'F', 'Em', 'Am', 'Dm', 'F', 'Em', 'E'],
-  hookA: bars('E6:2 F6:2 r:2 A6:2 B6:3 A6:1 F6:2 E6:2', 'F6:2 A6:2 r:2 C7:2 B6:3 A6:1 F6:2 C6:2', 'B5:2 E6:2 r:2 F6:2 E6:3 C6:1 B5:4', 'A5:6 E6:2 A6:8',
-    'E6:2 F6:2 r:2 A6:2 B6:3 A6:1 F6:2 E6:2', 'C7:2 A6:2 r:2 F6:2 A6:3 C7:1 F7:2 E7:2', 'E7:2 C7:2 r:2 B6:2 A6:3 F6:1 E6:4', 'E6:8 F6:4 E6:4'),
-  hookB: bars('A6:4 B6:4 C7:4 E7:4', 'F7:6 E7:2 C7:8', 'B6:4 C7:4 E7:4 F7:4', 'E7:6 C7:2 A6:8', 'D7:4 F7:4 A7:4 F7:4', 'C7:4 F7:4 A7:8', 'B6:4 E7:4 F7:4 E7:4', 'E7:8 B6:8'),
-  extra: { bells: ['bells', 'root5', 0.25] },
+  name: 'shrine', bpm: 120, voice: 'panflute', voiceShift: 0, lead: 'kotoLead', bass: 'off', chords: 'pad',
+  intro: 'perc', perc: bars(...Array(4).fill('t.t...w.t.tt..ww')), build: 'tom', beat: 'K.t.C.t.K.ttC.t.', fill: 'K.w.C.w.KwKwCwww',
+  chart: ['Dm', 'Bb', 'Am', 'Dm', 'Gm', 'Bb', 'Am', 'A'],
+  hookA: bars('D5:2 E5:1 F5:1 A5:2 Bb5:2 r:2 A5:2 F5:4', 'D5:2 F5:1 A5:1 Bb5:2 D6:2 r:2 A5:2 Bb5:4', 'E5:2 F5:1 A5:1 E6:2 D6:2 r:2 Bb5:2 A5:4', 'D6:4 A5:4 D5:8',
+    'G5:2 A5:1 Bb5:1 D6:2 F6:2 r:2 D6:2 Bb5:4', 'F5:2 Bb5:1 D6:1 F6:2 E6:2 r:2 D6:2 Bb5:4', 'E6:4 D6:2 Bb5:2 A5:4 E5:4', 'A5:4 Bb5:4 A5:8'),
+  hookB: bars('A5:4 D6:4 E6:4 F6:4', 'F6:6 E6:2 D6:8', 'E6:4 F6:4 A6:4 E6:4', 'D6:8 A5:8', 'G5:4 Bb5:4 D6:4 F6:4', 'F6:4 D6:4 Bb5:8', 'Bb5:4 A5:4 F5:4 E5:4', 'A5:16'),
+  extra: { bells: ['bells', 'root5', 0.2] },
 });
 
 const ridge = edm({
-  name: 'ridge', bpm: 124, voice: 'piano', voiceShift: 0, lead: 'edmLead', bass: 'octaves', chords: 'pad', arp: 1, pump: 0.25,
-  intro: 'solo', form: 'breakfirst', build: 'stop', beat: 'K.h.S.h.K.h.S.h.', fill: 'K.h.S.h.K.t.t.tt',
-  chart: ['F#m', 'D', 'E', 'C#m', 'F#m', 'D', 'E', 'C#'],
-  hookA: bars('C#6:6 E6:2 F#6:4 A6:4', 'F#6:6 E6:2 D6:8', 'E6:6 G#6:2 B6:4 G#6:4', 'C#6:6 E6:2 G#5:8', 'C#7:6 B6:2 A6:4 F#6:4', 'A6:6 F#6:2 D6:8', 'B6:4 G#6:4 E6:4 B6:4', 'F6:8 G#6:8'),
-  hookB: bars('A6:4 C#7:4 F#7:4 E7:4', 'D7:6 C#7:2 A6:8', 'B6:4 E7:4 G#7:4 F#7:4', 'E7:6 C#7:2 G#6:8', 'F#7:4 E7:4 C#7:4 A6:4', 'F#7:4 D7:4 A6:8', 'G#7:4 E7:4 B6:4 E7:4', 'F7:8 C#7:8'),
+  name: 'ridge', bpm: 116, swing: 0.55, voice: 'piano', voiceShift: 0, lead: 'guitarLead', bass: 'octaves', chords: 'pad',
+  intro: 'solo', form: 'breakfirst', build: 'stop', beat: 'K.h.C.h.K.h.C.hh', fill: 'K.h.C.h.K.h.SSSS',
+  chart: ['Ab', 'Fm', 'Db', 'Eb', 'Ab', 'Fm', 'Db', 'Eb'],
+  hookA: bars('r:2 C5:2 Eb5:2 Ab5:2 r:2 G5:2 Eb5:4', 'r:2 C5:2 F5:2 Ab5:2 r:2 G5:2 F5:4', 'r:2 Db5:2 F5:2 Ab5:2 r:2 F5:2 Db5:4', 'Eb5:3 G5:3 Bb5:2 Eb6:8',
+    'r:2 C5:2 Eb5:2 Ab5:2 r:2 G5:2 Eb5:4', 'r:2 C5:2 F5:2 Ab5:2 r:2 G5:2 F5:4', 'F5:2 Ab5:2 Db6:2 C6:2 Bb5:2 Ab5:2 F5:4', 'G5:6 Bb5:2 Eb5:8'),
+  hookB: bars('C6:4 Eb6:4 Ab5:8', 'C6:6 Bb5:2 Ab5:8', 'Ab5:4 Db6:4 F6:8', 'Eb6:6 Db6:2 Bb5:8', 'Ab5:4 C6:4 Eb6:4 C6:4', 'F6:6 Eb6:2 C6:8', 'Db6:4 F6:4 Ab5:8', 'G5:8 Bb5:8'),
 });
 
 const springs = edm({
-  name: 'springs', bpm: 128, voice: 'sitar', lead: 'sitarLead', lead2: 'saw', bass: 'off', chords: 'stab',
-  intro: 'kick', build: 'kick', beat: 'K.o.C.o.K.o.C.o.', fill: 'K.o.C.o.KKKKCCCC',
-  chart: ['Gm', 'Eb', 'Bb', 'F', 'Gm', 'Eb', 'Cm', 'D'],
-  hookA: bars('G6:2 Bb6:1 A6:1 G6:2 D6:2 G6:3 Bb6:3 A6:2', 'G6:2 Bb6:1 A6:1 G6:2 Eb6:2 G6:3 Bb6:3 C7:2', 'D7:2 F7:1 Eb7:1 D7:2 Bb6:2 F6:3 Bb6:3 D7:2', 'C7:4 A6:4 F6:8',
-    'G6:2 Bb6:1 A6:1 G6:2 D6:2 G6:3 Bb6:3 A6:2', 'G6:2 Bb6:1 A6:1 G6:2 Eb6:2 G6:3 Bb6:3 C7:2', 'C7:2 Eb7:1 D7:1 C7:2 G6:2 Eb6:3 G6:3 C7:2', 'D7:6 F#6:2 A6:8'),
-  hookB: bars('G6:3 G6:3 D7:2 G6:3 G6:3 Bb6:2', 'Eb7:3 Eb7:3 Bb6:2 G6:4 Eb6:4', 'F6:3 F6:3 D7:2 F6:3 F6:3 Bb6:2', 'A6:4 C7:4 F7:8',
-    'G6:3 G6:3 D7:2 G6:3 G6:3 Bb6:2', 'Eb7:3 Eb7:3 Bb6:2 G6:4 Eb6:4', 'C7:3 C7:3 G7:2 Eb7:4 C7:4', 'F#7:8 D7:8'),
-  extra: { koto: ['koto', 'arp', 0.25] },
+  name: 'springs', bpm: 124, voice: 'sitar', voiceShift: 0, lead: 'sitarLead', bass: 'house', chords: 'stab',
+  intro: 'kick', build: 'kick', beat: 'K.hKC.h.K.hKC.h.', fill: 'K.hKC.h.KKKKCCCC',
+  chart: ['Em', 'A', 'Em', 'D', 'Em', 'A', 'C', 'D'],
+  hookA: bars('E5:2 E5:1 G5:1 A5:2 B5:2 r:2 A5:2 G5:4', 'E5:2 E5:1 A5:1 C#6:2 B5:2 r:2 A5:2 E5:4', 'B5:2 B5:1 A5:1 G5:2 E5:2 r:2 G5:2 A5:4', 'F#5:4 A5:4 D6:8',
+    'E5:2 E5:1 G5:1 A5:2 B5:2 r:2 A5:2 G5:4', 'E5:2 E5:1 A5:1 C#6:2 B5:2 r:2 A5:2 E5:4', 'C6:2 C6:1 B5:1 G5:2 E5:2 r:2 G5:2 C6:4', 'B5:6 A5:2 F#5:8'),
+  hookB: bars('B5:4 E6:4 B5:4 G5:4', 'C#6:6 B5:2 A5:8', 'G5:4 B5:4 E6:4 D6:4', 'D6:6 C#6:2 A5:8', 'E6:4 D6:4 B5:4 G5:4', 'E6:4 C#6:4 A5:8', 'G5:4 C6:4 E6:4 C6:4', 'F#5:8 D6:8'),
+  extra: { koto: ['koto', 'arp', 0.2] },
 });
 
 const peak = edm({
-  name: 'peak', bpm: 130, voice: 'glock', voiceShift: 0, voiceGain: 0.4, lead: 'edmPluck', lead2: 'edmLead', bass: 'techno', chords: 'pad', pump: 0.3,
-  form: 'coldopen', build: 'snare', beat: 'K..hC.hhK..hC.hh', fill: 'K..hC.hhK.KKCCCC',
-  chart: ['Bbm', 'Gb', 'Db', 'Ab', 'Bbm', 'Gb', 'Ebm', 'F'],
-  hookA: bars('F6:2 Bb6:2 Db7:2 Bb6:2 F6:2 Bb6:2 Db7:2 F7:2', 'Gb6:2 Bb6:2 Db7:2 Bb6:2 Gb6:2 Bb6:2 Db7:2 Gb7:2', 'F6:2 Ab6:2 Db7:2 Ab6:2 F6:2 Ab6:2 Db7:2 F7:2', 'Eb6:2 Ab6:2 C7:2 Ab6:2 Eb6:2 Ab6:2 C7:2 Eb7:2',
-    'F6:2 Bb6:2 Db7:2 Bb6:2 F6:2 Bb6:2 Db7:2 F7:2', 'Gb6:2 Bb6:2 Db7:2 Bb6:2 Gb6:2 Bb6:2 Db7:2 Gb7:2', 'Eb6:2 Gb6:2 Bb6:2 Gb6:2 Eb6:2 Gb6:2 Bb6:2 Eb7:2', 'F6:2 A6:2 C7:2 A6:2 F6:2 A6:2 C7:2 F7:2'),
-  hookB: bars('Db7:8 Bb6:8', 'Db7:8 Gb7:8', 'F7:8 Db7:8', 'Eb7:8 C7:8', 'F7:4 Db7:4 Bb6:8', 'Gb7:4 F7:4 Db7:8', 'Gb7:4 Eb7:4 Bb6:8', 'A6:8 C7:8'),
-  extra: { chimes: ['chimes', 'root5', 0.25] },
+  name: 'peak', bpm: 120, voice: 'celesta', lead: 'xyloLead', bass: 'off', chords: 'pad',
+  form: 'coldopen', build: 'snare', beat: 'K.h.C.h.K.h.C.hh', fill: 'K.h.C.h.K.h.SSSS',
+  chart: ['Em', 'C', 'G', 'D', 'Em', 'C', 'Am', 'B'],
+  hookA: bars('E6:3 G6:3 B6:2 A6:3 G6:3 E6:2', 'E6:3 G6:3 C7:2 B6:3 G6:3 E6:2', 'D6:3 G6:3 B6:2 A6:3 G6:3 D6:2', 'F#6:4 A6:4 D7:8',
+    'E6:3 G6:3 B6:2 A6:3 G6:3 E6:2', 'E6:3 G6:3 C7:2 B6:3 G6:3 E6:2', 'C6:3 E6:3 A6:2 G6:3 E6:3 C6:2', 'D#6:6 F#6:2 B6:8'),
+  hookB: bars('B6:8 G6:8', 'C7:8 E7:8', 'D7:8 B6:8', 'A6:6 F#6:2 D6:8', 'E7:4 D7:4 B6:8', 'G7:4 E7:4 C7:8', 'A6:4 C7:4 E7:8', 'D#7:8 B6:8'),
+  extra: { chimes: ['chimes', 'root5', 0.2] },
 });
 
 const starfall = edm({
-  name: 'starfall', bpm: 150, voice: 'chimes', lead: 'chimesLead', lead2: 'saw', bass: 'sub', chords: 'swell', pump: 0.35,
-  intro: 'arp', build: 'stop', beat: 'K..h..h.S..h..hK', fill: 'K..h..h.SSSSSSSS',
-  chart: ['B', 'G#m', 'E', 'F#', 'B', 'G#m', 'E', 'F#'],
-  hookA: bars('F#6:2 r:1 F#6:1 D#6:2 B5:2 F#6:2 r:1 F#6:1 G#6:4', 'D#6:2 r:1 D#6:1 B5:2 G#5:2 D#6:2 r:1 D#6:1 F#6:4', 'E6:2 r:1 E6:1 B5:2 G#5:2 E6:2 r:1 E6:1 G#6:4', 'A#6:4 C#7:4 F#7:8',
-    'F#6:2 r:1 F#6:1 D#6:2 B5:2 F#6:2 r:1 F#6:1 G#6:4', 'D#6:2 r:1 D#6:1 B5:2 G#5:2 D#6:2 r:1 D#6:1 F#6:4', 'G#6:2 B6:2 E7:4 D#7:2 B6:2 G#6:4', 'F#6:8 A#6:4 C#7:4'),
-  hookB: bars('D#7:4 C#7:4 B6:4 F#6:4', 'G#6:4 B6:4 D#7:8', 'E7:4 D#7:4 B6:4 G#6:4', 'A#6:4 C#7:4 F#7:8', 'B6:3 D#7:3 F#7:2 D#7:4 B6:4', 'B6:3 D#7:3 G#7:2 F#7:4 D#7:4', 'G#6:3 B6:3 E7:2 D#7:4 C#7:4', 'C#7:8 A#6:8'),
-  extra: { vibes: ['vibes', 'arp', 0.25] },
+  name: 'starfall', bpm: 124, voice: 'chimes', voiceShift: 0, lead: 'vibesLead', bass: 'house', chords: 'stab',
+  intro: 'arp', build: 'stop', beat: 'K.o.C.o.K.o.C.oo', fill: 'K.o.C.o.K.o.SSSS',
+  chart: ['E', 'C#m', 'A', 'B', 'E', 'G#m', 'A', 'B'],
+  hookA: bars('B4:2 E5:2 r:1 G#5:1 F#5:2 E5:2 r:1 B4:1 E5:4', 'C#5:2 E5:2 r:1 G#5:1 F#5:2 E5:2 r:1 C#5:1 G#5:4', 'C#5:2 E5:2 r:1 A5:1 G#5:2 E5:2 r:1 C#5:1 A5:4', 'B5:4 A5:2 G#5:2 F#5:8',
+    'B4:2 E5:2 r:1 G#5:1 F#5:2 E5:2 r:1 B4:1 E5:4', 'B4:2 D#5:2 r:1 G#5:1 F#5:2 D#5:2 r:1 B4:1 G#5:4', 'E5:2 A5:2 r:1 C#6:1 B5:2 A5:2 r:1 E5:1 C#6:4', 'D#6:6 B5:2 F#5:8'),
+  hookB: bars('G#5:4 B5:4 E6:4 D#6:4', 'E6:6 C#6:2 G#5:8', 'A5:4 C#6:4 E6:4 C#6:4', 'D#6:6 F#6:2 B5:8', 'B5:4 E6:4 G#6:4 F#6:4', 'D#6:6 B5:2 G#5:8', 'C#6:4 E6:4 A6:8', 'F#6:8 D#6:8'),
+  extra: { glock: ['glock', 'arp', 0.2] },
 });
 
-// The queens' trial: an electro waltz in three, the kick on one, claps on two and three.
+// The queens' trial: a waltz in three, the kick on one, claps on two and three, the harp leading.
 const queen = edm({
-  name: 'queen', bpm: 168, rows: 12, voice: 'violin', lead: 'saw', bass: 'waltz', chords: 'stab',
+  name: 'queen', bpm: 150, rows: 12, voice: 'violinStacc', lead: 'harpLead', bass: 'waltz', chords: 'stab',
   intro: 'solo', build: 'snare', beat: 'K...c...c...', fill: 'K...c.K.cccc',
   chart: ['Gm', 'Eb', 'Cm', 'D', 'Gm', 'Eb', 'D', 'Gm'],
   hookA: bars('D6:4 G6:4 Bb6:4', 'Bb6:8 G6:4', 'C7:4 Eb7:4 G7:4', 'F#7:8 D7:4', 'Bb6:4 D7:4 G7:4', 'G7:4 F7:4 Eb7:4', 'D7:4 C7:4 A6:4', 'G6:12'),

@@ -4,9 +4,10 @@
 //
 // The mix, after docs/audio/research-sfx.md and research-japanese.md:
 // - Four buses into the master: effects, music, voices (NPC text blips) and the interface. The
-//   interface is dry, in front, and never dipped.
-// - The music dips under jingles and big blows (`duck`), the way FFXIV and Pokemon keep their
-//   fanfares clear, and comes back up smoothly.
+//   interface is dry, in front, and never dipped. The effects come down together as more of them
+//   ring at once (`setDensity`), so a busy fight stays clear.
+// - The music dips under jingles and your own big blows (`duck`), the way FFXIV and Pokemon keep
+//   their fanfares clear, and comes back up smoothly.
 // - A brick-wall limiter on the end, so a busy fight never clips, instead of a squashing
 //   compressor; and only a short, small room (0.3 s) that magic and holy sounds send a little to
 //   (the songs carry their own reverb).
@@ -26,6 +27,7 @@ let musicTone = null;
 let output = null;
 let duckUntil = 0;
 let duckDepth = 0;
+let density = null;
 const ready = [];
 
 // Volume levels as the Options window offers them.
@@ -64,6 +66,12 @@ export function unlock() {
     buses[name] = ac.createGain();
     buses[name].connect(master);
   }
+  // The effects bus goes through a gain that comes down as more effects ring at once
+  // (`setDensity`), so a crowded fight doesn't pile up into a wall.
+  buses.sfx.disconnect();
+  density = ac.createGain();
+  buses.sfx.connect(density);
+  density.connect(master);
   // The music bus goes through its own ducking gain, and a lowpass that muffles it (low HP, a
   // calm night in town; wide open the rest of the time).
   buses.music.disconnect();
@@ -126,6 +134,13 @@ export function duck(db, ms) {
   g.cancelScheduledValues(t);
   g.setTargetAtTime(dbGain(depth), t, 0.03);
   g.setTargetAtTime(1, duckUntil, 0.18);
+}
+
+// Up to four effects ring at full level; past that they all come down together (eight at once
+// about 3 dB, sixteen about 6 dB), easing over about 50 ms.
+export function setDensity(n) {
+  if (!ac) return;
+  density.gain.setTargetAtTime(Math.sqrt(4 / Math.max(4, n)), ac.currentTime, 0.05);
 }
 
 // Muffles the music to a lowpass at `hz` (20000 = open), easing there over about `secs`.

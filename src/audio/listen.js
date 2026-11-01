@@ -4,7 +4,9 @@
 // quests, maps, the hit counter's tiers, a full gauge). The world itself never plays sounds, so
 // the rules stay testable without audio; this reads what it left behind.
 //
-// Sounds pan with where they happen on screen. The music follows the map.
+// Sounds pan with where they happen on screen. What the other players do (party members, other
+// hunters on the map, friends online) is theirs: it plays softer, behind your own sounds (`ally`;
+// sfx.js). The music follows the map.
 
 import { sfx } from './sfx.js';
 import { updateMusic, setFight, setMuffle } from './music.js';
@@ -63,41 +65,49 @@ export function hearWorld(world, cam) {
     if (f.heard || f.t < 0) continue;
     f.heard = true;
     const p = pan(f.x ?? b.x);
+    const ally = Boolean(f.ally || f._remote);
+    const say = (name, o = {}) => sfx(name, { ...o, ally });
     switch (f.kind) {
       // A combo's own swings are heard from their wind-up (the 'swing' cue below); arcs without a
       // move (party members' cuts) are heard here.
-      case 'arc': if (!f.move) sfx('swing', { weight: f.big ? 1.8 : (f.thick ?? 7) > 11 ? 1.4 : 1, school: f.snd, pan: p }); break;
-      case 'projectile': sfx('shot', { kind: f.shot, weapon: f.weapon, pan: p }); break;
-      case 'castcircle': sfx('cast', { school: f.school, big: f.big, pan: p }); break;
-      case 'powerup': sfx('powerup', { school: f.school, big: f.big, pan: p }); break;
-      case 'buffcast': sfx('buff', { party: SKILLS[f.skill]?.party, pan: p }); break;
-      case 'heal': sfx('heal', { pan: p }); break;
-      case 'chargetrail': sfx('dash', { pan: p }); break;
-      case 'leapburst': sfx('dash', { pan: p }); break;
-      case 'blink': sfx('blink', { pan: p }); break;
-      case 'gather': sfx('gather', { dur: f.dur, school: f.school, pan: p }); break;
-      case 'freeze': sfx('freeze', { pan: p }); break;
+      case 'arc': if (!f.move) say('swing', { weight: f.big ? 1.8 : (f.thick ?? 7) > 11 ? 1.4 : 1, school: f.snd, pan: p }); break;
+      case 'projectile': say('shot', { kind: f.shot, weapon: f.weapon, pan: p }); break;
+      case 'castcircle': say('cast', { school: f.school, big: f.big, pan: p }); break;
+      case 'powerup': say('powerup', { school: f.school, big: f.big, pan: p }); break;
+      case 'buffcast': say('buff', { party: SKILLS[f.skill]?.party, pan: p }); break;
+      case 'heal': say('heal', { pan: p }); break;
+      case 'chargetrail': say('dash', { pan: p }); break;
+      case 'leapburst': say('dash', { pan: p }); break;
+      case 'blink': say('blink', { pan: p }); break;
+      case 'gather': say('gather', { dur: f.dur, school: f.school, pan: p }); break;
+      case 'freeze': say('freeze', { pan: p }); break;
       // Each sight locking on ticks a step higher than the last (Rez; research/archery.md 26).
-      case 'reticle': sfx('lockOn', { pan: p, rate: Math.pow(2, (2 * Math.min(8, f.n ?? 0)) / 12) }); break;
-      case 'poisonpuff': sfx('dot', { bleed: f.bleed, pan: p }); break;
+      case 'reticle': say('lockOn', { pan: p, rate: Math.pow(2, (2 * Math.min(8, f.n ?? 0)) / 12) }); break;
+      case 'poisonpuff': say('dot', { bleed: f.bleed, pan: p }); break;
       default:
         // (A bolt's small muzzle sparks ride on the shot's own sound.)
         if (f.small && f.kind === 'boltshock') break;
-        if (NAMED.has(f.kind)) sfx(f.kind, { pan: p });
-        else if (SPELLS.has(f.kind) || f.kind === 'fire' || f.kind === 'holy') sfx('spell', { kind: f.kind, pan: p });
+        if (NAMED.has(f.kind)) say(f.kind, { pan: p });
+        else if (SPELLS.has(f.kind) || f.kind === 'fire' || f.kind === 'holy') say('spell', { kind: f.kind, pan: p });
     }
   }
 
   // ----- Game-feel cues (read before the renderer drains them) -----
+  // Your hits this frame are heard as one blow (the biggest of them), the others' as one softer one.
   let hits = 0;
   let hit = null;
+  let theirs = null;
   for (const j of world.juice) {
     if (j.heard) continue;
     j.heard = true;
     if (j.type === 'hit') {
+      if (j.ally || j.party) {
+        if (!theirs || j.crit || j.big) theirs = j;
+        continue;
+      }
       hits++;
       if (!hit || j.crit || j.big) hit = j;
-    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x) });
+    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x), ally: Boolean(j.ally || j.party) && !j.boss });
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
@@ -109,6 +119,7 @@ export function hearWorld(world, cam) {
     const path = hit.party ? null : hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasBond(char) ? 'wind' : null;
     sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x), mob: hit.mob, boss: hit.boss });
   }
+  if (theirs) sfx('hit', { big: theirs.big, via: theirs.via, weapon: theirs.weapon, school: theirs.school, pan: pan(theirs.x), ally: true });
 
   // ----- Floating words -----
   for (const n of world.numbers) {
