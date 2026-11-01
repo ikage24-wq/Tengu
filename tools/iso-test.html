@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Isometric test</title>
+<style>body { margin: 0; background: #cfeaff; } canvas { display: block; margin: 0 auto; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a one-off look at Tengu in isometric view. A small meadow drawn as diamond tiles in the
+// meadow's own colours (a raised ledge, a cobble path, a pond, trees), with the real hero and
+// meadow monsters standing on it, sorted by depth. Open /tools/iso-test.html (served with the game).
+import { setHd, sprite, blit } from '../src/render/pixel.js';
+import { drawHero } from '../src/render/hero.js';
+import { MATERIALS } from '../src/render/terrain.js';
+import { ART } from '../src/render/mobs/meadow.js';
+
+const S = 3;
+const W = 420, H = 260;
+setHd(true, S);
+const c = document.getElementById('c');
+c.width = W * S;
+c.height = H * S;
+const ctx = c.getContext('2d');
+const M = MATERIALS.meadow;
+
+// Tile grid: height per tile (0 ground, 1-2 ledge), and what's on it.
+const N = 12, TW = 32, TH = 16, ZH = 12;
+const OX = W / 2, OY = 40;
+const height = (i, j) => (i < 4 && j < 5 ? (i < 2 && j < 3 ? 2 : 1) : 0);
+const pond = (i, j) => (i - 8.5) ** 2 + (j - 3) ** 2 < 4.2;
+const path = (i, j) => !pond(i, j) && (j === 7 || (i === 6 && j > 7)) && height(i, j) === 0;
+const iso = (i, j, z = 0) => [OX + (i - j) * TW / 2, OY + (i + j) * TH / 2 - z * ZH];
+
+function hash(i, j) { const s = Math.sin(i * 127.1 + j * 311.7) * 43758.5; return s - Math.floor(s); }
+
+function diamond(x, y, fill, line) {
+  ctx.beginPath();
+  ctx.moveTo(x, y); ctx.lineTo(x + TW / 2, y + TH / 2); ctx.lineTo(x, y + TH); ctx.lineTo(x - TW / 2, y + TH / 2); ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  if (line) { ctx.strokeStyle = line; ctx.lineWidth = 0.5; ctx.stroke(); }
+}
+
+function tile(i, j) {
+  const z = height(i, j);
+  const [x, y] = iso(i, j, z);
+  // Cliff faces down to the ground (or to a lower neighbour), left and right sides.
+  const faces = [[height(i, j + 1), -1, M.body], [height(i + 1, j), 1, M.deep]];
+  for (const [nz, side, col] of faces) {
+    const drop = (z - nz) * ZH;
+    if (drop <= 0) continue;
+    ctx.beginPath();
+    ctx.moveTo(x, y + TH); ctx.lineTo(x + side * TW / 2, y + TH / 2);
+    ctx.lineTo(x + side * TW / 2, y + TH / 2 + drop); ctx.lineTo(x, y + TH + drop); ctx.closePath();
+    ctx.fillStyle = col; ctx.fill();
+    ctx.strokeStyle = '#3a2d4f55'; ctx.lineWidth = 0.5; ctx.stroke();
+    // Cobble texture and a grassy lip with hanging vine bits.
+    ctx.fillStyle = M.stone;
+    for (let k = 0; k < drop / 6; k++) ctx.fillRect(x + side * (5 + hash(i + k, j) * 9) - 1.5, y + TH + 3 + k * 6 - side * 2, 3, 2);
+    ctx.fillStyle = M.lip;
+    ctx.beginPath(); ctx.moveTo(x, y + TH); ctx.lineTo(x + side * TW / 2, y + TH / 2);
+    ctx.lineTo(x + side * TW / 2, y + TH / 2 + 3); ctx.lineTo(x, y + TH + 3); ctx.closePath(); ctx.fill();
+  }
+  const top = pond(i, j) ? '#9fd8ff' : path(i, j) ? M.stone : hash(i, j) > 0.5 ? M.lip : '#84d681';
+  diamond(x, y, top, pond(i, j) ? '#7cc0f055' : '#5fb06a40');
+  if (pond(i, j) && hash(i, j) > 0.6) { ctx.fillStyle = '#ffffffaa'; ctx.fillRect(x - 4, y + 7, 8, 1); }
+  if (path(i, j)) for (let k = 0; k < 3; k++) { ctx.fillStyle = '#d9b98c'; ctx.fillRect(x - 6 + hash(i, j + k) * 12, y + 4 + k * 3, 3, 2); }
+}
+
+// Things that stand on the grid, drawn in depth order with the hero and monsters.
+const props = [];
+const tree = (i, j, s = 1) => props.push({ i, j, draw(x, y) {
+  ctx.fillStyle = '#3a2d4f22'; ctx.beginPath(); ctx.ellipse(x, y, 12 * s, 5 * s, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#a3714c'; ctx.fillRect(x - 2.5 * s, y - 16 * s, 5 * s, 16 * s);
+  for (const [dx, dy, r, col] of [[0, -30, 14, '#5fbf72'], [-8, -24, 10, '#6fcf7e'], [8, -25, 10, '#6fcf7e'], [-3, -35, 8, '#9ee8a0']]) {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x + dx * s, y + dy * s, r * s, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle = '#ff9ec0'; for (const [dx, dy] of [[-6, -30], [5, -36], [9, -24]]) ctx.fillRect(x + dx * s, y + dy * s, 2, 2);
+} });
+const flower = (i, j, col) => props.push({ i, j, draw(x, y) {
+  ctx.fillStyle = '#4fae5f'; ctx.fillRect(x - 0.5, y - 5, 1, 5);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y - 6, 2, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff6b0'; ctx.fillRect(x - 0.5, y - 6.5, 1, 1);
+} });
+tree(0.5, 0.5, 1.1); tree(3, 0.5); tree(10.5, 0.5, 1.2); tree(11, 9); tree(0.5, 10.5, 1.1); tree(2.5, 6);
+for (let k = 0; k < 26; k++) {
+  const i = hash(k, 3) * N, j = hash(5, k) * N;
+  if (!pond(i | 0, j | 0) && !path(i | 0, j | 0)) flower(i, j, ['#ff9ec0', '#c9a6ff', '#fff19e', '#9fd8ff'][k % 4]);
+}
+
+const monster = (key, i, j, r, sp) => ({ key, i0: i, j0: j, r, sp });
+const mobs = [monster('puffle', 7, 9.5, 1.4, 0.7), monster('sproutling', 9.5, 7, 1, 0.5), monster('mushkin', 4.5, 10, 1.2, 0.4)];
+const spr = (k, f) => sprite(`iso|${k}|${f}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, pad: ART[k].pad ?? 4, ...ART[k].draw('walk', f, 'idle') }));
+const look = { hairStyle: 'bob', hairColor: '#ff9ec0', skinTone: '#fbd9bf', eyeColor: '#5aa8ff', outfitColor: '#c9a6ff', eyeStyle: 'sparkle', face: 'smile' };
+
+// The hero walks a loop along the path and round the pond.
+const loop = [[6, 11.5], [6, 7], [10.5, 7], [10.5, 5.5], [6.5, 5.5], [6, 7]];
+function heroAt(t) {
+  const seg = loop.map((p, k) => [p, loop[(k + 1) % loop.length]]);
+  const lens = seg.map(([a, b]) => Math.hypot(b[0] - a[0], b[1] - a[1]));
+  let d = (t * 1.6) % lens.reduce((a, b) => a + b);
+  for (let k = 0; k < seg.length; k++) {
+    if (d <= lens[k]) { const [a, b] = seg[k]; const u = d / lens[k]; return { i: a[0] + (b[0] - a[0]) * u, j: a[1] + (b[1] - a[1]) * u, di: b[0] - a[0], dj: b[1] - a[1] }; }
+    d -= lens[k];
+  }
+}
+
+function frame(ms) {
+  const t = ms / 1000;
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#bfe4ff'); sky.addColorStop(1, '#f6f0ff');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  // Tiles back to front, raised ones last within their row so cliffs overlap correctly.
+  for (let s = 0; s < 2 * N - 1; s++) for (let i = 0; i < N; i++) { const j = s - i; if (j >= 0 && j < N) tile(i, j); }
+  const things = props.map((p) => ({ d: p.i + p.j, i: p.i, j: p.j, draw: p.draw }));
+  for (const m of mobs) {
+    const a = t * m.sp + m.i0;
+    const i = m.i0 + Math.cos(a) * m.r, j = m.j0 + Math.sin(a) * m.r;
+    const dx = -Math.sin(a) - Math.cos(a); // screen-x direction of travel
+    const f = Math.floor(t * 8) % (ART[m.key].walk ?? 4);
+    things.push({ d: i + j, i, j, draw(x, y) {
+      ctx.fillStyle = '#3a2d4f22'; ctx.beginPath(); ctx.ellipse(x, y, 9, 3.5, 0, 0, 7); ctx.fill();
+      const s = spr(m.key, f);
+      ctx.save(); ctx.translate(x, 0); ctx.scale(dx > 0 ? -1 : 1, 1); blit(ctx, s, -s.w / 2, y - s.h + 2); ctx.restore();
+    } });
+  }
+  const h = heroAt(t);
+  things.push({ d: h.i + h.j, i: h.i, j: h.j, draw(x, y) {
+    ctx.fillStyle = '#3a2d4f26'; ctx.beginPath(); ctx.ellipse(x, y, 8, 3, 0, 0, 7); ctx.fill();
+    drawHero(ctx, look, null, x, y, { pose: 'walk', time: t, facing: h.di - h.dj >= 0 ? 1 : -1, moving: true });
+  } });
+  things.sort((a, b) => a.d - b.d);
+  for (const o of things) { const [x, y] = iso(o.i, o.j, height(o.i | 0, o.j | 0)); o.draw(x, y + TH / 2); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+document.title = 'ready';
+</script>

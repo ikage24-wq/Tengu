@@ -1,0 +1,150 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Tall map example</title>
+<style>body { margin: 0; background: #2a2238; color: #f6f0ff; font: 13px sans-serif; } canvas { display: block; margin: 0 auto; max-width: 100%; } p { text-align: center; }</style>
+<canvas id="c"></canvas>
+<p id="hint"></p>
+<script type="module">
+// Dev tool: an example of a MapleStory-style tall hunting map, run on the real game. Blossom
+// Heights climbs one big flowering tree in four zones stacked on top of each other (the meadow
+// floor, the root shelves, the mushroom caps, the canopy), each with its own monsters, joined by
+// ropes and ladders, with exits on different floors. Players spread out over the floors instead of
+// crowding one line. Open /tools/tall-map.html to play it (arrows, Alt jump, Z attack, Up on a
+// rope); ?overview draws the whole map next to Petal Meadow, today's tallest meadow map.
+import { MAPS } from '../src/data/maps.js';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCharacter, gainExp } from '../src/core/character.js';
+import { createCamera, updateCamera, drawWorld, VIEW_W, VIEW_H } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { createInput, endFrame } from '../src/input.js';
+
+// Floors are 80 px apart (a jump reaches about 100). Zones: meadow floor 1460-1300, root shelves
+// 1220-1140, mushroom caps 1060-900, canopy 820-660, the lookout on top at 580.
+const G = 1460;
+MAPS.heights = {
+  ...MAPS.meadow1, id: 'heights', name: 'Blossom Heights', width: 2000, height: 1500, groundY: G,
+  terrain: [[0, G], [2000, G]],
+  look: { ...MAPS.meadow1.look, props: ['flower', 'tulip', 'bush', 'tuft'] },
+  platforms: [
+    // The meadow floor: two wide ledges.
+    { x: 120, y: 1380, w: 760 }, { x: 1120, y: 1380, w: 760 },
+    { x: 420, y: 1300, w: 1160 },
+    // The root shelves: posts like tree roots, a gap in the middle to drop through.
+    { x: 60, y: 1220, w: 700, posts: true }, { x: 1240, y: 1220, w: 700, posts: true },
+    { x: 260, y: 1140, w: 600, posts: true }, { x: 1140, y: 1140, w: 600, posts: true },
+    // The mushroom caps: short hops, zig-zagging up.
+    { x: 140, y: 1060, w: 260, thick: 30 }, { x: 560, y: 1060, w: 300, thick: 30 }, { x: 1140, y: 1060, w: 300, thick: 30 }, { x: 1600, y: 1060, w: 260, thick: 30 },
+    { x: 340, y: 980, w: 280, thick: 30 }, { x: 860, y: 980, w: 280, thick: 30 }, { x: 1380, y: 980, w: 280, thick: 30 },
+    { x: 100, y: 900, w: 520, thick: 30 }, { x: 1380, y: 900, w: 520, thick: 30 },
+    // The canopy: long boughs.
+    { x: 200, y: 820, w: 1600 },
+    { x: 80, y: 740, w: 760 }, { x: 1160, y: 740, w: 760 },
+    { x: 440, y: 660, w: 1120 },
+    // The lookout at the very top.
+    { x: 800, y: 580, w: 400, thick: 44 },
+  ],
+  ropes: [
+    { x: 160, top: 1380, bottom: G, ladder: true }, { x: 1840, top: 1380, bottom: G, ladder: true },
+    { x: 860, top: 1300, bottom: 1380 }, { x: 1140, top: 1300, bottom: 1380 },
+    { x: 700, top: 1220, bottom: 1300 }, { x: 1300, top: 1220, bottom: 1300 },
+    { x: 300, top: 1140, bottom: 1220 }, { x: 1700, top: 1140, bottom: 1220 },
+    { x: 600, top: 1060, bottom: 1140 }, { x: 1400, top: 1060, bottom: 1140 },
+    { x: 380, top: 980, bottom: 1060 }, { x: 1620, top: 980, bottom: 1060 },
+    { x: 140, top: 900, bottom: 1060 }, { x: 1860, top: 900, bottom: 1060 },
+    { x: 1000, top: 820, bottom: 980, ladder: true },
+    { x: 240, top: 740, bottom: 820 }, { x: 1760, top: 740, bottom: 820 },
+    { x: 480, top: 660, bottom: 740 }, { x: 1520, top: 660, bottom: 740 },
+    { x: 1000, top: 580, bottom: 660, ladder: true },
+  ],
+  // Exits on different floors: back to town at the bottom, the canyon off the root shelves, the
+  // Sky Garden from the lookout, as the reward for the climb.
+  portals: [
+    { id: 'west', x: 40, y: G, to: 'meadow1', toPortal: 'east', label: 'Petal Meadow' },
+    { id: 'roots', x: 1900, y: 1220, to: 'canyon', toPortal: 'south', label: 'Windy Canyon' },
+    { id: 'top', x: 1120, y: 580, to: 'sky', toPortal: 'west', label: 'Sky Garden' },
+  ],
+  deco: [['flowerarch', 300], ['beehive', 700], ['picnic', 1300], ['signpost', 1800]],
+  spawns: [
+    ...[300, 600, 900, 1200, 1500].map((x, k) => ({ mob: k % 2 ? 'snailbun' : 'puffle', x, y: G })),
+    ...[300, 650, 1300, 1650].map((x) => ({ mob: 'puffle', x, y: 1380 })),
+    ...[600, 1000, 1400].map((x) => ({ mob: 'snailbun', x, y: 1300 })),
+    ...[250, 550, 1450, 1750].map((x) => ({ mob: 'mushkin', x, y: 1220 })),
+    ...[500, 1450].map((x) => ({ mob: 'mushkin', x, y: 1140 })),
+    ...[700, 1290].map((x) => ({ mob: 'sproutling', x, y: 1060 })),
+    ...[480, 1000, 1520].map((x) => ({ mob: 'sproutling', x, y: 980 })),
+    ...[350, 1640].map((x) => ({ mob: 'sproutling', x, y: 900 })),
+    ...[500, 1000, 1500].map((x) => ({ mob: 'piglet', x, y: 820 })),
+    ...[450, 1500].map((x) => ({ mob: 'piglet', x, y: 740 })),
+    ...[700, 1300].map((x) => ({ mob: 'piglet', x, y: 660 })),
+  ],
+};
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const char = createCharacter('Tester', {});
+gainExp(char, 4000);
+const w = createWorld(char);
+
+if (q.has('overview')) {
+  // Each map drawn whole, a screen at a time, then shrunk side by side at the same scale.
+  const shot = (id) => {
+    loadMap(w, id, 'west');
+    const m = w.map;
+    const big = document.createElement('canvas');
+    big.width = m.width; big.height = m.height;
+    const bx = big.getContext('2d');
+    const tile = document.createElement('canvas');
+    tile.width = VIEW_W; tile.height = VIEW_H;
+    const tx = tile.getContext('2d');
+    setHd(true, 1);
+    // A first draw starts the map's fade-in; the real ones come well after it.
+    drawWorld(tx, w, { x: 0, y: 0, ready: true, mapId: m.id, look: 0, footY: 0 }, 0);
+    for (let y = 0; y < m.height; y += VIEW_H) for (let x = 0; x < m.width; x += VIEW_W) {
+      const cam = { x: Math.min(x, m.width - VIEW_W), y: Math.min(y, m.height - VIEW_H), ready: true, mapId: m.id, look: 0, footY: 0 };
+      nextFrame();
+      tx.setTransform(1, 0, 0, 1, 0, 0);
+      drawWorld(tx, w, cam, 10);
+      bx.drawImage(tile, cam.x, cam.y);
+    }
+    return big;
+  };
+  const a = shot('meadow1'), b = shot('heights');
+  const K = 0.5, pad = 30;
+  canvas.width = (a.width + b.width) * K + pad * 3;
+  canvas.height = Math.max(a.height, b.height) * K + pad * 2;
+  ctx.fillStyle = '#2a2238'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
+  const put = (img, x, label) => {
+    const y = canvas.height - pad - img.height * K;
+    ctx.drawImage(img, x, y, img.width * K, img.height * K);
+    ctx.fillStyle = '#f6f0ff'; ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(label, x, y - 8);
+  };
+  put(a, pad, 'Petal Meadow today (4 floors)');
+  put(b, pad * 2 + a.width * K, 'Blossom Heights (4 zones, 14 floors, 3 exits)');
+  document.title = 'ready';
+} else {
+  loadMap(w, 'heights', 'west');
+  const SCALE = 2;
+  canvas.width = VIEW_W * SCALE; canvas.height = VIEW_H * SCALE;
+  document.getElementById('hint').textContent = 'Arrows move · Alt jumps · Up/Down on ropes · Z attacks · climb to the lookout at the top';
+  const input = createInput(canvas);
+  const cam = createCamera();
+  let last = performance.now(), t = 0;
+  const loop = (now) => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+    updateWorld(w, dt, input);
+    endFrame(input);
+    nextFrame();
+    ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+    setHd(true, SCALE);
+    updateCamera(cam, w, dt);
+    drawWorld(ctx, w, cam, t);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+  window.world = w;
+  document.title = 'ready';
+}
+</script>

@@ -168,6 +168,47 @@ there and update the status file as they get done.
   The 2026-10-31 cleanup removed a long list of such things (fake-player town gags, gear layers
   that duplicated polishing, chores like running out of stars or a hungry pet): don't bring them
   back.
+- **Hunting maps are built MapleStory style: tall, in zones (the player's standing rule, from
+  the Blossom Heights example, `tools/tall-map.html`).** A main hunting map climbs high (about
+  1000-1500 px, 8-14 floors 80 px apart, ropes and ladders between them) and is split by height
+  into zones, each with its own look and its own monsters, so players spread out over the floors
+  instead of crowding one line. Exits sit on different floors (the best one at the top, as the
+  reward for the climb), and floors vary: wide ledges, short zig-zag hops, gaps to drop through.
+  Not every map has to be big, and size is decided per map, not by its kind: a town or a linking
+  map can be big too when that makes it better (a town climbing a cliff in districts, a linking
+  path up a mountain), as long as it is designed really well, with a reason for every floor and
+  nothing that's just filler. Boss rooms and trial arenas are usually their own size, built for
+  the fight. New maps follow this, and older maps get it when they are reworked. Every map also
+  follows these (the player picked them):
+  - **Hunt in a loop:** monsters and ropes are placed so you can hunt round a floor or zone
+    without walking back over empty ground, and respawns keep up with one hunter.
+  - **Room to fight:** hunting floors are wide enough for dashes, knockbacks and launches; no low
+    ceilings or tiny ledges where skills fall off.
+  - **Safe arrival:** no monsters at portals or where you appear.
+  - **A landmark per zone:** one big piece you recognise from far away (a giant mushroom, a
+    shrine bell), so you always know where you are.
+  - **A secret per big map:** one hidden find worth finding (a hidden ledge with a chest, a rare
+    monster, a shortcut), never just flavour.
+  - **Bots use the whole map:** bot players spread across every floor and zone like real players,
+    not bunched on the ground floor.
+  - **Maps heal as you hunt:** the island's spirits are souring (the story); as players hunt, a
+    map grows calmer and prettier (flowers bloom, colour returns, its calm spirit shows), and
+    left alone it slowly sours again.
+  - **One fun moving part per zone:** its own way to get around beyond ropes (bouncy mushroom
+    caps, swinging vines, drifting clouds, zip lines, updrafts).
+  - **An area boss nest:** hunt enough on a map and its own boss wakes in a set spot, a shared
+    moment for everyone there.
+  - **Day and night:** maps follow the real clock; at night some floors change, other monsters
+    come out, lanterns light up and a night-only spot opens.
+  - **Monsters live there:** they act like it's their home (nap on ledges, gather at the pond,
+    chase each other, flee to their nest when hurt), a habitat rather than a spawn list.
+  - **Maps connect in the view:** the next map shows in the far background (the canyon behind the
+    meadow, the Sky Garden above the peak), so the island reads as one place.
+  - **Weather per region:** real weather that changes play a little (wind pushes jumps on the
+    peak, rain raises ponds and brings new fish, snow slows monsters).
+  - **Life skills are important (the player's words):** every map has spots for fishing, mining
+    and gathering that fit its theme and zones (fishing where there's water, ore veins in caves
+    and cliffs, herbs and fruit in woods and meadows), worth visiting alongside hunting.
 - Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
   maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
   monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece

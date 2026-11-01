@@ -117,7 +117,7 @@ jobs.)
 - **Fun Fair** (FFXIV's Gold Saucer): Boss Rush, minigames, its own prize tokens and outfits.
 - **Mounts**: from story chapters and achievements.
 - **A cozy home** (FFXIV housing) to show off trophies and furniture. Much later.
-- **Gathering and crafting**: optional, much later.
+- **Life skills (fishing, mining, gathering, crafting)**: important to the player (2026-11-01), not "much later": every map gets spots for them that fit its theme and zones.
 
 ## Phases (build in this order)
 
