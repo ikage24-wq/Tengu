@@ -274,41 +274,55 @@ export const MAPS = {
   },
 
 
-  // Mossy Woods climbs an old forest in three zones (the tall-map rules, a light rework, laid out
-  // by data/climb.js): the Fern Floor, where Dryads tend the ferns and Wargs prowl; the Warg
-  // Hollows, the wolves' den among the roots, with a log drifting across its gap; and the Treant
-  // Canopy, where old Treants doze in the treetops and glowing spores float you up, with a lookout
-  // on top and the way on to the Whispering Glade as the reward for the climb. A mushroom on the
-  // floor bounces you up.
+  // Mossy Woods is a surface-and-underground map (data/climb.js lay(), zones by height): the Forest
+  // Floor is a long walk through the trees, broken by holes where the roots have fallen in; below it
+  // run the Root Tunnels, the Wargs' warrens, lit by glowing spores that rise up through the holes;
+  // and above it the Treetops, where the old Treants doze, with a log drifting between the boughs
+  // and, on the highest one, the way on to the Whispering Glade. A bouncy mushroom on the floor
+  // springs you up into the trees.
   woods: {
     id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
     look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'planks', edges: 'glowcaps' },
-    ...climb({
-      width: 2200, ground: 900, quiet: [[40, 900, 160], [2140, 900, 160]],
+    ...lay({
+      width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
       zones: [
-        { name: 'Fern Floor', color: '#4f9e55', rows: ['split', 'long'], mobs: ['leafling', 'boarlet'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Warg Hollows', color: '#8a6656', rows: ['splitwide', 'tri', 'long'], mobs: ['boarlet', 'leafling'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] }],
-          look: { sky: ['#7cc49a', '#b4e0b8', '#e6f2cc'], far: '#6aae84', mid: '#4f9466' } },
-        { name: 'Treant Canopy', color: '#3f9a7a', rows: ['split', 'middle', 'splitwide'], mobs: ['mossgolem', 'leafling'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+        { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] }],
+          look: { sky: ['#4a6a52', '#6a8a6a', '#a8c09a'], far: '#4f7a5a', mid: '#3f6a4a' } },
+        { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
           look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
       ],
+      ledges: [
+        // The Forest Floor: a long walk with two holes fallen through to the tunnels.
+        { x: 0, y: 680, w: 600 }, { x: 700, y: 680, w: 700 }, { x: 1500, y: 680, w: 700 },
+        // Root shelves down in the tunnels.
+        { x: 150, y: 920, w: 300 }, { x: 900, y: 920, w: 400 }, { x: 1700, y: 920, w: 300 },
+        { x: 480, y: 840, w: 260 }, { x: 1280, y: 840, w: 300 },
+        // The Treetops, and the highest bough with the way to the glade.
+        { x: 200, y: 600, w: 300 }, { x: 900, y: 600, w: 400 }, { x: 1700, y: 600, w: 300 },
+        { x: 500, y: 520, w: 300 }, { x: 1300, y: 520, w: 300 },
+        { x: 850, y: 440, w: 500, thick: 44 },
+        // The log drifting between the boughs.
+        { x: 810, y: 520, w: 120, style: 'planks', drift: { dx: 360, period: 10 } },
+      ],
     }),
-    // A moving part per zone: a bouncy mushroom on the floor, a log drifting across the hollows'
-    // gap, and glowing spores rising through the canopy (Up to ride them).
-    springs: [{ x: 1100, y: 900, up: 170, kind: 'shroom' }],
-    updrafts: [{ x: 1250, w: 56, top: 300, bottom: 500, kind: 'spores' }],
+    // A moving part per zone: glowing spores rising from the tunnels up through a hole (Up to ride
+    // them), a bouncy mushroom on the floor, and the drifting log in the treetops.
+    updrafts: [{ x: 650, w: 56, top: 650, bottom: 1000, kind: 'spores' }],
+    springs: [{ x: 1100, y: 680, up: 170, kind: 'shroom' }],
     portals: [
-      { id: 'west', x: 40, y: 900, to: 'harbor', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 900, to: 'grove', toPortal: 'west' },
+      { id: 'west', x: 40, y: 680, to: 'harbor', toPortal: 'east' },
+      { id: 'east', x: 2140, y: 680, to: 'grove', toPortal: 'west' },
     ],
     npcs: [],
-    // A landmark per zone: the great trees and the hollow log on the floor, the mushroom ring in
-    // the hollows, the stump house on the lookout.
-    deco: [['bigtree', 380, 0], ['bigtree', 1820, 0], ['hollowlog', 640], ['giantshroom', 2000, 1], ['mushring', 1100, 0, 500], ['stumphouse', 1000, 0, 180]],
-    lamps: [{ x: 1000, y: 140 }, { x: 1100, y: 470 }, { x: 640, y: 870 }],
-    spirit: { x: 1500, y: 210 },
-    habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true }, mossgolem: { naps: true } },
+    // A landmark per zone: the mushroom ring in the tunnels, the great trees and the hollow log on
+    // the floor, the stump house on the highest bough.
+    deco: [['mushring', 1100], ['bigtree', 380, 0, 680], ['hollowlog', 1000, 0, 680], ['giantshroom', 1900, 1, 680], ['stumphouse', 1050, 0, 440]],
+    lamps: [{ x: 1100, y: 970 }, { x: 1050, y: 400 }, { x: 650, y: 980 }],
+    spirit: { x: 1500, y: 400 },
+    habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true, home: { x: 1100, y: 1000 } }, mossgolem: { naps: true } },
   },
+
 
 
   // Twilight Ruins climbs a fallen temple in three zones (the tall-map rules, a light rework,
@@ -808,9 +822,7 @@ Object.assign(MAPS, {
 // `n` monsters evenly along a surface from x1 to x2 at height y, taking turns from `mobs`.
 const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ mob: mobs[i % mobs.length], x: Math.round(x1 + ((i + 0.5) / n) * (x2 - x1)), y }));
 
-// Mossy Woods' drifting log, gliding across the gap in the Warg Hollows.
-MAPS.woods.platforms.push({ x: 950, y: 660, w: 120, style: 'planks', drift: { dx: 180, period: 8 } });
-MAPS.woods.portals.push({ id: 'glade', x: 1240, y: 180, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
+MAPS.woods.portals.push({ id: 'glade', x: 1250, y: 440, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
 // The ruins' floating slab, and the way to the shrine from the galleries.
 MAPS.ruins.platforms.push({ x: 1115, y: 500, w: 140, drift: { dx: 230, period: 9 } });
 MAPS.ruins.portals.push({ id: 'shrine', x: 2000, y: 580, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });

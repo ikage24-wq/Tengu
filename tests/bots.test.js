@@ -547,9 +547,9 @@ test('a party combo: your finisher brings the members fighting by you in with th
   world.char.level = 40;
   const bots = { list: [], memory: new Set(), names: new Set(), rng: seeded(71), replies: [], spawnIn: 999, waveIn: 999, newsIn: 999 };
   world.bots = bots;
-  loadMap(world, 'woods', 'start');
+  loadMap(world, 'meadow1', 'west');
   world.mobs = [];
-  const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 60, y: world.map.groundY });
+  const m = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 60, y: world.body.y });
   // (A copy of its kind, so other tests still get ordinary ones.)
   m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
   m.hp = 1e9;
