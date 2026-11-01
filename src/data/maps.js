@@ -927,36 +927,52 @@ Object.assign(MAPS, {
   },
 
 
-  // Moonlit Ridge climbs a night-blue mountainside in three zones (the tall-map rules, a light
-  // rework, data/climb.js): the Moonlit Meadow among the moonstones, where a moonbeam lifts you up;
-  // the Wolf Den Ledges, the Lupina's ledges, with a ledge drifting across the gap; and the Howling
-  // Rock on top, the Rock Golems' crags, with an air vent to bounce you up and the howling rock on
-  // the lookout.
+  // Moonlit Ridge is a walk along a ridgeline, side by side (data/climb.js lay()): the ground itself
+  // rises and falls. The Moonlit Meadow in the west, a low saddle among the moonstones where a
+  // moonbeam lifts you; the Wolf Den on the rocky knoll and the dip beyond it, the Lupina's home,
+  // with a ledge drifting over the dip; and the Howling Rock in the east, the high summit of the
+  // Rock Golems, where a vent bounces you up onto the great howling rock itself.
   ridge: {
     id: 'ridge', name: 'Moonlit Ridge', theme: 'ridge', town: 'crag', world: { x: 246, y: 104 },
-    ...climb({
-      width: 2400, ground: 880, quiet: [[40, 880, 160]],
+    ...lay({
+      width: 2400, ground: 880, by: 'x',
+      terrain: [[0, 880], [600, 880], [600, 760], [1000, 760], [1000, 840], [1400, 840], [1400, 700], [1800, 700], [1800, 560], [2400, 560]],
+      // Ropes down each rock face, hanging beside it from the top.
+      ropes: [{ x: 590, top: 760, bottom: 880 }, { x: 1010, top: 760, bottom: 840 }, { x: 1390, top: 700, bottom: 840 }, { x: 1790, top: 560, bottom: 700 }],
+      quiet: [[40, 880, 160]],
       zones: [
-        { name: 'Moonlit Meadow', color: '#6a8ad0', rows: ['wide', 'split'], mobs: ['lupina'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Wolf Den Ledges', color: '#8a7ab0', rows: ['tri', 'long', 'splitwide'], mobs: ['lupina', 'rockgolem'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+        { name: 'Moonlit Meadow', color: '#6a8ad0', from: 0, mobs: ['lupina'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
+        { name: 'Wolf Den', color: '#8a7ab0', from: 600, mobs: ['lupina', 'rockgolem'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
           look: { sky: ['#2a2e6a', '#4a4e8a', '#8a8ac0'] } },
-        { name: 'Howling Rock', color: '#a8b8e0', rows: ['split', 'middle'], mobs: ['rockgolem', 'lupina'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'Howling Rock', color: '#a8b8e0', from: 1400, mobs: ['rockgolem', 'lupina'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
           look: { sky: ['#1e2058', '#3a3c7a', '#6a6aa8'] } },
       ],
+      ledges: [
+        // The meadow's rocks.
+        { x: 150, y: 800, w: 300 }, { x: 250, y: 720, w: 260 },
+        // Ledges on the den's knoll, and over the dip.
+        { x: 650, y: 680, w: 300 }, { x: 800, y: 600, w: 260 }, { x: 1080, y: 760, w: 260 },
+        // The rise, the howling rock on the summit, and a perch above it.
+        { x: 1450, y: 620, w: 280 },
+        { x: 2000, y: 480, w: 300 }, { x: 2100, y: 400, w: 200 },
+        // The ledge drifting over the dip.
+        { x: 1010, y: 700, w: 120, drift: { dx: 260, period: 9 } },
+      ],
     }),
-    // A moving part per zone: a moonbeam rising from the meadow (Up to ride it), a ledge drifting
-    // across the den's gap, and an air vent on the rock.
-    updrafts: [{ x: 1050, w: 56, top: 610, bottom: 880, kind: 'wisplight' }],
-    springs: [{ x: 960, y: 480, up: 175, kind: 'gust' }],
+    // A moving part per zone: a moonbeam rising in the meadow (Up to ride it), the ledge drifting
+    // over the dip, and a vent up onto the howling rock.
+    updrafts: [{ x: 520, w: 50, top: 690, bottom: 880, kind: 'wisplight' }],
+    springs: [{ x: 2060, y: 560, up: 120, kind: 'gust' }],
     portals: [{ id: 'west', x: 40, y: 880, to: 'crag', toPortal: 'ridge' }],
     npcs: [],
-    // A landmark per zone: the moonstones in the meadow, a howling rock on the den ledges, the
-    // great howling rock on the lookout.
-    deco: [['moonstone', 900], ['howlrock', 480], ['moonstone', 1700], ['howlrock', 1500, 1, 560], ['howlrock', 1200, 0, 240]],
-    lamps: [{ x: 1200, y: 200 }, { x: 900, y: 850 }, { x: 1500, y: 530 }],
-    spirit: { x: 1600, y: 200 },
-    habitats: { lupina: { play: true, home: { x: 1500, y: 560 } }, rockgolem: { naps: true } },
+    // A landmark per zone: the moonstones in the meadow, a howling rock on the knoll, the great
+    // howling rock on the summit.
+    deco: [['moonstone', 400], ['moonstone', 1200, 0, 840], ['howlrock', 800, 0, 760], ['howlrock', 2150, 0, 480], ['moonstone', 1650, 1, 700]],
+    lamps: [{ x: 400, y: 850 }, { x: 800, y: 720 }, { x: 2150, y: 440 }],
+    spirit: { x: 1700, y: 480 },
+    habitats: { lupina: { play: true, home: { x: 800, y: 760 } }, rockgolem: { naps: true } },
   },
+
 
 
   // Serpent Springs climbs a steaming mountainside in three zones (the tall-map rules, a light
@@ -1133,8 +1149,6 @@ Object.assign(MAPS, {
 });
 
 MAPS.glade.portals.push({ id: 'bower', x: 2340, y: 640, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
-// Moonlit Ridge's drifting ledge, across the den's gap.
-MAPS.ridge.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } });
 // The shrine path's petal cloud.
 MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
