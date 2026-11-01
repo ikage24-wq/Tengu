@@ -375,42 +375,59 @@ export const MAPS = {
 
 
 
-  // Crystal Cave climbs a great crystal cavern in three zones (the tall-map rules, a light rework,
-  // data/climb.js): the Glowpool Grotto, where Crystal Slimes bask by the glowing pools and a vent
-  // bounces you up; the Golem Galleries, the Rock Golems' halls, where crystal dust floats you
-  // higher and a tunnel leads off to Serpent Springs; and the Shade Hollows on top, with a slab of
-  // crystal drifting across the gap and, on the lookout, the ways on to the Sky Garden and up to the
-  // Crystal Throne. The mine road back to Sprout Village leaves from the grotto floor.
+  // Crystal Cave is a cavern valley round an underground lake (data/climb.js lay(), zones side by
+  // side): the Glowcap Terraces step down from the west, the Crystal Slimes' glowing shelves, where
+  // the mine road home leaves and a vent bounces you up to a crystal ledge; the Underground Lake
+  // lies at the bottom, the Rock Golems' shore, with a crystal raft ferrying across the water and
+  // the gate to the Crystal Throne by the lake; and the Shade Spires climb out to the east, where
+  // crystal dust floats you up to the ledge with the way to the Sky Garden, and the tunnel to
+  // Serpent Springs leaves from the east rim.
   cave: {
     id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'grove', world: { x: 336, y: 148 },
     look: { ceiling: true },
-    ...climb({
-      width: 2600, ground: 880, quiet: [[40, 880, 160], [2540, 880, 160], [200, 640, 200]],
+    ...lay({
+      width: 2600, ground: 1000, by: 'x',
+      terrain: [[0, 600], [400, 600], [400, 720], [800, 720], [800, 880], [1100, 880], [1100, 1000], [1500, 1000], [1500, 880], [1800, 880], [1800, 720], [2200, 720], [2200, 600], [2600, 600]],
+      // Ropes down each crystal step, hanging beside it from the top.
+      ropes: [{ x: 410, top: 600, bottom: 720 }, { x: 810, top: 720, bottom: 880 }, { x: 1110, top: 880, bottom: 1000 }, { x: 1490, top: 880, bottom: 1000 }, { x: 1790, top: 720, bottom: 880 }, { x: 2190, top: 600, bottom: 720 }],
+      quiet: [[40, 600, 160], [500, 720, 160], [1300, 1000, 200], [2100, 480, 160], [2540, 600, 160]],
       zones: [
-        { name: 'Glowpool Grotto', color: '#4fb0d8', rows: ['split', 'long'], mobs: ['crystalslime', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.15] }] },
-        { name: 'Golem Galleries', color: '#8a7ab0', rows: ['splitwide', 'tri', 'long'], mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.15] }] },
-        { name: 'Shade Hollows', color: '#5d5285', rows: ['split', 'middle'], mobs: ['shade', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.25] }] },
+        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.15] }] },
+        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.2] }] },
+        { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.25] }] },
+      ],
+      ledges: [
+        // Glowcap Terraces: crystal shelves over the steps, and a high ledge.
+        { x: 120, y: 520, w: 240 }, { x: 500, y: 560, w: 220 }, { x: 560, y: 640, w: 220 },
+        // The lake: crystal outcrops over the shore.
+        { x: 850, y: 800, w: 200 }, { x: 1550, y: 800, w: 200 }, { x: 1180, y: 900, w: 240 }, { x: 1150, y: 760, w: 300 },
+        // Shade Spires: spires climbing out, and the ledge with the way to the sky.
+        { x: 1850, y: 640, w: 220 }, { x: 2250, y: 520, w: 260 },
+        { x: 1900, y: 480, w: 280, thick: 44 },
+        // The crystal raft ferrying across the lake.
+        { x: 1100, y: 880, w: 130, style: 'stone', drift: { dx: 270, period: 10 } },
       ],
     }),
-    // A moving part per zone: a vent bouncing you up in the grotto, crystal dust rising through
-    // the galleries (Up to ride it), and a crystal slab drifting across the hollows' gap.
-    springs: [{ x: 1300, y: 880, up: 170, kind: 'gust' }],
-    updrafts: [{ x: 1180, w: 56, top: 450, bottom: 720, kind: 'wisplight' }],
+    // A moving part per zone: a vent on the terraces, the raft across the lake, and crystal dust
+    // rising in the spires (Up to ride it).
+    springs: [{ x: 620, y: 720, up: 170, kind: 'gust' }],
+    updrafts: [{ x: 2100, w: 50, top: 450, bottom: 720, kind: 'wisplight' }],
     portals: [
-      { id: 'west', x: 40, y: 880, to: 'ruins', toPortal: 'east' },
-      { id: 'east', x: 1450, y: 240, to: 'sky', toPortal: 'west' },
-      { id: 'boss', x: 1150, y: 240, to: 'bossroom', toPortal: 'west', label: 'Throne' },
+      { id: 'west', x: 40, y: 600, to: 'ruins', toPortal: 'east' },
+      { id: 'east', x: 2100, y: 480, to: 'sky', toPortal: 'west' },
+      { id: 'boss', x: 1300, y: 1000, to: 'bossroom', toPortal: 'west', label: 'Throne' },
       // The mine road back down to Sprout Village (the ring round the island).
-      { id: 'sprout', x: 2540, y: 880, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
+      { id: 'sprout', x: 500, y: 720, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
     ],
     npcs: [],
-    // A landmark per zone: the glowing pools in the grotto, a crystal spire in the galleries, a
-    // great crystal by the throne's gate.
-    deco: [['glowpool', 600], ['glowpool', 1500], ['stalagmite', 1000], ['crystalspire', 2200, 0], ['crystalspire', 1500, 1, 480], ['stalagmite', 700, 0, 480], ['crystalspire', 1300, 0, 240]],
-    lamps: [{ x: 600, y: 860 }, { x: 1500, y: 860 }, { x: 1300, y: 200 }],
-    spirit: { x: 1700, y: 200 },
-    habitats: { crystalslime: { naps: true, home: { x: 600, y: 880 } }, rockgolem: { naps: true }, shade: { play: true } },
+    // A landmark per zone: glowing pools on the terraces, a great crystal by the throne's gate at
+    // the lake, a crystal spire in the east.
+    deco: [['glowpool', 240, 0, 600], ['glowpool', 1200, 0, 1000], ['crystalspire', 1400, 1, 1000], ['stalagmite', 950, 0, 880], ['crystalspire', 2000, 0, 720], ['stalagmite', 2400, 0, 600]],
+    lamps: [{ x: 240, y: 580 }, { x: 1300, y: 960 }, { x: 2100, y: 440 }],
+    spirit: { x: 1300, y: 640 },
+    habitats: { crystalslime: { naps: true, home: { x: 240, y: 600 } }, rockgolem: { naps: true }, shade: { play: true } },
   },
+
 
 
   // Sky Garden is a chain of floating islands over a sea of cloud (a sky-islands layout, its zones
@@ -839,9 +856,8 @@ const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ 
 MAPS.woods.portals.push({ id: 'glade', x: 1250, y: 440, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
 // The way to the shrine leads off the collapsed halls.
 MAPS.ruins.portals.push({ id: 'shrine', x: 2380, y: 700, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
-// Crystal Cave's drifting crystal slab, and the tunnel to the springs off the galleries.
-MAPS.cave.platforms.push({ x: 975, y: 400, w: 150, style: 'stone', drift: { dx: 500, period: 11 } });
-MAPS.cave.portals.push({ id: 'springs', x: 200, y: 640, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
+// The tunnel to the springs leaves from the cave's east rim.
+MAPS.cave.portals.push({ id: 'springs', x: 2540, y: 600, to: 'springs', toPortal: 'west', label: 'Serpent Springs' });
 
 Object.assign(MAPS, {
   // The Whispering Glade is a walk across, side by side (data/climb.js lay()): the Flower Meadow in
